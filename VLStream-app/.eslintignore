@@ -1,0 +1,11 @@
+# Eslint 会忽略的文件
+.DS_Store
+node_modules
+dist
+public
+dist-ssr
+*.local
+src/assets
+public
+dists
+lib
