@@ -1,0 +1,206 @@
+server:
+  port: 18080
+  address: 0.0.0.0  # 绑定到所有网络接口
+  tomcat:
+    uri-encoding: UTF-8
+    relaxed-query-chars: "|,{,},[,],\\"
+    relaxed-path-chars: "|,{,},[,],\\"
+    relaxed-uri-chars: "|,{,},[,],\\"
+    relaxed-method-chars: "|,{,},[,],\\"
+    max-http-form-post-size: 1024MB
+    max-swallow-size: 1024MB
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+    multipart:
+      enabled: true
+      max-file-size: 1024MB
+      max-request-size: 1024MB
+spring:
+  application:
+    name: vls-server
+  mvc:
+    pathmatch:
+      matching-strategy: ant-path-matcher
+  web:
+    resources:
+      static-locations:
+        - classpath:/static/
+        - file:./static/
+        - file:./recordings/
+  # 数据源配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:192.168.60.77}:${DB_PORT:32443}/vlstream?useSSL=false&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:mysql@pass}
+  # Redis配置
+  redis:
+    host: ${REDIS_HOST:192.168.60.76}
+    port: ${REDIS_PORT:32576}
+    password: ${REDIS_PASSWORD:redis@pass}
+#    host: localhost
+#    port: 6379
+#    password:
+#    database: 0
+    timeout: 5000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
+        
+  # Jackson配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: non-null
+    
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+      
+# MyBatis Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    call-setters-on-nulls: true
+    jdbc-type-for-null: 'null'
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  mapper-locations: classpath*:mapper/**/*Mapper.xml
+  type-aliases-package: com.vlstream.server.entity
+
+# Knife4j配置
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+    enable-swagger-models: true
+    enable-document-manage: true
+    swagger-model-name: 实体类列表
+    enable-version: false
+    enable-reload-cache-parameter: false
+    enable-after-script: true
+    enable-filter-multipart-api-method-type: POST
+    enable-filter-multipart-apis: false
+    enable-request-cache: true
+    enable-host: false
+    enable-host-text: 
+    enable-home-custom: true
+    home-custom-path: classpath:markdown/home.md
+    enable-search: true
+    enable-footer: false
+    enable-footer-custom: true
+    footer-custom-content: Apache License 2.0 | Copyright 2024 VLStream
+
+# 日志配置
+logging:
+  level:
+    com.vlstream.server: debug
+    org.springframework.web: info
+    org.mybatis: debug
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+    file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+  file:
+    name: logs/vlstream-server.log
+    max-size: 50MB
+    max-history: 30
+
+# 业务配置
+vlstream:
+  ssh:
+    host: 192.168.88.173
+    port: 22
+    username: oort
+    password: oort301
+  # 算法配置
+  algorithm:
+    max-concurrent-tasks: 10
+    timeout: 300000
+    confidence-threshold: 0.8
+    
+  # 设备配置
+  device:
+    heartbeat-interval: 30000
+    connection-timeout: 5000
+    max-reconnect-times: 3 
+
+    # 录制配置
+recording:
+  storage:
+    path: ./recordings
+  enabled: true
+
+# 流转换配置
+stream:
+  # 首选转换模式 (webrtc | hls)
+  preferred-mode: webrtc
+  
+  # HLS输出配置
+  hls:
+    output-dir: static/hls/
+    segment-time: 2
+    list-size: 5
+    delete-segments: true
+  
+  # FFmpeg配置
+  ffmpeg:
+    path: ffmpeg
+    timeout: 30000
+    max-concurrent-streams: 5
+  
+  # 资源清理配置
+  cleanup:
+    enabled: true
+    interval: 3600000  # 1小时
+    max-idle-time: 600000  # 10分钟无活动自动清理
+
+# WebRTC配置
+webrtc:
+  streamer:
+    # WebRTC-streamer服务器地址
+    url: http://webrtc-streamer-server.zglt-1742612481:8000
+    internetUrl: http://oort.oortcloudsmart.com:21410/bus/webrtc-streamer-server
+    # 是否启用WebRTC功能
+    enabled: true
+    # 连接超时时间（毫秒）
+    timeout: 30000
+    # 重试次数
+    retry-count: 3
+    # STUN服务器配置
+    stun-server: stun.l.google.com:19302
+    # 是否启用日志
+    verbose: true
+
+# 统一用户中心配置
+user-center:
+  base-url: http://oort.oortcloudsmart.com:21410
+  app-id: 6551b0147c4649a894e86bf8de248da4
+  secret-key: 58f9eeefc65f4b318204ba21f39a8861
+  timeout: 10000
+  # 开发环境配置
+  dev:
+    # 是否启用模拟模式（开发环境使用）
+    mock-enabled: false
+    # 测试token（开发环境使用）
+    test-token: c34f010e8fc042099e9ac812da34f080
+
+#多租户文件上传
+apaas:
+  #文件上传方法路径
+  fileUpload: ${FILE_UPLOAD:http://apaas-fastdfsservice.p-lvgemgroup/fastdfs/v1/uploadFile}
+  #文件删除方法路径
+  deleteFile: ${DELETE_FILE:http://apaas-fastdfsservice.p-lvgemgroup/fastdfs/v1/deleteFile}

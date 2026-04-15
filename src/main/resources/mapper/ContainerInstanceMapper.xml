@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vlstream.mapper.ContainerInstanceMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.vlstream.entity.ContainerInstance">
+        <id column="id" property="id" />
+        <result column="instance_name" property="instanceName" />
+        <result column="container_id" property="containerId" />
+        <result column="image_name" property="imageName" />
+        <result column="image_tag" property="imageTag" />
+        <result column="algorithm_id" property="algorithmId" />
+        <result column="instance_type" property="instanceType" />
+        <result column="cpu_limit" property="cpuLimit" />
+        <result column="memory_limit" property="memoryLimit" />
+        <result column="gpu_limit" property="gpuLimit" />
+        <result column="port_config" property="portConfig" />
+        <result column="env_config" property="envConfig" />
+        <result column="volume_config" property="volumeConfig" />
+        <result column="instance_status" property="instanceStatus" />
+        <result column="health_status" property="healthStatus" />
+        <result column="start_time" property="startTime" />
+        <result column="stop_time" property="stopTime" />
+        <result column="restart_count" property="restartCount" />
+        <result column="cpu_usage" property="cpuUsage" />
+        <result column="memory_usage" property="memoryUsage" />
+        <result column="gpu_usage" property="gpuUsage" />
+        <result column="logs_path" property="logsPath" />
+        <result column="created_by" property="createdBy" />
+        <result column="created_time" property="createdTime" />
+        <result column="updated_time" property="updatedTime" />
+        <result column="deleted" property="deleted" />
+    </resultMap>
+
+    <!-- 包含关联信息的结果映射 -->
+    <resultMap id="DetailResultMap" type="com.vlstream.entity.ContainerInstance" extends="BaseResultMap">
+        <result column="algorithm_name" property="algorithmName" />
+        <result column="created_by_name" property="createdByName" />
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        id, instance_name, container_id, image_name, image_tag, algorithm_id, instance_type,
+        cpu_limit, memory_limit, gpu_limit, port_config, env_config, volume_config,
+        instance_status, health_status, start_time, stop_time, restart_count,
+        cpu_usage, memory_usage, gpu_usage, logs_path, created_by, created_time, updated_time, deleted
+    </sql>
+
+    <!-- 分页查询容器实例（包含关联信息） -->
+    <select id="selectPageWithDetails" resultMap="DetailResultMap">
+        SELECT 
+            c.*,
+            a.name as algorithm_name,
+            u.username as created_by_name
+        FROM container_instance c
+        LEFT JOIN algorithm a ON c.algorithm_id = a.id AND a.deleted = 0
+        LEFT JOIN sys_user u ON c.created_by = u.id AND u.deleted = 0
+        WHERE c.deleted = 0
+        <if test="query.instanceName != null and query.instanceName != ''">
+            AND c.instance_name LIKE CONCAT('%', #{query.instanceName}, '%')
+        </if>
+        <if test="query.containerId != null and query.containerId != ''">
+            AND c.container_id LIKE CONCAT('%', #{query.containerId}, '%')
+        </if>
+        <if test="query.imageName != null and query.imageName != ''">
+            AND c.image_name LIKE CONCAT('%', #{query.imageName}, '%')
+        </if>
+        <if test="query.algorithmId != null">
+            AND c.algorithm_id = #{query.algorithmId}
+        </if>
+        <if test="query.instanceType != null and query.instanceType != ''">
+            AND c.instance_type = #{query.instanceType}
+        </if>
+        <if test="query.instanceStatus != null and query.instanceStatus != ''">
+            AND c.instance_status = #{query.instanceStatus}
+        </if>
+        <if test="query.healthStatus != null and query.healthStatus != ''">
+            AND c.health_status = #{query.healthStatus}
+        </if>
+        <if test="query.createdBy != null">
+            AND c.created_by = #{query.createdBy}
+        </if>
+        <if test="query.createdTimeStart != null">
+            AND c.created_time >= #{query.createdTimeStart}
+        </if>
+        <if test="query.createdTimeEnd != null">
+            AND c.created_time &lt;= #{query.createdTimeEnd}
+        </if>
+        <if test="query.startTimeStart != null">
+            AND c.start_time >= #{query.startTimeStart}
+        </if>
+        <if test="query.startTimeEnd != null">
+            AND c.start_time &lt;= #{query.startTimeEnd}
+        </if>
+        <choose>
+            <when test="query.orderBy != null and query.orderBy != '' and query.order != null and query.order != ''">
+                ORDER BY c.${query.orderBy} ${query.order}
+            </when>
+            <otherwise>
+                ORDER BY c.created_time DESC
+            </otherwise>
+        </choose>
+    </select>
+
+    <!-- 根据ID查询容器实例详情（包含关联信息） -->
+    <select id="selectByIdWithDetails" resultMap="DetailResultMap">
+        SELECT 
+            c.*,
+            a.name as algorithm_name,
+            u.username as created_by_name
+        FROM container_instance c
+        LEFT JOIN algorithm a ON c.algorithm_id = a.id AND a.deleted = 0
+        LEFT JOIN sys_user u ON c.created_by = u.id AND u.deleted = 0
+        WHERE c.id = #{id} AND c.deleted = 0
+    </select>
+
+    <!-- 获取容器实例统计信息 -->
+    <select id="selectStatistics" resultType="map">
+        SELECT 
+            COUNT(*) as total_instances,
+            COUNT(CASE WHEN instance_status = 'running' THEN 1 END) as running_instances,
+            COUNT(CASE WHEN instance_status = 'stopped' THEN 1 END) as stopped_instances,
+            COUNT(CASE WHEN instance_status = 'error' THEN 1 END) as error_instances,
+            COUNT(CASE WHEN instance_status = 'starting' THEN 1 END) as starting_instances,
+            COUNT(CASE WHEN instance_status = 'stopping' THEN 1 END) as stopping_instances,
+            COUNT(CASE WHEN health_status = 'healthy' THEN 1 END) as healthy_instances,
+            COUNT(CASE WHEN health_status = 'unhealthy' THEN 1 END) as unhealthy_instances,
+            COUNT(CASE WHEN health_status = 'unknown' THEN 1 END) as unknown_instances,
+            ROUND(AVG(CASE WHEN cpu_usage IS NOT NULL THEN cpu_usage END), 2) as avg_cpu_usage,
+            ROUND(AVG(CASE WHEN memory_usage IS NOT NULL THEN memory_usage END), 2) as avg_memory_usage,
+            ROUND(AVG(CASE WHEN gpu_usage IS NOT NULL THEN gpu_usage END), 2) as avg_gpu_usage,
+            COUNT(DISTINCT algorithm_id) as unique_algorithms,
+            COUNT(DISTINCT instance_type) as unique_instance_types,
+            COUNT(CASE WHEN created_time >= DATE_SUB(NOW(), INTERVAL 1 DAY) THEN 1 END) as today_new_instances,
+            COUNT(CASE WHEN created_time >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as weekly_new_instances,
+            COUNT(CASE WHEN created_time >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as monthly_new_instances
+        FROM container_instance 
+        WHERE deleted = 0
+    </select>
+
+</mapper> 

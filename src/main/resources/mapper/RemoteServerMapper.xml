@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vlstream.mapper.RemoteServerMapper">
+    
+    <resultMap type="com.vlstream.entity.RemoteServer" id="RemoteServerResult">
+        <result property="id" column="id"/>
+        <result property="serverName" column="server_name"/>
+        <result property="serverIp" column="server_ip"/>
+        <result property="serverPort" column="server_port"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="condaEnv" column="conda_env"/>
+        <result property="workDir" column="work_dir"/>
+        <result property="status" column="status"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedTime" column="updated_time"/>
+    </resultMap>
+    
+    <sql id="selectRemoteServerVo">
+        select id, server_name, server_ip, server_port, username, password, conda_env, work_dir, status, created_time, updated_time from remote_servers
+    </sql>
+    
+    <select id="selectRemoteServerList" parameterType="com.vlstream.entity.RemoteServer" resultMap="RemoteServerResult">
+        <include refid="selectRemoteServerVo"/>
+        <where>
+            <if test="serverName != null and serverName != ''">
+                AND server_name like concat('%', #{serverName}, '%')
+            </if>
+            <if test="serverIp != null and serverIp != ''">
+                AND server_ip = #{serverIp}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+        order by created_time desc
+    </select>
+    
+    <select id="selectRemoteServerById" parameterType="Long" resultMap="RemoteServerResult">
+        <include refid="selectRemoteServerVo"/>
+        where id = #{id}
+    </select>
+    
+    <select id="selectActiveServer" resultMap="RemoteServerResult">
+        <include refid="selectRemoteServerVo"/>
+        where status = 1
+        limit 1
+    </select>
+    
+    <select id="count" resultType="int">
+        select count(*) from remote_servers
+    </select>
+
+    <update id="createTableIfNotExists">
+        CREATE TABLE IF NOT EXISTS `remote_servers` (
+          `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+          `server_name` varchar(100) NOT NULL COMMENT '服务器名称',
+          `server_ip` varchar(50) NOT NULL COMMENT '服务器IP地址',
+          `server_port` int(11) NOT NULL DEFAULT '22' COMMENT 'SSH端口',
+          `username` varchar(50) NOT NULL COMMENT '用户名',
+          `password` varchar(255) NOT NULL COMMENT '密码(加密)',
+          `conda_env` varchar(50) DEFAULT 'yolo8' COMMENT 'Conda环境名称',
+          `work_dir` varchar(255) DEFAULT '/data/work/ultralytics_yolov8-main' COMMENT '工作目录',
+          `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '状态(0:禁用 1:启用)',
+          `created_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+          `updated_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+          PRIMARY KEY (`id`),
+          KEY `idx_server_ip` (`server_ip`),
+          KEY `idx_status` (`status`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='远程服务器配置表'
+    </update>
+    
+    <insert id="insertRemoteServer" parameterType="com.vlstream.entity.RemoteServer" useGeneratedKeys="true" keyProperty="id">
+        insert into remote_servers
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="serverName != null">server_name,</if>
+            <if test="serverIp != null">server_ip,</if>
+            <if test="serverPort != null">server_port,</if>
+            <if test="username != null">username,</if>
+            <if test="password != null">password,</if>
+            <if test="condaEnv != null">conda_env,</if>
+            <if test="workDir != null">work_dir,</if>
+            <if test="status != null">status,</if>
+            created_time,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="serverName != null">#{serverName},</if>
+            <if test="serverIp != null">#{serverIp},</if>
+            <if test="serverPort != null">#{serverPort},</if>
+            <if test="username != null">#{username},</if>
+            <if test="password != null">#{password},</if>
+            <if test="condaEnv != null">#{condaEnv},</if>
+            <if test="workDir != null">#{workDir},</if>
+            <if test="status != null">#{status},</if>
+            now(),
+        </trim>
+    </insert>
+    
+    <update id="updateRemoteServer" parameterType="com.vlstream.entity.RemoteServer">
+        update remote_servers
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="serverName != null">server_name = #{serverName},</if>
+            <if test="serverIp != null">server_ip = #{serverIp},</if>
+            <if test="serverPort != null">server_port = #{serverPort},</if>
+            <if test="username != null">username = #{username},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="condaEnv != null">conda_env = #{condaEnv},</if>
+            <if test="workDir != null">work_dir = #{workDir},</if>
+            <if test="status != null">status = #{status},</if>
+            updated_time = now(),
+        </trim>
+        where id = #{id}
+    </update>
+    
+    <delete id="deleteRemoteServerById" parameterType="Long">
+        delete from remote_servers where id = #{id}
+    </delete>
+    
+    <delete id="deleteRemoteServerByIds" parameterType="String">
+        delete from remote_servers where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    
+</mapper> 

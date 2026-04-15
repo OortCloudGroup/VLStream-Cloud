@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vlstream.mapper.AlgorithmModelMapper">
+
+    <!-- 基础字段映射 -->
+    <resultMap id="BaseResultMap" type="com.vlstream.entity.AlgorithmModel">
+        <id column="id" property="id" />
+        <result column="model_name" property="modelName" />
+        <result column="algorithm_id" property="algorithmId" />
+        <result column="training_id" property="trainingId" />
+        <result column="version" property="version" />
+        <result column="model_format" property="modelFormat" />
+        <result column="model_size" property="modelSize" />
+        <result column="model_path" property="modelPath" />
+        <result column="accuracy" property="accuracy" />
+        <result column="status" property="status" />
+        <result column="description" property="description" />
+        <result column="download_count" property="downloadCount" />
+        <result column="deploy_count" property="deployCount" />
+        <result column="publish_time" property="publishTime" />
+        <result column="created_by" property="createdBy" />
+        <result column="created_time" property="createdTime" />
+        <result column="updated_time" property="updatedTime" />
+        <result column="deleted" property="deleted" />
+    </resultMap>
+
+    <!-- 基础字段列表 -->
+    <sql id="Base_Column_List">
+        id, model_name, algorithm_id, training_id, version, model_format, model_size, 
+        model_path, accuracy, status, description, download_count, deploy_count, 
+        publish_time, created_by, created_time, updated_time, deleted
+    </sql>
+
+    <!-- 分页查询算法模型列表 -->
+    <select id="selectModelPage" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM algorithm_model
+        WHERE deleted = 0
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 根据算法ID查询模型列表 -->
+    <select id="selectByAlgorithmId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM algorithm_model
+        WHERE algorithm_id = #{algorithmId} AND deleted = 0
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 根据训练任务ID查询模型列表 -->
+    <select id="selectByTrainingId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM algorithm_model
+        WHERE training_id = #{trainingId} AND deleted = 0
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 根据状态查询模型列表 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM algorithm_model
+        WHERE status = #{status} AND deleted = 0
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 更新模型状态 -->
+    <update id="updateStatus">
+        UPDATE algorithm_model
+        SET status = #{status}, updated_time = NOW()
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <!-- 更新模型下载次数 -->
+    <update id="updateDownloadCount">
+        UPDATE algorithm_model
+        SET download_count = download_count + 1, updated_time = NOW()
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <!-- 更新模型部署次数 -->
+    <update id="updateDeployCount">
+        UPDATE algorithm_model
+        SET deploy_count = deploy_count + 1, updated_time = NOW()
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <!-- 批量更新模型状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE algorithm_model
+        SET status = #{status}, updated_time = NOW()
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        AND deleted = 0
+    </update>
+
+    <!-- 获取模型统计信息 -->
+    <select id="getStatistics" resultType="com.vlstream.dto.AlgorithmModelStatisticsDTO">
+        SELECT 
+            COUNT(*) as totalCount,
+            SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draftCount,
+            SUM(CASE WHEN status = 'testing' THEN 1 ELSE 0 END) as testingCount,
+            SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) as publishedCount,
+            SUM(download_count) as totalDownloadCount,
+            SUM(deploy_count) as totalDeployCount
+        FROM algorithm_model
+        WHERE deleted = 0
+    </select>
+
+    <!-- 检查模型名称和版本是否存在 -->
+    <select id="checkModelNameAndVersion" resultType="int">
+        SELECT COUNT(*)
+        FROM algorithm_model
+        WHERE model_name = #{modelName} 
+        AND version = #{version} 
+        AND deleted = 0
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- 根据算法ID和版本查询模型 -->
+    <select id="selectByAlgorithmIdAndVersion" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM algorithm_model
+        WHERE algorithm_id = #{algorithmId} 
+        AND version = #{version} 
+        AND deleted = 0
+    </select>
+
+    <!-- 获取算法下最新版本的模型 -->
+    <select id="selectLatestByAlgorithmId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM algorithm_model
+        WHERE algorithm_id = #{algorithmId} AND deleted = 0
+        ORDER BY created_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 查询热门模型（按下载次数排序） -->
+    <select id="selectPopularModels" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM algorithm_model
+        WHERE deleted = 0 AND status = 'published'
+        ORDER BY download_count DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 根据创建人查询模型数量 -->
+    <select id="countByCreatedBy" resultType="long">
+        SELECT COUNT(*)
+        FROM algorithm_model
+        WHERE created_by = #{createdBy} AND deleted = 0
+    </select>
+
+    <!-- 获取算法模型的总大小 -->
+    <select id="getTotalModelSize" resultType="long">
+        SELECT SUM(CAST(REPLACE(REPLACE(REPLACE(model_size, 'MB', ''), 'GB', '000'), 'KB', '0.001') AS DECIMAL(10,3))) * 1024 * 1024
+        FROM algorithm_model
+        WHERE deleted = 0 AND status = 'published' AND model_size IS NOT NULL
+    </select>
+
+</mapper> 

@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vlstream.mapper.AlgorithmTrainingMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.vlstream.entity.AlgorithmTraining">
+        <id column="id" property="id" />
+        <result column="task_name" property="taskName" />
+        <result column="algorithm_id" property="algorithmId" />
+        <result column="dataset_id" property="datasetId" />
+        <result column="train_status" property="trainStatus" />
+        <result column="progress" property="progress" />
+        <result column="epoch_current" property="epochCurrent" />
+        <result column="epoch_total" property="epochTotal" />
+        <result column="accuracy" property="accuracy" />
+        <result column="precision_value" property="precisionValue" />
+        <result column="recall_value" property="recallValue" />
+        <result column="map_value" property="mapValue" />
+        <result column="loss_value" property="lossValue" />
+        <result column="gpu_usage" property="gpuUsage" />
+        <result column="start_time" property="startTime" />
+        <result column="end_time" property="endTime" />
+        <result column="estimated_time" property="estimatedTime" />
+        <result column="model_output_path" property="modelOutputPath" />
+        <result column="log_path" property="logPath" />
+        <result column="config_params" property="configParams" />
+        <result column="error_message" property="errorMessage" />
+        <result column="created_by" property="createdBy" />
+        <result column="created_time" property="createdTime" />
+        <result column="updated_time" property="updatedTime" />
+        <result column="deleted" property="deleted" />
+    </resultMap>
+
+    <!-- 包含关联信息的结果映射 -->
+    <resultMap id="DetailResultMap" type="com.vlstream.entity.AlgorithmTraining" extends="BaseResultMap">
+        <result column="algorithm_name" property="algorithmName" />
+        <result column="dataset_name" property="datasetName" />
+        <result column="created_by_name" property="createdByName" />
+    </resultMap>
+
+    <!-- 统计信息结果映射 -->
+    <resultMap id="StatisticsResultMap" type="com.vlstream.dto.AlgorithmTrainingStatisticsDTO">
+        <result column="total_tasks" property="totalTasks" />
+        <result column="pending_tasks" property="pendingTasks" />
+        <result column="training_tasks" property="trainingTasks" />
+        <result column="completed_tasks" property="completedTasks" />
+        <result column="failed_tasks" property="failedTasks" />
+        <result column="success_rate" property="successRate" />
+        <result column="average_accuracy" property="averageAccuracy" />
+        <result column="average_precision" property="averagePrecision" />
+        <result column="average_recall" property="averageRecall" />
+        <result column="average_map" property="averageMap" />
+        <result column="average_duration" property="averageDuration" />
+        <result column="today_new_tasks" property="todayNewTasks" />
+        <result column="weekly_new_tasks" property="weeklyNewTasks" />
+        <result column="monthly_new_tasks" property="monthlyNewTasks" />
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        id, task_name, algorithm_id, dataset_id, train_status, progress,
+        epoch_current, epoch_total, accuracy, precision_value, recall_value, map_value,
+        loss_value, gpu_usage, start_time, end_time, estimated_time, model_output_path,
+        log_path, config_params, error_message, created_by, created_time, updated_time, deleted
+    </sql>
+
+    <!-- 分页查询训练任务（包含关联信息） -->
+    <select id="selectPageWithDetails" resultMap="DetailResultMap">
+        SELECT 
+            t.*,
+            a.name as algorithm_name,
+            CAST(t.dataset_id AS CHAR) as dataset_name,
+            u.username as created_by_name
+        FROM algorithm_training t
+        LEFT JOIN algorithm a ON t.algorithm_id = a.id AND a.deleted = 0
+        LEFT JOIN sys_user u ON t.created_by = u.id AND u.deleted = 0
+        WHERE t.deleted = 0
+        <if test="taskName != null and taskName != ''">
+            AND t.task_name LIKE CONCAT('%', #{taskName}, '%')
+        </if>
+        <if test="algorithmId != null">
+            AND t.algorithm_id = #{algorithmId}
+        </if>
+        <if test="datasetId != null">
+            AND t.dataset_id = #{datasetId}
+        </if>
+        <if test="trainStatus != null and trainStatus != ''">
+            AND t.train_status = #{trainStatus}
+        </if>
+        <if test="createdBy != null">
+            AND t.created_by = #{createdBy}
+        </if>
+        <if test="startTimeBegin != null">
+            AND t.start_time >= #{startTimeBegin}
+        </if>
+        <if test="startTimeEnd != null">
+            AND t.start_time &lt;= #{startTimeEnd}
+        </if>
+        <if test="createdTimeBegin != null">
+            AND t.created_time >= #{createdTimeBegin}
+        </if>
+        <if test="createdTimeEnd != null">
+            AND t.created_time &lt;= #{createdTimeEnd}
+        </if>
+        <choose>
+            <when test="orderBy != null and orderBy != '' and order != null and order != ''">
+                ORDER BY t.${orderBy} ${order}
+            </when>
+            <otherwise>
+                ORDER BY t.created_time DESC
+            </otherwise>
+        </choose>
+    </select>
+
+    <!-- 根据ID查询训练任务详情（包含关联信息） -->
+    <select id="selectByIdWithDetails" resultMap="DetailResultMap">
+        SELECT 
+            t.*,
+            a.name as algorithm_name,
+            d.name as dataset_name,
+            u.name as created_by_name
+        FROM algorithm_training t
+        LEFT JOIN algorithm a ON t.algorithm_id = a.id AND a.deleted = 0
+        LEFT JOIN dataset d ON t.dataset_id = d.id AND d.deleted = 0
+        LEFT JOIN user u ON t.created_by = u.id AND u.deleted = 0
+        WHERE t.id = #{id} AND t.deleted = 0
+    </select>
+
+    <!-- 获取训练任务统计信息 -->
+    <select id="selectStatistics" resultMap="StatisticsResultMap">
+        SELECT 
+            COUNT(*) as total_tasks,
+            COUNT(CASE WHEN train_status = 'pending' THEN 1 END) as pending_tasks,
+            COUNT(CASE WHEN train_status = 'training' THEN 1 END) as training_tasks,
+            COUNT(CASE WHEN train_status = 'completed' THEN 1 END) as completed_tasks,
+            COUNT(CASE WHEN train_status = 'failed' THEN 1 END) as failed_tasks,
+            ROUND(
+                COUNT(CASE WHEN train_status = 'completed' THEN 1 END) * 100.0 / 
+                NULLIF(COUNT(CASE WHEN train_status IN ('completed', 'failed') THEN 1 END), 0),
+                2
+            ) as success_rate,
+            ROUND(AVG(CASE WHEN train_status = 'completed' THEN accuracy END), 4) as average_accuracy,
+            ROUND(AVG(CASE WHEN train_status = 'completed' THEN precision_value END), 4) as average_precision,
+            ROUND(AVG(CASE WHEN train_status = 'completed' THEN recall_value END), 4) as average_recall,
+            ROUND(AVG(CASE WHEN train_status = 'completed' THEN map_value END), 4) as average_map,
+            ROUND(AVG(
+                CASE WHEN train_status = 'completed' AND start_time IS NOT NULL AND end_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(MINUTE, start_time, end_time) END
+            ), 2) as average_duration,
+            COUNT(CASE WHEN DATE(created_time) = CURDATE() THEN 1 END) as today_new_tasks,
+            COUNT(CASE WHEN created_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN 1 END) as weekly_new_tasks,
+            COUNT(CASE WHEN created_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 END) as monthly_new_tasks
+        FROM algorithm_training
+        WHERE deleted = 0
+    </select>
+
+    <!-- 根据算法ID查询训练任务列表 -->
+    <select id="selectByAlgorithmId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM algorithm_training
+        WHERE algorithm_id = #{algorithmId} AND deleted = 0
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 根据数据集ID查询训练任务列表 -->
+    <select id="selectByDatasetId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM algorithm_training
+        WHERE dataset_id = #{datasetId} AND deleted = 0
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 查询算法训练任务 -->
+    <select id="selectAlgorithmTrainingById" parameterType="Long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM algorithm_training
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <!-- 查询算法训练任务列表 -->
+    <select id="selectAlgorithmTrainingList" parameterType="com.vlstream.entity.AlgorithmTraining" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM algorithm_training
+        <where>
+            deleted = 0
+            <if test="taskName != null and taskName != ''">
+                AND task_name like concat('%', #{taskName}, '%')
+            </if>
+            <if test="algorithmId != null">
+                AND algorithm_id = #{algorithmId}
+            </if>
+            <if test="datasetId != null">
+                AND dataset_id = #{datasetId}
+            </if>
+            <if test="trainStatus != null and trainStatus != ''">
+                AND train_status = #{trainStatus}
+            </if>
+            <if test="createdBy != null">
+                AND created_by = #{createdBy}
+            </if>
+        </where>
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 新增算法训练任务 -->
+    <insert id="insertAlgorithmTraining" parameterType="com.vlstream.entity.AlgorithmTraining" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO algorithm_training
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="taskName != null">task_name,</if>
+            <if test="algorithmId != null">algorithm_id,</if>
+            <if test="datasetId != null">dataset_id,</if>
+            <if test="trainStatus != null">train_status,</if>
+            <if test="progress != null">progress,</if>
+            <if test="epochCurrent != null">epoch_current,</if>
+            <if test="epochTotal != null">epoch_total,</if>
+            <if test="accuracy != null">accuracy,</if>
+            <if test="precisionValue != null">precision_value,</if>
+            <if test="recallValue != null">recall_value,</if>
+            <if test="mapValue != null">map_value,</if>
+            <if test="lossValue != null">loss_value,</if>
+            <if test="gpuUsage != null">gpu_usage,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="estimatedTime != null">estimated_time,</if>
+            <if test="modelOutputPath != null">model_output_path,</if>
+            <if test="logPath != null">log_path,</if>
+            <if test="configParams != null">config_params,</if>
+            <if test="errorMessage != null">error_message,</if>
+            <if test="createdBy != null">created_by,</if>
+            created_time,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="taskName != null">#{taskName},</if>
+            <if test="algorithmId != null">#{algorithmId},</if>
+            <if test="datasetId != null">#{datasetId},</if>
+            <if test="trainType != null">#{trainType},</if>
+            <if test="trainStatus != null">#{trainStatus},</if>
+            <if test="progress != null">#{progress},</if>
+            <if test="epochCurrent != null">#{epochCurrent},</if>
+            <if test="epochTotal != null">#{epochTotal},</if>
+            <if test="accuracy != null">#{accuracy},</if>
+            <if test="precisionValue != null">#{precisionValue},</if>
+            <if test="recallValue != null">#{recallValue},</if>
+            <if test="mapValue != null">#{mapValue},</if>
+            <if test="lossValue != null">#{lossValue},</if>
+            <if test="gpuUsage != null">#{gpuUsage},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="endTime != null">#{endTime},</if>
+            <if test="estimatedTime != null">#{estimatedTime},</if>
+            <if test="modelOutputPath != null">#{modelOutputPath},</if>
+            <if test="logPath != null">#{logPath},</if>
+            <if test="configParams != null">#{configParams},</if>
+            <if test="errorMessage != null">#{errorMessage},</if>
+            <if test="createdBy != null">#{createdBy},</if>
+            NOW(),
+        </trim>
+    </insert>
+
+    <!-- 修改算法训练任务 -->
+    <update id="updateAlgorithmTraining" parameterType="com.vlstream.entity.AlgorithmTraining">
+        UPDATE algorithm_training
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="taskName != null">task_name = #{taskName},</if>
+            <if test="algorithmId != null">algorithm_id = #{algorithmId},</if>
+            <if test="datasetId != null">dataset_id = #{datasetId},</if>
+            <if test="trainStatus != null">train_status = #{trainStatus},</if>
+            <if test="progress != null">progress = #{progress},</if>
+            <if test="epochCurrent != null">epoch_current = #{epochCurrent},</if>
+            <if test="epochTotal != null">epoch_total = #{epochTotal},</if>
+            <if test="accuracy != null">accuracy = #{accuracy},</if>
+            <if test="precisionValue != null">precision_value = #{precisionValue},</if>
+            <if test="recallValue != null">recall_value = #{recallValue},</if>
+            <if test="mapValue != null">map_value = #{mapValue},</if>
+            <if test="lossValue != null">loss_value = #{lossValue},</if>
+            <if test="gpuUsage != null">gpu_usage = #{gpuUsage},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="estimatedTime != null">estimated_time = #{estimatedTime},</if>
+            <if test="modelOutputPath != null">model_output_path = #{modelOutputPath},</if>
+            <if test="logPath != null">log_path = #{logPath},</if>
+            <if test="configParams != null">config_params = #{configParams},</if>
+            <if test="errorMessage != null">error_message = #{errorMessage},</if>
+            updated_time = NOW(),
+        </trim>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除算法训练任务 -->
+    <delete id="deleteAlgorithmTrainingById" parameterType="Long">
+        UPDATE algorithm_training SET deleted = 1, updated_time = NOW() WHERE id = #{id}
+    </delete>
+
+    <!-- 批量删除算法训练任务 -->
+    <delete id="deleteAlgorithmTrainingByIds" parameterType="Long[]">
+        UPDATE algorithm_training SET deleted = 1, updated_time = NOW() WHERE id IN 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper> 
