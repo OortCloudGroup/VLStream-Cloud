@@ -1,138 +1,127 @@
-# VLStream Cloud 后端服务
+# VLStream Cloud Backend Service
 
-## 项目简介
+## Project Introduction
 
-VLStream Cloud 是一个智能视频流管理系统，基于SpringBoot + MyBatis Plus + MySQL技术栈开发，提供设备管理、算法管理、智能分析、监控告警等功能的后端API服务。
+VLStream Cloud is an intelligent video stream management system developed based on SpringBoot + MyBatis Plus + MySQL technology stack, providing backend API services for device management, algorithm management, intelligent analysis, monitoring and alerting functions.
 
-## 技术栈
+## Technology Stack
 
-- **框架**: Spring Boot 2.7.18
+- **Framework**: Spring Boot 2.7.18
 - **ORM**: MyBatis Plus 3.5.3.1
-- **数据库**: MySQL 8.0+
-- **缓存**: Redis 6.0+
-- **API文档**: Knife4j 3.0.3
-- **工具库**: Hutool、Apache Commons Lang3
+- **Database**: MySQL 8.0+
+- **Cache**: Redis 6.0+
+- **API Documentation**: Knife4j 3.0.3
+- **Tool Libraries**: Hutool, Apache Commons Lang3
 - **JSON**: FastJSON 2.0.25
 
-## 项目结构
+## Project Structure
 
 ```
 VLStream-server/
 ├── src/
 │   ├── main/
 │   │   ├── java/com/vlstream/server/
-│   │   │   ├── entity/           # 实体类
-│   │   │   ├── mapper/           # 数据访问层
-│   │   │   ├── service/          # 业务逻辑层
-│   │   │   ├── controller/       # 控制器层
-│   │   │   ├── config/           # 配置类
-│   │   │   ├── common/           # 通用类
-│   │   │   └── utils/            # 工具类
+│   │   │   ├── entity/           # Entity classes
+│   │   │   ├── mapper/           # Data access layer
+│   │   │   ├── service/          # Business logic layer
+│   │   │   ├── controller/       # Controller layer
+│   │   │   ├── config/           # Configuration classes
+│   │   │   ├── common/           # Common classes
+│   │   │   └── utils/            # Utility classes
 │   │   └── resources/
-│   │       ├── application.yml   # 应用配置
-│   │       └── mapper/           # MyBatis XML映射文件
-│   └── test/                     # 测试代码
+│   │       ├── application.yml   # Application configuration
+│   │       └── mapper/           # MyBatis XML mapping files
+│   └── test/                     # Test code
 ├── docs/
-│   ├── sql/                      # 数据库脚本
-│   └── api/                      # API文档
-├── pom.xml                       # Maven配置
-└── README.md                     # 项目说明
+│   ├── sql/                      # Database scripts
+│   └── api/                      # API documentation
+├── pom.xml                       # Maven configuration
+└── README.md                     # Project description
 ```
 
-## 核心功能模块
+## Core Function Modules
 
-### 1. 设备管理
-- 设备信息的增删改查
-- 设备状态监控和管理
-- 设备分组和标签管理
-- 设备连接测试
+### 1. Device Management
+- Add, delete, modify and query device information
+- Device status monitoring and management
+- Device grouping and tag management
+- Device connection testing
 
-### 2. 算法管理
-- 算法信息管理
-- 算法训练任务管理
-- 算法模型管理
-- 算法标注数据管理
+### 2. Algorithm Management
+- Algorithm information management
+- Algorithm training task management
+- Algorithm model management
+- Algorithm annotation data management
 
-### 3. 智能分析
-- 分析请求管理
-- 分析结果查询
-- 实时分析监控
+### 3. Intelligent Analysis
+- Analysis request management
+- Analysis result query
+- Real-time analysis monitoring
 
-### 4. 监控告警
-- 设备告警管理
-- 告警规则配置
-- 告警处理流程
+### 4. Monitoring and Alerting
+- Device alert management
+- Alert rule configuration
+- Alert processing flow
 
-## 快速开始
+## Quick Start
 
-### 环境要求
+### Environment Requirements
 
 - JDK 8+
 - Maven 3.6+
 - MySQL 8.0+
 - Redis 6.0+
 
-### 安装步骤
+### Installation Steps
 
-1. **创建数据库**
+1. **Create Database**
 ```sql
 CREATE DATABASE vlstream CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-2. **执行SQL脚本**
+2. **Execute SQL Script**
 ```bash
 mysql -u root -p vlstream < docs/sql/vlstream_schema.sql
 ```
 
-3. **修改配置**
-编辑 `src/main/resources/application.yml`，修改数据库和Redis连接信息
+3. **Modify Configuration**
+Edit `src/main/resources/application.yml` to modify database and Redis connection information
 
-4. **启动应用**
+4. **Start Application**
 ```bash
 mvn spring-boot:run
 ```
 
-5. **访问API文档**
-启动成功后，访问：http://localhost:8080/api/doc.html
+5. **Access API Documentation**
+After successful startup, visit: http://localhost:8080/api/doc.html
 
-## API接口
+## API Interfaces
 
-### 设备管理 API
+### Device Management API
 
-| 方法 | 路径 | 描述 |
-|------|------|------|
-| GET | /api/device/page | 分页查询设备信息 |
-| GET | /api/device/{id} | 根据ID查询设备 |
-| POST | /api/device | 新增设备 |
-| PUT | /api/device | 更新设备 |
-| DELETE | /api/device/{id} | 删除设备 |
-| GET | /api/device/statistics | 获取设备统计信息 |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /api/device/page | Pagination query device information |
+| GET | /api/device/{id} | Query device by ID |
+| POST | /api/device | Add new device |
+| PUT | /api/device | Update device |
+| DELETE | /api/device/{id} | Delete device |
+| GET | /api/device/statistics | Get device statistics |
 
-### 响应格式
+### Response Format
 
-所有API响应都遵循统一格式：
+All API responses follow a unified format:
 
 ```json
 {
   "code": 200,
-  "message": "操作成功",
+  "message": "Operation successful",
   "data": {},
   "timestamp": 1704038400000
 }
 ```
-## 效果图
-<img width="2697" height="1791" alt="image" src="https://github.com/user-attachments/assets/d9ee1369-7ae3-4b8f-8bd8-961de320f9bd" />
 
-<img width="3807" height="1767" alt="image" src="https://github.com/user-attachments/assets/5d98c142-ea95-4b6b-be6a-82aa0a3134db" />
+## Contact Information
 
-<img width="3797" height="1674" alt="image" src="https://github.com/user-attachments/assets/eb63f8b3-c01c-4964-9516-58b0baac3ff6" />
-
-<img width="3804" height="1566" alt="image" src="https://github.com/user-attachments/assets/f6614a0b-9165-4702-8688-cb983ba52cf8" />
-
-
-
-
-## 联系方式
-
-- **项目主页**: https://vls.oortcloudsmart.com
-- **技术支持**: zhangxuelian@oortcloudsmart.com
+- **Project Homepage**: https://vls.oortcloudsmart.com
+- **Technical Support**: zhangxuelian@oortcloudsmart.com
