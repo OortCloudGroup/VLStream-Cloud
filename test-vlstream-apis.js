@@ -1,50 +1,50 @@
-// 测试VLStream-server的API
+// Test VLStream-server APIs
 async function testVLStreamAPIs() {
   const currentToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token')
   
-  console.log('🔍 测试VLStream-server API')
-  console.log('当前token:', currentToken)
+  console.log('🔍 Testing VLStream-server API')
+  console.log('Current token:', currentToken)
   console.log('')
   
   const testAPIs = [
     {
-      name: 'VLStream设备列表API（直接访问）',
+      name: 'VLStream device list API (direct access)',
       url: 'http://oort.oortcloudsmart.com:21410/bus/vls-server/device/page',
       method: 'GET',
       params: { current: 1, size: 10 }
     },
     {
-      name: 'VLStream设备列表API（带api前缀）',
+      name: 'VLStream device list API (with api prefix)',
       url: 'http://oort.oortcloudsmart.com:21410/bus/vls-server/api/device/page',
       method: 'GET',
       params: { current: 1, size: 10 }
     },
     {
-      name: 'VLStream用户同步API',
+      name: 'VLStream user sync API',
       url: 'http://oort.oortcloudsmart.com:21410/bus/vls-server/api/user/sync',
       method: 'POST',
       data: {
-        userName: '周亮',
+        userName: 'Zhou Liang',
         userId: '751fc4b0-81b4-4fe2-940b-ac18d7bc3439',
         tenantId: '0e391fd7-1033-4f09-88c0-187582fee462',
         accessToken: currentToken
       }
     },
     {
-      name: 'VLStream租户列表API',
+      name: 'VLStream tenant list API',
       url: 'http://oort.oortcloudsmart.com:21410/bus/vls-server/auth/getTenantList',
       method: 'POST',
       data: { accessToken: currentToken }
     },
     {
-      name: 'VLStream健康检查',
+      name: 'VLStream health check',
       url: 'http://oort.oortcloudsmart.com:21410/bus/vls-server/auth/health',
       method: 'GET'
     }
   ]
   
   for (const api of testAPIs) {
-    console.log(`\n=== 测试: ${api.name} ===`)
+    console.log(`\n=== Test: ${api.name} ===`)
     console.log('URL:', api.url)
     console.log('Method:', api.method)
     
@@ -80,43 +80,43 @@ async function testVLStreamAPIs() {
         })
       }
       
-      console.log(`响应状态: ${response.status}`)
+      console.log(`Response status: ${response.status}`)
       
       if (response.ok) {
         const data = await response.json()
-        console.log('✅ 请求成功！')
-        console.log('响应数据:', data)
+        console.log('✅ Request successful!')
+        console.log('Response data:', data)
       } else {
         const errorData = await response.json()
-        console.log('❌ 请求失败！')
-        console.log('错误信息:', errorData)
+        console.log('❌ Request failed!')
+        console.log('Error message:', errorData)
         
-        // 分析错误类型
+        // Analyze error type
         if (errorData.code === 4004) {
-          console.log('🔍 错误分析: accessToken无效.校验不通过')
-          console.log('可能原因:')
-          console.log('1. VLStream-server没有全局认证拦截器')
-          console.log('2. 需要手动在每个API中验证token')
-          console.log('3. 路径映射问题')
+          console.log('🔍 Error analysis: accessToken invalid. Validation failed')
+          console.log('Possible reasons:')
+          console.log('1. VLStream-server has no global authentication interceptor')
+          console.log('2. Need to manually verify token in each API')
+          console.log('3. Path mapping issue')
         } else if (errorData.code === 503) {
-          console.log('🔍 错误分析: 服务不可用')
-          console.log('可能原因:')
-          console.log('1. VLStream-server服务未启动')
-          console.log('2. 网关路由配置问题')
-          console.log('3. 服务注册问题')
+          console.log('🔍 Error analysis: Service unavailable')
+          console.log('Possible reasons:')
+          console.log('1. VLStream-server service not started')
+          console.log('2. Gateway routing configuration issue')
+          console.log('3. Service registration issue')
         }
       }
       
     } catch (error) {
-      console.log(`❌ 请求异常: ${error.message}`)
+      console.log(`❌ Request exception: ${error.message}`)
     }
   }
   
-  console.log('\n📝 测试总结:')
-  console.log('- 如果所有API都返回503错误，说明VLStream-server服务未启动或网关路由有问题')
-  console.log('- 如果部分API返回4004错误，说明需要添加全局认证拦截器')
-  console.log('- 如果路径带/api前缀的API失败，说明路径映射配置有问题')
+  console.log('\n📝 Test summary:')
+  console.log('- If all APIs return 503 error, VLStream-server service is not started or gateway routing has issues')
+  console.log('- If some APIs return 4004 error, need to add global authentication interceptor')
+  console.log('- If APIs with /api prefix fail, path mapping configuration has issues')
 }
 
-// 运行测试
+// Run test
 testVLStreamAPIs().catch(console.error) 
