@@ -9,8 +9,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * 安全头部过滤器
- * 添加SharedArrayBuffer所需的CORS头部
+ * Security Headers Filter
+ * Adds CORS headers required for SharedArrayBuffer
  */
 @Component
 @Order(1)
@@ -22,21 +22,21 @@ public class SecurityHeadersFilter implements Filter {
         
         HttpServletResponse httpResponse = (HttpServletResponse) response;
         
-        // 添加SharedArrayBuffer所需的CORS头部
+        // Add CORS headers required for SharedArrayBuffer
         httpResponse.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
         httpResponse.setHeader("Cross-Origin-Opener-Policy", "same-origin");
         
-        // 继续过滤器链
+        // Continue filter chain
         chain.doFilter(request, response);
     }
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-        // 初始化方法
+        // Initialization method
     }
 
     @Override
     public void destroy() {
-        // 销毁方法
+        // Destroy method
     }
 } 

@@ -8,7 +8,7 @@ import com.vlstream.entity.AlgorithmRepository;
 import java.util.List;
 
 /**
- * 算法仓库服务接口
+ * Algorithm Repository Service Interface
  * 
  * @author VLStream Team
  * @since 1.0.0
@@ -16,13 +16,13 @@ import java.util.List;
 public interface AlgorithmRepositoryService extends IService<AlgorithmRepository> {
 
     /**
-     * 分页查询算法仓库列表
+     * Query algorithm repository list with pagination
      * 
-     * @param page 分页参数
-     * @param name 仓库名称（模糊查询）
-     * @param repositoryType 仓库类型
-     * @param status 状态
-     * @return 分页结果
+     * @param page Pagination parameter
+     * @param name Repository name (fuzzy query)
+     * @param repositoryType Repository type
+     * @param status Status
+     * @return Pagination result
      */
     IPage<AlgorithmRepository> selectRepositoryPage(Page<AlgorithmRepository> page, 
                                                    String name, 
@@ -30,81 +30,81 @@ public interface AlgorithmRepositoryService extends IService<AlgorithmRepository
                                                    String status);
 
     /**
-     * 查询所有启用的算法仓库
+     * Query all enabled algorithm repositories
      * 
-     * @return 启用的算法仓库列表
+     * @return Enabled algorithm repository list
      */
     List<AlgorithmRepository> getEnabledRepositories();
 
     /**
-     * 根据类型查询算法仓库
+     * Query algorithm repositories by type
      * 
-     * @param repositoryType 仓库类型
-     * @return 算法仓库列表
+     * @param repositoryType Repository type
+     * @return Algorithm repository list
      */
     List<AlgorithmRepository> getByRepositoryType(String repositoryType);
 
     /**
-     * 创建算法仓库
+     * Create algorithm repository
      * 
-     * @param repository 算法仓库信息
-     * @return 是否成功
+     * @param repository Algorithm repository information
+     * @return Whether successful
      */
     boolean createRepository(AlgorithmRepository repository);
 
     /**
-     * 更新算法仓库
+     * Update algorithm repository
      * 
-     * @param repository 算法仓库信息
-     * @return 是否成功
+     * @param repository Algorithm repository information
+     * @return Whether successful
      */
     boolean updateRepository(AlgorithmRepository repository);
 
     /**
-     * 删除算法仓库
+     * Delete algorithm repository
      * 
-     * @param id 仓库ID
-     * @return 是否成功
+     * @param id Repository ID
+     * @return Whether successful
      */
     boolean deleteRepository(Long id);
 
     /**
-     * 批量删除算法仓库
+     * Batch delete algorithm repositories
      * 
-     * @param ids 仓库ID列表
-     * @return 是否成功
+     * @param ids Repository ID list
+     * @return Whether successful
      */
     boolean batchDeleteRepositories(List<Long> ids);
 
     /**
-     * 更新仓库状态
+     * Update repository status
      * 
-     * @param id 仓库ID
-     * @param status 新状态
-     * @return 是否成功
+     * @param id Repository ID
+     * @param status New status
+     * @return Whether successful
      */
     boolean updateRepositoryStatus(Long id, String status);
 
     /**
-     * 批量更新仓库状态
+     * Batch update repository status
      * 
-     * @param ids 仓库ID列表
-     * @param status 新状态
-     * @return 是否成功
+     * @param ids Repository ID list
+     * @param status New status
+     * @return Whether successful
      */
     boolean batchUpdateRepositoryStatus(List<Long> ids, String status);
 
     /**
-     * 统计算法仓库数量
+     * Count algorithm repositories
      * 
-     * @return 仓库总数
+     * @return Total repository count
      */
     Long countRepositories();
 
     /**
-     * 更新仓库的算法数量
+     * Update algorithm count for repository
      * 
-     * @param repositoryId 仓库ID
+     * @param repositoryId Repository ID
      */
     void updateAlgorithmCount(Long repositoryId);
 } 

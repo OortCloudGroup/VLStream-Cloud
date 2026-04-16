@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 设备信息服务层接口
+ * Device Info Service Interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -18,13 +18,13 @@ import java.util.Map;
 public interface DeviceInfoService extends IService<DeviceInfo> {
 
     /**
-     * 分页查询设备信息
+     * Query device info with pagination
      *
-     * @param page       分页对象
-     * @param deviceName 设备名称或设备ID
-     * @param tag        设备标签（实际对应device_type字段）
-     * @param status     设备状态
-     * @return 设备信息分页列表
+     * @param page       Pagination object
+     * @param deviceName Device name or device ID
+     * @param tag        Device tag (actually corresponds to device_type field)
+     * @param status     Device status
+     * @return Device info pagination list
      */
     IPage<DeviceInfo> getDevicePage(Page<DeviceInfo> page,
                                    String deviceName,
@@ -32,26 +32,26 @@ public interface DeviceInfoService extends IService<DeviceInfo> {
                                    String status);
 
     /**
-     * 根据设备编号查询设备信息
+     * Query device info by device ID
      *
-     * @param deviceId 设备编号
-     * @return 设备信息
+     * @param deviceId Device ID
+     * @return Device info
      */
     DeviceInfo getByDeviceId(String deviceId);
 
     /**
-     * 新增设备信息
+     * Add device info
      *
-     * @param deviceInfo 设备信息
-     * @return 是否成功
+     * @param deviceInfo Device info
+     * @return Whether successful
      */
     boolean addDevice(DeviceInfo deviceInfo);
 
     /**
-     * 更新设备信息
+     * Update device info
      *
-     * @param deviceInfo 设备信息
-     * @return 是否成功
+     * @param deviceInfo Device info
+     * @return Whether successful
      */
     boolean updateDevice(DeviceInfo deviceInfo);
 
@@ -65,177 +65,177 @@ public interface DeviceInfoService extends IService<DeviceInfo> {
     boolean dispatchAlgorithms(Long algorithmId, String deviceIds);
 
     /**
-     * 删除设备信息
+     * Delete device info
      *
-     * @param id 设备ID
-     * @return 是否成功
+     * @param id Device ID
+     * @return Whether successful
      */
     boolean deleteDevice(Long id);
 
     /**
-     * 批量删除设备信息
+     * Batch delete device info
      *
-     * @param ids 设备ID列表
-     * @return 是否成功
+     * @param ids Device ID list
+     * @return Whether successful
      */
     boolean deleteDeviceBatch(List<Long> ids);
 
     /**
-     * 更新设备状态
+     * Update device status
      *
-     * @param id     设备ID
-     * @param status 状态
-     * @return 是否成功
+     * @param id     Device ID
+     * @param status Status
+     * @return Whether successful
      */
     boolean updateDeviceStatus(Long id, String status);
 
     /**
-     * 批量更新设备状态
+     * Batch update device status
      *
-     * @param ids    设备ID列表
-     * @param status 状态
-     * @return 是否成功
+     * @param ids    Device ID list
+     * @param status Status
+     * @return Whether successful
      */
     boolean updateDeviceStatusBatch(List<Long> ids, String status);
 
     /**
-     * 根据状态获取设备列表
+     * Get device list by status
      *
-     * @param status 设备状态
-     * @return 设备列表
+     * @param status Device status
+     * @return Device list
      */
     List<DeviceInfo> getDevicesByStatus(String status);
 
     /**
-     * 根据设备类型获取设备列表
+     * Get device list by device type
      *
-     * @param deviceType 设备类型
-     * @return 设备列表
+     * @param deviceType Device type
+     * @return Device list
      */
     List<DeviceInfo> getDevicesByType(String deviceType);
 
     /**
-     * 根据品牌获取设备列表
+     * Get device list by brand
      *
-     * @param brand 设备品牌
-     * @return 设备列表
+     * @param brand Device brand
+     * @return Device list
      */
     List<DeviceInfo> getDevicesByBrand(String brand);
 
     /**
-     * 根据位置获取设备列表
+     * Get device list by position
      *
-     * @param position 设备位置
-     * @return 设备列表
+     * @param position Device position
+     * @return Device list
      */
     List<DeviceInfo> getDevicesByPosition(String position);
 
     /**
-     * 检查设备编号是否存在
+     * Check if device ID exists
      *
-     * @param deviceId 设备编号
-     * @return 是否存在
+     * @param deviceId Device ID
+     * @return Whether exists
      */
     boolean checkDeviceIdExists(String deviceId);
 
     /**
-     * 测试设备连接
+     * Test device connection
      *
-     * @param id 设备ID
-     * @return 连接结果
+     * @param id Device ID
+     * @return Connection result
      */
     Map<String, Object> testDeviceConnection(Long id);
 
     /**
-     * 获取设备统计信息
+     * Get device statistics
      *
-     * @return 统计信息
+     * @return Statistics
      */
     Map<String, Object> getDeviceStatistics();
 
     /**
-     * 获取所有设备类型列表（用于标签列表）
+     * Get all device type list (for tag list)
      *
-     * @return 设备类型列表
+     * @return Device type list
      */
     List<String> getAllTags();
 
     /**
-     * 获取所有设备品牌列表
+     * Get all device brand list
      *
-     * @return 品牌列表
+     * @return Brand list
      */
     List<String> getAllBrands();
 
     /**
-     * 验证设备配置
+     * Validate device configuration
      *
-     * @param deviceInfo 设备信息
-     * @return 验证结果
+     * @param deviceInfo Device info
+     * @return Validation result
      */
     Map<String, Object> validateDevice(DeviceInfo deviceInfo);
 
     /**
-     * 刷新设备状态
+     * Refresh device status
      *
-     * @param deviceId 设备ID
-     * @return 刷新结果
+     * @param deviceId Device ID
+     * @return Refresh result
      */
     Map<String, Object> refreshDeviceStatus(Long deviceId);
 
     /**
-     * 批量导入设备
+     * Batch import devices
      *
-     * @param deviceList 设备列表
-     * @return 导入结果
+     * @param deviceList Device list
+     * @return Import result
      */
     Map<String, Object> batchImportDevices(List<DeviceInfo> deviceList);
 
     /**
-     * 导出设备信息
+     * Export device info
      *
-     * @param deviceIds 设备ID列表，为空时导出所有设备
-     * @return 导出数据
+     * @param deviceIds Device ID list, export all devices when empty
+     * @return Export data
      */
     List<DeviceInfo> exportDevices(List<Long> deviceIds);
 
     /**
-     * 获取设备配置参数
+     * Get device configuration parameters
      *
-     * @param deviceId 设备ID
-     * @return 配置参数
+     * @param deviceId Device ID
+     * @return Configuration parameters
      */
     Map<String, Object> getDeviceConfig(Long deviceId);
 
     /**
-     * 更新设备配置参数
+     * Update device configuration parameters
      *
-     * @param deviceId 设备ID
-     * @param config 配置参数
-     * @return 是否成功
+     * @param deviceId Device ID
+     * @param config Configuration parameters
+     * @return Whether successful
      */
     boolean updateDeviceConfig(Long deviceId, Map<String, Object> config);
 
     /**
-     * PTZ控制
+     * PTZ control
      *
-     * @param deviceId 设备ID
-     * @param command PTZ命令
-     * @param params 参数
-     * @return 控制结果
+     * @param deviceId Device ID
+     * @param command PTZ command
+     * @param params Parameters
+     * @return Control result
      */
     Map<String, Object> ptzControl(Long deviceId, String command, Map<String, Object> params);
 
     /**
-     * 获取设备视频流信息
+     * Get device video stream info
      *
-     * @param deviceId 设备ID
-     * @return 视频流信息
+     * @param deviceId Device ID
+     * @return Video stream info
      */
     Map<String, Object> getVideoStreamInfo(Long deviceId);
 
     /**
-     * 设备统计信息
+     * Device statistics
      */
     @Data
     class DeviceStatistics {

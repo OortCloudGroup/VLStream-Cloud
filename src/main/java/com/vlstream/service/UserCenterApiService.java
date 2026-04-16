@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 统一用户中心API服务
+ * Unified user center API service
  */
 @Slf4j
 @Service
@@ -41,7 +41,7 @@ public class UserCenterApiService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     /**
-     * 验证Token
+     * Verify token
      */
     public UserCenterUser verifyToken(String accessToken) {
         try {
@@ -155,7 +155,7 @@ public class UserCenterApiService {
     }
 
     /**
-     * 获取用户信息
+     * Get user information
      */
     public UserCenterUser getUserInfo(String accessToken) {
         try {
@@ -206,7 +206,7 @@ public class UserCenterApiService {
     }
 
     /**
-     * 根据租户短语获取租户ID
+     * Get tenant ID by phrase
      */
     public String getTenantIdByPhrase(String phrase) {
         try {
@@ -257,7 +257,7 @@ public class UserCenterApiService {
     }
 
     /**
-     * 用户登录
+     * User login
      */
     public UserCenterUser login(JSONObject loginData) {
         try {
@@ -346,7 +346,7 @@ public class UserCenterApiService {
     }
 
     /**
-     * 用户退出
+     * User logout
      */
     public boolean logout(String accessToken) {
         try {
@@ -379,7 +379,7 @@ public class UserCenterApiService {
     }
 
     /**
-     * 验证用户权限
+     * Verify user permission
      */
     public boolean verifyUserPermission(String accessToken, String serviceName, String pauth, String auth, String doAction) {
         try {
@@ -416,7 +416,7 @@ public class UserCenterApiService {
     }
 
     /**
-     * 获取用户租户列表
+     * Get user tenant list
      */
     public Map<String, Object> getTenantList(String accessToken, Boolean isChild) {
         try {

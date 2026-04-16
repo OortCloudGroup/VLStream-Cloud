@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * 文件工具类
+ * File utility class
  */
 public class FileUtils {
     
@@ -27,7 +27,7 @@ public class FileUtils {
     );
     
     /**
-     * 检查文件是否为图片
+     * Check if the file is an image
      */
     public static boolean isImageFile(MultipartFile file) {
         String contentType = file.getContentType();
@@ -48,7 +48,7 @@ public class FileUtils {
     }
     
     /**
-     * 获取文件扩展名
+     * Get file extension
      */
     public static String getFileExtension(String filename) {
         if (filename == null || filename.isEmpty()) {
@@ -62,7 +62,7 @@ public class FileUtils {
     }
     
     /**
-     * 生成唯一文件名
+     * Generate unique file name
      */
     public static String generateUniqueFileName(String originalFilename) {
         String extension = getFileExtension(originalFilename);
@@ -70,7 +70,7 @@ public class FileUtils {
     }
     
     /**
-     * 创建目录
+     * Create directories
      */
     public static void createDirectories(String path) throws IOException {
         Path dirPath = Paths.get(path);
@@ -80,7 +80,7 @@ public class FileUtils {
     }
     
     /**
-     * 删除文件
+     * Delete file
      */
     public static boolean deleteFile(String filePath) {
         try {
@@ -92,7 +92,7 @@ public class FileUtils {
     }
     
     /**
-     * 获取文件大小的可读格式
+     * Get human-readable file size format
      */
     public static String formatFileSize(long size) {
         if (size < 1024) {
@@ -107,7 +107,7 @@ public class FileUtils {
     }
     
     /**
-     * 检查文件名是否安全
+     * Check if the file name is safe
      */
     public static boolean isSafeFileName(String filename) {
         if (filename == null || filename.trim().isEmpty()) {
@@ -126,7 +126,7 @@ public class FileUtils {
     }
     
     /**
-     * 清理文件名
+     * Sanitize file name
      */
     public static String sanitizeFileName(String filename) {
         if (filename == null) {

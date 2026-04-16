@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 时间策略实体类
+ * Time Strategy Entity Class
  */
 @Data
 @Accessors(chain = true)
@@ -30,50 +30,50 @@ public class TimeStrategy {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     
     /**
-     * 主键ID
+     * Primary key ID
      */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
     
     /**
-     * 设备ID
+     * Device ID
      */
     private String deviceId;
     
     /**
-     * 策略类型：everyday-每天, weekly-每周
+     * Strategy type: everyday-daily, weekly-weekly
      */
     private String strategyType;
     
     /**
-     * 每天模式的时间段，存储为JSON字符串
+     * Daily time periods, stored as JSON string
      */
     @TableField("daily_times")
     @JsonIgnore
     private String dailyTimesJson;
     
     /**
-     * 每周模式的时间段，存储为JSON字符串
+     * Weekly time periods, stored as JSON string
      */
     @TableField("weekly_times")
     @JsonIgnore
     private String weeklyTimesJson;
     
     /**
-     * 创建时间
+     * Creation time
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
     
     /**
-     * 更新时间
+     * Update time
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
     
-    // 业务字段（不映射到数据库）
+    // Business fields (not mapped to database)
     @TableField(exist = false)
     private List<Integer> dailyTimes;
     
@@ -81,7 +81,7 @@ public class TimeStrategy {
     private Map<String, List<Integer>> weeklyTimes;
     
     /**
-     * 获取每天时间段
+     * Get daily time periods
      */
     public List<Integer> getDailyTimes() {
         if (dailyTimes == null && dailyTimesJson != null && !dailyTimesJson.trim().isEmpty()) {
@@ -95,7 +95,7 @@ public class TimeStrategy {
     }
     
     /**
-     * 设置每天时间段
+     * Set daily time periods
      */
     public void setDailyTimes(List<Integer> dailyTimes) {
         this.dailyTimes = dailyTimes;
@@ -107,7 +107,7 @@ public class TimeStrategy {
     }
     
     /**
-     * 获取每周时间段
+     * Get weekly time periods
      */
     public Map<String, List<Integer>> getWeeklyTimes() {
         if (weeklyTimes == null && weeklyTimesJson != null && !weeklyTimesJson.trim().isEmpty()) {
@@ -121,7 +121,7 @@ public class TimeStrategy {
     }
     
     /**
-     * 设置每周时间段
+     * Set weekly time periods
      */
     public void setWeeklyTimes(Map<String, List<Integer>> weeklyTimes) {
         this.weeklyTimes = weeklyTimes;

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 视频录制记录服务接口
+ * Video recording record service interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -19,7 +19,7 @@ import java.util.Map;
 public interface VideoRecordService extends IService<VideoRecord> {
 
     /**
-     * 分页查询视频录制记录
+     * Query video recording records with pagination
      */
     IPage<VideoRecord> pageVideoRecords(
             Page<VideoRecord> page,
@@ -34,107 +34,107 @@ public interface VideoRecordService extends IService<VideoRecord> {
     );
 
     /**
-     * 根据设备ID查询指定日期的录制记录
+     * Query recording records by device ID and date
      */
     List<VideoRecord> getRecordsByDeviceAndDate(Long deviceId, LocalDate recordDate);
 
     /**
-     * 根据设备ID查询指定时间范围的录制记录
+     * Query recording records by device ID and time range
      */
     List<VideoRecord> getRecordsByDeviceAndTimeRange(Long deviceId, LocalDateTime startTime, LocalDateTime endTime);
 
     /**
-     * 开始录制视频
+     * Start video recording
      */
     VideoRecord startRecording(Long deviceId, String deviceName, Integer duration, String quality);
 
     /**
-     * 停止录制视频
+     * Stop video recording
      */
     boolean stopRecording(Long recordId);
 
     /**
-     * 完成录制（更新录制状态和文件信息）
+     * Complete recording (update recording status and file information)
      */
     boolean completeRecording(Long recordId, String filePath, Long fileSize, Integer duration, String thumbnailPath);
 
     /**
-     * 标记录制失败
+     * Mark recording as failed
      */
     boolean markRecordingFailed(Long recordId, String errorMessage);
 
     /**
-     * 删除录制记录（软删除）
+     * Delete recording record (soft delete)
      */
     boolean deleteRecord(Long recordId);
 
     /**
-     * 批量删除录制记录
+     * Batch delete recording records
      */
     boolean batchDeleteRecords(List<Long> recordIds);
 
     /**
-     * 获取设备录制统计信息
+     * Get device recording statistics
      */
     List<Map<String, Object>> getDeviceRecordStatistics(Long deviceId, LocalDate startDate, LocalDate endDate);
 
     /**
-     * 获取日期统计信息
+     * Get date statistics
      */
     List<Map<String, Object>> getDateStatistics(Long deviceId, LocalDate startDate, LocalDate endDate);
 
     /**
-     * 获取正在录制的视频记录
+     * Get currently recording video records
      */
     List<VideoRecord> getRecordingVideos();
 
     /**
-     * 获取设备最新的录制记录
+     * Get latest recording record by device
      */
     VideoRecord getLatestRecordByDevice(Long deviceId);
 
     /**
-     * 根据文件路径查询录制记录
+     * Query recording record by file path
      */
     VideoRecord getRecordByFilePath(String filePath);
 
     /**
-     * 批量更新录制状态
+     * Batch update recording status
      */
     boolean batchUpdateStatus(List<Long> recordIds, String newStatus, String updatedBy);
 
     /**
-     * 获取存储空间统计
+     * Get storage statistics
      */
     Map<String, Object> getStorageStatistics(Long deviceId);
 
     /**
-     * 清理过期的录制记录
+     * Clean up expired recording records
      */
     int cleanupExpiredRecords();
 
     /**
-     * 获取录制记录的播放URL
+     * Get playback URL for recording record
      */
     String getPlaybackUrl(Long recordId);
 
     /**
-     * 生成视频缩略图
+     * Generate video thumbnail
      */
     String generateThumbnail(String videoPath);
 
     /**
-     * 验证录制文件完整性
+     * Validate recording file integrity
      */
     boolean validateRecordFile(String filePath);
 
     /**
-     * 统计录制记录数量
+     * Count recording records
      */
     RecordStatistics getRecordStatistics(Long deviceId, LocalDate startDate, LocalDate endDate);
 
     /**
-     * 录制统计信息类
+     * Recording statistics class
      */
     class RecordStatistics {
         private Long totalRecords;

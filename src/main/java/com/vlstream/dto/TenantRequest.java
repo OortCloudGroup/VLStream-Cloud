@@ -3,13 +3,13 @@ package com.vlstream.dto;
 import lombok.Data;
 
 /**
- * 租户请求DTO
+ * Tenant Request DTO
  */
 @Data
 public class TenantRequest {
     
     /**
-     * 租户短语
+     * Tenant phrase
      */
     private String phrase;
     

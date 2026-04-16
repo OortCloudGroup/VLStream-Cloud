@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * VLStream Cloud 后端服务启动类
+ * VLStream Cloud backend service startup class
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -22,6 +22,6 @@ public class VLStreamServerApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(VLStreamServerApplication.class, args);
-        System.out.println("============ VLStream Cloud 后端服务启动成功 ============");
+        System.out.println("============ VLStream Cloud backend service started successfully ============");
     }
 } 

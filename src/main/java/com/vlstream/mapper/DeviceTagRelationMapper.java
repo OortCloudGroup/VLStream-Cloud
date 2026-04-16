@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 设备标签关联数据访问层接口
+ * Device Tag Relation Data Access Layer Interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -21,10 +21,10 @@ import java.util.Map;
 public interface DeviceTagRelationMapper extends BaseMapper<DeviceTagRelation> {
 
     /**
-     * 根据设备ID获取标签信息
+     * Get tag information by device ID
      *
-     * @param deviceId 设备ID
-     * @return 标签信息列表
+     * @param deviceId Device ID
+     * @return Tag information list
      */
     @Select("SELECT " +
             "dtr.id, dtr.device_id, dtr.tag_id, dtr.created_by, dtr.create_time, " +
@@ -36,10 +36,10 @@ public interface DeviceTagRelationMapper extends BaseMapper<DeviceTagRelation> {
     List<DeviceTagRelation> selectTagsByDeviceId(@Param("deviceId") Long deviceId);
 
     /**
-     * 根据标签ID获取设备列表
+     * Get device list by tag ID
      *
-     * @param tagId 标签ID
-     * @return 设备标签关联列表
+     * @param tagId Tag ID
+     * @return Device tag relation list
      */
     @Select("SELECT " +
             "dtr.id, dtr.device_id, dtr.tag_id, dtr.created_by, dtr.create_time, " +
@@ -51,12 +51,12 @@ public interface DeviceTagRelationMapper extends BaseMapper<DeviceTagRelation> {
     List<Map<String, Object>> selectDevicesByTagId(@Param("tagId") Long tagId);
 
     /**
-     * 批量添加设备标签关联
+     * Batch add device tag relations
      *
-     * @param deviceId 设备ID
-     * @param tagIds 标签ID列表
-     * @param createdBy 创建人
-     * @return 插入数量
+     * @param deviceId Device ID
+     * @param tagIds Tag ID list
+     * @param createdBy Creator
+     * @return Insert count
      */
     @Insert("<script>" +
             "INSERT INTO device_tag_relation (device_id, tag_id, created_by) VALUES " +
@@ -69,20 +69,20 @@ public interface DeviceTagRelationMapper extends BaseMapper<DeviceTagRelation> {
                              @Param("createdBy") String createdBy);
 
     /**
-     * 删除设备的所有标签关联
+     * Delete all tag relations for a device
      *
-     * @param deviceId 设备ID
-     * @return 删除数量
+     * @param deviceId Device ID
+     * @return Delete count
      */
     @Delete("DELETE FROM device_tag_relation WHERE device_id = #{deviceId}")
     int deleteByDeviceId(@Param("deviceId") Long deviceId);
 
     /**
-     * 删除设备的指定标签关联
+     * Delete specified tag relations for a device
      *
-     * @param deviceId 设备ID
-     * @param tagIds 标签ID列表
-     * @return 删除数量
+     * @param deviceId Device ID
+     * @param tagIds Tag ID list
+     * @return Delete count
      */
     @Delete("<script>" +
             "DELETE FROM device_tag_relation " +
@@ -94,9 +94,9 @@ public interface DeviceTagRelationMapper extends BaseMapper<DeviceTagRelation> {
     int deleteDeviceTagsBatch(@Param("deviceId") Long deviceId, @Param("tagIds") List<Long> tagIds);
 
     /**
-     * 获取设备标签统计信息
+     * Get device tag statistics
      *
-     * @return 统计信息
+     * @return Statistics
      */
     @Select("SELECT " +
             "device_id, " +
@@ -110,9 +110,9 @@ public interface DeviceTagRelationMapper extends BaseMapper<DeviceTagRelation> {
     List<Map<String, Object>> getDeviceTagStatistics();
 
     /**
-     * 获取标签使用统计
+     * Get tag usage statistics
      *
-     * @return 标签使用统计
+     * @return Tag usage statistics
      */
     @Select("SELECT " +
             "tm.id as tag_id, " +
@@ -129,10 +129,10 @@ public interface DeviceTagRelationMapper extends BaseMapper<DeviceTagRelation> {
     List<Map<String, Object>> getTagUsageStatistics();
 
     /**
-     * 根据多个标签查询设备（交集）
+     * Query devices by multiple tags (intersection)
      *
-     * @param tagIds 标签ID列表
-     * @return 设备ID列表
+     * @param tagIds Tag ID list
+     * @return Device ID list
      */
     @Select("<script>" +
             "SELECT device_id " +
@@ -147,10 +147,10 @@ public interface DeviceTagRelationMapper extends BaseMapper<DeviceTagRelation> {
     List<Long> findDevicesByAllTags(@Param("tagIds") List<Long> tagIds);
 
     /**
-     * 根据多个标签查询设备（并集）
+     * Query devices by multiple tags (union)
      *
-     * @param tagIds 标签ID列表
-     * @return 设备ID列表
+     * @param tagIds Tag ID list
+     * @return Device ID list
      */
     @Select("<script>" +
             "SELECT DISTINCT device_id " +
@@ -163,47 +163,47 @@ public interface DeviceTagRelationMapper extends BaseMapper<DeviceTagRelation> {
     List<Long> findDevicesByAnyTags(@Param("tagIds") List<Long> tagIds);
 
     /**
-     * 检查设备是否已有指定标签
+     * Check if device already has specified tag
      *
-     * @param deviceId 设备ID
-     * @param tagId 标签ID
-     * @return 数量
+     * @param deviceId Device ID
+     * @param tagId Tag ID
+     * @return Count
      */
     @Select("SELECT COUNT(*) FROM device_tag_relation WHERE device_id = #{deviceId} AND tag_id = #{tagId}")
     int checkDeviceTagExists(@Param("deviceId") Long deviceId, @Param("tagId") Long tagId);
 
     /**
-     * 获取设备的标签ID列表
+     * Get tag ID list for a device
      *
-     * @param deviceId 设备ID
-     * @return 标签ID列表
+     * @param deviceId Device ID
+     * @return Tag ID list
      */
     @Select("SELECT tag_id FROM device_tag_relation WHERE device_id = #{deviceId}")
     List<Long> selectTagIdsByDeviceId(@Param("deviceId") Long deviceId);
 
     /**
-     * 获取使用某个标签的设备数量
+     * Get device count for a tag
      *
-     * @param tagId 标签ID
-     * @return 设备数量
+     * @param tagId Tag ID
+     * @return Device count
      */
     @Select("SELECT COUNT(*) FROM device_tag_relation WHERE tag_id = #{tagId}")
     int countDevicesByTagId(@Param("tagId") Long tagId);
 
     /**
-     * 根据标签ID删除所有相关的设备标签关联
+     * Delete all device tag relations for a tag ID
      *
-     * @param tagId 标签ID
-     * @return 删除数量
+     * @param tagId Tag ID
+     * @return Delete count
      */
     @Delete("DELETE FROM device_tag_relation WHERE tag_id = #{tagId}")
     int deleteByTagId(@Param("tagId") Long tagId);
 
     /**
-     * 根据标签ID获取设备标签关联列表（用于TagManagementServiceImpl兼容）
+     * Get device tag relation list by tag ID (for TagManagementServiceImpl compatibility)
      *
-     * @param tagId 标签ID
-     * @return 设备标签关联列表
+     * @param tagId Tag ID
+     * @return Device tag relation list
      */
     @Select("SELECT " +
             "dtr.id, dtr.device_id, dtr.tag_id, dtr.created_by, dtr.create_time " +

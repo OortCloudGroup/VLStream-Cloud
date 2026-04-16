@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * 日期工具类
+ * Date utility class
  */
 public class DateUtils {
     
@@ -21,7 +21,7 @@ public class DateUtils {
             "yyyy.MM.dd", "yyyy.MM.dd HH:mm:ss", "yyyy.MM.dd HH:mm", "yyyy.MM"};
     
     /**
-     * 日期型字符串转化为日期 格式
+     * Convert date string to date format
      */
     public static Date parseDate(Object str) {
         if (str == null) {
@@ -35,7 +35,7 @@ public class DateUtils {
     }
     
     /**
-     * 解析日期字符串
+     * Parse date string
      */
     public static Date parseDate(String str, String... parsePatterns) throws ParseException {
         if (str == null || parsePatterns == null) {

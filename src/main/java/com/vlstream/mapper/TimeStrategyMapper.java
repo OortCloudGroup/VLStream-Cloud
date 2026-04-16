@@ -5,7 +5,7 @@ import com.vlstream.entity.TimeStrategy;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 时间策略Mapper接口
+ * Time Strategy Mapper Interface
  */
 @Mapper
 public interface TimeStrategyMapper extends BaseMapper<TimeStrategy> {

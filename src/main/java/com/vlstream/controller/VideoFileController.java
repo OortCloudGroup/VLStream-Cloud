@@ -24,10 +24,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * 视频文件控制器
- * 提供视频文件的HTTP访问
+ * Video File Controller
+ * Provides HTTP access to video files
  */
-@Api(tags = "视频文件管理")
+@Api(tags = "Video File Management")
 @RestController
 @RequestMapping("/api/recordings")
 @Slf4j
@@ -36,27 +36,27 @@ public class VideoFileController {
     @Value("${recording.storage.path:./recordings}")
     private String recordingStoragePath;
 
-    @ApiOperation("获取视频文件")
+    @ApiOperation("Get video file")
     @GetMapping("/**")
     public ResponseEntity<Resource> getVideoFile(
-            @ApiParam("文件路径") @RequestParam(required = false) String filePath,
+            @ApiParam("File path") @RequestParam(required = false) String filePath,
             HttpServletRequest request
     ) {
         try {
-            // 从请求URI中提取文件路径
+            // Extract file path from request URI
             String requestURI = request.getRequestURI();
             String encodedRelativePath = requestURI.substring(requestURI.indexOf("/recordings/") + "/recordings/".length());
             
-            // 对URL编码的路径进行解码，处理中文文件名
+            // Decode URL-encoded path to handle Chinese filenames
             String relativePath;
             try {
                 relativePath = URLDecoder.decode(encodedRelativePath, "UTF-8");
             } catch (UnsupportedEncodingException e) {
-                log.error("URL解码失败: {}", encodedRelativePath, e);
+                log.error("URL decode failed: {}", encodedRelativePath, e);
                 return ResponseEntity.badRequest().build();
             }
             
-            // 构建完整的文件路径
+            // Build complete file path
             Path fullPath = Paths.get(recordingStoragePath, relativePath);
             File file = fullPath.toFile();
             
@@ -75,20 +75,20 @@ public class VideoFileController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
             
-            // 创建资源
+            // Create resource
             Resource resource = new FileSystemResource(file);
             
-            // 设置响应头
+            // Set response headers
             HttpHeaders headers = new HttpHeaders();
             
-            // 根据文件扩展名设置Content-Type
+            // Set Content-Type based on file extension
             String contentType = getContentType(file.getName());
             headers.setContentType(MediaType.parseMediaType(contentType));
             
-            // 设置文件名
+            // Set filename
             headers.setContentDispositionFormData("inline", file.getName());
             
-            // 设置缓存
+            // Set cache
             headers.setCacheControl("public, max-age=3600");
             
             log.info("Successfully serving video file: {}", fullPath);
@@ -104,7 +104,7 @@ public class VideoFileController {
     }
     
     /**
-     * 根据文件名获取Content-Type
+     * Get Content-Type based on filename
      */
     private String getContentType(String filename) {
         String extension = filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();

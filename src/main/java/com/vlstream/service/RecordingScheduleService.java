@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 录制计划服务接口
+ * Recording schedule service interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -15,67 +15,67 @@ import java.util.List;
 public interface RecordingScheduleService extends IService<RecordingSchedule> {
 
     /**
-     * 根据设备ID查询启用的录制计划
+     * Query enabled recording schedules by device ID
      */
     List<RecordingSchedule> getEnabledSchedulesByDevice(Long deviceId);
 
     /**
-     * 查询所有启用的录制计划
+     * Query all enabled recording schedules
      */
     List<RecordingSchedule> getAllEnabledSchedules();
 
     /**
-     * 查询需要执行的录制计划
+     * Query recording schedules that need to be executed
      */
     List<RecordingSchedule> getSchedulesToExecute();
 
     /**
-     * 根据时间策略ID查询录制计划
+     * Query recording schedules by time strategy ID
      */
     List<RecordingSchedule> getSchedulesByTimeStrategy(Long timeStrategyId);
 
     /**
-     * 创建设备的默认录制计划
+     * Create default recording schedule for device
      */
     RecordingSchedule createDefaultScheduleForDevice(Long deviceId, String deviceName);
 
     /**
-     * 启用录制计划
+     * Enable recording schedule
      */
     boolean enableSchedule(Long scheduleId, String updatedBy);
 
     /**
-     * 禁用录制计划
+     * Disable recording schedule
      */
     boolean disableSchedule(Long scheduleId, String updatedBy);
 
     /**
-     * 批量启用/禁用录制计划
+     * Batch enable/disable recording schedules
      */
     boolean batchUpdateEnabledStatus(List<Long> scheduleIds, Boolean enabled, String updatedBy);
 
     /**
-     * 更新录制计划的执行时间
+     * Update execution time of recording schedule
      */
     boolean updateExecutionTime(Long scheduleId, LocalDateTime lastRecordTime, LocalDateTime nextRecordTime);
 
     /**
-     * 增加失败录制次数
+     * Increment failed recording count
      */
     boolean incrementFailedRecords(Long scheduleId);
 
     /**
-     * 计算下次录制时间
+     * Calculate next recording time
      */
     LocalDateTime calculateNextRecordTime(RecordingSchedule schedule);
 
     /**
-     * 检查录制计划是否应该在指定时间执行
+     * Check if recording schedule should be executed at specified time
      */
     boolean shouldExecuteAt(RecordingSchedule schedule, LocalDateTime currentTime);
 
     /**
-     * 执行录制计划
+     * Execute recording schedule
      */
     boolean executeSchedule(RecordingSchedule schedule);
 } 

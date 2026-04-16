@@ -12,7 +12,7 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
- * 算法模型Mapper接口
+ * Algorithm Model Mapper Interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -21,129 +21,129 @@ import java.util.List;
 public interface AlgorithmModelMapper extends BaseMapper<AlgorithmModel> {
 
     /**
-     * 分页查询算法模型列表
+     * Paginated query algorithm model list
      *
-     * @param page 分页对象
-     * @param queryDTO 查询参数
-     * @return 算法模型列表
+     * @param page Pagination object
+     * @param queryDTO Query parameters
+     * @return Algorithm model list
      */
     IPage<AlgorithmModel> selectModelPage(Page<AlgorithmModel> page, @Param("query") AlgorithmModelQueryDTO queryDTO);
 
     /**
-     * 根据算法ID查询模型列表
+     * Query model list by algorithm ID
      *
-     * @param algorithmId 算法ID
-     * @return 算法模型列表
+     * @param algorithmId Algorithm ID
+     * @return Algorithm model list
      */
     List<AlgorithmModel> selectByAlgorithmId(@Param("algorithmId") Long algorithmId);
 
     /**
-     * 根据训练任务ID查询模型列表
+     * Query model list by training task ID
      *
-     * @param trainingId 训练任务ID
-     * @return 算法模型列表
+     * @param trainingId Training task ID
+     * @return Algorithm model list
      */
     List<AlgorithmModel> selectByTrainingId(@Param("trainingId") Long trainingId);
 
     /**
-     * 根据状态查询模型列表
+     * Query model list by status
      *
-     * @param status 状态
-     * @return 算法模型列表
+     * @param status Status
+     * @return Algorithm model list
      */
     List<AlgorithmModel> selectByStatus(@Param("status") String status);
 
     /**
-     * 更新模型状态
+     * Update model status
      *
-     * @param id 模型ID
-     * @param status 新状态
-     * @return 影响行数
+     * @param id Model ID
+     * @param status New status
+     * @return Affected rows
      */
     int updateStatus(@Param("id") Long id, @Param("status") String status);
 
     /**
-     * 更新模型下载次数
+     * Update model download count
      *
-     * @param id 模型ID
-     * @return 影响行数
+     * @param id Model ID
+     * @return Affected rows
      */
     int updateDownloadCount(@Param("id") Long id);
 
     /**
-     * 更新模型部署次数
+     * Update model deployment count
      *
-     * @param id 模型ID
-     * @return 影响行数
+     * @param id Model ID
+     * @return Affected rows
      */
     int updateDeployCount(@Param("id") Long id);
 
     /**
-     * 批量更新模型状态
+     * Batch update model status
      *
-     * @param ids 模型ID列表
-     * @param status 新状态
-     * @return 影响行数
+     * @param ids Model ID list
+     * @param status New status
+     * @return Affected rows
      */
     int batchUpdateStatus(@Param("ids") List<Long> ids, @Param("status") String status);
 
     /**
-     * 获取模型统计信息
+     * Get model statistics
      *
-     * @return 统计信息
+     * @return Statistics
      */
     AlgorithmModelStatisticsDTO getStatistics();
 
     /**
-     * 检查模型名称和版本是否存在
+     * Check if model name and version exist
      *
-     * @param modelName 模型名称
-     * @param version 版本
-     * @param excludeId 排除的ID（更新时使用）
-     * @return 存在的数量
+     * @param modelName Model name
+     * @param version Version
+     * @param excludeId Exclude ID (used for updates)
+     * @return Existence count
      */
     int checkModelNameAndVersion(@Param("modelName") String modelName, 
                                 @Param("version") Integer version,
                                 @Param("excludeId") Long excludeId);
 
     /**
-     * 根据算法ID和版本查询模型
+     * Query model by algorithm ID and version
      *
-     * @param algorithmId 算法ID
-     * @param version 版本
-     * @return 算法模型
+     * @param algorithmId Algorithm ID
+     * @param version Version
+     * @return Algorithm model
      */
     AlgorithmModel selectByAlgorithmIdAndVersion(@Param("algorithmId") Long algorithmId, 
                                                 @Param("version") Integer version);
 
     /**
-     * 获取算法下最新版本的模型
+     * Get the latest version model under an algorithm
      *
-     * @param algorithmId 算法ID
-     * @return 算法模型
+     * @param algorithmId Algorithm ID
+     * @return Algorithm model
      */
     AlgorithmModel selectLatestByAlgorithmId(@Param("algorithmId") Long algorithmId);
 
     /**
-     * 查询热门模型（按下载次数排序）
+     * Query popular models (sorted by download count)
      *
-     * @param limit 限制数量
-     * @return 算法模型列表
+     * @param limit Limit quantity
+     * @return Algorithm model list
      */
     List<AlgorithmModel> selectPopularModels(@Param("limit") Integer limit);
 
     /**
-     * 根据创建人查询模型数量
+     * Query model count by creator
      *
-     * @param createdBy 创建人ID
-     * @return 模型数量
+     * @param createdBy Creator ID
+     * @return Model count
      */
     Long countByCreatedBy(@Param("createdBy") Long createdBy);
 
     /**
-     * 获取算法模型的总大小（所有已发布模型的文件大小总和）
+     * Get total algorithm model size (sum of file sizes of all published models)
      *
-     * @return 总大小（字节）
+     * @return Total size (bytes)
      */
     Long getTotalModelSize();
 } 

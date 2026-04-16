@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 视频录制记录控制器
+ * Video Recording Record Controller
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -37,7 +37,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/api/video-record")
-@Api(tags = "视频录制记录管理")
+@Api(tags = "Video Recording Record Management")
 public class VideoRecordController {
 
     @Autowired
@@ -46,19 +46,19 @@ public class VideoRecordController {
     @Value("${recording.storage.path:./recordings}")
     private String recordingStoragePath;
 
-    @ApiOperation("获取录制文件")
+    @ApiOperation("Get recording file")
     @GetMapping("/file/**")
     public ResponseEntity<Resource> getRecordFile(HttpServletRequest request) {
-        log.info("=== 进入getRecordFile方法 ===");
-        log.info("请求URI: {}", request.getRequestURI());
-        log.info("请求方法: {}", request.getMethod());
+        log.info("=== Enter getRecordFile method ===");
+        log.info("Request URI: {}", request.getRequestURI());
+        log.info("Request method: {}", request.getMethod());
         
         try {
-            // 获取完整的请求URI
+            // Get complete request URI
             String requestURI = request.getRequestURI();
-            log.info("完整请求URI: {}", requestURI);
+            log.info("Complete request URI: {}", requestURI);
             
-            // 提取文件路径部分
+            // Extract file path part
             String filePath = null;
             if (requestURI.contains("/api/video-record/file/")) {
                 filePath = requestURI.substring(requestURI.indexOf("/api/video-record/file/") + "/api/video-record/file/".length());
@@ -67,70 +67,70 @@ public class VideoRecordController {
             }
             
             if (filePath == null) {
-                log.error("无法提取文件路径: {}", requestURI);
+                log.error("Unable to extract file path: {}", requestURI);
                 return ResponseEntity.badRequest().build();
             }
             
-            log.info("提取的文件路径: {}", filePath);
+            log.info("Extracted file path: {}", filePath);
             
-            // 尝试URL解码
+            // Try URL decoding
             String decodedFilePath;
             try {
                 decodedFilePath = java.net.URLDecoder.decode(filePath, "UTF-8");
-                log.info("解码后的文件路径: {}", decodedFilePath);
+                log.info("Decoded file path: {}", decodedFilePath);
             } catch (Exception e) {
-                log.warn("URL解码失败，使用原始路径: {}", filePath);
+                log.warn("URL decode failed, using original path: {}", filePath);
                 decodedFilePath = filePath;
             }
             
-            log.info("=== 文件访问调试信息 ===");
+            log.info("=== File access debug information ===");
             log.info("recordingStoragePath: {}", recordingStoragePath);
-            log.info("最终文件路径: {}", decodedFilePath);
+            log.info("Final file path: {}", decodedFilePath);
             
-            // 构建完整的文件路径
+            // Build complete file path
             Path fullPath = Paths.get(recordingStoragePath, decodedFilePath);
             File file = fullPath.toFile();
             
-            log.info("完整文件路径: {}", fullPath);
-            log.info("文件存在: {}", file.exists());
-            log.info("是文件: {}", file.isFile());
-            log.info("可读: {}", file.canRead());
-            log.info("绝对路径: {}", file.getAbsolutePath());
+            log.info("Complete file path: {}", fullPath);
+            log.info("File exists: {}", file.exists());
+            log.info("Is file: {}", file.isFile());
+            log.info("Readable: {}", file.canRead());
+            log.info("Absolute path: {}", file.getAbsolutePath());
             
             if (!file.exists()) {
-                log.warn("文件不存在: {}", fullPath);
+                log.warn("File does not exist: {}", fullPath);
                 return ResponseEntity.notFound().build();
             }
             
             if (!file.isFile()) {
-                log.warn("路径不是文件: {}", fullPath);
+                log.warn("Path is not a file: {}", fullPath);
                 return ResponseEntity.badRequest().build();
             }
             
             if (!file.canRead()) {
-                log.warn("文件无法读取: {}", fullPath);
+                log.warn("File cannot be read: {}", fullPath);
                 return ResponseEntity.status(403).build();
             }
             
-            // 检查文件是否在recordings目录下（安全检查）
+            // Check if file is in recordings directory (security check)
             Path recordingsPath = Paths.get(recordingStoragePath).toAbsolutePath();
             Path filePathNormalized = fullPath.toAbsolutePath();
             
             log.info("recordingsPath: {}", recordingsPath);
             log.info("filePathNormalized: {}", filePathNormalized);
-            log.info("安全检查通过: {}", filePathNormalized.startsWith(recordingsPath));
+            log.info("Security check passed: {}", filePathNormalized.startsWith(recordingsPath));
             
             if (!filePathNormalized.startsWith(recordingsPath)) {
-                log.warn("访问路径超出允许范围: {}", filePathNormalized);
+                log.warn("Access path exceeds allowed range: {}", filePathNormalized);
                 return ResponseEntity.badRequest().build();
             }
             
             Resource resource = new FileSystemResource(file);
             
-            // 根据文件扩展名设置Content-Type
+            // Set Content-Type based on file extension
             String contentType = getContentType(file.getName());
             
-            log.info("成功提供文件: {}", fullPath);
+            log.info("Successfully serving file: {}", fullPath);
             log.info("Content-Type: {}", contentType);
             
             return ResponseEntity.ok()
@@ -139,24 +139,24 @@ public class VideoRecordController {
                     .body(resource);
                     
         } catch (Exception e) {
-            log.error("获取录制文件失败", e);
+            log.error("Failed to get recording file", e);
             return ResponseEntity.internalServerError().build();
         }
     }
 
-    @ApiOperation("获取录制文件缩略图")
+    @ApiOperation("Get recording file thumbnail")
     @GetMapping("/thumbnail/**")
     public ResponseEntity<Resource> getRecordThumbnail(HttpServletRequest request) {
-        log.info("=== 进入getRecordThumbnail方法 ===");
-        log.info("请求URI: {}", request.getRequestURI());
-        log.info("请求方法: {}", request.getMethod());
+        log.info("=== Enter getRecordThumbnail method ===");
+        log.info("Request URI: {}", request.getRequestURI());
+        log.info("Request method: {}", request.getMethod());
         
         try {
-            // 获取完整的请求URI
+            // Get complete request URI
             String requestURI = request.getRequestURI();
-            log.info("完整请求URI: {}", requestURI);
+            log.info("Complete request URI: {}", requestURI);
             
-            // 提取文件路径部分
+            // Extract file path part
             String filePath = null;
             if (requestURI.contains("/api/video-record/thumbnail/")) {
                 filePath = requestURI.substring(requestURI.indexOf("/api/video-record/thumbnail/") + "/api/video-record/thumbnail/".length());
@@ -165,70 +165,70 @@ public class VideoRecordController {
             }
             
             if (filePath == null) {
-                log.error("无法提取缩略图路径: {}", requestURI);
+                log.error("Unable to extract thumbnail path: {}", requestURI);
                 return ResponseEntity.badRequest().build();
             }
             
-            log.info("提取的缩略图路径: {}", filePath);
+            log.info("Extracted thumbnail path: {}", filePath);
             
-            // 尝试URL解码
+            // Try URL decoding
             String decodedFilePath;
             try {
                 decodedFilePath = java.net.URLDecoder.decode(filePath, "UTF-8");
-                log.info("解码后的缩略图路径: {}", decodedFilePath);
+                log.info("Decoded thumbnail path: {}", decodedFilePath);
             } catch (Exception e) {
-                log.warn("URL解码失败，使用原始路径: {}", filePath);
+                log.warn("URL decode failed, using original path: {}", filePath);
                 decodedFilePath = filePath;
             }
             
-            log.info("=== 缩略图访问调试信息 ===");
+            log.info("=== Thumbnail access debug information ===");
             log.info("recordingStoragePath: {}", recordingStoragePath);
-            log.info("最终缩略图路径: {}", decodedFilePath);
+            log.info("Final thumbnail path: {}", decodedFilePath);
             
-            // 构建完整的文件路径
+            // Build complete file path
             Path fullPath = Paths.get(recordingStoragePath, decodedFilePath);
             File file = fullPath.toFile();
             
-            log.info("完整缩略图路径: {}", fullPath);
-            log.info("文件存在: {}", file.exists());
-            log.info("是文件: {}", file.isFile());
-            log.info("可读: {}", file.canRead());
-            log.info("绝对路径: {}", file.getAbsolutePath());
+            log.info("Complete thumbnail path: {}", fullPath);
+            log.info("File exists: {}", file.exists());
+            log.info("Is file: {}", file.isFile());
+            log.info("Readable: {}", file.canRead());
+            log.info("Absolute path: {}", file.getAbsolutePath());
             
             if (!file.exists()) {
-                log.warn("缩略图不存在: {}", fullPath);
+                log.warn("Thumbnail does not exist: {}", fullPath);
                 return ResponseEntity.notFound().build();
             }
             
             if (!file.isFile()) {
-                log.warn("路径不是文件: {}", fullPath);
+                log.warn("Path is not a file: {}", fullPath);
                 return ResponseEntity.badRequest().build();
             }
             
             if (!file.canRead()) {
-                log.warn("文件无法读取: {}", fullPath);
+                log.warn("File cannot be read: {}", fullPath);
                 return ResponseEntity.status(403).build();
             }
             
-            // 检查文件是否在recordings目录下（安全检查）
+            // Check if file is in recordings directory (security check)
             Path recordingsPath = Paths.get(recordingStoragePath).toAbsolutePath();
             Path filePathNormalized = fullPath.toAbsolutePath();
             
             log.info("recordingsPath: {}", recordingsPath);
             log.info("filePathNormalized: {}", filePathNormalized);
-            log.info("安全检查通过: {}", filePathNormalized.startsWith(recordingsPath));
+            log.info("Security check passed: {}", filePathNormalized.startsWith(recordingsPath));
             
             if (!filePathNormalized.startsWith(recordingsPath)) {
-                log.warn("访问路径超出允许范围: {}", filePathNormalized);
+                log.warn("Access path exceeds allowed range: {}", filePathNormalized);
                 return ResponseEntity.badRequest().build();
             }
             
             Resource resource = new FileSystemResource(file);
             
-            // 根据文件扩展名设置Content-Type
+            // Set Content-Type based on file extension
             String contentType = getContentType(file.getName());
             
-            log.info("成功提供缩略图: {}", fullPath);
+            log.info("Successfully serving thumbnail: {}", fullPath);
             log.info("Content-Type: {}", contentType);
             
             return ResponseEntity.ok()
@@ -237,13 +237,13 @@ public class VideoRecordController {
                     .body(resource);
                     
         } catch (Exception e) {
-            log.error("获取缩略图失败", e);
+            log.error("Failed to get thumbnail", e);
             return ResponseEntity.internalServerError().build();
         }
     }
 
     /**
-     * 根据文件扩展名获取Content-Type
+     * Get Content-Type based on file extension
      */
     private String getContentType(String fileName) {
         String extension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
@@ -270,19 +270,19 @@ public class VideoRecordController {
         }
     }
 
-    @ApiOperation("分页查询视频录制记录")
+    @ApiOperation("Page query video recording records")
     @GetMapping("/page")
     public Result<IPage<VideoRecord>> pageVideoRecords(
-            @ApiParam(value = "当前页", defaultValue = "1") @RequestParam(defaultValue = "1") Integer current,
-            @ApiParam(value = "每页大小", defaultValue = "10") @RequestParam(defaultValue = "10") Integer size,
-            @ApiParam("设备ID") @RequestParam(required = false) Long deviceId,
-            @ApiParam("设备名称") @RequestParam(required = false) String deviceName,
-            @ApiParam("录制状态") @RequestParam(required = false) String recordStatus,
-            @ApiParam("录制质量") @RequestParam(required = false) String quality,
-            @ApiParam("开始日期") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @ApiParam("结束日期") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
-            @ApiParam("开始时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @ApiParam("结束时间") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime
+            @ApiParam(value = "Current page", defaultValue = "1") @RequestParam(defaultValue = "1") Integer current,
+            @ApiParam(value = "Page size", defaultValue = "10") @RequestParam(defaultValue = "10") Integer size,
+            @ApiParam("Device ID") @RequestParam(required = false) Long deviceId,
+            @ApiParam("Device name") @RequestParam(required = false) String deviceName,
+            @ApiParam("Recording status") @RequestParam(required = false) String recordStatus,
+            @ApiParam("Recording quality") @RequestParam(required = false) String quality,
+            @ApiParam("Start date") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @ApiParam("End date") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @ApiParam("Start time") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @ApiParam("End time") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime
     ) {
         try {
             Page<VideoRecord> page = new Page<>(current, size);
@@ -291,173 +291,173 @@ public class VideoRecordController {
                                                                            endDate, startTime, endTime);
             return Result.success(result);
         } catch (Exception e) {
-            log.error("分页查询视频录制记录失败", e);
-            return Result.error("查询失败：" + e.getMessage());
+            log.error("Failed to query video recording records by page", e);
+            return Result.error("Query failed: " + e.getMessage());
         }
     }
 
-    @ApiOperation("根据ID查询视频录制记录")
+    @ApiOperation("Query video recording record by ID")
     @GetMapping("/{id}")
-    public Result<VideoRecord> getVideoRecord(@ApiParam("录制记录ID") @PathVariable Long id) {
+    public Result<VideoRecord> getVideoRecord(@ApiParam("Recording record ID") @PathVariable Long id) {
         try {
             VideoRecord record = videoRecordService.getById(id);
             if (record == null) {
-                return Result.error("录制记录不存在");
+                return Result.error("Recording record does not exist");
             }
             return Result.success(record);
         } catch (Exception e) {
-            log.error("查询视频录制记录失败", e);
-            return Result.error("查询失败：" + e.getMessage());
+            log.error("Failed to query video recording record", e);
+            return Result.error("Query failed: " + e.getMessage());
         }
     }
 
-    @ApiOperation("开始录制视频")
+    @ApiOperation("Start recording video")
     @PostMapping("/start")
     public Result<VideoRecord> startRecording(
-            @ApiParam("设备ID") @RequestParam Long deviceId,
-            @ApiParam("设备名称") @RequestParam String deviceName,
-            @ApiParam(value = "录制时长(秒)", defaultValue = "600") @RequestParam(defaultValue = "600") Integer duration,
-            @ApiParam(value = "录制质量", defaultValue = "medium") @RequestParam(defaultValue = "medium") String quality
+            @ApiParam("Device ID") @RequestParam Long deviceId,
+            @ApiParam("Device name") @RequestParam String deviceName,
+            @ApiParam(value = "Recording duration (seconds)", defaultValue = "600") @RequestParam(defaultValue = "600") Integer duration,
+            @ApiParam(value = "Recording quality", defaultValue = "medium") @RequestParam(defaultValue = "medium") String quality
     ) {
         try {
             VideoRecord record = videoRecordService.startRecording(deviceId, deviceName, duration, quality);
             if (record != null) {
                 return Result.success(record);
             } else {
-                return Result.error("开始录制失败");
+                return Result.error("Failed to start recording");
             }
         } catch (Exception e) {
-            log.error("开始录制视频失败", e);
-            return Result.error("录制失败：" + e.getMessage());
+            log.error("Failed to start recording video", e);
+            return Result.error("Recording failed: " + e.getMessage());
         }
     }
 
-    @ApiOperation("停止录制视频")
+    @ApiOperation("Stop recording video")
     @PostMapping("/stop/{id}")
-    public Result<String> stopRecording(@ApiParam("录制记录ID") @PathVariable Long id) {
+    public Result<String> stopRecording(@ApiParam("Recording record ID") @PathVariable Long id) {
         try {
             boolean success = videoRecordService.stopRecording(id);
             if (success) {
-                return Result.success("停止录制成功");
+                return Result.success("Stop recording successful");
             } else {
-                return Result.error("停止录制失败");
+                return Result.error("Failed to stop recording");
             }
         } catch (Exception e) {
-            log.error("停止录制视频失败", e);
-            return Result.error("停止录制失败：" + e.getMessage());
+            log.error("Failed to stop recording video", e);
+            return Result.error("Failed to stop recording: " + e.getMessage());
         }
     }
 
-    @ApiOperation("删除录制记录")
+    @ApiOperation("Delete recording record")
     @DeleteMapping("/{id}")
-    public Result<String> deleteRecord(@ApiParam("录制记录ID") @PathVariable Long id) {
+    public Result<String> deleteRecord(@ApiParam("Recording record ID") @PathVariable Long id) {
         try {
             boolean success = videoRecordService.deleteRecord(id);
             if (success) {
-                return Result.success("删除成功");
+                return Result.success("Delete successful");
             } else {
-                return Result.error("删除失败");
+                return Result.error("Delete failed");
             }
         } catch (Exception e) {
-            log.error("删除录制记录失败", e);
-            return Result.error("删除失败：" + e.getMessage());
+            log.error("Failed to delete recording record", e);
+            return Result.error("Delete failed: " + e.getMessage());
         }
     }
 
-    @ApiOperation("获取设备录制统计信息")
+    @ApiOperation("Get device recording statistics")
     @GetMapping("/statistics/device")
     public Result<List<Map<String, Object>>> getDeviceRecordStatistics(
-            @ApiParam("设备ID") @RequestParam(required = false) Long deviceId,
-            @ApiParam("开始日期") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @ApiParam("结束日期") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate
+            @ApiParam("Device ID") @RequestParam(required = false) Long deviceId,
+            @ApiParam("Start date") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @ApiParam("End date") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate
     ) {
         try {
             List<Map<String, Object>> statistics = videoRecordService.getDeviceRecordStatistics(deviceId, startDate, endDate);
             return Result.success(statistics);
         } catch (Exception e) {
-            log.error("获取设备录制统计失败", e);
-            return Result.error("获取统计失败：" + e.getMessage());
+            log.error("Failed to get device recording statistics", e);
+            return Result.error("Failed to get statistics: " + e.getMessage());
         }
     }
 
-    @ApiOperation("获取正在录制的视频记录")
+    @ApiOperation("Get currently recording video records")
     @GetMapping("/recording")
     public Result<List<VideoRecord>> getRecordingVideos() {
         try {
             List<VideoRecord> records = videoRecordService.getRecordingVideos();
             return Result.success(records);
         } catch (Exception e) {
-            log.error("获取正在录制的视频失败", e);
-            return Result.error("获取失败：" + e.getMessage());
+            log.error("Failed to get currently recording videos", e);
+            return Result.error("Get failed: " + e.getMessage());
         }
     }
 
-    @ApiOperation("清理过期录制记录")
+    @ApiOperation("Clean up expired recording records")
     @PostMapping("/cleanup")
     public Result<String> cleanupExpiredRecords() {
         try {
             int cleanupCount = videoRecordService.cleanupExpiredRecords();
-            return Result.success("清理完成，删除了 " + cleanupCount + " 条过期记录");
+            return Result.success("Cleanup completed, deleted " + cleanupCount + " expired records");
         } catch (Exception e) {
-            log.error("清理过期录制记录失败", e);
-            return Result.error("清理失败：" + e.getMessage());
+            log.error("Failed to clean up expired recording records", e);
+            return Result.error("Cleanup failed: " + e.getMessage());
         }
     }
 
-    @ApiOperation("根据设备ID和日期查询录制记录")
+    @ApiOperation("Query recording records by device ID and date")
     @GetMapping("/device/{deviceId}/date/{date}")
     public Result<List<VideoRecord>> getRecordsByDeviceAndDate(
-            @ApiParam("设备ID") @PathVariable Long deviceId,
-            @ApiParam("日期") @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date
+            @ApiParam("Device ID") @PathVariable Long deviceId,
+            @ApiParam("Date") @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date
     ) {
         try {
             List<VideoRecord> records = videoRecordService.getRecordsByDeviceAndDate(deviceId, date);
             return Result.success(records);
         } catch (Exception e) {
-            log.error("根据设备ID和日期查询录制记录失败", e);
-            return Result.error("查询失败：" + e.getMessage());
+            log.error("Failed to query recording records by device ID and date", e);
+            return Result.error("Query failed: " + e.getMessage());
         }
     }
 
-    @ApiOperation("根据设备ID和时间范围查询录制记录")
+    @ApiOperation("Query recording records by device ID and time range")
     @GetMapping("/device/{deviceId}/time-range")
     public Result<List<VideoRecord>> getRecordsByDeviceAndTimeRange(
-            @ApiParam("设备ID") @PathVariable Long deviceId,
-            @ApiParam("开始时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
-            @ApiParam("结束时间") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime
+            @ApiParam("Device ID") @PathVariable Long deviceId,
+            @ApiParam("Start time") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @ApiParam("End time") @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime
     ) {
         try {
             List<VideoRecord> records = videoRecordService.getRecordsByDeviceAndTimeRange(deviceId, startTime, endTime);
             return Result.success(records);
         } catch (Exception e) {
-            log.error("根据设备ID和时间范围查询录制记录失败", e);
-            return Result.error("查询失败：" + e.getMessage());
+            log.error("Failed to query recording records by device ID and time range", e);
+            return Result.error("Query failed: " + e.getMessage());
         }
     }
 
-    @ApiOperation("根据设备ID查询录制记录")
+    @ApiOperation("Query recording records by device ID")
     @GetMapping("/device/{deviceId}")
     public Result<List<VideoRecord>> getDeviceRecords(
-            @ApiParam("设备ID") @PathVariable Long deviceId,
-            @ApiParam("日期") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
-            @ApiParam("页面大小") @RequestParam(required = false, defaultValue = "100") Integer pageSize,
-            @ApiParam("当前页") @RequestParam(required = false, defaultValue = "1") Integer currentPage
+            @ApiParam("Device ID") @PathVariable Long deviceId,
+            @ApiParam("Date") @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
+            @ApiParam("Page size") @RequestParam(required = false, defaultValue = "100") Integer pageSize,
+            @ApiParam("Current page") @RequestParam(required = false, defaultValue = "1") Integer currentPage
     ) {
         try {
             List<VideoRecord> records;
             if (date != null) {
-                // 如果传入了日期，按日期查询
+                // If date is passed, query by date
                 records = videoRecordService.getRecordsByDeviceAndDate(deviceId, date);
             } else {
-                // 如果没有传入日期，获取设备的所有录制记录
+                // If no date is passed, get all recording records for the device
                 records = videoRecordService.getRecordsByDeviceAndDate(deviceId, LocalDate.now());
             }
             
-            log.info("查询设备录制记录: deviceId={}, date={}, 找到记录数={}", deviceId, date, records.size());
+            log.info("Query device recording records: deviceId={}, date={}, record count={}", deviceId, date, records.size());
             return Result.success(records);
         } catch (Exception e) {
-            log.error("根据设备ID查询录制记录失败: deviceId={}, date={}", deviceId, date, e);
-            return Result.error("查询失败：" + e.getMessage());
+            log.error("Failed to query recording records by device ID: deviceId={}, date={}", deviceId, date, e);
+            return Result.error("Query failed: " + e.getMessage());
         }
     }
 }

@@ -9,7 +9,7 @@ import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDateTime;
 
 /**
- * 场景治理实体类
+ * Scene Governance Entity Class
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -17,83 +17,83 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("scene_governance")
-@ApiModel(value = "SceneGovernance对象", description = "场景治理")
+@ApiModel(value = "SceneGovernance object", description = "Scene governance")
 public class SceneGovernance {
 
-    @ApiModelProperty(value = "主键ID")
+    @ApiModelProperty(value = "Primary key ID")
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @ApiModelProperty(value = "场景名称")
+    @ApiModelProperty(value = "Scene name")
     @TableField("name")
     private String name;
 
-    @ApiModelProperty(value = "场景描述/备注")
+    @ApiModelProperty(value = "Scene description/remark")
     @TableField("description")
     private String description;
 
-    @ApiModelProperty(value = "关联设备")
+    @ApiModelProperty(value = "Associated devices")
     @TableField("devices")
     private String devices;
 
-    @ApiModelProperty(value = "治理规则")
+    @ApiModelProperty(value = "Governance rules")
     @TableField("rules")
     private String rules;
 
-    @ApiModelProperty(value = "状态: enabled-启用, disabled-禁用")
+    @ApiModelProperty(value = "Status: enabled-enabled, disabled-disabled")
     @TableField("status")
     private String status;
 
-    @ApiModelProperty(value = "执行类型: daily-每天, alternate-隔天, weekly-每周, monthly-每月")
+    @ApiModelProperty(value = "Execution type: daily-daily, alternate-every other day, weekly-weekly, monthly-monthly")
     @TableField("execute_type")
     private String executeType;
 
-    @ApiModelProperty(value = "选择的天数（JSON数组）")
+    @ApiModelProperty(value = "Selected days (JSON array)")
     @TableField("selected_days")
     private String selectedDays;
 
-    @ApiModelProperty(value = "间隔数量")
+    @ApiModelProperty(value = "Interval number")
     @TableField("interval_num")
     private Integer intervalNum;
 
-    @ApiModelProperty(value = "AI算法")
+    @ApiModelProperty(value = "AI algorithm")
     @TableField("algorithm")
     private String algorithm;
 
-    @ApiModelProperty(value = "区划地点")
+    @ApiModelProperty(value = "Regional location")
     @TableField("location")
     private String location;
 
-    @ApiModelProperty(value = "摄像头")
+    @ApiModelProperty(value = "Cameras")
     @TableField("cameras")
     private String cameras;
 
-    @ApiModelProperty(value = "开始时间")
+    @ApiModelProperty(value = "Start time")
     @TableField("start_time")
     private LocalDateTime startTime;
 
-    @ApiModelProperty(value = "结束时间")
+    @ApiModelProperty(value = "End time")
     @TableField("end_time")
     private LocalDateTime endTime;
 
-    @ApiModelProperty(value = "创建时间")
+    @ApiModelProperty(value = "Creation time")
     @TableField(value = "created_at", fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 
-    @ApiModelProperty(value = "更新时间")
+    @ApiModelProperty(value = "Update time")
     @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedAt;
 
-    @ApiModelProperty(value = "是否删除：0-未删除，1-已删除")
+    @ApiModelProperty(value = "Deleted: 0-Not deleted, 1-Deleted")
     @TableField("deleted")
     @TableLogic
     private Integer deleted;
 
-    @ApiModelProperty(value = "创建人")
+    @ApiModelProperty(value = "Creator")
     @TableField("created_by")
     private String createdBy;
 
-    @ApiModelProperty(value = "更新人")
+    @ApiModelProperty(value = "Updater")
     @TableField("updated_by")
     private String updatedBy;
 } 

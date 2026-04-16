@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 标注图片实体类
+ * Annotation Image Entity Class
  */
 @Data
 @TableName("annotation_image")
@@ -26,15 +26,15 @@ public class AnnotationImage {
     
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("created_time")
-    private LocalDateTime createTime;   // 对应数据库的 created_time 字段
+    private LocalDateTime createTime;   // Corresponding to the created_time field in the database
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @TableField("updated_time")
-    private LocalDateTime updateTime;   // 对应数据库的 updated_time 字段
+    private LocalDateTime updateTime;   // Corresponding to the updated_time field in the database
 
-    private LocalDateTime lastModified; // 最后修改时间
+    private LocalDateTime lastModified; // Last modified time
 
-    // 构造函数
+    // Constructor
     public AnnotationImage() {}
 
     public AnnotationImage(Long datasetId, String fileName, String originalName, String filePath) {

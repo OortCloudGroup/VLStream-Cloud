@@ -5,7 +5,7 @@ import com.vlstream.entity.LocalUser;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 本地用户Mapper接口
+ * Local User Mapper Interface
  */
 @Mapper
 public interface LocalUserMapper extends BaseMapper<LocalUser> {

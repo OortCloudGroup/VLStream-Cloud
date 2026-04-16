@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 算法训练任务 Mapper 接口
+ * Algorithm Training Task Mapper Interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -23,22 +23,22 @@ import java.util.List;
 public interface AlgorithmTrainingMapper extends BaseMapper<AlgorithmTraining> {
 
     /**
-     * 分页查询训练任务（包含关联信息）
+     * Paginated query training tasks (including associated information)
      *
-     * @param page 分页对象
-     * @param taskName 任务名称
-     * @param algorithmId 算法ID
-     * @param datasetId 数据集ID
-     * @param trainType 训练类型
-     * @param trainStatus 训练状态
-     * @param createdBy 创建人
-     * @param startTimeBegin 开始时间范围开始
-     * @param startTimeEnd 开始时间范围结束
-     * @param createdTimeBegin 创建时间范围开始
-     * @param createdTimeEnd 创建时间范围结束
-     * @param orderBy 排序字段
-     * @param order 排序方式
-     * @return 分页结果
+     * @param page Pagination object
+     * @param taskName Task name
+     * @param algorithmId Algorithm ID
+     * @param datasetId Dataset ID
+     * @param trainType Training type
+     * @param trainStatus Training status
+     * @param createdBy Creator
+     * @param startTimeBegin Start time range start
+     * @param startTimeEnd Start time range end
+     * @param createdTimeBegin Creation time range start
+     * @param createdTimeEnd Creation time range end
+     * @param orderBy Order by field
+     * @param order Order direction
+     * @return Pagination result
      */
     IPage<AlgorithmTraining> selectPageWithDetails(
             Page<AlgorithmTraining> page,
@@ -57,61 +57,61 @@ public interface AlgorithmTrainingMapper extends BaseMapper<AlgorithmTraining> {
     );
 
     /**
-     * 根据ID查询训练任务详情（包含关联信息）
+     * Query training task details by ID (including associated information)
      *
-     * @param id 训练任务ID
-     * @return 训练任务详情
+     * @param id Training task ID
+     * @return Training task details
      */
     AlgorithmTraining selectByIdWithDetails(@Param("id") Long id);
 
     /**
-     * 获取训练任务统计信息
+     * Get training task statistics
      *
-     * @return 统计信息
+     * @return Statistics
      */
     AlgorithmTrainingStatisticsDTO selectStatistics();
 
     /**
-     * 根据算法ID查询训练任务列表
+     * Query training task list by algorithm ID
      *
-     * @param algorithmId 算法ID
-     * @return 训练任务列表
+     * @param algorithmId Algorithm ID
+     * @return Training task list
      */
     List<AlgorithmTraining> selectByAlgorithmId(@Param("algorithmId") Long algorithmId);
 
     /**
-     * 根据数据集ID查询训练任务列表
+     * Query training task list by dataset ID
      *
-     * @param datasetId 数据集ID
-     * @return 训练任务列表
+     * @param datasetId Dataset ID
+     * @return Training task list
      */
     List<AlgorithmTraining> selectByDatasetId(@Param("datasetId") Long datasetId);
 
     /**
-     * 获取正在训练的任务列表
+     * Get training tasks in progress
      *
-     * @return 正在训练的任务列表
+     * @return Training tasks in progress
      */
     @Select("SELECT * FROM algorithm_training WHERE train_status = 'training' AND deleted = 0")
     List<AlgorithmTraining> selectTrainingTasks();
 
     /**
-     * 获取等待中的任务列表
+     * Get pending tasks
      *
-     * @return 等待中的任务列表
+     * @return Pending tasks
      */
     @Select("SELECT * FROM algorithm_training WHERE train_status = 'pending' AND deleted = 0 ORDER BY created_time ASC")
     List<AlgorithmTraining> selectPendingTasks();
 
     /**
-     * 更新训练任务状态
+     * Update training task status
      *
-     * @param id 训练任务ID
-     * @param trainStatus 训练状态
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @param errorMessage 错误信息
-     * @return 更新行数
+     * @param id Training task ID
+     * @param trainStatus Training status
+     * @param startTime Start time
+     * @param endTime End time
+     * @param errorMessage Error message
+     * @return Updated rows
      */
     @Update("UPDATE algorithm_training SET train_status = #{trainStatus}, " +
             "start_time = #{startTime}, end_time = #{endTime}, error_message = #{errorMessage}, " +
@@ -123,12 +123,12 @@ public interface AlgorithmTrainingMapper extends BaseMapper<AlgorithmTraining> {
                          @Param("errorMessage") String errorMessage);
 
     /**
-     * 更新训练进度
+     * Update training progress
      *
-     * @param id 训练任务ID
-     * @param progress 进度百分比
-     * @param epochCurrent 当前轮次
-     * @return 更新行数
+     * @param id Training task ID
+     * @param progress Progress percentage
+     * @param epochCurrent Current epoch
+     * @return Updated rows
      */
     @Update("UPDATE algorithm_training SET progress = #{progress}, " +
             "epoch_current = #{epochCurrent}, updated_time = NOW() WHERE id = #{id}")
@@ -137,10 +137,10 @@ public interface AlgorithmTrainingMapper extends BaseMapper<AlgorithmTraining> {
                       @Param("epochCurrent") Integer epochCurrent);
 
     /**
-     * 批量删除训练任务
+     * Batch delete training tasks
      *
-     * @param ids 任务ID列表
-     * @return 删除行数
+     * @param ids Task ID list
+     * @return Deleted rows
      */
     @Update("<script>" +
             "UPDATE algorithm_training SET deleted = 1, updated_time = NOW() WHERE id IN " +
@@ -151,50 +151,50 @@ public interface AlgorithmTrainingMapper extends BaseMapper<AlgorithmTraining> {
     int deleteBatch(@Param("ids") List<Long> ids);
     
     /**
-     * 查询算法训练任务
+     * Query algorithm training task
      * 
-     * @param id 算法训练任务主键
-     * @return 算法训练任务
+     * @param id Algorithm training task primary key
+     * @return Algorithm training task
      */
     AlgorithmTraining selectAlgorithmTrainingById(@Param("id") Long id);
     
     /**
-     * 查询算法训练任务列表
+     * Query algorithm training task list
      * 
-     * @param algorithmTraining 算法训练任务
-     * @return 算法训练任务集合
+     * @param algorithmTraining Algorithm training task
+     * @return Algorithm training task collection
      */
     List<AlgorithmTraining> selectAlgorithmTrainingList(AlgorithmTraining algorithmTraining);
     
     /**
-     * 新增算法训练任务
+     * Add new algorithm training task
      * 
-     * @param algorithmTraining 算法训练任务
-     * @return 结果
+     * @param algorithmTraining Algorithm training task
+     * @return Result
      */
     int insertAlgorithmTraining(AlgorithmTraining algorithmTraining);
     
     /**
-     * 修改算法训练任务
+     * Modify algorithm training task
      * 
-     * @param algorithmTraining 算法训练任务
-     * @return 结果
+     * @param algorithmTraining Algorithm training task
+     * @return Result
      */
     int updateAlgorithmTraining(AlgorithmTraining algorithmTraining);
     
     /**
-     * 删除算法训练任务
+     * Delete algorithm training task
      * 
-     * @param id 算法训练任务主键
-     * @return 结果
+     * @param id Algorithm training task primary key
+     * @return Result
      */
     int deleteAlgorithmTrainingById(@Param("id") Long id);
     
     /**
-     * 批量删除算法训练任务
+     * Batch delete algorithm training tasks
      * 
-     * @param ids 需要删除的算法训练任务主键集合
-     * @return 结果
+     * @param ids Primary key collection of algorithm training tasks to delete
+     * @return Result
      */
     int deleteAlgorithmTrainingByIds(@Param("ids") Long[] ids);
 } 

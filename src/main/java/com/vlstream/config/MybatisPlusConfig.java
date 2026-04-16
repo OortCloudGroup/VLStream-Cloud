@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import java.time.LocalDateTime;
 
 /**
- * MyBatis Plus配置类
+ * MyBatis Plus Configuration Class
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 public class MybatisPlusConfig {
 
     /**
-     * 分页插件
+     * Pagination plugin
      */
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
@@ -30,7 +30,7 @@ public class MybatisPlusConfig {
     }
 
     /**
-     * 自动填充配置
+     * Auto-fill configuration
      */
     @Bean
     public MetaObjectHandler metaObjectHandler() {

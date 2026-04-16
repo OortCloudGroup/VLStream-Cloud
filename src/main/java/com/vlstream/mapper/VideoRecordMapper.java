@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 视频录制记录 Mapper 接口
+ * Video Recording Record Mapper Interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -21,31 +21,31 @@ import java.util.Map;
 public interface VideoRecordMapper extends BaseMapper<VideoRecord> {
 
     /**
-     * 根据设备ID查询指定日期的录制记录
+     * Query recording records for specified date by device ID
      */
     @Select("SELECT * FROM video_record WHERE deleted = 0 AND device_id = #{deviceId} AND record_date = #{recordDate} ORDER BY record_start_time ASC")
     List<VideoRecord> selectByDeviceAndDate(@Param("deviceId") Long deviceId, @Param("recordDate") LocalDate recordDate);
 
     /**
-     * 根据设备ID查询指定时间范围的录制记录
+     * Query recording records for specified time range by device ID
      */
     @Select("SELECT * FROM video_record WHERE deleted = 0 AND device_id = #{deviceId} AND record_start_time >= #{startTime} AND record_end_time <= #{endTime} ORDER BY record_start_time ASC")
     List<VideoRecord> selectByDeviceAndTimeRange(@Param("deviceId") Long deviceId, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
 
     /**
-     * 查询正在录制的记录
+     * Query recording records in progress
      */
     @Select("SELECT * FROM video_record WHERE deleted = 0 AND record_status = 'recording' ORDER BY record_start_time DESC")
     List<VideoRecord> selectRecordingVideos();
 
     /**
-     * 获取设备最新的录制记录
+     * Get latest recording record for device
      */
     @Select("SELECT * FROM video_record WHERE deleted = 0 AND device_id = #{deviceId} ORDER BY record_start_time DESC LIMIT 1")
     VideoRecord selectLatestByDeviceId(@Param("deviceId") Long deviceId);
 
     /**
-     * 根据文件路径查询录制记录
+     * Query recording record by file path
      */
     @Select("SELECT * FROM video_record WHERE deleted = 0 AND file_path = #{filePath} LIMIT 1")
     VideoRecord selectByFilePath(@Param("filePath") String filePath);

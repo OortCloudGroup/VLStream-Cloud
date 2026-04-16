@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 远程服务器管理Controller
+ * Remote Server Management Controller
  */
-@Api(tags = "远程服务器管理")
+@Api(tags = "Remote Server Management")
 @RestController
 @RequestMapping("/api/remote-servers")
 public class RemoteServerController extends BaseController {
@@ -27,7 +27,7 @@ public class RemoteServerController extends BaseController {
     private SSHService sshService;
     
     /**
-     * 查询远程服务器配置列表
+     * Query remote server configuration list
      */
     @GetMapping("/list")
     public TableDataInfo list(RemoteServer remoteServer) {
@@ -36,7 +36,7 @@ public class RemoteServerController extends BaseController {
     }
     
     /**
-     * 获取远程服务器配置详细信息
+     * Get remote server configuration details
      */
     @GetMapping(value = "/{id}")
     public Result getInfo(@PathVariable("id") Long id) {
@@ -44,7 +44,7 @@ public class RemoteServerController extends BaseController {
     }
     
     /**
-     * 新增远程服务器配置
+     * Add remote server configuration
      */
     @PostMapping
     public Result add(@RequestBody RemoteServer remoteServer) {
@@ -52,7 +52,7 @@ public class RemoteServerController extends BaseController {
     }
     
     /**
-     * 修改远程服务器配置
+     * Update remote server configuration
      */
     @PutMapping
     public Result edit(@RequestBody RemoteServer remoteServer) {
@@ -60,7 +60,7 @@ public class RemoteServerController extends BaseController {
     }
     
     /**
-     * 删除远程服务器配置
+     * Delete remote server configuration
      */
     @DeleteMapping("/{ids}")
     public Result remove(@PathVariable Long[] ids) {
@@ -68,13 +68,13 @@ public class RemoteServerController extends BaseController {
     }
     
     /**
-     * 测试服务器连接
+     * Test server connection
      */
     @PostMapping("/{id}/test")
     public Result testConnection(@PathVariable("id") Long id) {
         RemoteServer server = remoteServerService.selectRemoteServerById(id);
         if (server == null) {
-            return error("服务器配置不存在");
+            return error("Server configuration does not exist");
         }
         
         boolean success = sshService.testConnection(
@@ -85,9 +85,9 @@ public class RemoteServerController extends BaseController {
         );
         
         if (success) {
-            return success("连接测试成功");
+            return success("Connection test successful");
         } else {
-            return error("连接测试失败，请检查服务器配置");
+            return error("Connection test failed, please check server configuration");
         }
     }
 } 

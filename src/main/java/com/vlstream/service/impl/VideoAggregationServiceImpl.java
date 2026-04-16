@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 /**
- * 视频汇聚配置Service实现类
+ * Video Aggregation Configuration Service Implementation
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -35,32 +35,32 @@ public class VideoAggregationServiceImpl extends ServiceImpl<VideoAggregationMap
     @Override
     @Transactional
     public boolean startAggregation(Long id) {
-        log.info("启动视频汇聚: {}", id);
+        log.info("Starting video aggregation: {}", id);
         try {
             VideoAggregation aggregation = getById(id);
             if (aggregation == null) {
-                log.error("汇聚配置不存在: {}", id);
+                log.error("Aggregation configuration does not exist: {}", id);
                 return false;
             }
 
             if (aggregation.getStatus() == 1) {
-                log.warn("汇聚已在运行中: {}", id);
+                log.warn("Aggregation is already running: {}", id);
                 return true;
             }
 
-            // 这里实现实际的启动逻辑
-            // TODO: 调用底层视频处理服务启动汇聚
+            // Implement actual start logic here
+            // TODO: Call underlying video processing service to start aggregation
 
-            // 更新状态
+            // Update status
             aggregation.setStatus(1);
             aggregation.setUpdateTime(LocalDateTime.now());
             updateById(aggregation);
 
-            log.info("视频汇聚启动成功: {}", id);
+            log.info("Video aggregation started successfully: {}", id);
             return true;
         } catch (Exception e) {
-            log.error("启动视频汇聚失败: {}", id, e);
-            // 更新为异常状态
+            log.error("Failed to start video aggregation: {}", id, e);
+            // Update to error status
             VideoAggregation aggregation = new VideoAggregation();
             aggregation.setId(id);
             aggregation.setStatus(2);
@@ -73,31 +73,31 @@ public class VideoAggregationServiceImpl extends ServiceImpl<VideoAggregationMap
     @Override
     @Transactional
     public boolean stopAggregation(Long id) {
-        log.info("停止视频汇聚: {}", id);
+        log.info("Stopping video aggregation: {}", id);
         try {
             VideoAggregation aggregation = getById(id);
             if (aggregation == null) {
-                log.error("汇聚配置不存在: {}", id);
+                log.error("Aggregation configuration does not exist: {}", id);
                 return false;
             }
 
             if (aggregation.getStatus() == 0) {
-                log.warn("汇聚已停止: {}", id);
+                log.warn("Aggregation is already stopped: {}", id);
                 return true;
             }
 
-            // 这里实现实际的停止逻辑
-            // TODO: 调用底层视频处理服务停止汇聚
+            // Implement actual stop logic here
+            // TODO: Call underlying video processing service to stop aggregation
 
-            // 更新状态
+            // Update status
             aggregation.setStatus(0);
             aggregation.setUpdateTime(LocalDateTime.now());
             updateById(aggregation);
 
-            log.info("视频汇聚停止成功: {}", id);
+            log.info("Video aggregation stopped successfully: {}", id);
             return true;
         } catch (Exception e) {
-            log.error("停止视频汇聚失败: {}", id, e);
+            log.error("Failed to stop video aggregation: {}", id, e);
             return false;
         }
     }
@@ -105,27 +105,27 @@ public class VideoAggregationServiceImpl extends ServiceImpl<VideoAggregationMap
     @Override
     @Transactional
     public boolean restartAggregation(Long id) {
-        log.info("重启视频汇聚: {}", id);
+        log.info("Restarting video aggregation: {}", id);
         return stopAggregation(id) && startAggregation(id);
     }
 
     @Override
     public boolean switchStream(Long id, Long targetStreamId) {
-        log.info("切换画面: 汇聚ID={}, 目标流ID={}", id, targetStreamId);
+        log.info("Switching stream: aggregation ID={}, target stream ID={}", id, targetStreamId);
         try {
             VideoAggregation aggregation = getById(id);
             if (aggregation == null || aggregation.getStatus() != 1) {
-                log.error("汇聚配置不存在或未运行: {}", id);
+                log.error("Aggregation configuration does not exist or is not running: {}", id);
                 return false;
             }
 
-            // 这里实现实际的画面切换逻辑
-            // TODO: 调用底层视频处理服务切换画面
+            // Implement actual stream switching logic here
+            // TODO: Call underlying video processing service to switch stream
 
-            log.info("画面切换成功: 汇聚ID={}, 目标流ID={}", id, targetStreamId);
+            log.info("Stream switched successfully: aggregation ID={}, target stream ID={}", id, targetStreamId);
             return true;
         } catch (Exception e) {
-            log.error("画面切换失败: 汇聚ID={}, 目标流ID={}", id, targetStreamId, e);
+            log.error("Failed to switch stream: aggregation ID={}, target stream ID={}", id, targetStreamId, e);
             return false;
         }
     }
@@ -213,36 +213,36 @@ public class VideoAggregationServiceImpl extends ServiceImpl<VideoAggregationMap
         Map<String, Object> result = new HashMap<>();
         List<String> errors = new ArrayList<>();
         
-        // 验证基本信息
+        // Validate basic information
         if (videoAggregation.getAggregationName() == null || videoAggregation.getAggregationName().trim().isEmpty()) {
-            errors.add("汇聚名称不能为空");
+            errors.add("Aggregation name cannot be empty");
         }
         
         if (videoAggregation.getAggregationType() == null || 
             videoAggregation.getAggregationType() < 1 || videoAggregation.getAggregationType() > 4) {
-            errors.add("汇聚类型无效");
+            errors.add("Invalid aggregation type");
         }
         
         if (videoAggregation.getLayout() == null || videoAggregation.getLayout().trim().isEmpty()) {
-            errors.add("画面布局不能为空");
+            errors.add("Layout cannot be empty");
         }
         
-        // 验证输出参数
+        // Validate output parameters
         if (videoAggregation.getOutputResolution() == null || videoAggregation.getOutputResolution().trim().isEmpty()) {
-            errors.add("输出分辨率不能为空");
+            errors.add("Output resolution cannot be empty");
         }
         
         if (videoAggregation.getOutputFrameRate() == null || videoAggregation.getOutputFrameRate() <= 0) {
-            errors.add("输出帧率必须大于0");
+            errors.add("Output frame rate must be greater than 0");
         }
         
         if (videoAggregation.getOutputBitRate() == null || videoAggregation.getOutputBitRate() <= 0) {
-            errors.add("输出比特率必须大于0");
+            errors.add("Output bitrate must be greater than 0");
         }
         
-        // 验证源流配置
+        // Validate source stream configuration
         if (videoAggregation.getSourceStreamIds() == null || videoAggregation.getSourceStreamIds().trim().isEmpty()) {
-            errors.add("源流ID列表不能为空");
+            errors.add("Source stream ID list cannot be empty");
         }
         
         result.put("valid", errors.isEmpty());

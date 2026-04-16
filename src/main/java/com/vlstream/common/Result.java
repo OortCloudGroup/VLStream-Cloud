@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 /**
- * 通用响应结果封装类
+ * Common Response Result Wrapper Class
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -22,41 +22,41 @@ public class Result<T> implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 响应码
+     * Response code
      */
     private Integer code;
 
     /**
-     * 响应消息
+     * Response message
      */
     private String message;
 
     /**
-     * 响应数据
+     * Response data
      */
     private T data;
 
     /**
-     * 时间戳
+     * Timestamp
      */
     private Long timestamp;
 
     /**
-     * 成功响应
+     * Success response
      */
     public static <T> Result<T> success() {
         return success(null);
     }
 
     /**
-     * 成功响应
+     * Success response
      */
     public static <T> Result<T> success(T data) {
-        return success("操作成功", data);
+        return success("Operation successful", data);
     }
 
     /**
-     * 成功响应
+     * Success response
      */
     public static <T> Result<T> success(String message, T data) {
         Result<T> result = new Result<>();
@@ -68,21 +68,21 @@ public class Result<T> implements Serializable {
     }
 
     /**
-     * 失败响应
+     * Error response
      */
     public static <T> Result<T> error() {
-        return error("操作失败");
+        return error("Operation failed");
     }
 
     /**
-     * 失败响应
+     * Error response
      */
     public static <T> Result<T> error(String message) {
         return error(ResultCode.ERROR.getCode(), message);
     }
 
     /**
-     * 失败响应
+     * Error response
      */
     public static <T> Result<T> error(Integer code, String message) {
         Result<T> result = new Result<>();
@@ -93,14 +93,14 @@ public class Result<T> implements Serializable {
     }
 
     /**
-     * 失败响应
+     * Error response
      */
     public static <T> Result<T> error(ResultCode resultCode) {
         return error(resultCode.getCode(), resultCode.getMessage());
     }
 
     /**
-     * 判断是否成功
+     * Check if the response is successful
      */
     public boolean isSuccess() {
         return ResultCode.SUCCESS.getCode().equals(this.code);

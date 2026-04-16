@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 录制任务配置
+ * Recording Task Configuration
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -34,7 +34,7 @@ public class RecordingTaskConfig {
     private int queueCapacity;
 
     /**
-     * 录制任务线程池
+     * Recording task thread pool
      */
     @Bean
     public ThreadPoolExecutor recordingThreadPool() {
@@ -50,7 +50,7 @@ public class RecordingTaskConfig {
     }
 
     /**
-     * 录制线程工厂
+     * Recording thread factory
      */
     private static class RecordingThreadFactory implements ThreadFactory {
         private final AtomicInteger threadNumber = new AtomicInteger(1);

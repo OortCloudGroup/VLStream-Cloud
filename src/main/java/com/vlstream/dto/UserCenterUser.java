@@ -3,58 +3,58 @@ package com.vlstream.dto;
 import lombok.Data;
 
 /**
- * 统一用户中心用户信息DTO
+ * Unified User Center User Information DTO
  */
 @Data
 public class UserCenterUser {
 
     /**
-     * 用户ID
+     * User ID
      */
     private String userId;
 
     /**
-     * 租户ID
+     * Tenant ID
      */
     private String tenantId;
 
     /**
-     * 登录账号
+     * Login ID
      */
     private String loginId;
 
     /**
-     * 用户姓名
+     * User name
      */
     private String userName;
 
     /**
-     * 登录时间
+     * Login time
      */
     private String loginTime;
 
     /**
-     * 最后请求时间
+     * Last request time
      */
     private String lastRequestTime;
 
     /**
-     * 登录IP
+     * Login IP
      */
     private String loginIP;
 
     /**
-     * 登录类型
+     * Login type
      */
     private Integer loginType;
 
     /**
-     * 客户端类型
+     * Client type
      */
     private String client;
 
     /**
-     * 访问令牌
+     * Access token
      */
     private String accessToken;
 } 

@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 算法Mapper接口
+ * Algorithm Mapper Interface
  * 
  * @author VLStream Team
  * @since 1.0.0
@@ -21,7 +21,7 @@ import java.util.Map;
 public interface AlgorithmMapper extends BaseMapper<Algorithm> {
 
     /**
-     * 分页查询算法列表
+     * Paginated query algorithm list
      */
     @Select("SELECT a.*, r.name as repository_name " +
             "FROM algorithm a " +
@@ -38,37 +38,37 @@ public interface AlgorithmMapper extends BaseMapper<Algorithm> {
                                        @Param("deployStatus") String deployStatus);
 
     /**
-     * 根据仓库ID查询算法列表
+     * Query algorithm list by repository ID
      */
     @Select("SELECT * FROM algorithm WHERE deleted = 0 AND repository_id = #{repositoryId} ORDER BY created_time DESC")
     List<Algorithm> selectByRepositoryId(@Param("repositoryId") Long repositoryId);
 
     /**
-     * 根据分类查询算法列表
+     * Query algorithm list by category
      */
     @Select("SELECT * FROM algorithm WHERE deleted = 0 AND category = #{category} ORDER BY created_time DESC")
     List<Algorithm> selectByCategory(@Param("category") String category);
 
     /**
-     * 统计某仓库下的算法数量
+     * Count algorithms under a repository
      */
     @Select("SELECT COUNT(*) FROM algorithm WHERE deleted = 0 AND repository_id = #{repositoryId}")
     Long countByRepositoryId(@Param("repositoryId") Long repositoryId);
 
     /**
-     * 查询算法分类统计
+     * Query algorithm category statistics
      */
     @Select("SELECT category, COUNT(*) as count FROM algorithm WHERE deleted = 0 GROUP BY category")
     List<Map<String, Object>> selectCategoryStatistics();
 
     /**
-     * 查询算法类型统计
+     * Query algorithm type statistics
      */
     @Select("SELECT type, COUNT(*) as count FROM algorithm WHERE deleted = 0 GROUP BY type")
     List<Map<String, Object>> selectTypeStatistics();
 
     /**
-     * 查询部署状态统计
+     * Query deployment status statistics
      */
     @Select("SELECT deploy_status, COUNT(*) as count FROM algorithm WHERE deleted = 0 GROUP BY deploy_status")
     List<Map<String, Object>> selectDeployStatusStatistics();

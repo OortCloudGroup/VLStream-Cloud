@@ -9,7 +9,7 @@ import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
 /**
- * 标注实例Mapper接口
+ * Annotation Instance Mapper Interface
  * 
  * @author VLStream Team
  * @since 1.0.0
@@ -18,11 +18,11 @@ import java.util.List;
 public interface AnnotationInstanceMapper extends BaseMapper<AnnotationInstance> {
 
     /**
-     * 根据标注项目ID和图片名称查询标注实例
+     * Query annotation instance by annotation project ID and image name
      * 
-     * @param annotationId 标注项目ID
-     * @param imageId 图片id
-     * @return 标注实例列表
+     * @param annotationId Annotation project ID
+     * @param imageId Image ID
+     * @return Annotation instance list
      */
     @Select("SELECT * FROM annotation_instance " +
             "WHERE annotation_id = #{annotationId} AND image_id = #{imageId} AND deleted = 0")
@@ -30,20 +30,20 @@ public interface AnnotationInstanceMapper extends BaseMapper<AnnotationInstance>
                                                               @Param("imageId") String imageId);
 
     /**
-     * 根据标签ID统计使用次数
+     * Count usage by label ID
      * 
-     * @param labelId 标签ID
-     * @return 使用次数
+     * @param labelId Label ID
+     * @return Usage count
      */
     @Select("SELECT COUNT(*) FROM annotation_instance " +
             "WHERE label_id = #{labelId} AND deleted = 0")
     Integer countByLabelId(@Param("labelId") Long labelId);
 
     /**
-     * 根据标注项目ID查询所有标注实例
+     * Query all annotation instances by annotation project ID
      * 
-     * @param annotationId 标注项目ID
-     * @return 标注实例列表
+     * @param annotationId Annotation project ID
+     * @return Annotation instance list
      */
     @Select("SELECT * FROM annotation_instance " +
             "WHERE annotation_id = #{annotationId} AND deleted = 0 " +
@@ -51,11 +51,11 @@ public interface AnnotationInstanceMapper extends BaseMapper<AnnotationInstance>
     List<AnnotationInstance> selectByAnnotationId(@Param("annotationId") Long annotationId);
 
     /**
-     * 根据标注项目ID和标签ID查询标注实例
+     * Query annotation instances by annotation project ID and label ID
      * 
-     * @param annotationId 标注项目ID
-     * @param labelId 标签ID
-     * @return 标注实例列表
+     * @param annotationId Annotation project ID
+     * @param labelId Label ID
+     * @return Annotation instance list
      */
     @Select("SELECT * FROM annotation_instance " +
             "WHERE annotation_id = #{annotationId} AND label_id = #{labelId} AND deleted = 0")

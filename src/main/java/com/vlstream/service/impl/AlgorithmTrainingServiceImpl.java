@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 算法训练任务Service业务层处理
+ * Algorithm Training Task Service Implementation Class
  */
 @Service
 public class AlgorithmTrainingServiceImpl implements AlgorithmTrainingService {
@@ -18,10 +18,10 @@ public class AlgorithmTrainingServiceImpl implements AlgorithmTrainingService {
     private AlgorithmTrainingMapper algorithmTrainingMapper;
 
     /**
-     * 查询算法训练任务
+     * Query algorithm training task
      * 
-     * @param id 算法训练任务主键
-     * @return 算法训练任务
+     * @param id Algorithm training task ID
+     * @return Algorithm training task
      */
     @Override
     public AlgorithmTraining selectAlgorithmTrainingById(Long id) {
@@ -29,10 +29,10 @@ public class AlgorithmTrainingServiceImpl implements AlgorithmTrainingService {
     }
     
     /**
-     * 查询算法训练任务列表
+     * Query algorithm training task list
      * 
-     * @param algorithmTraining 算法训练任务
-     * @return 算法训练任务
+     * @param algorithmTraining Algorithm training task
+     * @return Algorithm training task list
      */
     @Override
     public List<AlgorithmTraining> selectAlgorithmTrainingList(AlgorithmTraining algorithmTraining) {
@@ -40,10 +40,10 @@ public class AlgorithmTrainingServiceImpl implements AlgorithmTrainingService {
     }
     
     /**
-     * 新增算法训练任务
+     * Add algorithm training task
      * 
-     * @param algorithmTraining 算法训练任务
-     * @return 结果
+     * @param algorithmTraining Algorithm training task
+     * @return Result
      */
     @Override
     public int insertAlgorithmTraining(AlgorithmTraining algorithmTraining) {
@@ -51,10 +51,10 @@ public class AlgorithmTrainingServiceImpl implements AlgorithmTrainingService {
     }
     
     /**
-     * 修改算法训练任务
+     * Update algorithm training task
      * 
-     * @param algorithmTraining 算法训练任务
-     * @return 结果
+     * @param algorithmTraining Algorithm training task
+     * @return Result
      */
     @Override
     public int updateAlgorithmTraining(AlgorithmTraining algorithmTraining) {
@@ -62,10 +62,10 @@ public class AlgorithmTrainingServiceImpl implements AlgorithmTrainingService {
     }
     
     /**
-     * 批量删除算法训练任务
+     * Batch delete algorithm training tasks
      * 
-     * @param ids 需要删除的算法训练任务主键
-     * @return 结果
+     * @param ids Algorithm training task IDs to delete
+     * @return Result
      */
     @Override
     public int deleteAlgorithmTrainingByIds(Long[] ids) {
@@ -73,10 +73,10 @@ public class AlgorithmTrainingServiceImpl implements AlgorithmTrainingService {
     }
     
     /**
-     * 删除算法训练任务信息
+     * Delete algorithm training task
      * 
-     * @param id 算法训练任务主键
-     * @return 结果
+     * @param id Algorithm training task ID
+     * @return Result
      */
     @Override
     public int deleteAlgorithmTrainingById(Long id) {

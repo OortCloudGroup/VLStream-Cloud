@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 容器实例Mapper接口
+ * Container Instance Mapper Interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -23,37 +23,37 @@ import java.util.Map;
 public interface ContainerInstanceMapper extends BaseMapper<ContainerInstance> {
 
     /**
-     * 分页查询容器实例（包含关联信息）
+     * Paginated query container instances (including associated information)
      *
-     * @param page 分页参数
-     * @param queryDTO 查询条件
-     * @return 分页结果
+     * @param page Pagination parameters
+     * @param queryDTO Query conditions
+     * @return Pagination result
      */
     IPage<ContainerInstance> selectPageWithDetails(IPage<ContainerInstance> page, @Param("query") ContainerInstanceQueryDTO queryDTO);
 
     /**
-     * 根据ID查询容器实例详情（包含关联信息）
+     * Query container instance details by ID (including associated information)
      *
-     * @param id 容器实例ID
-     * @return 容器实例详情
+     * @param id Container instance ID
+     * @return Container instance details
      */
     ContainerInstance selectByIdWithDetails(@Param("id") Long id);
 
     /**
-     * 根据容器ID查询容器实例
+     * Query container instance by container ID
      *
-     * @param containerId 容器ID
-     * @return 容器实例
+     * @param containerId Container ID
+     * @return Container instance
      */
     @Select("SELECT * FROM container_instance WHERE container_id = #{containerId} AND deleted = 0")
     ContainerInstance selectByContainerId(@Param("containerId") String containerId);
 
     /**
-     * 根据实例名称查询容器实例（用于重名检查）
+     * Query container instance by instance name (for duplicate name check)
      *
-     * @param instanceName 实例名称
-     * @param excludeId 排除的ID（更新时使用）
-     * @return 容器实例
+     * @param instanceName Instance name
+     * @param excludeId Exclude ID (used for updates)
+     * @return Container instance
      */
     @Select("<script>" +
             "SELECT * FROM container_instance WHERE instance_name = #{instanceName} AND deleted = 0" +
@@ -62,33 +62,33 @@ public interface ContainerInstanceMapper extends BaseMapper<ContainerInstance> {
     ContainerInstance selectByInstanceName(@Param("instanceName") String instanceName, @Param("excludeId") Long excludeId);
 
     /**
-     * 根据算法ID查询容器实例列表
+     * Query container instance list by algorithm ID
      *
-     * @param algorithmId 算法ID
-     * @return 容器实例列表
+     * @param algorithmId Algorithm ID
+     * @return Container instance list
      */
     @Select("SELECT * FROM container_instance WHERE algorithm_id = #{algorithmId} AND deleted = 0 ORDER BY created_time DESC")
     List<ContainerInstance> selectByAlgorithmId(@Param("algorithmId") Long algorithmId);
 
     /**
-     * 根据状态查询容器实例列表
+     * Query container instance list by status
      *
-     * @param instanceStatus 实例状态
-     * @return 容器实例列表
+     * @param instanceStatus Instance status
+     * @return Container instance list
      */
     @Select("SELECT * FROM container_instance WHERE instance_status = #{instanceStatus} AND deleted = 0")
     List<ContainerInstance> selectByStatus(@Param("instanceStatus") String instanceStatus);
 
     /**
-     * 更新容器实例状态
+     * Update container instance status
      *
-     * @param id 容器实例ID
-     * @param instanceStatus 实例状态
-     * @param healthStatus 健康状态
-     * @param containerId 容器ID
-     * @param startTime 启动时间
-     * @param stopTime 停止时间
-     * @return 更新行数
+     * @param id Container instance ID
+     * @param instanceStatus Instance status
+     * @param healthStatus Health status
+     * @param containerId Container ID
+     * @param startTime Start time
+     * @param stopTime Stop time
+     * @return Updated rows
      */
     @Update("UPDATE container_instance SET instance_status = #{instanceStatus}, " +
             "health_status = #{healthStatus}, container_id = #{containerId}, " +
@@ -102,13 +102,13 @@ public interface ContainerInstanceMapper extends BaseMapper<ContainerInstance> {
                            @Param("stopTime") LocalDateTime stopTime);
 
     /**
-     * 更新容器监控数据
+     * Update container monitoring data
      *
-     * @param id 容器实例ID
-     * @param cpuUsage CPU使用率
-     * @param memoryUsage 内存使用率
-     * @param gpuUsage GPU使用率
-     * @return 更新行数
+     * @param id Container instance ID
+     * @param cpuUsage CPU usage
+     * @param memoryUsage Memory usage
+     * @param gpuUsage GPU usage
+     * @return Updated rows
      */
     @Update("UPDATE container_instance SET cpu_usage = #{cpuUsage}, " +
             "memory_usage = #{memoryUsage}, gpu_usage = #{gpuUsage}, updated_time = NOW() " +
@@ -119,26 +119,26 @@ public interface ContainerInstanceMapper extends BaseMapper<ContainerInstance> {
                            @Param("gpuUsage") java.math.BigDecimal gpuUsage);
 
     /**
-     * 增加重启次数
+     * Increment restart count
      *
-     * @param id 容器实例ID
-     * @return 更新行数
+     * @param id Container instance ID
+     * @return Updated rows
      */
     @Update("UPDATE container_instance SET restart_count = restart_count + 1, updated_time = NOW() WHERE id = #{id}")
     int increaseRestartCount(@Param("id") Long id);
 
     /**
-     * 获取容器实例统计信息
+     * Get container instance statistics
      *
-     * @return 统计结果
+     * @return Statistics result
      */
     Map<String, Object> selectStatistics();
 
     /**
-     * 批量删除容器实例
+     * Batch delete container instances
      *
-     * @param ids 容器实例ID列表
-     * @return 删除行数
+     * @param ids Container instance ID list
+     * @return Deleted rows
      */
     @Update("<script>" +
             "UPDATE container_instance SET deleted = 1, updated_time = NOW() WHERE id IN " +

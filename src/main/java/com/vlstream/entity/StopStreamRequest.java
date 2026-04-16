@@ -1,7 +1,7 @@
 package com.vlstream.entity;
 
 /**
- * 停止流转换请求实体
+ * Stop Stream Conversion Request Entity
  */
 public class StopStreamRequest {
     private String deviceId;

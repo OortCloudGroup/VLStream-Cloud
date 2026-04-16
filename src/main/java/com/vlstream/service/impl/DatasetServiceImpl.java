@@ -11,7 +11,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * 数据集服务实现类
+ * Dataset Service Implementation Class
  * 
  * @author VLStream Team
  * @since 1.0.0
@@ -35,27 +35,27 @@ public class DatasetServiceImpl implements DatasetService {
         Session session = null;
         
         try {
-            log.info("尝试连接服务器：{}@{}", username, host);
+            log.info("Attempting to connect to server: {}@{}", username, host);
             
-            // 创建SSH会话
+            // Create SSH session
             session = jsch.getSession(username, host, sshPort);
             session.setPassword(password);
             session.setConfig("StrictHostKeyChecking", "no");
-            session.connect(30000); // 30秒超时
+            session.connect(30000); // 30 seconds timeout
             
-            log.info("SSH连接成功：{}@{}", username, host);
+            log.info("SSH connection successful: {}@{}", username, host);
             
-            // 测试SFTP连接
+            // Test SFTP connection
             Channel channel = session.openChannel("sftp");
             channel.connect(30000);
             ChannelSftp sftp = (ChannelSftp) channel;
             
-            // 尝试访问指定路径
+            // Try to access specified path
             try {
                 sftp.cd(path);
-                log.info("路径访问成功：{}", path);
+                log.info("Path access successful: {}", path);
             } catch (SftpException e) {
-                log.warn("路径不存在，尝试创建：{}", path);
+                log.warn("Path does not exist, attempting to create: {}", path);
                 createRemoteDirectory(sftp, path);
             }
             
@@ -63,7 +63,7 @@ public class DatasetServiceImpl implements DatasetService {
             return true;
             
         } catch (Exception e) {
-            log.error("连接服务器失败：{}", e.getMessage());
+            log.error("Failed to connect to server: {}", e.getMessage());
             return false;
         } finally {
             if (session != null && session.isConnected()) {
@@ -108,12 +108,12 @@ public class DatasetServiceImpl implements DatasetService {
                 }
             }
             
-            log.info("获取到 {} 个文件", fileList.size());
+            log.info("Retrieved {} files", fileList.size());
             return fileList;
             
         } catch (Exception e) {
-            log.error("获取文件列表失败：{}", e.getMessage());
-            throw new RuntimeException("获取文件列表失败：" + e.getMessage());
+            log.error("Failed to get file list: {}", e.getMessage());
+            throw new RuntimeException("Failed to get file list: " + e.getMessage());
         } finally {
             if (sftp != null && sftp.isConnected()) {
                 sftp.disconnect();
@@ -159,12 +159,12 @@ public class DatasetServiceImpl implements DatasetService {
             inputStream.close();
             outputStream.close();
             
-            log.info("成功读取文件内容：{}", filename);
+            log.info("Successfully read file content: {}", filename);
             return content;
             
         } catch (Exception e) {
-            log.error("读取文件内容失败：{}", e.getMessage());
-            throw new RuntimeException("读取文件内容失败：" + e.getMessage());
+            log.error("Failed to read file content: {}", e.getMessage());
+            throw new RuntimeException("Failed to read file content: " + e.getMessage());
         } finally {
             if (sftp != null && sftp.isConnected()) {
                 sftp.disconnect();
@@ -213,11 +213,11 @@ public class DatasetServiceImpl implements DatasetService {
             inputStream.close();
             outputStream.flush();
             
-            log.info("文件下载成功：{}", filename);
+            log.info("File download successful: {}", filename);
             
         } catch (Exception e) {
-            log.error("文件下载失败：{}", e.getMessage());
-            throw new RuntimeException("文件下载失败：" + e.getMessage());
+            log.error("Failed to download file: {}", e.getMessage());
+            throw new RuntimeException("Failed to download file: " + e.getMessage());
         } finally {
             if (sftp != null && sftp.isConnected()) {
                 sftp.disconnect();
@@ -229,10 +229,10 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
     /**
-     * 创建远程目录
+     * Create remote directory
      * 
-     * @param sftp SFTP通道
-     * @param path 目录路径
+     * @param sftp SFTP channel
+     * @param path Directory path
      */
     private void createRemoteDirectory(ChannelSftp sftp, String path) throws SftpException {
         String[] dirs = path.split("/");
@@ -247,20 +247,20 @@ public class DatasetServiceImpl implements DatasetService {
             
             try {
                 sftp.cd(currentPath);
-                log.debug("目录已存在：{}", currentPath);
+                log.debug("Directory already exists: {}", currentPath);
             } catch (SftpException e) {
-                // 目录不存在，创建它
+                // Directory does not exist, create it
                 sftp.mkdir(currentPath);
-                log.info("创建远程目录：{}", currentPath);
+                log.info("Created remote directory: {}", currentPath);
             }
         }
     }
 
     /**
-     * 格式化文件大小
+     * Format file size
      * 
-     * @param size 文件大小（字节）
-     * @return 格式化后的文件大小
+     * @param size File size (bytes)
+     * @return Formatted file size
      */
     private String formatFileSize(long size) {
         if (size < 1024) {

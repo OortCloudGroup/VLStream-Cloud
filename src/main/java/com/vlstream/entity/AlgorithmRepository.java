@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDateTime;
 
 /**
- * 算法仓库实体类
+ * Algorithm Repository Entity Class
  * 
  * @author VLStream Team
  * @since 1.0.0
@@ -18,67 +18,67 @@ import java.time.LocalDateTime;
 public class AlgorithmRepository {
 
     /**
-     * 主键ID
+     * Primary key ID
      */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     /**
-     * 算法仓库名称
+     * Algorithm repository name
      */
     @TableField("name")
     private String name;
 
     /**
-     * 备注说明
+     * Remark
      */
     @TableField("remark")
     private String remark;
 
     /**
-     * 拥有算法数量
+     * Number of algorithms
      */
     @TableField("algorithm_count")
     private Integer algorithmCount;
 
     /**
-     * 仓库类型：basic-基础预置, extended-扩展
+     * Repository type: basic-built-in, extended-extended
      */
     @TableField("repository_type")
     private String repositoryType;
 
     /**
-     * 状态：enabled-启用, disabled-禁用
+     * Status: enabled-enabled, disabled-disabled
      */
     @TableField("status")
     private String status;
 
     /**
-     * 创建人
+     * Creator
      */
     @TableField(value = "created_by", fill = FieldFill.INSERT)
     private String createdBy;
 
     /**
-     * 创建时间
+     * Creation time
      */
     @TableField(value = "created_time", fill = FieldFill.INSERT)
     private LocalDateTime createdTime;
 
     /**
-     * 更新人
+     * Updater
      */
     @TableField(value = "updated_by", fill = FieldFill.INSERT_UPDATE)
     private String updatedBy;
 
     /**
-     * 更新时间
+     * Update time
      */
     @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedTime;
 
     /**
-     * 是否删除：0-未删除，1-已删除
+     * Deleted: 0-Not deleted, 1-Deleted
      */
     @TableField("deleted")
     @TableLogic

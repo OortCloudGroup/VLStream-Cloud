@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 算法模型实体类
+ * Algorithm Model Entity Class
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -19,189 +19,189 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("algorithm_model")
-@ApiModel(value = "AlgorithmModel对象", description = "算法模型")
+@ApiModel(value = "AlgorithmModel object", description = "Algorithm model")
 public class AlgorithmModel {
 
-    @ApiModelProperty(value = "模型ID")
+    @ApiModelProperty(value = "Model ID")
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @ApiModelProperty(value = "模型名称")
+    @ApiModelProperty(value = "Model name")
     @TableField("model_name")
     private String modelName;
 
-    @ApiModelProperty(value = "算法ID")
+    @ApiModelProperty(value = "Algorithm ID")
     @TableField("algorithm_id")
     private Long algorithmId;
 
-    @ApiModelProperty(value = "训练任务ID")
+    @ApiModelProperty(value = "Training task ID")
     @TableField("training_id")
     private Long trainingId;
 
-    @ApiModelProperty(value = "模型版本")
+    @ApiModelProperty(value = "Model version")
     @TableField("version")
     private Integer version;
 
-    @ApiModelProperty(value = "模型格式：ONNX,PyTorch,TensorFlow")
+    @ApiModelProperty(value = "Model format: ONNX, PyTorch, TensorFlow")
     @TableField("model_format")
     private String modelFormat;
 
-    @ApiModelProperty(value = "模型大小")
+    @ApiModelProperty(value = "Model size")
     @TableField("model_size")
     private String modelSize;
 
-    @ApiModelProperty(value = "模型文件路径")
+    @ApiModelProperty(value = "Model file path")
     @TableField("model_path")
     private String modelPath;
 
-    @ApiModelProperty(value = "模型准确率")
+    @ApiModelProperty(value = "Model accuracy")
     @TableField("accuracy")
     private BigDecimal accuracy;
 
-    @ApiModelProperty(value = "状态：draft-草稿,testing-测试中,published-已发布")
+    @ApiModelProperty(value = "Status: draft-draft, testing-testing, published-published")
     @TableField("status")
     private String status;
 
-    @ApiModelProperty(value = "模型描述")
+    @ApiModelProperty(value = "Model description")
     @TableField("description")
     private String description;
 
-    @ApiModelProperty(value = "下载次数")
+    @ApiModelProperty(value = "Download count")
     @TableField("download_count")
     private Integer downloadCount;
 
-    @ApiModelProperty(value = "部署次数")
+    @ApiModelProperty(value = "Deployment count")
     @TableField("deploy_count")
     private Integer deployCount;
 
-    @ApiModelProperty(value = "发布时间")
+    @ApiModelProperty(value = "Publish time")
     @TableField("publish_time")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime publishTime;
 
-    @ApiModelProperty(value = "创建人")
+    @ApiModelProperty(value = "Creator")
     @TableField(value = "created_by", fill = FieldFill.INSERT)
     private Long createdBy;
 
-    @ApiModelProperty(value = "创建时间")
+    @ApiModelProperty(value = "Creation time")
     @TableField(value = "created_time", fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createdTime;
 
-    @ApiModelProperty(value = "更新时间")
+    @ApiModelProperty(value = "Update time")
     @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime updatedTime;
 
-    @ApiModelProperty(value = "是否删除：0-否，1-是")
+    @ApiModelProperty(value = "Deleted: 0-No, 1-Yes")
     @TableField("deleted")
     @TableLogic
     private Integer deleted;
 
-    // 虚拟字段，用于关联查询
-    @ApiModelProperty(value = "算法名称")
+    // Virtual fields for associated queries
+    @ApiModelProperty(value = "Algorithm name")
     @TableField(exist = false)
     private String algorithmName;
 
-    @ApiModelProperty(value = "训练任务名称")
+    @ApiModelProperty(value = "Training task name")
     @TableField(exist = false)
     private String trainingTaskName;
 
-    @ApiModelProperty(value = "创建人姓名")
+    @ApiModelProperty(value = "Creator name")
     @TableField(exist = false)
     private String createdByName;
 
-    @ApiModelProperty(value = "状态描述")
+    @ApiModelProperty(value = "Status description")
     @TableField(exist = false)
     private String statusDesc;
 
-    // 业务逻辑方法
+    // Business logic methods
 
     /**
-     * 获取状态描述
+     * Get status description
      */
     public String getStatusDesc() {
         if (status == null) {
-            return "未知";
+            return "Unknown";
         }
         switch (status) {
             case "draft":
-                return "草稿";
+                return "Draft";
             case "testing":
-                return "测试中";
+                return "Testing";
             case "published":
-                return "已发布";
+                return "Published";
             default:
-                return "未知";
+                return "Unknown";
         }
     }
 
     /**
-     * 检查模型是否可以发布
+     * Check if model can be published
      */
     public boolean canPublish() {
         return "draft".equals(status) || "testing".equals(status);
     }
 
     /**
-     * 检查模型是否可以删除
+     * Check if model can be deleted
      */
     public boolean canDelete() {
         return "draft".equals(status) || "testing".equals(status);
     }
 
     /**
-     * 检查模型是否可以下载
+     * Check if model can be downloaded
      */
     public boolean canDownload() {
         return "published".equals(status);
     }
 
     /**
-     * 检查模型是否可以部署
+     * Check if model can be deployed
      */
     public boolean canDeploy() {
         return "published".equals(status);
     }
 
     /**
-     * 增加下载次数
+     * Increase download count
      */
     public void increaseDownloadCount() {
         this.downloadCount = (this.downloadCount == null ? 0 : this.downloadCount) + 1;
     }
 
     /**
-     * 增加部署次数
+     * Increase deployment count
      */
     public void increaseDeployCount() {
         this.deployCount = (this.deployCount == null ? 0 : this.deployCount) + 1;
     }
 
     /**
-     * 获取格式化的准确率
+     * Get formatted accuracy
      */
     public String getFormattedAccuracy() {
         if (accuracy == null) {
-            return "未知";
+            return "Unknown";
         }
         return accuracy.multiply(new BigDecimal("100")).setScale(2, BigDecimal.ROUND_HALF_UP) + "%";
     }
 
     /**
-     * 获取模型格式描述
+     * Get model format description
      */
     public String getModelFormatDesc() {
         if (modelFormat == null) {
-            return "未知";
+            return "Unknown";
         }
         switch (modelFormat.toLowerCase()) {
             case "onnx":
-                return "ONNX格式";
+                return "ONNX format";
             case "pytorch":
-                return "PyTorch格式";
+                return "PyTorch format";
             case "tensorflow":
-                return "TensorFlow格式";
+                return "TensorFlow format";
             default:
                 return modelFormat;
         }

@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 视频录制记录服务实现类
+ * Video Recording Record Service Implementation
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -56,7 +56,7 @@ public class VideoRecordServiceImpl extends ServiceImpl<VideoRecordMapper, Video
     public IPage<VideoRecord> pageVideoRecords(Page<VideoRecord> page, Long deviceId, String deviceName, 
                                                String recordStatus, String quality, LocalDate startDate, 
                                                LocalDate endDate, LocalDateTime startTime, LocalDateTime endTime) {
-        // 临时实现：使用基础查询方法
+        // Temporary implementation: Use basic query method
         return page(page);
     }
 
@@ -85,7 +85,7 @@ public class VideoRecordServiceImpl extends ServiceImpl<VideoRecordMapper, Video
         record.setRecordEndTime(now.plusSeconds(duration));
         record.setRecordDate(now.toLocalDate());
         
-        // 生成文件名和路径
+        // Generate file name and path
         String dateStr = now.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
         String fileName = String.format("%s_%s_%s.mp4", 
                                        deviceName, 
@@ -98,32 +98,32 @@ public class VideoRecordServiceImpl extends ServiceImpl<VideoRecordMapper, Video
         
         record.setCreatedBy("system");
         
-        // 创建目录
+        // Create directory
         createDirectoryIfNotExists(filePath);
         
         if (save(record)) {
-            log.info("开始录制视频: 设备ID={}, 设备名称={}, 录制时长={}秒, 文件路径={}", 
+            log.info("Start recording video: deviceId={}, deviceName={}, duration={} seconds, filePath={}", 
                     deviceId, deviceName, duration, filePath);
             
-            // 立即启动录制任务
+            // Start recording task immediately
             try {
                 DeviceInfo device = deviceInfoService.getById(deviceId);
                 if (device != null) {
                     recordingTaskService.performManualRecording(record, duration, device);
-                    log.info("手动录制任务已启动: recordId={}, deviceId={}", record.getId(), deviceId);
+                    log.info("Manual recording task started: recordId={}, deviceId={}", record.getId(), deviceId);
                 } else {
-                    log.error("设备不存在，无法启动录制: deviceId={}", deviceId);
-                    markRecordingFailed(record.getId(), "设备不存在");
+                    log.error("Device does not exist, cannot start recording: deviceId={}", deviceId);
+                    markRecordingFailed(record.getId(), "Device does not exist");
                 }
             } catch (Exception e) {
-                log.error("启动录制任务失败: recordId={}, deviceId={}, error={}", record.getId(), deviceId, e.getMessage(), e);
-                markRecordingFailed(record.getId(), "启动录制任务失败: " + e.getMessage());
+                log.error("Failed to start recording task: recordId={}, deviceId={}, error={}", record.getId(), deviceId, e.getMessage(), e);
+                markRecordingFailed(record.getId(), "Failed to start recording task: " + e.getMessage());
             }
             
             return record;
         }
         
-        log.error("创建录制记录失败: 设备ID={}, 设备名称={}", deviceId, deviceName);
+        log.error("Failed to create recording record: deviceId={}, deviceName={}", deviceId, deviceName);
         return null;
     }
 
@@ -135,41 +135,41 @@ public class VideoRecordServiceImpl extends ServiceImpl<VideoRecordMapper, Video
             return false;
         }
         
-        // 如果录制已经完成或失败，直接返回成功
+        // If recording is already completed or failed, return success directly
         if (VideoRecord.STATUS_COMPLETED.equals(record.getRecordStatus()) || 
             VideoRecord.STATUS_FAILED.equals(record.getRecordStatus())) {
-            log.info("录制已经完成或失败，直接返回成功: recordId={}, status={}", recordId, record.getRecordStatus());
+            log.info("Recording is already completed or failed, returning success directly: recordId={}, status={}", recordId, record.getRecordStatus());
             return true;
         }
         
         if (!VideoRecord.STATUS_RECORDING.equals(record.getRecordStatus())) {
-            log.warn("录制记录状态不是录制中: recordId={}, status={}", recordId, record.getRecordStatus());
+            log.warn("Recording record status is not recording: recordId={}, status={}", recordId, record.getRecordStatus());
             return false;
         }
 
-        // 停止实际的录制进程
+        // Stop actual recording process
         try {
             recordingTaskService.stopManualRecording(record.getDeviceId(), recordId);
         } catch (Exception e) {
-            log.warn("停止录制进程时发生异常: recordId={}, error={}", recordId, e.getMessage());
+            log.warn("Exception occurred while stopping recording process: recordId={}, error={}", recordId, e.getMessage());
         }
         
-        // 计算实际录制时长
+        // Calculate actual recording duration
         LocalDateTime endTime = LocalDateTime.now();
         int actualDuration = record.getRecordStartTime() != null ? 
             (int) java.time.Duration.between(record.getRecordStartTime(), endTime).getSeconds() : 0;
         
         record.setRecordStatus(VideoRecord.STATUS_COMPLETED);
         record.setRecordEndTime(endTime);
-        record.setDuration(actualDuration); // 更新为实际录制时长
+        record.setDuration(actualDuration); // Update to actual recording duration
         record.setUpdatedBy("system");
         
         boolean success = updateById(record);
         if (success) {
-            log.info("停止录制视频: recordId={}, 设备ID={}, 实际时长={}秒, 文件路径={}", 
+            log.info("Stop recording video: recordId={}, deviceId={}, actual duration={} seconds, filePath={}", 
                     recordId, record.getDeviceId(), actualDuration, record.getFilePath());
         } else {
-            log.error("停止录制失败: recordId={}", recordId);
+            log.error("Failed to stop recording: recordId={}", recordId);
         }
         
         return success;
@@ -193,10 +193,10 @@ public class VideoRecordServiceImpl extends ServiceImpl<VideoRecordMapper, Video
         
         boolean success = updateById(record);
         if (success) {
-            log.info("完成录制视频: recordId={}, 设备ID={}, 文件大小={}字节, 时长={}秒", 
+            log.info("Complete recording video: recordId={}, deviceId={}, file size={} bytes, duration={} seconds", 
                     recordId, record.getDeviceId(), fileSize, duration);
         } else {
-            log.error("完成录制失败: recordId={}", recordId);
+            log.error("Failed to complete recording: recordId={}", recordId);
         }
         
         return success;
@@ -217,10 +217,10 @@ public class VideoRecordServiceImpl extends ServiceImpl<VideoRecordMapper, Video
         
         boolean success = updateById(record);
         if (success) {
-            log.info("标记录制失败: recordId={}, 设备ID={}, 错误信息={}", 
+            log.info("Mark recording failed: recordId={}, deviceId={}, error message={}", 
                     recordId, record.getDeviceId(), errorMessage);
         } else {
-            log.error("标记录制失败时更新失败: recordId={}", recordId);
+            log.error("Failed to update when marking recording failed: recordId={}", recordId);
         }
         
         return success;

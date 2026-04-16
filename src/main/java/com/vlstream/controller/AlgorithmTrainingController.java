@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 算法训练管理Controller
+ * Algorithm Training Management Controller
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -46,7 +46,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/algorithm-training")
 @RequiredArgsConstructor
-@Api(tags = "算法训练管理")
+@Api(tags = "Algorithm Training Management")
 public class AlgorithmTrainingController {
 
     private final AlgorithmTrainingService algorithmTrainingService;
@@ -70,15 +70,15 @@ public class AlgorithmTrainingController {
     private String sshPassword;
 
     /**
-     * 分页查询训练任务列表
+     * Page query training task list
      */
     @GetMapping("/page")
-    @Operation(summary = "分页查询训练任务列表", description = "根据条件分页查询训练任务")
+    @Operation(summary = "Query training task list with pagination", description = "Query training tasks with pagination based on conditions")
     public Result<IPage<AlgorithmTraining>> getTrainingPage(
-            @Parameter(description = "当前页", example = "1") @RequestParam(defaultValue = "1") Integer current,
-            @Parameter(description = "每页大小", example = "10") @RequestParam(defaultValue = "10") Integer size,
-            @Parameter(description = "任务名称") @RequestParam(required = false) String taskName,
-            @Parameter(description = "训练类型") @RequestParam(required = false) String trainType) {
+            @Parameter(description = "Current page", example = "1") @RequestParam(defaultValue = "1") Integer current,
+            @Parameter(description = "Page size", example = "10") @RequestParam(defaultValue = "10") Integer size,
+            @Parameter(description = "Task name") @RequestParam(required = false) String taskName,
+            @Parameter(description = "Training type") @RequestParam(required = false) String trainType) {
 
         log.info("分页查询训练任务列表，参数：current={}, size={}, taskName={}, trainType={}",
                 current, size, taskName, trainType);
@@ -99,12 +99,12 @@ public class AlgorithmTrainingController {
     }
 
     /**
-     * 根据ID查询训练任务详情
+     * Query training task details by ID
      */
     @GetMapping("/{id}")
-    @Operation(summary = "查询训练任务详情", description = "根据ID获取训练任务详细信息")
+    @Operation(summary = "Query training task details", description = "Get training task details by ID")
     public Result<AlgorithmTraining> getTrainingById(
-            @Parameter(description = "训练任务ID", example = "1") @PathVariable @NotNull Long id) {
+            @Parameter(description = "Training task ID", example = "1") @PathVariable @NotNull Long id) {
 
         log.info("查询训练任务详情：ID={}", id);
 
@@ -117,10 +117,10 @@ public class AlgorithmTrainingController {
     }
 
     /**
-     * 新增训练任务
+     * Add training task
      */
     @PostMapping
-    @Operation(summary = "创建训练任务", description = "新增训练任务")
+    @Operation(summary = "Create training task", description = "Add new training task")
     public Result<String> createTraining(@Valid @RequestBody AlgorithmTraining training) {
 
         training.setTrainStatus("pending");
@@ -135,12 +135,12 @@ public class AlgorithmTrainingController {
     }
 
     /**
-     * 修改训练任务
+     * Modify training task
      */
     @PutMapping("/{id}")
-    @Operation(summary = "更新训练任务", description = "根据ID更新训练任务信息")
+    @Operation(summary = "Update training task", description = "Update training task information by ID")
     public Result<String> updateTraining(
-            @Parameter(description = "训练任务ID", example = "1") @PathVariable @NotNull Long id,
+            @Parameter(description = "Training task ID", example = "1") @PathVariable @NotNull Long id,
             @Valid @RequestBody AlgorithmTraining training) {
 
         log.info("更新训练任务：ID={}, 数据={}", id, training);
@@ -155,12 +155,12 @@ public class AlgorithmTrainingController {
     }
 
     /**
-     * 更新训练状态
+     * Update training status
      */
     @PutMapping("/{id}/status")
-    @Operation(summary = "更新训练状态", description = "更新指定训练任务的状态")
+    @Operation(summary = "Update training status", description = "Update status of specified training task")
     public Result<String> updateTrainingStatus(
-            @Parameter(description = "训练任务ID", example = "1") @PathVariable @NotNull Long id,
+            @Parameter(description = "Training task ID", example = "1") @PathVariable @NotNull Long id,
             @RequestBody Map<String, String> statusUpdate) {
 
         String trainStatus = statusUpdate.get("trainStatus");
@@ -190,12 +190,12 @@ public class AlgorithmTrainingController {
     }
 
     /**
-     * 删除训练任务
+     * Delete training task
      */
     @DeleteMapping("/{id}")
-    @Operation(summary = "删除训练任务", description = "根据ID删除训练任务")
+    @Operation(summary = "Delete training task", description = "Delete training task by ID")
     public Result<String> deleteTraining(
-            @Parameter(description = "训练任务ID", example = "1") @PathVariable @NotNull Long id) {
+            @Parameter(description = "Training task ID", example = "1") @PathVariable @NotNull Long id) {
 
         log.info("删除训练任务：ID={}", id);
 
@@ -208,10 +208,10 @@ public class AlgorithmTrainingController {
     }
 
     /**
-     * 批量删除训练任务
+     * Batch delete training tasks
      */
     @DeleteMapping("/batch")
-    @Operation(summary = "批量删除训练任务", description = "根据ID列表批量删除训练任务")
+    @Operation(summary = "Batch delete training tasks", description = "Batch delete training tasks by ID list")
     public Result<String> batchDeleteTraining(@RequestBody List<Long> ids) {
 
         log.info("批量删除训练任务：IDs={}", ids);
@@ -229,17 +229,17 @@ public class AlgorithmTrainingController {
     }
 
     /**
-     * 开始训练任务
+     * Start training task
      */
     @PostMapping("/{id}/start")
-    @Operation(summary = "开始训练任务", description = "开始指定的训练任务")
+    @Operation(summary = "Start training task", description = "Start specified training task")
     public Result<StartResult> startTraining(
-            @Parameter(description = "训练任务ID", example = "1") @PathVariable @NotNull Long id,
-            @Parameter(description = "数据集路径") @RequestParam(required = false) String datasetPath,
-            @Parameter(description = "训练轮次") @RequestParam(defaultValue = "10") Integer epochs,
-            @Parameter(description = "批大小") @RequestParam(defaultValue = "16") Integer batchSize,
-            @Parameter(description = "图像尺寸") @RequestParam(required = false) Integer imgSize,
-            @Parameter(description = "额外训练参数") @RequestParam(required = false) String extraParams) {
+            @Parameter(description = "Training task ID", example = "1") @PathVariable @NotNull Long id,
+            @Parameter(description = "Dataset path") @RequestParam(required = false) String datasetPath,
+            @Parameter(description = "Training epochs") @RequestParam(defaultValue = "10") Integer epochs,
+            @Parameter(description = "Batch size") @RequestParam(defaultValue = "16") Integer batchSize,
+            @Parameter(description = "Image size") @RequestParam(required = false) Integer imgSize,
+            @Parameter(description = "Extra training parameters") @RequestParam(required = false) String extraParams) {
 
         log.info("=== 开始训练任务 ===");
         log.info("训练任务ID: {}", id);
@@ -302,10 +302,10 @@ public class AlgorithmTrainingController {
     }
 
     /**
-     * 检查远程服务器上的模型文件
+     * Check model files on remote server
      */
     @GetMapping("/check-remote-files")
-    @Operation(summary = "检查远程服务器文件", description = "检查远程服务器上的模型文件")
+    @Operation(summary = "Check remote server files", description = "Check model files on remote server")
     public Result<String> checkRemoteFiles() {
         try {
             // 使用SSH服务检查远程文件
@@ -331,10 +331,10 @@ public class AlgorithmTrainingController {
     }
 
     /**
-     * 诊断远程服务器conda环境
+     * Diagnose remote server conda environment
      */
     @GetMapping("/diagnose-conda")
-    @Operation(summary = "诊断conda环境", description = "检查远程服务器上的conda安装情况")
+    @Operation(summary = "Diagnose conda environment", description = "Check conda installation on remote server")
     public Result<String> diagnoseConda() {
         try {
             // 构建诊断命令
@@ -379,11 +379,11 @@ public class AlgorithmTrainingController {
     }
 
     /**
-     * 停止训练任务
+     * Stop training task
      */
     @PostMapping("/{id}/stop")
-    @Operation(summary = "停止训练任务", description = "停止指定的训练任务")
-    public Result<String> stopTraining(@Parameter(description = "训练任务ID", example = "1") @PathVariable @NotNull Long id) {
+    @Operation(summary = "Stop training task", description = "Stop specified training task")
+    public Result<String> stopTraining(@Parameter(description = "Training task ID", example = "1") @PathVariable @NotNull Long id) {
 
         log.info("停止训练任务: ID={}", id);
         AlgorithmTraining training = algorithmTrainingService.selectAlgorithmTrainingById(id);
@@ -404,12 +404,12 @@ public class AlgorithmTrainingController {
     }
 
     /**
-     * 获取训练日志
+     * Get training logs
      */
     @GetMapping("/{id}/logs")
-    @Operation(summary = "获取训练状态", description = "获取指定训练任务的日志")
+    @Operation(summary = "Get training logs", description = "Get logs of specified training task")
     public Result<LogResult> getTrainingLogs(
-            @Parameter(description = "训练任务ID", example = "1") @PathVariable @NotNull Long id,
+            @Parameter(description = "Training task ID", example = "1") @PathVariable @NotNull Long id,
             @RequestParam(value = "logPath", required = false) String logPath,
             @RequestParam(value = "lines", defaultValue = "200") Integer lines) {
 
@@ -430,12 +430,12 @@ public class AlgorithmTrainingController {
     }
 
     /**
-     * 获取训练状态
+     * Get training status
      */
     @GetMapping("/{id}/status")
-    @Operation(summary = "获取训练状态", description = "获取指定训练任务的状态")
+    @Operation(summary = "Get training status", description = "Get status of specified training task")
     public Result<TrainingProgress> getTrainingStatus(
-            @Parameter(description = "训练任务ID", example = "1") @PathVariable @NotNull Long id,
+            @Parameter(description = "Training task ID", example = "1") @PathVariable @NotNull Long id,
             @RequestParam(value = "logPath", required = false) String logPath) {
 
         log.info("获取训练状态：ID={}?logPath={}", id, logPath);
@@ -509,7 +509,7 @@ public class AlgorithmTrainingController {
     }
 
     @GetMapping("/download-model")
-    @Operation(summary = "下载模型文件", description = "从远程服务器下载训练好的模型文件")
+    @Operation(summary = "Download model file", description = "Download trained model file from remote server")
     public void downloadModel(@RequestParam(required = false) String id, @RequestParam String path, HttpServletResponse response) {
         try {
             log.info("下载模型文件: {}", path);

@@ -18,7 +18,7 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
- * 算法仓库控制器
+ * Algorithm Repository Controller
  * 
  * @author VLStream Team
  * @since 1.0.0
@@ -28,22 +28,22 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/algorithm-repository")
 @RequiredArgsConstructor
-@Api(tags = "算法仓库管理")
+@Api(tags = "Algorithm Repository Management")
 public class AlgorithmRepositoryController {
 
     private final AlgorithmRepositoryService algorithmRepositoryService;
 
     /**
-     * 分页查询算法仓库列表
+     * Page query algorithm repository list
      */
     @GetMapping("/page")
-    @Operation(summary = "分页查询算法仓库列表", description = "根据条件分页查询算法仓库")
+    @Operation(summary = "Query algorithm repository list with pagination", description = "Query algorithm repositories with pagination based on conditions")
     public Result<IPage<AlgorithmRepository>> getRepositoryPage(
-            @Parameter(description = "当前页", example = "1") @RequestParam(defaultValue = "1") Integer current,
-            @Parameter(description = "每页大小", example = "10") @RequestParam(defaultValue = "10") Integer size,
-            @Parameter(description = "仓库名称") @RequestParam(required = false) String name,
-            @Parameter(description = "仓库类型") @RequestParam(required = false) String repositoryType,
-            @Parameter(description = "状态") @RequestParam(required = false) String status) {
+            @Parameter(description = "Current page", example = "1") @RequestParam(defaultValue = "1") Integer current,
+            @Parameter(description = "Page size", example = "10") @RequestParam(defaultValue = "10") Integer size,
+            @Parameter(description = "Repository name") @RequestParam(required = false) String name,
+            @Parameter(description = "Repository type") @RequestParam(required = false) String repositoryType,
+            @Parameter(description = "Status") @RequestParam(required = false) String status) {
         
         log.info("分页查询算法仓库，参数：current={}, size={}, name={}, repositoryType={}, status={}", 
                 current, size, name, repositoryType, status);
@@ -55,10 +55,10 @@ public class AlgorithmRepositoryController {
     }
 
     /**
-     * 查询所有启用的算法仓库
+     * Query all enabled algorithm repositories
      */
     @GetMapping("/enabled")
-    @Operation(summary = "查询所有启用的算法仓库", description = "获取状态为启用的所有算法仓库")
+    @Operation(summary = "Query all enabled algorithm repositories", description = "Get all algorithm repositories with enabled status")
     public Result<List<AlgorithmRepository>> getEnabledRepositories() {
         log.info("查询所有启用的算法仓库");
         
@@ -67,12 +67,12 @@ public class AlgorithmRepositoryController {
     }
 
     /**
-     * 根据类型查询算法仓库
+     * Query algorithm repositories by type
      */
     @GetMapping("/type/{repositoryType}")
-    @Operation(summary = "根据类型查询算法仓库", description = "根据仓库类型获取算法仓库列表")
+    @Operation(summary = "Query algorithm repositories by type", description = "Get algorithm repository list by repository type")
     public Result<List<AlgorithmRepository>> getRepositoriesByType(
-            @Parameter(description = "仓库类型", example = "extended") @PathVariable String repositoryType) {
+            @Parameter(description = "Repository type", example = "extended") @PathVariable String repositoryType) {
         
         log.info("根据类型查询算法仓库：{}", repositoryType);
         
@@ -81,12 +81,12 @@ public class AlgorithmRepositoryController {
     }
 
     /**
-     * 根据ID查询算法仓库详情
+     * Query algorithm repository details by ID
      */
     @GetMapping("/{id}")
-    @Operation(summary = "查询算法仓库详情", description = "根据ID获取算法仓库详细信息")
+    @Operation(summary = "Query algorithm repository details", description = "Get algorithm repository details by ID")
     public Result<AlgorithmRepository> getRepositoryById(
-            @Parameter(description = "仓库ID", example = "1") @PathVariable @NotNull Long id) {
+            @Parameter(description = "Repository ID", example = "1") @PathVariable @NotNull Long id) {
         
         log.info("查询算法仓库详情：ID={}", id);
         
@@ -99,10 +99,10 @@ public class AlgorithmRepositoryController {
     }
 
     /**
-     * 创建算法仓库
+     * Create algorithm repository
      */
     @PostMapping
-    @Operation(summary = "创建算法仓库", description = "新增算法仓库")
+    @Operation(summary = "Create algorithm repository", description = "Add new algorithm repository")
     public Result<String> createRepository(@Valid @RequestBody AlgorithmRepository repository) {
         log.info("创建算法仓库：{}", repository.getName());
         
@@ -115,12 +115,12 @@ public class AlgorithmRepositoryController {
     }
 
     /**
-     * 更新算法仓库
+     * Update algorithm repository
      */
     @PutMapping("/{id}")
-    @Operation(summary = "更新算法仓库", description = "根据ID更新算法仓库信息")
+    @Operation(summary = "Update algorithm repository", description = "Update algorithm repository information by ID")
     public Result<String> updateRepository(
-            @Parameter(description = "仓库ID", example = "1") @PathVariable @NotNull Long id,
+            @Parameter(description = "Repository ID", example = "1") @PathVariable @NotNull Long id,
             @Valid @RequestBody AlgorithmRepository repository) {
         
         log.info("更新算法仓库：ID={}", id);
@@ -136,12 +136,12 @@ public class AlgorithmRepositoryController {
     }
 
     /**
-     * 删除算法仓库
+     * Delete algorithm repository
      */
     @DeleteMapping("/{id}")
-    @Operation(summary = "删除算法仓库", description = "根据ID删除算法仓库（软删除）")
+    @Operation(summary = "Delete algorithm repository", description = "Delete algorithm repository by ID (soft delete)")
     public Result<String> deleteRepository(
-            @Parameter(description = "仓库ID", example = "1") @PathVariable @NotNull Long id) {
+            @Parameter(description = "Repository ID", example = "1") @PathVariable @NotNull Long id) {
         
         log.info("删除算法仓库：ID={}", id);
         
@@ -154,10 +154,10 @@ public class AlgorithmRepositoryController {
     }
 
     /**
-     * 批量删除算法仓库
+     * Batch delete algorithm repositories
      */
     @DeleteMapping("/batch")
-    @Operation(summary = "批量删除算法仓库", description = "根据ID列表批量删除算法仓库")
+    @Operation(summary = "Batch delete algorithm repositories", description = "Batch delete algorithm repositories by ID list")
     public Result<String> batchDeleteRepositories(@RequestBody List<Long> ids) {
         log.info("批量删除算法仓库：IDs={}", ids);
         
@@ -174,13 +174,13 @@ public class AlgorithmRepositoryController {
     }
 
     /**
-     * 更新仓库状态
+     * Update repository status
      */
     @PutMapping("/{id}/status")
-    @Operation(summary = "更新仓库状态", description = "启用或禁用算法仓库")
+    @Operation(summary = "Update repository status", description = "Enable or disable algorithm repository")
     public Result<String> updateRepositoryStatus(
-            @Parameter(description = "仓库ID", example = "1") @PathVariable @NotNull Long id,
-            @Parameter(description = "新状态", example = "enabled") @RequestParam @NotNull String status) {
+            @Parameter(description = "Repository ID", example = "1") @PathVariable @NotNull Long id,
+            @Parameter(description = "New status", example = "enabled") @RequestParam @NotNull String status) {
         
         log.info("更新算法仓库状态：ID={}, Status={}", id, status);
         
@@ -193,13 +193,13 @@ public class AlgorithmRepositoryController {
     }
 
     /**
-     * 批量更新仓库状态
+     * Batch update repository status
      */
     @PutMapping("/batch/status")
-    @Operation(summary = "批量更新仓库状态", description = "批量启用或禁用算法仓库")
+    @Operation(summary = "Batch update repository status", description = "Batch enable or disable algorithm repositories")
     public Result<String> batchUpdateRepositoryStatus(
             @RequestBody List<Long> ids,
-            @Parameter(description = "新状态", example = "enabled") @RequestParam @NotNull String status) {
+            @Parameter(description = "New status", example = "enabled") @RequestParam @NotNull String status) {
         
         log.info("批量更新算法仓库状态：IDs={}, Status={}", ids, status);
         
@@ -216,10 +216,10 @@ public class AlgorithmRepositoryController {
     }
 
     /**
-     * 统计算法仓库数量
+     * Count algorithm repositories
      */
     @GetMapping("/count")
-    @Operation(summary = "统计算法仓库数量", description = "获取算法仓库总数")
+    @Operation(summary = "Count algorithm repositories", description = "Get total algorithm repository count")
     public Result<Long> countRepositories() {
         log.info("统计算法仓库数量");
         
@@ -228,12 +228,12 @@ public class AlgorithmRepositoryController {
     }
 
     /**
-     * 刷新仓库算法数量
+     * Refresh repository algorithm count
      */
     @PutMapping("/{id}/refresh-count")
-    @Operation(summary = "刷新仓库算法数量", description = "重新计算并更新仓库的算法数量")
+    @Operation(summary = "Refresh repository algorithm count", description = "Recalculate and update repository algorithm count")
     public Result<String> refreshAlgorithmCount(
-            @Parameter(description = "仓库ID", example = "1") @PathVariable @NotNull Long id) {
+            @Parameter(description = "Repository ID", example = "1") @PathVariable @NotNull Long id) {
         
         log.info("刷新算法仓库算法数量：ID={}", id);
         

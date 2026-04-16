@@ -1,21 +1,21 @@
 package com.vlstream.entity;
 
 /**
- * 流转换请求实体
+ * Stream Conversion Request Entity
  */
 public class StreamRequest {
     private String deviceId;
     private String rtspUrl;
-    private String quality; // 可选：low, medium, high
-    private String mode; // 可选：webrtc, hls
+    private String quality; // Optional: low, medium, high
+    private String mode; // Optional: webrtc, hls
     
     public StreamRequest() {}
     
     public StreamRequest(String deviceId, String rtspUrl) {
         this.deviceId = deviceId;
         this.rtspUrl = rtspUrl;
-        this.quality = "medium"; // 默认中等质量
-        this.mode = "webrtc"; // 默认WebRTC模式
+        this.quality = "medium"; // Default medium quality
+        this.mode = "webrtc"; // Default WebRTC mode
     }
     
     public String getDeviceId() {

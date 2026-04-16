@@ -13,8 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 全局认证拦截器
- * 用于验证所有API请求的token
+ * Global Authentication Interceptor
+ * Used to validate tokens for all API requests
  */
 @Slf4j
 @Component
@@ -93,7 +93,7 @@ public class AuthInterceptor implements HandlerInterceptor {
     }
     
     /**
-     * 发送错误响应
+     * Send error response
      */
     private void sendErrorResponse(HttpServletResponse response, int code, String message) throws Exception {
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);

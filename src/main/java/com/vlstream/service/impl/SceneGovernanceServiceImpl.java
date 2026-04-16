@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 场景治理服务层实现类
+ * Scene Governance Service Implementation
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -69,18 +69,18 @@ public class SceneGovernanceServiceImpl extends ServiceImpl<SceneGovernanceMappe
     @Transactional(rollbackFor = Exception.class)
     public boolean addSceneGovernance(SceneGovernance sceneGovernance) {
         try {
-            // 检查场景名称是否已存在
+            // Check if scene name already exists
             if (checkSceneNameExists(sceneGovernance.getName(), null)) {
-                log.error("场景名称已存在: {}", sceneGovernance.getName());
+                log.error("Scene name already exists: {}", sceneGovernance.getName());
                 return false;
             }
             
-            // 设置默认值
+            // Set default values
             setDefaultValues(sceneGovernance);
             
             return save(sceneGovernance);
         } catch (Exception e) {
-            log.error("新增场景治理失败", e);
+            log.error("Failed to add scene governance", e);
             return false;
         }
     }
@@ -89,15 +89,15 @@ public class SceneGovernanceServiceImpl extends ServiceImpl<SceneGovernanceMappe
     @Transactional(rollbackFor = Exception.class)
     public boolean updateSceneGovernance(SceneGovernance sceneGovernance) {
         try {
-            // 检查场景名称是否已存在（排除自己）
+            // Check if scene name already exists (excluding itself)
             if (checkSceneNameExists(sceneGovernance.getName(), sceneGovernance.getId())) {
-                log.error("场景名称已存在: {}", sceneGovernance.getName());
+                log.error("Scene name already exists: {}", sceneGovernance.getName());
                 return false;
             }
             
             return updateById(sceneGovernance);
         } catch (Exception e) {
-            log.error("更新场景治理失败", e);
+            log.error("Failed to update scene governance", e);
             return false;
         }
     }
@@ -106,13 +106,13 @@ public class SceneGovernanceServiceImpl extends ServiceImpl<SceneGovernanceMappe
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteSceneGovernance(Long id) {
         try {
-            // 软删除：设置deleted字段为1
+            // Soft delete: set deleted field to 1
             SceneGovernance sceneGovernance = new SceneGovernance();
             sceneGovernance.setId(id);
             sceneGovernance.setDeleted(1);
             return updateById(sceneGovernance);
         } catch (Exception e) {
-            log.error("删除场景治理失败，ID: {}", id, e);
+            log.error("Failed to delete scene governance, ID: {}", id, e);
             return false;
         }
     }
@@ -132,7 +132,7 @@ public class SceneGovernanceServiceImpl extends ServiceImpl<SceneGovernanceMappe
             
             return updateBatchById(updateList);
         } catch (Exception e) {
-            log.error("批量删除场景治理失败", e);
+            log.error("Failed to batch delete scene governance", e);
             return false;
         }
     }
@@ -145,7 +145,7 @@ public class SceneGovernanceServiceImpl extends ServiceImpl<SceneGovernanceMappe
             sceneGovernance.setStatus(status);
             return updateById(sceneGovernance);
         } catch (Exception e) {
-            log.error("更新场景治理状态失败，ID: {}, 状态: {}", id, status, e);
+            log.error("Failed to update scene governance status, ID: {}, status: {}", id, status, e);
             return false;
         }
     }
@@ -159,7 +159,7 @@ public class SceneGovernanceServiceImpl extends ServiceImpl<SceneGovernanceMappe
             updateWrapper.set("status", status);
             return this.update(updateWrapper);
         } catch (Exception e) {
-            log.error("批量更新场景治理状态失败", e);
+            log.error("Failed to batch update scene governance status", e);
             return false;
         }
     }
@@ -208,7 +208,7 @@ public class SceneGovernanceServiceImpl extends ServiceImpl<SceneGovernanceMappe
             
             return result;
         } catch (Exception e) {
-            log.error("获取场景治理统计信息失败", e);
+            log.error("Failed to get scene governance statistics", e);
             return new HashMap<>();
         }
     }
@@ -256,27 +256,27 @@ public class SceneGovernanceServiceImpl extends ServiceImpl<SceneGovernanceMappe
             SceneGovernance sceneGovernance = getById(id);
             if (sceneGovernance == null) {
                 result.put("success", false);
-                result.put("message", "场景不存在");
+                result.put("message", "Scene does not exist");
                 return result;
             }
             
             if (!"enabled".equals(sceneGovernance.getStatus())) {
                 result.put("success", false);
-                result.put("message", "场景未启用");
+                result.put("message", "Scene is not enabled");
                 return result;
             }
             
-            // TODO: 实现实际的场景治理执行逻辑
-            log.info("执行场景治理: {}", sceneGovernance.getName());
+            // TODO: Implement actual scene governance execution logic
+            log.info("Executing scene governance: {}", sceneGovernance.getName());
             
             result.put("success", true);
-            result.put("message", "场景治理执行成功");
+            result.put("message", "Scene governance executed successfully");
             result.put("executeTime", LocalDateTime.now());
             
         } catch (Exception e) {
-            log.error("执行场景治理失败，ID: {}", id, e);
+            log.error("Failed to execute scene governance, ID: {}", id, e);
             result.put("success", false);
-            result.put("message", "执行失败: " + e.getMessage());
+            result.put("message", "Execution failed: " + e.getMessage());
         }
         
         return result;
@@ -287,32 +287,32 @@ public class SceneGovernanceServiceImpl extends ServiceImpl<SceneGovernanceMappe
         Map<String, Object> result = new HashMap<>();
         List<String> errors = new ArrayList<>();
         
-        // 验证场景名称
+        // Validate scene name
         if (StringUtils.isBlank(sceneGovernance.getName())) {
-            errors.add("场景名称不能为空");
+            errors.add("Scene name cannot be empty");
         } else if (sceneGovernance.getName().length() > 100) {
-            errors.add("场景名称长度不能超过100个字符");
+            errors.add("Scene name length cannot exceed 100 characters");
         }
         
-        // 验证状态
+        // Validate status
         if (StringUtils.isNotBlank(sceneGovernance.getStatus()) && 
             !"enabled".equals(sceneGovernance.getStatus()) && 
             !"disabled".equals(sceneGovernance.getStatus())) {
-            errors.add("状态值无效，必须为enabled或disabled");
+            errors.add("Invalid status value, must be enabled or disabled");
         }
         
-        // 验证执行类型
+        // Validate execution type
         if (StringUtils.isNotBlank(sceneGovernance.getExecuteType()) && 
             !"daily".equals(sceneGovernance.getExecuteType()) && 
             !"alternate".equals(sceneGovernance.getExecuteType()) && 
             !"weekly".equals(sceneGovernance.getExecuteType()) && 
             !"monthly".equals(sceneGovernance.getExecuteType())) {
-            errors.add("执行类型无效");
+            errors.add("Invalid execution type");
         }
         
-        // 验证间隔数量
+        // Validate interval number
         if (sceneGovernance.getIntervalNum() != null && sceneGovernance.getIntervalNum() < 1) {
-            errors.add("间隔数量必须大于等于1");
+            errors.add("Interval number must be greater than or equal to 1");
         }
         
         result.put("valid", errors.isEmpty());
@@ -339,23 +339,23 @@ public class SceneGovernanceServiceImpl extends ServiceImpl<SceneGovernanceMappe
         
         for (SceneGovernance sceneGovernance : sceneGovernanceList) {
             try {
-                // 验证数据
+                // Validate data
                 Map<String, Object> validateResult = validateSceneGovernance(sceneGovernance);
                 if (!(Boolean) validateResult.get("valid")) {
                     failureList.add(sceneGovernance.getName() + ": " + validateResult.get("errors"));
                     continue;
                 }
                 
-                // 设置默认值
+                // Set default values
                 setDefaultValues(sceneGovernance);
                 
                 if (save(sceneGovernance)) {
                     successList.add(sceneGovernance.getName());
                 } else {
-                    failureList.add(sceneGovernance.getName() + ": 保存失败");
+                    failureList.add(sceneGovernance.getName() + ": Save failed");
                 }
             } catch (Exception e) {
-                log.error("导入场景治理失败: {}", sceneGovernance.getName(), e);
+                log.error("Failed to import scene governance: {}", sceneGovernance.getName(), e);
                 failureList.add(sceneGovernance.getName() + ": " + e.getMessage());
             }
         }
@@ -371,13 +371,13 @@ public class SceneGovernanceServiceImpl extends ServiceImpl<SceneGovernanceMappe
 
     @Override
     public List<Map<String, Object>> getSceneGovernanceExecuteHistory(Long id) {
-        // TODO: 实现执行历史查询逻辑
+        // TODO: Implement execution history query logic
         List<Map<String, Object>> history = new ArrayList<>();
         
         Map<String, Object> record = new HashMap<>();
         record.put("executeTime", LocalDateTime.now());
         record.put("status", "success");
-        record.put("message", "执行成功");
+        record.put("message", "Execution successful");
         record.put("duration", "1.2s");
         history.add(record);
         
@@ -390,23 +390,23 @@ public class SceneGovernanceServiceImpl extends ServiceImpl<SceneGovernanceMappe
         try {
             SceneGovernance original = getById(id);
             if (original == null) {
-                log.error("源场景不存在，ID: {}", id);
+                log.error("Source scene does not exist, ID: {}", id);
                 return false;
             }
             
-            // 检查新名称是否已存在
+            // Check if new name already exists
             if (checkSceneNameExists(name, null)) {
-                log.error("场景名称已存在: {}", name);
+                log.error("Scene name already exists: {}", name);
                 return false;
             }
             
-            // 创建副本
+            // Create copy
             SceneGovernance copy = new SceneGovernance();
             copy.setName(name);
             copy.setDescription(original.getDescription());
             copy.setDevices(original.getDevices());
             copy.setRules(original.getRules());
-            copy.setStatus("disabled"); // 新复制的场景默认为禁用状态
+            copy.setStatus("disabled"); // New copied scene is disabled by default
             copy.setExecuteType(original.getExecuteType());
             copy.setSelectedDays(original.getSelectedDays());
             copy.setIntervalNum(original.getIntervalNum());
@@ -420,13 +420,13 @@ public class SceneGovernanceServiceImpl extends ServiceImpl<SceneGovernanceMappe
             
             return save(copy);
         } catch (Exception e) {
-            log.error("复制场景治理失败，ID: {}, 新名称: {}", id, name, e);
+            log.error("Failed to copy scene governance, ID: {}, new name: {}", id, name, e);
             return false;
         }
     }
 
     /**
-     * 设置默认值
+     * Set default values
      */
     private void setDefaultValues(SceneGovernance sceneGovernance) {
         if (StringUtils.isBlank(sceneGovernance.getStatus())) {
@@ -449,7 +449,7 @@ public class SceneGovernanceServiceImpl extends ServiceImpl<SceneGovernanceMappe
             sceneGovernance.setRules("-");
         }
         
-        // 设置默认的选择天数
+        // Set default selected days
         if (StringUtils.isBlank(sceneGovernance.getSelectedDays())) {
             sceneGovernance.setSelectedDays("[\"monday\"]");
         }

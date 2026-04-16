@@ -9,62 +9,62 @@ import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 /**
- * 容器实例更新DTO
+ * Container Instance Update DTO
  *
  * @author VLStream Team
  * @since 1.0.0
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value = "ContainerInstanceUpdateDTO", description = "容器实例更新参数")
+@ApiModel(value = "ContainerInstanceUpdateDTO", description = "Container instance update parameters")
 public class ContainerInstanceUpdateDTO {
 
-    @ApiModelProperty(value = "容器实例ID", required = true)
-    @NotNull(message = "容器实例ID不能为空")
+    @ApiModelProperty(value = "Container instance ID", required = true)
+    @NotNull(message = "Container instance ID cannot be empty")
     private Long id;
 
-    @ApiModelProperty(value = "实例名称")
+    @ApiModelProperty(value = "Instance name")
     private String instanceName;
 
-    @ApiModelProperty(value = "容器ID")
+    @ApiModelProperty(value = "Container ID")
     private String containerId;
 
-    @ApiModelProperty(value = "实例状态：running-运行中,stopped-已停止,error-错误,starting-启动中,stopping-停止中")
+    @ApiModelProperty(value = "Instance status: running-running, stopped-stopped, error-error, starting-starting, stopping-stopping")
     private String instanceStatus;
 
-    @ApiModelProperty(value = "健康状态：healthy-健康,unhealthy-不健康,unknown-未知")
+    @ApiModelProperty(value = "Health status: healthy-healthy, unhealthy-unhealthy, unknown-unknown")
     private String healthStatus;
 
-    @ApiModelProperty(value = "重启次数")
+    @ApiModelProperty(value = "Restart count")
     private Integer restartCount;
 
-    @ApiModelProperty(value = "CPU使用率")
+    @ApiModelProperty(value = "CPU usage")
     private BigDecimal cpuUsage;
 
-    @ApiModelProperty(value = "内存使用率")
+    @ApiModelProperty(value = "Memory usage")
     private BigDecimal memoryUsage;
 
-    @ApiModelProperty(value = "GPU使用率")
+    @ApiModelProperty(value = "GPU usage")
     private BigDecimal gpuUsage;
 
-    @ApiModelProperty(value = "CPU限制")
+    @ApiModelProperty(value = "CPU limit")
     private String cpuLimit;
 
-    @ApiModelProperty(value = "内存限制")
+    @ApiModelProperty(value = "Memory limit")
     private String memoryLimit;
 
-    @ApiModelProperty(value = "GPU限制")
+    @ApiModelProperty(value = "GPU limit")
     private String gpuLimit;
 
-    @ApiModelProperty(value = "端口配置（JSON格式）")
+    @ApiModelProperty(value = "Port configuration (JSON format)")
     private String portConfig;
 
-    @ApiModelProperty(value = "环境变量配置（JSON格式）")
+    @ApiModelProperty(value = "Environment variable configuration (JSON format)")
     private String envConfig;
 
-    @ApiModelProperty(value = "存储卷配置（JSON格式）")
+    @ApiModelProperty(value = "Volume configuration (JSON format)")
     private String volumeConfig;
 
-    @ApiModelProperty(value = "日志路径")
+    @ApiModelProperty(value = "Logs path")
     private String logsPath;
 } 

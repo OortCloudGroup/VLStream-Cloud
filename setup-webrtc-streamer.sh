@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "========================================"
-echo "WebRTC-streamer 配置脚本"
+echo "WebRTC-streamer Configuration Script"
 echo "========================================"
 
 WEBRTC_VERSION="v0.8.4"
@@ -10,24 +10,25 @@ WEBRTC_PROJECT_DIR="/f/work/vls-tr/webrtc-streamer"
 DOWNLOAD_URL="https://github.com/mpromonet/webrtc-streamer/releases/download/${WEBRTC_VERSION}/webrtc-streamer-${WEBRTC_VERSION}-Linux-x86_64.tar.gz"
 TAR_FILE="webrtc-streamer-${WEBRTC_VERSION}-Linux-x86_64.tar.gz"
 
-echo "正在检查WebRTC-streamer安装..."
+echo "Checking WebRTC-streamer installation..."
 echo
 
-# 检查项目根目录的webrtc-streamer目录
+
+# Check webrtc-streamer directory in project root
 if [ -d "$WEBRTC_PROJECT_DIR" ]; then
-    echo "发现已存在的WebRTC-streamer目录: $WEBRTC_PROJECT_DIR"
+    echo "Found existing WebRTC-streamer directory: $WEBRTC_PROJECT_DIR"
     WEBRTC_DIR="$WEBRTC_PROJECT_DIR"
     cd "$WEBRTC_DIR"
     check_executable
 elif [ -d "$WEBRTC_DIR" ]; then
-    echo "发现已存在的WebRTC-streamer目录: $WEBRTC_DIR"
+    echo "Found existing WebRTC-streamer directory: $WEBRTC_DIR"
     cd "$WEBRTC_DIR"
     check_executable
 else
-    echo "未找到WebRTC-streamer，准备下载安装..."
-    # 创建目录
+    echo "WebRTC-streamer not found, preparing to download and install..."
+    # Create directory
     if [ ! -d "$WEBRTC_DIR" ]; then
-        echo "创建目录: $WEBRTC_DIR"
+        echo "Creating directory: $WEBRTC_DIR"
         mkdir -p "$WEBRTC_DIR"
     fi
     cd "$WEBRTC_DIR"
@@ -35,23 +36,23 @@ else
 fi
 
 check_executable() {
-    echo "检查WebRTC-streamer可执行文件..."
+    echo "Checking WebRTC-streamer executable..."
     
-    # 检查是否存在webrtc-streamer
+    # Check if webrtc-streamer exists
     if [ -f "webrtc-streamer" ]; then
-        echo "找到webrtc-streamer可执行文件，跳过下载"
+        echo "Found webrtc-streamer executable, skipping download"
         create_config
         return
     fi
     
-    # 检查是否存在其他可执行文件
+    # Check if other executable files exist
     if ls webrtc-streamer* 1> /dev/null 2>&1; then
-        echo "找到webrtc-streamer相关文件"
-        # 重命名为标准名称
+        echo "Found webrtc-streamer related files"
+        # Rename to standard name
         for file in webrtc-streamer*; do
             if [ -x "$file" ] && [ "$file" != "webrtc-streamer" ]; then
                 mv "$file" "webrtc-streamer"
-                echo "重命名 $file 为 webrtc-streamer"
+                echo "Renamed $file to webrtc-streamer"
                 break
             fi
         done
@@ -62,14 +63,14 @@ check_executable() {
         fi
     fi
     
-    # 如果目录存在但没有可执行文件，尝试下载
-    echo "目录存在但未找到可执行文件，尝试下载..."
+    # If directory exists but no executable, try to download
+    echo "Directory exists but no executable found, attempting to download..."
     download_webrtc
 }
 
 download_webrtc() {
-    echo "正在下载WebRTC-streamer..."
-    echo "下载地址: $DOWNLOAD_URL"
+    echo "Downloading WebRTC-streamer..."
+    echo "Download URL: $DOWNLOAD_URL"
     echo
 
     if command -v wget > /dev/null; then
@@ -83,8 +84,8 @@ download_webrtc() {
             return 1
         fi
     else
-        echo "错误: 需要安装wget或curl来下载文件"
-        echo "请手动下载WebRTC-streamer"
+        echo "Error: Need to install wget or curl to download files"
+        echo "Please download WebRTC-streamer manually"
         manual_download_instructions
         return 1
     fi
@@ -94,45 +95,45 @@ download_webrtc() {
         return 1
     fi
 
-    echo "下载完成，正在解压..."
+    echo "Download completed, extracting..."
     if ! tar -xzf "$TAR_FILE"; then
-        echo "解压失败"
+        echo "Extraction failed"
         return 1
     fi
 
-    # 删除压缩包
+    # Delete tar file
     rm -f "$TAR_FILE"
 
-    # 设置执行权限
+    # Set executable permission
     chmod +x webrtc-streamer
 
-    echo "解压完成"
+    echo "Extraction completed"
     create_config
 }
 
 download_failed() {
     echo
-    echo "下载失败！请手动下载WebRTC-streamer"
+    echo "Download failed! Please download WebRTC-streamer manually"
     manual_download_instructions
 }
 
 manual_download_instructions() {
-    echo "下载地址: $DOWNLOAD_URL"
-    echo "解压到: $(pwd)"
+    echo "Download URL: $DOWNLOAD_URL"
+    echo "Extract to: $(pwd)"
     echo
-    echo "手动下载步骤："
-    echo "1. 访问 https://github.com/mpromonet/webrtc-streamer/releases"
-    echo "2. 下载 webrtc-streamer-${WEBRTC_VERSION}-Linux-x86_64.tar.gz"
-    echo "3. 解压到当前目录: $(pwd)"
-    echo "4. 重新运行此脚本"
+    echo "Manual download steps:"
+    echo "1. Visit https://github.com/mpromonet/webrtc-streamer/releases"
+    echo "2. Download webrtc-streamer-${WEBRTC_VERSION}-Linux-x86_64.tar.gz"
+    echo "3. Extract to current directory: $(pwd)"
+    echo "4. Rerun this script"
     echo
 }
 
 create_config() {
-    echo "正在创建配置文件..."
-    echo "当前目录: $(pwd)"
+    echo "Creating configuration files..."
+    echo "Current directory: $(pwd)"
 
-    # 创建配置文件
+    # Create configuration file
     cat > config.json << EOF
 {
   "webrtc-streamer": {
@@ -147,179 +148,180 @@ create_config() {
 }
 EOF
 
-    # 创建启动脚本
+    # Create start script
     cat > start.sh << 'EOF'
 #!/bin/bash
 echo "========================================"
-echo "启动WebRTC-streamer服务"
+echo "Starting WebRTC-streamer service"
 echo "========================================"
-echo "服务地址: http://localhost:8000"
-echo "管理界面: http://localhost:8000/webrtcstreamer.html"
-echo "按Ctrl+C停止服务"
+echo "Service address: http://localhost:8000"
+echo "Management interface: http://localhost:8000/webrtcstreamer.html"
+echo "Press Ctrl+C to stop service"
 echo "========================================"
 echo
 ./webrtc-streamer -H 0.0.0.0:8000 -S stun.l.google.com:19302 -v 2
 echo
-echo "服务已停止"
+echo "Service stopped"
 EOF
 
-    # 创建后台启动脚本
+    # Create background start script
     cat > start-background.sh << 'EOF'
 #!/bin/bash
-echo "启动WebRTC-streamer后台服务..."
+echo "Starting WebRTC-streamer background service..."
 nohup ./webrtc-streamer -H 0.0.0.0:8000 -S stun.l.google.com:19302 -v 2 > webrtc-streamer.log 2>&1 &
 echo $! > webrtc-streamer.pid
-echo "WebRTC-streamer服务已在后台启动"
-echo "服务地址: http://localhost:8000"
-echo "管理界面: http://localhost:8000/webrtcstreamer.html"
-echo "日志文件: webrtc-streamer.log"
-echo "PID文件: webrtc-streamer.pid"
-echo "运行 ./stop.sh 停止服务"
+echo "WebRTC-streamer service started in background"
+echo "Service address: http://localhost:8000"
+echo "Management interface: http://localhost:8000/webrtcstreamer.html"
+echo "Log file: webrtc-streamer.log"
+echo "PID file: webrtc-streamer.pid"
+echo "Run ./stop.sh to stop service"
 EOF
 
-    # 创建测试脚本
+    # Create test script
     cat > test.sh << 'EOF'
 #!/bin/bash
-echo "测试WebRTC-streamer服务..."
+echo "Testing WebRTC-streamer service..."
 echo
 
+
 if curl -s -m 5 http://localhost:8000/api/getIceServers > /dev/null; then
-    echo "[成功] WebRTC-streamer服务运行正常"
-    echo "服务地址: http://localhost:8000"
-    echo "管理界面: http://localhost:8000/webrtcstreamer.html"
+    echo "[Success] WebRTC-streamer service is running normally"
+    echo "Service address: http://localhost:8000"
+    echo "Management interface: http://localhost:8000/webrtcstreamer.html"
 else
-    echo "[失败] WebRTC-streamer服务未运行或不可访问"
-    echo "请先运行 ./start.sh 启动服务"
+    echo "[Failure] WebRTC-streamer service is not running or inaccessible"
+    echo "Please run ./start.sh to start service first"
 fi
 echo
 EOF
 
-    # 创建停止脚本
+    # Create stop script
     cat > stop.sh << 'EOF'
 #!/bin/bash
-echo "停止WebRTC-streamer服务..."
+echo "Stopping WebRTC-streamer service..."
 
-# 先尝试通过PID文件停止
+# Try to stop via PID file first
 if [ -f "webrtc-streamer.pid" ]; then
     PID=$(cat webrtc-streamer.pid)
     if kill -0 $PID 2>/dev/null; then
         kill $PID
-        echo "[成功] WebRTC-streamer服务已停止 (PID: $PID)"
+        echo "[Success] WebRTC-streamer service stopped (PID: $PID)"
         rm -f webrtc-streamer.pid
     else
-        echo "[信息] PID文件中的进程不存在，清理PID文件"
+        echo "[Info] Process in PID file does not exist, cleaning PID file"
         rm -f webrtc-streamer.pid
     fi
 else
-    # 通过进程名停止
+    # Stop via process name
     if pkill -f webrtc-streamer; then
-        echo "[成功] WebRTC-streamer服务已停止"
+        echo "[Success] WebRTC-streamer service stopped"
     else
-        echo "[信息] WebRTC-streamer服务未运行"
+        echo "[Info] WebRTC-streamer service is not running"
     fi
 fi
 echo
 EOF
 
-    # 创建README
+    # Create README
     cat > README.md << 'EOF'
-# WebRTC-streamer 使用说明
+# WebRTC-streamer Usage Instructions
 
-## 文件说明
-- `webrtc-streamer`: WebRTC-streamer主程序
-- `config.json`: 配置文件
-- `start.sh`: 启动服务（前台运行）
-- `start-background.sh`: 启动服务（后台运行）
-- `test.sh`: 测试服务状态
-- `stop.sh`: 停止服务
+## File Description
+- `webrtc-streamer`: WebRTC-streamer main program
+- `config.json`: Configuration file
+- `start.sh`: Start service (foreground)
+- `start-background.sh`: Start service (background)
+- `test.sh`: Test service status
+- `stop.sh`: Stop service
 
-## 使用步骤
-1. 运行 `./start.sh` 启动服务（前台运行，可看到日志）
-2. 或运行 `./start-background.sh` 启动服务（后台运行）
-3. 运行 `./test.sh` 测试服务是否正常
-4. 运行 `./stop.sh` 停止服务
+## Usage Steps
+1. Run `./start.sh` to start service (foreground, logs visible)
+2. Or run `./start-background.sh` to start service (background)
+3. Run `./test.sh` to test if service is normal
+4. Run `./stop.sh` to stop service
 
-## 访问地址
-- 服务地址: http://localhost:8000
-- 管理界面: http://localhost:8000/webrtcstreamer.html
-- API文档: http://localhost:8000/help
+## Access Addresses
+- Service address: http://localhost:8000
+- Management interface: http://localhost:8000/webrtcstreamer.html
+- API documentation: http://localhost:8000/help
 
-## 配置说明
-- 服务端口: 8000
-- STUN服务器: stun.l.google.com:19302
-- 日志级别: 2 (详细)
-- 录制路径: ./records
+## Configuration Description
+- Service port: 8000
+- STUN server: stun.l.google.com:19302
+- Log level: 2 (detailed)
+- Recording path: ./records
 
-## 后台运行
-使用 `start-background.sh` 后台运行时：
-- 日志输出到 `webrtc-streamer.log`
-- 进程ID保存到 `webrtc-streamer.pid`
-- 使用 `stop.sh` 停止服务
+## Background Running
+When using `start-background.sh` to run in background:
+- Logs output to `webrtc-streamer.log`
+- Process ID saved to `webrtc-streamer.pid`
+- Use `stop.sh` to stop service
 EOF
 
-    # 设置脚本权限
+    # Set script permissions
     chmod +x start.sh start-background.sh test.sh stop.sh
 
     echo
     echo "========================================"
-    echo "配置完成！"
+    echo "Configuration completed!"
     echo "========================================"
     echo
-    echo "安装位置: $(pwd)"
+    echo "Installation location: $(pwd)"
     echo
-    echo "文件检查:"
+    echo "File check:"
     if [ -f "webrtc-streamer" ]; then
-        echo "  [√] webrtc-streamer - 主程序"
+        echo "  [√] webrtc-streamer - Main program"
     else
-        echo "  [×] webrtc-streamer - 主程序 (缺失)"
+        echo "  [×] webrtc-streamer - Main program (missing)"
     fi
     if [ -f "config.json" ]; then
-        echo "  [√] config.json - 配置文件"
+        echo "  [√] config.json - Configuration file"
     else
-        echo "  [×] config.json - 配置文件 (缺失)"
+        echo "  [×] config.json - Configuration file (missing)"
     fi
     if [ -f "start.sh" ]; then
-        echo "  [√] start.sh - 启动脚本"
+        echo "  [√] start.sh - Start script"
     else
-        echo "  [×] start.sh - 启动脚本 (缺失)"
+        echo "  [×] start.sh - Start script (missing)"
     fi
     echo
-    echo "使用说明:"
-    echo "  1. ./start.sh 启动服务"
-    echo "  2. ./test.sh 测试服务"
-    echo "  3. ./stop.sh 停止服务"
+    echo "Usage instructions:"
+    echo "  1. ./start.sh to start service"
+    echo "  2. ./test.sh to test service"
+    echo "  3. ./stop.sh to stop service"
     echo
-    echo "访问地址:"
-    echo "  - 服务: http://localhost:8000"
-    echo "  - 管理: http://localhost:8000/webrtcstreamer.html"
+    echo "Access addresses:"
+    echo "  - Service: http://localhost:8000"
+    echo "  - Management: http://localhost:8000/webrtcstreamer.html"
     echo
-    echo "现在启动服务吗？(y/N)"
+    echo "Start service now? (y/N)"
     read -r choice
     if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
         echo
-        echo "启动WebRTC-streamer服务..."
+        echo "Starting WebRTC-streamer service..."
         ./start.sh &
     fi
 
     echo
-    echo "配置完成！请查看 README.md 了解详细使用方法。"
+    echo "Configuration completed! Please check README.md for detailed usage instructions."
 }
 
-# 主程序开始执行
+# Main program execution
 if [ -d "$WEBRTC_PROJECT_DIR" ]; then
-    echo "发现已存在的WebRTC-streamer目录: $WEBRTC_PROJECT_DIR"
+    echo "Found existing WebRTC-streamer directory: $WEBRTC_PROJECT_DIR"
     WEBRTC_DIR="$WEBRTC_PROJECT_DIR"
     cd "$WEBRTC_DIR"
     check_executable
 elif [ -d "$WEBRTC_DIR" ]; then
-    echo "发现已存在的WebRTC-streamer目录: $WEBRTC_DIR"
+    echo "Found existing WebRTC-streamer directory: $WEBRTC_DIR"
     cd "$WEBRTC_DIR"
     check_executable
 else
-    echo "未找到WebRTC-streamer，准备下载安装..."
-    # 创建目录
+    echo "WebRTC-streamer not found, preparing to download and install..."
+    # Create directory
     if [ ! -d "$WEBRTC_DIR" ]; then
-        echo "创建目录: $WEBRTC_DIR"
+        echo "Creating directory: $WEBRTC_DIR"
         mkdir -p "$WEBRTC_DIR"
     fi
     cd "$WEBRTC_DIR"

@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 标注标签Service实现类
+ * Annotation Label Service Implementation Class
  * 
  * @author VLStream Team
  * @since 1.0.0
@@ -30,26 +30,26 @@ public class AnnotationLabelServiceImpl extends ServiceImpl<AnnotationLabelMappe
 
     @Override
     public List<AnnotationLabel> getByAnnotationIdWithUsageCount(Long annotationId) {
-        log.info("查询标注项目[{}]的标签列表", annotationId);
+        log.info("Query label list for annotation project[{}]", annotationId);
         return baseMapper.selectByAnnotationIdWithUsageCount(annotationId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AnnotationLabel createLabel(Long annotationId, String name, String color, String description) {
-        log.info("创建标签: annotationId={}, name={}, color={}", annotationId, name, color);
+        log.info("Creating label: annotationId={}, name={}, color={}", annotationId, name, color);
         
-        // 检查同一标注项目下是否存在相同名称的标签
+        // Check if label with the same name exists in the same annotation project
         LambdaQueryWrapper<AnnotationLabel> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(AnnotationLabel::getAnnotationId, annotationId)
                .eq(AnnotationLabel::getName, name);
         
         AnnotationLabel existingLabel = baseMapper.selectOne(wrapper);
         if (existingLabel != null) {
-            throw new RuntimeException("标签名称已存在");
+            throw new RuntimeException("Label name already exists");
         }
 
-        // 获取当前最大排序值
+        // Get current maximum sort order
         LambdaQueryWrapper<AnnotationLabel> sortWrapper = new LambdaQueryWrapper<>();
         sortWrapper.eq(AnnotationLabel::getAnnotationId, annotationId)
                    .orderByDesc(AnnotationLabel::getSortOrder)
@@ -58,7 +58,7 @@ public class AnnotationLabelServiceImpl extends ServiceImpl<AnnotationLabelMappe
         AnnotationLabel lastLabel = baseMapper.selectOne(sortWrapper);
         int nextSortOrder = lastLabel != null ? lastLabel.getSortOrder() + 1 : 1;
 
-        // 创建新标签
+        // Create new label
         AnnotationLabel label = new AnnotationLabel();
         label.setAnnotationId(annotationId);
         label.setName(name);
@@ -70,7 +70,7 @@ public class AnnotationLabelServiceImpl extends ServiceImpl<AnnotationLabelMappe
         label.setUpdatedTime(LocalDateTime.now());
 
         baseMapper.insert(label);
-        log.info("标签创建成功，ID: {}", label.getId());
+        log.info("Label created successfully, ID: {}", label.getId());
         
         return label;
     }
@@ -78,14 +78,14 @@ public class AnnotationLabelServiceImpl extends ServiceImpl<AnnotationLabelMappe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AnnotationLabel updateLabel(Long labelId, String name, String color, String description) {
-        log.info("更新标签: labelId={}, name={}, color={}", labelId, name, color);
+        log.info("Updating label: labelId={}, name={}, color={}", labelId, name, color);
         
         AnnotationLabel label = baseMapper.selectById(labelId);
         if (label == null) {
-            throw new RuntimeException("标签不存在");
+            throw new RuntimeException("Label does not exist");
         }
 
-        // 检查同一标注项目下是否存在相同名称的其他标签
+        // Check if label with the same name exists in the same annotation project
         LambdaQueryWrapper<AnnotationLabel> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(AnnotationLabel::getAnnotationId, label.getAnnotationId())
                .eq(AnnotationLabel::getName, name)
@@ -93,17 +93,17 @@ public class AnnotationLabelServiceImpl extends ServiceImpl<AnnotationLabelMappe
         
         AnnotationLabel existingLabel = baseMapper.selectOne(wrapper);
         if (existingLabel != null) {
-            throw new RuntimeException("标签名称已存在");
+            throw new RuntimeException("Label name already exists");
         }
 
-        // 更新标签信息
+        // Update label information
         label.setName(name);
         label.setColor(color);
         label.setDescription(description);
         label.setUpdatedTime(LocalDateTime.now());
 
         baseMapper.updateById(label);
-        log.info("标签更新成功");
+        log.info("Label updated successfully");
         
         return label;
     }
@@ -111,29 +111,29 @@ public class AnnotationLabelServiceImpl extends ServiceImpl<AnnotationLabelMappe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteLabel(Long labelId) {
-        log.info("删除标签: labelId={}", labelId);
+        log.info("Deleting label: labelId={}", labelId);
         
         AnnotationLabel label = baseMapper.selectById(labelId);
         if (label == null) {
-            throw new RuntimeException("标签不存在");
+            throw new RuntimeException("Label does not exist");
         }
 
-        // 检查是否有标注实例使用该标签
+        // Check if the label is being used by annotation instances
         Integer usageCount = annotationInstanceMapper.countByLabelId(labelId);
         if (usageCount > 0) {
-            throw new RuntimeException("该标签已被使用，无法删除");
+            throw new RuntimeException("Label is in use, cannot delete");
         }
 
-        // 执行软删除
+        // Perform soft delete
         int result = baseMapper.deleteById(labelId);
-        log.info("标签删除成功");
+        log.info("Label deleted successfully");
         
         return result > 0;
     }
 
     @Override
     public boolean updateUsageCount(Long labelId) {
-        log.debug("更新标签使用次数: labelId={}", labelId);
+        log.debug("Updating label usage count: labelId={}", labelId);
         
         Integer usageCount = annotationInstanceMapper.countByLabelId(labelId);
         int result = baseMapper.updateUsageCount(labelId, usageCount);
@@ -144,7 +144,7 @@ public class AnnotationLabelServiceImpl extends ServiceImpl<AnnotationLabelMappe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateSortOrder(Long annotationId, List<Long> labelIds) {
-        log.info("更新标签排序: annotationId={}, labelIds={}", annotationId, labelIds);
+        log.info("Updating label sort order: annotationId={}, labelIds={}", annotationId, labelIds);
         
         int result = baseMapper.updateSortOrder(annotationId, labelIds);
         
@@ -153,7 +153,7 @@ public class AnnotationLabelServiceImpl extends ServiceImpl<AnnotationLabelMappe
 
     @Override
     public List<AnnotationLabel> searchLabels(Long annotationId, String keyword) {
-        log.debug("搜索标签: annotationId={}, keyword={}", annotationId, keyword);
+        log.debug("Searching labels: annotationId={}, keyword={}", annotationId, keyword);
         
         LambdaQueryWrapper<AnnotationLabel> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(AnnotationLabel::getAnnotationId, annotationId);
@@ -167,7 +167,7 @@ public class AnnotationLabelServiceImpl extends ServiceImpl<AnnotationLabelMappe
 
         List<AnnotationLabel> labels = baseMapper.selectList(wrapper);
         
-        // 更新使用次数
+        // Update usage counts
         labels.forEach(label -> {
             Integer usageCount = annotationInstanceMapper.countByLabelId(label.getId());
             label.setUsageCount(usageCount);

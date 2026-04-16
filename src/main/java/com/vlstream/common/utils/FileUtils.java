@@ -12,33 +12,33 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * 文件工具类
+ * File utility class
  */
 public class FileUtils {
     
-    // 支持的图片格式
+    // Supported image formats
     private static final List<String> SUPPORTED_IMAGE_TYPES = Arrays.asList(
         "image/jpeg", "image/jpg", "image/png", "image/gif", "image/bmp", "image/webp"
     );
     
-    // 支持的图片扩展名
+    // Supported image extensions
     private static final List<String> SUPPORTED_IMAGE_EXTENSIONS = Arrays.asList(
         ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"
     );
     
     /**
-     * 检查文件是否为图片
+     * Check if the file is an image
      */
     public static boolean isImageFile(MultipartFile file) {
         String contentType = file.getContentType();
         String originalFilename = file.getOriginalFilename();
         
-        // 检查MIME类型
+        // Check MIME type
         if (contentType != null && SUPPORTED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
             return true;
         }
         
-        // 检查文件扩展名
+        // Check file extension
         if (originalFilename != null) {
             String extension = getFileExtension(originalFilename).toLowerCase();
             return SUPPORTED_IMAGE_EXTENSIONS.contains(extension);
@@ -48,7 +48,7 @@ public class FileUtils {
     }
     
     /**
-     * 获取文件扩展名
+     * Get file extension
      */
     public static String getFileExtension(String filename) {
         if (filename == null || filename.isEmpty()) {
@@ -62,7 +62,7 @@ public class FileUtils {
     }
     
     /**
-     * 生成唯一文件名
+     * Generate unique file name
      */
     public static String generateUniqueFileName(String originalFilename) {
         String extension = getFileExtension(originalFilename);
@@ -70,7 +70,7 @@ public class FileUtils {
     }
     
     /**
-     * 创建目录
+     * Create directories
      */
     public static void createDirectories(String path) throws IOException {
         Path dirPath = Paths.get(path);
@@ -80,7 +80,7 @@ public class FileUtils {
     }
     
     /**
-     * 删除文件
+     * Delete file
      */
     public static boolean deleteFile(String filePath) {
         try {
@@ -92,7 +92,7 @@ public class FileUtils {
     }
     
     /**
-     * 获取文件大小的可读格式
+     * Get human-readable file size format
      */
     public static String formatFileSize(long size) {
         if (size < 1024) {
@@ -107,14 +107,14 @@ public class FileUtils {
     }
     
     /**
-     * 检查文件名是否安全
+     * Check if the file name is safe
      */
     public static boolean isSafeFileName(String filename) {
         if (filename == null || filename.trim().isEmpty()) {
             return false;
         }
         
-        // 检查是否包含危险字符
+        // Check for dangerous characters
         String[] dangerousChars = {"..", "/", "\\", ":", "*", "?", "\"", "<", ">", "|"};
         for (String dangerousChar : dangerousChars) {
             if (filename.contains(dangerousChar)) {
@@ -126,14 +126,14 @@ public class FileUtils {
     }
     
     /**
-     * 清理文件名
+     * Sanitize file name
      */
     public static String sanitizeFileName(String filename) {
         if (filename == null) {
             return "";
         }
         
-        // 替换危险字符
+        // Replace dangerous characters
         return filename.replaceAll("[^a-zA-Z0-9._-]", "_");
     }
 }

@@ -15,9 +15,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * 模型下载控制器
+ * Model Download Controller
  */
-@Api(tags = "模型下载管理")
+@Api(tags = "Model Download Management")
 @RestController
 @RequestMapping("/api/models")
 @CrossOrigin(origins = "*")
@@ -27,55 +27,55 @@ public class ModelDownloadController {
     private static final String MODEL_STORAGE_PATH = System.getProperty("user.home") + "/models/";
     
     /**
-     * 下载训练好的模型文件
+     * Download trained model file
      */
     @GetMapping("/download/{modelName}")
     public ResponseEntity<Resource> downloadModel(@PathVariable String modelName) {
         try {
-            System.out.println("收到下载请求: " + modelName);
-            System.out.println("模型存储路径: " + MODEL_STORAGE_PATH);
+            System.out.println("Received download request: " + modelName);
+            System.out.println("Model storage path: " + MODEL_STORAGE_PATH);
 
-            // 确保模型目录存在
+            // Ensure model directory exists
             File modelsDir = new File(MODEL_STORAGE_PATH);
             if (!modelsDir.exists()) {
                 modelsDir.mkdirs();
-                System.out.println("创建模型目录: " + MODEL_STORAGE_PATH);
+                System.out.println("Created model directory: " + MODEL_STORAGE_PATH);
             }
 
-            // 构建模型文件路径
+            // Build model file path
             Path modelPath = Paths.get(MODEL_STORAGE_PATH + modelName);
             File modelFile = modelPath.toFile();
 
-            System.out.println("查找模型文件: " + modelPath.toString());
+            System.out.println("Looking for model file: " + modelPath.toString());
 
-            // 检查文件是否存在
+            // Check if file exists
             if (!modelFile.exists()) {
-                System.out.println("指定模型不存在，尝试查找best.pt");
+                System.out.println("Specified model does not exist, trying to find best.pt");
 
-                // 如果指定的模型不存在，尝试查找best.pt并重命名
+                // If specified model doesn't exist, try to find best.pt and rename
                 Path bestModelPath = Paths.get(MODEL_STORAGE_PATH + "best.pt");
                 File bestModelFile = bestModelPath.toFile();
 
                 if (bestModelFile.exists()) {
-                    // 复制best.pt为指定的模型名称
+                    // Copy best.pt to specified model name
                     Files.copy(bestModelPath, modelPath);
-                    System.out.println("模型文件已重命名: best.pt -> " + modelName);
+                    System.out.println("Model file renamed: best.pt -> " + modelName);
                 } else {
-                    // 创建一个测试模型文件
-                    System.out.println("创建测试模型文件: " + modelName);
+                    // Create a test model file
+                    System.out.println("Creating test model file: " + modelName);
                     createTestModel(modelPath);
                 }
             }
             
-            // 创建文件资源
+            // Create file resource
             Resource resource = new FileSystemResource(modelFile);
             
-            // 设置响应头
+            // Set response headers
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + modelName + "\"");
             headers.add(HttpHeaders.CONTENT_TYPE, "application/octet-stream");
             
-            System.out.println("开始下载模型: " + modelName);
+            System.out.println("Starting model download: " + modelName);
             
             return ResponseEntity.ok()
                     .headers(headers)
@@ -84,13 +84,13 @@ public class ModelDownloadController {
                     .body(resource);
                     
         } catch (IOException e) {
-            System.err.println("下载模型失败: " + e.getMessage());
+            System.err.println("Failed to download model: " + e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }
     
     /**
-     * 获取可用的模型列表
+     * Get available model list
      */
     @GetMapping("/list")
     public ResponseEntity<?> getModelList() {
@@ -114,13 +114,13 @@ public class ModelDownloadController {
             return ResponseEntity.ok().body(modelNames);
             
         } catch (Exception e) {
-            System.err.println("获取模型列表失败: " + e.getMessage());
+            System.err.println("Failed to get model list: " + e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }
     
     /**
-     * 检查模型文件是否存在
+     * Check if model file exists
      */
     @GetMapping("/exists/{modelName}")
     public ResponseEntity<Boolean> checkModelExists(@PathVariable String modelName) {
@@ -128,7 +128,7 @@ public class ModelDownloadController {
             Path modelPath = Paths.get(MODEL_STORAGE_PATH + modelName);
             boolean exists = Files.exists(modelPath);
             
-            // 如果指定模型不存在，检查是否有best.pt可以重命名
+            // If specified model doesn't exist, check if there's best.pt that can be renamed
             if (!exists) {
                 Path bestModelPath = Paths.get(MODEL_STORAGE_PATH + "best.pt");
                 exists = Files.exists(bestModelPath);
@@ -137,16 +137,16 @@ public class ModelDownloadController {
             return ResponseEntity.ok(exists);
             
         } catch (Exception e) {
-            System.err.println("检查模型存在性失败: " + e.getMessage());
+            System.err.println("Failed to check model existence: " + e.getMessage());
             return ResponseEntity.ok(false);
         }
     }
 
     /**
-     * 创建测试模型文件
+     * Create test model file
      */
     private void createTestModel(Path modelPath) throws IOException {
-        // 创建一个简单的测试文件，模拟训练好的模型
+        // Create a simple test file to simulate a trained model
         String testContent = "# YOLOv8 Trained Model\n" +
                 "# This is a test model file generated for download testing\n" +
                 "# Model Name: " + modelPath.getFileName().toString() + "\n" +
@@ -159,6 +159,6 @@ public class ModelDownloadController {
                 "# containing the trained neural network weights and architecture.\n";
 
         Files.write(modelPath, testContent.getBytes());
-        System.out.println("测试模型文件已创建: " + modelPath.toString());
+        System.out.println("Test model file created: " + modelPath.toString());
     }
 }

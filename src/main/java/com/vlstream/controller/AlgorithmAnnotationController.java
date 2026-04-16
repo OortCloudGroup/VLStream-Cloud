@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 算法标注控制器
+ * Algorithm Annotation Controller
  * 
  * @author VLStream Team
  * @since 1.0.0
@@ -30,22 +30,22 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/algorithm-annotation")
 @RequiredArgsConstructor
-@Api(tags = "算法标注管理")
+@Api(tags = "Algorithm Annotation Management")
 public class AlgorithmAnnotationController {
 
     private final AlgorithmAnnotationService algorithmAnnotationService;
 
     /**
-     * 分页查询算法标注列表
+     * Page query algorithm annotation list
      */
     @GetMapping("/page")
-    @Operation(summary = "分页查询算法标注列表", description = "根据条件分页查询算法标注")
+    @Operation(summary = "Query algorithm annotation list with pagination", description = "Query algorithm annotations with pagination based on conditions")
     public Result<IPage<AlgorithmAnnotation>> getAnnotationPage(
-            @Parameter(description = "当前页", example = "1") @RequestParam(defaultValue = "1") Integer current,
-            @Parameter(description = "每页大小", example = "10") @RequestParam(defaultValue = "10") Integer size,
-            @Parameter(description = "标注名称") @RequestParam(required = false) String annotationName,
-            @Parameter(description = "标注类型") @RequestParam(required = false) String annotationType,
-            @Parameter(description = "标注状态") @RequestParam(required = false) String annotationStatus) {
+            @Parameter(description = "Current page", example = "1") @RequestParam(defaultValue = "1") Integer current,
+            @Parameter(description = "Page size", example = "10") @RequestParam(defaultValue = "10") Integer size,
+            @Parameter(description = "Annotation name") @RequestParam(required = false) String annotationName,
+            @Parameter(description = "Annotation type") @RequestParam(required = false) String annotationType,
+            @Parameter(description = "Annotation status") @RequestParam(required = false) String annotationStatus) {
         
         log.info("分页查询算法标注列表，参数：current={}, size={}, annotationName={}, annotationType={}, annotationStatus={}", 
                 current, size, annotationName, annotationType, annotationStatus);
@@ -59,12 +59,12 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 根据标注类型查询标注列表
+     * Query annotation list by annotation type
      */
     @GetMapping("/type/{annotationType}")
-    @Operation(summary = "根据标注类型查询标注列表", description = "获取指定类型的所有标注")
+    @Operation(summary = "Query annotation list by annotation type", description = "Get all annotations of specified type")
     public Result<List<AlgorithmAnnotation>> getAnnotationsByType(
-            @Parameter(description = "标注类型", example = "object_detection") @PathVariable String annotationType) {
+            @Parameter(description = "Annotation type", example = "object_detection") @PathVariable String annotationType) {
         
         log.info("根据标注类型查询标注列表：{}", annotationType);
         
@@ -73,12 +73,12 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 根据标注状态查询标注列表
+     * Query annotation list by annotation status
      */
     @GetMapping("/status/{annotationStatus}")
-    @Operation(summary = "根据标注状态查询标注列表", description = "获取指定状态的所有标注")
+    @Operation(summary = "Query annotation list by annotation status", description = "Get all annotations of specified status")
     public Result<List<AlgorithmAnnotation>> getAnnotationsByStatus(
-            @Parameter(description = "标注状态", example = "partial") @PathVariable String annotationStatus) {
+            @Parameter(description = "Annotation status", example = "partial") @PathVariable String annotationStatus) {
         
         log.info("根据标注状态查询标注列表：{}", annotationStatus);
         
@@ -87,12 +87,12 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 根据ID查询标注详情
+     * Query annotation details by ID
      */
     @GetMapping("/{id}")
-    @Operation(summary = "查询标注详情", description = "根据ID获取标注详细信息")
+    @Operation(summary = "Query annotation details", description = "Get annotation details by ID")
     public Result<AlgorithmAnnotation> getAnnotationById(
-            @Parameter(description = "标注ID", example = "1") @PathVariable @NotNull Long id) {
+            @Parameter(description = "Annotation ID", example = "1") @PathVariable @NotNull Long id) {
         
         log.info("查询标注详情：ID={}", id);
         
@@ -105,10 +105,10 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 创建算法标注
+     * Create algorithm annotation
      */
     @PostMapping
-    @Operation(summary = "创建算法标注", description = "新增算法标注")
+    @Operation(summary = "Create algorithm annotation", description = "Add new algorithm annotation")
     public Result<String> createAnnotation(@Valid @RequestBody AlgorithmAnnotation annotation) {
         log.info("创建算法标注：{}", annotation.getAnnotationName());
         
@@ -121,12 +121,12 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 更新算法标注
+     * Update algorithm annotation
      */
     @PutMapping("/{id}")
-    @Operation(summary = "更新算法标注", description = "根据ID更新标注信息")
+    @Operation(summary = "Update algorithm annotation", description = "Update annotation information by ID")
     public Result<String> updateAnnotation(
-            @Parameter(description = "标注ID", example = "1") @PathVariable @NotNull Long id,
+            @Parameter(description = "Annotation ID", example = "1") @PathVariable @NotNull Long id,
             @Valid @RequestBody AlgorithmAnnotation annotation) {
         
         log.info("更新算法标注：ID={}", id);
@@ -142,12 +142,12 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 删除算法标注
+     * Delete algorithm annotation
      */
     @DeleteMapping("/{id}")
-    @Operation(summary = "删除算法标注", description = "根据ID删除标注（软删除）")
+    @Operation(summary = "Delete algorithm annotation", description = "Delete annotation by ID (soft delete)")
     public Result<String> deleteAnnotation(
-            @Parameter(description = "标注ID", example = "1") @PathVariable @NotNull Long id) {
+            @Parameter(description = "Annotation ID", example = "1") @PathVariable @NotNull Long id) {
         
         log.info("删除算法标注：ID={}", id);
         
@@ -160,10 +160,10 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 批量删除算法标注
+     * Batch delete algorithm annotations
      */
     @DeleteMapping("/batch")
-    @Operation(summary = "批量删除算法标注", description = "根据ID列表批量删除标注")
+    @Operation(summary = "Batch delete algorithm annotations", description = "Batch delete annotations by ID list")
     public Result<String> batchDeleteAnnotations(@RequestBody List<Long> ids) {
         log.info("批量删除算法标注：IDs={}", ids);
         
@@ -180,13 +180,13 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 更新标注进度
+     * Update annotation progress
      */
     @PutMapping("/{id}/progress")
-    @Operation(summary = "更新标注进度", description = "更新标注的进度信息")
+    @Operation(summary = "Update annotation progress", description = "Update progress information of annotation")
     public Result<String> updateAnnotationProgress(
-            @Parameter(description = "标注ID", example = "1") @PathVariable @NotNull Long id,
-            @Parameter(description = "已标注数量", example = "50") @RequestParam @NotNull Integer annotatedCount) {
+            @Parameter(description = "Annotation ID", example = "1") @PathVariable @NotNull Long id,
+            @Parameter(description = "Annotated count", example = "50") @RequestParam @NotNull Integer annotatedCount) {
         
         log.info("更新标注进度：ID={}, AnnotatedCount={}", id, annotatedCount);
         
@@ -199,13 +199,13 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 批量更新标注状态
+     * Batch update annotation status
      */
     @PutMapping("/batch/status")
-    @Operation(summary = "批量更新标注状态", description = "批量更新标注的状态")
+    @Operation(summary = "Batch update annotation status", description = "Batch update status of annotations")
     public Result<String> batchUpdateAnnotationStatus(
             @RequestBody List<Long> ids,
-            @Parameter(description = "标注状态", example = "completed") @RequestParam @NotNull String annotationStatus) {
+            @Parameter(description = "Annotation status", example = "completed") @RequestParam @NotNull String annotationStatus) {
         
         log.info("批量更新标注状态：IDs={}, Status={}", ids, annotationStatus);
         
@@ -222,12 +222,12 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 开始标注任务
+     * Start annotation task
      */
     @PostMapping("/{id}/start")
-    @Operation(summary = "开始标注任务", description = "开始指定的标注任务")
+    @Operation(summary = "Start annotation task", description = "Start specified annotation task")
     public Result<String> startAnnotationTask(
-            @Parameter(description = "标注ID", example = "1") @PathVariable @NotNull Long id) {
+            @Parameter(description = "Annotation ID", example = "1") @PathVariable @NotNull Long id) {
         
         log.info("开始标注任务：ID={}", id);
         
@@ -240,12 +240,12 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 完成标注任务
+     * Complete annotation task
      */
     @PostMapping("/{id}/complete")
-    @Operation(summary = "完成标注任务", description = "完成指定的标注任务")
+    @Operation(summary = "Complete annotation task", description = "Complete specified annotation task")
     public Result<String> completeAnnotationTask(
-            @Parameter(description = "标注ID", example = "1") @PathVariable @NotNull Long id) {
+            @Parameter(description = "Annotation ID", example = "1") @PathVariable @NotNull Long id) {
         
         log.info("完成标注任务：ID={}", id);
         
@@ -258,12 +258,12 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 重置标注任务
+     * Reset annotation task
      */
     @PostMapping("/{id}/reset")
-    @Operation(summary = "重置标注任务", description = "重置指定的标注任务")
+    @Operation(summary = "Reset annotation task", description = "Reset specified annotation task")
     public Result<String> resetAnnotationTask(
-            @Parameter(description = "标注ID", example = "1") @PathVariable @NotNull Long id) {
+            @Parameter(description = "Annotation ID", example = "1") @PathVariable @NotNull Long id) {
         
         log.info("重置标注任务：ID={}", id);
         
@@ -276,23 +276,23 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 导出标注数据
+     * Export annotation data
      */
     @PostMapping("/{id}/export")
-    @Operation(summary = "导出标注数据", description = "导出指定标注的数据")
-    public void exportAnnotationData(@Parameter(description = "标注ID", example = "1") @PathVariable @NotNull Long id, HttpServletResponse response) {
+    @Operation(summary = "Export annotation data", description = "Export data of specified annotation")
+    public void exportAnnotationData(@Parameter(description = "Annotation ID", example = "1") @PathVariable @NotNull Long id, HttpServletResponse response) {
         log.info("Download dataset zip request, id={}", id);
         algorithmAnnotationService.downloadAnnotationDataset(id, response);
     }
 
     /**
-     * 导入标注数据
+     * Import annotation data
      */
     @PostMapping("/{id}/import")
-    @Operation(summary = "导入标注数据", description = "导入标注数据")
+    @Operation(summary = "Import annotation data", description = "Import annotation data")
     public Result<Map<String, Object>> importAnnotationData(
-            @Parameter(description = "标注ID", example = "1") @PathVariable @NotNull Long id,
-            @Parameter(description = "数据路径") @RequestParam @NotNull String dataPath) {
+            @Parameter(description = "Annotation ID", example = "1") @PathVariable @NotNull Long id,
+            @Parameter(description = "Data path") @RequestParam @NotNull String dataPath) {
         
         log.info("导入标注数据：ID={}, DataPath={}", id, dataPath);
         
@@ -305,12 +305,12 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 验证标注数据
+     * Validate annotation data
      */
     @PostMapping("/{id}/validate")
-    @Operation(summary = "验证标注数据", description = "验证指定标注的数据质量")
+    @Operation(summary = "Validate annotation data", description = "Validate data quality of specified annotation")
     public Result<Map<String, Object>> validateAnnotationData(
-            @Parameter(description = "标注ID", example = "1") @PathVariable @NotNull Long id) {
+            @Parameter(description = "Annotation ID", example = "1") @PathVariable @NotNull Long id) {
         
         log.info("验证标注数据：ID={}", id);
         
@@ -323,10 +323,10 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 获取标注类型统计
+     * Get annotation type statistics
      */
     @GetMapping("/statistics/type")
-    @Operation(summary = "获取标注类型统计", description = "获取各类型的标注数量统计")
+    @Operation(summary = "Get annotation type statistics", description = "Get annotation count statistics by type")
     public Result<List<Map<String, Object>>> getAnnotationTypeStatistics() {
         log.info("获取标注类型统计");
         
@@ -335,10 +335,10 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 获取标注状态统计
+     * Get annotation status statistics
      */
     @GetMapping("/statistics/status")
-    @Operation(summary = "获取标注状态统计", description = "获取各状态的标注数量统计")
+    @Operation(summary = "Get annotation status statistics", description = "Get annotation count statistics by status")
     public Result<List<Map<String, Object>>> getAnnotationStatusStatistics() {
         log.info("获取标注状态统计");
         
@@ -347,10 +347,10 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 获取标注进度统计
+     * Get annotation progress statistics
      */
     @GetMapping("/statistics/progress")
-    @Operation(summary = "获取标注进度统计", description = "获取各进度区间的标注数量统计")
+    @Operation(summary = "Get annotation progress statistics", description = "Get annotation count statistics by progress range")
     public Result<List<Map<String, Object>>> getProgressStatistics() {
         log.info("获取标注进度统计");
         
@@ -359,10 +359,10 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 获取标注工作量统计
+     * Get annotation workload statistics
      */
     @GetMapping("/statistics/workload")
-    @Operation(summary = "获取标注工作量统计", description = "获取标注工作量的总体统计")
+    @Operation(summary = "Get annotation workload statistics", description = "Get overall statistics of annotation workload")
     public Result<Map<String, Object>> getWorkloadStatistics() {
         log.info("获取标注工作量统计");
         
@@ -371,11 +371,11 @@ public class AlgorithmAnnotationController {
     }
 
     /**
-     * 保存标注数据到数据集文件
+     * Save annotation data to dataset file
      */
     @PostMapping("/{id}/save-dataset")
-    @Operation(summary = "保存标注数据到数据集", description = "将标注数据保存到数据集文件并更新数据库路径")
-    public Result<String> saveAnnotationToDataset(@Parameter(description = "标注ID", example = "1") @PathVariable @NotNull Long id) {
+    @Operation(summary = "Save annotation data to dataset", description = "Save annotation data to dataset file and update database path")
+    public Result<String> saveAnnotationToDataset(@Parameter(description = "Annotation ID", example = "1") @PathVariable @NotNull Long id) {
 
         log.info("保存标注数据到数据集：ID={}", id);
 

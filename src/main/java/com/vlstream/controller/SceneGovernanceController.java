@@ -16,12 +16,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 场景治理控制器
+ * Scene Governance Controller
  *
  * @author VLStream Team
  * @since 1.0.0
  */
-@Api(tags = "场景治理")
+@Api(tags = "Scene Governance")
 @RestController
 @RequestMapping("/api/scene-governance")
 @RequiredArgsConstructor
@@ -30,17 +30,17 @@ public class SceneGovernanceController {
     private final SceneGovernanceService sceneGovernanceService;
 
     /**
-     * 分页查询场景治理信息
+     * Page query scene governance information
      */
-    @ApiOperation("分页查询场景治理信息")
+    @ApiOperation("Page query scene governance information")
     @GetMapping("/page")
     public Result<IPage<SceneGovernance>> pageSceneGovernances(
-            @ApiParam("当前页") @RequestParam(defaultValue = "1") Long current,
-            @ApiParam("每页大小") @RequestParam(defaultValue = "10") Long size,
-            @ApiParam("场景名称") @RequestParam(required = false) String name,
-            @ApiParam("场景状态") @RequestParam(required = false) String status,
-            @ApiParam("开始日期") @RequestParam(required = false) String startDate,
-            @ApiParam("结束日期") @RequestParam(required = false) String endDate) {
+            @ApiParam("Current page") @RequestParam(defaultValue = "1") Long current,
+            @ApiParam("Page size") @RequestParam(defaultValue = "10") Long size,
+            @ApiParam("Scene name") @RequestParam(required = false) String name,
+            @ApiParam("Scene status") @RequestParam(required = false) String status,
+            @ApiParam("Start date") @RequestParam(required = false) String startDate,
+            @ApiParam("End date") @RequestParam(required = false) String endDate) {
         
         Page<SceneGovernance> page = new Page<>(current, size);
         IPage<SceneGovernance> result = sceneGovernanceService.getSceneGovernancePage(page, name, status, startDate, endDate);
@@ -48,242 +48,242 @@ public class SceneGovernanceController {
     }
 
     /**
-     * 根据ID查询场景治理信息
+     * Query scene governance information by ID
      */
-    @ApiOperation("根据ID查询场景治理信息")
+    @ApiOperation("Query scene governance information by ID")
     @GetMapping("/{id}")
-    public Result<SceneGovernance> getSceneGovernanceById(@ApiParam("场景ID") @PathVariable Long id) {
+    public Result<SceneGovernance> getSceneGovernanceById(@ApiParam("Scene ID") @PathVariable Long id) {
         SceneGovernance sceneGovernance = sceneGovernanceService.getById(id);
         if (sceneGovernance == null) {
-            return Result.error("场景不存在");
+            return Result.error("Scene does not exist");
         }
         return Result.success(sceneGovernance);
     }
 
     /**
-     * 根据名称查询场景治理信息
+     * Query scene governance information by name
      */
-    @ApiOperation("根据名称查询场景治理信息")
+    @ApiOperation("Query scene governance information by name")
     @GetMapping("/name/{name}")
-    public Result<SceneGovernance> getSceneGovernanceByName(@ApiParam("场景名称") @PathVariable String name) {
+    public Result<SceneGovernance> getSceneGovernanceByName(@ApiParam("Scene name") @PathVariable String name) {
         SceneGovernance sceneGovernance = sceneGovernanceService.getByName(name);
         if (sceneGovernance == null) {
-            return Result.error("场景不存在");
+            return Result.error("Scene does not exist");
         }
         return Result.success(sceneGovernance);
     }
 
     /**
-     * 新增场景治理信息
+     * Add scene governance information
      */
-    @ApiOperation("新增场景治理信息")
+    @ApiOperation("Add scene governance information")
     @PostMapping
     public Result<String> addSceneGovernance(@Valid @RequestBody SceneGovernance sceneGovernance) {
-        // 验证场景治理配置
+        // Validate scene governance configuration
         Map<String, Object> validateResult = sceneGovernanceService.validateSceneGovernance(sceneGovernance);
         if (!(Boolean) validateResult.get("valid")) {
-            return Result.error("数据验证失败: " + validateResult.get("errors"));
+            return Result.error("Data validation failed: " + validateResult.get("errors"));
         }
         
         boolean success = sceneGovernanceService.addSceneGovernance(sceneGovernance);
         if (success) {
-            return Result.success("新增成功");
+            return Result.success("Add successful");
         } else {
-            return Result.error("新增失败");
+            return Result.error("Add failed");
         }
     }
 
     /**
-     * 更新场景治理信息
+     * Update scene governance information
      */
-    @ApiOperation("更新场景治理信息")
+    @ApiOperation("Update scene governance information")
     @PutMapping("/{id}")
     public Result<String> updateSceneGovernance(
-            @ApiParam("场景ID") @PathVariable Long id,
+            @ApiParam("Scene ID") @PathVariable Long id,
             @RequestBody SceneGovernance sceneGovernance) {
         
         sceneGovernance.setId(id);
         
-        // 验证场景治理配置
+        // Validate scene governance configuration
         Map<String, Object> validateResult = sceneGovernanceService.validateSceneGovernance(sceneGovernance);
         if (!(Boolean) validateResult.get("valid")) {
-            return Result.error("数据验证失败: " + validateResult.get("errors"));
+            return Result.error("Data validation failed: " + validateResult.get("errors"));
         }
         
         boolean success = sceneGovernanceService.updateSceneGovernance(sceneGovernance);
         if (success) {
-            return Result.success("更新成功");
+            return Result.success("Update successful");
         } else {
-            return Result.error("更新失败");
+            return Result.error("Update failed");
         }
     }
 
     /**
-     * 删除场景治理信息
+     * Delete scene governance information
      */
-    @ApiOperation("删除场景治理信息")
+    @ApiOperation("Delete scene governance information")
     @DeleteMapping("/{id}")
-    public Result<String> deleteSceneGovernance(@ApiParam("场景ID") @PathVariable Long id) {
+    public Result<String> deleteSceneGovernance(@ApiParam("Scene ID") @PathVariable Long id) {
         boolean success = sceneGovernanceService.deleteSceneGovernance(id);
         if (success) {
-            return Result.success("删除成功");
+            return Result.success("Delete successful");
         } else {
-            return Result.error("删除失败");
+            return Result.error("Delete failed");
         }
     }
 
     /**
-     * 批量删除场景治理信息
+     * Batch delete scene governance information
      */
-    @ApiOperation("批量删除场景治理信息")
+    @ApiOperation("Batch delete scene governance information")
     @DeleteMapping("/batch")
-    public Result<String> deleteSceneGovernanceBatch(@ApiParam("场景ID列表") @RequestBody List<Long> ids) {
+    public Result<String> deleteSceneGovernanceBatch(@ApiParam("Scene ID list") @RequestBody List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
-            return Result.error("请选择要删除的场景");
+            return Result.error("Please select scenes to delete");
         }
         
         boolean success = sceneGovernanceService.deleteSceneGovernanceBatch(ids);
         if (success) {
-            return Result.success("批量删除成功");
+            return Result.success("Batch delete successful");
         } else {
-            return Result.error("批量删除失败");
+            return Result.error("Batch delete failed");
         }
     }
 
     /**
-     * 更新场景治理状态
+     * Update scene governance status
      */
-    @ApiOperation("更新场景治理状态")
+    @ApiOperation("Update scene governance status")
     @PutMapping("/{id}/status/{status}")
     public Result<String> updateSceneGovernanceStatus(
-            @ApiParam("场景ID") @PathVariable Long id,
-            @ApiParam("场景状态") @PathVariable String status) {
+            @ApiParam("Scene ID") @PathVariable Long id,
+            @ApiParam("Scene status") @PathVariable String status) {
         
         if (!"enabled".equals(status) && !"disabled".equals(status)) {
-            return Result.error("状态值无效");
+            return Result.error("Invalid status value");
         }
         
         boolean success = sceneGovernanceService.updateSceneGovernanceStatus(id, status);
         if (success) {
-            return Result.success("状态更新成功");
+            return Result.success("Status update successful");
         } else {
-            return Result.error("状态更新失败");
+            return Result.error("Status update failed");
         }
     }
 
     /**
-     * 批量更新场景治理状态
+     * Batch update scene governance status
      */
-    @ApiOperation("批量更新场景治理状态")
+    @ApiOperation("Batch update scene governance status")
     @PutMapping("/status/{status}")
     public Result<String> updateSceneGovernanceStatusBatch(
-            @ApiParam("场景状态") @PathVariable String status,
-            @ApiParam("场景ID列表") @RequestBody List<Long> ids) {
+            @ApiParam("Scene status") @PathVariable String status,
+            @ApiParam("Scene ID list") @RequestBody List<Long> ids) {
         
         if (ids == null || ids.isEmpty()) {
-            return Result.error("请选择要更新状态的场景");
+            return Result.error("Please select scenes to update status");
         }
         
         if (!"enabled".equals(status) && !"disabled".equals(status)) {
-            return Result.error("状态值无效");
+            return Result.error("Invalid status value");
         }
         
         boolean success = sceneGovernanceService.updateSceneGovernanceStatusBatch(ids, status);
         if (success) {
-            return Result.success("批量状态更新成功");
+            return Result.success("Batch status update successful");
         } else {
-            return Result.error("批量状态更新失败");
+            return Result.error("Batch status update failed");
         }
     }
 
     /**
-     * 启用场景治理
+     * Enable scene governance
      */
-    @ApiOperation("启用场景治理")
+    @ApiOperation("Enable scene governance")
     @PutMapping("/{id}/enable")
-    public Result<String> enableSceneGovernance(@ApiParam("场景ID") @PathVariable Long id) {
+    public Result<String> enableSceneGovernance(@ApiParam("Scene ID") @PathVariable Long id) {
         boolean success = sceneGovernanceService.enableSceneGovernance(id);
         if (success) {
-            return Result.success("启用成功");
+            return Result.success("Enable successful");
         } else {
-            return Result.error("启用失败");
+            return Result.error("Enable failed");
         }
     }
 
     /**
-     * 禁用场景治理
+     * Disable scene governance
      */
-    @ApiOperation("禁用场景治理")
+    @ApiOperation("Disable scene governance")
     @PutMapping("/{id}/disable")
-    public Result<String> disableSceneGovernance(@ApiParam("场景ID") @PathVariable Long id) {
+    public Result<String> disableSceneGovernance(@ApiParam("Scene ID") @PathVariable Long id) {
         boolean success = sceneGovernanceService.disableSceneGovernance(id);
         if (success) {
-            return Result.success("禁用成功");
+            return Result.success("Disable successful");
         } else {
-            return Result.error("禁用失败");
+            return Result.error("Disable failed");
         }
     }
 
     /**
-     * 批量启用场景治理
+     * Batch enable scene governance
      */
-    @ApiOperation("批量启用场景治理")
+    @ApiOperation("Batch enable scene governance")
     @PutMapping("/batch/enable")
-    public Result<String> enableSceneGovernanceBatch(@ApiParam("场景ID列表") @RequestBody List<Long> ids) {
+    public Result<String> enableSceneGovernanceBatch(@ApiParam("Scene ID list") @RequestBody List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
-            return Result.error("请选择要启用的场景");
+            return Result.error("Please select scenes to enable");
         }
         
         boolean success = sceneGovernanceService.enableSceneGovernanceBatch(ids);
         if (success) {
-            return Result.success("批量启用成功");
+            return Result.success("Batch enable successful");
         } else {
-            return Result.error("批量启用失败");
+            return Result.error("Batch enable failed");
         }
     }
 
     /**
-     * 批量禁用场景治理
+     * Batch disable scene governance
      */
-    @ApiOperation("批量禁用场景治理")
+    @ApiOperation("Batch disable scene governance")
     @PutMapping("/batch/disable")
-    public Result<String> disableSceneGovernanceBatch(@ApiParam("场景ID列表") @RequestBody List<Long> ids) {
+    public Result<String> disableSceneGovernanceBatch(@ApiParam("Scene ID list") @RequestBody List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
-            return Result.error("请选择要禁用的场景");
+            return Result.error("Please select scenes to disable");
         }
         
         boolean success = sceneGovernanceService.disableSceneGovernanceBatch(ids);
         if (success) {
-            return Result.success("批量禁用成功");
+            return Result.success("Batch disable successful");
         } else {
-            return Result.error("批量禁用失败");
+            return Result.error("Batch disable failed");
         }
     }
 
     /**
-     * 根据状态查询场景治理列表
+     * Query scene governance list by status
      */
-    @ApiOperation("根据状态查询场景治理列表")
+    @ApiOperation("Query scene governance list by status")
     @GetMapping("/status/{status}")
-    public Result<List<SceneGovernance>> getSceneGovernancesByStatus(@ApiParam("场景状态") @PathVariable String status) {
+    public Result<List<SceneGovernance>> getSceneGovernancesByStatus(@ApiParam("Scene status") @PathVariable String status) {
         List<SceneGovernance> sceneGovernances = sceneGovernanceService.getSceneGovernancesByStatus(status);
         return Result.success(sceneGovernances);
     }
 
     /**
-     * 根据执行类型查询场景治理列表
+     * Query scene governance list by execution type
      */
-    @ApiOperation("根据执行类型查询场景治理列表")
+    @ApiOperation("Query scene governance list by execution type")
     @GetMapping("/execute-type/{executeType}")
-    public Result<List<SceneGovernance>> getSceneGovernancesByExecuteType(@ApiParam("执行类型") @PathVariable String executeType) {
+    public Result<List<SceneGovernance>> getSceneGovernancesByExecuteType(@ApiParam("Execution type") @PathVariable String executeType) {
         List<SceneGovernance> sceneGovernances = sceneGovernanceService.getSceneGovernancesByExecuteType(executeType);
         return Result.success(sceneGovernances);
     }
 
     /**
-     * 获取场景治理统计信息
+     * Get scene governance statistics
      */
-    @ApiOperation("获取场景治理统计信息")
+    @ApiOperation("Get scene governance statistics")
     @GetMapping("/statistics")
     public Result<Map<String, Object>> getSceneGovernanceStatistics() {
         Map<String, Object> statistics = sceneGovernanceService.getSceneGovernanceStatistics();
@@ -291,9 +291,9 @@ public class SceneGovernanceController {
     }
 
     /**
-     * 获取所有执行类型列表
+     * Get all execution type list
      */
-    @ApiOperation("获取所有执行类型列表")
+    @ApiOperation("Get all execution type list")
     @GetMapping("/execute-types")
     public Result<List<String>> getAllExecuteTypes() {
         List<String> executeTypes = sceneGovernanceService.getAllExecuteTypes();
@@ -301,23 +301,23 @@ public class SceneGovernanceController {
     }
 
     /**
-     * 执行场景治理
+     * Execute scene governance
      */
-    @ApiOperation("执行场景治理")
+    @ApiOperation("Execute scene governance")
     @PostMapping("/{id}/execute")
-    public Result<Map<String, Object>> executeSceneGovernance(@ApiParam("场景ID") @PathVariable Long id) {
+    public Result<Map<String, Object>> executeSceneGovernance(@ApiParam("Scene ID") @PathVariable Long id) {
         Map<String, Object> result = sceneGovernanceService.executeSceneGovernance(id);
         if ((Boolean) result.get("success")) {
-            return Result.success("执行成功", result);
+            return Result.success("Execution successful", result);
         } else {
             return Result.error((String) result.get("message"));
         }
     }
 
     /**
-     * 验证场景治理配置
+     * Validate scene governance configuration
      */
-    @ApiOperation("验证场景治理配置")
+    @ApiOperation("Validate scene governance configuration")
     @PostMapping("/validate")
     public Result<Map<String, Object>> validateSceneGovernance(@RequestBody SceneGovernance sceneGovernance) {
         Map<String, Object> result = sceneGovernanceService.validateSceneGovernance(sceneGovernance);
@@ -325,9 +325,9 @@ public class SceneGovernanceController {
     }
 
     /**
-     * 导出场景治理信息
+     * Export scene governance information
      */
-    @ApiOperation("导出场景治理信息")
+    @ApiOperation("Export scene governance information")
     @GetMapping("/export")
     public Result<List<SceneGovernance>> exportSceneGovernances(@RequestParam(required = false) List<Long> sceneIds) {
         List<SceneGovernance> sceneGovernances = sceneGovernanceService.exportSceneGovernances(sceneIds);
@@ -335,58 +335,58 @@ public class SceneGovernanceController {
     }
 
     /**
-     * 批量导入场景治理
+     * Batch import scene governance
      */
-    @ApiOperation("批量导入场景治理")
+    @ApiOperation("Batch import scene governance")
     @PostMapping("/import")
     public Result<Map<String, Object>> batchImportSceneGovernances(@RequestBody List<SceneGovernance> sceneGovernanceList) {
         if (sceneGovernanceList == null || sceneGovernanceList.isEmpty()) {
-            return Result.error("导入数据不能为空");
+            return Result.error("Import data cannot be empty");
         }
         
         Map<String, Object> result = sceneGovernanceService.batchImportSceneGovernances(sceneGovernanceList);
-        return Result.success("导入完成", result);
+        return Result.success("Import completed", result);
     }
 
     /**
-     * 获取场景治理执行历史
+     * Get scene governance execution history
      */
-    @ApiOperation("获取场景治理执行历史")
+    @ApiOperation("Get scene governance execution history")
     @GetMapping("/{id}/execute-history")
-    public Result<List<Map<String, Object>>> getSceneGovernanceExecuteHistory(@ApiParam("场景ID") @PathVariable Long id) {
+    public Result<List<Map<String, Object>>> getSceneGovernanceExecuteHistory(@ApiParam("Scene ID") @PathVariable Long id) {
         List<Map<String, Object>> history = sceneGovernanceService.getSceneGovernanceExecuteHistory(id);
         return Result.success(history);
     }
 
     /**
-     * 复制场景治理
+     * Copy scene governance
      */
-    @ApiOperation("复制场景治理")
+    @ApiOperation("Copy scene governance")
     @PostMapping("/{id}/copy")
     public Result<String> copySceneGovernance(
-            @ApiParam("源场景ID") @PathVariable Long id,
-            @ApiParam("新场景名称") @RequestParam String name) {
+            @ApiParam("Source scene ID") @PathVariable Long id,
+            @ApiParam("New scene name") @RequestParam String name) {
         
         if (name == null || name.trim().isEmpty()) {
-            return Result.error("新场景名称不能为空");
+            return Result.error("New scene name cannot be empty");
         }
         
         boolean success = sceneGovernanceService.copySceneGovernance(id, name.trim());
         if (success) {
-            return Result.success("复制成功");
+            return Result.success("Copy successful");
         } else {
-            return Result.error("复制失败");
+            return Result.error("Copy failed");
         }
     }
 
     /**
-     * 检查场景名称是否存在
+     * Check if scene name exists
      */
-    @ApiOperation("检查场景名称是否存在")
+    @ApiOperation("Check if scene name exists")
     @GetMapping("/check-name")
     public Result<Boolean> checkSceneNameExists(
-            @ApiParam("场景名称") @RequestParam String name,
-            @ApiParam("场景ID（编辑时排除自己）") @RequestParam(required = false) Long id) {
+            @ApiParam("Scene name") @RequestParam String name,
+            @ApiParam("Scene ID (exclude self when editing)") @RequestParam(required = false) Long id) {
         
         boolean exists = sceneGovernanceService.checkSceneNameExists(name, id);
         return Result.success(exists);

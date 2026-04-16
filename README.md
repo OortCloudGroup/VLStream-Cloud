@@ -135,4 +135,4 @@ mvn spring-boot:run
 ## 联系方式
 
 - **项目主页**: https://vls.oortcloudsmart.com
-- **技术支持**: zhangxuellan@oortcloudsmart.com
+- **技术支持**: zhangxuelian@oortcloudsmart.com

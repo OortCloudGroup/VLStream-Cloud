@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 /**
- * 登录服务类
+ * Login service class
  */
 @Slf4j
 @Service
@@ -30,7 +30,7 @@ public class LoginService {
     private UserCenterApiService userCenterApiService;
 
     /**
-     * 根据租户短语获取租户ID
+     * Get tenant ID by tenant phrase
      */
     public String getTenantIdByPhrase(String phrase) {
         try {
@@ -43,7 +43,7 @@ public class LoginService {
     }
 
     /**
-     * 用户登录
+     * User login
      */
     public LoginResponse login(String encryptedUserInfo, String clientIp, String userAgent) {
         try {
@@ -93,7 +93,7 @@ public class LoginService {
     }
 
     /**
-     * 验证Token
+     * Verify token
      */
     public LocalUser verifyToken(String accessToken) {
         try {
@@ -170,7 +170,7 @@ public class LoginService {
     }
 
     /**
-     * 用户退出
+     * User logout
      */
     public boolean logout(String accessToken) {
         try {
@@ -197,7 +197,7 @@ public class LoginService {
     }
 
     /**
-     * 验证用户权限
+     * Verify user permission
      */
     public boolean verifyUserPermission(String accessToken, String serviceName, String pauth, String auth, String doAction) {
         try {
@@ -217,7 +217,7 @@ public class LoginService {
     }
 
     /**
-     * 同步用户信息到本地
+     * Sync user info to local
      */
     private LocalUser syncUserToLocal(UserCenterUser userInfo, String clientIp, String userAgent) {
         try {
@@ -272,7 +272,7 @@ public class LoginService {
     }
 
     /**
-     * 解析日期时间字符串
+     * Parse date time string
      */
     private LocalDateTime parseDateTime(String dateTimeStr) {
         if (dateTimeStr == null || dateTimeStr.trim().isEmpty()) {
@@ -289,14 +289,14 @@ public class LoginService {
     }
 
     /**
-     * 计算token过期时间（24小时后）
+     * Calculate token expire time (24 hours later)
      */
     private LocalDateTime calculateTokenExpireTime() {
         return LocalDateTime.now().plusHours(24);
     }
 
     /**
-     * 获取租户列表
+     * Get tenant list
      */
     public Map<String, Object> getTenantList(String accessToken, Boolean isChild) {
         try {

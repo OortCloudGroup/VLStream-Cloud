@@ -5,55 +5,55 @@ import com.vlstream.entity.AlgorithmTraining;
 import java.util.List;
 
 /**
- * 算法训练任务Service接口
+ * Algorithm Training Task Service Interface
  */
 public interface AlgorithmTrainingService {
     
     /**
-     * 查询算法训练任务
+     * Query algorithm training task
      * 
-     * @param id 算法训练任务主键
-     * @return 算法训练任务
+     * @param id Algorithm training task primary key
+     * @return Algorithm training task
      */
     public AlgorithmTraining selectAlgorithmTrainingById(Long id);
     
     /**
-     * 查询算法训练任务列表
+     * Query algorithm training task list
      * 
-     * @param algorithmTraining 算法训练任务
-     * @return 算法训练任务集合
+     * @param algorithmTraining Algorithm training task
+     * @return Algorithm training task collection
      */
     public List<AlgorithmTraining> selectAlgorithmTrainingList(AlgorithmTraining algorithmTraining);
     
     /**
-     * 新增算法训练任务
+     * Add algorithm training task
      * 
-     * @param algorithmTraining 算法训练任务
-     * @return 结果
+     * @param algorithmTraining Algorithm training task
+     * @return Result
      */
     public int insertAlgorithmTraining(AlgorithmTraining algorithmTraining);
     
     /**
-     * 修改算法训练任务
+     * Update algorithm training task
      * 
-     * @param algorithmTraining 算法训练任务
-     * @return 结果
+     * @param algorithmTraining Algorithm training task
+     * @return Result
      */
     public int updateAlgorithmTraining(AlgorithmTraining algorithmTraining);
     
     /**
-     * 批量删除算法训练任务
+     * Batch delete algorithm training tasks
      * 
-     * @param ids 需要删除的算法训练任务主键集合
-     * @return 结果
+     * @param ids Algorithm training task primary key collection to delete
+     * @return Result
      */
     public int deleteAlgorithmTrainingByIds(Long[] ids);
     
     /**
-     * 删除算法训练任务信息
+     * Delete algorithm training task information
      * 
-     * @param id 算法训练任务主键
-     * @return 结果
+     * @param id Algorithm training task primary key
+     * @return Result
      */
     public int deleteAlgorithmTrainingById(Long id);
 } 

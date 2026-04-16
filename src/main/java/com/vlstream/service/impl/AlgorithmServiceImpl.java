@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 算法服务实现类
+ * Algorithm Service Implementation Class
  * 
  * @author VLStream Team
  * @since 1.0.0
@@ -39,39 +39,39 @@ public class AlgorithmServiceImpl extends ServiceImpl<AlgorithmMapper, Algorithm
                                               String name, 
                                               String category,
                                               String deployStatus) {
-        log.info("分页查询算法列表，参数：repositoryId={}, name={}, category={}, deployStatus={}",
+        log.info("Query algorithm list by page, parameters: repositoryId={}, name={}, category={}, deployStatus={}",
                 repositoryId, name, category, deployStatus);
         return algorithmMapper.selectAlgorithmPage(page, repositoryId, name, category, deployStatus);
     }
 
     @Override
     public List<Algorithm> getByRepositoryId(Long repositoryId) {
-        log.info("根据仓库ID查询算法列表：{}", repositoryId);
+        log.info("Query algorithm list by repository ID: {}", repositoryId);
         return algorithmMapper.selectByRepositoryId(repositoryId);
     }
 
     @Override
     public List<Algorithm> getByCategory(String category) {
-        log.info("根据分类查询算法列表：{}", category);
+        log.info("Query algorithm list by category: {}", category);
         return algorithmMapper.selectByCategory(category);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean createAlgorithm(Algorithm algorithm) {
-        log.info("创建算法：{}", algorithm.getName());
+        log.info("Create algorithm: {}", algorithm.getName());
         
-        // 检查同一仓库下名称是否重复
+        // Check if name exists in the same repository
         QueryWrapper<Algorithm> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("repository_id", algorithm.getRepositoryId())
                    .eq("name", algorithm.getName())
                    .eq("deleted", 0);
         if (count(queryWrapper) > 0) {
-            log.warn("同一仓库下算法名称已存在：{}", algorithm.getName());
+            log.warn("Algorithm name already exists in the same repository: {}", algorithm.getName());
             return false;
         }
         
-        // 设置默认值
+        // Set default values
         if (algorithm.getVersion() == null) {
             algorithm.setVersion("1.0.0");
         }
@@ -86,7 +86,7 @@ public class AlgorithmServiceImpl extends ServiceImpl<AlgorithmMapper, Algorithm
         }
         boolean result = save(algorithm);
         
-        // 更新仓库的算法数量
+        // Update repository algorithm count
         if (result) {
             algorithmRepositoryService.updateAlgorithmCount(algorithm.getRepositoryId());
         }
@@ -97,21 +97,21 @@ public class AlgorithmServiceImpl extends ServiceImpl<AlgorithmMapper, Algorithm
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateAlgorithm(Algorithm algorithm) {
-        log.info("更新算法：ID={}, Name={}", algorithm.getId(), algorithm.getName());
+        log.info("Update algorithm: ID={}, Name={}", algorithm.getId(), algorithm.getName());
         
-        // 获取原算法信息
+        // Get original algorithm information
         Algorithm existing = getById(algorithm.getId());
         if (existing == null) {
-            log.warn("算法不存在：ID={}", algorithm.getId());
+            log.warn("Algorithm does not exist: ID={}", algorithm.getId());
             return false;
         }
         
-        // 如果仓库发生变化，需要更新两个仓库的算法数量
+        // If repository changes, need to update algorithm count for both repositories
         Long oldRepositoryId = existing.getRepositoryId();
         Long newRepositoryId = algorithm.getRepositoryId();
         boolean result = updateById(algorithm);
         
-        // 更新算法数量
+        // Update algorithm count
         if (result && !oldRepositoryId.equals(newRepositoryId)) {
             algorithmRepositoryService.updateAlgorithmCount(oldRepositoryId);
             algorithmRepositoryService.updateAlgorithmCount(newRepositoryId);
@@ -123,17 +123,17 @@ public class AlgorithmServiceImpl extends ServiceImpl<AlgorithmMapper, Algorithm
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteAlgorithm(Long id) {
-        log.info("删除算法：ID={}", id);
+        log.info("Delete algorithm: ID={}", id);
         
         Algorithm algorithm = getById(id);
         if (algorithm == null) {
-            log.warn("算法不存在：ID={}", id);
+            log.warn("Algorithm does not exist: ID={}", id);
             return false;
         }
         
         boolean result = removeById(id);
         
-        // 更新仓库的算法数量
+        // Update repository algorithm count
         if (result) {
             algorithmRepositoryService.updateAlgorithmCount(algorithm.getRepositoryId());
         }
@@ -144,16 +144,16 @@ public class AlgorithmServiceImpl extends ServiceImpl<AlgorithmMapper, Algorithm
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean batchDeleteAlgorithms(List<Long> ids) {
-        log.info("批量删除算法：IDs={}", ids);
+        log.info("Batch delete algorithms: IDs={}", ids);
         
-        // 获取待删除算法的仓库信息
+        // Get repository information of algorithms to be deleted
         List<Algorithm> algorithms = listByIds(ids);
         Map<Long, Boolean> repositoryMap = new HashMap<>();
         algorithms.forEach(algo -> repositoryMap.put(algo.getRepositoryId(), true));
         
         boolean result = removeByIds(ids);
         
-        // 更新相关仓库的算法数量
+        // Update algorithm count for related repositories
         if (result) {
             repositoryMap.keySet().forEach(algorithmRepositoryService::updateAlgorithmCount);
         }
@@ -163,13 +163,13 @@ public class AlgorithmServiceImpl extends ServiceImpl<AlgorithmMapper, Algorithm
 
     @Override
     public boolean updateDeployStatus(Long id, String deployStatus) {
-        log.info("更新算法部署状态：ID={}, Status={}", id, deployStatus);
+        log.info("Update algorithm deployment status: ID={}, Status={}", id, deployStatus);
         
         UpdateWrapper<Algorithm> updateWrapper = new UpdateWrapper<>();
         updateWrapper.eq("id", id)
                     .set("deploy_status", deployStatus);
         
-        // 如果是部署成功，增加部署次数和更新部署时间
+        // If deployment is successful, increment deployment count and update deployment time
         if ("deployed".equals(deployStatus)) {
             updateWrapper.setSql("deploy_count = deploy_count + 1")
                         .set("last_deploy_time", LocalDateTime.now());
@@ -180,13 +180,13 @@ public class AlgorithmServiceImpl extends ServiceImpl<AlgorithmMapper, Algorithm
 
     @Override
     public boolean batchUpdateDeployStatus(List<Long> ids, String deployStatus) {
-        log.info("批量更新算法部署状态：IDs={}, Status={}", ids, deployStatus);
+        log.info("Batch update algorithm deployment status: IDs={}, Status={}", ids, deployStatus);
         
         UpdateWrapper<Algorithm> updateWrapper = new UpdateWrapper<>();
         updateWrapper.in("id", ids)
                     .set("deploy_status", deployStatus);
         
-        // 如果是部署成功，增加部署次数和更新部署时间
+        // If deployment is successful, increment deployment count and update deployment time
         if ("deployed".equals(deployStatus)) {
             updateWrapper.setSql("deploy_count = deploy_count + 1")
                         .set("last_deploy_time", LocalDateTime.now());
@@ -198,26 +198,26 @@ public class AlgorithmServiceImpl extends ServiceImpl<AlgorithmMapper, Algorithm
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deployAlgorithmToDevices(Long algorithmId, List<Long> deviceIds) {
-        log.info("部署算法到设备：AlgorithmId={}, DeviceIds={}", algorithmId, deviceIds);
+        log.info("Deploy algorithm to devices: AlgorithmId={}, DeviceIds={}", algorithmId, deviceIds);
         
-        // 更新算法部署状态为部署中
+        // Update algorithm deployment status to deploying
         updateDeployStatus(algorithmId, "deploying");
         
         try {
-            // 这里应该调用实际的部署服务
-            // 模拟部署过程
+            // Here should call actual deployment service
+            // Simulate deployment process
             Thread.sleep(1000);
             
-            // 部署成功，更新状态
+            // Deployment successful, update status
             updateDeployStatus(algorithmId, "deployed");
             
-            log.info("算法部署成功：AlgorithmId={}", algorithmId);
+            log.info("Algorithm deployed successfully: AlgorithmId={}", algorithmId);
             return true;
             
         } catch (Exception e) {
-            log.error("算法部署失败：AlgorithmId={}", algorithmId, e);
+            log.error("Algorithm deployment failed: AlgorithmId={}", algorithmId, e);
             
-            // 部署失败，更新状态
+            // Deployment failed, update status
             updateDeployStatus(algorithmId, "failed");
             return false;
         }
@@ -225,39 +225,39 @@ public class AlgorithmServiceImpl extends ServiceImpl<AlgorithmMapper, Algorithm
 
     @Override
     public Long countByRepositoryId(Long repositoryId) {
-        log.info("统计某仓库下的算法数量：RepositoryId={}", repositoryId);
+        log.info("Count algorithms in repository: RepositoryId={}", repositoryId);
         return algorithmMapper.countByRepositoryId(repositoryId);
     }
 
     @Override
     public List<Map<String, Object>> getCategoryStatistics() {
-        log.info("获取算法分类统计");
+        log.info("Get algorithm category statistics");
         return algorithmMapper.selectCategoryStatistics();
     }
 
     @Override
     public List<Map<String, Object>> getTypeStatistics() {
-        log.info("获取算法类型统计");
+        log.info("Get algorithm type statistics");
         return algorithmMapper.selectTypeStatistics();
     }
 
     @Override
     public List<Map<String, Object>> getDeployStatusStatistics() {
-        log.info("获取部署状态统计");
+        log.info("Get deployment status statistics");
         return algorithmMapper.selectDeployStatusStatistics();
     }
 
     @Override
     public Map<String, Object> evaluateAlgorithm(Long algorithmId) {
-        log.info("算法评估：AlgorithmId={}", algorithmId);
+        log.info("Evaluate algorithm: AlgorithmId={}", algorithmId);
         
         Algorithm algorithm = getById(algorithmId);
         if (algorithm == null) {
-            log.warn("算法不存在：ID={}", algorithmId);
+            log.warn("Algorithm does not exist: ID={}", algorithmId);
             return null;
         }
         
-        // 模拟算法评估过程
+        // Simulate algorithm evaluation process
         Map<String, Object> result = new HashMap<>();
         result.put("algorithmId", algorithmId);
         result.put("algorithmName", algorithm.getName());
@@ -268,7 +268,7 @@ public class AlgorithmServiceImpl extends ServiceImpl<AlgorithmMapper, Algorithm
         result.put("evaluationTime", LocalDateTime.now());
         result.put("status", "completed");
         
-        log.info("算法评估完成：AlgorithmId={}, Result={}", algorithmId, result);
+        log.info("Algorithm evaluation completed: AlgorithmId={}, Result={}", algorithmId, result);
         return result;
     }
 } 

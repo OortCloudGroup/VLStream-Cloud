@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 标签管理 Service 实现类
+ * Tag Management Service Implementation
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -47,29 +47,29 @@ public class TagManagementServiceImpl extends ServiceImpl<TagManagementMapper, T
     @Override
     @Transactional(rollbackFor = Exception.class)
     public TagManagement createTag(TagManagement tagManagement) {
-        // 验证标签名称是否重复
+        // Validate tag name duplication
         if (isTagNameDuplicate(tagManagement.getTagName(), tagManagement.getParentId(), null)) {
-            throw new RuntimeException("标签名称已存在");
+            throw new RuntimeException("Tag name already exists");
         }
 
-        // 设置排序号
+        // Set sort order
         if (tagManagement.getSortOrder() == null) {
             Integer maxSort = tagManagementMapper.getMaxSortOrder(tagManagement.getParentId());
             tagManagement.setSortOrder(maxSort + 1);
         }
 
-        // 设置层级
+        // Set level
         if (tagManagement.getParentId() == null) {
-            tagManagement.setLevel(0); // 根级
+            tagManagement.setLevel(0); // Root level
         } else {
             TagManagement parent = getById(tagManagement.getParentId());
             if (parent != null) {
                 tagManagement.setLevel(parent.getLevel() + 1);
-                tagManagement.setCategoryType(parent.getCategoryType()); // 继承父级的类型
+                tagManagement.setCategoryType(parent.getCategoryType()); // Inherit parent type
             }
         }
 
-        // 设置默认值
+        // Set default values
         if (tagManagement.getIsActive() == null) {
             tagManagement.setIsActive(1);
         }
@@ -86,15 +86,15 @@ public class TagManagementServiceImpl extends ServiceImpl<TagManagementMapper, T
     public TagManagement updateTag(TagManagement tagManagement) {
         TagManagement existingTag = getById(tagManagement.getId());
         if (existingTag == null) {
-            throw new RuntimeException("标签不存在");
+            throw new RuntimeException("Tag does not exist");
         }
 
-        // 验证标签名称是否重复
+        // Validate tag name duplication
         if (isTagNameDuplicate(tagManagement.getTagName(), existingTag.getParentId(), tagManagement.getId())) {
-            throw new RuntimeException("标签名称已存在");
+            throw new RuntimeException("Tag name already exists");
         }
 
-        // 更新字段
+        // Update fields
         existingTag.setTagName(tagManagement.getTagName());
         existingTag.setTagColor(tagManagement.getTagColor());
         existingTag.setTagIcon(tagManagement.getTagIcon());
@@ -114,24 +114,24 @@ public class TagManagementServiceImpl extends ServiceImpl<TagManagementMapper, T
             return false;
         }
 
-        // 如果是根级标签，不允许删除
+        // Cannot delete root level tag
         if (tag.getLevel() == 0) {
-            throw new RuntimeException("不能删除根级标签分类");
+            throw new RuntimeException("Cannot delete root level tag category");
         }
 
-        // 递归删除子标签
+        // Recursively delete child tags
         List<TagManagement> children = tagManagementMapper.selectChildrenByParentId(tagId);
         for (TagManagement child : children) {
             deleteTag(child.getId());
         }
 
-        // 删除设备标签关联
+        // Delete device-tag relationships
         deviceTagRelationMapper.deleteByTagId(tagId);
 
-        // 删除标签
+        // Delete tag
         removeById(tagId);
         
-        log.info("删除标签成功，标签ID: {}, 标签名称: {}", tagId, tag.getTagName());
+        log.info("Tag deleted successfully, tag ID: {}, tag name: {}", tagId, tag.getTagName());
         return true;
     }
 
@@ -216,30 +216,30 @@ public class TagManagementServiceImpl extends ServiceImpl<TagManagementMapper, T
     }
 
     /**
-     * 构建树形结构
+     * Build tree structure
      *
-     * @param allTags 所有标签
-     * @return 树形结构
+     * @param allTags all tags
+     * @return tree structure
      */
     private List<TagManagement> buildTree(List<TagManagement> allTags) {
         if (allTags == null || allTags.isEmpty()) {
             return new ArrayList<>();
         }
 
-        // 按父级ID分组
+        // Group by parent ID
         Map<Long, List<TagManagement>> parentMap = allTags.stream()
                 .collect(Collectors.groupingBy(tag -> tag.getParentId() == null ? 0L : tag.getParentId()));
 
-        // 递归构建树
+        // Recursively build tree
         return buildTreeRecursive(parentMap, 0L);
     }
 
     /**
-     * 递归构建树形结构
+     * Recursively build tree structure
      *
-     * @param parentMap 父级分组
-     * @param parentId 父级ID
-     * @return 子节点列表
+     * @param parentMap parent grouping
+     * @param parentId parent ID
+     * @return child node list
      */
     private List<TagManagement> buildTreeRecursive(Map<Long, List<TagManagement>> parentMap, Long parentId) {
         List<TagManagement> children = parentMap.get(parentId);

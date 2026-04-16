@@ -12,7 +12,7 @@ import org.apache.ibatis.annotations.Update;
 import java.util.List;
 
 /**
- * 设备信息数据访问层接口
+ * Device Information Data Access Layer Interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -21,13 +21,13 @@ import java.util.List;
 public interface DeviceInfoMapper extends BaseMapper<DeviceInfo> {
 
     /**
-     * 分页查询设备信息
+     * Paginated query device information
      *
-     * @param page       分页对象
-     * @param deviceName 设备名称或设备ID
-     * @param tag        设备标签（实际对应device_type字段）
-     * @param status     设备状态
-     * @return 设备信息分页列表
+     * @param page       Pagination object
+     * @param deviceName Device name or device ID
+     * @param tag        Device tag (actually corresponds to device_type field)
+     * @param status     Device status
+     * @return Device information pagination list
      */
     @Select("<script>" +
             "SELECT * FROM device_info " +
@@ -49,47 +49,47 @@ public interface DeviceInfoMapper extends BaseMapper<DeviceInfo> {
                                       @Param("status") String status);
 
     /**
-     * 根据设备编号查询设备信息
+     * Query device information by device ID
      *
-     * @param deviceId 设备编号
-     * @return 设备信息
+     * @param deviceId Device ID
+     * @return Device information
      */
     @Select("SELECT * FROM device_info WHERE device_id = #{deviceId} AND deleted = 0")
     DeviceInfo selectByDeviceId(@Param("deviceId") String deviceId);
 
     /**
-     * 根据状态查询设备列表
+     * Query device list by status
      *
-     * @param status 设备状态
-     * @return 设备列表
+     * @param status Device status
+     * @return Device list
      */
     @Select("SELECT * FROM device_info WHERE status = #{status} AND deleted = 0")
     List<DeviceInfo> selectByStatus(@Param("status") String status);
 
     /**
-     * 根据设备类型查询设备列表
+     * Query device list by device type
      *
-     * @param deviceType 设备类型
-     * @return 设备列表
+     * @param deviceType Device type
+     * @return Device list
      */
     @Select("SELECT * FROM device_info WHERE device_type = #{deviceType} AND deleted = 0")
     List<DeviceInfo> selectByDeviceType(@Param("deviceType") String deviceType);
 
     /**
-     * 根据标签查询设备列表（实际查询device_type字段）
+     * Query device list by tag (actually queries device_type field)
      *
-     * @param tag 标签
-     * @return 设备列表
+     * @param tag Tag
+     * @return Device list
      */
     @Select("SELECT * FROM device_info WHERE device_type = #{tag} AND deleted = 0")
     List<DeviceInfo> selectByTag(@Param("tag") String tag);
 
     /**
-     * 批量更新设备状态
+     * Batch update device status
      *
-     * @param deviceIds 设备ID列表
-     * @param status    状态
-     * @return 更新数量
+     * @param deviceIds Device ID list
+     * @param status    Status
+     * @return Update count
      */
     @Update("<script>" +
             "UPDATE device_info SET status = #{status}, update_time = NOW() " +
@@ -102,74 +102,74 @@ public interface DeviceInfoMapper extends BaseMapper<DeviceInfo> {
                          @Param("status") String status);
 
     /**
-     * 获取设备状态统计
+     * Get device status statistics
      *
-     * @return 统计结果
+     * @return Statistics result
      */
     @Select("SELECT status, COUNT(*) as count FROM device_info WHERE deleted = 0 GROUP BY status")
     List<StatusStatistics> getStatusStatistics();
 
     /**
-     * 获取设备类型统计
+     * Get device type statistics
      *
-     * @return 统计结果
+     * @return Statistics result
      */
     @Select("SELECT device_type as type, COUNT(*) as count FROM device_info WHERE deleted = 0 GROUP BY device_type")
     List<TypeStatistics> getTypeStatistics();
 
     /**
-     * 获取设备品牌统计
+     * Get device brand statistics
      *
-     * @return 统计结果
+     * @return Statistics result
      */
     @Select("SELECT brand, COUNT(*) as count FROM device_info WHERE deleted = 0 GROUP BY brand")
     List<BrandStatistics> getBrandStatistics();
 
     /**
-     * 获取所有设备类型列表（用于标签列表）
+     * Get all device type list (for tag list)
      *
-     * @return 设备类型列表
+     * @return Device type list
      */
     @Select("SELECT DISTINCT device_type FROM device_info WHERE device_type IS NOT NULL AND device_type != '' AND deleted = 0")
     List<String> getAllTags();
 
     /**
-     * 获取所有设备品牌列表
+     * Get all device brand list
      *
-     * @return 品牌列表
+     * @return Brand list
      */
     @Select("SELECT DISTINCT brand FROM device_info WHERE brand IS NOT NULL AND brand != '' AND deleted = 0")
     List<String> getAllBrands();
 
     /**
-     * 根据IP地址查询设备
+     * Query devices by IP address
      *
-     * @param ipAddress IP地址
-     * @return 设备列表
+     * @param ipAddress IP address
+     * @return Device list
      */
     @Select("SELECT * FROM device_info WHERE ip_address = #{ipAddress} AND deleted = 0")
     List<DeviceInfo> selectByIpAddress(@Param("ipAddress") String ipAddress);
 
     /**
-     * 根据位置查询设备
+     * Query devices by location
      *
-     * @param position 位置
-     * @return 设备列表
+     * @param position Location
+     * @return Device list
      */
     @Select("SELECT * FROM device_info WHERE position LIKE CONCAT('%', #{position}, '%') AND deleted = 0")
     List<DeviceInfo> selectByPosition(@Param("position") String position);
 
     /**
-     * 检查设备编号是否存在
+     * Check if device ID exists
      *
-     * @param deviceId 设备编号
-     * @return 数量
+     * @param deviceId Device ID
+     * @return Count
      */
     @Select("SELECT COUNT(*) FROM device_info WHERE device_id = #{deviceId} AND deleted = 0")
     int countByDeviceId(@Param("deviceId") String deviceId);
 
     /**
-     * 状态统计内部类
+     * Status statistics inner class
      */
     class StatusStatistics {
         private String status;
@@ -182,7 +182,7 @@ public interface DeviceInfoMapper extends BaseMapper<DeviceInfo> {
     }
 
     /**
-     * 类型统计内部类
+     * Type statistics inner class
      */
     class TypeStatistics {
         private String type;
@@ -195,7 +195,7 @@ public interface DeviceInfoMapper extends BaseMapper<DeviceInfo> {
     }
 
     /**
-     * 品牌统计内部类
+     * Brand statistics inner class
      */
     class BrandStatistics {
         private String brand;
@@ -208,7 +208,7 @@ public interface DeviceInfoMapper extends BaseMapper<DeviceInfo> {
     }
 
     /**
-     * 设备统计信息内部类
+     * Device statistics inner class
      */
     class DeviceStatistics {
         private Long totalCount;

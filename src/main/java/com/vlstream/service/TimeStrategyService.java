@@ -6,34 +6,34 @@ import com.vlstream.entity.TimeStrategy;
 import java.util.List;
 
 /**
- * 时间策略Service接口
+ * Time strategy service interface
  */
 public interface TimeStrategyService extends IService<TimeStrategy> {
     
     /**
-     * 根据设备ID获取时间策略
-     * @param deviceId 设备ID
-     * @return 时间策略
+     * Get time strategy by device ID
+     * @param deviceId Device ID
+     * @return Time strategy
      */
     TimeStrategy getByDeviceId(String deviceId);
     
     /**
-     * 保存或更新时间策略
-     * @param timeStrategy 时间策略
-     * @return 是否成功
+     * Save or update time strategy
+     * @param timeStrategy Time strategy
+     * @return Whether successful
      */
     boolean saveOrUpdateStrategy(TimeStrategy timeStrategy);
     
     /**
-     * 根据设备ID删除时间策略
-     * @param deviceId 设备ID
-     * @return 是否成功
+     * Delete time strategy by device ID
+     * @param deviceId Device ID
+     * @return Whether successful
      */
     boolean deleteByDeviceId(String deviceId);
     
     /**
-     * 获取需要执行的时间策略
-     * @return 需要执行的时间策略列表
+     * Get time strategies to execute
+     * @return List of time strategies to execute
      */
     List<TimeStrategy> getTimeStrategiesToExecute();
 } 

@@ -12,13 +12,13 @@ import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2WebMvc;
 
 /**
- * Swagger配置类
+ * Swagger Configuration Class
  *
  * @author VLStream Team
  * @since 1.0.0
  */
 @Configuration
-// @EnableSwagger2WebMvc  // 临时禁用Swagger以解决启动问题
+// @EnableSwagger2WebMvc  // Temporarily disable Swagger to resolve startup issues
 public class SwaggerConfig {
 
     @Bean
@@ -33,8 +33,8 @@ public class SwaggerConfig {
 
     private ApiInfo apiInfo() {
         return new ApiInfoBuilder()
-                .title("VLStream Cloud API文档")
-                .description("VLStream Cloud 视频流管理系统后端API接口文档")
+                .title("VLStream Cloud API Documentation")
+                .description("VLStream Cloud Video Stream Management System Backend API Documentation")
                 .version("1.0.0")
                 .contact(new Contact("VLStream Team", "https://vlstream.com", "support@vlstream.com"))
                 .build();

@@ -39,7 +39,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 算法标注服务实现类
+ * Algorithm Annotation Service Implementation
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -71,15 +71,15 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
                                                            String annotationName,
                                                            String annotationType,
                                                            String annotationStatus) {
-        log.info("分页查询算法标注列表，参数：annotationName={}, annotationType={}, annotationStatus={}",
+        log.info("Pagination query algorithm annotation list, parameters: annotationName={}, annotationType={}, annotationStatus={}",
                 annotationName, annotationType, annotationStatus);
 
-        // 将空字符串转换为null，以便SQL查询条件正确处理
+        // Convert empty string to null for correct SQL query condition handling
         String finalAnnotationName = (annotationName != null && annotationName.trim().isEmpty()) ? null : annotationName;
         String finalAnnotationType = (annotationType != null && annotationType.trim().isEmpty()) ? null : annotationType;
         String finalAnnotationStatus = (annotationStatus != null && annotationStatus.trim().isEmpty()) ? null : annotationStatus;
 
-        log.info("转换后的查询参数：annotationName={}, annotationType={}, annotationStatus={}",
+        log.info("Converted query parameters: annotationName={}, annotationType={}, annotationStatus={}",
                 finalAnnotationName, finalAnnotationType, finalAnnotationStatus);
 
         return algorithmAnnotationMapper.selectAnnotationPage(page, finalAnnotationName, finalAnnotationType, finalAnnotationStatus);
@@ -87,31 +87,31 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
 
     @Override
     public List<AlgorithmAnnotation> getByAnnotationType(String annotationType) {
-        log.info("根据标注类型查询标注列表：{}", annotationType);
+        log.info("Query annotation list by annotation type: {}", annotationType);
         return algorithmAnnotationMapper.selectByAnnotationType(annotationType);
     }
 
     @Override
     public List<AlgorithmAnnotation> getByAnnotationStatus(String annotationStatus) {
-        log.info("根据标注状态查询标注列表：{}", annotationStatus);
+        log.info("Query annotation list by annotation status: {}", annotationStatus);
         return algorithmAnnotationMapper.selectByAnnotationStatus(annotationStatus);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean createAnnotation(AlgorithmAnnotation annotation) {
-        log.info("创建算法标注：{}", annotation.getAnnotationName());
+        log.info("Create algorithm annotation: {}", annotation.getAnnotationName());
 
-        // 检查标注名称是否重复
+        // Check if annotation name already exists
         QueryWrapper<AlgorithmAnnotation> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("annotation_name", annotation.getAnnotationName())
                 .eq("deleted", 0);
         if (count(queryWrapper) > 0) {
-            log.warn("标注名称已存在：{}", annotation.getAnnotationName());
+            log.warn("Annotation name already exists: {}", annotation.getAnnotationName());
             return false;
         }
 
-        // 设置默认值
+        // Set default values
         if (annotation.getTotalCount() == null) {
             annotation.setTotalCount(0);
         }
@@ -125,23 +125,23 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
             annotation.setProgress(0);
         }
 
-        // 数据集路径在保存标注时设置，这里不自动生成
+        // Dataset path will be set when saving annotation, not automatically generated here
         if (annotation.getDatasetPath() == null) {
             annotation.setDatasetPath(null);
-            log.info("数据集路径将在保存标注时设置");
+            log.info("Dataset path will be set when saving annotation");
         }
 
-        // 计算进度
+        // Calculate progress
         annotation.setProgress(calculateProgress(annotation.getAnnotatedCount(), annotation.getTotalCount()));
 
         return save(annotation);
     }
 
     /**
-     * 保存标注数据到数据集文件
+     * Save annotation data to dataset file
      *
-     * @param annotationId   标注ID
-     * @return 是否保存成功
+     * @param annotationId   Annotation ID
+     * @return Whether saved successfully
      */
     @Transactional(rollbackFor = Exception.class)
     public boolean saveAnnotationToDataset(Long annotationId) {
@@ -150,13 +150,13 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
         try {
             AlgorithmAnnotation annotation = getById(annotationId);
             if (annotation == null) {
-                log.warn("标注不存在：ID={}", annotationId);
+                log.warn("Annotation does not exist: ID={}", annotationId);
                 return false;
             }
 
             List<AnnotationImage> images = annotationImageService.getImagesByAnnotationId(annotationId);
             if (images == null || images.isEmpty()) {
-                log.warn("未找到标注图片，无法生成数据集：annotationId={}", annotationId);
+                log.warn("No annotation images found, cannot generate dataset: annotationId={}", annotationId);
                 return false;
             }
 
@@ -165,7 +165,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
             Map<String, List<AnnotationInstance>> instancesByImageName = new HashMap<>();
             Map<Long, String> labelIdNameMap = new HashMap<>();
 
-            // 预先加载当前标注下的全部标签，建立 labelId -> name 映射
+            // Preload all labels under current annotation, establish labelId -> name mapping
             List<AnnotationLabel> allLabels = annotationLabelService.getByAnnotationIdWithUsageCount(annotationId);
             if (allLabels != null) {
                 for (AnnotationLabel label : allLabels) {
@@ -173,7 +173,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
                 }
             }
 
-            // 按 imageId / imageName 聚合实例，收集标签名称
+            // Aggregate instances by imageId / imageName, collect label names
             if (imageInstances != null) {
                 for (AnnotationInstance instance : imageInstances) {
                     if (instance.getImageId() != null) {
@@ -195,7 +195,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
             String datasetsRoot = "/data/work/ultralytics_yolov8-main/datasets/vls";
             String datasetPath = datasetsRoot + "/annotation_" + annotationId;
 
-            // 建立 SFTP 连接
+            // Establish SFTP connection
             JSch jsch = new JSch();
             session = jsch.getSession(sshUsername, sshHost, sshPort);
             session.setPassword(sshAnnotationPassword);
@@ -206,7 +206,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
             channel.connect(30000);
             sftp = (ChannelSftp) channel;
 
-            // 创建数据集目录结构
+            // Create dataset directory structure
             createCompleteDatasetStructure(sftp, datasetPath);
 
             Set<String> labelNames = new LinkedHashSet<>();
@@ -228,10 +228,10 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
             for (AnnotationImage image : images) {
                 String imageName = image.getImageName();
 
-                // 上传图片到 train / val 目录（会先从 localPath 下载到本地临时文件）
+                // Upload image to train / val directory (will download from localPath to local temporary file first)
                 ImageLocalInfo imageInfo = uploadImageFile(sftp, datasetPath, image);
                 if (imageInfo == null) {
-                    log.warn("跳过不存在的图片文件：annotationId={}, imageName={}", annotationId, imageName);
+                    log.warn("Skip non-existent image file: annotationId={}, imageName={}", annotationId, imageName);
                     continue;
                 }
 
@@ -239,7 +239,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
                 double imageWidth = dims[0] > 0 ? dims[0] : -1;
                 double imageHeight = dims[1] > 0 ? dims[1] : -1;
 
-                // 处理并上传对应的标注文件
+                // Process and upload corresponding label file
                 List<Map<String, Object>> annotationMaps = new ArrayList<>();
                 List<AnnotationInstance> perImageInstances = new ArrayList<>();
                 if (instancesByImageId.containsKey(image.getId())) {
@@ -249,7 +249,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
                     perImageInstances.addAll(instancesByImageName.getOrDefault(imageName, new ArrayList<>()));
                 }
                 if (perImageInstances.isEmpty()) {
-                    // 兜底：按 annotationId + imageName 重新查询
+                    // Fallback: re-query by annotationId + imageName
                     perImageInstances.addAll(annotationInstanceService.getByAnnotationIdAndImageName(annotationId, imageName));
                 }
 
@@ -278,13 +278,13 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
                     uploadLabelFile(sftp, datasetPath, imageName, annotationMaps, labelIndexMap, imageWidth, imageHeight);
                 }
 
-                // 删除临时文件
+                // Delete temporary file
                 if (imageInfo.tempFile != null && imageInfo.tempFile.exists() && !imageInfo.tempFile.delete()) {
-                    log.debug("临时图片删除失败：{}", imageInfo.tempFile.getAbsolutePath());
+                    log.debug("Failed to delete temporary image: {}", imageInfo.tempFile.getAbsolutePath());
                 }
             }
 
-            // 若循环中未收集到标签名称，兜底按标注下的标签列表填充
+            // If no label names collected during loop, fill with label list under annotation
             if (labelNames.isEmpty() && allLabels != null) {
                 for (AnnotationLabel label : allLabels) {
                     if (label.getName() != null) {
@@ -294,7 +294,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
                 }
             }
 
-            // 生成并上传数据集 YAML
+            // Generate and upload dataset YAML
             String datasetYamlContent = buildDatasetYaml(annotation, labelNames);
             uploadDatasetYaml(sftp, datasetPath, datasetYamlContent);
 
@@ -302,12 +302,12 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
             updateWrapper.eq("id", annotationId).set("dataset_path", datasetPath);
             boolean updateResult = update(updateWrapper);
             if (!updateResult) {
-                log.warn("更新数据集路径失败：annotationId={}", annotationId);
+                log.warn("Failed to update dataset path: annotationId={}", annotationId);
             }
 
             return true;
         } catch (Exception e) {
-            log.error("保存标注数据到数据集失败：annotationId={}, error={}", annotationId, e.getMessage());
+            log.error("Failed to save annotation data to dataset: annotationId={}, error={}", annotationId, e.getMessage());
             return false;
         } finally {
             if (sftp != null && sftp.isConnected()) {
@@ -320,10 +320,10 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     }
 
     /**
-     * 解析标注数据
+     * Parse annotation data
      *
-     * @param annotationData JSON格式的标注数据
-     * @return 解析后的数据
+     * @param annotationData JSON format annotation data
+     * @return Parsed data
      */
     private Map<String, Object> parseAnnotationData(String annotationData) {
         try {
@@ -333,16 +333,16 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
 
             return JSONUtil.toBean(annotationData, Map.class);
         } catch (Exception e) {
-            log.error("解析标注数据失败：{}", e.getMessage());
+            log.error("Failed to parse annotation data: {}", e.getMessage());
             return new HashMap<>();
         }
     }
 
     /**
-     * 创建远程目录
+     * Create remote directory
      *
-     * @param sftp SFTP通道
-     * @param path 目录路径
+     * @param sftp SFTP channel
+     * @param path Directory path
      */
     private void createRemoteDirectory(ChannelSftp sftp, String path) throws SftpException {
         String[] dirs = path.split("/");
@@ -357,30 +357,30 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
 
             try {
                 sftp.cd(currentPath);
-                log.debug("目录已存在：{}", currentPath);
+                log.debug("Directory already exists: {}", currentPath);
             } catch (SftpException e) {
-                // 目录不存在，创建它
+                // Directory does not exist, create it
                 try {
                     sftp.mkdir(currentPath);
-                    log.info("创建远程目录：{}", currentPath);
+                    log.info("Create remote directory: {}", currentPath);
                 } catch (SftpException mkdirException) {
-                    log.warn("创建目录失败，可能已存在：{}", currentPath);
+                    log.warn("Failed to create directory, may already exist: {}", currentPath);
                 }
             }
         }
     }
 
     /**
-     * 创建完整的YOLO数据集目录结构
+     * Create complete YOLO dataset directory structure
      *
-     * @param sftp        SFTP通道
-     * @param datasetPath 数据集路径
+     * @param sftp        SFTP channel
+     * @param datasetPath Dataset path
      */
     private void createCompleteDatasetStructure(ChannelSftp sftp, String datasetPath) throws SftpException {
-        // 创建主数据集目录
+        // Create main dataset directory
         createRemoteDirectory(sftp, datasetPath);
 
-        // 创建YOLO标准目录结构
+        // Create YOLO standard directory structure
         String[] subdirs = {
                 datasetPath + "/images/train",
                 datasetPath + "/images/val",
@@ -391,16 +391,16 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
         };
 
         for (String subdir : subdirs) {
-            // 递归创建，避免父目录不存在导致 mkdir 报错
+            // Recursively create to avoid mkdir error when parent directory doesn't exist
             createRemoteDirectory(sftp, subdir);
-            log.info("确保子目录存在：{}", subdir);
+            log.info("Ensure subdirectory exists: {}", subdir);
         }
 
-        log.info("完整的YOLO数据集目录结构创建完成：{}", datasetPath);
+        log.info("Complete YOLO dataset directory structure created: {}", datasetPath);
     }
 
     /**
-     * 上传图片到训练/验证目录（优先从 localPath 下载到本地临时文件）
+     * Upload image to train/val directory (prioritize downloading from localPath to local temporary file)
      */
     private ImageLocalInfo uploadImageFile(ChannelSftp sftp, String datasetPath, AnnotationImage image) {
         String imageName = image.getImageName();
@@ -414,9 +414,9 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
         try {
             sftp.put(localImagePath, trainPath);
             sftp.put(localImagePath, valPath);
-            log.info("图片上传完成：train={}, val={}", trainPath, valPath);
+            log.info("Image upload completed: train={}, val={}", trainPath, valPath);
         } catch (Exception e) {
-            log.error("上传图片失败：imageName={}, path={}, error={}", imageName, localImagePath, e.getMessage());
+            log.error("Failed to upload image: imageName={}, path={}, error={}", imageName, localImagePath, e.getMessage());
             return null;
         }
 
@@ -424,7 +424,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     }
 
     /**
-     * 读取本地图片尺寸
+     * Read local image size
      */
     private int[] readImageSize(String localPath) {
         try {
@@ -433,13 +433,13 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
                 return new int[]{img.getWidth(), img.getHeight()};
             }
         } catch (Exception e) {
-            log.warn("读取图片尺寸失败：path={}, error={}", localPath, e.getMessage());
+            log.warn("Failed to read image size: path={}, error={}", localPath, e.getMessage());
         }
         return new int[]{-1, -1};
     }
 
     /**
-     * 上传标注文件到训练/验证目录
+     * Upload label file to train/val directory
      */
     private void uploadLabelFile(ChannelSftp sftp, String datasetPath, String imageName,
                                  List<Map<String, Object>> annotationMaps,
@@ -447,7 +447,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
                                  double imageWidth, double imageHeight) throws Exception {
         int dotIndex = imageName.lastIndexOf('.');
         if (dotIndex <= 0) {
-            log.warn("图片名称缺少扩展名，跳过标注上传：{}", imageName);
+            log.warn("Image name lacks extension, skipping label upload: {}", imageName);
             return;
         }
 
@@ -463,15 +463,15 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
         String valLabelPath = datasetPath + "/labels/val/" + labelFileName;
         sftp.put(localLabelFile.getAbsolutePath(), trainLabelPath);
         sftp.put(localLabelFile.getAbsolutePath(), valLabelPath);
-        log.info("标注文件上传完成：train={}, val={}", trainLabelPath, valLabelPath);
+        log.info("Label file upload completed: train={}, val={}", trainLabelPath, valLabelPath);
 
         if (!localLabelFile.delete()) {
-            log.debug("临时标注文件删除失败：{}", localLabelFile.getAbsolutePath());
+            log.debug("Failed to delete temporary label file: {}", localLabelFile.getAbsolutePath());
         }
     }
 
     /**
-     * 上传数据集 YAML 文件
+     * Upload dataset YAML file
      */
     private void uploadDatasetYaml(ChannelSftp sftp, String datasetPath, String yamlContent) throws Exception {
         String datasetFileName = "dataset.yaml";
@@ -480,15 +480,15 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
 
         String remoteYamlPath = datasetPath + "/" + datasetFileName;
         sftp.put(localYamlFile.getAbsolutePath(), remoteYamlPath);
-        log.info("数据集配置文件上传完成：{}", remoteYamlPath);
+        log.info("Dataset configuration file upload completed: {}", remoteYamlPath);
 
         if (!localYamlFile.delete()) {
-            log.debug("临时配置文件删除失败：{}", localYamlFile.getAbsolutePath());
+            log.debug("Failed to delete temporary configuration file: {}", localYamlFile.getAbsolutePath());
         }
     }
 
     /**
-     * 从标注实例中提取图片名，imageId 为空时用于兜底匹配
+     * Extract image name from annotation instance, used for fallback matching when imageId is empty
      */
     private String extractImageNameFromInstance(AnnotationInstance instance) {
         if (instance == null) {
@@ -499,7 +499,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
             Object name = data.get("imageName");
             return name == null ? null : name.toString();
         } catch (Exception e) {
-            log.debug("解析标注实例图片名失败：{}", e.getMessage());
+            log.debug("Failed to parse annotation instance image name: {}", e.getMessage());
             return null;
         }
     }
@@ -529,7 +529,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
                     double imgW = imageWidth > 0 ? imageWidth : toDouble(annotation.get("imageWidth")) != null ? toDouble(annotation.get("imageWidth")) : 100.0;
                     double imgH = imageHeight > 0 ? imageHeight : toDouble(annotation.get("imageHeight")) != null ? toDouble(annotation.get("imageHeight")) : 100.0;
 
-                    // 判断是否已归一化：四个值都在(0,1]视为相对比例
+                    // Determine if already normalized: all four values in (0,1] are considered relative ratio
                     boolean alreadyNormalized = x > 0 && x <= 1 && y > 0 && y <= 1 && width > 0 && width <= 1 && height > 0 && height <= 1;
 
                     double centerX;
@@ -549,7 +549,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
                         normalizedHeight = height / imgH;
                     }
 
-                    // 裁剪到 [0,1]
+                    // Clip to [0,1]
                     centerX = Math.min(Math.max(centerX, 0), 1);
                     centerY = Math.min(Math.max(centerY, 0), 1);
                     normalizedWidth = Math.min(Math.max(normalizedWidth, 0), 1);
@@ -568,7 +568,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
                 }
 
             } catch (Exception e) {
-                log.error("处理标注数据失败：{}", e.getMessage());
+                log.error("Failed to process annotation data: {}", e.getMessage());
             }
         }
 
@@ -576,29 +576,29 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     }
 
     /**
-     * 构建数据集 YAML 内容
+     * Build dataset YAML content
      */
     private String buildDatasetYaml(AlgorithmAnnotation algorithmAnnotation, Set<String> labelNames) {
         StringBuilder content = new StringBuilder();
-        // 使用相对上一级的路径，便于在 yolo 项目下引用
+        // Use relative path to parent directory for easy reference under yolo project
         content.append("path: ../datasets/vls/annotation_").append(algorithmAnnotation.getId()).append("\n");
         content.append("train: images/train\n");
         content.append("val: images/val\n");
         content.append("test: images/test\n\n");
 
         int labelCount = labelNames == null ? 0 : labelNames.size();
-        content.append("nc: ").append(labelCount).append("\n");
+        content.append("nc: " + labelCount + "\n");
         content.append("names: [");
         if (labelNames != null && !labelNames.isEmpty()) {
             content.append(labelNames.stream().collect(Collectors.joining("', '", "'", "'")));
         }
         content.append("]\n\n");
-        content.append("description: ").append(algorithmAnnotation.getAnnotationName());
+        content.append("description: " + algorithmAnnotation.getAnnotationName());
         return content.toString();
     }
 
     /**
-     * 将任意数值类型统一转为 Double，兼容 Integer/Long/Double 以及数字字符串。
+     * Unify any numeric type to Double, compatible with Integer/Long/Double and numeric strings.
      */
     private Double toDouble(Object value) {
         if (value == null) {
@@ -618,25 +618,25 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     }
 
     /**
-     * 生成数据集文件内容
+     * Generate dataset file content
      *
-     * @param annotationName 标注名称
-     * @param imageInstances 标注数据
-     * @return 数据集文件内容
+     * @param annotationName  Annotation name
+     * @param imageInstances  Annotation data
+     * @return Dataset file content
      */
     private String generateDatasetContent(String annotationName, List<AnnotationInstance> imageInstances) {
         StringBuilder content = new StringBuilder();
-        content.append("# YOLO数据集配置文件\n");
-        content.append("# 标注名称: ").append(annotationName).append("\n");
-        content.append("# 创建时间: ").append(java.time.LocalDateTime.now()).append("\n\n");
+        content.append("# YOLO dataset configuration file\n");
+        content.append("# Annotation name: " + annotationName + "\n");
+        content.append("# Creation time: " + java.time.LocalDateTime.now() + "\n\n");
 
-        content.append("# 数据集路径配置\n");
+        content.append("# Dataset path configuration\n");
         content.append("path: ./vls\n");
         content.append("train: images/train\n");
         content.append("val: images/val\n");
         content.append("test: images/test\n\n");
 
-        // 从标注数据中提取类别信息
+        // Extract category information from annotation data
         Set<String> uniqueLabels = new HashSet<>();
         for (AnnotationInstance annotationInstance : imageInstances) {
            AnnotationLabel annotationLabel = annotationLabelService.getById(annotationInstance.getLabelId());
@@ -646,32 +646,32 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
             }
         }
 
-        content.append("# 类别配置\n");
-        content.append("nc: ").append(uniqueLabels.size()).append("\n");
+        content.append("# Category configuration\n");
+        content.append("nc: " + uniqueLabels.size() + "\n");
         content.append("names: [");
         if (!uniqueLabels.isEmpty()) {
-            content.append("'").append(String.join("', '", uniqueLabels)).append("'");
+            content.append("'" + String.join("',  '" , uniqueLabels) + "'");
         }
         content.append("]\n\n");
 
-        content.append("# 数据集信息\n");
-        content.append("description: ").append(annotationName).append(" 标注数据集\n");
-        content.append("total_images: ").append(imageInstances.size()).append("\n");
-        content.append("total_annotations: ").append(imageInstances.size()).append("\n");
-        content.append("unique_labels: ").append(uniqueLabels.size()).append("\n\n");
+        content.append("# Dataset information\n");
+        content.append("description: " + annotationName + " annotation dataset\n");
+        content.append("total_images: " + imageInstances.size() + "\n");
+        content.append("total_annotations: " + imageInstances.size() + "\n");
+        content.append("unique_labels: " + uniqueLabels.size() + "\n\n");
 
-        content.append("# 注意：此配置文件仅包含基本设置\n");
-        content.append("# 实际训练需要以下目录结构：\n");
-        content.append("# - images/train/ (训练图片)\n");
-        content.append("# - images/val/ (验证图片)\n");
-        content.append("# - labels/train/ (训练标注)\n");
-        content.append("# - labels/val/ (验证标注)\n");
+        content.append("# Note: This configuration file only contains basic settings\n");
+        content.append("# Actual training requires the following directory structure:\n");
+        content.append("# - images/train/ (training images)\n");
+        content.append("# - images/val/ (validation images)\n");
+        content.append("# - labels/train/ (training labels)\n");
+        content.append("# - labels/val/ (validation labels)\n");
 
         return content.toString();
     }
 
     /**
-     * 从标注数据中提取标注列表
+     * Extract annotation list from annotation data
      */
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> extractAnnotations(Map<String, Object> annotationData) {
@@ -681,26 +681,26 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
                 return (List<Map<String, Object>>) annotationsObj;
             }
         } catch (Exception e) {
-            log.error("提取标注列表失败：{}", e.getMessage());
+            log.error("Failed to extract annotation list: {}", e.getMessage());
         }
         return new ArrayList<>();
     }
 
     /**
-     * 从标注数据中提取图片数量
+     * Extract image count from annotation data
      */
     private int extractImageCount(Map<String, Object> annotationData) {
         try {
             String imageName = (String) annotationData.get("imageName");
             return imageName != null ? 1 : 0;
         } catch (Exception e) {
-            log.error("提取图片数量失败：{}", e.getMessage());
+            log.error("Failed to extract image count: {}", e.getMessage());
             return 0;
         }
     }
 
     /**
-     * 从标注数据中提取图片名称列表
+     * Extract image name list from annotation data
      */
     private List<String> extractImageNames(Map<String, Object> annotationData) {
         try {
@@ -711,31 +711,31 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
                 return imageNames;
             }
         } catch (Exception e) {
-            log.error("提取图片名称失败：{}", e.getMessage());
+            log.error("Failed to extract image name: {}", e.getMessage());
         }
         return new ArrayList<>();
     }
 
     /**
-     * 生成数据集文件名
+     * Generate dataset file name
      *
-     * @param annotationName 标注名称
-     * @return 数据集文件名
+     * @param annotationName  Annotation name
+     * @return Dataset file name
      */
     private String generateDatasetFileName(String annotationName) {
-        // 移除特殊字符，只保留字母、数字和下划线
+        // Remove special characters, keep only letters, numbers and underscores
         String cleanName = annotationName.replaceAll("[^a-zA-Z0-9_]", "");
 
-        // 转换为小写
+        // Convert to lowercase
         cleanName = cleanName.toLowerCase();
 
-        // 添加时间戳确保唯一性
+        // Add timestamp to ensure uniqueness
         String timestamp = String.valueOf(System.currentTimeMillis());
 
-        // 生成数据集文件名
+        // Generate dataset file name
         String datasetFileName = cleanName + timestamp + ".yaml";
 
-        log.info("生成数据集文件名：originalName={}, cleanName={}, datasetFileName={}",
+        log.info("Generate dataset file name: originalName={}, cleanName={}, datasetFileName={}",
                 annotationName, cleanName, datasetFileName);
 
         return datasetFileName;
@@ -744,19 +744,19 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateAnnotation(AlgorithmAnnotation annotation) {
-        log.info("更新算法标注：ID={}, Name={}", annotation.getId(), annotation.getAnnotationName());
+        log.info("Update algorithm annotation: ID={}, Name={}", annotation.getId(), annotation.getAnnotationName());
 
-        // 获取原标注信息
+        // Get original annotation information
         AlgorithmAnnotation existing = getById(annotation.getId());
         if (existing == null) {
-            log.warn("标注不存在：ID={}", annotation.getId());
+            log.warn("Annotation does not exist: ID={}", annotation.getId());
             return false;
         }
 
-        // 重新计算进度
+        // Recalculate progress
         annotation.setProgress(calculateProgress(annotation.getAnnotatedCount(), annotation.getTotalCount()));
 
-        // 自动更新标注状态
+        // Automatically update annotation status
         annotation.setAnnotationStatus(calculateAnnotationStatus(annotation.getProgress()));
 
         return updateById(annotation);
@@ -765,20 +765,20 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteAnnotation(Long id) {
-        log.info("删除算法标注：ID={}", id);
+        log.info("Delete algorithm annotation: ID={}", id);
 
         AlgorithmAnnotation annotation = getById(id);
         if (annotation == null) {
-            log.warn("标注不存在：ID={}", id);
+            log.warn("Annotation does not exist: ID={}", id);
             return false;
         }
 
-        // 删除相关的图片文件
+        // Delete related image files
         try {
             deleteAnnotationImages(annotation);
         } catch (Exception e) {
-            log.error("删除标注图片文件失败：ID={}, Error={}", id, e.getMessage());
-            // 不阻止删除操作，只记录错误
+            log.error("Failed to delete annotation image files: ID={}, Error={}", id, e.getMessage());
+            // Do not block deletion operation, only log error
         }
 
         return removeById(id);
@@ -787,18 +787,18 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean batchDeleteAnnotations(List<Long> ids) {
-        log.info("批量删除算法标注：IDs={}", ids);
+        log.info("Batch delete algorithm annotations: IDs={}", ids);
 
-        // 先获取所有要删除的标注信息
+        // First get all annotations to be deleted
         List<AlgorithmAnnotation> annotations = listByIds(ids);
 
-        // 删除相关的图片文件
+        // Delete related image files
         for (AlgorithmAnnotation annotation : annotations) {
             try {
                 deleteAnnotationImages(annotation);
             } catch (Exception e) {
-                log.error("删除标注图片文件失败：ID={}, Error={}", annotation.getId(), e.getMessage());
-                // 不阻止删除操作，只记录错误
+                log.error("Failed to delete annotation image files: ID={}, Error={}", annotation.getId(), e.getMessage());
+                // Do not block deletion operation, only log error
             }
         }
 
@@ -808,15 +808,15 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateAnnotationProgress(Long id, Integer annotatedCount) {
-        log.info("更新标注进度：ID={}, AnnotatedCount={}", id, annotatedCount);
+        log.info("Update annotation progress: ID={}, AnnotatedCount={}", id, annotatedCount);
 
         AlgorithmAnnotation annotation = getById(id);
         if (annotation == null) {
-            log.warn("标注不存在：ID={}", id);
+            log.warn("Annotation does not exist: ID={}", id);
             return false;
         }
 
-        // 计算进度
+        // Calculate progress
         int progress = calculateProgress(annotatedCount, annotation.getTotalCount());
         String status = calculateAnnotationStatus(progress);
 
@@ -832,7 +832,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean batchUpdateAnnotationStatus(List<Long> ids, String annotationStatus) {
-        log.info("批量更新标注状态：IDs={}, Status={}", ids, annotationStatus);
+        log.info("Batch update annotation status: IDs={}, Status={}", ids, annotationStatus);
 
         UpdateWrapper<AlgorithmAnnotation> updateWrapper = new UpdateWrapper<>();
         updateWrapper.in("id", ids)
@@ -844,7 +844,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean startAnnotationTask(Long id) {
-        log.info("开始标注任务：ID={}", id);
+        log.info("Start annotation task: ID={}", id);
 
         UpdateWrapper<AlgorithmAnnotation> updateWrapper = new UpdateWrapper<>();
         updateWrapper.eq("id", id)
@@ -856,11 +856,11 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean completeAnnotationTask(Long id) {
-        log.info("完成标注任务：ID={}", id);
+        log.info("Complete annotation task: ID={}", id);
 
         AlgorithmAnnotation annotation = getById(id);
         if (annotation == null) {
-            log.warn("标注不存在：ID={}", id);
+            log.warn("Annotation does not exist: ID={}", id);
             return false;
         }
 
@@ -876,7 +876,7 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean resetAnnotationTask(Long id) {
-        log.info("重置标注任务：ID={}", id);
+        log.info("Reset annotation task: ID={}", id);
 
         UpdateWrapper<AlgorithmAnnotation> updateWrapper = new UpdateWrapper<>();
         updateWrapper.eq("id", id)
@@ -889,76 +889,76 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
 
     @Override
     public Map<String, Object> importAnnotationData(Long id, String dataPath) {
-        log.info("导入标注数据：ID={}, DataPath={}", id, dataPath);
+        log.info("Import annotation data: ID={}, DataPath={}", id, dataPath);
 
         AlgorithmAnnotation annotation = getById(id);
         if (annotation == null) {
-            log.warn("标注不存在：ID={}", id);
+            log.warn("Annotation does not exist: ID={}", id);
             return null;
         }
 
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
-        result.put("message", "导入成功");
-        result.put("importedCount", 100); // 示例数据
+        result.put("message", "Import successful");
+        result.put("importedCount", 100); // Sample data
 
-        // 这里可以添加实际的导入逻辑
+        // Actual import logic can be added here
 
         return result;
     }
 
     @Override
     public List<Map<String, Object>> getAnnotationTypeStatistics() {
-        log.info("获取标注类型统计");
+        log.info("Get annotation type statistics");
         return algorithmAnnotationMapper.selectAnnotationTypeStatistics();
     }
 
     @Override
     public List<Map<String, Object>> getAnnotationStatusStatistics() {
-        log.info("获取标注状态统计");
+        log.info("Get annotation status statistics");
         return algorithmAnnotationMapper.selectAnnotationStatusStatistics();
     }
 
     @Override
     public List<Map<String, Object>> getProgressStatistics() {
-        log.info("获取标注进度统计");
+        log.info("Get progress statistics");
         return algorithmAnnotationMapper.selectProgressStatistics();
     }
 
     @Override
     public Map<String, Object> getWorkloadStatistics() {
-        log.info("获取标注工作量统计");
+        log.info("Get workload statistics");
         return algorithmAnnotationMapper.selectWorkloadStatistics();
     }
 
     @Override
     public Map<String, Object> validateAnnotationData(Long id) {
-        log.info("验证标注数据：ID={}", id);
+        log.info("Validate annotation data: ID={}", id);
 
         AlgorithmAnnotation annotation = getById(id);
         if (annotation == null) {
-            log.warn("标注不存在：ID={}", id);
+            log.warn("Annotation does not exist: ID={}", id);
             return null;
         }
 
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
-        result.put("message", "验证成功");
+        result.put("message", "Validation successful");
         result.put("validCount", annotation.getAnnotatedCount());
         result.put("invalidCount", 0);
         result.put("validationDetails", new HashMap<>());
 
-        // 这里可以添加实际的验证逻辑
+        // Actual validation logic can be added here
 
         return result;
     }
 
     /**
-     * 计算标注进度
+     * Calculate annotation progress
      *
-     * @param annotatedCount 已标注数量
-     * @param totalCount     总数量
-     * @return 进度百分比
+     * @param annotatedCount  Annotated count
+     * @param totalCount      Total count
+     * @return Progress percentage
      */
     private int calculateProgress(Integer annotatedCount, Integer totalCount) {
         if (totalCount == null || totalCount == 0) {
@@ -971,10 +971,10 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     }
 
     /**
-     * 根据进度计算标注状态
+     * Calculate annotation status based on progress
      *
-     * @param progress 进度百分比
-     * @return 标注状态
+     * @param progress  Progress percentage
+     * @return Annotation status
      */
     private String calculateAnnotationStatus(int progress) {
         if (progress == 0) {
@@ -987,48 +987,48 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     }
 
     /**
-     * 删除标注相关的图片文件
+     * Delete annotation-related image files
      *
-     * @param annotation 标注信息
+     * @param annotation  Annotation information
      */
     private void deleteAnnotationImages(AlgorithmAnnotation annotation) {
         if (annotation == null || annotation.getDatasetPath() == null) {
-            log.warn("标注或数据集路径为空，跳过图片删除");
+            log.warn("Annotation or dataset path is empty, skipping image deletion");
             return;
         }
 
         try {
             String datasetPath = annotation.getDatasetPath();
-            log.info("开始删除标注图片文件：ID={}, DatasetPath={}", annotation.getId(), datasetPath);
+            log.info("Start deleting annotation image files: ID={}, DatasetPath={}", annotation.getId(), datasetPath);
 
-            // 如果数据集路径是相对路径，转换为绝对路径
+            // If dataset path is relative, convert to absolute path
             String absolutePath = datasetPath;
             if (!datasetPath.startsWith("/") && !datasetPath.contains(":")) {
-                // 相对路径，基于当前工作目录
+                // Relative path, based on current working directory
                 String currentDir = System.getProperty("user.dir");
                 absolutePath = currentDir + "/" + datasetPath;
             }
 
             java.io.File datasetDir = new java.io.File(absolutePath);
             if (!datasetDir.exists()) {
-                log.warn("数据集目录不存在：{}", absolutePath);
+                log.warn("Dataset directory does not exist: {}", absolutePath);
                 return;
             }
 
-            // 删除目录下的所有图片文件
+            // Delete all image files in directory
             deleteImageFiles(datasetDir);
-            log.info("标注图片文件删除完成：ID={}", annotation.getId());
+            log.info("Annotation image files deletion completed: ID={}", annotation.getId());
 
         } catch (Exception e) {
-            log.error("删除标注图片文件失败：ID={}, Error={}", annotation.getId(), e.getMessage());
+            log.error("Failed to delete annotation image files: ID={}, Error={}", annotation.getId(), e.getMessage());
             throw e;
         }
     }
 
     /**
-     * 递归删除目录下的图片文件
+     * Recursively delete image files in directory
      *
-     * @param directory 目录
+     * @param directory  Directory
      */
     private void deleteImageFiles(java.io.File directory) {
         if (!directory.exists() || !directory.isDirectory()) {
@@ -1039,20 +1039,20 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
         if (files != null) {
             for (java.io.File file : files) {
                 if (file.isDirectory()) {
-                    // 递归删除子目录
+                    // Recursively delete subdirectory
                     deleteImageFiles(file);
-                    // 删除空目录
+                    // Delete empty directory
                     if (file.listFiles() == null || Objects.requireNonNull(file.listFiles()).length == 0) {
                         file.delete();
-                        log.debug("删除空目录：{}", file.getAbsolutePath());
+                        log.debug("Delete empty directory: {}", file.getAbsolutePath());
                     }
                 } else if (isImageFile(file.getName())) {
-                    // 删除图片文件
+                    // Delete image file
                     boolean deleted = file.delete();
                     if (deleted) {
-                        log.debug("删除图片文件：{}", file.getAbsolutePath());
+                        log.debug("Delete image file: {}", file.getAbsolutePath());
                     } else {
-                        log.warn("删除图片文件失败：{}", file.getAbsolutePath());
+                        log.warn("Failed to delete image file: {}", file.getAbsolutePath());
                     }
                 }
             }
@@ -1060,10 +1060,10 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     }
 
     /**
-     * 判断是否为图片文件
+     * Check if it is an image file
      *
-     * @param fileName 文件名
-     * @return 是否为图片文件
+     * @param fileName  File name
+     * @return Whether it is an image file
      */
     private boolean isImageFile(String fileName) {
         if (fileName == null) {
@@ -1198,4 +1198,4 @@ public class AlgorithmAnnotationServiceImpl extends ServiceImpl<AlgorithmAnnotat
     }
 
 
-} 
+}

@@ -9,52 +9,52 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 /**
- * 容器实例创建DTO
+ * Container Instance Creation DTO
  *
  * @author VLStream Team
  * @since 1.0.0
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value = "ContainerInstanceCreateDTO", description = "容器实例创建参数")
+@ApiModel(value = "ContainerInstanceCreateDTO", description = "Container instance creation parameters")
 public class ContainerInstanceCreateDTO {
 
-    @ApiModelProperty(value = "实例名称", required = true)
-    @NotBlank(message = "实例名称不能为空")
+    @ApiModelProperty(value = "Instance name", required = true)
+    @NotBlank(message = "Instance name cannot be empty")
     private String instanceName;
 
-    @ApiModelProperty(value = "镜像名称", required = true)
-    @NotBlank(message = "镜像名称不能为空")
+    @ApiModelProperty(value = "Image name", required = true)
+    @NotBlank(message = "Image name cannot be empty")
     private String imageName;
 
-    @ApiModelProperty(value = "镜像标签")
+    @ApiModelProperty(value = "Image tag")
     private String imageTag = "latest";
 
-    @ApiModelProperty(value = "算法ID")
+    @ApiModelProperty(value = "Algorithm ID")
     private Long algorithmId;
 
-    @ApiModelProperty(value = "实例类型", required = true)
-    @NotBlank(message = "实例类型不能为空")
+    @ApiModelProperty(value = "Instance type", required = true)
+    @NotBlank(message = "Instance type cannot be empty")
     private String instanceType;
 
-    @ApiModelProperty(value = "CPU限制")
+    @ApiModelProperty(value = "CPU limit")
     private String cpuLimit;
 
-    @ApiModelProperty(value = "内存限制")
+    @ApiModelProperty(value = "Memory limit")
     private String memoryLimit;
 
-    @ApiModelProperty(value = "GPU限制")
+    @ApiModelProperty(value = "GPU limit")
     private String gpuLimit;
 
-    @ApiModelProperty(value = "端口配置（JSON格式）")
+    @ApiModelProperty(value = "Port configuration (JSON format)")
     private String portConfig;
 
-    @ApiModelProperty(value = "环境变量配置（JSON格式）")
+    @ApiModelProperty(value = "Environment variable configuration (JSON format)")
     private String envConfig;
 
-    @ApiModelProperty(value = "存储卷配置（JSON格式）")
+    @ApiModelProperty(value = "Volume configuration (JSON format)")
     private String volumeConfig;
 
-    @ApiModelProperty(value = "日志路径")
+    @ApiModelProperty(value = "Logs path")
     private String logsPath;
 } 

@@ -13,8 +13,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * RTSP流转换服务
- * 负责将RTSP流转换为HLS格式以便浏览器播放
+ * RTSP stream conversion service
+ * Responsible for converting RTSP streams to HLS format for browser playback
  */
 @Service
 public class RTSPConverterService {
@@ -31,7 +31,7 @@ public class RTSPConverterService {
     private String ffmpegPath;
     
     /**
-     * 启动HLS流转换
+     * Start HLS stream conversion
      */
     public String startHLSStream(String deviceId, String rtspUrl, String quality) {
         logger.info("启动HLS转换: deviceId={}, rtspUrl={}, quality={}", deviceId, rtspUrl, quality);
@@ -85,7 +85,7 @@ public class RTSPConverterService {
     }
     
     /**
-     * 停止HLS流转换
+     * Stop HLS stream conversion
      */
     public void stopHLSStream(String deviceId) {
         logger.info("停止HLS转换: deviceId={}", deviceId);
@@ -119,21 +119,21 @@ public class RTSPConverterService {
     }
     
     /**
-     * 获取活跃的流信息
+     * Get active stream information
      */
     public Map<String, String> getActiveStreams() {
         return new ConcurrentHashMap<>(streamUrls);
     }
     
     /**
-     * 检查设备是否在转换中
+     * Check if device is in conversion
      */
     public boolean isStreamActive(String deviceId) {
         return activeStreams.containsKey(deviceId) && streamUrls.containsKey(deviceId);
     }
     
     /**
-     * 构建FFmpeg转换命令
+     * Build FFmpeg conversion command
      */
     private List<String> buildFFmpegCommand(String rtspUrl, String playlistFile, String quality) {
         List<String> command = new ArrayList<>();
@@ -192,7 +192,7 @@ public class RTSPConverterService {
     }
     
     /**
-     * 启动进程监控线程
+     * Start process monitoring thread
      */
     private void startProcessMonitor(String deviceId, Process process) {
         Thread monitorThread = new Thread(() -> {
@@ -216,7 +216,7 @@ public class RTSPConverterService {
     }
 
     /**
-     * 启动输出读取线程
+     * Start output reader thread
      */
     private void startOutputReader(String deviceId, Process process) {
         Thread outputThread = new Thread(() -> {
@@ -237,7 +237,7 @@ public class RTSPConverterService {
     }
     
     /**
-     * 清理输出文件
+     * Clean up output files
      */
     private void cleanupOutputFiles(String deviceId) {
         try {
@@ -264,7 +264,7 @@ public class RTSPConverterService {
     }
     
     /**
-     * 停止所有转换
+     * Stop all conversions
      */
     public void stopAllStreams() {
         logger.info("停止所有HLS转换，当前活跃数量: {}", activeStreams.size());

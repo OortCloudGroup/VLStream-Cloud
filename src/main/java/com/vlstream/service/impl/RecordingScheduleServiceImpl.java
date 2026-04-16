@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 录制计划服务实现类
+ * Recording Schedule Service Implementation Class
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -67,23 +67,23 @@ public class RecordingScheduleServiceImpl extends ServiceImpl<RecordingScheduleM
             RecordingSchedule schedule = new RecordingSchedule();
             schedule.setDeviceId(deviceId);
             schedule.setDeviceName(deviceName);
-            schedule.setScheduleName("默认录制计划-" + deviceName);
+            schedule.setScheduleName("Default Recording Schedule-" + deviceName);
             schedule.setScheduleType(RecordingSchedule.TYPE_CONTINUOUS);
             schedule.setIsEnabled(true);
-            schedule.setRecordDuration(600); // 10分钟
-            schedule.setRetentionDays(30); // 保留30天
+            schedule.setRecordDuration(600); // 10 minutes
+            schedule.setRetentionDays(30); // Retain for 30 days
             schedule.setNextRecordTime(LocalDateTime.now());
             schedule.setCreatedBy("system");
             
             if (save(schedule)) {
-                log.info("创建默认录制计划成功: deviceId={}, scheduleId={}", deviceId, schedule.getId());
+                log.info("Default recording schedule created successfully: deviceId={}, scheduleId={}", deviceId, schedule.getId());
                 return schedule;
             } else {
-                log.error("创建默认录制计划失败: deviceId={}", deviceId);
+                log.error("Failed to create default recording schedule: deviceId={}", deviceId);
                 return null;
             }
         } catch (Exception e) {
-            log.error("创建默认录制计划异常: deviceId={}, error={}", deviceId, e.getMessage(), e);
+            log.error("Error creating default recording schedule: deviceId={}, error={}", deviceId, e.getMessage(), e);
             return null;
         }
     }
@@ -93,7 +93,7 @@ public class RecordingScheduleServiceImpl extends ServiceImpl<RecordingScheduleM
         try {
             RecordingSchedule schedule = getById(scheduleId);
             if (schedule == null) {
-                log.warn("录制计划不存在: scheduleId={}", scheduleId);
+                log.warn("Recording schedule does not exist: scheduleId={}", scheduleId);
                 return false;
             }
             
@@ -103,13 +103,13 @@ public class RecordingScheduleServiceImpl extends ServiceImpl<RecordingScheduleM
             
             boolean success = updateById(schedule);
             if (success) {
-                log.info("启用录制计划成功: scheduleId={}", scheduleId);
+                log.info("Recording schedule enabled successfully: scheduleId={}", scheduleId);
             } else {
-                log.error("启用录制计划失败: scheduleId={}", scheduleId);
+                log.error("Failed to enable recording schedule: scheduleId={}", scheduleId);
             }
             return success;
         } catch (Exception e) {
-            log.error("启用录制计划异常: scheduleId={}, error={}", scheduleId, e.getMessage(), e);
+            log.error("Error enabling recording schedule: scheduleId={}, error={}", scheduleId, e.getMessage(), e);
             return false;
         }
     }
@@ -119,7 +119,7 @@ public class RecordingScheduleServiceImpl extends ServiceImpl<RecordingScheduleM
         try {
             RecordingSchedule schedule = getById(scheduleId);
             if (schedule == null) {
-                log.warn("录制计划不存在: scheduleId={}", scheduleId);
+                log.warn("Recording schedule does not exist: scheduleId={}", scheduleId);
                 return false;
             }
             
@@ -129,13 +129,13 @@ public class RecordingScheduleServiceImpl extends ServiceImpl<RecordingScheduleM
             
             boolean success = updateById(schedule);
             if (success) {
-                log.info("禁用录制计划成功: scheduleId={}", scheduleId);
+                log.info("Recording schedule disabled successfully: scheduleId={}", scheduleId);
             } else {
-                log.error("禁用录制计划失败: scheduleId={}", scheduleId);
+                log.error("Failed to disable recording schedule: scheduleId={}", scheduleId);
             }
             return success;
         } catch (Exception e) {
-            log.error("禁用录制计划异常: scheduleId={}, error={}", scheduleId, e.getMessage(), e);
+            log.error("Error disabling recording schedule: scheduleId={}, error={}", scheduleId, e.getMessage(), e);
             return false;
         }
     }
@@ -156,13 +156,13 @@ public class RecordingScheduleServiceImpl extends ServiceImpl<RecordingScheduleM
             
             boolean success = updateBatchById(schedules);
             if (success) {
-                log.info("批量更新录制计划状态成功: 数量={}, enabled={}", schedules.size(), enabled);
+                log.info("Batch update recording schedule status successful: count={}, enabled={}", schedules.size(), enabled);
             } else {
-                log.error("批量更新录制计划状态失败: scheduleIds={}, enabled={}", scheduleIds, enabled);
+                log.error("Failed to batch update recording schedule status: scheduleIds={}, enabled={}", scheduleIds, enabled);
             }
             return success;
         } catch (Exception e) {
-            log.error("批量更新录制计划状态异常: scheduleIds={}, enabled={}, error={}", 
+            log.error("Error batch updating recording schedule status: scheduleIds={}, enabled={}, error={}", 
                      scheduleIds, enabled, e.getMessage(), e);
             return false;
         }
@@ -173,7 +173,7 @@ public class RecordingScheduleServiceImpl extends ServiceImpl<RecordingScheduleM
         try {
             RecordingSchedule schedule = getById(scheduleId);
             if (schedule == null) {
-                log.warn("录制计划不存在: scheduleId={}", scheduleId);
+                log.warn("Recording schedule does not exist: scheduleId={}", scheduleId);
                 return false;
             }
             
@@ -181,20 +181,20 @@ public class RecordingScheduleServiceImpl extends ServiceImpl<RecordingScheduleM
             schedule.setNextRecordTime(nextRecordTime);
             schedule.setUpdateTime(LocalDateTime.now());
             
-            // 增加总录制次数
+            // Increase total recording count
             Integer totalRecords = schedule.getTotalRecords();
             schedule.setTotalRecords(totalRecords != null ? totalRecords + 1 : 1);
             
             boolean success = updateById(schedule);
             if (success) {
-                log.debug("更新录制计划执行时间成功: scheduleId={}, nextRecordTime={}", 
+                log.debug("Recording schedule execution time updated successfully: scheduleId={}, nextRecordTime={}", 
                          scheduleId, nextRecordTime);
             } else {
-                log.error("更新录制计划执行时间失败: scheduleId={}", scheduleId);
+                log.error("Failed to update recording schedule execution time: scheduleId={}", scheduleId);
             }
             return success;
         } catch (Exception e) {
-            log.error("更新录制计划执行时间异常: scheduleId={}, error={}", scheduleId, e.getMessage(), e);
+            log.error("Error updating recording schedule execution time: scheduleId={}, error={}", scheduleId, e.getMessage(), e);
             return false;
         }
     }
@@ -204,7 +204,7 @@ public class RecordingScheduleServiceImpl extends ServiceImpl<RecordingScheduleM
         try {
             RecordingSchedule schedule = getById(scheduleId);
             if (schedule == null) {
-                log.warn("录制计划不存在: scheduleId={}", scheduleId);
+                log.warn("Recording schedule does not exist: scheduleId={}", scheduleId);
                 return false;
             }
             
@@ -214,14 +214,14 @@ public class RecordingScheduleServiceImpl extends ServiceImpl<RecordingScheduleM
             
             boolean success = updateById(schedule);
             if (success) {
-                log.debug("增加录制计划失败次数成功: scheduleId={}, failedRecords={}", 
+                log.debug("Recording schedule failed records incremented successfully: scheduleId={}, failedRecords={}", 
                          scheduleId, schedule.getFailedRecords());
             } else {
-                log.error("增加录制计划失败次数失败: scheduleId={}", scheduleId);
+                log.error("Failed to increment recording schedule failed records: scheduleId={}", scheduleId);
             }
             return success;
         } catch (Exception e) {
-            log.error("增加录制计划失败次数异常: scheduleId={}, error={}", scheduleId, e.getMessage(), e);
+            log.error("Error incrementing recording schedule failed records: scheduleId={}, error={}", scheduleId, e.getMessage(), e);
             return false;
         }
     }
@@ -234,20 +234,20 @@ public class RecordingScheduleServiceImpl extends ServiceImpl<RecordingScheduleM
             String scheduleType = schedule.getScheduleType();
             
             if (RecordingSchedule.TYPE_CONTINUOUS.equals(scheduleType)) {
-                // 连续录制：立即开始下一次录制
+                // Continuous recording: start next recording immediately
                 return now.plusMinutes(1);
             } else if (RecordingSchedule.TYPE_TIME_RANGE.equals(scheduleType)) {
-                // 时间段录制：根据时间配置计算
-                return now.plusMinutes(10); // 简化实现，10分钟后再次录制
+                // Time range recording: calculate based on time configuration
+                return now.plusMinutes(10); // Simplified implementation, record again after 10 minutes
             } else if (RecordingSchedule.TYPE_TIME_STRATEGY.equals(scheduleType)) {
-                // 时间策略录制：根据时间策略计算
-                return now.plusMinutes(10); // 简化实现，10分钟后再次录制
+                // Time strategy recording: calculate based on time strategy
+                return now.plusMinutes(10); // Simplified implementation, record again after 10 minutes
             }
             
-            // 默认10分钟后再次录制
+            // Default: record again after 10 minutes
             return now.plusMinutes(10);
         } catch (Exception e) {
-            log.error("计算下次录制时间异常: scheduleId={}, error={}", schedule.getId(), e.getMessage(), e);
+            log.error("Error calculating next recording time: scheduleId={}, error={}", schedule.getId(), e.getMessage(), e);
             return now.plusMinutes(10);
         }
     }
@@ -260,7 +260,7 @@ public class RecordingScheduleServiceImpl extends ServiceImpl<RecordingScheduleM
         
         LocalDateTime nextRecordTime = schedule.getNextRecordTime();
         if (nextRecordTime == null) {
-            return true; // 如果没有设置下次录制时间，则立即执行
+            return true; // If next recording time is not set, execute immediately
         }
         
         return currentTime.isAfter(nextRecordTime) || currentTime.isEqual(nextRecordTime);
@@ -269,17 +269,17 @@ public class RecordingScheduleServiceImpl extends ServiceImpl<RecordingScheduleM
     @Override
     public boolean executeSchedule(RecordingSchedule schedule) {
         try {
-            log.info("执行录制计划: scheduleId={}, deviceId={}, scheduleName={}", 
+            log.info("Executing recording schedule: scheduleId={}, deviceId={}, scheduleName={}", 
                     schedule.getId(), schedule.getDeviceId(), schedule.getScheduleName());
             
-            // 更新执行时间
+            // Update execution time
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime nextTime = calculateNextRecordTime(schedule);
             updateExecutionTime(schedule.getId(), now, nextTime);
             
             return true;
         } catch (Exception e) {
-            log.error("执行录制计划异常: scheduleId={}, error={}", schedule.getId(), e.getMessage(), e);
+            log.error("Error executing recording schedule: scheduleId={}, error={}", schedule.getId(), e.getMessage(), e);
             incrementFailedRecords(schedule.getId());
             return false;
         }

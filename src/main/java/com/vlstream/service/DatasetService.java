@@ -3,7 +3,7 @@ package com.vlstream.service;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 数据集服务接口
+ * Dataset Service Interface
  * 
  * @author VLStream Team
  * @since 1.0.0
@@ -11,42 +11,42 @@ import javax.servlet.http.HttpServletResponse;
 public interface DatasetService {
 
     /**
-     * 连接远程服务器
+     * Connect to remote server
      * 
-     * @param host 服务器地址
-     * @param username 用户名
-     * @param password 密码
-     * @param path 数据集路径
-     * @return 是否连接成功
+     * @param host Server address
+     * @param username Username
+     * @param password Password
+     * @param path Dataset path
+     * @return Whether connection successful
      */
     boolean connectToServer(String host, String username, String password, String path);
 
     /**
-     * 获取数据集文件列表
+     * Get dataset file list
      * 
-     * @param host 服务器地址
-     * @param path 数据集路径
-     * @return 文件列表
+     * @param host Server address
+     * @param path Dataset path
+     * @return File list
      */
     Object getDatasetFiles(String host, String path);
 
     /**
-     * 获取文件内容
+     * Get file content
      * 
-     * @param host 服务器地址
-     * @param path 数据集路径
-     * @param filename 文件名
-     * @return 文件内容
+     * @param host Server address
+     * @param path Dataset path
+     * @param filename Filename
+     * @return File content
      */
     String getFileContent(String host, String path, String filename);
 
     /**
-     * 下载文件
+     * Download file
      * 
-     * @param host 服务器地址
-     * @param path 数据集路径
-     * @param filename 文件名
-     * @param response HTTP响应对象
+     * @param host Server address
+     * @param path Dataset path
+     * @param filename Filename
+     * @param response HTTP response object
      */
     void downloadFile(String host, String path, String filename, HttpServletResponse response);
 } 

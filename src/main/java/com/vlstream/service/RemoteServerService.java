@@ -5,55 +5,55 @@ import com.vlstream.entity.RemoteServer;
 import java.util.List;
 
 /**
- * 远程服务器配置Service接口
+ * Remote server configuration service interface
  */
 public interface RemoteServerService {
     
     /**
-     * 查询远程服务器配置
+     * Query remote server configuration
      * 
-     * @param id 远程服务器配置主键
-     * @return 远程服务器配置
+     * @param id Remote server configuration primary key
+     * @return Remote server configuration
      */
     public RemoteServer selectRemoteServerById(Long id);
     
     /**
-     * 查询远程服务器配置列表
+     * Query remote server configuration list
      * 
-     * @param remoteServer 远程服务器配置
-     * @return 远程服务器配置集合
+     * @param remoteServer Remote server configuration
+     * @return Remote server configuration collection
      */
     public List<RemoteServer> selectRemoteServerList(RemoteServer remoteServer);
     
     /**
-     * 新增远程服务器配置
+     * Add remote server configuration
      * 
-     * @param remoteServer 远程服务器配置
-     * @return 结果
+     * @param remoteServer Remote server configuration
+     * @return Result
      */
     public int insertRemoteServer(RemoteServer remoteServer);
     
     /**
-     * 修改远程服务器配置
+     * Update remote server configuration
      * 
-     * @param remoteServer 远程服务器配置
-     * @return 结果
+     * @param remoteServer Remote server configuration
+     * @return Result
      */
     public int updateRemoteServer(RemoteServer remoteServer);
     
     /**
-     * 批量删除远程服务器配置
+     * Batch delete remote server configurations
      * 
-     * @param ids 需要删除的远程服务器配置主键集合
-     * @return 结果
+     * @param ids Primary key collection of remote server configurations to delete
+     * @return Result
      */
     public int deleteRemoteServerByIds(Long[] ids);
     
     /**
-     * 删除远程服务器配置信息
+     * Delete remote server configuration information
      * 
-     * @param id 远程服务器配置主键
-     * @return 结果
+     * @param id Remote server configuration primary key
+     * @return Result
      */
     public int deleteRemoteServerById(Long id);
 } 

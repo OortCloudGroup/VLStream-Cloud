@@ -13,8 +13,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * WebRTC流服务
- * 负责管理WebRTC-streamer服务和RTSP流处理
+ * WebRTC stream service
+ * Responsible for managing WebRTC-streamer service and RTSP stream processing
  */
 @Service
 public class WebRTCService {
@@ -47,7 +47,7 @@ public class WebRTCService {
     }
     
     /**
-     * 检查WebRTC服务状态
+     * Check WebRTC service status
      */
     public boolean isWebRTCServerAvailable() {
         if (!webrtcEnabled) {
@@ -68,7 +68,7 @@ public class WebRTCService {
     }
     
     /**
-     * 启动WebRTC流
+     * Start WebRTC stream
      */
     public String startWebRTCStream(String deviceId, String rtspUrl) {
         logger.info("启动WebRTC流: deviceId={}, rtspUrl={}", deviceId, rtspUrl);
@@ -104,7 +104,7 @@ public class WebRTCService {
     }
     
     /**
-     * 停止WebRTC流
+     * Stop WebRTC stream
      */
     public void stopWebRTCStream(String deviceId) {
         logger.info("停止WebRTC流: deviceId={}", deviceId);
@@ -125,21 +125,21 @@ public class WebRTCService {
     }
     
     /**
-     * 获取活跃的WebRTC流
+     * Get active WebRTC streams
      */
     public Map<String, String> getActiveStreams() {
         return new HashMap<>(activeStreams);
     }
     
     /**
-     * 检查设备WebRTC流是否活跃
+     * Check if device WebRTC stream is active
      */
     public boolean isStreamActive(String deviceId) {
         return activeStreams.containsKey(deviceId);
     }
     
     /**
-     * 停止所有WebRTC流
+     * Stop all WebRTC streams
      */
     public void stopAllStreams() {
         logger.info("停止所有WebRTC流，当前活跃流数量: {}", activeStreams.size());
@@ -158,21 +158,21 @@ public class WebRTCService {
     }
     
     /**
-     * 获取WebRTC服务器URL
+     * Get WebRTC server URL
      */
     public String getWebRTCServerUrl() {
         return webrtcServerUrl;
     }
     
     /**
-     * 验证RTSP URL格式
+     * Validate RTSP URL format
      */
     public boolean isValidRtspUrl(String url) {
         return url != null && url.toLowerCase().startsWith("rtsp://");
     }
     
     /**
-     * 创建WebRTC连接 - 简化版本，返回播放URL给前端
+     * Create WebRTC connection - simplified version, return playback URL to frontend
      */
     private String addStreamToWebRTC(String deviceId, String rtspUrl) throws Exception {
         String streamId = "stream_" + deviceId;
@@ -192,7 +192,7 @@ public class WebRTCService {
     }
     
     /**
-     * 获取WebRTC播放URL - 让前端直接连接webrtc-streamer
+     * Get WebRTC playback URL - let frontend connect directly to webrtc-streamer
      */
     public String getWebRTCPlayUrl(String deviceId) {
         String streamId = activeStreams.get(deviceId);
@@ -214,14 +214,14 @@ public class WebRTCService {
     }
     
     /**
-     * 获取原始RTSP URL
+     * Get original RTSP URL
      */
     private String getOriginalRtspUrl(String deviceId) {
         return streamUrls.get(deviceId);
     }
     
     /**
-     * 断开WebRTC连接
+     * Disconnect WebRTC connection
      */
     private void removeStreamFromWebRTC(String streamId) throws Exception {
         String url = String.format("%s/api/hangup?peerid=%s",
@@ -239,7 +239,7 @@ public class WebRTCService {
     }
     
     /**
-     * 获取WebRTC流信息
+     * Get WebRTC stream information
      */
     public Map<String, Object> getStreamInfo(String deviceId) {
         Map<String, Object> info = new HashMap<>();
@@ -257,7 +257,7 @@ public class WebRTCService {
     }
     
     /**
-     * 获取WebRTC服务器状态
+     * Get WebRTC server status
      */
     public Map<String, Object> getServerStatus() {
         Map<String, Object> status = new HashMap<>();

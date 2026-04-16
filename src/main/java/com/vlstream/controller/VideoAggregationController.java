@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 视频汇聚配置控制器
+ * Video Aggregation Configuration Controller
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -25,20 +25,20 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/api/video-aggregation")
-@Api(tags = "视频汇聚管理")
+@Api(tags = "Video Aggregation Management")
 public class VideoAggregationController {
 
     @Autowired
     private VideoAggregationService videoAggregationService;
 
     @GetMapping("/page")
-    @ApiOperation("分页查询视频汇聚配置")
+    @ApiOperation("Page query video aggregation configuration")
     public Result<IPage<VideoAggregation>> getAggregationPage(
-            @ApiParam("页码") @RequestParam(defaultValue = "1") Integer current,
-            @ApiParam("每页数量") @RequestParam(defaultValue = "10") Integer size,
-            @ApiParam("汇聚名称") @RequestParam(required = false) String aggregationName,
-            @ApiParam("汇聚类型") @RequestParam(required = false) Integer aggregationType,
-            @ApiParam("状态") @RequestParam(required = false) Integer status) {
+            @ApiParam("Page number") @RequestParam(defaultValue = "1") Integer current,
+            @ApiParam("Page size") @RequestParam(defaultValue = "10") Integer size,
+            @ApiParam("Aggregation name") @RequestParam(required = false) String aggregationName,
+            @ApiParam("Aggregation type") @RequestParam(required = false) Integer aggregationType,
+            @ApiParam("Status") @RequestParam(required = false) Integer status) {
         
         Page<VideoAggregation> page = new Page<>(current, size);
         IPage<VideoAggregation> result = videoAggregationService.getAggregationPage(
@@ -47,25 +47,25 @@ public class VideoAggregationController {
     }
 
     @GetMapping("/{id}")
-    @ApiOperation("根据ID查询汇聚配置")
-    public Result<VideoAggregation> getById(@ApiParam("汇聚配置ID") @PathVariable Long id) {
+    @ApiOperation("Query aggregation configuration by ID")
+    public Result<VideoAggregation> getById(@ApiParam("Aggregation configuration ID") @PathVariable Long id) {
         VideoAggregation aggregation = videoAggregationService.getById(id);
         if (aggregation == null) {
-            return Result.error("汇聚配置不存在");
+            return Result.error("Aggregation configuration does not exist");
         }
         return Result.success(aggregation);
     }
 
     @PostMapping
-    @ApiOperation("创建汇聚配置")
+    @ApiOperation("Create aggregation configuration")
     public Result<VideoAggregation> create(@RequestBody VideoAggregation videoAggregation) {
-        // 验证配置
+        // Validate configuration
         Map<String, Object> validation = videoAggregationService.validateConfig(videoAggregation);
         if (!(Boolean) validation.get("valid")) {
-            return Result.error("配置验证失败：" + validation.get("errors"));
+            return Result.error("Configuration validation failed: " + validation.get("errors"));
         }
 
-        // 设置初始状态
+        // Set initial status
         videoAggregation.setStatus(0);
         videoAggregation.setEnabled(1);
         
@@ -73,22 +73,22 @@ public class VideoAggregationController {
         if (success) {
             return Result.success(videoAggregation);
         }
-        return Result.error("创建失败");
+        return Result.error("Create failed");
     }
 
     @PutMapping("/{id}")
-    @ApiOperation("更新汇聚配置")
-    public Result<VideoAggregation> update(@ApiParam("汇聚配置ID") @PathVariable Long id,
+    @ApiOperation("Update aggregation configuration")
+    public Result<VideoAggregation> update(@ApiParam("Aggregation configuration ID") @PathVariable Long id,
                                           @RequestBody VideoAggregation videoAggregation) {
         VideoAggregation existing = videoAggregationService.getById(id);
         if (existing == null) {
-            return Result.error("汇聚配置不存在");
+            return Result.error("Aggregation configuration does not exist");
         }
 
-        // 验证配置
+        // Validate configuration
         Map<String, Object> validation = videoAggregationService.validateConfig(videoAggregation);
         if (!(Boolean) validation.get("valid")) {
-            return Result.error("配置验证失败：" + validation.get("errors"));
+            return Result.error("Configuration validation failed: " + validation.get("errors"));
         }
 
         videoAggregation.setId(id);
@@ -96,18 +96,18 @@ public class VideoAggregationController {
         if (success) {
             return Result.success(videoAggregation);
         }
-        return Result.error("更新失败");
+        return Result.error("Update failed");
     }
 
     @DeleteMapping("/{id}")
-    @ApiOperation("删除汇聚配置")
-    public Result<Void> delete(@ApiParam("汇聚配置ID") @PathVariable Long id) {
+    @ApiOperation("Delete aggregation configuration")
+    public Result<Void> delete(@ApiParam("Aggregation configuration ID") @PathVariable Long id) {
         VideoAggregation existing = videoAggregationService.getById(id);
         if (existing == null) {
-            return Result.error("汇聚配置不存在");
+            return Result.error("Aggregation configuration does not exist");
         }
 
-        // 如果正在运行，先停止
+        // If running, stop first
         if (existing.getStatus() == 1) {
             videoAggregationService.stopAggregation(id);
         }
@@ -116,69 +116,69 @@ public class VideoAggregationController {
         if (success) {
             return Result.success();
         }
-        return Result.error("删除失败");
+        return Result.error("Delete failed");
     }
 
     @PostMapping("/{id}/start")
-    @ApiOperation("启动视频汇聚")
-    public Result<Void> startAggregation(@ApiParam("汇聚配置ID") @PathVariable Long id) {
+    @ApiOperation("Start video aggregation")
+    public Result<Void> startAggregation(@ApiParam("Aggregation configuration ID") @PathVariable Long id) {
         boolean success = videoAggregationService.startAggregation(id);
         if (success) {
             return Result.success();
         }
-        return Result.error("启动失败");
+        return Result.error("Start failed");
     }
 
     @PostMapping("/{id}/stop")
-    @ApiOperation("停止视频汇聚")
-    public Result<Void> stopAggregation(@ApiParam("汇聚配置ID") @PathVariable Long id) {
+    @ApiOperation("Stop video aggregation")
+    public Result<Void> stopAggregation(@ApiParam("Aggregation configuration ID") @PathVariable Long id) {
         boolean success = videoAggregationService.stopAggregation(id);
         if (success) {
             return Result.success();
         }
-        return Result.error("停止失败");
+        return Result.error("Stop failed");
     }
 
     @PostMapping("/{id}/restart")
-    @ApiOperation("重启视频汇聚")
-    public Result<Void> restartAggregation(@ApiParam("汇聚配置ID") @PathVariable Long id) {
+    @ApiOperation("Restart video aggregation")
+    public Result<Void> restartAggregation(@ApiParam("Aggregation configuration ID") @PathVariable Long id) {
         boolean success = videoAggregationService.restartAggregation(id);
         if (success) {
             return Result.success();
         }
-        return Result.error("重启失败");
+        return Result.error("Restart failed");
     }
 
     @PostMapping("/{id}/switch")
-    @ApiOperation("切换画面")
-    public Result<Void> switchStream(@ApiParam("汇聚配置ID") @PathVariable Long id,
-                                    @ApiParam("目标流ID") @RequestParam Long targetStreamId) {
+    @ApiOperation("Switch screen")
+    public Result<Void> switchStream(@ApiParam("Aggregation configuration ID") @PathVariable Long id,
+                                    @ApiParam("Target stream ID") @RequestParam Long targetStreamId) {
         boolean success = videoAggregationService.switchStream(id, targetStreamId);
         if (success) {
             return Result.success();
         }
-        return Result.error("画面切换失败");
+        return Result.error("Screen switch failed");
     }
 
     @GetMapping("/{id}/status")
-    @ApiOperation("获取汇聚状态")
-    public Result<Map<String, Object>> getAggregationStatus(@ApiParam("汇聚配置ID") @PathVariable Long id) {
+    @ApiOperation("Get aggregation status")
+    public Result<Map<String, Object>> getAggregationStatus(@ApiParam("Aggregation configuration ID") @PathVariable Long id) {
         Map<String, Object> status = videoAggregationService.getAggregationStatus(id);
         if (!(Boolean) status.get("exists")) {
-            return Result.error("汇聚配置不存在");
+            return Result.error("Aggregation configuration does not exist");
         }
         return Result.success(status);
     }
 
     @GetMapping("/statistics")
-    @ApiOperation("获取状态统计")
+    @ApiOperation("Get status statistics")
     public Result<Map<String, Object>> getStatusStatistics() {
         Map<String, Object> statistics = videoAggregationService.getStatusStatistics();
         return Result.success(statistics);
     }
 
     @PostMapping("/batch/start")
-    @ApiOperation("批量启动汇聚")
+    @ApiOperation("Batch start aggregation")
     public Result<Map<String, Object>> batchStart(@RequestBody List<Long> ids) {
         int successCount = videoAggregationService.batchStart(ids);
         Map<String, Object> result = new HashMap<>();
@@ -189,7 +189,7 @@ public class VideoAggregationController {
     }
 
     @PostMapping("/batch/stop")
-    @ApiOperation("批量停止汇聚")
+    @ApiOperation("Batch stop aggregation")
     public Result<Map<String, Object>> batchStop(@RequestBody List<Long> ids) {
         int successCount = videoAggregationService.batchStop(ids);
         Map<String, Object> result = new HashMap<>();
@@ -200,14 +200,14 @@ public class VideoAggregationController {
     }
 
     @GetMapping("/running")
-    @ApiOperation("获取运行中的汇聚列表")
+    @ApiOperation("Get running aggregation list")
     public Result<List<VideoAggregation>> getRunningAggregations() {
         List<VideoAggregation> runningList = videoAggregationService.getRunningAggregations();
         return Result.success(runningList);
     }
 
     @PostMapping("/validate")
-    @ApiOperation("验证汇聚配置")
+    @ApiOperation("Validate aggregation configuration")
     public Result<Map<String, Object>> validateConfig(@RequestBody VideoAggregation videoAggregation) {
         Map<String, Object> validation = videoAggregationService.validateConfig(videoAggregation);
         return Result.success(validation);

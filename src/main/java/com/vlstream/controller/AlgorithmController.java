@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 算法控制器
+ * Algorithm Controller
  * 
  * @author VLStream Team
  * @since 1.0.0
@@ -30,23 +30,23 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/algorithm")
 @RequiredArgsConstructor
-@Api(tags = "算法管理")
+@Api(tags = "Algorithm Management")
 public class AlgorithmController {
 
     private final AlgorithmService algorithmService;
 
     /**
-     * 分页查询算法列表
+     * Page query algorithm list
      */
     @GetMapping("/page")
-    @Operation(summary = "分页查询算法列表", description = "根据条件分页查询算法")
+    @Operation(summary = "Query algorithm list with pagination", description = "Query algorithms with pagination based on conditions")
     public Result<IPage<Algorithm>> getAlgorithmPage(
-            @Parameter(description = "当前页", example = "1") @RequestParam(defaultValue = "1") Integer current,
-            @Parameter(description = "每页大小", example = "10") @RequestParam(defaultValue = "10") Integer size,
-            @Parameter(description = "仓库ID") @RequestParam(required = false) Long repositoryId,
-            @Parameter(description = "算法名称") @RequestParam(required = false) String name,
-            @Parameter(description = "算法类型") @RequestParam(required = false) String category,
-            @Parameter(description = "部署状态") @RequestParam(required = false) String deployStatus) {
+            @Parameter(description = "Current page", example = "1") @RequestParam(defaultValue = "1") Integer current,
+            @Parameter(description = "Page size", example = "10") @RequestParam(defaultValue = "10") Integer size,
+            @Parameter(description = "Repository ID") @RequestParam(required = false) Long repositoryId,
+            @Parameter(description = "Algorithm name") @RequestParam(required = false) String name,
+            @Parameter(description = "Algorithm type") @RequestParam(required = false) String category,
+            @Parameter(description = "Deployment status") @RequestParam(required = false) String deployStatus) {
         
         log.info("分页查询算法列表，参数：current={}, size={}, repositoryId={}, name={}, category={}, categoryName={}, deployStatus={}",
                 current, size, repositoryId, name, category, deployStatus);
@@ -60,12 +60,12 @@ public class AlgorithmController {
     }
 
     /**
-     * 根据仓库ID查询算法列表
+     * Query algorithm list by repository ID
      */
     @GetMapping("/repository/{repositoryId}")
-    @Operation(summary = "根据仓库ID查询算法列表", description = "获取指定仓库下的所有算法")
+    @Operation(summary = "Query algorithm list by repository ID", description = "Get all algorithms in specified repository")
     public Result<List<Algorithm>> getAlgorithmsByRepositoryId(
-            @Parameter(description = "仓库ID", example = "1") @PathVariable @NotNull Long repositoryId) {
+            @Parameter(description = "Repository ID", example = "1") @PathVariable @NotNull Long repositoryId) {
         
         log.info("根据仓库ID查询算法列表：{}", repositoryId);
         
@@ -74,12 +74,12 @@ public class AlgorithmController {
     }
 
     /**
-     * 根据分类查询算法列表
+     * Query algorithm list by category
      */
     @GetMapping("/category/{category}")
-    @Operation(summary = "根据分类查询算法列表", description = "获取指定分类的所有算法")
+    @Operation(summary = "Query algorithm list by category", description = "Get all algorithms of specified category")
     public Result<List<Algorithm>> getAlgorithmsByCategory(
-            @Parameter(description = "算法类型", example = "person-detection") @PathVariable String category) {
+            @Parameter(description = "Algorithm type", example = "person-detection") @PathVariable String category) {
         
         log.info("根据分类查询算法列表：{}", category);
         
@@ -88,12 +88,12 @@ public class AlgorithmController {
     }
 
     /**
-     * 根据ID查询算法详情
+     * Query algorithm details by ID
      */
     @GetMapping("/{id}")
-    @Operation(summary = "查询算法详情", description = "根据ID获取算法详细信息")
+    @Operation(summary = "Query algorithm details", description = "Get algorithm details by ID")
     public Result<Algorithm> getAlgorithmById(
-            @Parameter(description = "算法ID", example = "1") @PathVariable @NotNull Long id) {
+            @Parameter(description = "Algorithm ID", example = "1") @PathVariable @NotNull Long id) {
         
         log.info("查询算法详情：ID={}", id);
         
@@ -106,10 +106,10 @@ public class AlgorithmController {
     }
 
     /**
-     * 创建算法
+     * Create algorithm
      */
     @PostMapping
-    @Operation(summary = "创建算法", description = "新增算法")
+    @Operation(summary = "Create algorithm", description = "Add new algorithm")
     public Result<String> createAlgorithm(@Valid @RequestBody Algorithm algorithm) {
         log.info("创建算法：{}", algorithm.getName());
         
@@ -122,12 +122,12 @@ public class AlgorithmController {
     }
 
     /**
-     * 更新算法
+     * Update algorithm
      */
     @PutMapping("/{id}")
-    @Operation(summary = "更新算法", description = "根据ID更新算法信息")
+    @Operation(summary = "Update algorithm", description = "Update algorithm information by ID")
     public Result<String> updateAlgorithm(
-            @Parameter(description = "算法ID", example = "1") @PathVariable @NotNull Long id,
+            @Parameter(description = "Algorithm ID", example = "1") @PathVariable @NotNull Long id,
             @Valid @RequestBody Algorithm algorithm) {
         
         log.info("更新算法：ID={}", id);
@@ -143,12 +143,12 @@ public class AlgorithmController {
     }
 
     /**
-     * 删除算法
+     * Delete algorithm
      */
     @DeleteMapping("/{id}")
-    @Operation(summary = "删除算法", description = "根据ID删除算法（软删除）")
+    @Operation(summary = "Delete algorithm", description = "Delete algorithm by ID (soft delete)")
     public Result<String> deleteAlgorithm(
-            @Parameter(description = "算法ID", example = "1") @PathVariable @NotNull Long id) {
+            @Parameter(description = "Algorithm ID", example = "1") @PathVariable @NotNull Long id) {
         
         log.info("删除算法：ID={}", id);
         
@@ -161,10 +161,10 @@ public class AlgorithmController {
     }
 
     /**
-     * 批量删除算法
+     * Batch delete algorithms
      */
     @DeleteMapping("/batch")
-    @Operation(summary = "批量删除算法", description = "根据ID列表批量删除算法")
+    @Operation(summary = "Batch delete algorithms", description = "Batch delete algorithms by ID list")
     public Result<String> batchDeleteAlgorithms(@RequestBody List<Long> ids) {
         log.info("批量删除算法：IDs={}", ids);
         
@@ -181,13 +181,13 @@ public class AlgorithmController {
     }
 
     /**
-     * 更新部署状态
+     * Update deployment status
      */
     @PutMapping("/{id}/deploy-status")
-    @Operation(summary = "更新部署状态", description = "更新算法的部署状态")
+    @Operation(summary = "Update deployment status", description = "Update deployment status of algorithm")
     public Result<String> updateDeployStatus(
-            @Parameter(description = "算法ID", example = "1") @PathVariable @NotNull Long id,
-            @Parameter(description = "部署状态", example = "deployed") @RequestParam @NotNull String deployStatus) {
+            @Parameter(description = "Algorithm ID", example = "1") @PathVariable @NotNull Long id,
+            @Parameter(description = "Deployment status", example = "deployed") @RequestParam @NotNull String deployStatus) {
         
         log.info("更新算法部署状态：ID={}, Status={}", id, deployStatus);
         
@@ -200,13 +200,13 @@ public class AlgorithmController {
     }
 
     /**
-     * 批量更新部署状态
+     * Batch update deployment status
      */
     @PutMapping("/batch/deploy-status")
-    @Operation(summary = "批量更新部署状态", description = "批量更新算法的部署状态")
+    @Operation(summary = "Batch update deployment status", description = "Batch update deployment status of algorithms")
     public Result<String> batchUpdateDeployStatus(
             @RequestBody List<Long> ids,
-            @Parameter(description = "部署状态", example = "deployed") @RequestParam @NotNull String deployStatus) {
+            @Parameter(description = "Deployment status", example = "deployed") @RequestParam @NotNull String deployStatus) {
         
         log.info("批量更新算法部署状态：IDs={}, Status={}", ids, deployStatus);
         
@@ -223,12 +223,12 @@ public class AlgorithmController {
     }
 
     /**
-     * 部署算法到设备
+     * Deploy algorithm to devices
      */
     @PostMapping("/{id}/deploy")
-    @Operation(summary = "部署算法到设备", description = "将算法部署到指定设备")
+    @Operation(summary = "Deploy algorithm to devices", description = "Deploy algorithm to specified devices")
     public Result<String> deployAlgorithmToDevices(
-            @Parameter(description = "算法ID", example = "1") @PathVariable @NotNull Long algorithmId,
+            @Parameter(description = "Algorithm ID", example = "1") @PathVariable @NotNull Long algorithmId,
             @RequestBody List<Long> deviceIds) {
         
         log.info("部署算法到设备：AlgorithmId={}, DeviceIds={}", algorithmId, deviceIds);
@@ -246,11 +246,11 @@ public class AlgorithmController {
     }
 
     /**
-     * 算法评估
+     * Algorithm evaluation
      */
     @PostMapping("/{algorithmId}/evaluate")
-    @Operation(summary = "算法评估", description = "对算法进行性能评估")
-    public Result<Map<String, Object>> evaluateAlgorithm(@Parameter(description = "算法ID", example = "1") @PathVariable @NotNull Long algorithmId) {
+    @Operation(summary = "Algorithm evaluation", description = "Perform performance evaluation on algorithm")
+    public Result<Map<String, Object>> evaluateAlgorithm(@Parameter(description = "Algorithm ID", example = "1") @PathVariable @NotNull Long algorithmId) {
         
         log.info("算法评估：AlgorithmId={}", algorithmId);
         
@@ -263,10 +263,10 @@ public class AlgorithmController {
     }
 
     /**
-     * 获取算法分类统计
+     * Get algorithm category statistics
      */
     @GetMapping("/statistics/category")
-    @Operation(summary = "获取算法分类统计", description = "获取各分类的算法数量统计")
+    @Operation(summary = "Get algorithm category statistics", description = "Get algorithm count statistics by category")
     public Result<List<Map<String, Object>>> getCategoryStatistics() {
         log.info("获取算法分类统计");
         
@@ -275,10 +275,10 @@ public class AlgorithmController {
     }
 
     /**
-     * 获取算法类型统计
+     * Get algorithm type statistics
      */
     @GetMapping("/statistics/type")
-    @Operation(summary = "获取算法类型统计", description = "获取各类型的算法数量统计")
+    @Operation(summary = "Get algorithm type statistics", description = "Get algorithm count statistics by type")
     public Result<List<Map<String, Object>>> getTypeStatistics() {
         log.info("获取算法类型统计");
         
@@ -287,10 +287,10 @@ public class AlgorithmController {
     }
 
     /**
-     * 获取部署状态统计
+     * Get deployment status statistics
      */
     @GetMapping("/statistics/deploy-status")
-    @Operation(summary = "获取部署状态统计", description = "获取各部署状态的算法数量统计")
+    @Operation(summary = "Get deployment status statistics", description = "Get algorithm count statistics by deployment status")
     public Result<List<Map<String, Object>>> getDeployStatusStatistics() {
         log.info("获取部署状态统计");
         
@@ -299,12 +299,12 @@ public class AlgorithmController {
     }
 
     /**
-     * 统计某仓库下的算法数量
+     * Count algorithms in a repository
      */
     @GetMapping("/count/repository/{repositoryId}")
-    @Operation(summary = "统计某仓库下的算法数量", description = "获取指定仓库的算法数量")
+    @Operation(summary = "Count algorithms in a repository", description = "Get algorithm count in specified repository")
     public Result<Long> countByRepositoryId(
-            @Parameter(description = "仓库ID", example = "1") @PathVariable @NotNull Long repositoryId) {
+            @Parameter(description = "Repository ID", example = "1") @PathVariable @NotNull Long repositoryId) {
         
         log.info("统计某仓库下的算法数量：RepositoryId={}", repositoryId);
         

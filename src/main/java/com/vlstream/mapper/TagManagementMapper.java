@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Update;
 import java.util.List;
 
 /**
- * 标签管理 Mapper 接口
+ * Tag Management Mapper Interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -19,9 +19,9 @@ import java.util.List;
 public interface TagManagementMapper extends BaseMapper<TagManagement> {
 
     /**
-     * 获取标签树形结构（按类型和层级排序）
+     * Get tag tree structure (sorted by type and level)
      *
-     * @return 标签列表
+     * @return Tag list
      */
     @Select("SELECT t.*, p.tag_name as parent_name " +
             "FROM tag_management t " +
@@ -31,10 +31,10 @@ public interface TagManagementMapper extends BaseMapper<TagManagement> {
     List<TagManagement> selectTagTree();
 
     /**
-     * 根据类型获取标签树
+     * Get tag tree by type
      *
-     * @param tagType 标签类型
-     * @return 标签列表
+     * @param tagType Tag type
+     * @return Tag list
      */
     @Select("SELECT t.*, p.tag_name as parent_name " +
             "FROM tag_management t " +
@@ -44,10 +44,10 @@ public interface TagManagementMapper extends BaseMapper<TagManagement> {
     List<TagManagement> selectTagTreeByType(@Param("tagType") String tagType);
 
     /**
-     * 根据父级ID获取子标签
+     * Get child tags by parent ID
      *
-     * @param parentId 父级ID
-     * @return 子标签列表
+     * @param parentId Parent ID
+     * @return Child tag list
      */
     @Select("SELECT * FROM tag_management " +
             "WHERE deleted = 0 AND parent_id = #{parentId} " +
@@ -55,9 +55,9 @@ public interface TagManagementMapper extends BaseMapper<TagManagement> {
     List<TagManagement> selectChildrenByParentId(@Param("parentId") Long parentId);
 
     /**
-     * 获取根级标签（类型级别）
+     * Get root tags (type level)
      *
-     * @return 根级标签列表
+     * @return Root tag list
      */
     @Select("SELECT * FROM tag_management " +
             "WHERE deleted = 0 AND level = 0 " +
@@ -65,31 +65,31 @@ public interface TagManagementMapper extends BaseMapper<TagManagement> {
     List<TagManagement> selectRootTags();
 
     /**
-     * 更新标签使用次数
+     * Update tag usage count
      *
-     * @param tagId 标签ID
-     * @param increment 增加的次数
+     * @param tagId Tag ID
+     * @param increment Increment count
      */
     @Update("UPDATE tag_management SET usage_count = usage_count + #{increment} " +
             "WHERE id = #{tagId}")
     void updateUsageCount(@Param("tagId") Long tagId, @Param("increment") Integer increment);
 
     /**
-     * 设置标签使用次数
+     * Set tag usage count
      *
-     * @param tagId 标签ID
-     * @param count 使用次数
+     * @param tagId Tag ID
+     * @param count Usage count
      */
     @Update("UPDATE tag_management SET usage_count = #{count} WHERE id = #{tagId}")
     void setUsageCount(@Param("tagId") Long tagId, @Param("count") Integer count);
 
     /**
-     * 检查标签名称是否存在（同级别下）
+     * Check if tag name exists (under the same level)
      *
-     * @param tagName 标签名称
-     * @param parentId 父级ID
-     * @param excludeId 排除的ID（用于编辑时验证）
-     * @return 数量
+     * @param tagName Tag name
+     * @param parentId Parent ID
+     * @param excludeId Exclude ID (used for editing validation)
+     * @return Count
      */
     @Select("<script>" +
             "SELECT COUNT(*) FROM tag_management " +
@@ -104,10 +104,10 @@ public interface TagManagementMapper extends BaseMapper<TagManagement> {
                           @Param("excludeId") Long excludeId);
 
     /**
-     * 获取最大排序号
+     * Get maximum sort order
      *
-     * @param parentId 父级ID
-     * @return 最大排序号
+     * @param parentId Parent ID
+     * @return Maximum sort order
      */
     @Select("SELECT COALESCE(MAX(sort_order), 0) FROM tag_management " +
             "WHERE deleted = 0 AND (parent_id = #{parentId} OR (parent_id IS NULL AND #{parentId} IS NULL))")

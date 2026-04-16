@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * 响应码枚举
+ * Response Code Enum
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -13,43 +13,43 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ResultCode {
 
-    // 通用响应码
-    SUCCESS(200, "操作成功"),
-    ERROR(500, "操作失败"),
+    // Common response codes
+    SUCCESS(200, "Operation successful"),
+    ERROR(500, "Operation failed"),
     
-    // 客户端错误 4xx
-    BAD_REQUEST(400, "请求参数有误"),
-    UNAUTHORIZED(401, "未授权"),
-    FORBIDDEN(403, "禁止访问"),
-    NOT_FOUND(404, "资源不存在"),
+    // Client errors 4xx
+    BAD_REQUEST(400, "Invalid request parameters"),
+    UNAUTHORIZED(401, "Unauthorized"),
+    FORBIDDEN(403, "Forbidden access"),
+    NOT_FOUND(404, "Resource not found"),
     
-    // 业务错误码 1xxx
-    PARAM_ERROR(1001, "参数错误"),
-    PARAM_MISSING(1002, "缺少必要参数"),
+    // Business error codes 1xxx
+    PARAM_ERROR(1001, "Parameter error"),
+    PARAM_MISSING(1002, "Missing required parameters"),
     
-    // 用户相关错误 2xxx
-    USER_NOT_FOUND(2001, "用户不存在"),
-    PASSWORD_ERROR(2004, "密码错误"),
+    // User-related errors 2xxx
+    USER_NOT_FOUND(2001, "User not found"),
+    PASSWORD_ERROR(2004, "Password error"),
     
-    // 设备相关错误 3xxx
-    DEVICE_NOT_FOUND(3001, "设备不存在"),
-    DEVICE_OFFLINE(3002, "设备离线"),
+    // Device-related errors 3xxx
+    DEVICE_NOT_FOUND(3001, "Device not found"),
+    DEVICE_OFFLINE(3002, "Device offline"),
     
-    // 算法相关错误 4xxx
-    ALGORITHM_NOT_FOUND(4001, "算法不存在"),
-    ALGORITHM_FAILED(4004, "算法执行失败"),
+    // Algorithm-related errors 4xxx
+    ALGORITHM_NOT_FOUND(4001, "Algorithm not found"),
+    ALGORITHM_FAILED(4004, "Algorithm execution failed"),
     
-    // 系统错误 9xxx
-    SYSTEM_ERROR(9001, "系统内部错误"),
-    DATABASE_ERROR(9002, "数据库错误");
+    // System errors 9xxx
+    SYSTEM_ERROR(9001, "System internal error"),
+    DATABASE_ERROR(9002, "Database error");
 
     /**
-     * 响应码
+     * Response code
      */
     private final Integer code;
 
     /**
-     * 响应消息
+     * Response message
      */
     private final String message;
 } 

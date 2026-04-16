@@ -17,10 +17,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 登录认证控制器
+ * Login Authentication Controller
  */
 @Slf4j
-@Api(tags = "鉴权管理")
+@Api(tags = "Authentication Management")
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
@@ -30,18 +30,18 @@ public class LoginController {
     private LoginService loginService;
 
     /**
-     * 获取租户ID
+     * Get tenant ID
      */
     @PostMapping("/getTenantId")
     public ResponseEntity<Map<String, Object>> getTenantId(@RequestBody TenantRequest request) {
         try {
-            log.info("获取租户ID请求: {}", request.getPhrase());
+            log.info("Get tenant ID request: {}", request.getPhrase());
             
             String tenantId = loginService.getTenantIdByPhrase(request.getPhrase());
             
             Map<String, Object> response = new HashMap<>();
             response.put("code", 200);
-            response.put("msg", "成功");
+            response.put("msg", "Success");
             
             Map<String, Object> data = new HashMap<>();
             data.put("tenant_id", tenantId);
@@ -50,72 +50,72 @@ public class LoginController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("获取租户ID失败", e);
+            log.error("Failed to get tenant ID", e);
             
             Map<String, Object> response = new HashMap<>();
             response.put("code", 404);
-            response.put("msg", "获取租户ID失败: " + e.getMessage());
+            response.put("msg", "Failed to get tenant ID: " + e.getMessage());
             
             return ResponseEntity.status(500).body(response);
         }
     }
 
     /**
-     * 获取用户租户列表
+     * Get user tenant list
      */
     @PostMapping("/getTenantList")
     public ResponseEntity<Map<String, Object>> getTenantList(@RequestBody Map<String, Object> request) {
         try {
-            log.info("获取用户租户列表请求");
+            log.info("Get user tenant list request");
             
             String accessToken = (String) request.get("accessToken");
             
             if (accessToken == null) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("code", 400);
-                response.put("msg", "accessToken不能为空");
+                response.put("msg", "accessToken cannot be empty");
                 return ResponseEntity.badRequest().body(response);
             }
             
-            // 验证token并获取用户信息
+            // Verify token and get user information
             LocalUser user = loginService.verifyToken(accessToken);
             if (user == null) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("code", 4004);
-                response.put("msg", "无效的accessToken");
+                response.put("msg", "Invalid accessToken");
                 return ResponseEntity.badRequest().body(response);
             }
             
-            // 调用统一用户中心获取用户租户列表
+            // Call unified user center to get user tenant list
             Map<String, Object> tenantList = loginService.getTenantList(accessToken, null);
             
             Map<String, Object> response = new HashMap<>();
             response.put("code", 200);
-            response.put("msg", "成功");
+            response.put("msg", "Success");
             response.put("data", tenantList);
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("获取用户租户列表失败", e);
+            log.error("Failed to get user tenant list", e);
             
             Map<String, Object> response = new HashMap<>();
             response.put("code", 500);
-            response.put("msg", "获取用户租户列表失败: " + e.getMessage());
+            response.put("msg", "Failed to get user tenant list: " + e.getMessage());
             
             return ResponseEntity.status(500).body(response);
         }
     }
 
     /**
-     * 用户登录
+     * User login
      */
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         try {
-            log.info("用户登录请求");
+            log.info("User login request");
             
-            // 获取客户端IP
+            // Get client IP
             String clientIp = getClientIpAddress(httpRequest);
             String userAgent = httpRequest.getHeader("User-Agent");
             
@@ -123,38 +123,38 @@ public class LoginController {
             
             Map<String, Object> response = new HashMap<>();
             response.put("code", 200);
-            response.put("msg", "成功");
+            response.put("msg", "Success");
             response.put("data", loginResponse);
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("用户登录失败", e);
+            log.error("User login failed", e);
             
             Map<String, Object> response = new HashMap<>();
             response.put("code", 4200);
-            response.put("msg", "登录失败: " + e.getMessage());
+            response.put("msg", "Login failed: " + e.getMessage());
             
             return ResponseEntity.status(500).body(response);
         }
     }
 
     /**
-     * 验证Token
+     * Verify token
      */
     @PostMapping("/verifyToken")
     public ResponseEntity<Map<String, Object>> verifyToken(@RequestBody VerifyTokenRequest request) {
         try {
-            log.info("验证Token请求");
+            log.info("Verify token request");
             
             LocalUser user = loginService.verifyToken(request.getAccessToken());
             
             Map<String, Object> response = new HashMap<>();
             if (user != null) {
                 response.put("code", 200);
-                response.put("msg", "成功");
+                response.put("msg", "Success");
                 
-                // 构建返回数据
+                // Build return data
                 Map<String, Object> data = new HashMap<>();
                 data.put("userId", user.getUserId());
                 data.put("tenantId", user.getTenantId());
@@ -169,70 +169,70 @@ public class LoginController {
                 response.put("data", data);
             } else {
                 response.put("code", 4004);
-                response.put("msg", "无效的accesstoken");
+                response.put("msg", "Invalid accessToken");
             }
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("验证Token失败", e);
+            log.error("Verify token failed", e);
             
             Map<String, Object> response = new HashMap<>();
             response.put("code", 4004);
-            response.put("msg", "无效的accesstoken");
+            response.put("msg", "Invalid accessToken");
             
             return ResponseEntity.status(500).body(response);
         }
     }
 
     /**
-     * 用户退出
+     * User logout
      */
     @PostMapping("/logout")
     public ResponseEntity<Map<String, Object>> logout(@RequestBody VerifyTokenRequest request) {
         try {
-            log.info("用户退出请求");
+            log.info("User logout request");
             
             boolean success = loginService.logout(request.getAccessToken());
             
             Map<String, Object> response = new HashMap<>();
             if (success) {
                 response.put("code", 200);
-                response.put("msg", "成功");
+                response.put("msg", "Success");
             } else {
                 response.put("code", 404);
-                response.put("msg", "退出失败");
+                response.put("msg", "Logout failed");
             }
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("用户退出失败", e);
+            log.error("User logout failed", e);
             
             Map<String, Object> response = new HashMap<>();
             response.put("code", 404);
-            response.put("msg", "退出失败: " + e.getMessage());
+            response.put("msg", "Logout failed: " + e.getMessage());
             
             return ResponseEntity.status(500).body(response);
         }
     }
 
     /**
-     * 获取用户信息
+     * Get user information
      */
     @PostMapping("/getUserInfo")
     public ResponseEntity<Map<String, Object>> getUserInfo(@RequestBody VerifyTokenRequest request) {
         try {
-            log.info("获取用户信息请求");
+            log.info("Get user information request");
             
             LocalUser user = loginService.verifyToken(request.getAccessToken());
             
             Map<String, Object> response = new HashMap<>();
             if (user != null) {
                 response.put("code", 200);
-                response.put("msg", "成功");
+                response.put("msg", "Success");
                 
-                // 构建用户信息
+                // Build user information
                 Map<String, Object> data = new HashMap<>();
                 data.put("user_id", user.getUserId());
                 data.put("tenant_id", user.getTenantId());
@@ -247,29 +247,29 @@ public class LoginController {
                 response.put("data", data);
             } else {
                 response.put("code", 4004);
-                response.put("msg", "无效的accesstoken");
+                response.put("msg", "Invalid accessToken");
             }
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("获取用户信息失败", e);
+            log.error("Failed to get user information", e);
             
             Map<String, Object> response = new HashMap<>();
             response.put("code", 4004);
-            response.put("msg", "无效的accesstoken");
+            response.put("msg", "Invalid accessToken");
             
             return ResponseEntity.status(500).body(response);
         }
     }
 
     /**
-     * 校验用户权限
+     * Verify user permission
      */
     @PostMapping("/verifyAuth")
     public ResponseEntity<Map<String, Object>> verifyAuth(@RequestBody Map<String, Object> request) {
         try {
-            log.info("校验用户权限请求");
+            log.info("Verify user permission request");
             
             String accessToken = (String) request.get("accessToken");
             String serviceName = (String) request.get("service");
@@ -282,22 +282,22 @@ public class LoginController {
             Map<String, Object> response = new HashMap<>();
             if (hasPermission) {
                 response.put("code", 200);
-                response.put("msg", "有权限");
+                response.put("msg", "Has permission");
                 response.put("data", true);
             } else {
                 response.put("code", 4001);
-                response.put("msg", "没有权限");
+                response.put("msg", "No permission");
                 response.put("data", false);
             }
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("校验用户权限失败", e);
+            log.error("Failed to verify user permission", e);
             
             Map<String, Object> response = new HashMap<>();
             response.put("code", 4001);
-            response.put("msg", "没有权限");
+            response.put("msg", "No permission");
             response.put("data", false);
             
             return ResponseEntity.status(500).body(response);
@@ -305,20 +305,20 @@ public class LoginController {
     }
 
     /**
-     * 健康检查接口
+     * Health check interface
      */
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
         Map<String, Object> response = new HashMap<>();
         response.put("code", 200);
-        response.put("msg", "登录认证服务正常运行");
+        response.put("msg", "Login authentication service running normally");
         response.put("timestamp", System.currentTimeMillis());
         
         return ResponseEntity.ok(response);
     }
 
     /**
-     * 获取客户端IP地址
+     * Get client IP address
      */
     private String getClientIpAddress(HttpServletRequest request) {
         String clientIp = request.getHeader("X-Forwarded-For");

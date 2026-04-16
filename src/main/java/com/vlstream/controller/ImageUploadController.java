@@ -15,9 +15,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 图片上传控制器
+ * Image Upload Controller
  */
-@Api(tags = "图片上传管理")
+@Api(tags = "Image Upload Management")
 @RestController
 @RequestMapping("/api/image")
 @CrossOrigin(origins = "*")
@@ -27,17 +27,17 @@ public class ImageUploadController {
     private IFileUploadService fileUploadService;
 
     /**
-     * 上传图片
+     * Upload image
      *
-     * @param files     图片文件（支持多文件）
-     * @param fileNames 文件名（可选，对应每个文件）
-     * @return 上传结果
+     * @param files     Image files (supports multiple files)
+     * @param fileNames File names (optional, corresponding to each file)
+     * @return Upload result
      */
     @PostMapping("/upload")
     public Result<List<Map<String, Object>>> uploadImage(@RequestPart("files") MultipartFile[] files, @RequestPart(value = "fileNames", required = false) List<String> fileNames) {
 
         if (files == null || files.length == 0) {
-            return Result.error("文件为空");
+            return Result.error("File is empty");
         }
 
         try {
@@ -46,26 +46,26 @@ public class ImageUploadController {
             for (int i = 0; i < files.length; i++) {
                 MultipartFile file = files[i];
                 if (file.isEmpty()) {
-                    return Result.error("文件为空");
+                    return Result.error("File is empty");
                 }
 
-                // 检查文件类型
+                // Check file type
                 String contentType = file.getContentType();
                 if (contentType == null || !contentType.startsWith("image/")) {
-                    return Result.error("请上传图片文件");
+                    return Result.error("Please upload image files");
                 }
 
-                // 检查文件大小（10MB限制）
+                // Check file size (10MB limit)
                 long maxSize = 10 * 1024 * 1024;
                 if (file.getSize() > maxSize) {
-                    return Result.error("图片大小不能超过10MB");
+                    return Result.error("Image size cannot exceed 10MB");
                 }
 
                 FileResponseDto fileResponse = fileUploadService.uploadFile("818301f0e77f4cd8a117414cbeb32d9e", "5f0de11687d744bc95e84e207d319493", fileUploadService.multipartFileToFile(file));
 
                 String originalName = file.getOriginalFilename();
                 if (originalName == null || originalName.trim().isEmpty()) {
-                    throw new RuntimeException("文件名不能为空");
+                    throw new RuntimeException("File name cannot be empty");
                 }
                 originalName = Paths.get(originalName).getFileName().toString();
                 originalName = originalName.replace("\\", "_")
@@ -89,7 +89,7 @@ public class ImageUploadController {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return Result.error("图片上传失败: " + e.getMessage());
+            return Result.error("Image upload failed: " + e.getMessage());
         }
     }
 

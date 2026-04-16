@@ -8,55 +8,55 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDateTime;
 
 /**
- * 容器实例查询条件DTO
+ * Container Instance Query Conditions DTO
  *
  * @author VLStream Team
  * @since 1.0.0
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value = "ContainerInstanceQueryDTO", description = "容器实例查询条件")
+@ApiModel(value = "ContainerInstanceQueryDTO", description = "Container instance query conditions")
 public class ContainerInstanceQueryDTO {
 
-    @ApiModelProperty(value = "实例名称")
+    @ApiModelProperty(value = "Instance name")
     private String instanceName;
 
-    @ApiModelProperty(value = "容器ID")
+    @ApiModelProperty(value = "Container ID")
     private String containerId;
 
-    @ApiModelProperty(value = "镜像名称")
+    @ApiModelProperty(value = "Image name")
     private String imageName;
 
-    @ApiModelProperty(value = "算法ID")
+    @ApiModelProperty(value = "Algorithm ID")
     private Long algorithmId;
 
-    @ApiModelProperty(value = "实例类型")
+    @ApiModelProperty(value = "Instance type")
     private String instanceType;
 
-    @ApiModelProperty(value = "实例状态：running-运行中,stopped-已停止,error-错误,starting-启动中,stopping-停止中")
+    @ApiModelProperty(value = "Instance status: running-running, stopped-stopped, error-error, starting-starting, stopping-stopping")
     private String instanceStatus;
 
-    @ApiModelProperty(value = "健康状态：healthy-健康,unhealthy-不健康,unknown-未知")
+    @ApiModelProperty(value = "Health status: healthy-healthy, unhealthy-unhealthy, unknown-unknown")
     private String healthStatus;
 
-    @ApiModelProperty(value = "创建人")
+    @ApiModelProperty(value = "Creator")
     private Long createdBy;
 
-    @ApiModelProperty(value = "创建时间开始")
+    @ApiModelProperty(value = "Creation time start")
     private LocalDateTime createdTimeStart;
 
-    @ApiModelProperty(value = "创建时间结束")
+    @ApiModelProperty(value = "Creation time end")
     private LocalDateTime createdTimeEnd;
 
-    @ApiModelProperty(value = "启动时间开始")
+    @ApiModelProperty(value = "Start time start")
     private LocalDateTime startTimeStart;
 
-    @ApiModelProperty(value = "启动时间结束")
+    @ApiModelProperty(value = "Start time end")
     private LocalDateTime startTimeEnd;
 
-    @ApiModelProperty(value = "排序字段")
+    @ApiModelProperty(value = "Sort field")
     private String orderBy;
 
-    @ApiModelProperty(value = "排序方式：asc-升序，desc-降序")
+    @ApiModelProperty(value = "Sort order: asc-ascending, desc-descending")
     private String order;
 } 

@@ -16,12 +16,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 标注图片管理控制器
+ * Annotation Image Management Controller
  */
 @RestController
 @RequestMapping("/api/annotation-images")
 @CrossOrigin(origins = "*")
-@Api(tags = "标注图片管理")
+@Api(tags = "Annotation Image Management")
 public class AnnotationImageController {
 
     private static final Logger log = LoggerFactory.getLogger(AnnotationImageController.class);
@@ -30,7 +30,7 @@ public class AnnotationImageController {
     private AnnotationImageService annotationImageService;
 
     /**
-     * 上传标注图片
+     * Upload annotation images
      */
     @PostMapping("/upload")
     public ResponseEntity<?> uploadImages(
@@ -40,19 +40,19 @@ public class AnnotationImageController {
             List<AnnotationImage> images = annotationImageService.uploadImages(files, annotationId);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "图片上传成功");
+            response.put("message", "Images uploaded successfully");
             response.put("data", images);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "图片上传失败: " + e.getMessage());
+            errorResponse.put("message", "Failed to upload images: " + e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
     /**
-     * 获取数据集的所有图片
+     * Get all images of dataset
      */
     @GetMapping("/dataset/{annotationId}")
     public ResponseEntity<?> getImagesByDataset(@PathVariable Long annotationId) {
@@ -65,13 +65,13 @@ public class AnnotationImageController {
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "获取图片列表失败: " + e.getMessage());
+            errorResponse.put("message", "Failed to get image list: " + e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
     /**
-     * 获取图片详情
+     * Get image details
      */
     @GetMapping("/{id}")
     public ResponseEntity<?> getImageById(@PathVariable Long id) {
@@ -88,13 +88,13 @@ public class AnnotationImageController {
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "获取图片详情失败: " + e.getMessage());
+            errorResponse.put("message", "Failed to get image details: " + e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
     /**
-     * 更新图片标注信息
+     * Update image annotation information
      */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateImage(@PathVariable Long id, @RequestBody AnnotationImage image) {
@@ -103,19 +103,19 @@ public class AnnotationImageController {
             AnnotationImage updatedImage = annotationImageService.updateImage(image);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "图片信息更新成功");
+            response.put("message", "Image information updated successfully");
             response.put("data", updatedImage);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "更新图片信息失败: " + e.getMessage());
+            errorResponse.put("message", "Failed to update image information: " + e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
     /**
-     * 删除图片
+     * Delete image
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteImage(@PathVariable Long id) {
@@ -123,18 +123,18 @@ public class AnnotationImageController {
             annotationImageService.deleteImage(id);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "图片删除成功");
+            response.put("message", "Image deleted successfully");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "删除图片失败: " + e.getMessage());
+            errorResponse.put("message", "Failed to delete image: " + e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
     /**
-     * 批量删除图片
+     * Batch delete images
      */
     @DeleteMapping("/batch")
     public ResponseEntity<?> batchDeleteImages(@RequestBody List<Long> ids) {
@@ -142,18 +142,18 @@ public class AnnotationImageController {
             annotationImageService.batchDeleteImages(ids);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "批量删除成功");
+            response.put("message", "Batch deletion successful");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "批量删除失败: " + e.getMessage());
+            errorResponse.put("message", "Failed to batch delete: " + e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
     /**
-     * 获取数据集统计信息
+     * Get dataset statistics
      */
     @GetMapping("/dataset/{datasetId}/stats")
     public ResponseEntity<?> getDatasetStats(@PathVariable Long datasetId) {
@@ -166,16 +166,16 @@ public class AnnotationImageController {
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "获取统计信息失败: " + e.getMessage());
+            errorResponse.put("message", "Failed to get statistics: " + e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
     /**
-     * 批量保存图片信息到annotation_image表
+     * Batch save image information to annotation_image table
      *
-     * @param annotationImages 图片信息列表
-     * @return 保存结果
+     * @param annotationImages Image information list
+     * @return Save result
      */
     @PostMapping("/images/batch")
     public ResponseEntity<?> batchSaveImages(@RequestBody List<AnnotationImage> annotationImages) {
@@ -193,31 +193,31 @@ public class AnnotationImageController {
             if (success) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", true);
-                response.put("message", "批量保存图片信息成功");
+                response.put("message", "Batch save image information successful");
                 response.put("data", annotationImages.size());
                 return ResponseEntity.ok(response);
             } else {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
-                errorResponse.put("message", "批量保存图片信息失败");
+                errorResponse.put("message", "Failed to batch save image information");
                 return ResponseEntity.badRequest().body(errorResponse);
             }
         } catch (Exception e) {
-            log.error("批量保存图片信息失败", e);
+            log.error("Failed to batch save image information", e);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "批量保存图片信息失败: " + e.getMessage());
+            errorResponse.put("message", "Failed to batch save image information: " + e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
     /**
-     * 访问图片文件
-     * 通过数据集ID和图片名称访问存储在data/images目录中的图片文件
+     * Access image file
+     * Access image files stored in data/images directory by dataset ID and image name
      *
-     * @param datasetId 数据集ID
-     * @param imageName 图片名称
-     * @return 图片文件流
+     * @param datasetId Dataset ID
+     * @param imageName Image name
+     * @return Image file stream
      */
     @GetMapping("/dataset/{datasetId}/image/{imageName}")
     public ResponseEntity<?> getImageFile(
@@ -255,10 +255,10 @@ public class AnnotationImageController {
                 .body(imageBytes);
                 
         } catch (Exception e) {
-            log.error("访问图片文件失败: datasetId={}, imageName={}", datasetId, imageName, e);
+            log.error("Failed to access image file: datasetId={}, imageName={}", datasetId, imageName, e);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "访问图片文件失败: " + e.getMessage());
+            errorResponse.put("message", "Failed to access image file: " + e.getMessage());
             return ResponseEntity.internalServerError().body(errorResponse);
         }
     }

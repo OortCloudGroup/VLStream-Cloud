@@ -14,10 +14,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * WebRTC流控制器
- * 提供WebRTC流管理的API接口
+ * WebRTC Stream Controller
+ * Provides API interfaces for WebRTC stream management
  */
-@Api(tags = "WebRTC流控制器")
+@Api(tags = "WebRTC Stream Controller")
 @RestController
 @RequestMapping("/api/webrtc")
 @CrossOrigin(origins = "*")
@@ -29,147 +29,147 @@ public class WebRTCController {
     private WebRTCService webrtcService;
     
     /**
-     * 获取WebRTC服务配置
+     * Get WebRTC service configuration
      */
     @GetMapping("/config")
     public Result<Map<String, Object>> getWebRTCConfig() {
         try {
             Map<String, Object> config = webrtcService.getServerStatus();
-            logger.debug("获取WebRTC配置成功: {}", config);
+            logger.debug("Get WebRTC configuration successful: {}", config);
             return Result.success(config);
         } catch (Exception e) {
-            logger.error("获取WebRTC配置失败: {}", e.getMessage(), e);
-            return Result.error("获取WebRTC配置失败: " + e.getMessage());
+            logger.error("Failed to get WebRTC configuration: {}", e.getMessage(), e);
+            return Result.error("Failed to get WebRTC configuration: " + e.getMessage());
         }
     }
     
     /**
-     * 检查WebRTC服务状态
+     * Check WebRTC service status
      */
     @GetMapping("/status")
     public Result<Map<String, Object>> getWebRTCStatus() {
         try {
             Map<String, Object> status = webrtcService.getServerStatus();
-            logger.debug("获取WebRTC状态成功: {}", status);
+            logger.debug("Get WebRTC status successful: {}", status);
             return Result.success(status);
         } catch (Exception e) {
-            logger.error("获取WebRTC状态失败: {}", e.getMessage(), e);
-            return Result.error("获取WebRTC状态失败: " + e.getMessage());
+            logger.error("Failed to get WebRTC status: {}", e.getMessage(), e);
+            return Result.error("Failed to get WebRTC status: " + e.getMessage());
         }
     }
     
     /**
-     * 启动WebRTC流
+     * Start WebRTC stream
      */
     @PostMapping("/start")
     public Result<Map<String, Object>> startWebRTCStream(@RequestBody StreamRequest request) {
-        logger.info("收到启动WebRTC流请求: {}", request);
+        logger.info("Received start WebRTC stream request: {}", request);
         
         try {
-            // 参数验证
+            // Parameter validation
             if (request.getDeviceId() == null || request.getDeviceId().trim().isEmpty()) {
-                return Result.error("设备ID不能为空");
+                return Result.error("Device ID cannot be empty");
             }
             
             if (request.getRtspUrl() == null || request.getRtspUrl().trim().isEmpty()) {
-                return Result.error("RTSP URL不能为空");
+                return Result.error("RTSP URL cannot be empty");
             }
             
             if (!webrtcService.isValidRtspUrl(request.getRtspUrl())) {
-                return Result.error("不是有效的RTSP URL");
+                return Result.error("Invalid RTSP URL");
             }
             
-            // 启动WebRTC流
+            // Start WebRTC stream
             String streamId = webrtcService.startWebRTCStream(
                 request.getDeviceId(), 
                 request.getRtspUrl()
             );
             
-            // 获取流信息
+            // Get stream information
             Map<String, Object> streamInfo = webrtcService.getStreamInfo(request.getDeviceId());
             
-            logger.info("WebRTC流启动成功: deviceId={}, streamId={}", 
+            logger.info("WebRTC stream started successfully: deviceId={}, streamId={}", 
                        request.getDeviceId(), streamId);
             return Result.success(streamInfo);
             
         } catch (Exception e) {
-            logger.error("启动WebRTC流失败: deviceId={}, error={}", 
+            logger.error("Failed to start WebRTC stream: deviceId={}, error={}", 
                         request.getDeviceId(), e.getMessage(), e);
-            return Result.error("启动WebRTC流失败: " + e.getMessage());
+            return Result.error("Failed to start WebRTC stream: " + e.getMessage());
         }
     }
     
     /**
-     * 停止WebRTC流
+     * Stop WebRTC stream
      */
     @PostMapping("/stop")
     public Result<Void> stopWebRTCStream(@RequestBody StopStreamRequest request) {
-        logger.info("收到停止WebRTC流请求: {}", request);
+        logger.info("Received stop WebRTC stream request: {}", request);
         
         try {
-            // 参数验证
+            // Parameter validation
             if (request.getDeviceId() == null || request.getDeviceId().trim().isEmpty()) {
-                return Result.error("设备ID不能为空");
+                return Result.error("Device ID cannot be empty");
             }
             
-            // 停止WebRTC流
+            // Stop WebRTC stream
             webrtcService.stopWebRTCStream(request.getDeviceId());
             
-            logger.info("WebRTC流停止成功: deviceId={}", request.getDeviceId());
+            logger.info("WebRTC stream stopped successfully: deviceId={}", request.getDeviceId());
             return Result.success();
             
         } catch (Exception e) {
-            logger.error("停止WebRTC流失败: deviceId={}, error={}", 
+            logger.error("Failed to stop WebRTC stream: deviceId={}, error={}", 
                         request.getDeviceId(), e.getMessage(), e);
-            return Result.error("停止WebRTC流失败: " + e.getMessage());
+            return Result.error("Failed to stop WebRTC stream: " + e.getMessage());
         }
     }
     
     /**
-     * 获取活跃的WebRTC流
+     * Get active WebRTC streams
      */
     @GetMapping("/active")
     public Result<Map<String, String>> getActiveStreams() {
         try {
             Map<String, String> activeStreams = webrtcService.getActiveStreams();
-            logger.debug("获取活跃WebRTC流成功，数量: {}", activeStreams.size());
+            logger.debug("Get active WebRTC streams successful, count: {}", activeStreams.size());
             return Result.success(activeStreams);
         } catch (Exception e) {
-            logger.error("获取活跃WebRTC流失败: {}", e.getMessage(), e);
-            return Result.error("获取活跃WebRTC流失败: " + e.getMessage());
+            logger.error("Failed to get active WebRTC streams: {}", e.getMessage(), e);
+            return Result.error("Failed to get active WebRTC streams: " + e.getMessage());
         }
     }
     
     /**
-     * 检查设备WebRTC流状态
+     * Check device WebRTC stream status
      */
     @GetMapping("/check/{deviceId}")
     public Result<Map<String, Object>> checkStreamStatus(@PathVariable String deviceId) {
         try {
             Map<String, Object> streamInfo = webrtcService.getStreamInfo(deviceId);
-            logger.debug("检查WebRTC流状态: deviceId={}, info={}", deviceId, streamInfo);
+            logger.debug("Check WebRTC stream status: deviceId={}, info={}", deviceId, streamInfo);
             return Result.success(streamInfo);
         } catch (Exception e) {
-            logger.error("检查WebRTC流状态失败: deviceId={}, error={}", 
+            logger.error("Failed to check WebRTC stream status: deviceId={}, error={}", 
                         deviceId, e.getMessage(), e);
-            return Result.error("检查WebRTC流状态失败: " + e.getMessage());
+            return Result.error("Failed to check WebRTC stream status: " + e.getMessage());
         }
     }
     
     /**
-     * 验证RTSP流是否可用
+     * Validate if RTSP stream is available
      */
     @PostMapping("/validate")
     public Result<Map<String, Object>> validateRtspStream(@RequestBody Map<String, String> request) {
         String rtspUrl = request.get("rtspUrl");
         
         try {
-            // 验证RTSP URL格式
+            // Validate RTSP URL format
             if (!webrtcService.isValidRtspUrl(rtspUrl)) {
-                return Result.error("无效的RTSP地址");
+                return Result.error("Invalid RTSP address");
             }
             
-            // 检查WebRTC服务是否可用
+            // Check if WebRTC service is available
             boolean webrtcAvailable = webrtcService.isWebRTCServerAvailable();
             
             Map<String, Object> result = new HashMap<>();
@@ -177,49 +177,49 @@ public class WebRTCController {
             result.put("valid", true);
             result.put("webrtcAvailable", webrtcAvailable);
             
-            logger.debug("验证RTSP流: {}", result);
+            logger.debug("Validate RTSP stream: {}", result);
             return Result.success(result);
             
         } catch (Exception e) {
-            logger.error("验证RTSP流失败: rtspUrl={}, error={}", rtspUrl, e.getMessage(), e);
-            return Result.error("验证RTSP流失败: " + e.getMessage());
+            logger.error("Failed to validate RTSP stream: rtspUrl={}, error={}", rtspUrl, e.getMessage(), e);
+            return Result.error("Failed to validate RTSP stream: " + e.getMessage());
         }
     }
     
     /**
-     * 停止所有WebRTC流（管理员功能）
+     * Stop all WebRTC streams (admin function)
      */
     @PostMapping("/stop-all")
     public Result<Void> stopAllStreams() {
-        logger.info("收到停止所有WebRTC流请求");
+        logger.info("Received stop all WebRTC streams request");
         
         try {
             webrtcService.stopAllStreams();
-            logger.info("所有WebRTC流已停止");
+            logger.info("All WebRTC streams stopped");
             return Result.success();
         } catch (Exception e) {
-            logger.error("停止所有WebRTC流失败: {}", e.getMessage(), e);
-            return Result.error("停止所有WebRTC流失败: " + e.getMessage());
+            logger.error("Failed to stop all WebRTC streams: {}", e.getMessage(), e);
+            return Result.error("Failed to stop all WebRTC streams: " + e.getMessage());
         }
     }
     
     /**
-     * 刷新WebRTC连接
+     * Refresh WebRTC connection
      */
     @PostMapping("/refresh")
     public Result<Map<String, Object>> refreshWebRTCConnection() {
-        logger.info("收到刷新WebRTC连接请求");
+        logger.info("Received refresh WebRTC connection request");
         
         try {
-            // 检查WebRTC服务状态
+            // Check WebRTC service status
             Map<String, Object> status = webrtcService.getServerStatus();
             
-            logger.info("WebRTC连接刷新完成: {}", status);
+            logger.info("WebRTC connection refresh completed: {}", status);
             return Result.success(status);
             
         } catch (Exception e) {
-            logger.error("刷新WebRTC连接失败: {}", e.getMessage(), e);
-            return Result.error("刷新WebRTC连接失败: " + e.getMessage());
+            logger.error("Failed to refresh WebRTC connection: {}", e.getMessage(), e);
+            return Result.error("Failed to refresh WebRTC connection: " + e.getMessage());
         }
     }
 } 

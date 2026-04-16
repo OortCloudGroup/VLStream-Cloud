@@ -10,20 +10,20 @@ import java.io.ByteArrayOutputStream;
 import java.util.Properties;
 
 /**
- * SSH连接服务类
+ * SSH connection service class
  */
 @Slf4j
 @Service
 public class SSHService {
     
     /**
-     * SSH连接配置
+     * SSH connection configuration
      */
     private static final int CONNECT_TIMEOUT = 30000;
     private static final int SESSION_TIMEOUT = 30000;
     
     /**
-     * 执行SSH命令
+     * Execute SSH command
      */
     public SSHExecutionResult executeCommand(String host, int port, String username, String password, String command) {
         Session session = null;
@@ -103,7 +103,7 @@ public class SSHService {
     }
     
     /**
-     * 测试SSH连接
+     * Test SSH connection
      */
     public boolean testConnection(String host, int port, String username, String password) {
         Session session = null;
@@ -130,7 +130,7 @@ public class SSHService {
     }
     
     /**
-     * SSH执行结果类
+     * SSH execution result class
      */
     public static class SSHExecutionResult {
         private boolean success;

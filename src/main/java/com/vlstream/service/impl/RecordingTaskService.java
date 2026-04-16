@@ -35,8 +35,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * 录制任务服务
- * 负责根据录制计划自动执行视频录制任务
+ * Recording Task Service
+ * Responsible for automatically executing video recording tasks according to recording schedules
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -83,48 +83,48 @@ public class RecordingTaskService {
     private final ConcurrentHashMap<Long, Process> recordingProcesses = new ConcurrentHashMap<>();
 
     /**
-     * 定时检查并执行录制任务
-     * 每分钟执行一次
-     * 暂时注释掉定时任务，避免与手动录制冲突
+     * Check and execute recording tasks regularly
+     * Executes once per minute
+     * Temporarily commented out to avoid conflicts with manual recording
      */
     // @Scheduled(fixedRate = 60000) // 每分钟执行一次
     public void checkAndExecuteRecordingTasks() {
         if (!recordingEnabled) {
-            log.debug("录制功能已禁用，跳过任务检查");
+            log.debug("Recording function is disabled, skipping task check");
             return;
         }
 
         try {
-            log.debug("开始检查录制任务...");
+            log.debug("Starting to check recording tasks...");
             
-            // 清理已完成的录制状态
+            // Clean up completed recording statuses
             cleanupCompletedRecordings();
             
-            // 查询需要执行的录制计划
+            // Query recording schedules to execute
             List<RecordingSchedule> schedulesToExecute = recordingScheduleService.getSchedulesToExecute();
             
-            // 查询需要执行的时间策略
+            // Query time strategies to execute
             List<TimeStrategy> timeStrategiesToExecute = timeStrategyService.getTimeStrategiesToExecute();
             
             if (schedulesToExecute.isEmpty() && timeStrategiesToExecute.isEmpty()) {
-                log.debug("没有需要执行的录制任务");
+                log.debug("No recording tasks need to be executed");
                 return;
             }
 
-            log.info("找到 {} 个录制计划和 {} 个时间策略需要执行", 
+            log.info("Found {} recording schedules and {} time strategies to execute", 
                     schedulesToExecute.size(), timeStrategiesToExecute.size());
 
-            // 检查并发录制数量限制
+            // Check concurrent recording limit
             int currentRecordings = deviceRecordingStatus.size();
             if (currentRecordings >= maxConcurrentRecordings) {
-                log.warn("当前录制数量已达到最大限制: {}/{}", currentRecordings, maxConcurrentRecordings);
+                log.warn("Current recording count has reached maximum limit: {}/{}", currentRecordings, maxConcurrentRecordings);
                 return;
             }
 
-            // 异步执行每个录制计划任务
+            // Asynchronously execute each recording schedule task
             for (RecordingSchedule schedule : schedulesToExecute) {
                 if (currentRecordings >= maxConcurrentRecordings) {
-                    log.warn("达到最大并发录制数量限制，跳过剩余任务");
+                    log.warn("Reached maximum concurrent recording limit, skipping remaining tasks");
                     break;
                 }
                 if (canStartRecording(schedule.getDeviceId())) {
@@ -133,10 +133,10 @@ public class RecordingTaskService {
                 }
             }
             
-            // 异步执行每个时间策略任务
+            // Asynchronously execute each time strategy task
             for (TimeStrategy timeStrategy : timeStrategiesToExecute) {
                 if (currentRecordings >= maxConcurrentRecordings) {
-                    log.warn("达到最大并发录制数量限制，跳过剩余任务");
+                    log.warn("Reached maximum concurrent recording limit, skipping remaining tasks");
                     break;
                 }
                 if (canStartRecording(Long.valueOf(timeStrategy.getDeviceId()))) {
@@ -146,37 +146,37 @@ public class RecordingTaskService {
             }
 
         } catch (Exception e) {
-            log.error("检查录制任务时发生错误", e);
+            log.error("Error occurred while checking recording tasks", e);
         }
     }
 
     /**
-     * 检查是否可以开始录制
+     * Check if recording can start
      */
     private boolean canStartRecording(Long deviceId) {
-        // 检查设备是否正在录制
+        // Check if device is recording
         if (deviceRecordingStatus.containsKey(deviceId)) {
             AtomicBoolean status = deviceRecordingStatus.get(deviceId);
             if (status.get()) {
-                log.debug("设备正在录制中，跳过: deviceId={}", deviceId);
+                log.debug("Device is recording, skipping: deviceId={}", deviceId);
                 return false;
             }
         }
 
-        // 检查数据库中的录制状态
+        // Check recording status in database
         VideoRecord latestRecord = videoRecordService.getLatestRecordByDevice(deviceId);
         if (latestRecord != null && VideoRecord.STATUS_RECORDING.equals(latestRecord.getRecordStatus())) {
-            // 检查录制是否超时（超过预期时间还未完成）
+            // Check if recording is timeout (exceeded expected time but not completed)
             LocalDateTime startTime = latestRecord.getRecordStartTime();
-            LocalDateTime expectedEndTime = startTime.plusSeconds(latestRecord.getDuration() + 30); // 允许30秒缓冲时间
+            LocalDateTime expectedEndTime = startTime.plusSeconds(latestRecord.getDuration() + 30); // Allow 30 seconds buffer time
             
             if (LocalDateTime.now().isAfter(expectedEndTime)) {
-                log.warn("录制任务超时，标记为失败: deviceId={}, recordId={}", deviceId, latestRecord.getId());
-                videoRecordService.markRecordingFailed(latestRecord.getId(), "录制超时");
+                log.warn("Recording task timeout, marking as failed: deviceId={}, recordId={}", deviceId, latestRecord.getId());
+                videoRecordService.markRecordingFailed(latestRecord.getId(), "Recording timeout");
                 return true;
             }
             
-            log.debug("设备有正在录制的任务: deviceId={}, recordId={}", deviceId, latestRecord.getId());
+            log.debug("Device has ongoing recording task: deviceId={}, recordId={}", deviceId, latestRecord.getId());
             return false;
         }
 
@@ -184,7 +184,7 @@ public class RecordingTaskService {
     }
 
     /**
-     * 清理已完成的录制状态
+     * Clean up completed recording statuses
      */
     private void cleanupCompletedRecordings() {
         deviceRecordingStatus.entrySet().removeIf(entry -> {

@@ -45,7 +45,7 @@ public class AnnotationImageServiceImpl implements AnnotationImageService {
 
                 String originalName = file.getOriginalFilename();
                 if (originalName == null || originalName.trim().isEmpty()) {
-                    throw new RuntimeException("文件名不能为空");
+                    throw new RuntimeException("File name cannot be empty");
                 }
                 originalName = Paths.get(originalName).getFileName().toString();
                 originalName = originalName.replace("\\", "_")
@@ -73,11 +73,11 @@ public class AnnotationImageServiceImpl implements AnnotationImageService {
             } catch (Exception e) {
                 e.printStackTrace();
                 log.error("Failed to save annotation image: annotationId={}, file={}", annotationId, file != null ? file.getOriginalFilename() : "null", e);
-                throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
+                throw new RuntimeException("File upload failed: " + e.getMessage(), e);
             }
         }
 
-        // 更新标注 totalCount
+        // Update annotation totalCount
         try {
             if (addedCount > 0) {
                 AlgorithmAnnotation annotation = algorithmAnnotationMapper.selectById(annotationId);
@@ -88,7 +88,7 @@ public class AnnotationImageServiceImpl implements AnnotationImageService {
                 }
             }
         } catch (Exception e) {
-            log.warn("上传图片后更新标注总数失败: annotationId={}, error={}", annotationId, e.getMessage());
+            log.warn("Failed to update annotation total count after uploading images: annotationId={}, error={}", annotationId, e.getMessage());
         }
 
         return uploadedImages;
@@ -152,10 +152,10 @@ public class AnnotationImageServiceImpl implements AnnotationImageService {
     public boolean saveImage(AnnotationImage annotationImage) {
         try {
             if (annotationImage.getImageName() == null || annotationImage.getImageName().trim().isEmpty()) {
-                throw new IllegalArgumentException("文件名不能为空");
+                throw new IllegalArgumentException("File name cannot be empty");
             }
             if (annotationImage.getAnnotationId() == null) {
-                throw new IllegalArgumentException("数据集ID不能为空");
+                throw new IllegalArgumentException("Dataset ID cannot be empty");
             }
 
             if (annotationImage.getCreateTime() == null) {
@@ -183,7 +183,7 @@ public class AnnotationImageServiceImpl implements AnnotationImageService {
         } catch (Exception e) {
             log.error("Failed to save annotation image: datasetId={}, fileName={}",
                     annotationImage.getAnnotationId(), annotationImage.getImageName(), e);
-            throw new RuntimeException("保存标注图片失败: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to save annotation image: " + e.getMessage(), e);
         }
     }
 
@@ -211,7 +211,7 @@ public class AnnotationImageServiceImpl implements AnnotationImageService {
 
             return true;
         } catch (Exception e) {
-            throw new RuntimeException("批量保存标注图片失败: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to batch save annotation images: " + e.getMessage(), e);
         }
     }
 

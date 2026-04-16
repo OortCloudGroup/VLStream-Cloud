@@ -7,51 +7,51 @@ import java.io.Serializable;
 
 /**
  * <p>
- * 文件存储响应类
+ * File Storage Response Class
  * </p>
  *
  * @author 刘鑫
  * @since 2025-04-07
  */
 @Data
-@Schema(description = "文件存储响应类")
+@Schema(description = "File storage response class")
 public class FileResponseDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Schema(description =  "文件访问URL", example = "文件访问URL:http://example.com/files/2024/04/01/audio.mp3")
+    @Schema(description =  "File access URL", example = "File access URL:http://example.com/files/2024/04/01/audio.mp3")
     private String url;
 
-    @Schema(description =  "文件MD5值", example = "文件MD5值:d41d8cd98f00b204e9800998ecf8427e")
+    @Schema(description =  "File MD5 value", example = "File MD5 value:d41d8cd98f00b204e9800998ecf8427e")
     private String md5;
 
-    @Schema(description =  "文件存储路径", example = "文件存储路径:/files/2024/04/01/audio.mp3")
+    @Schema(description =  "File storage path", example = "File storage path:/files/2024/04/01/audio.mp3")
     private String path;
 
-    @Schema(description =  "文件域名", example = "文件域名:http://example.com")
+    @Schema(description =  "File domain", example = "File domain:http://example.com")
     private String domain;
 
-    @Schema(description =  "文件场景", example = "文件场景:audio")
+    @Schema(description =  "File scene", example = "File scene:audio")
     private String scene;
 
-    @Schema(description =  "文件大小", example = "文件大小:1024000")
+    @Schema(description =  "File size", example = "File size:1024000")
     private Long size;
 
-    @Schema(description =  "文件修改时间", example = "文件修改时间:1711968000")
+    @Schema(description =  "File modification time", example = "File modification time:1711968000")
     private Long mtime;
 
-    @Schema(description =  "文件场景列表", example = "文件场景列表:audio,video,image")
+    @Schema(description =  "File scene list", example = "File scene list:audio,video,image")
     private String scenes;
 
-    @Schema(description =  "返回消息", example = "返回消息:200")
+    @Schema(description =  "Return message", example = "Return message:200")
     private String retmsg;
 
-    @Schema(description =  "返回码", example = "返回码:200")
+    @Schema(description =  "Return code", example = "Return code:200")
     private Integer retcode;
 
-    @Schema(description =  "源文件路径", example = "源文件路径:/upload/2024/04/01/audio.mp3")
+    @Schema(description =  "Source file path", example = "Source file path:/upload/2024/04/01/audio.mp3")
     private String src;
 
-    @Schema(description =  "文件时长(秒)", example = "文件时长(秒):300")
+    @Schema(description =  "File duration (seconds)", example = "File duration (seconds):300")
     private Integer duration;
 }

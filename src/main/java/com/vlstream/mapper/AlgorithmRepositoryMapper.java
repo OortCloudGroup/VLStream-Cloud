@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
 /**
- * 算法仓库Mapper接口
+ * Algorithm Repository Mapper Interface
  * 
  * @author VLStream Team
  * @since 1.0.0
@@ -20,7 +20,7 @@ import java.util.List;
 public interface AlgorithmRepositoryMapper extends BaseMapper<AlgorithmRepository> {
 
     /**
-     * 分页查询算法仓库列表
+     * Paginated query algorithm repository list
      */
     @Select("SELECT r.*, " +
             "(SELECT COUNT(*) FROM algorithm a WHERE a.repository_id = r.id AND a.deleted = 0) as algorithm_count " +
@@ -36,19 +36,19 @@ public interface AlgorithmRepositoryMapper extends BaseMapper<AlgorithmRepositor
                                                    @Param("status") String status);
 
     /**
-     * 查询所有启用的算法仓库
+     * Query all enabled algorithm repositories
      */
     @Select("SELECT * FROM algorithm_repository WHERE deleted = 0 AND status = 'enabled' ORDER BY id")
     List<AlgorithmRepository> selectEnabledRepositories();
 
     /**
-     * 根据类型查询算法仓库
+     * Query algorithm repository by type
      */
     @Select("SELECT * FROM algorithm_repository WHERE deleted = 0 AND repository_type = #{repositoryType} ORDER BY id")
     List<AlgorithmRepository> selectByRepositoryType(@Param("repositoryType") String repositoryType);
 
     /**
-     * 统计算法仓库数量
+     * Count algorithm repositories
      */
     @Select("SELECT COUNT(*) FROM algorithm_repository WHERE deleted = 0")
     Long countRepositories();

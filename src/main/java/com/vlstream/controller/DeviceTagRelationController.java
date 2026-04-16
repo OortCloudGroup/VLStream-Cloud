@@ -13,12 +13,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 设备标签关联控制器
+ * Device Tag Relation Controller
  *
  * @author VLStream Team
  * @since 1.0.0
  */
-@Api(tags = "设备标签关联管理")
+@Api(tags = "Device Tag Relation Management")
 @RestController
 @RequestMapping("/api/device-tag")
 @RequiredArgsConstructor
@@ -27,177 +27,177 @@ public class DeviceTagRelationController {
     private final DeviceTagRelationService deviceTagRelationService;
 
     /**
-     * 设置设备标签（覆盖原有标签）
+     * Set device tags (override existing tags)
      */
-    @ApiOperation("设置设备标签")
+    @ApiOperation("Set device tags")
     @PutMapping("/device/{deviceId}/tags")
     public Result<String> setDeviceTags(
-            @ApiParam("设备ID") @PathVariable Long deviceId,
-            @ApiParam("标签ID列表") @RequestBody List<Long> tagIds) {
+            @ApiParam("Device ID") @PathVariable Long deviceId,
+            @ApiParam("Tag ID list") @RequestBody List<Long> tagIds) {
         
         boolean success = deviceTagRelationService.setDeviceTags(deviceId, tagIds, "admin");
         if (success) {
-            return Result.success("设备标签设置成功");
+            return Result.success("Device tags set successfully");
         } else {
-            return Result.error("设备标签设置失败");
+            return Result.error("Failed to set device tags");
         }
     }
 
     /**
-     * 添加设备标签（追加到现有标签）
+     * Add device tags (append to existing tags)
      */
-    @ApiOperation("添加设备标签")
+    @ApiOperation("Add device tags")
     @PostMapping("/device/{deviceId}/tags")
     public Result<String> addDeviceTags(
-            @ApiParam("设备ID") @PathVariable Long deviceId,
-            @ApiParam("标签ID列表") @RequestBody List<Long> tagIds) {
+            @ApiParam("Device ID") @PathVariable Long deviceId,
+            @ApiParam("Tag ID list") @RequestBody List<Long> tagIds) {
         
         boolean success = deviceTagRelationService.addDeviceTags(deviceId, tagIds, "admin");
         if (success) {
-            return Result.success("设备标签添加成功");
+            return Result.success("Device tags added successfully");
         } else {
-            return Result.error("设备标签添加失败");
+            return Result.error("Failed to add device tags");
         }
     }
 
     /**
-     * 移除设备标签
+     * Remove device tags
      */
-    @ApiOperation("移除设备标签")
+    @ApiOperation("Remove device tags")
     @DeleteMapping("/device/{deviceId}/tags")
     public Result<String> removeDeviceTags(
-            @ApiParam("设备ID") @PathVariable Long deviceId,
-            @ApiParam("标签ID列表") @RequestBody List<Long> tagIds) {
+            @ApiParam("Device ID") @PathVariable Long deviceId,
+            @ApiParam("Tag ID list") @RequestBody List<Long> tagIds) {
         
         boolean success = deviceTagRelationService.removeDeviceTags(deviceId, tagIds);
         if (success) {
-            return Result.success("设备标签移除成功");
+            return Result.success("Device tags removed successfully");
         } else {
-            return Result.error("设备标签移除失败");
+            return Result.error("Failed to remove device tags");
         }
     }
 
     /**
-     * 清除设备的所有标签
+     * Clear all device tags
      */
-    @ApiOperation("清除设备的所有标签")
+    @ApiOperation("Clear all device tags")
     @DeleteMapping("/device/{deviceId}/tags/all")
     public Result<String> clearDeviceTags(
-            @ApiParam("设备ID") @PathVariable Long deviceId) {
+            @ApiParam("Device ID") @PathVariable Long deviceId) {
         
         boolean success = deviceTagRelationService.clearDeviceTags(deviceId);
         if (success) {
-            return Result.success("设备标签清除成功");
+            return Result.success("All device tags cleared successfully");
         } else {
-            return Result.error("设备标签清除失败");
+            return Result.error("Failed to clear device tags");
         }
     }
 
     /**
-     * 获取设备的所有标签
+     * Get all device tags
      */
-    @ApiOperation("获取设备的所有标签")
+    @ApiOperation("Get device's all tags")
     @GetMapping("/device/{deviceId}/tags")
     public Result<List<DeviceTagRelation>> getDeviceTags(
-            @ApiParam("设备ID") @PathVariable Long deviceId) {
+            @ApiParam("Device ID") @PathVariable Long deviceId) {
         
         List<DeviceTagRelation> tags = deviceTagRelationService.getDeviceTags(deviceId);
         return Result.success(tags);
     }
 
     /**
-     * 获取设备的标签ID列表
+     * Get device tag ID list
      */
-    @ApiOperation("获取设备的标签ID列表")
+    @ApiOperation("Get device's tag ID list")
     @GetMapping("/device/{deviceId}/tag-ids")
     public Result<List<Long>> getDeviceTagIds(
-            @ApiParam("设备ID") @PathVariable Long deviceId) {
+            @ApiParam("Device ID") @PathVariable Long deviceId) {
         
         List<Long> tagIds = deviceTagRelationService.getDeviceTagIds(deviceId);
         return Result.success(tagIds);
     }
 
     /**
-     * 获取设备标签的详细信息
+     * Get device tag details
      */
-    @ApiOperation("获取设备标签的详细信息")
+    @ApiOperation("Get device tag details")
     @GetMapping("/device/{deviceId}/tag-details")
     public Result<Map<String, Object>> getDeviceTagDetails(
-            @ApiParam("设备ID") @PathVariable Long deviceId) {
+            @ApiParam("Device ID") @PathVariable Long deviceId) {
         
         Map<String, Object> details = deviceTagRelationService.getDeviceTagDetails(deviceId);
         return Result.success(details);
     }
 
     /**
-     * 获取带有指定标签的设备列表
+     * Get device list with specified tag
      */
-    @ApiOperation("获取带有指定标签的设备列表")
+    @ApiOperation("Get devices with specified tag")
     @GetMapping("/tag/{tagId}/devices")
     public Result<List<Map<String, Object>>> getDevicesByTag(
-            @ApiParam("标签ID") @PathVariable Long tagId) {
+            @ApiParam("Tag ID") @PathVariable Long tagId) {
         
         List<Map<String, Object>> devices = deviceTagRelationService.getDevicesByTag(tagId);
         return Result.success(devices);
     }
 
     /**
-     * 根据多个标签查询设备（交集）
+     * Query devices by multiple tags (intersection)
      */
-    @ApiOperation("根据多个标签查询设备（交集）")
+    @ApiOperation("Query devices by multiple tags (intersection)")
     @PostMapping("/devices/by-all-tags")
     public Result<List<Long>> findDevicesByAllTags(
-            @ApiParam("标签ID列表") @RequestBody List<Long> tagIds) {
+            @ApiParam("Tag ID list") @RequestBody List<Long> tagIds) {
         
         List<Long> deviceIds = deviceTagRelationService.findDevicesByAllTags(tagIds);
         return Result.success(deviceIds);
     }
 
     /**
-     * 根据多个标签查询设备（并集）
+     * Query devices by multiple tags (union)
      */
-    @ApiOperation("根据多个标签查询设备（并集）")
+    @ApiOperation("Query devices by multiple tags (union)")
     @PostMapping("/devices/by-any-tags")
     public Result<List<Long>> findDevicesByAnyTags(
-            @ApiParam("标签ID列表") @RequestBody List<Long> tagIds) {
+            @ApiParam("Tag ID list") @RequestBody List<Long> tagIds) {
         
         List<Long> deviceIds = deviceTagRelationService.findDevicesByAnyTags(tagIds);
         return Result.success(deviceIds);
     }
 
     /**
-     * 批量设置设备标签
+     * Batch set device tags
      */
-    @ApiOperation("批量设置设备标签")
+    @ApiOperation("Batch set device tags")
     @PutMapping("/devices/batch-tags")
     public Result<String> batchSetDeviceTags(
-            @ApiParam("设备标签映射") @RequestBody Map<Long, List<Long>> deviceTagMap) {
+            @ApiParam("Device tag mapping") @RequestBody Map<Long, List<Long>> deviceTagMap) {
         
         int successCount = deviceTagRelationService.batchSetDeviceTags(deviceTagMap, "admin");
-        return Result.success("批量设置成功，成功设置 " + successCount + " 个设备的标签");
+        return Result.success("Batch setting successful, successfully set tags for " + successCount + " devices");
     }
 
     /**
-     * 复制设备标签到其他设备
+     * Copy device tags to other devices
      */
-    @ApiOperation("复制设备标签到其他设备")
+    @ApiOperation("Copy device tags to other devices")
     @PostMapping("/device/{sourceDeviceId}/copy-tags")
     public Result<String> copyDeviceTags(
-            @ApiParam("源设备ID") @PathVariable Long sourceDeviceId,
-            @ApiParam("目标设备ID列表") @RequestBody List<Long> targetDeviceIds) {
+            @ApiParam("Source device ID") @PathVariable Long sourceDeviceId,
+            @ApiParam("Target device ID list") @RequestBody List<Long> targetDeviceIds) {
         
         boolean success = deviceTagRelationService.copyDeviceTags(sourceDeviceId, targetDeviceIds, "admin");
         if (success) {
-            return Result.success("复制设备标签成功");
+            return Result.success("Device tags copied successfully");
         } else {
-            return Result.error("复制设备标签失败");
+            return Result.error("Failed to copy device tags");
         }
     }
 
     /**
-     * 获取设备标签统计信息
+     * Get device tag statistics
      */
-    @ApiOperation("获取设备标签统计信息")
+    @ApiOperation("Get device tag statistics")
     @GetMapping("/statistics/device-tags")
     public Result<List<Map<String, Object>>> getDeviceTagStatistics() {
         List<Map<String, Object>> statistics = deviceTagRelationService.getDeviceTagStatistics();
@@ -205,9 +205,9 @@ public class DeviceTagRelationController {
     }
 
     /**
-     * 获取标签使用统计
+     * Get tag usage statistics
      */
-    @ApiOperation("获取标签使用统计")
+    @ApiOperation("Get tag usage statistics")
     @GetMapping("/statistics/tag-usage")
     public Result<List<Map<String, Object>>> getTagUsageStatistics() {
         List<Map<String, Object>> statistics = deviceTagRelationService.getTagUsageStatistics();
@@ -215,63 +215,63 @@ public class DeviceTagRelationController {
     }
 
     /**
-     * 检查设备是否有指定标签
+     * Check if device has specified tag
      */
-    @ApiOperation("检查设备是否有指定标签")
+    @ApiOperation("Check if device has specified tag")
     @GetMapping("/device/{deviceId}/has-tag/{tagId}")
     public Result<Boolean> hasDeviceTag(
-            @ApiParam("设备ID") @PathVariable Long deviceId,
-            @ApiParam("标签ID") @PathVariable Long tagId) {
+            @ApiParam("Device ID") @PathVariable Long deviceId,
+            @ApiParam("Tag ID") @PathVariable Long tagId) {
         
         boolean hasTag = deviceTagRelationService.hasDeviceTag(deviceId, tagId);
         return Result.success(hasTag);
     }
 
     /**
-     * 获取标签的设备数量
+     * Get device count of tag
      */
-    @ApiOperation("获取标签的设备数量")
+    @ApiOperation("Get tag's device count")
     @GetMapping("/tag/{tagId}/device-count")
     public Result<Integer> getTagDeviceCount(
-            @ApiParam("标签ID") @PathVariable Long tagId) {
+            @ApiParam("Tag ID") @PathVariable Long tagId) {
         
         int count = deviceTagRelationService.getTagDeviceCount(tagId);
         return Result.success(count);
     }
 
     /**
-     * 验证标签ID列表是否有效
+     * Validate tag ID list
      */
-    @ApiOperation("验证标签ID列表是否有效")
+    @ApiOperation("Validate tag ID list")
     @PostMapping("/validate-tags")
     public Result<Map<String, Object>> validateTagIds(
-            @ApiParam("标签ID列表") @RequestBody List<Long> tagIds) {
+            @ApiParam("Tag ID list") @RequestBody List<Long> tagIds) {
         
         Map<String, Object> result = deviceTagRelationService.validateTagIds(tagIds);
         return Result.success(result);
     }
 
     /**
-     * 同步标签使用计数
+     * Sync tag usage count
      */
-    @ApiOperation("同步标签使用计数")
+    @ApiOperation("Sync tag usage count")
     @PostMapping("/sync-usage-count")
     public Result<String> syncTagUsageCount() {
         boolean success = deviceTagRelationService.syncTagUsageCount();
         if (success) {
-            return Result.success("同步标签使用计数成功");
+            return Result.success("Tag usage count synchronized successfully");
         } else {
-            return Result.error("同步标签使用计数失败");
+            return Result.error("Failed to sync tag usage count");
         }
     }
 
     /**
-     * 获取设备标签的完整信息（包含设备信息和标签信息）
+     * Get complete device tag information (including device and tag info)
      */
-    @ApiOperation("获取设备标签的完整信息")
+    @ApiOperation("Get device tag full information")
     @GetMapping("/device/{deviceId}/full-info")
     public Result<Map<String, Object>> getDeviceTagFullInfo(
-            @ApiParam("设备ID") @PathVariable Long deviceId) {
+            @ApiParam("Device ID") @PathVariable Long deviceId) {
         
         Map<String, Object> info = new java.util.HashMap<>();
         
@@ -287,12 +287,12 @@ public class DeviceTagRelationController {
     }
 
     /**
-     * 根据标签批量获取设备标签关联信息
+     * Batch get device tag relation info by tags
      */
-    @ApiOperation("根据标签批量获取设备标签关联信息")
+    @ApiOperation("Batch get device tag relations by tags")
     @PostMapping("/tags/device-relations")
     public Result<Map<String, Object>> getDeviceRelationsByTags(
-            @ApiParam("标签ID列表") @RequestBody List<Long> tagIds) {
+            @ApiParam("Tag ID list") @RequestBody List<Long> tagIds) {
         
         Map<String, Object> result = new java.util.HashMap<>();
         

@@ -8,64 +8,64 @@ import lombok.EqualsAndHashCode;
 import java.math.BigDecimal;
 
 /**
- * 算法模型统计DTO
+ * Algorithm Model Statistics DTO
  *
  * @author VLStream Team
  * @since 1.0.0
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value = "AlgorithmModelStatisticsDTO", description = "算法模型统计信息")
+@ApiModel(value = "AlgorithmModelStatisticsDTO", description = "Algorithm model statistics information")
 public class AlgorithmModelStatisticsDTO {
 
-    @ApiModelProperty(value = "模型总数")
+    @ApiModelProperty(value = "Total model count")
     private Long totalCount;
 
-    @ApiModelProperty(value = "草稿状态模型数")
+    @ApiModelProperty(value = "Draft status model count")
     private Long draftCount;
 
-    @ApiModelProperty(value = "测试状态模型数")
+    @ApiModelProperty(value = "Testing status model count")
     private Long testingCount;
 
-    @ApiModelProperty(value = "已发布模型数")
+    @ApiModelProperty(value = "Published model count")
     private Long publishedCount;
 
-    @ApiModelProperty(value = "总下载次数")
+    @ApiModelProperty(value = "Total download count")
     private Long totalDownloadCount;
 
-    @ApiModelProperty(value = "总部署次数")
+    @ApiModelProperty(value = "Total deployment count")
     private Long totalDeployCount;
 
-    @ApiModelProperty(value = "平均准确率")
+    @ApiModelProperty(value = "Average accuracy")
     private BigDecimal avgAccuracy;
 
-    @ApiModelProperty(value = "最高准确率")
+    @ApiModelProperty(value = "Maximum accuracy")
     private BigDecimal maxAccuracy;
 
-    @ApiModelProperty(value = "最低准确率")
+    @ApiModelProperty(value = "Minimum accuracy")
     private BigDecimal minAccuracy;
 
-    @ApiModelProperty(value = "ONNX格式模型数")
+    @ApiModelProperty(value = "ONNX format model count")
     private Long onnxFormatCount;
 
-    @ApiModelProperty(value = "PyTorch格式模型数")
+    @ApiModelProperty(value = "PyTorch format model count")
     private Long pytorchFormatCount;
 
-    @ApiModelProperty(value = "TensorFlow格式模型数")
+    @ApiModelProperty(value = "TensorFlow format model count")
     private Long tensorflowFormatCount;
 
-    @ApiModelProperty(value = "本周新增模型数")
+    @ApiModelProperty(value = "Weekly new model count")
     private Long weeklyNewCount;
 
-    @ApiModelProperty(value = "本月新增模型数")
+    @ApiModelProperty(value = "Monthly new model count")
     private Long monthlyNewCount;
 
-    @ApiModelProperty(value = "本年新增模型数")
+    @ApiModelProperty(value = "Yearly new model count")
     private Long yearlyNewCount;
 
-    @ApiModelProperty(value = "最受欢迎的模型名称")
+    @ApiModelProperty(value = "Most popular model name")
     private String mostPopularModelName;
 
-    @ApiModelProperty(value = "最受欢迎的模型下载次数")
+    @ApiModelProperty(value = "Most popular model download count")
     private Long mostPopularModelDownloadCount;
 } 

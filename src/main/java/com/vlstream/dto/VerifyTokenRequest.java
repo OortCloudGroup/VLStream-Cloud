@@ -3,13 +3,13 @@ package com.vlstream.dto;
 import lombok.Data;
 
 /**
- * 验证Token请求DTO
+ * Verify Token Request DTO
  */
 @Data
 public class VerifyTokenRequest {
     
     /**
-     * 访问令牌
+     * Access token
      */
     private String accessToken;
     

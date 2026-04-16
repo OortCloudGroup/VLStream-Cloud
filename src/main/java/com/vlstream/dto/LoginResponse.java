@@ -3,7 +3,7 @@ package com.vlstream.dto;
 import lombok.Data;
 
 /**
- * 登录响应DTO
+ * Login Response DTO
  */
 @Data
 public class LoginResponse {

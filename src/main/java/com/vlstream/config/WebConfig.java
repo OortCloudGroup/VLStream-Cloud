@@ -5,8 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.*;
 
 /**
- * Web配置类
- * 配置静态资源映射，支持视频文件访问
+ * Web Configuration Class
+ * Configures static resource mappings and supports video file access
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -16,19 +16,19 @@ public class WebConfig implements WebMvcConfigurer {
     
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
-        // 为所有控制器添加/api前缀，但排除图片上传等特殊控制器和测试控制器
+        // Add /api prefix to all controllers, except special controllers like ImageUpload and Test
 //        configurer.addPathPrefix("/api", c -> !c.getSimpleName().contains("ImageUpload") && !c.getSimpleName().contains("Test"));
     }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // 临时禁用认证拦截器，用于测试
+        // Temporarily disable auth interceptor for testing
         System.out.println("Auth interceptor temporarily disabled for testing");
         
-        // 注册认证拦截器，拦截所有API请求
+        // Register auth interceptor to intercept all API requests
         // registry.addInterceptor(authInterceptor)
-        //         .addPathPatterns("/**")  // 拦截所有请求
-        //         .excludePathPatterns(    // 排除不需要认证的路径
+        //         .addPathPatterns("/**")  // Intercept all requests
+        //         .excludePathPatterns(    // Exclude paths that don't need authentication
         //                 "/health",
         //                 "/auth/health",
         //                 "/swagger-ui/**",
@@ -62,28 +62,28 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 获取当前工作目录的绝对路径
+        // Get absolute path of current working directory
         String currentDir = System.getProperty("user.dir");
 
-        // 打印调试信息
-        System.out.println("=== 图片路径配置调试信息 ===");
-        System.out.println("当前工作目录: " + currentDir);
-        System.out.println("================================");
+        // Print debug information
+        System.out.println("=== Image path configuration debug info ===");
+        System.out.println("Current working directory: " + currentDir);
+        System.out.println("===============================");
         
-        // 配置视频文件访问路径
+        // Configure video file access path
         registry.addResourceHandler("/recordings/**")
                 .addResourceLocations("file:" + recordingStoragePath + "/");
         
-        // 配置HLS流文件访问路径
+        // Configure HLS stream file access path
         registry.addResourceHandler("/hls/**")
                 .addResourceLocations("file:" + recordingStoragePath + "/hls/");
 
-        // 配置静态资源访问
+        // Configure static resource access
         registry.addResourceHandler("/static/**")
                 .addResourceLocations("classpath:/static/");
         
-        // 打印最终的资源映射配置
-        System.out.println("=== 资源映射配置 ===");
-        System.out.println("================================");
+        // Print final resource mapping configuration
+        System.out.println("=== Resource mapping configuration ===");
+        System.out.println("===============================");
     }
 } 

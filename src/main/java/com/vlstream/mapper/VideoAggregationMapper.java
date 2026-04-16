@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
 /**
- * 视频汇聚配置Mapper接口
+ * Video Aggregation Configuration Mapper Interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -20,13 +20,13 @@ import java.util.List;
 public interface VideoAggregationMapper extends BaseMapper<VideoAggregation> {
 
     /**
-     * 分页查询视频汇聚配置
+     * Paginated query video aggregation configuration
      *
-     * @param page 分页对象
-     * @param aggregationName 汇聚名称
-     * @param aggregationType 汇聚类型
-     * @param status 状态
-     * @return 分页结果
+     * @param page Pagination object
+     * @param aggregationName Aggregation name
+     * @param aggregationType Aggregation type
+     * @param status Status
+     * @return Pagination result
      */
     @Select("<script>" +
             "SELECT * FROM vls_video_aggregation " +
@@ -48,24 +48,24 @@ public interface VideoAggregationMapper extends BaseMapper<VideoAggregation> {
                                                   @Param("status") Integer status);
 
     /**
-     * 根据状态查询汇聚配置列表
+     * Query aggregation configuration list by status
      *
-     * @param status 状态
-     * @return 汇聚配置列表
+     * @param status Status
+     * @return Aggregation configuration list
      */
     @Select("SELECT * FROM vls_video_aggregation WHERE status = #{status} AND deleted = 0")
     List<VideoAggregation> selectByStatus(@Param("status") Integer status);
 
     /**
-     * 获取状态统计
+     * Get status statistics
      *
-     * @return 状态统计结果
+     * @return Status statistics result
      */
     @Select("SELECT status, COUNT(*) as count FROM vls_video_aggregation WHERE deleted = 0 GROUP BY status")
     List<StatusStatistics> getStatusStatistics();
 
     /**
-     * 状态统计内部类
+     * Status statistics inner class
      */
     class StatusStatistics {
         private Integer status;

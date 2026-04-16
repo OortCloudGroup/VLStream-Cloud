@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 设备标签关联服务层实现类
+ * Device Tag Relation Service Implementation Class
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -31,22 +31,22 @@ public class DeviceTagRelationServiceImpl extends ServiceImpl<DeviceTagRelationM
     @Transactional(rollbackFor = Exception.class)
     public boolean setDeviceTags(Long deviceId, List<Long> tagIds, String createdBy) {
         try {
-            // 先删除设备的所有标签
+            // First delete all tags for the device
             baseMapper.deleteByDeviceId(deviceId);
             
-            // 如果有新标签，则批量插入
+            // If there are new tags, batch insert
             if (tagIds != null && !tagIds.isEmpty()) {
-                // 去重并过滤无效标签
+                // Deduplicate and filter invalid tags
                 List<Long> validTagIds = validateAndFilterTagIds(tagIds);
                 if (!validTagIds.isEmpty()) {
                     baseMapper.batchInsertDeviceTags(deviceId, validTagIds, createdBy);
                 }
             }
             
-            log.info("设置设备标签成功: deviceId={}, tagIds={}", deviceId, tagIds);
+            log.info("Device tags set successfully: deviceId={}, tagIds={}", deviceId, tagIds);
             return true;
         } catch (Exception e) {
-            log.error("设置设备标签失败: deviceId={}, tagIds={}", deviceId, tagIds, e);
+            log.error("Failed to set device tags: deviceId={}, tagIds={}", deviceId, tagIds, e);
             return false;
         }
     }
@@ -59,7 +59,7 @@ public class DeviceTagRelationServiceImpl extends ServiceImpl<DeviceTagRelationM
             return true;
         }
 
-            // 去重并过滤已存在的标签
+            // Deduplicate and filter existing tags
             List<Long> existingTagIds = getDeviceTagIds(deviceId);
             List<Long> newTagIds = tagIds.stream()
                     .distinct()
@@ -67,17 +67,17 @@ public class DeviceTagRelationServiceImpl extends ServiceImpl<DeviceTagRelationM
                     .collect(Collectors.toList());
             
             if (!newTagIds.isEmpty()) {
-                // 验证标签有效性
+                // Validate tag validity
                 List<Long> validTagIds = validateAndFilterTagIds(newTagIds);
                 if (!validTagIds.isEmpty()) {
                     baseMapper.batchInsertDeviceTags(deviceId, validTagIds, createdBy);
                 }
             }
             
-            log.info("添加设备标签成功: deviceId={}, newTagIds={}", deviceId, newTagIds);
+            log.info("Device tags added successfully: deviceId={}, newTagIds={}", deviceId, newTagIds);
             return true;
         } catch (Exception e) {
-            log.error("添加设备标签失败: deviceId={}, tagIds={}", deviceId, tagIds, e);
+            log.error("Failed to add device tags: deviceId={}, tagIds={}", deviceId, tagIds, e);
             return false;
         }
     }
@@ -91,10 +91,10 @@ public class DeviceTagRelationServiceImpl extends ServiceImpl<DeviceTagRelationM
             }
             
             int deleted = baseMapper.deleteDeviceTagsBatch(deviceId, tagIds);
-            log.info("移除设备标签成功: deviceId={}, tagIds={}, deleted={}", deviceId, tagIds, deleted);
+            log.info("Device tags removed successfully: deviceId={}, tagIds={}, deleted={}", deviceId, tagIds, deleted);
             return true;
         } catch (Exception e) {
-            log.error("移除设备标签失败: deviceId={}, tagIds={}", deviceId, tagIds, e);
+            log.error("Failed to remove device tags: deviceId={}, tagIds={}", deviceId, tagIds, e);
             return false;
         }
     }
@@ -104,10 +104,10 @@ public class DeviceTagRelationServiceImpl extends ServiceImpl<DeviceTagRelationM
     public boolean clearDeviceTags(Long deviceId) {
         try {
             int deleted = baseMapper.deleteByDeviceId(deviceId);
-            log.info("清除设备标签成功: deviceId={}, deleted={}", deviceId, deleted);
+            log.info("Device tags cleared successfully: deviceId={}, deleted={}", deviceId, deleted);
             return true;
         } catch (Exception e) {
-            log.error("清除设备标签失败: deviceId={}", deviceId, e);
+            log.error("Failed to clear device tags: deviceId={}", deviceId, e);
             return false;
         }
     }
@@ -161,23 +161,23 @@ public class DeviceTagRelationServiceImpl extends ServiceImpl<DeviceTagRelationM
     @Transactional(rollbackFor = Exception.class)
     public boolean copyDeviceTags(Long sourceDeviceId, List<Long> targetDeviceIds, String createdBy) {
         try {
-            // 获取源设备的标签
+            // Get tags from source device
             List<Long> sourceTagIds = getDeviceTagIds(sourceDeviceId);
             if (sourceTagIds.isEmpty()) {
-                log.info("源设备无标签，无需复制: sourceDeviceId={}", sourceDeviceId);
+                log.info("Source device has no tags, no need to copy: sourceDeviceId={}", sourceDeviceId);
                 return true;
             }
             
-            // 为每个目标设备设置标签
+            // Set tags for each target device
             for (Long targetDeviceId : targetDeviceIds) {
                 setDeviceTags(targetDeviceId, sourceTagIds, createdBy);
             }
             
-            log.info("复制设备标签成功: sourceDeviceId={}, targetDeviceIds={}, tagIds={}", 
+            log.info("Device tags copied successfully: sourceDeviceId={}, targetDeviceIds={}, tagIds={}", 
                     sourceDeviceId, targetDeviceIds, sourceTagIds);
             return true;
         } catch (Exception e) {
-            log.error("复制设备标签失败: sourceDeviceId={}, targetDeviceIds={}", 
+            log.error("Failed to copy device tags: sourceDeviceId={}, targetDeviceIds={}", 
                     sourceDeviceId, targetDeviceIds, e);
             return false;
         }
@@ -238,7 +238,7 @@ public class DeviceTagRelationServiceImpl extends ServiceImpl<DeviceTagRelationM
         result.put("deviceId", deviceId);
         result.put("totalCount", deviceTags.size());
         
-        // 按类型分组
+        // Group by type
         Map<String, List<DeviceTagRelation>> tagsByCategory = deviceTags.stream()
                 .collect(Collectors.groupingBy(tag -> tag.getCategoryType()));
         
@@ -247,7 +247,7 @@ public class DeviceTagRelationServiceImpl extends ServiceImpl<DeviceTagRelationM
         result.put("ownTagCount", tagsByCategory.getOrDefault("own", new ArrayList<>()).size());
         result.put("publicTagCount", tagsByCategory.getOrDefault("public", new ArrayList<>()).size());
         
-        // 标签名称列表
+        // Tag name list
         List<String> tagNames = deviceTags.stream()
                 .map(DeviceTagRelation::getTagName)
                 .collect(Collectors.toList());
@@ -258,8 +258,8 @@ public class DeviceTagRelationServiceImpl extends ServiceImpl<DeviceTagRelationM
 
     @Override
     public List<Map<String, Object>> getDevicesByTagCategory(String categoryType, Integer level) {
-        // 这里需要根据具体需求实现
-        // 可以结合DeviceInfoMapper和TagManagementMapper来查询
+        // Implementation needed based on specific requirements
+        // Can query using DeviceInfoMapper and TagManagementMapper
         return new ArrayList<>();
     }
 
@@ -267,31 +267,31 @@ public class DeviceTagRelationServiceImpl extends ServiceImpl<DeviceTagRelationM
     @Transactional(rollbackFor = Exception.class)
     public boolean syncTagUsageCount() {
         try {
-            // 获取标签使用统计
+            // Get tag usage statistics
             List<Map<String, Object>> usageStats = getTagUsageStatistics();
             
-            // 更新每个标签的使用次数
+            // Update usage count for each tag
             for (Map<String, Object> stat : usageStats) {
                 Long tagId = (Long) stat.get("tag_id");
                 Long deviceCount = (Long) stat.get("device_count");
                 
-                // 设置tag_management表中的usage_count字段
+                // Set usage_count field in tag_management table
                 tagManagementMapper.setUsageCount(tagId, deviceCount.intValue());
             }
             
-            log.info("同步标签使用计数成功，更新了 {} 个标签", usageStats.size());
+            log.info("Tag usage count synced successfully, updated {} tags", usageStats.size());
         return true;
         } catch (Exception e) {
-            log.error("同步标签使用计数失败", e);
+            log.error("Failed to sync tag usage count", e);
             return false;
         }
     }
 
     /**
-     * 验证并过滤标签ID列表
+     * Validate and filter tag ID list
      *
-     * @param tagIds 原始标签ID列表
-     * @return 有效的标签ID列表
+     * @param tagIds Original tag ID list
+     * @return Valid tag ID list
      */
     private List<Long> validateAndFilterTagIds(List<Long> tagIds) {
         if (tagIds == null || tagIds.isEmpty()) {
@@ -305,7 +305,7 @@ public class DeviceTagRelationServiceImpl extends ServiceImpl<DeviceTagRelationM
                     try {
                         return tagManagementMapper.selectById(tagId) != null;
                     } catch (Exception e) {
-                        log.warn("验证标签ID失败: tagId={}", tagId, e);
+                        log.warn("Failed to validate tag ID: tagId={}", tagId, e);
                         return false;
                     }
                 })

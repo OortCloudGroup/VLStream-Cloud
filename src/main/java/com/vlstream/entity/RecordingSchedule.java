@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 /**
- * 录制计划实体类
+ * Recording Schedule Entity Class
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -18,185 +18,185 @@ import java.time.LocalTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("recording_schedule")
-@ApiModel(value = "RecordingSchedule对象", description = "录制计划")
+@ApiModel(value = "RecordingSchedule object", description = "Recording schedule")
 public class RecordingSchedule {
 
-    @ApiModelProperty(value = "主键ID")
+    @ApiModelProperty(value = "Primary key ID")
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @ApiModelProperty(value = "设备ID")
+    @ApiModelProperty(value = "Device ID")
     @TableField("device_id")
     private Long deviceId;
 
-    @ApiModelProperty(value = "设备名称")
+    @ApiModelProperty(value = "Device name")
     @TableField("device_name")
     private String deviceName;
 
-    @ApiModelProperty(value = "计划名称")
+    @ApiModelProperty(value = "Schedule name")
     @TableField("schedule_name")
     private String scheduleName;
 
-    @ApiModelProperty(value = "是否启用：0-禁用，1-启用")
+    @ApiModelProperty(value = "Enabled: 0-Disabled, 1-Enabled")
     @TableField("is_enabled")
     private Boolean isEnabled;
 
-    @ApiModelProperty(value = "单次录制时长(秒，默认10分钟)")
+    @ApiModelProperty(value = "Single recording duration (seconds, default 10 minutes)")
     @TableField("record_duration")
     private Integer recordDuration;
 
-    @ApiModelProperty(value = "录制质量：high-高清，medium-中等，low-低清")
+    @ApiModelProperty(value = "Recording quality: high-high definition, medium-medium, low-low definition")
     @TableField("record_quality")
     private String recordQuality;
 
-    @ApiModelProperty(value = "录制格式")
+    @ApiModelProperty(value = "Recording format")
     @TableField("record_format")
     private String recordFormat;
 
-    @ApiModelProperty(value = "存储路径")
+    @ApiModelProperty(value = "Storage path")
     @TableField("storage_path")
     private String storagePath;
 
-    @ApiModelProperty(value = "保留天数(0表示永久保留)")
+    @ApiModelProperty(value = "Retention days (0 means permanent retention)")
     @TableField("retention_days")
     private Integer retentionDays;
 
-    @ApiModelProperty(value = "计划类型：continuous-连续录制，time_range-时间段，time_strategy-时间策略")
+    @ApiModelProperty(value = "Schedule type: continuous-continuous recording, time_range-time range, time_strategy-time strategy")
     @TableField("schedule_type")
     private String scheduleType;
 
-    @ApiModelProperty(value = "时间策略ID(当schedule_type为time_strategy时)")
+    @ApiModelProperty(value = "Time strategy ID (when schedule_type is time_strategy)")
     @TableField("time_strategy_id")
     private Long timeStrategyId;
 
-    @ApiModelProperty(value = "开始时间(当schedule_type为time_range时)")
+    @ApiModelProperty(value = "Start time (when schedule_type is time_range)")
     @TableField("start_time")
     private LocalTime startTime;
 
-    @ApiModelProperty(value = "结束时间(当schedule_type为time_range时)")
+    @ApiModelProperty(value = "End time (when schedule_type is time_range)")
     @TableField("end_time")
     private LocalTime endTime;
 
-    @ApiModelProperty(value = "星期几录制(1-7,逗号分隔)")
+    @ApiModelProperty(value = "Weekdays to record (1-7, comma-separated)")
     @TableField("weekdays")
     private String weekdays;
 
-    @ApiModelProperty(value = "最后录制时间")
+    @ApiModelProperty(value = "Last recording time")
     @TableField("last_record_time")
     private LocalDateTime lastRecordTime;
 
-    @ApiModelProperty(value = "下次录制时间")
+    @ApiModelProperty(value = "Next recording time")
     @TableField("next_record_time")
     private LocalDateTime nextRecordTime;
 
-    @ApiModelProperty(value = "总录制次数")
+    @ApiModelProperty(value = "Total recording times")
     @TableField("total_records")
     private Integer totalRecords;
 
-    @ApiModelProperty(value = "失败录制次数")
+    @ApiModelProperty(value = "Failed recording times")
     @TableField("failed_records")
     private Integer failedRecords;
 
-    @ApiModelProperty(value = "创建人")
+    @ApiModelProperty(value = "Creator")
     @TableField("created_by")
     private String createdBy;
 
-    @ApiModelProperty(value = "更新人")
+    @ApiModelProperty(value = "Updater")
     @TableField("updated_by")
     private String updatedBy;
 
-    @ApiModelProperty(value = "创建时间")
+    @ApiModelProperty(value = "Creation time")
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
-    @ApiModelProperty(value = "更新时间")
+    @ApiModelProperty(value = "Update time")
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
-    @ApiModelProperty(value = "是否删除：0-未删除，1-已删除")
+    @ApiModelProperty(value = "Deleted: 0-Not deleted, 1-Deleted")
     @TableField("deleted")
     @TableLogic
     private Integer deleted;
 
-    // 计划类型常量
+    // Schedule type constants
     public static final String TYPE_CONTINUOUS = "continuous";
     public static final String TYPE_TIME_RANGE = "time_range";
     public static final String TYPE_TIME_STRATEGY = "time_strategy";
 
-    // 质量常量
+    // Quality constants
     public static final String QUALITY_HIGH = "high";
     public static final String QUALITY_MEDIUM = "medium";
     public static final String QUALITY_LOW = "low";
 
     /**
-     * 获取计划类型的中文描述
+     * Get schedule type description
      */
     public String getScheduleTypeText() {
         switch (scheduleType) {
             case TYPE_CONTINUOUS:
-                return "连续录制";
+                return "Continuous recording";
             case TYPE_TIME_RANGE:
-                return "时间段录制";
+                return "Time range recording";
             case TYPE_TIME_STRATEGY:
-                return "时间策略录制";
+                return "Time strategy recording";
             default:
-                return "未知类型";
+                return "Unknown type";
         }
     }
 
     /**
-     * 获取质量的中文描述
+     * Get quality description
      */
     public String getRecordQualityText() {
         switch (recordQuality) {
             case QUALITY_HIGH:
-                return "高清";
+                return "High definition";
             case QUALITY_MEDIUM:
-                return "中等";
+                return "Medium";
             case QUALITY_LOW:
-                return "低清";
+                return "Low definition";
             default:
-                return "未知";
+                return "Unknown";
         }
     }
 
     /**
-     * 获取格式化的录制时长
+     * Get formatted recording duration
      */
     public String getFormattedRecordDuration() {
         if (recordDuration == null || recordDuration <= 0) {
-            return "0分钟";
+            return "0 minutes";
         }
         
         int minutes = recordDuration / 60;
         int seconds = recordDuration % 60;
         
         if (seconds == 0) {
-            return minutes + "分钟";
+            return minutes + " minutes";
         } else {
-            return minutes + "分" + seconds + "秒";
+            return minutes + "m " + seconds + "s";
         }
     }
 
     /**
-     * 获取启用状态的中文描述
+     * Get enabled status description
      */
     public String getEnabledStatusText() {
-        return Boolean.TRUE.equals(isEnabled) ? "启用" : "禁用";
+        return Boolean.TRUE.equals(isEnabled) ? "Enabled" : "Disabled";
     }
 
     /**
-     * 获取保留天数的描述
+     * Get retention days description
      */
     public String getRetentionDaysText() {
         if (retentionDays == null || retentionDays == 0) {
-            return "永久保留";
+            return "Permanent retention";
         }
-        return retentionDays + "天";
+        return retentionDays + " days";
     }
 
     /**
-     * 获取成功率
+     * Get success rate
      */
     public Double getSuccessRate() {
         if (totalRecords == null || totalRecords == 0) {

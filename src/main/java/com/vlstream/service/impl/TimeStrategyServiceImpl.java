@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 时间策略Service实现类
+ * Time Strategy Service Implementation
  */
 @Service
 public class TimeStrategyServiceImpl extends ServiceImpl<TimeStrategyMapper, TimeStrategy> implements TimeStrategyService {
@@ -30,17 +30,17 @@ public class TimeStrategyServiceImpl extends ServiceImpl<TimeStrategyMapper, Tim
     
     @Override
     public boolean saveOrUpdateStrategy(TimeStrategy timeStrategy) {
-        // 检查是否已存在该设备的时间策略
+        // Check if time strategy already exists for this device
         TimeStrategy existing = getByDeviceId(timeStrategy.getDeviceId());
         
         if (existing != null) {
-            // 如果存在，更新
+            // If exists, update
             UpdateWrapper<TimeStrategy> updateWrapper = new UpdateWrapper<>();
             updateWrapper.eq("device_id", timeStrategy.getDeviceId());
             timeStrategy.setId(existing.getId());
             return this.update(timeStrategy, updateWrapper);
         } else {
-            // 如果不存在，新增
+            // If not exists, add
             return this.save(timeStrategy);
         }
     }
@@ -72,7 +72,7 @@ public class TimeStrategyServiceImpl extends ServiceImpl<TimeStrategyMapper, Tim
     }
     
     /**
-     * 判断时间策略是否应该执行
+     * Determine if the time strategy should be executed
      */
     private boolean shouldExecuteStrategy(TimeStrategy strategy, LocalTime currentTime, DayOfWeek currentDay) {
         if (strategy.getStrategyType().equals("weekly")) {
@@ -100,7 +100,7 @@ public class TimeStrategyServiceImpl extends ServiceImpl<TimeStrategyMapper, Tim
     }
     
     /**
-     * 获取星期几的键名
+     * Get the day of week key name
      */
     private String getDayKey(DayOfWeek dayOfWeek) {
         switch (dayOfWeek) {

@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 算法训练任务实体类
+ * Algorithm Training Task Entity Class
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -19,178 +19,178 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("algorithm_training")
-@ApiModel(value = "AlgorithmTraining对象", description = "算法训练任务")
+@ApiModel(value = "AlgorithmTraining object", description = "Algorithm training task")
 public class AlgorithmTraining {
 
-    @ApiModelProperty(value = "训练任务ID")
+    @ApiModelProperty(value = "Training task ID")
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @ApiModelProperty(value = "任务名称")
+    @ApiModelProperty(value = "Task name")
     @TableField("task_name")
     private String taskName;
 
-    @ApiModelProperty(value = "算法ID")
+    @ApiModelProperty(value = "Algorithm ID")
     @TableField("algorithm_id")
     private Long algorithmId;
 
-    @ApiModelProperty(value = "数据集ID")
+    @ApiModelProperty(value = "Dataset ID")
     @TableField("dataset_id")
     private Long datasetId;
 
-    @ApiModelProperty(value = "训练状态：pending-等待,training-训练中,completed-完成,failed-失败")
+    @ApiModelProperty(value = "Training status: pending-pending, training-training, completed-completed, failed-failed")
     @TableField("train_status")
     private String trainStatus;
 
-    @ApiModelProperty(value = "训练进度百分比")
+    @ApiModelProperty(value = "Training progress percentage")
     @TableField("progress")
     private Integer progress;
 
-    @ApiModelProperty(value = "当前轮次")
+    @ApiModelProperty(value = "Current epoch")
     @TableField("epoch_current")
     private Integer epochCurrent;
 
-    @ApiModelProperty(value = "总轮次")
+    @ApiModelProperty(value = "Total epochs")
     @TableField("epoch_total")
     private Integer epochTotal;
 
-    @ApiModelProperty(value = "准确率")
+    @ApiModelProperty(value = "Accuracy")
     @TableField("accuracy")
     private BigDecimal accuracy;
 
-    @ApiModelProperty(value = "精确率")
+    @ApiModelProperty(value = "Precision")
     @TableField("precision_value")
     private BigDecimal precisionValue;
 
-    @ApiModelProperty(value = "召回率")
+    @ApiModelProperty(value = "Recall")
     @TableField("recall_value")
     private BigDecimal recallValue;
 
-    @ApiModelProperty(value = "map值")
+    @ApiModelProperty(value = "mAP value")
     @TableField("map_value")
     private BigDecimal mapValue;
 
-    @ApiModelProperty(value = "损失值")
+    @ApiModelProperty(value = "Loss value")
     @TableField("loss_value")
     private BigDecimal lossValue;
 
-    @ApiModelProperty(value = "GPU使用率")
+    @ApiModelProperty(value = "GPU usage")
     @TableField("gpu_usage")
     private String gpuUsage;
 
-    @ApiModelProperty(value = "开始时间")
+    @ApiModelProperty(value = "Start time")
     @TableField("start_time")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime startTime;
 
-    @ApiModelProperty(value = "结束时间")
+    @ApiModelProperty(value = "End time")
     @TableField("end_time")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime endTime;
 
-    @ApiModelProperty(value = "预计时间")
+    @ApiModelProperty(value = "Estimated time")
     @TableField("estimated_time")
     private String estimatedTime;
 
-    @ApiModelProperty(value = "模型输出路径")
+    @ApiModelProperty(value = "Model output path")
     @TableField("model_output_path")
     private String modelOutputPath;
 
-    @ApiModelProperty(value = "日志路径")
+    @ApiModelProperty(value = "Log path")
     @TableField("log_path")
     private String logPath;
 
-    @ApiModelProperty(value = "训练参数")
+    @ApiModelProperty(value = "Training parameters")
     @TableField("config_params")
     private String configParams;
 
-    @ApiModelProperty(value = "错误信息")
+    @ApiModelProperty(value = "Error message")
     @TableField("error_message")
     private String errorMessage;
 
-    @ApiModelProperty(value = "创建人")
+    @ApiModelProperty(value = "Creator")
     @TableField(value = "created_by", fill = FieldFill.INSERT)
     private Long createdBy;
 
-    @ApiModelProperty(value = "创建时间")
+    @ApiModelProperty(value = "Creation time")
     @TableField(value = "created_time", fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createdTime;
 
-    @ApiModelProperty(value = "更新时间")
+    @ApiModelProperty(value = "Update time")
     @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime updatedTime;
 
-    @ApiModelProperty(value = "是否删除：0-否，1-是")
+    @ApiModelProperty(value = "Deleted: 0-No, 1-Yes")
     @TableField("deleted")
     @TableLogic
     private Integer deleted;
 
-    // 非数据库字段，用于查询时关联显示
-    @ApiModelProperty(value = "算法名称")
+    // Non-database fields for associated display in queries
+    @ApiModelProperty(value = "Algorithm name")
     @TableField(exist = false)
     private String algorithmName;
 
-    @ApiModelProperty(value = "算法类型")
+    @ApiModelProperty(value = "Algorithm type")
     @TableField(exist = false)
     private String trainType;
 
-    @ApiModelProperty(value = "对应模型")
+    @ApiModelProperty(value = "Target model")
     @TableField(exist = false)
     private String targetModel;
 
-    @ApiModelProperty(value = "数据集名称")
+    @ApiModelProperty(value = "Dataset name")
     @TableField(exist = false)
     private String datasetName;
 
-    @ApiModelProperty(value = "创建人姓名")
+    @ApiModelProperty(value = "Creator name")
     @TableField(exist = false)
     private String createdByName;
 
-    @ApiModelProperty(value = "训练时长（分钟）")
+    @ApiModelProperty(value = "Training duration (minutes)")
     @TableField(exist = false)
     private Long durationMinutes;
 
-    @ApiModelProperty(value = "训练状态描述")
+    @ApiModelProperty(value = "Training status description")
     @TableField(exist = false)
     private String trainStatusDesc;
 
-    // 状态常量
+    // Status constants
     public static final int STATUS_PENDING = 0;
     public static final int STATUS_TRAINING = 1;
     public static final int STATUS_COMPLETED = 2;
     public static final int STATUS_STOPPED = 3;
     public static final int STATUS_FAILED = 4;
 
-    // 状态字段（用于兼容旧代码）
-    @ApiModelProperty(value = "状态：0-等待,1-训练中,2-完成,3-停止,4-失败")
+    // Status field (for compatibility with old code)
+    @ApiModelProperty(value = "Status: 0-pending, 1-training, 2-completed, 3-stopped, 4-failed")
     @TableField(exist = false)
     private Integer status;
 
     /**
-     * 获取训练状态描述
+     * Get training status description
      */
     public String getTrainStatusDesc() {
         if (trainStatus == null) {
-            return "未知";
+            return "Unknown";
         }
         switch (trainStatus) {
             case "pending":
-                return "等待中";
+                return "Pending";
             case "training":
-                return "训练中";
+                return "Training";
             case "completed":
-                return "已完成";
+                return "Completed";
             case "failed":
-                return "失败";
+                return "Failed";
             default:
-                return "未知";
+                return "Unknown";
         }
     }
 
     /**
-     * 计算训练时长
+     * Calculate training duration
      */
     public Long getDurationMinutes() {
         if (startTime != null && endTime != null) {
@@ -200,11 +200,11 @@ public class AlgorithmTraining {
     }
 
     /**
-     * 设置状态
+     * Set status
      */
     public void setStatus(Integer status) {
         this.status = status;
-        // 同步更新trainStatus
+        // Synchronously update trainStatus
         switch (status) {
             case STATUS_PENDING:
                 this.trainStatus = "pending";
@@ -225,35 +225,35 @@ public class AlgorithmTraining {
     }
 
     /**
-     * 获取状态
+     * Get status
      */
     public Integer getStatus() {
         return status;
     }
 
     /**
-     * 获取数据集路径
+     * Get dataset path
      */
     public String getDatasetPath() {
-        // 这里应该根据datasetId查询数据集路径
-        // 暂时返回默认路径
+        // Should query dataset path based on datasetId
+        // Temporarily return default path
         return "./datasets/emgitemsv6/emgitemsv6.yaml";
     }
 
     /**
-     * 获取基础模型
+     * Get base model
      */
     public String getBaseModel() {
-        // 这里应该根据algorithmId查询基础模型
-        // 暂时返回默认模型
+        // Should query base model based on algorithmId
+        // Temporarily return default model
         return "yolov8n.pt";
     }
 
     /**
-     * 获取训练参数
+     * Get training parameters
      */
     public String getTrainParams() {
-        // 返回配置的训练参数
+        // Return configured training parameters
         return this.configParams;
     }
 } 

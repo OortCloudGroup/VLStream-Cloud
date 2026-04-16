@@ -12,51 +12,51 @@ import javax.validation.constraints.Pattern;
 import java.math.BigDecimal;
 
 /**
- * 算法模型创建DTO
+ * Algorithm Model Creation DTO
  *
  * @author VLStream Team
  * @since 1.0.0
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@ApiModel(value = "AlgorithmModelCreateDTO", description = "算法模型创建参数")
+@ApiModel(value = "AlgorithmModelCreateDTO", description = "Algorithm model creation parameters")
 public class AlgorithmModelCreateDTO {
 
-    @ApiModelProperty(value = "模型名称", required = true, example = "目标检测模型v1.0")
-    @NotBlank(message = "模型名称不能为空")
-    @Size(max = 100, message = "模型名称长度不能超过100字符")
+    @ApiModelProperty(value = "Model name", required = true, example = "Object Detection Model v1.0")
+    @NotBlank(message = "Model name cannot be empty")
+    @Size(max = 100, message = "Model name length cannot exceed 100 characters")
     private String modelName;
 
-    @ApiModelProperty(value = "算法ID", required = true, example = "1")
-    @NotNull(message = "算法ID不能为空")
+    @ApiModelProperty(value = "Algorithm ID", required = true, example = "1")
+    @NotNull(message = "Algorithm ID cannot be empty")
     private Long algorithmId;
 
-    @ApiModelProperty(value = "训练任务ID", example = "1")
+    @ApiModelProperty(value = "Training task ID", example = "1")
     private Long trainingId;
 
-    @ApiModelProperty(value = "模型版本", required = true, example = "1")
+    @ApiModelProperty(value = "Model version", required = true, example = "1")
     private Integer version;
 
-    @ApiModelProperty(value = "模型格式", example = "ONNX")
-    @Pattern(regexp = "^(onnx|pt)$", message = "模型格式只能为onnx、pt")
+    @ApiModelProperty(value = "Model format", example = "ONNX")
+    @Pattern(regexp = "^(onnx|pt)$", message = "Model format can only be onnx or pt")
     private String modelFormat;
 
-    @ApiModelProperty(value = "模型大小", example = "100MB")
-    @Size(max = 20, message = "模型大小描述长度不能超过20字符")
+    @ApiModelProperty(value = "Model size", example = "100MB")
+    @Size(max = 20, message = "Model size description length cannot exceed 20 characters")
     private String modelSize;
 
-    @ApiModelProperty(value = "模型文件路径", required = true, example = "/models/detection/v1.0/model.onnx")
-    @NotBlank(message = "模型文件路径不能为空")
-    @Size(max = 500, message = "模型文件路径长度不能超过500字符")
+    @ApiModelProperty(value = "Model file path", required = true, example = "/models/detection/v1.0/model.onnx")
+    @NotBlank(message = "Model file path cannot be empty")
+    @Size(max = 500, message = "Model file path length cannot exceed 500 characters")
     private String modelPath;
 
-    @ApiModelProperty(value = "模型准确率", example = "0.95")
+    @ApiModelProperty(value = "Model accuracy", example = "0.95")
     private BigDecimal accuracy;
 
-    @ApiModelProperty(value = "模型描述", example = "基于YOLOv5的目标检测模型")
+    @ApiModelProperty(value = "Model description", example = "Object detection model based on YOLOv5")
     private String description;
 
-    @ApiModelProperty(value = "状态", example = "draft")
-    @Pattern(regexp = "^(draft|testing|published)$", message = "状态只能为draft、testing或published")
+    @ApiModelProperty(value = "Status", example = "draft")
+    @Pattern(regexp = "^(draft|testing|published)$", message = "Status can only be draft, testing, or published")
     private String status = "draft";
 } 

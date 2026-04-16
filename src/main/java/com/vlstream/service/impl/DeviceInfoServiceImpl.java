@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 设备信息服务层实现类
+ * Device Information Service Implementation
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -44,7 +44,7 @@ public class DeviceInfoServiceImpl extends ServiceImpl<DeviceInfoMapper, DeviceI
     @Transactional(rollbackFor = Exception.class)
     public boolean addDevice(DeviceInfo deviceInfo) {
         try {
-            // 自动生成device_id（如果没有提供）
+            // Auto generate device_id if not provided
             if (deviceInfo.getDeviceId() == null || deviceInfo.getDeviceId().trim().isEmpty()) {
                 String deviceId = generateDeviceId();
                 deviceInfo.setDeviceId(deviceId);
@@ -52,14 +52,14 @@ public class DeviceInfoServiceImpl extends ServiceImpl<DeviceInfoMapper, DeviceI
                 return false;
             }
             
-            // 设置默认状态
+            // Set default status
             if (StringUtils.isBlank(deviceInfo.getStatus())) {
-                deviceInfo.setStatus("离线");
+                deviceInfo.setStatus("offline");
             }
             
             return save(deviceInfo);
         } catch (Exception e) {
-            log.error("新增设备失败", e);
+            log.error("Failed to add device", e);
             return false;
         }
     }
@@ -147,22 +147,22 @@ public class DeviceInfoServiceImpl extends ServiceImpl<DeviceInfoMapper, DeviceI
         
         if (device == null) {
             result.put("success", false);
-            result.put("message", "设备不存在");
+            result.put("message", "Device does not exist");
             return result;
         }
 
         try {
-            // 这里实现实际的设备连接测试逻辑
-            // TODO: 根据设备类型和连接参数测试连接
-            log.info("测试设备连接: {}", device.getDeviceName());
+            // Implement actual device connection test logic here
+            // TODO: Test connection based on device type and connection parameters
+            log.info("Testing device connection: {}", device.getDeviceName());
             
             result.put("success", true);
-            result.put("message", "连接成功");
+            result.put("message", "Connection successful");
             result.put("latency", "20ms");
         } catch (Exception e) {
-            log.error("设备连接测试失败: {}", device.getDeviceName(), e);
+            log.error("Device connection test failed: {}", device.getDeviceName(), e);
             result.put("success", false);
-            result.put("message", "连接失败: " + e.getMessage());
+            result.put("message", "Connection failed: " + e.getMessage());
         }
         
         return result;
@@ -184,9 +184,9 @@ public class DeviceInfoServiceImpl extends ServiceImpl<DeviceInfoMapper, DeviceI
         for (DeviceInfoMapper.StatusStatistics stat : statusStats) {
             total += stat.getCount();
             switch (stat.getStatus()) {
-                case "离线": offline = stat.getCount(); break;
-                case "在线": online = stat.getCount(); break;
-                case "故障": fault = stat.getCount(); break;
+                case "offline": offline = stat.getCount(); break;
+                case "online": online = stat.getCount(); break;
+                case "fault": fault = stat.getCount(); break;
             }
         }
         
@@ -215,31 +215,31 @@ public class DeviceInfoServiceImpl extends ServiceImpl<DeviceInfoMapper, DeviceI
         Map<String, Object> result = new HashMap<>();
         List<String> errors = new ArrayList<>();
         
-        // 验证设备名称
+        // Validate device name
         if (deviceInfo.getDeviceName() == null || deviceInfo.getDeviceName().trim().isEmpty()) {
-            errors.add("设备名称不能为空");
+            errors.add("Device name cannot be empty");
         }
         
-        // 验证设备ID
+        // Validate device ID
         if (deviceInfo.getDeviceId() == null || deviceInfo.getDeviceId().trim().isEmpty()) {
-            errors.add("设备ID不能为空");
+            errors.add("Device ID cannot be empty");
         } else if (checkDeviceIdExists(deviceInfo.getDeviceId())) {
-            errors.add("设备ID已存在");
+            errors.add("Device ID already exists");
         }
         
-        // 验证IP地址
+        // Validate IP address
         if (StringUtils.isNotBlank(deviceInfo.getIpAddress()) && !isValidIpAddress(deviceInfo.getIpAddress())) {
-            errors.add("IP地址格式不正确");
+            errors.add("Invalid IP address format");
         }
         
-        // 验证端口
+        // Validate port
         if (deviceInfo.getPort() != null && (deviceInfo.getPort() < 1 || deviceInfo.getPort() > 65535)) {
-            errors.add("端口号必须在1-65535之间");
+            errors.add("Port must be between 1-65535");
         }
 
         if (errors.isEmpty()) {
             result.put("valid", true);
-            result.put("message", "验证通过");
+            result.put("message", "Validation passed");
         } else {
             result.put("valid", false);
             result.put("errors", errors);
@@ -277,26 +277,26 @@ public class DeviceInfoServiceImpl extends ServiceImpl<DeviceInfoMapper, DeviceI
         
         if (device == null) {
             result.put("success", false);
-            result.put("message", "设备不存在");
+            result.put("message", "Device does not exist");
             return result;
         }
         
         try {
-            // 这里实现实际的设备状态刷新逻辑
-            // TODO: 根据设备连接情况更新状态
-            log.info("刷新设备状态: {}", device.getDeviceName());
+            // Implement actual device status refresh logic here
+            // TODO: Update status based on device connection status
+            log.info("Refreshing device status: {}", device.getDeviceName());
             
-            // 模拟状态刷新
-            String newStatus = "在线"; // 实际应该根据设备检测结果确定
+            // Simulate status refresh
+            String newStatus = "online"; // Should be determined based on actual device detection
             updateDeviceStatus(deviceId, newStatus);
             
             result.put("success", true);
-            result.put("message", "状态刷新成功");
+            result.put("message", "Status refreshed successfully");
             result.put("status", newStatus);
         } catch (Exception e) {
-            log.error("刷新设备状态失败: {}", device.getDeviceName(), e);
+            log.error("Failed to refresh device status: {}", device.getDeviceName(), e);
             result.put("success", false);
-            result.put("message", "状态刷新失败: " + e.getMessage());
+            result.put("message", "Status refresh failed: " + e.getMessage());
         }
         
         return result;

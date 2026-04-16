@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 算法实体类
+ * Algorithm Entity Class
  * 
  * @author VLStream Team
  * @since 1.0.0
@@ -19,145 +19,145 @@ import java.time.LocalDateTime;
 public class Algorithm {
 
     /**
-     * 主键ID
+     * Primary key ID
      */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     /**
-     * 所属算法仓库ID
+     * Associated algorithm repository ID
      */
     @TableField("repository_id")
     private Long repositoryId;
 
     /**
-     * 算法名称
+     * Algorithm name
      */
     @TableField("name")
     private String name;
 
     /**
-     * 算法类型（人员检测类、人脸识别类、视频分析类等）
+     * Algorithm category (person detection, face recognition, video analysis, etc.)
      */
     @TableField("category")
     private String category;
 
     /**
-     * 算法类型名称
+     * Algorithm category name
      */
     @TableField(exist = false)
     private String categoryName;
 
     /**
-     * 算法描述
+     * Algorithm description
      */
     @TableField("description")
     private String description;
 
     /**
-     * 算法图片URL
+     * Algorithm image URL
      */
     @TableField("image_url")
     private String imageUrl;
 
     /**
-     * 算法版本
+     * Algorithm version
      */
     @TableField("version")
     private String version;
 
     /**
-     * 模型文件路径
+     * Model file path
      */
     @TableField("model_file_path")
     private String modelFilePath;
 
     /**
-     * 算法配置参数（JSON格式）
+     * Algorithm configuration parameters (JSON format)
      */
     @TableField("config_params")
     private String configParams;
 
     /**
-     * 输入格式（image、video等）
+     * Input format (image, video, etc.)
      */
     @TableField("input_format")
     private String inputFormat;
 
     /**
-     * 输出格式（bbox、mask、keypoint等）
+     * Output format (bbox, mask, keypoint, etc.)
      */
     @TableField("output_format")
     private String outputFormat;
 
     /**
-     * 准确率
+     * Accuracy
      */
     @TableField("accuracy")
     private BigDecimal accuracy;
 
     /**
-     * 处理速度（FPS）
+     * Processing speed (FPS)
      */
     @TableField("processing_speed")
     private Integer processingSpeed;
 
     /**
-     * 内存使用量（MB）
+     * Memory usage (MB)
      */
     @TableField("memory_usage")
     private Integer memoryUsage;
 
     /**
-     * 是否需要GPU：0-否，1-是
+     * GPU required: 0-No, 1-Yes
      */
     @TableField("gpu_required")
     private Integer gpuRequired;
 
     /**
-     * 部署状态：ready-就绪, deploying-部署中, deployed-已部署, failed-失败
+     * Deployment status: ready-ready, deploying-deploying, deployed-deployed, failed-failed
      */
     @TableField("deploy_status")
     private String deployStatus;
 
     /**
-     * 部署次数
+     * Deployment count
      */
     @TableField("deploy_count")
     private Integer deployCount;
 
     /**
-     * 最后部署时间
+     * Last deployment time
      */
     @TableField("last_deploy_time")
     private LocalDateTime lastDeployTime;
 
     /**
-     * 创建人
+     * Creator
      */
     @TableField(value = "created_by", fill = FieldFill.INSERT)
     private String createdBy;
 
     /**
-     * 创建时间
+     * Creation time
      */
     @TableField(value = "created_time", fill = FieldFill.INSERT)
     private LocalDateTime createdTime;
 
     /**
-     * 更新人
+     * Updater
      */
     @TableField(value = "updated_by", fill = FieldFill.INSERT_UPDATE)
     private String updatedBy;
 
     /**
-     * 更新时间
+     * Update time
      */
     @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedTime;
 
     /**
-     * 是否删除：0-未删除，1-已删除
+     * Deleted: 0-Not deleted, 1-Deleted
      */
     @TableField("deleted")
     @TableLogic

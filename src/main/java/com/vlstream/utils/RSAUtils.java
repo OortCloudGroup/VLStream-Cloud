@@ -12,7 +12,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 
 /**
- * RSA加密解密工具类
+ * RSA encryption and decryption utility class
  */
 @Slf4j
 @Component
@@ -37,7 +37,7 @@ public class RSAUtils {
             "M8E7W6eJqKqGcQ8HqKQ+8cOLnPAQ6xKqEqYvL8K1YPgKqQ8HqKQ+8cOLnPAQ6xK";
 
     /**
-     * 使用私钥解密
+     * Decrypt using private key
      */
     public static String decrypt(String encryptedData) {
         try {
@@ -64,7 +64,7 @@ public class RSAUtils {
     }
 
     /**
-     * 实际的RSA解密实现（当有真实私钥时使用）
+     * Actual RSA decryption implementation (used when there is a real private key)
      */
     private static String realDecrypt(String encryptedData, String privateKeyString) {
         try {

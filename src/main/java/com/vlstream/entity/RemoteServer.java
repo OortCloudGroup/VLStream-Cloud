@@ -6,7 +6,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 远程服务器配置实体类
+ * Remote Server Configuration Entity Class
  */
 @Data
 public class RemoteServer {
@@ -14,53 +14,53 @@ public class RemoteServer {
     private Long id;
     
     /**
-     * 服务器名称
+     * Server name
      */
     private String serverName;
     
     /**
-     * 服务器IP地址
+     * Server IP address
      */
     private String serverIp;
     
     /**
-     * SSH端口
+     * SSH port
      */
     private Integer serverPort;
     
     /**
-     * 用户名
+     * Username
      */
     private String username;
     
     /**
-     * 密码(加密存储)
+     * Password (encrypted storage)
      */
     private String password;
     
     /**
-     * Conda环境名称
+     * Conda environment name
      */
     private String condaEnv;
     
     /**
-     * 工作目录
+     * Working directory
      */
     private String workDir;
     
     /**
-     * 状态: 0-禁用, 1-启用
+     * Status: 0-Disabled, 1-Enabled
      */
     private Integer status;
     
     /**
-     * 创建时间
+     * Creation time
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdTime;
     
     /**
-     * 更新时间
+     * Update time
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedTime;

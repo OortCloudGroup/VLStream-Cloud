@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 容器实例服务实现类
+ * Container Instance Service Implementation Class
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -33,18 +33,18 @@ public class ContainerInstanceServiceImpl extends ServiceImpl<ContainerInstanceM
 
     @Override
     public IPage<ContainerInstance> pageContainerInstances(Page<ContainerInstance> page, ContainerInstanceQueryDTO queryDTO) {
-        log.info("分页查询容器实例，当前页: {}，每页大小: {}", page.getCurrent(), page.getSize());
+        log.info("Page query container instances, current page: {}, page size: {}", page.getCurrent(), page.getSize());
         
         return baseMapper.selectPageWithDetails(page, queryDTO);
     }
 
     @Override
     public ContainerInstance getContainerInstanceById(Long id) {
-        log.info("根据ID查询容器实例详情，ID: {}", id);
+        log.info("Query container instance details by ID: {}", id);
         
         ContainerInstance instance = baseMapper.selectByIdWithDetails(id);
         if (instance == null) {
-            throw new RuntimeException("容器实例不存在，ID: " + id);
+            throw new RuntimeException("Container instance does not exist, ID: " + id);
         }
         
         return instance;
@@ -53,46 +53,46 @@ public class ContainerInstanceServiceImpl extends ServiceImpl<ContainerInstanceM
     @Override
     @Transactional
     public ContainerInstance createContainerInstance(ContainerInstanceCreateDTO createDTO) {
-        log.info("创建容器实例，实例名称: {}", createDTO.getInstanceName());
+        log.info("Create container instance, instance name: {}", createDTO.getInstanceName());
         
-        // 检查实例名称是否重复
+        // Check if instance name exists
         if (checkInstanceNameExists(createDTO.getInstanceName(), null)) {
-            throw new RuntimeException("实例名称已存在: " + createDTO.getInstanceName());
+            throw new RuntimeException("Instance name already exists: " + createDTO.getInstanceName());
         }
         
-        // 创建容器实例
+        // Create container instance
         ContainerInstance instance = new ContainerInstance();
         BeanUtils.copyProperties(createDTO, instance);
         
-        // 设置默认值
+        // Set default values
         instance.setInstanceStatus("stopped");
         instance.setHealthStatus("unknown");
         instance.setRestartCount(0);
         
-        // 保存到数据库
+        // Save to database
         save(instance);
         
-        log.info("容器实例创建成功，ID: {}", instance.getId());
+        log.info("Container instance created successfully, ID: {}", instance.getId());
         return instance;
     }
 
     @Override
     @Transactional
     public ContainerInstance updateContainerInstance(ContainerInstanceUpdateDTO updateDTO) {
-        log.info("更新容器实例，ID: {}", updateDTO.getId());
+        log.info("Update container instance, ID: {}", updateDTO.getId());
         
         ContainerInstance instance = getById(updateDTO.getId());
         if (instance == null) {
-            throw new RuntimeException("容器实例不存在，ID: " + updateDTO.getId());
+            throw new RuntimeException("Container instance does not exist, ID: " + updateDTO.getId());
         }
         
-        // 检查实例名称是否重复（排除当前实例）
+        // Check if instance name exists (exclude current instance)
         if (StringUtils.hasText(updateDTO.getInstanceName()) && 
             checkInstanceNameExists(updateDTO.getInstanceName(), updateDTO.getId())) {
-            throw new RuntimeException("实例名称已存在: " + updateDTO.getInstanceName());
+            throw new RuntimeException("Instance name already exists: " + updateDTO.getInstanceName());
         }
         
-        // 复制非空属性
+        // Copy non-null properties
         if (StringUtils.hasText(updateDTO.getInstanceName())) {
             instance.setInstanceName(updateDTO.getInstanceName());
         }
@@ -139,26 +139,26 @@ public class ContainerInstanceServiceImpl extends ServiceImpl<ContainerInstanceM
             instance.setLogsPath(updateDTO.getLogsPath());
         }
         
-        // 更新到数据库
+        // Update to database
         updateById(instance);
         
-        log.info("容器实例更新成功，ID: {}", instance.getId());
+        log.info("Container instance updated successfully, ID: {}", instance.getId());
         return instance;
     }
 
     @Override
     @Transactional
     public boolean deleteContainerInstance(Long id) {
-        log.info("删除容器实例，ID: {}", id);
+        log.info("Delete container instance, ID: {}", id);
         
         ContainerInstance instance = getById(id);
         if (instance == null) {
-            throw new RuntimeException("容器实例不存在，ID: " + id);
+            throw new RuntimeException("Container instance does not exist, ID: " + id);
         }
         
-        // 检查是否可以删除
+        // Check if instance can be deleted
         if ("running".equals(instance.getInstanceStatus()) || "starting".equals(instance.getInstanceStatus())) {
-            throw new RuntimeException("容器实例正在运行中，无法删除");
+            throw new RuntimeException("Container instance is running, cannot delete");
         }
         
         return removeById(id);
@@ -167,13 +167,13 @@ public class ContainerInstanceServiceImpl extends ServiceImpl<ContainerInstanceM
     @Override
     @Transactional
     public boolean deleteContainerInstanceBatch(List<Long> ids) {
-        log.info("批量删除容器实例，数量: {}", ids.size());
+        log.info("Batch delete container instances, count: {}", ids.size());
         
-        // 检查是否有运行中的实例
+        // Check if there are running instances
         List<ContainerInstance> instances = listByIds(ids);
         for (ContainerInstance instance : instances) {
             if ("running".equals(instance.getInstanceStatus()) || "starting".equals(instance.getInstanceStatus())) {
-                throw new RuntimeException("存在运行中的容器实例，无法删除");
+                throw new RuntimeException("There are running container instances, cannot delete");
             }
         }
         
@@ -198,42 +198,42 @@ public class ContainerInstanceServiceImpl extends ServiceImpl<ContainerInstanceM
     @Override
     @Transactional
     public boolean startContainer(Long id, String containerId) {
-        log.info("启动容器实例，ID: {}", id);
+        log.info("Start container instance, ID: {}", id);
         
         ContainerInstance instance = getById(id);
         if (instance == null) {
-            throw new RuntimeException("容器实例不存在，ID: " + id);
+            throw new RuntimeException("Container instance does not exist, ID: " + id);
         }
         
         if ("running".equals(instance.getInstanceStatus())) {
-            throw new RuntimeException("容器实例已在运行中");
+            throw new RuntimeException("Container instance is already running");
         }
         
-        // 这里应该调用Docker API启动容器
-        // TODO: 集成Docker API
+        // Docker API should be called here to start the container
+        // TODO: Integrate Docker API
         
-        // 更新状态
+        // Update status
         return updateInstanceStatus(id, "starting", "unknown", containerId, LocalDateTime.now(), null);
     }
 
     @Override
     @Transactional
     public boolean stopContainer(Long id) {
-        log.info("停止容器实例，ID: {}", id);
+        log.info("Stop container instance, ID: {}", id);
         
         ContainerInstance instance = getById(id);
         if (instance == null) {
-            throw new RuntimeException("容器实例不存在，ID: " + id);
+            throw new RuntimeException("Container instance does not exist, ID: " + id);
         }
         
         if ("stopped".equals(instance.getInstanceStatus())) {
-            throw new RuntimeException("容器实例已停止");
+            throw new RuntimeException("Container instance is already stopped");
         }
         
-        // 这里应该调用Docker API停止容器
-        // TODO: 集成Docker API
+        // Docker API should be called here to stop the container
+        // TODO: Integrate Docker API
         
-        // 更新状态
+        // Update status
         return updateInstanceStatus(id, "stopping", "unknown", instance.getContainerId(), 
                                   instance.getStartTime(), LocalDateTime.now());
     }
@@ -241,20 +241,20 @@ public class ContainerInstanceServiceImpl extends ServiceImpl<ContainerInstanceM
     @Override
     @Transactional
     public boolean restartContainer(Long id) {
-        log.info("重启容器实例，ID: {}", id);
+        log.info("Restart container instance, ID: {}", id);
         
         ContainerInstance instance = getById(id);
         if (instance == null) {
-            throw new RuntimeException("容器实例不存在，ID: " + id);
+            throw new RuntimeException("Container instance does not exist, ID: " + id);
         }
         
-        // 这里应该调用Docker API重启容器
-        // TODO: 集成Docker API
+        // Docker API should be called here to restart the container
+        // TODO: Integrate Docker API
         
-        // 增加重启次数
+        // Increase restart count
         increaseRestartCount(id);
         
-        // 更新状态
+        // Update status
         return updateInstanceStatus(id, "starting", "unknown", instance.getContainerId(), 
                                   LocalDateTime.now(), null);
     }

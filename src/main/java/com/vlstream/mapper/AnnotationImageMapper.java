@@ -6,13 +6,13 @@ import org.apache.ibatis.annotations.*;
 import java.util.List;
 
 /**
- * 标注图片数据访问层
+ * Annotation Image Data Access Layer
  */
 @Mapper
 public interface AnnotationImageMapper {
 
     /**
-     * 结果映射：数据库字段到Java属性的映射
+     * Result mapping: Database field to Java property mapping
      */
     @Results(id = "AnnotationImageResultMap", value = {
         @Result(property = "id", column = "id"),
@@ -32,7 +32,7 @@ public interface AnnotationImageMapper {
     AnnotationImage selectById(Long id);
 
     /**
-     * 插入图片记录
+     * Insert image record
      */
     @Insert("INSERT INTO annotation_image (annotation_id, image_name, original_name, local_path, " +
             "file_size, is_imported, import_time, created_time, updated_time) " +
@@ -42,21 +42,21 @@ public interface AnnotationImageMapper {
     int insert(AnnotationImage image);
     
     /**
-     * 根据数据集ID查询图片列表 (兼容旧接口，实际使用annotation_id)
+     * Query image list by dataset ID (compatible with old interface, actually using annotation_id)
      */
     @ResultMap("AnnotationImageResultMap")
     @Select("SELECT * FROM annotation_image WHERE annotation_id = #{annotationId} ORDER BY created_time DESC")
     List<AnnotationImage> selectByDatasetId(Long annotationId);
 
     /**
-     * 根据标注项目ID查询图片列表
+     * Query image list by annotation project ID
      */
     @ResultMap("AnnotationImageResultMap")
     @Select("SELECT * FROM annotation_image WHERE annotation_id = #{annotationId} AND deleted = 0 ORDER BY created_time DESC")
     List<AnnotationImage> selectByAnnotationId(@Param("annotationId") Long annotationId);
     
     /**
-     * 更新图片信息
+     * Update image information
      */
     @Update("UPDATE annotation_image SET " +
             "image_name = #{imageName}, original_name = #{originalName}, local_path = #{localPath}, " +
@@ -68,25 +68,25 @@ public interface AnnotationImageMapper {
     int updateById(AnnotationImage image);
     
     /**
-     * 删除图片记录
+     * Delete image record
      */
     @Delete("DELETE FROM annotation_image WHERE id = #{id}")
     int deleteById(Long id);
     
     /**
-     * 根据数据集ID删除所有图片 (兼容旧接口，实际使用annotation_id)
+     * Delete all images by dataset ID (compatible with old interface, actually using annotation_id)
      */
     @Delete("DELETE FROM annotation_image WHERE annotation_id = #{datasetId}")
     int deleteByDatasetId(Long datasetId);
 
     /**
-     * 统计数据集图片数量 (兼容旧接口，实际使用annotation_id)
+     * Count images in dataset (compatible with old interface, actually using annotation_id)
      */
     @Select("SELECT COUNT(*) FROM annotation_image WHERE annotation_id = #{datasetId}")
     int countByDatasetId(Long datasetId);
 
     /**
-     * 根据状态统计图片数量 (兼容旧接口，实际使用annotation_id)
+     * Count images by status in dataset (compatible with old interface, actually using annotation_id)
      */
     @Select("SELECT COUNT(*) FROM annotation_image WHERE annotation_id = #{datasetId} AND status = #{status}")
     int countByDatasetIdAndStatus(@Param("datasetId") Long datasetId, @Param("status") String status);

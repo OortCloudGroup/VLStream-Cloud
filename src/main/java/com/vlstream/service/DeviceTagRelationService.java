@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 设备标签关联服务层接口
+ * Device Tag Relation Service Interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -15,162 +15,162 @@ import java.util.Map;
 public interface DeviceTagRelationService extends IService<DeviceTagRelation> {
 
     /**
-     * 设置设备标签（覆盖原有标签）
+     * Set device tags (override existing tags)
      *
-     * @param deviceId 设备ID
-     * @param tagIds 标签ID列表
-     * @param createdBy 创建人
-     * @return 是否成功
+     * @param deviceId Device ID
+     * @param tagIds Tag ID list
+     * @param createdBy Creator
+     * @return Whether successful
      */
     boolean setDeviceTags(Long deviceId, List<Long> tagIds, String createdBy);
 
     /**
-     * 添加设备标签（追加到现有标签）
+     * Add device tags (append to existing tags)
      *
-     * @param deviceId 设备ID
-     * @param tagIds 标签ID列表
-     * @param createdBy 创建人
-     * @return 是否成功
+     * @param deviceId Device ID
+     * @param tagIds Tag ID list
+     * @param createdBy Creator
+     * @return Whether successful
      */
     boolean addDeviceTags(Long deviceId, List<Long> tagIds, String createdBy);
 
     /**
-     * 移除设备标签
+     * Remove device tags
      *
-     * @param deviceId 设备ID
-     * @param tagIds 标签ID列表
-     * @return 是否成功
+     * @param deviceId Device ID
+     * @param tagIds Tag ID list
+     * @return Whether successful
      */
     boolean removeDeviceTags(Long deviceId, List<Long> tagIds);
 
     /**
-     * 清除设备的所有标签
+     * Clear all device tags
      *
-     * @param deviceId 设备ID
-     * @return 是否成功
+     * @param deviceId Device ID
+     * @return Whether successful
      */
     boolean clearDeviceTags(Long deviceId);
 
     /**
-     * 获取设备的所有标签
+     * Get all device tags
      *
-     * @param deviceId 设备ID
-     * @return 标签信息列表
+     * @param deviceId Device ID
+     * @return Tag info list
      */
     List<DeviceTagRelation> getDeviceTags(Long deviceId);
 
     /**
-     * 获取设备的标签ID列表
+     * Get device tag ID list
      *
-     * @param deviceId 设备ID
-     * @return 标签ID列表
+     * @param deviceId Device ID
+     * @return Tag ID list
      */
     List<Long> getDeviceTagIds(Long deviceId);
 
     /**
-     * 获取带有指定标签的设备列表
+     * Get device list with specified tag
      *
-     * @param tagId 标签ID
-     * @return 设备信息列表
+     * @param tagId Tag ID
+     * @return Device info list
      */
     List<Map<String, Object>> getDevicesByTag(Long tagId);
 
     /**
-     * 根据多个标签查询设备（交集 - 必须同时包含所有标签）
+     * Query devices by multiple tags (intersection - must contain all tags)
      *
-     * @param tagIds 标签ID列表
-     * @return 设备ID列表
+     * @param tagIds Tag ID list
+     * @return Device ID list
      */
     List<Long> findDevicesByAllTags(List<Long> tagIds);
 
     /**
-     * 根据多个标签查询设备（并集 - 包含任意一个标签）
+     * Query devices by multiple tags (union - contains any tag)
      *
-     * @param tagIds 标签ID列表
-     * @return 设备ID列表
+     * @param tagIds Tag ID list
+     * @return Device ID list
      */
     List<Long> findDevicesByAnyTags(List<Long> tagIds);
 
     /**
-     * 批量设置设备标签
+     * Batch set device tags
      *
-     * @param deviceTagMap 设备ID -> 标签ID列表的映射
-     * @param createdBy 创建人
-     * @return 成功设置的设备数量
+     * @param deviceTagMap Map of device ID -> tag ID list
+     * @param createdBy Creator
+     * @return Number of successfully set devices
      */
     int batchSetDeviceTags(Map<Long, List<Long>> deviceTagMap, String createdBy);
 
     /**
-     * 复制设备标签到其他设备
+     * Copy device tags to other devices
      *
-     * @param sourceDeviceId 源设备ID
-     * @param targetDeviceIds 目标设备ID列表
-     * @param createdBy 创建人
-     * @return 是否成功
+     * @param sourceDeviceId Source device ID
+     * @param targetDeviceIds Target device ID list
+     * @param createdBy Creator
+     * @return Whether successful
      */
     boolean copyDeviceTags(Long sourceDeviceId, List<Long> targetDeviceIds, String createdBy);
 
     /**
-     * 获取设备标签统计信息
+     * Get device tag statistics
      *
-     * @return 统计信息
+     * @return Statistics
      */
     List<Map<String, Object>> getDeviceTagStatistics();
 
     /**
-     * 获取标签使用统计
+     * Get tag usage statistics
      *
-     * @return 标签使用统计
+     * @return Tag usage statistics
      */
     List<Map<String, Object>> getTagUsageStatistics();
 
     /**
-     * 检查设备是否有指定标签
+     * Check if device has specified tag
      *
-     * @param deviceId 设备ID
-     * @param tagId 标签ID
-     * @return 是否存在
+     * @param deviceId Device ID
+     * @param tagId Tag ID
+     * @return Whether exists
      */
     boolean hasDeviceTag(Long deviceId, Long tagId);
 
     /**
-     * 获取标签的设备数量
+     * Get tag device count
      *
-     * @param tagId 标签ID
-     * @return 设备数量
+     * @param tagId Tag ID
+     * @return Device count
      */
     int getTagDeviceCount(Long tagId);
 
     /**
-     * 验证标签ID列表是否有效
+     * Validate tag ID list
      *
-     * @param tagIds 标签ID列表
-     * @return 验证结果
+     * @param tagIds Tag ID list
+     * @return Validation result
      */
     Map<String, Object> validateTagIds(List<Long> tagIds);
 
     /**
-     * 获取设备标签的详细信息（包含标签层级结构）
+     * Get device tag details (including tag hierarchy)
      *
-     * @param deviceId 设备ID
-     * @return 标签详细信息
+     * @param deviceId Device ID
+     * @return Tag details
      */
     Map<String, Object> getDeviceTagDetails(Long deviceId);
 
     /**
-     * 根据标签类型获取设备列表
+     * Get device list by tag category
      *
-     * @param categoryType 标签类型（own/public）
-     * @param level 标签层级（1/2）
-     * @return 设备信息
+     * @param categoryType Tag type (own/public)
+     * @param level Tag level (1/2)
+     * @return Device info
      */
     List<Map<String, Object>> getDevicesByTagCategory(String categoryType, Integer level);
 
     /**
-     * 同步标签使用计数
-     * 更新tag_management表中的usage_count字段
+     * Sync tag usage count
+     * Update usage_count field in tag_management table
      *
-     * @return 是否成功
+     * @return Whether successful
      */
     boolean syncTagUsageCount();
 } 

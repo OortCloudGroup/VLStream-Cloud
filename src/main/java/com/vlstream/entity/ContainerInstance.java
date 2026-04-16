@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 容器实例实体类
+ * Container Instance Entity Class
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -19,183 +19,183 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("container_instance")
-@ApiModel(value = "ContainerInstance对象", description = "容器实例")
+@ApiModel(value = "ContainerInstance object", description = "Container instance")
 public class ContainerInstance {
 
-    @ApiModelProperty(value = "容器实例ID")
+    @ApiModelProperty(value = "Container instance ID")
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @ApiModelProperty(value = "实例名称")
+    @ApiModelProperty(value = "Instance name")
     @TableField("instance_name")
     private String instanceName;
 
-    @ApiModelProperty(value = "容器ID")
+    @ApiModelProperty(value = "Container ID")
     @TableField("container_id")
     private String containerId;
 
-    @ApiModelProperty(value = "镜像名称")
+    @ApiModelProperty(value = "Image name")
     @TableField("image_name")
     private String imageName;
 
-    @ApiModelProperty(value = "镜像标签")
+    @ApiModelProperty(value = "Image tag")
     @TableField("image_tag")
     private String imageTag;
 
-    @ApiModelProperty(value = "算法ID")
+    @ApiModelProperty(value = "Algorithm ID")
     @TableField("algorithm_id")
     private Long algorithmId;
 
-    @ApiModelProperty(value = "实例类型")
+    @ApiModelProperty(value = "Instance type")
     @TableField("instance_type")
     private String instanceType;
 
-    @ApiModelProperty(value = "CPU限制")
+    @ApiModelProperty(value = "CPU limit")
     @TableField("cpu_limit")
     private String cpuLimit;
 
-    @ApiModelProperty(value = "内存限制")
+    @ApiModelProperty(value = "Memory limit")
     @TableField("memory_limit")
     private String memoryLimit;
 
-    @ApiModelProperty(value = "GPU限制")
+    @ApiModelProperty(value = "GPU limit")
     @TableField("gpu_limit")
     private String gpuLimit;
 
-    @ApiModelProperty(value = "端口配置")
+    @ApiModelProperty(value = "Port configuration")
     @TableField("port_config")
     private String portConfig;
 
-    @ApiModelProperty(value = "环境变量配置")
+    @ApiModelProperty(value = "Environment variable configuration")
     @TableField("env_config")
     private String envConfig;
 
-    @ApiModelProperty(value = "存储卷配置")
+    @ApiModelProperty(value = "Volume configuration")
     @TableField("volume_config")
     private String volumeConfig;
 
-    @ApiModelProperty(value = "实例状态：running-运行中,stopped-已停止,error-错误,starting-启动中,stopping-停止中")
+    @ApiModelProperty(value = "Instance status: running-running, stopped-stopped, error-error, starting-starting, stopping-stopping")
     @TableField("instance_status")
     private String instanceStatus;
 
-    @ApiModelProperty(value = "健康状态：healthy-健康,unhealthy-不健康,unknown-未知")
+    @ApiModelProperty(value = "Health status: healthy-healthy, unhealthy-unhealthy, unknown-unknown")
     @TableField("health_status")
     private String healthStatus;
 
-    @ApiModelProperty(value = "启动时间")
+    @ApiModelProperty(value = "Start time")
     @TableField("start_time")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime startTime;
 
-    @ApiModelProperty(value = "停止时间")
+    @ApiModelProperty(value = "Stop time")
     @TableField("stop_time")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime stopTime;
 
-    @ApiModelProperty(value = "重启次数")
+    @ApiModelProperty(value = "Restart count")
     @TableField("restart_count")
     private Integer restartCount;
 
-    @ApiModelProperty(value = "CPU使用率")
+    @ApiModelProperty(value = "CPU usage")
     @TableField("cpu_usage")
     private BigDecimal cpuUsage;
 
-    @ApiModelProperty(value = "内存使用率")
+    @ApiModelProperty(value = "Memory usage")
     @TableField("memory_usage")
     private BigDecimal memoryUsage;
 
-    @ApiModelProperty(value = "GPU使用率")
+    @ApiModelProperty(value = "GPU usage")
     @TableField("gpu_usage")
     private BigDecimal gpuUsage;
 
-    @ApiModelProperty(value = "日志路径")
+    @ApiModelProperty(value = "Logs path")
     @TableField("logs_path")
     private String logsPath;
 
-    @ApiModelProperty(value = "创建人")
+    @ApiModelProperty(value = "Creator")
     @TableField(value = "created_by", fill = FieldFill.INSERT)
     private Long createdBy;
 
-    @ApiModelProperty(value = "创建时间")
+    @ApiModelProperty(value = "Creation time")
     @TableField(value = "created_time", fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createdTime;
 
-    @ApiModelProperty(value = "更新时间")
+    @ApiModelProperty(value = "Update time")
     @TableField(value = "updated_time", fill = FieldFill.INSERT_UPDATE)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime updatedTime;
 
-    @ApiModelProperty(value = "是否删除：0-否，1-是")
+    @ApiModelProperty(value = "Deleted: 0-No, 1-Yes")
     @TableField("deleted")
     @TableLogic
     private Integer deleted;
 
-    // 非数据库字段，用于查询时关联显示
-    @ApiModelProperty(value = "算法名称")
+    // Non-database fields for associated display in queries
+    @ApiModelProperty(value = "Algorithm name")
     @TableField(exist = false)
     private String algorithmName;
 
-    @ApiModelProperty(value = "创建人姓名")
+    @ApiModelProperty(value = "Creator name")
     @TableField(exist = false)
     private String createdByName;
 
-    @ApiModelProperty(value = "实例状态描述")
+    @ApiModelProperty(value = "Instance status description")
     @TableField(exist = false)
     private String instanceStatusDesc;
 
-    @ApiModelProperty(value = "健康状态描述")
+    @ApiModelProperty(value = "Health status description")
     @TableField(exist = false)
     private String healthStatusDesc;
 
-    @ApiModelProperty(value = "运行时长（分钟）")
+    @ApiModelProperty(value = "Runtime duration (minutes)")
     @TableField(exist = false)
     private Long runtimeMinutes;
 
     /**
-     * 获取实例状态描述
+     * Get instance status description
      */
     public String getInstanceStatusDesc() {
         if (instanceStatus == null) {
-            return "未知";
+            return "Unknown";
         }
         switch (instanceStatus) {
             case "running":
-                return "运行中";
+                return "Running";
             case "stopped":
-                return "已停止";
+                return "Stopped";
             case "error":
-                return "错误";
+                return "Error";
             case "starting":
-                return "启动中";
+                return "Starting";
             case "stopping":
-                return "停止中";
+                return "Stopping";
             default:
-                return "未知";
+                return "Unknown";
         }
     }
 
     /**
-     * 获取健康状态描述
+     * Get health status description
      */
     public String getHealthStatusDesc() {
         if (healthStatus == null) {
-            return "未知";
+            return "Unknown";
         }
         switch (healthStatus) {
             case "healthy":
-                return "健康";
+                return "Healthy";
             case "unhealthy":
-                return "不健康";
+                return "Unhealthy";
             case "unknown":
-                return "未知";
+                return "Unknown";
             default:
-                return "未知";
+                return "Unknown";
         }
     }
 
     /**
-     * 计算运行时长
+     * Calculate runtime duration
      */
     public Long getRuntimeMinutes() {
         if (startTime != null && stopTime == null && "running".equals(instanceStatus)) {

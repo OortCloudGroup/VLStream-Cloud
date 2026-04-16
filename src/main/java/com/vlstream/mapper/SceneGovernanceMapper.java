@@ -9,7 +9,7 @@ import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
 /**
- * 场景治理数据访问层接口
+ * Scene Governance Data Access Layer Interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -18,43 +18,43 @@ import java.util.List;
 public interface SceneGovernanceMapper extends BaseMapper<SceneGovernance> {
 
     /**
-     * 根据名称查询场景治理信息
+     * Query scene governance information by name
      *
-     * @param name 场景名称
-     * @return 场景治理信息
+     * @param name Scene name
+     * @return Scene governance information
      */
     @Select("SELECT * FROM scene_governance WHERE name = #{name} AND deleted = 0")
     SceneGovernance selectByName(@Param("name") String name);
 
     /**
-     * 根据状态查询场景治理列表
+     * Query scene governance list by status
      *
-     * @param status 场景状态
-     * @return 场景治理列表
+     * @param status Scene status
+     * @return Scene governance list
      */
     @Select("SELECT * FROM scene_governance WHERE status = #{status} AND deleted = 0 ORDER BY created_at DESC")
     List<SceneGovernance> selectByStatus(@Param("status") String status);
 
     /**
-     * 获取场景治理总数
+     * Get total scene governance count
      *
-     * @return 总数
+     * @return Total count
      */
     @Select("SELECT COUNT(*) FROM scene_governance WHERE deleted = 0")
     Long getTotalCount();
 
     /**
-     * 获取启用的场景治理数量
+     * Get enabled scene governance count
      *
-     * @return 启用数量
+     * @return Enabled count
      */
     @Select("SELECT COUNT(*) FROM scene_governance WHERE status = 'enabled' AND deleted = 0")
     Long getEnabledCount();
 
     /**
-     * 获取禁用的场景治理数量
+     * Get disabled scene governance count
      *
-     * @return 禁用数量
+     * @return Disabled count
      */
     @Select("SELECT COUNT(*) FROM scene_governance WHERE status = 'disabled' AND deleted = 0")
     Long getDisabledCount();

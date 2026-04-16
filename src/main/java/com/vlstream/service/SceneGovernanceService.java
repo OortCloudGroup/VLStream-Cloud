@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 场景治理服务层接口
+ * Scene governance service layer interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -17,14 +17,14 @@ import java.util.Map;
 public interface SceneGovernanceService extends IService<SceneGovernance> {
 
     /**
-     * 分页查询场景治理信息
+     * Query scene governance information with pagination
      *
-     * @param page      分页对象
-     * @param name      场景名称
-     * @param status    场景状态
-     * @param startDate 开始日期
-     * @param endDate   结束日期
-     * @return 场景治理信息分页列表
+     * @param page      Pagination object
+     * @param name      Scene name
+     * @param status    Scene status
+     * @param startDate Start date
+     * @param endDate   End date
+     * @return Scene governance information pagination list
      */
     IPage<SceneGovernance> getSceneGovernancePage(Page<SceneGovernance> page,
                                                  String name,
@@ -33,180 +33,180 @@ public interface SceneGovernanceService extends IService<SceneGovernance> {
                                                  String endDate);
 
     /**
-     * 根据名称查询场景治理信息
+     * Query scene governance information by name
      *
-     * @param name 场景名称
-     * @return 场景治理信息
+     * @param name Scene name
+     * @return Scene governance information
      */
     SceneGovernance getByName(String name);
 
     /**
-     * 新增场景治理信息
+     * Add scene governance information
      *
-     * @param sceneGovernance 场景治理信息
-     * @return 是否成功
+     * @param sceneGovernance Scene governance information
+     * @return Whether successful
      */
     boolean addSceneGovernance(SceneGovernance sceneGovernance);
 
     /**
-     * 更新场景治理信息
+     * Update scene governance information
      *
-     * @param sceneGovernance 场景治理信息
-     * @return 是否成功
+     * @param sceneGovernance Scene governance information
+     * @return Whether successful
      */
     boolean updateSceneGovernance(SceneGovernance sceneGovernance);
 
     /**
-     * 删除场景治理信息
+     * Delete scene governance information
      *
-     * @param id 场景ID
-     * @return 是否成功
+     * @param id Scene ID
+     * @return Whether successful
      */
     boolean deleteSceneGovernance(Long id);
 
     /**
-     * 批量删除场景治理信息
+     * Batch delete scene governance information
      *
-     * @param ids 场景ID列表
-     * @return 是否成功
+     * @param ids Scene ID list
+     * @return Whether successful
      */
     boolean deleteSceneGovernanceBatch(List<Long> ids);
 
     /**
-     * 更新场景治理状态
+     * Update scene governance status
      *
-     * @param id     场景ID
-     * @param status 状态
-     * @return 是否成功
+     * @param id     Scene ID
+     * @param status Status
+     * @return Whether successful
      */
     boolean updateSceneGovernanceStatus(Long id, String status);
 
     /**
-     * 批量更新场景治理状态
+     * Batch update scene governance status
      *
-     * @param ids    场景ID列表
-     * @param status 状态
-     * @return 是否成功
+     * @param ids    Scene ID list
+     * @param status Status
+     * @return Whether successful
      */
     boolean updateSceneGovernanceStatusBatch(List<Long> ids, String status);
 
     /**
-     * 根据状态获取场景治理列表
+     * Get scene governance list by status
      *
-     * @param status 场景状态
-     * @return 场景治理列表
+     * @param status Scene status
+     * @return Scene governance list
      */
     List<SceneGovernance> getSceneGovernancesByStatus(String status);
 
     /**
-     * 根据执行类型获取场景治理列表
+     * Get scene governance list by execution type
      *
-     * @param executeType 执行类型
-     * @return 场景治理列表
+     * @param executeType Execution type
+     * @return Scene governance list
      */
     List<SceneGovernance> getSceneGovernancesByExecuteType(String executeType);
 
     /**
-     * 检查场景名称是否存在
+     * Check if scene name exists
      *
-     * @param name 场景名称
-     * @param id   场景ID（编辑时排除自己）
-     * @return 是否存在
+     * @param name Scene name
+     * @param id   Scene ID (exclude self when editing)
+     * @return Whether exists
      */
     boolean checkSceneNameExists(String name, Long id);
 
     /**
-     * 获取场景治理统计信息
+     * Get scene governance statistics
      *
-     * @return 统计信息
+     * @return Statistics
      */
     Map<String, Object> getSceneGovernanceStatistics();
 
     /**
-     * 获取所有执行类型列表
+     * Get all execution type list
      *
-     * @return 执行类型列表
+     * @return Execution type list
      */
     List<String> getAllExecuteTypes();
 
     /**
-     * 启用场景治理
+     * Enable scene governance
      *
-     * @param id 场景ID
-     * @return 是否成功
+     * @param id Scene ID
+     * @return Whether successful
      */
     boolean enableSceneGovernance(Long id);
 
     /**
-     * 禁用场景治理
+     * Disable scene governance
      *
-     * @param id 场景ID
-     * @return 是否成功
+     * @param id Scene ID
+     * @return Whether successful
      */
     boolean disableSceneGovernance(Long id);
 
     /**
-     * 批量启用场景治理
+     * Batch enable scene governance
      *
-     * @param ids 场景ID列表
-     * @return 是否成功
+     * @param ids Scene ID list
+     * @return Whether successful
      */
     boolean enableSceneGovernanceBatch(List<Long> ids);
 
     /**
-     * 批量禁用场景治理
+     * Batch disable scene governance
      *
-     * @param ids 场景ID列表
-     * @return 是否成功
+     * @param ids Scene ID list
+     * @return Whether successful
      */
     boolean disableSceneGovernanceBatch(List<Long> ids);
 
     /**
-     * 执行场景治理
+     * Execute scene governance
      *
-     * @param id 场景ID
-     * @return 执行结果
+     * @param id Scene ID
+     * @return Execution result
      */
     Map<String, Object> executeSceneGovernance(Long id);
 
     /**
-     * 验证场景治理配置
+     * Validate scene governance configuration
      *
-     * @param sceneGovernance 场景治理信息
-     * @return 验证结果
+     * @param sceneGovernance Scene governance information
+     * @return Validation result
      */
     Map<String, Object> validateSceneGovernance(SceneGovernance sceneGovernance);
 
     /**
-     * 导出场景治理信息
+     * Export scene governance information
      *
-     * @param sceneIds 场景ID列表，为空时导出所有场景
-     * @return 导出数据
+     * @param sceneIds Scene ID list, export all scenes when empty
+     * @return Export data
      */
     List<SceneGovernance> exportSceneGovernances(List<Long> sceneIds);
 
     /**
-     * 批量导入场景治理
+     * Batch import scene governance
      *
-     * @param sceneGovernanceList 场景治理列表
-     * @return 导入结果
+     * @param sceneGovernanceList Scene governance list
+     * @return Import result
      */
     Map<String, Object> batchImportSceneGovernances(List<SceneGovernance> sceneGovernanceList);
 
     /**
-     * 获取场景治理执行历史
+     * Get scene governance execution history
      *
-     * @param id 场景ID
-     * @return 执行历史
+     * @param id Scene ID
+     * @return Execution history
      */
     List<Map<String, Object>> getSceneGovernanceExecuteHistory(Long id);
 
     /**
-     * 复制场景治理
+     * Copy scene governance
      *
-     * @param id   源场景ID
-     * @param name 新场景名称
-     * @return 是否成功
+     * @param id   Source scene ID
+     * @param name New scene name
+     * @return Whether successful
      */
     boolean copySceneGovernance(Long id, String name);
 } 

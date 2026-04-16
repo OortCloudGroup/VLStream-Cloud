@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 算法模型Service实现类
+ * Algorithm Model Service Implementation Class
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -38,7 +38,7 @@ public class AlgorithmModelServiceImpl extends ServiceImpl<AlgorithmModelMapper,
     @Override
     public AlgorithmModel getModelById(Long id) {
         if (id == null) {
-            log.warn("获取模型详情时，ID为空");
+            log.warn("Get model details, ID is null");
             return null;
         }
         return baseMapper.selectById(id);
@@ -47,9 +47,9 @@ public class AlgorithmModelServiceImpl extends ServiceImpl<AlgorithmModelMapper,
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AlgorithmModel createModel(AlgorithmModelCreateDTO createDTO) {
-        log.info("创建算法模型：{}", createDTO.getModelName());
+        log.info("Create algorithm model: {}", createDTO.getModelName());
         
-        // 验证模型名称和版本是否存在
+        // Validate model name and version exist
         Integer version = createDTO.getVersion();
         if (version == null || version < 1) {
             version = 1;
@@ -58,19 +58,19 @@ public class AlgorithmModelServiceImpl extends ServiceImpl<AlgorithmModelMapper,
             version++;
         }
 
-        // 验证模型文件是否存在
+        // Validate model file exists
         if (!new File(createDTO.getModelPath()).exists()) {
-            log.warn("模型文件不存在：{}", createDTO.getModelPath());
-            // 在实际生产环境中，这里应该抛出异常
-            // throw new RuntimeException("模型文件不存在");
+            log.warn("Model file does not exist: {}", createDTO.getModelPath());
+            // In actual production environment, an exception should be thrown here
+            // throw new RuntimeException("Model file does not exist");
         }
         
-        // 创建模型实体
+        // Create model entity
         AlgorithmModel model = new AlgorithmModel();
         BeanUtils.copyProperties(createDTO, model);
         model.setVersion(version);
         model.setModelPath("datasets/" + model.getModelPath());
-        // 设置默认值
+        // Set default values
         if (model.getDownloadCount() == null) {
             model.setDownloadCount(0);
         }
@@ -81,42 +81,42 @@ public class AlgorithmModelServiceImpl extends ServiceImpl<AlgorithmModelMapper,
             model.setStatus("draft");
         }
         
-        // 保存到数据库
+        // Save to database
         boolean success = save(model);
         if (!success) {
-            log.error("创建模型失败：{}", createDTO.getModelName());
-            throw new RuntimeException("创建模型失败");
+            log.error("Create model failed: {}", createDTO.getModelName());
+            throw new RuntimeException("Create model failed");
         }
         
-        log.info("创建模型成功，ID：{}", model.getId());
+        log.info("Model created successfully, ID: {}", model.getId());
         return model;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AlgorithmModel updateModel(AlgorithmModelUpdateDTO updateDTO) {
-        log.info("更新算法模型：{}", updateDTO.getId());
+        log.info("Update algorithm model: {}", updateDTO.getId());
         
-        // 检查模型是否存在
+        // Check if model exists
         AlgorithmModel existingModel = getModelById(updateDTO.getId());
         if (existingModel == null) {
-            throw new RuntimeException("模型不存在");
+            throw new RuntimeException("Model does not exist");
         }
         
-        // 验证模型名称和版本是否存在（排除当前记录）
+        // Validate model name and version exist (exclude current record)
         if (updateDTO.getModelName() != null && updateDTO.getVersion() != null) {
             if (checkModelNameAndVersion(updateDTO.getModelName(), updateDTO.getVersion(), updateDTO.getId())) {
-                throw new RuntimeException("模型名称和版本已存在");
+                throw new RuntimeException("Model name and version already exist");
             }
         }
         
-        // 检查模型是否可以更新
+        // Check if model can be updated
         if ("published".equals(existingModel.getStatus()) && updateDTO.getStatus() != null && 
             !updateDTO.getStatus().equals(existingModel.getStatus())) {
-            throw new RuntimeException("已发布的模型不能修改状态");
+            throw new RuntimeException("Published model cannot modify status");
         }
         
-        // 更新字段
+        // Update fields
         if (updateDTO.getModelName() != null) {
             existingModel.setModelName(updateDTO.getModelName());
         }
@@ -142,69 +142,69 @@ public class AlgorithmModelServiceImpl extends ServiceImpl<AlgorithmModelMapper,
             existingModel.setStatus(updateDTO.getStatus());
         }
         
-        // 保存更新
+        // Save update
         boolean success = updateById(existingModel);
         if (!success) {
-            log.error("更新模型失败：{}", updateDTO.getId());
-            throw new RuntimeException("更新模型失败");
+            log.error("Update model failed: {}", updateDTO.getId());
+            throw new RuntimeException("Update model failed");
         }
         
-        log.info("更新模型成功：{}", updateDTO.getId());
+        log.info("Model updated successfully: {}", updateDTO.getId());
         return existingModel;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteModel(Long id) {
-        log.info("删除算法模型：{}", id);
+        log.info("Delete algorithm model: {}", id);
         
-        // 检查模型是否存在
+        // Check if model exists
         AlgorithmModel existingModel = getModelById(id);
         if (existingModel == null) {
-            throw new RuntimeException("模型不存在");
+            throw new RuntimeException("Model does not exist");
         }
         
-        // 检查模型是否可以删除
+        // Check if model can be deleted
         if (!existingModel.canDelete()) {
-            throw new RuntimeException("已发布的模型不能删除");
+            throw new RuntimeException("Published model cannot be deleted");
         }
         
-        // 删除模型（逻辑删除）
+        // Delete model (logical delete)
         boolean success = removeById(id);
         if (!success) {
-            log.error("删除模型失败：{}", id);
-            throw new RuntimeException("删除模型失败");
+            log.error("Delete model failed: {}", id);
+            throw new RuntimeException("Delete model failed");
         }
         
-        log.info("删除模型成功：{}", id);
+        log.info("Model deleted successfully: {}", id);
         return true;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean batchDeleteModel(List<Long> ids) {
-        log.info("批量删除算法模型：{}", ids);
+        log.info("Batch delete algorithm models: {}", ids);
         
         if (ids == null || ids.isEmpty()) {
-            throw new RuntimeException("删除的模型ID列表不能为空");
+            throw new RuntimeException("Model ID list to delete cannot be null");
         }
         
-        // 检查所有模型是否可以删除
+        // Check if all models can be deleted
         List<AlgorithmModel> models = listByIds(ids);
         for (AlgorithmModel model : models) {
             if (!model.canDelete()) {
-                throw new RuntimeException("模型 " + model.getModelName() + " 已发布，不能删除");
+                throw new RuntimeException("Model " + model.getModelName() + " is published and cannot be deleted");
             }
         }
         
-        // 批量删除
+        // Batch delete
         boolean success = removeByIds(ids);
         if (!success) {
-            log.error("批量删除模型失败：{}", ids);
-            throw new RuntimeException("批量删除模型失败");
+            log.error("Batch delete models failed: {}", ids);
+            throw new RuntimeException("Batch delete models failed");
         }
         
-        log.info("批量删除模型成功：{}", ids);
+        log.info("Models batch deleted successfully: {}", ids);
         return true;
     }
 
@@ -226,168 +226,168 @@ public class AlgorithmModelServiceImpl extends ServiceImpl<AlgorithmModelMapper,
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean publishModel(Long id) {
-        log.info("发布算法模型：{}", id);
+        log.info("Publish algorithm model: {}", id);
         
-        // 检查模型是否存在
+        // Check if model exists
         AlgorithmModel existingModel = getModelById(id);
         if (existingModel == null) {
-            throw new RuntimeException("模型不存在");
+            throw new RuntimeException("Model does not exist");
         }
         
-        // 检查模型是否可以发布
+        // Check if model can be published
         if (!existingModel.canPublish()) {
-            throw new RuntimeException("模型状态不允许发布");
+            throw new RuntimeException("Model status does not allow publishing");
         }
         
-        // 验证模型文件是否存在
+        // Validate model file exists
         if (!new File(existingModel.getModelPath()).exists()) {
-            throw new RuntimeException("模型文件不存在，无法发布");
+            throw new RuntimeException("Model file does not exist, cannot publish");
         }
         
-        // 更新状态为已发布
+        // Update status to published
         int result = baseMapper.updateStatus(id, "published");
         if (result <= 0) {
-            log.error("发布模型失败：{}", id);
-            throw new RuntimeException("发布模型失败");
+            log.error("Publish model failed: {}", id);
+            throw new RuntimeException("Publish model failed");
         }
         
-        // 更新发布时间
+        // Update publish time
         existingModel.setPublishTime(LocalDateTime.now());
         updateById(existingModel);
         
-        log.info("发布模型成功：{}", id);
+        log.info("Model published successfully: {}", id);
         return true;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean unpublishModel(Long id) {
-        log.info("撤销发布算法模型：{}", id);
+        log.info("Unpublish algorithm model: {}", id);
         
-        // 检查模型是否存在
+        // Check if model exists
         AlgorithmModel existingModel = getModelById(id);
         if (existingModel == null) {
-            throw new RuntimeException("模型不存在");
+            throw new RuntimeException("Model does not exist");
         }
         
-        // 检查模型是否已发布
+        // Check if model is published
         if (!"published".equals(existingModel.getStatus())) {
-            throw new RuntimeException("模型未发布，无法撤销");
+            throw new RuntimeException("Model is not published, cannot unpublish");
         }
         
-        // 更新状态为草稿
+        // Update status to draft
         int result = baseMapper.updateStatus(id, "draft");
         if (result <= 0) {
-            log.error("撤销发布模型失败：{}", id);
-            throw new RuntimeException("撤销发布模型失败");
+            log.error("Unpublish model failed: {}", id);
+            throw new RuntimeException("Unpublish model failed");
         }
         
-        // 清空发布时间
+        // Clear publish time
         existingModel.setPublishTime(null);
         updateById(existingModel);
         
-        log.info("撤销发布模型成功：{}", id);
+        log.info("Model unpublished successfully: {}", id);
         return true;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean batchPublishModel(List<Long> ids) {
-        log.info("批量发布算法模型：{}", ids);
+        log.info("Batch publish algorithm models: {}", ids);
         
         if (ids == null || ids.isEmpty()) {
-            throw new RuntimeException("发布的模型ID列表不能为空");
+            throw new RuntimeException("Model ID list to publish cannot be null");
         }
         
-        // 检查所有模型是否可以发布
+        // Check if all models can be published
         List<AlgorithmModel> models = listByIds(ids);
         for (AlgorithmModel model : models) {
             if (!model.canPublish()) {
-                throw new RuntimeException("模型 " + model.getModelName() + " 状态不允许发布");
+                throw new RuntimeException("Model " + model.getModelName() + " status does not allow publishing");
             }
         }
         
-        // 批量更新状态
+        // Batch update status
         int result = baseMapper.batchUpdateStatus(ids, "published");
         if (result <= 0) {
-            log.error("批量发布模型失败：{}", ids);
-            throw new RuntimeException("批量发布模型失败");
+            log.error("Batch publish models failed: {}", ids);
+            throw new RuntimeException("Batch publish models failed");
         }
         
-        // 更新发布时间
+        // Update publish time
         for (AlgorithmModel model : models) {
             model.setPublishTime(LocalDateTime.now());
             updateById(model);
         }
         
-        log.info("批量发布模型成功：{}", ids);
+        log.info("Models batch published successfully: {}", ids);
         return true;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String downloadModel(Long id) {
-        log.info("下载算法模型：{}", id);
+        log.info("Download algorithm model: {}", id);
         
-        // 检查模型是否存在
+        // Check if model exists
         AlgorithmModel existingModel = getModelById(id);
         if (existingModel == null) {
-            throw new RuntimeException("模型不存在");
+            throw new RuntimeException("Model does not exist");
         }
         
-        // 检查模型是否可以下载
+        // Check if model can be downloaded
         if (!existingModel.canDownload()) {
-            throw new RuntimeException("模型未发布，无法下载");
+            throw new RuntimeException("Model is not published, cannot download");
         }
         
-        // 验证模型文件是否存在
+        // Validate model file exists
         String filePath = existingModel.getModelPath();
         if (!new File(filePath).exists()) {
-            throw new RuntimeException("模型文件不存在");
+            throw new RuntimeException("Model file does not exist");
         }
         
-        // 增加下载次数
+        // Increment download count
         int result = baseMapper.updateDownloadCount(id);
         if (result <= 0) {
-            log.error("更新下载次数失败：{}", id);
+            log.error("Update download count failed: {}", id);
         }
         
-        log.info("下载模型成功：{}", id);
+        log.info("Model downloaded successfully: {}", id);
         return filePath;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deployModel(Long id) {
-        log.info("部署算法模型：{}", id);
+        log.info("Deploy algorithm model: {}", id);
         
-        // 检查模型是否存在
+        // Check if model exists
         AlgorithmModel existingModel = getModelById(id);
         if (existingModel == null) {
-            throw new RuntimeException("模型不存在");
+            throw new RuntimeException("Model does not exist");
         }
         
-        // 检查模型是否可以部署
+        // Check if model can be deployed
         if (!existingModel.canDeploy()) {
-            throw new RuntimeException("模型未发布，无法部署");
+            throw new RuntimeException("Model is not published, cannot deploy");
         }
         
-        // 验证模型文件是否存在
+        // Validate model file exists
         if (!new File(existingModel.getModelPath()).exists()) {
-            throw new RuntimeException("模型文件不存在");
+            throw new RuntimeException("Model file does not exist");
         }
         
-        // 这里应该调用实际的部署逻辑
-        // 例如：调用Docker API、Kubernetes API等
-        log.info("执行模型部署逻辑...");
+        // Here should call actual deployment logic
+        // e.g., call Docker API, Kubernetes API, etc.
+        log.info("Execute model deployment logic...");
         
-        // 增加部署次数
+        // Increment deployment count
         int result = baseMapper.updateDeployCount(id);
         if (result <= 0) {
-            log.error("更新部署次数失败：{}", id);
+            log.error("Update deployment count failed: {}", id);
         }
         
-        log.info("部署模型成功：{}", id);
+        log.info("Model deployed successfully: {}", id);
         return true;
     }
 

@@ -3,18 +3,18 @@ package com.vlstream.enums;
 import lombok.Getter;
 
 /**
- * 算法类型枚举
+ * Algorithm Type Enum
  *
  * @author Administrator
  */
 @Getter
 public enum AlgorithmCategoryEnum {
 
-    DETECT("detect", "目标检测算法"),
-    SEGMENT("segment", "实例分割算法"),
-	CLASSIFY("classify", "图像分类算法"),
-	POSE("pose", "关键点检测算法"),
-	OBB("obb", "旋转目标检测算法");
+    DETECT("detect", "Object Detection Algorithm"),
+    SEGMENT("segment", "Instance Segmentation Algorithm"),
+	CLASSIFY("classify", "Image Classification Algorithm"),
+	POSE("pose", "Keypoint Detection Algorithm"),
+	OBB("obb", "Rotated Object Detection Algorithm");
 
     private final String code;
     private final String description;
@@ -25,10 +25,10 @@ public enum AlgorithmCategoryEnum {
     }
 
     /**
-     * 根据code获取枚举
+     * Get enum by code
      *
-     * @param code 状态码
-     * @return 枚举对象
+     * @param code Status code
+     * @return Enum object
      */
     public static AlgorithmCategoryEnum of(String code) {
         if (code == null) {

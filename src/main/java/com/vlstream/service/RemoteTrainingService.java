@@ -16,7 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 远程训练服务类
+ * Remote training service class
  */
 @Slf4j
 @Service
@@ -46,7 +46,7 @@ public class RemoteTrainingService {
     private static final String DEFAULT_LOG_DIR = "logs";
 
     /**
-     * 启动远端YOLO训练（后台运行，日志落盘）
+     * Start remote YOLO training (run in background, save logs to disk)
      */
     public StartResult startTraining(String taskType,
                                      Long taskId,
@@ -118,7 +118,7 @@ public class RemoteTrainingService {
     }
 
     /**
-     * 执行SSH命令，如果认证失败则使用默认配置的SSH账号重试一次。
+     * Execute SSH command, retry once with default SSH configuration if authentication fails.
      */
     private SSHService.SSHExecutionResult executeWithFallback(RemoteServer server, String command) {
         String host = server != null ? server.getServerIp() : sshHost;
@@ -153,7 +153,7 @@ public class RemoteTrainingService {
     }
 
     /**
-     * 处理训练完成后的模型文件
+     * Process model files after training completion
      */
     private String processTrainingResult(Long taskId, RemoteServer server, String trainType, String taskName) {
         try {
@@ -216,7 +216,7 @@ public class RemoteTrainingService {
     }
 
     /**
-     * 获取训练进度
+     * Get training progress
      */
     public LogResult getTrainingLogs(Long taskId, String logPath, String trainType, String taskName, int lines) {
         LogResult logResult = new LogResult();
@@ -273,7 +273,7 @@ public class RemoteTrainingService {
     }
 
     /**
-     * ????
+     * Stop training task
      */
     public boolean stopTraining(Long taskId, String logPath) {
         try {
@@ -297,7 +297,7 @@ public class RemoteTrainingService {
     }
 
     /**
-     * 获取训练进度
+     * Get training progress
      */
     public TrainingProgress getProgress(Long taskId, String logPath) {
         try {
@@ -389,14 +389,14 @@ public class RemoteTrainingService {
     }
 
     /**
-     * 加密密码(实际实现中应使用更安全的加密方式)
+     * Encrypt password (should use more secure encryption in actual implementation)
      */
     private String encryptPassword(String password) {
         return Base64.getEncoder().encodeToString(password.getBytes());
     }
 
     /**
-     * 解密密码
+     * Decrypt password
      */
     private String decryptPassword(String encryptedPassword) {
         if (encryptedPassword == null) {
@@ -412,7 +412,7 @@ public class RemoteTrainingService {
     }
 
     /**
-     * 训练进度类
+     * Training progress class
      */
     @Data
     public static class StartResult {
@@ -426,7 +426,7 @@ public class RemoteTrainingService {
     }
 
     /**
-     * 训练进度类
+     * Training progress class
      */
     @Data
     public static class LogResult {

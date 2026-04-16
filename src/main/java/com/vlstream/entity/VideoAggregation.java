@@ -9,7 +9,7 @@ import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDateTime;
 
 /**
- * 视频汇聚配置实体类
+ * Video Aggregation Configuration Entity Class
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -17,83 +17,83 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("vls_video_aggregation")
-@ApiModel(value = "VideoAggregation对象", description = "视频汇聚配置")
+@ApiModel(value = "VideoAggregation object", description = "Video aggregation configuration")
 public class VideoAggregation {
 
-    @ApiModelProperty(value = "主键ID")
+    @ApiModelProperty(value = "Primary key ID")
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @ApiModelProperty(value = "汇聚名称")
+    @ApiModelProperty(value = "Aggregation name")
     @TableField("aggregation_name")
     private String aggregationName;
 
-    @ApiModelProperty(value = "汇聚类型(1-画面分割,2-画中画,3-轮播,4-智能切换)")
+    @ApiModelProperty(value = "Aggregation type (1-Split screen, 2-Picture-in-picture, 3-Rotation, 4-Intelligent switching)")
     @TableField("aggregation_type")
     private Integer aggregationType;
 
-    @ApiModelProperty(value = "画面布局(1x1,2x2,3x3,4x4,自定义)")
+    @ApiModelProperty(value = "Screen layout (1x1, 2x2, 3x3, 4x4, custom)")
     @TableField("layout")
     private String layout;
 
-    @ApiModelProperty(value = "输出分辨率")
+    @ApiModelProperty(value = "Output resolution")
     @TableField("output_resolution")
     private String outputResolution;
 
-    @ApiModelProperty(value = "输出帧率")
+    @ApiModelProperty(value = "Output frame rate")
     @TableField("output_frame_rate")
     private Integer outputFrameRate;
 
-    @ApiModelProperty(value = "输出比特率")
+    @ApiModelProperty(value = "Output bit rate")
     @TableField("output_bit_rate")
     private Integer outputBitRate;
 
-    @ApiModelProperty(value = "源流ID列表(JSON格式)")
+    @ApiModelProperty(value = "Source stream ID list (JSON format)")
     @TableField("source_stream_ids")
     private String sourceStreamIds;
 
-    @ApiModelProperty(value = "输出流地址")
+    @ApiModelProperty(value = "Output stream URL")
     @TableField("output_stream_url")
     private String outputStreamUrl;
 
-    @ApiModelProperty(value = "状态(0-停止,1-运行,2-异常)")
+    @ApiModelProperty(value = "Status (0-Stop, 1-Running, 2-Exception)")
     @TableField("status")
     private Integer status;
 
-    @ApiModelProperty(value = "切换策略(1-手动,2-自动,3-定时)")
+    @ApiModelProperty(value = "Switching strategy (1-Manual, 2-Automatic, 3-Timed)")
     @TableField("switch_strategy")
     private Integer switchStrategy;
 
-    @ApiModelProperty(value = "切换间隔(秒)")
+    @ApiModelProperty(value = "Switching interval (seconds)")
     @TableField("switch_interval")
     private Integer switchInterval;
 
-    @ApiModelProperty(value = "描述")
+    @ApiModelProperty(value = "Description")
     @TableField("description")
     private String description;
 
-    @ApiModelProperty(value = "是否启用(0-禁用,1-启用)")
+    @ApiModelProperty(value = "Enabled (0-Disabled, 1-Enabled)")
     @TableField("enabled")
     private Integer enabled;
 
-    @ApiModelProperty(value = "是否删除(0-未删除,1-已删除)")
+    @ApiModelProperty(value = "Deleted (0-Not deleted, 1-Deleted)")
     @TableField("deleted")
     @TableLogic
     private Integer deleted;
 
-    @ApiModelProperty(value = "创建时间")
+    @ApiModelProperty(value = "Creation time")
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 
-    @ApiModelProperty(value = "更新时间")
+    @ApiModelProperty(value = "Update time")
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
-    @ApiModelProperty(value = "创建人")
+    @ApiModelProperty(value = "Creator")
     @TableField("creator")
     private String creator;
 
-    @ApiModelProperty(value = "更新人")
+    @ApiModelProperty(value = "Updater")
     @TableField("updater")
     private String updater;
 } 

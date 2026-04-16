@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * 用户同步服务
+ * User sync service
  */
 @Slf4j
 @Service
@@ -25,7 +25,7 @@ public class UserSyncService {
     private UserCenterApiService userCenterApiService;
 
     /**
-     * 同步用户信息到本地
+     * Sync user information to local
      */
     public LocalUser syncUserToLocal(String accessToken) {
         try {
@@ -85,7 +85,7 @@ public class UserSyncService {
     }
 
     /**
-     * 根据用户ID获取本地用户信息
+     * Get local user information by user ID
      */
     public LocalUser getLocalUser(String userId) {
         return localUserMapper.selectOne(
@@ -94,7 +94,7 @@ public class UserSyncService {
     }
 
     /**
-     * 更新本地用户信息
+     * Update local user information
      */
     public LocalUser updateLocalUser(String userId, LocalUser userData) {
         LocalUser existingUser = getLocalUser(userId);
@@ -124,7 +124,7 @@ public class UserSyncService {
     }
 
     /**
-     * 解析日期时间字符串
+     * Parse date time string
      */
     private LocalDateTime parseDateTime(String dateTimeStr) {
         if (dateTimeStr == null || dateTimeStr.trim().isEmpty()) {
@@ -141,7 +141,7 @@ public class UserSyncService {
     }
 
     /**
-     * 计算token过期时间（24小时后）
+     * Calculate token expiration time (24 hours later)
      */
     private LocalDateTime calculateTokenExpireTime() {
         return LocalDateTime.now().plusHours(24);

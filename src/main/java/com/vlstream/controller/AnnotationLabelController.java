@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 标注标签Controller
+ * Annotation Label Controller
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/annotation")
 @CrossOrigin(origins = "*")
-@Api(tags = "标注标签管理")
+@Api(tags = "Annotation Label Management")
 public class AnnotationLabelController {
 
     @Autowired
@@ -43,11 +43,11 @@ public class AnnotationLabelController {
     private AlgorithmAnnotationService algorithmAnnotationService;
 
     /**
-     * 获取标注项目的标签列表
+     * Get label list of annotation project
      *
-     * @param annotationId 标注项目ID
-     * @param keyword      搜索关键词（可选）
-     * @return 标签列表
+     * @param annotationId Annotation project ID
+     * @param keyword      Search keyword (optional)
+     * @return Label list
      */
     @GetMapping("/{annotationId}/labels")
     public Result<List<AnnotationLabel>> getLabels(@PathVariable Long annotationId,
@@ -61,17 +61,17 @@ public class AnnotationLabelController {
             }
             return Result.success(labels);
         } catch (Exception e) {
-            log.error("获取标签列表失败", e);
-            return Result.error("获取标签列表失败: " + e.getMessage());
+            log.error("Failed to get label list", e);
+            return Result.error("Failed to get label list: " + e.getMessage());
         }
     }
 
     /**
-     * 创建标签
+     * Create label
      *
-     * @param annotationId 标注项目ID
-     * @param requestBody  请求体
-     * @return 创建的标签
+     * @param annotationId Annotation project ID
+     * @param requestBody  Request body
+     * @return Created label
      */
     @PostMapping("/{annotationId}/labels")
     public Result<AnnotationLabel> createLabel(@PathVariable Long annotationId,
@@ -82,26 +82,26 @@ public class AnnotationLabelController {
             String description = (String) requestBody.get("description");
 
             if (name == null || name.trim().isEmpty()) {
-                return Result.error("标签名称不能为空");
+                return Result.error("Label name cannot be empty");
             }
             if (color == null || color.trim().isEmpty()) {
-                return Result.error("标签颜色不能为空");
+                return Result.error("Label color cannot be empty");
             }
 
             AnnotationLabel label = annotationLabelService.createLabel(annotationId, name.trim(), color.trim(), description);
             return Result.success(label);
         } catch (Exception e) {
-            log.error("创建标签失败", e);
-            return Result.error("创建标签失败: " + e.getMessage());
+            log.error("Failed to create label", e);
+            return Result.error("Failed to create label: " + e.getMessage());
         }
     }
 
     /**
-     * 更新标签
+     * Update label
      *
-     * @param labelId     标签ID
-     * @param requestBody 请求体
-     * @return 更新后的标签
+     * @param labelId     Label ID
+     * @param requestBody Request body
+     * @return Updated label
      */
     @PutMapping("/labels/{labelId}")
     public Result<AnnotationLabel> updateLabel(@PathVariable Long labelId,
@@ -112,25 +112,25 @@ public class AnnotationLabelController {
             String description = (String) requestBody.get("description");
 
             if (name == null || name.trim().isEmpty()) {
-                return Result.error("标签名称不能为空");
+                return Result.error("Label name cannot be empty");
             }
             if (color == null || color.trim().isEmpty()) {
-                return Result.error("标签颜色不能为空");
+                return Result.error("Label color cannot be empty");
             }
 
             AnnotationLabel label = annotationLabelService.updateLabel(labelId, name.trim(), color.trim(), description);
             return Result.success(label);
         } catch (Exception e) {
-            log.error("更新标签失败", e);
-            return Result.error("更新标签失败: " + e.getMessage());
+            log.error("Failed to update label", e);
+            return Result.error("Failed to update label: " + e.getMessage());
         }
     }
 
     /**
-     * 删除标签
+     * Delete label
      *
-     * @param labelId 标签ID
-     * @return 删除结果
+     * @param labelId Label ID
+     * @return Delete result
      */
     @DeleteMapping("/labels/{labelId}")
     public Result<Boolean> deleteLabel(@PathVariable Long labelId) {
@@ -138,17 +138,17 @@ public class AnnotationLabelController {
             boolean success = annotationLabelService.deleteLabel(labelId);
             return Result.success(success);
         } catch (Exception e) {
-            log.error("删除标签失败", e);
-            return Result.error("删除标签失败: " + e.getMessage());
+            log.error("Failed to delete label", e);
+            return Result.error("Failed to delete label: " + e.getMessage());
         }
     }
 
     /**
-     * 批量更新标签排序
+     * Batch update label sort order
      *
-     * @param annotationId 标注项目ID
-     * @param requestBody  请求体（包含labelIds数组）
-     * @return 更新结果
+     * @param annotationId Annotation project ID
+     * @param requestBody  Request body (contains labelIds array)
+     * @return Update result
      */
     @PutMapping("/{annotationId}/labels/sort")
     public Result<Boolean> updateLabelSort(@PathVariable Long annotationId,
@@ -158,23 +158,23 @@ public class AnnotationLabelController {
             List<Long> labelIds = (List<Long>) requestBody.get("labelIds");
 
             if (labelIds == null || labelIds.isEmpty()) {
-                return Result.error("标签ID列表不能为空");
+                return Result.error("Label ID list cannot be empty");
             }
 
             boolean success = annotationLabelService.updateSortOrder(annotationId, labelIds);
             return Result.success(success);
         } catch (Exception e) {
-            log.error("更新标签排序失败", e);
-            return Result.error("更新标签排序失败: " + e.getMessage());
+            log.error("Failed to update label sort order", e);
+            return Result.error("Failed to update label sort order: " + e.getMessage());
         }
     }
 
     /**
-     * 获取图片的标注实例列表
+     * Get annotation instance list of image
      *
-     * @param annotationId 标注项目ID
-     * @param imageName    图片名称
-     * @return 标注实例列表
+     * @param annotationId Annotation project ID
+     * @param imageName    Image name
+     * @return Annotation instance list
      */
     @GetMapping("/{annotationId}/instances")
     public Result<List<AnnotationInstance>> getAnnotationInstances(@PathVariable Long annotationId,
@@ -183,16 +183,16 @@ public class AnnotationLabelController {
             List<AnnotationInstance> instances = annotationInstanceService.getByAnnotationIdAndImageName(annotationId, imageName);
             return Result.success(instances);
         } catch (Exception e) {
-            log.error("获取标注实例失败", e);
-            return Result.error("获取标注实例失败: " + e.getMessage());
+            log.error("Failed to get annotation instances", e);
+            return Result.error("Failed to get annotation instances: " + e.getMessage());
         }
     }
 
     /**
-     * 获取标注项目的所有标注实例列表
+     * Get all annotation instance list of annotation project
      *
-     * @param annotationId 标注项目ID
-     * @return 标注实例列表
+     * @param annotationId Annotation project ID
+     * @return Annotation instance list
      */
     @GetMapping("/{annotationId}/instances/all")
     public Result<List<AnnotationInstance>> getAllAnnotationInstances(@PathVariable Long annotationId) {
@@ -200,17 +200,17 @@ public class AnnotationLabelController {
             List<AnnotationInstance> instances = annotationInstanceService.getByAnnotationId(annotationId);
             return Result.success(instances);
         } catch (Exception e) {
-            log.error("获取标注项目所有实例失败", e);
-            return Result.error("获取标注项目所有实例失败: " + e.getMessage());
+            log.error("Failed to get all annotation project instances", e);
+            return Result.error("Failed to get all annotation project instances: " + e.getMessage());
         }
     }
 
     /**
-     * 保存标注实例
+     * Save annotation instance
      *
-     * @param annotationId 标注项目ID
-     * @param requestBody  请求体
-     * @return 保存的标注实例
+     * @param annotationId Annotation project ID
+     * @param requestBody  Request body
+     * @return Saved annotation instance
      */
     @PostMapping("/{annotationId}/instances")
     public Result<AnnotationInstance> saveAnnotationInstance(@PathVariable Long annotationId,
@@ -224,17 +224,17 @@ public class AnnotationLabelController {
             AnnotationInstance instance = annotationInstanceService.saveAnnotation(annotationId, labelId, imageId, annotationType, annotationData);
             return Result.success(instance);
         } catch (Exception e) {
-            log.error("保存标注实例失败", e);
-            return Result.error("保存标注实例失败: " + e.getMessage());
+            log.error("Failed to save annotation instance", e);
+            return Result.error("Failed to save annotation instance: " + e.getMessage());
         }
     }
 
     /**
-     * 批量保存图片的标注实例
+     * Batch save annotation instances of image
      *
-     * @param annotationId 标注项目ID
-     * @param requestBody  请求体
-     * @return 保存结果
+     * @param annotationId Annotation project ID
+     * @param requestBody  Request body
+     * @return Save result
      */
     @PostMapping("/{annotationId}/instances/batch")
     public Result<Boolean> batchSaveAnnotationInstances(@PathVariable Long annotationId,
@@ -274,47 +274,47 @@ public class AnnotationLabelController {
                     algorithmAnnotationService.updateById(annotation);
                 }
             } catch (Exception statEx) {
-                log.warn("批量保存后更新统计信息失败: annotationId={}, error={}", annotationId, statEx.getMessage());
+                log.warn("Failed to update statistics after batch save: annotationId={}, error={}", annotationId, statEx.getMessage());
             }
 
             return Result.success(success);
         } catch (Exception e) {
-            log.error("批量保存标注实例失败", e);
-            return Result.error("批量保存标注实例失败: " + e.getMessage());
+            log.error("Failed to batch save annotation instances", e);
+            return Result.error("Failed to batch save annotation instances: " + e.getMessage());
         }
     }
 
     /**
-     * 删除标注实例
+     * Delete annotation instance
      *
-     * @param instanceId 实例ID
-     * @return 删除结果
+     * @param instanceId Instance ID
+     * @return Delete result
      */
     @DeleteMapping("/instances/{instanceId}")
     public Result<Boolean> deleteAnnotationInstance(@PathVariable Long instanceId) {
-        log.info("收到删除标注实例请求: instanceId={}", instanceId);
+        log.info("Received delete annotation instance request: instanceId={}", instanceId);
         try {
             boolean success = annotationInstanceService.deleteAnnotation(instanceId);
-            log.info("删除标注实例结果: instanceId={}, success={}", instanceId, success);
+            log.info("Delete annotation instance result: instanceId={}, success={}", instanceId, success);
             return Result.success(success);
         } catch (Exception e) {
-            log.error("删除标注实例失败: instanceId={}", instanceId, e);
-            return Result.error("删除标注实例失败: " + e.getMessage());
+            log.error("Failed to delete annotation instance: instanceId={}", instanceId, e);
+            return Result.error("Failed to delete annotation instance: " + e.getMessage());
         }
     }
 
     /**
-     * 批量删除标注实例
+     * Batch delete annotation instances
      *
-     * @param instanceIds 实例ID列表
-     * @return 删除结果
+     * @param instanceIds Instance ID list
+     * @return Delete result
      */
     @DeleteMapping("/instances/batch")
     public Result<String> batchDeleteAnnotationInstances(@RequestBody List<Long> instanceIds) {
-        log.info("批量删除标注实例：IDs={}", instanceIds);
+        log.info("Batch delete annotation instances: IDs={}", instanceIds);
 
         if (instanceIds == null || instanceIds.isEmpty()) {
-            return Result.error("实例ID列表不能为空");
+            return Result.error("Instance ID list cannot be empty");
         }
 
         try {
@@ -326,11 +326,11 @@ public class AnnotationLabelController {
                 }
             }
 
-            log.info("批量删除完成，成功删除 {} 个实例", totalDeleted);
-            return Result.success("批量删除成功，共删除 " + totalDeleted + " 个实例");
+            log.info("Batch delete completed, successfully deleted {} instances", totalDeleted);
+            return Result.success("Batch delete successful, deleted " + totalDeleted + " instances");
         } catch (Exception e) {
-            log.error("批量删除标注实例失败", e);
-            return Result.error("批量删除失败：" + e.getMessage());
+            log.error("Failed to batch delete annotation instances", e);
+            return Result.error("Batch delete failed: " + e.getMessage());
         }
     }
 
@@ -398,7 +398,7 @@ public class AnnotationLabelController {
     }
 
     /**
-     * 计算标注进度（0-100）
+     * Calculate annotation progress (0-100)
      */
     private int calculateProgress(Integer annotatedCount, Integer totalCount) {
         if (totalCount == null || totalCount == 0) {
@@ -411,7 +411,7 @@ public class AnnotationLabelController {
     }
 
     /**
-     * 根据进度计算标注状态
+     * Calculate annotation status based on progress
      */
     private String calculateAnnotationStatus(int progress) {
         if (progress == 0) {

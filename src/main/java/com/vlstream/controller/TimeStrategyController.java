@@ -10,95 +10,95 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 时间策略控制器
+ * Time Strategy Controller
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/time-strategy")
 @RequiredArgsConstructor
-@Api(tags = "时间策略管理")
+@Api(tags = "Time Strategy Management")
 public class TimeStrategyController {
     
     private final TimeStrategyService timeStrategyService;
     
     /**
-     * 根据设备ID获取时间策略
+     * Get time strategy by device ID
      */
     @GetMapping("/{deviceId}")
-    @Operation(summary = "获取时间策略", description = "根据设备ID获取时间策略")
+    @Operation(summary = "Get time strategy", description = "Get time strategy by device ID")
     public Result<TimeStrategy> getByDeviceId(@PathVariable String deviceId) {
-        log.info("获取设备时间策略，设备ID: {}", deviceId);
+        log.info("Get device time strategy, device ID: {}", deviceId);
         TimeStrategy timeStrategy = timeStrategyService.getByDeviceId(deviceId);
         
-        // 添加调试日志
+        // Add debug logs
         if (timeStrategy != null) {
-            log.info("查询到时间策略 - ID: {}, 设备ID: {}, 策略类型: {}", 
+            log.info("Found time strategy - ID: {}, device ID: {}, strategy type: {}", 
                 timeStrategy.getId(), timeStrategy.getDeviceId(), timeStrategy.getStrategyType());
-            log.info("每天时间段: {}", timeStrategy.getDailyTimes());
-            log.info("每周时间段: {}", timeStrategy.getWeeklyTimes());
+            log.info("Daily time periods: {}", timeStrategy.getDailyTimes());
+            log.info("Weekly time periods: {}", timeStrategy.getWeeklyTimes());
             
-            // 检查字段是否为null
+            // Check if fields are null
             if (timeStrategy.getDailyTimes() == null) {
-                log.warn("dailyTimes 字段为 null");
+                log.warn("dailyTimes field is null");
             }
             if (timeStrategy.getWeeklyTimes() == null) {
-                log.warn("weeklyTimes 字段为 null");
+                log.warn("weeklyTimes field is null");
             }
         } else {
-            log.info("未找到设备 {} 的时间策略", deviceId);
+            log.info("Time strategy not found for device {}", deviceId);
         }
         
         return Result.success(timeStrategy);
     }
     
     /**
-     * 保存或更新时间策略
+     * Save or update time strategy
      */
     @PostMapping
-    @Operation(summary = "保存时间策略", description = "保存或更新时间策略")
+    @Operation(summary = "Save time strategy", description = "Save or update time strategy")
     public Result<Boolean> saveOrUpdate(@RequestBody TimeStrategy timeStrategy) {
-        log.info("保存时间策略 - 设备ID: {}, 策略类型: {}", 
+        log.info("Save time strategy - device ID: {}, strategy type: {}", 
             timeStrategy.getDeviceId(), timeStrategy.getStrategyType());
-        log.info("每天时间段: {}", timeStrategy.getDailyTimes());
-        log.info("每周时间段: {}", timeStrategy.getWeeklyTimes());
+        log.info("Daily time periods: {}", timeStrategy.getDailyTimes());
+        log.info("Weekly time periods: {}", timeStrategy.getWeeklyTimes());
         
         boolean success = timeStrategyService.saveOrUpdateStrategy(timeStrategy);
-        return success ? Result.success(true) : Result.error("保存失败");
+        return success ? Result.success(true) : Result.error("Save failed");
     }
-    
+
     /**
-     * 根据设备ID删除时间策略
+     * Delete time strategy by device ID
      */
     @DeleteMapping("/{deviceId}")
-    @Operation(summary = "删除时间策略", description = "根据设备ID删除时间策略")
+    @Operation(summary = "Delete time strategy", description = "Delete time strategy by device ID")
     public Result<Boolean> deleteByDeviceId(@PathVariable String deviceId) {
         boolean success = timeStrategyService.deleteByDeviceId(deviceId);
-        return success ? Result.success(true) : Result.error("删除失败");
+        return success ? Result.success(true) : Result.error("Delete failed");
     }
-    
+
     /**
-     * 调试接口 - 检查原始数据
+     * Debug interface - Check raw data
      */
     @GetMapping("/debug/{deviceId}")
-    @Operation(summary = "调试接口", description = "调试时间策略数据")
+    @Operation(summary = "Debug interface", description = "Debug time strategy data")
     public Result<String> debugTimeStrategy(@PathVariable String deviceId) {
         TimeStrategy timeStrategy = timeStrategyService.getByDeviceId(deviceId);
         
         if (timeStrategy == null) {
-            return Result.success("未找到数据");
+            return Result.success("Data not found");
         }
         
         StringBuilder debug = new StringBuilder();
-        debug.append("原始对象: ").append(timeStrategy.toString()).append("\n");
+        debug.append("Original object: ").append(timeStrategy.toString()).append("\n");
         debug.append("ID: ").append(timeStrategy.getId()).append("\n");
-        debug.append("设备ID: ").append(timeStrategy.getDeviceId()).append("\n");
-        debug.append("策略类型: ").append(timeStrategy.getStrategyType()).append("\n");
-        debug.append("每天时间段类型: ").append(timeStrategy.getDailyTimes() != null ? timeStrategy.getDailyTimes().getClass().getName() : "null").append("\n");
-        debug.append("每天时间段值: ").append(timeStrategy.getDailyTimes()).append("\n");
-        debug.append("每周时间段类型: ").append(timeStrategy.getWeeklyTimes() != null ? timeStrategy.getWeeklyTimes().getClass().getName() : "null").append("\n");
-        debug.append("每周时间段值: ").append(timeStrategy.getWeeklyTimes()).append("\n");
-        debug.append("创建时间: ").append(timeStrategy.getCreateTime()).append("\n");
-        debug.append("更新时间: ").append(timeStrategy.getUpdateTime()).append("\n");
+        debug.append("Device ID: ").append(timeStrategy.getDeviceId()).append("\n");
+        debug.append("Strategy type: ").append(timeStrategy.getStrategyType()).append("\n");
+        debug.append("Daily time periods type: ").append(timeStrategy.getDailyTimes() != null ? timeStrategy.getDailyTimes().getClass().getName() : "null").append("\n");
+        debug.append("Daily time periods value: ").append(timeStrategy.getDailyTimes()).append("\n");
+        debug.append("Weekly time periods type: ").append(timeStrategy.getWeeklyTimes() != null ? timeStrategy.getWeeklyTimes().getClass().getName() : "null").append("\n");
+        debug.append("Weekly time periods value: ").append(timeStrategy.getWeeklyTimes()).append("\n");
+        debug.append("Create time: ").append(timeStrategy.getCreateTime()).append("\n");
+        debug.append("Update time: ").append(timeStrategy.getUpdateTime()).append("\n");
         
         return Result.success(debug.toString());
     }

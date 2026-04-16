@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDateTime;
 
 /**
- * 本地用户实体类
+ * Local User Entity Class
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -18,103 +18,103 @@ public class LocalUser {
     private Long id;
 
     /**
-     * 统一用户中心用户ID
+     * Unified user center user ID
      */
     @TableField("user_id")
     private String userId;
 
     /**
-     * 租户ID
+     * Tenant ID
      */
     @TableField("tenant_id")
     private String tenantId;
 
     /**
-     * 登录账号
+     * Login account
      */
     @TableField("login_id")
     private String loginId;
 
     /**
-     * 用户姓名
+     * User name
      */
     @TableField("user_name")
     private String userName;
 
     /**
-     * 姓名拼音
+     * User name pinyin
      */
     @TableField("user_name_py")
     private String userNamePy;
 
     /**
-     * 姓名首字母
+     * User name first letter pinyin
      */
     @TableField("user_name_fpy")
     private String userNameFpy;
 
     /**
-     * 用户头像
+     * User avatar
      */
     @TableField("photo")
     private String photo;
 
     /**
-     * 用户状态：1正常，2禁用
+     * User status: 1-Normal, 2-Disabled
      */
     @TableField("status")
     private Integer status;
 
     /**
-     * 用户来源：1系统创建，2组织创建，3用户池创建，4注册
+     * User source: 1-System created, 2-Organization created, 3-User pool created, 4-Registered
      */
     @TableField("form")
     private Integer form;
 
     /**
-     * 最后登录时间
+     * Last login time
      */
     @TableField("login_time")
     private LocalDateTime loginTime;
 
     /**
-     * 最后登录IP
+     * Last login IP
      */
     @TableField("login_ip")
     private String loginIp;
 
     /**
-     * 用户登录身份：1B/E端用户，2C端用户
+     * User login identity: 1-B/E end user, 2-C end user
      */
     @TableField("login_type")
     private Integer loginType;
 
     /**
-     * 登录客户端类型
+     * Login client type
      */
     @TableField("client")
     private String client;
 
     /**
-     * 访问令牌
+     * Access token
      */
     @TableField("access_token")
     private String accessToken;
 
     /**
-     * 令牌过期时间
+     * Token expiration time
      */
     @TableField("token_expire_time")
     private LocalDateTime tokenExpireTime;
 
     /**
-     * 创建时间
+     * Creation time
      */
     @TableField(value = "created_at", fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 
     /**
-     * 更新时间
+     * Update time
      */
     @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedAt;

@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 视频汇聚配置Service接口
+ * Video aggregation configuration service interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -17,13 +17,13 @@ import java.util.Map;
 public interface VideoAggregationService extends IService<VideoAggregation> {
 
     /**
-     * 分页查询视频汇聚配置
+     * Query video aggregation configuration with pagination
      *
-     * @param page 分页对象
-     * @param aggregationName 汇聚名称
-     * @param aggregationType 汇聚类型
-     * @param status 状态
-     * @return 分页结果
+     * @param page Pagination object
+     * @param aggregationName Aggregation name
+     * @param aggregationType Aggregation type
+     * @param status Status
+     * @return Pagination result
      */
     IPage<VideoAggregation> getAggregationPage(Page<VideoAggregation> page,
                                                String aggregationName,
@@ -31,81 +31,81 @@ public interface VideoAggregationService extends IService<VideoAggregation> {
                                                Integer status);
 
     /**
-     * 启动视频汇聚
+     * Start video aggregation
      *
-     * @param id 汇聚配置ID
-     * @return 是否成功
+     * @param id Aggregation configuration ID
+     * @return Whether successful
      */
     boolean startAggregation(Long id);
 
     /**
-     * 停止视频汇聚
+     * Stop video aggregation
      *
-     * @param id 汇聚配置ID
-     * @return 是否成功
+     * @param id Aggregation configuration ID
+     * @return Whether successful
      */
     boolean stopAggregation(Long id);
 
     /**
-     * 重启视频汇聚
+     * Restart video aggregation
      *
-     * @param id 汇聚配置ID
-     * @return 是否成功
+     * @param id Aggregation configuration ID
+     * @return Whether successful
      */
     boolean restartAggregation(Long id);
 
     /**
-     * 切换画面
+     * Switch stream
      *
-     * @param id 汇聚配置ID
-     * @param targetStreamId 目标流ID
-     * @return 是否成功
+     * @param id Aggregation configuration ID
+     * @param targetStreamId Target stream ID
+     * @return Whether successful
      */
     boolean switchStream(Long id, Long targetStreamId);
 
     /**
-     * 获取汇聚状态
+     * Get aggregation status
      *
-     * @param id 汇聚配置ID
-     * @return 状态信息
+     * @param id Aggregation configuration ID
+     * @return Status information
      */
     Map<String, Object> getAggregationStatus(Long id);
 
     /**
-     * 获取状态统计
+     * Get status statistics
      *
-     * @return 状态统计
+     * @return Status statistics
      */
     Map<String, Object> getStatusStatistics();
 
     /**
-     * 批量启动汇聚
+     * Batch start aggregation
      *
-     * @param ids 汇聚配置ID列表
-     * @return 成功启动的数量
+     * @param ids Aggregation configuration ID list
+     * @return Number of successfully started
      */
     int batchStart(List<Long> ids);
 
     /**
-     * 批量停止汇聚
+     * Batch stop aggregation
      *
-     * @param ids 汇聚配置ID列表
-     * @return 成功停止的数量
+     * @param ids Aggregation configuration ID list
+     * @return Number of successfully stopped
      */
     int batchStop(List<Long> ids);
 
     /**
-     * 检查汇聚配置是否有效
+     * Check if aggregation configuration is valid
      *
-     * @param videoAggregation 汇聚配置
-     * @return 检查结果
+     * @param videoAggregation Aggregation configuration
+     * @return Check result
      */
     Map<String, Object> validateConfig(VideoAggregation videoAggregation);
 
     /**
-     * 获取运行中的汇聚列表
+     * Get running aggregation list
      *
-     * @return 运行中的汇聚列表
+     * @return Running aggregation list
      */
     List<VideoAggregation> getRunningAggregations();
 } 

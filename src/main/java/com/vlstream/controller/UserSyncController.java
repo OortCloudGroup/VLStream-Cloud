@@ -13,10 +13,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 用户同步控制器
+ * User Sync Controller
  */
 @Slf4j
-@Api(tags = "用户同步控制器")
+@Api(tags = "User Sync Controller")
 @RestController
 @RequestMapping("/api/user")
 @CrossOrigin(origins = "*")
@@ -26,102 +26,102 @@ public class UserSyncController {
     private UserSyncService userSyncService;
 
     /**
-     * 同步用户信息到本地
+     * Sync user information to local
      */
     @PostMapping("/sync")
     public ResponseEntity<Map<String, Object>> syncUser(@RequestBody UserSyncRequest request) {
         try {
-            log.info("收到用户同步请求: {}", request.getUserId());
+            log.info("Received user sync request: {}", request.getUserId());
             
             LocalUser localUser = userSyncService.syncUserToLocal(request.getAccessToken());
             
             Map<String, Object> response = new HashMap<>();
             response.put("code", 200);
-            response.put("message", "用户同步成功");
+            response.put("message", "User sync successful");
             response.put("data", localUser);
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("用户同步失败", e);
+            log.error("User sync failed", e);
             
             Map<String, Object> response = new HashMap<>();
             response.put("code", 500);
-            response.put("message", "用户同步失败: " + e.getMessage());
+            response.put("message", "User sync failed: " + e.getMessage());
             
             return ResponseEntity.status(500).body(response);
         }
     }
 
     /**
-     * 根据用户ID获取本地用户信息
+     * Get local user information by user ID
      */
     @GetMapping("/{userId}")
     public ResponseEntity<Map<String, Object>> getUserInfo(@PathVariable String userId) {
         try {
-            log.info("获取用户信息: {}", userId);
+            log.info("Get user information: {}", userId);
             
             LocalUser localUser = userSyncService.getLocalUser(userId);
             
             Map<String, Object> response = new HashMap<>();
             if (localUser != null) {
                 response.put("code", 200);
-                response.put("message", "获取用户信息成功");
+                response.put("message", "Get user information successful");
                 response.put("data", localUser);
             } else {
                 response.put("code", 404);
-                response.put("message", "用户不存在");
+                response.put("message", "User does not exist");
             }
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("获取用户信息失败", e);
+            log.error("Failed to get user information", e);
             
             Map<String, Object> response = new HashMap<>();
             response.put("code", 500);
-            response.put("message", "获取用户信息失败: " + e.getMessage());
+            response.put("message", "Failed to get user information: " + e.getMessage());
             
             return ResponseEntity.status(500).body(response);
         }
     }
 
     /**
-     * 更新本地用户信息
+     * Update local user information
      */
     @PutMapping("/{userId}")
     public ResponseEntity<Map<String, Object>> updateUser(@PathVariable String userId, @RequestBody LocalUser userData) {
         try {
-            log.info("更新用户信息: {}", userId);
+            log.info("Update user information: {}", userId);
             
             LocalUser localUser = userSyncService.updateLocalUser(userId, userData);
             
             Map<String, Object> response = new HashMap<>();
             response.put("code", 200);
-            response.put("message", "更新用户信息成功");
+            response.put("message", "Update user information successful");
             response.put("data", localUser);
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("更新用户信息失败", e);
+            log.error("Failed to update user information", e);
             
             Map<String, Object> response = new HashMap<>();
             response.put("code", 500);
-            response.put("message", "更新用户信息失败: " + e.getMessage());
+            response.put("message", "Failed to update user information: " + e.getMessage());
             
             return ResponseEntity.status(500).body(response);
         }
     }
 
     /**
-     * 健康检查接口
+     * Health check interface
      */
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
         Map<String, Object> response = new HashMap<>();
         response.put("code", 200);
-        response.put("message", "用户同步服务正常运行");
+        response.put("message", "User sync service running normally");
         response.put("timestamp", System.currentTimeMillis());
         
         return ResponseEntity.ok(response);

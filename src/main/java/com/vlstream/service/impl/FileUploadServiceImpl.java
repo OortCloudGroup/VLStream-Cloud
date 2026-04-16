@@ -14,7 +14,7 @@ import java.util.HashMap;
 
 /**
  * <p>
- * 文件上传服务实现类
+ * File Upload Service Implementation Class
  * </p>
  *
  * @author OORT
@@ -24,17 +24,17 @@ import java.util.HashMap;
 @Service
 public class FileUploadServiceImpl implements IFileUploadService {
 
-	//文件上传方法路径
+	// File upload method path
 	@Value("${apaas.fileUpload}")
 	private String fileUpload;
 
 	@Override
 	public File multipartFileToFile(MultipartFile multiFile) {
-		// 获取文件名
+		// Get file name
 		String fileName = multiFile.getOriginalFilename();
-		// 获取文件后缀
+		// Get file extension
 		String prefix = fileName.substring(fileName.lastIndexOf("."));
-		// 若须要防止生成的临时文件重复,能够在文件名后添加随机码
+		// If you need to prevent duplicate temporary files, you can add a random code after the file name
 		try {
 			File file = File.createTempFile(fileName, prefix);
 			multiFile.transferTo(file);
@@ -48,15 +48,15 @@ public class FileUploadServiceImpl implements IFileUploadService {
 	@Override
 	public FileResponseDto uploadFile(String appId, String secretKey, File file) {
 		if (file == null) {
-			log.error("文件为空");
+			log.error("File is empty");
 			return null;
 		}
 
 		try {
 
-			log.info("开始上传文件: {}", file.getName());
+			log.info("Start uploading file: {}", file.getName());
 			HashMap<String, Object> paramMap = new HashMap<>();
-			//文件上传只需将参数中的键指定（默认file），值设为文件对象即可，对于使用者来说，文件上传与普通表单提交并无区别
+			// For file upload, just specify the key in the parameter (default is file) and set the value to the file object. For users, file upload is no different from ordinary form submission
 			paramMap.put("file", file);
 
 			String responseString = HttpRequest.post(fileUpload)
@@ -64,16 +64,16 @@ public class FileUploadServiceImpl implements IFileUploadService {
 				.header("appId", appId)
 				.header("secretKey", secretKey)
 				.form(paramMap).timeout(5000).execute().body();
-//			log.info("文件存储获取响应: {}", responseString);
+//			log.info("File storage response: {}", responseString);
 
-			// 解析响应
+			// Parse response
 			JSONObject jsonResponse = new JSONObject(responseString);
 			if (jsonResponse.getInt("code") != 200) {
 				String errorMsg = jsonResponse.getStr("msg");
 				log.error("Upload failed: {}", errorMsg);
 				return null;
 			}
-			// 获取文件路径
+			// Get file path
 			String data = jsonResponse.getStr("data");
 			JSONObject dataObj = new JSONObject(data);
 			FileResponseDto fileResponseDto = new FileResponseDto();
@@ -91,8 +91,8 @@ public class FileUploadServiceImpl implements IFileUploadService {
 			fileResponseDto.setDuration(dataObj.getInt("duration"));
 			return fileResponseDto;
 		} catch (Exception e) {
-			log.error("文件上传失败:{}", file.getName());
-			throw new RuntimeException("文件上传失败: " + e.getMessage());
+			log.error("File upload failed:{}", file.getName());
+			throw new RuntimeException("File upload failed: " + e.getMessage());
 		}
 	}
 

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 录制计划 Mapper 接口
+ * Recording Schedule Mapper Interface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -20,7 +20,7 @@ import java.util.List;
 public interface RecordingScheduleMapper extends BaseMapper<RecordingSchedule> {
 
     /**
-     * 根据设备ID查询启用的录制计划
+     * Query enabled recording schedules by device ID
      */
     @Select("SELECT * FROM recording_schedule " +
             "WHERE deleted = 0 " +
@@ -29,7 +29,7 @@ public interface RecordingScheduleMapper extends BaseMapper<RecordingSchedule> {
     List<RecordingSchedule> selectEnabledByDeviceId(@Param("deviceId") Long deviceId);
 
     /**
-     * 查询所有启用的录制计划
+     * Query all enabled recording schedules
      */
     @Select("SELECT * FROM recording_schedule " +
             "WHERE deleted = 0 " +
@@ -38,7 +38,7 @@ public interface RecordingScheduleMapper extends BaseMapper<RecordingSchedule> {
     List<RecordingSchedule> selectAllEnabled();
 
     /**
-     * 查询需要执行的录制计划
+     * Query recording schedules to execute
      */
     @Select("SELECT * FROM recording_schedule " +
             "WHERE deleted = 0 " +
@@ -47,7 +47,7 @@ public interface RecordingScheduleMapper extends BaseMapper<RecordingSchedule> {
     List<RecordingSchedule> selectSchedulesToExecute(@Param("currentTime") LocalDateTime currentTime);
 
     /**
-     * 根据时间策略ID查询录制计划
+     * Query recording schedules by time strategy ID
      */
     @Select("SELECT * FROM recording_schedule " +
             "WHERE deleted = 0 " +
@@ -55,7 +55,7 @@ public interface RecordingScheduleMapper extends BaseMapper<RecordingSchedule> {
     List<RecordingSchedule> selectByTimeStrategyId(@Param("timeStrategyId") Long timeStrategyId);
 
     /**
-     * 更新录制计划的执行时间
+     * Update recording schedule execution time
      */
     @Update("UPDATE recording_schedule " +
             "SET last_record_time = #{lastRecordTime}, " +
@@ -70,7 +70,7 @@ public interface RecordingScheduleMapper extends BaseMapper<RecordingSchedule> {
     );
 
     /**
-     * 增加失败录制次数
+     * Increment failed recording count
      */
     @Update("UPDATE recording_schedule " +
             "SET failed_records = failed_records + 1, " +
@@ -79,7 +79,7 @@ public interface RecordingScheduleMapper extends BaseMapper<RecordingSchedule> {
     int incrementFailedRecords(@Param("id") Long id);
 
     /**
-     * 启用/禁用录制计划
+     * Enable/disable recording schedule
      */
     @Update("UPDATE recording_schedule " +
             "SET is_enabled = #{enabled}, " +
@@ -93,7 +93,7 @@ public interface RecordingScheduleMapper extends BaseMapper<RecordingSchedule> {
     );
 
     /**
-     * 批量启用/禁用录制计划
+     * Batch enable/disable recording schedules
      */
     @Update("<script>" +
             "UPDATE recording_schedule " +

@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 
 /**
- * 设备标签关联实体类
+ * Device Tag Relation Entity Class
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -18,48 +18,48 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("device_tag_relation")
-@ApiModel(value = "DeviceTagRelation对象", description = "设备标签关联")
+@ApiModel(value = "DeviceTagRelation object", description = "Device tag relation")
 public class DeviceTagRelation {
 
-    @ApiModelProperty(value = "主键ID")
+    @ApiModelProperty(value = "Primary key ID")
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @ApiModelProperty(value = "设备ID")
+    @ApiModelProperty(value = "Device ID")
     @TableField("device_id")
     private Long deviceId;
 
-    @ApiModelProperty(value = "标签ID")
+    @ApiModelProperty(value = "Tag ID")
     @TableField("tag_id")
     private Long tagId;
 
-    @ApiModelProperty(value = "创建人")
+    @ApiModelProperty(value = "Creator")
     @TableField("created_by")
     private String createdBy;
 
-    @ApiModelProperty(value = "创建时间")
+    @ApiModelProperty(value = "Creation time")
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 
-    // 以下为关联对象，不对应数据库字段
-    @ApiModelProperty(value = "设备信息", hidden = true)
+    // The following are associated objects, not corresponding to database fields
+    @ApiModelProperty(value = "Device information", hidden = true)
     @TableField(exist = false)
     private DeviceInfo deviceInfo;
 
-    @ApiModelProperty(value = "标签信息", hidden = true)
+    @ApiModelProperty(value = "Tag information", hidden = true)
     @TableField(exist = false)
     private TagManagement tagInfo;
 
-    @ApiModelProperty(value = "标签名称", hidden = true)
+    @ApiModelProperty(value = "Tag name", hidden = true)
     @TableField(exist = false)
     private String tagName;
 
-    @ApiModelProperty(value = "标签类型", hidden = true)
+    @ApiModelProperty(value = "Tag type", hidden = true)
     @TableField(exist = false)
     private String categoryType;
 
-    @ApiModelProperty(value = "标签颜色", hidden = true)
+    @ApiModelProperty(value = "Tag color", hidden = true)
     @TableField(exist = false)
     private String tagColor;
 } 

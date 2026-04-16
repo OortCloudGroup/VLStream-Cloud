@@ -20,7 +20,7 @@ import java.util.List;
  * REST endpoints for event management.
  */
 @Slf4j
-@Api(tags = "事件管理")
+@Api(tags = "Event Management")
 @RestController
 @RequestMapping("/api/event-management")
 @RequiredArgsConstructor
@@ -29,7 +29,7 @@ public class EventManagementController {
     private final EventManagementService eventManagementService;
 
     @GetMapping("/page")
-    @ApiOperation("分页查询")
+    @ApiOperation("Page query")
     public Result<IPage<EventManagement>> pageEvents(
             @ApiParam("Current page") @RequestParam(defaultValue = "1") Long current,
             @ApiParam("Page size") @RequestParam(defaultValue = "10") Long size,
@@ -50,7 +50,7 @@ public class EventManagementController {
     }
 
     @GetMapping("/{id}")
-    @ApiOperation("根据id查询详情")
+    @ApiOperation("Query by ID")
     public Result<EventManagement> getEvent(@ApiParam("Primary id") @PathVariable Long id) {
         EventManagement event = eventManagementService.getEventById(id);
         if (event == null) {
@@ -60,7 +60,7 @@ public class EventManagementController {
     }
 
     @PostMapping
-    @ApiOperation("创建事件")
+    @ApiOperation("Create event")
     public Result<Boolean> createEvent(@RequestBody EventManagement eventManagement) {
         boolean created = eventManagementService.createEvent(eventManagement);
         if (created) {
@@ -70,7 +70,7 @@ public class EventManagementController {
     }
 
     @PutMapping
-    @ApiOperation("更新事件")
+    @ApiOperation("Update event")
     public Result<Boolean> updateEvent(@RequestBody EventManagement eventManagement) {
         boolean updated = eventManagementService.updateEvent(eventManagement);
         if (updated) {
@@ -80,7 +80,7 @@ public class EventManagementController {
     }
 
     @PatchMapping("/{id}/status")
-    @ApiOperation("更新事件状态")
+    @ApiOperation("Update event status")
     public Result<Boolean> updateStatus(@ApiParam("Primary id") @PathVariable Long id,
                                         @ApiParam("Status") @RequestParam String status,
                                         @ApiParam("Executor") @RequestParam(required = false) String executor,
@@ -93,7 +93,7 @@ public class EventManagementController {
     }
 
     @DeleteMapping("/{id}")
-    @ApiOperation("删除事件")
+    @ApiOperation("Delete event")
     public Result<Boolean> deleteEvent(@ApiParam("Primary id") @PathVariable Long id) {
         boolean removed = eventManagementService.removeEvent(id);
         if (removed) {
@@ -103,7 +103,7 @@ public class EventManagementController {
     }
 
     @DeleteMapping("/batch")
-    @ApiOperation("批量保存事件")
+    @ApiOperation("Batch delete events")
     public Result<Boolean> deleteEvents(@RequestBody List<Long> ids) {
         boolean removed = eventManagementService.removeEvents(ids);
         if (removed) {

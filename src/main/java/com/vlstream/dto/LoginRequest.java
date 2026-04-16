@@ -3,13 +3,13 @@ package com.vlstream.dto;
 import lombok.Data;
 
 /**
- * 登录请求DTO
+ * Login Request DTO
  */
 @Data
 public class LoginRequest {
     
     /**
-     * 加密后的用户信息字符串
+     * Encrypted user information string
      */
     private String userInfo;
     

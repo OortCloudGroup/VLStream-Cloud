@@ -6,53 +6,53 @@ import org.apache.ibatis.annotations.Mapper;
 import java.util.List;
 
 /**
- * 远程服务器配置Mapper接口
+ * Remote Server Configuration Mapper Interface
  */
 @Mapper
 public interface RemoteServerMapper {
     
     /**
-     * 查询远程服务器配置列表
+     * Query remote server configuration list
      */
     List<RemoteServer> selectRemoteServerList(RemoteServer remoteServer);
     
     /**
-     * 查询远程服务器配置详细
+     * Query remote server configuration details
      */
     RemoteServer selectRemoteServerById(Long id);
     
     /**
-     * 新增远程服务器配置
+     * Add new remote server configuration
      */
     int insertRemoteServer(RemoteServer remoteServer);
     
     /**
-     * 修改远程服务器配置
+     * Modify remote server configuration
      */
     int updateRemoteServer(RemoteServer remoteServer);
     
     /**
-     * 删除远程服务器配置
+     * Delete remote server configuration
      */
     int deleteRemoteServerById(Long id);
     
     /**
-     * 批量删除远程服务器配置
+     * Batch delete remote server configurations
      */
     int deleteRemoteServerByIds(Long[] ids);
     
     /**
-     * 查询启用的服务器配置
+     * Query enabled server configuration
      */
     RemoteServer selectActiveServer();
     
     /**
-     * 统计服务器数量
+     * Count servers
      */
     int count();
 
     /**
-     * 创建表（如果不存在）
+     * Create table (if not exists)
      */
     void createTableIfNotExists();
 } 

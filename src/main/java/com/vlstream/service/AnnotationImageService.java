@@ -7,57 +7,57 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 标注图片服务接口
+ * Annotation Image Service Interface
  */
 public interface AnnotationImageService {
     
     /**
-     * 上传图片
+     * Upload images
      */
     List<AnnotationImage> uploadImages(MultipartFile[] files, Long annotationId);
     
     /**
-     * 根据数据集ID获取图片列表
+     * Get image list by dataset ID
      */
     List<AnnotationImage> getImagesByDataset(Long annotationId);
     
     /**
-     * 根据ID获取图片详情
+     * Get image details by ID
      */
     AnnotationImage getImageById(Long id);
     
     /**
-     * 更新图片信息
+     * Update image information
      */
     AnnotationImage updateImage(AnnotationImage image);
     
     /**
-     * 删除图片
+     * Delete image
      */
     void deleteImage(Long id);
     
     /**
-     * 批量删除图片
+     * Batch delete images
      */
     void batchDeleteImages(List<Long> ids);
     
     /**
-     * 获取数据集统计信息
+     * Get dataset statistics
      */
     Map<String, Object> getDatasetStats(Long datasetId);
 
     /**
-     * 保存图片信息到annotation_image表
+     * Save image information to annotation_image table
      */
     boolean saveImage(AnnotationImage annotationImage);
 
     /**
-     * 批量保存图片信息到annotation_image表
+     * Batch save image information to annotation_image table
      */
     boolean batchSaveImages(List<AnnotationImage> annotationImages);
 
     /**
-     * 根据标注项目ID获取图片列表
+     * Get image list by annotation project ID
      */
     List<AnnotationImage> getImagesByAnnotationId(Long annotationId);
 }

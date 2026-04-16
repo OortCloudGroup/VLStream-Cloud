@@ -23,12 +23,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 设备信息控制器
+ * Device Information Controller
  *
  * @author VLStream Team
  * @since 1.0.0
  */
-@Api(tags = "设备管理")
+@Api(tags = "Device Management")
 @RestController
 @RequestMapping("/api/device")
 @RequiredArgsConstructor
@@ -38,17 +38,17 @@ public class DeviceInfoController {
     private final DeviceTagRelationService deviceTagRelationService;
 
     /**
-     * 分页查询设备信息
+     * Page query device information
      */
-    @ApiOperation("分页查询设备信息")
+    @ApiOperation("Page query device information")
     @GetMapping("/page")
     public Result<IPage<DeviceInfo>> pageDevices(
-            @ApiParam("当前页") @RequestParam(defaultValue = "1") Long current,
-            @ApiParam("每页大小") @RequestParam(defaultValue = "10") Long size,
-            @ApiParam("搜索关键字") @RequestParam(required = false) String keyword,
-            @ApiParam("设备类型") @RequestParam(required = false) String deviceType,
-            @ApiParam("设备状态") @RequestParam(required = false) String status,
-            @ApiParam("设备标签") @RequestParam(required = false) String tag) {
+            @ApiParam("Current page") @RequestParam(defaultValue = "1") Long current,
+            @ApiParam("Page size") @RequestParam(defaultValue = "10") Long size,
+            @ApiParam("Search keyword") @RequestParam(required = false) String keyword,
+            @ApiParam("Device type") @RequestParam(required = false) String deviceType,
+            @ApiParam("Device status") @RequestParam(required = false) String status,
+            @ApiParam("Device tag") @RequestParam(required = false) String tag) {
         
         System.out.println("接收到的查询参数:");
         System.out.println("current: " + current);
@@ -64,11 +64,11 @@ public class DeviceInfoController {
     }
 
     /**
-     * 根据ID查询设备信息
+     * Query device information by ID
      */
-    @ApiOperation("根据ID查询设备信息")
+    @ApiOperation("Query device information by ID")
     @GetMapping("/{id}")
-    public Result<Map<String, Object>> getDeviceById(@ApiParam("设备ID") @PathVariable Long id) {
+    public Result<Map<String, Object>> getDeviceById(@ApiParam("Device ID") @PathVariable Long id) {
         DeviceInfo deviceInfo = deviceInfoService.getById(id);
         if (deviceInfo == null) {
             return Result.error("设备不存在");
@@ -79,11 +79,11 @@ public class DeviceInfoController {
     }
 
     /**
-     * 根据设备编号查询设备信息
+     * Query device information by device ID
      */
-    @ApiOperation("根据设备编号查询设备信息")
+    @ApiOperation("Query device information by device ID")
     @GetMapping("/deviceId/{deviceId}")
-    public Result<Map<String, Object>> getDeviceByDeviceId(@ApiParam("设备编号") @PathVariable String deviceId) {
+    public Result<Map<String, Object>> getDeviceByDeviceId(@ApiParam("Device ID") @PathVariable String deviceId) {
         DeviceInfo deviceInfo = deviceInfoService.getByDeviceId(deviceId);
         if (deviceInfo == null) {
             return Result.error("设备不存在");
@@ -94,9 +94,9 @@ public class DeviceInfoController {
     }
 
     /**
-     * 新增设备信息
+     * Add new device information
      */
-    @ApiOperation("新增设备信息")
+    @ApiOperation("Add new device information")
     @PostMapping
     public Result<String> addDevice(@Valid @RequestBody DeviceInfo deviceInfo) {
         // 检查设备编号是否已存在
@@ -113,12 +113,12 @@ public class DeviceInfoController {
     }
 
     /**
-     * 更新设备信息
+     * Update device information
      */
-    @ApiOperation("更新设备信息")
+    @ApiOperation("Update device information")
     @PutMapping("/{id}")
     public Result<String> updateDevice(
-            @ApiParam("设备ID") @PathVariable Long id,
+            @ApiParam("Device ID") @PathVariable Long id,
             @RequestBody Map<String, Object> requestData) {
         
         // 提取设备信息
@@ -164,11 +164,11 @@ public class DeviceInfoController {
     }
     
     /**
-     * 摄像头算法下发
+     * Dispatch algorithm to camera
      */
-    @ApiOperation("摄像头算法下发")
+    @ApiOperation("Dispatch algorithm to camera")
     @PostMapping("/{algorithmId}/algorithms")
-    public Result<String> dispatchAlgorithms(@ApiParam("算法id") @PathVariable Long algorithmId, @RequestParam String deviceIds) {
+    public Result<String> dispatchAlgorithms(@ApiParam("Algorithm ID") @PathVariable Long algorithmId, @RequestParam String deviceIds) {
         boolean success = deviceInfoService.dispatchAlgorithms(algorithmId, deviceIds);
         if (success) {
             return Result.success("算法下发成功");
@@ -178,7 +178,7 @@ public class DeviceInfoController {
     }
     
     /**
-     * 从请求数据中提取设备信息
+     * Extract device information from request data
      */
     private DeviceInfo extractDeviceInfo(Map<String, Object> requestData) {
         DeviceInfo deviceInfo = new DeviceInfo();
@@ -253,7 +253,7 @@ public class DeviceInfoController {
     }
 
     /**
-     * 辅助方法：如果值不为null则设置
+     * Helper method: set value if not null
      */
     private void setIfNotNull(java.util.function.Consumer<String> setter, Object value) {
         if (value != null) {
@@ -262,7 +262,7 @@ public class DeviceInfoController {
     }
     
     /**
-     * 构建设备信息的完整Map，包含关联的标签信息
+     * Build complete device information map including associated tag information
      */
     private Map<String, Object> buildDeviceInfoMap(DeviceInfo deviceInfo) {
         Map<String, Object> result = new HashMap<>();
@@ -320,11 +320,11 @@ public class DeviceInfoController {
     }
 
     /**
-     * 删除设备信息
+     * Delete device information
      */
-    @ApiOperation("删除设备信息")
+    @ApiOperation("Delete device information")
     @DeleteMapping("/{id}")
-    public Result<String> deleteDevice(@ApiParam("设备ID") @PathVariable Long id) {
+    public Result<String> deleteDevice(@ApiParam("Device ID") @PathVariable Long id) {
         boolean success = deviceInfoService.deleteDevice(id);
         if (success) {
             return Result.success("删除成功");
@@ -334,11 +334,11 @@ public class DeviceInfoController {
     }
 
     /**
-     * 批量删除设备信息
+     * Batch delete device information
      */
-    @ApiOperation("批量删除设备信息")
+    @ApiOperation("Batch delete device information")
     @DeleteMapping("/batch")
-    public Result<String> deleteDeviceBatch(@ApiParam("设备ID列表") @RequestBody List<Long> ids) {
+    public Result<String> deleteDeviceBatch(@ApiParam("Device ID list") @RequestBody List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return Result.error("请选择要删除的设备");
         }
@@ -352,13 +352,13 @@ public class DeviceInfoController {
     }
 
     /**
-     * 更新设备状态
+     * Update device status
      */
-    @ApiOperation("更新设备状态")
+    @ApiOperation("Update device status")
     @PutMapping("/{id}/status/{status}")
     public Result<String> updateDeviceStatus(
-            @ApiParam("设备ID") @PathVariable Long id,
-            @ApiParam("设备状态") @PathVariable String status) {
+            @ApiParam("Device ID") @PathVariable Long id,
+            @ApiParam("Device status") @PathVariable String status) {
         
         boolean success = deviceInfoService.updateDeviceStatus(id, status);
         if (success) {
@@ -369,13 +369,13 @@ public class DeviceInfoController {
     }
 
     /**
-     * 批量更新设备状态
+     * Batch update device status
      */
-    @ApiOperation("批量更新设备状态")
+    @ApiOperation("Batch update device status")
     @PutMapping("/status/{status}")
     public Result<String> updateDeviceStatusBatch(
-            @ApiParam("设备状态") @PathVariable String status,
-            @ApiParam("设备ID列表") @RequestBody List<Long> ids) {
+            @ApiParam("Device status") @PathVariable String status,
+            @ApiParam("Device ID list") @RequestBody List<Long> ids) {
         
         if (ids == null || ids.isEmpty()) {
             return Result.error("请选择要更新的设备");
@@ -390,41 +390,41 @@ public class DeviceInfoController {
     }
 
     /**
-     * 根据状态查询设备列表
+     * Query device list by status
      */
-    @ApiOperation("根据状态查询设备列表")
+    @ApiOperation("Query device list by status")
     @GetMapping("/status/{status}")
-    public Result<List<DeviceInfo>> getDevicesByStatus(@ApiParam("设备状态") @PathVariable String status) {
+    public Result<List<DeviceInfo>> getDevicesByStatus(@ApiParam("Device status") @PathVariable String status) {
         List<DeviceInfo> devices = deviceInfoService.getDevicesByStatus(status);
         return Result.success(devices);
     }
 
     /**
-     * 根据设备类型查询设备列表
+     * Query device list by device type
      */
-    @ApiOperation("根据设备类型查询设备列表")
+    @ApiOperation("Query device list by device type")
     @GetMapping("/type/{deviceType}")
-    public Result<List<DeviceInfo>> getDevicesByType(@ApiParam("设备类型") @PathVariable String deviceType) {
+    public Result<List<DeviceInfo>> getDevicesByType(@ApiParam("Device type") @PathVariable String deviceType) {
         List<DeviceInfo> devices = deviceInfoService.getDevicesByType(deviceType);
         return Result.success(devices);
     }
 
     /**
-     * 根据品牌查询设备列表
+     * Query device list by brand
      */
-    @ApiOperation("根据品牌查询设备列表")
+    @ApiOperation("Query device list by brand")
     @GetMapping("/brand/{brand}")
-    public Result<List<DeviceInfo>> getDevicesByBrand(@ApiParam("设备品牌") @PathVariable String brand) {
+    public Result<List<DeviceInfo>> getDevicesByBrand(@ApiParam("Device brand") @PathVariable String brand) {
         List<DeviceInfo> devices = deviceInfoService.getDevicesByBrand(brand);
         return Result.success(devices);
     }
 
     /**
-     * 测试设备连接
+     * Test device connection
      */
-    @ApiOperation("测试设备连接")
+    @ApiOperation("Test device connection")
     @PostMapping("/{id}/test")
-    public Result<Map<String, Object>> testDeviceConnection(@ApiParam("设备ID") @PathVariable Long id) {
+    public Result<Map<String, Object>> testDeviceConnection(@ApiParam("Device ID") @PathVariable Long id) {
         Map<String, Object> result = deviceInfoService.testDeviceConnection(id);
         if ((Boolean) result.get("success")) {
             return Result.success(result);
@@ -434,9 +434,9 @@ public class DeviceInfoController {
     }
 
     /**
-     * 获取设备统计信息
+     * Get device statistics
      */
-    @ApiOperation("获取设备统计信息")
+    @ApiOperation("Get device statistics")
     @GetMapping("/statistics")
     public Result<Map<String, Object>> getDeviceStatistics() {
         Map<String, Object> statistics = deviceInfoService.getDeviceStatistics();
@@ -444,9 +444,9 @@ public class DeviceInfoController {
     }
 
     /**
-     * 获取设备分组统计（按标签分组）
+     * Get device group statistics (grouped by tag)
      */
-    @ApiOperation("获取设备分组统计")
+    @ApiOperation("Get device group statistics")
     @GetMapping("/group-statistics")
     public Result<List<Map<String, Object>>> getDeviceGroupStatistics() {
         // 获取所有设备
@@ -488,9 +488,9 @@ public class DeviceInfoController {
     }
 
     /**
-     * 获取设备类型统计
+     * Get device type statistics
      */
-    @ApiOperation("获取设备类型统计")
+    @ApiOperation("Get device type statistics")
     @GetMapping("/type-statistics")
     public Result<Map<String, Object>> getDeviceTypeStatistics() {
         // 获取所有设备类型
@@ -506,9 +506,9 @@ public class DeviceInfoController {
     }
 
     /**
-     * 获取所有设备类型列表（标签列表）
+     * Get all device type list (tag list)
      */
-    @ApiOperation("获取所有设备类型列表")
+    @ApiOperation("Get all device type list")
     @GetMapping("/tags")
     public Result<List<String>> getDeviceTags() {
         List<String> tags = deviceInfoService.getAllTags();
@@ -516,9 +516,9 @@ public class DeviceInfoController {
     }
 
     /**
-     * 获取所有设备品牌列表
+     * Get all device brand list
      */
-    @ApiOperation("获取所有设备品牌列表")
+    @ApiOperation("Get all device brand list")
     @GetMapping("/brands")
     public Result<List<String>> getDeviceBrands() {
         List<String> brands = deviceInfoService.getAllBrands();
@@ -526,11 +526,11 @@ public class DeviceInfoController {
     }
 
     /**
-     * 刷新设备状态
+     * Refresh device status
      */
-    @ApiOperation("刷新设备状态")
+    @ApiOperation("Refresh device status")
     @PostMapping("/{id}/refresh")
-    public Result<String> refreshDeviceStatus(@ApiParam("设备ID") @PathVariable Long id) {
+    public Result<String> refreshDeviceStatus(@ApiParam("Device ID") @PathVariable Long id) {
         Map<String, Object> result = deviceInfoService.refreshDeviceStatus(id);
         if ((Boolean) result.get("success")) {
             return Result.success((String) result.get("message"));
@@ -540,11 +540,11 @@ public class DeviceInfoController {
     }
 
     /**
-     * 批量刷新设备状态
+     * Batch refresh device status
      */
-    @ApiOperation("批量刷新设备状态")
+    @ApiOperation("Batch refresh device status")
     @PostMapping("/batch/refresh")
-    public Result<String> batchRefreshDevices(@ApiParam("设备ID列表") @RequestBody Map<String, List<Long>> request) {
+    public Result<String> batchRefreshDevices(@ApiParam("Device ID list") @RequestBody Map<String, List<Long>> request) {
         List<Long> ids = request.get("ids");
         if (ids == null || ids.isEmpty()) {
             return Result.error("请选择要刷新的设备");
@@ -562,12 +562,12 @@ public class DeviceInfoController {
     }
 
     /**
-     * PTZ控制 - 移动
+     * PTZ control - move
      */
-    @ApiOperation("PTZ控制 - 移动")
+    @ApiOperation("PTZ control - move")
     @PostMapping("/{id}/ptz/move")
     public Result<String> ptzMove(
-            @ApiParam("设备ID") @PathVariable Long id,
+            @ApiParam("Device ID") @PathVariable Long id,
             @RequestBody Map<String, Object> params) {
         
         String direction = (String) params.get("direction");
@@ -588,11 +588,11 @@ public class DeviceInfoController {
     }
 
     /**
-     * PTZ控制 - 停止
+     * PTZ control - stop
      */
-    @ApiOperation("PTZ控制 - 停止")
+    @ApiOperation("PTZ control - stop")
     @PostMapping("/{id}/ptz/stop")
-    public Result<String> ptzStop(@ApiParam("设备ID") @PathVariable Long id) {
+    public Result<String> ptzStop(@ApiParam("Device ID") @PathVariable Long id) {
         // 检查设备是否存在
         DeviceInfo device = deviceInfoService.getById(id);
         if (device == null) {
@@ -608,12 +608,12 @@ public class DeviceInfoController {
     }
 
     /**
-     * PTZ控制 - 缩放
+     * PTZ control - zoom
      */
-    @ApiOperation("PTZ控制 - 缩放")
+    @ApiOperation("PTZ control - zoom")
     @PostMapping("/{id}/ptz/zoom")
     public Result<String> ptzZoom(
-            @ApiParam("设备ID") @PathVariable Long id,
+            @ApiParam("Device ID") @PathVariable Long id,
             @RequestBody Map<String, Object> params) {
         
         String action = (String) params.get("action");
@@ -634,11 +634,11 @@ public class DeviceInfoController {
     }
 
     /**
-     * 获取设备视频流信息
+     * Get device video stream information
      */
-    @ApiOperation("获取设备视频流信息")
+    @ApiOperation("Get device video stream information")
     @GetMapping("/{id}/stream")
-    public Result<Map<String, Object>> getDeviceStreamInfo(@ApiParam("设备ID") @PathVariable Long id) {
+    public Result<Map<String, Object>> getDeviceStreamInfo(@ApiParam("Device ID") @PathVariable Long id) {
         Map<String, Object> streamInfo = deviceInfoService.getVideoStreamInfo(id);
         if (streamInfo.isEmpty()) {
             return Result.error("设备不存在");
@@ -647,9 +647,9 @@ public class DeviceInfoController {
     }
 
     /**
-     * 导出设备列表
+     * Export device list
      */
-    @ApiOperation("导出设备列表")
+    @ApiOperation("Export device list")
     @GetMapping("/export")
     public Result<List<DeviceInfo>> exportDevices(@RequestParam(required = false) List<Long> deviceIds) {
         List<DeviceInfo> devices = deviceInfoService.exportDevices(deviceIds);
@@ -657,9 +657,9 @@ public class DeviceInfoController {
     }
 
     /**
-     * 导入设备列表
+     * Import device list
      */
-    @ApiOperation("导入设备列表")
+    @ApiOperation("Import device list")
     @PostMapping("/import")
     public Result<Map<String, Object>> importDevices(@RequestParam("file") MultipartFile file) {
         // TODO: 实现文件解析和设备导入功能
@@ -669,11 +669,11 @@ public class DeviceInfoController {
     }
 
     /**
-     * 获取设备配置
+     * Get device configuration
      */
-    @ApiOperation("获取设备配置")
+    @ApiOperation("Get device configuration")
     @GetMapping("/{id}/config")
-    public Result<Map<String, Object>> getDeviceConfig(@ApiParam("设备ID") @PathVariable Long id) {
+    public Result<Map<String, Object>> getDeviceConfig(@ApiParam("Device ID") @PathVariable Long id) {
         Map<String, Object> config = deviceInfoService.getDeviceConfig(id);
         if (config.isEmpty()) {
             return Result.error("设备不存在");
@@ -682,12 +682,12 @@ public class DeviceInfoController {
     }
 
     /**
-     * 更新设备配置
+     * Update device configuration
      */
-    @ApiOperation("更新设备配置")
+    @ApiOperation("Update device configuration")
     @PutMapping("/{id}/config")
     public Result<String> updateDeviceConfig(
-            @ApiParam("设备ID") @PathVariable Long id,
+            @ApiParam("Device ID") @PathVariable Long id,
             @RequestBody Map<String, Object> config) {
         
         boolean success = deviceInfoService.updateDeviceConfig(id, config);
@@ -701,13 +701,13 @@ public class DeviceInfoController {
     // ==================== 设备标签相关接口 ====================
 
     /**
-     * 设置设备标签
+     * Set device tags
      */
-    @ApiOperation("设置设备标签")
+    @ApiOperation("Set device tags")
     @PutMapping("/{id}/tags")
     public Result<String> setDeviceTags(
-            @ApiParam("设备ID") @PathVariable Long id,
-            @ApiParam("标签ID列表") @RequestBody List<Long> tagIds) {
+            @ApiParam("Device ID") @PathVariable Long id,
+            @ApiParam("Tag ID list") @RequestBody List<Long> tagIds) {
         
         // 验证设备是否存在
         DeviceInfo device = deviceInfoService.getById(id);
@@ -724,12 +724,12 @@ public class DeviceInfoController {
     }
 
     /**
-     * 获取设备标签
+     * Get device tags
      */
-    @ApiOperation("获取设备标签")
+    @ApiOperation("Get device tags")
     @GetMapping("/{id}/tags")
     public Result<List<DeviceTagRelation>> getDeviceTags(
-            @ApiParam("设备ID") @PathVariable Long id) {
+            @ApiParam("Device ID") @PathVariable Long id) {
         
         // 验证设备是否存在
         DeviceInfo device = deviceInfoService.getById(id);
@@ -742,13 +742,13 @@ public class DeviceInfoController {
     }
 
     /**
-     * 添加设备标签
+     * Add device tags
      */
-    @ApiOperation("添加设备标签")
+    @ApiOperation("Add device tags")
     @PostMapping("/{id}/tags")
     public Result<String> addDeviceTags(
-            @ApiParam("设备ID") @PathVariable Long id,
-            @ApiParam("标签ID列表") @RequestBody List<Long> tagIds) {
+            @ApiParam("Device ID") @PathVariable Long id,
+            @ApiParam("Tag ID list") @RequestBody List<Long> tagIds) {
         
         // 验证设备是否存在
         DeviceInfo device = deviceInfoService.getById(id);
@@ -765,13 +765,13 @@ public class DeviceInfoController {
     }
 
     /**
-     * 移除设备标签
+     * Remove device tags
      */
-    @ApiOperation("移除设备标签")
+    @ApiOperation("Remove device tags")
     @DeleteMapping("/{id}/tags")
     public Result<String> removeDeviceTags(
-            @ApiParam("设备ID") @PathVariable Long id,
-            @ApiParam("标签ID列表") @RequestBody List<Long> tagIds) {
+            @ApiParam("Device ID") @PathVariable Long id,
+            @ApiParam("Tag ID list") @RequestBody List<Long> tagIds) {
         
         // 验证设备是否存在
         DeviceInfo device = deviceInfoService.getById(id);
@@ -788,12 +788,12 @@ public class DeviceInfoController {
     }
 
     /**
-     * 清除设备的所有标签
+     * Clear all device tags
      */
-    @ApiOperation("清除设备的所有标签")
+    @ApiOperation("Clear all device tags")
     @DeleteMapping("/{id}/tags/all")
     public Result<String> clearDeviceTags(
-            @ApiParam("设备ID") @PathVariable Long id) {
+            @ApiParam("Device ID") @PathVariable Long id) {
         
         // 验证设备是否存在
         DeviceInfo device = deviceInfoService.getById(id);
@@ -810,12 +810,12 @@ public class DeviceInfoController {
     }
 
     /**
-     * 获取设备标签详细信息
+     * Get device tag details
      */
-    @ApiOperation("获取设备标签详细信息")
+    @ApiOperation("Get device tag details")
     @GetMapping("/{id}/tag-details")
     public Result<Map<String, Object>> getDeviceTagDetails(
-            @ApiParam("设备ID") @PathVariable Long id) {
+            @ApiParam("Device ID") @PathVariable Long id) {
         
         // 验证设备是否存在
         DeviceInfo device = deviceInfoService.getById(id);
@@ -828,13 +828,13 @@ public class DeviceInfoController {
     }
 
     /**
-     * 复制设备标签
+     * Copy device tags
      */
-    @ApiOperation("复制设备标签到其他设备")
+    @ApiOperation("Copy device tags to other devices")
     @PostMapping("/{sourceId}/copy-tags")
     public Result<String> copyDeviceTags(
-            @ApiParam("源设备ID") @PathVariable Long sourceId,
-            @ApiParam("目标设备ID列表") @RequestBody List<Long> targetDeviceIds) {
+            @ApiParam("Source device ID") @PathVariable Long sourceId,
+            @ApiParam("Target device ID list") @RequestBody List<Long> targetDeviceIds) {
         
         // 验证源设备是否存在
         DeviceInfo sourceDevice = deviceInfoService.getById(sourceId);
@@ -859,7 +859,7 @@ public class DeviceInfoController {
     }
     
     /**
-     * 获取设备树形结构
+     * Get device tree structure
      */
     @ApiOperation("获取设备树形结构")
     @GetMapping("/tree")
