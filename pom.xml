@@ -16,7 +16,7 @@
     <artifactId>vls-server</artifactId>
     <version>1.0.0</version>
     <name>vls-server</name>
-    <description>VLStream Cloud 视频流管理系统后端服务</description>
+    <description>VLStream Cloud Video Stream Management System Backend Service</description>
     
     <properties>
         <java.version>8</java.version>
@@ -108,7 +108,7 @@
             <version>${fastjson.version}</version>
         </dependency>
         
-        <!-- Hutool工具类 -->
+        <!-- Hutool Utilities -->
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
@@ -136,14 +136,14 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- JSch SSH连接依赖 -->
+        <!-- JSch SSH Connection Dependency -->
         <dependency>
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>
             <version>0.1.55</version>
         </dependency>
 
-        <!--人脸识别模块-->
+        <!-- Face Recognition Module -->
         <dependency>
             <groupId>cn.smartjavaai</groupId>
             <artifactId>smartjavaai-face</artifactId>
@@ -164,7 +164,7 @@
         </dependency>
 
 
-        <!-- windows平台 (保留对应平台的配置，可以减小包大小)-->
+        <!-- Windows platform (Keep platform-specific configuration to reduce package size)-->
 <!--        <dependency>-->
 <!--            <groupId>org.bytedeco</groupId>-->
 <!--            <artifactId>javacpp</artifactId>-->
@@ -200,7 +200,7 @@
 <!--            <scope>runtime</scope>-->
 <!--        </dependency>-->
 
-        <!-- linux x86 平台 (保留对应平台的配置，可以减小包大小)-->
+        <!-- Linux x86 platform (Keep platform-specific configuration to reduce package size)-->
         <dependency>
             <groupId>org.bytedeco</groupId>
             <artifactId>javacpp</artifactId>
