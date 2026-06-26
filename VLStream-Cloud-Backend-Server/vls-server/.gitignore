@@ -25,3 +25,5 @@ Thumbs.db
 *.war
 *.ear
 /target
+/Antigravity
+/codex

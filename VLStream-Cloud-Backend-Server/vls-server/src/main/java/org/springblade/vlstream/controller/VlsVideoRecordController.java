@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 /**
  * Video Recording Record Table Controller
  *
- * @author Oort
+ * @author OortCloud
  * @since 2025-12-25
  */
 @Slf4j
