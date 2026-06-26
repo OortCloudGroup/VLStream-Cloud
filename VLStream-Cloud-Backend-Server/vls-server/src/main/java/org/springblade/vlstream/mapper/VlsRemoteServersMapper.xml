@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.vlstream.mapper.VlsRemoteServersMapper">
+
+    <!-- General query mapping result -->
+    <resultMap id="vlsRemoteServersResultMap" type="org.springblade.vlstream.pojo.entity.RemoteServers">
+        <result column="server_name" property="serverName"/>
+        <result column="server_ip" property="serverIp"/>
+        <result column="server_port" property="serverPort"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="conda_env" property="condaEnv"/>
+        <result column="work_dir" property="workDir"/>
+    </resultMap>
+
+    <select id="selectVlsRemoteServersPage" resultMap="vlsRemoteServersResultMap">
+        select * from vls_remote_servers where is_deleted = 0 order by create_time desc
+    </select>
+
+    <select id="exportVlsRemoteServers" resultType="org.springblade.vlstream.excel.VlsRemoteServersExcel">
+        SELECT * FROM vls_remote_servers ${ew.customSqlSegment}
+    </select>
+
+    <resultMap type="org.springblade.vlstream.pojo.entity.RemoteServers" id="RemoteServerResult">
+        <result property="id" column="id"/>
+        <result property="serverName" column="server_name"/>
+        <result property="serverIp" column="server_ip"/>
+        <result property="serverPort" column="server_port"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="condaEnv" column="conda_env"/>
+        <result property="workDir" column="work_dir"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <sql id="selectRemoteServerVo">
+        select id, server_name, server_ip, server_port, username, password, conda_env, work_dir, status, create_time, update_time from vls_remote_servers
+    </sql>
+
+    <select id="selectRemoteServerList" parameterType="org.springblade.vlstream.pojo.entity.RemoteServers" resultMap="RemoteServerResult">
+        <include refid="selectRemoteServerVo"/>
+        <where>
+            <if test="serverName != null and serverName != ''">
+                AND server_name like concat('%', #{serverName}, '%')
+            </if>
+            <if test="serverIp != null and serverIp != ''">
+                AND server_ip = #{serverIp}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectRemoteServerById" parameterType="Long" resultMap="RemoteServerResult">
+        <include refid="selectRemoteServerVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectActiveServer" resultMap="RemoteServerResult">
+        <include refid="selectRemoteServerVo"/>
+        where status = 1
+        limit 1
+    </select>
+
+    <select id="count" resultType="int">
+        select count(*) from vls_remote_servers
+    </select>
+
+    <update id="createTableIfNotExists">
+        CREATE TABLE IF NOT EXISTS `vls_remote_servers` (
+                                                        `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'Primary key ID',
+            `server_name` varchar(100) NOT NULL COMMENT 'Server Name',
+            `server_ip` varchar(50) NOT NULL COMMENT 'Server IP Address',
+            `server_port` int(11) NOT NULL DEFAULT '22' COMMENT 'SSH port',
+            `username` varchar(50) NOT NULL COMMENT 'Username',
+            `password` varchar(255) NOT NULL COMMENT 'Password (encrypted)',
+            `conda_env` varchar(50) DEFAULT 'yolo8' COMMENT 'Conda environment name',
+            `work_dir` varchar(255) DEFAULT '/data/work/ultralytics_yolov8-main' COMMENT 'Working directory',
+            `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Status (0: Disabled, 1: Enabled)',
+            `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation time',
+            `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
+            PRIMARY KEY (`id`),
+            KEY `idx_server_ip` (`server_ip`),
+            KEY `idx_status` (`status`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Remote Server Configuration Table'
+    </update>
+
+    <insert id="insertRemoteServer" parameterType="org.springblade.vlstream.pojo.entity.RemoteServers" useGeneratedKeys="true" keyProperty="id">
+        insert into vls_remote_servers
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="serverName != null">server_name,</if>
+            <if test="serverIp != null">server_ip,</if>
+            <if test="serverPort != null">server_port,</if>
+            <if test="username != null">username,</if>
+            <if test="password != null">password,</if>
+            <if test="condaEnv != null">conda_env,</if>
+            <if test="workDir != null">work_dir,</if>
+            <if test="status != null">status,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="serverName != null">#{serverName},</if>
+            <if test="serverIp != null">#{serverIp},</if>
+            <if test="serverPort != null">#{serverPort},</if>
+            <if test="username != null">#{username},</if>
+            <if test="password != null">#{password},</if>
+            <if test="condaEnv != null">#{condaEnv},</if>
+            <if test="workDir != null">#{workDir},</if>
+            <if test="status != null">#{status},</if>
+            now(),
+        </trim>
+    </insert>
+
+    <update id="updateRemoteServer" parameterType="org.springblade.vlstream.pojo.entity.RemoteServers">
+        update vls_remote_servers
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="serverName != null">server_name = #{serverName},</if>
+            <if test="serverIp != null">server_ip = #{serverIp},</if>
+            <if test="serverPort != null">server_port = #{serverPort},</if>
+            <if test="username != null">username = #{username},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="condaEnv != null">conda_env = #{condaEnv},</if>
+            <if test="workDir != null">work_dir = #{workDir},</if>
+            <if test="status != null">status = #{status},</if>
+            update_time = now(),
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteRemoteServerById" parameterType="Long">
+        delete from vls_remote_servers where id = #{id}
+    </delete>
+
+    <delete id="deleteRemoteServerByIds" parameterType="String">
+        delete from vls_remote_servers where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

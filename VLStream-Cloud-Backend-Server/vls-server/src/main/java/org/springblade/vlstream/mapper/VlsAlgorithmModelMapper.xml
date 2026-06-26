@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.vlstream.mapper.VlsAlgorithmModelMapper">
+
+    <!-- General query mapping result -->
+    <resultMap id="vlsAlgorithmModelResultMap" type="org.springblade.vlstream.pojo.entity.AlgorithmModel">
+        <result column="model_name" property="modelName"/>
+        <result column="algorithm_id" property="algorithmId"/>
+        <result column="training_id" property="trainingId"/>
+        <result column="version" property="version"/>
+        <result column="model_format" property="modelFormat"/>
+        <result column="model_size" property="modelSize"/>
+        <result column="model_path" property="modelPath"/>
+        <result column="onnx_model_path" property="onnxModelPath"/>
+        <result column="rknn_model_path" property="rknnModelPath"/>
+        <result column="accuracy" property="accuracy"/>
+        <result column="description" property="description"/>
+        <result column="download_count" property="downloadCount"/>
+        <result column="deploy_count" property="deployCount"/>
+        <result column="publish_time" property="publishTime"/>
+    </resultMap>
+
+    <!-- Basic fields mapping -->
+    <resultMap id="BaseResultMap" type="org.springblade.vlstream.pojo.entity.AlgorithmModel">
+        <id column="id" property="id"/>
+        <result column="model_name" property="modelName"/>
+        <result column="algorithm_id" property="algorithmId"/>
+        <result column="training_id" property="trainingId"/>
+        <result column="version" property="version"/>
+        <result column="model_format" property="modelFormat"/>
+        <result column="model_size" property="modelSize"/>
+        <result column="model_path" property="modelPath"/>
+        <result column="onnx_model_path" property="onnxModelPath"/>
+        <result column="rknn_model_path" property="rknnModelPath"/>
+        <result column="accuracy" property="accuracy"/>
+        <result column="status" property="status"/>
+        <result column="description" property="description"/>
+        <result column="download_count" property="downloadCount"/>
+        <result column="deploy_count" property="deployCount"/>
+        <result column="publish_time" property="publishTime"/>
+    </resultMap>
+
+    <select id="selectVlsAlgorithmModelPage" resultMap="vlsAlgorithmModelResultMap">
+        select *
+        from vls_algorithm_model
+        where is_deleted = 0 order by create_time desc
+    </select>
+
+    <select id="exportVlsAlgorithmModel" resultType="org.springblade.vlstream.excel.VlsAlgorithmModelExcel">
+        SELECT *
+        FROM vls_algorithm_model ${ew.customSqlSegment}
+    </select>
+
+    <!-- Basic fields list -->
+    <sql id="Base_Column_List">
+        id
+        , model_name, algorithm_id, training_id, version, model_format, model_size,
+        model_path, onnx_model_path, rknn_model_path, accuracy, status, description, download_count, deploy_count,
+        publish_time, create_user, create_time, update_time, is_deleted
+    </sql>
+
+    <!-- Paginated query for algorithm model list -->
+    <select id="selectModelPage" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM vls_algorithm_model
+        WHERE is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- Query model list by algorithm ID -->
+    <select id="selectByAlgorithmId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM vls_algorithm_model
+        WHERE algorithm_id = #{algorithmId} AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- Query model list by training task ID -->
+    <select id="selectByTrainingId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM vls_algorithm_model
+        WHERE training_id = #{trainingId} AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- Query model list by status -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM vls_algorithm_model
+        WHERE status = #{status} AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- Update model status -->
+    <update id="updateStatus">
+        UPDATE vls_algorithm_model
+        SET status       = #{status},
+            update_time = NOW()
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </update>
+
+    <!-- Update model download count -->
+    <update id="updateDownloadCount">
+        UPDATE vls_algorithm_model
+        SET download_count = download_count + 1,
+            update_time   = NOW()
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </update>
+
+    <!-- Update model deployment count -->
+    <update id="updateDeployCount">
+        UPDATE vls_algorithm_model
+        SET deploy_count = deploy_count + 1,
+            update_time = NOW()
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </update>
+
+    <!-- Batch update model status -->
+    <update id="batchUpdateStatus">
+        UPDATE vls_algorithm_model
+        SET status = #{status}, update_time = NOW()
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        AND is_deleted = 0
+    </update>
+
+    <!-- Check if model name and version exist -->
+    <select id="checkModelNameAndVersion" resultType="int">
+        SELECT COUNT(*)
+        FROM vls_algorithm_model
+        WHERE model_name = #{modelName}
+        AND version = #{version}
+        AND is_deleted = 0
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- Query model by algorithm ID and version -->
+    <select id="selectByAlgorithmIdAndVersion" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM vls_algorithm_model
+        WHERE algorithm_id = #{algorithmId}
+        AND version = #{version}
+        AND is_deleted = 0
+    </select>
+
+    <!-- Get the latest version model under the algorithm -->
+    <select id="selectLatestByAlgorithmId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM vls_algorithm_model
+        WHERE algorithm_id = #{algorithmId} AND is_deleted = 0
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- Query Popular Models (Sorted by downloads) -->
+    <select id="selectPopularModels" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM vls_algorithm_model
+        WHERE is_deleted = 0 AND status = 'published'
+        ORDER BY download_count DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- Query model count by creator -->
+    <select id="countByCreatedBy" resultType="long">
+        SELECT COUNT(*)
+        FROM vls_algorithm_model
+        WHERE create_user = #{createdBy}
+          AND is_deleted = 0
+    </select>
+
+    <!-- Get total size of algorithm model -->
+    <select id="getTotalModelSize" resultType="long">
+        SELECT
+            SUM(CAST(REPLACE(REPLACE(REPLACE(model_size, 'MB', ''), 'GB', '000'), 'KB', '0.001') AS DECIMAL(10, 3))) *
+            1024 * 1024
+        FROM vls_algorithm_model
+        WHERE is_deleted = 0
+          AND status = 'published'
+          AND model_size IS NOT NULL
+    </select>
+
+</mapper>

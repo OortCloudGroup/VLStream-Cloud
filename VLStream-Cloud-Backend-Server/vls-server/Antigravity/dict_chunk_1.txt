@@ -1,0 +1,400 @@
+QHJldHVybiDov5DooYzkuK3nmoTlrrnlmajlrp7kvovliJfooag= ||| @return 运行中的容器实例列表 ||| @return List of running container instances
+QHJldHVybiDov5znqIvmnI3liqHlmajphY3nva4= ||| @return 远程服务器配置 ||| @return Remote server configuration
+QHJldHVybiDov5znqIvmnI3liqHlmajphY3nva7pm4blkIg= ||| @return 远程服务器配置集合 ||| @return Collection of remote server configurations
+QHJldHVybiDov57mjqXnu5Pmnpw= ||| @return 连接结果 ||| @return Connection result
+QHJldHVybiDpg6jnvbLnirbmgIHnu5/orqHkv6Hmga8= ||| @return 部署状态统计信息 ||| @return Deployment status statistics
+QHJldHVybiDphY3nva7lj4LmlbA= ||| @return 配置参数 ||| @return Configuration parameters
+QHJldHVybiDpqozor4Hnu5Pmnpw= ||| @return 验证结果 ||| @return Verification results
+QUnnrpfms5XkuI3og73kuLrnqbo= ||| AI算法不能为空 ||| AI algorithm cannot be empty
+QW50IERlc2lnbiBQcm8g5piv5LiA5Liq5LyB5Lia57qn5byA566x5Y2z55So55qE5Lit5ZCO5Y+w5YmN56uvL+iuvuiuoeino+WGs+aWueahiOOAguespuWQiOmYv+mHjOi/veaxgueahCfmlY/mjbfnmoTliY3nq68r5by65aSn55qE5Lit5Y+wJ+eahOaAneaDs+OAgg== ||| Ant Design Pro 是一个企业级开箱即用的中后台前端/设计解决方案。符合阿里追求的'敏捷的前端+强大的中台'的思想。 ||| Ant Design Pro is an enterprise-class out-of-the-box mid-and-back-end front-end/design solution. It conforms to Alibaba's philosophy of 'agile front-end + powerful mid-end'.
+QXBpU2NvcGVWT+WvueixoQ== ||| ApiScopeVO对象 ||| ApiScopeVO object
+QXBpU2NvcGXlr7nosaE= ||| ApiScope对象 ||| ApiScope object
+QXVkaW9Bbm9tYWx5RGV0ZWN0aW9uU2V0dGluZ+WvueixoQ== ||| AudioAnomalyDetectionSetting对象 ||| AudioAnomalyDetectionSetting object
+QXVkaW9EZWZlbnNlVGltZVNldHRpbmflr7nosaE= ||| AudioDefenseTimeSetting对象 ||| AudioDefenseTimeSetting object
+QXVkaW9MaW5rYWdlTW9kZVNldHRpbmflr7nosaE= ||| AudioLinkageModeSetting对象 ||| AudioLinkageModeSetting object
+QmFzZTY05YaF5a656ZW/5bqmOiB7fQ== ||| Base64内容长度: {} ||| Base64 content length: {}
+QmxhZGXljZXlhYPmtYvor5U= ||| Blade单元测试 ||| Blade unit test
+QmxhZGXphY3nva4= ||| Blade配置 ||| Blade configuration
+Q1BV5L2/55So546H ||| CPU使用率 ||| CPU usage
+Q1BV5Z6L5Y+3 ||| CPU型号 ||| CPU model
+Q1BV6ZmQ5Yi2 ||| CPU限制 ||| CPU limit
+Q2FtZXJhQXBwbHlSZWNvcmTlr7nosaE= ||| CameraApplyRecord对象 ||| CameraApplyRecord object
+Q2FtZXJhRGlzcGxheVNldHRpbmflr7nosaE= ||| CameraDisplaySetting对象 ||| CameraDisplaySetting object
+Q2FtZXJhT3NkU2V0dGluZ+WvueixoQ== ||| CameraOsdSetting对象 ||| CameraOsdSetting object
+Q2xpZW505a+56LGh ||| Client对象 ||| Client object
+Q29kZeWvueixoQ== ||| Code对象 ||| Code object
+Q29uZGHnjq/looPlkI3np7A= ||| Conda环境名称 ||| Conda environment name
+Q29uZGHor4rmlq3lpLHotKU6IA== ||| Conda诊断失败:  ||| Conda diagnosis failed: 
+Q29uZGHor4rmlq3lpLHotKU6IHt9 ||| Conda诊断失败: {} ||| Conda diagnosis failed: {}
+Q29uZGHor4rmlq3lvILluLg6IA== ||| Conda诊断异常:  ||| Conda diagnosis anomaly: 
+Q29uZGHor4rmlq3lvILluLg6IHt9 ||| Conda诊断异常: {} ||| Conda diagnosis anomaly: {}
+Q29uZGHor4rmlq3miJDlip86IHt9 ||| Conda诊断成功: {} ||| Conda diagnosis succeeded: {}
+Q29uZGHor4rmlq3nu5Pmnpw6XG4= ||| Conda诊断结果:\n ||| Conda diagnosis result:\n
+Q29weXJpZ2h0IChjKSAyMDE4LTIwOTksIENoaWxsIFpodWFuZyDluoTpqp4gKGJsYWRlamF2YUBxcS5jb20pLg== ||| Copyright (c) 2018-2099, Chill Zhuang 庄骞 (bladejava@qq.com). ||| Copyright (c) 2018-2099, Chill Zhuang 庄骞 (bladejava@qq.com).
+RGF0YVNjb3BlVk/lr7nosaE= ||| DataScopeVO对象 ||| DataScopeVO object
+RGF0YVNjb3Bl5a+56LGh ||| DataScope对象 ||| DataScope object
+RGF0YXNvdXJjZeWvueixoQ== ||| Datasource对象 ||| Datasource object
+RGVwdFZP5a+56LGh ||| DeptVO对象 ||| DeptVO object
+RGVwdOWvueixoQ== ||| Dept对象 ||| Dept object
+RGljdFZP5a+56LGh ||| DictVO对象 ||| DictVO object
+RGljdOWvueixoQ== ||| Dict对象 ||| Dict object
+RkZtcGVn6YWN572u ||| FFmpeg配置 ||| FFmpeg configuration
+R1BV5L2/55So546H ||| GPU使用率 ||| GPU usage
+R1BV5o+P6L+w ||| GPU描述 ||| GPU description
+R1BV6ZmQ5Yi2 ||| GPU限制 ||| GPU limit
+SExT6L6T5Ye66YWN572u ||| HLS输出配置 ||| HLS output configuration
+SVDlnLDlnYAgKOaUr+aMgUlQdjTlkoxJUHY2KQ== ||| IP地址 (支持IPv4和IPv6) ||| IP address (supports IPv4 and IPv6)
+SVDplIHlrpprZXk= ||| IP锁定key ||| IP lock key
+TG9n5YyF6KOF57G7LOi/lOWbnuinhuWbvuWxguaJgOmcgOeahOWtl+autQ== ||| Log包装类,返回视图层所需的字段 ||| Log wrapper class, returning fields required by the view layer
+TVFUVOWuouaIt+err0lE5YmN57yA ||| MQTT客户端ID前缀 ||| MQTT client ID prefix
+TVFUVOWvhueggQ== ||| MQTT密码 ||| MQTT password
+TVFUVOW/g+i3s+S/neaMgeaXtumVv++8iOenku+8iQ== ||| MQTT心跳保持时长（秒） ||| MQTT keep-alive duration (seconds)
+TVFUVOacjeWKoeWcsOWdgA== ||| MQTT服务地址 ||| MQTT service address
+TVFUVOacjeWKoeerr+WPow== ||| MQTT服务端口 ||| MQTT service port
+TVFUVOa2iOaBr+WPkemAgeWksei0pe+8jHRvcGlj5LuF5YWB6K64b29ydGNsb3VkLyM6IHRvcGljPXt9 ||| MQTT消息发送失败，topic仅允许oortcloud/#: topic={} ||| Failed to send MQTT message, topic only allows oortcloud/#: topic={}
+TVFUVOa2iOaBr+WPkemAgeW8guW4uDogdG9waWM9e30= ||| MQTT消息发送异常: topic={} ||| MQTT message sending exception: topic={}
+TVFUVOa2iOaBr+WPkemAgeacjeWKoQ== ||| MQTT消息发送服务 ||| MQTT message sending service
+TVFUVOa2iOaBr+i0qOmHj+etiee6pw== ||| MQTT消息质量等级 ||| MQTT message Quality of Service (QoS)
+TVFUVOeUqOaIt+WQjQ== ||| MQTT用户名 ||| MQTT username
+TVFUVOi/nuaOpei2heaXtu+8iOenku+8iQ== ||| MQTT连接超时（秒） ||| MQTT connection timeout (seconds)
+TVFUVOmFjee9rg== ||| MQTT配置 ||| MQTT configuration
+TWFwcGVyIOaOpeWPow== ||| Mapper 接口 ||| Mapper interface
+TWVudVZP5a+56LGh ||| MenuVO对象 ||| MenuVO object
+TWVudeWvueixoQ== ||| Menu对象 ||| Menu object
+TW9iaWxlU2NlbmVHb3Zlcm5hbmNlU3ViVGFza+WvueixoQ== ||| MobileSceneGovernanceSubTask对象 ||| MobileSceneGovernanceSubTask object
+TW9iaWxlU2NlbmVHb3Zlcm5hbmNl5a+56LGh ||| MobileSceneGovernance对象 ||| MobileSceneGovernance object
+TXlCYXRpcyDmmK/kuIDmrL7kvJjnp4DnmoTmjIHkuYXlsYLmoYbmnrbvvIzlroPmlK/mjIHlrprliLbljJYgU1FM44CB5a2Y5YKo6L+H56iL5Lul5Y+K6auY57qn5pig5bCE44CCTXlCYXRpcyDpgb/lhY3kuoblh6DkuY7miYDmnInnmoQgSkRCQyDku6PnoIHlkozmiYvliqjorr7nva7lj4LmlbDku6Xlj4rojrflj5bnu5Pmnpzpm4bjgIJNeUJhdGlzIOWPr+S7peS9v+eUqOeugOWNleeahCBYTUwg5oiW5rOo6Kej5p2l6YWN572u5ZKM5pig5bCE5Y6f55Sf5L+h5oGv77yM5bCG5o6l5Y+j5ZKMIEphdmEg55qEIFBPSk9zKFBsYWluIE9sZCBKYXZhIE9iamVjdHMs5pmu6YCa55qEIEphdmHlr7nosaEp5pig5bCE5oiQ5pWw5o2u5bqT5Lit55qE6K6w5b2V44CC ||| MyBatis 是一款优秀的持久层框架，它支持定制化 SQL、存储过程以及高级映射。MyBatis 避免了几乎所有的 JDBC 代码和手动设置参数以及获取结果集。MyBatis 可以使用简单的 XML 或注解来配置和映射原生信息，将接口和 Java 的 POJOs(Plain Old Java Objects,普通的 Java对象)映射成数据库中的记录。 ||| MyBatis is an outstanding persistence framework that supports customized SQL, stored procedures, and advanced mapping. MyBatis avoids almost all JDBC code, manual parameter setting, and retrieval of results. MyBatis can be configured and mapped from native information using simple XML or annotations, mapping interfaces and Java POJOs (Plain Old Java Objects) into database records.
+Tm90aWNl5YyF6KOF57G7LOi/lOWbnuinhuWbvuWxguaJgOmcgOeahOWtl+autQ== ||| Notice包装类,返回视图层所需的字段 ||| Notice wrapper class, returning fields required by the view layer
+T1NE5a2X5L2T ||| OSD字体 ||| OSD font
+T1NE5bGe5oCn ||| OSD属性 ||| OSD properties
+T1NE6aKc6Imy ||| OSD颜色 ||| OSD color
+UFRa5YGc5q2i5oiQ5Yqf ||| PTZ停止成功 ||| PTZ stop succeeded
+UFRa5o6n5Yi2 ||| PTZ控制 ||| PTZ control
+UFRa5o6n5Yi2IC0g5YGc5q2i ||| PTZ控制 - 停止 ||| PTZ control - Stop
+UFRa5o6n5Yi2IC0g56e75Yqo ||| PTZ控制 - 移动 ||| PTZ control - Move
+UFRa5o6n5Yi2IC0g57yp5pS+ ||| PTZ控制 - 缩放 ||| PTZ control - Zoom
+UFRa5o6n5Yi2OiDorr7lpIc9e30sIOWRveS7pD17fSwg5Y+C5pWwPXt9 ||| PTZ控制: 设备={}, 命令={}, 参数={} ||| PTZ control: device={}, command={}, parameters={}
+UFRa5o6n5Yi25aSx6LSlOiA= ||| PTZ控制失败:  ||| PTZ control failed: 
+UFRa5o6n5Yi25aSx6LSlOiB7fQ== ||| PTZ控制失败: {} ||| PTZ control failed: {}
+UFRa5o6n5Yi25oiQ5Yqf ||| PTZ控制成功 ||| PTZ control succeeded
+UFRa56e75Yqo5oiQ5YqfOiA= ||| PTZ移动成功:  ||| PTZ move succeeded: 
+UFRa57yp5pS+5oiQ5YqfOiA= ||| PTZ缩放成功:  ||| PTZ zoom succeeded: 
+UGFyYW1WT+WvueixoQ== ||| ParamVO对象 ||| ParamVO object
+UGFyYW3lr7nosaE= ||| Param对象 ||| Param object
+UG9zdFZP5a+56LGh ||| PostVO对象 ||| PostVO object
+UG9zdOWvueixoQ== ||| Post对象 ||| Post object
+UlRTUOWcsOWdgA== ||| RTSP地址 ||| RTSP address
+UlRTUOW9leWItuWKn+iDveacquWQr+eUqA== ||| RTSP录制功能未启用 ||| RTSP recording function not enabled
+UlRTUOW9leWItui/m+eoi+euoeeQhuWZqA== ||| RTSP录制进程管理器 ||| RTSP recording process manager
+UlRTUOW9leWItumFjee9rg== ||| RTSP录制配置 ||| RTSP recording configuration
+UmVhY3Qg6LW35rqQ5LqOIEZhY2Vib29rIOeahOWGhemDqOmhueebru+8jOWboOS4uuivpeWFrOWPuOWvueW4guWcuuS4iuaJgOaciSBKYXZhU2NyaXB0IE1WQyDmoYbmnrbvvIzpg73kuI3mu6HmhI/vvIzlsLHlhrPlrproh6rlt7HlhpnkuIDlpZfvvIznlKjmnaXmnrborr5JbnN0YWdyYW0g55qE572R56uZ44CC5YGa5Ye65p2l5Lul5ZCO77yM5Y+R546w6L+Z5aWX5Lic6KW/5b6I5aW955So77yM5bCx5ZyoMjAxM+W5tDXmnIjlvIDmupDkuobjgII= ||| React 起源于 Facebook 的内部项目，因为该公司对市场上所有 JavaScript MVC 框架，都不满意，就决定自己写一套，用来架设Instagram 的网站。做出来以后，发现这套东西很好用，就在2013年5月开源了。 ||| React originated as an internal project at Facebook. Because the company was unsatisfied with all existing JavaScript MVC frameworks on the market, they decided to write their own to build the Instagram website. Once built, they found it very useful and open-sourced it in May 2013.
+UmVjb3JkRXZlbnRTdHJhdGVneeWvueixoQ== ||| RecordEventStrategy对象 ||| RecordEventStrategy object
+UmVjb3JkaW5nU2Vzc2lvbuWvueixoQ== ||| RecordingSession对象 ||| RecordingSession object
+UmVnaW9uVk/lr7nosaE= ||| RegionVO对象 ||| RegionVO object
+UmVnaW9u5a+56LGh ||| Region对象 ||| Region object
+UmVzb3VyY2VTcGVj5a+56LGh ||| ResourceSpec对象 ||| ResourceSpec object
+UmVzb3VyY2VUeXBl5a+56LGh ||| ResourceType对象 ||| ResourceType object
+Um9sZU1lbnVWT+WvueixoQ== ||| RoleMenuVO对象 ||| RoleMenuVO object
+Um9sZU1lbnXlr7nosaE= ||| RoleMenu对象 ||| RoleMenu object
+Um9sZVNjb3Bl5a+56LGh ||| RoleScope对象 ||| RoleScope object
+Um9sZVZP5a+56LGh ||| RoleVO对象 ||| RoleVO object
+Um9sZeWvueixoQ== ||| Role对象 ||| Role object
+U1NI5ZG95Luk5omn6KGMOiB7fQ== ||| SSH命令执行: {} ||| SSH command execution: {}
+U1NI5ZG95Luk5omn6KGM5aSx6LSlOiB7fQ== ||| SSH命令执行失败: {} ||| SSH command execution failed: {}
+U1NI5ZG95Luk5omn6KGM5a6M5oiQ77yM6L6T5Ye66ZW/5bqmOiB7fSwg6ZSZ6K+v6ZW/5bqmOiB7fQ== ||| SSH命令执行完成，输出长度: {}, 错误长度: {} ||| SSH command execution completed, output length: {}, error length: {}
+U1NI5ZG95Luk5omn6KGM6L6T5Ye6OiB7fQ== ||| SSH命令执行输出: {} ||| SSH command execution output: {}
+U1NI5ZG95Luk5omn6KGM6ZSZ6K+v5L+h5oGvOiB7fQ== ||| SSH命令执行错误信息: {} ||| SSH command execution error info: {}
+U1NI5omn6KGM57uT5p6c57G7 ||| SSH执行结果类 ||| SSH execution result class
+U1NI56uv5Y+j ||| SSH端口 ||| SSH port
+U1NI6L+e5o6l5oiQ5YqfOiB7fUB7fTp7fQ== ||| SSH连接成功: {}@{}:{} ||| SSH connection succeeded: {}@{}:{}
+U1NI6L+e5o6l5oiQ5Yqf77yae31Ae30= ||| SSH连接成功：{}@{} ||| SSH connection succeeded: {}@{}
+U1NI6L+e5o6l5pyN5Yqh57G7 ||| SSH连接服务类 ||| SSH connection service class
+U1NI6L+e5o6l5rWL6K+V5aSx6LSlOiB7fQ== ||| SSH连接测试失败: {} ||| SSH connection test failed: {}
+U1NI6L+e5o6l5rWL6K+V5oiQ5YqfOiB7fUB7fTp7fQ== ||| SSH连接测试成功: {}@{}:{} ||| SSH connection test succeeded: {}@{}:{}
+U1NI6L+e5o6l6YWN572u ||| SSH连接配置 ||| SSH connection configuration
+U2VjdXJl5bel5YW357G7 ||| Secure工具类 ||| Secure utility class
+U3ByaW5nQmxhZGUg5o6l5Y+j5paH5qGj57O757uf ||| SpringBlade 接口文档系统 ||| SpringBlade API Document System
+U3ByaW5nQ2xvdWTmmK/ln7rkuo5TcHJpbmdCb29055qE5LiA5pW05aWX5a6e546w5b6u5pyN5Yqh55qE5qGG5p6244CC5LuW5o+Q5L6b5LqG5b6u5pyN5Yqh5byA5Y+R5omA6ZyA55qE6YWN572u566h55CG44CB5pyN5Yqh5Y+R546w44CB5pat6Lev5Zmo44CB5pm66IO96Lev55Sx44CB5b6u5Luj55CG44CB5o6n5Yi25oC757q/44CB5YWo5bGA6ZSB44CB5Yaz562W56ue6YCJ44CB5YiG5biD5byP5Lya6K+d5ZKM6ZuG576k54q25oCB566h55CG562J57uE5Lu244CC ||| SpringCloud是基于SpringBoot的一整套实现微服务的框架。他提供了微服务开发所需的配置管理、服务发现、断路器、智能路由、微代理、控制总线、全局锁、决策竞选、分布式会话和集群状态管理等组件。 ||| Spring Cloud is a microservices framework built on top of Spring Boot. It provides components needed for microservices development, such as configuration management, service discovery, circuit breakers, intelligent routing, micro-proxy, control bus, global lock, leadership election, distributed sessions, and cluster state management.
+U3dhZ2dlcumFjee9ruexuw== ||| Swagger配置类 ||| Swagger configuration class
+VE9ETzog5a6e546w5paH5Lu26Kej5p6Q5ZKM6K6+5aSH5a+85YWl5Yqf6IO9 ||| TODO: 实现文件解析和设备导入功能 ||| TODO: Implement file parsing and device import functions
+VE9ETzog5qC55o2u6K6+5aSH57G75Z6L5ZKM5ZG95Luk5omn6KGMUFRa5o6n5Yi2 ||| TODO: 根据设备类型和命令执行PTZ控制 ||| TODO: Execute PTZ control based on device type and command
+VE9ETzog5qC55o2u6K6+5aSH57G75Z6L5ZKM6L+e5o6l5Y+C5pWw5rWL6K+V6L+e5o6l ||| TODO: 根据设备类型和连接参数测试连接 ||| TODO: Test connection based on device type and connection parameters
+VE9ETzog6ZuG5oiQRG9ja2VyIEFQSQ== ||| TODO: 集成Docker API ||| TODO: Integrate Docker API
+VGVuYW505a+56LGh ||| Tenant对象 ||| Tenant object
+VG9rZW5HcmFudGVy57yT5a2Y5rGg ||| TokenGranter缓存池 ||| TokenGranter cache pool
+VXNlclZP5a+56LGh ||| UserVO对象 ||| UserVO object
+VkxTdHJlYW0gQ2xvdWQg6KeG6aKR5rWB566h55CG57O757uf5o6l5Y+j5paH5qGj57O757uf ||| VLStream Cloud 视频流管理系统接口文档系统 ||| VLStream Cloud video stream management system API document system
+VkxTdHJlYW0gQ2xvdWQg6KeG6aKR5rWB566h55CG57O757uf5o6l5Y+j5paH5qGj57O757ufKOacjeWKoeWQjWFwYWFzLXZscy1zZXJ2ZXIp ||| VLStream Cloud 视频流管理系统接口文档系统(服务名apaas-vls-server) ||| VLStream Cloud video stream management system API document system (service name: apaas-vls-server)
+VmxzQWxnb3JpdGhtQW5ub3RhdGlvbkVudGl0eeWvueixoQ== ||| VlsAlgorithmAnnotationEntity对象 ||| VlsAlgorithmAnnotationEntity object
+VmxzQWxnb3JpdGhtRW50aXR55a+56LGh ||| VlsAlgorithmEntity对象 ||| VlsAlgorithmEntity object
+VmxzQWxnb3JpdGhtTW9kZWxFbnRpdHnlr7nosaE= ||| VlsAlgorithmModelEntity对象 ||| VlsAlgorithmModelEntity object
+VmxzQWxnb3JpdGhtT3JjaGVzdHJhdGlvbkVudGl0eeWvueixoQ== ||| VlsAlgorithmOrchestrationEntity对象 ||| VlsAlgorithmOrchestrationEntity object
+VmxzQWxnb3JpdGhtUmVwb3NpdG9yeUVudGl0eeWvueixoQ== ||| VlsAlgorithmRepositoryEntity对象 ||| VlsAlgorithmRepositoryEntity object
+VmxzQWxnb3JpdGhtVHJhaW5pbmdFbnRpdHnlr7nosaE= ||| VlsAlgorithmTrainingEntity对象 ||| VlsAlgorithmTrainingEntity object
+VmxzQW5hbHlzaXNSZXF1ZXN0RW50aXR55a+56LGh ||| VlsAnalysisRequestEntity对象 ||| VlsAnalysisRequestEntity object
+VmxzQW5ub3RhdGlvbkltYWdlRW50aXR55a+56LGh ||| VlsAnnotationImageEntity对象 ||| VlsAnnotationImageEntity object
+VmxzQW5ub3RhdGlvbkluc3RhbmNlRW50aXR55a+56LGh ||| VlsAnnotationInstanceEntity对象 ||| VlsAnnotationInstanceEntity object
+VmxzQW5ub3RhdGlvbkxhYmVsRW50aXR55a+56LGh ||| VlsAnnotationLabelEntity对象 ||| VlsAnnotationLabelEntity object
+VmxzQ29udGFpbmVySW5zdGFuY2VFbnRpdHnlr7nosaE= ||| VlsContainerInstanceEntity对象 ||| VlsContainerInstanceEntity object
+VmxzRGV2aWNlSW5mb0VudGl0eeWvueixoQ== ||| VlsDeviceInfoEntity对象 ||| VlsDeviceInfoEntity object
+VmxzRGV2aWNlVGFnUmVsYXRpb25FbnRpdHnlr7nosaE= ||| VlsDeviceTagRelationEntity对象 ||| VlsDeviceTagRelationEntity object
+VmxzRXZlbnRNYW5hZ2VtZW50RW50aXR55a+56LGh ||| VlsEventManagementEntity对象 ||| VlsEventManagementEntity object
+VmxzUmVtb3RlU2VydmVyc0VudGl0eeWvueixoQ== ||| VlsRemoteServersEntity对象 ||| VlsRemoteServersEntity object
+VmxzU2NlbmVHb3Zlcm5hbmNlRW50aXR55a+56LGh ||| VlsSceneGovernanceEntity对象 ||| VlsSceneGovernanceEntity object
+VmxzVGFnTWFuYWdlbWVudEVudGl0eeWvueixoQ== ||| VlsTagManagementEntity对象 ||| VlsTagManagementEntity object
+VmxzVGltZVN0cmF0ZWd5RW50aXR55a+56LGh ||| VlsTimeStrategyEntity对象 ||| VlsTimeStrategyEntity object
+VmxzVmlkZW9SZWNvcmRFbnRpdHnlr7nosaE= ||| VlsVideoRecordEntity对象 ||| VlsVideoRecordEntity object
+WFhYWOW5tFhY5pyIWFjml6U= ||| XXXX年XX月XX日 ||| XXXX-XX-XX
+WU9MT3Y46K6t57uD5pyN5Yqh5Zmo ||| YOLOv8训练服务器 ||| YOLOv8 training server
+XSDkuKo= ||| ] 个 ||| ] items
+YW5ub3RhdGlvbklk5LiN5ZCI5rOV ||| annotationId不合法 ||| annotationId is invalid
+YW5ub3RhdGlvblR5cGXkuI3lkIjms5U= ||| annotationType不合法 ||| annotationType is invalid
+YW5ub3RhdGlvblR5cGXkuI3og73kuLrnqbo= ||| annotationType不能为空 ||| annotationType cannot be empty
+YXBpU2NvcGVJZHPpm4blkIg= ||| apiScopeIds集合 ||| apiScopeIds collection
+YmxhZGXphY3nva4= ||| blade配置 ||| blade configuration
+Y3JvbuihqOi+vuW8jw== ||| cron表达式 ||| cron expression
+ZGF0YVNjb3BlSWRz6ZuG5ZCI ||| dataScopeIds集合 ||| dataScopeIds collection
+ZWNobyAnPT09IFB5dGhvbueOr+WigyA9PT0nICYmIA== ||| echo '=== Python环境 ===' &&  ||| echo '=== Python Environment ===' && 
+ZWNobyAnPT09IOWujOaIkCA9PT0n ||| echo '=== 完成 ===' ||| echo '=== Completed ==='
+ZWNobyAnPT09IOafpeaJvmNvbmRhID09PScgJiYg ||| echo '=== 查找conda ===' &&  ||| echo '=== Find conda ===' && 
+ZWNobyAnPT09IOafpeaJvmNvbmRhLnNoID09PScgJiYg ||| echo '=== 查找conda.sh ===' &&  ||| echo '=== Find conda.sh ===' && 
+ZWNobyAnPT09IOafpeaJvnlvbG8gPT09JyAmJiA= ||| echo '=== 查找yolo ===' &&  ||| echo '=== Find yolo ===' && 
+ZWNobyAnPT09IOeOr+Wig+iviuaWrSA9PT0nICYmIA== ||| echo '=== 环境诊断 ===' &&  ||| echo '=== Environment Diagnosis ===' && 
+aW1hZ2VJZOS4jeiDveS4uuepug== ||| imageId不能为空 ||| imageId cannot be empty
+aW5zdGFuY2Vz5LiN6IO95Li656m6 ||| instances不能为空 ||| instances cannot be empty
+aW5zdGFuY2Vz5qC85byP5LiN5ZCI5rOV ||| instances格式不合法 ||| instances format is invalid
+aW50OCBya25u5qih5Z6L6L6T5Ye66Lev5b6E ||| int8 rknn模型输出路径 ||| int8 rknn model output path
+a25pZmU0aumFjee9rg== ||| knife4j配置 ||| knife4j configuration
+bGFiZWxJZOS4jeiDveS4uuepug== ||| labelId不能为空 ||| labelId cannot be empty
+bGFiZWxJZOaIlmltYWdlSWTkuI3og73kuLrnqbo= ||| labelId或imageId不能为空 ||| labelId or imageId cannot be empty
+bG9nLmluZm8oIlNTSOWRveS7pOaJp+ihjOi+k+WHujoge30iLCBvdXRwdXQpOw== ||| log.info("SSH命令执行输出: {}", output); ||| log.info("SSH command execution output: {}", output);
+bG9nLndhcm4oIlNTSOWRveS7pOaJp+ihjOmUmeivr+S/oeaBrzoge30iLCBlcnJvcik7 ||| log.warn("SSH命令执行错误信息: {}", error); ||| log.warn("SSH command execution error info: {}", error);
+bUFQ5YC8 ||| mAP值 ||| mAP value
+bWVudUlkc+mbhuWQiA== ||| menuIds集合 ||| menuIds collection
+bmFtZTrnvJPlrZjlkI3np7DjgIINCiAgICAgICAgbWF4RWxlbWVudHNJbk1lbW9yee+8mue8k+WtmOacgOWkp+S4quaVsOOAgg0KICAgICAgICBldGVybmFsOuWvueixoeaYr+WQpuawuOS5heacieaViO+8jOS4gOS9huiuvue9ruS6hu+8jHRpbWVvdXTlsIbkuI3otbfkvZznlKjjgIINCiAgICAgICAgdGltZVRvSWRsZVNlY29uZHPvvJrorr7nva7lr7nosaHlnKjlpLHmlYjliY3nmoTlhYHorrjpl7Lnva7ml7bpl7TvvIjljZXkvY3vvJrnp5LvvInjgILku4XlvZNldGVybmFsPWZhbHNl5a+56LGh5LiN5piv5rC45LmF5pyJ5pWI5pe25L2/55So77yM5Y+v6YCJ5bGe5oCn77yM6buY6K6k5YC85pivMO+8jOS5n+WwseaYr+WPr+mXsue9ruaXtumXtOaXoOept+Wkp+OAgg0KICAgICAgICB0aW1lVG9MaXZlU2Vjb25kc++8muiuvue9ruWvueixoeWcqOWkseaViOWJjeWFgeiuuOWtmOa0u+aXtumXtO+8iOWNleS9je+8muenku+8ieOAguacgOWkp+aXtumXtOS7i+S6juWIm+W7uuaXtumXtOWSjOWkseaViOaXtumXtOS5i+mXtOOAguS7heW9k2V0ZXJuYWw9ZmFsc2Xlr7nosaHkuI3mmK/msLjkuYXmnInmlYjml7bkvb/nlKjvvIzpu5jorqTmmK8wLu+8jOS5n+WwseaYr+WvueixoeWtmOa0u+aXtumXtOaXoOept+Wkp+OAgg0KICAgICAgICBvdmVyZmxvd1RvRGlza++8muW9k+WGheWtmOS4reWvueixoeaVsOmHj+i+vuWIsG1heEVsZW1lbnRzSW5NZW1vcnnml7bvvIxFaGNhY2hl5bCG5Lya5a+56LGh5YaZ5Yiw56OB55uY5Lit44CCDQogICAgICAgIGRpc2tTcG9vbEJ1ZmZlclNpemVNQu+8mui/meS4quWPguaVsOiuvue9rkRpc2tTdG9yZe+8iOejgeebmOe8k+WtmO+8ieeahOe8k+WtmOWMuuWkp+Wwj+OAgum7mOiupOaYrzMwTULjgILmr4/kuKpDYWNoZemDveW6lOivpeacieiHquW3seeahOS4gOS4que8k+WGsuWMuuOAgg0KICAgICAgICBtYXhFbGVtZW50c09uRGlza++8muehrOebmOacgOWkp+e8k+WtmOS4quaVsOOAgg0KICAgICAgICBkaXNrUGVyc2lzdGVudO+8muaYr+WQpue8k+WtmOiZmuaLn+acuumHjeWQr+acn+aVsOaNriBXaGV0aGVyIHRoZSBkaXNrIHN0b3JlIHBlcnNpc3RzIGJldHdlZW4gcmVzdGFydHMgb2YgdGhlIFZpcnR1YWwgTWFjaGluZS4gVGhlIGRlZmF1bHQgdmFsdWUgaXMgZmFsc2UuDQogICAgICAgIGRpc2tFeHBpcnlUaHJlYWRJbnRlcnZhbFNlY29uZHPvvJrno4Hnm5jlpLHmlYjnur/nqIvov5DooYzml7bpl7Tpl7TpmpTvvIzpu5jorqTmmK8xMjDnp5LjgIINCiAgICAgICAgbWVtb3J5U3RvcmVFdmljdGlvblBvbGljee+8muW9k+i+vuWIsG1heEVsZW1lbnRzSW5NZW1vcnnpmZDliLbml7bvvIxFaGNhY2hl5bCG5Lya5qC55o2u5oyH5a6a55qE562W55Wl5Y675riF55CG5YaF5a2Y44CC6buY6K6k562W55Wl5pivTFJV77yI5pyA6L+R5pyA5bCR5L2/55So77yJ44CC5L2g5Y+v5Lul6K6+572u5Li6RklGT++8iOWFiOi/m+WFiOWHuu+8ieaIluaYr0xGVe+8iOi+g+WwkeS9v+eUqO+8ieOAgg0KICAgICAgICBjbGVhck9uRmx1c2jvvJrlhoXlrZjmlbDph4/mnIDlpKfml7bmmK/lkKbmuIXpmaTjgII= ||| name:缓存名称。\r\n        maxElementsInMemory：缓存最大个数。\r\n        eternal:对象是否永久有效，一但设置了，timeout将不起作用。\r\n        timeToIdleSeconds：设置对象在失效前的允许闲置时间（单位：秒）。仅当eternal=false对象不是永久有效时使用，可选属性，默认值是0，也就是可闲置时间无穷大。\r\n        timeToLiveSeconds：设置对象在失效前允许存活时间（单位：秒）。最大时间介于创建时间和失效时间之间。仅当eternal=false对象不是永久有效时使用，默认是0.，也就是对象存活时间无穷大。\r\n        overflowToDisk：当内存中对象数量达到maxElementsInMemory时，Ehcache将会对象写到磁盘中。\r\n        diskSpoolBufferSizeMB：这个参数设置DiskStore（磁盘缓存）的缓存区大小。默认是30MB。每个Cache都应该有自己的一个缓冲区。\r\n        maxElementsOnDisk：硬盘最大缓存个数。\r\n        diskPersistent：是否缓存虚拟机重启期数据 Whether the disk store persists between restarts of the Virtual Machine. The default value is false.\r\n        diskExpiryThreadIntervalSeconds：磁盘失效线程运行时间间隔，默认是120秒。\r\n        memoryStoreEvictionPolicy：当达到maxElementsInMemory限制时，Ehcache将会根据指定的策略去清理内存。默认策略是LRU（最近最少使用）。你可以设置为FIFO（先进先出）或是LFU（较少使用）。\r\n        clearOnFlush：内存数量最大时是否清除。 ||| name: Cache name.\r\n        maxElementsInMemory: Maximum number of elements in memory.\r\n        eternal: Whether the object is permanently valid. Once set, timeout will have no effect.\r\n        timeToIdleSeconds: Set the allowed idle time for an object before it expires (unit: seconds). Used only when eternal=false (the object is not permanently valid), optional attribute, default value is 0, which means infinite idle time.\r\n        timeToLiveSeconds: Set the allowed lifespan for an object before it expires (unit: seconds). The maximum time is between the creation time and expiration time. Used only when eternal=false (the object is not permanently valid), default value is 0, which means infinite lifespan.\r\n        overflowToDisk: When the number of objects in memory reaches maxElementsInMemory, Ehcache will write the objects to disk.\r\n        diskSpoolBufferSizeMB: This parameter sets the buffer size of the DiskStore (disk cache). The default is 30MB. Each Cache should have its own buffer.\r\n        maxElementsOnDisk: Maximum number of cache elements on the hard disk.\r\n        diskPersistent: Whether to cache data across virtual machine restarts. Whether the disk store persists between restarts of the Virtual Machine. The default value is false.\r\n        diskExpiryThreadIntervalSeconds: Interval for running the disk expiration thread, default is 120 seconds.\r\n        memoryStoreEvictionPolicy: When the maxElementsInMemory limit is reached, Ehcache will clear memory based on the specified policy. The default policy is LRU (Least Recently Used). You can set it to FIFO (First In First Out) or LFU (Less Frequently Used).\r\n        clearOnFlush: Whether to clear when memory capacity reaches maximum.
+bm90aWNl5pWw6YeP77yaWw== ||| notice数量：[ ||| number of notices: [
+b25ueOaooeWei+aWh+S7tui3r+W+hA== ||| onnx模型文件路径 ||| onnx model file path
+b25ueOaooeWei+i+k+WHuui3r+W+hA== ||| onnx模型输出路径 ||| onnx model output path
+b3JhY2xlIOeJiOacrA== ||| oracle 版本 ||| oracle version
+b3Nz6YWN572u ||| oss配置 ||| oss configuration
+cHTmqKHlnovmlofku7bot6/lvoQ= ||| pt模型文件路径 ||| pt model file path
+cmtubuaooeWei+aWh+S7tui3r+W+hA== ||| rknn模型文件路径 ||| rknn model file path
+cmtubuaooeWei+i+k+WHuui3r+W+hA== ||| rknn模型输出路径 ||| rknn model output path
+cm9sZUlkc+mbhuWQiA== ||| roleIds集合 ||| roleIds collection
+cm9sZUlk6ZuG5ZCI ||| roleId集合 ||| roleId collection
+c2FiZXIg57O757uf5ZCN ||| saber 系统名 ||| saber system name
+c2FiZXLphY3nva5cbiIgKw== ||| saber配置\n" + ||| saber configuration\n" +
+c2VudGluZWwgZGV2IOWcsOWdgA== ||| sentinel dev 地址 ||| sentinel dev address
+c2VudGluZWwgcHJvZCDlnLDlnYA= ||| sentinel prod 地址 ||| sentinel prod address
+c2VudGluZWwgdGVzdCDlnLDlnYA= ||| sentinel test 地址 ||| sentinel test address
+c2lnbktleeeUn+aIkOWZqA== ||| signKey生成器 ||| signKey generator
+c3ByaW5nZG9jLW9wZW5hcGnphY3nva4= ||| springdoc-openapi配置 ||| springdoc-openapi configuration
+c3ByaW5n6YWN572u ||| spring配置 ||| spring configuration
+c3No6YWN572u ||| ssh配置 ||| ssh configuration
+c3dhZ2dlcumFjee9ruS/oeaBrw== ||| swagger配置信息 ||| swagger configuration info
+c3dvcmQg57O757uf5ZCN ||| sword 系统名 ||| sword system name
+c3luc2V05paH5Lu2 ||| synset文件 ||| synset file
+dG9wTWVudUlkc+mbhuWQiA== ||| topMenuIds集合 ||| topMenuIds collection
+dXNlcklk6ZuG5ZCI ||| userId集合 ||| userId collection
+dkNQVeaguOaVsA== ||| vCPU核数 ||| vCPU cores
+dmxz5qih5Z2X ||| vls模块 ||| vls module
+eW9sb+W3peS9nOi3r+W+hA== ||| yolo工作路径 ||| yolo working path
+e30gQmFzZTY06ZW/5bqmOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgbGVuZ3RoPXt9 ||| {} Base64长度: deviceId={}, deviceName={}, length={} ||| {} Base64 length: deviceId={}, deviceName={}, length={}
+5LiD5pyI5pyI6L+t5Luj ||| 七月月迭代 ||| July monthly iteration
+5LiK5Lyg5Lit5b+DOjDlkKYx5piv ||| 上传中心:0否1是 ||| Upload center: 0 No, 1 Yes
+5LiK5Lyg5Zu+54mH ||| 上传图片 ||| Upload image
+5LiK5Lyg5Zu+54mH5ZCO5pu05paw5qCH5rOo5oC75pWw5aSx6LSlOiBhbm5vdGF0aW9uSWQ9e30sIGVycm9yPXt9 ||| 上传图片后更新标注总数失败: annotationId={}, error={} ||| Failed to update annotation count after uploading image: annotationId={}, error={}
+5LiK5Lyg5pWw5o2u6ZuGIFlBTUwg5paH5Lu2 ||| 上传数据集 YAML 文件 ||| Upload dataset YAML file
+5LiK5Lyg5paH5Lu2 ||| 上传文件 ||| Upload file
+5LiK5Lyg5paH5Lu25Yiw5paH5Lu25a2Y5YKo5pyN5Yqh ||| 上传文件到文件存储服务 ||| Upload file to file storage service
+5LiK5Lyg5qCH5rOo5Zu+54mH ||| 上传标注图片 ||| Upload annotated image
+5LiK5Lyg5qCH5rOo5paH5Lu25Yiw6K6t57uDL+mqjOivgeebruW9lQ== ||| 上传标注文件到训练/验证目录 ||| Upload annotation files to training/validation directory
+5LiK5Lyg6KeG6aKR57yp55Wl5Zu+5aSx6LSlOiB2aWRlb1BhdGg9e30sIHRodW1ibmFpbFBhdGg9e30= ||| 上传视频缩略图失败: videoPath={}, thumbnailPath={} ||| Failed to upload video thumbnail: videoPath={}, thumbnailPath={}
+5LiK5oql5LqL5Lu2 ||| 上报事件 ||| Report event
+5LiK5oql5L2N572u ||| 上报位置 ||| Report location
+5LiK5oql5Zu+54mH ||| 上报图片 ||| Report image
+5LiK5oql5pe26Ze0 ||| 上报时间 ||| Report time
+5LiK5oql6K6+5aSH ||| 上报设备 ||| Report device
+5LiK57qn5a2X5YW4 ||| 上级字典 ||| Parent dictionary
+5LiK57qn6I+c5Y2V ||| 上级菜单 ||| Parent menu
+5LiK57qn6KeS6Imy ||| 上级角色 ||| Parent role
+5LiK57qn6YOo6Zeo ||| 上级部门 ||| Parent department
+5LiL5ouJ5pWw5o2u5rqQ ||| 下拉数据源 ||| Dropdown data source
+5LiL5qyh5b2V5Yi25pe26Ze0 ||| 下次录制时间 ||| Next recording time
+5LiL6L295paH5Lu2 ||| 下载文件 ||| Download file
+5LiL6L295paH5Lu25aSx6LSl77ya ||| 下载文件失败： ||| Failed to download file: 
+5LiL6L295paH5Lu277yaaG9zdD17fSwgcGF0aD17fSwgZmlsZW5hbWU9e30= ||| 下载文件：host={}, path={}, filename={} ||| Download file: host={}, path={}, filename={}
+5LiL6L295qih5Z6L ||| 下载模型 ||| Download model
+5LiL6L295qih5Z6L5aSx6LSl ||| 下载模型失败 ||| Failed to download model
+5LiL6L295qih5Z6L5aSx6LSl77ya ||| 下载模型失败： ||| Failed to download model: 
+5LiL6L295qih5Z6L5oiQ5Yqf77yae30= ||| 下载模型成功：{} ||| Model downloaded successfully: {}
+5LiL6L295qih5Z6L5paH5Lu2 ||| 下载模型文件 ||| Download model file
+5LiL6L295qih5Z6L5paH5Lu2OiB7fQ== ||| 下载模型文件: {} ||| Download model file: {}
+5LiL6L295qih5Z6L5paH5Lu25aSx6LSlOiB7fQ== ||| 下载模型文件失败: {} ||| Failed to download model file: {}
+5LiL6L295qyh5pWw ||| 下载次数 ||| Download count
+5LiL6L29566X5rOV5qih5Z6L77yae30= ||| 下载算法模型：{} ||| Download algorithm model: {}
+5LiN5YWB6K645Yig6Zmk5Z+656GA6aKE572u566X5rOV5bqT77yaSUQ9e30= ||| 不允许删除基础预置算法库：ID={} ||| Deleting basic preset algorithm library is not allowed: ID={}
+5LiN5oqb5Ye65byC5bi477yM57un57ut5omn6KGM5ZCO57ut6YC76L6R ||| 不抛出异常，继续执行后续逻辑 ||| Do not throw exception, continue with subsequent logic
+5LiN5pSv5oyB55qE5b6q546v5ZGo5pyf57G75Z6L ||| 不支持的循环周期类型 ||| Unsupported loop cycle type
+5LiN6IO95Yig6Zmk5qC557qn5qCH562+5YiG57G7 ||| 不能删除根级标签分类 ||| Cannot delete root label classification
+5LiN6YCP5piO44CB5LiN6Zeq54OB ||| 不透明、不闪烁 ||| Opaque, non-flashing
+5LiN6Zi75q2i5Yig6Zmk5pON5L2c77yM5Y+q6K6w5b2V6ZSZ6K+v ||| 不阻止删除操作，只记录错误 ||| Do not block delete operation, only log error
+5LiN6Zi75q2i5bqU55So5ZCv5Yqo77yM5Y+q6K6w5b2V6K2m5ZGK ||| 不阻止应用启动，只记录警告 ||| Do not block application startup, only log warning
+5Lia5Yqh5pel5b+X ||| 业务日志 ||| Business log
+5Lia5Yqh6YWN572u ||| 业务配置 ||| Business configuration
+5Lit ||| 中 ||| Medium
+5Li05pe25Zu+54mH5Yig6Zmk5aSx6LSl77yae30= ||| 临时图片删除失败：{} ||| Failed to delete temporary image: {}
+5Li05pe25qCH5rOo5paH5Lu25Yig6Zmk5aSx6LSl77yae30= ||| 临时标注文件删除失败：{} ||| Failed to delete temporary annotation file: {}
+5Li05pe26YWN572u5paH5Lu25Yig6Zmk5aSx6LSl77yae30= ||| 临时配置文件删除失败：{} ||| Failed to delete temporary configuration file: {}
+5Li65q+P5Liq5qCH562+57G75Z6L5p6E5bu65a2Q5qCH562+ ||| 为每个标签类型构建子标签 ||| Build child labels for each label type
+5Li65q+P5Liq55uu5qCH6K6+5aSH6K6+572u5qCH562+ ||| 为每个目标设备设置标签 ||| Set labels for each target device
+5Li75Lu75YqhSUQ= ||| 主任务ID ||| Main task ID
+5Li76ZSu ||| 主键 ||| Primary key
+5Li76ZSuSUQ= ||| 主键ID ||| Primary key ID
+5Li76ZSuaWQ= ||| 主键id ||| Primary key ID
+5Li76ZSu5ZCN ||| 主键名 ||| Primary key name
+5Li76ZSu57G75Z6LICAwOiLmlbDmja7lupNJROiHquWiniIsIDE6IuS4jeaTjeS9nCIsIDI6IueUqOaIt+i+k+WFpUlEIiwzOiLmlbDlrZflnotzbm93Zmxha2UiLCA0OiLlhajlsYDllK/kuIBJRCBVVUlEIiwgNToi5a2X56ym5Liy5Z6Lc25vd2ZsYWtlIjs= ||| 主键类型  0:"数据库ID自增", 1:"不操作", 2:"用户输入ID",3:"数字型snowflake", 4:"全局唯一ID UUID", 5:"字符串型snowflake"; ||| Primary key type  0:"Database ID auto-increment", 1:"No operation", 2:"User input ID", 3:"Numeric snowflake", 4:"Global unique ID UUID", 5:"String snowflake";
+5Li76ZSu6ZuG5ZCI ||| 主键集合 ||| Primary key collection
+5LqL5Lu2SUQ= ||| 事件ID ||| Event ID
+5LqL5Lu25o+P6L+w ||| 事件描述 ||| Event description
+5LqL5Lu25pWw5o2u ||| 事件数据 ||| Event data
+5LqL5Lu254q25oCB ||| 事件状态 ||| Event status
+5LqL5Lu254q25oCB5p6a5Li+ ||| 事件状态枚举 ||| Event status enum
+5LqL5Lu254q25oCB77yacGVuZGluZy3lvoXlpITnkIYscHJvY2Vzc2luZy3lpITnkIbkuK0sY29tcGxldGVkLeW3suWujOaIkCxjbG9zZWQt5bey5YWz6Zet ||| 事件状态：pending-待处理,processing-处理中,completed-已完成,closed-已关闭 ||| Event status: pending-Pending, processing-Processing, completed-Completed, closed-Closed
+5LqL5Lu2562W55Wl5oiW5pe26Ze0562W55Wl5bey5Yig6ZmkL+emgeeUqA== ||| 事件策略或时间策略已删除/禁用 ||| Event strategy or time strategy has been deleted/disabled
+5LqL5Lu2562W55Wl5piO56Gu56aB55So5b2V5Yi2KHRyaWdnZXJBY3Rpb27kuI3lkKtyZWNvcmQpOiBzdHJhdGVneURldmljZUlkPXt9LCB0cmlnZ2VyQWN0aW9uPXt9 ||| 事件策略明确禁用录制(triggerAction不含record): strategyDeviceId={}, triggerAction={} ||| Event strategy explicitly disables recording (triggerAction does not contain record): strategyDeviceId={}, triggerAction={}
+5LqL5Lu2562W55Wl5pyq6YWN572udHJpZ2dlckFjdGlvbu+8jOaMiem7mOiupOWQr+eUqOW9leWItjogc3RyYXRlZ3lEZXZpY2VJZD17fQ== ||| 事件策略未配置triggerAction，按默认启用录制: strategyDeviceId={} ||| Event strategy does not configure triggerAction, enabling recording by default: strategyDeviceId={}
+5LqL5Lu2566h55CG6KGo ||| 事件管理表 ||| Event management table
+5LqL5Lu2566h55CG6KGoIEV4Y2Vs5a6e5L2T57G7 ||| 事件管理表 Excel实体类 ||| Event management table Excel entity class
+5LqL5Lu2566h55CG6KGoIE1hcHBlciDmjqXlj6M= ||| 事件管理表 Mapper 接口 ||| Event management table Mapper interface
+5LqL5Lu2566h55CG6KGoIOS/ruaUuQ== ||| 事件管理表 修改 ||| Event management table Modification
+5LqL5Lu2566h55CG6KGoIOWIhumhtQ== ||| 事件管理表 分页 ||| Event management table Pagination
+5LqL5Lu2566h55CG6KGoIOWIoOmZpA== ||| 事件管理表 删除 ||| Event management table Deletion
+5LqL5Lu2566h55CG6KGoIOWMheijheexuyzov5Tlm57op4blm77lsYLmiYDpnIDnmoTlrZfmrrU= ||| 事件管理表 包装类,返回视图层所需的字段 ||| Event management table wrapper class, returning fields required by the view layer
+5LqL5Lu2566h55CG6KGoIOWunuS9k+exuw== ||| 事件管理表 实体类 ||| Event management table Entity class
+5LqL5Lu2566h55CG6KGoIOaOp+WItuWZqA== ||| 事件管理表 控制器 ||| Event management table Controller
+5LqL5Lu2566h55CG6KGoIOaVsOaNruS8oOi+k+WvueixoeWunuS9k+exuw== ||| 事件管理表 数据传输对象实体类 ||| Event management table Data Transfer Object (DTO) entity class
+5LqL5Lu2566h55CG6KGoIOaWsOWing== ||| 事件管理表 新增 ||| Event management table Add
+5LqL5Lu2566h55CG6KGoIOaWsOWinuaIluS/ruaUuQ== ||| 事件管理表 新增或修改 ||| Event management table Add or Modify
+5LqL5Lu2566h55CG6KGoIOacjeWKoeWunueOsOexuw== ||| 事件管理表 服务实现类 ||| Event management table Service implementation class
+5LqL5Lu2566h55CG6KGoIOacjeWKoeexuw== ||| 事件管理表 服务类 ||| Event management table Service class
+5LqL5Lu2566h55CG6KGoIOiHquWumuS5ieWIhumhtQ== ||| 事件管理表 自定义分页 ||| Event management table Custom pagination
+5LqL5Lu2566h55CG6KGoIOinhuWbvuWunuS9k+exuw== ||| 事件管理表 视图实体类 ||| Event management table View entity class
+5LqL5Lu2566h55CG6KGoIOivpuaDhQ== ||| 事件管理表 详情 ||| Event management table Details
+5LqL5Lu2566h55CG6KGo5o6l5Y+j ||| 事件管理表接口 ||| Event management table interface
+5LqL5Lu2566h55CG6KGo5pWw5o2u ||| 事件管理表数据 ||| Event management table data
+5LqL5Lu2566h55CG6KGo5pWw5o2u6KGo ||| 事件管理表数据表 ||| Event management table data table
+5LqL5Lu257G75Z6L ||| 事件类型 ||| Event type
+5LqL5Lu257qn5Yir ||| 事件级别 ||| Event level
+5LqL5Lu257qn5Yir5p6a5Li+ ||| 事件级别枚举 ||| Event level enum
+5LqL5Lu257qn5Yir77yabG93LeS9jixtZWRpdW0t5LitLGhpZ2gt6auYLHVyZ2VudC3ntKfmgKU= ||| 事件级别：low-低,medium-中,high-高,urgent-紧急 ||| Event level: low-Low, medium-Medium, high-High, urgent-Urgent
+5LqR5Y+w ||| 云台 ||| PTZ
+5Lqu5bqm ||| 亮度 ||| Brightness
+5Lqu5bqm6L+H5L2O77yM6Lez6L+H5qOA5rWLOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYnJpZ2h0bmVzcz17fQ== ||| 亮度过低，跳过检测: deviceId={}, deviceName={}, brightness={} ||| Brightness too low, skipping detection: deviceId={}, deviceName={}, brightness={}
+5Lqu5bqm6ZmQ5Yi2 ||| 亮度限制 ||| Brightness limit
+5Lq65L2T5qOA5rWL ||| 人体检测 ||| Human body detection
+5Lq65L2T5qOA5rWL5ZCv5Yqo6Kem5Y+R5Zmo77ya5bqU55So5ZCv5Yqo5pe26Kem5Y+R5LiA5qyh5Lq65L2T5qOA5rWL5Lu75Yqh5Yi35paw44CC ||| 人体检测启动触发器：应用启动时触发一次人体检测任务刷新。 ||| Human body detection startup trigger: triggers a human body detection task refresh once when the application starts.
+5Lq66IS45qOA5rWL ||| 人脸检测 ||| Face detection
+5Lq66IS45qOA5rWL5LqL5Lu25bey5Yib5bu6OiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30sIGZhY2VzPXt9 ||| 人脸检测事件已创建: deviceId={}, deviceName={}, algorithmId={}, faces={} ||| Face detection event created: deviceId={}, deviceName={}, algorithmId={}, faces={}
+5Lq66IS45qOA5rWL5ZCv5Yqo6Kem5Y+R5Zmo77ya5bqU55So5ZCv5Yqo5pe26Kem5Y+R5LiA5qyh5Lq66IS45qOA5rWL5Lu75Yqh5Yi35paw44CC ||| 人脸检测启动触发器：应用启动时触发一次人脸检测任务刷新。 ||| Face detection startup trigger: triggers a face detection task refresh once when the application starts.
+5Lq66IS45qOA5rWL5oiq5Zu+5bey5L+d5a2YOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgdGltZT17fSwgcGF0aD17fQ== ||| 人脸检测截图已保存: deviceId={}, deviceName={}, time={}, path={} ||| Face detection snapshot saved: deviceId={}, deviceName={}, time={}, path={}
+5Lq66IS45qOA5rWL6KeG6aKR5rWB5pat5byAOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30= ||| 人脸检测视频流断开: deviceId={}, deviceName={}, algorithmId={} ||| Face detection video stream disconnected: deviceId={}, deviceName={}, algorithmId={}
+5Lq66IS45qOA5rWL6KeG6aKR5rWB57uT5p2fOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30= ||| 人脸检测视频流结束: deviceId={}, deviceName={}, algorithmId={} ||| Face detection video stream ended: deviceId={}, deviceName={}, algorithmId={}
+5Lq66IS46K+G5Yir566X5rOV ||| 人脸识别算法 ||| Face recognition algorithm
+5LuFYXBwcm92ZWTnirbmgIHlj6/lroznu5PkuLpjb21wbGV0ZWQ= ||| 仅approved状态可完结为completed ||| Only approved status can be concluded as completed
+5LuF5a6h5om56YCa6L+H6K6w5b2V5YWB6K645a6M57uT ||| 仅审批通过记录允许完结 ||| Only approved records are allowed to be concluded
+5LuO5qCH5rOo5a6e5L6L5Lit5o+Q5Y+W5Zu+54mH5ZCN77yMaW1hZ2VJZCDkuLrnqbrml7bnlKjkuo7lhZzlupXljLnphY0= ||| 从标注实例中提取图片名，imageId 为空时用于兜底匹配 ||| Extract image name from annotation instance, used as fallback matching when imageId is empty
+5LuO5qCH5rOo5pWw5o2u5Lit5o+Q5Y+W5Zu+54mH5ZCN56ew5YiX6KGo ||| 从标注数据中提取图片名称列表 ||| Extract image name list from annotation data
+5LuO5qCH5rOo5pWw5o2u5Lit5o+Q5Y+W5Zu+54mH5pWw6YeP ||| 从标注数据中提取图片数量 ||| Extract image count from annotation data
+5LuO5qCH5rOo5pWw5o2u5Lit5o+Q5Y+W5qCH5rOo5YiX6KGo ||| 从标注数据中提取标注列表 ||| Extract annotation list from annotation data
+5LuO5qCH5rOo5pWw5o2u5Lit5o+Q5Y+W57G75Yir5L+h5oGv ||| 从标注数据中提取类别信息 ||| Extract category information from annotation data
+5LuO6K+35rGC5pWw5o2u5Lit5o+Q5Y+W6K6+5aSH5L+h5oGv ||| 从请求数据中提取设备信息 ||| Extract device information from request data
+5LuO6L+c56iL5pyN5Yqh5Zmo5LiL6L295oyH5a6a5paH5Lu2 ||| 从远程服务器下载指定文件 ||| Download specified file from remote server
+5LuO6L+c56iL5pyN5Yqh5Zmo5LiL6L295paH5Lu2 ||| 从远程服务器下载文件 ||| Download file from remote server
+5LuO6L+c56iL5pyN5Yqh5Zmo5LiL6L296K6t57uD5aW955qE5qih5Z6L5paH5Lu2 ||| 从远程服务器下载训练好的模型文件 ||| Download trained model file from remote server
+5LuT5bqTSUQ= ||| 仓库ID ||| Repository ID
+5LuT5bqT57G75Z6L ||| 仓库类型 ||| Repository type
+5LuT5bqT57G75Z6L5p6a5Li+ ||| 仓库类型枚举 ||| Repository type enum
+5LuT5bqT57G75Z6L77yaYmFzaWMt5Z+656GA6aKE572uLCBleHRlbmRlZC3mianlsZU= ||| 仓库类型：basic-基础预置, extended-扩展 ||| Repository type: basic-Basic Preset, extended-Extended
+5LuY5bCP5bCP ||| 付小小 ||| Fu Xiaoxiao
+5Luj56CB5omA5Zyo5pyN5Yqh5ZCN ||| 代码所在服务名 ||| Service name where code resides
+5Luj56CB55Sf5oiQ ||| 代码生成 ||| Code generation
+5Luj56CB55Sf5oiQ5Zmo ||| 代码生成器 ||| Code generator
+5Luj56CB55Sf5oiQ5oiQ5Yqf ||| 代码生成成功 ||| Code generation succeeded
+5Luj56CB55Sf5oiQ55qE5YyF5ZCN ||| 代码生成的包名 ||| Package name of generated code
+5Luj56CB55Sf5oiQ55qE5qih5Z2X5ZCN ||| 代码生成的模块名 ||| Module name of generated code
+5Luk54mM ||| 令牌 ||| Token
+5Luk54mM57G75Z6L ||| 令牌类型 ||| Token type
+5Luk54mM6L+H5pyf56eS5pWw ||| 令牌过期秒数 ||| Token expiration seconds
+5Lul5LiL5Li65YWz6IGU5a+56LGh77yM5LiN5a+55bqU5pWw5o2u5bqT5a2X5q61 ||| 以下为关联对象，不对应数据库字段 ||| The following are associated objects and do not correspond to database fields
+5Lul5LiL55qE6YWN572u5Lya5b2x5ZONYnVmZmVyLOi/meS6m2J1ZmZlcuS8mueUqOS6juacjeWKoeWZqOi/nuaOpeeahElP5pON5L2cLOacieeCueexu+S8vG5ldHR555qE5rGg5YyW5YaF5a2Y566h55CG ||| 以下的配置会影响buffer,这些buffer会用于服务器连接的IO操作,有点类似netty的池化内存管理 ||| The following configuration will affect buffers, which will be used for IO operations of server connections, similar to Netty's pooled memory management
+5Lu75Yqh5ZCN56ew ||| 任务名称 ||| Task name
+5Lu75Yqh54q25oCBKHBlbmRpbmcvZG9uZS9jYW5jZWwp ||| 任务状态(pending/done/cancel) ||| Task status (pending/done/cancel)
+5Lu75Yqh6ZyA6KaB5ZyoIDIwMTgtMDEtMTIgMjA6MDAg5YmN5ZCv5Yqo ||| 任务需要在 2018-01-12 20:00 前启动 ||| Task needs to start before 2018-01-12 20:00
+5LyY5YWI5LuOIHJlcXVlc3Qg5Lit6I635Y+W ||| 优先从 request 中获取 ||| Obtain from request preferentially
+5Lya6K+d5byA5aeL5pe26Ze0 ||| 会话开始时间 ||| Session start time
+5Lya6K+d54q25oCBIHJ1bm5pbmcvc3RvcHBlZA== ||| 会话状态 running/stopped ||| Session status running/stopped
+5Lya6K+d562+5ZCN ||| 会话签名 ||| Session signature
+5Lya6K+d57uT5p2f5pe26Ze0 ||| 会话结束时间 ||| Session end time
+5Lyg5YWlVXNlcg== ||| 传入User ||| Pass in User
+5Lyg5YWlYWNjb3VudOWSjHJlYWxOYW1l ||| 传入account和realName ||| Pass in account and realName
+5Lyg5YWlY2FtZXJhRGlzcGxheVNldHRpbmc= ||| 传入cameraDisplaySetting ||| Pass in cameraDisplaySetting
+5Lyg5YWlY2FtZXJhT3NkU2V0dGluZw== ||| 传入cameraOsdSetting ||| Pass in cameraOsdSetting
+5Lyg5YWlY2xpZW50 ||| 传入client ||| Pass in client
+5Lyg5YWlY29kZQ== ||| 传入code ||| Pass in code
+5Lyg5YWlZGF0YVNjb3Bl ||| 传入dataScope ||| Pass in dataScope
+5Lyg5YWlZGF0YXNvdXJjZQ== ||| 传入datasource ||| Pass in datasource
+5Lyg5YWlZGVwdA== ||| 传入dept ||| Pass in dept
+5Lyg5YWlZGV2aWNlSWQ= ||| 传入deviceId ||| Pass in deviceId
+5Lyg5YWlZGV2aWNlSWTkuI7ml7bpl7TmrrU= ||| 传入deviceId与时间段 ||| Pass in deviceId and time period
+5Lyg5YWlZGljdA== ||| 传入dict ||| Pass in dict
+5Lyg5YWlZG9tYWlu ||| 传入domain ||| Pass in domain
+5Lyg5YWlZXhjZWw= ||| 传入excel ||| Pass in excel
+5Lyg5YWlaWQ= ||| 传入id ||| Pass in id
+5Lyg5YWlaWRz ||| 传入ids ||| Pass in ids
+5Lyg5YWlbWVudQ== ||| 传入menu ||| Pass in menu
+5Lyg5YWlbm90aWNl ||| 传入notice ||| Pass in notice
+5Lyg5YWlcGFyYW0= ||| 传入param ||| Pass in param
+5Lyg5YWlcG9zdA== ||| 传入post ||| Pass in post
+5Lyg5YWlcmVnaW9u ||| 传入region ||| Pass in region
+5Lyg5YWlcmVzb3VyY2VTcGVj ||| 传入resourceSpec ||| Pass in resourceSpec
+5Lyg5YWlcmVzb3VyY2VUeXBl ||| 传入resourceType ||| Pass in resourceType
+5Lyg5YWlcm9sZQ== ||| 传入role ||| Pass in role
+5Lyg5YWlcm9sZUlk6ZuG5ZCI5Lul5Y+KbWVudUlk6ZuG5ZCI ||| 传入roleId集合以及menuId集合 ||| Pass in roleId collection and menuId collection
+5Lyg5YWldGVuYW50 ||| 传入tenant ||| Pass in tenant
+5Lyg5YWldG9wTWVudQ== ||| 传入topMenu ||| Pass in topMenu
+5Lyg5YWldG9wTWVudUlk6ZuG5ZCI5Lul5Y+KbWVudUlk6ZuG5ZCI ||| 传入topMenuId集合以及menuId集合 ||| Pass in topMenuId collection and menuId collection
+5Lyg5YWldXNlcg== ||| 传入user ||| Pass in user
+5Lyg5YWldXNlcklk6ZuG5ZCI ||| 传入userId集合 ||| Pass in userId collection
+5Lyg5YWldmxzQWxnb3JpdGht ||| 传入vlsAlgorithm ||| Pass in vlsAlgorithm
+5Lyg5YWldmxzQWxnb3JpdGhtQW5ub3RhdGlvbg== ||| 传入vlsAlgorithmAnnotation ||| Pass in vlsAlgorithmAnnotation
+5Lyg5YWldmxzQWxnb3JpdGhtTW9kZWw= ||| 传入vlsAlgorithmModel ||| Pass in vlsAlgorithmModel
+5Lyg5YWldmxzQWxnb3JpdGhtT3JjaGVzdHJhdGlvbg== ||| 传入vlsAlgorithmOrchestration ||| Pass in vlsAlgorithmOrchestration
+5Lyg5YWldmxzQWxnb3JpdGhtUmVwb3NpdG9yeQ== ||| 传入vlsAlgorithmRepository ||| Pass in vlsAlgorithmRepository
+5Lyg5YWldmxzQWxnb3JpdGhtVHJhaW5pbmc= ||| 传入vlsAlgorithmTraining ||| Pass in vlsAlgorithmTraining
+5Lyg5YWldmxzQW5hbHlzaXNSZXF1ZXN0 ||| 传入vlsAnalysisRequest ||| Pass in vlsAnalysisRequest
+5Lyg5YWldmxzQW5ub3RhdGlvbkltYWdl ||| 传入vlsAnnotationImage ||| Pass in vlsAnnotationImage
+5Lyg5YWldmxzQW5ub3RhdGlvbkluc3RhbmNl ||| 传入vlsAnnotationInstance ||| Pass in vlsAnnotationInstance
+5Lyg5YWldmxzQW5ub3RhdGlvbkxhYmVs ||| 传入vlsAnnotationLabel ||| Pass in vlsAnnotationLabel
+5Lyg5YWldmxzQ29udGFpbmVySW5zdGFuY2U= ||| 传入vlsContainerInstance ||| Pass in vlsContainerInstance
+5Lyg5YWldmxzRGV2aWNlSW5mbw== ||| 传入vlsDeviceInfo ||| Pass in vlsDeviceInfo
+5Lyg5YWldmxzRGV2aWNlVGFnUmVsYXRpb24= ||| 传入vlsDeviceTagRelation ||| Pass in vlsDeviceTagRelation
+5Lyg5YWldmxzRXZlbnRNYW5hZ2VtZW50 ||| 传入vlsEventManagement ||| Pass in vlsEventManagement
+5Lyg5YWldmxzUmVtb3RlU2VydmVycw== ||| 传入vlsRemoteServers ||| Pass in vlsRemoteServers
+5Lyg5YWldmxzU2NlbmVHb3Zlcm5hbmNl ||| 传入vlsSceneGovernance ||| Pass in vlsSceneGovernance
+5Lyg5YWldmxzVGFnTWFuYWdlbWVudA== ||| 传入vlsTagManagement ||| Pass in vlsTagManagement
+5Lyg5YWldmxzVGltZVN0cmF0ZWd5 ||| 传入vlsTimeStrategy ||| Pass in vlsTimeStrategy
+5Lyg5YWldmxzVmlkZW9SZWNvcmQ= ||| 传入vlsVideoRecord ||| Pass in vlsVideoRecord
+5Lyg5YWl5Li76ZSu ||| 传入主键 ||| Pass in primary key
+5Lyg5YWl5Zyw5Z+65ZKM ||| 传入地基和 ||| Pass in foundation and
+5Lyg5YWl5a+G56CB ||| 传入密码 ||| Pass in password
+5Lyg5YWl56ef5oi3SUQ6dGVuYW50SWQs6LSm5Y+3OmFjY291bnQs5a+G56CBOnBhc3N3b3Jk ||| 传入租户ID:tenantId,账号:account,密码:password ||| Pass in tenant ID: tenantId, account: account, password: password
+5L2N572u ||| 位置 ||| Location
+5L2N572u5o+P6L+w ||| 位置描述 ||| Location description
+5L2O ||| 低 ||| Low
+5L2O54Wn5bqm55S15a2Q5b+r6Zeo ||| 低照度电子快门 ||| Low-light electronic shutter
+5L2g5o6o6I2Q55qEIOabsuWmruWmriDlt7LpgJrov4fnrKzkuInova7pnaLor5U= ||| 你推荐的 曲妮妮 已通过第三轮面试 ||| Qu Nini, recommended by you, has passed the third round of interviews
+5L2g5pS25Yiw5LqGIDE0IOS7veaWsOWRqOaKpQ== ||| 你收到了 14 份新周报 ||| You received 14 new weekly reports
+5L2/55SoIEBvcmcuc3ByaW5nYmxhZGUudGVzdC5TaWduS2V5R2VuZXJhdG9yIOiOt+WPlg== ||| 使用 @org.springblade.test.SignKeyGenerator 获取 ||| Obtained using @org.springblade.test.SignKeyGenerator
+5L2/55SoIEBvcmcuc3ByaW5nYmxhZGUudGVzdC5TbTJLZXlHZW5lcmF0b3Ig6I635Y+WLOeUqOS6juWbveWvhnNtMuino+WvhizliY3nq6/ml6DpnIDphY3nva4= ||| 使用 @org.springblade.test.Sm2KeyGenerator 获取,用于国密sm2解密,前端无需配置 ||| Obtained using @org.springblade.test.Sm2KeyGenerator, used for SM2 decryption, front-end configuration not required
+5L2/55SoIEBvcmcuc3ByaW5nYmxhZGUudGVzdC5TbTJLZXlHZW5lcmF0b3Ig6I635Y+WLOeUqOS6juWbveWvhnNtMumqjOetvizpnIDlkozliY3nq6/kv53mjIHkuIDoh7Q= ||| 使用 @org.springblade.test.Sm2KeyGenerator 获取,用于国密sm2验签,需和前端保持一致 ||| Obtained using @org.springblade.test.Sm2KeyGenerator, used for SM2 signature verification, needs to be consistent with the front-end

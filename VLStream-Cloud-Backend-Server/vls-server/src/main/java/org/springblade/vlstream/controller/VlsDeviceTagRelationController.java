@@ -1,0 +1,134 @@
+package org.springblade.vlstream.controller;
+
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import org.springblade.core.boot.ctrl.BladeController;
+import org.springblade.core.excel.util.ExcelUtil;
+import org.springblade.core.mp.support.Condition;
+import org.springblade.core.mp.support.Query;
+import org.springblade.core.secure.BladeUser;
+import org.springblade.core.tool.api.R;
+import org.springblade.core.tool.utils.DateUtil;
+import org.springblade.core.tool.utils.Func;
+import org.springblade.vlstream.excel.VlsDeviceTagRelationExcel;
+import org.springblade.vlstream.pojo.entity.DeviceTagRelation;
+import org.springblade.vlstream.pojo.vo.DeviceTagRelationVO;
+import org.springblade.vlstream.service.IVlsDeviceTagRelationService;
+import org.springblade.vlstream.wrapper.VlsDeviceTagRelationWrapper;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Device Tag Association Table Controller
+ *
+ * @author Oort
+ * @since 2025-12-23
+ */
+@RestController
+@AllArgsConstructor
+@RequestMapping("/vlsDeviceTagRelation")
+@Tag(name = "Device Tag Association Table", description = "Device Tag Association Table Interface")
+public class VlsDeviceTagRelationController extends BladeController {
+
+	private final IVlsDeviceTagRelationService vlsDeviceTagRelationService;
+
+	/**
+	 * Device Tag Association Table Details
+	 */
+	@GetMapping("/detail")
+	@ApiOperationSupport(order = 1)
+	@Operation(summary = "Details", description = "Pass in vlsDeviceTagRelation")
+	public R<DeviceTagRelationVO> detail(DeviceTagRelation vlsDeviceTagRelation) {
+		DeviceTagRelation detail = vlsDeviceTagRelationService.getOne(Condition.getQueryWrapper(vlsDeviceTagRelation));
+		return R.data(VlsDeviceTagRelationWrapper.build().entityVO(detail));
+	}
+
+	/**
+	 * Device Tag Association Table Pagination
+	 */
+	@GetMapping("/list")
+	@ApiOperationSupport(order = 2)
+	@Operation(summary = "Pagination", description = "Pass in vlsDeviceTagRelation")
+	public R<IPage<DeviceTagRelationVO>> list(@Parameter(hidden = true) @RequestParam Map<String, Object> vlsDeviceTagRelation, Query query) {
+		IPage<DeviceTagRelation> pages = vlsDeviceTagRelationService.page(Condition.getPage(query), Condition.getQueryWrapper(vlsDeviceTagRelation, DeviceTagRelation.class));
+		return R.data(VlsDeviceTagRelationWrapper.build().pageVO(pages));
+	}
+
+
+	/**
+	 * Device Tag Association Table Custom Pagination
+	 */
+	@GetMapping("/page")
+	@ApiOperationSupport(order = 3)
+	@Operation(summary = "Pagination", description = "Pass in vlsDeviceTagRelation")
+	public R<IPage<DeviceTagRelationVO>> page(DeviceTagRelationVO vlsDeviceTagRelation, Query query) {
+		IPage<DeviceTagRelationVO> pages = vlsDeviceTagRelationService.selectVlsDeviceTagRelationPage(Condition.getPage(query), vlsDeviceTagRelation);
+		return R.data(pages);
+	}
+
+	/**
+	 * Device Tag Association Table Add
+	 */
+	@PostMapping("/save")
+	@ApiOperationSupport(order = 4)
+	@Operation(summary = "Add", description = "Pass in vlsDeviceTagRelation")
+	public R save(@Valid @RequestBody DeviceTagRelation vlsDeviceTagRelation) {
+		return R.status(vlsDeviceTagRelationService.save(vlsDeviceTagRelation));
+	}
+
+	/**
+	 * Device Tag Association Table Modify
+	 */
+	@PostMapping("/update")
+	@ApiOperationSupport(order = 5)
+	@Operation(summary = "Modify", description = "Pass in vlsDeviceTagRelation")
+	public R update(@Valid @RequestBody DeviceTagRelation vlsDeviceTagRelation) {
+		return R.status(vlsDeviceTagRelationService.updateById(vlsDeviceTagRelation));
+	}
+
+	/**
+	 * Device Tag Association Table Add or Modify
+	 */
+	@PostMapping("/submit")
+	@ApiOperationSupport(order = 6)
+	@Operation(summary = "Add or modify", description = "Pass in vlsDeviceTagRelation")
+	public R submit(@Valid @RequestBody DeviceTagRelation vlsDeviceTagRelation) {
+		return R.status(vlsDeviceTagRelationService.saveOrUpdate(vlsDeviceTagRelation));
+	}
+
+	/**
+	 * Device Tag Association Table Delete
+	 */
+	@GetMapping("/remove")
+	@ApiOperationSupport(order = 7)
+	@Operation(summary = "Logical delete", description = "Pass in ids")
+	public R remove(@Parameter(description = "Primary key collection", required = true) @RequestParam String ids) {
+		return R.status(vlsDeviceTagRelationService.deleteLogic(Func.toLongList(ids)));
+	}
+
+	/**
+	 * Export data
+	 */
+	@GetMapping("/export-vlsDeviceTagRelation")
+	@ApiOperationSupport(order = 8)
+	@Operation(summary = "Export data", description = "Pass in vlsDeviceTagRelation")
+	public void exportVlsDeviceTagRelation(@Parameter(hidden = true) @RequestParam Map<String, Object> vlsDeviceTagRelation, BladeUser bladeUser, HttpServletResponse response) {
+		QueryWrapper<DeviceTagRelation> queryWrapper = Condition.getQueryWrapper(vlsDeviceTagRelation, DeviceTagRelation.class);
+		//if (!AuthUtil.isAdministrator()) {
+		//	queryWrapper.lambda().eq(VlsDeviceTagRelationEntity::getTenantId, bladeUser.getTenantId());
+		//}
+		//queryWrapper.lambda().eq(VlsDeviceTagRelationEntity::getIsDeleted, BladeConstant.DB_NOT_DELETED);
+		List<VlsDeviceTagRelationExcel> list = vlsDeviceTagRelationService.exportVlsDeviceTagRelation(queryWrapper);
+		ExcelUtil.export(response, "Device Tag Association Table Data" + DateUtil.today(), "Device Tag Association Table Data Table", list, VlsDeviceTagRelationExcel.class);
+	}
+
+}

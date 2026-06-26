@@ -1,0 +1,188 @@
+6L+c56iL6K6t57uD5pyN5Yqh57G7 ||| 远程训练服务类 ||| Remote training service class
+6L+e5o6l ||| 连接 ||| Connection
+6L+e5o6l5Yiw6L+c56iL5pyN5Yqh5Zmo5bm26aqM6K+B6L+e5o6l54q25oCB ||| 连接到远程服务器并验证连接状态 ||| Connect to remote server and verify connection status
+6L+e5o6l5Zyw5Z2A ||| 连接地址 ||| Connection address
+6L+e5o6l5aSx6LSlOiA= ||| 连接失败:  ||| Connection failed: 
+6L+e5o6l5oiQ5Yqf ||| 连接成功 ||| Connection successful
+6L+e5o6l5pyN5Yqh5Zmo5aSx6LSl77ya ||| 连接服务器失败： ||| Failed to connect to server: 
+6L+e5o6l5pyN5Yqh5Zmo5aSx6LSl77yae30= ||| 连接服务器失败：{} ||| Failed to connect to server: {}
+6L+e5o6l6L+c56iL5pyN5Yqh5Zmo ||| 连接远程服务器 ||| Connect to remote server
+6L+e5o6l6L+c56iL5pyN5Yqh5Zmo77yaaG9zdD17fSwgdXNlcm5hbWU9e30sIHBhdGg9e30= ||| 连接远程服务器：host={}, username={}, path={} ||| Connect to remote server: host={}, username={}, path={}
+6YCC6YWN5pWw5o2u5bqT5Lit5a2Y5ZyoIFVVSUQg562J6Z2e57qv5pWw5a2X5a2X56ym5Liy55qE5oOF5Ya144CC ||| 适配数据库中存在 UUID 等非纯数字字符串的情况。 ||| Adapt to cases where non-pure numeric strings such as UUIDs exist in the database.
+6YCP6Zu+5qih5byP ||| 透雾模式 ||| Defog mode
+6YCS5b2S5Yib5bu677yM6YG/5YWN54i255uu5b2V5LiN5a2Y5Zyo5a+86Ie0IG1rZGlyIOaKpemUmQ== ||| 递归创建，避免父目录不存在导致 mkdir 报错 ||| Recursive creation to avoid mkdir errors caused by the non-existence of parent directories
+6YCS5b2S5Yig6Zmk5a2Q5qCH562+ ||| 递归删除子标签 ||| Recursively delete child tags
+6YCS5b2S5Yig6Zmk5a2Q55uu5b2V ||| 递归删除子目录 ||| Recursively delete subdirectories
+6YCS5b2S5Yig6Zmk55uu5b2V5LiL55qE5Zu+54mH5paH5Lu2 ||| 递归删除目录下的图片文件 ||| Recursively delete image files under the directory
+6YCS5b2S5p6E5bu65qCR ||| 递归构建树 ||| Recursively build tree
+6YCS5b2S5p6E5bu65qCR5b2i57uT5p6E ||| 递归构建树形结构 ||| Recursively build tree structure
+6YCa55So5Li76aKY5YmN57yA ||| 通用主题前缀 ||| Common topic prefix
+6YCa55So5bel5YW357G7 ||| 通用工具类 ||| Common utility class
+6YCa55So5bi46YeP ||| 通用常量 ||| Common constants
+6YCa55So5piv5ZCm5p6a5Li+57G7 ||| 通用是否枚举类 ||| Common Yes/No enum class
+6YCa55So5p+l6K+i5pig5bCE57uT5p6c ||| 通用查询映射结果 ||| General query mapping result
+6YCa55So5p+l6K+i57uT5p6c5YiX ||| 通用查询结果列 ||| General query result columns
+6YCa55+l5YWs5ZGK6KeG5Zu+57G7 ||| 通知公告视图类 ||| Notice announcement view class
+6YCa55+l57G75Z6L ||| 通知类型 ||| Notification type
+6YCa55+l57G75Z6L5ZCN ||| 通知类型名 ||| Notification type name
+6YCa6YGT5ZCN56ew ||| 通道名称 ||| Channel name
+6YC76L6R5Yig6Zmk ||| 逻辑删除 ||| Logical delete
+6YC76L6R5Yig6ZmkKDDmnKrliKAsMeW3suWIoCk= ||| 逻辑删除(0未删,1已删) ||| Logical deletion (0 not deleted, 1 deleted)
+6YC76L6R5Yig6Zmk5YWo5bGA5YC877yIMeihqOekuuW3suWIoOmZpO+8jOi/meS5n+aYr015YmF0aXMgUGx1c+eahOm7mOiupOmFjee9ru+8iQ== ||| 逻辑删除全局值（1表示已删除，这也是Mybatis Plus的默认配置） ||| Logical deletion global value (1 indicates deleted, which is also the default configuration of MyBatis-Plus)
+6YC76L6R5Yig6Zmk6YWN572u ||| 逻辑删除配置 ||| Logical deletion configuration
+6YC76L6R5pyq5Yig6Zmk5YWo5bGA5YC877yIMOihqOekuuacquWIoOmZpO+8jOi/meS5n+aYr015YmF0aXMgUGx1c+eahOm7mOiupOmFjee9ru+8iQ== ||| 逻辑未删除全局值（0表示未删除，这也是Mybatis Plus的默认配置） ||| Logical undeleted global value (0 indicates not deleted, which is also the default configuration of MyBatis-Plus)
+6YKu5Lu2 ||| 邮件 ||| Email
+6YKu5Lu26IGU5YqoOjDlkKYx5piv ||| 邮件联动:0否1是 ||| Email linkage: 0 no, 1 yes
+6YKu566x ||| 邮箱 ||| Email
+6YOo5YiG5qCH5rOo ||| 部分标注 ||| Partial labeling
+6YOo572y5aSx6LSl77yM5pu05paw54q25oCB ||| 部署失败，更新状态 ||| Deployment failed, update status
+6YOo572y5oiQ5Yqf77yM5pu05paw54q25oCB ||| 部署成功，更新状态 ||| Deployment successful, update status
+6YOo572y5qih5Z6L ||| 部署模型 ||| Deploy model
+6YOo572y5qih5Z6L5aSx6LSl ||| 部署模型失败 ||| Failed to deploy model
+6YOo572y5qih5Z6L5aSx6LSl77ya ||| 部署模型失败： ||| Failed to deploy model: 
+6YOo572y5qih5Z6L5oiQ5Yqf77yae30= ||| 部署模型成功：{} ||| Successfully deployed model: {}
+6YOo572y5qyh5pWw ||| 部署次数 ||| Deployment count
+6YOo572y54q25oCB ||| 部署状态 ||| Deployment status
+6YOo572y54q25oCB5om56YeP5pu05paw5aSx6LSl ||| 部署状态批量更新失败 ||| Batch update of deployment status failed
+6YOo572y54q25oCB5om56YeP5pu05paw5oiQ5Yqf ||| 部署状态批量更新成功 ||| Batch update of deployment status successful
+6YOo572y54q25oCB5pu05paw5aSx6LSl ||| 部署状态更新失败 ||| Update of deployment status failed
+6YOo572y54q25oCB5pu05paw5oiQ5Yqf ||| 部署状态更新成功 ||| Update of deployment status successful
+6YOo572y54q25oCB77yacmVhZHkt5bCx57uqLCBkZXBsb3lpbmct6YOo572y5LitLCBkZXBsb3llZC3lt7Lpg6jnvbIsIGZhaWxlZC3lpLHotKU= ||| 部署状态：ready-就绪, deploying-部署中, deployed-已部署, failed-失败 ||| Deployment status: ready-ready, deploying-deploying, deployed-deployed, failed-failed
+6YOo572y566X5rOV5Yiw6K6+5aSH ||| 部署算法到设备 ||| Deploy algorithm to device
+6YOo572y566X5rOV5Yiw6K6+5aSH77yaQWxnb3JpdGhtSWQ9e30sIERldmljZUlkcz17fQ== ||| 部署算法到设备：AlgorithmId={}, DeviceIds={} ||| Deploy algorithm to device: AlgorithmId={}, DeviceIds={}
+6YOo572y566X5rOV5qih5Z6L77yae30= ||| 部署算法模型：{} ||| Deploy algorithm model: {}
+6YOo6Zeo ||| 部门 ||| Department
+6YOo6ZeoSUQ= ||| 部门ID ||| Department ID
+6YOo6ZeoaWQ= ||| 部门id ||| department id
+6YOo6Zeo5YWo56ew ||| 部门全称 ||| Full department name
+6YOo6Zeo5ZCN ||| 部门名 ||| Department name
+6YOo6Zeo5ZCN56ew ||| 部门名称 ||| Department name
+6YWN572u5L+h5oGv ||| 配置信息 ||| Configuration information
+6YWN572u5pel5b+X5Zyw5Z2A ||| 配置日志地址 ||| Configure log address
+6YWN572u5pu05paw5aSx6LSl ||| 配置更新失败 ||| Failed to update configuration
+6YWN572u5pu05paw5oiQ5Yqf ||| 配置更新成功 ||| Configuration updated successfully
+6YeN5ZCv5a655Zmo5a6e5L6L ||| 重启容器实例 ||| Restart container instance
+6YeN5ZCv5a655Zmo5a6e5L6L77yMSUQ6IHt9 ||| 重启容器实例，ID: {} ||| Restart container instance, ID: {}
+6YeN5ZCv5qyh5pWw ||| 重启次数 ||| Restart count
+6YeN5paw6K6h566X5bm25pu05paw5LuT5bqT55qE566X5rOV5pWw6YeP ||| 重新计算并更新仓库的算法数量 ||| Recalculate and update the number of algorithms in the repository
+6YeN5paw6K6h566X6L+b5bqm ||| 重新计算进度 ||| Recalculate progress
+6YeN572u5oyH5a6a55qE5qCH5rOo5Lu75Yqh ||| 重置指定的标注任务 ||| Reset specified labeling task
+6YeN572u5qCH5rOo5Lu75Yqh ||| 重置标注任务 ||| Reset labeling task
+6YeN572u5qCH5rOo5Lu75Yqh77yaSUQ9e30= ||| 重置标注任务：ID={} ||| Reset labeling task: ID={}
+6ZSQ5bqm ||| 锐度 ||| Sharpness
+6ZSZ6K+v5L+h5oGv ||| 错误信息 ||| Error message
+6ZSZ6K+v6KGM5pWw ||| 错误行数 ||| Error line count
+6ZWH57qn5Yy65YiS57yW5Y+3 ||| 镇级区划编号 ||| Town-level division code
+6ZWH57qn5ZCN56ew ||| 镇级名称 ||| Town-level name
+6ZWc5YOP ||| 镜像 ||| Image
+6ZWc5YOP5ZCN56ew ||| 镜像名称 ||| Image name
+6ZWc5YOP5qCH562+ ||| 镜像标签 ||| Image tag
+6ZWc5YOP57G75Z6L77yaYmFzZS3ln7rnoYDplZzlg48sYXBwLeW6lOeUqOmVnOWDjyxjdXN0b20t6Ieq5a6a5LmJ6ZWc5YOPLHVybC3plZzlg4/lnLDlnYA= ||| 镜像类型：base-基础镜像,app-应用镜像,custom-自定义镜像,url-镜像地址 ||| Image type: base-base image, app-app image, custom-custom image, url-image URL
+6ZWc5aS05Yid5aeL5YyW ||| 镜头初始化 ||| Lens initialization
+6Zif5YiX5a656YeP ||| 队列容量 ||| Queue capacity
+6Ziy6KGl5YWJ6L+H5pud ||| 防补光过曝 ||| Fill light overexposure prevention
+6Zi75aGe5Lu75Yqh57q/56iL5rGgLCDlvZPmiafooYznsbvkvLxzZXJ2bGV06K+35rGC6Zi75aGe5pON5L2cLCB1bmRlcnRvd+S8muS7jui/meS4que6v+eoi+axoOS4reWPluW+l+e6v+eoiyzlroPnmoTlgLzorr7nva7lj5blhrPkuo7ns7vnu5/nmoTotJ/ovb0= ||| 阻塞任务线程池, 当执行类似servlet请求阻塞操作, undertow会从这个线程池中取得线程,它的值设置取决于系统的负载 ||| Blocking task thread pool. When executing blocking operations like Servlet requests, Undertow will obtain threads from this thread pool. Its value setting depends on system load.
+6ZmE5Yqg6K+05piO ||| 附加说明 ||| Additional remarks
+6ZmN5Zmq562J57qn ||| 降噪等级 ||| Noise reduction level
+6ZqU5aSp5qih5byP6Ze06ZqU5aSp5pWw ||| 隔天模式间隔天数 ||| Interval days in alternate days mode
+6ZqU5aSp5qih5byP6Ze06ZqU5aSp5pWw5b+F6aG75aSn5LqOMA== ||| 隔天模式间隔天数必须大于0 ||| Interval days in alternate days mode must be greater than 0
+6ZyA6KaB5Y675o6J55qE6KGo5YmN57yA ||| 需要去掉的表前缀 ||| Table prefixes to be removed
+6ZyA6KaB5o6S6Zmk55qE6KGo5ZCNKOS4pOiAheWPquiDveWPluWFtuS4gCk= ||| 需要排除的表名(两者只能取其一) ||| Table names to be excluded (choose only one of the two)
+6ZyA6KaB55Sf5oiQ55qE6KGo5ZCNKOS4pOiAheWPquiDveWPluWFtuS4gCk= ||| 需要生成的表名(两者只能取其一) ||| Table names to be generated (choose only one of the two)
+6Z2e5pWw5o2u5bqT5a2X5q6177yM55So5LqO5p+l6K+i5pe25YWz6IGU5pi+56S6 ||| 非数据库字段，用于查询时关联显示 ||| Non-database field, used for associated display during query
+6Z+z6aKR5biD6Ziy5pe26Ze06K6+572u ||| 音频布防时间设置 ||| Audio arming schedule setting
+6Z+z6aKR5biD6Ziy5pe26Ze06K6+572u5o6l5Y+j ||| 音频布防时间设置接口 ||| Audio arming schedule setting interface
+6Z+z6aKR5biD6Ziy5pe26Ze06K6+572u5raI5oGv5Li76aKY ||| 音频布防时间设置消息主题 ||| Audio arming schedule setting message topic
+6Z+z6aKR5biD6Ziy5pe26Ze06K6+572u6KGoIE1hcHBlciDmjqXlj6M= ||| 音频布防时间设置表 Mapper 接口 ||| Audio arming schedule setting table Mapper interface
+6Z+z6aKR5biD6Ziy5pe26Ze06K6+572u6KGoIOWMheijheexuw== ||| 音频布防时间设置表 包装类 ||| Audio arming schedule setting table wrapper class
+6Z+z6aKR5biD6Ziy5pe26Ze06K6+572u6KGoIOWunuS9k+exuw== ||| 音频布防时间设置表 实体类 ||| Audio arming schedule setting table entity class
+6Z+z6aKR5biD6Ziy5pe26Ze06K6+572u6KGoIOaOp+WItuWZqA== ||| 音频布防时间设置表 控制器 ||| Audio arming schedule setting table controller
+6Z+z6aKR5biD6Ziy5pe26Ze06K6+572u6KGoIOacjeWKoeWunueOsOexuw== ||| 音频布防时间设置表 服务实现类 ||| Audio arming schedule setting table service implementation class
+6Z+z6aKR5biD6Ziy5pe26Ze06K6+572u6KGoIOacjeWKoeexuw== ||| 音频布防时间设置表 服务类 ||| Audio arming schedule setting table service class
+6Z+z6aKR5biD6Ziy5pe26Ze06K6+572u6KGoIOinhuWbvuWunuS9k+exuw== ||| 音频布防时间设置表 视图实体类 ||| Audio arming schedule setting table view entity class
+6Z+z6aKR5byC5bi45L6m5rWL6K6+572u ||| 音频异常侦测设置 ||| Audio exception detection settings
+6Z+z6aKR5byC5bi45L6m5rWL6K6+572u5o6l5Y+j ||| 音频异常侦测设置接口 ||| Audio exception detection settings interface
+6Z+z6aKR5byC5bi45L6m5rWL6K6+572u5raI5oGv5Li76aKY ||| 音频异常侦测设置消息主题 ||| Audio exception detection settings message topic
+6Z+z6aKR5byC5bi45L6m5rWL6K6+572u6KGoIE1hcHBlciDmjqXlj6M= ||| 音频异常侦测设置表 Mapper 接口 ||| Audio exception detection settings table Mapper interface
+6Z+z6aKR5byC5bi45L6m5rWL6K6+572u6KGoIOWMheijheexuw== ||| 音频异常侦测设置表 包装类 ||| Audio exception detection settings table wrapper class
+6Z+z6aKR5byC5bi45L6m5rWL6K6+572u6KGoIOWunuS9k+exuw== ||| 音频异常侦测设置表 实体类 ||| Audio exception detection settings table entity class
+6Z+z6aKR5byC5bi45L6m5rWL6K6+572u6KGoIOaOp+WItuWZqA== ||| 音频异常侦测设置表 控制器 ||| Audio exception detection settings table controller
+6Z+z6aKR5byC5bi45L6m5rWL6K6+572u6KGoIOacjeWKoeWunueOsOexuw== ||| 音频异常侦测设置表 服务实现类 ||| Audio exception detection settings table service implementation class
+6Z+z6aKR5byC5bi45L6m5rWL6K6+572u6KGoIOacjeWKoeexuw== ||| 音频异常侦测设置表 服务类 ||| Audio exception detection settings table service class
+6Z+z6aKR5byC5bi45L6m5rWL6K6+572u6KGoIOinhuWbvuWunuS9k+exuw== ||| 音频异常侦测设置表 视图实体类 ||| Audio exception detection settings table view entity class
+6Z+z6aKR6IGU5Yqo5pa55byP6K6+572u ||| 音频联动方式设置 ||| Audio linkage mode settings
+6Z+z6aKR6IGU5Yqo5pa55byP6K6+572u5o6l5Y+j ||| 音频联动方式设置接口 ||| Audio linkage mode settings interface
+6Z+z6aKR6IGU5Yqo5pa55byP6K6+572u5raI5oGv5Li76aKY ||| 音频联动方式设置消息主题 ||| Audio linkage mode settings message topic
+6Z+z6aKR6IGU5Yqo5pa55byP6K6+572u6KGoIE1hcHBlciDmjqXlj6M= ||| 音频联动方式设置表 Mapper 接口 ||| Audio linkage mode settings table Mapper interface
+6Z+z6aKR6IGU5Yqo5pa55byP6K6+572u6KGoIOWMheijheexuw== ||| 音频联动方式设置表 包装类 ||| Audio linkage mode settings table wrapper class
+6Z+z6aKR6IGU5Yqo5pa55byP6K6+572u6KGoIOWunuS9k+exuw== ||| 音频联动方式设置表 实体类 ||| Audio linkage mode settings table entity class
+6Z+z6aKR6IGU5Yqo5pa55byP6K6+572u6KGoIOaOp+WItuWZqA== ||| 音频联动方式设置表 控制器 ||| Audio linkage mode settings table controller
+6Z+z6aKR6IGU5Yqo5pa55byP6K6+572u6KGoIOacjeWKoeWunueOsOexuw== ||| 音频联动方式设置表 服务实现类 ||| Audio linkage mode settings table service implementation class
+6Z+z6aKR6IGU5Yqo5pa55byP6K6+572u6KGoIOacjeWKoeexuw== ||| 音频联动方式设置表 服务类 ||| Audio linkage mode settings table service class
+6Z+z6aKR6IGU5Yqo5pa55byP6K6+572u6KGoIOinhuWbvuWunuS9k+exuw== ||| 音频联动方式设置表 视图实体类 ||| Audio linkage mode settings table view entity class
+6Z+z6aKR6L6T5YWl5byC5bi4OjDlkKYx5piv ||| 音频输入异常:0否1是 ||| Audio input exception: 0 no, 1 yes
+6aG257qn ||| 顶级 ||| Top-level
+6aG257qn54i26IqC54K5aWQ= ||| 顶级父节点id ||| Top-level parent node ID
+6aG257qn54i26IqC54K55ZCN56ew ||| 顶级父节点名称 ||| Top-level parent node name
+6aG26YOo6I+c5Y2V ||| 顶部菜单 ||| Top menu
+6aG26YOo6I+c5Y2VaWQ= ||| 顶部菜单id ||| Top menu ID
+6aG26YOo6I+c5Y2V5Li76ZSu ||| 顶部菜单主键 ||| Top menu primary key
+6aG26YOo6I+c5Y2V5ZCN ||| 顶部菜单名 ||| Top menu name
+6aG26YOo6I+c5Y2V5omA5YiG6YWN55qE5qCR ||| 顶部菜单所分配的树 ||| Tree allocated to top menu
+6aG26YOo6I+c5Y2V5o6I5p2D5qCR5b2i57uT5p6E ||| 顶部菜单授权树形结构 ||| Top menu authorization tree structure
+6aG26YOo6I+c5Y2V5o6S5bqP ||| 顶部菜单排序 ||| Top menu sorting
+6aG26YOo6I+c5Y2V5pWw5o2u ||| 顶部菜单数据 ||| Top menu data
+6aG26YOo6I+c5Y2V5qCR5b2i57uT5p6E ||| 顶部菜单树形结构 ||| Top menu tree structure
+6aG26YOo6I+c5Y2V57yW5Y+3 ||| 顶部菜单编号 ||| Top menu code
+6aG26YOo6I+c5Y2V6KGo ||| 顶部菜单表 ||| Top menu table
+6aG26YOo6I+c5Y2V6KGoIE1hcHBlciDmjqXlj6M= ||| 顶部菜单表 Mapper 接口 ||| Top menu table Mapper interface
+6aG26YOo6I+c5Y2V6KGoIOaOp+WItuWZqA== ||| 顶部菜单表 控制器 ||| Top menu table controller
+6aG26YOo6I+c5Y2V6KGoIOacjeWKoeWunueOsOexuw== ||| 顶部菜单表 服务实现类 ||| Top menu table service implementation class
+6aG26YOo6I+c5Y2V6KGoIOacjeWKoeexuw== ||| 顶部菜单表 服务类 ||| Top menu table service class
+6aG26YOo6I+c5Y2V6KGo5a6e5L2T57G7 ||| 顶部菜单表实体类 ||| Top menu table entity class
+6aG26YOo6I+c5Y2V6LWE5rqQ ||| 顶部菜单资源 ||| Top menu resources
+6aG26YOo6I+c5Y2V6Lev55Sx ||| 顶部菜单路由 ||| Top menu routing
+6aG26YOo6I+c5Y2V6YWN572u ||| 顶部菜单配置 ||| Top menu configuration
+6aG26YOo6I+c5Y2V6buY6K6k6YCJ5Lit6IqC54K5 ||| 顶部菜单默认选中节点 ||| Top menu default selected node
+6aKE5YWI5Yqg6L295b2T5YmN5qCH5rOo5LiL55qE5YWo6YOo5qCH562+77yM5bu656uLIGxhYmVsSWQgLT4gbmFtZSDmmKDlsIQ= ||| 预先加载当前标注下的全部标签，建立 labelId -> name 映射 ||| Preload all tags under the current labeling, and establish labelId -> name mapping
+6aKE6K6h5pe26Ze0 ||| 预计时间 ||| Estimated time
+6aKd5aSW6K6t57uD5Y+C5pWw ||| 额外训练参数 ||| Extra training parameters
+6aWx5ZKM5bqm ||| 饱和度 ||| Saturation
+6aaW5bit5omn6KGM5a6Y ||| 首席执行官 ||| CEO
+6aaW6YCJ6L2s5o2i5qih5byPICh3ZWJydGMgfCBobHMp ||| 首选转换模式 (webrtc | hls) ||| Preferred conversion mode (webrtc | hls)
+6aaW6aG1 ||| 首页 ||| Home page
+6amx5Yqo57G7 ||| 驱动类 ||| Driver class
+6amz5Zue5Y6f5Zug ||| 驳回原因 ||| Rejection reason
+6amz5Zue5Y6f5Zug5LiN6IO95Li656m6 ||| 驳回原因不能为空 ||| Rejection reason cannot be empty
+6amz5Zue5ZCO54q25oCB5rWB6L2s5Li6cmVqZWN0ZWQ= ||| 驳回后状态流转为rejected ||| After rejection, status transfers to rejected
+6am85bOw5LiL5YiS57q/6L2s5o2i ||| 驼峰下划线转换 ||| CamelCase and underline conversion
+6aqM6K+BVG9rZW7or7fmsYJEVE8= ||| 验证Token请求DTO ||| Verify Token request DTO
+6aqM6K+B5bm26L+H5ruk5qCH562+SUTliJfooag= ||| 验证并过滤标签ID列表 ||| Verify and filter tag ID list
+6aqM6K+B5oiQ5Yqf ||| 验证成功 ||| Verification successful
+6aqM6K+B5oyH5a6a5qCH5rOo55qE5pWw5o2u6LSo6YeP ||| 验证指定标注的数据质量 ||| Verify data quality of specified labeling
+6aqM6K+B5qCH5rOo5pWw5o2u ||| 验证标注数据 ||| Verify labeling data
+6aqM6K+B5qCH5rOo5pWw5o2u77yaSUQ9e30= ||| 验证标注数据：ID={} ||| Verify labeling data: ID={}
+6aqM6K+B5qCH562+SUTliJfooajmmK/lkKbmnInmlYg= ||| 验证标签ID列表是否有效 ||| Verify if the tag ID list is valid
+6aqM6K+B5qCH562+SUTlpLHotKU6IHRhZ0lkPXt9 ||| 验证标签ID失败: tagId={} ||| Failed to verify tag ID: tagId={}
+6aqM6K+B5qCH562+5ZCN56ew5piv5ZCm6YeN5aSN ||| 验证标签名称是否重复 ||| Verify if the tag name is duplicate
+6aqM6K+B5qCH562+5pyJ5pWI5oCn ||| 验证标签有效性 ||| Verify tag validity
+6aqM6K+B5qih5Z6L5ZCN56ew5ZKM54mI5pys5piv5ZCm5a2Y5Zyo ||| 验证模型名称和版本是否存在 ||| Verify if model name and version exist
+6aqM6K+B5qih5Z6L5paH5Lu25piv5ZCm5a2Y5Zyo ||| 验证模型文件是否存在 ||| Verify if model file exists
+6aqM6K+B5rqQ6K6+5aSH5piv5ZCm5a2Y5Zyo ||| 验证源设备是否存在 ||| Verify if source device exists
+6aqM6K+B55uu5qCH6K6+5aSH5piv5ZCm6YO95a2Y5Zyo ||| 验证目标设备是否都存在 ||| Verify if all target devices exist
+6aqM6K+B56CBVG9rZW5HcmFudGVy ||| 验证码TokenGranter ||| Verification code TokenGranter
+6aqM6K+B56CBa2V5 ||| 验证码key ||| Verification code key
+6aqM6K+B56CB5LiN5q2j56Gu ||| 验证码不正确 ||| Verification code is incorrect
+6aqM6K+B6K6+5aSHSUQ= ||| 验证设备ID ||| Verify device ID
+6aqM6K+B6K6+5aSH5L+h5oGv ||| 验证设备信息 ||| Verify device information
+6aqM6K+B6K6+5aSH5ZCN56ew ||| 验证设备名称 ||| Verify device name
+6aqM6K+B6K6+5aSH5piv5ZCm5a2Y5Zyo ||| 验证设备是否存在 ||| Verify if device exists
+6aqM6K+B6K6+5aSH6YWN572u ||| 验证设备配置 ||| Verify device configuration
+6aqM6K+B6YCa6L+H ||| 验证通过 ||| Verification passed
+6auY ||| 高 ||| High
+6auY5bqm5L2N572uKOmrmOepui/lnLDpnaIv5Zyw5LiLL+WFtuS7lik= ||| 高度位置(高空/地面/地下/其他) ||| Height position (high altitude/ground/underground/other)
+6auY6YC85qC86K6+6K6h5aSp5Zui ||| 高逼格设计天团 ||| Premium design team
+6buR55m96Ieq5Yqo ||| 黑白自动 ||| Black & White Auto
+6buY6K6k5a+G56CB ||| 默认密码 ||| Default password
+6buY6K6k5q+P6ZqUMzAwMOadoeWtmOWCqOaVsOaNruW6kw== ||| 默认每隔3000条存储数据库 ||| Save to database every 3000 records by default
+6buY6K6k6YCJ5Lit6IqC54K5 ||| 默认选中节点 ||| Default selected node

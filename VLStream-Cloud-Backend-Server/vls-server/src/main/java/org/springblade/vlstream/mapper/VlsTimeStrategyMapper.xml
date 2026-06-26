@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.vlstream.mapper.VlsTimeStrategyMapper">
+
+    <!-- General query mapping result -->
+    <resultMap id="vlsTimeStrategyResultMap" type="org.springblade.vlstream.pojo.entity.TimeStrategy">
+        <result column="device_id" property="deviceId"/>
+        <result column="strategy_type" property="strategyType"/>
+        <result column="daily_times" property="dailyTimes" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="weekly_times" property="weeklyTimes" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+
+    <select id="selectVlsTimeStrategyPage" resultMap="vlsTimeStrategyResultMap">
+        select * from vls_time_strategy where is_deleted = 0 order by create_time desc
+    </select>
+
+    <select id="exportVlsTimeStrategy" resultType="org.springblade.vlstream.excel.VlsTimeStrategyExcel">
+        SELECT * FROM vls_time_strategy ${ew.customSqlSegment}
+    </select>
+
+</mapper>

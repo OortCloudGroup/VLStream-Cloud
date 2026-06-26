@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.vlstream.mapper.VlsDeviceInfoMapper">
+
+    <!-- General query mapping result -->
+    <resultMap id="vlsDeviceInfoResultMap" type="org.springblade.vlstream.pojo.vo.DeviceInfoVO">
+        <result column="device_name" property="deviceName"/>
+        <result column="device_id" property="deviceId"/>
+        <result column="stream_url" property="streamUrl"/>
+        <result column="image_path" property="imagePath"/>
+        <result column="device_type" property="deviceType"/>
+        <result column="remark" property="remark"/>
+        <result column="longitude" property="longitude"/>
+        <result column="latitude" property="latitude"/>
+        <result column="height_position" property="heightPosition"/>
+        <result column="address" property="address"/>
+        <result column="region" property="region"/>
+        <result column="tag" property="tag"/>
+        <result column="algorithm_id" property="algorithmId"/>
+    </resultMap>
+
+    <select id="selectVlsDeviceInfoPage" resultMap="vlsDeviceInfoResultMap">
+        select * from vls_device_info where is_deleted = 0 order by create_time desc
+    </select>
+
+    <select id="exportVlsDeviceInfo" resultType="org.springblade.vlstream.excel.VlsDeviceInfoExcel">
+        SELECT * FROM vls_device_info ${ew.customSqlSegment}
+    </select>
+
+</mapper>

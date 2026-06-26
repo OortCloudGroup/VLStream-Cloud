@@ -1,0 +1,400 @@
+5om56YeP5L+d5a2Y5Zu+54mH55qE5qCH5rOo5a6e5L6L ||| 批量保存图片的标注实例 ||| Batch save annotation instances of images
+5om56YeP5L+d5a2Y5qCH5rOo5Zu+54mH5aSx6LSlOiA= ||| 批量保存标注图片失败:  ||| Batch save annotated images failed: 
+5om56YeP5L+d5a2Y5qCH5rOo5a6e5L6L ||| 批量保存标注实例 ||| Batch save annotation instances
+5om56YeP5L+d5a2Y5qCH5rOo5a6e5L6LOiBhbm5vdGF0aW9uSWQ9e30sIGltYWdlTmFtZT17fSwgY291bnQ9e30= ||| 批量保存标注实例: annotationId={}, imageName={}, count={} ||| Batch save annotation instances: annotationId={}, imageName={}, count={}
+5om56YeP5L+d5a2Y5qCH5rOo5a6e5L6L5aSx6LSl ||| 批量保存标注实例失败 ||| Failed to batch save annotation instances
+5om56YeP5L+d5a2Y5qCH5rOo5a6e5L6L5aSx6LSlOiA= ||| 批量保存标注实例失败:  ||| Failed to batch save annotation instances: 
+5om56YeP5L+d5a2Y5qCH5rOo5a6e5L6L5oiQ5Yqf ||| 批量保存标注实例成功 ||| Successfully batch saved annotation instances
+5om56YeP5Yig6Zmk ||| 批量删除 ||| Batch delete
+5om56YeP5Yig6Zmk5Zu+54mH ||| 批量删除图片 ||| Batch delete images
+5om56YeP5Yig6Zmk5aSx6LSl ||| 批量删除失败 ||| Batch delete failed
+5om56YeP5Yig6Zmk5aSx6LSlOiA= ||| 批量删除失败:  ||| Batch delete failed: 
+5om56YeP5Yig6Zmk5aSx6LSl77ya ||| 批量删除失败： ||| Batch delete failed: 
+5om56YeP5Yig6Zmk5a6M5oiQ77yM5oiQ5Yqf5Yig6ZmkIHt9IOS4quWunuS+iw== ||| 批量删除完成，成功删除 {} 个实例 ||| Batch deletion completed, successfully deleted {} instances
+5om56YeP5Yig6Zmk5a655Zmo5a6e5L6L ||| 批量删除容器实例 ||| Batch delete container instances
+5om56YeP5Yig6Zmk5a655Zmo5a6e5L6L77yM5pWw6YePOiB7fQ== ||| 批量删除容器实例，数量: {} ||| Batch delete container instances, count: {}
+5om56YeP5Yig6Zmk5oiQ5Yqf ||| 批量删除成功 ||| Batch delete succeeded
+5om56YeP5Yig6Zmk5oiQ5Yqf77yM5YWx5Yig6ZmkIA== ||| 批量删除成功，共删除  ||| Batch delete succeeded, deleted in total 
+5om56YeP5Yig6Zmk5paH5Lu2 ||| 批量删除文件 ||| Batch delete files
+5om56YeP5Yig6Zmk5qCH5rOo5a6e5L6L ||| 批量删除标注实例 ||| Batch delete annotation instances
+5om56YeP5Yig6Zmk5qCH5rOo5a6e5L6L5aSx6LSl ||| 批量删除标注实例失败 ||| Failed to batch delete annotation instances
+5om56YeP5Yig6Zmk5qCH5rOo5a6e5L6L77yaSURzPXt9 ||| 批量删除标注实例：IDs={} ||| Batch delete annotation instances: IDs={}
+5om56YeP5Yig6Zmk5qCH562+ ||| 批量删除标签 ||| Batch delete labels
+5om56YeP5Yig6Zmk5qCH562+5aSx6LSl ||| 批量删除标签失败 ||| Failed to batch delete labels
+5om56YeP5Yig6Zmk5qCH562+5aSx6LSlOiA= ||| 批量删除标签失败:  ||| Failed to batch delete labels: 
+5om56YeP5Yig6Zmk5qCH562+5aSx6LSl77yMSURzOiB7fQ== ||| 批量删除标签失败，IDs: {} ||| Failed to batch delete labels, IDs: {}
+5om56YeP5Yig6Zmk5qih5Z6L5aSx6LSl ||| 批量删除模型失败 ||| Failed to batch delete models
+5om56YeP5Yig6Zmk5qih5Z6L5aSx6LSl77yae30= ||| 批量删除模型失败：{} ||| Failed to batch delete models: {}
+5om56YeP5Yig6Zmk5qih5Z6L5oiQ5Yqf77yae30= ||| 批量删除模型成功：{} ||| Successfully batch deleted models: {}
+5om56YeP5Yig6Zmk566X5rOV ||| 批量删除算法 ||| Batch delete algorithms
+5om56YeP5Yig6Zmk566X5rOV5LuT5bqT ||| 批量删除算法仓库 ||| Batch delete algorithm repositories
+5om56YeP5Yig6Zmk566X5rOV5LuT5bqT77yaSURzPXt9 ||| 批量删除算法仓库：IDs={} ||| Batch delete algorithm repositories: IDs={}
+5om56YeP5Yig6Zmk566X5rOV5qCH5rOo ||| 批量删除算法标注 ||| Batch delete algorithm annotations
+5om56YeP5Yig6Zmk566X5rOV5qCH5rOo77yaSURzPXt9 ||| 批量删除算法标注：IDs={} ||| Batch delete algorithm annotations: IDs={}
+5om56YeP5Yig6Zmk566X5rOV5qih5Z6L ||| 批量删除算法模型 ||| Batch delete algorithm models
+5om56YeP5Yig6Zmk566X5rOV5qih5Z6L5aSx6LSl ||| 批量删除算法模型失败 ||| Failed to batch delete algorithm models
+5om56YeP5Yig6Zmk566X5rOV5qih5Z6L5aSx6LSl77ya ||| 批量删除算法模型失败： ||| Failed to batch delete algorithm models: 
+5om56YeP5Yig6Zmk566X5rOV5qih5Z6L77yae30= ||| 批量删除算法模型：{} ||| Batch delete algorithm models: {}
+5om56YeP5Yig6Zmk566X5rOV6K6t57uD5Lu75Yqh ||| 批量删除算法训练任务 ||| Batch delete algorithm training tasks
+5om56YeP5Yig6Zmk566X5rOV77yaSURzPXt9 ||| 批量删除算法：IDs={} ||| Batch delete algorithms: IDs={}
+5om56YeP5Yig6Zmk6K6t57uD5Lu75Yqh ||| 批量删除训练任务 ||| Batch delete training tasks
+5om56YeP5Yig6Zmk6K6t57uD5Lu75Yqh77yaSURzPXt9 ||| 批量删除训练任务：IDs={} ||| Batch delete training tasks: IDs={}
+5om56YeP5Yig6Zmk6K6+5aSH5L+h5oGv ||| 批量删除设备信息 ||| Batch delete device information
+5om56YeP5Yig6Zmk6L+c56iL5pyN5Yqh5Zmo6YWN572u ||| 批量删除远程服务器配置 ||| Batch delete remote server configurations
+5om56YeP5Yi35paw5a6M5oiQ77yM5oiQ5YqfIA== ||| 批量刷新完成，成功  ||| Batch refresh completed, successfully 
+5om56YeP5Yi35paw6K6+5aSH54q25oCB ||| 批量刷新设备状态 ||| Batch refresh device status
+5om56YeP5Y+R5biD5qih5Z6L ||| 批量发布模型 ||| Batch publish models
+5om56YeP5Y+R5biD5qih5Z6L5aSx6LSl ||| 批量发布模型失败 ||| Failed to batch publish models
+5om56YeP5Y+R5biD5qih5Z6L5aSx6LSl77ya ||| 批量发布模型失败： ||| Failed to batch publish models: 
+5om56YeP5Y+R5biD5qih5Z6L5aSx6LSl77yae30= ||| 批量发布模型失败：{} ||| Failed to batch publish models: {}
+5om56YeP5Y+R5biD5qih5Z6L5oiQ5Yqf77yae30= ||| 批量发布模型成功：{} ||| Successfully batch published models: {}
+5om56YeP5Y+R5biD566X5rOV5qih5Z6L77yae30= ||| 批量发布算法模型：{} ||| Batch publish algorithm models: {}
+5om56YeP5ZCv55So5oiW56aB55So566X5rOV5LuT5bqT ||| 批量启用或禁用算法仓库 ||| Batch enable or disable algorithm repositories
+5om56YeP5a+85YWl6K6+5aSH ||| 批量导入设备 ||| Batch import devices
+5om56YeP5o+S5YWl5paw5qCH5rOo ||| 批量插入新标注 ||| Batch insert new annotations
+5om56YeP5pu05paw5LuT5bqT54q25oCB ||| 批量更新仓库状态 ||| Batch update repository status
+5om56YeP5pu05paw5qCH5rOo54q25oCB ||| 批量更新标注状态 ||| Batch update annotation status
+5om56YeP5pu05paw5qCH5rOo54q25oCB77yaSURzPXt9LCBTdGF0dXM9e30= ||| 批量更新标注状态：IDs={}, Status={} ||| Batch update annotation status: IDs={}, Status={}
+5om56YeP5pu05paw5qCH5rOo55qE54q25oCB ||| 批量更新标注的状态 ||| Batch update the status of annotations
+5om56YeP5pu05paw5qCH562+5o6S5bqP ||| 批量更新标签排序 ||| Batch update label sorting
+5om56YeP5pu05paw5qih5Z6L54q25oCB ||| 批量更新模型状态 ||| Batch update model status
+5om56YeP5pu05paw54q25oCB ||| 批量更新状态 ||| Batch update status
+5om56YeP5pu05paw566X5rOV5LuT5bqT54q25oCB77yaSURzPXt9LCBTdGF0dXM9e30= ||| 批量更新算法仓库状态：IDs={}, Status={} ||| Batch update algorithm repository status: IDs={}, Status={}
+5om56YeP5pu05paw566X5rOV55qE6YOo572y54q25oCB ||| 批量更新算法的部署状态 ||| Batch update the deployment status of algorithms
+5om56YeP5pu05paw566X5rOV6YOo572y54q25oCB77yaSURzPXt9LCBTdGF0dXM9e30= ||| 批量更新算法部署状态：IDs={}, Status={} ||| Batch update algorithm deployment status: IDs={}, Status={}
+5om56YeP5pu05paw6K6+5aSH54q25oCB ||| 批量更新设备状态 ||| Batch update device status
+5om56YeP5pu05paw6YOo572y54q25oCB ||| 批量更新部署状态 ||| Batch update deployment status
+5om56YeP5re75Yqg6K6+5aSH5qCH562+5YWz6IGU ||| 批量添加设备标签关联 ||| Batch add device label associations
+5om56YeP54q25oCB5pu05paw5aSx6LSl ||| 批量状态更新失败 ||| Failed to batch update status
+5om56YeP54q25oCB5pu05paw5oiQ5Yqf ||| 批量状态更新成功 ||| Successfully batch updated status
+5om56YeP6K6+572u6K6+5aSH5qCH562+ ||| 批量设置设备标签 ||| Batch set device labels
+5om+5LiN5Yiw5qih5Z6L6K6t57uD ||| 找不到模型训练 ||| Model training not found
+5om+5LiN5Yiw6K6t57uD5Lu75Yqh ||| 找不到训练任务 ||| Training task not found
+5om+5YiwIHt9IOS4quagh+azqOWunuS+i+mcgOimgeWIoOmZpA== ||| 找到 {} 个标注实例需要删除 ||| Found {} annotation instances that need to be deleted
+5om+5Yiw5pyA5paw6K6t57uD57uT5p6c55uu5b2VOiB7fQ== ||| 找到最新训练结果目录: {} ||| Found the latest training result directory: {}
+5om+5Yiw6KaB5Yig6Zmk55qE5Zu+54mH6K6w5b2V ||| 找到要删除的图片记录 ||| Found the image record to be deleted
+5oqKcHTmqKHlnovovazmjaLkuLpvbm545ZKMcmtubg== ||| 把pt模型转换为onnx和rknn ||| Convert pt model to onnx and rknn
+5oql6KGo6YWN572u ||| 报表配置 ||| Report configuration
+5oql6K2m6L6T5Ye66YCa6YGT ||| 报警输出通道 ||| Alarm output channel
+5oul5pyJ566X5rOV5pWw6YeP ||| 拥有算法数量 ||| Number of algorithms owned
+5ou36LSd5paH5Lu2 ||| 拷贝文件 ||| Copy file
+5oyJIGltYWdlSWQgLyBpbWFnZU5hbWUg6IGa5ZCI5a6e5L6L77yM5pS26ZuG5qCH562+5ZCN56ew ||| 按 imageId / imageName 聚合实例，收集标签名称 ||| Aggregate instances by imageId / imageName and collect label names
+5oyJSUTnsr7noa7mn6Xor6LvvIjkvJjlhYjnuqfmnIDpq5jvvIk= ||| 按ID精确查询（优先级最高） ||| Precise query by ID (highest priority)
+5oyJ5bGC57qn6L+H5ruk ||| 按层级过滤 ||| Filter by hierarchy
+5oyJ5pe26Ze06IyD5Zu05p+l6K+i5Zue5pS+6K6w5b2V ||| 按时间范围查询回放记录 ||| Query playback records by time range
+5oyJ5qCH562+5aSn57G76L+H5ruk ||| 按标签大类过滤 ||| Filter by label category
+5oyJ54i257qnSUTliIbnu4Q= ||| 按父级ID分组 ||| Group by parent ID
+5oyJ54i257qnSUTov4fmu6Q= ||| 按父级ID过滤 ||| Filter by parent ID
+5oyJ57G75Z6L5YiG57uE ||| 按类型分组 ||| Group by type
+5oyJ6K6+5aSHSUTkv53lrZjpn7PpopHluIPpmLLml7bpl7Torr7nva4= ||| 按设备ID保存音频布防时间设置 ||| Save audio arming schedule settings by device ID
+5oyJ6K6+5aSHSUTkv53lrZjpn7PpopHlvILluLjkvqbmtYvorr7nva4= ||| 按设备ID保存音频异常侦测设置 ||| Save audio exception detection settings by device ID
+5oyJ6K6+5aSHSUTkv53lrZjpn7PpopHogZTliqjmlrnlvI/orr7nva4= ||| 按设备ID保存音频联动方式设置 ||| Save audio linkage method settings by device ID
+5oyJ6K6+5aSHSUTmn6Xor6Lpn7PpopHluIPpmLLml7bpl7Torr7nva4= ||| 按设备ID查询音频布防时间设置 ||| Query audio arming schedule settings by device ID
+5oyJ6K6+5aSHSUTmn6Xor6Lpn7PpopHlvILluLjkvqbmtYvorr7nva4= ||| 按设备ID查询音频异常侦测设置 ||| Query audio exception detection settings by device ID
+5oyJ6K6+5aSHSUTmn6Xor6Lpn7PpopHogZTliqjmlrnlvI/orr7nva4= ||| 按设备ID查询音频联动方式设置 ||| Query audio linkage method settings by device ID
+5oyJ6K6+5aSH44CB54q25oCB44CB55Sz6K+35Lq65YiG6aG15p+l6K+i ||| 按设备、状态、申请人分页查询 ||| Page query by device, status, and applicant
+5oyJ6K6+5aSH5LiO5bm05Lu96L+U5Zue5pyJ5b2V5YOP55qE5pyI5Lu9L+aXpeacnw== ||| 按设备与年份返回有录像的月份/日期 ||| Return months/dates with recordings by device and year
+5oyJ6K6+5aSH5LiO5hel5pyf6L+U5Zue5b2V5YOP5YiX6KGo ||| 按设备与日期返回录像列表 ||| Return video list by device and date
+5oyJ6K6+5aSH57G75Z6L5YiG57uE57uf6K6h ||| 按设备类型分组统计 ||| Statistics grouped by device type
+5oyJ6ZKu5Yqf6IO9 ||| 按钮功能 ||| Button function
+5oyJ6ZKu5qCR5b2i57uT5p6E ||| 按钮树形结构 ||| Button tree structure
+5o2f5aSx5YC8 ||| 损失值 ||| Loss value
+5o6I5p2D5a6M5q+V6Lez6L2s ||| 授权完毕跳转 ||| Redirect after authorization
+5o6I5p2D5o6l5Y+j ||| 授权接口 ||| Authorization interface
+5o6I5p2D5qCR5b2i57uT5p6E ||| 授权树形结构 ||| Authorization tree structure
+5o6I5p2D5qih5Z2X ||| 授权模块 ||| Authorization module
+5o6I5p2D57G75Z6L ||| 授权类型 ||| Authorization type
+5o6I5p2D6IyD5Zu0 ||| 授权范围 ||| Authorization scope
+5o6I5p2D6K6k6K+B57uf5LiA5o6l5Y+jLg== ||| 授权认证统一接口. ||| Unified interface for authorization and authentication.
+5o6S5bqP ||| 排序 ||| Sort
+5o6S5bqP6aG65bqP ||| 排序顺序 ||| Sort order
+5o6l5Y+j ||| 接口 ||| Interface
+5o6l5Y+j5p2D6ZmQ ||| 接口权限 ||| Interface permissions
+5o6l5Y+j5p2D6ZmQ5ZCN ||| 接口权限名 ||| Interface permission name
+5o6l5Y+j5p2D6ZmQ5ZCN56ew ||| 接口权限名称 ||| Interface permission name
+5o6l5Y+j5p2D6ZmQ5Zyw5Z2A ||| 接口权限地址 ||| Interface permission address
+5o6l5Y+j5p2D6ZmQ5aSH5rOo ||| 接口权限备注 ||| Interface permission remarks
+5o6l5Y+j5p2D6ZmQ5a2X5q61 ||| 接口权限字段 ||| Interface permission field
+5o6l5Y+j5p2D6ZmQ5o6I5p2D5qCR5b2i57uT5p6E ||| 接口权限授权树形结构 ||| Interface permission authorization tree structure
+5o6l5Y+j5p2D6ZmQ5o6n5Yi25Zmo ||| 接口权限控制器 ||| Interface permission controller
+5o6l5Y+j5p2D6ZmQ57G75Z6L ||| 接口权限类型 ||| Interface permission type
+5o6l5Y+j5p2D6ZmQ6buY6K6k6YCJ5Lit6IqC54K5 ||| 接口权限默认选中节点 ||| Interface permission default selected node
+5o6l5pS25Lq6SUTpm4blkIgo6YCX5Y+35YiG6ZqUKQ== ||| 接收人ID集合(逗号分隔) ||| Receiver ID set (comma-separated)
+5o6n5Yi25Y+w6L6T5Ye6 ||| 控制台输出 ||| Console output
+5o6n5Yi25Zmo ||| 控制器 ||| Controller
+5o6n5Yi25Zmo5re75Yqg5pyN5Yqh5ZCN5YmN57yA ||| 控制器添加服务名前缀 ||| Controller adds service name prefix
+5o6o6YCB5Zyw5Z2A ||| 推送地址 ||| Push address
+5o+P6L+w ||| 描述 ||| Description
+5o+P6L+w5L+h5oGv ||| 描述信息 ||| Description information
+5o+P6L+w5L+h5oGv5o+P6L+w5L+h5oGv5o+P6L+w5L+h5oGv ||| 描述信息描述信息描述信息 ||| Description info description info description info
+5o+Q5Lqk ||| 提交 ||| Submit
+5o+Q5Lqk5pGE5YOP5aS055Sz6K+36K6w5b2V ||| 提交摄像头申请记录 ||| Submit camera application record
+5o+Q5Lqk5pm66IO95YiG5p6Q55Sz6K+3 ||| 提交智能分析申请 ||| Submit intelligent analysis application
+5o+Q5Y+W5Zu+54mH5ZCN56ew5aSx6LSl77yae30= ||| 提取图片名称失败：{} ||| Failed to extract image name: {}
+5o+Q5Y+W5Zu+54mH5pWw6YeP5aSx6LSl77yae30= ||| 提取图片数量失败：{} ||| Failed to extract image quantity: {}
+5o+Q5Y+W5qCH5rOo5YiX6KGo5aSx6LSl77yae30= ||| 提取标注列表失败：{} ||| Failed to extract annotation list: {}
+5o+Q5Y+W6K6+5aSH5L+h5oGv ||| 提取设备信息 ||| Extract device information
+5o+S5YWl5Zu+54mH6K6w5b2V ||| 插入图片记录 ||| Insert image record
+5pCc57Si5qCH562+OiBhbm5vdGF0aW9uSWQ9e30sIGtleXdvcmQ9e30= ||| 搜索标签: annotationId={}, keyword={} ||| Search labels: annotationId={}, keyword={}
+5pGE5YOP5aS0 ||| 摄像头 ||| Camera
+5pGE5YOP5aS0SUTpm4blkIgo6YCX5Y+35YiG6ZqUKQ== ||| 摄像头ID集合(逗号分隔) ||| Camera ID set (comma-separated)
+5pGE5YOP5aS05LiN6IO95Li656m6 ||| 摄像头不能为空 ||| Camera cannot be empty
+5pGE5YOP5aS05LqL5Lu2562W55Wl ||| 摄像头事件策略 ||| Camera event strategy
+5pGE5YOP5aS05LqL5Lu2562W55WlIOaOp+WItuWZqA== ||| 摄像头事件策略 控制器 ||| Camera event strategy controller
+5pGE5YOP5aS05LqL5Lu2562W55WlIOacjeWKoeWunueOsOexuw== ||| 摄像头事件策略 服务实现类 ||| Camera event strategy service implementation class
+5pGE5YOP5aS05LqL5Lu2562W55WlIOacjeWKoeexuw== ||| 摄像头事件策略 服务类 ||| Camera event strategy service class
+5pGE5YOP5aS05LqL5Lu2562W55WlKOinpuWPkeW9leWDjy/mipPlm74pIOWunuS9k+exuw== ||| 摄像头事件策略(触发录像/抓图) 实体类 ||| Camera event strategy (trigger recording/capture) entity class
+5pGE5YOP5aS05LqL5Lu2562W55Wl5o6l5Y+j ||| 摄像头事件策略接口 ||| Camera event strategy interface
+5pGE5YOP5aS05L2/55So55Sz6K+3 ||| 摄像头使用申请 ||| Camera usage application
+5pGE5YOP5aS05L2/55So55Sz6K+35YiG6aG1 ||| 摄像头使用申请分页 ||| Camera usage application paging
+5pGE5YOP5aS05L2/55So55Sz6K+35a6M57uT ||| 摄像头使用申请完结 ||| Camera usage application completed
+5pGE5YOP5aS05L2/55So55Sz6K+35a6h5om56YCa6L+H ||| 摄像头使用申请审批通过 ||| Camera usage application approved
+5pGE5YOP5aS05L2/55So55Sz6K+35a6h5om56amz5Zue ||| 摄像头使用申请审批驳回 ||| Camera usage application rejected
+5pGE5YOP5aS05L2/55So55Sz6K+35o+Q5Lqk ||| 摄像头使用申请提交 ||| Camera usage application submitted
+5pGE5YOP5aS05L+h5oGv ||| 摄像头信息 ||| Camera information
+5pGE5YOP5aS05ZCN56ew ||| 摄像头名称 ||| Camera name
+5pGE5YOP5aS05ZCN56ewKOmAl+WPt+WIhumalCk= ||| 摄像头名称(逗号分隔) ||| Camera name (comma-separated)
+5pGE5YOP5aS055Sz6K+3 ||| 摄像头申请 ||| Camera application
+5pGE5YOP5aS055Sz6K+35YiG6aG1 ||| 摄像头申请分页 ||| Camera application paging
+5pGE5YOP5aS055Sz6K+35YiG6aG15p+l6K+i5Y+C5pWw ||| 摄像头申请分页查询参数 ||| Camera application paging query parameters
+5pGE5YOP5aS055Sz6K+35a6M57uT ||| 摄像头申请完结 ||| Camera application completed
+5pGE5YOP5aS055Sz6K+35a6M57uT5Y+C5pWw ||| 摄像头申请完结参数 ||| Camera application completion parameters
+5pGE5YOP5aS055Sz6K+35a6h5om554q25oCB ||| 摄像头申请审批状态 ||| Camera application approval status
+5pGE5YOP5aS055Sz6K+35a6h5om56K6w5b2V ||| 摄像头申请审批记录 ||| Camera application approval record
+5pGE5YOP5aS055Sz6K+35a6h5om56K6w5b2VIE1hcHBlciDmjqXlj6M= ||| 摄像头申请审批记录 Mapper 接口 ||| Camera application approval record Mapper interface
+5pGE5YOP5aS055Sz6K+35a6h5om56K6w5b2VIOacjeWKoeWunueOsOexuw== ||| 摄像头申请审批记录 服务实现类 ||| Camera application approval record service implementation class
+5pGE5YOP5aS055Sz6K+35a6h5om56K6w5b2VIOacjeWKoeexuw== ||| 摄像头申请审批记录 服务类 ||| Camera application approval record service class
+5pGE5YOP5aS055Sz6K+35a6h5om56K6w5b2V6KeG5Zu+ ||| 摄像头申请审批记录视图 ||| Camera application approval record view
+5pGE5YOP5aS055Sz6K+35a6h5om56YCa6L+H ||| 摄像头申请审批通过 ||| Camera application approval passed
+5pGE5YOP5aS055Sz6K+35a6h5om56YCa6L+H5Y+C5pWw ||| 摄像头申请审批通过参数 ||| Camera application approval pass parameters
+5pGE5YOP5aS055Sz6K+35a6h5om56amz5Zue ||| 摄像头申请审批驳回 ||| Camera application approval rejected
+5pGE5YOP5aS055Sz6K+35o+Q5Lqk5Y+C5pWw ||| 摄像头申请提交参数 ||| Camera application submission parameters
+5pGE5YOP5aS055Sz6K+36KGo5o6l5Y+j ||| 摄像头申请表接口 ||| Camera application table interface
+5pGE5YOP5aS055Sz6K+36amz5Zue5Y+C5pWw ||| 摄像头申请驳回参数 ||| Camera application rejection parameters
+5pGE5YOP5aS0566X5rOV5LiL5Y+R ||| 摄像头算法下发 ||| Camera algorithm delivery
+5pGE5YOP5py6T1NE6K6+572u ||| 摄像机OSD设置 ||| Camera OSD settings
+5pGE5YOP5py6T1NE6K6+572u5o6l5Y+j ||| 摄像机OSD设置接口 ||| Camera OSD settings interface
+5pGE5YOP5py6T1NE6K6+572u5raI5oGv5Li76aKY ||| 摄像机OSD设置消息主题 ||| Camera OSD settings message topic
+5pGE5YOP5py6T1NE6K6+572u6KGoIE1hcHBlciDmjqXlj6M= ||| 摄像机OSD设置表 Mapper 接口 ||| Camera OSD settings table Mapper interface
+5pGE5YOP5py6T1NE6K6+572u6KGoIOWMheijheexuw== ||| 摄像机OSD设置表 包装类 ||| Camera OSD settings table wrapper class
+5pGE5YOP5py6T1NE6K6+572u6KGoIOWunuS9k+exuw== ||| 摄像机OSD设置表 实体类 ||| Camera OSD settings table entity class
+5pGE5YOP5py6T1NE6K6+572u6KGoIOaOp+WItuWZqA== ||| 摄像机OSD设置表 控制器 ||| Camera OSD settings table controller
+5pGE5YOP5py6T1NE6K6+572u6KGoIOacjeWKoeWunueOsOexuw== ||| 摄像机OSD设置表 服务实现类 ||| Camera OSD settings table service implementation class
+5pGE5YOP5py6T1NE6K6+572u6KGoIOacjeWKoeexuw== ||| 摄像机OSD设置表 服务类 ||| Camera OSD settings table service class
+5pGE5YOP5py6T1NE6K6+572u6KGoIOinhuWbvuWunuS9k+exuw== ||| 摄像机OSD设置表 视图实体类 ||| Camera OSD settings table view entity class
+5pGE5YOP5py65pi+56S66K6+572u ||| 摄像机显示设置 ||| Camera display settings
+5pGE5YOP5py65pi+56S66K6+572u5o6l5Y+j ||| 摄像机显示设置接口 ||| Camera display settings interface
+5pGE5YOP5py65pi+56S66K6+572u5raI5oGv5Li76aKY ||| 摄像机显示设置消息主题 ||| Camera display settings message topic
+5pGE5YOP5py65pi+56S66K6+572u6KGoIE1hcHBlciDmjqXlj6M= ||| 摄像机显示设置表 Mapper 接口 ||| Camera display settings table Mapper interface
+5pGE5YOP5py65pi+56S66K6+572u6KGoIOWMheijheexuw== ||| 摄像机显示设置表 包装类 ||| Camera display settings table wrapper class
+5pGE5YOP5py65pi+56S66K6+572u6KGoIOWunuS9k+exuw== ||| 摄像机显示设置表 实体类 ||| Camera display settings table entity class
+5pGE5YOP5py65pi+56S66K6+572u6KGoIOaOp+WItuWZqA== ||| 摄像机显示设置表 控制器 ||| Camera display settings table controller
+5pGE5YOP5py65pi+56S66K6+572u6KGoIOacjeWKoeWunueOsOexuw== ||| 摄像机显示设置表 服务实现类 ||| Camera display settings table service implementation class
+5pGE5YOP5py65pi+56S66K6+572u6KGoIOacjeWKoeexuw== ||| 摄像机显示设置表 服务类 ||| Camera display settings table service class
+5pGE5YOP5py65pi+56S66K6+572u6KGoIOinhuWbvuWunuS9k+exuw== ||| 摄像机显示设置表 视图实体类 ||| Camera display settings table view entity class
+5pKk6ZSA5Y+R5biD5qih5Z6L ||| 撤销发布模型 ||| Unpublish model
+5pKk6ZSA5Y+R5biD5qih5Z6L5aSx6LSl ||| 撤销发布模型失败 ||| Failed to unpublish model
+5pKk6ZSA5Y+R5biD5qih5Z6L5aSx6LSl77ya ||| 撤销发布模型失败： ||| Failed to unpublish model: 
+5pKk6ZSA5Y+R5biD5qih5Z6L5aSx6LSl77yae30= ||| 撤销发布模型失败：{} ||| Failed to unpublish model: {}
+5pKk6ZSA5Y+R5biD5qih5Z6L5oiQ5Yqf77yae30= ||| 撤销发布模型成功：{} ||| Successfully unpublished model: {}
+5pKk6ZSA5Y+R5biD566X5rOV5qih5Z6L77yae30= ||| 撤销发布算法模型：{} ||| Unpublish algorithm model: {}
+5pKk6ZSA5o6I5p2D ||| 撤销授权 ||| Revoke authorization
+5pON5L2cSVDlnLDlnYA= ||| 操作IP地址 ||| Operation IP address
+5pON5L2c5oiQ5Yqf ||| 操作成功 ||| Operation successful
+5pON5L2c5oyJ6ZKu57G75Z6L ||| 操作按钮类型 ||| Operation button type
+5pON5L2c5o+Q5Lqk55qE5pWw5o2u ||| 操作提交的数据 ||| Operation submitted data
+5pON5L2c5pa55byP ||| 操作方式 ||| Operation method
+5pS25YiwUlRTUOW9leWItuWIt+aWsOivt+axgu+8jOW8guatpeaJp+ihjA== ||| 收到RTSP录制刷新请求，异步执行 ||| Received RTSP recording refresh request, executing asynchronously
+5pS25Yiw5Yig6Zmk5qCH5rOo5a6e5L6L6K+35rGCOiBpbnN0YW5jZUlkPXt9 ||| 收到删除标注实例请求: instanceId={} ||| Received delete annotation instance request: instanceId={}
+5pWF6Zqc ||| 故障 ||| Fault
+5pWw5a2X6ZmN5Zmq ||| 数字降噪 ||| Digital noise reduction
+5pWw5o2u5Lyg6L6T5a+56LGh5a6e5L2T57G7 ||| 数据传输对象实体类 ||| Data transfer object entity class
+5pWw5o2u5p2D6ZmQ ||| 数据权限 ||| Data permission
+5pWw5o2u5p2D6ZmQ5YC85Z+f ||| 数据权限值域 ||| Data permission value range
+5pWw5o2u5p2D6ZmQ5Y+v6KeB5a2X5q61 ||| 数据权限可见字段 ||| Data permission visible fields
+5pWw5o2u5p2D6ZmQ5ZCN56ew ||| 数据权限名称 ||| Data permission name
+5pWw5o2u5p2D6ZmQ5aSH5rOo ||| 数据权限备注 ||| Data permission remarks
+5pWw5o2u5p2D6ZmQ5a2X5q61 ||| 数据权限字段 ||| Data permission field
+5pWw5o2u5p2D6ZmQ5o6I5p2D5qCR5b2i57uT5p6E ||| 数据权限授权树形结构 ||| Data permission authorization tree structure
+5pWw5o2u5p2D6ZmQ5o6n5Yi25Zmo ||| 数据权限控制器 ||| Data permission controller
+5pWw5o2u5p2D6ZmQ57G75ZCN ||| 数据权限类名 ||| Data permission class name
+5pWw5o2u5p2D6ZmQ57G75Z6L ||| 数据权限类型 ||| Data permission type
+5pWw5o2u5rqQ5Li76ZSu ||| 数据源主键 ||| Data source primary key
+5pWw5o2u5rqQ5YiX6KGo ||| 数据源列表 ||| Data source list
+5pWw5o2u5rqQ6YWN572u ||| 数据源配置 ||| Data source configuration
+5pWw5o2u5rqQ6YWN572u6KGo ||| 数据源配置表 ||| Data source configuration table
+5pWw5o2u5rqQ6YWN572u6KGoIE1hcHBlciDmjqXlj6M= ||| 数据源配置表 Mapper 接口 ||| Data source configuration table Mapper interface
+5pWw5o2u5rqQ6YWN572u6KGoIOaOp+WItuWZqA== ||| 数据源配置表 控制器 ||| Data source configuration table controller
+5pWw5o2u5rqQ6YWN572u6KGoIOacjeWKoeWunueOsOexuw== ||| 数据源配置表 服务实现类 ||| Data source configuration table service implementation class
+5pWw5o2u5rqQ6YWN572u6KGoIOacjeWKoeexuw== ||| 数据源配置表 服务类 ||| Data source configuration table service class
+5pWw5o2u5rqQ6YWN572u6KGo5a6e5L2T57G7 ||| 数据源配置表实体类 ||| Data source configuration table entity class
+5pWw5o2u5rqQ6YWN572u6KGo5o6l5Y+j ||| 数据源配置表接口 ||| Data source configuration table interface
+5pWw5o2u55uYKEdCKQ== ||| 数据盘(GB) ||| Data disk (GB)
+5pWw5o2u6Lev5b6E ||| 数据路径 ||| Data path
+5pWw5o2u6ZuGSUQ= ||| 数据集ID ||| Dataset ID
+5pWw5o2u6ZuGSUTkuI3og73kuLrnqbo= ||| 数据集ID不能为空 ||| Dataset ID cannot be empty
+5pWw5o2u6ZuGaWQ= ||| 数据集id ||| Dataset ID
+5pWw5o2u6ZuG5LiN5a2Y5Zyo ||| 数据集不存在 ||| Dataset does not exist
+5pWw5o2u6ZuG5ZCN56ew ||| 数据集名称 ||| Dataset name
+5pWw5o2u6ZuG5pyN5Yqh5a6e546w57G7 ||| 数据集服务实现类 ||| Dataset service implementation class
+5pWw5o2u6ZuG5pyN5Yqh5o6l5Y+j ||| 数据集服务接口 ||| Dataset service interface
+5pWw5o2u6ZuG55uu5b2V5LiN5a2Y5Zyo77yae30= ||| 数据集目录不存在：{} ||| Dataset directory does not exist: {}
+5pWw5o2u6ZuG6E6h55CG5o6n5Yi25Zmo ||| 数据集管理控制器 ||| Dataset management controller
+5pWw5o2u6ZuG6Lev5b6E ||| 数据集路径 ||| Dataset path
+5pWw5o2u6ZuG6Lev5b6E5Zyo5L+d5a2Y5qCH5rOo5pe26K6+572u77yM6L+Z6YeM5LiN6Ieq5Yqo55Sf5oiQ ||| 数据集路径在保存标注时设置，这里不自动生成 ||| Dataset path is set when saving annotations, it is not automatically generated here
+5pWw5o2u6ZuG6Lev5b6E5bCG5Zyo5L+d5a2Y5qCH5rOo5pe26K6+572u ||| 数据集路径将在保存标注时设置 ||| Dataset path will be set when saving annotations
+5pWw5o2u6ZuG6Lev5b6E77yae30= ||| 数据集路径：{} ||| Dataset path: {}
+5pWw5o2u6ZuG6YWN572u5paH5Lu25LiK5Lyg5a6M5oiQ77yae30= ||| 数据集配置文件上传完成：{} ||| Dataset configuration file upload completed: {}
+5paH5Lu2TUQ15YC8 ||| 文件MD5值 ||| File MD5 value
+5paH5Lu2TUQ15YC8OmQ0MWQ4Y2Q5OGYwMGIyMDRlOTgwMDk5OGVjZjg0Mjdl ||| 文件MD5值:d41d8cd98f00b204e9800998ecf8427e ||| File MD5 value:d41d8cd98f00b204e9800998ecf8427e
+5paH5Lu25LiK5Lyg5Y+q6ZyA5bCG5Y+C5pWw5Lit55qE6ZSu5oyH5a6a77yI6buY6K6kZmlsZe+8ie+8jOWAvOiuvuS4uuaWh+S7tuWvueixoeWNs+WPr++8jOWvueS6juS9v+eUqOiAheadpeivtO+8jOaWh+S7tuS4iuS8oOS4juaZrumAmuihqOWNleaPkOS6pOW5tuaXoOWMuuWIqw== ||| 文件上传只需将参数中的键指定（默认file），值设为file对象即可，对于使用者来说，文件上传与普通表单提交并无区别 ||| For file upload, you only need to specify the key in the parameters (default is file) and set the value as the file object. For users, file upload is no different from ordinary form submission
+5paH5Lu25LiK5Lyg5aSx6LSlOiA= ||| 文件上传失败:  ||| File upload failed: 
+5paH5Lu25LiK5Lyg5aSx6LSlOnt9 ||| 文件上传失败:{} ||| File upload failed:{}
+5paH5Lu25LiK5Lyg5pa55rOV6Lev5b6E ||| 文件上传方法路径 ||| File upload method path
+5paH5Lu25LiK5Lyg5pyN5Yqh5a6e546w57G7 ||| 文件上传服务实现类 ||| File upload service implementation class
+5paH5Lu25LiK5Lyg5pyN5Yqh5o6l5Y+j ||| 文件上传服务接口 ||| File upload service interface
+5paH5Lu25LiL6L295aSx6LSl77ya ||| 文件下载失败： ||| File download failed: 
+5paH5Lu25LiL6L295aSx6LSl77yae30= ||| 文件下载失败：{} ||| File download failed: {}
+5paH5Lu25LiL6L295oiQ5Yqf77yae30= ||| 文件下载成功：{} ||| File download succeeded: {}
+5paH5Lu25LiN5a2Y5Zyo77yae30= ||| 文件不存在：{} ||| File does not exist: {}
+5paH5Lu25Li656m6 ||| 文件为空 ||| File is empty
+5paH5Lu25L+u5pS55pe26Ze0 ||| 文件修改时间 ||| File modification time
+5paH5Lu25L+u5pS55pe26Ze0OjE3MTE5NjgwMDA= ||| 文件修改时间:1711968000 ||| File modification time:1711968000
+5paH5Lu25YaF5a65 ||| 文件内容 ||| File content
+5paH5Lu25ZCN ||| 文件名 ||| File name
+5paH5Lu25ZCN5LiN6IO95Li656m6 ||| 文件名不能为空 ||| File name cannot be empty
+5paH5Lu25Zy65pmv ||| 文件场景 ||| File scenario
+5paH5Lu25Zy65pmvOmF1ZGlv ||| 文件场景:audio ||| File scenario:audio
+5paH5Lu25Zy65pmv5YiX6KGo ||| 文件场景列表 ||| File scenario list
+5paH5Lu25Zy65pmv5YiX6KGoOmF1ZGlvLHZpZGVvLGltYWdl ||| 文件场景列表:audio,video,image ||| File scenario list:audio,video,image
+5paH5Lu25Z+f5ZCN ||| 文件域名 ||| File domain
+5paH5Lu25Z+f5ZCNOmh0dHA6Ly9leGFtcGxlLmNvbQ== ||| 文件域名:http://example.com ||| File domain:http://example.com
+5paH5Lu25aSn5bCP ||| 文件大小 ||| File size
+5paH5Lu25aSn5bCPKOWtl+iKgik= ||| 文件大小(字节) ||| File size (bytes)
+5paH5Lu25aSn5bCPOjEwMjQwMDA= ||| 文件大小:1024000 ||| File size:1024000
+5paH5Lu25aSn5bCP77yI5a2X6IqC77yJ ||| 文件大小（字节） ||| File size (bytes)
+5paH5Lu25a2Y5YKo5ZON5bqU57G7 ||| 文件存储响应类 ||| File storage response class
+5paH5Lu25a2Y5YKo6I635Y+W5ZON5bqUOiB7fQ== ||| 文件存储获取响应: {} ||| File storage get response: {}
+5paH5Lu25a2Y5YKo6Lev5b6E ||| 文件存储路径 ||| File storage path
+5paH5Lu25a2Y5YKo6Lev5b6EOi9maWxlcy8yMDI0LzA0LzAxL2F1ZGlvLm1wMw== ||| 文件存储路径:/files/2024/04/01/audio.mp3 ||| File storage path:/files/2024/04/01/audio.mp3
+5paH5Lu25pe26ZW/KOenkik= ||| 文件时长(秒) ||| File duration (seconds)
+5paH5Lu25pe26ZW/KOenkik6MzAw ||| 文件时长(秒):300 ||| File duration (seconds):300
+5paH5Lu26K6/6ZeuVVJM ||| 文件访问URL ||| File access URL
+5paH5Lu26K6/6ZeuVVJMOmh0dHA6Ly9leGFtcGxlLmNvbS9maWxlcy8yMDI0LzA0LzAxL2F1ZGlvLm1wMw== ||| 文件访问URL:http://example.com/files/2024/04/01/audio.mp3 ||| File access URL:http://example.com/files/2024/04/01/audio.mp3
+5paw5aKe ||| 新增 ||| Add
+5paw5aKeIOWyl+S9jeihqA== ||| 新增 岗位表 ||| Add Post Table
+5paw5aKeIOaVsOaNrua6kOmFjee9ruihqA== ||| 新增 数据源配置表 ||| Add Data Source Configuration Table
+5paw5aKeIOihjOaUv+WMuuWIkuihqA== ||| 新增 行政区划表 ||| Add Administrative Division Table
+5paw5aKeIOmhtumDqOiPnOWNleihqA== ||| 新增 顶部菜单表 ||| Add Top Menu Table
+5paw5aKe5Y2z5pe25rK755CG ||| 新增即时治理 ||| Add immediate governance
+5paw5aKe5aSx6LSl ||| 新增失败 ||| Failed to add
+5paw5aKe5a2X5q61 ||| 新增字段 ||| Add field
+5paw5aKe5b6q546v5rK755CG ||| 新增循环治理 ||| Add cyclic governance
+5paw5aKe5b6q546v5rK755CG77yM5bm255Sf5oiQ5a2Q5b6q546v5Lu75Yqh ||| 新增循环治理，并生成子循环任务 ||| Add cyclic governance and generate sub-cyclic tasks
+5paw5aKe5oiQ5Yqf ||| 新增成功 ||| Successfully added
+5paw5aKe5oiW5L+u5pS5 ||| 新增或修改 ||| Add or modify
+5paw5aKe5oiW5L+u5pS5IOWyl+S9jeihqA== ||| 新增或修改 岗位表 ||| Add or modify Post Table
+5paw5aKe5oiW5L+u5pS5IOaVsOaNrua6kOmFjee9ruihqA== ||| 新增或修改 数据源配置表 ||| Add or modify Data Source Configuration Table
+5paw5aKe5oiW5L+u5pS5IOihjOaUv+WMuuWIkuihqA== ||| 新增或修改 行政区划表 ||| Add or modify Administrative Division Table
+5paw5aKe5oiW5L+u5pS5IOmhtumDqOiPnOWNleihqA== ||| 新增或修改 顶部菜单表 ||| Add or modify Top Menu Table
+5paw5aKe5oiW5L+u5pS555So5oi3 ||| 新增或修改用户 ||| Add or modify user
+5paw5aKe56e75Yqo56uv5Y2z5pe25rK755CG ||| 新增移动端即时治理 ||| Add mobile immediate governance
+5paw5aKe56e75Yqo56uv5b6q546v5rK755CG5bm255Sf5oiQ5a2Q5b6q546v5Lu75Yqh ||| 新增移动端循环治理并生成子循环任务 ||| Add mobile cyclic governance and generate sub-cyclic tasks
+5paw5aKe566X5rOV ||| 新增算法 ||| Add algorithm
+5paw5aKe566X5rOV5LuT5bqT ||| 新增算法仓库 ||| Add algorithm repository
+5paw5aKe566X5rOV5qCH5rOo ||| 新增算法标注 ||| Add algorithm annotation
+5paw5aKe566X5rOV6K6t57uD5Lu75Yqh ||| 新增算法训练任务 ||| Add algorithm training task
+5paw5aKe6K6t57uD5Lu75Yqh ||| 新增训练任务 ||| Add training task
+5paw5aKe6K6+5aSH5L+h5oGv ||| 新增设备信息 ||| Add device information
+5paw5aKe6K6+5aSH5aSx6LSl ||| 新增设备失败 ||| Failed to add device
+5paw5aKe6L+c56iL5pyN5Yqh5Zmo6YWN572u ||| 新增远程服务器配置 ||| Add remote server configuration
+5paw5aKe6YWN572u ||| 新增配置 ||| Add configuration
+5paw5a+G56CB ||| 新密码 ||| New password
+5paw5bu656ef5oi35a+55bqU55qE6buY6K6k5bKX5L2N ||| 新建租户对应的默认岗位 ||| Create default positions corresponding to the tenant
+5paw5bu656ef5oi35a+55bqU55qE6buY6K6k566h55CG55So5oi3 ||| 新建租户对应的默认管理用户 ||| Create default admin user corresponding to the tenant
+5paw5bu656ef5oi35a+55bqU55qE6buY6K6k6KeS6Imy ||| 新建租户对应的默认角色 ||| Create default roles corresponding to the tenant
+5paw5bu656ef5oi35a+55bqU55qE6buY6K6k6YOo6Zeo ||| 新建租户对应的默认部门 ||| Create default departments corresponding to the tenant
+5paw54q25oCB ||| 新状态 ||| New status
+5pa55rOV5ZCN ||| 方法名 ||| Method name
+5pa55rOV57G7 ||| 方法类 ||| Method class
+5peL6L2s5qGG5qOA5rWL ||| 旋转框检测 ||| Rotated bounding box detection
+5peL6L2s5qGG5qOA5rWL5LqL5Lu25bey5Yib5bu6OiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30sIGRldGVjdGlvbnM9e30= ||| 旋转框检测事件已创建: deviceId={}, deviceName={}, algorithmId={}, detections={} ||| Rotated bounding box detection event created: deviceId={}, deviceName={}, algorithmId={}, detections={}
+5peL6L2s5qGG5qOA5rWL5oiq5Zu+5bey5L+d5a2YOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgdGltZT17fSwgcGF0aD17fQ== ||| 旋转框检测截图已保存: deviceId={}, deviceName={}, time={}, path={} ||| Rotated bounding box detection screenshot saved: deviceId={}, deviceName={}, time={}, path={}
+5peL6L2s5qGG5qOA5rWL6KeG6aKR5rWB5pat5byAOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30= ||| 旋转框检测视频流断开: deviceId={}, deviceName={}, algorithmId={} ||| Rotated bounding box detection video stream disconnected: deviceId={}, deviceName={}, algorithmId={}
+5peL6L2s5qGG5qOA5rWL6KeG6aKR5rWB57uT5p2fOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30= ||| 旋转框检测视频流结束: deviceId={}, deviceName={}, algorithmId={} ||| Rotated bounding box detection video stream ended: deviceId={}, deviceName={}, algorithmId={}
+5peL6L2s5qGG77yIT0JC77yJ5qOA5rWL5ZCv5Yqo6Kem5Y+R5Zmo77ya5bqU55So5ZCv5Yqo5pe26Kem5Y+R5LiA5qyh5peL6L2s5qGG5qOA5rWL5Lu75Yqh5Yi35paw44CC ||| 旋转框（OBB）检测启动触发器：应用启动时触发一次旋转框检测任务刷新。 ||| Rotated bounding box (OBB) detection startup trigger: Triggers a refresh of rotated bounding box detection tasks once when the application starts.
+5peL6L2s55uu5qCH5qOA5rWL566X5rOV ||| 旋转目标检测算法 ||| Rotated object detection algorithm
+5peg5pWI55qE5qCH562+SUQ6IA== ||| 无效的标签ID:  ||| Invalid label ID: 
+5pel5aSc6L2s5o2i ||| 日夜转换 ||| Day-night switch
+5pel5b+X5Lia5YqhaWQ= ||| 日志业务id ||| Log business ID
+5pel5b+X5bel5YW36Ieq5Yqo6YWN572u ||| 日志工具自动配置 ||| Log utility auto configuration
+5pel5b+X5pWw5o2u ||| 日志数据 ||| Log data
+5pel5b+X5paH5Lu25L+d55WZ5aSp5pWw ||| 日志文件保留天数 ||| Log file retention days
+5pel5b+X5paH5Lu25pyA5aSn55qE5aSn5bCP ||| 日志文件最大的大小 ||| Maximum log file size
+5pel5b+X5paH5Lu26L6T5Ye655qE5paH5Lu25ZCN ||| 日志文件输出的文件名 ||| Log file output file name
+5pel5b+X5qCH6aKY ||| 日志标题 ||| Log title
+5pel5b+X57G75Z6L ||| 日志类型 ||| Log type
+5pel5b+X57qn5Yir ||| 日志级别 ||| Log level
+5pel5b+X6Lev5b6E ||| 日志路径 ||| Log path
+5pel5b+X6L6T5Ye657qn5Yir ||| 日志输出级别 ||| Log output level
+5pel5pyf5qC85byP ||| 日期格式 ||| Date format
+5pen5a+G56CB ||| 旧密码 ||| Old password
+5pe26Ze05qC85byP ||| 时间格式 ||| Time format
+5pe26Ze0562W55WlSUQ= ||| 时间策略ID ||| Time strategy ID
+5pe26Ze0562W55WlSUQo5b2Tc2NoZWR1bGVfdHlwZeS4unRpbWVfc3RyYXRlZ3nml7Yp ||| 时间策略ID(当schedule_type为time_strategy时) ||| Time strategy ID (when schedule_type is time_strategy)
+5pe26Ze0562W55Wl5raI5oGv5Li76aKY ||| 时间策略消息主题 ||| Time strategy message topic
+5pe26Ze0562W55Wl6KGo ||| 时间策略表 ||| Time strategy table
+5pe26Ze0562W55Wl6KGoIEV4Y2Vs5a6e5L2T57G7 ||| 时间策略表 Excel实体类 ||| Time strategy table Excel entity class
+5pe26Ze0562W55Wl6KGoIE1hcHBlciDmjqXlj6M= ||| 时间策略表 Mapper 接口 ||| Time strategy table Mapper interface
+5pe26Ze0562W55Wl6KGoIOS/ruaUuQ== ||| 时间策略表 修改 ||| Time strategy table modification
+5pe26Ze0562W55Wl6KGoIOWIhumhtQ== ||| 时间策略表 分页 ||| Time strategy table paging
+5pe26Ze0562W55Wl6KGoIOWIoOmZpA== ||| 时间策略表 删除 ||| Time strategy table deletion
+5pe26Ze0562W55Wl6KGoIOWMheijheexuyzov5Tlm57op4blm77lsYLmiYDpnIDnmoTlrZfmrrU= ||| 时间策略表 包装类,返回视图层所需的字段 ||| Time strategy table wrapper class, returning fields required by view layer
+5pe26Ze0562W55Wl6KGoIOWunuS9k+exuw== ||| 时间策略表 实体类 ||| Time strategy table entity class
+5pe26Ze0562W55Wl6KGoIOaOp+WItuWZqA== ||| 时间策略表 控制器 ||| Time strategy table controller
+5pe26Ze0562W55Wl6KGoIOaVsOaNruS8oOi+k+WvueixoeWunuS9k+exuw== ||| 时间策略表 数据传输对象实体类 ||| Time strategy table data transfer object entity class
+5pe26Ze0562W55Wl6KGoIOaWsOWing== ||| 时间策略表 新增 ||| Time strategy table addition
+5pe26Ze0562W55Wl6KGoIOaWsOWinuaIluS/ruaUuQ== ||| 时间策略表 新增或修改 ||| Time strategy table add or modify
+5pe26Ze0562W55Wl6KGoIOacjeWKoeWunueOsOexuw== ||| 时间策略表 服务实现类 ||| Time strategy table service implementation class
+5pe26Ze0562W55Wl6KGoIOacjeWKoeexuw== ||| 时间策略表 服务类 ||| Time strategy table service class
+5pe26Ze0562W55Wl6KGoIOiHquWumuS5ieWIhumhtQ== ||| 时间策略表 自定义分页 ||| Time strategy table custom paging
+5pe26Ze0562W55Wl6KGoIOinhuWbvuWunuS9k+exuw== ||| 时间策略表 视图实体类 ||| Time strategy table view entity class
+5pe26Ze0562W55Wl6KGoIOivpuaDhQ== ||| 时间策略表 详情 ||| Time strategy table details
+5pe26Ze0562W55Wl6KGo5o6l5Y+j ||| 时间策略表接口 ||| Time strategy table interface
+5pe26Ze0562W55Wl6KGo5pWw5o2u ||| 时间策略表数据 ||| Time strategy table data
+5pe26Ze0562W55Wl6KGo5pWw5o2u6KGo ||| 时间策略表数据表 ||| Time strategy table data table
+5pe26Ze0562W55Wl6YWN572u ||| 时间策略配置 ||| Time strategy configuration
+5pe26Ze06IyD5Zu0 ||| 时间范围 ||| Time range
+5pe26Ze06L205b2T5aSp5b2V5YOP ||| 时间轴当天录像 ||| Timeline recording of the day
+5pe26Ze06L205pel5Y6G ||| 时间轴日历 ||| Timeline calendar
+5pe26Ze06L205pel5Y6G5p+l6K+i ||| 时间轴日历查询 ||| Timeline calendar query
+5pe26Ze06L205p+Q5aSp5b2V5YOP5YiX6KGo ||| 时间轴某天录像列表 ||| Timeline recording list of a specific day
+5pif5pyf5Yeg5b2V5Yi2KDEtNyzpgJflj7fliIbpmpQp ||| 星期几录制(1-7,逗号分隔) ||| Days of week to record (1-7, comma-separated)
+5piv ||| 是 ||| Yes
+5piv5ZCm5Li65a+85YWl55qE5Zu+54mH77yaMC3lkKbvvIwxLeaYrw== ||| 是否为导入的图片：0-否，1-是 ||| Whether it is an imported image: 0-No, 1-Yes
+5piv5ZCm5Li657O757uf6aKE572u566X5rOV ||| 是否为系统预置算法 ||| Whether it is a system preset algorithm
+5piv5ZCm5Li657O757uf6aKE572u566X5rOV77yaMC3lkKbvvIwxLeaYrw== ||| 是否为系统预置算法：0-否，1-是 ||| Whether it is a system preset algorithm: 0-No, 1-Yes
+5piv5ZCm5Li66LaF566h ||| 是否为超管 ||| Whether it is a super administrator
+5piv5ZCm5YWs5byA77yaMC3lkKbvvIwxLeaYrw== ||| 是否公开：0-否，1-是 ||| Whether public: 0-No, 1-Yes
+5piv5ZCm5YiG6YWN55qE55u05o6l5YaF5a2Y ||| 是否分配的直接内存 ||| Whether direct memory is allocated
+5piv5ZCm5YyF5ZCr5Z+656GA5Lia5Yqh5a2X5q61 ||| 是否包含基础业务字段 ||| Whether it contains basic business fields
+5piv5ZCm5ZCv55So77yaMC3npoHnlKjvvIwxLeWQr+eUqA== ||| 是否启用：0-禁用，1-启用 ||| Whether enabled: 0-Disabled, 1-Enabled
+5piv5ZCm5ZCv55So77yaMS3lkK/nlKjvvIwwLeemgeeUqA== ||| 是否启用：1-启用，0-禁用 ||| Whether enabled: 1-Enabled, 0-Disabled
+5piv5ZCm5bey5LiK5oql ||| 是否已上报 ||| Whether reported
+5piv5ZCm5bey5Yig6Zmk ||| 是否已删除 ||| Whether deleted
+5piv5ZCm5bey5o6I5p2D ||| 是否已授权 ||| Whether authorized
+5piv5ZCm5bey6aqM6K+B ||| 是否已验证 ||| Whether verified
+5piv5ZCm5omT5byA5paw6aG16Z2i ||| 是否打开新页面 ||| Whether to open a new page
+5piv5ZCm5paw56qX5Y+j5omT5byA ||| 是否新窗口打开 ||| Whether to open in a new window
+5piv5ZCm5pyJ5a2Q5a2Z6IqC54K5 ||| 是否有子孙节点 ||| Whether there are descendant nodes
+5piv5ZCm6ZyA6KaBR1BV77yaMC3lkKbvvIwxLeaYrw== ||| 是否需要GPU：0-否，1-是 ||| Whether GPU is required: 0-No, 1-Yes
+5pi156ew ||| 昵称 ||| Nickname
+5pi+56S65ZCN56ewOjDlkKYx5piv ||| 显示名称:0否1是 ||| Display name:0 no 1 yes
+5pi+56S65pel5pyfOjDlkKYx5piv ||| 显示日期:0否1是 ||| Display date:0 no 1 yes
+5pi+56S65pif5pyfOjDlkKYx5piv ||| 显示星期:0否1是 ||| Display week:0 no 1 yes
+5pmu6YCa5qih5byP ||| 普通模式 ||| Normal mode
+5pm66IO95YiG5p6Q55Sz6K+3 ||| 智能分析申请 ||| Intelligent analysis application
+5pm66IO95YiG5p6Q6K+35rGC6KGo ||| 智能分析请求表 ||| Intelligent analysis request table
+5pm66IO95YiG5p6Q6K+35rGC6KGoIEV4Y2Vs5a6e5L2T57G7 ||| 智能分析请求表 Excel实体类 ||| Intelligent analysis request table Excel entity class
+5pm66IO95YiG5p6Q6K+35rGC6KGoIE1hcHBlciDmjqXlj6M= ||| 智能分析请求表 Mapper 接口 ||| Intelligent analysis request table Mapper interface
+5pm66IO95YiG5p6Q6K+35rGC6KGoIOS/ruaUuQ== ||| 智能分析请求表 修改 ||| Intelligent analysis request table modification

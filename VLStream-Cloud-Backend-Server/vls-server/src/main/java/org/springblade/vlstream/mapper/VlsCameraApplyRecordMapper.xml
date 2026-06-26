@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.vlstream.mapper.VlsCameraApplyRecordMapper">
+
+    <resultMap id="cameraApplyRecordResultMap" type="org.springblade.vlstream.pojo.vo.CameraApplyRecordVO">
+        <result column="id" property="id"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_dept" property="createDept"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user" property="updateUser"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="status" property="status"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="device_info_id" property="deviceInfoId"/>
+        <result column="apply_reason" property="applyReason"/>
+        <result column="apply_remark" property="applyRemark"/>
+        <result column="apply_user_name" property="applyUserName"/>
+        <result column="apply_time" property="applyTime"/>
+        <result column="apply_status" property="applyStatus"/>
+        <result column="approval_comment" property="approvalComment"/>
+        <result column="approve_user_name" property="approveUserName"/>
+        <result column="approve_time" property="approveTime"/>
+        <result column="complete_remark" property="completeRemark"/>
+        <result column="complete_user_name" property="completeUserName"/>
+        <result column="complete_time" property="completeTime"/>
+        <result column="device_name" property="deviceName"/>
+    </resultMap>
+
+    <select id="selectCameraApplyRecordPage" resultMap="cameraApplyRecordResultMap">
+        select
+            record.*,
+            device.device_name
+        from vls_camera_apply_record record
+        left join vls_device_info device on device.id = record.device_info_id and device.is_deleted = 0
+        where record.is_deleted = 0
+        <if test="query != null and query.deviceInfoId != null">
+            and record.device_info_id = #{query.deviceInfoId}
+        </if>
+        <if test="query != null and query.applyStatus != null and query.applyStatus != ''">
+            and record.apply_status = #{query.applyStatus}
+        </if>
+        <if test="query != null and query.applyUserName != null and query.applyUserName != ''">
+            and record.apply_user_name like concat('%', #{query.applyUserName}, '%')
+        </if>
+        order by record.create_time desc
+    </select>
+
+</mapper>

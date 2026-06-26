@@ -1,0 +1,180 @@
+#Server Configuration
+server:
+  port: 80
+  undertow:
+    # The following configuration will affect buffers, which will be used for IO operations of server connections, similar to Netty's pooled memory management
+    buffer-size: 1024
+    # Whether direct memory is allocated
+    direct-buffers: true
+    # Thread configuration
+    threads:
+      # Set the number of IO threads, which mainly execute non-blocking tasks. They will handle multiple connections, default set to one thread per CPU core.
+      io: 16
+      # Blocking task thread pool. When executing blocking operations like Servlet requests, Undertow will obtain threads from this thread pool. Its value setting depends on system load.
+      worker: 400
+  servlet:
+    # Encoding configuration
+    encoding:
+      charset: UTF-8
+      force: true
+
+#spring configuration
+spring:
+  cache:
+    ehcache:
+      config: classpath:config/ehcache.xml
+  servlet:
+    multipart:
+      max-file-size: 256MB
+      max-request-size: 1024MB
+  web:
+    resources:
+      add-mappings: false
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+
+#Configure log address
+logging:
+  config: classpath:log/logback_${blade.env}.xml
+
+# mybatis
+mybatis-plus:
+  mapper-locations: classpath:org/springblade/**/mapper/*Mapper.xml
+  #Entity scan, multiple packages separated by commas or semicolons
+  typeAliasesPackage: org.springblade.**.entity
+  #typeEnumsPackage: org.springblade.dashboard.entity.enums
+  global-config:
+    # Close MP3.0 built-in banner
+    banner: false
+    db-config:
+      #Primary key type  0:"Database ID auto-increment", 1:"No operation", 2:"User input ID", 3:"Numeric snowflake", 4:"Global unique ID UUID", 5:"String snowflake";
+      id-type: assign_id
+      #Field strategy
+      insert-strategy: not_null
+      update-strategy: not_null
+      where-strategy: not_null
+      #CamelCase and underline conversion
+      table-underline: true
+      # Logical deletion configuration
+      # Logical deletion global value (1 indicates deleted, which is also the default configuration of MyBatis-Plus)
+      logic-delete-value: 1
+      # Logical undeleted global value (0 indicates not deleted, which is also the default configuration of MyBatis-Plus)
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+
+#Report configuration
+report:
+  enabled: false
+  database:
+    provider:
+      prefix: blade-
+
+#springdoc-openapi configuration
+springdoc:
+  default-flat-param-object: true
+
+#knife4j configuration
+knife4j:
+  #Enable
+  enable: true
+  #Basic authentication
+  basic:
+    enable: false
+    username: blade
+    password: blade
+  #Enhanced configuration
+  setting:
+    enableSwaggerModels: true
+    enableDocumentManage: true
+    enableHost: false
+    enableHostText: http://localhost
+    enableRequestCache: true
+    enableFilterMultipartApis: false
+    enableFilterMultipartApiMethodType: POST
+    language: zh_cn
+    enableFooter: false
+    enableFooterCustom: true
+    footerCustomContent: Copyright © 2024 SpringBlade All Rights Reserved
+
+#swagger configuration info
+swagger:
+  title: SpringBlade API Document System
+  description: SpringBlade API Document System
+  version: 4.8.0
+  license: Powered By SpringBlade
+  licenseUrl: https://bladex.cn
+  terms-of-service-url: https://bladex.cn
+  contact:
+    name: smallchill
+    email: bladejava@qq.com
+    url: https://gitee.com/smallc
+
+#oss configuration
+oss:
+  enabled: true
+  name: qiniu
+  tenant-mode: true
+  endpoint: http://prt1thnw3.bkt.clouddn.com
+  access-key: N_Loh1ngBqcJovwiAJqR91Ifj2vgOWHOf8AwBA_h
+  secret-key: AuzuA1KHAbkIndCU0dB3Zfii2O3crHNODDmpxHRS
+  bucket-name: blade
+
+#Third-party login configuration
+social:
+  oauth:
+    GITHUB:
+      client-id: 233************
+      client-secret: 233************************************
+      redirect-uri: ${social.domain}/oauth/redirect/github
+    GITEE:
+      client-id: 233************
+      client-secret: 233************************************
+      redirect-uri: ${social.domain}/oauth/redirect/gitee
+    WECHAT_OPEN:
+      client-id: 233************
+      client-secret: 233************************************
+      redirect-uri: ${social.domain}/oauth/redirect/wechat
+    QQ:
+      client-id: 233************
+      client-secret: 233************************************
+      redirect-uri: ${social.domain}/oauth/redirect/qq
+    DINGTALK:
+      client-id: 233************
+      client-secret: 233************************************
+      redirect-uri: ${social.domain}/oauth/redirect/dingtalk
+
+
+#blade configuration
+blade:
+  auth:
+    #Obtained using @org.springblade.test.Sm2KeyGenerator, used for SM2 signature verification, needs to be consistent with the front-end
+    public-key: ${BLADE_OAUTH2_PUBLIC_KEY}
+    #Obtained using @org.springblade.test.Sm2KeyGenerator, used for SM2 decryption, front-end configuration not required
+    private-key: ${BLADE_OAUTH2_PRIVATE_KEY}
+  token:
+    #Obtained using @org.springblade.test.SignKeyGenerator
+    sign-key: ${BLADE_TOKEN_SIGN_KEY}
+    #Obtained using @org.springblade.test.SignKeyGenerator
+    aes-key: ${BLADE_TOKEN_CRYPTO_KEY}
+  xss:
+    enabled: true
+    skip-url:
+      - /blade-test/**
+  secure:
+    skip-url:
+      - /blade-test/**
+    client:
+      - client-id: sword
+        path-patterns:
+          - /blade-sword/**
+      - client-id: saber
+        path-patterns:
+          - /blade-saber/**
+  tenant:
+    column: tenant_id
+    tables:
+      - blade_notice
+

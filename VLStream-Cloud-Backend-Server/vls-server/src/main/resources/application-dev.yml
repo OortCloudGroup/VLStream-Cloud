@@ -1,0 +1,106 @@
+#Data source configuration
+spring:
+  data:
+    redis:
+      ##redis standalone environment configuration
+      host: ${REDIS_HOST:192.168.60.77}
+      port: ${REDIS_PORT:32576}
+      database: 2
+      password: ${REDIS_PASSWORD:redis@pass}
+      ssl:
+        enabled: false
+      ##redis cluster environment configuration
+      #cluster:
+      #  nodes: 127.0.0.1:7001,127.0.0.1:7002,127.0.0.1:7003
+      #  commandTimeout: 5000
+  datasource:
+    url: jdbc:mysql://${DB_HOST:192.168.60.77}:${DB_PORT:32443}/${DB_NAME:blade}?useSSL=false&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:mysql@pass}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+#Third-party login
+social:
+  enabled: true
+  domain: http://127.0.0.1:1888
+
+#blade configuration
+blade:
+  prop:
+    upload-domain: http://localhost:8888
+    remote-mode: true
+    remote-path: /usr/share/nginx/html
+    remote-path-iis: D://iis/html
+    log-mode: true
+
+#Multi-tenant file upload
+apaas:
+  #File upload method path
+  fileUpload: ${FILE_UPLOAD:http://oort.oortcloudsmart.com:21410/bus/apaas-fastdfsservice/fastdfs/v1/uploadFile}
+
+# Business configuration
+vlstream:
+  person-detection:
+    enabled: false
+  face-detection:
+    enabled: false
+  object-detection:
+    enabled: false
+  classify-detection:
+    enabled: false
+  instance-seg-detection:
+    enabled: false
+  obb-detection:
+    enabled: false
+  pose-detection:
+    enabled: false
+  semseg-detection:
+    enabled: false
+  ssh:
+    host: ${VLSTREAM_SSH_HOST:192.168.88.173}
+    port: ${VLSTREAM_SSH_PORT:22}
+    username: ${VLSTREAM_SSH_USERNAME:oort}
+    password: ${VLSTREAM_SSH_PASSWORD:oort301}
+  rtsp-recording:
+    enabled: ${VLSTREAM_RTSP_RECORDING_ENABLED:true}
+    ffmpeg-path: ${VLSTREAM_RTSP_FFMPEG_PATH:ffmpeg}
+    default-storage-path: ${VLSTREAM_RTSP_STORAGE_PATH:recordings}
+    segment-seconds: ${VLSTREAM_RTSP_SEGMENT_SECONDS:300}
+    process-stop-wait-seconds: ${VLSTREAM_RTSP_PROCESS_STOP_WAIT_SECONDS:5}
+    stale-file-seconds: ${VLSTREAM_RTSP_STALE_FILE_SECONDS:5}
+    refresh-interval-millis: ${VLSTREAM_RTSP_REFRESH_INTERVAL_MILLIS:10000}
+# Recording configuration
+recording:
+  storage:
+    path: recordings
+  enabled: true
+  default:
+    duration: 60
+    quality: medium
+  base:
+    path: recordings
+  max:
+    concurrent: 5
+# Stream conversion configuration
+stream:
+  # Preferred conversion mode (webrtc | hls)
+  preferred-mode: webrtc
+
+  # HLS output configuration
+  hls:
+    output-dir: static/hls/
+    segment-time: 2
+    list-size: 5
+    delete-segments: true
+
+  # FFmpeg configuration
+  ffmpeg:
+    path: ffmpeg
+    timeout: 30000
+    max-concurrent-streams: 5
+
+  # Resource cleanup configuration
+  cleanup:
+    enabled: true
+    interval: 3600000  # 1 hour
+    max-idle-time: 600000  # Automatically clean up after 10 minutes of inactivity

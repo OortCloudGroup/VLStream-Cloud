@@ -1,0 +1,400 @@
+IOS4quWunuS+iw== |||  个实例 |||  instances
+IOS4quebruaghw== |||  个目标 |||  targets
+IOS4que7k+aenA== |||  个结果 |||  results
+IOS/neWtmOWksei0pQ== |||  保存失败 |||  Save failed
+IOWIhuWJsuWIsCA= |||  分割到  |||  Split to 
+IOWIhuexu+WIsCA= |||  分类到  |||  Classified to 
+IOWPsOiuvuWkhw== |||  台设备 |||  devices
+IOWkhOeQhuW8guW4uDog |||  处理异常:  |||  Process exception: 
+IOWujOaIkOivreS5ieWIhuWJsg== |||  完成语义分割 |||  Complete semantic segmentation
+IOW3suWPkeW4g++8jOS4jeiDveWIoOmZpA== |||  已发布，不能删除 |||  Published, cannot be deleted
+IOW8oOS6uuiEuA== |||  张人脸 |||  faces
+IOagh+azqOaVsOaNrumbhlxu |||  标注数据集\n |||  Annotation dataset\n
+IOajgOa1i+WIsCA= |||  检测到  |||  Detected 
+IOajgOa1i+WIsOWnv+aAgQ== |||  检测到姿态 |||  Detected posture
+IOeKtuaAgeS4jeWFgeiuuOWPkeW4gw== |||  状态不允许发布 |||  Status does not allow publishing
+IOmqjOivgeWksei0pQ== |||  验证失败 |||  Verification failed
+IyAtIGltYWdlcy90cmFpbi8gKOiuree7g+WbvueJhylcbg== ||| # - images/train/ (训练图片)\n ||| # - images/train/ (Training images)\n
+IyAtIGltYWdlcy92YWwvICjpqozor4Hlm77niYcpXG4= ||| # - images/val/ (验证图片)\n ||| # - images/val/ (Validation images)\n
+IyAtIGxhYmVscy90cmFpbi8gKOiuree7g+agh+azqClcbg== ||| # - labels/train/ (训练标注)\n ||| # - labels/train/ (Training annotations)\n
+IyAtIGxhYmVscy92YWwvICjpqozor4HmoIfms6gpXG4= ||| # - labels/val/ (验证标注)\n ||| # - labels/val/ (Validation annotations)\n
+IyBZT0xP5pWw5o2u6ZuG6YWN572u5paH5Lu2XG4= ||| # YOLO数据集配置文件\n ||| # YOLO dataset configuration file\n
+IyDliJvlu7rml7bpl7Q6IA== ||| # 创建时间:  ||| # Creation time: 
+IyDlrp7pmYXorq3nu4PpnIDopoHku6XkuIvnm67lvZXnu5PmnoTvvJpcbg== ||| # 实际训练需要以下目录结构：\n ||| # Actual training requires the following directory structure:\n
+IyDmlbDmja7pm4bkv6Hmga9cbg== ||| # 数据集信息\n ||| # Dataset information\n
+IyDmlbDmja7pm4bot6/lvoTphY3nva5cbg== ||| # 数据集路径配置\n ||| # Dataset path configuration\n
+IyDmoIfms6jlkI3np7A6IA== ||| # 标注名称:  ||| # Annotation name: 
+IyDms6jmhI/vvJrmraTphY3nva7mlofku7bku4XljIXlkKvln7rmnKzorr7nva5cbg== ||| # 注意：此配置文件仅包含基本设置\n ||| # Note: This configuration file only contains basic settings\n
+IyDnsbvliKvphY3nva5cbg== ||| # 类别配置\n ||| # Class configuration\n
+I2JsYWRl6YWN572uIFxu ||| #blade配置 \n ||| #blade configuration \n
+I2JsYWRl6YWN572uXG4= ||| #blade配置\n ||| #blade configuration\n
+I3JlZGlzIOWNleacuueOr+Wig+mFjee9rg== ||| #redis 单机环境配置 ||| #redis standalone environment configuration
+I3JlZGlzIOmbhue+pOeOr+Wig+mFjee9rg== ||| #redis 集群环境配置 ||| #redis cluster environment configuration
+KiBDb3B5cmlnaHQgKGMpIDIwMTgtMjA5OSwgQ2hpbGwgWmh1YW5nIOW6hOmqniAoYmxhZGVqYXZhQHFxLmNvbSkuDQogKiA8cD4NCiAqIExpY2Vuc2VkIHVuZGVyIHRoZSBHTlUgTEVTU0VSIEdFTkVSQUwgUFVCTElDIExJQ0VOU0UgMy4wOw0KICogeW91IG1heSBub3QgdXNlIHRoaXMgZmlsZSBleGNlcHQgaW4gY29tcGxpYW5jZSB3aXRoIHRoZSBMaWNlbnNlLg0KICogWW91IG1heSBvYnRhaW4gYSBjb3B5IG9mIHRoZSBMaWNlbnNlIGF0DQogKiA8cD4NCiAqIGh0dHA6Ly93d3cuZ251Lm9yZy9saWNlbnNlcy9sZ3BsLmh0bWwNCiAqIDxwPg0KICogVW5sZXNzIHJlcXVpcmVkIGJ5IGFwcGxpY2FibGUgbGF3IG9yIGFncmVlZCB0byBpbiB3cml0aW5nLCBzb2Z0d2FyZQ0KICogZGlzdHJpYnV0ZWQgdW5kZXIgdGhlIExpY2Vuc2UgaXMgZGlzdHJpYnV0ZWQgb24gYW4gIkFTIElTIiBCQVNJUywNCiAqIFdJVEhPVVQgV0FSUkFOVElFUyBPUiBDT05ESVRJT05TIE9GIEFOWSBLSU5ELCBlaXRoZXIgZXhwcmVzcyBvciBpbXBsaWVkLg0KICogU2VlIHRoZSBMaWNlbnNlIGZvciB0aGUgc3BlY2lmaWMgbGFuZ3VhZ2UgZ292ZXJuaW5nIHBlcm1pc3Npb25zIGFuZA0KICogbGltaXRhdGlvbnMgdW5kZXIgdGhlIExpY2Vuc2UuDQogKg== ||| * Copyright (c) 2018-2099, Chill Zhuang 庄骞 (bladejava@qq.com).\r\n * <p>\r\n * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE 3.0;\r\n * you may not use this file except in compliance with the License.\r\n * You may obtain a copy of the License at\r\n * <p>\r\n * http://www.gnu.org/licenses/lgpl.html\r\n * <p>\r\n * Unless required by applicable law or agreed to in writing, software\r\n * distributed under the License is distributed on an "AS IS" BASIS,\r\n * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\r\n * See the License for the specific language governing permissions and\r\n * limitations under the License.\r\n * ||| * Copyright (c) 2018-2099, Chill Zhuang 庄骞 (bladejava@qq.com).\r\n * <p>\r\n * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE 3.0;\r\n * you may not use this file except in compliance with the License.\r\n * You may obtain a copy of the License at\r\n * <p>\r\n * http://www.gnu.org/licenses/lgpl.html\r\n * <p>\r\n * Unless required by applicable law or agreed to in writing, software\r\n * distributed under the License is distributed on an "AS IS" BASIS,\r\n * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\r\n * See the License for the specific language governing permissions and\r\n * limitations under the License.\r\n *
+LCDpgJ/luqY6IA== ||| , 速度:  ||| , speed: 
+Ly9zYWJlcumFjee9rlxu ||| //saber配置\n ||| //saber configuration\n
+MS3mmK/vvIwwLeWQpg== ||| 1-是，0-否 ||| 1-Yes, 0-No
+MS4g5p+l6K+i6K+l5Zu+54mH55qE5omA5pyJ5qCH5rOo5a6e5L6L ||| 1. 查询该图片的所有标注实例 ||| 1. Query all annotation instances of the image
+MTDliIbpkp/ml6DmtLvliqjoh6rliqjmuIXnkIY= ||| 10分钟无活动自动清理 ||| Automatically clean up after 10 minutes of inactivity
+MeWwj+aXtg== ||| 1小时 ||| 1 hour
+Mi4g57uf6K6h5q+P5Liq5qCH562+55qE5L2/55So5qyh5pWw77yM55So5LqO5ZCO57ut5pu05paw5qCH562+6K6h5pWw ||| 2. 统计每个标签的使用次数，用于后续更新标签计数 ||| 2. Count the usage times of each label for subsequent updates of label count
+MjTlsI/ml7bliLY= ||| 24小时制 ||| 24-hour format
+My4g5Yig6Zmk5omA5pyJ5qCH5rOo5a6e5L6L ||| 3. 删除所有标注实例 ||| 3. Delete all annotation instances
+MzDnp5LotoXml7Y= ||| 30秒超时 ||| 30 seconds timeout
+NC4g5Yig6Zmk5Zu+54mH6K6w5b2V77yIYW5ub3RhdGlvbl9pbWFnZeihqO+8iQ== ||| 4. 删除图片记录（annotation_image表） ||| 4. Delete image record (annotation_image table)
+NS4g5pu05paw5qCH562+5L2/55So6K6h5pWw77yIYW5ub3RhdGlvbl9sYWJlbOihqO+8iQ== ||| 5. 更新标签使用计数（annotation_label表） ||| 5. Update label usage count (annotation_label table)
+PT09IOW8gOWni+iuree7g+S7u+WKoSA9PT0= ||| === 开始训练任务 === ||| === Start training task ===
+PT09PT09PT09PT0gYmxhZGUudG9rZW4uc2lnbi1rZXkg6YWN572u5aaC5LiLID09PT09PT09PT09PT09 ||| =========== blade.token.sign-key 配置如下 ============== ||| =========== blade.token.sign-key configuration is as follows ==============
+PT09PT09PT09PT09PT0gc2FiZXIgd2Vic2l0ZS5qcyDphY3nva7lpoLkuIsgPT09PT09PT09PT09PT09 ||| ============== saber website.js 配置如下 =============== ||| ============== saber website.js configuration is as follows ===============
+PT09PT09PT09PT09PT0g5a+G56CBOlthZG1pbl0g5Yqg5a+G5rWB56iL5aaC5LiLID09PT09PT09PT09PT09PT0= ||| ============== 密码:[admin] 加密流程如下 ================ ||| ============== Password:[admin] encryption workflow is as follows ================
+PT09PT09PT09PT09PT09PSBibGFkZS5hdXRoIOmFjee9ruWmguS4iyA9PT09PT09PT09PT09PT09PQ== ||| ================ blade.auth 配置如下 ================= ||| ================ blade.auth configuration is as follows =================
+PT09PT09PT09PT09PT09PT09PT0g6K6+5aSH5qCH562+55u45YWz5o6l5Y+jID09PT09PT09PT09PT09PT09PT09 ||| ==================== 设备标签相关接口 ==================== ||| ==================== Device tag related interfaces ====================
+QGF1dGhvciDliJjpkas= ||| @author 刘鑫 ||| @author Liu Xin
+QHBhcmFtIGFjY291bnQgICAg6LSm5Y+3 ||| @param account    账号 ||| @param account    account
+QHBhcmFtIGFsZ29yaXRobSDnrpfms5Xkv6Hmga8= ||| @param algorithm 算法信息 ||| @param algorithm algorithm information
+QHBhcmFtIGFsZ29yaXRobUlkIOeul+azlUlE ||| @param algorithmId 算法ID ||| @param algorithmId algorithm ID
+QHBhcmFtIGFsZ29yaXRobVRyYWluaW5nIOeul+azleiuree7g+S7u+WKoQ== ||| @param algorithmTraining 算法训练任务 ||| @param algorithmTraining algorithm training task
+QHBhcmFtIGFsbFRhZ3Mg5omA5pyJ5qCH562+ ||| @param allTags 所有标签 ||| @param allTags all tags
+QHBhcmFtIGFubm90YXRlZENvdW50IOW3suagh+azqOaVsOmHjw== ||| @param annotatedCount 已标注数量 ||| @param annotatedCount annotated quantity
+QHBhcmFtIGFubm90YXRpb24g5qCH5rOo5L+h5oGv ||| @param annotation 标注信息 ||| @param annotation annotation information
+QHBhcmFtIGFubm90YXRpb25EYXRhIEpTT07moLzlvI/nmoTmoIfms6jmlbDmja4= ||| @param annotationData JSON格式的标注数据 ||| @param annotationData annotation data in JSON format
+QHBhcmFtIGFubm90YXRpb25EYXRhIOagh+azqOaVsOaNru+8iEpTT07moLzlvI/vvIk= ||| @param annotationData 标注数据（JSON格式） ||| @param annotationData annotation data (JSON format)
+QHBhcmFtIGFubm90YXRpb25JZCAgIOagh+azqElE ||| @param annotationId   标注ID ||| @param annotationId   annotation ID
+QHBhcmFtIGFubm90YXRpb25JZCDmoIfms6hJRA== ||| @param annotationId 标注ID ||| @param annotationId annotation ID
+QHBhcmFtIGFubm90YXRpb25JZCDmoIfms6jpobnnm65JRA== ||| @param annotationId 标注项目ID ||| @param annotationId annotation project ID
+QHBhcmFtIGFubm90YXRpb25JbWFnZXMg5Zu+54mH5L+h5oGv5YiX6KGo ||| @param annotationImages 图片信息列表 ||| @param annotationImages image information list
+QHBhcmFtIGFubm90YXRpb25OYW1lIOagh+azqOWQjeensA== ||| @param annotationName 标注名称 ||| @param annotationName annotation name
+QHBhcmFtIGFubm90YXRpb25OYW1lIOagh+azqOWQjeensO+8iOaooeeziuafpeivou+8iQ== ||| @param annotationName 标注名称（模糊查询） ||| @param annotationName annotation name (fuzzy query)
+QHBhcmFtIGFubm90YXRpb25TdGF0dXMg5paw5qCH5rOo54q25oCB ||| @param annotationStatus 新标注状态 ||| @param annotationStatus new annotation status
+QHBhcmFtIGFubm90YXRpb25TdGF0dXMg5qCH5rOo54q25oCB ||| @param annotationStatus 标注状态 ||| @param annotationStatus annotation status
+QHBhcmFtIGFubm90YXRpb25UeXBlIOagh+azqOexu+Weiw== ||| @param annotationType 标注类型 ||| @param annotationType annotation type
+QHBhcmFtIGFubm90YXRpb25zIOagh+azqOWunuS+i+WIl+ihqA== ||| @param annotations 标注实例列表 ||| @param annotations annotation instances list
+QHBhcmFtIGFwaVNjb3BlSWRzICDmjqXlj6PmnYPpmZBpZOmbhuWQiA== ||| @param apiScopeIds  接口权限id集合 ||| @param apiScopeIds  API permission ID set
+QHBhcmFtIGJsYWRlUmVkaXMgUmVkaXPnvJPlrZg= ||| @param bladeRedis Redis缓存 ||| @param bladeRedis Redis cache
+QHBhcmFtIGJ1Y2tldE5hbWUg5a2Y5YKo5qG25ZCN56ew ||| @param bucketName 存储桶名称 ||| @param bucketName bucket name
+QHBhcmFtIGNhY2hlS2V5ICAgICAg57yT5a2Ya2V5 ||| @param cacheKey      缓存key ||| @param cacheKey      cache key
+QHBhcmFtIGNhY2hlS2V5VmFsdWUg57yT5a2Ya2V55YC8 ||| @param cacheKeyValue 缓存key值 ||| @param cacheKeyValue cache key value
+QHBhcmFtIGNhdGVnb3J5IOeul+azleWIhuexuw== ||| @param category 算法分类 ||| @param category algorithm category
+QHBhcmFtIGNhdGVnb3J5IOeul+azleexu+Weiw== ||| @param category 算法类型 ||| @param category algorithm type
+QHBhcmFtIGNhdGVnb3J5VHlwZSDliIbnsbvnsbvlnosob3duLeiHquaciSwgcHVibGljLeWFrOWFsSk= ||| @param categoryType 分类类型(own-自有, public-公共) ||| @param categoryType category type (own-owned, public-public)
+QHBhcmFtIGNhdGVnb3J5VHlwZSDmoIfnrb7lpKfnsbs= ||| @param categoryType 标签大类 ||| @param categoryType label major category
+QHBhcmFtIGNhdGVnb3J5VHlwZSDmoIfnrb7nsbvlnovvvIhvd24vcHVibGlj77yJ ||| @param categoryType 标签类型（own/public） ||| @param categoryType label type (own/public)
+QHBhcmFtIGNsaWVudElkICAgICDlrqLmiLfnq69pZA== ||| @param clientId     客户端id ||| @param clientId     client ID
+QHBhcmFtIGNsaWVudElkIOWuouaIt+err2lk ||| @param clientId 客户端id ||| @param clientId client ID
+QHBhcmFtIGNsaWVudFNlY3JldCDlrqLmiLfnq6/lr4bpkqU= ||| @param clientSecret 客户端密钥 ||| @param clientSecret client secret
+QHBhcmFtIGNvZGUgICAg5a2X5YW457yW5Y+3 ||| @param code    字典编号 ||| @param code    dict code
+QHBhcmFtIGNvZGUg5a2X5YW457yW5Y+3 ||| @param code 字典编号 ||| @param code dict code
+QHBhcmFtIGNvZGUg54q25oCB56CB ||| @param code 状态码 ||| @param code status code
+QHBhcmFtIGNvbG9yIOagh+etvuminOiJsg== ||| @param color 标签颜色 ||| @param color label color
+QHBhcmFtIGNvbW1hbmQgUFRa5ZG95Luk ||| @param command PTZ命令 ||| @param command PTZ command
+QHBhcmFtIGNvbmZpZyDphY3nva7lj4LmlbA= ||| @param config 配置参数 ||| @param config configuration parameters
+QHBhcmFtIGNvbnRhaW5lcklkIOWuueWZqElE ||| @param containerId 容器ID ||| @param containerId container ID
+QHBhcmFtIGNvdW50IOS9v+eUqOasoeaVsA== ||| @param count 使用次数 ||| @param count usage count
+QHBhcmFtIGNwdVVzYWdlIENQVeS9v+eUqOeOhw== ||| @param cpuUsage CPU使用率 ||| @param cpuUsage CPU usage
+QHBhcmFtIGNyZWF0ZURUTyDliJvlu7rlj4LmlbA= ||| @param createDTO 创建参数 ||| @param createDTO creation parameters
+QHBhcmFtIGNyZWF0ZWRCeSDliJvlu7rkuro= ||| @param createdBy 创建人 ||| @param createdBy creator
+QHBhcmFtIGNyZWF0ZWRCeSDliJvlu7rkurpJRA== ||| @param createdBy 创建人ID ||| @param createdBy creator ID
+QHBhcmFtIGNyZWF0ZWRUaW1lQmVnaW4g5Yib5bu65pe26Ze06IyD5Zu05byA5aeL ||| @param createdTimeBegin 创建时间范围开始 ||| @param createdTimeBegin creation time range start
+QHBhcmFtIGNyZWF0ZWRUaW1lRW5kIOWIm+W7uuaXtumXtOiMg+WbtOe7k+adnw== ||| @param createdTimeEnd 创建时间范围结束 ||| @param createdTimeEnd creation time range end
+QHBhcmFtIGRhdGFQYXRoIOaVsOaNrui3r+W+hA== ||| @param dataPath 数据路径 ||| @param dataPath data path
+QHBhcmFtIGRhdGFTY29wZUlkcyDmlbDmja7mnYPpmZBpZOmbhuWQiA== ||| @param dataScopeIds 数据权限id集合 ||| @param dataScopeIds data scope ID set
+QHBhcmFtIGRhdGFzZXRJZCDmlbDmja7pm4ZJRA== ||| @param datasetId 数据集ID ||| @param datasetId dataset ID
+QHBhcmFtIGRhdGFzZXRQYXRoIOaVsOaNrumbhui3r+W+hA== ||| @param datasetPath 数据集路径 ||| @param datasetPath dataset path
+QHBhcmFtIGRlcGxveVN0YXR1cyDmlrDpg6jnvbLnirbmgIE= ||| @param deployStatus 新部署状态 ||| @param deployStatus new deployment status
+QHBhcmFtIGRlcGxveVN0YXR1cyDpg6jnvbLnirbmgIE= ||| @param deployStatus 部署状态 ||| @param deployStatus deployment status
+QHBhcmFtIGRlc2NyaXB0aW9uIOagh+etvuaPj+i/sA== ||| @param description 标签描述 ||| @param description label description
+QHBhcmFtIGRlc3RCdWNrZXROYW1lIOebruagh+WtmOWCqOahtuWQjeensA== ||| @param destBucketName 目标存储桶名称 ||| @param destBucketName destination bucket name
+QHBhcmFtIGRlc3RGaWxlTmFtZSAgIOebruagh+WtmOWCqOahtuWvueixoeWQjeensA== ||| @param destFileName   目标存储桶对象名称 ||| @param destFileName   destination object name
+QHBhcmFtIGRldmljZUlkIOiuvuWkh0lE ||| @param deviceId 设备ID ||| @param deviceId device ID
+QHBhcmFtIGRldmljZUlkIOiuvuWkh+e8luWPtw== ||| @param deviceId 设备编号 ||| @param deviceId device code
+QHBhcmFtIGRldmljZUlkcyDorr7lpIdJROWIl+ihqA== ||| @param deviceIds 设备ID列表 ||| @param deviceIds device ID list
+QHBhcmFtIGRldmljZUlkcyDorr7lpIdJROWIl+ihqO+8jOS4uuepuuaXtuWvvOWHuuaJgOacieiuvuWkhw== ||| @param deviceIds 设备ID列表，为空时导出所有设备 ||| @param deviceIds device ID list; if empty, export all devices
+QHBhcmFtIGRldmljZUluZm8g6K6+5aSH5L+h5oGv ||| @param deviceInfo 设备信息 ||| @param deviceInfo device information
+QHBhcmFtIGRldmljZUxpc3Qg6K6+5aSH5YiX6KGo ||| @param deviceList 设备列表 ||| @param deviceList device list
+QHBhcmFtIGRldmljZU5hbWUg6K6+5aSH5ZCN56ew5oiW6K6+5aSHSUQ= ||| @param deviceName 设备名称或设备ID ||| @param deviceName device name or device ID
+QHBhcmFtIGRldmljZVRhZ01hcCDorr7lpIdJRCAtPiDmoIfnrb5JROWIl+ihqOeahOaYoOWwhA== ||| @param deviceTagMap 设备ID -> 标签ID列表的映射 ||| @param deviceTagMap mapping of device ID -> label ID list
+QHBhcmFtIGRldmljZVR5cGUg6K6+5aSH57G75Z6L ||| @param deviceType 设备类型 ||| @param deviceType device type
+QHBhcmFtIGRpY3RLZXkg5a2X5YW45bqP5Y+3 ||| @param dictKey 字典序号 ||| @param dictKey dict key
+QHBhcmFtIGRpcmVjdG9yeSDnm67lvZU= ||| @param directory 目录 ||| @param directory directory
+QHBhcmFtIGRvbWFpbiDln5/lkI0= ||| @param domain 域名 ||| @param domain domain
+QHBhcmFtIGVuZFRpbWUg57uT5p2f5pe26Ze0 ||| @param endTime 结束时间 ||| @param endTime end time
+QHBhcmFtIGVwb2NoQ3VycmVudCDlvZPliY3ova7mrKE= ||| @param epochCurrent 当前轮次 ||| @param epochCurrent current epoch
+QHBhcmFtIGVycm9yTWVzc2FnZSDplJnor6/kv6Hmga8= ||| @param errorMessage 错误信息 ||| @param errorMessage error message
+QHBhcmFtIGV4Y2x1ZGVJZCDmjpLpmaTnmoRJRO+8iOabtOaWsOaXtuS9v+eUqO+8iQ== ||| @param excludeId 排除的ID（更新时使用） ||| @param excludeId excluded ID (used when updating)
+QHBhcmFtIGV4Y2x1ZGVJZCDmjpLpmaTnmoRJRO+8iOeUqOS6jue8lui+keaXtumqjOivge+8iQ== ||| @param excludeId 排除的ID（用于编辑时验证） ||| @param excludeId excluded ID (used for validation during editing)
+QHBhcmFtIGZpbGUgICAgIOaWh+S7tg== ||| @param file     文件 ||| @param file     file
+QHBhcmFtIGZpbGUg5paH5Lu2 ||| @param file 文件 ||| @param file file
+QHBhcmFtIGZpbGVOYW1lICAgICAgIOWtmOWCqOahtuWvueixoeWQjeensA== ||| @param fileName       存储桶对象名称 ||| @param fileName       bucket object name
+QHBhcmFtIGZpbGVOYW1lIOWtmOWCqOahtuWvueixoeWQjeensA== ||| @param fileName 存储桶对象名称 ||| @param fileName bucket object name
+QHBhcmFtIGZpbGVOYW1lIOaWh+S7tuWQjQ== ||| @param fileName 文件名 ||| @param fileName file name
+QHBhcmFtIGZpbGVOYW1lcyDlrZjlgqjmobblr7nosaHlkI3np7Dpm4blkIg= ||| @param fileNames 存储桶对象名称集合 ||| @param fileNames bucket object name collection
+QHBhcmFtIGZpbGVuYW1lIOaWh+S7tuWQjQ== ||| @param filename 文件名 ||| @param filename file name
+QHBhcmFtIGdwdVVzYWdlIEdQVeS9v+eUqOeOhw== ||| @param gpuUsage GPU使用率 ||| @param gpuUsage GPU usage
+QHBhcmFtIGdyYW50VHlwZSDmjojmnYPnsbvlnos= ||| @param grantType 授权类型 ||| @param grantType grant type
+QHBhcmFtIGhlYWx0aFN0YXR1cyDlgaXlurfnirbmgIE= ||| @param healthStatus 健康状态 ||| @param healthStatus health status
+QHBhcmFtIGhvc3QgICAgIOacjeWKoeWZqOWcsOWdgA== ||| @param host     服务器地址 ||| @param host     server address
+QHBhcmFtIGhvc3Qg5pyN5Yqh5Zmo5Zyw5Z2A ||| @param host 服务器地址 ||| @param host server address
+QHBhcmFtIGlkICAgICDorr7lpIdJRA== ||| @param id     设备ID ||| @param id     device ID
+QHBhcmFtIGlkIOS7k+W6k0lE ||| @param id 仓库ID ||| @param id repository ID
+QHBhcmFtIGlkIOWuueWZqOWunuS+i0lE ||| @param id 容器实例ID ||| @param id container instance ID
+QHBhcmFtIGlkIOagh+azqElE ||| @param id 标注ID ||| @param id annotation ID
+QHBhcmFtIGlkIOaooeWei0lE ||| @param id 模型ID ||| @param id model ID
+QHBhcmFtIGlkIOeul+azlUlE ||| @param id 算法ID ||| @param id algorithm ID
+QHBhcmFtIGlkIOeul+azleiuree7g+S7u+WKoeS4u+mUrg== ||| @param id 算法训练任务主键 ||| @param id algorithm training task primary key
+QHBhcmFtIGlkIOiuree7g+S7u+WKoUlE ||| @param id 训练任务ID ||| @param id training task ID
+QHBhcmFtIGlkIOiuvuWkh0lE ||| @param id 设备ID ||| @param id device ID
+QHBhcmFtIGlkIOi/nOeoi+acjeWKoeWZqOmFjee9ruS4u+mUrg== ||| @param id 远程服务器配置主键 ||| @param id remote server configuration primary key
+QHBhcmFtIGlkcyAgICDorr7lpIdJROWIl+ihqA== ||| @param ids    设备ID列表 ||| @param ids    device ID list
+QHBhcmFtIGlkcyDku5PlupNJROWIl+ihqA== ||| @param ids 仓库ID列表 ||| @param ids repository ID list
+QHBhcmFtIGlkcyDku7vliqFJROWIl+ihqA== ||| @param ids 任务ID列表 ||| @param ids task ID list
+QHBhcmFtIGlkcyDlrrnlmajlrp7kvotJROWIl+ihqA== ||| @param ids 容器实例ID列表 ||| @param ids container instance ID list
+QHBhcmFtIGlkcyDmoIfms6hJROWIl+ihqA== ||| @param ids 标注ID列表 ||| @param ids annotation ID list
+QHBhcmFtIGlkcyDmqKHlnotJROWIl+ihqA== ||| @param ids 模型ID列表 ||| @param ids model ID list
+QHBhcmFtIGlkcyDnrpfms5VJROWIl+ihqA== ||| @param ids 算法ID列表 ||| @param ids algorithm ID list
+QHBhcmFtIGlkcyDorr7lpIdJROWIl+ihqA== ||| @param ids 设备ID列表 ||| @param ids device ID list
+QHBhcmFtIGlkcyDpnIDopoHliKDpmaTnmoTnrpfms5Xorq3nu4Pku7vliqHkuLvplK4= ||| @param ids 需要删除的算法训练任务主键 ||| @param ids primary keys of the algorithm training tasks to be deleted
+QHBhcmFtIGlkcyDpnIDopoHliKDpmaTnmoTnrpfms5Xorq3nu4Pku7vliqHkuLvplK7pm4blkIg= ||| @param ids 需要删除的算法训练任务主键集合 ||| @param ids set of primary keys of the algorithm training tasks to be deleted
+QHBhcmFtIGlkcyDpnIDopoHliKDpmaTnmoTov5znqIvmnI3liqHlmajphY3nva7kuLvplK4= ||| @param ids 需要删除的远程服务器配置主键 ||| @param ids primary keys of remote server configurations to be deleted
+QHBhcmFtIGlkcyDpnIDopoHliKDpmaTnmoTov5znqIvmnI3liqHlmajphY3nva7kuLvplK7pm4blkIg= ||| @param ids 需要删除的远程服务器配置主键集合 ||| @param ids set of primary keys of remote server configurations to be deleted
+QHBhcmFtIGltYWdlSWQg5Zu+54mHSUQ= ||| @param imageId 图片ID ||| @param imageId image ID
+QHBhcmFtIGltYWdlSWQg5Zu+54mHaWQ= ||| @param imageId 图片id ||| @param imageId image ID
+QHBhcmFtIGltYWdlSW5zdGFuY2VzIOagh+azqOaVsOaNrg== ||| @param imageInstances 标注数据 ||| @param imageInstances annotation data
+QHBhcmFtIGltYWdlTmFtZSAgICDlm77niYflkI3np7A= ||| @param imageName    图片名称 ||| @param imageName    image name
+QHBhcmFtIGltYWdlTmFtZSDlm77niYflkI3np7A= ||| @param imageName 图片名称 ||| @param imageName image name
+QHBhcmFtIGluY3JlbWVudCDlop7liqDnmoTmrKHmlbA= ||| @param increment 增加的次数 ||| @param increment increased count
+QHBhcmFtIGluc3RhbmNlSWQg5a6e5L6LSUQ= ||| @param instanceId 实例ID ||| @param instanceId instance ID
+QHBhcmFtIGluc3RhbmNlSWRzIOWunuS+i0lE5YiX6KGo ||| @param instanceIds 实例ID列表 ||| @param instanceIds instance ID list
+QHBhcmFtIGluc3RhbmNlTmFtZSDlrp7kvovlkI3np7A= ||| @param instanceName 实例名称 ||| @param instanceName instance name
+QHBhcmFtIGluc3RhbmNlU3RhdHVzIOWunuS+i+eKtuaAgQ== ||| @param instanceStatus 实例状态 ||| @param instanceStatus instance status
+QHBhcmFtIGlwQWRkcmVzcyBJUOWcsOWdgA== ||| @param ipAddress IP地址 ||| @param ipAddress IP address
+QHBhcmFtIGlzQWN0aXZlIOaYr+WQpuWQr+eUqA== ||| @param isActive 是否启用 ||| @param isActive whether enabled
+QHBhcmFtIGtleXdvcmQgICAgICDmkJzntKLlhbPplK7or43vvIjlj6/pgInvvIk= ||| @param keyword      搜索关键词（可选） ||| @param keyword      search keyword (optional)
+QHBhcmFtIGtleXdvcmQg5pCc57Si5YWz6ZSu5a2X ||| @param keyword 搜索关键字 ||| @param keyword search keyword
+QHBhcmFtIGtleXdvcmQg5pCc57Si5YWz6ZSu6K+N ||| @param keyword 搜索关键词 ||| @param keyword search keyword
+QHBhcmFtIGxhYmVsSWQgICAgIOagh+etvklE ||| @param labelId     标签ID ||| @param labelId     label ID
+QHBhcmFtIGxhYmVsSWQg5qCH562+SUQ= ||| @param labelId 标签ID ||| @param labelId label ID
+QHBhcmFtIGxhYmVsSWRzIOagh+etvklE5YiX6KGo77yI5oyJ5o6S5bqP6aG65bqP77yJ ||| @param labelIds 标签ID列表（按排序顺序） ||| @param labelIds label ID list (in sort order)
+QHBhcmFtIGxldmVsIOagh+etvuWxgue6pw== ||| @param level 标签层级 ||| @param level label level
+QHBhcmFtIGxldmVsIOagh+etvuWxgue6p++8iDEvMu+8iQ== ||| @param level 标签层级（1/2） ||| @param level label level (1/2)
+QHBhcmFtIGxpbWl0IOmZkOWItuaVsOmHjw== ||| @param limit 限制数量 ||| @param limit limit quantity
+QHBhcmFtIG1lbW9yeVVzYWdlIOWGheWtmOS9v+eUqOeOhw== ||| @param memoryUsage 内存使用率 ||| @param memoryUsage memory usage
+QHBhcmFtIG1lbnVJZHMgICAgICDoj5zljZVpZOmbhuWQiA== ||| @param menuIds      菜单id集合 ||| @param menuIds      menu ID set
+QHBhcmFtIG1lbnVJZHMgICAg6I+c5Y2VaWTpm4blkIg= ||| @param menuIds    菜单id集合 ||| @param menuIds    menu ID set
+QHBhcmFtIG1vZGVsTmFtZSDmqKHlnovlkI3np7A= ||| @param modelName 模型名称 ||| @param modelName model name
+QHBhcmFtIG5hbWUg5LuT5bqT5ZCN56ew77yI5qih57OK5p+l6K+i77yJ ||| @param name 仓库名称（模糊查询） ||| @param name repository name (fuzzy query)
+QHBhcmFtIG5hbWUg5Zy65pmv5ZCN56ew ||| @param name 场景名称 ||| @param name scene name
+QHBhcmFtIG5hbWUg5qCH562+5ZCN56ew ||| @param name 标签名称 ||| @param name label name
+QHBhcmFtIG5hbWUg566X5rOV5ZCN56ew77yI5qih57OK5p+l6K+i77yJ ||| @param name 算法名称（模糊查询） ||| @param name algorithm name (fuzzy query)
+QHBhcmFtIG9yZGVyIOaOkuW6j+aWueW8jw== ||| @param order 排序方式 ||| @param order sort order
+QHBhcmFtIG9yZGVyQnkg5o6S5bqP5a2X5q61 ||| @param orderBy 排序字段 ||| @param orderBy sort field
+QHBhcmFtIHBhZ2UgICAgICAgICAgICAg5YiG6aG15Y+C5pWw ||| @param page             分页参数 ||| @param page             pagination parameters
+QHBhcmFtIHBhZ2UgICAgICAgICAg5YiG6aG15Y+C5pWw ||| @param page          分页参数 ||| @param page          pagination parameters
+QHBhcmFtIHBhZ2UgICAgICAg5YiG6aG15a+56LGh ||| @param page       分页对象 ||| @param page       pagination object
+QHBhcmFtIHBhZ2Ug5YiG6aG15Y+C5pWw ||| @param page 分页参数 ||| @param page pagination parameters
+QHBhcmFtIHBhZ2Ug5YiG6aG15a+56LGh ||| @param page 分页对象 ||| @param page pagination object
+QHBhcmFtIHBhcmFtcyDlj4LmlbA= ||| @param params 参数 ||| @param params parameters
+QHBhcmFtIHBhcmVudElkICDniLbnuqdJRA== ||| @param parentId  父级ID ||| @param parentId  parent ID
+QHBhcmFtIHBhcmVudElkIOeItue6p0lE ||| @param parentId 父级ID ||| @param parentId parent ID
+QHBhcmFtIHBhcmVudE1hcCDniLbnuqfliIbnu4Q= ||| @param parentMap 父级分组 ||| @param parentMap parent grouping
+QHBhcmFtIHBhc3N3b3JkIOWvhueggQ== ||| @param password 密码 ||| @param password password
+QHBhcmFtIHBhdGggICAgIOaVsOaNrumbhui3r+W+hA== ||| @param path     数据集路径 ||| @param path     dataset path
+QHBhcmFtIHBhdGgg5pWw5o2u6ZuG6Lev5b6E ||| @param path 数据集路径 ||| @param path dataset path
+QHBhcmFtIHBhdGgg55uu5b2V6Lev5b6E ||| @param path 目录路径 ||| @param path directory path
+QHBhcmFtIHBvc2l0aW9uIOS9jee9rg== ||| @param position 位置 ||| @param position position
+QHBhcmFtIHBvc2l0aW9uIOiuvuWkh+S9jee9rg== ||| @param position 设备位置 ||| @param position device position
+QHBhcmFtIHByaXZhdGVLZXkgIOengemSpQ== ||| @param privateKey  私钥 ||| @param privateKey  private key
+QHBhcmFtIHByb2ZpbGUg546v5aKD5Y+Y6YeP ||| @param profile 环境变量 ||| @param profile environment variable
+QHBhcmFtIHByb2dyZXNzIOi/m+W6pueZvuWIhuavlA== ||| @param progress 进度百分比 ||| @param progress progress percentage
+QHBhcmFtIHB1YmxpY0tleSAgIOWFrOmSpQ== ||| @param publicKey   公钥 ||| @param publicKey   public key
+QHBhcmFtIHF1ZXJ5V3JhcHBlciDmn6Xor6LmnaHku7Y= ||| @param queryWrapper 查询条件 ||| @param queryWrapper query conditions
+QHBhcmFtIHJhd1Bhc3N3b3JkIOivt+axguaXtuaPkOS6pOeahOWOn+WvhueggQ== ||| @param rawPassword 请求时提交的原密码 ||| @param rawPassword original password submitted during request
+QHBhcmFtIHJlY29yZERhdGUg5pel5pyf ||| @param recordDate 日期 ||| @param recordDate date
+QHBhcmFtIHJlbW90ZVNlcnZlciDov5znqIvmnI3liqHlmajphY3nva4= ||| @param remoteServer 远程服务器配置 ||| @param remoteServer remote server configuration
+QHBhcmFtIHJlcG9zaXRvcnkg566X5rOV5LuT5bqT5L+h5oGv ||| @param repository 算法仓库信息 ||| @param repository algorithm repository information
+QHBhcmFtIHJlcG9zaXRvcnlJZCDku5PlupNJRA== ||| @param repositoryId 仓库ID ||| @param repositoryId repository ID
+QHBhcmFtIHJlcG9zaXRvcnlUeXBlIOS7k+W6k+exu+Weiw== ||| @param repositoryType 仓库类型 ||| @param repositoryType repository type
+QHBhcmFtIHJlcXVlc3RCb2R5ICDor7fmsYLkvZM= ||| @param requestBody  请求体 ||| @param requestBody  request body
+QHBhcmFtIHJlcXVlc3RCb2R5ICDor7fmsYLkvZPvvIjljIXlkKtsYWJlbElkc+aVsOe7hO+8iQ== ||| @param requestBody  请求体（包含labelIds数组） ||| @param requestBody  request body (including labelIds array)
+QHBhcmFtIHJlcXVlc3RCb2R5IOivt+axguS9kw== ||| @param requestBody 请求体 ||| @param requestBody request body
+QHBhcmFtIHJlc3BvbnNlIEhUVFDlk43lupTlr7nosaE= ||| @param response HTTP响应对象 ||| @param response HTTP response object
+QHBhcmFtIHJvbGVJZHMgICAgICDop5LoibJpZOmbhuWQiA== ||| @param roleIds      角色id集合 ||| @param roleIds      role ID set
+QHBhcmFtIHNmdHAgICAgICAgIFNGVFDpgJrpgZM= ||| @param sftp        SFTP通道 ||| @param sftp        SFTP channel
+QHBhcmFtIHNmdHAgU0ZUUOmAmumBkw== ||| @param sftp SFTP通道 ||| @param sftp SFTP channel
+QHBhcmFtIHNpemUg5paH5Lu25aSn5bCP77yI5a2X6IqC77yJ ||| @param size 文件大小（字节） ||| @param size file size (bytes)
+QHBhcmFtIHNvdXJjZURldmljZUlkIOa6kOiuvuWkh0lE ||| @param sourceDeviceId 源设备ID ||| @param sourceDeviceId source device ID
+QHBhcmFtIHN0YXJ0VGltZSDlkK/liqjml7bpl7Q= ||| @param startTime 启动时间 ||| @param startTime start time
+QHBhcmFtIHN0YXJ0VGltZSDlvIDlp4vml7bpl7Q= ||| @param startTime 开始时间 ||| @param startTime start time
+QHBhcmFtIHN0YXJ0VGltZSDotbflp4vml7bpl7Q= ||| @param startTime 起始时间 ||| @param startTime start time
+QHBhcmFtIHN0YXJ0VGltZUJlZ2luIOW8gOWni+aXtumXtOiMg+WbtOW8gOWniw== ||| @param startTimeBegin 开始时间范围开始 ||| @param startTimeBegin start time range start
+QHBhcmFtIHN0YXJ0VGltZUVuZCDlvIDlp4vml7bpl7TojIPlm7Tnu5PmnZ8= ||| @param startTimeEnd 开始时间范围结束 ||| @param startTimeEnd start time range end
+QHBhcmFtIHN0YXR1cyAgICAg6K6+5aSH54q25oCB ||| @param status     设备状态 ||| @param status     device status
+QHBhcmFtIHN0YXR1cyAgICDnirbmgIE= ||| @param status    状态 ||| @param status    status
+QHBhcmFtIHN0YXR1cyDlnLrmma/nirbmgIE= ||| @param status 场景状态 ||| @param status scene status
+QHBhcmFtIHN0YXR1cyDmlrDnirbmgIE= ||| @param status 新状态 ||| @param status new status
+QHBhcmFtIHN0YXR1cyDnirbmgIE= ||| @param status 状态 ||| @param status status
+QHBhcmFtIHN0YXR1cyDorr7lpIfnirbmgIE= ||| @param status 设备状态 ||| @param status device status
+QHBhcmFtIHN0b3BUaW1lIOWBnOatouaXtumXtA== ||| @param stopTime 停止时间 ||| @param stopTime stop time
+QHBhcmFtIHRhZyAgICAgICAg6K6+5aSH5qCH562+77yI5a6e6ZmF5a+55bqUZGV2aWNlX3R5cGXlrZfmrrXvvIk= ||| @param tag        设备标签（实际对应device_type字段） ||| @param tag        device tag (actually corresponds to the device_type field)
+QHBhcmFtIHRhZyDmoIfnrb4= ||| @param tag 标签 ||| @param tag label
+QHBhcmFtIHRhZ0lkICAgICDmoIfnrb5JRA== ||| @param tagId     标签ID ||| @param tagId     label ID
+QHBhcmFtIHRhZ0lkIOagh+etvklE ||| @param tagId 标签ID ||| @param tagId label ID
+QHBhcmFtIHRhZ0lkcyDljp/lp4vmoIfnrb5JROWIl+ihqA== ||| @param tagIds 原始标签ID列表 ||| @param tagIds original label ID list
+QHBhcmFtIHRhZ0lkcyDmoIfnrb5JROWIl+ihqA== ||| @param tagIds 标签ID列表 ||| @param tagIds label ID list
+QHBhcmFtIHRhZ01hbmFnZW1lbnQg5qCH562+5L+h5oGv ||| @param tagManagement 标签信息 ||| @param tagManagement label information
+QHBhcmFtIHRhZ05hbWUgICDmoIfnrb7lkI3np7A= ||| @param tagName   标签名称 ||| @param tagName   label name
+QHBhcmFtIHRhZ05hbWUg5qCH562+5ZCN56ew ||| @param tagName 标签名称 ||| @param tagName label name
+QHBhcmFtIHRhZ1R5cGUg5qCH562+57G75Z6L ||| @param tagType 标签类型 ||| @param tagType label type
+QHBhcmFtIHRhZ1R5cGUg5qCH562+57G75Z6LKG93bi3oh6rmnIksIHB1YmxpYy3lhazlhbEp ||| @param tagType 标签类型(own-自有, public-公共) ||| @param tagType label type (own-owned, public-public)
+QHBhcmFtIHRhcmdldERldmljZUlkcyDnm67moIforr7lpIdJROWIl+ihqA== ||| @param targetDeviceIds 目标设备ID列表 ||| @param targetDeviceIds target device ID list
+QHBhcmFtIHRhcmdldFBhcmVudElkIOebruagh+eItue6p0lE ||| @param targetParentId 目标父级ID ||| @param targetParentId target parent ID
+QHBhcmFtIHRhcmdldFBvc2l0aW9uIOebruagh+S9jee9rg== ||| @param targetPosition 目标位置 ||| @param targetPosition target position
+QHBhcmFtIHRhc2tOYW1lIOS7u+WKoeWQjeensA== ||| @param taskName 任务名称 ||| @param taskName task name
+QHBhcmFtIHRlbmFudElkICAgICAg56ef5oi357yW5Y+3 ||| @param tenantId      租户编号 ||| @param tenantId      tenant code
+QHBhcmFtIHRlbmFudElkICAg56ef5oi3SUQ= ||| @param tenantId   租户ID ||| @param tenantId   tenant ID
+QHBhcmFtIHRpbWVTdHJhdGVneSDml7bpl7TnrZbnlaU= ||| @param timeStrategy 时间策略 ||| @param timeStrategy time strategy
+QHBhcmFtIHRva2VuUGFyYW1ldGVyIOaOiOadg+WPguaVsA== ||| @param tokenParameter 授权参数 ||| @param tokenParameter authorization parameters
+QHBhcmFtIHRvcE1lbnVJZHMg6aG26YOo6I+c5Y2VaWTpm4blkIg= ||| @param topMenuIds 顶部菜单id集合 ||| @param topMenuIds top menu ID set
+QHBhcmFtIHRyYWluU3RhdHVzIOiuree7g+eKtuaAgQ== ||| @param trainStatus 训练状态 ||| @param trainStatus training status
+QHBhcmFtIHRyYWluVHlwZSDorq3nu4Pnsbvlnos= ||| @param trainType 训练类型 ||| @param trainType training type
+QHBhcmFtIHRyYWluaW5nSWQg6K6t57uD5Lu75YqhSUQ= ||| @param trainingId 训练任务ID ||| @param trainingId training task ID
+QHBhcmFtIHVzYWdlQ291bnQg5L2/55So5qyh5pWw ||| @param usageCount 使用次数 ||| @param usageCount usage count
+QHBhcmFtIHVzZXJJbmZvIOeUqOaIt+S/oeaBrw== ||| @param userInfo 用户信息 ||| @param userInfo user information
+QHBhcmFtIHVzZXJuYW1lIOeUqOaIt+WQjQ== ||| @param username 用户名 ||| @param username username
+QHBhcmFtIHZhbCDlrZfnrKbkuLLlgLw= ||| @param val 字符串值 ||| @param val string value
+QHBhcmFtIHZlcnNpb24g54mI5pys ||| @param version 版本 ||| @param version version
+QHBhcmFtIHZsc0FsZ29yaXRobSDmn6Xor6Llj4LmlbA= ||| @param vlsAlgorithm 查询参数 ||| @param vlsAlgorithm query parameters
+QHBhcmFtIHZsc0FsZ29yaXRobUFubm90YXRpb24g5p+l6K+i5Y+C5pWw ||| @param vlsAlgorithmAnnotation 查询参数 ||| @param vlsAlgorithmAnnotation query parameters
+QHBhcmFtIHZsc0FsZ29yaXRobU1vZGVsIOafpeivouWPguaVsA== ||| @param vlsAlgorithmModel 查询参数 ||| @param vlsAlgorithmModel query parameters
+QHBhcmFtIHZsc0FsZ29yaXRobU9yY2hlc3RyYXRpb24g5p+l6K+i5Y+C5pWw ||| @param vlsAlgorithmOrchestration 查询参数 ||| @param vlsAlgorithmOrchestration query parameters
+QHBhcmFtIHZsc0FsZ29yaXRobVJlcG9zaXRvcnkg5p+l6K+i5Y+C5pWw ||| @param vlsAlgorithmRepository 查询参数 ||| @param vlsAlgorithmRepository query parameters
+QHBhcmFtIHZsc0FsZ29yaXRobVRyYWluaW5nIOafpeivouWPguaVsA== ||| @param vlsAlgorithmTraining 查询参数 ||| @param vlsAlgorithmTraining query parameters
+QHBhcmFtIHZsc0FuYWx5c2lzUmVxdWVzdCDmn6Xor6Llj4LmlbA= ||| @param vlsAnalysisRequest 查询参数 ||| @param vlsAnalysisRequest query parameters
+QHBhcmFtIHZsc0Fubm90YXRpb25JbWFnZSDmn6Xor6Llj4LmlbA= ||| @param vlsAnnotationImage 查询参数 ||| @param vlsAnnotationImage query parameters
+QHBhcmFtIHZsc0Fubm90YXRpb25JbnN0YW5jZSDmn6Xor6Llj4LmlbA= ||| @param vlsAnnotationInstance 查询参数 ||| @param vlsAnnotationInstance query parameters
+QHBhcmFtIHZsc0Fubm90YXRpb25MYWJlbCDmn6Xor6Llj4LmlbA= ||| @param vlsAnnotationLabel 查询参数 ||| @param vlsAnnotationLabel query parameters
+QHBhcmFtIHZsc0NvbnRhaW5lckluc3RhbmNlIOafpeivouWPguaVsA== ||| @param vlsContainerInstance 查询参数 ||| @param vlsContainerInstance query parameters
+QHBhcmFtIHZsc0RldmljZUluZm8g5p+l6K+i5Y+C5pWw ||| @param vlsDeviceInfo 查询参数 ||| @param vlsDeviceInfo query parameters
+QHBhcmFtIHZsc0RldmljZVRhZ1JlbGF0aW9uIOafpeivouWPguaVsA== ||| @param vlsDeviceTagRelation 查询参数 ||| @param vlsDeviceTagRelation query parameters
+QHBhcmFtIHZsc0V2ZW50TWFuYWdlbWVudCDmn6Xor6Llj4LmlbA= ||| @param vlsEventManagement 查询参数 ||| @param vlsEventManagement query parameters
+QHBhcmFtIHZsc1JlbW90ZVNlcnZlcnMg5p+l6K+i5Y+C5pWw ||| @param vlsRemoteServers 查询参数 ||| @param vlsRemoteServers query parameters
+QHBhcmFtIHZsc1NjZW5lR292ZXJuYW5jZSDmn6Xor6Llj4LmlbA= ||| @param vlsSceneGovernance 查询参数 ||| @param vlsSceneGovernance query parameters
+QHBhcmFtIHZsc1RhZ01hbmFnZW1lbnQg5p+l6K+i5Y+C5pWw ||| @param vlsTagManagement 查询参数 ||| @param vlsTagManagement query parameters
+QHBhcmFtIHZsc1RpbWVTdHJhdGVneSDmn6Xor6Llj4LmlbA= ||| @param vlsTimeStrategy 查询参数 ||| @param vlsTimeStrategy query parameters
+QHBhcmFtIHZsc1ZpZGVvUmVjb3JkIOafpeivouWPguaVsA== ||| @param vlsVideoRecord 查询参数 ||| @param vlsVideoRecord query parameters
+QHBhcmFtIHllYXIg5bm05Lu977yI5Li656m65pe25LiN6ZmQ5Yi277yJ ||| @param year 年份（为空时不限制） ||| @param year year (no limit if empty)
+QHJldHVybiDku5PlupPmgLvmlbA= ||| @return 仓库总数 ||| @return total number of repositories
+QHJldHVybiDkvb/nlKjmrKHmlbA= ||| @return 使用次数 ||| @return usage count
+QHJldHVybiDkvb/nlKjnu5/orqHkv6Hmga8= ||| @return 使用统计信息 ||| @return usage statistics
+QHJldHVybiDkv53lrZjnmoTmoIfms6jlrp7kvos= ||| @return 保存的标注实例 ||| @return saved annotation instances
+QHJldHVybiDkv53lrZjnu5Pmnpw= ||| @return 保存结果 ||| @return save result
+QHJldHVybiDliIbnsbvnu5/orqHkv6Hmga8= ||| @return 分类统计信息 ||| @return classification statistics
+QHJldHVybiDliIbpobXnu5Pmnpw= ||| @return 分页结果 ||| @return pagination results
+QHJldHVybiDliJvlu7rmiJDlip/nmoTmoIfnrb4= ||| @return 创建成功的标签 ||| @return successfully created label
+QHJldHVybiDliJvlu7rmiJDlip/nmoTmqKHlnos= ||| @return 创建成功的模型 ||| @return successfully created model
+QHJldHVybiDliJvlu7rnmoTmoIfnrb4= ||| @return 创建的标签 ||| @return created label
+QHJldHVybiDliKDpmaTmlbDph48= ||| @return 删除数量 ||| @return deleted quantity
+QHJldHVybiDliKDpmaTnu5Pmnpw= ||| @return 删除结果 ||| @return deletion result
+QHJldHVybiDliKDpmaTooYzmlbA= ||| @return 删除行数 ||| @return number of deleted rows
+QHJldHVybiDliLfmlrDnu5Pmnpw= ||| @return 刷新结果 ||| @return refresh result
+QHJldHVybiDlkK/nlKjmlbDph48= ||| @return 启用数量 ||| @return enabled quantity
+QHJldHVybiDlkK/nlKjnmoTnrpfms5Xku5PlupPliJfooag= ||| @return 启用的算法仓库列表 ||| @return list of enabled algorithm repositories
+QHJldHVybiDlk4HniYzliJfooag= ||| @return 品牌列表 ||| @return brand list
+QHJldHVybiDlm57mlL7orrDlvZXliJfooag= ||| @return 回放记录列表 ||| @return playback record list
+QHJldHVybiDlnLrmma/msrvnkIbkv6Hmga8= ||| @return 场景治理信息 ||| @return scene governance information
+QHJldHVybiDlnLrmma/msrvnkIbliJfooag= ||| @return 场景治理列表 ||| @return scene governance list
+QHJldHVybiDlrZDmoIfnrb7liJfooag= ||| @return 子标签列表 ||| @return sub-label list
+QHJldHVybiDlrZDoioLngrnliJfooag= ||| @return 子节点列表 ||| @return child node list
+QHJldHVybiDlrZjlnKjnmoTmlbDph48= ||| @return 存在的数量 ||| @return existing quantity
+QHJldHVybiDlrrnlmajlrp7kvos= ||| @return 容器实例 ||| @return container instance
+QHJldHVybiDlrrnlmajlrp7kvovliJfooag= ||| @return 容器实例列表 ||| @return container instance list
+QHJldHVybiDlrrnlmajlrp7kvovor6bmg4U= ||| @return 容器实例详情 ||| @return container instance details
+QHJldHVybiDlr7zlhaXnu5Pmnpw= ||| @return 导入结果 ||| @return import result
+QHJldHVybiDlr7zlh7rmlbDmja4= ||| @return 导出数据 ||| @return exported data
+QHJldHVybiDlvILluLjnirbmgIHnmoTlrrnlmajlrp7kvovliJfooag= ||| @return 异常状态的容器实例列表 ||| @return list of container instances in abnormal state
+QHJldHVybiDlvZXliLborrDlvZXliJfooag= ||| @return 录制记录列表 ||| @return recording list
+QHJldHVybiDlvbHlk43ooYzmlbA= ||| @return 影响行数 ||| @return affected rows
+QHJldHVybiDmgLvlpKflsI/vvIjlrZfoioLvvIk= ||| @return 总大小（字节） ||| @return total size (bytes)
+QHJldHVybiDmgLvmlbA= ||| @return 总数 ||| @return total count
+QHJldHVybiDmiJDlip/orr7nva7nmoTorr7lpIfmlbDph48= ||| @return 成功设置的设备数量 ||| @return number of successfully configured devices
+QHJldHVybiDmjqfliLbnu5Pmnpw= ||| @return 控制结果 ||| @return control result
+QHJldHVybiDmj5LlhaXmlbDph48= ||| @return 插入数量 ||| @return inserted quantity
+QHJldHVybiDmlbDmja7pm4bmlofku7blhoXlrrk= ||| @return 数据集文件内容 ||| @return dataset file content
+QHJldHVybiDmlbDmja7pm4bmlofku7blkI0= ||| @return 数据集文件名 ||| @return dataset file name
+QHJldHVybiDmlbDph48= ||| @return 数量 ||| @return quantity
+QHJldHVybiDmlofku7blhoXlrrk= ||| @return 文件内容 ||| @return file content
+QHJldHVybiDmlofku7bliJfooag= ||| @return 文件列表 ||| @return file list
+QHJldHVybiDmlofku7blk43lupTkv6Hmga8= ||| @return 文件响应信息 ||| @return file response information
+QHJldHVybiDml6XmnJ/liJfooag= ||| @return 日期列表 ||| @return date list
+QHJldHVybiDml7bpl7TnrZbnlaU= ||| @return 时间策略 ||| @return time strategy
+QHJldHVybiDmmK/lkKbkuLoi5ZCmIg== ||| @return 是否为"否" ||| @return whether it is "No"
+QHJldHVybiDmmK/lkKbkuLoi5pivIg== ||| @return 是否为"是" ||| @return whether it is "Yes"
+QHJldHVybiDmmK/lkKbkuLrlm77niYfmlofku7Y= ||| @return 是否为图片文件 ||| @return whether it is an image file
+QHJldHVybiDmmK/lkKbkv53lrZjmiJDlip8= ||| @return 是否保存成功 ||| @return whether saved successfully
+QHJldHVybiDmmK/lkKblgZzmraLmiJDlip8= ||| @return 是否停止成功 ||| @return whether stopped successfully
+QHJldHVybiDmmK/lkKbliKDpmaTmiJDlip8= ||| @return 是否删除成功 ||| @return whether deleted successfully
+QHJldHVybiDmmK/lkKblkK/liqjmiJDlip8= ||| @return 是否启动成功 ||| @return whether started successfully
+QHJldHVybiDmmK/lkKblrZjlnKg= ||| @return 是否存在 ||| @return whether exists
+QHJldHVybiDmmK/lkKbmiJDlip8= ||| @return 是否成功 ||| @return whether successful
+QHJldHVybiDmmK/lkKbmk43kvZzmiJDlip8= ||| @return 是否操作成功 ||| @return whether operated successfully
+QHJldHVybiDmmK/lkKbmm7TmlrDmiJDlip8= ||| @return 是否更新成功 ||| @return whether updated successfully
+QHJldHVybiDmmK/lkKbnp7vliqjmiJDlip8= ||| @return 是否移动成功 ||| @return whether moved successfully
+QHJldHVybiDmmK/lkKbov57mjqXmiJDlip8= ||| @return 是否连接成功 ||| @return whether connected successfully
+QHJldHVybiDmmK/lkKbph43lkK/miJDlip8= ||| @return 是否重启成功 ||| @return whether restarted successfully
+QHJldHVybiDmmK/lkKbph43lpI0= ||| @return 是否重复 ||| @return whether duplicated
+QHJldHVybiDmm7TmlrDlkI7nmoTmoIfms6jlrp7kvos= ||| @return 更新后的标注实例 ||| @return updated annotation instances
+QHJldHVybiDmm7TmlrDlkI7nmoTmoIfnrb4= ||| @return 更新后的标签 ||| @return updated label
+QHJldHVybiDmm7TmlrDmiJDlip/nmoTmoIfnrb4= ||| @return 更新成功的标签 ||| @return successfully updated label
+QHJldHVybiDmm7TmlrDmlbDph48= ||| @return 更新数量 ||| @return updated quantity
+QHJldHVybiDmm7TmlrDnu5Pmnpw= ||| @return 更新结果 ||| @return update result
+QHJldHVybiDmm7TmlrDooYzmlbA= ||| @return 更新行数 ||| @return number of updated rows
+QHJldHVybiDmnIDlpKfmjpLluo/lj7c= ||| @return 最大排序号 ||| @return maximum sort number
+QHJldHVybiDmnInmlYjnmoTmoIfnrb5JROWIl+ihqA== ||| @return 有效的标签ID列表 ||| @return valid label ID list
+QHJldHVybiDmnprkuL7lr7nosaE= ||| @return 枚举对象 ||| @return enum object
+QHJldHVybiDmoIfms6jliJfooag= ||| @return 标注列表 ||| @return annotation list
+QHJldHVybiDmoIfms6jlrp7kvovliJfooag= ||| @return 标注实例列表 ||| @return annotation instances list
+QHJldHVybiDmoIfms6jlt6XkvZzph4/nu5/orqHkv6Hmga8= ||| @return 标注工作量统计信息 ||| @return annotation workload statistics
+QHJldHVybiDmoIfms6jnirbmgIE= ||| @return 标注状态 ||| @return annotation status
+QHJldHVybiDmoIfms6jnirbmgIHnu5/orqHkv6Hmga8= ||| @return 标注状态统计信息 ||| @return annotation status statistics
+QHJldHVybiDmoIfms6jnsbvlnovnu5/orqHkv6Hmga8= ||| @return 标注类型统计信息 ||| @return annotation type statistics
+QHJldHVybiDmoIfms6jov5vluqbnu5/orqHkv6Hmga8= ||| @return 标注进度统计信息 ||| @return annotation progress statistics
+QHJldHVybiDmoIfnrb5JROWIl+ihqA== ||| @return 标签ID列表 ||| @return label ID list
+QHJldHVybiDmoIfnrb7kvb/nlKjnu5/orqE= ||| @return 标签使用统计 ||| @return label usage statistics
+QHJldHVybiDmoIfnrb7kv6Hmga/liJfooag= ||| @return 标签信息列表 ||| @return label information list
+QHJldHVybiDmoIfnrb7liJfooag= ||| @return 标签列表 ||| @return label list
+QHJldHVybiDmoIfnrb7moJE= ||| @return 标签树 ||| @return label tree
+QHJldHVybiDmoIfnrb7or6bnu4bkv6Hmga8= ||| @return 标签详细信息 ||| @return label details
+QHJldHVybiDmoJHlvaLnu5PmnoQ= ||| @return 树形结构 ||| @return tree structure
+QHJldHVybiDmoLnnuqfmoIfnrb7liJfooag= ||| @return 根级标签列表 ||| @return root level label list
+QHJldHVybiDmoLzlvI/ljJblkI7nmoTmlofku7blpKflsI8= ||| @return 格式化后的文件大小 ||| @return formatted file size
+QHJldHVybiDmqKHlnovliJfooag= ||| @return 模型列表 ||| @return model list
+QHJldHVybiDmqKHlnovmlbDph48= ||| @return 模型数量 ||| @return model quantity
+QHJldHVybiDmqKHlnovmlofku7bot6/lvoQ= ||| @return 模型文件路径 ||| @return model file path
+QHJldHVybiDmraPlnKjorq3nu4PnmoTku7vliqHliJfooag= ||| @return 正在训练的任务列表 ||| @return list of training tasks
+QHJldHVybiDnpoHnlKjmlbDph48= ||| @return 禁用数量 ||| @return disabled quantity
+QHJldHVybiDnrYnlvoXkuK3nmoTku7vliqHliJfooag= ||| @return 等待中的任务列表 ||| @return list of waiting tasks
+QHJldHVybiDnrpfms5Xku5PlupPliJfooag= ||| @return 算法仓库列表 ||| @return algorithm repository list
+QHJldHVybiDnrpfms5XliJfooag= ||| @return 算法列表 ||| @return algorithm list
+QHJldHVybiDnrpfms5XmlbDph48= ||| @return 算法数量 ||| @return algorithm quantity
+QHJldHVybiDnrpfms5XmqKHlnos= ||| @return 算法模型 ||| @return algorithm model
+QHJldHVybiDnrpfms5XmqKHlnovliJfooag= ||| @return 算法模型列表 ||| @return algorithm model list
+QHJldHVybiDnrpfms5Xorq3nu4Pku7vliqE= ||| @return 算法训练任务 ||| @return algorithm training task
+QHJldHVybiDnrpfms5Xorq3nu4Pku7vliqHpm4blkIg= ||| @return 算法训练任务集合 ||| @return algorithm training task collection
+QHJldHVybiDnsbvlnovnu5/orqHkv6Hmga8= ||| @return 类型统计信息 ||| @return type statistics
+QHJldHVybiDnu5Pmnpw= ||| @return 结果 ||| @return result
+QHJldHVybiDnu5/orqHkv6Hmga8= ||| @return 统计信息 ||| @return statistics
+QHJldHVybiDnu5/orqHnu5Pmnpw= ||| @return 统计结果 ||| @return statistical results
+QHJldHVybiDop4bpopHmtYHkv6Hmga8= ||| @return 视频流信息 ||| @return video stream information
+QHJldHVybiDop6Plr4blkI7nmoTlr4bnoIE= ||| @return 解密后的密码 ||| @return decrypted password
+QHJldHVybiDop6PmnpDlkI7nmoTmlbDmja4= ||| @return 解析后的数据 ||| @return parsed data
+QHJldHVybiDorq3nu4Pku7vliqHliJfooag= ||| @return 训练任务列表 ||| @return training task list
+QHJldHVybiDorq3nu4Pku7vliqHor6bmg4U= ||| @return 训练任务详情 ||| @return training task details
+QHJldHVybiDorr7lpIdJROWIl+ihqA== ||| @return 设备ID列表 ||| @return device ID list
+QHJldHVybiDorr7lpIfkv6Hmga8= ||| @return 设备信息 ||| @return device information
+QHJldHVybiDorr7lpIfkv6Hmga/liIbpobXliJfooag= ||| @return 设备信息分页列表 ||| @return paginated list of device information
+QHJldHVybiDorr7lpIfkv6Hmga/liJfooag= ||| @return 设备信息列表 ||| @return device information list
+QHJldHVybiDorr7lpIfliJfooag= ||| @return 设备列表 ||| @return device list
+QHJldHVybiDorr7lpIfmlbDph48= ||| @return 设备数量 ||| @return device quantity
+QHJldHVybiDorr7lpIfmoIfnrb7lhbPogZTliJfooag= ||| @return 设备标签关联列表 ||| @return device tag relation list
+QHJldHVybiDorr7lpIfnsbvlnovliJfooag= ||| @return 设备类型列表 ||| @return device type list
+QHJldHVybiDor4TkvLDnu5Pmnpw= ||| @return 评估结果 ||| @return evaluation results
+QHJldHVybiDovazmjaLlkI7nmoQgTG9uZyDlgLzvvIzlpoLmnpzovazmjaLlpLHotKXliJnov5Tlm54gbnVsbA== ||| @return 转换后的 Long 值，如果转换失败则返回 null ||| @return converted Long value, or null if conversion fails

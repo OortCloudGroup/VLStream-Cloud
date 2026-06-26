@@ -1,0 +1,400 @@
+5L2/55So5YiG6aG1QVBJ5p+l6K+i6K+l57G75Z6L5LiL55qE5omA5pyJ6K6+5aSH77yI6K6+572u5aSn6aG16Z2i6I635Y+W5YWo6YOo5pWw5o2u77yJ ||| 使用分页API查询该类型下的所有设备（设置大页面获取全部数据） ||| Query all devices under this type using the pagination API (set a large page size to retrieve all data)
+5L2/55So5qyh5pWw ||| 使用次数 ||| Number of usages
+5L2/55So5qyh5pWw57uf6K6h ||| 使用次数统计 ||| Usage frequency statistics
+5L2/55So55u45a+55LiK5LiA57qn55qE6Lev5b6E77yM5L6/5LqO5ZyoIHlvbG8g6aG555uu5LiL5byV55So ||| 使用相对上一级的路径，便于在 yolo 项目下引用 ||| Use the path relative to the parent directory to facilitate referencing under the YOLO project
+5L6L5aaC77ya6LCD55SoRG9ja2VyIEFQSeOAgUt1YmVybmV0ZXMgQVBJ562J ||| 例如：调用Docker API、Kubernetes API等 ||| Example: Call Docker API, Kubernetes API, etc.
+5L6bIEBTY2hlZHVsZWQg6LCD55So55qE5Yi35paw5YWl5Y+j77ya5aSW6YOo5o6n5Yi25qih5byP5ZCv55So5pe26Lez6L+H44CC ||| 供 @Scheduled 调用的刷新入口：外部控制模式启用时跳过。 ||| Refresh entry point for @Scheduled calls: skipped when external control mode is enabled.
+5L+d5a2Y5LqL5Lu2562W55Wl ||| 保存事件策略 ||| Save event strategy
+5L+d5a2Y5Yiw5pWw5o2u5bqT ||| 保存到数据库 ||| Save to database
+5L+d5a2Y5Zu+54mH5L+h5oGv5YiwYW5ub3RhdGlvbl9pbWFnZeihqA== ||| 保存图片信息到annotation_image表 ||| Save image information to the annotation_image table
+5L+d5a2Y5aSx6LSl ||| 保存失败 ||| Save failed
+5L+d5a2Y5oiQ5Yqf77yM5L2GTVFUVOa2iOaBr+WPkemAgeWksei0pQ== ||| 保存成功，但MQTT消息发送失败 ||| Saved successfully, but MQTT message sending failed
+5L+d5a2Y5oiW5pu05paw5LqL5Lu2562W55WlKOWQq+inpuWPkeWKqOS9nOOAgeWRiuitpumikeeOh+OAgeWRiuitpue6p+WIq+OAgeWRiuitpuaWueW8j+OAgeaOpeaUtuS6uuOAgeWRqOacn+mFjee9rik= ||| 保存或更新事件策略(含触发动作、告警频率、告警级别、告警方式、接收人、周期配置) ||| Save or update event strategy (including trigger action, alarm frequency, alarm level, alarm method, receiver, and cycle configuration)
+5L+d5a2Y5oiW5pu05paw5pe26Ze0562W55Wl ||| 保存或更新时间策略 ||| Save or update time strategy
+5L+d5a2Y5pON5L2c5pel5b+X ||| 保存操作日志 ||| Save operation log
+5L+d5a2Y5pe26Ze0562W55Wl ||| 保存时间策略 ||| Save time strategy
+5L+d5a2Y5qCH5rOo5Zu+54mH5aSx6LSlOiA= ||| 保存标注图片失败:  ||| Failed to save annotated image: 
+5L+d5a2Y5qCH5rOo5a6e5L6L ||| 保存标注实例 ||| Save annotation instance
+5L+d5a2Y5qCH5rOo5a6e5L6LOiBhbm5vdGF0aW9uSWQ9e30sIGxhYmVsSWQ9e30sIGltYWdlSWQ9e30= ||| 保存标注实例: annotationId={}, labelId={}, imageId={} ||| Save annotation instance: annotationId={}, labelId={}, imageId={}
+5L+d5a2Y5qCH5rOo5a6e5L6L5aSx6LSl ||| 保存标注实例失败 ||| Failed to save annotation instance
+5L+d5a2Y5qCH5rOo5a6e5L6L5aSx6LSlOiA= ||| 保存标注实例失败:  ||| Failed to save annotation instance: 
+5L+d5a2Y5qCH5rOo5pWw5o2u5Yiw5pWw5o2u6ZuG ||| 保存标注数据到数据集 ||| Save annotation data to dataset
+5L+d5a2Y5qCH5rOo5pWw5o2u5Yiw5pWw5o2u6ZuG5aSx6LSl77yaYW5ub3RhdGlvbklkPXt9LCBlcnJvcj17fQ== ||| 保存标注数据到数据集失败：annotationId={}, error={} ||| Failed to save annotation data to dataset: annotationId={}, error={}
+5L+d5a2Y5qCH5rOo5pWw5o2u5Yiw5pWw5o2u6ZuG5paH5Lu2 ||| 保存标注数据到数据集文件 ||| Save annotation data to dataset file
+5L+d5a2Y5qCH5rOo5pWw5o2u5Yiw5pWw5o2u6ZuG77yaSUQ9e30= ||| 保存标注数据到数据集：ID={} ||| Save annotation data to dataset: ID={}
+5L+d5a2Y6K6+5aSH ||| 保存设备 ||| Save device
+5L+d5a2Y6YCa55So5pel5b+X ||| 保存通用日志 ||| Save general log
+5L+d5a2Y6ZSZ6K+v5pel5b+X ||| 保存错误日志 ||| Save error log
+5L+d5a2Y6ZSZ6K+v5pel5b+X5aSx6LSl ||| 保存错误日志失败 ||| Failed to save error log
+5L+d55WZ5aSp5pWwKDDooajnpLrmsLjkuYXkv53nlZkp ||| 保留天数(0表示永久保留) ||| Retention days (0 means permanent retention)
+5L+u5pS5 ||| 修改 ||| Modify
+5L+u5pS5IOWyl+S9jeihqA== ||| 修改 岗位表 ||| Modify post table
+5L+u5pS5IOaVsOaNrua6kOmFjee9ruihqA== ||| 修改 数据源配置表 ||| Modify datasource config table
+5L+u5pS5IOihjOaUv+WMuuWIkuihqA== ||| 修改 行政区划表 ||| Modify administrative division table
+5L+u5pS5IOmhtumDqOiPnOWNleihqA== ||| 修改 顶部菜单表 ||| Modify top menu table
+5L+u5pS55Lq6 ||| 修改人 ||| Modified by
+5L+u5pS55Z+65pys5L+h5oGv ||| 修改基本信息 ||| Modify basic information
+5L+u5pS55a+G56CB ||| 修改密码 ||| Modify password
+5L+u5pS55pe26Ze0 ||| 修改时间 ||| Modification time
+5L+u5pS555So5oi35Z+65pys5L+h5oGv ||| 修改用户基本信息 ||| Modify user basic info
+5L+u5pS5566X5rOV6K6t57uD5Lu75Yqh ||| 修改算法训练任务 ||| Modify algorithm training task
+5L+u5pS56K6t57uD5Lu75Yqh ||| 修改训练任务 ||| Modify training task
+5L+u5pS56L+c56iL5pyN5Yqh5Zmo6YWN572u ||| 修改远程服务器配置 ||| Modify remote server configuration
+5YGc5q2i ||| 停止 ||| Stop
+5YGc5q2iUlRTUOW9leWItuJpZGVudGlmaWVy ||| 停止RTSP录制: timeStrategyId={}, reason={} ||| Stop RTSP recording: timeStrategyId={}, reason={}
+5YGc5q2i5Lq66IS45qOA5rWLOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30sIHJlYXNvbj17fQ== ||| 停止人脸检测: deviceId={}, deviceName={}, algorithmId={}, reason={} ||| Stop face detection: deviceId={}, deviceName={}, algorithmId={}, reason={}
+5YGc5q2i5Lq66IS45qOA5rWL5Zmo5aSx6LSl ||| 停止人脸检测器失败 ||| Failed to stop face detector
+5YGc5q2i5Lya6K+d77ya5LqL5Lu2562W55Wl56aB55So5b2V5Yi2LCBzdHJhdGVneUlkPXt9LCBzdHJhdGVneURldmljZUlkPXt9LCBkZXZpY2VCdXNpbmVzc0lkPXt9LCB0cmlnZ2VyQWN0aW9uPXt9 ||| 停止会话：事件策略禁用录制, strategyId={}, strategyDeviceId={}, deviceBusinessId={}, triggerAction={} ||| Stop session: recording disabled by event strategy, strategyId={}, strategyDeviceId={}, deviceBusinessId={}, triggerAction={}
+5YGc5q2i5Lya6K+d77ya5pyq5om+5Yiw6K6+5aSH5L+h5oGvLCBzdHJhdGVneUlkPXt9LCBzdHJhdGVneURldmljZUlkPXt9 ||| 停止会话：未找到设备信息, strategyId={}, strategyDeviceId={} ||| Stop session: device information not found, strategyId={}, strategyDeviceId={}
+5YGc5q2i5Lya6K+d77ya6K6+5aSHUlRTUOWcsOWdgOaXoOaViCwgc3RyYXRlZ3lJZD17fSwgZGV2aWNlSWQ9e30sIHN0cmVhbVVybD17fQ== ||| 停止会话：设备RTSP地址无效, strategyId={}, deviceId={}, streamUrl={} ||| Stop session: invalid device RTSP address, strategyId={}, deviceId={}, streamUrl={}
+5YGc5q2i5Y6f5Zug ||| 停止原因 ||| Stop reason
+5YGc5q2i5Zu+5YOP5YiG57G7OiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30sIHJlYXNvbj17fQ== ||| 停止图像分类: deviceId={}, deviceName={}, algorithmId={}, reason={} ||| Stop image classification: deviceId={}, deviceName={}, algorithmId={}, reason={}
+5YGc5q2i5Zu+5YOP5YiG57G75Zmo5aSx6LSl ||| 停止图像分类器失败 ||| Failed to stop image classifier
+5YGc5q2i5ae/5oCB5Lyw6K6hOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30sIHJlYXNvbj17fQ== ||| 停止姿态估计: deviceId={}, deviceName={}, algorithmId={}, reason={} ||| Stop pose estimation: deviceId={}, deviceName={}, algorithmId={}, reason={}
+5YGc5q2i5ae/5oCB5Lyw6K6h5Zmo5aSx6LSl ||| 停止姿态估计器失败 ||| Failed to stop pose estimator
+5YGc5q2i5a6e5L6L5YiG5YmyOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30sIHJlYXNvbj17fQ== ||| 停止实例分割: deviceId={}, deviceName={}, algorithmId={}, reason={} ||| Stop instance segmentation: deviceId={}, deviceName={}, algorithmId={}, reason={}
+5YGc5q2i5a6e5L6L5YiG5Ymy5Zmo5aSx6LSl ||| 停止实例分割器失败 ||| Failed to stop instance segmenter
+5YGc5q2i5a655Zmo5a6e5L6L ||| 停止容器实例 ||| Stop container instance
+5YGc5q2i5a655Zmo5a6e5L6L77yMSUQ6IHt9 ||| 停止容器实例，ID: {} ||| Stop container instance, ID: {}
+5YGc5q2i5oyH5a6a55qE6K6t57uD5Lu75Yqh ||| 停止指定的训练任务 ||| Stop specified training task
+5YGc5q2i5peL6L2s5qGG5qOA5rWLOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30sIHJlYXNvbj17fQ== ||| 停止旋转框检测: deviceId={}, deviceName={}, algorithmId={}, reason={} ||| Stop oriented bounding box detection: deviceId={}, deviceName={}, algorithmId={}, reason={}
+5YGc5q2i5peL6L2s5qGG5qOA5rWL5Zmo5aSx6LSl ||| 停止旋转框检测器失败 ||| Failed to stop oriented bounding box detector
+5YGc5q2i5pe26Ze0 ||| 停止时间 ||| Stop time
+5YGc5q2i5qOA5rWL5Zmo5aSx6LSl ||| 停止检测器失败 ||| Failed to stop detector
+5YGc5q2i55uu5qCH5qOA5rWLOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30sIHJlYXNvbj17fQ== ||| 停止目标检测: deviceId={}, deviceName={}, algorithmId={}, reason={} ||| Stop object detection: deviceId={}, deviceName={}, algorithmId={}, reason={}
+5YGc5q2i55uu5qCH5qOA5rWL5Zmo5aSx6LSl ||| 停止目标检测器失败 ||| Failed to stop object detector
+5YGc5q2i6K6t57uD5Lu75Yqh ||| 停止训练任务 ||| Stop training task
+5YGc5q2i6K6t57uD5Lu75YqhOi BJRD17fSwgcmVhc29uPXt9 ||| 停止训练任务: ID={} ||| Stop training task: ID={}
+5YGc5q2i6K6t57uD5Lu75Yqhe306IHt9 ||| 停止训练任务{}: {} ||| Stop training task {}: {}
+5YGc5q2i6K6+5aSH5Lq66IS45qOA5rWL5aSx6LSlOiBkZXZpY2VJZD17fSwgcmVhc29uPXt9 ||| 停止设备人脸检测失败: deviceId={}, reason={} ||| Failed to stop device face detection: deviceId={}, reason={}
+5YGc5q2i6K6+5aSH5Zu+5YOP5YiG57G75aSx6LSlOiBkZXZpY2VJZD17fSwgcmVhc29uPXt9 ||| 停止设备图像分类失败: deviceId={}, reason={} ||| Failed to stop device image classification: deviceId={}, reason={}
+5YGc5q2i6K6+5aSH5ae/5oCB5Lyw6K6h5aSx6LSlOiBkZXZpY2VJZD17fSwgcmVhc29uPXt9 ||| 停止设备姿态估计失败: deviceId={}, reason={} ||| Failed to stop device pose estimation: deviceId={}, reason={}
+5YGc5q2i6K6+5aSH5a6e5L6L5YiG5Ymy5aSx6LSlOiBkZXZpY2VJZD17fSwgcmVhc29uPXt9 ||| 停止设备实例分割失败: deviceId={}, reason={} ||| Failed to stop device instance segmentation: deviceId={}, reason={}
+5YGc5q2i6K6+5aSH5peL6L2s5qGG5qOA5rWL5aSx6LSlOiBkZXZpY2VJZD17fSwgcmVhc29uPXt9 ||| 停止设备旋转框检测失败: deviceId={}, reason={} ||| Failed to stop device oriented bounding box detection: deviceId={}, reason={}
+5YGc5q2i6K6+5aSH5qOA5rWLOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgcmVhc29uPXt9 ||| 停止设备检测: deviceId={}, deviceName={}, reason={} ||| Stop device detection: deviceId={}, deviceName={}, reason={}
+5YGc5q2i6K6+5aSH5qOA5aSx6LSlOiBkZXZpY2VJZD17fSwgcmVhc29uPXt9 ||| 停止设备检测失败: deviceId={}, reason={} ||| Failed to stop device detection: deviceId={}, reason={}
+5YGc5q2i6K6+5aSH55uu5qCH5qOA5rWL5aSx6LSlOiBkZXZpY2VJZD17fSwgcmVhc29uPXt9 ||| 停止设备目标检测失败: deviceId={}, reason={} ||| Failed to stop device object detection: deviceId={}, reason={}
+5YGc5q2i6K6+5aSH6K+t5LmJ5YiG5Ymy5aSx6LSlOiBkZXZpY2VJZD17fSwgcmVhc29uPXt9 ||| 停止设备语义分割失败: deviceId={}, reason={} ||| Failed to stop device semantic segmentation: deviceId={}, reason={}
+5YGc5q2i6K+t5LmJ5YiG5YmyOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30sIHJlYXNvbj17fQ== ||| 停止语义分割: deviceId={}, deviceName={}, algorithmId={}, reason={} ||| Stop semantic segmentation: deviceId={}, deviceName={}, algorithmId={}, reason={}
+5YGl5bq354q25oCB5o+P6L+w ||| 健康状态描述 ||| Health status description
+5YGl5bq354q25oCB77yaaGVhbHRoeS3lgaXlurcsdW5oZWFsdGh5LeS4jeWBpeW6tyx1bmtub3duLeacquefpQ== ||| 健康状态：healthy-健康,unhealthy-不健康,unknown-未知 ||| Health status: healthy-healthy, unhealthy-unhealthy, unknown-unknown
+5YWB6K645qC45b+D57q/56iL6LaF5pe2 ||| 允许核心线程超时 ||| Allow core thread timeout
+5YWI5Yig6Zmk6K6+5aSH55qE5omA5pyJ5qCH562+ ||| 先删除设备的所有标签 ||| Delete all tags of the device first
+5YWI5Yig6Zmk6K+l5Zu+54mH55qE5omA5pyJ546w5pyJ5qCH5rOo ||| 先删除该图片的所有现有标注 ||| Delete all existing annotations of the image first
+5YWI5bCd6K+V5Yib5bu66KGo77yI5aaC5p6c5LiN5a2Y5Zyo77yJ ||| 先尝试创建表（如果不存在） ||| Try to create the table first (if it does not exist)
+5YWI6I635Y+W5omA5pyJ6KaB5Yig6Zmk55qE5qCH5rOo5L+h5oGv ||| 先获取所有要删除的标注信息 ||| Retrieve all annotation information to be deleted first
+5YWc5bqV77ya5oyJIGFubm90YXRpb25JZCArIGltYWdlTmFtZSDph43mlrDmn6Xor6I= ||| 兜底：按 annotationId + imageName 重新查询 ||| Fallback: Query again by annotationId + imageName
+5YWs5YWx5qCH562+ ||| 公共标签 ||| Public tag
+5YWs5Y+45ZCN ||| 公司名 ||| Company name
+5YWs5ZGK5qCH6aKY ||| 公告标题 ||| Announcement title
+5YWs5ZGK57G75Z6L ||| 公告类型 ||| Announcement type
+5YWt5pyI6L+t5Luj ||| 六月迭代 ||| June iteration
+5YWz6IGU55qE5qCH5rOo6aG555uuSUQ= ||| 关联的标注项目ID ||| Associated annotation project ID
+5YWz6IGU6K6+5aSH5pWw6YeP ||| 关联设备数量 ||| Number of associated devices
+5YWz6ZSu5a2X5pCc57SiIC0g5pSv5oyB5qCH562+5ZCN56ew5ZKM5o+P6L+w ||| 关键字搜索 - 支持标签名称 and 描述 ||| Keyword search - Supports tag name and description
+5YWz6ZSu54K55qOA5rWL566X5rOV ||| 关键点检测算法 ||| Keypoint detection algorithm
+5YWz6Zet ||| 关闭 ||| Close
+5YWz6ZetTVAzLjDoh6rluKbnmoRiYW5uZXI= ||| 关闭MP3.0自带的banner ||| Close MP3.0 built-in banner
+5YWz6ZetTVFUVOWuouaIt+err+Wksei0pQ== ||| 关闭MQTT客户端失败 ||| Failed to close MQTT client
+5YWz6ZetTVFUVOi/nuaOpeWksei0pQ== ||| 关闭MQTT连接失败 ||| Failed to close MQTT connection
+5YWz6Zet5Lq66IS45qOA5rWL5Zmo5aSx6LSl ||| 关闭人脸检测器失败 ||| Failed to close face detector
+5YWz6Zet5Zu+5YOP5YiG57G75Zmo5aSx6LSl ||| 关闭图像分类器失败 ||| Failed to close image classifier
+5YWz6Zet5ae/5oCB5Lyw6K6h5Zmo5aSx6LSl ||| 关闭姿态估计器失败 ||| Failed to close pose estimator
+5YWz6Zet5a6e5L6L5YiG5Ymy5Zmo5aSx6LSl ||| 关闭实例分割器失败 ||| Failed to close instance segmenter
+5YWz6Zet5peL6L2s5qGG5qOA5rWL5Zmo5aSx6LSl ||| 关闭旋转框检测器失败 ||| Failed to close oriented bounding box detector
+5YWz6Zet5qOA5rWL5Zmo5aSx6LSl ||| 关闭检测器失败 ||| Failed to stop detector
+5YWz6Zet55uu5qCH5qOA5rWL5Zmo5aSx6LSl ||| 关闭目标检测器失败 ||| Failed to stop object detector
+5YWz6Zet6LWE5rqQ5aSx6LSl ||| 关闭资源失败 ||| Failed to close resources
+5YWz6Zet6L+e5o6l ||| 关闭连接 ||| Close connection
+5YW25Lit5pyJ56m65YiZ5Yy56YWN5aSx6LSl ||| 其中有空则匹配失败 ||| Match fails if any of them is empty
+5YaF5a2YKEdCKQ== ||| 内存(GB) ||| Memory (GB)
+5YaF5a2Y5L2/55So546H ||| 内存使用率 ||| Memory usage rate
+5YaF5a2Y5L2/55So6YeP77yITULvvIk= ||| 内存使用量（MB） ||| Memory usage (MB)
+5YaF5a2Y6ZmQ5Yi2 ||| 内存限制 ||| Memory limit
+5YaF5a65 ||| 内容 ||| Content
+5YaZ5YWl5ZON5bqU ||| 写入响应 ||| Write response
+5YaZ5YWl6ZSZ6K+v5ZON5bqU5aSx6LSlOiB7fQ== ||| 写入错误响应失败: {} ||| Failed to write error response: {}
+5YaZ5YWl6ZSZ6K+v5ZON5bqU5aSx6LSl77ya ||| 写入错误响应失败： ||| Failed to write error response: 
+5YeG56Gu546H ||| 准确率 ||| Accuracy
+5YeP5bCR5qCH562+55qE5L2/55So6K6h5pWw ||| 减少标签的使用计数 ||| Decrease usage count of the tag
+5YeP5bCR6YOo5YiGZGVidWfml6Xlv5c= ||| 减少部分debug日志 ||| Reduce some debug logs
+5YiG5p6Q5Lit ||| 分析中 ||| Analyzing
+5YiG5p6Q5Yy65Z+f ||| 分析区域 ||| Analysis area
+5YiG5p6Q5Yy65Z+fSUTpm4blkIgo6YCX5Y+35YiG6ZqUKQ== ||| 分析区域ID集合(逗号分隔) ||| Collection of analysis area IDs (comma-separated)
+5YiG5p6Q5Yy65Z+f5LiN6IO95Li656m6 ||| 分析区域不能为空 ||| Analysis area cannot be empty
+5YiG5p6Q5Yy65Z+f77yM6YCX5Y+35YiG6ZqU ||| 分析区域，逗号分隔 ||| Analysis area, comma-separated
+5YiG5p6Q5ZCN56ew ||| 分析名称 ||| Analysis name
+5YiG5p6Q5Zu+54mH ||| 分析图片 ||| Analyze image
+5YiG5p6Q5o+P6L+w ||| 分析描述 ||| Analysis description
+5YiG5p6Q5pe26Ze0 ||| 分析时间 ||| Analysis time
+5YiG5p6Q57G75Z6L ||| 分析类型 ||| Analysis type
+5YiG5p6Q57uT5p6c5pWw5o2u ||| 分析结果数据 ||| Analysis result data
+5YiG54mH56eS5pWw ||| 分片秒数 ||| Segment seconds
+5YiG57G75ZCN56ew ||| 分类名称 ||| Classification name
+5YiG6aG1 ||| 分页 ||| Pagination
+5YiG6aG1IOWyl+S9jeihqA== ||| 分页 岗位表 ||| Paginate post table
+5YiG6aG1IOaVsOaNrua6kOmFjee9ruihqA== ||| 分页 数据源配置表 ||| Paginate datasource config table
+5YiG6aG1IOihjOaUv+WMuuWIkuihqA== ||| 分页 行政区划表 ||| Paginate administrative division table
+5YiG6aG1IOmhtumDqOiPnOWNleihqA== ||| 分页 顶部菜单表 ||| Paginate top menu table
+5YiG6aG15p+l6K+i5qCH562+566h55CG ||| 分页查询标签管理 ||| Paginated query for tag management
+5YiG6aG15p+l6K+i566X5rOV5LuT5bqT5YiX6KGo ||| 分页查询算法仓库列表 ||| Paginated query for algorithm repository list
+5YiG6aG15p+l6K+i566X5rOV5LuT5bqT5YiX6KGo77yM5Y+C5pWw77yabmFtZT17fSwgcmVwb3NpdG9yeVR5cGU9e30sIHN0YXR1cz17fQ== ||| 分页查询算法仓库列表，参数：name={}, repositoryType={}, status={} ||| Paginated query for algorithm repository list, parameters: name={}, repositoryType={}, status={}
+5YiG6aG15p+l6K+i566X5rOV5YiX6KGo ||| 分页查询算法列表 ||| Paginated query for algorithm list
+5YiG6aG15p+l6K+i566X5rOV5YiX6KGo77yM5Y+C5pWw77yacmVwb3NpdG9yeUlkPXt9LCBuYW1lPXt9LCBjYXRlZ29yeT17fSwgZGVwbG95U3RhdHVzPXt9 ||| 分页查询算法列表，参数：repositoryId={}, name={}, category={}, deployStatus={} ||| Paginated query for algorithm list, parameters: repositoryId={}, name={}, category={}, deployStatus={}
+5YiG6aG15p+l6K+i566X5rOV5qCH5rOo5YiX6KGo ||| 分页查询算法标注列表 ||| Paginated query for algorithm annotation list
+5YiG6aG15p+l6K+i566X5rOV5qCH5rOo5YiX6KGo77yM5Y+C5pWw77yaYW5ub3RhdGlvbk5hbWU9e30sIGFubm90YXRpb25UeXBlPXt9LCBhbm5vdGF0aW9uU3RhdHVzPXt9 ||| 分页查询算法标注列表，参数：annotationName={}, annotationType={}, annotationStatus={} ||| Paginated query for algorithm annotation list, parameters: annotationName={}, annotationType={}, annotationStatus={}
+5YiG6aG15p+l6K+i566X5rOV5qih5Z6L5YiX6KGo ||| 分页查询算法模型列表 ||| Paginated query for algorithm model list
+5YiG6aG15p+l6K+i6K6t57uD5Lu75Yqh77yI5YyF5ZCr5YWz6IGU5L+h5oGv77yJ ||| 分页查询训练任务（包含关联信息） ||| Paginated query for training tasks (including association information)
+5YiG6aG15p+l6K+i6K6+5aSH5L+h5oGv ||| 分页查询设备信息 ||| Paginated query for device information
+5YiH5o2i5Yiw5oyH5a6a6Lev5b6E ||| 切换到指定路径 ||| Switch to specified path
+5YiH5o2i5qCH562+54q25oCB5aSx6LSl ||| 切换标签状态失败 ||| Failed to switch tag status
+5YiH5o2i5qCH562+54q25oCB5aSx6LSlOiA= ||| 切换标签状态失败:  ||| Failed to switch tag status: 
+5YiH5o2i5qCH562+54q25oCB5aSx6LSl77yMSUQ6IHt9 ||| 切换标签状态失败，ID: {} ||| Failed to switch tag status, ID: {}
+5YiX6KGo ||| 列表 ||| List
+5Yib5bu6SlNjaOWunuS+iw== ||| 创建JSch实例 ||| Create JSch instance
+5Yib5bu6U0ZUUOmAmumBkw== ||| 创建SFTP通道 ||| Create SFTP channel
+5Yib5bu6U1NI5Lya6K+d ||| 创建SSH会话 ||| Create SSH session
+5Yib5bu6WU9MT+agh+WHhuebruW9lee7k+aehA== ||| 创建YOLO标准目录结构 ||| Create YOLO standard directory structure
+5Yib5bu6cmVmcmVzaFRva2Vu ||| 创建refreshToken ||| Create refreshToken
+5Yib5bu65Li75pWw5o2u6ZuG55uu5b2V ||| 创建主数据集目录 ||| Create main dataset directory
+5Yib5bu65Lq6 ||| 创建人 ||| Created by
+5Yib5bu65Lq65aeT5ZCN ||| 创建人姓名 ||| Creator name
+5Yib5bu65Luk54mM ||| 创建令牌 ||| Create token
+5Yib5bu65Lya6K+d ||| 创建会话 ||| Create session
+5Yib5bu65aSx6LSl ||| 创建失败 ||| Creation failed
+5Yib5bu65a2Y5YKo5qG2 ||| 创建存储桶 ||| Create bucket
+5Yib5bu65a6M5pW055qEWU9MT+aVsOaNrumbhuebruW9lee7k+aehA== ||| 创建完整的YOLO数据集目录结构 ||| Create complete YOLO dataset directory structure
+5Yib5bu65bm26L+U5ZueR3JvdXBlZE9wZW5BcGnlr7nosaE= ||| 创建并返回GroupedOpenApi对象 ||| Create and return GroupedOpenApi object
+5Yib5bu65oiQ5Yqf ||| 创建成功 ||| Created successfully
+5Yib5bu65omn6KGM6YCa6YGT ||| 创建执行通道 ||| Create execution channel
+5Yib5bu65o6l5Y+j5p2D6ZmQ6KGo ||| 创建接口权限表 ||| Create interface permission table
+5Yib5bu65pWw5o2u6ZuG55uu5b2V57uT5p6E ||| 创建数据集目录结构 ||| Create dataset directory structure
+5Yib5bu65paw5qCH562+ ||| 创建新标签 ||| Create new tag
+5Yib5bu65pe26Ze0 ||| 创建时间 ||| Creation time
+5Yib5bu65qCH562+ ||| 创建标签 ||| Create tag
+5Yib5bu65qCH562+OiBhbm5vdGF0aW9uSWQ9e30sIG5hbWU9e30sIGNvbG9yPXt9 ||| 创建标签: annotationId={}, name={}, color={} ||| Create tag: annotationId={}, name={}, color={}
+5Yib5bu65qCH562+5aSx6LSl ||| 创建标签失败 ||| Failed to create tag
+5Yib5bu65qCH562+5aSx6LSlOiA= ||| 创建标签失败:  ||| Failed to create tag: 
+5Yib5bu65qih5Z6L5aSx6LSl ||| 创建模型失败 ||| Failed to create model
+5Yib5bu65qih5Z6L5aSx6LSl77yae30= ||| 创建模型失败：{} ||| Failed to create model: {}
+5Yib5bu65qih5Z6L5a6e5L2T ||| 创建模型实体 ||| Create model entity
+5Yib5bu65qih5Z6L5oiQ5Yqf77yMSUTvvJp7fQ== ||| 创建模型成功，ID：{} ||| Created model successfully, ID: {}
+5Yib5bu655uu5b2V5aSx6LSl77yM5Y+v6IO95bey5a2Y5Zyo77yae30= ||| 创建目录失败，可能已存在：{} ||| Failed to create directory, it may already exist: {}
+5Yib5bu6566X5rOV ||| 创建算法 ||| Create algorithm
+5Yib5bu6566X5rOV5LuT5bqT ||| 创建算法仓库 ||| Create algorithm repository
+5Yib5bu6566X5rOV5LuT5bqT77yae30= ||| 创建算法仓库：{} ||| Create algorithm repository: {}
+5Yib5bu6566X5rOV5qCH5rOo ||| 创建算法标注 ||| Create algorithm annotation
+5Yib5bu6566X5rOV5qCH5rOo77yae30= ||| 创建算法标注：{} ||| Create algorithm annotation: {}
+5Yib5bu6566X5rOV5qih5Z6L ||| 创建算法模型 ||| Create algorithm model
+5Yib5bu6566X5rOV5qih5Z6L5aSx6LSl ||| 创建算法模型失败 ||| Failed to create algorithm model
+5Yib5bu6566X5rOV5qih5Z6L5aSx6LSl77ya ||| 创建算法模型失败： ||| Failed to create algorithm model: 
+5Yib5bu6566X5rOV5qih5Z6L77yae30= ||| 创建算法模型：{} ||| Create algorithm model: {}
+5Yib5bu6566X5rOV77yae30= ||| 创建算法：{} ||| Create algorithm: {}
+5Yib5bu66ICF ||| 创建者 ||| Creator
+5Yib5bu66KGo77yI5aaC5p6c5LiN5a2Y5Zyo77yJ ||| 创建表（如果不存在） ||| Create table (if not exists)
+5Yib5bu66K6k6K+BdG9rZW4= ||| 创建认证token ||| Create authentication token
+5Yib5bu66K6t57uD5Lu75Yqh ||| 创建训练任务 ||| Create training task
+5Yib5bu66K6t57uD5Lu75Yqh77yae30= ||| 创建训练任务：{} ||| Create training task: {}
+5Yib5bu66L+c56iL5pyN5Yqh5Zmo6YWN572u6KGo5aSx6LSlOiB7fQ== ||| 创建远程服务器配置表失败: {} ||| Failed to create remote server configuration table: {}
+5Yib5bu66L+c56iL55uu5b2V ||| 创建远程目录 ||| Create remote directory
+5Yib5bu66L+c56iL55uu5b2V77yae30= ||| 创建远程目录：{} ||| Create remote directory: {}
+5Yib5bu66YOo6Zeo ||| 创建部门 ||| Create department
+5Yid5aeL5YyW5a+G56CB ||| 初始化密码 ||| Initialize password
+5Yid5aeL5YyW6buY6K6k5pyN5Yqh5Zmo6YWN572u5aSx6LSl77yM6Lez6L+H5q2k5q2l6aqkOiB7fQ== ||| 初始化默认服务器配置失败，跳过此步骤: {} ||| Failed to initialize default server configuration, skipping this step: {}
+5Yid5aeL5YyW6buY6K6k5pyN5Yqh5Zmo6YWN572u5oiQ5Yqf ||| 初始化默认服务器配置成功 ||| Default server configuration initialized successfully
+5Yig6Zmk ||| 删除 ||| Delete
+5Yig6ZmkIOWyl+S9jeihqA== ||| 删除 岗位表 ||| Delete post table
+5Yig6ZmkIOaVsOaNrua6kOmFjee9ruihqA== ||| 删除 数据源配置表 ||| Delete datasource config table
+5Yig6ZmkIOihjOaUv+WMuuWIkuihqA== ||| 删除 行政区划表 ||| Delete administrative division table
+5Yig6ZmkIOmhtumDqOiPnOWNleihqA== ||| 删除 顶部菜单表 ||| Delete top menu table
+5Yig6Zmk5Li05pe25paH5Lu2 ||| 删除临时文件 ||| Delete temporary files
+5Yig6Zmk5Li05pe25qih5Z6L5paH5Lu25aSx6LSlOiB7fQ== ||| 删除临时模型文件失败: {} ||| Failed to delete temporary model file: {}
+5Yig6Zmk5Li05pe25qih5Z6L55uu5b2V5aSx6LSlOiB7fQ== ||| 删除临时模型目录失败: {} ||| Failed to delete temporary model directory: {}
+5Yig6Zmk5LqGIHt9IOS4quagh+azqOWunuS+iw== ||| 删除了 {} 个标注实例 ||| Deleted {} annotation instances
+5Yig6Zmk5LqL5Lu2562W55Wl ||| 删除事件策略 ||| Delete event strategy
+5Yig6Zmk5Zu+54mH ||| 删除图片 ||| Delete image
+5Yig6Zmk5Zu+54mH5Y+K5YW255u45YWz55qE5omA5pyJ5pWw5o2u ||| 删除图片及其相关的所有数据 ||| Delete image and all related data
+5Yig6Zmk5Zu+54mH5Y+K55u45YWz5pWw5o2u5aSx6LSl77ya ||| 删除图片及相关数据失败： ||| Failed to delete image and related data: 
+5Yig6Zmk5Zu+54mH5Y+K55u45YWz5pWw5o2u5aSx6LSl77yaaW1hZ2VJZD17fQ== ||| 删除图片及相关数据失败：imageId={} ||| Failed to delete image and related data: imageId={}
+5Yig6Zmk5Zu+54mH5aSx6LSlOiA= ||| 删除图片失败:  ||| Failed to delete image: 
+5Yig6Zmk5Zu+54mH5paH5Lu2 ||| 删除图片文件 ||| Delete image file
+5Yig6Zmk5Zu+54mH5paH5Lu25aSx6LSl77yae30= ||| 删除图片文件失败：{} ||| Failed to delete image file: {}
+5Yig6Zmk5Zu+54mH5paH5Lu277yae30= ||| 删除图片文件：{} ||| Delete image file: {}
+5Yig6Zmk5Zu+54mH6K6w5b2V ||| 删除图片记录 ||| Delete image record
+5Yig6Zmk5Zu+54mH6K6w5b2VOi BJRD17fSwgaW1hZ2VJZD17fQ== ||| 删除图片记录: ID={}, imageId={} ||| Delete image record: ID={}, imageId={}
+5Yig6Zmk5Zu+54mH6K6w5b2V5aSx6LSlOiBpbWFnZUlkPXt9 ||| 删除图片记录失败: imageId={} ||| Failed to delete image record: imageId={}
+5Yig6Zmk5aSx6LSl ||| 删除失败 ||| Delete failed
+5Yig6Zmk5a655Zmo5a6e5L6L ||| 删除容器实例 ||| Delete container instance
+5Yig6Zmk5a655Zmo5a6e5L6L77yMSUQ6IHt9 ||| 删除容器实例，ID: {} ||| Delete container instance, ID: {}
+5Yig6Zmk5oiQ5Yqf ||| 删除成功 ||| Deleted successfully
+5Yig6Zmk5paH5Lu2 ||| 删除文件 ||| Delete file
+5Yig6Zmk5pe26Ze0562W55Wl ||| 删除时间策略 ||| Delete time strategy
+5Yig6Zmk5pys5Zyw57yp55Wl5Zu+5aSx6LSlOiB0aHVtYm5haWxQYXRoPXt9 ||| 删除本地缩略图失败: thumbnailPath={} ||| Failed to delete local thumbnail: thumbnailPath={}
+5Yig6Zmk5qCH5rOo5Zu+54mH5paH5Lu25aSx6LSl77yaSUQ9e30sIEVycm9yPXt9 ||| 删除标注图片文件失败：ID={}, Error={} ||| Failed to delete annotated image file: ID={}, Error={}
+5Yig6Zmk5qCH5rOo5a6e5L6L ||| 删除标注实例 ||| Delete annotation instance
+5Yig6Zmk5qCH5rOo5a6e5L6LOiBpbnN0YW5jZUlkPXt9 ||| 删除标注实例: instanceId={} ||| Delete annotation instance: instanceId={}
+5Yig6Zmk5qCH5rOo5a6e5L6L5aSx6LSlOiA= ||| 删除标注实例失败:  ||| Failed to delete annotation instance: 
+5Yig6Zmk5qCH5rOo5a6e5L6L5aSx6LSlOiBpbnN0YW5jZUlkPXt9 ||| 删除标注实例失败: instanceId={} ||| Failed to delete annotation instance: instanceId={}
+5Yig6Zmk5qCH5rOo5a6e5L6L57uT5p6cOiBpbnN0YW5jZUlkPXt9LCBzdWNjZXNzPXt9 ||| 删除标注实例结果: instanceId={}, success={} ||| Delete annotation instance result: instanceId={}, success={}
+5Yig6Zmk5qCH5rOo55u45YWz55qE5Zu+54mH5paH5Lu2 ||| 删除标注相关的图片文件 ||| Delete image files related to annotations
+5Yig6Zmk5qCH562+ ||| 删除标签 ||| Delete tag
+5Yig6Zmk5qCH562+OiBsYWJlbElkPXt9 ||| 删除标签: labelId={} ||| Delete tag: labelId={}
+5Yig6Zmk5qCH562+5aSx6LSl ||| 删除标签失败 ||| Failed to delete tag
+5Yig6Zmk5qCH562+5aSx6LSlOiA= ||| 删除标签失败:  ||| Failed to delete tag: 
+5Yig6Zmk5qCH562+5aSx6LSl77yMSUQ6IHt9 ||| 删除标签失败，ID: {} ||| Failed to delete tag, ID: {}
+5Yig6Zmk5qCH562+5oiQ5Yqf77yM5qCH562+SUQ6IHt9LCDmoIfnrb7lkI3np7A6IHt9 ||| 删除标签成功，标签ID: {}, 标签名称: {} ||| Deleted tag successfully, tag ID: {}, tag name: {}
+5Yig6Zmk5qCH562+77yI57qn6IGU5Yig6Zmk5a2Q5qCH562+77yJ ||| 删除标签（级联删除子标签） ||| Delete tag (cascade delete sub-tags)
+5Yig6Zmk5qih5Z6L5aSx6LSl ||| 删除模型失败 ||| Failed to delete model
+5Yig6Zmk5qih5Z6L5aSx6LSl77yae30= ||| 删除模型失败：{} ||| Failed to delete model: {}
+5Yig6Zmk5qih5Z6L5oiQ5Yqf77yae30= ||| 删除模型成功：{} ||| Deleted model successfully: {}
+5Yig6Zmk5qih5Z6L77yI6YC76L6R5Yig6Zmk77yJ ||| 删除模型（逻辑删除） ||| Delete model (logical deletion)
+5Yig6Zmk55qE5qih5Z6LSUTliJfooajkuI3og73kuLrnqbo= ||| 删除的模型ID列表不能为空 ||| List of model IDs to delete cannot be empty
+5Yig6Zmk55uu5b2V5LiL55qE5omA5pyJ5Zu+54mH5paH5Lu2 ||| 删除目录下的所有图片文件 ||| Delete all image files in the directory
+5Yig6Zmk55u45YWz55qE5Zu+54mH5paH5Lu2 ||| 删除相关的图片文件 ||| Delete related image files
+5Yig6Zmk56m655uu5b2V ||| 删除空目录 ||| Delete empty directory
+5Yig6Zmk56m655uu5b2V77yae30= ||| 删除空目录：{} ||| Delete empty directory: {}
+5Yig6Zmk566X5rOV ||| 删除算法 ||| Delete algorithm
+5Yig6Zmk566X5rOV5LuT5bqT ||| 删除算法仓库 ||| Delete algorithm repository
+5Yig6Zmk566X5rOV5LuT5bqT77yaSUQ9e30= ||| 删除算法仓库：ID={} ||| Delete algorithm repository: ID={}
+5Yig6Zmk566X5rOV5qCH5rOo ||| 删除算法标注 ||| Delete algorithm annotation
+5Yig6Zmk566X5rOV5qCH5rOo77yaSUQ9e30= ||| 删除算法标注：ID={} ||| Delete algorithm annotation: ID={}
+5Yig6Zmk566X5rOV5qih5Z6L ||| 删除算法模型 ||| Delete algorithm model
+5Yig6Zmk566X5rOV5qih5Z6L5aSx6LSl ||| 删除算法模型失败 ||| Failed to delete algorithm model
+5Yig6Zmk566X5rOV5qih5Z6L5aSx6LSl77ya ||| 删除算法模型失败： ||| Failed to delete algorithm model: 
+5Yig6Zmk566X5rOV5qih5Z6L77yae30= ||| 删除算法模型：{} ||| Delete algorithm model: {}
+5Yig6Zmk566X5rOV6K6t57uD5Lu75Yqh ||| 删除算法训练任务 ||| Delete algorithm training task
+5Yig6Zmk566X5rOV6K6t57uD5Lu75Yqh5L+h5oGv ||| 删除算法训练任务信息 ||| Delete algorithm training task information
+5Yig6Zmk566X5rOV77yaSUQ9e30= ||| 删除算法：ID={} ||| Delete algorithm: ID={}
+5Yig6Zmk6KeS6Imy6YWN572u55qE5o6l5Y+j5p2D6ZmQ6ZuG5ZCI ||| 删除角色配置的接口权限集合 ||| Delete the set of interface permissions configured for the role
+5Yig6Zmk6KeS6Imy6YWN572u55qE5pWw5o2u5p2D6ZmQ6ZuG5ZCI ||| 删除角色配置的数据权限集合 ||| Delete the set of data permissions configured for the role
+5Yig6Zmk6KeS6Imy6YWN572u55qE6I+c5Y2V6ZuG5ZCI ||| 删除角色配置的菜单集合 ||| Delete the set of menus configured for the role
+5Yig6Zmk6K6t57uD5Lu75Yqh ||| 删除训练任务 ||| Delete training task
+5Yig6Zmk6K6t57uD5Lu75Yqh77yaSUQ9e30= ||| 删除训练任务：ID={} ||| Delete training task: ID={}
+5Yig6Zmk6K6+5aSH5L+h5oGv ||| 删除设备信息 ||| Delete device information
+5Yig6Zmk6K6+5aSH5qCH562+5YWz6IGU ||| 删除设备标签关联 ||| Delete device tag association
+5Yig6Zmk6K6+5aSH55qE5omA5pyJ5qCH562+5YWz6IGU ||| 删除设备的所有标签关联 ||| Delete all tag associations of the device
+5Yig6Zmk6K6+5aSH55qE5oyH5a6a5qCH562+5YWz6IGU ||| 删除设备的指定标签关联 ||| Delete specified tag associations of the device
+5Yig6Zmk6L+c56iL5pyN5Yqh5Zmo6YWN572u ||| 删除远程服务器配置 ||| Delete remote server configuration
+5Yig6Zmk6L+c56iL5pyN5Yqh5Zmo6YWN572u5L+h5oGv ||| 删除远程服务器配置信息 ||| Delete remote server configuration info
+5Yig6Zmk6aG26YOo6I+c5Y2V6YWN572u55qE6I+c5Y2V6ZuG5ZCI ||| 删除顶部菜单配置的菜单集合 ||| Delete the menu collection configured for the top menu
+5Yik5patdG9rZW7nsbvlnovkuLpiZWFyZXI= ||| 判断token类型为bearer ||| Determine token type as bearer
+5Yik5patdG9rZW7nsbvlnovkuLpjcnlwdG8= ||| 判断token类型为crypto ||| Determine token type as crypto
+5Yik5pat5piv5ZCm5Li6IuWQpiI= ||| 判断是否为"否" ||| Determine if it is "No"
+5Yik5pat5piv5ZCm5Li6IuaYryI= ||| 判断是否为"是" ||| Determine if it is "Yes"
+5Yik5pat5piv5ZCm5Li65Zu+54mH5paH5Lu2 ||| 判断是否为图片文件 ||| Determine if it is an image file
+5Yik5pat5piv5ZCm5bey5b2S5LiA5YyW77ya5Zub5Liq5YC86YO95ZyoKDAsMV3op4bkuLrnm7jlr7nmr5Tkvos= ||| 判断是否已归一化：四个值都在(0,1]视为相对比例 ||| Determine if normalized: four values all in (0, 1] are treated as relative ratios
+5Yik5pat6LSm5Y+35ZKMSVDmmK/lkKbplIHlrpo= ||| 判断账号和IP是否锁定 ||| Determine if account and IP are locked
+5Yik5pat6aqM6K+B56CB ||| 判断验证码 ||| Check verification code
+5Yi35pawUlRTUOW9leWItuWksei0pQ== ||| 刷新RTSP录制任务失败 ||| Failed to refresh RTSP recording task
+5Yi35paw5LuT5bqT566X5rOV5pWw6YeP ||| 刷新仓库算法数量 ||| Refresh algorithm quantity in the repository
+5Yi35paw5Luk54mM ||| 刷新令牌 ||| Refresh token
+5Yi35paw5Luk54mM6L+H5pyf56eS5pWw ||| 刷新令牌过期秒数 ||| Refresh token expiration seconds
+5Yi35paw566X5rOV5LuT5bqT566X5rOV5pWw6YeP77yaSUQ9e30= ||| 刷新算法仓库算法数量：ID={} ||| Refresh algorithm quantity in the algorithm repository: ID={}
+5Yi35paw6K6+5aSH5Lq66IS45qOA5rWL5Lu75Yqh5aSx6LSl ||| 刷新设备人脸检测任务失败 ||| Failed to refresh device face detection task
+5Yi35paw6K6+5aSH5Zu+5YOP5YiG57G75Lu75Yqh5aSx6LSl ||| 刷新设备图像分类任务失败 ||| Failed to refresh device image classification task
+5Yi35paw6K6+5aSH5ae/5oCB5Lyw6K6h5Lu75Yqh5aSx6LSl ||| 刷新设备姿态估计任务失败 ||| Failed to refresh device pose estimation task
+5Yi35paw6K6+5aSH5a6e5L6L5YiG5Ymy5Lu75Yqh5aSx6LSl ||| 刷新设备实例分割任务失败 ||| Failed to refresh device instance segmentation task
+5Yi35paw6K6+5aSH5peL6L2s5qGG5qOA5rWL5Lu75Yqh5aSx6LSl ||| 刷新设备旋转框检测任务失败 ||| Failed to refresh device oriented bounding box detection task
+5Yi35paw6K6+5aSH5qOA5rWL5Lu75Yqh5aSx6LSl ||| 刷新设备检测任务失败 ||| Failed to refresh device detection task
+5Yi35paw6K6+5aSH54q25oCB ||| 刷新设备状态 ||| Refresh device status
+5Yi35paw6K6+5aSH54q25oCB5aSx6LSlOiB7fQ== ||| 刷新设备状态失败: {} ||| Failed to refresh device status: {}
+5Yi35paw6K6+5aSH55uu5qCH5qOA5rWL5Lu75Yqh5aSx6LSl ||| 刷新设备目标检测任务失败 ||| Failed to refresh device object detection task
+5Yi35paw6K6+5aSH6K+t5LmJ5YiG5Ymy5Lu75Yqh5aSx6LSl ||| 刷新设备语义分割任务失败 ||| Failed to refresh device semantic segmentation task
+5YmNTuadoeaVsOaNrg== ||| 前N条数据 ||| First N records of data
+5YmN56uv5Luj56CB55Sf5oiQ5Zyw5Z2A ||| 前端代码生成地址 ||| Front-end code generation directory
+5YmN56uv5Luj56CB55Sf5oiQ5omA5bGe57O757uf ||| 前端代码生成所属系统 ||| Front-end code generation system
+5YmN56uv5oyJ6ZKu5pWw5o2u ||| 前端按钮数据 ||| Front-end button data
+5YmN56uv6I+c5Y2V5pWw5o2u ||| 前端菜单数据 ||| Front-end menu data
+5YmN56uv6Lev5b6E ||| 前端路径 ||| Front-end path
+5Yqg5a+G5YmNOiA= ||| 加密前:  ||| Before encryption: 
+5Yqg5a+G5ZCOOiA= ||| 加密后:  ||| After encryption: 
+5Yqg5a+G5ZCO55qE55So5oi35L+h5oGv5a2X56ym5Liy ||| 加密后的用户信息字符串 ||| Encrypted user information string
+5Yqg5a+G5a+G56CBKOWunumZheWunueOsOS4reW6lOS9v+eUqOabtOWuieWFqOeahOWKoOWvhuaWueW8jyk= ||| 加密密码(实际实现中应使用更安全的加密方式) ||| Encrypt password (a more secure encryption method should be used in actual implementation)
+5Yqo5oCB6I635Y+Wc2VudGluZWzlnLDlnYA= ||| 动态获取sentinel地址 ||| Dynamically get Sentinel address
+5YyF5ZCr5YWz6IGU5L+h5oGv55qE57uT5p6c5pig5bCE ||| 包含关联信息的结果映射 ||| Result mapping containing association information
+5YyF5ous77yaYW5ub3RhdGlvbl9pbWFnZeOAgWFubm90YXRpb25faW5zdGFuY2XjgIHmm7TmlrBhbm5vdGF0aW9uX2xhYmVs55qE5L2/55So6K6h5pWw ||| 包括：annotation_image、annotation_instance、更新annotation_label的使用计数 ||| Includes: annotation_image, annotation_instance, and updating the usage count of annotation_label
+5YyF6KOF5Zmo5qih5byP ||| 包装器模式 ||| Wrapper pattern
+5YyF6KOF57G7LOi/lOWbnuinhuWbvuWxguaJgOmcgOeahOWtl+autQ== ||| 包装类,返回视图层所需的字段 ||| Wrapper class, returning fields required by the view layer
+5Yy56YWN5piv5ZCm5pyJ5Yir5ZCN5a6a5LmJ ||| 匹配是否有别名定义 ||| Match if there is an alias definition
+5Yy65YiS5ZCN56ew ||| 区划名称 ||| Division name
+5Yy65YiS57yW5Y+3 ||| 区划编号 ||| Division code
+5Yy65YiS6YCJ5oup ||| 区划选择 ||| Division selection
+5Yy65YiS6YCJ5oupKEpTT07moLzlvI8p ||| 区划选择(JSON格式) ||| Division selection (JSON format)
+5Yy65Z+f ||| 区域 ||| Area
+5Yy65Z+f5L+h5oGv ||| 区域信息 ||| Area information
+5Yy657qn5Yy65YiS57yW5Y+3 ||| 区级区划编号 ||| District-level division code
+5Yy657qn5ZCN56ew ||| 区级名称 ||| District-level name
+5Y2K55CD ||| 半球 ||| Hemisphere
+5Y2K6Ieq5Yqo ||| 半自动 ||| Semi-automatic
+5Y2V6qyh5b2V5Yi25pe26ZW/KOenku+8jOm7mOiupDEw5YiG6ZKfKQ== ||| 单次录制时长(秒，默认10分钟) ||| Single recording duration (seconds, default 10 minutes)
+5Y2V6K6+5aSH5Lq65L2T5qOA5rWL5Lya6K+d77ya5Yqg6L295qih5Z6L5bm25a+56KeG6aKR5rWB6L+b6KGM5Lq65L2T5qOA5rWL5LiO57uT5p6c6L+H5ruk77yM5Zyo5Lqn55Sf57uT5p6c5pe25oiq5Zu+5LiK5Lyg5bm25Yib5bu65LqL5Lu244CC ||| 单设备人体检测会话：加载模型并对视频流进行人体检测与结果过滤，在产生结果时截图上传并创建事件。 ||| Single-device body detection session: load the model, perform body detection and result filtering on the video stream, take a screenshot, upload it, and create an event when a result is generated.
+5Y2V6K6+5aSH5Lq66IS45qOA5rWL5Lya6K+d77ya5Yqg6L295qih5Z6L5bm25a+56KeG6aKR5rWB6L+b6KGM5Lq66IS45qOA5rWL77yM5Zyo5Lqn55Sf57uT5p6c5pe25oiq5Zu+5LiK5Lyg5bm25Yib5bu65LqL5Lu277yb5pSv5oyB5byC5bi46YeN5ZCv5LiO6LWE5rqQ5riF55CG44CC ||| 单设备人脸检测会话：加载模型并对视频流进行人脸检测，在产生结果时截图上传并创建事件；支持异常重启与资源清理。 ||| Single-device face detection session: load the model, perform face detection on the video stream, take a screenshot, upload it, and create an event when a result is generated; support abnormal restart and resource cleanup.
+5Y2V6K6+5aSH5Zu+5YOP5YiG57G75qOA5rWL5Lya6K+d77ya5Yqg6L295qih5Z6L5bm25a+56KeG6aKR5rWB6L+b6KGM5YiG57G777yM5Zyo5Lqn55Sf57uT5p6c5pe25oiq5Zu+5LiK5Lyg5bm25Yib5bu65LqL5Lu277yb5pSv5oyB5byC5bi46YeN5ZCv5LiO6LWE5rqQ5riF55CG44CC ||| 单设备图像分类检测会话：加载模型并对视频流进行分类，在产生结果时截图上传并创建事件；支持异常重启与资源清理。 ||| Single-device image classification detection session: load the model, classify the video stream, take a screenshot, upload it, and create an event when a result is generated; support abnormal restart and resource cleanup.
+5Y2V6K6+5aSH5ae/5oCB5Lyw6K6h5Lya6K+d77ya5Yqg6L295qih5Z6L5bm25a+56KeG6aKR5rWB6L+b6KGM5ae/5oCB5Lyw6K6h77yM5Zyo5Lqn55Sf57uT5p6c5pe25oiq5Zu+5LiK5Lyg5bm25Yib5bu65LqL5Lu277yb5pSv5oyB5byC5bi46YeN5ZCv5LiO6LWE5rqQ5riF55CG44CC ||| 单设备姿态估计会话：加载模型并对视频流进行姿态估计，在产生结果时截图上传并创建事件；支持异常重启与资源清理。 ||| Single-device pose estimation session: load the model, perform pose estimation on the video stream, take a screenshot, upload it, and create an event when a result is generated; support abnormal restart and resource cleanup.
+5Y2V6K6+5aSH5a6e5L6L5YiG5Ymy5Lya6K+d77ya5Yqg6L295qih5Z6L5bm25a+56KeG6aKR5rWB6L+b6KGM5a6e5L6L5YiG5Ymy77yM5Zyo5Lqn55Sf57uT5p6c5pe25oiq5Zu+5LiK5Lyg5bm25Yib5bu65LqL5Lu277yb5pSv5oyB5byC5bi46YeN5ZCv5LiO6LWE5rqQ5riF55CG44CC ||| 单设备实例分割会话：加载模型并对视频流进行实例分割，在产生结果时截图上传并创建事件；支持异常重启与资源清理。 ||| Single-device instance segmentation session: load the model, perform instance segmentation on the video stream, take a screenshot, upload it, and create an event when a result is generated; support abnormal restart and resource cleanup.
+5Y2V6K6+5aSH5peL6L2s5qGG77yIT0JC77yJ5qOA5rWL5Lya6K+d77ya5Yqg6L295qih5Z6L5bm25a+56KeG6aKR5rWB6L+b6KGM5peL6L2s5qGG5qOA5rWL77yM5Zyo5Lqn55Sf57uT5p6c5pe25oiq5Zu+5LiK5Lyg5bm25Yib5bu65LqL5Lu277yb5pSv5oyB5byC5bi46YeN5ZCv5LiO6LWE5rqQ5riF55CG44CC ||| 单设备旋转框（OBB）检测会话：加载模型并对视频流进行旋转框检测，在产生结果时截图上传并创建事件；支持异常重启与资源清理。 ||| Single-device oriented bounding box (OBB) detection session: load the model, perform oriented bounding box detection on the video stream, take a screenshot, upload it, and create an event when a result is generated; support abnormal restart and resource cleanup.
+5Y2V6K6+5aSH55uu5qCH5qOA5rWL5Lya6K+d77ya5Yqg6L295qih5Z6L5bm25a+56KeG6aKR5rWB6L+b6KGM55uu5qCH5qOA5rWL77yM5Zyo5Lqn55Sf57uT5p6c5pe25oiq5Zu+5LiK5Lyg5bm25Yib5bu65LqL5Lu277yb5pSv5oyB5byC5bi46YeN5ZCv5LiO6LWE5rqQ5riF55CG44CC ||| 单设备目标检测会话：加载模型并对视频流进行目标检测，在产生结果时截图上传并创建事件；支持异常重启与资源清理。 ||| Single-device object detection session: load the model, perform object detection on the video stream, take a screenshot, upload it, and create an event when a result is generated; support abnormal restart and resource cleanup.
+5Y2V6K6+5aSH6K+t5LmJ5YiG5Ymy5Lya6K+d77ya5ZGo5pyf5oCn5ouJ5Y+W5Zu+54mH77yIVVJML+acrOWcsOi3r+W+hO+8ieW5tuaJp+ihjOivreS5ieWIhuWJsu+8jOWcqOS6p+eUn+e7k+aenOaXtui+k+WHuuWIhuWJsuWbvuW5tuWIm+W7uuS6i+S7tuOAgg== ||| 单设备语义分割会话：周期性拉取图片（URL/本地路径）并执行语义分割，在产生结果时输出分割图并创建事件。 ||| Single-device semantic segmentation session: periodically pull images (URL/local path) and perform semantic segmentation, outputting the segmented image and creating an event when a result is generated.
+5Y2a5a6i5o6l5Y+j ||| 博客接口 ||| Blog interface
+5Y2z5pe25rK755CG5YiX6KGo ||| 即时治理列表 ||| Real-time governance list
+5Y6C5ZWG ||| 厂商 ||| Manufacturer
+5Y6f5aeL5paH5Lu25ZCN ||| 原始文件名 ||| Original filename
+5Y6f5a+G56CB5LiN5q2j56GuIQ== ||| 原密码不正确! ||| Incorrect original password!
+5Y676YeN5bm26L+H5ruk5bey5a2Y5Zyo55qE5qCH562+ ||| 去重并过滤已存在的标签 ||| Deduplicate and filter existing tags
+5Y676YeN5bm26L+H5ruk5peg5pWI5qCH562+ ||| 去重并过滤无效标签 ||| Deduplicate and filter invalid tags
+5Y+C5pWw5YC8 ||| 参数值 ||| Parameter value
+5Y+C5pWw5ZCN ||| 参数名 ||| Parameter name
+5Y+C5pWw5ZCN56ew ||| 参数名称 ||| Parameter name
+5Y+C5pWw6ZSu ||| 参数键 ||| Parameter key
+5Y+C5pWw6ZSu5YC8 ||| 参数键值 ||| Parameter key value
+5Y+C5pWw6ZSu5ZCN ||| 参数键名 ||| Parameter key name
+5Y+C5pWw6ZSu5ZCN ||| 参数键名 ||| Parameter key name
+5Y+N5ZCR6YCS5b2S6KeS6Imy6I+c5Y2V5omA5pyJ54i257qn ||| 反向递归角色菜单所有父级 ||| Reverse recursively get all parent levels of the role menu
+5Y+N6aaI5L+h5oGv ||| 反馈信息 ||| Feedback info
+5Y+N6aaI5Zu+54mH ||| 反馈图片 ||| Feedback image
+5Y+N6aaI54q25oCB ||| 反馈状态 ||| Feedback status
+5Y+R5biD5pel5pyf ||| 发布日期 ||| Publish date
+5Y+R5biD5pe26Ze0 ||| 发布时间 ||| Publish time
+5Y+R5biD5qih5Z6L ||| 发布模型 ||| Publish model
+5Y+R5biD5qih5Z6L5aSx6LSl ||| 发布模型失败 ||| Failed to publish model
+5Y+R5biD5qih5Z6L5aSx6LSl77ya ||| 发布模型失败： ||| Failed to publish model: 
+5Y+R5biD5qih5Z6L5aSx6LSl77yae30= ||| 发布模型失败：{} ||| Failed to publish model: {}
+5Y+R5biD5qih5Z6L5oiQ5Yqf77yae30= ||| 发布模型成功：{} ||| Published model successfully: {}
+5Y+R5biD55qE5qih5Z6LSUTliJfooajkuI3og73kuLrnqbo= ||| 发布的模型ID列表不能为空 ||| List of published model IDs cannot be empty
+5Y+R5biD566X5rOV5qih5Z6L77yae30= ||| 发布算法模型：{} ||| Publish algorithm model: {}
+5Y+W5raI ||| 取消 ||| Cancel
+5Y+W5raI5pm66IO95YiG5p6Q55Sz6K+3 ||| 取消智能分析申请 ||| Cancel intelligent analysis application
+5Y+W5raI55Sz6K+3 ||| 取消申请 ||| Cancel application
+5Y+Y5YCN6ZmQ5Yi2 ||| 变倍限制 ||| Zoom limit
+5Y+s5Zue546H ||| 召回率 ||| Recall rate
+5Y+v5Lul5Zyo6L+Z6YeM5re75Yqg5pu05aSa57uf6K6h5L+h5oGv ||| 可以在这里添加更多统计信息 ||| More statistical information can be added here
+5Y+v5Lul57uT5ZCIRGV2aWNlSW5mb01hcHBlcuWSjFRhZ01hbmFnZW1lbnRNYXBwZXLmnaXmn6Xor6I= ||| 可以结合DeviceInfoMapper and TagManagementMapper来查询 ||| Can be queried by combining DeviceInfoMapper and TagManagementMapper
+5ZCM5LiA5LuT5bqT5LiL566X5rOV5ZCN56ew5bey5a2Y5Zyo77yae30= ||| 同一仓库下算法名称已存在：{} ||| Algorithm name already exists in the same repository: {}
+5ZCM5q2l5qCH562+5L2/55So6K6h5pWw ||| 同步标签使用计数 ||| Synchronize tag usage count
+5ZCM5q2l5qCH562+5L2/55So6K6h5pWw5aSx6LSl ||| 同步标签使用计数失败 ||| Failed to synchronize tag usage count
+5ZCM5q2l5qCH562+5L2/55So6K6h5pWw5oiQ5Yqf77yM5pu05paw5LqGIHt9IOS4quagh+etvg== ||| 同步标签使用计数成功，更新了 {} 个标签 ||| Synchronized tag usage count successfully, updated {} tags
+5ZCN56ew ||| 名称 ||| Name
+5ZCO56uv5YyF5ZCN ||| 后端包名 ||| Back-end package name
+5ZCO56uv6Lev5b6E ||| 后端路径 ||| Back-end path
+5ZCm ||| 否 ||| No
+5ZCv5YqoUlRTUOW9leWItuWksei0pTogc3RyYXRlZ3lJZD17fSwgZGV2aWNlSWQ9e30sIHJlYXNvbj17fQ== ||| 启动RTSP录制失败: strategyId={}, deviceId={}, reason={} ||| Failed to start RTSP recording: strategyId={}, deviceId={}, reason={}
+5ZCv5YqoUlRTUOW9leWItuaIkOWKnzogc3RyYXRlZ3lJZD17fSwgZGV2aWNlSWQ9e30sIHN0cmVhbT17fQ== ||| 启动RTSP录制成功: strategyId={}, deviceId={}, stream={} ||| Started RTSP recording successfully: strategyId={}, deviceId={}, stream={}
+5ZCv5Yqo5Lq66IS45qOA5rWL5Zmo5aSx6LSlOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30sIHJldHJ5VGltZXM9e30sIGVycm9yPXt9 ||| 启动人脸检测器失败: deviceId={}, deviceName={}, algorithmId={}, retryTimes={}, error={} ||| Failed to start face detector: deviceId={}, deviceName={}, algorithmId={}, retryTimes={}, error={}
+5ZCv5Yqo5Y+C5pWw5ouT5bGV ||| 启动参数拓展 ||| Startup parameter extension
+5ZCv5Yqo5Zmo ||| 启动器 ||| Launcher
+5ZCv5Yqo5Zu+5YOP5YiG57G75Zmo5aSx6LSlOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30sIHJldHJ5VGltZXM9e30sIGVycm9yPXt9 ||| 启动图像分类器失败: deviceId={}, deviceName={}, algorithmId={}, retryTimes={}, error={} ||| Failed to start image classifier: deviceId={}, deviceName={}, algorithmId={}, retryTimes={}, error={}
+5ZCv5Yqo5ae/5oCB5Lyw6K6h5Zmo5aSx6LSlOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30sIHJldHJ5VGltZXM9e30sIGVycm9yPXt9 ||| 启动姿态估计器失败: deviceId={}, deviceName={}, algorithmId={}, retryTimes={}, error={} ||| Failed to start pose estimator: deviceId={}, deviceName={}, algorithmId={}, retryTimes={}, error={}
+5ZCv5Yqo5a6e5L6L5YiG5Ymy5Zmo5aSx6LSlOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30sIHJldHJ5VGltZXM9e30sIGVycm9yPXt9 ||| 启动实例分割器失败: deviceId={}, deviceName={}, algorithmId={}, retryTimes={}, error={} ||| Failed to start instance segmenter: deviceId={}, deviceName={}, algorithmId={}, retryTimes={}, error={}
+5ZCv5Yqo5a655Zmo5a6e5L6L ||| 启动容器实例 ||| Start container instance
+5ZCv5Yqo5a655Zmo5a6e5L6L77yMSUQ6IHt9 ||| 启动容器实例，ID: {} ||| Start container instance, ID: {}
+5ZCv5Yqo5peL6L2s5qGG5qOA5rWL5Zmo5aSx6LSlOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30sIHJldHJ5VGltZXM9e30sIGVycm9yPXt9 ||| 启动旋转框检测器失败: deviceId={}, deviceName={}, algorithmId={}, retryTimes={}, error={} ||| Failed to start oriented bounding box detector: deviceId={}, deviceName={}, algorithmId={}, retryTimes={}, error={}
+5ZCv5Yqo5pe26Ze0 ||| 启动时间 ||| Start time
+5ZCv5Yqo5qOA5rWL5Zmo5aSx6LSlOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgcmV0cnlUaW1lcz17fSwgZXJyb3I9e30= ||| 启动检测器失败: deviceId={}, deviceName={}, retryTimes={}, error={} ||| Failed to start detector: deviceId={}, deviceName={}, retryTimes={}, error={}
+5ZCv5Yqo55uu5qCH5qOA5rWL5Zmo5aSx6LSlOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30sIHJldHJ5VGltZXM9e30sIGVycm9yPXt9 ||| 启动目标检测器失败: deviceId={}, deviceName={}, algorithmId={}, retryTimes={}, error={} ||| Failed to start object detector: deviceId={}, deviceName={}, algorithmId={}, retryTimes={}, error={}
+5ZCv5Yqo6L+c56uvWU9MT+iuree7g++8iOWQjuWPsOi/kOihjO+8jOaXpeW/l+iQveebmO+8iQ== ||| 启动远端YOLO训练（后台运行，日志落盘） ||| Start remote YOLO training (run in the background, logs saved to disk)
+5ZCv5Yqo6L+c56uv6K6t57uD5aSx6LSlOiA= ||| 启动远端训练失败:  ||| Failed to start remote training: 
+5ZCv5Yqo6L+c56uv6K6t57uD5aSx6LSlOiB7fQ== ||| 启动远端训练失败: {} ||| Failed to start remote training: {}
+5ZCv55So ||| 启用 ||| Enable
+5ZCv55SoL+WFs+mXreWklumDqOaOp+WItuaooeW8j++8muWQr+eUqOWQju+8jOWumuaXtuWIt+aWsOWFpeWPo+WwhuS4jeWGjeiHquWKqOe7tOaKpOS8muivne+8jOeUseWklumDqO+8iOWmgiBQb3dlckpvYu+8ieinpuWPkeWIt+aWsOOAgg== ||| 启用/关闭外部控制模式：启用后，定时刷新入口将不再自动维护会话，由外部（如 PowerJob）触发刷新。 ||| Enable/disable external control mode: Once enabled, the scheduled refresh entry will no longer automatically maintain sessions, and refresh will be triggered externally (e.g., by PowerJob).
+5ZCv55SoL+emgeeUqOagh+etvg== ||| 启用/禁用标签 ||| Enable/disable tag
+5ZCv55SoUFRa6L+Q5Yqo5oql6K2m5LiK5oql ||| 启用PTZ运动报警上报 ||| Enable PTZ motion alarm reporting

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.vlstream.mapper.VlsAlgorithmOrchestrationMapper">
+
+    <!-- General query mapping result -->
+    <resultMap id="vlsAlgorithmOrchestrationResultMap" type="org.springblade.vlstream.pojo.entity.AlgorithmOrchestration">
+        <result column="orchestration_name" property="orchestrationName"/>
+        <result column="orchestration_desc" property="orchestrationDesc"/>
+        <result column="trigger_type" property="triggerType"/>
+        <result column="execute_mode" property="executeMode"/>
+        <result column="algorithm_steps" property="algorithmSteps"/>
+        <result column="input_config" property="inputConfig"/>
+        <result column="output_config" property="outputConfig"/>
+        <result column="device_count" property="deviceCount"/>
+        <result column="run_count" property="runCount"/>
+        <result column="orchestration_status" property="orchestrationStatus"/>
+        <result column="last_run_time" property="lastRunTime"/>
+        <result column="avg_run_time" property="avgRunTime"/>
+        <result column="success_rate" property="successRate"/>
+    </resultMap>
+
+    <select id="selectVlsAlgorithmOrchestrationPage" resultMap="vlsAlgorithmOrchestrationResultMap">
+        select * from vls_algorithm_orchestration where is_deleted = 0 order by create_time desc
+    </select>
+
+    <select id="exportVlsAlgorithmOrchestration" resultType="org.springblade.vlstream.excel.VlsAlgorithmOrchestrationExcel">
+        SELECT * FROM vls_algorithm_orchestration ${ew.customSqlSegment}
+    </select>
+
+</mapper>

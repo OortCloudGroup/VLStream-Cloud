@@ -1,0 +1,400 @@
+566X5rOV5o+P6L+w ||| 算法描述 ||| Algorithm description
+566X5rOV5pWw6YeP5Yi35paw5oiQ5Yqf ||| 算法数量刷新成功 ||| Algorithm count refreshed successfully
+566X5rOV5pu05paw5aSx6LSl ||| 算法更新失败 ||| Algorithm update failed
+566X5rOV5pu05paw5oiQ5Yqf ||| 算法更新成功 ||| Algorithm update successfully
+566X5rOV5qCH5rOo5pWw5o2u6KGo ||| 算法标注数据表 ||| Algorithm annotation data table
+566X5rOV5qCH5rOo5pWw5o2u6KGoIEV4Y2Vs5a6e5L2T57G7 ||| 算法标注数据表 Excel实体类 ||| Algorithm annotation data table Excel entity class
+566X5rOV5qCH5rOo5pWw5o2u6KGoIE1hcHBlciDmjqXlj6M= ||| 算法标注数据表 Mapper 接口 ||| Algorithm annotation data table Mapper interface
+566X5rOV5qCH5rOo5pWw5o2u6KGoIOS/ruaUuQ== ||| 算法标注数据表 修改 ||| Modify algorithm annotation data table
+566X5rOV5qCH5rOo5pWw5o2u6KGoIOWIhumhtQ== ||| 算法标注数据表 分页 ||| Algorithm annotation data table paging
+566X5rOV5qCH5rOo5pWw5o2u6KGoIOWIoOmZpA== ||| 算法标注数据表 删除 ||| Delete algorithm annotation data table
+566X5rOV5qCH5rOo5pWw5o2u6KGoIOWMheijheexuyzov5Tlm57op4blm77lsYLmiYDpnIDnmoTlrZfmrrU= ||| 算法标注数据表 包装类,返回视图层所需的字段 ||| Algorithm annotation data table wrapper class, returning fields required by the view layer
+566X5rOV5qCH5rOo5pWw5o2u6KGoIOWunuS9k+exuw== ||| 算法标注数据表 实体类 ||| Algorithm annotation data table entity class
+566X5rOV5qCH5rOo5pWw5o2u6KGoIOaOp+WItuWZqA== ||| 算法标注数据表 控制器 ||| Algorithm annotation data table controller
+566X5rOV5qCH5rOo5pWw5o2u6KGoIOaVsOaNruS8oOi+k+WvueixoeWunuS9k+exuw== ||| 算法标注数据表 数据传输对象实体类 ||| Algorithm annotation data table data transfer object entity class
+566X5rOV5qCH5rOo5pWw5o2u6KGoIOaWsOWing== ||| 算法标注数据表 新增 ||| Add algorithm annotation data table
+566X5rOV5qCH5rOo5pWw5o2u6KGoIOaWsOWinuaIluS/ruaUuQ== ||| 算法标注数据表 新增或修改 ||| Add or modify algorithm annotation data table
+566X5rOV5qCH5rOo5pWw5o2u6KGoIOacjeWKoeWunueOsOexuw== ||| 算法标注数据表 服务实现类 ||| Algorithm annotation data table service implementation class
+566X5rOV5qCH5rOo5pWw5o2u6KGoIOacjeWKoeexuw== ||| 算法标注数据表 服务类 ||| Algorithm annotation data table service class
+566X5rOV5qCH5rOo5pWw5o2u6KGoIOiHquWumuS5ieWIhumhtQ== ||| 算法标注数据表 自定义分页 ||| Algorithm annotation data table custom paging
+566X5rOV5qCH5rOo5pWw5o2u6KGoIOinhuWbvuWunuS9k+exuw== ||| 算法标注数据表 视图实体类 ||| Algorithm annotation data table view entity class
+566X5rOV5qCH5rOo5pWw5o2u6KGoIOivpuaDhQ== ||| 算法标注数据表 详情 ||| Algorithm annotation data table details
+566X5rOV5qCH5rOo5pWw5o2u6KGo5o6l5Y+j ||| 算法标注数据表接口 ||| Algorithm annotation data table interface
+566X5rOV5qCH5rOo5pWw5o2u6KGo5pWw5o2u ||| 算法标注数据表数据 ||| Algorithm annotation data table data
+566X5rOV5qCH5rOo5pWw5o2u6KGo5pWw5o2u6KGo ||| 算法标注数据表数据表 ||| Algorithm annotation data table database table
+566X5rOV5qih5Z6L6KGo ||| 算法模型表 ||| Algorithm model table
+566X5rOV5qih5Z6L6KGoIEV4Y2Vs5a6e5L2T57G7 ||| 算法模型表 Excel实体类 ||| Algorithm model table Excel entity class
+566X5rOV5qih5Z6L6KGoIE1hcHBlciDmjqXlj6M= ||| 算法模型表 Mapper 接口 ||| Algorithm model table Mapper interface
+566X5rOV5qih5Z6L6KGoIOS/ruaUuQ== ||| 算法模型表 修改 ||| Modify algorithm model table
+566X5rOV5qih5Z6L6KGoIOWIhumhtQ== ||| 算法模型表 分页 ||| Algorithm model table paging
+566X5rOV5qih5Z6L6KGoIOWIoOmZpA== ||| 算法模型表 删除 ||| Delete algorithm model table
+566X5rOV5qih5Z6L6KGoIOWMheijheexuyzov5Tlm57op4blm77lsYLmiYDpnIDnmoTlrZfmrrU= ||| 算法模型表 包装类,返回视图层所需的字段 ||| Algorithm model table wrapper class, returning fields required by the view layer
+566X5rOV5qih5Z6L6KGoIOWunuS9k+exuw== ||| 算法模型表 实体类 ||| Algorithm model table entity class
+566X5rOV5qih5Z6L6KGoIOaOp+WItuWZqA== ||| 算法模型表 控制器 ||| Algorithm model table controller
+566X5rOV5qih5Z6L6KGoIOaVsOaNruS8oOi+k+WvueixoeWunuS9k+exuw== ||| 算法模型表 数据传输对象实体类 ||| Algorithm model table data transfer object entity class
+566X5rOV5qih5Z6L6KGoIOaWsOWing== ||| 算法模型表 新增 ||| Add algorithm model table
+566X5rOV5qih5Z6L6KGoIOaWsOWinuaIluS/ruaUuQ== ||| 算法模型表 新增或修改 ||| Add or modify algorithm model table
+566X5rOV5qih5Z6L6KGoIOacjeWKoeWunueOsOexuw== ||| 算法模型表 服务实现类 ||| Algorithm model table service implementation class
+566X5rOV5qih5Z6L6KGoIOacjeWKoeexuw== ||| 算法模型表 服务类 ||| Algorithm model table service class
+566X5rOV5qih5Z6L6KGoIOiHquWumuS5ieWIhumhtQ== ||| 算法模型表 自定义分页 ||| Algorithm model table custom paging
+566X5rOV5qih5Z6L6KGoIOinhuWbvuWunuS9k+exuw== ||| 算法模型表 视图实体类 ||| Algorithm model table view entity class
+566X5rOV5qih5Z6L6KGoIOivpuaDhQ== ||| 算法模型表 详情 ||| Algorithm model table details
+566X5rOV5qih5Z6L6KGo5o6l5Y+j ||| 算法模型表接口 ||| Algorithm model table interface
+566X5rOV5qih5Z6L6KGo5pWw5o2u ||| 算法模型表数据 ||| Algorithm model table data
+566X5rOV5qih5Z6L6KGo5pWw5o2u6KGo ||| 算法模型表数据表 ||| Algorithm model table database table
+566X5rOV5q2l6aqk6YWN572u ||| 算法步骤配置 ||| Algorithm step configuration
+566X5rOV54mI5pys ||| 算法版本 ||| Algorithm version
+566X5rOV57G75Z6L ||| 算法类型 ||| Algorithm type
+566X5rOV57G75Z6L5ZCN56ew ||| 算法类型名称 ||| Algorithm type name
+566X5rOV57G75Z6L5p6a5Li+ ||| 算法类型枚举 ||| Algorithm type enum
+566X5rOV57yW5o6S6KGo ||| 算法编排表 ||| Algorithm orchestration table
+566X5rOV57yW5o6S6KGoIEV4Y2Vs5a6e5L2T57G7 ||| 算法编排表 Excel实体类 ||| Algorithm orchestration table Excel entity class
+566X5rOV57yW5o6S6KGoIE1hcHBlciDmjqXlj6M= ||| 算法编排表 Mapper 接口 ||| Algorithm orchestration table Mapper interface
+566X5rOV57yW5o6S6KGoIOS/ruaUuQ== ||| 算法编排表 修改 ||| Modify algorithm orchestration table
+566X5rOV57yW5o6S6KGoIOWIhumhtQ== ||| 算法编排表 分页 ||| Algorithm orchestration table paging
+566X5rOV57yW5o6S6KGoIOWIoOmZpA== ||| 算法编排表 删除 ||| Delete algorithm orchestration table
+566X5rOV57yW5o6S6KGoIOWMheijheexuyzov5Tlm57op4blm77lsYLmiYDpnIDnmoTlrZfmrrU= ||| 算法编排表 包装类,返回视图层所需的字段 ||| Algorithm orchestration table wrapper class, returning fields required by the view layer
+566X5rOV57yW5o6S6KGoIOWunuS9k+exuw== ||| 算法编排表 实体类 ||| Algorithm orchestration table entity class
+566X5rOV57yW5o6S6KGoIOaOp+WItuWZqA== ||| 算法编排表 控制器 ||| Algorithm orchestration table controller
+566X5rOV57yW5o6S6KGoIOaVsOaNruS8oOi+k+WvueixoeWunuS9k+exuw== ||| 算法编排表 数据传输对象实体类 ||| Algorithm orchestration table data transfer object entity class
+566X5rOV57yW5o6S6KGoIOaWsOWing== ||| 算法编排表 新增 ||| Add algorithm orchestration table
+566X5rOV57yW5o6S6KGoIOaWsOWinuaIluS/ruaUuQ== ||| 算法编排表 新增或修改 ||| Add or modify algorithm orchestration table
+566X5rOV57yW5o6S6KGoIOacjeWKoeWunueOsOexuw== ||| 算法编排表 服务实现类 ||| Algorithm orchestration table service implementation class
+566X5rOV57yW5o6S6KGoIOacjeWKoeexuw== ||| 算法编排表 服务类 ||| Algorithm orchestration table service class
+566X5rOV57yW5o6S6KGoIOiHquWumuS5ieWIhumhtQ== ||| 算法编排表 自定义分页 ||| Algorithm orchestration table custom paging
+566X5rOV57yW5o6S6KGoIOinhuWbvuWunuS9k+exuw== ||| 算法编排表 视图实体类 ||| Algorithm orchestration table view entity class
+566X5rOV57yW5o6S6KGoIOivpuaDhQ== ||| 算法编排表 详情 ||| Algorithm orchestration table details
+566X5rOV57yW5o6S6KGo5o6l5Y+j ||| 算法编排表接口 ||| Algorithm orchestration table interface
+566X5rOV57yW5o6S6KGo5pWw5o2u ||| 算法编排表数据 ||| Algorithm orchestration table data
+566X5rOV57yW5o6S6KGo5pWw5o2u6KGo ||| 算法编排表数据表 ||| Algorithm orchestration table database table
+566X5rOV6KGo ||| 算法表 ||| Algorithm table
+566X5rOV6KGoIEV4Y2Vs5a6e5L2T57G7 ||| 算法表 Excel实体类 ||| Algorithm table Excel entity class
+566X5rOV6KGoIE1hcHBlciDmjqXlj6M= ||| 算法表 Mapper 接口 ||| Algorithm table Mapper interface
+566X5rOV6KGoIOS/ruaUuQ== ||| 算法表 修改 ||| Modify algorithm table
+566X5rOV6KGoIOWIhumhtQ== ||| 算法表 分页 ||| Algorithm table paging
+566X5rOV6KGoIOWIoOmZpA== ||| 算法表 删除 ||| Delete algorithm table
+566X5rOV6KGoIOWMheijheexuyzov5Tlm57op4blm77lsYLmiYDpnIDnmoTlrZfmrrU= ||| 算法表 包装类,返回视图层所需的字段 ||| Algorithm table wrapper class, returning fields required by the view layer
+566X5rOV6KGoIOWunuS9k+exuw== ||| 算法表 实体类 ||| Algorithm table entity class
+566X5rOV6KGoIOaOp+WItuWZqA== ||| 算法表 控制器 ||| Algorithm table controller
+566X5rOV6KGoIOaVsOaNruS8oOi+k+WvueixoeWunuS9k+exuw== ||| 算法表 数据传输对象实体类 ||| Algorithm table data transfer object entity class
+566X5rOV6KGoIOaWsOWing== ||| 算法表 新增 ||| Add algorithm table
+566X5rOV6KGoIOaWsOWinuaIluS/ruaUuQ== ||| 算法表 新增或修改 ||| Add or modify algorithm table
+566X5rOV6KGoIOacjeWKoeWunueOsOexuw== ||| 算法表 服务实现类 ||| Algorithm table service implementation class
+566X5rOV6KGoIOacjeWKoeexuw== ||| 算法表 服务类 ||| Algorithm table service class
+566X5rOV6KGoIOiHquWumuS5ieWIhumhtQ== ||| 算法表 自定义分页 ||| Algorithm table custom paging
+566X5rOV6KGoIOinhuWbvuWunuS9k+exuw== ||| 算法表 视图实体类 ||| Algorithm table view entity class
+566X5rOV6KGoIOivpuaDhQ== ||| 算法表 详情 ||| Algorithm table details
+566X5rOV6KGo5o6l5Y+j ||| 算法表接口 ||| Algorithm table interface
+566X5rOV6KGo5pWw5o2u ||| 算法表数据 ||| Algorithm table data
+566X5rOV6KGo5pWw5o2u6KGo ||| 算法表数据表 ||| Algorithm table database table
+566X5rOV6K6t57uD5Lu75Yqh6KGo ||| 算法训练任务表 ||| Algorithm training task table
+566X5rOV6K6t57uD5Lu75Yqh6KGoIEV4Y2Vs5a6e5L2T57G7 ||| 算法训练任务表 Excel实体类 ||| Algorithm training task table Excel entity class
+566X5rOV6K6t57uD5Lu75Yqh6KGoIE1hcHBlciDmjqXlj6M= ||| 算法训练任务表 Mapper 接口 ||| Algorithm training task table Mapper interface
+566X5rOV6K6t57uD5Lu75Yqh6KGoIOS/ruaUuQ== ||| 算法训练任务表 修改 ||| Modify algorithm training task table
+566X5rOV6K6t57uD5Lu75Yqh6KGoIOWIhumhtQ== ||| 算法训练任务表 分页 ||| Algorithm training task table paging
+566X5rOV6K6t57uD5Lu75Yqh6KGoIOWIoOmZpA== ||| 算法训练任务表 删除 ||| Delete algorithm training task table
+566X5rOV6K6t57uD5Lu75Yqh6KGoIOWMheijheexuyzov5Tlm57op4blm77lsYLmiYDpnIDnmoTlrZfmrrU= ||| 算法训练任务表 包装类,返回视图层所需的字段 ||| Algorithm training task table wrapper class, returning fields required by the view layer
+566X5rOV6K6t57uD5Lu75Yqh6KGoIOWunuS9k+exuw== ||| 算法训练任务表 实体类 ||| Algorithm training task table entity class
+566X5rOV6K6t57uD5Lu75Yqh6KGoIOaOp+WItuWZqA== ||| 算法训练任务表 控制器 ||| Algorithm training task table controller
+566X5rOV6K6t57uD5Lu75Yqh6KGoIOaVsOaNruS8oOi+k+WvueixoeWunuS9k+exuw== ||| 算法训练任务表 数据传输对象实体类 ||| Algorithm training task table data transfer object entity class
+566X5rOV6K6t57uD5Lu75Yqh6KGoIOaWsOWing== ||| 算法训练任务表 新增 ||| Add algorithm training task table
+566X5rOV6K6t57uD5Lu75Yqh6KGoIOaWsOWinuaIluS/ruaUuQ== ||| 算法训练任务表 新增或修改 ||| Add or modify algorithm training task table
+566X5rOV6K6t57uD5Lu75Yqh6KGoIOacjeWKoeWunueOsOexuw== ||| 算法训练任务表 服务实现类 ||| Algorithm training task table service implementation class
+566X5rOV6K6t57uD5Lu75Yqh6KGoIOacjeWKoeexuw== ||| 算法训练任务表 服务类 ||| Algorithm training task table service class
+566X5rOV6K6t57uD5Lu75Yqh6KGoIOiHquWumuS5ieWIhumhtQ== ||| 算法训练任务表 自定义分页 ||| Algorithm training task table custom paging
+566X5rOV6K6t57uD5Lu75Yqh6KGoIOinhuWbvuWunuS9k+exuw== ||| 算法训练任务表 视图实体类 ||| Algorithm training task table view entity class
+566X5rOV6K6t57uD5Lu75Yqh6KGoIOivpuaDhQ== ||| 算法训练任务表 详情 ||| Algorithm training task table details
+566X5rOV6K6t57uD5Lu75Yqh6KGo5o6l5Y+j ||| 算法训练任务表接口 ||| Algorithm training task table interface
+566X5rOV6K6t57uD5Lu75Yqh6KGo5pWw5o2u ||| 算法训练任务表数据 ||| Algorithm training task table data
+566X5rOV6K6t57uD5Lu75Yqh6KGo5pWw5o2u6KGo ||| 算法训练任务表数据表 ||| Algorithm training task table database table
+566X5rOV6K+E5Lyw ||| 算法评估 ||| Algorithm evaluation
+566X5rOV6K+E5Lyw5aSx6LSl77yM566X5rOV5LiN5a2Y5Zyo ||| 算法评估失败，算法不存在 ||| Algorithm evaluation failed: algorithm does not exist
+566X5rOV6K+E5Lyw5a6M5oiQ77yaQWxnb3JpdGhtSWQ9e30sIFJlc3VsdD17fQ== ||| 算法评估完成：AlgorithmId={}, Result={} ||| Algorithm evaluation completed: AlgorithmId={}, Result={}
+566X5rOV6K+E5Lyw77yaQWxnb3JpdGhtSWQ9e30= ||| 算法评估：AlgorithmId={} ||| Algorithm evaluation: AlgorithmId={}
+566X5rOV6YOo572y5aSx6LSl ||| 算法部署失败 ||| Algorithm deployment failed
+566X5rOV6YOo572y5aSx6LSl77yaQWxnb3JpdGhtSWQ9e30= ||| 算法部署失败：AlgorithmId={} ||| Algorithm deployment failed: AlgorithmId={}
+566X5rOV6YOo572y5oiQ5Yqf ||| 算法部署成功 ||| Algorithm deployment succeeded
+566X5rOV6YOo572y5oiQ5Yqf77yaQWxnb3JpdGhtSWQ9e30= ||| 算法部署成功：AlgorithmId={} ||| Algorithm deployment succeeded: AlgorithmId={}
+566X5rOV6YWN572u5Y+C5pWw77yISlNPTuagvOW8j++8iQ== ||| 算法配置参数（JSON格式） ||| Algorithm configuration parameters (JSON format)
+566h55CG5ZGY ||| 管理员 ||| Administrator
+57G75Z6L ||| 类型 ||| Type
+57G75Z6L57uf6K6h5YaF6YOo57G7 ||| 类型统计内部类 ||| Type statistics inner class
+57K+56Gu546H ||| 精确率 ||| Precision
+57O757uf5YWz6Zet ||| 系统关闭 ||| System shutdown
+57O757uf5qih5Z2X ||| 系统模块 ||| System module
+57O757uf546v5aKD ||| 系统环境 ||| System environment
+57O757uf55uYKEdCKQ== ||| 系统盘(GB) ||| System disk (GB)
+57Sn5oCl ||| 紧急 ||| Urgent
+57qi5aSW54Gv5qih5byP ||| 红外灯模式 ||| Infrared lamp mode
+57qs5bqm ||| 纬度 ||| Latitude
+57q/56iL5L+d5oyB5a2Y5rS75pe26Ze0 ||| 线程保持存活时间 ||| Thread keep-alive time
+57q/56iL5ZCN5YmN57yA ||| 线程名前缀 ||| Thread name prefix
+57q/56iL5rGg6YWN572u ||| 线程池配置 ||| Thread pool configuration
+57q/56iL6YWN572u ||| 线程配置 ||| Thread configuration
+57uE6KOFVG9rZW7kv6Hmga8= ||| 组装Token信息 ||| Assemble Token information
+57uE6KOF5pWw5o2u ||| 组装数据 ||| Assemble data
+57uE6KOF6YWN572u ||| 组装配置 ||| Assemble configuration
+57uP5bqm ||| 经度 ||| Longitude
+57uT5p2f5pe26Ze0 ||| 结束时间 ||| End time
+57uT5p2f5pe26Ze0KOW9k3NjaGVkdWxlX3R5cGXkuLp0aW1lX3Jhbmdl5pe2KQ== ||| 结束时间(当schedule_type为time_range时) ||| End time (when schedule_type is time_range)
+57uT5p2f5pe26Ze05LiN6IO95pep5LqO5byA5aeL5pe26Ze0 ||| 结束时间不能早于开始时间 ||| End time cannot be earlier than start time
+57uT5p6cSUQ= ||| 结果ID ||| Result ID
+57uT5p6c5paH5Lu26Lev5b6E ||| 结果文件路径 ||| Result file path
+57uT5p6c5pig5bCE ||| 结果映射 ||| Result mapping
+57uT5p6c5pig5bCE77ya5pWw5o2u5bqT5a2X5q615YiwSmF2YeWxnuaAp+eahOaYoOWwhA== ||| 结果映射：数据库字段到Java属性的映射 ||| Result mapping: mapping from database fields to Java properties
+57uZ55So5oi36K6+572u6KeS6Imy ||| 给用户设置角色 ||| Assign roles to users
+57uf5LiA55So5oi35Lit5b+D55So5oi35L+h5oGvRFRP ||| 统一用户中心用户信息DTO ||| Unified user center user information DTO
+57uf6K6h5ZCE54q25oCB5pWw6YeP ||| 统计各状态数量 ||| Count quantity of each status
+57uf6K6h5pWw5o2u6ZuG5Zu+54mH5pWw6YePICjlhbzlrrnml6fmjqXlj6PvvIzlrp7pmYXkvb/nlKhhbm5vdGF0aW9uX2lkKQ== ||| 统计数据集图片数量 (兼容旧接口，实际使用annotation_id) ||| Count dataset images (compatible with old interface, actually uses annotation_id)
+57uf6K6h5pyN5Yqh5Zmo5pWw6YeP ||| 统计服务器数量 ||| Count number of servers
+57uf6K6h5p+Q5LuT5bqT5LiL55qE566X5rOV5pWw6YeP ||| 统计某仓库下的算法数量 ||| Count algorithms under a repository
+57uf6K6h5p+Q5LuT5bqT5LiL55qE566X5rOV5pWw6YeP77yaUmVwb3NpdG9yeUlkPXt9 ||| 统计某仓库下的算法数量：RepositoryId={} ||| Count algorithms under a repository: RepositoryId={}
+57uf6K6h5qCH562+5L2/55So5qyh5pWwOiBsYWJlbElkPXt9 ||| 统计标签使用次数: labelId={} ||| Count label usage: labelId={}
+57uf6K6h566X5rOV5LuT5bqT5pWw6YeP ||| 统计算法仓库数量 ||| Count algorithm repositories
+57un5om/54i257qn55qE57G75Z6L ||| 继承父级的类型 ||| Inherit parent's type
+57ut5pyfYWNjZXNzVG9rZW4= ||| 续期accessToken ||| Renew accessToken
+57ut5pyf5Luk54mM ||| 续期令牌 ||| Renew token
+57yT5a2Y5LiA5aSp ||| 缓存一天 ||| Cache for one day
+57yT5a2Y5LiA5bCP5pe2 ||| 缓存一小时 ||| Cache for one hour
+57yT5a2Y5Y2K5bCP5pe2 ||| 缓存半小时 ||| Cache for half an hour
+57yT5a2Y5ZCN ||| 缓存名 ||| Cache name
+57yT5a2Y55qE5pWw5o2u5YiX6KGo ||| 缓存的数据列表 ||| Cached data list
+57yW5Y+3 ||| 编号 ||| Number
+57yW5o6SSUQ= ||| 编排ID ||| Orchestration ID
+57yW5o6S5ZCN56ew ||| 编排名称 ||| Orchestration name
+57yW5o6S5o+P6L+w ||| 编排描述 ||| Orchestration description
+57yW56CB6YWN572u ||| 编码配置 ||| Encoding configuration
+57yp55Wl5Zu+5LiK5Lyg5aSx6LSl77yM6L+U5ZueVVJM5Li656m6OiB2aWRlb1BhdGg9e30sIHRodW1ibmFpbFBhdGg9e30= ||| 缩略图上传失败，返回URL为空: videoPath={}, thumbnailPath={} ||| Thumbnail upload failed, returned URL is empty: videoPath={}, thumbnailPath={}
+57yp55Wl5Zu+6Lev5b6E ||| 缩略图路径 ||| Thumbnail path
+572u5L+h5bqm ||| 置信度 ||| Confidence
+6IGU5Yqo5oql6K2m6L6T5Ye6OjDlkKYx5piv ||| 联动报警输出:0否1是 ||| Linkage alarm output: 0 No, 1 Yes
+6IGU5Yqo5oql6K2m6L6T5Ye65byA5ZCv5pe277yM5oql6K2m6L6T5Ye66YCa6YGT5LiN6IO95Li656m6 ||| 联动报警输出开启时，报警输出通道不能为空 ||| When linkage alarm output is enabled, the alarm output channel cannot be empty
+6IGU57O75Lq6 ||| 联系人 ||| Contact person
+6IGU57O75Zyw5Z2A ||| 联系地址 ||| Contact address
+6IGU57O755S16K+d ||| 联系电话 ||| Contact phone
+6IGa54Sm5qih5byP ||| 聚焦模式 ||| Focus mode
+6IOM5YWJ6KGl5YG/ ||| 背光补偿 ||| Backlight compensation
+6Ieq5Yqo ||| 自动 ||| Automatic
+6Ieq5Yqo5o6I5p2D ||| 自动授权 ||| Auto authorization
+6Ieq5Yqo5pu05paw5qCH5rOo54q25oCB ||| 自动更新标注状态 ||| Automatically update annotation status
+6Ieq5Yqo55Sf5oiQZGV2aWNlX2lk77yI5aaC5p6c5rKh5pyJ5o+Q5L6b77yJ ||| 自动生成device_id（如果没有提供） ||| Automatically generate device_id (if not provided)
+6Ieq5Yqo55m95bmz6KGh ||| 自动白平衡 ||| Auto white balance
+6Ieq5a6a5LmJ5YiG6aG1 ||| 自定义分页 ||| Custom paging
+6Ieq5a6a5LmJ5YiG6aG1IOWyl+S9jeihqA== ||| 自定义分页 岗位表 ||| Custom paging post table
+6Ieq5a6a5LmJ5qih5Z2X ||| 自定义模块 ||| Custom module
+6Ieq5pyJ5qCH562+ ||| 自有标签 ||| Own label
+6Ieq6YCC5bqU ||| 自适应 ||| Adaptive
+6Iul5b6q546v5Lit5pyq5pS26ZuG5Yiw5qCH562+5ZCN56ew77yM5YWc5bqV5oyJ5qCH5rOo5LiL55qE5qCH562+5YiX6KGo5aGr5YWF ||| 若循环中未收集到标签名称，兜底按标注下的标签列表填充 ||| If label names are not collected in the loop, fall back to fill in according to the label list under the annotation
+6I635Y+WQ2xhaW1z ||| 获取Claims ||| Get Claims
+6I635Y+WVG9rZW5HcmFudGVy ||| 获取TokenGranter ||| Get TokenGranter
+6I635Y+WVG9rZW7nrb7lkI0= ||| 获取Token签名 ||| Get Token signature
+6I635Y+W5LqL5Lu2562W55Wl ||| 获取事件策略 ||| Get event policy
+6I635Y+W5L2/55So5p+Q5Liq5qCH562+55qE6K6+5aSH5pWw6YeP ||| 获取使用某个标签的设备数量 ||| Get device count using a specific label
+6I635Y+W5YiwIHt9IOS4quaWh+S7tg== ||| 获取到 {} 个文件 ||| Got {} files
+6I635Y+W5Y6f5qCH5rOo5L+h5oGv ||| 获取原标注信息 ||| Get original annotation info
+6I635Y+W5Y6f566X5rOV5L+h5oGv ||| 获取原算法信息 ||| Get original algorithm info
+6I635Y+W5ZCE5YiG57G755qE566X5rOV5pWw6YeP57uf6K6h ||| 获取各分类的算法数量统计 ||| Get algorithm count statistics for each category
+6I635Y+W5ZCE54q25oCB55qE5qCH5rOo5pWw6YeP57uf6K6h ||| 获取各状态的标注数量统计 ||| Get annotation count statistics for each status
+6I635Y+W5ZCE57G75Z6L55qE5qCH5rOo5pWw6YeP57uf6K6h ||| 获取各类型的标注数量统计 ||| Get annotation count statistics for each type
+6I635Y+W5ZCE57G75Z6L55qE566X5rOV5pWw6YeP57uf6K6h ||| 获取各类型的算法数量统计 ||| Get algorithm count statistics for each type
+6I635Y+W5ZCE6L+b5bqm5Yy66Ze055qE5qCH5rOo5pWw6YeP57uf6K6h ||| 获取各进度区间的标注数量统计 ||| Get annotation count statistics for each progress interval
+6I635Y+W5ZCE6YOo572y54q25oCB55qE566X5rOV5pWw6YeP57uf6K6h ||| 获取各部署状态的算法数量统计 ||| Get algorithm count statistics for each deployment status
+6I635Y+W5ZCv55So55qE5Zy65pmv5rK755CG5pWw6YeP ||| 获取启用的场景治理数量 ||| Get enabled scene governance count
+6I635Y+W5Zu+54mH5YiX6KGo5aSx6LSlOiA= ||| 获取图片列表失败:  ||| Failed to get image list: 
+6I635Y+W5Zu+54mH55qE5qCH5rOo5a6e5L6L5YiX6KGo ||| 获取图片的标注实例列表 ||| Get annotation instance list of image
+6I635Y+W5Zu+54mH6K+m5oOF ||| 获取图片详情 ||| Get image details
+6I635Y+W5Zu+54mH6K+m5oOF5aSx6LSlOiA= ||| 获取图片详情失败:  ||| Failed to get image details: 
+6I635Y+W5Zy65pmv5rK755CG5oC75pWw ||| 获取场景治理总数 ||| Get total count of scene governance
+6I635Y+W5a2X5YW4 ||| 获取字典 ||| Get dictionary
+6I635Y+W5a2X5YW45qCR5b2i57uT5p6E ||| 获取字典树形结构 ||| Get dictionary tree structure
+6I635Y+W5a2X5YW46KGo ||| 获取字典表 ||| Get dictionary table
+6I635Y+W5a2X5YW46KGo5a+55bqU5Lit5paH ||| 获取字典表对应中文 ||| Get corresponding Chinese for dictionary table
+6I635Y+W5a6i5oi356uvaWQ= ||| 获取客户端id ||| Get client ID
+6I635Y+W5a6i5oi356uv5L+h5oGv ||| 获取客户端信息 ||| Get client info
+6I635Y+W5a6i5oi356uv5pyN5Yqh57G7 ||| 获取客户端服务类 ||| Get client service class
+6I635Y+W5a655Zmo5a6e5L6L57uf6K6h5L+h5oGv ||| 获取容器实例统计信息 ||| Get container instance statistics
+6I635Y+W5a+85Ye65pWw5o2u ||| 获取导出数据 ||| Get export data
+6I635Y+W5a+85Ye655So5oi35pWw5o2u ||| 获取导出用户数据 ||| Get export user data
+6I635Y+W5bKX5L2NSUQ= ||| 获取岗位ID ||| Get post ID
+6I635Y+W5bKX5L2N5ZCN ||| 获取岗位名 ||| Get post name
+6I635Y+W5bim5pyJ5oyH5a6a5qCH562+55qE6K6+5aSH5YiX6KGo ||| 获取带有指定标签的设备列表 ||| Get device list with specified label
+6I635Y+W5byA5pS+5bmz5Y+w5o6I5p2D5pWw5o2u ||| 获取开放平台授权数据 ||| Get open platform authorization data
+6I635Y+W5byC5bi454q25oCB55qE5a655Zmo5a6e5L6L5YiX6KGo ||| 获取异常状态的容器实例列表 ||| Get container instances with abnormal status
+6I635Y+W5b2T5YmN5pyA5aSn5o6S5bqP5YC8 ||| 获取当前最大排序值 ||| Get current maximum sort value
+6I635Y+W5b6F5Yig6Zmk566X5rOV55qE5LuT5bqT5L+h5oGv ||| 获取待删除算法的仓库信息 ||| Get repository info of algorithm to be deleted
+6I635Y+W5oiR55qE5raI5oGv ||| 获取我的消息 ||| Get my messages
+6I635Y+W5omA5pyJ5qCH562+57G75Z6L77yIbGV2ZWw9Me+8iQ== ||| 获取所有标签类型（level=1） ||| Get all label types (level=1)
+6I635Y+W5omA5pyJ6K6+5aSH ||| 获取所有设备 ||| Get all devices
+6I635Y+W5omA5pyJ6K6+5aSH5ZOB54mM5YiX6KGo ||| 获取所有设备品牌列表 ||| Get all device brand list
+6I635Y+W5omA5pyJ6K6+5aSH57G75Z6L ||| 获取所有设备类型 ||| Get all device types
+6I635Y+W5omA5pyJ6K6+5aSH57G75Z6L5YiX6KGo ||| 获取所有设备类型列表 ||| Get all device type list
+6I635Y+W5omA5pyJ6K6+5aSH57G75Z6L5YiX6KGo77yI5qCH562+5YiX6KGo77yJ ||| 获取所有设备类型列表（标签列表） ||| Get all device type list (label list)
+6I635Y+W5omA5pyJ6K6+5aSH57G75Z6L5YiX6KGo77yI55So5LqO5qCH562+5YiX6KGo77yJ ||| 获取所有设备类型列表（用于标签列表） ||| Get all device type list (used for label list)
+6I635Y+W5omn6KGM57uT5p6c77yM5L2/55SoVVRGLTjnvJbnoIHnoa7kv53kuK3mlofmraPnoa7mmL7npLo= ||| 获取执行结果，使用UTF-8编码确保中文正确显示 ||| Get execution result, use UTF-8 encoding to ensure correct display of Chinese
+6I635Y+W5oyH5a6a5LuT5bqT5LiL55qE5omA5pyJ566X5rOV ||| 获取指定仓库下的所有算法 ||| Get all algorithms under specified repository
+6I635Y+W5oyH5a6a5LuT5bqT55qE566X5rOV5pWw6YeP ||| 获取指定仓库的算法数量 ||| Get algorithm count of specified repository
+6I635Y+W5oyH5a6a5YiG57G755qE5omA5pyJ566X5rOV ||| 获取指定分类的所有算法 ||| Get all algorithms of specified category
+6I635Y+W5oyH5a6a54q25oCB55qE5omA5pyJ5qCH5rOo ||| 获取指定状态的所有标注 ||| Get all annotations of specified status
+6I635Y+W5oyH5a6a57G75Z6L55qE5omA5pyJ5qCH5rOo ||| 获取指定类型的所有标注 ||| Get all annotations of specified type
+6I635Y+W5oyH5a6a6KeS6Imy5qCR5b2i57uT5p6E ||| 获取指定角色树形结构 ||| Get specified role tree structure
+6I635Y+W5oyH5a6a6K6t57uD5Lu75Yqh55qE5pel5b+X ||| 获取指定训练任务的日志 ||| Get logs of specified training task
+6I635Y+W5oyH5a6a6K6t57uD5Lu75Yqh55qE54q25oCB ||| 获取指定训练任务的状态 ||| Get status of specified training task
+6I635Y+W5pWw5o2u6ZuG5paH5Lu25YiX6KGo ||| 获取数据集文件列表 ||| Get dataset file list
+6I635Y+W5pWw5o2u6ZuG5paH5Lu25YiX6KGo77yaaG9zdD17fSwgcGF0aD17fQ== ||| 获取数据集文件列表：host={}, path={} ||| Get dataset file list: host={}, path={}
+6I635Y+W5pWw5o2u6ZuG55qE5omA5pyJ5Zu+54mH ||| 获取数据集的所有图片 ||| Get all images of dataset
+6I635Y+W5pWw5o2u6ZuG57uf6K6h5L+h5oGv ||| 获取数据集统计信息 ||| Get dataset statistics
+6I635Y+W5paH5Lu25L+h5oGv ||| 获取文件信息 ||| Get file info
+6I635Y+W5paH5Lu25YaF5a65 ||| 获取文件内容 ||| Get file content
+6I635Y+W5paH5Lu25YaF5a655aSx6LSl77ya ||| 获取文件内容失败： ||| Failed to get file content: 
+6I635Y+W5paH5Lu25YaF5a6577yaaG9zdD17fSwgcGF0aD17fSwgZmlsZW5hbWU9e30= ||| 获取文件内容：host={}, path={}, filename={} ||| Get file content: host={}, path={}, filename={}
+6I635Y+W5paH5Lu25YiX6KGo ||| 获取文件列表 ||| Get file list
+6I635Y+W5paH5Lu25YiX6KGo5aSx6LSl77ya ||| 获取文件列表失败： ||| Failed to get file list: 
+6I635Y+W5paH5Lu25YiX6KGo5aSx6LSl77yae30= ||| 获取文件列表失败：{} ||| Failed to get file list: {}
+6I635Y+W5paH5Lu25aSW6ZO+ ||| 获取文件外链 ||| Get file external link
+6I635Y+W5paH5Lu255u45a+56Lev5b6E ||| 获取文件相对路径 ||| Get file relative path
+6I635Y+W5paH5Lu26Lev5b6E ||| 获取文件路径 ||| Get file path
+6I635Y+W5pyA5aSn5o6S5bqP5Y+3 ||| 获取最大排序号 ||| Get maximum sort number
+6I635Y+W5p2D6ZmQ5YiG6YWN5qCR5b2i57uT5p6E ||| 获取权限分配树形结构 ||| Get permission assignment tree structure
+6I635Y+W5qCH5rOo5a6e5L6L5aSx6LSl ||| 获取标注实例失败 ||| Failed to get annotation instance
+6I635Y+W5qCH5rOo5a6e5L6L5aSx6LSlOiA= ||| 获取标注实例失败:  ||| Failed to get annotation instance: 
+6I635Y+W5qCH5rOo5bel5L2c6YeP55qE5oC75L2T57uf6K6h ||| 获取标注工作量的总体统计 ||| Get overall statistics of annotation workload
+6I635Y+W5qCH5rOo5bel5L2c6YeP57uf6K6h ||| 获取标注工作量统计 ||| Get annotation workload statistics
+6I635Y+W5qCH5rOo54q25oCB57uf6K6h ||| 获取标注状态统计 ||| Get annotation status statistics
+6I635Y+W5qCH5rOo57G75Z6L57uf6K6h ||| 获取标注类型统计 ||| Get annotation type statistics
+6I635Y+W5qCH5rOo6L+b5bqm57uf6K6h ||| 获取标注进度统计 ||| Get annotation progress statistics
+6I635Y+W5qCH5rOo6aG555uu5omA5pyJ5a6e5L6L5aSx6LSl ||| 获取标注项目所有实例失败 ||| Failed to get all instances of annotation project
+6I635Y+W5qCH5rOo6aG555uu5omA5pyJ5a6e5L6L5aSx6LSlOiA= ||| 获取标注项目所有实例失败:  ||| Failed to get all instances of annotation project: 
+6I635Y+W5qCH5rOo6aG555uu55qE5omA5pyJ5qCH5rOo5a6e5L6L5YiX6KGo ||| 获取标注项目的所有标注实例列表 ||| Get all annotation instances of annotation project
+6I635Y+W5qCH5rOo6aG555uu55qE5qCH562+5YiX6KGo ||| 获取标注项目的标签列表 ||| Get label list of annotation project
+6I635Y+W5qCH562+5L2/55So57uf6K6h ||| 获取标签使用统计 ||| Get label usage statistics
+6I635Y+W5qCH562+5YiX6KGo5aSx6LSl ||| 获取标签列表失败 ||| Failed to get label list
+6I635Y+W5qCH562+5YiX6KGo5aSx6LSlOiA= ||| 获取标签列表失败:  ||| Failed to get label list: 
+6I635Y+W5qCH562+5qCR5aSx6LSl ||| 获取标签树失败 ||| Failed to get label tree
+6I635Y+W5qCH562+5qCR5aSx6LSlOiA= ||| 获取标签树失败:  ||| Failed to get label tree: 
+6I635Y+W5qCH562+5qCR5aSx6LSl77yM57G75Z6LOiB7fQ== ||| 获取标签树失败，类型: {} ||| Failed to get label tree, type: {}
+6I635Y+W5qCH562+5qCR5b2i57uT5p6E ||| 获取标签树形结构 ||| Get label tree structure
+6I635Y+W5qCH562+5qCR5b2i57uT5p6E77yI5oyJ57G75Z6L5ZKM5bGC57qn5o6S5bqP77yJ ||| 获取标签树形结构（按类型和层级排序） ||| Get label tree structure (sorted by type and level)
+6I635Y+W5qCH562+5qCR5b2i57uT5p6E77yI55So5LqO5bem5L6n5a+86Iiq77yJ ||| 获取标签树形结构（用于左侧导航） ||| Get label tree structure (used for left navigation)
+6I635Y+W5qCH562+55qE5L2/55So57uf6K6h ||| 获取标签的使用统计 ||| Get label usage statistics
+6I635Y+W5qCH562+55qE6K6+5aSH5pWw6YeP ||| 获取标签的设备数量 ||| Get device count of label
+6I635Y+W5qCH562+57uf6K6h5aSx6LSlOiA= ||| 获取标签统计失败:  ||| Failed to get label statistics: 
+6I635Y+W5qCH562+57uf6K6h5aSx6LSl77yMSUQ6IHt9 ||| 获取标签统计失败，ID: {} ||| Failed to get label statistics, ID: {}
+6I635Y+W5qCR5b2i6IqC54K5 ||| 获取树形节点 ||| Get tree node
+6I635Y+W5qC557qn5qCH562+77yI57G75Z6L57qn5Yir77yJ ||| 获取根级标签（类型级别） ||| Get root-level label (type level)
+6I635Y+W5qih5Z6L6K+m5oOF5pe277yMSUTkuLrnqbo= ||| 获取模型详情时，ID为空 ||| ID is empty when getting model details
+6I635Y+W5q2j5Zyo6K6t57uD55qE5Lu75Yqh5YiX6KGo ||| 获取正在训练的任务列表 ||| Get list of tasks currently training
+6I635Y+W5raI5oGv ||| 获取消息 ||| Get message
+6I635Y+W5rqQ6K6+5aSH55qE5qCH562+ ||| 获取源设备的标签 ||| Get labels of source device
+6I635Y+W54q25oCB5Li65ZCv55So55qE5omA5pyJ566X5rOV5LuT5bqT ||| 获取状态为启用的所有算法仓库 ||| Get all algorithm repositories with status enabled
+6I635Y+W546w5pyJ55qE6K6t57uD5Lu75Yqh ||| 获取现有的训练任务 ||| Get existing training tasks
+6I635Y+W55So5oi3 ||| 获取用户 ||| Get user
+6I635Y+W55So5oi3aWQ= ||| 获取用户id ||| Get user ID
+6I635Y+W55So5oi35L+h5oGv ||| 获取用户信息 ||| Get user info
+6I635Y+W55So5oi35ZCN ||| 获取用户名 ||| Get username
+6I635Y+W55So5oi357G75Z6L ||| 获取用户类型 ||| Get user type
+6I635Y+W55So5oi36KeS6Imy ||| 获取用户角色 ||| Get user role
+6I635Y+W55So5oi36LSm5Y+3 ||| 获取用户账号 ||| Get user account
+6I635Y+W55So6KeS6Imy ||| 获取用角色 ||| Get user roles
+6I635Y+W56aB55So55qE5Zy65pmv5rK755CG5pWw6YeP ||| 获取禁用的场景治理数量 ||| Get disabled scene governance count
+6I635Y+W56ef5oi3SUQ= ||| 获取租户ID ||| Get tenant ID
+6I635Y+W562J5b6F5Lit55qE5Lu75Yqh5YiX6KGo ||| 获取等待中的任务列表 ||| Get list of waiting tasks
+6I635Y+W566X5rOV5LiL5pyA5paw54mI5pys55qE5qih5Z6L ||| 获取算法下最新版本的模型 ||| Get the latest version model under the algorithm
+6I635Y+W566X5rOV5LiL5pyA5paw54mI5pys55qE5qih5Z6L5aSx6LSl ||| 获取算法下最新版本的模型失败 ||| Failed to get the latest version model under the algorithm
+6I635Y+W566X5rOV5LiL5pyA5paw54mI5pys55qE5qih5Z6L5aSx6LSl77ya ||| 获取算法下最新版本的模型失败： ||| Failed to get the latest version model under the algorithm: 
+6I635Y+W566X5rOV5LuT5bqT5oC75pWw ||| 获取算法仓库总数 ||| Get total count of algorithm repositories
+6I635Y+W566X5rOV5YiG57G757uf6K6h ||| 获取算法分类统计 ||| Get algorithm category statistics
+6I635Y+W566X5rOV5qih5Z6L55qE5oC75aSn5bCP ||| 获取算法模型的总大小 ||| Get total size of algorithm model
+6I635Y+W566X5rOV5qih5Z6L55qE5oC75aSn5bCP5aSx6LSl ||| 获取算法模型的总大小失败 ||| Failed to get total size of algorithm model
+6I635Y+W566X5rOV5qih5Z6L55qE5oC75aSn5bCP5aSx6LSl77ya ||| 获取算法模型的总大小失败： ||| Failed to get total size of algorithm model: 
+6I635Y+W566X5rOV5qih5Z6L55qE5oC75aSn5bCP77yI5omA5pyJ5bey5Y+R5biD5qih5Z6L55qE5paH5Lu25aSn5bCP5oC75ZKM77yJ ||| 获取算法模型的总大小（所有已发布模型的文件大小总和） ||| Get total size of algorithm model (sum of file sizes of all published models)
+6I635Y+W566X5rOV57G75Z6L57uf6K6h ||| 获取算法类型统计 ||| Get algorithm type statistics
+6I635Y+W57uf6K6h5L+h5oGv5aSx6LSlOiA= ||| 获取统计信息失败:  ||| Failed to get statistical info: 
+6I635Y+W6Ieq5pyJ5qCH562+5ZKM5YWs5YWx5qCH562+5pWw5o2u ||| 获取自有标签和公共标签数据 ||| Get own label and public label data
+6I635Y+W6I+c5Y2V5qCR5b2i57uT5p6E ||| 获取菜单树形结构 ||| Get menu tree structure
+6I635Y+W6KeS6ImySUQ= ||| 获取角色ID ||| Get role ID
+6I635Y+W6KeS6Imy5Yir5ZCN ||| 获取角色别名 ||| Get role alias
+6I635Y+W6KeS6Imy5ZCN ||| 获取角色名 ||| Get role name
+6I635Y+W6KeS6Imy5qCR5b2i57uT5p6E ||| 获取角色树形结构 ||| Get role tree structure
+6I635Y+W6KeS6Imy6YWN572u55qE6I+c5Y2V ||| 获取角色配置的菜单 ||| Get menus configured for role
+6I635Y+W6K6k6K+BdG9rZW4= ||| 获取认证token ||| Get authentication token
+6I635Y+W6K6k6K+B5L+h5oGv ||| 获取认证信息 ||| Get authentication info
+6I635Y+W6K6t57uD5pel5b+X ||| 获取训练日志 ||| Get training logs
+6I635Y+W6K6t57uD5pel5b+X77yaSUQ9e30/bG9nUGF0aD17fQ== ||| 获取训练日志：ID={}?logPath={} ||| Get training logs: ID={}?logPath={}
+6I635Y+W6K6t57uD54q25oCB ||| 获取训练状态 ||| Get training status
+6I635Y+W6K6t57uD54q25oCB77yaSUQ9e30/bG9nUGF0aD17fQ== ||| 获取训练状态：ID={}?logPath={} ||| Get training status: ID={}?logPath={}
+6I635Y+W6K6t57uD6L+b5bqm ||| 获取训练进度 ||| Get training progress
+6I635Y+W6K6t57uD6L+b5bqm5aSx6LSlOiB7fQ== ||| 获取训练进度失败: {} ||| Failed to get training progress: {}
+6I635Y+W6K6+5aSH5YiG57uE57uf6K6h ||| 获取设备分组统计 ||| Get device grouping statistics
+6I635Y+W6K6+5aSH5YiG57uE57uf6K6h77yI5oyJ5qCH562+5YiG57uE77yJ ||| 获取设备分组统计（按标签分组） ||| Get device grouping statistics (grouped by label)
+6I635Y+W6K6+5aSH5ZOB54mM57uf6K6h ||| 获取设备品牌统计 ||| Get device brand statistics
+6I635Y+W6K6+5aSH5qCH562+ ||| 获取设备标签 ||| Get device labels
+6I635Y+W6K6+5aSH5qCH562+55qE6K+m57uG5L+h5oGv77yI5YyF5ZCr5qCH562+5bGC57qn57uT5p6E77yJ ||| 获取设备标签的详细信息（包含标签层级结构） ||| Get detailed information of device label (containing label hierarchy)
+6I635Y+W6K6+5aSH5qCH562+57uf6K6h5L+h5oGv ||| 获取设备标签统计信息 ||| Get device label statistics
+6I635Y+W6K6+5aSH5qCH562+6K+m57uG5L+h5oGv ||| 获取设备标签详细信息 ||| Get device label details
+6I635Y+W6K6+5aSH5qCR5aSx6LSlOiA= ||| 获取设备树失败:  ||| Failed to get device tree: 
+6I635Y+W6K6+5aSH5qCR5b2i57uT5p6E ||| 获取设备树形结构 ||| Get device tree structure
+6I635Y+W6K6+5aSH54q25oCB57uf6K6h ||| 获取设备状态统计 ||| Get device status statistics
+6I635Y+W6K6+5aSH55qE5omA5pyJ5qCH562+ ||| 获取设备的所有标签 ||| Get all labels of device
+6I635Y+W6K6+5aSH55qE5qCH562+SUTliJfooag= ||| 获取设备的标签ID列表 ||| Get label ID list of device
+6I635Y+W6K6+5aSH57G75Z6L57uf6K6h ||| 获取设备类型统计 ||| Get device type statistics
+6I635Y+W6K6+5aSH57uf6K6h5L+h5oGv ||| 获取设备统计信息 ||| Get device statistics
+6I635Y+W6K6+5aSH6KeG6aKR5rWB5L+h5oGv ||| 获取设备视频流信息 ||| Get device video stream info
+6I635Y+W6K6+5aSH6K6t57uD5qih5Z6L ||| 获取设备训练模型 ||| Get device training model
+6I635Y+W6K6+5aSH6YWN572u ||| 获取设备配置 ||| Get device configuration
+6I635Y+W6K6+5aSH6YWN572u5Y+C5pWw ||| 获取设备配置参数 ||| Get device configuration parameters
+6I635Y+W6K+l5qCH5rOo6aG555uu55qE5omA5pyJ5Zu+54mH ||| 获取该标注项目的所有图片 ||| Get all images of the annotation project
+6I635Y+W6K+l57G75Z6L5LiL55qE5omA5pyJ5YW35L2T5qCH562+ ||| 获取该类型下的所有具体标签 ||| Get all specific labels under this type
+6I635Y+W6K+35rGC5Lyg6YCS55qEdG9rZW7kuLI= ||| 获取请求传递的token串 ||| Get token string passed by request
+6I635Y+W6K+35rGC5aS0 ||| 获取请求头 ||| Get request headers
+6I635Y+W6K+35rGC5aS05Lit55qE5a6i5oi356uvaWQ= ||| 获取请求头中的客户端id ||| Get client ID in request header
+6I635Y+W6K+35rGC5aS05a6i5oi356uv5L+h5oGv ||| 获取请求头客户端信息 ||| Get client info in request header
+6I635Y+W6L6T5Ye65rWB ||| 获取输出流 ||| Get output stream
+6I635Y+W6L+H5pyf5pe26Ze0KOasoeaXpeWHjOaZqDPngrkp ||| 获取过期时间(次日凌晨3点) ||| Get expiration time (3 AM next day)
+6I635Y+W6L+Q6KGM5Lit55qE5a655Zmo5a6e5L6L5YiX6KGo ||| 获取运行中的容器实例列表 ||| Get running container instances
+6I635Y+W6L+c56iL5pyN5Yqh5Zmo5oyH5a6a5paH5Lu255qE5YaF5a65 ||| 获取远程服务器指定文件的内容 ||| Get contents of specified file on remote server
+6I635Y+W6L+c56iL5pyN5Yqh5Zmo5oyH5a6a6Lev5b6E5LiL55qE5paH5Lu25YiX6KGo ||| 获取远程服务器指定路径下的文件列表 ||| Get file list under specified path on remote server
+6I635Y+W6YOo572y54q25oCB57uf6K6h ||| 获取部署状态统计 ||| Get deployment status statistics
+6I635Y+W6YOo6ZeoSUQ= ||| 获取部门ID ||| Get department ID
+6I635Y+W6YOo6Zeo5ZCN ||| 获取部门名 ||| Get department name
+6I635Y+W6YOo6Zeo5qCR5b2i57uT5p6E ||| 获取部门树形结构 ||| Get department tree structure
+6I635Y+W6YWN572u ||| 获取配置 ||| Get configuration
+6I635Y+W6YWN572u55qE6KeS6Imy5p2D6ZmQ ||| 获取配置的角色权限 ||| Get configured role permissions
+6I635Y+W6YWN572u57G7 ||| 获取配置类 ||| Get configuration class
+6I635Y+W6ZSZ6K+v5rWB ||| 获取错误流 ||| Get error stream
+6I635Y+W6aG26YOo6I+c5Y2V5qCR5b2i57uT5p6E ||| 获取顶部菜单树形结构 ||| Get top menu tree structure
+6I635Y+W6aG26YOo6I+c5Y2V6YWN572u55qE6I+c5Y2V ||| 获取顶部菜单配置的菜单 ||| Get menus configured for top menu
+6I635Y+W6aqM6K+B56CB ||| 获取验证码 ||| Get verification code
+6I+c5Y2V ||| 菜单 ||| Menu
+6I+c5Y2VaWQ= ||| 菜单id ||| Menu ID
+6I+c5Y2V5Li76ZSu ||| 菜单主键 ||| Menu primary key
+6I+c5Y2V5YiX6KGo ||| 菜单列表 ||| Menu list
+6I+c5Y2V5Yir5ZCN ||| 菜单别名 ||| Menu alias
+6I+c5Y2V5ZCN56ew ||| 菜单名称 ||| Menu name
+6I+c5Y2V5qCR5b2i57uT5p6E ||| 菜单树形结构 ||| Menu tree structure
+6I+c5Y2V54i25Li76ZSu ||| 菜单父主键 ||| Menu parent primary key
+6I+c5Y2V55qE6KeS6Imy5p2D6ZmQ ||| 菜单的角色权限 ||| Role permissions of menu
+6I+c5Y2V57G75Z6L ||| 菜单类型 ||| Menu type
+6I+c5Y2V57yW5Y+3 ||| 菜单编号 ||| Menu code
+6I+c5Y2V6KGo5paw5aKe5o6l5Y+j5p2D6ZmQ6I+c5Y2V ||| 菜单表新增接口权限菜单 ||| Add interface permission menu in menu table
+6I+c5Y2V6LWE5rqQ ||| 菜单资源 ||| Menu resource
+6JqC6JqB6YeR5pyN5L2T6aqM5oqA5pyv6YOo57uP6L+H5aSn6YeP55qE6aG555uu5a6e6Le15ZKM5oC757uT77yM5rKJ5reA5Ye66K6+6K6h6K+t6KiAIEFudCBEZXNpZ27vvIzov5nlj6/kuI3ljZXnuq/lj6rmmK/orr7orqHljp/liJnjgIHmjqfku7bop4TojIPlkozop4bop4nlsLrlr7jvvIzov5jphY3lpZfmnInliY3nq6/ku6PnoIHlrp7njrDmlrnmoYjjgILkuZ/lsLHmmK/or7Tph4fnlKhBbnQgRGVzaWdu5ZCO77yMVUnorr7orqHlkozliY3nq6/nlYzpnaLnoJTlj5Hlj6/lkIzmraXlrozmiJDvvIzmlYjnjoflpKflpKfmj5DljYfjgII= ||| 蚂蚁金服体验技术部经过大量的项目实践和总结，沉淀出设计语言 Ant Design，这可不单纯只是设计原则、控件规范和视觉尺寸，还配套有前端代码实现方案。也就是说采用Ant Design后，UI设计和前端界面研发可同步完成，效率大大提升。 ||| Through a large number of project practices and summaries, the Ant Financial Experience Technology Department has developed the design language Ant Design. This is not simply design principles, control specifications, and visual dimensions, but is also accompanied by frontend code implementation solutions. In other words, after adopting Ant Design, UI design and frontend interface R&D can be completed synchronously, greatly improving efficiency.
+6KGM5Lq65qOA5rWL566X5rOV ||| 行人检测算法 ||| Pedestrian detection algorithm
+6KGM5pS/5Yy65YiS5LiL5ouJ5pWw5o2u5rqQ ||| 行政区划下拉数据源 ||| Administrative division dropdown data source
+6KGM5pS/5Yy65YiS6KGo ||| 行政区划表 ||| Administrative division table
+6KGM5pS/5Yy65YiS6KGoIE1hcHBlciDmjqXlj6M= ||| 行政区划表 Mapper 接口 ||| Administrative division table Mapper interface
+6KGM5pS/5Yy65YiS6KGoIOaOp+WItuWZqA== ||| 行政区划表 控制器 ||| Administrative division table controller
+6KGM5pS/5Yy65YiS6KGoIOacjeWKoeWunueOsOexuw== ||| 行政区划表 服务实现类 ||| Administrative division table service implementation class
+6KGM5pS/5Yy65YiS6KGoIOacjeWKoeexuw== ||| 行政区划表 服务类 ||| Administrative division table service class
+6KGM5pS/5Yy65YiS6KGo5a6e5L2T57G7 ||| 行政区划表实体类 ||| Administrative division table entity class
+6KGM5pS/5Yy65YiS6KGo5o6l5Y+j ||| 行政区划表接口 ||| Administrative division table interface
+6KGM5pS/5Yy65YiS6KGo6KeG5Zu+5a6e5L2T57G7 ||| 行政区划表视图实体类 ||| Administrative division table view entity class
+6KGo5YmN57yA ||| 表前缀 ||| Table prefix
+6KGo5ZCN ||| 表名 ||| Table name
+6KOB5Ymq5YiwIFswLDFd ||| 裁剪到 [0,1] ||| Clip to [0,1]
+6KeE5YiZ57G75Z6L5ZCN ||| 规则类型名 ||| Rule type name
+6KeE5qC85ZCN56ew ||| 规格名称 ||| Specification name
+6KeG5Zu+5a6e5L2T57G7 ||| 视图实体类 ||| View entity class
+6KeG6aKR5Zue5pS+5p+l6K+i ||| 视频回放查询 ||| Video playback query
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIEV4Y2Vs5a6e5L2T57G7 ||| 视频录制记录表 Excel实体类 ||| Video recording record table Excel entity class
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIE1hcHBlciDmjqXlj6M= ||| 视频录制记录表 Mapper 接口 ||| Video recording record table Mapper interface
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIOS/ruaUuQ== ||| 视频录制记录表 修改 ||| Modify video recording record table

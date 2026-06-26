@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.vlstream.mapper.VlsEventManagementMapper">
+
+    <!-- General query mapping result -->
+    <resultMap id="vlsEventManagementResultMap" type="org.springblade.vlstream.pojo.entity.EventManagement">
+        <result column="event_desc" property="eventDesc"/>
+        <result column="event_type" property="eventType"/>
+        <result column="report_location" property="reportLocation"/>
+        <result column="report_device" property="reportDevice"/>
+        <result column="report_img" property="reportImg"/>
+        <result column="report_time" property="reportTime"/>
+        <result column="event_level" property="eventLevel"/>
+        <result column="event_status" property="eventStatus"/>
+        <result column="executor" property="executor"/>
+        <result column="executor_ids" property="executorIds"/>
+        <result column="event_data" property="eventData"/>
+        <result column="handle_result" property="handleResult"/>
+        <result column="feedback_info" property="feedbackInfo"/>
+        <result column="feedback_img" property="feedbackImg"/>
+        <result column="feedback_status" property="feedbackStatus"/>
+    </resultMap>
+
+    <select id="selectVlsEventManagementPage" resultMap="vlsEventManagementResultMap">
+        select * from vls_event_management where is_deleted = 0 order by create_time desc
+    </select>
+
+    <select id="exportVlsEventManagement" resultType="org.springblade.vlstream.excel.VlsEventManagementExcel">
+        SELECT * FROM vls_event_management ${ew.customSqlSegment}
+    </select>
+
+</mapper>

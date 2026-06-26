@@ -1,0 +1,400 @@
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIOWIhumhtQ== ||| 视频录制记录表 分页 ||| Video Recording Record Table Pagination
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIOWIoOmZpA== ||| 视频录制记录表 删除 ||| Video Recording Record Table Delete
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIOWMheijheexuyzov5Tlm57op4blm77lsYLmiYDpnIDnmoTlrZfmrrU= ||| 视频录制记录表 包装类,返回视图层所需的字段 ||| Video Recording Record Table Wrapper Class, returns fields required by view layer
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIOWunuS9k+exuw== ||| 视频录制记录表 实体类 ||| Video Recording Record Table Entity Class
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIOaOp+WItuWZqA== ||| 视频录制记录表 控制器 ||| Video Recording Record Table Controller
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIOaVsOaNruS8oOi+k+WvueixoeWunuS9k+exuw== ||| 视频录制记录表 数据传输对象实体类 ||| Video Recording Record Table Data Transfer Object Entity Class
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIOaWsOWing== ||| 视频录制记录表 新增 ||| Video Recording Record Table Add
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIOaWsOWinuaIluS/ruaUuQ== ||| 视频录制记录表 新增或修改 ||| Video Recording Record Table Add or Modify
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIOacjeWKoeWunueOsOexuw== ||| 视频录制记录表 服务实现类 ||| Video Recording Record Table Service Implementation Class
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIOacjeWKoeexuw== ||| 视频录制记录表 服务类 ||| Video Recording Record Table Service Class
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIOiHquWumuS5ieWIhumhtQ== ||| 视频录制记录表 自定义分页 ||| Video Recording Record Table Custom Pagination
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIOinhuWbvuWunuS9k+exuw== ||| 视频录制记录表 视图实体类 ||| Video Recording Record Table View Entity Class
+6KeG6aKR5b2V5Yi26K6w5b2V6KGoIOivpuaDhQ== ||| 视频录制记录表 详情 ||| Video Recording Record Table Details
+6KeG6aKR5b2V5Yi26K6w5b2V6KGo5o6l5Y+j77yI6KeG6aKR5Zue5pS+77yJ ||| 视频录制记录表接口（视频回放） ||| Video Recording Record Table Interface (Video Playback)
+6KeG6aKR5b2V5Yi26K6w5b2V6KGo5pWw5o2u ||| 视频录制记录表数据 ||| Video Recording Record Table Data
+6KeG6aKR5b2V5Yi26K6w5b2V6KGo5pWw5o2u6KGo ||| 视频录制记录表数据表 ||| Video Recording Record Table Data Table
+6KeG6aKR5b2V5Yi26K6w5b2V6KGo77yI6KeG6aKR5Zue5pS+77yJ ||| 视频录制记录表（视频回放） ||| Video Recording Record Table (Video Playback)
+6KeG6aKR5paH5Lu25ZCN ||| 视频文件名 ||| Video File Name
+6KeG6aKR5paH5Lu25rWB5pKt5pS+ ||| 视频文件流播放 ||| Video File Stream Playback
+6KeG6aKR5paH5Lu26Lev5b6E ||| 视频文件路径 ||| Video File Path
+6KeG6aKR5pe26ZW/KOenkik= ||| 视频时长(秒) ||| Video Duration (seconds)
+6KeG6aKR5qC85byP ||| 视频格式 ||| Video Format
+6KeG6aKR5rWB5Zyw5Z2AIChSVFNQL0hUVFAvV0VCUlRD562JKQ== ||| 视频流地址 (RTSP/HTTP/WEBRTC等) ||| Video Stream Address (RTSP/HTTP/WEBRTC, etc.)
+6KeG6aKR5rWB5Zyw5Z2AIChSVFNQL0hUVFDnrYkp ||| 视频流地址 (RTSP/HTTP等) ||| Video Stream Address (RTSP/HTTP, etc.)
+6KeG6aKR5rWB5pKt5pS+ ||| 视频流播放 ||| Video Stream Playback
+6KeG6aKR5rWB5pat5byA6L+e5o6lOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fQ== ||| 视频流断开连接: deviceId={}, deviceName={} ||| Video stream disconnected: deviceId={}, deviceName={}
+6KeG6aKR5rWB5qOA5rWL57uT5p2fOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fQ== ||| 视频流检测结束: deviceId={}, deviceName={} ||| Video stream detection finished: deviceId={}, deviceName={}
+6KeG6aKR5rWB6Lev5b6E ||| 视频流路径 ||| Video Stream Path
+KeS6Imy ||| 角色 ||| Role
+KeS6ImySUQ= ||| 角色ID ||| Role ID
+KeS6ImyaWQ= ||| 角色id ||| Role ID
+KeS6Imy5Yir5ZCN ||| 角色别名 ||| Role Alias
+KeS6Imy5ZCN ||| 角色名 ||| Role Name
+KeS6Imy5ZCN56ew ||| 角色名称 ||| Role Name
+KeS6Imy5omA5YiG6YWN55qE5qCR ||| 角色所分配的树 ||| Tree allocated to role
+KeS6Imy5p2D6ZmQ6KGo5paw5aKe5p2D6ZmQ57G75Z6L5a2X5q61 ||| 角色权限表新增权限类型字段 ||| Added permission type field to role permission table
+KeS6Imy5p2D6ZmQ6KGo6K6+572u5Y6G5Y+y5pWw5o2u5p2D6ZmQ57G75Z6L5Li6MQ== ||| 角色权限表设置历史数据权限类型为1 ||| Set historical data permission type to 1 in role permission table
+KeS6Imy6ZuG5ZCI ||| 角色集合 ||| Role Set
+Kej5a+G5ZCOOiA= ||| 解密后:  ||| Decrypted: 
+Kej5a+G5a+G56CB ||| 解密密码 ||| Decrypt password
+Kej5p6QanNvbldlYlRva2Vu ||| 解析jsonWebToken ||| Parse JSON Web Token
+Kej5p6Q5ZON5bqU ||| 解析响应 ||| Parse Response
+Kej5p6Q5Zu95a+Gc20y5Yqg5a+G5a+G56CB ||| 解析国密sm2加密密码 ||| Parse SM2 encrypted password
+Kej5p6Q5byC5bi4OiB7fQ== ||| 解析异常: {} ||| Parse exception: {}
+Kej5p6Q5b2V5YOP5paH5Lu25byA5aeL5pe26Ze05aSx6LSlOiBmaWxlTmFtZT17fQ== ||| 解析录像文件开始时间失败: fileName={} ||| Failed to parse recording file start time: fileName={}
+Kej5p6Q5qCH5rOo5a6e5L6L5Zu+54mH5ZCN5aSx6LSl77yae30= ||| 解析标注实例图片名失败：{} ||| Failed to parse labeled instance image name: {}
+Kej5p6Q5qCH5rOo5pWw5o2u ||| 解析标注数据 ||| Parse annotation data
+Kej5p6Q5qCH5rOo5pWw5o2u5aSx6LSl77yae30= ||| 解析标注数据失败：{} ||| Failed to parse annotation data: {}
+Kej56CBYmFzZTY05YaF5a65 ||| 解码base64内容 ||| Decode base64 content
+Kem5Y+R5Yqo5L2cKHJlY29yZC9zbmFwc2hvdCk= ||| 触发动作(record/snapshot) ||| Trigger Action (record/snapshot)
+Kem5Y+R5b2V5Yi25Yi35paw5aSx6LSlOiBWbHNSdHNwUmVjb3JkaW5nTWFuYWdlcuacquWKoOi9vQ== ||| 触发录制刷新失败: VlsRtspRecordingManager未加载 ||| Failed to trigger recording refresh: VlsRtspRecordingManager is not loaded
+Kem5Y+R5b2V5Yi25Yi35paw6YCa55+lOiBjb250cm9sbGVyPVZsc1RpbWVTdHJhdGVneUNvbnRyb2xsZXI= ||| 触发录制刷新通知: controller=VlsTimeStrategyController ||| Trigger recording refresh notification: controller=VlsTimeStrategyController
+Kem5Y+R5oql6K2m5YmN5b2V5Yi256eS5pWw ||| 触发报警前录制秒数 ||| Pre-alarm recording seconds
+Kem5Y+R5oql6K2m5ZCO5b2V5Yi256eS5pWw ||| 触发报警后录制秒数 ||| Post-alarm recording seconds
+Kem5Y+R5pe26Ze05LiN6IO95Li656m6 ||| 触发时间不能为空 ||| Trigger time cannot be empty
+Kem5Y+R5pe26Ze05YiX6KGoKEhIOm1tOnNzLOmAl+WPt+WIhumalCk= ||| 触发时间列表(HH:mm:ss,逗号分隔) ||| Trigger time list (HH:mm:ss, comma separated)
+Kem5Y+R57G75Z6L77yacmVhbHRpbWUt5a6e5pe2LHNjaGVkdWxlZC3lrprml7YsbWFudWFsLeaJi+WKqA== ||| 触发类型：realtime-实时,scheduled-定时,manual-手动 ||| Trigger type: realtime-real-time, scheduled-scheduled, manual-manual
+Kem5Y+R6K6t57uD5Lu75Yqh5aSx6LSlOiA= ||| 触发训练任务失败:  ||| Failed to trigger training task: 
+Kem5Y+R6K6t57uD5Lu75Yqh5aSx6LSlOiB7fQ== ||| 触发训练任务失败: {} ||| Failed to trigger training task: {}
+K6h5YiS5ZCN56ew ||| 计划名称 ||| Plan Name
+K6h5YiS57G75Z6L ||| 计划类型 ||| Plan Type
+K6h566X5Zu+5YOP5Lqu5bqm5aSx6LSl ||| 计算图像亮度失败 ||| Failed to calculate image brightness
+K6h566X5qCH5rOo6L+b5bqm77yIMC0xMDDvvIk= ||| 计算标注进度（0-100） ||| Calculate annotation progress (0-100)
+K6h566X6L+b5bqm ||| 计算进度 ||| Calculate progress
+K6k6K+B5L+h5oGv ||| 认证信息 ||| Authentication Information
+K6k6K+B5bel5YW357G7 ||| 认证工具类 ||| Authentication Utility Class
+K6k6K+B5qih5Z2X ||| 认证模块 ||| Authentication Module
+K6t57uD5Lit ||| 训练中 ||| Training
+K6t57uD5Lu75YqhSUQ= ||| 训练任务ID ||| Training Task ID
+K6t57uD5Lu75YqhSUQ6IHt9 ||| 训练任务ID: {} ||| Training Task ID: {}
+K6t57uD5Lu75Yqhe33lt7LlkK/liqjvvIzml6Xlv5fot6/lvoQ6IHt9 ||| 训练任务{}已启动，日志路径: {} ||| Training task {} has started, log path: {}
+K6t57uD5Lu75Yqh5LiN5a2Y5Zyo ||| 训练任务不存在 ||| Training task does not exist
+K6t57uD5Lu75Yqh5YGc5q2i5aSx6LSl ||| 训练任务停止失败 ||| Failed to stop training task
+K6t57uD5Lu75Yqh5bey5YGc5q2i ||| 训练任务已停止 ||| Training task has stopped
+K6t57uD5Y+C5pWw ||| 训练参数 ||| Training Parameters
+K6t57uD5pe26ZW/77yI5YiG6ZKf77yJ ||| 训练时长（分钟） ||| Training Duration (minutes)
+K6t57uD54q25oCB ||| 训练状态 ||| Training Status
+K6t57uD54q25oCB5o+P6L+w ||| 训练状态描述 ||| Training Status Description
+K6t57uD54q25oCB5pu05paw5oiQ5Yqf77yaSUQ9e30sIOaWsOeKtuaAgT17fQ== ||| 训练状态更新成功：ID={}, 新状态={} ||| Training status updated successfully: ID={}, new status={}
+K6t57uD54q25oCB5p6a5Li+ ||| 训练状态枚举 ||| Training Status Enum
+K6t57uD54q25oCB77yacGVuZGluZy3nrYnlvoUsdHJhaW5pbmct6K6t57uD5LitLGNvbXBsZXRlZC3lrozmiJAsZmFpbGVkLeWksei0pQ== ||| 训练状态：pending-等待,training-训练中,completed-完成,failed-失败 ||| Training status: pending-pending, training-training, completed-completed, failed-failed
+K6t57uD6L2u5qyh ||| 训练轮次 ||| Training Epochs
+K6t57uD6L+b5bqm55m+5YiG5q+U ||| 训练进度百分比 ||| Training Progress Percentage
+K6t57uD6L+b5bqm57G7 ||| 训练进度类 ||| Training Progress Class
+K645Y+v6K+B ||| 许可证 ||| License
+K6+5aSHIA== ||| 设备  ||| Device 
+K6+5aSHIHt9IOS4iuS8oOaIquWbvuWksei0pe+8jOi3s+i/h+S6i+S7tuWIm+W7ug== ||| 设备 {} 上传截图失败，跳过事件创建 ||| Device {} failed to upload screenshot, skipping event creation
+K6+5aSHIHt9IOS6i+S7tuW3suWIm+W7uu+8jOajgOa1i+WIsCB7fSDkuKrnm67moIc= ||| 设备 {} 事件已创建，检测到 {} 个目标 ||| Device {} event created, detected {} targets
+K6+5aSHIHt9IOS6uuiEuOajgOa1i+Wbnuiwg+WkhOeQhuWksei0pQ== ||| 设备 {} 人脸检测回调处理失败 ||| Device {} face detection callback processing failed
+K6+5aSHIHt9IOS9v+eUqOacrOWcsOaooeWei+aWh+S7tjogYWxnb3JpdGhtSWQ9e30sIG1vZGVsUGF0aD17fQ== ||| 设备 {} 使用本地模型文件: algorithmId={}, modelPath={} ||| Device {} uses local model file: algorithmId={}, modelPath={}
+K6+5aSHIHt9IOS9v+eUqOacrOWcsOaooeWei+i3r+W+hDogYWxnb3JpdGhtSWQ9e30sIG1vZGVsUGF0aD17fQ== ||| 设备 {} 使用本地模型路径: algorithmId={}, modelPath={} ||| Device {} uses local model path: algorithmId={}, modelPath={}
+K6+5aSHIHt9IOS/neWtmOaIquWbvuWksei0pQ== ||| 设备 {} 保存截图失败 ||| Device {} failed to save screenshot
+K6+5aSHIHt9IOWGmeWFpSBzeW5zZXQg5paH5Lu25aSx6LSl ||| 设备 {} 写入 synset 文件失败 ||| Device {} failed to write synset file
+K6+5aSHIHt9IOWGmeWFpeS4tOaXtuaooeWei+aWh+S7tuWksei0pQ== ||| 设备 {} 写入临时模型文件失败 ||| Device {} failed to write temporary model file
+K6+5aSHIHt9IOWIm+W7uuS4tOaXtuebruW9leWksei0pQ== ||| 设备 {} 创建临时目录失败 ||| Device {} failed to create temporary directory
+K6+5aSHIHt9IOWKoOi9veWbvueJh+Wksei0pTogcGF0aD17fQ== ||| 设备 {} 加载图片失败: path={} ||| Device {} failed to load image: path={}
+K6+5aSHIHt9IOWbvuWDj+WIhuexu+Wbnuiwg+WkhOeQhuWksei0pQ== ||| 设备 {} 图像分类回调处理失败 ||| Device {} image classification callback processing failed
+K6+5aSHIHt9IOWkjeWItuaIquWbvuWksei0pe+8jOi3s+i/hw== ||| 设备 {} 复制截图失败，跳过 ||| Device {} failed to copy screenshot, skipping
+K6+5aSHIHt9IOWnv+aAgeS8sOiuoeWbnuiwg+WkhOeQhuWksei0pQ== ||| 设备 {} 姿态估计回调处理失败 ||| Device {} pose estimation callback processing failed
+K6+5aSHIHt9IOWunuS+i+WIhuWJsuWbnuiwg+WkhOeQhuWksei0pQ== ||| 设备 {} 实例分割回调处理失败 ||| Device {} instance segmentation callback processing failed
+K6+5aSHIHt9IOaXi+i9rOahhuajgOa1i+Wbnuiwg+WkhOeQhuWksei0pQ== ||| 设备 {} 旋转框检测回调处理失败 ||| Device {} oriented bounding box detection callback processing failed
+K6+5aSHIHt9IOacqumFjee9ruWPr+eUqOWbvueJh+WcsOWdgO+8jOWBnOatouivreS5ieWIhuWJsg== ||| 设备 {} 未配置可用图片地址，停止语义分割 ||| Device {} has no available image address configured, stopping semantic segmentation
+K6+5aSHIHt9IOacqumFjee9ruWPr+eUqOWbvueJh+WcsOWdgO+8jOi3s+i/h+ivreS5ieWIhuWJsjogc3RyZWFtVXJsPXt9 ||| 设备 {} 未配置可用图片地址，跳过语义分割: streamUrl={} ||| Device {} has no available image address configured, skipping semantic segmentation: streamUrl={}
+K6+5aSHIHt9IOacqumFjee9ruWbvuWDj+adpea6kO+8jOi3s+i/h+ivreS5ieWIhuWJsg== ||| 设备 {} 未配置图像来源，跳过语义分割 ||| Device {} has no image source configured, skipping semantic segmentation
+K6+5aSHIHt9IOacqumFjee9rua1geWcsOWdgO+8jOi3s+i/h+S6uuiEuOajgOa1iw== ||| 设备 {} 未配置流地址，跳过人脸检测 ||| Device {} has no stream address configured, skipping face detection
+K6+5aSHIHt9IOacqumFjee9rua1geWcsOWdgO+8jOi3s+i/h+WbvuWDj+WIhuexuw== ||| 设备 {} 未配置流地址，跳过图像分类 ||| Device {} has no stream address configured, skipping image classification
+K6+5aSHIHt9IOacqumFjee9rua1geWcsOWdgO+8jOi3s+i/h+Wnv+aAgeS8sOiuoQ== ||| 设备 {} 未配置流地址，跳过姿态估计 ||| Device {} has no stream address configured, skipping pose estimation
+K6+5aSHIHt9IOacqumFjee9rua1geWcsOWdgO+8jOi3s+i/h+WunuS+i+WIhuWJsg== ||| 设备 {} 未配置流地址，跳过实例分割 ||| Device {} has no stream address configured, skipping instance segmentation
+K6+5aSHIHt9IOacqumFjee9rua1geWcsOWdgO+8jOi3s+i/h+aXi+i9rOahhuajgOa1iw== ||| 设备 {} 未配置流地址，跳过旋转框检测 ||| Device {} has no stream address configured, skipping oriented bounding box detection
+K6+5aSHIHt9IOacqumFjee9rua1geWcsOWdgO+8jOi3s+i/h+ebruagh+ajgOa1iw== ||| 设备 {} 未配置流地址，跳过目标检测 ||| Device {} has no stream address configured, skipping object detection
+K6+5aSHIHt9IOajgOa1i+WkhOeQhuWksei0pQ== ||| 设备 {} 检测处理失败 ||| Device {} detection processing failed
+K6+5aSHIHt9IOaooeWei+aWh+S7tuW3suWHhuWkh+Wwsee7qjogYWxnb3JpdGhtSWQ9e30sIG1vZGVsUGF0aD17fQ== ||| 设备 {} 模型文件已准备就绪: algorithmId={}, modelPath={} ||| Device {} model file is ready: algorithmId={}, modelPath={}
+K6+5aSHIHt9IOaooeWei+ebruW9lee8uuWwkSB7fTogbW9kZWxQYXRoPXt9 ||| 设备 {} 模型目录缺少 {}: modelPath={} ||| Device {} model directory lacks {}: modelPath={}
+K6+5aSHIHt9IOeahCB7fSDot6/lvoTkuLrnqbo= ||| 设备 {} 的 {} 路径为空 ||| Device {}'s {} path is empty
+K6+5aSHIHt9IOeahOeul+azlSB7fSDzeW5zZXQg5paH5Lu25LiN5Y+v55SoOiBtb2RlbFBhdGg9e30sIHN5bnNldFBhdGg9e30= ||| 设备 {} 的算法 {} synset 文件不可用: modelPath={}, synsetPath={} ||| Device {}'s algorithm {} synset file is unavailable: modelPath={}, synsetPath={}
+K6+5aSHIHt9IOeahOeul+azlSB7fSDkuI3lrZjlnKjvvIzot7Pov4d7fQ== ||| 设备 {} 的算法 {} 不存在，跳过{} ||| Device {}'s algorithm {} does not exist, skipping {}
+K6+5aSHIHt9IOeahOeul+azlSB7fSDmnKrmib7liLDlj6/nlKjmqKHlnovot6/lvoTvvIzot7Pov4d7fQ== ||| 设备 {} 的算法 {} 未找到可用模型路径，跳过{} ||| Device {}'s algorithm {} found no available model path, skipping {}
+K6+5aSHIHt9IOeahOeul+azlSB7fSDmqKHlnovmlofku7bkuI3lj6/nlKg6IG1vZGVsUGF0aD17fQ== ||| 设备 {} 的算法 {} 模型文件不可用: modelPath={} ||| Device {}'s algorithm {} model file is unavailable: modelPath={}
+K6+5aSHIHt9IOeahOeul+azlSB7fSDmqKHlnovmoKHpqozkuI3pgJrov4fvvIzot7Pov4d7TogbW9kZWxQYXRoPXt9LCBtb2RlbEZvcm1hdD17fQ== ||| 设备 {} 的算法 {} 模型校验不通过，跳过{}: modelPath={}, modelFormat={} ||| Device {}'s algorithm {} model verification failed, skipping {}: modelPath={}, modelFormat={}
+K6+5aSHIHt9IOeahOeul+azlSB7fSDmqKHlnovot6/lvoTkuLrnqbo= ||| 设备 {} 的算法 {} 模型路径为空 ||| Device {}'s algorithm {} model path is empty
+K6+5aSHIHt9IOebruagh+ajgOa1i+Wbnuiwg+WkhOeQhuWksei0pQ== ||| 设备 {} 目标检测回调处理失败 ||| Device {} object detection callback processing failed
+K6+5aSHIHt9IOino+eggSB7fSDlpLHotKU6IHt9 ||| 设备 {} 解码 {} 失败: {} ||| Device {} failed to decode {}: {}
+K6+5aSHIHt9IOivreS5ieWIhuWJsuWkhOeQhuWksei0pQ== ||| 设备 {} 语义分割处理失败 ||| Device {} semantic segmentation processing failed
+K6+5aSHIHt9IOivreS5ieWIhuWJsuWksei0pToge30= ||| 设备 {} 语义分割失败: {} ||| Device {} semantic segmentation failed: {}
+K6+5aSHSUQ= ||| 设备ID ||| Device ID
+K6+5aSHSUTkuI3og73kuLrnqbo= ||| 设备ID不能为空 ||| Device ID cannot be empty
+K6+5aSHSUTliJfooajvvIzpgJflj7fliIbpmpQ= ||| 设备ID列表，逗号分隔 ||| Device ID list, comma separated
+K6+5aSHSUTlt7LlrZjlnKg= ||| 设备ID已存在 ||| Device ID already exists
+K6+5aSHSUTntKLlvJU= ||| 设备ID索引 ||| Device ID index
+K6+5aSHSUTvvIzkuLvplK4= ||| 设备ID，主键 ||| Device ID, primary key
+K6+5aSHSUTvvIzlhbPogZRkZXZpY2VfaW5mby5pZA== ||| 设备ID，关联device_info.id ||| Device ID, relates to device_info.id
+K6+5aSH5LiN5a2Y5Zyo ||| 设备不存在 ||| Device does not exist
+K6+5aSH5Li76ZSuSUQ= ||| 设备主键ID ||| Device Primary Key ID
+K6+5aSH5Li76ZSuSUTkuI3og73kuLrnqbo= ||| 设备主键ID不能为空 ||| Device primary key ID cannot be empty
+K6+5aSH5Lq65L2T5qOA5rWL5Lu75Yqh566h55CG5Zmo77ya5a6a5pe25omr5o+P6K6+5aSH6YWN572u5bm257u05oqk5Lq65L2T5qOA5rWL5Lya6K+d44CC ||| 设备人体检测任务管理器：定时扫描设备配置并维护人体检测会话。 ||| Device human detection task manager: Scans device configurations periodically and maintains human detection sessions.
+K6+5aSH5Lq66IS45qOA5rWL5Lu75Yqh566h55CG5Zmo77ya5a6a5pe25omr5o+P6K6+5aSH6YWN572u5bm257u05oqk5Lq66IS45qOA5rWL5Lya6K+d44CC ||| 设备人脸检测任务管理器：定时扫描设备配置并维护人脸检测会话。 ||| Device face detection task manager: Scans device configurations periodically and maintains face detection sessions.
+K6+5aSH5Lq66IS45qOA5rWL6YWN572u5Y+R55Sf5Y+Y5YyW ||| 设备人脸检测配置发生变化 ||| Device face detection configuration changed
+K6+5aSH5L2N572uL+WuieijheWcsOeCuQ== ||| 设备位置/安装地点 ||| Device location/installation site
+K6+5aSH5L+h5oGv ||| 设备信息 ||| Device Information
+K6+5aSH5L+h5oGv5pu05paw5aSx6LSl ||| 设备信息更新失败 ||| Device information update failed
+K6+5aSH5L+h5oGv6KGo ||| 设备信息表 ||| Device Information Table
+K6+5aSH5L+h5oGv6KGoIEV4Y2Vs5a6e5L2T57G7 ||| 设备信息表 Excel实体类 ||| Device Information Table Excel Entity Class
+K6+5aSH5L+h5oGv6KGoIE1hcHBlciDmjqXlj6M= ||| 设备信息表 Mapper 接口 ||| Device Information Table Mapper Interface
+K6+5aSH5L+h5oGv6KGoIOS/ruaUuQ== ||| 设备信息表 修改 ||| Device Information Table Modify
+K6+5aSH5L+h5oGv6KGoIOWIhumhtQ== ||| 设备信息表 分页 ||| Device Information Table Pagination
+K6+5aSH5L+h5oGv6KGoIOWIoOmZpA== ||| 设备信息表 删除 ||| Device Information Table Delete
+K6+5aSH5L+h5oGv6KGoIOWMheijheexuyzov5Tlm57op4blm77lsYLmiYDpnIDnmoTlrZfmrrU= ||| 设备信息表 包装类,返回视图层所需的字段 ||| Device Information Table Wrapper Class, returns fields required by view layer
+K6+5aSH5L+h5oGv6KGoIOWunuS9k+exuw== ||| 设备信息表 实体类 ||| Device Information Table Entity Class
+K6+5aSH5L+h5oGv6KGoIOaOp+WItuWZqA== ||| 设备信息表 控制器 ||| Device Information Table Controller
+K6+5aSH5L+h5oGv6KGoIOaVsOaNruS8oOi+k+WvueixoeWunuS9k+exuw== ||| 设备信息表 数据传输对象实体类 ||| Device Information Table Data Transfer Object Entity Class
+K6+5aSH5L+h5oGv6KGoIOaWsOWing== ||| 设备信息表 新增 ||| Device Information Table Add
+K6+5aSH5L+h5oGv6KGoIOaWsOWinuaIluS/ruaUuQ== ||| 设备信息表 新增或修改 ||| Device Information Table Add or Modify
+K6+5aSH5L+h5oGv6KGoIOacjeWKoeWunueOsOexuw== ||| 设备信息表 服务实现类 ||| Device Information Table Service Implementation Class
+K6+5aSH5L+h5oGv6KGoIOacjeWKoeexuw== ||| 设备信息表 服务类 ||| Device Information Table Service Class
+K6+5aSH5L+h5oGv6KGoIOiHquWumuS5ieWIhumhtQ== ||| 设备信息表 自定义分页 ||| Device Information Table Custom Pagination
+K6+5aSH5L+h5oGv6KGoIOinhuWbvuWunuS9k+exuw== ||| 设备信息表 视图实体类 ||| Device Information Table View Entity Class
+K6+5aSH5L+h5oGv6KGoIOivpuaDhQ== ||| 设备信息表 详情 ||| Device Information Table Details
+K6+5aSH5L+h5oGv6KGo5o6l5Y+j ||| 设备信息表接口 ||| Device Information Table Interface
+K6+5aSH5L+h5oGv6KGo5pWw5o2u ||| 设备信息表数据 ||| Device Information Table Data
+K6+5aSH5L+h5oGv6KGo5pWw5o2u6KGo ||| 设备信息表数据表 ||| Device Information Table Data Table
+K6+5aSH5ZCN56ew ||| 设备名称 ||| Device Name
+K6+5aSH5ZCN56ew5LiN6IO95Li656m6 ||| 设备名称不能为空 ||| Device name cannot be empty
+K6+5aSH5ZOB54mMICjmtbflurflqIHop4bjgIHlpKfljY7jgIHlrofop4bnrYkp ||| 设备品牌 (海康威视、大华、宇视等) ||| Device Brand (Hikvision, Dahua, Uniview, etc.)
+K6+5aSH5Zu+5YOP5YiG57G75Lu75Yqh566h55CG5Zmo77ya5a6a5pe25omr5o+P6K6+5aSH6YWN572u5bm257u05oqk5Zu+5YOP5YiG57G75qOA5rWL5Lya6K+d44CC ||| 设备图像分类任务管理器：定时扫描设备配置并维护图像分类检测会话。 ||| Device image classification task manager: Scans device configurations periodically and maintains image classification detection sessions.
+K6+5aSH5Zu+5YOP5YiG57G76YWN572u5Y+R55Sf5Y+Y5YyW ||| 设备图像分类配置发生变化 ||| Device image classification configuration changed
+K6+5aSH5Zu+5YOP6Lev5b6E ||| 设备图像路径 ||| Device Image Path
+K6+5aSH5Z6L5Y+3 ||| 设备型号 ||| Device Model
+K6+5aSH5Z+65pys5L+h5oGv ||| 设备基本信息 ||| Device Basic Information
+K6+5aSH5ae/5oCB5Lyw6K6h5Lu75Yqh566h55CG5Zmo77ya5a6a5pe25omr5o+P6K6+5aSH6YWN572u5bm257u05oqk5ae/5oCB5Lyw6K6h5Lya6K+d44CC ||| 设备姿态估计任务管理器：定时扫描设备配置并维护姿态估计会话。 ||| Device pose estimation task manager: Scans device configurations periodically and maintains pose estimation sessions.
+K6+5aSH5ae/5oCB5Lyw6K6h6YWN572u5Y+R55Sf5Y+Y5YyW ||| 设备姿态估计配置发生变化 ||| Device pose estimation configuration changed
+K6+5aSH5a6e5L6L5YiG5Ymy5Lu75Yqh566h55CG5Zmo77ya5a6a5pe25omr5o+P6K6+5aSH6YWN572u5bm257u05oqk5a6e5L6L5YiG5Ymy5Lya6K+d44CC ||| 设备实例分割任务管理器：定时扫描设备配置并维护实例分割会话。 ||| Device instance segmentation task manager: Scans device configurations periodically and maintains instance segmentation sessions.
+K6+5aSH5a6e5L6L5YiG5Ymy6YWN572u5Y+R55Sf5Y+Y5YyW ||| 设备实例分割配置发生变化 ||| Device instance segmentation configuration changed
+K6+5aSH5o+P6L+w5L+h5oGv ||| 设备描述信息 ||| Device Description
+K6+5aSH5peL6L2s5qGG5qOA5rWL6YWN572u5Y+R55Sf5Y+Y5YyW ||| 设备旋转框检测配置发生变化 ||| Device oriented bounding box detection configuration changed
+K6+5aSH5peL6L2s5qGG77yIT0JC77yJ5qOA5rWL5Lu75Yqh566h55CG5Zmo77ya5a6a5pe25omr5o+P6K6+5aSH6YWN572u5bm257u05oqk5peL6L2s5qGG5qOA5rWL5Lya6K+d44CC ||| 设备旋转框（OBB）检测任务管理器：定时扫描设备配置并维护旋转框检测会话。 ||| Device oriented bounding box (OBB) detection task manager: Scans device configurations periodically and maintains oriented bounding box detection sessions.
+K6+5aSH5pel5pyf5aSN5ZCI57Si5byV ||| 设备日期复合索引 ||| Device date composite index
+K6+5aSH5pyq6YWN572uUlRTUOWcsOWdgA== ||| 设备未配置RTSP地址 ||| Device RTSP address not configured
+K6+5aSH5pyq6YWN572u5Lq66IS45qOA5rWL566X5rOV5oiW6YWN572u5LiN5a6M5pW0 ||| 设备未配置人脸检测算法或配置不完整 ||| Device face detection algorithm not configured or configuration incomplete
+K6+5aSH5pyq6YWN572u5Zu+5YOP5YiG57G7566X5rOV5oiW6YWN572u5LiN5a6M5pW0 ||| 设备未配置图像分类算法或配置不完整 ||| Device image classification algorithm not configured or configuration incomplete
+K6+5aSH5pyq6YWN572u5ae/5oCB5Lyw6K6h566X5rOV5oiW6YWN572u5LiN5a6M5pW0 ||| 设备未配置姿态估计算法或配置不完整 ||| Device pose estimation algorithm not configured or configuration incomplete
+K6+5aSH5pyq6YWN572u5a6e5L6L5YiG5Ymy566X5rOV5oiW6YWN572u5LiN5a6M5pW0 ||| 设备未配置实例分割算法或配置不完整 ||| Device instance segmentation algorithm not configured or configuration incomplete
+K6+5aSH5pyq6YWN572u5peL6L2s5qGG5qOA5rWL566X5rOV5oiW6YWN572u5LiN5a6M5pW0 ||| 设备未配置旋转框检测算法或配置不完整 ||| Device oriented bounding box detection algorithm not configured or configuration incomplete
+K6+5aSH5pyq6YWN572u55uu5qCH5qOA5rWL566X5rOV5oiW6YWN572u5LiN5a6M5pW0 ||| 设备未配置目标检测算法或配置不完整 ||| Device object detection algorithm not configured or configuration incomplete
+K6+5aSH5pyq6YWN572u566X5rOV5oiW6YWN572u5LiN5a6M5pW0 ||| 设备未配置算法或配置不完整 ||| Device algorithm not configured or configuration incomplete
+K6+5aSH5pyq6YWN572u6K+t5LmJ5YiG5Ymy566X5rOV5oiW6YWN572u5LiN5a6M5pW0 ||| 设备未配置语义分割算法或配置不完整 ||| Device semantic segmentation algorithm not configured or configuration incomplete
+K6+5aSH5qCH562+ ||| 设备标签 ||| Device Tag
+K6+5aSH5qCH562+5L+d5a2Y5aSx6LSl77yM6K6+5aSHSUQ6IA== ||| 设备标签保存失败，设备ID:  ||| Failed to save device tag, device ID: 
+K6+5aSH5qCH562+5YWz6IGU6KGo ||| 设备标签关联表 ||| Device Tag Association Table
+K6+5aSH5qCH562+5YWz6IGU6KGoIEV4Y2Vs5a6e5L2T57G7 ||| 设备标签关联表 Excel实体类 ||| Device Tag Association Table Excel Entity Class
+K6+5aSH5qCH562+5YWz6IGU6KGoIE1hcHBlciDmjqXlj6M= ||| 设备标签关联表 Mapper 接口 ||| Device Tag Association Table Mapper Interface
+K6+5aSH5qCH562+5YWz6IGU6KGoIOS/ruaUuQ== ||| 设备标签关联表 修改 ||| Device Tag Association Table Modify
+K6+5aSH5qCH562+5YWz6IGU6KGoIOWIhumhtQ== ||| 设备标签关联表 分页 ||| Device Tag Association Table Pagination
+K6+5aSH5qCH562+5YWz6IGU6KGoIOWIoOmZpA== ||| 设备标签关联表 删除 ||| Device Tag Association Table Delete
+K6+5aSH5qCH562+5YWz6IGU6KGoIOWMheijheexuyzov5Tlm57op4blm77lsYLmiYDpnIDnmoTlrZfmrrU= ||| 设备标签关联表 包装类,返回视图层所需的字段 ||| Device Tag Association Table Wrapper Class, returns fields required by view layer
+K6+5aSH5qCH562+5YWz6IGU6KGoIOWunuS9k+exuw== ||| 设备标签关联表 实体类 ||| Device Tag Association Table Entity Class
+K6+5aSH5qCH562+5YWz6IGU6KGoIOaOp+WItuWZqA== ||| 设备标签关联表 控制器 ||| Device Tag Association Table Controller
+K6+5aSH5qCH562+5YWz6IGU6KGoIOaVsOaNruS8oOi+k+WvueixoeWunuS9k+exuw== ||| 设备标签关联表 数据传输对象实体类 ||| Device Tag Association Table Data Transfer Object Entity Class
+K6+5aSH5qCH562+5YWz6IGU6KGoIOaWsOWing== ||| 设备标签关联表 新增 ||| Device Tag Association Table Add
+K6+5aSH5qCH562+5YWz6IGU6KGoIOaWsOWinuaIluS/ruaUuQ== ||| 设备标签关联表 新增或修改 ||| Device Tag Association Table Add or Modify
+K6+5aSH5qCH562+5YWz6IGU6KGoIOacjeWKoeWunueOsOexuw== ||| 设备标签关联表 服务实现类 ||| Device Tag Association Table Service Implementation Class
+K6+5aSH5qCH562+5YWz6IGU6KGoIOacjeWKoeexuw== ||| 设备标签关联表 服务类 ||| Device Tag Association Table Service Class
+K6+5aSH5qCH562+5YWz6IGU6KGoIOiHquWumuS5ieWIhumhtQ== ||| 设备标签关联表 自定义分页 ||| Device Tag Association Table Custom Pagination
+K6+5aSH5qCH562+5YWz6IGU6KGoIOinhuWbvuWunuS9k+exuw== ||| 设备标签关联表 视图实体类 ||| Device Tag Association Table View Entity Class
+K6+5aSH5qCH562+5YWz6IGU6KGoIOivpuaDhQ== ||| 设备标签关联表 详情 ||| Device Tag Association Table Details
+K6+5aSH5qCH562+5YWz6IGU6KGo5o6l5Y+j ||| 设备标签关联表接口 ||| Device Tag Association Table Interface
+K6+5aSH5qCH562+5YWz6IGU6KGo5pWw5o2u ||| 设备标签关联表数据 ||| Device Tag Association Table Data
+K6+5aSH5qCH562+5YWz6IGU6KGo5pWw5o2u6KGo ||| 设备标签关联表数据表 ||| Device Tag Association Table Data Table
+K6+5aSH5qCH562+5ZSv5LiA57qm5p2f ||| 设备标签唯一约束 ||| Device tag unique constraint
+K6+5aSH5qCH562+5re75Yqg5aSx6LSl ||| 设备标签添加失败 ||| Failed to add device tag
+K6+5aSH5qCH562+5re75Yqg5oiQ5Yqf ||| 设备标签添加成功 ||| Device tag added successfully
+K6+5aSH5qCH562+5riF6Zmk5aSx6LSl ||| 设备标签清除失败 ||| Failed to clear device tag
+K6+5aSH5qCH562+5riF6Zmk5oiQ5Yqf ||| 设备标签清除成功 ||| Device tag cleared successfully
+K6+5aSH5qCH562+56e76Zmk5aSx6LSl ||| 设备标签移除失败 ||| Failed to remove device tag
+K6+5aSH5qCH562+56e76Zmk5oiQ5Yqf ||| 设备标签移除成功 ||| Device tag removed successfully
+K6+5aSH5qCH562+6K6+572u5aSx6LSl ||| 设备标签设置失败 ||| Failed to set device tags
+K6+5aSH5qCH562+6K6+572u5oiQ5Yqf ||| 设备标签设置成功 ||| Device tags set successfully
+K6+5aSH5qOA5rWL5Lu75Yqh566h55CG5Zmo5Z+657G777ya5oyJ6K6+5aSH6YWN572u5Yqo5oCB5Yib5bu6L+abtOaWsC/lgZzmraLmo4DmtYvkvJror53vvIzlubblnKjns7vnu5/lhbPpl63ml7bnu5/kuIDmuIXnkIbjgII= ||| 设备检测任务管理器基类：按设备配置动态创建/更新/停止检测会话，并在系统关闭时统一清理。 ||| Device detection task manager base class: Dynamically creates/updates/stops detection sessions based on device configurations, and cleans them up uniformly when system shuts down.
+K6+5aSH5qOA5rWL5Lya6K+d5oq96LGh77ya55So5LqO5Yik5pat6YWN572u5piv5ZCm5Yy56YWN77yM5bm2566h55CG5Lya6K+d55qE5ZCv5YqoL+WBnOatoueUn+WRveWRqOacn+OAgg== ||| 设备检测会话抽象：用于判断配置是否匹配，并管理会话的启动/停止生命周期。 ||| Device detection session abstraction: Used to judge whether configurations match, and to manage the start/stop life cycle of the session.
+K6+5aSH5qOA5rWL6YWN572u5Y+R55Sf5Y+Y5YyW ||| 设备检测配置发生变化 ||| Device detection configuration changed
+K6+5aSH54q25oCB57Si5byV ||| 设备状态索引 ||| Device status index
+K6+5aSH55uu5qCH5qOA5rWL5Lu75Yqh566h55CG5Zmo77ya5a6a5pe25omr5o+P6K6+5aSH6YWN572u5bm257u05oqk55uu5qCH5qOA5rWL5Lya6K+d44CC ||| 设备目标检测任务管理器：定时扫描设备配置并维护目标检测会话。 ||| Device object detection task manager: Scans device configurations periodically and maintains object detection sessions.
+K6+5aSH55uu5qCH5qOA5rWL6YWN572u5Y+R55Sf5Y+Y5YyW ||| 设备目标检测配置发生变化 ||| Device object detection configuration changed
+K6+5aSH57G75Z6LICjnkIPmnLrnm5HmjqfjgIHkupHlj7DjgIHmnqrmnLrnrYkp ||| 设备类型 (球机监控、云台、枪机等) ||| Device Type (Dome camera, PTZ, Box camera, etc.)
+K6+5aSH57G75Z6L57Si5byV ||| 设备类型索引 ||| Device type index
+K6+5aSH57uf6K6h5L+h5oGv ||| 设备统计信息 ||| Device Statistics
+K6+5aSH57uf6K6h5L+h5oGv5YaF6YOo57G7 ||| 设备统计信息内部类 ||| Device statistics inner class
+K6+5aSH57yW5Y+3KERldmljZUluZm8uZGV2aWNlSWQp ||| 设备编号(DeviceInfo.deviceId) ||| Device Number (DeviceInfo.deviceId)
+K6+5aSH57yW5Y+35bey5a2Y5Zyo ||| 设备编号已存在 ||| Device number already exists
+K6+5aSH57yW5Y+357Si5byV ||| 设备编号索引 ||| Device number index
+K6+5aSH57yW5Y+377yM5ZSv5LiA5qCH6K+G ||| 设备编号，唯一标识 ||| Device number, unique identifier
+K6+5aSH6K+t5LmJ5YiG5Ymy5Lu75Yqh566h55CG5Zmo77ya5a6a5pe25omr5o+P6K6+5aSH6YWN572u5bm257u05oqk6K+t5LmJ5YiG5Ymy5Lya6K+d77yI5pSv5oyB5Zu+54mHIFVSTCAvIOiuvuWkh+WbvueJh+i3r+W+hOS9nOS4uui+k+WFpe+8ieOAgg== ||| 设备语义分割任务管理器：定时扫描设备配置并维护语义分割会话（支持图片 URL / 设备图片路径作为输入）。 ||| Device semantic segmentation task manager: Scans device configurations periodically and maintains semantic segmentation sessions (supports image URL / device image path as input).
+K6+5aSH6K+t5LmJ5YiG5Ymy6YWN572u5Y+R55Sf5Y+Y5YyW ||| 设备语义分割配置发生变化 ||| Device semantic segmentation configuration changed
+K6+5aSH6L+e5o6l5rWL6K+V5aSx6LSlOiB7fQ== ||| 设备连接测试失败: {} ||| Device connection test failed: {}
+K6+572uSU/nur/nqIvmlbAsIOWug+S4u+imgeaJp+ihjOmdnumYu+WhnueahOS7u+WKoSzlroPku6zkvJrotJ/otKPlpJrkuKrov57mjqUsIOm7mOiupOiuvue9ruavj+S4qkNQVeaguOW/g+S4gOS4que6v+eoiw== ||| 设置IO线程数, 它主要执行非阻塞的任务,它们会负责多个连接, 默认设置每个CPU核心一个线程 ||| Set the number of IO threads, which mainly execute non-blocking tasks. They will handle multiple connections, default set to one thread per CPU core.
+K6+572uSldU5Y+C5pWw ||| 设置JWT参数 ||| Set JWT Parameters
+K6+572uand05Y+C5pWw ||| 设置jwt参数 ||| Set jwt parameters
+K6+572udGFnX21hbmFnZW1lbnTooajkuK3nmoR1c2FnZV9jb3VudOWtl+autQ== ||| 设置tag_management表中的usage_count字段 ||| Set the usage_count field in the tag_management table
+K6+572u5YiwIHJlcXVlc3Qg5Lit ||| 设置到 request 中 ||| Set to request
+K6+572u5ZON5bqU5aS0 ||| 设置响应头 ||| Set response headers
+K6+572u5Z+65pys5a2X5q61 ||| 设置基本字段 ||| Set basic fields
+K6+572u5Z+656GA6YWN572u ||| 设置基础配置 ||| Set basic configurations
+K6+572u5aSn6aG16Z2i6I635Y+W5YWo6YOo5pWw5o2u ||| 设置大页面获取全部数据 ||| Set large page size to retrieve all data
+K6+572u5bGC57qn ||| 设置层级 ||| Set hierarchy
+K6+572u5bKX5L2NSUQ= ||| 设置岗位ID ||| Set Post ID
+K6+572u5bqU55SoaWQ= ||| 设置应用id ||| Set Application ID
+K6+572u5p6S5bqP5Y+3 ||| 设置排序号 ||| Set sort number
+K6+572u5pWw5o2u5rqQ ||| 设置数据源 ||| Set Data Source
+K6+572u5piv5ZCm5byA5ZCv5YyF6KOF5Zmo5qih5byP ||| 设置是否开启包装器模式 ||| Set whether to enable wrapper mode
+K6+572u5piv5ZCm57un5om/5Z+656GA5Lia5Yqh5a2X5q61 ||| 设置是否继承基础业务字段 ||| Set whether to inherit basic business fields
+K6+572u5qCH562+5L2/55So5qyh5pWw ||| 设置标签使用次数 ||| Set tag usage count
+K6+572u55yB44CB5biC44CB5Yy644CB6ZWH44CB5p2R ||| 设置省、市、区、镇、村 ||| Set province, city, district, town, village
+K6+572u56WW5Yy65YiS57yW5Y+3 ||| 设置祖区划编号 ||| Set ancestor division code
+K6+572u57uT5p6c ||| 设置结果 ||| Set Result
+K6+572u6I+c5Y2V5p2D6ZmQ ||| 设置菜单权限 ||| Set menu permissions
+K6+572u6KeS6ImySUQ= ||| 设置角色ID ||| Set Role ID
+K6+572u6KeS6Imy5p2D6ZmQ ||| 设置角色权限 ||| Set Role Permissions
+K6+572u6K6+5aSH5qCH562+ ||| 设置设备标签 ||| Set device tags
+K6+572u6K6+5aSH5qCH562+5aSx6LSlOiBkZXZpY2VJZD17fSwgdGFnSWRzPXt9 ||| 设置设备标签失败: deviceId={}, tagIds={} ||| Failed to set device tags: deviceId={}, tagIds={}
+K6+572u6K6+5aSH5qCH562+5oiQ5YqfOiBkZXZpY2VJZD17fSwgdGFnSWRzPXt9 ||| 设置设备标签成功: deviceId={}, tagIds={} ||| Device tags set successfully: deviceId={}, tagIds={}
+K6+572u6K6+5aSH5qCH562+77yI6KaG55uW5Y6f5pyJ5qCH562+77yJ ||| 设置设备标签（覆盖原有标签） ||| Set device tags (overwrite original tags)
+K6+572u6L+e5o6l5bGe5oCn ||| 设置连接属性 ||| Set connection properties
+K6+572u6YOo6ZeoSUQ= ||| 设置部门ID ||| Set Department ID
+K6+572u6aG26YOo6I+c5Y2V ||| 设置顶部菜单 ||| Set top menu
+K6+572u6buY6K6k5YC8 ||| 设置默认值 ||| Set default value
+K6+572u6buY6K6k5a+G56CB ||| 设置默认密码 ||| Set default password
+K6v6Zeu5Luk54mM ||| 访问令牌 ||| Access Token
+K+K5patY29uZGHnjq/looM= ||| 诊断conda环境 ||| Diagnose conda environment
+K+K5pat6L+c56iL5pyN5Yqh5ZmoY29uZGHnjq/looM= ||| 诊断远程服务器conda环境 ||| Diagnose remote server conda environment
+K+l5qCH562+5bey6KKr5L2/55So77yM5peg5rOV5Yig6Zmk ||| 该标签已被使用，无法删除 ||| The tag is in use and cannot be deleted
+K+m5oOF ||| 详情 ||| Details
+K+m57uG5Zyw5Z2A ||| 详细地址 ||| Detail Address
+K+t5LmJ5YiG5Ymy ||| 语义分割 ||| Semantic Segmentation
+K+t5LmJ5YiG5Ymy5LqL5Lu25bey5Yib5bu6OiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgYWxnb3JpdGhtSWQ9e30= ||| 语义分割事件已创建: deviceId={}, deviceName={}, algorithmId={} ||| Semantic segmentation event created: deviceId={}, deviceName={}, algorithmId={}
+K+t5LmJ5YiG5Ymy5ZCv5Yqo6Kem5Y+R5Zmo77ya5bqU55So5ZCv5Yqo5pe26Kem5Y+R5LiA5qyh6K+t5LmJ5YiG5Ymy5Lu75Yqh5Yi35paw44CC ||| 语义分割启动触发器：应用启动时触发一次语义分割任务刷新。 ||| Semantic segmentation start trigger: Triggers a semantic segmentation task refresh when the application starts.
+K+t5LmJ5YiG5Ymy5oiq5Zu+5bey5L+d5a2YOiBkZXZpY2VJZD17fSwgZGV2aWNlTmFtZT17fSwgdGltZT17fSwgcGF0aD17fQ== ||| 语义分割截图已保存: deviceId={}, deviceName={}, time={}, path={} ||| Semantic segmentation screenshot saved: deviceId={}, deviceName={}, time={}, path={}
+K+t5LmJ5YiG5Ymy566X5rOV ||| 语义分割算法 ||| Semantic Segmentation Algorithm
+K+35LiK5Lyg5paH5Lu2IQ== ||| 请上传文件! ||| Please upload files!
+K+35LiK5Lyg5q2j56Gu55qEZXhjZWzmlofku7Yh ||| 请上传正确的excel文件! ||| Please upload the correct excel file!
+K+35YWI5Yig6Zmk5a2Q6IqC54K5IQ== ||| 请先删除子节点! ||| Please delete child nodes first!
+K+35rGCSUQ= ||| 请求ID ||| Request ID
+K+35rGCVVJJ ||| 请求URI ||| Request URI
+K+35rGC5Y+C5pWw5LiN6IO95Li656m6 ||| 请求参数不能为空 ||| Request parameters cannot be empty
+K+35rGC5Zyw5Z2A ||| 请求地址 ||| Request Address
+K+35rGC54q25oCB ||| 请求状态 ||| Request Status
+K+35rGC54q25oCB5p6a5Li+ ||| 请求状态枚举 ||| Request Status Enum
+K+35rGC54q25oCB77yacGVuZGluZy3lvoXlpITnkIYscHJvY2Vzc2luZy3lpITnkIbkuK0sY29tcGxldGVkLeW3suWujOaIkCxmYWlsZWQt5aSE55CG5aSx6LSl ||| 请求状态：pending-待处理,processing-处理中,completed-已完成,failed-处理失败 ||| Request status: pending-pending, processing-processing, completed-completed, failed-failed
+K+35rOo5oSPOiDmraTlr4bmlofkuLrliY3nq6/liqDlr4blkI7osIPnlKh0b2tlbuaOpeWPo+eahOWvhueggeWPguaVsA== ||| 请注意: 此密文为前端加密后调用token接口的密码参数 ||| Please note: This ciphertext is the password parameter for calling the token interface after frontend encryption
+K+36Iez5bCR6YCJ5oup5LiA5Liq55So5oi3 ||| 请至少选择一个用户 ||| Please select at least one user
+K+36L6T5YWl5q2j56Gu55qE56Gu6K6k5a+G56CBIQ== ||| 请输入正确的确认密码! ||| Please enter the correct confirmation password!
+K+36YCJ5oup6KaB5Yig6Zmk55qE5qCH5rOo ||| 请选择要删除的标注 ||| Please select annotations to delete
+K+36YCJ5oup6KaB5Yig6Zmk55qE566X5rOV ||| 请选择要删除的算法 ||| Please select algorithms to delete
+K+36YCJ5oup6KaB5Yig6Zmk55qE566X5rOV5LuT5bqT ||| 请选择要删除的算法仓库 ||| Please select algorithm repositories to delete
+K+36YCJ5oup6KaB5Yig6Zmk55qE6K6t57uD5Lu75Yqh ||| 请选择要删除的训练任务 ||| Please select training tasks to delete
+K+36YCJ5oup6KaB5Yig6Zmk55qE6K6+5aSH ||| 请选择要删除的设备 ||| Please select devices to delete
+K+36YCJ5oup6KaB5Yi35paw55qE6K6+5aSH ||| 请选择要刷新的设备 ||| Please select devices to refresh
+K+36YCJ5oup6KaB5pu05paw55qE5qCH5rOo ||| 请选择要更新的标注 ||| Please select annotations to update
+K+36YCJ5oup6KaB5pu05paw55qE566X5rOV ||| 请选择要更新的算法 ||| Please select algorithms to update
+K+36YCJ5oup6KaB5pu05paw55qE566X5rOV5LuT5bqT ||| 请选择要更新的算法仓库 ||| Please select algorithm repositories to update
+K+36YCJ5oup6KaB5pu05paw55qE6K6+5aSH ||| 请选择要更新的设备 ||| Please select devices to update
+K+36YCJ5oup6KaB6YOo572y55qE6K6+5aSH ||| 请选择要部署的设备 ||| Please select devices to deploy
+K+75Y+W5Zu+54mH5bC65a+45aSx6LSl77yacGF0aD17fSwgZXJyb3I9e30= ||| 读取图片尺寸失败：path={}, error={} ||| Failed to read image dimensions: path={}, error={}
+K+75Y+W5paH5Lu25YaF5a65 ||| 读取文件内容 ||| Read file content
+K+75Y+W5paH5Lu25YaF5a655aSx6LSl77ya ||| 读取文件内容失败： ||| Failed to read file content: 
+K+75Y+W5paH5Lu25YaF5a655aSx6LSl77yae30= ||| 读取文件内容失败：{} ||| Failed to read file content: {}
+K+75Y+W5pel5b+X5aSx6LSlOiA= ||| 读取日志失败:  ||| Failed to read log: 
+K+75Y+W5pys5Zyw5Zu+54mH5bC65a+4 ||| 读取本地图片尺寸 ||| Read local image dimensions
+LCD55SoaW1wb3J0ZXLmlrnms5U= ||| 调用importer方法 ||| Call importer method
+LSm5Y+3 ||| 账号 ||| Account
+LSm5Y+35ZCN ||| 账号名 ||| Account Name
+LSm5Y+36Kej6ZSB ||| 账号解锁 ||| Account unlock
+LSm5oi3 ||| 账户 ||| Account
+LWE5rqQ5riF55CG6YWN572u ||| 资源清理配置 ||| Resource cleanup configuration
+LWE5rqQ57G75Z6LSUQ= ||| 资源类型ID ||| Resource Type ID
+LWE5rqQ57G75Z6L5ZCN56ew ||| 资源类型名称 ||| Resource Type Name
+LWE5rqQ57G75Z6L57yW56CB ||| 资源类型编码 ||| Resource Type Code
+LWE5rqQ57G75Z6L6YWN572u ||| 资源类型配置 ||| Resource Type Configuration
+LWE5rqQ57G75Z6L6YWN572u5o6l5Y+j ||| 资源类型配置接口 ||| Resource Type Configuration Interface
+LWE5rqQ57G75Z6L6YWN572u6KGoIE1hcHBlciDmjqXlj6M= ||| 资源类型配置表 Mapper 接口 ||| Resource Type Configuration Table Mapper Interface
+LWE5rqQ57G75Z6L6YWN572u6KGoIOWMheijheexuw== ||| 资源类型配置表 包装类 ||| Resource Type Configuration Table Wrapper Class
+LWE5rqQ57G75Z6L6YWN572u6KGoIOWunuS9k+exuw== ||| 资源类型配置表 实体类 ||| Resource Type Configuration Table Entity Class
+LWE5rqQ57G75Z6L6YWN572u6KGoIOaOp+WItuWZqA== ||| 资源类型配置表 控制器 ||| Resource Type Configuration Table Controller
+LWE5rqQ57G75Z6L6YWN572u6KGoIOacjeWKoeWunueOsOexuw== ||| 资源类型配置表 服务实现类 ||| Resource Type Configuration Table Service Implementation Class
+LWE5rqQ57G75Z6L6YWN572u6KGoIOacjeWKoeexuw== ||| 资源类型配置表 服务类 ||| Resource Type Configuration Table Service Class
+LWE5rqQ57G75Z6L6YWN572u6KGoIOinhuWbvuWunuS9k+exuw== ||| 资源类型配置表 视图实体类 ||| Resource Type Configuration Table View Entity Class
+LWE5rqQ57yW5Y+3 ||| 资源编号 ||| Resource Code
+LWE5rqQ6KeE5qC8SUQ= ||| 资源规格ID ||| Resource Specification ID
+LWE5rqQ6KeE5qC86YWN572u ||| 资源规格配置 ||| Resource Specification Configuration
+LWE5rqQ6KeE5qC86YWN572u5o6l5Y+j ||| 资源规格配置接口 ||| Resource Specification Configuration Interface
+LWE5rqQ6KeE5qC86YWN572u6KGoIE1hcHBlciDmjqXlj6M= ||| 资源规格配置表 Mapper 接口 ||| Resource Specification Configuration Table Mapper Interface
+LWE5rqQ6KeE5qC86YWN572u6KGoIOWMheijheexuw== ||| 资源规格配置表 包装类 ||| Resource Specification Configuration Table Wrapper Class
+LWE5rqQ6KeE5qC86YWN572u6KGoIOWunuS9k+exuw== ||| 资源规格配置表 实体类 ||| Resource Specification Configuration Table Entity Class
+LWE5rqQ6KeE5qC86YWN572u6KGoIOaOp+WItuWZqA== ||| 资源规格配置表 控制器 ||| Resource Specification Configuration Table Controller
+LWE5rqQ6KeE5qC86YWN572u6KGoIOacjeWKoeWunueOsOexuw== ||| 资源规格配置表 服务实现类 ||| Resource Specification Configuration Table Service Implementation Class
+LWE5rqQ6KeE5qC86YWN572u6KGoIOacjeWKoeexuw== ||| 资源规格配置表 服务类 ||| Resource Specification Configuration Table Service Class
+LWE5rqQ6KeE5qC86YWN572u6KGoIOinhuWbvuWunuS9k+exuw== ||| 资源规格配置表 视图实体类 ||| Resource Specification Configuration Table View Entity Class
+LWE5rqQ6ZuG5ZCI ||| 资源集合 ||| Resource Set
+Lev5b6E5LiN5a2Y5Zyo77yM5bCd6K+V5Yib5bu677yae30= ||| 路径不存在，尝试创建：{} ||| Path does not exist, trying to create: {}
+Lev5b6E6K6/6Zeu5oiQ5Yqf77yae30= ||| 路径访问成功：{} ||| Path accessed successfully: {}
+Lez6L+HUlRTUOW9leWItuWIt+aWsO+8mnZsc3RyZWFtLnJ0c3AtcmVjb3JkaW5nLmVuYWJsZWQ9ZmFsc2U= ||| 跳过RTSP录制刷新：vlstream.rtsp-recording.enabled=false ||| Skipped RTSP recording refresh: vlstream.rtsp-recording.enabled=false
+Lez6L+HUlRTUOW9leWItuWIt+aWsO+8muW3suacieWIt+aWsOS7u+WKoei/m+ihjOS4rQ== ||| 跳过RTSP录制刷新：已有刷新任务进行中 ||| Skipped RTSP recording refresh: Another refresh task is already in progress
+Lez6L+H5b2V5YOP5YWl5bqT5omr5o+P77ya5bey5pyJ5omr5o+P5Lu75Yqh6L+b6KGM5Lit ||| 跳过录像入库扫描：已有扫描任务进行中 ||| Skipped recording storage scanning: Another scanning task is already in progress
+Lez6L+H5paH5Lu25ZCM5q2l77ya5Lya6K+d5oiW55uu5b2V5Li66KeS ||| 跳过文件同步：会话或目录为空 ||| Skipped file synchronization: Session or directory is empty
+Lez6L+H5paH5Lu25ZCM5q2l77ya55uu5b2V5LiN5Y+v6K6/6Zeu5oiW5peg5paH5Lu25pWw57uELCBzdHJhdGVneUlkPXt9LCBkaXJlY3Rvcnk9e30= ||| 跳过文件同步：目录不可访问或无文件数组, strategyId={}, directory={} ||| Skipped file synchronization: Directory inaccessible or file array is empty, strategyId={}, directory={}
+Lez6L+H5pe26Ze0562W55Wl5Yi35paw77yac3RyYXRlZ3lJZOS4uuepuiwgc3RyYXRlZ3lEZXZpY2VJZD17fQ== ||| 跳过时间策略刷新：strategyId为空, strategyDeviceId={} ||| Skipped time strategy refresh: strategyId is empty, strategyDeviceId={}
+Lez6L+H5pyq56iz5a6a5paH5Lu2OiBwYXRoPXt9LCBtb2RpZnlUaW1lPXt9LCBzdGFsZVRocmVzaG9sZFNlY29uZHM9e30= ||| 跳过未稳定文件: path={}, modifyTime={}, staleThresholdSeconds={} ||| Skipped unstable file: path={}, modifyTime={}, staleThresholdSeconds={}
+Lez6L+H6YeN5aSN5YWl5bqT5paH5Lu2KERC5bey5a2Y5ZyoKToge30= ||| 跳过重复入库文件(DB已存在): {} ||| Skipped duplicate file storage (already exists in DB): {}
+L2s5o2i5Li65bCP5YaZ ||| 转换为小写 ||| Convert to lowercase
+L2s5o2i5ZCO55qE5p+l6K+i5Y+C5pWw77yaYW5ub3RhdGlvbk5hbWU9e30sIGFubm90YXRpb25UeXBlPXt9LCBhbm5vdGF0aW9uU3RhdHVzPXt9 ||| 转换后的查询参数：annotationName={}, annotationType={}, annotationStatus={} ||| Converted query parameters: annotationName={}, annotationType={}, annotationStatus={}
+L2s5o2i5paH5Lu2 ||| 转换文件 ||| Convert file
+L2s5o2i5qih5Z6L ||| 转换模型 ||| Convert model
+L6F5Yqp5pa55rOV77ya5aaC5p6c5YC85LiN5Li6bnVsbOWImeiuvue9rg== ||| 辅助方法：如果值不为null则设置 ||| Helper method: set if value is not null
+L6T5YWl5qC85byP77yIaW1hZ2XjgIF2aWRlb+etie+8iQ== ||| 输入格式（image、video等） ||| Input format (image, video, etc.)
+L6T5YWl6YWN572u ||| 输入配置 ||| Input Configuration
+L6T5Ye65qC85byP77yIYmJveOOAgW1hc2vjgIFrZXlwb2ludOetie+8iQ== ||| 输出格式（bbox、mask、keypoint等） ||| Output format (bbox, mask, keypoint, etc.)
+L6T5Ye66YWN572u ||| 输出配置 ||| Output Configuration
+L6+5YiwQkFUQ0hfQ09VTlTvvIzliJnosIPnlKhpbXBvcnRlcuaWueazleWFpeW6k++8jOmYsuatouaVsOaNruWHoOS4h+adoeaVsOaNruWcqOWGheWtmO+8jOWuueaYk09PTQ== ||| 达到BATCH_COUNT，则调用importer方法入库，防止数据几万条数据在内存，容易OOM ||| Once BATCH_COUNT is reached, call importer method to persist data, preventing tens of thousands of data items in memory which easily causes OOM
+L+H5pyf5pe26Ze0 ||| 过期时间 ||| Expiration Time
+L+H5ruk5o6J5Z+656GA6aKE572u566X5rOV5bqT ||| 过滤掉基础预置算法库 ||| Filter out basic preset algorithm library
+L+Q6KGM5pe26ZW/77yI5YiG6ZKf77yJ ||| 运行时长（分钟） ||| Run Duration (minutes)
+L+Q6KGM5qyh5pWw ||| 运行次数 ||| Run Count
+L+U5ZueVXNlckluZm8= ||| 返回UserInfo ||| Return UserInfo
+L+U5Zue5raI5oGv ||| 返回消息 ||| Return message
+L+U5Zue5raI5oGvOjIwMA== ||| 返回消息:200 ||| Return message: 200
+L+U5Zue56CB ||| 返回码 ||| Return code
+L+U5Zue56CBOjIwMA== ||| 返回码:200 ||| Return code: 200
+L+U5Zue56ef5oi35qC85byP55qEa2V5 ||| 返回租户格式的key ||| Return key in tenant format
+L+Z56eN5qih5p2/55So5LqO5o+Q6YaS6LCB5LiO5L2g5Y+R55Sf5LqG5LqS5Yqo77yM5bem5L6n5pS+44CO6LCB44CP55qE5aS05YOP ||| 这种模板用于提醒谁与你发生了互动，左侧放『谁』的头像 ||| This template is used to remind who interacted with you, with "who's" avatar placed on the left
+L+Z6YeM5Y+v5Lul5re75Yqg5a6e6ZmF55qE5a+导注入逻辑 ||| 这里可以添加实际的导入逻辑 ||| Actual import logic can be added here
+L+Z6YeM5Y+v5Lul5re75Yqg5a6e6ZmF55qE6aqM6K+B6YC76L6R ||| 这里可以添加实际的验证逻辑 ||| Actual validation logic can be added here
+L+Z6YeM5a6e546w5a6e6ZmF55qEUFRa5o6n5Yi26YC76L6R ||| 这里实现实际的PTZ控制逻辑 ||| Implement actual PTZ control logic here
+L+Z6YeM5a6e546w5a6e6ZmF55qE6K6+5aSH6L+e5o6l5rWL6K+V6YC76L6R ||| 这里实现实际的设备连接测试逻辑 ||| Implement actual device connection test logic here
+L+Z6YeM5bqU6K+l6LCD55SoRG9ja2VyIEFQSeWBnOatouWuueWZqA== ||| 这里应该调用Docker API停止容器 ||| Docker API should be called here to stop container
+L+Z6YeM5bqU6K+l6LCD55SoRG9ja2VyIEFQSeWQr+WKqOWuueWZqA== ||| 这里应该调用Docker API启动容器 ||| Docker API should be called here to start container
+L+Z6YeM5bqU6K+l6LCD55SoRG9ja2VyIEFQSemHjeWQr+WuueWZqA== ||| 这里应该调用Docker API重启容器 ||| Docker API should be called here to restart container
+L+Z6YeM5bqU6K+l6LCD55So5a6e6ZmF55qE6YOo572y5pyN5Yqh ||| 这里应该调用实际的部署服务 ||| Actual deployment service should be called here
+L+Z6YeM5bqU6K+l6LCD55So5a6e6ZmF55qE6YOo572y6YC76L6R ||| 这里应该调用实际的部署逻辑 ||| Actual deployment logic should be called here
+L+Z6YeM6ZyA6KaB5qC55o2u5YW35L2T6ZyA5rGC5a6e546w ||| 这里需要根据具体需求实现 ||| This needs to be implemented based on specific requirements
+L+c56iL5pyN5Yqh5Zmo6YWN572u5bey5a2Y5Zyo77yM6Lez6L+H5Yid5aeL5YyW ||| 远程服务器配置已存在，跳过初始化 ||| Remote server configuration already exists, skipping initialization
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGo ||| 远程服务器配置表 ||| Remote Server Configuration Table
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIEV4Y2Vs5a6e5L2T57G7 ||| 远程服务器配置表 Excel实体类 ||| Remote Server Configuration Table Excel Entity Class
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIE1hcHBlciDmjqXlj6M= ||| 远程服务器配置表 Mapper 接口 ||| Remote Server Configuration Table Mapper Interface
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIOS/ruaUuQ== ||| 远程服务器配置表 修改 ||| Remote Server Configuration Table Modify
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIOWIhumhtQ== ||| 远程服务器配置表 分页 ||| Remote Server Configuration Table Pagination
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIOWIoOmZpA== ||| 远程服务器配置表 删除 ||| Remote Server Configuration Table Delete
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIOWMheijheexuyzov5Tlm57op4blm77lsYLmiYDpnIDnmoTlrZfmrrU= ||| 远程服务器配置表 包装类,返回视图层所需的字段 ||| Remote Server Configuration Table Wrapper Class, returns fields required by view layer
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIOWunuS9k+exuw== ||| 远程服务器配置表 实体类 ||| Remote Server Configuration Table Entity Class
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIOaOp+WItuWZqA== ||| 远程服务器配置表 控制器 ||| Remote Server Configuration Table Controller
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIOaVsOaNruS8oOi+k+WvueixoeWunuS9k+exuw== ||| 远程服务器配置表 数据传输对象实体类 ||| Remote Server Configuration Table Data Transfer Object Entity Class
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIOaWsOWing== ||| 远程服务器配置表 新增 ||| Remote Server Configuration Table Add
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIOaWsOWinuaIluS/ruaUuQ== ||| 远程服务器配置表 新增或修改 ||| Remote Server Configuration Table Add or Modify
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIOacjeWKoeWunueOsOexuw== ||| 远程服务器配置表 服务实现类 ||| Remote Server Configuration Table Service Implementation Class
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIOacjeWKoeexuw== ||| 远程服务器配置表 服务类 ||| Remote Server Configuration Table Service Class
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIOiHquWumuS5ieWIhumhtQ== ||| 远程服务器配置表 自定义分页 ||| Remote Server Configuration Table Custom Pagination
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIOinhuWbvuWunuS9k+exuw== ||| 远程服务器配置表 视图实体类 ||| Remote Server Configuration Table View Entity Class
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGoIOivpuaDhQ== ||| 远程服务器配置表 详情 ||| Remote Server Configuration Table Details
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGo5o6l5Y+j ||| 远程服务器配置表接口 ||| Remote Server Configuration Table Interface
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGo5pWw5o2u ||| 远程服务器配置表数据 ||| Remote Server Configuration Table Data
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGo5pWw5o2u6KGo ||| 远程服务器配置表数据表 ||| Remote Server Configuration Table Data Table
+L+c56iL5pyN5Yqh5Zmo6YWN572u6KGo5qOA5p+l5a6M5oiQ ||| 远程服务器配置表检查完成 ||| Remote Server Configuration Table check completed
+L+c56iL6I635Y+WIHt9IOWksei0pTogZGV2aWNlSWQ9e30sIGRldmljZU5hbWU9e30sIHBhdGg9e30sIGVycm9yPXt9 ||| 远程获取 {} 失败: deviceId={}, deviceName={}, path={}, error={} ||| Failed to retrieve {} remotely: deviceId={}, deviceName={}, path={}, error={}
