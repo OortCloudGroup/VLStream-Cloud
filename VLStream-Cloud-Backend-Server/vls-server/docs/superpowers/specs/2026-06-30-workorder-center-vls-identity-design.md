@@ -8,6 +8,8 @@ Date: 2026-06-30
 
 `apaas-workflowforms` owns the workflow-form and workorder capabilities. It runs on JDK 8, Spring Boot 2.7, RuoYi, Sa-Token, Flowable, and Javax APIs.
 
+The implementation target is the copied repository under `D:\work\ide\WorkSpace\VLStream-Cloud\VLStream-Cloud-Backend-Server\apaas-workflowforms`. The original external directory `D:\work\ide\WorkSpace\apaas-workflowforms` is reference material only unless explicitly requested.
+
 The target is not to merge the two services. The target is to keep `apaas-workflowforms` as an independent workorder-center service, keep Flowable as an internal engine, remove the public product surface of a general workflow platform, and rely on `vls-server` as the identity authority.
 
 ## Goals
@@ -281,6 +283,8 @@ Required verification chain:
 - Shell commands should use the local `rtk` prefix.
 
 ## Rollout Plan
+
+All implementation steps target `D:\work\ide\WorkSpace\VLStream-Cloud\VLStream-Cloud-Backend-Server\apaas-workflowforms` for the workorder service and `D:\work\ide\WorkSpace\VLStream-Cloud\VLStream-Cloud-Backend-Server\vls-server` for VLS view/JWT integration work.
 
 1. Add VLS read-only views and document required fields.
 2. Add workorder-service VLS read-only data source configuration.
