@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.workflow.mapper.WfModelMapper">
+
+    <select id="selectModelCount" resultType="java.lang.Long">
+        SELECT
+        count( RES.ID_ )
+        FROM
+        ACT_RE_MODEL RES
+        <where>
+            <if test="modelBo.modelKey!= null and modelBo.modelKey != ''">
+                and RES.KEY_ = #{modelBo.modelKey}
+            </if>
+            <if test="modelBo.modelName != null and modelBo.modelName != ''">
+                and RES.NAME_ LIKE concat('%',#{modelBo.modelName},'%')
+            </if>
+            <if test="wfSyntheses != null and wfSyntheses.size > 0">
+                and RES.CATEGORY_ in
+                <foreach collection="wfSyntheses" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <if test="workOrderSyntheses != null and workOrderSyntheses.size > 0">
+                and RES.CATEGORY_ in
+                <foreach collection="workOrderSyntheses" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <if test="modelBo.wfCategory != null and modelBo.wfCategory != ''">
+                and RES.CATEGORY_ =
+                #{modelBo.wfCategory}
+            </if>
+            <if test="modelBo.WorkOrderCategory != null and modelBo.WorkOrderCategory != ''">
+                and RES.CATEGORY_ =
+                #{modelBo.WorkOrderCategory}
+            </if>
+            <if test="!history">
+                AND RES.VERSION_ =
+                (SELECT
+                max( VERSION_ )
+                FROM
+                ACT_RE_MODEL
+                WHERE
+                KEY_ = RES.KEY_
+                )
+            </if>
+            AND RES.TENANT_ID_ = #{tenantId}
+        </where>
+    </select>
+    <select id="selectModelList" resultType="org.flowable.engine.impl.persistence.entity.ModelEntityImpl">
+        SELECT
+        RES.ID_,
+        RES.REV_,
+        RES.NAME_,
+        RES.KEY_,
+        RES.CATEGORY_,
+        RES.CREATE_TIME_,
+        RES.LAST_UPDATE_TIME_,
+        RES.VERSION_,
+        RES.META_INFO_,
+        RES.DEPLOYMENT_ID_,
+        RES.EDITOR_SOURCE_VALUE_ID_,
+        RES.EDITOR_SOURCE_EXTRA_VALUE_ID_,
+        RES.TENANT_ID_
+        FROM
+        ACT_RE_MODEL RES
+        <where>
+            <if test="modelBo.modelKey!= null and modelBo.modelKey != ''">
+                and RES.KEY_ = #{modelBo.modelKey}
+            </if>
+            <if test="modelBo.modelName != null and modelBo.modelName != ''">
+                and RES.NAME_ LIKE concat('%',#{modelBo.modelName},'%')
+            </if>
+            <if test="wfSyntheses != null and wfSyntheses.size > 0">
+                and RES.CATEGORY_ in
+                <foreach collection="wfSyntheses" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <if test="workOrderSyntheses != null and workOrderSyntheses.size > 0">
+                and RES.CATEGORY_ in
+                <foreach collection="workOrderSyntheses" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <if test="modelBo.wfCategory != null and modelBo.wfCategory != ''">
+                and RES.CATEGORY_ =
+                #{modelBo.wfCategory}
+            </if>
+            <if test="modelBo.WorkOrderCategory != null and modelBo.WorkOrderCategory != ''">
+                and RES.CATEGORY_ =
+                #{modelBo.WorkOrderCategory}
+            </if>
+        <if test="!history">
+            AND RES.VERSION_ =
+            (SELECT
+            max( VERSION_ )
+            FROM
+            ACT_RE_MODEL
+            WHERE
+            KEY_ = RES.KEY_
+            )
+        </if>
+            AND RES.TENANT_ID_ = #{tenantId}
+        </where>
+        ORDER BY
+        RES.CREATE_TIME_ DESC
+    </select>
+</mapper>

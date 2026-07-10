@@ -1,0 +1,22 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: <IMAGE_NAME>
+  namespace: <NAMESPACES>
+  annotations:
+    configuration.konghq.com: <NAMESPACES>.kong-ingress
+spec:
+  ingressClassName: lvgemgroup-kong
+  rules:
+  - host: <IMAGE_NAME>
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: <IMAGE_NAME>
+            port:
+              number: 8080
+

@@ -1,0 +1,95 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: <IMAGE_NAME>
+  namespace: <NAMESPACES>
+  labels:
+    app: <IMAGE_NAME>
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: <IMAGE_NAME>
+  template:
+    metadata:
+      labels:
+        task: backend
+        k8s-app: <IMAGE_NAME>
+    spec:
+      containers:
+        - name: <IMAGE_NAME>
+          image: hb.oortcloudsmart.com/oa-apaas/<IMAGE_NAME>:__VERSION__
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SERVER_PORT
+              value: '8080'
+            - name: MYSQL_USERNAME
+              value: root
+            - name: MYSQL_PASSWORD
+              value: mysql@pass
+            - name: MYSQL_PORT
+              value: '3306'
+            - name: MYSQL_HOST
+              value: mysql
+            - name: REDIS_HOST
+              value: redis-single-public1.oort-base
+            - name: REDIS_PORT
+              value: '6001'
+            - name: REDIS_PASSWORD
+              value: redis@pass
+            - name: APAAS_SSO
+              value: http://apaas-sso.p-lvgemgroup
+            - name: APAAS_GETTENANTADMIN
+              value: http://apaas-user/tenant/v1/getTenantAdmin
+            - name: UNIFIEDMESSAGINGSEND_URL
+              value: http://apaas-unified-msg/
+            - name: APAAS_WORKFLOWFORMS
+              value: http://apaas-workflowforms:8080
+            - name: LOGINCODEURL
+              value: http://apaas-sso.p-lvgemgroup/sso/v1/getLoginCode
+            - name: USERTENANTSURL
+              value: http://apaas-sso.p-lvgemgroup/sso/v1/getUserTenants
+            - name: LOGINURL
+              value: http://apaas-sso.p-lvgemgroup/sso/v1/login
+            - name: REPORTDATASCOPEURL
+              value: http://apaas-auth.p-lvgemgroup/auth/v1/uplist
+            - name: VERIFYDATASCOPEURL
+              value: http://apaas-auth.p-lvgemgroup/auth/v2/verifyauth
+            - name: XXL_JOB_ADDRESSES
+              value: http://apaas-xxl-job.zglt-1742612481.svc.cluster.local:9100
+            - name: TZ
+              value: Asia/Shanghai
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "1400Mi"
+            limits:
+              cpu: "800m"
+              memory: "2800Mi"
+      #        readinessProbe:
+      #          failureThreshold: 3
+      #          httpGet:
+      #            path: /config
+      #            port: 8092
+      #          initialDelaySeconds: 30
+      #          periodSeconds: 30
+      #          successThreshold: 1
+      #          timeoutSeconds: 10
+      #        livenessProbe:
+      #          httpGet:
+      #            path: /config
+      #            port: 8092
+      #          initialDelaySeconds: 40
+      #          periodSeconds: 30
+      #          successThreshold: 1
+      #          timeoutSeconds: 10
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: app
+                    operator: NotIn
+                    values:
+                      - im

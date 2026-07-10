@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysUserMapper">
+
+    <resultMap type="com.ruoyi.common.core.domain.entity.SysUser" id="SysUserResult">
+        <id property="userId" column="user_id"/>
+        <result property="tenantId" column="tenant_id"/>
+        <result property="idcard" column="idcard"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="deptName" column="dept_name"/>
+        <result property="deptCode" column="deptCode"/>
+        <result property="userName" column="user_name"/>
+        <result property="nickName" column="nick_name"/>
+        <result property="loginId" column="login_id"/>
+        <result property="userType" column="user_type"/>
+        <result property="jobId" column="job_id"/>
+        <result property="postId" column="post_id"/>
+        <result property="email" column="email"/>
+        <result property="phonenumber" column="phonenumber"/>
+        <result property="sex" column="sex"/>
+        <result property="avatar" column="avatar"/>
+        <result property="password" column="password"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="loginIp" column="login_ip"/>
+        <result property="loginDate" column="login_date"/>
+<!--        <result property="oortIspart" column="oort_ispart"/>-->
+<!--        <result property="oortJobname" column="oort_jobname"/>-->
+        <result property="deptInfo" column="dept_info"/>
+        <association property="dept" column="dept_id" javaType="com.ruoyi.common.core.domain.entity.SysDeptView" resultMap="deptResult"/>
+        <collection property="roles" javaType="java.util.List" resultMap="RoleResult"/>
+    </resultMap>
+
+<!--    <resultMap type="SysUser" id="SysUserResult">-->
+<!--        <id property="userId" column="user_id"/>-->
+<!--        <result property="deptId" column="dept_id"/>-->
+<!--        <result property="userName" column="user_name"/>-->
+<!--        <result property="nickName" column="nick_name"/>-->
+<!--        <result property="userType" column="user_type"/>-->
+<!--        <result property="idcard" column="idcard"/>-->
+<!--        <result property="email" column="email"/>-->
+<!--        <result property="phonenumber" column="phonenumber"/>-->
+<!--        <result property="sex" column="sex"/>-->
+<!--        <result property="avatar" column="avatar"/>-->
+<!--        <result property="password" column="password"/>-->
+<!--        <result property="status" column="status"/>-->
+<!--        <result property="delFlag" column="del_flag"/>-->
+<!--        <result property="loginIp" column="login_ip"/>-->
+<!--        <result property="loginDate" column="login_date"/>-->
+<!--        <result property="createBy" column="create_by"/>-->
+<!--        <result property="createTime" column="create_time"/>-->
+<!--        <result property="updateBy" column="update_by"/>-->
+<!--        <result property="updateTime" column="update_time"/>-->
+<!--        &lt;!&ndash;        <result property="remark" column="remark"/>&ndash;&gt;-->
+<!--        &lt;!&ndash;        <result property="oortIspart" column="oort_ispart"/>&ndash;&gt;-->
+<!--        <result property="oortJobname" column="oort_jobname"/>-->
+<!--        <result property="deptUdid" column="dept_udid"/>-->
+<!--        <result property="deptInfo" column="dept_info"/>-->
+<!--        <association property="dept" column="dept_id" javaType="SysDept" resultMap="deptResult"/>-->
+<!--        <collection property="roles" javaType="java.util.List" resultMap="RoleResult"/>-->
+<!--    </resultMap>-->
+
+    <resultMap id="deptResult" type="com.ruoyi.common.core.domain.entity.SysDeptView">
+        <id property="deptId" column="dept_id"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="deptName" column="dept_name"/>
+        <result property="ancestors" column="ancestors"/>
+        <result property="orderNum" column="order_num"/>
+        <result property="leader" column="leader"/>
+        <result property="status" column="dept_status"/>
+    </resultMap>
+
+    <resultMap id="RoleResult" type="com.ruoyi.common.core.domain.entity.SysRole">
+        <id property="roleId" column="role_id"/>
+        <result property="roleName" column="role_name"/>
+        <result property="roleKey" column="role_key"/>
+        <result property="roleSort" column="role_sort"/>
+        <result property="dataScope" column="data_scope"/>
+        <result property="status" column="role_status"/>
+    </resultMap>
+
+    <sql id="selectUserVo">
+        SELECT
+            u.user_id,
+            u.tenant_id,
+            u.dept_id,
+            u.dept_info,
+            COALESCE(u.dept_code, d.oort_dcode) AS deptCode,
+            u.idcard,
+            u.user_name,
+            u.nick_name,
+            u.login_id,
+            u.user_type,
+            u.email,
+            u.avatar,
+            u.phonenumber,
+            u.password,
+            u.sex,
+            u.status,
+            u.del_flag,
+            u.login_ip,
+            u.login_date,
+            u.create_by,
+            u.create_time,
+            u.update_by,
+            u.update_time,
+            u.job_id,
+            u.post_id,
+            d.parent_id,
+            d.ancestors,
+            COALESCE(d.dept_name, u.dept_name) AS dept_name,
+            d.order_num,
+            d.leader,
+            d.status AS dept_status,
+            r.role_id,
+            r.role_name,
+            r.role_key,
+            r.role_sort,
+            r.data_scope,
+            r.status AS role_status
+        FROM
+            sys_user u
+                LEFT JOIN sys_dept d ON u.dept_id = d.dept_id
+                LEFT JOIN sys_user_role sur ON u.user_id = sur.user_id
+                LEFT JOIN sys_role r ON r.role_id = sur.role_id
+    </sql>
+
+    <select id="selectPageUserList" resultMap="SysUserResult">
+        SELECT
+            u.user_id,
+            u.tenant_id,
+            u.dept_id,
+            COALESCE(u.dept_code, d.oort_dcode) AS deptCode,
+            u.login_id,
+            u.user_name,
+            u.nick_name,
+            u.user_type,
+            u.email,
+            u.avatar,
+            u.phonenumber,
+            u.sex,
+            u.status,
+            u.del_flag,
+            u.login_ip,
+            u.login_date,
+            u.create_by,
+            u.create_time,
+            u.job_id,
+            u.post_id,
+            COALESCE(d.dept_name, u.dept_name) AS dept_name,
+            d.leader,
+            d.status AS dept_status
+        FROM
+            sys_user u
+                LEFT JOIN sys_dept d ON u.dept_id = d.dept_id
+            ${ew.getCustomSqlSegment}
+    </select>
+
+    <select id="selectUserList" resultMap="SysUserResult">
+        select u.user_id,
+               u.tenant_id,
+               u.dept_id,
+               COALESCE(u.dept_code, d.oort_dcode) AS deptCode,
+               u.login_id,
+               u.user_name,
+               u.nick_name,
+               u.user_type,
+               u.email,
+               u.avatar,
+               u.phonenumber,
+               u.sex,
+               u.status,
+               u.del_flag,
+               u.login_ip,
+               u.login_date,
+               u.create_by,
+               u.create_time,
+               u.job_id,
+               u.post_id,
+               COALESCE(d.dept_name, u.dept_name) AS dept_name,
+               d.leader,
+               d.status AS dept_status
+        from sys_user u
+                 left join sys_dept d on u.dept_id = d.dept_id
+            ${ew.getCustomSqlSegment}
+    </select>
+
+    <select id="selectAllocatedList" resultMap="SysUserResult">
+        select distinct u.user_id,
+                        u.tenant_id,
+                        u.dept_id,
+                        COALESCE(u.dept_code, d.oort_dcode) AS deptCode,
+                        u.user_name,
+                        u.nick_name,
+                        u.login_id,
+                        u.email,
+                        u.phonenumber,
+                        u.status,
+                        u.create_time,
+                        COALESCE(d.dept_name, u.dept_name) AS dept_name
+        from sys_user u
+                 left join sys_dept d on u.dept_id = d.dept_id
+                 left join sys_user_role sur on u.user_id = sur.user_id
+                 left join sys_role r on r.role_id = sur.role_id
+            ${ew.getCustomSqlSegment}
+    </select>
+
+    <select id="selectUnallocatedList" resultMap="SysUserResult">
+        select distinct u.user_id,
+                        u.tenant_id,
+                        u.dept_id,
+                        COALESCE(u.dept_code, d.oort_dcode) AS deptCode,
+                        u.user_name,
+                        u.nick_name,
+                        u.login_id,
+                        u.email,
+                        u.phonenumber,
+                        u.status,
+                        u.create_time,
+                        COALESCE(d.dept_name, u.dept_name) AS dept_name
+        from sys_user u
+                 left join sys_dept d on u.dept_id = d.dept_id
+                 left join sys_user_role sur on u.user_id = sur.user_id
+                 left join sys_role r on r.role_id = sur.role_id
+            ${ew.getCustomSqlSegment}
+    </select>
+
+    <select id="selectUserByUserName" parameterType="String" resultMap="SysUserResult">
+        <include refid="selectUserVo"/>
+        where u.del_flag = '0' and u.user_name = #{userName}
+    </select>
+
+    <select id="selectUserByPhonenumber" parameterType="String" resultMap="SysUserResult">
+        <include refid="selectUserVo"/>
+        where u.del_flag = '0' and u.phonenumber = #{phonenumber}
+    </select>
+
+    <select id="selectUserByEmail" parameterType="String" resultMap="SysUserResult">
+        <include refid="selectUserVo"/>
+        where u.del_flag = '0' and u.email = #{email}
+    </select>
+
+    <select id="selectUserById" parameterType="String" resultMap="SysUserResult">
+        <include refid="selectUserVo"/>
+        where u.del_flag = '0' and u.user_id = #{userId}
+    </select>
+
+
+
+    <select id="selectLatestUpdateTime" resultType="date">
+        SELECT update_time FROM sys_user ORDER BY update_time DESC LIMIT 1
+    </select>
+
+    <select id="selectLeadersByDeptId" resultMap="SysUserResult">
+        <include refid="selectUserVo"/>
+        where u.del_flag = '0' and u.dept_id = #{parentId} and u.dept_info is not null and u.dept_info != ''
+    </select>
+    <select id="selectUserByUserId" resultMap="SysUserResult">
+        <include refid="selectUserVo"/>
+        where u.del_flag = '0' and u.user_id = #{UserId}
+         <if test="tenantId!=null and tenantId!=''">
+         and u.tenant_id=#{tenantId}
+         </if>
+    </select>
+    <select id="selectUserByUserIds" resultMap="SysUserResult">
+            <include refid="selectUserVo"/>
+            where u.del_flag = '0' and u.user_id in
+            <foreach collection="UserIds" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+    </select>
+
+
+</mapper>

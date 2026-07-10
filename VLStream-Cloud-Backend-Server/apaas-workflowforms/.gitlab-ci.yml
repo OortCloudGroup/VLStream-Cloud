@@ -1,0 +1,145 @@
+#image:
+#  name: hb.oortcloudsmart.com/base/golang:1.10.3-stretch
+#  entrypoint: ["/bin/sh", "-c"]
+
+# The problem is that to be able to use go get, one needs to put
+# the repository in the $GOPATH. So for example if your gitlab domain
+# is mydomainperso.com, and that your repository is repos/projectname, and
+# the default GOPATH being /go, then you'd need to have your
+# repository in /go/src/mydomainperso.com/repos/projectname
+# Thus, making a symbolic link corrects this.
+
+#before_script:
+#  - mkdir -p "/go/src/git.qikqiak.com/${CI_PROJECT_NAMESPACE}"
+#  - ln -sf "${CI_PROJECT_DIR}" "/go/src/git.qikqiak.com/${CI_PROJECT_PATH}"
+#  - cd "/go/src/git.qikqiak.com/${CI_PROJECT_PATH}/"
+
+stages:
+  - release
+  - review
+  - deploy
+
+
+
+#compile:
+#  stage: build
+#  script:
+#    # Add here all the dependencies, or use glide/govendor/...
+#    # to get them automatically.
+#    - make build
+#  artifacts:
+#    paths:
+#      - app
+
+#image_build:
+#  stage: release
+#  image: hb.oortcloudsmart.com/devops/docker:latest
+#  variables:
+#    DOCKER_DRIVER: overlay
+#    DOCKER_HOST: tcp://localhost:2375
+#  services:
+#    - name: docker:17.03-dind
+#      command: ["--insecure-registry=registry.qikqiak.com"]
+#  script:
+#    - docker info
+#    - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" registry.qikqiak.com
+#    - docker build -t "${CI_REGISTRY_IMAGE}:latest" .
+#    - docker tag "${CI_REGISTRY_IMAGE}:latest" "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}"
+#    - test ! -z "${CI_COMMIT_TAG}" && docker push "${CI_REGISTRY_IMAGE}:latest"
+#    - docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}"
+
+docker-harbor-build:
+  stage: release
+  only:
+    - branches
+    - tags
+#  except:
+#    - master
+  retry: 1
+  image:
+    name: hb.oortcloudsmart.com/devops/kaniko-project-executor:debug
+    entrypoint: [""]
+  script:
+    - sed -i "s/<PROJECT_NAME>/$CI_PROJECT_NAME/g" dockerfile
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - cat /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/dockerfile --destination $CI_REGISTRY/oa-apaas/$CI_PROJECT_NAME:${CI_COMMIT_REF_NAME}_${CI_PIPELINE_ID} 
+
+deploy_review:
+  image: hb.oortcloudsmart.com/test/kubectl:1.13.12
+  stage: review
+  only:
+    - branches
+  except:
+    - tags
+    - master
+  variables:
+    NS: p-lvgemgroup
+  environment:
+    name: p-lvgemgroup
+    url: http://192.168.88.119:31610/oort/$CI_PROJECT_NAME/swagger/index.html
+    on_stop: stop_review
+  script:
+    - kubectl version
+    - cd deploy/
+    - |
+      sed -i "/konghq.com/a\    kubernetes.io\/ingress.class: \"demo\"" ingress.yaml
+    - sed -i "s/<NAMESPACES>/$NS/" deployment.yaml service.yaml ingress.yaml
+    - sed -i "s/<IMAGE_NAME>/$CI_PROJECT_NAME/" deployment.yaml service.yaml ingress.yaml
+    - sed -i "s/__CI_ENVIRONMENT_SLUG__/${CI_ENVIRONMENT_SLUG}/" deployment.yaml service.yaml ingress.yaml
+    - sed -i "s/__VERSION__/${CI_COMMIT_REF_NAME}_${CI_PIPELINE_ID}/" deployment.yaml service.yaml ingress.yaml
+    - cat deployment.yaml
+    - cat ingress.yaml
+    - |
+      if kubectl apply -f deployment.yaml | grep -q unchanged; then
+          echo "=> Patching deployment to force image update."
+          kubectl patch -f deployment.yaml -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"ci-last-updated\":\"$(date +'%s')\"}}}}}"
+      else
+          echo "=> Deployment apply has changed the object, no need to force image update."
+      fi
+    - kubectl apply -f service.yaml || true
+    - kubectl apply -f ingress.yaml
+    - kubectl rollout status -f deployment.yaml
+    - kubectl get deploy,svc,ing -n $NS -l ref=${CI_ENVIRONMENT_SLUG}
+#/konghq.com/a\    kubernetes.io\/ingress.class: \"demo\"
+#${CI_PIPELINE_ID}
+stop_review:
+  image: hb.oortcloudsmart.com/test/kubectl:1.13.12
+  stage: review
+  variables:
+    GIT_STRATEGY: none
+  when: manual
+  only:
+    - branches
+  except:
+    - tags
+    - master
+  environment:
+    name: p-lvgemgroup
+    action: stop
+  script:
+    - kubectl version
+    - kubectl delete deploy,svc,ing -n p-lvgemgroup -l ref=${CI_ENVIRONMENT_SLUG}
+
+deploy_live:
+  image: hb.oortcloudsmart.com/test/kubectl:1.13.12
+  stage: deploy
+  variables:
+    NS: p-lvgemgroup
+  environment:
+    name: p-lvgemgroup
+    url: http://oort.oortcloudsmart.com:31110/oort/$CI_PROJECT_NAME/swagger/index.html
+#  only:
+#    - tags
+#  when: manual
+  script:
+    - echo '部署命名空间$NS!'
+    - cd deploy/
+    - sed -i "s/<NAMESPACES>/$NS/" deployment.yaml service.yaml ingress.yaml
+    - sed -i "s/<IMAGE_NAME>/$CI_PROJECT_NAME/" deployment.yaml service.yaml ingress.yaml
+    - sed -i "s/__VERSION__/${CI_COMMIT_REF_NAME}_${CI_PIPELINE_ID}/" deployment.yaml service.yaml ingress.yaml
+    - kubectl apply -f deployment.yaml
+    - kubectl apply -f service.yaml
+    - kubectl apply -f ingress.yaml
+    - kubectl rollout status -f deployment.yaml
+#    - kubectl get deploy,svc,ing -n $NS -l ref=${CI_ENVIRONMENT_SLUG}

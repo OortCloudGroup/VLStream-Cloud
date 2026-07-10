@@ -1,0 +1,50 @@
+package com.ruoyi.workflow.domain;
+
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.ruoyi.common.core.domain.TreeEntity;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+/**
+ * 综合工单流程对象 workorder_synthesis
+ *
+ * @author Lei Chao Qun
+ * @date 2025-01-04
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@TableName("workorder_synthesis")
+public class WorkOrderSynthesis extends TreeEntity<WorkOrderSynthesis> {
+
+    private static final long serialVersionUID=1L;
+
+    /**
+     * 主键ID
+     */
+    @TableId(value = "synthesis_id")
+    private String synthesisId;
+    /**
+     * 分类名称
+     */
+    private String categoryName;
+    /**
+     * 流程描述
+     */
+    private String description;
+    /**
+     * 租户id
+     */
+    private String tenantId;
+    /**
+     * 用户id
+     */
+    private String userId;
+    /**
+     * 删除标记，0表示未删除，1表示删除
+     */
+    @TableLogic
+    private String delFlag;
+
+}

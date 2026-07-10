@@ -1,0 +1,48 @@
+FROM 192.168.88.150/base/maven:3.6.3-openjdk-8 AS builder
+ #  AS builder 起别名
+
+RUN mkdir /build
+# 创建临时文件
+
+ADD ruoyi-admin /build/ruoyi-admin
+ADD ruoyi-common /build/ruoyi-common
+ADD ruoyi-demo /build/ruoyi-demo
+ADD ruoyi-extend /build/ruoyi-extend
+ADD ruoyi-flowable /build/ruoyi-flowable
+ADD ruoyi-framework /build/ruoyi-framework
+ADD ruoyi-generator /build/ruoyi-generator
+ADD ruoyi-job /build/ruoyi-job
+ADD ruoyi-oss /build/ruoyi-oss
+ADD ruoyi-sms /build/ruoyi-sms
+ADD ruoyi-system /build/ruoyi-system
+ADD script /build/script
+#将 src目录复制到临时目录
+
+ADD pom.xml /build
+# 将 pom文件复制到临时目录
+
+RUN cd /build && mvn -B -ntp package
+# 打包
+
+#FROM adoptopenjdk/openjdk8:alpine-jre
+# FROM 192.168.88.150/base/java:8u111
+# # 获取jre
+#
+# COPY --from=builder /build/ruoyi-admin/target/apaas-workflowforms.jar /app.jar
+# #从标记点 拷贝jar包 并改名
+#
+# CMD ["java", "-jar", "/app.jar"]
+
+FROM 192.168.88.150/base/java:8u111
+WORKDIR /app
+
+# 1. 拷贝编译产物
+COPY --from=builder /build/ruoyi-admin/target/apaas-workflowforms.jar ./app.jar
+
+# 2. 也拷源码（保证运行时能读到）
+COPY ruoyi-admin/src/main/java/com/ruoyi/web/controller/workflow ./ruoyi-admin/src/main/java/com/ruoyi/web/controller/workflow
+
+CMD ["java", "-jar", "app.jar"]
+
+
+# 声明运行方式
