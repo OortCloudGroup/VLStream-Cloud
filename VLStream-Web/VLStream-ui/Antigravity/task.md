@@ -1,0 +1,48 @@
+# Tasks Checklist - System Management UI
+
+- [x] Task 1: Add System API Wrappers
+  - [x] Step 1: Create `src/api/system/user.js`
+  - [x] Step 2: Create `src/api/system/role.js`
+  - [x] Step 3: Create `src/api/system/menu.js`
+  - [x] Step 4: Create `src/api/system/dept.js`, `post.js`, `tenant.js`, `dataScope.js`, `apiScope.js`
+  - [x] Step 5: Create `src/api/system/index.js`
+  - [x] Step 6: Static verification of API endpoints
+- [x] Task 2: Add Shared Response Utilities
+  - [x] Step 1: Create `src/views/System/utils/response.js`
+  - [x] Step 2: Static verification of response helpers
+- [x] Task 3: Add Shared System Page Shell
+  - [x] Step 1: Create `src/views/System/components/SystemPageShell.vue`
+  - [x] Step 2: Static verification of shell component
+- [x] Task 4: Add Permission Grant Dialog
+  - [x] Step 1: Create `src/views/System/components/PermissionGrantDialog.vue`
+  - [x] Step 2: Static verification of permission grant dialog
+- [x] Task 5: Add Static Routes And System Menu
+  - [x] Step 1: Add routes in `src/router/index.js`
+  - [x] Step 2: Add menu to `topMenus` in `src/layout/index.vue`
+  - [x] Step 3: Add side menus to `menuRoutesMap` in `src/layout/index.vue`
+  - [x] Step 4: Import and map icons for system menus in `src/layout/index.vue`
+  - [x] Step 5: Static verification of routing and layout changes
+- [x] Task 6: Implement User Management Page
+  - [x] Step 1: Create `src/views/System/UserManagement.vue`
+  - [x] Step 2: Add actions (create, edit, reset password, unlock, grant roles, delete)
+  - [x] Step 3: Static verification of UserManagement
+- [x] Task 7: Implement Role Management Page
+  - [x] Step 1: Create `src/views/System/RoleManagement.vue`
+  - [x] Step 2: Add actions (create, edit, delete, open grant dialog)
+  - [x] Step 3: Static verification of RoleManagement
+- [x] Task 8: Implement Menu And Organization Pages
+  - [x] Step 1: Create `src/views/System/MenuManagement.vue`
+  - [x] Step 2: Create `src/views/System/DeptManagement.vue`
+  - [x] Step 3: Create `src/views/System/PostManagement.vue`
+  - [x] Step 4: Create `src/views/System/TenantManagement.vue`
+  - [x] Step 5: Static verification of the four pages
+- [x] Task 9: Implement Data Scope And API Scope Pages
+  - [x] Step 1: Create `src/views/System/DataScopeManagement.vue`
+  - [x] Step 2: Create `src/views/System/ApiScopeManagement.vue`
+  - [x] Step 3: Static verification of the two scope pages
+- [x] Task 10: Build Verification
+  - [x] Step 1: Run compilation build `rtk pwsh -NoProfile -Command \"npm run build\"`
+  - [x] Step 2: Capture build log to `codex/system-management-build.log`
+- [x] Task 11: Smoke Testing & Log blockages
+  - [x] Step 1: Review rendering, search, pagination, and modal dialog checkouts
+  - [x] Step 2: Record results and exceptions to `codex/system-management-smoke.md`

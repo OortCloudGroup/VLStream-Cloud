@@ -1,0 +1,489 @@
+<!--
+/**
+ * author: vformAdmin
+ * email: vdpadmin@163.com
+ * website: https://www.vform666.com
+ * date: 2021.08.18
+ * remark: 如果要分发VForm源码，需在本文件顶部保留此文件头信息！！
+ */
+-->
+
+<template>
+  <el-container class="main-container full-height">
+    <el-container>
+      <el-aside class="side-panel">
+        <widget-panel :designer="designer" />
+      </el-aside>
+      <el-container class="center-layout-container">
+        <el-header class="toolbar-header">
+          <toolbar-panel ref="toolbarRef" :designer="designer" :global-dsv="globalDsv" @saveForm="saveForm">
+            <template v-for="(idx, slotName) in $slots" #[slotName]>
+              <slot :name="slotName" />
+            </template>
+          </toolbar-panel>
+        </el-header>
+        <el-main class="form-widget-main">
+          <el-scrollbar class="container-scroll-bar" :style="{height: scrollerHeight}">
+            <v-form-widget ref="formRef" :designer="designer" :form-config="designer.formConfig" :global-dsv="globalDsv" />
+          </el-scrollbar>
+        </el-main>
+      </el-container>
+      <el-aside class="form-widget-aside">
+        <el-button v-if="showClose" class="close_button" type="danger" @click="closeDesigner">
+          关闭
+        </el-button>
+        <setting-panel
+          :designer="designer"
+          :selected-widget="designer.selectedWidget"
+          :form-config="designer.formConfig"
+          :global-dsv="globalDsv"
+          @edit-event-handler="testEEH"
+        />
+      </el-aside>
+    </el-container>
+  </el-container>
+</template>
+
+<script>
+import WidgetPanel from './widget-panel/index.vue'
+import ToolbarPanel from './toolbar-panel/index.vue'
+import SettingPanel from './setting-panel/index.vue'
+import VFormWidget from './form-widget/index.vue'
+import { createDesigner } from '~@/components/form-designer/designer.js'
+import { addWindowResizeHandler, deepClone, getQueryParam, getAllContainerWidgets,
+  getAllFieldWidgets, traverseAllWidgets } from '~@/utils/util'
+import { MOCK_CASE_URL, VARIANT_FORM_VERSION } from '~@/utils/config'
+import i18n, { changeLocale } from '~@/utils/i18n'
+import bus from '@/utils/bus'
+import axios from 'axios'
+import { ElContainer, ElAside, ElHeader, ElMain, ElScrollbar, ElButton } from 'element-plus'
+
+export default {
+  name: 'VFormDesigner',
+  componentName: 'VFormDesigner',
+  components: {
+    WidgetPanel,
+    ToolbarPanel,
+    SettingPanel,
+    VFormWidget,
+    ElContainer, ElAside, ElHeader, ElMain, ElScrollbar, ElButton
+  },
+  mixins: [i18n],
+  provide() {
+    return {
+      serverFieldList: this.fieldList,
+      getDesignerConfig: () => this.designerConfig,
+      getBannedWidgets: () => this.bannedWidgets
+    }
+  },
+  props: {
+    /* 后端字段列表API */
+    fieldListApi: {
+      type: Object,
+      default: null
+    },
+
+    /* 禁止显示的组件名称数组 */
+    bannedWidgets: {
+      type: Array,
+      default: () => []
+    },
+
+    designerConfig: {
+      type: Object,
+      default: () => {
+        return {
+          languageMenu: true, // 是否显示语言切换菜单
+          externalLink: true, // 是否显示GitHub、文档等外部链接
+          formTemplates: false, // 是否显示表单模板
+          eventCollapse: false, // 是否显示组件事件属性折叠面板
+          widgetNameReadonly: false, // 禁止修改组件名称
+
+          clearDesignerButton: true, // 是否显示清空设计器按钮
+          previewFormButton: true, // 是否显示预览表单按钮
+          importJsonButton: true, // 是否显示导入JSON按钮
+          exportJsonButton: true, // 是否显示导出JSON器按钮
+          exportCodeButton: true, // 是否显示导出代码按钮
+          generateSFCButton: false, // 是否显示生成SFC按钮
+
+          toolbarMaxWidth: 450, // 设计器工具按钮栏最大宽度（单位像素）
+          toolbarMinWidth: 300, // 设计器工具按钮栏最小宽度（单位像素）
+
+          presetCssCode: '', // 设计器预设CSS样式代码
+
+          resetFormJson: true // 是否在设计器初始化时将表单内容重置为空
+        }
+      }
+    },
+
+    /* 全局数据源变量 */
+    globalDsv: {
+      type: Object,
+      default: () => ({})
+    },
+    showClose: {
+      type: Boolean,
+      default: false
+    }
+  },
+  data() {
+    return {
+      vFormVersion: VARIANT_FORM_VERSION,
+      curLangName: '',
+      curLocale: '',
+
+      vsCodeFlag: false,
+      caseName: '',
+
+      scrollerHeight: 0,
+
+      designer: createDesigner(this),
+
+      fieldList: []
+    }
+  },
+  created() {
+    this.vsCodeFlag = getQueryParam('vscode') === 1
+    this.caseName = getQueryParam('case')
+  },
+  mounted() {
+    this.setCustomFields
+    this.initLocale()
+    this.scrollerHeight = window.innerHeight - 56 - 36 + 'px'
+    addWindowResizeHandler(() => {
+      this.$nextTick(() => {
+        this.scrollerHeight = window.innerHeight - 56 - 36 + 'px'
+      })
+    })
+
+    // this.loadCase()
+    // this.loadFieldListFromServer()
+  },
+  methods: {
+    closeDesigner() {
+      this.$emit('close')
+    },
+    // 外部添加组件进来
+    setCustomFields(data) {
+      bus.$emit('setCustomFields', data)
+    },
+    testEEH(eventName, eventParams) {
+      console.log('test', eventName)
+      console.log('test222222', eventParams)
+    },
+
+    loadCase() {
+      if (!this.caseName) {
+        return
+      }
+
+      axios.get(MOCK_CASE_URL + this.caseName + '.txt').then(res => {
+        if (!!res.data.code) {
+          this.$message.error(this.i18nt('designer.hint.sampleLoadedFail'))
+          return
+        }
+        console.log('表单数据---', res.data)
+        this.setFormJson(res.data)
+        this.$message.success(this.i18nt('designer.hint.sampleLoadedSuccess'))
+      }).catch(error => {
+        this.$message.error(this.i18nt('designer.hint.sampleLoadedFail') + ':' + error)
+      })
+    },
+
+    initLocale() {
+      this.curLocale = localStorage.getItem('v_form_locale')
+      if (!!this.vsCodeFlag) {
+        this.curLocale = this.curLocale || 'en-US'
+      } else {
+        this.curLocale = this.curLocale || 'zh-CN'
+      }
+      this.curLangName = this.i18nt('application.' + this.curLocale)
+      this.changeLanguage(this.curLocale)
+    },
+
+    loadFieldListFromServer() {
+      if (!this.fieldListApi) {
+        return
+      }
+
+      let headers = this.fieldListApi.headers || {}
+      axios.get(this.fieldListApi.URL, { 'headers': headers }).then(res => {
+        let labelKey = this.fieldListApi.labelKey || 'label'
+        let nameKey = this.fieldListApi.nameKey || 'name'
+
+        this.fieldList.splice(0, this.fieldList.length) // 清空已有
+        res.data.forEach(fieldItem => {
+          this.fieldList.push({
+            label: fieldItem[labelKey],
+            name: fieldItem[nameKey]
+          })
+        })
+      }).catch(error => {
+        this.$message.error(error)
+      })
+    },
+
+    handleLanguageChanged(command) {
+      this.changeLanguage(command)
+      this.curLangName = this.i18nt('application.' + command)
+    },
+
+    changeLanguage(langName) {
+      changeLocale(langName)
+    },
+
+    setFormJson(formJson) {
+      let modifiedFlag = false
+      if (!!formJson) {
+        if (typeof formJson === 'string') {
+          modifiedFlag = this.designer.loadFormJson(JSON.parse(formJson))
+        } else if (formJson.constructor === Object) {
+          modifiedFlag = this.designer.loadFormJson(formJson)
+        }
+
+        if (modifiedFlag) {
+          this.designer.emitHistoryChange()
+        }
+      }
+    },
+
+    getFormJson() {
+      let tempObj = {
+        widgetList: deepClone(this.designer.widgetList),
+        formConfig: deepClone(this.designer.formConfig)
+      }
+      // 配合后台需要将option里面的customName 提取到上一级
+      tempObj.widgetList.forEach(widget => {
+        if (!!widget.options.customName) {
+          widget.customName = widget.options.customName
+        }
+      })
+      return tempObj
+    },
+
+    clearDesigner() {
+      this.$refs.toolbarRef.clearFormWidget()
+    },
+
+    saveForm(flag = 0) {
+      if (flag === 1) {
+        this.$emit('saveForComponent', this.getFormJson())
+      }
+      if (flag === 0) {
+        this.$emit('saveForm', this.getFormJson())
+      }
+    },
+
+    /**
+       * 刷新表单设计器
+       */
+    refreshDesigner() {
+      // this.designer.loadFormJson( this.getFormJson() )  //只有第一次调用生效？？
+
+      let fJson = this.getFormJson()
+      this.designer.clearDesigner(true) // 不触发历史记录变更
+      this.designer.loadFormJson(fJson)
+    },
+
+    /**
+       * 预览表单
+       */
+    previewForm() {
+      this.$refs.toolbarRef.previewForm()
+    },
+
+    /**
+       * 导入表单JSON
+       */
+    importJson() {
+      this.$refs.toolbarRef.importJson()
+    },
+
+    /**
+       * 导出表单JSON
+       */
+    exportJson() {
+      this.$refs.toolbarRef.exportJson()
+    },
+
+    /**
+       * 导出Vue/HTML代码
+       */
+    exportCode() {
+      this.$refs.toolbarRef.exportCode()
+    },
+
+    /**
+       * 生成SFC代码
+       */
+    generateSFC() {
+      this.$refs.toolbarRef.generateSFC()
+    },
+
+    /**
+       * 获取所有字段组件
+       * @returns {*[]}
+       */
+    getFieldWidgets(widgetList = null) {
+      return !!widgetList ? getAllFieldWidgets(widgetList) : getAllFieldWidgets(this.designer.widgetList)
+    },
+
+    /**
+       * 获取所有容器组件
+       * @returns {*[]}
+       */
+    getContainerWidgets(widgetList = null) {
+      return !!widgetList ? getAllContainerWidgets(widgetList) : getAllContainerWidgets(this.designer.widgetList)
+    },
+
+    /**
+       * 升级表单json，以补充最新的组件属性
+       * @param formJson
+       */
+    upgradeFormJson(formJson) {
+      if (!formJson.widgetList || !formJson.formConfig) {
+        this.$message.error('Invalid form json!')
+        return
+      }
+
+      traverseAllWidgets(formJson.widgetList, (w) => {
+        this.designer.upgradeWidgetConfig(w)
+      })
+      this.designer.upgradeFormConfig(formJson.formConfig)
+
+      return formJson
+    },
+
+    getWidgetRef(widgetName, showError = false) {
+      return this.$refs['formRef'].getWidgetRef(widgetName, showError)
+    },
+
+    getSelectedWidgetRef() {
+      return this.$refs['formRef'].getSelectedWidgetRef()
+    }
+
+    // TODO: 增加更多方法！！
+
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+  .el-container.main-container {
+    background: #fff;
+
+    :deep(aside) {  /* 防止aside样式被外部样式覆盖！！ */
+      margin: 0;
+      padding: 0;
+      background: inherit;
+    }
+  }
+
+  .el-container.full-height {
+    height: 100%;
+    overflow-y: hidden;
+  }
+
+  .el-container.center-layout-container {
+    min-width: 680px;
+    border-left: 2px dotted #EBEEF5;
+    border-right: 2px dotted #EBEEF5;
+  }
+
+  .el-header.main-header {
+    border-bottom: 2px dotted #EBEEF5;
+    height: 48px !important;
+    line-height: 48px !important;
+    min-width: 800px;
+  }
+
+  div.main-title {
+    font-size: 18px;
+    color: #242424;
+    display: flex;
+    align-items: center;
+    justify-items: center;
+
+    img {
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+    }
+
+    span.bold {
+      font-size: 20px;
+      font-weight: bold;
+      margin: 0 6px 0 6px;
+    }
+
+    span.version-span {
+      font-size: 14px;
+      color: #101F1C;
+      margin-left: 6px;
+    }
+  }
+
+  .float-left {
+    float: left;
+  }
+
+  .float-right {
+    float: right;
+  }
+
+  .el-dropdown-link {
+    margin-right: 12px;
+    cursor: pointer;
+  }
+
+  div.external-link {
+    display: flex;
+    align-items: center;
+
+    a {
+      font-size: 13px;
+      text-decoration: none;
+      margin-right: 10px;
+      color: #606266;
+    }
+  }
+
+  .el-header.toolbar-header {
+    font-size: 14px;
+    border-bottom: 1px dotted #CCCCCC;
+    display: flex;
+    align-items: center;
+    height: 48px !important;
+
+  }
+
+  .el-aside.side-panel {
+    width: 260px !important;
+    overflow-y: hidden;
+  }
+
+  .el-main.form-widget-main {
+    padding: 0;
+
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  .container-scroll-bar {
+    :deep(.el-scrollbar__wrap), :deep(.el-scrollbar__view) {
+      overflow-x: hidden;
+    }
+  }
+
+  .form-widget-aside {
+    position: relative;
+  }
+
+  .close_button {
+    position: absolute;
+    right: 0;
+    top: 4px;
+    z-index: 99;
+  }
+
+</style>

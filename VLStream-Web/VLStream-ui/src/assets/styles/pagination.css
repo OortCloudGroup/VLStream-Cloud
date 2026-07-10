@@ -1,0 +1,166 @@
+/* 全局分页组件统一样式 */
+.pagination-container,
+.pagination-section {
+  background: white;
+  padding: 12px 20px 16px 20px;
+  border-top: none;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: -1px;
+}
+
+/* 表格内嵌分页样式 - 紧贴表格数据 */
+.table-pagination {
+  padding: 12px 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  background: transparent;
+}
+
+/* Element Plus 分页组件样式覆盖 */
+:deep(.el-pagination) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #606266;
+}
+
+/* 总条数样式 */
+:deep(.el-pagination__total) {
+  color: #606266;
+  font-size: 14px;
+  margin-right: 16px;
+}
+
+/* 每页显示条数选择器 */
+:deep(.el-pagination__sizes) {
+  margin-left: 16px;
+}
+
+:deep(.el-pagination__sizes .el-select) {
+  width: 100px;
+}
+
+:deep(.el-pagination__sizes .el-select .el-select__wrapper) {
+  height: 32px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background: white;
+}
+
+/* 分页按钮样式 */
+:deep(.el-pagination .btn-prev),
+:deep(.el-pagination .btn-next) {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background: white;
+  color: #606266;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+:deep(.el-pagination .btn-prev:hover),
+:deep(.el-pagination .btn-next:hover) {
+  color: #1A53FF;
+  border-color: #1A53FF;
+}
+
+:deep(.el-pagination .btn-prev.is-disabled),
+:deep(.el-pagination .btn-next.is-disabled) {
+  color: #c0c4cc;
+  cursor: not-allowed;
+  background: #f5f7fa;
+  border-color: #e4e7ed;
+}
+
+/* 页码按钮样式 */
+:deep(.el-pagination .el-pager li) {
+  min-width: 32px;
+  height: 32px;
+  line-height: 30px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background: white;
+  color: #606266;
+  margin: 0 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+}
+
+:deep(.el-pagination .el-pager li:hover) {
+  color: #1A53FF;
+  border-color: #1A53FF;
+}
+
+:deep(.el-pagination .el-pager li.is-active) {
+  background: #1A53FF;
+  color: white;
+  border-color: #1A53FF;
+}
+
+/* 页码省略号样式 */
+:deep(.el-pagination .el-pager li.more) {
+  border: none;
+  background: transparent;
+  color: #c0c4cc;
+}
+
+/* 跳转页面输入框样式 */
+:deep(.el-pagination__jump) {
+  margin-left: 16px;
+  color: #606266;
+  font-size: 14px;
+}
+
+:deep(.el-pagination__jump .el-input) {
+  width: 50px;
+  margin: 0 8px;
+}
+
+:deep(.el-pagination__jump .el-input .el-input__wrapper) {
+  height: 32px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+}
+
+:deep(.el-pagination__jump .el-input .el-input__inner) {
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .pagination-container,
+  .pagination-section {
+    padding: 16px;
+    justify-content: flex-end;
+  }
+  
+  :deep(.el-pagination) {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  
+  :deep(.el-pagination__total),
+  :deep(.el-pagination__jump) {
+    margin: 0 8px;
+  }
+  
+  :deep(.el-pagination__sizes) {
+    margin: 0 8px;
+  }
+} 

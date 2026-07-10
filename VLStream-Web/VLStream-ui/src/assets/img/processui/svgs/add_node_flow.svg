@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="48px" height="48px" viewBox="0 0 48 48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>添加</title>
+    <g id="流程设计器" stroke="none" stroke-width="1" fill-rule="evenodd">
+        <g id="添加">
+            <circle id="椭圆形" stroke-width="1.4" stroke="var(--el-color-primary)" fill='#E0EFFF' cx="24" cy="24" r="23.3684211"></circle>
+            <rect id="矩形"  x="22.7368421" y="12.6315789" width="2.52631579" height="22.7368421"></rect>
+            <rect id="矩形"  transform="translate(24.000000, 24.000000) rotate(90.000000) translate(-24.000000, -24.000000) " x="22.7368421" y="12.6315789" width="2.52631579" height="22.7368421"></rect>
+        </g>
+    </g>
+</svg>

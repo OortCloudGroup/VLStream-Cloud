@@ -1,0 +1,141 @@
+<template>
+  <form-item-wrapper
+    :designer="designer"
+    :field="field"
+    :rules="rules"
+    :design-state="designState"
+    :parent-widget="parentWidget"
+    :parent-list="parentList"
+    :index-of-parent-list="indexOfParentList"
+    :sub-form-row-index="subFormRowIndex"
+    :sub-form-col-index="subFormColIndex"
+    :sub-form-row-id="subFormRowId"
+  >
+    <el-input
+      ref="fieldEditor"
+      v-model="fieldModel"
+      :disabled="field.options.disabled"
+      :readonly="field.options.readonly"
+      :size="widgetSize"
+      class="hide-spin-button"
+      type="number"
+      :placeholder="field.options.placeholder"
+      :clearable="field.options.clearable"
+      :minlength="field.options.minLength"
+      :maxlength="field.options.maxLength"
+      :show-word-limit="field.options.showWordLimit"
+      :prefix-icon="field.options.prefixIcon"
+      :suffix-icon="field.options.suffixIcon"
+      @focus="handleFocusCustomEvent"
+      @blur="handleBlurCustomEvent"
+      @input="handleInputCustomEvent"
+      @change="handleSelfChangeEvent"
+    >
+      <!-- 货币才用前缀 -->
+      <template v-if="field.options.numberOptions.type ===3" #prepend>
+        <span> {{ field.options.numberOptions.moneyType }}</span>
+      </template>
+      <!-- 货币才用前缀 -->
+      <template v-if="field.options.numberOptions.type ===4" #append>
+        <span>%</span>
+      </template>
+    </el-input>
+  </form-item-wrapper>
+</template>
+
+<script>
+import FormItemWrapper from './form-item-wrapper'
+import emitter from '~@/utils/emitter'
+import i18n from '~@/utils/i18n'
+import fieldMixin from '~@/components/form-designer/form-widget/field-widget/fieldMixin'
+import { ElInput } from 'element-plus'
+
+export default {
+  name: 'NumberCompWidget',
+  componentName: 'FieldWidget',
+  components: {
+    ElInput,
+    FormItemWrapper
+  }, // 必须固定为FieldWidget，用于接收父级组件的broadcast事件
+  mixins: [emitter, fieldMixin, i18n],
+  props: {
+    field: Object,
+    parentWidget: Object,
+    parentList: Array,
+    indexOfParentList: Number,
+    designer: Object,
+
+    designState: {
+      type: Boolean,
+      default: false
+    },
+
+    subFormRowIndex: { /* 子表单组件行索引，从0开始计数 */
+      type: Number,
+      default: -1
+    },
+    subFormColIndex: { /* 子表单组件列索引，从0开始计数 */
+      type: Number,
+      default: -1
+    },
+    subFormRowId: { /* 子表单组件行Id，唯一id且不可变 */
+      type: String,
+      default: ''
+    }
+
+  },
+  data() {
+    return {
+      oldFieldValue: null, // field组件change之前的值
+      fieldModel: 0,
+      rules: []
+    }
+  },
+  watch: {
+    'field.options.numberOptions.decimalLength'() {
+      this.fiexMonnyNum()
+    }
+  },
+
+  beforeCreate() {
+    /* 这里不能访问方法和属性！！ */
+  },
+
+  created() {
+    /* 注意：子组件mounted在父组件created之后、父组件mounted之前触发，故子组件mounted需要用到的prop
+         需要在父组件created中初始化！！ */
+    this.initFieldModel()
+    this.registerToRefList()
+    this.initEventHandler()
+    this.buildFieldRules()
+
+    this.handleOnCreated()
+    this.fiexMonnyNum()
+  },
+
+  mounted() {
+    this.handleOnMounted()
+  },
+
+  beforeUnmount() {
+    this.unregisterFromRefList()
+  },
+
+  methods: {
+    handleSelfChangeEvent() {
+      this.fiexMonnyNum()
+      this.handleChangeEvent(this.fieldModel)
+    },
+    fiexMonnyNum() {
+      if (this.field.options.numberOptions.decimalLength) {
+        this.fieldModel = Number(this.fieldModel).toFixed(this.field.options.numberOptions.decimalLength)
+      }
+    }
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+  @import "../../../../styles/global.scss"; /* form-item-wrapper已引入，还需要重复引入吗？ */
+
+</style>
