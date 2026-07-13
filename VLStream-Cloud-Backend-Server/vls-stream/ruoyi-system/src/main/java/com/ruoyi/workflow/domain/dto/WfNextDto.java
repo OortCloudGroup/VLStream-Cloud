@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-License-Identifier: MIT
+ */
+
 package com.ruoyi.workflow.domain.dto;
 
 import com.ruoyi.common.core.domain.entity.SysRole;

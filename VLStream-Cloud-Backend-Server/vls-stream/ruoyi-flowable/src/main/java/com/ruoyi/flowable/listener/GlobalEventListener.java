@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-License-Identifier: MIT
+ */
+
 package com.ruoyi.flowable.listener;
 
 import cn.hutool.core.convert.Convert;

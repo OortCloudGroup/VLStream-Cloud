@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-License-Identifier: MIT
+ */
+
 package com.ruoyi.monitor.admin.notifier;
 
 import de.codecentric.boot.admin.server.domain.entities.Instance;

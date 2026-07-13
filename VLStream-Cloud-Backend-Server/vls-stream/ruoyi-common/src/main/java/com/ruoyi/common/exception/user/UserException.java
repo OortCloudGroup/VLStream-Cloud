@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-License-Identifier: MIT
+ */
+
 package com.ruoyi.common.exception.user;
 
 import com.ruoyi.common.exception.base.BaseException;

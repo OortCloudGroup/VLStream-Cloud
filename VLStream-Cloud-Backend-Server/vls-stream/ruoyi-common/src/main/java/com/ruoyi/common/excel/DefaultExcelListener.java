@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-License-Identifier: MIT
+ */
+
 package com.ruoyi.common.excel;
 
 import cn.hutool.core.util.StrUtil;

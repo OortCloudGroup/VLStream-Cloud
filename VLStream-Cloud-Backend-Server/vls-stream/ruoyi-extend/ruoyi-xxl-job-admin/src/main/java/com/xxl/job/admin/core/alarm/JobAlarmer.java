@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-License-Identifier: MIT
+ */
+
 package com.xxl.job.admin.core.alarm;
 
 import com.xxl.job.admin.core.model.XxlJobInfo;

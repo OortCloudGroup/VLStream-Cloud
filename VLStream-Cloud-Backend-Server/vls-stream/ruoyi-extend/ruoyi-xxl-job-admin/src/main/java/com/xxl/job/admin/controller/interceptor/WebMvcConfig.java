@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-License-Identifier: MIT
+ */
+
 package com.xxl.job.admin.controller.interceptor;
 
 import org.springframework.context.annotation.Configuration;

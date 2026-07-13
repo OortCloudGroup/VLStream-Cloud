@@ -13,6 +13,10 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  *
+ * Modified by 奥尔特云（深圳）智慧科技有限公司 in 2026.
+ * SPDX-FileCopyrightText: 2026 奥尔特云（深圳）智慧科技有限公司
+ * SPDX-License-Identifier: Apache-2.0
+ *
  */
 
 package com.xxl.job.admin.core.cron;
