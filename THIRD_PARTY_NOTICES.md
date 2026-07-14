@@ -13,7 +13,7 @@ Portions of the Java backend are derived from RuoYi-Flowable-Plus.
 - License: MIT; see [`LICENSE`](LICENSE)
 
 Modifications and original VLStream-Cloud code are Copyright (c) 2026
-奥尔特云（深圳）智慧科技有限公司 and are licensed under the MIT License,
+OortCloud (https://vls.oortcloudsmart.com/en/) and are licensed under the MIT License,
 except where an individual file states otherwise.
 
 ## Redisson-derived cache manager
@@ -37,4 +37,4 @@ The following file contains code originating from Terracotta/Quartz:
 - License: Apache License 2.0; see [`LICENSES/Apache-2.0.txt`](LICENSES/Apache-2.0.txt)
 
 The source file retains its original notice and records modifications made by
-奥尔特云（深圳）智慧科技有限公司 in 2026.
+OortCloud (https://vls.oortcloudsmart.com/en/) in 2026.

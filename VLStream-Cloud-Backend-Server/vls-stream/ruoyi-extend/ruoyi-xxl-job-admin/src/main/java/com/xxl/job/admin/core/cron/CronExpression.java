@@ -13,8 +13,8 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  *
- * Modified by 奥尔特云（深圳）智慧科技有限公司 in 2026.
- * SPDX-FileCopyrightText: 2026 奥尔特云（深圳）智慧科技有限公司
+ * Modified by OortCloud (https://vls.oortcloudsmart.com/en/) in 2026.
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: Apache-2.0
  *
  */
