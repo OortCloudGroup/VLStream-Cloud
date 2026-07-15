@@ -1,5 +1,4 @@
 import { request } from '@/utils/service'
-import { apaasServiceUrl } from '@/utils/apaasApiBase'
 
 // function commonFunc<T, K>(interfaceName: string, data: T, method = 'post') {
 //   return request<K>({
@@ -8,9 +7,13 @@ import { apaasServiceUrl } from '@/utils/apaasApiBase'
 //     data: data
 //   })
 // }
+/**
+ * 请求当前 Java 后端中的事件兼容接口，不再经过 apaas-location-service。
+ */
 function commonFuncB<T, K>(interfaceName: string, data: T, method = 'post') {
+  const normalizedPath = String(interfaceName || '').replace(/^\/+/, '')
   return request<K>({
-    url: apaasServiceUrl('apaas-location-service', interfaceName),
+    url: `/${normalizedPath}`,
     method: method,
     data: data
   })

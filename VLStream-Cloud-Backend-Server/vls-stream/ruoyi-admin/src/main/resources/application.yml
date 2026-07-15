@@ -156,6 +156,9 @@ security:
     - /blade-auth/logout
     - /captchaImage
     - /login
+    # 主动安全设备上报接口沿用 Go 服务的公开调用约定
+    - /task/v1/event_report_camera
+    - /task/v1/event_report_cameras
     - /monitor/**
 #    - /xxl-job-admin/**
 

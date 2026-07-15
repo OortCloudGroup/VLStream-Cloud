@@ -15,6 +15,7 @@ import com.ruoyi.common.utils.redis.RedisUtils;
 import com.ruoyi.workflow.convert.delegate.HttpTriggerDelegate;
 import com.ruoyi.workflow.convert.node.HeaderOrParams;
 import com.ruoyi.workflow.service.IWfProcessService;
+import com.ruoyi.workflow.service.LocationTaskWorkflowCallbackService;
 import lombok.Data;
 import org.apache.http.client.methods.*;
 import org.apache.http.entity.StringEntity;
@@ -111,6 +112,12 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
             .singleResult();
         // 根据请求类型执行不同的操作
         try {
+            LocationTaskWorkflowCallbackService locationTaskCallback =
+                applicationContext.getBean(LocationTaskWorkflowCallbackService.class);
+            if (locationTaskCallback.supports(requestUrlValue)) {
+                locationTaskCallback.handleApprovedTask(delegateTask, historicProcIns);
+                return;
+            }
             switch (requestMethodValue.toUpperCase()) {
                 case "GET":
                 case "DELETE":

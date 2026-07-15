@@ -10,5 +10,8 @@
     "type": "git",
     "url": "https://github.com/OortCloudGroup/VLStream-Cloud.git"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "vite": "^8.1.4"
+  }
 }

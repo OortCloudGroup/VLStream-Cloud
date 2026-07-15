@@ -60,7 +60,7 @@ spring:
           #          url: jdbc:mysql://${MYSQL_HOST:192.168.60.75}:${MYSQL_PORT:32433}/oortcloud_workflowforms?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true&lowerCaseTableNames=true
           #          username: ${MYSQL_USERNAME:oortcloud_workflowforms}
           #          password: ${MYSQL_PASSWORD:OWvsss9.dV.}
-          url: "jdbc:mysql://${MYSQL_HOST:192.168.60.77}:${MYSQL_PORT:32443}/${MYSQL_DB_NAME:oortcloud_workflowforms_vls}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true"
+          url: jdbc:mysql://${MYSQL_HOST:192.168.60.77}:${MYSQL_PORT:32443}/${MYSQL_DB_NAME:oortcloud_workflowforms_vls}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true
           username: ${MYSQL_USERNAME:root}
           password: ${MYSQL_PASSWORD:mysql@pass}
 #          url: jdbc:mysql://${MYSQL_HOST:192.168.50.13}:${MYSQL_PORT:32426}/${MYSQL_DB_NAME:apaas_workflowforms}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true

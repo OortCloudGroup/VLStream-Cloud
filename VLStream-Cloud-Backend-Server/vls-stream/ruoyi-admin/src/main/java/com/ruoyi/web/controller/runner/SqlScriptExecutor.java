@@ -61,6 +61,8 @@ public class SqlScriptExecutor implements ApplicationRunner {
 
     private static final String EVENT_MANAGEMENT_SEED_SQL_FILE = "oortcloud_event_management_seed.sql";
 
+    private static final String LOCATION_TASK_INIT_SQL_FILE = "oortcloud_location_task_initialize.sql";
+
     private static final String ROOT_TENANT_ID = "0e391fd7-1033-4f09-88c0-187582fee462";
 
     private static final String SINGLE_TENANT_ID = "000000";
@@ -89,6 +91,12 @@ public class SqlScriptExecutor implements ApplicationRunner {
             executeSqlScript(INIT_SQL_FILE);
         } else {
             logger.info("数据库已初始化，跳过SQL脚本执行。");
+        }
+
+        if (!isLocationTaskSchemaInitialized()) {
+            executeSqlScript(LOCATION_TASK_INIT_SQL_FILE);
+        } else {
+            logger.info("事件模块单库表结构已初始化，跳过事件表结构SQL脚本执行。");
         }
 
         if (!isWorkflowSeedInitialized()) {
@@ -307,6 +315,33 @@ public class SqlScriptExecutor implements ApplicationRunner {
             return lowerCaseNecessaryTables.isEmpty();
         } catch (Exception e) {
             logger.error("检查数据库初始化状态时发生错误", e);
+            return false;
+        }
+    }
+
+    /**
+     * Check whether every location-task table required by the Java compatibility API exists in the main schema.
+     */
+    private boolean isLocationTaskSchemaInitialized() {
+        try (Connection connection = DriverManager.getConnection(url, user, password);
+             Statement statement = connection.createStatement()) {
+            List<String> requiredTables = Arrays.asList(
+                "ap_definition_app_group_config_v2",
+                "ap_definition_table_group_app_v2",
+                "oort_definition_app_group",
+                "oort_definition_app_group_device",
+                "oort_definition_table_group_v2",
+                "oort_task_event",
+                "oort_task_event_back",
+                "oort_task_event_group",
+                "oort_task_event_item",
+                "oort_task_event_user",
+                "oort_task_setting"
+            ).stream().collect(Collectors.toList());
+            removeExistingTables(statement, requiredTables);
+            return requiredTables.isEmpty();
+        } catch (Exception e) {
+            logger.error("检查事件模块单库表结构时发生错误", e);
             return false;
         }
     }
