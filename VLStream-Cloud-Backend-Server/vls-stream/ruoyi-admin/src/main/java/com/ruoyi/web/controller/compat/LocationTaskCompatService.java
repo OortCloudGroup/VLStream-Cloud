@@ -86,15 +86,18 @@ public class LocationTaskCompatService {
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
     private final IWfProcessService processService;
+    private final LocationTaskWorkflowProperties workflowProperties;
 
     /**
      * Build the service on the application's primary dynamic data source.
      */
     public LocationTaskCompatService(DataSource dataSource, ObjectMapper objectMapper,
-                                     IWfProcessService processService) {
+                                     IWfProcessService processService,
+                                     LocationTaskWorkflowProperties workflowProperties) {
         this.jdbc = new JdbcTemplate(dataSource);
         this.objectMapper = objectMapper;
         this.processService = processService;
+        this.workflowProperties = workflowProperties;
     }
 
     /**
@@ -812,10 +815,15 @@ public class LocationTaskCompatService {
         if (!validOptionalType(modType, 2) || !validOptionalType(groupType, 2)) {
             return parameterError("参数错误 mod_type或group_type不正确");
         }
-        LinkedHashMap<String, Object> config = workflowConfig(body);
+        String key = workflowSettingKey(user.getTenantId(), modType, groupType);
+        Map<String, Object> setting = firstRow(
+            "SELECT `val` FROM " + SETTINGS + " WHERE `key` = ? LIMIT 1", key);
+        Map<String, Object> existing = setting == null
+            ? Collections.<String, Object>emptyMap() : jsonMap(setting.get("val"));
+        LinkedHashMap<String, Object> config = mergeWorkflowConfig(existing, body);
         config.put("tenant_id", user.getTenantId());
         config.put("user_id", user.getUserId());
-        upsertSetting(workflowSettingKey(user.getTenantId(), modType, groupType), config);
+        upsertSetting(key, config);
         return LocationTaskResult.success();
     }
 
@@ -1421,6 +1429,9 @@ public class LocationTaskCompatService {
         variables.put("jump_path", string(configuration.get("jump_path")));
         variables.put("jump_params", string(configuration.get("jump_params"))
             .replace("{{event_id}}", event.key.externalId()));
+        if (event.modType == 2) {
+            variables.put("msg_source", 0);
+        }
 
         WorkOrderBo workOrder = new WorkOrderBo();
         workOrder.setEventNumber(event.key.externalId());
@@ -1625,6 +1636,33 @@ public class LocationTaskCompatService {
     }
 
     /**
+     * Apply only workflow fields present in a partial request so an automatic-dispatch toggle cannot erase its flow.
+     */
+    private static LinkedHashMap<String, Object> mergeWorkflowConfig(Map<String, Object> existing,
+                                                                      Map<String, Object> patch) {
+        LinkedHashMap<String, Object> config = workflowConfig(existing);
+        if (patch.containsKey("process_id")) {
+            config.put("process_id", string(patch.get("process_id")));
+        }
+        if (patch.containsKey("app_id")) {
+            config.put("app_id", string(patch.get("app_id")));
+        }
+        if (patch.containsKey("app_package")) {
+            config.put("app_package", string(patch.get("app_package")));
+        }
+        if (patch.containsKey("jump_path")) {
+            config.put("jump_path", string(patch.get("jump_path")));
+        }
+        if (patch.containsKey("jump_params")) {
+            config.put("jump_params", string(patch.get("jump_params")));
+        }
+        if (patch.containsKey("auto_to_work")) {
+            config.put("auto_to_work", booleanValue(patch, "auto_to_work", false));
+        }
+        return config;
+    }
+
+    /**
      * Build a stored ConfigData object with tenant and user identity.
      */
     private static LinkedHashMap<String, Object> workflowConfigData(Map<String, Object> source, UserContext user) {
@@ -1637,7 +1675,7 @@ public class LocationTaskCompatService {
     /**
      * Return only the public workflow Config fields from stored ConfigData.
      */
-    private static LinkedHashMap<String, Object> workflowConfigOnly(Map<String, Object> source) {
+    private LinkedHashMap<String, Object> workflowConfigOnly(Map<String, Object> source) {
         LinkedHashMap<String, Object> config = workflowConfig(source);
         applyWorkflowDefaults(config);
         return config;
@@ -1646,18 +1684,18 @@ public class LocationTaskCompatService {
     /**
      * Apply the same default navigation values as workflow.Config.GetDefault.
      */
-    private static void applyWorkflowDefaults(Map<String, Object> config) {
+    private void applyWorkflowDefaults(Map<String, Object> config) {
         putIfMissing(config, "process_id", "");
         putIfMissing(config, "app_id", "");
         putIfMissing(config, "auto_to_work", Boolean.FALSE);
         if (string(config.get("jump_params")).isEmpty()) {
-            config.put("jump_params", "task={\"id\":\"{{event_id}}\"}");
+            config.put("jump_params", workflowProperties.getJumpParams());
         }
         if (string(config.get("jump_path")).isEmpty()) {
-            config.put("jump_path", "/event-detail");
+            config.put("jump_path", workflowProperties.getJumpPath());
         }
         if (string(config.get("app_package")).isEmpty()) {
-            config.put("app_package", "com.oort-event.demo");
+            config.put("app_package", workflowProperties.getAppPackage());
         }
     }
 

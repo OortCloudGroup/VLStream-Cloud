@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.mockito.ArgumentCaptor;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -88,9 +89,42 @@ class LocationTaskCameraWorkOrderFlowTest {
         }).when(processService).startProcessByDefId(any(ProcessStartBo.class), any());
 
         assertEquals(200, taskService.reportCameraEvent(cameraEvent("codex-camera-on")).getCode());
+        ArgumentCaptor<ProcessStartBo> processRequest = ArgumentCaptor.forClass(ProcessStartBo.class);
         verify(processService, timeout(5000))
-            .startProcessByDefId(any(ProcessStartBo.class), any());
+            .startProcessByDefId(processRequest.capture(), any());
+        assertEquals(0, ((Number) processRequest.getValue().getVariables().get("msg_source")).intValue());
+        assertEquals("com.oort-event.demo",
+            processRequest.getValue().getVariables().get("app_package"));
+        assertEquals("/event-detail", processRequest.getValue().getVariables().get("jump_path"));
         awaitWorkOrderStatus("codex-camera-on", 1, 5000L);
+    }
+
+    /**
+     * Verify that a switch-only update preserves the configured process and application.
+     */
+    @Test
+    void automaticDispatchTogglePreservesGlobalWorkflowSelection() {
+        LocationTaskCompatService.UserContext user = new LocationTaskCompatService.UserContext(
+            "local-token", TENANT_ID, "workflow-user", "workflow-user", "web");
+        LinkedHashMap<String, Object> initial = new LinkedHashMap<String, Object>();
+        initial.put("mod_type", 2);
+        initial.put("group_type", 1);
+        initial.put("process_id", "process-definition");
+        initial.put("app_id", "events-app");
+        initial.put("auto_to_work", false);
+        assertEquals(200, taskService.workflowConfigSet(initial, user).getCode());
+
+        LinkedHashMap<String, Object> toggle = new LinkedHashMap<String, Object>();
+        toggle.put("mod_type", 2);
+        toggle.put("group_type", 1);
+        toggle.put("auto_to_work", true);
+        assertEquals(200, taskService.workflowConfigSet(toggle, user).getCode());
+
+        LocationTaskResult<?> result = taskService.workflowConfigGet(toggle, user);
+        Map<?, ?> config = (Map<?, ?>) result.getData();
+        assertEquals("process-definition", config.get("process_id"));
+        assertEquals("events-app", config.get("app_id"));
+        assertEquals(Boolean.TRUE, config.get("auto_to_work"));
     }
 
     /**

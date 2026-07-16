@@ -8,6 +8,11 @@ package com.ruoyi.web.controller.compat;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.interceptor.AuthorizationInterceptor;
 import com.ruoyi.web.controller.compat.LocationTaskCompatService.UserContext;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -60,6 +65,20 @@ public class LocationTaskCompatController {
     /**
      * Accept one unauthenticated camera report using the original device-facing contract.
      */
+    @Operation(
+        tags = "主动安全设备上报",
+        summary = "单个上报主动安全事件",
+        description = "硬件设备公开接口，无需登录令牌。HTTP状态通常为200，请以响应体code判断业务结果。",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true,
+            content = @Content(schema = @Schema(
+                implementation = LocationTaskCameraApiModels.CameraEventRequest.class))),
+        responses = @ApiResponse(
+            responseCode = "200",
+            description = "code=200成功；code=4101参数错误；code=5003数据库错误；code=500服务器内部错误",
+            content = @Content(schema = @Schema(
+                implementation = LocationTaskCameraApiModels.CameraEventResponse.class))))
+    @SecurityRequirements
     @PostMapping("/task/v1/event_report_camera")
     public LocationTaskResult<?> reportCameraEvent(@RequestBody(required = false) Map<String, Object> body) {
         return executePublic(body, new PublicOperation() {
@@ -74,6 +93,20 @@ public class LocationTaskCompatController {
     /**
      * Accept multiple unauthenticated camera reports using the original device-facing contract.
      */
+    @Operation(
+        tags = "主动安全设备上报",
+        summary = "批量上报主动安全事件",
+        description = "硬件设备公开接口，无需登录令牌。先校验全部事件，再逐条写入；返回成功时不返回逐条结果。",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true,
+            content = @Content(schema = @Schema(
+                implementation = LocationTaskCameraApiModels.CameraEventsRequest.class))),
+        responses = @ApiResponse(
+            responseCode = "200",
+            description = "code=200成功；code=4101参数错误；code=5003数据库错误；code=500服务器内部错误",
+            content = @Content(schema = @Schema(
+                implementation = LocationTaskCameraApiModels.CameraEventsResponse.class))))
+    @SecurityRequirements
     @PostMapping("/task/v1/event_report_cameras")
     public LocationTaskResult<?> reportCameraEvents(@RequestBody(required = false) Map<String, Object> body) {
         return executePublic(body, new PublicOperation() {
