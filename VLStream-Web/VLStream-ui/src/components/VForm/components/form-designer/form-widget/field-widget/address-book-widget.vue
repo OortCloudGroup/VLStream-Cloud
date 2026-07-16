@@ -32,7 +32,7 @@
 import FormItemWrapper from './form-item-wrapper'
 import emitter from '~@/utils/emitter'
 import fieldMixin from '~@/components/form-designer/form-widget/field-widget/fieldMixin'
-import ChoosePersonOrDept from './components/ChoosePersonOrDept.vue'
+import ChoosePersonOrDept from './components/choosePersonOrDept.vue'
 
 export default {
   name: 'AddressBookWidget',
