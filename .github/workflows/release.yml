@@ -76,6 +76,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Verify container packages are public
+        run: |
+          for image in vlstream-backend vlstream-frontend; do
+            token=$(curl -fsSL "https://ghcr.io/token?scope=repository:oortcloudgroup/${image}:pull" | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
+            status=$(curl -sS -o /dev/null -w '%{http_code}' \
+              -H "Authorization: Bearer ${token}" \
+              -H "Accept: application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.v2+json" \
+              "https://ghcr.io/v2/oortcloudgroup/${image}/manifests/${GITHUB_REF_NAME#v}")
+            if [ "$status" != "200" ]; then
+              echo "::error::ghcr.io/oortcloudgroup/${image}:${GITHUB_REF_NAME#v} is not public (HTTP ${status})"
+              exit 1
+            fi
+          done
       - name: Build release archive
         run: bash scripts/release/build-release.sh "${GITHUB_REF_NAME#v}"
       - uses: softprops/action-gh-release@v3
