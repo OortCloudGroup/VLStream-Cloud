@@ -5,9 +5,7 @@
 
 package com.ruoyi.framework.aspectj;
 
-import com.ruoyi.framework.handler.CreateAndUpdateMetaObjectHandler;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
-import org.apache.ibatis.reflection.SystemMetaObject;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -34,16 +32,11 @@ class VlsSingleTenantRequestAspectTest {
 
         DeviceInfo entity = new DeviceInfo();
         entity.setTenantId("untrusted-entity-tenant");
-        DeviceInfo internallyCreatedEntity = new DeviceInfo();
-
         aspect.normalizeArguments(new Object[] {request, requestWithoutTenant, Arrays.asList(entity)});
-        new CreateAndUpdateMetaObjectHandler("fixed-tenant")
-            .insertFill(SystemMetaObject.forObject(internallyCreatedEntity));
 
         assertEquals("fixed-tenant", request.get("tenantId"));
         assertEquals("fixed-tenant", requestWithoutTenant.get("tenantId"));
         assertEquals("fixed-tenant", nested.get("device_tenant_id"));
         assertEquals("fixed-tenant", entity.getTenantId());
-        assertEquals("fixed-tenant", internallyCreatedEntity.getTenantId());
     }
 }

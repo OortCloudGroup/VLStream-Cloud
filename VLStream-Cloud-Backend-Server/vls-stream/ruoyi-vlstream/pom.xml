@@ -5,7 +5,7 @@
     <parent>
         <artifactId>vls-stream</artifactId>
         <groupId>com.ruoyi</groupId>
-        <version>0.8.3</version>
+    <version>1.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -21,6 +21,12 @@
             <artifactId>ruoyi-common</artifactId>
         </dependency>
 
+        <!-- 文件上传适配层直接使用系统模块的 OSS 服务接口。 -->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-system</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>
@@ -31,6 +37,13 @@
             <groupId>org.eclipse.paho</groupId>
             <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
             <version>1.2.5</version>
+        </dependency>
+
+        <!-- 视频分析会话依赖的检测、分类、姿态与分割能力。 -->
+        <dependency>
+            <groupId>cn.smartjavaai</groupId>
+            <artifactId>all</artifactId>
+            <version>1.1.2</version>
         </dependency>
 
         <dependency>
