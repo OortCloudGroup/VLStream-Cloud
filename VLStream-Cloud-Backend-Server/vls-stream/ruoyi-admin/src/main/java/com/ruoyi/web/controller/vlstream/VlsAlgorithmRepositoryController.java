@@ -5,6 +5,7 @@
 
 package com.ruoyi.web.controller.vlstream;
 
+import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.vlstream.compat.BladePage;
 import com.ruoyi.vlstream.compat.BladeResult;
 import com.ruoyi.vlstream.domain.AlgorithmRepository;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -28,7 +30,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/vlsAlgorithmRepository")
-public class VlsAlgorithmRepositoryController {
+public class VlsAlgorithmRepositoryController extends VlsControllerSupport {
 
     private final IVlsAlgorithmRepositoryService repositoryService;
 
@@ -78,24 +80,24 @@ public class VlsAlgorithmRepositoryController {
 
     @DeleteMapping("/{id}")
     public BladeResult<Boolean> deleteRepository(@PathVariable Long id) {
-        return BladeResult.success(repositoryService.deleteRepository(id));
+        return operationResult(repositoryService.deleteRepository(id), "Repository was not deleted");
     }
 
     @DeleteMapping("/batch")
     public BladeResult<Boolean> batchDeleteRepositories(@RequestBody List<Long> ids) {
-        return BladeResult.success(repositoryService.deleteRepositories(ids));
+        return operationResult(repositoryService.deleteRepositories(ids), "No repositories were deleted");
     }
 
     @PutMapping("/{id}/status")
     public BladeResult<Boolean> updateRepositoryStatus(@PathVariable Long id,
                                                        @RequestParam String status) {
-        return BladeResult.success(repositoryService.updateRepositoryStatus(id, status));
+        return operationResult(repositoryService.updateRepositoryStatus(id, status), "Repository status was not updated");
     }
 
     @PutMapping("/batch/status")
     public BladeResult<Boolean> batchUpdateRepositoryStatus(@RequestBody List<Long> ids,
                                                             @RequestParam String status) {
-        return BladeResult.success(repositoryService.updateRepositoryStatus(ids, status));
+        return operationResult(repositoryService.updateRepositoryStatus(ids, status), "Repository statuses were not updated");
     }
 
     @GetMapping("/count")
@@ -105,6 +107,68 @@ public class VlsAlgorithmRepositoryController {
 
     @PutMapping("/{id}/refresh-count")
     public BladeResult<Boolean> refreshAlgorithmCount(@PathVariable Long id) {
-        return BladeResult.success(repositoryService.refreshAlgorithmCount(id));
+        return operationResult(repositoryService.refreshAlgorithmCount(id), "Repository algorithm count was not refreshed");
+    }
+
+    /** Return one repository through the SpringBlade detail route. */
+    @GetMapping("/detail")
+    public BladeResult<AlgorithmRepository> detail(@RequestParam Long id) {
+        return getRepositoryById(id);
+    }
+
+    /** Return a repository page through the SpringBlade list route. */
+    @GetMapping("/list")
+    public BladeResult<BladePage<AlgorithmRepository>> list(@RequestParam(required = false) Long current,
+                                                            @RequestParam(required = false) Long size,
+                                                            @RequestParam(required = false) String name,
+                                                            @RequestParam(required = false) String repositoryType,
+                                                            @RequestParam(required = false) String status) {
+        return getRepositoryPage(current, size, name, repositoryType, status);
+    }
+
+    /** Create a repository through the SpringBlade save route. */
+    @PostMapping("/save")
+    public BladeResult<AlgorithmRepository> save(@RequestBody AlgorithmRepository repository) {
+        return createRepository(repository);
+    }
+
+    /** Update a repository through the SpringBlade update route. */
+    @PostMapping("/update")
+    public BladeResult<AlgorithmRepository> update(@RequestBody AlgorithmRepository repository) {
+        if (repository == null || repository.getId() == null) {
+            return BladeResult.fail("Algorithm repository ID is required");
+        }
+        return updateRepository(repository.getId(), repository);
+    }
+
+    /** Insert or update a repository through the SpringBlade submit route. */
+    @PostMapping("/submit")
+    public BladeResult<AlgorithmRepository> submit(@RequestBody AlgorithmRepository repository) {
+        return repository != null && repository.getId() != null
+            ? updateRepository(repository.getId(), repository)
+            : createRepository(repository);
+    }
+
+    /** Delete repositories by comma-separated IDs. */
+    @GetMapping("/remove")
+    public BladeResult<Boolean> remove(@RequestParam String ids) {
+        try {
+            List<Long> parsed = parseIds(ids);
+            return parsed.isEmpty() ? BladeResult.<Boolean>fail("ids is required")
+                : BladeResult.success(repositoryService.deleteRepositories(parsed));
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
+    }
+
+    /** Export the actual filtered repository rows. */
+    @GetMapping("/export-vlsAlgorithmRepository")
+    public void exportVlsAlgorithmRepository(@RequestParam(required = false) String name,
+                                             @RequestParam(required = false) String repositoryType,
+                                             @RequestParam(required = false) String status,
+                                             HttpServletResponse response) {
+        BladePage<AlgorithmRepository> page = repositoryService.getRepositoryPage(
+            Long.valueOf(1L), Long.valueOf(Integer.MAX_VALUE), name, repositoryType, status);
+        ExcelUtil.exportExcel(page.getRecords(), "Algorithm Repositories", AlgorithmRepository.class, response);
     }
 }

@@ -126,12 +126,55 @@ vlstream:
   auth:
     public-key: ${BLADE_OAUTH2_PUBLIC_KEY:049787e408dea94acb3655acc5a7c7c7010bb9f140c84926c667ea616366082a118141c8dcb3e78a9d85d64fb765a250ff73448b18938f2219b94f782e28e1df64}
     private-key: ${BLADE_OAUTH2_PRIVATE_KEY:7204a0e7dd3f23783fb04a82b7ae211441b12a8cb42694f9997e02babc4bf65b}
+  ssh:
+    host: ${VLSTREAM_SSH_HOST:192.168.88.173}
+    port: ${VLSTREAM_SSH_PORT:22}
+    username: ${VLSTREAM_SSH_USERNAME:oort}
+    password: ${VLSTREAM_SSH_PASSWORD:oort301}
+  training:
+    conda-profile: ${VLSTREAM_TRAINING_CONDA_PROFILE:/data/work/anaconda3/etc/profile.d/conda.sh}
+    default-conda-env: ${VLSTREAM_TRAINING_CONDA_ENV:yolo8}
+    default-work-dir: ${VLSTREAM_TRAINING_WORK_DIR:/data/work/ultralytics_yolov8-main/datasets}
+    log-dir: ${VLSTREAM_TRAINING_LOG_DIR:logs}
+    synset-file-name: ${VLSTREAM_TRAINING_SYNSET_FILE_NAME:synset.txt}
+  rtsp-recording:
+    enabled: ${VLSTREAM_RTSP_RECORDING_ENABLED:true}
+    ffmpeg-path: ${VLSTREAM_RTSP_FFMPEG_PATH:ffmpeg}
+    default-storage-path: ${VLSTREAM_RTSP_STORAGE_PATH:recordings}
+    segment-seconds: ${VLSTREAM_RTSP_SEGMENT_SECONDS:300}
+    process-stop-wait-seconds: ${VLSTREAM_RTSP_PROCESS_STOP_WAIT_SECONDS:5}
+    stale-file-seconds: ${VLSTREAM_RTSP_STALE_FILE_SECONDS:5}
+    refresh-interval-millis: ${VLSTREAM_RTSP_REFRESH_INTERVAL_MILLIS:10000}
+  mqtt:
+    host: ${VLSTREAM_MQTT_HOST:146.56.220.167}
+    port: ${VLSTREAM_MQTT_PORT:1883}
+    username: ${VLSTREAM_MQTT_USERNAME:oort2}
+    password: ${VLSTREAM_MQTT_PASSWORD:kdo.2028}
+    topic-prefix: ${VLSTREAM_MQTT_TOPIC_PREFIX:oortcloud}
+    dispatch-algorithms-topic: ${VLSTREAM_MQTT_DISPATCH_ALGORITHMS_TOPIC:oortcloud/dispatchAlgorithms}
+    client-id-prefix: ${VLSTREAM_MQTT_CLIENT_ID_PREFIX:vls-dispatch}
+    qos: ${VLSTREAM_MQTT_QOS:1}
+    keep-alive-seconds: ${VLSTREAM_MQTT_KEEP_ALIVE_SECONDS:60}
+    connection-timeout-seconds: ${VLSTREAM_MQTT_CONNECTION_TIMEOUT_SECONDS:10}
+    vls-camera-display-setting-topic: ${VLSTREAM_MQTT_TOPIC_CAMERA_DISPLAY:oortcloud/vlsCameraDisplaySetting}
+    vls-camera-osd-setting-topic: ${VLSTREAM_MQTT_TOPIC_CAMERA_OSD:oortcloud/vlsCameraOsdSetting}
+    vls-audio-anomaly-detection-setting-topic: ${VLSTREAM_MQTT_TOPIC_AUDIO_ANOMALY:oortcloud/vlsAudioAnomalyDetectionSetting}
+    vls-audio-defense-time-setting-topic: ${VLSTREAM_MQTT_TOPIC_AUDIO_DEFENSE:oortcloud/vlsAudioDefenseTimeSetting}
+    vls-audio-linkage-mode-setting-topic: ${VLSTREAM_MQTT_TOPIC_AUDIO_LINKAGE:oortcloud/vlsAudioLinkageModeSetting}
+    vls-time-strategy-topic: ${VLSTREAM_MQTT_TOPIC_TIME_STRATEGY:oortcloud/vlsTimeStrategy}
+    vls-record-event-strategy-topic: ${VLSTREAM_MQTT_TOPIC_RECORD_EVENT:oortcloud/vlsRecordEventStrategy}
 
 vls:
   tenant:
     id: ${VLS_SINGLE_TENANT_ID:000000}
   apaas-sync:
     enabled: ${VLS_APAAS_SYNC_ENABLED:false}
+  location-task:
+    workflow:
+      app-package: ${VLS_LOCATION_TASK_WORKFLOW_APP_PACKAGE:com.oort-event.demo}
+      jump-path: ${VLS_LOCATION_TASK_WORKFLOW_JUMP_PATH:/event-detail}
+      # JSON 模板的默认值由配置类提供，避免 YAML 占位符与 {{event_id}} 冲突
+      jump-params: ${VLS_LOCATION_TASK_WORKFLOW_JUMP_PARAMS:}
 
 # security配置
 security:
@@ -345,42 +388,3 @@ flowable:
   async-history-executor-activate: true
   # 历史级别
   history-level: audit
-
-  # 密信推送
-notification:
-  slUrl2: ${SL_URL2:http://20.72.1.127/ga/akeyme-push-service}
-  serviceID: ${SERVICE_ID:8c4ae40cf21142449a0f28deeb3679a8}
-  secretKey: ${SECRET_KEY:5ee850dc5e091fdc422ef017ef527270}
-  requestType: ${REQUEST_TYPE:service}
-
-registration:
-  url: ${OORT_EUREKA_HOST:http://192.168.88.17:8761/ga/xh-registry-center}
-  app: ${OORT_EUREKA_FLOWABLESERVER:oort-flowable}
-  ipAddr: ${OORT_EUREKA_MYIP:127.0.0.1}
-  port: ${OORT_EUREKA_MYPORT:${server.port}}
-  serviceID: ${OORT_XH_SERVICEID:zuul}
-  secretKey: ${OORT_XH_SECRETKEY:zuul}
-  requestType: ${OORT_XH_REQUESTTYPE:zuul}
-  switchSparkBus: ${OORT_XH_SWITCH:0}
-
-synchronise:
-  DEPT-SYNURL: ${SYNCHRONISE_DEPT_SYNURL:http://192.168.60.76:32610/oort/oortcloud-cloud-classroom/sync/v1/dept}
-  USER-SYNURL: ${SYNCHRONISE_USER_SYNURL:http://192.168.60.76:32610/oort/oortcloud-cloud-classroom/sync/v1/user}
-  JOB-SYNURL: ${SYNCHRONISE_JOB_SYNURL:http://192.168.60.76:32610/oort/oortcloud-cloud-classroom/sync/v1/job}
-#  DEPT-SYNURL: ${SYNCHRONISE-DEPT-SYNURL:http://20.72.1.94:31815/sync/v1/dept}
-#  USER-SYNURL: ${SYNCHRONISE-USER-SYNURL:http://20.72.1.94:31815/sync/v1/user}
-
-http:
-  apaas-sso: ${APAAS_SSO:http://127.0.0.1:32620/bus/apaas-sso}
-  apaas-workflowforms: ${APAAS_WORKFLOWFORMS:http://183.62.103.20:21410/bus/apaas-workflowforms}
-  get-tenant-admin : ${APAAS_GETTENANTADMIN:http://127.0.0.1:32620/bus/apaas-user/tenant/v1/getTenantAdmin}
-  #token-verification-url: ${OORT_XH_VERIFYTOKEN:http://192.168.60.76:32610/oort/oortcloud-cloud-classroom/user/v1/verifyToken}
-user:
-  excludedjobname: ${EXCLUDEDJOBNAME:科员,警员}
-dept:
-  excludedUdid: ${EXCLUDEDUDID:273ed9a4-0e77-4169-af46-dd2da2aa1fcc}
-tx:
-  callback-address: ${TX_CALLBACK_ADDRESS:http://20.72.1.41:8080/jk/RegionPort/areaNode}
-
-UnifiedMessagingSend:
-  url: ${UNIFIEDMESSAGINGSEND_URL:http://183.62.103.20:21410/bus/apaas-unified-msg/}

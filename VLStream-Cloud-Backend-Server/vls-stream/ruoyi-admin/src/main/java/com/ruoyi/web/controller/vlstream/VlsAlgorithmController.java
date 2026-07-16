@@ -5,6 +5,7 @@
 
 package com.ruoyi.web.controller.vlstream;
 
+import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.vlstream.compat.BladePage;
 import com.ruoyi.vlstream.compat.BladeResult;
 import com.ruoyi.vlstream.domain.Algorithm;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +31,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/vlsAlgorithm")
-public class VlsAlgorithmController {
+public class VlsAlgorithmController extends VlsControllerSupport {
 
     private final IVlsAlgorithmService algorithmService;
 
@@ -81,37 +83,59 @@ public class VlsAlgorithmController {
 
     @DeleteMapping("/{id}")
     public BladeResult<Boolean> deleteAlgorithm(@PathVariable Long id) {
-        return BladeResult.success(algorithmService.deleteAlgorithm(id));
+        return operationResult(algorithmService.deleteAlgorithm(id), "Algorithm was not deleted");
     }
 
     @DeleteMapping("/batch")
     public BladeResult<Boolean> batchDeleteAlgorithms(@RequestBody List<Long> ids) {
-        return BladeResult.success(algorithmService.deleteAlgorithms(ids));
+        return operationResult(algorithmService.deleteAlgorithms(ids), "No algorithms were deleted");
     }
 
     @PutMapping("/{id}/deploy-status")
     public BladeResult<Boolean> updateDeployStatus(@PathVariable Long id,
                                                    @RequestParam String deployStatus) {
-        return BladeResult.success(algorithmService.updateDeployStatus(id, deployStatus));
+        try {
+            return algorithmService.updateDeployStatus(id, deployStatus)
+                ? BladeResult.success(Boolean.TRUE)
+                : BladeResult.<Boolean>fail("Deployment status was not updated");
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
     }
 
     @PutMapping("/batch/deploy-status")
     public BladeResult<Boolean> batchUpdateDeployStatus(@RequestBody List<Long> ids,
                                                         @RequestParam String deployStatus) {
-        return BladeResult.success(algorithmService.updateDeployStatus(ids, deployStatus));
+        try {
+            return algorithmService.updateDeployStatus(ids, deployStatus)
+                ? BladeResult.success(Boolean.TRUE)
+                : BladeResult.<Boolean>fail("Deployment statuses were not updated");
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
     }
 
     @PostMapping("/{algorithmId}/deploy")
     public BladeResult<Map<String, Object>> deployAlgorithmToDevices(@PathVariable Long algorithmId,
                                                                      @RequestBody List<Long> deviceIds) {
         Map<String, Object> result = algorithmService.deployAlgorithmToDevices(algorithmId, deviceIds);
-        return result == null ? BladeResult.<Map<String, Object>>fail("Algorithm deployment failed") : BladeResult.success(result);
+        if (result == null || Boolean.FALSE.equals(result.get("success"))) {
+            String message = result == null || result.get("message") == null
+                ? "Algorithm deployment failed"
+                : String.valueOf(result.get("message"));
+            return BladeResult.fail(message);
+        }
+        return BladeResult.success(result);
     }
 
     @PostMapping("/{algorithmId}/evaluate")
     public BladeResult<Map<String, Object>> evaluateAlgorithm(@PathVariable Long algorithmId) {
-        Map<String, Object> result = algorithmService.evaluateAlgorithm(algorithmId);
-        return result == null ? BladeResult.<Map<String, Object>>fail("Algorithm evaluation failed") : BladeResult.success(result);
+        try {
+            Map<String, Object> result = algorithmService.evaluateAlgorithm(algorithmId);
+            return result == null ? BladeResult.<Map<String, Object>>fail("Algorithm evaluation failed") : BladeResult.success(result);
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
     }
 
     @GetMapping("/statistics/category")
@@ -132,5 +156,71 @@ public class VlsAlgorithmController {
     @GetMapping("/count/repository/{repositoryId}")
     public BladeResult<Long> countByRepositoryId(@PathVariable Long repositoryId) {
         return BladeResult.success(algorithmService.countByRepositoryId(repositoryId));
+    }
+
+    /** Return one algorithm through the SpringBlade detail route. */
+    @GetMapping("/detail")
+    public BladeResult<Algorithm> detail(@RequestParam Long id) {
+        return getAlgorithmById(id);
+    }
+
+    /** Return a SpringBlade-compatible algorithm list page. */
+    @GetMapping("/list")
+    public BladeResult<BladePage<Algorithm>> list(@RequestParam(required = false) Long current,
+                                                  @RequestParam(required = false) Long size,
+                                                  @RequestParam(required = false) Long repositoryId,
+                                                  @RequestParam(required = false) String name,
+                                                  @RequestParam(required = false) String category,
+                                                  @RequestParam(required = false) String type,
+                                                  @RequestParam(required = false) String deployStatus) {
+        return getAlgorithmPage(current, size, repositoryId, name, category, type, deployStatus);
+    }
+
+    /** Create an algorithm through the SpringBlade save route. */
+    @PostMapping("/save")
+    public BladeResult<Algorithm> save(@RequestBody Algorithm algorithm) {
+        return createAlgorithm(algorithm);
+    }
+
+    /** Update an algorithm through the SpringBlade update route. */
+    @PostMapping("/update")
+    public BladeResult<Algorithm> update(@RequestBody Algorithm algorithm) {
+        if (algorithm == null || algorithm.getId() == null) {
+            return BladeResult.fail("Algorithm ID is required");
+        }
+        return updateAlgorithm(algorithm.getId(), algorithm);
+    }
+
+    /** Insert or update an algorithm through the SpringBlade submit route. */
+    @PostMapping("/submit")
+    public BladeResult<Algorithm> submit(@RequestBody Algorithm algorithm) {
+        return algorithm != null && algorithm.getId() != null
+            ? updateAlgorithm(algorithm.getId(), algorithm)
+            : createAlgorithm(algorithm);
+    }
+
+    /** Delete algorithms by the SpringBlade comma-separated ID convention. */
+    @GetMapping("/remove")
+    public BladeResult<Boolean> remove(@RequestParam String ids) {
+        try {
+            List<Long> parsed = parseIds(ids);
+            return parsed.isEmpty() ? BladeResult.<Boolean>fail("ids is required")
+                : BladeResult.success(algorithmService.deleteAlgorithms(parsed));
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
+    }
+
+    /** Export the actual filtered algorithm rows. */
+    @GetMapping("/export-vlsAlgorithm")
+    public void exportVlsAlgorithm(@RequestParam(required = false) Long repositoryId,
+                                   @RequestParam(required = false) String name,
+                                   @RequestParam(required = false) String category,
+                                   @RequestParam(required = false) String type,
+                                   @RequestParam(required = false) String deployStatus,
+                                   HttpServletResponse response) {
+        BladePage<Algorithm> page = algorithmService.getAlgorithmPage(
+            Long.valueOf(1L), Long.valueOf(Integer.MAX_VALUE), repositoryId, name, category, type, deployStatus);
+        ExcelUtil.exportExcel(page.getRecords(), "Algorithms", Algorithm.class, response);
     }
 }

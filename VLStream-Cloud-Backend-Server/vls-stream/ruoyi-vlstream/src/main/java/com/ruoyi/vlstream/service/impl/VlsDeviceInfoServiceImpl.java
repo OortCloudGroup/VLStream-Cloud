@@ -11,6 +11,7 @@ import com.ruoyi.vlstream.compat.BladePage;
 import com.ruoyi.vlstream.domain.DeviceInfo;
 import com.ruoyi.vlstream.mapper.VlsDeviceInfoMapper;
 import com.ruoyi.vlstream.service.IVlsDeviceInfoService;
+import com.ruoyi.vlstream.service.VlsAlgorithmDispatchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.net.URI;
+import java.net.Socket;
+import java.net.InetSocketAddress;
 
 /**
  * Service for the VLS device frontend compatibility surface.
@@ -35,6 +39,7 @@ public class VlsDeviceInfoServiceImpl implements IVlsDeviceInfoService {
         "Dome camera", "PTZ", "Camera", "Bullet Camera", "Hemisphere"));
 
     private final VlsDeviceInfoMapper deviceInfoMapper;
+    private final VlsAlgorithmDispatchService algorithmDispatchService;
 
     @Override
     public BladePage<DeviceInfo> getDevicePage(long current, long size, String keyword, String deviceName,
@@ -173,10 +178,7 @@ public class VlsDeviceInfoServiceImpl implements IVlsDeviceInfoService {
             result.put("message", "设备不存在");
             return result;
         }
-        result.put("success", true);
-        result.put("message", "连接成功");
-        result.put("latency", "20ms");
-        return result;
+        return probeDevice(device);
     }
 
     @Override
@@ -189,11 +191,14 @@ public class VlsDeviceInfoServiceImpl implements IVlsDeviceInfoService {
             result.put("message", "设备不存在");
             return result;
         }
-        device.setStatus(1);
+        Map<String, Object> probe = probeDevice(device);
+        boolean reachable = Boolean.TRUE.equals(probe.get("success"));
+        device.setStatus(reachable ? 0 : 1);
         deviceInfoMapper.updateById(device);
-        result.put("success", true);
-        result.put("message", "状态刷新成功");
-        result.put("status", 1);
+        result.putAll(probe);
+        result.put("status", device.getStatus());
+        result.put("message", reachable ? "设备连接探测成功，状态已更新为在线"
+            : "设备连接探测失败，状态已更新为离线: " + probe.get("message"));
         return result;
     }
 
@@ -213,6 +218,12 @@ public class VlsDeviceInfoServiceImpl implements IVlsDeviceInfoService {
         result.put("total", ids == null ? 0 : ids.size());
         result.put("success", successCount);
         result.put("fail", ids == null ? 0 : ids.size() - successCount);
+        result.put("operationSuccess", ids != null && !ids.isEmpty() && successCount == ids.size());
+        if (ids == null || ids.isEmpty()) {
+            result.put("message", "设备 ID 列表不能为空");
+        } else if (successCount != ids.size()) {
+            result.put("message", "部分或全部设备连接探测失败");
+        }
         return result;
     }
 
@@ -235,8 +246,8 @@ public class VlsDeviceInfoServiceImpl implements IVlsDeviceInfoService {
             result.put("message", "设备不存在");
             return result;
         }
-        result.put("success", true);
-        result.put("message", "PTZ控制成功");
+        result.put("success", false);
+        result.put("message", "当前后端未配置真实 ONVIF/PTZ 控制通道，未向设备下发命令");
         result.put("command", command);
         result.put("params", params == null ? Collections.emptyMap() : params);
         return result;
@@ -268,41 +279,71 @@ public class VlsDeviceInfoServiceImpl implements IVlsDeviceInfoService {
 
     @Override
     public Map<String, Object> importDevices(MultipartFile file) {
-        Map<String, Object> result = new LinkedHashMap<String, Object>();
-        result.put("filename", file == null ? null : file.getOriginalFilename());
-        result.put("total", 0);
-        result.put("success", 0);
-        result.put("fail", 0);
-        result.put("message", "导入接口已接入，文件解析后续补齐");
-        return result;
+        throw new UnsupportedOperationException("设备导入尚未实现文件解析，未写入任何设备数据");
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> dispatchAlgorithms(Long algorithmId, String deviceIds) {
         List<Long> ids = parseIds(deviceIds);
-        int updated = 0;
-        for (Long id : ids) {
-            DeviceInfo device = deviceInfoMapper.selectById(id);
-            if (device == null) {
-                continue;
-            }
-            device.setAlgorithmId(String.valueOf(algorithmId));
-            updated += deviceInfoMapper.updateById(device) > 0 ? 1 : 0;
-        }
-
-        Map<String, Object> result = new LinkedHashMap<String, Object>();
-        result.put("algorithmId", algorithmId);
-        result.put("deviceIds", ids);
-        result.put("updated", updated);
-        result.put("message", updated > 0 ? "算法下发已记录" : "未找到可下发设备");
-        return result;
+        return algorithmDispatchService.dispatch(algorithmId, ids);
     }
 
     private List<DeviceInfo> devicesByType(String type) {
         return deviceInfoMapper.selectList(new LambdaQueryWrapper<DeviceInfo>()
             .eq(DeviceInfo::getDeviceType, type)
             .orderByDesc(DeviceInfo::getId));
+    }
+
+    /** Perform a real TCP reachability probe against the configured stream endpoint. */
+    private Map<String, Object> probeDevice(DeviceInfo device) {
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        if (device == null || !StringUtils.hasText(device.getStreamUrl())) {
+            result.put("success", false);
+            result.put("message", "设备未配置视频流地址");
+            return result;
+        }
+        Socket socket = new Socket();
+        long startedAt = System.currentTimeMillis();
+        try {
+            URI uri = URI.create(device.getStreamUrl().trim());
+            String host = uri.getHost();
+            if (!StringUtils.hasText(host)) {
+                throw new IllegalArgumentException("视频流地址缺少主机名");
+            }
+            int port = uri.getPort() > 0 ? uri.getPort() : defaultPort(uri.getScheme());
+            socket.connect(new InetSocketAddress(host, port), 5000);
+            long latency = System.currentTimeMillis() - startedAt;
+            result.put("success", true);
+            result.put("message", "设备流端点 TCP 连接成功");
+            result.put("latency", latency + "ms");
+            result.put("host", host);
+            result.put("port", port);
+        } catch (Exception ex) {
+            result.put("success", false);
+            result.put("message", "设备流端点连接失败: " + ex.getMessage());
+        } finally {
+            try {
+                socket.close();
+            } catch (Exception ignored) {
+                // Socket close failure does not change the completed probe result.
+            }
+        }
+        return result;
+    }
+
+    /** Resolve the conventional TCP port for supported stream URL schemes. */
+    private int defaultPort(String scheme) {
+        if ("rtsp".equalsIgnoreCase(scheme) || "rtsps".equalsIgnoreCase(scheme)) {
+            return 554;
+        }
+        if ("https".equalsIgnoreCase(scheme)) {
+            return 443;
+        }
+        if ("http".equalsIgnoreCase(scheme)) {
+            return 80;
+        }
+        throw new IllegalArgumentException("不支持的视频流协议: " + scheme);
     }
 
     private List<Map<String, Object>> deviceNodes(List<DeviceInfo> devices) {

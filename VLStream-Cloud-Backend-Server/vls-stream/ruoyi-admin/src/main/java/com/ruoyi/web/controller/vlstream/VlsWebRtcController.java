@@ -40,22 +40,36 @@ public class VlsWebRtcController {
 
     @PostMapping("/refresh")
     public BladeResult<Map<String, Object>> refresh() {
-        return BladeResult.success(webRtcService.refresh());
+        Map<String, Object> result = webRtcService.refresh();
+        return Boolean.TRUE.equals(result.get("refreshed")) ? BladeResult.success(result)
+            : BladeResult.<Map<String, Object>>fail(String.valueOf(result.get("message")));
     }
 
     @PostMapping("/start")
     public BladeResult<Map<String, Object>> startWebRtcStream(@RequestBody(required = false) Map<String, Object> body) {
-        return BladeResult.success(webRtcService.startStream(text(body, "deviceId"), text(body, "rtspUrl"), body));
+        try {
+            return BladeResult.success(webRtcService.startStream(text(body, "deviceId"), text(body, "rtspUrl"), body));
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
     }
 
     @PostMapping("/stop")
     public BladeResult<Map<String, Object>> stopWebRtcStream(@RequestBody(required = false) Map<String, Object> body) {
-        return BladeResult.success(webRtcService.stopStream(text(body, "deviceId")));
+        try {
+            Map<String, Object> result = webRtcService.stopStream(text(body, "deviceId"));
+            return Boolean.TRUE.equals(result.get("stopped")) ? BladeResult.success(result)
+                : BladeResult.<Map<String, Object>>fail(String.valueOf(result.get("message")));
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
     }
 
     @PostMapping("/validate")
     public BladeResult<Map<String, Object>> validateRtspStream(@RequestBody(required = false) Map<String, Object> body) {
-        return BladeResult.success(webRtcService.validateRtspStream(text(body, "rtspUrl")));
+        Map<String, Object> result = webRtcService.validateRtspStream(text(body, "rtspUrl"));
+        return Boolean.TRUE.equals(result.get("available")) ? BladeResult.success(result)
+            : BladeResult.<Map<String, Object>>fail(String.valueOf(result.get("message")));
     }
 
     @GetMapping("/active")

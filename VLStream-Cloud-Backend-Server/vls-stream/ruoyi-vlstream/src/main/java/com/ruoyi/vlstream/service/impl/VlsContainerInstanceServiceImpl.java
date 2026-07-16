@@ -141,15 +141,7 @@ public class VlsContainerInstanceServiceImpl implements IVlsContainerInstanceSer
         if (STATUS_RUNNING.equals(instance.getInstanceStatus())) {
             throw new IllegalArgumentException("Container instance is already running");
         }
-        instance.setInstanceStatus(STATUS_STARTING);
-        instance.setHealthStatus(HEALTH_UNKNOWN);
-        if (!StringUtils.hasText(instance.getContainerId())) {
-            instance.setContainerId("container-" + id);
-        }
-        instance.setStartTime(new Date());
-        instance.setStopTime(null);
-        instance.setUpdateTime(new Date());
-        return containerInstanceMapper.updateById(instance) > 0;
+        throw new UnsupportedOperationException("未配置 Docker/容器运行时连接，未启动容器实例");
     }
 
     @Override
@@ -159,24 +151,14 @@ public class VlsContainerInstanceServiceImpl implements IVlsContainerInstanceSer
         if (STATUS_STOPPED.equals(instance.getInstanceStatus())) {
             throw new IllegalArgumentException("Container instance is already stopped");
         }
-        instance.setInstanceStatus(STATUS_STOPPING);
-        instance.setHealthStatus(HEALTH_UNKNOWN);
-        instance.setStopTime(new Date());
-        instance.setUpdateTime(new Date());
-        return containerInstanceMapper.updateById(instance) > 0;
+        throw new UnsupportedOperationException("未配置 Docker/容器运行时连接，未停止容器实例");
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean restartContainerInstance(Long id) {
         ContainerInstance instance = requireInstance(id);
-        instance.setRestartCount(nullToZero(instance.getRestartCount()) + 1);
-        instance.setInstanceStatus(STATUS_STARTING);
-        instance.setHealthStatus(HEALTH_UNKNOWN);
-        instance.setStartTime(new Date());
-        instance.setStopTime(null);
-        instance.setUpdateTime(new Date());
-        return containerInstanceMapper.updateById(instance) > 0;
+        throw new UnsupportedOperationException("未配置 Docker/容器运行时连接，未重启容器实例");
     }
 
     @Override

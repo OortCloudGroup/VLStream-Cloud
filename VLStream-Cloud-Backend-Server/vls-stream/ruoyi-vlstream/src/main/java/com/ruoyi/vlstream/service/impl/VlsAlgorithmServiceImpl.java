@@ -12,6 +12,7 @@ import com.ruoyi.vlstream.domain.Algorithm;
 import com.ruoyi.vlstream.mapper.VlsAlgorithmMapper;
 import com.ruoyi.vlstream.service.IVlsAlgorithmRepositoryService;
 import com.ruoyi.vlstream.service.IVlsAlgorithmService;
+import com.ruoyi.vlstream.service.VlsAlgorithmDispatchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,7 @@ public class VlsAlgorithmServiceImpl implements IVlsAlgorithmService {
 
     private final VlsAlgorithmMapper algorithmMapper;
     private final IVlsAlgorithmRepositoryService algorithmRepositoryService;
+    private final VlsAlgorithmDispatchService algorithmDispatchService;
     private final Map<Long, String> deployStatuses = new ConcurrentHashMap<Long, String>();
 
     @Override
@@ -199,8 +201,8 @@ public class VlsAlgorithmServiceImpl implements IVlsAlgorithmService {
         if (id == null || !StringUtils.hasText(deployStatus) || algorithmMapper.selectById(id) == null) {
             return false;
         }
-        deployStatuses.put(id, deployStatus.trim());
-        return true;
+        throw new UnsupportedOperationException(
+            "Deployment status cannot be set manually; dispatch the algorithm through the MQTT deployment endpoint");
     }
 
     @Override
@@ -208,47 +210,33 @@ public class VlsAlgorithmServiceImpl implements IVlsAlgorithmService {
         if (ids == null || ids.isEmpty()) {
             return false;
         }
-        boolean updated = false;
-        for (Long id : ids) {
-            updated = updateDeployStatus(id, deployStatus) || updated;
-        }
-        return updated;
+        throw new UnsupportedOperationException(
+            "Deployment status cannot be set manually; dispatch algorithms through the MQTT deployment endpoint");
     }
 
     @Override
     public Map<String, Object> deployAlgorithmToDevices(Long algorithmId, List<Long> deviceIds) {
         Algorithm algorithm = algorithmMapper.selectById(algorithmId);
-        if (algorithm == null || deviceIds == null || deviceIds.isEmpty()) {
-            return null;
+        if (algorithm == null) {
+            return failedDeployment("Algorithm does not exist");
         }
-        deployStatuses.put(algorithmId, "deployed");
-        Map<String, Object> result = new LinkedHashMap<String, Object>();
-        result.put("algorithmId", algorithmId);
+        Map<String, Object> result = algorithmDispatchService.dispatch(algorithmId, deviceIds);
         result.put("algorithmName", algorithm.getName());
-        result.put("deviceIds", deviceIds);
-        result.put("deployStatus", "deployed");
-        result.put("status", "completed");
         result.put("deployTime", new Date());
+        if (Boolean.TRUE.equals(result.get("success"))) {
+            deployStatuses.put(algorithmId, "deployed");
+            result.put("deployStatus", "deployed");
+        }
         return result;
     }
 
     @Override
     public Map<String, Object> evaluateAlgorithm(Long algorithmId) {
-        Algorithm algorithm = algorithmMapper.selectById(algorithmId);
-        if (algorithm == null) {
-            return null;
+        if (algorithmMapper.selectById(algorithmId) == null) {
+            throw new IllegalArgumentException("Algorithm does not exist");
         }
-        Map<String, Object> result = new LinkedHashMap<String, Object>();
-        result.put("algorithmId", algorithmId);
-        result.put("algorithmName", algorithm.getName());
-        result.put("category", algorithm.getCategory());
-        result.put("accuracy", 0.95D);
-        result.put("precision", 0.92D);
-        result.put("recall", 0.89D);
-        result.put("f1Score", 0.905D);
-        result.put("evaluationTime", new Date());
-        result.put("status", "completed");
-        return result;
+        throw new UnsupportedOperationException(
+            "No real evaluation runner or persisted evaluation metrics are configured; evaluation was not executed");
     }
 
     @Override
@@ -356,6 +344,14 @@ public class VlsAlgorithmServiceImpl implements IVlsAlgorithmService {
 
     private String defaultDeployStatus(Algorithm algorithm) {
         return Integer.valueOf(0).equals(algorithm.getStatus()) ? "disabled" : "not_deployed";
+    }
+
+    private Map<String, Object> failedDeployment(String message) {
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("success", Boolean.FALSE);
+        result.put("status", "failed");
+        result.put("message", message);
+        return result;
     }
 
     private long normalizePage(Long current) {

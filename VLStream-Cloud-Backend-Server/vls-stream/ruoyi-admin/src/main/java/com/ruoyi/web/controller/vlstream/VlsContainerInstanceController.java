@@ -5,6 +5,7 @@
 
 package com.ruoyi.web.controller.vlstream;
 
+import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.vlstream.compat.BladePage;
 import com.ruoyi.vlstream.compat.BladeResult;
 import com.ruoyi.vlstream.domain.ContainerInstance;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,7 +34,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/vlsContainerInstance")
-public class VlsContainerInstanceController {
+public class VlsContainerInstanceController extends VlsControllerSupport {
 
     private final IVlsContainerInstanceService containerInstanceService;
 
@@ -90,7 +92,7 @@ public class VlsContainerInstanceController {
     @DeleteMapping("/{id}")
     public BladeResult<Boolean> deleteContainerInstance(@PathVariable Long id) {
         try {
-            return BladeResult.success(containerInstanceService.deleteContainerInstance(id));
+            return operationResult(containerInstanceService.deleteContainerInstance(id), "Container instance was not deleted");
         } catch (RuntimeException ex) {
             return BladeResult.fail(ex.getMessage());
         }
@@ -114,7 +116,7 @@ public class VlsContainerInstanceController {
     @PostMapping("/{id}/start")
     public BladeResult<Boolean> startContainerInstance(@PathVariable Long id) {
         try {
-            return BladeResult.success(containerInstanceService.startContainerInstance(id));
+            return operationResult(containerInstanceService.startContainerInstance(id), "Container instance was not started");
         } catch (RuntimeException ex) {
             return BladeResult.fail(ex.getMessage());
         }
@@ -126,7 +128,7 @@ public class VlsContainerInstanceController {
     @PostMapping("/{id}/stop")
     public BladeResult<Boolean> stopContainerInstance(@PathVariable Long id) {
         try {
-            return BladeResult.success(containerInstanceService.stopContainerInstance(id));
+            return operationResult(containerInstanceService.stopContainerInstance(id), "Container instance was not stopped");
         } catch (RuntimeException ex) {
             return BladeResult.fail(ex.getMessage());
         }
@@ -138,7 +140,7 @@ public class VlsContainerInstanceController {
     @PostMapping("/{id}/restart")
     public BladeResult<Boolean> restartContainerInstance(@PathVariable Long id) {
         try {
-            return BladeResult.success(containerInstanceService.restartContainerInstance(id));
+            return operationResult(containerInstanceService.restartContainerInstance(id), "Container instance was not restarted");
         } catch (RuntimeException ex) {
             return BladeResult.fail(ex.getMessage());
         }
@@ -265,5 +267,70 @@ public class VlsContainerInstanceController {
             }
         }
         return null;
+    }
+
+    /** Return one instance through the SpringBlade detail route. */
+    @GetMapping("/detail")
+    public BladeResult<ContainerInstance> detail(@RequestParam Long id) {
+        return getContainerInstanceById(id);
+    }
+
+    /** Return the instance page through the SpringBlade list route. */
+    @GetMapping("/list")
+    public BladeResult<BladePage<ContainerInstance>> list(@RequestParam(required = false) Long current,
+                                                          @RequestParam(required = false) Long size,
+                                                          @RequestParam(required = false) String name,
+                                                          @RequestParam(required = false) String status,
+                                                          @RequestParam(required = false) Long algorithmId,
+                                                          @RequestParam(required = false) String healthStatus,
+                                                          @RequestParam(required = false) String startTime,
+                                                          @RequestParam(required = false) String endTime) {
+        return getContainerInstancePage(current, size, name, status, algorithmId, healthStatus, startTime, endTime);
+    }
+
+    /** Create an instance through the SpringBlade save route. */
+    @PostMapping("/save")
+    public BladeResult<ContainerInstance> save(@RequestBody ContainerInstance instance) {
+        return createContainerInstance(instance);
+    }
+
+    /** Update an instance through the SpringBlade update route. */
+    @PostMapping("/update")
+    public BladeResult<ContainerInstance> update(@RequestBody ContainerInstance instance) {
+        return updateContainerInstance(instance);
+    }
+
+    /** Insert or update an instance through the SpringBlade submit route. */
+    @PostMapping("/submit")
+    public BladeResult<ContainerInstance> submit(@RequestBody ContainerInstance instance) {
+        return instance != null && instance.getId() != null
+            ? updateContainerInstance(instance)
+            : createContainerInstance(instance);
+    }
+
+    /** Delete instances by comma-separated IDs through the real service rules. */
+    @GetMapping("/remove")
+    public BladeResult<Boolean> remove(@RequestParam String ids) {
+        try {
+            List<Long> parsed = parseIds(ids);
+            return parsed.isEmpty() ? BladeResult.<Boolean>fail("ids is required")
+                : BladeResult.success(containerInstanceService.batchDeleteContainerInstances(parsed));
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
+    }
+
+    /** Export the actual filtered instance rows. */
+    @GetMapping("/export-vlsContainerInstance")
+    public void exportVlsContainerInstance(@RequestParam(required = false) String name,
+                                           @RequestParam(required = false) String status,
+                                           @RequestParam(required = false) Long algorithmId,
+                                           @RequestParam(required = false) String healthStatus,
+                                           @RequestParam(required = false) String startTime,
+                                           @RequestParam(required = false) String endTime,
+                                           HttpServletResponse response) {
+        BladePage<ContainerInstance> page = containerInstanceService.getContainerInstancePage(Long.valueOf(1L),
+            Long.valueOf(Integer.MAX_VALUE), name, status, algorithmId, healthStatus, startTime, endTime);
+        ExcelUtil.exportExcel(page.getRecords(), "Container Instances", ContainerInstance.class, response);
     }
 }

@@ -7,15 +7,20 @@ package com.ruoyi.web.controller.vlstream;
 
 import com.ruoyi.vlstream.compat.BladePage;
 import com.ruoyi.vlstream.compat.BladeResult;
+import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.vlstream.domain.VideoRecord;
 import com.ruoyi.vlstream.service.IVlsVideoRecordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.ResourceRegion;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpRange;
+import org.springframework.http.HttpStatus;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +35,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -39,7 +46,9 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/vlsVideoRecord")
-public class VlsVideoRecordController {
+public class VlsVideoRecordController extends VlsControllerSupport {
+
+    private static final long STREAM_CHUNK_SIZE = 1024L * 1024L;
 
     private final IVlsVideoRecordService videoRecordService;
 
@@ -99,12 +108,22 @@ public class VlsVideoRecordController {
                                                    @RequestParam(required = false) String deviceName,
                                                    @RequestParam(required = false) Integer duration,
                                                    @RequestParam(required = false) String quality) {
-        return BladeResult.success(videoRecordService.startRecording(deviceId, deviceName, duration, quality));
+        try {
+            return BladeResult.success(videoRecordService.startRecording(deviceId, deviceName, duration, quality));
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
     }
 
     @PostMapping("/stop/{recordId}")
     public BladeResult<Map<String, Object>> stopRecording(@PathVariable Long recordId) {
-        return BladeResult.success(videoRecordService.stopRecording(recordId));
+        try {
+            Map<String, Object> result = videoRecordService.stopRecording(recordId);
+            return Boolean.TRUE.equals(result.get("success")) ? BladeResult.success(result)
+                : BladeResult.<Map<String, Object>>fail(String.valueOf(result.get("message")));
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
     }
 
     @GetMapping("/status/{deviceId}")
@@ -147,6 +166,132 @@ public class VlsVideoRecordController {
     @GetMapping("/thumbnail/{filePath}")
     public ResponseEntity<?> thumbnail(@PathVariable String filePath) {
         return fileResponse(filePath, false, null);
+    }
+
+    /** Return one actual recording through the SpringBlade detail route. */
+    @GetMapping("/detail")
+    public BladeResult<VideoRecord> detail(@RequestParam Long id) {
+        VideoRecord record = videoRecordService.getRecord(id);
+        return record == null ? BladeResult.<VideoRecord>fail("Video record does not exist") : BladeResult.success(record);
+    }
+
+    /** Return the real recording page through the SpringBlade list route. */
+    @GetMapping("/list")
+    public BladeResult<BladePage<VideoRecord>> list(@RequestParam(required = false) Long current,
+                                                    @RequestParam(required = false) Long size,
+                                                    @RequestParam(required = false) Long deviceId,
+                                                    @RequestParam(required = false) String deviceName,
+                                                    @RequestParam(required = false) String fileName,
+                                                    @RequestParam(required = false) String recordStatus,
+                                                    @RequestParam(required = false) String date) {
+        return page(current, null, size, null, deviceId, deviceName, fileName, recordStatus, null, date);
+    }
+
+    /** Query recordings that overlap the requested playback interval. */
+    @GetMapping("/playback")
+    public BladeResult<List<VideoRecord>> playback(@RequestParam Long deviceId,
+                                                    @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startTime,
+                                                    @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date endTime) {
+        try {
+            return BladeResult.success(videoRecordService.listPlaybackRecords(deviceId, startTime, endTime));
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
+    }
+
+    /** Return months and days backed by stored recording dates. */
+    @GetMapping("/timeline/calendar")
+    public BladeResult<Map<Integer, List<Integer>>> timelineCalendar(@RequestParam Long deviceId,
+                                                                     @RequestParam Integer year) {
+        try {
+            return BladeResult.success(videoRecordService.getTimelineCalendar(deviceId, year));
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
+    }
+
+    /** Return actual recordings for one device and day. */
+    @GetMapping("/timeline/day")
+    public BladeResult<List<VideoRecord>> timelineDay(@RequestParam Long deviceId,
+                                                       @RequestParam String recordDate) {
+        try {
+            return BladeResult.success(videoRecordService.listDayRecords(deviceId, recordDate));
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
+    }
+
+    /** Stream a local recording with HTTP Range support. */
+    @GetMapping("/stream/{recordId}")
+    public ResponseEntity<?> stream(@PathVariable Long recordId,
+                                    @org.springframework.web.bind.annotation.RequestHeader HttpHeaders headers) throws IOException {
+        VideoRecord record = videoRecordService.getRecord(recordId);
+        if (record == null || !StringUtils.hasText(record.getFilePath())) {
+            return ResponseEntity.notFound().build();
+        }
+        Resource resource = new FileSystemResource(record.getFilePath());
+        if (!resource.exists() || !resource.isReadable()) {
+            return ResponseEntity.notFound().build();
+        }
+        long contentLength = resource.contentLength();
+        if (contentLength <= 0L) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
+        MediaType mediaType = MediaTypeFactory.getMediaType(resource).orElse(MediaType.APPLICATION_OCTET_STREAM);
+        List<HttpRange> ranges = headers.getRange();
+        if (ranges.isEmpty()) {
+            return ResponseEntity.ok().contentType(mediaType).contentLength(contentLength)
+                .header(HttpHeaders.ACCEPT_RANGES, "bytes").body(resource);
+        }
+        HttpRange range = ranges.get(0);
+        long start = range.getRangeStart(contentLength);
+        long requested = range.getRangeEnd(contentLength) - start + 1L;
+        ResourceRegion region = new ResourceRegion(resource, start, Math.min(STREAM_CHUNK_SIZE, requested));
+        return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).contentType(mediaType)
+            .header(HttpHeaders.ACCEPT_RANGES, "bytes").body(region);
+    }
+
+    /** Create a recording through the SpringBlade save route. */
+    @PostMapping("/save")
+    public BladeResult<VideoRecord> save(@RequestBody VideoRecord record) {
+        return createRecord(record);
+    }
+
+    /** Update a recording through the SpringBlade update route. */
+    @PostMapping("/update")
+    public BladeResult<VideoRecord> update(@RequestBody VideoRecord record) {
+        return record == null || record.getId() == null ? BladeResult.<VideoRecord>fail("Video record ID is required")
+            : updateRecord(record.getId(), record);
+    }
+
+    /** Insert or update a recording through the SpringBlade submit route. */
+    @PostMapping("/submit")
+    public BladeResult<VideoRecord> submit(@RequestBody VideoRecord record) {
+        return record != null && record.getId() != null ? update(record) : createRecord(record);
+    }
+
+    /** Delete actual recording rows by comma-separated IDs. */
+    @GetMapping("/remove")
+    public BladeResult<Void> remove(@RequestParam String ids) {
+        try {
+            List<Long> parsed = parseIds(ids);
+            return parsed.isEmpty() ? BladeResult.fail("ids is required")
+                : booleanResult(videoRecordService.deleteRecords(parsed), "Delete video records failed");
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
+    }
+
+    /** Export real filtered recording rows. */
+    @GetMapping("/export-vlsVideoRecord")
+    public void exportVlsVideoRecord(@RequestParam(required = false) Long deviceId,
+                                     @RequestParam(required = false) String deviceName,
+                                     @RequestParam(required = false) String fileName,
+                                     @RequestParam(required = false) String recordStatus,
+                                     @RequestParam(required = false) String date,
+                                     javax.servlet.http.HttpServletResponse response) {
+        ExcelUtil.exportExcel(videoRecordService.listRecords(deviceId, deviceName, fileName, recordStatus, date),
+            "VLS Video Records", VideoRecord.class, response);
     }
 
     private BladeResult<Void> booleanResult(boolean success, String message) {

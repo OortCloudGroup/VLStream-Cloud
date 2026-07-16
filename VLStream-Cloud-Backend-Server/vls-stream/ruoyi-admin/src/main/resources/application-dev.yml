@@ -193,25 +193,6 @@ sms:
   accessKeyId: xxxxxxx
   accessKeySecret: xxxxxx
   signName: 测试
-  # 腾讯专用
-  sdkAppId:
-
----
-platform:
-  # 平台登录地址
-  loginCodeUrl: ${LOGINCODEURL:http://183.62.103.20:21410/bus/apaas-sso/sso/v1/getLoginCode}
-  # 获取租户地址
-  userTenantsUrl: ${USERTENANTSURL:http://183.62.103.20:21410/bus/apaas-sso/sso/v1/getUserTenants}
-  # 平台登录地址
-  loginUrl: ${LOGINURL:http://183.62.103.20:21410/bus/apaas-sso/sso/v1/login}
-  # 上报数据权限
-  reportDataScopeUrl: ${REPORTDATASCOPEURL:http://183.62.103.20:21410/bus/apaas-auth/auth/v1/uplist}
-  # 校验数据权限
-  verifyDataScopeUrl: ${VERIFYDATASCOPEURL:http://183.62.103.20:21410/bus/apaas-auth/auth/v2/verifyauth}
-  #统一用户
-  userUrl: ${USERURL:http://183.62.103.20:21410/bus/apaas-user/}
-  #统一权限
-  authUrl: ${AUTHURL:http://183.62.103.20:21410/bus/apaas-auth/}
 ---
 auth:
   report:

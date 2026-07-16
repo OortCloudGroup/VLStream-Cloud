@@ -211,10 +211,8 @@ public class VlsAlgorithmModelServiceImpl implements IVlsAlgorithmModelService {
         if (model == null) {
             return null;
         }
-        model.setDownloadCount(nullToZero(model.getDownloadCount()) + 1);
-        model.setUpdateTime(new Date());
-        algorithmModelMapper.updateById(model);
-        return firstNonBlank(model.getModelPath(), model.getOnnxModelPath(), model.getRknnModelPath(), model.getInt8RknnModelOutputPath());
+        throw new UnsupportedOperationException(
+            "Model download streaming is not implemented on this endpoint; no file was transferred and the download count was not changed");
     }
 
     @Override
@@ -224,9 +222,8 @@ public class VlsAlgorithmModelServiceImpl implements IVlsAlgorithmModelService {
         if (model == null) {
             return false;
         }
-        model.setDeployCount(nullToZero(model.getDeployCount()) + 1);
-        model.setUpdateTime(new Date());
-        return algorithmModelMapper.updateById(model) > 0;
+        throw new UnsupportedOperationException(
+            "Model deployment requires target devices and MQTT dispatch; no model was deployed and the deployment count was not changed");
     }
 
     @Override

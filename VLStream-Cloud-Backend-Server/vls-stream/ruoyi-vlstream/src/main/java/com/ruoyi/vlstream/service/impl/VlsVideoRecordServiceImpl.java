@@ -24,6 +24,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Service for the VLS video record frontend compatibility surface.
@@ -96,49 +99,28 @@ public class VlsVideoRecordServiceImpl implements IVlsVideoRecordService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public VideoRecord startRecording(Long deviceId, String deviceName, Integer duration, String quality) {
-        VideoRecord videoRecord = new VideoRecord();
-        videoRecord.setDeviceId(deviceId);
-        videoRecord.setDeviceName(StringUtils.hasText(deviceName) ? deviceName.trim() : "Device");
-        videoRecord.setDuration(normalizeDuration(duration));
-        videoRecord.setRecordStatus(RECORDING_STATUS);
-        normalizeForSave(videoRecord, true);
-        videoRecordMapper.insert(videoRecord);
-        updateUrlAfterInsert(videoRecord);
-        return applyAliases(videoRecord);
+        throw new UnsupportedOperationException("未接入可控制的 FFmpeg 录像进程，未启动录像");
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> stopRecording(Long recordId) {
-        Map<String, Object> result = new LinkedHashMap<String, Object>();
         VideoRecord record = videoRecordMapper.selectById(recordId);
         if (record == null) {
-            result.put("success", false);
-            result.put("message", "Video record does not exist");
-            return result;
+            throw new IllegalArgumentException("Video record does not exist");
         }
-        java.util.Date now = new java.util.Date();
-        record.setRecordEndTime(now);
-        record.setRecordStatus(COMPLETED_STATUS);
-        record.setDuration(calculateDuration(record.getRecordStartTime(), now));
-        record.setUpdateTime(now);
-        videoRecordMapper.updateById(record);
-
-        result.put("success", true);
-        result.put("id", record.getId());
-        result.put("recordId", record.getId());
-        result.put("status", COMPLETED_STATUS);
-        result.put("duration", record.getDuration());
-        return result;
+        throw new UnsupportedOperationException("未接入可控制的 FFmpeg 录像进程，未停止录像");
     }
 
     @Override
     public Map<String, Object> getRecordingStatus(Long deviceId) {
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         VideoRecord recording = deviceId == null ? null : videoRecordMapper.selectLatestRecording(deviceId);
-        result.put("isRecording", recording != null);
-        result.put("recording", recording != null);
-        result.put("status", recording == null ? COMPLETED_STATUS : RECORDING_STATUS);
+        result.put("isRecording", false);
+        result.put("recording", false);
+        result.put("status", "runtime_unavailable");
+        result.put("persistedRecordingRow", recording != null);
+        result.put("message", "No controllable FFmpeg runtime is connected; database rows cannot prove that recording is active");
         result.put("recordId", recording == null ? null : recording.getId());
         result.put("id", recording == null ? null : recording.getId());
         result.put("record", applyAliases(recording));
@@ -156,6 +138,8 @@ public class VlsVideoRecordServiceImpl implements IVlsVideoRecordService {
         statistics.put("totalCount", total);
         statistics.put("recording", recording);
         statistics.put("recordingCount", recording);
+        statistics.put("activeRuntimeRecordingCount", 0L);
+        statistics.put("recordingCountMeaning", "persisted rows only; no FFmpeg runtime is connected");
         statistics.put("completed", completed);
         statistics.put("completedCount", completed);
         statistics.put("failed", failed);
@@ -197,6 +181,75 @@ public class VlsVideoRecordServiceImpl implements IVlsVideoRecordService {
         preview.put("recordEndTime", record.getRecordEndTime());
         preview.put("recordStatus", record.getRecordStatus());
         return preview;
+    }
+
+    @Override
+    public List<VideoRecord> listPlaybackRecords(Long deviceId, java.util.Date startTime, java.util.Date endTime) {
+        if (deviceId == null || startTime == null || endTime == null || endTime.before(startTime)) {
+            throw new IllegalArgumentException("A valid device and time range are required");
+        }
+        List<VideoRecord> records = videoRecordMapper.selectList(new LambdaQueryWrapper<VideoRecord>()
+            .eq(VideoRecord::getDeviceId, deviceId)
+            .le(VideoRecord::getRecordStartTime, endTime)
+            .ge(VideoRecord::getRecordEndTime, startTime)
+            .orderByAsc(VideoRecord::getRecordStartTime));
+        for (VideoRecord record : records) {
+            applyAliases(record);
+        }
+        return records;
+    }
+
+    @Override
+    public Map<Integer, List<Integer>> getTimelineCalendar(Long deviceId, Integer year) {
+        if (deviceId == null || year == null) {
+            throw new IllegalArgumentException("deviceId and year are required");
+        }
+        LocalDate firstDay = LocalDate.of(year, 1, 1);
+        LocalDate nextYear = firstDay.plusYears(1);
+        List<VideoRecord> records = videoRecordMapper.selectList(new LambdaQueryWrapper<VideoRecord>()
+            .select(VideoRecord::getRecordDate)
+            .eq(VideoRecord::getDeviceId, deviceId)
+            .ge(VideoRecord::getRecordDate, Date.valueOf(firstDay))
+            .lt(VideoRecord::getRecordDate, Date.valueOf(nextYear))
+            .orderByAsc(VideoRecord::getRecordDate));
+        Map<Integer, Set<Integer>> values = new TreeMap<Integer, Set<Integer>>();
+        for (VideoRecord record : records) {
+            if (record.getRecordDate() != null) {
+                LocalDate day = new Date(record.getRecordDate().getTime()).toLocalDate();
+                Set<Integer> days = values.get(day.getMonthValue());
+                if (days == null) {
+                    days = new TreeSet<Integer>();
+                    values.put(day.getMonthValue(), days);
+                }
+                days.add(day.getDayOfMonth());
+            }
+        }
+        Map<Integer, List<Integer>> result = new TreeMap<Integer, List<Integer>>();
+        for (Map.Entry<Integer, Set<Integer>> entry : values.entrySet()) {
+            result.put(entry.getKey(), new java.util.ArrayList<Integer>(entry.getValue()));
+        }
+        return result;
+    }
+
+    @Override
+    public List<VideoRecord> listDayRecords(Long deviceId, String recordDate) {
+        Date day = parseSqlDate(recordDate);
+        if (deviceId == null || day == null) {
+            throw new IllegalArgumentException("deviceId and a yyyy-MM-dd recordDate are required");
+        }
+        return getDeviceRecords(deviceId, recordDate, 1L, 10000L);
+    }
+
+    @Override
+    public List<VideoRecord> listRecords(Long deviceId, String deviceName, String fileName,
+                                         String recordStatus, String date) {
+        LambdaQueryWrapper<VideoRecord> query = buildRecordQuery(deviceId, deviceName, fileName, recordStatus, date);
+        query.orderByDesc(VideoRecord::getRecordStartTime);
+        List<VideoRecord> records = videoRecordMapper.selectList(query);
+        for (VideoRecord record : records) {
+            applyAliases(record);
+        }
+        return records;
     }
 
     private LambdaQueryWrapper<VideoRecord> buildRecordQuery(Long deviceId, String deviceName, String fileName,

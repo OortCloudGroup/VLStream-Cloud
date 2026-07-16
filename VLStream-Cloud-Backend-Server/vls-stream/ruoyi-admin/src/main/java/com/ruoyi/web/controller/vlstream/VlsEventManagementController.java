@@ -5,6 +5,7 @@
 
 package com.ruoyi.web.controller.vlstream;
 
+import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.vlstream.compat.BladePage;
 import com.ruoyi.vlstream.compat.BladeResult;
 import com.ruoyi.vlstream.domain.EventManagement;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -29,7 +31,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/vlsEventManagement")
-public class VlsEventManagementController {
+public class VlsEventManagementController extends VlsControllerSupport {
 
     private final IVlsEventManagementService eventManagementService;
 
@@ -101,7 +103,7 @@ public class VlsEventManagementController {
      */
     @DeleteMapping("/{id}")
     public BladeResult<Boolean> deleteEvent(@PathVariable Long id) {
-        return BladeResult.success(eventManagementService.deleteEvent(id));
+        return operationResult(eventManagementService.deleteEvent(id), "Event was not deleted");
     }
 
     /**
@@ -110,5 +112,74 @@ public class VlsEventManagementController {
     @DeleteMapping("/batch")
     public BladeResult<Boolean> batchDeleteEvents(@RequestBody List<Long> ids) {
         return BladeResult.success(eventManagementService.batchDeleteEvents(ids));
+    }
+
+    /** Return one event through the SpringBlade detail route. */
+    @GetMapping("/detail")
+    public BladeResult<EventManagement> detail(@RequestParam Long id) {
+        return getEventById(id);
+    }
+
+    /** Return the event page through the SpringBlade list route. */
+    @GetMapping("/list")
+    public BladeResult<BladePage<EventManagement>> list(@RequestParam(required = false) Long current,
+                                                        @RequestParam(required = false) Long size,
+                                                        @RequestParam(required = false) String eventType,
+                                                        @RequestParam(required = false) String eventStatus,
+                                                        @RequestParam(required = false) String eventLevel,
+                                                        @RequestParam(required = false) String keyword,
+                                                        @RequestParam(required = false) String startTime,
+                                                        @RequestParam(required = false) String endTime) {
+        return getEventPage(current, size, eventType, eventStatus, eventLevel, keyword, startTime, endTime);
+    }
+
+    /** Create an event through the SpringBlade save route. */
+    @PostMapping("/save")
+    public BladeResult<EventManagement> save(@RequestBody EventManagement event) {
+        return createEvent(event);
+    }
+
+    /** Report an event through the same real persistence path as event creation. */
+    @PostMapping("/report")
+    public BladeResult<EventManagement> report(@RequestBody EventManagement event) {
+        return createEvent(event);
+    }
+
+    /** Update an event through the SpringBlade update route. */
+    @PostMapping("/update")
+    public BladeResult<EventManagement> update(@RequestBody EventManagement event) {
+        return updateEvent(event);
+    }
+
+    /** Insert or update an event through the SpringBlade submit route. */
+    @PostMapping("/submit")
+    public BladeResult<EventManagement> submit(@RequestBody EventManagement event) {
+        return event != null && event.getId() != null ? updateEvent(event) : createEvent(event);
+    }
+
+    /** Delete events by comma-separated IDs. */
+    @GetMapping("/remove")
+    public BladeResult<Boolean> remove(@RequestParam String ids) {
+        try {
+            List<Long> parsed = parseIds(ids);
+            return parsed.isEmpty() ? BladeResult.<Boolean>fail("ids is required")
+                : BladeResult.success(eventManagementService.batchDeleteEvents(parsed));
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
+    }
+
+    /** Export actual filtered event rows. */
+    @GetMapping("/export-vlsEventManagement")
+    public void exportVlsEventManagement(@RequestParam(required = false) String eventType,
+                                         @RequestParam(required = false) String eventStatus,
+                                         @RequestParam(required = false) String eventLevel,
+                                         @RequestParam(required = false) String keyword,
+                                         @RequestParam(required = false) String startTime,
+                                         @RequestParam(required = false) String endTime,
+                                         HttpServletResponse response) {
+        BladePage<EventManagement> page = eventManagementService.getEventPage(Long.valueOf(1L),
+            Long.valueOf(Integer.MAX_VALUE), eventType, eventStatus, eventLevel, keyword, startTime, endTime);
+        ExcelUtil.exportExcel(page.getRecords(), "VLS Events", EventManagement.class, response);
     }
 }

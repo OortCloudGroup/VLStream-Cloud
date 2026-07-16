@@ -12,6 +12,11 @@ import org.springframework.util.StringUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.net.URI;
+import java.net.Socket;
+import java.net.InetSocketAddress;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -50,27 +55,42 @@ public class VlsWebRtcServiceImpl implements IVlsWebRtcService {
     @Override
     public Map<String, Object> getStatus() {
         Map<String, Object> status = baseState();
-        status.put("running", enabled);
-        status.put("activeCount", activeStreams.size());
+        boolean reachable = enabled && isServerReachable();
+        status.put("running", reachable);
+        status.put("available", reachable);
+        status.put("activeCount", 0);
+        status.put("preparedCount", activeStreams.size());
         status.put("checkedAt", new Date());
+        if (!reachable) {
+            status.put("message", enabled ? "WebRTC server is unreachable" : "WebRTC is disabled");
+        }
         return status;
     }
 
     @Override
     public Map<String, Object> refresh() {
         Map<String, Object> status = getStatus();
-        status.put("refreshed", true);
-        status.put("message", "WebRTC configuration refreshed");
+        boolean reachable = Boolean.TRUE.equals(status.get("running"));
+        status.put("refreshed", reachable);
+        status.put("message", reachable ? "WebRTC server reachability check succeeded"
+            : String.valueOf(status.get("message")));
         return status;
     }
 
     @Override
     public Map<String, Object> startStream(String deviceId, String rtspUrl, Map<String, Object> options) {
+        if (!enabled) {
+            throw new IllegalStateException("WebRTC is disabled");
+        }
         if (!StringUtils.hasText(rtspUrl)) {
-            Map<String, Object> status = getStatus();
-            status.put("started", true);
-            status.put("message", "WebRTC service adapter is ready");
-            return status;
+            throw new IllegalArgumentException("rtspUrl is required; no stream was started");
+        }
+        Map<String, Object> validation = validateRtspStream(rtspUrl);
+        if (!Boolean.TRUE.equals(validation.get("available"))) {
+            throw new IllegalStateException(String.valueOf(validation.get("message")));
+        }
+        if (!isServerReachable()) {
+            throw new IllegalStateException("WebRTC server is unreachable; no playback URL was prepared");
         }
 
         String streamId = StringUtils.hasText(deviceId) ? deviceId.trim() : "stream_" + System.currentTimeMillis();
@@ -81,8 +101,10 @@ public class VlsWebRtcServiceImpl implements IVlsWebRtcService {
         stream.put("streamUrl", rtspUrl);
         stream.put("webrtcUrl", normalizeServerUrl() + "/webrtcstreamer.html?video=" + encode(rtspUrl));
         stream.put("serverUrl", normalizeServerUrl());
-        stream.put("active", true);
-        stream.put("status", "playing");
+        stream.put("active", false);
+        stream.put("prepared", true);
+        stream.put("status", "prepared");
+        stream.put("message", "WebRTC server and RTSP endpoint are reachable; browser negotiation is still required");
         stream.put("startTime", new Date());
         if (options != null) {
             stream.put("options", new LinkedHashMap<String, Object>(options));
@@ -95,20 +117,18 @@ public class VlsWebRtcServiceImpl implements IVlsWebRtcService {
     public Map<String, Object> stopStream(String streamId) {
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         if (!StringUtils.hasText(streamId)) {
-            int stoppedCount = activeStreams.size();
-            activeStreams.clear();
-            result.put("stopped", true);
-            result.put("stoppedCount", stoppedCount);
-            result.put("message", "All WebRTC streams stopped");
-            return result;
+            throw new IllegalArgumentException("streamId is required; browser-owned WebRTC sessions were not stopped");
         }
 
         Map<String, Object> removed = activeStreams.remove(streamId.trim());
         result.put("streamId", streamId);
         result.put("deviceId", streamId);
-        result.put("stopped", removed != null);
+        result.put("stopped", false);
+        result.put("registrationRemoved", removed != null);
         result.put("active", false);
-        result.put("message", removed != null ? "WebRTC stream stopped" : "WebRTC stream is not active");
+        result.put("message", removed != null
+            ? "Prepared playback registration removed; the browser must close its own WebRTC peer connection"
+            : "Prepared playback registration does not exist");
         return result;
     }
 
@@ -116,11 +136,13 @@ public class VlsWebRtcServiceImpl implements IVlsWebRtcService {
     public Map<String, Object> validateRtspStream(String rtspUrl) {
         boolean valid = StringUtils.hasText(rtspUrl)
             && (rtspUrl.trim().toLowerCase().startsWith("rtsp://") || rtspUrl.trim().toLowerCase().startsWith("rtsps://"));
+        boolean reachable = valid && isRtspReachable(rtspUrl);
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("rtspUrl", rtspUrl);
         result.put("valid", valid);
-        result.put("available", valid);
-        result.put("message", valid ? "RTSP URL format is valid" : "RTSP URL must start with rtsp:// or rtsps://");
+        result.put("available", reachable);
+        result.put("message", !valid ? "RTSP URL must start with rtsp:// or rtsps://"
+            : reachable ? "RTSP TCP endpoint is reachable" : "RTSP TCP endpoint is unreachable");
         return result;
     }
 
@@ -128,7 +150,9 @@ public class VlsWebRtcServiceImpl implements IVlsWebRtcService {
     public List<Map<String, Object>> getActiveStreams() {
         List<Map<String, Object>> streams = new ArrayList<Map<String, Object>>();
         for (Map<String, Object> stream : activeStreams.values()) {
-            streams.add(copy(stream));
+            if (Boolean.TRUE.equals(stream.get("active"))) {
+                streams.add(copy(stream));
+            }
         }
         return streams;
     }
@@ -177,6 +201,49 @@ public class VlsWebRtcServiceImpl implements IVlsWebRtcService {
             return URLEncoder.encode(value, "UTF-8");
         } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException("UTF-8 is not supported", ex);
+        }
+    }
+
+    /** Probe the configured WebRTC HTTP server instead of trusting configuration flags. */
+    private boolean isServerReachable() {
+        if (!available) {
+            return false;
+        }
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) new URL(normalizeServerUrl()).openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+            int status = connection.getResponseCode();
+            return status >= 200 && status < 500;
+        } catch (Exception ex) {
+            return false;
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    /** Probe the RTSP TCP endpoint without claiming that media negotiation succeeded. */
+    private boolean isRtspReachable(String rtspUrl) {
+        Socket socket = new Socket();
+        try {
+            URI uri = URI.create(rtspUrl.trim());
+            if (!StringUtils.hasText(uri.getHost())) {
+                return false;
+            }
+            socket.connect(new InetSocketAddress(uri.getHost(), uri.getPort() > 0 ? uri.getPort() : 554), 5000);
+            return true;
+        } catch (Exception ex) {
+            return false;
+        } finally {
+            try {
+                socket.close();
+            } catch (Exception ignored) {
+                // Closing a completed probe must not change its result.
+            }
         }
     }
 }

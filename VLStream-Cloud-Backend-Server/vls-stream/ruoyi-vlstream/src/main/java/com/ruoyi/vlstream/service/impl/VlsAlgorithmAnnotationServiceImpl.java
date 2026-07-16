@@ -230,9 +230,7 @@ public class VlsAlgorithmAnnotationServiceImpl implements IVlsAlgorithmAnnotatio
         return new ResponseEntity<byte[]>(bytes, headers, HttpStatus.OK);
     }
 
-    /**
-     * Accept a dataset zip upload and record a compatibility import result.
-     */
+    /** Reject zip imports until the source extraction/persistence chain is migrated. */
     @Override
     public Map<String, Object> importAnnotationZip(Long id, MultipartFile file) {
         AlgorithmAnnotation annotation = annotationMapper.selectById(id);
@@ -242,13 +240,8 @@ public class VlsAlgorithmAnnotationServiceImpl implements IVlsAlgorithmAnnotatio
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Zip file is empty");
         }
-        Map<String, Object> result = new LinkedHashMap<String, Object>();
-        result.put("success", true);
-        result.put("message", "Import accepted");
-        result.put("fileName", file.getOriginalFilename());
-        result.put("size", file.getSize());
-        result.put("annotationId", id);
-        return result;
+        throw new UnsupportedOperationException(
+            "Annotation zip import is not configured: the file was not extracted and no annotation data was persisted");
     }
 
     /**

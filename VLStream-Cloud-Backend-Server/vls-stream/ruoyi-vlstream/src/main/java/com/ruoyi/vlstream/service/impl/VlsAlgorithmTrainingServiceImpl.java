@@ -7,14 +7,19 @@ package com.ruoyi.vlstream.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.vlstream.compat.BladePage;
 import com.ruoyi.vlstream.domain.Algorithm;
+import com.ruoyi.vlstream.domain.AlgorithmAnnotation;
 import com.ruoyi.vlstream.domain.AlgorithmModel;
 import com.ruoyi.vlstream.domain.AlgorithmTraining;
+import com.ruoyi.vlstream.mapper.VlsAlgorithmAnnotationMapper;
 import com.ruoyi.vlstream.mapper.VlsAlgorithmMapper;
 import com.ruoyi.vlstream.mapper.VlsAlgorithmModelMapper;
 import com.ruoyi.vlstream.mapper.VlsAlgorithmTrainingMapper;
 import com.ruoyi.vlstream.service.IVlsAlgorithmTrainingService;
+import com.ruoyi.vlstream.service.RemoteTrainingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -51,10 +56,15 @@ public class VlsAlgorithmTrainingServiceImpl implements IVlsAlgorithmTrainingSer
     private static final String STATUS_COMPLETED = "completed";
     private static final String STATUS_FAILED = "failed";
     private static final String STATUS_STOP = "stop";
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<Map<String, Object>>() {
+    };
 
     private final VlsAlgorithmTrainingMapper trainingMapper;
     private final VlsAlgorithmMapper algorithmMapper;
     private final VlsAlgorithmModelMapper algorithmModelMapper;
+    private final VlsAlgorithmAnnotationMapper annotationMapper;
+    private final RemoteTrainingService remoteTrainingService;
 
     @Override
     public BladePage<AlgorithmTraining> getTrainingPage(Long current, Long size, String taskName, String trainStatus,
@@ -135,10 +145,33 @@ public class VlsAlgorithmTrainingServiceImpl implements IVlsAlgorithmTrainingSer
     public Map<String, Object> startTraining(Long id, Integer epochs, Long datasetId, Integer batchSize,
                                              Integer imgSize, String extraParams) {
         AlgorithmTraining training = requireTraining(id);
-        int resolvedEpochs = epochs == null || epochs < 1 ? nullToDefault(training.getEpochTotal(), 10) : epochs;
-        String logPath = StringUtils.hasText(training.getLogPath())
-            ? training.getLogPath()
-            : "/logs/training_" + id + ".log";
+        Algorithm algorithm = requireAlgorithm(training.getAlgorithmId());
+        Map<String, Object> config = parseConfigParams(training.getConfigParams());
+
+        Long resolvedDatasetId = datasetId == null ? training.getDatasetId() : datasetId;
+        AlgorithmAnnotation annotation = resolvedDatasetId == null ? null : annotationMapper.selectById(resolvedDatasetId);
+        String datasetPath = firstNonBlank(annotation == null ? null : annotation.getDatasetPath(),
+            stringConfig(config, "datasetPath"), stringConfig(config, "data"));
+        String baseModel = firstNonBlank(algorithm.getPtModelFilePath(), training.getTargetModel(),
+            stringConfig(config, "baseModel"), stringConfig(config, "modelPath"), stringConfig(config, "model"));
+        String trainType = firstNonBlank(algorithm.getCategory(), training.getTrainType(),
+            stringConfig(config, "taskType"), stringConfig(config, "trainType"), "detect");
+        int resolvedEpochs = epochs == null || epochs < 1
+            ? nullToDefault(configInt(config, "epochs", configInt(config, "epoch", training.getEpochTotal())), 10)
+            : epochs;
+        int resolvedBatchSize = batchSize == null || batchSize < 1
+            ? nullToDefault(configInt(config, "batch", configInt(config, "batchSize", training.getBatchSize())), 16)
+            : batchSize;
+        int resolvedImgSize = imgSize == null || imgSize < 1
+            ? nullToDefault(configInt(config, "imgsz", configInt(config, "imgSize", training.getImgSize())), 640)
+            : imgSize;
+        String resolvedExtraParams = buildExtraParams(extraParams, config);
+
+        RemoteTrainingService.StartResult startResult = remoteTrainingService.startTraining(trainType, id, datasetPath,
+            baseModel, resolvedEpochs, resolvedBatchSize, resolvedImgSize, resolvedExtraParams);
+        if (startResult == null || !startResult.isSubmitted()) {
+            throw new IllegalStateException(startResult == null ? "Training command failed" : startResult.getMessage());
+        }
 
         AlgorithmTraining update = new AlgorithmTraining();
         update.setId(id);
@@ -146,23 +179,24 @@ public class VlsAlgorithmTrainingServiceImpl implements IVlsAlgorithmTrainingSer
         update.setProgress(0);
         update.setEpochCurrent(0);
         update.setEpochTotal(resolvedEpochs);
-        update.setDatasetId(datasetId == null ? training.getDatasetId() : datasetId);
-        update.setLogPath(logPath);
+        update.setDatasetId(resolvedDatasetId);
+        update.setLogPath(startResult.getLogPath());
         update.setStartTime(new Date());
         update.setErrorMessage("");
         update.setStatus(training.getStatus());
         trainingMapper.updateById(update);
 
-        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        Map<String, Object> result = startResult.toMap();
         result.put("status", STATUS_TRAINING);
         result.put("trainStatus", STATUS_TRAINING);
-        result.put("logPath", logPath);
-        result.put("datasetId", update.getDatasetId());
+        result.put("algorithmId", algorithm.getId());
+        result.put("algorithmName", algorithm.getName());
+        result.put("datasetId", resolvedDatasetId);
+        result.put("datasetPath", datasetPath);
         result.put("epochs", resolvedEpochs);
-        result.put("batchSize", batchSize == null ? 16 : batchSize);
-        result.put("imgSize", imgSize == null ? 640 : imgSize);
-        result.put("extraParams", extraParams);
-        result.put("message", "Training request accepted");
+        result.put("batchSize", resolvedBatchSize);
+        result.put("imgSize", resolvedImgSize);
+        result.put("extraParams", resolvedExtraParams);
         return result;
     }
 
@@ -173,50 +207,48 @@ public class VlsAlgorithmTrainingServiceImpl implements IVlsAlgorithmTrainingSer
         if (training == null) {
             return false;
         }
-        AlgorithmTraining update = new AlgorithmTraining();
-        update.setId(id);
-        update.setTrainStatus(STATUS_STOP);
-        update.setEndTime(new Date());
-        update.setProgress(training.getProgress());
-        return trainingMapper.updateById(update) > 0;
+        return remoteTrainingService.stopTraining(id, training.getLogPath());
     }
 
     @Override
     public Map<String, Object> getTrainingLogs(Long id, String logPath, Integer lines) {
         AlgorithmTraining training = requireTraining(id);
         String resolvedLogPath = firstNonBlank(logPath, training.getLogPath(), "/logs/training_" + id + ".log");
-        String logContent = readLocalLogTail(resolvedLogPath, lines == null ? 200 : lines);
-
-        Map<String, Object> result = new LinkedHashMap<String, Object>();
-        result.put("logPath", resolvedLogPath);
-        result.put("logContent", logContent);
-        result.put("currentEpoch", nullToDefault(training.getEpochCurrent(), 0));
-        result.put("totalEpoch", nullToDefault(training.getEpochTotal(), 0));
-        result.put("progress", nullToDefault(training.getProgress(), 0));
-        result.put("completed", STATUS_COMPLETED.equals(training.getTrainStatus()));
-        result.put("modelPath", firstNonBlank(training.getModelOutputPath(), training.getModelPath()));
-        result.put("modelOutputPath", firstNonBlank(training.getModelOutputPath(), training.getModelPath()));
-        result.put("status", training.getTrainStatus());
-        result.put("trainStatus", training.getTrainStatus());
-        result.put("message", StringUtils.hasText(logContent) ? "Log loaded" : "No local training log available");
+        RemoteTrainingService.LogResult remoteLogs = remoteTrainingService.getTrainingLogs(id, resolvedLogPath,
+            firstNonBlank(training.getTrainType(), "detect"), training.getTaskName(), lines == null ? 200 : lines);
+        Map<String, Object> result = remoteLogs == null ? new LinkedHashMap<String, Object>() : remoteLogs.toMap();
+        AlgorithmTraining refreshed = trainingMapper.selectById(id);
+        result.put("status", refreshed == null ? training.getTrainStatus() : refreshed.getTrainStatus());
+        result.put("trainStatus", refreshed == null ? training.getTrainStatus() : refreshed.getTrainStatus());
+        result.put("modelOutputPath", firstNonBlank(result.get("modelPath") == null ? null : String.valueOf(result.get("modelPath")),
+            refreshed == null ? null : refreshed.getModelOutputPath(), training.getModelOutputPath(), training.getModelPath()));
         return result;
     }
 
     @Override
     public Map<String, Object> getTrainingStatus(Long id, String logPath) {
         AlgorithmTraining training = requireTraining(id);
+        String resolvedLogPath = firstNonBlank(logPath, training.getLogPath());
+        RemoteTrainingService.TrainingProgress progress = remoteTrainingService.getProgress(id, resolvedLogPath);
+        if (progress == null && STATUS_TRAINING.equals(training.getTrainStatus())) {
+            throw new IllegalStateException("Failed to read remote training status");
+        }
+        AlgorithmTraining refreshed = fillDerived(trainingMapper.selectById(id));
+        if (refreshed != null) {
+            training = refreshed;
+        }
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("taskId", id);
         result.put("status", training.getTrainStatus());
         result.put("trainStatus", training.getTrainStatus());
-        result.put("currentEpoch", nullToDefault(training.getEpochCurrent(), 0));
-        result.put("totalEpochs", nullToDefault(training.getEpochTotal(), 0));
-        result.put("percentage", nullToDefault(training.getProgress(), 0));
+        result.put("currentEpoch", progress == null ? nullToDefault(training.getEpochCurrent(), 0) : progress.getCurrentEpoch());
+        result.put("totalEpochs", progress == null ? nullToDefault(training.getEpochTotal(), 0) : progress.getTotalEpochs());
+        result.put("percentage", progress == null ? nullToDefault(training.getProgress(), 0) : progress.getPercentage());
         result.put("completed", STATUS_COMPLETED.equals(training.getTrainStatus()));
         result.put("modelPath", firstNonBlank(training.getModelOutputPath(), training.getModelPath()));
         result.put("modelOutputPath", firstNonBlank(training.getModelOutputPath(), training.getModelPath()));
-        result.put("logPath", firstNonBlank(logPath, training.getLogPath()));
-        result.put("latestLoss", training.getLossValue() == null ? null : training.getLossValue().floatValue());
+        result.put("logPath", resolvedLogPath);
+        result.put("latestLoss", progress == null ? (training.getLossValue() == null ? null : training.getLossValue().floatValue()) : progress.getLatestLoss());
         return result;
     }
 
@@ -233,19 +265,25 @@ public class VlsAlgorithmTrainingServiceImpl implements IVlsAlgorithmTrainingSer
             return result;
         }
 
+        String onnxPath = firstNonBlank(training.getOnnxModelOutputPath(), remoteTrainingService.exportModel(basePath, "onnx"));
+        String rknnPath = firstNonBlank(training.getRknnModelOutputPath(), remoteTrainingService.exportModel(basePath, "rknn"));
+        if (!StringUtils.hasText(onnxPath) && !StringUtils.hasText(rknnPath)) {
+            throw new IllegalStateException("Remote model conversion failed");
+        }
+
         AlgorithmTraining update = new AlgorithmTraining();
         update.setId(id);
-        update.setOnnxModelOutputPath(firstNonBlank(training.getOnnxModelOutputPath(), replaceExtension(basePath, ".onnx")));
-        update.setRknnModelOutputPath(firstNonBlank(training.getRknnModelOutputPath(), replaceExtension(basePath, "-rk3588.rknn")));
-        update.setInt8RknnModelOutputPath(firstNonBlank(training.getInt8RknnModelOutputPath(), replaceExtension(basePath, "-rk3588-int8.rknn")));
+        update.setOnnxModelOutputPath(onnxPath);
+        update.setRknnModelOutputPath(rknnPath);
+        update.setInt8RknnModelOutputPath(training.getInt8RknnModelOutputPath());
         update.setUpdateTime(new Date());
         trainingMapper.updateById(update);
 
-        result.put("status", "submitted");
+        result.put("status", "completed");
         result.put("onnxModelOutputPath", update.getOnnxModelOutputPath());
         result.put("rknnModelOutputPath", update.getRknnModelOutputPath());
         result.put("int8RknnModelOutputPath", update.getInt8RknnModelOutputPath());
-        result.put("message", "Model conversion paths recorded");
+        result.put("message", "Remote model conversion completed");
         return result;
     }
 
@@ -256,12 +294,13 @@ public class VlsAlgorithmTrainingServiceImpl implements IVlsAlgorithmTrainingSer
             return textResponse(HttpStatus.NOT_FOUND, "Model file path is empty");
         }
 
-        Path path = Paths.get(downloadPath);
-        if (!Files.isRegularFile(path)) {
-            return textResponse(HttpStatus.NOT_FOUND, "Model file not found: " + downloadPath);
-        }
         try {
-            byte[] bytes = Files.readAllBytes(path);
+            Path path = Paths.get(downloadPath);
+            byte[] bytes = Files.isRegularFile(path) ? Files.readAllBytes(path) : remoteTrainingService.readRemoteFile(downloadPath);
+            if (bytes == null || bytes.length == 0) {
+                return textResponse(HttpStatus.NOT_FOUND, "Model file not found locally or remotely: " + downloadPath);
+            }
+            incrementDownloadCount(id);
             String fileName = path.getFileName() == null ? "model" : path.getFileName().toString();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
@@ -271,6 +310,17 @@ public class VlsAlgorithmTrainingServiceImpl implements IVlsAlgorithmTrainingSer
         } catch (IOException ex) {
             return textResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Download failed: " + ex.getMessage());
         }
+    }
+
+    private Algorithm requireAlgorithm(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Algorithm ID is required");
+        }
+        Algorithm algorithm = algorithmMapper.selectById(id);
+        if (algorithm == null) {
+            throw new IllegalArgumentException("Algorithm does not exist");
+        }
+        return algorithm;
     }
 
     private AlgorithmTraining requireTraining(Long id) {
@@ -467,23 +517,6 @@ public class VlsAlgorithmTrainingServiceImpl implements IVlsAlgorithmTrainingSer
         return ptPath;
     }
 
-    private String readLocalLogTail(String logPath, int lineCount) {
-        if (!StringUtils.hasText(logPath)) {
-            return "";
-        }
-        Path path = Paths.get(logPath);
-        if (!Files.isRegularFile(path)) {
-            return "";
-        }
-        try {
-            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-            int fromIndex = Math.max(0, lines.size() - Math.max(1, lineCount));
-            return String.join("\n", lines.subList(fromIndex, lines.size()));
-        } catch (IOException ex) {
-            return "Failed to read local log: " + ex.getMessage();
-        }
-    }
-
     private ResponseEntity<byte[]> textResponse(HttpStatus status, String message) {
         byte[] bytes = message.getBytes(StandardCharsets.UTF_8);
         HttpHeaders headers = new HttpHeaders();
@@ -491,16 +524,97 @@ public class VlsAlgorithmTrainingServiceImpl implements IVlsAlgorithmTrainingSer
         return new ResponseEntity<byte[]>(bytes, headers, status);
     }
 
-    private String replaceExtension(String path, String suffix) {
-        if (!StringUtils.hasText(path)) {
-            return path;
+    private void incrementDownloadCount(String id) {
+        Long numericId = parseLong(id);
+        if (numericId == null) {
+            return;
         }
-        int slash = path.lastIndexOf('/');
-        int dot = path.lastIndexOf('.');
-        if (dot > slash) {
-            return path.substring(0, dot) + suffix;
+        AlgorithmModel model = algorithmModelMapper.selectById(numericId);
+        if (model == null) {
+            return;
         }
-        return path + suffix;
+        AlgorithmModel update = new AlgorithmModel();
+        update.setId(numericId);
+        update.setDownloadCount(nullToDefault(model.getDownloadCount(), 0) + 1);
+        algorithmModelMapper.updateById(update);
+    }
+
+    private Map<String, Object> parseConfigParams(String configParams) {
+        if (!StringUtils.hasText(configParams)) {
+            return new LinkedHashMap<String, Object>();
+        }
+        try {
+            return OBJECT_MAPPER.readValue(configParams, MAP_TYPE);
+        } catch (IOException ex) {
+            return new LinkedHashMap<String, Object>();
+        }
+    }
+
+    private String stringConfig(Map<String, Object> config, String key) {
+        if (config == null || !StringUtils.hasText(key)) {
+            return null;
+        }
+        Object value = config.get(key);
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private Integer configInt(Map<String, Object> config, String key, Integer fallback) {
+        if (config == null || !StringUtils.hasText(key) || !config.containsKey(key)) {
+            return fallback;
+        }
+        Object value = config.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        if (value == null) {
+            return fallback;
+        }
+        try {
+            return Integer.valueOf(String.valueOf(value).trim());
+        } catch (NumberFormatException ex) {
+            return fallback;
+        }
+    }
+
+    private String buildExtraParams(String requestExtraParams, Map<String, Object> config) {
+        StringBuilder builder = new StringBuilder();
+        if (StringUtils.hasText(requestExtraParams)) {
+            builder.append(requestExtraParams.trim());
+        }
+        if (config != null) {
+            for (Map.Entry<String, Object> entry : config.entrySet()) {
+                if (entry.getValue() == null || isHandledTrainingOption(entry.getKey())) {
+                    continue;
+                }
+                if (builder.length() > 0) {
+                    builder.append(' ');
+                }
+                builder.append(entry.getKey()).append('=').append(entry.getValue());
+            }
+        }
+        return builder.length() == 0 ? null : builder.toString();
+    }
+
+    private boolean isHandledTrainingOption(String key) {
+        if (!StringUtils.hasText(key)) {
+            return true;
+        }
+        String normalized = key.trim().toLowerCase();
+        return "epochs".equals(normalized)
+            || "epoch".equals(normalized)
+            || "batch".equals(normalized)
+            || "batchsize".equals(normalized)
+            || "imgsz".equals(normalized)
+            || "imgsize".equals(normalized)
+            || "resolution".equals(normalized)
+            || "datasetid".equals(normalized)
+            || "datasetpath".equals(normalized)
+            || "data".equals(normalized)
+            || "basemodel".equals(normalized)
+            || "modelpath".equals(normalized)
+            || "model".equals(normalized)
+            || "tasktype".equals(normalized)
+            || "traintype".equals(normalized);
     }
 
     private String normalizeStatus(String status) {

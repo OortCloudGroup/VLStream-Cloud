@@ -5,6 +5,7 @@
 
 package com.ruoyi.web.controller.vlstream;
 
+import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.vlstream.compat.BladePage;
 import com.ruoyi.vlstream.compat.BladeResult;
 import com.ruoyi.vlstream.domain.AlgorithmAnnotation;
@@ -24,7 +25,9 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +37,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/vlsAlgorithmAnnotation")
-public class VlsAlgorithmAnnotationController {
+public class VlsAlgorithmAnnotationController extends VlsControllerSupport {
 
     private final IVlsAlgorithmAnnotationService annotationService;
 
@@ -90,7 +93,7 @@ public class VlsAlgorithmAnnotationController {
      */
     @DeleteMapping("/{id}")
     public BladeResult<Boolean> deleteAnnotation(@PathVariable Long id) {
-        return BladeResult.success(annotationService.deleteAnnotation(id));
+        return operationResult(annotationService.deleteAnnotation(id), "Annotation was not deleted");
     }
 
     /**
@@ -98,7 +101,7 @@ public class VlsAlgorithmAnnotationController {
      */
     @DeleteMapping("/batch")
     public BladeResult<Boolean> batchDeleteAnnotations(@RequestBody List<Long> ids) {
-        return BladeResult.success(annotationService.deleteAnnotations(ids));
+        return operationResult(annotationService.deleteAnnotations(ids), "No annotations were deleted");
     }
 
     /**
@@ -106,7 +109,7 @@ public class VlsAlgorithmAnnotationController {
      */
     @PostMapping("/{id}/start")
     public BladeResult<Boolean> startAnnotationTask(@PathVariable Long id) {
-        return BladeResult.success(annotationService.startAnnotationTask(id));
+        return operationResult(annotationService.startAnnotationTask(id), "Annotation task was not started");
     }
 
     /**
@@ -114,7 +117,7 @@ public class VlsAlgorithmAnnotationController {
      */
     @PostMapping("/{id}/complete")
     public BladeResult<Boolean> completeAnnotationTask(@PathVariable Long id) {
-        return BladeResult.success(annotationService.completeAnnotationTask(id));
+        return operationResult(annotationService.completeAnnotationTask(id), "Annotation task was not completed");
     }
 
     /**
@@ -122,7 +125,7 @@ public class VlsAlgorithmAnnotationController {
      */
     @PostMapping("/{id}/reset")
     public BladeResult<Boolean> resetAnnotationTask(@PathVariable Long id) {
-        return BladeResult.success(annotationService.resetAnnotationTask(id));
+        return operationResult(annotationService.resetAnnotationTask(id), "Annotation task was not reset");
     }
 
     /**
@@ -130,7 +133,8 @@ public class VlsAlgorithmAnnotationController {
      */
     @PutMapping("/{id}/progress")
     public BladeResult<Boolean> updateAnnotationProgress(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        return BladeResult.success(annotationService.updateAnnotationProgress(id, toInteger(body == null ? null : body.get("annotatedCount"))));
+        return operationResult(annotationService.updateAnnotationProgress(id, toInteger(body == null ? null : body.get("annotatedCount"))),
+            "Annotation progress was not updated");
     }
 
     /**
@@ -220,7 +224,140 @@ public class VlsAlgorithmAnnotationController {
      */
     @PostMapping("/{id}/save-dataset")
     public BladeResult<Boolean> saveDataset(@PathVariable Long id, @RequestParam(required = false) String annotationData) {
-        return BladeResult.success(annotationService.saveDataset(id, annotationData));
+        return operationResult(annotationService.saveDataset(id, annotationData), "Annotation dataset was not saved");
+    }
+
+    /** Return one annotation through the SpringBlade detail route. */
+    @GetMapping("/detail")
+    public BladeResult<AlgorithmAnnotation> detail(@RequestParam Long id) {
+        return getAnnotationById(id);
+    }
+
+    /** Return the annotation page through the SpringBlade list route. */
+    @GetMapping("/list")
+    public BladeResult<BladePage<AlgorithmAnnotation>> list(@RequestParam(required = false) Long current,
+                                                            @RequestParam(required = false) Long size,
+                                                            @RequestParam(required = false) String annotationName,
+                                                            @RequestParam(required = false) String annotationType,
+                                                            @RequestParam(required = false) String annotationStatus,
+                                                            @RequestParam(required = false) String startTime,
+                                                            @RequestParam(required = false) String endTime) {
+        return getAnnotationPage(current, size, annotationName, annotationType, annotationStatus, startTime, endTime);
+    }
+
+    /** Create an annotation through the SpringBlade save route. */
+    @PostMapping("/save")
+    public BladeResult<AlgorithmAnnotation> save(@RequestBody AlgorithmAnnotation annotation) {
+        return createAnnotation(annotation);
+    }
+
+    /** Update an annotation through the SpringBlade update route. */
+    @PostMapping("/update")
+    public BladeResult<AlgorithmAnnotation> update(@RequestBody AlgorithmAnnotation annotation) {
+        if (annotation == null || annotation.getId() == null) {
+            return BladeResult.fail("Annotation ID is required");
+        }
+        return updateAnnotation(annotation.getId(), annotation);
+    }
+
+    /** Insert or update an annotation through the SpringBlade submit route. */
+    @PostMapping("/submit")
+    public BladeResult<AlgorithmAnnotation> submit(@RequestBody AlgorithmAnnotation annotation) {
+        return annotation != null && annotation.getId() != null
+            ? updateAnnotation(annotation.getId(), annotation)
+            : createAnnotation(annotation);
+    }
+
+    /** Delete annotations by comma-separated IDs. */
+    @GetMapping("/remove")
+    public BladeResult<Boolean> remove(@RequestParam String ids) {
+        try {
+            List<Long> parsed = parseIds(ids);
+            return parsed.isEmpty() ? BladeResult.<Boolean>fail("ids is required")
+                : BladeResult.success(annotationService.deleteAnnotations(parsed));
+        } catch (RuntimeException ex) {
+            return BladeResult.fail(ex.getMessage());
+        }
+    }
+
+    /** Export the actual filtered annotation rows. */
+    @GetMapping("/export-vlsAlgorithmAnnotation")
+    public void exportVlsAlgorithmAnnotation(@RequestParam(required = false) String annotationName,
+                                             @RequestParam(required = false) String annotationType,
+                                             @RequestParam(required = false) String annotationStatus,
+                                             @RequestParam(required = false) String startTime,
+                                             @RequestParam(required = false) String endTime,
+                                             HttpServletResponse response) {
+        BladePage<AlgorithmAnnotation> page = annotationService.getAnnotationPage(Long.valueOf(1L),
+            Long.valueOf(Integer.MAX_VALUE), annotationName, annotationType, annotationStatus, startTime, endTime);
+        ExcelUtil.exportExcel(page.getRecords(), "Algorithm Annotations", AlgorithmAnnotation.class, response);
+    }
+
+    /** Query annotations by type through the source route. */
+    @GetMapping("/type/{annotationType}")
+    public BladeResult<List<AlgorithmAnnotation>> getAnnotationsByType(@PathVariable String annotationType) {
+        return BladeResult.success(annotationService.searchAnnotations(Long.valueOf(1L), Long.valueOf(Integer.MAX_VALUE),
+            null, annotationType, null).getRecords());
+    }
+
+    /** Query annotations by status through the source route. */
+    @GetMapping("/status/{annotationStatus}")
+    public BladeResult<List<AlgorithmAnnotation>> getAnnotationsByStatus(@PathVariable String annotationStatus) {
+        return BladeResult.success(annotationService.searchAnnotations(Long.valueOf(1L), Long.valueOf(Integer.MAX_VALUE),
+            null, null, annotationStatus).getRecords());
+    }
+
+    /** Apply a supported status transition to every requested annotation. */
+    @PutMapping("/batch/status")
+    public BladeResult<Boolean> batchUpdateAnnotationStatus(@RequestBody List<Long> ids,
+                                                            @RequestParam String annotationStatus) {
+        if (ids == null || ids.isEmpty()) {
+            return BladeResult.fail("Please select annotations to update");
+        }
+        String operation;
+        if ("completed".equalsIgnoreCase(annotationStatus)) {
+            operation = "completed";
+        } else if ("partial".equalsIgnoreCase(annotationStatus)) {
+            operation = "partial";
+        } else if ("none".equalsIgnoreCase(annotationStatus)) {
+            operation = "reset";
+        } else {
+            return BladeResult.fail("Unsupported annotation status transition: " + annotationStatus);
+        }
+        return BladeResult.success(annotationService.batchOperation(operation, ids));
+    }
+
+    /** Reject the source path-only import route with an actionable real-import alternative. */
+    @PostMapping("/{id}/import")
+    public BladeResult<Map<String, Object>> importAnnotationData(@PathVariable Long id,
+                                                                 @RequestParam String dataPath) {
+        return BladeResult.fail("Path-only annotation import is unsafe and unsupported; use /" + id + "/import-zip with a real dataset archive");
+    }
+
+    /** Validate persisted annotation counters and progress without returning fabricated success. */
+    @PostMapping("/{id}/validate")
+    public BladeResult<Map<String, Object>> validateAnnotationData(@PathVariable Long id) {
+        AlgorithmAnnotation annotation = annotationService.getAnnotationById(id);
+        if (annotation == null) {
+            return BladeResult.fail("Annotation does not exist");
+        }
+        int total = annotation.getTotalCount() == null ? 0 : annotation.getTotalCount().intValue();
+        int annotated = annotation.getAnnotatedCount() == null ? 0 : annotation.getAnnotatedCount().intValue();
+        int progress = annotation.getProgress() == null ? 0 : annotation.getProgress().intValue();
+        List<String> errors = new ArrayList<String>();
+        if (total < 0 || annotated < 0 || annotated > total) {
+            errors.add("Annotation counters are inconsistent");
+        }
+        if (progress < 0 || progress > 100) {
+            errors.add("Progress must be between 0 and 100");
+        }
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("valid", Boolean.valueOf(errors.isEmpty()));
+        result.put("totalCount", Integer.valueOf(total));
+        result.put("annotatedCount", Integer.valueOf(annotated));
+        result.put("progress", Integer.valueOf(progress));
+        result.put("errors", errors);
+        return errors.isEmpty() ? BladeResult.success(result) : BladeResult.<Map<String, Object>>fail(String.join("; ", errors));
     }
 
     private Integer toInteger(Object value) {

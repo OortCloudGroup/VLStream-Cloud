@@ -10,6 +10,7 @@ import com.ruoyi.vlstream.domain.VideoRecord;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Date;
 
 /**
  * VLS video record service contract used by compatibility controllers.
@@ -40,4 +41,12 @@ public interface IVlsVideoRecordService {
     List<VideoRecord> getDeviceRecords(Long deviceId, String date, Long currentPage, Long pageSize);
 
     Map<String, Object> getRecordPreview(Long id);
+
+    List<VideoRecord> listPlaybackRecords(Long deviceId, Date startTime, Date endTime);
+
+    Map<Integer, List<Integer>> getTimelineCalendar(Long deviceId, Integer year);
+
+    List<VideoRecord> listDayRecords(Long deviceId, String recordDate);
+
+    List<VideoRecord> listRecords(Long deviceId, String deviceName, String fileName, String recordStatus, String date);
 }
