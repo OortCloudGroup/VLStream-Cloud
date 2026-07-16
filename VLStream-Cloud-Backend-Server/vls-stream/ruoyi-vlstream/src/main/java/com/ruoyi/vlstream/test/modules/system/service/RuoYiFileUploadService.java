@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 package com.ruoyi.vlstream.test.modules.system.service;
 
 import com.ruoyi.system.domain.vo.SysOssVo;

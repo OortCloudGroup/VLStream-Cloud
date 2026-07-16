@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 package com.ruoyi.vlstream.test.vlstream.pojo.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
