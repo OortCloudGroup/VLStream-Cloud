@@ -1,0 +1,19 @@
+package com.ruoyi.vlstream.test.vlstream.pojo.dto;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.VideoRecord;
+
+
+/**
+ * 视频录制记录表 数据传输对象实体类
+ *
+ * @author Oort
+ * @since 2025-12-25
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class VideoRecordDTO extends VideoRecord {
+	private static final long serialVersionUID = 1L;
+
+}

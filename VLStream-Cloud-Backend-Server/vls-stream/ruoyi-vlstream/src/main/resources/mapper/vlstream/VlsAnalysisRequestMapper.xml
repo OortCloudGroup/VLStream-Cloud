@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.vlstream.test.vlstream.mapper.VlsAnalysisRequestMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="vlsAnalysisRequestResultMap" type="com.ruoyi.vlstream.test.vlstream.pojo.entity.AnalysisRequest">
+        <result column="analysis_name" property="analysisName"/>
+        <result column="analysis_type" property="analysisType"/>
+        <result column="scene_name" property="sceneName"/>
+        <result column="device_ids" property="deviceIds"/>
+        <result column="device_info" property="deviceInfo"/>
+        <result column="algorithm_ids" property="algorithmIds"/>
+        <result column="region_info" property="regionInfo"/>
+        <result column="time_range" property="timeRange"/>
+        <result column="screenshots" property="screenshots"/>
+        <result column="request_status" property="requestStatus"/>
+        <result column="progress" property="progress"/>
+        <result column="result_path" property="resultPath"/>
+        <result column="start_time" property="startTime"/>
+        <result column="complete_time" property="completeTime"/>
+        <result column="error_message" property="errorMessage"/>
+        <result column="description" property="description"/>
+    </resultMap>
+
+    <select id="selectVlsAnalysisRequestPage" resultMap="vlsAnalysisRequestResultMap">
+        select * from vls_analysis_request where is_deleted = 0 order by create_time desc
+    </select>
+
+    <select id="exportVlsAnalysisRequest" resultType="com.ruoyi.vlstream.test.vlstream.excel.VlsAnalysisRequestExcel">
+        SELECT * FROM vls_analysis_request ${ew.customSqlSegment}
+    </select>
+
+</mapper>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.vlstream.test.vlstream.mapper.VlsAlgorithmAnnotationMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="vlsAlgorithmAnnotationResultMap" type="com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmAnnotation">
+        <result column="annotation_name" property="annotationName"/>
+        <result column="annotation_type" property="annotationType"/>
+        <result column="dataset_path" property="datasetPath"/>
+        <result column="total_count" property="totalCount"/>
+        <result column="annotated_count" property="annotatedCount"/>
+        <result column="annotation_status" property="annotationStatus"/>
+        <result column="progress" property="progress"/>
+        <result column="annotation_rules" property="annotationRules"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <select id="selectVlsAlgorithmAnnotationPage" resultMap="vlsAlgorithmAnnotationResultMap">
+        select * from vls_algorithm_annotation where is_deleted = 0 order by create_time desc
+    </select>
+
+    <select id="exportVlsAlgorithmAnnotation" resultType="com.ruoyi.vlstream.test.vlstream.excel.VlsAlgorithmAnnotationExcel">
+        SELECT * FROM vls_algorithm_annotation ${ew.customSqlSegment}
+    </select>
+
+</mapper>

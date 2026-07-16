@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.vlstream.test.vlstream.mapper.VlsAlgorithmMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="vlsAlgorithmResultMap" type="com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmVO">
+        <result column="repository_id" property="repositoryId"/>
+        <result column="name" property="name"/>
+        <result column="category" property="category"/>
+        <result column="description" property="description"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="config_params" property="configParams"/>
+        <result column="input_format" property="inputFormat"/>
+        <result column="output_format" property="outputFormat"/>
+        <result column="gpu_required" property="gpuRequired"/>
+        <result column="is_system" property="isSystem"/>
+    </resultMap>
+
+    <select id="selectVlsAlgorithmPage" resultMap="vlsAlgorithmResultMap">
+        select * from vls_algorithm where is_deleted = 0 order by create_time desc
+    </select>
+
+    <select id="exportVlsAlgorithm" resultType="com.ruoyi.vlstream.test.vlstream.excel.VlsAlgorithmExcel">
+        SELECT * FROM vls_algorithm ${ew.customSqlSegment}
+    </select>
+
+</mapper>

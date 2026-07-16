@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.vlstream.test.vlstream.mapper.VlsVideoRecordMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="vlsVideoRecordResultMap" type="com.ruoyi.vlstream.test.vlstream.pojo.entity.VideoRecord">
+        <result column="vhost" property="vhost"/>
+        <result column="app" property="app"/>
+        <result column="stream" property="stream"/>
+        <result column="device_id" property="deviceId"/>
+        <result column="device_name" property="deviceName"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_path" property="filePath"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="url" property="url"/>
+        <result column="duration" property="duration"/>
+        <result column="format" property="format"/>
+        <result column="record_start_time" property="recordStartTime"/>
+        <result column="record_end_time" property="recordEndTime"/>
+        <result column="record_date" property="recordDate"/>
+        <result column="record_status" property="recordStatus"/>
+        <result column="thumbnail_path" property="thumbnailPath"/>
+    </resultMap>
+
+    <select id="selectVlsVideoRecordPage" resultMap="vlsVideoRecordResultMap">
+        select * from vls_video_record where is_deleted = 0
+    </select>
+
+    <select id="exportVlsVideoRecord" resultType="com.ruoyi.vlstream.test.vlstream.excel.VlsVideoRecordExcel">
+        SELECT * FROM vls_video_record ${ew.customSqlSegment}
+    </select>
+
+</mapper>

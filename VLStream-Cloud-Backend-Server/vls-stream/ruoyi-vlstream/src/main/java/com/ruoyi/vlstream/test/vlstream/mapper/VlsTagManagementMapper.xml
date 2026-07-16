@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.vlstream.test.vlstream.mapper.VlsTagManagementMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="vlsTagManagementResultMap" type="com.ruoyi.vlstream.test.vlstream.pojo.entity.TagManagement">
+        <result column="tag_name" property="tagName"/>
+        <result column="category_type" property="categoryType"/>
+        <result column="level" property="level"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="tag_color" property="tagColor"/>
+        <result column="tag_icon" property="tagIcon"/>
+        <result column="description" property="description"/>
+        <result column="is_active" property="isActive"/>
+        <result column="usage_count" property="usageCount"/>
+    </resultMap>
+
+    <select id="selectVlsTagManagementPage" resultMap="vlsTagManagementResultMap">
+        select * from vls_tag_management where is_deleted = 0 order by create_time desc
+    </select>
+
+    <select id="exportVlsTagManagement" resultType="com.ruoyi.vlstream.test.vlstream.excel.VlsTagManagementExcel">
+        SELECT * FROM vls_tag_management ${ew.customSqlSegment}
+    </select>
+
+</mapper>

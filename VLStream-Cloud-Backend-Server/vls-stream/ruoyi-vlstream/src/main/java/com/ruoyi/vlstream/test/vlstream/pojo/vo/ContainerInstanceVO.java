@@ -1,0 +1,19 @@
+package com.ruoyi.vlstream.test.vlstream.pojo.vo;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.ContainerInstance;
+
+
+/**
+ * 容器实例表 视图实体类
+ *
+ * @author Oort
+ * @since 2025-12-23
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class ContainerInstanceVO extends ContainerInstance {
+	private static final long serialVersionUID = 1L;
+
+}
