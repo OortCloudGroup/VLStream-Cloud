@@ -1,0 +1,11 @@
+{
+    "initstring": "tX5RmL3giG81f9+EqocDd30nH9sNccqGXAbvqFngKwtrR7zbmbB0G5XMl4RLw2rGE7Ot4ER7jDs5+JcHDxw0mcChuDVSRO/0qpwgWmZLnnOvLM143IO20ZZKt1Yp/JaaVIyw6YJgvv/e/SoQ+YT1p6kpPoQGuJBAmdBMxU6s7CM=",
+    "serno": "AETY-00-NJN2-WJUB-00000100",
+    "serveraddr": "146.56.220.167:1884",
+    "customerserno": "",
+    "web_root": "/mnt/webrtc/www",
+    "web_cert": "/mnt/webrtc/cert.pem",
+    "web_key": "/mnt/webrtc/priv.key",
+    "https_port": 8443,
+    "http_port": 6888
+}

@@ -1,0 +1,1106 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hi3519DV500 AI 视频项目开发与排障笔记</title>
+  <style>
+    :root {
+      --ink: #17212b;
+      --muted: #5d6975;
+      --paper: #f7f9fa;
+      --surface: #ffffff;
+      --line: #d9e0e5;
+      --nav: #16222c;
+      --blue: #146c94;
+      --green: #24704d;
+      --orange: #a95417;
+      --red: #a33a3a;
+      --code: #101820;
+      --code-ink: #d7e3ec;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans CJK SC",
+        "Microsoft YaHei", Arial, sans-serif;
+      line-height: 1.65;
+      letter-spacing: 0;
+    }
+
+    a { color: var(--blue); }
+    code, pre, .mono {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      letter-spacing: 0;
+    }
+
+    .page-header {
+      color: #f6fafc;
+      background: var(--nav);
+      border-bottom: 5px solid #2d8a72;
+    }
+
+    .header-inner {
+      max-width: 1420px;
+      margin: 0 auto;
+      padding: 34px 30px 30px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      line-height: 1.25;
+      font-weight: 720;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #c7d4dc;
+      font-size: 15px;
+    }
+
+    .header-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 22px;
+      margin-top: 18px;
+      color: #aebfc9;
+      font-size: 13px;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(247, 249, 250, 0.96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(8px);
+    }
+
+    .toolbar-inner {
+      max-width: 1420px;
+      margin: 0 auto;
+      padding: 10px 30px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .search {
+      width: min(480px, 100%);
+      height: 38px;
+      padding: 0 12px;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid #bfc9cf;
+      border-radius: 5px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .search:focus { border-color: var(--blue); box-shadow: 0 0 0 2px #146c9422; }
+    .toolbar button {
+      height: 38px;
+      padding: 0 14px;
+      border: 1px solid #aeb9c0;
+      border-radius: 5px;
+      background: var(--surface);
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .toolbar button:hover { border-color: var(--blue); color: var(--blue); }
+
+    .layout {
+      max-width: 1420px;
+      margin: 0 auto;
+      padding: 28px 30px 80px;
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      gap: 38px;
+      align-items: start;
+    }
+
+    .toc {
+      position: sticky;
+      top: 78px;
+      max-height: calc(100vh - 100px);
+      overflow: auto;
+      padding-right: 12px;
+      border-right: 1px solid var(--line);
+    }
+
+    .toc-title {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .toc a {
+      display: block;
+      padding: 6px 8px;
+      color: #44515d;
+      border-left: 3px solid transparent;
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .toc a:hover { color: var(--blue); border-left-color: var(--blue); }
+    main { min-width: 0; }
+    section {
+      padding: 0 0 36px;
+      margin: 0 0 36px;
+      border-bottom: 1px solid var(--line);
+      scroll-margin-top: 76px;
+    }
+
+    section:last-child { border-bottom: 0; }
+    h2 {
+      margin: 0 0 18px;
+      font-size: 24px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 26px 0 10px;
+      font-size: 18px;
+      line-height: 1.4;
+      letter-spacing: 0;
+    }
+
+    h4 { margin: 18px 0 8px; font-size: 15px; }
+    p { margin: 8px 0 13px; }
+    ul, ol { margin: 8px 0 16px; padding-left: 24px; }
+    li { margin: 4px 0; }
+    strong { font-weight: 700; }
+    .lead { font-size: 17px; color: #35424d; }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .status-item {
+      min-height: 102px;
+      padding: 15px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--blue);
+      border-radius: 6px;
+    }
+
+    .status-item:nth-child(2) { border-top-color: var(--green); }
+    .status-item:nth-child(3) { border-top-color: var(--orange); }
+    .status-item:nth-child(4) { border-top-color: #6e5d91; }
+    .status-label { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .status-value { margin-top: 6px; font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
+
+    .note, .warning, .success, .danger {
+      margin: 16px 0;
+      padding: 13px 16px;
+      background: #eef6fa;
+      border-left: 4px solid var(--blue);
+    }
+
+    .warning { background: #fff5e9; border-left-color: var(--orange); }
+    .success { background: #edf8f1; border-left-color: var(--green); }
+    .danger { background: #fff0f0; border-left-color: var(--red); }
+    .note > :first-child, .warning > :first-child, .success > :first-child, .danger > :first-child { margin-top: 0; }
+    .note > :last-child, .warning > :last-child, .success > :last-child, .danger > :last-child { margin-bottom: 0; }
+
+    .issue {
+      margin: 18px 0 24px;
+      padding: 0 0 2px 18px;
+      border-left: 3px solid #c6d0d6;
+    }
+
+    .issue h3 { margin-top: 0; }
+    .tag {
+      display: inline-block;
+      margin: 0 6px 5px 0;
+      padding: 2px 8px;
+      color: #34414b;
+      background: #e8edf0;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .tag.ok { color: #17563a; background: #dff1e7; }
+    .tag.exp { color: #8b4311; background: #ffead7; }
+    .tag.open { color: #8d3030; background: #f9dddd; }
+
+    table {
+      width: 100%;
+      margin: 14px 0 20px;
+      border-collapse: collapse;
+      background: var(--surface);
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+
+    th { background: #edf1f3; font-weight: 700; }
+    pre {
+      position: relative;
+      margin: 12px 0 18px;
+      padding: 16px 18px;
+      overflow: auto;
+      color: var(--code-ink);
+      background: var(--code);
+      border-radius: 6px;
+      font-size: 13px;
+      line-height: 1.55;
+      white-space: pre;
+    }
+
+    :not(pre) > code {
+      padding: 1px 5px;
+      color: #7b2f18;
+      background: #f0e9e5;
+      border-radius: 3px;
+      overflow-wrap: anywhere;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin: 18px 0 24px;
+    }
+
+    .flow-step {
+      position: relative;
+      min-height: 88px;
+      padding: 12px 10px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .flow-step b { display: block; margin-bottom: 5px; color: var(--blue); }
+    .flow-step:not(:last-child)::after {
+      content: ">";
+      position: absolute;
+      right: -8px;
+      top: 31px;
+      z-index: 2;
+      color: var(--orange);
+      font-weight: 800;
+    }
+
+    details {
+      margin: 12px 0;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    summary {
+      padding: 11px 14px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    details > div { padding: 0 14px 14px; }
+    .checklist { list-style: none; padding-left: 0; }
+    .checklist li { position: relative; padding-left: 26px; }
+    .checklist li::before {
+      content: "";
+      position: absolute;
+      left: 2px;
+      top: 8px;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #6f7c86;
+      border-radius: 2px;
+    }
+
+    .path-list code { color: #273b47; background: #edf2f4; }
+    .hidden-by-search { display: none !important; }
+    .search-empty { display: none; padding: 28px; border: 1px dashed #aab5bc; text-align: center; color: var(--muted); }
+    footer { max-width: 1420px; margin: 0 auto; padding: 0 30px 36px; color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 1050px) {
+      .status-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .flow { grid-template-columns: 1fr; }
+      .flow-step:not(:last-child)::after { content: "v"; right: 50%; top: auto; bottom: -13px; }
+    }
+
+    @media (max-width: 760px) {
+      h1, .subtitle, .header-meta { overflow-wrap: anywhere; }
+      h1 { font-size: 24px; }
+      .header-inner, .toolbar-inner, .layout { padding-left: 18px; padding-right: 18px; }
+      .layout { display: block; }
+      .toc {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 2px 8px;
+        max-height: none;
+        margin-bottom: 28px;
+        padding: 0 0 16px;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .toc-title { grid-column: 1 / -1; }
+      .toc a { padding-left: 4px; overflow-wrap: anywhere; }
+      .status-grid { grid-template-columns: 1fr; }
+      table { display: block; overflow-x: auto; }
+      .toolbar-inner { flex-wrap: wrap; }
+      .search { width: 100%; min-width: 0; flex: 1 0 100%; }
+      .toolbar button { flex: 1 1 0; }
+    }
+
+    @media print {
+      body { background: white; font-size: 11pt; }
+      .toolbar, .toc { display: none; }
+      .layout { display: block; max-width: none; padding: 20px; }
+      .page-header { color: black; background: white; border-bottom-color: #333; }
+      .subtitle, .header-meta { color: #444; }
+      section { break-inside: auto; }
+      pre { white-space: pre-wrap; word-break: break-word; }
+      details { break-inside: avoid; }
+      details > div { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <div class="header-inner">
+      <h1>Hi3519DV500 + IMX335 AI 视频项目开发与排障笔记</h1>
+      <p class="subtitle">从实时推流、YOLO 推理和画框，到事件上报、模型热更新与板端网络配置</p>
+      <div class="header-meta">
+        <span>整理日期：2026-07-14</span>
+        <span>当前主模型：YOLOv8 OM</span>
+        <span>平台：Hi3519DV500 / SVP ACL</span>
+        <span>视频：H.264 1280x720 @ 15 fps</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="toolbar-inner">
+      <input id="search" class="search" type="search" placeholder="搜索问题、日志、命令或模块" aria-label="搜索笔记">
+      <button id="clearSearch" type="button">清空</button>
+      <button type="button" onclick="window.print()">打印</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <nav class="toc" aria-label="目录">
+      <p class="toc-title">目录</p>
+      <a href="#baseline">1. 当前项目基线</a>
+      <a href="#architecture">2. 当前链路架构</a>
+      <a href="#timeline">3. 关键推进阶段</a>
+      <a href="#no-box">4. 没有检测框</a>
+      <a href="#offline">5. 离线验证</a>
+      <a href="#yolo11">6. YOLO11 实验</a>
+      <a href="#performance">7. 卡顿、残影与异步</a>
+      <a href="#overlay">8. 框闪烁与识别不准</a>
+      <a href="#reporting">9. 事件上报</a>
+      <a href="#hot-update">10. 模型热更新</a>
+      <a href="#network">11. IP、DHCP 与 MAC</a>
+      <a href="#rootfs">12. rootfs 构建</a>
+      <a href="#logs">13. 日志判读</a>
+      <a href="#commands">14. 常用命令</a>
+      <a href="#files">15. 文件职责</a>
+      <a href="#open-items">16. 待解决事项</a>
+    </nav>
+
+    <main id="content">
+      <section id="baseline" data-searchable>
+        <h2>1. 当前项目基线</h2>
+        <p class="lead">下面是截至 2026-07-14 实际代码和配置所对应的状态。后续排查必须先确认板端固件与这一基线一致。</p>
+
+        <div class="status-grid">
+          <div class="status-item">
+            <div class="status-label">正式 AI 模型</div>
+            <div class="status-value mono">/mnt/ai_verify/yolov8.om</div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">推理调度</div>
+            <div class="status-value">独立异步线程，每 10 帧提交一次</div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">事件上报</div>
+            <div class="status-value">异步队列，最短间隔 10 秒</div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">模型接收</div>
+            <div class="status-value mono">0.0.0.0:8888</div>
+          </div>
+        </div>
+
+        <table>
+          <thead><tr><th>项目</th><th>当前值</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>设备序列号</td><td><code>AETY-00-NJN2-WJUB-00000100</code></td><td>来自 <code>/mnt/webrtc/webcam.conf</code> 的 <code>serno</code></td></tr>
+            <tr><td>COCO 标签</td><td><code>/mnt/webrtc/model/classes.txt</code></td><td>80 类，包括 person、car、bottle、cell phone 等</td></tr>
+            <tr><td>显示置信度</td><td><code>0.25</code></td><td>低阈值有利于先跑通，但会增加误检</td></tr>
+            <tr><td>NMS 阈值</td><td><code>0.45</code></td><td>用于抑制同类重叠框</td></tr>
+            <tr><td>检测框保持</td><td><code>30 帧</code></td><td>解决每 10 帧推理时框只出现一帧的问题</td></tr>
+            <tr><td>事件接口</td><td><code>http://192.168.60.76:32557/vlsEventManagement/report</code></td><td>multipart/form-data，字段为 event 和 file</td></tr>
+            <tr><td>设备测试 IP</td><td><code>192.168.88.98</code></td><td>当前阶段固定使用；设备 ID 与 IP、MAC 是不同概念</td></tr>
+          </tbody>
+        </table>
+
+        <div class="warning">
+          <strong>当前没有采用的方案：</strong>YOLO11 实时模型、<code>/save</code> 双接口上报、IMX335 寄存器替换、每次启动随机 DHCP 地址。这些都做过实验，但已撤回或不作为当前主方案。
+        </div>
+      </section>
+
+      <section id="architecture" data-searchable>
+        <h2>2. 当前链路架构</h2>
+
+        <h3>视频与 AI 链路</h3>
+        <div class="flow" aria-label="视频与AI处理流程">
+          <div class="flow-step"><b>VI / IMX335</b>采集原始图像</div>
+          <div class="flow-step"><b>VPSS</b>输出 1280x720 YVU420SP 帧</div>
+          <div class="flow-step"><b>AI 异步队列</b>每 10 帧覆盖式提交最新帧</div>
+          <div class="flow-step"><b>SVP ACL</b>预处理、执行 YOLOv8、解析结果</div>
+          <div class="flow-step"><b>Overlay / VENC</b>使用缓存框绘制并编码推流</div>
+        </div>
+
+        <h3>事件上报链路</h3>
+        <div class="flow" aria-label="事件上报流程">
+          <div class="flow-step"><b>检测完成</b>复制最多 32 个检测结果</div>
+          <div class="flow-step"><b>带框帧</b>复制当前 YVU420SP 图像</div>
+          <div class="flow-step"><b>上报队列</b>最多保留 4 个任务</div>
+          <div class="flow-step"><b>后台线程</b>YUV 转 RGB，JPEG 质量 80</div>
+          <div class="flow-step"><b>HTTP POST</b>event JSON + file JPEG</div>
+        </div>
+
+        <h3>模型热更新链路</h3>
+        <div class="flow" aria-label="模型热更新流程">
+          <div class="flow-step"><b>平台或 Apifox</b>调用设备 8888 端口</div>
+          <div class="flow-step"><b>设备校验</b>deviceId、URL 和 .om 后缀</div>
+          <div class="flow-step"><b>下载候选模型</b>保存为 current path + .tmp</div>
+          <div class="flow-step"><b>ACL 验证</b>临时加载并释放候选模型</div>
+          <div class="flow-step"><b>互斥切换</b>替换正式文件和运行上下文</div>
+        </div>
+
+        <div class="note">
+          <strong>线程边界：</strong>推流主路径、AI 推理线程、事件上报线程、模型接收线程彼此分离。网络超时或模型下载失败只能记录日志，不能让推流线程退出。
+        </div>
+      </section>
+
+      <section id="timeline" data-searchable>
+        <h2>3. 关键推进阶段</h2>
+        <table>
+          <thead><tr><th>阶段</th><th>主要问题</th><th>阶段结论</th></tr></thead>
+          <tbody>
+            <tr><td>1. AI 接入初期</td><td>每帧推理、画面残影、没有框、模型用途不清楚</td><td>先降为每 10 帧推理，随后建立离线验证程序隔离问题</td></tr>
+            <tr><td>2. YOLOv8 离线验证</td><td>输入文件 1228800 字节，模型报告 dataset 614400 字节</td><td>按模型 dims/stride 组织输入后执行成功，确认 ACL、模型和后处理链路可用</td></tr>
+            <tr><td>3. 实时 YOLOv8</td><td>有框但闪烁、类别不准、推理影响推流</td><td>异步推理、缓存检测框、阈值 0.25、文字绘制、每 10 帧推理</td></tr>
+            <tr><td>4. YOLO11 实验</td><td>RKNN 不能直接给 Hi3519 使用；新 OM 缺 AICPU 库、3 输入、9 输出</td><td>完成离线 9 路解析，但实时性能不足，主链路退回 YOLOv8</td></tr>
+            <tr><td>5. 事件上报</td><td>接口返回成功，平台页面无记录；Apifox 出现 415</td><td>设备请求格式已跑通；415 是 PNG/octet-stream；平台不可见继续查后端环境与查询条件</td></tr>
+            <tr><td>6. 模型热更新</td><td>需要平台下发而不重启推流</td><td>完成独立 HTTP 接收、临时下载、ACL 验证、互斥切换；当前下载器仍只支持 HTTP</td></tr>
+            <tr><td>7. 网络配置</td><td>DHCP 地址每次变化，根因包含 MAC 变化</td><td>当前测试先固定 192.168.88.98；量产应提供稳定且设备唯一的 MAC</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="no-box" data-searchable>
+        <h2>4. 长时间卡点：画面没有检测框</h2>
+
+        <div class="issue">
+          <h3>现象</h3>
+          <span class="tag ok">已定位</span>
+          <ul>
+            <li>推流正常，但网页画面完全没有框。</li>
+            <li>日志中推理函数可能返回成功，但检测数量长期为 0。</li>
+            <li>放置手机等物体无法判断究竟是模型不识别，还是输入/输出处理错误。</li>
+          </ul>
+        </div>
+
+        <div class="issue">
+          <h3>为什么这个问题会卡很久</h3>
+          <p>“没有框”不是单一问题，它至少可能发生在以下任一层：</p>
+          <ol>
+            <li>模型文件与芯片不匹配，模型根本没有正确执行。</li>
+            <li>输入格式错误，例如 RGB/BGR、NCHW/NHWC、uint8/float、stride 或 letterbox 不匹配。</li>
+            <li>辅助输入没有创建，模型执行结果无效。</li>
+            <li>输出布局理解错误，把坐标、类别、置信度的行列读反。</li>
+            <li>坐标映射错误，框被画到画面外。</li>
+            <li>阈值过高，所有候选框都被过滤。</li>
+            <li>模型本身不包含测试物体对应类别。</li>
+          </ol>
+        </div>
+
+        <div class="issue">
+          <h3>最终采用的排查方法</h3>
+          <p>不要继续在实时推流里同时猜模型、预处理、输出解析和画框。先使用 SDK 已知正确的：</p>
+          <ul>
+            <li><code>yolov8.om</code></li>
+            <li><code>dog_bike_car_yolov8.bin</code></li>
+            <li>独立程序 <code>/mnt/ai_yolov8_verify</code></li>
+          </ul>
+          <p>离线程序成功打印有效检测框后，证明 ACL 初始化、模型加载、输入组织、模型执行和输出解析都能够工作。之后再逐层接入摄像头帧、坐标还原、YUV 画框和编码推流。</p>
+        </div>
+
+        <div class="success">
+          <strong>关键经验：</strong>模型不确定时，必须先建立“已知模型 + 已知输入 + 已知预期输出”的最小闭环。实时画面无框不能直接得出“模型坏了”的结论。
+        </div>
+      </section>
+
+      <section id="offline" data-searchable>
+        <h2>5. YOLOv8 离线验证与输入尺寸问题</h2>
+
+        <h3>第一次失败：file too large</h3>
+        <pre>[VERIFY] input[0] dims=1x3x640x640 type=uint8 size=614400 stride=640
+[VERIFY][ERROR] file too large: file=1228800 buffer=614400
+[VERIFY] done ret=1</pre>
+        <p>问题不是模型已经执行失败，而是验证程序在执行前就错误地假设“输入文件大小必须小于模型报告的 dataset size”。该模型的 dims、stride、dataset size 和测试 bin 文件之间存在平台特定的组织方式，不能简单整文件 memcpy。</p>
+
+        <h3>修复方法</h3>
+        <p>验证程序改为依据模型描述中的维度、数据类型、末维行宽和默认 stride，逐行读取输入并分配实际需要的内存；同时 dataset 仍使用 SDK 要求的逻辑大小。</p>
+        <pre>line_size = last_dim * data_type_size;
+loop_times = product(other_dims);
+alloc_size = loop_times * stride;
+
+for each line:
+    read line_size bytes into buffer + line_index * stride</pre>
+
+        <h3>成功标准</h3>
+        <pre>[VERIFY] execute ok
+[VERIFY] total_valid=3
+[VERIFY] box[...] class=... score=... x1=... y1=... x2=... y2=...
+[VERIFY] done ret=0</pre>
+        <p><code>done ret=0</code> 且能打印合理的类别、置信度和坐标，才说明离线推理完整跑通。只有 <code>model loaded</code> 或 <code>execute ok</code> 还不足以证明后处理正确。</p>
+
+        <div class="note">
+          <strong>模型用途：</strong>当前标签是 COCO 80 类。测试文件名 <code>dog_bike_car_yolov8.bin</code> 描述的是测试画面内容，不表示模型只能识别 dog、bicycle 和 car。手机对应 COCO 的 <code>cell phone</code>，但小目标、角度、光照和阈值都会影响结果。
+        </div>
+
+        <h3>板端验证步骤</h3>
+        <pre>cd /ko
+sh load3519dv500 -i -sensor0 imx335 -sensor1 imx335
+/mnt/ai_yolov8_verify</pre>
+        <p><code>insmod: can't insert 'sys_config.ko': File exists</code> 通常表示模块已加载，不是本次 AI 验证失败的直接原因。</p>
+      </section>
+
+      <section id="yolo11" data-searchable>
+        <h2>6. YOLO11 转换和 9 路输出实验</h2>
+
+        <div class="warning">
+          <strong>当前状态：</strong>YOLO11 已完成离线验证，但因实时链路卡顿而退出主方案。当前正式实时模型仍是 YOLOv8。
+        </div>
+
+        <h3>RKNN 不能直接变成 OM</h3>
+        <p>参考项目使用的 <code>yolo11n-rk3588-int8.rknn</code> 是 Rockchip RK3588 的编译模型，Hi3519DV500 不能加载。正确路线是找到原始 ONNX/训练模型，再通过 HiSilicon 工具链生成 OM；不能只修改后缀，也不能可靠地把 RKNN 反向转换成 OM。</p>
+
+        <h3>模型加载失败：缺少 libsvp_aicpu.so</h3>
+        <pre>Error loading shared library libsvp_aicpu.so: No such file or directory
+svp_acl_mdl_load_from_mem failed ret=100003</pre>
+        <p>该 OM 包含需要 AICPU 支持的算子。解决方式是把 SDK 对应架构和 libc 的 <code>libsvp_aicpu.so</code> 打入 rootfs，并确保动态链接器搜索路径正确。库缺失时模型甚至无法创建，和检测阈值无关。</p>
+
+        <h3>模型不是单输入：3 输入</h3>
+        <pre>input[0] name=images   dims=1x3x640x640       size=1228800
+input[1] name=task_buf dims=1x1x1x108         size=432
+input[2] name=work_buf dims=1x1x1x1731840     size=6927360</pre>
+        <p>初版验证程序只创建 images 一个输入，因此报 <code>expects one input, model inputs=3 dataset=1</code>。修复后为 <code>task_buf</code> 和 <code>work_buf</code> 分配 SDK 要求的缓冲区并清零，模型才能执行。</p>
+
+        <h3>模型输出不是最终 300 个框：9 路特征图</h3>
+        <table>
+          <thead><tr><th>分支</th><th>网格</th><th>步长</th><th>输出内容</th></tr></thead>
+          <tbody>
+            <tr><td>0</td><td>20x20</td><td>32</td><td>64 通道 DFL 框 + 80 类分数 + 1 路 score sum</td></tr>
+            <tr><td>1</td><td>40x40</td><td>16</td><td>64 通道 DFL 框 + 80 类分数 + 1 路 score sum</td></tr>
+            <tr><td>2</td><td>80x80</td><td>8</td><td>64 通道 DFL 框 + 80 类分数 + 1 路 score sum</td></tr>
+          </tbody>
+        </table>
+        <p>后处理需要对每个网格执行 DFL softmax/期望值解码、类别筛选、坐标还原，再做 class-aware NMS。离线成功结果包含：</p>
+        <pre>class=16 dog      score=0.945312
+class=1  bicycle  score=0.937500
+class=14 bird     score=0.929688
+class=2  car      score=0.906250
+[VERIFY] done ret=0</pre>
+
+        <h3>为什么移植实时后很卡</h3>
+        <ul>
+          <li>9 路输出总数据量明显高于 YOLOv8 当前的“数量 + 6x300 框”输出。</li>
+          <li><code>work_buf</code> 本身接近 7 MB，每次数据集和缓存管理压力更大。</li>
+          <li>DFL、三尺度遍历和 NMS 增加 CPU 后处理开销。</li>
+          <li>模型切换成功不等于实时性能满足 15 fps 推流要求。</li>
+        </ul>
+
+        <div class="success">
+          <strong>决策：</strong>YOLO11 实验保留为验证资产，但实时链路退回已验证且输出更轻的 <code>yolov8.om</code>。
+        </div>
+      </section>
+
+      <section id="performance" data-searchable>
+        <h2>7. 长时间卡点：画面卡顿、延迟和残影</h2>
+
+        <div class="issue">
+          <h3>早期根因：推理阻塞视频处理</h3>
+          <p>如果取帧、预处理、ACL execute、后处理、画框和编码全部在同一线程串行执行，一次 50 ms 左右的推理就会直接叠加到视频帧周期。再加上取帧、复制和编码，浏览器看到的就是低帧率和延迟堆积。</p>
+        </div>
+
+        <div class="issue">
+          <h3>当前解决方法：真正的异步线程</h3>
+          <ul>
+            <li>视频线程持续从 VPSS 取帧、叠加缓存框并送 VENC。</li>
+            <li>每 10 帧才向 AI 队列提交一次，减少 NPU 和内存带宽压力。</li>
+            <li>AI 队列是单槽“最新帧”设计；旧任务尚未处理时，新帧覆盖旧帧，避免越积越延迟。</li>
+            <li>AI 线程完成推理后更新共享检测结果，视频线程读取缓存结果，不等待本次推理完成。</li>
+          </ul>
+        </div>
+
+        <h3>如何读性能日志</h3>
+        <pre>[INFO] AI send profile frame=690 get=51ms mmap=0ms queue=17ms
+       overlay=0ms venc=1ms total=69ms det=0
+[AI] profile frame=690 create_in=8ms preprocess=31ms execute=14ms
+     parse=0ms draw=0ms total=53ms det=0</pre>
+        <table>
+          <thead><tr><th>字段</th><th>含义</th><th>异常判断</th></tr></thead>
+          <tbody>
+            <tr><td>get</td><td>等待 VPSS 帧</td><td>接近帧周期通常正常，不等于 CPU 忙了 51 ms</td></tr>
+            <tr><td>queue</td><td>复制并提交 AI 帧</td><td>持续升高说明 memcpy 或锁竞争明显</td></tr>
+            <tr><td>preprocess</td><td>YUV/RGB、缩放、letterbox、布局转换</td><td>当前约 30 ms，是主要 CPU 成本之一</td></tr>
+            <tr><td>execute</td><td>NPU 模型执行</td><td>当前 YOLOv8 常见约 14-15 ms</td></tr>
+            <tr><td>overlay</td><td>绘制缓存框和文字</td><td>通常接近 0 ms</td></tr>
+            <tr><td>venc</td><td>送入硬件编码器</td><td>持续高于 80 ms 需要查编码器拥塞</td></tr>
+          </tbody>
+        </table>
+
+        <h3>残影不一定来自 AI</h3>
+        <p>运动物体残影还可能来自传感器曝光过长、3DNR、编码码率/GOP、浏览器缓冲或 WebRTC/RTSP 播放策略。曾参考 <code>/home/oort/Desktop/sony_imx335</code> 尝试修改 sensor 寄存器，但用户随后要求撤销，因此当前不能把传感器参数变化当成已采用的解决方案。</p>
+
+        <div class="warning">
+          排查残影时先做 A/B：关闭 AI 但保持相同编码和播放端。如果残影仍存在，优先查 ISP/曝光/降噪/编码；如果仅开启 AI 后出现，才继续查帧复制、排队和推理阻塞。
+        </div>
+      </section>
+
+      <section id="overlay" data-searchable>
+        <h2>8. 框闪烁、框不准与文字绘制</h2>
+
+        <h3>为什么框会一闪而过</h3>
+        <p>每 10 帧才推理一次时，如果只在推理成功的那一帧画框，其余 9 帧都没有框，肉眼就会看到闪烁。当前实现缓存最近一次检测结果，并允许它在后续 30 帧继续绘制；连续若干次空检测后再清除，兼顾稳定显示和目标离开后的及时消失。</p>
+
+        <h3>为什么置信度调到 0.25 后更容易误检</h3>
+        <p><code>0.25</code> 的目标是先保证链路有结果，但低置信候选更多。例如把背景误判为 umbrella、bottle。它不代表后处理一定错误，必须结合以下因素判断：</p>
+        <ul>
+          <li>同一目标在连续多次推理中类别和位置是否稳定。</li>
+          <li>框坐标是否与物体一致，是否存在整体缩放/偏移。</li>
+          <li>输入颜色顺序、归一化和 letterbox 是否与模型转换配置一致。</li>
+          <li><code>classes.txt</code> 顺序是否与模型训练类别顺序一致。</li>
+          <li>目标是否太小、逆光、模糊或被遮挡。</li>
+        </ul>
+
+        <h3>当前绘制内容</h3>
+        <p>画框直接作用于 YVU420SP 帧，文字开关为 <code>AI_DRAW_LABEL_TEXT = true</code>，标签包含类别名和置信度。上报线程拿到的是画框后的同一帧，因此事件图片应当包含框和文字。</p>
+
+        <div class="note">
+          如果框整体位置正确但类别经常错误，优先查模型精度和阈值；如果框整体按固定比例偏移，优先查 letterbox 与坐标逆变换；如果所有分数都异常接近 0，优先查输入预处理和输出数据类型。
+        </div>
+      </section>
+
+      <section id="reporting" data-searchable>
+        <h2>9. 事件上报：已成功 POST，但平台仍不可见</h2>
+
+        <h3>当前实现</h3>
+        <ul>
+          <li>独立模块：<code>http_reporter.cpp/.h</code>。</li>
+          <li>推流线程只复制事件数据并入队，不执行网络请求。</li>
+          <li>队列最大 4 个，满时丢最旧任务，避免网络故障拖垮内存。</li>
+          <li>启动前 30 帧不提交；两次提交至少间隔 10000 ms。</li>
+          <li>YVU420SP 转 RGB，再用 stb 编码为质量 80 的 JPEG。</li>
+          <li>HTTP 200 才算成功；响应存在 <code>success</code> 字段时还必须为 true。</li>
+        </ul>
+
+        <h3>multipart/form-data 的实际结构</h3>
+        <pre>POST /vlsEventManagement/report HTTP/1.1
+Host: 192.168.60.76:32557
+Content-Type: multipart/form-data; boundary=----rtsp-streamer-event-boundary-7f3d9a01
+
+------rtsp-streamer-event-boundary-7f3d9a01
+Content-Disposition: form-data; name="event"
+Content-Type: application/json
+
+{event JSON}
+------rtsp-streamer-event-boundary-7f3d9a01
+Content-Disposition: form-data; name="file"; filename="frame_780.jpg"
+Content-Type: image/jpeg
+
+&lt;JPEG binary&gt;
+------rtsp-streamer-event-boundary-7f3d9a01--</pre>
+
+        <h3>等价 cURL</h3>
+        <pre>curl --location 'http://192.168.60.76:32557/vlsEventManagement/report' \
+  --form 'event={"eventDesc":"设备 AETY-00-NJN2-WJUB-00000100 detected 1 target(s).","eventType":"bottle","reportLocation":"测试位置","reportDevice":"AETY-00-NJN2-WJUB-00000100","reportTime":"2026-07-14 10:30:00","eventLevel":"low","eventStatus":"pending","executor":"","executorIds":"","eventData":"[{\"score\":0.92,\"objectDetInfo\":{\"className\":\"bottle\"},\"detectionRectangle\":{\"x\":100,\"y\":120,\"width\":300,\"height\":400}}]","handleResult":"","feedbackInfo":"{}","feedbackStatus":0};type=application/json' \
+  --form 'file=@/path/frame_780.jpg;type=image/jpeg;filename=frame_780.jpg'</pre>
+
+        <h3>成功日志说明什么</h3>
+        <pre>[REPORT] url=http://192.168.60.76:32557/vlsEventManagement/report
+targets=1 jpeg=99413 http=200
+resp="{"code":200,"success":true,"data":true,"msg":"操作成功"}"</pre>
+        <p>它证明设备已连接到该地址、完成上传并收到后端成功响应。它不能证明 VLStream 页面查询的就是同一数据库、租户或项目。</p>
+
+        <h3>平台页面没有新记录时的后端检查项</h3>
+        <ol>
+          <li><code>192.168.60.76:32557</code> 是否与 <code>workup-dev</code> 页面连接的是同一套后端环境。</li>
+          <li><code>/report</code> 最终写入哪张表，是否发生事务回滚或异步消费失败。</li>
+          <li>平台列表是否按租户、组织、设备、删除状态、事件状态或时间范围过滤。</li>
+          <li><code>reportDevice=AETY-00-NJN2-WJUB-00000100</code> 是否能关联平台设备表。</li>
+          <li>板端时间是否正确；错误的未来/过去时间可能让记录落在页面筛选范围外。</li>
+        </ol>
+
+        <h3>为什么不再调用 /save</h3>
+        <p>曾临时同时调用 <code>/report</code> 和 <code>/save</code>，日志显示 <code>/report</code> 返回 200，而 <code>/save</code> 返回 401“请求未授权”。<code>/save</code> 是需要平台鉴权的管理接口，不是设备匿名上报前必须调用的步骤。该双上报代码已按要求撤销。</p>
+
+        <h3>Apifox 的 415 错误</h3>
+        <pre>{
+  "code": 415,
+  "success": false,
+  "msg": "Content-Type 'application/octet-stream' is not supported"
+}</pre>
+        <p>当时选择的是 <code>2.png</code>，Apifox 以 <code>application/octet-stream</code> 上传。解决方法：</p>
+        <ul>
+          <li>使用真实 JPEG 文件，不能只把 PNG 扩展名改成 JPG。</li>
+          <li><code>event</code> 子项设置 <code>Content-Type: application/json</code>。</li>
+          <li><code>file</code> 子项设置 <code>Content-Type: image/jpeg</code>。</li>
+          <li>不要手工覆盖整个请求的 multipart Content-Type，让 Apifox 自动生成 boundary。</li>
+        </ul>
+      </section>
+
+      <section id="hot-update" data-searchable>
+        <h2>10. 模型热更新</h2>
+
+        <h3>当前接口</h3>
+        <pre>GET http://DEVICE_IP:8888/vlsDeviceInfo/latest-training-model
+    ?deviceId=AETY-00-NJN2-WJUB-00000100
+    &amp;modelDownloadPath=http://MODEL_SERVER/new.om</pre>
+
+        <h3>Apifox / PC 测试环境</h3>
+        <p>板端测试 IP 为 <code>192.168.88.98</code>，PC 为 <code>192.168.88.47</code>，模型目录曾使用 Windows 的 <code>D:\Modeladdr</code>。</p>
+        <pre># PC 在 D:\Modeladdr 中启动 HTTP 文件服务
+python -m http.server 8000
+
+# 设备请求 URL（modelDownloadPath 应由 Apifox URL 编码）
+http://192.168.88.98:8888/vlsDeviceInfo/latest-training-model?deviceId=AETY-00-NJN2-WJUB-00000100&amp;modelDownloadPath=http%3A%2F%2F192.168.88.47%3A8000%2Fyolov8.om</pre>
+
+        <h3>成功日志</h3>
+        <pre>[MODEL] request deviceId=AETY-00-NJN2-WJUB-00000100
+        modelDownloadPath=http://192.168.88.47:8000/yolov8.om
+[MODEL] download ok path=/mnt/ai_verify/yolov8.om.tmp size=3748520
+[MODEL] load new model ok
+[MODEL] switched current model=/mnt/ai_verify/yolov8.om</pre>
+        <p>这些日志说明请求到达、文件下载、候选模型 ACL 加载和运行上下文切换均成功。切换前后模型文件相同也会成功，但只能验证热更新机制，不能证明模型行为发生变化。</p>
+
+        <h3>参考项目中值得借鉴的机制</h3>
+        <ul>
+          <li>从 <code>video.conf</code> 控制是否启动接收服务。</li>
+          <li>用 <code>webcam.conf</code> 的 <code>serno</code> 校验 deviceId。</li>
+          <li>接收服务独立于推流。</li>
+          <li>新模型先初始化成功，再在 mutex 保护下替换旧上下文。</li>
+          <li>切换失败继续使用旧模型。</li>
+        </ul>
+
+        <h3>参考项目不能照搬的缺陷</h3>
+        <ul>
+          <li>入口声称支持 HTTPS，但下载函数实际只实现 HTTP。</li>
+          <li>直接写正式模型文件，没有 <code>.tmp + rename</code>。</li>
+          <li>先返回成功再调用切换回调，并忽略回调返回值。</li>
+          <li>固定使用 RKNN/ONNX，与 Hi3519 的 OM/ACL 不兼容。</li>
+        </ul>
+
+        <h3>当前仍需改进的风险</h3>
+        <div class="warning">
+          当前实现先验证 <code>.tmp</code>，随后 rename 覆盖正式路径，再从正式路径重新加载。如果第二次加载意外失败，旧内存上下文仍可继续推理，但磁盘上的正式模型已经被替换，重启后可能无法恢复。更稳妥的方案是版本化文件、候选上下文一次加载、原子交换 active 指针，并保留上一版本用于回滚。
+        </div>
+        <ul>
+          <li>当前下载器只真正支持 <code>http://</code>，不支持 HTTPS、重定向、chunked 和鉴权 URL。</li>
+          <li>仅“模型可加载”不够，还应校验输入尺寸、输入数量、输出数量和后处理类型。</li>
+          <li>热更新到不同类别模型时，必须同步 labels 和后处理配置。</li>
+        </ul>
+
+        <h3>为什么网页平台可能无法直接下发</h3>
+        <p><code>#/algorithm-arrangement</code> 是前端路由。真正发请求的应是 VLStream 后端。设备地址 <code>192.168.88.98</code> 是私网地址，如果云端后端没有路由/VPN/网关，就无法访问设备的 8888 端口。浏览器从 HTTPS 页面直接访问设备 HTTP 还会受到 mixed-content 和 CORS 限制。</p>
+        <pre># 点击平台下发时，在板端观察是否有连接
+tcpdump -ni eth0 tcp port 8888</pre>
+        <p>完全没有 SYN 包说明问题在平台调用或网络可达性，不在模型加载代码。</p>
+      </section>
+
+      <section id="network" data-searchable>
+        <h2>11. IP、DHCP、MAC 与设备标识</h2>
+
+        <h3>自动选网口脚本的含义</h3>
+        <p>脚本依次检查 <code>eth0 eth1 end0</code> 的 carrier，找到插线网口后启动接口并尝试 DHCP；只有获得 IPv4 地址才认为成功。所有 DHCP 都失败时，再给 eth0 设置静态地址。</p>
+
+        <h3>为什么同一根网线重启后 IP 仍会变化</h3>
+        <p>DHCP 地址由路由器租约决定，不是由网线决定。正常情况下，同一稳定 MAC 常会续租同一地址，但没有绝对保证。项目排查中还发现每次启动显示的 MAC 不同，例如：</p>
+        <pre>eth0 Link encap:Ethernet HWaddr E6:44:5E:F6:99:C4</pre>
+        <p>如果固件没有从 OTP、EEPROM 或持久化分区读取固定 MAC，驱动可能生成随机本地 MAC。路由器会把它视为一台新设备，因此分配不同 IP。</p>
+
+        <h3>手工 DHCP 成功说明什么</h3>
+        <pre>udhcpc -i eth0 -s /etc/udhcpc.script -q -n -t 3 -T 2
+udhcpc: lease of 192.168.88.48 obtained from 192.168.88.1</pre>
+        <p>说明网线、carrier、DHCP 服务器和 udhcpc 客户端基本正常。此前回退到 <code>192.168.88.98</code>，并不表示 DHCP 不可用，可能是启动时 DHCP 超时、脚本不完整或 MAC 变化导致租约变化。</p>
+
+        <h3>设备 ID、IP、MAC 不是同一个字段</h3>
+        <table>
+          <thead><tr><th>标识</th><th>当前示例</th><th>用途</th></tr></thead>
+          <tbody>
+            <tr><td>设备序列号</td><td><code>AETY-00-NJN2-WJUB-00000100</code></td><td>业务身份、平台关联、模型下发 deviceId 校验</td></tr>
+            <tr><td>MAC</td><td><code>xx:xx:xx:xx:xx:xx</code></td><td>二层网络身份、DHCP 租约依据</td></tr>
+            <tr><td>IP</td><td><code>192.168.88.98</code></td><td>当前网络中的访问地址</td></tr>
+          </tbody>
+        </table>
+
+        <h3>当前决策与量产建议</h3>
+        <p>当前联调阶段先固定 <code>192.168.88.98/24</code>，网关 <code>192.168.88.1</code>，避免调试地址反复变化。量产时更合理的是：</p>
+        <ol>
+          <li>每台设备从 OTP/EEPROM/独立持久化分区获得唯一且稳定的 MAC。</li>
+          <li>使用 DHCP，由路由器按 MAC 保留地址；或者平台通过设备主动长连接，不依赖反向访问私网 IP。</li>
+          <li>不同设备不能烧录完全相同的固定 MAC，也不应全部固定为同一个 IP。</li>
+        </ol>
+
+        <h3>板端网络检查</h3>
+        <pre>cat /sys/class/net/eth0/carrier
+ifconfig eth0
+route -n
+cat /tmp/current_iface
+cat /tmp/current_ip
+ping -c 3 192.168.60.76</pre>
+      </section>
+
+      <section id="rootfs" data-searchable>
+        <h2>12. rootfs 编译、打包与确认</h2>
+
+        <h3>构建入口</h3>
+        <pre>cd smp/a55_linux/source/bsp
+make rootfs_build</pre>
+        <p>执行前需要保证 SDK 交叉编译工具链环境正确。<code>rootfs_build</code> 会重新准备 rootfs、构建 BusyBox/板端工具、设置权限并生成 ext4 等镜像。</p>
+
+        <h3>当前 160 MB eMMC 镜像位置</h3>
+        <pre>smp/a55_linux/source/bsp/pub/hi3519dv500_emmc_image_musl/
+rootfs_hi3519dv500_160M.ext4</pre>
+
+        <h3>为什么每次改代码后必须确认镜像内容</h3>
+        <p>多次出现“代码已经改了，但板端行为像上一个版本”的疑问。常见原因包括：</p>
+        <ul>
+          <li>只编译了应用，没有把新二进制复制进 rootfs staging 目录。</li>
+          <li>rootfs 镜像没有重新生成，或烧录了旧路径下的镜像。</li>
+          <li>板端同时存在多个同名程序，实际运行的不是新文件。</li>
+          <li>模型、配置或动态库没有一起打包。</li>
+        </ul>
+
+        <h3>每次构建后的核对清单</h3>
+        <ul class="checklist">
+          <li>检查构建命令退出码为 0。</li>
+          <li>检查 ext4 镜像修改时间和大小。</li>
+          <li>记录镜像 MD5，确保烧录端拿到同一文件。</li>
+          <li>确认 rootfs 中包含新的 <code>rtsp_streamer</code>、OM、classes.txt 和配置。</li>
+          <li>若模型依赖 AICPU，确认 <code>libsvp_aicpu.so</code> 已打包且架构正确。</li>
+          <li>烧录后从启动日志确认模型路径、配置和功能开关。</li>
+        </ul>
+        <pre>ls -lh smp/a55_linux/source/bsp/pub/hi3519dv500_emmc_image_musl/rootfs_hi3519dv500_160M.ext4
+md5sum smp/a55_linux/source/bsp/pub/hi3519dv500_emmc_image_musl/rootfs_hi3519dv500_160M.ext4</pre>
+      </section>
+
+      <section id="logs" data-searchable>
+        <h2>13. 常见日志的正确判读</h2>
+        <table>
+          <thead><tr><th>日志</th><th>含义</th><th>下一步</th></tr></thead>
+          <tbody>
+            <tr><td><code>sys_config.ko: File exists</code></td><td>内核模块已加载</td><td>不是 AI 失败证据；避免重复加载即可</td></tr>
+            <tr><td><code>model loaded ... inputs=4 outputs=2</code></td><td>模型描述创建成功</td><td>继续看 execute 和检测结果，不能到此就宣布推理成功</td></tr>
+            <tr><td><code>execute ok</code></td><td>NPU 执行返回成功</td><td>继续验证输出解析和框坐标</td></tr>
+            <tr><td><code>done ret=0</code> 且有正确框</td><td>离线闭环成功</td><td>可以移植同一输入/输出逻辑到实时链路</td></tr>
+            <tr><td><code>detections=0</code></td><td>本次没有通过阈值的结果</td><td>检查目标、阈值、预处理，不等于模型一定坏了</td></tr>
+            <tr><td><code>overwritten=0</code></td><td>AI 单槽队列暂未覆盖任务</td><td>如果持续增长，说明 AI 处理赶不上提交频率</td></tr>
+            <tr><td><code>http=200 success=true</code></td><td>后端接受了事件请求</td><td>平台不可见时查数据库环境、租户和列表过滤</td></tr>
+            <tr><td><code>/save http=401</code></td><td>管理接口需要鉴权</td><td>设备端继续使用 /report，不应先调 /save</td></tr>
+            <tr><td><code>415 application/octet-stream</code></td><td>上传文件 MIME 错误</td><td>使用真实 JPEG，file 子项设置 image/jpeg</td></tr>
+            <tr><td><code>load new model ok</code></td><td>候选模型可被 ACL 初始化</td><td>继续确认 switched 日志和切换后推理结果</td></tr>
+            <tr><td><code>crng init done</code></td><td>内核随机数初始化完成</td><td>正常启动信息，通常无需关注</td></tr>
+          </tbody>
+        </table>
+
+        <h3>设备自动崩溃/断电的判断边界</h3>
+        <p>应用日志突然停止不能单独证明应用导致“断电”。需要区分：</p>
+        <ul>
+          <li>应用进程崩溃：shell 仍可操作，可能有 segmentation fault。</li>
+          <li>内核崩溃：串口通常出现 panic、oops、watchdog 或调用栈。</li>
+          <li>电源/硬件复位：串口直接中断或重新出现 bootrom/U-Boot 启动。</li>
+          <li>内存压力：可能出现 OOM killer、分配失败或驱动异常。</li>
+        </ul>
+        <p>曾有固件运行一段时间后设备异常停止，但仅凭应用检测日志无法确定电源级根因。降低推理频率、使用已验证 YOLOv8、减少大缓冲和异步解耦改善了稳定性；若再次出现，必须保留异常前后的完整串口和内核日志。</p>
+      </section>
+
+      <section id="commands" data-searchable>
+        <h2>14. 常用验证命令</h2>
+
+        <details open>
+          <summary>YOLOv8 离线验证</summary>
+          <div><pre>cd /ko
+sh load3519dv500 -i -sensor0 imx335 -sensor1 imx335
+/mnt/ai_yolov8_verify</pre></div>
+        </details>
+
+        <details>
+          <summary>YOLO11 实验验证</summary>
+          <div><pre>/mnt/ai_yolo11_verify</pre></div>
+        </details>
+
+        <details>
+          <summary>检查模型和运行文件</summary>
+          <div><pre>ls -lh /mnt/ai_verify/
+ls -lh /mnt/rtsp_streamer
+ls -lh /mnt/webrtc/model/classes.txt
+cat /mnt/webrtc/video.conf
+cat /mnt/webrtc/webcam.conf</pre></div>
+        </details>
+
+        <details>
+          <summary>检查模型接收服务</summary>
+          <div><pre>netstat -lnt | grep 8888
+tcpdump -ni eth0 tcp port 8888</pre></div>
+        </details>
+
+        <details>
+          <summary>检查事件接口网络</summary>
+          <div><pre>ping -c 3 192.168.60.76
+nc -zv -w 3 192.168.60.76 32557</pre></div>
+        </details>
+
+        <details>
+          <summary>查看当前 IP、MAC 和路由</summary>
+          <div><pre>ifconfig eth0
+ifconfig eth0 | head -1
+route -n
+cat /sys/class/net/eth0/carrier</pre></div>
+        </details>
+
+        <details>
+          <summary>手工申请 DHCP 地址</summary>
+          <div><pre>udhcpc -i eth0 -s /etc/udhcpc.script -q -n -t 3 -T 2</pre></div>
+        </details>
+      </section>
+
+      <section id="files" data-searchable>
+        <h2>15. 当前关键文件与职责</h2>
+        <table class="path-list">
+          <thead><tr><th>文件</th><th>职责</th></tr></thead>
+          <tbody>
+            <tr><td><code>rtsp_streamer.c</code></td><td>VI/VPSS/VENC/RTSP 主流程、每 10 帧调度、异步 AI 队列、缓存框叠加、事件 submit、服务启停</td></tr>
+            <tr><td><code>ai_bridge.cpp/.h</code></td><td>C 与 C++ AI 适配层之间的稳定接口</td></tr>
+            <tr><td><code>ai_acl_adapter.cpp/.h</code></td><td>SVP ACL 初始化、模型加载、预处理、YOLOv8/YOLO11 后处理、NMS、缓存框、YUV 画框和模型热切换</td></tr>
+            <tr><td><code>ai_yolov8_verify.cpp</code></td><td>SDK YOLOv8 + dog_bike_car bin 的离线闭环验证</td></tr>
+            <tr><td><code>ai_yolo11_verify.cpp</code></td><td>YOLO11 三输入、九输出、DFL 与 NMS 的离线实验</td></tr>
+            <tr><td><code>http_reporter.cpp/.h</code></td><td>异步事件队列、JPEG 编码、event/file multipart 请求与响应检查</td></tr>
+            <tr><td><code>model_receiver.cpp/.h</code></td><td>8888 HTTP 服务、设备 ID 校验、模型下载、临时验证和热切换回调</td></tr>
+            <tr><td><code>/mnt/webrtc/video.conf</code></td><td>模型路径、模型接收开关、事件上报开关/URL/位置/设备/间隔</td></tr>
+            <tr><td><code>/mnt/webrtc/webcam.conf</code></td><td>WebRTC 初始化参数、serno、服务器地址和本地 Web 服务配置</td></tr>
+            <tr><td><code>/mnt/webrtc/model/classes.txt</code></td><td>COCO 类别 ID 到名称映射</td></tr>
+          </tbody>
+        </table>
+
+        <h3>参考项目</h3>
+        <p><code>/home/oort/Desktop/share/jiaojie/camera-800w-ai-fh-master</code> 提供了 RKNN 异步推理、模型接收和事件上报的设计参考，但平台、模型格式和硬件不同，只能借鉴线程与接口设计，不能复制 RKNN/ONNX 加载逻辑。</p>
+      </section>
+
+      <section id="open-items" data-searchable>
+        <h2>16. 尚未闭环的问题与后续优先级</h2>
+
+        <div class="issue">
+          <h3>事件已返回成功，但 VLStream 页面没有记录</h3>
+          <span class="tag open">待后端确认</span>
+          <p>设备端已有 HTTP 200 和 <code>success=true</code>。下一步不是继续重复修改 multipart，而是由后端确认入库表、环境、租户、设备关联和页面查询过滤。</p>
+        </div>
+
+        <div class="issue">
+          <h3>平台算法编排直接下发模型</h3>
+          <span class="tag open">网络架构待确认</span>
+          <p>需要确认平台后端能否路由到设备私网 <code>192.168.88.98:8888</code>。若不能，应改为设备主动轮询、WebRTC/消息信令通知后由设备主动下载，或建立 VPN/边缘网关。</p>
+        </div>
+
+        <div class="issue">
+          <h3>模型下载 HTTPS 与回滚</h3>
+          <span class="tag open">工程增强</span>
+          <p>当前只支持普通 HTTP。平台对象存储大概率使用 HTTPS、重定向或签名 URL，需要成熟 HTTP 客户端能力、证书校验、下载大小/MD5 校验、版本化文件和失败回滚。</p>
+        </div>
+
+        <div class="issue">
+          <h3>识别精度</h3>
+          <span class="tag open">需要数据验证</span>
+          <p>当前 0.25 阈值用于先跑通，误检仍明显。应收集真实摄像头样本，逐项核对预处理，再基于 precision/recall 调阈值，必要时使用面向目标场景训练和转换的模型。</p>
+        </div>
+
+        <div class="issue">
+          <h3>量产网络身份</h3>
+          <span class="tag open">需要硬件/生产方案</span>
+          <p>每台设备必须有稳定唯一 MAC 和业务 serno。固定 IP 只适合当前单板联调，不能直接复制到多设备部署。</p>
+        </div>
+
+        <h3>新问题的标准排查顺序</h3>
+        <ol>
+          <li>先保存完整日志和固件 MD5，确认运行版本。</li>
+          <li>把问题分到采集、推理、后处理、绘制、编码、网络或平台数据库中的一层。</li>
+          <li>使用离线程序或 cURL/Apifox 建立最小可复现闭环。</li>
+          <li>一次只改变一个变量，并记录修改前后的性能和输出。</li>
+          <li>实验方案不采用时明确撤销，避免后续把旧实验误认为当前配置。</li>
+        </ol>
+      </section>
+
+      <div id="searchEmpty" class="search-empty">没有匹配的章节。</div>
+    </main>
+  </div>
+
+  <footer>
+    本文档根据项目开发与排障过程整理。代码和配置可能继续变化；执行操作前以当前源码、板端日志和镜像 MD5 为准。
+  </footer>
+
+  <script>
+    (function () {
+      var search = document.getElementById("search");
+      var clear = document.getElementById("clearSearch");
+      var sections = Array.prototype.slice.call(document.querySelectorAll("[data-searchable]"));
+      var empty = document.getElementById("searchEmpty");
+
+      function normalize(value) {
+        return value.toLowerCase().replace(/\s+/g, " ").trim();
+      }
+
+      function applySearch() {
+        var query = normalize(search.value);
+        var visible = 0;
+        sections.forEach(function (section) {
+          var matched = !query || normalize(section.textContent).indexOf(query) !== -1;
+          section.classList.toggle("hidden-by-search", !matched);
+          if (matched) visible += 1;
+        });
+        empty.style.display = visible ? "none" : "block";
+      }
+
+      search.addEventListener("input", applySearch);
+      clear.addEventListener("click", function () {
+        search.value = "";
+        applySearch();
+        search.focus();
+      });
+    }());
+  </script>
+</body>
+</html>
