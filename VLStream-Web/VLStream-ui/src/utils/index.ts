@@ -198,8 +198,10 @@ export function getVideoCover(url) {
 }
 
 
-// 配置是否在当前是不是开发环境
+/**
+ * 判断当前页面是否运行在本地开发主机，避免鉴权失败时跳往外部统一门户。
+ */
 export function jugeIsInLocalhostEnv () {
-  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === 'lanjian.com'
+  return ['localhost', '127.0.0.1', '::1', '[::1]', 'lanjian.com'].includes(window.location.hostname)
   //  || window.location.hostname === 'workup-dev.myoumuamua.com'  // 这个为测试环境网关的跳转设置 记得注释，只用于调试跨域 这些问题
 }

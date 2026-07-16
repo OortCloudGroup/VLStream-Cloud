@@ -8,6 +8,7 @@
 * @Copyright aPaaS-front-team. All rights reserved.
 */
 import config from '@/config/index'
+import { jugeIsInLocalhostEnv } from '@/utils'
 import { useRouter } from 'vue-router'
 
 export default function() {
@@ -15,7 +16,7 @@ export default function() {
   const goWhere = function() {
     if (!!config.notforcedLogin) return
     // 是否跳转到统一的登陆页面 或者 是否在统一门户
-    if (config.common && !config.common.commonLoginPage || window.location.href.includes('localhost')) {
+    if ((config.common && !config.common.commonLoginPage) || jugeIsInLocalhostEnv()) {
       if (routerHook) {
         routerHook.push('/login')
       } else {
