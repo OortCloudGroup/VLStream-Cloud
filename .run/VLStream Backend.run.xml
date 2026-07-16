@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="VLStream Backend" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <module name="ruoyi-admin" />
+    <option name="SHORTEN_COMMAND_LINE" value="MANIFEST" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.ruoyi.RuoYiApplication" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/VLStream-Cloud-Backend-Server/vls-stream" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

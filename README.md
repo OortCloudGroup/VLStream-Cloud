@@ -21,6 +21,7 @@
   <p>
     <a href="#-quick-start">Quick Start</a> •
     <a href="#-key-features">Key Features</a> •
+    <a href="#-application-scenarios">Application Scenarios</a> •
     <a href="#-technology-stack">Technology Stack</a> •
     <a href="#-deployment">Deployment</a> •
     <a href="#-help-and-support">Help</a>
@@ -56,6 +57,55 @@ object storage, and operational support for enterprise video applications.
 | Enterprise Permissions | Sa-Token authentication, RBAC, data permissions, user management, and role management |
 | Platform Services | Scheduled jobs, object storage, SMS integration, monitoring, and XXL-Job support |
 | Visual Operations | Vue 3 management console with dashboards, GIS views, reusable CRUD components, and video layouts |
+
+---
+
+## 🌐 Application Scenarios
+
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <img src="./assets/use-cases/01-chemical-production-safety.jpg" alt="Chemical production safety" width="100%"><br>
+      <strong>Chemical Production Safety</strong>
+    </td>
+    <td align="center" width="33%">
+      <img src="./assets/use-cases/02-smart-water-conservancy.jpg" alt="Smart water conservancy" width="100%"><br>
+      <strong>Smart Water Conservancy</strong>
+    </td>
+    <td align="center" width="33%">
+      <img src="./assets/use-cases/03-wastewater-treatment.jpg" alt="Wastewater treatment" width="100%"><br>
+      <strong>Wastewater Treatment</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
+      <img src="./assets/use-cases/04-smart-construction-site.jpg" alt="Smart construction site" width="100%"><br>
+      <strong>Smart Construction Site</strong>
+    </td>
+    <td align="center" width="33%">
+      <img src="./assets/use-cases/05-smart-community.jpg" alt="Smart community" width="100%"><br>
+      <strong>Smart Community</strong>
+    </td>
+    <td align="center" width="33%">
+      <img src="./assets/use-cases/06-gas-station-safety.jpg" alt="Gas station safety supervision" width="100%"><br>
+      <strong>Gas Station Safety</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
+      <img src="./assets/use-cases/07-smart-kitchen.jpg" alt="Smart kitchen" width="100%"><br>
+      <strong>Smart Kitchen</strong>
+    </td>
+    <td align="center" width="33%">
+      <img src="./assets/use-cases/08-smart-campus.jpg" alt="Smart campus" width="100%"><br>
+      <strong>Smart Campus</strong>
+    </td>
+    <td align="center" width="33%">
+      <img src="./assets/use-cases/09-smart-city-management.jpg" alt="Smart city management" width="100%"><br>
+      <strong>Smart City Management</strong>
+    </td>
+  </tr>
+</table>
 
 ---
 
