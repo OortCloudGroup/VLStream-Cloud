@@ -313,7 +313,8 @@ import {
   Plus, Search, MoreFilled, View, VideoPause, Upload, Delete, 
   Loading, Check, Clock, Box, Tools 
 } from '@element-plus/icons-vue'
-import { mockTrainingData, mockModelData } from '@/mock/videoData'
+import { getTrainingPage, stopTraining as stopTrainingApi, delTrainingTask } from '@/api/algorithmTraining'
+import { getModelPage, deleteModel as deleteModelApi } from '@/api/algorithmModel'
 
 // 响应式数据
 const activeTab = ref('training')
@@ -328,10 +329,10 @@ const showCreateTrainingDialog = ref(false)
 
 // 统计数据
 const trainingStats = ref({
-  running: 2,
-  completed: 15,
-  pending: 3,
-  models: 8
+  running: 0,
+  completed: 0,
+  pending: 0,
+  models: 0
 })
 
 // 训练任务数据
@@ -457,12 +458,13 @@ const viewTaskDetails = (task) => {
 
 const stopTraining = (task) => {
   ElMessageBox.confirm('确定要停止此训练任务吗？', '确认操作')
-    .then(() => {
-      task.status = 'stopped'
+    .then(async () => {
+      await stopTrainingApi(task.id)
+      await loadRealData()
       ElMessage.success('训练任务已停止')
     })
-    .catch(() => {
-      ElMessage.info('操作已取消')
+    .catch((error) => {
+      if (error !== 'cancel' && error !== 'close') ElMessage.error(`停止训练失败：${error.message || error}`)
     })
 }
 
@@ -472,15 +474,13 @@ const publishModel = (task) => {
 
 const deleteTask = (task) => {
   ElMessageBox.confirm('确定要删除此训练任务吗？', '确认删除')
-    .then(() => {
-      const index = trainingTasks.value.findIndex(t => t.id === task.id)
-      if (index > -1) {
-        trainingTasks.value.splice(index, 1)
-        ElMessage.success('删除成功')
-      }
+    .then(async () => {
+      await delTrainingTask(task.id)
+      await loadRealData()
+      ElMessage.success('删除成功')
     })
-    .catch(() => {
-      ElMessage.info('已取消删除')
+    .catch((error) => {
+      if (error !== 'cancel' && error !== 'close') ElMessage.error(`删除训练任务失败：${error.message || error}`)
     })
 }
 
@@ -498,15 +498,13 @@ const viewModelDetails = (model) => {
 
 const deleteModel = (model) => {
   ElMessageBox.confirm('确定要删除此模型吗？', '确认删除')
-    .then(() => {
-      const index = models.value.findIndex(m => m.id === model.id)
-      if (index > -1) {
-        models.value.splice(index, 1)
-        ElMessage.success('删除成功')
-      }
+    .then(async () => {
+      await deleteModelApi(model.id)
+      await loadRealData()
+      ElMessage.success('删除成功')
     })
-    .catch(() => {
-      ElMessage.info('已取消删除')
+    .catch((error) => {
+      if (error !== 'cancel' && error !== 'close') ElMessage.error(`删除模型失败：${error.message || error}`)
     })
 }
 
@@ -523,33 +521,48 @@ const resetTrainingForm = () => {
 }
 
 const createTrainingTask = () => {
-  const newTask = {
-    id: Date.now(),
-    name: trainingForm.value.name,
-    algorithmType: trainingForm.value.algorithmType,
-    datasetName: '选定数据集',
-    datasetSize: '数据量',
-    status: 'pending',
-    progress: 0,
-    accuracy: 0,
-    epoch: 0,
-    totalEpochs: trainingForm.value.epochs,
-    startTime: '',
-    estimatedTime: '待开始',
-    gpuUsage: '0%',
-    createTime: new Date().toLocaleString()
+  ElMessage.error('该旧页面未提供后端必需的真实算法 ID 和数据集 ID，未创建训练任务；请使用“算法训练”页面')
+}
+
+const loadRealData = async () => {
+  try {
+    const [trainingResponse, modelResponse] = await Promise.all([
+      getTrainingPage({ current: 1, size: 100 }),
+      getModelPage({ current: 1, size: 100 })
+    ])
+    const trainingRecords = trainingResponse?.data?.records || []
+    const modelRecords = modelResponse?.data?.records || []
+    trainingTasks.value = trainingRecords.map(item => ({
+      id: item.id,
+      name: item.taskName,
+      algorithmType: item.algorithmName || '-',
+      datasetName: item.datasetName || '-',
+      datasetSize: '-',
+      status: item.trainStatus,
+      progress: item.progress || 0,
+      accuracy: item.accuracy || 0,
+      epoch: item.epochCurrent || 0,
+      totalEpochs: item.epochTotal || 0,
+      startTime: item.startTime || '',
+      estimatedTime: item.estimatedTime || '-',
+      gpuUsage: item.gpuUsage || '-'
+    }))
+    models.value = modelRecords.map(item => ({ id: item.id, name: item.modelName, status: item.statusName || String(item.status) }))
+    trainingStats.value = {
+      running: trainingRecords.filter(item => item.trainStatus === 'training').length,
+      completed: trainingRecords.filter(item => item.trainStatus === 'completed').length,
+      pending: trainingRecords.filter(item => item.trainStatus === 'pending').length,
+      models: Number(modelResponse?.data?.total || modelRecords.length)
+    }
+  } catch (error) {
+    trainingTasks.value = []
+    models.value = []
+    ElMessage.error(`加载真实训练数据失败：${error.message || error}`)
   }
-  
-  trainingTasks.value.unshift(newTask)
-  showCreateTrainingDialog.value = false
-  resetTrainingForm()
-  ElMessage.success('训练任务创建成功')
 }
 
 onMounted(() => {
-  // 加载mock数据
-  trainingTasks.value = mockTrainingData()
-  models.value = mockModelData()
+  loadRealData()
 })
 </script>
 

@@ -60,6 +60,8 @@
 </template>
 
 <script>
+import { connectToServer } from '@/api/dataset'
+
 export default {
   name: 'SSHConnectionConfig',
   emits: ['connection-ready'],
@@ -100,21 +102,26 @@ export default {
         this.testing = true
         this.connectionStatus = null
         
-        // 模拟连接测试
-        setTimeout(() => {
-          this.testing = false
-          this.connectionStatus = {
-            type: 'success',
-            message: '连接测试成功！'
-          }
-          this.connectionValid = true
-        }, 2000)
+        if (this.form.authType !== 'password') {
+          throw new Error('当前后端未接入私钥认证，未发起 SSH 连接')
+        }
+        const response = await connectToServer({
+          host: this.form.host,
+          username: this.form.username,
+          password: this.form.password,
+          path: '.'
+        })
+        if (response?.code !== 200 || response?.data?.success !== true) {
+          throw new Error(response?.msg || response?.message || response?.data?.message || 'SSH 连接失败')
+        }
+        this.connectionStatus = { type: 'success', message: response.data.message || '真实 SSH 连接测试成功' }
+        this.connectionValid = true
         
       } catch (error) {
         this.testing = false
         this.connectionStatus = {
           type: 'error',
-          message: '连接测试失败，请检查配置信息'
+          message: `连接测试失败：${error.message || error}`
         }
         this.connectionValid = false
       }
@@ -126,14 +133,13 @@ export default {
         return
       }
       
-      // 保存连接配置到本地存储
+      // 密码不落入浏览器本地存储，只向当前组件链路交付已验证配置。
       const connectionConfig = { ...this.form }
-      localStorage.setItem('ssh_connection_config', JSON.stringify(connectionConfig))
       
       // 触发连接就绪事件
       this.$emit('connection-ready', connectionConfig)
       
-      this.$message.success('连接配置已保存')
+      this.$message.success('已交付经真实连接测试的配置')
     },
     
     resetForm() {
@@ -143,14 +149,7 @@ export default {
     },
     
     loadSavedConnection() {
-      const saved = localStorage.getItem('ssh_connection_config')
-      if (saved) {
-        try {
-          this.form = { ...this.form, ...JSON.parse(saved) }
-        } catch (error) {
-          console.error('加载保存的连接配置失败:', error)
-        }
-      }
+      // 凭据不从 localStorage 读取。
     }
   },
   

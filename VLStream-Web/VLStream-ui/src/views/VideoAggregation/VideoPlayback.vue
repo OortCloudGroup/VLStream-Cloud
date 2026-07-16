@@ -330,7 +330,7 @@
           <!-- 视频缩略图列表 -->
           <div class="video-thumbnails">
             <div
-              v-for="(video, index) in mockVideoList"
+              v-for="(video, index) in videoList"
               :key="index"
               class="video-thumbnail-item"
               :class="{ active: selectedVideoIndex === index }"
@@ -636,12 +636,8 @@ const getDeviceVideoRecords = async (deviceId, date) => {
   }
 }
 
-// 模拟视频列表数据
-const mockVideoList = ref([
-  { timeRange: '10:20:00 - 10:30:00' },
-  { timeRange: '10:07:00 - 10:10:00' },
-  { timeRange: '10:07:00 - 10:10:00' }
-])
+// 仅由真实录像查询结果填充。
+const videoList = ref([])
 
 // 方法
 const toggleDeviceTree = () => {
@@ -703,23 +699,19 @@ const handleAdvancedSearchReset = () => {
 }
 
 const handleExport = () => {
-  console.log('导出数据')
-  ElMessage.success('导出数据')
+  ElMessage.error('当前未接入录像导出接口，未导出任何数据')
 }
 
 const handleUpload = () => {
-  console.log('上传文件')
-  ElMessage.success('上传功能')
+  ElMessage.error('当前未接入录像上传接口，未上传任何文件')
 }
 
 const handleDownloadTemplate = () => {
-  console.log('下载模板')
-  ElMessage.success('下载模板')
+  ElMessage.error('当前未配置录像导入模板，未下载文件')
 }
 
 const handleBatchOperation = () => {
-  console.log('批量操作')
-  ElMessage.success('批量操作')
+  ElMessage.error('当前未接入录像批量操作接口，未执行操作')
 }
 
 const handleNodeClick = (data) => {
@@ -891,7 +883,7 @@ const formatTime = (seconds) => {
 // 选择视频
 const selectVideo = (index) => {
   selectedVideoIndex.value = index
-  const selectedVideoData = mockVideoList.value[index]
+  const selectedVideoData = videoList.value[index]
   console.log('选择视频:', selectedVideoData)
 
   if (selectedVideoData && selectedVideoData.record) {
@@ -1063,8 +1055,8 @@ const handleThumbnailError = (event, index) => {
   }
 
   // 同时在数据中标记缩略图加载失败
-  if (mockVideoList.value[index]) {
-    mockVideoList.value[index].thumbnailUrl = null
+  if (videoList.value[index]) {
+    videoList.value[index].thumbnailUrl = null
   }
 }
 
@@ -1173,7 +1165,7 @@ const loadVideoRecords = async () => {
     if (records && records.length > 0) {
       videoRecords.value = records
       // 转换为视频列表格式
-      mockVideoList.value = records.map(record => ({
+      videoList.value = records.map(record => ({
         timeRange: `${record.recordStartTime?.substring(11, 19) || '--:--:--'} - ${record.recordEndTime?.substring(11, 19) || '--:--:--'}`,
         filePath: record.filePath,
         fileName: record.fileName,
@@ -1223,14 +1215,14 @@ const loadVideoRecords = async () => {
       }
     } else {
       videoRecords.value = []
-      mockVideoList.value = []
+      videoList.value = []
       currentVideoUrl.value = ''
       ElMessage.info(`${selectedDateStr.value} 没有视频记录`)
     }
   } catch (error) {
     console.error('加载视频记录失败:', error)
     videoRecords.value = []
-    mockVideoList.value = []
+    videoList.value = []
     currentVideoUrl.value = ''
 
     // 统一的错误处理，只显示一个友好的提示

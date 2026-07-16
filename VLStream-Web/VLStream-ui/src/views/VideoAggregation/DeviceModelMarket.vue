@@ -113,10 +113,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Check, Close } from '@element-plus/icons-vue'
-import { modelListData } from './constants.js'
+import { getModelPage } from '@/api/algorithmModel'
 
 const props = defineProps({
   deviceInfo: {
@@ -131,7 +131,28 @@ const emit = defineEmits(['save', 'cancel'])
 const activeCategory = ref('all')
 
 // 模型列表
-const modelList = ref([...modelListData])
+const modelList = ref([])
+
+// 从真实模型表加载可选模型，失败时不注入样例数据。
+const loadModels = async () => {
+  try {
+    const response = await getModelPage({ current: 1, size: 200, status: 'published' })
+    if (response?.code !== 200) throw new Error(response?.msg || response?.message || '加载失败')
+    modelList.value = (response?.data?.records || []).map(model => ({
+      ...model,
+      name: model.modelName,
+      category: String(model.algorithmId || ''),
+      type: model.modelFormat || '算法模型',
+      image: model.imageUrl || null,
+      selected: false
+    }))
+  } catch (error) {
+    modelList.value = []
+    ElMessage.error(`加载模型列表失败：${error.message || error}`)
+  }
+}
+
+onMounted(loadModels)
 
 // 计算属性
 const selectedModels = computed(() => {

@@ -609,48 +609,26 @@ export class WebRTCPlayer {
    * 开始播放
    */
   async play() {
-    console.log('🎬 WebRTCPlayer.play() 调用 - 版本20250711-v2 - 已添加fallback机制')
+    console.log('🎬 WebRTCPlayer.play() 调用')
     try {
       // 初始化WebRTC播放流程（跳过配置检查）
       await this.initialize()
       
       console.log('开始WebRTC播放...')
       
-      try {
-        // 尝试启动WebRTC流
-        const response = await startWebRTCPlay(this.deviceId, this.rtspUrl)
+      // 后端请求失败时必须把真实错误交给上层，不再伪造 MediaStream。
+      const response = await startWebRTCPlay(this.deviceId, this.rtspUrl)
         
         if (response && response.code === 200) {
           const streamInfo = response.data
           console.log('WebRTC播放启动成功:', streamInfo)
           
-          // 如果有webrtcUrl，可以使用它来获取流
-          if (streamInfo.webrtcUrl) {
-            console.log('WebRTC播放URL:', streamInfo.webrtcUrl)
-            // 这里可以添加实际的WebRTC连接逻辑
-            this.isPlaying = true
-          }
-          
+          // 只有 PeerConnection 的 connected/ontrack 回调才能把 isPlaying 置为 true。
+          this.isPlaying = false
           return true
         } else {
-          throw new Error(`WebRTC播放启动失败: ${response?.message || '未知错误'}`)
+          throw new Error(`WebRTC播放启动失败: ${response?.msg || response?.message || '未知错误'}`)
         }
-      } catch (apiError) {
-        console.warn('WebRTC API调用失败，尝试模拟播放:', apiError)
-        
-        // API失败时的fallback逻辑
-        console.log('模拟WebRTC播放成功 (Fallback模式)')
-        this.isPlaying = true
-        
-        // 通知上层播放成功
-        if (this.onTrack) {
-          // 创建一个模拟的流对象
-          const mockStream = new MediaStream()
-          this.onTrack(mockStream)
-        }
-        
-        return true
-      }
     } catch (error) {
       console.error('WebRTC播放失败:', error)
       this.onError(error)

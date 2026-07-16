@@ -350,7 +350,6 @@ import { getDeviceById, getDeviceList, getDeviceTree, dispatchAlgorithmToDevices
 import { getTagTree } from '@/api/tagManagement'
 import { WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
 import { getStreamType, getYouTubeEmbedUrl } from '@/views/VideoAggregation/deviceUtils.js'
-import { defaultDeviceTreeData } from '@/views/VideoAggregation/constants.js'
 import { getAlgorithmPage } from '@/api/algorithmManagement'
 import { CAMERA_RTC_SOCKET_URL, ensureOPlayer } from '@/utils/oplayer'
 
@@ -713,7 +712,7 @@ const filteredAlgorithmList = computed(() => {
 })
 
 // 设备树/设备列表对接（参考 DeviceManagement.vue）
-const deviceTreeData = ref([...defaultDeviceTreeData])
+const deviceTreeData = ref([])
 const deviceList = ref([])
 const tagNameMap = ref(new Map())
 

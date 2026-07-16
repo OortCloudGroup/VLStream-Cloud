@@ -520,18 +520,8 @@ onMounted(async () => {
       deviceList.value = response.data
       }
     } catch (apiError) {
-      console.warn('API加载失败，使用模拟数据:', apiError)
-    }
-    
-    // 模拟一些数据
-    if (isComponentMounted) {
-    deviceList.value = [
-      { id: 1, name: '摄像头1', location: '大门入口', status: 'online', ip: '192.168.1.100', port: 554 },
-      { id: 2, name: '摄像头2', location: '停车场', status: 'offline', ip: '192.168.1.101', port: 554 },
-      { id: 3, name: '摄像头3', location: '大厅', status: 'online', ip: '192.168.1.102', port: 554 }
-    ]
-    
-    ElMessage.success('VideoSquare加载完成')
+      deviceList.value = []
+      throw new Error(`加载设备列表失败：${apiError.message || apiError}`)
     }
   } catch (error) {
     console.error('初始化失败:', error)

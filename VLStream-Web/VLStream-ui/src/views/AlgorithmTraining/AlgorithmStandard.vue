@@ -1370,19 +1370,11 @@ const handleValidateDatasetPath = async () => {
 
   validatingPath.value = true
   try {
-    // 模拟文件校验（实际项目中应该调用后端API校验文件是否存在）
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    // 模拟校验结果 - 这里应该调用真实的API
-    const isValid = Math.random() > 0.3 // 模拟70%的成功率
     pathValidationResult.value = {
-      valid: isValid,
-      message: isValid
-        ? `数据集文件 ${fileName} 在服务器上存在`
-        : `数据集文件 ${fileName} 在服务器上不存在或无法访问`
+      valid: false,
+      message: `当前未接入服务器路径校验接口，未校验文件 ${fileName}`
     }
-
-    ElMessage.success(isValid ? '文件校验成功' : '文件校验失败')
+    ElMessage.error(pathValidationResult.value.message)
   } catch (error) {
     console.error('校验文件失败:', error)
     ElMessage.error('校验文件失败: ' + error.message)

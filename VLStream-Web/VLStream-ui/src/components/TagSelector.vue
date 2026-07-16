@@ -160,13 +160,13 @@ const loadTagTree = async () => {
       tagTreeData.value = response.data
       console.log('加载标签树数据:', response.data)
     } else {
-      // 如果API返回失败，使用模拟数据
-      tagTreeData.value = getMockTagData()
+      tagTreeData.value = []
+      ElMessage.error(response.msg || response.message || '加载标签树失败')
     }
   } catch (error) {
     console.error('加载标签树失败:', error)
-    // 出错时使用模拟数据
-    tagTreeData.value = getMockTagData()
+    tagTreeData.value = []
+    ElMessage.error(`加载标签树失败：${error.message || error}`)
   } finally {
     loading.value = false
   }
@@ -318,71 +318,6 @@ const transformTagTreeToOptions = (treeData) => {
     
     return typeOption
   })
-}
-
-// 获取模拟数据
-const getMockTagData = () => {
-  return [
-    {
-      id: 'own',
-      tagName: '自有',
-      level: 0,
-      children: [
-        {
-          id: 'own_device',
-          tagName: '设备类型',
-          level: 1,
-          children: [
-            { id: 'camera', tagName: '摄像头', level: 2 },
-            { id: 'ptz', tagName: '云台', level: 2 },
-            { id: 'dome', tagName: '球机', level: 2 },
-            { id: 'bullet', tagName: '枪机', level: 2 },
-            { id: 'dome_mini', tagName: '半球', level: 2 }
-          ]
-        },
-        {
-          id: 'own_location',
-          tagName: '位置类型',
-          level: 1,
-          children: [
-            { id: 'indoor', tagName: '室内', level: 2 },
-            { id: 'outdoor', tagName: '室外', level: 2 },
-            { id: 'entrance', tagName: '出入口', level: 2 },
-            { id: 'parking', tagName: '停车场', level: 2 }
-          ]
-        }
-      ]
-    },
-    {
-      id: 'public',
-      tagName: '公共',
-      level: 0,
-      children: [
-        {
-          id: 'public_function',
-          tagName: '功能类型',
-          level: 1,
-          children: [
-            { id: 'monitor', tagName: '监控', level: 2 },
-            { id: 'alarm', tagName: '报警', level: 2 },
-            { id: 'record', tagName: '录像', level: 2 },
-            { id: 'analysis', tagName: '分析', level: 2 }
-          ]
-        },
-        {
-          id: 'public_brand',
-          tagName: '品牌类型',
-          level: 1,
-          children: [
-            { id: 'hikvision', tagName: '海康威视', level: 2 },
-            { id: 'dahua', tagName: '大华', level: 2 },
-            { id: 'uniview', tagName: '宇视', level: 2 },
-            { id: 'other', tagName: '其他', level: 2 }
-          ]
-        }
-      ]
-    }
-  ]
 }
 
 const handleChange = (values) => {

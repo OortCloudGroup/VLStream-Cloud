@@ -78,18 +78,8 @@ export default {
         return
       }
       
-      this.addOutputLine(`正在连接到 ${this.connection.host}:${this.connection.port || 22}...`)
-      
-      // 模拟连接过程
-      setTimeout(() => {
-        this.isConnected = true
-        this.addOutputLine(`已连接到 ${this.connection.host}`)
-        this.addOutputLine('欢迎使用SSH终端')
-        this.prompt = `${this.connection.username}@${this.connection.host}:~$`
-        this.$nextTick(() => {
-          this.$refs.commandInput?.focus()
-        })
-      }, 1000)
+      this.isConnected = false
+      this.addOutputLine('错误: 当前未接入真实 SSH 交互式 WebSocket 终端，未建立连接')
     },
     
     disconnect() {
@@ -122,7 +112,6 @@ export default {
     },
     
     handleCommand(command) {
-      // 模拟命令执行
       if (command === 'clear') {
         this.clearTerminal()
         return
@@ -133,26 +122,7 @@ export default {
         return
       }
       
-      if (command.startsWith('cd ')) {
-        this.addOutputLine(`切换目录: ${command.substring(3)}`)
-        return
-      }
-      
-      if (command === 'ls' || command === 'ls -la') {
-        this.addOutputLine('total 8')
-        this.addOutputLine('drwxr-xr-x  2 user user 4096 Aug 29 14:00 .')
-        this.addOutputLine('drwxr-xr-x  3 user user 4096 Aug 29 13:00 ..')
-        this.addOutputLine('-rw-r--r--  1 user user  220 Aug 29 13:00 .bashrc')
-        return
-      }
-      
-      if (command === 'pwd') {
-        this.addOutputLine('/home/user')
-        return
-      }
-      
-      // 默认处理
-      this.addOutputLine(`执行命令: ${command}`)
+      this.addOutputLine('错误: 未连接真实 SSH 终端，命令未执行')
       this.addOutputLine('命令执行完成')
     },
     

@@ -300,7 +300,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, Plus, Edit, Delete, ArrowRight, Close, Clock, MessageBox } from '@element-plus/icons-vue'
@@ -308,6 +308,7 @@ import DateRangePicker from '@/components/DateRangePicker.vue'
 import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
 import PlayButton from '@/components/PlayButton.vue'
 import AdvancedSearch from '@/components/AdvancedSearch.vue'
+import { getAnalysisRequestPage, applyAnalysisRequest, updateAnalysisRequest } from '@/api/analysisRequest'
 
 const router = useRouter()
 
@@ -323,7 +324,7 @@ const searchForm = reactive({
 const pagination = reactive({
   currentPage: 1,
   pageSize: 10,
-  total: 128
+  total: 0
 })
 
 // 选中的行
@@ -355,143 +356,14 @@ const tempSelectedCameras = ref([])
 
 // 文件上传
 const fileInput = ref(null)
-const uploadedFiles = ref([
-  {
-    name: 'image1.jpg',
-    url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjNDMzIi8+CjxjaXJjbGUgY3g9IjUwIiBjeT0iNDAiIHI9IjE1IiBmaWxsPSIjRkY2NTAwIi8+CjxyZWN0IHg9IjMwIiB5PSI2MCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjRkZGIi8+CjwvdGV4dD4KPC9zdmc+'
-  },
-  {
-    name: 'image2.jpg', 
-    url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjOEI0NTEzIi8+CjxwYXRoIGQ9Ik0yMCAyMEw4MCA4ME0yMCA4MEw4MCAyMCIgc3Ryb2tlPSIjRkZGIiBzdHJva2Utd2lkdGg9IjIiLz4KPC9zdmc+'
-  }
-])
+const uploadedFiles = ref([])
 
 // 占位图片数据URL
 const placeholderImage80x60 = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2Y1ZjVmNSIvPjxwYXRoIGQ9Ik0zNSAzMGMwIDUuNDE4IDMuMDgyIDEwIDcgMTBzNy00LjU4MiA3LTEwUzQ2LjQxOCAyMCA0MiAyMCAzNSAyNC41ODIgMzUgMzB6bTIwIDIwTDUwIDQ1bC01LTUtMTAgMTB6IiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNDAiIHk9IjUwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+ODAgeCAwPC90ZXh0Pjwvc3ZnPg=='
 
 // 表格数据
-const tableData = ref([
-  {
-    id: 1,
-    sequence: 1,
-    analysisName: '疫情期间管控 - 行为分析',
-    analysisType: '行为分析',
-    deviceInfo: '海康云台/65131984',
-    status: '已完成',
-    createTime: '2025/01/15 14:30',
-    completeTime: '2025/01/15 15:45',
-    videoThumbnail: placeholderImage80x60,
-    description: '针对疫情期间的人员行为进行智能分析，包括聚集检测和口罩佩戴检测'
-  },
-  {
-    id: 2,
-    sequence: 1,
-    analysisName: '物品遗留检测',
-    analysisType: '物体检测',
-    deviceInfo: '大华球机/65131985',
-    status: '处理中',
-    createTime: '2025/01/15 13:20',
-    completeTime: '处理中',
-    videoThumbnail: placeholderImage80x60,
-    description: '检测场景中是否有物品长时间遗留，用于安全监控'
-  },
-  {
-    id: 3,
-    sequence: 1,
-    analysisName: '人员密度分析',
-    analysisType: '人员统计',
-    deviceInfo: '海康枪机/65131986',
-    status: '已完成',
-    createTime: '2025/01/15 12:10',
-    completeTime: '2025/01/15 13:30',
-    videoThumbnail: placeholderImage80x60,
-    description: '分析区域内人员密度分布，评估拥挤程度'
-  },
-  {
-    id: 4,
-    sequence: 1,
-    analysisName: '车辆违停检测',
-    analysisType: '车辆分析',
-    deviceInfo: '宇视球机/65131987',
-    status: '已完成',
-    createTime: '2025/01/15 11:00',
-    completeTime: '2025/01/15 12:15',
-    videoThumbnail: placeholderImage80x60,
-    description: '检测停车区域的违规停车行为'
-  },
-  {
-    id: 5,
-    sequence: 1,
-    analysisName: '入侵检测分析',
-    analysisType: '区域监控',
-    deviceInfo: '海康云台/65131988',
-    status: '处理失败',
-    createTime: '2025/01/15 10:30',
-    completeTime: '2025/01/15 11:45',
-    videoThumbnail: placeholderImage80x60,
-    description: '监控禁止区域的入侵行为'
-  },
-  {
-    id: 6,
-    sequence: 1,
-    analysisName: '客流量统计',
-    analysisType: '人员统计',
-    deviceInfo: '大华枪机/65131989',
-    status: '已完成',
-    createTime: '2025/01/15 09:20',
-    completeTime: '2025/01/15 10:40',
-    videoThumbnail: placeholderImage80x60,
-    description: '统计特定区域的人员流量变化'
-  },
-  {
-    id: 7,
-    sequence: 1,
-    analysisName: '异常行为检测',
-    analysisType: '行为分析',
-    deviceInfo: '宇视云台/65131990',
-    status: '已完成',
-    createTime: '2025/01/15 08:10',
-    completeTime: '2025/01/15 09:30',
-    videoThumbnail: placeholderImage80x60,
-    description: '检测场景中的异常行为模式'
-  },
-  {
-    id: 8,
-    sequence: 1,
-    analysisName: '人脸识别验证',
-    analysisType: '人脸识别',
-    deviceInfo: '海康球机/65131991',
-    status: '处理中',
-    createTime: '2025/01/15 07:00',
-    completeTime: '处理中',
-    videoThumbnail: placeholderImage80x60,
-    description: '对特定人员进行身份识别验证'
-  },
-  {
-    id: 9,
-    sequence: 1,
-    analysisName: '安全帽佩戴检测',
-    analysisType: '安全检测',
-    deviceInfo: '大华云台/65131992',
-    status: '已完成',
-    createTime: '2025/01/15 06:30',
-    completeTime: '2025/01/15 07:45',
-    videoThumbnail: placeholderImage80x60,
-    description: '检测工作人员是否正确佩戴安全帽'
-  },
-  {
-    id: 10,
-    sequence: 1,
-    analysisName: '火焰烟雾检测',
-    analysisType: '安全检测',
-    deviceInfo: '宇视枪机/65131993',
-    status: '已完成',
-    createTime: '2025/01/15 05:20',
-    completeTime: '2025/01/15 06:35',
-    videoThumbnail: placeholderImage80x60,
-    description: '检测场景中的火焰和烟雾情况'
-  }
-])
+// 表格仅由后端真实记录填充，不展示历史静态样例。
+const tableData = ref([])
 
 // 方法
 const handleSearch = () => {
@@ -605,54 +477,62 @@ const resetForm = () => {
   editingItem.value = null
 }
 
+// 从真实分析请求表加载列表，失败时保持空数据并显示原因。
+const loadAnalysisRequests = async () => {
+  try {
+    const response = await getAnalysisRequestPage({
+      current: pagination.currentPage,
+      size: pagination.pageSize,
+      analysisName: searchForm.analysisName,
+      analysisType: searchForm.analysisType
+    })
+    if (response?.code !== 200) throw new Error(response?.msg || response?.message || '加载失败')
+    const records = response?.data?.records || []
+    tableData.value = records.map((item, index) => ({
+      ...item,
+      sequence: (pagination.currentPage - 1) * pagination.pageSize + index + 1,
+      name: item.analysisName,
+      deviceInfo: item.cameraName || item.deviceIds || '-',
+      status: item.requestStatus,
+      videoThumbnail: item.resultPath || null
+    }))
+    pagination.total = Number(response?.data?.total || 0)
+  } catch (error) {
+    tableData.value = []
+    pagination.total = 0
+    ElMessage.error(`加载分析请求失败：${error.message || error}`)
+  }
+}
+
 // 提交表单
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (!form.value.sceneName.trim()) {
     ElMessage.warning('请输入场景名称')
     return
   }
 
-  if (editingItem.value) {
-    // 编辑模式
-    const index = tableData.value.findIndex(item => item.id === editingItem.value.id)
-    if (index > -1) {
-      Object.assign(tableData.value[index], {
-        analysisName: form.value.sceneName,
-        analysisType: form.value.analysisType,
-        deviceInfo: form.value.deviceInfo,
-        status: '已完成',
-        createTime: form.value.createTime,
-        completeTime: form.value.completeTime,
-        videoThumbnail: form.value.videoThumbnail,
-        description: form.value.description
-      })
-    }
-    ElMessage.success('更新成功')
-  } else {
-    // 新增模式
-    const mockNewRequest = {
-      id: Date.now(),
-      name: form.value.sceneName,
-      analysisType: form.value.analysisType,
-      deviceInfo: form.value.deviceInfo,
-      status: '处理中',
-      createTime: new Date().toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).replace(/\//g, '/'),
-      completeTime: '处理中',
-      videoThumbnail: placeholderImage80x60,
-      description: form.value.description || '智能分析请求'
-    }
-    tableData.value.push(mockNewRequest)
-    ElMessage.success('申请成功')
+  const payload = {
+    id: editingItem.value?.id,
+    analysisName: form.value.sceneName,
+    analysisType: form.value.analysisType,
+    deviceIds: (form.value.selectedCameras || []).join(','),
+    regionInfo: (form.value.selectedRegions || []).join(','),
+    timeRange: form.value.timeRange,
+    images: uploadedFiles.value.map(file => file.url).join(','),
+    description: form.value.description || '智能分析请求'
   }
-
-  showEditView.value = false
-  selectedRows.value = []
+  try {
+    const response = editingItem.value
+      ? await updateAnalysisRequest(payload)
+      : await applyAnalysisRequest(payload)
+    if (response?.code !== 200) throw new Error(response?.msg || response?.message || '操作失败')
+    await loadAnalysisRequests()
+    showEditView.value = false
+    selectedRows.value = []
+    ElMessage.success(editingItem.value ? '更新成功' : '申请已真实入库')
+  } catch (error) {
+    ElMessage.error(`分析请求提交失败：${error.message || error}`)
+  }
 }
 
 // 文件上传相关方法
@@ -680,6 +560,8 @@ const handleFileUpload = (event) => {
 const removeFile = (index) => {
   uploadedFiles.value.splice(index, 1)
 }
+
+onMounted(loadAnalysisRequests)
 
 // 标签删除方法
 const removeRegion = (region) => {

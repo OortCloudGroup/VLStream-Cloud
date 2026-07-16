@@ -241,11 +241,11 @@ const refreshDebugInfo = () => {
 }
 
 const updatePerformanceMetrics = () => {
-  // 模拟性能数据更新
-  memoryUsage.value = Math.floor(Math.random() * 100) + 50
-  cpuUsage.value = Math.floor(Math.random() * 50) + 10
-  networkLatency.value = Math.floor(Math.random() * 100) + 20
-  frameRate.value = Math.floor(Math.random() * 10) + 25
+  memoryUsage.value = 0
+  cpuUsage.value = 0
+  networkLatency.value = 0
+  frameRate.value = 0
+  addLog('warning', '未接入真实性能指标接口，不展示随机数据')
 }
 
 const addLog = (type, message) => {

@@ -983,11 +983,8 @@ const restartContainer = async (container) => {
 
 const viewLogs = (container) => {
   currentContainer.value = container
-  // 模拟日志数据，实际应该从API获取
-  displayLogs.value = [
-    { time: new Date().toLocaleString(), level: 'INFO', message: '容器运行正常' },
-    { time: new Date().toLocaleString(), level: 'INFO', message: '服务启动完成' }
-  ]
+  displayLogs.value = []
+  ElMessage.error('当前后端未接入真实容器运行时日志接口，未加载日志')
   showLogsDialog.value = true
 }
 

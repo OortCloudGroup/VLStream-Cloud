@@ -11,6 +11,14 @@
       >
         {{ menu.label }}
       </div>
+      <a
+        class="modelhub-button"
+        href="https://vls.oortcloudsmart.com/zh/ModelHub/ModelHub"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        ModelHub
+      </a>
     </div>
 
     <!-- 分类标签栏和添加按钮 -->
@@ -463,7 +471,6 @@ import {
 } from '@/api/algorithmManagement'
 import {getDeviceById, getDeviceList, getDeviceTree, dispatchAlgorithmToDevices} from '@/api/device'
 import {getTagTree} from '@/api/tagManagement'
-import {defaultDeviceTreeData} from '@/views/VideoAggregation/constants'
 
 // 加载状态
 const repositoriesLoading = ref(false)
@@ -496,7 +503,7 @@ const algorithmTotal = ref(0)
 const currentRepositoryId = ref(null)
 
 // 设备树数据
-const deviceTreeData = ref([...defaultDeviceTreeData])
+const deviceTreeData = ref([])
 
 // 从当前算法列表中提取所有分类
 const typeOptions = ref([
@@ -1461,6 +1468,25 @@ onMounted(() => {
   background-color: #ecf5ff;
 }
 
+.modelhub-button {
+  align-self: center;
+  margin: 0 16px 0 auto;
+  padding: 8px 15px;
+  border: 1px solid #409eff;
+  border-radius: 4px;
+  color: #409eff;
+  background-color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  text-decoration: none;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.modelhub-button:hover {
+  color: #fff;
+  background-color: #409eff;
+}
+
 /* 分类标签栏 */
 .category-tabs {
   background: white;
@@ -1707,6 +1733,11 @@ onMounted(() => {
     flex-shrink: 0;
     padding: 12px 20px;
     font-size: 13px;
+  }
+
+  .modelhub-button {
+    flex-shrink: 0;
+    margin-left: auto;
   }
   
   .category-tabs {

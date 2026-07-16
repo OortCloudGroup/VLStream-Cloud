@@ -375,6 +375,8 @@ const handleGroupAutoDispatchChange = async(val: boolean) => {
 
 // 顶部设置图标点击
 const handleHeaderSettingsClick = async() => {
+  // 顶部设置始终对应“全部”范围，清空此前可能选中的区域、分组或标签节点。
+  currentNodeUid.value = ''
   dialogContext.value = {
     regionName: leftTabActive.value === 'region' ? '区域' : '分组',
     nodeLabel: currentTreeNodeLabel.value || '目标追踪类AI主动安全事件'
@@ -409,17 +411,30 @@ const handleHeaderSettingsClick = async() => {
 
 const handleSettingConfirm = async(value: any) => {
   const { definitionId } = value
-  const params = {
-    accessToken: store.userInfo?.accessToken,
-    uid: currentNodeUid.value,
-    app_id: AppConfig.events?.appID,
-    config: {
+  let res: any
+  if (!currentNodeUid.value) {
+    // “全部”配置写入租户级设置；流程字段与开关必须保存到同一条记录。
+    res = await workflowConfigSet({
+      accessToken: store.userInfo?.accessToken,
+      group_type: currentGroupType.value,
+      mod_type: 2,
       app_id: AppConfig.events?.appID,
       auto_to_work: currentAutoToWork.value,
       process_id: definitionId
-    }
+    }) as any
+  } else {
+    // 具体区域、分组或标签继续使用节点级 V2 配置。
+    res = await event_group_setting_save({
+      accessToken: store.userInfo?.accessToken,
+      uid: currentNodeUid.value,
+      app_id: AppConfig.events?.appID,
+      config: {
+        app_id: AppConfig.events?.appID,
+        auto_to_work: currentAutoToWork.value,
+        process_id: definitionId
+      }
+    }) as any
   }
-  const res = await event_group_setting_save(params) as any
   if (res?.code === 200) {
     ElMessage.success('工单配置保存成功')
     currentProcessId.value = definitionId

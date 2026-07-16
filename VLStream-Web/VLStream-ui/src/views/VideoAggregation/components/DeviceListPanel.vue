@@ -271,13 +271,26 @@ const emit = defineEmits([
 const selectedLocationCategory = ref('')
 const selectedStatus = ref('')
 
-// 模拟设备数据
-const cameras = ref([
-  { id: 1, name: '摄像头1', location: '大门入口', status: 'online' },
-  { id: 2, name: '摄像头2', location: '停车场', status: 'offline' },
-  { id: 3, name: '摄像头3', location: '大厅', status: 'online' },
-  // 更多设备数据...
-])
+// 只从父组件已加载的真实设备树解析摄像机。
+const cameras = computed(() => {
+  const result = []
+  const visit = (nodes, location = '') => {
+    ;(nodes || []).forEach(node => {
+      const nextLocation = node.type === 'location' ? (node.label || node.name || location) : location
+      if (node.type === 'device' || node.deviceId || node.streamUrl) {
+        result.push({
+          ...node,
+          name: node.name || node.label || node.deviceName,
+          location: node.location || nextLocation,
+          status: node.status
+        })
+      }
+      visit(node.children, nextLocation)
+    })
+  }
+  visit(props.treeData)
+  return result
+})
 
 // 过滤后的设备列表
 const filteredCameras = computed(() => {

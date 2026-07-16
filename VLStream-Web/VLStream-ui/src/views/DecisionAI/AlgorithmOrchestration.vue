@@ -247,6 +247,8 @@ import {
   Connection,
   Close
 } from '@element-plus/icons-vue'
+import { getAlgorithmPage } from '@/api/algorithmManagement'
+import { getOrchestrationPage, saveOrchestrationRecord, updateOrchestrationRecord, removeOrchestrationRecord } from '@/api/algorithmOrchestration'
 
 // 响应式数据
 const showEditor = ref(false)
@@ -263,64 +265,10 @@ const orchestrationForm = ref({
 })
 
 // 编排数据
-const orchestrations = ref([
-  {
-    id: 1,
-    name: '人员行为检测编排',
-    description: '检测人员异常行为的完整算法链',
-    steps: [
-      { name: '人脸检测', type: '人脸识别' },
-      { name: '人员追踪', type: '目标追踪' },
-      { name: '行为分析', type: '行为分析' }
-    ],
-    algorithmCount: 3,
-    deviceCount: 8,
-    runCount: 1247,
-    status: 'active',
-    updateTime: '2024-01-15 14:30:00'
-  },
-  {
-    id: 2,
-    name: '车辆违章检测',
-    description: '检测车辆违停、逆行等违章行为',
-    steps: [
-      { name: '车辆检测', type: '目标检测' },
-      { name: '车牌识别', type: '车牌识别' },
-      { name: '违章判断', type: '行为分析' }
-    ],
-    algorithmCount: 3,
-    deviceCount: 12,
-    runCount: 856,
-    status: 'active',
-    updateTime: '2024-01-14 16:20:00'
-  },
-  {
-    id: 3,
-    name: '周界入侵检测',
-    description: '检测周界围栏入侵行为',
-    steps: [
-      { name: '移动检测', type: '目标检测' },
-      { name: '区域判断', type: '行为分析' }
-    ],
-    algorithmCount: 2,
-    deviceCount: 6,
-    runCount: 423,
-    status: 'inactive',
-    updateTime: '2024-01-12 10:15:00'
-  }
-])
+const orchestrations = ref([])
 
 // 算法库数据
-const algorithms = ref([
-  { id: 1, name: '人脸检测', type: '人脸识别' },
-  { id: 2, name: '人脸识别', type: '人脸识别' },
-  { id: 3, name: '车辆检测', type: '目标检测' },
-  { id: 4, name: '车牌识别', type: '车牌识别' },
-  { id: 5, name: '行为分析', type: '行为分析' },
-  { id: 6, name: '人员追踪', type: '目标追踪' },
-  { id: 7, name: '物体检测', type: '目标检测' },
-  { id: 8, name: '移动检测', type: '目标检测' }
-])
+const algorithms = ref([])
 
 // 计算属性
 const filteredAlgorithms = computed(() => {
@@ -385,15 +333,21 @@ const editOrchestration = (orchestration) => {
   showEditor.value = true
 }
 
-const duplicateOrchestration = (orchestration) => {
-  const newOrchestration = {
-    ...orchestration,
-    id: Date.now(),
-    name: orchestration.name + ' (副本)',
-    updateTime: new Date().toLocaleString()
+const duplicateOrchestration = async (orchestration) => {
+  try {
+    await saveOrchestrationRecord({
+      orchestrationName: `${orchestration.name} (副本)`,
+      orchestrationDesc: orchestration.description,
+      triggerType: orchestration.trigger,
+      executeMode: orchestration.mode,
+      algorithmSteps: JSON.stringify(orchestration.steps || []),
+      orchestrationStatus: 'inactive'
+    })
+    await loadOrchestrations()
+    ElMessage.success('编排副本已真实入库')
+  } catch (error) {
+    ElMessage.error(`编排复制失败：${error.message || error}`)
   }
-  orchestrations.value.push(newOrchestration)
-  ElMessage.success('编排复制成功')
 }
 
 const deleteOrchestration = (orchestration) => {
@@ -405,14 +359,12 @@ const deleteOrchestration = (orchestration) => {
       cancelButtonText: '取消',
       type: 'warning'
     }
-  ).then(() => {
-    const index = orchestrations.value.findIndex(o => o.id === orchestration.id)
-    if (index > -1) {
-      orchestrations.value.splice(index, 1)
-      ElMessage.success('删除成功')
-    }
-  }).catch(() => {
-    ElMessage.info('已取消删除')
+  ).then(async () => {
+    await removeOrchestrationRecord(orchestration.id)
+    await loadOrchestrations()
+    ElMessage.success('删除成功')
+  }).catch((error) => {
+    if (error !== 'cancel' && error !== 'close') ElMessage.error(`删除编排失败：${error.message || error}`)
   })
 }
 
@@ -439,15 +391,14 @@ const removeStep = (index) => {
 }
 
 const configureStep = (step, index) => {
-  ElMessage.info(`配置步骤: ${step.name}`)
-  // 这里应该打开参数配置对话框
+  ElMessage.error(`步骤参数编辑器尚未接入，未修改“${step.name}”`)
 }
 
 const clearCanvas = () => {
   currentSteps.value = []
 }
 
-const saveOrchestration = () => {
+const saveOrchestration = async () => {
   if (!orchestrationForm.value.name) {
     ElMessage.warning('请输入编排名称')
     return
@@ -459,35 +410,25 @@ const saveOrchestration = () => {
   }
 
   const orchestrationData = {
-    ...orchestrationForm.value,
-    steps: currentSteps.value,
-    algorithmCount: currentSteps.value.length,
+    id: editingOrchestration.value?.id,
+    orchestrationName: orchestrationForm.value.name,
+    orchestrationDesc: orchestrationForm.value.description,
+    triggerType: orchestrationForm.value.trigger,
+    executeMode: orchestrationForm.value.mode,
+    algorithmSteps: JSON.stringify(currentSteps.value),
     deviceCount: 0,
     runCount: 0,
-    status: 'inactive',
-    updateTime: new Date().toLocaleString()
+    orchestrationStatus: editingOrchestration.value?.status || 'inactive'
   }
-
-  if (editingOrchestration.value) {
-    // 编辑模式
-    const index = orchestrations.value.findIndex(o => o.id === editingOrchestration.value.id)
-    if (index > -1) {
-      orchestrations.value[index] = {
-        ...orchestrations.value[index],
-        ...orchestrationData
-      }
-      ElMessage.success('编排更新成功')
-    }
-  } else {
-    // 新增模式
-    orchestrations.value.push({
-      id: Date.now(),
-      ...orchestrationData
-    })
-    ElMessage.success('编排创建成功')
+  try {
+    if (editingOrchestration.value) await updateOrchestrationRecord(orchestrationData)
+    else await saveOrchestrationRecord(orchestrationData)
+    await loadOrchestrations()
+    showEditor.value = false
+    ElMessage.success(editingOrchestration.value ? '编排更新成功' : '编排创建成功')
+  } catch (error) {
+    ElMessage.error(`保存编排失败：${error.message || error}`)
   }
-
-  showEditor.value = false
 }
 
 const handleEditorClose = (done) => {
@@ -500,9 +441,42 @@ const handleEditorClose = (done) => {
     })
 }
 
-onMounted(() => {
-  // 页面初始化
-})
+const loadOrchestrations = async () => {
+  try {
+    const response = await getOrchestrationPage({ current: 1, size: 200 })
+    if (response?.code !== 200) throw new Error(response?.msg || response?.message || '加载失败')
+    orchestrations.value = (response?.data?.records || []).map(item => {
+      let steps = []
+      try { steps = JSON.parse(item.algorithmSteps || '[]') } catch (error) { steps = [] }
+      return {
+        ...item,
+        name: item.orchestrationName,
+        description: item.orchestrationDesc,
+        trigger: item.triggerType,
+        mode: item.executeMode,
+        steps,
+        algorithmCount: steps.length,
+        status: item.orchestrationStatus,
+        updateTime: item.updateTime
+      }
+    })
+  } catch (error) {
+    orchestrations.value = []
+    ElMessage.error(`加载编排失败：${error.message || error}`)
+  }
+}
+
+const loadAlgorithms = async () => {
+  try {
+    const response = await getAlgorithmPage({ current: 1, size: 500 })
+    algorithms.value = (response?.data?.records || []).map(item => ({ id: item.id, name: item.name, type: item.categoryName || item.category }))
+  } catch (error) {
+    algorithms.value = []
+    ElMessage.error(`加载算法列表失败：${error.message || error}`)
+  }
+}
+
+onMounted(() => Promise.all([loadOrchestrations(), loadAlgorithms()]))
 </script>
 
 <style scoped>

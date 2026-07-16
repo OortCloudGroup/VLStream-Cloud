@@ -359,7 +359,6 @@ import {
   getTagDevices 
 } from '@/api/tagManagement'
 import { getDeviceById, getDeviceList, getDeviceTree } from '@/api/device'
-import { defaultDeviceTreeData } from './constants.js'
 
 // 当前激活的标签页
 const activeTab = ref('maintenance')
@@ -467,7 +466,7 @@ const ensureTagNameMap = async () => {
   }
 }
 
-const deviceTreeData = ref([...defaultDeviceTreeData])
+const deviceTreeData = ref([])
 
 const treeProps = {
   children: 'children',

@@ -228,21 +228,9 @@ const saving = ref(false)
 const showRegionDialog = ref(false)
 const showCameraDialog = ref(false)
 
-// 占位图片数据URL
-const placeholderImage120x90 = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjkwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmNWY1ZjUiLz48cGF0aCBkPSJNNDAuNSA0NWMwIDguNDE4IDYuMDgyIDE1LjUgMTMuNSAxNS41czEzLjUtNy4wODIgMTMuNS0xNS41UzYyLjQxOCAyOS41IDU0IDI5LjUgNDAuNSAzNi41ODIgNDAuNSA0NXptNDAgNDBMNzAgNzVsLTEwLTEwLTIwIDIweiIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjYwIiB5PSI4MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4xMjAgeCBwMDwvdGV4dD48L3N2Zz4='
-
 // 文件上传
 const fileInput = ref(null)
-const uploadedFiles = ref([
-  {
-    name: 'screenshot1.jpg',
-    url: placeholderImage120x90
-  },
-  {
-    name: 'screenshot2.jpg', 
-    url: placeholderImage120x90
-  }
-])
+const uploadedFiles = ref([])
 
 // 临时选择状态
 const tempSelectedRegions = ref([])
@@ -250,33 +238,19 @@ const tempSelectedCameras = ref([])
 
 // 场景表单数据
 const sceneForm = reactive({
-  sceneName: '告警场景',
-  analysisType: '人员',
+  sceneName: '',
+  analysisType: '',
   screenshots: [],
-  selectedRegions: ['水产大楼', '洪湖大厦'],
-  selectedCameras: ['摄像头1', '摄像头2'],
-  timeRange: ['08/17 10:20', '08/17 12:20']
+  selectedRegions: [],
+  selectedCameras: [],
+  timeRange: []
 })
 
 // 可选区域列表
-const availableRegions = ref([
-  { label: '水产大楼', value: '水产大楼' },
-  { label: '洪湖大厦', value: '洪湖大厦' },
-  { label: '教学楼A', value: '教学楼A' },
-  { label: '教学楼B', value: '教学楼B' },
-  { label: '图书馆', value: '图书馆' },
-  { label: '体育馆', value: '体育馆' }
-])
+const availableRegions = ref([])
 
 // 可选摄像头列表
-const availableCameras = ref([
-  { label: '摄像头1', value: '摄像头1' },
-  { label: '摄像头2', value: '摄像头2' },
-  { label: '摄像头3', value: '摄像头3' },
-  { label: '摄像头4', value: '摄像头4' },
-  { label: '摄像头5', value: '摄像头5' },
-  { label: '摄像头6', value: '摄像头6' }
-])
+const availableCameras = ref([])
 
 // 表单验证规则
 const sceneRules = {

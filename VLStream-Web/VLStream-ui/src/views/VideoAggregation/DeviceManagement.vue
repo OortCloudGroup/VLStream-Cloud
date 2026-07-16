@@ -577,7 +577,6 @@ import {getWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL} from '@/api/webrtc'
 
 // 导入工具函数和常量
 import {formatDateTime, getStreamType, getYouTubeEmbedUrl} from './deviceUtils.js'
-import {defaultDeviceTreeData} from './constants.js'
 import { CAMERA_RTC_SOCKET_URL, ensureOPlayer } from '@/utils/oplayer'
 
 const router = useRouter()
@@ -591,7 +590,7 @@ const searchForm = ref({
 })
 
 // 设备树数据
-const deviceTreeData = ref([...defaultDeviceTreeData])
+const deviceTreeData = ref([])
 
 // 表格数据
 const tableData = ref([])
@@ -1670,25 +1669,6 @@ const executeNativePlayStrategy = async (device) => {
   } catch (error) {
     console.error('原生播放策略执行失败:', error)
     throw error
-  }
-}
-
-// 根据设备类型获取测试视频URL
-const getTestVideoUrl = (deviceTag) => {
-  // 导入测试视频URL
-  const { testVideoUrls } = require('./constants.js')
-  
-  switch (deviceTag) {
-    case '摄像头':
-    case '枪机':
-      return testVideoUrls.mp4
-    case '球机':
-    case '云台':
-      return testVideoUrls.hls
-    case '半球':
-      return testVideoUrls.mp4Small
-    default:
-      return testVideoUrls.mp4
   }
 }
 
