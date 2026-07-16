@@ -26,7 +26,7 @@
 
 import { ref, watch, defineExpose, computed, onMounted } from 'vue'
 import StartNode from './flow/startNode.vue'
-import NodeWrap from './flow/nodewrap.vue'
+import NodeWrap from './flow/nodeWrap.vue'
 import EndNode from './flow/endNode.vue'
 import { useErrorMsgStoreHook } from '@/store/modules/useErrorMsg'
 // import { ElMessage } from 'element-plus'
