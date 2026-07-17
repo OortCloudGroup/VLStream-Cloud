@@ -10,7 +10,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -39,7 +38,6 @@ import com.ruoyi.flowable.utils.TaskUtils;
 import com.ruoyi.system.mapper.SysDeptMapper;
 import com.ruoyi.system.mapper.SysUserMapper;
 import com.ruoyi.system.mapper.SysUserRoleViewMapper;
-import com.ruoyi.system.service.AjaxResult;
 import com.ruoyi.workflow.domain.WfAttachment;
 import com.ruoyi.workflow.domain.bo.WfSavePdfBo;
 import com.ruoyi.workflow.domain.bo.WfTaskBo;
@@ -53,12 +51,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.flowable.bpmn.constants.BpmnXMLConstants;
 import org.flowable.bpmn.model.*;
 import org.flowable.bpmn.model.Process;
@@ -83,7 +75,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -103,87 +94,10 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     private final WfAttachmentMapper wfAttachmentMapper;
     private final IWfInstanceService wfInstanceService;
     private final IWorkOrderService wfWorkOrderService;
-    @Value("${dept.excludedUdid}")
-    private String excludedUdid;
-    @Value("${notification.slUrl2}")
-    private String slUrl2;
-    @Value("${notification.serviceID}")
-    private String serviceID;
-    @Value("${notification.secretKey}")
-    private String secretKey;
-    @Value("${notification.requestType}")
-    private String requestType;
 
     @Value("${UnifiedMessagingSend.url}")
     private String msgUrl;
 
-    /**
-     * 推送消息
-     *
-     * @param recipients
-     * @return
-     */
-    public AjaxResult sendNotification(List<String> recipients) {
-        String Url = slUrl2 + "/api/v1/notify";
-        // 组装要发送的数据
-        JSONObject body = new JSONObject();
-        // 推送事务的唯一 ID，调用方生成 UUID
-        Random random = new Random();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
-        String txId = "oort" + dateFormat.format(new Date()) + random.nextInt(10000);
-        body.put("txId", txId);
-        body.put("type", 1);
-
-        JSONObject to = new JSONObject();
-        to.put("zone", 2);
-        body.put("to", to);
-
-        String uid = "UID" + dateFormat.format(new Date()) + random.nextInt(10000);
-        body.put("uid", uid);
-
-        JSONObject notification = new JSONObject();
-        notification.put("application", "oort流程中心");
-        notification.put("title", "审核提醒");
-        notification.put("content", "您有一条新任务需要处理");
-        notification.put("recipients", recipients);
-        body.put("notification", notification);
-
-        String bodyStr = body.toString();
-        System.out.println(bodyStr);
-
-        // 使用 HttpClient 发送 POST 请求
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            HttpPost httpPost = new HttpPost(Url);
-
-            httpPost.addHeader("Content-Type", "application/json");
-            httpPost.addHeader("requestType", requestType);
-            httpPost.addHeader("serviceID", serviceID);
-            httpPost.addHeader("secretKey", secretKey);
-            httpPost.setEntity(new StringEntity(bodyStr, "UTF-8"));
-
-            String response = "";
-            try (CloseableHttpResponse httpResponse = httpClient.execute(httpPost)) {
-                int statusCode = httpResponse.getStatusLine().getStatusCode();
-                if (statusCode == 200) {
-                    response = EntityUtils.toString(httpResponse.getEntity(), "UTF-8");
-                    System.out.println(response);
-                } else {
-                    System.err.println("请求出错：" + httpResponse.getStatusLine());
-                }
-            }
-
-            // 模拟返回结果，根据实际需要调整
-            if (!response.isEmpty()) {
-                return AjaxResult.success(response);
-            } else {
-                return AjaxResult.error("请求失败");
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return AjaxResult.error("请求过程中发生异常");
-        }
-    }
 
     // 消息推送
     public void sendMessage(boolean isPushMessage, String userIds) {
@@ -194,7 +108,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
                 idCards.add(sysUserService.selectIdCardById(id));
             }
             if (!idCards.isEmpty()) {
-                sendNotification(idCards);
+//                sendNotification(idCards);
             }
         }
     }
@@ -326,15 +240,15 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
                 // 判断是不是局领导提交
                 SysUser sysUser = sysUserMapper.selectUserById(user.getUserId());
                 SysDeptView sysDeptView = sysDeptMapper.selectVoById(sysUser.getDeptId());
-                if (sysDeptView.getDeptId().equals(excludedUdid)) { // 属于局领导，直接结束流程
-                    runtimeService.setVariable(taskBo.getProcInsId(), "flowDirection", "end");
-                } else { // 不属于局领导，获取所有领导并写入
+//                if (sysDeptView.getDeptId().equals(excludedUdid)) { // 属于局领导，直接结束流程
+//                    runtimeService.setVariable(taskBo.getProcInsId(), "flowDirection", "end");
+//                } else { // 不属于局领导，获取所有领导并写入
                     List<SysUser> leaders = sysUserService.getLeaders(user.getUserId());
                     String join = leaders.stream().map(SysUser::getUserId).collect(Collectors.joining(","));
                     this.assignORCandidateUserNextUsers(bpmnModel, taskBo.getProcInsId(), join,
                             taskBo.getCandidateUsers(), taskBo.getCandidateGroups(), notifyAllSteps, user);
                     runtimeService.setVariable(taskBo.getProcInsId(), "nextUserIds", join);
-                }
+//                }
             }
         }
 

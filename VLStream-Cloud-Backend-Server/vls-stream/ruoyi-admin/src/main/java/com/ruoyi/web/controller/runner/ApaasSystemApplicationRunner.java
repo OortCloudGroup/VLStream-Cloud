@@ -57,19 +57,19 @@ public class ApaasSystemApplicationRunner implements ApplicationRunner {
 
     private static final String DATA = "data";
 
-    @Value(value = "${platform.loginCodeUrl}")
+//    @Value(value = "${platform.loginCodeUrl}")
     private String loginCodeUrl;
-
-    @Value(value = "${platform.userTenantsUrl}")
+//
+//    @Value(value = "${platform.userTenantsUrl}")
     private String userTenantsUrl;
-
-    @Value(value = "${platform.loginUrl}")
+//
+//    @Value(value = "${platform.loginUrl}")
     private String loginUrl;
-
-    @Value(value = "${platform.reportDataScopeUrl}")
+//
+//    @Value(value = "${platform.reportDataScopeUrl}")
     private String reportDataScopeUrl;
-
-    @Value(value = "${platform.verifyDataScopeUrl}")
+//
+//    @Value(value = "${platform.verifyDataScopeUrl}")
     private String verifyDataScopeUrl;
 
     @Value("${vls.apaas-sync.enabled:false}")

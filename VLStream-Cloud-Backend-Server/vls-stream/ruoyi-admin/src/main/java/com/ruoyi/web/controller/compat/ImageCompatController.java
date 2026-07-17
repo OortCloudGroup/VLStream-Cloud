@@ -5,7 +5,8 @@
 
 package com.ruoyi.web.controller.compat;
 
-import com.ruoyi.vlstream.compat.BladeResult;
+
+import com.ruoyi.vlstream.test.compat.BladeResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;

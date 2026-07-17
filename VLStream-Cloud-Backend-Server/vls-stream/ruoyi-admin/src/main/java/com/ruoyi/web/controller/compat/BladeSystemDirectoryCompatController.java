@@ -18,9 +18,10 @@ import com.ruoyi.system.service.ISysDeptService;
 import com.ruoyi.system.service.ISysMenuService;
 import com.ruoyi.system.service.ISysRoleService;
 import com.ruoyi.system.service.ISysUserService;
-import com.ruoyi.vlstream.compat.BladePage;
-import com.ruoyi.vlstream.compat.BladeResult;
-import com.ruoyi.vlstream.compat.SingleTenant;
+
+import com.ruoyi.vlstream.test.compat.BladePage;
+import com.ruoyi.vlstream.test.compat.BladeResult;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,6 +39,8 @@ public class BladeSystemDirectoryCompatController {
     private final ISysDeptService deptService;
     private final ISysMenuService menuService;
     private final SysPostMapper postMapper;
+    @Value("${vls.tenant.id:000000}")
+    private String singleTenantId = "000000";
 
     public BladeSystemDirectoryCompatController(ISysUserService userService,
                                                 ISysRoleService roleService,
@@ -208,7 +211,7 @@ public class BladeSystemDirectoryCompatController {
     /**
      * Convert RuoYi user rows to legacy system-management aliases.
      */
-    private static List<Map<String, Object>> userMaps(List<SysUser> users) {
+    private List<Map<String, Object>> userMaps(List<SysUser> users) {
         List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>();
         if (users == null) {
             return rows;
@@ -222,7 +225,7 @@ public class BladeSystemDirectoryCompatController {
     /**
      * Convert a single RuoYi user to the field names expected by VLStream UI tables.
      */
-    private static Map<String, Object> userMap(SysUser user) {
+    private Map<String, Object> userMap(SysUser user) {
         Map<String, Object> row = new LinkedHashMap<String, Object>();
         String account = firstNonBlank(user.getLoginId(), user.getUserName());
         String realName = firstNonBlank(user.getUserName(), user.getLoginId());
@@ -231,7 +234,7 @@ public class BladeSystemDirectoryCompatController {
         row.put("account", account);
         row.put("name", realName);
         row.put("realName", realName);
-        row.put("tenantId", firstNonBlank(user.getTenantId(), SingleTenant.DEFAULT_TENANT_ID));
+        row.put("tenantId", singleTenantId);
         row.put("deptId", user.getDeptId());
         row.put("deptName", user.getDeptName());
         row.put("postId", user.getPostId());
@@ -270,7 +273,7 @@ public class BladeSystemDirectoryCompatController {
     /**
      * Convert RuoYi department rows to legacy department table and tree aliases.
      */
-    private static List<Map<String, Object>> deptMaps(List<SysDeptView> depts) {
+    private List<Map<String, Object>> deptMaps(List<SysDeptView> depts) {
         List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>();
         if (depts == null) {
             return rows;
@@ -280,7 +283,7 @@ public class BladeSystemDirectoryCompatController {
             row.put("id", dept.getDeptId());
             row.put("deptId", dept.getDeptId());
             row.put("parentId", firstNonBlank(dept.getParentId(), "0"));
-            row.put("tenantId", dept.getTenantId());
+            row.put("tenantId", singleTenantId);
             row.put("deptName", dept.getDeptName());
             row.put("fullName", dept.getDeptName());
             row.put("label", dept.getDeptName());
@@ -324,7 +327,7 @@ public class BladeSystemDirectoryCompatController {
     /**
      * Convert local RuoYi post rows to legacy post table and selector aliases.
      */
-    private static List<Map<String, Object>> postMaps(List<SysPost> posts) {
+    private List<Map<String, Object>> postMaps(List<SysPost> posts) {
         List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>();
         if (posts == null) {
             return rows;
@@ -337,7 +340,7 @@ public class BladeSystemDirectoryCompatController {
             row.put("postCode", firstNonBlank(post.getPostCode(), String.valueOf(post.getPostId())));
             row.put("postName", postName);
             row.put("label", postName);
-            row.put("tenantId", SingleTenant.DEFAULT_TENANT_ID);
+            row.put("tenantId", singleTenantId);
             row.put("category", "1");
             row.put("sort", post.getPostSort());
             rows.add(row);
@@ -348,9 +351,9 @@ public class BladeSystemDirectoryCompatController {
     /**
      * Build fixed single-tenant rows for legacy tenant selectors.
      */
-    private static List<Map<String, Object>> tenantMaps() {
+    private List<Map<String, Object>> tenantMaps() {
         List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>();
-        rows.add(tenantMap(SingleTenant.DEFAULT_TENANT_ID));
+        rows.add(tenantMap(singleTenantId));
         return rows;
     }
 

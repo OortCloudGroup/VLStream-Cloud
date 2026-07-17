@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -38,6 +39,9 @@ public class LocationTaskCompatController {
 
     private final LocationTaskCompatService taskService;
     private final BladeTokenUserStore tokenUserStore;
+
+    @Value("${vls.tenant.id:000000}")
+    private String singleTenantId = "000000";
 
     /**
      * Create the compatibility controller with its task and token dependencies.
@@ -465,16 +469,11 @@ public class LocationTaskCompatController {
         if (currentUser == null) {
             return LocationTaskResult.error(4004, "无效的accesstoken");
         }
-        String tenantId = stringValue(currentUser.getTenantId());
-        if (tenantId.isEmpty()) {
-            return LocationTaskResult.error(40025, "租户无效");
-        }
-
         String userName = stringValue(currentUser.getUserName());
         if (userName.isEmpty()) {
             userName = stringValue(currentUser.getLoginId());
         }
-        UserContext user = new UserContext(token, tenantId, stringValue(currentUser.getUserId()),
+        UserContext user = new UserContext(token, singleTenantId, stringValue(currentUser.getUserId()),
             userName, currentClient());
         try {
             return operation.execute(request, user);

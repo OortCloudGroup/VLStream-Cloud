@@ -44,7 +44,7 @@ public class CustomTenantLineHandler implements TenantLineHandler {
     /**
      * 单租户校验地址
      */
-    @Value("${token.singleTenantId}")
+    @Value("${vls.tenant.id:000000}")
     private String singleTenantId;
     @Value("${token.tenantType}")
     private String tenantType;
@@ -71,7 +71,7 @@ public class CustomTenantLineHandler implements TenantLineHandler {
      */
     @Override
     public boolean ignoreTable(String tableName) {
-        return IGNORE_TABLE_NAMES.contains(tableName);
+        return true;
     }
 
     /**

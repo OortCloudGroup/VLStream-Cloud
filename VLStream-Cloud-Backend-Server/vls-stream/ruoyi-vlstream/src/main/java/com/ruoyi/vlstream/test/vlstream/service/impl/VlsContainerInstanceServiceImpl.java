@@ -6,6 +6,7 @@
 package com.ruoyi.vlstream.test.vlstream.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.extern.slf4j.Slf4j;
 import org.springblade.core.mp.base.BaseServiceImpl;
@@ -162,17 +163,31 @@ public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContaine
 	@Override
 	public boolean updateInstanceStatus(Long id, String instanceStatus, String healthStatus,
 										String containerId, Date startTime, Date stopTime) {
-		return baseMapper.updateInstanceStatus(id, instanceStatus, healthStatus, containerId, startTime, stopTime) > 0;
+		ContainerInstance instance = new ContainerInstance();
+		instance.setId(id);
+		instance.setInstanceStatus(instanceStatus);
+		instance.setHealthStatus(healthStatus);
+		instance.setContainerId(containerId);
+		instance.setStartTime(startTime);
+		instance.setStopTime(stopTime);
+		return updateById(instance);
 	}
 
 	@Override
 	public boolean updateMonitoringData(Long id, BigDecimal cpuUsage, BigDecimal memoryUsage, BigDecimal gpuUsage) {
-		return baseMapper.updateMonitoringData(id, cpuUsage, memoryUsage, gpuUsage) > 0;
+		ContainerInstance instance = new ContainerInstance();
+		instance.setId(id);
+		instance.setCpuUsage(cpuUsage);
+		instance.setMemoryUsage(memoryUsage);
+		instance.setGpuUsage(gpuUsage);
+		return updateById(instance);
 	}
 
 	@Override
 	public boolean increaseRestartCount(Long id) {
-		return baseMapper.increaseRestartCount(id) > 0;
+		UpdateWrapper<ContainerInstance> wrapper = new UpdateWrapper<>();
+		wrapper.eq("id", id).setSql("restart_count = restart_count + 1");
+		return update(new ContainerInstance(), wrapper);
 	}
 
 	@Override

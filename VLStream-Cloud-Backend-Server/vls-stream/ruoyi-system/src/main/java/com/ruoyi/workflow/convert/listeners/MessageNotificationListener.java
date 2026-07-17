@@ -8,7 +8,6 @@ package com.ruoyi.workflow.convert.listeners;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ruoyi.common.constant.PlatformConstants;
 import com.ruoyi.common.utils.OkHttpClientHolder;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.workflow.domain.WfForm;
@@ -201,16 +200,7 @@ public class MessageNotificationListener implements TaskListener, ApplicationCon
             String dataValue, List<Integer> channelTypesValue) {
         try {
             // 构建请求体 (复用 ApprovalNotificationListener 逻辑)
-            HttpServletRequest request = getCurrentRequest();
-            String tenantId = null;
-            if (request != null) {
-                tenantId = request.getHeader("tenantid");
-                if (tenantId == null || tenantId.isEmpty()) {
-                    tenantId = request.getHeader(PlatformConstants.HEADER_TENANT_ID);
-                }
-            }
-            if (tenantId == null)
-                tenantId = delegateTask.getTenantId();
+            String tenantId = delegateTask.getTenantId();
 
             ProcessEngineConfigurationImpl processEngineConfiguration = Context.getProcessEngineConfiguration();
             RepositoryService repositoryService = processEngineConfiguration.getRepositoryService();

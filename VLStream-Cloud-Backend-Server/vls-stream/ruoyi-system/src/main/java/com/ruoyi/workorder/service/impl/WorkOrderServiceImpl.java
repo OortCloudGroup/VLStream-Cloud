@@ -70,7 +70,9 @@ import com.ruoyi.workorder.mapper.WorkOrderMapper;
 import com.ruoyi.workorder.service.IWorkOrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.*;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.flowable.common.engine.api.query.Query;
@@ -83,7 +85,6 @@ import org.flowable.task.api.TaskQuery;
 import org.flowable.task.api.history.HistoricTaskInstance;
 import org.flowable.task.api.history.HistoricTaskInstanceQuery;
 import org.flowable.variable.api.history.HistoricVariableInstance;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -131,7 +132,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     @Lazy
     IWfProcessService processService;
 
-    @Value("${http.apaas-workflowforms}")
+//    @Value("${http.apaas-workflowforms}")
     private String workFlowFormsUrl;
 
     /**

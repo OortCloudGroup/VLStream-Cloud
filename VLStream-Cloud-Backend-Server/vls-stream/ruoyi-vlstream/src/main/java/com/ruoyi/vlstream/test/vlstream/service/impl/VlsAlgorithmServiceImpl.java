@@ -179,7 +179,7 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 			updateWrapper.setSql("deploy_count = deploy_count + 1").set("last_deploy_time", LocalDateTime.now());
 		}
 
-		return update(updateWrapper);
+		return update(new Algorithm(), updateWrapper);
 	}
 
 	@Override
@@ -194,7 +194,7 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 			updateWrapper.setSql("deploy_count = deploy_count + 1").set("last_deploy_time", LocalDateTime.now());
 		}
 
-		return update(updateWrapper);
+		return update(new Algorithm(), updateWrapper);
 	}
 
 	@Override

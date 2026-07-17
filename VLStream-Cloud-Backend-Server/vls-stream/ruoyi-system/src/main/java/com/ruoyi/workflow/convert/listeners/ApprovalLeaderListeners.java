@@ -43,22 +43,23 @@ public class ApprovalLeaderListeners implements TaskListener, ApplicationContext
     public void notify(DelegateTask delegateTask) {
         try {
             // 1. 预先获取所有需要的 Bean 和工具
-            ApplicationContext ctx        = applicationContext;
+            ApplicationContext ctx = applicationContext;
             SysUserServiceImpl userService = ctx.getBean(SysUserServiceImpl.class);
-            Environment env               = ctx.getBean(Environment.class);
-            ObjectMapper mapper           = new ObjectMapper();
-            String authUrlPrefix          = env.getProperty("platform.authUrl");
-            String token                  = AuthorizationInterceptor.getToken();
+            Environment env = ctx.getBean(Environment.class);
+            ObjectMapper mapper = new ObjectMapper();
+//            String authUrlPrefix          = env.getProperty("platform.authUrl");
+            String authUrlPrefix = null;
+            String token = AuthorizationInterceptor.getToken();
 
             // 2. 解析 assignee ("前缀-级别")
             String assignee = delegateTask.getAssignee();
-            int dashIndex   = assignee.indexOf('-');
-            String prefix   = assignee.substring(0, dashIndex);   // "job" 或 "post"
-            int level       = Integer.parseInt(assignee.substring(dashIndex + 1));
+            int dashIndex = assignee.indexOf('-');
+            String prefix = assignee.substring(0, dashIndex);   // "job" 或 "post"
+            int level = Integer.parseInt(assignee.substring(dashIndex + 1));
 
             // 3. 从流程变量取 id 值
-            String jobId  = Optional.ofNullable(delegateTask.getVariable("jobId"))
-                                    .map(Object::toString).orElse("");
+            String jobId = Optional.ofNullable(delegateTask.getVariable("jobId"))
+                                   .map(Object::toString).orElse("");
             String postId = Optional.ofNullable(delegateTask.getVariable("postId"))
                                     .map(Object::toString).orElse("");
 
@@ -66,12 +67,10 @@ public class ApprovalLeaderListeners implements TaskListener, ApplicationContext
             if ("job".equals(prefix) && StringUtils.isNotBlank(jobId)) {
                 handleApproval(delegateTask, userService, mapper,
                     authUrlPrefix, token, "job", jobId, level);
-            }
-            else if ("post".equals(prefix) && StringUtils.isNotBlank(postId)) {
+            } else if ("post".equals(prefix) && StringUtils.isNotBlank(postId)) {
                 handleApproval(delegateTask, userService, mapper,
                     authUrlPrefix, token, "post", postId, level);
-            }
-            else {
+            } else {
                 delegateTask.setAssignee(null);
             }
         } catch (Exception e) {

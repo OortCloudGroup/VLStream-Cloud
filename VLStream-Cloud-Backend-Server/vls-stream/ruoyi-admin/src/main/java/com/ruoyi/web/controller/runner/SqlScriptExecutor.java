@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -35,6 +36,7 @@ import javax.annotation.Resource;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Component
+@ConditionalOnProperty(prefix = "vls.data-initialization", name = "enabled", havingValue = "true")
 public class SqlScriptExecutor implements ApplicationRunner {
 
     @Value("${spring.datasource.dynamic.datasource.master.url}")
@@ -65,7 +67,8 @@ public class SqlScriptExecutor implements ApplicationRunner {
 
     private static final String ROOT_TENANT_ID = "0e391fd7-1033-4f09-88c0-187582fee462";
 
-    private static final String SINGLE_TENANT_ID = "000000";
+    @Value("${vls.tenant.id:000000}")
+    private String singleTenantId = "000000";
 
     private static final String EVENT_MANAGEMENT_APPLICATION_ID = "818301f0e77f4cd8a117414cbeb32d9e";
 
@@ -163,7 +166,7 @@ public class SqlScriptExecutor implements ApplicationRunner {
 
             int appCount = queryCount(statement,
                 "SELECT COUNT(*) FROM workorder_app " +
-                    "WHERE tenant_id = '" + SINGLE_TENANT_ID + "' " +
+                    "WHERE tenant_id = '" + singleTenantId + "' " +
                     "  AND application_id = '" + EVENT_MANAGEMENT_APPLICATION_ID + "' " +
                     "  AND application_secret = '" + EVENT_MANAGEMENT_APPLICATION_SECRET + "' " +
                     "  AND COALESCE(del_flag, '0') = '0'");
@@ -174,7 +177,7 @@ public class SqlScriptExecutor implements ApplicationRunner {
                         " create_by, create_time, update_by, update_time, del_flag, app_flag, images, app_package) " +
                         "VALUES (" +
                         " '" + SINGLE_TENANT_EVENT_MANAGEMENT_APP_ID + "', '事件管理', '" + EVENT_MANAGEMENT_APPLICATION_ID + "', " +
-                        " '" + EVENT_MANAGEMENT_APPLICATION_SECRET + "', '" + SINGLE_TENANT_ID + "', NULL, " +
+                        " '" + EVENT_MANAGEMENT_APPLICATION_SECRET + "', '" + singleTenantId + "', NULL, " +
                         " 'system', NOW(), 'system', NOW(), '0', '0', NULL, 'vls-ui') " +
                         "ON DUPLICATE KEY UPDATE " +
                         " application_name = VALUES(application_name), " +
@@ -193,7 +196,7 @@ public class SqlScriptExecutor implements ApplicationRunner {
 
             int formAppCount = queryCount(statement,
                 "SELECT COUNT(*) FROM wf_form_app " +
-                    "WHERE tenant_id = '" + SINGLE_TENANT_ID + "' " +
+                    "WHERE tenant_id = '" + singleTenantId + "' " +
                     "  AND application_id = '" + EVENT_MANAGEMENT_APPLICATION_ID + "' " +
                     "  AND type = '1' " +
                     "  AND COALESCE(del_flag, '0') = '0'");
@@ -205,7 +208,7 @@ public class SqlScriptExecutor implements ApplicationRunner {
                         " del_flag, images, type, app_flag) " +
                         "VALUES (" +
                         " '" + SINGLE_TENANT_EVENT_MANAGEMENT_FORM_CATEGORY_ID + "', '" + EVENT_MANAGEMENT_APPLICATION_ID + "', " +
-                        " '事件管理', '" + EVENT_MANAGEMENT_APPLICATION_SECRET + "', '" + SINGLE_TENANT_ID + "', NULL, " +
+                        " '事件管理', '" + EVENT_MANAGEMENT_APPLICATION_SECRET + "', '" + singleTenantId + "', NULL, " +
                         " NULL, '事件管理', 'event_management', '', 'system', NOW(), 'system', NOW(), " +
                         " '0', NULL, '1', '0') " +
                         "ON DUPLICATE KEY UPDATE " +
@@ -403,7 +406,7 @@ public class SqlScriptExecutor implements ApplicationRunner {
         try (Connection connection = DriverManager.getConnection(url, user, password);
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(
-                 "SELECT COUNT(1) FROM sys_user WHERE user_name = 'admin' AND tenant_id = '" + SINGLE_TENANT_ID + "' AND del_flag = '0'")) {
+                 "SELECT COUNT(1) FROM sys_user WHERE user_name = 'admin' AND tenant_id = '" + singleTenantId + "' AND del_flag = '0'")) {
             return resultSet.next() && resultSet.getInt(1) > 0;
         } catch (Exception e) {
             logger.warn("检查本地单租户用户权限种子数据失败，将尝试执行种子脚本: {}", e.getMessage());

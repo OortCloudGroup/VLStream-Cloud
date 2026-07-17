@@ -13,10 +13,9 @@ import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
-import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
 import com.ruoyi.framework.handler.CreateAndUpdateMetaObjectHandler;
 import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -31,14 +30,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @MapperScan("${mybatis-plus.mapperPackage}")
 public class MybatisPlusConfig {
 
-    @Autowired
-    private CustomTenantLineHandler customTenantLineHandler;
-
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        //多租户插件
-        interceptor.addInnerInterceptor(new TenantLineInnerInterceptor(customTenantLineHandler));
 //        // 数据权限处理
 //        interceptor.addInnerInterceptor(dataPermissionInterceptor());
         // 分页插件
@@ -79,8 +73,8 @@ public class MybatisPlusConfig {
      * 元对象字段填充控制器
      */
     @Bean
-    public MetaObjectHandler metaObjectHandler() {
-        return new CreateAndUpdateMetaObjectHandler();
+    public MetaObjectHandler metaObjectHandler(@Value("${vls.tenant.id:000000}") String singleTenantId) {
+        return new CreateAndUpdateMetaObjectHandler(singleTenantId);
     }
 
     /**
@@ -106,8 +100,6 @@ public class MybatisPlusConfig {
      * IllegalSQLInnerInterceptor sql性能规范插件(垃圾SQL拦截)
      * IdentifierGenerator 自定义主键策略
      * https://baomidou.com/pages/568eb2/
-     * TenantLineInnerInterceptor 多租户插件
-     * https://baomidou.com/pages/aef2f2/
      * DynamicTableNameInnerInterceptor 动态表名插件
      * https://baomidou.com/pages/2a45ff/
      */

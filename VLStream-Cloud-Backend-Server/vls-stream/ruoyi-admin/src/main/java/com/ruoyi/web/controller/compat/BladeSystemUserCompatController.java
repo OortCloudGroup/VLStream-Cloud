@@ -8,8 +8,9 @@ package com.ruoyi.web.controller.compat;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.interceptor.TokenHeaderResolver;
 import com.ruoyi.system.service.SysPermissionService;
-import com.ruoyi.vlstream.compat.BladeResult;
-import com.ruoyi.vlstream.compat.BladeUserInfoBuilder;
+
+import com.ruoyi.vlstream.test.compat.BladeResult;
+import com.ruoyi.vlstream.test.compat.BladeUserInfoBuilder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

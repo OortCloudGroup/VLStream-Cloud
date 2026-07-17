@@ -13,15 +13,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Forces all tenant-shaped inputs of VLStream business and location-task APIs to the configured tenant.
+ * Forces all tenant-shaped controller inputs to the configured single tenant.
  */
 @Aspect
 @Component
@@ -39,8 +41,7 @@ public class VlsSingleTenantRequestAspect {
     /**
      * Normalize controller arguments before any business method can consume client-supplied tenant values.
      */
-    @Around("execution(public * com.ruoyi.vlstream..controller..*(..))"
-        + " || execution(public * com.ruoyi.web.controller.compat.LocationTaskCompatController.*(..))")
+    @Around("execution(public * com.ruoyi..controller..*(..))")
     public Object forceSingleTenant(ProceedingJoinPoint joinPoint) throws Throwable {
         normalizeArguments(joinPoint.getArgs());
         return joinPoint.proceed();
@@ -76,7 +77,7 @@ public class VlsSingleTenantRequestAspect {
     }
 
     /**
-     * Recursively replace tenant values in maps, arrays, collections, and VLStream request beans.
+     * Recursively replace tenant values in maps, arrays, collections, and project request beans.
      */
     private void normalizeValue(Object value, Set<Object> visited) {
         if (value == null || isSimpleValue(value) || !visited.add(value)) {
@@ -100,9 +101,9 @@ public class VlsSingleTenantRequestAspect {
         }
         if (value instanceof TenantEntity) {
             ((TenantEntity) value).setTenantId(tenantId);
-            return;
         }
         normalizeTenantBean(value);
+        normalizeProjectBeanFields(value, visited);
     }
 
     /**
@@ -121,23 +122,58 @@ public class VlsSingleTenantRequestAspect {
     }
 
     /**
-     * Force tenantId on VLStream DTOs that do not inherit the compatibility TenantEntity base class.
+     * Force every tenant-shaped String setter on project-owned request beans.
      */
     private void normalizeTenantBean(Object value) {
         Package valuePackage = value.getClass().getPackage();
-        if (valuePackage == null || !valuePackage.getName().startsWith("com.ruoyi.vlstream.")) {
+        if (valuePackage == null || !valuePackage.getName().startsWith("com.ruoyi.")) {
             return;
         }
-        try {
-            Method setter = value.getClass().getMethod("setTenantId", String.class);
-            setter.invoke(value, tenantId);
-        } catch (NoSuchMethodException ignored) {
-            // Most request DTOs do not carry tenant data and need no normalization.
-        } catch (IllegalAccessException exception) {
-            throw new IllegalStateException("无法覆盖VLStream请求中的tenantId", exception);
-        } catch (InvocationTargetException exception) {
-            throw new IllegalStateException("无法覆盖VLStream请求中的tenantId", exception.getCause());
+        for (Method setter : value.getClass().getMethods()) {
+            if (!isTenantSetter(setter)) {
+                continue;
+            }
+            try {
+                setter.invoke(value, tenantId);
+            } catch (IllegalAccessException exception) {
+                throw new IllegalStateException("无法覆盖请求中的租户ID", exception);
+            } catch (InvocationTargetException exception) {
+                throw new IllegalStateException("无法覆盖请求中的租户ID", exception.getCause());
+            }
         }
+    }
+
+    /**
+     * Traverse nested fields on project request beans so wrapped DTOs cannot hide a tenant value.
+     */
+    private void normalizeProjectBeanFields(Object value, Set<Object> visited) {
+        Package valuePackage = value.getClass().getPackage();
+        if (valuePackage == null || !valuePackage.getName().startsWith("com.ruoyi.")) {
+            return;
+        }
+        for (Class<?> type = value.getClass(); type != null && type != Object.class; type = type.getSuperclass()) {
+            for (Field field : type.getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
+                    continue;
+                }
+                try {
+                    if (!field.isAccessible()) {
+                        field.setAccessible(true);
+                    }
+                    normalizeValue(field.get(value), visited);
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("无法检查请求中的嵌套租户ID", exception);
+                }
+            }
+        }
+    }
+
+    /**
+     * Recognize String setters such as setTenantId, setToTenantId, and setSourceTenantId.
+     */
+    private static boolean isTenantSetter(Method method) {
+        return method.getName().startsWith("set") && method.getParameterTypes().length == 1
+            && method.getParameterTypes()[0] == String.class && isTenantKey(method.getName().substring(3));
     }
 
     /**

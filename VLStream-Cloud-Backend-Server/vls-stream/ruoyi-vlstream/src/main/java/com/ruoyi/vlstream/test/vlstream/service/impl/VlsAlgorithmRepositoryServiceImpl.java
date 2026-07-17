@@ -162,7 +162,7 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 		updateWrapper.eq("id", id)
 			.set("status", status);
 
-		return update(updateWrapper);
+		return update(new AlgorithmRepository(), updateWrapper);
 	}
 
 	@Override
@@ -173,7 +173,7 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 		updateWrapper.in("id", ids)
 			.set("status", status);
 
-		return update(updateWrapper);
+		return update(new AlgorithmRepository(), updateWrapper);
 	}
 
 	@Override
@@ -193,7 +193,7 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 		updateWrapper.eq("id", repositoryId)
 			.set("algorithm_count", count);
 
-		update(updateWrapper);
+		update(new AlgorithmRepository(), updateWrapper);
 	}
 
 }

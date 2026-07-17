@@ -6,6 +6,7 @@
 package com.ruoyi.vlstream.test.vlstream.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
 import com.ruoyi.vlstream.test.common.enums.YesNoEnum;
@@ -199,8 +200,9 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 		}
 
 		// 更新状态为已发布
-		int result = baseMapper.updateStatus(id, "published");
-		if (result <= 0) {
+		UpdateWrapper<AlgorithmModel> publishWrapper = new UpdateWrapper<>();
+		publishWrapper.eq("id", id).set("status", "published");
+		if (!update(new AlgorithmModel(), publishWrapper)) {
 			log.error("发布模型失败：{}", id);
 			throw new RuntimeException("发布模型失败");
 		}
@@ -230,8 +232,9 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 		}
 
 		// 更新状态为草稿
-		int result = baseMapper.updateStatus(id, "draft");
-		if (result <= 0) {
+		UpdateWrapper<AlgorithmModel> draftWrapper = new UpdateWrapper<>();
+		draftWrapper.eq("id", id).set("status", "draft");
+		if (!update(new AlgorithmModel(), draftWrapper)) {
 			log.error("撤销发布模型失败：{}", id);
 			throw new RuntimeException("撤销发布模型失败");
 		}
@@ -262,8 +265,9 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 		}
 
 		// 批量更新状态
-		int result = baseMapper.batchUpdateStatus(ids, "published");
-		if (result <= 0) {
+		UpdateWrapper<AlgorithmModel> publishWrapper = new UpdateWrapper<>();
+		publishWrapper.in("id", ids).set("status", "published");
+		if (!update(new AlgorithmModel(), publishWrapper)) {
 			log.error("批量发布模型失败：{}", ids);
 			throw new RuntimeException("批量发布模型失败");
 		}
@@ -301,8 +305,9 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 		}
 
 		// 增加下载次数
-		int result = baseMapper.updateDownloadCount(id);
-		if (result <= 0) {
+		UpdateWrapper<AlgorithmModel> downloadWrapper = new UpdateWrapper<>();
+		downloadWrapper.eq("id", id).setSql("download_count = download_count + 1");
+		if (!update(new AlgorithmModel(), downloadWrapper)) {
 			log.error("更新下载次数失败：{}", id);
 		}
 
@@ -336,8 +341,9 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 		log.info("执行模型部署逻辑...");
 
 		// 增加部署次数
-		int result = baseMapper.updateDeployCount(id);
-		if (result <= 0) {
+		UpdateWrapper<AlgorithmModel> deployWrapper = new UpdateWrapper<>();
+		deployWrapper.eq("id", id).setSql("deploy_count = deploy_count + 1");
+		if (!update(new AlgorithmModel(), deployWrapper)) {
 			log.error("更新部署次数失败：{}", id);
 		}
 

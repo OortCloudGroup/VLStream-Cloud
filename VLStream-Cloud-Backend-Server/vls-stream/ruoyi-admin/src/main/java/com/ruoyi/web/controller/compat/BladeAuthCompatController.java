@@ -10,10 +10,10 @@ import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.common.interceptor.TokenHeaderResolver;
 import com.ruoyi.system.service.ISysUserService;
 import com.ruoyi.system.service.SysLoginService;
-import com.ruoyi.vlstream.compat.BladeAuthInfo;
-import com.ruoyi.vlstream.compat.BladePasswordDecoder;
-import com.ruoyi.vlstream.compat.BladeResult;
-import com.ruoyi.vlstream.compat.SingleTenant;
+
+import com.ruoyi.vlstream.test.compat.BladeAuthInfo;
+import com.ruoyi.vlstream.test.compat.BladePasswordDecoder;
+import com.ruoyi.vlstream.test.compat.BladeResult;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,6 +35,8 @@ public class BladeAuthCompatController {
     private final BladeTokenUserStore tokenUserStore;
     private final BladeTokenSessionService tokenSessionService;
     private final long tokenTimeout;
+    @Value("${vls.tenant.id:000000}")
+    private String singleTenantId = "000000";
 
     public BladeAuthCompatController(SysLoginService loginService,
                                      ISysUserService userService,
@@ -64,17 +66,17 @@ public class BladeAuthCompatController {
         }
 
         try {
-            TenantContextHolder.setTenantId(SingleTenant.DEFAULT_TENANT_ID);
+            TenantContextHolder.setTenantId(singleTenantId);
             String password = passwordDecoder.decode(encryptedPassword);
             String token = loginService.login(account, password, params.get("code"), params.get("uuid"));
             SysUser user = userService.selectUserByUserName(account);
             if (user == null) {
                 throw new IllegalStateException("本地用户不存在");
             }
-            user.setTenantId(SingleTenant.DEFAULT_TENANT_ID);
+            user.setTenantId(singleTenantId);
             tokenUserStore.put(token, user, tokenTimeout);
             String userName = firstNonBlank(user.getUserName(), account);
-            BladeAuthInfo authInfo = BladeAuthInfo.passwordToken(token, account, userName, SingleTenant.DEFAULT_TENANT_ID, tokenTimeout);
+            BladeAuthInfo authInfo = BladeAuthInfo.passwordToken(token, account, userName, singleTenantId, tokenTimeout);
             return BladeResult.success(authInfo);
         } catch (Exception ex) {
             return BladeResult.fail(firstNonBlank(ex.getMessage(), "登录失败"));

@@ -10,19 +10,18 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * ssh配置
+ * SSH defaults for the remote GPU training server.
  */
 @Data
 @Component
 @ConfigurationProperties(prefix = "vlstream.ssh")
 public class VlsSshProperties {
 
-	private String host;
+    private String host = "192.168.88.173";
 
-	private Integer port;
+    private Integer port = 22;
 
-	private String username;
+    private String username = "oort";
 
-	private String password;
-
+    private String password = "oort301";
 }

@@ -5,8 +5,8 @@
 
 package com.ruoyi.web.controller.compat;
 
-import com.ruoyi.vlstream.compat.BladePage;
-import com.ruoyi.vlstream.compat.BladeResult;
+import com.ruoyi.vlstream.test.compat.BladePage;
+import com.ruoyi.vlstream.test.compat.BladeResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

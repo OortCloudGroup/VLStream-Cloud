@@ -16,7 +16,7 @@ public class ApiHeaderUtil {
     // 允许的请求头白名单
     private static final List<String> ALLOWED_HEADERS = Arrays.asList(
         "AccessToken", "Content-Type", "Cookie", "appID",
-        "requestType", "secretKey", "tenantid","serverID"
+        "requestType", "secretKey", "serverID"
     );
 
     /**

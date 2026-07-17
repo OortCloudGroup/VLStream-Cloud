@@ -27,14 +27,24 @@ public class TenantEntity implements Serializable {
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private String tenantId;
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @TableField(fill = FieldFill.INSERT)
     private String createUser;
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @TableField(fill = FieldFill.INSERT)
     private String createDept;
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @TableField(fill = FieldFill.INSERT)
     private Date createTime;
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private String updateUser;
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
     private Integer status;

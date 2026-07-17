@@ -260,9 +260,6 @@
     <select id="selectUserByUserId" resultMap="SysUserResult">
         <include refid="selectUserVo"/>
         where u.del_flag = '0' and u.user_id = #{UserId}
-         <if test="tenantId!=null and tenantId!=''">
-         and u.tenant_id=#{tenantId}
-         </if>
     </select>
     <select id="selectUserByUserIds" resultMap="SysUserResult">
             <include refid="selectUserVo"/>

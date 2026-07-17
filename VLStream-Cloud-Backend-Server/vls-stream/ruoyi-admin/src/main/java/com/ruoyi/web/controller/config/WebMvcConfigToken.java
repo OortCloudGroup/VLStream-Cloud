@@ -6,14 +6,13 @@
 package com.ruoyi.web.controller.config;
 
 
+import cn.dev33.satoken.interceptor.SaInterceptor;
+import cn.dev33.satoken.stp.StpUtil;
 import com.ruoyi.common.interceptor.AuthorizationInterceptor;
 import com.ruoyi.framework.config.properties.SecurityProperties;
-import com.ruoyi.system.service.ISysUserService;
-import com.ruoyi.web.controller.interceptor.TokenInterceptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -26,23 +25,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebMvcConfigToken implements WebMvcConfigurer {
     private final SecurityProperties securityProperties;
-    private final ISysUserService sysUserServiceImpl;
-
-//    @Value("${http.apaas-sso}")
-//    private String tokenVerificationUrl;
     @Autowired
     private AuthorizationInterceptor authorizationInterceptor;
-    @Value(value = "${platform.verifyDataScopeUrl}")
-    private String verifyDataScopeUrl;
-    @Value("${token.tenantType}")
-    private String  tenantType;
-    @Value("${token.singleTenantVerifyTokenAddress}")
-    private String singleVerifyUrl;
-    @Value("${token.singleTenantId}")
-    private String singleTenantId;
+
+    /**
+     * Register one Sa-Token login check for every protected backend endpoint.
+     */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new TokenInterceptor(sysUserServiceImpl, verifyDataScopeUrl, singleVerifyUrl, tenantType,singleTenantId))
+        registry.addInterceptor(new SaInterceptor(handler -> StpUtil.checkLogin()))
             .addPathPatterns("/**")
             .excludePathPatterns(securityProperties.getExcludes());
         registry.addInterceptor(authorizationInterceptor).addPathPatterns("/**");

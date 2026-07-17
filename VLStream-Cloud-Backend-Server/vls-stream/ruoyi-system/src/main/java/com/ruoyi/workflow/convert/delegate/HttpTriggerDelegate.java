@@ -74,7 +74,6 @@ public class HttpTriggerDelegate implements JavaDelegate, ApplicationContextAwar
         List<HeaderOrParams> paramsList = gson.fromJson(paramsJson, new TypeToken<List<HeaderOrParams>>() {
         }.getType());
         HistoricProcessInstance historicProcIns = historyService.createHistoricProcessInstanceQuery()
-                .processInstanceTenantId(request.getHeader("tenantid"))
                 .processInstanceId(execution.getProcessInstanceId())
                 .includeProcessVariables()
                 .singleResult();
@@ -160,7 +159,7 @@ public class HttpTriggerDelegate implements JavaDelegate, ApplicationContextAwar
                     : new HttpPut(url);
             // 直接在请求头中添加额外的参数
             http.addHeader("accesstoken", request.getHeader("accesstoken"));
-            http.addHeader("tenantId", request.getHeader("Tenantid"));
+            http.addHeader("tenantId", historicProcIns == null ? "" : historicProcIns.getTenantId());
             http.addHeader("appid", request.getHeader("appid"));
             http.addHeader("requestType", request.getHeader("requesttype"));
             http.addHeader("secretKey", request.getHeader("secretkey"));

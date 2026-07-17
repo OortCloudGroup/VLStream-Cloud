@@ -105,10 +105,10 @@ sa-token:
   is-get-extra-enabled: true
   # token名称 (同时也是cookie名称)
   token-name: Authorization
-  # token有效期 设为一天 (必定过期) 单位: 秒
-  timeout: 86400
-  # token临时有效期 (指定时间无操作就过期) 单位: 秒
-  activity-timeout: 1800
+  # token 登录后固定有效两小时，单位：秒
+  timeout: 7200
+  # 关闭独立的闲置过期，避免普通接口与工作流接口产生不同登录状态
+  activity-timeout: -1
   # 是否允许同一账号并发登录 (为true时允许一起登录, 为false时新登录挤掉旧登录)
   is-concurrent: true
   # 在多人登录同一账号时，是否共用一个token (为true时所有登录共用一个token, 为false时每次登录新建一个token)
@@ -166,7 +166,10 @@ vlstream:
 
 vls:
   tenant:
-    id: ${VLS_SINGLE_TENANT_ID:000000}
+    id: ${VLS_SINGLE_TENANT_ID:${SINGLE_TENANT_ID:000000}}
+  data-initialization:
+    # 开源服务默认不执行建表、种子数据、流程部署或历史数据修复。
+    enabled: ${VLS_DATA_INITIALIZATION_ENABLED:false}
   apaas-sync:
     enabled: ${VLS_APAAS_SYNC_ENABLED:false}
   location-task:
@@ -364,7 +367,7 @@ flowable:
   # 是否开启定时任务 job
   # async-executor-activate: 启用异步执行器，用于处理异步任务（如定时任务、异步延续、异步服务任务等）
   # 开启后会启动单独的线程池来处理异步任务，避免阻塞主流程
-  async-executor-activate: true
+  async-executor-activate: false
 
   # job-executor-activate: 激活定时器执行器（已注释）
   # 用于处理流程中的定时器事件（如定时边界事件、定时启动事件等）

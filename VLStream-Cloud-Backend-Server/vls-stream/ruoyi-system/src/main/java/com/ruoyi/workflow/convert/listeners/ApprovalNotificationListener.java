@@ -8,7 +8,6 @@ package com.ruoyi.workflow.convert.listeners;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ruoyi.common.constant.PlatformConstants;
 import com.ruoyi.common.utils.OkHttpClientHolder;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.workflow.domain.WfForm;
@@ -130,10 +129,7 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
                 log.warn("审批节点消息推送：无法获取当前请求，跳过推送");
                 return;
             }
-            String tenantId = request.getHeader("tenantid");
-            if (tenantId == null || tenantId.isEmpty()) {
-                tenantId = request.getHeader(PlatformConstants.HEADER_TENANT_ID);
-            }
+            String tenantId = delegateTask.getTenantId();
 
             // 获取RepositoryService用于查询流程定义信息
             ProcessEngineConfigurationImpl processEngineConfiguration = Context.getProcessEngineConfiguration();

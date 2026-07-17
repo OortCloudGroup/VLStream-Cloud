@@ -232,7 +232,9 @@ public class VlsDeviceInfoServiceImpl extends BaseServiceImpl<VlsDeviceInfoMappe
 
 	@Override
 	public boolean updateDeviceStatusBatch(List<Long> ids, String status) {
-		return baseMapper.updateStatusBatch(ids, status) > 0;
+		return update(new DeviceInfo(), Wrappers.<DeviceInfo>update()
+			.in("id", ids)
+			.set("status", status));
 	}
 
 	@Override

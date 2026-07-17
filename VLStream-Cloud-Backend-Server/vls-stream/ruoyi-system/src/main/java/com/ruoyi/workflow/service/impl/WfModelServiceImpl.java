@@ -42,7 +42,6 @@ import com.ruoyi.workflow.convert.node.StartNode;
 import com.ruoyi.workflow.domain.*;
 import com.ruoyi.workflow.domain.bo.*;
 import com.ruoyi.workflow.domain.dto.WfMetaInfoDto;
-import com.ruoyi.workflow.domain.vo.ProcessTemplateVo;
 import com.ruoyi.workflow.domain.vo.ReModelJsonVo;
 import com.ruoyi.workflow.domain.vo.WfFormVo;
 import com.ruoyi.workflow.domain.vo.WfModelVo;
@@ -60,15 +59,15 @@ import okhttp3.Request;
 import okhttp3.Response;
 import org.flowable.bpmn.constants.BpmnXMLConstants;
 import org.flowable.bpmn.converter.BpmnXMLConverter;
-import org.flowable.bpmn.model.*;
-import org.flowable.bpmn.model.Process;
+import org.flowable.bpmn.model.BpmnModel;
+import org.flowable.bpmn.model.StartEvent;
+import org.flowable.bpmn.model.UserTask;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 import org.flowable.common.engine.impl.db.SuspensionState;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.Model;
 import org.flowable.engine.repository.ModelQuery;
 import org.flowable.engine.repository.ProcessDefinition;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -146,7 +145,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     private final IReModeJsonService reModeJsonService;
     private final IWfFormSynthesisService iWfFormSynthesisService;
     private final IWfDeployService deployService;
-    @Value("${http.get-tenant-admin}")
+//    @Value("${http.get-tenant-admin}")
     private String getTenantAdmin;
 
     /**

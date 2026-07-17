@@ -7,7 +7,8 @@ package com.ruoyi.web.controller.compat;
 
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.interceptor.TokenHeaderResolver;
-import com.ruoyi.vlstream.compat.BladeResult;
+import com.ruoyi.vlstream.test.compat.BladeResult;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,6 +25,8 @@ import java.util.Map;
 public class SsoCompatController {
 
     private final BladeTokenUserStore tokenUserStore;
+    @Value("${vls.tenant.id:000000}")
+    private String singleTenantId = "000000";
 
     public SsoCompatController(BladeTokenUserStore tokenUserStore) {
         this.tokenUserStore = tokenUserStore;
@@ -42,7 +45,7 @@ public class SsoCompatController {
         }
 
         Map<String, Object> tenant = new LinkedHashMap<String, Object>();
-        String tenantId = firstNonBlank(user.getTenantId(), "default");
+        String tenantId = singleTenantId;
         String userName = firstNonBlank(user.getUserName(), user.getLoginId());
         tenant.put("tenant_id", tenantId);
         tenant.put("tenant_name", tenantId);
@@ -84,7 +87,7 @@ public class SsoCompatController {
         data.put("userInfo", user);
         data.put("account", account);
         data.put("userName", userName);
-        data.put("tenantId", firstNonBlank(user.getTenantId(), "default"));
+        data.put("tenantId", singleTenantId);
         data.put("user_id", user.getUserId());
         data.put("user_name", userName);
         data.put("accessToken", token);
@@ -117,7 +120,7 @@ public class SsoCompatController {
         data.put("tokenType", "Bearer");
         data.put("user", user);
         data.put("userName", userName);
-        data.put("tenantId", firstNonBlank(user.getTenantId(), "default"));
+        data.put("tenantId", singleTenantId);
         return BladeResult.success(data);
     }
 

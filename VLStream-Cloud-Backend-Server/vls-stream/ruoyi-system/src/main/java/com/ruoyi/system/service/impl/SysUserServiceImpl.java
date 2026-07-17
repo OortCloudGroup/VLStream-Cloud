@@ -40,7 +40,6 @@ import com.ruoyi.system.mapper.*;
 import com.ruoyi.system.service.ISysUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,9 +58,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Service
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements ISysUserService, UserService {
-    @Value("${user.excludedjobname}")
+//    @Value("${user.excludedjobname}")
     private String excludedJobName;
-    @Value("${dept.excludedUdid}")
+//    @Value("${dept.excludedUdid}")
     private String excludedUdid;
 
     private final SysUserMapper baseMapper;
@@ -496,9 +495,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
-    public SysUser selectUserByUserId(String UserId,String  tenantId) {
-        SysUser sysUser = baseMapper.selectUserByUserId(UserId, tenantId);
-        return sysUser;
+    public SysUser selectUserByUserId(String UserId) {
+        return baseMapper.selectUserByUserId(UserId);
     }
 
     @Override

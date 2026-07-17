@@ -11,7 +11,7 @@ spring.boot.admin.client:
 --- # xxl-job 配置
 xxl.job:
   # 执行器开关
-  enabled: true
+  enabled: false
   # 调度中心地址：如调度中心集群部署存在多个地址则用逗号分隔。
   admin-addresses: ${XXL_JOB_ADDRESSES:http://127.0.0.1:9100}
 #  admin-addresses: http://localhost:9100/xxl-job-admin/
@@ -203,11 +203,16 @@ token:
   tenantType: ${SSO_TENANT_TYPE:single}
   #获取多租户用户信息
   multiTenantAdminUserUrl: ${GET_MULTI_TENANT_ADMIN_USER_URL:http://183.62.103.20:21410/bus/apaas-user/user/v1/userInfo}
-  #单租户校验token地址
-  singleTenantVerifyTokenAddress: ${SSO_SINGLE_TENANT_VERIFY_TOKEN:http://oort.oortcloudsmart.com:21310/oort/oortcloud-sso/sso/v1/verifyToken}
-  #获取单租户用户信息
-  singleTenantAdminUserUrl: ${GET_SINGLE_TENANT_ADMIN_USER_URL:http://oort.oortcloudsmart.com:21310/oort/oortcloud-sso/sso/v1/getUserInfo}
   #单租户id
   singleTenantId: ${SINGLE_TENANT_ID:000000}
+---
+dept:
+  excludedUdid: ${EXCLUDEDUDID:273ed9a4-0e77-4169-af46-dd2da2aa1fcc}
+UnifiedMessagingSend:
+  url: ${UNIFIEDMESSAGINGSEND_URL:http://183.62.103.20:21410/bus/apaas-unified-msg/}
+---
+auth:
+  report:
+    excludeClasses: ReModeJsonController,ProcessTemplateController,WfTXController
 
 

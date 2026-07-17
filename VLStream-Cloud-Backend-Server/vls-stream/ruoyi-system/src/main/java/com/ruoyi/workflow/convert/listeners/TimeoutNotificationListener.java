@@ -8,7 +8,6 @@ package com.ruoyi.workflow.convert.listeners;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ruoyi.common.constant.PlatformConstants;
 import com.ruoyi.common.utils.OkHttpClientHolder;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.workflow.domain.WfForm;
@@ -111,19 +110,7 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
             List<Integer> channelTypesValue) {
         try {
             // 1. 获取请求头信息
-            HttpServletRequest request = getCurrentRequest();
-            String tenantId = null;
-            if (request != null) {
-                tenantId = request.getHeader("tenantid");
-                if (tenantId == null || tenantId.isEmpty()) {
-                    tenantId = request.getHeader(PlatformConstants.HEADER_TENANT_ID);
-                }
-            }
-
-            // 如果无法从请求获取，尝试从任务获取
-            if (tenantId == null || tenantId.isEmpty()) {
-                tenantId = task.getTenantId();
-            }
+            String tenantId = task.getTenantId();
 
             // 2. 获取应用ID
             ProcessEngineConfigurationImpl processEngineConfiguration = Context.getProcessEngineConfiguration();

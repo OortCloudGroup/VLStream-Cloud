@@ -35,4 +35,15 @@ class CustomTenantLineHandlerLoginTenantTest {
 
         assertTrue(handler.ignoreTable("sys_user"));
     }
+
+    /**
+     * 单租户模式不应再给任何业务表拼接租户过滤条件，历史空租户数据也必须可见。
+     */
+    @Test
+    void ignoresEveryTableInSingleTenantMode() {
+        CustomTenantLineHandler handler = new CustomTenantLineHandler();
+
+        assertTrue(handler.ignoreTable("vls_device_info"));
+        assertTrue(handler.ignoreTable("oort_task_event"));
+    }
 }

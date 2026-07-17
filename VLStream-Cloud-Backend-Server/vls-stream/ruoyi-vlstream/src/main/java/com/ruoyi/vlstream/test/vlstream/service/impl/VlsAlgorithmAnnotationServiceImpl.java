@@ -380,7 +380,7 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 
 			UpdateWrapper<AlgorithmAnnotation> updateWrapper = new UpdateWrapper<>();
 			updateWrapper.eq("id", annotationId).set("dataset_path", datasetPath + "/dataset.yaml");
-			boolean updateResult = update(updateWrapper);
+			boolean updateResult = update(new AlgorithmAnnotation(), updateWrapper);
 			if (!updateResult) {
 				log.warn("更新数据集路径失败：annotationId={}", annotationId);
 			}
@@ -969,7 +969,7 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 			.set("progress", progress)
 			.set("annotation_status", status);
 
-		return update(updateWrapper);
+		return update(new AlgorithmAnnotation(), updateWrapper);
 	}
 
 	@Override
@@ -981,7 +981,7 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 		updateWrapper.in("id", ids)
 			.set("annotation_status", annotationStatus);
 
-		return update(updateWrapper);
+		return update(new AlgorithmAnnotation(), updateWrapper);
 	}
 
 	@Override
@@ -993,7 +993,7 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 		updateWrapper.eq("id", id)
 			.set("annotation_status", "partial");
 
-		return update(updateWrapper);
+		return update(new AlgorithmAnnotation(), updateWrapper);
 	}
 
 	@Override
@@ -1013,7 +1013,7 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 			.set("progress", 100)
 			.set("annotated_count", annotation.getTotalCount());
 
-		return update(updateWrapper);
+		return update(new AlgorithmAnnotation(), updateWrapper);
 	}
 
 	@Override
@@ -1027,7 +1027,7 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 			.set("progress", 0)
 			.set("annotated_count", 0);
 
-		return update(updateWrapper);
+		return update(new AlgorithmAnnotation(), updateWrapper);
 	}
 
 	@Override
@@ -1165,7 +1165,7 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 				.set("annotated_count", totalInstances)
 				.set("progress", progress)
 				.set("annotation_status", statusEnum);
-			update(updateWrapper);
+			update(new AlgorithmAnnotation(), updateWrapper);
 
 			Map<String, Object> result = new HashMap<>();
 			result.put("success", true);

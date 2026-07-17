@@ -350,7 +350,6 @@ public class VlsRtspRecordingManager {
 		videoRecord.setRecordDate(recordStartTime.toLocalDate());
 		videoRecord.setRecordStatus("completed");
 		videoRecord.setThumbnailPath(thumbnailUrl);
-		videoRecord.setTenantId("0e391fd7-1033-4f09-88c0-187582fee462");
 		return videoRecord;
 	}
 

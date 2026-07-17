@@ -7,6 +7,7 @@ package com.ruoyi.vlstream.test.vlstream.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import javax.annotation.Resource;
@@ -209,7 +210,9 @@ public class VlsTagManagementServiceImpl extends BaseServiceImpl<VlsTagManagemen
 
 	@Override
 	public void updateUsageCount(Long tagId, Integer increment) {
-		tagManagementMapper.updateUsageCount(tagId, increment);
+		UpdateWrapper<TagManagement> wrapper = new UpdateWrapper<>();
+		wrapper.eq("id", tagId).setSql("usage_count = usage_count + " + increment);
+		update(new TagManagement(), wrapper);
 	}
 
 	@Override

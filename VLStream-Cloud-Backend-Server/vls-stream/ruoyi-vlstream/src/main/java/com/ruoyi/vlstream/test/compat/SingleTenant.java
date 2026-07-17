@@ -15,11 +15,10 @@ public final class SingleTenant {
     private SingleTenant() {
     }
 
-    public static String orDefault(String tenantId) {
-        if (tenantId == null) {
-            return DEFAULT_TENANT_ID;
-        }
-        String trimmed = tenantId.trim();
-        return trimmed.isEmpty() ? DEFAULT_TENANT_ID : trimmed;
+    /**
+     * Ignore compatibility input and always return the backend-owned tenant.
+     */
+    public static String orDefault(String ignoredTenantId) {
+        return DEFAULT_TENANT_ID;
     }
 }

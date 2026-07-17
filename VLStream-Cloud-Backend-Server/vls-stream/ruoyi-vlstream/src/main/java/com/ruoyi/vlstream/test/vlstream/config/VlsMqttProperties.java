@@ -42,7 +42,10 @@ public class VlsMqttProperties {
 	 */
 	private String topicPrefix = "oortcloud";
 
-	/**
+    private String dispatchAlgorithmsTopic = "oortcloud/dispatchAlgorithms";
+
+
+    /**
 	 * 摄像机显示设置消息主题
 	 */
 	private String vlsCameraDisplaySettingTopic = "oortcloud/vlsCameraDisplaySetting";

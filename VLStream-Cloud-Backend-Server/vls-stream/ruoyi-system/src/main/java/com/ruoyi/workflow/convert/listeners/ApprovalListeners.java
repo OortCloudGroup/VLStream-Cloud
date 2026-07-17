@@ -214,7 +214,7 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
             ;
             // 直接在请求头中添加额外的参数
             http.addHeader("accesstoken", request.getHeader("accesstoken"));
-            http.addHeader("tenantId", request.getHeader("Tenantid"));
+            http.addHeader("tenantId", historicProcIns == null ? "" : historicProcIns.getTenantId());
             http.addHeader("appid", request.getHeader("appid"));
             http.addHeader("requestType", request.getHeader("requesttype"));
             http.addHeader("secretKey", request.getHeader("secretkey"));

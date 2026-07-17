@@ -74,7 +74,7 @@ public class VlsRemoteServersServiceImpl extends BaseServiceImpl<VlsRemoteServer
 	 */
 	@Override
 	public int insertRemoteServer(RemoteServers remoteServer) {
-		return remoteServerMapper.insertRemoteServer(remoteServer);
+		return save(remoteServer) ? 1 : 0;
 	}
 
 	/**
@@ -85,7 +85,7 @@ public class VlsRemoteServersServiceImpl extends BaseServiceImpl<VlsRemoteServer
 	 */
 	@Override
 	public int updateRemoteServer(RemoteServers remoteServer) {
-		return remoteServerMapper.updateRemoteServer(remoteServer);
+		return updateById(remoteServer) ? 1 : 0;
 	}
 
 	/**

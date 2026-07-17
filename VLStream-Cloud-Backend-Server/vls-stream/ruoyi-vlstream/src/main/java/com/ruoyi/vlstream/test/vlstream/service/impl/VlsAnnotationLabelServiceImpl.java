@@ -150,9 +150,10 @@ public class VlsAnnotationLabelServiceImpl extends BaseServiceImpl<VlsAnnotation
 		log.debug("更新标签使用次数: labelId={}", labelId);
 
 		Integer usageCount = annotationInstanceMapper.countByLabelId(labelId);
-		int result = baseMapper.updateUsageCount(labelId, usageCount);
-
-		return result > 0;
+		AnnotationLabel label = new AnnotationLabel();
+		label.setId(labelId);
+		label.setUsageCount(usageCount);
+		return updateById(label);
 	}
 
 	@Override

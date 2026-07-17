@@ -17,6 +17,7 @@ import com.ruoyi.workorder.domain.bo.WorkOrderBo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -87,6 +88,9 @@ public class LocationTaskCompatService {
     private final ObjectMapper objectMapper;
     private final IWfProcessService processService;
     private final LocationTaskWorkflowProperties workflowProperties;
+
+    @Value("${vls.tenant.id:000000}")
+    private String singleTenantId = "000000";
 
     /**
      * Build the service on the application's primary dynamic data source.
@@ -195,9 +199,8 @@ public class LocationTaskCompatService {
             return parameterError("参数错误 point不能为空");
         }
         if (stringValue(body, "device_id").isEmpty()
-            || stringValue(body, "device_name").isEmpty()
-            || stringValue(body, "device_tenant_id").isEmpty()) {
-            return parameterError("参数错误 device_id、device_name和device_tenant_id不能为空");
+            || stringValue(body, "device_name").isEmpty()) {
+            return parameterError("参数错误 device_id和device_name不能为空");
         }
         String item = cameraEventItem(body);
         if (stringValue(body, "item").isEmpty() && codePointLength(item) > 10) {
@@ -213,7 +216,7 @@ public class LocationTaskCompatService {
      * Persist one active-safety event and schedule its configuration-controlled work-order hook.
      */
     private EventKey insertCameraEvent(Map<String, Object> body) {
-        String tenantId = stringValue(body, "device_tenant_id");
+        String tenantId = singleTenantId;
         String deviceId = stringValue(body, "device_id");
         String deviceName = stringValue(body, "device_name");
         String item = cameraEventItem(body);

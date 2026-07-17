@@ -107,10 +107,9 @@ public interface SysUserMapper extends BaseMapperPlus<SysUserMapper, SysUser, Sy
      * 通过用户uuid查询用户
      *
      * @param UserId   用户uuID
-     * @param tenantId
      * @return 用户对象信息
      */
-    SysUser selectUserByUserId(@Param("UserId") String UserId,@Param("tenantId")String tenantId);
+    SysUser selectUserByUserId(@Param("UserId") String UserId);
 
     /**
      * 通过用户id查询用户

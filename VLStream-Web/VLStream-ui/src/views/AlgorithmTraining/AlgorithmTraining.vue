@@ -1489,7 +1489,20 @@ const handleTrain = (row) => {
   }
 }
 
-// 构建训练参数
+// 按算法配置、任务快照和历史训练产物的优先级解析可用的 PT 基础模型路径。
+const resolveBaseModelPath = (algorithm, trainingData) => {
+  const candidates = [
+    algorithm?.ptModelFilePath,
+    trainingData?.targetModel,
+    trainingData?.ptModelFilePath,
+    trainingData?.modelPath,
+    trainingData?.modelOutputPath
+  ]
+  const matchedPath = candidates.find(path => typeof path === 'string' && path.trim())
+  return matchedPath?.trim() || ''
+}
+
+// 校验当前任务和数据集，并构建后端开始训练接口所需的参数。
 const buildTrainingPayload = async () => {
   if (!currentTrainingItem.value) {
     throw new Error('请先选择训练任务')
@@ -1510,9 +1523,12 @@ const buildTrainingPayload = async () => {
   if (!algorithmOptions.value.length) {
     await loadAlgorithmOptions()
   }
-  const algorithm = algorithmOptions.value.find(item => item.value === trainingData.algorithmId)
-  const modelFilePath = algorithm?.ptModelFilePath || trainingData.ptModelFilePath
-  const trainType = trainingData.trainType
+  const algorithmId = trainingData.algorithmId ?? currentTrainingItem.value.algorithmId
+  const algorithm = algorithmOptions.value.find(
+    item => String(item.value) === String(algorithmId)
+  )
+  const modelFilePath = resolveBaseModelPath(algorithm, trainingData)
+  const trainType = trainingData.trainType || algorithm?.type || 'detect'
   const epochs = Number(trainingData.epochTotal)
   const imgsz = Number(trainImgSize.value || 640)
   const batch = Number(batchSize.value || 16)

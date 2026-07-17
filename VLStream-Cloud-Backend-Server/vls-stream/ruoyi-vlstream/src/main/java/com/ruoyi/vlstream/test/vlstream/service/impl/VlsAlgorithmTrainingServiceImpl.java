@@ -74,7 +74,7 @@ public class VlsAlgorithmTrainingServiceImpl extends BaseServiceImpl<VlsAlgorith
 	 */
 	@Override
 	public int insertAlgorithmTraining(AlgorithmTraining algorithmTraining) {
-		return algorithmTrainingMapper.insertAlgorithmTraining(algorithmTraining);
+		return save(algorithmTraining) ? 1 : 0;
 	}
 
 	/**
@@ -85,7 +85,7 @@ public class VlsAlgorithmTrainingServiceImpl extends BaseServiceImpl<VlsAlgorith
 	 */
 	@Override
 	public int updateAlgorithmTraining(AlgorithmTraining algorithmTraining) {
-		return algorithmTrainingMapper.updateAlgorithmTraining(algorithmTraining);
+		return updateById(algorithmTraining) ? 1 : 0;
 	}
 
 	/**

@@ -11,6 +11,7 @@ import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.workflow.domain.vo.WorkOrderAppVo;
 import com.ruoyi.workflow.service.IWorkOrderAppService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,9 +35,9 @@ public class ProcessCategoryCompatController {
 
     private static final String DEFAULT_APP_ID = "000000-event-management-app";
     private static final String DEFAULT_APP_NAME = "事件管理";
-    private static final String DEFAULT_TENANT_ID = "000000";
-
     private final IWorkOrderAppService workOrderAppService;
+    @Value("${vls.tenant.id:000000}")
+    private String singleTenantId = "000000";
 
     @GetMapping("/list")
     public TableDataInfo<Map<String, Object>> list(String appId) {
@@ -91,7 +92,7 @@ public class ProcessCategoryCompatController {
         row.put("parentId", "0");
         row.put("sortOrder", 0);
         row.put("sort", 0);
-        row.put("tenantId", DEFAULT_TENANT_ID);
+        row.put("tenantId", singleTenantId);
         row.put("children", Collections.emptyList());
         row.put("modelList", Collections.emptyList());
         return row;

@@ -6,7 +6,7 @@
 package com.ruoyi.web.controller.compat;
 
 import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.vlstream.compat.BladeResult;
+import com.ruoyi.vlstream.test.compat.BladeResult;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;

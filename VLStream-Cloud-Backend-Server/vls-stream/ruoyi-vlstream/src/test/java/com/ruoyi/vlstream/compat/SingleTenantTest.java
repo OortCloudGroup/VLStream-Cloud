@@ -5,6 +5,7 @@
 
 package com.ruoyi.vlstream.compat;
 
+import com.ruoyi.vlstream.test.compat.SingleTenant;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 
@@ -21,7 +22,7 @@ class SingleTenantTest {
     }
 
     @Test
-    void preservesExplicitTenantForCompatibilityOnlyWhenNonBlank() {
-        assertEquals("tenant-a", SingleTenant.orDefault("tenant-a"));
+    void ignoresExplicitCompatibilityTenant() {
+        assertEquals("000000", SingleTenant.orDefault("tenant-a"));
     }
 }

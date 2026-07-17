@@ -15,6 +15,7 @@ import com.ruoyi.vlstream.test.vlstream.mapper.VlsDeviceTagRelationMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsTagManagementMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.DeviceTagRelationDTO;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceTagRelation;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.TagManagement;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.DeviceTagRelationVO;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsDeviceTagRelationService;
 import org.springframework.stereotype.Service;
@@ -61,7 +62,7 @@ public class VlsDeviceTagRelationServiceImpl extends BaseServiceImpl<VlsDeviceTa
 			// 去重并过滤无效标签
 			List<Long> validTagIds = validateAndFilterTagIds(tagIds);
 			if (!validTagIds.isEmpty()) {
-				baseMapper.batchInsertDeviceTags(deviceId, validTagIds, createdBy);
+				saveDeviceTags(deviceId, validTagIds);
 			}
 		}
 
@@ -87,12 +88,25 @@ public class VlsDeviceTagRelationServiceImpl extends BaseServiceImpl<VlsDeviceTa
 			// 验证标签有效性
 			List<Long> validTagIds = validateAndFilterTagIds(newTagIds);
 			if (!validTagIds.isEmpty()) {
-				baseMapper.batchInsertDeviceTags(deviceId, validTagIds, createdBy);
+				saveDeviceTags(deviceId, validTagIds);
 			}
 		}
 
 		log.info("添加设备标签成功: deviceId={}, newTagIds={}", deviceId, newTagIds);
 		return true;
+	}
+
+	/**
+	 * 通过统一实体写入链路保存关联，使租户及创建、更新审计字段由全局填充器负责。
+	 */
+	private void saveDeviceTags(Long deviceId, List<Long> tagIds) {
+		List<DeviceTagRelation> relations = tagIds.stream().map(tagId -> {
+			DeviceTagRelation relation = new DeviceTagRelation();
+			relation.setDeviceId(deviceId);
+			relation.setTagId(tagId);
+			return relation;
+		}).collect(Collectors.toList());
+		saveBatch(relations);
 	}
 
 	@Override
@@ -283,7 +297,10 @@ public class VlsDeviceTagRelationServiceImpl extends BaseServiceImpl<VlsDeviceTa
 				Long deviceCount = (Long) stat.get("device_count");
 
 				// 设置tag_management表中的usage_count字段
-				tagManagementMapper.setUsageCount(tagId, deviceCount.intValue());
+				TagManagement tag = new TagManagement();
+				tag.setId(tagId);
+				tag.setUsageCount(deviceCount.intValue());
+				tagManagementMapper.updateById(tag);
 			}
 
 			log.info("同步标签使用计数成功，更新了 {} 个标签", usageStats.size());

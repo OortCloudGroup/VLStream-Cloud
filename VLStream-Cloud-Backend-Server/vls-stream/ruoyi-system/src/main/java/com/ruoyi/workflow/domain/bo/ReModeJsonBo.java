@@ -31,9 +31,8 @@ public class ReModeJsonBo extends BaseEntity {
     private String modelId;
 
     /**
-     * 租户id
+     * 后台单租户标识，客户端无需传入。
      */
-    @NotBlank(message = "租户id不能为空", groups = { AddGroup.class, EditGroup.class })
     private String tenantId;
 
     /**

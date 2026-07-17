@@ -221,7 +221,7 @@ public interface ISysUserService extends IService<SysUser> {
      * @param UserId 用户uuID
      * @return 用户对象信息
      */
-    SysUser selectUserByUserId(String UserId,String  tenantId);
+    SysUser selectUserByUserId(String UserId);
 
 
     /**

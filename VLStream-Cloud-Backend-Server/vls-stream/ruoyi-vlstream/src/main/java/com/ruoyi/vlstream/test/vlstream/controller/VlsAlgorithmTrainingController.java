@@ -833,7 +833,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 						UpdateWrapper<AlgorithmModel> updateWrapper = new UpdateWrapper<>();
 						updateWrapper.eq("id", modelId)
 							.setSql("download_count = download_count + 1");
-						boolean updated = algorithmModelService.update(updateWrapper);
+						boolean updated = algorithmModelService.update(new AlgorithmModel(), updateWrapper);
 						if (!updated) {
 							log.warn("Failed to increment download count, modelId={}", modelId);
 						}

@@ -91,7 +91,7 @@ public final class LocationTaskCameraApiModels {
         @JsonProperty("device_tag")
         public String deviceTag;
 
-        @Schema(description = "业务租户ID；当前单库部署应传VLS_SINGLE_TENANT_ID", example = "000000", required = true)
+        @Schema(description = "兼容字段；后台固定租户并忽略客户端传值", example = "000000", deprecated = true)
         @JsonProperty("device_tenant_id")
         public String deviceTenantId;
     }
