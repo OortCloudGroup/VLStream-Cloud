@@ -1,260 +1,177 @@
 <template>
-  <div class="video-playback">
-    <!-- 搜索表单区域 -->
-    <!--
-    <div class="search-form-container">
-      <div class="search-form">
-        <div class="search-row">
-          <div class="search-item">
+  <div class="video-playback tenant_Page draHeaPB">
+    <div class="tenant_content">
+      <div class="tableTenBox flexRowAC">
+        <!-- 左侧设备树 -->
+        <div
+          v-show="!deviceTreeCollapsed"
+          v-yResize
+          class="police_aside_use"
+        >
+          <div class="treeTitle">
+            设备树
+          </div>
+          <div class="tree_search_content flexRowAC">
             <el-input
-              v-model="searchForm.fileName"
-              placeholder="请输入设备名称或设备ID"
+              v-model="searchTreeKeyword"
+              placeholder="搜索"
+              debounce="300"
+              prefix-icon="Search"
               clearable
+              @input="handleTreeSearch"
             />
           </div>
-          <div class="search-item">
-            <el-select
-              v-model="searchForm.recordType"
-              placeholder="请选择标签类型"
-              clearable
-              style="width: 100%"
-            >
-              <el-option label="全部" value="" />
-              <el-option label="球机监控" value="球机监控" />
-              <el-option label="枪机监控" value="枪机监控" />
-              <el-option label="半球监控" value="半球监控" />
-              <el-option label="云台监控" value="云台监控" />
-            </el-select>
-          </div>
-          <div class="search-item date-with-buttons">
-            <DateRangePicker
-              v-model="searchForm.dateRange"
-              start-placeholder="开始时间"
-              end-placeholder="结束时间"
-              value-format="YYYY-MM-DD"
-              width="600px"
-            />
-            <div class="search-buttons">
-              <el-button type="primary" @click="handleSearch">
-                <el-icon><Search /></el-icon>
-                搜索
-              </el-button>
-              <el-button @click="handleReset">
-                <el-icon><Refresh /></el-icon>
-                重置
-              </el-button>
-            </div>
-          </div>
+          <el-tree
+            ref="deviceTreeRef"
+            style="background: #fff;"
+            :data="filteredDeviceTreeData"
+            highlight-current
+            node-key="id"
+            default-expand-all
+            :props="treeDefaultProps"
+            :expand-on-click-node="false"
+            @node-click="handleNodeClick"
+          >
+            <template #default="{ node, data }">
+              <div
+                class="custom-tree-node flexRowAC"
+                @mouseenter="hoveredTreeNodeId = data.id"
+                @mouseleave="hoveredTreeNodeId = null"
+              >
+                <div class="tree-node-main flexRowAC">
+                  <el-icon v-if="data.type === 'tag'" class="tree-icon tag-icon">
+                    <Collection />
+                  </el-icon>
+                  <el-icon v-else-if="data.type === 'device'" class="tree-icon device-icon">
+                    <VideoCamera />
+                  </el-icon>
+                  <el-icon v-else class="tree-icon">
+                    <Folder />
+                  </el-icon>
+                  <el-tooltip
+                    :open-delay="500"
+                    class="item"
+                    effect="light"
+                    :content="node.label"
+                    placement="top"
+                  >
+                    <div
+                      class="tree-node-label"
+                      :class="{
+                        activeDept: data.id === currentTreeNodeId,
+                        'device-offline': data.type === 'device' && data.status !== 'online' && data.status !== 1
+                      }"
+                    >
+                      {{ node.label }}
+                    </div>
+                  </el-tooltip>
+                </div>
+                <div
+                  v-show="hoveredTreeNodeId === data.id || data.id === currentTreeNodeId"
+                  class="tree-node-actions flexRowAC"
+                  @click.stop
+                >
+                  <oort-svg-icon
+                    width="16"
+                    height="16"
+                    name="delete"
+                    color="red"
+                    class="tree-action-icon delete-icon"
+                    @click="handleTreeDelete(data)"
+                  />
+                  <oort-svg-icon
+                    width="16"
+                    height="16"
+                    name="add"
+                    class="tree-action-icon add-icon"
+                    @click="handleTreeAdd(data)"
+                  />
+                </div>
+              </div>
+            </template>
+          </el-tree>
         </div>
-      </div>
-    </div>
-    -->
 
-    <!-- 主要内容区域 -->
-    <div class="main-content">
-      <!-- 左侧设备树 -->
-      <div class="device-tree-container" :class="{ collapsed: deviceTreeCollapsed }">
-        <DeviceTree
-          :tree-data="deviceTreeData"
-          title="设备树"
-          :show-search="true"
-          :show-collapse-btn="true"
-          :show-expand-btn="false"
-          :show-add-actions="false"
-          :show-delete-actions="false"
-          :show-bottom-actions="false"
-          :collapsed="deviceTreeCollapsed"
-          @node-click="handleNodeClick"
-          @toggle-collapse="toggleDeviceTree"
-          @search="handleDeviceTreeSearch"
-        />
-      </div>
-
-      <!-- 右侧内容区域 -->
-      <div class="content-area">
-        <div class="content-wrapper">
-          <!-- 导航栏 -->
-          <div class="content-header">
-            <div class="breadcrumb">
-              <!-- 设备树折叠时显示的展开按钮 -->
+        <!-- 右侧表格区域 -->
+        <div class="tableTenItU">
+          <div class="depNameBox_out flexRowAC">
+            <div class="depNameBox flexRowAC">
               <CollapseToggle
                 v-if="deviceTreeCollapsed"
                 class="expand-device-tree-btn"
                 :is-expanded="false"
                 @toggle="toggleDeviceTree"
               />
-              <span class="breadcrumb-item" @click="showTableView">视频回放</span>
-              <span v-if="showPlayerView" class="breadcrumb-separator">></span>
-              <!-- <span v-if="showPlayerView" class="breadcrumb-item active">播放视频</span> -->
             </div>
-          </div>
-
-          <!-- 表格视图 -->
-          <div v-if="!showPlayerView" class="table-view">
-            <!-- 搜索区域 -->
-            <div class="search-section">
-              <AdvancedSearch
-                @search="handleAdvancedSearch"
-                @reset="handleAdvancedSearchReset"
-                @export="handleExport"
-                @upload="handleUpload"
-                @template="handleDownloadTemplate"
-                @batch="handleBatchOperation"
+            <div class="searchHeight_out flexRowAC">
+              <search-height-box
+                keyword="keyword"
+                placeholder="搜索"
+                :data="searchData"
+                @handle="searchResetFn"
               />
-            </div>
-
-            <!-- 表格 -->
-            <div class="table-content">
-              <el-table
-                :data="currentPageData"
-                stripe
-                v-loading="loading"
-                element-loading-text="正在加载设备数据..."
-                @row-click="handleRowClick"
-              >
-                <el-table-column prop="index" label="序号" width="80" align="center" />
-                <el-table-column prop="deviceName" label="设备名称" min-width="120" />
-                <el-table-column prop="tag" label="标签" width="100">
-                  <template #default="scope">
-                    <el-tag size="small" type="primary">
-                      {{ scope.row.tag }}
-                    </el-tag>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="deviceId" label="设备ID" min-width="120" />
-                <el-table-column prop="streamPath" label="视频流路径" min-width="300" show-overflow-tooltip />
-                <el-table-column prop="status" label="状态" min-width="100" align="center">
-                  <template #default="scope">
-                    <el-tag
-                        :type="scope.row.status === 1 ? 'success' : 'danger'"
-                        size="small">
-                      {{ scope.row.status === 1 ? '在线' : '离线' }}
-                    </el-tag>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="lastRefreshTime" label="最近一次刷新时间" width="160" />
-                <el-table-column label="操作" width="120" fixed="right" align="right">
-                  <template #default="scope">
-                    <div class="action-buttons">
-                      <PlayButton @click="handlePlay(scope.row)" />
-                    </div>
-                  </template>
-                </el-table-column>
-              </el-table>
-
-              <!-- 分页 - 紧贴表格数据 -->
-              <div class="table-pagination">
-                <el-pagination
-                  v-model:current-page="currentPage"
-                  v-model:page-size="pageSize"
-                  :page-sizes="[10, 20, 50, 100]"
-                  :total="filteredData.length"
-                  layout="total, sizes, prev, pager, next, jumper"
-                  @size-change="handleSizeChange"
-                  @current-change="handleCurrentChange"
-                />
-              </div>
+              <export-excel-pdf :item="exportItem" @handle="handleExport" />
             </div>
           </div>
 
-          <!-- 播放器视图 -->
-          <div v-if="showPlayerView" class="player-view">
-            <div class="player-content">
-              <!-- 视频信息 -->
-              <div class="section">
-                <h3 class="section-title">视频信息</h3>
-
-                <div class="video-info-grid">
-                  <div class="info-row">
-                    <div class="info-label">设备名称：</div>
-                    <div class="info-value">{{ currentVideo?.deviceName }}</div>
-                  </div>
-                  <div class="info-row">
-                    <div class="info-label">设备ID：</div>
-                    <div class="info-value">{{ currentVideo?.deviceId }}</div>
-                  </div>
-                  <div class="info-row">
-                    <div class="info-label">标签：</div>
-                    <div class="info-value">
-                      <el-tag size="small" type="primary">
-                        {{ currentVideo?.tag }}
-                      </el-tag>
-                    </div>
-                  </div>
-                  <div class="info-row">
-                    <div class="info-label">视频流路径：</div>
-                    <div class="info-value">{{ currentVideo?.streamPath }}</div>
-                  </div>
-                  <div class="info-row">
-                    <div class="info-label">状态：</div>
-                    <div class="info-value">
-                      <el-tag
-                          :type="currentVideo.status === 1 ? 'success' : 'danger'"
-                          size="small">
-                        {{ currentVideo.status === 1 ? '在线' : '离线' }}
-                      </el-tag>
-                    </div>
-                  </div>
-                  <div class="info-row">
-                    <div class="info-label">最近刷新时间：</div>
-                    <div class="info-value">{{ currentVideo?.lastRefreshTime }}</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 视频播放器 -->
-              <div class="section">
-                <h3 class="section-title">视频播放</h3>
-
-                <div class="player-container">
-                  <div class="video-screen">
-                    <video ref="videoPlayer" controls width="100%" height="400">
-                      <source :src="currentVideoUrl" type="video/mp4">
-                      您的浏览器不支持视频播放
-                    </video>
-                  </div>
-
-                  <div class="player-controls">
-                    <div class="control-buttons">
-                      <el-button-group>
-                        <el-button @click="playPause" :type="isPlaying ? 'danger' : 'primary'">
-                          <el-icon><VideoPlay v-if="!isPlaying" /><VideoPause v-else /></el-icon>
-                          {{ isPlaying ? '暂停' : '播放' }}
-                        </el-button>
-                        <el-button @click="stopVideo">
-                          <el-icon><SwitchButton /></el-icon>
-                          停止
-                        </el-button>
-                        <el-button @click="downloadVideo">
-                          <el-icon><Download /></el-icon>
-                          下载
-                        </el-button>
-                      </el-button-group>
-                    </div>
-
-                    <div class="timeline-container">
-                      <div class="timeline">
-                        <el-slider
-                          v-model="playProgress"
-                          :max="videoDuration"
-                          :format-tooltip="formatTime"
-                          @change="seekVideo"
-                        />
-                      </div>
-                      <div class="time-display">
-                        {{ formatTime(currentTime) }} / {{ formatTime(videoDuration) }}
-                      </div>
-                    </div>
+          <TableSelf
+            v-loading="loading"
+            class="new_table"
+            header-cell-class-name="header_tenant_cell"
+            stripe
+            :data="currentPageData"
+            current-row-key="deviceId"
+            element-loading-text="正在加载设备数据..."
+            @selection-change="handleSelectionChange"
+            @row-click="handleRowClick"
+          >
+            <el-table-column type="selection" :width="clacPXToVW(55)" />
+            <el-table-column label="序号" :width="clacPXToVW(65)">
+              <template #default="scope">
+                {{ scope.$index + (currentPage - 1) * pageSize + 1 }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="deviceName" label="设备名称" :width="clacPXToVW(140)" show-overflow-tooltip />
+            <el-table-column prop="tag" label="标签" :width="clacPXToVW(120)">
+              <template #default="scope">
+                <el-tag size="small" type="primary" class="tag_pill">
+                  {{ scope.row.tag }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="deviceId" label="设备ID" :width="clacPXToVW(140)" show-overflow-tooltip />
+            <el-table-column prop="streamPath" label="视频流路径" show-overflow-tooltip />
+            <el-table-column prop="status" label="状态" :width="clacPXToVW(100)">
+              <template #default="scope">
+                <span v-if="scope.row.status === 1" class="staBtns WX">在线</span>
+                <span v-else class="staBtns">离线</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="lastRefreshTime" label="最近一次录制时间" :width="clacPXToVW(180)" />
+            <el-table-column fixed="right" align="right" label="操作" :width="clacPXToVW(120)">
+              <template #default="scope">
+                <div class="operateAppBox flexRowAC" @click.stop>
+                  <div class="new_table_svg_group" @click="handlePlay(scope.row)">
+                    <oort-svg-icon width="20" height="20" name="play" class="new_table_svg_group_svg" />
+                    <span>播放</span>
                   </div>
                 </div>
-              </div>
+              </template>
+            </el-table-column>
+          </TableSelf>
 
-              <!-- 操作按钮 -->
-              <div class="form-actions">
-                <el-button class="action-btn" @click="showTableView">返回列表</el-button>
-                <el-button type="primary" class="action-btn" @click="downloadVideo">下载视频</el-button>
-              </div>
-            </div>
+          <div class="paginationBox flexRowAC">
+            <el-pagination
+              background
+              :current-page="currentPage"
+              :page-size="pageSize"
+              :page-sizes="[10, 20, 50, 100]"
+              :total="filteredData.length"
+              layout="total, prev, pager, next, sizes"
+              class="justifyAlign"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            />
           </div>
         </div>
       </div>
@@ -417,20 +334,17 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import {
   VideoCamera,
   VideoPlay,
-  VideoPause,
-  SwitchButton,
-  Download,
+  Folder,
+  Collection,
 } from '@element-plus/icons-vue'
-import DeviceTree from '@/components/DeviceTree.vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
-import PlayButton from '@/components/PlayButton.vue'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { clacPXToVW } from '@/utils/index'
 
 // API 导入
 import { getDeviceList, getDeviceTree } from '@/api/device'
 import { getDeviceRecords } from '@/api/videoRecord'
-import {getBaseURL} from "@/utils/request";
+import { getBaseURL } from '@/utils/request'
 
 // 响应式数据
 const deviceTreeCollapsed = ref(false)
@@ -438,7 +352,35 @@ const showPlayerView = ref(false)
 const selectedRow = ref(null)
 const selectedRows = ref([])
 const currentPage = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(10)
+const exportItem = ref({
+  isDisabledExcel: false
+})
+
+// 高级搜索配置
+const searchData = ref([
+  { label: '设备名称', value: 'keyword', type: 'text', default: '' },
+  {
+    label: '标签类型',
+    value: 'recordType',
+    type: 'select',
+    default: '',
+    option: [
+      { label: '全部', value: '' },
+      { label: '球机监控', value: '球机监控' },
+      { label: '枪机监控', value: '枪机监控' },
+      { label: '半球监控', value: '半球监控' },
+      { label: '云台监控', value: '云台监控' }
+    ]
+  },
+  {
+    label: '时间',
+    value: 'dateRange',
+    type: 'daterange',
+    format: 'YYYY-MM-DD',
+    default: []
+  }
+])
 const currentVideo = ref(null)
 const currentVideoUrl = ref('')
 const isPlaying = ref(false)
@@ -468,7 +410,46 @@ const searchForm = reactive({
   dateRange: [getCurrentDate(), getCurrentDate()]
 })
 
-// 设备树数据
+// 设备树
+const deviceTreeRef = ref(null)
+const searchTreeKeyword = ref('')
+const currentTreeNodeId = ref(null)
+const hoveredTreeNodeId = ref(null)
+const treeDefaultProps = {
+  children: 'children',
+  label: 'label'
+}
+
+// 过滤后的设备树数据
+const filteredDeviceTreeData = computed(() => {
+  if (!searchTreeKeyword.value) {
+    return deviceTreeData.value
+  }
+
+  const keyword = searchTreeKeyword.value.toLowerCase()
+  const filterNode = (nodes) => {
+    return nodes.filter(node => {
+      if (node.label?.toLowerCase().includes(keyword)) {
+        return true
+      }
+      if (node.children?.length) {
+        return filterNode(node.children).length > 0
+      }
+      return false
+    }).map(node => {
+      if (node.children?.length) {
+        return {
+          ...node,
+          children: filterNode(node.children)
+        }
+      }
+      return node
+    })
+  }
+
+  return filterNode(deviceTreeData.value)
+})
+
 const deviceTreeData = ref([])
 
 // 设备列表数据（主列表）
@@ -641,91 +622,61 @@ const videoList = ref([])
 
 // 方法
 const toggleDeviceTree = () => {
-  console.log('toggleDeviceTree 被调用，当前状态:', deviceTreeCollapsed.value)
   deviceTreeCollapsed.value = !deviceTreeCollapsed.value
-  console.log('toggleDeviceTree 新状态:', deviceTreeCollapsed.value)
-  ElMessage.info(`设备树${deviceTreeCollapsed.value ? '已折叠' : '已展开'}`)
+}
+
+const handleTreeSearch = () => {
+  // 本地过滤，无需额外请求
 }
 
 const handleSearch = () => {
   currentPage.value = 1
   loadDeviceList()
-  ElMessage.success('搜索完成')
 }
 
-const handleReset = () => {
-  searchForm.fileName = ''
-  searchForm.recordType = ''
-  searchForm.dateRange = [getCurrentDate(), getCurrentDate()]
-  currentPage.value = 1
+// 搜索 / 重置（search-height-box）
+const searchResetFn = (val, reset) => {
+  if (reset) currentPage.value = 1
+  searchForm.fileName = val?.keyword || ''
+  searchForm.recordType = val?.recordType || ''
+  searchForm.dateRange = val?.dateRange?.length
+    ? val.dateRange
+    : [getCurrentDate(), getCurrentDate()]
   loadDeviceList()
-  ElMessage.info('已重置搜索条件')
 }
 
-// 高级搜索相关方法
-const handleAdvancedSearch = (searchData) => {
-  console.log('高级搜索:', searchData)
-
-  // 更新搜索表单
-  if (searchData.keyword) {
-    searchForm.fileName = searchData.keyword
-  }
-  if (searchData.deviceName) {
-    searchForm.fileName = searchData.deviceName
-  }
-  if (searchData.deviceId) {
-    searchForm.fileName = searchData.deviceId
-  }
-  if (searchData.selectedTags && searchData.selectedTags.length > 0) {
-    searchForm.recordType = searchData.selectedTags[0]
-  }
-  if (searchData.dateRange && searchData.dateRange.length > 0) {
-    searchForm.dateRange = searchData.dateRange
-  }
-
-  currentPage.value = 1
-  loadDeviceList()
-  ElMessage.success('高级搜索完成')
-}
-
-const handleAdvancedSearchReset = () => {
-  console.log('重置高级搜索')
-  searchForm.fileName = ''
-  searchForm.recordType = ''
-  searchForm.dateRange = [getCurrentDate(), getCurrentDate()]
-  currentPage.value = 1
-  loadDeviceList()
-  ElMessage.info('已重置高级搜索条件')
-}
-
-const handleExport = () => {
-  ElMessage.error('当前未接入录像导出接口，未导出任何数据')
-}
-
-const handleUpload = () => {
-  ElMessage.error('当前未接入录像上传接口，未上传任何文件')
-}
-
-const handleDownloadTemplate = () => {
-  ElMessage.error('当前未配置录像导入模板，未下载文件')
-}
-
-const handleBatchOperation = () => {
-  ElMessage.error('当前未接入录像批量操作接口，未执行操作')
+const handleExport = (type) => {
+  ElMessage.error(`当前未接入录像导出接口，未导出${type || ''}数据`)
 }
 
 const handleNodeClick = (data) => {
+  currentTreeNodeId.value = data.id
   if (data.type === 'device') {
-    console.log('选择设备:', data)
-    // 根据设备过滤视频
     searchForm.fileName = data.label
-    handleSearch()
+    currentPage.value = 1
+    loadDeviceList()
   }
 }
 
-const handleDeviceTreeSearch = (keyword) => {
-  console.log('设备树搜索:', keyword)
-  ElMessage.info(`搜索设备: ${keyword}`)
+const handleTreeAdd = (data) => {
+  ElMessage.info(`新增节点：${data.label}`)
+}
+
+const handleTreeDelete = async (data) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定删除「${data.label}」吗？`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    ElMessage.success('删除成功')
+  } catch {
+    // 用户取消
+  }
 }
 
 const showTableView = () => {
@@ -1237,146 +1188,183 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-/* 视频回放页面样式 - 按照rules规范 */
-.video-playback {
-  display: flex;
-  flex-direction: column;
-  background: #f5f7fa;
-  min-height: 100vh;
-}
-
-/* 搜索表单样式 - 查询栏背景颜色：#F0F2F5 */
-.search-form-container {
-  background: #F0F2F5;
-  padding: 20px;
-  margin-bottom: 0;
-  border-radius: 8px 8px 0 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.search-form {
+<style scoped lang="scss">
+.tenant_Page {
+  height: 100%;
   width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  background: #f0f2f5;
+
+  .tenant_content {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+  }
+
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+  }
 }
 
-.search-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: nowrap;
-}
-
-.search-item {
-  flex: 1;
-  min-width: 200px;
-}
-
-.search-item:first-child {
-  width: 240px;
-  flex: none;
-}
-
-.search-item:nth-child(2) {
-  min-width: 180px;
-  max-width: 200px;
-}
-
-.search-item:nth-child(3) {
-  width: auto;
-  flex: none;
-}
-
-.date-with-buttons {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-
-
-.search-buttons {
-  display: flex;
-  gap: 12px;
+.police_aside_use {
+  width: 300px;
+  padding-right: 20px;
   flex-shrink: 0;
-}
-
-/* 主要内容区域 - 容器无缝连接，零间隙 */
-.main-content {
-  flex: 1;
-  display: flex;
-  gap: 0;
-  min-height: 0;
-}
-
-/* 左侧设备树 */
-.device-tree-container {
-  width: 280px;
-  background: white;
-  border-radius: 0 0 0 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  transition: all 0.3s ease;
+  height: 100%;
   overflow: hidden;
-  flex-shrink: 0;
-  border-right: 1px solid #f0f0f0;
+
+  .treeTitle {
+    color: var(--el-color-primary);
+    padding-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 4px;
+
+    &::before {
+      content: '';
+      width: 3px;
+      height: 18px;
+      background-color: var(--el-color-primary);
+    }
+  }
+
+  .tree_search_content {
+    justify-content: center;
+    padding-bottom: 10px;
+
+    :deep(.el-input__wrapper) {
+      background: #fff;
+      box-shadow: none;
+      border: 1px solid #dcdfe6;
+      border-radius: 4px;
+    }
+
+    :deep(.el-input__inner) {
+      background: #fff;
+      border: none;
+    }
+  }
+
+  :deep(.el-tree-node__content) {
+    --el-tree-node-hover-bg-color: var(--el-menu-hover-bg-color);
+    height: 38px;
+    font-size: 14px;
+    color: #333;
+
+    .custom-tree-node {
+      width: 100%;
+      justify-content: space-between;
+      padding-right: 4px;
+    }
+  }
+
+  :deep(.el-tree-node) {
+    .el-tree-node.is-current.is-focusable > .el-tree-node__content {
+      background-color: var(--el-color-primary-hb);
+      color: var(--el-color-primary);
+    }
+  }
+
+  :deep(.el-tree) {
+    height: calc(100% - 80px);
+    overflow: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
 }
 
-/* 设备树展开状态（默认） */
-.device-tree-container:not(.collapsed) {
-  width: 280px !important;
-  min-width: 280px !important;
-  opacity: 1;
-  transform: translateX(0);
-  visibility: visible;
-}
-
-/* 设备树折叠状态 */
-.device-tree-container.collapsed {
-  width: 0 !important;
-  min-width: 0 !important;
-  margin-right: 0 !important;
-  opacity: 0;
-  transform: translateX(-280px);
-  visibility: hidden;
-  border-right: none;
-}
-
-/* 设备树折叠时，内容区域的圆角调整 */
-.device-tree-container.collapsed + .content-area .content-wrapper {
-  border-radius: 0 0 8px 8px;
-}
-
-/* 右侧内容区域 */
-.content-area {
+.custom-tree-node {
   flex: 1;
-  display: flex;
-  flex-direction: column;
   min-width: 0;
+  gap: 4px;
+
+  .tree-node-main {
+    flex: 1;
+    min-width: 0;
+    gap: 4px;
+    overflow: hidden;
+  }
+
+  .tree-node-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tree-node-actions {
+    flex-shrink: 0;
+    gap: 8px;
+    margin-left: 8px;
+  }
+
+  .tree-action-icon {
+    cursor: pointer;
+    flex-shrink: 0;
+
+    &:hover {
+      opacity: 0.75;
+    }
+  }
+
+  .tree-icon {
+    flex-shrink: 0;
+    font-size: 14px;
+    color: var(--el-color-primary);
+  }
+
+  .device-icon {
+    color: #52C41A;
+  }
+
+  .tag-icon {
+    color: #8581dc;
+  }
+
+  .activeDept {
+    color: var(--el-color-primary);
+  }
+
+  .device-offline {
+    color: #999;
+  }
 }
 
-/* 内容包装器 - 白色内容区域使用统一的圆角8px和阴影效果 */
-.content-wrapper {
-  background: white;
-  border-radius: 0 0 8px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+.tableTenItU {
   flex: 1;
-}
+  height: 100%;
+  overflow: auto;
+  min-width: 0;
 
-/* 导航栏 - 统一的padding: 20px确保内容对齐 */
-.content-header {
-  background: white;
-  border-bottom: 1px solid #e8e8e8;
-  padding: 20px;
-}
+  :deep(.el-table) {
+    .el-table__header .el-table__cell .cell {
+      background: #F8F8F9;
+      font-size: 14px;
+      color: #515A6E;
+      line-height: 24px;
+      font-weight: 700;
+    }
 
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    th.el-table-fixed-column--right {
+      background-color: #F8F8F9;
+    }
+  }
+
+  :deep(.header_tenant_cell) {
+    background: #F8F8F9;
+  }
 }
 
 .expand-device-tree-btn {
@@ -1385,9 +1373,8 @@ onMounted(async () => {
   border: 1px solid #e4e7ed;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: all 0.3s;
-  margin-right: 12px;
-  width: 32.15px;
-  height: 28.29px;
+  width: 32px;
+  height: 28px;
 }
 
 .expand-device-tree-btn:hover {
@@ -1396,232 +1383,47 @@ onMounted(async () => {
   transform: scale(1.05);
 }
 
-/* 折叠按钮内部样式优化 */
-.expand-device-tree-btn :deep(.collapse-toggle) {
-  width: 100%;
-  height: 100%;
+.paginationBox {
+  justify-content: center;
+  height: 100px;
 }
 
-.expand-device-tree-btn :deep(.toggle-icon) {
-  width: 24px;
-  height: 21px;
-}
-
-.expand-device-tree-btn :deep(.line) {
-  height: 1.5px;
-}
-
-.expand-device-tree-btn :deep(.arrow) {
-  stroke-width: 1.5px;
-}
-
-.breadcrumb-item {
-  color: #606266;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.breadcrumb-item:hover {
-  color: #1A53FF;
-}
-
-.breadcrumb-item.active {
-  color: #303133;
-  font-weight: 500;
-}
-
-.breadcrumb-separator {
-  color: #c0c4cc;
-  margin: 0 8px;
-}
-
-/* 表格视图 */
-.table-view {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* 搜索区域 */
-.search-section {
-  display: flex;
+.operateAppBox {
   justify-content: flex-end;
-  margin-bottom: 16px;
+  gap: 2px;
 }
 
-.table-content {
-  flex: 1;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+.tag_pill {
+  border-radius: 12px;
 }
 
-/* 表格滚动条样式 */
-.table-content .el-table {
-  flex: 1;
-  overflow: auto;
-}
-
-.table-content .el-table__body-wrapper {
-  overflow-y: auto !important;
-  overflow-x: auto !important;
-}
-
-/* 自定义滚动条样式 */
-.table-content .el-table__body-wrapper::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.table-content .el-table__body-wrapper::-webkit-scrollbar-track {
-  background: #f1f1f1;
+.staBtns {
+  padding: 3px 7px;
+  font-size: 14px;
+  line-height: 14px;
   border-radius: 4px;
-}
+  position: relative;
+  padding-left: 12px;
 
-.table-content .el-table__body-wrapper::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
-}
+  &::before {
+    content: "";
+    display: flex;
+    position: absolute;
+    top: 6px;
+    left: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: gray;
+  }
 
-.table-content .el-table__body-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
+  &.WX {
+    color: #52C41A;
 
-/* 操作按钮样式 - 操作列的按钮总是保持在一行显示 */
-.action-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-}
-
-/* 分页容器 - 紧贴表格数据，参考DeviceManagement */
-.table-pagination {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* 播放器视图 */
-.player-view {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.player-content {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-}
-
-.section {
-  margin-bottom: 24px;
-}
-
-.section-title {
-  color: #303133;
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 16px 0;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #1A53FF;
-}
-
-.video-info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.info-row {
-  display: flex;
-  align-items: center;
-}
-
-.info-label {
-  width: 100px;
-  color: #606266;
-  font-size: 14px;
-}
-
-.info-value {
-  color: #303133;
-  font-size: 14px;
-}
-
-.player-container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.video-screen {
-  background: #000;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.player-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.control-buttons {
-  display: flex;
-  justify-content: center;
-}
-
-.timeline-container {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.timeline {
-  flex: 1;
-}
-
-.time-display {
-  color: #606266;
-  font-size: 14px;
-  min-width: 120px;
-  text-align: center;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: center;
-  gap: 0;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.form-actions .action-btn {
-  width: 82px;
-  height: 36px;
-  font-size: 14px;
-  border-radius: 18px;
-}
-
-.form-actions .action-btn:first-child {
-  border-radius: 18px 0 0 18px;
-}
-
-.form-actions .action-btn:last-child {
-  border-radius: 0 18px 18px 0;
-  border-left: none;
+    &::before {
+      background: #52C41A;
+    }
+  }
 }
 
 /* 视频回放弹窗样式 */

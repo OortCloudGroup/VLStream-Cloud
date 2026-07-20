@@ -127,7 +127,7 @@
             <el-table-column prop="position" label="设备位置" :width="clacPXToVW(160)" />
             <el-table-column prop="algorithm" label="拥有算法" show-overflow-tooltip />
             <el-table-column prop="applicant" label="申请人" />
-            <el-table-column label="操作" :width="clacPXToVW(220)">
+            <el-table-column label="操作" fixed="right" align="right" :width="clacPXToVW(220)">
               <template #default="scope">
                 <div class="operate-box flexRowAC">
                   <div class="new_table_svg_group" @click="handleDetail(scope.row)">
