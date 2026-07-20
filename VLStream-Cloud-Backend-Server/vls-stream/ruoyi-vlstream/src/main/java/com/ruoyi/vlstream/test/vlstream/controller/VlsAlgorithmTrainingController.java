@@ -6,7 +6,6 @@
 package com.ruoyi.vlstream.test.vlstream.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -87,6 +86,9 @@ public class VlsAlgorithmTrainingController extends BladeController {
 
 	@Resource
 	private VlsSshProperties sshProperties;
+
+	@Resource
+	private ModelFileDownloadService modelFileDownloadService;
 
 	/**
 	 * 算法训练任务表 详情
@@ -773,93 +775,64 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		return datasetPath.trim();
 	}
 
+	/**
+	 * 按训练任务 ID 下载训练产物，避免把训练 ID 误当成模型表 ID。
+	 */
+	@GetMapping("/{id}/download-model")
+	@Operation(summary = "下载训练产物", description = "根据训练任务ID下载该任务生成的模型文件")
+	public void downloadTrainingModel(@PathVariable Long id,
+		@RequestParam(defaultValue = "pt") String type, HttpServletResponse response) {
+		downloadFile(response, () -> modelFileDownloadService.downloadTrainingModel(id, type, response));
+	}
+
+	/**
+	 * 保留旧的模型下载地址，仅用于兼容仍传模型表 ID 的历史调用方。
+	 */
+	@Deprecated
 	@GetMapping("/download-model")
-	@Operation(summary = "下载模型文件", description = "从远程服务器下载训练好的模型文件")
-	public void downloadModel(@RequestParam String id, @RequestParam String type, HttpServletResponse response) {
+	@Operation(summary = "下载模型文件（兼容）", description = "兼容旧接口，id参数仍表示模型表ID")
+	public void downloadModel(@RequestParam Long id,
+		@RequestParam(defaultValue = "pt") String type, HttpServletResponse response) {
+		downloadFile(response, () -> modelFileDownloadService.downloadModel(id, type, response));
+	}
+
+	/**
+	 * 统一将下载异常转换为明确的 HTTP 状态码和错误信息。
+	 */
+	private void downloadFile(HttpServletResponse response, DownloadAction action) {
 		try {
-			log.info("下载模型文件: {}", type);
-
-			AlgorithmModel algorithmModel = algorithmModelService.getById(id);
-			if (algorithmModel == null) {
-				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-				response.getWriter().write("Model not found: " + id);
-				return;
-			}
-
-			String downloadPath = algorithmModel.getModelPath();
-			if (type.equals("onnx")) {
-				downloadPath = algorithmModel.getOnnxModelPath();
-			} else if (type.equals("rknn")) {
-				downloadPath = algorithmModel.getRknnModelPath();
-			} else if (type.equals("int8-rknn")) {
-				downloadPath = algorithmModel.getInt8RknnModelOutputPath();
-			}
-			if (StringUtils.isBlank(downloadPath)) {
-				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-				response.getWriter().write("Model file path is empty");
-				return;
-			}
-			// 从远程服务器下载文件
-			SSHService.SSHExecutionResult result = sshService.executeCommand(
-				sshProperties.getHost(),
-				sshProperties.getPort(),
-				sshProperties.getUsername(),
-				sshProperties.getPassword(),
-				String.format("base64 %s", downloadPath)
-			);
-
-			if (result.isSuccess() && !result.getOutput().trim().isEmpty()) {
-				// 清理base64内容，移除可能的换行符和其他字符
-				String base64Content = result.getOutput().trim().replaceAll("\\s+", "");
-				log.info("Base64内容长度: {}", base64Content.length());
-
-				// 解码base64内容
-				byte[] fileContent = java.util.Base64.getDecoder().decode(base64Content);
-
-				String fileName = downloadPath.substring(downloadPath.lastIndexOf('/') + 1);
-				response.setContentType("application/octet-stream");
-
-				String encodedFileName = java.net.URLEncoder.encode(fileName, "UTF-8").replaceAll("\\+", "%20");
-				response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
-				response.setContentLength(fileContent.length);
-
-				// 写入响应
-				response.getOutputStream().write(fileContent);
-				response.getOutputStream().flush();
-
-				if (id != null && !id.trim().isEmpty()) {
-					try {
-						Long modelId = Long.valueOf(id.trim());
-						UpdateWrapper<AlgorithmModel> updateWrapper = new UpdateWrapper<>();
-						updateWrapper.eq("id", modelId)
-							.setSql("download_count = download_count + 1");
-						boolean updated = algorithmModelService.update(new AlgorithmModel(), updateWrapper);
-						if (!updated) {
-							log.warn("Failed to increment download count, modelId={}", modelId);
-						}
-					} catch (NumberFormatException ex) {
-						log.warn("Invalid model id for download count: {}", id);
-					} catch (Exception ex) {
-						log.warn("Failed to increment download count, modelId={}, error={}", id, ex.getMessage());
-					}
-				}
-
-				log.info("模型文件下载成功: {}", fileName);
-			} else {
-				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-				response.getWriter().write("Model file not found: " + downloadPath);
-				log.error("模型文件不存在: {}", downloadPath);
-			}
-
+			action.run();
+		} catch (IllegalArgumentException e) {
+			writeDownloadError(response, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+		} catch (java.io.FileNotFoundException e) {
+			writeDownloadError(response, HttpServletResponse.SC_NOT_FOUND, e.getMessage());
 		} catch (Exception e) {
 			log.error("下载模型文件失败: {}", e.getMessage(), e);
-			try {
-				response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-				response.getWriter().write("Download failed: " + e.getMessage());
-			} catch (Exception ex) {
-				log.error("写入错误响应失败: {}", ex.getMessage());
-			}
+			writeDownloadError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Download failed: " + e.getMessage());
 		}
+	}
+
+	/**
+	 * 在响应尚未提交时写入下载失败原因。
+	 */
+	private void writeDownloadError(HttpServletResponse response, int status, String message) {
+		try {
+			if (!response.isCommitted()) {
+				response.setStatus(status);
+				response.setContentType("text/plain;charset=UTF-8");
+				response.getWriter().write(message);
+			}
+		} catch (Exception ex) {
+			log.error("写入下载错误响应失败: {}", ex.getMessage());
+		}
+	}
+
+	/**
+	 * 表示一个可能抛出异常的模型下载动作。
+	 */
+	@FunctionalInterface
+	private interface DownloadAction {
+		void run() throws Exception;
 	}
 
 }

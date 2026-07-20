@@ -54,29 +54,29 @@ spring:
           driverClassName: com.mysql.cj.jdbc.Driver
           # jdbc 所有参数配置参考 https://lionli.blog.csdn.net/article/details/122018562
 #          rewriteBatchedStatements=true 批处理优化 大幅提升批量插入更新删除性能(对数据库有性能损耗 使用批量操作应考虑性能问题)
-          #          url: jdbc:mysql://${MYSQL_HOST:20.72.1.94}:${MYSQL_PORT:32433}/oortcloud_workflowforms?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true
+          #          url: jdbc:mysql://${MYSQL_HOST:20.72.1.94}:${MYSQL_PORT:32433}/oortcloud_workflowforms?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true&tinyInt1isBit=false
           #          username: ${MYSQL_USERNAME:root}
           #          password: ${MYSQL_PASSWORD:cmysql@pass}
-          #          url: jdbc:mysql://${MYSQL_HOST:192.168.60.75}:${MYSQL_PORT:32433}/oortcloud_workflowforms?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true&lowerCaseTableNames=true
+          #          url: jdbc:mysql://${MYSQL_HOST:192.168.60.75}:${MYSQL_PORT:32433}/oortcloud_workflowforms?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true&lowerCaseTableNames=true&tinyInt1isBit=false
           #          username: ${MYSQL_USERNAME:oortcloud_workflowforms}
           #          password: ${MYSQL_PASSWORD:OWvsss9.dV.}
-          url: jdbc:mysql://${MYSQL_HOST:192.168.60.77}:${MYSQL_PORT:32443}/${MYSQL_DB_NAME:oortcloud_workflowforms_vls}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true
+          url: jdbc:mysql://${MYSQL_HOST:192.168.60.77}:${MYSQL_PORT:32443}/${MYSQL_DB_NAME:oortcloud_workflowforms_vls}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true&tinyInt1isBit=false
           username: ${MYSQL_USERNAME:root}
           password: ${MYSQL_PASSWORD:mysql@pass}
-#          url: jdbc:mysql://${MYSQL_HOST:192.168.50.13}:${MYSQL_PORT:32426}/${MYSQL_DB_NAME:apaas_workflowforms}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true
+#          url: jdbc:mysql://${MYSQL_HOST:192.168.50.13}:${MYSQL_PORT:32426}/${MYSQL_DB_NAME:apaas_workflowforms}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true&tinyInt1isBit=false
 #          username: ${MYSQL_USERNAME:apaas_workflowforms}
 #          password: ${MYSQL_PASSWORD:OWvsss9.dV.}
-#          url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/workflowtest?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true
+#          url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/workflowtest?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true&tinyInt1isBit=false
 #          username: ${MYSQL_USERNAME:root}
 #          password: ${MYSQL_PASSWORD:123456}
-#          url: jdbc:mysql://${MYSQL_HOST:192.168.60.77}:${MYSQL_PORT:32443}/${MYSQL_DB_NAME:test2}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true
+#          url: jdbc:mysql://${MYSQL_HOST:192.168.60.77}:${MYSQL_PORT:32443}/${MYSQL_DB_NAME:test2}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true&tinyInt1isBit=false
 #          username: ${MYSQL_USERNAME:root}
 #          password: ${MYSQL_PASSWORD:mysql@pass}
-#          url: jdbc:mysql://${MYSQL_HOST:192.168.60.75}:${MYSQL_PORT:32433}/${MYSQL_DB_NAME:oortcloud_workflowforms}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true&lowerCaseTableNames=true
+#          url: jdbc:mysql://${MYSQL_HOST:192.168.60.75}:${MYSQL_PORT:32433}/${MYSQL_DB_NAME:oortcloud_workflowforms}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true&lowerCaseTableNames=true&tinyInt1isBit=false
 #          username: ${MYSQL_USERNAME:root}
 #          password: ${MYSQL_PASSWORD:mysql@pass}
 #        智慧街道-生产环境
-#          url: jdbc:mysql://${MYSQL_HOST:192.168.50.13}:${MYSQL_PORT:32426}/${MYSQL_DB_NAME:apaas_workflowforms}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true&lowerCaseTableNames=true
+#          url: jdbc:mysql://${MYSQL_HOST:192.168.50.13}:${MYSQL_PORT:32426}/${MYSQL_DB_NAME:apaas_workflowforms}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true&lowerCaseTableNames=true&tinyInt1isBit=false
 #          username: ${MYSQL_USERNAME:apaas_workflowforms}
 #          password: ${MYSQL_PASSWORD:OWvsss9.dV.}
         # 从库数据源
@@ -84,7 +84,7 @@ spring:
           lazy: true
           type: ${spring.datasource.type}
           driverClassName: com.mysql.cj.jdbc.Driver
-          url: jdbc:mysql://localhost:3306/oortcloud_workflowforms?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true
+          url: jdbc:mysql://localhost:3306/oortcloud_workflowforms?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&nullCatalogMeansCurrent=true&tinyInt1isBit=false
           username:
           password:
       #        oracle:

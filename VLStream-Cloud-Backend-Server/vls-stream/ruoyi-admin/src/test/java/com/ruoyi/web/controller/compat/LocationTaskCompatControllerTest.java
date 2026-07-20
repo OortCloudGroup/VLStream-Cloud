@@ -8,6 +8,7 @@ package com.ruoyi.web.controller.compat;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.common.interceptor.AuthorizationInterceptor;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -83,6 +84,40 @@ class LocationTaskCompatControllerTest {
         verify(service).eventList(any(Map.class), contextCaptor.capture());
         assertEquals("tenant-1", contextCaptor.getValue().getTenantId());
         assertEquals("app", contextCaptor.getValue().getClient());
+    }
+
+    /**
+     * Verify that an authenticated header wins over a stale legacy body token.
+     */
+    @Test
+    void prefersAuthenticatedHeaderOverLegacyBodyToken() throws Exception {
+        LocationTaskCompatService service = mock(LocationTaskCompatService.class);
+        BladeTokenUserStore tokenStore = mock(BladeTokenUserStore.class);
+        LocationTaskCompatController controller = new LocationTaskCompatController(service, tokenStore);
+        Map<String, Object> body = new LinkedHashMap<String, Object>();
+        body.put("accessToken", "expired-body-token");
+
+        SysUser user = new SysUser();
+        user.setUserId("user-1");
+        user.setUserName("admin");
+        when(tokenStore.get("current-header-token")).thenReturn(user);
+        doReturn(LocationTaskResult.success()).when(service)
+            .eventList(any(Map.class), any(LocationTaskCompatService.UserContext.class));
+
+        MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+        servletRequest.addHeader("Authorization", "Bearer current-header-token");
+        AuthorizationInterceptor interceptor = new AuthorizationInterceptor();
+        interceptor.preHandle(servletRequest, null, null);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(servletRequest));
+        try {
+            assertEquals(200, controller.eventList(body).getCode());
+        } finally {
+            interceptor.afterCompletion(servletRequest, null, null, null);
+            RequestContextHolder.resetRequestAttributes();
+        }
+
+        verify(tokenStore).get("current-header-token");
+        verify(tokenStore, never()).get("expired-body-token");
     }
 
     /**

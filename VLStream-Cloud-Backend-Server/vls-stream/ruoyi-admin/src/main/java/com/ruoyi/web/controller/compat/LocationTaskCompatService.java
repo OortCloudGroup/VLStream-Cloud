@@ -338,6 +338,10 @@ public class LocationTaskCompatService {
      * Return the filtered, paged event list.
      */
     public LocationTaskResult<?> eventList(Map<String, Object> body, UserContext user) {
+        LocationTaskResult<?> filterError = validateEventListFilters(body);
+        if (filterError != null) {
+            return filterError;
+        }
         int page = positiveInt(body, "page", 1);
         int pageSize = Math.min(positiveInt(body, "pagesize", 10), 100);
         StringBuilder from = new StringBuilder(" FROM ").append(EVENT).append(" te ");
@@ -409,6 +413,20 @@ public class LocationTaskCompatService {
         String externalId = stringValue(body, "id");
         if (externalId.isEmpty()) {
             return parameterError("参数错误 id不能为空");
+        }
+        if (!hasContractValue(body, "status", LocationTaskEventContracts.EventStatus.values(), false)) {
+            return parameterError("参数错误 status只能为1或2");
+        }
+        if (!hasOptionalContractValue(body, "mod_status",
+            LocationTaskEventContracts.AlarmStatus.values(), false)) {
+            return parameterError("参数错误 mod_status只能为0、1、2或3");
+        }
+        if (!hasOptionalContractValue(body, "work_order_status",
+            LocationTaskEventContracts.WorkOrderStatus.values(), false)) {
+            return parameterError("参数错误 work_order_status只能为0或1");
+        }
+        if (codePointLength(stringValue(body, "describe")) > 1024) {
+            return parameterError("参数错误 describe不能超过1024个字符串");
         }
         Map<String, Object> event = findEventRaw(externalId);
         if (event == null || !user.getTenantId().equals(string(event.get("tenant_id")))) {
@@ -515,6 +533,10 @@ public class LocationTaskCompatService {
         if (eventId.isEmpty() || !(values instanceof List) || ((List<?>) values).isEmpty()) {
             return parameterError("参数错误 id和uuids不能为空");
         }
+        LocationTaskResult<?> executorError = validateEventExecutors(values);
+        if (executorError != null) {
+            return executorError;
+        }
         Map<String, Object> event = findEventRaw(eventId);
         if (event == null || !user.getTenantId().equals(string(event.get("tenant_id")))) {
             return error(NOT_FOUND, "没找到记录");
@@ -573,12 +595,17 @@ public class LocationTaskCompatService {
      * Return the current user's event list for the requested execution relationship.
      */
     public LocationTaskResult<?> myEventList(Map<String, Object> body, UserContext user) {
+        LocationTaskResult<?> filterError = validateEventListFilters(body);
+        if (filterError != null) {
+            return filterError;
+        }
+        if (!hasOptionalContractValue(body, "exec_status",
+            LocationTaskEventContracts.ExecutionScope.values(), false)) {
+            return parameterError("参数错误 exec_status只能为1、2、3或4");
+        }
         int page = positiveInt(body, "page", 1);
         int pageSize = positiveInt(body, "pagesize", 10);
-        int executionStatus = intValue(body, "exec_status", 0);
-        if (executionStatus <= 1) {
-            executionStatus = 1;
-        }
+        int executionStatus = intValue(body, "exec_status", 1);
 
         StringBuilder from = new StringBuilder(" FROM ").append(EVENT).append(" te ");
         List<String> where = new ArrayList<String>();
@@ -714,6 +741,11 @@ public class LocationTaskCompatService {
         if (uid.isEmpty() || !(body.get("config") instanceof Map)) {
             return parameterError("参数错误 uid和config不能为空");
         }
+        LocationTaskResult<?> booleanError = validateOptionalBoolean(
+            castMap(body.get("config")), "auto_to_work");
+        if (booleanError != null) {
+            return booleanError;
+        }
         Map<String, Object> item = firstRow("SELECT * FROM " + EVENT_ITEM + " WHERE uid = ? LIMIT 1", uid);
         if (item == null) {
             return error(EVENT_ITEM_NOT_FOUND, "没找到事件类型记录");
@@ -733,6 +765,10 @@ public class LocationTaskCompatService {
         String uid = stringValue(body, "uid");
         if (uid.isEmpty()) {
             return parameterError("参数错误 uid不能为空");
+        }
+        LocationTaskResult<?> booleanError = validateRequiredBoolean(body, "auto_to_work");
+        if (booleanError != null) {
+            return booleanError;
         }
         Map<String, Object> item = firstRow("SELECT * FROM " + EVENT_ITEM + " WHERE uid = ? LIMIT 1", uid);
         if (item == null) {
@@ -790,7 +826,10 @@ public class LocationTaskCompatService {
     public LocationTaskResult<?> workflowConfigGet(Map<String, Object> body, UserContext user) {
         int modType = intValue(body, "mod_type", 0);
         int groupType = intValue(body, "group_type", 0);
-        if (!validOptionalType(modType, 2) || !validOptionalType(groupType, 2)) {
+        if (!hasOptionalContractValue(body, "mod_type",
+                LocationTaskEventContracts.ModuleType.values(), true)
+            || !hasOptionalContractValue(body, "group_type",
+                LocationTaskEventContracts.GroupType.values(), true)) {
             return parameterError("参数错误 mod_type或group_type不正确");
         }
         String key = workflowSettingKey(user.getTenantId(), modType, groupType);
@@ -815,8 +854,15 @@ public class LocationTaskCompatService {
     public LocationTaskResult<?> workflowConfigSet(Map<String, Object> body, UserContext user) {
         int modType = intValue(body, "mod_type", 0);
         int groupType = intValue(body, "group_type", 0);
-        if (!validOptionalType(modType, 2) || !validOptionalType(groupType, 2)) {
+        if (!hasOptionalContractValue(body, "mod_type",
+                LocationTaskEventContracts.ModuleType.values(), true)
+            || !hasOptionalContractValue(body, "group_type",
+                LocationTaskEventContracts.GroupType.values(), true)) {
             return parameterError("参数错误 mod_type或group_type不正确");
+        }
+        LocationTaskResult<?> booleanError = validateOptionalBoolean(body, "auto_to_work");
+        if (booleanError != null) {
+            return booleanError;
         }
         String key = workflowSettingKey(user.getTenantId(), modType, groupType);
         Map<String, Object> setting = firstRow(
@@ -842,6 +888,10 @@ public class LocationTaskCompatService {
         }
         Map<String, Object> config = body.get("config") instanceof Map
             ? castMap(body.get("config")) : new LinkedHashMap<String, Object>();
+        LocationTaskResult<?> booleanError = validateOptionalBoolean(config, "auto_to_work");
+        if (booleanError != null) {
+            return booleanError;
+        }
         String name = !userId.isEmpty() ? userId : deptId;
         String parent = !userId.isEmpty() ? "user" : "dept";
         Map<String, Object> existing = firstRow(
@@ -930,6 +980,10 @@ public class LocationTaskCompatService {
         if (userId.isEmpty() && deptId.isEmpty()) {
             return parameterError("参数错误 用户ID或部门ID不能都为空");
         }
+        LocationTaskResult<?> booleanError = validateRequiredBoolean(body, "auto_to_work");
+        if (booleanError != null) {
+            return booleanError;
+        }
         String name = !userId.isEmpty() ? userId : deptId;
         String parent = !userId.isEmpty() ? "user" : "dept";
         Map<String, Object> group = firstRow(
@@ -948,12 +1002,16 @@ public class LocationTaskCompatService {
      */
     @Transactional(rollbackFor = Exception.class)
     public LocationTaskResult<?> eventGroupSettingSaveV2(Map<String, Object> body, UserContext user) {
+        Map<String, Object> config = body.get("config") instanceof Map
+            ? castMap(body.get("config")) : new LinkedHashMap<String, Object>();
+        LocationTaskResult<?> booleanError = validateOptionalBoolean(config, "auto_to_work");
+        if (booleanError != null) {
+            return booleanError;
+        }
         AuthorizationResult authorization = authorizeV2Group(body, user);
         if (authorization.getError() != null) {
             return authorization.getError();
         }
-        Map<String, Object> config = body.get("config") instanceof Map
-            ? castMap(body.get("config")) : new LinkedHashMap<String, Object>();
         Map<String, Object> existing = firstRow(
             "SELECT * FROM " + TABLE_GROUP_CONFIG_V2 + " WHERE group_uid = ? AND app_id = ? LIMIT 1",
             string(authorization.getGroup().get("uid")), authorization.getAppId());
@@ -980,6 +1038,10 @@ public class LocationTaskCompatService {
      */
     @Transactional(rollbackFor = Exception.class)
     public LocationTaskResult<?> eventGroupStatusV2(Map<String, Object> body, UserContext user) {
+        LocationTaskResult<?> booleanError = validateRequiredBoolean(body, "auto_to_work");
+        if (booleanError != null) {
+            return booleanError;
+        }
         AuthorizationResult authorization = authorizeV2Group(body, user);
         if (authorization.getError() != null) {
             return authorization.getError();
@@ -999,6 +1061,14 @@ public class LocationTaskCompatService {
      * Calculate event statistics using the original view, grouping, and summary rules.
      */
     public LocationTaskResult<?> eventStatistics(Map<String, Object> body, UserContext user) {
+        if (!hasOptionalContractValue(body, "mod_type",
+            LocationTaskEventContracts.ModuleType.values(), true)) {
+            return parameterError("参数错误 mod_type只能为0、1或2");
+        }
+        if (!hasOptionalContractValue(body, "stat_type",
+            LocationTaskEventContracts.StatisticsType.values(), false)) {
+            return parameterError("参数错误 stat_type只能为1或2");
+        }
         String userType = stringValue(body, "user_type");
         if (!userType.isEmpty() && !"dept".equals(userType) && !"user".equals(userType)) {
             return parameterError("参数错误 user_type不正确");
@@ -2039,6 +2109,120 @@ public class LocationTaskCompatService {
     }
 
     /**
+     * Validate every numeric filter before an event-list method can access the database.
+     */
+    private static LocationTaskResult<?> validateEventListFilters(Map<String, Object> body) {
+        if (!hasOptionalContractValue(body, "mod_type",
+            LocationTaskEventContracts.ModuleType.values(), true)) {
+            return parameterError("参数错误 mod_type只能为0、1或2");
+        }
+        if (!hasOptionalContractValue(body, "mod_status",
+            LocationTaskEventContracts.AlarmFilter.values(), false)) {
+            return parameterError("参数错误 mod_status筛选值只能为0、1或2");
+        }
+        if (!hasOptionalContractValue(body, "status",
+            LocationTaskEventContracts.EventStatus.values(), true)) {
+            return parameterError("参数错误 status只能为1或2");
+        }
+        if (!hasOptionalContractValue(body, "had_pic",
+            LocationTaskEventContracts.PictureFilter.values(), false)) {
+            return parameterError("参数错误 had_pic只能为0、1或2");
+        }
+        return null;
+    }
+
+    /**
+     * Validate an executor list completely so malformed values cannot cause partial database work.
+     */
+    private static LocationTaskResult<?> validateEventExecutors(Object rawExecutors) {
+        for (Object rawExecutor : (List<?>) rawExecutors) {
+            if (!(rawExecutor instanceof Map)) {
+                return parameterError("参数错误 uuids格式不正确");
+            }
+            Map<String, Object> executor = castMap(rawExecutor);
+            if (stringValue(executor, "uuid").isEmpty()) {
+                return parameterError("参数错误 uuid不能为空");
+            }
+            if (!hasOptionalContractValue(executor, "u_type",
+                LocationTaskEventContracts.ExecutorType.values(), false)) {
+                return parameterError("参数错误 u_type只能为1或2");
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Require one request field to contain a member of the supplied numeric contract.
+     */
+    private static boolean hasContractValue(Map<String, Object> body, String key,
+                                            LocationTaskEventContracts.NumericContract[] values,
+                                            boolean allowZero) {
+        if (body == null || !body.containsKey(key) || body.get(key) == null
+            || string(body.get(key)).trim().isEmpty()) {
+            return false;
+        }
+        return hasOptionalContractValue(body, key, values, allowZero);
+    }
+
+    /**
+     * Validate a present numeric contract field while accepting an omitted optional field.
+     */
+    private static boolean hasOptionalContractValue(Map<String, Object> body, String key,
+                                                    LocationTaskEventContracts.NumericContract[] values,
+                                                    boolean allowZero) {
+        if (body == null || !body.containsKey(key) || body.get(key) == null
+            || string(body.get(key)).trim().isEmpty()) {
+            return true;
+        }
+        Integer value = exactInteger(body.get(key));
+        return value != null && LocationTaskEventContracts.contains(values, value, allowZero);
+    }
+
+    /**
+     * Convert a JSON number or numeric string to an exact integer, rejecting truncation and overflow.
+     */
+    private static Integer exactInteger(Object value) {
+        if (!(value instanceof Number) && !(value instanceof CharSequence)) {
+            return null;
+        }
+        try {
+            return new BigDecimal(string(value).trim()).intValueExact();
+        } catch (ArithmeticException ex) {
+            return null;
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    /**
+     * Validate an optional JSON Boolean field without accepting numbers or strings as false.
+     */
+    private static LocationTaskResult<?> validateOptionalBoolean(Map<String, Object> body, String key) {
+        if (body == null || !body.containsKey(key) || body.get(key) == null) {
+            return null;
+        }
+        return isBooleanValue(body.get(key))
+            ? null : parameterError("参数错误 " + key + "必须为布尔值");
+    }
+
+    /**
+     * Validate a required JSON Boolean field used by automatic-work-order switches.
+     */
+    private static LocationTaskResult<?> validateRequiredBoolean(Map<String, Object> body, String key) {
+        if (body == null || !body.containsKey(key) || !isBooleanValue(body.get(key))) {
+            return parameterError("参数错误 " + key + "必须为布尔值");
+        }
+        return null;
+    }
+
+    /**
+     * Determine whether an incoming value is an actual JSON Boolean.
+     */
+    private static boolean isBooleanValue(Object value) {
+        return value instanceof Boolean;
+    }
+
+    /**
      * Normalize a PointNew-compatible value and apply its zero-value fields.
      */
     private static Map<String, Object> pointValue(Object raw) {
@@ -2225,13 +2409,6 @@ public class LocationTaskCompatService {
             return ((Number) value).intValue() != 0;
         }
         return Boolean.parseBoolean(string(value));
-    }
-
-    /**
-     * Validate a zero-or-range enum value.
-     */
-    private static boolean validOptionalType(int value, int max) {
-        return value == 0 || value >= 1 && value <= max;
     }
 
     /**

@@ -14,6 +14,7 @@ import com.ruoyi.vlstream.test.vlstream.excel.VlsAlgorithmModelExcel;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmModel;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmModelVO;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsAlgorithmModelService;
+import com.ruoyi.vlstream.test.vlstream.service.ModelFileDownloadService;
 import com.ruoyi.vlstream.test.vlstream.wrapper.VlsAlgorithmModelWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -48,6 +49,7 @@ import java.util.Map;
 public class VlsAlgorithmModelController extends BladeController {
 
 	private final IVlsAlgorithmModelService vlsAlgorithmModelService;
+	private final ModelFileDownloadService modelFileDownloadService;
 
 	/**
 	 * 算法模型表 详情
@@ -271,6 +273,40 @@ public class VlsAlgorithmModelController extends BladeController {
 		} catch (Exception e) {
 			log.error("下载模型失败", e);
 			return R.fail("下载模型失败：" + e.getMessage());
+		}
+	}
+
+	/**
+	 * 按模型表 ID 下载已入库模型的指定格式文件。
+	 */
+	@Operation(description = "下载模型文件")
+	@GetMapping("/{id}/download-file")
+	public void downloadModelFile(@PathVariable Long id,
+		@RequestParam(defaultValue = "pt") String type, HttpServletResponse response) {
+		try {
+			modelFileDownloadService.downloadModel(id, type, response);
+		} catch (IllegalArgumentException e) {
+			writeDownloadError(response, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+		} catch (java.io.FileNotFoundException e) {
+			writeDownloadError(response, HttpServletResponse.SC_NOT_FOUND, e.getMessage());
+		} catch (Exception e) {
+			log.error("下载模型文件失败", e);
+			writeDownloadError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Download failed: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * 在响应尚未提交时写入下载失败原因。
+	 */
+	private void writeDownloadError(HttpServletResponse response, int status, String message) {
+		try {
+			if (!response.isCommitted()) {
+				response.setStatus(status);
+				response.setContentType("text/plain;charset=UTF-8");
+				response.getWriter().write(message);
+			}
+		} catch (Exception ex) {
+			log.error("写入下载错误响应失败", ex);
 		}
 	}
 

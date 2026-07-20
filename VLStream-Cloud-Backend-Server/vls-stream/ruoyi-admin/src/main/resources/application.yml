@@ -126,6 +126,17 @@ vlstream:
   auth:
     public-key: ${BLADE_OAUTH2_PUBLIC_KEY:049787e408dea94acb3655acc5a7c7c7010bb9f140c84926c667ea616366082a118141c8dcb3e78a9d85d64fb765a250ff73448b18938f2219b94f782e28e1df64}
     private-key: ${BLADE_OAUTH2_PRIVATE_KEY:7204a0e7dd3f23783fb04a82b7ae211441b12a8cb42694f9997e02babc4bf65b}
+  webrtc:
+    enabled: ${VLSTREAM_WEBRTC_ENABLED:true}
+    provider: ${VLSTREAM_WEBRTC_PROVIDER:webrtc-streamer}
+    # 返回给浏览器；默认由同源 Nginx 转发，避免绑定公司测试域名
+    public-base-url: ${VLSTREAM_WEBRTC_PUBLIC_URL:/bus/webrtc-streamer-server}
+    # 仅 Java 后端健康探测使用；Compose 中通过服务名覆盖
+    internal-base-url: ${VLSTREAM_WEBRTC_INTERNAL_URL:http://127.0.0.1:8000}
+    health-path: ${VLSTREAM_WEBRTC_HEALTH_PATH:/api/getMediaList}
+    connect-timeout-millis: ${VLSTREAM_WEBRTC_CONNECT_TIMEOUT_MILLIS:1000}
+    read-timeout-millis: ${VLSTREAM_WEBRTC_READ_TIMEOUT_MILLIS:1500}
+    health-cache-millis: ${VLSTREAM_WEBRTC_HEALTH_CACHE_MILLIS:5000}
   ssh:
     host: ${VLSTREAM_SSH_HOST:192.168.88.173}
     port: ${VLSTREAM_SSH_PORT:22}
