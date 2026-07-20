@@ -350,7 +350,7 @@ import PlayButton from '@/components/PlayButton.vue'
 
 import { getDeviceById, getDeviceList, getDeviceTree, dispatchAlgorithmToDevices } from '@/api/device'
 import { getTagTree } from '@/api/tagManagement'
-import { WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
+import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
 import { getStreamType, getYouTubeEmbedUrl } from '@/views/VideoAggregation/deviceUtils.js'
 import { getAlgorithmPage } from '@/api/algorithmManagement'
 import { CAMERA_RTC_SOCKET_URL, ensureOPlayer } from '@/utils/oplayer'
@@ -410,8 +410,9 @@ const currentStreamUrl = computed(() => getDeviceStreamUrl(currentVideoDevice.va
 const currentStreamType = computed(() => getStreamType(currentStreamUrl.value))
 
 // WebRTC (默认 RTSP 直连)
-const WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
-const WEBRTC_SCRIPT_URLS = [
+let WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
+// 配置请求完成后再生成脚本地址，避免继续使用模块初始化时的默认值。
+const getWebRtcScriptUrls = () => [
   `${WEBRTC_STREAMER_BASE}/libs/adapter.min.js`,
   `${WEBRTC_STREAMER_BASE}/webrtcstreamer.js`
 ]
@@ -435,7 +436,9 @@ const loadScriptTag = (src) => {
 
 const ensureWebRtcStreamerScripts = async () => {
   if (webrtcScriptLoader) return webrtcScriptLoader
-  webrtcScriptLoader = Promise.all(WEBRTC_SCRIPT_URLS.map(loadScriptTag)).catch((error) => {
+  await ensureWebRTCBackendConfig()
+  WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
+  webrtcScriptLoader = Promise.all(getWebRtcScriptUrls().map(loadScriptTag)).catch((error) => {
     webrtcScriptLoader = null
     throw error
   })

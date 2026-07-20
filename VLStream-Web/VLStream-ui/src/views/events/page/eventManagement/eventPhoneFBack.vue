@@ -84,7 +84,7 @@
           <oort-svg-icon v-else class="elmenuIconImg" name="open" width="24" height="24" />
         </div>
       </div>
-      <div v-if="harvest">
+      <div v-if="harvest" v-loading="feedbackLoading">
         <el-tabs v-model="activeIndex" class="left-tabs">
           <el-tab-pane label="反馈记录" name="1" />
           <el-tab-pane label="工单记录" name="2" />
@@ -93,6 +93,15 @@
           <FeedbackRecord v-if="activeIndex === '1'" :feedback-list-data="feedbackListData" />
           <WorkOrderRecord v-if="activeIndex === '2'" :item="eventDetailData" />
         </div>
+        <el-pagination
+          v-if="activeIndex === '1' && feedbackTotal > feedbackPageSize"
+          v-model:current-page="feedbackPage"
+          class="feedback-pagination"
+          layout="prev, pager, next, total"
+          :page-size="feedbackPageSize"
+          :total="feedbackTotal"
+          @current-change="getFeedbackList"
+        />
       </div>
       <div class="d_h_maintainBtns">
         <el-button @click="handleClose">
@@ -166,6 +175,11 @@ const props = defineProps<Props>()
 const emit = defineEmits(['update:visible', 'refresh'])
 const harvest = ref(false)
 const formLoading = ref(false)
+const feedbackLoading = ref(false)
+const feedbackLoaded = ref(false)
+const feedbackPage = ref(1)
+const feedbackPageSize = 20
+const feedbackTotal = ref(0)
 const dialogVisible = computed({
   get: () => props.visible,
   set: (value: boolean) => emit('update:visible', value)
@@ -184,14 +198,19 @@ const selectContent = (content) => {
 
 const eventDetailData = ref<EventDetailData>({})
 
+// 加载事件详情；接口异常时保持空详情，避免未处理异常阻断弹窗交互。
 const getEventDetail = async() => {
   const params = {
     id: props.data.id,
     accessToken: store.token
   }
-  const res: any = await eventDetail(params)
-  if (res.code === 200) {
-    eventDetailData.value = res.data
+  try {
+    const res: any = await eventDetail(params)
+    if (res.code === 200) {
+      eventDetailData.value = res.data
+    }
+  } catch (error) {
+    eventDetailData.value = {}
   }
 }
 
@@ -205,12 +224,21 @@ watch([() => props.visible, () => props.data], ([newVisible, newData]) => {
     formData.value.status = newData.status
     eventDetailData.value = {}
     feedbackListData.value = []
+    feedbackLoaded.value = false
+    feedbackPage.value = 1
+    feedbackTotal.value = 0
     activeIndex.value = '1'
     harvest.value = false
     getEventDetail()
-    getFeedbackList()
   }
 }, { immediate: true })
+
+// 首次展开反馈列表时再加载数据，避免打开弹窗就创建大量记录组件。
+watch(harvest, (expanded) => {
+  if (expanded && !feedbackLoaded.value) {
+    void getFeedbackList(1)
+  }
+})
 const initFormData = () => ({
   accessToken: store.token,
   id: undefined,
@@ -297,23 +325,35 @@ const addFeedbackForm = async() => {
     formData.value = initFormData()
     formData.value.id = currentId
     formData.value.point = currentPoint
-    getFeedbackList()
+    void getFeedbackList(1)
     handleClose()
     emit('refresh')
   }
 }
 const feedbackListData = ref<FeedbackItem[]>([])
 // 反馈列表
-const getFeedbackList = async() => {
+// 分页加载反馈记录，限制单次 DOM 数量并保证加载状态正常复位。
+const getFeedbackList = async(page = feedbackPage.value) => {
+  feedbackLoading.value = true
+  feedbackPage.value = page
   const params = {
     accessToken: store.token,
-    page: 1,
-    pagesize: 9999,
+    page,
+    pagesize: feedbackPageSize,
     task_event_id: formData.value.id
   }
-  const res: any = await feedbackList(params)
-  if (res.code === 200) {
-    feedbackListData.value = res.data.list
+  try {
+    const res: any = await feedbackList(params)
+    if (res.code === 200) {
+      feedbackListData.value = Array.isArray(res?.data?.list) ? res.data.list : []
+      feedbackTotal.value = Number(res?.data?.count || feedbackListData.value.length)
+      feedbackLoaded.value = true
+    }
+  } catch (error) {
+    feedbackListData.value = []
+    feedbackTotal.value = 0
+  } finally {
+    feedbackLoading.value = false
   }
 }
 </script>
@@ -468,6 +508,11 @@ const getFeedbackList = async() => {
 }
 .feedbacklist{
   margin-top: 25px;
+}
+
+.feedback-pagination {
+  justify-content: flex-end;
+  margin: 16px 0;
 }
 
 :deep(.el-menu .el-menu-item) {

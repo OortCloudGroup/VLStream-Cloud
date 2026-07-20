@@ -232,7 +232,7 @@ import { ref, onMounted, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Edit, Check, Close } from '@element-plus/icons-vue'
 import { AuthManager } from '@/utils/auth'
-import { getUserInfo } from '@/api/userCenter'
+import { getUserInfo } from '@/api/system/localAuth'
 
 // 认证管理器
 const authManager = new AuthManager()

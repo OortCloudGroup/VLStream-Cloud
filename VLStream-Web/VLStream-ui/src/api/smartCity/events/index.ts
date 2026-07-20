@@ -2,7 +2,6 @@ import { request } from '@/utils/service'
 
 // function commonFunc<T, K>(interfaceName: string, data: T, method = 'post') {
 //   return request<K>({
-//     url: config.URL + config.gateWay + 'apaas-sso/' + interfaceName,
 //     method: method,
 //     data: data
 //   })
@@ -15,8 +14,19 @@ function commonFuncB<T, K>(interfaceName: string, data: T, method = 'post') {
   return request<K>({
     url: `/${normalizedPath}`,
     method: method,
-    data: data
+    data: removeLegacyAccessToken(data)
   })
+}
+
+/**
+ * 本地任务接口统一通过请求头鉴权，不再把可能过期的 token 固化到请求体。
+ */
+function removeLegacyAccessToken<T>(data: T): T {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return data
+  }
+  const { accessToken: _legacyAccessToken, ...payload } = data as Record<string, unknown>
+  return payload as T
 }
 
 // 以下为 事件管理 接口

@@ -2,6 +2,7 @@ import request from '@/utils/request'
 import { SINGLE_TENANT_ID, toRuoyiStatus } from './ruoyiCompat'
 
 const DEFAULT_PAGE_SIZE = 999
+const userRequestById = new Map()
 
 function compact(value) {
   return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined && item !== null && item !== ''))
@@ -132,11 +133,23 @@ export function mapDirectoryRole(role = {}) {
   }
 }
 
+// 合并同一用户的并发查询，避免头像与名称组件同时挂载时重复请求。
+async function loadUserById(id) {
+  if (!userRequestById.has(id)) {
+    const pendingRequest = request({
+      url: `/system/user/${encodeURIComponent(id)}`,
+      method: 'get'
+    }).then((response) => response?.data?.user || response?.data || null)
+      .catch(() => null)
+      .finally(() => userRequestById.delete(id))
+    userRequestById.set(id, pendingRequest)
+  }
+  return userRequestById.get(id)
+}
+
+// 批量加载用户并转换成本地目录兼容结构。
 async function loadUsersByIds(ids) {
-  const users = await Promise.all(ids.map((id) => request({
-    url: `/system/user/${encodeURIComponent(id)}`,
-    method: 'get'
-  }).then((response) => response?.data?.user || response?.data || null).catch(() => null)))
+  const users = await Promise.all(ids.map(loadUserById))
   return users.filter(Boolean).map(mapDirectoryUser)
 }
 

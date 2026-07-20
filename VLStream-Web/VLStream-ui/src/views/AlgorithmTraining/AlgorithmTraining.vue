@@ -1828,9 +1828,9 @@ const handleDownloadModel = async (row) => {
     const modelFileName = `${taskName}.${downloadType}`
 
     const blob = await request({
-      url: '/vlsAlgorithmTraining/download-model',
+      url: `/vlsAlgorithmTraining/${trainingId}/download-model`,
       method: 'get',
-      params: { id: trainingId, type: downloadType },
+      params: { type: downloadType },
       responseType: 'blob'
     })
 

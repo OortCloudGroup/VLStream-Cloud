@@ -378,7 +378,7 @@ import VideoLayoutDialog from '@/components/VideoLayoutDialog.vue'
 // 导入设备列表面板组件
 import DeviceListPanel from '@/components/DeviceListPanel.vue'
 import {getDeviceList} from "@/api/device";
-import {WEBRTC_SERVER_BASE_URL} from "@/api/webrtc";
+import {ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL} from "@/api/webrtc";
 import { CAMERA_RTC_SOCKET_URL, ensureOPlayer, isCameraRtcStream } from '@/utils/oplayer'
 
 // 分页相关
@@ -419,8 +419,9 @@ const webrtcConfig = ref({
   available: false,
   enabled: true
 })
-const WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
-const WEBRTC_SCRIPT_URLS = [
+let WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
+// 配置请求完成后再生成脚本地址，避免继续使用模块初始化时的默认值。
+const getWebRtcScriptUrls = () => [
   `${WEBRTC_STREAMER_BASE}/libs/adapter.min.js`,
   `${WEBRTC_STREAMER_BASE}/webrtcstreamer.js`
 ]
@@ -458,8 +459,10 @@ const ensureWebRtcStreamerScripts = async () => {
   if (webrtcScriptLoader) {
     return webrtcScriptLoader
   }
-  
-  webrtcScriptLoader = Promise.all(WEBRTC_SCRIPT_URLS.map(loadScriptTag)).catch(error => {
+
+  await ensureWebRTCBackendConfig()
+  WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
+  webrtcScriptLoader = Promise.all(getWebRtcScriptUrls().map(loadScriptTag)).catch(error => {
     webrtcScriptLoader = null
     throw error
   })

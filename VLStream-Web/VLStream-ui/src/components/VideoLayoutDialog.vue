@@ -197,7 +197,7 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import RtspPlayer from './RtspPlayer.vue'
 import PTZControl from './PTZControl.vue'
-import { WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
+import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
 import { CAMERA_RTC_SOCKET_URL, ensureOPlayer, isCameraRtcStream } from '@/utils/oplayer'
 
 // Props
@@ -321,8 +321,9 @@ const addDeviceToWindow = (windowIndex) => {
 
 
 // WebRTC direct playback (similar to DeviceManagement.vue)
-const WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
-const WEBRTC_SCRIPT_URLS = [
+let WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
+// 配置请求完成后再生成脚本地址，避免继续使用模块初始化时的默认值。
+const getWebRtcScriptUrls = () => [
   `${WEBRTC_STREAMER_BASE}/libs/adapter.min.js`,
   `${WEBRTC_STREAMER_BASE}/webrtcstreamer.js`
 ]
@@ -353,7 +354,9 @@ const ensureWebRtcStreamerScripts = async () => {
     return webrtcScriptLoader
   }
 
-  webrtcScriptLoader = Promise.all(WEBRTC_SCRIPT_URLS.map(loadScriptTag)).catch(error => {
+  await ensureWebRTCBackendConfig()
+  WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
+  webrtcScriptLoader = Promise.all(getWebRtcScriptUrls().map(loadScriptTag)).catch(error => {
     webrtcScriptLoader = null
     throw error
   })

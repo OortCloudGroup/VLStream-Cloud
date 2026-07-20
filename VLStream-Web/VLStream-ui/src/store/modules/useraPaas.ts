@@ -19,7 +19,7 @@ import {
   // getLoginCode,
   getLoginCodeV2,
   fastLogin
-} from '@/api/login/indexapaas'
+} from '@/api/system/localAuth'
 import {
   IVerifyTokenData,
   UserInfo
@@ -187,7 +187,7 @@ export const useUserStore = defineStore('user', () => {
     })
   }
 
-  // apaas-sso登录
+  // 本项目后端登录
   const login = (loginData) => {
     return new Promise((resolve, reject) => {
       loginSSO(loginData)

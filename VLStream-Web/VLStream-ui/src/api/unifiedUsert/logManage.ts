@@ -22,18 +22,6 @@ function commonFunc<T, K>(interfaceName: string, data: T, method = 'post', isPar
   })
 }
 
-function commonFunc1<T, K>(interfaceName: string, data: T, method = 'post', isParams = false) {
-  let params = method === 'get' || method === 'delete' || method === 'GET' || method === 'DELETE' ? { params: data } : { data: data }
-  if (isParams) {
-    params = { params: data }
-  }
-  return request < K >({
-    url: config.URL + config.gateWay + 'apaas-sso' + interfaceName,
-    method: method,
-    ...params
-  })
-}
-
 function commonFunc2<T, K>(interfaceName: string, data: T, method = 'post', isParams = false) {
   let params = method === 'get' || method === 'delete' || method === 'GET' || method === 'DELETE' ? { params: data } : { data: data }
   if (isParams) {
@@ -210,69 +198,9 @@ export function alarmRuleLogList(data) {
   return commonFunc('/alertrule/v1/add', data)
 }
 
-// 人员使用数据统计接口
-export function userStatistics(data) {
-  return commonFunc1('/rank/v1/user.statistics', data)
-}
-
-// 应用每天使用统计
-export function appDayUse(data) {
-  return commonFunc1('/rank/v1/app.day.use', data)
-}
-
-// 部门应用榜
-export function appDept(data) {
-  return commonFunc1('/rank/v1/app.dept', data)
-}
-
-// 部门用户APP活跃榜
-export function appStatistics(data) {
-  return commonFunc1('/rank/v1/app.statistics', data)
-}
-
-// 上报app使用情况
-export function appUse(data) {
-  return commonFunc1('/rank/v1/app.use', data)
-}
-
-// 用户应用榜
-export function appUser(data) {
-  return commonFunc1('/rank/v1/app.user', data)
-}
-
-// 部门活跃榜
-export function loginDept(data) {
-  return commonFunc1('/rank/v1/login.dept', data)
-}
-
-// 移动首页统计数据
-export function loginStatistics(data) {
-  return commonFunc1('/rank/v1/login.statistics', data)
-}
-
-// 用户活跃榜
-export function loginUser(data) {
-  return commonFunc1('/rank/v1/login.user', data)
-}
-
-// 人员使用数据统计概览
-export function userGeneral(data) {
-  return commonFunc1('/rank/v1/user.general', data)
-}
-
-// 获取用户的积分明细
-export function scoreDetailList(data) {
-  return commonFunc1('/rank/v1/score.detailList', data, 'post')
-}
-
 // 创建问题整改信息
 export function createProblemCorrectionProgress(data) {
   return commonFunc2('/smartCity/problem-correction-progress/create', data, 'post')
-}
-
-// 获取个人总积分
-export function getPersonalTotalScore(data) {
-  return commonFunc1('/rank/v1/getPersonalTotalScore', data, 'post')
 }
 
 // 获得园林巡查巡查任务

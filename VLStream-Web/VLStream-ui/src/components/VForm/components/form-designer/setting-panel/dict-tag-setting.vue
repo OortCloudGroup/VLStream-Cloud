@@ -58,7 +58,7 @@ import { ElInput, ElButton, ElDialog, ElTable, ElTableColumn, ElPagination, ElSe
 import { Plus } from '@element-plus/icons-vue'
 
 import { ref, onMounted } from 'vue'
-import { dictList } from '@/api/login/indexapaas'
+import { dictList } from '@/api/system/dictionary'
 
 const props = defineProps({
   modelValue: Object

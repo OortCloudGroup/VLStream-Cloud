@@ -679,8 +679,10 @@ const webrtcConfig = ref({
   available: false,
   enabled: true
 })
-const WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
-const WEBRTC_SCRIPT_URLS = [
+let WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
+
+// 每次加载时读取最新运行时地址，允许 /api/webrtc/config 覆盖默认同源路径。
+const getWebRtcScriptUrls = () => [
   `${WEBRTC_STREAMER_BASE}/libs/adapter.min.js`,
   `${WEBRTC_STREAMER_BASE}/webrtcstreamer.js`
 ]
@@ -742,7 +744,7 @@ const ensureWebRtcStreamerScripts = async () => {
     return webrtcScriptLoader
   }
   
-  webrtcScriptLoader = Promise.all(WEBRTC_SCRIPT_URLS.map(loadScriptTag))
+  webrtcScriptLoader = Promise.all(getWebRtcScriptUrls().map(loadScriptTag))
     .catch(error => {
       webrtcScriptLoader = null
       throw error
@@ -1773,6 +1775,7 @@ const checkWebRTCService = async () => {
       
       if (response && response.code === 200) {
         webrtcConfig.value = response.data
+        WEBRTC_STREAMER_BASE = response.data.serverUrl || WEBRTC_SERVER_BASE_URL
         console.log('WebRTC配置获取成功:', response.data)
         
         if (response.data.available) {

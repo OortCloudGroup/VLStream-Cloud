@@ -12,12 +12,6 @@ const routes = [
     meta: { title: '登录', hideInMenu: true }
   },
   {
-    path: '/test-auth',
-    name: 'TestAuth',
-    component: () => import('@/views/TestAuth.vue'),
-    meta: { title: '测试认证', hideInMenu: true }
-  },
-  {
     path: '/',
     component: Layout,
     redirect: '/workspace',
@@ -273,8 +267,8 @@ router.beforeEach(async (to, from, next) => {
   console.log('路由跳转:', to.path)
 
   try {
-  // 如果访问登录页面或测试页面，直接通过
-  if (to.path === '/login' || to.path === '/test-auth') {
+  // 登录页不需要本地 token 校验。
+  if (to.path === '/login') {
     next()
     return
   }

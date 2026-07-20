@@ -644,9 +644,9 @@ const downloadModelFile = async (modelRow) => {
     const fileName = `${fallbackName}.${downloadType}`
 
     const blob = await request({
-      url: '/vlsAlgorithmTraining/download-model',
+      url: `/vlsAlgorithmModel/${modelId}/download-file`,
       method: 'get',
-      params: { id: modelId, type: downloadType },
+      params: { type: downloadType },
       responseType: 'blob'
     })
 

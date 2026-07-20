@@ -60,7 +60,7 @@ import emitter from '~@/utils/emitter'
 import i18n, { translate } from '~@/utils/i18n'
 import fieldMixin from '~@/components/form-designer/form-widget/field-widget/fieldMixin'
 import { ElSelect, ElOption, ElCheckbox, ElCheckboxGroup, ElRadioGroup, ElRadio } from 'element-plus'
-import { dictListByTag } from '@/api/login/indexapaas'
+import { dictListByTag } from '@/api/system/dictionary'
 
 export default {
   name: 'BasicDataWidget',

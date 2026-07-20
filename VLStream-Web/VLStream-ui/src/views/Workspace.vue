@@ -176,7 +176,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getDeviceList } from '@/api/device'
-import { WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
+import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
 import { ElMessage } from 'element-plus'
 import { clacPXToVW } from '@/utils/index'
 
@@ -361,8 +361,9 @@ const approvalData = ref([
   }
 ])
 
-const WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
-const WEBRTC_SCRIPT_URLS = [
+let WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
+// 配置请求完成后再生成脚本地址，避免继续使用模块初始化时的默认值。
+const getWebRtcScriptUrls = () => [
   `${WEBRTC_STREAMER_BASE}/libs/adapter.min.js`,
   `${WEBRTC_STREAMER_BASE}/webrtcstreamer.js`
 ]
@@ -384,8 +385,13 @@ const loadScriptTag = (src) => {
 }
 
 const ensureWebRtcStreamerScripts = async () => {
-  if (webrtcScriptLoader) return webrtcScriptLoader
-  webrtcScriptLoader = Promise.all(WEBRTC_SCRIPT_URLS.map(loadScriptTag)).catch(error => {
+  if (webrtcScriptLoader) {
+    return webrtcScriptLoader
+  }
+
+  await ensureWebRTCBackendConfig()
+  WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
+  webrtcScriptLoader = Promise.all(getWebRtcScriptUrls().map(loadScriptTag)).catch(error => {
     webrtcScriptLoader = null
     throw error
   })

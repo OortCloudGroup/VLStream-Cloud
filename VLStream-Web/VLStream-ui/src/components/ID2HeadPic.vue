@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useUserStore } from '@/store/modules/useraPaas'
 import { getUserList } from '@/api/system/directory'
 import defaultImage from '@/assets/img/tx.png'
@@ -32,46 +32,47 @@ const props = defineProps({
     default: false
   }
 })
-let srcUrl = ref<any>(defaultImage)
-const init = () => {
-  if (props.src === null) {
-    getUserInfoFn()
-  } else {
-    srcUrl.value = props.src
-  }
-}
+const srcUrl = ref<any>(defaultImage)
 
-// oort_photo
-const getUserInfoFn = () => {
-  // 是否vuex中已经存在这个用户，避免重复请求
-  if (store.userListStore[props.id]) {
-    srcUrl.value = store.userListStore[props.id].photo
+// 根据外部图片或本地用户目录刷新头像，任何目录异常都回退到默认头像。
+const init = () => {
+  if (props.src) {
+    srcUrl.value = props.src
     return
   }
-  let data = {
-    accessToken: store.userInfo.accessToken,
-    user_id: [props.id],
-    tenant_id: store.tenantId
-  }
-  data['hideLoading'] = true
-  getUserList(data).then((res: any) => {
-    if (res.code === 200) {
-      if (res.data.list.length > 0) {
-        let tempObj = res.data.list[0]
-        store.addUser(tempObj)
-        srcUrl.value = tempObj.photo
-      }
-    }
-  })
+  srcUrl.value = defaultImage
+  void getUserInfoFn()
 }
 
-watch(() => props.id, () => {
-  init()
-})
+// 从本地用户目录加载头像，避免旧 APaaS 用户信息缺失时中断 Vue 更新队列。
+const getUserInfoFn = async() => {
+  if (!props.id) return
 
-onMounted(() => {
+  // 是否vuex中已经存在这个用户，避免重复请求
+  const cachedUser = store.userListStore?.[props.id]
+  if (cachedUser) {
+    srcUrl.value = cachedUser.photo || defaultImage
+    return
+  }
+
+  try {
+    const res: any = await getUserList({
+      user_id: [props.id],
+      hideLoading: true
+    })
+    const user = res?.code === 200 && Array.isArray(res?.data?.list) ? res.data.list[0] : undefined
+    if (user) {
+      store.addUser(user)
+      srcUrl.value = user.photo || defaultImage
+    }
+  } catch (error) {
+    srcUrl.value = defaultImage
+  }
+}
+
+watch(() => [props.id, props.src], () => {
   init()
-})
+}, { immediate: true })
 
 </script>
 
