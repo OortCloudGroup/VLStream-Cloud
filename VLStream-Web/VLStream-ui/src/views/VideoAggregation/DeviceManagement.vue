@@ -108,14 +108,17 @@
               />
             </div>
             <div class="toolbar-right">
-              <AdvancedSearch 
-                @search="handleAdvancedSearch"
-                @reset="handleAdvancedSearchReset"
-                @export="handleExport"
-                @upload="handleUpload"
-                @template="handleDownloadTemplate"
-                @batch="handleBatchOperation"
-              />
+              <div class="depNameBox_out flexRowAC">
+                <div class="searchHeight_out flexRowAC">
+                  <search-height-box
+                    keyword="keyword"
+                    placeholder="搜索"
+                    :data="searchData"
+                    @handle="searchResetFn"
+                  />
+                  <export-excel-pdf :item="exportItem" @handle="handleExport" />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -548,7 +551,6 @@ import PTZControl from '@/components/PTZControl.vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
 import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
 import PlayButton from '@/components/PlayButton.vue'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
 import RtspPlayer from '@/components/RtspPlayer.vue'
 import CameraSettings from './CameraSettings.vue'
 import DeviceEditForm from './DeviceEditForm.vue'
@@ -927,6 +929,19 @@ const loadDeviceTree = async () => {
 }
 
 // 高级搜索处理
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '关键词', value: 'keyword', type: 'text', default: '' }
+])
+
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && val.keyword)) {
+    handleAdvancedSearchReset()
+    return
+  }
+  handleAdvancedSearch(val || {})
+}
+
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索数据:', searchData)
   // 将搜索数据合并到现有的searchForm中

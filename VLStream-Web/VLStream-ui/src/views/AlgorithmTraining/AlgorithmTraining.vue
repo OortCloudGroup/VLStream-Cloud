@@ -74,14 +74,17 @@
           </div>
           
           <div class="toolbar-right">
-            <AdvancedSearch 
-              @search="handleAdvancedSearch"
-              @reset="handleAdvancedSearchReset"
-              @export="handleExport"
-              @upload="handleUpload"
-              @template="handleDownloadTemplate"
-              @batch="handleBatchOperation"
-            />
+            <div class="depNameBox_out flexRowAC">
+              <div class="searchHeight_out flexRowAC">
+                <search-height-box
+                  keyword="keyword"
+                  placeholder="搜索"
+                  :data="searchData"
+                  @handle="searchResetFn"
+                />
+                <export-excel-pdf :item="exportItem" @handle="handleExport" />
+              </div>
+            </div>
           </div>
         </div>
         
@@ -1128,7 +1131,6 @@ import {createModel, getModelPage} from '@/api/algorithmModel.js'
 import {getAlgorithmAnnotationPage} from '@/api/algorithmAnnotation.js'
 import {getAlgorithmPage} from '@/api/algorithmManagement.js'
 import CollapseToggle from '@/components/CollapseToggle.vue'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
 
 // 导入步骤图标
 import trainIcon from '@/assets/start-training@3x.png'
@@ -2548,6 +2550,19 @@ const handleDeployModel = async () => {
   } catch (error) {
     ElMessage.error('发布模型失败：' + error.message)
   }
+}
+
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '关键词', value: 'keyword', type: 'text', default: '' }
+])
+
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && val.keyword)) {
+    handleAdvancedSearchReset()
+    return
+  }
+  handleAdvancedSearch(val || {})
 }
 
 // 高级搜索相关方法

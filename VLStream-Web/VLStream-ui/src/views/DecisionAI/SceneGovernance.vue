@@ -17,14 +17,17 @@
           </div>
           
           <div class="toolbar-right">
-            <AdvancedSearch 
-              @search="handleAdvancedSearch"
-              @reset="handleAdvancedSearchReset"
-              @export="handleExport"
-              @upload="handleUpload"
-              @template="handleDownloadTemplate"
-              @batch="handleBatchOperation"
-            />
+            <div class="depNameBox_out flexRowAC">
+              <div class="searchHeight_out flexRowAC">
+                <search-height-box
+                  keyword="keyword"
+                  placeholder="搜索"
+                  :data="searchData"
+                  @handle="searchResetFn"
+                />
+                <export-excel-pdf :item="exportItem" @handle="handleExport" />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -365,7 +368,6 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight } from '@element-plus/icons-vue'
 import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
 import CronExpressionBuilder from '@/components/CronExpressionBuilder.vue'
 import {getList, add, update, remove} from '@/api/sceneGovernance'
 import { getAlgorithmPage } from '@/api/algorithmManagement'
@@ -1231,6 +1233,19 @@ const handleCurrentChange = async (val) => {
 // 获取执行时间文本描述
 const getExecuteTimeText = (formData) => {
   return formatCronDescription(formData.cronExpression)
+}
+
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '关键词', value: 'keyword', type: 'text', default: '' }
+])
+
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && val.keyword)) {
+    handleAdvancedSearchReset()
+    return
+  }
+  handleAdvancedSearch(val || {})
 }
 
 // 高级搜索相关方法

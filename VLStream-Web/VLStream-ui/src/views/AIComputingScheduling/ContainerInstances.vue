@@ -444,16 +444,16 @@
         创建容器实例
       </el-button>
       
-      <!-- 高级搜索组件 -->
-      <div class="advanced-search-group">
-        <AdvancedSearch 
-          @search="handleAdvancedSearch"
-          @reset="handleAdvancedSearchReset"
-          @export="handleExport"
-          @upload="handleUpload"
-          @template="handleDownloadTemplate"
-          @batch="handleBatchOperation"
-        />
+      <div class="depNameBox_out flexRowAC">
+        <div class="searchHeight_out flexRowAC">
+          <search-height-box
+            keyword="keyword"
+            placeholder="搜索"
+            :data="searchData"
+            @handle="searchResetFn"
+          />
+          <export-excel-pdf :item="exportItem" @handle="handleExport" />
+        </div>
       </div>
     </div>
 
@@ -719,7 +719,6 @@ import {
   Delete, View, Warning, Check, Loading, ArrowDown
 } from '@element-plus/icons-vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
 import {
   getContainerInstancePage,
   getContainerInstanceById,
@@ -1175,6 +1174,19 @@ const openWebConnection = (container) => {
 const openTensorBoard = (container) => {
   ElMessage.info(`打开TensorBoard: ${container.name}`)
   // 这里可以实现打开TensorBoard的逻辑
+}
+
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '关键词', value: 'keyword', type: 'text', default: '' }
+])
+
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && val.keyword)) {
+    handleAdvancedSearchReset()
+    return
+  }
+  handleAdvancedSearch(val || {})
 }
 
 // 高级搜索相关方法

@@ -23,14 +23,17 @@
       </div>
       
       <div class="toolbar-right">
-        <AdvancedSearch 
-          @search="handleAdvancedSearch"
-          @reset="handleAdvancedSearchReset"
-          @export="handleExport"
-          @upload="handleUpload"
-          @template="handleDownloadTemplate"
-          @batch="handleBatchOperation"
-        />
+        <div class="depNameBox_out flexRowAC">
+          <div class="searchHeight_out flexRowAC">
+            <search-height-box
+              keyword="keyword"
+              placeholder="搜索"
+              :data="searchData"
+              @handle="searchResetFn"
+            />
+            <export-excel-pdf :item="exportItem" @handle="handleExport" />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -243,7 +246,6 @@
 import {computed, h, onMounted, ref} from 'vue'
 import {Delete, Edit, Plus} from '@element-plus/icons-vue'
 import {ElMessage, ElMessageBox, ElRadio, ElRadioGroup} from 'element-plus'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
 import {
   batchDeleteModel,
   createModel,
@@ -699,6 +701,19 @@ const handleSizeChange = (val) => {
 const handleCurrentChange = (val) => {
   currentPage.value = val
   loadModelData()
+}
+
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '关键词', value: 'keyword', type: 'text', default: '' }
+])
+
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && val.keyword)) {
+    handleAdvancedSearchReset()
+    return
+  }
+  handleAdvancedSearch(val || {})
 }
 
 // 高级搜索相关方法

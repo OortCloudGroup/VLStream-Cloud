@@ -233,16 +233,16 @@
               导出事件列表
             </el-button>
 
-            <!-- 高级搜索组件 -->
-            <div class="advanced-search-group">
-              <AdvancedSearch
-                  @search="handleAdvancedSearch"
-                  @reset="handleAdvancedSearchReset"
-                  @export="handleExportEvents"
-                  @upload="handleUpload"
-                  @template="handleDownloadTemplate"
-                  @batch="handleBatchOperation"
-              />
+            <div class="depNameBox_out flexRowAC">
+              <div class="searchHeight_out flexRowAC">
+                <search-height-box
+                  keyword="keyword"
+                  placeholder="搜索"
+                  :data="searchData"
+                  @handle="searchResetFn"
+                />
+                <export-excel-pdf :item="exportItem" @handle="handleExportEvents" />
+              </div>
             </div>
           </div>
         </div>
@@ -338,7 +338,6 @@ import {computed, onMounted, reactive, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {Document, Monitor, Location, Clock, User, Picture, Plus, CircleCheck} from '@element-plus/icons-vue'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
 import {
   batchDeleteEvents,
   deleteEvent,
@@ -655,6 +654,19 @@ const handleSubmitFeedback = async () => {
     console.error('提交反馈失败', error)
     ElMessage.error('提交失败')
   }
+}
+
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '关键词', value: 'keyword', type: 'text', default: '' }
+])
+
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && val.keyword)) {
+    handleAdvancedSearchReset()
+    return
+  }
+  handleAdvancedSearch(val || {})
 }
 
 // 高级搜索相关方法

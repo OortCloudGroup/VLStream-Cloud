@@ -32,14 +32,17 @@
           </div>
           
           <div class="toolbar-right">
-            <AdvancedSearch 
-              @search="handleAdvancedSearch"
-              @reset="handleAdvancedSearchReset"
-              @export="handleExport"
-              @upload="handleImport"
-              @template="handleDownloadTemplate"
-              @batch="handleBatchOperation"
-            />
+            <div class="depNameBox_out flexRowAC">
+              <div class="searchHeight_out flexRowAC">
+                <search-height-box
+                  keyword="keyword"
+                  placeholder="搜索"
+                  :data="searchData"
+                  @handle="searchResetFn"
+                />
+                <export-excel-pdf :item="exportItem" @handle="handleExport" />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -741,7 +744,6 @@ import {
   ZoomIn,
   ZoomOut
 } from '@element-plus/icons-vue'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
 import {
   ANNOTATION_STATUS,
   ANNOTATION_TYPE_LABELS,
@@ -3166,6 +3168,19 @@ const handleGlobalClick = (event) => {
     }
   }
   console.log('=== 全局点击事件处理完成 ===')
+}
+
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '关键词', value: 'keyword', type: 'text', default: '' }
+])
+
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && val.keyword)) {
+    handleAdvancedSearchReset()
+    return
+  }
+  handleAdvancedSearch(val || {})
 }
 
 // 高级搜索相关方法

@@ -60,14 +60,17 @@
             />
           </div>
           <div class="toolbar-right">
-            <AdvancedSearch 
-              @search="handleAdvancedSearch"
-              @reset="handleAdvancedSearchReset"
-              @export="handleExport"
-              @upload="handleUpload"
-              @template="handleDownloadTemplate"
-              @batch="handleBatchOperation"
-            />
+            <div class="depNameBox_out flexRowAC">
+              <div class="searchHeight_out flexRowAC">
+                <search-height-box
+                  keyword="keyword"
+                  placeholder="搜索"
+                  :data="searchData"
+                  @handle="searchResetFn"
+                />
+                <export-excel-pdf :item="exportItem" @handle="handleExport" />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -307,7 +310,6 @@ import { Search, Refresh, Plus, Edit, Delete, ArrowRight, Close, Clock, MessageB
 import DateRangePicker from '@/components/DateRangePicker.vue'
 import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
 import PlayButton from '@/components/PlayButton.vue'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
 import { getAnalysisRequestPage, applyAnalysisRequest, updateAnalysisRequest } from '@/api/analysisRequest'
 
 const router = useRouter()
@@ -608,6 +610,19 @@ const confirmRegionSelection = () => {
 const confirmCameraSelection = () => {
   form.value.selectedCameras = [...tempSelectedCameras.value]
   showCameraSelector.value = false
+}
+
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '关键词', value: 'keyword', type: 'text', default: '' }
+])
+
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && val.keyword)) {
+    handleAdvancedSearchReset()
+    return
+  }
+  handleAdvancedSearch(val || {})
 }
 
 // 高级搜索相关方法

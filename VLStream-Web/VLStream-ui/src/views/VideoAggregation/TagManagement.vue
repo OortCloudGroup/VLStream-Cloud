@@ -101,14 +101,17 @@
             </div>
             
             <div class="toolbar-right">
-              <AdvancedSearch 
-                @search="handleAdvancedSearch"
-                @reset="handleAdvancedSearchReset"
-                @export="handleExport"
-                @upload="handleUpload"
-                @template="handleDownloadTemplate"
-                @batch="handleBatchOperation"
-              />
+              <div class="depNameBox_out flexRowAC">
+                <div class="searchHeight_out flexRowAC">
+                  <search-height-box
+                    keyword="keyword"
+                    placeholder="搜索"
+                    :data="searchData"
+                    @handle="searchResetFn"
+                  />
+                  <export-excel-pdf :item="exportItem" @handle="handleExport" />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -227,14 +230,17 @@
             </div>
             
             <div class="toolbar-right">
-              <AdvancedSearch 
-                @search="handleDeviceAdvancedSearch"
-                @reset="handleDeviceAdvancedSearchReset"
-                @export="handleExport"
-                @upload="handleUpload"
-                @template="handleDownloadTemplate"
-                @batch="handleBatchOperation"
-              />
+              <div class="depNameBox_out flexRowAC">
+                <div class="searchHeight_out flexRowAC">
+                  <search-height-box
+                    keyword="keyword"
+                    placeholder="搜索"
+                    :data="deviceSearchData"
+                    @handle="deviceSearchResetFn"
+                  />
+                  <export-excel-pdf :item="exportItem" @handle="handleExport" />
+                </div>
+              </div>
             </div>
           </div>
           
@@ -348,7 +354,6 @@ import DateRangePicker from '@/components/DateRangePicker.vue'
 import SearchInput from '@/components/SearchInput.vue'
 import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
 import TagSelector from '@/components/TagSelector.vue'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
 import { 
   getTagTree, 
   getTagManagementPage,
@@ -1719,6 +1724,19 @@ const handleDeviceTreeSearch = (searchValue) => {
   // 这里可以添加设备树搜索逻辑
 }
 
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '关键词', value: 'keyword', type: 'text', default: '' }
+])
+
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && val.keyword)) {
+    handleAdvancedSearchReset()
+    return
+  }
+  handleAdvancedSearch(val || {})
+}
+
 // 高级搜索相关方法
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索:', searchData)
@@ -1748,6 +1766,18 @@ const handleAdvancedSearchReset = () => {
   searchForm.tagName = ''
   searchForm.dateRange = []
   handleReset()
+}
+
+const deviceSearchData = ref([
+  { label: '关键词', value: 'keyword', type: 'text', default: '' }
+])
+
+const deviceSearchResetFn = (val, reset) => {
+  if (reset && !(val && val.keyword)) {
+    handleDeviceAdvancedSearchReset()
+    return
+  }
+  handleDeviceAdvancedSearch(val || {})
 }
 
 const handleDeviceAdvancedSearch = (searchData) => {
