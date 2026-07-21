@@ -9,6 +9,8 @@ import ai.djl.modality.cv.Image;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.smartjavaai.common.cv.SmartImageFactory;
 import cn.smartjavaai.common.entity.DetectionInfo;
+import cn.smartjavaai.common.entity.DetectionResponse;
+import cn.smartjavaai.common.entity.R;
 import cn.smartjavaai.common.enums.DeviceEnum;
 import cn.smartjavaai.common.enums.VideoSourceType;
 import cn.smartjavaai.common.utils.ImageUtils;
@@ -17,8 +19,7 @@ import cn.smartjavaai.face.constant.FaceDetectConstant;
 import cn.smartjavaai.face.enums.FaceDetModelEnum;
 import cn.smartjavaai.face.factory.FaceDetModelFactory;
 import cn.smartjavaai.face.model.facedect.FaceDetModel;
-import cn.smartjavaai.objectdetection.stream.StreamDetectionListener;
-import cn.smartjavaai.objectdetection.stream.StreamDetector;
+import cn.smartjavaai.stream.CompatibleStreamDetector;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import com.ruoyi.vlstream.test.modules.system.service.IFileUploadService;
@@ -64,7 +65,7 @@ public class DeviceFaceDetectionSession implements DeviceDetectionSession {
     private final AtomicBoolean restartInProgress = new AtomicBoolean(false);
     private final AtomicBoolean stopRequested = new AtomicBoolean(false);
 
-    private volatile StreamDetector detector;
+    private volatile CompatibleStreamDetector detector;
     private volatile FaceDetModel detectorModel;
     private volatile File tempModelFile;
 
@@ -127,7 +128,7 @@ public class DeviceFaceDetectionSession implements DeviceDetectionSession {
     private void startDetectionWithRetry(FaceDetModel detectorModel) {
         int retryTimes = 0;
         while (true) {
-            StreamDetector streamDetector = buildStreamDetector(detectorModel);
+            CompatibleStreamDetector streamDetector = buildStreamDetector(detectorModel);
             detectorClosed.set(false);
             this.detector = streamDetector;
             try {
@@ -153,13 +154,13 @@ public class DeviceFaceDetectionSession implements DeviceDetectionSession {
         }
     }
 
-    private StreamDetector buildStreamDetector(FaceDetModel detectorModel) {
-        return new StreamDetector.Builder()
-            .sourceType(VideoSourceType.STREAM)
-            .streamUrl(streamUrl)
-            .frameDetectionInterval(5)
-            .detectorModel(detectorModel::getPool)
-            .listener(new StreamDetectionListener() {
+    private CompatibleStreamDetector buildStreamDetector(FaceDetModel detectorModel) {
+        return new CompatibleStreamDetector(VideoSourceType.STREAM, streamUrl, 5,
+            image -> {
+                R<DetectionResponse> result = detectorModel.detect(image);
+                return result != null && result.isSuccess() && result.getData() != null
+                    ? result.getData().getDetectionInfoList() : java.util.Collections.emptyList();
+            }, new CompatibleStreamDetector.DetectionListener() {
                 @Override
                 public void onObjectDetected(List<DetectionInfo> detectionInfoList, Image image) {
                     if (detectionInfoList == null || detectionInfoList.isEmpty()) {
@@ -222,8 +223,7 @@ public class DeviceFaceDetectionSession implements DeviceDetectionSession {
                         deviceInfo.getId(), deviceInfo.getDeviceName(), algorithmId);
                     scheduleDetectorRestart("streamDisconnected");
                 }
-            })
-            .build();
+            });
     }
 
     private void scheduleDetectorRestart(String reason) {
@@ -263,7 +263,7 @@ public class DeviceFaceDetectionSession implements DeviceDetectionSession {
     }
 
     private void stopDetector() {
-        StreamDetector currentDetector = this.detector;
+        CompatibleStreamDetector currentDetector = this.detector;
         if (currentDetector == null) {
             return;
         }

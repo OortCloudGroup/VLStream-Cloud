@@ -39,42 +39,11 @@
             <version>1.2.5</version>
         </dependency>
 
-        <!-- Migrated VLS detection code uses the same SmartJavaAI APIs as the source project. -->
+        <!-- Keep the complete API set required by every video-analysis session. -->
         <dependency>
             <groupId>cn.smartjavaai</groupId>
-            <artifactId>face</artifactId>
-            <version>1.1.0</version>
-            <exclusions>
-                <!-- Keep one explicit ONNX Runtime version to avoid transitive version drift. -->
-                <exclusion>
-                    <groupId>com.microsoft.onnxruntime</groupId>
-                    <artifactId>onnxruntime</artifactId>
-                </exclusion>
-                <!-- RuoYi already provides the SLF4J binding. -->
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>cn.smartjavaai</groupId>
-            <artifactId>vision</artifactId>
-            <version>1.1.0</version>
-            <exclusions>
-                <!-- Keep one explicit ONNX Runtime version to avoid transitive version drift. -->
-                <exclusion>
-                    <groupId>com.microsoft.onnxruntime</groupId>
-                    <artifactId>onnxruntime</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>com.microsoft.onnxruntime</groupId>
-            <artifactId>onnxruntime</artifactId>
-            <version>1.20.0</version>
+            <artifactId>all</artifactId>
+            <version>1.1.2</version>
         </dependency>
 
         <dependency>

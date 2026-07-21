@@ -12,6 +12,8 @@ import ai.djl.ndarray.types.DataType;
 import ai.djl.util.JsonUtils;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.smartjavaai.common.entity.DetectionInfo;
+import cn.smartjavaai.common.entity.DetectionResponse;
+import cn.smartjavaai.common.entity.R;
 import cn.smartjavaai.common.entity.DetectionRectangle;
 import cn.smartjavaai.common.enums.DeviceEnum;
 import cn.smartjavaai.common.enums.VideoSourceType;
@@ -20,8 +22,7 @@ import cn.smartjavaai.objectdetection.config.PersonDetModelConfig;
 import cn.smartjavaai.objectdetection.enums.PersonDetectorModelEnum;
 import cn.smartjavaai.objectdetection.model.person.PersonDetModel;
 import cn.smartjavaai.objectdetection.model.person.PersonDetModelFactory;
-import cn.smartjavaai.objectdetection.stream.StreamDetectionListener;
-import cn.smartjavaai.objectdetection.stream.StreamDetector;
+import cn.smartjavaai.stream.CompatibleStreamDetector;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import com.ruoyi.vlstream.test.modules.system.service.IFileUploadService;
@@ -78,7 +79,7 @@ public class DevicePersonDetectionSession implements DeviceDetectionSession {
     private final AtomicBoolean detectorClosed = new AtomicBoolean(false);
     private final AtomicBoolean restartInProgress = new AtomicBoolean(false);
 
-    private volatile StreamDetector detector;
+    private volatile CompatibleStreamDetector detector;
     private volatile PersonDetModel detectorModel;
 
     private volatile File tempModelFile;
@@ -166,7 +167,7 @@ public class DevicePersonDetectionSession implements DeviceDetectionSession {
     private void startDetectionWithRetry(PersonDetModel detectorModel) {
         int retryTimes = 0;
         while (true) {
-            StreamDetector streamDetector = buildStreamDetector(detectorModel);
+            CompatibleStreamDetector streamDetector = buildStreamDetector(detectorModel);
             detectorClosed.set(false);
             this.detector = streamDetector;
             try {
@@ -191,13 +192,13 @@ public class DevicePersonDetectionSession implements DeviceDetectionSession {
         }
     }
 
-    private StreamDetector buildStreamDetector(PersonDetModel detectorModel) {
-        return new StreamDetector.Builder()
-            .sourceType(VideoSourceType.STREAM)
-            .streamUrl(streamUrl)
-            .frameDetectionInterval(5)
-            .detectorModel(detectorModel)
-            .listener(new StreamDetectionListener() {
+    private CompatibleStreamDetector buildStreamDetector(PersonDetModel detectorModel) {
+        return new CompatibleStreamDetector(VideoSourceType.STREAM, streamUrl, 5,
+            image -> {
+                R<DetectionResponse> result = detectorModel.detect(image);
+                return result != null && result.isSuccess() && result.getData() != null
+                    ? result.getData().getDetectionInfoList() : java.util.Collections.emptyList();
+            }, new CompatibleStreamDetector.DetectionListener() {
                 @Override
                 public void onObjectDetected(List<DetectionInfo> detectionInfoList, Image image) {
                     if (detectionInfoList == null || detectionInfoList.isEmpty()) {
@@ -275,8 +276,7 @@ public class DevicePersonDetectionSession implements DeviceDetectionSession {
                     log.info("视频流断开连接: deviceId={}, deviceName={}", deviceInfo.getId(), deviceInfo.getDeviceName());
                     stopDetector();
                 }
-            })
-            .build();
+            });
     }
 
     private void scheduleDetectorRestart(String reason) {
@@ -304,7 +304,7 @@ public class DevicePersonDetectionSession implements DeviceDetectionSession {
     }
 
     private void stopDetector() {
-        StreamDetector currentDetector = this.detector;
+        CompatibleStreamDetector currentDetector = this.detector;
         if (currentDetector == null) {
             return;
         }
