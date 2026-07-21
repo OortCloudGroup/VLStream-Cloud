@@ -459,16 +459,32 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 摄像头算法下发
+	 * 兼容旧调用方使用查询参数发起算法下发。
+	 */
+	@Operation(summary = "摄像头算法下发（兼容）")
+	@GetMapping("/dispatchAlgorithms")
+	public R<String> dispatchAlgorithmsLegacy(@RequestParam Long algorithmId, @RequestParam String deviceIds) {
+		return dispatchAlgorithmRequest(algorithmId, deviceIds);
+	}
+
+	/**
+	 * 接收管理端下发请求，并由服务层逐台通知硬件下载最新 OM 模型。
 	 */
 	@Operation(summary = "摄像头算法下发")
-	@GetMapping("/dispatchAlgorithms")
-	public R<String> dispatchAlgorithms(@RequestParam Long algorithmId, @RequestParam String deviceIds) {
+	@PostMapping("/{algorithmId}/algorithms")
+	public R<String> dispatchAlgorithms(@PathVariable Long algorithmId, @RequestParam String deviceIds) {
+		return dispatchAlgorithmRequest(algorithmId, deviceIds);
+	}
+
+	/**
+	 * 统一新旧接口的返回结果，避免两套下发逻辑产生差异。
+	 */
+	private R<String> dispatchAlgorithmRequest(Long algorithmId, String deviceIds) {
 		boolean success = vlsDeviceInfoService.dispatchAlgorithms(algorithmId, deviceIds);
 		if (success) {
 			return R.success("算法下发成功");
 		} else {
-			return R.fail("算法下发失败，设备不存在");
+			return R.fail("算法下发失败，请检查OM模型、设备信息和硬件接口");
 		}
 	}
 

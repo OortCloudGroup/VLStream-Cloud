@@ -28,6 +28,7 @@
         <result column="onnx_model_output_path" property="onnxModelOutputPath"/>
         <result column="rknn_model_output_path" property="rknnModelOutputPath"/>
         <result column="int8_rknn_model_output_path" property="int8RknnModelOutputPath"/>
+        <result column="om_model_output_path" property="omModelOutputPath"/>
         <result column="log_path" property="logPath"/>
         <result column="config_params" property="configParams"/>
         <result column="error_message" property="errorMessage"/>
@@ -66,6 +67,7 @@
         <result column="onnx_model_output_path" property="onnxModelOutputPath" />
         <result column="rknn_model_output_path" property="rknnModelOutputPath" />
         <result column="int8_rknn_model_output_path" property="int8RknnModelOutputPath" />
+        <result column="om_model_output_path" property="omModelOutputPath" />
         <result column="log_path" property="logPath" />
         <result column="config_params" property="configParams" />
         <result column="error_message" property="errorMessage" />
@@ -80,7 +82,8 @@
         id, task_name, algorithm_id, dataset_id, train_status, progress,
         epoch_current, epoch_total, accuracy, precision_value, recall_value, map_value,
         loss_value, gpu_usage, start_time, end_time, estimated_time, model_output_path,
-        onnx_model_output_path, rknn_model_output_path, int8_rknn_model_output_path, log_path, config_params, error_message,
+        onnx_model_output_path, rknn_model_output_path, int8_rknn_model_output_path, om_model_output_path,
+        log_path, config_params, error_message,
         create_user, create_time, update_time, is_deleted
     </sql>
 
@@ -215,6 +218,7 @@
             <if test="onnxModelOutputPath != null">onnx_model_output_path,</if>
             <if test="rknnModelOutputPath != null">rknn_model_output_path,</if>
             <if test="int8RknnModelOutputPath != null">int8_rknn_model_output_path,</if>
+            <if test="omModelOutputPath != null">om_model_output_path,</if>
             <if test="logPath != null">log_path,</if>
             <if test="configParams != null">config_params,</if>
             <if test="errorMessage != null">error_message,</if>
@@ -241,6 +245,7 @@
             <if test="onnxModelOutputPath != null">#{onnxModelOutputPath},</if>
             <if test="rknnModelOutputPath != null">#{rknnModelOutputPath},</if>
             <if test="int8RknnModelOutputPath != null">#{int8RknnModelOutputPath},</if>
+            <if test="omModelOutputPath != null">#{omModelOutputPath},</if>
             <if test="logPath != null">#{logPath},</if>
             <if test="configParams != null">#{configParams},</if>
             <if test="errorMessage != null">#{errorMessage},</if>
@@ -272,6 +277,7 @@
             <if test="onnxModelOutputPath != null">onnx_model_output_path = #{onnxModelOutputPath},</if>
             <if test="rknnModelOutputPath != null">rknn_model_output_path = #{rknnModelOutputPath},</if>
             <if test="int8RknnModelOutputPath != null">int8_rknn_model_output_path = #{int8RknnModelOutputPath},</if>
+            <if test="omModelOutputPath != null">om_model_output_path = #{omModelOutputPath},</if>
             <if test="logPath != null">log_path = #{logPath},</if>
             <if test="configParams != null">config_params = #{configParams},</if>
             <if test="errorMessage != null">error_message = #{errorMessage},</if>

@@ -140,6 +140,11 @@ public class AlgorithmTraining extends TenantEntity {
 	@Schema(description = "int8 rknn模型输出路径")
 	private String int8RknnModelOutputPath;
 	/**
+	 * Hi3519DV500 SVP ACL OM模型输出路径
+	 */
+	@Schema(description = "Hi3519DV500 OM模型输出路径")
+	private String omModelOutputPath;
+	/**
 	 * 日志路径
 	 */
 	@Schema(description = "日志路径")

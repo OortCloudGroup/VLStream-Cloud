@@ -97,6 +97,7 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 		model.setOnnxModelPath(training.getOnnxModelOutputPath());
 		model.setRknnModelPath(training.getRknnModelOutputPath());
 		model.setInt8RknnModelOutputPath(training.getInt8RknnModelOutputPath());
+		model.setOmModelOutputPath(training.getOmModelOutputPath());
 		// 保存到数据库
 		boolean success = save(model);
 		if (!success) {

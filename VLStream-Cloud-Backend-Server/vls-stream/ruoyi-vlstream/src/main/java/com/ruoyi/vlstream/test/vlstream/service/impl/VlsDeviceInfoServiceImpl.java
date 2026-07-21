@@ -5,7 +5,8 @@
 
 package com.ruoyi.vlstream.test.vlstream.service.impl;
 
-import cn.hutool.json.JSONUtil;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -13,25 +14,19 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springblade.core.mp.base.BaseServiceImpl;
-import com.ruoyi.vlstream.test.vlstream.config.VlsMqttProperties;
+import com.ruoyi.vlstream.test.vlstream.config.VlsHardwareDispatchProperties;
 import com.ruoyi.vlstream.test.vlstream.excel.VlsDeviceInfoExcel;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsDeviceInfoMapper;
-import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmModel;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.DeviceInfoVO;
-import com.ruoyi.vlstream.test.vlstream.service.IVlsAlgorithmModelService;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsAlgorithmTrainingService;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsDeviceInfoService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -48,10 +43,7 @@ public class VlsDeviceInfoServiceImpl extends BaseServiceImpl<VlsDeviceInfoMappe
 	private IVlsAlgorithmTrainingService vlsAlgorithmTrainingService;
 
 	@Resource
-	private IVlsAlgorithmModelService vlsAlgorithmModelService;
-
-	@Resource
-	private VlsMqttProperties vlsMqttProperties;
+	private VlsHardwareDispatchProperties hardwareDispatchProperties;
 
 	@Override
 	public IPage<DeviceInfoVO> selectVlsDeviceInfoPage(IPage<DeviceInfoVO> page, DeviceInfoVO vlsDeviceInfo) {
@@ -104,111 +96,107 @@ public class VlsDeviceInfoServiceImpl extends BaseServiceImpl<VlsDeviceInfoMappe
 	}
 
 	@Override
-	@Transactional(rollbackFor = Exception.class)
 	public boolean dispatchAlgorithms(Long algorithmId, String deviceIds) {
-		if (StringUtils.isBlank(deviceIds)) {
+		if (algorithmId == null || StringUtils.isBlank(deviceIds)) {
 			return false;
 		}
-
-		String mqttTopic = "oortcloud/dispatchAlgorithms";
 
 		AlgorithmTraining latestTraining = vlsAlgorithmTrainingService.getOne(Wrappers.<AlgorithmTraining>lambdaQuery()
 			.eq(AlgorithmTraining::getAlgorithmId, algorithmId)
+			.isNotNull(AlgorithmTraining::getOmModelOutputPath)
+			.ne(AlgorithmTraining::getOmModelOutputPath, "")
 			.orderByDesc(AlgorithmTraining::getUpdateTime)
 			.last("limit 1"));
 		if (latestTraining == null) {
-			log.error("算法下发失败，未找到最新训练任务: algorithmId={}", algorithmId);
+			log.error("算法下发失败，未找到已生成OM文件的训练任务: algorithmId={}", algorithmId);
 			return false;
 		}
 
-		AlgorithmModel latestModel = vlsAlgorithmModelService.getOne(Wrappers.<AlgorithmModel>lambdaQuery()
-			.eq(AlgorithmModel::getTrainingId, latestTraining.getId())
-			.orderByDesc(AlgorithmModel::getCreateTime)
-			.last("limit 1"));
-		if (latestModel == null || latestModel.getId() == null) {
-			log.error("算法下发失败，未找到最新训练模型: algorithmId={}, trainingId={}", algorithmId, latestTraining.getId());
+		String modelDownloadUrl = buildPublicOmDownloadUrl(latestTraining.getId());
+		if (StringUtils.isBlank(modelDownloadUrl)) {
+			log.error("算法下发失败，模型公开下载地址未配置: algorithmId={}", algorithmId);
 			return false;
 		}
 
-		MqttClient mqttClient = null;
-		try {
-			mqttClient = createMqttClient();
-			mqttClient.connect(buildMqttConnectOptions());
-
-			for (String deviceId : deviceIds.split(",")) {
-				if (StringUtils.isBlank(deviceId)) {
-					continue;
-				}
-				DeviceInfo device = getById(deviceId.trim());
-				if (device == null || StringUtils.isBlank(device.getDeviceId())) {
-					log.error("算法下发失败，设备不存在或设备编号为空: deviceId={}", deviceId);
-					return false;
-				}
-
-				DeviceInfo updateEntity = new DeviceInfo();
-				updateEntity.setId(Long.valueOf(deviceId.trim()));
-				updateEntity.setAlgorithmId(String.valueOf(algorithmId));
-				updateById(updateEntity);
-
-				if (!StringUtils.equals(mqttTopic, "oortcloud/dispatchAlgorithms")) {
-					log.error("算法下发失败，MQTT主题仅允许 oortcloud/#: topic={}", mqttTopic);
-					return false;
-				}
-
-				Map<String, Object> messagePayload = new HashMap<>(2);
-				messagePayload.put("deviceId", device.getDeviceId());
-				messagePayload.put("modelId", latestModel.getId());
-
-				MqttMessage mqttMessage = new MqttMessage(JSONUtil.toJsonStr(messagePayload).getBytes(StandardCharsets.UTF_8));
-				mqttMessage.setQos(vlsMqttProperties.getQos());
-				mqttClient.publish(mqttTopic, mqttMessage);
+		boolean allSucceeded = true;
+		int dispatchedCount = 0;
+		for (String rowId : deviceIds.split(",")) {
+			if (StringUtils.isBlank(rowId)) {
+				continue;
 			}
-			return true;
-		} catch (Exception dispatchException) {
-			log.error("算法下发失败，MQTT发送异常: algorithmId={}", algorithmId, dispatchException);
-			return false;
-		} finally {
-			closeMqttClient(mqttClient);
-		}
-	}
-
-	private MqttClient createMqttClient() throws MqttException {
-		String clientIdPrefix = StringUtils.defaultIfBlank(vlsMqttProperties.getClientIdPrefix(), "vls-dispatch");
-		String brokerUrl = "tcp://" + vlsMqttProperties.getHost() + ":" + vlsMqttProperties.getPort();
-		String clientId = clientIdPrefix + "-" + UUID.randomUUID();
-		return new MqttClient(brokerUrl, clientId);
-	}
-
-	private MqttConnectOptions buildMqttConnectOptions() {
-		MqttConnectOptions connectOptions = new MqttConnectOptions();
-		connectOptions.setAutomaticReconnect(true);
-		connectOptions.setCleanSession(true);
-		connectOptions.setConnectionTimeout(vlsMqttProperties.getConnectionTimeoutSeconds());
-		connectOptions.setKeepAliveInterval(vlsMqttProperties.getKeepAliveSeconds());
-		if (StringUtils.isNotBlank(vlsMqttProperties.getUsername())) {
-			connectOptions.setUserName(vlsMqttProperties.getUsername());
-		}
-		if (StringUtils.isNotBlank(vlsMqttProperties.getPassword())) {
-			connectOptions.setPassword(vlsMqttProperties.getPassword().toCharArray());
-		}
-		return connectOptions;
-	}
-
-	private void closeMqttClient(MqttClient mqttClient) {
-		if (mqttClient == null) {
-			return;
-		}
-		try {
-			if (mqttClient.isConnected()) {
-				mqttClient.disconnect();
+			DeviceInfo device;
+			try {
+				device = getById(Long.valueOf(rowId.trim()));
+			} catch (NumberFormatException invalidIdException) {
+				log.error("算法下发失败，设备主键格式错误: rowId={}", rowId);
+				allSucceeded = false;
+				continue;
 			}
-		} catch (MqttException disconnectException) {
-			log.warn("关闭MQTT连接失败", disconnectException);
+			if (device == null || StringUtils.isBlank(device.getDeviceId())) {
+				log.error("算法下发失败，设备不存在或设备编号为空: rowId={}", rowId);
+				allSucceeded = false;
+				continue;
+			}
+
+			if (!requestHardwareModelDownload(device.getDeviceId(), modelDownloadUrl)) {
+				allSucceeded = false;
+				continue;
+			}
+
+			DeviceInfo updateEntity = new DeviceInfo();
+			updateEntity.setId(device.getId());
+			updateEntity.setAlgorithmId(String.valueOf(algorithmId));
+			if (!updateById(updateEntity)) {
+				log.error("硬件接口调用成功，但设备算法关联更新失败: rowId={}, deviceId={}", device.getId(), device.getDeviceId());
+				allSucceeded = false;
+				continue;
+			}
+			dispatchedCount++;
 		}
-		try {
-			mqttClient.close();
-		} catch (MqttException closeException) {
-			log.warn("关闭MQTT客户端失败", closeException);
+		return allSucceeded && dispatchedCount > 0;
+	}
+
+	/**
+	 * Build the unauthenticated OM URL that the hardware device can download directly.
+	 */
+	private String buildPublicOmDownloadUrl(Long trainingId) {
+		String baseUrl = StringUtils.stripEnd(hardwareDispatchProperties.getModelDownloadBaseUrl(), "/");
+		if (StringUtils.isBlank(baseUrl) || trainingId == null) {
+			return null;
+		}
+		return baseUrl + "/vlsAlgorithmTraining/public/" + trainingId + "/om";
+	}
+
+	/**
+	 * Ask the hardware service to download and activate the selected training model.
+	 */
+	private boolean requestHardwareModelDownload(String deviceId, String modelDownloadUrl) {
+		String endpointUrl = hardwareDispatchProperties.getEndpointUrl();
+		if (StringUtils.isBlank(endpointUrl)) {
+			log.error("算法下发失败，硬件接口地址未配置");
+			return false;
+		}
+		String requestUrl = UriComponentsBuilder.fromHttpUrl(endpointUrl.trim())
+			.queryParam("deviceId", deviceId)
+			.queryParam("modelDownloadPath", modelDownloadUrl)
+			.build()
+			.encode()
+			.toUriString();
+		int timeout = hardwareDispatchProperties.getRequestTimeoutMillis() == null
+			? 10000 : Math.max(1000, hardwareDispatchProperties.getRequestTimeoutMillis());
+
+		try (HttpResponse response = HttpRequest.get(requestUrl).timeout(timeout).execute()) {
+			int status = response.getStatus();
+			if (status >= 200 && status < 300) {
+				log.info("硬件模型下发接口调用成功: deviceId={}, modelDownloadUrl={}", deviceId, modelDownloadUrl);
+				return true;
+			}
+			log.error("硬件模型下发接口调用失败: deviceId={}, status={}, body={}",
+				deviceId, status, StringUtils.abbreviate(response.body(), 500));
+			return false;
+		} catch (Exception requestException) {
+			log.error("硬件模型下发接口调用异常: deviceId={}, endpoint={}", deviceId, endpointUrl, requestException);
+			return false;
 		}
 	}
 
