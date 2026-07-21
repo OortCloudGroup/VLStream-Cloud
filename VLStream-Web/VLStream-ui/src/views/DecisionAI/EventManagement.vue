@@ -723,12 +723,14 @@ onMounted(() => {
 .tenant_Page {
   height: 100%;
   width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
   background: #f0f2f5;
-  .tenant_content { width: 100%; height: 100%; }
+  .tenant_content { width: 100%; height: 100%; border-radius: 8px; }
   .tableTenBox {
     padding: 20px;
     width: 100%;
     height: 100%;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
     flex: 1;
     background: #fff;
     align-items: flex-start;
@@ -747,10 +749,9 @@ onMounted(() => {
 /* 详情视图样式 */
 .detail-view {
   flex: 1;
-  margin: 20px;
+  margin: 0;
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;

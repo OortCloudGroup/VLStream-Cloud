@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="algorithm-management">
     <!-- 顶部菜单栏 -->
     <div class="top-menu-bar" v-loading="repositoriesLoading">
@@ -1425,18 +1425,22 @@ onMounted(() => {
 
 <style scoped>
 .algorithm-management {
-  padding: 20px;
-  background: #f5f7fa;
-  min-height: 100vh;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* 顶部菜单栏 */
 .top-menu-bar {
   background: white;
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
   padding: 0;
   margin-bottom: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
   display: flex;
   border-bottom: 1px solid #e4e7ed;
 }
@@ -1490,10 +1494,10 @@ onMounted(() => {
 /* 分类标签栏 */
 .category-tabs {
   background: white;
-  border-radius: 0 0 8px 8px;
+  border-radius: 0;
   padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 0;
+  box-shadow: none;
   display: flex;
   justify-content: flex-start;
   align-items: center;

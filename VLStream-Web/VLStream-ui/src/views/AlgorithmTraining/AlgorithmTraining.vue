@@ -2899,8 +2899,15 @@ const openDatasetSelector = async () => {
 .tenant_Page {
   height: 100%;
   width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
   background: #f0f2f5;
-  .tenant_content { width: 100%; height: 100%; }
+  .tenant_content {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    overflow: hidden;
+  }
   .tableTenBox {
     padding: 20px;
     width: 100%;
@@ -2908,6 +2915,7 @@ const openDatasetSelector = async () => {
     flex: 1;
     background: #fff;
     align-items: flex-start;
+    border-radius: 0;
   }
 }
 .tableTenItU {
@@ -2921,12 +2929,11 @@ const openDatasetSelector = async () => {
 .operateAppBox { justify-content: flex-end; gap: 2px; flex-wrap: wrap; }
 
 .page-container {
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  background-color: #f5f7fa;
-  padding: 20px;
+  overflow: hidden;
 }
 
 .list-view {
@@ -3008,11 +3015,11 @@ const openDatasetSelector = async () => {
 /* 介绍区域 */
 .intro-section {
   background: white;
-  border-radius: 0;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-top: 1px solid #e8e8e8;
-  margin-bottom: 24px;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  padding: 24px 20px 0;
+  box-shadow: none;
+  border-top: none;
+  margin-bottom: 0;
 }
 
 .intro-header {

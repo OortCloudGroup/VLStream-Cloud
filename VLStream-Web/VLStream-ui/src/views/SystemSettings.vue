@@ -523,6 +523,12 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  margin: 0;
+  padding: 20px;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  box-sizing: border-box;
+  overflow: auto;
 }
 
 .settings-tabs {
