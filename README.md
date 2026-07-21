@@ -293,6 +293,13 @@ npm run dev
 
 Use `npm run build` to create a production frontend bundle.
 
+### 5. Default Login
+
+| Account | Value |
+| --- | --- |
+| Username | `admin` |
+| Password | `Codex@123456` |
+
 ---
 
 ## 🔌 API Preview

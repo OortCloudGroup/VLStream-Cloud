@@ -43,6 +43,8 @@ jobs:
         run: |
           docker compose --env-file deploy/release/.env.example -f deploy/release/compose.yaml config --quiet
           docker compose --env-file deploy/release/.env.example -f deploy/release/compose.external.yaml config --quiet
+      - name: Validate public initialization SQL
+        run: python3 scripts/release/verify-release-sql.py VLStream-Cloud-Backend-Server/vls-stream/db/oortcloud_workflowforms_vls.sql
 
   images:
     needs: validate
@@ -109,6 +111,10 @@ jobs:
           cd codex/release-dist
           sha256sum --check "VLStream-Cloud-${GITHUB_REF_NAME}.zip.sha256"
           python3 -m zipfile -l "VLStream-Cloud-${GITHUB_REF_NAME}.zip" | grep '23-hisilicon-om-model-path.sql'
+          unzip -p "VLStream-Cloud-${GITHUB_REF_NAME}.zip" \
+            "VLStream-Cloud-${GITHUB_REF_NAME}/sql/init/10-oortcloud-workflowforms-vls.sql" \
+            > release-init.sql
+          python3 ../../scripts/release/verify-release-sql.py release-init.sql
       - uses: softprops/action-gh-release@v3
         with:
           name: VLStream Cloud ${{ github.ref_name }}

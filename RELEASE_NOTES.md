@@ -10,10 +10,11 @@
 - 模型下载界面支持 OM 格式，数据库新增 `om_model_output_path` 升级脚本。
 - 前端切换为本地认证，并改进工作台、视频播放、搜索、表格和标签页布局。
 - 补充中英文产品截图与 Hi3519DV500 模型部署说明。
+- 使用完整但已清理业务数据的 MySQL 初始化结构，并由后端在首次启动时安全恢复管理员、菜单、字典和必要流程。
 
 ## 部署说明
 
 - 默认 Compose 内置 MySQL、Redis、MinIO、WebRTC-streamer、后端与前端，可执行 `docker compose up -d` 一键启动。
+- 全新部署使用 `oortcloud_workflowforms_vls` 数据库；初始化 SQL 仅保留 Flowable 版本元数据，不包含开发环境的流程实例、日志、设备或录像数据。
 - 从其他计算机播放实时视频时，请设置 `WEBRTC_EXTERNAL_HOST`，并放行服务器 UDP 50000-50010。
 - 升级已有数据库前请备份，并审核执行发布包 `sql/upgrade` 中的脚本。
-

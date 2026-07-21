@@ -7,7 +7,7 @@ services:
     environment:
       TZ: ${TZ:-Asia/Shanghai}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-vlstream-root}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-blade}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-oortcloud_workflowforms_vls}
       MYSQL_USER: ${MYSQL_USER:-vlstream}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-vlstream}
     command:
@@ -106,7 +106,7 @@ services:
       TZ: ${TZ:-Asia/Shanghai}
       SERVER_PORT: 8080
       SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-blade}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-oortcloud_workflowforms_vls}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_USERNAME: ${MYSQL_USER:-vlstream}
       SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_PASSWORD: ${MYSQL_PASSWORD:-vlstream}
       SPRING_REDIS_HOST: redis
@@ -114,6 +114,7 @@ services:
       SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD:-vlstream}
       SPRING_BOOT_ADMIN_CLIENT_ENABLED: "false"
       XXL_JOB_ENABLED: "false"
+      VLS_DATA_INITIALIZATION_ENABLED: "true"
       VLSTREAM_WEBRTC_ENABLED: "true"
       VLSTREAM_WEBRTC_PUBLIC_URL: /bus/webrtc-streamer-server
       VLSTREAM_WEBRTC_INTERNAL_URL: http://webrtc-streamer:8000
@@ -147,4 +148,3 @@ volumes:
   minio-data:
   backend-data:
   backend-logs:
-

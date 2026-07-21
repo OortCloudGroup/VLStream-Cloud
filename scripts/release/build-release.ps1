@@ -21,9 +21,8 @@ Copy-Item (Join-Path $Root "deploy/release/compose.external.yaml") (Join-Path $P
 Copy-Item (Join-Path $Root "deploy/release/.env.example") (Join-Path $Package ".env.example")
 Copy-Item (Join-Path $Root "deploy/release/README.zh-CN.md") (Join-Path $Package "README.zh-CN.md")
 
-# Copy fresh-install and upgrade SQL in execution order.
-Copy-Item (Join-Path $Backend "doc/sql/blade.mysql.all.create.sql") (Join-Path $Package "sql/init/10-blade.sql")
-Copy-Item (Join-Path $Backend "doc/sql/vls_stream.sql") (Join-Path $Package "sql/init/20-vls-stream.sql")
+# Copy the sanitized complete schema and upgrade SQL in execution order.
+Copy-Item (Join-Path $Backend "db/oortcloud_workflowforms_vls.sql") (Join-Path $Package "sql/init/10-oortcloud-workflowforms-vls.sql")
 Copy-Item (Join-Path $Backend "doc/sql/blade.mysql.upgrade.4.7.0.to.4.8.0.sql") (Join-Path $Package "sql/upgrade/10-blade-4.7.0-to-4.8.0.sql")
 Copy-Item (Join-Path $Backend "db/2026-06-30-app-package.sql") (Join-Path $Package "sql/upgrade/20-app-package.sql")
 Copy-Item (Join-Path $Backend "db/2026-07-15-vls-source-priority-modules.sql") (Join-Path $Package "sql/upgrade/21-source-priority.sql")
@@ -35,4 +34,3 @@ Compress-Archive -Path $Package -DestinationPath $Archive -CompressionLevel Opti
 $Hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $Archive).Hash.ToLowerInvariant()
 Set-Content -LiteralPath "$Archive.sha256" -Value "$Hash  $(Split-Path -Leaf $Archive)" -Encoding ascii
 Write-Output $Archive
-
