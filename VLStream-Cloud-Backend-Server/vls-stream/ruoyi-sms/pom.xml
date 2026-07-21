@@ -5,7 +5,7 @@
     <parent>
         <artifactId>vls-stream</artifactId>
         <groupId>com.ruoyi</groupId>
-        <version>0.8.3</version>
+        <version>1.1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 

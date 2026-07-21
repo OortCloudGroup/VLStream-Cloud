@@ -129,7 +129,7 @@
 </template>
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import PersonInfoCard from '@/components/personInfoCard.vue'
+import PersonInfoCard from '@/components/PersonInfoCard.vue'
 import TaskHandleDetail from '@/pages/processui/views/page/flowManage/taskHandleDetail.vue'
 import { eventDetail } from '@/api/smartCity/events'
 import { useUserStore } from '@/store/modules/useraPaas'

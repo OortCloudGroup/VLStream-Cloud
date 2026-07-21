@@ -1,6 +1,6 @@
 {
   "name": "vlstream-ui",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "VLStream Cloud 视频流管理系统",
   "scripts": {
     "dev": "vite",
