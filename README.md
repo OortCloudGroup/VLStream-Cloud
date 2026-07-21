@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./VLStream-Web/VLStream-ui/src/assets/img/oortlogo.png" alt="VLStream Cloud" width="160">
+  <img src="./VLStream-Web/VLStream-ui/src/assets/img/img.png" alt="VLStream Cloud" width="160">
 
   <h1>VLStream Cloud</h1>
 
@@ -21,6 +21,7 @@
   <p>
     <a href="#-quick-start">Quick Start</a> •
     <a href="#-key-features">Key Features</a> •
+    <a href="#-system-screenshots">System Screenshots</a> •
     <a href="#-application-scenarios">Application Scenarios</a> •
     <a href="#-technology-stack">Technology Stack</a> •
     <a href="#-deployment">Deployment</a> •
@@ -52,11 +53,66 @@ object storage, and operational support for enterprise video applications.
 | Video Device Management | Device registration, grouping, tagging, health monitoring, connection tests, PTZ control, and stream discovery |
 | Multi-Protocol Playback | Web video playback and low-latency streaming capabilities for common Video IoT scenarios |
 | Intelligent Analysis | Analysis requests, real-time task monitoring, result management, and event governance |
-| Algorithm Lifecycle | Algorithm warehouse, training tasks, annotations, models, and device associations |
+| Algorithm Lifecycle | Algorithm warehouse, training tasks, annotations, model management, Hi3519DV500 OM conversion, and device deployment |
 | Workflow Automation | Flowable-based process definition, deployment, tasks, and approval workflows |
 | Enterprise Permissions | Sa-Token authentication, RBAC, data permissions, user management, and role management |
 | Platform Services | Scheduled jobs, object storage, SMS integration, monitoring, and XXL-Job support |
 | Visual Operations | Vue 3 management console with dashboards, GIS views, reusable CRUD components, and video layouts |
+
+---
+
+### Hi3519DV500 Model Deployment
+
+After an operator selects an algorithm and one or more devices, VLStream locates the latest training task with an OM artifact, creates a device-accessible OM download URL, and calls the hardware `latest-training-model` endpoint once per device. The device-to-algorithm association is updated only after the hardware endpoint returns an HTTP 2xx response.
+
+Configure the deployment integration with these environment variables:
+
+```bash
+VLSTREAM_HARDWARE_DISPATCH_URL=http://192.168.88.98:8888/vlsDeviceInfo/latest-training-model
+VLSTREAM_MODEL_DOWNLOAD_PUBLIC_BASE_URL=http://192.168.88.31:8080
+VLSTREAM_HARDWARE_DISPATCH_TIMEOUT_MILLIS=10000
+```
+
+`VLSTREAM_MODEL_DOWNLOAD_PUBLIC_BASE_URL` must point to the backend address reachable from the hardware network, not the browser-facing frontend address. The device download route does not require a platform login token, so expose it only on a trusted device network or through a restricted reverse proxy.
+
+---
+
+## 🖥️ System Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <a href="./assets/screenshots/01-active-safety-events.png"><img src="./assets/screenshots/01-active-safety-events.png" alt="Active safety event management" width="100%"></a><br>
+      <strong>Active Safety Event Management</strong>
+    </td>
+    <td align="center" width="50%">
+      <a href="./assets/screenshots/02-event-feedback-workflow.png"><img src="./assets/screenshots/02-event-feedback-workflow.png" alt="Event feedback and workflow" width="100%"></a><br>
+      <strong>Event Feedback &amp; Workflow</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <a href="./assets/screenshots/03-work-order-management.png"><img src="./assets/screenshots/03-work-order-management.png" alt="Work order management" width="100%"></a><br>
+      <strong>Work Order Management</strong>
+    </td>
+    <td align="center" width="50%">
+      <a href="./assets/screenshots/04-workflow-designer.png"><img src="./assets/screenshots/04-workflow-designer.png" alt="Visual workflow designer" width="100%"></a><br>
+      <strong>Visual Workflow Designer</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <a href="./assets/screenshots/05-algorithm-training-management.png"><img src="./assets/screenshots/05-algorithm-training-management.png" alt="Algorithm training management" width="100%"></a><br>
+      <strong>Algorithm Training Management</strong>
+    </td>
+    <td align="center" width="50%">
+      <a href="./assets/screenshots/06-algorithm-training-console.png"><img src="./assets/screenshots/06-algorithm-training-console.png" alt="Algorithm training console" width="100%"></a><br>
+      <strong>Algorithm Training Console</strong>
+    </td>
+  </tr>
+</table>
+
+> Click any screenshot to view it at full resolution.
 
 ---
 
