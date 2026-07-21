@@ -73,7 +73,8 @@ public class ModelFileDownloadService {
 	private String normalizeType(String type) {
 		String normalizedType = StringUtils.defaultIfBlank(type, "pt").trim().toLowerCase(Locale.ROOT);
 		if (!"pt".equals(normalizedType) && !"onnx".equals(normalizedType)
-			&& !"rknn".equals(normalizedType) && !"int8-rknn".equals(normalizedType)) {
+			&& !"rknn".equals(normalizedType) && !"int8-rknn".equals(normalizedType)
+			&& !"om".equals(normalizedType)) {
 			throw new IllegalArgumentException("Unsupported model type: " + type);
 		}
 		return normalizedType;
@@ -93,6 +94,9 @@ public class ModelFileDownloadService {
 				break;
 			case "int8-rknn":
 				downloadPath = training.getInt8RknnModelOutputPath();
+				break;
+			case "om":
+				downloadPath = training.getOmModelOutputPath();
 				break;
 			case "pt":
 			default:
@@ -116,6 +120,9 @@ public class ModelFileDownloadService {
 				break;
 			case "int8-rknn":
 				downloadPath = model.getInt8RknnModelOutputPath();
+				break;
+			case "om":
+				downloadPath = model.getOmModelOutputPath();
 				break;
 			case "pt":
 			default:

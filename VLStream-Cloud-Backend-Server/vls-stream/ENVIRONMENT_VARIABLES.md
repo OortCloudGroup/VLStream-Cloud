@@ -126,6 +126,16 @@
 |--------|------|--------|----------|----------|----------|
 | `TX_CALLBACK_ADDRESS` | TX回调地址 | `http://20.72.1.41:8080/jk/RegionPort/areaNode` | 是 | HTTP/HTTPS URL | `http://callback.example.com/api/tx` |
 
+### 8.4 Hi3519DV500 模型下发
+
+| 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |
+|--------|------|--------|----------|----------|----------|
+| `VLSTREAM_HARDWARE_DISPATCH_URL` | 通知硬件下载并切换模型的接口地址 | `http://192.168.88.98:8888/vlsDeviceInfo/latest-training-model` | 否 | HTTP/HTTPS URL | `http://hardware-service:8888/vlsDeviceInfo/latest-training-model` |
+| `VLSTREAM_MODEL_DOWNLOAD_PUBLIC_BASE_URL` | 硬件设备可访问的后端模型下载根地址 | `http://192.168.88.31:8080` | 否 | HTTP/HTTPS URL，不含末尾业务路径 | `http://vlstream-backend:8080` |
+| `VLSTREAM_HARDWARE_DISPATCH_TIMEOUT_MILLIS` | 单台设备硬件接口请求超时时间 | `10000` | 否 | 大于等于 1000 的毫秒数 | `15000` |
+
+> 模型下载根地址必须能从设备网络访问。OM 下载接口无需平台登录令牌，请仅在受信任网络中开放，或通过反向代理增加来源限制。
+
 ## 九、Swagger文档配置
 
 | 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |

@@ -148,6 +148,16 @@ vlstream:
     default-work-dir: ${VLSTREAM_TRAINING_WORK_DIR:/data/work/ultralytics_yolov8-main/datasets}
     log-dir: ${VLSTREAM_TRAINING_LOG_DIR:logs}
     synset-file-name: ${VLSTREAM_TRAINING_SYNSET_FILE_NAME:synset.txt}
+  model-conversion:
+    hisilicon-exporter-script: ${VLSTREAM_HISILICON_EXPORTER_SCRIPT:/data/work/svp_pc/exporter/export_hisilicon_yolov8.py}
+    atc-env-script: ${VLSTREAM_ATC_ENV_SCRIPT:/data/work/svp_pc/Ascend/ascend-toolkit/svp_latest/x86_64-linux/script/setenv.sh}
+    insert-op-config: ${VLSTREAM_ATC_INSERT_OP_CONFIG:/data/work/svp_pc/V3.0.0.12/sample/yolo/insert_op.cfg}
+    soc-version: ${VLSTREAM_ATC_SOC_VERSION:Hi3519DV500}
+    calibration-image-count: ${VLSTREAM_ATC_CALIBRATION_IMAGE_COUNT:20}
+  hardware-dispatch:
+    endpoint-url: ${VLSTREAM_HARDWARE_DISPATCH_URL:http://192.168.88.98:8888/vlsDeviceInfo/latest-training-model}
+    model-download-base-url: ${VLSTREAM_MODEL_DOWNLOAD_PUBLIC_BASE_URL:http://192.168.88.31:8080}
+    request-timeout-millis: ${VLSTREAM_HARDWARE_DISPATCH_TIMEOUT_MILLIS:10000}
   rtsp-recording:
     enabled: ${VLSTREAM_RTSP_RECORDING_ENABLED:true}
     ffmpeg-path: ${VLSTREAM_RTSP_FFMPEG_PATH:ffmpeg}
@@ -216,6 +226,8 @@ security:
     # 主动安全设备上报接口沿用 Go 服务的公开调用约定
     - /task/v1/event_report_camera
     - /task/v1/event_report_cameras
+    # Hi3519DV500 设备需要在没有平台登录令牌的情况下拉取下发的 OM 文件
+    - /vlsAlgorithmTraining/public/**
     - /monitor/**
 #    - /xxl-job-admin/**
 

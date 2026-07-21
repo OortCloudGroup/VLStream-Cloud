@@ -5,6 +5,7 @@
 
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import cn.dev33.satoken.annotation.SaIgnore;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -393,7 +394,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	 */
 	@PostMapping("/{id}/convert-model")
 	@ApiOperationSupport(order = 9)
-	@Operation(summary = "转换模型", description = "把pt模型转换为onnx和rknn")
+	@Operation(summary = "转换模型", description = "把pt模型转换为onnx、rknn、int8-rknn和Hi3519DV500 OM")
 	public R<String> convertModel(
 		@Parameter(description = "模型训练ID", example = "1") @PathVariable @NotNull Long id) {
 
@@ -412,12 +413,14 @@ public class VlsAlgorithmTrainingController extends BladeController {
 
 		log.info("数据集路径：{}", datasetPathSnapshot);
 		Thread convertThread = new Thread(() -> {
-			ExecutorService executor = Executors.newFixedThreadPool(2);
+			ExecutorService executor = Executors.newFixedThreadPool(3);
 			try {
 				Future<String> onnxFuture = executor.submit(() -> remoteTrainingService.exportModel(ptModelPath, "onnx"));
 				Future<String> rknnFuture = executor.submit(() -> remoteTrainingService.exportModel(ptModelPath, "rknn"));
+				Future<String> omFuture = executor.submit(() -> remoteTrainingService.exportHisiliconOm(ptModelPath, datasetPathSnapshot));
 				String onnxPath = getConvertResult(onnxFuture, id, "onnx");
 				String rknnPath = getConvertResult(rknnFuture, id, "rknn");
+				String omPath = getConvertResult(omFuture, id, "om");
 				String synsetDatasetPath = datasetPathSnapshot;
 				if (synsetDatasetPath == null || synsetDatasetPath.trim().isEmpty()) {
 					synsetDatasetPath = resolveDatasetPath(trainingSnapshot);
@@ -438,8 +441,10 @@ public class VlsAlgorithmTrainingController extends BladeController {
 						if (int8OutputPath == null || int8OutputPath.trim().isEmpty()) {
 							log.warn("Int8 output path is empty, skip conversion: id={}, onnxPath={}", id, onnxPath);
 						} else {
-							String convertCommand = String.format("cd \"%s\" && python3 convert.py --model \"%s\" --dataset \"%s\" --platform rk3588 --output \"%s\"",
-								RKNN_MODEL_ZOO_PATH, onnxPath, cocoSubsetPath, int8OutputPath);
+							String convertCommand = String.format(
+								"find \"%s\" -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \\) | head -n 20 > \"%s\" && "
+									+ "test -s \"%s\" && cd \"%s\" && python3 convert.py --model \"%s\" --dataset \"%s\" --platform rk3588 --output \"%s\"",
+								datasetDir, cocoSubsetPath, cocoSubsetPath, RKNN_MODEL_ZOO_PATH, onnxPath, cocoSubsetPath, int8OutputPath);
 							SSHService.SSHExecutionResult convertResult = sshService.executeCommand(
 								sshProperties.getHost(),
 								sshProperties.getPort(),
@@ -460,20 +465,19 @@ public class VlsAlgorithmTrainingController extends BladeController {
 						}
 					}
 				}
-				String rk3588RknnPath = null;
-				if (rknnPath != null && !rknnPath.isEmpty()) {
-					rk3588RknnPath = rknnPath.replace(".rknn", "-rk3588.rknn");
-				}
 				AlgorithmTraining update = new AlgorithmTraining();
 				update.setId(id);
 				update.setOnnxModelOutputPath(onnxPath);
-				update.setRknnModelOutputPath(rk3588RknnPath);
+				update.setRknnModelOutputPath(rknnPath);
 				update.setInt8RknnModelOutputPath(int8RknnPath);
+				update.setOmModelOutputPath(omPath);
 				int updateResult = vlsAlgorithmTrainingService.updateAlgorithmTraining(update);
 				if (updateResult > 0) {
-					log.info("模型路径更新成功: id={}, onnxPath={}, rknnPath={}, int8RknnPath={}", id, onnxPath, rk3588RknnPath, int8RknnPath);
+					log.info("模型路径更新成功: id={}, onnxPath={}, rknnPath={}, int8RknnPath={}, omPath={}",
+						id, onnxPath, rknnPath, int8RknnPath, omPath);
 				} else {
-					log.warn("模型路径更新失败: id={}, onnxPath={}, rknnPath={}, int8RknnPath={}", id, onnxPath, rk3588RknnPath, int8RknnPath);
+					log.warn("模型路径更新失败: id={}, onnxPath={}, rknnPath={}, int8RknnPath={}, omPath={}",
+						id, onnxPath, rknnPath, int8RknnPath, omPath);
 				}
 			} catch (Exception exception) {
 				log.error("模型转换异常: id={}, error={}", id, exception.getMessage(), exception);
@@ -483,7 +487,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		});
 		convertThread.setName("model-convert-" + id);
 		convertThread.start();
-		return R.success("模型转换成功");
+		return R.success("模型转换任务已提交");
 	}
 
 	/**
@@ -783,6 +787,16 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	public void downloadTrainingModel(@PathVariable Long id,
 		@RequestParam(defaultValue = "pt") String type, HttpServletResponse response) {
 		downloadFile(response, () -> modelFileDownloadService.downloadTrainingModel(id, type, response));
+	}
+
+	/**
+	 * 提供给受信任硬件网络下载 OM 文件，不要求设备携带平台登录令牌。
+	 */
+	@SaIgnore
+	@GetMapping("/public/{id}/om")
+	@Operation(summary = "设备下载OM模型", description = "根据训练任务ID下载OM文件，供硬件下发接口使用")
+	public void downloadPublicOmModel(@PathVariable Long id, HttpServletResponse response) {
+		downloadFile(response, () -> modelFileDownloadService.downloadTrainingModel(id, "om", response));
 	}
 
 	/**
