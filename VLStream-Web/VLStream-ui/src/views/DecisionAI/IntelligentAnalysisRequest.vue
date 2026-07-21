@@ -5,7 +5,15 @@
         <div class="tableTenItU">
           <div class="depNameBox_out flexRowAC">
             <div class="depNameBox flexRowAC">
-              <button-group :button-list="toolbarButtonList" />
+              <div class="exportBtnBox flexRowAC">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
+                  <el-icon class="BtnImg">
+                    <Plus />
+                  </el-icon>
+                  申请
+                </button>
+                <button-group :button-list="toolbarButtonList" />
+              </div>
             </div>
             <div class="searchHeight_out flexRowAC">
               <search-height-box
@@ -27,9 +35,9 @@
           >
             <el-table-column type="selection" :width="clacPXToVW(55)" />
             <el-table-column prop="sequence" label="序号" :width="clacPXToVW(80)" align="center" />
-            <el-table-column prop="analysisName" label="分析名称" :width="clacPXToVW(120)" />
-            <el-table-column prop="analysisType" label="分析类型" :width="clacPXToVW(120)" />
-            <el-table-column prop="videoThumbnail" label="抓拍截图" :width="clacPXToVW(120)" align="center">
+            <el-table-column prop="analysisName" label="分析名称" />
+            <el-table-column prop="analysisType" label="分析类型" />
+            <el-table-column prop="videoThumbnail" label="抓拍截图" align="center">
               <template #default="scope">
                 <div class="thumbnail-container">
                   <img :src="scope.row.videoThumbnail" :alt="scope.row.analysisName" class="video-thumbnail" />
@@ -37,9 +45,9 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="region" label="区域" :width="clacPXToVW(100)" />
+            <el-table-column prop="region" label="区域" />
             <el-table-column prop="cameras" label="摄像头" min-width="200" />
-            <el-table-column prop="analysisStatus" label="分析状态" :width="clacPXToVW(120)" align="center">
+            <el-table-column prop="analysisStatus" label="分析状态" align="center">
               <template #default="scope">
                 <el-tag
                   :type="getStatusTagType(scope.row.analysisStatus)"
@@ -49,7 +57,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="analysisTime" label="分析时间" :width="clacPXToVW(160)" />
+            <el-table-column prop="analysisTime" label="分析时间" />
             <el-table-column label="操作" :width="clacPXToVW(100)" fixed="right" align="right">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>

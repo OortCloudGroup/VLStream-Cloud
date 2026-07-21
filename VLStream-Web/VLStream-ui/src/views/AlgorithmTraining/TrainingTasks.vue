@@ -40,17 +40,17 @@
             <el-table-column label="序号" :width="clacPXToVW(80)" align="center">
               <template #default="scope">{{ scope.$index + 1 }}</template>
             </el-table-column>
-            <el-table-column prop="taskName" label="任务名称" :width="clacPXToVW(150)" show-overflow-tooltip />
-            <el-table-column prop="datasetName" label="数据集" :width="clacPXToVW(120)" show-overflow-tooltip />
-            <el-table-column prop="baseModel" label="基础模型" :width="clacPXToVW(120)" show-overflow-tooltip />
-            <el-table-column prop="trainStatusDesc" label="状态" :width="clacPXToVW(100)" align="center">
+            <el-table-column prop="taskName" label="任务名称" show-overflow-tooltip />
+            <el-table-column prop="datasetName" label="数据集" show-overflow-tooltip />
+            <el-table-column prop="baseModel" label="基础模型" show-overflow-tooltip />
+            <el-table-column prop="trainStatusDesc" label="状态" align="center">
               <template #default="scope">
                 <el-tag :type="getStatusType(scope.row.trainStatus)" size="small">
                   {{ scope.row.trainStatusDesc }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="progress" label="进度" :width="clacPXToVW(120)" align="center">
+            <el-table-column prop="progress" label="进度" align="center">
               <template #default="scope">
                 <el-progress
                   :percentage="scope.row.progress || 0"
@@ -59,7 +59,7 @@
                 />
               </template>
             </el-table-column>
-            <el-table-column prop="createTime" label="创建时间" :width="clacPXToVW(160)" />
+            <el-table-column prop="createTime" label="创建时间" />
             <el-table-column label="操作" :width="clacPXToVW(220)" fixed="right" align="right">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>

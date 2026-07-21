@@ -115,9 +115,9 @@
                   {{ scope.$index + (currentPage - 1) * pageSize + 1 }}
                 </template>
               </el-table-column>
-              <el-table-column prop="tagName" label="标签名称" :width="clacPXToVW(150)" show-overflow-tooltip />
+              <el-table-column prop="tagName" label="标签名称" show-overflow-tooltip />
               <el-table-column prop="description" label="描述" show-overflow-tooltip />
-              <el-table-column prop="isPublic" label="是否公开" :width="clacPXToVW(120)" align="center">
+              <el-table-column prop="isPublic" label="是否公开" align="center">
                 <template #default="scope">
                   <el-switch
                     v-model="scope.row.isPublic"
@@ -125,7 +125,7 @@
                   />
                 </template>
               </el-table-column>
-              <el-table-column prop="createTime" label="创建时间" :width="clacPXToVW(180)" />
+              <el-table-column prop="createTime" label="创建时间" />
               <el-table-column fixed="right" align="right" label="操作" :width="clacPXToVW(160)">
                 <template #default="scope">
                   <div class="operateAppBox flexRowAC" @click.stop>
@@ -226,8 +226,8 @@
                 {{ scope.$index + 1 }}
               </template>
             </el-table-column>
-            <el-table-column prop="deviceName" label="设备名称" :width="clacPXToVW(150)" show-overflow-tooltip />
-            <el-table-column prop="tags" label="标签" :width="clacPXToVW(200)">
+            <el-table-column prop="deviceName" label="设备名称" show-overflow-tooltip />
+            <el-table-column prop="tags" label="标签">
               <template #default="scope">
                 <el-tag
                   v-for="tag in scope.row.tags"
@@ -239,9 +239,9 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="deviceId" label="设备ID" :width="clacPXToVW(120)" />
+            <el-table-column prop="deviceId" label="设备ID" />
             <el-table-column prop="streamUrl" label="视频流地址" show-overflow-tooltip />
-            <el-table-column prop="status" label="状态" :width="clacPXToVW(100)" align="center">
+            <el-table-column prop="status" label="状态" align="center">
               <template #default="scope">
                 <span v-if="scope.row.status === 1" class="staBtns WX">在线</span>
                 <span v-else class="staBtns">离线</span>

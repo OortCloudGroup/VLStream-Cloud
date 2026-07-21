@@ -74,8 +74,8 @@
                 {{ scope.$index + (pagination.currentPage - 1) * pagination.pageSize + 1 }}
               </template>
             </el-table-column>
-            <el-table-column prop="deviceName" label="设备名称" :width="clacPXToVW(120)" show-overflow-tooltip />
-            <el-table-column prop="tags" label="标签" :width="clacPXToVW(100)">
+            <el-table-column prop="deviceName" label="设备名称" show-overflow-tooltip />
+            <el-table-column prop="tags" label="标签">
               <template #default="scope">
                 <el-tag
                   v-for="tag in scope.row.tags"
@@ -87,9 +87,9 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="deviceId" label="设备ID" :width="clacPXToVW(120)" show-overflow-tooltip />
-            <el-table-column prop="deviceType" label="设备类型" :width="clacPXToVW(100)" />
-            <el-table-column prop="deviceLocation" label="设备位置" :width="clacPXToVW(150)" show-overflow-tooltip />
+            <el-table-column prop="deviceId" label="设备ID" show-overflow-tooltip />
+            <el-table-column prop="deviceType" label="设备类型" />
+            <el-table-column prop="deviceLocation" label="设备位置" show-overflow-tooltip />
             <el-table-column prop="algorithms" label="拥有算法" show-overflow-tooltip />
             <el-table-column label="操作" :width="clacPXToVW(200)" fixed="right" align="right">
               <template #default="scope">

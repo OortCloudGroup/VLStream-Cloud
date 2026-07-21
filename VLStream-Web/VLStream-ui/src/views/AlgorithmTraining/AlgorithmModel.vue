@@ -38,10 +38,10 @@
         >
           <el-table-column type="selection" :width="clacPXToVW(55)" align="center" />
           <el-table-column prop="name" label="模型名称" show-overflow-tooltip />
-          <el-table-column prop="source" label="模型来源" :width="clacPXToVW(120)" align="center" />
-          <el-table-column prop="version" label="版本" :width="clacPXToVW(100)" align="center" />
-          <el-table-column prop="downloadCount" label="下载次数" :width="clacPXToVW(100)" align="center" />
-          <el-table-column prop="createTime" label="创建时间" :width="clacPXToVW(180)" />
+          <el-table-column prop="source" label="模型来源" align="center" />
+          <el-table-column prop="version" label="版本" align="center" />
+          <el-table-column prop="downloadCount" label="下载次数" align="center" />
+          <el-table-column prop="createTime" label="创建时间" />
           <el-table-column label="操作" :width="clacPXToVW(220)" align="right" fixed="right">
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>

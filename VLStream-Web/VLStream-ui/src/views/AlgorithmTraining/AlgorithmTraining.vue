@@ -93,10 +93,10 @@
         @row-click="handleRowClick"
       >
         <el-table-column type="selection" :width="clacPXToVW(55)" align="center" />
-        <el-table-column prop="modelId" label="模型ID" :width="clacPXToVW(80)" align="center" />
-        <el-table-column prop="algorithmName" label="算法名称" :width="clacPXToVW(160)" show-overflow-tooltip />
-        <el-table-column prop="trainAlgorithm" label="训练算法" :width="clacPXToVW(200)" show-overflow-tooltip />
-        <el-table-column prop="trainStatus" label="训练状态" :width="clacPXToVW(120)" align="center">
+        <el-table-column prop="modelId" label="模型ID" align="center" />
+        <el-table-column prop="algorithmName" label="算法名称" show-overflow-tooltip />
+        <el-table-column prop="trainAlgorithm" label="训练算法" show-overflow-tooltip />
+        <el-table-column prop="trainStatus" label="训练状态" align="center">
           <template #default="scope">
             <el-tag
               :type="getStatusType(scope.row.trainStatus)"
@@ -107,7 +107,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="modelEffect" label="模型效果" :width="clacPXToVW(200)" align="center">
+        <el-table-column prop="modelEffect" label="模型效果" align="center">
           <template #default="scope">
             <div v-if="scope.row.trainStatus === '训练完成'" class="model-metrics">
               <div class="metric-item">
@@ -130,7 +130,7 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="targetModel" label="对应模型" :width="clacPXToVW(120)" align="center">
+        <el-table-column prop="targetModel" label="对应模型" align="center">
           <template #default="scope">
             <span v-if="scope.row.targetModel">{{ scope.row.targetModel }}</span>
             <span v-else>-</span>

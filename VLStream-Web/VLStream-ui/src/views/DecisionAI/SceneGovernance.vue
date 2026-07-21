@@ -41,12 +41,12 @@
               {{ scope.$index + (currentPage - 1) * pageSize + 1 }}
             </template>
           </el-table-column>
-          <el-table-column prop="name" label="场景名称" :width="clacPXToVW(150)" show-overflow-tooltip />
-          <el-table-column prop="description" label="场景描述" :width="clacPXToVW(200)" show-overflow-tooltip />
-<!--            <el-table-column prop="algorithmName" label="关联算法" :width="clacPXToVW(120)" />-->
-          <el-table-column prop="camerasName" label="关联设备" :width="clacPXToVW(120)" show-overflow-tooltip />
-<!--            <el-table-column prop="rules" label="治理规则" :width="clacPXToVW(120)" />-->
-          <el-table-column prop="status" label="状态" :width="clacPXToVW(100)" align="center">
+          <el-table-column prop="name" label="场景名称" show-overflow-tooltip />
+          <el-table-column prop="description" label="场景描述" show-overflow-tooltip />
+<!--            <el-table-column prop="algorithmName" label="关联算法" />-->
+          <el-table-column prop="camerasName" label="关联设备" show-overflow-tooltip />
+<!--            <el-table-column prop="rules" label="治理规则" />-->
+          <el-table-column prop="status" label="状态" align="center">
             <template #default="scope">
               <el-tag
                 :type="scope.row.status === 1 ? 'success' : 'danger'"
@@ -56,7 +56,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" :width="clacPXToVW(160)" />
+          <el-table-column prop="createTime" label="创建时间" />
           <el-table-column label="操作" :width="clacPXToVW(160)" fixed="right" align="right">
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>

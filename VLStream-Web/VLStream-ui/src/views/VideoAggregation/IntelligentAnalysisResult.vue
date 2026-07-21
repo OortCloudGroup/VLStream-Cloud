@@ -31,9 +31,9 @@
                 {{ scope.$index + (currentPage - 1) * pageSize + 1 }}
               </template>
             </el-table-column>
-            <el-table-column prop="analysisName" label="分析名称" :width="clacPXToVW(140)" show-overflow-tooltip />
-            <el-table-column prop="analysisType" label="分析类型" :width="clacPXToVW(120)" />
-            <el-table-column prop="screenshot" label="抓拍截图" :width="clacPXToVW(120)" align="center">
+            <el-table-column prop="analysisName" label="分析名称" show-overflow-tooltip />
+            <el-table-column prop="analysisType" label="分析类型" />
+            <el-table-column prop="screenshot" label="抓拍截图" align="center">
               <template #default="scope">
                 <div class="screenshot-container">
                   <img :src="scope.row.screenshot" alt="截图" class="screenshot-image" />
@@ -41,9 +41,9 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="area" label="区域" :width="clacPXToVW(120)" />
+            <el-table-column prop="area" label="区域" />
             <el-table-column prop="camera" label="摄像头" show-overflow-tooltip />
-            <el-table-column prop="analysisTime" label="分析时间" :width="clacPXToVW(180)" />
+            <el-table-column prop="analysisTime" label="分析时间" />
             <el-table-column fixed="right" align="right" label="操作" :width="clacPXToVW(120)">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>

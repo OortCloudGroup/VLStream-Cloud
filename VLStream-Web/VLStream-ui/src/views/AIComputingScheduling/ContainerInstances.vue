@@ -438,7 +438,7 @@
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" :width="clacPXToVW(55)" />
-          <el-table-column label="实例名称/ID" :width="clacPXToVW(220)">
+          <el-table-column label="实例名称/ID">
             <template #default="{ row }">
               <div class="instance-info">
                 <div class="instance-name">{{ row.name }}</div>
@@ -446,7 +446,7 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="状态" :width="clacPXToVW(100)">
+          <el-table-column prop="status" label="状态">
             <template #default="{ row }">
               <el-tag :type="getStatusTagType(row.status)" size="small">
                 <el-icon class="status-icon">
@@ -456,7 +456,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="计算配置" :width="clacPXToVW(200)">
+          <el-table-column label="计算配置">
             <template #default="{ row }">
               <div class="compute-config">
                 <div class="config-item">CPU: {{ row.cpuLimit || '未设置' }}</div>
@@ -465,26 +465,26 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="镜像信息" :width="clacPXToVW(200)">
+          <el-table-column label="镜像信息">
             <template #default="{ row }">
               <div class="image-info">
                 <div class="image-name">{{ row.image || '未设置' }}</div>
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="端口映射" :width="clacPXToVW(120)">
+          <el-table-column label="端口映射">
             <template #default="{ row }">
               <div class="port-info">
                 {{ row.portMappings ? JSON.parse(row.portMappings || '{}').port || '-' : '-' }}
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="创建时间" :width="clacPXToVW(160)">
+          <el-table-column label="创建时间">
             <template #default="{ row }">
               {{ row.createTime || '-' }}
             </template>
           </el-table-column>
-          <el-table-column label="快捷访问" :width="clacPXToVW(250)">
+          <el-table-column label="快捷访问">
             <template #default="{ row }">
               <div class="quick-access">
                 <el-button type="primary" text class="access-button" :disabled="row.status !== 'running'" @click="openJupyter(row)">jupyter</el-button>

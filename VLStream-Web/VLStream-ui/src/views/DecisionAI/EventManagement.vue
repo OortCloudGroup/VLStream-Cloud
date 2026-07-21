@@ -248,11 +248,11 @@
                   {{ scope.$index + (pagination.currentPage - 1) * pagination.pageSize + 1 }}
                 </template>
               </el-table-column>
-              <el-table-column prop="eventDesc" label="事件描述" :width="clacPXToVW(150)" show-overflow-tooltip />
-              <el-table-column prop="reportLocation" label="上报位置" :width="clacPXToVW(200)" show-overflow-tooltip />
-              <el-table-column prop="reportDevice" label="上报设备" :width="clacPXToVW(120)" show-overflow-tooltip />
-              <el-table-column prop="reportTime" label="上报时间" :width="clacPXToVW(160)" />
-              <el-table-column prop="reportImg" label="上报图片" :width="clacPXToVW(100)">
+              <el-table-column prop="eventDesc" label="事件描述" show-overflow-tooltip />
+              <el-table-column prop="reportLocation" label="上报位置" show-overflow-tooltip />
+              <el-table-column prop="reportDevice" label="上报设备" show-overflow-tooltip />
+              <el-table-column prop="reportTime" label="上报时间" />
+              <el-table-column prop="reportImg" label="上报图片">
                 <template #default="scope">
                   <el-image
                     v-if="scope.row.reportImg"
@@ -267,7 +267,7 @@
                   <span v-else class="no-image">--</span>
                 </template>
               </el-table-column>
-              <el-table-column prop="status" label="执行状态" :width="clacPXToVW(100)">
+              <el-table-column prop="status" label="执行状态">
                 <template #default="scope">
                   <el-tag
                     :type="getStatusType(scope.row.status)"
