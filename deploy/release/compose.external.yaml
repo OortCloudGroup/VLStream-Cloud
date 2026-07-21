@@ -1,0 +1,61 @@
+name: vlstream-cloud
+
+services:
+  webrtc-streamer:
+    image: ${WEBRTC_STREAMER_IMAGE:-mpromonet/webrtc-streamer:v0.8.16}
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["-C", "config.json", "-R", "50000:50010", "-e", "${WEBRTC_EXTERNAL_HOST:-host.docker.internal}"]
+    ports:
+      - "${WEBRTC_PORT:-8000}:8000"
+      - "50000-50010:50000-50010/udp"
+    healthcheck:
+      test: ["CMD", "bash", "-ec", "exec 3<>/dev/tcp/127.0.0.1/8000"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    image: ${BACKEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-backend:1.1.0}
+    restart: unless-stopped
+    depends_on:
+      webrtc-streamer:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      SERVER_PORT: 8080
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_URL: ${EXTERNAL_MYSQL_URL:?请设置 EXTERNAL_MYSQL_URL}
+      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_USERNAME: ${EXTERNAL_MYSQL_USERNAME:?请设置 EXTERNAL_MYSQL_USERNAME}
+      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_PASSWORD: ${EXTERNAL_MYSQL_PASSWORD:?请设置 EXTERNAL_MYSQL_PASSWORD}
+      SPRING_REDIS_HOST: ${EXTERNAL_REDIS_HOST:?请设置 EXTERNAL_REDIS_HOST}
+      SPRING_REDIS_PORT: ${EXTERNAL_REDIS_PORT:-6379}
+      SPRING_REDIS_PASSWORD: ${EXTERNAL_REDIS_PASSWORD:-}
+      SPRING_BOOT_ADMIN_CLIENT_ENABLED: "false"
+      XXL_JOB_ENABLED: "false"
+      VLSTREAM_WEBRTC_ENABLED: "true"
+      VLSTREAM_WEBRTC_PUBLIC_URL: /bus/webrtc-streamer-server
+      VLSTREAM_WEBRTC_INTERNAL_URL: http://webrtc-streamer:8000
+      JAVA_OPTS: ${JAVA_OPTS:--Xms512m -Xmx2048m -Dfile.encoding=UTF-8}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - backend-data:/app/data
+      - backend-logs:/app/logs
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-frontend:1.1.0}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+      webrtc-streamer:
+        condition: service_healthy
+    ports:
+      - "${HTTP_PORT:-80}:80"
+
+volumes:
+  backend-data:
+  backend-logs:
+
