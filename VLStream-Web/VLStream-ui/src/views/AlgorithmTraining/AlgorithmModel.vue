@@ -555,8 +555,21 @@ const handleBackToList = () => {
 }
 
 // 下载模型文件
-const promptDownloadModelType = async () => {
-  let chosenType = 'pt'
+const promptDownloadModelType = async (modelRow) => {
+  const modelData = modelRow?.originalData || modelRow || {}
+  const modelTypes = [
+    { type: 'pt', path: modelData.modelPath },
+    { type: 'onnx', path: modelData.onnxModelPath },
+    { type: 'rknn', path: modelData.rknnModelPath },
+    { type: 'int8-rknn', path: modelData.int8RknnModelOutputPath },
+    { type: 'om', path: modelData.omModelOutputPath }
+  ]
+  const firstAvailableType = modelTypes.find(item => item.path)?.type
+  if (!firstAvailableType) {
+    ElMessage.warning('当前模型还没有可下载的文件')
+    return null
+  }
+  let chosenType = firstAvailableType
 
   const TypeSelector = {
     name: 'DownloadModelTypeSelector',
@@ -574,12 +587,11 @@ const promptDownloadModelType = async () => {
             modelValue: localType.value,
             'onUpdate:modelValue': updateType
           },
-          () => [
-            h(ElRadio, { label: 'pt' }, () => 'pt'),
-            h(ElRadio, { label: 'onnx' }, () => 'onnx'),
-            h(ElRadio, { label: 'rknn' }, () => 'rknn'),
-            h(ElRadio, { label: 'int8-rknn' }, () => 'int8-rknn')
-          ]
+          () => modelTypes.map(item => h(
+            ElRadio,
+            { label: item.type, disabled: !item.path },
+            () => item.path ? item.type : `${item.type}（未生成）`
+          ))
         )
       ])
     }
@@ -616,7 +628,7 @@ const downloadModelFile = async (modelRow) => {
       return
     }
 
-    const downloadType = await promptDownloadModelType()
+    const downloadType = await promptDownloadModelType(modelRow)
     if (!downloadType) {
       return
     }
