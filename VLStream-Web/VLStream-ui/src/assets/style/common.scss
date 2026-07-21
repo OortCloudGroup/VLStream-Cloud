@@ -908,6 +908,34 @@ td {
   align-items: center;
 }
 
+// 右侧内容面板
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  background: #f0f2f5;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+
+  > .tenant_content {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+  }
+
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+    box-sizing: border-box;
+  }
+}
+
 // 顶部内容区 Tab
 .tenanat-tabs {
   padding: 0 20px;

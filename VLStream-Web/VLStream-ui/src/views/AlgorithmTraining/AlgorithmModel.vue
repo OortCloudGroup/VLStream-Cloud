@@ -813,12 +813,14 @@ onMounted(() => {
 .tenant_Page {
   height: 100%;
   width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
   background: #f0f2f5;
-  .tenant_content { width: 100%; height: 100%; }
+  .tenant_content { width: 100%; height: 100%; border-radius: 8px; }
   .tableTenBox {
     padding: 20px;
     width: 100%;
     height: 100%;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
     flex: 1;
     background: #fff;
     align-items: flex-start;
@@ -835,9 +837,8 @@ onMounted(() => {
 .operateAppBox { justify-content: flex-end; gap: 2px; flex-wrap: wrap; }
 
 .algorithm-model {
-  padding: 20px;
-  background: #f5f7fa;
-  min-height: 100vh;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* 搜索区域 */

@@ -360,9 +360,13 @@ onMounted(() => {
 
 <style scoped>
 .scene-edit {
+  height: 100%;
+  margin: 0;
   padding: 20px;
-  background: #f5f7fa;
-  min-height: 100vh;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  overflow: auto;
+  box-sizing: border-box;
 }
 
 .breadcrumb {

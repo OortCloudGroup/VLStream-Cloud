@@ -26,9 +26,12 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
+  background: #fff;
+  margin: 0;
   padding: 20px;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .system-toolbar {

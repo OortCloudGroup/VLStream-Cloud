@@ -3397,8 +3397,15 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 .tenant_Page {
   height: 100%;
   width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
   background: #f0f2f5;
-  .tenant_content { width: 100%; height: 100%; }
+  .tenant_content {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    overflow: hidden;
+  }
   .tableTenBox {
     padding: 20px;
     width: 100%;
@@ -3406,6 +3413,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
     flex: 1;
     background: #fff;
     align-items: flex-start;
+    border-radius: 0;
   }
 }
 .tableTenItU {
@@ -3422,9 +3430,6 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  background-color: #f5f7fa;
-  padding: 20px;
   overflow: hidden;
 }
 
@@ -3437,7 +3442,9 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 
 /* 页面标题 */
 .page-header {
-  margin-bottom: 24px;
+  margin-bottom: 0;
+  padding: 20px 20px 0;
+  background: #fff;
 }
 
 .page-header h1 {

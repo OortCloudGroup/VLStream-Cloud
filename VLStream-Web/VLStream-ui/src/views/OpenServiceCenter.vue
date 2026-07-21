@@ -53,9 +53,12 @@ onMounted(loadMarkdown)
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 16px;
-  background: #f5f7fa;
+  margin: 0;
+  padding: 20px;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .document-toolbar {
@@ -63,6 +66,7 @@ onMounted(loadMarkdown)
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .document-title {
@@ -73,6 +77,7 @@ onMounted(loadMarkdown)
 
 .document-body {
   flex: 1;
+  min-height: 0;
   background: #ffffff;
   border: 1px solid #e4e7ed;
   border-radius: 8px;

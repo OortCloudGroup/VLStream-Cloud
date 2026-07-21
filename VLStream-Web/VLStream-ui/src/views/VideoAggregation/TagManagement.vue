@@ -1797,6 +1797,7 @@ onMounted(() => {
 .tenant_Page {
   height: 100%;
   width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
   background: #f0f2f5;
   display: flex;
   flex-direction: column;
@@ -1807,6 +1808,7 @@ onMounted(() => {
     min-height: 0;
     display: flex;
     flex-direction: column;
+    border-radius: 8px;
   }
 
   .tableTenBox {
@@ -1817,6 +1819,7 @@ onMounted(() => {
     background: #fff;
     align-items: flex-start;
     min-height: 0;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
   }
 }
 
