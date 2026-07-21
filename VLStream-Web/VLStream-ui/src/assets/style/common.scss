@@ -908,3 +908,32 @@ td {
   align-items: center;
 }
 
+// 顶部内容区 Tab
+.tenanat-tabs {
+  padding: 0 20px;
+  background: #fff;
+  flex-shrink: 0;
+
+  .el-tabs__item {
+    color: #999;
+  }
+
+  .el-tabs__item.is-active {
+    color: var(--el-color-primary);
+  }
+
+  .el-tabs__header {
+    padding-top: 10px;
+    margin-bottom: 0;
+
+    .el-tabs__nav-wrap::after {
+      background: #E7EAEF;
+    }
+
+    .el-tabs__item.is-top {
+      font-size: 16px;
+      font-weight: 700;
+    }
+  }
+}
+

@@ -14,20 +14,10 @@
       <div class="video-control-container">
         <!-- 显示设置标签页 -->
         <div class="settings-tabs">
-          <div class="tab-header">
-            <el-button 
-              :class="['tab-btn', { active: activeTab === 'display' }]"
-              @click="activeTab = 'display'"
-            >
-              显示设置
-            </el-button>
-            <el-button 
-              :class="['tab-btn', { active: activeTab === 'osd' }]"
-              @click="activeTab = 'osd'"
-            >
-              OSD设置
-            </el-button>
-          </div>
+          <el-tabs v-model="activeTab" class="tenanat-tabs">
+            <el-tab-pane label="显示设置" name="display" />
+            <el-tab-pane label="OSD设置" name="osd" />
+          </el-tabs>
           
           <!-- 场景选择 -->
           <div v-if="activeTab === 'display'" class="scene-selector">
@@ -854,45 +844,14 @@ const handleOSDSettingsSave = (settings) => {
 /* 标签页 */
 .settings-tabs {
   background: white;
-  border-radius: 6px 6px 0 0; /* 只保留顶部圆角 */
+  border-radius: 6px 6px 0 0;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  margin: 0; /* 完全移除所有外边距 */
-  flex-shrink: 0; /* 防止标签页被压缩 */
-}
+  margin: 0;
+  flex-shrink: 0;
 
-.tab-header {
-  padding: 16px 0px 16px 0px; /* 移除左内边距，与左边框对齐 */
-  border-bottom: 1px solid #e4e7ed;
-  display: flex;
-  gap: 8px;
-}
-
-.tab-btn {
-  padding: 8px 16px;
-  border: none;
-  background: transparent; /* 移除背景色 */
-  color: #909399; /* 默认灰色文字 */
-  border-radius: 0; /* 移除圆角 */
-  transition: all 0.3s ease;
-  font-size: 16px;
-}
-
-.tab-btn:first-child {
-  margin-left: 0; /* 移除额外左边距，容器已有20px内边距 */
-}
-
-.tab-btn:not(:first-child) {
-  margin-left: 8px; /* 其他按钮正常间距 */
-}
-
-.tab-btn.active {
-  background: transparent; /* 移除背景色 */
-  color: #409eff; /* 蓝色文字表示激活状态 */
-}
-
-.tab-btn:hover:not(.active) {
-  background: transparent; /* 移除背景色 */
-  color: #409eff; /* 悬停时也变为蓝色 */
+  .tenanat-tabs {
+    padding: 0 16px;
+  }
 }
 
 /* 场景选择器 */

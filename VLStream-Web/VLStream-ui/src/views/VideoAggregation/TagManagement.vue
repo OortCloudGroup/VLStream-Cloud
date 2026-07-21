@@ -1,12 +1,10 @@
 <template>
   <div class="tag-management tenant_Page draHeaPB">
+    <el-tabs v-model="activeTab" class="tenanat-tabs">
+      <el-tab-pane label="标签维护" name="maintenance" />
+      <el-tab-pane label="标签设备" name="device" />
+    </el-tabs>
     <div class="tenant_content">
-    <!-- 标签页切换 - 顶部 -->
-    <div class="tab-nav">
-      <div class="tab-item" :class="{ active: activeTab === 'maintenance' }" @click="activeTab = 'maintenance'">标签维护</div>
-      <div class="tab-item" :class="{ active: activeTab === 'device' }" @click="activeTab = 'device'">标签设备</div>
-    </div>
-
     <!-- 标签维护页面 -->
     <div v-if="activeTab === 'maintenance'" class="tableTenBox flexRowAC maintenance-content">
         <div
@@ -1800,10 +1798,13 @@ onMounted(() => {
   height: 100%;
   width: 100%;
   background: #f0f2f5;
+  display: flex;
+  flex-direction: column;
 
   .tenant_content {
     width: 100%;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
   }
@@ -1946,34 +1947,6 @@ onMounted(() => {
   flex-direction: column;
   background: #f0f2f5;
   overflow: hidden;
-}
-
-.tab-nav {
-  display: flex;
-  background: #F0F2F5;
-  border-radius: 8px 8px 0 0;
-  padding: 20px 20px 0 20px;
-  border-bottom: 1px solid rgba(26, 83, 255, 0.2);
-  flex-shrink: 0;
-}
-
-.tab-item {
-  padding: 12px 24px;
-  cursor: pointer;
-  border-bottom: 3px solid transparent;
-  color: #606266;
-  transition: all 0.3s;
-  background: transparent;
-
-  &.active {
-    color: #1A53FF;
-    border-bottom-color: #1A53FF;
-    font-weight: 600;
-  }
-
-  &:hover:not(.active) {
-    color: #1A53FF;
-  }
 }
 
 .maintenance-content,
