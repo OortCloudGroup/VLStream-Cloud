@@ -55,7 +55,7 @@
     </div>
 
     <!-- 标签页 -->
-    <el-tabs v-model="activeTab" @tab-click="handleTabClick">
+    <el-tabs v-model="activeTab" class="tenanat-tabs" @tab-click="handleTabClick">
       <!-- 训练任务 -->
       <el-tab-pane label="训练任务" name="training">
         <div class="training-section">

@@ -7,7 +7,7 @@
     </div>
 
     <!-- 设置选项卡 -->
-    <el-tabs v-model="activeTab" class="settings-tabs">
+    <el-tabs v-model="activeTab" class="tenanat-tabs settings-tabs">
       <!-- 基础设置 -->
       <el-tab-pane label="基础设置" name="basic">
         <el-card class="setting-card">

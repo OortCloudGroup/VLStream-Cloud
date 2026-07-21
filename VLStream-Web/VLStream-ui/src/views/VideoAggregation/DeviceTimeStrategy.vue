@@ -2,22 +2,10 @@
   <div class="device-time-strategy">
     <div class="config-container">
       <!-- 标签页 -->
-      <div class="config-tabs">
-        <div 
-          class="tab-item" 
-          :class="{ active: activeTab === 'time' }"
-          @click="activeTab = 'time'"
-        >
-          时间策略
-        </div>
-        <div 
-          class="tab-item" 
-          :class="{ active: activeTab === 'event' }"
-          @click="activeTab = 'event'"
-        >
-          事件策略
-        </div>
-      </div>
+      <el-tabs v-model="activeTab" class="tenanat-tabs">
+        <el-tab-pane label="时间策略" name="time" />
+        <el-tab-pane label="事件策略" name="event" />
+      </el-tabs>
 
       <!-- 时间策略内容 -->
       <div v-if="activeTab === 'time'" class="config-tab-content">
@@ -935,26 +923,9 @@ onMounted(() => {
     margin: 0;
   }
   
-  .config-tabs {
-    display: flex;
-    margin-bottom: 30px;
-    border-bottom: 1px solid #e4e7ed;
-    
-    .tab-item {
-      padding: 12px 24px;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.3s;
-      
-      &:hover {
-        color: #409eff;
-      }
-      
-      &.active {
-        color: #409eff;
-        border-bottom-color: #409eff;
-      }
-    }
+  .tenanat-tabs {
+    padding: 0;
+    margin-bottom: 20px;
   }
   
   .config-section {
