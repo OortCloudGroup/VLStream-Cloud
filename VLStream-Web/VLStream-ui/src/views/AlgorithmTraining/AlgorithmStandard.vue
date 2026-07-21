@@ -1,5 +1,6 @@
 <template>
-  <div class="page-container">
+  <div class="page-container tenant_Page draHeaPB">
+    <div class="tenant_content">
     <!-- 页面标题 -->
     <div class="page-header" v-if="!showAnnotationView">
       <h1>算法标注</h1>
@@ -16,134 +17,100 @@
     </div>
 
     <!-- 列表视图 -->
-    <div v-if="!showAnnotationView" class="list-view">
-      <!-- 主内容区域 -->
-      <div class="main-content">
-        <!-- 工具栏 -->
-        <div class="toolbar">
-          <div class="toolbar-left">
-            <ActionButtonGroup 
-              :selected-count="selectedRows.length"
-              @add="handleAdd"
-              @edit="handleEdit"
-              @delete="handleDelete"
-            >
-            </ActionButtonGroup>
-          </div>
-          
-          <div class="toolbar-right">
-            <div class="depNameBox_out flexRowAC">
-              <div class="searchHeight_out flexRowAC">
-                <search-height-box
-                  keyword="keyword"
-                  placeholder="搜索"
-                  :data="searchData"
-                  @handle="searchResetFn"
-                />
-                <export-excel-pdf :item="exportItem" @handle="handleExport" />
+    <div v-if="!showAnnotationView" class="tableTenBox flexRowAC">
+      <div class="tableTenItU">
+        <div class="depNameBox_out flexRowAC">
+          <div class="depNameBox flexRowAC">
+            <div class="exportBtnBox flexRowAC">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
+                  <el-icon class="BtnImg">
+                    <Plus />
+                  </el-icon>
+                  新建
+                </button>
+                <button-group :button-list="toolbarButtonList" />
               </div>
-            </div>
+          </div>
+          <div class="searchHeight_out flexRowAC">
+            <search-height-box
+              keyword="keyword"
+              placeholder="搜索"
+              :data="searchData"
+              @handle="searchResetFn"
+            />
+            <export-excel-pdf :item="exportItem" @handle="handleExport" />
           </div>
         </div>
 
-        <!-- 表格内容 -->
-        <div class="table-content">
-          <el-table 
-            :data="tableData" 
-            stripe 
-            style="width: 100%"
-            v-loading="loading"
-            @selection-change="handleSelectionChange"
-            @row-click="handleRowClick"
-          >
-            <el-table-column type="selection" width="55" />
-            <el-table-column prop="name" label="标注名称" min-width="200" />
-            <el-table-column prop="remark" label="备注" min-width="200" show-overflow-tooltip />
-            <el-table-column prop="type" label="标注类型" width="120" align="center" />
-            <el-table-column prop="status" label="标注状态" width="120" align="center">
-              <template #default="scope">
-                <el-tag 
-                  :type="getStatusTagType(scope.row.annotationStatus)" 
-                  size="small"
-                >
-                  {{ scope.row.status }} ({{ scope.row.progress }})
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="datasetPath" label="数据集路径" width="200">
-              <template #default="scope">
-                <span
-                  v-if="scope.row.datasetPath"
-                  class="dataset-path clickable"
-                  :title="scope.row.datasetPath"
-                >
-                  {{ scope.row.datasetPath }}
-                </span>
-                <span v-else class="no-dataset">未设置</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="createTime" label="创建时间" width="180" />
-                            <el-table-column label="操作" width="360" align="right" fixed="right">
-              <template #default="scope">
-                <div class="action-buttons">
-                  <el-button 
-                    type="primary" 
-                    link 
-                    size="small" 
-                  @click="handleView(scope.row)"
-                >
-                  查看与标注
-                </el-button>
-                  <el-button
-                    type="primary"
-                    link
-                    size="small"
-                    @click="handleSaveDataset(scope.row)"
-                  >
-                    生成数据集
-                  </el-button>
-
-                  <el-button 
-                    type="primary" 
-                    link 
-                    size="small" 
-                    @click="handleImportData(scope.row)"
-                  >
-                    导入
-                  </el-button>
-                  <el-button 
-                    type="primary" 
-                    link 
-                    size="small" 
-                    @click="handleExportData(scope.row)"
-                  >
-                    导出
-                  </el-button>
-                  <el-button 
-                    type="danger" 
-                    link 
-                    size="small" 
-                    @click="handleDeleteItem(scope.row)"
-                  >
-                    删除
-                  </el-button>
+        <TableSelf
+          class="new_table"
+          header-cell-class-name="header_tenant_cell"
+          stripe
+          v-loading="loading"
+          :data="tableData"
+          @selection-change="handleSelectionChange"
+          @row-click="handleRowClick"
+        >
+          <el-table-column type="selection" :width="clacPXToVW(55)" />
+          <el-table-column prop="name" label="标注名称" :width="clacPXToVW(200)" show-overflow-tooltip />
+          <el-table-column prop="remark" label="备注" show-overflow-tooltip />
+          <el-table-column prop="type" label="标注类型" :width="clacPXToVW(120)" align="center" />
+          <el-table-column prop="status" label="标注状态" :width="clacPXToVW(140)" align="center">
+            <template #default="scope">
+              <el-tag :type="getStatusTagType(scope.row.annotationStatus)" size="small">
+                {{ scope.row.status }} ({{ scope.row.progress }})
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="datasetPath" label="数据集路径" :width="clacPXToVW(200)">
+            <template #default="scope">
+              <span v-if="scope.row.datasetPath" class="dataset-path clickable" :title="scope.row.datasetPath">
+                {{ scope.row.datasetPath }}
+              </span>
+              <span v-else class="no-dataset">未设置</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createTime" label="创建时间" :width="clacPXToVW(180)" />
+          <el-table-column label="操作" :width="clacPXToVW(360)" align="right" fixed="right">
+            <template #default="scope">
+              <div class="operateAppBox flexRowAC" @click.stop>
+                <div class="new_table_svg_group" @click="handleView(scope.row)">
+                  <oort-svg-icon width="20" height="20" name="detail_icon" class="new_table_svg_group_svg" />
+                  <span>标注</span>
                 </div>
-              </template>
-            </el-table-column>
-          </el-table>
+                <div class="new_table_svg_group" @click="handleSaveDataset(scope.row)">
+                  <oort-svg-icon width="20" height="20" name="export" class="new_table_svg_group_svg" />
+                  <span>生成</span>
+                </div>
+                <div class="new_table_svg_group" @click="handleImportData(scope.row)">
+                  <oort-svg-icon width="20" height="20" name="table_incoming" class="new_table_svg_group_svg" />
+                  <span>导入</span>
+                </div>
+                <div class="new_table_svg_group" @click="handleExportData(scope.row)">
+                  <oort-svg-icon width="20" height="20" name="export" class="new_table_svg_group_svg" />
+                  <span>导出</span>
+                </div>
+                <div class="new_table_svg_group" @click="handleDeleteItem(scope.row)">
+                  <oort-svg-icon color="red" width="20" height="20" name="delete_icon" class="new_table_svg_group_svg" />
+                  <span>删除</span>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+        </TableSelf>
 
-          <!-- 分页 - 紧贴表格数据 -->
-          <div class="table-pagination">
-            <el-pagination
-              v-model:current-page="currentPage"
-              v-model:page-size="pageSize"
-              :page-sizes="[10, 20, 50, 100]"
-              layout="total, sizes, prev, pager, next, jumper"
-              :total="total"
-              @size-change="handleSizeChange"
-              @current-change="handleCurrentChange"
-            />
-          </div>
+        <div class="paginationBox flexRowAC">
+          <el-pagination
+            background
+            :current-page="currentPage"
+            :page-size="pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, prev, pager, next, sizes"
+            class="justifyAlign"
+            :total="total"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+          />
         </div>
       </div>
     </div>
@@ -714,19 +681,19 @@
         </div>
       </template>
     </el-dialog>
+    </div>
   </div>
 </template>
 
 <script setup>
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue'
-import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
+import { clacPXToVW } from '@/utils/index'
 import AnnotationGridView from './AnnotationGridView.vue'
 import AnnotationLabelPanel from '@/components/AnnotationLabelPanel.vue'
 import AnnotationAddDialog from './components/AnnotationAddDialog.vue'
 import AnnotationLabelDialog from './components/AnnotationLabelDialog.vue'
 import {ElMessage, ElMessageBox} from 'element-plus'
-import {
-  ArrowLeft,
+import {ArrowLeft,
   ArrowRight,
   CircleCheck,
   CircleClose,
@@ -742,8 +709,7 @@ import {
   RefreshRight,
   Upload,
   ZoomIn,
-  ZoomOut
-} from '@element-plus/icons-vue'
+  ZoomOut, Plus } from '@element-plus/icons-vue'
 import {
   ANNOTATION_STATUS,
   ANNOTATION_TYPE_LABELS,
@@ -3170,6 +3136,10 @@ const handleGlobalClick = (event) => {
   console.log('=== 全局点击事件处理完成 ===')
 }
 
+const toolbarButtonList = [
+  { name: '编辑', svg: 'table_edit', clickFn: handleEdit },
+  { name: '删除', svg: 'table_del', clickFn: handleDelete },
+]
 const exportItem = ref({ isDisabledExcel: false })
 const searchData = ref([
   { label: '关键词', value: 'keyword', type: 'text', default: '' }
@@ -3422,7 +3392,32 @@ window.testDeleteAnnotation = testDeleteAnnotationInstance
 window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  background: #f0f2f5;
+  .tenant_content { width: 100%; height: 100%; }
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+  }
+}
+.tableTenItU {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+  :deep(.header_tenant_cell) { background: #F8F8F9; }
+}
+.paginationBox { justify-content: center; height: 100px; }
+.operateAppBox { justify-content: flex-end; gap: 2px; flex-wrap: wrap; }
+
 .page-container {
   height: 100%;
   display: flex;

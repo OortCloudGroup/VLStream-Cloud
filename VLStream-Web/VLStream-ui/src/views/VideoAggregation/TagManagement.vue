@@ -1,78 +1,65 @@
 <template>
-  <div class="tag-management">
+  <div class="tag-management tenant_Page draHeaPB">
+    <div class="tenant_content">
     <!-- 标签页切换 - 顶部 -->
     <div class="tab-nav">
       <div class="tab-item" :class="{ active: activeTab === 'maintenance' }" @click="activeTab = 'maintenance'">标签维护</div>
       <div class="tab-item" :class="{ active: activeTab === 'device' }" @click="activeTab = 'device'">标签设备</div>
     </div>
-    
-    <!-- 主要内容区域 -->
-    <div class="main-content-container">
-      <!-- 标签维护页面 -->
-      <div v-if="activeTab === 'maintenance'" class="maintenance-content">
-        <!-- 左侧树形结构 -->
-        <div class="device-tree" v-show="!treeCollapsed">
-          <!-- 树形搜索框 -->
-          <div class="tree-search">
-            <SearchInput
+
+    <!-- 标签维护页面 -->
+    <div v-if="activeTab === 'maintenance'" class="tableTenBox flexRowAC maintenance-content">
+        <div
+          v-show="!treeCollapsed"
+          v-yResize
+          class="police_aside_use"
+        >
+          <div class="treeTitle">自有</div>
+          <div class="tree_search_content flexRowAC">
+            <el-input
               v-model="treeSearchKeyword"
               placeholder="搜索"
-              button-text="查询"
-              size="small"
-              width="200px"
-              @search="handleTreeSearch"
+              clearable
+              prefix-icon="Search"
+              @change="handleTreeSearch"
             />
           </div>
-          
-          <div class="tree-header">
-            <span class="tree-title">自有</span>
-            <div class="tree-actions">
-              <CollapseToggle 
-                :is-expanded="!treeCollapsed" 
-                @toggle="handleTreeToggle" 
-              />
-            </div>
-          </div>
-
           <div class="tree-content" v-loading="treeLoading">
             <el-tree
+              style="background: #fff;"
               :data="treeData"
               :props="treeProps"
+              highlight-current
               :expand-on-click-node="false"
               :default-expand-all="false"
               node-key="id"
               @node-click="handleNodeClick"
             >
               <template #default="{ node, data }">
-                <div class="tree-node" :class="[`node-level-${node.level}`, { 'is-leaf': node.isLeaf }]">
-                  <span class="node-label">{{ node.label }}</span>
-                  <div class="node-actions" v-if="data.type !== 'root' && node.level === 2">
-                    <el-button size="small" text @click.stop="addChild(data)" class="add-btn">
-                      <el-icon><Plus /></el-icon>
-                    </el-button>
-                    <el-button size="small" text @click.stop="deleteNode(data)" class="delete-btn">
-                      <el-icon><Delete /></el-icon>
-                    </el-button>
+                <div class="custom-tree-node flexRowAC">
+                  <span class="tree-node-label">{{ node.label }}</span>
+                  <div v-if="data.type !== 'root' && node.level === 2" class="tree-node-actions flexRowAC" @click.stop>
+                    <oort-svg-icon width="16" height="16" name="delete" color="red" @click="deleteNode(data)" />
+                    <oort-svg-icon width="16" height="16" name="add" @click="addChild(data)" />
                   </div>
                 </div>
               </template>
             </el-tree>
-            
-            <!-- 公共部分 -->
             <div class="public-section">
               <div class="public-title">公共</div>
               <el-tree
+                style="background: #fff;"
                 :data="publicTreeData"
                 :props="treeProps"
+                highlight-current
                 :expand-on-click-node="false"
-                :default-expand-all="false"
                 node-key="id"
                 @node-click="handleNodeClick"
               >
-                <template #default="{ node, data }">
-                  <div class="tree-node public-node">
-                    <el-icon class="node-icon"><Key /></el-icon>
-                    <span class="node-label">{{ node.label }}</span>
+                <template #default="{ node }">
+                  <div class="custom-tree-node flexRowAC">
+                    <el-icon class="tree-icon"><Key /></el-icon>
+                    <span class="tree-node-label">{{ node.label }}</span>
                   </div>
                 </template>
               </el-tree>
@@ -81,237 +68,208 @@
         </div>
 
         <!-- 右侧内容区域 -->
-        <div class="content-area" :class="{ 'full-width': treeCollapsed }">
-          <!-- 操作按钮栏 -->
-          <div class="toolbar">
-            <div class="toolbar-left">
-              <!-- 展开树形区域按钮 -->
-              <div class="expand-tree-btn-inline" v-if="treeCollapsed">
-                <CollapseToggle 
-                  :is-expanded="false" 
-                  @toggle="handleTreeToggle" 
+        <div class="tableTenItU">
+            <div class="depNameBox_out flexRowAC">
+              <div class="depNameBox flexRowAC">
+                <CollapseToggle
+                  v-if="treeCollapsed"
+                  class="expand-device-tree-btn"
+                  :is-expanded="false"
+                  @toggle="handleTreeToggle"
                 />
+                <div class="exportBtnBox flexRowAC">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleToolbarAdd">
+                  <el-icon class="BtnImg">
+                    <Plus />
+                  </el-icon>
+                  新建
+                </button>
+                <button-group :button-list="[
+                    { name: '编辑', svg: 'table_edit', clickFn: handleEdit },
+                    { name: '删除', svg: 'table_del', clickFn: handleDelete },
+                  ]" />
               </div>
-              <ActionButtonGroup 
-                :selected-count="selectedRows.length"
-                @add="handleToolbarAdd"
-                @edit="handleEdit"
-                @delete="handleDelete"
-              />
-            </div>
-            
-            <div class="toolbar-right">
-              <div class="depNameBox_out flexRowAC">
-                <div class="searchHeight_out flexRowAC">
-                  <search-height-box
-                    keyword="keyword"
-                    placeholder="搜索"
-                    :data="searchData"
-                    @handle="searchResetFn"
-                  />
-                  <export-excel-pdf :item="exportItem" @handle="handleExport" />
-                </div>
+              </div>
+              <div class="searchHeight_out flexRowAC">
+                <search-height-box
+                  keyword="keyword"
+                  placeholder="搜索"
+                  :data="searchData"
+                  @handle="searchResetFn"
+                />
+                <export-excel-pdf :item="exportItem" @handle="handleExport" />
               </div>
             </div>
-          </div>
 
-          <!-- 表格内容 -->
-          <div class="table-content">
-            <el-table 
-              :data="currentPageTableData" 
+            <TableSelf
+              class="new_table"
+              header-cell-class-name="header_tenant_cell"
               stripe
               v-loading="loading"
+              :data="currentPageTableData"
               @selection-change="handleSelectionChange"
-              style="width: 100%"
             >
-              <el-table-column type="selection" width="55" />
-              <el-table-column type="index" label="序号" width="80" align="center" />
-              <el-table-column prop="tagName" label="标签名称" min-width="150" />
-              <el-table-column prop="description" label="描述" min-width="200" />
-              <el-table-column prop="isPublic" label="是否公开" width="120" align="center">
+              <el-table-column type="selection" :width="clacPXToVW(55)" />
+              <el-table-column label="序号" :width="clacPXToVW(65)">
                 <template #default="scope">
-                  <el-switch 
-                    v-model="scope.row.isPublic" 
+                  {{ scope.$index + (currentPage - 1) * pageSize + 1 }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="tagName" label="标签名称" :width="clacPXToVW(150)" show-overflow-tooltip />
+              <el-table-column prop="description" label="描述" show-overflow-tooltip />
+              <el-table-column prop="isPublic" label="是否公开" :width="clacPXToVW(120)" align="center">
+                <template #default="scope">
+                  <el-switch
+                    v-model="scope.row.isPublic"
                     @change="handlePublicChange(scope.row)"
                   />
                 </template>
               </el-table-column>
-              <el-table-column prop="createTime" label="创建时间" min-width="160" />
-              <el-table-column label="操作" width="180" fixed="right" align="right">
+              <el-table-column prop="createTime" label="创建时间" :width="clacPXToVW(180)" />
+              <el-table-column fixed="right" align="right" label="操作" :width="clacPXToVW(160)">
                 <template #default="scope">
-                  <div class="operation-buttons">
-                    <el-button 
-                      class="operation-btn edit-btn" 
-                      @click="handleRowEdit(scope.row)">
-                      编辑
-                    </el-button>
-                    <el-button 
-                      class="operation-btn delete-btn"
-                      @click="handleRowDelete(scope.row)">
-                      删除
-                    </el-button>
+                  <div class="operateAppBox flexRowAC" @click.stop>
+                    <div class="new_table_svg_group" @click="handleRowEdit(scope.row)">
+                      <oort-svg-icon width="20" height="20" name="edit_icon" class="new_table_svg_group_svg" />
+                      <span>编辑</span>
+                    </div>
+                    <div class="new_table_svg_group" @click="handleRowDelete(scope.row)">
+                      <oort-svg-icon color="red" width="20" height="20" name="delete_icon" class="new_table_svg_group_svg" />
+                      <span>删除</span>
+                    </div>
                   </div>
                 </template>
               </el-table-column>
-            </el-table>
-            
-            <!-- 分页 - 紧贴表格数据 -->
-            <div class="table-pagination">
+            </TableSelf>
+
+            <div class="paginationBox flexRowAC">
               <el-pagination
-                v-model:current-page="currentPage"
-                v-model:page-size="pageSize"
+                background
+                :current-page="currentPage"
+                :page-size="pageSize"
                 :page-sizes="[10, 20, 50, 100]"
                 :total="total"
-                layout="total, sizes, prev, pager, next, jumper"
+                layout="total, prev, pager, next, sizes"
+                class="justifyAlign"
                 @size-change="handleSizeChange"
                 @current-change="handleCurrentChange"
               />
             </div>
-          </div>
         </div>
-      </div>
+    </div>
 
-      <!-- 标签设备页面 -->
-      <div v-if="activeTab === 'device'" class="device-content">
-        <!-- 左侧设备树形结构 -->
-        <div class="device-tree" v-show="!deviceTreeCollapsed">
-          <!-- 设备树形搜索框 -->
-          <div class="tree-search">
-            <SearchInput
+    <!-- 标签设备页面 -->
+    <div v-if="activeTab === 'device'" class="tableTenBox flexRowAC device-content">
+        <div
+          v-show="!deviceTreeCollapsed"
+          v-yResize
+          class="police_aside_use"
+        >
+          <div class="treeTitle">设备树</div>
+          <div class="tree_search_content flexRowAC">
+            <el-input
               v-model="deviceTreeSearchKeyword"
               placeholder="搜索"
-              button-text="查询"
-              size="small"
-              width="200px"
-              @search="handleDeviceTreeSearch"
+              clearable
+              prefix-icon="Search"
+              @change="handleDeviceTreeSearch"
             />
           </div>
-          
-          <div class="tree-header">
-            <span class="tree-title">设备树</span>
-            <div class="tree-actions">
-              <CollapseToggle 
-                :is-expanded="!deviceTreeCollapsed" 
-                @toggle="handleDeviceTreeToggle" 
-              />
-            </div>
-          </div>
-
-          <div class="tree-content">
-            <el-tree
-              :data="deviceTreeData"
-              :props="treeProps"
-              :expand-on-click-node="false"
-              :default-expand-all="false"
-              node-key="id"
-              @node-click="handleDeviceNodeClick"
-            >
-              <template #default="{ node, data }">
-                <div class="tree-node" :class="[`node-level-${node.level}`, { 'is-leaf': node.isLeaf }]">
-                  <span class="node-label">{{ node.label }}</span>
-                </div>
-              </template>
-            </el-tree>
-          </div>
+          <el-tree
+            style="background: #fff;"
+            :data="deviceTreeData"
+            :props="treeProps"
+            highlight-current
+            :expand-on-click-node="false"
+            node-key="id"
+            @node-click="handleDeviceNodeClick"
+          >
+            <template #default="{ node }">
+              <div class="custom-tree-node flexRowAC">
+                <span class="tree-node-label">{{ node.label }}</span>
+              </div>
+            </template>
+          </el-tree>
         </div>
 
-        <!-- 右侧设备表格区域 -->
-        <div class="content-area" :class="{ 'full-width': deviceTreeCollapsed }">
-          <!-- 设备操作按钮栏 -->
-          <div class="toolbar">
-            <div class="toolbar-left">
-              <!-- 展开设备树区域按钮 -->
-              <div class="expand-tree-btn-inline" v-if="deviceTreeCollapsed">
-                <CollapseToggle 
-                  :is-expanded="false" 
-                  @toggle="handleDeviceTreeToggle" 
-                />
-              </div>
+        <div class="tableTenItU">
+          <div class="depNameBox_out flexRowAC">
+            <div class="depNameBox flexRowAC">
+              <CollapseToggle
+                v-if="deviceTreeCollapsed"
+                class="expand-device-tree-btn"
+                :is-expanded="false"
+                @toggle="handleDeviceTreeToggle"
+              />
             </div>
-            
-            <div class="toolbar-right">
-              <div class="depNameBox_out flexRowAC">
-                <div class="searchHeight_out flexRowAC">
-                  <search-height-box
-                    keyword="keyword"
-                    placeholder="搜索"
-                    :data="deviceSearchData"
-                    @handle="deviceSearchResetFn"
-                  />
-                  <export-excel-pdf :item="exportItem" @handle="handleExport" />
-                </div>
-              </div>
+            <div class="searchHeight_out flexRowAC">
+              <search-height-box
+                keyword="keyword"
+                placeholder="搜索"
+                :data="deviceSearchData"
+                @handle="deviceSearchResetFn"
+              />
+              <export-excel-pdf :item="exportItem" @handle="handleExport" />
             </div>
           </div>
-          
-          <!-- 设备表格内容 -->
-          <div class="table-content">
-            <el-table 
-              :data="deviceTableData" 
-              stripe
-              @selection-change="handleDeviceSelectionChange"
-              style="width: 100%"
-            >
-              <el-table-column type="selection" width="55" />
-              <el-table-column type="index" label="序号" width="80" align="center" />
-              <el-table-column prop="deviceName" label="设备名称" min-width="150" />
-              <el-table-column prop="tags" label="标签" min-width="200">
-                <template #default="scope">
-                  <el-tag
-                    v-for="tag in scope.row.tags"
-                    :key="tag"
-                    size="small"
-                    style="margin-right: 8px;"
-                  >
-                    {{ tag }}
-                  </el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column prop="deviceId" label="设备ID" min-width="120" />
-              <el-table-column prop="streamUrl" label="视频流地址" min-width="250" />
-              <el-table-column prop="status" label="状态" min-width="100" align="center">
-                <template #default="scope">
-                  <el-tag
-                      :type="scope.row.status === 1 ? 'success' : 'danger'"
-                      size="small">
-                    {{ scope.row.status === 1 ? '在线' : '离线' }}
-                  </el-tag>
-                </template>
-              </el-table-column>
-<!--              <el-table-column label="操作" width="120" fixed="right" align="right">-->
-<!--                <template #default="scope">-->
-<!--                  <div class="operation-buttons">-->
-<!--                    <el-button -->
-<!--                      class="operation-btn view-btn" -->
-<!--                      @click="handleViewDevice(scope.row)">-->
-<!--                      查看-->
-<!--                    </el-button>-->
-<!--                  </div>-->
-<!--                </template>-->
-<!--              </el-table-column>-->
-            </el-table>
-            
-            <!-- 设备分页 - 紧贴表格数据 -->
-            <div class="table-pagination">
+
+          <TableSelf
+            class="new_table"
+            header-cell-class-name="header_tenant_cell"
+            stripe
+            :data="deviceTableData"
+            @selection-change="handleDeviceSelectionChange"
+          >
+            <el-table-column type="selection" :width="clacPXToVW(55)" />
+            <el-table-column label="序号" :width="clacPXToVW(65)">
+              <template #default="scope">
+                {{ scope.$index + 1 }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="deviceName" label="设备名称" :width="clacPXToVW(150)" show-overflow-tooltip />
+            <el-table-column prop="tags" label="标签" :width="clacPXToVW(200)">
+              <template #default="scope">
+                <el-tag
+                  v-for="tag in scope.row.tags"
+                  :key="tag"
+                  size="small"
+                  style="margin-right: 8px;"
+                >
+                  {{ tag }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="deviceId" label="设备ID" :width="clacPXToVW(120)" />
+            <el-table-column prop="streamUrl" label="视频流地址" show-overflow-tooltip />
+            <el-table-column prop="status" label="状态" :width="clacPXToVW(100)" align="center">
+              <template #default="scope">
+                <span v-if="scope.row.status === 1" class="staBtns WX">在线</span>
+                <span v-else class="staBtns">离线</span>
+              </template>
+            </el-table-column>
+          </TableSelf>
+
+          <div class="paginationBox flexRowAC">
               <el-pagination
-                v-model:current-page="deviceCurrentPage"
-                v-model:page-size="devicePageSize"
+                background
+                :current-page="deviceCurrentPage"
+                :page-size="devicePageSize"
                 :page-sizes="[10, 20, 50, 100]"
                 :total="deviceTotal"
-                layout="total, sizes, prev, pager, next, jumper"
+                layout="total, prev, pager, next, sizes"
+                class="justifyAlign"
                 @size-change="handleDeviceSizeChange"
                 @current-change="handleDeviceCurrentChange"
               />
             </div>
-          </div>
         </div>
-      </div>
+    </div>
     </div>
 
     <!-- 新增/编辑标签对话框 -->
-    <el-dialog 
-      v-model="dialogVisible" 
-      :title="dialogTitle" 
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
       width="400px"
       @close="handleDialogClose"
     >
@@ -328,7 +286,7 @@
           <el-input v-model="tagForm.tagName" placeholder="请输入" />
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleSave">确认</el-button>
@@ -339,6 +297,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { clacPXToVW } from '@/utils/index'
 import {
   Search,
   Plus,
@@ -351,17 +310,15 @@ import {
 import { ElMessage, ElMessageBox } from 'element-plus'
 import CollapseToggle from '@/components/CollapseToggle.vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
-import SearchInput from '@/components/SearchInput.vue'
-import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
 import TagSelector from '@/components/TagSelector.vue'
-import { 
-  getTagTree, 
+import {
+  getTagTree,
   getTagManagementPage,
-  createTag, 
-  updateTag, 
-  deleteTag, 
+  createTag,
+  updateTag,
+  deleteTag,
   batchDeleteTags,
-  getTagDevices 
+  getTagDevices
 } from '@/api/tagManagement'
 import { getDeviceById, getDeviceList, getDeviceTree } from '@/api/device'
 
@@ -406,9 +363,9 @@ const tagNameMap = ref(new Map())
 // 转换后端数据为前端树形结构
 const convertToTreeData = (apiData) => {
   if (!apiData || !Array.isArray(apiData)) return []
-  
+
   console.log('开始转换树形数据:', apiData.length, '个节点')
-  
+
   // 递归转换树形数据为前端组件所需格式
   const transformTreeData = (nodes) => {
     return nodes.map(node => ({
@@ -423,10 +380,10 @@ const convertToTreeData = (apiData) => {
       original: node
     }))
   }
-  
+
   const result = transformTreeData(apiData)
   console.log('树形数据转换完成:', result.length, '个根节点')
-  
+
   return result
 }
 
@@ -632,7 +589,7 @@ const handleTreeAction = (action) => {
 // 根据ID查找标签名称
 const findTagNameById = (id) => {
   if (!id || !allTagsData.value.length) return ''
-  
+
   // 递归查找标签
   const findInTree = (nodes) => {
     for (const node of nodes) {
@@ -646,17 +603,17 @@ const findTagNameById = (id) => {
     }
     return null
   }
-  
+
   return findInTree(allTagsData.value) || ''
 }
 
 // 生成父级选项
 const generateParentOptions = () => {
   const options = []
-  
+
   console.log('生成新增父级选项，allTagsData长度:', allTagsData.value.length)
   console.log('当前选中树节点:', selectedTreeNode.value)
-  
+
   if (!allTagsData.value.length) {
     console.warn('allTagsData为空，返回默认选项')
     // 如果数据还没加载完成，提供默认选项
@@ -665,12 +622,12 @@ const generateParentOptions = () => {
       { id: 'public', name: '公共', level: 0, categoryType: 'public' }
     ]
   }
-  
+
   // 根据当前选中的树节点或表格数据的上下文确定显示哪些父级选项
   if (selectedTreeNode.value) {
     const node = selectedTreeNode.value
     console.log('根据选中节点生成选项，节点:', node)
-    
+
     if (node.level === 1) {
       // 选中的是标签类型（level=1），新增的标签应该是level=2，父级就是这个标签类型
       options.push({
@@ -704,20 +661,20 @@ const generateParentOptions = () => {
   } else {
     console.log('没有选中节点，生成通用选项')
     // 没有选中特定节点，显示所有可能的父级选项
-    
+
     // 添加根级选项（自有/公共）
     options.push(
       { id: 'own', name: '自有', level: 0, categoryType: 'own' },
       { id: 'public', name: '公共', level: 0, categoryType: 'public' }
     )
-    
+
     // 添加所有level=1的标签类型作为可选父级
     const level1Tags = allTagsData.value.filter(tag => tag.level === 1)
     console.log('找到的level=1标签:', level1Tags)
-    
+
     // 使用Set来去重，防止重复添加
     const addedIds = new Set(['own', 'public']) // 已经添加的根级选项
-    
+
     level1Tags.forEach(tag => {
       if (!addedIds.has(tag.id)) {
         addedIds.add(tag.id)
@@ -730,7 +687,7 @@ const generateParentOptions = () => {
       }
     })
   }
-  
+
   console.log('生成的父级选项:', options)
   return options
 }
@@ -738,7 +695,7 @@ const generateParentOptions = () => {
 // 在所有数据中查找标签
 const findTagInAllData = (id) => {
   if (!id || !allTagsData.value.length) return null
-  
+
   // 递归查找标签
   const findInTree = (nodes) => {
     for (const node of nodes) {
@@ -752,14 +709,14 @@ const findTagInAllData = (id) => {
     }
     return null
   }
-  
+
   return findInTree(allTagsData.value)
 }
 
 // 根据父级标签建议子标签名称
 const getSuggestedTagNames = (parentName, categoryType) => {
   const suggestions = []
-  
+
   // 根据父级名称和分类类型建议合适的子标签名称
   if (parentName === '设备类型') {
     suggestions.push('网络摄像机', '模拟摄像机', '云台摄像机', '红外摄像机', '鱼眼摄像机')
@@ -783,7 +740,7 @@ const getSuggestedTagNames = (parentName, categoryType) => {
       suggestions.push('新标签')
     }
   }
-  
+
   // 检查建议的名称是否已存在，如果存在则添加数字后缀
   const existingNames = new Set()
   if (allTagsData.value) {
@@ -793,7 +750,7 @@ const getSuggestedTagNames = (parentName, categoryType) => {
       }
     })
   }
-  
+
   const uniqueSuggestions = suggestions.map(name => {
     let uniqueName = name
     let counter = 1
@@ -803,20 +760,20 @@ const getSuggestedTagNames = (parentName, categoryType) => {
     }
     return uniqueName
   })
-  
+
   return uniqueSuggestions
 }
 
 // 建议标签类型名称（level=1）
 const getSuggestedCategoryNames = (categoryType) => {
   const suggestions = []
-  
+
   if (categoryType === 'own') {
     suggestions.push('设备类型', '设备位置', '设备品牌', '设备状态', '使用场景', '重要等级')
   } else if (categoryType === 'public') {
     suggestions.push('通用分类', '功能分类', '技术规格', '标准类型', '应用场景', '管理分类')
   }
-  
+
   // 检查建议的名称是否已存在
   const existingNames = new Set()
   if (allTagsData.value) {
@@ -826,7 +783,7 @@ const getSuggestedCategoryNames = (categoryType) => {
       }
     })
   }
-  
+
   const uniqueSuggestions = suggestions.map(name => {
     let uniqueName = name
     let counter = 1
@@ -836,21 +793,21 @@ const getSuggestedCategoryNames = (categoryType) => {
     }
     return uniqueName
   })
-  
+
   return uniqueSuggestions
 }
 
 // 处理父级选择变更
 const handleParentChange = (parentId) => {
   console.log('父级选择变更:', parentId)
-  
+
   // 根据选中的父级更新相关字段
   const selectedParent = parentOptions.value.find(option => option.id === parentId)
   if (selectedParent) {
     // 设置标签的层级和分类类型
     tagForm.level = selectedParent.level + 1
     tagForm.categoryType = selectedParent.categoryType
-    
+
     console.log('更新标签层级和分类:', {
       level: tagForm.level,
       categoryType: tagForm.categoryType
@@ -861,20 +818,20 @@ const handleParentChange = (parentId) => {
 // 处理TagSelector父级标签选择变更
 const handleParentTagChange = (selectedTags) => {
   console.log('TagSelector父级选择变更:', selectedTags)
-  
+
   // 实现单选逻辑：如果选择了新的标签，则只保留最后一个
   if (selectedTags && selectedTags.length > 1) {
     // 保留最后选择的标签
     const lastSelected = selectedTags[selectedTags.length - 1]
     selectedParentTag.value = [lastSelected]
     tagForm.parentId = lastSelected
-    
+
     // 处理选择的标签类型
     handleSelectedTag(lastSelected)
   } else if (selectedTags && selectedTags.length === 1) {
     const selectedTag = selectedTags[0]
     tagForm.parentId = selectedTag
-    
+
     // 处理选择的标签类型
     handleSelectedTag(selectedTag)
   } else {
@@ -888,7 +845,7 @@ const handleParentTagChange = (selectedTags) => {
 // 处理选择的标签，设置相关字段
 const handleSelectedTag = (selectedValue) => {
   console.log('处理选择的标签:', selectedValue)
-  
+
   // 如果选择的是大类（"own"/"public"）
   if (selectedValue === 'own' || selectedValue === 'public') {
     tagForm.categoryType = selectedValue
@@ -917,15 +874,15 @@ const findTagById = (tagId) => {
 // 生成编辑模式的父级选项
 const generateEditParentOptions = (currentRow) => {
   const options = []
-  
+
   console.log('生成编辑父级选项，当前行数据:', currentRow)
   console.log('allTagsData:', allTagsData.value)
-  
+
   if (!allTagsData.value.length) {
     console.warn('allTagsData为空，无法生成父级选项')
     return options
   }
-  
+
   // 根据当前标签的层级确定可选的父级
   if (currentRow.level === 1) {
     // 编辑标签类型（level=1），父级应该是根级（自有/公共）
@@ -933,28 +890,28 @@ const generateEditParentOptions = (currentRow) => {
       { id: 'own', name: '自有', level: 0, categoryType: 'own' },
       { id: 'public', name: '公共', level: 0, categoryType: 'public' }
     )
-    
+
     // 自动设置当前的父级ID为对应的分类类型
     setTimeout(() => {
       tagForm.parentId = currentRow.categoryType
       selectedParentTag.value = [currentRow.categoryType]
       console.log('自动设置父级ID为:', currentRow.categoryType)
     }, 0)
-    
+
   } else if (currentRow.level === 2) {
     // 编辑具体标签（level=2），父级应该是同类型下的所有标签类型（level=1）
     console.log('查找level=1的标签，categoryType:', currentRow.categoryType)
-    
+
     // 直接从展平的数据中查找level=1的标签，避免重复
-    const level1Tags = allTagsData.value.filter(tag => 
+    const level1Tags = allTagsData.value.filter(tag =>
       tag.level === 1 && tag.categoryType === currentRow.categoryType
     )
-    
+
     console.log('找到的level=1标签:', level1Tags)
-    
+
     // 使用Set来去重，防止重复添加
     const addedIds = new Set()
-    
+
     level1Tags.forEach(tag => {
       if (!addedIds.has(tag.id)) {
         addedIds.add(tag.id)
@@ -966,7 +923,7 @@ const generateEditParentOptions = (currentRow) => {
         })
       }
     })
-    
+
     // 自动设置当前的父级ID
     setTimeout(() => {
       tagForm.parentId = currentRow.parentId
@@ -974,7 +931,7 @@ const generateEditParentOptions = (currentRow) => {
       console.log('自动设置父级ID为:', currentRow.parentId)
     }, 0)
   }
-  
+
   console.log('生成的父级选项:', options)
   parentOptions.value = options
 }
@@ -1001,7 +958,7 @@ const handleNodeClick = (data) => {
   console.log('节点点击:', data)
   selectedTreeNode.value = data
   selectedTagType.value = data.tagType || 'own'
-  
+
   // 清空搜索条件，避免干扰树节点过滤
   queryParams.value = {
     keyword: '',
@@ -1009,10 +966,10 @@ const handleNodeClick = (data) => {
     level: null,
     parentId: null
   }
-  
+
   // 同时清空搜索表单
   searchForm.tagName = ''
-  
+
   // 根据选中的节点过滤表格数据
   currentPage.value = 1
   loadTagData()
@@ -1020,10 +977,10 @@ const handleNodeClick = (data) => {
 
 const addChild = (data) => {
   console.log('添加子节点:', data)
-  
+
   // 设置选中的树节点，这样generateParentOptions会生成正确的父级选项
   selectedTreeNode.value = data
-  
+
   // 打开新增对话框，允许自动填充
   handleAdd(true)
 }
@@ -1040,11 +997,11 @@ const deleteNode = async (data) => {
         type: 'warning'
       }
     )
-    
+
     loading.value = true
     await deleteTag(data.id)
     ElMessage.success('删除成功')
-    
+
     // 重新加载树形结构和表格数据
     await loadTagTree()
     await loadTagData()
@@ -1077,15 +1034,15 @@ const handleAdd = (autoFill = true) => {
   dialogTitle.value = '新增标签'
   isEditing.value = false
   resetForm()
-  
+
   // 生成父级选项
   parentOptions.value = generateParentOptions()
-  
+
   // 根据上下文自动填充信息（仅当autoFill为true且有选中节点时）
   if (autoFill && selectedTreeNode.value) {
     const node = selectedTreeNode.value
     console.log('根据选中节点自动填充信息:', node)
-    
+
     // 自动设置父级
     if (node.level === 1) {
       // 选中的是标签类型（level=1），新增的标签父级是这个类型
@@ -1093,7 +1050,7 @@ const handleAdd = (autoFill = true) => {
       selectedParentTag.value = [node.id]
       tagForm.level = 2
       tagForm.categoryType = node.tagType
-      
+
       // 根据父级类型建议标签名称
       const suggestions = getSuggestedTagNames(node.label, node.tagType)
       if (suggestions.length > 0) {
@@ -1105,7 +1062,7 @@ const handleAdd = (autoFill = true) => {
       selectedParentTag.value = [node.id]
       tagForm.level = 1
       tagForm.categoryType = node.tagType
-      
+
       // 建议标签类型名称
       const suggestions = getSuggestedCategoryNames(node.tagType)
       if (suggestions.length > 0) {
@@ -1118,7 +1075,7 @@ const handleAdd = (autoFill = true) => {
         selectedParentTag.value = [node.parentId]
         tagForm.level = 2
         tagForm.categoryType = node.tagType
-        
+
         // 根据同级标签建议名称
         const parentTag = findTagInAllData(node.parentId)
         if (parentTag) {
@@ -1129,7 +1086,7 @@ const handleAdd = (autoFill = true) => {
         }
       }
     }
-    
+
     // 确保父级选项包含我们设置的父级ID
     handleParentChange(tagForm.parentId)
   } else {
@@ -1140,7 +1097,7 @@ const handleAdd = (autoFill = true) => {
       handleParentChange(tagForm.parentId)
     }
   }
-  
+
   console.log('新增标签表单初始化完成:', tagForm)
   dialogVisible.value = true
 }
@@ -1150,14 +1107,14 @@ const handleEdit = () => {
     ElMessage.warning('请选择一条记录进行编辑')
     return
   }
-  
+
   dialogTitle.value = '编辑标签'
   isEditing.value = true
   const row = selectedRows.value[0]
-  
+
   // 生成父级选项 - 编辑时需要更灵活的选项
   generateEditParentOptions(row)
-  
+
   Object.assign(tagForm, {
     id: row.id,
     tagName: row.tagName,
@@ -1168,10 +1125,10 @@ const handleEdit = () => {
     level: row.level,
     position: row.position || 0
   })
-  
+
   // 设置TagSelector的选中值
   selectedParentTag.value = row.parentId ? [row.parentId] : []
-  
+
   dialogVisible.value = true
 }
 
@@ -1180,7 +1137,7 @@ const handleDelete = async () => {
     ElMessage.warning('请选择要删除的记录')
     return
   }
-  
+
   try {
     await ElMessageBox.confirm(
       `确定要删除选中的 ${selectedRows.value.length} 条记录吗？`,
@@ -1191,9 +1148,9 @@ const handleDelete = async () => {
         type: 'warning'
       }
     )
-    
+
     loading.value = true
-    
+
     // 批量删除
     if (selectedRows.value.length === 1) {
       await deleteTag(selectedRows.value[0].id)
@@ -1201,10 +1158,10 @@ const handleDelete = async () => {
       const tagIds = selectedRows.value.map(row => row.id)
       await batchDeleteTags(tagIds)
     }
-    
+
     selectedRows.value = []
     ElMessage.success('删除成功')
-    
+
     // 重新加载树形结构和表格数据
     await loadTagTree()
     await loadTagData()
@@ -1237,10 +1194,10 @@ const handleRowEdit = (row) => {
     level: row.level,
     position: row.position || 0
   })
-  
+
   // 设置TagSelector的选中值
   selectedParentTag.value = row.parentId ? [row.parentId] : []
-  
+
   dialogVisible.value = true
 }
 
@@ -1255,11 +1212,11 @@ const handleRowDelete = async (row) => {
         type: 'warning'
       }
     )
-    
+
     loading.value = true
     await deleteTag(row.id)
     ElMessage.success('删除成功')
-    
+
     // 重新加载树形结构和表格数据
     await loadTagTree()
     await loadTagData()
@@ -1278,7 +1235,7 @@ const handleRowDelete = async (row) => {
 const handlePublicChange = async (row) => {
   try {
     loading.value = true
-    
+
     const tagData = {
       tagName: row.tagName,
       description: row.description,
@@ -1287,10 +1244,10 @@ const handlePublicChange = async (row) => {
       level: row.level,
       position: row.position || 0
     }
-    
+
     await updateTag(row.id, tagData)
     ElMessage.success(`已${row.isPublic ? '公开' : '取消公开'}标签`)
-    
+
     // 重新加载树形结构和表格数据
     await loadTagTree()
     await loadTagData()
@@ -1342,14 +1299,14 @@ const handleDialogClose = () => {
 
 const handleSave = async () => {
   if (!tagFormRef.value) return
-  
+
   try {
     await tagFormRef.value.validate()
     loading.value = true
-    
+
     // 处理parentId的类型转换
     let processedParentId = null
-    
+
     if (tagForm.parentId) {
       // 如果选择的是大类（"own"/"public"），则parentId应该为null
       if (tagForm.parentId === 'own' || tagForm.parentId === 'public') {
@@ -1364,7 +1321,7 @@ const handleSave = async () => {
         processedParentId = isNaN(parentIdNum) ? null : parentIdNum
       }
     }
-    
+
     const tagData = {
       tagName: tagForm.tagName,
       description: tagForm.description,
@@ -1373,10 +1330,10 @@ const handleSave = async () => {
       level: tagForm.level || 1,
       position: tagForm.position || 0
     }
-    
+
     console.log('保存标签数据:', tagData)
     console.log('原始parentId:', tagForm.parentId, '处理后parentId:', processedParentId)
-    
+
     if (isEditing.value) {
       // 编辑逻辑
       await updateTag(tagForm.id, tagData)
@@ -1386,7 +1343,7 @@ const handleSave = async () => {
       await createTag(tagData)
       ElMessage.success('新增成功')
     }
-    
+
     dialogVisible.value = false
     selectedRows.value = []
     // 重新加载树形结构和表格数据
@@ -1413,10 +1370,10 @@ const resetForm = () => {
     level: 1,
     position: 0
   })
-  
+
   // 重置TagSelector选择
   selectedParentTag.value = []
-  
+
   if (tagFormRef.value) {
     tagFormRef.value.resetFields()
   }
@@ -1426,18 +1383,18 @@ const resetForm = () => {
 const loadTagData = async () => {
   try {
     loading.value = true
-    
+
     // 构建查询参数
     const params = {
       current: currentPage.value,
       size: pageSize.value,
       ...queryParams.value
     }
-    
+
     // 根据选中的树节点设置过滤条件
     if (selectedTreeNode.value) {
       console.log('选中的树节点:', selectedTreeNode.value)
-      
+
       // 判断节点类型
       if (selectedTreeNode.value.level === 1) {
         // 选中的是标签类型（一级节点），显示该类型下的所有子标签
@@ -1454,15 +1411,15 @@ const loadTagData = async () => {
         console.log('过滤条件 - 大类:', { categoryType: params.categoryType })
       }
     }
-    
+
     console.log('分页查询参数:', params)
-    
+
     const response = await getTagManagementPage(params)
     console.log('分页查询响应:', response)
-    
+
     // 处理响应数据 - 可能直接是分页数据，也可能包装在success/data中
     let pageData = null
-    
+
     if (response && response.records !== undefined) {
       // 直接的分页数据格式
       pageData = response
@@ -1473,11 +1430,11 @@ const loadTagData = async () => {
       // 其他包装格式
       pageData = response.data
     }
-    
+
     if (pageData && pageData.records !== undefined) {
       // 处理返回的分页数据
       const records = pageData.records || []
-      
+
       // 转换数据格式
       const formattedData = records.map(tag => ({
         id: tag.id,
@@ -1492,12 +1449,12 @@ const loadTagData = async () => {
         tagColor: tag.tagColor,
         isActive: tag.isActive
       }))
-      
+
       // 更新表格数据
       tableData.value = formattedData
       currentPageTableData.value = formattedData
       total.value = pageData.total || 0
-      
+
       console.log(`分页查询成功：当前页 ${pageData.current}/${pageData.pages || Math.ceil(pageData.total / pageData.size)}，共 ${pageData.total} 条记录`)
     } else {
       console.error('分页查询失败或数据格式不正确:', response)
@@ -1516,9 +1473,9 @@ const loadTagTree = async () => {
   try {
     treeLoading.value = true
     const response = await getTagTree()
-    
+
     console.log('树形API响应数据:', response)
-    
+
     // 响应处理 - 根据axios拦截器的处理逻辑
     let tagData = []
     if (Array.isArray(response)) {
@@ -1528,23 +1485,23 @@ const loadTagTree = async () => {
     } else if (response && response.success && response.data) {
       tagData = response.data
     }
-    
+
     console.log('处理后的标签数据:', tagData)
-    
+
     if (tagData && tagData.length > 0) {
       // 后端返回的数据格式：
       // [
       //   {id: "own", tagName: "自有标签", categoryType: "own", children: [...]},
       //   {id: "public", tagName: "公共标签", categoryType: "public", children: [...]}
       // ]
-      
+
       // 查找自有标签和公共标签根节点
       const ownRoot = tagData.find(item => item.categoryType === 'own')
       const publicRoot = tagData.find(item => item.categoryType === 'public')
-      
+
       console.log('自有标签根节点:', ownRoot)
       console.log('公共标签根节点:', publicRoot)
-      
+
       // 转换为前端组件需要的格式
       if (ownRoot && ownRoot.children) {
         treeData.value = convertToTreeData(ownRoot.children)
@@ -1553,7 +1510,7 @@ const loadTagTree = async () => {
         treeData.value = []
         console.log('没有自有标签数据')
       }
-      
+
       if (publicRoot && publicRoot.children) {
         publicTreeData.value = convertToTreeData(publicRoot.children)
         console.log('公共标签树形数据:', publicTreeData.value)
@@ -1561,14 +1518,14 @@ const loadTagTree = async () => {
         publicTreeData.value = []
         console.log('没有公共标签数据')
       }
-      
+
       console.log('树形结构加载完成')
-      
+
       // 保存完整的标签数据用于查找功能 - 需要展平树形数据
       const flattenAllTags = (nodes) => {
         let result = []
         if (!nodes || !Array.isArray(nodes)) return result
-        
+
         for (const node of nodes) {
           result.push(node)
           if (node.children && node.children.length > 0) {
@@ -1577,11 +1534,11 @@ const loadTagTree = async () => {
         }
         return result
       }
-      
+
       allTagsData.value = flattenAllTags(tagData)
       console.log('保存的完整标签数据:', allTagsData.value)
       tagNameMap.value = buildTagNameMap(allTagsData.value)
-      
+
       // 加载表格数据
       await loadTagData()
     } else {
@@ -1611,11 +1568,11 @@ const countAllTags = (nodes) => {
 // 展平标签数据
 const flattenTags = (tags) => {
   console.log('开始展平标签数据:', tags.length, '个根节点')
-  
+
   // 递归展平树形数据
   const flattenRecursive = (nodes) => {
     let result = []
-    
+
     nodes.forEach(node => {
       // 添加当前节点
       result.push({
@@ -1631,38 +1588,38 @@ const flattenTags = (tags) => {
         tagColor: node.tagColor,
         isActive: node.isActive
       })
-      
+
       // 递归处理子节点
       if (node.children && node.children.length > 0) {
         result = result.concat(flattenRecursive(node.children))
       }
     })
-    
+
     return result
   }
-  
+
   const flattenedData = flattenRecursive(tags)
-  
+
   console.log('展平后的数据:', flattenedData.length, '个标签')
-  
+
   // 保存完整数据用于过滤
   allTagsData.value = flattenedData
   flatTagsList.value = [...allTagsData.value]
   total.value = flatTagsList.value.length
-  
+
   console.log('表格数据已更新，总数:', total.value)
 }
 
 // 筛选标签数据
 const filterTagsList = () => {
   let filtered = allTagsData.value
-  
+
   // 根据当前选中的节点过滤
   if (selectedTreeNode.value) {
     if (selectedTreeNode.value.type === 'category') {
       // 选中分类，显示该分类下的所有标签
-      filtered = filtered.filter(tag => 
-        tag.parentId === selectedTreeNode.value.id || 
+      filtered = filtered.filter(tag =>
+        tag.parentId === selectedTreeNode.value.id ||
         tag.id === selectedTreeNode.value.id
       )
     } else if (selectedTreeNode.value.type === 'public') {
@@ -1670,14 +1627,14 @@ const filterTagsList = () => {
       filtered = filtered.filter(tag => tag.tagType === 'public')
     }
   }
-  
+
   // 根据搜索条件过滤
   if (searchForm.tagName) {
-    filtered = filtered.filter(tag => 
+    filtered = filtered.filter(tag =>
       tag.tagName.toLowerCase().includes(searchForm.tagName.toLowerCase())
     )
   }
-  
+
   flatTagsList.value = filtered
   total.value = filtered.length
   currentPage.value = 1
@@ -1686,11 +1643,11 @@ const filterTagsList = () => {
 // 搜索处理方法
 const handleSearch = () => {
   console.log('执行搜索:', searchForm)
-  
+
   // 清除树节点选择，使用搜索条件
   selectedTreeNode.value = null
   selectedTagType.value = 'own'
-  
+
   queryParams.value.keyword = searchForm.tagName
   currentPage.value = 1
   loadTagData()
@@ -1740,7 +1697,7 @@ const searchResetFn = (val, reset) => {
 // 高级搜索相关方法
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索:', searchData)
-  
+
   // 更新搜索表单
   if (searchData.keyword) {
     searchForm.tagName = searchData.keyword
@@ -1757,7 +1714,7 @@ const handleAdvancedSearch = (searchData) => {
   if (searchData.dateRange && searchData.dateRange.length > 0) {
     searchForm.dateRange = searchData.dateRange
   }
-  
+
   handleSearch()
 }
 
@@ -1782,7 +1739,7 @@ const deviceSearchResetFn = (val, reset) => {
 
 const handleDeviceAdvancedSearch = (searchData) => {
   console.log('设备高级搜索:', searchData)
-  
+
   // 更新设备搜索表单
   if (searchData.keyword) {
     deviceSearchForm.deviceName = searchData.keyword
@@ -1838,24 +1795,166 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  background: #f0f2f5;
+
+  .tenant_content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+    min-height: 0;
+  }
+}
+
+.police_aside_use {
+  width: 300px;
+  padding-right: 20px;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+
+  .treeTitle {
+    color: var(--el-color-primary);
+    padding-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 4px;
+
+    &::before {
+      content: '';
+      width: 3px;
+      height: 18px;
+      background-color: var(--el-color-primary);
+    }
+  }
+
+  .tree_search_content {
+    justify-content: center;
+    padding-bottom: 10px;
+
+    :deep(.el-input__wrapper) {
+      background: #fff;
+      box-shadow: none;
+      border: 1px solid #dcdfe6;
+      border-radius: 4px;
+    }
+  }
+
+  :deep(.el-tree-node__content) {
+    --el-tree-node-hover-bg-color: var(--el-menu-hover-bg-color);
+    height: 38px;
+    font-size: 14px;
+    color: #333;
+
+    .custom-tree-node {
+      width: 100%;
+      justify-content: space-between;
+      padding-right: 4px;
+    }
+  }
+
+  :deep(.el-tree) {
+    height: calc(100% - 80px);
+    overflow: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
+.custom-tree-node {
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+
+  .tree-node-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tree-node-actions {
+    flex-shrink: 0;
+    gap: 8px;
+    margin-left: 8px;
+  }
+
+  .tree-icon {
+    flex-shrink: 0;
+    font-size: 14px;
+    color: var(--el-color-primary);
+  }
+}
+
+.tableTenItU {
+  flex: 1;
+  height: 100%;
+  overflow: auto;
+  min-width: 0;
+
+  :deep(.header_tenant_cell) {
+    background: #F8F8F9;
+  }
+}
+
+.paginationBox {
+  justify-content: center;
+  height: 100px;
+}
+
+.operateAppBox {
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.staBtns {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #909399;
+  background: #f4f4f5;
+
+  &.WX {
+    color: #67c23a;
+    background: #f0f9eb;
+  }
+}
+
 .tag-management {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
-  padding: 20px;
+  background: #f0f2f5;
   overflow: hidden;
 }
 
-/* 标签页切换 - 顶部 */
 .tab-nav {
   display: flex;
   background: #F0F2F5;
   border-radius: 8px 8px 0 0;
   padding: 20px 20px 0 20px;
   border-bottom: 1px solid rgba(26, 83, 255, 0.2);
-  margin-bottom: 0;
+  flex-shrink: 0;
 }
 
 .tab-item {
@@ -1865,173 +1964,31 @@ onMounted(() => {
   color: #606266;
   transition: all 0.3s;
   background: transparent;
+
+  &.active {
+    color: #1A53FF;
+    border-bottom-color: #1A53FF;
+    font-weight: 600;
+  }
+
+  &:hover:not(.active) {
+    color: #1A53FF;
+  }
 }
 
-.tab-item.active {
-  color: #1A53FF;
-  border-bottom-color: #1A53FF;
-  font-weight: 600;
-}
-
-.tab-item:hover:not(.active) {
-  color: #1A53FF;
-}
-
-
-
-/* 主要内容区域 */
-.main-content-container {
-  flex: 1;
-  display: flex;
-  gap: 0;
-  min-height: 0;
-  overflow: hidden;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 0 0 8px 8px;
-}
-
-
-
-.tab-item {
-  padding: 12px 24px;
-  cursor: pointer;
-  border-bottom: 3px solid transparent;
-  color: #606266;
-  transition: all 0.3s;
-  background: transparent;
-}
-
-.tab-item.active {
-  color: #1A53FF;
-  border-bottom-color: #1A53FF;
-  font-weight: 600;
-}
-
-.tab-item:hover:not(.active) {
-  color: #1A53FF;
-}
-
-/* 标签维护内容 */
-.maintenance-content {
-  flex: 1;
-  display: flex;
-  gap: 0;
-  min-height: 0;
-  overflow: hidden;
-}
-
-/* 标签设备内容 */
+.maintenance-content,
 .device-content {
   flex: 1;
-  display: flex;
-  gap: 0;
   min-height: 0;
   overflow: hidden;
-}
-
-/* 搜索区域 */
-.search-section {
-  flex: 1;
-  padding: 20px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-/* 左侧树形结构 */
-.device-tree {
-  width: 280px;
-  min-width: 280px;
-  max-width: 280px;
-  flex-shrink: 0;
-  background: white;
-  border-right: 1px solid #f0f0f0;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 设备树区域圆角 */
-.device-tree {
-  border-radius: 0 0 0 8px;
-}
-
-.tree-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.tree-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1A53FF;
-}
-
-.tree-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.tree-search {
-  padding: 20px;
-  border-bottom: 1px solid #f0f0f0;
 }
 
 .tree-content {
   flex: 1;
-  padding: 20px;
   overflow-y: auto;
+  height: calc(100% - 90px);
 }
 
-.tree-node {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  position: relative;
-}
-
-.node-label {
-  flex: 1;
-  font-size: 14px;
-}
-
-.node-actions {
-  display: flex;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.tree-node:hover .node-actions {
-  opacity: 1;
-}
-
-/* 不同层级的节点样式 */
-.node-level-1 .node-label {
-  font-weight: 600;
-  color: #303133;
-}
-
-.node-level-2 .node-label {
-  color: #606266;
-}
-
-.node-level-3 .node-label {
-  color: #909399;
-}
-
-/* 操作按钮样式 */
-.add-btn {
-  color: #67c23a !important;
-}
-
-.delete-btn {
-  color: #f56c6c !important;
-}
-
-/* 公共部分样式 */
 .public-section {
   margin-top: 20px;
   padding-top: 16px;
@@ -2043,154 +2000,6 @@ onMounted(() => {
   font-weight: 600;
   color: #1A53FF;
   margin-bottom: 12px;
-  padding: 0;
-}
-
-.public-node {
-  padding-left: 8px;
-}
-
-.node-icon {
-  margin-right: 8px;
-  color: #909399;
-}
-
-/* 展开树形区域按钮 - 内联样式 */
-.expand-tree-btn-inline {
-  display: flex;
-  align-items: center;
-  margin-right: 12px;
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 4px;
-}
-
-/* 右侧内容区域 */
-.content-area {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  gap: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: white;
-  border-radius: 8px 8px 0 0;
-  padding: 20px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-}
-
-/* 操作列按钮样式 */
-.operation-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.operation-btn {
-  padding: 0;
-  font-size: 14px;
-  border: none;
-  background: transparent;
-  color: #1A53FF;
-  text-decoration: none;
-  transition: all 0.3s;
-  cursor: pointer;
-}
-
-.operation-btn.edit-btn {
-  color: #1A53FF;
-}
-
-.operation-btn.delete-btn {
-  color: #f56c6c;
-}
-
-.operation-btn.view-btn {
-  color: #1A53FF;
-}
-
-.operation-btn:hover {
-  opacity: 0.7;
-}
-
-/* 表格容器样式 */
-.table-content {
-  flex: 1;
-  background: white;
-  border-radius: 0 0 8px 8px;
-  padding: 20px;
-  overflow: hidden;
-}
-
-/* 树形区域展开时的右侧圆角 */
-.content-area:not(.full-width) .toolbar {
-  border-radius: 0 8px 0 0;
-}
-
-.content-area:not(.full-width) .table-content {
-  border-radius: 0 0 8px 0;
-}
-
-/* 树形区域折叠时的完整圆角 */
-.content-area.full-width .toolbar {
-  border-radius: 8px 8px 0 0;
-}
-
-.content-area.full-width .table-content {
-  border-radius: 0 0 8px 8px;
-}
-
-/* 分页容器样式 */
-.table-pagination {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
-}
-
-
-
-/* 表格样式调整 */
-:deep(.el-table) {
-  font-size: 14px;
-}
-
-:deep(.el-table th) {
-  background-color: #fafafa;
-  font-weight: 600;
-}
-
-/* 主色调替换 */
-:deep(.el-button--primary) {
-  background-color: #1A53FF;
-  border-color: #1A53FF;
-}
-
-:deep(.el-button--primary:hover) {
-  background-color: #4A72FF;
-  border-color: #4A72FF;
 }
 
 :deep(.el-switch.is-checked .el-switch__core) {
@@ -2198,63 +2007,8 @@ onMounted(() => {
   border-color: #1A53FF;
 }
 
-:deep(.el-pagination .el-pagination__sizes .el-select .el-input .el-input__inner:focus),
-:deep(.el-pagination .el-pagination__jump .el-input .el-input__inner:focus) {
-  border-color: #1A53FF;
-}
-
-:deep(.el-pagination .btn-next:hover),
-:deep(.el-pagination .btn-prev:hover),
-:deep(.el-pagination .el-pager li:hover) {
-  color: #1A53FF;
-}
-
-:deep(.el-pagination .el-pager li.active) {
-  color: #1A53FF;
-  font-weight: 700;
-}
-
-/* 树形组件样式调整 */
-:deep(.el-tree-node__content) {
-  height: 36px;
-}
-
-:deep(.el-tree-node__label) {
-  font-size: 14px;
-}
-
-:deep(.el-tree-node__content:hover) {
-  background-color: rgba(26, 83, 255, 0.1);
-}
-
-:deep(.el-tree--highlight-current .el-tree-node.is-current > .el-tree-node__content) {
-  background-color: rgba(26, 83, 255, 0.2);
-  color: #1A53FF;
-}
-
-/* 对话框样式 */
 :deep(.el-dialog) {
   border-radius: 8px;
 }
-
-:deep(.el-dialog__header) {
-  padding: 20px 24px 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-:deep(.el-dialog__body) {
-  padding: 24px;
-}
-
-:deep(.el-form-item__label) {
-  font-weight: 500;
-}
-
-/* 上级分类显示样式 */
-.parent-category {
-  color: #606266;
-  font-size: 14px;
-  line-height: 32px;
-}
-
 </style>
+

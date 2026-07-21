@@ -1,98 +1,90 @@
 <template>
-  <div class="scene-governance">
+  <div class="scene-governance tenant_Page draHeaPB">
+    <div class="tenant_content">
     <!-- 列表视图 -->
-    <div v-if="!showEditView" class="list-view">
-
-      <!-- 主内容区域 -->
-      <div class="main-content">
-        <!-- 工具栏 -->
-        <div class="toolbar">
-          <div class="toolbar-left">
-            <ActionButtonGroup 
-              :selected-count="selectedRows.length"
-              @add="handleAdd"
-              @edit="handleEdit"
-              @delete="handleDelete"
-            />
-          </div>
-          
-          <div class="toolbar-right">
-            <div class="depNameBox_out flexRowAC">
-              <div class="searchHeight_out flexRowAC">
-                <search-height-box
-                  keyword="keyword"
-                  placeholder="搜索"
-                  :data="searchData"
-                  @handle="searchResetFn"
-                />
-                <export-excel-pdf :item="exportItem" @handle="handleExport" />
+    <div v-if="!showEditView" class="tableTenBox flexRowAC">
+      <div class="tableTenItU">
+        <div class="depNameBox_out flexRowAC">
+          <div class="depNameBox flexRowAC">
+            <div class="exportBtnBox flexRowAC">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
+                  <el-icon class="BtnImg">
+                    <Plus />
+                  </el-icon>
+                  新建
+                </button>
+                <button-group :button-list="toolbarButtonList" />
               </div>
-            </div>
+          </div>
+          <div class="searchHeight_out flexRowAC">
+            <search-height-box
+              keyword="keyword"
+              placeholder="搜索"
+              :data="searchData"
+              @handle="searchResetFn"
+            />
+            <export-excel-pdf :item="exportItem" @handle="handleExport" />
           </div>
         </div>
 
-        <!-- 表格内容 -->
-        <div class="table-content">
-          <el-table 
-            :data="currentPageData" 
-            stripe
-            v-loading="tableLoading"
-            @selection-change="handleSelectionChange"
-          >
-            <el-table-column type="selection" width="55" />
-            <el-table-column type="index" label="序号" width="80" align="center" />
-            <el-table-column prop="name" label="场景名称" min-width="150" />
-            <el-table-column prop="description" label="场景描述" min-width="200" />
-<!--            <el-table-column prop="algorithmName" label="关联算法" min-width="120" />-->
-            <el-table-column prop="camerasName" label="关联设备" min-width="120" />
-<!--            <el-table-column prop="rules" label="治理规则" min-width="120" />-->
-            <el-table-column prop="status" label="状态" min-width="100" align="center">
-              <template #default="scope">
-                <el-tag 
-                  :type="scope.row.status === 1 ? 'success' : 'danger'"
-                  size="small"
-                >
-                  {{ scope.row.status === 1 ? '启用' : '禁用' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="createTime" label="创建时间" min-width="160" />
-            <el-table-column label="操作" width="240" fixed="right" align="right">
-              <template #default="scope">
-                <div class="table-action-buttons">
-                  <el-button
-                    type="primary"
-                    text
-                    size="small"
-                    @click="handleEditRow(scope.row)"
-                  >
-                    编辑
-                  </el-button>
-                  <el-button 
-                    type="danger"
-                    text
-                    size="small"
-                    @click="handleDeleteRow(scope.row)"
-                  >
-                    删除
-                  </el-button>
+        <TableSelf
+          class="new_table"
+          header-cell-class-name="header_tenant_cell"
+          stripe
+          v-loading="tableLoading"
+          :data="currentPageData"
+          @selection-change="handleSelectionChange"
+        >
+          <el-table-column type="selection" :width="clacPXToVW(55)" />
+          <el-table-column label="序号" :width="clacPXToVW(80)" align="center">
+            <template #default="scope">
+              {{ scope.$index + (currentPage - 1) * pageSize + 1 }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="name" label="场景名称" :width="clacPXToVW(150)" show-overflow-tooltip />
+          <el-table-column prop="description" label="场景描述" :width="clacPXToVW(200)" show-overflow-tooltip />
+<!--            <el-table-column prop="algorithmName" label="关联算法" :width="clacPXToVW(120)" />-->
+          <el-table-column prop="camerasName" label="关联设备" :width="clacPXToVW(120)" show-overflow-tooltip />
+<!--            <el-table-column prop="rules" label="治理规则" :width="clacPXToVW(120)" />-->
+          <el-table-column prop="status" label="状态" :width="clacPXToVW(100)" align="center">
+            <template #default="scope">
+              <el-tag
+                :type="scope.row.status === 1 ? 'success' : 'danger'"
+                size="small"
+              >
+                {{ scope.row.status === 1 ? '启用' : '禁用' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createTime" label="创建时间" :width="clacPXToVW(160)" />
+          <el-table-column label="操作" :width="clacPXToVW(160)" fixed="right" align="right">
+            <template #default="scope">
+              <div class="operateAppBox flexRowAC" @click.stop>
+                <div class="new_table_svg_group" @click="handleEditRow(scope.row)">
+                  <oort-svg-icon width="20" height="20" name="edit_icon" class="new_table_svg_group_svg" />
+                  <span>编辑</span>
                 </div>
-              </template>
-            </el-table-column>
-          </el-table>
-          
-          <!-- 分页 - 紧贴表格数据 -->
-          <div class="table-pagination">
-                      <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
+                <div class="new_table_svg_group" @click="handleDeleteRow(scope.row)">
+                  <oort-svg-icon color="red" width="20" height="20" name="delete_icon" class="new_table_svg_group_svg" />
+                  <span>删除</span>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+        </TableSelf>
+
+        <div class="paginationBox flexRowAC">
+          <el-pagination
+            background
+            :current-page="currentPage"
+            :page-size="pageSize"
             :page-sizes="[10, 20, 50, 100]"
             :total="total"
-            layout="total, sizes, prev, pager, next, jumper"
+            layout="total, prev, pager, next, sizes"
+            class="justifyAlign"
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
           />
-          </div>
         </div>
       </div>
     </div>
@@ -154,6 +146,7 @@
           </div>
         </el-form>
       </div>
+    </div>
     </div>
 
     <!-- 新增场景弹窗 -->
@@ -366,12 +359,12 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowRight } from '@element-plus/icons-vue'
-import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
+import {ArrowRight, Plus } from '@element-plus/icons-vue'
 import CronExpressionBuilder from '@/components/CronExpressionBuilder.vue'
 import {getList, add, update, remove} from '@/api/sceneGovernance'
 import { getAlgorithmPage } from '@/api/algorithmManagement'
 import { getDeviceList } from '@/api/device'
+import { clacPXToVW } from '@/utils/index'
 
 const router = useRouter()
 
@@ -1045,6 +1038,11 @@ const handleDelete = async () => {
   }
 }
 
+const toolbarButtonList = [
+  { name: '编辑', svg: 'table_edit', clickFn: handleEdit },
+  { name: '删除', svg: 'table_del', clickFn: handleDelete },
+]
+
 const handleDetailRow = (row) => {
   ElMessage.info(`查看场景详情: ${row.name}`)
   // 实际项目中这里会打开详情页面或弹窗
@@ -1299,22 +1297,38 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  background: #f0f2f5;
+  .tenant_content { width: 100%; height: 100%; }
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+  }
+}
+.tableTenItU {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+  :deep(.header_tenant_cell) { background: #F8F8F9; }
+}
+.paginationBox { justify-content: center; height: 100px; }
+.operateAppBox { justify-content: flex-end; gap: 2px; }
+
 .scene-governance {
   height: 100%;
   display: flex;
   flex-direction: column;
   gap: 0;
   background-color: #f5f7fa;
-  padding: 20px;
   overflow: hidden;
-}
-
-.list-view {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
 }
 
 /* 查询栏 */
@@ -1351,52 +1365,6 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-/* 主内容区域 */
-.main-content {
-  flex: 1;
-  background: white;
-  border-radius: 0 0 8px 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow: hidden;
-}
-
-/* 工具栏样式 */
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-}
-
-/* 表格内容区域 */
-.table-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* 表格操作按钮样式 */
-.table-action-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 /* 主题色更新 */
 :deep(.el-button--primary) {
   background-color: #1A53FF;
@@ -1406,53 +1374,6 @@ onMounted(() => {
 :deep(.el-button--primary:hover) {
   background-color: #3d70ff;
   border-color: #3d70ff;
-}
-
-/* 表格操作按钮 - 纯文字样式 */
-.table-action-buttons :deep(.el-button--primary.is-text) {
-  color: #1A53FF !important;
-  background: transparent !important;
-  border: none !important;
-  padding: 2px 8px !important;
-}
-
-.table-action-buttons :deep(.el-button--primary.is-text:hover) {
-  color: #3d70ff !important;
-  background: transparent !important;
-  border: none !important;
-}
-
-.table-action-buttons :deep(.el-button--primary.is-text:focus) {
-  color: #1A53FF !important;
-  background: transparent !important;
-  border: none !important;
-}
-
-.table-action-buttons :deep(.el-button--danger.is-text) {
-  color: #f56c6c !important;
-  background: transparent !important;
-  border: none !important;
-  padding: 2px 8px !important;
-}
-
-.table-action-buttons :deep(.el-button--danger.is-text:hover) {
-  color: #f78989 !important;
-  background: transparent !important;
-  border: none !important;
-}
-
-.table-action-buttons :deep(.el-button--danger.is-text:focus) {
-  color: #f56c6c !important;
-  background: transparent !important;
-  border: none !important;
-}
-
-/* 分页样式 */
-.table-pagination {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
 }
 
 /* 编辑视图样式 */

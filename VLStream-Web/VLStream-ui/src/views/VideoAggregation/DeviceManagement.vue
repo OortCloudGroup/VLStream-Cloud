@@ -1,145 +1,155 @@
 <template>
-  <div class="device-management">
-    <!-- 搜索表单区域 -->
-    <!-- <div class="search-form-container">
-      <div class="search-form">
-        <div class="search-row">
-          <div class="search-item">
-            <el-input 
-              v-model="searchForm.deviceName" 
-              placeholder="请输入设备名称或设备ID"
+  <div class="device-management tenant_Page draHeaPB">
+    <div class="tenant_content">
+      <div class="tableTenBox flexRowAC">
+        <!-- 左侧设备树 -->
+        <div
+          v-show="!deviceTreeCollapsed"
+          v-yResize
+          class="police_aside_use"
+        >
+          <div class="treeTitle">
+            设备树
+          </div>
+          <div class="tree_search_content flexRowAC">
+            <el-input
+              v-model="searchTreeKeyword"
+              placeholder="搜索"
+              debounce="300"
+              prefix-icon="Search"
               clearable
-              style="width: 240px; flex: none;"
             />
           </div>
-          <div class="search-item">
-            <el-select 
-              v-model="searchForm.tagName" 
-              placeholder="请选择标签" 
-              clearable 
-              style="width: 200px"
-            >
-              <el-option label="全部" value="" />
-              <el-option label="摄像头" value="摄像头" />
-              <el-option label="云台" value="云台" />
-              <el-option label="球机" value="球机" />
-              <el-option label="枪机" value="枪机" />
-              <el-option label="半球" value="半球" />
-            </el-select>
-          </div>
-          <div class="search-item date-with-buttons">
-            <DateRangePicker
-              v-model="searchForm.dateRange"
-              class="date-picker"
-            />
-            <div class="search-buttons">
-              <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
-              <el-button :icon="Refresh" @click="handleReset">重置</el-button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div> -->
-
-    <!-- 主要内容区域 -->
-    <div class="main-content">
-      <!-- 左侧设备树 -->
-      <div class="device-tree-container" :class="{ collapsed: deviceTreeCollapsed }">
-        <DeviceTree
-          :tree-data="deviceTreeData"
-          title="设备树"
-          :show-search="true"
-          :show-collapse-btn="true"
-          :show-expand-btn="false"
-          :show-add-actions="true"
-          :show-delete-actions="true"
-          :show-bottom-actions="true"
-          :collapsed="deviceTreeCollapsed"
-          @node-click="handleNodeClick"
-          @add-device="handleAddDevice"
-          @delete-device="handleDeleteDevice"
-          @bottom-add="handleBottomAdd"
-          @bottom-delete="handleBottomDelete"
-          @toggle-collapse="toggleDeviceTree"
-          @search="handleDeviceTreeSearch"
-        />
-      </div>
-
-      <!-- 右侧内容区域 -->
-      <div class="table-container">
-        <!-- 导航栏 -->
-        <div class="content-header">
-          <div class="breadcrumb">
-            <!-- 设备树折叠时显示的展开按钮 -->
-            <CollapseToggle 
-              v-if="deviceTreeCollapsed"
-              class="expand-device-tree-btn"
-              :is-expanded="false"
-              @toggle="toggleDeviceTree"
-            />
-            <span class="breadcrumb-item" @click="showTableView">设备列表</span>
-            <span v-if="treeFilterText" class="breadcrumb-separator">></span>
-            <span v-if="treeFilterText" class="breadcrumb-item filter-text" @click="clearTreeFilter">{{ treeFilterText }}</span>
-            <span v-if="showEditView" class="breadcrumb-separator">></span>
-            <span v-if="showEditView" class="breadcrumb-item active">编辑设备</span>
-            <span v-if="showCameraSettingsView" class="breadcrumb-separator">></span>
-            <span v-if="showCameraSettingsView" class="breadcrumb-item active">摄像机设置</span>
-            <span v-if="showConfigView" class="breadcrumb-separator">></span>
-            <span v-if="showConfigView" class="breadcrumb-item active">配置参数</span>
-            <span v-if="showAIEventView" class="breadcrumb-separator">></span>
-<!--            <span v-if="showAIEventView" class="breadcrumb-item active">配置AI事件</span>-->
-            <span v-if="showModelMarketView" class="breadcrumb-separator">></span>
-<!--            <span v-if="showModelMarketView" class="breadcrumb-item" @click="backToAIEvent">配置AI事件</span>-->
-            <span v-if="showModelMarketView" class="breadcrumb-separator">></span>
-            <span v-if="showModelMarketView" class="breadcrumb-item active">算法超市</span>
-          </div>
-        </div>
-
-        <!-- 表格视图 -->
-        <div v-if="!showEditView && !showCameraSettingsView && !showConfigView && !showAIEventView && !showModelMarketView" class="table-view">
-          <!-- 操作按钮 -->
-          <div class="toolbar">
-            <div class="toolbar-left">
-              <ActionButtonGroup 
-                :selected-count="selectedRows.length"
-                @add="handleAdd"
-                @edit="handleEdit"
-                @delete="handleDelete"
-              />
-            </div>
-            <div class="toolbar-right">
-              <div class="depNameBox_out flexRowAC">
-                <div class="searchHeight_out flexRowAC">
-                  <search-height-box
-                    keyword="keyword"
-                    placeholder="搜索"
-                    :data="searchData"
-                    @handle="searchResetFn"
+          <el-tree
+            style="background: #fff;"
+            :data="filteredDeviceTreeData"
+            highlight-current
+            node-key="id"
+            default-expand-all
+            :props="treeDefaultProps"
+            :expand-on-click-node="false"
+            @node-click="handleNodeClick"
+          >
+            <template #default="{ node, data }">
+              <div
+                class="custom-tree-node flexRowAC"
+                @mouseenter="hoveredTreeNodeId = data.id"
+                @mouseleave="hoveredTreeNodeId = null"
+              >
+                <div class="tree-node-main flexRowAC">
+                  <el-icon v-if="data.type === 'tag'" class="tree-icon tag-icon">
+                    <Collection />
+                  </el-icon>
+                  <el-icon v-else-if="data.type === 'device'" class="tree-icon device-icon">
+                    <VideoCamera />
+                  </el-icon>
+                  <el-icon v-else class="tree-icon">
+                    <Folder />
+                  </el-icon>
+                  <el-tooltip :open-delay="500" effect="light" :content="node.label" placement="top">
+                    <div
+                      class="tree-node-label"
+                      :class="{ activeDept: data.id === currentTreeNodeId }"
+                    >
+                      {{ node.label }}
+                    </div>
+                  </el-tooltip>
+                </div>
+                <div
+                  v-show="hoveredTreeNodeId === data.id || data.id === currentTreeNodeId"
+                  class="tree-node-actions flexRowAC"
+                  @click.stop
+                >
+                  <oort-svg-icon
+                    width="16"
+                    height="16"
+                    name="delete"
+                    color="red"
+                    class="tree-action-icon"
+                    @click="handleDeleteDevice(data)"
                   />
-                  <export-excel-pdf :item="exportItem" @handle="handleExport" />
+                  <oort-svg-icon
+                    width="16"
+                    height="16"
+                    name="add"
+                    class="tree-action-icon"
+                    @click="handleAddDevice({ command: 'child', data })"
+                  />
                 </div>
               </div>
+            </template>
+          </el-tree>
+        </div>
+
+        <!-- 右侧内容区域 -->
+        <div class="tableTenItU">
+          <!-- 导航栏（子视图时显示） -->
+          <div v-if="showEditView || showCameraSettingsView || showConfigView || showAIEventView || showModelMarketView || deviceTreeCollapsed || treeFilterText" class="content-header">
+            <div class="breadcrumb">
+              <CollapseToggle
+                v-if="deviceTreeCollapsed"
+                class="expand-device-tree-btn"
+                :is-expanded="false"
+                @toggle="toggleDeviceTree"
+              />
+              <span class="breadcrumb-item" @click="showTableView">设备列表</span>
+              <span v-if="treeFilterText" class="breadcrumb-separator">></span>
+              <span v-if="treeFilterText" class="breadcrumb-item filter-text" @click="clearTreeFilter">{{ treeFilterText }}</span>
+              <span v-if="showEditView" class="breadcrumb-separator">></span>
+              <span v-if="showEditView" class="breadcrumb-item active">编辑设备</span>
+              <span v-if="showCameraSettingsView" class="breadcrumb-separator">></span>
+              <span v-if="showCameraSettingsView" class="breadcrumb-item active">摄像机设置</span>
+              <span v-if="showConfigView" class="breadcrumb-separator">></span>
+              <span v-if="showConfigView" class="breadcrumb-item active">配置参数</span>
+              <span v-if="showModelMarketView" class="breadcrumb-separator">></span>
+              <span v-if="showModelMarketView" class="breadcrumb-item active">算法超市</span>
             </div>
           </div>
 
-          <!-- 表格 -->
-          <div class="table-content">
-            <el-table 
-              :data="paginatedTableData" 
-              stripe
+          <!-- 表格视图 -->
+          <div v-if="!showEditView && !showCameraSettingsView && !showConfigView && !showAIEventView && !showModelMarketView" class="table-view">
+            <div class="depNameBox_out flexRowAC">
+              <div class="depNameBox flexRowAC">
+                <div class="exportBtnBox flexRowAC">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
+                  <el-icon class="BtnImg">
+                    <Plus />
+                  </el-icon>
+                  新建
+                </button>
+                <button-group :button-list="toolbarButtonList" />
+              </div>
+              </div>
+              <div class="searchHeight_out flexRowAC">
+                <search-height-box
+                  keyword="keyword"
+                  placeholder="搜索"
+                  :data="searchData"
+                  @handle="searchResetFn"
+                />
+                <export-excel-pdf :item="exportItem" @handle="handleExport" />
+              </div>
+            </div>
+
+            <TableSelf
               v-loading="loading"
+              class="new_table"
+              header-cell-class-name="header_tenant_cell"
+              stripe
+              :data="paginatedTableData"
+              current-row-key="id"
               @selection-change="handleSelectionChange"
               @row-click="handleRowClick"
             >
-              <el-table-column type="selection" width="55" />
-              <el-table-column label="序号" width="80" align="center">
+              <el-table-column type="selection" :width="clacPXToVW(55)" />
+              <el-table-column label="序号" :width="clacPXToVW(65)">
                 <template #default="scope">
-                  {{ scope.row.id }}
+                  {{ scope.$index + (currentPage - 1) * pageSize + 1 }}
                 </template>
               </el-table-column>
-              <el-table-column prop="deviceName" label="设备名称" min-width="120" align="left" header-align="left" />
-              <el-table-column prop="deviceId" label="设备ID" min-width="120" align="left" header-align="left" />
-              <el-table-column prop="tags" label="标签名称" min-width="150" align="left" header-align="left">
+              <el-table-column prop="deviceName" label="设备名称" :width="clacPXToVW(140)" show-overflow-tooltip />
+              <el-table-column prop="deviceId" label="设备ID" :width="clacPXToVW(140)" show-overflow-tooltip />
+              <el-table-column prop="tags" label="标签名称" :width="clacPXToVW(160)">
                 <template #default="scope">
                   <template v-if="scope.row.tags && scope.row.tags.length > 0">
                     <el-tag
@@ -147,7 +157,7 @@
                       :key="tag"
                       size="small"
                       type="primary"
-                      style="margin-right: 8px; margin-bottom: 4px;"
+                      class="tag_pill"
                     >
                       {{ tag }}
                     </el-tag>
@@ -155,30 +165,24 @@
                   <el-tag v-else size="small" type="info">未分类</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="streamUrl" label="视频流路径" min-width="300" show-overflow-tooltip align="left" header-align="left" />
-              <el-table-column prop="createTime" label="创建时间" min-width="160" :formatter="formatDateTime" align="left" header-align="left" />
-              <el-table-column label="操作" width="420" fixed="right" align="right">
+              <el-table-column prop="streamUrl" label="视频流路径" show-overflow-tooltip />
+              <el-table-column prop="createTime" label="创建时间" :width="clacPXToVW(180)" :formatter="formatDateTime" />
+              <el-table-column fixed="right" align="right" label="操作" :width="clacPXToVW(280)">
                 <template #default="scope">
-                  <div class="action-buttons">
-                    <PlayButton @click="handlePlay(scope.row)" />
-                    <el-button 
-                      size="small" 
-                      class="config-button"
-                      @click="handleConfig(scope.row)"
-                    >
-                      配置录像
-                    </el-button>
-<!--                    <el-button -->
-<!--                      size="small" -->
-<!--                      class="config-button"-->
-<!--                      @click="handleAIEvent(scope.row)"-->
-<!--                    >-->
-<!--                      配置AI事件-->
-<!--                    </el-button>-->
+                  <div class="operateAppBox flexRowAC" @click.stop>
+                    <div class="new_table_svg_group" @click="handlePlay(scope.row)">
+                      <oort-svg-icon width="20" height="20" name="play" class="new_table_svg_group_svg" />
+                      <span>播放</span>
+                    </div>
+                    <div class="new_table_svg_group" @click="handleConfig(scope.row)">
+                      <oort-svg-icon width="20" height="20" name="setting" class="new_table_svg_group_svg" />
+                      <span>配置录像</span>
+                    </div>
                     <el-dropdown @command="handleMoreActions" trigger="click">
-                      <el-button size="small">
-                        更多 <el-icon><ArrowDown /></el-icon>
-                      </el-button>
+                      <div class="new_table_svg_group">
+                        <oort-svg-icon width="20" height="20" name="table_more" class="new_table_svg_group_svg" />
+                        <span>更多</span>
+                      </div>
                       <template #dropdown>
                         <el-dropdown-menu>
                           <el-dropdown-item :command="{action: 'edit', row: scope.row}">编辑</el-dropdown-item>
@@ -190,67 +194,68 @@
                   </div>
                 </template>
               </el-table-column>
-            </el-table>
-            
-            <!-- 分页 -->
-            <div class="table-pagination">
+            </TableSelf>
+
+            <div class="paginationBox flexRowAC">
               <el-pagination
-                v-model:current-page="currentPage"
-                v-model:page-size="pageSize"
+                background
+                :current-page="currentPage"
+                :page-size="pageSize"
                 :page-sizes="[10, 20, 50, 100]"
                 :total="filteredTotal"
-                layout="total, sizes, prev, pager, next, jumper"
+                layout="total, prev, pager, next, sizes"
+                class="justifyAlign"
                 @size-change="handleSizeChange"
                 @current-change="handleCurrentChange"
               />
             </div>
           </div>
-        </div>
 
-        <!-- 编辑视图 -->
-        <div v-if="showEditView" class="edit-view">
-          <DeviceEditForm
-            v-model="editForm"
-            :mode="editMode"
-            @save="handleEditSave"
-            @cancel="showTableView"
-          />
-        </div>
+          <!-- 编辑视图 -->
+          <div v-if="showEditView" class="edit-view">
+            <DeviceEditForm
+              v-model="editForm"
+              :mode="editMode"
+              @save="handleEditSave"
+              @cancel="showTableView"
+            />
+          </div>
 
-        <!-- 摄像机设置视图 -->
-        <div v-if="showCameraSettingsView" class="camera-settings-view">
-          <CameraSettings 
-            :device-info="selectedRow"
-            @back="showTableView" 
-          />
-        </div>
+          <!-- 摄像机设置视图 -->
+          <div v-if="showCameraSettingsView" class="camera-settings-view">
+            <CameraSettings
+              :device-info="selectedRow"
+              @back="showTableView"
+            />
+          </div>
 
-        <!-- 配置参数视图 -->
-        <div v-if="showConfigView" class="config-view">
-          <DeviceTimeStrategy
-            :device-info="selectedRow"
-            @save="handleTimeStrategySave"
-            @cancel="showTableView"
-          />
-        </div>
+          <!-- 配置参数视图 -->
+          <div v-if="showConfigView" class="config-view">
+            <DeviceTimeStrategy
+              :device-info="selectedRow"
+              @save="handleTimeStrategySave"
+              @cancel="showTableView"
+            />
+          </div>
 
-        <!-- AI事件配置视图 -->
-        <div v-if="showAIEventView && !showModelMarketView" class="ai-event-view">
-          <DeviceAIEvent
-            :device-info="selectedRow"
-            @save="handleAIEventSave"
-            @cancel="showTableView"
-            @open-model-market="openModelMarket"
-          />
-        </div>
+          <!-- AI事件配置视图 -->
+          <div v-if="showAIEventView && !showModelMarketView" class="ai-event-view">
+            <DeviceAIEvent
+              :device-info="selectedRow"
+              @save="handleAIEventSave"
+              @cancel="showTableView"
+              @open-model-market="openModelMarket"
+            />
+          </div>
 
-        <!-- 模型超市视图 -->
-        <div v-if="showModelMarketView" class="model-market-view">
-          <DeviceModelMarket
-            :device-info="selectedRow"
+          <!-- 模型超市视图 -->
+          <div v-if="showModelMarketView" class="model-market-view">
+            <DeviceModelMarket
+              :device-info="selectedRow"
             @save="handleModelMarketSave"
             @cancel="backToAIEvent"
           />
+          </div>
         </div>
       </div>
     </div>
@@ -313,7 +318,7 @@
                 录制中 {{ formatRecordingTime(recordingStatus.duration) }}
               </el-tag>
             </div>
-            
+
             <div class="quality-stats">
               <el-tooltip content="播放质量统计" placement="top">
                 <div class="stats-info">
@@ -326,7 +331,7 @@
                 </div>
               </el-tooltip>
             </div>
-            
+
             <!-- 录像按钮 -->
             <el-button
               size="small"
@@ -338,7 +343,7 @@
               <el-icon><VideoCamera /></el-icon>
               {{ recordingStatus.isRecording ? '停止录像' : '开始录像' }}
             </el-button>
-            
+
             <el-button
               size="small"
               type="primary"
@@ -372,7 +377,7 @@
 <!--                <div>类型: {{ getStreamType(currentVideoDevice.streamUrl) }}</div>-->
 <!--                <div v-if="currentVideoDevice.playMode">播放模式: {{ getPlayModeText(currentVideoDevice.playMode) }}</div>-->
 <!--              </div>-->
-              
+
               <!-- WebRTC播放器 -->
               <div
                 v-if="isCameraRtcDevice(currentVideoDevice)"
@@ -390,7 +395,7 @@
                 muted
                 playsinline
               ></video>
-              
+
               <!-- HLS视频 -->
               <video
                 v-else-if="getStreamType(currentVideoDevice.streamUrl) === 'hls' || currentVideoDevice.playMode === 'hls'"
@@ -400,7 +405,7 @@
                 autoplay
                 muted
               ></video>
-              
+
               <!-- MP4等视频文件 -->
               <video
                 v-else-if="getStreamType(currentVideoDevice.streamUrl) === 'video' || getStreamType(currentVideoDevice.streamUrl) === 'http'"
@@ -414,12 +419,12 @@
               </video>
 
               <!-- RTSP流处理 -->
-              <div v-else-if="getStreamType(currentVideoDevice.originalRtspUrl || currentVideoDevice.streamUrl) === 'rtsp'" 
+              <div v-else-if="getStreamType(currentVideoDevice.originalRtspUrl || currentVideoDevice.streamUrl) === 'rtsp'"
                    class="rtsp-container">
-                
+
                 <!-- WebRTC播放器 - 使用VLStream-server的webrtcUrl -->
                 <div v-if="currentVideoDevice.webrtcUrl" class="webrtc-player">
-                  <iframe 
+                  <iframe
                     :src="currentVideoDevice.webrtcUrl"
                     width="800"
                     height="450"
@@ -432,7 +437,7 @@
                     <small>WebRTC播放 - {{ currentVideoDevice.deviceName }}</small>
                   </div>
                 </div>
-                
+
                 <!-- 备用：直接WebRTC连接 -->
                 <RtspPlayer
                   v-else-if="webrtcConfig.available && !currentVideoDevice.webrtcUrl"
@@ -444,7 +449,7 @@
                   @disconnected="handleRtspDisconnected"
                   @error="handleRtspError"
                 />
-                
+
                 <!-- WebRTC服务不可用时的后备方案 -->
                 <div v-else class="rtsp-fallback-options">
                   <div class="fallback-info">
@@ -453,12 +458,12 @@
                     </div>
                     <div class="rtsp-title">WebRTC服务不可用</div>
                     <div class="rtsp-url">{{ currentVideoDevice.originalRtspUrl || currentVideoDevice.streamUrl }}</div>
-                    
+
                     <div class="fallback-note">
                       <p>WebRTC-streamer服务未启动或不可用。</p>
                       <p>您可以尝试以下选项：</p>
                     </div>
-                    
+
                     <div class="fallback-actions">
                       <el-button type="primary" @click="checkWebRTCService" :loading="checkingWebRTC">
                         <el-icon><Refresh /></el-icon>
@@ -473,7 +478,7 @@
                         复制RTSP地址
                       </el-button>
                     </div>
-                    
+
                     <div class="fallback-tips">
                       <p><strong>提示：</strong></p>
                       <ul>
@@ -495,7 +500,7 @@
                   muted
                 ></video>
               </div>
-              
+
               <!-- 错误显示 -->
               <div v-else class="video-error">
                 <div class="error-content">
@@ -541,16 +546,13 @@
 <script setup>
 import {computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch} from 'vue'
 import {useRouter} from 'vue-router'
-import {ArrowDown, DocumentCopy, Refresh, VideoCamera} from '@element-plus/icons-vue'
+import {ArrowDown, DocumentCopy, Refresh, VideoCamera, Folder, Collection, Plus } from '@element-plus/icons-vue'
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
 import Hls from 'hls.js'
 
 // 导入组件
-import DeviceTree from '@/components/DeviceTree.vue'
 import PTZControl from '@/components/PTZControl.vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
-import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
-import PlayButton from '@/components/PlayButton.vue'
 import RtspPlayer from '@/components/RtspPlayer.vue'
 import CameraSettings from './CameraSettings.vue'
 import DeviceEditForm from './DeviceEditForm.vue'
@@ -580,6 +582,7 @@ import {getWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL} from '@/api/webrtc'
 // 导入工具函数和常量
 import {formatDateTime, getStreamType, getYouTubeEmbedUrl} from './deviceUtils.js'
 import { CAMERA_RTC_SOCKET_URL, ensureOPlayer } from '@/utils/oplayer'
+import { clacPXToVW } from '@/utils/index'
 
 const router = useRouter()
 
@@ -591,8 +594,31 @@ const searchForm = ref({
   dateRange: []
 })
 
-// 设备树数据
+// 设备树
 const deviceTreeData = ref([])
+const searchTreeKeyword = ref('')
+const currentTreeNodeId = ref(null)
+const hoveredTreeNodeId = ref(null)
+const treeDefaultProps = {
+  children: 'children',
+  label: 'label'
+}
+
+const filteredDeviceTreeData = computed(() => {
+  if (!searchTreeKeyword.value) return deviceTreeData.value
+  const keyword = searchTreeKeyword.value.toLowerCase()
+  const filterNode = (nodes) => nodes.filter(node => {
+    if (node.label?.toLowerCase().includes(keyword)) return true
+    if (node.children?.length) return filterNode(node.children).length > 0
+    return false
+  }).map(node => node.children?.length ? { ...node, children: filterNode(node.children) } : node)
+  return filterNode(deviceTreeData.value)
+})
+
+const toolbarButtonList = computed(() => [
+  { name: '编辑', svg: 'table_edit', clickFn: handleEdit },
+  { name: '删除', svg: 'table_del', clickFn: handleDelete }
+])
 
 // 表格数据
 const tableData = ref([])
@@ -602,25 +628,25 @@ const total = ref(0)
 // 计算属性：根据设备树选择过滤数据
 const filteredTableData = computed(() => {
   let filtered = tableData.value
-  
+
   // 应用设备树过滤
   if (selectedTreeNode.value) {
     const node = selectedTreeNode.value
-    
+
     // 如果选中的是设备类型节点（一级节点）
     if (node.type === 'device_type') {
       // 根据设备类型过滤
       const deviceTypeLabel = node.label.split(' (')[0] // 去掉数量显示，如 "球机 (2)" -> "球机"
       filtered = filtered.filter(device => device.deviceType === deviceTypeLabel)
     }
-    
+
     // 如果选中的是具体设备节点（二级节点）
     if (node.type === 'device') {
       // 根据设备ID过滤，只显示选中的设备
       filtered = filtered.filter(device => device.id === node.deviceId)
     }
   }
-  
+
   return filtered
 })
 
@@ -729,7 +755,7 @@ const loadScriptTag = (src) => {
       resolve()
       return
     }
-    
+
     const script = document.createElement('script')
     script.src = src
     script.async = true
@@ -743,13 +769,13 @@ const ensureWebRtcStreamerScripts = async () => {
   if (webrtcScriptLoader) {
     return webrtcScriptLoader
   }
-  
+
   webrtcScriptLoader = Promise.all(getWebRtcScriptUrls().map(loadScriptTag))
     .catch(error => {
       webrtcScriptLoader = null
       throw error
     })
-  
+
   return webrtcScriptLoader
 }
 
@@ -789,10 +815,10 @@ onMounted(() => {
 onUnmounted(() => {
   // 清理播放监控
   stopPlayMonitoring()
-  
+
   // 清理录像状态和计时器
   stopRecordingTimer()
-  
+
   // 如果正在录像，强制停止
   if (recordingStatus.value.isRecording && recordingStatus.value.recordId) {
     console.warn('组件卸载时检测到正在录像，自动停止录像')
@@ -801,12 +827,12 @@ onUnmounted(() => {
       console.error('组件卸载时停止录像失败:', error)
     })
   }
-  
+
   // 清理WebRTC和HLS流
   cleanupWebRTCStream()
   cleanupHLSStream()
   cleanupCameraRTCPlayer()
-  
+
   console.log('设备管理组件已卸载，资源已清理')
 })
 
@@ -819,23 +845,23 @@ const loadTagNameMap = async () => {
     const response = await getTagTree()
     if (response.code === 200 && response.data) {
       const tagMap = new Map()
-      
+
       // 递归遍历标签树，建立ID到名称的映射
       const traverseTagTree = (nodes) => {
         if (!Array.isArray(nodes)) return
-        
+
         nodes.forEach(node => {
           if (node.id && node.tagName) {
             tagMap.set(node.id, node.tagName)
           }
-          
+
           // 递归处理子节点
           if (node.children && Array.isArray(node.children)) {
             traverseTagTree(node.children)
           }
         })
       }
-      
+
       traverseTagTree(response.data)
       tagNameMap.value = tagMap
       console.log('标签映射表加载完成:', tagMap.size, '个标签')
@@ -853,7 +879,7 @@ const loadDeviceList = async () => {
     if (tagNameMap.value.size === 0) {
       await loadTagNameMap()
     }
-    
+
     const params = {
       page: currentPage.value,
       size: pageSize.value,
@@ -861,10 +887,10 @@ const loadDeviceList = async () => {
       tagName: searchForm.value.tagName,
       dateRange: searchForm.value.dateRange
     }
-    
+
     const response = await getDeviceList(params)
     const devices = response.data.records || []
-    
+
     // 参考编辑页面的做法，使用getDeviceById获取每个设备的完整信息，包括标签
     tableData.value = await Promise.all(
         devices.map(async (device) => {
@@ -1031,8 +1057,8 @@ const handleRowClick = (row) => {
 // 设备树事件处理
 const handleNodeClick = (node) => {
   selectedTreeNode.value = node
-  
-  // 设置面包屑显示文本
+  currentTreeNodeId.value = node.id
+
   if (node.type === 'device_type') {
     treeFilterText.value = `设备类型: ${node.label}`
   } else if (node.type === 'device') {
@@ -1040,13 +1066,8 @@ const handleNodeClick = (node) => {
   } else {
     treeFilterText.value = node.label
   }
-  
-  // 重置到第一页
+
   currentPage.value = 1
-  
-  console.log('设备树节点点击:', node)
-  console.log('当前过滤条件:', treeFilterText.value)
-  console.log('过滤后数据数量:', filteredTableData.value.length)
 }
 
 const toggleDeviceTree = () => {
@@ -1074,7 +1095,7 @@ const showTableView = () => {
   showAIEventView.value = false
   showModelMarketView.value = false
   selectedRow.value = null
-  
+
   // 清除设备树过滤条件
   selectedTreeNode.value = null
   treeFilterText.value = ''
@@ -1093,7 +1114,7 @@ const handleEdit = async () => {
     ElMessage.warning('请选择一个设备进行编辑')
     return
   }
-  
+
   try {
     // 加载状态
     const loadingMessage = ElMessage({
@@ -1101,17 +1122,17 @@ const handleEdit = async () => {
       type: 'info',
       duration: 0
     })
-    
+
     // 调用API获取完整的设备信息，包括关联的标签
     const response = await getDeviceById(selectedRows.value[0].id)
     loadingMessage.close()
-    
+
     if (response.code === 200) {
       editMode.value = 'edit'
       editForm.value = { ...response.data }
       selectedRow.value = selectedRows.value[0]
       showEditView.value = true
-      
+
       console.log('获取设备详情成功:', response.data)
       console.log('关联的标签ID:', response.data.selectedTags)
     } else {
@@ -1128,7 +1149,7 @@ const handleDelete = async () => {
     ElMessage.warning('请选择要删除的设备')
     return
   }
-  
+
   try {
     await ElMessageBox.confirm(
       `确认删除选中的 ${selectedRows.value.length} 个设备吗？`,
@@ -1139,10 +1160,10 @@ const handleDelete = async () => {
         type: 'warning'
       }
     )
-    
+
     const deviceIds = selectedRows.value.map(row => row.id)
     await batchDeleteDevices(deviceIds)
-    
+
     ElMessage.success('删除成功')
     await loadDeviceList()
   } catch (error) {
@@ -1156,25 +1177,25 @@ const handleDelete = async () => {
 // 增强的视频播放功能
 const handlePlay = async (row) => {
   console.log('点击播放设备:', row)
-  
+
   // 统计播放尝试次数
   playStatistics.value.totalAttempts++
-  
+
   // 创建设备副本用于播放
   const deviceForPlay = { ...row }
-  
+
   // 如果没有视频流URL，使用测试URL
   if (!deviceForPlay.streamUrl || deviceForPlay.streamUrl.trim() === '') {
     console.log('设备没有配置视频流URL，使用测试视频')
     deviceForPlay.streamUrl = 'https://www.w3schools.com/html/mov_bbb.mp4'
     ElMessage.info('设备未配置视频流，使用测试视频进行演示')
   }
-  
+
   console.log('播放视频URL:', deviceForPlay.streamUrl)
-  
+
   // 检测流类型
   const streamType = getStreamType(deviceForPlay.streamUrl)
-  
+
   // 显示加载中提示
   const loading = ElLoading.service({
     lock: true,
@@ -1182,21 +1203,21 @@ const handlePlay = async (row) => {
     spinner: 'el-icon-loading',
     background: 'rgba(0, 0, 0, 0.7)'
   })
-  
+
   try {
     // pick play strategy
     const playStrategy = await determinePlayStrategy(deviceForPlay, streamType)
     console.log('Play strategy:', playStrategy)
-    
+
     currentVideoDevice.value = deviceForPlay
     videoDialogVisible.value = true
-    
+
     await executePlayStrategy(currentVideoDevice.value, playStrategy)
-    
+
     // start monitoring after player setup
     startPlayMonitoring()
-    
-    
+
+
   } catch (error) {
     console.error('播放失败:', error)
     ElMessage.error(`播放失败: ${error.message}`)
@@ -1215,51 +1236,51 @@ const determinePlayStrategy = async (device, streamType) => {
   if (selectedPlayMode.value !== 'auto') {
     return selectedPlayMode.value
   }
-  
+
   // 智能播放策略
   const strategy = await getOptimalPlayStrategy(device, streamType)
   console.log('智能播放策略分析结果:', strategy)
-  
+
   return strategy.mode
 }
 
 // 获取最优播放策略
 const getOptimalPlayStrategy = async (device, streamType) => {
   const strategies = []
-  
+
   // 策略1：基于设备类型推荐
   const deviceTypeStrategy = getDeviceTypeStrategy(device)
   strategies.push(deviceTypeStrategy)
-  
+
   // 策略2：基于流类型推荐
   const streamTypeStrategy = getStreamTypeStrategy(streamType)
   strategies.push(streamTypeStrategy)
-  
+
   // 策略3：基于网络状况推荐
   const networkStrategy = await getNetworkStrategy()
   strategies.push(networkStrategy)
-  
+
   // 策略4：基于历史成功率推荐
   const historyStrategy = getHistoryStrategy()
   strategies.push(historyStrategy)
-  
+
   // 策略5：基于系统可用性推荐
   const availabilityStrategy = await getAvailabilityStrategy()
   strategies.push(availabilityStrategy)
-  
+
   console.log('所有策略分析结果:', strategies)
-  
+
   // 计算综合评分
   const finalStrategy = calculateFinalStrategy(strategies)
   console.log('最终播放策略:', finalStrategy)
-  
+
   return finalStrategy
 }
 
 // 基于设备类型的播放策略
 const getDeviceTypeStrategy = (device) => {
   const deviceType = device.tag || device.deviceType || 'unknown'
-  
+
   switch (deviceType) {
     case '球机':
     case '云台':
@@ -1335,13 +1356,13 @@ const getNetworkStrategy = async () => {
   try {
     // 检测网络连接类型
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection
-    
+
     if (connection) {
       const effectiveType = connection.effectiveType
       const downlink = connection.downlink
-      
+
       console.log('网络状况:', { effectiveType, downlink })
-      
+
       // 根据网络状况推荐播放策略
       if (effectiveType === '4g' || effectiveType === '3g') {
         if (downlink >= 10) {
@@ -1372,7 +1393,7 @@ const getNetworkStrategy = async () => {
         }
       }
     }
-    
+
     // 如果无法检测网络状况，使用默认策略
     return {
       mode: 'webrtc',
@@ -1393,12 +1414,12 @@ const getNetworkStrategy = async () => {
 const getHistoryStrategy = () => {
   const stats = playStatistics.value
   const total = stats.totalAttempts || 1
-  
+
   const webrtcRate = stats.webrtcSuccess / total
   const hlsRate = stats.hlsSuccess / total
-  
+
   console.log('历史成功率:', { webrtcRate, hlsRate, stats })
-  
+
   if (webrtcRate > hlsRate && webrtcRate > 0.7) {
     return {
       mode: 'webrtc',
@@ -1425,7 +1446,7 @@ const getAvailabilityStrategy = async () => {
   try {
     // 检查WebRTC服务可用性
     const webrtcAvailable = webrtcConfig.value.available && webrtcConfig.value.enabled
-    
+
     if (webrtcAvailable) {
       return {
         mode: 'webrtc',
@@ -1459,34 +1480,34 @@ const calculateFinalStrategy = (strategies) => {
     history: 0.2,
     availability: 0.1
   }
-  
+
   // 计算各模式的加权得分
   const modeScores = {}
-  
+
   strategies.forEach((strategy, index) => {
     const weight = Object.values(weights)[index] || 0.1
     const mode = strategy.mode
     const score = strategy.score * weight
-    
+
     if (!modeScores[mode]) {
       modeScores[mode] = { score: 0, reasons: [] }
     }
-    
+
     modeScores[mode].score += score
     modeScores[mode].reasons.push(strategy.reason)
   })
-  
+
   // 找出得分最高的模式
   let bestMode = 'auto'
   let bestScore = 0
-  
+
   for (const [mode, data] of Object.entries(modeScores)) {
     if (data.score > bestScore) {
       bestScore = data.score
       bestMode = mode
     }
   }
-  
+
   // 如果是auto模式，根据其他因素决定
   if (bestMode === 'auto') {
     // 如果WebRTC可用，优先使用WebRTC
@@ -1496,7 +1517,7 @@ const calculateFinalStrategy = (strategies) => {
       bestMode = 'hls'
     }
   }
-  
+
   return {
     mode: bestMode,
     score: bestScore,
@@ -1508,7 +1529,7 @@ const calculateFinalStrategy = (strategies) => {
 // 执行播放策略
 const executePlayStrategy = async (device, strategy) => {
   console.log(`执行播放策略: ${strategy}`)
-  
+
   switch (strategy) {
     case 'webrtc':
       await executeWebRTCPlayStrategy(device)
@@ -1531,10 +1552,10 @@ const executePlayStrategy = async (device, strategy) => {
 const executeWebRTCPlayStrategy = async (device) => {
   try {
     console.log('Starting WebRTC direct playback...')
-    
+
     await cleanupWebRTCStream()
     cleanupCameraRTCPlayer()
-    
+
     device.playMode = 'webrtc'
     device.connectionState = 'connecting'
     playStatus.value.isConnecting = true
@@ -1542,23 +1563,23 @@ const executeWebRTCPlayStrategy = async (device) => {
     playStatus.value.hasError = false
     playStatus.value.errorMessage = ''
     playStatus.value.connectionState = 'connecting'
-    
+
     await ensureWebRtcStreamerScripts()
     await nextTick()
-    
+
     if (!window.WebRtcStreamer) {
       throw new Error('WebRtcStreamer library not available')
     }
-    
+
     const videoEl = webrtcVideoPlayer.value
     if (!videoEl) {
       throw new Error('WebRTC video element not ready')
     }
-    
+
     if (!videoEl.id) {
       videoEl.id = `webrtc-player-${Date.now()}`
     }
-    
+
     videoEl.srcObject = null
     videoEl.onerror = () => handlePlayError(new Error('WebRTC direct playback error'))
     videoEl.onloadeddata = () => {
@@ -1567,17 +1588,17 @@ const executeWebRTCPlayStrategy = async (device) => {
       playStatus.value.isConnecting = false
       playStatus.value.connectionState = 'connected'
     }
-    
+
     webrtcPlayer.value = new window.WebRtcStreamer(videoEl.id, WEBRTC_STREAMER_BASE)
     if (typeof webrtcPlayer.value.connect === 'function') {
       webrtcPlayer.value.connect(device.streamUrl, '', 'rtptransport=tcp&timeout=60')
     } else {
       throw new Error('WebRtcStreamer.connect is not available')
     }
-    
+
   } catch (error) {
     console.error('WebRTC direct play failed:', error)
-    
+
     if (selectedPlayMode.value === 'auto') {
       console.log('WebRTC failed, falling back to HLS')
       await executeHLSPlayStrategy(device)
@@ -1641,9 +1662,9 @@ const executeHLSPlayStrategy = async (device) => {
   try {
     cleanupCameraRTCPlayer()
     console.log('开始HLS播放流程...')
-    
+
     const streamType = getStreamType(device.streamUrl)
-    
+
     if (streamType === 'rtsp') {
       // RTSP流需要先转换为HLS
       const hlsUrl = await startHLSConversion(device)
@@ -1663,9 +1684,9 @@ const executeHLSPlayStrategy = async (device) => {
     } else {
       throw new Error(`不支持的流类型: ${streamType}`)
     }
-    
+
     console.log('HLS播放流程完成')
-    
+
   } catch (error) {
     console.error('HLS播放策略执行失败:', error)
     throw error
@@ -1677,12 +1698,12 @@ const executeNativePlayStrategy = async (device) => {
   try {
     cleanupCameraRTCPlayer()
     console.log('开始原生播放流程...')
-    
+
     // 对于原生支持的格式，直接播放
     device.playMode = 'native'
-    
+
     console.log('原生播放流程完成')
-    
+
   } catch (error) {
     console.error('原生播放策略执行失败:', error)
     throw error
@@ -1718,29 +1739,29 @@ const handleVideoClose = () => {
     simpleHlsPlayer.value.hlsInstance.destroy()
     simpleHlsPlayer.value.hlsInstance = null
   }
-  
+
   // 清理WebRTC播放器
   if (webrtcVideoPlayer.value) {
     webrtcVideoPlayer.value.srcObject = null
   }
-  
+
   // 清理流
   cleanupHLSStream()
   cleanupWebRTCStream()
   cleanupCameraRTCPlayer()
-  
+
   // 停止播放监控
   stopPlayMonitoring()
-  
+
   // 清理录像状态（如果正在录像，提醒用户）
   if (recordingStatus.value.isRecording) {
     ElMessage.warning('检测到正在录像，请先停止录像')
     return // 不关闭对话框
   }
-  
+
   // 清理录像计时器
   stopRecordingTimer()
-  
+
   // 重置录像状态
   recordingStatus.value.isRecording = false
   recordingStatus.value.recordId = null
@@ -1748,7 +1769,7 @@ const handleVideoClose = () => {
   recordingStatus.value.startTime = null
   recordingStatus.value.starting = false
   recordingStatus.value.stopping = false
-  
+
   videoDialogVisible.value = false
   currentVideoDevice.value = {}
 }
@@ -1769,15 +1790,15 @@ const copyRtspUrl = async () => {
 const checkWebRTCService = async () => {
   try {
     checkingWebRTC.value = true
-    
+
     try {
       const response = await getWebRTCBackendConfig()
-      
+
       if (response && response.code === 200) {
         webrtcConfig.value = response.data
         WEBRTC_STREAMER_BASE = response.data.serverUrl || WEBRTC_SERVER_BASE_URL
         console.log('WebRTC配置获取成功:', response.data)
-        
+
         if (response.data.available) {
           console.log('WebRTC服务可用')
         } else {
@@ -1789,7 +1810,7 @@ const checkWebRTCService = async () => {
       }
     } catch (apiError) {
       console.warn('WebRTC配置API调用失败，使用默认配置:', apiError)
-      
+
       // API失败时使用默认配置
       webrtcConfig.value = {
         serverUrl: WEBRTC_SERVER_BASE_URL,
@@ -1818,11 +1839,11 @@ const handleRtspDisconnected = () => {
 
 const handleRtspError = async (error) => {
   console.error('RTSP WebRTC连接错误:', error)
-  
+
   // 如果WebRTC失败，自动尝试HLS转换
   if (currentVideoDevice.value.originalRtspUrl) {
     ElMessage.warning('WebRTC播放失败，正在尝试HLS播放模式...')
-    
+
     try {
       // 调用HLS转换API
       const hlsUrl = await convertRtspToHls(currentVideoDevice.value.originalRtspUrl)
@@ -1830,23 +1851,23 @@ const handleRtspError = async (error) => {
         currentVideoDevice.value.streamUrl = hlsUrl
         currentVideoDevice.value.hlsUrl = hlsUrl
         currentVideoDevice.value.playMode = 'hls'
-        
+
         ElMessage.success('已切换到HLS播放模式')
-        
+
         // 初始化HLS播放器
         setTimeout(() => {
           initHLSPlayer(hlsUrl)
         }, 1000)
-        
+
         return
       }
     } catch (hlsError) {
       console.error('HLS转换也失败:', hlsError)
     }
   }
-  
+
   ElMessage.error('视频播放失败: ' + error)
-  
+
   // 显示故障排除建议
   showTroubleshootingTips()
 }
@@ -1881,7 +1902,7 @@ const handleWebRTCError = (error) => {
   console.error('WebRTC iframe加载失败:', error)
   ElMessage.error('WebRTC播放器加载失败')
   currentVideoDevice.value.connectionState = 'failed'
-  
+
   // 自动尝试HLS备用方案
   handleRtspError('WebRTC iframe加载失败')
 }
@@ -1894,7 +1915,7 @@ const startHLSConversion = async (device) => {
       rtspUrl: device.streamUrl,
       quality: 'medium'
     })
-    
+
     if (response.code === 200) {
       // 更新设备的流URL为HLS地址
       device.hlsUrl = response.data
@@ -1913,7 +1934,7 @@ const startHLSConversion = async (device) => {
 // 手动转换为HLS
 const convertToHLS = async () => {
   converting.value = true
-  
+
   try {
     const hlsUrl = await startHLSConversion(currentVideoDevice.value)
     if (hlsUrl) {
@@ -1937,27 +1958,27 @@ const initHLSPlayer = (hlsUrl) => {
     console.error('HLS播放器元素未找到')
     return
   }
-  
+
   console.log('初始化HLS播放器:', hlsUrl)
-  
+
   // 清理之前的实例
   if (video.hlsInstance) {
     video.hlsInstance.destroy()
     video.hlsInstance = null
   }
-  
+
   if (Hls.isSupported()) {
     const hls = new Hls({
       debug: false,
       enableWorker: true,
       lowLatencyMode: true
     })
-    
+
     video.hlsInstance = hls
-    
+
     hls.loadSource(hlsUrl)
     hls.attachMedia(video)
-    
+
     hls.on(Hls.Events.MANIFEST_PARSED, () => {
       console.log('HLS manifest 解析成功')
       video.play().catch(error => {
@@ -1965,7 +1986,7 @@ const initHLSPlayer = (hlsUrl) => {
         ElMessage.warning('视频自动播放失败，请手动点击播放')
       })
     })
-    
+
     hls.on(Hls.Events.ERROR, (event, data) => {
       console.error('HLS 播放错误:', data)
       if (data.fatal) {
@@ -1995,7 +2016,7 @@ const cleanupHLSStream = async () => {
       console.error('停止HLS流失败:', error)
     }
   }
-  
+
   // 清理播放器实例
   if (hlsPlayer.value && hlsPlayer.value.hlsInstance) {
     hlsPlayer.value.hlsInstance.destroy()
@@ -2021,7 +2042,7 @@ const cleanupWebRTCStream = async () => {
     webrtcVideoPlayer.value.onerror = null
     webrtcVideoPlayer.value.onloadeddata = null
   }
-  
+
   if (webrtcPlayer.value) {
     try {
       if (typeof webrtcPlayer.value.disconnect === 'function') {
@@ -2035,7 +2056,7 @@ const cleanupWebRTCStream = async () => {
     }
     webrtcPlayer.value = null
   }
-  
+
   playStatus.value.connectionState = 'disconnected'
   playStatus.value.isConnecting = false
   playStatus.value.isPlaying = false
@@ -2092,12 +2113,12 @@ const handleReplay = async () => {
   if (!currentVideoDevice.value.deviceId) {
     return
   }
-  
+
   // 清理当前播放
   await cleanupWebRTCStream()
   await cleanupHLSStream()
   cleanupCameraRTCPlayer()
-  
+
   // 重新播放
   await handlePlay(currentVideoDevice.value)
 }
@@ -2105,17 +2126,17 @@ const handleReplay = async () => {
 // 开始播放状态监控
 const startPlayMonitoring = () => {
   console.log('开始播放状态监控...')
-  
+
   // 清理旧的定时器
   if (playMonitorTimer.value) {
     clearInterval(playMonitorTimer.value)
   }
-  
+
   // 设置新的监控定时器
   playMonitorTimer.value = setInterval(() => {
     monitorPlayStatus()
   }, 2000) // 每2秒检查一次
-  
+
   // 重置状态
   playStatus.value.isConnecting = true
   playStatus.value.hasError = false
@@ -2126,12 +2147,12 @@ const startPlayMonitoring = () => {
 // 停止播放状态监控
 const stopPlayMonitoring = () => {
   console.log('停止播放状态监控...')
-  
+
   if (playMonitorTimer.value) {
     clearInterval(playMonitorTimer.value)
     playMonitorTimer.value = null
   }
-  
+
   playStatus.value.isPlaying = false
   playStatus.value.isConnecting = false
   playStatus.value.connectionState = 'disconnected'
@@ -2144,20 +2165,20 @@ const monitorPlayStatus = async () => {
     if (!device || !device.deviceId) {
       return
     }
-    
+
     // 检查WebRTC播放状态
     if (device.playMode === 'webrtc' && webrtcPlayer.value) {
       await monitorWebRTCStatus(webrtcPlayer.value)
     }
-    
+
     // 检查HLS播放状态
     if (device.playMode === 'hls' && (simpleHlsPlayer.value || hlsPlayer.value)) {
       await monitorHLSStatus(simpleHlsPlayer.value || hlsPlayer.value)
     }
-    
+
     // 检查播放质量
     await monitorPlayQuality()
-    
+
   } catch (error) {
     console.error('播放状态监控失败:', error)
     await handlePlayError(error)
@@ -2171,30 +2192,30 @@ const monitorWebRTCStatus = async (player) => {
     if (!peer) {
       return
     }
-    
+
     const connectionState = peer.connectionState || peer.iceConnectionState || 'unknown'
     playStatus.value.connectionState = connectionState
-    
+
     if (connectionState === 'connected') {
       playStatus.value.isPlaying = true
       playStatus.value.isConnecting = false
       playStatus.value.hasError = false
       playStatus.value.retryCount = 0
-      
+
       if (peer.getStats) {
         const stats = await peer.getStats()
         updateQualityStats(stats)
       }
-      
+
     } else if (connectionState === 'disconnected' || connectionState === 'failed') {
       playStatus.value.isPlaying = false
       playStatus.value.isConnecting = false
-      
+
       if (connectionState === 'failed') {
         handlePlayError(new Error('WebRTC connection failed'))
       }
     }
-    
+
   } catch (error) {
     console.error('WebRTC status monitor failed:', error)
     await handlePlayError(error)
@@ -2206,21 +2227,21 @@ const monitorHLSStatus = async (videoElement) => {
     if (!videoElement) {
       return
     }
-    
+
     const isPlaying = !videoElement.paused && !videoElement.ended && videoElement.readyState > 2
     playStatus.value.isPlaying = isPlaying
     playStatus.value.isConnecting = false
     playStatus.value.connectionState = isPlaying ? 'connected' : 'disconnected'
-    
+
     if (isPlaying) {
       playStatus.value.hasError = false
       playStatus.value.retryCount = 0
-      
+
       // 更新质量统计
       playStatus.value.qualityStats.resolution = `${videoElement.videoWidth}x${videoElement.videoHeight}`
       playStatus.value.qualityStats.frameRate = videoElement.mozPresentedFrames || 0
     }
-    
+
   } catch (error) {
     console.error('HLS状态监控失败:', error)
     await handlePlayError(error)
@@ -2234,7 +2255,7 @@ const monitorPlayQuality = async () => {
     if (!device || !device.deviceId) {
       return
     }
-    
+
     // 获取网络质量信息
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection
     if (connection) {
@@ -2242,7 +2263,7 @@ const monitorPlayQuality = async () => {
       if (connection.effectiveType !== playStatus.value.lastNetworkType) {
         console.log('网络状况变化:', connection.effectiveType)
         playStatus.value.lastNetworkType = connection.effectiveType
-        
+
         // 如果网络状况恶化，考虑切换播放模式
         if (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g') {
           if (device.playMode === 'webrtc') {
@@ -2252,7 +2273,7 @@ const monitorPlayQuality = async () => {
         }
       }
     }
-    
+
   } catch (error) {
     console.error('播放质量监控失败:', error)
   }
@@ -2276,21 +2297,21 @@ const updateQualityStats = (stats) => {
 // 处理播放错误
 const handlePlayError = async (error) => {
   console.error('播放错误:', error)
-  
+
   playStatus.value.hasError = true
   playStatus.value.errorMessage = error.message || '播放出现未知错误'
   playStatus.value.lastErrorTime = new Date()
   playStatus.value.isPlaying = false
   playStatus.value.isConnecting = false
-  
+
   // 更新失败统计
   playStatistics.value.failedAttempts++
-  
+
   // 如果重试次数未达到上限，尝试自动重试
   if (playStatus.value.retryCount < playStatus.value.maxRetries) {
     console.log(`播放失败，将在3秒后进行第${playStatus.value.retryCount + 1}次重试...`)
     playStatus.value.retryCount++
-    
+
     setTimeout(() => {
       attemptAutoRecovery()
     }, 3000)
@@ -2305,21 +2326,21 @@ const handlePlayError = async (error) => {
 const attemptAutoRecovery = async () => {
   try {
     console.log('尝试自动恢复播放...')
-    
+
     const device = currentVideoDevice.value
     if (!device || !device.deviceId) {
       return
     }
-    
+
     // 清理当前播放状态
     await cleanupWebRTCStream()
     await cleanupHLSStream()
     cleanupCameraRTCPlayer()
-    
+
     // 重新选择播放策略
     const streamType = getStreamType(device.streamUrl)
     let newStrategy = await determinePlayStrategy(device, streamType)
-    
+
     // 如果当前策略失败，尝试其他策略
     if (newStrategy === device.playMode) {
       if (device.playMode === 'webrtc') {
@@ -2330,13 +2351,13 @@ const attemptAutoRecovery = async () => {
         newStrategy = 'webrtc'
       }
     }
-    
+
     // 执行新的播放策略
     await executePlayStrategy(device, newStrategy)
-    
+
     console.log('自动恢复播放成功')
     ElMessage.success('播放已自动恢复')
-    
+
   } catch (error) {
     console.error('自动恢复失败:', error)
     await handlePlayError(error)
@@ -2390,29 +2411,29 @@ const openInVlc = () => {
 // 初始化HLS播放器
 const initSimpleHLSPlayer = () => {
   if (!simpleHlsPlayer.value || !currentVideoDevice.value.streamUrl) return
-  
+
   const video = simpleHlsPlayer.value
   const streamUrl = currentVideoDevice.value.streamUrl
-  
+
   console.log('初始化简单HLS播放器，URL:', streamUrl)
-  
+
   // 清理之前的实例
   if (video.hlsInstance) {
     video.hlsInstance.destroy()
     video.hlsInstance = null
   }
-  
+
   if (window.Hls && window.Hls.isSupported()) {
     const hls = new window.Hls({
       debug: true,
       enableWorker: true
     })
-    
+
     video.hlsInstance = hls
-    
+
     hls.loadSource(streamUrl)
     hls.attachMedia(video)
-    
+
     hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
       console.log('HLS manifest 解析成功')
       video.play().catch(error => {
@@ -2420,7 +2441,7 @@ const initSimpleHLSPlayer = () => {
         ElMessage.warning('视频自动播放失败，请手动点击播放')
       })
     })
-    
+
     hls.on(window.Hls.Events.ERROR, (event, data) => {
       console.error('HLS 播放错误:', data)
       if (data.fatal) {
@@ -2446,10 +2467,10 @@ watch(videoDialogVisible, (newValue) => {
     console.log('视频对话框打开，准备初始化播放器')
     console.log('设备信息:', currentVideoDevice.value)
     console.log('原始URL:', currentVideoDevice.value.streamUrl)
-    
+
     const streamType = getStreamType(currentVideoDevice.value.streamUrl)
     console.log('检测到的流类型:', streamType)
-    
+
     setTimeout(() => {
       // 根据播放模式初始化播放器
       if (currentVideoDevice.value.playMode === 'webrtc') {
@@ -2464,7 +2485,7 @@ watch(videoDialogVisible, (newValue) => {
       } else if (streamType === 'youtube') {
         const embedUrl = getYouTubeEmbedUrl(currentVideoDevice.value.streamUrl)
         console.log('YouTube嵌入URL:', embedUrl)
-        
+
         if (!embedUrl) {
           console.error('YouTube嵌入URL生成失败')
           ElMessage.error('YouTube视频URL处理失败')
@@ -2498,7 +2519,7 @@ const handleAIEvent = (row) => {
 // 下拉菜单操作
 const handleMoreActions = async ({ action, row }) => {
   selectedRow.value = row
-  
+
   switch (action) {
     case 'edit':
       await handleEditSingle(row)
@@ -2521,16 +2542,16 @@ const handleEditSingle = async (row) => {
       type: 'info',
       duration: 0
     })
-    
+
     // 调用API获取完整的设备信息，包括关联的标签
     const response = await getDeviceById(row.id)
     loadingMessage.close()
-    
+
     if (response.code === 200) {
       editMode.value = 'edit'
       editForm.value = { ...response.data }
       showEditView.value = true
-      
+
       console.log('获取设备详情成功:', response.data)
       console.log('关联的标签ID:', response.data.selectedTags)
     } else {
@@ -2553,7 +2574,7 @@ const handleDeleteSingle = async (row) => {
         type: 'warning'
       }
     )
-    
+
     await deleteDevice(row.id)
     ElMessage.success('删除成功')
     loadDeviceList()
@@ -2584,7 +2605,7 @@ const handleEditSave = async (formData) => {
       await createDevice(formData)
       ElMessage.success('添加成功')
     }
-    
+
     showTableView()
     loadDeviceList()
   } catch (error) {
@@ -2643,7 +2664,7 @@ const toggleRecording = async () => {
     ElMessage.warning('未选择有效的设备')
     return
   }
-  
+
   if (recordingStatus.value.isRecording) {
     await stopVideoRecording()
   } else {
@@ -2655,24 +2676,24 @@ const toggleRecording = async () => {
 const startVideoRecording = async () => {
   try {
     recordingStatus.value.starting = true
-    
+
     const deviceId = currentVideoDevice.value.id
     const deviceName = currentVideoDevice.value.deviceName || '设备'
     const duration = 60 // 默认60秒
-    
+
     console.log('开始录像:', { deviceId, deviceName, duration })
-    
+
     const response = await startRecording(deviceId, deviceName, duration, 'medium')
-    
+
     if (response && response.data) {
       recordingStatus.value.recordId = response.data.id || response.data.recordId
       recordingStatus.value.isRecording = true
       recordingStatus.value.startTime = new Date()
       recordingStatus.value.duration = 0
-      
+
       // 开始计时器
       startRecordingTimer()
-      
+
       ElMessage.success('开始录像成功')
       console.log('录像已开始，记录ID:', recordingStatus.value.recordId)
     } else {
@@ -2681,7 +2702,7 @@ const startVideoRecording = async () => {
   } catch (error) {
     console.error('开始录像失败:', error)
     ElMessage.error(`开始录像失败: ${error.message || '未知错误'}`)
-    
+
     // 重置状态
     recordingStatus.value.isRecording = false
     recordingStatus.value.recordId = null
@@ -2694,26 +2715,26 @@ const startVideoRecording = async () => {
 const stopVideoRecording = async () => {
   try {
     recordingStatus.value.stopping = true
-    
+
     if (!recordingStatus.value.recordId) {
       ElMessage.warning('未找到录像记录ID')
       return
     }
-    
+
     console.log('停止录像:', recordingStatus.value.recordId)
-    
+
     const response = await stopRecording(recordingStatus.value.recordId)
-    
+
     if (response) {
       // 停止计时器
       stopRecordingTimer()
-      
+
       // 重置录像状态
       recordingStatus.value.isRecording = false
       recordingStatus.value.recordId = null
       recordingStatus.value.duration = 0
       recordingStatus.value.startTime = null
-      
+
       ElMessage.success('录像已停止')
       console.log('录像已停止')
     } else {
@@ -2732,7 +2753,7 @@ const startRecordingTimer = () => {
   if (recordingTimer.value) {
     clearInterval(recordingTimer.value)
   }
-  
+
   recordingTimer.value = setInterval(() => {
     if (recordingStatus.value.startTime) {
       const now = new Date()
@@ -2760,14 +2781,14 @@ const formatRecordingTime = (seconds) => {
 const handlePTZCommand = async (command) => {
   try {
     console.log('PTZ控制命令:', command)
-    
+
     if (!currentVideoDevice.value || !currentVideoDevice.value.id) {
       ElMessage.warning('未选择有效的设备')
       return
     }
-    
+
     const deviceId = currentVideoDevice.value.id
-    
+
     // 根据命令类型调用相应的API
     switch (command.type) {
       case 'move':
@@ -2777,12 +2798,12 @@ const handlePTZCommand = async (command) => {
           speed: command.speed || 5
         })
         break
-        
+
       case 'stop':
         // 停止移动
         await ptzStop(deviceId)
         break
-        
+
       case 'zoom':
         // 缩放控制
         await ptzZoom(deviceId, {
@@ -2790,7 +2811,7 @@ const handlePTZCommand = async (command) => {
           speed: command.speed || 5
         })
         break
-        
+
       case 'preset':
         // 预置位控制
         if (command.action === 'set') {
@@ -2801,23 +2822,23 @@ const handlePTZCommand = async (command) => {
           // 这里可以调用转到预置位的API
         }
         break
-        
+
       case 'focus':
         // 聚焦控制
         console.log('聚焦控制:', command.direction)
         break
-        
+
       case 'iris':
         // 光圈控制
         console.log('光圈控制:', command.direction)
         break
-        
+
       default:
         console.warn('未知的PTZ控制命令:', command.type)
         ElMessage.warning('未知的PTZ控制命令')
         return
     }
-    
+
     ElMessage.success(`PTZ ${command.type} 控制成功`)
   } catch (error) {
     console.error('PTZ控制失败:', error)
@@ -2867,34 +2888,216 @@ const handleIframeError = () => {
 </script>
 
 <style scoped lang="scss">
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  background: #f0f2f5;
+
+  .tenant_content {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+  }
+
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+  }
+}
+
+.police_aside_use {
+  width: 300px;
+  padding-right: 20px;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+
+  .treeTitle {
+    color: var(--el-color-primary);
+    padding-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 4px;
+
+    &::before {
+      content: '';
+      width: 3px;
+      height: 18px;
+      background-color: var(--el-color-primary);
+    }
+  }
+
+  .tree_search_content {
+    justify-content: center;
+    padding-bottom: 10px;
+
+    :deep(.el-input__wrapper) {
+      background: #fff;
+      box-shadow: none;
+      border: 1px solid #dcdfe6;
+      border-radius: 4px;
+    }
+  }
+
+  :deep(.el-tree-node__content) {
+    --el-tree-node-hover-bg-color: var(--el-menu-hover-bg-color);
+    height: 38px;
+    font-size: 14px;
+    color: #333;
+
+    .custom-tree-node {
+      width: 100%;
+      justify-content: space-between;
+      padding-right: 4px;
+    }
+  }
+
+  :deep(.el-tree-node) {
+    .el-tree-node.is-current.is-focusable > .el-tree-node__content {
+      background-color: var(--el-color-primary-hb);
+      color: var(--el-color-primary);
+    }
+  }
+
+  :deep(.el-tree) {
+    height: calc(100% - 80px);
+    overflow: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
+.custom-tree-node {
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+
+  .tree-node-main {
+    flex: 1;
+    min-width: 0;
+    gap: 4px;
+    overflow: hidden;
+  }
+
+  .tree-node-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tree-node-actions {
+    flex-shrink: 0;
+    gap: 8px;
+    margin-left: 8px;
+  }
+
+  .tree-action-icon {
+    cursor: pointer;
+  }
+
+  .tree-icon {
+    flex-shrink: 0;
+    font-size: 14px;
+    color: var(--el-color-primary);
+  }
+
+  .device-icon { color: #52C41A; }
+  .tag-icon { color: #8581dc; }
+  .activeDept { color: var(--el-color-primary); }
+}
+
+.tableTenItU {
+  flex: 1;
+  height: 100%;
+  overflow: auto;
+  min-width: 0;
+
+  :deep(.header_tenant_cell) {
+    background: #F8F8F9;
+  }
+}
+
+.paginationBox {
+  justify-content: center;
+  height: 100px;
+}
+
+.operateAppBox {
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.tag_pill {
+  margin-right: 4px;
+  border-radius: 12px;
+}
+
+.content-header {
+  padding-bottom: 12px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.breadcrumb-item {
+  color: #606266;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.breadcrumb-item.active {
+  color: #303133;
+  font-weight: 500;
+}
+
+.breadcrumb-separator {
+  color: #c0c4cc;
+}
+
 .device-management {
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
-  
+  background: #f0f2f5;
+
   .search-form-container {
     background: white;
     padding: 16px 20px;
     border-bottom: 1px solid #ebeef5;
-    
+
     .search-form {
       .search-row {
         display: flex;
         align-items: center;
         gap: 16px;
         flex-wrap: wrap;
-        
+
         .search-item {
           display: flex;
           align-items: center;
           gap: 8px;
-          
+
           &.date-with-buttons {
             display: flex;
             align-items: center;
             gap: 12px;
-            
+
             .search-buttons {
               display: flex;
               gap: 8px;
@@ -2904,53 +3107,53 @@ const handleIframeError = () => {
       }
     }
   }
-  
+
   .main-content {
     flex: 1;
     display: flex;
     overflow: hidden;
-    
+
     .device-tree-container {
       width: 280px;
       transition: all 0.3s ease;
       border-right: 1px solid #ebeef5;
       background: white;
-      
+
       &.collapsed {
         width: 0;
         overflow: hidden;
       }
     }
-    
+
     .table-container {
       flex: 1;
       display: flex;
       flex-direction: column;
       background: white;
-      
+
       .content-header {
         padding: 16px 20px;
         border-bottom: 1px solid #ebeef5;
-        
+
         .breadcrumb {
           display: flex;
           align-items: center;
           gap: 8px;
           font-size: 14px;
-          
+
           .breadcrumb-item {
             color: #606266;
             cursor: pointer;
-            
+
             &:hover {
               color: #409eff;
             }
-            
+
             &.active {
               color: #409eff;
               font-weight: 500;
             }
-            
+
             &.filter-text {
               color: #409eff;
               background: #ecf5ff;
@@ -2958,7 +3161,7 @@ const handleIframeError = () => {
               border-radius: 4px;
               position: relative;
               padding-right: 20px;
-              
+
               &::after {
                 content: '×';
                 position: absolute;
@@ -2970,64 +3173,64 @@ const handleIframeError = () => {
                 opacity: 0.6;
                 transition: opacity 0.2s;
               }
-              
+
               &:hover::after {
                 opacity: 1;
               }
             }
           }
-          
+
           .breadcrumb-separator {
             color: #c0c4cc;
           }
-          
+
           .expand-device-tree-btn {
             margin-right: 8px;
           }
         }
       }
-      
+
       .table-view {
         flex: 1;
         display: flex;
         flex-direction: column;
         padding: 20px;
-        
+
         .toolbar {
           margin-bottom: 16px;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          
+
           .toolbar-left {
             display: flex;
             gap: 12px;
           }
-          
+
           .toolbar-right {
             display: flex;
             align-items: center;
           }
         }
-        
+
         .table-content {
           flex: 1;
           display: flex;
           flex-direction: column;
-          
+
           .action-buttons {
             display: flex;
             gap: 8px;
             justify-content: flex-end;
             align-items: center;
-            
+
             .config-button {
               flex-shrink: 0;
             }
-            
+
             // PlayButton组件使用自己的原始样式，不做任何覆盖
           }
-          
+
           .table-pagination {
             display: flex;
             justify-content: center;
@@ -3037,7 +3240,7 @@ const handleIframeError = () => {
           }
         }
       }
-      
+
       .edit-view,
       .camera-settings-view,
       .config-view,
@@ -3048,33 +3251,33 @@ const handleIframeError = () => {
       }
     }
   }
-  
+
   :deep(.delete-dropdown-item) {
     color: #f56c6c;
-    
+
     &:hover {
       background-color: #fef0f0;
       color: #f56c6c;
     }
   }
-  
+
   // 统一按钮颜色样式
   .config-button {
     background: transparent !important;
     border: none !important;
     color: #1A53FF !important;
-    
+
     &:hover {
       background: rgba(26, 83, 255, 0.1) !important;
       color: #1A53FF !important;
     }
-    
+
     &:active {
       background: rgba(26, 83, 255, 0.2) !important;
       color: #1A53FF !important;
     }
   }
-  
+
   // 更多按钮和其他操作按钮样式
   .action-buttons {
     :deep(.el-button) {
@@ -3082,12 +3285,12 @@ const handleIframeError = () => {
         background: transparent !important;
         border: none !important;
         color: #1A53FF !important;
-        
+
         &:hover {
           background: rgba(26, 83, 255, 0.1) !important;
           color: #1A53FF !important;
         }
-        
+
         &:active {
           background: rgba(26, 83, 255, 0.2) !important;
           color: #1A53FF !important;
@@ -3095,7 +3298,7 @@ const handleIframeError = () => {
       }
     }
   }
-  
+
   // 表格工具栏按钮样式 - 排除ActionButtonGroup内的按钮
   .table-toolbar {
     :deep(.el-button) {
@@ -3103,12 +3306,12 @@ const handleIframeError = () => {
         background: transparent !important;
         border: none !important;
         color: #1A53FF !important;
-        
+
         &:hover {
           background: rgba(26, 83, 255, 0.1) !important;
           color: #1A53FF !important;
         }
-        
+
         &:active {
           background: rgba(26, 83, 255, 0.2) !important;
           color: #1A53FF !important;
@@ -3116,7 +3319,7 @@ const handleIframeError = () => {
       }
     }
   }
-  
+
   // 搜索按钮样式
   .search-buttons {
     :deep(.el-button) {
@@ -3124,12 +3327,12 @@ const handleIframeError = () => {
         background: transparent !important;
         border: none !important;
         color: #1A53FF !important;
-        
+
         &:hover {
           background: rgba(26, 83, 255, 0.1) !important;
           color: #1A53FF !important;
         }
-        
+
         &:active {
           background: rgba(26, 83, 255, 0.2) !important;
           color: #1A53FF !important;
@@ -3147,21 +3350,21 @@ const handleIframeError = () => {
         width: 240px;
       }
     }
-    
+
     .search-form {
       .search-row {
         flex-direction: column;
         align-items: stretch;
-        
+
         .search-item {
           width: 100%;
-          
+
           &.date-with-buttons {
             flex-direction: column;
             gap: 12px;
-            
 
-            
+
+
             .search-buttons {
               justify-content: center;
             }
@@ -3176,24 +3379,24 @@ const handleIframeError = () => {
   .device-management {
     .main-content {
       flex-direction: column;
-      
+
       .device-tree-container {
         width: 100%;
         height: 200px;
         border-right: none;
         border-bottom: 1px solid #ebeef5;
-        
+
         &.collapsed {
           height: 0;
         }
       }
     }
-    
+
     .table-content {
       .action-buttons {
         flex-direction: column;
         align-items: stretch;
-        
+
         .el-button {
           margin: 0;
         }
@@ -3210,7 +3413,7 @@ const handleIframeError = () => {
   min-height: 800px;
   max-height: 85vh;
   overflow: hidden;
-  
+
   // 播放控制栏样式
   .player-controls {
     display: flex;
@@ -3220,56 +3423,56 @@ const handleIframeError = () => {
     background: #f5f7fa;
     border-radius: 8px;
     border: 1px solid #e4e7ed;
-    
+
     .control-left {
       display: flex;
       align-items: center;
       gap: 16px;
-      
+
       .play-mode-selector {
         display: flex;
         align-items: center;
         gap: 8px;
-        
+
         &::before {
           content: '播放模式:';
           font-size: 14px;
           color: #606266;
         }
       }
-      
+
       .play-status {
         display: flex;
         align-items: center;
         gap: 8px;
       }
     }
-    
+
     .control-right {
       display: flex;
       align-items: center;
       gap: 8px;
-      
+
       .recording-status {
         margin-right: 8px;
-        
+
         .el-tag {
           .recording-icon {
             animation: blink 1.5s infinite;
           }
         }
       }
-      
+
       .quality-stats {
         margin-right: 8px;
-        
+
         .stats-info {
           display: flex;
           align-items: center;
           gap: 6px;
           font-size: 12px;
           color: #666;
-          
+
           span {
             padding: 2px 6px;
             background: #f0f0f0;
@@ -3280,7 +3483,7 @@ const handleIframeError = () => {
       }
     }
   }
-  
+
   // 视频播放器区域容器
   .video-player-content {
     display: flex;
@@ -3289,10 +3492,10 @@ const handleIframeError = () => {
     flex: 1;
     min-height: 0;
   }
-  
+
   .video-player-section {
     flex: none; // 固定尺寸，不伸缩
-    
+
     .simple-video-player {
       width: 1340px;
       height: 762px;
@@ -3301,7 +3504,7 @@ const handleIframeError = () => {
       overflow: hidden;
       position: relative;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); // 添加阴影
-      
+
       .debug-info {
         position: absolute;
         top: 10px;
@@ -3313,7 +3516,7 @@ const handleIframeError = () => {
         font-size: 12px;
         z-index: 999;
       }
-      
+
       .video-element {
         width: 100%;
         height: 100%;
@@ -3324,26 +3527,26 @@ const handleIframeError = () => {
         width: 100%;
         height: 100%;
       }
-      
+
       .video-iframe {
         width: 100%;
         height: 100%;
         border: none;
       }
-      
+
       .video-error {
         display: flex;
         align-items: center;
         justify-content: center;
         height: 100%;
         background: #f5f5f5;
-        
+
         .error-content {
           text-align: center;
           color: #666;
         }
       }
-      
+
       // RTSP流容器样式
       .rtsp-container {
         display: flex;
@@ -3351,7 +3554,7 @@ const handleIframeError = () => {
         justify-content: center;
         height: 100%;
         background: #000;
-        
+
         // WebRTC播放器样式
         .webrtc-player {
           position: relative;
@@ -3360,14 +3563,14 @@ const handleIframeError = () => {
           background: #000;
           border-radius: 8px;
           overflow: hidden;
-          
+
           iframe {
             width: 100%;
             height: 100%;
             border: none;
             border-radius: 8px;
           }
-          
+
           .webrtc-info {
             position: absolute;
             bottom: 8px;
@@ -3380,14 +3583,14 @@ const handleIframeError = () => {
             pointer-events: none;
           }
         }
-        
+
         .rtsp-conversion-options {
           display: flex;
           align-items: center;
           justify-content: center;
           height: 100%;
           background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-          
+
           .conversion-info {
             text-align: center;
             padding: 40px;
@@ -3395,18 +3598,18 @@ const handleIframeError = () => {
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
             max-width: 600px;
-            
+
             .rtsp-icon {
               margin-bottom: 20px;
             }
-            
+
             .rtsp-title {
               font-size: 24px;
               font-weight: 600;
               color: #303133;
               margin-bottom: 16px;
             }
-            
+
             .rtsp-url {
               background: #f5f7fa;
               border: 1px solid #e4e7ed;
@@ -3419,18 +3622,18 @@ const handleIframeError = () => {
               margin-bottom: 20px;
               user-select: all;
             }
-            
+
             .conversion-note {
               text-align: left;
               color: #606266;
               line-height: 1.6;
               margin-bottom: 24px;
-              
+
               p {
                 margin: 0 0 12px 0;
               }
             }
-            
+
             .conversion-actions {
               display: flex;
               justify-content: center;
@@ -3438,23 +3641,23 @@ const handleIframeError = () => {
               flex-wrap: wrap;
               margin-bottom: 20px;
             }
-            
+
             .conversion-tips {
               background: #f8f9fa;
               border-radius: 6px;
               padding: 16px;
               text-align: left;
-              
+
               p {
                 margin: 0 0 8px 0;
                 font-weight: 600;
                 color: #303133;
               }
-              
+
               ul {
                 margin: 8px 0 0 0;
                 padding-left: 20px;
-                
+
                 li {
                   margin-bottom: 6px;
                   color: #666;
@@ -3467,14 +3670,14 @@ const handleIframeError = () => {
       }
     }
   }
-  
+
   .ptz-control-section {
     flex: none; // 固定宽度
     width: 330px; // 给PTZ控制面板足够的宽度
     max-height: 85vh; // 限制最大高度
     display: flex;
     flex-direction: column;
-    
+
     .ptz-control-wrapper {
       height: 100%;
       overflow-y: auto; // 允许垂直滚动
@@ -3483,21 +3686,21 @@ const handleIframeError = () => {
       border-radius: 0; // 取消圆角
       padding: 0; // 取消内边距
       // 取消阴影和边框
-      
+
       // 自定义滚动条样式
       &::-webkit-scrollbar {
         width: 6px;
       }
-      
+
       &::-webkit-scrollbar-track {
         background: #f1f1f1;
         border-radius: 3px;
       }
-      
+
       &::-webkit-scrollbar-thumb {
         background: #c1c1c1;
         border-radius: 3px;
-        
+
         &:hover {
           background: #a8a8a8;
         }
@@ -3516,10 +3719,10 @@ const handleIframeError = () => {
 @media (max-height: 900px) {
   .video-player-container {
     max-height: 80vh;
-    
+
     .ptz-control-section {
       max-height: 80vh;
     }
   }
 }
-</style> 
+</style>

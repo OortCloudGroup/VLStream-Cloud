@@ -1,5 +1,6 @@
 <template>
-  <div class="page-container">
+  <div class="page-container tenant_Page draHeaPB">
+    <div class="tenant_content">
     <!-- 列表视图 -->
     <div v-if="!showTrainingConfig && !showVersionConfig && !showValidationView" class="list-view">
       <!-- 介绍内容区 -->
@@ -57,52 +58,45 @@
         </div>
       </div>
 
-      <!-- 主内容区域 -->
-      <div class="main-content">
-        <!-- 工具栏 -->
-        <div class="toolbar">
-          <div class="toolbar-left">
-            <ActionButtonGroup
-              :selected-count="selectedRows.length"
-              @add="handleAdd"
-              @edit="handleEdit"
-              @delete="handleDelete"
-            />
-<!--            <el-button type="success" size="small" @click="testUpdateStatus" style="margin-left: 10px;">-->
-<!--              测试状态更新-->
-<!--            </el-button>-->
-          </div>
-          
-          <div class="toolbar-right">
-            <div class="depNameBox_out flexRowAC">
-              <div class="searchHeight_out flexRowAC">
-                <search-height-box
-                  keyword="keyword"
-                  placeholder="搜索"
-                  :data="searchData"
-                  @handle="searchResetFn"
-                />
-                <export-excel-pdf :item="exportItem" @handle="handleExport" />
+      <div class="tableTenBox flexRowAC" style="flex-direction:column;padding-top:0;">
+        <div class="tableTenItU">
+        <div class="depNameBox_out flexRowAC">
+          <div class="depNameBox flexRowAC">
+            <div class="exportBtnBox flexRowAC">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
+                  <el-icon class="BtnImg">
+                    <Plus />
+                  </el-icon>
+                  新建
+                </button>
+                <button-group :button-list="toolbarButtonList" />
               </div>
-            </div>
+          </div>
+          <div class="searchHeight_out flexRowAC">
+            <search-height-box
+              keyword="keyword"
+              placeholder="搜索"
+              :data="searchData"
+              @handle="searchResetFn"
+            />
+            <export-excel-pdf :item="exportItem" @handle="handleExport" />
           </div>
         </div>
         
-        <!-- 表格区域 -->
-        <div class="table-section">
-      <el-table 
-        :data="currentPageData" 
-        stripe 
-        style="width: 100%"
+        <TableSelf
+        class="new_table"
+        header-cell-class-name="header_tenant_cell"
+        :data="currentPageData"
+        stripe
         v-loading="loading"
         @selection-change="handleSelectionChange"
         @row-click="handleRowClick"
       >
-        <el-table-column type="selection" width="55" align="center" />
-        <el-table-column prop="modelId" label="模型ID" width="80" align="center" />
-        <el-table-column prop="algorithmName" label="算法名称" min-width="160" />
-        <el-table-column prop="trainAlgorithm" label="训练算法" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="trainStatus" label="训练状态" width="120" align="center">
+        <el-table-column type="selection" :width="clacPXToVW(55)" align="center" />
+        <el-table-column prop="modelId" label="模型ID" :width="clacPXToVW(80)" align="center" />
+        <el-table-column prop="algorithmName" label="算法名称" :width="clacPXToVW(160)" show-overflow-tooltip />
+        <el-table-column prop="trainAlgorithm" label="训练算法" :width="clacPXToVW(200)" show-overflow-tooltip />
+        <el-table-column prop="trainStatus" label="训练状态" :width="clacPXToVW(120)" align="center">
           <template #default="scope">
             <el-tag
               :type="getStatusType(scope.row.trainStatus)"
@@ -113,7 +107,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="modelEffect" label="模型效果" width="200" align="center">
+        <el-table-column prop="modelEffect" label="模型效果" :width="clacPXToVW(200)" align="center">
           <template #default="scope">
             <div v-if="scope.row.trainStatus === '训练完成'" class="model-metrics">
               <div class="metric-item">
@@ -136,13 +130,13 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="targetModel" label="对应模型" min-width="120" align="center">
+        <el-table-column prop="targetModel" label="对应模型" :width="clacPXToVW(120)" align="center">
           <template #default="scope">
             <span v-if="scope.row.targetModel">{{ scope.row.targetModel }}</span>
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="320" fixed="right" align="right">
+        <el-table-column label="操作" :width="clacPXToVW(320)" fixed="right" align="right">
           <template #default="scope">
             <div class="table-action-buttons">
               <!-- 空状态：训练和更多 -->
@@ -287,16 +281,16 @@
             </div>
           </template>
         </el-table-column>
-      </el-table>
-      </div>
+      </TableSelf>
 
-      <!-- 分页 -->
-      <div class="pagination-section">
+      <div class="paginationBox flexRowAC">
         <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
+          background
+          :current-page="currentPage"
+          :page-size="pageSize"
           :page-sizes="[5, 10, 20, 50]"
-          layout="total, sizes, prev, pager, next, jumper"
+          layout="total, prev, pager, next, sizes"
+          class="justifyAlign"
           :total="total"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
@@ -304,6 +298,7 @@
       </div>
         </div>
       </div>
+    </div>
 
     <!-- 版本配置视图 -->
     <div v-if="showVersionConfig" class="version-config-view">
@@ -733,7 +728,6 @@
         </div>
       </div>
     </div>
-  </div>
 
   <!-- 发布为模型弹窗 -->
   <el-dialog
@@ -1108,13 +1102,15 @@
       </div>
     </template>
   </el-dialog>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import {computed, h, nextTick, onMounted, onUnmounted, ref} from 'vue'
 import {ElMessage, ElMessageBox, ElRadio, ElRadioGroup} from 'element-plus'
 import {ArrowDown, Download, Plus, QuestionFilled, Refresh, Search} from '@element-plus/icons-vue'
-import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
+import { clacPXToVW } from '@/utils/index'
 import {
   batchDeleteTraining,
   convertModel,
@@ -2552,6 +2548,10 @@ const handleDeployModel = async () => {
   }
 }
 
+const toolbarButtonList = [
+  { name: '编辑', svg: 'table_edit', clickFn: handleEdit },
+  { name: '删除', svg: 'table_del', clickFn: handleDelete },
+]
 const exportItem = ref({ isDisabledExcel: false })
 const searchData = ref([
   { label: '关键词', value: 'keyword', type: 'text', default: '' }
@@ -2894,7 +2894,32 @@ const openDatasetSelector = async () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  background: #f0f2f5;
+  .tenant_content { width: 100%; height: 100%; }
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+  }
+}
+.tableTenItU {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+  :deep(.header_tenant_cell) { background: #F8F8F9; }
+}
+.paginationBox { justify-content: center; height: 100px; }
+.operateAppBox { justify-content: flex-end; gap: 2px; flex-wrap: wrap; }
+
 .page-container {
   min-height: 100vh;
   display: flex;

@@ -478,6 +478,45 @@ a {
   border-radius: 50px !important;
 }
 
+/*工具栏：新建按钮 + button-group */
+.exportBtnBox {
+  gap: 12px;
+  padding: 0;
+}
+
+.exportBtn {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  height: 32px;
+  background: var(--el-color-primary);
+  border-radius: 5px;
+  border: 1px solid var(--el-color-primary);
+  font-size: 14px;
+  line-height: 1;
+  color: #fff;
+  box-shadow: 0 2px 0 0 rgb(0 0 0 / 4%);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+
+  .BtnImg {
+    width: 14px;
+    height: 14px;
+    margin-right: 8px;
+    flex-shrink: 0;
+    font-size: 14px;
+    color: #fff;
+  }
+}
+
+button.exportBtn {
+  margin: 0;
+}
+
 /*高级搜索*/
 .popoverRefHeight {
   width: 542px !important;

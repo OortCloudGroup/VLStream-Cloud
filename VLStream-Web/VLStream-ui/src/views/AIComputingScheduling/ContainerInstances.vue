@@ -1,5 +1,6 @@
 <template>
-  <div class="container-instances">
+  <div class="container-instances tenant_Page draHeaPB">
+    <div class="tenant_content">
     <!-- 监控页面 -->
     <!-- 创建容器实例页面 -->
     <div v-if="showCreateView" class="create-view">
@@ -404,209 +405,146 @@
     </div>
 
     <!-- 列表页面 -->
-    <div v-else-if="!showCreateView && !showMonitoringView && !showDetailsView" class="list-view">
-      <!-- 搜索筛选区域 - 已注释，使用高级搜索组件替代 -->
-      <!--
-      <div class="search-section">
-      <div class="search-form">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="实例名称/ID"
-          clearable
-          class="search-input"
-        >
-        </el-input>
-        
-        <DateRangePicker
-          v-model="createTimeRange"
-          start-placeholder="创建时间"
-          end-placeholder="创建时间"
-          width="500px"
-          value-format="YYYY-MM-DD"
-          format="YYYY-MM-DD"
-        />
-        
-        <el-button type="primary" @click="handleSearch">
-          <el-icon><Search /></el-icon>
-          搜索
-        </el-button>
-        <el-button @click="resetFilter">
-          重置
-        </el-button>
-      </div>
-    </div>
-    -->
+    <div v-else-if="!showCreateView && !showMonitoringView && !showDetailsView" class="tableTenBox flexRowAC">
+      <div class="tableTenItU">
+        <div class="depNameBox_out flexRowAC">
+          <div class="depNameBox flexRowAC">
+            <div class="exportBtnBox flexRowAC">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="showCreateView = true">
+                  <el-icon class="BtnImg">
+                    <Plus />
+                  </el-icon>
+                  创建容器实例
+                </button>
+              </div>
+          </div>
+          <div class="searchHeight_out flexRowAC">
+            <search-height-box
+              keyword="keyword"
+              placeholder="搜索"
+              :data="searchData"
+              @handle="searchResetFn"
+            />
+            <export-excel-pdf :item="exportItem" @handle="handleExport" />
+          </div>
+        </div>
 
-    <!-- 操作栏 -->
-    <div class="action-section">
-      <el-button type="primary" @click="showCreateView = true" class="add-btn-custom">
-        <el-icon><Plus /></el-icon>
-        创建容器实例
-      </el-button>
-      
-      <div class="depNameBox_out flexRowAC">
-        <div class="searchHeight_out flexRowAC">
-          <search-height-box
-            keyword="keyword"
-            placeholder="搜索"
-            :data="searchData"
-            @handle="searchResetFn"
+        <TableSelf
+          class="new_table"
+          header-cell-class-name="header_tenant_cell"
+          stripe
+          :data="filteredInstances"
+          v-loading="loading"
+          @selection-change="handleSelectionChange"
+        >
+          <el-table-column type="selection" :width="clacPXToVW(55)" />
+          <el-table-column label="实例名称/ID" :width="clacPXToVW(220)">
+            <template #default="{ row }">
+              <div class="instance-info">
+                <div class="instance-name">{{ row.name }}</div>
+                <div class="instance-id">ID: {{ row.id }}</div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="status" label="状态" :width="clacPXToVW(100)">
+            <template #default="{ row }">
+              <el-tag :type="getStatusTagType(row.status)" size="small">
+                <el-icon class="status-icon">
+                  <component :is="getStatusIcon(row.status)" />
+                </el-icon>
+                {{ getStatusText(row.status) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="计算配置" :width="clacPXToVW(200)">
+            <template #default="{ row }">
+              <div class="compute-config">
+                <div class="config-item">CPU: {{ row.cpuLimit || '未设置' }}</div>
+                <div class="config-item">内存: {{ row.memoryLimit || '未设置' }}</div>
+                <div class="config-item">GPU: {{ row.gpuLimit || '未设置' }}</div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="镜像信息" :width="clacPXToVW(200)">
+            <template #default="{ row }">
+              <div class="image-info">
+                <div class="image-name">{{ row.image || '未设置' }}</div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="端口映射" :width="clacPXToVW(120)">
+            <template #default="{ row }">
+              <div class="port-info">
+                {{ row.portMappings ? JSON.parse(row.portMappings || '{}').port || '-' : '-' }}
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="创建时间" :width="clacPXToVW(160)">
+            <template #default="{ row }">
+              {{ row.createTime || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column label="快捷访问" :width="clacPXToVW(250)">
+            <template #default="{ row }">
+              <div class="quick-access">
+                <el-button type="primary" text class="access-button" :disabled="row.status !== 'running'" @click="openJupyter(row)">jupyter</el-button>
+                <el-button type="primary" text class="access-button" :disabled="row.status !== 'running'" @click="openWebConnection(row)">web 连接</el-button>
+                <el-button type="primary" text class="access-button" :disabled="row.status !== 'running'" @click="openTensorBoard(row)">TensorBoard</el-button>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" :width="clacPXToVW(300)" fixed="right">
+            <template #default="{ row }">
+              <div class="operateAppBox flexRowAC" @click.stop>
+                <div v-if="row.status === 'stopped'" class="new_table_svg_group" @click="startContainer(row)">
+                  <oort-svg-icon width="20" height="20" name="enable" class="new_table_svg_group_svg" />
+                  <span>启动</span>
+                </div>
+                <div v-if="row.status === 'running'" class="new_table_svg_group" @click="stopContainer(row)">
+                  <oort-svg-icon width="20" height="20" name="consent" class="new_table_svg_group_svg" />
+                  <span>停止</span>
+                </div>
+                <div v-if="row.status === 'running'" class="new_table_svg_group" @click="restartContainer(row)">
+                  <oort-svg-icon width="20" height="20" name="setting" class="new_table_svg_group_svg" />
+                  <span>重启</span>
+                </div>
+                <div class="new_table_svg_group" @click="viewDetails(row)">
+                  <oort-svg-icon width="20" height="20" name="detail_icon" class="new_table_svg_group_svg" />
+                  <span>详情</span>
+                </div>
+                <el-dropdown trigger="click">
+                  <div class="new_table_svg_group">
+                    <oort-svg-icon width="20" height="20" name="table_more" class="new_table_svg_group_svg" />
+                    <span>更多</span>
+                  </div>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item @click="saveImage(row)">保存镜像</el-dropdown-item>
+                      <el-dropdown-item @click="viewMonitoring(row)">监控</el-dropdown-item>
+                      <el-dropdown-item @click="viewLogs(row)">查看日志</el-dropdown-item>
+                      <el-dropdown-item @click="deleteContainer(row)" class="delete-item">删除</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
+            </template>
+          </el-table-column>
+        </TableSelf>
+
+        <div class="paginationBox flexRowAC">
+          <el-pagination
+            background
+            :current-page="currentPage"
+            :page-size="pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="totalInstances"
+            layout="total, prev, pager, next, sizes"
+            class="justifyAlign"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
           />
-          <export-excel-pdf :item="exportItem" @handle="handleExport" />
         </div>
       </div>
-    </div>
-
-    <!-- 容器实例列表 -->
-    <div class="list-section">
-      <el-table 
-        :data="filteredInstances" 
-        :loading="loading"
-        style="width: 100%"
-        @selection-change="handleSelectionChange"
-      >
-        <el-table-column type="selection" width="55" />
-        <el-table-column label="实例名称/ID" min-width="220">
-          <template #default="{ row }">
-            <div class="instance-info">
-              <div class="instance-name">{{ row.name }}</div>
-              <div class="instance-id">ID: {{ row.id }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" min-width="100">
-          <template #default="{ row }">
-            <el-tag :type="getStatusTagType(row.status)" size="small">
-              <el-icon class="status-icon">
-                <component :is="getStatusIcon(row.status)" />
-              </el-icon>
-              {{ getStatusText(row.status) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="计算配置" min-width="200">
-          <template #default="{ row }">
-            <div class="compute-config">
-              <div class="config-item">CPU: {{ row.cpuLimit || '未设置' }}</div>
-              <div class="config-item">内存: {{ row.memoryLimit || '未设置' }}</div>
-              <div class="config-item">GPU: {{ row.gpuLimit || '未设置' }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="镜像信息" min-width="200">
-          <template #default="{ row }">
-            <div class="image-info">
-              <div class="image-name">{{ row.image || '未设置' }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="端口映射" min-width="120">
-          <template #default="{ row }">
-            <div class="port-info">
-              {{ row.portMappings ? JSON.parse(row.portMappings || '{}').port || '-' : '-' }}
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="创建时间" min-width="160">
-          <template #default="{ row }">
-            {{ row.createTime || '-' }}
-          </template>
-        </el-table-column>
-        <el-table-column label="快捷访问" min-width="250">
-          <template #default="{ row }">
-            <div class="quick-access">
-              <el-button 
-                type="primary" 
-                text 
-                class="access-button"
-                :disabled="row.status !== 'running'"
-                @click="openJupyter(row)"
-              >
-                jupyter
-              </el-button>
-              <el-button 
-                type="primary" 
-                text 
-                class="access-button"
-                :disabled="row.status !== 'running'"
-                @click="openWebConnection(row)"
-              >
-                web 连接
-              </el-button>
-              <el-button 
-                type="primary" 
-                text 
-                class="access-button"
-                :disabled="row.status !== 'running'"
-                @click="openTensorBoard(row)"
-              >
-                TensorBoard
-              </el-button>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="300" fixed="right">
-          <template #default="{ row }">
-            <div class="action-buttons">
-              <el-button 
-                v-if="row.status === 'stopped'"
-                type="primary" 
-                text 
-                size="small" 
-                @click="startContainer(row)"
-              >
-                启动
-              </el-button>
-              <el-button 
-                v-if="row.status === 'running'"
-                type="warning" 
-                text 
-                size="small" 
-                @click="stopContainer(row)"
-              >
-                停止
-              </el-button>
-              <el-button 
-                v-if="row.status === 'running'"
-                type="info" 
-                text 
-                size="small" 
-                @click="restartContainer(row)"
-              >
-                重启
-              </el-button>
-              <el-button type="primary" text size="small" @click="saveImage(row)">保存镜像</el-button>
-              <el-button type="primary" text size="small" @click="viewDetails(row)">实例详情</el-button>
-              <el-dropdown trigger="click">
-                <el-button type="primary" text size="small">
-                  更多
-                  <el-icon><ArrowDown /></el-icon>
-                </el-button>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item @click="viewMonitoring(row)">监控</el-dropdown-item>
-                    <el-dropdown-item @click="viewLogs(row)">查看日志</el-dropdown-item>
-                    <el-dropdown-item @click="deleteContainer(row)" class="delete-item">删除</el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-
-    <!-- 分页 -->
-    <div class="pagination-section">
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="totalInstances"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
     </div>
 
     <!-- 创建容器对话框 -->
@@ -713,6 +651,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { clacPXToVW } from '@/utils/index'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Plus, Refresh, Search, Box, Cpu, Monitor, VideoCamera, 
@@ -1243,7 +1182,32 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  background: #f0f2f5;
+  .tenant_content { width: 100%; height: 100%; }
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+  }
+}
+.tableTenItU {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+  :deep(.header_tenant_cell) { background: #F8F8F9; }
+}
+.paginationBox { justify-content: center; height: 100px; }
+.operateAppBox { justify-content: flex-end; gap: 2px; flex-wrap: wrap; }
+
 .container-instances {
   margin: 0 20px;
 }

@@ -1,75 +1,12 @@
 <template>
-  <div class="monitoring-alarms">
-    <!-- 搜索区域 - 已注释，使用高级搜索组件替代 -->
-    <!--
-    <div class="search-section">
-      <div class="search-form">
-        <div class="search-row">
-          <el-input
-            v-model="searchForm.deviceName"
-            placeholder="设备名称/设备ID"
-            clearable
-            style="width: 240px;"
-          />
-          <el-select
-            v-model="searchForm.alarmType"
-            placeholder="告警类型"
-            clearable
-            style="width: 150px;"
-          >
-            <el-option label="全部" value="" />
-            <el-option label="跨线告警" value="跨线告警" />
-            <el-option label="区域入侵" value="区域入侵" />
-            <el-option label="人员聚集" value="人员聚集" />
-            <el-option label="异常行为" value="异常行为" />
-          </el-select>
-          <DateRangePicker
-            v-model="searchForm.dateRange"
-            start-placeholder="创建时间"
-            end-placeholder="结束时间"
-          />
-          <div class="search-buttons">
-            <el-button type="primary" @click="handleSearch">
-              <el-icon><Search /></el-icon>
-              搜索
-            </el-button>
-            <el-button @click="handleReset">
-              <el-icon><Refresh /></el-icon>
-              重置
-            </el-button>
-          </div>
-        </div>
-      </div>
-    </div>
-    -->
-
-    <!-- 主要内容区域 -->
-    <div class="main-content">
-      <!-- 操作按钮区域 -->
-      <div class="action-section">
-        <div class="action-button-group">
-          <!-- 导出删除按钮组 -->
-          <div class="export-delete-group">
-            <el-button 
-              class="export-btn-custom" 
-              @click="handleExport" 
-              :disabled="!selectedRows.length"
-            >
-              <el-icon><Download /></el-icon>
-              导出
-            </el-button>
-            <el-button 
-              type="danger" 
-              class="delete-btn-custom" 
-              @click="handleDelete" 
-              :disabled="!selectedRows.length"
-            >
-              <el-icon><Delete /></el-icon>
-              删除
-            </el-button>
-          </div>
-          
+  <div class="monitoring-alarms tenant_Page draHeaPB">
+    <div class="tenant_content">
+      <div class="tableTenBox flexRowAC">
+        <div class="tableTenItU">
           <div class="depNameBox_out flexRowAC">
+            <div class="depNameBox flexRowAC">
+              <button-group :button-list="toolbarButtonList" />
+            </div>
             <div class="searchHeight_out flexRowAC">
               <search-height-box
                 keyword="keyword"
@@ -80,49 +17,55 @@
               <export-excel-pdf :item="exportItem" @handle="handleExport" />
             </div>
           </div>
-        </div>
-      </div>
-          
-      <!-- 表格区域 -->
-      <div class="table-section">
-        <el-table 
-          :data="currentPageData"
-          stripe
-          @selection-change="handleSelectionChange"
-          style="width: 100%"
-        >
-          <el-table-column type="selection" width="55" />
-          <el-table-column type="index" label="序号" width="80" align="center" />
-          <el-table-column prop="deviceName" label="设备名称" min-width="120" />
-          <el-table-column prop="tags" label="标签" width="120">
-            <template #default="scope">
-              <el-tag size="small" type="primary">{{ scope.row.tags }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="deviceId" label="设备ID" min-width="120" />
-          <el-table-column prop="alarmType" label="告警类型" min-width="120" />
-          <el-table-column prop="alarmLocation" label="告警位置" min-width="200" />
-          <el-table-column prop="alarmTime" label="告警时间" width="180" />
-                          <el-table-column label="操作" width="100" align="right" fixed="right">
-            <template #default="scope">
-              <div class="action-buttons">
-                <PlayButton @click="handlePlay(scope.row)" />
-              </div>
-            </template>
-          </el-table-column>
-        </el-table>
-        
-        <!-- 分页 - 紧贴表格数据 -->
-        <div class="table-pagination">
-          <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="total"
-            layout="total, sizes, prev, pager, next, jumper"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-          />
+
+          <TableSelf
+            class="new_table"
+            header-cell-class-name="header_tenant_cell"
+            stripe
+            :data="currentPageData"
+            @selection-change="handleSelectionChange"
+          >
+            <el-table-column type="selection" :width="clacPXToVW(55)" />
+            <el-table-column label="序号" :width="clacPXToVW(65)">
+              <template #default="scope">
+                {{ scope.$index + (currentPage - 1) * pageSize + 1 }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="deviceName" label="设备名称" :width="clacPXToVW(140)" show-overflow-tooltip />
+            <el-table-column prop="tags" label="标签" :width="clacPXToVW(120)">
+              <template #default="scope">
+                <el-tag size="small" type="primary">{{ scope.row.tags }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="deviceId" label="设备ID" :width="clacPXToVW(140)" show-overflow-tooltip />
+            <el-table-column prop="alarmType" label="告警类型" :width="clacPXToVW(120)" />
+            <el-table-column prop="alarmLocation" label="告警位置" show-overflow-tooltip />
+            <el-table-column prop="alarmTime" label="告警时间" :width="clacPXToVW(180)" />
+            <el-table-column fixed="right" align="right" label="操作" :width="clacPXToVW(120)">
+              <template #default="scope">
+                <div class="operateAppBox flexRowAC" @click.stop>
+                  <div class="new_table_svg_group" @click="handlePlay(scope.row)">
+                    <oort-svg-icon width="20" height="20" name="play" class="new_table_svg_group_svg" />
+                    <span>播放</span>
+                  </div>
+                </div>
+              </template>
+            </el-table-column>
+          </TableSelf>
+
+          <div class="paginationBox flexRowAC">
+            <el-pagination
+              background
+              :current-page="currentPage"
+              :page-size="pageSize"
+              :page-sizes="[10, 20, 50, 100]"
+              :total="total"
+              layout="total, prev, pager, next, sizes"
+              class="justifyAlign"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -192,7 +135,7 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import DateRangePicker from '@/components/DateRangePicker.vue'
-import PlayButton from '@/components/PlayButton.vue'
+import { clacPXToVW } from '@/utils/index'
 
 // 搜索表单
 const searchForm = reactive({
@@ -234,6 +177,11 @@ const currentPageData = computed(() => {
 // 选中行
 const selectedRows = ref([])
 
+const toolbarButtonList = computed(() => [
+  { name: '导出', svg: 'export', clickFn: () => handleExport() },
+  { name: '删除', svg: 'table_del', clickFn: () => handleDelete() }
+])
+
 // 方法
 const handleSearch = () => {
   console.log('搜索:', searchForm)
@@ -258,7 +206,7 @@ const handleExport = async () => {
     ElMessage.warning('请选择要导出的记录')
     return
   }
-  
+
   try {
     await ElMessageBox.confirm(
       `确定要导出选中的 ${selectedRows.value.length} 条记录吗？`,
@@ -269,7 +217,7 @@ const handleExport = async () => {
         type: 'info'
       }
     )
-    
+
     ElMessage.success(`导出 ${selectedRows.value.length} 条记录成功`)
     // 这里可以添加实际的导出逻辑
   } catch {
@@ -282,7 +230,7 @@ const handleDelete = async () => {
     ElMessage.warning('请选择要删除的记录')
     return
   }
-  
+
   try {
     await ElMessageBox.confirm(
       `确定要删除选中的 ${selectedRows.value.length} 条记录吗？`,
@@ -293,7 +241,7 @@ const handleDelete = async () => {
       type: 'warning'
     }
     )
-    
+
     // 删除逻辑
     selectedRows.value.forEach(row => {
       const index = tableData.value.findIndex(item => item.id === row.id)
@@ -301,7 +249,7 @@ const handleDelete = async () => {
         tableData.value.splice(index, 1)
       }
     })
-    
+
     selectedRows.value = []
     ElMessage.success('删除成功')
   } catch {
@@ -341,7 +289,7 @@ const searchResetFn = (val, reset) => {
 // 高级搜索相关方法
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索:', searchData)
-  
+
   // 更新搜索表单
   if (searchData.keyword) {
     searchForm.deviceName = searchData.keyword
@@ -358,7 +306,7 @@ const handleAdvancedSearch = (searchData) => {
   if (searchData.dateRange && searchData.dateRange.length > 0) {
     searchForm.dateRange = searchData.dateRange
   }
-  
+
   handleSearch()
 }
 
@@ -399,14 +347,36 @@ const selectVideo = (index) => {
 }
 </script>
 
-<style scoped>
-/* 监控告警页面样式 - 按照rules规范 */
+<style scoped lang="scss">
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  background: #f0f2f5;
+  .tenant_content { width: 100%; height: 100%; }
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+  }
+}
+.tableTenItU {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+  :deep(.header_tenant_cell) { background: #F8F8F9; }
+}
+.paginationBox { justify-content: center; height: 100px; }
+.operateAppBox { justify-content: flex-end; gap: 2px; }
+
 .monitoring-alarms {
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
-  padding: 20px;
+  background: #f0f2f5;
 }
 
 /* 搜索区域 - 查询栏背景颜色：#F0F2F5 */

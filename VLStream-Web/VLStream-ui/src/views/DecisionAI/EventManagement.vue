@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="event-management">
     <!-- 详情页面视图 -->
     <div v-if="showDetailView" class="detail-view">
@@ -216,24 +216,14 @@
     </div>
 
     <!-- 列表页面视图 -->
-    <div v-else class="list-view">
-      <!-- 查询栏 -->
-      <div class="query-bar">
-      </div>
-
-      <!-- 主内容区 -->
-      <div class="main-content">
-        <!-- 操作按钮区域 -->
-        <div class="action-section">
-          <div class="action-button-group">
-            <el-button
-                class="export-events-btn"
-                @click="handleExportEvents"
-            >
-              导出事件列表
-            </el-button>
-
+    <div v-else class="list-view tenant_Page draHeaPB">
+      <div class="tenant_content">
+        <div class="tableTenBox flexRowAC">
+          <div class="tableTenItU">
             <div class="depNameBox_out flexRowAC">
+              <div class="depNameBox flexRowAC">
+                <button-group :button-list="toolbarButtonList" />
+              </div>
               <div class="searchHeight_out flexRowAC">
                 <search-height-box
                   keyword="keyword"
@@ -244,88 +234,95 @@
                 <export-excel-pdf :item="exportItem" @handle="handleExportEvents" />
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- 表格内容 -->
-        <div class="table-content">
-          <el-table
-              :data="paginatedData"
+            <TableSelf
+              class="new_table"
+              header-cell-class-name="header_tenant_cell"
               stripe
-              @selection-change="handleSelectionChange">
-            <el-table-column type="selection" width="55"/>
-            <el-table-column type="index" label="序号" width="80"/>
-            <el-table-column prop="eventDesc" label="事件描述" min-width="150"/>
-            <el-table-column prop="reportLocation" label="上报位置" min-width="200"/>
-            <el-table-column prop="reportDevice" label="上报设备" min-width="120"/>
-            <el-table-column prop="reportTime" label="上报时间" min-width="160"/>
-            <el-table-column prop="reportImg" label="上报图片" min-width="100">
-              <template #default="scope">
-                <el-image
-                  v-if="scope.row.reportImg"
-                  class="table-report-img"
-                  :src="scope.row.reportImg"
-                  fit="cover"
-                  :preview-src-list="[scope.row.reportImg]"
-                  :hide-on-click-modal="true"
-                  preview-teleported
-                  lazy
-                />
-                <span v-else class="no-image">--</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="status" label="执行状态" min-width="100">
-              <template #default="scope">
-                <el-tag
+              :data="paginatedData"
+              @selection-change="handleSelectionChange"
+            >
+              <el-table-column type="selection" :width="clacPXToVW(55)" />
+              <el-table-column label="序号" :width="clacPXToVW(65)">
+                <template #default="scope">
+                  {{ scope.$index + (pagination.currentPage - 1) * pagination.pageSize + 1 }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="eventDesc" label="事件描述" :width="clacPXToVW(150)" show-overflow-tooltip />
+              <el-table-column prop="reportLocation" label="上报位置" :width="clacPXToVW(200)" show-overflow-tooltip />
+              <el-table-column prop="reportDevice" label="上报设备" :width="clacPXToVW(120)" show-overflow-tooltip />
+              <el-table-column prop="reportTime" label="上报时间" :width="clacPXToVW(160)" />
+              <el-table-column prop="reportImg" label="上报图片" :width="clacPXToVW(100)">
+                <template #default="scope">
+                  <el-image
+                    v-if="scope.row.reportImg"
+                    class="table-report-img"
+                    :src="scope.row.reportImg"
+                    fit="cover"
+                    :preview-src-list="[scope.row.reportImg]"
+                    :hide-on-click-modal="true"
+                    preview-teleported
+                    lazy
+                  />
+                  <span v-else class="no-image">--</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="status" label="执行状态" :width="clacPXToVW(100)">
+                <template #default="scope">
+                  <el-tag
                     :type="getStatusType(scope.row.status)"
-                    size="small">
-                  {{ scope.row.status }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="executor" label="执行人" min-width="150">
-              <template #default="scope">
-                <div v-if="scope.row.executor" class="executor-info">
-                  <div class="executor-avatars">
-                    <img
+                    size="small"
+                  >
+                    {{ scope.row.status }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="executor" label="执行人" show-overflow-tooltip>
+                <template #default="scope">
+                  <div v-if="scope.row.executor" class="executor-info">
+                    <div class="executor-avatars">
+                      <img
                         v-for="(avatar, index) in scope.row.executorAvatars"
                         :key="index"
                         :src="avatar"
                         class="executor-avatar"
                         :style="{ zIndex: scope.row.executorAvatars.length - index }"
-                    />
+                      />
+                    </div>
+                    <span class="executor-names">{{ scope.row.executor }}</span>
                   </div>
-                  <span class="executor-names">{{ scope.row.executor }}</span>
-                </div>
-                <span v-else class="no-executor">暂无执行人</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="240" fixed="right" align="right">
-              <template #default="scope">
-                <el-button
-                    class="action-btn"
-                    @click="handleAssignExecutor(scope.row)">
-                  选择执行人
-                </el-button>
-                <el-button
-                    class="action-btn"
-                    @click="handleDetail(scope.row)">
-                  详情
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+                  <span v-else class="no-executor">暂无执行人</span>
+                </template>
+              </el-table-column>
+              <el-table-column fixed="right" align="right" label="操作" :width="clacPXToVW(200)">
+                <template #default="scope">
+                  <div class="operateAppBox flexRowAC" @click.stop>
+                    <div class="new_table_svg_group" @click="handleAssignExecutor(scope.row)">
+                      <oort-svg-icon width="20" height="20" name="allocation" class="new_table_svg_group_svg" />
+                      <span>选择执行人</span>
+                    </div>
+                    <div class="new_table_svg_group" @click="handleDetail(scope.row)">
+                      <oort-svg-icon width="20" height="20" name="detail_icon" class="new_table_svg_group_svg" />
+                      <span>详情</span>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+            </TableSelf>
 
-          <!-- 分页 - 紧贴表格数据 -->
-          <div class="table-pagination">
-            <el-pagination
-                v-model:current-page="pagination.currentPage"
-                v-model:page-size="pagination.pageSize"
+            <div class="paginationBox flexRowAC">
+              <el-pagination
+                background
+                :current-page="pagination.currentPage"
+                :page-size="pagination.pageSize"
                 :page-sizes="[10, 20, 50, 100]"
                 :total="pagination.total"
-                layout="total, sizes, prev, pager, next, jumper"
+                layout="total, prev, pager, next, sizes"
+                class="justifyAlign"
                 @size-change="handleSizeChange"
-                @current-change="handleCurrentChange"/>
+                @current-change="handleCurrentChange"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -345,8 +342,13 @@ import {
   getEventPage,
   updateEventStatus
 } from '@/api/eventManagement'
+import { clacPXToVW } from '@/utils/index'
 
 const router = useRouter()
+
+const toolbarButtonList = computed(() => [
+  { name: '导出', svg: 'export', clickFn: () => handleExportEvents() }
+])
 
 // 当前激活的标签
 const activeTab = ref('maintenance')
@@ -708,20 +710,44 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .event-management {
   height: 100%;
   display: flex;
   flex-direction: column;
   gap: 0;
   background-color: #f5f7fa;
-  padding: 20px;
   overflow: hidden;
 }
+
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  background: #f0f2f5;
+  .tenant_content { width: 100%; height: 100%; }
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+  }
+}
+.tableTenItU {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+  :deep(.header_tenant_cell) { background: #F8F8F9; }
+}
+.paginationBox { justify-content: center; height: 100px; }
+.operateAppBox { justify-content: flex-end; gap: 2px; }
 
 /* 详情视图样式 */
 .detail-view {
   flex: 1;
+  margin: 20px;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -874,8 +900,7 @@ onMounted(() => {
   object-fit: cover;
 }
 
-.preview-image,
-.table-report-img {
+.preview-image {
   width: 120px;
   height: 80px;
   border-radius: 8px;
@@ -883,6 +908,10 @@ onMounted(() => {
 }
 
 .table-report-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
   display: block;
 }
 
@@ -1009,191 +1038,12 @@ onMounted(() => {
   border-color: #3d70ff;
 }
 
-/* 列表视图样式 */
+/* 列表视图 */
 .list-view {
   height: 100%;
   display: flex;
   flex-direction: column;
   gap: 0;
-}
-
-/* 查询栏 */
-.query-bar {
-  background: #F0F2F5;
-  border-radius: 8px 8px 0 0;
-  padding: 20px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-/* 标签按钮区域 */
-.tag-buttons {
-  display: flex;
-  gap: 32px;
-  margin-bottom: 16px;
-  padding-bottom: 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.tag-tab {
-  position: relative;
-  padding: 12px 0 16px 0;
-  font-size: 16px;
-  color: #666666;
-  cursor: pointer;
-  transition: color 0.3s ease;
-  user-select: none;
-}
-
-.tag-tab:hover {
-  color: #1A53FF;
-}
-
-.tag-tab.active {
-  color: #1A53FF;
-  font-weight: 500;
-}
-
-.tag-tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: #1A53FF;
-  border-radius: 2px 2px 0 0;
-}
-
-.search-form {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.search-input {
-  width: 240px;
-  flex: none;
-}
-
-
-/* 主内容区 */
-.main-content {
-  flex: 1;
-  background: white;
-  border-radius: 0 0 8px 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 操作按钮区域 */
-.action-section {
-  margin-bottom: 16px;
-}
-
-.action-button-group {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-/* 高级搜索组件区域 */
-.advanced-search-group {
-  display: flex;
-  align-items: center;
-}
-
-/* 导出事件列表按钮样式 */
-.export-events-btn {
-  width: 138px !important;
-  height: 36px !important;
-  background: rgba(255, 255, 255, 0.00) !important;
-  border: 1px solid rgba(217, 217, 217, 1) !important;
-  border-radius: 18px !important;
-  padding: 0 16px !important;
-  font-size: 14px;
-  font-weight: 500;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  color: #333333 !important;
-}
-
-.export-events-btn:hover {
-  background: rgba(26, 83, 255, 0.05) !important;
-  border-color: #1A53FF !important;
-  color: #1A53FF !important;
-}
-
-.export-events-btn:focus {
-  background: rgba(255, 255, 255, 0.00) !important;
-  border-color: rgba(217, 217, 217, 1) !important;
-  color: #333333 !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.export-events-btn:active {
-  background: rgba(26, 83, 255, 0.1) !important;
-  border-color: #1A53FF !important;
-  color: #1A53FF !important;
-}
-
-/* 表格内容 */
-.table-content {
-  flex: 1;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 分页容器样式 */
-.table-pagination {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* 操作按钮样式 */
-.action-btn {
-  background: none !important;
-  border: none !important;
-  color: #1A53FF !important;
-  padding: 4px 8px !important;
-  margin: 0 4px !important;
-  font-size: 14px !important;
-  height: auto !important;
-  line-height: 1.5 !important;
-  cursor: pointer !important;
-}
-
-.action-btn:hover {
-  background: none !important;
-  border: none !important;
-  color: #3d70ff !important;
-  text-decoration: underline !important;
-}
-
-.action-btn:focus {
-  background: none !important;
-  border: none !important;
-  color: #1A53FF !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.action-btn:active {
-  background: none !important;
-  border: none !important;
-  color: #1A53FF !important;
 }
 
 /* 执行人信息 */
@@ -1229,22 +1079,6 @@ onMounted(() => {
 .no-executor {
   color: #909399;
   font-size: 12px;
-}
-
-/* 表格样式调整 */
-:deep(.el-table) {
-  font-size: 14px;
-  flex: 1;
-}
-
-:deep(.el-table th) {
-  background-color: #fafafa;
-  color: #606266;
-  font-weight: 500;
-}
-
-:deep(.el-table .el-table__row:hover > td) {
-  background-color: #f8faff;
 }
 
 /* 标签样式 */

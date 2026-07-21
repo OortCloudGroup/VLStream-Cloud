@@ -1,91 +1,35 @@
 <template>
-  <div class="intelligent-analysis-request">
-    <!-- 列表视图 -->
-    <div v-if="!showEditView" class="list-view">
-      <!-- 查询栏 -->
-      <!--
-      <div class="query-bar">
-        <div class="search-form">
-          <div class="search-row">
-            <div class="search-item">
-              <el-input 
-                v-model="searchForm.analysisName" 
-                placeholder="分析名称"
-                clearable
-              />
+  <div class="intelligent-analysis-request tenant_Page draHeaPB">
+    <div class="tenant_content">
+      <div v-if="!showEditView" class="tableTenBox flexRowAC">
+        <div class="tableTenItU">
+          <div class="depNameBox_out flexRowAC">
+            <div class="depNameBox flexRowAC">
+              <button-group :button-list="toolbarButtonList" />
             </div>
-            <div class="search-item">
-              <el-input 
-                v-model="searchForm.analysisType" 
-                placeholder="分析类型"
-                clearable
+            <div class="searchHeight_out flexRowAC">
+              <search-height-box
+                keyword="keyword"
+                placeholder="搜索"
+                :data="searchData"
+                @handle="searchResetFn"
               />
-            </div>
-            <div class="search-item">
-              <el-input 
-                v-model="searchForm.analysisStep" 
-                placeholder="分析步骤"
-                clearable
-              />
-            </div>
-            <div class="search-item date-with-buttons">
-              <DateRangePicker
-                v-model="searchForm.createDateRange"
-                start-placeholder="创建日期"
-                end-placeholder="修改日期"
-                style="width: 340px !important;"
-                class="date-picker"
-              />
-              <div class="search-buttons">
-                <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
-                <el-button :icon="Refresh" @click="handleReset">重置</el-button>
-              </div>
+              <export-excel-pdf :item="exportItem" @handle="handleExport" />
             </div>
           </div>
-        </div>
-      </div>
-      -->
 
-      <!-- 主要内容区域 -->
-      <div class="main-content">
-        <!-- 操作按钮区域 -->
-        <div class="table-toolbar">
-          <div class="toolbar-left">
-            <ActionButtonGroup 
-              :selected-count="selectedRows.length"
-              add-text="申请"
-              @add="handleAdd"
-              @edit="handleEdit"
-              @delete="handleDelete"
-            />
-          </div>
-          <div class="toolbar-right">
-            <div class="depNameBox_out flexRowAC">
-              <div class="searchHeight_out flexRowAC">
-                <search-height-box
-                  keyword="keyword"
-                  placeholder="搜索"
-                  :data="searchData"
-                  @handle="searchResetFn"
-                />
-                <export-excel-pdf :item="exportItem" @handle="handleExport" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 表格 -->
-        <div class="table-content">
-          <el-table 
-            :data="tableData" 
+          <TableSelf
+            class="new_table"
+            header-cell-class-name="header_tenant_cell"
             stripe
+            :data="tableData"
             @selection-change="handleSelectionChange"
           >
-            <el-table-column type="selection" width="55" />
-            <el-table-column prop="sequence" label="序号" width="80" align="center" />
-            <el-table-column prop="analysisName" label="分析名称" width="120" />
-            <el-table-column prop="analysisType" label="分析类型" width="120" />
-            <el-table-column prop="videoThumbnail" label="抓拍截图" width="120" align="center">
+            <el-table-column type="selection" :width="clacPXToVW(55)" />
+            <el-table-column prop="sequence" label="序号" :width="clacPXToVW(80)" align="center" />
+            <el-table-column prop="analysisName" label="分析名称" :width="clacPXToVW(120)" />
+            <el-table-column prop="analysisType" label="分析类型" :width="clacPXToVW(120)" />
+            <el-table-column prop="videoThumbnail" label="抓拍截图" :width="clacPXToVW(120)" align="center">
               <template #default="scope">
                 <div class="thumbnail-container">
                   <img :src="scope.row.videoThumbnail" :alt="scope.row.analysisName" class="video-thumbnail" />
@@ -93,11 +37,11 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="region" label="区域" width="100" />
+            <el-table-column prop="region" label="区域" :width="clacPXToVW(100)" />
             <el-table-column prop="cameras" label="摄像头" min-width="200" />
-            <el-table-column prop="analysisStatus" label="分析状态" width="120" align="center">
+            <el-table-column prop="analysisStatus" label="分析状态" :width="clacPXToVW(120)" align="center">
               <template #default="scope">
-                <el-tag 
+                <el-tag
                   :type="getStatusTagType(scope.row.analysisStatus)"
                   size="small"
                 >
@@ -105,31 +49,34 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="analysisTime" label="分析时间" width="160" />
-            <el-table-column label="操作" width="100" fixed="right" align="right">
+            <el-table-column prop="analysisTime" label="分析时间" :width="clacPXToVW(160)" />
+            <el-table-column label="操作" :width="clacPXToVW(100)" fixed="right" align="right">
               <template #default="scope">
-                <div class="table-action-buttons">
-                  <PlayButton @click="handlePlay(scope.row)" />
+                <div class="operateAppBox flexRowAC" @click.stop>
+                  <div class="new_table_svg_group" @click="handlePlay(scope.row)">
+                    <oort-svg-icon width="20" height="20" name="play" class="new_table_svg_group_svg" />
+                    <span>播放</span>
+                  </div>
                 </div>
               </template>
             </el-table-column>
-          </el-table>
-          
-          <!-- 分页 - 紧贴表格数据 -->
-          <div class="table-pagination">
+          </TableSelf>
+
+          <div class="paginationBox flexRowAC">
             <el-pagination
+              background
               v-model:current-page="pagination.currentPage"
               v-model:page-size="pagination.pageSize"
               :page-sizes="[10, 20, 50, 100]"
               :total="pagination.total"
-              layout="total, sizes, prev, pager, next, jumper"
+              layout="total, prev, pager, next, sizes"
+              class="justifyAlign"
               @size-change="handleSizeChange"
               @current-change="handleCurrentChange"
             />
           </div>
         </div>
       </div>
-    </div>
 
     <!-- 编辑视图 -->
     <div v-if="showEditView" class="edit-view">
@@ -299,6 +246,7 @@
         </el-dialog>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
@@ -308,8 +256,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, Plus, Edit, Delete, ArrowRight, Close, Clock, MessageBox } from '@element-plus/icons-vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
-import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
-import PlayButton from '@/components/PlayButton.vue'
+import { clacPXToVW } from '@/utils/index'
 import { getAnalysisRequestPage, applyAnalysisRequest, updateAnalysisRequest } from '@/api/analysisRequest'
 
 const router = useRouter()
@@ -446,6 +393,11 @@ const handleDelete = async () => {
     // 用户取消删除
   }
 }
+
+const toolbarButtonList = [
+  { name: '编辑', svg: 'table_edit', clickFn: handleEdit },
+  { name: '删除', svg: 'table_del', clickFn: handleDelete },
+]
 
 const handlePlay = (row) => {
   console.log('播放分析视频:', row.analysisName)
@@ -681,9 +633,33 @@ const handleBatchOperation = () => {
 
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  background: #f0f2f5;
+  .tenant_content { width: 100%; height: 100%; }
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+  }
+}
+.tableTenItU {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+  :deep(.header_tenant_cell) { background: #F8F8F9; }
+}
+.paginationBox { justify-content: center; height: 100px; }
+.operateAppBox { justify-content: flex-end; gap: 2px; }
+
 .intelligent-analysis-request {
-  height: 100vh;
+  height: 100%;
 }
 
 /* 查询栏 - 无缝连接设计 */
@@ -732,50 +708,6 @@ const handleBatchOperation = () => {
   flex-shrink: 0;
 }
 
-/* 主要内容区域 - 无缝连接设计 */
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: white;
-  border-radius: 0 0 8px 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.table-toolbar {
-  padding: 20px;
-  border-bottom: 1px solid #f0f0f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.toolbar-left {
-  display: flex;
-  gap: 12px;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-}
-
-.table-content {
-  flex: 1;
-  padding: 0 20px 20px 20px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.table-pagination {
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
-  display: flex;
-  justify-content: flex-end;
-}
-
 /* 视频缩略图样式 */
 .thumbnail-container {
   position: relative;
@@ -801,47 +733,6 @@ const handleBatchOperation = () => {
   border-radius: 2px;
 }
 
-/* 表格操作按钮样式 */
-.table-action-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-/* 确保操作按钮为纯文字样式 */
-.table-action-buttons :deep(.el-button--primary.is-text) {
-  color: #1A53FF !important;
-  background: transparent !important;
-  border: none !important;
-  padding: 2px 8px !important;
-}
-
-.table-action-buttons :deep(.el-button--primary.is-text:hover) {
-  color: #3d70ff !important;
-  background: transparent !important;
-  border: none !important;
-}
-
-/* 表格样式调整 */
-:deep(.el-table) {
-  font-size: 14px;
-}
-
-:deep(.el-table th) {
-  background-color: #f5f7fa;
-  color: #909399;
-  font-weight: 500;
-}
-
-:deep(.el-table td) {
-  border-bottom: 1px solid #ebeef5;
-}
-
-:deep(.el-table .el-table__row:hover) {
-  background-color: #f5f7fa;
-}
-
 /* 主题色更新 */
 :deep(.el-button--primary) {
   background-color: #1A53FF;
@@ -851,16 +742,6 @@ const handleBatchOperation = () => {
 :deep(.el-button--primary:hover) {
   background-color: #3d70ff;
   border-color: #3d70ff;
-}
-
-/* 列表视图样式 */
-.list-view {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: #f5f7fa;
-  padding: 20px;
-  gap: 0;
 }
 
 /* 编辑视图样式 */
