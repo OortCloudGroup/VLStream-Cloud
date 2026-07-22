@@ -13,18 +13,18 @@
           </div>
           <h2>VLStream Cloud</h2>
           <!-- 侧边栏伸缩图标 -->
-          <CollapseToggle 
+          <CollapseToggle
             v-if="showSidebar"
             class="sidebar-toggle"
             :is-expanded="!sidebarCollapsed"
             @toggle="toggleSidebar"
           />
         </div>
-        
+
         <!-- 顶部菜单 -->
         <div class="top-menu">
-          <div 
-            v-for="menu in topMenus" 
+          <div
+            v-for="menu in topMenus"
             :key="menu.key"
             class="menu-item"
             :class="{ active: activeTopMenu === menu.key }"
@@ -33,7 +33,7 @@
             {{ menu.title }}
           </div>
         </div>
-        
+
         <div class="header-right">
           <!-- 用户信息下拉框 -->
           <el-dropdown>
@@ -56,19 +56,20 @@
     <!-- 主体内容 -->
     <div class="layout-main">
       <!-- 侧边栏 - 只在非工作台时显示 -->
-      <div 
-        v-if="showSidebar" 
-        class="layout-sidebar" 
+      <div
+        v-if="showSidebar"
+        class="layout-sidebar"
         :style="{ width: sidebarCollapsed ? '64px' : '200px' }"
       >
         <el-menu
           :default-active="$route.path"
           router
           class="sidebar-menu"
-          background-color="#fff"
+          background-color="transparent"
           text-color="#303133"
           active-text-color="#409eff"
           :collapse="sidebarCollapsed"
+          style="--el-menu-bg-color: transparent; background: transparent;"
         >
           <template v-for="route in currentMenuRoutes" :key="route.path">
             <!-- 有子菜单的项 -->
@@ -92,7 +93,7 @@
                 </template>
               </el-menu-item>
             </el-sub-menu>
-            
+
             <!-- 没有子菜单的项 -->
             <el-menu-item v-else :index="route.path">
               <el-icon>
@@ -234,7 +235,7 @@ const loadTenantInfo = async () => {
     console.log('🔍 当前URL参数:', window.location.search)
     console.log('🔍 sessionStorage token:', sessionStorage.getItem('accessToken'))
     console.log('🔍 localStorage token:', localStorage.getItem('accessToken'))
-    
+
     console.log('开始调用getUserTenants API获取用户和租户信息...')
 
     // 修复：获取token并传递给getUserTenants
@@ -242,22 +243,22 @@ const loadTenantInfo = async () => {
     const urlToken = urlParams.get('accessToken') || urlParams.get('token')
     const sessionToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token')
     const localToken = localStorage.getItem('accessToken') || localStorage.getItem('token')
-    
+
     const token = urlToken || sessionToken || localToken
-    
+
     if (!token) {
       console.log('❌ loadTenantInfo: 没有找到有效的token')
       console.log('🚫 loadTenantInfo函数提前返回 - 没有token')
       return
     }
-    
+
     console.log('✅ loadTenantInfo: 使用token:', token.substring(0, 8) + '...')
-    
+
     // 修复：传递正确的参数，包含accessToken
     const response = await getUserTenants({ accessToken: token })
-    
+
     console.log('getUserTenants API响应:', response)
-    
+
     // 添加详细的响应数据结构调试
     console.log('🔍 getUserTenants响应详细结构:', {
       code: response.code,
@@ -265,7 +266,7 @@ const loadTenantInfo = async () => {
       list: response.data?.list,
       firstItem: response.data?.list?.[0]
     })
-    
+
     if (response.code === 200 && response.data) {
       // 处理租户列表
       if (response.data.list && response.data.list.length > 0) {
@@ -275,13 +276,13 @@ const loadTenantInfo = async () => {
           status: tenant.status,
           phrase: tenant.phrase
         }))
-        
+
         tenantList.value = tenants
-        
+
         // 修复：正确从getUserTenants API响应中提取用户信息
         const firstTenant = response.data.list[0]
         console.log('🔍 第一个租户数据:', firstTenant)
-        
+
         // 根据实际API响应结构提取用户信息
         const userInfo = {
           userName: firstTenant.user_name || '管理员',
@@ -290,30 +291,30 @@ const loadTenantInfo = async () => {
           tenantId: firstTenant.tenant_id || '',
           accessToken: token // 使用当前token
         }
-        
+
         console.log('✅ 从getUserTenants API获取到用户信息:', userInfo)
-        
+
         // 更新用户信息显示
         currentUser.value = {
           userName: userInfo.userName,
           userId: userInfo.userId,
           loginId: userInfo.loginId
         }
-        
+
         console.log('✅ 更新currentUser:', currentUser.value)
         console.log('🔍 检查currentUser响应式更新:', {
           userName: currentUser.value.userName,
           userId: currentUser.value.userId,
           loginId: currentUser.value.loginId
         })
-        
+
         // 强制触发响应式更新
         nextTick(() => {
           console.log('🔄 强制触发响应式更新后的状态:')
           console.log('- currentUser:', currentUser.value)
           console.log('- currentTenant:', currentTenant.value)
         })
-        
+
         // 设置当前租户为第一个租户
         const currentTenantData = tenants[0]
         if (currentTenantData) {
@@ -324,7 +325,7 @@ const loadTenantInfo = async () => {
             name: currentTenant.value.name
           })
         }
-        
+
         // 保存用户信息到本地存储
         try {
           await authManager.saveUserToLocal(userInfo)
@@ -332,9 +333,9 @@ const loadTenantInfo = async () => {
         } catch (error) {
           console.error('保存用户信息失败:', error)
         }
-        
+
         console.log('✅ 租户信息和用户信息加载成功:', tenants)
-        
+
         // 添加延迟检查，确保页面显示正确
         setTimeout(() => {
           console.log('🔍 延迟检查页面显示状态:')
@@ -461,8 +462,8 @@ const menuRoutesMap = {
   ],
   'algorithm-warehouse': [
     { path: '/algorithm-management', meta: { title: '算法管理', icon: '算法管理' } },
-    { 
-      path: '/algorithm-training-platform', 
+    {
+      path: '/algorithm-training-platform',
       meta: { title: '算法训练平台', icon: '算法训练平台' },
       children: [
         { path: '/algorithm-standard', meta: { title: '算法标注', icon: '算法标注' } },
@@ -505,7 +506,7 @@ const currentMenuRoutes = computed(() => {
  */
 const handleTopMenuClick = (menuKey) => {
   activeTopMenu.value = menuKey
-  
+
   // 根据菜单切换到对应的默认路由
   if (menuKey === 'workspace') {
     router.push('/workspace') // 工作台页面
@@ -549,47 +550,47 @@ const forceLoadUserAndTenantInfo = async () => {
   console.log('🚀 forceLoadUserAndTenantInfo函数开始执行...')
   await loadBladeUserInfo()
   return
-  
+
   try {
     // 获取token
     const urlParams = new URLSearchParams(window.location.search)
     const urlToken = urlParams.get('accessToken') || urlParams.get('token')
     const sessionToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token')
     const localToken = localStorage.getItem('accessToken') || localStorage.getItem('token')
-    
+
     const token = urlToken || sessionToken || localToken
-    
+
     if (!token) {
       console.log('❌ 没有找到有效的token')
       return
     }
-    
+
     console.log('✅ 使用token:', token.substring(0, 8) + '...')
-    
+
     // 直接调用getUserTenants API
     const response = await getUserTenants({ accessToken: token })
-    
+
     console.log('📥 getUserTenants响应:', response)
-    
+
     // 检查响应格式
     if (response.status === 200 && response.data && response.data.code === 200 && response.data.data && response.data.data.list && response.data.data.list.length > 0) {
       const firstTenant = response.data.data.list[0]
-      
+
       console.log('📋 解析到的用户和租户信息:')
       console.log('- 用户名称:', firstTenant.user_name)
       console.log('- 租户名称:', firstTenant.tenant_name)
       console.log('- 用户ID:', firstTenant.user_id)
       console.log('- 租户ID:', firstTenant.tenant_id)
-      
+
       // 直接更新currentUser
       currentUser.value = {
         userName: firstTenant.user_name || '管理员',
         userId: firstTenant.user_id || '',
         loginId: firstTenant.user_name || ''
       }
-      
+
       console.log('✅ 更新currentUser:', currentUser.value)
-      
+
       // 更新租户列表
       const tenants = response.data.data.list.map(tenant => ({
         id: tenant.tenant_id,
@@ -597,16 +598,16 @@ const forceLoadUserAndTenantInfo = async () => {
         status: tenant.status,
         phrase: tenant.phrase
       }))
-      
+
       tenantList.value = tenants
       console.log('✅ 更新tenantList:', tenantList.value)
-      
+
       // 设置当前租户
       if (tenants.length > 0) {
         currentTenant.value = tenants[0]
         console.log('✅ 设置当前租户:', currentTenant.value)
       }
-      
+
       // 保存到localStorage
       localStorage.setItem('userInfo', JSON.stringify({
         userName: firstTenant.user_name,
@@ -615,16 +616,16 @@ const forceLoadUserAndTenantInfo = async () => {
         tenantId: firstTenant.tenant_id,
         accessToken: token
       }))
-      
+
       console.log('✅ 用户信息已保存到localStorage')
-      
+
     } else {
       console.warn('getUserTenants API返回数据格式不正确:', response)
     }
   } catch (error) {
     console.error('❌ forceLoadUserAndTenantInfo失败:', error)
   }
-  
+
   console.log('🏁 forceLoadUserAndTenantInfo函数执行完成')
 }
 
@@ -633,7 +634,7 @@ const loadUserInfo = async () => {
   try {
     // 优先从Session Storage获取用户信息
     let userInfo = await authManager.checkLocalToken()
-    
+
     // 如果Session Storage中没有，尝试从localStorage获取
     if (!userInfo) {
       const localUserInfo = localStorage.getItem('userInfo')
@@ -648,7 +649,7 @@ const loadUserInfo = async () => {
         }
       }
     }
-    
+
     // 如果本地都没有用户信息，不主动调用API，而是依赖loadTenantInfo方法
     // loadTenantInfo方法会调用getUserTenants API并更新用户信息
     if (!userInfo) {
@@ -656,7 +657,7 @@ const loadUserInfo = async () => {
       // 不主动调用API，让loadTenantInfo方法处理
       return
     }
-    
+
     // 如果本地有用户信息，但不设置currentUser.value，确保使用getUserTenants API的数据
     if (userInfo) {
       console.log('本地有用户信息，但不更新显示，等待loadTenantInfo方法处理')
@@ -709,12 +710,12 @@ const handleAutoCrossSystemTokenInvalid = () => {
 // 组件挂载时设置初始菜单和加载用户信息
 onMounted(async () => {
   console.log('🎬 组件开始挂载...')
-  
+
   try {
   const activeMenu = getActiveMenuByRoute(route.path)
   activeTopMenu.value = activeMenu
     console.log('✅ 设置初始菜单:', activeMenu)
-    
+
     // 强制调用getUserTenants API并更新显示
     console.log('🔄 开始强制调用getUserTenants API...')
     await forceLoadUserAndTenantInfo()
@@ -722,7 +723,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('❌ onMounted中发生错误:', error)
   }
-  
+
   // 添加延迟检查，确保数据更新
   setTimeout(async () => {
     console.log('⏰ 延迟检查用户和租户信息...')
@@ -731,24 +732,24 @@ onMounted(async () => {
       await forceLoadUserAndTenantInfo()
     }
     }, 2000)
-  
+
   // 添加token变化事件监听器
   window.addEventListener('tokenUpdated', handleTokenUpdate)
   window.addEventListener('tokenInvalid', handleTokenInvalid)
-  
+
   // 添加跨系统token变化事件监听器
   window.addEventListener('crossSystemTokenUpdated', handleCrossSystemTokenUpdate)
   window.addEventListener('crossSystemTokenInvalid', handleCrossSystemTokenInvalid)
-  
+
   // 添加自动跨系统token变化事件监听器
   window.addEventListener('autoCrossSystemTokenUpdated', handleAutoCrossSystemTokenUpdate)
   window.addEventListener('autoCrossSystemTokenInvalid', handleAutoCrossSystemTokenInvalid)
-  
+
   // 监听用户token更新事件
   window.addEventListener('userTokenUpdated', handleUserTokenUpdated)
-  
+
   console.log('🎬 组件挂载完成')
-  
+
   // 暴露函数到window对象，方便调试
   window.forceLoadUserAndTenantInfo = forceLoadUserAndTenantInfo
   console.log('🔧 forceLoadUserAndTenantInfo函数已暴露到window对象')
@@ -760,11 +761,11 @@ onUnmounted(() => {
   window.removeEventListener('tokenInvalid', handleTokenInvalid)
   window.removeEventListener('crossSystemTokenUpdated', handleCrossSystemTokenUpdate)
   window.removeEventListener('crossSystemTokenInvalid', handleCrossSystemTokenInvalid)
-  
+
   // 移除自动跨系统token变化事件监听器
   window.removeEventListener('autoCrossSystemTokenUpdated', handleAutoCrossSystemTokenUpdate)
   window.removeEventListener('autoCrossSystemTokenInvalid', handleAutoCrossSystemTokenInvalid)
-  
+
   // 移除事件监听
   window.removeEventListener('userTokenUpdated', handleUserTokenUpdated)
 })
@@ -804,11 +805,11 @@ const getMenuIcon = (iconName) => {
 // 添加处理函数
 const handleUserTokenUpdated = async (event) => {
   console.log('🔄 收到用户token更新事件，重新加载用户信息')
-  
+
   try {
     // 只重新加载租户信息，不重新加载用户信息，确保使用getUserTenants API的数据
     await loadTenantInfo()
-    
+
     console.log('✅ 租户信息已更新')
   } catch (error) {
     console.error('❌ 更新租户信息失败:', error)
@@ -821,12 +822,14 @@ const handleUserTokenUpdated = async (event) => {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  background: #f5f7fa;
 }
 
 .layout-header {
-  background: #fff;
+  background: transparent !important;
+  background-color: transparent !important;
   border-bottom: 1px solid #e8e8e8;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 .header-content {
@@ -955,6 +958,7 @@ const handleUserTokenUpdated = async (event) => {
   display: flex;
   transition: all 0.3s ease;
   position: relative;
+  background: #f5f7fa;
 }
 
 /* 确保主布局区域不显示任何拖拽条 */
@@ -972,14 +976,16 @@ const handleUserTokenUpdated = async (event) => {
 }
 
 .layout-sidebar {
-  background: #fff;
+  background: transparent !important;
   border-right: 1px solid #e8e8e8;
-  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
   transition: width 0.3s ease;
   height: 100%;
   flex-shrink: 0;
   resize: none;
   overflow: hidden;
+  --el-menu-bg-color: transparent;
+  --el-menu-hover-bg-color: #ecf5ff;
 }
 
 /* 隐藏Element Plus可能的拖拽句柄 */
@@ -1001,8 +1007,19 @@ const handleUserTokenUpdated = async (event) => {
 }
 
 .sidebar-menu {
-  border-right: none;
+  border-right: none !important;
   height: 100%;
+  background: transparent !important;
+  background-color: transparent !important;
+  --el-menu-bg-color: transparent;
+}
+
+.sidebar-menu.el-menu,
+.layout-sidebar :deep(.el-menu),
+.layout-sidebar :deep(.el-menu--vertical),
+.layout-sidebar :deep(.el-sub-menu__title) {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 .sidebar-menu .el-menu-item {
@@ -1011,14 +1028,15 @@ const handleUserTokenUpdated = async (event) => {
   margin: 4px 8px;
   border-radius: 6px;
   transition: all 0.3s;
+  background-color: transparent;
 }
 
 .sidebar-menu .el-menu-item:hover {
-  background-color: #ecf5ff;
+  background-color: #ecf5ff !important;
 }
 
 .sidebar-menu .el-menu-item.is-active {
-  background-color: #ecf5ff;
+  background-color: #ecf5ff !important;
   color: #409eff;
   font-weight: 500;
 }
@@ -1029,5 +1047,25 @@ const handleUserTokenUpdated = async (event) => {
   flex: 1;
   transition: all 0.3s ease;
   min-width: 0;
+  padding: 0;
+}
+</style>
+
+<style lang="scss">
+/* 全局强制：左侧菜单整列（含底部空白区）背景透明 */
+.layout-sidebar,
+.layout-sidebar .el-menu,
+.layout-sidebar .sidebar-menu,
+.layout-sidebar .el-menu--vertical {
+  background: transparent !important;
+  background-color: transparent !important;
+  --el-menu-bg-color: transparent !important;
+}
+
+/* 全局强制：顶部导航背景透明 */
+.layout-header,
+.layout-header.el-header {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 </style>

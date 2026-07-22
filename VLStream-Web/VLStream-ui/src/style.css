@@ -29,36 +29,49 @@ body {
 #app {
   height: 100vh;
   overflow: hidden;
+  background-color: #f5f7fa;
 }
 
 .layout-container {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: #f5f7fa;
 }
 
 .layout-header {
-  background: #fff;
+  background: transparent !important;
+  background-color: transparent !important;
   border-bottom: 1px solid #e4e7ed;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12), 0 0 6px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
 }
 
 .layout-main {
   flex: 1;
   display: flex;
   overflow: hidden;
+  background-color: #f5f7fa;
 }
 
 .layout-sidebar {
   width: 200px;
-  background: #fff;
+  background: transparent !important;
+  background-color: transparent !important;
   border-right: 1px solid #e4e7ed;
   overflow-y: auto;
+  --el-menu-bg-color: transparent;
+}
+
+.layout-sidebar .el-menu,
+.layout-sidebar .sidebar-menu {
+  background: transparent !important;
+  background-color: transparent !important;
+  --el-menu-bg-color: transparent !important;
 }
 
 .layout-content {
   flex: 1;
-  padding: 20px;
+  padding: 0;
   overflow-y: auto;
   background: #f5f7fa;
 }
