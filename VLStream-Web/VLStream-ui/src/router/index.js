@@ -36,6 +36,30 @@ const routes = [
         meta: { title: '设备管理', icon: '设备管理' }
       },
       {
+        path: '/device-edit',
+        name: 'DeviceEdit',
+        component: () => import('@/views/VideoAggregation/DeviceEditPage.vue'),
+        meta: { title: '编辑设备', hideInMenu: true, parentMenu: 'video-aggregation', parentPath: '/device-management' }
+      },
+      {
+        path: '/device-config',
+        name: 'DeviceConfig',
+        component: () => import('@/views/VideoAggregation/DeviceConfigPage.vue'),
+        meta: { title: '配置参数', hideInMenu: true, parentMenu: 'video-aggregation', parentPath: '/device-management' }
+      },
+      {
+        path: '/device-ai-event',
+        name: 'DeviceAIEvent',
+        component: () => import('@/views/VideoAggregation/DeviceAIEventPage.vue'),
+        meta: { title: 'AI事件配置', hideInMenu: true, parentMenu: 'video-aggregation', parentPath: '/device-management' }
+      },
+      {
+        path: '/camera-settings',
+        name: 'CameraSettings',
+        component: () => import('@/views/VideoAggregation/CameraSettings.vue'),
+        meta: { title: '设置摄像机', hideInMenu: true, parentMenu: 'video-aggregation', parentPath: '/device-management' }
+      },
+      {
         path: '/event-management',
         name: 'EventManagement',
         component: () => import('@/views/DecisionAI/EventManagement.vue'),
@@ -113,12 +137,6 @@ const routes = [
         name: 'VideoPlayback',
         component: () => import('@/views/VideoAggregation/VideoPlayback.vue'),
         meta: { title: '视频回放', icon: '视频回放' }
-      },
-      {
-        path: '/camera-settings',
-        name: 'CameraSettings',
-        component: () => import('@/views/VideoAggregation/CameraSettings.vue'),
-        meta: { title: '设置摄像机', icon: '摄像机设置' }
       },
       {
         path: '/design-drawing',

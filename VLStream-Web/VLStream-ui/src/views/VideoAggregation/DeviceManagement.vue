@@ -83,8 +83,8 @@
 
         <!-- 右侧内容区域 -->
         <div class="tableTenItU">
-          <!-- 导航栏（子视图时显示） -->
-          <div v-if="showEditView || showCameraSettingsView || showConfigView || showAIEventView || showModelMarketView || deviceTreeCollapsed || treeFilterText" class="content-header">
+          <!-- 导航栏（树折叠或筛选时显示） -->
+          <div v-if="deviceTreeCollapsed || treeFilterText" class="content-header">
             <div class="breadcrumb">
               <CollapseToggle
                 v-if="deviceTreeCollapsed"
@@ -92,22 +92,14 @@
                 :is-expanded="false"
                 @toggle="toggleDeviceTree"
               />
-              <span class="breadcrumb-item" @click="showTableView">设备列表</span>
+              <span class="breadcrumb-item" @click="clearTreeFilter">设备列表</span>
               <span v-if="treeFilterText" class="breadcrumb-separator">></span>
               <span v-if="treeFilterText" class="breadcrumb-item filter-text" @click="clearTreeFilter">{{ treeFilterText }}</span>
-              <span v-if="showEditView" class="breadcrumb-separator">></span>
-              <span v-if="showEditView" class="breadcrumb-item active">编辑设备</span>
-              <span v-if="showCameraSettingsView" class="breadcrumb-separator">></span>
-              <span v-if="showCameraSettingsView" class="breadcrumb-item active">摄像机设置</span>
-              <span v-if="showConfigView" class="breadcrumb-separator">></span>
-              <span v-if="showConfigView" class="breadcrumb-item active">配置参数</span>
-              <span v-if="showModelMarketView" class="breadcrumb-separator">></span>
-              <span v-if="showModelMarketView" class="breadcrumb-item active">算法超市</span>
             </div>
           </div>
 
-          <!-- 表格视图 -->
-          <div v-if="!showEditView && !showCameraSettingsView && !showConfigView && !showAIEventView && !showModelMarketView" class="table-view">
+          <!-- 列表视图 -->
+          <div class="table-view">
             <div class="depNameBox_out flexRowAC">
               <div class="depNameBox flexRowAC">
                 <div class="exportBtnBox flexRowAC">
@@ -209,52 +201,6 @@
                 @current-change="handleCurrentChange"
               />
             </div>
-          </div>
-
-          <!-- 编辑视图 -->
-          <div v-if="showEditView" class="edit-view">
-            <DeviceEditForm
-              v-model="editForm"
-              :mode="editMode"
-              @save="handleEditSave"
-              @cancel="showTableView"
-            />
-          </div>
-
-          <!-- 摄像机设置视图 -->
-          <div v-if="showCameraSettingsView" class="camera-settings-view">
-            <CameraSettings
-              :device-info="selectedRow"
-              @back="showTableView"
-            />
-          </div>
-
-          <!-- 配置参数视图 -->
-          <div v-if="showConfigView" class="config-view">
-            <DeviceTimeStrategy
-              :device-info="selectedRow"
-              @save="handleTimeStrategySave"
-              @cancel="showTableView"
-            />
-          </div>
-
-          <!-- AI事件配置视图 -->
-          <div v-if="showAIEventView && !showModelMarketView" class="ai-event-view">
-            <DeviceAIEvent
-              :device-info="selectedRow"
-              @save="handleAIEventSave"
-              @cancel="showTableView"
-              @open-model-market="openModelMarket"
-            />
-          </div>
-
-          <!-- 模型超市视图 -->
-          <div v-if="showModelMarketView" class="model-market-view">
-            <DeviceModelMarket
-              :device-info="selectedRow"
-            @save="handleModelMarketSave"
-            @cancel="backToAIEvent"
-          />
           </div>
         </div>
       </div>
@@ -554,11 +500,7 @@ import Hls from 'hls.js'
 import PTZControl from '@/components/PTZControl.vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
 import RtspPlayer from '@/components/RtspPlayer.vue'
-import CameraSettings from './CameraSettings.vue'
 import DeviceEditForm from './DeviceEditForm.vue'
-import DeviceTimeStrategy from './DeviceTimeStrategy.vue'
-import DeviceAIEvent from './DeviceAIEvent.vue'
-import DeviceModelMarket from './DeviceModelMarket.vue'
 
 // 导入API
 import {
@@ -570,11 +512,9 @@ import {
   getDeviceTree,
   ptzMove,
   ptzStop,
-  ptzZoom,
-  updateDevice
+  ptzZoom
 } from '@/api/device'
 import {getTagTree} from '@/api/tagManagement'
-import {saveTimeStrategy as saveTimeStrategyAPI} from '@/api/timeStrategy'
 import {startHLSStream, stopHLSStream} from '@/api/stream'
 import {startRecording, stopRecording} from '@/api/videoRecord'
 import {getWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL} from '@/api/webrtc'
@@ -674,12 +614,8 @@ const selectedRow = ref(null)
 const selectedTreeNode = ref(null)
 const treeFilterText = ref('')
 
-// 视图状态控制
-const showEditView = ref(false)
-const showCameraSettingsView = ref(false)
-const showConfigView = ref(false)
-const showAIEventView = ref(false)
-const showModelMarketView = ref(false)
+// 视图状态（新增弹窗仍用 editMode）
+const editMode = ref('add') // 'add' | 'edit'
 
 // 设备树折叠状态
 const deviceTreeCollapsed = ref(false)
@@ -687,7 +623,6 @@ const deviceTreeCollapsed = ref(false)
 // 对话框相关
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
-const editMode = ref('add') // 'add' | 'edit'
 
 // 视频播放相关
 const videoDialogVisible = ref(false)
@@ -794,8 +729,7 @@ const recordingStatus = ref({
 // 录像监控定时器
 const recordingTimer = ref(null)
 
-// 表单数据
-const editForm = ref({})
+// 表单数据（新增弹窗）
 const deviceForm = ref({})
 
 // 生命周期
@@ -1087,16 +1021,9 @@ const clearTreeFilter = () => {
   console.log('已清除设备树过滤条件')
 }
 
-// 视图切换
+// 清除树筛选并回到列表态
 const showTableView = () => {
-  showEditView.value = false
-  showCameraSettingsView.value = false
-  showConfigView.value = false
-  showAIEventView.value = false
-  showModelMarketView.value = false
   selectedRow.value = null
-
-  // 清除设备树过滤条件
   selectedTreeNode.value = null
   treeFilterText.value = ''
 }
@@ -1114,34 +1041,7 @@ const handleEdit = async () => {
     ElMessage.warning('请选择一个设备进行编辑')
     return
   }
-
-  try {
-    // 加载状态
-    const loadingMessage = ElMessage({
-      message: '正在加载设备详情...',
-      type: 'info',
-      duration: 0
-    })
-
-    // 调用API获取完整的设备信息，包括关联的标签
-    const response = await getDeviceById(selectedRows.value[0].id)
-    loadingMessage.close()
-
-    if (response.code === 200) {
-      editMode.value = 'edit'
-      editForm.value = { ...response.data }
-      selectedRow.value = selectedRows.value[0]
-      showEditView.value = true
-
-      console.log('获取设备详情成功:', response.data)
-      console.log('关联的标签ID:', response.data.selectedTags)
-    } else {
-      ElMessage.error('获取设备详情失败: ' + response.message)
-    }
-  } catch (error) {
-    ElMessage.error('获取设备详情失败，请重试')
-    console.error('获取设备详情失败:', error)
-  }
+  router.push({ path: '/device-edit', query: { id: selectedRows.value[0].id } })
 }
 
 const handleDelete = async () => {
@@ -2507,13 +2407,11 @@ watch(videoDialogVisible, (newValue) => {
 
 // 配置操作
 const handleConfig = (row) => {
-  selectedRow.value = row
-  showConfigView.value = true
+  router.push({ path: '/device-config', query: { id: row.id } })
 }
 
 const handleAIEvent = (row) => {
-  selectedRow.value = row
-  showAIEventView.value = true
+  router.push({ path: '/device-ai-event', query: { id: row.id } })
 }
 
 // 下拉菜单操作
@@ -2522,10 +2420,10 @@ const handleMoreActions = async ({ action, row }) => {
 
   switch (action) {
     case 'edit':
-      await handleEditSingle(row)
+      router.push({ path: '/device-edit', query: { id: row.id } })
       break
     case 'camera-settings':
-      showCameraSettingsView.value = true
+      router.push({ path: '/camera-settings', query: { id: row.id } })
       break
     case 'delete':
       handleDeleteSingle(row)
@@ -2535,32 +2433,7 @@ const handleMoreActions = async ({ action, row }) => {
 
 // 编辑单个设备
 const handleEditSingle = async (row) => {
-  try {
-    // 加载状态
-    const loadingMessage = ElMessage({
-      message: '正在加载设备详情...',
-      type: 'info',
-      duration: 0
-    })
-
-    // 调用API获取完整的设备信息，包括关联的标签
-    const response = await getDeviceById(row.id)
-    loadingMessage.close()
-
-    if (response.code === 200) {
-      editMode.value = 'edit'
-      editForm.value = { ...response.data }
-      showEditView.value = true
-
-      console.log('获取设备详情成功:', response.data)
-      console.log('关联的标签ID:', response.data.selectedTags)
-    } else {
-      ElMessage.error('获取设备详情失败: ' + response.message)
-    }
-  } catch (error) {
-    ElMessage.error('获取设备详情失败，请重试')
-    console.error('获取设备详情失败:', error)
-  }
+  router.push({ path: '/device-edit', query: { id: row.id } })
 }
 
 const handleDeleteSingle = async (row) => {
@@ -2586,34 +2459,7 @@ const handleDeleteSingle = async (row) => {
   }
 }
 
-// 模型超市
-const openModelMarket = () => {
-  showModelMarketView.value = true
-}
-
-const backToAIEvent = () => {
-  showModelMarketView.value = false
-}
-
-// 表单保存处理
-const handleEditSave = async (formData) => {
-  try {
-    if (editMode.value === 'edit') {
-      await updateDevice(selectedRow.value.id, formData)
-      ElMessage.success('更新成功')
-    } else {
-      await createDevice(formData)
-      ElMessage.success('添加成功')
-    }
-
-    showTableView()
-    loadDeviceList()
-  } catch (error) {
-    console.error('保存设备失败:', error)
-    ElMessage.error('保存失败')
-  }
-}
-
+// 表单保存处理（新增弹窗）
 const handleDeviceFormSave = async (formData) => {
   try {
     await createDevice(formData)
@@ -2623,38 +2469,6 @@ const handleDeviceFormSave = async (formData) => {
   } catch (error) {
     console.error('保存设备失败:', error)
     ElMessage.error('保存失败')
-  }
-}
-
-const handleTimeStrategySave = async (strategyData) => {
-  try {
-    await saveTimeStrategyAPI(strategyData)
-    ElMessage.success('时间策略保存成功')
-  } catch (error) {
-    console.error('保存时间策略失败:', error)
-    ElMessage.error('保存失败')
-  }
-}
-
-const handleAIEventSave = async (aiEventData) => {
-  try {
-    // 这里应该调用AI事件配置保存API
-    console.log('保存AI事件配置:', aiEventData)
-    ElMessage.success('AI事件配置保存成功')
-  } catch (error) {
-    console.error('保存AI事件配置失败:', error)
-    ElMessage.error('保存失败')
-  }
-}
-
-const handleModelMarketSave = async (modelData) => {
-  try {
-    // 这里应该调用模型安装API
-    console.log('安装模型:', modelData)
-    ElMessage.success('模型安装成功')
-  } catch (error) {
-    console.error('安装模型失败:', error)
-    ElMessage.error('安装失败')
   }
 }
 

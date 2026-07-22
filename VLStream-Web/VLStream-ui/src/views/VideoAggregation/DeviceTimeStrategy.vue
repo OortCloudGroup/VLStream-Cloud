@@ -919,7 +919,8 @@ onMounted(() => {
   padding: 20px;
   
   .config-container {
-    max-width: 1200px;
+    max-width: none;
+    width: 100%;
     margin: 0;
   }
   

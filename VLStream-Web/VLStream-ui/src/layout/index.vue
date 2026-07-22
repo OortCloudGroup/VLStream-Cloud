@@ -62,7 +62,8 @@
         :style="{ width: sidebarCollapsed ? '64px' : '200px' }"
       >
         <el-menu
-          :default-active="$route.path"
+          :key="sidebarActivePath"
+          :default-active="sidebarActivePath"
           router
           class="sidebar-menu"
           background-color="transparent"
@@ -492,6 +493,11 @@ const showSidebar = computed(() => {
   return activeTopMenu.value !== 'workspace'
 })
 
+// 侧边栏高亮：子页面回落到父菜单 path（如编辑设备 → 设备管理）
+const sidebarActivePath = computed(() => {
+  return route.meta?.parentPath || route.path
+})
+
 // 当前菜单的路由
 const currentMenuRoutes = computed(() => {
   return menuRoutesMap[activeTopMenu.value] || []
@@ -522,14 +528,24 @@ const handleTopMenuClick = (menuKey) => {
 
 // 根据当前路由确定激活的顶部菜单
 const getActiveMenuByRoute = (routePath) => {
+  if (route.meta?.parentMenu) {
+    return route.meta.parentMenu
+  }
+  // 设备管理相关子页面
+  if (
+    routePath.startsWith('/device-') ||
+    routePath === '/camera-settings'
+  ) {
+    return 'video-aggregation'
+  }
   for (const [menuKey, routes] of Object.entries(menuRoutesMap)) {
     // 检查直接路由匹配
-    if (routes.some(route => route.path === routePath)) {
+    if (routes.some(r => r.path === routePath)) {
       return menuKey
     }
     // 检查子路由匹配
-    for (const route of routes) {
-      if (route.children && route.children.some(child => child.path === routePath)) {
+    for (const r of routes) {
+      if (r.children && r.children.some(child => child.path === routePath)) {
         return menuKey
       }
     }

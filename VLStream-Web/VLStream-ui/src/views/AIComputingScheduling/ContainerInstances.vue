@@ -1638,18 +1638,24 @@ onMounted(() => {
 /* 创建页面样式 */
 .create-view {
   margin: 0;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  box-sizing: border-box;
+  overflow: auto;
 }
 
 .create-view .breadcrumb-section {
-  width: 1120px;
+  width: 100%;
 }
 
 .create-content {
-  width: 1120px;
+  width: 100%;
   background: white;
   padding: 20px;
   border-radius: 0 0 8px 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
 .form-section {
@@ -1973,15 +1979,15 @@ onMounted(() => {
 }
 
 .details-view .breadcrumb-section {
-  width: 1120px;
+  width: 100%;
 }
 
 .details-content {
-  width: 1120px;
+  width: 100%;
   background: white;
   padding: 20px;
   border-radius: 0 0 8px 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
 .details-content .form-section {
