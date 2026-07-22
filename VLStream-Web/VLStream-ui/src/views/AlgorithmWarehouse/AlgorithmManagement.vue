@@ -149,7 +149,7 @@
                   size="small" 
                   @click="toggleRepositoryStatus(scope.row)"
                 >
-                  {{ scope.row.status === 'enabled' ? '禁用' : '启用' }}
+                  {{ scope.row.status === 1 ? '禁用' : '启用' }}
                 </el-button>
                 <el-button 
                   type="danger" 
@@ -213,8 +213,8 @@
             placeholder="请选择状态"
             style="width: 100%"
           >
-            <el-option label="启用" value="enabled" />
-            <el-option label="禁用" value="disabled" />
+            <el-option label="启用" :value="1" />
+            <el-option label="禁用" :value="0" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
@@ -527,7 +527,7 @@ const editingRepository = ref(null)
 const addForm = ref({
   name: '',
   repositoryType: 'extended',
-  status: 'enabled',
+  status: 1,
   remark: ''
 })
 
@@ -880,7 +880,7 @@ const initData = async () => {
   await loadDeviceTree()
   // 如果有可用的仓库，默认加载第一个仓库的算法
   if (algorithmRepositories.value.length > 0) {
-    const firstEnabledRepo = algorithmRepositories.value.find(repo => repo.status === 'enabled')
+    const firstEnabledRepo = algorithmRepositories.value.find(repo => repo.status === 1)
     if (firstEnabledRepo) {
       activeTopMenu.value = firstEnabledRepo.id.toString()
       await loadAlgorithmsByRepository(firstEnabledRepo.id)
@@ -1098,7 +1098,7 @@ const addAlgorithmLibrary = () => {
   addForm.value = {
     name: '',
     repositoryType: 'extended',
-    status: 'enabled',
+    status: 1,
     remark: ''
   }
   showAddDialog.value = true
@@ -1207,11 +1207,11 @@ const deleteLibraryItem = async (row) => {
 
 const toggleRepositoryStatus = async (row) => {
   try {
-    const newStatus = row.status === 'enabled' ? 'disabled' : 'enabled'
+    const newStatus = row.status === 1 ? 0 : 1
     const response = await updateAlgorithmRepositoryStatus(row.id, newStatus)
     
     if (response.code === 200) {
-      ElMessage.success(`${newStatus === 'enabled' ? '启用' : '禁用'}成功`)
+      ElMessage.success(`${newStatus === 1 ? '启用' : '禁用'}成功`)
       await loadAlgorithmRepositories()
     } else {
       ElMessage.error(response.message || '状态更新失败')
@@ -1254,7 +1254,7 @@ const handleAddConfirm = async () => {
       addForm.value = {
         name: '',
         repositoryType: 'extended',
-        status: 'enabled',
+        status: 1,
         remark: ''
       }
       editingRepository.value = null
@@ -1279,7 +1279,7 @@ const handleAddCancel = () => {
   addForm.value = {
     name: '',
     repositoryType: 'extended',
-    status: 'enabled',
+    status: 1,
     remark: ''
   }
   if (addFormRef.value) {
