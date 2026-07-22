@@ -2933,8 +2933,11 @@ const openDatasetSelector = async () => {
 }
 .tableTenItU {
   flex: 1;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   height: 100%;
+  box-sizing: border-box;
   overflow: auto;
   :deep(.header_tenant_cell) { background: #F8F8F9; }
 }
