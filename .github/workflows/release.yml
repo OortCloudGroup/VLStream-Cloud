@@ -1,0 +1,133 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "8"
+          cache: maven
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: VLStream-Web/VLStream-ui/package-lock.json
+      - name: Verify release version
+        working-directory: VLStream-Cloud-Backend-Server/vls-stream
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          project_version=$(mvn -ntp help:evaluate -Dexpression=project.version -q -DforceStdout)
+          test "$project_version" = "$version"
+          test "$(node -p "require('../../VLStream-Web/VLStream-ui/package.json').version")" = "$version"
+      - name: Build backend
+        working-directory: VLStream-Cloud-Backend-Server/vls-stream
+        run: sh release-compat/prepare.sh && mvn -ntp -Pprod -Dmaven.test.skip=true package
+      - name: Verify backend logging binding
+        working-directory: VLStream-Cloud-Backend-Server/vls-stream
+        run: |
+          if unzip -l ruoyi-admin/target/apaas-workflowforms.jar | grep -q 'BOOT-INF/lib/slf4j-simple-'; then
+            echo "::error::The backend archive contains the conflicting slf4j-simple binding"
+            exit 1
+          fi
+          unzip -l ruoyi-admin/target/apaas-workflowforms.jar | grep -q 'BOOT-INF/lib/logback-classic-'
+      - name: Build frontend
+        working-directory: VLStream-Web/VLStream-ui
+        env:
+          VITE_API_BASE_URL: /bus/vls-server
+        run: npm ci && sh prepare-linux-release.sh && npm run build
+      - name: Validate Compose files
+        run: |
+          docker compose --env-file deploy/release/.env.example -f deploy/release/compose.yaml config --quiet
+          docker compose --env-file deploy/release/.env.example -f deploy/release/compose.external.yaml config --quiet
+      - name: Validate public initialization SQL
+        run: python3 scripts/release/verify-release-sql.py VLStream-Cloud-Backend-Server/vls-stream/db/oortcloud_workflowforms_vls.sql
+
+  images:
+    needs: validate
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: backend
+            context: VLStream-Cloud-Backend-Server/vls-stream
+            dockerfile: VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/Dockerfile.release
+          - name: frontend
+            context: VLStream-Web/VLStream-ui
+            dockerfile: VLStream-Web/VLStream-ui/Dockerfile.release
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/oortcloudgroup/vlstream-${{ matrix.name }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=latest
+      - uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64
+          build-args: |
+            VERSION=${{ github.ref_name }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+  release:
+    needs: images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify container packages are public
+        run: |
+          for image in vlstream-backend vlstream-frontend; do
+            token=$(curl -fsSL "https://ghcr.io/token?scope=repository:oortcloudgroup/${image}:pull" | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
+            status=$(curl -sS -o /dev/null -w '%{http_code}' \
+              -H "Authorization: Bearer ${token}" \
+              -H "Accept: application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.v2+json" \
+              "https://ghcr.io/v2/oortcloudgroup/${image}/manifests/${GITHUB_REF_NAME#v}")
+            if [ "$status" != "200" ]; then
+              echo "::error::ghcr.io/oortcloudgroup/${image}:${GITHUB_REF_NAME#v} is not public (HTTP ${status})"
+              exit 1
+            fi
+          done
+      - name: Build release archive
+        run: bash scripts/release/build-release.sh "${GITHUB_REF_NAME#v}"
+      - name: Verify release archive
+        run: |
+          cd codex/release-dist
+          sha256sum --check "VLStream-Cloud-${GITHUB_REF_NAME}.zip.sha256"
+          python3 -m zipfile -l "VLStream-Cloud-${GITHUB_REF_NAME}.zip" | grep '23-hisilicon-om-model-path.sql'
+          unzip -p "VLStream-Cloud-${GITHUB_REF_NAME}.zip" \
+            "VLStream-Cloud-${GITHUB_REF_NAME}/sql/init/10-oortcloud-workflowforms-vls.sql" \
+            > release-init.sql
+          python3 ../../scripts/release/verify-release-sql.py release-init.sql
+      - uses: softprops/action-gh-release@v3
+        with:
+          name: VLStream Cloud ${{ github.ref_name }}
+          body_path: RELEASE_NOTES.md
+          generate_release_notes: true
+          files: |
+            codex/release-dist/VLStream-Cloud-${{ github.ref_name }}.zip
+            codex/release-dist/VLStream-Cloud-${{ github.ref_name }}.zip.sha256

@@ -1,0 +1,22 @@
+FROM maven:3.9.11-eclipse-temurin-8 AS builder
+WORKDIR /workspace
+COPY . .
+RUN --mount=type=cache,target=/root/.m2/repository \
+    sh release-compat/prepare.sh && \
+    mvn -ntp -Pprod -Dmaven.test.skip=true \
+    -Dmaven.wagon.http.retryHandler.count=5 package
+
+FROM eclipse-temurin:8-jre-jammy
+ARG VERSION=1.1.1
+LABEL org.opencontainers.image.title="VLStream Cloud Backend" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.source="https://github.com/OortCloudGroup/VLStream-Cloud"
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl fontconfig \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY --from=builder /workspace/ruoyi-admin/target/apaas-workflowforms.jar /app/vlstream.jar
+RUN mkdir -p /app/logs /app/data /ruoyi/server/temp
+EXPOSE 8080
+ENV JAVA_OPTS="-Xms512m -Xmx2048m -Dfile.encoding=UTF-8"
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/vlstream.jar --spring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod}"]

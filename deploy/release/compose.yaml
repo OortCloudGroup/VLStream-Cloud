@@ -1,0 +1,155 @@
+name: vlstream-cloud
+
+services:
+  mysql:
+    image: mysql:8.4.10-oraclelinux9
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-vlstream-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-oortcloud_workflowforms_vls}
+      MYSQL_USER: ${MYSQL_USER:-vlstream}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-vlstream}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --lower-case-table-names=1
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./sql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  redis:
+    image: redis:7.4.9-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-vlstream}
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$${REDIS_PASSWORD}\""]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-vlstream}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-vlstream123}
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-vlstream}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-vlstream123}
+      MINIO_BUCKET: ${MINIO_BUCKET:-vlstream}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}" &&
+        mc mb --ignore-existing "local/$${MINIO_BUCKET}"
+
+  webrtc-streamer:
+    image: ${WEBRTC_STREAMER_IMAGE:-mpromonet/webrtc-streamer:v0.8.16}
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["-C", "config.json", "-R", "50000:50010", "-e", "${WEBRTC_EXTERNAL_HOST:-host.docker.internal}"]
+    ports:
+      - "${WEBRTC_PORT:-8000}:8000"
+      - "50000-50010:50000-50010/udp"
+    healthcheck:
+      test: ["CMD", "bash", "-ec", "exec 3<>/dev/tcp/127.0.0.1/8000"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    image: ${BACKEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-backend:1.1.1}
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      webrtc-streamer:
+        condition: service_healthy
+    environment: &backend-environment
+      TZ: ${TZ:-Asia/Shanghai}
+      SERVER_PORT: 8080
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-oortcloud_workflowforms_vls}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_USERNAME: ${MYSQL_USER:-vlstream}
+      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_PASSWORD: ${MYSQL_PASSWORD:-vlstream}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD:-vlstream}
+      SPRING_BOOT_ADMIN_CLIENT_ENABLED: "false"
+      XXL_JOB_ENABLED: "false"
+      XXL_JOB_ADMIN_ADDRESSES: ${XXL_JOB_ADMIN_ADDRESSES:-}
+      UNIFIEDMESSAGINGSEND_URL: ${UNIFIEDMESSAGINGSEND_URL:-}
+      AUTH_REPORT_EXCLUDECLASSES: ${AUTH_REPORT_EXCLUDECLASSES:-ReModeJsonController,ProcessTemplateController,WfTXController}
+      TOKEN_TENANTTYPE: ${TOKEN_TENANTTYPE:-single}
+      DEPT_EXCLUDEDUDID: ${DEPT_EXCLUDEDUDID:-273ed9a4-0e77-4169-af46-dd2da2aa1fcc}
+      VLS_DATA_INITIALIZATION_ENABLED: "true"
+      VLSTREAM_WEBRTC_ENABLED: "true"
+      VLSTREAM_WEBRTC_PUBLIC_URL: /bus/webrtc-streamer-server
+      VLSTREAM_WEBRTC_INTERNAL_URL: http://webrtc-streamer:8000
+      JAVA_OPTS: ${JAVA_OPTS:--Xms512m -Xmx2048m -Dfile.encoding=UTF-8}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - backend-data:/app/data
+      - backend-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-frontend:1.1.1}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+      webrtc-streamer:
+        condition: service_healthy
+    ports:
+      - "${HTTP_PORT:-80}:80"
+
+volumes:
+  mysql-data:
+  redis-data:
+  minio-data:
+  backend-data:
+  backend-logs:

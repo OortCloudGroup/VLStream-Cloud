@@ -6,13 +6,13 @@
 
     <groupId>com.ruoyi</groupId>
     <artifactId>vls-stream</artifactId>
-    <version>0.8.3</version>
+    <version>1.1.1</version>
 
     <name>RuoYi-Flowable-Plus</name>
     <description>统一工单中心后台管理系统</description>
 
     <properties>
-        <ruoyi-flowable-plus.version>0.8.3</ruoyi-flowable-plus.version>
+        <ruoyi-flowable-plus.version>1.1.1</ruoyi-flowable-plus.version>
         <spring-boot.version>2.7.11</spring-boot.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
