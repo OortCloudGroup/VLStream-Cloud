@@ -29,7 +29,6 @@ type Config = {
 const config: Config = {
   URL: 'http://oort.oortcloudsmart.com:21410/', // 公司测试环境地址
   // URL: 'http://183.62.103.20:21410/', // 测试环境IP
-  // URL: 'https://workup-dev.myoumuamua.com:6433/', // 测试环境 https
   gateWay: 'oort/',
   // 配置文件
   configJSONData: {},
@@ -53,9 +52,7 @@ if (env === 'ny') {
 }
 
 if (env === 'lt') {
-  // config.URL = 'http://183.62.103.20:21410/'
-  config.URL = 'https://workup-dev.myoumuamua.com:6433/'
-  // config.URL = 'https://workup.oortcloudsmart.com:2443/'
+  // Workflow and work-order APIs use the current Java backend via apaasServiceUrl.
   config.gateWay = 'bus/'
 }
 
