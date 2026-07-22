@@ -1,5 +1,3 @@
-import {getBaseURL} from "@/utils/request";
-
 export const timeExpressionTypeDic = [
   {
     label: 'API',
@@ -138,7 +136,7 @@ export default {
       label: '任务应用',
       prop: 'jobServerId',
       type: 'select',
-      dicUrl: getBaseURL() + '/blade-job/job-server/select',
+      dicUrl: '/blade-job/job-server/select',
       props: {
         label: 'jobAppName',
         value: 'id',
