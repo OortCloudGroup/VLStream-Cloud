@@ -844,7 +844,7 @@ const handleUserTokenUpdated = async (event) => {
 .layout-header {
   background: transparent !important;
   background-color: transparent !important;
-  border-bottom: 1px solid #e8e8e8;
+  border-bottom: none;
   box-shadow: none;
 }
 
@@ -993,10 +993,11 @@ const handleUserTokenUpdated = async (event) => {
 
 .layout-sidebar {
   background: transparent !important;
-  border-right: 1px solid #e8e8e8;
+  border-right: none;
   box-shadow: none;
   transition: width 0.3s ease;
-  height: 100%;
+  height: calc(100% - 20px);
+  margin-top: 20px;
   flex-shrink: 0;
   resize: none;
   overflow: hidden;
@@ -1041,7 +1042,7 @@ const handleUserTokenUpdated = async (event) => {
 .sidebar-menu .el-menu-item {
   height: 50px;
   line-height: 50px;
-  margin: 4px 8px;
+  margin: 0 8px;
   border-radius: 6px;
   transition: all 0.3s;
   background-color: transparent;
@@ -1063,7 +1064,16 @@ const handleUserTokenUpdated = async (event) => {
   flex: 1;
   transition: all 0.3s ease;
   min-width: 0;
-  padding: 0;
+  padding: 20px 0 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-content > * {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
 }
 </style>
 
@@ -1078,10 +1088,19 @@ const handleUserTokenUpdated = async (event) => {
   --el-menu-bg-color: transparent !important;
 }
 
-/* 全局强制：顶部导航背景透明 */
+/* 全局强制：顶部导航背景透明、去除下边框 */
 .layout-header,
 .layout-header.el-header {
   background: transparent !important;
   background-color: transparent !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+/* 全局强制：左侧菜单去除右边框，上外边距 20px */
+.layout-sidebar {
+  border-right: none !important;
+  margin-top: 20px !important;
+  height: calc(100% - 20px) !important;
 }
 </style>

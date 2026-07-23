@@ -42,7 +42,7 @@ body {
 .layout-header {
   background: transparent !important;
   background-color: transparent !important;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: none;
   box-shadow: none;
 }
 
@@ -57,7 +57,9 @@ body {
   width: 200px;
   background: transparent !important;
   background-color: transparent !important;
-  border-right: 1px solid #e4e7ed;
+  border-right: none;
+  margin-top: 20px;
+  height: calc(100% - 20px);
   overflow-y: auto;
   --el-menu-bg-color: transparent;
 }
@@ -71,9 +73,18 @@ body {
 
 .layout-content {
   flex: 1;
-  padding: 0;
+  padding: 20px 0 0;
   overflow-y: auto;
   background: #f5f7fa;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-content > * {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
 }
 
 .page-header {
