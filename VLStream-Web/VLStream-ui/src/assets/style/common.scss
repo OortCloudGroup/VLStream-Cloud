@@ -834,21 +834,71 @@ td {
 // 弹出框样式
 .el-dialog {
   border-radius: 6px;
-  padding: 0 0 34px 0;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .el-dialog__header {
-  padding: 11px 0 13px 24px;
-  border-bottom: 1px solid #D8D8D8;
+  position: relative;
+  padding: 11px 48px 13px 24px !important;
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
+  border-bottom: 1px solid #D8D8D8 !important;
   height: 48px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
+.el-dialog__title {
+  font-size: 16px;
+  font-weight: 400;
+  color: #191919;
+  line-height: 24px;
+  letter-spacing: 0.4px;
+}
+
+/* 弹窗右上角关闭图标（始终显示） */
+.el-dialog__headerbtn {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%);
+  right: 16px !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.el-dialog__headerbtn .el-dialog__close {
+  font-size: 18px !important;
+  color: #909399 !important;
+  font-weight: 600;
+}
+
+.el-dialog__headerbtn:hover .el-dialog__close {
+  color: #606266 !important;
 }
 
 .el-dialog__body {
-  padding: 40px 40px 0 40px;
+  padding: 20px 40px;
 }
 
 .el-dialog__footer {
-  padding: 0 40px;
+  padding: 0 40px 34px;
+  text-align: right;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .dialog-footer .el-button {
@@ -870,6 +920,7 @@ td {
   height: 45px;
   padding: 12px 20px;
   border-bottom: 1px solid #D8D8D8;
+  margin-bottom: 0 !important;
 
   h4,
   .el-drawer__title {
@@ -889,7 +940,7 @@ td {
   padding: 30px 30px 0 30px;
 }
 
-// 弹框去掉边框
+// 弹框去掉边框（事件反馈等）
 .el-dialog.diaOutSet {
   padding: 0;
 

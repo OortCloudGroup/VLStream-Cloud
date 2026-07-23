@@ -154,7 +154,7 @@
                 v-model="copyDialogVisible"
                 title="复制时间设置"
                 width="25%"
-                :show-close="false"
+                :show-close="true"
               >
                 <div class="copy-dialog-content">
                   <p>将 {{ sourceDay }} 的时间设置复制到：</p>

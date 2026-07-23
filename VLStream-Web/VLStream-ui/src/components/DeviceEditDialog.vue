@@ -245,17 +245,6 @@ const handleSave = async () => {
   border-radius: 8px;
 }
 
-.device-edit-dialog :deep(.el-dialog__header) {
-  padding: 20px 24px 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.device-edit-dialog :deep(.el-dialog__title) {
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-}
-
 .device-edit-dialog :deep(.el-dialog__body) {
   padding: 0;
   max-height: 70vh;

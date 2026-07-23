@@ -533,7 +533,7 @@
       width="95%"
       :before-close="handleCloseFullScreenPreview"
       class="fullscreen-preview-dialog"
-      :show-close="false"
+      :show-close="true"
       :close-on-click-modal="true"
       :close-on-press-escape="true"
     >
@@ -4793,12 +4793,6 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 }
 
 /* 数据集文件校验弹窗样式 */
-.dataset-validation-dialog {
-  .el-dialog__body {
-    padding: 20px;
-  }
-}
-
 .dataset-validation-content {
   .annotation-info {
     margin-bottom: 24px;

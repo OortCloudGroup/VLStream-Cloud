@@ -4075,21 +4075,6 @@ const openDatasetSelector = async () => {
   gap: 12px;
 }
 
-:deep(.el-dialog__header) {
-  padding: 20px 24px 12px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-:deep(.el-dialog__title) {
-  font-size: 16px;
-  font-weight: 600;
-  color: #262626;
-}
-
-:deep(.el-dialog__body) {
-  padding: 20px 24px;
-}
-
 :deep(.el-form-item__label) {
   color: #262626;
   font-weight: 500;
@@ -4276,21 +4261,6 @@ const openDatasetSelector = async () => {
   justify-content: flex-end;
   gap: 12px;
   padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* 弹窗表单样式 */
-:deep(.el-dialog__body) {
-  padding: 20px 24px;
-}
-
-:deep(.el-dialog__header) {
-  padding: 20px 24px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-:deep(.el-dialog__footer) {
-  padding: 0 24px 20px;
 }
 
 /* 弹窗表单字段样式 */

@@ -2126,9 +2126,10 @@ onMounted(() => {
 }
 
 :deep(.el-drawer__title) {
-  font-size: 18px;
-  font-weight: 600;
-  color: #262626;
+  font-size: 16px;
+  font-weight: 400;
+  color: #191919;
+  letter-spacing: 0.4px;
 }
 
 :deep(.el-drawer__body) {

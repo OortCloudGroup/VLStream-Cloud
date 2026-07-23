@@ -1601,10 +1601,6 @@ onMounted(() => {
 }
 
 /* 弹窗表单样式 */
-:deep(.el-dialog__body) {
-  padding: 20px;
-}
-
 :deep(.el-form-item__label) {
   font-weight: 500;
   color: #303133;
@@ -1626,28 +1622,9 @@ onMounted(() => {
 }
 
 /* 新增场景弹窗样式 */
-.scene-dialog :deep(.el-dialog__header) {
-  padding: 20px 20px 0 20px;
-  border-bottom: 1px solid #f0f0f0;
-  margin-bottom: 0;
-}
-
-.scene-dialog :deep(.el-dialog__title) {
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
-}
-
 .scene-dialog :deep(.el-dialog__body) {
-  padding: 20px;
   max-height: 80vh;
   overflow-y: auto;
-}
-
-.scene-dialog :deep(.el-dialog__footer) {
-  padding: 0 20px 20px 20px;
-  border-top: 1px solid #f0f0f0;
-  margin-top: 0;
 }
 
 .scene-dialog-form {

@@ -1715,26 +1715,10 @@ onMounted(async () => {
 </style>
 
 <style lang="scss">
-/* el-dialog 挂载到 body，需非 scoped */
+/* el-dialog 挂载到 body，头部样式统一走全局 common.scss */
 .video-dialog {
-  .el-dialog__header {
-    padding: 16px 20px 12px;
-    margin-right: 0;
-    border-bottom: 1px solid #f0f0f0;
-  }
-
-  .el-dialog__title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #303133;
-  }
-
   .el-dialog__body {
-    padding: 16px 20px 20px;
-  }
-
-  .el-dialog__headerbtn {
-    top: 16px;
+    padding: 20px 40px;
   }
 }
 </style>

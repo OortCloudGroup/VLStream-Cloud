@@ -989,10 +989,6 @@ onMounted(() => {
 }
 
 /* 导入弹窗样式 */
-.import-dialog .el-dialog__body {
-  padding: 20px;
-}
-
 .import-dialog-content {
   display: flex;
   gap: 40px;

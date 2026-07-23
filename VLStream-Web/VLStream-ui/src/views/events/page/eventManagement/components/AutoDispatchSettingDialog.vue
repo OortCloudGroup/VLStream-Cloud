@@ -187,17 +187,6 @@ const handleConfirm = () => {
 </script>
 
 <style lang="scss" scoped>
-.auto-dispatch-dialog {
-  :deep(.el-dialog__header) {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  :deep(.el-dialog__body) {
-    padding: 10px 20px 0 20px;
-  }
-}
-
 .info-banner {
   display: flex;
   align-items: center;
