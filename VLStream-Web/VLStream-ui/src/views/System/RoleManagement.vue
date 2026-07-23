@@ -80,7 +80,7 @@
   <el-dialog
     v-model="dialogVisible"
     :title="dialogTitle"
-    width="540px"
+    width="30%"
     destroy-on-close
   >
     <el-form

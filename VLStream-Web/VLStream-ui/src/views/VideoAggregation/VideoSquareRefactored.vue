@@ -256,7 +256,7 @@
     <el-dialog
       v-model="showSettingsDialog" 
       title="显示设置"
-      width="400px"
+      width="25%"
       center
       :close-on-click-modal="true"
       :show-close="true"

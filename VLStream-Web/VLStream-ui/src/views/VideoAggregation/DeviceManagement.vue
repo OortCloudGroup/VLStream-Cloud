@@ -210,7 +210,7 @@
     <el-dialog
       v-model="videoDialogVisible"
       title="视频播放"
-      width="1720px"
+      width="90%"
       top="5vh"
       @close="handleVideoClose"
     >
@@ -476,7 +476,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="600px"
+      width="35%"
       @close="handleDialogClose"
     >
       <DeviceEditForm

@@ -130,7 +130,7 @@
     <el-dialog
       v-model="showAddDialog"
       :title="isEdit ? '编辑用户' : '添加用户'"
-      width="600px"
+      width="35%"
     >
       <el-form
         :model="userForm"
@@ -199,7 +199,7 @@
     </el-dialog>
 
     <!-- 权限配置对话框 -->
-    <el-dialog v-model="showPermissionDialog" title="权限配置" width="800px">
+    <el-dialog v-model="showPermissionDialog" title="权限配置" width="45%">
       <div v-if="selectedUser" class="permission-content">
         <h3>{{ selectedUser.realName }} ({{ selectedUser.username }}) 的权限配置</h3>
         <el-divider />

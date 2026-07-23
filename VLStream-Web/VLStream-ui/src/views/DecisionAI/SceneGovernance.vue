@@ -153,7 +153,7 @@
     <el-dialog
       v-model="showAddDialog"
       title="新增场景"
-      width="800px"
+      width="45%"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
       :show-close="true"
@@ -247,7 +247,7 @@
     <el-dialog
       v-model="showCameraSelector"
       title="选择摄像头"
-      width="520px"
+      width="30%"
       class="selector-dialog"
     >
       <div class="dialog-content">
@@ -283,7 +283,7 @@
 <!--    <el-dialog-->
 <!--      v-model="showAlgorithmDialog"-->
 <!--      title="选择AI算法"-->
-<!--      width="520px"-->
+<!--      width="30%"-->
 <!--      class="selector-dialog"-->
 <!--    >-->
 <!--      <div class="dialog-content">-->
@@ -319,7 +319,7 @@
     <el-dialog
       v-model="showCameraDialog"
       title="选择摄像头"
-      width="520px"
+      width="30%"
       class="selector-dialog"
     >
       <div class="dialog-content">

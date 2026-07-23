@@ -74,7 +74,7 @@
     <el-dialog
       v-model="videoDialogVisible"
       title="视频播放"
-      width="1400px"
+      width="70%"
       :close-on-click-modal="false"
       class="video-dialog"
     >

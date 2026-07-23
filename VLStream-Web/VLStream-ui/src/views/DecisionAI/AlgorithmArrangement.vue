@@ -134,7 +134,7 @@
     <el-dialog
       v-model="videoDialogVisible"
       title="视频播放"
-      width="1200px"
+      width="65%"
       top="5vh"
       @close="handleVideoClose"
     >
@@ -193,7 +193,7 @@
     <el-dialog
       v-model="showConfigDialog"
       title="配置AI算法"
-      width="500px"
+      width="30%"
       @close="resetConfigForm"
     >
       <div class="config-dialog-content">

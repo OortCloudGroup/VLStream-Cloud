@@ -2,7 +2,7 @@
   <el-dialog
     :model-value="modelValue"
     title="权限配置"
-    width="900px"
+    width="50%"
     @open="loadGrantData"
     @close="handleClose"
   >

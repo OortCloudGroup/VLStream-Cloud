@@ -460,7 +460,7 @@
     <el-dialog
       v-model="showDatasetDialog"
       title="数据集文件校验"
-      width="600px"
+      width="35%"
       :before-close="handleDatasetDialogClose"
       class="dataset-validation-dialog"
     >
@@ -632,7 +632,7 @@
     <el-dialog
       v-model="showImportDialog"
       title="导入图片"
-      width="800px"
+      width="45%"
       :before-close="handleCloseImportDialog"
     >
       <div class="import-dialog-content">

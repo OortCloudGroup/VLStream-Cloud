@@ -141,7 +141,7 @@
     <el-dialog
       v-model="showModelDialog"
       :title="isEditingModel ? '编辑算法模型' : '新增算法模型'"
-      width="640px"
+      width="35%"
       :close-on-click-modal="false"
       @close="handleModelDialogClose"
     >

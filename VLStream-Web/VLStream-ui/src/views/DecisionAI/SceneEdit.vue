@@ -157,7 +157,7 @@
     <el-dialog
       v-model="showRegionDialog"
       title="选择区域"
-      width="500px"
+      width="30%"
     >
       <div class="dialog-content">
         <el-checkbox-group v-model="tempSelectedRegions">
@@ -185,7 +185,7 @@
     <el-dialog
       v-model="showCameraDialog"
       title="选择摄像头"
-      width="500px"
+      width="30%"
     >
       <div class="dialog-content">
         <el-checkbox-group v-model="tempSelectedCameras">

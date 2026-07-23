@@ -198,7 +198,7 @@
         </el-form>
 
         <!-- 分析类型选择对话框 -->
-        <el-dialog v-model="showAnalysisTypeSelector" title="选择分析类型" width="400px">
+        <el-dialog v-model="showAnalysisTypeSelector" title="选择分析类型" width="25%">
           <el-radio-group v-model="tempAnalysisType" direction="vertical">
             <el-radio value="人员">人员</el-radio>
             <el-radio value="车辆">车辆</el-radio>
@@ -214,7 +214,7 @@
         </el-dialog>
 
         <!-- 区域选择对话框 -->
-        <el-dialog v-model="showRegionSelector" title="选择区域" width="400px">
+        <el-dialog v-model="showRegionSelector" title="选择区域" width="25%">
           <el-checkbox-group v-model="tempSelectedRegions">
             <div class="checkbox-grid">
               <el-checkbox value="水产大厦">水产大厦</el-checkbox>
@@ -234,7 +234,7 @@
         </el-dialog>
 
         <!-- 摄像头选择对话框 -->
-        <el-dialog v-model="showCameraSelector" title="选择摄像头" width="400px">
+        <el-dialog v-model="showCameraSelector" title="选择摄像头" width="25%">
           <el-checkbox-group v-model="tempSelectedCameras">
             <div class="checkbox-grid">
               <el-checkbox value="摄像头1">摄像头1</el-checkbox>

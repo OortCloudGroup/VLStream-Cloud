@@ -268,7 +268,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="400px"
+      width="25%"
       @close="handleDialogClose"
     >
       <el-form :model="tagForm" :rules="tagRules" ref="tagFormRef" label-width="80px">

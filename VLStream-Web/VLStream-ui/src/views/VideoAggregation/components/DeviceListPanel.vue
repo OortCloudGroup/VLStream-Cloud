@@ -165,7 +165,7 @@
     <el-dialog
       :model-value="showDeviceStatsDialog"
       title="设备统计信息"
-      width="600px"
+      width="35%"
       @update:model-value="handleDialogClose"
     >
       <div v-if="currentStatsItem" class="stats-content">

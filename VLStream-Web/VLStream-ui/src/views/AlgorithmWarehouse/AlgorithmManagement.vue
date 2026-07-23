@@ -184,7 +184,7 @@
     <el-dialog
       v-model="showAddDialog"
       :title="editingRepository ? '编辑算法库' : '新增算法库'"
-      width="500px"
+      width="30%"
       :close-on-click-modal="false"
     >
       <el-form :model="addForm" :rules="addFormRules" ref="addFormRef" label-width="80px" class="add-form">
@@ -242,7 +242,7 @@
     <el-dialog
       v-model="showAlgorithmAddDialog"
       title="添加算法"
-      width="700px"
+      width="40%"
       :close-on-click-modal="false"
     >
       <el-form :model="algorithmAddForm" :rules="algorithmAddFormRules" ref="algorithmAddFormRef" label-width="80px" class="add-form">
@@ -308,7 +308,7 @@
     <el-dialog
       v-model="showAlgorithmEditDialog"
       title="编辑算法"
-      width="700px"
+      width="40%"
       :close-on-click-modal="false"
     >
       <el-form :model="algorithmEditForm" :rules="algorithmEditFormRules" ref="algorithmEditFormRef" label-width="80px" class="add-form">
@@ -375,7 +375,7 @@
       v-model="showDeviceDrawer"
       title="下发到摄像机"
       direction="rtl"
-      size="1000px"
+      size="55%"
       :before-close="handleDrawerClose"
     >
       <div class="device-drawer-content">

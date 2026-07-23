@@ -551,7 +551,7 @@
     <el-dialog
       v-model="showCreateDialog"
       title="创建容器实例"
-      width="600px"
+      width="35%"
       @close="resetCreateForm"
     >
       <el-form :model="createForm" :rules="createRules" ref="createFormRef" label-width="120px">

@@ -356,7 +356,7 @@
     <el-dialog
       v-model="addDetectionDialogVisible"
       title="添加检测项目"
-      width="500px"
+      width="30%"
     >
       <div class="add-detection-content">
         <el-form :model="newDetectionForm" label-width="100px">

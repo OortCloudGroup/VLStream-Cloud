@@ -153,7 +153,7 @@
               <el-dialog
                 v-model="copyDialogVisible"
                 title="复制时间设置"
-                width="400px"
+                width="25%"
                 :show-close="false"
               >
                 <div class="copy-dialog-content">

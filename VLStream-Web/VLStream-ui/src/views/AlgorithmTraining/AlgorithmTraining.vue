@@ -733,7 +733,7 @@
   <el-dialog
     v-model="showDeployDialog"
     title="发布至模型仓库"
-    width="600px"
+    width="35%"
     :before-close="handleDeployCancel"
   >
     <el-form :model="deployForm" label-width="100px" style="max-width: 500px">
@@ -806,7 +806,7 @@
   <el-dialog
     v-model="showAddDialog"
     title="新增训练任务"
-    width="600px"
+    width="35%"
     :before-close="handleCloseDialog"
   >
     <el-form
@@ -923,7 +923,7 @@
   <el-dialog
     v-model="showEditDialog"
     title="编辑训练任务"
-    width="600px"
+    width="35%"
     :before-close="handleCloseEditDialog"
   >
     <el-form
@@ -1041,7 +1041,7 @@
   <el-dialog
     v-model="showDatasetSelector"
     title="选择数据集"
-    width="800px"
+    width="45%"
     :before-close="handleCloseDatasetSelector"
   >
     <div class="dataset-selector-content">

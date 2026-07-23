@@ -131,7 +131,7 @@
     <el-dialog
       v-model="showLabelDialog"
       :title="editingLabel ? '编辑标签' : '新增标签'"
-      width="400px"
+      width="25%"
     >
       <el-form :model="labelForm" :rules="labelRules" ref="labelFormRef" label-width="80px">
         <el-form-item label="标签名" prop="name">
@@ -151,7 +151,7 @@
     <el-dialog
       v-model="showUploadDialog"
       title="导入图片"
-      width="800px"
+      width="45%"
       class="import-dialog"
     >
       <div class="import-dialog-content">

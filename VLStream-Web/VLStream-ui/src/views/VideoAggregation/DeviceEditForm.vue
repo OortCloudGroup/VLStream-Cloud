@@ -142,7 +142,7 @@
     <el-dialog
       v-model="mapDialogVisible"
       title="地图选点"
-      width="800px"
+      width="45%"
     >
       <div class="map-container">
         <div class="map-toolbar">

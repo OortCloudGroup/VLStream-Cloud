@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visible"
     :title="form.id ? '编辑标签' : '新增标签'"
-    width="400px"
+    width="25%"
     :before-close="handleClose"
   >
     <el-form

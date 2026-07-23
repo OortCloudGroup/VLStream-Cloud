@@ -251,7 +251,7 @@
     <el-dialog
       v-model="showCreateTrainingDialog"
       title="新建训练任务"
-      width="600px"
+      width="35%"
       @close="resetTrainingForm"
     >
       <el-form :model="trainingForm" :rules="trainingRules" ref="trainingFormRef" label-width="120px">

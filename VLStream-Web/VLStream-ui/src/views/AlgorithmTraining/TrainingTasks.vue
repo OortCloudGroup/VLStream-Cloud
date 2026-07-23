@@ -99,7 +99,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="600px"
+      width="35%"
       :close-on-click-modal="false"
     >
       <el-form 
@@ -138,7 +138,7 @@
     <el-dialog 
       v-model="detailVisible" 
       title="训练任务详情" 
-      width="800px"
+      width="45%"
     >
       <el-descriptions :column="2" border>
         <el-descriptions-item label="任务名称">{{ detailData.taskName }}</el-descriptions-item>

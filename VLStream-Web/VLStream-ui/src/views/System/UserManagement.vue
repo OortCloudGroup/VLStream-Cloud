@@ -114,7 +114,7 @@
   <el-dialog
     v-model="dialogVisible"
     :title="dialogTitle"
-    width="680px"
+    width="40%"
     destroy-on-close
   >
     <el-form
@@ -237,7 +237,7 @@
   <el-dialog
     v-model="grantVisible"
     title="分配角色"
-    width="500px"
+    width="30%"
     destroy-on-close
   >
     <div style="padding: 10px 20px" v-loading="grantLoading">

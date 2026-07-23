@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visible"
     title="新增标注"
-    width="600px"
+    width="35%"
     :before-close="handleClose"
   >
     <el-form
