@@ -42,7 +42,7 @@
           <el-table-column prop="version" label="版本" align="center" />
           <el-table-column prop="downloadCount" label="下载次数" align="center" />
           <el-table-column prop="createTime" label="创建时间" />
-          <el-table-column label="操作" :width="clacPXToVW(220)" align="right" fixed="right">
+          <el-table-column label="操作" :min-width="clacPXToVW(260)" :width="clacPXToVW(260)" align="right" fixed="right">
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="handleView(scope.row)">
@@ -834,7 +834,12 @@ onMounted(() => {
   :deep(.header_tenant_cell) { background: #F8F8F9; }
 }
 .paginationBox { justify-content: center; height: 100px; }
-.operateAppBox { justify-content: flex-end; gap: 2px; flex-wrap: wrap; }
+.operateAppBox {
+  justify-content: flex-end;
+  gap: 2px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
 
 .algorithm-model {
   height: 100%;

@@ -1,32 +1,22 @@
 <template>
   <div class="annotation-grid-view">
     <!-- 顶部筛选标签 -->
-    <div class="filter-tabs-section">
-      <div class="filter-tabs">
-        <div
-          v-for="filter in annotationFilters"
-          :key="filter.key"
-          class="filter-tab"
-          :class="{ active: activeFilter === filter.key }"
-          @click="handleFilterChange(filter.key)"
-        >
-          {{ filter.label }} ({{ filter.count }})
-        </div>
-      </div>
-    </div>
+    <el-tabs
+      v-model="activeFilter"
+      class="tenanat-tabs"
+      @tab-change="handleFilterChange"
+    >
+      <el-tab-pane
+        v-for="filter in annotationFilters"
+        :key="filter.key"
+        :label="filter.label"
+        :name="filter.key"
+      />
+    </el-tabs>
 
-    <div class="grid-container">
+    <div class="grid-container tableTenBox flexRowAC">
       <!-- 左侧标签面板 -->
-      <div class="left-sidebar">
-        <!-- 返回按钮 -->
-<!--        <div class="back-button-section">-->
-<!--          <el-button @click="handleBackToList" type="text" class="back-btn">-->
-<!--            <el-icon><ArrowLeft /></el-icon>-->
-<!--            返回列表-->
-<!--          </el-button>-->
-<!--        </div>-->
-
-        <!-- 统一标签面板组件 -->
+      <div v-yResize class="police_aside_use">
         <AnnotationLabelPanel
           :labels="annotationLabels"
           :selected-label-id="selectedLabelId"
@@ -38,37 +28,15 @@
       </div>
 
       <!-- 右侧主内容区域 -->
-      <div class="main-content">
-        <!-- 顶部工具栏 -->
-        <div class="content-toolbar">
-          <div class="toolbar-buttons">
-            <div class="button-group">
-              <el-button
-                class="capsule-btn import-btn first-btn"
-                @click="handleImportImages"
-              >
-                <el-icon><Upload /></el-icon>
-                导入
-              </el-button>
-              <el-button
-                class="capsule-btn annotate-btn middle-btn"
-                @click="handleBatchAnnotate"
-              >
-                <el-icon><Edit /></el-icon>
-                标注
-              </el-button>
-              <el-button
-                class="capsule-btn delete-btn last-btn"
-                @click="handleDeleteSelected"
-                :disabled="selectedImages.length === 0"
-              >
-                <el-icon><Delete /></el-icon>
-                删除
-              </el-button>
+      <div class="tableTenItU main-content">
+        <div class="depNameBox_out flexRowAC">
+          <div class="depNameBox flexRowAC">
+            <div class="exportBtnBox flexRowAC">
+              <button-group :button-list="toolbarButtonList" />
             </div>
           </div>
         </div>
-        
+
         <!-- 图片网格区域 -->
         <div class="images-grid-wrapper" @scroll="handleGridScroll">
           <div class="images-grid">
@@ -77,50 +45,41 @@
               :key="image.id"
               class="image-card"
               :class="{ selected: selectedImages.includes(image.id) }"
-              @click="handleImageCardClick(image.id, $event)">
+              @click="handleImageCardClick(image.id, $event)"
+            >
               <div class="image-container">
-                <img :src="image.url" :alt="image.name" class="image-preview" @error="handleImageError" loading="lazy" />
-                <div class="image-overlay">
-                  <div class="overlay-actions">
-                    <el-button
-                      type="primary"
-                      size="small"
-                      @click.stop="handleAnnotateImage(image.id)"
-                      class="action-btn"
-                    >
-                      <el-icon><Edit /></el-icon>
-                      标注
-                    </el-button>
-                    <el-button
-                      type="info"
-                      size="small"
-                      @click.stop="handlePreviewImage(image)"
-                      class="action-btn"
-                    >
-                      <el-icon><View /></el-icon>
-                      预览
-                    </el-button>
-                  </div>
+                <img
+                  :src="image.url"
+                  :alt="image.name"
+                  class="image-preview"
+                  @error="handleImageError"
+                  loading="lazy"
+                />
+                <div class="image-corner-icon">
+                  <el-icon><Crop /></el-icon>
                 </div>
               </div>
-              <div class="image-info">
-                <div class="image-name">{{ image.name }}</div>
-                <div class="image-stats">
-                  <span class="annotation-count">
-                    标注: {{ (image.annotations || []).length }}
-                  </span>
+              <div class="image-info flexRowAC">
+                <div class="image-name">{{ getImageDisplayName(image) }}</div>
+                <div class="image-card-actions flexRowAC">
+                  <el-icon class="card-action-icon" title="标注" @click.stop="handleAnnotateImage(image.id)">
+                    <Crop />
+                  </el-icon>
+                  <el-icon class="card-action-icon" title="预览" @click.stop="handlePreviewImage(image)">
+                    <FullScreen />
+                  </el-icon>
                 </div>
               </div>
             </div>
-            
+
             <!-- 空状态 -->
             <div v-if="filteredImages.length === 0" class="empty-state">
               <el-icon class="empty-icon"><Picture /></el-icon>
               <p class="empty-text">暂无图片</p>
-              <el-button type="primary" @click="handleImportImages">
-                <el-icon><Upload /></el-icon>
+              <button type="button" class="exportBtn newBtn flexRowAC" @click="handleImportImages">
+                <el-icon class="BtnImg"><Upload /></el-icon>
                 导入图片
-              </el-button>
+              </button>
             </div>
           </div>
         </div>
@@ -285,7 +244,7 @@
 <script setup>
 import {computed, onMounted, reactive, ref, watch} from 'vue'
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
-import {ArrowDown, Delete, Edit, Folder, InfoFilled, Picture, Upload, View} from '@element-plus/icons-vue'
+import {ArrowDown, Crop, Delete, Edit, Folder, FullScreen, InfoFilled, Picture, Upload} from '@element-plus/icons-vue'
 import {getAllAnnotationInstances} from '@/api/annotationInstances'
 import {uploadAnnotationImages} from '@/api/annotationImage'
 import {importAnnotationData} from '@/api/algorithmAnnotation'
@@ -363,6 +322,18 @@ const showUploadDialog = ref(false)
 const editingLabel = ref(null)
 const showPreviewDialog = ref(false)
 const previewImage = ref(null)
+
+const getImageDisplayName = (image) => {
+  if (selectedLabelId.value) {
+    const label = annotationLabels.value.find(item => item.id === selectedLabelId.value)
+    if (label?.name) return label.name
+  }
+  const annotations = image?.annotations || []
+  if (annotations.length > 0 && annotations[0].labelName) {
+    return annotations[0].labelName
+  }
+  return image?.name || '未命名'
+}
 
 // 表单数据
 const labelForm = reactive({
@@ -553,6 +524,7 @@ const handleImportImages = () => {
   pendingZipFile.value = null
   showUploadDialog.value = true
 }
+
 const handleBatchAnnotate = () => {
   if (selectedImages.value.length === 0) {
     ElMessage.warning('请先选择要标注的图片')
@@ -571,7 +543,10 @@ const handleBatchAnnotate = () => {
 }
 
 const handleDeleteSelected = async () => {
-  if (selectedImages.value.length === 0) return
+  if (selectedImages.value.length === 0) {
+    ElMessage.warning('请先选择要删除的图片')
+    return
+  }
 
   console.log('=== 开始删除选中的图片 ===')
   console.log('选中的图片ID:', selectedImages.value)
@@ -628,6 +603,12 @@ const handleDeleteSelected = async () => {
     }
   })
 }
+
+const toolbarButtonList = computed(() => [
+  { name: '导入', svg: 'table_incoming', clickFn: handleImportImages },
+  { name: '标注', svg: 'table_edit', clickFn: handleBatchAnnotate },
+  { name: '删除', svg: 'table_del', clickFn: handleDeleteSelected }
+])
 
 const deleteImageAndRelatedData = async (annotationId, imageIds) => {
   console.log('deleteImageAndRelatedData :', { annotationId, imageIds: imageIds })
@@ -833,62 +814,13 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .annotation-grid-view {
-  height: 100vh;
-  background: #f5f5f5;
+  height: 100%;
+  background: #fff;
   display: flex;
   flex-direction: column;
-}
-
-/* 筛选标签区域 */
-.filter-tabs-section {
-  background: white;
-  border-bottom: 1px solid #e8e8e8;
-  padding: 16px 20px 0;
-}
-
-.filter-tabs {
-  display: flex;
-  gap: 0;
-}
-
-.filter-tab {
-  padding: 12px 24px;
-  background: #f8f9fa;
-  border: 1px solid #e8e8e8;
-  border-bottom: none;
-  cursor: pointer;
-  font-size: 14px;
-  color: #666;
-  transition: all 0.2s;
-  border-radius: 6px 6px 0 0;
-  margin-right: 4px;
-  position: relative;
-}
-
-.filter-tab:hover {
-  background: #e9ecef;
-  color: #333;
-}
-
-.filter-tab.active {
-  background: white;
-  color: #1890ff;
-  border-color: #1890ff;
-  border-bottom: 1px solid white;
-  z-index: 1;
-  margin-bottom: -1px;
-}
-
-.filter-tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: white;
+  overflow: hidden;
 }
 
 .grid-container {
@@ -896,150 +828,46 @@ onMounted(() => {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  align-items: flex-start;
+  background: #fff;
+  padding: 16px 20px 0;
 }
 
-/* 左侧标签面板 */
-.left-sidebar {
-  width: 250px;
-  background: white;
-  border-right: 1px solid #e8e8e8;
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #262626;
-}
-
-.label-item:hover .label-actions {
-  opacity: 1;
-}
-
-.label-actions .el-button {
-  padding: 2px;
-  width: 20px;
-  height: 20px;
-  font-size: 12px;
-}
-
-/* 右侧主内容区域 */
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: white;
-  min-height: 0;
-}
-
-.content-toolbar {
-  padding: 16px 20px;
-  border-bottom: 1px solid #e8e8e8;
-  background: white;
-}
-
-.toolbar-buttons {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.button-group {
-  display: flex;
-  border: 1px solid #d9d9d9;
-  border-radius: 18px;
+.police_aside_use {
+  width: 280px;
+  padding-right: 20px;
+  flex-shrink: 0;
+  height: 100%;
   overflow: hidden;
-  background: white;
-}
-
-/* 胶囊按钮样式 */
-.capsule-btn {
-  width: 82px;
-  height: 36px;
-  border: none;
-  border-right: 1px solid #e8e8e8;
-  background: white;
-  color: #666;
-  font-size: 14px;
-  font-weight: 400;
-  padding: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  transition: all 0.2s;
-  box-shadow: none;
-  border-radius: 0;
-  position: relative;
+  flex-direction: column;
+
+  :deep(.annotation-label-panel) {
+    flex: 1;
+    min-height: 0;
+  }
 }
 
-/* 第一个按钮 - 左侧圆角 */
-.first-btn {
-  border-top-left-radius: 17px;
-  border-bottom-left-radius: 17px;
+.tableTenItU.main-content {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
 }
 
-/* 最后一个按钮 - 右侧圆角，无右边框 */
-.last-btn {
-  border-top-right-radius: 17px;
-  border-bottom-right-radius: 17px;
-  border-right: none;
+.depNameBox_out {
+  flex-shrink: 0;
+  padding-bottom: 12px;
 }
 
-/* 中间按钮 - 无圆角 */
-.middle-btn {
-  border-radius: 0;
-}
-
-.capsule-btn:hover {
-  background: #f0f9ff;
-  color: #1890ff;
-  z-index: 1;
-}
-
-.capsule-btn:active {
-  background: #e6f7ff;
-}
-
-.capsule-btn:disabled {
-  background: #f5f5f5;
-  color: #bfbfbf;
-  cursor: not-allowed;
-}
-
-.capsule-btn:disabled:hover {
-  background: #f5f5f5;
-  color: #bfbfbf;
-}
-
-/* 按钮特定悬停颜色 */
-.import-btn:hover {
-  background: #f0f9ff;
-  color: #1890ff;
-}
-
-.annotate-btn:hover {
-  background: #f6ffed;
-  color: #52c41a;
-}
-
-.delete-btn:hover {
-  background: #fff2f0;
-  color: #ff4d4f;
-}
-
-.capsule-btn .el-icon {
-  font-size: 16px;
-}
-
-/* 图片网格区域 */
 .images-grid-wrapper {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 20px;
-  padding-bottom: 202px;
+  padding: 0 0 40px;
 }
 
 .images-grid {
@@ -1051,30 +879,30 @@ onMounted(() => {
 }
 
 .image-card {
-  background: white;
-  border-radius: 8px;
+  background: #fff;
+  border-radius: 4px;
   border: 2px solid transparent;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .image-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .image-card.selected {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  border-color: var(--el-color-primary);
+  box-shadow: 0 0 0 1px var(--el-color-primary);
 }
 
 .image-container {
   position: relative;
   width: 100%;
-  height: 150px;
+  height: 160px;
   overflow: hidden;
+  background: #f5f5f5;
 }
 
 .image-preview {
@@ -1083,58 +911,62 @@ onMounted(() => {
   object-fit: cover;
 }
 
-.image-overlay {
+.image-corner-icon {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  top: 8px;
+  left: 8px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.image-card:hover .image-overlay {
-  opacity: 1;
-}
-
-.overlay-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  padding: 6px 12px;
-  font-size: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 2px;
+  color: #666;
+  font-size: 14px;
 }
 
 .image-info {
-  padding: 12px;
+  padding: 10px 12px;
+  justify-content: space-between;
+  gap: 8px;
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
 }
 
 .image-name {
   font-size: 14px;
-  font-weight: 500;
-  color: #262626;
-  margin-bottom: 4px;
+  font-weight: 400;
+  color: #333;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
-.image-stats {
-  font-size: 12px;
-  color: #8c8c8c;
+.image-card-actions {
+  gap: 8px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
 }
 
-.annotation-count {
-  color: #1890ff;
+.image-card:hover .image-card-actions,
+.image-card.selected .image-card-actions {
+  opacity: 1;
 }
 
-/* 空状态 */
+.card-action-icon {
+  font-size: 16px;
+  color: var(--el-color-primary);
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
 .empty-state {
   grid-column: 1 / -1;
   display: flex;

@@ -1,40 +1,27 @@
 <template>
   <div class="annotation-label-panel">
-    <!-- 标签面板头部 -->
-    <div class="panel-header">
-      <h3>标签栏</h3>
-      <el-button
-        type="primary"
-        size="small"
-        @click="handleAddLabel"
-        class="add-label-btn"
-      >
-        <el-icon><Plus /></el-icon>
-      </el-button>
+    <div class="treeTitle">
+      标签栏
+      <el-icon class="add-label-icon" @click="handleAddLabel">
+        <Plus />
+      </el-icon>
     </div>
 
-    <!-- 搜索查询区域 -->
-    <div class="search-section">
+    <div class="tree_search_content flexRowAC">
       <el-input
         v-model="searchKeyword"
-        placeholder="搜索标签"
+        placeholder="搜索"
+        debounce="300"
+        prefix-icon="Search"
         clearable
-        size="small"
-        @input="handleSearch"
-      >
-        <template #prefix>
-          <el-icon><Search /></el-icon>
-        </template>
-      </el-input>
+      />
     </div>
 
-    <!-- 标签栏表头 -->
     <div class="labels-header">
       <div class="header-cell label-name-col">标签名</div>
       <div class="header-cell label-count-col">标注框数</div>
     </div>
 
-    <!-- 标签列表容器 -->
     <div class="labels-container">
       <div
         v-for="label in filteredLabels"
@@ -50,28 +37,17 @@
         <div class="label-stats">
           <span class="label-count">{{ label.usageCount || 0 }}</span>
           <div class="label-actions">
-            <el-button
-              type="text"
-              size="small"
-              @click.stop="handleEditLabel(label)"
-              title="编辑"
-            >
-              <el-icon><Edit /></el-icon>
-            </el-button>
-            <el-button
-              type="text"
-              size="small"
-              @click.stop="handleDeleteLabel(label.id)"
-              title="删除"
-            >
-              <el-icon><Delete /></el-icon>
-            </el-button>
+            <el-icon class="action-icon" title="编辑" @click.stop="handleEditLabel(label)">
+              <Edit />
+            </el-icon>
+            <el-icon class="action-icon" title="删除" @click.stop="handleDeleteLabel(label.id)">
+              <Delete />
+            </el-icon>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 标签编辑弹窗 -->
     <el-dialog
       v-model="showLabelDialog"
       :title="editingLabel ? '编辑标签' : '新增标签'"
@@ -96,9 +72,8 @@
 <script setup>
 import { ref, computed, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 
-// Props
 const props = defineProps({
   labels: {
     type: Array,
@@ -110,40 +85,30 @@ const props = defineProps({
   }
 })
 
-// Emits
 const emit = defineEmits(['label-selected', 'add-label', 'edit-label', 'delete-label'])
 
-// 响应式数据
 const searchKeyword = ref('')
 const showLabelDialog = ref(false)
 const editingLabel = ref(null)
 const labelFormRef = ref(null)
 
-// 表单数据
 const labelForm = reactive({
   name: '',
   color: '#409eff'
 })
 
-// 表单验证规则
 const labelRules = {
   name: [{ required: true, message: '请输入标签名称', trigger: 'blur' }]
 }
 
-// 计算属性 - 过滤后的标签
 const filteredLabels = computed(() => {
   if (!searchKeyword.value) {
     return props.labels
   }
-  return props.labels.filter(label => 
+  return props.labels.filter(label =>
     label.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
   )
 })
-
-// 方法
-const handleSearch = () => {
-  // 搜索逻辑已通过计算属性实现
-}
 
 const selectLabel = (labelId) => {
   emit('label-selected', labelId)
@@ -176,12 +141,11 @@ const handleDeleteLabel = (labelId) => {
 
 const handleSaveLabel = async () => {
   if (!labelFormRef.value) return
-  
+
   try {
     await labelFormRef.value.validate()
-    
+
     if (editingLabel.value) {
-      // 编辑标签
       emit('edit-label', {
         id: editingLabel.value.id,
         name: labelForm.name,
@@ -189,7 +153,6 @@ const handleSaveLabel = async () => {
       })
       ElMessage.success('标签更新成功')
     } else {
-      // 新增标签
       emit('add-label', {
         name: labelForm.name,
         color: labelForm.color,
@@ -197,7 +160,7 @@ const handleSaveLabel = async () => {
       })
       ElMessage.success('标签添加成功')
     }
-    
+
     showLabelDialog.value = false
   } catch (error) {
     console.error('表单验证失败:', error)
@@ -205,61 +168,72 @@ const handleSaveLabel = async () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .annotation-label-panel {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: white;
+  background: #fff;
+  overflow: hidden;
 }
 
-/* 面板头部 */
-.panel-header {
+.treeTitle {
+  color: var(--el-color-primary);
+  padding-bottom: 16px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-  border-bottom: 1px solid #e8e8e8;
+  gap: 12px;
+  padding-top: 4px;
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 500;
+
+  &::before {
+    content: '';
+    width: 3px;
+    height: 18px;
+    background-color: var(--el-color-primary);
+  }
 }
 
-.panel-header h3 {
-  margin: 0;
+.add-label-icon {
+  margin-left: auto;
+  cursor: pointer;
+  color: var(--el-color-primary);
   font-size: 16px;
-  font-weight: 600;
-  color: #262626;
+  padding: 4px;
+  border-radius: 4px;
+
+  &:hover {
+    background: var(--el-color-primary-hb, #ecf5ff);
+  }
 }
 
-.add-label-btn {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border-radius: 6px;
+.tree_search_content {
+  padding-bottom: 10px;
+  flex-shrink: 0;
+
+  :deep(.el-input__wrapper) {
+    background: #fff;
+    box-shadow: none;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+  }
+
+  :deep(.el-input__inner) {
+    background: #fff;
+    border: none;
+  }
 }
 
-/* 搜索区域 */
-.search-section {
-  padding: 12px 16px;
-  border-bottom: 1px solid #e8e8e8;
-  background: #fafafa;
-}
-
-.search-section .el-input {
-  border-radius: 6px;
-}
-
-.search-section .el-input__wrapper {
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-/* 标签栏表头 */
 .labels-header {
   display: flex;
-  padding: 8px 16px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e8e8e8;
+  padding: 8px 12px;
+  background: #f8f8f9;
   font-size: 12px;
   font-weight: 600;
   color: #666;
+  flex-shrink: 0;
 }
 
 .header-cell {
@@ -275,7 +249,6 @@ const handleSaveLabel = async () => {
   text-align: center;
 }
 
-/* 标签列表容器 */
 .labels-container {
   flex: 1;
   overflow-y: auto;
@@ -285,12 +258,13 @@ const handleSaveLabel = async () => {
 .label-item {
   display: flex;
   align-items: center;
-  padding: 8px 16px;
+  padding: 10px 12px;
   cursor: pointer;
   transition: all 0.2s;
   border: 1px solid transparent;
   border-bottom: 1px solid #f0f0f0;
   min-height: 40px;
+  position: relative;
 }
 
 .label-item:hover {
@@ -298,8 +272,27 @@ const handleSaveLabel = async () => {
 }
 
 .label-item.active {
-  background: #e6f7ff;
-  border-color: #1890ff;
+  background: var(--el-color-primary-hb, #e6f7ff);
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--el-color-primary);
+  }
+
+  .label-name {
+    color: var(--el-color-primary);
+  }
+
+  .label-actions {
+    opacity: 1;
+  }
 }
 
 .label-main-info {
@@ -320,7 +313,7 @@ const handleSaveLabel = async () => {
 
 .label-name {
   font-size: 14px;
-  color: #262626;
+  color: #333;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -333,6 +326,7 @@ const handleSaveLabel = async () => {
   flex: 1;
   justify-content: center;
   position: relative;
+  min-height: 24px;
 }
 
 .label-count {
@@ -349,23 +343,26 @@ const handleSaveLabel = async () => {
   top: 50%;
   transform: translateY(-50%);
   display: flex;
-  gap: 2px;
+  align-items: center;
+  gap: 4px;
   opacity: 0;
   transition: opacity 0.2s;
-  background: white;
-  padding: 2px;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: transparent;
+  padding: 0 2px;
 }
 
 .label-item:hover .label-actions {
   opacity: 1;
 }
 
-.label-actions .el-button {
+.action-icon {
+  font-size: 14px;
+  color: var(--el-color-primary);
+  cursor: pointer;
   padding: 2px;
-  width: 20px;
-  height: 20px;
-  font-size: 12px;
+
+  &:hover {
+    color: var(--el-color-primary);
+  }
 }
 </style>
