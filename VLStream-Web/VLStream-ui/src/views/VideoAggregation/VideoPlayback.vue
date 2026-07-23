@@ -181,144 +181,118 @@
     <el-dialog
       v-model="videoDialogVisible"
       title="视频回放"
-      width="1400px"
+      width="70%"
       :close-on-click-modal="false"
       class="video-dialog"
+      align-center
     >
       <div class="video-playback-container">
-        <!-- 左侧视频列表区域 -->
-        <div class="video-list-section">
-          <!-- 日期选择器 -->
-          <div class="date-selector">
-            <!-- 年份选择 -->
-            <div class="date-section">
-              <div class="section-title">年份</div>
-              <div class="year-list">
-                <span
-                  v-for="year in availableYears"
-                  :key="year"
-                  class="year-item"
-                  :class="{ active: selectedDate.year === year }"
-                  @click="selectYear(year)"
-                >
-                  {{ year }}
-                </span>
-              </div>
-            </div>
-
-            <!-- 月份选择 -->
-            <div class="date-section">
-              <div class="section-title">月份</div>
-              <div class="month-grid">
-                <span
-                  v-for="month in availableMonths"
-                  :key="month"
-                  class="month-item"
-                  :class="{ active: selectedDate.month === month }"
-                  @click="selectMonth(month)"
-                >
-                  {{ month }}
-                </span>
-              </div>
-            </div>
-
-            <!-- 日期选择 -->
-            <div class="date-section">
-              <div class="section-title">日期</div>
-              <div class="date-grid">
-                <span
-                  v-for="day in availableDays"
-                  :key="day"
-                  class="date-item"
-                  :class="{ active: selectedDate.day === day }"
-                  @click="selectDay(day)"
-                >
-                  {{ day }}
-                </span>
-              </div>
+        <!-- 顶部：年 / 月 / 日 选择 -->
+        <div class="date-selector">
+          <div class="date-section year-section">
+            <div class="year-grid">
+              <span
+                v-for="year in availableYears"
+                :key="year"
+                class="date-cell year-item"
+                :class="{ active: selectedDate.year === year }"
+                @click="selectYear(year)"
+              >
+                {{ year }}
+              </span>
             </div>
           </div>
 
-          <!-- 视频列表标题 -->
-          <div class="video-list-title">
-            <span>视频列表</span>
+          <div class="date-section month-section">
+            <div class="month-grid">
+              <span
+                v-for="month in availableMonths"
+                :key="month"
+                class="date-cell month-item"
+                :class="{ active: selectedDate.month === month }"
+                @click="selectMonth(month)"
+              >
+                {{ month }}
+              </span>
+            </div>
           </div>
 
-          <!-- 视频缩略图列表 -->
-          <div class="video-thumbnails">
-            <div
-              v-for="(video, index) in videoList"
-              :key="index"
-              class="video-thumbnail-item"
-              :class="{ active: selectedVideoIndex === index }"
-              @click="selectVideo(index)"
-            >
-              <div class="thumbnail-image">
-                <!-- 显示真实缩略图 -->
-                <img
-                  v-if="video.thumbnailUrl"
-                  :src="video.thumbnailUrl"
-                  :alt="video.fileName"
-                  class="thumbnail-img"
-                  @error="handleThumbnailError($event, index)"
-                />
-                <!-- 缩略图加载失败或不存在时显示占位符 -->
-                <div class="thumbnail-placeholder" :style="{ display: video.thumbnailUrl ? 'none' : 'flex' }">
-                  <el-icon class="video-icon"><VideoCamera /></el-icon>
-                </div>
-                <div class="play-overlay">
-                  <el-icon class="play-icon"><VideoPlay /></el-icon>
-                </div>
-              </div>
-              <div class="video-time-range">{{ video.timeRange }}</div>
+          <div class="date-section day-section">
+            <div class="day-grid">
+              <span
+                v-for="day in availableDays"
+                :key="day"
+                class="date-cell day-item"
+                :class="{ active: selectedDate.day === day }"
+                @click="selectDay(day)"
+              >
+                {{ day }}
+              </span>
             </div>
           </div>
         </div>
 
-        <!-- 右侧播放器区域 -->
-        <div class="player-section">
-          <div class="video-player">
-            <div class="video-content">
-              <!-- 视频播放区域 -->
+        <!-- 底部：视频列表 + 播放器 -->
+        <div class="playback-body">
+          <div class="video-list-section">
+            <div class="video-list-title">视频列表</div>
+            <div class="video-thumbnails">
+              <div
+                v-for="(video, index) in videoList"
+                :key="index"
+                class="video-thumbnail-item"
+                :class="{ active: selectedVideoIndex === index }"
+                @click="selectVideo(index)"
+              >
+                <div class="thumbnail-image">
+                  <img
+                    v-if="video.thumbnailUrl"
+                    :src="video.thumbnailUrl"
+                    :alt="video.fileName"
+                    class="thumbnail-img"
+                    @error="handleThumbnailError($event, index)"
+                  />
+                  <div
+                    class="thumbnail-placeholder"
+                    :style="{ display: video.thumbnailUrl ? 'none' : 'flex' }"
+                  >
+                    <el-icon class="video-icon"><VideoCamera /></el-icon>
+                  </div>
+                </div>
+                <div class="video-time-range">{{ video.timeRange }}</div>
+              </div>
+              <div v-if="!videoList.length" class="video-list-empty">暂无视频记录</div>
+            </div>
+          </div>
+
+          <div class="player-section">
+            <div class="video-player">
               <div class="video-display">
-                <!-- 录制视频播放器 -->
                 <div v-if="currentVideoUrl" class="recorded-video-container">
                   <video
                     ref="recordedVideoPlayer"
                     :src="currentVideoUrl"
                     controls
                     autoplay
-                    width="100%"
                     class="recorded-video-player"
                     @loadedmetadata="handleVideoLoaded"
                     @error="handleVideoError"
                   >
                     您的浏览器不支持视频播放
                   </video>
+                  <div class="player-datetime" v-if="playerOverlayDateTime">
+                    {{ playerOverlayDateTime }}
+                  </div>
+                  <div class="player-device-name" v-if="currentVideo?.deviceName">
+                    {{ currentVideo.deviceName }}
+                  </div>
                 </div>
 
-                <!-- 无视频时的占位符 -->
                 <div v-else class="video-placeholder">
                   <div class="placeholder-content">
                     <el-icon class="placeholder-icon"><VideoCamera /></el-icon>
                     <div class="placeholder-text">请从左侧选择要播放的视频</div>
                   </div>
-                </div>
-              </div>
-
-              <!-- 视频信息显示 -->
-              <div class="video-info" v-if="currentVideo">
-                <div class="video-info-item">
-                  <span class="info-label">设备：</span>
-                  <span class="info-value">{{ currentVideo.deviceName }}</span>
-                </div>
-                <div class="video-info-item">
-                  <span class="info-label">文件：</span>
-                  <span class="info-value">{{ currentVideo.fileName }}</span>
-                </div>
-                <div class="video-info-item" v-if="currentVideo.recordStartTime">
-                  <span class="info-label">时间：</span>
-                  <span class="info-value">{{ formatRecordTime(currentVideo.recordStartTime, currentVideo.recordEndTime) }}</span>
                 </div>
               </div>
             </div>
@@ -333,7 +307,6 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import {
   VideoCamera,
-  VideoPlay,
   Folder,
   Collection,
 } from '@element-plus/icons-vue'
@@ -465,11 +438,11 @@ const selectedDate = reactive({
   day: new Date().getDate()
 })
 
-// 可选年份范围（当前年份前后5年）
+// 可选年份范围（展示近若干年，便于网格排布）
 const availableYears = computed(() => {
   const currentYear = new Date().getFullYear()
   const years = []
-  for (let i = currentYear - 2; i <= currentYear + 1; i++) {
+  for (let i = currentYear - 5; i <= currentYear; i++) {
     years.push(i)
   }
   return years
@@ -492,6 +465,28 @@ const selectedDateStr = computed(() => {
   const month = String(selectedDate.month).padStart(2, '0')
   const day = String(selectedDate.day).padStart(2, '0')
   return `${year}-${month}-${day}`
+})
+
+// 播放器右上角日期时间文案
+const playerOverlayDateTime = computed(() => {
+  if (!currentVideo.value) return ''
+  const start = currentVideo.value.recordStartTime
+  if (start) {
+    const date = new Date(start)
+    if (!Number.isNaN(date.getTime())) {
+      const y = date.getFullYear()
+      const m = String(date.getMonth() + 1).padStart(2, '0')
+      const d = String(date.getDate()).padStart(2, '0')
+      const hh = String(date.getHours()).padStart(2, '0')
+      const mm = String(date.getMinutes()).padStart(2, '0')
+      const ss = String(date.getSeconds()).padStart(2, '0')
+      return `${y}年${m}月${d}日 ${hh}:${mm}:${ss}`
+    }
+  }
+  const y = selectedDate.year
+  const m = String(selectedDate.month).padStart(2, '0')
+  const d = String(selectedDate.day).padStart(2, '0')
+  return `${y}年${m}月${d}日`
 })
 
 // 过滤后的数据 - 基于设备列表
@@ -1427,196 +1422,148 @@ onMounted(async () => {
 }
 
 /* 视频回放弹窗样式 */
-.video-dialog {
-  .el-dialog__body {
-    padding: 0;
-  }
-}
-
 .video-playback-container {
   display: flex;
-  height: 680px;
-  background: #f5f7fa;
-  padding: 20px;
-  gap: 20px;
-}
-
-/* 左侧视频列表区域 */
-.video-list-section {
-  width: 420px;
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
+  background: #fff;
+  min-height: 640px;
 }
 
-/* 日期选择器 */
+/* 顶部年月日选择 */
 .date-selector {
   display: flex;
-  flex-direction: row;
-  gap: 20px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
 }
 
 .date-section {
+  border: 1px solid #e8e8e8;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #e8e8e8;
+}
+
+.year-section {
+  flex: 0 0 220px;
+}
+
+.month-section {
+  flex: 0 0 260px;
+}
+
+.day-section {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  min-width: 0;
 }
 
-.section-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-  text-align: center;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e9ecef;
+.year-grid,
+.month-grid,
+.day-grid {
+  display: grid;
+  width: 100%;
+  gap: 1px;
+  background: #e8e8e8;
 }
 
-.year-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.year-item {
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-  color: #666;
-  transition: all 0.3s;
-  text-align: center;
-  border: 1px solid transparent;
-}
-
-.year-item.active {
-  background: #1A53FF;
-  color: white;
-  border-color: #1A53FF;
-}
-
-.year-item:hover:not(.active) {
-  background: #f0f4ff;
-  color: #1A53FF;
-  border-color: #1A53FF;
+.year-grid {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .month-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(4, 1fr);
 }
 
-.date-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  max-height: 180px;
-  overflow-y: auto;
+.day-grid {
+  grid-template-columns: repeat(11, 1fr);
 }
 
-.month-item,
-.date-item {
-  width: 100%;
-  height: 32px;
+.date-cell {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  height: 40px;
+  font-size: 14px;
+  color: #303133;
   cursor: pointer;
-  font-size: 12px;
-  color: #666;
-  transition: all 0.3s;
-  border: 1px solid transparent;
+  user-select: none;
+  background: #fff;
+  transition: background 0.2s, color 0.2s;
+  box-sizing: border-box;
 }
 
-.month-item.active,
-.date-item.active {
-  background: #1A53FF;
-  color: white;
-  border-color: #1A53FF;
+.date-cell:hover:not(.active) {
+  background: #f5f9ff;
+  color: #1890ff;
 }
 
-.month-item:hover:not(.active),
-.date-item:hover:not(.active) {
-  background: #f0f4ff;
-  color: #1A53FF;
-  border-color: #1A53FF;
+.date-cell.active {
+  background: #e6f7ff;
+  color: #1890ff;
+  font-weight: 500;
 }
 
-/* 视频列表标题 */
+/* 底部主体区域 */
+.playback-body {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-height: 480px;
+}
+
+/* 左侧视频列表 */
+.video-list-section {
+  width: 180px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .video-list-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  color: #333;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
+  color: #303133;
+  line-height: 1;
 }
 
-/* 视频缩略图列表 */
 .video-thumbnails {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   overflow-y: auto;
-  max-height: 350px; /* 限制高度，约3条记录的高度：110*3 + 12*2 = 354px */
-  padding-right: 8px; /* 为滚动条留出空间 */
-  min-height: 120px; /* 最小高度 */
+  max-height: 480px;
+  padding-right: 4px;
 }
 
-/* 自定义滚动条样式 */
 .video-thumbnails::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .video-thumbnails::-webkit-scrollbar-track {
-  background: #f0f0f0;
-  border-radius: 3px;
+  background: transparent;
 }
 
 .video-thumbnails::-webkit-scrollbar-thumb {
-  background: #c0c4cc;
-  border-radius: 3px;
-  transition: background 0.3s;
+  background: #d9d9d9;
+  border-radius: 2px;
 }
 
-.video-thumbnails::-webkit-scrollbar-thumb:hover {
-  background: #909399;
+.video-list-empty {
+  padding: 24px 0;
+  text-align: center;
+  color: #909399;
+  font-size: 13px;
 }
 
 .video-thumbnail-item {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   cursor: pointer;
-  border-radius: 6px;
-  overflow: hidden;
-  transition: all 0.3s;
-  background: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e4e7ed;
-  min-height: 110px; /* 保证每个项目的最小高度 */
-  flex-shrink: 0; /* 防止项目被压缩 */
-}
-
-.video-thumbnail-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-color: #1A53FF;
-}
-
-.video-thumbnail-item.active {
-  border: 2px solid #1A53FF;
-  background: #f0f8ff;
-  transform: translateY(-1px);
+  flex-shrink: 0;
 }
 
 .thumbnail-image {
@@ -1624,21 +1571,31 @@ onMounted(async () => {
   width: 100%;
   height: 90px;
   background: #f0f0f0;
-  border-radius: 4px;
+  border-radius: 2px;
   overflow: hidden;
+  border: 2px solid transparent;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
 }
 
-.thumbnail-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.video-thumbnail-item.active .thumbnail-image {
+  border-color: #1890ff;
 }
 
+.video-thumbnail-item:hover .thumbnail-image {
+  border-color: #69b1ff;
+}
+
+.video-thumbnail-item.active:hover .thumbnail-image {
+  border-color: #1890ff;
+}
+
+.thumbnail-image img,
 .thumbnail-image .thumbnail-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 4px;
+  display: block;
 }
 
 .thumbnail-placeholder {
@@ -1655,40 +1612,22 @@ onMounted(async () => {
   color: #c0c4cc;
 }
 
-.play-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 32px;
-  height: 32px;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.video-thumbnail-item:hover .play-overlay {
-  opacity: 1;
-}
-
 .video-time-range {
   font-size: 12px;
-  color: #666;
+  color: #8c8c8c;
   text-align: center;
-  padding: 4px 8px;
-  background: #f5f7fa;
-  border-radius: 0 0 6px 6px;
-  font-weight: 500;
+  line-height: 1.2;
+  word-break: break-all;
 }
 
-/* 右侧播放器区域 */
+.video-thumbnail-item.active .video-time-range {
+  color: #1890ff;
+}
+
+/* 右侧播放器 */
 .player-section {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
@@ -1696,258 +1635,70 @@ onMounted(async () => {
 .video-player {
   flex: 1;
   background: #000;
-  border-radius: 8px;
+  border-radius: 2px;
   overflow: hidden;
   position: relative;
+  min-height: 480px;
 }
 
-.video-content {
+.video-display {
+  position: relative;
   width: 100%;
   height: 100%;
-  position: relative;
+  background: #000;
+  overflow: hidden;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.recorded-video-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.recorded-video-player {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  min-height: 480px;
+  background: #000;
+}
+
+.player-datetime {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 2;
+  color: #fff;
+  font-size: 14px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+}
+
+.player-device-name {
+  position: absolute;
+  left: 16px;
+  bottom: 56px;
+  z-index: 2;
+  color: #fff;
+  font-size: 14px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
 }
 
 .video-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 20px;
-  position: relative;
-  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23f0f0f0"/><circle cx="30" cy="30" r="20" fill="%23e0e0e0"/><rect x="60" y="20" width="30" height="20" fill="%23e0e0e0"/></svg>');
-  background-size: cover;
-  background-position: center;
-}
-
-.video-info {
-  color: white;
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  z-index: 2;
-}
-
-.device-name {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.video-time {
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-/* 视频控制条 */
-.video-controls {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-  padding: 20px;
-  color: white;
-}
-
-.progress-bar {
-  margin-bottom: 12px;
-}
-
-.progress-track {
-  height: 4px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
-  position: relative;
-  cursor: pointer;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #1A53FF;
-  border-radius: 2px;
-  transition: width 0.3s;
-}
-
-.progress-handle {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 12px;
-  height: 12px;
-  background: #1A53FF;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.control-buttons {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.control-btn {
-  background: transparent !important;
-  border: none !important;
-  color: white !important;
-  padding: 4px !important;
-}
-
-.control-btn:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-}
-
-.time-display {
-  font-size: 14px;
-  color: white;
-  min-width: 60px;
-}
-
-.volume-control {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.volume-icon {
-  font-size: 16px;
-  color: white;
-}
-
-.volume-text {
-  font-size: 14px;
-  color: white;
-  min-width: 20px;
-}
-
-.fullscreen-control {
-  margin-left: auto;
-}
-
-.fullscreen-icon {
-  font-size: 18px;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.fullscreen-icon:hover {
-  color: #1A53FF;
-}
-
-/* 新增的视频播放区域样式 */
-.video-display {
-  position: relative;
-  width: 100%;
-  flex: 1;
-  background: #000;
-  border-radius: 8px;
-  overflow: hidden;
+  min-height: 480px;
+  background: #1a1a1a;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.video-info-overlay {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 4px;
-  z-index: 10;
-  font-size: 14px;
-}
-
-.video-info-overlay .device-name {
-  font-weight: bold;
-  margin-bottom: 2px;
-}
-
-.video-info-overlay .video-time {
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-/* HTTP流容器 */
-.http-stream-container {
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-
-.stream-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  border-radius: 8px;
-}
-
-/* RTSP流容器 */
-.rtsp-stream-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f8f9fa;
-}
-
-.rtsp-info {
-  text-align: center;
-  padding: 20px;
-  max-width: 500px;
-}
-
-.rtsp-title {
-  font-size: 20px;
-  font-weight: bold;
-  color: #303133;
-  margin-bottom: 12px;
-}
-
-.rtsp-url {
-  font-family: monospace;
-  font-size: 12px;
-  color: #606266;
-  background: #f0f0f0;
-  padding: 8px 12px;
-  border-radius: 4px;
-  margin-bottom: 16px;
-  word-break: break-all;
-}
-
-.rtsp-note {
-  text-align: left;
-  color: #606266;
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-
-.rtsp-note p {
-  margin: 8px 0;
-}
-
-.rtsp-note ul {
-  margin: 8px 0;
-  padding-left: 20px;
-}
-
-.rtsp-note li {
-  margin: 4px 0;
-}
-
-.rtsp-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-
-/* 默认占位符样式更新 */
 .video-placeholder .placeholder-content {
   text-align: center;
   color: #909399;
@@ -1959,52 +1710,31 @@ onMounted(async () => {
 }
 
 .video-placeholder .placeholder-text {
-  font-size: 16px;
+  font-size: 14px;
 }
+</style>
 
-/* 录制视频播放器样式 */
-.recorded-video-container {
-  width: 100%;
-  height: 100%;
-}
+<style lang="scss">
+/* el-dialog 挂载到 body，需非 scoped */
+.video-dialog {
+  .el-dialog__header {
+    padding: 16px 20px 12px;
+    margin-right: 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
 
-.recorded-video-player {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 8px;
-  min-height: 400px;
-}
+  .el-dialog__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #303133;
+  }
 
-/* 视频信息显示样式 */
-.video-info {
-  flex-shrink: 0;
-  margin-top: 12px;
-  padding: 10px 16px;
-  background: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e9ecef;
-}
+  .el-dialog__body {
+    padding: 16px 20px 20px;
+  }
 
-.video-info-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.video-info-item:last-child {
-  margin-bottom: 0;
-}
-
-.video-info .info-label {
-  font-weight: 500;
-  color: #666;
-  min-width: 60px;
-}
-
-.video-info .info-value {
-  color: #333;
-  flex: 1;
-  word-break: break-all;
+  .el-dialog__headerbtn {
+    top: 16px;
+  }
 }
 </style>
