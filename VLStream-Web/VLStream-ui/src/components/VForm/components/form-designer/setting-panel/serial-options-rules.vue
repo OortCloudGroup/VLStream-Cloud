@@ -56,8 +56,8 @@
       </el-icon>
     </div>
     <span class="dialog-footer">
-      <el-button size="large" @click="cancelSave">取 消</el-button>
-      <el-button size="large" type="primary" @click="confirmSave">确 定</el-button>
+      <el-button size="large" @click="cancelSave" class="common_btn">取 消</el-button>
+      <el-button size="large" type="primary" @click="confirmSave" class="common_btn">确 定</el-button>
     </span>
   </div>
 </template>

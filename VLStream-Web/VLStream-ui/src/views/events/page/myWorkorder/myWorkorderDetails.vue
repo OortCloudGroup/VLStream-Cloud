@@ -120,7 +120,7 @@
         />
       </div>
       <div class="d_h_maintainBtns">
-        <el-button class="bigBtn" @click="emit('close')">
+        <el-button class="bigBtn common_btn" @click="emit('close')">
           取 消
         </el-button>
       </div>

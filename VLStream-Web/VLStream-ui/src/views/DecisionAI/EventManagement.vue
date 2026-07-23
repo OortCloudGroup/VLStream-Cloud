@@ -205,10 +205,10 @@
 
         <!-- 操作按钮 -->
         <div class="action-buttons">
-          <el-button type="primary" size="large" @click="handleSubmitFeedback">
+          <el-button type="primary" size="large" @click="handleSubmitFeedback" class="common_btn">
             确定
           </el-button>
-          <el-button size="large" @click="showDetailView = false">
+          <el-button size="large" @click="showDetailView = false" class="common_btn">
             取消
           </el-button>
         </div>

@@ -133,8 +133,8 @@
 
       <!-- 保存按钮 -->
       <div class="edit-footer">
-        <el-button @click="handleCancel" class="cancel-btn">取消</el-button>
-        <el-button type="primary" @click="handleSave" class="save-btn">保存</el-button>
+        <el-button @click="handleCancel" class="cancel-btn common_btn">取消</el-button>
+        <el-button type="primary" @click="handleSave" class="save-btn common_btn">保存</el-button>
       </div>
     </div>
     
@@ -167,8 +167,8 @@
         </div>
       </div>
       <template #footer>
-        <el-button @click="mapDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmCoordinate">确定</el-button>
+        <el-button @click="mapDialogVisible = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="confirmCoordinate" class="common_btn">确定</el-button>
       </template>
     </el-dialog>
   </div>

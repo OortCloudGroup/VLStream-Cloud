@@ -16,7 +16,7 @@
         </el-button>
       </div>
       <div class="button_group">
-        <el-button @click="cancel">
+        <el-button @click="cancel" class="common_btn">
           取消
         </el-button>
         <el-button v-preReClick type="primary" @click="saveFlow">
@@ -44,10 +44,10 @@
       </el-form>
       <template #footer>
         <div style="text-align: right;">
-          <el-button @click="dialogVisible = false">
+          <el-button @click="dialogVisible = false" class="common_btn">
             取消
           </el-button>
-          <el-button v-preReClick type="primary" @click="dialogVisible = false">
+          <el-button v-preReClick type="primary" @click="dialogVisible = false" class="common_btn">
             确定
           </el-button>
         </div>

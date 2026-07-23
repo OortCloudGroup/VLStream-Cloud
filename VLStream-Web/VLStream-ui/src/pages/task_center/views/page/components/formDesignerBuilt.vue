@@ -48,7 +48,7 @@
       </el-form-item>
     </el-form>
     <div style="text-align: right;">
-      <el-button @click="emits('close')">
+      <el-button @click="emits('close')" class="common_btn">
         取消
       </el-button>
       <el-button v-preReClick type="primary" @click="saveCategory(ruleFormRef)">

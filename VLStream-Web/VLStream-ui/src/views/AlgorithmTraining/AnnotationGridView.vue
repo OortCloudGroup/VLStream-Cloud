@@ -101,8 +101,8 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showLabelDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleSaveLabel">保存</el-button>
+        <el-button @click="showLabelDialog = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleSaveLabel" class="common_btn">保存</el-button>
       </template>
     </el-dialog>
 
@@ -204,8 +204,8 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showUploadDialog = false" class="cancel-btn">取消</el-button>
-          <el-button type="primary" @click="handleConfirmUpload" class="confirm-btn">确认</el-button>
+          <el-button @click="showUploadDialog = false" class="cancel-btn common_btn">取消</el-button>
+          <el-button type="primary" @click="handleConfirmUpload" class="confirm-btn common_btn">确认</el-button>
         </div>
       </template>
     </el-dialog>
@@ -235,7 +235,7 @@
         <p>无法加载图片</p>
       </div>
       <template #footer>
-        <el-button @click="handleClosePreview">关闭</el-button>
+        <el-button @click="handleClosePreview" class="common_btn">关闭</el-button>
       </template>
     </el-dialog>
   </div>
@@ -1165,24 +1165,6 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-}
-
-.cancel-btn {
-  width: 80px;
-  height: 36px;
-  border-radius: 6px;
-  border: 1px solid #d9d9d9;
-  background: white;
-  color: #666;
-}
-
-.confirm-btn {
-  width: 80px;
-  height: 36px;
-  border-radius: 6px;
-  background: #1890ff;
-  border: 1px solid #1890ff;
-  color: white;
 }
 
 /* 图片预览 */

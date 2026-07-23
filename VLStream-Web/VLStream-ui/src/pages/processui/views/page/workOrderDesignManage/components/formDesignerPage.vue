@@ -26,7 +26,7 @@
       </el-form>
       <template #footer>
         <div style="text-align: right;">
-          <el-button @click="dialogVisible = false">
+          <el-button @click="dialogVisible = false" class="common_btn">
             取消
           </el-button>
           <el-button type="primary" @click="saveForComponent">

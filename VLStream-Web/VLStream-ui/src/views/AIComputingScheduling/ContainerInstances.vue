@@ -156,8 +156,8 @@
       
         <!-- 操作按钮 -->
         <div class="form-actions">
-          <el-button type="primary" @click="confirmCreate" class="confirm-btn">确定</el-button>
-          <el-button @click="cancelCreate" class="cancel-btn">取消</el-button>
+          <el-button type="primary" @click="confirmCreate" class="confirm-btn common_btn">确定</el-button>
+          <el-button @click="cancelCreate" class="cancel-btn common_btn">取消</el-button>
         </div>
         </div>
       </div>
@@ -609,8 +609,8 @@
       </el-form>
       
       <template #footer>
-        <el-button @click="showCreateDialog = false">取消</el-button>
-        <el-button type="primary" @click="createContainer">创建</el-button>
+        <el-button @click="showCreateDialog = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="createContainer" class="common_btn">创建</el-button>
       </template>
     </el-dialog>
 
@@ -1944,11 +1944,8 @@ onMounted(() => {
 }
 
 .confirm-btn {
-  width: 120px;
-  height: 40px;
   background: #1A53FF;
   border: 1px solid #1A53FF;
-  border-radius: 4px;
   color: white;
   font-size: 14px;
 }
@@ -1959,10 +1956,7 @@ onMounted(() => {
 }
 
 .cancel-btn {
-  width: 120px;
-  height: 40px;
   border: 1px solid #dcdfe6;
-  border-radius: 4px;
   color: #606266;
   font-size: 14px;
   background: white;

@@ -29,8 +29,8 @@
     </div>
 
     <template #footer>
-      <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSubmit">保存</el-button>
+      <el-button @click="handleClose" class="common_btn">取消</el-button>
+      <el-button type="primary" :loading="saving" @click="handleSubmit" class="common_btn">保存</el-button>
     </template>
   </el-dialog>
 </template>

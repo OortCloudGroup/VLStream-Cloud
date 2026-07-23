@@ -521,7 +521,7 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="handleDatasetDialogClose">关闭</el-button>
+          <el-button type="primary" @click="handleDatasetDialogClose" class="common_btn">关闭</el-button>
         </div>
       </template>
     </el-dialog>
@@ -566,7 +566,7 @@
               size="small"
               @click="handleCloseFullScreenPreview"
               title="关闭 (ESC)"
-            >
+             class="common_btn">
               关闭
             </el-button>
           </div>
@@ -670,8 +670,8 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleCloseImportDialog">取消</el-button>
-          <el-button type="primary" @click="handleConfirmImport">确定</el-button>
+          <el-button @click="handleCloseImportDialog" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleConfirmImport" class="common_btn">确定</el-button>
         </div>
       </template>
     </el-dialog>

@@ -99,12 +99,12 @@
 
       <!-- 底部操作按钮 -->
         <div class="footer-actions">
-          <el-button @click="handleCancel">取消</el-button>
+          <el-button @click="handleCancel" class="common_btn">取消</el-button>
           <el-button 
             type="primary" 
           @click="handleConfirm"
             :disabled="selectedModels.length === 0"
-          >
+           class="common_btn">
           确定
           </el-button>
       </div>

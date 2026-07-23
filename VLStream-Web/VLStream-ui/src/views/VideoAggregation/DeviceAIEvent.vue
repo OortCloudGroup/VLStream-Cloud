@@ -383,8 +383,8 @@
       </div>
       
       <template #footer>
-        <el-button @click="addDetectionDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmAddDetection">确定</el-button>
+        <el-button @click="addDetectionDialogVisible = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="confirmAddDetection" class="common_btn">确定</el-button>
       </template>
     </el-dialog>
   </div>

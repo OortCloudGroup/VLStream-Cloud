@@ -248,8 +248,8 @@
       
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleAddCancel">取消</el-button>
-          <el-button type="primary" @click="handleAddConfirm" :loading="submitting">
+          <el-button @click="handleAddCancel" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleAddConfirm" :loading="submitting" class="common_btn">
             {{ editingRepository ? '更新' : '创建' }}
           </el-button>
         </div>
@@ -314,8 +314,8 @@
       
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleAlgorithmAddCancel">取消</el-button>
-          <el-button type="primary" @click="handleAlgorithmAddConfirm" :loading="submitting">
+          <el-button @click="handleAlgorithmAddCancel" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleAlgorithmAddConfirm" :loading="submitting" class="common_btn">
             添加
           </el-button>
         </div>
@@ -380,8 +380,8 @@
       
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleAlgorithmEditCancel">取消</el-button>
-          <el-button type="primary" @click="handleAlgorithmEditConfirm" :loading="submitting">
+          <el-button @click="handleAlgorithmEditCancel" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleAlgorithmEditConfirm" :loading="submitting" class="common_btn">
             更新
           </el-button>
         </div>

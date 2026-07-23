@@ -213,8 +213,8 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleModelDialogClose">取消</el-button>
-          <el-button type="primary" @click="handleSubmitModel">保存</el-button>
+          <el-button @click="handleModelDialogClose" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleSubmitModel" class="common_btn">保存</el-button>
         </div>
       </template>
     </el-dialog>

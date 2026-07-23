@@ -178,8 +178,8 @@
                 </div>
                 <template #footer>
                   <div class="copy-dialog-footer">
-                    <el-button @click="cancelCopy">取消</el-button>
-                    <el-button type="primary" @click="confirmCopy">确定</el-button>
+                    <el-button @click="cancelCopy" class="common_btn">取消</el-button>
+                    <el-button type="primary" @click="confirmCopy" class="common_btn">确定</el-button>
                   </div>
                 </template>
               </el-dialog>

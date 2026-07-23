@@ -55,8 +55,8 @@
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button size="large" @click="dialogVisible = false">取 消</el-button>
-          <el-button size="large" type="primary" @click="saveCalcConfig">确 定</el-button>
+          <el-button size="large" @click="dialogVisible = false" class="common_btn">取 消</el-button>
+          <el-button size="large" type="primary" @click="saveCalcConfig" class="common_btn">确 定</el-button>
         </span>
       </template>
     </el-dialog>

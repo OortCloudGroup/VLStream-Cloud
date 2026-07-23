@@ -286,8 +286,8 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSave">确认</el-button>
+        <el-button @click="dialogVisible = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleSave" class="common_btn">确认</el-button>
       </template>
     </el-dialog>
   </div>

@@ -128,8 +128,8 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
+          <el-button @click="dialogVisible = false" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleSubmit" class="common_btn">确定</el-button>
         </div>
       </template>
     </el-dialog>

@@ -62,8 +62,8 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showLabelDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleSaveLabel">保存</el-button>
+        <el-button @click="showLabelDialog = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleSaveLabel" class="common_btn">保存</el-button>
       </template>
     </el-dialog>
   </div>

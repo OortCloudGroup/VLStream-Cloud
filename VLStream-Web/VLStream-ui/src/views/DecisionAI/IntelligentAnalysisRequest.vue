@@ -192,8 +192,8 @@
 
           <!-- 操作按钮 -->
           <div class="form-actions">
-            <el-button type="primary" @click="handleSubmit" style="width: 120px">申请</el-button>
-            <el-button @click="showListView" style="width: 120px">取消</el-button>
+            <el-button type="primary" @click="handleSubmit" class="common_btn">申请</el-button>
+            <el-button @click="showListView" class="common_btn">取消</el-button>
           </div>
         </el-form>
 
@@ -207,8 +207,8 @@
           </el-radio-group>
           <template #footer>
             <div class="dialog-footer">
-              <el-button @click="showAnalysisTypeSelector = false">取消</el-button>
-              <el-button type="primary" @click="confirmAnalysisType">确定</el-button>
+              <el-button @click="showAnalysisTypeSelector = false" class="common_btn">取消</el-button>
+              <el-button type="primary" @click="confirmAnalysisType" class="common_btn">确定</el-button>
             </div>
           </template>
         </el-dialog>
@@ -227,8 +227,8 @@
           </el-checkbox-group>
           <template #footer>
             <div class="dialog-footer">
-              <el-button @click="showRegionSelector = false">取消</el-button>
-              <el-button type="primary" @click="confirmRegionSelection">确定</el-button>
+              <el-button @click="showRegionSelector = false" class="common_btn">取消</el-button>
+              <el-button type="primary" @click="confirmRegionSelection" class="common_btn">确定</el-button>
             </div>
           </template>
         </el-dialog>
@@ -247,8 +247,8 @@
           </el-checkbox-group>
           <template #footer>
             <div class="dialog-footer">
-              <el-button @click="showCameraSelector = false">取消</el-button>
-              <el-button type="primary" @click="confirmCameraSelection">确定</el-button>
+              <el-button @click="showCameraSelector = false" class="common_btn">取消</el-button>
+              <el-button type="primary" @click="confirmCameraSelection" class="common_btn">确定</el-button>
             </div>
           </template>
         </el-dialog>

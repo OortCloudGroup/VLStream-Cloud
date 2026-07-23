@@ -193,13 +193,14 @@
                 @click="saveChanges"
                 :icon="Check"
                 :loading="saving"
+                class="common_btn"
               >
                 保存
               </el-button>
               <el-button 
                 @click="cancelEdit"
                 :icon="Close"
-              >
+               class="common_btn">
                 取消
               </el-button>
             </template>

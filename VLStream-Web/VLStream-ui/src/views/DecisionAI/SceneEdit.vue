@@ -146,8 +146,8 @@
         <!-- 操作按钮 -->
         <el-form-item>
           <div class="form-actions">
-            <el-button type="primary" @click="handleSubmit" :loading="saving">申请</el-button>
-            <el-button @click="handleCancel">取消</el-button>
+            <el-button type="primary" @click="handleSubmit" :loading="saving" class="common_btn">申请</el-button>
+            <el-button @click="handleCancel" class="common_btn">取消</el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -175,8 +175,8 @@
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showRegionDialog = false">取消</el-button>
-          <el-button type="primary" @click="confirmRegionSelection">确定</el-button>
+          <el-button @click="showRegionDialog = false" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="confirmRegionSelection" class="common_btn">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -203,8 +203,8 @@
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showCameraDialog = false">取消</el-button>
-          <el-button type="primary" @click="confirmCameraSelection">确定</el-button>
+          <el-button @click="showCameraDialog = false" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="confirmCameraSelection" class="common_btn">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -534,11 +534,6 @@ onMounted(() => {
   display: flex;
   gap: 16px;
   padding-top: 20px;
-}
-
-.form-actions .el-button {
-  min-width: 100px;
-  height: 40px;
 }
 
 /* 对话框样式 */

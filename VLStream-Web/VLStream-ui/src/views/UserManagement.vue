@@ -193,8 +193,8 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showAddDialog = false">取消</el-button>
-        <el-button type="primary" @click="saveUser">保存</el-button>
+        <el-button @click="showAddDialog = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="saveUser" class="common_btn">保存</el-button>
       </template>
     </el-dialog>
 
@@ -249,8 +249,8 @@
         </div>
       </div>
       <template #footer>
-        <el-button @click="showPermissionDialog = false">取消</el-button>
-        <el-button type="primary" @click="savePermissions">保存权限</el-button>
+        <el-button @click="showPermissionDialog = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="savePermissions" class="common_btn">保存权限</el-button>
       </template>
     </el-dialog>
   </div>

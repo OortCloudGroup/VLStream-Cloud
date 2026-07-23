@@ -230,8 +230,8 @@
       
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showConfigDialog = false">取消</el-button>
-          <el-button type="primary" @click="saveConfiguration">确认</el-button>
+          <el-button @click="showConfigDialog = false" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="saveConfiguration" class="common_btn">确认</el-button>
         </div>
       </template>
     </el-dialog>
@@ -1649,11 +1649,6 @@ onUnmounted(() => {
   justify-content: center;
   gap: 16px;
   padding: 20px 0 0;
-}
-
-.dialog-footer .el-button {
-  min-width: 80px;
-  height: 36px;
 }
 
 /* 算法选择面板样式 */

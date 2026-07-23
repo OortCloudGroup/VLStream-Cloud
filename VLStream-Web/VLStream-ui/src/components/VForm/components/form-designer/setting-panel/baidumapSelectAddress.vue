@@ -3,7 +3,7 @@
     <div ref="mapContainer" class="map_container" />
     <div class="button_select">
       <div>{{ address?"详细地址：" + address: '' }} {{ isEdit?'经纬度坐标' + centerPoint.center:'当前坐标：'+ centerPoint.center }}</div>
-      <el-button type="primary" size="large" @click="baiduMapSelectAddress">
+      <el-button type="primary" size="large" @click="baiduMapSelectAddress" class="common_btn">
         确定
       </el-button>
     </div>

@@ -154,10 +154,10 @@
           </div>
         </template>
         <div class="d_h_maintainBtns">
-          <el-button @click="handleCancel">
+          <el-button @click="handleCancel" class="common_btn">
             取 消
           </el-button>
-          <el-button type="primary" :disabled="formLoading" @click="submitForm">
+          <el-button type="primary" :disabled="formLoading" @click="submitForm" class="common_btn">
             确 定
           </el-button>
         </div>

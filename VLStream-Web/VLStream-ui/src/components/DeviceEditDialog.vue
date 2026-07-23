@@ -140,7 +140,7 @@
     
     <template #footer>
       <div class="dialog-footer">
-        <el-button type="primary" @click="handleSave" class="save-btn">保存</el-button>
+        <el-button type="primary" @click="handleSave" class="save-btn common_btn">保存</el-button>
       </div>
     </template>
   </el-dialog>

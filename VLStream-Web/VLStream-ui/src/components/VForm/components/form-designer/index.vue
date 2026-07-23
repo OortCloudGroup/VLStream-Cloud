@@ -29,7 +29,7 @@
         </el-main>
       </el-container>
       <el-aside class="form-widget-aside">
-        <el-button v-if="showClose" class="close_button" type="danger" @click="closeDesigner">
+        <el-button v-if="showClose" class="close_button common_btn" type="danger" @click="closeDesigner">
           关闭
         </el-button>
         <setting-panel

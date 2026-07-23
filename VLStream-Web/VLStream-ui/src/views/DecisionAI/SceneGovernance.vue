@@ -141,8 +141,8 @@
 
           <!-- 操作按钮 -->
           <div class="form-actions">
-            <el-button @click="showListView">取消</el-button>
-            <el-button type="primary" @click="handleSubmit">保存</el-button>
+            <el-button @click="showListView" class="common_btn">取消</el-button>
+            <el-button type="primary" @click="handleSubmit" class="common_btn">保存</el-button>
           </div>
         </el-form>
       </div>
@@ -202,8 +202,8 @@
       
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleCancelAdd" size="large">取消</el-button>
-          <el-button type="primary" @click="handleConfirmAdd" size="large">确定</el-button>
+          <el-button @click="handleCancelAdd" size="large" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleConfirmAdd" size="large" class="common_btn">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -238,8 +238,8 @@
 <!--      </div>-->
 <!--      <template #footer>-->
 <!--        <div class="dialog-footer">-->
-<!--          <el-button @click="showAlgorithmSelector = false">取消</el-button>-->
-<!--          <el-button type="primary" @click="confirmAlgorithmSelector">确定</el-button>-->
+<!--          <el-button @click="showAlgorithmSelector = false" class="common_btn">取消</el-button>-->
+<!--          <el-button type="primary" @click="confirmAlgorithmSelector" class="common_btn">确定</el-button>-->
 <!--        </div>-->
 <!--      </template>-->
 <!--    </el-dialog>-->
@@ -274,8 +274,8 @@
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showCameraSelector = false">取消</el-button>
-          <el-button type="primary" @click="confirmCameraSelector">确定</el-button>
+          <el-button @click="showCameraSelector = false" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="confirmCameraSelector" class="common_btn">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -310,8 +310,8 @@
 <!--      </div>-->
 <!--      <template #footer>-->
 <!--        <div class="dialog-footer">-->
-<!--          <el-button @click="showAlgorithmDialog = false">取消</el-button>-->
-<!--          <el-button type="primary" @click="confirmAlgorithmDialog">确定</el-button>-->
+<!--          <el-button @click="showAlgorithmDialog = false" class="common_btn">取消</el-button>-->
+<!--          <el-button type="primary" @click="confirmAlgorithmDialog" class="common_btn">确定</el-button>-->
 <!--        </div>-->
 <!--      </template>-->
 <!--    </el-dialog>-->
@@ -346,8 +346,8 @@
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showCameraDialog = false">取消</el-button>
-          <el-button type="primary" @click="confirmCameraDialog">确定</el-button>
+          <el-button @click="showCameraDialog = false" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="confirmCameraDialog" class="common_btn">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -1615,11 +1615,6 @@ onMounted(() => {
 }
 
 /* 弹窗按钮样式 */
-.dialog-footer .el-button {
-  min-width: 80px;
-  height: 32px;
-}
-
 .dialog-footer .el-button--primary {
   background-color: #1A53FF;
   border-color: #1A53FF;
@@ -1830,13 +1825,5 @@ onMounted(() => {
 
 .selector-item:hover .selector-arrow {
   color: #1A53FF;
-}
-
-/* 弹窗底部按钮样式覆盖 */
-.scene-dialog .dialog-footer .el-button {
-  min-width: 100px;
-  height: 40px;
-  border-radius: 4px;
-  font-size: 14px;
 }
 </style> 

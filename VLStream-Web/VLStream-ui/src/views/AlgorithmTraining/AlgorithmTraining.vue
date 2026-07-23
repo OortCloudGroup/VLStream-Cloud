@@ -794,8 +794,8 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleDeployCancel">取消</el-button>
-        <el-button type="primary" @click="handleDeployConfirm">确认</el-button>
+        <el-button @click="handleDeployCancel" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleDeployConfirm" class="common_btn">确认</el-button>
       </div>
     </template>
   </el-dialog>
@@ -913,8 +913,8 @@
     
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleCloseDialog">取消</el-button>
-        <el-button type="primary" @click="handleConfirmAdd">确定</el-button>
+        <el-button @click="handleCloseDialog" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleConfirmAdd" class="common_btn">确定</el-button>
       </div>
     </template>
   </el-dialog>
@@ -1031,8 +1031,8 @@
     
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleCloseEditDialog">取消</el-button>
-        <el-button type="primary" @click="handleConfirmEdit">确定</el-button>
+        <el-button @click="handleCloseEditDialog" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleConfirmEdit" class="common_btn">确定</el-button>
       </div>
     </template>
   </el-dialog>
@@ -1095,8 +1095,8 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleCloseDatasetSelector">取消</el-button>
-        <el-button type="primary" @click="handleConfirmDatasetSelection">
+        <el-button @click="handleCloseDatasetSelector" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleConfirmDatasetSelection" class="common_btn">
           确定 ({{ selectedDatasetIds.length }})
         </el-button>
       </div>

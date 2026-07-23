@@ -104,10 +104,10 @@
         />
       </div>
       <div class="d_h_maintainBtns">
-        <el-button @click="handleClose">
+        <el-button @click="handleClose" class="common_btn">
           取 消
         </el-button>
-        <el-button type="primary" :disabled="formLoading" @click="addFeedbackForm">
+        <el-button type="primary" :disabled="formLoading" @click="addFeedbackForm" class="common_btn">
           确 定
         </el-button>
       </div>
