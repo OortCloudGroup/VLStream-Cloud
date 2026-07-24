@@ -226,6 +226,16 @@
             </el-button>
           </div>
         </div>
+        <div class="config-item">
+          <label class="config-label">模型格式</label>
+          <el-select v-model="dispatchModelType" style="width: 100%">
+            <el-option label="OM（昇腾/海思）" value="om" />
+            <el-option label="RKNN（瑞芯微）" value="rknn" />
+            <el-option label="INT8 RKNN" value="int8-rknn" />
+            <el-option label="ONNX（通用）" value="onnx" />
+            <el-option label="PT（PyTorch）" value="pt" />
+          </el-select>
+        </div>
       </div>
       
       <template #footer>
@@ -620,6 +630,7 @@ const currentDevice = ref(null)
 
 // 可选的算法列表
 const selectedAlgorithms = ref([])
+const dispatchModelType = ref('om')
 
 const showAlgorithmPanel = ref(false)
 
@@ -1167,7 +1178,11 @@ const saveConfiguration = async () => {
 
   try {
     for (const algorithmId of algorithmIds) {
-      const response = await dispatchAlgorithmToDevices(algorithmId, String(deviceId))
+      const response = await dispatchAlgorithmToDevices(
+        algorithmId,
+        String(deviceId),
+        dispatchModelType.value
+      )
       if (response?.code !== 200) {
         ElMessage.error(response?.message || '\u7b97\u6cd5\u914d\u7f6e\u5931\u8d25')
         return

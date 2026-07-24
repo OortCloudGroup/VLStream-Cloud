@@ -740,8 +740,8 @@ import {
   deleteAnnotationInstancesByImage,
   getAllAnnotationInstances,
 } from '@/api/annotationInstances'
-import request, {getBaseURL, imageUploadRequest} from '@/utils/request'
-import {batchSaveAnnotationImages, getAnnotationImages} from '@/api/annotationImage'
+import request, {getBaseURL} from '@/utils/request'
+import {batchSaveAnnotationImages, getAnnotationImages, uploadAnnotationImages} from '@/api/annotationImage'
 
 // 视图控制
 const showAnnotationView = ref(false)
@@ -1443,48 +1443,29 @@ const batchUploadImages = async (files, annotationId) => {
     for (let i = 0; i < files.length; i += batchSize) {
       const batch = files.slice(i, i + batchSize)
 
-      // 生成唯一文件名，只保留文件名部分，去掉文件夹路径
-      const fileNamePairs = batch.map((file) => {
-        const timestamp = Date.now()
-        const randomStr = Math.random().toString(36).substr(2, 9)
-        const originalFileName = file.name.split('/').pop().split('\\').pop()
-        const uniqueFileName = `${timestamp}_${randomStr}_${originalFileName}`
-        return { originalFileName, uniqueFileName }
-      })
-
-      const formData = new FormData()
-      batch.forEach((file, idx) => {
-        formData.append('file', file)
-        formData.append('fileName', fileNamePairs[idx].uniqueFileName)
-      })
-
-      const uploadResponse = await imageUploadRequest({
-        url: '/image/upload',
-        method: 'post',
-        data: formData,
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
+      // 上传接口会保存文件、创建图片记录并更新标注项目的图片总数。
+      const uploadResponse = await uploadAnnotationImages(batch, annotationId)
 
       if (!uploadResponse?.success && uploadResponse?.code !== 200) {
         throw new Error(uploadResponse.message || '图片上传失败')
       }
 
-      const respList = Array.isArray(uploadResponse?.data)
-        ? uploadResponse.data
-        : Array.isArray(uploadResponse?.data?.files)
-          ? uploadResponse.data.files
-          : []
+      const respList = Array.isArray(uploadResponse?.data) ? uploadResponse.data : []
+      if (respList.length !== batch.length) {
+        throw new Error('图片上传结果不完整')
+      }
 
-      const mapped = fileNamePairs.map((pair, idx) => {
-        const respItem = respList[idx] || uploadResponse?.data || {}
-        const finalName = respItem.fileName || pair.uniqueFileName
+      const mapped = respList.map((respItem, idx) => {
+        const originalFileName = batch[idx].name.split('/').pop().split('\\').pop()
         return {
-          id: Date.now() + Math.random(),
-          name: finalName,
-          originalName: pair.originalFileName,
-          url: `/image/${finalName}`,
+          id: respItem.id,
+          name: respItem.imageName || originalFileName,
+          originalName: respItem.originalName || originalFileName,
+          url: respItem.localPath,
           annotations: [],
           isFromUpload: true,
+          savedToDb: true,
+          dbId: respItem.id,
           uploadData: respItem
         }
       })
@@ -1547,19 +1528,8 @@ const handleConfirmImport = async () => {
       return
     }
 
-    const imagesToSave = uploadedImages.value.filter(img => img.isFromUpload && !img.savedToDb)
-
-    if (imagesToSave.length > 0) {
-      const annotationId = importTargetId.value || currentAnnotationData.value?.id
-      if (!annotationId) {
-        ElMessage.warning('Please select a target annotation first.')
-        return
-      }
-      const savedCount = await saveImagesToDatabase(imagesToSave, annotationId)
-      ElMessage.success(`导入成功！已保存 ${savedCount} 张图片信息到数据库`)
-    } else {
-      ElMessage.success('导入成功')
-    }
+    // 图片在选择目录时已由上传接口持久化，确认操作不再重复写入数据库。
+    ElMessage.success('导入成功')
 
     showImportDialog.value = false
     importTargetId.value = null
@@ -2436,31 +2406,23 @@ const handleLabelDialogSubmit = async (labelData) => {
   }
 }
 
-// 保存图片到本地目录的函数
-const saveImageToLocal = async (file, fileName) => {
+// 上传单张图片并返回后端创建的图片记录，保证界面与数据库使用相同的图片标识。
+const saveImageToLocal = async (file) => {
   try {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('fileName', fileName)
-    
-    console.log('保存图片到本地:', fileName)
-    
-    // 调用后端API保存图片 (使用8080端口的图片上传服务)
-    const response = await imageUploadRequest({
-      url: '/image/upload',
-      method: 'POST',
-      data: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-    
-    if (response.success) {
-      console.log('图片上传成功:', response.data)
-      return response.data.localPath
-    } else {
-      throw new Error(response.message || '图片上传失败')
+    console.log('保存图片到标注项目:', file.name)
+    const annotationId = getCurrentAnnotationId()
+    if (!annotationId) {
+      throw new Error('未找到当前标注项目')
     }
+
+    const response = await uploadAnnotationImages([file], annotationId)
+    const image = Array.isArray(response?.data) ? response.data[0] : null
+    if (!image?.localPath) {
+      throw new Error(response?.message || '图片上传失败')
+    }
+
+    console.log('图片上传成功:', image)
+    return image
   } catch (error) {
     console.error('保存图片到本地失败:', error)
     throw error
@@ -2493,23 +2455,19 @@ const handleImageUpload = async (uploadFile) => {
   }
   
   try {
-    // 生成唯一文件名（避免冲突）
+    // 以服务端返回的图片记录作为界面模型，避免本地生成的文件名与数据库不一致。
     const timestamp = Date.now()
-    const fileExtension = file.name.split('.').pop()
-    const uniqueFileName = `${timestamp}_${file.name}`
-    
-    // 保存图片到本地目录
-    const localPath = await saveImageToLocal(file, uniqueFileName)
+    const uploadedImage = await saveImageToLocal(file)
     
     // 读取图片作为base64用于显示
     const reader = new FileReader()
     reader.onload = (e) => {
       const newImage = {
-        id: timestamp,
-        name: uniqueFileName,
-        originalName: file.name,
+        id: uploadedImage.id || timestamp,
+        name: uploadedImage.imageName || file.name,
+        originalName: uploadedImage.originalName || file.name,
         url: e.target.result, // 用于显示的base64
-        localPath: localPath, // 本地存储路径
+        localPath: uploadedImage.localPath,
         annotations: [], // 确保每个图片都有annotations数组
         isUploaded: true // 标记为已上传
       }
@@ -2528,7 +2486,7 @@ const handleImageUpload = async (uploadFile) => {
       console.log('图片上传成功，当前图片索引:', currentImageIndex.value)
       console.log('当前图片列表长度:', uploadedImages.value.length)
       console.log('当前选中图片:', currentImage.value)
-      console.log('图片本地路径:', localPath)
+      console.log('图片本地路径:', uploadedImage.localPath)
       ElMessage.success('图片上传并保存成功')
     }
     reader.onerror = () => {

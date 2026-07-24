@@ -142,6 +142,21 @@ export function getContainerInstanceStatistics() {
   })
 }
 
+export function getGpuResourceSnapshot() {
+  return request({
+    url: '/vlsContainerInstance/resources',
+    method: 'get'
+  })
+}
+
+export function getContainerInstanceLogs(id, lines = 500) {
+  return request({
+    url: `/vlsContainerInstance/${id}/logs`,
+    method: 'get',
+    params: { lines }
+  })
+}
+
 /**
  * 获取运行中的容器实例列表
  */
@@ -210,4 +225,4 @@ export function updateContainerInstanceMonitoring(id, data) {
     method: 'put',
     data
   })
-} 
+}

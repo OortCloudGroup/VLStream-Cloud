@@ -410,6 +410,14 @@
                   :is-expanded="false"
                   @toggle="toggleDeviceTree"
                 />
+                <el-select v-model="dispatchModelType" style="width: 170px" placeholder="选择模型格式">
+                  <el-option
+                    v-for="item in modelTypeOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
                 <el-button type="primary" @click="handleDeployToDevice">
                   <el-icon><Plus /></el-icon>
                   下发
@@ -519,6 +527,14 @@ const typeOptions = ref([
 const deviceTableData = ref([])
 const tagNameMap = ref(new Map())
 const selectedDeviceRows = ref([])
+const dispatchModelType = ref('om')
+const modelTypeOptions = [
+  { label: 'OM（昇腾/海思）', value: 'om' },
+  { label: 'RKNN（瑞芯微）', value: 'rknn' },
+  { label: 'INT8 RKNN', value: 'int8-rknn' },
+  { label: 'ONNX（通用）', value: 'onnx' },
+  { label: 'PT（PyTorch）', value: 'pt' }
+]
 
 // 算法库管理相关
 const selectedRepositories = ref([])
@@ -1045,7 +1061,11 @@ const handleDeployToDevice = async () => {
   const deviceIdsStr = deviceIds.join(',')
 
   try {
-    const response = await dispatchAlgorithmToDevices(selectedAlgorithm.value.id, deviceIdsStr)
+    const response = await dispatchAlgorithmToDevices(
+      selectedAlgorithm.value.id,
+      deviceIdsStr,
+      dispatchModelType.value
+    )
     if (response.code === 200) {
       ElMessage.success('下发成功')
       showDeviceDrawer.value = false

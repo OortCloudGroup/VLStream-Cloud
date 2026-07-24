@@ -318,7 +318,7 @@
         <!-- 基本信息 -->
         <div class="form-section">
           <div class="form-label">实例名称</div>
-          <div class="form-value">{{ detailsForm.name || '--' }}</div>
+          <div class="form-value">{{ detailsForm.instanceName || '--' }}</div>
         </div>
 
         <div class="form-section">
@@ -329,11 +329,11 @@
         <div class="form-section">
           <div class="form-label">状态</div>
           <div class="form-value">
-            <el-tag :type="getStatusTagType(detailsForm.status)" size="small">
+            <el-tag :type="getStatusTagType(detailsForm.instanceStatus)" size="small">
               <el-icon class="status-icon">
-                <component :is="getStatusIcon(detailsForm.status)" />
+                <component :is="getStatusIcon(detailsForm.instanceStatus)" />
               </el-icon>
-              {{ getStatusText(detailsForm.status) }}
+              {{ getStatusText(detailsForm.instanceStatus) }}
             </el-tag>
           </div>
         </div>
@@ -341,7 +341,7 @@
         <!-- 镜像信息 -->
         <div class="form-section">
           <div class="form-label">镜像地址</div>
-          <div class="form-value">{{ detailsForm.image || '--' }}</div>
+          <div class="form-value">{{ detailsForm.imageName || '--' }}</div>
         </div>
 
         <div class="form-section">
@@ -367,15 +367,15 @@
 
         <!-- 网络配置 -->
         <div class="form-section">
-          <div class="form-label">端口映射</div>
-          <div class="form-value">{{ detailsForm.portMappings || '--' }}</div>
+          <div class="form-label">训练任务ID</div>
+          <div class="form-value">{{ detailsForm.trainingTaskId || '--' }}</div>
         </div>
 
         <!-- 环境配置 -->
         <div class="form-section">
-          <div class="form-label">环境变量</div>
+          <div class="form-label">错误信息</div>
           <div class="form-value">
-            <pre>{{ detailsForm.envVariables || '--' }}</pre>
+            <pre>{{ detailsForm.errorMessage || '--' }}</pre>
           </div>
         </div>
 
@@ -410,11 +410,11 @@
         <div class="depNameBox_out flexRowAC">
           <div class="depNameBox flexRowAC">
             <div class="exportBtnBox flexRowAC">
-                <button type="button" class="exportBtn newBtn flexRowAC" @click="showCreateView = true">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="refreshInstances">
                   <el-icon class="BtnImg">
-                    <Plus />
+                    <Refresh />
                   </el-icon>
-                  创建容器实例
+                  {{ resourceSummary }}
                 </button>
               </div>
           </div>
@@ -441,18 +441,18 @@
           <el-table-column label="实例名称/ID">
             <template #default="{ row }">
               <div class="instance-info">
-                <div class="instance-name">{{ row.name }}</div>
+                <div class="instance-name">{{ row.instanceName }}</div>
                 <div class="instance-id">ID: {{ row.id }}</div>
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="状态">
+          <el-table-column prop="instanceStatus" label="状态">
             <template #default="{ row }">
-              <el-tag :type="getStatusTagType(row.status)" size="small">
+              <el-tag :type="getStatusTagType(row.instanceStatus)" size="small">
                 <el-icon class="status-icon">
-                  <component :is="getStatusIcon(row.status)" />
+                  <component :is="getStatusIcon(row.instanceStatus)" />
                 </el-icon>
-                {{ getStatusText(row.status) }}
+                {{ getStatusText(row.instanceStatus) }}
               </el-tag>
             </template>
           </el-table-column>
@@ -468,15 +468,14 @@
           <el-table-column label="镜像信息">
             <template #default="{ row }">
               <div class="image-info">
-                <div class="image-name">{{ row.image || '未设置' }}</div>
+                <div class="image-name">{{ row.imageName || '未设置' }}</div>
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="端口映射">
+          <el-table-column label="训练任务">
             <template #default="{ row }">
-              <div class="port-info">
-                {{ row.portMappings ? JSON.parse(row.portMappings || '{}').port || '-' : '-' }}
-              </div>
+              <div class="port-info">任务ID：{{ row.trainingTaskId || '-' }}</div>
+              <div class="port-info">GPU：{{ row.gpuIndex ?? '-' }}</div>
             </template>
           </el-table-column>
           <el-table-column label="创建时间">
@@ -487,27 +486,13 @@
           <el-table-column label="快捷访问">
             <template #default="{ row }">
               <div class="quick-access">
-                <el-button type="primary" text class="access-button" :disabled="row.status !== 'running'" @click="openJupyter(row)">jupyter</el-button>
-                <el-button type="primary" text class="access-button" :disabled="row.status !== 'running'" @click="openWebConnection(row)">web 连接</el-button>
-                <el-button type="primary" text class="access-button" :disabled="row.status !== 'running'" @click="openTensorBoard(row)">TensorBoard</el-button>
+                <span>{{ row.serverIp || '-' }}</span>
               </div>
             </template>
           </el-table-column>
           <el-table-column label="操作" :width="clacPXToVW(300)" fixed="right">
             <template #default="{ row }">
               <div class="operateAppBox flexRowAC" @click.stop>
-                <div v-if="row.status === 'stopped'" class="new_table_svg_group" @click="startContainer(row)">
-                  <oort-svg-icon width="20" height="20" name="enable" class="new_table_svg_group_svg" />
-                  <span>启动</span>
-                </div>
-                <div v-if="row.status === 'running'" class="new_table_svg_group" @click="stopContainer(row)">
-                  <oort-svg-icon width="20" height="20" name="consent" class="new_table_svg_group_svg" />
-                  <span>停止</span>
-                </div>
-                <div v-if="row.status === 'running'" class="new_table_svg_group" @click="restartContainer(row)">
-                  <oort-svg-icon width="20" height="20" name="setting" class="new_table_svg_group_svg" />
-                  <span>重启</span>
-                </div>
                 <div class="new_table_svg_group" @click="viewDetails(row)">
                   <oort-svg-icon width="20" height="20" name="detail_icon" class="new_table_svg_group_svg" />
                   <span>详情</span>
@@ -519,10 +504,7 @@
                   </div>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item @click="saveImage(row)">保存镜像</el-dropdown-item>
-                      <el-dropdown-item @click="viewMonitoring(row)">监控</el-dropdown-item>
                       <el-dropdown-item @click="viewLogs(row)">查看日志</el-dropdown-item>
-                      <el-dropdown-item @click="deleteContainer(row)" class="delete-item">删除</el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -617,7 +599,7 @@
     <!-- 日志查看对话框 -->
     <el-dialog
       v-model="showLogsDialog"
-      :title="`${currentContainer?.name} - 运行日志`"
+      :title="`${currentContainer?.instanceName} - 运行日志`"
       width="80%"
     >
       <div class="logs-container">
@@ -650,7 +632,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { clacPXToVW } from '@/utils/index'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -669,7 +651,9 @@ import {
   stopContainerInstance,
   restartContainerInstance,
   getContainerInstanceStatistics,
-  checkContainerInstanceName
+  checkContainerInstanceName,
+  getGpuResourceSnapshot,
+  getContainerInstanceLogs
 } from '@/api/containerInstance'
 
 // 响应式数据
@@ -681,6 +665,8 @@ const showMonitoringView = ref(false)
 const showCreateView = ref(false)
 const showDetailsView = ref(false)
 const activeTimeFilter = ref('实时')
+const gpuResource = ref(null)
+let refreshTimer = null
 
 // 时间过滤器选项
 const timeFilters = ref([
@@ -703,6 +689,13 @@ const resourceStats = ref({
   cpuUsage: 65,
   memoryUsage: 72,
   gpuUsage: 45
+})
+
+const resourceSummary = computed(() => {
+  if (!gpuResource.value) return '刷新GPU资源'
+  const resource = gpuResource.value
+  const state = resource.busy ? `忙碌，排队 ${resource.queueLength || 0}` : '空闲'
+  return `${resource.gpuName || 'GPU'} ${Math.round((resource.gpuMemoryTotalMb || 0) / 1024)}GB · ${state}`
 })
 
 // 容器数据
@@ -774,7 +767,7 @@ const loadContainerInstances = async () => {
     const params = {
       current: currentPage.value,
       size: pageSize.value,
-      name: searchKeyword.value || undefined,
+      instanceName: searchKeyword.value || undefined,
       startTime: createTimeRange.value?.[0] || undefined,
       endTime: createTimeRange.value?.[1] || undefined
     }
@@ -798,7 +791,9 @@ const loadContainerInstances = async () => {
 const getStatusTagType = (status) => {
   const typeMap = {
     'running': 'success',
+    'queued': 'warning',
     'starting': 'warning',
+    'completed': 'success',
     'stopped': 'info',
     'stopping': 'warning',
     'error': 'danger'
@@ -809,7 +804,9 @@ const getStatusTagType = (status) => {
 const getStatusIcon = (status) => {
   const iconMap = {
     'running': 'Check',
+    'queued': 'Loading',
     'starting': 'Loading',
+    'completed': 'Check',
     'stopped': 'Warning',
     'stopping': 'Loading',
     'error': 'Delete'
@@ -820,7 +817,9 @@ const getStatusIcon = (status) => {
 const getStatusText = (status) => {
   const textMap = {
     'running': '运行中',
+    'queued': '排队中',
     'starting': '启动中',
+    'completed': '已完成',
     'stopped': '已停止',
     'stopping': '停止中',
     'error': '错误'
@@ -851,7 +850,16 @@ const resetFilter = () => {
 
 const refreshInstances = () => {
   loadContainerInstances()
-  ElMessage.success('实例列表已刷新')
+  loadGpuResource()
+}
+
+const loadGpuResource = async () => {
+  try {
+    const response = await getGpuResourceSnapshot()
+    if (response.code === 200) gpuResource.value = response.data
+  } catch (error) {
+    console.error('加载GPU资源失败:', error)
+  }
 }
 
 const handleSelectionChange = (selection) => {
@@ -919,10 +927,19 @@ const restartContainer = async (container) => {
   }
 }
 
-const viewLogs = (container) => {
+const viewLogs = async (container) => {
   currentContainer.value = container
-  displayLogs.value = []
-  ElMessage.error('当前后端未接入真实容器运行时日志接口，未加载日志')
+  try {
+    const response = await getContainerInstanceLogs(container.id)
+    displayLogs.value = (response.data || '').split('\n').filter(Boolean).map(message => ({
+      time: '',
+      level: message.includes('ERROR') || message.includes('failed') ? 'ERROR' : 'INFO',
+      message
+    }))
+  } catch (error) {
+    displayLogs.value = []
+    ElMessage.error('读取训练日志失败')
+  }
   showLogsDialog.value = true
 }
 
@@ -931,7 +948,7 @@ const viewDetails = async (container) => {
     const response = await getContainerInstanceById(container.id)
     if (response.code === 200) {
       detailsForm.value = response.data
-      detailsTitle.value = `容器详情 - ${container.name}`
+      detailsTitle.value = `容器详情 - ${container.instanceName}`
       showDetailsView.value = true
     } else {
       ElMessage.error(response.message || '获取容器详情失败')
@@ -1042,12 +1059,7 @@ const deleteContainer = async (container) => {
 
 const refreshLogs = () => {
   if (currentContainer.value) {
-    // 这里应该调用API获取最新日志
-    displayLogs.value = [
-      ...displayLogs.value,
-      { time: new Date().toLocaleString(), level: 'INFO', message: '日志已刷新' }
-    ]
-    ElMessage.success('日志已刷新')
+    viewLogs(currentContainer.value)
   }
 }
 
@@ -1177,8 +1189,13 @@ const handleBatchOperation = () => {
 }
 
 onMounted(() => {
-  // 加载容器实例数据  
-  // loadContainerInstances()
+  loadContainerInstances()
+  loadGpuResource()
+  refreshTimer = window.setInterval(refreshInstances, 5000)
+})
+
+onUnmounted(() => {
+  if (refreshTimer) window.clearInterval(refreshTimer)
 })
 </script>
 
