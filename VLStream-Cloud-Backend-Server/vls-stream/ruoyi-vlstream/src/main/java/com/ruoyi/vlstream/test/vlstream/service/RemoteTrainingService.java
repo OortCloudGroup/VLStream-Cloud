@@ -193,7 +193,7 @@ public class RemoteTrainingService {
 	/**
 	 * 处理训练完成后的模型文件
 	 */
-	private String processTrainingResult(Long taskId, RemoteServers server, String trainType, String taskName) {
+	public String processTrainingResult(Long taskId, RemoteServers server, String trainType, String taskName) {
 		try {
 			String taskFolder = (trainType == null || trainType.isEmpty()) ? "detect" : trainType;
 			String findResultCommand = String.format(

@@ -463,8 +463,10 @@ public class VlsDeviceInfoController extends BladeController {
 	 */
 	@Operation(summary = "摄像头算法下发（兼容）")
 	@GetMapping("/dispatchAlgorithms")
-	public R<String> dispatchAlgorithmsLegacy(@RequestParam Long algorithmId, @RequestParam String deviceIds) {
-		return dispatchAlgorithmRequest(algorithmId, deviceIds);
+	public R<String> dispatchAlgorithmsLegacy(@RequestParam Long algorithmId,
+		@RequestParam String deviceIds,
+		@RequestParam(defaultValue = "om") String modelType) {
+		return dispatchAlgorithmRequest(algorithmId, deviceIds, modelType);
 	}
 
 	/**
@@ -472,19 +474,21 @@ public class VlsDeviceInfoController extends BladeController {
 	 */
 	@Operation(summary = "摄像头算法下发")
 	@PostMapping("/{algorithmId}/algorithms")
-	public R<String> dispatchAlgorithms(@PathVariable Long algorithmId, @RequestParam String deviceIds) {
-		return dispatchAlgorithmRequest(algorithmId, deviceIds);
+	public R<String> dispatchAlgorithms(@PathVariable Long algorithmId,
+		@RequestParam String deviceIds,
+		@RequestParam(defaultValue = "om") String modelType) {
+		return dispatchAlgorithmRequest(algorithmId, deviceIds, modelType);
 	}
 
 	/**
 	 * 统一新旧接口的返回结果，避免两套下发逻辑产生差异。
 	 */
-	private R<String> dispatchAlgorithmRequest(Long algorithmId, String deviceIds) {
-		boolean success = vlsDeviceInfoService.dispatchAlgorithms(algorithmId, deviceIds);
+	private R<String> dispatchAlgorithmRequest(Long algorithmId, String deviceIds, String modelType) {
+		boolean success = vlsDeviceInfoService.dispatchAlgorithms(algorithmId, deviceIds, modelType);
 		if (success) {
-			return R.success("算法下发成功");
+			return R.success("模型下发任务已通过MQTT发布");
 		} else {
-			return R.fail("算法下发失败，请检查OM模型、设备信息和硬件接口");
+			return R.fail("算法下发失败，请检查模型产物、设备信息、MQTT和下载地址配置");
 		}
 	}
 
