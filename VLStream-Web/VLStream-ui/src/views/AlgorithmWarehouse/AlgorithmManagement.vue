@@ -1,16 +1,19 @@
 <template>
-  <div class="algorithm-management">
-    <!-- 顶部菜单栏 -->
-    <div class="top-menu-bar" v-loading="repositoriesLoading">
-      <div 
-        v-for="menu in topMenus"
-        :key="menu.key"
-        class="top-menu-item"
-        :class="{ active: activeTopMenu === menu.key }"
-        @click="setActiveTopMenu(menu.key)"
+  <div class="algorithm-management tenant_Page draHeaPB">
+    <!-- 顶部 Tab + ModelHub -->
+    <div class="top-tabs-header" v-loading="repositoriesLoading">
+      <el-tabs
+        v-model="activeTopMenu"
+        class="tenanat-tabs"
+        @tab-change="setActiveTopMenu"
       >
-        {{ menu.label }}
-      </div>
+        <el-tab-pane
+          v-for="menu in topMenus"
+          :key="menu.key"
+          :label="menu.label"
+          :name="menu.key"
+        />
+      </el-tabs>
       <a
         class="modelhub-button"
         href="https://vls.oortcloudsmart.com/zh/ModelHub/ModelHub"
@@ -21,158 +24,173 @@
       </a>
     </div>
 
-    <!-- 分类标签栏和添加按钮 -->
-    <div class="category-tabs"  v-if="showAddButton">
-      <div class="add-button-section">
-        <el-button type="primary" @click="addAlgorithm">
-          <el-icon><Plus /></el-icon>
-          添加
-        </el-button>
-      </div>
-      <div v-if="typeOptions.length > 0" class="category-section">
-        <div 
-          v-for="category in typeOptions"
-          :key="category.value"
-          class="category-tab"
-          :class="{ active: activeCategory === category.value }"
-          @click="setActiveCategory(category.value)"
+    <div class="tenant_content">
+      <!-- 分类标签栏：样式对齐登录方式二级 tab（tenanat-tabs_act） -->
+      <div
+        v-if="showAddButton && typeOptions.length > 0"
+        class="category-tabs-wrap"
+      >
+        <el-tabs
+          v-model="activeCategory"
+          class="tenanat-tabs_act"
+          @tab-change="setActiveCategory"
         >
-          {{ category.label }}
+          <el-tab-pane
+            v-for="category in typeOptions"
+            :key="category.value"
+            :label="category.label"
+            :name="category.value"
+          />
+        </el-tabs>
+      </div>
+
+      <!-- category-tabs 下方：添加按钮 -->
+      <div v-if="showAddButton" class="add-toolbar">
+        <div class="exportBtnBox flexRowAC">
+          <button type="button" class="exportBtn newBtn flexRowAC" @click="addAlgorithm">
+            <el-icon class="BtnImg">
+              <Plus />
+            </el-icon>
+            添加
+          </button>
         </div>
       </div>
-    </div>
 
-    <!-- 算法网格 -->
-    <div v-if="activeTopMenu !== 'management'" class="algorithm-grid" v-loading="algorithmsLoading">
-      <div 
-        v-for="algorithm in currentPageAlgorithms"
-        :key="algorithm.id"
-        class="algorithm-card"
-      >
-        <div class="card-image">
-          <img :src="getAlgorithmCardBackground(algorithm, currentRepositoryId)" :alt="algorithm.name" />
-          <div class="card-menu">
-            <el-dropdown trigger="click" placement="bottom-end">
-              <div class="menu-trigger">
-                <el-icon><MoreFilled /></el-icon>
-              </div>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="editAlgorithm(algorithm)">
-                    <el-icon><Edit /></el-icon>
-                    编辑
-                  </el-dropdown-item>
-                  <el-dropdown-item @click="evaluateAlgorithm(algorithm)">
-                    <el-icon><DataAnalysis /></el-icon>
-                    算法评估
-                  </el-dropdown-item>
-                  <el-dropdown-item @click="deployAlgorithm(algorithm)">
-                    <el-icon><Download /></el-icon>
-                    下发到摄像机
-                  </el-dropdown-item>
-                  <el-dropdown-item divided @click="handleDeleteAlgorithm(algorithm)">
-                    <el-icon><Delete /></el-icon>
-                    删除
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+      <!-- 算法网格 -->
+      <div v-if="activeTopMenu !== 'management'" class="algorithm-grid" v-loading="algorithmsLoading">
+        <div
+          v-for="algorithm in currentPageAlgorithms"
+          :key="algorithm.id"
+          class="algorithm-card"
+        >
+          <div class="card-image">
+            <img :src="getAlgorithmCardBackground(algorithm, currentRepositoryId)" :alt="algorithm.name" />
+            <div class="card-menu">
+              <el-dropdown trigger="click" placement="bottom-end">
+                <div class="menu-trigger">
+                  <el-icon><MoreFilled /></el-icon>
+                </div>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item @click="editAlgorithm(algorithm)">
+                      <el-icon><Edit /></el-icon>
+                      编辑
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="evaluateAlgorithm(algorithm)">
+                      <el-icon><DataAnalysis /></el-icon>
+                      算法评估
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="deployAlgorithm(algorithm)">
+                      <el-icon><Download /></el-icon>
+                      下发到摄像机
+                    </el-dropdown-item>
+                    <el-dropdown-item divided @click="handleDeleteAlgorithm(algorithm)">
+                      <el-icon><Delete /></el-icon>
+                      删除
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+          </div>
+          <div class="card-content">
+            <div class="card-title">{{ algorithm.name }}</div>
+            <div class="card-subtitle">{{ algorithm.categoryName }}</div>
+            <div class="card-description">{{ algorithm.description }}</div>
           </div>
         </div>
-        <div class="card-content">
-          <div class="card-title">{{ algorithm.name }}</div>
-          <div class="card-subtitle">{{ algorithm.categoryName }}</div>
-          <div class="card-description">{{ algorithm.description }}</div>
+      </div>
+
+      <!-- 算法库管理表格 -->
+      <div v-if="activeTopMenu === 'management'" class="algorithm-management-container">
+        <div class="depNameBox_out flexRowAC">
+          <div class="depNameBox flexRowAC">
+            <div class="exportBtnBox flexRowAC">
+              <button type="button" class="exportBtn newBtn flexRowAC" @click="addAlgorithmLibrary">
+                <el-icon class="BtnImg">
+                  <Plus />
+                </el-icon>
+                新增
+              </button>
+              <button-group :button-list="managementToolbarButtonList" />
+            </div>
+          </div>
         </div>
-      </div>
-      
 
-    </div>
-
-    <!-- 算法库管理表格 -->
-    <div v-if="activeTopMenu === 'management'" class="algorithm-management-container">
-      <!-- 工具栏 -->
-      <div class="management-toolbar">
-        <ActionButtonGroup 
-          :selected-count="selectedRepositories.length"
-          @add="addAlgorithmLibrary"
-          @edit="editAlgorithmLibrary"
-          @delete="batchDeleteAlgorithmLibrary"
-        />
-      </div>
-
-      <!-- 表格内容 -->
-      <div class="management-table-content">
-        <el-table 
-          :data="currentPageRepositories" 
-          stripe 
+        <TableSelf
+          class="new_table"
+          header-cell-class-name="header_tenant_cell"
+          stripe
           v-loading="repositoriesLoading"
+          :data="currentPageRepositories"
           @selection-change="handleLibrarySelectionChange"
         >
-          <el-table-column type="selection" width="55" />
-          <el-table-column type="index" label="序号" width="80" align="center" 
-            :index="(index) => (repositoryCurrentPage - 1) * repositoryPageSize + index + 1" />
-          <el-table-column prop="name" label="名称" min-width="200" />
-          <el-table-column prop="remark" label="备注" min-width="300" />
-          <el-table-column prop="algorithmCount" label="拥有算法" width="120" align="center" />
-          <el-table-column prop="repositoryType" label="类型" width="120" align="center">
+          <el-table-column type="selection" :width="clacPXToVW(55)" />
+          <el-table-column label="序号" :width="clacPXToVW(80)" align="center">
+            <template #default="scope">
+              {{ scope.$index + (repositoryCurrentPage - 1) * repositoryPageSize + 1 }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="name" label="名称" show-overflow-tooltip />
+          <el-table-column prop="remark" label="备注" show-overflow-tooltip />
+          <el-table-column prop="algorithmCount" label="拥有算法" :width="clacPXToVW(120)" align="center" />
+          <el-table-column prop="repositoryType" label="类型" :width="clacPXToVW(120)" align="center">
             <template #default="scope">
               <el-tag :type="getRepositoryTypeTagType(scope.row.repositoryType)">
                 {{ getRepositoryTypeText(scope.row.repositoryType) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="状态" width="100" align="center">
+          <el-table-column prop="status" label="状态" :width="clacPXToVW(100)" align="center">
             <template #default="scope">
               <el-tag
-                  :type="scope.row.status === 1 ? 'success' : 'danger'"
-                  size="small">
+                :type="scope.row.status === 1 ? 'success' : 'danger'"
+                size="small"
+              >
                 {{ scope.row.status === 1 ? '启用' : '禁用' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" width="180" />
-          <el-table-column label="操作" width="240" fixed="right" align="right">
+          <el-table-column prop="createTime" label="创建时间" :width="clacPXToVW(180)" />
+          <el-table-column label="操作" :width="clacPXToVW(220)" fixed="right" align="right">
             <template #default="scope">
-              <div class="table-action-buttons">
-                <el-button 
-                  type="primary" 
-                  text
-                  size="small" 
-                  @click="editLibraryItem(scope.row)"
+              <div class="operateAppBox flexRowAC" @click.stop>
+                <div class="new_table_svg_group" @click="editLibraryItem(scope.row)">
+                  <oort-svg-icon width="20" height="20" name="edit_icon" class="new_table_svg_group_svg" />
+                  <span>编辑</span>
+                </div>
+                <div class="new_table_svg_group" @click="toggleRepositoryStatus(scope.row)">
+                  <oort-svg-icon width="20" height="20" name="enable" class="new_table_svg_group_svg" />
+                  <span>{{ scope.row.status === 1 ? '禁用' : '启用' }}</span>
+                </div>
+                <div
+                  class="new_table_svg_group"
+                  :class="{ 'is-disabled': scope.row.repositoryType === 'basic' }"
+                  @click="scope.row.repositoryType !== 'basic' && deleteLibraryItem(scope.row)"
                 >
-                  编辑
-                </el-button>
-                <el-button 
-                  type="primary" 
-                  text
-                  size="small" 
-                  @click="toggleRepositoryStatus(scope.row)"
-                >
-                  {{ scope.row.status === 1 ? '禁用' : '启用' }}
-                </el-button>
-                <el-button 
-                  type="danger" 
-                  text
-                  size="small" 
-                  @click="deleteLibraryItem(scope.row)"
-                  :disabled="scope.row.repositoryType === 'basic'"
-                >
-                  删除
-                </el-button>
+                  <oort-svg-icon
+                    color="red"
+                    width="20"
+                    height="20"
+                    name="delete_icon"
+                    class="new_table_svg_group_svg"
+                  />
+                  <span>删除</span>
+                </div>
               </div>
             </template>
           </el-table-column>
-        </el-table>
-        
-        <!-- 分页 -->
-        <div class="management-table-pagination">
+        </TableSelf>
+
+        <div class="paginationBox flexRowAC">
           <el-pagination
-            v-model:current-page="repositoryCurrentPage"
-            v-model:page-size="repositoryPageSize"
+            background
+            :current-page="repositoryCurrentPage"
+            :page-size="repositoryPageSize"
             :page-sizes="[10, 20, 50, 100]"
-            layout="total, sizes, prev, pager, next, jumper"
             :total="repositoryTotal"
+            layout="total, prev, pager, next, sizes"
+            class="justifyAlign"
             @size-change="handleRepositorySizeChange"
             @current-change="handleRepositoryCurrentChange"
           />
@@ -184,7 +202,7 @@
     <el-dialog
       v-model="showAddDialog"
       :title="editingRepository ? '编辑算法库' : '新增算法库'"
-      width="500px"
+      width="30%"
       :close-on-click-modal="false"
     >
       <el-form :model="addForm" :rules="addFormRules" ref="addFormRef" label-width="80px" class="add-form">
@@ -230,8 +248,8 @@
       
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleAddCancel">取消</el-button>
-          <el-button type="primary" @click="handleAddConfirm" :loading="submitting">
+          <el-button @click="handleAddCancel" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleAddConfirm" :loading="submitting" class="common_btn">
             {{ editingRepository ? '更新' : '创建' }}
           </el-button>
         </div>
@@ -242,7 +260,7 @@
     <el-dialog
       v-model="showAlgorithmAddDialog"
       title="添加算法"
-      width="700px"
+      width="40%"
       :close-on-click-modal="false"
     >
       <el-form :model="algorithmAddForm" :rules="algorithmAddFormRules" ref="algorithmAddFormRef" label-width="80px" class="add-form">
@@ -296,8 +314,8 @@
       
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleAlgorithmAddCancel">取消</el-button>
-          <el-button type="primary" @click="handleAlgorithmAddConfirm" :loading="submitting">
+          <el-button @click="handleAlgorithmAddCancel" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleAlgorithmAddConfirm" :loading="submitting" class="common_btn">
             添加
           </el-button>
         </div>
@@ -308,7 +326,7 @@
     <el-dialog
       v-model="showAlgorithmEditDialog"
       title="编辑算法"
-      width="700px"
+      width="40%"
       :close-on-click-modal="false"
     >
       <el-form :model="algorithmEditForm" :rules="algorithmEditFormRules" ref="algorithmEditFormRef" label-width="80px" class="add-form">
@@ -362,8 +380,8 @@
       
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleAlgorithmEditCancel">取消</el-button>
-          <el-button type="primary" @click="handleAlgorithmEditConfirm" :loading="submitting">
+          <el-button @click="handleAlgorithmEditCancel" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleAlgorithmEditConfirm" :loading="submitting" class="common_btn">
             更新
           </el-button>
         </div>
@@ -375,41 +393,70 @@
       v-model="showDeviceDrawer"
       title="下发到摄像机"
       direction="rtl"
-      size="1000px"
+      size="55%"
       :before-close="handleDrawerClose"
+      class="device-deploy-drawer"
     >
-      <div class="device-drawer-content">
-        <!-- 主要内容区域 -->
-        <div class="main-content">
-          <!-- 左侧设备树 -->
-          <div class="device-tree-container" :class="{ collapsed: deviceTreeCollapsed }">
-            <DeviceTree
-              :tree-data="deviceTreeData"
-              title="设备树"
-              :show-search="true"
-              :show-collapse-btn="true"
-              :show-add-actions="false"
-              :show-delete-actions="false"
-              :show-bottom-actions="false"
-              :collapsed="deviceTreeCollapsed"
-              @node-click="handleDeviceNodeClick"
-              @search="handleDeviceTreeSearch"
-              @toggle-collapse="toggleDeviceTree"
+      <div class="device-drawer-content tableTenBox flexRowAC">
+        <!-- 左侧设备树 -->
+        <div
+          v-yResize
+          class="police_aside_use"
+        >
+          <div class="treeTitle">设备树</div>
+          <div class="tree_search_content flexRowAC">
+            <el-input
+              v-model="searchTreeKeyword"
+              placeholder="搜索"
+              debounce="300"
+              prefix-icon="Search"
+              clearable
             />
           </div>
+          <el-tree
+            style="background: #fff;"
+            :data="filteredDeviceTreeData"
+            highlight-current
+            node-key="id"
+            default-expand-all
+            :props="treeDefaultProps"
+            :expand-on-click-node="false"
+            @node-click="handleDeviceNodeClick"
+          >
+            <template #default="{ node, data }">
+              <div class="custom-tree-node flexRowAC">
+                <div class="tree-node-main flexRowAC">
+                  <el-icon v-if="data.type === 'tag'" class="tree-icon tag-icon">
+                    <Collection />
+                  </el-icon>
+                  <el-icon v-else-if="data.type === 'device'" class="tree-icon device-icon">
+                    <VideoCamera />
+                  </el-icon>
+                  <el-icon v-else class="tree-icon">
+                    <Folder />
+                  </el-icon>
+                  <el-tooltip :open-delay="500" effect="light" :content="node.label" placement="top">
+                    <div
+                      class="tree-node-label"
+                      :class="{ activeDept: data.id === currentTreeNodeId }"
+                    >
+                      {{ node.label }}
+                      <span v-if="data.type === 'tag'" class="node-count">
+                        ({{ data.children?.length || 0 }})
+                      </span>
+                    </div>
+                  </el-tooltip>
+                </div>
+              </div>
+            </template>
+          </el-tree>
+        </div>
 
-          <!-- 右侧设备列表 -->
-          <div class="table-container">
-            <div class="table-content">
-              <!-- 上方操作区 -->
-              <div class="table-actions">
-                <!-- 设备树折叠时显示的展开按钮 -->
-                <CollapseToggle 
-                  v-if="deviceTreeCollapsed"
-                  class="expand-device-tree-btn"
-                  :is-expanded="false"
-                  @toggle="toggleDeviceTree"
-                />
+        <!-- 右侧设备列表 -->
+        <div class="tableTenItU">
+          <div class="depNameBox_out flexRowAC">
+            <div class="depNameBox flexRowAC">
+              <div class="exportBtnBox flexRowAC">
                 <el-select v-model="dispatchModelType" style="width: 170px" placeholder="选择模型格式">
                   <el-option
                     v-for="item in modelTypeOptions"
@@ -418,38 +465,61 @@
                     :value="item.value"
                   />
                 </el-select>
-                <el-button type="primary" @click="handleDeployToDevice">
-                  <el-icon><Plus /></el-icon>
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleDeployToDevice">
+                  <el-icon class="BtnImg">
+                    <Plus />
+                  </el-icon>
                   下发
-                </el-button>
+                </button>
               </div>
-              
-              <el-table :data="deviceTableData" height="450" stripe v-loading="deviceLoading" @selection-change="handleDeviceSelectionChange">
-                <el-table-column type="selection" width="55" />
-                <el-table-column prop="index" label="序号" width="60" align="center" />
-                <el-table-column prop="name" label="设备名称" width="120" />
-                <el-table-column prop="tag" label="标签" width="100">
-                  <template #default="scope">
-                    <el-tag size="small" type="primary">{{ scope.row.tag }}</el-tag>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="deviceId" label="设备ID" width="120" />
-                <el-table-column prop="location" label="设备位置" />
-              </el-table>
             </div>
-            
-            <!-- 分页 -->
-            <div class="pagination-container">
-              <el-pagination
-                v-model:current-page="currentPage"
-                v-model:page-size="pageSize"
-                :page-sizes="[10, 20, 50, 100]"
-                layout="total, sizes, prev, pager, next, jumper"
-                :total="totalDevices"
-                @size-change="handleSizeChange"
-                @current-change="handleCurrentChange"
-              />
-            </div>
+          </div>
+
+          <TableSelf
+            class="new_table"
+            header-cell-class-name="header_tenant_cell"
+            stripe
+            v-loading="deviceLoading"
+            :data="deviceTableData"
+            height="450"
+            @selection-change="handleDeviceSelectionChange"
+          >
+            <el-table-column type="selection" :width="clacPXToVW(55)" />
+            <el-table-column label="序号" :width="clacPXToVW(65)" align="center">
+              <template #default="scope">
+                {{ scope.row.index || (scope.$index + (currentPage - 1) * pageSize + 1) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="name" label="设备名称" show-overflow-tooltip />
+            <el-table-column prop="tag" label="标签" :width="clacPXToVW(120)">
+              <template #default="scope">
+                <el-tag
+                  v-if="scope.row.tag && scope.row.tag !== '-'"
+                  size="small"
+                  type="primary"
+                >
+                  {{ scope.row.tag }}
+                </el-tag>
+                <span v-else>-</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="deviceId" label="设备ID" show-overflow-tooltip />
+            <el-table-column prop="location" label="设备位置" show-overflow-tooltip />
+            <el-table-column label="操作" />
+          </TableSelf>
+
+          <div class="paginationBox flexRowAC">
+            <el-pagination
+              background
+              :current-page="currentPage"
+              :page-size="pageSize"
+              :page-sizes="[10, 20, 50, 100]"
+              :total="totalDevices"
+              layout="total, sizes, prev, pager, next, jumper"
+              class="justifyAlign"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            />
           </div>
         </div>
       </div>
@@ -460,10 +530,8 @@
 <script setup>
 import {computed, onMounted, ref} from 'vue'
 import {ElMessage, ElMessageBox} from 'element-plus'
-import {DataAnalysis, Delete, Download, Edit, MoreFilled, Plus} from '@element-plus/icons-vue'
-import DeviceTree from '@/components/DeviceTree.vue'
-import CollapseToggle from '@/components/CollapseToggle.vue'
-import ActionButtonGroup from '@/components/ActionButtonGroup.vue' // Added import for ActionButtonGroup
+import {DataAnalysis, Delete, Download, Edit, MoreFilled, Plus, Folder, VideoCamera, Collection} from '@element-plus/icons-vue'
+import { clacPXToVW } from '@/utils/index'
 import {
   batchDeleteAlgorithmRepositories,
   createAlgorithm,
@@ -497,7 +565,23 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const totalDevices = ref(0)
 const deviceLoading = ref(false)
-const deviceTreeCollapsed = ref(false)
+const searchTreeKeyword = ref('')
+const currentTreeNodeId = ref(null)
+const treeDefaultProps = {
+  children: 'children',
+  label: 'label'
+}
+
+const filteredDeviceTreeData = computed(() => {
+  if (!searchTreeKeyword.value) return deviceTreeData.value
+  const keyword = searchTreeKeyword.value.toLowerCase()
+  const filterNode = (nodes) => (nodes || []).filter(node => {
+    if (node.label?.toLowerCase().includes(keyword)) return true
+    if (node.children?.length) return filterNode(node.children).length > 0
+    return false
+  }).map(node => (node.children?.length ? { ...node, children: filterNode(node.children) } : node))
+  return filterNode(deviceTreeData.value)
+})
 
 // 算法仓库数据
 const algorithmRepositories = ref([])
@@ -992,6 +1076,8 @@ const deployAlgorithm = async (algorithm) => {
   showDeviceDrawer.value = true
   selectedDeviceRows.value = []
   currentPage.value = 1
+  searchTreeKeyword.value = ''
+  currentTreeNodeId.value = null
   await loadDeviceList()
 }
 
@@ -1031,12 +1117,7 @@ const handleDrawerClose = (done) => {
 }
 
 const handleDeviceNodeClick = (data) => {
-  console.log('点击设备树节点:', data)
-}
-
-const handleDeviceTreeSearch = (searchKeyword) => {
-  console.log('设备树搜索:', searchKeyword)
-  // 这里可以添加搜索逻辑
+  currentTreeNodeId.value = data.id
 }
 
 const handleDeviceSelectionChange = (selection) => {
@@ -1102,10 +1183,6 @@ const handleSizeChange = async (val) => {
 const handleCurrentChange = async (val) => {
   currentPage.value = val
   await loadDeviceList()
-}
-
-const toggleDeviceTree = () => {
-  deviceTreeCollapsed.value = !deviceTreeCollapsed.value
 }
 
 // 算法库管理相关方法
@@ -1181,6 +1258,11 @@ const batchDeleteAlgorithmLibrary = async () => {
     }
   }
 }
+
+const managementToolbarButtonList = computed(() => [
+  { name: '编辑', svg: 'table_edit', clickFn: editAlgorithmLibrary },
+  { name: '删除', svg: 'table_del', clickFn: batchDeleteAlgorithmLibrary }
+])
 
 const editLibraryItem = (row) => {
   editingRepository.value = row
@@ -1452,49 +1534,38 @@ onMounted(() => {
   border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
   overflow: hidden;
   box-sizing: border-box;
-}
-
-/* 顶部菜单栏 */
-.top-menu-bar {
-  background: white;
-  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
-  padding: 0;
-  margin-bottom: 0;
-  box-shadow: none;
   display: flex;
-  border-bottom: 1px solid #e4e7ed;
+  flex-direction: column;
 }
 
-.top-menu-item {
-  padding: 16px 24px;
-  cursor: pointer;
-  color: #606266;
-  font-size: 14px;
-  font-weight: 500;
-  border-bottom: 3px solid transparent;
-  transition: all 0.3s ease;
-  position: relative;
-  background: transparent;
+.tenant_content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 20px 20px;
+  box-sizing: border-box;
 }
 
-.top-menu-item:first-child {
-  border-radius: 8px 0 0 0;
+/* 顶部 Tab + ModelHub（样式对齐标签管理 tenanat-tabs） */
+.top-tabs-header {
+  display: flex;
+  align-items: flex-end;
+  background: #fff;
+  flex-shrink: 0;
+  padding-right: 16px;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
 }
 
-.top-menu-item:hover {
-  color: #409eff;
-  background-color: #f8f9fa;
-}
-
-.top-menu-item.active {
-  color: #409eff;
-  border-bottom-color: #409eff;
-  background-color: #ecf5ff;
+.top-tabs-header :deep(.tenanat-tabs) {
+  flex: 1;
+  min-width: 0;
+  padding-right: 0;
 }
 
 .modelhub-button {
+  flex-shrink: 0;
   align-self: center;
-  margin: 0 16px 0 auto;
+  margin: 0 0 8px 12px;
   padding: 8px 15px;
   border: 1px solid #409eff;
   border-radius: 4px;
@@ -1511,52 +1582,66 @@ onMounted(() => {
   background-color: #409eff;
 }
 
-/* 分类标签栏 */
-.category-tabs {
-  background: white;
-  border-radius: 0;
-  padding: 20px;
-  margin-bottom: 0;
-  box-shadow: none;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  border-top: none;
-  gap: 20px;
-  min-height: 20px;
+/* category-tabs 下方添加按钮 */
+.add-toolbar {
+  padding: 8px 0 16px;
 }
 
-.category-section {
-  display: flex;
-  gap: 0;
-  flex: 1;
+/* 分类标签：短条圆角下划线选中态（如图） */
+.category-tabs-wrap {
+  margin: 0 -20px;
+  background: #fff;
 }
 
-.add-button-section {
-  flex-shrink: 0;
-  order: -1;
-}
+:deep(.tenanat-tabs_act) {
+  .el-tabs__header {
+    padding: 0 20px;
+    margin-bottom: 0;
+  }
 
-.category-tab {
-  padding: 12px 24px;
-  cursor: pointer;
-  color: #606266;
-  font-size: 14px;
-  font-weight: 500;
-  border-bottom: 3px solid transparent;
-  transition: all 0.3s ease;
-  position: relative;
-}
+  .el-tabs__nav-wrap::after {
+    display: none;
+  }
 
-.category-tab:hover {
-  color: #409eff;
-  background-color: #f8f9fa;
-}
+  .el-tabs__active-bar {
+    display: none;
+  }
 
-.category-tab.active {
-  color: #409eff;
-  border-bottom-color: #409eff;
-  background-color: #ecf5ff;
+  .el-tabs__item {
+    position: relative;
+    color: #999;
+    font-size: 16px;
+    font-weight: 400;
+    height: 44px;
+    line-height: 44px;
+    padding: 0 20px !important;
+  }
+
+  /* Element Plus 首个 tab 默认 padding-left:0，会导致短下划线偏左，统一左右内边距 */
+  .el-tabs__item:nth-child(2) {
+    padding-left: 20px !important;
+  }
+
+  .el-tabs__item:hover {
+    color: var(--el-color-primary);
+  }
+
+  .el-tabs__item.is-active {
+    color: var(--el-color-primary);
+    font-weight: 500;
+  }
+
+  .el-tabs__item.is-active::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 6px;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--el-color-primary);
+  }
 }
 
 /* 算法网格 */
@@ -1565,7 +1650,7 @@ onMounted(() => {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
   padding: 0;
-  max-width: 1200px;
+  width: 100%;
 }
 
 .algorithm-card {
@@ -1747,38 +1832,18 @@ onMounted(() => {
     padding: 16px;
   }
   
-  .top-menu-bar {
+  .top-tabs-header {
     overflow-x: auto;
-    flex-wrap: nowrap;
-    white-space: nowrap;
-  }
-  
-  .top-menu-item {
-    flex-shrink: 0;
-    padding: 12px 20px;
-    font-size: 13px;
+    padding-right: 12px;
   }
 
   .modelhub-button {
     flex-shrink: 0;
-    margin-left: auto;
+    margin-left: 8px;
   }
-  
-  .category-tabs {
-    padding: 16px;
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .category-section {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    white-space: nowrap;
-  }
-  
-  .category-tab {
-    flex-shrink: 0;
-    padding: 10px 20px;
+
+  .category-tabs-wrap {
+    margin: 0 -16px;
   }
   
   .algorithm-grid {
@@ -1838,105 +1903,151 @@ onMounted(() => {
 /* 设备侧边栏样式 */
 .device-drawer-content {
   height: 100%;
-  display: flex;
-  flex-direction: column;
   padding: 0;
+  align-items: flex-start;
+  background: #fff;
 }
 
-/* 主内容区域 */
-.main-content {
-  flex: 1;
-  display: flex;
-  gap: 20px;
-  height: calc(100vh - 120px);
-  padding: 24px;
-}
-
-/* 设备树容器 */
-.device-tree-container {
+.police_aside_use {
   width: 280px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  padding-right: 20px;
   flex-shrink: 0;
-  transition: all 0.3s ease;
-}
-
-/* 设备树折叠状态 */
-.device-tree-container.collapsed {
-  width: 0;
-  transform: translateX(-100%);
-}
-
-/* 表格容器 */
-.table-container {
-  flex: 1;
+  height: 100%;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+
+  .treeTitle {
+    color: var(--el-color-primary);
+    padding-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 4px;
+    flex-shrink: 0;
+
+    &::before {
+      content: '';
+      width: 3px;
+      height: 18px;
+      background-color: var(--el-color-primary);
+    }
+  }
+
+  .tree_search_content {
+    justify-content: center;
+    padding-bottom: 10px;
+    flex-shrink: 0;
+
+    :deep(.el-input__wrapper) {
+      background: #fff;
+      box-shadow: none;
+      border: 1px solid #dcdfe6;
+      border-radius: 4px;
+    }
+
+    :deep(.el-input__inner) {
+      background: #fff;
+      border: none;
+    }
+  }
+
+  :deep(.el-tree) {
+    flex: 1;
+    overflow: auto;
+  }
+
+  :deep(.el-tree-node__content) {
+    --el-tree-node-hover-bg-color: var(--el-menu-hover-bg-color);
+    height: 38px;
+    font-size: 14px;
+    color: #333;
+
+    .custom-tree-node {
+      width: 100%;
+      justify-content: space-between;
+      padding-right: 4px;
+    }
+  }
+
+  :deep(.el-tree-node.is-current > .el-tree-node__content) {
+    background-color: var(--el-color-primary-hb, #ecf5ff);
+    color: var(--el-color-primary);
+  }
 }
 
-.table-content {
+.tree-node-main {
+  gap: 6px;
+  min-width: 0;
   flex: 1;
-  padding: 20px;
 }
 
-/* 表格上方操作区 */
-.table-actions {
+.tree-icon {
+  flex-shrink: 0;
+  color: #909399;
+}
+
+.tree-icon.device-icon {
+  color: var(--el-color-primary);
+}
+
+.tree-node-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-node-label.activeDept {
+  color: var(--el-color-primary);
+}
+
+.node-count {
+  margin-left: 4px;
+  color: #909399;
+  font-size: 12px;
+}
+
+.tableTenItU {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
   display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #ebeef5;
-}
+  flex-direction: column;
 
-/* 展开设备树按钮 */
-.expand-device-tree-btn {
-  margin-right: 8px;
-}
-
-/* 分页样式 */
-.pagination-container {
-  padding: 16px 20px;
-  border-top: 1px solid #f0f0f0;
-  display: flex;
-  justify-content: center;
-  background: #fafafa;
+  :deep(.header_tenant_cell) {
+    background: #F8F8F9;
+  }
 }
 
 /* 算法库管理容器样式 */
 .algorithm-management-container {
   margin-top: 0;
   padding: 0;
-}
-
-/* 管理工具栏样式 */
-.management-toolbar {
-  background: white;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e4e7ed;
+  height: 100%;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  margin-top: 20px;
 }
 
-/* 管理表格内容样式 */
-.management-table-content {
-  background: white;
-  padding: 20px;
+.algorithm-management-container :deep(.header_tenant_cell) {
+  background: #F8F8F9;
 }
 
-/* 管理表格分页样式 */
-.management-table-pagination {
-  display: flex;
+.paginationBox {
+  justify-content: center;
+  height: 100px;
+}
+
+.operateAppBox {
   justify-content: flex-end;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
+  gap: 2px;
+}
+
+.operateAppBox .new_table_svg_group.is-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* 主题色更新 */
@@ -2035,34 +2146,17 @@ onMounted(() => {
 }
 
 :deep(.el-drawer__title) {
-  font-size: 18px;
-  font-weight: 600;
-  color: #262626;
+  font-size: 16px;
+  font-weight: 400;
+  color: #191919;
+  letter-spacing: 0.4px;
 }
 
 :deep(.el-drawer__body) {
   padding: 24px;
+  height: calc(100% - 60px);
+  box-sizing: border-box;
 }
-
-/* DeviceTree组件在Drawer中的样式调整 */
-:deep(.device-tree-component) {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-:deep(.device-tree-component .tree-header) {
-  padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
-  background: #fafafa;
-}
-
-:deep(.device-tree-component .device-tree) {
-  flex: 1;
-  padding: 16px;
-  overflow-y: auto;
-}
-
 
 </style>
 

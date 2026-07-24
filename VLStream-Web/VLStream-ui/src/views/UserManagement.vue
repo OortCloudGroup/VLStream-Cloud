@@ -130,7 +130,7 @@
     <el-dialog
       v-model="showAddDialog"
       :title="isEdit ? '编辑用户' : '添加用户'"
-      width="600px"
+      width="35%"
     >
       <el-form
         :model="userForm"
@@ -193,13 +193,13 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showAddDialog = false">取消</el-button>
-        <el-button type="primary" @click="saveUser">保存</el-button>
+        <el-button @click="showAddDialog = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="saveUser" class="common_btn">保存</el-button>
       </template>
     </el-dialog>
 
     <!-- 权限配置对话框 -->
-    <el-dialog v-model="showPermissionDialog" title="权限配置" width="800px">
+    <el-dialog v-model="showPermissionDialog" title="权限配置" width="45%">
       <div v-if="selectedUser" class="permission-content">
         <h3>{{ selectedUser.realName }} ({{ selectedUser.username }}) 的权限配置</h3>
         <el-divider />
@@ -249,8 +249,8 @@
         </div>
       </div>
       <template #footer>
-        <el-button @click="showPermissionDialog = false">取消</el-button>
-        <el-button type="primary" @click="savePermissions">保存权限</el-button>
+        <el-button @click="showPermissionDialog = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="savePermissions" class="common_btn">保存权限</el-button>
       </template>
     </el-dialog>
   </div>

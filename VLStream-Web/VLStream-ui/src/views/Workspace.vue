@@ -154,7 +154,7 @@
   <!-- 热门设备 - 简易WebRTC播放弹窗 -->
   <el-dialog
     v-model="showPlayer"
-    width="900px"
+    width="50%"
     :title="currentPlayDevice?.deviceName ? `${currentPlayDevice.deviceName} - 摄像头预览` : '摄像头预览'"
     append-to-body
     @close="handlePlayerClose"

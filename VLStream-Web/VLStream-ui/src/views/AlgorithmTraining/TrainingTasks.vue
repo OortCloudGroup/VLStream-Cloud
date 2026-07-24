@@ -99,7 +99,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="600px"
+      width="35%"
       :close-on-click-modal="false"
     >
       <el-form 
@@ -128,8 +128,8 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
+          <el-button @click="dialogVisible = false" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleSubmit" class="common_btn">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -138,7 +138,7 @@
     <el-dialog 
       v-model="detailVisible" 
       title="训练任务详情" 
-      width="800px"
+      width="45%"
     >
       <el-descriptions :column="2" border>
         <el-descriptions-item label="任务名称">{{ detailData.taskName }}</el-descriptions-item>

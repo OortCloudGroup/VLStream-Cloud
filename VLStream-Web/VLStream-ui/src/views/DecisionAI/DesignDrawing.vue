@@ -154,8 +154,8 @@
 
         <!-- 操作按钮 -->
         <div class="action-buttons">
-          <el-button type="primary" size="large" @click="handleSubmit">确定</el-button>
-          <el-button size="large" @click="handleCancel">取消</el-button>
+          <el-button type="primary" size="large" @click="handleSubmit" class="common_btn">确定</el-button>
+          <el-button size="large" @click="handleCancel" class="common_btn">取消</el-button>
         </div>
       </div>
     </div>

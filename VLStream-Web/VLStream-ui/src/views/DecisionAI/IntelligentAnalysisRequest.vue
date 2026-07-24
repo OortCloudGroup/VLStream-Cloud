@@ -192,13 +192,13 @@
 
           <!-- 操作按钮 -->
           <div class="form-actions">
-            <el-button type="primary" @click="handleSubmit" style="width: 120px">申请</el-button>
-            <el-button @click="showListView" style="width: 120px">取消</el-button>
+            <el-button type="primary" @click="handleSubmit" class="common_btn">申请</el-button>
+            <el-button @click="showListView" class="common_btn">取消</el-button>
           </div>
         </el-form>
 
         <!-- 分析类型选择对话框 -->
-        <el-dialog v-model="showAnalysisTypeSelector" title="选择分析类型" width="400px">
+        <el-dialog v-model="showAnalysisTypeSelector" title="选择分析类型" width="25%">
           <el-radio-group v-model="tempAnalysisType" direction="vertical">
             <el-radio value="人员">人员</el-radio>
             <el-radio value="车辆">车辆</el-radio>
@@ -207,14 +207,14 @@
           </el-radio-group>
           <template #footer>
             <div class="dialog-footer">
-              <el-button @click="showAnalysisTypeSelector = false">取消</el-button>
-              <el-button type="primary" @click="confirmAnalysisType">确定</el-button>
+              <el-button @click="showAnalysisTypeSelector = false" class="common_btn">取消</el-button>
+              <el-button type="primary" @click="confirmAnalysisType" class="common_btn">确定</el-button>
             </div>
           </template>
         </el-dialog>
 
         <!-- 区域选择对话框 -->
-        <el-dialog v-model="showRegionSelector" title="选择区域" width="400px">
+        <el-dialog v-model="showRegionSelector" title="选择区域" width="25%">
           <el-checkbox-group v-model="tempSelectedRegions">
             <div class="checkbox-grid">
               <el-checkbox value="水产大厦">水产大厦</el-checkbox>
@@ -227,14 +227,14 @@
           </el-checkbox-group>
           <template #footer>
             <div class="dialog-footer">
-              <el-button @click="showRegionSelector = false">取消</el-button>
-              <el-button type="primary" @click="confirmRegionSelection">确定</el-button>
+              <el-button @click="showRegionSelector = false" class="common_btn">取消</el-button>
+              <el-button type="primary" @click="confirmRegionSelection" class="common_btn">确定</el-button>
             </div>
           </template>
         </el-dialog>
 
         <!-- 摄像头选择对话框 -->
-        <el-dialog v-model="showCameraSelector" title="选择摄像头" width="400px">
+        <el-dialog v-model="showCameraSelector" title="选择摄像头" width="25%">
           <el-checkbox-group v-model="tempSelectedCameras">
             <div class="checkbox-grid">
               <el-checkbox value="摄像头1">摄像头1</el-checkbox>
@@ -247,8 +247,8 @@
           </el-checkbox-group>
           <template #footer>
             <div class="dialog-footer">
-              <el-button @click="showCameraSelector = false">取消</el-button>
-              <el-button type="primary" @click="confirmCameraSelection">确定</el-button>
+              <el-button @click="showCameraSelector = false" class="common_btn">取消</el-button>
+              <el-button type="primary" @click="confirmCameraSelection" class="common_btn">确定</el-button>
             </div>
           </template>
         </el-dialog>

@@ -141,8 +141,8 @@
 
           <!-- 操作按钮 -->
           <div class="form-actions">
-            <el-button @click="showListView">取消</el-button>
-            <el-button type="primary" @click="handleSubmit">保存</el-button>
+            <el-button @click="showListView" class="common_btn">取消</el-button>
+            <el-button type="primary" @click="handleSubmit" class="common_btn">保存</el-button>
           </div>
         </el-form>
       </div>
@@ -153,7 +153,7 @@
     <el-dialog
       v-model="showAddDialog"
       title="新增场景"
-      width="800px"
+      width="45%"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
       :show-close="true"
@@ -202,8 +202,8 @@
       
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleCancelAdd" size="large">取消</el-button>
-          <el-button type="primary" @click="handleConfirmAdd" size="large">确定</el-button>
+          <el-button @click="handleCancelAdd" size="large" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleConfirmAdd" size="large" class="common_btn">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -238,8 +238,8 @@
 <!--      </div>-->
 <!--      <template #footer>-->
 <!--        <div class="dialog-footer">-->
-<!--          <el-button @click="showAlgorithmSelector = false">取消</el-button>-->
-<!--          <el-button type="primary" @click="confirmAlgorithmSelector">确定</el-button>-->
+<!--          <el-button @click="showAlgorithmSelector = false" class="common_btn">取消</el-button>-->
+<!--          <el-button type="primary" @click="confirmAlgorithmSelector" class="common_btn">确定</el-button>-->
 <!--        </div>-->
 <!--      </template>-->
 <!--    </el-dialog>-->
@@ -247,7 +247,7 @@
     <el-dialog
       v-model="showCameraSelector"
       title="选择摄像头"
-      width="520px"
+      width="30%"
       class="selector-dialog"
     >
       <div class="dialog-content">
@@ -274,8 +274,8 @@
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showCameraSelector = false">取消</el-button>
-          <el-button type="primary" @click="confirmCameraSelector">确定</el-button>
+          <el-button @click="showCameraSelector = false" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="confirmCameraSelector" class="common_btn">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -283,7 +283,7 @@
 <!--    <el-dialog-->
 <!--      v-model="showAlgorithmDialog"-->
 <!--      title="选择AI算法"-->
-<!--      width="520px"-->
+<!--      width="30%"-->
 <!--      class="selector-dialog"-->
 <!--    >-->
 <!--      <div class="dialog-content">-->
@@ -310,8 +310,8 @@
 <!--      </div>-->
 <!--      <template #footer>-->
 <!--        <div class="dialog-footer">-->
-<!--          <el-button @click="showAlgorithmDialog = false">取消</el-button>-->
-<!--          <el-button type="primary" @click="confirmAlgorithmDialog">确定</el-button>-->
+<!--          <el-button @click="showAlgorithmDialog = false" class="common_btn">取消</el-button>-->
+<!--          <el-button type="primary" @click="confirmAlgorithmDialog" class="common_btn">确定</el-button>-->
 <!--        </div>-->
 <!--      </template>-->
 <!--    </el-dialog>-->
@@ -319,7 +319,7 @@
     <el-dialog
       v-model="showCameraDialog"
       title="选择摄像头"
-      width="520px"
+      width="30%"
       class="selector-dialog"
     >
       <div class="dialog-content">
@@ -346,8 +346,8 @@
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showCameraDialog = false">取消</el-button>
-          <el-button type="primary" @click="confirmCameraDialog">确定</el-button>
+          <el-button @click="showCameraDialog = false" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="confirmCameraDialog" class="common_btn">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -1601,10 +1601,6 @@ onMounted(() => {
 }
 
 /* 弹窗表单样式 */
-:deep(.el-dialog__body) {
-  padding: 20px;
-}
-
 :deep(.el-form-item__label) {
   font-weight: 500;
   color: #303133;
@@ -1615,11 +1611,6 @@ onMounted(() => {
 }
 
 /* 弹窗按钮样式 */
-.dialog-footer .el-button {
-  min-width: 80px;
-  height: 32px;
-}
-
 .dialog-footer .el-button--primary {
   background-color: #1A53FF;
   border-color: #1A53FF;
@@ -1631,28 +1622,9 @@ onMounted(() => {
 }
 
 /* 新增场景弹窗样式 */
-.scene-dialog :deep(.el-dialog__header) {
-  padding: 20px 20px 0 20px;
-  border-bottom: 1px solid #f0f0f0;
-  margin-bottom: 0;
-}
-
-.scene-dialog :deep(.el-dialog__title) {
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
-}
-
 .scene-dialog :deep(.el-dialog__body) {
-  padding: 20px;
   max-height: 80vh;
   overflow-y: auto;
-}
-
-.scene-dialog :deep(.el-dialog__footer) {
-  padding: 0 20px 20px 20px;
-  border-top: 1px solid #f0f0f0;
-  margin-top: 0;
 }
 
 .scene-dialog-form {
@@ -1830,13 +1802,5 @@ onMounted(() => {
 
 .selector-item:hover .selector-arrow {
   color: #1A53FF;
-}
-
-/* 弹窗底部按钮样式覆盖 */
-.scene-dialog .dialog-footer .el-button {
-  min-width: 100px;
-  height: 40px;
-  border-radius: 4px;
-  font-size: 14px;
 }
 </style> 

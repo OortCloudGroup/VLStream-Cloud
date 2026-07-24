@@ -1,7 +1,7 @@
 <template>
   <div class="camera-settings">
-    <!-- 导航面包屑 - 仅在独立页面模式显示 -->
-    <div v-if="!deviceInfo" class="content-header">
+    <!-- 导航面包屑 - 独立页面模式或无内嵌 deviceInfo 时显示 -->
+    <div v-if="!props.deviceInfo" class="content-header">
       <div class="breadcrumb">
         <span class="breadcrumb-item" @click="goBack">设备列表</span>
         <span class="breadcrumb-separator">></span>
@@ -517,12 +517,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Setting } from '@element-plus/icons-vue'
 import PTZControl from '@/components/PTZControl.vue'
 import PresetPanel from '@/components/PresetPanel.vue'
+import { getDeviceById } from '@/api/device'
 
 // Props
 const props = defineProps({
@@ -535,7 +536,28 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['back'])
 
+const route = useRoute()
 const router = useRouter()
+
+const routeDeviceInfo = ref(null)
+const resolvedDeviceInfo = computed(() => props.deviceInfo || routeDeviceInfo.value)
+
+onMounted(async () => {
+  if (props.deviceInfo) return
+  const id = route.query.id
+  if (!id) return
+  try {
+    const response = await getDeviceById(id)
+    if (response.code === 200) {
+      routeDeviceInfo.value = { ...response.data, id: response.data.id || id }
+    } else {
+      routeDeviceInfo.value = { id }
+    }
+  } catch (error) {
+    console.error('获取设备详情失败:', error)
+    routeDeviceInfo.value = { id }
+  }
+})
 
 // 当前激活的标签页
 const activeTab = ref('display')

@@ -114,7 +114,7 @@
   <el-dialog
     v-model="dialogVisible"
     :title="dialogTitle"
-    width="680px"
+    width="40%"
     destroy-on-close
   >
     <el-form
@@ -228,8 +228,8 @@
     </el-form>
 
     <template #footer>
-      <el-button @click="dialogVisible = false">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSaveSubmit">确定</el-button>
+      <el-button @click="dialogVisible = false" class="common_btn">取消</el-button>
+      <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">确定</el-button>
     </template>
   </el-dialog>
 
@@ -237,7 +237,7 @@
   <el-dialog
     v-model="grantVisible"
     title="分配角色"
-    width="500px"
+    width="30%"
     destroy-on-close
   >
     <div style="padding: 10px 20px" v-loading="grantLoading">
@@ -262,8 +262,8 @@
       </el-form>
     </div>
     <template #footer>
-      <el-button @click="grantVisible = false">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleGrantSubmit">确定</el-button>
+      <el-button @click="grantVisible = false" class="common_btn">取消</el-button>
+      <el-button type="primary" :loading="saving" @click="handleGrantSubmit" class="common_btn">确定</el-button>
     </template>
   </el-dialog>
 </template>

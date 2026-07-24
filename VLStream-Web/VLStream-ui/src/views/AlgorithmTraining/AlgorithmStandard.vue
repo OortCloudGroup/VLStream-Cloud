@@ -1,12 +1,6 @@
 <template>
   <div class="page-container tenant_Page draHeaPB">
     <div class="tenant_content">
-    <!-- 页面标题 -->
-    <div class="page-header" v-if="!showAnnotationView">
-      <h1>算法标注</h1>
-      <p>管理和创建算法训练所需的标注数据集</p>
-    </div>
-
     <!-- 导航栏（标注视图时显示） -->
     <div v-if="showAnnotationView" class="content-header">
       <div class="breadcrumb">
@@ -22,14 +16,14 @@
         <div class="depNameBox_out flexRowAC">
           <div class="depNameBox flexRowAC">
             <div class="exportBtnBox flexRowAC">
-                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
-                  <el-icon class="BtnImg">
-                    <Plus />
-                  </el-icon>
-                  新建
-                </button>
-                <button-group :button-list="toolbarButtonList" />
-              </div>
+              <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
+                <el-icon class="BtnImg">
+                  <Plus />
+                </el-icon>
+                新建
+              </button>
+              <button-group :button-list="toolbarButtonList" />
+            </div>
           </div>
           <div class="searchHeight_out flexRowAC">
             <search-height-box
@@ -62,7 +56,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="datasetPath" label="数据集路径">
+          <el-table-column prop="datasetPath" label="数据集路径" show-overflow-tooltip>
             <template #default="scope">
               <span v-if="scope.row.datasetPath" class="dataset-path clickable" :title="scope.row.datasetPath">
                 {{ scope.row.datasetPath }}
@@ -70,8 +64,8 @@
               <span v-else class="no-dataset">未设置</span>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" />
-          <el-table-column label="操作" :width="clacPXToVW(360)" align="right" fixed="right">
+          <el-table-column prop="createTime" label="创建时间" :width="clacPXToVW(180)" />
+          <el-table-column label="操作" :width="clacPXToVW(380)" align="right" fixed="right">
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="handleView(scope.row)">
@@ -460,7 +454,7 @@
     <el-dialog
       v-model="showDatasetDialog"
       title="数据集文件校验"
-      width="600px"
+      width="35%"
       :before-close="handleDatasetDialogClose"
       class="dataset-validation-dialog"
     >
@@ -527,7 +521,7 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="handleDatasetDialogClose">关闭</el-button>
+          <el-button type="primary" @click="handleDatasetDialogClose" class="common_btn">关闭</el-button>
         </div>
       </template>
     </el-dialog>
@@ -539,7 +533,7 @@
       width="95%"
       :before-close="handleCloseFullScreenPreview"
       class="fullscreen-preview-dialog"
-      :show-close="false"
+      :show-close="true"
       :close-on-click-modal="true"
       :close-on-press-escape="true"
     >
@@ -572,7 +566,7 @@
               size="small"
               @click="handleCloseFullScreenPreview"
               title="关闭 (ESC)"
-            >
+             class="common_btn">
               关闭
             </el-button>
           </div>
@@ -632,7 +626,7 @@
     <el-dialog
       v-model="showImportDialog"
       title="导入图片"
-      width="800px"
+      width="45%"
       :before-close="handleCloseImportDialog"
     >
       <div class="import-dialog-content">
@@ -676,8 +670,8 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleCloseImportDialog">取消</el-button>
-          <el-button type="primary" @click="handleConfirmImport">确定</el-button>
+          <el-button @click="handleCloseImportDialog" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleConfirmImport" class="common_btn">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -3382,13 +3376,26 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   :deep(.header_tenant_cell) { background: #F8F8F9; }
 }
 .paginationBox { justify-content: center; height: 100px; }
-.operateAppBox { justify-content: flex-end; gap: 2px; flex-wrap: wrap; }
+.operateAppBox {
+  justify-content: flex-end;
+  gap: 2px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
 
 .page-container {
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  .tenant_content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
 }
 
 .list-view {
@@ -3396,26 +3403,6 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   display: flex;
   flex-direction: column;
   gap: 0;
-}
-
-/* 页面标题 */
-.page-header {
-  margin-bottom: 0;
-  padding: 20px 20px 0;
-  background: #fff;
-}
-
-.page-header h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #262626;
-  margin: 0 0 8px 0;
-}
-
-.page-header p {
-  color: #8c8c8c;
-  margin: 0;
-  font-size: 14px;
 }
 
 /* 主内容区域 */
@@ -3687,10 +3674,9 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 
 /* 导航栏样式 */
 .content-header {
-  padding: 16px 20px;
+  padding: 12px 0;
   background: white;
-  border-bottom: 1px solid #e8e8e8;
-  margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .breadcrumb {
@@ -3717,6 +3703,21 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 
 .breadcrumb-separator {
   color: #999;
+}
+
+.annotation-view-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+
+  :deep(.annotation-grid-view) {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+  }
 }
 
 /* 标注视图样式 */
@@ -4750,12 +4751,6 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 }
 
 /* 数据集文件校验弹窗样式 */
-.dataset-validation-dialog {
-  .el-dialog__body {
-    padding: 20px;
-  }
-}
-
 .dataset-validation-content {
   .annotation-info {
     margin-bottom: 24px;

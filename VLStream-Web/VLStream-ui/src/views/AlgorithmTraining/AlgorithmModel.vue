@@ -42,7 +42,7 @@
           <el-table-column prop="version" label="版本" align="center" />
           <el-table-column prop="downloadCount" label="下载次数" align="center" />
           <el-table-column prop="createTime" label="创建时间" />
-          <el-table-column label="操作" :width="clacPXToVW(220)" align="right" fixed="right">
+          <el-table-column label="操作" :min-width="clacPXToVW(260)" :width="clacPXToVW(260)" align="right" fixed="right">
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="handleView(scope.row)">
@@ -141,7 +141,7 @@
     <el-dialog
       v-model="showModelDialog"
       :title="isEditingModel ? '编辑算法模型' : '新增算法模型'"
-      width="640px"
+      width="35%"
       :close-on-click-modal="false"
       @close="handleModelDialogClose"
     >
@@ -213,8 +213,8 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleModelDialogClose">取消</el-button>
-          <el-button type="primary" @click="handleSubmitModel">保存</el-button>
+          <el-button @click="handleModelDialogClose" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleSubmitModel" class="common_btn">保存</el-button>
         </div>
       </template>
     </el-dialog>
@@ -834,7 +834,12 @@ onMounted(() => {
   :deep(.header_tenant_cell) { background: #F8F8F9; }
 }
 .paginationBox { justify-content: center; height: 100px; }
-.operateAppBox { justify-content: flex-end; gap: 2px; flex-wrap: wrap; }
+.operateAppBox {
+  justify-content: flex-end;
+  gap: 2px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
 
 .algorithm-model {
   height: 100%;

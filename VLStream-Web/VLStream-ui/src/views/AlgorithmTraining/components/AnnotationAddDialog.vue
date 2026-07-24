@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visible"
     title="新增标注"
-    width="600px"
+    width="35%"
     :before-close="handleClose"
   >
     <el-form
@@ -57,8 +57,8 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" @click="handleConfirm">确定</el-button>
+        <el-button @click="handleClose" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleConfirm" class="common_btn">确定</el-button>
       </div>
     </template>
   </el-dialog>

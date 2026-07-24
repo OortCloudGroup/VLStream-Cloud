@@ -733,7 +733,7 @@
   <el-dialog
     v-model="showDeployDialog"
     title="发布至模型仓库"
-    width="600px"
+    width="35%"
     :before-close="handleDeployCancel"
   >
     <el-form :model="deployForm" label-width="100px" style="max-width: 500px">
@@ -794,8 +794,8 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleDeployCancel">取消</el-button>
-        <el-button type="primary" @click="handleDeployConfirm">确认</el-button>
+        <el-button @click="handleDeployCancel" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleDeployConfirm" class="common_btn">确认</el-button>
       </div>
     </template>
   </el-dialog>
@@ -806,7 +806,7 @@
   <el-dialog
     v-model="showAddDialog"
     title="新增训练任务"
-    width="600px"
+    width="35%"
     :before-close="handleCloseDialog"
   >
     <el-form
@@ -913,8 +913,8 @@
     
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleCloseDialog">取消</el-button>
-        <el-button type="primary" @click="handleConfirmAdd">确定</el-button>
+        <el-button @click="handleCloseDialog" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleConfirmAdd" class="common_btn">确定</el-button>
       </div>
     </template>
   </el-dialog>
@@ -923,7 +923,7 @@
   <el-dialog
     v-model="showEditDialog"
     title="编辑训练任务"
-    width="600px"
+    width="35%"
     :before-close="handleCloseEditDialog"
   >
     <el-form
@@ -1031,8 +1031,8 @@
     
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleCloseEditDialog">取消</el-button>
-        <el-button type="primary" @click="handleConfirmEdit">确定</el-button>
+        <el-button @click="handleCloseEditDialog" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleConfirmEdit" class="common_btn">确定</el-button>
       </div>
     </template>
   </el-dialog>
@@ -1041,7 +1041,7 @@
   <el-dialog
     v-model="showDatasetSelector"
     title="选择数据集"
-    width="800px"
+    width="45%"
     :before-close="handleCloseDatasetSelector"
   >
     <div class="dataset-selector-content">
@@ -1095,8 +1095,8 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleCloseDatasetSelector">取消</el-button>
-        <el-button type="primary" @click="handleConfirmDatasetSelection">
+        <el-button @click="handleCloseDatasetSelector" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleConfirmDatasetSelection" class="common_btn">
           确定 ({{ selectedDatasetIds.length }})
         </el-button>
       </div>
@@ -4075,21 +4075,6 @@ const openDatasetSelector = async () => {
   gap: 12px;
 }
 
-:deep(.el-dialog__header) {
-  padding: 20px 24px 12px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-:deep(.el-dialog__title) {
-  font-size: 16px;
-  font-weight: 600;
-  color: #262626;
-}
-
-:deep(.el-dialog__body) {
-  padding: 20px 24px;
-}
-
 :deep(.el-form-item__label) {
   color: #262626;
   font-weight: 500;
@@ -4276,21 +4261,6 @@ const openDatasetSelector = async () => {
   justify-content: flex-end;
   gap: 12px;
   padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* 弹窗表单样式 */
-:deep(.el-dialog__body) {
-  padding: 20px 24px;
-}
-
-:deep(.el-dialog__header) {
-  padding: 20px 24px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-:deep(.el-dialog__footer) {
-  padding: 0 24px 20px;
 }
 
 /* 弹窗表单字段样式 */

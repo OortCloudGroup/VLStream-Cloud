@@ -356,7 +356,7 @@
     <el-dialog
       v-model="addDetectionDialogVisible"
       title="添加检测项目"
-      width="500px"
+      width="30%"
     >
       <div class="add-detection-content">
         <el-form :model="newDetectionForm" label-width="100px">
@@ -383,8 +383,8 @@
       </div>
       
       <template #footer>
-        <el-button @click="addDetectionDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmAddDetection">确定</el-button>
+        <el-button @click="addDetectionDialogVisible = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="confirmAddDetection" class="common_btn">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -695,7 +695,8 @@ onUnmounted(() => {
   padding: 20px;
   
   .ai-event-container {
-    max-width: 1200px;
+    max-width: none;
+    width: 100%;
     margin: 0;
   }
   

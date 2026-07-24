@@ -153,8 +153,8 @@
               <el-dialog
                 v-model="copyDialogVisible"
                 title="复制时间设置"
-                width="400px"
-                :show-close="false"
+                width="25%"
+                :show-close="true"
               >
                 <div class="copy-dialog-content">
                   <p>将 {{ sourceDay }} 的时间设置复制到：</p>
@@ -178,8 +178,8 @@
                 </div>
                 <template #footer>
                   <div class="copy-dialog-footer">
-                    <el-button @click="cancelCopy">取消</el-button>
-                    <el-button type="primary" @click="confirmCopy">确定</el-button>
+                    <el-button @click="cancelCopy" class="common_btn">取消</el-button>
+                    <el-button type="primary" @click="confirmCopy" class="common_btn">确定</el-button>
                   </div>
                 </template>
               </el-dialog>
@@ -919,7 +919,8 @@ onMounted(() => {
   padding: 20px;
   
   .config-container {
-    max-width: 1200px;
+    max-width: none;
+    width: 100%;
     margin: 0;
   }
   

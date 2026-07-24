@@ -256,7 +256,7 @@
     <el-dialog
       v-model="showSettingsDialog" 
       title="显示设置"
-      width="400px"
+      width="25%"
       center
       :close-on-click-modal="true"
       :show-close="true"
@@ -279,8 +279,8 @@
         </div>
         
         <div class="setting-actions">
-          <el-button @click="cancelSettings">取消</el-button>
-          <el-button type="primary" @click="confirmSettings">确定</el-button>
+          <el-button @click="cancelSettings" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="confirmSettings" class="common_btn">确定</el-button>
         </div>
       </div>
     </el-dialog>

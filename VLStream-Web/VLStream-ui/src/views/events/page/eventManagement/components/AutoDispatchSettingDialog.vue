@@ -41,10 +41,10 @@
       </div>
     </div>
     <div class="dialog-footer">
-      <el-button @click="handleCancel">
+      <el-button @click="handleCancel" class="common_btn">
         取消
       </el-button>
-      <el-button type="primary" @click="handleConfirm">
+      <el-button type="primary" @click="handleConfirm" class="common_btn">
         确定
       </el-button>
     </div>
@@ -187,17 +187,6 @@ const handleConfirm = () => {
 </script>
 
 <style lang="scss" scoped>
-.auto-dispatch-dialog {
-  :deep(.el-dialog__header) {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  :deep(.el-dialog__body) {
-    padding: 10px 20px 0 20px;
-  }
-}
-
 .info-banner {
   display: flex;
   align-items: center;

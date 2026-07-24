@@ -134,7 +134,7 @@
     <el-dialog
       v-model="videoDialogVisible"
       title="视频播放"
-      width="1200px"
+      width="65%"
       top="5vh"
       @close="handleVideoClose"
     >
@@ -193,7 +193,7 @@
     <el-dialog
       v-model="showConfigDialog"
       title="配置AI算法"
-      width="500px"
+      width="30%"
       @close="resetConfigForm"
     >
       <div class="config-dialog-content">
@@ -240,8 +240,8 @@
       
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showConfigDialog = false">取消</el-button>
-          <el-button type="primary" @click="saveConfiguration">确认</el-button>
+          <el-button @click="showConfigDialog = false" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="saveConfiguration" class="common_btn">确认</el-button>
         </div>
       </template>
     </el-dialog>
@@ -1664,11 +1664,6 @@ onUnmounted(() => {
   justify-content: center;
   gap: 16px;
   padding: 20px 0 0;
-}
-
-.dialog-footer .el-button {
-  min-width: 80px;
-  height: 36px;
 }
 
 /* 算法选择面板样式 */

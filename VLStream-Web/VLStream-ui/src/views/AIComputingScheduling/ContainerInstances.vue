@@ -156,8 +156,8 @@
       
         <!-- 操作按钮 -->
         <div class="form-actions">
-          <el-button type="primary" @click="confirmCreate" class="confirm-btn">确定</el-button>
-          <el-button @click="cancelCreate" class="cancel-btn">取消</el-button>
+          <el-button type="primary" @click="confirmCreate" class="confirm-btn common_btn">确定</el-button>
+          <el-button @click="cancelCreate" class="cancel-btn common_btn">取消</el-button>
         </div>
         </div>
       </div>
@@ -533,7 +533,7 @@
     <el-dialog
       v-model="showCreateDialog"
       title="创建容器实例"
-      width="600px"
+      width="35%"
       @close="resetCreateForm"
     >
       <el-form :model="createForm" :rules="createRules" ref="createFormRef" label-width="120px">
@@ -591,8 +591,8 @@
       </el-form>
       
       <template #footer>
-        <el-button @click="showCreateDialog = false">取消</el-button>
-        <el-button type="primary" @click="createContainer">创建</el-button>
+        <el-button @click="showCreateDialog = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="createContainer" class="common_btn">创建</el-button>
       </template>
     </el-dialog>
 
@@ -1655,18 +1655,24 @@ onUnmounted(() => {
 /* 创建页面样式 */
 .create-view {
   margin: 0;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  box-sizing: border-box;
+  overflow: auto;
 }
 
 .create-view .breadcrumb-section {
-  width: 1120px;
+  width: 100%;
 }
 
 .create-content {
-  width: 1120px;
+  width: 100%;
   background: white;
   padding: 20px;
   border-radius: 0 0 8px 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
 .form-section {
@@ -1955,11 +1961,8 @@ onUnmounted(() => {
 }
 
 .confirm-btn {
-  width: 120px;
-  height: 40px;
   background: #1A53FF;
   border: 1px solid #1A53FF;
-  border-radius: 4px;
   color: white;
   font-size: 14px;
 }
@@ -1970,10 +1973,7 @@ onUnmounted(() => {
 }
 
 .cancel-btn {
-  width: 120px;
-  height: 40px;
   border: 1px solid #dcdfe6;
-  border-radius: 4px;
   color: #606266;
   font-size: 14px;
   background: white;
@@ -1990,15 +1990,15 @@ onUnmounted(() => {
 }
 
 .details-view .breadcrumb-section {
-  width: 1120px;
+  width: 100%;
 }
 
 .details-content {
-  width: 1120px;
+  width: 100%;
   background: white;
   padding: 20px;
   border-radius: 0 0 8px 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
 .details-content .form-section {

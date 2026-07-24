@@ -251,7 +251,7 @@
     <el-dialog
       v-model="showCreateTrainingDialog"
       title="新建训练任务"
-      width="600px"
+      width="35%"
       @close="resetTrainingForm"
     >
       <el-form :model="trainingForm" :rules="trainingRules" ref="trainingFormRef" label-width="120px">
@@ -299,8 +299,8 @@
       </el-form>
       
       <template #footer>
-        <el-button @click="showCreateTrainingDialog = false">取消</el-button>
-        <el-button type="primary" @click="createTrainingTask">开始训练</el-button>
+        <el-button @click="showCreateTrainingDialog = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="createTrainingTask" class="common_btn">开始训练</el-button>
       </template>
     </el-dialog>
   </div>
