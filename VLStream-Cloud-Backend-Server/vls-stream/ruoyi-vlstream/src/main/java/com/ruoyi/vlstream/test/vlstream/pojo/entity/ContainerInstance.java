@@ -165,5 +165,29 @@ public class ContainerInstance extends TenantEntity {
 	 */
 	@Schema(description = "日志路径")
 	private String logsPath;
+	/**
+	 * 关联的算法训练任务ID
+	 */
+	@Schema(description = "关联的算法训练任务ID")
+	@JsonSerialize(using = ToStringSerializer.class)
+	private Long trainingTaskId;
+	/**
+	 * GPU服务器与卡信息
+	 */
+	@Schema(description = "GPU服务器ID")
+	@JsonSerialize(using = ToStringSerializer.class)
+	private Long serverId;
+	@Schema(description = "GPU服务器地址")
+	private String serverIp;
+	@Schema(description = "GPU序号")
+	private Integer gpuIndex;
+	@Schema(description = "GPU UUID")
+	private String gpuUuid;
+	@Schema(description = "排队时间")
+	@DateTimeFormat(pattern = DateUtil.PATTERN_DATETIME)
+	@JsonFormat(pattern = DateUtil.PATTERN_DATETIME)
+	private Date queueTime;
+	@Schema(description = "运行错误信息")
+	private String errorMessage;
 
 }

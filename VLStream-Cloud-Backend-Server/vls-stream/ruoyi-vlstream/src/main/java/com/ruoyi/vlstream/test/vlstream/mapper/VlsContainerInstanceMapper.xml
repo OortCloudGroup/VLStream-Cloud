@@ -8,6 +8,7 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="vlsContainerInstanceResultMap" type="com.ruoyi.vlstream.test.vlstream.pojo.entity.ContainerInstance">
+        <id column="id" property="id"/>
         <result column="instance_name" property="instanceName"/>
         <result column="container_id" property="containerId"/>
         <result column="image_name" property="imageName"/>
@@ -29,10 +30,26 @@
         <result column="memory_usage" property="memoryUsage"/>
         <result column="gpu_usage" property="gpuUsage"/>
         <result column="logs_path" property="logsPath"/>
+        <result column="training_task_id" property="trainingTaskId"/>
+        <result column="server_id" property="serverId"/>
+        <result column="server_ip" property="serverIp"/>
+        <result column="gpu_index" property="gpuIndex"/>
+        <result column="gpu_uuid" property="gpuUuid"/>
+        <result column="queue_time" property="queueTime"/>
+        <result column="error_message" property="errorMessage"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <select id="selectVlsContainerInstancePage" resultMap="vlsContainerInstanceResultMap">
-        select * from vls_container_instance where is_deleted = 0
+        select *
+        from vls_container_instance
+        where is_deleted = 0
+          and instance_type = 'training'
+        <if test="query != null and query.instanceName != null and query.instanceName != ''">
+            and instance_name like concat('%', #{query.instanceName}, '%')
+        </if>
+        order by queue_time desc, create_time desc
     </select>
 
     <select id="exportVlsContainerInstance" resultType="com.ruoyi.vlstream.test.vlstream.excel.VlsContainerInstanceExcel">
@@ -63,6 +80,13 @@
         <result column="memory_usage" property="memoryUsage" />
         <result column="gpu_usage" property="gpuUsage" />
         <result column="logs_path" property="logsPath" />
+        <result column="training_task_id" property="trainingTaskId" />
+        <result column="server_id" property="serverId" />
+        <result column="server_ip" property="serverIp" />
+        <result column="gpu_index" property="gpuIndex" />
+        <result column="gpu_uuid" property="gpuUuid" />
+        <result column="queue_time" property="queueTime" />
+        <result column="error_message" property="errorMessage" />
     </resultMap>
 
     <!-- 包含关联信息的结果映射 -->
@@ -74,7 +98,9 @@
         id, instance_name, container_id, image_name, image_tag, algorithm_id, instance_type,
         cpu_limit, memory_limit, gpu_limit, port_config, env_config, volume_config,
         instance_status, health_status, start_time, stop_time, restart_count,
-        cpu_usage, memory_usage, gpu_usage, logs_path, created_by, create_time, update_time, is_deleted
+        cpu_usage, memory_usage, gpu_usage, logs_path, training_task_id, server_id,
+        server_ip, gpu_index, gpu_uuid, queue_time, error_message,
+        created_by, create_time, update_time, is_deleted
     </sql>
 
     <!-- 根据ID查询容器实例详情（包含关联信息） -->

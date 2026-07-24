@@ -34,7 +34,8 @@ public interface VlsContainerInstanceMapper extends BaseMapper<ContainerInstance
 	 * @param vlsContainerInstance 查询参数
 	 * @return List<VlsContainerInstanceVO>
 	 */
-	List<ContainerInstanceVO> selectVlsContainerInstancePage(IPage page, ContainerInstanceVO vlsContainerInstance);
+	List<ContainerInstanceVO> selectVlsContainerInstancePage(IPage page,
+															 @Param("query") ContainerInstanceVO vlsContainerInstance);
 
 	/**
 	 * 获取导出数据

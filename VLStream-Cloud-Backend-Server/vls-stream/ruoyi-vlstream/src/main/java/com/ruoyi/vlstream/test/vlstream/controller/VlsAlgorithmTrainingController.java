@@ -5,7 +5,6 @@
 
 package com.ruoyi.vlstream.test.vlstream.controller;
 
-import cn.dev33.satoken.annotation.SaIgnore;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -69,6 +68,9 @@ public class VlsAlgorithmTrainingController extends BladeController {
 
 	@Resource
 	private RemoteTrainingService remoteTrainingService;
+
+	@Resource
+	private GpuTrainingSchedulerService gpuTrainingSchedulerService;
 
 	@Resource
 	private IVlsAlgorithmAnnotationService algorithmAnnotationService;
@@ -359,32 +361,42 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			Integer finalEpochs = epochs != null ? epochs : getIntFromConfig(config, "epochs", training.getEpochTotal(), 100);
 			Integer finalBatch = batchSize != null ? batchSize : getIntFromConfig(config, "batchSize", null, 16);
 			Integer finalImgSize = imgSize != null ? imgSize : getIntFromConfig(config, "imgsz", getIntFromConfig(config, "resolution", null, null), 640);
-			String mergedExtraParams = buildExtraParams(config, extraParams);
 
-			RemoteTrainingService.StartResult startResult = remoteTrainingService.startTraining(
+			AlgorithmTraining queueUpdate = new AlgorithmTraining();
+			queueUpdate.setId(id);
+			queueUpdate.setTrainStatus(AlgorithmTrainingStatusEnum.pending);
+			queueUpdate.setEpochTotal(finalEpochs);
+			queueUpdate.setProgress(0);
+			queueUpdate.setErrorMessage(null);
+			if (vlsAlgorithmTrainingService.updateAlgorithmTraining(queueUpdate) <= 0) {
+				return R.fail("更新训练任务排队状态失败");
+			}
+
+			RemoteTrainingService.StartResult startResult = gpuTrainingSchedulerService.enqueue(
 				algorithm.getCategory().getCode(),
 				id,
 				annotation.getDatasetPath(),
 				baseModel,
 				finalEpochs,
 				finalBatch,
-				finalImgSize,
-				mergedExtraParams
+				finalImgSize
 			);
 
 			AlgorithmTraining update = new AlgorithmTraining();
 			update.setId(id);
-			update.setTrainStatus(AlgorithmTrainingStatusEnum.training);
-			update.setStartTime(new Date());
-			update.setEpochTotal(finalEpochs);
-			update.setProgress(0);
 			update.setLogPath(startResult.getLogPath());
 			vlsAlgorithmTrainingService.updateAlgorithmTraining(update);
 
-			log.info("训练任务{}已启动，日志路径: {}", id, startResult.getLogPath());
+			log.info("训练任务{}已进入GPU队列，日志路径: {}", id, startResult.getLogPath());
 			return R.data(startResult);
 		} catch (Exception e) {
 			log.error("触发训练任务失败: {}", e.getMessage(), e);
+			AlgorithmTraining failedUpdate = new AlgorithmTraining();
+			failedUpdate.setId(id);
+			failedUpdate.setTrainStatus(AlgorithmTrainingStatusEnum.failed);
+			failedUpdate.setErrorMessage(e.getMessage());
+			failedUpdate.setEndTime(new Date());
+			vlsAlgorithmTrainingService.updateAlgorithmTraining(failedUpdate);
 			return R.fail("触发训练任务失败: " + e.getMessage());
 		}
 	}
@@ -606,6 +618,14 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		if (training == null) {
 			return R.fail("找不到训练任务");
 		}
+		if (training.getTrainStatus() == AlgorithmTrainingStatusEnum.pending) {
+			RemoteTrainingService.TrainingProgress queuedProgress = new RemoteTrainingService.TrainingProgress();
+			queuedProgress.setTaskId(id);
+			queuedProgress.setStatus(AlgorithmTrainingStatusEnum.pending.getCode());
+			queuedProgress.setPercentage(0);
+			queuedProgress.setMessage("等待GPU资源");
+			return R.data(queuedProgress);
+		}
 		if (training.getTrainStatus() == AlgorithmTrainingStatusEnum.completed
 			|| training.getTrainStatus() == AlgorithmTrainingStatusEnum.failed
 			|| training.getTrainStatus() == AlgorithmTrainingStatusEnum.stop) {
@@ -787,16 +807,6 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	public void downloadTrainingModel(@PathVariable Long id,
 		@RequestParam(defaultValue = "pt") String type, HttpServletResponse response) {
 		downloadFile(response, () -> modelFileDownloadService.downloadTrainingModel(id, type, response));
-	}
-
-	/**
-	 * 提供给受信任硬件网络下载 OM 文件，不要求设备携带平台登录令牌。
-	 */
-	@SaIgnore
-	@GetMapping("/public/{id}/om")
-	@Operation(summary = "设备下载OM模型", description = "根据训练任务ID下载OM文件，供硬件下发接口使用")
-	public void downloadPublicOmModel(@PathVariable Long id, HttpServletResponse response) {
-		downloadFile(response, () -> modelFileDownloadService.downloadTrainingModel(id, "om", response));
 	}
 
 	/**
