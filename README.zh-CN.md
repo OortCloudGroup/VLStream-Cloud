@@ -55,19 +55,34 @@ VLStream Cloud 是面向设备与视频流管理、智能视频分析、算法�
 
 ---
 
+### 单节点 GPU 训练调度
+
+算法训练支持一台物理 GPU 服务器上的单卡独占队列。训练开始时按需创建 Docker
+容器，GPU 忙时任务自动排队，训练结束后删除容器并保留任务记录、日志和模型产物。
+部署和环境变量说明见
+[单节点 GPU 训练调度](./VLStream-Cloud-Backend-Server/vls-stream/doc/gpu-training-scheduler.md)。
+
+---
+
 ### Hi3519DV500 模型下发
 
-在算法管理页选择算法和设备后，平台会查找该算法最新且已生成 OM 文件的训练任务，为设备生成 OM 下载地址，并逐台调用硬件服务的 `latest-training-model` 接口。只有硬件接口返回 HTTP 2xx 后，平台才更新设备与算法的关联。
+平台支持通过 MQTT 向硬件下发训练模型。硬件连接、模型下发、事件上报、媒体上传、
+状态回执和联调验收统一以
+[硬件 IoT MQTT 接入协议](./VLStream-Cloud-Backend-Server/vls-stream/doc/iot-mqtt-device-integration.md)
+为准。
 
 部署时需要配置以下环境变量：
 
 ```bash
-VLSTREAM_HARDWARE_DISPATCH_URL=http://192.168.88.98:8888/vlsDeviceInfo/latest-training-model
-VLSTREAM_MODEL_DOWNLOAD_PUBLIC_BASE_URL=http://192.168.88.31:8080
-VLSTREAM_HARDWARE_DISPATCH_TIMEOUT_MILLIS=10000
+VLSTREAM_MQTT_HOST=127.0.0.1
+VLSTREAM_MQTT_PORT=1883
+VLSTREAM_MQTT_USERNAME=vlstream
+VLSTREAM_MQTT_PASSWORD=replace-me
+VLSTREAM_MODEL_PUBLIC_BASE_URL=https://vlstream.example.com
+VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET=replace-with-a-long-random-secret
 ```
 
-`VLSTREAM_MODEL_DOWNLOAD_PUBLIC_BASE_URL` 必须是硬件设备能够访问的后端地址，不是浏览器访问的前端地址。设备下载入口不要求平台登录令牌，应仅通过受信任的设备网络或受控反向代理开放。
+`VLSTREAM_MODEL_PUBLIC_BASE_URL` 必须是硬件设备能够访问的后端地址，不是浏览器访问的前端地址。设备下载入口不要求平台登录令牌，但每个任务都使用短期 HMAC 签名 URL。
 
 ---
 
@@ -227,6 +242,10 @@ VLStream-Cloud/
 | Maven | 3.6+ |
 | 数据库 | MySQL 5.7+ |
 | 缓存 | Redis |
+| 对象存储 | MinIO 或其他 S3 兼容服务；完整算法标注功能必需 |
+| 消息服务 | MQTT Broker；设备控制和模型下发必需 |
+| 训练节点 | 支持 SSH/SFTP 的 Linux GPU 服务器；算法训练功能必需 |
+| GPT 服务 | 能由 APaaS 网关路由的 `apaas-ai` 服务；AI 文本/图片功能必需 |
 | 前端 | Node.js 与 npm |
 
 ### 1. 克隆项目
@@ -245,9 +264,12 @@ CREATE DATABASE vlstream CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```powershell
 cd VLStream-Cloud-Backend-Server/vls-stream
 mysql -u root -p vlstream --execute="source script/sql/mysql/mysql_ry_v0.8.X.sql"
+mysql -u root -p vlstream --execute="source db/2026-07-23-model-dispatch.sql"
+mysql -u root -p vlstream --execute="source doc/sql/2026-07-23-gpu-training-scheduler.sql"
 ```
 
 `script/sql/` 下还提供了 Oracle、PostgreSQL 和 SQL Server 的初始化脚本。
+后两条增量 SQL 分别创建模型下发任务表和 GPU 训练调度相关结构。模型下发表使用 `CREATE TABLE IF NOT EXISTS`；GPU 调度脚本包含 `ALTER TABLE ADD COLUMN`，每个数据库只能执行一次。生产环境执行任何增量 SQL 前都应先备份数据库。
 
 ### 3. 配置并启动后端
 
@@ -256,6 +278,171 @@ mysql -u root -p vlstream --execute="source script/sql/mysql/mysql_ry_v0.8.X.sql
 - `ruoyi-admin/src/main/resources/application.yml`
 - `ruoyi-admin/src/main/resources/application-dev.yml`
 - `ruoyi-admin/src/main/resources/application-prod.yml`
+
+#### 部署前必做配置
+
+完整功能部署不能直接使用仓库中的测试地址和示例密码。启动前至少完成以下配置：
+
+| 配置项 | 用途 | 配置位置 |
+| --- | --- | --- |
+| MySQL | 业务数据、训练任务、下发任务 | `application-dev.yml` / `application-prod.yml` |
+| Redis | 登录状态、缓存和分布式状态 | `application-dev.yml` / `application-prod.yml` |
+| MinIO | 算法标注图片、数据集和普通文件上传 | 数据库表 `sys_oss_config` |
+| GPU 训练服务器 | 训练、格式转换、模型产物保存 | `VLSTREAM_SSH_*`、`VLSTREAM_TRAINING_*` |
+| MQTT Broker | 设备控制、模型任务发布和硬件回执 | `VLSTREAM_MQTT_*` |
+| 模型下载入口 | 现场设备通过 HTTP 拉取模型 | `VLSTREAM_MODEL_*` |
+| GPT/AI 服务 | AI 文本生成和文生图 | 前端 APaaS 网关配置及独立 `apaas-ai` 服务 |
+
+推荐通过部署环境注入敏感配置，不要把真实密码、密钥提交到 Git：
+
+```bash
+# MySQL
+MYSQL_HOST=mysql.example.internal
+MYSQL_PORT=3306
+MYSQL_DB_NAME=vlstream
+MYSQL_USERNAME=vlstream
+MYSQL_PASSWORD=replace-me
+
+# Redis
+REDIS_HOST=redis.example.internal
+REDIS_PORT=6379
+REDIS_PASSWORD=replace-me
+
+# GPU 训练服务器；模型产物实际保存在该服务器的 /data/work
+VLSTREAM_SSH_HOST=gpu.example.internal
+VLSTREAM_SSH_PORT=22
+VLSTREAM_SSH_USERNAME=vlstream
+VLSTREAM_SSH_PASSWORD=replace-me
+VLSTREAM_TRAINING_HOST_DATA_DIR=/data/work
+VLSTREAM_TRAINING_WORK_DIR=/data/work/ultralytics_yolov8-main/datasets
+
+# MQTT
+VLSTREAM_MQTT_HOST=127.0.0.1
+VLSTREAM_MQTT_PORT=1883
+VLSTREAM_MQTT_USERNAME=vlstream
+VLSTREAM_MQTT_PASSWORD=replace-me
+VLSTREAM_MQTT_TOPIC_PREFIX=oortcloud
+VLSTREAM_MQTT_DISPATCH_ALGORITHMS_TOPIC=oortcloud/dispatchAlgorithms
+VLSTREAM_MQTT_QOS=1
+
+# 模型下发；PUBLIC_BASE_URL 必须能被现场硬件访问
+VLSTREAM_MODEL_PUBLIC_BASE_URL=https://vlstream.example.com
+VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET=replace-with-a-long-random-secret
+VLSTREAM_MODEL_DOWNLOAD_URL_TTL_SECONDS=1800
+VLSTREAM_MODEL_DISPATCH_REPLY_TOPIC=oortcloud/modelDispatch/reply/#
+VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID=vls-model-dispatch-backend-01
+```
+
+多实例部署时，每个后端实例的 `VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID` 必须唯一。
+MQTT Topic、ACL 和硬件行为不在 README 重复维护，统一查看
+[硬件 IoT MQTT 接入协议](./VLStream-Cloud-Backend-Server/vls-stream/doc/iot-mqtt-device-integration.md)。
+
+#### EMQX 5.4 本地测试环境
+
+项目 Compose 使用内网镜像
+`192.168.88.150:80/opensource/emqx/emqx:5.4`，运行单节点 EMQX 5.4：
+
+- Java 后端 MQTT：`127.0.0.1:1883`。
+- 当前硬件联调 MQTT：`192.168.88.31:1883`。
+- Dashboard：`http://192.168.88.31:18083`。
+- 数据目录：`/docker/emqx/data`。
+- 日志目录：`/docker/emqx/log`。
+- MQTT 3.1.1 用户名密码认证：启用。
+- TLS、WebSocket 和 WSS：本地测试环境关闭。
+
+先复制环境变量模板并修改所有占位密码：
+
+```powershell
+cd VLStream-Cloud-Backend-Server/vls-stream
+Copy-Item script/docker/.env.example script/docker/.env
+```
+
+`.env` 已被 Git 忽略，不能提交。镜像仓库需要先登录：
+
+```powershell
+docker login 192.168.88.150:80
+```
+
+如果 Docker 报错 `server gave HTTP response to HTTPS client`，说明该仓库使用
+HTTP，需要在部署机器的 Docker daemon 中加入：
+
+```json
+{
+  "insecure-registries": ["192.168.88.150:80"]
+}
+```
+
+修改 Docker daemon 配置后必须重启 Docker。然后启动 EMQX，并初始化本地 MQTT
+用户：
+
+```powershell
+docker compose --env-file script/docker/.env -f script/docker/docker-compose.yml up -d emqx
+pwsh -File script/docker/init-emqx.ps1
+```
+
+`init-emqx.ps1` 会从 `.env` 读取 `VLSTREAM_MQTT_USERNAME` 和
+`VLSTREAM_MQTT_PASSWORD`，通过 EMQX 5.4 API 幂等创建或更新本地测试用户，不会把
+密码写进 Git。EMQX 5.4 不支持较新版本的认证用户启动文件，因此不能使用 5.7
+以后的 `bootstrap_file` 配置替代此步骤。
+
+本地从源码启动 Java 后端时，也必须把 `.env` 中相同的 MQTT 用户名和密码设置为
+进程环境变量。`application.yml` 默认连接 `127.0.0.1:1883`，但不再提供默认密码。
+
+后端和 EMQX 在同一台服务器时使用 `127.0.0.1:1883`；硬件设备不能使用
+`127.0.0.1`，当前联调地址固定为 `192.168.88.31:1883`。部署机器防火墙需要允许
+硬件网段访问 TCP `1883`；Dashboard 的 TCP `18083` 只应向管理网段开放。
+
+#### MinIO 与算法标注
+
+算法标注上传通过 RuoYi OSS 服务读取数据库表 `sys_oss_config`，不是读取 `application.yml` 中的固定 MinIO 账号。首次启动后，在对象存储配置中启用一条 `config_key=minio` 的记录，并填写：
+
+- `access_key`：MinIO Access Key。
+- `secret_key`：MinIO Secret Key。
+- `bucket_name`：模型数据和标注图片使用的 Bucket。
+- `endpoint`：例如 `minio.example.internal:9000`，不要误填控制台端口。
+- `domain`：浏览器或训练服务器访问对象时使用的外部域名，可按部署方式留空。
+- `is_https`：外部访问是否使用 HTTPS。
+- `access_policy`：按现场安全要求选择；若使用私有桶，必须确认下载链路能够取得有效签名 URL。
+- `status`：必须为启用状态。
+
+MinIO 的数据目录必须挂载到持久化磁盘。后端、浏览器和 GPU 训练服务器都需要能够解析并访问最终生成的对象 URL，否则会出现“上传成功但标注页或训练任务无法读取图片”。
+
+#### GPT/AI 服务器
+
+当前 VLStream 前端不会直接调用 OpenAI，也不在 Java 后端保存 GPT API Key。AI 功能调用以下网关路由：
+
+```text
+{APaaS网关前缀}/apaas-ai/api/v1/text_completion
+{APaaS网关前缀}/apaas-ai/api/v1/text_img
+```
+
+因此需要同时完成两层配置：
+
+1. 在 VLStream 前端配置能够访问 `apaas-ai` 的 APaaS 网关。
+2. 在独立的 `apaas-ai` 服务中配置实际大模型的 Base URL、API Key、模型名称和超时时间；该服务不在本仓库中。
+
+`apaas-ai` 至少需要确认以下服务端参数，具体环境变量名称以该服务自身的部署包为准：
+
+- 大模型提供方的 Base URL。
+- API Key 或内部认证凭据。
+- 文本生成使用的模型名称。
+- 文生图使用的模型名称或服务地址。
+- 请求超时、最大响应长度以及失败重试策略。
+- 服务器到大模型提供方的 DNS、代理和防火墙出口。
+
+开发环境示例：
+
+```bash
+VITE_APAAS_PROXY_TARGET=http://apaas-gateway.example.internal:21410
+```
+
+生产构建示例：
+
+```bash
+VITE_APAAS_GATEWAY_PREFIX=https://gateway.example.com/bus
+```
+
+配置完成后，应直接验证网关能够访问 `apaas-ai/api/v1/text_completion`。只有网关健康但 `apaas-ai` 未配置模型密钥时，前端 AI 按钮仍会调用失败。
 
 Maven Profile 包括 `dev`、`local` 和 `prod`，默认启用 `dev`。
 
@@ -282,7 +469,25 @@ npm install
 npm run dev
 ```
 
+本地开发时还应在前端环境文件中设置：
+
+```bash
+VITE_DEV_PROXY_TARGET=http://127.0.0.1:8080
+VITE_APAAS_PROXY_TARGET=http://apaas-gateway.example.internal:21410
+```
+
 使用 `npm run build` 构建生产环境前端资源。
+
+#### 启动后验收
+
+部署完成后至少验证：
+
+1. 后端 `/actuator/health` 正常，能够连接 MySQL 和 Redis。
+2. 在文件管理中上传测试图片，并从浏览器打开返回的 MinIO URL。
+3. 新建算法标注任务，确认图片可显示、标注结果可保存。
+4. 调用 GPT 文本生成功能，确认请求实际到达 `apaas-ai`。
+5. 按硬件 IoT MQTT 接入协议完成 MQTT 和模型下发联调验收。
+6. 执行一次训练任务，确认容器调度、日志和 `/data/work` 模型产物均正常。
 
 ---
 
@@ -319,13 +524,17 @@ npm run dev
 
 ```powershell
 cd VLStream-Cloud-Backend-Server/vls-stream
-docker compose -f script/docker/docker-compose.yml up -d
+Copy-Item script/docker/.env.example script/docker/.env
+docker login 192.168.88.150:80
+docker compose --env-file script/docker/.env -f script/docker/docker-compose.yml up -d emqx
+pwsh -File script/docker/init-emqx.ps1
+docker compose --env-file script/docker/.env -f script/docker/docker-compose.yml up -d
 ```
 
 停止服务：
 
 ```powershell
-docker compose -f script/docker/docker-compose.yml down
+docker compose --env-file script/docker/.env -f script/docker/docker-compose.yml down
 ```
 
 > [!TIP]
@@ -340,6 +549,7 @@ docker compose -f script/docker/docker-compose.yml down
 | 前端指南 | [`VLStream-Web/README.md`](./VLStream-Web/README.md) |
 | 前端中文指南 | [`VLStream-Web/README-cn.md`](./VLStream-Web/README-cn.md) |
 | 后端环境变量 | [`ENVIRONMENT_VARIABLES.md`](./VLStream-Cloud-Backend-Server/vls-stream/ENVIRONMENT_VARIABLES.md) |
+| 硬件 IoT MQTT 接入协议（含模型下发） | [`iot-mqtt-device-integration.md`](./VLStream-Cloud-Backend-Server/vls-stream/doc/iot-mqtt-device-integration.md) |
 | API 文档 | 启动后端后访问 Knife4j 或 Swagger UI |
 
 ---
