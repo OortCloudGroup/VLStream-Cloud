@@ -425,7 +425,9 @@ const menuRoutesMap = {
     { path: '/intelligent-analysis-result', meta: { title: '智能分析结果', icon: '智能分析结果' } },
     { path: '/device-management', meta: { title: '设备管理', icon: '设备管理' } },
     // { path: '/camera-settings', meta: { title: '设置摄像机', icon: '摄像机设置' } },
-    { path: '/tag-management', meta: { title: '标签管理', icon: '标签管理' } }
+    { path: '/tag-management', meta: { title: '标签管理', icon: '标签管理' } },
+    { path: '/region-management', meta: { title: '区域管理', icon: '区域管理' } },
+    { path: '/group-management', meta: { title: '分组管理', icon: '分组管理' } }
   ],
   'decision-ai': [
     { path: '/event-management', meta: { title: '事件管理', icon: '事件' } },
@@ -799,6 +801,8 @@ const getMenuIcon = (iconName) => {
     '智能分析结果': Search,
     '场景治理': Setting,
     '标签管理': Collection,
+    '区域管理': OfficeBuilding,
+    '分组管理': Collection,
     '算法训练平台': School,
     '算法标注': DataAnalysis,
     '算法训练': School,

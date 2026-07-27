@@ -36,9 +36,9 @@
               <template #default="{ node, data }">
                 <div class="custom-tree-node flexRowAC">
                   <span class="tree-node-label">{{ node.label }}</span>
-                  <div v-if="data.type !== 'root' && node.level === 2" class="tree-node-actions flexRowAC" @click.stop>
-                    <oort-svg-icon width="16" height="16" name="delete" color="red" @click="deleteNode(data)" />
-                    <oort-svg-icon width="16" height="16" name="add" @click="addChild(data)" />
+                  <div v-if="data.type !== 'root'" class="tree-node-actions flexRowAC" @click.stop>
+                    <oort-svg-icon v-if="data.level > 1" width="16" height="16" name="delete" color="red" @click="deleteNode(data)" />
+                    <oort-svg-icon v-if="data.level === 1" width="16" height="16" name="add" @click="addChild(data)" />
                   </div>
                 </div>
               </template>
@@ -317,7 +317,7 @@ import {
   deleteTag,
   batchDeleteTags,
   getTagDevices
-} from '@/api/tagManagement'
+} from '@/api/eventGroupTagManagement'
 import { getDeviceById, getDeviceList, getDeviceTree } from '@/api/device'
 
 // 当前激活的标签页
@@ -1314,9 +1314,8 @@ const handleSave = async () => {
           tagForm.categoryType = tagForm.parentId
         }
       } else {
-        // 如果是数字ID，转换为Long类型
-        const parentIdNum = parseInt(tagForm.parentId)
-        processedParentId = isNaN(parentIdNum) ? null : parentIdNum
+        // V2 分组 UID 为字符串，不能转换为 Number，否则会丢失精度。
+        processedParentId = String(tagForm.parentId)
       }
     }
 

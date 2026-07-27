@@ -80,7 +80,7 @@
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getTagTree } from '@/api/tagManagement'
+import { getTagTree } from '@/api/eventGroupTagManagement'
 
 const props = defineProps({
   modelValue: {
@@ -156,7 +156,7 @@ const loadTagTree = async () => {
   try {
     const response = await getTagTree()
     
-    if (response.code === 200 && response.data) {
+    if ((!response.code || response.code === 200) && response.data) {
       tagTreeData.value = response.data
       console.log('加载标签树数据:', response.data)
     } else {
