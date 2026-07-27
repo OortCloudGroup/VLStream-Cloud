@@ -73,6 +73,8 @@ public class LocationTaskCompatService {
     private static final String TABLE_GROUP_V2 = "`oort_definition_table_group_v2`";
     private static final String TABLE_GROUP_APP_V2 = "`ap_definition_table_group_app_v2`";
     private static final String TABLE_GROUP_CONFIG_V2 = "`ap_definition_app_group_config_v2`";
+    private static final String VLS_TAG = "`vls_tag_management`";
+    private static final String VLS_DEVICE_TAG = "`vls_device_tag_relation`";
     private static final String APP = "`wf_form_app`";
     private static final String USER = "`sys_user`";
     private static final String DEPT = "`sys_dept`";
@@ -385,10 +387,10 @@ public class LocationTaskCompatService {
             args.add(deptId);
         } else if (!groupUid.isEmpty()) {
             from.append(" LEFT JOIN ").append(OLD_APP_GROUP_DEVICE).append(" gd ON gd.device_id = te.device_id ")
-                .append(" LEFT JOIN ").append(OLD_APP_GROUP).append(" ag ON ag.uid = gd.uid ")
-                .append(" LEFT JOIN ").append(OLD_APP_GROUP)
-                .append(" ag2 ON ag.uid_path LIKE CONCAT(ag2.uid_path,'%') ");
-            where.add("ag2.tenant_id = ? AND ag2.uid = ?");
+                .append(" LEFT JOIN ").append(TABLE_GROUP_V2).append(" g ON g.uid = gd.uid ")
+                .append(" LEFT JOIN ").append(TABLE_GROUP_V2)
+                .append(" g2 ON g.uid_path LIKE CONCAT(g2.uid_path,'%') ");
+            where.add("g2.tenant_id = ? AND g2.uid = ?");
             args.add(user.getTenantId());
             args.add(groupUid);
         }
@@ -654,6 +656,7 @@ public class LocationTaskCompatService {
     /**
      * Return the V2 groups authorized to the requested application.
      */
+    @Transactional(rollbackFor = Exception.class)
     public LocationTaskResult<?> eventGroupListV2(Map<String, Object> body, UserContext user) {
         String appId = stringValue(body, "app_id");
         int groupType = intValue(body, "group_type", 0);
@@ -719,6 +722,52 @@ public class LocationTaskCompatService {
     }
 
     /**
+     * Return the complete authorized V2 group tree in one request.
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public LocationTaskResult<?> eventGroupTreeV2(Map<String, Object> body, UserContext user) {
+        String appId = stringValue(body, "app_id");
+        int groupType = intValue(body, "group_type", 0);
+        if (appId.isEmpty() || groupType < 1 || groupType > 3) {
+            return parameterError("参数错误 app_id和group_type不能为空");
+        }
+        if (!appExists(user.getTenantId(), appId)) {
+            return error(NOT_FOUND, "应用不存在");
+        }
+        if (groupType == 3) {
+            ensureLegacyVlsTagsMigrated(appId, user.getTenantId());
+        }
+        List<Map<String, Object>> grants = appGroupGrants(user.getTenantId(), appId);
+        if (grants.isEmpty()) {
+            return LocationTaskResult.success(singleListPayload(new ArrayList<Object>()));
+        }
+        List<Map<String, Object>> rows = jdbc.queryForList("SELECT * FROM " + TABLE_GROUP_V2
+            + " WHERE tenant_id = ? AND group_type = ? ORDER BY puid ASC, sort ASC", user.getTenantId(), groupType);
+        LinkedHashMap<String, Map<String, Object>> nodes = new LinkedHashMap<String, Map<String, Object>>();
+        for (Map<String, Object> row : rows) {
+            if (!isGroupAuthorized(row, grants)) {
+                continue;
+            }
+            Map<String, Object> node = toGroupV2(row);
+            node.put("children", new ArrayList<Map<String, Object>>());
+            nodes.put(string(row.get("uid")), node);
+        }
+        List<Map<String, Object>> roots = new ArrayList<Map<String, Object>>();
+        for (Map<String, Object> node : nodes.values()) {
+            String parentUid = string(node.get("puid"));
+            Map<String, Object> parent = nodes.get(parentUid);
+            if (parent == null) {
+                roots.add(node);
+            } else {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> children = (List<Map<String, Object>>) parent.get("children");
+                children.add(node);
+            }
+        }
+        return LocationTaskResult.success(singleListPayload(roots));
+    }
+
+    /**
      * Preserve the original deprecated V1 event-group save endpoint.
      */
     public LocationTaskResult<?> eventGroupSaveV1(Map<String, Object> body, UserContext user) {
@@ -730,6 +779,120 @@ public class LocationTaskCompatService {
      */
     public LocationTaskResult<?> eventGroupDeleteV1(Map<String, Object> body, UserContext user) {
         return LocationTaskResult.deprecated();
+    }
+
+    /**
+     * Create or update one V2 group shared by video aggregation and active safety.
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public LocationTaskResult<?> eventGroupSaveV2(Map<String, Object> body, UserContext user) {
+        String appId = stringValue(body, "app_id");
+        int groupType = intValue(body, "group_type", 0);
+        String name = stringValue(body, "name").trim();
+        String uid = stringValue(body, "uid");
+        if (appId.isEmpty() || groupType < 1 || groupType > 3 || name.isEmpty() || name.length() > 50) {
+            return parameterError("参数错误 app_id、group_type和name不能为空，name最长50个字符");
+        }
+        if (!appExists(user.getTenantId(), appId)) {
+            return error(NOT_FOUND, "应用不存在");
+        }
+        if (groupType == 3) {
+            ensureLegacyVlsTagsMigrated(appId, user.getTenantId());
+        }
+
+        String remark = stringValue(body, "remark");
+        if (remark.length() > 255) {
+            return parameterError("参数错误 remark最长255个字符");
+        }
+        if (!uid.isEmpty()) {
+            Map<String, Object> existing = findGroupV2(uid);
+            if (existing == null || !user.getTenantId().equals(string(existing.get("tenant_id")))) {
+                return error(GROUP_NOT_FOUND, "没找到分组记录");
+            }
+            if (number(existing.get("group_type")).intValue() != groupType
+                || !isGroupAuthorized(existing, appGroupGrants(user.getTenantId(), appId))) {
+                return error(GROUP_APP_NOT_AUTHORIZED, "应用分组没有权限");
+            }
+            if (groupNameExists(user.getTenantId(), groupType, string(existing.get("puid")), name, uid)) {
+                return parameterError("同级分组名称已存在");
+            }
+            jdbc.update("UPDATE " + TABLE_GROUP_V2 + " SET name = ?, remark = ?, updated_at = NOW() WHERE uid = ?",
+                name, remark, uid);
+            return LocationTaskResult.success(toGroupV2(findGroupV2(uid)));
+        }
+
+        String parentUid = stringValue(body, "puid");
+        String parentPath = "";
+        if (!parentUid.isEmpty()) {
+            Map<String, Object> parent = findGroupV2(parentUid);
+            if (parent == null || !user.getTenantId().equals(string(parent.get("tenant_id")))) {
+                return error(GROUP_NOT_FOUND, "没找到父级分组记录");
+            }
+            if (number(parent.get("group_type")).intValue() != groupType
+                || !isGroupAuthorized(parent, appGroupGrants(user.getTenantId(), appId))) {
+                return error(GROUP_APP_NOT_AUTHORIZED, "父级分组没有应用权限");
+            }
+            parentPath = string(parent.get("uid_path"));
+        }
+        if (groupNameExists(user.getTenantId(), groupType, parentUid, name, "")) {
+            return parameterError("同级分组名称已存在");
+        }
+
+        uid = IdUtil.getSnowflakeNextIdStr();
+        String uidPath = parentPath + uid + "/";
+        int sort = number(jdbc.queryForObject("SELECT COALESCE(MAX(sort), 0) FROM " + TABLE_GROUP_V2
+            + " WHERE tenant_id = ? AND group_type = ? AND puid = ?", Object.class,
+            user.getTenantId(), groupType, parentUid)).intValue() + 1;
+        jdbc.update("INSERT INTO " + TABLE_GROUP_V2
+                + " (`uid`,`tenant_id`,`group_type`,`name`,`puid`,`uid_path`,`remark`,`sort`,`created_at`,`updated_at`) "
+                + "VALUES (?,?,?,?,?,?,?,?,NOW(),NOW())",
+            uid, user.getTenantId(), groupType, name, parentUid, uidPath, remark, sort);
+        if (parentUid.isEmpty()) {
+            jdbc.update("INSERT INTO " + TABLE_GROUP_APP_V2
+                    + " (`id`,`app_id`,`group_uid`,`group_type`,`tenant_id`,`uid_path`,`authorize_at`,`created_at`,`updated_at`) "
+                    + "VALUES (?,?,?,?,?,?,?,NOW(),NOW())",
+                IdUtil.getSnowflakeNextIdStr(), appId, uid, groupType, user.getTenantId(), uidPath,
+                System.currentTimeMillis());
+        }
+        return LocationTaskResult.success(toGroupV2(findGroupV2(uid)));
+    }
+
+    /**
+     * Delete a leaf V2 group and its application configuration.
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public LocationTaskResult<?> eventGroupDeleteV2(Map<String, Object> body, UserContext user) {
+        String uid = stringValue(body, "uid");
+        String appId = stringValue(body, "app_id");
+        if (uid.isEmpty() || appId.isEmpty()) {
+            return parameterError("参数错误 uid和app_id不能为空");
+        }
+        if (!appExists(user.getTenantId(), appId)) {
+            return error(NOT_FOUND, "应用不存在");
+        }
+        Map<String, Object> group = findGroupV2(uid);
+        if (group == null || !user.getTenantId().equals(string(group.get("tenant_id")))) {
+            return error(GROUP_NOT_FOUND, "没找到分组记录");
+        }
+        if (!isGroupAuthorized(group, appGroupGrants(user.getTenantId(), appId))) {
+            return error(GROUP_APP_NOT_AUTHORIZED, "应用分组没有权限");
+        }
+        Long children = jdbc.queryForObject("SELECT COUNT(*) FROM " + TABLE_GROUP_V2 + " WHERE puid = ?", Long.class, uid);
+        if (children != null && children > 0L) {
+            return parameterError("请先删除子级分组");
+        }
+        Long sharedReferences = jdbc.queryForObject("SELECT COUNT(*) FROM " + TABLE_GROUP_CONFIG_V2
+            + " WHERE group_uid = ? AND app_id <> ?", Long.class, uid, appId);
+        Long sharedGrants = jdbc.queryForObject("SELECT COUNT(*) FROM " + TABLE_GROUP_APP_V2
+            + " WHERE group_uid = ? AND app_id <> ?", Long.class, uid, appId);
+        if ((sharedReferences != null && sharedReferences > 0L) || (sharedGrants != null && sharedGrants > 0L)) {
+            return parameterError("该分组仍被其他应用使用，不能删除");
+        }
+        jdbc.update("DELETE FROM " + TABLE_GROUP_CONFIG_V2 + " WHERE group_uid = ?", uid);
+        jdbc.update("DELETE FROM " + TABLE_GROUP_APP_V2 + " WHERE group_uid = ? AND tenant_id = ?", uid, user.getTenantId());
+        jdbc.update("DELETE FROM " + OLD_APP_GROUP_DEVICE + " WHERE uid = ?", uid);
+        jdbc.update("DELETE FROM " + TABLE_GROUP_V2 + " WHERE uid = ?", uid);
+        return LocationTaskResult.success();
     }
 
     /**
@@ -1625,7 +1788,84 @@ public class LocationTaskCompatService {
             "SELECT COUNT(*) FROM " + APP
                 + " WHERE tenant_id = ? AND application_id = ? AND COALESCE(del_flag,'0') = '0'",
             Long.class, tenantId, appId);
+        if ((count == null || count == 0L) && singleTenantId.equals(tenantId)) {
+            count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM " + APP
+                    + " WHERE application_id = ? AND COALESCE(del_flag,'0') = '0'",
+                Long.class, appId);
+        }
         return count != null && count > 0L;
+    }
+
+    /**
+     * Import the pre-existing video-aggregation tags once into the V2 shared group model.
+     * The deterministic UID keeps this migration idempotent and preserves device associations.
+     */
+    private void ensureLegacyVlsTagsMigrated(String appId, String tenantId) {
+        List<Map<String, Object>> legacyTags = jdbc.queryForList(
+            "SELECT id, tag_name, parent_id, sort_order, description FROM " + VLS_TAG
+                + " WHERE tenant_id = ? AND is_deleted = 0 ORDER BY level ASC, sort_order ASC, id ASC",
+            tenantId);
+        for (Map<String, Object> legacyTag : legacyTags) {
+            String legacyId = string(legacyTag.get("id"));
+            if (legacyId.isEmpty()) {
+                continue;
+            }
+            String uid = "vls-tag-" + legacyId;
+            Map<String, Object> existing = findGroupV2(uid);
+            if (existing != null) {
+                if (string(existing.get("puid")).isEmpty()) {
+                    ensureV2GroupGrant(appId, tenantId, uid, string(existing.get("uid_path")));
+                }
+                continue;
+            }
+            String parentLegacyId = string(legacyTag.get("parent_id"));
+            String parentUid = parentLegacyId.isEmpty() ? "" : "vls-tag-" + parentLegacyId;
+            Map<String, Object> parent = parentUid.isEmpty() ? null : findGroupV2(parentUid);
+            String parentPath = parent == null ? "" : string(parent.get("uid_path"));
+            String uidPath = parentPath + uid + "/";
+            jdbc.update("INSERT INTO " + TABLE_GROUP_V2
+                    + " (`uid`,`tenant_id`,`group_type`,`name`,`puid`,`uid_path`,`remark`,`sort`,`created_at`,`updated_at`) "
+                    + "VALUES (?,?,?,?,?,?,?,?,NOW(),NOW())",
+                uid, tenantId, 3, string(legacyTag.get("tag_name")), parentUid, uidPath,
+                string(legacyTag.get("description")), number(legacyTag.get("sort_order")).intValue());
+            if (parentUid.isEmpty()) {
+                ensureV2GroupGrant(appId, tenantId, uid, uidPath);
+            }
+        }
+
+        List<Map<String, Object>> relations = jdbc.queryForList(
+            "SELECT r.device_id, r.tag_id FROM " + VLS_DEVICE_TAG + " r JOIN " + VLS_TAG
+                + " t ON t.id = r.tag_id WHERE t.tenant_id = ? AND t.is_deleted = 0 AND r.is_deleted = 0",
+            tenantId);
+        for (Map<String, Object> relation : relations) {
+            String tagUid = "vls-tag-" + string(relation.get("tag_id"));
+            String deviceId = string(relation.get("device_id"));
+            if (deviceId.isEmpty() || findGroupV2(tagUid) == null) {
+                continue;
+            }
+            Long count = jdbc.queryForObject("SELECT COUNT(*) FROM " + OLD_APP_GROUP_DEVICE
+                + " WHERE uid = ? AND device_id = ?", Long.class, tagUid, deviceId);
+            if (count == null || count == 0L) {
+                jdbc.update("INSERT INTO " + OLD_APP_GROUP_DEVICE
+                        + " (`id`,`uid`,`table_id`,`device_id`,`created_at`,`updated_at`) VALUES (?,?,?,?,NOW(),NOW())",
+                    IdUtil.getSnowflakeNextIdStr(), tagUid, appId, deviceId);
+            }
+        }
+    }
+
+    /**
+     * Give the active-safety application access to one root V2 group when needed.
+     */
+    private void ensureV2GroupGrant(String appId, String tenantId, String uid, String uidPath) {
+        Long count = jdbc.queryForObject("SELECT COUNT(*) FROM " + TABLE_GROUP_APP_V2
+            + " WHERE app_id = ? AND group_uid = ? AND tenant_id = ?", Long.class, appId, uid, tenantId);
+        if (count == null || count == 0L) {
+            jdbc.update("INSERT INTO " + TABLE_GROUP_APP_V2
+                    + " (`id`,`app_id`,`group_uid`,`group_type`,`tenant_id`,`uid_path`,`authorize_at`,`created_at`,`updated_at`) "
+                    + "VALUES (?,?,?,?,?,?,?,NOW(),NOW())",
+                IdUtil.getSnowflakeNextIdStr(), appId, uid, 3, tenantId, uidPath, System.currentTimeMillis());
+        }
     }
 
     /**
@@ -1642,6 +1882,25 @@ public class LocationTaskCompatService {
      */
     private Map<String, Object> findGroupV2(String uid) {
         return firstRow("SELECT * FROM " + TABLE_GROUP_V2 + " WHERE uid = ? LIMIT 1", uid);
+    }
+
+    /**
+     * Check whether a sibling already uses the requested name.
+     */
+    private boolean groupNameExists(String tenantId, int groupType, String parentUid, String name, String excludeUid) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM ").append(TABLE_GROUP_V2)
+            .append(" WHERE tenant_id = ? AND group_type = ? AND puid = ? AND name = ?");
+        List<Object> args = new ArrayList<Object>();
+        args.add(tenantId);
+        args.add(groupType);
+        args.add(parentUid);
+        args.add(name);
+        if (!excludeUid.isEmpty()) {
+            sql.append(" AND uid <> ?");
+            args.add(excludeUid);
+        }
+        Long count = jdbc.queryForObject(sql.toString(), Long.class, args.toArray());
+        return count != null && count > 0L;
     }
 
     /**

@@ -313,6 +313,45 @@ public class LocationTaskCompatController {
     }
 
     /**
+     * Create or update a V2 group shared by video aggregation and active safety.
+     */
+    @PostMapping("/task/v2/event_group_save")
+    public LocationTaskResult<?> eventGroupSaveV2(@RequestBody(required = false) Map<String, Object> body) {
+        return execute(body, new AuthenticatedOperation() {
+            @Override
+            public LocationTaskResult<?> execute(Map<String, Object> request, UserContext user) {
+                return taskService.eventGroupSaveV2(request, user);
+            }
+        });
+    }
+
+    /**
+     * Return a complete authorized V2 group tree for management pages.
+     */
+    @PostMapping("/task/v2/event_group_tree")
+    public LocationTaskResult<?> eventGroupTree(@RequestBody(required = false) Map<String, Object> body) {
+        return execute(body, new AuthenticatedOperation() {
+            @Override
+            public LocationTaskResult<?> execute(Map<String, Object> request, UserContext user) {
+                return taskService.eventGroupTreeV2(request, user);
+            }
+        });
+    }
+
+    /**
+     * Delete one leaf V2 group shared by video aggregation and active safety.
+     */
+    @PostMapping("/task/v2/event_group_delete")
+    public LocationTaskResult<?> eventGroupDeleteV2(@RequestBody(required = false) Map<String, Object> body) {
+        return execute(body, new AuthenticatedOperation() {
+            @Override
+            public LocationTaskResult<?> execute(Map<String, Object> request, UserContext user) {
+                return taskService.eventGroupDeleteV2(request, user);
+            }
+        });
+    }
+
+    /**
      * Save the workflow configuration for an event item.
      */
     @PostMapping("/task/v1/event_item_setting_save")

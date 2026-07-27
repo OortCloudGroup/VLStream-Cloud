@@ -82,6 +82,18 @@ export function myEventList(data) {
 export function event_group_list(data) {
   return commonFuncB('task/v2/event_group_list', data, 'post')
 }
+// 一次获取完整 V2 分组树，供管理页使用
+export function event_group_tree(data) {
+  return commonFuncB('task/v2/event_group_tree', data, 'post')
+}
+// 保存 V2 区域、分组或标签（视频汇聚和主动安全共用）
+export function event_group_save_v2(data) {
+  return commonFuncB('task/v2/event_group_save', data, 'post')
+}
+// 删除 V2 区域、分组或标签（仅允许删除叶子节点）
+export function event_group_delete_v2(data) {
+  return commonFuncB('task/v2/event_group_delete', data, 'post')
+}
 // 保存事件分组配置
 export function event_group_save(data) {
   return commonFuncB('task/v1/event_group_save', data, 'post')
