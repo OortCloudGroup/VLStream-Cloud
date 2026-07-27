@@ -161,6 +161,7 @@
   >
     <div class="workspace-player">
       <video
+        v-show="!showSnapshotPreview"
         ref="webrtcVideoEl"
         class="workspace-webrtc-video"
         controls
@@ -168,6 +169,12 @@
         muted
         playsinline
       ></video>
+      <img
+        v-if="showSnapshotPreview"
+        :src="snapshotPreviewUrl"
+        class="workspace-camera-preview"
+        alt="摄像头实时预览"
+      />
     </div>
   </el-dialog>
 </template>
@@ -300,72 +307,21 @@ const startWeatherRefresh = () => {
 const showPlayer = ref(false)
 const webrtcVideoEl = ref(null)
 const currentPlayDevice = ref(null)
+const showSnapshotPreview = ref(false)
+const snapshotPreviewUrl = ref('')
 let webrtcPlayer = null
+let playbackProbeTimer = null
+let snapshotRefreshTimer = null
 
 const hotDevices = ref([])
 
-const approvalData = ref([
-  {
-    deviceName: '海康云台',
-    tag: '球机巡控',
-    deviceId: '65131984',
-    deviceType: '球机',
-    position: '水产大厦19K',
-    algorithm: '人流密度、客流量、物品识别',
-    applicant: '郑明明'
-  },
-  {
-    deviceName: '海康云台',
-    tag: '球机巡控',
-    deviceId: '65131985',
-    deviceType: '球机',
-    position: '水产大厦19K',
-    algorithm: '人流密度、客流量、物品识别',
-    applicant: '郑明明'
-  },
-  {
-    deviceName: '海康云台',
-    tag: '球机巡控',
-    deviceId: '65131986',
-    deviceType: '球机',
-    position: '水产大厦19K',
-    algorithm: '人流密度、客流量、物品识别',
-    applicant: '郑明明'
-  },
-  {
-    deviceName: '海康云台',
-    tag: '球机巡控',
-    deviceId: '65131987',
-    deviceType: '球机',
-    position: '水产大厦19K',
-    algorithm: '人流密度、客流量、物品识别',
-    applicant: '郑明明'
-  },
-  {
-    deviceName: '海康云台',
-    tag: '球机巡控',
-    deviceId: '65131988',
-    deviceType: '球机',
-    position: '水产大厦19K',
-    algorithm: '人流密度、客流量、物品识别',
-    applicant: '郑明明'
-  },
-  {
-    deviceName: '海康云台',
-    tag: '球机巡控',
-    deviceId: '65131989',
-    deviceType: '球机',
-    position: '水产大厦19K',
-    algorithm: '人流密度、客流量、物品识别',
-    applicant: '郑明明'
-  }
-])
+const approvalData = ref([])
 
 let WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
-// 配置请求完成后再生成脚本地址，避免继续使用模块初始化时的默认值。
-const getWebRtcScriptUrls = () => [
-  `${WEBRTC_STREAMER_BASE}/libs/adapter.min.js`,
-  `${WEBRTC_STREAMER_BASE}/webrtcstreamer.js`
+// 播放器脚本随前端发布，避免因 WebRTC 服务端未暴露静态资源而阻断播放。
+const WEBRTC_SCRIPT_URLS = [
+  '/hikvision/adapter.min.js',
+  '/hikvision/webrtcstreamer.js'
 ]
 let webrtcScriptLoader = null
 
@@ -391,14 +347,51 @@ const ensureWebRtcStreamerScripts = async () => {
 
   await ensureWebRTCBackendConfig()
   WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
-  webrtcScriptLoader = Promise.all(getWebRtcScriptUrls().map(loadScriptTag)).catch(error => {
+  webrtcScriptLoader = Promise.all(WEBRTC_SCRIPT_URLS.map(loadScriptTag)).catch(error => {
     webrtcScriptLoader = null
     throw error
   })
   return webrtcScriptLoader
 }
 
+const stopSnapshotPreview = () => {
+  if (playbackProbeTimer) {
+    clearTimeout(playbackProbeTimer)
+    playbackProbeTimer = null
+  }
+  if (snapshotRefreshTimer) {
+    clearInterval(snapshotRefreshTimer)
+    snapshotRefreshTimer = null
+  }
+  showSnapshotPreview.value = false
+  snapshotPreviewUrl.value = ''
+}
+
+const refreshSnapshotPreview = (streamUrl) => {
+  snapshotPreviewUrl.value = `/__camera-preview?stream=${encodeURIComponent(streamUrl)}&t=${Date.now()}`
+}
+
+const startSnapshotPreview = (streamUrl) => {
+  if (!import.meta.env.DEV || showSnapshotPreview.value) return
+
+  showSnapshotPreview.value = true
+  refreshSnapshotPreview(streamUrl)
+  snapshotRefreshTimer = setInterval(() => refreshSnapshotPreview(streamUrl), 1000)
+  ElMessage.warning('WebRTC 转流未返回视频帧，已切换为相机实时预览')
+}
+
+const monitorWebRtcPlayback = (streamUrl) => {
+  if (!import.meta.env.DEV) return
+
+  playbackProbeTimer = setTimeout(() => {
+    const videoEl = webrtcVideoEl.value
+    const hasVideoFrame = videoEl && videoEl.readyState >= 2 && videoEl.videoWidth > 0
+    if (!hasVideoFrame) startSnapshotPreview(streamUrl)
+  }, 5000)
+}
+
 const cleanupWebrtcPlayer = async () => {
+  stopSnapshotPreview()
   if (webrtcPlayer) {
     try {
       if (typeof webrtcPlayer.disconnect === 'function') {
@@ -433,6 +426,7 @@ const handlePlay = async (device) => {
   }
 
   currentPlayDevice.value = device
+  stopSnapshotPreview()
   showPlayer.value = true
 
   try {
@@ -455,8 +449,10 @@ const handlePlay = async (device) => {
 
     if (typeof webrtcPlayer.connect === 'function') {
       webrtcPlayer.connect(streamUrl, '', 'rtptransport=tcp&timeout=60')
+      monitorWebRtcPlayback(streamUrl)
     } else if (typeof webrtcPlayer.play === 'function') {
       webrtcPlayer.play(streamUrl)
+      monitorWebRtcPlayback(streamUrl)
     } else {
       throw new Error('WebRtcStreamer 缺少 connect/play 方法')
     }
@@ -532,6 +528,13 @@ onBeforeUnmount(() => {
 }
 
 .workspace-webrtc-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+.workspace-camera-preview {
   width: 100%;
   height: 100%;
   object-fit: contain;
