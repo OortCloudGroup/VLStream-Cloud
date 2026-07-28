@@ -130,11 +130,18 @@
 
 | 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |
 |--------|------|--------|----------|----------|----------|
-| `VLSTREAM_HARDWARE_DISPATCH_URL` | 通知硬件下载并切换模型的接口地址 | `http://192.168.88.98:8888/vlsDeviceInfo/latest-training-model` | 否 | HTTP/HTTPS URL | `http://hardware-service:8888/vlsDeviceInfo/latest-training-model` |
-| `VLSTREAM_MODEL_DOWNLOAD_PUBLIC_BASE_URL` | 硬件设备可访问的后端模型下载根地址 | `http://192.168.88.31:8080` | 否 | HTTP/HTTPS URL，不含末尾业务路径 | `http://vlstream-backend:8080` |
-| `VLSTREAM_HARDWARE_DISPATCH_TIMEOUT_MILLIS` | 单台设备硬件接口请求超时时间 | `10000` | 否 | 大于等于 1000 的毫秒数 | `15000` |
+| `VLSTREAM_MODEL_PUBLIC_BASE_URL` | 硬件设备可访问的后端模型下载根地址 | `http://192.168.88.31:8080` | 是 | HTTP/HTTPS URL，不含末尾业务路径 | `https://vlstream.example.com` |
+| `VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET` | 模型下载短期 URL 的 HMAC-SHA256 签名密钥 | 无 | 是 | 部署方生成的高强度随机字符串，建议至少 32 字节 | 通过 Secret 注入，不写入配置文件 |
+| `VLSTREAM_MODEL_DOWNLOAD_URL_TTL_SECONDS` | 签名下载 URL 有效期 | `1800` | 否 | 大于等于 60 的秒数 | `1800` |
+| `VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID` | 后端模型下发 MQTT 客户端 ID | `vls-model-dispatch-backend` | 是 | 同一 Broker 内唯一 | `vls-model-dispatch-backend-01` |
+| `VLSTREAM_MQTT_HOST` | MQTT Broker 地址 | `127.0.0.1` | 是 | IP 地址或域名 | `192.168.88.31` |
+| `VLSTREAM_MQTT_PORT` | MQTT Broker TCP 端口 | `1883` | 是 | 1-65535 | `1883` |
+| `VLSTREAM_MQTT_USERNAME` | MQTT 用户名 | 无 | 生产必填 | Broker 中存在的用户 | `vlstream-backend` |
+| `VLSTREAM_MQTT_PASSWORD` | MQTT 密码 | 无 | 生产必填 | 高强度密码 | 通过 Secret 注入 |
 
-> 模型下载根地址必须能从设备网络访问。OM 下载接口无需平台登录令牌，请仅在受信任网络中开放，或通过反向代理增加来源限制。
+> 签名密钥由部署方自行生成，只保存在 VLStream 后端；摄像头只接收已经签名的短期
+> `modelUrl`。模型下载根地址必须能从设备网络访问。MQTT Topic、消息结构和硬件处理流程
+> 不在环境变量文档重复维护，统一以 `doc/VLS-Protocol.md` 为准。
 
 ## 九、Swagger文档配置
 

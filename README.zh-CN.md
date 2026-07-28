@@ -68,7 +68,7 @@ VLStream Cloud 是面向设备与视频流管理、智能视频分析、算法�
 
 平台支持通过 MQTT 向硬件下发训练模型。硬件连接、模型下发、事件上报、媒体上传、
 状态回执和联调验收统一以
-[硬件 IoT MQTT 接入协议](./VLStream-Cloud-Backend-Server/vls-stream/doc/iot-mqtt-device-integration.md)
+[VLS 平台与摄像头统一通信协议](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.md)
 为准。
 
 部署时需要配置以下环境变量：
@@ -83,6 +83,18 @@ VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET=replace-with-a-long-random-secret
 ```
 
 `VLSTREAM_MODEL_PUBLIC_BASE_URL` 必须是硬件设备能够访问的后端地址，不是浏览器访问的前端地址。设备下载入口不要求平台登录令牌，但每个任务都使用短期 HMAC 签名 URL。
+`VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET` 由部署方自行生成，只保存在 VLStream 后端，
+不下发给摄像头，也不能在不同环境之间复用。PowerShell 可使用以下命令生成 32 字节随机密钥：
+
+```powershell
+$bytes = New-Object byte[] 32
+[Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+[Convert]::ToBase64String($bytes)
+```
+
+本地使用 IDEA 启动后端时，在 `VLStream Backend` 运行配置的“环境变量”中加入生成后的
+`VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET`。生产环境应通过部署平台的 Secret 或环境变量注入，
+不要把实际密钥写入 `.run`、YAML、README 或 Git。
 
 ---
 
@@ -265,11 +277,12 @@ CREATE DATABASE vlstream CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 cd VLStream-Cloud-Backend-Server/vls-stream
 mysql -u root -p vlstream --execute="source script/sql/mysql/mysql_ry_v0.8.X.sql"
 mysql -u root -p vlstream --execute="source db/2026-07-23-model-dispatch.sql"
+mysql -u root -p vlstream --execute="source db/2026-07-28-vls-protocol-v2-model-deploy.sql"
 mysql -u root -p vlstream --execute="source doc/sql/2026-07-23-gpu-training-scheduler.sql"
 ```
 
 `script/sql/` 下还提供了 Oracle、PostgreSQL 和 SQL Server 的初始化脚本。
-后两条增量 SQL 分别创建模型下发任务表和 GPU 训练调度相关结构。模型下发表使用 `CREATE TABLE IF NOT EXISTS`；GPU 调度脚本包含 `ALTER TABLE ADD COLUMN`，每个数据库只能执行一次。生产环境执行任何增量 SQL 前都应先备份数据库。
+模型下发的两条 SQL 分别创建任务表、增加 V2.2 MQTT `messageId`；GPU 调度脚本创建训练调度相关结构。包含 `ALTER TABLE` 的增量脚本每个数据库只能执行一次，生产环境执行前必须先备份数据库。
 
 ### 3. 配置并启动后端
 
@@ -321,21 +334,20 @@ VLSTREAM_MQTT_HOST=127.0.0.1
 VLSTREAM_MQTT_PORT=1883
 VLSTREAM_MQTT_USERNAME=vlstream
 VLSTREAM_MQTT_PASSWORD=replace-me
-VLSTREAM_MQTT_TOPIC_PREFIX=oortcloud
-VLSTREAM_MQTT_DISPATCH_ALGORITHMS_TOPIC=oortcloud/dispatchAlgorithms
 VLSTREAM_MQTT_QOS=1
 
 # 模型下发；PUBLIC_BASE_URL 必须能被现场硬件访问
 VLSTREAM_MODEL_PUBLIC_BASE_URL=https://vlstream.example.com
 VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET=replace-with-a-long-random-secret
 VLSTREAM_MODEL_DOWNLOAD_URL_TTL_SECONDS=1800
-VLSTREAM_MODEL_DISPATCH_REPLY_TOPIC=oortcloud/modelDispatch/reply/#
 VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID=vls-model-dispatch-backend-01
 ```
 
 多实例部署时，每个后端实例的 `VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID` 必须唯一。
-MQTT Topic、ACL 和硬件行为不在 README 重复维护，统一查看
-[硬件 IoT MQTT 接入协议](./VLStream-Cloud-Backend-Server/vls-stream/doc/iot-mqtt-device-integration.md)。
+VLS-Protocol 2.2 的设备 bus Topic
+`vlstream/v2.2/dev/{deviceId}/bus` 是固定协议，不再通过环境变量修改。Topic、ACL 和
+硬件行为统一查看
+[VLS 平台与摄像头统一通信协议](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.md)。
 
 #### EMQX 5.4 本地测试环境
 
@@ -486,7 +498,7 @@ VITE_APAAS_PROXY_TARGET=http://apaas-gateway.example.internal:21410
 2. 在文件管理中上传测试图片，并从浏览器打开返回的 MinIO URL。
 3. 新建算法标注任务，确认图片可显示、标注结果可保存。
 4. 调用 GPT 文本生成功能，确认请求实际到达 `apaas-ai`。
-5. 按硬件 IoT MQTT 接入协议完成 MQTT 和模型下发联调验收。
+5. 按 `VLS-Protocol.md` 完成 MQTT 和模型下发联调验收。
 6. 执行一次训练任务，确认容器调度、日志和 `/data/work` 模型产物均正常。
 
 ---
@@ -549,7 +561,7 @@ docker compose --env-file script/docker/.env -f script/docker/docker-compose.yml
 | 前端指南 | [`VLStream-Web/README.md`](./VLStream-Web/README.md) |
 | 前端中文指南 | [`VLStream-Web/README-cn.md`](./VLStream-Web/README-cn.md) |
 | 后端环境变量 | [`ENVIRONMENT_VARIABLES.md`](./VLStream-Cloud-Backend-Server/vls-stream/ENVIRONMENT_VARIABLES.md) |
-| 硬件 IoT MQTT 接入协议（含模型下发） | [`iot-mqtt-device-integration.md`](./VLStream-Cloud-Backend-Server/vls-stream/doc/iot-mqtt-device-integration.md) |
+| VLS 平台与摄像头统一通信协议（含模型下发） | [`VLS-Protocol.md`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.md) |
 | API 文档 | 启动后端后访问 Knife4j 或 Swagger UI |
 
 ---

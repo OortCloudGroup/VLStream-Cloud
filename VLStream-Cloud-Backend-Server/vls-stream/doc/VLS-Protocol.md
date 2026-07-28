@@ -931,30 +931,37 @@ platform2dev
 
 AI 推理模型下载、校验、切换推理实例。
 
+> VLStream Cloud 当前实现说明：通信信封、Topic 和回执严格遵守 V2.2；业务字段按
+> 现有训练任务和模型产物落地。当前支持 `pt/onnx/rknn/int8-rknn/om`；平台 ID 是 64 位 Snowflake ID，
+> `algorithmId/trainingId` 均按字符串传输，避免 JSON 数字精度丢失；`modelConfig`
+> 为预留可选字段、当前不下发。模型文件仍保存在
+> GPU 训练服务器，`modelUrl` 是平台生成的短期签名 HTTP 地址，由平台通过 SFTP
+> 流式转发文件，不要求模型预先迁移到 MinIO。
+
 ### 下发 payload 完整字段
 
 |     |     |     |     |
 | --- | --- | --- | --- |
 | **字段** | **类型** | **必填** | **释义** |
 | requestId | string | 是   | 模型任务唯一 ID |
-| algorithmId | int | 是   | 算法业务编号 |
-| trainingId | string | 否   | 训练任务 ID |
-| modelType | string | 是   | om/tensorrt |
+| algorithmId | string | 是   | 平台算法 Snowflake ID |
+| trainingId | string | 是   | 平台训练任务 Snowflake ID |
+| modelType | string | 是   | pt/onnx/rknn/int8-rknn/om，以训练任务实际产物为准 |
 | modelUrl | string | 是   | 短期签名 HTTP 下载地址 |
 | fileName | string | 是   | 模型文件名 |
 | fileSize | number | 是   | 文件字节大小 |
 | sha256 | string | 是   | 文件哈希校验码 |
 | expiresAt | string | 是   | 下载链接过期 UTC 时间 |
-| rollbackEnable | bool | 是   | 失败自动回滚旧模型 |
-| modelConfig | object | 否   | 推理参数阈值 |
-| modelConfig.confThreshold | float | 置信度阈值 |     |
-| modelConfig.nmsThreshold | float | NMS 抑制阈值 |     |
+| rollbackEnable | bool | 是   | 当前实现固定为 true，失败自动回滚旧模型 |
+| modelConfig | object | 否   | 预留推理参数，当前实现不下发 |
+| modelConfig.confThreshold | float | 否   | 置信度阈值 |
+| modelConfig.nmsThreshold | float | 否   | NMS 抑制阈值 |
 
 下发完整示例：
 
 {  
 "protocolVersion": "2.2",  
-"messageId": "cmd-model-77886655-1234-5678-abcd-12345678abcd",  
+"messageId": "77886655-1234-4678-abcd-12345678abcd",  
 "deviceId": "CAM-20260001",  
 "sentAt": "2026-07-24T09:33:00Z",  
 "msgDir": "platform2dev",  
@@ -962,19 +969,15 @@ AI 推理模型下载、校验、切换推理实例。
 "subBizType": "modelDeploy",  
 "payload": {  
 "requestId": "MODEL-TASK-20260724-001",  
-"algorithmId": 1001,  
-"trainingId": "TRAIN-0001",  
+"algorithmId": "2077000000000001001",  
+"trainingId": "2077359187012198403",  
 "modelType": "om",  
-"modelUrl": "https://minio.test.com/ai/model/detect.om",  
+"modelUrl": "http://192.168.88.31:8080/vlsModelDispatch/public/{requestId}/download?expires={unixSeconds}&signature={hmac}",  
 "fileName": "detect.om",  
 "fileSize": 12580000,  
-"sha256": "3f2c9d11e88a77b665443211abcdef00987654321",  
+"sha256": "3f2c9d11e88a77b665443211abcdef009876543210fedcba1234567890abcdef",  
 "expiresAt": "2026-07-25T00:00:00Z",  
-"rollbackEnable": true,  
-"modelConfig": {  
-"confThreshold": 0.5,  
-"nmsThreshold": 0.4  
-}  
+"rollbackEnable": true  
 },  
 "extend": {}  
 }
@@ -993,14 +996,14 @@ AI 推理模型下载、校验、切换推理实例。
 
 {  
 "protocolVersion": "2.2",  
-"messageId": "ack-model-11223344-5566-7788-9900-abcdef123456",  
+"messageId": "11223344-5566-4788-9900-abcdef123456",  
 "deviceId": "CAM-20260001",  
 "sentAt": "2026-07-24T09:33:45Z",  
 "msgDir": "dev2platform",  
 "mainBizType": "aiBiz",  
 "subBizType": "modelDeploy",  
 "payload": {  
-"sourceMsgId": "cmd-model-77886655-1234-5678-abcd-12345678abcd",  
+"sourceMsgId": "77886655-1234-4678-abcd-12345678abcd",  
 "code": 200,  
 "msg": "模型校验通过，部署完成",  
 "errCode": 0,  
