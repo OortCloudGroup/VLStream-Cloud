@@ -1209,7 +1209,7 @@ const saveConfiguration = async () => {
     showAlgorithmPanel.value = false
   } catch (error) {
     console.error('Failed to configure algorithms:', error)
-    ElMessage.error('\u7b97\u6cd5\u914d\u7f6e\u5931\u8d25')
+    // 请求拦截器已经展示后端返回的具体业务错误，避免重复显示通用提示。
   }
 }
 

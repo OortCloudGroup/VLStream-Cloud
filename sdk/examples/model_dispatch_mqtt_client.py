@@ -11,6 +11,9 @@ import os
 import shlex
 import subprocess
 import tempfile
+import time
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 import paho.mqtt.client as mqtt
@@ -22,20 +25,45 @@ MQTT_HOST = os.environ["VLSTREAM_MQTT_HOST"]
 MQTT_PORT = int(os.getenv("VLSTREAM_MQTT_PORT", "1883"))
 MQTT_USERNAME = os.getenv("VLSTREAM_MQTT_USERNAME")
 MQTT_PASSWORD = os.getenv("VLSTREAM_MQTT_PASSWORD")
-DISPATCH_TOPIC = os.getenv("VLSTREAM_MODEL_DISPATCH_TOPIC", "oortcloud/dispatchAlgorithms")
+BUS_TOPIC = f"vlstream/v2.2/dev/{DEVICE_ID}/bus"
 MODEL_DIR = Path(os.getenv("VLSTREAM_MODEL_DIR", "/mnt/models"))
 ACTIVATE_COMMAND = os.getenv("VLSTREAM_MODEL_ACTIVATE_COMMAND", "")
+COMPLETED_MESSAGES = {}
 
 
-def publish_status(client, message, status, detail):
-    """Publish one deployment progress event to the reply topic from the task."""
-    payload = {
-        "requestId": message["requestId"],
-        "deviceId": DEVICE_ID,
+def utc_now():
+    """Return a VLS-Protocol UTC timestamp."""
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def publish_status(client, command, model, status, detail, started_at, file_sha256=""):
+    """Publish one VLS-Protocol 2.2 modelDeploy acknowledgement."""
+    failed = status == "FAILED"
+    biz_data = {
+        "requestId": model["requestId"],
         "status": status,
-        "message": detail,
+        "fileSha256": file_sha256,
+        "costMs": int((time.monotonic() - started_at) * 1000),
     }
-    client.publish(message["replyTopic"], json.dumps(payload), qos=1)
+    reply = {
+        "protocolVersion": "2.2",
+        "messageId": str(uuid.uuid4()),
+        "deviceId": DEVICE_ID,
+        "sentAt": utc_now(),
+        "msgDir": "dev2platform",
+        "mainBizType": "aiBiz",
+        "subBizType": "modelDeploy",
+        "payload": {
+            "sourceMsgId": command["messageId"],
+            "code": 500 if failed else 200,
+            "msg": detail,
+            "errCode": 5001 if failed else 0,
+            "errDetail": detail if failed else "",
+            "bizData": biz_data,
+        },
+        "extend": {},
+    }
+    client.publish(BUS_TOPIC, json.dumps(reply, ensure_ascii=False), qos=1, retain=False)
 
 
 def download_and_verify(message):
@@ -62,53 +90,100 @@ def download_and_verify(message):
             raise ValueError(
                 f"sha256 mismatch: expected={message['sha256']} actual={actual_sha256}"
             )
-        return Path(temp_name)
+        return Path(temp_name), actual_sha256
     except Exception:
         Path(temp_name).unlink(missing_ok=True)
         raise
 
 
 def activate_model(temp_path, message):
-    """Atomically install the file and invoke an optional hardware-specific hook."""
+    """Atomically install the file and restore the previous model if activation fails."""
     target = MODEL_DIR / message["fileName"]
-    os.replace(str(temp_path), str(target))
-    if ACTIVATE_COMMAND:
-        args = [part.replace("{path}", str(target)) for part in shlex.split(ACTIVATE_COMMAND)]
-        subprocess.run(args, check=True, timeout=120)
+    backup = target.with_suffix(target.suffix + ".previous")
+    had_previous = target.exists()
+    if had_previous:
+        os.replace(str(target), str(backup))
+    try:
+        os.replace(str(temp_path), str(target))
+        if ACTIVATE_COMMAND:
+            args = [part.replace("{path}", str(target)) for part in shlex.split(ACTIVATE_COMMAND)]
+            subprocess.run(args, check=True, timeout=120)
+    except Exception:
+        target.unlink(missing_ok=True)
+        if message.get("rollbackEnable", False) and had_previous and backup.exists():
+            os.replace(str(backup), str(target))
+        raise
     return target
 
 
 def handle_dispatch(client, payload):
-    """Process one task only when its hardware device number matches this client."""
-    message = json.loads(payload.decode("utf-8"))
-    if message.get("deviceId") != DEVICE_ID:
+    """Process one platform2dev aiBiz/modelDeploy message from this device bus."""
+    command = json.loads(payload.decode("utf-8"))
+    if (
+        command.get("protocolVersion") != "2.2"
+        or command.get("deviceId") != DEVICE_ID
+        or command.get("msgDir") != "platform2dev"
+        or command.get("mainBizType") != "aiBiz"
+        or command.get("subBizType") != "modelDeploy"
+    ):
         return
+    message = command.get("payload") or {}
     required = {
-        "requestId", "deviceId", "modelType", "modelUrl", "fileName",
-        "fileSize", "sha256", "replyTopic",
+        "requestId", "algorithmId", "modelType", "modelUrl", "fileName",
+        "fileSize", "sha256", "expiresAt", "rollbackEnable",
     }
     missing = sorted(required.difference(message))
     if missing:
         raise ValueError("missing fields: " + ",".join(missing))
+    source_message_id = command.get("messageId")
+    if not source_message_id:
+        raise ValueError("missing messageId")
+    if source_message_id in COMPLETED_MESSAGES:
+        status, detail, file_sha256, started_at = COMPLETED_MESSAGES[source_message_id]
+        publish_status(client, command, message, status, detail, started_at, file_sha256)
+        return
 
+    started_at = time.monotonic()
+    actual_sha256 = ""
     try:
-        publish_status(client, message, "RECEIVED", "task accepted")
-        publish_status(client, message, "DOWNLOADING", "model download started")
-        temp_path = download_and_verify(message)
-        publish_status(client, message, "DOWNLOADED", "model download completed")
-        publish_status(client, message, "VERIFYING", "size and SHA-256 verified")
-        publish_status(client, message, "DEPLOYING", "model activation started")
+        publish_status(client, command, message, "RECEIVED", "task accepted", started_at)
+        publish_status(client, command, message, "DOWNLOADING", "model download started", started_at)
+        temp_path, actual_sha256 = download_and_verify(message)
+        publish_status(
+            client, command, message, "DOWNLOADED", "model download completed",
+            started_at, actual_sha256,
+        )
+        publish_status(
+            client, command, message, "VERIFYING", "size and SHA-256 verified",
+            started_at, actual_sha256,
+        )
+        publish_status(
+            client, command, message, "DEPLOYING", "model activation started",
+            started_at, actual_sha256,
+        )
         target = activate_model(temp_path, message)
-        publish_status(client, message, "SUCCESS", f"model activated: {target.name}")
+        detail = f"model activated: {target.name}"
+        publish_status(
+            client, command, message, "SUCCESS", detail, started_at, actual_sha256,
+        )
+        COMPLETED_MESSAGES[source_message_id] = (
+            "SUCCESS", detail, actual_sha256, started_at,
+        )
     except Exception as exc:
-        publish_status(client, message, "FAILED", str(exc)[:500])
+        detail = str(exc)[:500]
+        publish_status(
+            client, command, message, "FAILED", detail, started_at, actual_sha256,
+        )
+        COMPLETED_MESSAGES[source_message_id] = (
+            "FAILED", detail, actual_sha256, started_at,
+        )
 
 
 def on_connect(client, _userdata, _flags, reason_code, _properties=None):
     """Restore the dispatch subscription after initial connection or reconnect."""
     if int(reason_code) != 0:
         raise RuntimeError(f"MQTT connection failed: {reason_code}")
-    client.subscribe(DISPATCH_TOPIC, qos=1)
+    client.subscribe(BUS_TOPIC, qos=1)
 
 
 def on_message(client, _userdata, mqtt_message):
@@ -123,7 +198,7 @@ def main():
     """Connect to the broker and run until the process is stopped."""
     client = mqtt.Client(
         mqtt.CallbackAPIVersion.VERSION2,
-        client_id=f"vlstream-device-{DEVICE_ID}",
+        client_id=f"vlstream-{DEVICE_ID}",
         clean_session=False,
         protocol=mqtt.MQTTv311,
     )

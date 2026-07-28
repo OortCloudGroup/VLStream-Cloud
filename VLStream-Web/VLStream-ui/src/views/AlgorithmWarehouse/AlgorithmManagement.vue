@@ -20,7 +20,7 @@
         target="_blank"
         rel="noopener noreferrer"
       >
-        ModelHub
+        https://vls.oortcloudsmart.com/zh/ModelHub/ModelHub
       </a>
     </div>
 
@@ -1155,7 +1155,7 @@ const handleDeployToDevice = async () => {
     }
   } catch (error) {
     console.error('下发失败:', error)
-    ElMessage.error('下发失败')
+    // 请求拦截器已经展示后端返回的具体业务错误，避免再用通用提示覆盖它。
   }
 }
 
@@ -1566,20 +1566,16 @@ onMounted(() => {
   flex-shrink: 0;
   align-self: center;
   margin: 0 0 8px 12px;
-  padding: 8px 15px;
-  border: 1px solid #409eff;
-  border-radius: 4px;
   color: #409eff;
-  background-color: #fff;
   font-size: 14px;
-  line-height: 1;
-  text-decoration: none;
-  transition: color 0.2s, background-color 0.2s;
+  line-height: 20px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.2s;
 }
 
 .modelhub-button:hover {
-  color: #fff;
-  background-color: #409eff;
+  color: #3d70ff;
 }
 
 /* category-tabs 下方添加按钮 */
