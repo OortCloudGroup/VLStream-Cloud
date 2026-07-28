@@ -5,6 +5,9 @@
 package com.ruoyi.vlstream.test.vlstream.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.vlstream.test.vlstream.config.VlsSshProperties;
 import com.ruoyi.vlstream.test.vlstream.config.VlsTrainingContainerProperties;
 import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmTrainingStatusEnum;
@@ -56,6 +59,8 @@ public class GpuTrainingSchedulerService {
 	private VlsTrainingContainerProperties properties;
 	@Resource
 	private RemoteTrainingService remoteTrainingService;
+	@Resource
+	private ObjectMapper objectMapper;
 
 	private ScheduledExecutorService executor;
 
@@ -116,9 +121,13 @@ public class GpuTrainingSchedulerService {
 		instance.setCpuLimit(properties.getCpuLimit() + " cores");
 		instance.setMemoryLimit(properties.getMemoryLimit());
 		instance.setGpuLimit("GPU " + properties.getGpuIndex() + " (exclusive)");
-		instance.setPortConfig(isBlank(taskType) ? "detect" : taskType.trim());
-		instance.setEnvConfig(command);
-		instance.setVolumeConfig(properties.getHostDataDir() + ":" + properties.getHostDataDir());
+		String resolvedTaskType = isBlank(taskType) ? "detect" : taskType.trim();
+		instance.setPortConfig(toJson(singletonMap("trainType", resolvedTaskType)));
+		instance.setEnvConfig(toJson(singletonMap("launchCommand", command)));
+		Map<String, Object> volumeConfig = new LinkedHashMap<>();
+		volumeConfig.put("hostPath", properties.getHostDataDir());
+		volumeConfig.put("containerPath", properties.getHostDataDir());
+		instance.setVolumeConfig(toJson(volumeConfig));
 		instance.setInstanceStatus(STATUS_QUEUED);
 		instance.setHealthStatus("unknown");
 		instance.setLogsPath(logPath);
@@ -216,7 +225,12 @@ public class GpuTrainingSchedulerService {
 		}
 		ContainerInstance instance = queued.get(0);
 		updateStatus(instance, STATUS_STARTING, null, null);
-		SSHService.SSHExecutionResult start = execute(instance.getEnvConfig());
+		String launchCommand = readJsonText(instance.getEnvConfig(), "launchCommand");
+		if (isBlank(launchCommand)) {
+			fail(instance, "训练容器启动命令不存在");
+			return;
+		}
+		SSHService.SSHExecutionResult start = execute(launchCommand);
 		if (!start.isSuccess() || isBlank(start.getOutput())) {
 			fail(instance, "Docker容器启动失败: " + start.getErrorMsg());
 			return;
@@ -365,7 +379,39 @@ public class GpuTrainingSchedulerService {
 	}
 
 	private String resolveTrainType(ContainerInstance instance) {
-		return isBlank(instance.getPortConfig()) ? "detect" : instance.getPortConfig();
+		String trainType = readJsonText(instance.getPortConfig(), "trainType");
+		return isBlank(trainType) ? "detect" : trainType;
+	}
+
+	private Map<String, Object> singletonMap(String key, String value) {
+		Map<String, Object> result = new LinkedHashMap<>();
+		result.put(key, value);
+		return result;
+	}
+
+	private String toJson(Map<String, Object> value) {
+		try {
+			return objectMapper.writeValueAsString(value);
+		} catch (JsonProcessingException exception) {
+			throw new IllegalStateException("序列化训练容器配置失败", exception);
+		}
+	}
+
+	private String readJsonText(String json, String fieldName) {
+		if (isBlank(json)) {
+			return null;
+		}
+		try {
+			JsonNode root = objectMapper.readTree(json);
+			if (root != null && root.isObject()) {
+				JsonNode value = root.get(fieldName);
+				return value == null || value.isNull() ? null : value.asText();
+			}
+			return root != null && root.isTextual() ? root.asText() : null;
+		} catch (JsonProcessingException exception) {
+			log.warn("Invalid scheduler JSON config, field={}", fieldName);
+			return null;
+		}
 	}
 
 	private RemoteServers requireServer() {
