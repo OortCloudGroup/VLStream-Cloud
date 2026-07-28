@@ -93,7 +93,7 @@ public interface IVlsDeviceInfoService extends BaseService<DeviceInfo> {
 	 *
 	 * @param algorithmId algorithm ID
 	 * @param deviceIds comma-separated device table IDs
-	 * @param modelType pt, onnx, rknn, int8-rknn or om
+	 * @param modelType pt、onnx、rknn、int8-rknn 或 om
 	 * @return true when every selected device task was published
 	 */
 	boolean dispatchAlgorithms(Long algorithmId, String deviceIds, String modelType);

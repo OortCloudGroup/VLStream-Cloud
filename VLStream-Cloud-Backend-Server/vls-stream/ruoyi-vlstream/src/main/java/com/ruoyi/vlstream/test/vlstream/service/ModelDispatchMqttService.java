@@ -106,7 +106,7 @@ public class ModelDispatchMqttService {
 
 			@Override
 			public void messageArrived(String topic, MqttMessage message) {
-				handleReply(topic, new String(message.getPayload(), StandardCharsets.UTF_8));
+				handleIncomingMessage(topic, new String(message.getPayload(), StandardCharsets.UTF_8));
 			}
 
 			@Override
@@ -116,20 +116,41 @@ public class ModelDispatchMqttService {
 		};
 	}
 
-	private void handleReply(String topic, String payload) {
+	void handleIncomingMessage(String topic, String payload) {
 		try {
 			JSONObject json = JSONUtil.parseObj(payload);
-			String requestId = json.getStr("requestId");
+			if (!VlsMqttProtocol.VERSION.equals(json.getStr("protocolVersion"))
+				|| !VlsMqttProtocol.DEVICE_TO_PLATFORM.equals(json.getStr("msgDir"))
+				|| !VlsMqttProtocol.AI_BIZ.equals(json.getStr("mainBizType"))
+				|| !VlsMqttProtocol.MODEL_DEPLOY.equals(json.getStr("subBizType"))) {
+				return;
+			}
 			String deviceId = json.getStr("deviceId");
-			String status = json.getStr("status");
-			String message = json.getStr("message");
-			if (StringUtils.isAnyBlank(requestId, deviceId, status)) {
+			if (!StringUtils.equals(topic, VlsMqttProtocol.deviceBusTopic(deviceId))) {
+				log.warn("Ignoring modelDeploy reply on another device bus: topic={}, deviceId={}",
+					topic, deviceId);
+				return;
+			}
+
+			JSONObject reply = json.getJSONObject("payload");
+			JSONObject bizData = reply == null ? null : reply.getJSONObject("bizData");
+			String sourceMsgId = reply == null ? null : reply.getStr("sourceMsgId");
+			String requestId = bizData == null ? null : bizData.getStr("requestId");
+			String status = bizData == null ? null : bizData.getStr("status");
+			String fileSha256 = bizData == null ? null : bizData.getStr("fileSha256");
+			String message = reply == null ? null : reply.getStr("msg");
+			String errDetail = reply == null ? null : reply.getStr("errDetail");
+			if (StringUtils.isNotBlank(errDetail) && !StringUtils.equals(message, errDetail)) {
+				message = StringUtils.defaultString(message) + ": " + errDetail;
+			}
+			if (StringUtils.isAnyBlank(sourceMsgId, requestId, deviceId, status)) {
 				log.warn("Ignoring incomplete model dispatch reply: topic={}", topic);
 				return;
 			}
-			if (!taskService.applyHardwareReply(requestId, deviceId, status, message, payload)) {
-				log.warn("Ignoring unmatched model dispatch reply: requestId={}, deviceId={}",
-					requestId, deviceId);
+			if (!taskService.applyHardwareReply(
+				sourceMsgId, requestId, deviceId, status, fileSha256, message, payload)) {
+				log.warn("Ignoring unmatched model dispatch reply: sourceMsgId={}, requestId={}, deviceId={}",
+					sourceMsgId, requestId, deviceId);
 			}
 		} catch (Exception ex) {
 			log.error("Failed to process model dispatch reply: topic={}", topic, ex);
@@ -137,34 +158,29 @@ public class ModelDispatchMqttService {
 	}
 
 	private void subscribeReplies(MqttClient mqttClient) throws Exception {
-		String topic = dispatchProperties.getReplyTopic();
-		if (!isAllowedTopic(topic, true)) {
-			throw new IllegalStateException("Invalid MQTT model reply topic: " + topic);
-		}
+		String topic = VlsMqttProtocol.BUS_TOPIC_FILTER;
 		mqttClient.subscribe(topic, qos());
-		log.info("Subscribed to MQTT model dispatch replies: {}", topic);
+		log.info("Subscribed to VLS 2.2 device bus: {}", topic);
 	}
 
 	private boolean isAllowedTopic(String topic, boolean allowWildcard) {
 		if (StringUtils.isBlank(topic)) {
 			return false;
 		}
-		String prefix = StringUtils.defaultIfBlank(mqttProperties.getTopicPrefix(), "oortcloud") + "/";
-		if (!topic.startsWith(prefix)) {
-			return false;
+		if (allowWildcard) {
+			return VlsMqttProtocol.BUS_TOPIC_FILTER.equals(topic);
 		}
-		return allowWildcard || (!topic.contains("#") && !topic.contains("+"));
+		return topic.matches("vlstream/v2\\.2/dev/[^/+#]+/bus");
 	}
 
 	private int qos() {
-		Integer configured = mqttProperties.getQos();
-		return configured == null ? 1 : Math.max(0, Math.min(configured, 2));
+		return 1;
 	}
 
 	private MqttConnectOptions connectOptions() {
 		MqttConnectOptions options = new MqttConnectOptions();
 		options.setAutomaticReconnect(true);
-		options.setCleanSession(true);
+		options.setCleanSession(false);
 		options.setConnectionTimeout(defaultInt(mqttProperties.getConnectionTimeoutSeconds(), 10));
 		options.setKeepAliveInterval(defaultInt(mqttProperties.getKeepAliveSeconds(), 60));
 		if (StringUtils.isNotBlank(mqttProperties.getUsername())) {

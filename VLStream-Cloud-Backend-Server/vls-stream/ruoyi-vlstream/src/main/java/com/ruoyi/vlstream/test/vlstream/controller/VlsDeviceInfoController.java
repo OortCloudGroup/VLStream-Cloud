@@ -470,7 +470,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 接收管理端下发请求，并由服务层逐台通知硬件下载最新 OM 模型。
+	 * 接收管理端下发请求，并通过 VLS-Protocol 2.2 modelDeploy 逐台通知硬件下载指定格式模型。
 	 */
 	@Operation(summary = "摄像头算法下发")
 	@PostMapping("/{algorithmId}/algorithms")
@@ -486,7 +486,7 @@ public class VlsDeviceInfoController extends BladeController {
 	private R<String> dispatchAlgorithmRequest(Long algorithmId, String deviceIds, String modelType) {
 		boolean success = vlsDeviceInfoService.dispatchAlgorithms(algorithmId, deviceIds, modelType);
 		if (success) {
-			return R.success("模型下发任务已通过MQTT发布");
+			return R.success("模型下发任务已通过VLS-Protocol 2.2 MQTT总线发布");
 		} else {
 			return R.fail("算法下发失败，请检查模型产物、设备信息、MQTT和下载地址配置");
 		}

@@ -67,16 +67,25 @@ public class ModelDispatchTaskService {
 		updateStatus(requestId, "FAILED", reason, null, null, null, null);
 	}
 
-	public boolean applyHardwareReply(String requestId, String deviceId, String status,
+	public boolean applyHardwareReply(String sourceMsgId, String requestId, String deviceId,
+									 String status, String fileSha256,
 									 String message, String rawPayload) {
 		ModelDispatchTask task = getByRequestId(requestId);
-		if (task == null || !StringUtils.equals(task.getDeviceId(), deviceId)) {
+		if (task == null
+			|| !StringUtils.equals(task.getMqttMessageId(), sourceMsgId)
+			|| !StringUtils.equals(task.getDeviceId(), deviceId)) {
 			return false;
 		}
 
 		String normalizedStatus = normalizeHardwareStatus(status);
 		if (normalizedStatus == null) {
 			return false;
+		}
+		if ("SUCCESS".equals(normalizedStatus)
+			&& !StringUtils.equalsIgnoreCase(task.getSha256(), StringUtils.trimToEmpty(fileSha256))) {
+			normalizedStatus = "FAILED";
+			message = "Device model SHA-256 mismatch: expected=" + task.getSha256()
+				+ ", actual=" + StringUtils.defaultIfBlank(fileSha256, "empty");
 		}
 		if (!canApplyHardwareStatus(task.getDispatchStatus(), normalizedStatus)) {
 			return true;

@@ -201,12 +201,10 @@ vlstream:
   model-dispatch:
     # 模型文件下载服务的公共地址
     public-base-url: ${VLSTREAM_MODEL_PUBLIC_BASE_URL:http://192.168.88.31:8080}
-    # 下载 URL 签名密钥（为空则不验签）
+    # 下载 URL 的 HMAC-SHA256 签名密钥（必填；由部署方随机生成，仅保存在后端）
     signing-secret: ${VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET:}
     # 下载链接有效期（秒）
     download-url-ttl-seconds: ${VLSTREAM_MODEL_DOWNLOAD_URL_TTL_SECONDS:1800}
-    # MQTT 回复主题（接收设备端下发结果）
-    reply-topic: ${VLSTREAM_MODEL_DISPATCH_REPLY_TOPIC:oortcloud/modelDispatch/reply/#}
     # MQTT 客户端标识
     mqtt-client-id: ${VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID:vls-model-dispatch-backend}
   # RTSP 视频录制配置
@@ -237,8 +235,6 @@ vlstream:
     password: ${VLSTREAM_MQTT_PASSWORD:}
     # 主题前缀（所有自定义主题的公共前缀）
     topic-prefix: ${VLSTREAM_MQTT_TOPIC_PREFIX:oortcloud}
-    # 算法调度主题（接收算法下发指令）
-    dispatch-algorithms-topic: ${VLSTREAM_MQTT_DISPATCH_ALGORITHMS_TOPIC:oortcloud/dispatchAlgorithms}
     # MQTT 客户端 ID 前缀（实际 ID 会追加随机后缀避免冲突）
     client-id-prefix: ${VLSTREAM_MQTT_CLIENT_ID_PREFIX:vls-dispatch}
     # QoS 服务质量等级（0=至多一次，1=至少一次，2=恰好一次）

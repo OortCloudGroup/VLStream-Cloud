@@ -24,6 +24,7 @@ public class ModelDispatchTask extends TenantEntity {
 	private static final long serialVersionUID = 1L;
 
 	private String requestId;
+	private String mqttMessageId;
 	private Long deviceRowId;
 	private String deviceId;
 	private Long algorithmId;

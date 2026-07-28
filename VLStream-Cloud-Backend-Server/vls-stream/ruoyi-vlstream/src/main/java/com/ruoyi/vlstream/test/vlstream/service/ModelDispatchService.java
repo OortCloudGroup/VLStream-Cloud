@@ -6,8 +6,8 @@
 package com.ruoyi.vlstream.test.vlstream.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.config.VlsModelDispatchProperties;
-import com.ruoyi.vlstream.test.vlstream.config.VlsMqttProperties;
 import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmTrainingStatusEnum;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsDeviceInfoMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
@@ -21,6 +21,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import javax.annotation.Resource;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,33 +55,24 @@ public class ModelDispatchService {
 	@Resource
 	private VlsModelDispatchProperties dispatchProperties;
 
-	@Resource
-	private VlsMqttProperties mqttProperties;
-
 	public boolean dispatch(Long algorithmId, String deviceIds, String modelType) {
 		if (algorithmId == null || StringUtils.isBlank(deviceIds)) {
-			return false;
+			throw new ServiceException("算法ID和设备ID不能为空");
 		}
 
 		String normalizedType;
 		PreparedArtifact preparedArtifact;
 		try {
 			normalizedType = artifactService.normalizeType(modelType);
-			preparedArtifact = prepareLatestArtifact(algorithmId, normalizedType);
-			if (preparedArtifact == null) {
-				log.error("No completed training artifact found: algorithmId={}, modelType={}",
-					algorithmId, normalizedType);
-				return false;
-			}
-			validateConfiguration();
-		} catch (Exception ex) {
-			log.error("Cannot prepare model dispatch: algorithmId={}, modelType={}",
-				algorithmId, modelType, ex);
-			return false;
+		} catch (IllegalArgumentException ex) {
+			throw new ServiceException("不支持的模型格式：" + StringUtils.defaultString(modelType), 400);
 		}
+		preparedArtifact = prepareLatestArtifact(algorithmId, normalizedType);
+		validateConfiguration();
 
 		boolean allSucceeded = true;
 		int publishedCount = 0;
+		List<String> failures = new ArrayList<String>();
 		for (String rowIdText : deviceIds.split(",")) {
 			if (StringUtils.isBlank(rowIdText)) {
 				continue;
@@ -96,8 +88,16 @@ public class ModelDispatchService {
 				publishedCount++;
 			} catch (Exception ex) {
 				allSucceeded = false;
+				failures.add("设备记录 " + rowIdText.trim() + "：" + rootMessage(ex));
 				log.error("Model dispatch failed for device row: {}", rowIdText, ex);
 			}
+		}
+		if (!allSucceeded) {
+			String detail = StringUtils.join(failures, "；");
+			if (publishedCount > 0) {
+				throw new ServiceException("部分设备模型下发失败：" + detail);
+			}
+			throw new ServiceException("模型下发失败：" + detail);
 		}
 		return allSucceeded && publishedCount > 0;
 	}
@@ -107,17 +107,17 @@ public class ModelDispatchService {
 								  RemoteModelArtifactService.ArtifactMetadata metadata,
 								  DeviceInfo device) {
 		String requestId = UUID.randomUUID().toString();
+		String mqttMessageId = UUID.randomUUID().toString();
 		long ttl = dispatchProperties.getDownloadUrlTtlSeconds() == null
 			? 1800L : Math.max(60L, dispatchProperties.getDownloadUrlTtlSeconds());
 		long expiresAt = System.currentTimeMillis() / 1000L + ttl;
 		String signature = signatureService.sign(requestId, expiresAt);
 		String downloadUrl = buildDownloadUrl(requestId, expiresAt, signature);
-		String topic = StringUtils.defaultIfBlank(
-			mqttProperties.getDispatchAlgorithmsTopic(), "oortcloud/dispatchAlgorithms");
-		String replyTopic = buildDeviceReplyTopic(device.getDeviceId());
+		String topic = VlsMqttProtocol.deviceBusTopic(device.getDeviceId());
 
 		ModelDispatchTask task = new ModelDispatchTask();
 		task.setRequestId(requestId);
+		task.setMqttMessageId(mqttMessageId);
 		task.setDeviceRowId(device.getId());
 		task.setDeviceId(device.getDeviceId());
 		task.setAlgorithmId(algorithmId);
@@ -132,21 +132,32 @@ public class ModelDispatchService {
 		task.setDownloadExpiresAt(expiresAt);
 		taskService.create(task);
 
-		Map<String, Object> payload = new LinkedHashMap<String, Object>();
-		payload.put("requestId", requestId);
-		payload.put("deviceId", device.getDeviceId());
-		payload.put("algorithmId", algorithmId);
-		payload.put("trainingId", training.getId());
-		payload.put("modelType", modelType);
-		payload.put("modelUrl", downloadUrl);
-		payload.put("fileName", metadata.getFileName());
-		payload.put("fileSize", metadata.getFileSize());
-		payload.put("sha256", metadata.getSha256());
-		payload.put("expiresAt", DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochSecond(expiresAt)));
-		payload.put("replyTopic", replyTopic);
+		Map<String, Object> modelPayload = new LinkedHashMap<String, Object>();
+		modelPayload.put("requestId", requestId);
+		modelPayload.put("algorithmId", String.valueOf(algorithmId));
+		modelPayload.put("trainingId", String.valueOf(training.getId()));
+		modelPayload.put("modelType", modelType);
+		modelPayload.put("modelUrl", downloadUrl);
+		modelPayload.put("fileName", metadata.getFileName());
+		modelPayload.put("fileSize", metadata.getFileSize());
+		modelPayload.put("sha256", metadata.getSha256());
+		modelPayload.put("expiresAt",
+			DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochSecond(expiresAt)));
+		modelPayload.put("rollbackEnable", Boolean.TRUE);
+
+		Map<String, Object> envelope = new LinkedHashMap<String, Object>();
+		envelope.put("protocolVersion", VlsMqttProtocol.VERSION);
+		envelope.put("messageId", mqttMessageId);
+		envelope.put("deviceId", device.getDeviceId());
+		envelope.put("sentAt", DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
+		envelope.put("msgDir", VlsMqttProtocol.PLATFORM_TO_DEVICE);
+		envelope.put("mainBizType", VlsMqttProtocol.AI_BIZ);
+		envelope.put("subBizType", VlsMqttProtocol.MODEL_DEPLOY);
+		envelope.put("payload", modelPayload);
+		envelope.put("extend", new LinkedHashMap<String, Object>());
 
 		try {
-			mqttService.publish(topic, payload);
+			mqttService.publish(topic, envelope);
 			taskService.markPublished(requestId, topic);
 			DeviceInfo update = new DeviceInfo();
 			update.setId(device.getId());
@@ -168,17 +179,25 @@ public class ModelDispatchService {
 				.orderByDesc(AlgorithmTraining::getUpdateTime)
 				.orderByDesc(AlgorithmTraining::getId)
 				.last("limit 20"));
+		if (candidates == null || candidates.isEmpty()) {
+			throw new ServiceException("算法 " + algorithmId
+				+ " 没有已完成的训练任务，无法下发 " + modelType.toUpperCase() + " 模型");
+		}
+		String lastFailure = null;
 		for (AlgorithmTraining candidate : candidates) {
 			try {
 				String remotePath = artifactService.resolvePath(candidate, modelType);
 				RemoteModelArtifactService.ArtifactMetadata metadata = artifactService.inspect(remotePath);
 				return new PreparedArtifact(candidate, remotePath, metadata);
 			} catch (Exception ex) {
+				lastFailure = rootMessage(ex);
 				log.warn("Skip unavailable training artifact: trainingId={}, modelType={}, reason={}",
 					candidate.getId(), modelType, ex.getMessage());
 			}
 		}
-		return null;
+		throw new ServiceException("算法 " + algorithmId + " 没有可用的 "
+			+ modelType.toUpperCase() + " 模型产物"
+			+ (StringUtils.isBlank(lastFailure) ? "" : "：" + lastFailure));
 	}
 
 	private static final class PreparedArtifact {
@@ -196,21 +215,19 @@ public class ModelDispatchService {
 
 	private void validateConfiguration() {
 		if (StringUtils.isBlank(dispatchProperties.getPublicBaseUrl())) {
-			throw new IllegalStateException("VLSTREAM_MODEL_PUBLIC_BASE_URL is not configured");
+			throw new ServiceException("未配置硬件可访问的模型下载地址 VLSTREAM_MODEL_PUBLIC_BASE_URL");
 		}
 		if (StringUtils.isBlank(dispatchProperties.getSigningSecret())) {
-			throw new IllegalStateException("VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET is not configured");
-		}
-		String replyTopic = dispatchProperties.getReplyTopic();
-		if (StringUtils.isBlank(replyTopic) || !replyTopic.endsWith("/#")) {
-			throw new IllegalStateException(
-				"VLSTREAM_MODEL_DISPATCH_REPLY_TOPIC must end with /#");
+			throw new ServiceException("未配置模型下载签名密钥 VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET");
 		}
 	}
 
-	private String buildDeviceReplyTopic(String deviceId) {
-		String replyTopicFilter = dispatchProperties.getReplyTopic();
-		return replyTopicFilter.substring(0, replyTopicFilter.length() - 1) + deviceId;
+	private String rootMessage(Throwable throwable) {
+		Throwable current = throwable;
+		while (current.getCause() != null && current.getCause() != current) {
+			current = current.getCause();
+		}
+		return StringUtils.defaultIfBlank(current.getMessage(), current.getClass().getSimpleName());
 	}
 
 	private String buildDownloadUrl(String requestId, long expiresAt, String signature) {

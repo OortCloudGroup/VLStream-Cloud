@@ -33,11 +33,6 @@ public class VlsModelDispatchProperties {
 	private Long downloadUrlTtlSeconds = 1800L;
 
 	/**
-	 * Topic filter used by the platform to receive hardware acknowledgements.
-	 */
-	private String replyTopic = "oortcloud/modelDispatch/reply/#";
-
-	/**
 	 * Stable MQTT client ID for the acknowledgement subscriber.
 	 */
 	private String mqttClientId = "vls-model-dispatch-backend";
