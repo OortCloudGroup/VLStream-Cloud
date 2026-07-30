@@ -52,6 +52,7 @@ public class VlsWebRtcGatewayService {
 		status.put("enabled", properties.isEnabled());
 		status.put("available", probe.isAvailable());
 		status.put("provider", StringUtils.defaultIfBlank(properties.getProvider(), "webrtc-streamer"));
+		status.put("runtimeImage", StringUtils.defaultIfBlank(properties.getRuntimeImage(), "mpromonet/webrtc-streamer:v0.8.16"));
 		status.put("httpStatus", probe.getHttpStatus());
 		status.put("latencyMillis", probe.getLatencyMillis());
 		status.put("checkedAt", probe.getCheckedAt());

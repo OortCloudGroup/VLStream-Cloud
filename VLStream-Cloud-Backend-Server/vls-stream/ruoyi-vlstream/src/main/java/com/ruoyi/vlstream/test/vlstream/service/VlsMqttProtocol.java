@@ -18,6 +18,8 @@ public final class VlsMqttProtocol {
 	public static final String DEVICE_TO_PLATFORM = "dev2platform";
 	public static final String AI_BIZ = "aiBiz";
 	public static final String MODEL_DEPLOY = "modelDeploy";
+	public static final String FACE_EVENT = "faceEvent";
+	public static final String STRUCT_EVENT = "struct";
 
 	private static final String BUS_TOPIC_PREFIX = "vlstream/v2.2/dev/";
 	private static final String BUS_TOPIC_SUFFIX = "/bus";

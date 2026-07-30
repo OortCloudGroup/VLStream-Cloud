@@ -143,6 +143,19 @@
 > `modelUrl`。模型下载根地址必须能从设备网络访问。MQTT Topic、消息结构和硬件处理流程
 > 不在环境变量文档重复维护，统一以 `doc/VLS-Protocol.md` 为准。
 
+### 8.5 硬件事件图片直传 MinIO
+
+| 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |
+|--------|------|--------|----------|----------|----------|
+| `VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY` | 硬件事件图片使用的 `sys_oss_config.config_key` | 空（默认 OSS） | 生产必填 | 已启用的 OSS 配置，建议独立私有 Bucket | `vlstream-events` |
+| `VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS` | 预签名 PUT 地址有效期 | `600` | 否 | 60-3600 秒 | `600` |
+| `VLSTREAM_DEVICE_MEDIA_MAX_IMAGE_BYTES` | 单张事件图片最大字节数 | `10485760` | 否 | 正整数 | `10485760` |
+| `VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED` | 是否允许设备无认证申请上传地址 | `false`；dev 为 `true` | 是 | `true/false` | 生产必须为 `false` |
+
+> 当前无认证模式只用于 `192.168.88.0/24` 等隔离的局域网联调。生产必须关闭，并在启用
+> 每设备 HMAC-SHA256 身份认证后再开放上传地址申请接口。MinIO API endpoint 必须是硬件可访问
+> 的地址，不能配置成相对硬件自身的 `127.0.0.1:9000`。
+
 ## 九、Swagger文档配置
 
 | 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |

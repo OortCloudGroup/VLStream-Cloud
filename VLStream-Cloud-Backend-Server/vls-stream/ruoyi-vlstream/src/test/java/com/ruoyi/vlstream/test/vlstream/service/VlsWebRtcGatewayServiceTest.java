@@ -50,6 +50,7 @@ class VlsWebRtcGatewayServiceTest {
 		assertTrue((Boolean) config.get("available"));
 		assertEquals("/bus/webrtc-streamer-server", config.get("serverUrl"));
 		assertEquals("webrtc-streamer", config.get("provider"));
+		assertEquals("mpromonet/webrtc-streamer:v0.8.16", service.getStatus().get("runtimeImage"));
 	}
 
 	/** Verifies that an unreachable gateway is not masked as a successful service. */

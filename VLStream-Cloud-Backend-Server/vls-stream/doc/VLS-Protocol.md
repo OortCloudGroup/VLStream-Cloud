@@ -440,103 +440,72 @@ platform2dev
 
 ### 业务说明
 
-图片 / 录像走 MinIO HTTP 上传，MQTT 仅传元数据，禁止大 Base64。
+图片使用 HTTP PUT 直传 MinIO，MQTT 只传事件元数据，禁止传 Base64 图片。
+硬件不持有 MinIO AccessKey/SecretKey，也不自行拼接对象地址。
 
-### 1）平台获取上传地址
+### 1）设备通过 HTTP 申请上传地址
 
-|     |     |     |     |
-| --- | --- | --- | --- |
-| **字段** | **类型** | **必填** | **释义** |
-| mediaId | string | 是   | 媒体唯一 UUID |
-| mediaType | string | 是   | image/jpeg / video/mp4 |
-| fileSize | number | 是   | 文件字节大小 |
-| sha256 | string | 是   | 文件校验哈希 |
+联调接口：
 
-下发示例：
+`POST /vlsDeviceMedia/public/upload-url`
 
-{  
-"protocolVersion": "2.2",  
-"messageId": "cmd-media-upload-00112233-44556677-8899aabbccdd",  
-"deviceId": "CAM-20260001",  
-"sentAt": "2026-07-24T09:37:00Z",  
-"msgDir": "platform2dev",  
-"mainBizType": "device",  
-"subBizType": "mediaUpload",  
-"payload": {  
-"mediaId": "MEDIA-UUID-0001",  
-"mediaType": "image/jpeg",  
-"fileSize": 102400,  
-"sha256": "abcdef1234567890abcdef1234567890"  
-},  
-"extend": {}  
+请求体：
+
+```json
+{
+  "deviceId": "CAM-20260001",
+  "fileName": "capture-001.jpg",
+  "contentType": "image/jpeg",
+  "fileSize": 102400,
+  "sha256": "64位图片SHA-256十六进制字符串"
 }
+```
 
-### 2）平台返回上传地址回执
+平台校验设备存在后生成 `mediaId`、平台控制的 `objectKey` 和短期预签名 PUT 地址：
 
-|     |     |     |
-| --- | --- | --- |
-| **字段** | **类型** | **释义** |
-| mediaId | string | 媒体 ID |
-| uploadUrl | string | PUT 签名上传地址 |
-| objectUrl | string | 永久访问地址 |
-| expiresAt | string | URL 过期 UTC 时间 |
-
-回执示例：bizData 字段
-
-{  
-"protocolVersion": "2.2",  
-"messageId": "ack-media-url-11223344-55667788-9900aabbccdd",  
-"deviceId": "CAM-20260001",  
-"sentAt": "2026-07-24T09:37:01Z",  
-"msgDir": "dev2platform",  
-"mainBizType": "device",  
-"subBizType": "mediaUpload",  
-"payload": {  
-"sourceMsgId": "cmd-media-upload-00112233-44556677-8899aabbccdd",  
-"code": 200,  
-"msg": "上传地址已生成",  
-"errCode": 0,  
-"errDetail": "",  
-"bizData": {  
-"mediaId": "MEDIA-UUID-0001",  
-"uploadUrl": "https://minio.test.com/upload/xxx",  
-"objectUrl": "https://minio.test.com/res/xxx",  
-"expiresAt": "2026-07-24T10:37:00Z"  
-}  
-},  
-"extend": {}  
+```json
+{
+  "code": 200,
+  "data": {
+    "mediaId": "7e70d34c-f24e-44d6-a067-5dcfc8f85e55",
+    "objectKey": "events/CAM-20260001/2026/07/29/7e70d34c-f24e-44d6-a067-5dcfc8f85e55.jpg",
+    "uploadUrl": "http://minio-host/bucket/events/...?X-Amz-Signature=...",
+    "expiresAt": "2026-07-29T10:10:00Z",
+    "requiredContentType": "image/jpeg"
+  }
 }
+```
 
-### 3）设备上传完成上报
+> 当前 `/public/upload-url` 只用于局域网联调，必须由
+> `VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED=true` 显式开启。生产环境必须关闭，
+> 并升级为每台设备独立凭证的 HMAC-SHA256 请求认证。
 
-|     |     |     |
-| --- | --- | --- |
-| **字段** | **类型** | **释义** |
-| mediaId | string | 媒体 ID |
-| objectUrl | string | 永久资源地址 |
-| fileSize | number | 文件大小 |
-| sha256 | string | 文件哈希 |
-| uploadCostMs | number | 上传耗时毫秒 |
+### 2）设备使用 HTTP PUT 上传图片
 
-上报完整示例：
+设备必须使用响应中的原始 `uploadUrl`，且 `Content-Type` 必须与
+`requiredContentType` 完全一致：
 
-{  
-"protocolVersion": "2.2",  
-"messageId": "up-media-finish-22334455-66778899-0011aabbccdd",  
-"deviceId": "CAM-20260001",  
-"sentAt": "2026-07-24T09:37:45Z",  
-"msgDir": "dev2platform",  
-"mainBizType": "device",  
-"subBizType": "mediaUpload",  
-"payload": {  
-"mediaId": "MEDIA-UUID-0001",  
-"objectUrl": "https://minio.test.com/res/xxx",  
-"fileSize": 102400,  
-"sha256": "abcdef1234567890abcdef1234567890",  
-"uploadCostMs": 800  
-},  
-"extend": {}  
-}
+```bash
+curl -X PUT \
+  -H "Content-Type: image/jpeg" \
+  --data-binary "@capture-001.jpg" \
+  "${uploadUrl}"
+```
+
+HTTP 2xx 表示对象存储已接收图片。硬件随后在 `faceEvent` 或 `struct` MQTT
+事件中携带同一组 `mediaId/objectKey/sha256`。不需要单独发送 `mediaUpload`
+完成消息；平台消费事件时会执行 MinIO HEAD、文件大小和 SHA-256 校验。
+
+### 3）私有图片访问
+
+数据库仅保存 `mediaId` 和内部 `objectKey`，不保存会过期的 MinIO 签名 URL。
+已登录的平台用户通过以下接口获取短期私有 GET 地址：
+
+`GET /vlsDeviceMedia/{mediaId}/view-url?seconds=300`
+
+生产建议使用独立的私有 OSS 配置（例如 `config_key=vlstream-events`、独立
+`vlstream-events` Bucket），通过 `VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY`
+指定；本地联调可以留空并复用当前默认 OSS 配置。
 
 ## 3.6 设备心跳 & 硬件遥测
 
@@ -1150,14 +1119,21 @@ algorithmId、fileName、sha256、modelType
 |     |     |     |
 | --- | --- | --- |
 | **字段** | **类型** | **释义** |
+| eventId | string | 设备生成的事件唯一 ID，同一事件重试时保持不变 |
+| eventType | string | 平台事件类型，例如 face_pass/stranger |
+| eventDesc | string | 可选事件描述 |
+| eventTime | string | UTC ISO-8601 事件时间 |
+| eventLevel | string | low/medium/high/urgent，默认 medium |
+| media | array | 已通过 3.5 上传的图片，当前至少一张 |
+| media[].mediaId | string | 平台签发的 mediaId |
+| media[].objectKey | string | 平台签发的 objectKey |
+| media[].sha256 | string | 图片实际 SHA-256 |
 | operator | string | entr 白名单 /entr_or_exit 陌生人 |
 | info.customId | string | 库内人员 ID，陌生人空 |
 | info.personid | int | 设备本地人员编号 |
 | info.persionName | string | 姓名  |
 | info.facesluiceId | string | 设备 ID |
 | info.time | string | 抓拍时间 yyyy-MM-dd HH:mm:ss |
-| info.pic | string | 现场抓拍图 base64 |
-| info.sample_pic | string | 底库人脸图 base64 |
 | info.score_dect | int | 比对分数 0~100 |
 | info.rect | array | \[x,y,w,h\] 人脸框坐标 |
 | info.gender | string | M 男 / F 女 |
@@ -1176,6 +1152,16 @@ algorithmId、fileName、sha256、modelType
 "mainBizType": "aiBiz",  
 "subBizType": "faceEvent",  
 "payload": {  
+"eventId": "face-event-20260724-0001",  
+"eventType": "face_pass",  
+"eventDesc": "白名单人员通行",  
+"eventTime": "2026-07-24T09:41:00Z",  
+"eventLevel": "medium",  
+"media": [{  
+"mediaId": "7e70d34c-f24e-44d6-a067-5dcfc8f85e55",  
+"objectKey": "events/CAM-20260001/2026/07/24/7e70d34c-f24e-44d6-a067-5dcfc8f85e55.jpg",  
+"sha256": "64位图片SHA-256十六进制字符串"  
+}],  
 "operator": "entr",  
 "info": {  
 "customId": "713BCEF6393955E0DC8822354D0D61E1",  
@@ -1183,8 +1169,6 @@ algorithmId、fileName、sha256、modelType
 "persionName": "张三",  
 "facesluiceId": "CAM-20260001",  
 "time": "2026-07-24 09:41:00",  
-"pic": "data:image/jpg;base64,xxx",  
-"sample_pic": "data:image/jpg;base64,xxx",  
 "score_dect": 92,  
 "rect": \[100, 120, 220, 260\],  
 "gender": "M",  
@@ -1209,6 +1193,15 @@ algorithmId、fileName、sha256、modelType
 |     |     |     |
 | --- | --- | --- |
 | **字段** | **类型** | **释义** |
+| eventId | string | 设备生成的事件唯一 ID，同一事件重试时保持不变 |
+| eventType | string | 平台事件类型，例如 person_detected |
+| eventDesc | string | 可选事件描述 |
+| eventTime | string | UTC ISO-8601 事件时间 |
+| eventLevel | string | low/medium/high/urgent，默认 medium |
+| media | array | 已通过 3.5 上传的图片，当前至少一张 |
+| media[].mediaId | string | 平台签发的 mediaId |
+| media[].objectKey | string | 平台签发的 objectKey |
+| media[].sha256 | string | 图片实际 SHA-256 |
 | operator | string | 固定struct_attr |
 | facesluiceId | string | 设备 ID |
 | track_id | int | 目标跟踪唯一 ID |
@@ -1219,8 +1212,6 @@ algorithmId、fileName、sha256、modelType
 | datetime | string | 抓拍时间 |
 | bind | array | 绑定目标 track_id（人脸绑定人形） |
 | info | object | 目标细分属性 |
-| object_image | string | 目标截图 base64 |
-| bg_image | string | 背景图 base64 |
 | mac | string | 设备 MAC |
 | ipaddr | string | 设备 IP |
 
@@ -1235,6 +1226,16 @@ algorithmId、fileName、sha256、modelType
 "mainBizType": "aiBiz",  
 "subBizType": "struct",  
 "payload": {  
+"eventId": "struct-event-20260724-0001",  
+"eventType": "person_detected",  
+"eventDesc": "检测到人员",  
+"eventTime": "2026-07-24T09:42:00Z",  
+"eventLevel": "medium",  
+"media": [{  
+"mediaId": "b91aec19-fb17-4328-b390-1d9ab6ef6c16",  
+"objectKey": "events/CAM-20260001/2026/07/24/b91aec19-fb17-4328-b390-1d9ab6ef6c16.jpg",  
+"sha256": "64位图片SHA-256十六进制字符串"  
+}],  
 "operator": "struct_attr",  
 "facesluiceId": "CAM-20260001",  
 "track_id": 4,  
@@ -1253,13 +1254,42 @@ algorithmId、fileName、sha256、modelType
 "action_watch_phone": 1,  
 "bags": 1  
 },  
-"object_image": "data:image/jpeg;base64,xxx",  
-"bg_image": "data:image/jpeg;base64,xxx",  
 "mac": "00:11:22:33:44:55",  
 "ipaddr": "192.168.1.100"  
 },  
 "extend": {}  
 }
+
+### 事件业务回执
+
+平台只在完成 MQTT 消息去重、设备校验、MinIO 对象存在性/大小/SHA-256 校验并成功
+写入 `vls_event_management` 后返回 `SUCCESS`。硬件在收到成功回执前必须保留本地
+事件记录；超时可以使用相同 `messageId/eventId` 重发，平台会幂等返回成功。
+
+```json
+{
+  "protocolVersion": "2.2",
+  "messageId": "平台新生成的回执UUID",
+  "deviceId": "CAM-20260001",
+  "sentAt": "2026-07-24T09:42:01Z",
+  "msgDir": "platform2dev",
+  "mainBizType": "aiBiz",
+  "subBizType": "struct",
+  "payload": {
+    "sourceMsgId": "up-struct-human-00112233-44556677-8899aabbccdd",
+    "code": 200,
+    "msg": "事件已接收并入库",
+    "errCode": 0,
+    "errDetail": "",
+    "bizData": {
+      "eventId": "struct-event-20260724-0001",
+      "mediaId": "b91aec19-fb17-4328-b390-1d9ab6ef6c16",
+      "status": "SUCCESS"
+    }
+  },
+  "extend": {}
+}
+```
 
 # 五、IoT Center 类
 

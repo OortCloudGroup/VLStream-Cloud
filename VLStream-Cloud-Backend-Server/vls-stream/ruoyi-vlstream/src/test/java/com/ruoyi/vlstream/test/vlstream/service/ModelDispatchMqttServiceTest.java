@@ -8,6 +8,8 @@ import java.lang.reflect.Field;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -71,8 +73,44 @@ class ModelDispatchMqttServiceTest {
 		verifyNoInteractions(taskService);
 	}
 
+	@Test
+	void routesStructEventsToTheEventHandlerAndPublishesBusinessReply() throws Exception {
+		DeviceEventMqttHandler eventHandler = mock(DeviceEventMqttHandler.class);
+		ModelDispatchMqttService service = spy(new ModelDispatchMqttService());
+		setField(service, "taskService", taskService);
+		setField(service, "deviceEventHandler", eventHandler);
+		cn.hutool.json.JSONObject reply = new cn.hutool.json.JSONObject();
+		reply.put("messageId", "reply-1");
+		when(eventHandler.handle(org.mockito.ArgumentMatchers.any())).thenReturn(reply);
+		doNothing().when(service).publish("vlstream/v2.2/dev/CAM-1/bus", reply);
+		String event = "{"
+			+ "\"protocolVersion\":\"2.2\","
+			+ "\"messageId\":\"event-1\","
+			+ "\"deviceId\":\"CAM-1\","
+			+ "\"msgDir\":\"dev2platform\","
+			+ "\"mainBizType\":\"aiBiz\","
+			+ "\"subBizType\":\"struct\","
+			+ "\"payload\":{},\"extend\":{}}";
+
+		service.handleIncomingMessage("vlstream/v2.2/dev/CAM-1/bus", event);
+
+		verify(eventHandler).handle(org.mockito.ArgumentMatchers.any());
+		verify(service).publish("vlstream/v2.2/dev/CAM-1/bus", reply);
+	}
+
 	private void setField(Object target, String name, Object value) throws Exception {
-		Field field = target.getClass().getDeclaredField(name);
+		Class<?> type = target.getClass();
+		Field field = null;
+		while (type != null && field == null) {
+			try {
+				field = type.getDeclaredField(name);
+			} catch (NoSuchFieldException ignored) {
+				type = type.getSuperclass();
+			}
+		}
+		if (field == null) {
+			throw new NoSuchFieldException(name);
+		}
 		field.setAccessible(true);
 		field.set(target, value);
 	}

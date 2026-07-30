@@ -23,6 +23,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Long-lived MQTT connection used for model dispatch and device acknowledgements.
@@ -40,7 +42,15 @@ public class ModelDispatchMqttService {
 	@Resource
 	private ModelDispatchTaskService taskService;
 
+	@Resource
+	private DeviceEventMqttHandler deviceEventHandler;
+
 	private final Object clientMonitor = new Object();
+	private final ExecutorService inboundExecutor = Executors.newFixedThreadPool(2, runnable -> {
+		Thread thread = new Thread(runnable, "vls-mqtt-inbound");
+		thread.setDaemon(true);
+		return thread;
+	});
 	private MqttClient client;
 
 	@PostConstruct
@@ -106,7 +116,8 @@ public class ModelDispatchMqttService {
 
 			@Override
 			public void messageArrived(String topic, MqttMessage message) {
-				handleIncomingMessage(topic, new String(message.getPayload(), StandardCharsets.UTF_8));
+				String payload = new String(message.getPayload(), StandardCharsets.UTF_8);
+				inboundExecutor.submit(() -> handleIncomingMessage(topic, payload));
 			}
 
 			@Override
@@ -121,14 +132,23 @@ public class ModelDispatchMqttService {
 			JSONObject json = JSONUtil.parseObj(payload);
 			if (!VlsMqttProtocol.VERSION.equals(json.getStr("protocolVersion"))
 				|| !VlsMqttProtocol.DEVICE_TO_PLATFORM.equals(json.getStr("msgDir"))
-				|| !VlsMqttProtocol.AI_BIZ.equals(json.getStr("mainBizType"))
-				|| !VlsMqttProtocol.MODEL_DEPLOY.equals(json.getStr("subBizType"))) {
+				|| !VlsMqttProtocol.AI_BIZ.equals(json.getStr("mainBizType"))) {
 				return;
 			}
 			String deviceId = json.getStr("deviceId");
 			if (!StringUtils.equals(topic, VlsMqttProtocol.deviceBusTopic(deviceId))) {
 				log.warn("Ignoring modelDeploy reply on another device bus: topic={}, deviceId={}",
 					topic, deviceId);
+				return;
+			}
+			String subBizType = json.getStr("subBizType");
+			if (VlsMqttProtocol.FACE_EVENT.equals(subBizType)
+				|| VlsMqttProtocol.STRUCT_EVENT.equals(subBizType)) {
+				JSONObject reply = deviceEventHandler.handle(json);
+				publish(topic, reply);
+				return;
+			}
+			if (!VlsMqttProtocol.MODEL_DEPLOY.equals(subBizType)) {
 				return;
 			}
 
@@ -198,6 +218,7 @@ public class ModelDispatchMqttService {
 
 	@PreDestroy
 	public void destroy() {
+		inboundExecutor.shutdownNow();
 		synchronized (clientMonitor) {
 			closeClient();
 		}

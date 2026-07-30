@@ -96,6 +96,16 @@ spring:
       indent_output: false
       # 忽略无法转换的对象
       fail_on_empty_beans: false
+  flyway:
+    # 启动时自动执行尚未执行过的数据库升级脚本。
+    enabled: ${FLYWAY_ENABLED:true}
+    locations: classpath:db/migration
+    # v1.1.2 及更早版本没有 Flyway 历史表，首次升级时将现有数据库登记为基线。
+    baseline-on-migrate: true
+    baseline-version: "1.1.2"
+    baseline-description: VLStream Cloud v1.1.2 baseline
+    validate-on-migrate: true
+    out-of-order: false
     deserialization:
       # 允许对象忽略json中不存在的属性
       fail_on_unknown_properties: false
@@ -135,6 +145,9 @@ vlstream:
     enabled: ${VLSTREAM_WEBRTC_ENABLED:true}
     # WebRTC 服务提供者（如 webrtc-streamer）
     provider: ${VLSTREAM_WEBRTC_PROVIDER:webrtc-streamer}
+    # WebRTC Streamer 运行时镜像；仅用于声明和状态展示，容器由部署脚本负责启动
+    # 与 deploy/release/.env.example 中的 WEBRTC_STREAMER_IMAGE 保持一致
+    runtime-image: ${VLSTREAM_WEBRTC_RUNTIME_IMAGE:mpromonet/webrtc-streamer:v0.8.16}
     # 返回给浏览器的公共访问地址；默认由同源 Nginx 转发，避免绑定公司测试域名
     public-base-url: ${VLSTREAM_WEBRTC_PUBLIC_URL:/bus/webrtc-streamer-server}
     # 仅 Java 后端健康探测使用的内网地址；Compose 中通过服务名覆盖
@@ -207,6 +220,16 @@ vlstream:
     download-url-ttl-seconds: ${VLSTREAM_MODEL_DOWNLOAD_URL_TTL_SECONDS:1800}
     # MQTT 客户端标识
     mqtt-client-id: ${VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID:vls-model-dispatch-backend}
+  # 硬件识别事件图片（预签名 PUT 直传 MinIO）
+  device-media:
+    # 对应 sys_oss_config.config_key；为空时复用当前默认 OSS 配置
+    oss-config-key: ${VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY:}
+    # 预签名上传地址有效期（秒）
+    upload-url-ttl-seconds: ${VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS:600}
+    # 单张事件图片最大字节数，默认 10 MiB
+    max-image-bytes: ${VLSTREAM_DEVICE_MEDIA_MAX_IMAGE_BYTES:10485760}
+    # 生产环境必须保持 false；dev 配置允许局域网先联调
+    allow-unauthenticated: ${VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED:false}
   # RTSP 视频录制配置
   rtsp-recording:
     # 是否启用 RTSP 录制功能
@@ -301,6 +324,10 @@ security:
     - /task/v1/event_report_cameras
     # Hi3519DV500 设备需要在没有平台登录令牌的情况下拉取下发的 OM 文件
     - /vlsAlgorithmTraining/public/**
+    - /vlsModelDispatch/public/**
+    # 局域网联调阶段，硬件无需平台用户 Token 即可申请单对象预签名 PUT 地址；
+    # 业务服务仍受 VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED 开关保护
+    - /vlsDeviceMedia/public/**
     - /monitor/**
 #    - /xxl-job-admin/**
 

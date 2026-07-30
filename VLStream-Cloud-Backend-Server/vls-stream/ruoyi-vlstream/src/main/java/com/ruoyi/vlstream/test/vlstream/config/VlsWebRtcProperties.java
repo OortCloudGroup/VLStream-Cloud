@@ -23,6 +23,9 @@ public class VlsWebRtcProperties {
 	/** Media gateway implementation exposed to the frontend. */
 	private String provider = "webrtc-streamer";
 
+	/** Pinned WebRTC Streamer runtime image used by the deployment manifests. */
+	private String runtimeImage = "mpromonet/webrtc-streamer:v0.8.16";
+
 	/** Browser-visible URL, normally routed by the frontend reverse proxy. */
 	private String publicBaseUrl = "/bus/webrtc-streamer-server";
 

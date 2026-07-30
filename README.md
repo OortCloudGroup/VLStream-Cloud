@@ -31,6 +31,13 @@
 
 ---
 
+> [!IMPORTANT]
+> **Container access:** [https://www.example.com/bus/vls-ui/](https://www.example.com/bus/vls-ui/)
+> **Default account:** `admin` / `Codex@123456`
+> The address is a placeholder and will be replaced with the official address later. Change the default password immediately after the first sign-in.
+
+---
+
 ## 📖 Project Description
 
 VLStream Cloud is an open-source Video IoT platform for device and stream
@@ -61,19 +68,38 @@ object storage, and operational support for enterprise video applications.
 
 ---
 
+### Single-Node GPU Training Scheduler
+
+Algorithm training supports an exclusive single-GPU queue on one physical GPU
+server. A Docker container is created when a training job starts. Jobs wait
+automatically while the GPU is busy, and the container is removed when training
+finishes while job records, logs, and model artifacts are retained. See
+[Single-Node GPU Training Scheduler](./VLStream-Cloud-Backend-Server/vls-stream/doc/gpu-training-scheduler.md).
+
+---
+
 ### Hi3519DV500 Model Deployment
 
-After an operator selects an algorithm and one or more devices, VLStream locates the latest training task with an OM artifact, creates a device-accessible OM download URL, and calls the hardware `latest-training-model` endpoint once per device. The device-to-algorithm association is updated only after the hardware endpoint returns an HTTP 2xx response.
+VLStream delivers trained models to devices through MQTT. Hardware connection,
+model delivery, event reporting, media upload, status receipts, and integration
+acceptance follow the
+[VLS Platform and Camera Unified Communication Protocol](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.md).
 
-Configure the deployment integration with these environment variables:
+Configure these environment variables:
 
 ```bash
-VLSTREAM_HARDWARE_DISPATCH_URL=http://192.168.88.98:8888/vlsDeviceInfo/latest-training-model
-VLSTREAM_MODEL_DOWNLOAD_PUBLIC_BASE_URL=http://192.168.88.31:8080
-VLSTREAM_HARDWARE_DISPATCH_TIMEOUT_MILLIS=10000
+VLSTREAM_MQTT_HOST=127.0.0.1
+VLSTREAM_MQTT_PORT=1883
+VLSTREAM_MQTT_USERNAME=vlstream
+VLSTREAM_MQTT_PASSWORD=replace-me
+VLSTREAM_MODEL_PUBLIC_BASE_URL=https://vlstream.example.com
+VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET=replace-with-a-long-random-secret
 ```
 
-`VLSTREAM_MODEL_DOWNLOAD_PUBLIC_BASE_URL` must point to the backend address reachable from the hardware network, not the browser-facing frontend address. The device download route does not require a platform login token, so expose it only on a trusted device network or through a restricted reverse proxy.
+`VLSTREAM_MODEL_PUBLIC_BASE_URL` must be the backend address reachable by the
+devices, not the browser-facing frontend address. Model download URLs use
+short-lived HMAC signatures. Generate and inject a unique random signing secret
+for each environment; never commit the real secret to Git.
 
 ---
 
@@ -233,7 +259,41 @@ VLStream-Cloud/
 | Maven | 3.6+ |
 | Database | MySQL 5.7+ |
 | Cache | Redis |
+| Object Storage | MinIO or another S3-compatible service; required for complete annotation support |
+| Messaging | MQTT broker; required for device control and model delivery |
+| Training Node | Linux GPU server with SSH/SFTP; required for algorithm training |
+| AI Service | `apaas-ai` routed through an APaaS gateway; required for AI text/image features |
 | Frontend | Node.js and npm |
+
+### WebRTC Live-Preview Dependency
+
+Browsers cannot play RTSP directly. Camera live preview uses WebRTC Streamer to
+convert RTSP to WebRTC. The pinned, validated Docker image for this project is
+**`mpromonet/webrtc-streamer:v0.8.16`**. Keep this exact tag instead of using an
+untested `latest` image or an older Windows binary.
+
+To start it independently on a local machine:
+
+```powershell
+docker run -d --name vlstream-webrtc --restart unless-stopped -p 8000:8000 `
+  mpromonet/webrtc-streamer:v0.8.16 -H 0.0.0.0:8000 -vvv
+```
+
+Verify the runtime with `curl.exe http://127.0.0.1:8000/api/version`; it should
+report `v0.8.16/Linux-x86_64`. The backend declaration is in
+`ruoyi-admin/src/main/resources/application.yml`:
+
+```bash
+VLSTREAM_WEBRTC_ENABLED=true
+VLSTREAM_WEBRTC_RUNTIME_IMAGE=mpromonet/webrtc-streamer:v0.8.16
+VLSTREAM_WEBRTC_INTERNAL_URL=http://127.0.0.1:8000
+VLSTREAM_WEBRTC_PUBLIC_URL=/bus/webrtc-streamer-server
+```
+
+The release Compose deployment uses the same version through
+`WEBRTC_STREAMER_IMAGE=mpromonet/webrtc-streamer:v0.8.16` in
+`deploy/release/.env`. `runtime-image` is a backend declaration and status
+value only; the backend does not pull or start Docker containers.
 
 ### 1. Clone the Repository
 
@@ -242,7 +302,7 @@ git clone https://github.com/OortCloudGroup/VLStream-Cloud.git
 cd VLStream-Cloud
 ```
 
-### 2. Initialize the Database
+### 2. Initialize and Upgrade the Database
 
 ```sql
 CREATE DATABASE vlstream CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -254,7 +314,12 @@ mysql -u root -p vlstream --execute="source script/sql/mysql/mysql_ry_v0.8.X.sql
 ```
 
 SQL initialization scripts for Oracle, PostgreSQL, and SQL Server are also
-available under `script/sql/`.
+available under `script/sql/`. Application schema upgrades are managed by
+Flyway when the backend starts. Add every new database change as a new,
+immutable migration under
+`ruoyi-admin/src/main/resources/db/migration/`; do not edit a migration that
+has already run. See
+[`DATABASE_MIGRATIONS.md`](./VLStream-Cloud-Backend-Server/vls-stream/DATABASE_MIGRATIONS.md).
 
 ### 3. Configure and Start the Backend
 
@@ -265,6 +330,92 @@ Review the main configuration and the active profile configuration:
 - `ruoyi-admin/src/main/resources/application-prod.yml`
 
 The Maven profiles are `dev`, `local`, and `prod`; `dev` is active by default.
+
+#### Required Configuration Before Deployment
+
+Do not use repository test addresses or example passwords for a complete
+deployment. Configure at least the following services before startup:
+
+| Configuration | Purpose | Location |
+| --- | --- | --- |
+| MySQL | Business data, training jobs, and delivery jobs | `application-dev.yml` / `application-prod.yml` |
+| Redis | Sessions, cache, and distributed state | `application-dev.yml` / `application-prod.yml` |
+| MinIO | Annotation images, datasets, and file uploads | Database table `sys_oss_config` |
+| GPU training server | Training, conversion, and model artifacts | `VLSTREAM_SSH_*`, `VLSTREAM_TRAINING_*` |
+| MQTT broker | Device control, model delivery, and receipts | `VLSTREAM_MQTT_*` |
+| Model download entry | Device-side HTTP model download | `VLSTREAM_MODEL_*` |
+| GPT/AI service | AI text and image generation | Frontend APaaS gateway and a separate `apaas-ai` service |
+
+Inject secrets through the deployment environment and never commit real
+passwords or keys:
+
+```bash
+MYSQL_HOST=mysql.example.internal
+MYSQL_PORT=3306
+MYSQL_DB_NAME=vlstream
+MYSQL_USERNAME=vlstream
+MYSQL_PASSWORD=replace-me
+
+REDIS_HOST=redis.example.internal
+REDIS_PORT=6379
+REDIS_PASSWORD=replace-me
+
+VLSTREAM_SSH_HOST=gpu.example.internal
+VLSTREAM_SSH_PORT=22
+VLSTREAM_SSH_USERNAME=vlstream
+VLSTREAM_SSH_PASSWORD=replace-me
+VLSTREAM_TRAINING_HOST_DATA_DIR=/data/work
+VLSTREAM_TRAINING_WORK_DIR=/data/work/ultralytics_yolov8-main/datasets
+
+VLSTREAM_MQTT_HOST=127.0.0.1
+VLSTREAM_MQTT_PORT=1883
+VLSTREAM_MQTT_USERNAME=vlstream
+VLSTREAM_MQTT_PASSWORD=replace-me
+VLSTREAM_MQTT_QOS=1
+
+VLSTREAM_MODEL_PUBLIC_BASE_URL=https://vlstream.example.com
+VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET=replace-with-a-long-random-secret
+VLSTREAM_MODEL_DOWNLOAD_URL_TTL_SECONDS=1800
+VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID=vls-model-dispatch-backend-01
+
+VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY=vlstream-events
+VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS=600
+VLSTREAM_DEVICE_MEDIA_MAX_IMAGE_BYTES=10485760
+VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED=false
+```
+
+Each backend instance must use a unique
+`VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID`. MQTT topics, ACL rules, and hardware
+behavior are defined by
+[`VLS-Protocol.md`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.md).
+
+#### MinIO and Algorithm Annotation
+
+Annotation uploads use the enabled `config_key=minio` record in
+`sys_oss_config`, not fixed credentials in `application.yml`. Configure the
+access key, secret key, bucket, API endpoint, external domain, HTTPS flag,
+access policy, and enabled status. Persist MinIO data and verify that the
+backend, browser, and GPU server can all reach the generated object URLs.
+
+For device event images, reuse the MinIO service but configure a separate
+private OSS entry and bucket (for example `config_key=vlstream-events`).
+Devices receive only short-lived, single-object presigned PUT URLs and must
+never receive MinIO credentials. The unauthenticated upload-grant endpoint is
+for LAN development only and must remain disabled in production. Apply
+`db/2026-07-29-vls-device-event-media.sql` before enabling MQTT event ingestion.
+
+#### GPT/AI Service
+
+The frontend calls `apaas-ai` through the configured APaaS gateway:
+
+```text
+{APaaS gateway prefix}/apaas-ai/api/v1/text_completion
+{APaaS gateway prefix}/apaas-ai/api/v1/text_img
+```
+
+Configure the provider base URL, API key, model names, timeout, retries, and
+network access in the separate `apaas-ai` service. That service is not included
+in this repository.
 
 ```powershell
 mvn -ntp -Pdev clean package
@@ -291,7 +442,23 @@ npm install
 npm run dev
 ```
 
+For local development, configure:
+
+```bash
+VITE_DEV_PROXY_TARGET=http://127.0.0.1:8080
+VITE_APAAS_PROXY_TARGET=http://apaas-gateway.example.internal:21410
+```
+
 Use `npm run build` to create a production frontend bundle.
+
+#### Post-Startup Acceptance
+
+1. Verify `/actuator/health` and MySQL/Redis connectivity.
+2. Upload an image and open the returned MinIO URL.
+3. Create an annotation job and save annotation results.
+4. Verify that an AI text request reaches `apaas-ai`.
+5. Complete MQTT and model-delivery checks defined in `VLS-Protocol.md`.
+6. Run one training job and verify scheduling, logs, and model artifacts.
 
 ---
 
@@ -324,23 +491,26 @@ Use the generated OpenAPI documentation for the complete and current API list.
 
 ## 🐳 Deployment
 
-Docker Compose resources are provided in the backend directory:
+Download the deployment package from
+[GitHub Releases](https://github.com/OortCloudGroup/VLStream-Cloud/releases),
+extract it, copy the environment template, and start the bundled services:
 
 ```powershell
-cd VLStream-Cloud-Backend-Server/vls-stream
-docker compose -f script/docker/docker-compose.yml up -d
+Copy-Item .env.example .env
+docker compose up -d
 ```
 
 Stop the services with:
 
 ```powershell
-docker compose -f script/docker/docker-compose.yml down
+docker compose down
 ```
 
 > [!TIP]
-> Some configured container base images are hosted on an internal registry.
-> Review `script/docker/docker-compose.yml` and `dockerfile` before deploying
-> outside the project network.
+> The package includes MySQL, Redis, MinIO, WebRTC-streamer, the backend, and
+> the frontend. Existing external infrastructure is also supported. See the
+> [deployment guide](./deploy/release/README.md) for configuration and upgrade
+> instructions.
 
 ---
 
@@ -351,6 +521,11 @@ docker compose -f script/docker/docker-compose.yml down
 | Frontend Guide | [`VLStream-Web/README.md`](./VLStream-Web/README.md) |
 | Frontend Guide (Chinese) | [`VLStream-Web/README-cn.md`](./VLStream-Web/README-cn.md) |
 | Backend Environment Variables | [`ENVIRONMENT_VARIABLES.md`](./VLStream-Cloud-Backend-Server/vls-stream/ENVIRONMENT_VARIABLES.md) |
+| Deployment Guide | [`deploy/release/README.md`](./deploy/release/README.md) |
+| Database Migrations | [`DATABASE_MIGRATIONS.md`](./VLStream-Cloud-Backend-Server/vls-stream/DATABASE_MIGRATIONS.md) |
+| VLS Device Protocol | [`VLS-Protocol.md`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.md) |
+| VLS Protocol Specification (English) | [`VLS-Protocol-EN.docx`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol-EN.docx) |
+| VLS Protocol Specification (Chinese) | [`VLS-Protocol.docx`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.docx) |
 | API Documentation | Start the backend and open Knife4j or Swagger UI |
 
 ---

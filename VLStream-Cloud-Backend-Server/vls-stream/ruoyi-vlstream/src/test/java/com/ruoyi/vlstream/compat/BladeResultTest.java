@@ -5,6 +5,9 @@
 
 package com.ruoyi.vlstream.compat;
 
+import com.ruoyi.vlstream.test.compat.BladeAuthInfo;
+import com.ruoyi.vlstream.test.compat.BladePage;
+import com.ruoyi.vlstream.test.compat.BladeResult;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 

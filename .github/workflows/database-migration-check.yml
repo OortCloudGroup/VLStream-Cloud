@@ -1,0 +1,33 @@
+name: Database migration check
+
+on:
+  pull_request:
+    paths:
+      - "**/*.sql"
+      - "tools/check-database-migrations.ps1"
+      - "AGENTS.md"
+  push:
+    branches:
+      - main
+    paths:
+      - "**/*.sql"
+      - "tools/check-database-migrations.ps1"
+      - "AGENTS.md"
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate new SQL files
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "pull_request") {
+            pwsh -File tools/check-database-migrations.ps1 -BaseRef "origin/${{ github.base_ref }}"
+          } else {
+            pwsh -File tools/check-database-migrations.ps1 -BaseRef "${{ github.event.before }}"
+          }

@@ -144,8 +144,7 @@ public class OssClient {
      */
     public ObjectMetadata getObjectMetadata(String path) {
         path = path.replace(getUrl() + "/", "");
-        S3Object object = client.getObject(properties.getBucketName(), path);
-        return object.getObjectMetadata();
+        return client.getObjectMetadata(properties.getBucketName(), path);
     }
 
     public InputStream getObjectContent(String path) {
@@ -201,6 +200,32 @@ public class OssClient {
                 .withExpiration(new Date(System.currentTimeMillis() + 1000L * second));
         URL url = client.generatePresignedUrl(generatePresignedUrlRequest);
         return url.toString();
+    }
+
+    /**
+     * 获取对象短期 PUT 上传地址。调用方只拿到单个对象的限时上传权限，
+     * 不需要也不应持有对象存储 AccessKey/SecretKey。
+     *
+     * @param objectKey  对象KEY
+     * @param contentType 上传时必须使用的 Content-Type
+     * @param second     授权时间
+     */
+    public String getPresignedPutUrl(String objectKey, String contentType, Integer second) {
+        GeneratePresignedUrlRequest request =
+            new GeneratePresignedUrlRequest(properties.getBucketName(), objectKey)
+                .withMethod(HttpMethod.PUT)
+                .withExpiration(new Date(System.currentTimeMillis() + 1000L * second));
+        if (StringUtils.isNotBlank(contentType)) {
+            request.setContentType(contentType);
+        }
+        return client.generatePresignedUrl(request).toString();
+    }
+
+    /**
+     * 判断对象是否已经上传。
+     */
+    public boolean doesObjectExist(String objectKey) {
+        return client.doesObjectExist(properties.getBucketName(), objectKey);
     }
 
     /**

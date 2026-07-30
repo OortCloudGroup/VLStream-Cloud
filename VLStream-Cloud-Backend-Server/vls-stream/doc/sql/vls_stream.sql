@@ -1449,17 +1449,45 @@ INSERT INTO `vls_mobile_scene_governance` VALUES (2028410705661087745, '666666',
 INSERT INTO `vls_mobile_scene_governance` VALUES (2028411463693455361, '8888', 'immediate', NULL, NULL, NULL, NULL, '2016-01-01 00:00:00', '2016-01-08 00:00:00', NULL, '呼和浩特市/回民区/钢铁路街道/西机务段社区居委会', '2', '14,2026939218799886338', '99999', '000000', 1958378395694854144, '0ffc6e35-258e-4d2f-81d3-dda069d88a3e', '2026-03-02 18:05:54', 1958378395694854144, '2026-03-02 18:05:54', 1, 0);
 
 -- ----------------------------
+-- Table structure for vls_device_media_upload
+-- ----------------------------
+DROP TABLE IF EXISTS `vls_device_media_upload`;
+CREATE TABLE `vls_device_media_upload` (
+  `id` bigint NOT NULL COMMENT '主键',
+  `media_id` varchar(64) NOT NULL COMMENT '媒体UUID',
+  `device_id` varchar(100) NOT NULL COMMENT '设备编号',
+  `oss_config_key` varchar(64) NOT NULL COMMENT 'sys_oss_config.config_key',
+  `object_key` varchar(512) NOT NULL COMMENT '对象存储KEY',
+  `file_name` varchar(255) NOT NULL COMMENT '原始文件名',
+  `content_type` varchar(100) NOT NULL COMMENT 'Content-Type',
+  `file_size` bigint NOT NULL COMMENT '期望文件字节数',
+  `sha256` char(64) NOT NULL COMMENT '期望SHA-256',
+  `upload_status` varchar(20) NOT NULL COMMENT 'ISSUED/BOUND',
+  `expires_at` datetime NOT NULL COMMENT 'PUT签名地址过期时间',
+  `bound_event_message_id` varchar(64) NULL COMMENT '绑定的MQTT事件messageId',
+  `create_time` datetime NOT NULL,
+  `update_time` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_vls_device_media_id` (`media_id`),
+  UNIQUE KEY `uk_vls_device_media_object` (`oss_config_key`, `object_key`),
+  KEY `idx_vls_device_media_device` (`device_id`, `create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='硬件事件媒体预签名上传记录';
+
+-- ----------------------------
 -- Table structure for vls_event_management
 -- ----------------------------
 DROP TABLE IF EXISTS `vls_event_management`;
 CREATE TABLE `vls_event_management`  (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '事件ID',
+  `mqtt_message_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'MQTT上报messageId',
+  `device_event_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '设备侧事件ID',
+  `media_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '事件图片mediaId',
   `tenant_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '租户id',
   `event_desc` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '事件描述',
   `event_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '事件类型',
   `report_location` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '上报位置',
   `report_device` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '上报设备',
-  `report_img` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '上报图片',
+  `report_img` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '对象存储内部引用',
   `report_time` datetime NOT NULL COMMENT '上报时间',
   `event_level` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'medium' COMMENT '事件级别：low-低,medium-中,high-高,urgent-紧急',
   `event_status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'pending' COMMENT '事件状态：pending-待处理,processing-处理中,completed-已完成,closed-已关闭',
@@ -1477,6 +1505,9 @@ CREATE TABLE `vls_event_management`  (
   `status` int NULL DEFAULT 1 COMMENT '状态',
   `is_deleted` int NULL DEFAULT 0 COMMENT '是否已删除',
   PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_vls_event_mqtt_message`(`mqtt_message_id` ASC) USING BTREE,
+  UNIQUE INDEX `uk_vls_event_device_event`(`report_device` ASC, `device_event_id` ASC) USING BTREE,
+  INDEX `idx_vls_event_media_id`(`media_id` ASC) USING BTREE,
   INDEX `idx_event_type`(`event_type` ASC) USING BTREE,
   INDEX `idx_event_status`(`event_status` ASC) USING BTREE,
   INDEX `idx_report_time`(`report_time` ASC) USING BTREE

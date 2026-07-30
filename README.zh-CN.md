@@ -22,12 +22,19 @@
     <a href="#-快速开始">快速开始</a> •
     <a href="#-核心特性">核心特性</a> •
     <a href="#-系统截图">系统截图</a> •
-    <a href="#-application-scenarios">Application Scenarios</a> •
+    <a href="#-应用场景">应用场景</a> •
     <a href="#-技术栈">技术栈</a> •
     <a href="#-部署">部署</a> •
     <a href="#-帮助与支持">帮助</a>
   </p>
 </div>
+
+---
+
+> [!IMPORTANT]
+> **容器访问地址：** [https://www.example.com/bus/vls-ui/](https://www.example.com/bus/vls-ui/)
+> **默认账号：** `admin` / `Codex@123456`
+> 当前访问地址是占位地址，后续会替换为正式地址。首次登录后请立即修改默认密码。
 
 ---
 
@@ -137,49 +144,49 @@ $bytes = New-Object byte[] 32
 
 ---
 
-## 🌐 Application Scenarios
+## 🌐 应用场景
 
 <table>
   <tr>
     <td align="center" width="33%">
       <img src="./assets/use-cases/01-chemical-production-safety.jpg" alt="Chemical production safety" width="100%"><br>
-      <strong>Chemical Production Safety</strong>
+      <strong>化工生产安全</strong>
     </td>
     <td align="center" width="33%">
       <img src="./assets/use-cases/02-smart-water-conservancy.jpg" alt="Smart water conservancy" width="100%"><br>
-      <strong>Smart Water Conservancy</strong>
+      <strong>智慧水利</strong>
     </td>
     <td align="center" width="33%">
       <img src="./assets/use-cases/03-wastewater-treatment.jpg" alt="Wastewater treatment" width="100%"><br>
-      <strong>Wastewater Treatment</strong>
+      <strong>污水处理</strong>
     </td>
   </tr>
   <tr>
     <td align="center" width="33%">
       <img src="./assets/use-cases/04-smart-construction-site.jpg" alt="Smart construction site" width="100%"><br>
-      <strong>Smart Construction Site</strong>
+      <strong>智慧工地</strong>
     </td>
     <td align="center" width="33%">
       <img src="./assets/use-cases/05-smart-community.jpg" alt="Smart community" width="100%"><br>
-      <strong>Smart Community</strong>
+      <strong>智慧社区</strong>
     </td>
     <td align="center" width="33%">
       <img src="./assets/use-cases/06-gas-station-safety.jpg" alt="Gas station safety" width="100%"><br>
-      <strong>Gas Station Safety</strong>
+      <strong>加油站安全监管</strong>
     </td>
   </tr>
   <tr>
     <td align="center" width="33%">
       <img src="./assets/use-cases/07-smart-kitchen.jpg" alt="Smart kitchen" width="100%"><br>
-      <strong>Smart Kitchen</strong>
+      <strong>智慧后厨</strong>
     </td>
     <td align="center" width="33%">
       <img src="./assets/use-cases/08-smart-campus.jpg" alt="Smart campus" width="100%"><br>
-      <strong>Smart Campus</strong>
+      <strong>智慧校园</strong>
     </td>
     <td align="center" width="33%">
       <img src="./assets/use-cases/09-smart-city-management.jpg" alt="Smart city management" width="100%"><br>
-      <strong>Smart City Management</strong>
+      <strong>智慧城管</strong>
     </td>
   </tr>
 </table>
@@ -260,6 +267,34 @@ VLStream-Cloud/
 | GPT 服务 | 能由 APaaS 网关路由的 `apaas-ai` 服务；AI 文本/图片功能必需 |
 | 前端 | Node.js 与 npm |
 
+### WebRTC 实时预览依赖
+
+浏览器不能直接播放 RTSP；摄像头实时预览依赖 WebRTC Streamer 将 RTSP 转换为 WebRTC。
+本项目固定使用并已验证的 Docker 镜像为 **`mpromonet/webrtc-streamer:v0.8.16`**。
+请保持此精确标签，不要使用未验证的 `latest` 或旧版 Windows 二进制。
+
+本地独立启动示例：
+
+```powershell
+docker run -d --name vlstream-webrtc --restart unless-stopped -p 8000:8000 `
+  mpromonet/webrtc-streamer:v0.8.16 -H 0.0.0.0:8000 -vvv
+```
+
+启动后执行 `curl.exe http://127.0.0.1:8000/api/version`，应返回
+`v0.8.16/Linux-x86_64`。后端配置位于
+`ruoyi-admin/src/main/resources/application.yml`：
+
+```bash
+VLSTREAM_WEBRTC_ENABLED=true
+VLSTREAM_WEBRTC_RUNTIME_IMAGE=mpromonet/webrtc-streamer:v0.8.16
+VLSTREAM_WEBRTC_INTERNAL_URL=http://127.0.0.1:8000
+VLSTREAM_WEBRTC_PUBLIC_URL=/bus/webrtc-streamer-server
+```
+
+容器化发布使用 `deploy/release/.env` 中同一个版本的
+`WEBRTC_STREAMER_IMAGE=mpromonet/webrtc-streamer:v0.8.16`。`runtime-image` 仅用于后端声明
+和状态展示，后端不会自行拉取或启动 Docker 容器。
+
 ### 1. 克隆项目
 
 ```powershell
@@ -267,7 +302,7 @@ git clone https://github.com/OortCloudGroup/VLStream-Cloud.git
 cd VLStream-Cloud
 ```
 
-### 2. 初始化数据库
+### 2. 初始化与升级数据库
 
 ```sql
 CREATE DATABASE vlstream CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -276,13 +311,13 @@ CREATE DATABASE vlstream CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```powershell
 cd VLStream-Cloud-Backend-Server/vls-stream
 mysql -u root -p vlstream --execute="source script/sql/mysql/mysql_ry_v0.8.X.sql"
-mysql -u root -p vlstream --execute="source db/2026-07-23-model-dispatch.sql"
-mysql -u root -p vlstream --execute="source db/2026-07-28-vls-protocol-v2-model-deploy.sql"
-mysql -u root -p vlstream --execute="source doc/sql/2026-07-23-gpu-training-scheduler.sql"
 ```
 
 `script/sql/` 下还提供了 Oracle、PostgreSQL 和 SQL Server 的初始化脚本。
-模型下发的两条 SQL 分别创建任务表、增加 V2.2 MQTT `messageId`；GPU 调度脚本创建训练调度相关结构。包含 `ALTER TABLE` 的增量脚本每个数据库只能执行一次，生产环境执行前必须先备份数据库。
+后续表结构和基础数据变更由 Flyway 在后端启动时自动执行。每次数据库变更都应在
+`ruoyi-admin/src/main/resources/db/migration/` 中新增一个不可修改的迁移文件，已经运行过的
+迁移不能继续编辑。详细规则见
+[`DATABASE_MIGRATIONS.md`](./VLStream-Cloud-Backend-Server/vls-stream/DATABASE_MIGRATIONS.md)。
 
 ### 3. 配置并启动后端
 
@@ -341,6 +376,12 @@ VLSTREAM_MODEL_PUBLIC_BASE_URL=https://vlstream.example.com
 VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET=replace-with-a-long-random-secret
 VLSTREAM_MODEL_DOWNLOAD_URL_TTL_SECONDS=1800
 VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID=vls-model-dispatch-backend-01
+
+# 硬件事件图片；生产使用独立私有 OSS 配置
+VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY=vlstream-events
+VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS=600
+VLSTREAM_DEVICE_MEDIA_MAX_IMAGE_BYTES=10485760
+VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED=false
 ```
 
 多实例部署时，每个后端实例的 `VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID` 必须唯一。
@@ -418,6 +459,13 @@ pwsh -File script/docker/init-emqx.ps1
 - `status`：必须为启用状态。
 
 MinIO 的数据目录必须挂载到持久化磁盘。后端、浏览器和 GPU 训练服务器都需要能够解析并访问最终生成的对象 URL，否则会出现“上传成功但标注页或训练任务无法读取图片”。
+
+硬件事件图片复用同一套 MinIO 服务，但生产环境推荐新增
+`config_key=vlstream-events` 的私有 OSS 配置并使用独立 Bucket。硬件只接收单对象、
+短时有效的预签名 PUT 地址，不得持有 MinIO AccessKey/SecretKey。本地 `dev` 配置默认
+允许局域网无认证申请上传地址；生产必须设置
+`VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED=false`，在设备 HMAC 认证上线前该接口保持关闭。
+部署前必须执行 `db/2026-07-29-vls-device-event-media.sql`。
 
 #### GPT/AI 服务器
 
@@ -532,25 +580,23 @@ VITE_APAAS_PROXY_TARGET=http://apaas-gateway.example.internal:21410
 
 ## 🐳 部署
 
-后端目录中提供了 Docker Compose 资源：
+从 [GitHub Releases](https://github.com/OortCloudGroup/VLStream-Cloud/releases)
+下载并解压部署包，然后复制环境变量模板并启动：
 
 ```powershell
-cd VLStream-Cloud-Backend-Server/vls-stream
-Copy-Item script/docker/.env.example script/docker/.env
-docker login 192.168.88.150:80
-docker compose --env-file script/docker/.env -f script/docker/docker-compose.yml up -d emqx
-pwsh -File script/docker/init-emqx.ps1
-docker compose --env-file script/docker/.env -f script/docker/docker-compose.yml up -d
+Copy-Item .env.example .env
+docker compose up -d
 ```
 
 停止服务：
 
 ```powershell
-docker compose --env-file script/docker/.env -f script/docker/docker-compose.yml down
+docker compose down
 ```
 
 > [!TIP]
-> 部分容器基础镜像配置在内部镜像仓库中。在项目网络外部署前，请检查 `script/docker/docker-compose.yml` 和 `dockerfile`。
+> 部署包默认包含 MySQL、Redis、MinIO、WebRTC-streamer、后端和前端，也支持使用已有的
+> 外部基础服务。配置和升级方法见[部署指南](./deploy/release/README.zh-CN.md)。
 
 ---
 
@@ -561,7 +607,11 @@ docker compose --env-file script/docker/.env -f script/docker/docker-compose.yml
 | 前端指南 | [`VLStream-Web/README.md`](./VLStream-Web/README.md) |
 | 前端中文指南 | [`VLStream-Web/README-cn.md`](./VLStream-Web/README-cn.md) |
 | 后端环境变量 | [`ENVIRONMENT_VARIABLES.md`](./VLStream-Cloud-Backend-Server/vls-stream/ENVIRONMENT_VARIABLES.md) |
+| 部署指南 | [`deploy/release/README.zh-CN.md`](./deploy/release/README.zh-CN.md) |
+| 数据库迁移 | [`DATABASE_MIGRATIONS.md`](./VLStream-Cloud-Backend-Server/vls-stream/DATABASE_MIGRATIONS.md) |
 | VLS 平台与摄像头统一通信协议（含模型下发） | [`VLS-Protocol.md`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.md) |
+| VLS 协议规范（中文） | [`VLS-Protocol.docx`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.docx) |
+| VLS 协议规范（英文） | [`VLS-Protocol-EN.docx`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol-EN.docx) |
 | API 文档 | 启动后端后访问 Knife4j 或 Swagger UI |
 
 ---

@@ -8,6 +8,9 @@ spring.boot.admin.client:
     service-host-type: IP
   username: ruoyi
   password: 123456
+
+--- # 硬件事件图片局域网联调
+vlstream.device-media.allow-unauthenticated: ${VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED:true}
 --- # xxl-job 配置
 xxl.job:
   # 执行器开关

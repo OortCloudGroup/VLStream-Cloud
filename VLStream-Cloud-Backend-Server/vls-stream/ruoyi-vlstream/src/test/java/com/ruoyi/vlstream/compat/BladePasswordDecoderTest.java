@@ -5,6 +5,7 @@
 
 package com.ruoyi.vlstream.compat;
 
+import com.ruoyi.vlstream.test.compat.BladePasswordDecoder;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
