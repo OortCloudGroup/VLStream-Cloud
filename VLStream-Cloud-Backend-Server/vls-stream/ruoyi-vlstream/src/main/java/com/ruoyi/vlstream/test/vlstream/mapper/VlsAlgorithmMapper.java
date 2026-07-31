@@ -33,7 +33,7 @@ public interface VlsAlgorithmMapper extends BaseMapper<Algorithm> {
 	 * @param vlsAlgorithm 查询参数
 	 * @return List<VlsAlgorithmVO>
 	 */
-	List<AlgorithmVO> selectVlsAlgorithmPage(IPage page, AlgorithmVO vlsAlgorithm);
+	List<AlgorithmVO> selectVlsAlgorithmPage(IPage page, @Param("vlsAlgorithm") AlgorithmVO vlsAlgorithm);
 
 	/**
 	 * 获取导出数据

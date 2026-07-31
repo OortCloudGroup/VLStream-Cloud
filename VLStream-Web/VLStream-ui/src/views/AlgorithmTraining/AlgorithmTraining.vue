@@ -1116,6 +1116,7 @@ import {
   convertModel,
   createTraining,
   deleteTraining,
+  getTrainingTask,
   getTrainingLogs,
   getTrainingPage,
   getTrainingStatus,
@@ -1237,6 +1238,9 @@ const currentCommand = ref('')
 const terminalRef = ref(null)
 const logPollingTimer = ref(null)
 const statusPollingTimer = ref(null)
+const conversionPollingTimer = ref(null)
+const finalizingTrainingTasks = new Set()
+const MODEL_CONVERSION_MAX_POLLS = 900
 const lastLogContent = ref('')
 const lastLogCount = ref(0)
 const lastModelPath = ref('')
@@ -1767,10 +1771,20 @@ const promptDownloadModelType = async (row) => {
   const modelData = row?.originalData || row || {}
   const modelTypes = [
     { type: 'pt', path: modelData.modelOutputPath },
-    { type: 'onnx', path: modelData.onnxModelOutputPath },
+    {
+      type: 'onnx',
+      path: modelData.onnxModelOutputPath,
+      status: modelData.onnxConversionStatus,
+      error: modelData.onnxConversionError
+    },
     { type: 'rknn', path: modelData.rknnModelOutputPath },
     { type: 'int8-rknn', path: modelData.int8RknnModelOutputPath },
-    { type: 'om', path: modelData.omModelOutputPath }
+    {
+      type: 'om',
+      path: modelData.omModelOutputPath,
+      status: modelData.omConversionStatus,
+      error: modelData.omConversionError
+    }
   ]
   const firstAvailableType = modelTypes.find(item => item.path)?.type
   if (!firstAvailableType) {
@@ -1798,7 +1812,15 @@ const promptDownloadModelType = async (row) => {
           () => modelTypes.map(item => h(
             ElRadio,
             { label: item.type, disabled: !item.path },
-            () => item.path ? item.type : `${item.type}（未生成）`
+            () => {
+              if (item.path) return item.type
+              if (item.status === 'converting') return `${item.type}（转换中）`
+              if (item.status === 'failed') {
+                const error = item.error ? String(item.error).slice(0, 120) : '未返回失败原因'
+                return `${item.type}（失败：${error}）`
+              }
+              return `${item.type}（未生成）`
+            }
           ))
         )
       ])
@@ -2322,9 +2344,95 @@ const stopStatusPolling = () => {
   }
 }
 
+const stopConversionPolling = () => {
+  if (conversionPollingTimer.value) {
+    clearInterval(conversionPollingTimer.value)
+    conversionPollingTimer.value = null
+  }
+}
+
 const stopAllPolling = () => {
   stopLogPolling()
   stopStatusPolling()
+  stopConversionPolling()
+}
+
+const isConversionTerminal = (status) => ['completed', 'failed'].includes(status)
+
+const startConversionPolling = (taskId, trainingStatus, displayStatus) => {
+  stopConversionPolling()
+  let polling = false
+  let attempts = 0
+
+  const fetchOnce = async () => {
+    if (polling) return
+    polling = true
+    try {
+      attempts += 1
+      const res = await getTrainingTask(taskId)
+      const payload = res?.data ?? res
+      const data = payload?.data ?? payload
+      const onnxStatus = data?.onnxConversionStatus
+      const omStatus = data?.omConversionStatus
+      if (!isConversionTerminal(onnxStatus) || !isConversionTerminal(omStatus)) {
+        if (attempts >= MODEL_CONVERSION_MAX_POLLS) {
+          stopConversionPolling()
+          appendTerminalInfo('模型转换等待超时，请稍后刷新列表查看转换结果。')
+        }
+        return
+      }
+
+      stopConversionPolling()
+      await loadTrainingData()
+      if (onnxStatus === 'completed') {
+        appendTerminalInfo(`ONNX转换完成: ${data.onnxModelOutputPath}`)
+      } else {
+        appendLogLines(`[ERROR] ONNX转换失败: ${data.onnxConversionError || '未返回失败原因'}`)
+      }
+      if (omStatus === 'completed') {
+        appendTerminalInfo(`OM转换完成: ${data.omModelOutputPath}`)
+      } else {
+        appendLogLines(`[ERROR] OM转换失败: ${data.omConversionError || '未返回失败原因'}`)
+      }
+      await triggerAutoPublish(taskId, trainingStatus, displayStatus)
+    } catch (error) {
+      console.error('查询模型转换状态失败:', error)
+      if (attempts >= MODEL_CONVERSION_MAX_POLLS) {
+        stopConversionPolling()
+        appendLogLines(`[ERROR] 查询模型转换状态失败: ${error?.message || error}`)
+      }
+    } finally {
+      polling = false
+    }
+  }
+
+  conversionPollingTimer.value = setInterval(fetchOnce, 2000)
+  fetchOnce()
+}
+
+const handleTrainingFinished = async (taskId, statusValue) => {
+  if (finalizingTrainingTasks.has(taskId)) return
+  finalizingTrainingTasks.add(taskId)
+  isTraining.value = false
+  stopLogPolling()
+  stopStatusPolling()
+
+  const displayStatus = getTrainStatusText(statusValue)
+  appendTerminalInfo(`训练状态: ${displayStatus}`)
+  if (!isCompletedStatus(statusValue) && !isCompletedStatus(displayStatus)) {
+    await loadTrainingData()
+    return
+  }
+
+  try {
+    await convertModel(taskId)
+    appendTerminalInfo('训练完成，已提交ONNX和OM转换，正在查询转换状态...')
+    startConversionPolling(taskId, statusValue, displayStatus)
+  } catch (error) {
+    appendLogLines(`[ERROR] 提交模型转换失败: ${error?.message || error}`)
+    await loadTrainingData()
+    finalizingTrainingTasks.delete(taskId)
+  }
 }
 
 const startLogPolling = (taskId) => {
@@ -2361,20 +2469,7 @@ const startLogPolling = (taskId) => {
       appendTrainingPaths(modelPath, logPath)
 
       if (isFinishedStatus(resolvedStatus)) {
-        await convertModel(taskId)
-        isTraining.value = false
-        stopAllPolling()
-        await loadTrainingData()
-        const displayStatus = getTrainStatusText(resolvedStatus)
-        appendTerminalInfo(`\u8bad\u7ec3\u72b6\u6001: ${displayStatus}`)
-        await triggerAutoPublish(taskId, resolvedStatus, displayStatus)
-        const refreshedItem = tableData.value.find(item => item.id === taskId)
-        if (refreshedItem?.originalData) {
-          appendTrainingPaths(
-            refreshedItem.originalData.modelOutputPath,
-            refreshedItem.originalData.logPath || refreshedItem.originalData.logFilePath
-          )
-        }
+		await handleTrainingFinished(taskId, resolvedStatus)
       }
 
       // 日志接口返回了完成状态时，提前停止轮询
@@ -2405,11 +2500,7 @@ const startStatusPolling = (taskId) => {
       }
 
       if (isFinishedStatus(statusValue) || isFinishedStatus(displayStatus)) {
-        isTraining.value = false
-        stopAllPolling()
-        await loadTrainingData()
-        appendLogLines(`[INFO] Training status: ${displayStatus}`)
-        await triggerAutoPublish(taskId, statusValue, displayStatus)
+		await handleTrainingFinished(taskId, statusValue)
       }
     } catch (error) {
       console.error('Failed to fetch training status:', error)

@@ -359,19 +359,22 @@ public class GpuTrainingSchedulerService {
 		if (epochs != null) train.append(" epochs=").append(epochs);
 		if (batchSize != null) train.append(" batch=").append(batchSize);
 		if (imgSize != null) train.append(" imgsz=").append(imgSize);
+		if (properties.getWorkers() != null) train.append(" workers=").append(properties.getWorkers());
 		train.append("; rc=$?; if [ $rc -eq 0 ]; then echo 'Training complete'; ")
 			.append("else echo 'Training failed'; fi; exit $rc");
 		String loggedTraining = "{ " + train + "; } >> " + shellQuote(logPath) + " 2>&1";
 
 		return "mkdir -p " + shellQuote(server.getWorkDir() + "/logs")
+			+ " " + shellQuote(properties.getUltralyticsConfigDir())
 			+ " && rm -f " + shellQuote(logPath)
 			+ " && docker rm -f " + shellQuote(containerName) + " >/dev/null 2>&1 || true; "
 			+ "docker run -d --name " + shellQuote(containerName)
 			+ " --gpus device=" + properties.getGpuIndex()
 			+ " --cpus " + shellToken(properties.getCpuLimit())
 			+ " --memory " + shellToken(properties.getMemoryLimit())
+			+ " --shm-size " + shellToken(properties.getShmSize())
 			+ " --user $(id -u):$(id -g)"
-			+ " -e HOME=/tmp -e YOLO_CONFIG_DIR=/tmp/Ultralytics"
+			+ " -e HOME=/tmp -e YOLO_CONFIG_DIR=" + shellQuote(properties.getUltralyticsConfigDir())
 			+ " -v " + shellQuote(properties.getHostDataDir() + ":" + properties.getHostDataDir())
 			+ " -w " + shellQuote(server.getWorkDir())
 			+ " " + shellQuote(properties.getImage())

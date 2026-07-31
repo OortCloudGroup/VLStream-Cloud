@@ -23,6 +23,7 @@
     <a href="#-key-features">Key Features</a> •
     <a href="#-system-screenshots">System Screenshots</a> •
     <a href="#-application-scenarios">Application Scenarios</a> •
+    <a href="#-architecture-and-project-structure">Architecture</a> •
     <a href="#-technology-stack">Technology Stack</a> •
     <a href="#-deployment">Deployment</a> •
     <a href="#-help-and-support">Help</a>
@@ -220,32 +221,91 @@ for each environment; never commit the real secret to Git.
 
 ---
 
-## 🗂️ Project Structure
+## 🏗️ Architecture and Project Structure
+
+VLStream Cloud is organized around two clients and one shared service platform:
+the Vue management console is used by operators, while the native SDK runs on
+Hi3519DV500 cameras. Both clients communicate with the Spring Boot backend; the
+backend coordinates business modules and external infrastructure such as MySQL,
+Redis, MinIO, MQTT, GPU training, and AI services.
+
+```mermaid
+flowchart LR
+    UI["VLStream-ui<br/>Vue 3 management console"] --> API["ruoyi-admin<br/>Spring Boot API"]
+    CAM["Hi3519DV500 camera"] --> SDK["sdk/<br/>Native C/C++ business SDK"]
+    SDK -->|MQTT / HTTP| API
+    SDK -->|RTSP / WebRTC frames| MEDIA["WebRTC Streamer<br/>and video clients"]
+    API --> BIZ["ruoyi-vlstream<br/>device, stream, AI, and model services"]
+    API --> PLATFORM["system / framework / flowable<br/>job / oss / sms / extend"]
+    BIZ --> DATA["MySQL / Redis / MinIO / MQTT"]
+    API --> EXT["GPU training / APaaS AI<br/>and other external services"]
+```
+
+### Repository layers
+
+The backend paths in the following table are relative to
+`VLStream-Cloud-Backend-Server/vls-stream/`.
+
+| Layer | Main paths | Responsibility |
+| --- | --- | --- |
+| Operator client | `VLStream-Web/VLStream-ui/` | Dashboards, device and stream management, AI operations, workflow, and system administration |
+| Device client | `sdk/` | Native camera-side RTSP/WebRTC streaming, AI inference, event reporting, and model updates |
+| Application services | `ruoyi-admin/`, `ruoyi-vlstream/` | API entry point and VLStream domain services |
+| Platform services | `ruoyi-common/`, `ruoyi-framework/`, `ruoyi-system/`, `ruoyi-flowable/`, `ruoyi-job/`, `ruoyi-oss/`, `ruoyi-sms/`, `ruoyi-extend/` | Shared infrastructure, authentication, permissions, workflows, jobs, storage, messaging, and monitoring |
+| Operations and documentation | `deploy/`, `docs/`, backend `deploy/` and `script/` | Container deployment, database initialization, migration support, protocols, and operational documentation |
+
+### Top-level layout
 
 ```text
 VLStream-Cloud/
 ├── VLStream-Cloud-Backend-Server/
-│   └── vls-stream/                  # Maven multi-module backend
-│       ├── ruoyi-admin/             # Main Spring Boot application and APIs
-│       ├── ruoyi-common/            # Shared models and utilities
-│       ├── ruoyi-framework/         # Web, security, and framework configuration
+│   └── vls-stream/                  # Java 8 / Spring Boot Maven reactor
+│       ├── ruoyi-admin/             # Executable application and REST APIs
+│       ├── ruoyi-vlstream/          # Devices, streams, AI, events, and models
 │       ├── ruoyi-system/            # Users, roles, permissions, and system services
-│       ├── ruoyi-vlstream/          # VLStream business domain
+│       ├── ruoyi-framework/         # Web, security, and framework configuration
 │       ├── ruoyi-flowable/          # Workflow and approval services
+│       ├── ruoyi-common/            # Shared models, utilities, and base components
 │       ├── ruoyi-generator/         # Code generation
 │       ├── ruoyi-job/               # Scheduled jobs
-│       ├── ruoyi-oss/               # Object storage
+│       ├── ruoyi-oss/               # Object storage integration
 │       ├── ruoyi-sms/               # SMS integration
-│       ├── ruoyi-demo/              # Examples and integration tests
 │       ├── ruoyi-extend/            # Monitoring and XXL-Job services
-│       ├── deploy/                  # Deployment resources
+│       ├── ruoyi-demo/              # Examples and integration tests
+│       ├── deploy/                  # Backend deployment resources
 │       └── script/                  # Database and Docker scripts
 ├── VLStream-Web/
 │   └── VLStream-ui/                 # Vue 3 management console
+├── sdk/                             # Hi3519DV500 native camera business SDK
+├── deploy/                          # Repository-level deployment assets
+├── docs/                            # Repository-level documentation
+├── assets/                          # Screenshots and application imagery
+├── tools/                           # Development and validation tools
 ├── LICENSE
 ├── README.md                        # English documentation (default)
 └── README.zh-CN.md                  # Simplified Chinese documentation
 ```
+
+### Device SDK (`sdk/`)
+
+The `sdk/` directory is the camera-side native component, not a Maven or npm
+module. It exports the business source used to build the `rtsp_streamer`
+executable for the Hi3519DV500 board and depends on the original HiSilicon
+MPP/ACL SDK, the cross toolchain, and an external WebRTC Streamer SDK.
+
+| Area | Contents |
+| --- | --- |
+| Media pipeline | `src/rtsp_streamer.c`, `rtsp_lib/` — RTSP input, frame handling, and stream orchestration |
+| WebRTC bridge | `src/webrtc_bridge.c`, `include/webrtc_bridge.h` — WebRTC lifecycle, sessions, codec headers, and keyframe gating |
+| AI runtime | `src/ai_bridge.cpp`, `src/ai_acl_adapter.cpp`, `src/ai_runtime_config.cpp` — ACL inference, OM model validation/hot switching, and runtime configuration |
+| Platform integration | `src/http_reporter.cpp`, `src/model_receiver.cpp` — asynchronous event/JPEG reporting and HTTP model reception |
+| Configuration and examples | `config/`, `examples/` — board settings, class labels, and an MQTT model-dispatch example |
+| Dependencies and notes | `third_party/`, `docs/`, `Makefile` — external declarations, porting notes, debugging records, and board build rules |
+
+The SDK is intentionally kept separate from the server build: the root Maven
+and frontend commands do not compile it. For prerequisites, original project
+paths, excluded vendor binaries, and board-side build instructions, see the
+[SDK guide](./sdk/README.md).
 
 ---
 
@@ -520,6 +580,7 @@ docker compose down
 | --- | --- |
 | Frontend Guide | [`VLStream-Web/README.md`](./VLStream-Web/README.md) |
 | Frontend Guide (Chinese) | [`VLStream-Web/README-cn.md`](./VLStream-Web/README-cn.md) |
+| Device SDK Guide | [`sdk/README.md`](./sdk/README.md) |
 | Backend Environment Variables | [`ENVIRONMENT_VARIABLES.md`](./VLStream-Cloud-Backend-Server/vls-stream/ENVIRONMENT_VARIABLES.md) |
 | Deployment Guide | [`deploy/release/README.md`](./deploy/release/README.md) |
 | Database Migrations | [`DATABASE_MIGRATIONS.md`](./VLStream-Cloud-Backend-Server/vls-stream/DATABASE_MIGRATIONS.md) |

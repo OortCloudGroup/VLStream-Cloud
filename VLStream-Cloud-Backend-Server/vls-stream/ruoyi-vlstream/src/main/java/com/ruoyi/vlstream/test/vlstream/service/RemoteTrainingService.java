@@ -322,26 +322,25 @@ public class RemoteTrainingService {
 	public String exportModel(String modelPath, String format) {
 		RemoteServers server = remoteServerMapper.selectActiveServer();
 		if (server == null) {
-			log.warn("No active remote server, skip model export: format={}, modelPath={}", format, modelPath);
-			return null;
+			throw new IllegalStateException("未找到可用的模型转换服务器");
 		}
 		return exportModel(server, modelPath, format);
 	}
 
 	private String exportModel(RemoteServers server, String modelPath, String format) {
 		if (server == null) {
-			return null;
+			throw new IllegalArgumentException("模型转换服务器不能为空");
 		}
 		if (modelPath == null || modelPath.isEmpty()) {
-			return null;
+			throw new IllegalArgumentException("待转换的PT模型路径不能为空");
 		}
 		if (format == null || format.trim().isEmpty()) {
-			return null;
+			throw new IllegalArgumentException("目标模型格式不能为空");
 		}
 		String normalizedFormat = format.trim().toLowerCase();
 		String exportPath = resolveExportPath(modelPath, normalizedFormat);
 		if (exportPath == null) {
-			return null;
+			throw new IllegalArgumentException("无法生成" + normalizedFormat.toUpperCase() + "模型输出路径");
 		}
 
 		String condaEnv = server.getCondaEnv();
@@ -361,11 +360,12 @@ public class RemoteTrainingService {
 
 		String wrappedCommand = wrapWithBash(commandBuilder.toString());
 		SSHService.SSHExecutionResult exportResult = executeWithFallback(server, wrappedCommand);
-		if (exportResult.isSuccess()) {
+		if (exportResult != null && exportResult.isSuccess()) {
 			return exportPath;
 		}
-		log.warn("Model export failed: format={}, error={}", normalizedFormat, exportResult.getErrorMsg());
-		return null;
+		String error = buildExportError(exportResult);
+		log.warn("Model export failed: format={}, error={}", normalizedFormat, error);
+		throw new IllegalStateException(error);
 	}
 
 	private String resolveExportPath(String modelPath, String format) {
@@ -391,11 +391,14 @@ public class RemoteTrainingService {
 	 */
 	public String exportHisiliconOm(String modelPath, String datasetYamlPath) {
 		RemoteServers server = remoteServerMapper.selectActiveServer();
-		if (server == null || modelPath == null || modelPath.trim().isEmpty()
-			|| datasetYamlPath == null || datasetYamlPath.trim().isEmpty()) {
-			log.warn("Skip HiSilicon OM export because required input is missing: modelPath={}, datasetPath={}",
-				modelPath, datasetYamlPath);
-			return null;
+		if (server == null) {
+			throw new IllegalStateException("未找到可用的Hi3519DV500模型转换服务器");
+		}
+		if (modelPath == null || modelPath.trim().isEmpty()) {
+			throw new IllegalArgumentException("待转换的PT模型路径不能为空");
+		}
+		if (datasetYamlPath == null || datasetYamlPath.trim().isEmpty()) {
+			throw new IllegalArgumentException("OM转换缺少数据集配置路径，无法生成校准图片列表");
 		}
 
 		String normalizedModelPath = modelPath.trim();
@@ -446,8 +449,26 @@ public class RemoteTrainingService {
 			return targetPath;
 		}
 		log.warn("HiSilicon OM export failed: modelPath={}, error={}", normalizedModelPath,
-			result == null ? "No SSH result" : result.getErrorMsg());
-		return null;
+			buildExportError(result));
+		throw new IllegalStateException(buildExportError(result));
+	}
+
+	private String buildExportError(SSHService.SSHExecutionResult result) {
+		if (result == null) {
+			return "远程转换命令未返回执行结果";
+		}
+		String error = result.getErrorMsg();
+		String output = result.getOutput();
+		if (error != null && !error.trim().isEmpty()) {
+			if (output != null && !output.trim().isEmpty()) {
+				return "stderr:\n" + error.trim() + "\nstdout:\n" + output.trim();
+			}
+			return "stderr:\n" + error.trim();
+		}
+		if (output != null && !output.trim().isEmpty()) {
+			return "stdout:\n" + output.trim();
+		}
+		return "远程转换命令执行失败，但未返回错误输出";
 	}
 
 	/**

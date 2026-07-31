@@ -23,6 +23,7 @@
     <a href="#-核心特性">核心特性</a> •
     <a href="#-系统截图">系统截图</a> •
     <a href="#-应用场景">应用场景</a> •
+    <a href="#-架构与项目结构">架构</a> •
     <a href="#-技术栈">技术栈</a> •
     <a href="#-部署">部署</a> •
     <a href="#-帮助与支持">帮助</a>
@@ -222,32 +223,86 @@ $bytes = New-Object byte[] 32
 
 ---
 
-## 🗂️ 项目结构
+## 🏗️ 架构与项目结构
+
+VLStream Cloud 由两个客户端和一个共享服务平台组成：Vue 管理控制台供运营人员使用，
+原生 SDK 运行在 Hi3519DV500 摄像机上。两个客户端都通过 Spring Boot 后端交互，后端
+负责协调业务模块，以及 MySQL、Redis、MinIO、MQTT、GPU 训练和 AI 服务等外部基础设施。
+
+```mermaid
+flowchart LR
+    UI["VLStream-ui<br/>Vue 3 管理控制台"] --> API["ruoyi-admin<br/>Spring Boot API"]
+    CAM["Hi3519DV500 摄像机"] --> SDK["sdk/<br/>原生 C/C++ 设备侧业务 SDK"]
+    SDK -->|MQTT / HTTP| API
+    SDK -->|RTSP / WebRTC 视频帧| MEDIA["WebRTC Streamer<br/>和视频客户端"]
+    API --> BIZ["ruoyi-vlstream<br/>设备、流媒体、AI 与模型服务"]
+    API --> PLATFORM["system / framework / flowable<br/>job / oss / sms / extend"]
+    BIZ --> DATA["MySQL / Redis / MinIO / MQTT"]
+    API --> EXT["GPU 训练 / APaaS AI<br/>及其他外部服务"]
+```
+
+### 仓库分层
+
+下表中的后端目录均相对于
+`VLStream-Cloud-Backend-Server/vls-stream/`。
+
+| 层次 | 主要目录 | 职责 |
+| --- | --- | --- |
+| 运营客户端 | `VLStream-Web/VLStream-ui/` | 仪表盘、设备与流媒体管理、AI 操作、工作流和系统管理 |
+| 设备客户端 | `sdk/` | 摄像机侧 RTSP/WebRTC 推流、AI 推理、事件上报和模型更新 |
+| 应用服务 | `ruoyi-admin/`、`ruoyi-vlstream/` | API 入口与 VLStream 领域服务 |
+| 平台服务 | `ruoyi-common/`、`ruoyi-framework/`、`ruoyi-system/`、`ruoyi-flowable/`、`ruoyi-job/`、`ruoyi-oss/`、`ruoyi-sms/`、`ruoyi-extend/` | 公共基础设施、认证授权、工作流、任务、存储、消息和监控 |
+| 运维与文档 | `deploy/`、`docs/`、后端 `deploy/` 和 `script/` | 容器部署、数据库初始化、迁移支持、协议和运维文档 |
+
+### 顶层目录
 
 ```text
 VLStream-Cloud/
 ├── VLStream-Cloud-Backend-Server/
-│   └── vls-stream/                  # Maven 多模块后端
-│       ├── ruoyi-admin/             # Spring Boot 主应用与 API
-│       ├── ruoyi-common/            # 公共模型和工具
-│       ├── ruoyi-framework/         # Web、安全与框架配置
+│   └── vls-stream/                  # Java 8 / Spring Boot Maven 多模块工程
+│       ├── ruoyi-admin/             # 可执行应用与 REST API
+│       ├── ruoyi-vlstream/          # 设备、流媒体、AI、事件和模型
 │       ├── ruoyi-system/            # 用户、角色、权限和系统服务
-│       ├── ruoyi-vlstream/          # VLStream 业务领域
+│       ├── ruoyi-framework/         # Web、安全与框架配置
 │       ├── ruoyi-flowable/          # 工作流与审批服务
+│       ├── ruoyi-common/            # 公共模型、工具和基础组件
 │       ├── ruoyi-generator/         # 代码生成
 │       ├── ruoyi-job/               # 定时任务
-│       ├── ruoyi-oss/               # 对象存储
+│       ├── ruoyi-oss/               # 对象存储集成
 │       ├── ruoyi-sms/               # 短信集成
-│       ├── ruoyi-demo/              # 示例与集成测试
 │       ├── ruoyi-extend/            # 监控与 XXL-Job 服务
-│       ├── deploy/                  # 部署资源
+│       ├── ruoyi-demo/              # 示例与集成测试
+│       ├── deploy/                  # 后端部署资源
 │       └── script/                  # 数据库与 Docker 脚本
 ├── VLStream-Web/
 │   └── VLStream-ui/                 # Vue 3 管理控制台
+├── sdk/                             # Hi3519DV500 原生摄像机业务 SDK
+├── deploy/                          # 仓库级部署资源
+├── docs/                            # 仓库级文档
+├── assets/                          # 截图和应用场景图片
+├── tools/                           # 开发与校验工具
 ├── LICENSE
 ├── README.md                        # 英文文档（默认）
 └── README.zh-CN.md                  # 简体中文文档
 ```
+
+### 设备 SDK（`sdk/`）
+
+`sdk/` 是摄像机侧原生组件，不属于 Maven 或 npm 模块。它导出了 Hi3519DV500 板卡上
+用于构建 `rtsp_streamer` 可执行文件的业务源码，依赖原始海思 MPP/ACL SDK、交叉编译
+工具链和外部 WebRTC Streamer SDK。
+
+| 区域 | 内容 |
+| --- | --- |
+| 媒体管线 | `src/rtsp_streamer.c`、`rtsp_lib/`：RTSP 输入、帧处理和推流编排 |
+| WebRTC 桥接 | `src/webrtc_bridge.c`、`include/webrtc_bridge.h`：WebRTC 生命周期、会话、编码头和关键帧控制 |
+| AI 运行时 | `src/ai_bridge.cpp`、`src/ai_acl_adapter.cpp`、`src/ai_runtime_config.cpp`：ACL 推理、OM 模型校验/热切换和运行时配置 |
+| 平台集成 | `src/http_reporter.cpp`、`src/model_receiver.cpp`：异步事件/JPEG 上报和 HTTP 模型接收 |
+| 配置与示例 | `config/`、`examples/`：板端配置、类别标签和 MQTT 模型下发示例 |
+| 依赖与说明 | `third_party/`、`docs/`、`Makefile`：外部声明、移植说明、调试记录和板端构建规则 |
+
+SDK 与服务端构建相互独立：根目录 Maven 和前端命令不会编译它。依赖条件、原始工程路径、
+不包含的厂商二进制文件以及板端构建说明，请查看 [SDK 指南](./sdk/README.md)。
 
 ---
 
@@ -606,6 +661,7 @@ docker compose down
 | --- | --- |
 | 前端指南 | [`VLStream-Web/README.md`](./VLStream-Web/README.md) |
 | 前端中文指南 | [`VLStream-Web/README-cn.md`](./VLStream-Web/README-cn.md) |
+| 设备 SDK 指南 | [`sdk/README.md`](./sdk/README.md) |
 | 后端环境变量 | [`ENVIRONMENT_VARIABLES.md`](./VLStream-Cloud-Backend-Server/vls-stream/ENVIRONMENT_VARIABLES.md) |
 | 部署指南 | [`deploy/release/README.zh-CN.md`](./deploy/release/README.zh-CN.md) |
 | 数据库迁移 | [`DATABASE_MIGRATIONS.md`](./VLStream-Cloud-Backend-Server/vls-stream/DATABASE_MIGRATIONS.md) |

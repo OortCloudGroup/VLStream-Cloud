@@ -194,8 +194,14 @@ vlstream:
     cpu-limit: ${VLSTREAM_TRAINING_CPU_LIMIT:12}
     # 容器内存限制
     memory-limit: ${VLSTREAM_TRAINING_MEMORY_LIMIT:12g}
+    # DataLoader 多进程使用的容器共享内存，避免 Docker 默认 64MB 导致 Bus error
+    shm-size: ${VLSTREAM_TRAINING_SHM_SIZE:4g}
+    # YOLO DataLoader worker 数量，低共享内存环境建议设为 0
+    workers: ${VLSTREAM_TRAINING_WORKERS:2}
     # 宿主机数据挂载目录（容器内 /data/work 的映射源）
     host-data-dir: ${VLSTREAM_TRAINING_HOST_DATA_DIR:/data/work}
+    # Ultralytics 持久化配置和字体缓存目录，必须位于宿主机数据挂载目录内
+    ultralytics-config-dir: ${VLSTREAM_ULTRALYTICS_CONFIG_DIR:/data/work/ultralytics_yolov8-main/.ultralytics}
     # 训练任务状态轮询间隔（毫秒）
     schedule-interval-millis: ${VLSTREAM_TRAINING_SCHEDULE_INTERVAL_MILLIS:3000}
   # 模型转换配置（YOLOv8 → 海思/昇腾芯片格式）

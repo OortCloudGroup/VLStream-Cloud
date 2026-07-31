@@ -17,6 +17,9 @@ public class VlsTrainingContainerProperties {
 	private String gpuUuid = "GPU-46808c9f-cd48-1feb-5304-5342999ca622";
 	private String cpuLimit = "12";
 	private String memoryLimit = "12g";
+	private String shmSize = "4g";
+	private Integer workers = 2;
 	private String hostDataDir = "/data/work";
+	private String ultralyticsConfigDir = "/data/work/ultralytics_yolov8-main/.ultralytics";
 	private long scheduleIntervalMillis = 3000L;
 }

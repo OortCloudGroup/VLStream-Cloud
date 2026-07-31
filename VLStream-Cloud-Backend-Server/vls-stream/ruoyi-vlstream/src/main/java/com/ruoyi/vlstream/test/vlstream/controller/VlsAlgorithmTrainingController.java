@@ -62,6 +62,10 @@ public class VlsAlgorithmTrainingController extends BladeController {
 
 	private static final String RKNN_MODEL_ZOO_PATH = "/data/work/ultralytics_yolov8-main/rknn_model_zoo-main";
 	private static final String COCO_SUBSET_FILE_NAME = "coco_subset_20.txt";
+	private static final String CONVERSION_CONVERTING = "converting";
+	private static final String CONVERSION_COMPLETED = "completed";
+	private static final String CONVERSION_FAILED = "failed";
+	private static final int MAX_CONVERSION_ERROR_LENGTH = 8000;
 
 	@Resource
 	private IVlsAlgorithmTrainingService vlsAlgorithmTrainingService;
@@ -419,6 +423,21 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		if (ptModelPath == null || ptModelPath.isEmpty()) {
 			return R.fail("模型路径不能为空");
 		}
+		if (CONVERSION_CONVERTING.equals(training.getOnnxConversionStatus())
+			|| CONVERSION_CONVERTING.equals(training.getOmConversionStatus())) {
+			return R.success("模型正在转换中");
+		}
+		AlgorithmTraining convertingUpdate = new AlgorithmTraining();
+		convertingUpdate.setId(id);
+		convertingUpdate.setOnnxModelOutputPath("");
+		convertingUpdate.setOnnxConversionStatus(CONVERSION_CONVERTING);
+		convertingUpdate.setOnnxConversionError("");
+		convertingUpdate.setOmModelOutputPath("");
+		convertingUpdate.setOmConversionStatus(CONVERSION_CONVERTING);
+		convertingUpdate.setOmConversionError("");
+		if (vlsAlgorithmTrainingService.updateAlgorithmTraining(convertingUpdate) <= 0) {
+			return R.fail("初始化模型转换状态失败");
+		}
 		String datasetPath = resolveDatasetPath(training);
 		AlgorithmTraining trainingSnapshot = training;
 		String datasetPathSnapshot = datasetPath;
@@ -427,9 +446,9 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		Thread convertThread = new Thread(() -> {
 			ExecutorService executor = Executors.newFixedThreadPool(3);
 			try {
-				Future<String> onnxFuture = executor.submit(() -> remoteTrainingService.exportModel(ptModelPath, "onnx"));
+				Future<String> onnxFuture = executor.submit(() -> convertOnnxAndRecord(id, ptModelPath));
 				Future<String> rknnFuture = executor.submit(() -> remoteTrainingService.exportModel(ptModelPath, "rknn"));
-				Future<String> omFuture = executor.submit(() -> remoteTrainingService.exportHisiliconOm(ptModelPath, datasetPathSnapshot));
+				Future<String> omFuture = executor.submit(() -> convertOmAndRecord(id, ptModelPath, datasetPathSnapshot));
 				String onnxPath = getConvertResult(onnxFuture, id, "onnx");
 				String rknnPath = getConvertResult(rknnFuture, id, "rknn");
 				String omPath = getConvertResult(omFuture, id, "om");
@@ -479,10 +498,8 @@ public class VlsAlgorithmTrainingController extends BladeController {
 				}
 				AlgorithmTraining update = new AlgorithmTraining();
 				update.setId(id);
-				update.setOnnxModelOutputPath(onnxPath);
 				update.setRknnModelOutputPath(rknnPath);
 				update.setInt8RknnModelOutputPath(int8RknnPath);
-				update.setOmModelOutputPath(omPath);
 				int updateResult = vlsAlgorithmTrainingService.updateAlgorithmTraining(update);
 				if (updateResult > 0) {
 					log.info("模型路径更新成功: id={}, onnxPath={}, rknnPath={}, int8RknnPath={}, omPath={}",
@@ -500,6 +517,73 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		convertThread.setName("model-convert-" + id);
 		convertThread.start();
 		return R.success("模型转换任务已提交");
+	}
+
+	private String convertOnnxAndRecord(Long trainingId, String ptModelPath) {
+		try {
+			String path = remoteTrainingService.exportModel(ptModelPath, "onnx");
+			if (StringUtils.isBlank(path)) {
+				throw new IllegalStateException("ONNX转换未生成模型文件");
+			}
+			AlgorithmTraining update = new AlgorithmTraining();
+			update.setId(trainingId);
+			update.setOnnxModelOutputPath(path);
+			update.setOnnxConversionStatus(CONVERSION_COMPLETED);
+			update.setOnnxConversionError("");
+			vlsAlgorithmTrainingService.updateAlgorithmTraining(update);
+			return path;
+		} catch (Exception exception) {
+			String error = extractConversionError(exception);
+			AlgorithmTraining update = new AlgorithmTraining();
+			update.setId(trainingId);
+			update.setOnnxModelOutputPath("");
+			update.setOnnxConversionStatus(CONVERSION_FAILED);
+			update.setOnnxConversionError(error);
+			vlsAlgorithmTrainingService.updateAlgorithmTraining(update);
+			log.error("ONNX模型转换失败: id={}, error={}", trainingId, error, exception);
+			return null;
+		}
+	}
+
+	private String convertOmAndRecord(Long trainingId, String ptModelPath, String datasetPath) {
+		try {
+			String path = remoteTrainingService.exportHisiliconOm(ptModelPath, datasetPath);
+			if (StringUtils.isBlank(path)) {
+				throw new IllegalStateException("OM转换未生成模型文件");
+			}
+			AlgorithmTraining update = new AlgorithmTraining();
+			update.setId(trainingId);
+			update.setOmModelOutputPath(path);
+			update.setOmConversionStatus(CONVERSION_COMPLETED);
+			update.setOmConversionError("");
+			vlsAlgorithmTrainingService.updateAlgorithmTraining(update);
+			return path;
+		} catch (Exception exception) {
+			String error = extractConversionError(exception);
+			AlgorithmTraining update = new AlgorithmTraining();
+			update.setId(trainingId);
+			update.setOmModelOutputPath("");
+			update.setOmConversionStatus(CONVERSION_FAILED);
+			update.setOmConversionError(error);
+			vlsAlgorithmTrainingService.updateAlgorithmTraining(update);
+			log.error("OM模型转换失败: id={}, error={}", trainingId, error, exception);
+			return null;
+		}
+	}
+
+	private String extractConversionError(Throwable throwable) {
+		Throwable current = throwable;
+		while (current.getCause() != null && current.getCause() != current) {
+			current = current.getCause();
+		}
+		String message = current.getMessage();
+		if (StringUtils.isBlank(message)) {
+			message = current.getClass().getSimpleName();
+		}
+		message = message.trim();
+		return message.length() <= MAX_CONVERSION_ERROR_LENGTH
+			? message
+			: message.substring(0, MAX_CONVERSION_ERROR_LENGTH);
 	}
 
 	/**

@@ -21,7 +21,21 @@
     </resultMap>
 
     <select id="selectVlsAlgorithmPage" resultMap="vlsAlgorithmResultMap">
-        select * from vls_algorithm where is_deleted = 0 order by create_time desc
+        select *
+        from vls_algorithm
+        <where>
+            is_deleted = 0
+            <if test="vlsAlgorithm != null and vlsAlgorithm.repositoryId != null">
+                and repository_id = #{vlsAlgorithm.repositoryId}
+            </if>
+            <if test="vlsAlgorithm != null and vlsAlgorithm.name != null and vlsAlgorithm.name != ''">
+                and name like concat('%', #{vlsAlgorithm.name}, '%')
+            </if>
+            <if test="vlsAlgorithm != null and vlsAlgorithm.category != null">
+                and category = #{vlsAlgorithm.category}
+            </if>
+        </where>
+        order by create_time desc
     </select>
 
     <select id="exportVlsAlgorithm" resultType="com.ruoyi.vlstream.test.vlstream.excel.VlsAlgorithmExcel">

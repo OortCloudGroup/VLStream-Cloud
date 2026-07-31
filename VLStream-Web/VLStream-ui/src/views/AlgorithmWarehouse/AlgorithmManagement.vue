@@ -593,6 +593,7 @@ const repositoryTotal = ref(0)
 const algorithms = ref([])
 const algorithmTotal = ref(0)
 const currentRepositoryId = ref(null)
+const algorithmRequestId = ref(0)
 
 // 设备树数据
 const deviceTreeData = ref([])
@@ -721,6 +722,18 @@ const cardBackgrounds = [
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjVmNWY1Ii8+PHBhdGggZD0iTTEwMCA5MGMwIDEyLjQxOCAxMC4wODIgMjIuNSAyMi41IDIyLjVzMjIuNS0xMC4wODIgMjIuNS0yMi41Uzg3LjQxOCA2Ny41IDc1IDY3LjUgMTAwIDc3LjU4MiAxMDAgOTB6bTc4IDkwTDE1MCAyMDBsLTMwLTMwLTQwIDQweiIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjE1MCIgeT0iMTgwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjMwMCB4IDIwMDwvdGV4dD48L3N2Zz4='
 ]
 
+// 算法库 ID 来自后端 Long，按字符串取模可避免 JavaScript 数字精度丢失。
+const getNumericModulo = (value, divisor) => {
+  const digits = String(value ?? '')
+  if (!/^\d+$/.test(digits)) return 0
+
+  let remainder = 0
+  for (const digit of digits) {
+    remainder = (remainder * 10 + Number(digit)) % divisor
+  }
+  return remainder
+}
+
 // 获取算法卡片背景图片
 const getAlgorithmCardBackground = (algorithm, repositoryId) => {
   // 如果算法已有图片，直接返回
@@ -729,8 +742,8 @@ const getAlgorithmCardBackground = (algorithm, repositoryId) => {
   }
   
   // 根据算法ID和仓库ID计算背景图片索引
-  const algorithmIndex = algorithm.id || 0
-  const repoIndex = repositoryId || 0
+  const algorithmIndex = getNumericModulo(algorithm.id, cardBackgrounds.length)
+  const repoIndex = getNumericModulo(repositoryId, cardBackgrounds.length)
   const backgroundIndex = (algorithmIndex + repoIndex) % cardBackgrounds.length
   
   return cardBackgrounds[backgroundIndex]
@@ -826,6 +839,14 @@ const getRepositoryTypeTagType = (type) => {
 
 // API调用方法
 
+const normalizeRepositoryId = (repositoryId) => {
+  const normalizedRepositoryId = String(repositoryId ?? '').trim()
+  if (!/^\d+$/.test(normalizedRepositoryId) || /^0+$/.test(normalizedRepositoryId)) {
+    return null
+  }
+  return normalizedRepositoryId
+}
+
 // 加载算法仓库列表
 const loadAlgorithmRepositories = async () => {
   try {
@@ -856,18 +877,37 @@ const loadAlgorithmRepositories = async () => {
 
 // 加载指定仓库的算法列表
 const loadAlgorithmsByRepository = async (repositoryId) => {
+  const requestId = ++algorithmRequestId.value
+  const normalizedRepositoryId = normalizeRepositoryId(repositoryId)
+  if (!normalizedRepositoryId) {
+    algorithms.value = []
+    algorithmTotal.value = 0
+    currentRepositoryId.value = null
+    algorithmsLoading.value = false
+    return
+  }
+
+  // 切换算法库后先清空旧库数据，避免请求完成前继续显示上一库的算法。
+  algorithms.value = []
+  algorithmTotal.value = 0
+  currentRepositoryId.value = normalizedRepositoryId
+
   try {
     algorithmsLoading.value = true
     const response = await getAlgorithmPage({
       current: 1,
       size: 1000, // 使用较大的页面大小来获取所有算法
-      repositoryId: repositoryId
+      repositoryId: normalizedRepositoryId
     })
+
+    // 快速切换算法库时，忽略较早请求的响应，避免跨库数据串回页面。
+    if (requestId !== algorithmRequestId.value) {
+      return
+    }
     
     if (response.code === 200) {
       algorithms.value = response.data.records || []
       algorithmTotal.value = response.data.total || 0
-      currentRepositoryId.value = repositoryId
     } else {
       ElMessage.error(response.message || '加载算法列表失败')
     }
@@ -875,7 +915,9 @@ const loadAlgorithmsByRepository = async (repositoryId) => {
     console.error('加载算法列表失败:', error)
     ElMessage.error('加载算法列表失败')
   } finally {
-    algorithmsLoading.value = false
+    if (requestId === algorithmRequestId.value) {
+      algorithmsLoading.value = false
+    }
   }
 }
 
@@ -1000,10 +1042,7 @@ const setActiveTopMenu = async (menu) => {
     console.log('切换到算法库管理页面')
   } else {
     // 切换到具体算法库，加载算法列表
-    const repositoryId = parseInt(menu)
-    if (!isNaN(repositoryId)) {
-      await loadAlgorithmsByRepository(repositoryId)
-    }
+    await loadAlgorithmsByRepository(menu)
   }
 }
 
@@ -1014,8 +1053,8 @@ const setActiveCategory = (category) => {
 // 算法相关操作
 const addAlgorithm = () => {
   // 获取当前选择的算法库ID
-  const repositoryId = parseInt(activeTopMenu.value)
-  if (isNaN(repositoryId)) {
+  const repositoryId = normalizeRepositoryId(activeTopMenu.value)
+  if (!repositoryId) {
     ElMessage.error('无法获取算法库信息')
     return
   }
