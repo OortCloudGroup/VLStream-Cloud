@@ -33,9 +33,9 @@
 ---
 
 > [!IMPORTANT]
-> **Container access:** [https://www.example.com/bus/vls-ui/](https://www.example.com/bus/vls-ui/)
+> **Online environment:** [https://vlstream.oortcloudsmart.com:2443/bus/vls-ui/login](https://vlstream.oortcloudsmart.com:2443/bus/vls-ui/login)
 > **Default account:** `admin` / `Codex@123456`
-> The address is a placeholder and will be replaced with the official address later. Change the default password immediately after the first sign-in.
+> This is the current online environment. Change the default password immediately after the first sign-in.
 
 ---
 

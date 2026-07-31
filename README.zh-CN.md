@@ -33,9 +33,9 @@
 ---
 
 > [!IMPORTANT]
-> **容器访问地址：** [https://www.example.com/bus/vls-ui/](https://www.example.com/bus/vls-ui/)
+> **线上环境地址：** [https://vlstream.oortcloudsmart.com:2443/bus/vls-ui/login](https://vlstream.oortcloudsmart.com:2443/bus/vls-ui/login)
 > **默认账号：** `admin` / `Codex@123456`
-> 当前访问地址是占位地址，后续会替换为正式地址。首次登录后请立即修改默认密码。
+> 这是当前线上环境地址。首次登录后请立即修改默认密码。
 
 ---
 
