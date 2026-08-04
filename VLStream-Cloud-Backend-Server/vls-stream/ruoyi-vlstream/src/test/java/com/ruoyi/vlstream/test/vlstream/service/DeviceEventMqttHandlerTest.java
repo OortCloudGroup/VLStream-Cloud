@@ -4,10 +4,10 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsDeviceInfoMapper;
-import com.ruoyi.vlstream.test.vlstream.mapper.VlsEventManagementMapper;
+import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
+import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceMediaUpload;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
-import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -28,27 +28,26 @@ class DeviceEventMqttHandlerTest {
 
 	private VlsDeviceInfoMapper deviceInfoMapper;
 	private DeviceMediaUploadService mediaUploadService;
-	private IVlsEventManagementService eventManagementService;
-	private VlsEventManagementMapper eventMapper;
+	private ActiveSafetyEventReportService activeSafetyEventReportService;
 	private DeviceEventMqttHandler handler;
 
 	@BeforeEach
 	void setUp() throws Exception {
 		deviceInfoMapper = mock(VlsDeviceInfoMapper.class);
 		mediaUploadService = mock(DeviceMediaUploadService.class);
-		eventManagementService = mock(IVlsEventManagementService.class);
-		eventMapper = mock(VlsEventManagementMapper.class);
+		activeSafetyEventReportService = mock(ActiveSafetyEventReportService.class);
 		handler = new DeviceEventMqttHandler();
 		setField(handler, "deviceInfoMapper", deviceInfoMapper);
 		setField(handler, "mediaUploadService", mediaUploadService);
-		setField(handler, "eventManagementService", eventManagementService);
-		setField(handler, "eventMapper", eventMapper);
+		setField(handler, "activeSafetyEventReportService", activeSafetyEventReportService);
 	}
 
 	@Test
 	void storesStructEventOnlyAfterMediaValidation() {
 		DeviceInfo device = new DeviceInfo();
 		device.setDeviceId("CAM-1");
+		device.setDeviceName("测试摄像头");
+		device.setTag("重点区域");
 		device.setAddress("测试位置");
 		DeviceMediaUpload upload = new DeviceMediaUpload();
 		upload.setMediaId("media-1");
@@ -58,19 +57,29 @@ class DeviceEventMqttHandlerTest {
 		when(mediaUploadService.validateAndBind(
 			"media-1", "CAM-1", upload.getObjectKey(), sha256(), "event-message-1"))
 			.thenReturn(upload);
-		when(eventManagementService.createEvent(any(EventManagement.class))).thenReturn(true);
+		when(activeSafetyEventReportService.report(any(ActiveSafetyEventReport.class))).thenReturn(
+			ActiveSafetyEventReportResult.builder()
+				.activeSafetyEventId("event-row-1")
+				.mediaId("media-1")
+				.build());
 
 		JSONObject reply = handler.handle(eventMessage());
 
 		assertEquals("SUCCESS", reply.getByPath("payload.bizData.status"));
 		assertEquals("platform2dev", reply.getStr("msgDir"));
-		ArgumentCaptor<EventManagement> eventCaptor = ArgumentCaptor.forClass(EventManagement.class);
-		verify(eventManagementService).createEvent(eventCaptor.capture());
-		EventManagement stored = eventCaptor.getValue();
-		assertEquals("event-message-1", stored.getMqttMessageId());
+		ArgumentCaptor<ActiveSafetyEventReport> eventCaptor =
+			ArgumentCaptor.forClass(ActiveSafetyEventReport.class);
+		verify(activeSafetyEventReportService).report(eventCaptor.capture());
+		ActiveSafetyEventReport stored = eventCaptor.getValue();
+		assertEquals("event-message-1", stored.getSourceMessageId());
 		assertEquals("device-event-1", stored.getDeviceEventId());
 		assertEquals("media-1", stored.getMediaId());
-		assertTrue(stored.getReportImg().contains(upload.getObjectKey()));
+		assertEquals("person_detected", stored.getEventType());
+		assertEquals("设备上报结构化识别事件：person_detected", stored.getDescription());
+		assertEquals("测试摄像头", stored.getDeviceName());
+		assertEquals("重点区域", stored.getDeviceTag());
+		assertEquals("测试位置", stored.getAddress());
+		assertTrue(stored.getEventTime().getTime() > 0L);
 	}
 
 	@Test
@@ -85,7 +94,25 @@ class DeviceEventMqttHandlerTest {
 
 		assertEquals("FAILED", reply.getByPath("payload.bizData.status"));
 		assertEquals("MinIO 图片尚未上传", reply.getByPath("payload.errDetail"));
-		verify(eventManagementService, never()).createEvent(any());
+		verify(activeSafetyEventReportService, never()).report(any());
+	}
+
+	@Test
+	void ignoresDuplicateBeforeValidatingMediaAgain() {
+		when(activeSafetyEventReportService.findDuplicate(
+			"event-message-1", "CAM-1", "device-event-1"))
+			.thenReturn(ActiveSafetyEventReportResult.builder()
+				.activeSafetyEventId("event-row-1")
+				.mediaId("media-1")
+				.duplicate(true)
+				.build());
+
+		JSONObject reply = handler.handle(eventMessage());
+
+		assertEquals("SUCCESS", reply.getByPath("payload.bizData.status"));
+		assertEquals("事件已处理，重复消息已忽略", reply.getByPath("payload.msg"));
+		verify(mediaUploadService, never()).validateAndBind(any(), any(), any(), any(), any());
+		verify(activeSafetyEventReportService, never()).report(any());
 	}
 
 	private JSONObject eventMessage() {

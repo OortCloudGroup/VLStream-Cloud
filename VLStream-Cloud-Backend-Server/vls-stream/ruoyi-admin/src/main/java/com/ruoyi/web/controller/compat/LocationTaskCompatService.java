@@ -14,8 +14,13 @@ import com.ruoyi.workflow.domain.bo.ProcessStartBo;
 import com.ruoyi.workflow.service.IWfProcessService;
 import com.ruoyi.workorder.domain.WorkOrder;
 import com.ruoyi.workorder.domain.bo.WorkOrderBo;
+import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
+import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
+import com.ruoyi.vlstream.test.vlstream.service.ActiveSafetyEventReportService;
+import com.ruoyi.vlstream.test.vlstream.service.DeviceMediaUploadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -52,7 +57,7 @@ import java.util.concurrent.CompletableFuture;
  * Java implementation of the task APIs previously served by apaas-location-service.
  */
 @Service
-public class LocationTaskCompatService {
+public class LocationTaskCompatService implements ActiveSafetyEventReportService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LocationTaskCompatService.class);
 
@@ -83,6 +88,7 @@ public class LocationTaskCompatService {
     private static final String OLD_APP_GROUP = "`oort_definition_app_group`";
 
     private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final String VLS_MEDIA_PREFIX = "vls-media://";
     private static final TypeReference<LinkedHashMap<String, Object>> MAP_TYPE =
         new TypeReference<LinkedHashMap<String, Object>>() { };
 
@@ -90,6 +96,9 @@ public class LocationTaskCompatService {
     private final ObjectMapper objectMapper;
     private final IWfProcessService processService;
     private final LocationTaskWorkflowProperties workflowProperties;
+
+    @Autowired
+    private DeviceMediaUploadService deviceMediaUploadService;
 
     @Value("${vls.tenant.id:000000}")
     private String singleTenantId = "000000";
@@ -218,6 +227,10 @@ public class LocationTaskCompatService {
      * Persist one active-safety event and schedule its configuration-controlled work-order hook.
      */
     private EventKey insertCameraEvent(Map<String, Object> body) {
+        return insertCameraEvent(body, null);
+    }
+
+    private EventKey insertCameraEvent(Map<String, Object> body, ActiveSafetyEventReport mqttReport) {
         String tenantId = singleTenantId;
         String deviceId = stringValue(body, "device_id");
         String deviceName = stringValue(body, "device_name");
@@ -235,6 +248,14 @@ public class LocationTaskCompatService {
         data.put("pics", pictures);
         data.put("send_pics", new ArrayList<String>());
         data.put("video", videos);
+        if (mqttReport != null) {
+            data.put("mqtt_message_id", mqttReport.getSourceMessageId());
+            data.put("device_event_id", mqttReport.getDeviceEventId());
+            data.put("media_id", mqttReport.getMediaId());
+            data.put("event_time", mqttReport.getEventTime() == null
+                ? "" : new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ROOT)
+                    .format(mqttReport.getEventTime()));
+        }
         jdbc.update("INSERT INTO " + EVENT
                 + " (`id`,`no`,`tenant_id`,`uuid`,`name`,`data`,`status`,`item`,`client`,`mod_type`,"
                 + "`mod_status`,`device_id`,`device_name`,`device_tag`,`work_order_status`,"
@@ -243,7 +264,7 @@ public class LocationTaskCompatService {
             key.getId(), key.getNo(), tenantId, deviceId, name, toJson(data), item,
             deviceId, deviceName, stringValue(body, "device_tag"));
         scheduleAutomaticWorkOrder(new EventSnapshot(key, tenantId, deviceId, name, item,
-            describe, point, pictures, 2, deviceId));
+            describe, point, resolveEventPictures(pictures), 2, deviceId));
         return key;
     }
 
@@ -893,6 +914,75 @@ public class LocationTaskCompatService {
         jdbc.update("DELETE FROM " + OLD_APP_GROUP_DEVICE + " WHERE uid = ?", uid);
         jdbc.update("DELETE FROM " + TABLE_GROUP_V2 + " WHERE uid = ?", uid);
         return LocationTaskResult.success();
+    }
+
+    /**
+     * Locate an MQTT event already written to the active-safety table.
+     */
+    @Override
+    public ActiveSafetyEventReportResult findDuplicate(String sourceMessageId, String deviceId,
+                                                        String deviceEventId) {
+        if (string(sourceMessageId).isEmpty() || string(deviceId).isEmpty()
+            || string(deviceEventId).isEmpty()) {
+            return null;
+        }
+        Map<String, Object> row = firstRow("SELECT * FROM " + EVENT
+                + " WHERE tenant_id = ? AND device_id = ? AND deleted_at = 0"
+                + " AND (JSON_UNQUOTE(JSON_EXTRACT(data,'$.mqtt_message_id')) = ?"
+                + " OR JSON_UNQUOTE(JSON_EXTRACT(data,'$.device_event_id')) = ?) LIMIT 1",
+            singleTenantId, deviceId, sourceMessageId, deviceEventId);
+        return row == null ? null : activeSafetyResult(row, true);
+    }
+
+    /**
+     * Persist one MQTT camera event through the same active-safety insertion path as HTTP.
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ActiveSafetyEventReportResult report(ActiveSafetyEventReport report) {
+        if (report == null || string(report.getSourceMessageId()).isEmpty()
+            || string(report.getDeviceEventId()).isEmpty() || string(report.getDeviceId()).isEmpty()
+            || string(report.getMediaId()).isEmpty()) {
+            throw new IllegalArgumentException("MQTT 主动安全事件关键字段不能为空");
+        }
+        if (codePointLength(report.getDeviceId()) > 40) {
+            throw new IllegalArgumentException("设备编号不能超过40个字符");
+        }
+        ActiveSafetyEventReportResult duplicate = findDuplicate(report.getSourceMessageId(),
+            report.getDeviceId(), report.getDeviceEventId());
+        if (duplicate != null) {
+            return duplicate;
+        }
+
+        String eventType = limitCodePoints(string(report.getEventType()), 40);
+        if (eventType.isEmpty()) {
+            eventType = "struct";
+        }
+        LinkedHashMap<String, Object> point = new LinkedHashMap<String, Object>();
+        point.put("address", string(report.getAddress()));
+        point.put("lng", report.getLongitude());
+        point.put("lat", report.getLatitude());
+        point.put("lng_initial", report.getLongitude());
+        point.put("lat_initial", report.getLatitude());
+
+        LinkedHashMap<String, Object> body = new LinkedHashMap<String, Object>();
+        body.put("device_id", report.getDeviceId());
+        body.put("device_name", limitCodePoints(
+            string(report.getDeviceName()).isEmpty() ? report.getDeviceId() : report.getDeviceName(), 20));
+        body.put("device_tag", limitCodePoints(string(report.getDeviceTag()), 20));
+        body.put("item", eventType);
+        body.put("name", limitCodePoints(eventType, 20));
+        body.put("describe", string(report.getDescription()));
+        body.put("point", point);
+        body.put("pics", Collections.singletonList(VLS_MEDIA_PREFIX + report.getMediaId()));
+        body.put("video", Collections.emptyList());
+
+        EventKey key = insertCameraEvent(body, report);
+        return ActiveSafetyEventReportResult.builder()
+            .activeSafetyEventId(key.externalId())
+            .mediaId(report.getMediaId())
+            .duplicate(false)
+            .build();
     }
 
     /**
@@ -2119,7 +2209,7 @@ public class LocationTaskCompatService {
         Map<String, Object> data = jsonMap(row.get("data"));
         value.put("describe", string(data.get("describe")));
         value.put("point", pointValue(data.get("point")));
-        value.put("pics", distinctStrings(data.get("pics"), true));
+        value.put("pics", resolveEventPictures(distinctStrings(data.get("pics"), true)));
         value.put("send_pics", distinctStrings(data.get("send_pics"), false));
         value.put("video", data.containsKey("video") ? data.get("video") : null);
         if (data.get("work_order_data") instanceof Map && !((Map<?, ?>) data.get("work_order_data")).isEmpty()) {
@@ -2146,6 +2236,42 @@ public class LocationTaskCompatService {
         value.put("updated_at", updatedAt);
         value.put("pic_len", number(row.get("pic_len")).longValue());
         return value;
+    }
+
+    private ActiveSafetyEventReportResult activeSafetyResult(Map<String, Object> row,
+                                                               boolean duplicate) {
+        String rawId = string(row.get("id"));
+        long no = number(row.get("no")).longValue();
+        Map<String, Object> data = jsonMap(row.get("data"));
+        return ActiveSafetyEventReportResult.builder()
+            .activeSafetyEventId(no == 0L ? rawId : rawId + "-" + no)
+            .mediaId(string(data.get("media_id")))
+            .duplicate(duplicate)
+            .build();
+    }
+
+    /**
+     * Replace stable VLS media references with fresh private MinIO view URLs.
+     */
+    private List<String> resolveEventPictures(List<String> pictures) {
+        if (pictures == null || pictures.isEmpty() || deviceMediaUploadService == null) {
+            return pictures == null ? new ArrayList<String>() : pictures;
+        }
+        List<String> resolved = new ArrayList<String>(pictures.size());
+        for (String picture : pictures) {
+            if (!picture.startsWith(VLS_MEDIA_PREFIX)) {
+                resolved.add(picture);
+                continue;
+            }
+            String mediaId = picture.substring(VLS_MEDIA_PREFIX.length());
+            try {
+                resolved.add(deviceMediaUploadService.getPrivateViewUrl(mediaId, 3600));
+            } catch (RuntimeException exception) {
+                LOGGER.warn("Could not resolve private VLS event media {}", mediaId, exception);
+                resolved.add(picture);
+            }
+        }
+        return resolved;
     }
 
     /**
@@ -2675,6 +2801,17 @@ public class LocationTaskCompatService {
      */
     private static int codePointLength(String value) {
         return value == null ? 0 : value.codePointCount(0, value.length());
+    }
+
+    /**
+     * Truncate a value without splitting a Unicode surrogate pair.
+     */
+    private static String limitCodePoints(String value, int maxLength) {
+        String text = string(value);
+        if (codePointLength(text) <= maxLength) {
+            return text;
+        }
+        return text.substring(0, text.offsetByCodePoints(0, maxLength));
     }
 
     /**

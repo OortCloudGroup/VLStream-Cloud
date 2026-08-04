@@ -1263,7 +1263,8 @@ algorithmId、fileName、sha256、modelType
 ### 事件业务回执
 
 平台只在完成 MQTT 消息去重、设备校验、MinIO 对象存在性/大小/SHA-256 校验并成功
-写入 `vls_event_management` 后返回 `SUCCESS`。硬件在收到成功回执前必须保留本地
+写入主动安全事件表 `oort_task_event` 后返回 `SUCCESS`。该事件可由平台
+`/task/v1/event_list` 查询。硬件在收到成功回执前必须保留本地
 事件记录；超时可以使用相同 `messageId/eventId` 重发，平台会幂等返回成功。
 
 ```json

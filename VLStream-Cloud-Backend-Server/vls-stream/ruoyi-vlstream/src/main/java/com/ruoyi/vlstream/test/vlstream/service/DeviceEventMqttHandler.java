@@ -8,15 +8,12 @@ package com.ruoyi.vlstream.test.vlstream.service;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.ruoyi.vlstream.test.vlstream.enums.EventLevelEnum;
-import com.ruoyi.vlstream.test.vlstream.enums.EventStatusEnum;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsDeviceInfoMapper;
-import com.ruoyi.vlstream.test.vlstream.mapper.VlsEventManagementMapper;
+import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
+import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceMediaUpload;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
-import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -42,11 +39,8 @@ public class DeviceEventMqttHandler {
 	@Resource
 	private DeviceMediaUploadService mediaUploadService;
 
-	@Autowired
-	private IVlsEventManagementService eventManagementService;
-
 	@Resource
-	private VlsEventManagementMapper eventMapper;
+	private ActiveSafetyEventReportService activeSafetyEventReportService;
 
 	@Transactional(rollbackFor = Exception.class)
 	public JSONObject handle(JSONObject envelope) {
@@ -61,7 +55,8 @@ public class DeviceEventMqttHandler {
 			if (StringUtils.isAnyBlank(sourceMessageId, deviceId, eventId) || payload == null) {
 				throw new IllegalArgumentException("事件 messageId、deviceId、eventId 和 payload 均不能为空");
 			}
-			EventManagement duplicate = findDuplicate(sourceMessageId, deviceId, eventId);
+			ActiveSafetyEventReportResult duplicate = activeSafetyEventReportService.findDuplicate(
+				sourceMessageId, deviceId, eventId);
 			if (duplicate != null) {
 				return buildReply(envelope, eventId, duplicate.getMediaId(), true,
 					"事件已处理，重复消息已忽略");
@@ -86,26 +81,24 @@ public class DeviceEventMqttHandler {
 			}
 			DeviceMediaUpload upload = mediaUploadService.validateAndBind(
 				mediaId, deviceId, objectKey, sha256, sourceMessageId);
-
-			EventManagement event = new EventManagement();
-			event.setMqttMessageId(sourceMessageId);
-			event.setDeviceEventId(eventId);
-			event.setMediaId(mediaId);
-			event.setEventDesc(StringUtils.defaultIfBlank(payload.getStr("eventDesc"),
-				defaultDescription(subBizType, payload)));
-			event.setEventType(StringUtils.defaultIfBlank(payload.getStr("eventType"),
-				defaultEventType(subBizType, payload)));
-			event.setReportLocation(device.getAddress());
-			event.setReportDevice(deviceId);
-			event.setReportImg("oss://" + upload.getOssConfigKey() + "/" + upload.getObjectKey());
-			event.setReportTime(parseEventTime(envelope, payload));
-			EventLevelEnum level = EventLevelEnum.of(payload.getStr("eventLevel"));
-			event.setEventLevel(level == null ? EventLevelEnum.medium : level);
-			event.setEventStatus(EventStatusEnum.pending);
-			event.setEventData(payload.toString());
-			event.setHandleResult("MQTT " + subBizType + " 事件上报");
-			event.setIsReport(1);
-			if (!eventManagementService.createEvent(event)) {
+			ActiveSafetyEventReportResult result = activeSafetyEventReportService.report(
+				ActiveSafetyEventReport.builder()
+					.sourceMessageId(sourceMessageId)
+					.deviceEventId(eventId)
+					.deviceId(deviceId)
+					.deviceName(StringUtils.defaultIfBlank(device.getDeviceName(), deviceId))
+					.deviceTag(device.getTag())
+					.eventType(StringUtils.defaultIfBlank(payload.getStr("eventType"),
+						defaultEventType(subBizType, payload)))
+					.description(StringUtils.defaultIfBlank(payload.getStr("eventDesc"),
+						defaultDescription(subBizType, payload)))
+					.eventTime(parseEventTime(envelope, payload))
+					.mediaId(upload.getMediaId())
+					.address(device.getAddress())
+					.longitude(device.getLongitude())
+					.latitude(device.getLatitude())
+					.build());
+			if (result == null) {
 				throw new IllegalStateException("事件写入数据库失败");
 			}
 			return buildReply(envelope, eventId, mediaId, true, "事件已接收并入库");
@@ -116,14 +109,6 @@ public class DeviceEventMqttHandler {
 			return buildReply(envelope, eventId, mediaId, false,
 				StringUtils.defaultIfBlank(ex.getMessage(), "事件处理失败"));
 		}
-	}
-
-	private EventManagement findDuplicate(String messageId, String deviceId, String eventId) {
-		return eventMapper.selectOne(new LambdaQueryWrapper<EventManagement>()
-			.and(wrapper -> wrapper.eq(EventManagement::getMqttMessageId, messageId)
-				.or(nested -> nested.eq(EventManagement::getReportDevice, deviceId)
-					.eq(EventManagement::getDeviceEventId, eventId)))
-			.last("limit 1"));
 	}
 
 	private JSONObject firstMedia(JSONObject payload) {
@@ -144,7 +129,8 @@ public class DeviceEventMqttHandler {
 	private String defaultDescription(String subBizType, JSONObject payload) {
 		return VlsMqttProtocol.FACE_EVENT.equals(subBizType)
 			? "设备上报人脸识别事件"
-			: "设备上报结构化识别事件：" + StringUtils.defaultIfBlank(payload.getStr("type"), "unknown");
+			: "设备上报结构化识别事件：" + StringUtils.defaultIfBlank(payload.getStr("eventType"),
+				StringUtils.defaultIfBlank(payload.getStr("type"), "unknown"));
 	}
 
 	private String defaultEventType(String subBizType, JSONObject payload) {

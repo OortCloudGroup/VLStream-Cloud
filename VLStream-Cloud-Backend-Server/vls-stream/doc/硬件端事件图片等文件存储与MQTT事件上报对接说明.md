@@ -15,47 +15,9 @@ MQTT 使用 QoS 1、Retain=false。设备发布事件前，应先订阅自己的
 
 ## 2. 对接流程
 
-### 2.1 申请图片上传地址
+设备先完成图片上传，再通过 MQTT 上报事件。图片上传的地址、字段和调用示例统一见 [硬件端图片上传接口对接文档](./硬件端图片上传接口对接文档.md)。
 
-设备先计算图片的字节数和 SHA-256，然后调用：
-
-```http
-POST /vlsDeviceMedia/public/upload-url
-Content-Type: application/json
-```
-
-```json
-{
-  "deviceId": "AETY-00-NJN2-WJUB-00000110",
-  "fileName": "capture.jpg",
-  "contentType": "image/jpeg",
-  "fileSize": 102400,
-  "sha256": "图片的64位SHA-256十六进制字符串"
-}
-```
-
-响应 `data` 中需要保存：
-
-- `mediaId`
-- `objectKey`
-- `uploadUrl`
-- `requiredContentType`
-
-### 2.2 上传图片
-
-使用返回的完整 `uploadUrl` 直接 PUT 图片：
-
-```bash
-curl -X PUT \
-  -H "Content-Type: image/jpeg" \
-  --data-binary "@capture.jpg" \
-  "${uploadUrl}"
-```
-
-`Content-Type` 必须与 `requiredContentType` 完全一致。HTTP 2xx 表示上传成功。
-硬件不需要 MinIO AccessKey/SecretKey，也不要在 MQTT 中传 Base64 图片。
-
-### 2.3 MQTT 上报事件
+### 2.1 MQTT 上报事件
 
 ```json
 {
@@ -109,6 +71,11 @@ curl -X PUT \
 - 超时或收到 `FAILED`：保留记录并重试。
 - 重试必须保持原来的 `messageId` 和 `eventId`，平台会幂等处理。
 - 上传地址过期或 PUT 失败：重新申请上传地址。
+
+平台只有在 `mainBizType=aiBiz` 且 `subBizType=struct/faceEvent` 时才按主动安全事件处理。
+事件写入活动安全业务表后，可由平台的 `/task/v1/event_list` 接口查询；心跳和其他
+`subBizType` 不会进入该事件表。`SUCCESS` 表示平台已经消费、校验并完成业务入库，
+不是 MQTT Broker 仅收到消息的确认。
 
 ## 4. 当前联调限制
 

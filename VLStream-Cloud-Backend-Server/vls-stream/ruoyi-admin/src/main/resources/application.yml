@@ -231,7 +231,7 @@ vlstream:
     # 对应 sys_oss_config.config_key；为空时复用当前默认 OSS 配置
     oss-config-key: ${VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY:}
     # 预签名上传地址有效期（秒）
-    upload-url-ttl-seconds: ${VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS:600}
+    upload-url-ttl-seconds: ${VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS:6000}
     # 单张事件图片最大字节数，默认 10 MiB
     max-image-bytes: ${VLSTREAM_DEVICE_MEDIA_MAX_IMAGE_BYTES:10485760}
     # 生产环境必须保持 false；dev 配置允许局域网先联调
