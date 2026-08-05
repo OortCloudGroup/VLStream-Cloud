@@ -156,42 +156,12 @@
           <div class="video-player">
             <!-- 实时视频播放区域 -->
             <div class="video-placeholder-player">
-              <!-- WebRTC直连视频 -->
-              <video
-                v-if="dialog.camera.deviceData && dialog.camera.deviceData.playMode === 'webrtc'"
-                class="webrtc-video"
-                controls
-                autoplay
-                muted
-                playsinline
-                :ref="el => setWebrtcVideoRef(dialog.id, el)"
-                @loadeddata="handleWebRTCSuccess"
-                @error="handleWebRTCError"
-              ></video>
-
+              <!-- OPlayer 统一播放器 -->
               <div
-                v-else-if="dialog.camera.deviceData && (dialog.camera.deviceData.playMode === 'cameraRTC' || isCameraRtcStream(dialog.camera.deviceData.streamUrl))"
-                class="camera-rtc-container"
-              >
-                <div
-                  class="camera-rtc-player"
-                  :ref="el => setCameraRtcContainerRef(dialog.id, el)"
-                ></div>
-              </div>
-
-
-              
-              <!-- 备用：使用RtspPlayer组件直接连接 -->
-              <div v-else-if="dialog.camera.deviceData && dialog.camera.deviceData.streamUrl && dialog.camera.deviceData.playMode === 'direct'" class="rtsp-player-container">
-                <RtspPlayer 
-                  :rtsp-url="dialog.camera.deviceData.streamUrl || dialog.camera.deviceData.originalRtspUrl"
-                  :width="840"
-                  :height="520"
-                  @connected="handleDialogRtspConnected"
-                  @disconnected="handleDialogRtspDisconnected"
-                  @error="handleDialogRtspError"
-                />
-              </div>
+                v-if="dialog.camera.deviceData && dialog.camera.deviceData.streamUrl"
+                :ref="element => setDialogOPlayerContainer(dialog.id, element)"
+                class="oplayer-container"
+              />
               
               <!-- 无视频流时显示占位符 -->
               <div v-else class="video-placeholder">
@@ -365,9 +335,6 @@ import {Close} from '@element-plus/icons-vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-// 导入播放器组件
-import RtspPlayer from '@/components/RtspPlayer.vue'
-
 // 导入布局控制组件
 import VideoLayoutControls from '@/components/VideoLayoutControls.vue'
 
@@ -379,7 +346,8 @@ import VideoLayoutDialog from '@/components/VideoLayoutDialog.vue'
 import DeviceListPanel from '@/components/DeviceListPanel.vue'
 import {getDeviceList} from "@/api/device";
 import {ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL} from "@/api/webrtc";
-import { CAMERA_RTC_SOCKET_URL, ensureOPlayer, isCameraRtcStream } from '@/utils/oplayer'
+import { ensureOPlayer, isCameraRtcStream } from '@/utils/oplayer'
+import { getStreamType } from './deviceUtils.js'
 
 // 分页相关
 const currentPage = ref(1)
@@ -413,23 +381,15 @@ const layoutDialogs = ref([])
 const nextLayoutDialogId = ref(1000)
 const maxLayoutZIndex = ref(3000)
 
-// WebRTC相关状态
+// 播放服务状态
 const webrtcConfig = ref({
   serverUrl: WEBRTC_SERVER_BASE_URL,
   available: false,
   enabled: true
 })
-let WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
-// 配置请求完成后再生成脚本地址，避免继续使用模块初始化时的默认值。
-const getWebRtcScriptUrls = () => [
-  `${WEBRTC_STREAMER_BASE}/libs/adapter.min.js`,
-  `${WEBRTC_STREAMER_BASE}/webrtcstreamer.js`
-]
-let webrtcScriptLoader = null
-const webrtcPlayers = ref(new Map())
-const webrtcVideoRefs = ref(new Map())
-const cameraRtcPlayers = ref(new Map())
-const cameraRtcContainerRefs = ref(new Map())
+const dialogOPlayerContainers = ref(new Map())
+const dialogOPlayerInstances = ref(new Map())
+const dialogOPlayerTasks = ref(new Map())
 
 // 地图相关变量
 let mapInstance = null
@@ -438,173 +398,116 @@ let mapInitialized = false
 let isComponentMounted = false
 let currentTileLayer = null
 
-// WebRTC script loader
-const loadScriptTag = (src) => {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) {
-      resolve()
-      return
-    }
-    
-    const script = document.createElement('script')
-    script.src = src
-    script.async = true
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error(`Failed to load ${src}`))
-    document.head.appendChild(script)
-  })
-}
-
-const ensureWebRtcStreamerScripts = async () => {
-  if (webrtcScriptLoader) {
-    return webrtcScriptLoader
+/**
+ * 记录单画面 OPlayer 容器。
+ */
+const setDialogOPlayerContainer = (dialogId, element) => {
+  if (element) {
+    dialogOPlayerContainers.value.set(dialogId, element)
+    return
   }
 
-  await ensureWebRTCBackendConfig()
-  WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
-  webrtcScriptLoader = Promise.all(getWebRtcScriptUrls().map(loadScriptTag)).catch(error => {
-    webrtcScriptLoader = null
-    throw error
-  })
-  
-  return webrtcScriptLoader
+  cleanupDialogOPlayer(dialogId)
+  dialogOPlayerContainers.value.delete(dialogId)
 }
 
-const setWebrtcVideoRef = (dialogId, el) => {
-  if (el) {
-    webrtcVideoRefs.value.set(dialogId, el)
-  } else {
-    webrtcVideoRefs.value.delete(dialogId)
-  }
-}
+/**
+ * 清理单画面 OPlayer 实例。
+ */
+const cleanupDialogOPlayer = (dialogId) => {
+  dialogOPlayerTasks.value.delete(dialogId)
 
-const setCameraRtcContainerRef = (dialogId, el) => {
-  if (el) {
-    cameraRtcContainerRefs.value.set(dialogId, el)
-  } else {
-    cleanupDialogCameraRTC(dialogId)
-    cameraRtcContainerRefs.value.delete(dialogId)
-  }
-}
-
-const cleanupDialogWebRTC = async (dialogId) => {
-  const player = webrtcPlayers.value.get(dialogId)
-  if (player) {
-    try {
-      if (typeof player.disconnect === 'function') {
-        await player.disconnect()
-      } else if (typeof player.stop === 'function') {
-        await player.stop()
-      }
-    } catch (error) {
-      console.warn('清理WebRTC直连失败:', error)
-    }
-    webrtcPlayers.value.delete(dialogId)
-  }
-  
-  const videoEl = webrtcVideoRefs.value.get(dialogId)
-  if (videoEl) {
-    videoEl.srcObject = null
-  }
-}
-
-const cleanupDialogCameraRTC = (dialogId) => {
-  const player = cameraRtcPlayers.value.get(dialogId)
+  const player = dialogOPlayerInstances.value.get(dialogId)
   if (player?.compInstance?.$destroy) {
     player.compInstance.$destroy()
   }
-  cameraRtcPlayers.value.delete(dialogId)
+  dialogOPlayerInstances.value.delete(dialogId)
 
-  const container = cameraRtcContainerRefs.value.get(dialogId)
+  const container = dialogOPlayerContainers.value.get(dialogId)
   if (container) {
     container.innerHTML = ''
   }
 }
 
-const playDialogWebRTC = async (dialog) => {
+/**
+ * 根据流类型生成单画面 OPlayer 参数。
+ */
+const createDialogOPlayerOptions = async (streamUrl) => {
+  const streamType = getStreamType(streamUrl)
+  const playerConfig = {
+    debuggerMode: false,
+    autoSize: true,
+    backgroundColor: '#000000',
+    showHeader: true
+  }
+
+  if (streamType === 'cameraRTC') {
+    const url = new URL(streamUrl)
+    const cameraId = url.pathname.split('/').filter(Boolean).pop()
+    if (!cameraId) throw new Error('CameraRTC 地址中缺少摄像头ID')
+
+    playerConfig.webRTCSocketURL = url.origin.replace(/^http/, 'ws')
+    return { playerConfig, playConfig: { type: 'cameraRTC', src: cameraId } }
+  }
+
+  if (streamType === 'rtsp') {
+    await ensureWebRTCBackendConfig()
+    playerConfig.rtspServerURL = WEBRTC_SERVER_BASE_URL
+    return {
+      playerConfig,
+      playConfig: {
+        type: 'rtsp',
+        src: streamUrl,
+        transport: 'tcp',
+        timeout: 60,
+        preferredMime: 'video/H264'
+      }
+    }
+  }
+
+  const playTypeMap = { flv: 'flv', hls: 'm3u8', video: 'mp4', http: 'mp4' }
+  const playType = playTypeMap[streamType]
+  if (!playType) throw new Error(`暂不支持该视频流类型：${streamType}`)
+
+  return { playerConfig, playConfig: { type: playType, src: streamUrl } }
+}
+
+/**
+ * 播放视频广场单画面视频流。
+ */
+const playDialogOPlayer = async (dialog) => {
+  const deviceData = dialog?.camera?.deviceData
+  if (!deviceData?.streamUrl) {
+    ElMessage.warning('缺少流地址')
+    return
+  }
+
+  const taskId = Symbol(`dialog-oplayer-${dialog.id}`)
+  dialogOPlayerTasks.value.set(dialog.id, taskId)
+
   try {
-    if (!dialog?.camera?.deviceData?.streamUrl) {
-      throw new Error('缺少流地址')
-    }
-    
     exitAnyFullscreen()
-    
-    await ensureWebRtcStreamerScripts()
-    await cleanupDialogWebRTC(dialog.id)
-    await nextTick()
-    
-    const videoEl = webrtcVideoRefs.value.get(dialog.id)
-    if (!videoEl) {
-      throw new Error('WebRTC视频元素未就绪')
-    }
-    
-    if (!videoEl.id) {
-      videoEl.id = `webrtc-dialog-${dialog.id}`
-    }
-    
-    const player = new window.WebRtcStreamer(videoEl.id, WEBRTC_STREAMER_BASE)
-    webrtcPlayers.value.set(dialog.id, player)
-    
-    dialog.camera.deviceData.playMode = 'webrtc'
-    player.connect(dialog.camera.deviceData.streamUrl, '', 'rtptransport=tcp&timeout=60')
-    
-    player.onconnected = () => {
-      ElMessage.success('WebRTC直连成功')
-    }
+    await Promise.all([ensureOPlayer(), nextTick()])
+    const { playerConfig, playConfig } = await createDialogOPlayerOptions(deviceData.streamUrl)
+    const container = dialogOPlayerContainers.value.get(dialog.id)
+    if (!container || dialogOPlayerTasks.value.get(dialog.id) !== taskId) return
+
+    cleanupDialogOPlayer(dialog.id)
+    dialogOPlayerTasks.value.set(dialog.id, taskId)
+
+    const player = new window.OToolBox.OPlayer(container, playerConfig)
+    dialogOPlayerInstances.value.set(dialog.id, player)
+    deviceData.playMode = 'oplayer'
+    player.play({ ...playConfig, name: dialog?.camera?.name || '' })
   } catch (error) {
-    console.error('WebRTC直连播放失败:', error)
-    ElMessage.error(`WebRTC播放失败: ${error.message || error}`)
-    if (dialog?.camera?.deviceData) {
-      dialog.camera.deviceData.playMode = 'direct'
-    }
+    if (dialogOPlayerTasks.value.get(dialog.id) !== taskId) return
+    cleanupDialogOPlayer(dialog.id)
+    console.error('OPlayer 播放失败:', error)
+    ElMessage.error(`播放失败: ${error.message || error}`)
   }
 }
 
 // 设备显示设置
-
-const playDialogCameraRTC = async (dialog) => {
-  try {
-    const deviceData = dialog?.camera?.deviceData
-    if (!deviceData?.streamUrl) {
-      throw new Error('Missing stream url')
-    }
-
-    const deviceId = deviceData.deviceId || deviceData.id
-    if (!deviceId) {
-      throw new Error('CameraRTC requires deviceId')
-    }
-
-    exitAnyFullscreen()
-
-    await ensureOPlayer()
-    cleanupDialogCameraRTC(dialog.id)
-    await nextTick()
-
-    const container = cameraRtcContainerRefs.value.get(dialog.id)
-    if (!container) {
-      throw new Error('CameraRTC container not ready')
-    }
-
-    const player = new window.OToolBox.OPlayer(container, {
-      debuggerMode: false,
-      autoSize: true,
-      backgroundColor: '#000000',
-      showHeader: true,
-      webRTCSocketURL: CAMERA_RTC_SOCKET_URL
-    })
-    cameraRtcPlayers.value.set(dialog.id, player)
-
-    dialog.camera.deviceData.playMode = 'cameraRTC'
-    player.play({
-      type: 'cameraRTC',
-      src: String(deviceId),
-      name: dialog?.camera?.name || ''
-    })
-  } catch (error) {
-    console.error('CameraRTC play failed:', error)
-    ElMessage.error(`CameraRTC play failed: ${error.message || error}`)
-  }
-}
 
 
 const showSettingsDialog = ref(false)
@@ -1261,8 +1164,6 @@ const closeLayoutDialog = (dialogId) => {
   const dialogIndex = layoutDialogs.value.findIndex(dialog => dialog.id === dialogId)
   if (dialogIndex === -1) return
   
-  cleanupDialogWebRTC(dialogId)
- 
   // 清除计时器
   // if (dialog.recording?.timer) {
   //   clearInterval(dialog.recording.timer)
@@ -1505,9 +1406,7 @@ const handleCameraClick = async (deviceData) => {
                                    'rtsp://admin:password@192.168.1.100/stream'  // 默认测试流
   }
   
-  // 优先尝试直接使用WebRTC直连播放
-  const isCameraRtc = isCameraRtcStream(processedCameraData.streamUrl)
-  processedCameraData.playMode = isCameraRtc ? 'cameraRTC' : 'webrtc'
+  processedCameraData.playMode = 'oplayer'
 
   // 打开单画面视频播放
   const dialog = {
@@ -1522,12 +1421,8 @@ const handleCameraClick = async (deviceData) => {
   }
   
   videoDialogs.value.push(dialog)
-  await nextTick();
-  if (isCameraRtc) {
-    await playDialogCameraRTC(dialog)
-  } else {
-    await playDialogWebRTC(dialog)
-  }
+  await nextTick()
+  await playDialogOPlayer(dialog)
   ElMessage.success(`正在播放: ${deviceName}`)
 }
 
@@ -2153,8 +2048,7 @@ const closeVideoDialog = (id) => {
   const index = videoDialogs.value.findIndex(dialog => dialog.id === id)
   if (index > -1) {
     exitAnyFullscreen()
-    cleanupDialogWebRTC(id)
-    cleanupDialogCameraRTC(id)
+    cleanupDialogOPlayer(id)
     videoDialogs.value.splice(index, 1)
   }
 }
@@ -2240,11 +2134,7 @@ const retryWebRTCConnection = async (camera) => {
   
   const dialog = videoDialogs.value.find(d => d.camera === camera)
   if (dialog) {
-    if (isCameraRtcStream(camera.deviceData.streamUrl)) {
-      await playDialogCameraRTC(dialog)
-    } else {
-      await playDialogWebRTC(dialog)
-    }
+    await playDialogOPlayer(dialog)
   } else {
     ElMessage.info(`重试连接摄像头: ${camera.name}`)
   }
@@ -2349,13 +2239,9 @@ onUnmounted(() => {
     }
   }
   
-  // 清理所有WebRTC直连
-  Array.from(webrtcPlayers.value.keys()).forEach(id => {
-    cleanupDialogWebRTC(id)
-  })
-
-  Array.from(cameraRtcPlayers.value.keys()).forEach(id => {
-    cleanupDialogCameraRTC(id)
+  // 清理所有单画面播放器
+  Array.from(dialogOPlayerInstances.value.keys()).forEach(id => {
+    cleanupDialogOPlayer(id)
   })
   
   console.log('VideoSquareRefactored组件卸载完成')
@@ -3245,6 +3131,14 @@ body::-webkit-scrollbar {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.oplayer-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: #000;
+  overflow: hidden;
 }
 
 .webrtc-iframe-container,

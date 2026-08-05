@@ -30,25 +30,27 @@ export function formatDateTime(row, column, cellValue) {
  */
 export function getStreamType(streamUrl) {
   if (!streamUrl) return 'unknown'
-  
-  if (isCameraRtcStream(streamUrl)) {
+
+  const url = String(streamUrl).trim().toLowerCase()
+
+  if (url.includes('/aety-') || isCameraRtcStream(streamUrl)) {
     return 'cameraRTC'
   }
 
-  const url = streamUrl.toLowerCase()
-  
   if (url.includes('youtube.com') || url.includes('youtu.be')) {
     return 'youtube'
   } else if (url.startsWith('rtsp://')) {
     return 'rtsp'
-  } else if (url.includes('.m3u8')) {
+  } else if (/\.m3u8($|[?#])/i.test(url)) {
     return 'hls'
+  } else if (/\.flv($|[?#])/i.test(url)) {
+    return 'flv'
+  } else if (/\.(mp4|avi|mov|wmv|mkv)($|[?#])/i.test(url)) {
+    return 'video'
   } else if (url.startsWith('http')) {
     return 'http'
-  } else if (url.match(/\.(mp4|avi|mov|wmv|flv|mkv)$/)) {
-    return 'video'
   }
-  
+
   return 'unknown'
 }
 

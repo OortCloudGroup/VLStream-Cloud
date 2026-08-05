@@ -74,7 +74,7 @@ const createCameraPreviewPlugin = () => ({
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const backendTarget = env.VITE_DEV_PROXY_TARGET || 'http://127.0.0.1:8080'
+  const backendTarget = env.VITE_DEV_PROXY_TARGET || 'http://192.168.88.31:3000'
   const ssoTarget = env.VITE_SSO_PROXY_TARGET || backendTarget
   const apaasTarget = env.VITE_APAAS_PROXY_TARGET || 'http://oort.oortcloudsmart.com:21410'
   const webRtcTarget = env.VITE_WEBRTC_PROXY_TARGET || 'http://127.0.0.1:8000'

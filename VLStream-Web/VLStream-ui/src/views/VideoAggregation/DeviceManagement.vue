@@ -218,21 +218,6 @@
         <!-- 播放控制栏 -->
         <div class="player-controls">
           <div class="control-left">
-            <div class="play-mode-selector">
-              <el-select
-                v-model="selectedPlayMode"
-                placeholder="选择播放模式"
-                size="small"
-                style="width: 120px"
-              >
-                <el-option
-                  v-for="option in playModeOptions"
-                  :key="option.value"
-                  :label="option.label"
-                  :value="option.value"
-                />
-              </el-select>
-            </div>
             <div class="play-status">
               <el-tag
                 v-if="currentVideoDevice.playMode"
@@ -324,12 +309,12 @@
 <!--                <div v-if="currentVideoDevice.playMode">播放模式: {{ getPlayModeText(currentVideoDevice.playMode) }}</div>-->
 <!--              </div>-->
 
-              <!-- WebRTC播放器 -->
+              <!-- OPlayer 统一播放器 -->
               <div
-                v-if="isCameraRtcDevice(currentVideoDevice)"
-                ref="cameraRtcContainer"
-                class="camera-rtc-player"
-              ></div>
+                v-if="currentVideoDevice.streamUrl"
+                ref="oplayerContainer"
+                class="oplayer-container"
+              />
 
               <video
                 v-else-if="currentVideoDevice.playMode === 'webrtc'"
@@ -517,7 +502,7 @@ import {
 import {getTagTree} from '@/api/tagManagement'
 import {startHLSStream, stopHLSStream} from '@/api/stream'
 import {startRecording, stopRecording} from '@/api/videoRecord'
-import {getWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL} from '@/api/webrtc'
+import {ensureWebRTCBackendConfig, getWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL} from '@/api/webrtc'
 
 // 导入工具函数和常量
 import {formatDateTime, getStreamType, getYouTubeEmbedUrl} from './deviceUtils.js'
@@ -632,6 +617,9 @@ const hlsPlayer = ref(null)
 const webrtcVideoPlayer = ref(null)
 const cameraRtcContainer = ref(null)
 const cameraRtcPlayer = shallowRef(null)
+const oplayerContainer = ref(null)
+const oplayerInstance = shallowRef(null)
+let activeOPlayerTask = null
 const converting = ref(false)
 
 // WebRTC相关
@@ -766,6 +754,7 @@ onUnmounted(() => {
   cleanupWebRTCStream()
   cleanupHLSStream()
   cleanupCameraRTCPlayer()
+  cleanupDeviceOPlayer()
 
   console.log('设备管理组件已卸载，资源已清理')
 })
@@ -1074,29 +1063,82 @@ const handleDelete = async () => {
   }
 }
 
-// 增强的视频播放功能
-const handlePlay = async (row) => {
-  console.log('点击播放设备:', row)
+/**
+ * 清理设备管理 OPlayer 实例。
+ */
+const cleanupDeviceOPlayer = () => {
+  activeOPlayerTask = null
 
-  // 统计播放尝试次数
-  playStatistics.value.totalAttempts++
+  if (oplayerInstance.value?.compInstance?.$destroy) {
+    oplayerInstance.value.compInstance.$destroy()
+  }
+  oplayerInstance.value = null
 
-  // 创建设备副本用于播放
-  const deviceForPlay = { ...row }
+  if (oplayerContainer.value) {
+    oplayerContainer.value.innerHTML = ''
+  }
+}
 
-  // 如果没有视频流URL，使用测试URL
-  if (!deviceForPlay.streamUrl || deviceForPlay.streamUrl.trim() === '') {
-    console.log('设备没有配置视频流URL，使用测试视频')
-    deviceForPlay.streamUrl = 'https://www.w3schools.com/html/mov_bbb.mp4'
-    ElMessage.info('设备未配置视频流，使用测试视频进行演示')
+/**
+ * 根据设备流类型生成 OPlayer 参数。
+ */
+const createDeviceOPlayerOptions = async (streamUrl) => {
+  const streamType = getStreamType(streamUrl)
+  const playerConfig = {
+    debuggerMode: false,
+    autoSize: true,
+    backgroundColor: '#000000',
+    showHeader: true
   }
 
-  console.log('播放视频URL:', deviceForPlay.streamUrl)
+  if (streamType === 'cameraRTC') {
+    const url = new URL(streamUrl)
+    const cameraId = url.pathname.split('/').filter(Boolean).pop()
+    if (!cameraId) throw new Error('CameraRTC 地址中缺少摄像头ID')
 
-  // 检测流类型
-  const streamType = getStreamType(deviceForPlay.streamUrl)
+    playerConfig.webRTCSocketURL = url.origin.replace(/^http/, 'ws')
+    return { playerConfig, playConfig: { type: 'cameraRTC', src: cameraId } }
+  }
 
-  // 显示加载中提示
+  if (streamType === 'rtsp') {
+    await ensureWebRTCBackendConfig()
+    playerConfig.rtspServerURL = WEBRTC_SERVER_BASE_URL
+    return {
+      playerConfig,
+      playConfig: {
+        type: 'rtsp',
+        src: streamUrl,
+        transport: 'tcp',
+        timeout: 60,
+        preferredMime: 'video/H264'
+      }
+    }
+  }
+
+  const playTypeMap = { flv: 'flv', hls: 'm3u8', video: 'mp4', http: 'mp4' }
+  const playType = playTypeMap[streamType]
+  if (!playType) throw new Error(`暂不支持该视频流类型：${streamType}`)
+
+  return { playerConfig, playConfig: { type: playType, src: streamUrl } }
+}
+
+// 设备视频播放
+const handlePlay = async (row) => {
+  console.log('点击播放设备:', row)
+  playStatistics.value.totalAttempts++
+  const deviceForPlay = { ...row }
+
+  if (!deviceForPlay.streamUrl || deviceForPlay.streamUrl.trim() === '') {
+    ElMessage.warning('设备未配置视频流地址')
+    return
+  }
+
+  cleanupDeviceOPlayer()
+  const playbackTask = Symbol('device-oplayer')
+  activeOPlayerTask = playbackTask
+  currentVideoDevice.value = deviceForPlay
+  videoDialogVisible.value = true
+
   const loading = ElLoading.service({
     lock: true,
     text: '正在启动视频播放...',
@@ -1105,23 +1147,37 @@ const handlePlay = async (row) => {
   })
 
   try {
-    // pick play strategy
-    const playStrategy = await determinePlayStrategy(deviceForPlay, streamType)
-    console.log('Play strategy:', playStrategy)
+    await Promise.all([ensureOPlayer(), nextTick()])
+    const { playerConfig, playConfig } = await createDeviceOPlayerOptions(deviceForPlay.streamUrl)
+    const container = oplayerContainer.value
+    if (activeOPlayerTask !== playbackTask) return
+    if (!container) throw new Error('播放器容器未准备好')
 
-    currentVideoDevice.value = deviceForPlay
-    videoDialogVisible.value = true
+    const player = new window.OToolBox.OPlayer(container, playerConfig)
+    oplayerInstance.value = player
+    player.play({
+      ...playConfig,
+      name: deviceForPlay.deviceName || deviceForPlay.name || ''
+    })
 
-    await executePlayStrategy(currentVideoDevice.value, playStrategy)
-
-    // start monitoring after player setup
-    startPlayMonitoring()
-
-
+    const playModeMap = { cameraRTC: 'cameraRTC', rtsp: 'rtsp', m3u8: 'hls' }
+    currentVideoDevice.value.playMode = playModeMap[playConfig.type] || 'native'
+    playStatus.value.isConnecting = false
+    playStatus.value.isPlaying = true
+    playStatus.value.hasError = false
+    playStatus.value.connectionState = 'connected'
   } catch (error) {
+    if (activeOPlayerTask !== playbackTask) return
     console.error('播放失败:', error)
     ElMessage.error(`播放失败: ${error.message}`)
     playStatistics.value.failedAttempts++
+    playStatus.value.isConnecting = false
+    playStatus.value.isPlaying = false
+    playStatus.value.hasError = true
+    playStatus.value.errorMessage = error.message || '播放失败'
+    playStatus.value.connectionState = 'failed'
+    cleanupDeviceOPlayer()
+    videoDialogVisible.value = false
   } finally {
     loading.close()
   }
@@ -1649,6 +1705,7 @@ const handleVideoClose = () => {
   cleanupHLSStream()
   cleanupWebRTCStream()
   cleanupCameraRTCPlayer()
+  cleanupDeviceOPlayer()
 
   // 停止播放监控
   stopPlayMonitoring()
@@ -1972,6 +2029,8 @@ const getPlayModeTagType = (playMode) => {
       return 'info'
     case 'cameraRTC':
       return 'success'
+    case 'rtsp':
+      return 'success'
     default:
       return 'info'
   }
@@ -1988,6 +2047,8 @@ const getPlayModeText = (playMode) => {
       return '原生'
     case 'cameraRTC':
       return 'CameraRTC'
+    case 'rtsp':
+      return 'RTSP'
     default:
       return '未知'
   }
@@ -2018,6 +2079,7 @@ const handleReplay = async () => {
   await cleanupWebRTCStream()
   await cleanupHLSStream()
   cleanupCameraRTCPlayer()
+  cleanupDeviceOPlayer()
 
   // 重新播放
   await handlePlay(currentVideoDevice.value)
@@ -2363,44 +2425,8 @@ const initSimpleHLSPlayer = () => {
 
 // 监听视频对话框状态
 watch(videoDialogVisible, (newValue) => {
-  if (newValue && currentVideoDevice.value.streamUrl) {
-    console.log('视频对话框打开，准备初始化播放器')
-    console.log('设备信息:', currentVideoDevice.value)
-    console.log('原始URL:', currentVideoDevice.value.streamUrl)
-
-    const streamType = getStreamType(currentVideoDevice.value.streamUrl)
-    console.log('检测到的流类型:', streamType)
-
-    setTimeout(() => {
-      // 根据播放模式初始化播放器
-      if (currentVideoDevice.value.playMode === 'webrtc') {
-        return
-      } else if (currentVideoDevice.value.playMode === 'hls' || streamType === 'hls') {
-        // 如果是转换后的HLS流，使用新的播放器
-        if (currentVideoDevice.value.hlsUrl) {
-          initHLSPlayer(currentVideoDevice.value.streamUrl)
-        } else {
-          initSimpleHLSPlayer()
-        }
-      } else if (streamType === 'youtube') {
-        const embedUrl = getYouTubeEmbedUrl(currentVideoDevice.value.streamUrl)
-        console.log('YouTube嵌入URL:', embedUrl)
-
-        if (!embedUrl) {
-          console.error('YouTube嵌入URL生成失败')
-          ElMessage.error('YouTube视频URL处理失败')
-        }
-      } else if (streamType === 'rtsp') {
-        console.log('RTSP流已准备就绪，显示RTSP播放提示')
-        if (!currentVideoDevice.value.hlsUrl) {
-          ElMessage.info('检测到RTSP流，可以转换为HLS格式在浏览器中播放')
-        }
-      }
-    }, 500)
-  } else if (!newValue) {
-    // 对话框关闭时清理资源
-    cleanupHLSStream()
-    cleanupWebRTCStream()
+  if (!newValue) {
+    cleanupDeviceOPlayer()
   }
 })
 
@@ -3340,6 +3366,13 @@ const handleIframeError = () => {
       .camera-rtc-player {
         width: 100%;
         height: 100%;
+      }
+
+      .oplayer-container {
+        width: 100%;
+        height: 100%;
+        background: #000;
+        overflow: hidden;
       }
 
       .video-iframe {

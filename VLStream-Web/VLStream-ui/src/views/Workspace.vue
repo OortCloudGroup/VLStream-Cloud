@@ -151,41 +151,43 @@
     </div>
   </div>
 
-  <!-- 热门设备 - 简易WebRTC播放弹窗 -->
+  <!-- 热门设备播放弹窗 -->
   <el-dialog
     v-model="showPlayer"
-    width="50%"
+    class="workspace-player-dialog"
+    top="10vh"
+    width="900px"
+    draggable
     :title="currentPlayDevice?.deviceName ? `${currentPlayDevice.deviceName} - 摄像头预览` : '摄像头预览'"
     append-to-body
     @close="handlePlayerClose"
   >
-    <div class="workspace-player">
-      <video
-        v-show="!showSnapshotPreview"
-        ref="webrtcVideoEl"
-        class="workspace-webrtc-video"
-        controls
-        autoplay
-        muted
-        playsinline
-      ></video>
-      <img
-        v-if="showSnapshotPreview"
-        :src="snapshotPreviewUrl"
-        class="workspace-camera-preview"
-        alt="摄像头实时预览"
-      />
+    <template #header="{ titleId, titleClass }">
+      <div class="workspace-player-header">
+        <span :id="titleId" :class="titleClass">
+          {{ currentPlayDevice?.deviceName ? `${currentPlayDevice.deviceName} - 摄像头预览` : '摄像头预览' }}
+        </span>
+        <el-icon class="workspace-fullscreen-button" title="全屏" @click="toggleFullscreen">
+          <FullScreen />
+        </el-icon>
+      </div>
+    </template>
+    <div ref="workspacePlayerRef" class="workspace-player">
+      <div ref="oplayerContainer" class="oplayer-container" />
     </div>
   </el-dialog>
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
+import { FullScreen } from '@element-plus/icons-vue'
 import { getDeviceList } from '@/api/device'
 import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
-import { ElMessage } from 'element-plus'
+import { ElLoading, ElMessage } from 'element-plus'
 import { clacPXToVW } from '@/utils/index'
+import { ensureOPlayer } from '@/utils/oplayer'
+import { getStreamType } from '@/views/VideoAggregation/deviceUtils.js'
 
 import iconVideoPlaza from '@/assets/img/workbench/video_plaza.png'
 import iconSceneGovernance from '@/assets/img/workbench/scene_governance.png'
@@ -305,112 +307,53 @@ const startWeatherRefresh = () => {
 }
 
 const showPlayer = ref(false)
-const webrtcVideoEl = ref(null)
+const oplayerContainer = ref(null)
+const oplayerInstance = shallowRef(null)
 const currentPlayDevice = ref(null)
-const showSnapshotPreview = ref(false)
-const snapshotPreviewUrl = ref('')
-let webrtcPlayer = null
-let playbackProbeTimer = null
-let snapshotRefreshTimer = null
+const workspacePlayerRef = ref(null)
+let activePlaybackTask = null
 
 const hotDevices = ref([])
 
 const approvalData = ref([])
 
-let WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
-// 播放器脚本随前端发布，避免因 WebRTC 服务端未暴露静态资源而阻断播放。
-const WEBRTC_SCRIPT_URLS = [
-  '/hikvision/adapter.min.js',
-  '/hikvision/webrtcstreamer.js'
-]
-let webrtcScriptLoader = null
+/**
+ * 切换工作台播放器全屏状态。
+ */
+const toggleFullscreen = async () => {
+  const playerElement = workspacePlayerRef.value
+  if (!playerElement) return
 
-const loadScriptTag = (src) => {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) {
-      resolve()
-      return
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen()
+    } else {
+      await playerElement.requestFullscreen?.()
     }
-    const script = document.createElement('script')
-    script.src = src
-    script.async = true
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error(`Failed to load ${src}`))
-    document.head.appendChild(script)
-  })
-}
-
-const ensureWebRtcStreamerScripts = async () => {
-  if (webrtcScriptLoader) {
-    return webrtcScriptLoader
-  }
-
-  await ensureWebRTCBackendConfig()
-  WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
-  webrtcScriptLoader = Promise.all(WEBRTC_SCRIPT_URLS.map(loadScriptTag)).catch(error => {
-    webrtcScriptLoader = null
-    throw error
-  })
-  return webrtcScriptLoader
-}
-
-const stopSnapshotPreview = () => {
-  if (playbackProbeTimer) {
-    clearTimeout(playbackProbeTimer)
-    playbackProbeTimer = null
-  }
-  if (snapshotRefreshTimer) {
-    clearInterval(snapshotRefreshTimer)
-    snapshotRefreshTimer = null
-  }
-  showSnapshotPreview.value = false
-  snapshotPreviewUrl.value = ''
-}
-
-const refreshSnapshotPreview = (streamUrl) => {
-  snapshotPreviewUrl.value = `/__camera-preview?stream=${encodeURIComponent(streamUrl)}&t=${Date.now()}`
-}
-
-const startSnapshotPreview = (streamUrl) => {
-  if (!import.meta.env.DEV || showSnapshotPreview.value) return
-
-  showSnapshotPreview.value = true
-  refreshSnapshotPreview(streamUrl)
-  snapshotRefreshTimer = setInterval(() => refreshSnapshotPreview(streamUrl), 1000)
-  ElMessage.warning('WebRTC 转流未返回视频帧，已切换为相机实时预览')
-}
-
-const monitorWebRtcPlayback = (streamUrl) => {
-  if (!import.meta.env.DEV) return
-
-  playbackProbeTimer = setTimeout(() => {
-    const videoEl = webrtcVideoEl.value
-    const hasVideoFrame = videoEl && videoEl.readyState >= 2 && videoEl.videoWidth > 0
-    if (!hasVideoFrame) startSnapshotPreview(streamUrl)
-  }, 5000)
-}
-
-const cleanupWebrtcPlayer = async () => {
-  stopSnapshotPreview()
-  if (webrtcPlayer) {
-    try {
-      if (typeof webrtcPlayer.disconnect === 'function') {
-        await webrtcPlayer.disconnect()
-      } else if (typeof webrtcPlayer.stop === 'function') {
-        await webrtcPlayer.stop()
-      }
-    } catch (error) {
-      console.warn('停止 WebRTC 播放失败:', error)
-    }
-    webrtcPlayer = null
-  }
-  if (webrtcVideoEl.value) {
-    webrtcVideoEl.value.srcObject = null
+  } catch (error) {
+    console.error('切换播放器全屏失败:', error)
+    ElMessage.error('切换全屏失败')
   }
 }
 
-const handlePlayerClose = async () => {
-  await cleanupWebrtcPlayer()
+/**
+ * 释放工作台播放器资源。
+ */
+const cleanupOPlayer = () => {
+  activePlaybackTask = null
+
+  if (oplayerInstance.value?.compInstance?.$destroy) {
+    oplayerInstance.value.compInstance.$destroy()
+  }
+  oplayerInstance.value = null
+
+  if (oplayerContainer.value) {
+    oplayerContainer.value.innerHTML = ''
+  }
+}
+
+const handlePlayerClose = () => {
+  cleanupOPlayer()
   showPlayer.value = false
 }
 
@@ -418,6 +361,67 @@ const gotoMoreDevice = async () => {
   await router.push('/device-management')
 }
 
+/**
+ * 根据流类型生成工作台 OPlayer 参数。
+ */
+const createWorkspacePlayerOptions = async (streamUrl) => {
+  const streamType = getStreamType(streamUrl)
+  const playerConfig = {
+    debuggerMode: false,
+    autoSize: true,
+    backgroundColor: '#000000',
+    showHeader: false
+  }
+
+  if (streamType === 'cameraRTC') {
+    const url = new URL(streamUrl)
+    const cameraId = url.pathname.split('/').filter(Boolean).pop()
+    if (!cameraId) {
+      throw new Error('CameraRTC 地址中缺少摄像头ID')
+    }
+
+    playerConfig.webRTCSocketURL = url.origin.replace(/^http/, 'ws')
+    return {
+      playerConfig,
+      playConfig: { type: 'cameraRTC', src: cameraId }
+    }
+  }
+
+  if (streamType === 'rtsp') {
+    await ensureWebRTCBackendConfig()
+    playerConfig.rtspServerURL = WEBRTC_SERVER_BASE_URL
+    return {
+      playerConfig,
+      playConfig: {
+        type: 'rtsp',
+        src: streamUrl,
+        transport: 'tcp',
+        timeout: 60,
+        preferredMime: 'video/H264'
+      }
+    }
+  }
+
+  const playTypeMap = {
+    flv: 'flv',
+    hls: 'm3u8',
+    video: 'mp4',
+    http: 'mp4'
+  }
+  const playType = playTypeMap[streamType]
+  if (!playType) {
+    throw new Error(`暂不支持该视频流类型：${streamType}`)
+  }
+
+  return {
+    playerConfig,
+    playConfig: { type: playType, src: streamUrl }
+  }
+}
+
+/**
+ * 播放热门设备的视频流。
+ */
 const handlePlay = async (device) => {
   const streamUrl = device?.streamUrl || device?.originalRtspUrl || device?.rtspUrl || device?.url
   if (!streamUrl) {
@@ -425,41 +429,39 @@ const handlePlay = async (device) => {
     return
   }
 
+  cleanupOPlayer()
+  const playbackTask = Symbol('workspace-oplayer')
+  activePlaybackTask = playbackTask
   currentPlayDevice.value = device
-  stopSnapshotPreview()
   showPlayer.value = true
 
+  const loading = ElLoading.service({
+    lock: true,
+    text: '正在启动视频播放...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  })
+
   try {
-    await ensureWebRtcStreamerScripts()
-    await nextTick()
+    await Promise.all([ensureOPlayer(), nextTick()])
+    const { playerConfig, playConfig } = await createWorkspacePlayerOptions(streamUrl)
+    const container = oplayerContainer.value
+    if (activePlaybackTask !== playbackTask) return
+    if (!container) throw new Error('播放器容器未准备好')
 
-    const videoEl = webrtcVideoEl.value
-    if (!videoEl) throw new Error('播放器未准备好')
-    if (!window.WebRtcStreamer) throw new Error('WebRtcStreamer 未加载')
-
-    if (!videoEl.id) {
-      videoEl.id = `workspace-webrtc-${device.id || Date.now()}`
-    }
-
-    await cleanupWebrtcPlayer()
-
-    webrtcPlayer = new window.WebRtcStreamer(videoEl.id, WEBRTC_STREAMER_BASE)
-    webrtcPlayer.onconnected = () => ElMessage.success('WebRTC连接成功')
-    webrtcPlayer.onerror = () => ElMessage.error('WebRTC连接失败')
-
-    if (typeof webrtcPlayer.connect === 'function') {
-      webrtcPlayer.connect(streamUrl, '', 'rtptransport=tcp&timeout=60')
-      monitorWebRtcPlayback(streamUrl)
-    } else if (typeof webrtcPlayer.play === 'function') {
-      webrtcPlayer.play(streamUrl)
-      monitorWebRtcPlayback(streamUrl)
-    } else {
-      throw new Error('WebRtcStreamer 缺少 connect/play 方法')
-    }
+    const player = new window.OToolBox.OPlayer(container, playerConfig)
+    oplayerInstance.value = player
+    player.play({
+      ...playConfig,
+      name: device?.deviceName || device?.name || ''
+    })
   } catch (error) {
+    if (activePlaybackTask !== playbackTask) return
     console.error('播放失败:', error)
     ElMessage.error(`播放失败: ${error.message || error}`)
+    cleanupOPlayer()
     showPlayer.value = false
+  } finally {
+    loading.close()
   }
 }
 
@@ -514,30 +516,21 @@ onBeforeUnmount(() => {
     clearInterval(weatherTimer)
     weatherTimer = null
   }
-  cleanupWebrtcPlayer()
+  cleanupOPlayer()
 })
 </script>
 
 <style scoped>
 .workspace-player {
   width: 100%;
-  height: 500px;
+  aspect-ratio: 16 / 9;
   background: #000;
-  border-radius: 8px;
   overflow: hidden;
 }
 
-.workspace-webrtc-video {
+.oplayer-container {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  background: #000;
-}
-
-.workspace-camera-preview {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
   background: #000;
 }
 
@@ -974,5 +967,44 @@ onBeforeUnmount(() => {
 
 :deep(.approval-table::before) {
   display: none;
+}
+</style>
+
+<style>
+.el-dialog.workspace-player-dialog {
+  margin: 0 auto !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.el-dialog.workspace-player-dialog .el-dialog__body {
+  padding: 0 !important;
+}
+
+.el-dialog.workspace-player-dialog .el-dialog__header {
+  position: relative;
+}
+
+.el-dialog.workspace-player-dialog .workspace-player-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-right: 72px;
+  box-sizing: border-box;
+}
+
+.el-dialog.workspace-player-dialog .workspace-fullscreen-button {
+  position: absolute;
+  top: 50%;
+  right: 52px;
+  margin: 0;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: var(--el-color-info);
+  cursor: pointer;
+}
+
+.el-dialog.workspace-player-dialog .workspace-fullscreen-button:hover {
+  color: var(--el-color-primary);
 }
 </style>
