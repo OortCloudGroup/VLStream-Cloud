@@ -1,172 +1,167 @@
 <template>
-  <SystemPageShell>
-    <!-- 顶部工具栏 -->
-    <template #toolbar>
-      <div class="toolbar-left">
-        <!-- 扁平页面简单说明或过滤表单 -->
-        <el-form :inline="true" :model="queryParams" size="default">
-          <el-form-item label="菜单名称">
-            <el-input v-model="queryParams.name" placeholder="请输入菜单名称" clearable @keyup.enter="handleSearch" />
-          </el-form-item>
-          <el-form-item label="菜单编号">
-            <el-input v-model="queryParams.code" placeholder="请输入菜单编号" clearable @keyup.enter="handleSearch" />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="handleSearch">
-              <el-icon><Search /></el-icon> 查询
-            </el-button>
-            <el-button @click="handleReset">
-              <el-icon><Refresh /></el-icon> 重置
-            </el-button>
-          </el-form-item>
-        </el-form>
-      </div>
-
-      <div class="toolbar-right">
-        <!-- 按钮操作组 -->
-        <ActionButtonGroup
-          :selected-count="selectedRows.length"
-          @add="handleCreate"
-          @edit="handleEdit(selectedRows[0])"
-          @delete="handleBatchRemove"
-        />
-      </div>
-    </template>
-
-    <!-- 菜单树形列表表格 -->
-    <el-table
-      v-loading="loading"
-      :data="tableData"
-      row-key="id"
-      stripe
-      style="width: 100%; height: 100%"
-      :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-      @selection-change="handleSelectionChange"
-    >
-      <el-table-column type="selection" width="55" />
-      <el-table-column prop="name" label="菜单名称" min-width="180" />
-      <el-table-column prop="code" label="路由编号" min-width="120" />
-      <el-table-column prop="alias" label="菜单别名" min-width="120" />
-      <el-table-column prop="path" label="路由地址" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="categoryName" label="类型" width="100" align="center">
-        <template #default="scope">
-          <el-tag :type="scope.row.category === 1 ? 'primary' : 'success'">
-            {{ scope.row.category === 1 ? '菜单' : scope.row.category === 2 ? '按钮' : '未知' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="sort" label="排序" width="80" align="center" />
-      <el-table-column prop="action" label="权限标识" min-width="150" show-overflow-tooltip />
-      <el-table-column label="操作" width="180" fixed="right" align="right">
-        <template #default="scope">
-          <div class="operation-buttons">
-            <el-button class="operation-btn edit-btn" @click="handleEdit(scope.row)">
-              编辑
-            </el-button>
-            <el-button class="operation-btn delete-btn" @click="handleSingleRemove(scope.row)">
-              删除
-            </el-button>
+  <div class="menu-management tenant_Page draHeaPB">
+    <div class="tenant_content">
+      <div class="tableTenBox flexRowAC">
+        <div class="tableTenItU">
+          <div class="depNameBox_out flexRowAC">
+            <div class="depNameBox flexRowAC">
+              <div class="exportBtnBox flexRowAC">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleCreate">
+                  <el-icon class="BtnImg"><Plus /></el-icon>
+                  新建
+                </button>
+                <button-group :button-list="toolbarButtonList" />
+              </div>
+            </div>
+            <div class="searchHeight_out flexRowAC">
+              <search-height-box
+                keyword="keyword"
+                placeholder="搜索"
+                :data="searchData"
+                @handle="searchResetFn"
+              />
+              <export-excel-pdf :item="exportItem" @handle="handleExport" />
+            </div>
           </div>
-        </template>
-      </el-table-column>
-    </el-table>
-  </SystemPageShell>
 
-  <!-- 新增/编辑菜单对话框 -->
-  <el-dialog
-    v-model="dialogVisible"
-    :title="dialogTitle"
-    width="35%"
-    destroy-on-close
-  >
-    <el-form
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      label-width="100px"
-      style="padding: 10px 20px"
+          <TableSelf
+            class="new_table"
+            header-cell-class-name="header_tenant_cell"
+            stripe
+            v-loading="loading"
+            :data="tableData"
+            row-key="id"
+            :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+            @selection-change="handleSelectionChange"
+          >
+            <el-table-column type="selection" :width="clacPXToVW(55)" />
+            <el-table-column prop="name" label="菜单名称" min-width="180" />
+            <el-table-column prop="code" label="路由编号" min-width="120" />
+            <el-table-column prop="alias" label="菜单别名" min-width="120" />
+            <el-table-column prop="path" label="路由地址" min-width="150" show-overflow-tooltip />
+            <el-table-column prop="categoryName" label="类型" :width="clacPXToVW(100)" align="center">
+              <template #default="scope">
+                <el-tag :type="scope.row.category === 1 ? 'primary' : 'success'">
+                  {{ scope.row.category === 1 ? '菜单' : scope.row.category === 2 ? '按钮' : '未知' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="sort" label="排序" :width="clacPXToVW(80)" align="center" />
+            <el-table-column prop="action" label="权限标识" min-width="150" show-overflow-tooltip />
+            <el-table-column label="操作" :width="clacPXToVW(180)" fixed="right" align="right">
+              <template #default="scope">
+                <div class="operateAppBox flexRowAC" @click.stop>
+                  <div class="new_table_svg_group" @click="handleEdit(scope.row)">
+                    <oort-svg-icon width="20" height="20" name="edit_icon" class="new_table_svg_group_svg" />
+                    <span>编辑</span>
+                  </div>
+                  <div class="new_table_svg_group" @click="handleSingleRemove(scope.row)">
+                    <oort-svg-icon color="red" width="20" height="20" name="delete_icon" class="new_table_svg_group_svg" />
+                    <span>删除</span>
+                  </div>
+                </div>
+              </template>
+            </el-table-column>
+          </TableSelf>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新增/编辑菜单对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="35%"
+      destroy-on-close
     >
-      <el-form-item label="上级菜单" prop="parentId">
-        <el-tree-select
-          v-model="form.parentId"
-          :data="menuTreeOptions"
-          node-key="id"
-          :props="{ label: 'label', children: 'children' }"
-          placeholder="请选择上级菜单 (不选则为根节点)"
-          check-strictly
-          style="width: 100%"
-          clearable
-        />
-      </el-form-item>
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="100px"
+        style="padding: 10px 20px"
+      >
+        <el-form-item label="上级菜单" prop="parentId">
+          <el-tree-select
+            v-model="form.parentId"
+            :data="menuTreeOptions"
+            node-key="id"
+            :props="{ label: 'label', children: 'children' }"
+            placeholder="请选择上级菜单 (不选则为根节点)"
+            check-strictly
+            style="width: 100%"
+            clearable
+          />
+        </el-form-item>
 
-      <el-form-item label="菜单名称" prop="name">
-        <el-input v-model="form.name" placeholder="请输入菜单名称" />
-      </el-form-item>
+        <el-form-item label="菜单名称" prop="name">
+          <el-input v-model="form.name" placeholder="请输入菜单名称" />
+        </el-form-item>
 
-      <el-form-item label="路由编号" prop="code">
-        <el-input v-model="form.code" placeholder="请输入路由编号" />
-      </el-form-item>
+        <el-form-item label="路由编号" prop="code">
+          <el-input v-model="form.code" placeholder="请输入路由编号" />
+        </el-form-item>
 
-      <el-form-item label="菜单别名" prop="alias">
-        <el-input v-model="form.alias" placeholder="请输入菜单别名" />
-      </el-form-item>
+        <el-form-item label="菜单别名" prop="alias">
+          <el-input v-model="form.alias" placeholder="请输入菜单别名" />
+        </el-form-item>
 
-      <el-form-item label="菜单类型" prop="category">
-        <el-radio-group v-model="form.category">
-          <el-radio :label="1">菜单</el-radio>
-          <el-radio :label="2">按钮</el-radio>
-        </el-radio-group>
-      </el-form-item>
+        <el-form-item label="菜单类型" prop="category">
+          <el-radio-group v-model="form.category">
+            <el-radio :label="1">菜单</el-radio>
+            <el-radio :label="2">按钮</el-radio>
+          </el-radio-group>
+        </el-form-item>
 
-      <el-form-item v-if="form.category === 1" label="路由地址" prop="path">
-        <el-input v-model="form.path" placeholder="请输入路由 path (如 /system/users)" />
-      </el-form-item>
+        <el-form-item v-if="form.category === 1" label="路由地址" prop="path">
+          <el-input v-model="form.path" placeholder="请输入路由 path (如 /system/users)" />
+        </el-form-item>
 
-      <el-form-item label="权限标识" prop="action">
-        <el-input v-model="form.action" placeholder="请输入权限标识 (如 system_user_list)" />
-      </el-form-item>
+        <el-form-item label="权限标识" prop="action">
+          <el-input v-model="form.action" placeholder="请输入权限标识 (如 system_user_list)" />
+        </el-form-item>
 
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item label="菜单排序" prop="sort">
-            <el-input-number v-model="form.sort" :min="1" style="width: 100%" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="是否新窗口" prop="isOpen">
-            <el-switch
-              v-model="form.isOpen"
-              :active-value="1"
-              :inactive-value="2"
-              active-text="是"
-              inactive-text="否"
-              inline-prompt
-            />
-          </el-form-item>
-        </el-col>
-      </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="菜单排序" prop="sort">
+              <el-input-number v-model="form.sort" :min="1" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="是否新窗口" prop="isOpen">
+              <el-switch
+                v-model="form.isOpen"
+                :active-value="1"
+                :inactive-value="2"
+                active-text="是"
+                inactive-text="否"
+                inline-prompt
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-      <el-form-item label="菜单图标" prop="source">
-        <el-input v-model="form.source" placeholder="请输入图标名称" />
-      </el-form-item>
+        <el-form-item label="菜单图标" prop="source">
+          <el-input v-model="form.source" placeholder="请输入图标名称" />
+        </el-form-item>
 
-      <el-form-item label="备注" prop="remark">
-        <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :rows="2" />
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <el-button @click="dialogVisible = false" class="common_btn">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">确定</el-button>
-    </template>
-  </el-dialog>
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :rows="2" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogVisible = false" class="common_btn">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">确定</el-button>
+      </template>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh, Search } from '@element-plus/icons-vue'
-import SystemPageShell from './components/SystemPageShell.vue'
-import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
+import { Plus } from '@element-plus/icons-vue'
+import { clacPXToVW } from '@/utils/index'
 import { getMenuList, submitMenu, removeMenus } from '@/api/system/menu'
 import { buildTree, getPayload, normalizeTree, joinIds, isSuccess } from './utils/response'
 
@@ -176,17 +171,24 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('新增菜单')
 const selectedRows = ref([])
 const tableData = ref([])
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '菜单名称', value: 'name', type: 'text', default: '' },
+  { label: '菜单编号', value: 'code', type: 'text', default: '' }
+])
 
-// 上级菜单树选项
+const toolbarButtonList = computed(() => [
+  { name: '编辑', svg: 'table_edit', clickFn: handleToolbarEdit },
+  { name: '删除', svg: 'table_del', clickFn: handleBatchRemove }
+])
+
 const menuTreeOptions = ref([])
 
-// 搜索条件
 const queryParams = reactive({
   name: '',
   code: ''
 })
 
-// 表单对象与表单校验规则
 const formRef = ref()
 const form = ref({
   id: undefined,
@@ -209,9 +211,6 @@ const rules = {
   category: [{ required: true, message: '请选择菜单类型', trigger: 'change' }]
 }
 
-/**
- * 异步查询所有菜单和按钮的扁平列表，使用 buildTree 工具整理成嵌套树状，并为 Element 规范化 label 字段
- */
 async function loadData() {
   loading.value = true
   try {
@@ -220,8 +219,7 @@ async function loadData() {
       code: queryParams.code
     })
     const rawList = getPayload(res) || []
-    
-    // 重构成树形结构。SpringBlade 菜单也是 parentId 的分级树
+
     const tree = buildTree(rawList, [0, '0', null, undefined])
     tableData.value = normalizeTree(tree)
     menuTreeOptions.value = normalizeTree(tree)
@@ -233,33 +231,42 @@ async function loadData() {
   }
 }
 
-/**
- * 触发搜索
- */
 function handleSearch() {
   loadData()
 }
 
-/**
- * 重置搜索过滤，重新加载
- */
 function handleReset() {
   queryParams.name = ''
   queryParams.code = ''
   loadData()
 }
 
-/**
- * 复选框改变回调
- * @param {Array} rows 选中的行
- */
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && (val.keyword || val.name || val.code))) {
+    handleReset()
+    return
+  }
+  queryParams.name = val?.name || val?.keyword || ''
+  queryParams.code = val?.code || ''
+  handleSearch()
+}
+
+const handleExport = () => {
+  ElMessage.success('导出数据')
+}
+
+function handleToolbarEdit() {
+  if (selectedRows.value.length !== 1) {
+    ElMessage.warning('请选择一条记录进行编辑')
+    return
+  }
+  handleEdit(selectedRows.value[0])
+}
+
 function handleSelectionChange(rows) {
   selectedRows.value = rows
 }
 
-/**
- * 打开新增菜单弹窗，初始化表单数据
- */
 function handleCreate() {
   dialogTitle.value = '新增菜单'
   form.value = {
@@ -279,10 +286,6 @@ function handleCreate() {
   dialogVisible.value = true
 }
 
-/**
- * 打开编辑菜单弹窗，克隆行数据回显
- * @param {Object} row 行数据
- */
 function handleEdit(row) {
   if (!row) return
   form.value = { ...row }
@@ -290,9 +293,6 @@ function handleEdit(row) {
   dialogVisible.value = true
 }
 
-/**
- * 确定保存，对表单做必填校验后调用后端 API
- */
 async function handleSaveSubmit() {
   if (!formRef.value) return
   await formRef.value.validate(async (valid) => {
@@ -317,11 +317,6 @@ async function handleSaveSubmit() {
   })
 }
 
-/**
- * 触发删除逻辑，包含二次确认层
- * @param {String} ids 逗号拼接的菜单ID
- * @param {String} msg 确认消息内容
- */
 function executeRemove(ids, msg) {
   ElMessageBox.confirm(msg, '提示', {
     confirmButtonText: '确定',
@@ -343,73 +338,76 @@ function executeRemove(ids, msg) {
   }).catch(() => {})
 }
 
-/**
- * 行内单条删除菜单
- * @param {Object} row 待删除行
- */
 function handleSingleRemove(row) {
   executeRemove(String(row.id), `确定删除菜单 [${row.name}] 吗？`)
 }
 
-/**
- * 批量删除已选中行的菜单项
- */
 function handleBatchRemove() {
   if (selectedRows.value.length === 0) return
   const ids = joinIds(selectedRows.value)
   executeRemove(ids, `确定删除选中的 ${selectedRows.value.length} 个菜单吗？`)
 }
 
-// 挂载时加载数据
 onMounted(() => {
   loadData()
 })
 </script>
 
-<style scoped>
-.operation-buttons {
+<style scoped lang="scss">
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  background: #f0f2f5;
   display: flex;
+  flex-direction: column;
+
+  .tenant_content {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+  }
+
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+    min-height: 0;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  }
+}
+
+.tableTenItU {
+  flex: 1;
+  height: 100%;
+  overflow: auto;
+  min-width: 0;
+
+  :deep(.header_tenant_cell) {
+    background: #F8F8F9;
+  }
+}
+
+.operateAppBox {
   justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
+  gap: 2px;
 }
 
-.operation-btn {
-  height: 28px !important;
-  padding: 0 12px !important;
-  font-size: 12px !important;
-  border-radius: 14px !important;
-  font-weight: 500 !important;
-}
-
-.edit-btn {
-  background: #ffffff !important;
-  color: #1A53FF !important;
-  border: 1px solid #1A53FF !important;
-}
-
-.edit-btn:hover {
-  background: #f0f4ff !important;
-}
-
-.delete-btn {
-  background: #ffffff !important;
-  color: #f56c6c !important;
-  border: 1px solid #d9d9d9 !important;
-}
-
-.delete-btn:hover {
-  border-color: #f56c6c !important;
-  color: #f56c6c !important;
-}
-
-.toolbar-left {
+.menu-management {
+  height: 100%;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  background: #f0f2f5;
+  overflow: hidden;
 }
 
-.el-form-item {
-  margin-bottom: 0;
-  margin-right: 16px;
+:deep(.el-dialog) {
+  border-radius: 8px;
 }
 </style>
