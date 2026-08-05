@@ -35,6 +35,11 @@ html {
   // 统一的圆角
   --common-border-radius: 6px;
 
+  /* 主题色及表格操作列按钮背景 */
+  --el-color-primary: #1A53FF;
+  --el-color-primary-hb: #E8EDFF;
+  --el-color-primary-hb2: #D1DCFF;
+
   /* 地图颜色-原来的色值 */
   --data-resources-item-background-color_1: #031e42;
   --tip-windows-box-shadow_1: none;
@@ -95,6 +100,8 @@ html {
   --el-color-primary-dark-2: #1A53FF !important;
   /* disable 的颜色*/
   --el-color-primary-light-5: #1A53FF !important;
+  --el-color-primary-hb: #E8EDFF !important;
+  --el-color-primary-hb2: #D1DCFF !important;
   --header-right_info: #fff !important;
 }
 
@@ -779,10 +786,6 @@ td {
   }
 }
 
-.new_table_svg_group:hover {
-  background-color: var(--el-color-primary-hb2);
-}
-
 .new_table .new_table_svg_group {
   cursor: pointer;
   display: flex;
@@ -803,10 +806,6 @@ td {
 
 .new_table .new_table_svg_group_svg {
   margin: 0 4px;
-}
-
-.new_table .new_table_svg_group:hover {
-  background-color: var(--el-color-primary-hb2);
 }
 
 // ----------

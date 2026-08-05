@@ -1,114 +1,103 @@
 <template>
-  <SystemPageShell>
-    <!-- 顶部工具栏 -->
-    <template #toolbar>
-      <div class="toolbar-left">
-        <!-- 搜索表单 -->
-        <el-form :inline="true" :model="queryParams" class="demo-form-inline" size="default">
-          <el-form-item label="账号">
-            <el-input v-model="queryParams.account" placeholder="请输入账号" clearable @keyup.enter="handleSearch" />
-          </el-form-item>
-          <el-form-item label="姓名">
-            <el-input v-model="queryParams.realName" placeholder="请输入姓名" clearable @keyup.enter="handleSearch" />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="handleSearch">
-              <el-icon><Search /></el-icon> 查询
-            </el-button>
-            <el-button @click="handleReset">
-              <el-icon><Refresh /></el-icon> 重置
-            </el-button>
-          </el-form-item>
-        </el-form>
-      </div>
-      
-      <div class="toolbar-right">
-        <!-- 操作按钮组 -->
-        <ActionButtonGroup
-          :selected-count="selectedRows.length"
-          @add="handleCreate"
-          @edit="handleEdit(selectedRows[0])"
-          @delete="handleBatchRemove"
-        >
-          <template #extra-buttons>
-            <el-button 
-              type="success"
-              plain
-              :disabled="selectedRows.length !== 1"
-              @click="handleOpenGrant(selectedRows[0])"
-            >
-              分配角色
-            </el-button>
-          </template>
-        </ActionButtonGroup>
-      </div>
-    </template>
-
-    <!-- 表格区域 -->
-    <el-table
-      v-loading="loading"
-      :data="tableData"
-      stripe
-      style="width: 100%; height: 100%"
-      @selection-change="handleSelectionChange"
-    >
-      <el-table-column type="selection" width="55" />
-      <el-table-column prop="account" label="账号" min-width="120" />
-      <el-table-column prop="name" label="昵称" min-width="120" />
-      <el-table-column prop="realName" label="姓名" min-width="120" />
-      <el-table-column prop="email" label="邮箱" min-width="150" />
-      <el-table-column prop="phone" label="手机" min-width="120" />
-      <el-table-column prop="sexName" label="性别" width="80" align="center">
-        <template #default="scope">
-          <span>{{ scope.row.sex === 1 ? '男' : scope.row.sex === 2 ? '女' : '未知' }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="roleName" label="角色" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="deptName" label="部门" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="postName" label="岗位" min-width="150" show-overflow-tooltip />
-      
-      <!-- 操作列 -->
-      <el-table-column label="操作" width="240" fixed="right" align="right">
-        <template #default="scope">
-          <div class="operation-buttons">
-            <el-button class="operation-btn edit-btn" @click="handleEdit(scope.row)">
-              编辑
-            </el-button>
-            <el-button class="operation-btn delete-btn" @click="handleSingleRemove(scope.row)">
-              删除
-            </el-button>
-            
-            <!-- “更多”下拉操作，包含重置密码和解锁账号 -->
-            <el-dropdown trigger="click" style="margin-left: 8px">
-              <el-button class="operation-btn view-btn">
-                更多 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item @click="handleResetPassword(scope.row)">重置密码</el-dropdown-item>
-                  <el-dropdown-item @click="handleUnlock(scope.row)">解锁账号</el-dropdown-item>
-                  <el-dropdown-item @click="handleOpenGrant(scope.row)">分配角色</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+  <div class="user-management tenant_Page draHeaPB">
+    <div class="tenant_content">
+      <div class="tableTenBox flexRowAC">
+        <div class="tableTenItU">
+          <div class="depNameBox_out flexRowAC">
+            <div class="depNameBox flexRowAC">
+              <div class="exportBtnBox flexRowAC">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleCreate">
+                  <el-icon class="BtnImg">
+                    <Plus />
+                  </el-icon>
+                  新建
+                </button>
+                <button-group :button-list="toolbarButtonList" />
+              </div>
+            </div>
+            <div class="searchHeight_out flexRowAC">
+              <search-height-box
+                keyword="keyword"
+                placeholder="搜索"
+                :data="searchData"
+                @handle="searchResetFn"
+              />
+              <export-excel-pdf :item="exportItem" @handle="handleExport" />
+            </div>
           </div>
-        </template>
-      </el-table-column>
-    </el-table>
 
-    <!-- 分页区域 -->
-    <template #pagination>
-      <el-pagination
-        v-model:current-page="pagination.current"
-        v-model:page-size="pagination.size"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="pagination.total"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </template>
-  </SystemPageShell>
+          <TableSelf
+            class="new_table"
+            header-cell-class-name="header_tenant_cell"
+            stripe
+            v-loading="loading"
+            :data="tableData"
+            @selection-change="handleSelectionChange"
+          >
+            <el-table-column type="selection" :width="clacPXToVW(55)" />
+            <el-table-column label="序号" :width="clacPXToVW(65)">
+              <template #default="scope">
+                {{ scope.$index + (pagination.current - 1) * pagination.size + 1 }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="account" label="账号" show-overflow-tooltip />
+            <el-table-column prop="name" label="昵称" show-overflow-tooltip />
+            <el-table-column prop="realName" label="姓名" show-overflow-tooltip />
+            <el-table-column prop="email" label="邮箱" show-overflow-tooltip />
+            <el-table-column prop="phone" label="手机" show-overflow-tooltip />
+            <el-table-column prop="sexName" label="性别" :width="clacPXToVW(80)" align="center">
+              <template #default="scope">
+                <span>{{ scope.row.sex === 1 ? '男' : scope.row.sex === 2 ? '女' : '未知' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="roleName" label="角色" show-overflow-tooltip />
+            <el-table-column prop="deptName" label="部门" show-overflow-tooltip />
+            <el-table-column prop="postName" label="岗位" show-overflow-tooltip />
+            <el-table-column label="操作" :width="clacPXToVW(220)" fixed="right" align="right">
+              <template #default="scope">
+                <div class="operateAppBox flexRowAC" @click.stop>
+                  <div class="new_table_svg_group" @click="handleEdit(scope.row)">
+                    <oort-svg-icon width="20" height="20" name="edit_icon" class="new_table_svg_group_svg" />
+                    <span>编辑</span>
+                  </div>
+                  <div class="new_table_svg_group" @click="handleSingleRemove(scope.row)">
+                    <oort-svg-icon color="red" width="20" height="20" name="delete_icon" class="new_table_svg_group_svg" />
+                    <span>删除</span>
+                  </div>
+                  <el-dropdown trigger="click">
+                    <div class="new_table_svg_group">
+                      <oort-svg-icon width="20" height="20" name="more" class="new_table_svg_group_svg" />
+                      <span>更多</span>
+                    </div>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item @click="handleResetPassword(scope.row)">重置密码</el-dropdown-item>
+                        <el-dropdown-item @click="handleUnlock(scope.row)">解锁账号</el-dropdown-item>
+                        <el-dropdown-item @click="handleOpenGrant(scope.row)">分配角色</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </div>
+              </template>
+            </el-table-column>
+          </TableSelf>
+
+          <div class="paginationBox flexRowAC">
+            <el-pagination
+              background
+              :current-page="pagination.current"
+              :page-size="pagination.size"
+              :page-sizes="[10, 20, 50, 100]"
+              :total="pagination.total"
+              layout="total, prev, pager, next, sizes"
+              class="justifyAlign"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
 
   <!-- 新增/编辑用户对话框 -->
   <el-dialog
@@ -266,14 +255,14 @@
       <el-button type="primary" :loading="saving" @click="handleGrantSubmit" class="common_btn">确定</el-button>
     </template>
   </el-dialog>
+  </div>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Refresh, Search, ArrowDown } from '@element-plus/icons-vue'
-import SystemPageShell from './components/SystemPageShell.vue'
-import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
+import { Plus } from '@element-plus/icons-vue'
+import { clacPXToVW } from '@/utils/index'
 import { 
   getUserList, 
   getUserDetail,
@@ -298,6 +287,17 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('新增用户')
 const selectedRows = ref([])
 const tableData = ref([])
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '账号', value: 'account', type: 'text', default: '' },
+  { label: '姓名', value: 'realName', type: 'text', default: '' }
+])
+
+const toolbarButtonList = computed(() => [
+  { name: '编辑', svg: 'table_edit', clickFn: handleToolbarEdit },
+  { name: '删除', svg: 'table_del', clickFn: handleBatchRemove },
+  { name: '分配角色', svg: 'more', clickFn: handleToolbarGrant }
+])
 
 // 分页数据
 const pagination = reactive({
@@ -404,6 +404,36 @@ function handleReset() {
   queryParams.realName = ''
   pagination.current = 1
   loadData()
+}
+
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && (val.keyword || val.account || val.realName))) {
+    handleReset()
+    return
+  }
+  queryParams.account = val?.account || val?.keyword || ''
+  queryParams.realName = val?.realName || ''
+  handleSearch()
+}
+
+const handleExport = () => {
+  ElMessage.success('导出数据')
+}
+
+function handleToolbarEdit() {
+  if (selectedRows.value.length !== 1) {
+    ElMessage.warning('请选择一条记录进行编辑')
+    return
+  }
+  handleEdit(selectedRows.value[0])
+}
+
+function handleToolbarGrant() {
+  if (selectedRows.value.length !== 1) {
+    ElMessage.warning('请选择一条记录分配角色')
+    return
+  }
+  handleOpenGrant(selectedRows.value[0])
 }
 
 /**
@@ -549,7 +579,10 @@ function handleSingleRemove(row) {
  * 批量删除已勾选的所有用户行
  */
 function handleBatchRemove() {
-  if (selectedRows.value.length === 0) return
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请选择要删除的记录')
+    return
+  }
   const ids = joinIds(selectedRows.value)
   executeRemove(ids, `确定删除选中的 ${selectedRows.value.length} 个用户吗？`)
 }
@@ -644,77 +677,66 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.operation-buttons {
+<style scoped lang="scss">
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  background: #f0f2f5;
   display: flex;
+  flex-direction: column;
+
+  .tenant_content {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+  }
+
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+    min-height: 0;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  }
+}
+
+.tableTenItU {
+  flex: 1;
+  height: 100%;
+  overflow: auto;
+  min-width: 0;
+
+  :deep(.header_tenant_cell) {
+    background: #F8F8F9;
+  }
+}
+
+.paginationBox {
+  justify-content: center;
+  height: 100px;
+}
+
+.operateAppBox {
   justify-content: flex-end;
-  align-items: center;
+  gap: 2px;
 }
 
-.operation-btn {
-  height: 28px !important;
-  padding: 0 12px !important;
-  font-size: 12px !important;
-  border-radius: 14px !important;
-  font-weight: 500 !important;
-}
-
-.edit-btn {
-  background: #ffffff !important;
-  color: #1A53FF !important;
-  border: 1px solid #1A53FF !important;
-}
-
-.edit-btn:hover {
-  background: #f0f4ff !important;
-}
-
-.delete-btn {
-  background: #ffffff !important;
-  color: #f56c6c !important;
-  border: 1px solid #d9d9d9 !important;
-}
-
-.delete-btn:hover {
-  border-color: #f56c6c !important;
-  color: #f56c6c !important;
-}
-
-.view-btn {
-  background: #ffffff !important;
-  color: #606266 !important;
-  border: 1px solid #d9d9d9 !important;
-}
-
-.view-btn:hover {
-  border-color: #1A53FF !important;
-  color: #1A53FF !important;
-}
-
-.toolbar-left {
+.user-management {
+  height: 100%;
   display: flex;
-  align-items: center;
-  flex: 1 1 520px;
-  min-width: 360px;
+  flex-direction: column;
+  background: #f0f2f5;
+  overflow: hidden;
 }
 
-.demo-form-inline .el-form-item {
-  margin-bottom: 0;
-  margin-right: 16px;
-}
-
-.demo-form-inline {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  row-gap: 8px;
-}
-
-.demo-form-inline :deep(.el-input) {
-  width: 180px;
-}
-
-.toolbar-right {
-  flex: 0 0 auto;
+:deep(.el-dialog) {
+  border-radius: 8px;
 }
 </style>

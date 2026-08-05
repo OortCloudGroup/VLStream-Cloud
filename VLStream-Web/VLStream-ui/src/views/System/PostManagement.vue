@@ -1,134 +1,136 @@
 <template>
-  <SystemPageShell>
-    <!-- 顶部工具栏 -->
-    <template #toolbar>
-      <div class="toolbar-left">
-        <el-form :inline="true" :model="queryParams" size="default">
-          <el-form-item label="岗位编码">
-            <el-input v-model="queryParams.postCode" placeholder="请输入岗位编码" clearable @keyup.enter="handleSearch" />
-          </el-form-item>
-          <el-form-item label="岗位名称">
-            <el-input v-model="queryParams.postName" placeholder="请输入岗位名称" clearable @keyup.enter="handleSearch" />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="handleSearch">
-              <el-icon><Search /></el-icon> 查询
-            </el-button>
-            <el-button @click="handleReset">
-              <el-icon><Refresh /></el-icon> 重置
-            </el-button>
-          </el-form-item>
-        </el-form>
-      </div>
-
-      <div class="toolbar-right">
-        <!-- 按钮操作组 -->
-        <ActionButtonGroup
-          :selected-count="selectedRows.length"
-          @add="handleCreate"
-          @edit="handleEdit(selectedRows[0])"
-          @delete="handleBatchRemove"
-        />
-      </div>
-    </template>
-
-    <!-- 列表数据表格 -->
-    <el-table
-      v-loading="loading"
-      :data="tableData"
-      stripe
-      style="width: 100%; height: 100%"
-      @selection-change="handleSelectionChange"
-    >
-      <el-table-column type="selection" width="55" />
-      <el-table-column prop="postCode" label="岗位编码" min-width="120" />
-      <el-table-column prop="postName" label="岗位名称" min-width="150" />
-      <el-table-column prop="category" label="岗位分类" min-width="100" align="center">
-        <template #default="scope">
-          <span>{{ scope.row.category === 1 ? '高管' : scope.row.category === 2 ? '经理' : '员工' }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="sort" label="排序" width="80" align="center" />
-      <el-table-column prop="remark" label="备注" min-width="200" show-overflow-tooltip />
-      <el-table-column label="操作" width="180" fixed="right" align="right">
-        <template #default="scope">
-          <div class="operation-buttons">
-            <el-button class="operation-btn edit-btn" @click="handleEdit(scope.row)">
-              编辑
-            </el-button>
-            <el-button class="operation-btn delete-btn" @click="handleSingleRemove(scope.row)">
-              删除
-            </el-button>
+  <div class="post-management tenant_Page draHeaPB">
+    <div class="tenant_content">
+      <div class="tableTenBox flexRowAC">
+        <div class="tableTenItU">
+          <div class="depNameBox_out flexRowAC">
+            <div class="depNameBox flexRowAC">
+              <div class="exportBtnBox flexRowAC">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleCreate">
+                  <el-icon class="BtnImg"><Plus /></el-icon>
+                  新建
+                </button>
+                <button-group :button-list="toolbarButtonList" />
+              </div>
+            </div>
+            <div class="searchHeight_out flexRowAC">
+              <search-height-box
+                keyword="keyword"
+                placeholder="搜索"
+                :data="searchData"
+                @handle="searchResetFn"
+              />
+              <export-excel-pdf :item="exportItem" @handle="handleExport" />
+            </div>
           </div>
-        </template>
-      </el-table-column>
-    </el-table>
 
-    <!-- 底部分页 -->
-    <template #pagination>
-      <el-pagination
-        v-model:current-page="pagination.current"
-        v-model:page-size="pagination.size"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="pagination.total"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </template>
-  </SystemPageShell>
+          <TableSelf
+            class="new_table"
+            header-cell-class-name="header_tenant_cell"
+            stripe
+            v-loading="loading"
+            :data="tableData"
+            @selection-change="handleSelectionChange"
+          >
+            <el-table-column type="selection" :width="clacPXToVW(55)" />
+            <el-table-column label="序号" :width="clacPXToVW(65)">
+              <template #default="scope">
+                {{ scope.$index + (pagination.current - 1) * pagination.size + 1 }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="postCode" label="岗位编码" min-width="120" />
+            <el-table-column prop="postName" label="岗位名称" min-width="150" />
+            <el-table-column prop="category" label="岗位分类" min-width="100" align="center">
+              <template #default="scope">
+                <span>{{ scope.row.category === 1 ? '高管' : scope.row.category === 2 ? '经理' : '员工' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="sort" label="排序" :width="clacPXToVW(80)" align="center" />
+            <el-table-column prop="remark" label="备注" min-width="200" show-overflow-tooltip />
+            <el-table-column label="操作" :width="clacPXToVW(180)" fixed="right" align="right">
+              <template #default="scope">
+                <div class="operateAppBox flexRowAC" @click.stop>
+                  <div class="new_table_svg_group" @click="handleEdit(scope.row)">
+                    <oort-svg-icon width="20" height="20" name="edit_icon" class="new_table_svg_group_svg" />
+                    <span>编辑</span>
+                  </div>
+                  <div class="new_table_svg_group" @click="handleSingleRemove(scope.row)">
+                    <oort-svg-icon color="red" width="20" height="20" name="delete_icon" class="new_table_svg_group_svg" />
+                    <span>删除</span>
+                  </div>
+                </div>
+              </template>
+            </el-table-column>
+          </TableSelf>
 
-  <!-- 新增/编辑岗位对话框 -->
-  <el-dialog
-    v-model="dialogVisible"
-    :title="dialogTitle"
-    width="30%"
-    destroy-on-close
-  >
-    <el-form
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      label-width="100px"
-      style="padding: 10px 20px"
+          <div class="paginationBox flexRowAC">
+            <el-pagination
+              background
+              :current-page="pagination.current"
+              :page-size="pagination.size"
+              :page-sizes="[10, 20, 50, 100]"
+              :total="pagination.total"
+              layout="total, prev, pager, next, sizes"
+              class="justifyAlign"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新增/编辑岗位对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="30%"
+      destroy-on-close
     >
-      <el-form-item label="岗位类型" prop="category">
-        <el-select v-model="form.category" placeholder="请选择岗位类型" style="width: 100%">
-          <el-option :value="1" label="高管" />
-          <el-option :value="2" label="经理" />
-          <el-option :value="3" label="员工" />
-        </el-select>
-      </el-form-item>
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="100px"
+        style="padding: 10px 20px"
+      >
+        <el-form-item label="岗位类型" prop="category">
+          <el-select v-model="form.category" placeholder="请选择岗位类型" style="width: 100%">
+            <el-option :value="1" label="高管" />
+            <el-option :value="2" label="经理" />
+            <el-option :value="3" label="员工" />
+          </el-select>
+        </el-form-item>
 
-      <el-form-item label="岗位编码" prop="postCode">
-        <el-input v-model="form.postCode" placeholder="请输入岗位编码" />
-      </el-form-item>
+        <el-form-item label="岗位编码" prop="postCode">
+          <el-input v-model="form.postCode" placeholder="请输入岗位编码" />
+        </el-form-item>
 
-      <el-form-item label="岗位名称" prop="postName">
-        <el-input v-model="form.postName" placeholder="请输入岗位名称" />
-      </el-form-item>
+        <el-form-item label="岗位名称" prop="postName">
+          <el-input v-model="form.postName" placeholder="请输入岗位名称" />
+        </el-form-item>
 
-      <el-form-item label="岗位排序" prop="sort">
-        <el-input-number v-model="form.sort" :min="1" style="width: 100%" />
-      </el-form-item>
+        <el-form-item label="岗位排序" prop="sort">
+          <el-input-number v-model="form.sort" :min="1" style="width: 100%" />
+        </el-form-item>
 
-      <el-form-item label="备注" prop="remark">
-        <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :rows="2" />
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <el-button @click="dialogVisible = false" class="common_btn">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">确定</el-button>
-    </template>
-  </el-dialog>
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :rows="2" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogVisible = false" class="common_btn">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">确定</el-button>
+      </template>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh, Search } from '@element-plus/icons-vue'
-import SystemPageShell from './components/SystemPageShell.vue'
-import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
+import { Plus } from '@element-plus/icons-vue'
+import { clacPXToVW } from '@/utils/index'
 import { getPostList, submitPost, removePosts } from '@/api/system/post'
 import { getPayload, getRecords, getTotal, joinIds, isSuccess } from './utils/response'
 
@@ -138,21 +140,28 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('新增岗位')
 const selectedRows = ref([])
 const tableData = ref([])
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '岗位编码', value: 'postCode', type: 'text', default: '' },
+  { label: '岗位名称', value: 'postName', type: 'text', default: '' }
+])
 
-// 分页结构
+const toolbarButtonList = computed(() => [
+  { name: '编辑', svg: 'table_edit', clickFn: handleToolbarEdit },
+  { name: '删除', svg: 'table_del', clickFn: handleBatchRemove }
+])
+
 const pagination = reactive({
   current: 1,
   size: 10,
   total: 0
 })
 
-// 过滤参数
 const queryParams = reactive({
   postCode: '',
   postName: ''
 })
 
-// 表单与必填验证
 const formRef = ref()
 const form = ref({
   id: undefined,
@@ -168,9 +177,6 @@ const rules = {
   postName: [{ required: true, message: '请输入岗位名称', trigger: 'blur' }]
 }
 
-/**
- * 异步获取岗位分页列表数据
- */
 async function loadData() {
   loading.value = true
   try {
@@ -190,17 +196,11 @@ async function loadData() {
   }
 }
 
-/**
- * 搜索过滤
- */
 function handleSearch() {
   pagination.current = 1
   loadData()
 }
 
-/**
- * 重置查询条件
- */
 function handleReset() {
   queryParams.postCode = ''
   queryParams.postName = ''
@@ -208,36 +208,43 @@ function handleReset() {
   loadData()
 }
 
-/**
- * 分页大小改变时重新拉取数据
- * @param {Number} size 分页每页大小
- */
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && (val.keyword || val.postCode || val.postName))) {
+    handleReset()
+    return
+  }
+  queryParams.postCode = val?.postCode || val?.keyword || ''
+  queryParams.postName = val?.postName || ''
+  handleSearch()
+}
+
+const handleExport = () => {
+  ElMessage.success('导出数据')
+}
+
+function handleToolbarEdit() {
+  if (selectedRows.value.length !== 1) {
+    ElMessage.warning('请选择一条记录进行编辑')
+    return
+  }
+  handleEdit(selectedRows.value[0])
+}
+
 function handleSizeChange(size) {
   pagination.size = size
   pagination.current = 1
   loadData()
 }
 
-/**
- * 页码改变时重新拉取数据
- * @param {Number} current 页码
- */
 function handleCurrentChange(current) {
   pagination.current = current
   loadData()
 }
 
-/**
- * 勾选变化回调
- * @param {Array} rows 选中的行
- */
 function handleSelectionChange(rows) {
   selectedRows.value = rows
 }
 
-/**
- * 打开新增岗位对话框
- */
 function handleCreate() {
   dialogTitle.value = '新增岗位'
   form.value = {
@@ -251,10 +258,6 @@ function handleCreate() {
   dialogVisible.value = true
 }
 
-/**
- * 打开修改岗位对话框，回显行数据
- * @param {Object} row 行数据
- */
 function handleEdit(row) {
   if (!row) return
   form.value = { ...row }
@@ -262,9 +265,6 @@ function handleEdit(row) {
   dialogVisible.value = true
 }
 
-/**
- * 确定并保存表单内容，先做必填项检验
- */
 async function handleSaveSubmit() {
   if (!formRef.value) return
   await formRef.value.validate(async (valid) => {
@@ -289,11 +289,6 @@ async function handleSaveSubmit() {
   })
 }
 
-/**
- * 物理或逻辑删除选中记录，包含二次提示层
- * @param {String} ids 逗号拼接的ID字符串
- * @param {String} msg 确认消息提示
- */
 function executeRemove(ids, msg) {
   ElMessageBox.confirm(msg, '提示', {
     confirmButtonText: '确定',
@@ -315,73 +310,81 @@ function executeRemove(ids, msg) {
   }).catch(() => {})
 }
 
-/**
- * 行内删除单条岗位
- * @param {Object} row 目标行
- */
 function handleSingleRemove(row) {
   executeRemove(String(row.id), `确定删除岗位 [${row.postName}] 吗？`)
 }
 
-/**
- * 批量删除选中的所有岗位行
- */
 function handleBatchRemove() {
   if (selectedRows.value.length === 0) return
   const ids = joinIds(selectedRows.value)
   executeRemove(ids, `确定删除选中的 ${selectedRows.value.length} 个岗位吗？`)
 }
 
-// 挂载加载数据
 onMounted(() => {
   loadData()
 })
 </script>
 
-<style scoped>
-.operation-buttons {
+<style scoped lang="scss">
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  background: #f0f2f5;
   display: flex;
+  flex-direction: column;
+
+  .tenant_content {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+  }
+
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+    min-height: 0;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  }
+}
+
+.tableTenItU {
+  flex: 1;
+  height: 100%;
+  overflow: auto;
+  min-width: 0;
+
+  :deep(.header_tenant_cell) {
+    background: #F8F8F9;
+  }
+}
+
+.paginationBox {
+  justify-content: center;
+  height: 100px;
+}
+
+.operateAppBox {
   justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
+  gap: 2px;
 }
 
-.operation-btn {
-  height: 28px !important;
-  padding: 0 12px !important;
-  font-size: 12px !important;
-  border-radius: 14px !important;
-  font-weight: 500 !important;
-}
-
-.edit-btn {
-  background: #ffffff !important;
-  color: #1A53FF !important;
-  border: 1px solid #1A53FF !important;
-}
-
-.edit-btn:hover {
-  background: #f0f4ff !important;
-}
-
-.delete-btn {
-  background: #ffffff !important;
-  color: #f56c6c !important;
-  border: 1px solid #d9d9d9 !important;
-}
-
-.delete-btn:hover {
-  border-color: #f56c6c !important;
-  color: #f56c6c !important;
-}
-
-.toolbar-left {
+.post-management {
+  height: 100%;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  background: #f0f2f5;
+  overflow: hidden;
 }
 
-.el-form-item {
-  margin-bottom: 0;
-  margin-right: 16px;
+:deep(.el-dialog) {
+  border-radius: 8px;
 }
 </style>
