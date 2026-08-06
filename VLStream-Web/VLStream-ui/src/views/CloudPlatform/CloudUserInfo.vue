@@ -762,6 +762,7 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 8px;
+  margin-top: 24px;
+  padding-bottom: 8px;
 }
 </style>

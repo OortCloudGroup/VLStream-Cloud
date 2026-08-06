@@ -120,11 +120,20 @@ watch(activeTab, (tab) => {
 }
 
 .content-card {
-  flex: 1;
-  min-height: 0;
+  flex: 1 0 auto;
   background: #fff;
-  border-radius: 6px 6px 0px 0px;
-  padding: 20px;
+  border-radius: 6px;
+  padding: 20px 20px 32px;
+  overflow: visible;
+}
+
+.cloud-tabs {
+  overflow: visible;
+}
+
+.cloud-tabs :deep(.el-tabs__content),
+.cloud-tabs :deep(.el-tab-pane) {
+  overflow: visible;
 }
 
 .cloud-tabs :deep(.el-tabs__item) {
