@@ -88,9 +88,9 @@
                       <el-icon><Download /></el-icon>
                       下发到摄像机
                     </el-dropdown-item>
-                    <el-dropdown-item @click="publishToModelHub">
+                    <el-dropdown-item @click="publishToModelHub(algorithm)">
                       <el-icon><Upload /></el-icon>
-                      发布到Model Hub
+                      发布到 Model Hub
                     </el-dropdown-item>
                     <el-dropdown-item divided @click="handleDeleteAlgorithm(algorithm)">
                       <el-icon><Delete /></el-icon>
@@ -126,12 +126,12 @@
         </div>
 
         <TableSelf
-          class="new_table"
-          header-cell-class-name="header_tenant_cell"
-          stripe
-          v-loading="repositoriesLoading"
-          :data="currentPageRepositories"
-          @selection-change="handleLibrarySelectionChange"
+            class="new_table"
+            header-cell-class-name="header_tenant_cell"
+            stripe
+            v-loading="repositoriesLoading"
+            :data="currentPageRepositories"
+            @selection-change="handleLibrarySelectionChange"
         >
           <el-table-column type="selection" :width="clacPXToVW(55)" />
           <el-table-column label="序号" :width="clacPXToVW(80)" align="center">
@@ -152,8 +152,8 @@
           <el-table-column prop="status" label="状态" :width="clacPXToVW(100)" align="center">
             <template #default="scope">
               <el-tag
-                :type="scope.row.status === 1 ? 'success' : 'danger'"
-                size="small"
+                  :type="scope.row.status === 1 ? 'success' : 'danger'"
+                  size="small"
               >
                 {{ scope.row.status === 1 ? '启用' : '禁用' }}
               </el-tag>
@@ -172,16 +172,16 @@
                   <span>{{ scope.row.status === 1 ? '禁用' : '启用' }}</span>
                 </div>
                 <div
-                  class="new_table_svg_group"
-                  :class="{ 'is-disabled': scope.row.repositoryType === 'basic' }"
-                  @click="scope.row.repositoryType !== 'basic' && deleteLibraryItem(scope.row)"
+                    class="new_table_svg_group"
+                    :class="{ 'is-disabled': scope.row.repositoryType === 'basic' }"
+                    @click="scope.row.repositoryType !== 'basic' && deleteLibraryItem(scope.row)"
                 >
                   <oort-svg-icon
-                    color="red"
-                    width="20"
-                    height="20"
-                    name="delete_icon"
-                    class="new_table_svg_group_svg"
+                      color="red"
+                      width="20"
+                      height="20"
+                      name="delete_icon"
+                      class="new_table_svg_group_svg"
                   />
                   <span>删除</span>
                 </div>
@@ -192,15 +192,15 @@
 
         <div class="paginationBox flexRowAC">
           <el-pagination
-            background
-            :current-page="repositoryCurrentPage"
-            :page-size="repositoryPageSize"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="repositoryTotal"
-            layout="total, prev, pager, next, sizes"
-            class="justifyAlign"
-            @size-change="handleRepositorySizeChange"
-            @current-change="handleRepositoryCurrentChange"
+              background
+              :current-page="repositoryCurrentPage"
+              :page-size="repositoryPageSize"
+              :page-sizes="[10, 20, 50, 100]"
+              :total="repositoryTotal"
+              layout="total, prev, pager, next, sizes"
+              class="justifyAlign"
+              @size-change="handleRepositorySizeChange"
+              @current-change="handleRepositoryCurrentChange"
           />
         </div>
       </div>
@@ -208,25 +208,25 @@
 
     <!-- 新增/编辑算法库弹框 -->
     <el-dialog
-      v-model="showAddDialog"
-      :title="editingRepository ? '编辑算法库' : '新增算法库'"
-      width="30%"
-      :close-on-click-modal="false"
+        v-model="showAddDialog"
+        :title="editingRepository ? '编辑算法库' : '新增算法库'"
+        width="30%"
+        :close-on-click-modal="false"
     >
       <el-form :model="addForm" :rules="addFormRules" ref="addFormRef" label-width="80px" class="add-form">
         <el-form-item label="名称" prop="name" required>
           <el-input
-            v-model="addForm.name"
-            placeholder="请输入算法库名称"
-            clearable
+              v-model="addForm.name"
+              placeholder="请输入算法库名称"
+              clearable
           />
         </el-form-item>
         <el-form-item label="类型" prop="repositoryType" required>
           <el-select
-            v-model="addForm.repositoryType"
-            placeholder="请选择仓库类型"
-            style="width: 100%"
-            :disabled="editingRepository && editingRepository.repositoryType === 'basic'"
+              v-model="addForm.repositoryType"
+              placeholder="请选择仓库类型"
+              style="width: 100%"
+              :disabled="editingRepository && editingRepository.repositoryType === 'basic'"
           >
             <el-option label="基础算法库" value="basic" />
             <el-option label="扩展算法库" value="extended" />
@@ -235,9 +235,9 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select
-            v-model="addForm.status"
-            placeholder="请选择状态"
-            style="width: 100%"
+              v-model="addForm.status"
+              placeholder="请选择状态"
+              style="width: 100%"
           >
             <el-option label="启用" :value="1" />
             <el-option label="禁用" :value="0" />
@@ -245,11 +245,11 @@
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
-            v-model="addForm.remark"
-            type="textarea"
-            placeholder="请输入备注"
-            :rows="4"
-            resize="none"
+              v-model="addForm.remark"
+              type="textarea"
+              placeholder="请输入备注"
+              :rows="4"
+              resize="none"
           />
         </el-form-item>
       </el-form>
@@ -266,17 +266,17 @@
 
     <!-- 添加算法弹框 -->
     <el-dialog
-      v-model="showAlgorithmAddDialog"
-      title="添加算法"
-      width="40%"
-      :close-on-click-modal="false"
+        v-model="showAlgorithmAddDialog"
+        title="添加算法"
+        width="40%"
+        :close-on-click-modal="false"
     >
       <el-form :model="algorithmAddForm" :rules="algorithmAddFormRules" ref="algorithmAddFormRef" label-width="80px" class="add-form">
         <el-form-item label="算法名称" prop="name" required>
           <el-input
-            v-model="algorithmAddForm.name"
-            placeholder="请输入算法名称"
-            clearable
+              v-model="algorithmAddForm.name"
+              placeholder="请输入算法名称"
+              clearable
           />
         </el-form-item>
         <el-form-item label="算法类型" prop="category" required>
@@ -311,11 +311,11 @@
         </el-form-item>
         <el-form-item label="算法描述" prop="description">
           <el-input
-            v-model="algorithmAddForm.description"
-            type="textarea"
-            placeholder="请输入算法描述"
-            :rows="4"
-            resize="none"
+              v-model="algorithmAddForm.description"
+              type="textarea"
+              placeholder="请输入算法描述"
+              :rows="4"
+              resize="none"
           />
         </el-form-item>
       </el-form>
@@ -332,17 +332,17 @@
 
     <!-- 算法编辑弹框 -->
     <el-dialog
-      v-model="showAlgorithmEditDialog"
-      title="编辑算法"
-      width="40%"
-      :close-on-click-modal="false"
+        v-model="showAlgorithmEditDialog"
+        title="编辑算法"
+        width="40%"
+        :close-on-click-modal="false"
     >
       <el-form :model="algorithmEditForm" :rules="algorithmEditFormRules" ref="algorithmEditFormRef" label-width="80px" class="add-form">
         <el-form-item label="算法名称" prop="name" required>
           <el-input
-            v-model="algorithmEditForm.name"
-            placeholder="请输入算法名称"
-            clearable
+              v-model="algorithmEditForm.name"
+              placeholder="请输入算法名称"
+              clearable
           />
         </el-form-item>
         <el-form-item label="算法分类" prop="category" required>
@@ -378,21 +378,21 @@
         <el-form-item label="算法图片">
           <div class="algorithm-image-editor">
             <el-upload
-              class="algorithm-image-uploader"
-              :action="algorithmImageUploadUrl"
-              :headers="algorithmImageUploadHeaders"
-              accept="image/jpeg,image/png,image/webp"
-              :show-file-list="false"
-              :multiple="false"
-              :disabled="imageUploading"
-              :on-success="handleAlgorithmImageUploadSuccess"
-              :on-error="handleAlgorithmImageUploadError"
-              :before-upload="beforeAlgorithmImageUpload"
+                class="algorithm-image-uploader"
+                :action="algorithmImageUploadUrl"
+                :headers="algorithmImageUploadHeaders"
+                accept="image/jpeg,image/png,image/webp"
+                :show-file-list="false"
+                :multiple="false"
+                :disabled="imageUploading"
+                :on-success="handleAlgorithmImageUploadSuccess"
+                :on-error="handleAlgorithmImageUploadError"
+                :before-upload="beforeAlgorithmImageUpload"
             >
               <div class="algorithm-image-preview">
                 <img
-                  :src="algorithmEditForm.imageUrl || getAlgorithmCardBackground(editingAlgorithm || {}, algorithmEditForm.repositoryId || currentRepositoryId)"
-                  alt="算法图片"
+                    :src="algorithmEditForm.imageUrl || getAlgorithmCardBackground(editingAlgorithm || {}, algorithmEditForm.repositoryId || currentRepositoryId)"
+                    alt="算法图片"
                 />
                 <div class="algorithm-image-overlay">
                   {{ imageUploading ? '上传中...' : '点击更换图片' }}
@@ -400,11 +400,11 @@
               </div>
             </el-upload>
             <el-button
-              v-if="algorithmEditForm.imageUrl"
-              type="danger"
-              link
-              size="small"
-              @click="clearAlgorithmImage"
+                v-if="algorithmEditForm.imageUrl"
+                type="danger"
+                link
+                size="small"
+                @click="clearAlgorithmImage"
             >
               清除图片
             </el-button>
@@ -413,11 +413,11 @@
         </el-form-item>
         <el-form-item label="算法描述" prop="description">
           <el-input
-            v-model="algorithmEditForm.description"
-            type="textarea"
-            placeholder="请输入算法描述"
-            :rows="4"
-            resize="none"
+              v-model="algorithmEditForm.description"
+              type="textarea"
+              placeholder="请输入算法描述"
+              :rows="4"
+              resize="none"
           />
         </el-form-item>
       </el-form>
@@ -434,38 +434,38 @@
 
     <!-- 下发到摄像机侧边栏 -->
     <el-drawer
-      v-model="showDeviceDrawer"
-      title="下发到摄像机"
-      direction="rtl"
-      size="55%"
-      :before-close="handleDrawerClose"
-      class="device-deploy-drawer"
+        v-model="showDeviceDrawer"
+        title="下发到摄像机"
+        direction="rtl"
+        size="55%"
+        :before-close="handleDrawerClose"
+        class="device-deploy-drawer"
     >
       <div class="device-drawer-content tableTenBox flexRowAC">
         <!-- 左侧设备树 -->
         <div
-          v-yResize
-          class="police_aside_use"
+            v-yResize
+            class="police_aside_use"
         >
           <div class="treeTitle">设备树</div>
           <div class="tree_search_content flexRowAC">
             <el-input
-              v-model="searchTreeKeyword"
-              placeholder="搜索"
-              debounce="300"
-              prefix-icon="Search"
-              clearable
+                v-model="searchTreeKeyword"
+                placeholder="搜索"
+                debounce="300"
+                prefix-icon="Search"
+                clearable
             />
           </div>
           <el-tree
-            style="background: #fff;"
-            :data="filteredDeviceTreeData"
-            highlight-current
-            node-key="id"
-            default-expand-all
-            :props="treeDefaultProps"
-            :expand-on-click-node="false"
-            @node-click="handleDeviceNodeClick"
+              style="background: #fff;"
+              :data="filteredDeviceTreeData"
+              highlight-current
+              node-key="id"
+              default-expand-all
+              :props="treeDefaultProps"
+              :expand-on-click-node="false"
+              @node-click="handleDeviceNodeClick"
           >
             <template #default="{ node, data }">
               <div class="custom-tree-node flexRowAC">
@@ -481,13 +481,13 @@
                   </el-icon>
                   <el-tooltip :open-delay="500" effect="light" :content="node.label" placement="top">
                     <div
-                      class="tree-node-label"
-                      :class="{ activeDept: data.id === currentTreeNodeId }"
+                        class="tree-node-label"
+                        :class="{ activeDept: data.id === currentTreeNodeId }"
                     >
                       {{ node.label }}
                       <span v-if="data.type === 'tag'" class="node-count">
-                        ({{ data.children?.length || 0 }})
-                      </span>
+                          ({{ data.children?.length || 0 }})
+                        </span>
                     </div>
                   </el-tooltip>
                 </div>
@@ -503,10 +503,10 @@
               <div class="exportBtnBox flexRowAC">
                 <el-select v-model="dispatchModelType" style="width: 170px" placeholder="选择模型格式">
                   <el-option
-                    v-for="item in modelTypeOptions"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
+                      v-for="item in modelTypeOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"
                   />
                 </el-select>
                 <button type="button" class="exportBtn newBtn flexRowAC" @click="handleDeployToDevice">
@@ -520,13 +520,13 @@
           </div>
 
           <TableSelf
-            class="new_table"
-            header-cell-class-name="header_tenant_cell"
-            stripe
-            v-loading="deviceLoading"
-            :data="deviceTableData"
-            height="450"
-            @selection-change="handleDeviceSelectionChange"
+              class="new_table"
+              header-cell-class-name="header_tenant_cell"
+              stripe
+              v-loading="deviceLoading"
+              :data="deviceTableData"
+              height="450"
+              @selection-change="handleDeviceSelectionChange"
           >
             <el-table-column type="selection" :width="clacPXToVW(55)" />
             <el-table-column label="序号" :width="clacPXToVW(65)" align="center">
@@ -538,9 +538,9 @@
             <el-table-column prop="tag" label="标签" :width="clacPXToVW(120)">
               <template #default="scope">
                 <el-tag
-                  v-if="scope.row.tag && scope.row.tag !== '-'"
-                  size="small"
-                  type="primary"
+                    v-if="scope.row.tag && scope.row.tag !== '-'"
+                    size="small"
+                    type="primary"
                 >
                   {{ scope.row.tag }}
                 </el-tag>
@@ -554,15 +554,15 @@
 
           <div class="paginationBox flexRowAC">
             <el-pagination
-              background
-              :current-page="currentPage"
-              :page-size="pageSize"
-              :page-sizes="[10, 20, 50, 100]"
-              :total="totalDevices"
-              layout="total, sizes, prev, pager, next, jumper"
-              class="justifyAlign"
-              @size-change="handleSizeChange"
-              @current-change="handleCurrentChange"
+                background
+                :current-page="currentPage"
+                :page-size="pageSize"
+                :page-sizes="[10, 20, 50, 100]"
+                :total="totalDevices"
+                layout="total, sizes, prev, pager, next, jumper"
+                class="justifyAlign"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
             />
           </div>
         </div>
@@ -573,10 +573,16 @@
 
 <script setup>
 import {computed, onMounted, ref} from 'vue'
+import { useRouter } from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {DataAnalysis, Delete, Download, Edit, MoreFilled, Plus, Folder, VideoCamera, Collection, Upload} from '@element-plus/icons-vue'
 import { clacPXToVW } from '@/utils/index'
 import Config from '@/config'
+import {
+  getCloudPlatformUserPath,
+  getModelHubAccessToken,
+  startModelHubLogin
+} from '@/utils/modelHubAuth'
 import {
   batchDeleteAlgorithmRepositories,
   createAlgorithm,
@@ -592,6 +598,8 @@ import {
 } from '@/api/algorithmManagement'
 import {getDeviceById, getDeviceList, getDeviceTree, dispatchAlgorithmToDevices} from '@/api/device'
 import {getTagTree} from '@/api/tagManagement'
+
+const router = useRouter()
 
 // 加载状态
 const repositoriesLoading = ref(false)
@@ -846,7 +854,7 @@ const showAddButton = computed(() => {
 
   // 找到当前选择的仓库
   const currentRepo = algorithmRepositories.value.find(repo =>
-    repo.id.toString() === activeTopMenu.value
+      repo.id.toString() === activeTopMenu.value
   )
 
   // 只有扩展算法库显示添加按钮
@@ -1021,40 +1029,40 @@ const loadDeviceList = async () => {
     const startIndex = (currentPage.value - 1) * pageSize.value
 
     deviceTableData.value = await Promise.all(
-      devices.map(async (device, idx) => {
-        try {
-          const detailResponse = await getDeviceById(device.id)
-          if (detailResponse.code === 200 && detailResponse.data) {
-            const detail = detailResponse.data
-            let tags = []
-            if (Array.isArray(detail.selectedTags) && detail.selectedTags.length > 0) {
-              tags = detail.selectedTags.map(tagId => tagNameMap.value.get(tagId) || `tag-${tagId}`)
+        devices.map(async (device, idx) => {
+          try {
+            const detailResponse = await getDeviceById(device.id)
+            if (detailResponse.code === 200 && detailResponse.data) {
+              const detail = detailResponse.data
+              let tags = []
+              if (Array.isArray(detail.selectedTags) && detail.selectedTags.length > 0) {
+                tags = detail.selectedTags.map(tagId => tagNameMap.value.get(tagId) || `tag-${tagId}`)
+              }
+              const displayTag = tags.length > 0 ? tags[0] : '-'
+              return {
+                ...device,
+                ...detail,
+                index: startIndex + idx + 1,
+                name: device.deviceName || device.name || '',
+                tag: displayTag,
+                tags,
+                displayTag,
+                location: detail.address || detail.location || device.address || ''
+              }
             }
-            const displayTag = tags.length > 0 ? tags[0] : '-'
-            return {
-              ...device,
-              ...detail,
-              index: startIndex + idx + 1,
-              name: device.deviceName || device.name || '',
-              tag: displayTag,
-              tags,
-              displayTag,
-              location: detail.address || detail.location || device.address || ''
-            }
+          } catch (error) {
+            console.warn(`load device detail failed: ${device.id}`, error)
           }
-        } catch (error) {
-          console.warn(`load device detail failed: ${device.id}`, error)
-        }
-        return {
-          ...device,
-          index: startIndex + idx + 1,
-          name: device.deviceName || device.name || '',
-          tag: '-',
-          tags: [],
-          displayTag: '-',
-          location: device.address || ''
-        }
-      })
+          return {
+            ...device,
+            index: startIndex + idx + 1,
+            name: device.deviceName || device.name || '',
+            tag: '-',
+            tags: [],
+            displayTag: '-',
+            location: device.address || ''
+          }
+        })
     )
 
     totalDevices.value = (response.data && response.data.total) ? response.data.total : 0
@@ -1209,24 +1217,35 @@ const deployAlgorithm = async (algorithm) => {
   await loadDeviceList()
 }
 
-const publishToModelHub = () => {
-  window.open(
-    'http://oort.oortcloudsmart.com:21410/bus/apaas-web/VLStreamManage/index.html',
-    '_blank',
-    'noopener,noreferrer'
-  )
+/** 发布到 Model Hub：无 token 先登录，有 token 进入云平台用户信息页 */
+const publishToModelHub = (algorithm) => {
+  const pending = algorithm
+      ? {
+        algorithmId: algorithm.id,
+        algorithmName: algorithm.name,
+        from: 'algorithm-management'
+      }
+      : { from: 'algorithm-management' }
+
+  if (!getModelHubAccessToken()) {
+    ElMessage.info('请先登录后继续发布到 Model Hub')
+    startModelHubLogin(pending)
+    return
+  }
+
+  router.push(getCloudPlatformUserPath())
 }
 
 const handleDeleteAlgorithm = async (algorithm) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除算法"${algorithm.name}"吗？`,
-      '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
+        `确定要删除算法"${algorithm.name}"吗？`,
+        '确认删除',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
     )
 
     const response = await deleteAlgorithm(algorithm.id)
@@ -1279,9 +1298,9 @@ const handleDeployToDevice = async () => {
 
   try {
     const response = await dispatchAlgorithmToDevices(
-      selectedAlgorithm.value.id,
-      deviceIdsStr,
-      dispatchModelType.value
+        selectedAlgorithm.value.id,
+        deviceIdsStr,
+        dispatchModelType.value
     )
     if (response.code === 200) {
       ElMessage.success('下发成功')
@@ -1368,13 +1387,13 @@ const batchDeleteAlgorithmLibrary = async () => {
     }
 
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedRepositories.value.length} 个算法库吗？`,
-      '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
+        `确定要删除选中的 ${selectedRepositories.value.length} 个算法库吗？`,
+        '确认删除',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
     )
 
     const ids = selectedRepositories.value.map(repo => repo.id)
@@ -1419,13 +1438,13 @@ const deleteLibraryItem = async (row) => {
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除算法库"${row.name}"吗？`,
-      '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
+        `确定要删除算法库"${row.name}"吗？`,
+        '确认删除',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
     )
 
     const response = await deleteAlgorithmRepository(row.id)
