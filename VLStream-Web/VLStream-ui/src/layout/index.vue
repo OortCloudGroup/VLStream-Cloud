@@ -64,6 +64,7 @@
         <el-menu
           :key="sidebarActivePath"
           :default-active="sidebarActivePath"
+          :default-openeds="defaultOpenMenuPaths"
           router
           class="sidebar-menu"
           background-color="transparent"
@@ -72,39 +73,10 @@
           :collapse="sidebarCollapsed"
           style="--el-menu-bg-color: transparent; background: transparent;"
         >
-          <template v-for="route in currentMenuRoutes" :key="route.path">
-            <!-- 有子菜单的项 -->
-            <el-sub-menu v-if="route.children && route.children.length > 0" :index="route.path">
-              <template #title>
-                <el-icon>
-                  <component :is="getMenuIcon(route.meta.icon)" />
-                </el-icon>
-                <span>{{ route.meta.title }}</span>
-              </template>
-              <el-menu-item
-                v-for="child in route.children"
-                :key="child.path"
-                :index="child.path"
-              >
-                <el-icon>
-                  <component :is="getMenuIcon(child.meta.icon)" />
-                </el-icon>
-                <template #title>
-                  <span>{{ child.meta.title }}</span>
-                </template>
-              </el-menu-item>
-            </el-sub-menu>
-
-            <!-- 没有子菜单的项 -->
-            <el-menu-item v-else :index="route.path">
-              <el-icon>
-                <component :is="getMenuIcon(route.meta.icon)" />
-              </el-icon>
-              <template #title>
-                <span>{{ route.meta.title }}</span>
-              </template>
-            </el-menu-item>
-          </template>
+          <SidebarMenuNode
+            :items="currentMenuRoutes"
+            :get-menu-icon="getMenuIcon"
+          />
         </el-menu>
       </div>
 
@@ -146,6 +118,7 @@ import {
   Lock
 } from '@element-plus/icons-vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
+import SidebarMenuNode from './SidebarMenuNode.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -430,7 +403,31 @@ const menuRoutesMap = {
     { path: '/group-management', meta: { title: '分组管理', icon: '分组管理' } }
   ],
   'decision-ai': [
-    { path: '/event-management', meta: { title: '事件管理', icon: '事件' } },
+    {
+      path: '/event-management',
+      meta: { title: '事件管理', icon: '事件' },
+      children: [
+        { path: '/active-safety/events/secure', meta: { title: '主动安全', icon: '监控告警' } },
+        {
+          path: '/active-safety/work-orders',
+          meta: { title: '工单管理', icon: '岗位管理' },
+          children: [
+            { path: '/active-safety/work-orders/my', meta: { title: '我的工单', icon: '角色管理' } },
+            { path: '/active-safety/work-orders/pending', meta: { title: '待办工单', icon: '事件' } },
+            { path: '/active-safety/work-orders/completed', meta: { title: '已办工单', icon: '标签管理' } },
+            { path: '/active-safety/work-orders/claimable', meta: { title: '可接工单', icon: '智能分析结果' } }
+          ]
+        },
+        {
+          path: '/active-safety/settings',
+          meta: { title: '系统管理', icon: '摄像机设置' },
+          children: [
+            { path: '/active-safety/settings/secure', meta: { title: '主动安全', icon: '摄像机设置' } },
+            { path: '/active-safety/settings/work-orders', meta: { title: '工单设置', icon: '摄像机设置' } }
+          ]
+        }
+      ]
+    },
     { path: '/scene-governance', meta: { title: '场景治理', icon: '场景治理' } },
     { path: '/algorithm-arrangement', meta: { title: '算法配置', icon: '算法配置' } },
     { path: '/intelligent-analysis-request', meta: { title: '智能分析申请', icon: '智能分析申请' } },
@@ -442,24 +439,6 @@ const menuRoutesMap = {
       meta: { title: '事件管理', icon: '事件' },
       children: [
         { path: '/active-safety/events/secure', meta: { title: '主动安全', icon: '监控告警' } }
-      ]
-    },
-    {
-      path: '/active-safety/work-orders',
-      meta: { title: '工单管理', icon: '岗位管理' },
-      children: [
-        { path: '/active-safety/work-orders/my', meta: { title: '我的工单', icon: '角色管理' } },
-        { path: '/active-safety/work-orders/pending', meta: { title: '待办工单', icon: '事件' } },
-        { path: '/active-safety/work-orders/completed', meta: { title: '已办工单', icon: '标签管理' } },
-        { path: '/active-safety/work-orders/claimable', meta: { title: '可接工单', icon: '智能分析结果' } }
-      ]
-    },
-    {
-      path: '/active-safety/settings',
-      meta: { title: '系统设置', icon: '摄像机设置' },
-      children: [
-        { path: '/active-safety/settings/secure', meta: { title: '主动安全', icon: '摄像机设置' } },
-        { path: '/active-safety/settings/work-orders', meta: { title: '工单设置', icon: '摄像机设置' } }
       ]
     }
   ],
@@ -505,6 +484,34 @@ const currentMenuRoutes = computed(() => {
   return menuRoutesMap[activeTopMenu.value] || []
 })
 
+const menuContainsPath = (items, routePath) => {
+  return items.some(item => (
+    item.path === routePath
+      || (item.children && menuContainsPath(item.children, routePath))
+  ))
+}
+
+const getOpenMenuPaths = (items, routePath) => {
+  return items.reduce((openedPaths, item) => {
+    if (!item.children || item.children.length === 0) {
+      return openedPaths
+    }
+
+    const itemContainsPath = item.path === routePath || menuContainsPath(item.children, routePath)
+    if (!itemContainsPath) {
+      return openedPaths
+    }
+
+    openedPaths.push(item.path)
+    return openedPaths.concat(getOpenMenuPaths(item.children, routePath))
+  }, [])
+}
+
+// 当前页面所在的多级菜单自动展开，避免用户看不到已归入事件管理的子菜单。
+const defaultOpenMenuPaths = computed(() => {
+  return getOpenMenuPaths(currentMenuRoutes.value, sidebarActivePath.value)
+})
+
 /**
  * 处理顶部菜单的点击事件
  * 如果点击的是“工作台”，跳转到 /workspace 页面
@@ -540,16 +547,13 @@ const getActiveMenuByRoute = (routePath) => {
   ) {
     return 'video-aggregation'
   }
+  // 主动安全顶部入口仍然负责主动安全事件页；工单和系统页面已归入决策式AI的事件管理菜单。
+  if (routePath === '/active-safety/events' || routePath.startsWith('/active-safety/events/')) {
+    return 'active-safety'
+  }
   for (const [menuKey, routes] of Object.entries(menuRoutesMap)) {
-    // 检查直接路由匹配
-    if (routes.some(r => r.path === routePath)) {
+    if (menuContainsPath(routes, routePath)) {
       return menuKey
-    }
-    // 检查子路由匹配
-    for (const r of routes) {
-      if (r.children && r.children.some(child => child.path === routePath)) {
-        return menuKey
-      }
     }
   }
   return 'workspace'

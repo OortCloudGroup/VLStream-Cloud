@@ -62,7 +62,7 @@ const routes = [
       {
         path: '/event-management',
         name: 'EventManagement',
-        component: () => import('@/views/DecisionAI/EventManagement.vue'),
+        component: () => import('@/views/events/page/eventManagement/secure.vue'),
         meta: { title: '事件管理', icon: '事件' }
       },
       {

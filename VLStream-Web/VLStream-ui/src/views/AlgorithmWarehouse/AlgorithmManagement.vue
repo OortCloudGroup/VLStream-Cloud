@@ -20,7 +20,7 @@
         target="_blank"
         rel="noopener noreferrer"
       >
-        https://vls.oortcloudsmart.com/zh/ModelHub/ModelHub
+        Model_Hub
       </a>
     </div>
 
@@ -64,7 +64,11 @@
           class="algorithm-card"
         >
           <div class="card-image">
-            <img :src="getAlgorithmCardBackground(algorithm, currentRepositoryId)" :alt="algorithm.name" />
+            <img
+              :src="getAlgorithmCardBackground(algorithm, currentRepositoryId)"
+              :alt="algorithm.name"
+              @click="editAlgorithm(algorithm)"
+            />
             <div class="card-menu">
               <el-dropdown trigger="click" placement="bottom-end">
                 <div class="menu-trigger">
@@ -83,6 +87,10 @@
                     <el-dropdown-item @click="deployAlgorithm(algorithm)">
                       <el-icon><Download /></el-icon>
                       下发到摄像机
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="publishToModelHub">
+                      <el-icon><Upload /></el-icon>
+                      发布到Model Hub
                     </el-dropdown-item>
                     <el-dropdown-item divided @click="handleDeleteAlgorithm(algorithm)">
                       <el-icon><Delete /></el-icon>
@@ -367,6 +375,42 @@
             <el-radio value="NO">否</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="算法图片">
+          <div class="algorithm-image-editor">
+            <el-upload
+              class="algorithm-image-uploader"
+              :action="algorithmImageUploadUrl"
+              :headers="algorithmImageUploadHeaders"
+              accept="image/jpeg,image/png,image/webp"
+              :show-file-list="false"
+              :multiple="false"
+              :disabled="imageUploading"
+              :on-success="handleAlgorithmImageUploadSuccess"
+              :on-error="handleAlgorithmImageUploadError"
+              :before-upload="beforeAlgorithmImageUpload"
+            >
+              <div class="algorithm-image-preview">
+                <img
+                  :src="algorithmEditForm.imageUrl || getAlgorithmCardBackground(editingAlgorithm || {}, algorithmEditForm.repositoryId || currentRepositoryId)"
+                  alt="算法图片"
+                />
+                <div class="algorithm-image-overlay">
+                  {{ imageUploading ? '上传中...' : '点击更换图片' }}
+                </div>
+              </div>
+            </el-upload>
+            <el-button
+              v-if="algorithmEditForm.imageUrl"
+              type="danger"
+              link
+              size="small"
+              @click="clearAlgorithmImage"
+            >
+              清除图片
+            </el-button>
+            <span class="algorithm-image-tip">支持 JPG、PNG、WEBP，大小不超过 5MB</span>
+          </div>
+        </el-form-item>
         <el-form-item label="算法描述" prop="description">
           <el-input
             v-model="algorithmEditForm.description"
@@ -530,8 +574,9 @@
 <script setup>
 import {computed, onMounted, ref} from 'vue'
 import {ElMessage, ElMessageBox} from 'element-plus'
-import {DataAnalysis, Delete, Download, Edit, MoreFilled, Plus, Folder, VideoCamera, Collection} from '@element-plus/icons-vue'
+import {DataAnalysis, Delete, Download, Edit, MoreFilled, Plus, Folder, VideoCamera, Collection, Upload} from '@element-plus/icons-vue'
 import { clacPXToVW } from '@/utils/index'
+import Config from '@/config'
 import {
   batchDeleteAlgorithmRepositories,
   createAlgorithm,
@@ -552,6 +597,10 @@ import {getTagTree} from '@/api/tagManagement'
 const repositoriesLoading = ref(false)
 const algorithmsLoading = ref(false)
 const submitting = ref(false)
+const imageUploading = ref(false)
+
+const algorithmImageUploadUrl = `${Config.URL}${Config.gateWay}apaas-fastdfsservice/fastdfs/v1/uploadFile`
+const algorithmImageUploadHeaders = Config.headers
 
 // 当前激活的顶部菜单
 const activeTopMenu = ref('management')
@@ -657,7 +706,8 @@ const algorithmEditForm = ref({
   repositoryId: null,
   ptModelFilePath: '',
   onnxModelFilePath: '',
-  isSystem: 'YES'
+  isSystem: 'YES',
+  imageUrl: ''
 })
 
 // 表单验证规则
@@ -1085,6 +1135,7 @@ const editAlgorithm = (algorithm) => {
     ptModelFilePath: algorithm.ptModelFilePath,
     onnxModelFilePath: algorithm.onnxModelFilePath,
     isSystem: algorithm.isSystem,
+    imageUrl: algorithm.imageUrl || '',
     description: algorithm.description || '',
     repositoryId: algorithm.repositoryId || currentRepositoryId.value
   }
@@ -1110,6 +1161,44 @@ const evaluateAlgorithm = async (algorithm) => {
   }
 }
 
+const beforeAlgorithmImageUpload = (file) => {
+  const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp']
+  const isImage = acceptedTypes.includes(file.type)
+  const isWithinLimit = file.size / 1024 / 1024 <= 5
+
+  if (!isImage) {
+    ElMessage.error('图片格式仅支持 JPG、PNG 或 WEBP')
+  }
+  if (!isWithinLimit) {
+    ElMessage.error('图片大小不能超过 5MB')
+  }
+
+  if (isImage && isWithinLimit) {
+    imageUploading.value = true
+  }
+  return isImage && isWithinLimit
+}
+
+const handleAlgorithmImageUploadSuccess = (response) => {
+  imageUploading.value = false
+  const imageUrl = response?.data?.url
+  if (response?.code === 200 && imageUrl) {
+    algorithmEditForm.value.imageUrl = imageUrl
+    ElMessage.success('图片上传成功')
+  } else {
+    ElMessage.error(response?.message || response?.msg || '图片上传失败')
+  }
+}
+
+const handleAlgorithmImageUploadError = () => {
+  imageUploading.value = false
+  ElMessage.error('图片上传失败')
+}
+
+const clearAlgorithmImage = () => {
+  algorithmEditForm.value.imageUrl = ''
+}
+
 const deployAlgorithm = async (algorithm) => {
   selectedAlgorithm.value = algorithm
   showDeviceDrawer.value = true
@@ -1118,6 +1207,14 @@ const deployAlgorithm = async (algorithm) => {
   searchTreeKeyword.value = ''
   currentTreeNodeId.value = null
   await loadDeviceList()
+}
+
+const publishToModelHub = () => {
+  window.open(
+    'http://oort.oortcloudsmart.com:21410/bus/apaas-web/VLStreamManage/index.html',
+    '_blank',
+    'noopener,noreferrer'
+  )
 }
 
 const handleDeleteAlgorithm = async (algorithm) => {
@@ -1513,7 +1610,7 @@ const handleAlgorithmEditConfirm = async () => {
       inputFormat: 'image',
       outputFormat: 'json',
       gpuRequired: 0,
-      imageUrl: editingAlgorithm.value.imageUrl // 保持原有图片
+      imageUrl: algorithmEditForm.value.imageUrl.trim()
     }
     
     // 调用算法更新API
@@ -1543,13 +1640,15 @@ const handleAlgorithmEditConfirm = async () => {
 
 const handleAlgorithmEditCancel = () => {
   showAlgorithmEditDialog.value = false
+  imageUploading.value = false
   algorithmEditForm.value = {
     name: '',
     category: '',
     type: 'detect',
     version: '1.0.0',
     description: '',
-    repositoryId: null
+    repositoryId: null,
+    imageUrl: ''
   }
   if (algorithmEditFormRef.value) {
     algorithmEditFormRef.value.resetFields()
@@ -1713,11 +1812,64 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  cursor: pointer;
   transition: transform 0.3s ease;
 }
 
 .algorithm-card:hover .card-image img {
   transform: scale(1.05);
+}
+
+.algorithm-image-editor {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.algorithm-image-uploader :deep(.el-upload) {
+  display: block;
+}
+
+.algorithm-image-preview {
+  position: relative;
+  width: 220px;
+  height: 146px;
+  overflow: hidden;
+  border: 1px dashed #dcdfe6;
+  border-radius: 6px;
+  background: #f5f7fa;
+  cursor: pointer;
+}
+
+.algorithm-image-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.algorithm-image-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.algorithm-image-preview:hover .algorithm-image-overlay {
+  opacity: 1;
+}
+
+.algorithm-image-tip {
+  color: #909399;
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .card-menu {
