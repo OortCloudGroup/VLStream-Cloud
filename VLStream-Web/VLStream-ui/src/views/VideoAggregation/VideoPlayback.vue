@@ -177,147 +177,54 @@
       </div>
     </div>
 
-    <!-- 视频回放弹窗 -->
+    <!-- 设备视频播放弹窗 -->
     <el-dialog
       v-model="videoDialogVisible"
-      title="视频回放"
-      width="70%"
-      :close-on-click-modal="false"
       class="video-dialog"
-      align-center
+      top="10vh"
+      width="900px"
+      draggable
+      :title="selectedRow?.deviceName ? `${selectedRow.deviceName} - 摄像头预览` : '摄像头预览'"
+      :close-on-click-modal="false"
+      append-to-body
+      @close="handlePlayerClose"
     >
-      <div class="video-playback-container">
-        <!-- 顶部：年 / 月 / 日 选择 -->
-        <div class="date-selector">
-          <div class="date-section year-section">
-            <div class="year-grid">
-              <span
-                v-for="year in availableYears"
-                :key="year"
-                class="date-cell year-item"
-                :class="{ active: selectedDate.year === year }"
-                @click="selectYear(year)"
-              >
-                {{ year }}
-              </span>
-            </div>
-          </div>
-
-          <div class="date-section month-section">
-            <div class="month-grid">
-              <span
-                v-for="month in availableMonths"
-                :key="month"
-                class="date-cell month-item"
-                :class="{ active: selectedDate.month === month }"
-                @click="selectMonth(month)"
-              >
-                {{ month }}
-              </span>
-            </div>
-          </div>
-
-          <div class="date-section day-section">
-            <div class="day-grid">
-              <span
-                v-for="day in availableDays"
-                :key="day"
-                class="date-cell day-item"
-                :class="{ active: selectedDate.day === day }"
-                @click="selectDay(day)"
-              >
-                {{ day }}
-              </span>
-            </div>
-          </div>
+      <template #header="{ titleId, titleClass }">
+        <div class="video-player-header">
+          <span :id="titleId" :class="titleClass">
+            {{ selectedRow?.deviceName ? `${selectedRow.deviceName} - 摄像头预览` : '摄像头预览' }}
+          </span>
+          <el-icon class="video-fullscreen-button" title="全屏" @click="togglePlayerFullscreen">
+            <FullScreen />
+          </el-icon>
         </div>
-
-        <!-- 底部：视频列表 + 播放器 -->
-        <div class="playback-body">
-          <div class="video-list-section">
-            <div class="video-list-title">视频列表</div>
-            <div class="video-thumbnails">
-              <div
-                v-for="(video, index) in videoList"
-                :key="index"
-                class="video-thumbnail-item"
-                :class="{ active: selectedVideoIndex === index }"
-                @click="selectVideo(index)"
-              >
-                <div class="thumbnail-image">
-                  <img
-                    v-if="video.thumbnailUrl"
-                    :src="video.thumbnailUrl"
-                    :alt="video.fileName"
-                    class="thumbnail-img"
-                    @error="handleThumbnailError($event, index)"
-                  />
-                  <div
-                    class="thumbnail-placeholder"
-                    :style="{ display: video.thumbnailUrl ? 'none' : 'flex' }"
-                  >
-                    <el-icon class="video-icon"><VideoCamera /></el-icon>
-                  </div>
-                </div>
-                <div class="video-time-range">{{ video.timeRange }}</div>
-              </div>
-              <div v-if="!videoList.length" class="video-list-empty">暂无视频记录</div>
-            </div>
-          </div>
-
-          <div class="player-section">
-            <div class="video-player">
-              <div class="video-display">
-                <div v-if="currentVideoUrl" class="recorded-video-container">
-                  <video
-                    ref="recordedVideoPlayer"
-                    :src="currentVideoUrl"
-                    controls
-                    autoplay
-                    class="recorded-video-player"
-                    @loadedmetadata="handleVideoLoaded"
-                    @error="handleVideoError"
-                  >
-                    您的浏览器不支持视频播放
-                  </video>
-                  <div class="player-datetime" v-if="playerOverlayDateTime">
-                    {{ playerOverlayDateTime }}
-                  </div>
-                  <div class="player-device-name" v-if="currentVideo?.deviceName">
-                    {{ currentVideo.deviceName }}
-                  </div>
-                </div>
-
-                <div v-else class="video-placeholder">
-                  <div class="placeholder-content">
-                    <el-icon class="placeholder-icon"><VideoCamera /></el-icon>
-                    <div class="placeholder-text">请从左侧选择要播放的视频</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      </template>
+      <div ref="playerWrapperRef" class="live-player">
+        <div ref="oplayerContainerRef" class="oplayer-container" />
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, nextTick, onBeforeUnmount, onMounted, shallowRef } from 'vue'
 import {
   VideoCamera,
   Folder,
   Collection,
+  FullScreen,
 } from '@element-plus/icons-vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
 import { clacPXToVW } from '@/utils/index'
 
 // API 导入
 import { getDeviceList, getDeviceTree } from '@/api/device'
 import { getDeviceRecords } from '@/api/videoRecord'
+import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
+import { ensureOPlayer } from '@/utils/oplayer'
 import { getBaseURL } from '@/utils/request'
+import { getStreamType } from './deviceUtils.js'
 
 // 响应式数据
 const deviceTreeCollapsed = ref(false)
@@ -363,6 +270,10 @@ const videoDuration = ref(0)
 const videoPlayer = ref(null)
 const recordedVideoPlayer = ref(null)
 const videoDialogVisible = ref(false)
+const playerWrapperRef = ref(null)
+const oplayerContainerRef = ref(null)
+const oplayerInstance = shallowRef(null)
+let activePlaybackTask = null
 const selectedVideoIndex = ref(0)
 const loading = ref(false)
 const totalRecords = ref(0)
@@ -758,21 +669,155 @@ const handleDelete = async () => {
   }
 }
 
-const handlePlay = async (row) => {
-  console.log('播放设备视频记录:', row)
+/**
+ * 释放设备视频播放器资源。
+ */
+const cleanupOPlayer = () => {
+  activePlaybackTask = null
 
-  // 只显示播放弹窗，不跳转到内嵌页面
+  if (oplayerInstance.value?.compInstance?.$destroy) {
+    oplayerInstance.value.compInstance.$destroy()
+  }
+  oplayerInstance.value = null
+
+  if (oplayerContainerRef.value) {
+    oplayerContainerRef.value.innerHTML = ''
+  }
+}
+
+/**
+ * 关闭播放弹窗并释放底层连接。
+ */
+const handlePlayerClose = () => {
+  cleanupOPlayer()
+  videoDialogVisible.value = false
+}
+
+/**
+ * 切换播放器全屏状态。
+ */
+const togglePlayerFullscreen = async () => {
+  const playerElement = playerWrapperRef.value
+  if (!playerElement) return
+
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen()
+    } else {
+      await playerElement.requestFullscreen?.()
+    }
+  } catch (error) {
+    console.error('切换播放器全屏失败:', error)
+    ElMessage.error('切换全屏失败')
+  }
+}
+
+/**
+ * 根据流类型生成 OPlayer 播放参数。
+ */
+const createPlayerOptions = async (streamUrl) => {
+  const streamType = getStreamType(streamUrl)
+  const playerConfig = {
+    debuggerMode: false,
+    autoSize: true,
+    backgroundColor: '#000000',
+    showHeader: false
+  }
+
+  if (streamType === 'cameraRTC') {
+    const url = new URL(streamUrl)
+    const cameraId = url.pathname.split('/').filter(Boolean).pop()
+    if (!cameraId) {
+      throw new Error('CameraRTC 地址中缺少摄像头ID')
+    }
+
+    playerConfig.webRTCSocketURL = url.origin.replace(/^http/, 'ws')
+    return {
+      playerConfig,
+      playConfig: { type: 'cameraRTC', src: cameraId }
+    }
+  }
+
+  if (streamType === 'rtsp') {
+    await ensureWebRTCBackendConfig()
+    playerConfig.rtspServerURL = WEBRTC_SERVER_BASE_URL
+    return {
+      playerConfig,
+      playConfig: {
+        type: 'rtsp',
+        src: streamUrl,
+        transport: 'tcp',
+        timeout: 60,
+        preferredMime: 'video/H264'
+      }
+    }
+  }
+
+  const playTypeMap = {
+    flv: 'flv',
+    hls: 'm3u8',
+    video: 'mp4',
+    http: 'mp4'
+  }
+  const playType = playTypeMap[streamType]
+  if (!playType) {
+    throw new Error(`暂不支持该视频流类型：${streamType}`)
+  }
+
+  return {
+    playerConfig,
+    playConfig: { type: playType, src: streamUrl }
+  }
+}
+
+/**
+ * 使用与工作台一致的播放器播放设备实时流。
+ */
+const handlePlay = async (row) => {
+  const streamUrl = row?.streamPath
+    || row?.streamUrl
+    || row?.originalRtspUrl
+    || row?.rtspUrl
+    || row?.url
+  if (!streamUrl) {
+    ElMessage.warning('暂无可用流地址')
+    return
+  }
+
+  cleanupOPlayer()
+  const playbackTask = Symbol('video-playback-oplayer')
+  activePlaybackTask = playbackTask
   selectedRow.value = row
   videoDialogVisible.value = true
 
-  // 初始化日期选择器为当前日期
-  const now = new Date()
-  selectedDate.year = now.getFullYear()
-  selectedDate.month = now.getMonth() + 1
-  selectedDate.day = now.getDate()
+  const loadingInstance = ElLoading.service({
+    lock: true,
+    text: '正在启动视频播放...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  })
 
-  // 自动加载当前日期的视频记录
-  await loadVideoRecords()
+  try {
+    await Promise.all([ensureOPlayer(), nextTick()])
+    const { playerConfig, playConfig } = await createPlayerOptions(streamUrl)
+    const container = oplayerContainerRef.value
+    if (activePlaybackTask !== playbackTask) return
+    if (!container) throw new Error('播放器容器未准备好')
+
+    const player = new window.OToolBox.OPlayer(container, playerConfig)
+    oplayerInstance.value = player
+    player.play({
+      ...playConfig,
+      name: row?.deviceName || row?.name || ''
+    })
+  } catch (error) {
+    if (activePlaybackTask !== playbackTask) return
+    console.error('播放失败:', error)
+    ElMessage.error(`播放失败: ${error.message || error}`)
+    cleanupOPlayer()
+    videoDialogVisible.value = false
+  } finally {
+    loadingInstance.close()
+  }
 }
 
 const handleSizeChange = (size) => {
@@ -1181,9 +1226,45 @@ onMounted(async () => {
   await loadDeviceTree()
   await loadDeviceList()
 })
+
+onBeforeUnmount(() => {
+  cleanupOPlayer()
+})
 </script>
 
 <style scoped lang="scss">
+.video-player-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-right: 8px;
+}
+
+.video-fullscreen-button {
+  margin-left: auto;
+  color: #606266;
+  font-size: 18px;
+  cursor: pointer;
+
+  &:hover {
+    color: #1890ff;
+  }
+}
+
+.live-player {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #000;
+}
+
+.oplayer-container {
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+
 .tenant_Page {
   height: 100%;
   width: 100%;
@@ -1715,10 +1796,44 @@ onMounted(async () => {
 </style>
 
 <style lang="scss">
-/* el-dialog 挂载到 body，头部样式统一走全局 common.scss */
-.video-dialog {
-  .el-dialog__body {
-    padding: 20px 40px;
-  }
+/* 播放弹窗挂载到 body，去除播放器外围边框与留白。 */
+.el-dialog.video-dialog {
+  margin: 0 auto !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.el-dialog.video-dialog .el-dialog__header {
+  position: relative;
+  margin: 0;
+  border-bottom: none !important;
+}
+
+.el-dialog.video-dialog .el-dialog__body {
+  padding: 0 !important;
+}
+
+.el-dialog.video-dialog .video-player-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-right: 72px;
+  box-sizing: border-box;
+}
+
+.el-dialog.video-dialog .video-fullscreen-button {
+  position: absolute;
+  top: 50%;
+  right: 52px;
+  margin: 0;
+  color: var(--el-color-info);
+  font-size: 18px;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.el-dialog.video-dialog .video-fullscreen-button:hover {
+  color: var(--el-color-primary);
 }
 </style>
