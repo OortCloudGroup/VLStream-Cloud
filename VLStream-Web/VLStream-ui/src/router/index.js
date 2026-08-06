@@ -244,8 +244,8 @@ const routes = [
       {
         path: '/active-safety/events/secure',
         name: 'ActiveSafetySecureEvents',
-        component: () => import('@/views/events/page/eventManagement/secure.vue'),
-        meta: { title: '主动安全事件', icon: '安全' }
+        redirect: '/event-management',
+        meta: { title: '主动安全事件', icon: '安全', hideInMenu: true }
       },
       {
         path: '/active-safety/work-orders/my',

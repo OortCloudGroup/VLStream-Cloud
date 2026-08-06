@@ -382,7 +382,6 @@ const topMenus = [
   { key: 'workspace', title: '工作台' },
   { key: 'video-aggregation', title: '视频汇聚' },
   { key: 'decision-ai', title: '决策式AI' },
-  { key: 'active-safety', title: '主动安全' },
   { key: 'algorithm-warehouse', title: '算法仓库' },
   { key: 'ai-computing', title: 'AI算力调度' },
   { key: 'system-management', title: '系统管理' }
@@ -404,10 +403,10 @@ const menuRoutesMap = {
   ],
   'decision-ai': [
     {
-      path: '/event-management',
+      path: 'event-management-menu',
       meta: { title: '事件管理', icon: '事件' },
       children: [
-        { path: '/active-safety/events/secure', meta: { title: '主动安全', icon: '监控告警' } },
+        { path: '/event-management', meta: { title: '主动安全', icon: '监控告警' } },
         {
           path: '/active-safety/work-orders',
           meta: { title: '工单管理', icon: '岗位管理' },
@@ -432,15 +431,6 @@ const menuRoutesMap = {
     { path: '/algorithm-arrangement', meta: { title: '算法配置', icon: '算法配置' } },
     { path: '/intelligent-analysis-request', meta: { title: '智能分析申请', icon: '智能分析申请' } },
     { path: '/algorithm-task', meta: { title: '任务配置', icon: '任务配置' } },
-  ],
-  'active-safety': [
-    {
-      path: '/active-safety/events',
-      meta: { title: '事件管理', icon: '事件' },
-      children: [
-        { path: '/active-safety/events/secure', meta: { title: '主动安全', icon: '监控告警' } }
-      ]
-    }
   ],
   'algorithm-warehouse': [
     { path: '/algorithm-management', meta: { title: '算法管理', icon: '算法管理' } },
@@ -507,6 +497,21 @@ const getOpenMenuPaths = (items, routePath) => {
   }, [])
 }
 
+const getFirstNavigablePath = (items) => {
+  for (const item of items) {
+    if (!item.children || item.children.length === 0) {
+      return item.path
+    }
+
+    const childPath = getFirstNavigablePath(item.children)
+    if (childPath) {
+      return childPath
+    }
+  }
+
+  return ''
+}
+
 // 当前页面所在的多级菜单自动展开，避免用户看不到已归入事件管理的子菜单。
 const defaultOpenMenuPaths = computed(() => {
   return getOpenMenuPaths(currentMenuRoutes.value, sidebarActivePath.value)
@@ -515,7 +520,6 @@ const defaultOpenMenuPaths = computed(() => {
 /**
  * 处理顶部菜单的点击事件
  * 如果点击的是“工作台”，跳转到 /workspace 页面
- * 如果点击的是“主动安全”，默认跳转到主动安全事件管理页面 /active-safety/events/secure
  * 其他菜单默认跳转到对应侧边栏的第一个路由
  * @param {string} menuKey 顶部菜单对应的 key
  */
@@ -525,12 +529,13 @@ const handleTopMenuClick = (menuKey) => {
   // 根据菜单切换到对应的默认路由
   if (menuKey === 'workspace') {
     router.push('/workspace') // 工作台页面
-  } else if (menuKey === 'active-safety') {
-    router.push('/active-safety/events/secure') // 默认跳转到主动安全页面
   } else {
     const routes = menuRoutesMap[menuKey]
     if (routes && routes.length > 0) {
-      router.push(routes[0].path) // 跳转到该菜单的第一个路由
+      const firstNavigablePath = getFirstNavigablePath(routes)
+      if (firstNavigablePath) {
+        router.push(firstNavigablePath) // 跳转到该菜单的第一个可导航路由
+      }
     }
   }
 }
@@ -546,10 +551,6 @@ const getActiveMenuByRoute = (routePath) => {
     routePath === '/camera-settings'
   ) {
     return 'video-aggregation'
-  }
-  // 主动安全顶部入口仍然负责主动安全事件页；工单和系统页面已归入决策式AI的事件管理菜单。
-  if (routePath === '/active-safety/events' || routePath.startsWith('/active-safety/events/')) {
-    return 'active-safety'
   }
   for (const [menuKey, routes] of Object.entries(menuRoutesMap)) {
     if (menuContainsPath(routes, routePath)) {
