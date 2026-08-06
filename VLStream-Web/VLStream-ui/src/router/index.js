@@ -163,6 +163,12 @@ const routes = [
         meta: { title: '个人设置', icon: '个人设置' }
       },
       {
+        path: '/cloud-platform',
+        name: 'CloudPlatform',
+        component: () => import('@/views/CloudPlatform/index.vue'),
+        meta: { title: '云平台', icon: '云平台' }
+      },
+      {
         path: '/open-service-center',
         name: 'OpenServiceCenter',
         component: () => import('@/views/OpenServiceCenter.vue'),

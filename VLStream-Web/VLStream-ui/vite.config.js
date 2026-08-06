@@ -72,6 +72,24 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false
         },
+        // Model Hub / OortToolKit SSO（workup-dev）
+        '/bus/apaas-sso': {
+          target: 'https://workup-dev.myoumuamua.com:6433',
+          changeOrigin: true,
+          secure: false
+        },
+        // Model Hub 头像上传 fastdfs
+        '/bus/apaas-fastdfsservice': {
+          target: 'https://workup-dev.myoumuamua.com:6433',
+          changeOrigin: true,
+          secure: false
+        },
+        // AI 模型（我上传的模型）
+        '/bus/apaas-deployment-service': {
+          target: 'https://workup-dev.myoumuamua.com:6433',
+          changeOrigin: true,
+          secure: false
+        },
         '/oort': {
           target: apaasTarget,
           changeOrigin: true,

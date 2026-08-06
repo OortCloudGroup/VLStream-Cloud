@@ -70,6 +70,10 @@
                     <el-icon><Download /></el-icon>
                     下发到摄像机
                   </el-dropdown-item>
+                  <el-dropdown-item @click="publishToModelHub(algorithm)">
+                    <el-icon><Upload /></el-icon>
+                    发布到 Model Hub
+                  </el-dropdown-item>
                   <el-dropdown-item divided @click="handleDeleteAlgorithm(algorithm)">
                     <el-icon><Delete /></el-icon>
                     删除
@@ -451,8 +455,9 @@
 
 <script setup>
 import {computed, onMounted, ref} from 'vue'
+import { useRouter } from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
-import {DataAnalysis, Delete, Download, Edit, MoreFilled, Plus} from '@element-plus/icons-vue'
+import {DataAnalysis, Delete, Download, Edit, MoreFilled, Plus, Upload} from '@element-plus/icons-vue'
 import DeviceTree from '@/components/DeviceTree.vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
 import ActionButtonGroup from '@/components/ActionButtonGroup.vue' // Added import for ActionButtonGroup
@@ -471,6 +476,13 @@ import {
 } from '@/api/algorithmManagement'
 import {getDeviceById, getDeviceList, getDeviceTree, dispatchAlgorithmToDevices} from '@/api/device'
 import {getTagTree} from '@/api/tagManagement'
+import {
+  getCloudPlatformUserPath,
+  getModelHubAccessToken,
+  startModelHubLogin
+} from '@/utils/modelHubAuth'
+
+const router = useRouter()
 
 // 加载状态
 const repositoriesLoading = ref(false)
@@ -977,6 +989,25 @@ const deployAlgorithm = async (algorithm) => {
   selectedDeviceRows.value = []
   currentPage.value = 1
   await loadDeviceList()
+}
+
+/** 发布到 Model Hub：无 token 跳转登录，有 token 进入云平台用户信息页 */
+const publishToModelHub = (algorithm) => {
+  const accessToken = getModelHubAccessToken()
+  if (!accessToken) {
+    ElMessage.info('正在跳转登录，登录成功后将展示用户信息')
+    startModelHubLogin({
+      algorithmId: algorithm?.id,
+      algorithmName: algorithm?.name,
+      from: 'publish-to-model-hub'
+    })
+    return
+  }
+
+  router.push(getCloudPlatformUserPath())
+  if (algorithm?.name) {
+    ElMessage.success(`已登录，可查看用户信息（算法：${algorithm.name}）`)
+  }
 }
 
 const handleDeleteAlgorithm = async (algorithm) => {
