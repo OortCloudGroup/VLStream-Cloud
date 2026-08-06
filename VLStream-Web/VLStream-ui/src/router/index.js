@@ -12,12 +12,6 @@ const routes = [
     meta: { title: '登录', hideInMenu: true }
   },
   {
-    path: '/test-auth',
-    name: 'TestAuth',
-    component: () => import('@/views/TestAuth.vue'),
-    meta: { title: '测试认证', hideInMenu: true }
-  },
-  {
     path: '/',
     component: Layout,
     redirect: '/workspace',
@@ -42,9 +36,33 @@ const routes = [
         meta: { title: '设备管理', icon: '设备管理' }
       },
       {
+        path: '/device-edit',
+        name: 'DeviceEdit',
+        component: () => import('@/views/VideoAggregation/DeviceEditPage.vue'),
+        meta: { title: '编辑设备', hideInMenu: true, parentMenu: 'video-aggregation', parentPath: '/device-management' }
+      },
+      {
+        path: '/device-config',
+        name: 'DeviceConfig',
+        component: () => import('@/views/VideoAggregation/DeviceConfigPage.vue'),
+        meta: { title: '配置参数', hideInMenu: true, parentMenu: 'video-aggregation', parentPath: '/device-management' }
+      },
+      {
+        path: '/device-ai-event',
+        name: 'DeviceAIEvent',
+        component: () => import('@/views/VideoAggregation/DeviceAIEventPage.vue'),
+        meta: { title: 'AI事件配置', hideInMenu: true, parentMenu: 'video-aggregation', parentPath: '/device-management' }
+      },
+      {
+        path: '/camera-settings',
+        name: 'CameraSettings',
+        component: () => import('@/views/VideoAggregation/CameraSettings.vue'),
+        meta: { title: '设置摄像机', hideInMenu: true, parentMenu: 'video-aggregation', parentPath: '/device-management' }
+      },
+      {
         path: '/event-management',
         name: 'EventManagement',
-        component: () => import('@/views/DecisionAI/EventManagement.vue'),
+        component: () => import('@/views/events/page/eventManagement/secure.vue'),
         meta: { title: '事件管理', icon: '事件' }
       },
       {
@@ -76,7 +94,19 @@ const routes = [
         path: '/tag-management',
         name: 'TagManagement',
         component: () => import('@/views/VideoAggregation/TagManagement.vue'),
-        meta: { title: '标签管理', icon: '标签管理' }
+        meta: { title: '标签管理', icon: '标签管理', groupType: 3 }
+      },
+      {
+        path: '/region-management',
+        name: 'RegionManagement',
+        component: () => import('@/views/VideoAggregation/EventGroupManagement.vue'),
+        meta: { title: '区域管理', icon: '区域管理', groupType: 1 }
+      },
+      {
+        path: '/group-management',
+        name: 'GroupManagement',
+        component: () => import('@/views/VideoAggregation/EventGroupManagement.vue'),
+        meta: { title: '分组管理', icon: '分组管理', groupType: 2 }
       },
       {
         path: '/algorithm-training-platform',
@@ -119,12 +149,6 @@ const routes = [
         name: 'VideoPlayback',
         component: () => import('@/views/VideoAggregation/VideoPlayback.vue'),
         meta: { title: '视频回放', icon: '视频回放' }
-      },
-      {
-        path: '/camera-settings',
-        name: 'CameraSettings',
-        component: () => import('@/views/VideoAggregation/CameraSettings.vue'),
-        meta: { title: '设置摄像机', icon: '摄像机设置' }
       },
       {
         path: '/design-drawing',
@@ -279,8 +303,8 @@ router.beforeEach(async (to, from, next) => {
   console.log('路由跳转:', to.path)
 
   try {
-  // 如果访问登录页面或测试页面，直接通过
-  if (to.path === '/login' || to.path === '/test-auth') {
+  // 登录页不需要本地 token 校验。
+  if (to.path === '/login') {
     next()
     return
   }

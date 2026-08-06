@@ -1,6 +1,31 @@
-version: '3'
-
 services:
+  emqx:
+    image: ${EMQX_IMAGE:-192.168.88.150:80/opensource/emqx/emqx:5.4}
+    container_name: emqx
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      EMQX_NODE_NAME: emqx@127.0.0.1
+      EMQX_NODE__COOKIE: ${EMQX_NODE_COOKIE:?请在 script/docker/.env 中配置 EMQX_NODE_COOKIE}
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: '"${EMQX_DASHBOARD_PASSWORD:?请在 script/docker/.env 中配置 EMQX_DASHBOARD_PASSWORD}"'
+      EMQX_LISTENERS__SSL__DEFAULT__BIND: 0
+      EMQX_LISTENERS__WS__DEFAULT__BIND: 0
+      EMQX_LISTENERS__WSS__DEFAULT__BIND: 0
+      EMQX_AUTHENTICATION: >-
+        [{mechanism = password_based, backend = built_in_database,
+        user_id_type = username, enable = true,
+        password_hash_algorithm = {name = sha256, salt_position = suffix}}]
+    volumes:
+      - /docker/emqx/data:/opt/emqx/data
+      - /docker/emqx/log:/opt/emqx/log
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    network_mode: "host"
+
   mysql:
     image: mysql:8.0.31
     container_name: mysql
@@ -106,6 +131,18 @@ services:
       # 时区上海
       TZ: Asia/Shanghai
       SERVER_PORT: 8080
+      VLSTREAM_MQTT_HOST: 127.0.0.1
+      VLSTREAM_MQTT_PORT: 1883
+      VLSTREAM_MQTT_USERNAME: ${VLSTREAM_MQTT_USERNAME:?请在 script/docker/.env 中配置 VLSTREAM_MQTT_USERNAME}
+      VLSTREAM_MQTT_PASSWORD: ${VLSTREAM_MQTT_PASSWORD:?请在 script/docker/.env 中配置 VLSTREAM_MQTT_PASSWORD}
+      VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID: vls-model-dispatch-backend-01
+      VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY: ${VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY:-}
+      VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS: ${VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS:-600}
+      VLSTREAM_DEVICE_MEDIA_MAX_IMAGE_BYTES: ${VLSTREAM_DEVICE_MEDIA_MAX_IMAGE_BYTES:-10485760}
+      VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED: ${VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED:-false}
+    depends_on:
+      emqx:
+        condition: service_healthy
     volumes:
       # 配置文件
       - /docker/server1/logs/:/ruoyi/server/logs/
@@ -121,6 +158,18 @@ services:
       # 时区上海
       TZ: Asia/Shanghai
       SERVER_PORT: 8081
+      VLSTREAM_MQTT_HOST: 127.0.0.1
+      VLSTREAM_MQTT_PORT: 1883
+      VLSTREAM_MQTT_USERNAME: ${VLSTREAM_MQTT_USERNAME:?请在 script/docker/.env 中配置 VLSTREAM_MQTT_USERNAME}
+      VLSTREAM_MQTT_PASSWORD: ${VLSTREAM_MQTT_PASSWORD:?请在 script/docker/.env 中配置 VLSTREAM_MQTT_PASSWORD}
+      VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID: vls-model-dispatch-backend-02
+      VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY: ${VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY:-}
+      VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS: ${VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS:-600}
+      VLSTREAM_DEVICE_MEDIA_MAX_IMAGE_BYTES: ${VLSTREAM_DEVICE_MEDIA_MAX_IMAGE_BYTES:-10485760}
+      VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED: ${VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED:-false}
+    depends_on:
+      emqx:
+        condition: service_healthy
     volumes:
       # 配置文件
       - /docker/server2/logs/:/ruoyi/server/logs/

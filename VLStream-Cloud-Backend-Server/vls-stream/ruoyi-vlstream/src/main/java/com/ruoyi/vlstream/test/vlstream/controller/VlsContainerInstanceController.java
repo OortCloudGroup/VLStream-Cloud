@@ -26,6 +26,7 @@ import com.ruoyi.vlstream.test.vlstream.excel.VlsContainerInstanceExcel;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.ContainerInstance;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.ContainerInstanceVO;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsContainerInstanceService;
+import com.ruoyi.vlstream.test.vlstream.service.GpuTrainingSchedulerService;
 import com.ruoyi.vlstream.test.vlstream.wrapper.VlsContainerInstanceWrapper;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,6 +46,26 @@ import java.util.Map;
 public class VlsContainerInstanceController extends BladeController {
 
 	private final IVlsContainerInstanceService vlsContainerInstanceService;
+	private final GpuTrainingSchedulerService gpuTrainingSchedulerService;
+
+	@GetMapping("/resources")
+	@Operation(summary = "GPU服务器资源", description = "读取当前SSH训练服务器和GPU实时资源")
+	public R<Map<String, Object>> resources() {
+		return R.data(gpuTrainingSchedulerService.getResourceSnapshot());
+	}
+
+	@GetMapping("/{id}")
+	@Operation(summary = "容器任务详情")
+	public R<ContainerInstance> getById(@PathVariable Long id) {
+		return R.data(vlsContainerInstanceService.getById(id));
+	}
+
+	@GetMapping("/{id}/logs")
+	@Operation(summary = "训练容器日志")
+	public R<String> logs(@PathVariable Long id,
+						  @RequestParam(defaultValue = "500") Integer lines) {
+		return R.data(gpuTrainingSchedulerService.getContainerLogs(id, lines));
+	}
 
 	/**
 	 * 容器实例表 详情

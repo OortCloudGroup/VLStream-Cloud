@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "sourceModule": "VLStream-Cloud-Backend-Server/vls-stream/ruoyi-vlstream",
+  "targetRepositoryRelativePath": "../apaas-vls-server",
+  "targetSearchRoots": [
+    "src/main/java/org/springblade/vlstream",
+    "src/main/resources/mapper"
+  ],
+  "candidateRules": [
+    {
+      "id": "core-service",
+      "description": "核心服务与业务编排，仅生成审核清单",
+      "sourcePatterns": [
+        "src/main/java/com/ruoyi/vlstream/test/vlstream/service/*.java"
+      ]
+    },
+    {
+      "id": "algorithm-detection",
+      "description": "算法检测与推理逻辑，仅生成审核清单",
+      "sourcePatterns": [
+        "src/main/java/com/ruoyi/vlstream/test/vlstream/detection/*.java"
+      ]
+    },
+    {
+      "id": "protocol",
+      "description": "协议实现与报文处理，仅生成审核清单",
+      "sourcePatterns": [
+        "src/main/java/com/ruoyi/vlstream/test/vlstream/protocol/*.java"
+      ]
+    },
+    {
+      "id": "runtime-config",
+      "description": "VLStream运行参数定义，仅生成审核清单",
+      "sourcePatterns": [
+        "src/main/java/com/ruoyi/vlstream/config/*.java",
+        "src/main/java/com/ruoyi/vlstream/test/vlstream/config/*.java"
+      ]
+    },
+    {
+      "id": "business-contract",
+      "description": "核心业务枚举和序列化规则，仅生成审核清单",
+      "sourcePatterns": [
+        "src/main/java/com/ruoyi/vlstream/test/vlstream/enums/*.java",
+        "src/main/java/com/ruoyi/vlstream/test/vlstream/deserialize/*.java"
+      ]
+    }
+  ],
+  "excludeRules": [
+    {
+      "id": "web-adapter",
+      "description": "Controller和接口返回结构属于框架适配层",
+      "sourcePatterns": [
+        "src/main/java/com/ruoyi/vlstream/test/vlstream/controller/*"
+      ]
+    },
+    {
+      "id": "persistence-adapter",
+      "description": "Entity、Mapper、XML和数据库模型需人工适配",
+      "sourcePatterns": [
+        "src/main/java/com/ruoyi/vlstream/test/vlstream/mapper/*",
+        "src/main/java/com/ruoyi/vlstream/test/vlstream/pojo/*",
+        "src/main/resources/mapper/*"
+      ]
+    },
+    {
+      "id": "framework-adapter",
+      "description": "若依、SpringBlade兼容层及包装器不参与核心逻辑同步",
+      "sourcePatterns": [
+        "pom.xml",
+        "src/main/java/com/github/*",
+        "src/main/java/com/ruoyi/vlstream/test/common/*",
+        "src/main/java/com/ruoyi/vlstream/test/compat/*",
+        "src/main/java/com/ruoyi/vlstream/test/modules/*",
+        "src/main/java/com/ruoyi/vlstream/test/vlstream/excel/*",
+        "src/main/java/com/ruoyi/vlstream/test/vlstream/wrapper/*",
+        "src/main/java/org/springblade/*"
+      ]
+    },
+    {
+      "id": "test-code",
+      "description": "测试代码单独维护",
+      "sourcePatterns": [
+        "src/test/*"
+      ]
+    }
+  ],
+  "riskPatterns": [
+    {
+      "id": "ruoyi-dependency",
+      "pattern": "\\bcom\\.ruoyi\\.",
+      "description": "依赖若依代码"
+    },
+    {
+      "id": "blade-dependency",
+      "pattern": "\\borg\\.springblade\\.",
+      "description": "依赖SpringBlade或兼容层"
+    },
+    {
+      "id": "persistence-dependency",
+      "pattern": "\\b(com\\.baomidou|org\\.mybatis)\\.",
+      "description": "依赖MyBatis持久化实现"
+    },
+    {
+      "id": "spring-web-dependency",
+      "pattern": "\\borg\\.springframework\\.web\\.",
+      "description": "依赖Spring Web适配层"
+    }
+  ]
+}

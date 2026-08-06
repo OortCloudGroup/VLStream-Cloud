@@ -7,7 +7,7 @@
     </div>
 
     <!-- 设置选项卡 -->
-    <el-tabs v-model="activeTab" class="settings-tabs">
+    <el-tabs v-model="activeTab" class="tenanat-tabs settings-tabs">
       <!-- 基础设置 -->
       <el-tab-pane label="基础设置" name="basic">
         <el-card class="setting-card">
@@ -523,6 +523,12 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  margin: 0;
+  padding: 20px;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  box-sizing: border-box;
+  overflow: auto;
 }
 
 .settings-tabs {

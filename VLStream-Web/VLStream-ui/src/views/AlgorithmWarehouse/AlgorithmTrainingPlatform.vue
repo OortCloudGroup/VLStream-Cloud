@@ -55,7 +55,7 @@
     </div>
 
     <!-- 标签页 -->
-    <el-tabs v-model="activeTab" @tab-click="handleTabClick">
+    <el-tabs v-model="activeTab" class="tenanat-tabs" @tab-click="handleTabClick">
       <!-- 训练任务 -->
       <el-tab-pane label="训练任务" name="training">
         <div class="training-section">
@@ -251,7 +251,7 @@
     <el-dialog
       v-model="showCreateTrainingDialog"
       title="新建训练任务"
-      width="600px"
+      width="35%"
       @close="resetTrainingForm"
     >
       <el-form :model="trainingForm" :rules="trainingRules" ref="trainingFormRef" label-width="120px">
@@ -299,8 +299,8 @@
       </el-form>
       
       <template #footer>
-        <el-button @click="showCreateTrainingDialog = false">取消</el-button>
-        <el-button type="primary" @click="createTrainingTask">开始训练</el-button>
+        <el-button @click="showCreateTrainingDialog = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="createTrainingTask" class="common_btn">开始训练</el-button>
       </template>
     </el-dialog>
   </div>
@@ -568,9 +568,13 @@ onMounted(() => {
 
 <style scoped>
 .algorithm-training-platform {
+  height: 100%;
+  margin: 0;
   padding: 20px;
-  background-color: #f5f7fa;
-  min-height: 100vh;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  overflow: auto;
+  box-sizing: border-box;
 }
 
 .page-header {

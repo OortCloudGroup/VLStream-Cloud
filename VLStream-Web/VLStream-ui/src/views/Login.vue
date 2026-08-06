@@ -4,14 +4,7 @@
       <!-- 登录头部 -->
       <div class="login-header">
         <div class="logo-section">
-          <div class="logo">
-            <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor">
-              <path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 9.74s9-4.19 9-9.74V7l-10-5z" fill="#667eea"/>
-              <path d="M12 4.44L4 8.5v8.5c0 4.28 2.88 7.26 7 7.26s7-2.98 7-7.26V8.5l-8-4.06z" fill="#764ba2"/>
-              <circle cx="12" cy="12" r="3" fill="white"/>
-            </svg>
-          </div>
-          <h1 class="title">VLStream视频汇聚平台</h1>
+          <img :src="loginLogo" alt="VLStream" class="login-logo">
         </div>
       </div>
 
@@ -61,15 +54,6 @@
         </el-form>
       </div>
 
-      <!-- 底部信息 -->
-      <div class="login-footer">
-        <p class="copyright">© 2024 VLStream 版权所有</p>
-        <div class="links">
-          <a href="#" class="link">使用帮助</a>
-          <span class="divider">|</span>
-          <a href="#" class="link">联系我们</a>
-        </div>
-      </div>
     </div>
 
     <!-- 背景装饰 -->
@@ -88,6 +72,7 @@ import { ElMessage } from 'element-plus'
 import smCrypto from 'sm-crypto'
 import { AuthManager } from '@/utils/auth'
 import { loginUser } from '@/api/auth'
+import loginLogo from '@/assets/img/img.png'
 
 const router = useRouter()
 const route = useRoute()
@@ -176,7 +161,9 @@ const handleLogin = async () => {
 
   } catch (error) {
     console.error('登录失败:', error)
-    const errorMsg = error.response?.data?.msg || error.response?.data?.message || error.message || '网络错误'
+    // 认证拦截器会把业务失败响应封装在 error.data 中；优先读取该消息，避免将账号密码错误误显示为网络错误。
+    const errorData = error.response?.data || error.data
+    const errorMsg = errorData?.msg || errorData?.message || (typeof errorData === 'string' && errorData) || error.message || '网络错误'
     ElMessage.error('登录失败: ' + errorMsg)
   } finally {
     loginLoading.value = false
@@ -251,26 +238,12 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
 }
 
-.logo {
-  width: 48px;
-  height: 48px;
-  margin-right: 12px;
-}
-
-.title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0;
-}
-
-.subtitle {
-  font-size: 14px;
-  color: #7f8c8d;
-  margin: 0;
+.login-logo {
+  width: 282px;
+  max-width: 100%;
+  height: auto;
 }
 
 .login-form {
@@ -293,37 +266,6 @@ onMounted(async () => {
 
 .login-button:hover {
   background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-}
-
-.login-footer {
-  text-align: center;
-  color: #95a5a6;
-  font-size: 12px;
-}
-
-.copyright {
-  margin: 0 0 8px 0;
-}
-
-.links {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.link {
-  color: #95a5a6;
-  text-decoration: none;
-  transition: color 0.3s;
-}
-
-.link:hover {
-  color: #667eea;
-}
-
-.divider {
-  color: #bdc3c7;
 }
 
 .bg-decoration {
@@ -382,8 +324,5 @@ onMounted(async () => {
     padding: 30px 20px;
   }
 
-  .title {
-    font-size: 20px;
-  }
 }
 </style>

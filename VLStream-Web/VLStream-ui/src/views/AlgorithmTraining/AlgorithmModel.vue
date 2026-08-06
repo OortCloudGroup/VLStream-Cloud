@@ -1,99 +1,81 @@
 <template>
-  <div class="algorithm-model">
+  <div class="algorithm-model tenant_Page draHeaPB">
+    <div class="tenant_content">
     <!-- 列表视图 -->
-    <div v-if="!showDetailView" class="list-view">
+    <div v-if="!showDetailView" class="tableTenBox flexRowAC">
+      <div class="tableTenItU">
+        <div class="depNameBox_out flexRowAC">
+          <div class="depNameBox flexRowAC">
+            <div class="exportBtnBox flexRowAC">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
+                  <el-icon class="BtnImg">
+                    <Plus />
+                  </el-icon>
+                  新增
+                </button>
+                <button-group :button-list="toolbarButtonList" />
+              </div>
+          </div>
+          <div class="searchHeight_out flexRowAC">
+            <search-height-box
+              keyword="keyword"
+              placeholder="搜索"
+              :data="searchData"
+              @handle="searchResetFn"
+            />
+            <export-excel-pdf :item="exportItem" @handle="handleExport" />
+          </div>
+        </div>
 
-    <!-- 操作按钮区域 -->
-    <div class="toolbar-section">
-      <div class="toolbar-left">
-        <el-button type="primary" class="add-btn-custom" @click="handleAdd">
-          <el-icon><Plus /></el-icon>
-          新增
-        </el-button>
-        <div class="edit-delete-group">
-          <el-button class="edit-btn-custom" @click="handleEdit" :disabled="selectedRows.length !== 1">
-            <el-icon><Edit /></el-icon>
-            编辑
-          </el-button>
-          <el-button type="danger" class="delete-btn-custom" @click="handleDelete" :disabled="selectedRows.length === 0">
-            <el-icon><Delete /></el-icon>
-            {{ selectedRows.length > 1 ? '批量删除' : '删除' }}
-          </el-button>
+        <TableSelf
+          class="new_table"
+          header-cell-class-name="header_tenant_cell"
+          stripe
+          v-loading="loading"
+          :data="currentPageData"
+          @selection-change="handleSelectionChange"
+          @row-click="handleRowClick"
+        >
+          <el-table-column type="selection" :width="clacPXToVW(55)" align="center" />
+          <el-table-column prop="name" label="模型名称" show-overflow-tooltip />
+          <el-table-column prop="source" label="模型来源" align="center" />
+          <el-table-column prop="version" label="版本" align="center" />
+          <el-table-column prop="downloadCount" label="下载次数" align="center" />
+          <el-table-column prop="createTime" label="创建时间" />
+          <el-table-column label="操作" :min-width="clacPXToVW(260)" :width="clacPXToVW(260)" align="right" fixed="right">
+            <template #default="scope">
+              <div class="operateAppBox flexRowAC" @click.stop>
+                <div class="new_table_svg_group" @click="handleView(scope.row)">
+                  <oort-svg-icon width="20" height="20" name="detail_icon" class="new_table_svg_group_svg" />
+                  <span>查看</span>
+                </div>
+                <div class="new_table_svg_group" @click="handleDownloadModel(scope.row)">
+                  <oort-svg-icon width="20" height="20" name="export" class="new_table_svg_group_svg" />
+                  <span>下载</span>
+                </div>
+                <div class="new_table_svg_group" @click="handleDeleteItem(scope.row)">
+                  <oort-svg-icon color="red" width="20" height="20" name="delete_icon" class="new_table_svg_group_svg" />
+                  <span>删除</span>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+        </TableSelf>
+
+        <div class="paginationBox flexRowAC">
+          <el-pagination
+            background
+            :current-page="currentPage"
+            :page-size="pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, prev, pager, next, sizes"
+            class="justifyAlign"
+            :total="total"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+          />
         </div>
       </div>
-      
-      <div class="toolbar-right">
-        <AdvancedSearch 
-          @search="handleAdvancedSearch"
-          @reset="handleAdvancedSearchReset"
-          @export="handleExport"
-          @upload="handleUpload"
-          @template="handleDownloadTemplate"
-          @batch="handleBatchOperation"
-        />
-      </div>
-    </div>
-
-    <!-- 表格区域 -->
-    <div class="table-section">
-      <el-table 
-        :data="currentPageData" 
-        stripe 
-        style="width: 100%"
-        v-loading="loading"
-        @selection-change="handleSelectionChange"
-        @row-click="handleRowClick">
-        <el-table-column type="selection" width="55" align="center" />
-        <el-table-column prop="name" label="模型名称"/>
-        <el-table-column prop="source" label="模型来源" align="center" />
-        <el-table-column prop="version" label="版本" align="center" />
-        <el-table-column prop="downloadCount" label="下载次数" align="center" />
-        <el-table-column prop="createTime" label="创建时间" />
-        <el-table-column label="操作" align="right" fixed="right">
-          <template #default="scope">
-            <div class="action-buttons">
-              <el-button
-                type="primary"
-                link
-                size="small"
-                @click="handleView(scope.row)"
-              >
-                查看
-              </el-button>
-              <el-button
-                type="success"
-                link
-                size="small"
-                @click="handleDownloadModel(scope.row)"
-              >
-                下载模型
-              </el-button>
-              <el-button
-                type="danger"
-                link
-                size="small"
-                @click="handleDeleteItem(scope.row)"
-              >
-                删除
-              </el-button>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-
-    <!-- 分页 -->
-    <div class="pagination-section">
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="total"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </div>
     </div>
 
     <!-- 详情视图 -->
@@ -159,7 +141,7 @@
     <el-dialog
       v-model="showModelDialog"
       :title="isEditingModel ? '编辑算法模型' : '新增算法模型'"
-      width="640px"
+      width="35%"
       :close-on-click-modal="false"
       @close="handleModelDialogClose"
     >
@@ -231,19 +213,20 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleModelDialogClose">取消</el-button>
-          <el-button type="primary" @click="handleSubmitModel">保存</el-button>
+          <el-button @click="handleModelDialogClose" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleSubmitModel" class="common_btn">保存</el-button>
         </div>
       </template>
     </el-dialog>
+    </div>
   </div>
 </template>
 
 <script setup>
 import {computed, h, onMounted, ref} from 'vue'
+import { clacPXToVW } from '@/utils/index'
 import {Delete, Edit, Plus} from '@element-plus/icons-vue'
 import {ElMessage, ElMessageBox, ElRadio, ElRadioGroup} from 'element-plus'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
 import {
   batchDeleteModel,
   createModel,
@@ -572,8 +555,21 @@ const handleBackToList = () => {
 }
 
 // 下载模型文件
-const promptDownloadModelType = async () => {
-  let chosenType = 'pt'
+const promptDownloadModelType = async (modelRow) => {
+  const modelData = modelRow?.originalData || modelRow || {}
+  const modelTypes = [
+    { type: 'pt', path: modelData.modelPath },
+    { type: 'onnx', path: modelData.onnxModelPath },
+    { type: 'rknn', path: modelData.rknnModelPath },
+    { type: 'int8-rknn', path: modelData.int8RknnModelOutputPath },
+    { type: 'om', path: modelData.omModelOutputPath }
+  ]
+  const firstAvailableType = modelTypes.find(item => item.path)?.type
+  if (!firstAvailableType) {
+    ElMessage.warning('当前模型还没有可下载的文件')
+    return null
+  }
+  let chosenType = firstAvailableType
 
   const TypeSelector = {
     name: 'DownloadModelTypeSelector',
@@ -591,12 +587,11 @@ const promptDownloadModelType = async () => {
             modelValue: localType.value,
             'onUpdate:modelValue': updateType
           },
-          () => [
-            h(ElRadio, { label: 'pt' }, () => 'pt'),
-            h(ElRadio, { label: 'onnx' }, () => 'onnx'),
-            h(ElRadio, { label: 'rknn' }, () => 'rknn'),
-            h(ElRadio, { label: 'int8-rknn' }, () => 'int8-rknn')
-          ]
+          () => modelTypes.map(item => h(
+            ElRadio,
+            { label: item.type, disabled: !item.path },
+            () => item.path ? item.type : `${item.type}（未生成）`
+          ))
         )
       ])
     }
@@ -633,7 +628,7 @@ const downloadModelFile = async (modelRow) => {
       return
     }
 
-    const downloadType = await promptDownloadModelType()
+    const downloadType = await promptDownloadModelType(modelRow)
     if (!downloadType) {
       return
     }
@@ -642,9 +637,9 @@ const downloadModelFile = async (modelRow) => {
     const fileName = `${fallbackName}.${downloadType}`
 
     const blob = await request({
-      url: '/vlsAlgorithmTraining/download-model',
+      url: `/vlsAlgorithmModel/${modelId}/download-file`,
       method: 'get',
-      params: { id: modelId, type: downloadType },
+      params: { type: downloadType },
       responseType: 'blob'
     })
 
@@ -699,6 +694,23 @@ const handleSizeChange = (val) => {
 const handleCurrentChange = (val) => {
   currentPage.value = val
   loadModelData()
+}
+
+const toolbarButtonList = [
+  { name: '编辑', svg: 'table_edit', clickFn: handleEdit },
+  { name: '删除', svg: 'table_del', clickFn: handleDelete },
+]
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '关键词', value: 'keyword', type: 'text', default: '' }
+])
+
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && val.keyword)) {
+    handleAdvancedSearchReset()
+    return
+  }
+  handleAdvancedSearch(val || {})
 }
 
 // 高级搜索相关方法
@@ -796,11 +808,42 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  background: #f0f2f5;
+  .tenant_content { width: 100%; height: 100%; border-radius: 8px; }
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+  }
+}
+.tableTenItU {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+  :deep(.header_tenant_cell) { background: #F8F8F9; }
+}
+.paginationBox { justify-content: center; height: 100px; }
+.operateAppBox {
+  justify-content: flex-end;
+  gap: 2px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
 .algorithm-model {
-  padding: 20px;
-  background: #f5f7fa;
-  min-height: 100vh;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* 搜索区域 */

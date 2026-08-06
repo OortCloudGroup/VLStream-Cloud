@@ -8,6 +8,9 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="vlsEventManagementResultMap" type="com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement">
+        <result column="mqtt_message_id" property="mqttMessageId"/>
+        <result column="device_event_id" property="deviceEventId"/>
+        <result column="media_id" property="mediaId"/>
         <result column="event_desc" property="eventDesc"/>
         <result column="event_type" property="eventType"/>
         <result column="report_location" property="reportLocation"/>

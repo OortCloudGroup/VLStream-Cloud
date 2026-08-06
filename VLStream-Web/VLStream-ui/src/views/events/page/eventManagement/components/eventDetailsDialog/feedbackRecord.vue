@@ -3,7 +3,7 @@
     <el-timeline>
       <el-timeline-item
         v-for="(item, index) in feedbackListData"
-        :key="index"
+        :key="item.id || `${item.created_at}-${index}`"
         :timestamp="formatTimestamp(item.created_at || '')"
         :hollow="true"
         type="primary"

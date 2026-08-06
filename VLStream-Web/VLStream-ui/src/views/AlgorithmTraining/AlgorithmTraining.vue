@@ -1,5 +1,6 @@
 <template>
-  <div class="page-container">
+  <div class="page-container tenant_Page draHeaPB">
+    <div class="tenant_content">
     <!-- 列表视图 -->
     <div v-if="!showTrainingConfig && !showVersionConfig && !showValidationView" class="list-view">
       <!-- 介绍内容区 -->
@@ -57,49 +58,45 @@
         </div>
       </div>
 
-      <!-- 主内容区域 -->
-      <div class="main-content">
-        <!-- 工具栏 -->
-        <div class="toolbar">
-          <div class="toolbar-left">
-            <ActionButtonGroup
-              :selected-count="selectedRows.length"
-              @add="handleAdd"
-              @edit="handleEdit"
-              @delete="handleDelete"
-            />
-<!--            <el-button type="success" size="small" @click="testUpdateStatus" style="margin-left: 10px;">-->
-<!--              测试状态更新-->
-<!--            </el-button>-->
+      <div class="tableTenBox flexRowAC" style="flex-direction:column;padding-top:0;">
+        <div class="tableTenItU">
+        <div class="depNameBox_out flexRowAC">
+          <div class="depNameBox flexRowAC">
+            <div class="exportBtnBox flexRowAC">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
+                  <el-icon class="BtnImg">
+                    <Plus />
+                  </el-icon>
+                  新建
+                </button>
+                <button-group :button-list="toolbarButtonList" />
+              </div>
           </div>
-          
-          <div class="toolbar-right">
-            <AdvancedSearch 
-              @search="handleAdvancedSearch"
-              @reset="handleAdvancedSearchReset"
-              @export="handleExport"
-              @upload="handleUpload"
-              @template="handleDownloadTemplate"
-              @batch="handleBatchOperation"
+          <div class="searchHeight_out flexRowAC">
+            <search-height-box
+              keyword="keyword"
+              placeholder="搜索"
+              :data="searchData"
+              @handle="searchResetFn"
             />
+            <export-excel-pdf :item="exportItem" @handle="handleExport" />
           </div>
         </div>
         
-        <!-- 表格区域 -->
-        <div class="table-section">
-      <el-table 
-        :data="currentPageData" 
-        stripe 
-        style="width: 100%"
+        <TableSelf
+        class="new_table"
+        header-cell-class-name="header_tenant_cell"
+        :data="currentPageData"
+        stripe
         v-loading="loading"
         @selection-change="handleSelectionChange"
         @row-click="handleRowClick"
       >
-        <el-table-column type="selection" width="55" align="center" />
-        <el-table-column prop="modelId" label="模型ID" width="80" align="center" />
-        <el-table-column prop="algorithmName" label="算法名称" min-width="160" />
-        <el-table-column prop="trainAlgorithm" label="训练算法" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="trainStatus" label="训练状态" width="120" align="center">
+        <el-table-column type="selection" :width="clacPXToVW(55)" align="center" />
+        <el-table-column prop="modelId" label="模型ID" align="center" />
+        <el-table-column prop="algorithmName" label="算法名称" show-overflow-tooltip />
+        <el-table-column prop="trainAlgorithm" label="训练算法" show-overflow-tooltip />
+        <el-table-column prop="trainStatus" label="训练状态" align="center">
           <template #default="scope">
             <el-tag
               :type="getStatusType(scope.row.trainStatus)"
@@ -110,7 +107,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="modelEffect" label="模型效果" width="200" align="center">
+        <el-table-column prop="modelEffect" label="模型效果" align="center">
           <template #default="scope">
             <div v-if="scope.row.trainStatus === '训练完成'" class="model-metrics">
               <div class="metric-item">
@@ -133,13 +130,13 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="targetModel" label="对应模型" min-width="120" align="center">
+        <el-table-column prop="targetModel" label="对应模型" align="center">
           <template #default="scope">
             <span v-if="scope.row.targetModel">{{ scope.row.targetModel }}</span>
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="320" fixed="right" align="right">
+        <el-table-column label="操作" :width="clacPXToVW(320)" fixed="right" align="right">
           <template #default="scope">
             <div class="table-action-buttons">
               <!-- 空状态：训练和更多 -->
@@ -284,16 +281,16 @@
             </div>
           </template>
         </el-table-column>
-      </el-table>
-      </div>
+      </TableSelf>
 
-      <!-- 分页 -->
-      <div class="pagination-section">
+      <div class="paginationBox flexRowAC">
         <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
+          background
+          :current-page="currentPage"
+          :page-size="pageSize"
           :page-sizes="[5, 10, 20, 50]"
-          layout="total, sizes, prev, pager, next, jumper"
+          layout="total, prev, pager, next, sizes"
+          class="justifyAlign"
           :total="total"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
@@ -301,6 +298,7 @@
       </div>
         </div>
       </div>
+    </div>
 
     <!-- 版本配置视图 -->
     <div v-if="showVersionConfig" class="version-config-view">
@@ -730,13 +728,12 @@
         </div>
       </div>
     </div>
-  </div>
 
   <!-- 发布为模型弹窗 -->
   <el-dialog
     v-model="showDeployDialog"
     title="发布至模型仓库"
-    width="600px"
+    width="35%"
     :before-close="handleDeployCancel"
   >
     <el-form :model="deployForm" label-width="100px" style="max-width: 500px">
@@ -797,8 +794,8 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleDeployCancel">取消</el-button>
-        <el-button type="primary" @click="handleDeployConfirm">确认</el-button>
+        <el-button @click="handleDeployCancel" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleDeployConfirm" class="common_btn">确认</el-button>
       </div>
     </template>
   </el-dialog>
@@ -809,7 +806,7 @@
   <el-dialog
     v-model="showAddDialog"
     title="新增训练任务"
-    width="600px"
+    width="35%"
     :before-close="handleCloseDialog"
   >
     <el-form
@@ -916,8 +913,8 @@
     
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleCloseDialog">取消</el-button>
-        <el-button type="primary" @click="handleConfirmAdd">确定</el-button>
+        <el-button @click="handleCloseDialog" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleConfirmAdd" class="common_btn">确定</el-button>
       </div>
     </template>
   </el-dialog>
@@ -926,7 +923,7 @@
   <el-dialog
     v-model="showEditDialog"
     title="编辑训练任务"
-    width="600px"
+    width="35%"
     :before-close="handleCloseEditDialog"
   >
     <el-form
@@ -1034,8 +1031,8 @@
     
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleCloseEditDialog">取消</el-button>
-        <el-button type="primary" @click="handleConfirmEdit">确定</el-button>
+        <el-button @click="handleCloseEditDialog" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleConfirmEdit" class="common_btn">确定</el-button>
       </div>
     </template>
   </el-dialog>
@@ -1044,7 +1041,7 @@
   <el-dialog
     v-model="showDatasetSelector"
     title="选择数据集"
-    width="800px"
+    width="45%"
     :before-close="handleCloseDatasetSelector"
   >
     <div class="dataset-selector-content">
@@ -1098,25 +1095,28 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleCloseDatasetSelector">取消</el-button>
-        <el-button type="primary" @click="handleConfirmDatasetSelection">
+        <el-button @click="handleCloseDatasetSelector" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="handleConfirmDatasetSelection" class="common_btn">
           确定 ({{ selectedDatasetIds.length }})
         </el-button>
       </div>
     </template>
   </el-dialog>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import {computed, h, nextTick, onMounted, onUnmounted, ref} from 'vue'
 import {ElMessage, ElMessageBox, ElRadio, ElRadioGroup} from 'element-plus'
 import {ArrowDown, Download, Plus, QuestionFilled, Refresh, Search} from '@element-plus/icons-vue'
-import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
+import { clacPXToVW } from '@/utils/index'
 import {
   batchDeleteTraining,
   convertModel,
   createTraining,
   deleteTraining,
+  getTrainingTask,
   getTrainingLogs,
   getTrainingPage,
   getTrainingStatus,
@@ -1128,7 +1128,6 @@ import {createModel, getModelPage} from '@/api/algorithmModel.js'
 import {getAlgorithmAnnotationPage} from '@/api/algorithmAnnotation.js'
 import {getAlgorithmPage} from '@/api/algorithmManagement.js'
 import CollapseToggle from '@/components/CollapseToggle.vue'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
 
 // 导入步骤图标
 import trainIcon from '@/assets/start-training@3x.png'
@@ -1239,6 +1238,9 @@ const currentCommand = ref('')
 const terminalRef = ref(null)
 const logPollingTimer = ref(null)
 const statusPollingTimer = ref(null)
+const conversionPollingTimer = ref(null)
+const finalizingTrainingTasks = new Set()
+const MODEL_CONVERSION_MAX_POLLS = 900
 const lastLogContent = ref('')
 const lastLogCount = ref(0)
 const lastModelPath = ref('')
@@ -1765,8 +1767,31 @@ const handleMoreAction = async (command, data) => {
 }
 
 // 下载模型
-const promptDownloadModelType = async () => {
-  let chosenType = 'pt'
+const promptDownloadModelType = async (row) => {
+  const modelData = row?.originalData || row || {}
+  const modelTypes = [
+    { type: 'pt', path: modelData.modelOutputPath },
+    {
+      type: 'onnx',
+      path: modelData.onnxModelOutputPath,
+      status: modelData.onnxConversionStatus,
+      error: modelData.onnxConversionError
+    },
+    { type: 'rknn', path: modelData.rknnModelOutputPath },
+    { type: 'int8-rknn', path: modelData.int8RknnModelOutputPath },
+    {
+      type: 'om',
+      path: modelData.omModelOutputPath,
+      status: modelData.omConversionStatus,
+      error: modelData.omConversionError
+    }
+  ]
+  const firstAvailableType = modelTypes.find(item => item.path)?.type
+  if (!firstAvailableType) {
+    ElMessage.warning('当前训练任务还没有可下载的模型文件')
+    return null
+  }
+  let chosenType = firstAvailableType
 
   const TypeSelector = {
     name: 'DownloadModelTypeSelector',
@@ -1784,11 +1809,19 @@ const promptDownloadModelType = async () => {
             modelValue: localType.value,
             'onUpdate:modelValue': updateType
           },
-          () => [
-            h(ElRadio, { label: 'pt' }, () => 'pt'),
-            h(ElRadio, { label: 'onnx' }, () => 'onnx'),
-            h(ElRadio, { label: 'rknn' }, () => 'rknn')
-          ]
+          () => modelTypes.map(item => h(
+            ElRadio,
+            { label: item.type, disabled: !item.path },
+            () => {
+              if (item.path) return item.type
+              if (item.status === 'converting') return `${item.type}（转换中）`
+              if (item.status === 'failed') {
+                const error = item.error ? String(item.error).slice(0, 120) : '未返回失败原因'
+                return `${item.type}（失败：${error}）`
+              }
+              return `${item.type}（未生成）`
+            }
+          ))
         )
       ])
     }
@@ -1817,7 +1850,7 @@ const handleDownloadModel = async (row) => {
       return
     }
 
-    const downloadType = await promptDownloadModelType()
+    const downloadType = await promptDownloadModelType(row)
     if (!downloadType) {
       return
     }
@@ -1826,9 +1859,9 @@ const handleDownloadModel = async (row) => {
     const modelFileName = `${taskName}.${downloadType}`
 
     const blob = await request({
-      url: '/vlsAlgorithmTraining/download-model',
+      url: `/vlsAlgorithmTraining/${trainingId}/download-model`,
       method: 'get',
-      params: { id: trainingId, type: downloadType },
+      params: { type: downloadType },
       responseType: 'blob'
     })
 
@@ -2311,9 +2344,95 @@ const stopStatusPolling = () => {
   }
 }
 
+const stopConversionPolling = () => {
+  if (conversionPollingTimer.value) {
+    clearInterval(conversionPollingTimer.value)
+    conversionPollingTimer.value = null
+  }
+}
+
 const stopAllPolling = () => {
   stopLogPolling()
   stopStatusPolling()
+  stopConversionPolling()
+}
+
+const isConversionTerminal = (status) => ['completed', 'failed'].includes(status)
+
+const startConversionPolling = (taskId, trainingStatus, displayStatus) => {
+  stopConversionPolling()
+  let polling = false
+  let attempts = 0
+
+  const fetchOnce = async () => {
+    if (polling) return
+    polling = true
+    try {
+      attempts += 1
+      const res = await getTrainingTask(taskId)
+      const payload = res?.data ?? res
+      const data = payload?.data ?? payload
+      const onnxStatus = data?.onnxConversionStatus
+      const omStatus = data?.omConversionStatus
+      if (!isConversionTerminal(onnxStatus) || !isConversionTerminal(omStatus)) {
+        if (attempts >= MODEL_CONVERSION_MAX_POLLS) {
+          stopConversionPolling()
+          appendTerminalInfo('模型转换等待超时，请稍后刷新列表查看转换结果。')
+        }
+        return
+      }
+
+      stopConversionPolling()
+      await loadTrainingData()
+      if (onnxStatus === 'completed') {
+        appendTerminalInfo(`ONNX转换完成: ${data.onnxModelOutputPath}`)
+      } else {
+        appendLogLines(`[ERROR] ONNX转换失败: ${data.onnxConversionError || '未返回失败原因'}`)
+      }
+      if (omStatus === 'completed') {
+        appendTerminalInfo(`OM转换完成: ${data.omModelOutputPath}`)
+      } else {
+        appendLogLines(`[ERROR] OM转换失败: ${data.omConversionError || '未返回失败原因'}`)
+      }
+      await triggerAutoPublish(taskId, trainingStatus, displayStatus)
+    } catch (error) {
+      console.error('查询模型转换状态失败:', error)
+      if (attempts >= MODEL_CONVERSION_MAX_POLLS) {
+        stopConversionPolling()
+        appendLogLines(`[ERROR] 查询模型转换状态失败: ${error?.message || error}`)
+      }
+    } finally {
+      polling = false
+    }
+  }
+
+  conversionPollingTimer.value = setInterval(fetchOnce, 2000)
+  fetchOnce()
+}
+
+const handleTrainingFinished = async (taskId, statusValue) => {
+  if (finalizingTrainingTasks.has(taskId)) return
+  finalizingTrainingTasks.add(taskId)
+  isTraining.value = false
+  stopLogPolling()
+  stopStatusPolling()
+
+  const displayStatus = getTrainStatusText(statusValue)
+  appendTerminalInfo(`训练状态: ${displayStatus}`)
+  if (!isCompletedStatus(statusValue) && !isCompletedStatus(displayStatus)) {
+    await loadTrainingData()
+    return
+  }
+
+  try {
+    await convertModel(taskId)
+    appendTerminalInfo('训练完成，已提交ONNX和OM转换，正在查询转换状态...')
+    startConversionPolling(taskId, statusValue, displayStatus)
+  } catch (error) {
+    appendLogLines(`[ERROR] 提交模型转换失败: ${error?.message || error}`)
+    await loadTrainingData()
+    finalizingTrainingTasks.delete(taskId)
+  }
 }
 
 const startLogPolling = (taskId) => {
@@ -2350,20 +2469,7 @@ const startLogPolling = (taskId) => {
       appendTrainingPaths(modelPath, logPath)
 
       if (isFinishedStatus(resolvedStatus)) {
-        await convertModel(taskId)
-        isTraining.value = false
-        stopAllPolling()
-        await loadTrainingData()
-        const displayStatus = getTrainStatusText(resolvedStatus)
-        appendTerminalInfo(`\u8bad\u7ec3\u72b6\u6001: ${displayStatus}`)
-        await triggerAutoPublish(taskId, resolvedStatus, displayStatus)
-        const refreshedItem = tableData.value.find(item => item.id === taskId)
-        if (refreshedItem?.originalData) {
-          appendTrainingPaths(
-            refreshedItem.originalData.modelOutputPath,
-            refreshedItem.originalData.logPath || refreshedItem.originalData.logFilePath
-          )
-        }
+		await handleTrainingFinished(taskId, resolvedStatus)
       }
 
       // 日志接口返回了完成状态时，提前停止轮询
@@ -2394,11 +2500,7 @@ const startStatusPolling = (taskId) => {
       }
 
       if (isFinishedStatus(statusValue) || isFinishedStatus(displayStatus)) {
-        isTraining.value = false
-        stopAllPolling()
-        await loadTrainingData()
-        appendLogLines(`[INFO] Training status: ${displayStatus}`)
-        await triggerAutoPublish(taskId, statusValue, displayStatus)
+		await handleTrainingFinished(taskId, statusValue)
       }
     } catch (error) {
       console.error('Failed to fetch training status:', error)
@@ -2548,6 +2650,23 @@ const handleDeployModel = async () => {
   } catch (error) {
     ElMessage.error('发布模型失败：' + error.message)
   }
+}
+
+const toolbarButtonList = [
+  { name: '编辑', svg: 'table_edit', clickFn: handleEdit },
+  { name: '删除', svg: 'table_del', clickFn: handleDelete },
+]
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '关键词', value: 'keyword', type: 'text', default: '' }
+])
+
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && val.keyword)) {
+    handleAdvancedSearchReset()
+    return
+  }
+  handleAdvancedSearch(val || {})
 }
 
 // 高级搜索相关方法
@@ -2879,14 +2998,49 @@ const openDatasetSelector = async () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  background: #f0f2f5;
+  .tenant_content {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    overflow: hidden;
+  }
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+    border-radius: 0;
+  }
+}
+.tableTenItU {
+  flex: 1;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: auto;
+  :deep(.header_tenant_cell) { background: #F8F8F9; }
+}
+.paginationBox { justify-content: center; height: 100px; }
+.operateAppBox { justify-content: flex-end; gap: 2px; flex-wrap: wrap; }
+
 .page-container {
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  background-color: #f5f7fa;
-  padding: 20px;
+  overflow: hidden;
 }
 
 .list-view {
@@ -2968,11 +3122,11 @@ const openDatasetSelector = async () => {
 /* 介绍区域 */
 .intro-section {
   background: white;
-  border-radius: 0;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-top: 1px solid #e8e8e8;
-  margin-bottom: 24px;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  padding: 24px 20px 0;
+  box-shadow: none;
+  border-top: none;
+  margin-bottom: 0;
 }
 
 .intro-header {
@@ -4012,21 +4166,6 @@ const openDatasetSelector = async () => {
   gap: 12px;
 }
 
-:deep(.el-dialog__header) {
-  padding: 20px 24px 12px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-:deep(.el-dialog__title) {
-  font-size: 16px;
-  font-weight: 600;
-  color: #262626;
-}
-
-:deep(.el-dialog__body) {
-  padding: 20px 24px;
-}
-
 :deep(.el-form-item__label) {
   color: #262626;
   font-weight: 500;
@@ -4213,21 +4352,6 @@ const openDatasetSelector = async () => {
   justify-content: flex-end;
   gap: 12px;
   padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* 弹窗表单样式 */
-:deep(.el-dialog__body) {
-  padding: 20px 24px;
-}
-
-:deep(.el-dialog__header) {
-  padding: 20px 24px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-:deep(.el-dialog__footer) {
-  padding: 0 24px 20px;
 }
 
 /* 弹窗表单字段样式 */

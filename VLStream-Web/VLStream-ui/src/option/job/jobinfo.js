@@ -1,5 +1,3 @@
-import {getBaseURL} from "@/utils/request";
-
 export const timeExpressionTypeDic = [
   {
     label: 'API',
@@ -121,11 +119,14 @@ export default {
   height: 'auto',
   calcHeight: 30,
   tip: false,
-  searchShow: true,
+  searchShow: false,
+  searchShowBtn: false,
+  searchBtn: false,
   searchMenuSpan: 6,
   border: true,
   index: true,
   viewBtn: true,
+  addBtn: false,
   selection: true,
   grid: true,
   labelWidth: 180,
@@ -138,19 +139,19 @@ export default {
       label: '任务应用',
       prop: 'jobServerId',
       type: 'select',
-      dicUrl: getBaseURL() + '/blade-job/job-server/select',
+      dicUrl: '/blade-job/job-server/select',
       props: {
         label: 'jobAppName',
         value: 'id',
       },
-      search: true,
+      search: false,
       display: false,
     },
     {
       label: '任务ID',
       prop: 'jobId',
       type: 'input',
-      search: true,
+      search: false,
       width: 80,
       display: false,
     },
@@ -158,7 +159,7 @@ export default {
       label: '任务名称',
       prop: 'jobName',
       type: 'input',
-      search: true,
+      search: false,
       width: 200,
       display: false,
     },

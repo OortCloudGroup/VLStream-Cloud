@@ -6,6 +6,7 @@
 package com.ruoyi.vlstream.compat;
 
 import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.vlstream.test.compat.BladeUserInfoBuilder;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 

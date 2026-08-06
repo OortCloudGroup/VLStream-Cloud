@@ -1,7 +1,7 @@
 <template>
   <div class="camera-settings">
-    <!-- 导航面包屑 - 仅在独立页面模式显示 -->
-    <div v-if="!deviceInfo" class="content-header">
+    <!-- 导航面包屑 - 独立页面模式或无内嵌 deviceInfo 时显示 -->
+    <div v-if="!props.deviceInfo" class="content-header">
       <div class="breadcrumb">
         <span class="breadcrumb-item" @click="goBack">设备列表</span>
         <span class="breadcrumb-separator">></span>
@@ -14,20 +14,10 @@
       <div class="video-control-container">
         <!-- 显示设置标签页 -->
         <div class="settings-tabs">
-          <div class="tab-header">
-            <el-button 
-              :class="['tab-btn', { active: activeTab === 'display' }]"
-              @click="activeTab = 'display'"
-            >
-              显示设置
-            </el-button>
-            <el-button 
-              :class="['tab-btn', { active: activeTab === 'osd' }]"
-              @click="activeTab = 'osd'"
-            >
-              OSD设置
-            </el-button>
-          </div>
+          <el-tabs v-model="activeTab" class="tenanat-tabs">
+            <el-tab-pane label="显示设置" name="display" />
+            <el-tab-pane label="OSD设置" name="osd" />
+          </el-tabs>
           
           <!-- 场景选择 -->
           <div v-if="activeTab === 'display'" class="scene-selector">
@@ -527,12 +517,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Setting } from '@element-plus/icons-vue'
 import PTZControl from '@/components/PTZControl.vue'
 import PresetPanel from '@/components/PresetPanel.vue'
+import { getDeviceById } from '@/api/device'
 
 // Props
 const props = defineProps({
@@ -545,7 +536,28 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['back'])
 
+const route = useRoute()
 const router = useRouter()
+
+const routeDeviceInfo = ref(null)
+const resolvedDeviceInfo = computed(() => props.deviceInfo || routeDeviceInfo.value)
+
+onMounted(async () => {
+  if (props.deviceInfo) return
+  const id = route.query.id
+  if (!id) return
+  try {
+    const response = await getDeviceById(id)
+    if (response.code === 200) {
+      routeDeviceInfo.value = { ...response.data, id: response.data.id || id }
+    } else {
+      routeDeviceInfo.value = { id }
+    }
+  } catch (error) {
+    console.error('获取设备详情失败:', error)
+    routeDeviceInfo.value = { id }
+  }
+})
 
 // 当前激活的标签页
 const activeTab = ref('display')
@@ -854,45 +866,14 @@ const handleOSDSettingsSave = (settings) => {
 /* 标签页 */
 .settings-tabs {
   background: white;
-  border-radius: 6px 6px 0 0; /* 只保留顶部圆角 */
+  border-radius: 6px 6px 0 0;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  margin: 0; /* 完全移除所有外边距 */
-  flex-shrink: 0; /* 防止标签页被压缩 */
-}
+  margin: 0;
+  flex-shrink: 0;
 
-.tab-header {
-  padding: 16px 0px 16px 0px; /* 移除左内边距，与左边框对齐 */
-  border-bottom: 1px solid #e4e7ed;
-  display: flex;
-  gap: 8px;
-}
-
-.tab-btn {
-  padding: 8px 16px;
-  border: none;
-  background: transparent; /* 移除背景色 */
-  color: #909399; /* 默认灰色文字 */
-  border-radius: 0; /* 移除圆角 */
-  transition: all 0.3s ease;
-  font-size: 16px;
-}
-
-.tab-btn:first-child {
-  margin-left: 0; /* 移除额外左边距，容器已有20px内边距 */
-}
-
-.tab-btn:not(:first-child) {
-  margin-left: 8px; /* 其他按钮正常间距 */
-}
-
-.tab-btn.active {
-  background: transparent; /* 移除背景色 */
-  color: #409eff; /* 蓝色文字表示激活状态 */
-}
-
-.tab-btn:hover:not(.active) {
-  background: transparent; /* 移除背景色 */
-  color: #409eff; /* 悬停时也变为蓝色 */
+  .tenanat-tabs {
+    padding: 0 16px;
+  }
 }
 
 /* 场景选择器 */

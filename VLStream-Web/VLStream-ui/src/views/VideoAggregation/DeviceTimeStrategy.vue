@@ -2,22 +2,10 @@
   <div class="device-time-strategy">
     <div class="config-container">
       <!-- 标签页 -->
-      <div class="config-tabs">
-        <div 
-          class="tab-item" 
-          :class="{ active: activeTab === 'time' }"
-          @click="activeTab = 'time'"
-        >
-          时间策略
-        </div>
-        <div 
-          class="tab-item" 
-          :class="{ active: activeTab === 'event' }"
-          @click="activeTab = 'event'"
-        >
-          事件策略
-        </div>
-      </div>
+      <el-tabs v-model="activeTab" class="tenanat-tabs">
+        <el-tab-pane label="时间策略" name="time" />
+        <el-tab-pane label="事件策略" name="event" />
+      </el-tabs>
 
       <!-- 时间策略内容 -->
       <div v-if="activeTab === 'time'" class="config-tab-content">
@@ -165,8 +153,8 @@
               <el-dialog
                 v-model="copyDialogVisible"
                 title="复制时间设置"
-                width="400px"
-                :show-close="false"
+                width="25%"
+                :show-close="true"
               >
                 <div class="copy-dialog-content">
                   <p>将 {{ sourceDay }} 的时间设置复制到：</p>
@@ -190,8 +178,8 @@
                 </div>
                 <template #footer>
                   <div class="copy-dialog-footer">
-                    <el-button @click="cancelCopy">取消</el-button>
-                    <el-button type="primary" @click="confirmCopy">确定</el-button>
+                    <el-button @click="cancelCopy" class="common_btn">取消</el-button>
+                    <el-button type="primary" @click="confirmCopy" class="common_btn">确定</el-button>
                   </div>
                 </template>
               </el-dialog>
@@ -931,30 +919,14 @@ onMounted(() => {
   padding: 20px;
   
   .config-container {
-    max-width: 1200px;
+    max-width: none;
+    width: 100%;
     margin: 0;
   }
   
-  .config-tabs {
-    display: flex;
-    margin-bottom: 30px;
-    border-bottom: 1px solid #e4e7ed;
-    
-    .tab-item {
-      padding: 12px 24px;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.3s;
-      
-      &:hover {
-        color: #409eff;
-      }
-      
-      &.active {
-        color: #409eff;
-        border-bottom-color: #409eff;
-      }
-    }
+  .tenanat-tabs {
+    padding: 0;
+    margin-bottom: 20px;
   }
   
   .config-section {

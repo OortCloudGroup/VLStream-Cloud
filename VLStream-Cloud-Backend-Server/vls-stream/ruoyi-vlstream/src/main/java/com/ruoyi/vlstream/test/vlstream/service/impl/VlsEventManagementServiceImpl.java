@@ -88,10 +88,10 @@ public class VlsEventManagementServiceImpl extends BaseServiceImpl<VlsEventManag
 		if (eventManagement == null) {
 			return false;
 		}
-		if (Objects.nonNull(eventManagement.getEventLevel())) {
+		if (Objects.isNull(eventManagement.getEventLevel())) {
 			eventManagement.setEventLevel(EventLevelEnum.medium);
 		}
-		if (Objects.nonNull(eventManagement.getEventStatus())) {
+		if (Objects.isNull(eventManagement.getEventStatus())) {
 			eventManagement.setEventStatus(EventStatusEnum.pending);
 		}
 		if (eventManagement.getReportTime() == null) {

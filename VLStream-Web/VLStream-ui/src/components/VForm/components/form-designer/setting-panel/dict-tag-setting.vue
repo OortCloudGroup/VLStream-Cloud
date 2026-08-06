@@ -45,8 +45,8 @@
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取 消</el-button>
-          <el-button type="primary" @click="saveDataTag">确 定</el-button>
+          <el-button @click="dialogVisible = false" class="common_btn">取 消</el-button>
+          <el-button type="primary" @click="saveDataTag" class="common_btn">确 定</el-button>
         </span>
       </template>
     </el-dialog>
@@ -58,7 +58,7 @@ import { ElInput, ElButton, ElDialog, ElTable, ElTableColumn, ElPagination, ElSe
 import { Plus } from '@element-plus/icons-vue'
 
 import { ref, onMounted } from 'vue'
-import { dictList } from '@/api/login/indexapaas'
+import { dictList } from '@/api/system/dictionary'
 
 const props = defineProps({
   modelValue: Object

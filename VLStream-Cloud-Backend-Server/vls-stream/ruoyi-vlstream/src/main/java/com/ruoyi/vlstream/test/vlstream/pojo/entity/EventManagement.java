@@ -32,6 +32,22 @@ public class EventManagement extends TenantEntity {
 	private static final long serialVersionUID = 1L;
 
 	/**
+	 * MQTT 上报消息唯一 ID，用于 QoS 1 重复消息去重。
+	 */
+	@Schema(description = "MQTT上报消息唯一ID")
+	private String mqttMessageId;
+	/**
+	 * 设备侧事件唯一 ID。
+	 */
+	@Schema(description = "设备侧事件唯一ID")
+	private String deviceEventId;
+	/**
+	 * 关联的事件图片 mediaId。
+	 */
+	@Schema(description = "事件图片mediaId")
+	private String mediaId;
+
+	/**
 	 * 事件描述
 	 */
 	@Schema(description = "事件描述")

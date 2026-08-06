@@ -1449,17 +1449,45 @@ INSERT INTO `vls_mobile_scene_governance` VALUES (2028410705661087745, '666666',
 INSERT INTO `vls_mobile_scene_governance` VALUES (2028411463693455361, '8888', 'immediate', NULL, NULL, NULL, NULL, '2016-01-01 00:00:00', '2016-01-08 00:00:00', NULL, '呼和浩特市/回民区/钢铁路街道/西机务段社区居委会', '2', '14,2026939218799886338', '99999', '000000', 1958378395694854144, '0ffc6e35-258e-4d2f-81d3-dda069d88a3e', '2026-03-02 18:05:54', 1958378395694854144, '2026-03-02 18:05:54', 1, 0);
 
 -- ----------------------------
+-- Table structure for vls_device_media_upload
+-- ----------------------------
+DROP TABLE IF EXISTS `vls_device_media_upload`;
+CREATE TABLE `vls_device_media_upload` (
+  `id` bigint NOT NULL COMMENT '主键',
+  `media_id` varchar(64) NOT NULL COMMENT '媒体UUID',
+  `device_id` varchar(100) NOT NULL COMMENT '设备编号',
+  `oss_config_key` varchar(64) NOT NULL COMMENT 'sys_oss_config.config_key',
+  `object_key` varchar(512) NOT NULL COMMENT '对象存储KEY',
+  `file_name` varchar(255) NOT NULL COMMENT '原始文件名',
+  `content_type` varchar(100) NOT NULL COMMENT 'Content-Type',
+  `file_size` bigint NOT NULL COMMENT '期望文件字节数',
+  `sha256` char(64) NOT NULL COMMENT '期望SHA-256',
+  `upload_status` varchar(20) NOT NULL COMMENT 'ISSUED/BOUND',
+  `expires_at` datetime NOT NULL COMMENT 'PUT签名地址过期时间',
+  `bound_event_message_id` varchar(64) NULL COMMENT '绑定的MQTT事件messageId',
+  `create_time` datetime NOT NULL,
+  `update_time` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_vls_device_media_id` (`media_id`),
+  UNIQUE KEY `uk_vls_device_media_object` (`oss_config_key`, `object_key`),
+  KEY `idx_vls_device_media_device` (`device_id`, `create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='硬件事件媒体预签名上传记录';
+
+-- ----------------------------
 -- Table structure for vls_event_management
 -- ----------------------------
 DROP TABLE IF EXISTS `vls_event_management`;
 CREATE TABLE `vls_event_management`  (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '事件ID',
+  `mqtt_message_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'MQTT上报messageId',
+  `device_event_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '设备侧事件ID',
+  `media_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '事件图片mediaId',
   `tenant_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '租户id',
   `event_desc` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '事件描述',
   `event_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '事件类型',
   `report_location` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '上报位置',
   `report_device` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '上报设备',
-  `report_img` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '上报图片',
+  `report_img` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '对象存储内部引用',
   `report_time` datetime NOT NULL COMMENT '上报时间',
   `event_level` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'medium' COMMENT '事件级别：low-低,medium-中,high-高,urgent-紧急',
   `event_status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'pending' COMMENT '事件状态：pending-待处理,processing-处理中,completed-已完成,closed-已关闭',
@@ -1477,6 +1505,9 @@ CREATE TABLE `vls_event_management`  (
   `status` int NULL DEFAULT 1 COMMENT '状态',
   `is_deleted` int NULL DEFAULT 0 COMMENT '是否已删除',
   PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_vls_event_mqtt_message`(`mqtt_message_id` ASC) USING BTREE,
+  UNIQUE INDEX `uk_vls_event_device_event`(`report_device` ASC, `device_event_id` ASC) USING BTREE,
+  INDEX `idx_vls_event_media_id`(`media_id` ASC) USING BTREE,
   INDEX `idx_event_type`(`event_type` ASC) USING BTREE,
   INDEX `idx_event_status`(`event_status` ASC) USING BTREE,
   INDEX `idx_report_time`(`report_time` ASC) USING BTREE
@@ -2170,6 +2201,7 @@ CREATE TABLE `vls_algorithm_training`  (
   `onnx_model_output_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'onnx模型输出路径',
   `rknn_model_output_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'rknn模型输出路径',
   `int8_rknn_model_output_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'int8 rknn模型输出路径',
+  `om_model_output_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'Hi3519DV500 OM模型输出路径',
   `log_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '日志路径',
   `config_params` json NULL COMMENT '训练参数',
   `error_message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '错误信息',
@@ -2197,8 +2229,8 @@ CREATE TABLE `vls_algorithm_training`  (
 -- ----------------------------
 -- Records of vls_algorithm_training
 -- ----------------------------
-INSERT INTO `vls_algorithm_training` VALUES (10011, '000000', '测试训练', 1, 19, 'completed', 100, 0, 10, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-09 18:20:15', '2026-03-04 14:50:37', NULL, '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/测试训练.pt', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/测试训练.onnx', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train4/weights/测试训练-rk3588.rknn', NULL, '/data/work/ultralytics_yolov8-main/datasets/logs/training_10011.log', '{\"epochs\": 10, \"savedAt\": \"2025-12-19T07:43:55.287Z\", \"batchSize\": 16, \"datasetId\": 19, \"epochMode\": \"auto\", \"resolution\": \"auto\", \"autoPublish\": \"yes\", \"datasetName\": \"火焰检测\", \"dataStrategy\": \"default\", \"customValidation\": true}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-04 14:50:56', 1, 0);
-INSERT INTO `vls_algorithm_training` VALUES (10012, '000000', '目标检测', 1, 2004506468441571330, 'completed', 100, 0, 50, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-06 16:10:29', '2026-02-06 16:11:07', NULL, '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/目标检测.pt', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/目标检测.onnx', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train4/weights/目标检测-rk3588.rknn', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/目标检测-rk3588-int8.rknn', '/data/work/ultralytics_yolov8-main/datasets/logs/training_10012.log', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-06 16:12:02', 1, 0);
+INSERT INTO `vls_algorithm_training` VALUES (10011, '000000', '测试训练', 1, 19, 'completed', 100, 0, 10, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-09 18:20:15', '2026-03-04 14:50:37', NULL, '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/测试训练.pt', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/测试训练.onnx', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train4/weights/测试训练-rk3588.rknn', NULL, NULL, '/data/work/ultralytics_yolov8-main/datasets/logs/training_10011.log', '{\"epochs\": 10, \"savedAt\": \"2025-12-19T07:43:55.287Z\", \"batchSize\": 16, \"datasetId\": 19, \"epochMode\": \"auto\", \"resolution\": \"auto\", \"autoPublish\": \"yes\", \"datasetName\": \"火焰检测\", \"dataStrategy\": \"default\", \"customValidation\": true}', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-03-04 14:50:56', 1, 0);
+INSERT INTO `vls_algorithm_training` VALUES (10012, '000000', '目标检测', 1, 2004506468441571330, 'completed', 100, 0, 50, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-06 16:10:29', '2026-02-06 16:11:07', NULL, '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/目标检测.pt', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/目标检测.onnx', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train4/weights/目标检测-rk3588.rknn', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/目标检测-rk3588-int8.rknn', NULL, '/data/work/ultralytics_yolov8-main/datasets/logs/training_10012.log', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-06 16:12:02', 1, 0);
 
 -- ----------------------------
 -- Table structure for vls_algorithm_repository
@@ -2282,6 +2314,7 @@ CREATE TABLE `vls_algorithm_model`  (
   `onnx_model_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'onnx模型文件路径',
   `rknn_model_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'rknn模型文件路径',
   `int8_rknn_model_output_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'int8 rknn模型输出路径',
+  `om_model_output_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'Hi3519DV500 OM模型输出路径',
   `accuracy` decimal(5, 2) NULL DEFAULT NULL COMMENT '模型准确率',
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '模型描述',
   `download_count` int NULL DEFAULT 0 COMMENT '下载次数',
@@ -2302,10 +2335,10 @@ CREATE TABLE `vls_algorithm_model`  (
 -- ----------------------------
 -- Records of vls_algorithm_model
 -- ----------------------------
-INSERT INTO `vls_algorithm_model` VALUES (2019685268409327618, '000000', '目标检测', 1, 10012, 1, 'pt', NULL, '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train5/weights/目标检测.pt', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train5/weights/目标检测.onnx', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train4/weights/目标检测-rk3588.rknn', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train5/weights/目标检测-rk3588-int8.rknn', NULL, NULL, 10, 0, NULL, 1954016679939747840, 'e547a062-b432-4620-a624-3c0670b00d78', '2026-02-06 16:11:07', 1954016679939747840, '2026-02-06 16:11:07', 0, 0);
-INSERT INTO `vls_algorithm_model` VALUES (2029086996409913346, '000000', '测试训练', 1, 10011, 1, 'pt', NULL, '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/测试训练.pt', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train4/weights/测试训练.onnx', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train4/weights/测试训练-rk3588.rknn', NULL, NULL, NULL, 0, 0, NULL, 1976472403513942016, 'e547a062-b432-4620-a624-3c0670b00d78', '2026-03-04 14:50:13', 1976472403513942016, '2026-03-04 14:50:13', 0, 0);
-INSERT INTO `vls_algorithm_model` VALUES (2029087097589108737, '000000', '测试训练', 1, 10011, 2, 'pt', NULL, '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/测试训练.pt', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/测试训练.onnx', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train4/weights/测试训练-rk3588.rknn', NULL, NULL, NULL, 0, 0, NULL, 1976472403513942016, 'e547a062-b432-4620-a624-3c0670b00d78', '2026-03-04 14:50:37', 1976472403513942016, '2026-03-04 14:50:37', 0, 0);
-INSERT INTO `vls_algorithm_model` VALUES (2029088467952111617, '000000', '测试训练', 1, 10011, 3, 'pt', NULL, '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/测试训练.pt', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/测试训练.onnx', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train4/weights/测试训练-rk3588.rknn', NULL, 0.00, NULL, 1, 0, NULL, 1976472403513942016, 'e547a062-b432-4620-a624-3c0670b00d78', '2026-03-04 14:56:04', 1976472403513942016, '2026-03-04 14:56:04', 0, 0);
+INSERT INTO `vls_algorithm_model` VALUES (2019685268409327618, '000000', '目标检测', 1, 10012, 1, 'pt', NULL, '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train5/weights/目标检测.pt', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train5/weights/目标检测.onnx', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train4/weights/目标检测-rk3588.rknn', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train5/weights/目标检测-rk3588-int8.rknn', NULL, NULL, NULL, 10, 0, NULL, 1954016679939747840, 'e547a062-b432-4620-a624-3c0670b00d78', '2026-02-06 16:11:07', 1954016679939747840, '2026-02-06 16:11:07', 0, 0);
+INSERT INTO `vls_algorithm_model` VALUES (2029086996409913346, '000000', '测试训练', 1, 10011, 1, 'pt', NULL, '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/测试训练.pt', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train4/weights/测试训练.onnx', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train4/weights/测试训练-rk3588.rknn', NULL, NULL, NULL, NULL, 0, 0, NULL, 1976472403513942016, 'e547a062-b432-4620-a624-3c0670b00d78', '2026-03-04 14:50:13', 1976472403513942016, '2026-03-04 14:50:13', 0, 0);
+INSERT INTO `vls_algorithm_model` VALUES (2029087097589108737, '000000', '测试训练', 1, 10011, 2, 'pt', NULL, '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/测试训练.pt', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/测试训练.onnx', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train4/weights/测试训练-rk3588.rknn', NULL, NULL, NULL, NULL, 0, 0, NULL, 1976472403513942016, 'e547a062-b432-4620-a624-3c0670b00d78', '2026-03-04 14:50:37', 1976472403513942016, '2026-03-04 14:50:37', 0, 0);
+INSERT INTO `vls_algorithm_model` VALUES (2029088467952111617, '000000', '测试训练', 1, 10011, 3, 'pt', NULL, '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/测试训练.pt', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train6/weights/测试训练.onnx', '/data/work/ultralytics_yolov8-main/datasets/runs/detect/train4/weights/测试训练-rk3588.rknn', NULL, NULL, 0.00, NULL, 1, 0, NULL, 1976472403513942016, 'e547a062-b432-4620-a624-3c0670b00d78', '2026-03-04 14:56:04', 1976472403513942016, '2026-03-04 14:56:04', 0, 0);
 
 -- ----------------------------
 -- Table structure for vls_algorithm_annotation

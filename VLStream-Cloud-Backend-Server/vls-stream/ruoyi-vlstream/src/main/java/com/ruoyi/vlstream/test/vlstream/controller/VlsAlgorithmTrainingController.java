@@ -6,7 +6,6 @@
 package com.ruoyi.vlstream.test.vlstream.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,12 +62,19 @@ public class VlsAlgorithmTrainingController extends BladeController {
 
 	private static final String RKNN_MODEL_ZOO_PATH = "/data/work/ultralytics_yolov8-main/rknn_model_zoo-main";
 	private static final String COCO_SUBSET_FILE_NAME = "coco_subset_20.txt";
+	private static final String CONVERSION_CONVERTING = "converting";
+	private static final String CONVERSION_COMPLETED = "completed";
+	private static final String CONVERSION_FAILED = "failed";
+	private static final int MAX_CONVERSION_ERROR_LENGTH = 8000;
 
 	@Resource
 	private IVlsAlgorithmTrainingService vlsAlgorithmTrainingService;
 
 	@Resource
 	private RemoteTrainingService remoteTrainingService;
+
+	@Resource
+	private GpuTrainingSchedulerService gpuTrainingSchedulerService;
 
 	@Resource
 	private IVlsAlgorithmAnnotationService algorithmAnnotationService;
@@ -87,6 +93,9 @@ public class VlsAlgorithmTrainingController extends BladeController {
 
 	@Resource
 	private VlsSshProperties sshProperties;
+
+	@Resource
+	private ModelFileDownloadService modelFileDownloadService;
 
 	/**
 	 * 算法训练任务表 详情
@@ -356,32 +365,42 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			Integer finalEpochs = epochs != null ? epochs : getIntFromConfig(config, "epochs", training.getEpochTotal(), 100);
 			Integer finalBatch = batchSize != null ? batchSize : getIntFromConfig(config, "batchSize", null, 16);
 			Integer finalImgSize = imgSize != null ? imgSize : getIntFromConfig(config, "imgsz", getIntFromConfig(config, "resolution", null, null), 640);
-			String mergedExtraParams = buildExtraParams(config, extraParams);
 
-			RemoteTrainingService.StartResult startResult = remoteTrainingService.startTraining(
+			AlgorithmTraining queueUpdate = new AlgorithmTraining();
+			queueUpdate.setId(id);
+			queueUpdate.setTrainStatus(AlgorithmTrainingStatusEnum.pending);
+			queueUpdate.setEpochTotal(finalEpochs);
+			queueUpdate.setProgress(0);
+			queueUpdate.setErrorMessage(null);
+			if (vlsAlgorithmTrainingService.updateAlgorithmTraining(queueUpdate) <= 0) {
+				return R.fail("更新训练任务排队状态失败");
+			}
+
+			RemoteTrainingService.StartResult startResult = gpuTrainingSchedulerService.enqueue(
 				algorithm.getCategory().getCode(),
 				id,
 				annotation.getDatasetPath(),
 				baseModel,
 				finalEpochs,
 				finalBatch,
-				finalImgSize,
-				mergedExtraParams
+				finalImgSize
 			);
 
 			AlgorithmTraining update = new AlgorithmTraining();
 			update.setId(id);
-			update.setTrainStatus(AlgorithmTrainingStatusEnum.training);
-			update.setStartTime(new Date());
-			update.setEpochTotal(finalEpochs);
-			update.setProgress(0);
 			update.setLogPath(startResult.getLogPath());
 			vlsAlgorithmTrainingService.updateAlgorithmTraining(update);
 
-			log.info("训练任务{}已启动，日志路径: {}", id, startResult.getLogPath());
+			log.info("训练任务{}已进入GPU队列，日志路径: {}", id, startResult.getLogPath());
 			return R.data(startResult);
 		} catch (Exception e) {
 			log.error("触发训练任务失败: {}", e.getMessage(), e);
+			AlgorithmTraining failedUpdate = new AlgorithmTraining();
+			failedUpdate.setId(id);
+			failedUpdate.setTrainStatus(AlgorithmTrainingStatusEnum.failed);
+			failedUpdate.setErrorMessage(e.getMessage());
+			failedUpdate.setEndTime(new Date());
+			vlsAlgorithmTrainingService.updateAlgorithmTraining(failedUpdate);
 			return R.fail("触发训练任务失败: " + e.getMessage());
 		}
 	}
@@ -391,7 +410,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	 */
 	@PostMapping("/{id}/convert-model")
 	@ApiOperationSupport(order = 9)
-	@Operation(summary = "转换模型", description = "把pt模型转换为onnx和rknn")
+	@Operation(summary = "转换模型", description = "把pt模型转换为onnx、rknn、int8-rknn和Hi3519DV500 OM")
 	public R<String> convertModel(
 		@Parameter(description = "模型训练ID", example = "1") @PathVariable @NotNull Long id) {
 
@@ -404,18 +423,35 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		if (ptModelPath == null || ptModelPath.isEmpty()) {
 			return R.fail("模型路径不能为空");
 		}
+		if (CONVERSION_CONVERTING.equals(training.getOnnxConversionStatus())
+			|| CONVERSION_CONVERTING.equals(training.getOmConversionStatus())) {
+			return R.success("模型正在转换中");
+		}
+		AlgorithmTraining convertingUpdate = new AlgorithmTraining();
+		convertingUpdate.setId(id);
+		convertingUpdate.setOnnxModelOutputPath("");
+		convertingUpdate.setOnnxConversionStatus(CONVERSION_CONVERTING);
+		convertingUpdate.setOnnxConversionError("");
+		convertingUpdate.setOmModelOutputPath("");
+		convertingUpdate.setOmConversionStatus(CONVERSION_CONVERTING);
+		convertingUpdate.setOmConversionError("");
+		if (vlsAlgorithmTrainingService.updateAlgorithmTraining(convertingUpdate) <= 0) {
+			return R.fail("初始化模型转换状态失败");
+		}
 		String datasetPath = resolveDatasetPath(training);
 		AlgorithmTraining trainingSnapshot = training;
 		String datasetPathSnapshot = datasetPath;
 
 		log.info("数据集路径：{}", datasetPathSnapshot);
 		Thread convertThread = new Thread(() -> {
-			ExecutorService executor = Executors.newFixedThreadPool(2);
+			ExecutorService executor = Executors.newFixedThreadPool(3);
 			try {
-				Future<String> onnxFuture = executor.submit(() -> remoteTrainingService.exportModel(ptModelPath, "onnx"));
+				Future<String> onnxFuture = executor.submit(() -> convertOnnxAndRecord(id, ptModelPath));
 				Future<String> rknnFuture = executor.submit(() -> remoteTrainingService.exportModel(ptModelPath, "rknn"));
+				Future<String> omFuture = executor.submit(() -> convertOmAndRecord(id, ptModelPath, datasetPathSnapshot));
 				String onnxPath = getConvertResult(onnxFuture, id, "onnx");
 				String rknnPath = getConvertResult(rknnFuture, id, "rknn");
+				String omPath = getConvertResult(omFuture, id, "om");
 				String synsetDatasetPath = datasetPathSnapshot;
 				if (synsetDatasetPath == null || synsetDatasetPath.trim().isEmpty()) {
 					synsetDatasetPath = resolveDatasetPath(trainingSnapshot);
@@ -436,8 +472,10 @@ public class VlsAlgorithmTrainingController extends BladeController {
 						if (int8OutputPath == null || int8OutputPath.trim().isEmpty()) {
 							log.warn("Int8 output path is empty, skip conversion: id={}, onnxPath={}", id, onnxPath);
 						} else {
-							String convertCommand = String.format("cd \"%s\" && python3 convert.py --model \"%s\" --dataset \"%s\" --platform rk3588 --output \"%s\"",
-								RKNN_MODEL_ZOO_PATH, onnxPath, cocoSubsetPath, int8OutputPath);
+							String convertCommand = String.format(
+								"find \"%s\" -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \\) | head -n 20 > \"%s\" && "
+									+ "test -s \"%s\" && cd \"%s\" && python3 convert.py --model \"%s\" --dataset \"%s\" --platform rk3588 --output \"%s\"",
+								datasetDir, cocoSubsetPath, cocoSubsetPath, RKNN_MODEL_ZOO_PATH, onnxPath, cocoSubsetPath, int8OutputPath);
 							SSHService.SSHExecutionResult convertResult = sshService.executeCommand(
 								sshProperties.getHost(),
 								sshProperties.getPort(),
@@ -458,20 +496,17 @@ public class VlsAlgorithmTrainingController extends BladeController {
 						}
 					}
 				}
-				String rk3588RknnPath = null;
-				if (rknnPath != null && !rknnPath.isEmpty()) {
-					rk3588RknnPath = rknnPath.replace(".rknn", "-rk3588.rknn");
-				}
 				AlgorithmTraining update = new AlgorithmTraining();
 				update.setId(id);
-				update.setOnnxModelOutputPath(onnxPath);
-				update.setRknnModelOutputPath(rk3588RknnPath);
+				update.setRknnModelOutputPath(rknnPath);
 				update.setInt8RknnModelOutputPath(int8RknnPath);
 				int updateResult = vlsAlgorithmTrainingService.updateAlgorithmTraining(update);
 				if (updateResult > 0) {
-					log.info("模型路径更新成功: id={}, onnxPath={}, rknnPath={}, int8RknnPath={}", id, onnxPath, rk3588RknnPath, int8RknnPath);
+					log.info("模型路径更新成功: id={}, onnxPath={}, rknnPath={}, int8RknnPath={}, omPath={}",
+						id, onnxPath, rknnPath, int8RknnPath, omPath);
 				} else {
-					log.warn("模型路径更新失败: id={}, onnxPath={}, rknnPath={}, int8RknnPath={}", id, onnxPath, rk3588RknnPath, int8RknnPath);
+					log.warn("模型路径更新失败: id={}, onnxPath={}, rknnPath={}, int8RknnPath={}, omPath={}",
+						id, onnxPath, rknnPath, int8RknnPath, omPath);
 				}
 			} catch (Exception exception) {
 				log.error("模型转换异常: id={}, error={}", id, exception.getMessage(), exception);
@@ -481,7 +516,74 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		});
 		convertThread.setName("model-convert-" + id);
 		convertThread.start();
-		return R.success("模型转换成功");
+		return R.success("模型转换任务已提交");
+	}
+
+	private String convertOnnxAndRecord(Long trainingId, String ptModelPath) {
+		try {
+			String path = remoteTrainingService.exportModel(ptModelPath, "onnx");
+			if (StringUtils.isBlank(path)) {
+				throw new IllegalStateException("ONNX转换未生成模型文件");
+			}
+			AlgorithmTraining update = new AlgorithmTraining();
+			update.setId(trainingId);
+			update.setOnnxModelOutputPath(path);
+			update.setOnnxConversionStatus(CONVERSION_COMPLETED);
+			update.setOnnxConversionError("");
+			vlsAlgorithmTrainingService.updateAlgorithmTraining(update);
+			return path;
+		} catch (Exception exception) {
+			String error = extractConversionError(exception);
+			AlgorithmTraining update = new AlgorithmTraining();
+			update.setId(trainingId);
+			update.setOnnxModelOutputPath("");
+			update.setOnnxConversionStatus(CONVERSION_FAILED);
+			update.setOnnxConversionError(error);
+			vlsAlgorithmTrainingService.updateAlgorithmTraining(update);
+			log.error("ONNX模型转换失败: id={}, error={}", trainingId, error, exception);
+			return null;
+		}
+	}
+
+	private String convertOmAndRecord(Long trainingId, String ptModelPath, String datasetPath) {
+		try {
+			String path = remoteTrainingService.exportHisiliconOm(ptModelPath, datasetPath);
+			if (StringUtils.isBlank(path)) {
+				throw new IllegalStateException("OM转换未生成模型文件");
+			}
+			AlgorithmTraining update = new AlgorithmTraining();
+			update.setId(trainingId);
+			update.setOmModelOutputPath(path);
+			update.setOmConversionStatus(CONVERSION_COMPLETED);
+			update.setOmConversionError("");
+			vlsAlgorithmTrainingService.updateAlgorithmTraining(update);
+			return path;
+		} catch (Exception exception) {
+			String error = extractConversionError(exception);
+			AlgorithmTraining update = new AlgorithmTraining();
+			update.setId(trainingId);
+			update.setOmModelOutputPath("");
+			update.setOmConversionStatus(CONVERSION_FAILED);
+			update.setOmConversionError(error);
+			vlsAlgorithmTrainingService.updateAlgorithmTraining(update);
+			log.error("OM模型转换失败: id={}, error={}", trainingId, error, exception);
+			return null;
+		}
+	}
+
+	private String extractConversionError(Throwable throwable) {
+		Throwable current = throwable;
+		while (current.getCause() != null && current.getCause() != current) {
+			current = current.getCause();
+		}
+		String message = current.getMessage();
+		if (StringUtils.isBlank(message)) {
+			message = current.getClass().getSimpleName();
+		}
+		message = message.trim();
+		return message.length() <= MAX_CONVERSION_ERROR_LENGTH
+			? message
+			: message.substring(0, MAX_CONVERSION_ERROR_LENGTH);
 	}
 
 	/**
@@ -599,6 +701,14 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		AlgorithmTraining training = vlsAlgorithmTrainingService.selectAlgorithmTrainingById(id);
 		if (training == null) {
 			return R.fail("找不到训练任务");
+		}
+		if (training.getTrainStatus() == AlgorithmTrainingStatusEnum.pending) {
+			RemoteTrainingService.TrainingProgress queuedProgress = new RemoteTrainingService.TrainingProgress();
+			queuedProgress.setTaskId(id);
+			queuedProgress.setStatus(AlgorithmTrainingStatusEnum.pending.getCode());
+			queuedProgress.setPercentage(0);
+			queuedProgress.setMessage("等待GPU资源");
+			return R.data(queuedProgress);
 		}
 		if (training.getTrainStatus() == AlgorithmTrainingStatusEnum.completed
 			|| training.getTrainStatus() == AlgorithmTrainingStatusEnum.failed
@@ -773,93 +883,64 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		return datasetPath.trim();
 	}
 
+	/**
+	 * 按训练任务 ID 下载训练产物，避免把训练 ID 误当成模型表 ID。
+	 */
+	@GetMapping("/{id}/download-model")
+	@Operation(summary = "下载训练产物", description = "根据训练任务ID下载该任务生成的模型文件")
+	public void downloadTrainingModel(@PathVariable Long id,
+		@RequestParam(defaultValue = "pt") String type, HttpServletResponse response) {
+		downloadFile(response, () -> modelFileDownloadService.downloadTrainingModel(id, type, response));
+	}
+
+	/**
+	 * 保留旧的模型下载地址，仅用于兼容仍传模型表 ID 的历史调用方。
+	 */
+	@Deprecated
 	@GetMapping("/download-model")
-	@Operation(summary = "下载模型文件", description = "从远程服务器下载训练好的模型文件")
-	public void downloadModel(@RequestParam String id, @RequestParam String type, HttpServletResponse response) {
+	@Operation(summary = "下载模型文件（兼容）", description = "兼容旧接口，id参数仍表示模型表ID")
+	public void downloadModel(@RequestParam Long id,
+		@RequestParam(defaultValue = "pt") String type, HttpServletResponse response) {
+		downloadFile(response, () -> modelFileDownloadService.downloadModel(id, type, response));
+	}
+
+	/**
+	 * 统一将下载异常转换为明确的 HTTP 状态码和错误信息。
+	 */
+	private void downloadFile(HttpServletResponse response, DownloadAction action) {
 		try {
-			log.info("下载模型文件: {}", type);
-
-			AlgorithmModel algorithmModel = algorithmModelService.getById(id);
-			if (algorithmModel == null) {
-				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-				response.getWriter().write("Model not found: " + id);
-				return;
-			}
-
-			String downloadPath = algorithmModel.getModelPath();
-			if (type.equals("onnx")) {
-				downloadPath = algorithmModel.getOnnxModelPath();
-			} else if (type.equals("rknn")) {
-				downloadPath = algorithmModel.getRknnModelPath();
-			} else if (type.equals("int8-rknn")) {
-				downloadPath = algorithmModel.getInt8RknnModelOutputPath();
-			}
-			if (StringUtils.isBlank(downloadPath)) {
-				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-				response.getWriter().write("Model file path is empty");
-				return;
-			}
-			// 从远程服务器下载文件
-			SSHService.SSHExecutionResult result = sshService.executeCommand(
-				sshProperties.getHost(),
-				sshProperties.getPort(),
-				sshProperties.getUsername(),
-				sshProperties.getPassword(),
-				String.format("base64 %s", downloadPath)
-			);
-
-			if (result.isSuccess() && !result.getOutput().trim().isEmpty()) {
-				// 清理base64内容，移除可能的换行符和其他字符
-				String base64Content = result.getOutput().trim().replaceAll("\\s+", "");
-				log.info("Base64内容长度: {}", base64Content.length());
-
-				// 解码base64内容
-				byte[] fileContent = java.util.Base64.getDecoder().decode(base64Content);
-
-				String fileName = downloadPath.substring(downloadPath.lastIndexOf('/') + 1);
-				response.setContentType("application/octet-stream");
-
-				String encodedFileName = java.net.URLEncoder.encode(fileName, "UTF-8").replaceAll("\\+", "%20");
-				response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
-				response.setContentLength(fileContent.length);
-
-				// 写入响应
-				response.getOutputStream().write(fileContent);
-				response.getOutputStream().flush();
-
-				if (id != null && !id.trim().isEmpty()) {
-					try {
-						Long modelId = Long.valueOf(id.trim());
-						UpdateWrapper<AlgorithmModel> updateWrapper = new UpdateWrapper<>();
-						updateWrapper.eq("id", modelId)
-							.setSql("download_count = download_count + 1");
-						boolean updated = algorithmModelService.update(new AlgorithmModel(), updateWrapper);
-						if (!updated) {
-							log.warn("Failed to increment download count, modelId={}", modelId);
-						}
-					} catch (NumberFormatException ex) {
-						log.warn("Invalid model id for download count: {}", id);
-					} catch (Exception ex) {
-						log.warn("Failed to increment download count, modelId={}, error={}", id, ex.getMessage());
-					}
-				}
-
-				log.info("模型文件下载成功: {}", fileName);
-			} else {
-				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-				response.getWriter().write("Model file not found: " + downloadPath);
-				log.error("模型文件不存在: {}", downloadPath);
-			}
-
+			action.run();
+		} catch (IllegalArgumentException e) {
+			writeDownloadError(response, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+		} catch (java.io.FileNotFoundException e) {
+			writeDownloadError(response, HttpServletResponse.SC_NOT_FOUND, e.getMessage());
 		} catch (Exception e) {
 			log.error("下载模型文件失败: {}", e.getMessage(), e);
-			try {
-				response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-				response.getWriter().write("Download failed: " + e.getMessage());
-			} catch (Exception ex) {
-				log.error("写入错误响应失败: {}", ex.getMessage());
-			}
+			writeDownloadError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Download failed: " + e.getMessage());
 		}
+	}
+
+	/**
+	 * 在响应尚未提交时写入下载失败原因。
+	 */
+	private void writeDownloadError(HttpServletResponse response, int status, String message) {
+		try {
+			if (!response.isCommitted()) {
+				response.setStatus(status);
+				response.setContentType("text/plain;charset=UTF-8");
+				response.getWriter().write(message);
+			}
+		} catch (Exception ex) {
+			log.error("写入下载错误响应失败: {}", ex.getMessage());
+		}
+	}
+
+	/**
+	 * 表示一个可能抛出异常的模型下载动作。
+	 */
+	@FunctionalInterface
+	private interface DownloadAction {
+		void run() throws Exception;
 	}
 
 }

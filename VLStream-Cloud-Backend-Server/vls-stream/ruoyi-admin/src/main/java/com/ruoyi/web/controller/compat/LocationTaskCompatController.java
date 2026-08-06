@@ -167,6 +167,10 @@ public class LocationTaskCompatController {
     /**
      * Return the tenant event list.
      */
+    @Operation(tags = "主动安全事件", summary = "查询事件列表",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            content = @Content(schema = @Schema(
+                implementation = LocationTaskCompatApiModels.EventListRequest.class))))
     @PostMapping("/task/v1/event_list")
     public LocationTaskResult<?> eventList(@RequestBody(required = false) Map<String, Object> body) {
         return execute(body, new AuthenticatedOperation() {
@@ -181,6 +185,10 @@ public class LocationTaskCompatController {
     /**
      * Add handling feedback to an event.
      */
+    @Operation(tags = "主动安全事件", summary = "提交事件反馈并可选转工单",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
+            content = @Content(schema = @Schema(
+                implementation = LocationTaskCompatApiModels.EventFeedbackRequest.class))))
     @PostMapping("/task/v1/event_back_add")
     public LocationTaskResult<?> eventBackAdd(@RequestBody(required = false) Map<String, Object> body) {
         return execute(body, new AuthenticatedOperation() {
@@ -223,6 +231,10 @@ public class LocationTaskCompatController {
     /**
      * Assign users to an event.
      */
+    @Operation(tags = "主动安全事件", summary = "添加事件执行对象",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
+            content = @Content(schema = @Schema(
+                implementation = LocationTaskCompatApiModels.EventExecutorRequest.class))))
     @PostMapping("/task/v1/event_add_user")
     public LocationTaskResult<?> eventAddUser(@RequestBody(required = false) Map<String, Object> body) {
         return execute(body, new AuthenticatedOperation() {
@@ -251,6 +263,10 @@ public class LocationTaskCompatController {
     /**
      * Return events visible to the current user.
      */
+    @Operation(tags = "主动安全事件", summary = "查询与当前用户相关的事件",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            content = @Content(schema = @Schema(
+                implementation = LocationTaskCompatApiModels.MyEventListRequest.class))))
     @PostMapping("/task/v2/myevent_list")
     public LocationTaskResult<?> myEventList(@RequestBody(required = false) Map<String, Object> body) {
         return execute(body, new AuthenticatedOperation() {
@@ -265,6 +281,10 @@ public class LocationTaskCompatController {
     /**
      * Return authorized V2 event groups.
      */
+    @Operation(tags = "主动安全配置", summary = "查询已授权的V2事件分组",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
+            content = @Content(schema = @Schema(
+                implementation = LocationTaskCompatApiModels.EventGroupListRequest.class))))
     @PostMapping("/task/v2/event_group_list")
     public LocationTaskResult<?> eventGroupList(@RequestBody(required = false) Map<String, Object> body) {
         return execute(body, new AuthenticatedOperation() {
@@ -290,6 +310,45 @@ public class LocationTaskCompatController {
     @PostMapping("/task/v1/event_group_del")
     public LocationTaskResult<?> eventGroupDelete(@RequestBody(required = false) Map<String, Object> body) {
         return taskService.eventGroupDeleteV1(normalize(body), null);
+    }
+
+    /**
+     * Create or update a V2 group shared by video aggregation and active safety.
+     */
+    @PostMapping("/task/v2/event_group_save")
+    public LocationTaskResult<?> eventGroupSaveV2(@RequestBody(required = false) Map<String, Object> body) {
+        return execute(body, new AuthenticatedOperation() {
+            @Override
+            public LocationTaskResult<?> execute(Map<String, Object> request, UserContext user) {
+                return taskService.eventGroupSaveV2(request, user);
+            }
+        });
+    }
+
+    /**
+     * Return a complete authorized V2 group tree for management pages.
+     */
+    @PostMapping("/task/v2/event_group_tree")
+    public LocationTaskResult<?> eventGroupTree(@RequestBody(required = false) Map<String, Object> body) {
+        return execute(body, new AuthenticatedOperation() {
+            @Override
+            public LocationTaskResult<?> execute(Map<String, Object> request, UserContext user) {
+                return taskService.eventGroupTreeV2(request, user);
+            }
+        });
+    }
+
+    /**
+     * Delete one leaf V2 group shared by video aggregation and active safety.
+     */
+    @PostMapping("/task/v2/event_group_delete")
+    public LocationTaskResult<?> eventGroupDeleteV2(@RequestBody(required = false) Map<String, Object> body) {
+        return execute(body, new AuthenticatedOperation() {
+            @Override
+            public LocationTaskResult<?> execute(Map<String, Object> request, UserContext user) {
+                return taskService.eventGroupDeleteV2(request, user);
+            }
+        });
     }
 
     /**
@@ -323,6 +382,10 @@ public class LocationTaskCompatController {
     /**
      * Return one authorized V2 event group.
      */
+    @Operation(tags = "主动安全配置", summary = "查询V2事件分组详情",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
+            content = @Content(schema = @Schema(
+                implementation = LocationTaskCompatApiModels.EventGroupInfoRequest.class))))
     @PostMapping("/task/v2/event_group_info")
     public LocationTaskResult<?> eventGroupInfo(@RequestBody(required = false) Map<String, Object> body) {
         return execute(body, new AuthenticatedOperation() {
@@ -337,6 +400,10 @@ public class LocationTaskCompatController {
     /**
      * Return a workflow configuration.
      */
+    @Operation(tags = "主动安全配置", summary = "查询全局转工单配置",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            content = @Content(schema = @Schema(
+                implementation = LocationTaskCompatApiModels.WorkflowConfigGetRequest.class))))
     @PostMapping("/task/v1/workflowConfigGet")
     public LocationTaskResult<?> workflowConfigGet(@RequestBody(required = false) Map<String, Object> body) {
         return execute(body, new AuthenticatedOperation() {
@@ -351,6 +418,10 @@ public class LocationTaskCompatController {
     /**
      * Save a workflow configuration.
      */
+    @Operation(tags = "主动安全配置", summary = "保存全局转工单配置",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            content = @Content(schema = @Schema(
+                implementation = LocationTaskCompatApiModels.WorkflowConfigSetRequest.class))))
     @PostMapping("/task/v1/workflowConfigSet")
     public LocationTaskResult<?> workflowConfigSet(@RequestBody(required = false) Map<String, Object> body) {
         return execute(body, new AuthenticatedOperation() {
@@ -407,6 +478,10 @@ public class LocationTaskCompatController {
     /**
      * Save an authorized V2 event group's task settings.
      */
+    @Operation(tags = "主动安全配置", summary = "保存V2分组转工单配置",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
+            content = @Content(schema = @Schema(
+                implementation = LocationTaskCompatApiModels.EventGroupSettingRequest.class))))
     @PostMapping("/task/v2/event_group_setting_save")
     public LocationTaskResult<?> eventGroupSettingSave(@RequestBody(required = false) Map<String, Object> body) {
         return execute(body, new AuthenticatedOperation() {
@@ -421,6 +496,10 @@ public class LocationTaskCompatController {
     /**
      * Change an authorized V2 event group's status.
      */
+    @Operation(tags = "主动安全配置", summary = "修改V2分组自动转工单开关",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
+            content = @Content(schema = @Schema(
+                implementation = LocationTaskCompatApiModels.AutoWorkStatusRequest.class))))
     @PostMapping("/task/v2/event_group_status")
     public LocationTaskResult<?> eventGroupStatus(@RequestBody(required = false) Map<String, Object> body) {
         return execute(body, new AuthenticatedOperation() {
@@ -435,6 +514,10 @@ public class LocationTaskCompatController {
     /**
      * Return event statistics using the original grouping rules.
      */
+    @Operation(tags = "主动安全事件", summary = "统计事件处理情况",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            content = @Content(schema = @Schema(
+                implementation = LocationTaskCompatApiModels.EventStatisticsRequest.class))))
     @PostMapping("/task/v1/event_statistics")
     public LocationTaskResult<?> eventStatistics(@RequestBody(required = false) Map<String, Object> body) {
         return execute(body, new AuthenticatedOperation() {
@@ -451,9 +534,9 @@ public class LocationTaskCompatController {
      */
     private LocationTaskResult<?> execute(Map<String, Object> body, AuthenticatedOperation operation) {
         Map<String, Object> request = normalize(body);
-        String token = stringValue(request.get("accessToken"));
+        String token = stringValue(AuthorizationInterceptor.getToken());
         if (token.isEmpty()) {
-            token = stringValue(AuthorizationInterceptor.getToken());
+            token = stringValue(request.get("accessToken"));
         }
         if (token.isEmpty()) {
             return LocationTaskResult.error(4101, "参数错误 accessToken不能为空");

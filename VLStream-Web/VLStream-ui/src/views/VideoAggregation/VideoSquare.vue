@@ -99,7 +99,7 @@
     <el-dialog
       v-model="showExtendedLayoutDialog"
       title="扩展布局选项"
-      width="600px"
+      width="35%"
     >
       <div class="extended-layout-options">
         <h4>选择布局模式</h4>
@@ -125,7 +125,7 @@
     </el-dialog>
 
     <!-- 设置面板 -->
-    <el-dialog v-model="showSettings" title="设置" width="500px">
+    <el-dialog v-model="showSettings" title="设置" width="30%">
       <div class="settings-content">
         <h4>显示设置</h4>
         <div class="setting-group">

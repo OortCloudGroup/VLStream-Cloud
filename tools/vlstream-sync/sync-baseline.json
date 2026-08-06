@@ -1,0 +1,5 @@
+{
+  "sourceCommit": "ec2bf25c2d5b46705f576e6dd06e69ff99d8a92d",
+  "confirmed": false,
+  "note": "初始比较点，尚未确认该提交已完整同步到多租户版本。确认前请使用 -Inventory 做全量盘点。"
+}

@@ -126,6 +126,36 @@
 |--------|------|--------|----------|----------|----------|
 | `TX_CALLBACK_ADDRESS` | TX回调地址 | `http://20.72.1.41:8080/jk/RegionPort/areaNode` | 是 | HTTP/HTTPS URL | `http://callback.example.com/api/tx` |
 
+### 8.4 Hi3519DV500 模型下发
+
+| 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |
+|--------|------|--------|----------|----------|----------|
+| `VLSTREAM_MODEL_PUBLIC_BASE_URL` | 硬件设备可访问的后端模型下载根地址 | `http://192.168.88.31:8080` | 是 | HTTP/HTTPS URL，不含末尾业务路径 | `https://vlstream.example.com` |
+| `VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET` | 模型下载短期 URL 的 HMAC-SHA256 签名密钥 | 无 | 是 | 部署方生成的高强度随机字符串，建议至少 32 字节 | 通过 Secret 注入，不写入配置文件 |
+| `VLSTREAM_MODEL_DOWNLOAD_URL_TTL_SECONDS` | 签名下载 URL 有效期 | `1800` | 否 | 大于等于 60 的秒数 | `1800` |
+| `VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID` | 后端模型下发 MQTT 客户端 ID | `vls-model-dispatch-backend` | 是 | 同一 Broker 内唯一 | `vls-model-dispatch-backend-01` |
+| `VLSTREAM_MQTT_HOST` | MQTT Broker 地址 | `127.0.0.1` | 是 | IP 地址或域名 | `192.168.88.31` |
+| `VLSTREAM_MQTT_PORT` | MQTT Broker TCP 端口 | `1883` | 是 | 1-65535 | `1883` |
+| `VLSTREAM_MQTT_USERNAME` | MQTT 用户名 | 无 | 生产必填 | Broker 中存在的用户 | `vlstream-backend` |
+| `VLSTREAM_MQTT_PASSWORD` | MQTT 密码 | 无 | 生产必填 | 高强度密码 | 通过 Secret 注入 |
+
+> 签名密钥由部署方自行生成，只保存在 VLStream 后端；摄像头只接收已经签名的短期
+> `modelUrl`。模型下载根地址必须能从设备网络访问。MQTT Topic、消息结构和硬件处理流程
+> 不在环境变量文档重复维护，统一以 `doc/VLS-Protocol.md` 为准。
+
+### 8.5 硬件事件图片直传 MinIO
+
+| 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |
+|--------|------|--------|----------|----------|----------|
+| `VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY` | 硬件事件图片使用的 `sys_oss_config.config_key` | 空（默认 OSS） | 生产必填 | 已启用的 OSS 配置，建议独立私有 Bucket | `vlstream-events` |
+| `VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS` | 预签名 PUT 地址有效期 | `600` | 否 | 60-3600 秒 | `600` |
+| `VLSTREAM_DEVICE_MEDIA_MAX_IMAGE_BYTES` | 单张事件图片最大字节数 | `10485760` | 否 | 正整数 | `10485760` |
+| `VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED` | 是否允许设备无认证申请上传地址 | `false`；dev 为 `true` | 是 | `true/false` | 生产必须为 `false` |
+
+> 当前无认证模式只用于 `192.168.88.0/24` 等隔离的局域网联调。生产必须关闭，并在启用
+> 每设备 HMAC-SHA256 身份认证后再开放上传地址申请接口。MinIO API endpoint 必须是硬件可访问
+> 的地址，不能配置成相对硬件自身的 `127.0.0.1:9000`。
+
 ## 九、Swagger文档配置
 
 | 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |

@@ -193,13 +193,14 @@
                 @click="saveChanges"
                 :icon="Check"
                 :loading="saving"
+                class="common_btn"
               >
                 保存
               </el-button>
               <el-button 
                 @click="cancelEdit"
                 :icon="Close"
-              >
+               class="common_btn">
                 取消
               </el-button>
             </template>
@@ -232,7 +233,7 @@ import { ref, onMounted, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Edit, Check, Close } from '@element-plus/icons-vue'
 import { AuthManager } from '@/utils/auth'
-import { getUserInfo } from '@/api/userCenter'
+import { getUserInfo } from '@/api/system/localAuth'
 
 // 认证管理器
 const authManager = new AuthManager()

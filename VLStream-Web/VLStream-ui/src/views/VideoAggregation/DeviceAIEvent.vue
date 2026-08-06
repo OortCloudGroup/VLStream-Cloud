@@ -64,7 +64,7 @@
         <div class="ai-config-right">
           <!-- 配置标签页 -->
           <div class="config-tabs">
-            <el-tabs v-model="activeTab" class="config-tab-container">
+            <el-tabs v-model="activeTab" class="tenanat-tabs">
               <!-- 异常检测标签页 -->
               <el-tab-pane label="异常检测" name="detection">
                 <div class="detection-config">
@@ -356,7 +356,7 @@
     <el-dialog
       v-model="addDetectionDialogVisible"
       title="添加检测项目"
-      width="500px"
+      width="30%"
     >
       <div class="add-detection-content">
         <el-form :model="newDetectionForm" label-width="100px">
@@ -383,8 +383,8 @@
       </div>
       
       <template #footer>
-        <el-button @click="addDetectionDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmAddDetection">确定</el-button>
+        <el-button @click="addDetectionDialogVisible = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="confirmAddDetection" class="common_btn">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -695,7 +695,8 @@ onUnmounted(() => {
   padding: 20px;
   
   .ai-event-container {
-    max-width: 1200px;
+    max-width: none;
+    width: 100%;
     margin: 0;
   }
   
@@ -806,38 +807,12 @@ onUnmounted(() => {
       flex: 1;
       
       .config-tabs {
-        .config-tab-container {
-          :deep(.el-tabs__header) {
-            margin: 0 0 20px 0;
-            
-            .el-tabs__nav {
-              border: none;
-            }
-            
-            .el-tabs__item {
-              padding: 12px 20px;
-              font-size: 14px;
-              font-weight: 500;
-              color: #666;
-              border-bottom: 2px solid transparent;
-              
-              &.is-active {
-                color: #1A53FF;
-                border-bottom-color: #1A53FF;
-              }
-              
-              &:hover {
-                color: #1A53FF;
-              }
-            }
-            
-            .el-tabs__active-bar {
-              display: none;
-            }
-          }
-          
+        .tenanat-tabs {
+          padding: 0;
+
           :deep(.el-tabs__content) {
             padding: 0;
+            margin-top: 20px;
           }
         }
         

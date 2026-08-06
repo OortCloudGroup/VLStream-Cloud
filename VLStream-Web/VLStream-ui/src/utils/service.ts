@@ -23,7 +23,7 @@ import Config from '@/config'
 import { useErrorMsgStoreHook } from '@/store/modules/useErrorMsg'
 import useGoWhere  from '@/hooks/useGoWhere'
 import { ElMessageBox } from 'element-plus'
-import { refreshToken } from '@/api/unifiedUsert/sso'
+import { refreshToken } from '@/api/system/localAuth'
 import { applyAuthHeaders, getStoredToken } from '@/utils/request'
 
 
@@ -171,6 +171,25 @@ function shouldShowWarningByApi(url = '') {
   return !noWarningApi.some(item => url.includes(item))
 }
 
+/**
+ * 判断是否为已经迁移到本项目后端、只使用本地登录态的任务接口。
+ */
+function isLocalTaskApi(url = '') {
+  return /^\/?task\//.test(url)
+}
+
+/**
+ * 本地登录态失效时直接结束会话，不再调用旧 SSO 刷新接口并重试原请求。
+ */
+function rejectExpiredLocalSession(originalResponse: any) {
+  removeToken()
+  useGoWhere().goWhere()
+  return Promise.reject({
+    isInterceptorDetour: true,
+    message: originalResponse?.data?.msg || originalResponse?.response?.data?.msg || '当前用户登录信息已过期'
+  })
+}
+
 /** 创建请求实例 */
 function createService() {
  // 节流: n 秒内只运行一次，若在n 秒内重复触发，只有一次生效
@@ -251,6 +270,9 @@ function createService() {
         if (response.data.code !== 200) {
           // 判断 response.data.code  === 4004  就去调用刷新token
           if (response.data.code === 4004) {
+            if (isLocalTaskApi(response.config?.url || '')) {
+              return rejectExpiredLocalSession(response)
+            }
             return handleTokenRefresh(response);
           }
           // 针对刷新接口  和 其他 msg接口的处理
@@ -291,8 +313,11 @@ function createService() {
       let errMessage = error.message
       const errorBody = error.response?.data
       if(errorBody && errorBody.code ) {
-         // 检查是否需要刷新token
+        // 检查是否需要刷新token
         if (errorBody.code === 4004) {
+          if (isLocalTaskApi(error.config?.url || '')) {
+            return rejectExpiredLocalSession(error)
+          }
           return handleTokenRefresh(error, error.config);
         }
         errMessage = errorBody.code +  errorBody.msg

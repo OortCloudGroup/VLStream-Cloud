@@ -1,436 +1,230 @@
 <template>
-  <div class="video-playback">
-    <!-- 搜索表单区域 -->
-    <!--
-    <div class="search-form-container">
-      <div class="search-form">
-        <div class="search-row">
-          <div class="search-item">
+  <div class="video-playback tenant_Page draHeaPB">
+    <div class="tenant_content">
+      <div class="tableTenBox flexRowAC">
+        <!-- 左侧设备树 -->
+        <div
+          v-show="!deviceTreeCollapsed"
+          v-yResize
+          class="police_aside_use"
+        >
+          <div class="treeTitle">
+            设备树
+          </div>
+          <div class="tree_search_content flexRowAC">
             <el-input
-              v-model="searchForm.fileName"
-              placeholder="请输入设备名称或设备ID"
+              v-model="searchTreeKeyword"
+              placeholder="搜索"
+              debounce="300"
+              prefix-icon="Search"
               clearable
+              @input="handleTreeSearch"
             />
           </div>
-          <div class="search-item">
-            <el-select
-              v-model="searchForm.recordType"
-              placeholder="请选择标签类型"
-              clearable
-              style="width: 100%"
-            >
-              <el-option label="全部" value="" />
-              <el-option label="球机监控" value="球机监控" />
-              <el-option label="枪机监控" value="枪机监控" />
-              <el-option label="半球监控" value="半球监控" />
-              <el-option label="云台监控" value="云台监控" />
-            </el-select>
-          </div>
-          <div class="search-item date-with-buttons">
-            <DateRangePicker
-              v-model="searchForm.dateRange"
-              start-placeholder="开始时间"
-              end-placeholder="结束时间"
-              value-format="YYYY-MM-DD"
-              width="600px"
-            />
-            <div class="search-buttons">
-              <el-button type="primary" @click="handleSearch">
-                <el-icon><Search /></el-icon>
-                搜索
-              </el-button>
-              <el-button @click="handleReset">
-                <el-icon><Refresh /></el-icon>
-                重置
-              </el-button>
-            </div>
-          </div>
+          <el-tree
+            ref="deviceTreeRef"
+            style="background: #fff;"
+            :data="filteredDeviceTreeData"
+            highlight-current
+            node-key="id"
+            default-expand-all
+            :props="treeDefaultProps"
+            :expand-on-click-node="false"
+            @node-click="handleNodeClick"
+          >
+            <template #default="{ node, data }">
+              <div
+                class="custom-tree-node flexRowAC"
+                @mouseenter="hoveredTreeNodeId = data.id"
+                @mouseleave="hoveredTreeNodeId = null"
+              >
+                <div class="tree-node-main flexRowAC">
+                  <el-icon v-if="data.type === 'tag'" class="tree-icon tag-icon">
+                    <Collection />
+                  </el-icon>
+                  <el-icon v-else-if="data.type === 'device'" class="tree-icon device-icon">
+                    <VideoCamera />
+                  </el-icon>
+                  <el-icon v-else class="tree-icon">
+                    <Folder />
+                  </el-icon>
+                  <el-tooltip
+                    :open-delay="500"
+                    class="item"
+                    effect="light"
+                    :content="node.label"
+                    placement="top"
+                  >
+                    <div
+                      class="tree-node-label"
+                      :class="{
+                        activeDept: data.id === currentTreeNodeId,
+                        'device-offline': data.type === 'device' && data.status !== 'online' && data.status !== 1
+                      }"
+                    >
+                      {{ node.label }}
+                    </div>
+                  </el-tooltip>
+                </div>
+                <div
+                  v-show="hoveredTreeNodeId === data.id || data.id === currentTreeNodeId"
+                  class="tree-node-actions flexRowAC"
+                  @click.stop
+                >
+                  <oort-svg-icon
+                    width="16"
+                    height="16"
+                    name="delete"
+                    color="red"
+                    class="tree-action-icon delete-icon"
+                    @click="handleTreeDelete(data)"
+                  />
+                  <oort-svg-icon
+                    width="16"
+                    height="16"
+                    name="add"
+                    class="tree-action-icon add-icon"
+                    @click="handleTreeAdd(data)"
+                  />
+                </div>
+              </div>
+            </template>
+          </el-tree>
         </div>
-      </div>
-    </div>
-    -->
 
-    <!-- 主要内容区域 -->
-    <div class="main-content">
-      <!-- 左侧设备树 -->
-      <div class="device-tree-container" :class="{ collapsed: deviceTreeCollapsed }">
-        <DeviceTree
-          :tree-data="deviceTreeData"
-          title="设备树"
-          :show-search="true"
-          :show-collapse-btn="true"
-          :show-expand-btn="false"
-          :show-add-actions="false"
-          :show-delete-actions="false"
-          :show-bottom-actions="false"
-          :collapsed="deviceTreeCollapsed"
-          @node-click="handleNodeClick"
-          @toggle-collapse="toggleDeviceTree"
-          @search="handleDeviceTreeSearch"
-        />
-      </div>
-
-      <!-- 右侧内容区域 -->
-      <div class="content-area">
-        <div class="content-wrapper">
-          <!-- 导航栏 -->
-          <div class="content-header">
-            <div class="breadcrumb">
-              <!-- 设备树折叠时显示的展开按钮 -->
+        <!-- 右侧表格区域 -->
+        <div class="tableTenItU">
+          <div class="depNameBox_out flexRowAC">
+            <div class="depNameBox flexRowAC">
               <CollapseToggle
                 v-if="deviceTreeCollapsed"
                 class="expand-device-tree-btn"
                 :is-expanded="false"
                 @toggle="toggleDeviceTree"
               />
-              <span class="breadcrumb-item" @click="showTableView">视频回放</span>
-              <span v-if="showPlayerView" class="breadcrumb-separator">></span>
-              <!-- <span v-if="showPlayerView" class="breadcrumb-item active">播放视频</span> -->
             </div>
-          </div>
-
-          <!-- 表格视图 -->
-          <div v-if="!showPlayerView" class="table-view">
-            <!-- 搜索区域 -->
-            <div class="search-section">
-              <AdvancedSearch
-                @search="handleAdvancedSearch"
-                @reset="handleAdvancedSearchReset"
-                @export="handleExport"
-                @upload="handleUpload"
-                @template="handleDownloadTemplate"
-                @batch="handleBatchOperation"
+            <div class="searchHeight_out flexRowAC">
+              <search-height-box
+                keyword="keyword"
+                placeholder="搜索"
+                :data="searchData"
+                @handle="searchResetFn"
               />
-            </div>
-
-            <!-- 表格 -->
-            <div class="table-content">
-              <el-table
-                :data="currentPageData"
-                stripe
-                v-loading="loading"
-                element-loading-text="正在加载设备数据..."
-                @row-click="handleRowClick"
-              >
-                <el-table-column prop="index" label="序号" width="80" align="center" />
-                <el-table-column prop="deviceName" label="设备名称" min-width="120" />
-                <el-table-column prop="tag" label="标签" width="100">
-                  <template #default="scope">
-                    <el-tag size="small" type="primary">
-                      {{ scope.row.tag }}
-                    </el-tag>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="deviceId" label="设备ID" min-width="120" />
-                <el-table-column prop="streamPath" label="视频流路径" min-width="300" show-overflow-tooltip />
-                <el-table-column prop="status" label="状态" min-width="100" align="center">
-                  <template #default="scope">
-                    <el-tag
-                        :type="scope.row.status === 1 ? 'success' : 'danger'"
-                        size="small">
-                      {{ scope.row.status === 1 ? '在线' : '离线' }}
-                    </el-tag>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="lastRefreshTime" label="最近一次刷新时间" width="160" />
-                <el-table-column label="操作" width="120" fixed="right" align="right">
-                  <template #default="scope">
-                    <div class="action-buttons">
-                      <PlayButton @click="handlePlay(scope.row)" />
-                    </div>
-                  </template>
-                </el-table-column>
-              </el-table>
-
-              <!-- 分页 - 紧贴表格数据 -->
-              <div class="table-pagination">
-                <el-pagination
-                  v-model:current-page="currentPage"
-                  v-model:page-size="pageSize"
-                  :page-sizes="[10, 20, 50, 100]"
-                  :total="filteredData.length"
-                  layout="total, sizes, prev, pager, next, jumper"
-                  @size-change="handleSizeChange"
-                  @current-change="handleCurrentChange"
-                />
-              </div>
+              <export-excel-pdf :item="exportItem" @handle="handleExport" />
             </div>
           </div>
 
-          <!-- 播放器视图 -->
-          <div v-if="showPlayerView" class="player-view">
-            <div class="player-content">
-              <!-- 视频信息 -->
-              <div class="section">
-                <h3 class="section-title">视频信息</h3>
-
-                <div class="video-info-grid">
-                  <div class="info-row">
-                    <div class="info-label">设备名称：</div>
-                    <div class="info-value">{{ currentVideo?.deviceName }}</div>
-                  </div>
-                  <div class="info-row">
-                    <div class="info-label">设备ID：</div>
-                    <div class="info-value">{{ currentVideo?.deviceId }}</div>
-                  </div>
-                  <div class="info-row">
-                    <div class="info-label">标签：</div>
-                    <div class="info-value">
-                      <el-tag size="small" type="primary">
-                        {{ currentVideo?.tag }}
-                      </el-tag>
-                    </div>
-                  </div>
-                  <div class="info-row">
-                    <div class="info-label">视频流路径：</div>
-                    <div class="info-value">{{ currentVideo?.streamPath }}</div>
-                  </div>
-                  <div class="info-row">
-                    <div class="info-label">状态：</div>
-                    <div class="info-value">
-                      <el-tag
-                          :type="currentVideo.status === 1 ? 'success' : 'danger'"
-                          size="small">
-                        {{ currentVideo.status === 1 ? '在线' : '离线' }}
-                      </el-tag>
-                    </div>
-                  </div>
-                  <div class="info-row">
-                    <div class="info-label">最近刷新时间：</div>
-                    <div class="info-value">{{ currentVideo?.lastRefreshTime }}</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 视频播放器 -->
-              <div class="section">
-                <h3 class="section-title">视频播放</h3>
-
-                <div class="player-container">
-                  <div class="video-screen">
-                    <video ref="videoPlayer" controls width="100%" height="400">
-                      <source :src="currentVideoUrl" type="video/mp4">
-                      您的浏览器不支持视频播放
-                    </video>
-                  </div>
-
-                  <div class="player-controls">
-                    <div class="control-buttons">
-                      <el-button-group>
-                        <el-button @click="playPause" :type="isPlaying ? 'danger' : 'primary'">
-                          <el-icon><VideoPlay v-if="!isPlaying" /><VideoPause v-else /></el-icon>
-                          {{ isPlaying ? '暂停' : '播放' }}
-                        </el-button>
-                        <el-button @click="stopVideo">
-                          <el-icon><SwitchButton /></el-icon>
-                          停止
-                        </el-button>
-                        <el-button @click="downloadVideo">
-                          <el-icon><Download /></el-icon>
-                          下载
-                        </el-button>
-                      </el-button-group>
-                    </div>
-
-                    <div class="timeline-container">
-                      <div class="timeline">
-                        <el-slider
-                          v-model="playProgress"
-                          :max="videoDuration"
-                          :format-tooltip="formatTime"
-                          @change="seekVideo"
-                        />
-                      </div>
-                      <div class="time-display">
-                        {{ formatTime(currentTime) }} / {{ formatTime(videoDuration) }}
-                      </div>
-                    </div>
+          <TableSelf
+            v-loading="loading"
+            class="new_table"
+            header-cell-class-name="header_tenant_cell"
+            stripe
+            :data="currentPageData"
+            current-row-key="deviceId"
+            element-loading-text="正在加载设备数据..."
+            @selection-change="handleSelectionChange"
+            @row-click="handleRowClick"
+          >
+            <el-table-column type="selection" :width="clacPXToVW(55)" />
+            <el-table-column label="序号" :width="clacPXToVW(65)">
+              <template #default="scope">
+                {{ scope.$index + (currentPage - 1) * pageSize + 1 }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="deviceName" label="设备名称" :width="clacPXToVW(140)" show-overflow-tooltip />
+            <el-table-column prop="tag" label="标签" :width="clacPXToVW(120)">
+              <template #default="scope">
+                <el-tag size="small" type="primary" class="tag_pill">
+                  {{ scope.row.tag }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="deviceId" label="设备ID" :width="clacPXToVW(140)" show-overflow-tooltip />
+            <el-table-column prop="streamPath" label="视频流路径" show-overflow-tooltip />
+            <el-table-column prop="status" label="状态" :width="clacPXToVW(100)">
+              <template #default="scope">
+                <span v-if="scope.row.status === 1" class="staBtns WX">在线</span>
+                <span v-else class="staBtns">离线</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="lastRefreshTime" label="最近一次录制时间" :width="clacPXToVW(180)" />
+            <el-table-column fixed="right" align="right" label="操作" :width="clacPXToVW(120)">
+              <template #default="scope">
+                <div class="operateAppBox flexRowAC" @click.stop>
+                  <div class="new_table_svg_group" @click="handlePlay(scope.row)">
+                    <oort-svg-icon width="20" height="20" name="play" class="new_table_svg_group_svg" />
+                    <span>播放</span>
                   </div>
                 </div>
-              </div>
+              </template>
+            </el-table-column>
+          </TableSelf>
 
-              <!-- 操作按钮 -->
-              <div class="form-actions">
-                <el-button class="action-btn" @click="showTableView">返回列表</el-button>
-                <el-button type="primary" class="action-btn" @click="downloadVideo">下载视频</el-button>
-              </div>
-            </div>
+          <div class="paginationBox flexRowAC">
+            <el-pagination
+              background
+              :current-page="currentPage"
+              :page-size="pageSize"
+              :page-sizes="[10, 20, 50, 100]"
+              :total="filteredData.length"
+              layout="total, prev, pager, next, sizes"
+              class="justifyAlign"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            />
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 视频回放弹窗 -->
+    <!-- 设备视频播放弹窗 -->
     <el-dialog
       v-model="videoDialogVisible"
-      title="视频回放"
-      width="1400px"
-      :close-on-click-modal="false"
       class="video-dialog"
+      top="10vh"
+      width="900px"
+      draggable
+      :title="selectedRow?.deviceName ? `${selectedRow.deviceName} - 摄像头预览` : '摄像头预览'"
+      :close-on-click-modal="false"
+      append-to-body
+      @close="handlePlayerClose"
     >
-      <div class="video-playback-container">
-        <!-- 左侧视频列表区域 -->
-        <div class="video-list-section">
-          <!-- 日期选择器 -->
-          <div class="date-selector">
-            <!-- 年份选择 -->
-            <div class="date-section">
-              <div class="section-title">年份</div>
-              <div class="year-list">
-                <span
-                  v-for="year in availableYears"
-                  :key="year"
-                  class="year-item"
-                  :class="{ active: selectedDate.year === year }"
-                  @click="selectYear(year)"
-                >
-                  {{ year }}
-                </span>
-              </div>
-            </div>
-
-            <!-- 月份选择 -->
-            <div class="date-section">
-              <div class="section-title">月份</div>
-              <div class="month-grid">
-                <span
-                  v-for="month in availableMonths"
-                  :key="month"
-                  class="month-item"
-                  :class="{ active: selectedDate.month === month }"
-                  @click="selectMonth(month)"
-                >
-                  {{ month }}
-                </span>
-              </div>
-            </div>
-
-            <!-- 日期选择 -->
-            <div class="date-section">
-              <div class="section-title">日期</div>
-              <div class="date-grid">
-                <span
-                  v-for="day in availableDays"
-                  :key="day"
-                  class="date-item"
-                  :class="{ active: selectedDate.day === day }"
-                  @click="selectDay(day)"
-                >
-                  {{ day }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 视频列表标题 -->
-          <div class="video-list-title">
-            <span>视频列表</span>
-          </div>
-
-          <!-- 视频缩略图列表 -->
-          <div class="video-thumbnails">
-            <div
-              v-for="(video, index) in videoList"
-              :key="index"
-              class="video-thumbnail-item"
-              :class="{ active: selectedVideoIndex === index }"
-              @click="selectVideo(index)"
-            >
-              <div class="thumbnail-image">
-                <!-- 显示真实缩略图 -->
-                <img
-                  v-if="video.thumbnailUrl"
-                  :src="video.thumbnailUrl"
-                  :alt="video.fileName"
-                  class="thumbnail-img"
-                  @error="handleThumbnailError($event, index)"
-                />
-                <!-- 缩略图加载失败或不存在时显示占位符 -->
-                <div class="thumbnail-placeholder" :style="{ display: video.thumbnailUrl ? 'none' : 'flex' }">
-                  <el-icon class="video-icon"><VideoCamera /></el-icon>
-                </div>
-                <div class="play-overlay">
-                  <el-icon class="play-icon"><VideoPlay /></el-icon>
-                </div>
-              </div>
-              <div class="video-time-range">{{ video.timeRange }}</div>
-            </div>
-          </div>
+      <template #header="{ titleId, titleClass }">
+        <div class="video-player-header">
+          <span :id="titleId" :class="titleClass">
+            {{ selectedRow?.deviceName ? `${selectedRow.deviceName} - 摄像头预览` : '摄像头预览' }}
+          </span>
+          <el-icon class="video-fullscreen-button" title="全屏" @click="togglePlayerFullscreen">
+            <FullScreen />
+          </el-icon>
         </div>
-
-        <!-- 右侧播放器区域 -->
-        <div class="player-section">
-          <div class="video-player">
-            <div class="video-content">
-              <!-- 视频播放区域 -->
-              <div class="video-display">
-                <!-- 录制视频播放器 -->
-                <div v-if="currentVideoUrl" class="recorded-video-container">
-                  <video
-                    ref="recordedVideoPlayer"
-                    :src="currentVideoUrl"
-                    controls
-                    autoplay
-                    width="100%"
-                    class="recorded-video-player"
-                    @loadedmetadata="handleVideoLoaded"
-                    @error="handleVideoError"
-                  >
-                    您的浏览器不支持视频播放
-                  </video>
-                </div>
-
-                <!-- 无视频时的占位符 -->
-                <div v-else class="video-placeholder">
-                  <div class="placeholder-content">
-                    <el-icon class="placeholder-icon"><VideoCamera /></el-icon>
-                    <div class="placeholder-text">请从左侧选择要播放的视频</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 视频信息显示 -->
-              <div class="video-info" v-if="currentVideo">
-                <div class="video-info-item">
-                  <span class="info-label">设备：</span>
-                  <span class="info-value">{{ currentVideo.deviceName }}</span>
-                </div>
-                <div class="video-info-item">
-                  <span class="info-label">文件：</span>
-                  <span class="info-value">{{ currentVideo.fileName }}</span>
-                </div>
-                <div class="video-info-item" v-if="currentVideo.recordStartTime">
-                  <span class="info-label">时间：</span>
-                  <span class="info-value">{{ formatRecordTime(currentVideo.recordStartTime, currentVideo.recordEndTime) }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      </template>
+      <div ref="playerWrapperRef" class="live-player">
+        <div ref="oplayerContainerRef" class="oplayer-container" />
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, nextTick, onBeforeUnmount, onMounted, shallowRef } from 'vue'
 import {
   VideoCamera,
-  VideoPlay,
-  VideoPause,
-  SwitchButton,
-  Download,
+  Folder,
+  Collection,
+  FullScreen,
 } from '@element-plus/icons-vue'
-import DeviceTree from '@/components/DeviceTree.vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
-import PlayButton from '@/components/PlayButton.vue'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
+import { clacPXToVW } from '@/utils/index'
 
 // API 导入
 import { getDeviceList, getDeviceTree } from '@/api/device'
 import { getDeviceRecords } from '@/api/videoRecord'
-import {getBaseURL} from "@/utils/request";
+import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
+import { ensureOPlayer } from '@/utils/oplayer'
+import { getBaseURL } from '@/utils/request'
+import { getStreamType } from './deviceUtils.js'
 
 // 响应式数据
 const deviceTreeCollapsed = ref(false)
@@ -438,7 +232,35 @@ const showPlayerView = ref(false)
 const selectedRow = ref(null)
 const selectedRows = ref([])
 const currentPage = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(10)
+const exportItem = ref({
+  isDisabledExcel: false
+})
+
+// 高级搜索配置
+const searchData = ref([
+  { label: '设备名称', value: 'keyword', type: 'text', default: '' },
+  {
+    label: '标签类型',
+    value: 'recordType',
+    type: 'select',
+    default: '',
+    option: [
+      { label: '全部', value: '' },
+      { label: '球机监控', value: '球机监控' },
+      { label: '枪机监控', value: '枪机监控' },
+      { label: '半球监控', value: '半球监控' },
+      { label: '云台监控', value: '云台监控' }
+    ]
+  },
+  {
+    label: '时间',
+    value: 'dateRange',
+    type: 'daterange',
+    format: 'YYYY-MM-DD',
+    default: []
+  }
+])
 const currentVideo = ref(null)
 const currentVideoUrl = ref('')
 const isPlaying = ref(false)
@@ -448,6 +270,10 @@ const videoDuration = ref(0)
 const videoPlayer = ref(null)
 const recordedVideoPlayer = ref(null)
 const videoDialogVisible = ref(false)
+const playerWrapperRef = ref(null)
+const oplayerContainerRef = ref(null)
+const oplayerInstance = shallowRef(null)
+let activePlaybackTask = null
 const selectedVideoIndex = ref(0)
 const loading = ref(false)
 const totalRecords = ref(0)
@@ -468,7 +294,46 @@ const searchForm = reactive({
   dateRange: [getCurrentDate(), getCurrentDate()]
 })
 
-// 设备树数据
+// 设备树
+const deviceTreeRef = ref(null)
+const searchTreeKeyword = ref('')
+const currentTreeNodeId = ref(null)
+const hoveredTreeNodeId = ref(null)
+const treeDefaultProps = {
+  children: 'children',
+  label: 'label'
+}
+
+// 过滤后的设备树数据
+const filteredDeviceTreeData = computed(() => {
+  if (!searchTreeKeyword.value) {
+    return deviceTreeData.value
+  }
+
+  const keyword = searchTreeKeyword.value.toLowerCase()
+  const filterNode = (nodes) => {
+    return nodes.filter(node => {
+      if (node.label?.toLowerCase().includes(keyword)) {
+        return true
+      }
+      if (node.children?.length) {
+        return filterNode(node.children).length > 0
+      }
+      return false
+    }).map(node => {
+      if (node.children?.length) {
+        return {
+          ...node,
+          children: filterNode(node.children)
+        }
+      }
+      return node
+    })
+  }
+
+  return filterNode(deviceTreeData.value)
+})
+
 const deviceTreeData = ref([])
 
 // 设备列表数据（主列表）
@@ -484,11 +349,11 @@ const selectedDate = reactive({
   day: new Date().getDate()
 })
 
-// 可选年份范围（当前年份前后5年）
+// 可选年份范围（展示近若干年，便于网格排布）
 const availableYears = computed(() => {
   const currentYear = new Date().getFullYear()
   const years = []
-  for (let i = currentYear - 2; i <= currentYear + 1; i++) {
+  for (let i = currentYear - 5; i <= currentYear; i++) {
     years.push(i)
   }
   return years
@@ -511,6 +376,28 @@ const selectedDateStr = computed(() => {
   const month = String(selectedDate.month).padStart(2, '0')
   const day = String(selectedDate.day).padStart(2, '0')
   return `${year}-${month}-${day}`
+})
+
+// 播放器右上角日期时间文案
+const playerOverlayDateTime = computed(() => {
+  if (!currentVideo.value) return ''
+  const start = currentVideo.value.recordStartTime
+  if (start) {
+    const date = new Date(start)
+    if (!Number.isNaN(date.getTime())) {
+      const y = date.getFullYear()
+      const m = String(date.getMonth() + 1).padStart(2, '0')
+      const d = String(date.getDate()).padStart(2, '0')
+      const hh = String(date.getHours()).padStart(2, '0')
+      const mm = String(date.getMinutes()).padStart(2, '0')
+      const ss = String(date.getSeconds()).padStart(2, '0')
+      return `${y}年${m}月${d}日 ${hh}:${mm}:${ss}`
+    }
+  }
+  const y = selectedDate.year
+  const m = String(selectedDate.month).padStart(2, '0')
+  const d = String(selectedDate.day).padStart(2, '0')
+  return `${y}年${m}月${d}日`
 })
 
 // 过滤后的数据 - 基于设备列表
@@ -641,91 +528,61 @@ const videoList = ref([])
 
 // 方法
 const toggleDeviceTree = () => {
-  console.log('toggleDeviceTree 被调用，当前状态:', deviceTreeCollapsed.value)
   deviceTreeCollapsed.value = !deviceTreeCollapsed.value
-  console.log('toggleDeviceTree 新状态:', deviceTreeCollapsed.value)
-  ElMessage.info(`设备树${deviceTreeCollapsed.value ? '已折叠' : '已展开'}`)
+}
+
+const handleTreeSearch = () => {
+  // 本地过滤，无需额外请求
 }
 
 const handleSearch = () => {
   currentPage.value = 1
   loadDeviceList()
-  ElMessage.success('搜索完成')
 }
 
-const handleReset = () => {
-  searchForm.fileName = ''
-  searchForm.recordType = ''
-  searchForm.dateRange = [getCurrentDate(), getCurrentDate()]
-  currentPage.value = 1
+// 搜索 / 重置（search-height-box）
+const searchResetFn = (val, reset) => {
+  if (reset) currentPage.value = 1
+  searchForm.fileName = val?.keyword || ''
+  searchForm.recordType = val?.recordType || ''
+  searchForm.dateRange = val?.dateRange?.length
+    ? val.dateRange
+    : [getCurrentDate(), getCurrentDate()]
   loadDeviceList()
-  ElMessage.info('已重置搜索条件')
 }
 
-// 高级搜索相关方法
-const handleAdvancedSearch = (searchData) => {
-  console.log('高级搜索:', searchData)
-
-  // 更新搜索表单
-  if (searchData.keyword) {
-    searchForm.fileName = searchData.keyword
-  }
-  if (searchData.deviceName) {
-    searchForm.fileName = searchData.deviceName
-  }
-  if (searchData.deviceId) {
-    searchForm.fileName = searchData.deviceId
-  }
-  if (searchData.selectedTags && searchData.selectedTags.length > 0) {
-    searchForm.recordType = searchData.selectedTags[0]
-  }
-  if (searchData.dateRange && searchData.dateRange.length > 0) {
-    searchForm.dateRange = searchData.dateRange
-  }
-
-  currentPage.value = 1
-  loadDeviceList()
-  ElMessage.success('高级搜索完成')
-}
-
-const handleAdvancedSearchReset = () => {
-  console.log('重置高级搜索')
-  searchForm.fileName = ''
-  searchForm.recordType = ''
-  searchForm.dateRange = [getCurrentDate(), getCurrentDate()]
-  currentPage.value = 1
-  loadDeviceList()
-  ElMessage.info('已重置高级搜索条件')
-}
-
-const handleExport = () => {
-  ElMessage.error('当前未接入录像导出接口，未导出任何数据')
-}
-
-const handleUpload = () => {
-  ElMessage.error('当前未接入录像上传接口，未上传任何文件')
-}
-
-const handleDownloadTemplate = () => {
-  ElMessage.error('当前未配置录像导入模板，未下载文件')
-}
-
-const handleBatchOperation = () => {
-  ElMessage.error('当前未接入录像批量操作接口，未执行操作')
+const handleExport = (type) => {
+  ElMessage.error(`当前未接入录像导出接口，未导出${type || ''}数据`)
 }
 
 const handleNodeClick = (data) => {
+  currentTreeNodeId.value = data.id
   if (data.type === 'device') {
-    console.log('选择设备:', data)
-    // 根据设备过滤视频
     searchForm.fileName = data.label
-    handleSearch()
+    currentPage.value = 1
+    loadDeviceList()
   }
 }
 
-const handleDeviceTreeSearch = (keyword) => {
-  console.log('设备树搜索:', keyword)
-  ElMessage.info(`搜索设备: ${keyword}`)
+const handleTreeAdd = (data) => {
+  ElMessage.info(`新增节点：${data.label}`)
+}
+
+const handleTreeDelete = async (data) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定删除「${data.label}」吗？`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    ElMessage.success('删除成功')
+  } catch {
+    // 用户取消
+  }
 }
 
 const showTableView = () => {
@@ -812,21 +669,155 @@ const handleDelete = async () => {
   }
 }
 
-const handlePlay = async (row) => {
-  console.log('播放设备视频记录:', row)
+/**
+ * 释放设备视频播放器资源。
+ */
+const cleanupOPlayer = () => {
+  activePlaybackTask = null
 
-  // 只显示播放弹窗，不跳转到内嵌页面
+  if (oplayerInstance.value?.compInstance?.$destroy) {
+    oplayerInstance.value.compInstance.$destroy()
+  }
+  oplayerInstance.value = null
+
+  if (oplayerContainerRef.value) {
+    oplayerContainerRef.value.innerHTML = ''
+  }
+}
+
+/**
+ * 关闭播放弹窗并释放底层连接。
+ */
+const handlePlayerClose = () => {
+  cleanupOPlayer()
+  videoDialogVisible.value = false
+}
+
+/**
+ * 切换播放器全屏状态。
+ */
+const togglePlayerFullscreen = async () => {
+  const playerElement = playerWrapperRef.value
+  if (!playerElement) return
+
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen()
+    } else {
+      await playerElement.requestFullscreen?.()
+    }
+  } catch (error) {
+    console.error('切换播放器全屏失败:', error)
+    ElMessage.error('切换全屏失败')
+  }
+}
+
+/**
+ * 根据流类型生成 OPlayer 播放参数。
+ */
+const createPlayerOptions = async (streamUrl) => {
+  const streamType = getStreamType(streamUrl)
+  const playerConfig = {
+    debuggerMode: false,
+    autoSize: true,
+    backgroundColor: '#000000',
+    showHeader: false
+  }
+
+  if (streamType === 'cameraRTC') {
+    const url = new URL(streamUrl)
+    const cameraId = url.pathname.split('/').filter(Boolean).pop()
+    if (!cameraId) {
+      throw new Error('CameraRTC 地址中缺少摄像头ID')
+    }
+
+    playerConfig.webRTCSocketURL = url.origin.replace(/^http/, 'ws')
+    return {
+      playerConfig,
+      playConfig: { type: 'cameraRTC', src: cameraId }
+    }
+  }
+
+  if (streamType === 'rtsp') {
+    await ensureWebRTCBackendConfig()
+    playerConfig.rtspServerURL = WEBRTC_SERVER_BASE_URL
+    return {
+      playerConfig,
+      playConfig: {
+        type: 'rtsp',
+        src: streamUrl,
+        transport: 'tcp',
+        timeout: 60,
+        preferredMime: 'video/H264'
+      }
+    }
+  }
+
+  const playTypeMap = {
+    flv: 'flv',
+    hls: 'm3u8',
+    video: 'mp4',
+    http: 'mp4'
+  }
+  const playType = playTypeMap[streamType]
+  if (!playType) {
+    throw new Error(`暂不支持该视频流类型：${streamType}`)
+  }
+
+  return {
+    playerConfig,
+    playConfig: { type: playType, src: streamUrl }
+  }
+}
+
+/**
+ * 使用与工作台一致的播放器播放设备实时流。
+ */
+const handlePlay = async (row) => {
+  const streamUrl = row?.streamPath
+    || row?.streamUrl
+    || row?.originalRtspUrl
+    || row?.rtspUrl
+    || row?.url
+  if (!streamUrl) {
+    ElMessage.warning('暂无可用流地址')
+    return
+  }
+
+  cleanupOPlayer()
+  const playbackTask = Symbol('video-playback-oplayer')
+  activePlaybackTask = playbackTask
   selectedRow.value = row
   videoDialogVisible.value = true
 
-  // 初始化日期选择器为当前日期
-  const now = new Date()
-  selectedDate.year = now.getFullYear()
-  selectedDate.month = now.getMonth() + 1
-  selectedDate.day = now.getDate()
+  const loadingInstance = ElLoading.service({
+    lock: true,
+    text: '正在启动视频播放...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  })
 
-  // 自动加载当前日期的视频记录
-  await loadVideoRecords()
+  try {
+    await Promise.all([ensureOPlayer(), nextTick()])
+    const { playerConfig, playConfig } = await createPlayerOptions(streamUrl)
+    const container = oplayerContainerRef.value
+    if (activePlaybackTask !== playbackTask) return
+    if (!container) throw new Error('播放器容器未准备好')
+
+    const player = new window.OToolBox.OPlayer(container, playerConfig)
+    oplayerInstance.value = player
+    player.play({
+      ...playConfig,
+      name: row?.deviceName || row?.name || ''
+    })
+  } catch (error) {
+    if (activePlaybackTask !== playbackTask) return
+    console.error('播放失败:', error)
+    ElMessage.error(`播放失败: ${error.message || error}`)
+    cleanupOPlayer()
+    videoDialogVisible.value = false
+  } finally {
+    loadingInstance.close()
+  }
 }
 
 const handleSizeChange = (size) => {
@@ -1235,148 +1226,221 @@ onMounted(async () => {
   await loadDeviceTree()
   await loadDeviceList()
 })
+
+onBeforeUnmount(() => {
+  cleanupOPlayer()
+})
 </script>
 
-<style scoped>
-/* 视频回放页面样式 - 按照rules规范 */
-.video-playback {
+<style scoped lang="scss">
+.video-player-header {
   display: flex;
-  flex-direction: column;
-  background: #f5f7fa;
-  min-height: 100vh;
-}
-
-/* 搜索表单样式 - 查询栏背景颜色：#F0F2F5 */
-.search-form-container {
-  background: #F0F2F5;
-  padding: 20px;
-  margin-bottom: 0;
-  border-radius: 8px 8px 0 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.search-form {
+  align-items: center;
+  justify-content: space-between;
   width: 100%;
+  padding-right: 8px;
 }
 
-.search-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: nowrap;
+.video-fullscreen-button {
+  margin-left: auto;
+  color: #606266;
+  font-size: 18px;
+  cursor: pointer;
+
+  &:hover {
+    color: #1890ff;
+  }
 }
 
-.search-item {
-  flex: 1;
-  min-width: 200px;
-}
-
-.search-item:first-child {
-  width: 240px;
-  flex: none;
-}
-
-.search-item:nth-child(2) {
-  min-width: 180px;
-  max-width: 200px;
-}
-
-.search-item:nth-child(3) {
-  width: auto;
-  flex: none;
-}
-
-.date-with-buttons {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-
-
-.search-buttons {
-  display: flex;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-/* 主要内容区域 - 容器无缝连接，零间隙 */
-.main-content {
-  flex: 1;
-  display: flex;
-  gap: 0;
-  min-height: 0;
-}
-
-/* 左侧设备树 */
-.device-tree-container {
-  width: 280px;
-  background: white;
-  border-radius: 0 0 0 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  transition: all 0.3s ease;
+.live-player {
+  width: 100%;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
+  background: #000;
+}
+
+.oplayer-container {
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  background: #f0f2f5;
+
+  .tenant_content {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+  }
+
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+  }
+}
+
+.police_aside_use {
+  width: 300px;
+  padding-right: 20px;
   flex-shrink: 0;
-  border-right: 1px solid #f0f0f0;
+  height: 100%;
+  overflow: hidden;
+
+  .treeTitle {
+    color: var(--el-color-primary);
+    padding-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 4px;
+
+    &::before {
+      content: '';
+      width: 3px;
+      height: 18px;
+      background-color: var(--el-color-primary);
+    }
+  }
+
+  .tree_search_content {
+    justify-content: center;
+    padding-bottom: 10px;
+
+    :deep(.el-input__wrapper) {
+      background: #fff;
+      box-shadow: none;
+      border: 1px solid #dcdfe6;
+      border-radius: 4px;
+    }
+
+    :deep(.el-input__inner) {
+      background: #fff;
+      border: none;
+    }
+  }
+
+  :deep(.el-tree-node__content) {
+    --el-tree-node-hover-bg-color: var(--el-menu-hover-bg-color);
+    height: 38px;
+    font-size: 14px;
+    color: #333;
+
+    .custom-tree-node {
+      width: 100%;
+      justify-content: space-between;
+      padding-right: 4px;
+    }
+  }
+
+  :deep(.el-tree-node) {
+    .el-tree-node.is-current.is-focusable > .el-tree-node__content {
+      background-color: var(--el-color-primary-hb);
+      color: var(--el-color-primary);
+    }
+  }
+
+  :deep(.el-tree) {
+    height: calc(100% - 80px);
+    overflow: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
 }
 
-/* 设备树展开状态（默认） */
-.device-tree-container:not(.collapsed) {
-  width: 280px !important;
-  min-width: 280px !important;
-  opacity: 1;
-  transform: translateX(0);
-  visibility: visible;
-}
-
-/* 设备树折叠状态 */
-.device-tree-container.collapsed {
-  width: 0 !important;
-  min-width: 0 !important;
-  margin-right: 0 !important;
-  opacity: 0;
-  transform: translateX(-280px);
-  visibility: hidden;
-  border-right: none;
-}
-
-/* 设备树折叠时，内容区域的圆角调整 */
-.device-tree-container.collapsed + .content-area .content-wrapper {
-  border-radius: 0 0 8px 8px;
-}
-
-/* 右侧内容区域 */
-.content-area {
+.custom-tree-node {
   flex: 1;
-  display: flex;
-  flex-direction: column;
   min-width: 0;
+  gap: 4px;
+
+  .tree-node-main {
+    flex: 1;
+    min-width: 0;
+    gap: 4px;
+    overflow: hidden;
+  }
+
+  .tree-node-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tree-node-actions {
+    flex-shrink: 0;
+    gap: 8px;
+    margin-left: 8px;
+  }
+
+  .tree-action-icon {
+    cursor: pointer;
+    flex-shrink: 0;
+
+    &:hover {
+      opacity: 0.75;
+    }
+  }
+
+  .tree-icon {
+    flex-shrink: 0;
+    font-size: 14px;
+    color: var(--el-color-primary);
+  }
+
+  .device-icon {
+    color: #52C41A;
+  }
+
+  .tag-icon {
+    color: #8581dc;
+  }
+
+  .activeDept {
+    color: var(--el-color-primary);
+  }
+
+  .device-offline {
+    color: #999;
+  }
 }
 
-/* 内容包装器 - 白色内容区域使用统一的圆角8px和阴影效果 */
-.content-wrapper {
-  background: white;
-  border-radius: 0 0 8px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+.tableTenItU {
   flex: 1;
-}
+  height: 100%;
+  overflow: auto;
+  min-width: 0;
 
-/* 导航栏 - 统一的padding: 20px确保内容对齐 */
-.content-header {
-  background: white;
-  border-bottom: 1px solid #e8e8e8;
-  padding: 20px;
-}
+  :deep(.el-table) {
+    .el-table__header .el-table__cell .cell {
+      background: #F8F8F9;
+      font-size: 14px;
+      color: #515A6E;
+      line-height: 24px;
+      font-weight: 700;
+    }
 
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    th.el-table-fixed-column--right {
+      background-color: #F8F8F9;
+    }
+  }
+
+  :deep(.header_tenant_cell) {
+    background: #F8F8F9;
+  }
 }
 
 .expand-device-tree-btn {
@@ -1385,9 +1449,8 @@ onMounted(async () => {
   border: 1px solid #e4e7ed;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: all 0.3s;
-  margin-right: 12px;
-  width: 32.15px;
-  height: 28.29px;
+  width: 32px;
+  height: 28px;
 }
 
 .expand-device-tree-btn:hover {
@@ -1396,425 +1459,192 @@ onMounted(async () => {
   transform: scale(1.05);
 }
 
-/* 折叠按钮内部样式优化 */
-.expand-device-tree-btn :deep(.collapse-toggle) {
-  width: 100%;
-  height: 100%;
+.paginationBox {
+  justify-content: center;
+  height: 100px;
 }
 
-.expand-device-tree-btn :deep(.toggle-icon) {
-  width: 24px;
-  height: 21px;
-}
-
-.expand-device-tree-btn :deep(.line) {
-  height: 1.5px;
-}
-
-.expand-device-tree-btn :deep(.arrow) {
-  stroke-width: 1.5px;
-}
-
-.breadcrumb-item {
-  color: #606266;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.breadcrumb-item:hover {
-  color: #1A53FF;
-}
-
-.breadcrumb-item.active {
-  color: #303133;
-  font-weight: 500;
-}
-
-.breadcrumb-separator {
-  color: #c0c4cc;
-  margin: 0 8px;
-}
-
-/* 表格视图 */
-.table-view {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* 搜索区域 */
-.search-section {
-  display: flex;
+.operateAppBox {
   justify-content: flex-end;
-  margin-bottom: 16px;
+  gap: 2px;
 }
 
-.table-content {
-  flex: 1;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+.tag_pill {
+  border-radius: 12px;
 }
 
-/* 表格滚动条样式 */
-.table-content .el-table {
-  flex: 1;
-  overflow: auto;
-}
-
-.table-content .el-table__body-wrapper {
-  overflow-y: auto !important;
-  overflow-x: auto !important;
-}
-
-/* 自定义滚动条样式 */
-.table-content .el-table__body-wrapper::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.table-content .el-table__body-wrapper::-webkit-scrollbar-track {
-  background: #f1f1f1;
+.staBtns {
+  padding: 3px 7px;
+  font-size: 14px;
+  line-height: 14px;
   border-radius: 4px;
-}
+  position: relative;
+  padding-left: 12px;
 
-.table-content .el-table__body-wrapper::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
-}
+  &::before {
+    content: "";
+    display: flex;
+    position: absolute;
+    top: 6px;
+    left: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: gray;
+  }
 
-.table-content .el-table__body-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
+  &.WX {
+    color: #52C41A;
 
-/* 操作按钮样式 - 操作列的按钮总是保持在一行显示 */
-.action-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-}
-
-/* 分页容器 - 紧贴表格数据，参考DeviceManagement */
-.table-pagination {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* 播放器视图 */
-.player-view {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.player-content {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-}
-
-.section {
-  margin-bottom: 24px;
-}
-
-.section-title {
-  color: #303133;
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 16px 0;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #1A53FF;
-}
-
-.video-info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.info-row {
-  display: flex;
-  align-items: center;
-}
-
-.info-label {
-  width: 100px;
-  color: #606266;
-  font-size: 14px;
-}
-
-.info-value {
-  color: #303133;
-  font-size: 14px;
-}
-
-.player-container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.video-screen {
-  background: #000;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.player-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.control-buttons {
-  display: flex;
-  justify-content: center;
-}
-
-.timeline-container {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.timeline {
-  flex: 1;
-}
-
-.time-display {
-  color: #606266;
-  font-size: 14px;
-  min-width: 120px;
-  text-align: center;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: center;
-  gap: 0;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.form-actions .action-btn {
-  width: 82px;
-  height: 36px;
-  font-size: 14px;
-  border-radius: 18px;
-}
-
-.form-actions .action-btn:first-child {
-  border-radius: 18px 0 0 18px;
-}
-
-.form-actions .action-btn:last-child {
-  border-radius: 0 18px 18px 0;
-  border-left: none;
-}
-
-/* 视频回放弹窗样式 */
-.video-dialog {
-  .el-dialog__body {
-    padding: 0;
+    &::before {
+      background: #52C41A;
+    }
   }
 }
 
+/* 视频回放弹窗样式 */
 .video-playback-container {
   display: flex;
-  height: 680px;
-  background: #f5f7fa;
-  padding: 20px;
-  gap: 20px;
-}
-
-/* 左侧视频列表区域 */
-.video-list-section {
-  width: 420px;
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
+  background: #fff;
+  min-height: 640px;
 }
 
-/* 日期选择器 */
+/* 顶部年月日选择 */
 .date-selector {
   display: flex;
-  flex-direction: row;
-  gap: 20px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
 }
 
 .date-section {
+  border: 1px solid #e8e8e8;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #e8e8e8;
+}
+
+.year-section {
+  flex: 0 0 220px;
+}
+
+.month-section {
+  flex: 0 0 260px;
+}
+
+.day-section {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  min-width: 0;
 }
 
-.section-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-  text-align: center;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e9ecef;
+.year-grid,
+.month-grid,
+.day-grid {
+  display: grid;
+  width: 100%;
+  gap: 1px;
+  background: #e8e8e8;
 }
 
-.year-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.year-item {
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-  color: #666;
-  transition: all 0.3s;
-  text-align: center;
-  border: 1px solid transparent;
-}
-
-.year-item.active {
-  background: #1A53FF;
-  color: white;
-  border-color: #1A53FF;
-}
-
-.year-item:hover:not(.active) {
-  background: #f0f4ff;
-  color: #1A53FF;
-  border-color: #1A53FF;
+.year-grid {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .month-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(4, 1fr);
 }
 
-.date-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  max-height: 180px;
-  overflow-y: auto;
+.day-grid {
+  grid-template-columns: repeat(11, 1fr);
 }
 
-.month-item,
-.date-item {
-  width: 100%;
-  height: 32px;
+.date-cell {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  height: 40px;
+  font-size: 14px;
+  color: #303133;
   cursor: pointer;
-  font-size: 12px;
-  color: #666;
-  transition: all 0.3s;
-  border: 1px solid transparent;
+  user-select: none;
+  background: #fff;
+  transition: background 0.2s, color 0.2s;
+  box-sizing: border-box;
 }
 
-.month-item.active,
-.date-item.active {
-  background: #1A53FF;
-  color: white;
-  border-color: #1A53FF;
+.date-cell:hover:not(.active) {
+  background: #f5f9ff;
+  color: #1890ff;
 }
 
-.month-item:hover:not(.active),
-.date-item:hover:not(.active) {
-  background: #f0f4ff;
-  color: #1A53FF;
-  border-color: #1A53FF;
+.date-cell.active {
+  background: #e6f7ff;
+  color: #1890ff;
+  font-weight: 500;
 }
 
-/* 视频列表标题 */
+/* 底部主体区域 */
+.playback-body {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-height: 480px;
+}
+
+/* 左侧视频列表 */
+.video-list-section {
+  width: 180px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .video-list-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  color: #333;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
+  color: #303133;
+  line-height: 1;
 }
 
-/* 视频缩略图列表 */
 .video-thumbnails {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   overflow-y: auto;
-  max-height: 350px; /* 限制高度，约3条记录的高度：110*3 + 12*2 = 354px */
-  padding-right: 8px; /* 为滚动条留出空间 */
-  min-height: 120px; /* 最小高度 */
+  max-height: 480px;
+  padding-right: 4px;
 }
 
-/* 自定义滚动条样式 */
 .video-thumbnails::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .video-thumbnails::-webkit-scrollbar-track {
-  background: #f0f0f0;
-  border-radius: 3px;
+  background: transparent;
 }
 
 .video-thumbnails::-webkit-scrollbar-thumb {
-  background: #c0c4cc;
-  border-radius: 3px;
-  transition: background 0.3s;
+  background: #d9d9d9;
+  border-radius: 2px;
 }
 
-.video-thumbnails::-webkit-scrollbar-thumb:hover {
-  background: #909399;
+.video-list-empty {
+  padding: 24px 0;
+  text-align: center;
+  color: #909399;
+  font-size: 13px;
 }
 
 .video-thumbnail-item {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   cursor: pointer;
-  border-radius: 6px;
-  overflow: hidden;
-  transition: all 0.3s;
-  background: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e4e7ed;
-  min-height: 110px; /* 保证每个项目的最小高度 */
-  flex-shrink: 0; /* 防止项目被压缩 */
-}
-
-.video-thumbnail-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-color: #1A53FF;
-}
-
-.video-thumbnail-item.active {
-  border: 2px solid #1A53FF;
-  background: #f0f8ff;
-  transform: translateY(-1px);
+  flex-shrink: 0;
 }
 
 .thumbnail-image {
@@ -1822,21 +1652,31 @@ onMounted(async () => {
   width: 100%;
   height: 90px;
   background: #f0f0f0;
-  border-radius: 4px;
+  border-radius: 2px;
   overflow: hidden;
+  border: 2px solid transparent;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
 }
 
-.thumbnail-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.video-thumbnail-item.active .thumbnail-image {
+  border-color: #1890ff;
 }
 
+.video-thumbnail-item:hover .thumbnail-image {
+  border-color: #69b1ff;
+}
+
+.video-thumbnail-item.active:hover .thumbnail-image {
+  border-color: #1890ff;
+}
+
+.thumbnail-image img,
 .thumbnail-image .thumbnail-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 4px;
+  display: block;
 }
 
 .thumbnail-placeholder {
@@ -1853,40 +1693,22 @@ onMounted(async () => {
   color: #c0c4cc;
 }
 
-.play-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 32px;
-  height: 32px;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.video-thumbnail-item:hover .play-overlay {
-  opacity: 1;
-}
-
 .video-time-range {
   font-size: 12px;
-  color: #666;
+  color: #8c8c8c;
   text-align: center;
-  padding: 4px 8px;
-  background: #f5f7fa;
-  border-radius: 0 0 6px 6px;
-  font-weight: 500;
+  line-height: 1.2;
+  word-break: break-all;
 }
 
-/* 右侧播放器区域 */
+.video-thumbnail-item.active .video-time-range {
+  color: #1890ff;
+}
+
+/* 右侧播放器 */
 .player-section {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
@@ -1894,258 +1716,70 @@ onMounted(async () => {
 .video-player {
   flex: 1;
   background: #000;
-  border-radius: 8px;
+  border-radius: 2px;
   overflow: hidden;
   position: relative;
+  min-height: 480px;
 }
 
-.video-content {
+.video-display {
+  position: relative;
   width: 100%;
   height: 100%;
-  position: relative;
+  background: #000;
+  overflow: hidden;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.recorded-video-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.recorded-video-player {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  min-height: 480px;
+  background: #000;
+}
+
+.player-datetime {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 2;
+  color: #fff;
+  font-size: 14px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+}
+
+.player-device-name {
+  position: absolute;
+  left: 16px;
+  bottom: 56px;
+  z-index: 2;
+  color: #fff;
+  font-size: 14px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
 }
 
 .video-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 20px;
-  position: relative;
-  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23f0f0f0"/><circle cx="30" cy="30" r="20" fill="%23e0e0e0"/><rect x="60" y="20" width="30" height="20" fill="%23e0e0e0"/></svg>');
-  background-size: cover;
-  background-position: center;
-}
-
-.video-info {
-  color: white;
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  z-index: 2;
-}
-
-.device-name {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.video-time {
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-/* 视频控制条 */
-.video-controls {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-  padding: 20px;
-  color: white;
-}
-
-.progress-bar {
-  margin-bottom: 12px;
-}
-
-.progress-track {
-  height: 4px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
-  position: relative;
-  cursor: pointer;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #1A53FF;
-  border-radius: 2px;
-  transition: width 0.3s;
-}
-
-.progress-handle {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 12px;
-  height: 12px;
-  background: #1A53FF;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.control-buttons {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.control-btn {
-  background: transparent !important;
-  border: none !important;
-  color: white !important;
-  padding: 4px !important;
-}
-
-.control-btn:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-}
-
-.time-display {
-  font-size: 14px;
-  color: white;
-  min-width: 60px;
-}
-
-.volume-control {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.volume-icon {
-  font-size: 16px;
-  color: white;
-}
-
-.volume-text {
-  font-size: 14px;
-  color: white;
-  min-width: 20px;
-}
-
-.fullscreen-control {
-  margin-left: auto;
-}
-
-.fullscreen-icon {
-  font-size: 18px;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.fullscreen-icon:hover {
-  color: #1A53FF;
-}
-
-/* 新增的视频播放区域样式 */
-.video-display {
-  position: relative;
-  width: 100%;
-  flex: 1;
-  background: #000;
-  border-radius: 8px;
-  overflow: hidden;
+  min-height: 480px;
+  background: #1a1a1a;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.video-info-overlay {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 4px;
-  z-index: 10;
-  font-size: 14px;
-}
-
-.video-info-overlay .device-name {
-  font-weight: bold;
-  margin-bottom: 2px;
-}
-
-.video-info-overlay .video-time {
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-/* HTTP流容器 */
-.http-stream-container {
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-
-.stream-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  border-radius: 8px;
-}
-
-/* RTSP流容器 */
-.rtsp-stream-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f8f9fa;
-}
-
-.rtsp-info {
-  text-align: center;
-  padding: 20px;
-  max-width: 500px;
-}
-
-.rtsp-title {
-  font-size: 20px;
-  font-weight: bold;
-  color: #303133;
-  margin-bottom: 12px;
-}
-
-.rtsp-url {
-  font-family: monospace;
-  font-size: 12px;
-  color: #606266;
-  background: #f0f0f0;
-  padding: 8px 12px;
-  border-radius: 4px;
-  margin-bottom: 16px;
-  word-break: break-all;
-}
-
-.rtsp-note {
-  text-align: left;
-  color: #606266;
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-
-.rtsp-note p {
-  margin: 8px 0;
-}
-
-.rtsp-note ul {
-  margin: 8px 0;
-  padding-left: 20px;
-}
-
-.rtsp-note li {
-  margin: 4px 0;
-}
-
-.rtsp-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-
-/* 默认占位符样式更新 */
 .video-placeholder .placeholder-content {
   text-align: center;
   color: #909399;
@@ -2157,52 +1791,49 @@ onMounted(async () => {
 }
 
 .video-placeholder .placeholder-text {
-  font-size: 16px;
+  font-size: 14px;
+}
+</style>
+
+<style lang="scss">
+/* 播放弹窗挂载到 body，去除播放器外围边框与留白。 */
+.el-dialog.video-dialog {
+  margin: 0 auto !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-/* 录制视频播放器样式 */
-.recorded-video-container {
-  width: 100%;
-  height: 100%;
+.el-dialog.video-dialog .el-dialog__header {
+  position: relative;
+  margin: 0;
+  border-bottom: none !important;
 }
 
-.recorded-video-player {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 8px;
-  min-height: 400px;
+.el-dialog.video-dialog .el-dialog__body {
+  padding: 0 !important;
 }
 
-/* 视频信息显示样式 */
-.video-info {
-  flex-shrink: 0;
-  margin-top: 12px;
-  padding: 10px 16px;
-  background: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e9ecef;
-}
-
-.video-info-item {
+.el-dialog.video-dialog .video-player-header {
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
+  width: 100%;
+  padding-right: 72px;
+  box-sizing: border-box;
 }
 
-.video-info-item:last-child {
-  margin-bottom: 0;
+.el-dialog.video-dialog .video-fullscreen-button {
+  position: absolute;
+  top: 50%;
+  right: 52px;
+  margin: 0;
+  color: var(--el-color-info);
+  font-size: 18px;
+  cursor: pointer;
+  transform: translateY(-50%);
 }
 
-.video-info .info-label {
-  font-weight: 500;
-  color: #666;
-  min-width: 60px;
-}
-
-.video-info .info-value {
-  color: #333;
-  flex: 1;
-  word-break: break-all;
+.el-dialog.video-dialog .video-fullscreen-button:hover {
+  color: var(--el-color-primary);
 }
 </style>

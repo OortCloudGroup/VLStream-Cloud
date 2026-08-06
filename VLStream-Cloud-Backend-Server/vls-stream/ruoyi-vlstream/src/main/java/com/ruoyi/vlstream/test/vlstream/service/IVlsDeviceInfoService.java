@@ -89,6 +89,16 @@ public interface IVlsDeviceInfoService extends BaseService<DeviceInfo> {
 	boolean dispatchAlgorithms(Long algorithmId, String deviceIds);
 
 	/**
+	 * Dispatch the latest completed artifact in the requested format.
+	 *
+	 * @param algorithmId algorithm ID
+	 * @param deviceIds comma-separated device table IDs
+	 * @param modelType pt、onnx、rknn、int8-rknn 或 om
+	 * @return true when every selected device task was published
+	 */
+	boolean dispatchAlgorithms(Long algorithmId, String deviceIds, String modelType);
+
+	/**
 	 * 删除设备信息
 	 *
 	 * @param id 设备ID

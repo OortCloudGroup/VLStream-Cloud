@@ -35,6 +35,11 @@ html {
   // 统一的圆角
   --common-border-radius: 6px;
 
+  /* 主题色及表格操作列按钮背景 */
+  --el-color-primary: #1A53FF;
+  --el-color-primary-hb: #E8EDFF;
+  --el-color-primary-hb2: #D1DCFF;
+
   /* 地图颜色-原来的色值 */
   --data-resources-item-background-color_1: #031e42;
   --tip-windows-box-shadow_1: none;
@@ -95,6 +100,8 @@ html {
   --el-color-primary-dark-2: #1A53FF !important;
   /* disable 的颜色*/
   --el-color-primary-light-5: #1A53FF !important;
+  --el-color-primary-hb: #E8EDFF !important;
+  --el-color-primary-hb2: #D1DCFF !important;
   --header-right_info: #fff !important;
 }
 
@@ -478,6 +485,45 @@ a {
   border-radius: 50px !important;
 }
 
+/*工具栏：新建按钮 + button-group */
+.exportBtnBox {
+  gap: 12px;
+  padding: 0;
+}
+
+.exportBtn {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  height: 32px;
+  background: var(--el-color-primary);
+  border-radius: 5px;
+  border: 1px solid var(--el-color-primary);
+  font-size: 14px;
+  line-height: 1;
+  color: #fff;
+  box-shadow: 0 2px 0 0 rgb(0 0 0 / 4%);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+
+  .BtnImg {
+    width: 14px;
+    height: 14px;
+    margin-right: 8px;
+    flex-shrink: 0;
+    font-size: 14px;
+    color: #fff;
+  }
+}
+
+button.exportBtn {
+  margin: 0;
+}
+
 /*高级搜索*/
 .popoverRefHeight {
   width: 542px !important;
@@ -740,10 +786,6 @@ td {
   }
 }
 
-.new_table_svg_group:hover {
-  background-color: var(--el-color-primary-hb2);
-}
-
 .new_table .new_table_svg_group {
   cursor: pointer;
   display: flex;
@@ -764,10 +806,6 @@ td {
 
 .new_table .new_table_svg_group_svg {
   margin: 0 4px;
-}
-
-.new_table .new_table_svg_group:hover {
-  background-color: var(--el-color-primary-hb2);
 }
 
 // ----------
@@ -795,21 +833,71 @@ td {
 // 弹出框样式
 .el-dialog {
   border-radius: 6px;
-  padding: 0 0 34px 0;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .el-dialog__header {
-  padding: 11px 0 13px 24px;
-  border-bottom: 1px solid #D8D8D8;
+  position: relative;
+  padding: 11px 48px 13px 24px !important;
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
+  border-bottom: 1px solid #D8D8D8 !important;
   height: 48px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
+.el-dialog__title {
+  font-size: 16px;
+  font-weight: 400;
+  color: #191919;
+  line-height: 24px;
+  letter-spacing: 0.4px;
+}
+
+/* 弹窗右上角关闭图标（始终显示） */
+.el-dialog__headerbtn {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%);
+  right: 16px !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.el-dialog__headerbtn .el-dialog__close {
+  font-size: 18px !important;
+  color: #909399 !important;
+  font-weight: 600;
+}
+
+.el-dialog__headerbtn:hover .el-dialog__close {
+  color: #606266 !important;
 }
 
 .el-dialog__body {
-  padding: 40px 40px 0 40px;
+  padding: 20px 40px;
 }
 
 .el-dialog__footer {
-  padding: 0 40px;
+  padding: 0 40px 34px;
+  text-align: right;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .dialog-footer .el-button {
@@ -831,6 +919,7 @@ td {
   height: 45px;
   padding: 12px 20px;
   border-bottom: 1px solid #D8D8D8;
+  margin-bottom: 0 !important;
 
   h4,
   .el-drawer__title {
@@ -850,7 +939,7 @@ td {
   padding: 30px 30px 0 30px;
 }
 
-// 弹框去掉边框
+// 弹框去掉边框（事件反馈等）
 .el-dialog.diaOutSet {
   padding: 0;
 
@@ -867,5 +956,62 @@ td {
   display: flex;
   flex-direction: row;
   align-items: center;
+}
+
+// 右侧内容面板
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  background: #f0f2f5;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+
+  > .tenant_content {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+  }
+
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+    box-sizing: border-box;
+  }
+}
+
+// 顶部内容区 Tab
+.tenanat-tabs {
+  padding: 0 20px;
+  background: #fff;
+  flex-shrink: 0;
+
+  .el-tabs__item {
+    color: #999;
+  }
+
+  .el-tabs__item.is-active {
+    color: var(--el-color-primary);
+  }
+
+  .el-tabs__header {
+    padding-top: 10px;
+    margin-bottom: 0;
+
+    .el-tabs__nav-wrap::after {
+      background: #E7EAEF;
+    }
+
+    .el-tabs__item.is-top {
+      font-size: 16px;
+      font-weight: 700;
+    }
+  }
 }
 

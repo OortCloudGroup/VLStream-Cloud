@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./VLStream-Web/VLStream-ui/src/assets/img/oortlogo.png" alt="VLStream Cloud" width="160">
+  <img src="./VLStream-Web/VLStream-ui/src/assets/img/img.png" alt="VLStream Cloud" width="160">
 
   <h1>VLStream Cloud</h1>
 
@@ -21,12 +21,21 @@
   <p>
     <a href="#-quick-start">Quick Start</a> •
     <a href="#-key-features">Key Features</a> •
+    <a href="#-system-screenshots">System Screenshots</a> •
     <a href="#-application-scenarios">Application Scenarios</a> •
+    <a href="#-architecture-and-project-structure">Architecture</a> •
     <a href="#-technology-stack">Technology Stack</a> •
     <a href="#-deployment">Deployment</a> •
     <a href="#-help-and-support">Help</a>
   </p>
 </div>
+
+---
+
+> [!IMPORTANT]
+> **Online environment:** [https://vlstream.oortcloudsmart.com:2443/bus/vls-ui/login](https://vlstream.oortcloudsmart.com:2443/bus/vls-ui/login)
+> **Default account:** `admin` / `Codex@123456`
+> This is the current online environment. Change the default password immediately after the first sign-in.
 
 ---
 
@@ -52,11 +61,85 @@ object storage, and operational support for enterprise video applications.
 | Video Device Management | Device registration, grouping, tagging, health monitoring, connection tests, PTZ control, and stream discovery |
 | Multi-Protocol Playback | Web video playback and low-latency streaming capabilities for common Video IoT scenarios |
 | Intelligent Analysis | Analysis requests, real-time task monitoring, result management, and event governance |
-| Algorithm Lifecycle | Algorithm warehouse, training tasks, annotations, models, and device associations |
+| Algorithm Lifecycle | Algorithm warehouse, training tasks, annotations, model management, Hi3519DV500 OM conversion, and device deployment |
 | Workflow Automation | Flowable-based process definition, deployment, tasks, and approval workflows |
 | Enterprise Permissions | Sa-Token authentication, RBAC, data permissions, user management, and role management |
 | Platform Services | Scheduled jobs, object storage, SMS integration, monitoring, and XXL-Job support |
 | Visual Operations | Vue 3 management console with dashboards, GIS views, reusable CRUD components, and video layouts |
+
+---
+
+### Single-Node GPU Training Scheduler
+
+Algorithm training supports an exclusive single-GPU queue on one physical GPU
+server. A Docker container is created when a training job starts. Jobs wait
+automatically while the GPU is busy, and the container is removed when training
+finishes while job records, logs, and model artifacts are retained. See
+[Single-Node GPU Training Scheduler](./VLStream-Cloud-Backend-Server/vls-stream/doc/gpu-training-scheduler.md).
+
+---
+
+### Hi3519DV500 Model Deployment
+
+VLStream delivers trained models to devices through MQTT. Hardware connection,
+model delivery, event reporting, media upload, status receipts, and integration
+acceptance follow the
+[VLS Platform and Camera Unified Communication Protocol](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.md).
+
+Configure these environment variables:
+
+```bash
+VLSTREAM_MQTT_HOST=127.0.0.1
+VLSTREAM_MQTT_PORT=1883
+VLSTREAM_MQTT_USERNAME=vlstream
+VLSTREAM_MQTT_PASSWORD=replace-me
+VLSTREAM_MODEL_PUBLIC_BASE_URL=https://vlstream.example.com
+VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET=replace-with-a-long-random-secret
+```
+
+`VLSTREAM_MODEL_PUBLIC_BASE_URL` must be the backend address reachable by the
+devices, not the browser-facing frontend address. Model download URLs use
+short-lived HMAC signatures. Generate and inject a unique random signing secret
+for each environment; never commit the real secret to Git.
+
+---
+
+## 🖥️ System Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <a href="./assets/screenshots/01-active-safety-events.png"><img src="./assets/screenshots/01-active-safety-events.png" alt="Active safety event management" width="100%"></a><br>
+      <strong>Active Safety Event Management</strong>
+    </td>
+    <td align="center" width="50%">
+      <a href="./assets/screenshots/02-event-feedback-workflow.png"><img src="./assets/screenshots/02-event-feedback-workflow.png" alt="Event feedback and workflow" width="100%"></a><br>
+      <strong>Event Feedback &amp; Workflow</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <a href="./assets/screenshots/03-work-order-management.png"><img src="./assets/screenshots/03-work-order-management.png" alt="Work order management" width="100%"></a><br>
+      <strong>Work Order Management</strong>
+    </td>
+    <td align="center" width="50%">
+      <a href="./assets/screenshots/04-workflow-designer.png"><img src="./assets/screenshots/04-workflow-designer.png" alt="Visual workflow designer" width="100%"></a><br>
+      <strong>Visual Workflow Designer</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <a href="./assets/screenshots/05-algorithm-training-management.png"><img src="./assets/screenshots/05-algorithm-training-management.png" alt="Algorithm training management" width="100%"></a><br>
+      <strong>Algorithm Training Management</strong>
+    </td>
+    <td align="center" width="50%">
+      <a href="./assets/screenshots/06-algorithm-training-console.png"><img src="./assets/screenshots/06-algorithm-training-console.png" alt="Algorithm training console" width="100%"></a><br>
+      <strong>Algorithm Training Console</strong>
+    </td>
+  </tr>
+</table>
+
+> Click any screenshot to view it at full resolution.
 
 ---
 
@@ -138,32 +221,91 @@ object storage, and operational support for enterprise video applications.
 
 ---
 
-## 🗂️ Project Structure
+## 🏗️ Architecture and Project Structure
+
+VLStream Cloud is organized around two clients and one shared service platform:
+the Vue management console is used by operators, while the native SDK runs on
+Hi3519DV500 cameras. Both clients communicate with the Spring Boot backend; the
+backend coordinates business modules and external infrastructure such as MySQL,
+Redis, MinIO, MQTT, GPU training, and AI services.
+
+```mermaid
+flowchart LR
+    UI["VLStream-ui<br/>Vue 3 management console"] --> API["ruoyi-admin<br/>Spring Boot API"]
+    CAM["Hi3519DV500 camera"] --> SDK["sdk/<br/>Native C/C++ business SDK"]
+    SDK -->|MQTT / HTTP| API
+    SDK -->|RTSP / WebRTC frames| MEDIA["WebRTC Streamer<br/>and video clients"]
+    API --> BIZ["ruoyi-vlstream<br/>device, stream, AI, and model services"]
+    API --> PLATFORM["system / framework / flowable<br/>job / oss / sms / extend"]
+    BIZ --> DATA["MySQL / Redis / MinIO / MQTT"]
+    API --> EXT["GPU training / APaaS AI<br/>and other external services"]
+```
+
+### Repository layers
+
+The backend paths in the following table are relative to
+`VLStream-Cloud-Backend-Server/vls-stream/`.
+
+| Layer | Main paths | Responsibility |
+| --- | --- | --- |
+| Operator client | `VLStream-Web/VLStream-ui/` | Dashboards, device and stream management, AI operations, workflow, and system administration |
+| Device client | `sdk/` | Native camera-side RTSP/WebRTC streaming, AI inference, event reporting, and model updates |
+| Application services | `ruoyi-admin/`, `ruoyi-vlstream/` | API entry point and VLStream domain services |
+| Platform services | `ruoyi-common/`, `ruoyi-framework/`, `ruoyi-system/`, `ruoyi-flowable/`, `ruoyi-job/`, `ruoyi-oss/`, `ruoyi-sms/`, `ruoyi-extend/` | Shared infrastructure, authentication, permissions, workflows, jobs, storage, messaging, and monitoring |
+| Operations and documentation | `deploy/`, `docs/`, backend `deploy/` and `script/` | Container deployment, database initialization, migration support, protocols, and operational documentation |
+
+### Top-level layout
 
 ```text
 VLStream-Cloud/
 ├── VLStream-Cloud-Backend-Server/
-│   └── vls-stream/                  # Maven multi-module backend
-│       ├── ruoyi-admin/             # Main Spring Boot application and APIs
-│       ├── ruoyi-common/            # Shared models and utilities
-│       ├── ruoyi-framework/         # Web, security, and framework configuration
+│   └── vls-stream/                  # Java 8 / Spring Boot Maven reactor
+│       ├── ruoyi-admin/             # Executable application and REST APIs
+│       ├── ruoyi-vlstream/          # Devices, streams, AI, events, and models
 │       ├── ruoyi-system/            # Users, roles, permissions, and system services
-│       ├── ruoyi-vlstream/          # VLStream business domain
+│       ├── ruoyi-framework/         # Web, security, and framework configuration
 │       ├── ruoyi-flowable/          # Workflow and approval services
+│       ├── ruoyi-common/            # Shared models, utilities, and base components
 │       ├── ruoyi-generator/         # Code generation
 │       ├── ruoyi-job/               # Scheduled jobs
-│       ├── ruoyi-oss/               # Object storage
+│       ├── ruoyi-oss/               # Object storage integration
 │       ├── ruoyi-sms/               # SMS integration
-│       ├── ruoyi-demo/              # Examples and integration tests
 │       ├── ruoyi-extend/            # Monitoring and XXL-Job services
-│       ├── deploy/                  # Deployment resources
+│       ├── ruoyi-demo/              # Examples and integration tests
+│       ├── deploy/                  # Backend deployment resources
 │       └── script/                  # Database and Docker scripts
 ├── VLStream-Web/
 │   └── VLStream-ui/                 # Vue 3 management console
+├── sdk/                             # Hi3519DV500 native camera business SDK
+├── deploy/                          # Repository-level deployment assets
+├── docs/                            # Repository-level documentation
+├── assets/                          # Screenshots and application imagery
+├── tools/                           # Development and validation tools
 ├── LICENSE
 ├── README.md                        # English documentation (default)
 └── README.zh-CN.md                  # Simplified Chinese documentation
 ```
+
+### Device SDK (`sdk/`)
+
+The `sdk/` directory is the camera-side native component, not a Maven or npm
+module. It exports the business source used to build the `rtsp_streamer`
+executable for the Hi3519DV500 board and depends on the original HiSilicon
+MPP/ACL SDK, the cross toolchain, and an external WebRTC Streamer SDK.
+
+| Area | Contents |
+| --- | --- |
+| Media pipeline | `src/rtsp_streamer.c`, `rtsp_lib/` — RTSP input, frame handling, and stream orchestration |
+| WebRTC bridge | `src/webrtc_bridge.c`, `include/webrtc_bridge.h` — WebRTC lifecycle, sessions, codec headers, and keyframe gating |
+| AI runtime | `src/ai_bridge.cpp`, `src/ai_acl_adapter.cpp`, `src/ai_runtime_config.cpp` — ACL inference, OM model validation/hot switching, and runtime configuration |
+| Platform integration | `src/http_reporter.cpp`, `src/model_receiver.cpp` — asynchronous event/JPEG reporting and HTTP model reception |
+| Configuration and examples | `config/`, `examples/` — board settings, class labels, and an MQTT model-dispatch example |
+| Dependencies and notes | `third_party/`, `docs/`, `Makefile` — external declarations, porting notes, debugging records, and board build rules |
+
+The SDK is intentionally kept separate from the server build: the root Maven
+and frontend commands do not compile it. For prerequisites, original project
+paths, excluded vendor binaries, and board-side build instructions, see the
+[SDK guide](./sdk/README.md).
 
 ---
 
@@ -177,7 +319,41 @@ VLStream-Cloud/
 | Maven | 3.6+ |
 | Database | MySQL 5.7+ |
 | Cache | Redis |
+| Object Storage | MinIO or another S3-compatible service; required for complete annotation support |
+| Messaging | MQTT broker; required for device control and model delivery |
+| Training Node | Linux GPU server with SSH/SFTP; required for algorithm training |
+| AI Service | `apaas-ai` routed through an APaaS gateway; required for AI text/image features |
 | Frontend | Node.js and npm |
+
+### WebRTC Live-Preview Dependency
+
+Browsers cannot play RTSP directly. Camera live preview uses WebRTC Streamer to
+convert RTSP to WebRTC. The pinned, validated Docker image for this project is
+**`mpromonet/webrtc-streamer:v0.8.16`**. Keep this exact tag instead of using an
+untested `latest` image or an older Windows binary.
+
+To start it independently on a local machine:
+
+```powershell
+docker run -d --name vlstream-webrtc --restart unless-stopped -p 8000:8000 `
+  mpromonet/webrtc-streamer:v0.8.16 -H 0.0.0.0:8000 -vvv
+```
+
+Verify the runtime with `curl.exe http://127.0.0.1:8000/api/version`; it should
+report `v0.8.16/Linux-x86_64`. The backend declaration is in
+`ruoyi-admin/src/main/resources/application.yml`:
+
+```bash
+VLSTREAM_WEBRTC_ENABLED=true
+VLSTREAM_WEBRTC_RUNTIME_IMAGE=mpromonet/webrtc-streamer:v0.8.16
+VLSTREAM_WEBRTC_INTERNAL_URL=http://127.0.0.1:8000
+VLSTREAM_WEBRTC_PUBLIC_URL=/bus/webrtc-streamer-server
+```
+
+The release Compose deployment uses the same version through
+`WEBRTC_STREAMER_IMAGE=mpromonet/webrtc-streamer:v0.8.16` in
+`deploy/release/.env`. `runtime-image` is a backend declaration and status
+value only; the backend does not pull or start Docker containers.
 
 ### 1. Clone the Repository
 
@@ -186,7 +362,7 @@ git clone https://github.com/OortCloudGroup/VLStream-Cloud.git
 cd VLStream-Cloud
 ```
 
-### 2. Initialize the Database
+### 2. Initialize and Upgrade the Database
 
 ```sql
 CREATE DATABASE vlstream CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -198,7 +374,12 @@ mysql -u root -p vlstream --execute="source script/sql/mysql/mysql_ry_v0.8.X.sql
 ```
 
 SQL initialization scripts for Oracle, PostgreSQL, and SQL Server are also
-available under `script/sql/`.
+available under `script/sql/`. Application schema upgrades are managed by
+Flyway when the backend starts. Add every new database change as a new,
+immutable migration under
+`ruoyi-admin/src/main/resources/db/migration/`; do not edit a migration that
+has already run. See
+[`DATABASE_MIGRATIONS.md`](./VLStream-Cloud-Backend-Server/vls-stream/DATABASE_MIGRATIONS.md).
 
 ### 3. Configure and Start the Backend
 
@@ -209,6 +390,92 @@ Review the main configuration and the active profile configuration:
 - `ruoyi-admin/src/main/resources/application-prod.yml`
 
 The Maven profiles are `dev`, `local`, and `prod`; `dev` is active by default.
+
+#### Required Configuration Before Deployment
+
+Do not use repository test addresses or example passwords for a complete
+deployment. Configure at least the following services before startup:
+
+| Configuration | Purpose | Location |
+| --- | --- | --- |
+| MySQL | Business data, training jobs, and delivery jobs | `application-dev.yml` / `application-prod.yml` |
+| Redis | Sessions, cache, and distributed state | `application-dev.yml` / `application-prod.yml` |
+| MinIO | Annotation images, datasets, and file uploads | Database table `sys_oss_config` |
+| GPU training server | Training, conversion, and model artifacts | `VLSTREAM_SSH_*`, `VLSTREAM_TRAINING_*` |
+| MQTT broker | Device control, model delivery, and receipts | `VLSTREAM_MQTT_*` |
+| Model download entry | Device-side HTTP model download | `VLSTREAM_MODEL_*` |
+| GPT/AI service | AI text and image generation | Frontend APaaS gateway and a separate `apaas-ai` service |
+
+Inject secrets through the deployment environment and never commit real
+passwords or keys:
+
+```bash
+MYSQL_HOST=mysql.example.internal
+MYSQL_PORT=3306
+MYSQL_DB_NAME=vlstream
+MYSQL_USERNAME=vlstream
+MYSQL_PASSWORD=replace-me
+
+REDIS_HOST=redis.example.internal
+REDIS_PORT=6379
+REDIS_PASSWORD=replace-me
+
+VLSTREAM_SSH_HOST=gpu.example.internal
+VLSTREAM_SSH_PORT=22
+VLSTREAM_SSH_USERNAME=vlstream
+VLSTREAM_SSH_PASSWORD=replace-me
+VLSTREAM_TRAINING_HOST_DATA_DIR=/data/work
+VLSTREAM_TRAINING_WORK_DIR=/data/work/ultralytics_yolov8-main/datasets
+
+VLSTREAM_MQTT_HOST=127.0.0.1
+VLSTREAM_MQTT_PORT=1883
+VLSTREAM_MQTT_USERNAME=vlstream
+VLSTREAM_MQTT_PASSWORD=replace-me
+VLSTREAM_MQTT_QOS=1
+
+VLSTREAM_MODEL_PUBLIC_BASE_URL=https://vlstream.example.com
+VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET=replace-with-a-long-random-secret
+VLSTREAM_MODEL_DOWNLOAD_URL_TTL_SECONDS=1800
+VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID=vls-model-dispatch-backend-01
+
+VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY=vlstream-events
+VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS=600
+VLSTREAM_DEVICE_MEDIA_MAX_IMAGE_BYTES=10485760
+VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED=false
+```
+
+Each backend instance must use a unique
+`VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID`. MQTT topics, ACL rules, and hardware
+behavior are defined by
+[`VLS-Protocol.md`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.md).
+
+#### MinIO and Algorithm Annotation
+
+Annotation uploads use the enabled `config_key=minio` record in
+`sys_oss_config`, not fixed credentials in `application.yml`. Configure the
+access key, secret key, bucket, API endpoint, external domain, HTTPS flag,
+access policy, and enabled status. Persist MinIO data and verify that the
+backend, browser, and GPU server can all reach the generated object URLs.
+
+For device event images, reuse the MinIO service but configure a separate
+private OSS entry and bucket (for example `config_key=vlstream-events`).
+Devices receive only short-lived, single-object presigned PUT URLs and must
+never receive MinIO credentials. The unauthenticated upload-grant endpoint is
+for LAN development only and must remain disabled in production. Apply
+`db/2026-07-29-vls-device-event-media.sql` before enabling MQTT event ingestion.
+
+#### GPT/AI Service
+
+The frontend calls `apaas-ai` through the configured APaaS gateway:
+
+```text
+{APaaS gateway prefix}/apaas-ai/api/v1/text_completion
+{APaaS gateway prefix}/apaas-ai/api/v1/text_img
+```
+
+Configure the provider base URL, API key, model names, timeout, retries, and
+network access in the separate `apaas-ai` service. That service is not included
+in this repository.
 
 ```powershell
 mvn -ntp -Pdev clean package
@@ -235,7 +502,23 @@ npm install
 npm run dev
 ```
 
+For local development, configure:
+
+```bash
+VITE_DEV_PROXY_TARGET=http://127.0.0.1:8080
+VITE_APAAS_PROXY_TARGET=http://apaas-gateway.example.internal:21410
+```
+
 Use `npm run build` to create a production frontend bundle.
+
+#### Post-Startup Acceptance
+
+1. Verify `/actuator/health` and MySQL/Redis connectivity.
+2. Upload an image and open the returned MinIO URL.
+3. Create an annotation job and save annotation results.
+4. Verify that an AI text request reaches `apaas-ai`.
+5. Complete MQTT and model-delivery checks defined in `VLS-Protocol.md`.
+6. Run one training job and verify scheduling, logs, and model artifacts.
 
 ---
 
@@ -268,23 +551,26 @@ Use the generated OpenAPI documentation for the complete and current API list.
 
 ## 🐳 Deployment
 
-Docker Compose resources are provided in the backend directory:
+Download the deployment package from
+[GitHub Releases](https://github.com/OortCloudGroup/VLStream-Cloud/releases),
+extract it, copy the environment template, and start the bundled services:
 
 ```powershell
-cd VLStream-Cloud-Backend-Server/vls-stream
-docker compose -f script/docker/docker-compose.yml up -d
+Copy-Item .env.example .env
+docker compose up -d
 ```
 
 Stop the services with:
 
 ```powershell
-docker compose -f script/docker/docker-compose.yml down
+docker compose down
 ```
 
 > [!TIP]
-> Some configured container base images are hosted on an internal registry.
-> Review `script/docker/docker-compose.yml` and `dockerfile` before deploying
-> outside the project network.
+> The package includes MySQL, Redis, MinIO, WebRTC-streamer, the backend, and
+> the frontend. Existing external infrastructure is also supported. See the
+> [deployment guide](./deploy/release/README.md) for configuration and upgrade
+> instructions.
 
 ---
 
@@ -294,7 +580,13 @@ docker compose -f script/docker/docker-compose.yml down
 | --- | --- |
 | Frontend Guide | [`VLStream-Web/README.md`](./VLStream-Web/README.md) |
 | Frontend Guide (Chinese) | [`VLStream-Web/README-cn.md`](./VLStream-Web/README-cn.md) |
+| Device SDK Guide | [`sdk/README.md`](./sdk/README.md) |
 | Backend Environment Variables | [`ENVIRONMENT_VARIABLES.md`](./VLStream-Cloud-Backend-Server/vls-stream/ENVIRONMENT_VARIABLES.md) |
+| Deployment Guide | [`deploy/release/README.md`](./deploy/release/README.md) |
+| Database Migrations | [`DATABASE_MIGRATIONS.md`](./VLStream-Cloud-Backend-Server/vls-stream/DATABASE_MIGRATIONS.md) |
+| VLS Device Protocol | [`VLS-Protocol.md`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.md) |
+| VLS Protocol Specification (English) | [`VLS-Protocol-EN.docx`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol-EN.docx) |
+| VLS Protocol Specification (Chinese) | [`VLS-Protocol.docx`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.docx) |
 | API Documentation | Start the backend and open Knife4j or Swagger UI |
 
 ---

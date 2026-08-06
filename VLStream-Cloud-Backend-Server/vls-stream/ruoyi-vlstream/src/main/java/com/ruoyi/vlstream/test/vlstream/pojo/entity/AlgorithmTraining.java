@@ -130,6 +130,16 @@ public class AlgorithmTraining extends TenantEntity {
 	@Schema(description = "onnx模型输出路径")
 	private String onnxModelOutputPath;
 	/**
+	 * ONNX转换状态：converting-转换中,completed-完成,failed-失败
+	 */
+	@Schema(description = "ONNX转换状态")
+	private String onnxConversionStatus;
+	/**
+	 * ONNX转换失败原因
+	 */
+	@Schema(description = "ONNX转换失败原因")
+	private String onnxConversionError;
+	/**
 	 * rknn模型输出路径
 	 */
 	@Schema(description = "rknn模型输出路径")
@@ -139,6 +149,21 @@ public class AlgorithmTraining extends TenantEntity {
 	 */
 	@Schema(description = "int8 rknn模型输出路径")
 	private String int8RknnModelOutputPath;
+	/**
+	 * Hi3519DV500 SVP ACL OM模型输出路径
+	 */
+	@Schema(description = "Hi3519DV500 OM模型输出路径")
+	private String omModelOutputPath;
+	/**
+	 * OM转换状态：converting-转换中,completed-完成,failed-失败
+	 */
+	@Schema(description = "OM转换状态")
+	private String omConversionStatus;
+	/**
+	 * OM转换失败原因
+	 */
+	@Schema(description = "OM转换失败原因")
+	private String omConversionError;
 	/**
 	 * 日志路径
 	 */

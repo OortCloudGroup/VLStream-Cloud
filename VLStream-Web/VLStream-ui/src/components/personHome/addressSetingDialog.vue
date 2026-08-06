@@ -268,7 +268,7 @@ import { getUserList, getDeptList } from '@/api/system/directory'
 import { ElButton, ElIcon, ElMessage } from 'element-plus'
 import OortSvgIcon from '@/components/oortSvgIcon/index.vue'
 import Config from '@/config'
-import { verifyToken } from '@/api/login/indexapaas'
+import { verifyToken } from '@/api/system/localAuth'
 
 const props = defineProps({
   // 激活的tab栏目

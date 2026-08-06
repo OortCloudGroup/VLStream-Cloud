@@ -229,10 +229,10 @@
       </div>
     </div>
     <div class="d_h_maintainBtns">
-      <el-button @click="handleClose">
+      <el-button @click="handleClose" class="common_btn">
         取 消
       </el-button>
-      <el-button v-if="eventDetailData.status !== 1 && eventDetailData.mod_status === 0" v-preReClick type="primary" :disabled="formLoading" @click="addFeedbackForm">
+      <el-button v-if="eventDetailData.status !== 1 && eventDetailData.mod_status === 0" v-preReClick type="primary" :disabled="formLoading" @click="addFeedbackForm" class="common_btn">
         确 定
       </el-button>
     </div>

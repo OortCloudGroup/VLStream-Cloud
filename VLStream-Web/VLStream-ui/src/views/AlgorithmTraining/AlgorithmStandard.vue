@@ -1,11 +1,6 @@
 <template>
-  <div class="page-container">
-    <!-- 页面标题 -->
-    <div class="page-header" v-if="!showAnnotationView">
-      <h1>算法标注</h1>
-      <p>管理和创建算法训练所需的标注数据集</p>
-    </div>
-
+  <div class="page-container tenant_Page draHeaPB">
+    <div class="tenant_content">
     <!-- 导航栏（标注视图时显示） -->
     <div v-if="showAnnotationView" class="content-header">
       <div class="breadcrumb">
@@ -16,131 +11,100 @@
     </div>
 
     <!-- 列表视图 -->
-    <div v-if="!showAnnotationView" class="list-view">
-      <!-- 主内容区域 -->
-      <div class="main-content">
-        <!-- 工具栏 -->
-        <div class="toolbar">
-          <div class="toolbar-left">
-            <ActionButtonGroup 
-              :selected-count="selectedRows.length"
-              @add="handleAdd"
-              @edit="handleEdit"
-              @delete="handleDelete"
-            >
-            </ActionButtonGroup>
+    <div v-if="!showAnnotationView" class="tableTenBox flexRowAC">
+      <div class="tableTenItU">
+        <div class="depNameBox_out flexRowAC">
+          <div class="depNameBox flexRowAC">
+            <div class="exportBtnBox flexRowAC">
+              <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
+                <el-icon class="BtnImg">
+                  <Plus />
+                </el-icon>
+                新建
+              </button>
+              <button-group :button-list="toolbarButtonList" />
+            </div>
           </div>
-          
-          <div class="toolbar-right">
-            <AdvancedSearch 
-              @search="handleAdvancedSearch"
-              @reset="handleAdvancedSearchReset"
-              @export="handleExport"
-              @upload="handleImport"
-              @template="handleDownloadTemplate"
-              @batch="handleBatchOperation"
+          <div class="searchHeight_out flexRowAC">
+            <search-height-box
+              keyword="keyword"
+              placeholder="搜索"
+              :data="searchData"
+              @handle="searchResetFn"
             />
+            <export-excel-pdf :item="exportItem" @handle="handleExport" />
           </div>
         </div>
 
-        <!-- 表格内容 -->
-        <div class="table-content">
-          <el-table 
-            :data="tableData" 
-            stripe 
-            style="width: 100%"
-            v-loading="loading"
-            @selection-change="handleSelectionChange"
-            @row-click="handleRowClick"
-          >
-            <el-table-column type="selection" width="55" />
-            <el-table-column prop="name" label="标注名称" min-width="200" />
-            <el-table-column prop="remark" label="备注" min-width="200" show-overflow-tooltip />
-            <el-table-column prop="type" label="标注类型" width="120" align="center" />
-            <el-table-column prop="status" label="标注状态" width="120" align="center">
-              <template #default="scope">
-                <el-tag 
-                  :type="getStatusTagType(scope.row.annotationStatus)" 
-                  size="small"
-                >
-                  {{ scope.row.status }} ({{ scope.row.progress }})
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="datasetPath" label="数据集路径" width="200">
-              <template #default="scope">
-                <span
-                  v-if="scope.row.datasetPath"
-                  class="dataset-path clickable"
-                  :title="scope.row.datasetPath"
-                >
-                  {{ scope.row.datasetPath }}
-                </span>
-                <span v-else class="no-dataset">未设置</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="createTime" label="创建时间" width="180" />
-                            <el-table-column label="操作" width="360" align="right" fixed="right">
-              <template #default="scope">
-                <div class="action-buttons">
-                  <el-button 
-                    type="primary" 
-                    link 
-                    size="small" 
-                  @click="handleView(scope.row)"
-                >
-                  查看与标注
-                </el-button>
-                  <el-button
-                    type="primary"
-                    link
-                    size="small"
-                    @click="handleSaveDataset(scope.row)"
-                  >
-                    生成数据集
-                  </el-button>
-
-                  <el-button 
-                    type="primary" 
-                    link 
-                    size="small" 
-                    @click="handleImportData(scope.row)"
-                  >
-                    导入
-                  </el-button>
-                  <el-button 
-                    type="primary" 
-                    link 
-                    size="small" 
-                    @click="handleExportData(scope.row)"
-                  >
-                    导出
-                  </el-button>
-                  <el-button 
-                    type="danger" 
-                    link 
-                    size="small" 
-                    @click="handleDeleteItem(scope.row)"
-                  >
-                    删除
-                  </el-button>
+        <TableSelf
+          class="new_table"
+          header-cell-class-name="header_tenant_cell"
+          stripe
+          v-loading="loading"
+          :data="tableData"
+          @selection-change="handleSelectionChange"
+          @row-click="handleRowClick"
+        >
+          <el-table-column type="selection" :width="clacPXToVW(55)" />
+          <el-table-column prop="name" label="标注名称" show-overflow-tooltip />
+          <el-table-column prop="remark" label="备注" show-overflow-tooltip />
+          <el-table-column prop="type" label="标注类型" align="center" />
+          <el-table-column prop="status" label="标注状态" align="center">
+            <template #default="scope">
+              <el-tag :type="getStatusTagType(scope.row.annotationStatus)" size="small">
+                {{ scope.row.status }} ({{ scope.row.progress }})
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="datasetPath" label="数据集路径" show-overflow-tooltip>
+            <template #default="scope">
+              <span v-if="scope.row.datasetPath" class="dataset-path clickable" :title="scope.row.datasetPath">
+                {{ scope.row.datasetPath }}
+              </span>
+              <span v-else class="no-dataset">未设置</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createTime" label="创建时间" :width="clacPXToVW(180)" />
+          <el-table-column label="操作" :width="clacPXToVW(380)" align="right" fixed="right">
+            <template #default="scope">
+              <div class="operateAppBox flexRowAC" @click.stop>
+                <div class="new_table_svg_group" @click="handleView(scope.row)">
+                  <oort-svg-icon width="20" height="20" name="detail_icon" class="new_table_svg_group_svg" />
+                  <span>标注</span>
                 </div>
-              </template>
-            </el-table-column>
-          </el-table>
+                <div class="new_table_svg_group" @click="handleSaveDataset(scope.row)">
+                  <oort-svg-icon width="20" height="20" name="export" class="new_table_svg_group_svg" />
+                  <span>生成</span>
+                </div>
+                <div class="new_table_svg_group" @click="handleImportData(scope.row)">
+                  <oort-svg-icon width="20" height="20" name="table_incoming" class="new_table_svg_group_svg" />
+                  <span>导入</span>
+                </div>
+                <div class="new_table_svg_group" @click="handleExportData(scope.row)">
+                  <oort-svg-icon width="20" height="20" name="export" class="new_table_svg_group_svg" />
+                  <span>导出</span>
+                </div>
+                <div class="new_table_svg_group" @click="handleDeleteItem(scope.row)">
+                  <oort-svg-icon color="red" width="20" height="20" name="delete_icon" class="new_table_svg_group_svg" />
+                  <span>删除</span>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+        </TableSelf>
 
-          <!-- 分页 - 紧贴表格数据 -->
-          <div class="table-pagination">
-            <el-pagination
-              v-model:current-page="currentPage"
-              v-model:page-size="pageSize"
-              :page-sizes="[10, 20, 50, 100]"
-              layout="total, sizes, prev, pager, next, jumper"
-              :total="total"
-              @size-change="handleSizeChange"
-              @current-change="handleCurrentChange"
-            />
-          </div>
+        <div class="paginationBox flexRowAC">
+          <el-pagination
+            background
+            :current-page="currentPage"
+            :page-size="pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, prev, pager, next, sizes"
+            class="justifyAlign"
+            :total="total"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+          />
         </div>
       </div>
     </div>
@@ -490,7 +454,7 @@
     <el-dialog
       v-model="showDatasetDialog"
       title="数据集文件校验"
-      width="600px"
+      width="35%"
       :before-close="handleDatasetDialogClose"
       class="dataset-validation-dialog"
     >
@@ -557,7 +521,7 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="handleDatasetDialogClose">关闭</el-button>
+          <el-button type="primary" @click="handleDatasetDialogClose" class="common_btn">关闭</el-button>
         </div>
       </template>
     </el-dialog>
@@ -569,7 +533,7 @@
       width="95%"
       :before-close="handleCloseFullScreenPreview"
       class="fullscreen-preview-dialog"
-      :show-close="false"
+      :show-close="true"
       :close-on-click-modal="true"
       :close-on-press-escape="true"
     >
@@ -602,7 +566,7 @@
               size="small"
               @click="handleCloseFullScreenPreview"
               title="关闭 (ESC)"
-            >
+             class="common_btn">
               关闭
             </el-button>
           </div>
@@ -662,7 +626,7 @@
     <el-dialog
       v-model="showImportDialog"
       title="导入图片"
-      width="800px"
+      width="45%"
       :before-close="handleCloseImportDialog"
     >
       <div class="import-dialog-content">
@@ -706,24 +670,24 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleCloseImportDialog">取消</el-button>
-          <el-button type="primary" @click="handleConfirmImport">确定</el-button>
+          <el-button @click="handleCloseImportDialog" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="handleConfirmImport" class="common_btn">确定</el-button>
         </div>
       </template>
     </el-dialog>
+    </div>
   </div>
 </template>
 
 <script setup>
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue'
-import ActionButtonGroup from '@/components/ActionButtonGroup.vue'
+import { clacPXToVW } from '@/utils/index'
 import AnnotationGridView from './AnnotationGridView.vue'
 import AnnotationLabelPanel from '@/components/AnnotationLabelPanel.vue'
 import AnnotationAddDialog from './components/AnnotationAddDialog.vue'
 import AnnotationLabelDialog from './components/AnnotationLabelDialog.vue'
 import {ElMessage, ElMessageBox} from 'element-plus'
-import {
-  ArrowLeft,
+import {ArrowLeft,
   ArrowRight,
   CircleCheck,
   CircleClose,
@@ -739,9 +703,7 @@ import {
   RefreshRight,
   Upload,
   ZoomIn,
-  ZoomOut
-} from '@element-plus/icons-vue'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
+  ZoomOut, Plus } from '@element-plus/icons-vue'
 import {
   ANNOTATION_STATUS,
   ANNOTATION_TYPE_LABELS,
@@ -772,8 +734,8 @@ import {
   deleteAnnotationInstancesByImage,
   getAllAnnotationInstances,
 } from '@/api/annotationInstances'
-import request, {getBaseURL, imageUploadRequest} from '@/utils/request'
-import {batchSaveAnnotationImages, getAnnotationImages} from '@/api/annotationImage'
+import request, {getBaseURL} from '@/utils/request'
+import {batchSaveAnnotationImages, getAnnotationImages, uploadAnnotationImages} from '@/api/annotationImage'
 
 // 视图控制
 const showAnnotationView = ref(false)
@@ -1475,48 +1437,29 @@ const batchUploadImages = async (files, annotationId) => {
     for (let i = 0; i < files.length; i += batchSize) {
       const batch = files.slice(i, i + batchSize)
 
-      // 生成唯一文件名，只保留文件名部分，去掉文件夹路径
-      const fileNamePairs = batch.map((file) => {
-        const timestamp = Date.now()
-        const randomStr = Math.random().toString(36).substr(2, 9)
-        const originalFileName = file.name.split('/').pop().split('\\').pop()
-        const uniqueFileName = `${timestamp}_${randomStr}_${originalFileName}`
-        return { originalFileName, uniqueFileName }
-      })
-
-      const formData = new FormData()
-      batch.forEach((file, idx) => {
-        formData.append('file', file)
-        formData.append('fileName', fileNamePairs[idx].uniqueFileName)
-      })
-
-      const uploadResponse = await imageUploadRequest({
-        url: '/image/upload',
-        method: 'post',
-        data: formData,
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
+      // 上传接口会保存文件、创建图片记录并更新标注项目的图片总数。
+      const uploadResponse = await uploadAnnotationImages(batch, annotationId)
 
       if (!uploadResponse?.success && uploadResponse?.code !== 200) {
         throw new Error(uploadResponse.message || '图片上传失败')
       }
 
-      const respList = Array.isArray(uploadResponse?.data)
-        ? uploadResponse.data
-        : Array.isArray(uploadResponse?.data?.files)
-          ? uploadResponse.data.files
-          : []
+      const respList = Array.isArray(uploadResponse?.data) ? uploadResponse.data : []
+      if (respList.length !== batch.length) {
+        throw new Error('图片上传结果不完整')
+      }
 
-      const mapped = fileNamePairs.map((pair, idx) => {
-        const respItem = respList[idx] || uploadResponse?.data || {}
-        const finalName = respItem.fileName || pair.uniqueFileName
+      const mapped = respList.map((respItem, idx) => {
+        const originalFileName = batch[idx].name.split('/').pop().split('\\').pop()
         return {
-          id: Date.now() + Math.random(),
-          name: finalName,
-          originalName: pair.originalFileName,
-          url: `/image/${finalName}`,
+          id: respItem.id,
+          name: respItem.imageName || originalFileName,
+          originalName: respItem.originalName || originalFileName,
+          url: respItem.localPath,
           annotations: [],
           isFromUpload: true,
+          savedToDb: true,
+          dbId: respItem.id,
           uploadData: respItem
         }
       })
@@ -1579,19 +1522,8 @@ const handleConfirmImport = async () => {
       return
     }
 
-    const imagesToSave = uploadedImages.value.filter(img => img.isFromUpload && !img.savedToDb)
-
-    if (imagesToSave.length > 0) {
-      const annotationId = importTargetId.value || currentAnnotationData.value?.id
-      if (!annotationId) {
-        ElMessage.warning('Please select a target annotation first.')
-        return
-      }
-      const savedCount = await saveImagesToDatabase(imagesToSave, annotationId)
-      ElMessage.success(`导入成功！已保存 ${savedCount} 张图片信息到数据库`)
-    } else {
-      ElMessage.success('导入成功')
-    }
+    // 图片在选择目录时已由上传接口持久化，确认操作不再重复写入数据库。
+    ElMessage.success('导入成功')
 
     showImportDialog.value = false
     importTargetId.value = null
@@ -2468,31 +2400,23 @@ const handleLabelDialogSubmit = async (labelData) => {
   }
 }
 
-// 保存图片到本地目录的函数
-const saveImageToLocal = async (file, fileName) => {
+// 上传单张图片并返回后端创建的图片记录，保证界面与数据库使用相同的图片标识。
+const saveImageToLocal = async (file) => {
   try {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('fileName', fileName)
-    
-    console.log('保存图片到本地:', fileName)
-    
-    // 调用后端API保存图片 (使用8080端口的图片上传服务)
-    const response = await imageUploadRequest({
-      url: '/image/upload',
-      method: 'POST',
-      data: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-    
-    if (response.success) {
-      console.log('图片上传成功:', response.data)
-      return response.data.localPath
-    } else {
-      throw new Error(response.message || '图片上传失败')
+    console.log('保存图片到标注项目:', file.name)
+    const annotationId = getCurrentAnnotationId()
+    if (!annotationId) {
+      throw new Error('未找到当前标注项目')
     }
+
+    const response = await uploadAnnotationImages([file], annotationId)
+    const image = Array.isArray(response?.data) ? response.data[0] : null
+    if (!image?.localPath) {
+      throw new Error(response?.message || '图片上传失败')
+    }
+
+    console.log('图片上传成功:', image)
+    return image
   } catch (error) {
     console.error('保存图片到本地失败:', error)
     throw error
@@ -2525,23 +2449,19 @@ const handleImageUpload = async (uploadFile) => {
   }
   
   try {
-    // 生成唯一文件名（避免冲突）
+    // 以服务端返回的图片记录作为界面模型，避免本地生成的文件名与数据库不一致。
     const timestamp = Date.now()
-    const fileExtension = file.name.split('.').pop()
-    const uniqueFileName = `${timestamp}_${file.name}`
-    
-    // 保存图片到本地目录
-    const localPath = await saveImageToLocal(file, uniqueFileName)
+    const uploadedImage = await saveImageToLocal(file)
     
     // 读取图片作为base64用于显示
     const reader = new FileReader()
     reader.onload = (e) => {
       const newImage = {
-        id: timestamp,
-        name: uniqueFileName,
-        originalName: file.name,
+        id: uploadedImage.id || timestamp,
+        name: uploadedImage.imageName || file.name,
+        originalName: uploadedImage.originalName || file.name,
         url: e.target.result, // 用于显示的base64
-        localPath: localPath, // 本地存储路径
+        localPath: uploadedImage.localPath,
         annotations: [], // 确保每个图片都有annotations数组
         isUploaded: true // 标记为已上传
       }
@@ -2560,7 +2480,7 @@ const handleImageUpload = async (uploadFile) => {
       console.log('图片上传成功，当前图片索引:', currentImageIndex.value)
       console.log('当前图片列表长度:', uploadedImages.value.length)
       console.log('当前选中图片:', currentImage.value)
-      console.log('图片本地路径:', localPath)
+      console.log('图片本地路径:', uploadedImage.localPath)
       ElMessage.success('图片上传并保存成功')
     }
     reader.onerror = () => {
@@ -3168,6 +3088,23 @@ const handleGlobalClick = (event) => {
   console.log('=== 全局点击事件处理完成 ===')
 }
 
+const toolbarButtonList = [
+  { name: '编辑', svg: 'table_edit', clickFn: handleEdit },
+  { name: '删除', svg: 'table_del', clickFn: handleDelete },
+]
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '关键词', value: 'keyword', type: 'text', default: '' }
+])
+
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && val.keyword)) {
+    handleAdvancedSearchReset()
+    return
+  }
+  handleAdvancedSearch(val || {})
+}
+
 // 高级搜索相关方法
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索:', searchData)
@@ -3407,15 +3344,58 @@ window.testDeleteAnnotation = testDeleteAnnotationInstance
 window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  background: #f0f2f5;
+  .tenant_content {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    overflow: hidden;
+  }
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+    border-radius: 0;
+  }
+}
+.tableTenItU {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+  :deep(.header_tenant_cell) { background: #F8F8F9; }
+}
+.paginationBox { justify-content: center; height: 100px; }
+.operateAppBox {
+  justify-content: flex-end;
+  gap: 2px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
 .page-container {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  background-color: #f5f7fa;
-  padding: 20px;
   overflow: hidden;
+
+  .tenant_content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
 }
 
 .list-view {
@@ -3423,24 +3403,6 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   display: flex;
   flex-direction: column;
   gap: 0;
-}
-
-/* 页面标题 */
-.page-header {
-  margin-bottom: 24px;
-}
-
-.page-header h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #262626;
-  margin: 0 0 8px 0;
-}
-
-.page-header p {
-  color: #8c8c8c;
-  margin: 0;
-  font-size: 14px;
 }
 
 /* 主内容区域 */
@@ -3712,10 +3674,9 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 
 /* 导航栏样式 */
 .content-header {
-  padding: 16px 20px;
+  padding: 12px 0;
   background: white;
-  border-bottom: 1px solid #e8e8e8;
-  margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .breadcrumb {
@@ -3742,6 +3703,21 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 
 .breadcrumb-separator {
   color: #999;
+}
+
+.annotation-view-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+
+  :deep(.annotation-grid-view) {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+  }
 }
 
 /* 标注视图样式 */
@@ -4775,12 +4751,6 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 }
 
 /* 数据集文件校验弹窗样式 */
-.dataset-validation-dialog {
-  .el-dialog__body {
-    padding: 20px;
-  }
-}
-
 .dataset-validation-content {
   .annotation-info {
     margin-bottom: 24px;

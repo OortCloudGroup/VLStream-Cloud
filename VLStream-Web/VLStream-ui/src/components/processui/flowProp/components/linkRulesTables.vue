@@ -61,10 +61,10 @@
       </div>
     </div>
     <div class="button_bottom flexRowAC">
-      <el-button @click="confirmChoose">
+      <el-button @click="confirmChoose" class="common_btn">
         取消
       </el-button>
-      <el-button v-preReClick type="primary" @click="confirmChoose">
+      <el-button v-preReClick type="primary" @click="confirmChoose" class="common_btn">
         确定
       </el-button>
     </div>

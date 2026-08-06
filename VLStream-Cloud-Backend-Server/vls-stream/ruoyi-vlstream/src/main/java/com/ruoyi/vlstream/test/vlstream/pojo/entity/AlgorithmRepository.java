@@ -6,11 +6,13 @@
 package com.ruoyi.vlstream.test.vlstream.pojo.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springblade.core.mp.base.TenantEntity;
 import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmRepositoryTypeEnum;
+import com.ruoyi.vlstream.test.vlstream.deserialize.AlgorithmRepositoryStatusDeserializer;
 
 
 /**
@@ -46,5 +48,15 @@ public class AlgorithmRepository extends TenantEntity {
 	 */
 	@Schema(description = "备注")
 	private String remark;
+
+	/**
+	 * Accepts both the persisted numeric status and the legacy enabled/disabled
+	 * values sent by the algorithm repository management page.
+	 */
+	@Override
+	@JsonDeserialize(using = AlgorithmRepositoryStatusDeserializer.class)
+	public void setStatus(Integer status) {
+		super.setStatus(status);
+	}
 
 }

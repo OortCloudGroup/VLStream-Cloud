@@ -1,155 +1,125 @@
 <template>
-  <div class="algorithm-arrangement">
-    <!-- 查询栏 -->
-    <!--
-    <div class="query-bar">
-      <div class="query-content">
-        <div class="search-item">
-          <el-input 
-            v-model="searchForm.deviceName" 
-            placeholder="设备名称/设备ID"
-            clearable
-            style="width: 240px"
-          />
-        </div>
-        <div class="search-item">
-          <el-select 
-            v-model="searchForm.deviceType" 
-            placeholder="设备类型" 
-            clearable 
-            style="width: 200px"
+  <div class="algorithm-arrangement tenant_Page draHeaPB">
+    <div class="tenant_content">
+      <div class="tableTenBox flexRowAC">
+        <div
+          v-show="!deviceTreeCollapsed"
+          v-yResize
+          class="police_aside_use"
+        >
+          <div class="treeTitle">设备树</div>
+          <div class="tree_search_content flexRowAC">
+            <el-input
+              v-model="searchTreeKeyword"
+              placeholder="搜索"
+              debounce="300"
+              prefix-icon="Search"
+              clearable
+            />
+          </div>
+          <el-tree
+            style="background: #fff;"
+            :data="filteredDeviceTreeData"
+            highlight-current
+            node-key="id"
+            default-expand-all
+            :props="treeDefaultProps"
+            :expand-on-click-node="false"
+            @node-click="handleTreeNodeClick"
           >
-            <el-option label="全部" value="" />
-            <el-option label="球机" value="ball" />
-            <el-option label="枪机" value="gun" />
-            <el-option label="半球" value="hemisphere" />
-          </el-select>
+            <template #default="{ node }">
+              <div class="custom-tree-node flexRowAC">
+                <span class="tree-node-label">{{ node.label }}</span>
+              </div>
+            </template>
+          </el-tree>
         </div>
-        <div class="search-item">
-          <DateRangePicker
-            v-model="searchForm.createDateRange"
-            start-placeholder="创建日期"
-            end-placeholder="修改日期"
-            style="width: 300px"
-          />
-        </div>
-        <div class="search-buttons">
-          <el-button type="primary" :icon="Search" @click="handleSearch">
-            搜索
-          </el-button>
-          <el-button :icon="Refresh" @click="handleReset">
-            重置
-          </el-button>
-        </div>
-      </div>
-    </div>
-    -->
 
-    <!-- 主要内容区域 -->
-    <div class="main-content">
-      <!-- 左侧设备树 -->
-      <div class="device-tree-container" :class="{ collapsed: deviceTreeCollapsed }">
-        <DeviceTree
-          :tree-data="deviceTreeData"
-          title="设备树"
-          :show-search="true"
-          :show-collapse-btn="true"
-          :show-expand-btn="false"
-          :show-add-actions="false"
-          :show-delete-actions="false"
-          :show-bottom-actions="false"
-          :collapsed="deviceTreeCollapsed"
-          @node-click="handleTreeNodeClick"
-          @search="handleDeviceTreeSearch"
-          @toggle-collapse="toggleDeviceTree"
-        />
-      </div>
-
-      <!-- 右侧内容区域 -->
-      <div class="table-container">
-        <!-- 导航栏 -->
-        <div class="content-header">
-          <div class="breadcrumb">
-            <!-- 设备树折叠时显示的展开按钮 -->
-            <CollapseToggle 
-              v-if="deviceTreeCollapsed"
-              class="expand-device-tree-btn"
-              :is-expanded="false"
-              @toggle="toggleDeviceTree"
-            />
-            <span class="breadcrumb-item">算法编排</span>
+        <div class="tableTenItU">
+          <div v-if="deviceTreeCollapsed" class="content-header">
+            <div class="breadcrumb">
+              <CollapseToggle
+                class="expand-device-tree-btn"
+                :is-expanded="false"
+                @toggle="toggleDeviceTree"
+              />
+              <span class="breadcrumb-item">算法编排</span>
+            </div>
           </div>
-        </div>
 
-        <!-- 工具栏 -->
-        <div class="toolbar">
-          <div class="toolbar-left">
+          <div class="depNameBox_out flexRowAC">
+            <div class="depNameBox flexRowAC"></div>
+            <div class="searchHeight_out flexRowAC">
+              <search-height-box
+                keyword="keyword"
+                placeholder="搜索"
+                :data="searchData"
+                @handle="searchResetFn"
+              />
+              <export-excel-pdf :item="exportItem" @handle="handleExport" />
+            </div>
           </div>
-          
-          <div class="toolbar-right">
-            <AdvancedSearch 
-              @search="handleAdvancedSearch"
-              @reset="handleAdvancedSearchReset"
-              @export="handleExport"
-              @upload="handleUpload"
-              @template="handleDownloadTemplate"
-              @batch="handleBatchOperation"
-            />
-          </div>
-        </div>
 
-        <!-- 表格内容 -->
-        <div class="table-content">
-          <el-table 
-            :data="tableData" 
+          <TableSelf
+            class="new_table"
+            header-cell-class-name="header_tenant_cell"
             stripe
             v-loading="loading"
+            :data="tableData"
             @selection-change="handleSelectionChange"
           >
-            <el-table-column type="selection" width="55" />
-            <el-table-column type="index" label="序号" width="80" align="center" />
-            <el-table-column prop="deviceName" label="设备名称" min-width="120" />
-            <el-table-column prop="tags" label="标签" min-width="100">
+            <el-table-column type="selection" :width="clacPXToVW(55)" />
+            <el-table-column label="序号" :width="clacPXToVW(80)" align="center">
               <template #default="scope">
-                <el-tag 
-                  v-for="tag in scope.row.tags" 
+                {{ scope.$index + (pagination.currentPage - 1) * pagination.pageSize + 1 }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="deviceName" label="设备名称" show-overflow-tooltip />
+            <el-table-column prop="tags" label="标签">
+              <template #default="scope">
+                <el-tag
+                  v-for="tag in scope.row.tags"
                   :key="tag"
-                  size="small" 
+                  size="small"
                   type="primary"
                 >
                   {{ tag }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="deviceId" label="设备ID" min-width="120" />
-            <el-table-column prop="deviceType" label="设备类型" min-width="100" />
-            <el-table-column prop="deviceLocation" label="设备位置" min-width="150" />
-            <el-table-column prop="algorithms" label="拥有算法" min-width="200" />
-            <el-table-column label="操作" width="180" fixed="right" align="right">
+            <el-table-column prop="deviceId" label="设备ID" show-overflow-tooltip />
+            <el-table-column prop="deviceType" label="设备类型" />
+            <el-table-column prop="deviceLocation" label="设备位置" show-overflow-tooltip />
+            <el-table-column prop="algorithms" label="拥有算法" show-overflow-tooltip />
+            <el-table-column label="操作" :width="clacPXToVW(200)" fixed="right" align="right">
               <template #default="scope">
-                <div class="action-buttons">
-                  <PlayButton :disabled="!getDeviceStreamUrl(scope.row)" @click="handlePlay(scope.row)" />
-                  <el-button
-                      type="primary"
-                      text
-                      size="small"
-                      class="config-button"
-                      @click="configureAlgorithm(scope.row)">
-                    配置AI算法
-                  </el-button>
+                <div class="operateAppBox flexRowAC" @click.stop>
+                  <div
+                    class="new_table_svg_group"
+                    :class="{ disabled: !getDeviceStreamUrl(scope.row) }"
+                    @click="getDeviceStreamUrl(scope.row) && handlePlay(scope.row)"
+                  >
+                    <oort-svg-icon width="20" height="20" name="play" class="new_table_svg_group_svg" />
+                    <span>播放</span>
+                  </div>
+                  <div class="new_table_svg_group" @click="configureAlgorithm(scope.row)">
+                    <oort-svg-icon width="20" height="20" name="setting" class="new_table_svg_group_svg" />
+                    <span>配置</span>
+                  </div>
                 </div>
               </template>
             </el-table-column>
-          </el-table>
+          </TableSelf>
 
-          <!-- 分页 -->
-          <div class="table-pagination">
+          <div class="paginationBox flexRowAC">
             <el-pagination
-              v-model:current-page="pagination.currentPage"
-              v-model:page-size="pagination.pageSize"
+              background
+              :current-page="pagination.currentPage"
+              :page-size="pagination.pageSize"
               :page-sizes="[10, 20, 50, 100]"
               :total="pagination.total"
-              layout="total, sizes, prev, pager, next, jumper"
+              layout="total, prev, pager, next, sizes"
+              class="justifyAlign"
               @size-change="handleSizeChange"
               @current-change="handleCurrentChange"
             />
@@ -160,10 +130,11 @@
 
     <!-- 配置AI算法对话框 -->
     <!-- 视频播放对话框 -->
+
     <el-dialog
       v-model="videoDialogVisible"
       title="视频播放"
-      width="1200px"
+      width="65%"
       top="5vh"
       @close="handleVideoClose"
     >
@@ -222,7 +193,7 @@
     <el-dialog
       v-model="showConfigDialog"
       title="配置AI算法"
-      width="500px"
+      width="30%"
       @close="resetConfigForm"
     >
       <div class="config-dialog-content">
@@ -255,12 +226,22 @@
             </el-button>
           </div>
         </div>
+        <div class="config-item">
+          <label class="config-label">模型格式</label>
+          <el-select v-model="dispatchModelType" style="width: 100%">
+            <el-option label="OM（昇腾/海思）" value="om" />
+            <el-option label="RKNN（瑞芯微）" value="rknn" />
+            <el-option label="INT8 RKNN" value="int8-rknn" />
+            <el-option label="ONNX（通用）" value="onnx" />
+            <el-option label="PT（PyTorch）" value="pt" />
+          </el-select>
+        </div>
       </div>
       
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showConfigDialog = false">取消</el-button>
-          <el-button type="primary" @click="saveConfiguration">确认</el-button>
+          <el-button @click="showConfigDialog = false" class="common_btn">取消</el-button>
+          <el-button type="primary" @click="saveConfiguration" class="common_btn">确认</el-button>
         </div>
       </template>
     </el-dialog>
@@ -341,14 +322,12 @@ import {ref, reactive, computed, onMounted, onUnmounted, nextTick, watch, shallo
 import { ElMessage } from 'element-plus'
 import { Close, Check } from '@element-plus/icons-vue'
 import Hls from 'hls.js'
-import DeviceTree from '@/components/DeviceTree.vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
-import PlayButton from '@/components/PlayButton.vue'
+import { clacPXToVW } from '@/utils/index'
 
 import { getDeviceById, getDeviceList, getDeviceTree, dispatchAlgorithmToDevices } from '@/api/device'
 import { getTagTree } from '@/api/tagManagement'
-import { WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
+import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
 import { getStreamType, getYouTubeEmbedUrl } from '@/views/VideoAggregation/deviceUtils.js'
 import { getAlgorithmPage } from '@/api/algorithmManagement'
 import { CAMERA_RTC_SOCKET_URL, ensureOPlayer } from '@/utils/oplayer'
@@ -408,8 +387,9 @@ const currentStreamUrl = computed(() => getDeviceStreamUrl(currentVideoDevice.va
 const currentStreamType = computed(() => getStreamType(currentStreamUrl.value))
 
 // WebRTC (默认 RTSP 直连)
-const WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
-const WEBRTC_SCRIPT_URLS = [
+let WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
+// 配置请求完成后再生成脚本地址，避免继续使用模块初始化时的默认值。
+const getWebRtcScriptUrls = () => [
   `${WEBRTC_STREAMER_BASE}/libs/adapter.min.js`,
   `${WEBRTC_STREAMER_BASE}/webrtcstreamer.js`
 ]
@@ -433,7 +413,9 @@ const loadScriptTag = (src) => {
 
 const ensureWebRtcStreamerScripts = async () => {
   if (webrtcScriptLoader) return webrtcScriptLoader
-  webrtcScriptLoader = Promise.all(WEBRTC_SCRIPT_URLS.map(loadScriptTag)).catch((error) => {
+  await ensureWebRTCBackendConfig()
+  WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
+  webrtcScriptLoader = Promise.all(getWebRtcScriptUrls().map(loadScriptTag)).catch((error) => {
     webrtcScriptLoader = null
     throw error
   })
@@ -648,6 +630,7 @@ const currentDevice = ref(null)
 
 // 可选的算法列表
 const selectedAlgorithms = ref([])
+const dispatchModelType = ref('om')
 
 const showAlgorithmPanel = ref(false)
 
@@ -713,6 +696,18 @@ const filteredAlgorithmList = computed(() => {
 
 // 设备树/设备列表对接（参考 DeviceManagement.vue）
 const deviceTreeData = ref([])
+const searchTreeKeyword = ref('')
+const treeDefaultProps = { children: 'children', label: 'label' }
+const filteredDeviceTreeData = computed(() => {
+  if (!searchTreeKeyword.value) return deviceTreeData.value
+  const keyword = searchTreeKeyword.value.toLowerCase()
+  const filterNode = (nodes) => nodes.filter(node => {
+    if (node.label?.toLowerCase().includes(keyword)) return true
+    if (node.children?.length) return filterNode(node.children).length > 0
+    return false
+  }).map(node => node.children?.length ? { ...node, children: filterNode(node.children) } : node)
+  return filterNode(deviceTreeData.value)
+})
 const deviceList = ref([])
 const tagNameMap = ref(new Map())
 
@@ -901,6 +896,19 @@ const filteredDeviceList = computed(() => {
 
 const tableData = computed(() => filteredDeviceList.value)
 
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '关键词', value: 'keyword', type: 'text', default: '' }
+])
+
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && val.keyword)) {
+    handleAdvancedSearchReset()
+    return
+  }
+  handleAdvancedSearch(val || {})
+}
+
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索:', searchData)
   
@@ -1001,10 +1009,6 @@ const handleTreeNodeClick = async (data) => {
     return
   }
   console.log('点击树节点:', data)
-}
-
-const handleDeviceTreeSearch = (keyword) => {
-  console.log('设备树搜索:', keyword)
 }
 
 const toggleDeviceTree = () => {
@@ -1174,7 +1178,11 @@ const saveConfiguration = async () => {
 
   try {
     for (const algorithmId of algorithmIds) {
-      const response = await dispatchAlgorithmToDevices(algorithmId, String(deviceId))
+      const response = await dispatchAlgorithmToDevices(
+        algorithmId,
+        String(deviceId),
+        dispatchModelType.value
+      )
       if (response?.code !== 200) {
         ElMessage.error(response?.message || '\u7b97\u6cd5\u914d\u7f6e\u5931\u8d25')
         return
@@ -1201,7 +1209,7 @@ const saveConfiguration = async () => {
     showAlgorithmPanel.value = false
   } catch (error) {
     console.error('Failed to configure algorithms:', error)
-    ElMessage.error('\u7b97\u6cd5\u914d\u7f6e\u5931\u8d25')
+    // 请求拦截器已经展示后端返回的具体业务错误，避免重复显示通用提示。
   }
 }
 
@@ -1242,14 +1250,99 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  background: #f0f2f5;
+
+  .tenant_content {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+  }
+
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+  }
+}
+.police_aside_use {
+  width: 300px;
+  padding-right: 20px;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+  .treeTitle {
+    color: var(--el-color-primary);
+    padding-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 4px;
+    &::before {
+      content: '';
+      width: 3px;
+      height: 18px;
+      background-color: var(--el-color-primary);
+    }
+  }
+  .tree_search_content {
+    justify-content: center;
+    padding-bottom: 10px;
+    :deep(.el-input__wrapper) {
+      background: #fff;
+      box-shadow: none;
+      border: 1px solid #dcdfe6;
+      border-radius: 4px;
+    }
+  }
+  :deep(.el-tree-node__content) {
+    height: 38px;
+    font-size: 14px;
+    .custom-tree-node {
+      width: 100%;
+      justify-content: space-between;
+      padding-right: 4px;
+    }
+  }
+  :deep(.el-tree) {
+    height: calc(100% - 80px);
+    overflow: auto;
+  }
+}
+.custom-tree-node {
+  flex: 1;
+  min-width: 0;
+  .tree-node-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+.tableTenItU {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+  :deep(.header_tenant_cell) { background: #F8F8F9; }
+}
+.paginationBox { justify-content: center; height: 100px; }
+.operateAppBox { justify-content: flex-end; gap: 2px; }
+.new_table_svg_group.disabled { opacity: 0.4; pointer-events: none; }
+
 .algorithm-arrangement {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  background-color: #f5f7fa;
-  padding: 20px;
   overflow: hidden;
 }
 
@@ -1571,11 +1664,6 @@ onUnmounted(() => {
   justify-content: center;
   gap: 16px;
   padding: 20px 0 0;
-}
-
-.dialog-footer .el-button {
-  min-width: 80px;
-  height: 36px;
 }
 
 /* 算法选择面板样式 */

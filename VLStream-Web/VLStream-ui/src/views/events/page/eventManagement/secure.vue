@@ -591,6 +591,7 @@ const reloadTree = () => {
 
 const handleLeftTabChange = (_tabName: string) => {
   itemTemp.value = ''
+  currentTreeNodeId.value = ''
   // 切换标签时重新加载树数据
   reloadTree()
   getList()

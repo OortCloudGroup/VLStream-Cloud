@@ -14,8 +14,13 @@ import com.ruoyi.workflow.domain.bo.ProcessStartBo;
 import com.ruoyi.workflow.service.IWfProcessService;
 import com.ruoyi.workorder.domain.WorkOrder;
 import com.ruoyi.workorder.domain.bo.WorkOrderBo;
+import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
+import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
+import com.ruoyi.vlstream.test.vlstream.service.ActiveSafetyEventReportService;
+import com.ruoyi.vlstream.test.vlstream.service.DeviceMediaUploadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -52,7 +57,7 @@ import java.util.concurrent.CompletableFuture;
  * Java implementation of the task APIs previously served by apaas-location-service.
  */
 @Service
-public class LocationTaskCompatService {
+public class LocationTaskCompatService implements ActiveSafetyEventReportService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LocationTaskCompatService.class);
 
@@ -73,6 +78,8 @@ public class LocationTaskCompatService {
     private static final String TABLE_GROUP_V2 = "`oort_definition_table_group_v2`";
     private static final String TABLE_GROUP_APP_V2 = "`ap_definition_table_group_app_v2`";
     private static final String TABLE_GROUP_CONFIG_V2 = "`ap_definition_app_group_config_v2`";
+    private static final String VLS_TAG = "`vls_tag_management`";
+    private static final String VLS_DEVICE_TAG = "`vls_device_tag_relation`";
     private static final String APP = "`wf_form_app`";
     private static final String USER = "`sys_user`";
     private static final String DEPT = "`sys_dept`";
@@ -81,6 +88,7 @@ public class LocationTaskCompatService {
     private static final String OLD_APP_GROUP = "`oort_definition_app_group`";
 
     private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final String VLS_MEDIA_PREFIX = "vls-media://";
     private static final TypeReference<LinkedHashMap<String, Object>> MAP_TYPE =
         new TypeReference<LinkedHashMap<String, Object>>() { };
 
@@ -88,6 +96,9 @@ public class LocationTaskCompatService {
     private final ObjectMapper objectMapper;
     private final IWfProcessService processService;
     private final LocationTaskWorkflowProperties workflowProperties;
+
+    @Autowired
+    private DeviceMediaUploadService deviceMediaUploadService;
 
     @Value("${vls.tenant.id:000000}")
     private String singleTenantId = "000000";
@@ -216,6 +227,10 @@ public class LocationTaskCompatService {
      * Persist one active-safety event and schedule its configuration-controlled work-order hook.
      */
     private EventKey insertCameraEvent(Map<String, Object> body) {
+        return insertCameraEvent(body, null);
+    }
+
+    private EventKey insertCameraEvent(Map<String, Object> body, ActiveSafetyEventReport mqttReport) {
         String tenantId = singleTenantId;
         String deviceId = stringValue(body, "device_id");
         String deviceName = stringValue(body, "device_name");
@@ -233,6 +248,14 @@ public class LocationTaskCompatService {
         data.put("pics", pictures);
         data.put("send_pics", new ArrayList<String>());
         data.put("video", videos);
+        if (mqttReport != null) {
+            data.put("mqtt_message_id", mqttReport.getSourceMessageId());
+            data.put("device_event_id", mqttReport.getDeviceEventId());
+            data.put("media_id", mqttReport.getMediaId());
+            data.put("event_time", mqttReport.getEventTime() == null
+                ? "" : new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ROOT)
+                    .format(mqttReport.getEventTime()));
+        }
         jdbc.update("INSERT INTO " + EVENT
                 + " (`id`,`no`,`tenant_id`,`uuid`,`name`,`data`,`status`,`item`,`client`,`mod_type`,"
                 + "`mod_status`,`device_id`,`device_name`,`device_tag`,`work_order_status`,"
@@ -241,7 +264,7 @@ public class LocationTaskCompatService {
             key.getId(), key.getNo(), tenantId, deviceId, name, toJson(data), item,
             deviceId, deviceName, stringValue(body, "device_tag"));
         scheduleAutomaticWorkOrder(new EventSnapshot(key, tenantId, deviceId, name, item,
-            describe, point, pictures, 2, deviceId));
+            describe, point, resolveEventPictures(pictures), 2, deviceId));
         return key;
     }
 
@@ -338,6 +361,10 @@ public class LocationTaskCompatService {
      * Return the filtered, paged event list.
      */
     public LocationTaskResult<?> eventList(Map<String, Object> body, UserContext user) {
+        LocationTaskResult<?> filterError = validateEventListFilters(body);
+        if (filterError != null) {
+            return filterError;
+        }
         int page = positiveInt(body, "page", 1);
         int pageSize = Math.min(positiveInt(body, "pagesize", 10), 100);
         StringBuilder from = new StringBuilder(" FROM ").append(EVENT).append(" te ");
@@ -381,10 +408,10 @@ public class LocationTaskCompatService {
             args.add(deptId);
         } else if (!groupUid.isEmpty()) {
             from.append(" LEFT JOIN ").append(OLD_APP_GROUP_DEVICE).append(" gd ON gd.device_id = te.device_id ")
-                .append(" LEFT JOIN ").append(OLD_APP_GROUP).append(" ag ON ag.uid = gd.uid ")
-                .append(" LEFT JOIN ").append(OLD_APP_GROUP)
-                .append(" ag2 ON ag.uid_path LIKE CONCAT(ag2.uid_path,'%') ");
-            where.add("ag2.tenant_id = ? AND ag2.uid = ?");
+                .append(" LEFT JOIN ").append(TABLE_GROUP_V2).append(" g ON g.uid = gd.uid ")
+                .append(" LEFT JOIN ").append(TABLE_GROUP_V2)
+                .append(" g2 ON g.uid_path LIKE CONCAT(g2.uid_path,'%') ");
+            where.add("g2.tenant_id = ? AND g2.uid = ?");
             args.add(user.getTenantId());
             args.add(groupUid);
         }
@@ -409,6 +436,20 @@ public class LocationTaskCompatService {
         String externalId = stringValue(body, "id");
         if (externalId.isEmpty()) {
             return parameterError("参数错误 id不能为空");
+        }
+        if (!hasContractValue(body, "status", LocationTaskEventContracts.EventStatus.values(), false)) {
+            return parameterError("参数错误 status只能为1或2");
+        }
+        if (!hasOptionalContractValue(body, "mod_status",
+            LocationTaskEventContracts.AlarmStatus.values(), false)) {
+            return parameterError("参数错误 mod_status只能为0、1、2或3");
+        }
+        if (!hasOptionalContractValue(body, "work_order_status",
+            LocationTaskEventContracts.WorkOrderStatus.values(), false)) {
+            return parameterError("参数错误 work_order_status只能为0或1");
+        }
+        if (codePointLength(stringValue(body, "describe")) > 1024) {
+            return parameterError("参数错误 describe不能超过1024个字符串");
         }
         Map<String, Object> event = findEventRaw(externalId);
         if (event == null || !user.getTenantId().equals(string(event.get("tenant_id")))) {
@@ -515,6 +556,10 @@ public class LocationTaskCompatService {
         if (eventId.isEmpty() || !(values instanceof List) || ((List<?>) values).isEmpty()) {
             return parameterError("参数错误 id和uuids不能为空");
         }
+        LocationTaskResult<?> executorError = validateEventExecutors(values);
+        if (executorError != null) {
+            return executorError;
+        }
         Map<String, Object> event = findEventRaw(eventId);
         if (event == null || !user.getTenantId().equals(string(event.get("tenant_id")))) {
             return error(NOT_FOUND, "没找到记录");
@@ -573,12 +618,17 @@ public class LocationTaskCompatService {
      * Return the current user's event list for the requested execution relationship.
      */
     public LocationTaskResult<?> myEventList(Map<String, Object> body, UserContext user) {
+        LocationTaskResult<?> filterError = validateEventListFilters(body);
+        if (filterError != null) {
+            return filterError;
+        }
+        if (!hasOptionalContractValue(body, "exec_status",
+            LocationTaskEventContracts.ExecutionScope.values(), false)) {
+            return parameterError("参数错误 exec_status只能为1、2、3或4");
+        }
         int page = positiveInt(body, "page", 1);
         int pageSize = positiveInt(body, "pagesize", 10);
-        int executionStatus = intValue(body, "exec_status", 0);
-        if (executionStatus <= 1) {
-            executionStatus = 1;
-        }
+        int executionStatus = intValue(body, "exec_status", 1);
 
         StringBuilder from = new StringBuilder(" FROM ").append(EVENT).append(" te ");
         List<String> where = new ArrayList<String>();
@@ -627,6 +677,7 @@ public class LocationTaskCompatService {
     /**
      * Return the V2 groups authorized to the requested application.
      */
+    @Transactional(rollbackFor = Exception.class)
     public LocationTaskResult<?> eventGroupListV2(Map<String, Object> body, UserContext user) {
         String appId = stringValue(body, "app_id");
         int groupType = intValue(body, "group_type", 0);
@@ -692,6 +743,52 @@ public class LocationTaskCompatService {
     }
 
     /**
+     * Return the complete authorized V2 group tree in one request.
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public LocationTaskResult<?> eventGroupTreeV2(Map<String, Object> body, UserContext user) {
+        String appId = stringValue(body, "app_id");
+        int groupType = intValue(body, "group_type", 0);
+        if (appId.isEmpty() || groupType < 1 || groupType > 3) {
+            return parameterError("参数错误 app_id和group_type不能为空");
+        }
+        if (!appExists(user.getTenantId(), appId)) {
+            return error(NOT_FOUND, "应用不存在");
+        }
+        if (groupType == 3) {
+            ensureLegacyVlsTagsMigrated(appId, user.getTenantId());
+        }
+        List<Map<String, Object>> grants = appGroupGrants(user.getTenantId(), appId);
+        if (grants.isEmpty()) {
+            return LocationTaskResult.success(singleListPayload(new ArrayList<Object>()));
+        }
+        List<Map<String, Object>> rows = jdbc.queryForList("SELECT * FROM " + TABLE_GROUP_V2
+            + " WHERE tenant_id = ? AND group_type = ? ORDER BY puid ASC, sort ASC", user.getTenantId(), groupType);
+        LinkedHashMap<String, Map<String, Object>> nodes = new LinkedHashMap<String, Map<String, Object>>();
+        for (Map<String, Object> row : rows) {
+            if (!isGroupAuthorized(row, grants)) {
+                continue;
+            }
+            Map<String, Object> node = toGroupV2(row);
+            node.put("children", new ArrayList<Map<String, Object>>());
+            nodes.put(string(row.get("uid")), node);
+        }
+        List<Map<String, Object>> roots = new ArrayList<Map<String, Object>>();
+        for (Map<String, Object> node : nodes.values()) {
+            String parentUid = string(node.get("puid"));
+            Map<String, Object> parent = nodes.get(parentUid);
+            if (parent == null) {
+                roots.add(node);
+            } else {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> children = (List<Map<String, Object>>) parent.get("children");
+                children.add(node);
+            }
+        }
+        return LocationTaskResult.success(singleListPayload(roots));
+    }
+
+    /**
      * Preserve the original deprecated V1 event-group save endpoint.
      */
     public LocationTaskResult<?> eventGroupSaveV1(Map<String, Object> body, UserContext user) {
@@ -706,6 +803,189 @@ public class LocationTaskCompatService {
     }
 
     /**
+     * Create or update one V2 group shared by video aggregation and active safety.
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public LocationTaskResult<?> eventGroupSaveV2(Map<String, Object> body, UserContext user) {
+        String appId = stringValue(body, "app_id");
+        int groupType = intValue(body, "group_type", 0);
+        String name = stringValue(body, "name").trim();
+        String uid = stringValue(body, "uid");
+        if (appId.isEmpty() || groupType < 1 || groupType > 3 || name.isEmpty() || name.length() > 50) {
+            return parameterError("参数错误 app_id、group_type和name不能为空，name最长50个字符");
+        }
+        if (!appExists(user.getTenantId(), appId)) {
+            return error(NOT_FOUND, "应用不存在");
+        }
+        if (groupType == 3) {
+            ensureLegacyVlsTagsMigrated(appId, user.getTenantId());
+        }
+
+        String remark = stringValue(body, "remark");
+        if (remark.length() > 255) {
+            return parameterError("参数错误 remark最长255个字符");
+        }
+        if (!uid.isEmpty()) {
+            Map<String, Object> existing = findGroupV2(uid);
+            if (existing == null || !user.getTenantId().equals(string(existing.get("tenant_id")))) {
+                return error(GROUP_NOT_FOUND, "没找到分组记录");
+            }
+            if (number(existing.get("group_type")).intValue() != groupType
+                || !isGroupAuthorized(existing, appGroupGrants(user.getTenantId(), appId))) {
+                return error(GROUP_APP_NOT_AUTHORIZED, "应用分组没有权限");
+            }
+            if (groupNameExists(user.getTenantId(), groupType, string(existing.get("puid")), name, uid)) {
+                return parameterError("同级分组名称已存在");
+            }
+            jdbc.update("UPDATE " + TABLE_GROUP_V2 + " SET name = ?, remark = ?, updated_at = NOW() WHERE uid = ?",
+                name, remark, uid);
+            return LocationTaskResult.success(toGroupV2(findGroupV2(uid)));
+        }
+
+        String parentUid = stringValue(body, "puid");
+        String parentPath = "";
+        if (!parentUid.isEmpty()) {
+            Map<String, Object> parent = findGroupV2(parentUid);
+            if (parent == null || !user.getTenantId().equals(string(parent.get("tenant_id")))) {
+                return error(GROUP_NOT_FOUND, "没找到父级分组记录");
+            }
+            if (number(parent.get("group_type")).intValue() != groupType
+                || !isGroupAuthorized(parent, appGroupGrants(user.getTenantId(), appId))) {
+                return error(GROUP_APP_NOT_AUTHORIZED, "父级分组没有应用权限");
+            }
+            parentPath = string(parent.get("uid_path"));
+        }
+        if (groupNameExists(user.getTenantId(), groupType, parentUid, name, "")) {
+            return parameterError("同级分组名称已存在");
+        }
+
+        uid = IdUtil.getSnowflakeNextIdStr();
+        String uidPath = parentPath + uid + "/";
+        int sort = number(jdbc.queryForObject("SELECT COALESCE(MAX(sort), 0) FROM " + TABLE_GROUP_V2
+            + " WHERE tenant_id = ? AND group_type = ? AND puid = ?", Object.class,
+            user.getTenantId(), groupType, parentUid)).intValue() + 1;
+        jdbc.update("INSERT INTO " + TABLE_GROUP_V2
+                + " (`uid`,`tenant_id`,`group_type`,`name`,`puid`,`uid_path`,`remark`,`sort`,`created_at`,`updated_at`) "
+                + "VALUES (?,?,?,?,?,?,?,?,NOW(),NOW())",
+            uid, user.getTenantId(), groupType, name, parentUid, uidPath, remark, sort);
+        if (parentUid.isEmpty()) {
+            jdbc.update("INSERT INTO " + TABLE_GROUP_APP_V2
+                    + " (`id`,`app_id`,`group_uid`,`group_type`,`tenant_id`,`uid_path`,`authorize_at`,`created_at`,`updated_at`) "
+                    + "VALUES (?,?,?,?,?,?,?,NOW(),NOW())",
+                IdUtil.getSnowflakeNextIdStr(), appId, uid, groupType, user.getTenantId(), uidPath,
+                System.currentTimeMillis());
+        }
+        return LocationTaskResult.success(toGroupV2(findGroupV2(uid)));
+    }
+
+    /**
+     * Delete a leaf V2 group and its application configuration.
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public LocationTaskResult<?> eventGroupDeleteV2(Map<String, Object> body, UserContext user) {
+        String uid = stringValue(body, "uid");
+        String appId = stringValue(body, "app_id");
+        if (uid.isEmpty() || appId.isEmpty()) {
+            return parameterError("参数错误 uid和app_id不能为空");
+        }
+        if (!appExists(user.getTenantId(), appId)) {
+            return error(NOT_FOUND, "应用不存在");
+        }
+        Map<String, Object> group = findGroupV2(uid);
+        if (group == null || !user.getTenantId().equals(string(group.get("tenant_id")))) {
+            return error(GROUP_NOT_FOUND, "没找到分组记录");
+        }
+        if (!isGroupAuthorized(group, appGroupGrants(user.getTenantId(), appId))) {
+            return error(GROUP_APP_NOT_AUTHORIZED, "应用分组没有权限");
+        }
+        Long children = jdbc.queryForObject("SELECT COUNT(*) FROM " + TABLE_GROUP_V2 + " WHERE puid = ?", Long.class, uid);
+        if (children != null && children > 0L) {
+            return parameterError("请先删除子级分组");
+        }
+        Long sharedReferences = jdbc.queryForObject("SELECT COUNT(*) FROM " + TABLE_GROUP_CONFIG_V2
+            + " WHERE group_uid = ? AND app_id <> ?", Long.class, uid, appId);
+        Long sharedGrants = jdbc.queryForObject("SELECT COUNT(*) FROM " + TABLE_GROUP_APP_V2
+            + " WHERE group_uid = ? AND app_id <> ?", Long.class, uid, appId);
+        if ((sharedReferences != null && sharedReferences > 0L) || (sharedGrants != null && sharedGrants > 0L)) {
+            return parameterError("该分组仍被其他应用使用，不能删除");
+        }
+        jdbc.update("DELETE FROM " + TABLE_GROUP_CONFIG_V2 + " WHERE group_uid = ?", uid);
+        jdbc.update("DELETE FROM " + TABLE_GROUP_APP_V2 + " WHERE group_uid = ? AND tenant_id = ?", uid, user.getTenantId());
+        jdbc.update("DELETE FROM " + OLD_APP_GROUP_DEVICE + " WHERE uid = ?", uid);
+        jdbc.update("DELETE FROM " + TABLE_GROUP_V2 + " WHERE uid = ?", uid);
+        return LocationTaskResult.success();
+    }
+
+    /**
+     * Locate an MQTT event already written to the active-safety table.
+     */
+    @Override
+    public ActiveSafetyEventReportResult findDuplicate(String sourceMessageId, String deviceId,
+                                                        String deviceEventId) {
+        if (string(sourceMessageId).isEmpty() || string(deviceId).isEmpty()
+            || string(deviceEventId).isEmpty()) {
+            return null;
+        }
+        Map<String, Object> row = firstRow("SELECT * FROM " + EVENT
+                + " WHERE tenant_id = ? AND device_id = ? AND deleted_at = 0"
+                + " AND (JSON_UNQUOTE(JSON_EXTRACT(data,'$.mqtt_message_id')) = ?"
+                + " OR JSON_UNQUOTE(JSON_EXTRACT(data,'$.device_event_id')) = ?) LIMIT 1",
+            singleTenantId, deviceId, sourceMessageId, deviceEventId);
+        return row == null ? null : activeSafetyResult(row, true);
+    }
+
+    /**
+     * Persist one MQTT camera event through the same active-safety insertion path as HTTP.
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ActiveSafetyEventReportResult report(ActiveSafetyEventReport report) {
+        if (report == null || string(report.getSourceMessageId()).isEmpty()
+            || string(report.getDeviceEventId()).isEmpty() || string(report.getDeviceId()).isEmpty()
+            || string(report.getMediaId()).isEmpty()) {
+            throw new IllegalArgumentException("MQTT 主动安全事件关键字段不能为空");
+        }
+        if (codePointLength(report.getDeviceId()) > 40) {
+            throw new IllegalArgumentException("设备编号不能超过40个字符");
+        }
+        ActiveSafetyEventReportResult duplicate = findDuplicate(report.getSourceMessageId(),
+            report.getDeviceId(), report.getDeviceEventId());
+        if (duplicate != null) {
+            return duplicate;
+        }
+
+        String eventType = limitCodePoints(string(report.getEventType()), 40);
+        if (eventType.isEmpty()) {
+            eventType = "struct";
+        }
+        LinkedHashMap<String, Object> point = new LinkedHashMap<String, Object>();
+        point.put("address", string(report.getAddress()));
+        point.put("lng", report.getLongitude());
+        point.put("lat", report.getLatitude());
+        point.put("lng_initial", report.getLongitude());
+        point.put("lat_initial", report.getLatitude());
+
+        LinkedHashMap<String, Object> body = new LinkedHashMap<String, Object>();
+        body.put("device_id", report.getDeviceId());
+        body.put("device_name", limitCodePoints(
+            string(report.getDeviceName()).isEmpty() ? report.getDeviceId() : report.getDeviceName(), 20));
+        body.put("device_tag", limitCodePoints(string(report.getDeviceTag()), 20));
+        body.put("item", eventType);
+        body.put("name", limitCodePoints(eventType, 20));
+        body.put("describe", string(report.getDescription()));
+        body.put("point", point);
+        body.put("pics", Collections.singletonList(VLS_MEDIA_PREFIX + report.getMediaId()));
+        body.put("video", Collections.emptyList());
+
+        EventKey key = insertCameraEvent(body, report);
+        return ActiveSafetyEventReportResult.builder()
+            .activeSafetyEventId(key.externalId())
+            .mediaId(report.getMediaId())
+            .duplicate(false)
+            .build();
+    }
+
+    /**
      * Replace an event item's workflow configuration.
      */
     @Transactional(rollbackFor = Exception.class)
@@ -713,6 +993,11 @@ public class LocationTaskCompatService {
         String uid = stringValue(body, "uid");
         if (uid.isEmpty() || !(body.get("config") instanceof Map)) {
             return parameterError("参数错误 uid和config不能为空");
+        }
+        LocationTaskResult<?> booleanError = validateOptionalBoolean(
+            castMap(body.get("config")), "auto_to_work");
+        if (booleanError != null) {
+            return booleanError;
         }
         Map<String, Object> item = firstRow("SELECT * FROM " + EVENT_ITEM + " WHERE uid = ? LIMIT 1", uid);
         if (item == null) {
@@ -733,6 +1018,10 @@ public class LocationTaskCompatService {
         String uid = stringValue(body, "uid");
         if (uid.isEmpty()) {
             return parameterError("参数错误 uid不能为空");
+        }
+        LocationTaskResult<?> booleanError = validateRequiredBoolean(body, "auto_to_work");
+        if (booleanError != null) {
+            return booleanError;
         }
         Map<String, Object> item = firstRow("SELECT * FROM " + EVENT_ITEM + " WHERE uid = ? LIMIT 1", uid);
         if (item == null) {
@@ -790,7 +1079,10 @@ public class LocationTaskCompatService {
     public LocationTaskResult<?> workflowConfigGet(Map<String, Object> body, UserContext user) {
         int modType = intValue(body, "mod_type", 0);
         int groupType = intValue(body, "group_type", 0);
-        if (!validOptionalType(modType, 2) || !validOptionalType(groupType, 2)) {
+        if (!hasOptionalContractValue(body, "mod_type",
+                LocationTaskEventContracts.ModuleType.values(), true)
+            || !hasOptionalContractValue(body, "group_type",
+                LocationTaskEventContracts.GroupType.values(), true)) {
             return parameterError("参数错误 mod_type或group_type不正确");
         }
         String key = workflowSettingKey(user.getTenantId(), modType, groupType);
@@ -815,8 +1107,15 @@ public class LocationTaskCompatService {
     public LocationTaskResult<?> workflowConfigSet(Map<String, Object> body, UserContext user) {
         int modType = intValue(body, "mod_type", 0);
         int groupType = intValue(body, "group_type", 0);
-        if (!validOptionalType(modType, 2) || !validOptionalType(groupType, 2)) {
+        if (!hasOptionalContractValue(body, "mod_type",
+                LocationTaskEventContracts.ModuleType.values(), true)
+            || !hasOptionalContractValue(body, "group_type",
+                LocationTaskEventContracts.GroupType.values(), true)) {
             return parameterError("参数错误 mod_type或group_type不正确");
+        }
+        LocationTaskResult<?> booleanError = validateOptionalBoolean(body, "auto_to_work");
+        if (booleanError != null) {
+            return booleanError;
         }
         String key = workflowSettingKey(user.getTenantId(), modType, groupType);
         Map<String, Object> setting = firstRow(
@@ -842,6 +1141,10 @@ public class LocationTaskCompatService {
         }
         Map<String, Object> config = body.get("config") instanceof Map
             ? castMap(body.get("config")) : new LinkedHashMap<String, Object>();
+        LocationTaskResult<?> booleanError = validateOptionalBoolean(config, "auto_to_work");
+        if (booleanError != null) {
+            return booleanError;
+        }
         String name = !userId.isEmpty() ? userId : deptId;
         String parent = !userId.isEmpty() ? "user" : "dept";
         Map<String, Object> existing = firstRow(
@@ -930,6 +1233,10 @@ public class LocationTaskCompatService {
         if (userId.isEmpty() && deptId.isEmpty()) {
             return parameterError("参数错误 用户ID或部门ID不能都为空");
         }
+        LocationTaskResult<?> booleanError = validateRequiredBoolean(body, "auto_to_work");
+        if (booleanError != null) {
+            return booleanError;
+        }
         String name = !userId.isEmpty() ? userId : deptId;
         String parent = !userId.isEmpty() ? "user" : "dept";
         Map<String, Object> group = firstRow(
@@ -948,12 +1255,16 @@ public class LocationTaskCompatService {
      */
     @Transactional(rollbackFor = Exception.class)
     public LocationTaskResult<?> eventGroupSettingSaveV2(Map<String, Object> body, UserContext user) {
+        Map<String, Object> config = body.get("config") instanceof Map
+            ? castMap(body.get("config")) : new LinkedHashMap<String, Object>();
+        LocationTaskResult<?> booleanError = validateOptionalBoolean(config, "auto_to_work");
+        if (booleanError != null) {
+            return booleanError;
+        }
         AuthorizationResult authorization = authorizeV2Group(body, user);
         if (authorization.getError() != null) {
             return authorization.getError();
         }
-        Map<String, Object> config = body.get("config") instanceof Map
-            ? castMap(body.get("config")) : new LinkedHashMap<String, Object>();
         Map<String, Object> existing = firstRow(
             "SELECT * FROM " + TABLE_GROUP_CONFIG_V2 + " WHERE group_uid = ? AND app_id = ? LIMIT 1",
             string(authorization.getGroup().get("uid")), authorization.getAppId());
@@ -980,6 +1291,10 @@ public class LocationTaskCompatService {
      */
     @Transactional(rollbackFor = Exception.class)
     public LocationTaskResult<?> eventGroupStatusV2(Map<String, Object> body, UserContext user) {
+        LocationTaskResult<?> booleanError = validateRequiredBoolean(body, "auto_to_work");
+        if (booleanError != null) {
+            return booleanError;
+        }
         AuthorizationResult authorization = authorizeV2Group(body, user);
         if (authorization.getError() != null) {
             return authorization.getError();
@@ -999,6 +1314,14 @@ public class LocationTaskCompatService {
      * Calculate event statistics using the original view, grouping, and summary rules.
      */
     public LocationTaskResult<?> eventStatistics(Map<String, Object> body, UserContext user) {
+        if (!hasOptionalContractValue(body, "mod_type",
+            LocationTaskEventContracts.ModuleType.values(), true)) {
+            return parameterError("参数错误 mod_type只能为0、1或2");
+        }
+        if (!hasOptionalContractValue(body, "stat_type",
+            LocationTaskEventContracts.StatisticsType.values(), false)) {
+            return parameterError("参数错误 stat_type只能为1或2");
+        }
         String userType = stringValue(body, "user_type");
         if (!userType.isEmpty() && !"dept".equals(userType) && !"user".equals(userType)) {
             return parameterError("参数错误 user_type不正确");
@@ -1555,7 +1878,84 @@ public class LocationTaskCompatService {
             "SELECT COUNT(*) FROM " + APP
                 + " WHERE tenant_id = ? AND application_id = ? AND COALESCE(del_flag,'0') = '0'",
             Long.class, tenantId, appId);
+        if ((count == null || count == 0L) && singleTenantId.equals(tenantId)) {
+            count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM " + APP
+                    + " WHERE application_id = ? AND COALESCE(del_flag,'0') = '0'",
+                Long.class, appId);
+        }
         return count != null && count > 0L;
+    }
+
+    /**
+     * Import the pre-existing video-aggregation tags once into the V2 shared group model.
+     * The deterministic UID keeps this migration idempotent and preserves device associations.
+     */
+    private void ensureLegacyVlsTagsMigrated(String appId, String tenantId) {
+        List<Map<String, Object>> legacyTags = jdbc.queryForList(
+            "SELECT id, tag_name, parent_id, sort_order, description FROM " + VLS_TAG
+                + " WHERE tenant_id = ? AND is_deleted = 0 ORDER BY level ASC, sort_order ASC, id ASC",
+            tenantId);
+        for (Map<String, Object> legacyTag : legacyTags) {
+            String legacyId = string(legacyTag.get("id"));
+            if (legacyId.isEmpty()) {
+                continue;
+            }
+            String uid = "vls-tag-" + legacyId;
+            Map<String, Object> existing = findGroupV2(uid);
+            if (existing != null) {
+                if (string(existing.get("puid")).isEmpty()) {
+                    ensureV2GroupGrant(appId, tenantId, uid, string(existing.get("uid_path")));
+                }
+                continue;
+            }
+            String parentLegacyId = string(legacyTag.get("parent_id"));
+            String parentUid = parentLegacyId.isEmpty() ? "" : "vls-tag-" + parentLegacyId;
+            Map<String, Object> parent = parentUid.isEmpty() ? null : findGroupV2(parentUid);
+            String parentPath = parent == null ? "" : string(parent.get("uid_path"));
+            String uidPath = parentPath + uid + "/";
+            jdbc.update("INSERT INTO " + TABLE_GROUP_V2
+                    + " (`uid`,`tenant_id`,`group_type`,`name`,`puid`,`uid_path`,`remark`,`sort`,`created_at`,`updated_at`) "
+                    + "VALUES (?,?,?,?,?,?,?,?,NOW(),NOW())",
+                uid, tenantId, 3, string(legacyTag.get("tag_name")), parentUid, uidPath,
+                string(legacyTag.get("description")), number(legacyTag.get("sort_order")).intValue());
+            if (parentUid.isEmpty()) {
+                ensureV2GroupGrant(appId, tenantId, uid, uidPath);
+            }
+        }
+
+        List<Map<String, Object>> relations = jdbc.queryForList(
+            "SELECT r.device_id, r.tag_id FROM " + VLS_DEVICE_TAG + " r JOIN " + VLS_TAG
+                + " t ON t.id = r.tag_id WHERE t.tenant_id = ? AND t.is_deleted = 0 AND r.is_deleted = 0",
+            tenantId);
+        for (Map<String, Object> relation : relations) {
+            String tagUid = "vls-tag-" + string(relation.get("tag_id"));
+            String deviceId = string(relation.get("device_id"));
+            if (deviceId.isEmpty() || findGroupV2(tagUid) == null) {
+                continue;
+            }
+            Long count = jdbc.queryForObject("SELECT COUNT(*) FROM " + OLD_APP_GROUP_DEVICE
+                + " WHERE uid = ? AND device_id = ?", Long.class, tagUid, deviceId);
+            if (count == null || count == 0L) {
+                jdbc.update("INSERT INTO " + OLD_APP_GROUP_DEVICE
+                        + " (`id`,`uid`,`table_id`,`device_id`,`created_at`,`updated_at`) VALUES (?,?,?,?,NOW(),NOW())",
+                    IdUtil.getSnowflakeNextIdStr(), tagUid, appId, deviceId);
+            }
+        }
+    }
+
+    /**
+     * Give the active-safety application access to one root V2 group when needed.
+     */
+    private void ensureV2GroupGrant(String appId, String tenantId, String uid, String uidPath) {
+        Long count = jdbc.queryForObject("SELECT COUNT(*) FROM " + TABLE_GROUP_APP_V2
+            + " WHERE app_id = ? AND group_uid = ? AND tenant_id = ?", Long.class, appId, uid, tenantId);
+        if (count == null || count == 0L) {
+            jdbc.update("INSERT INTO " + TABLE_GROUP_APP_V2
+                    + " (`id`,`app_id`,`group_uid`,`group_type`,`tenant_id`,`uid_path`,`authorize_at`,`created_at`,`updated_at`) "
+                    + "VALUES (?,?,?,?,?,?,?,NOW(),NOW())",
+                IdUtil.getSnowflakeNextIdStr(), appId, uid, 3, tenantId, uidPath, System.currentTimeMillis());
+        }
     }
 
     /**
@@ -1572,6 +1972,25 @@ public class LocationTaskCompatService {
      */
     private Map<String, Object> findGroupV2(String uid) {
         return firstRow("SELECT * FROM " + TABLE_GROUP_V2 + " WHERE uid = ? LIMIT 1", uid);
+    }
+
+    /**
+     * Check whether a sibling already uses the requested name.
+     */
+    private boolean groupNameExists(String tenantId, int groupType, String parentUid, String name, String excludeUid) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM ").append(TABLE_GROUP_V2)
+            .append(" WHERE tenant_id = ? AND group_type = ? AND puid = ? AND name = ?");
+        List<Object> args = new ArrayList<Object>();
+        args.add(tenantId);
+        args.add(groupType);
+        args.add(parentUid);
+        args.add(name);
+        if (!excludeUid.isEmpty()) {
+            sql.append(" AND uid <> ?");
+            args.add(excludeUid);
+        }
+        Long count = jdbc.queryForObject(sql.toString(), Long.class, args.toArray());
+        return count != null && count > 0L;
     }
 
     /**
@@ -1790,7 +2209,7 @@ public class LocationTaskCompatService {
         Map<String, Object> data = jsonMap(row.get("data"));
         value.put("describe", string(data.get("describe")));
         value.put("point", pointValue(data.get("point")));
-        value.put("pics", distinctStrings(data.get("pics"), true));
+        value.put("pics", resolveEventPictures(distinctStrings(data.get("pics"), true)));
         value.put("send_pics", distinctStrings(data.get("send_pics"), false));
         value.put("video", data.containsKey("video") ? data.get("video") : null);
         if (data.get("work_order_data") instanceof Map && !((Map<?, ?>) data.get("work_order_data")).isEmpty()) {
@@ -1817,6 +2236,42 @@ public class LocationTaskCompatService {
         value.put("updated_at", updatedAt);
         value.put("pic_len", number(row.get("pic_len")).longValue());
         return value;
+    }
+
+    private ActiveSafetyEventReportResult activeSafetyResult(Map<String, Object> row,
+                                                               boolean duplicate) {
+        String rawId = string(row.get("id"));
+        long no = number(row.get("no")).longValue();
+        Map<String, Object> data = jsonMap(row.get("data"));
+        return ActiveSafetyEventReportResult.builder()
+            .activeSafetyEventId(no == 0L ? rawId : rawId + "-" + no)
+            .mediaId(string(data.get("media_id")))
+            .duplicate(duplicate)
+            .build();
+    }
+
+    /**
+     * Replace stable VLS media references with fresh private MinIO view URLs.
+     */
+    private List<String> resolveEventPictures(List<String> pictures) {
+        if (pictures == null || pictures.isEmpty() || deviceMediaUploadService == null) {
+            return pictures == null ? new ArrayList<String>() : pictures;
+        }
+        List<String> resolved = new ArrayList<String>(pictures.size());
+        for (String picture : pictures) {
+            if (!picture.startsWith(VLS_MEDIA_PREFIX)) {
+                resolved.add(picture);
+                continue;
+            }
+            String mediaId = picture.substring(VLS_MEDIA_PREFIX.length());
+            try {
+                resolved.add(deviceMediaUploadService.getPrivateViewUrl(mediaId, 3600));
+            } catch (RuntimeException exception) {
+                LOGGER.warn("Could not resolve private VLS event media {}", mediaId, exception);
+                resolved.add(picture);
+            }
+        }
+        return resolved;
     }
 
     /**
@@ -2039,6 +2494,120 @@ public class LocationTaskCompatService {
     }
 
     /**
+     * Validate every numeric filter before an event-list method can access the database.
+     */
+    private static LocationTaskResult<?> validateEventListFilters(Map<String, Object> body) {
+        if (!hasOptionalContractValue(body, "mod_type",
+            LocationTaskEventContracts.ModuleType.values(), true)) {
+            return parameterError("参数错误 mod_type只能为0、1或2");
+        }
+        if (!hasOptionalContractValue(body, "mod_status",
+            LocationTaskEventContracts.AlarmFilter.values(), false)) {
+            return parameterError("参数错误 mod_status筛选值只能为0、1或2");
+        }
+        if (!hasOptionalContractValue(body, "status",
+            LocationTaskEventContracts.EventStatus.values(), true)) {
+            return parameterError("参数错误 status只能为1或2");
+        }
+        if (!hasOptionalContractValue(body, "had_pic",
+            LocationTaskEventContracts.PictureFilter.values(), false)) {
+            return parameterError("参数错误 had_pic只能为0、1或2");
+        }
+        return null;
+    }
+
+    /**
+     * Validate an executor list completely so malformed values cannot cause partial database work.
+     */
+    private static LocationTaskResult<?> validateEventExecutors(Object rawExecutors) {
+        for (Object rawExecutor : (List<?>) rawExecutors) {
+            if (!(rawExecutor instanceof Map)) {
+                return parameterError("参数错误 uuids格式不正确");
+            }
+            Map<String, Object> executor = castMap(rawExecutor);
+            if (stringValue(executor, "uuid").isEmpty()) {
+                return parameterError("参数错误 uuid不能为空");
+            }
+            if (!hasOptionalContractValue(executor, "u_type",
+                LocationTaskEventContracts.ExecutorType.values(), false)) {
+                return parameterError("参数错误 u_type只能为1或2");
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Require one request field to contain a member of the supplied numeric contract.
+     */
+    private static boolean hasContractValue(Map<String, Object> body, String key,
+                                            LocationTaskEventContracts.NumericContract[] values,
+                                            boolean allowZero) {
+        if (body == null || !body.containsKey(key) || body.get(key) == null
+            || string(body.get(key)).trim().isEmpty()) {
+            return false;
+        }
+        return hasOptionalContractValue(body, key, values, allowZero);
+    }
+
+    /**
+     * Validate a present numeric contract field while accepting an omitted optional field.
+     */
+    private static boolean hasOptionalContractValue(Map<String, Object> body, String key,
+                                                    LocationTaskEventContracts.NumericContract[] values,
+                                                    boolean allowZero) {
+        if (body == null || !body.containsKey(key) || body.get(key) == null
+            || string(body.get(key)).trim().isEmpty()) {
+            return true;
+        }
+        Integer value = exactInteger(body.get(key));
+        return value != null && LocationTaskEventContracts.contains(values, value, allowZero);
+    }
+
+    /**
+     * Convert a JSON number or numeric string to an exact integer, rejecting truncation and overflow.
+     */
+    private static Integer exactInteger(Object value) {
+        if (!(value instanceof Number) && !(value instanceof CharSequence)) {
+            return null;
+        }
+        try {
+            return new BigDecimal(string(value).trim()).intValueExact();
+        } catch (ArithmeticException ex) {
+            return null;
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    /**
+     * Validate an optional JSON Boolean field without accepting numbers or strings as false.
+     */
+    private static LocationTaskResult<?> validateOptionalBoolean(Map<String, Object> body, String key) {
+        if (body == null || !body.containsKey(key) || body.get(key) == null) {
+            return null;
+        }
+        return isBooleanValue(body.get(key))
+            ? null : parameterError("参数错误 " + key + "必须为布尔值");
+    }
+
+    /**
+     * Validate a required JSON Boolean field used by automatic-work-order switches.
+     */
+    private static LocationTaskResult<?> validateRequiredBoolean(Map<String, Object> body, String key) {
+        if (body == null || !body.containsKey(key) || !isBooleanValue(body.get(key))) {
+            return parameterError("参数错误 " + key + "必须为布尔值");
+        }
+        return null;
+    }
+
+    /**
+     * Determine whether an incoming value is an actual JSON Boolean.
+     */
+    private static boolean isBooleanValue(Object value) {
+        return value instanceof Boolean;
+    }
+
+    /**
      * Normalize a PointNew-compatible value and apply its zero-value fields.
      */
     private static Map<String, Object> pointValue(Object raw) {
@@ -2228,17 +2797,21 @@ public class LocationTaskCompatService {
     }
 
     /**
-     * Validate a zero-or-range enum value.
-     */
-    private static boolean validOptionalType(int value, int max) {
-        return value == 0 || value >= 1 && value <= max;
-    }
-
-    /**
      * Return the Unicode code-point length used by the Go validation helper.
      */
     private static int codePointLength(String value) {
         return value == null ? 0 : value.codePointCount(0, value.length());
+    }
+
+    /**
+     * Truncate a value without splitting a Unicode surrogate pair.
+     */
+    private static String limitCodePoints(String value, int maxLength) {
+        String text = string(value);
+        if (codePointLength(text) <= maxLength) {
+            return text;
+        }
+        return text.substring(0, text.offsetByCodePoints(0, maxLength));
     }
 
     /**

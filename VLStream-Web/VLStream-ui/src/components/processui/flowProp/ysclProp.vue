@@ -38,10 +38,10 @@
     </div>
     <div class="prop_body_bottom button_group">
       <!-- 两个按钮 一个取消 ，一个确定 -->
-      <el-button @click="cancel">
+      <el-button @click="cancel" class="common_btn">
         取消
       </el-button>
-      <el-button type="primary" @click="confirm">
+      <el-button type="primary" @click="confirm" class="common_btn">
         确定
       </el-button>
     </div>

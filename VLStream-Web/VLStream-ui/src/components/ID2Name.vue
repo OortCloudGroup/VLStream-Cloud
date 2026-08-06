@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useUserStore } from '@/store/modules/useraPaas'
 import { getUserList } from '@/api/system/directory'
 
@@ -32,43 +32,41 @@ const props = defineProps({
   }
 })
 const name = ref(props.id)
+// 刷新本地用户名称；无用户 ID 时保留空文本。
 const init = () => {
-  getUserInfoFn()
+  name.value = props.id || ''
+  void getUserInfoFn()
 }
 
-// oort_photo
-const getUserInfoFn = () => {
+// 从本地用户目录解析名称，兼容仅存在本项目登录令牌的场景。
+const getUserInfoFn = async() => {
+  if (!props.id) return
+
   // 是否vuex中已经存在这个用户，避免重复请求
-  if (store.userListStore[props.id]) {
-    name.value = store.userListStore[props.id][props.valueKey]
+  const cachedUser = store.userListStore?.[props.id]
+  if (cachedUser) {
+    name.value = cachedUser[props.valueKey] || props.id
     return
   }
-  if (props.id) {
-    let data = {
-      accessToken: store.userInfo.accessToken,
+
+  try {
+    const res: any = await getUserList({
       user_id: [props.id],
-      tenant_id: store.tenantId
-    }
-    data['hideLoading'] = true
-    getUserList(data).then((res: any) => {
-      if (res.code === 200) {
-        if (res.data.list.length > 0) {
-          let tempObj = res.data.list[0]
-          store.addUser(tempObj)
-          name.value = tempObj[props.valueKey]
-        }
-      }
+      hideLoading: true
     })
+    const user = res?.code === 200 && Array.isArray(res?.data?.list) ? res.data.list[0] : undefined
+    if (user) {
+      store.addUser(user)
+      name.value = user[props.valueKey] || props.id
+    }
+  } catch (error) {
+    name.value = props.id
   }
 }
 
 watch(() => props.id, () => {
   init()
-})
-
-onMounted(() => {
-  init()
-})
+}, { immediate: true })
 
 </script>
 

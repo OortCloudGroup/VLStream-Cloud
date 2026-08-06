@@ -5,7 +5,6 @@
 
 package com.ruoyi.vlstream.test.vlstream.service.impl;
 
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -13,25 +12,16 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springblade.core.mp.base.BaseServiceImpl;
-import com.ruoyi.vlstream.test.vlstream.config.VlsMqttProperties;
 import com.ruoyi.vlstream.test.vlstream.excel.VlsDeviceInfoExcel;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsDeviceInfoMapper;
-import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmModel;
-import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.DeviceInfoVO;
-import com.ruoyi.vlstream.test.vlstream.service.IVlsAlgorithmModelService;
-import com.ruoyi.vlstream.test.vlstream.service.IVlsAlgorithmTrainingService;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsDeviceInfoService;
+import com.ruoyi.vlstream.test.vlstream.service.ModelDispatchService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -45,13 +35,7 @@ import java.util.*;
 public class VlsDeviceInfoServiceImpl extends BaseServiceImpl<VlsDeviceInfoMapper, DeviceInfo> implements IVlsDeviceInfoService {
 
 	@Resource
-	private IVlsAlgorithmTrainingService vlsAlgorithmTrainingService;
-
-	@Resource
-	private IVlsAlgorithmModelService vlsAlgorithmModelService;
-
-	@Resource
-	private VlsMqttProperties vlsMqttProperties;
+	private ModelDispatchService modelDispatchService;
 
 	@Override
 	public IPage<DeviceInfoVO> selectVlsDeviceInfoPage(IPage<DeviceInfoVO> page, DeviceInfoVO vlsDeviceInfo) {
@@ -104,112 +88,13 @@ public class VlsDeviceInfoServiceImpl extends BaseServiceImpl<VlsDeviceInfoMappe
 	}
 
 	@Override
-	@Transactional(rollbackFor = Exception.class)
 	public boolean dispatchAlgorithms(Long algorithmId, String deviceIds) {
-		if (StringUtils.isBlank(deviceIds)) {
-			return false;
-		}
-
-		String mqttTopic = "oortcloud/dispatchAlgorithms";
-
-		AlgorithmTraining latestTraining = vlsAlgorithmTrainingService.getOne(Wrappers.<AlgorithmTraining>lambdaQuery()
-			.eq(AlgorithmTraining::getAlgorithmId, algorithmId)
-			.orderByDesc(AlgorithmTraining::getUpdateTime)
-			.last("limit 1"));
-		if (latestTraining == null) {
-			log.error("算法下发失败，未找到最新训练任务: algorithmId={}", algorithmId);
-			return false;
-		}
-
-		AlgorithmModel latestModel = vlsAlgorithmModelService.getOne(Wrappers.<AlgorithmModel>lambdaQuery()
-			.eq(AlgorithmModel::getTrainingId, latestTraining.getId())
-			.orderByDesc(AlgorithmModel::getCreateTime)
-			.last("limit 1"));
-		if (latestModel == null || latestModel.getId() == null) {
-			log.error("算法下发失败，未找到最新训练模型: algorithmId={}, trainingId={}", algorithmId, latestTraining.getId());
-			return false;
-		}
-
-		MqttClient mqttClient = null;
-		try {
-			mqttClient = createMqttClient();
-			mqttClient.connect(buildMqttConnectOptions());
-
-			for (String deviceId : deviceIds.split(",")) {
-				if (StringUtils.isBlank(deviceId)) {
-					continue;
-				}
-				DeviceInfo device = getById(deviceId.trim());
-				if (device == null || StringUtils.isBlank(device.getDeviceId())) {
-					log.error("算法下发失败，设备不存在或设备编号为空: deviceId={}", deviceId);
-					return false;
-				}
-
-				DeviceInfo updateEntity = new DeviceInfo();
-				updateEntity.setId(Long.valueOf(deviceId.trim()));
-				updateEntity.setAlgorithmId(String.valueOf(algorithmId));
-				updateById(updateEntity);
-
-				if (!StringUtils.equals(mqttTopic, "oortcloud/dispatchAlgorithms")) {
-					log.error("算法下发失败，MQTT主题仅允许 oortcloud/#: topic={}", mqttTopic);
-					return false;
-				}
-
-				Map<String, Object> messagePayload = new HashMap<>(2);
-				messagePayload.put("deviceId", device.getDeviceId());
-				messagePayload.put("modelId", latestModel.getId());
-
-				MqttMessage mqttMessage = new MqttMessage(JSONUtil.toJsonStr(messagePayload).getBytes(StandardCharsets.UTF_8));
-				mqttMessage.setQos(vlsMqttProperties.getQos());
-				mqttClient.publish(mqttTopic, mqttMessage);
-			}
-			return true;
-		} catch (Exception dispatchException) {
-			log.error("算法下发失败，MQTT发送异常: algorithmId={}", algorithmId, dispatchException);
-			return false;
-		} finally {
-			closeMqttClient(mqttClient);
-		}
+		return dispatchAlgorithms(algorithmId, deviceIds, "om");
 	}
 
-	private MqttClient createMqttClient() throws MqttException {
-		String clientIdPrefix = StringUtils.defaultIfBlank(vlsMqttProperties.getClientIdPrefix(), "vls-dispatch");
-		String brokerUrl = "tcp://" + vlsMqttProperties.getHost() + ":" + vlsMqttProperties.getPort();
-		String clientId = clientIdPrefix + "-" + UUID.randomUUID();
-		return new MqttClient(brokerUrl, clientId);
-	}
-
-	private MqttConnectOptions buildMqttConnectOptions() {
-		MqttConnectOptions connectOptions = new MqttConnectOptions();
-		connectOptions.setAutomaticReconnect(true);
-		connectOptions.setCleanSession(true);
-		connectOptions.setConnectionTimeout(vlsMqttProperties.getConnectionTimeoutSeconds());
-		connectOptions.setKeepAliveInterval(vlsMqttProperties.getKeepAliveSeconds());
-		if (StringUtils.isNotBlank(vlsMqttProperties.getUsername())) {
-			connectOptions.setUserName(vlsMqttProperties.getUsername());
-		}
-		if (StringUtils.isNotBlank(vlsMqttProperties.getPassword())) {
-			connectOptions.setPassword(vlsMqttProperties.getPassword().toCharArray());
-		}
-		return connectOptions;
-	}
-
-	private void closeMqttClient(MqttClient mqttClient) {
-		if (mqttClient == null) {
-			return;
-		}
-		try {
-			if (mqttClient.isConnected()) {
-				mqttClient.disconnect();
-			}
-		} catch (MqttException disconnectException) {
-			log.warn("关闭MQTT连接失败", disconnectException);
-		}
-		try {
-			mqttClient.close();
-		} catch (MqttException closeException) {
-			log.warn("关闭MQTT客户端失败", closeException);
-		}
+	@Override
+	public boolean dispatchAlgorithms(Long algorithmId, String deviceIds, String modelType) {
+		return modelDispatchService.dispatch(algorithmId, deviceIds, modelType);
 	}
 
 	@Override

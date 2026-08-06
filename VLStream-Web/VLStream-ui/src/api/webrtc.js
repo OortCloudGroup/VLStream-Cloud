@@ -1,7 +1,19 @@
 import request from '@/utils/request'
 
-// WebRTC 服务配置
-export const WEBRTC_SERVER_BASE_URL = 'http://oort.oortcloudsmart.com:21410/bus/webrtc-streamer-server'
+// 默认使用同源反向代理，避免把公司测试环境域名固化进开源前端。
+export let WEBRTC_SERVER_BASE_URL = '/bus/webrtc-streamer-server'
+let webRTCBackendConfigLoader = null
+
+/**
+ * 应用后端下发的浏览器公开地址，并保持已有导入方的 ES module live binding 可见。
+ */
+export function applyWebRTCServerBaseUrl(serverUrl) {
+  const normalized = String(serverUrl || '').trim().replace(/\/+$/, '')
+  if (normalized) {
+    WEBRTC_SERVER_BASE_URL = normalized
+  }
+  return WEBRTC_SERVER_BASE_URL
+}
 
 /**
  * 获取 WebRTC 配置信息
@@ -282,12 +294,30 @@ export function getStreamList() {
 /**
  * 获取WebRTC配置
  */
-export function getWebRTCBackendConfig() {
+export async function getWebRTCBackendConfig() {
   console.log('🔧 getWebRTCBackendConfig 调用 - 版本v4-20250711 - 修复后路径: /api/webrtc/config')
-  return request({
+  const response = await request({
     url: '/api/webrtc/config',
     method: 'get'
   })
+  if (response?.code === 200 && response?.data?.serverUrl) {
+    applyWebRTCServerBaseUrl(response.data.serverUrl)
+  }
+  return response
+}
+
+/**
+ * 在同一页面生命周期内只加载一次运行时配置，供所有 WebRTC 播放入口复用。
+ */
+export function ensureWebRTCBackendConfig() {
+  if (!webRTCBackendConfigLoader) {
+    webRTCBackendConfigLoader = getWebRTCBackendConfig().catch(error => {
+      webRTCBackendConfigLoader = null
+      console.warn('读取 WebRTC 运行时配置失败，继续使用同源默认地址:', error)
+      return null
+    })
+  }
+  return webRTCBackendConfigLoader
 }
 
 /**

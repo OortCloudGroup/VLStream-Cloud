@@ -2,7 +2,6 @@ import { request } from '@/utils/service'
 
 // function commonFunc<T, K>(interfaceName: string, data: T, method = 'post') {
 //   return request<K>({
-//     url: config.URL + config.gateWay + 'apaas-sso/' + interfaceName,
 //     method: method,
 //     data: data
 //   })
@@ -15,8 +14,19 @@ function commonFuncB<T, K>(interfaceName: string, data: T, method = 'post') {
   return request<K>({
     url: `/${normalizedPath}`,
     method: method,
-    data: data
+    data: removeLegacyAccessToken(data)
   })
+}
+
+/**
+ * 本地任务接口统一通过请求头鉴权，不再把可能过期的 token 固化到请求体。
+ */
+function removeLegacyAccessToken<T>(data: T): T {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return data
+  }
+  const { accessToken: _legacyAccessToken, ...payload } = data as Record<string, unknown>
+  return payload as T
 }
 
 // 以下为 事件管理 接口
@@ -71,6 +81,18 @@ export function myEventList(data) {
 // 我的事件列表
 export function event_group_list(data) {
   return commonFuncB('task/v2/event_group_list', data, 'post')
+}
+// 一次获取完整 V2 分组树，供管理页使用
+export function event_group_tree(data) {
+  return commonFuncB('task/v2/event_group_tree', data, 'post')
+}
+// 保存 V2 区域、分组或标签（视频汇聚和主动安全共用）
+export function event_group_save_v2(data) {
+  return commonFuncB('task/v2/event_group_save', data, 'post')
+}
+// 删除 V2 区域、分组或标签（仅允许删除叶子节点）
+export function event_group_delete_v2(data) {
+  return commonFuncB('task/v2/event_group_delete', data, 'post')
 }
 // 保存事件分组配置
 export function event_group_save(data) {

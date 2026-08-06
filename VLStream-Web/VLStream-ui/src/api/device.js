@@ -225,11 +225,12 @@ export function importDevices(formData) {
  * 摄像头算法下发（算法ID + 设备ID逗号串）
  * @param {number} algorithmId 算法ID
  * @param {string} deviceIdsStr 设备ID逗号分隔字符串
+ * @param {string} modelType 模型格式：pt/onnx/rknn/int8-rknn/om
  */
-export function dispatchAlgorithmToDevices(algorithmId, deviceIdsStr) {
+export function dispatchAlgorithmToDevices(algorithmId, deviceIdsStr, modelType = 'om') {
   return request({
     url: `/vlsDeviceInfo/${algorithmId}/algorithms`,
     method: 'post',
-    params: { deviceIds: deviceIdsStr }
+    params: { deviceIds: deviceIdsStr, modelType }
   })
 }

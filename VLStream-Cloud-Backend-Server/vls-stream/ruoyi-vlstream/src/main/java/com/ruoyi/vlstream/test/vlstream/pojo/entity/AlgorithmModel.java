@@ -82,6 +82,11 @@ public class AlgorithmModel extends TenantEntity {
 	@Schema(description = "int8 rknn模型输出路径")
 	private String int8RknnModelOutputPath;
 	/**
+	 * Hi3519DV500 SVP ACL OM模型输出路径
+	 */
+	@Schema(description = "Hi3519DV500 OM模型输出路径")
+	private String omModelOutputPath;
+	/**
 	 * 模型准确率
 	 */
 	@Schema(description = "模型准确率")

@@ -1,5 +1,6 @@
 <template>
-  <div class="container-instances">
+  <div class="container-instances tenant_Page draHeaPB">
+    <div class="tenant_content">
     <!-- 监控页面 -->
     <!-- 创建容器实例页面 -->
     <div v-if="showCreateView" class="create-view">
@@ -155,8 +156,8 @@
       
         <!-- 操作按钮 -->
         <div class="form-actions">
-          <el-button type="primary" @click="confirmCreate" class="confirm-btn">确定</el-button>
-          <el-button @click="cancelCreate" class="cancel-btn">取消</el-button>
+          <el-button type="primary" @click="confirmCreate" class="confirm-btn common_btn">确定</el-button>
+          <el-button @click="cancelCreate" class="cancel-btn common_btn">取消</el-button>
         </div>
         </div>
       </div>
@@ -317,7 +318,7 @@
         <!-- 基本信息 -->
         <div class="form-section">
           <div class="form-label">实例名称</div>
-          <div class="form-value">{{ detailsForm.name || '--' }}</div>
+          <div class="form-value">{{ detailsForm.instanceName || '--' }}</div>
         </div>
 
         <div class="form-section">
@@ -328,11 +329,11 @@
         <div class="form-section">
           <div class="form-label">状态</div>
           <div class="form-value">
-            <el-tag :type="getStatusTagType(detailsForm.status)" size="small">
+            <el-tag :type="getStatusTagType(detailsForm.instanceStatus)" size="small">
               <el-icon class="status-icon">
-                <component :is="getStatusIcon(detailsForm.status)" />
+                <component :is="getStatusIcon(detailsForm.instanceStatus)" />
               </el-icon>
-              {{ getStatusText(detailsForm.status) }}
+              {{ getStatusText(detailsForm.instanceStatus) }}
             </el-tag>
           </div>
         </div>
@@ -340,7 +341,7 @@
         <!-- 镜像信息 -->
         <div class="form-section">
           <div class="form-label">镜像地址</div>
-          <div class="form-value">{{ detailsForm.image || '--' }}</div>
+          <div class="form-value">{{ detailsForm.imageName || '--' }}</div>
         </div>
 
         <div class="form-section">
@@ -366,15 +367,15 @@
 
         <!-- 网络配置 -->
         <div class="form-section">
-          <div class="form-label">端口映射</div>
-          <div class="form-value">{{ detailsForm.portMappings || '--' }}</div>
+          <div class="form-label">训练任务ID</div>
+          <div class="form-value">{{ detailsForm.trainingTaskId || '--' }}</div>
         </div>
 
         <!-- 环境配置 -->
         <div class="form-section">
-          <div class="form-label">环境变量</div>
+          <div class="form-label">错误信息</div>
           <div class="form-value">
-            <pre>{{ detailsForm.envVariables || '--' }}</pre>
+            <pre>{{ detailsForm.errorMessage || '--' }}</pre>
           </div>
         </div>
 
@@ -404,216 +405,135 @@
     </div>
 
     <!-- 列表页面 -->
-    <div v-else-if="!showCreateView && !showMonitoringView && !showDetailsView" class="list-view">
-      <!-- 搜索筛选区域 - 已注释，使用高级搜索组件替代 -->
-      <!--
-      <div class="search-section">
-      <div class="search-form">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="实例名称/ID"
-          clearable
-          class="search-input"
+    <div v-else-if="!showCreateView && !showMonitoringView && !showDetailsView" class="tableTenBox flexRowAC">
+      <div class="tableTenItU">
+        <div class="depNameBox_out flexRowAC">
+          <div class="depNameBox flexRowAC">
+            <div class="exportBtnBox flexRowAC">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="refreshInstances">
+                  <el-icon class="BtnImg">
+                    <Refresh />
+                  </el-icon>
+                  {{ resourceSummary }}
+                </button>
+              </div>
+          </div>
+          <div class="searchHeight_out flexRowAC">
+            <search-height-box
+              keyword="keyword"
+              placeholder="搜索"
+              :data="searchData"
+              @handle="searchResetFn"
+            />
+            <export-excel-pdf :item="exportItem" @handle="handleExport" />
+          </div>
+        </div>
+
+        <TableSelf
+          class="new_table"
+          header-cell-class-name="header_tenant_cell"
+          stripe
+          :data="filteredInstances"
+          v-loading="loading"
+          @selection-change="handleSelectionChange"
         >
-        </el-input>
-        
-        <DateRangePicker
-          v-model="createTimeRange"
-          start-placeholder="创建时间"
-          end-placeholder="创建时间"
-          width="500px"
-          value-format="YYYY-MM-DD"
-          format="YYYY-MM-DD"
-        />
-        
-        <el-button type="primary" @click="handleSearch">
-          <el-icon><Search /></el-icon>
-          搜索
-        </el-button>
-        <el-button @click="resetFilter">
-          重置
-        </el-button>
+          <el-table-column type="selection" :width="clacPXToVW(55)" />
+          <el-table-column label="实例名称/ID">
+            <template #default="{ row }">
+              <div class="instance-info">
+                <div class="instance-name">{{ row.instanceName }}</div>
+                <div class="instance-id">ID: {{ row.id }}</div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="instanceStatus" label="状态">
+            <template #default="{ row }">
+              <el-tag :type="getStatusTagType(row.instanceStatus)" size="small">
+                <el-icon class="status-icon">
+                  <component :is="getStatusIcon(row.instanceStatus)" />
+                </el-icon>
+                {{ getStatusText(row.instanceStatus) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="计算配置">
+            <template #default="{ row }">
+              <div class="compute-config">
+                <div class="config-item">CPU: {{ row.cpuLimit || '未设置' }}</div>
+                <div class="config-item">内存: {{ row.memoryLimit || '未设置' }}</div>
+                <div class="config-item">GPU: {{ row.gpuLimit || '未设置' }}</div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="镜像信息">
+            <template #default="{ row }">
+              <div class="image-info">
+                <div class="image-name">{{ row.imageName || '未设置' }}</div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="训练任务">
+            <template #default="{ row }">
+              <div class="port-info">任务ID：{{ row.trainingTaskId || '-' }}</div>
+              <div class="port-info">GPU：{{ row.gpuIndex ?? '-' }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column label="创建时间">
+            <template #default="{ row }">
+              {{ row.createTime || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column label="快捷访问">
+            <template #default="{ row }">
+              <div class="quick-access">
+                <span>{{ row.serverIp || '-' }}</span>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" :width="clacPXToVW(300)" fixed="right">
+            <template #default="{ row }">
+              <div class="operateAppBox flexRowAC" @click.stop>
+                <div class="new_table_svg_group" @click="viewDetails(row)">
+                  <oort-svg-icon width="20" height="20" name="detail_icon" class="new_table_svg_group_svg" />
+                  <span>详情</span>
+                </div>
+                <el-dropdown trigger="click">
+                  <div class="new_table_svg_group">
+                    <oort-svg-icon width="20" height="20" name="table_more" class="new_table_svg_group_svg" />
+                    <span>更多</span>
+                  </div>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item @click="viewLogs(row)">查看日志</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
+            </template>
+          </el-table-column>
+        </TableSelf>
+
+        <div class="paginationBox flexRowAC">
+          <el-pagination
+            background
+            :current-page="currentPage"
+            :page-size="pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="totalInstances"
+            layout="total, prev, pager, next, sizes"
+            class="justifyAlign"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+          />
+        </div>
       </div>
-    </div>
-    -->
-
-    <!-- 操作栏 -->
-    <div class="action-section">
-      <el-button type="primary" @click="showCreateView = true" class="add-btn-custom">
-        <el-icon><Plus /></el-icon>
-        创建容器实例
-      </el-button>
-      
-      <!-- 高级搜索组件 -->
-      <div class="advanced-search-group">
-        <AdvancedSearch 
-          @search="handleAdvancedSearch"
-          @reset="handleAdvancedSearchReset"
-          @export="handleExport"
-          @upload="handleUpload"
-          @template="handleDownloadTemplate"
-          @batch="handleBatchOperation"
-        />
-      </div>
-    </div>
-
-    <!-- 容器实例列表 -->
-    <div class="list-section">
-      <el-table 
-        :data="filteredInstances" 
-        :loading="loading"
-        style="width: 100%"
-        @selection-change="handleSelectionChange"
-      >
-        <el-table-column type="selection" width="55" />
-        <el-table-column label="实例名称/ID" min-width="220">
-          <template #default="{ row }">
-            <div class="instance-info">
-              <div class="instance-name">{{ row.name }}</div>
-              <div class="instance-id">ID: {{ row.id }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" min-width="100">
-          <template #default="{ row }">
-            <el-tag :type="getStatusTagType(row.status)" size="small">
-              <el-icon class="status-icon">
-                <component :is="getStatusIcon(row.status)" />
-              </el-icon>
-              {{ getStatusText(row.status) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="计算配置" min-width="200">
-          <template #default="{ row }">
-            <div class="compute-config">
-              <div class="config-item">CPU: {{ row.cpuLimit || '未设置' }}</div>
-              <div class="config-item">内存: {{ row.memoryLimit || '未设置' }}</div>
-              <div class="config-item">GPU: {{ row.gpuLimit || '未设置' }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="镜像信息" min-width="200">
-          <template #default="{ row }">
-            <div class="image-info">
-              <div class="image-name">{{ row.image || '未设置' }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="端口映射" min-width="120">
-          <template #default="{ row }">
-            <div class="port-info">
-              {{ row.portMappings ? JSON.parse(row.portMappings || '{}').port || '-' : '-' }}
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="创建时间" min-width="160">
-          <template #default="{ row }">
-            {{ row.createTime || '-' }}
-          </template>
-        </el-table-column>
-        <el-table-column label="快捷访问" min-width="250">
-          <template #default="{ row }">
-            <div class="quick-access">
-              <el-button 
-                type="primary" 
-                text 
-                class="access-button"
-                :disabled="row.status !== 'running'"
-                @click="openJupyter(row)"
-              >
-                jupyter
-              </el-button>
-              <el-button 
-                type="primary" 
-                text 
-                class="access-button"
-                :disabled="row.status !== 'running'"
-                @click="openWebConnection(row)"
-              >
-                web 连接
-              </el-button>
-              <el-button 
-                type="primary" 
-                text 
-                class="access-button"
-                :disabled="row.status !== 'running'"
-                @click="openTensorBoard(row)"
-              >
-                TensorBoard
-              </el-button>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="300" fixed="right">
-          <template #default="{ row }">
-            <div class="action-buttons">
-              <el-button 
-                v-if="row.status === 'stopped'"
-                type="primary" 
-                text 
-                size="small" 
-                @click="startContainer(row)"
-              >
-                启动
-              </el-button>
-              <el-button 
-                v-if="row.status === 'running'"
-                type="warning" 
-                text 
-                size="small" 
-                @click="stopContainer(row)"
-              >
-                停止
-              </el-button>
-              <el-button 
-                v-if="row.status === 'running'"
-                type="info" 
-                text 
-                size="small" 
-                @click="restartContainer(row)"
-              >
-                重启
-              </el-button>
-              <el-button type="primary" text size="small" @click="saveImage(row)">保存镜像</el-button>
-              <el-button type="primary" text size="small" @click="viewDetails(row)">实例详情</el-button>
-              <el-dropdown trigger="click">
-                <el-button type="primary" text size="small">
-                  更多
-                  <el-icon><ArrowDown /></el-icon>
-                </el-button>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item @click="viewMonitoring(row)">监控</el-dropdown-item>
-                    <el-dropdown-item @click="viewLogs(row)">查看日志</el-dropdown-item>
-                    <el-dropdown-item @click="deleteContainer(row)" class="delete-item">删除</el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-
-    <!-- 分页 -->
-    <div class="pagination-section">
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="totalInstances"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
     </div>
 
     <!-- 创建容器对话框 -->
     <el-dialog
       v-model="showCreateDialog"
       title="创建容器实例"
-      width="600px"
+      width="35%"
       @close="resetCreateForm"
     >
       <el-form :model="createForm" :rules="createRules" ref="createFormRef" label-width="120px">
@@ -671,15 +591,15 @@
       </el-form>
       
       <template #footer>
-        <el-button @click="showCreateDialog = false">取消</el-button>
-        <el-button type="primary" @click="createContainer">创建</el-button>
+        <el-button @click="showCreateDialog = false" class="common_btn">取消</el-button>
+        <el-button type="primary" @click="createContainer" class="common_btn">创建</el-button>
       </template>
     </el-dialog>
 
     <!-- 日志查看对话框 -->
     <el-dialog
       v-model="showLogsDialog"
-      :title="`${currentContainer?.name} - 运行日志`"
+      :title="`${currentContainer?.instanceName} - 运行日志`"
       width="80%"
     >
       <div class="logs-container">
@@ -712,14 +632,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { clacPXToVW } from '@/utils/index'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Plus, Refresh, Search, Box, Cpu, Monitor, VideoCamera, 
   Delete, View, Warning, Check, Loading, ArrowDown
 } from '@element-plus/icons-vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
-import AdvancedSearch from '@/components/AdvancedSearch.vue'
 import {
   getContainerInstancePage,
   getContainerInstanceById,
@@ -731,7 +651,9 @@ import {
   stopContainerInstance,
   restartContainerInstance,
   getContainerInstanceStatistics,
-  checkContainerInstanceName
+  checkContainerInstanceName,
+  getGpuResourceSnapshot,
+  getContainerInstanceLogs
 } from '@/api/containerInstance'
 
 // 响应式数据
@@ -743,6 +665,8 @@ const showMonitoringView = ref(false)
 const showCreateView = ref(false)
 const showDetailsView = ref(false)
 const activeTimeFilter = ref('实时')
+const gpuResource = ref(null)
+let refreshTimer = null
 
 // 时间过滤器选项
 const timeFilters = ref([
@@ -765,6 +689,13 @@ const resourceStats = ref({
   cpuUsage: 65,
   memoryUsage: 72,
   gpuUsage: 45
+})
+
+const resourceSummary = computed(() => {
+  if (!gpuResource.value) return '刷新GPU资源'
+  const resource = gpuResource.value
+  const state = resource.busy ? `忙碌，排队 ${resource.queueLength || 0}` : '空闲'
+  return `${resource.gpuName || 'GPU'} ${Math.round((resource.gpuMemoryTotalMb || 0) / 1024)}GB · ${state}`
 })
 
 // 容器数据
@@ -836,7 +767,7 @@ const loadContainerInstances = async () => {
     const params = {
       current: currentPage.value,
       size: pageSize.value,
-      name: searchKeyword.value || undefined,
+      instanceName: searchKeyword.value || undefined,
       startTime: createTimeRange.value?.[0] || undefined,
       endTime: createTimeRange.value?.[1] || undefined
     }
@@ -860,7 +791,9 @@ const loadContainerInstances = async () => {
 const getStatusTagType = (status) => {
   const typeMap = {
     'running': 'success',
+    'queued': 'warning',
     'starting': 'warning',
+    'completed': 'success',
     'stopped': 'info',
     'stopping': 'warning',
     'error': 'danger'
@@ -871,7 +804,9 @@ const getStatusTagType = (status) => {
 const getStatusIcon = (status) => {
   const iconMap = {
     'running': 'Check',
+    'queued': 'Loading',
     'starting': 'Loading',
+    'completed': 'Check',
     'stopped': 'Warning',
     'stopping': 'Loading',
     'error': 'Delete'
@@ -882,7 +817,9 @@ const getStatusIcon = (status) => {
 const getStatusText = (status) => {
   const textMap = {
     'running': '运行中',
+    'queued': '排队中',
     'starting': '启动中',
+    'completed': '已完成',
     'stopped': '已停止',
     'stopping': '停止中',
     'error': '错误'
@@ -913,7 +850,16 @@ const resetFilter = () => {
 
 const refreshInstances = () => {
   loadContainerInstances()
-  ElMessage.success('实例列表已刷新')
+  loadGpuResource()
+}
+
+const loadGpuResource = async () => {
+  try {
+    const response = await getGpuResourceSnapshot()
+    if (response.code === 200) gpuResource.value = response.data
+  } catch (error) {
+    console.error('加载GPU资源失败:', error)
+  }
 }
 
 const handleSelectionChange = (selection) => {
@@ -981,10 +927,19 @@ const restartContainer = async (container) => {
   }
 }
 
-const viewLogs = (container) => {
+const viewLogs = async (container) => {
   currentContainer.value = container
-  displayLogs.value = []
-  ElMessage.error('当前后端未接入真实容器运行时日志接口，未加载日志')
+  try {
+    const response = await getContainerInstanceLogs(container.id)
+    displayLogs.value = (response.data || '').split('\n').filter(Boolean).map(message => ({
+      time: '',
+      level: message.includes('ERROR') || message.includes('failed') ? 'ERROR' : 'INFO',
+      message
+    }))
+  } catch (error) {
+    displayLogs.value = []
+    ElMessage.error('读取训练日志失败')
+  }
   showLogsDialog.value = true
 }
 
@@ -993,7 +948,7 @@ const viewDetails = async (container) => {
     const response = await getContainerInstanceById(container.id)
     if (response.code === 200) {
       detailsForm.value = response.data
-      detailsTitle.value = `容器详情 - ${container.name}`
+      detailsTitle.value = `容器详情 - ${container.instanceName}`
       showDetailsView.value = true
     } else {
       ElMessage.error(response.message || '获取容器详情失败')
@@ -1104,12 +1059,7 @@ const deleteContainer = async (container) => {
 
 const refreshLogs = () => {
   if (currentContainer.value) {
-    // 这里应该调用API获取最新日志
-    displayLogs.value = [
-      ...displayLogs.value,
-      { time: new Date().toLocaleString(), level: 'INFO', message: '日志已刷新' }
-    ]
-    ElMessage.success('日志已刷新')
+    viewLogs(currentContainer.value)
   }
 }
 
@@ -1177,6 +1127,19 @@ const openTensorBoard = (container) => {
   // 这里可以实现打开TensorBoard的逻辑
 }
 
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: '关键词', value: 'keyword', type: 'text', default: '' }
+])
+
+const searchResetFn = (val, reset) => {
+  if (reset && !(val && val.keyword)) {
+    handleAdvancedSearchReset()
+    return
+  }
+  handleAdvancedSearch(val || {})
+}
+
 // 高级搜索相关方法
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索:', searchData)
@@ -1226,14 +1189,48 @@ const handleBatchOperation = () => {
 }
 
 onMounted(() => {
-  // 加载容器实例数据  
-  // loadContainerInstances()
+  loadContainerInstances()
+  loadGpuResource()
+  refreshTimer = window.setInterval(refreshInstances, 5000)
+})
+
+onUnmounted(() => {
+  if (refreshTimer) window.clearInterval(refreshTimer)
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+
+.tenant_Page {
+  height: 100%;
+  width: 100%;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  background: #f0f2f5;
+  .tenant_content { width: 100%; height: 100%; border-radius: 8px; }
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    flex: 1;
+    background: #fff;
+    align-items: flex-start;
+  }
+}
+.tableTenItU {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+  :deep(.header_tenant_cell) { background: #F8F8F9; }
+}
+.paginationBox { justify-content: center; height: 100px; }
+.operateAppBox { justify-content: flex-end; gap: 2px; flex-wrap: wrap; }
+
 .container-instances {
-  margin: 0 20px;
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* 搜索区域 */
@@ -1470,7 +1467,7 @@ onMounted(() => {
 
 /* 监控页面样式 */
 .monitoring-view {
-  margin: 0 20px;
+  margin: 0;
 }
 
 .breadcrumb-section {
@@ -1657,19 +1654,25 @@ onMounted(() => {
 
 /* 创建页面样式 */
 .create-view {
-  margin: 0 20px;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  box-sizing: border-box;
+  overflow: auto;
 }
 
 .create-view .breadcrumb-section {
-  width: 1120px;
+  width: 100%;
 }
 
 .create-content {
-  width: 1120px;
+  width: 100%;
   background: white;
   padding: 20px;
   border-radius: 0 0 8px 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
 .form-section {
@@ -1958,11 +1961,8 @@ onMounted(() => {
 }
 
 .confirm-btn {
-  width: 120px;
-  height: 40px;
   background: #1A53FF;
   border: 1px solid #1A53FF;
-  border-radius: 4px;
   color: white;
   font-size: 14px;
 }
@@ -1973,10 +1973,7 @@ onMounted(() => {
 }
 
 .cancel-btn {
-  width: 120px;
-  height: 40px;
   border: 1px solid #dcdfe6;
-  border-radius: 4px;
   color: #606266;
   font-size: 14px;
   background: white;
@@ -1989,19 +1986,19 @@ onMounted(() => {
 
 /* 详情页面样式 */
 .details-view {
-  margin: 0 20px;
+  margin: 0;
 }
 
 .details-view .breadcrumb-section {
-  width: 1120px;
+  width: 100%;
 }
 
 .details-content {
-  width: 1120px;
+  width: 100%;
   background: white;
   padding: 20px;
   border-radius: 0 0 8px 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
 .details-content .form-section {

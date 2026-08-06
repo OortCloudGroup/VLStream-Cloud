@@ -22,10 +22,8 @@
   </div>
 </template>
 <script setup>
-import { myOpinionList, myOpinionDel, myOpinionSave } from '@/api/unifiedUsert/logManage'
+import { myOpinionList, myOpinionDel, myOpinionSave } from '@/api/system/userOpinions'
 import { defineProps, onMounted, ref, defineEmits } from 'vue'
-import { useUserStore } from '@/store/modules/useraPaas'
-const store = useUserStore()
 const props = defineProps({
   content: {
     type: String,
@@ -33,9 +31,9 @@ const props = defineProps({
   }
 })
 const listData = ref([])
+// 加载当前登录用户的常用语，身份由后端根据请求头中的本地 token 判定。
 const getCommonOpinionsList = async() => {
   const params = {
-    accessToken: store.token,
     is_open: 0, // 0 个人 1 公开
     page: 0,
     pagesize: 999
@@ -45,12 +43,12 @@ const getCommonOpinionsList = async() => {
     listData.value = res.data.list
   }
 }
+// 将当前输入保存为当前登录用户的常用语。
 const addCommonOpinion = async() => {
   if (!props.content || props.content.trim() === '') {
     return
   }
   const params = {
-    accessToken: store.token,
     content: props.content,
     is_open: 0
   }
@@ -59,9 +57,9 @@ const addCommonOpinion = async() => {
     getCommonOpinionsList()
   }
 }
+// 仅删除当前登录用户拥有的常用语。
 const delCommonOpinion = async(id) => {
   const params = {
-    accessToken: store.token,
     id: id
   }
   const res = await myOpinionDel(params)

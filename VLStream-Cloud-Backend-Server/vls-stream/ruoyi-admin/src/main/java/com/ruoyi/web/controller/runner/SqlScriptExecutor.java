@@ -65,6 +65,8 @@ public class SqlScriptExecutor implements ApplicationRunner {
 
     private static final String LOCATION_TASK_INIT_SQL_FILE = "oortcloud_location_task_initialize.sql";
 
+    private static final String LOCATION_TASK_DICT_SEED_SQL_FILE = "oortcloud_location_task_dict_seed.sql";
+
     private static final String ROOT_TENANT_ID = "0e391fd7-1033-4f09-88c0-187582fee462";
 
     @Value("${vls.tenant.id:000000}")
@@ -100,6 +102,12 @@ public class SqlScriptExecutor implements ApplicationRunner {
             executeSqlScript(LOCATION_TASK_INIT_SQL_FILE);
         } else {
             logger.info("事件模块单库表结构已初始化，跳过事件表结构SQL脚本执行。");
+        }
+
+        if (!isLocationTaskDictionaryInitialized()) {
+            executeSqlScript(LOCATION_TASK_DICT_SEED_SQL_FILE);
+        } else {
+            logger.info("事件模块状态字典已初始化，跳过事件字典SQL脚本执行。");
         }
 
         if (!isWorkflowSeedInitialized()) {
@@ -339,12 +347,45 @@ public class SqlScriptExecutor implements ApplicationRunner {
                 "oort_task_event_group",
                 "oort_task_event_item",
                 "oort_task_event_user",
-                "oort_task_setting"
+                "oort_task_setting",
+                "oort_user_opinion"
             ).stream().collect(Collectors.toList());
             removeExistingTables(statement, requiredTables);
             return requiredTables.isEmpty();
         } catch (Exception e) {
             logger.error("检查事件模块单库表结构时发生错误", e);
+            return false;
+        }
+    }
+
+    /**
+     * Check whether all location-task display and request-filter dictionaries are present.
+     */
+    private boolean isLocationTaskDictionaryInitialized() {
+        try (Connection connection = DriverManager.getConnection(url, user, password);
+             Statement statement = connection.createStatement()) {
+            List<String> requiredTables = Arrays.asList("sys_dict_type", "sys_dict_data")
+                .stream().collect(Collectors.toList());
+            removeExistingTables(statement, requiredTables);
+            if (!requiredTables.isEmpty()) {
+                logger.warn("事件模块状态字典依赖表不存在: {}", requiredTables);
+                return false;
+            }
+            String dictionaryTypes = "'vls_event_status','vls_event_module_type',"
+                + "'vls_event_alarm_status','vls_event_work_order_status',"
+                + "'vls_event_executor_type','vls_event_group_type',"
+                + "'vls_event_coordinate_system','vls_event_alarm_filter',"
+                + "'vls_event_execution_scope','vls_event_picture_filter',"
+                + "'vls_event_statistics_type'";
+            int typeCount = queryCount(statement,
+                "SELECT COUNT(DISTINCT dict_type) FROM sys_dict_type WHERE dict_type IN ("
+                    + dictionaryTypes + ")");
+            int valueCount = queryCount(statement,
+                "SELECT COUNT(*) FROM sys_dict_data WHERE dict_type IN ("
+                    + dictionaryTypes + ")");
+            return typeCount == 11 && valueCount >= 30;
+        } catch (Exception e) {
+            logger.error("检查事件模块状态字典时发生错误", e);
             return false;
         }
     }

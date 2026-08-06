@@ -4,6 +4,14 @@
 import config from '@/config'
 import { getToken } from '@/utils/cache/cookies'
 
+function getLocalBackendPrefix(): string {
+  const configuredBase = import.meta.env.VITE_API_BASE_URL
+  if (configuredBase !== undefined && configuredBase !== '') {
+    return String(configuredBase).replace(/\/$/, '')
+  }
+  return import.meta.env.DEV ? '' : '/bus/vls-server'
+}
+
 export function getApaasGatewayPrefix(): string {
   const envPrefix = import.meta.env.VITE_APAAS_GATEWAY_PREFIX
   if (envPrefix !== undefined && envPrefix !== '') {
@@ -19,15 +27,23 @@ export function getApaasGatewayPrefix(): string {
 }
 
 export function apaasServiceUrl(service: string, path = ''): string {
-  const prefix = getApaasGatewayPrefix()
   const svc = service.replace(/^\/+|\/+$/g, '')
   const normalizedPath = String(path || '').replace(/^\//, '')
   const serviceKey = svc.toLowerCase()
+
+  // Workflow and work-order APIs are hosted by the current Java backend.
+  if (serviceKey === 'apaas-workflowforms') {
+    const localBackendPrefix = getLocalBackendPrefix()
+    return normalizedPath ? `${localBackendPrefix}/${normalizedPath}` : `${localBackendPrefix}/`
+  }
+
   if (import.meta.env.DEV
-    && (serviceKey === 'apaas-workflowforms' || serviceKey === 'apaas-location-service')
+    && serviceKey === 'apaas-location-service'
     && import.meta.env.VITE_APAAS_WORKFLOWFORMS_DIRECT !== 'false') {
     return normalizedPath ? `/${normalizedPath}` : '/'
   }
+
+  const prefix = getApaasGatewayPrefix()
   if (!normalizedPath) {
     return `${prefix}/${svc}`
   }

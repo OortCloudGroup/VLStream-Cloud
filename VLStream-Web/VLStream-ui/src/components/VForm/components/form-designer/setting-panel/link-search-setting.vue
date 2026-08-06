@@ -26,7 +26,7 @@
         <span class="dialog-footer">
           <el-button size="large" @click="mockRun">模拟运行</el-button>
           <el-button size="large" type="primary" @click="saveCalcConfig">保 存</el-button>
-          <el-button size="large" @click="dialogVisible = false">取 消</el-button>
+          <el-button size="large" @click="dialogVisible = false" class="common_btn">取 消</el-button>
         </span>
       </template>
     </el-dialog>

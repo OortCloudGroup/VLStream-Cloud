@@ -36,7 +36,7 @@
           :global-dsv="{}"
         />
         <div class="form-render-footer">
-          <el-button type="primary" @click="confirmLinkForm">
+          <el-button type="primary" @click="confirmLinkForm" class="common_btn">
             确定
           </el-button>
         </div>

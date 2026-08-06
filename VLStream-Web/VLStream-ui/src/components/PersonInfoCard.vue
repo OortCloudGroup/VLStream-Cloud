@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
-import { getUserInfoList } from '@/api/sso_apaas'
+import { getUserList } from '@/api/system/directory'
 import { useUserStore } from '@/store/modules/useraPaas'
 
 const store = useUserStore()
@@ -52,13 +52,13 @@ const getUserInfo = async() => {
     accessToken: store.token,
     tenant_id: store.tenantId
   }
-  const res: any = await getUserInfoList(params)
+  const res: any = await getUserList(params)
   if (res.code === 200 && res.data && res.data.list && res.data.list.length > 0) {
     const user = res.data.list[0]
-    let deptName = user.dept_list.map((item: any) => item.deptinfo.dept_name).join('｜')
-    let jobName = user.dept_list.flatMap((item: any) => item.deptinfo.job || []).join('｜')
+    let deptName = user.dept_list.map((item: any) => item.deptinfo?.dept_name || '').filter(Boolean).join('｜')
+    let jobName = user.dept_list.flatMap((item: any) => item.deptinfo?.job || []).join('｜')
     let phone = user.dept_list
-      .map((item: any) => item.deptinfo.ex_data.phone || user.phone)
+      .map((item: any) => item.deptinfo?.ex_data?.phone || user.phone)
       .filter(phone => phone && phone.trim() !== '') // 过滤掉空字符串和只包含空格的字符串
       .join('｜')
     userInfo.value = {

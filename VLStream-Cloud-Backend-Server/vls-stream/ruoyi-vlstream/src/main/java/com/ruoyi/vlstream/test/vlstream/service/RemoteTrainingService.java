@@ -10,6 +10,7 @@ import javax.annotation.Resource;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import com.ruoyi.vlstream.test.common.constant.CommonConstant;
+import com.ruoyi.vlstream.test.vlstream.config.VlsModelConversionProperties;
 import com.ruoyi.vlstream.test.vlstream.config.VlsSshProperties;
 import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmTrainingStatusEnum;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsRemoteServersMapper;
@@ -42,6 +43,9 @@ public class RemoteTrainingService {
 
 	@Resource
 	private VlsSshProperties sshProperties;
+
+	@Resource
+	private VlsModelConversionProperties modelConversionProperties;
 
 	private static final String DEFAULT_LOG_DIR = "logs";
 
@@ -189,7 +193,7 @@ public class RemoteTrainingService {
 	/**
 	 * 处理训练完成后的模型文件
 	 */
-	private String processTrainingResult(Long taskId, RemoteServers server, String trainType, String taskName) {
+	public String processTrainingResult(Long taskId, RemoteServers server, String trainType, String taskName) {
 		try {
 			String taskFolder = (trainType == null || trainType.isEmpty()) ? "detect" : trainType;
 			String findResultCommand = String.format(
@@ -318,26 +322,25 @@ public class RemoteTrainingService {
 	public String exportModel(String modelPath, String format) {
 		RemoteServers server = remoteServerMapper.selectActiveServer();
 		if (server == null) {
-			log.warn("No active remote server, skip model export: format={}, modelPath={}", format, modelPath);
-			return null;
+			throw new IllegalStateException("未找到可用的模型转换服务器");
 		}
 		return exportModel(server, modelPath, format);
 	}
 
 	private String exportModel(RemoteServers server, String modelPath, String format) {
 		if (server == null) {
-			return null;
+			throw new IllegalArgumentException("模型转换服务器不能为空");
 		}
 		if (modelPath == null || modelPath.isEmpty()) {
-			return null;
+			throw new IllegalArgumentException("待转换的PT模型路径不能为空");
 		}
 		if (format == null || format.trim().isEmpty()) {
-			return null;
+			throw new IllegalArgumentException("目标模型格式不能为空");
 		}
 		String normalizedFormat = format.trim().toLowerCase();
 		String exportPath = resolveExportPath(modelPath, normalizedFormat);
 		if (exportPath == null) {
-			return null;
+			throw new IllegalArgumentException("无法生成" + normalizedFormat.toUpperCase() + "模型输出路径");
 		}
 
 		String condaEnv = server.getCondaEnv();
@@ -357,11 +360,12 @@ public class RemoteTrainingService {
 
 		String wrappedCommand = wrapWithBash(commandBuilder.toString());
 		SSHService.SSHExecutionResult exportResult = executeWithFallback(server, wrappedCommand);
-		if (exportResult.isSuccess()) {
+		if (exportResult != null && exportResult.isSuccess()) {
 			return exportPath;
 		}
-		log.warn("Model export failed: format={}, error={}", normalizedFormat, exportResult.getErrorMsg());
-		return null;
+		String error = buildExportError(exportResult);
+		log.warn("Model export failed: format={}, error={}", normalizedFormat, error);
+		throw new IllegalStateException(error);
 	}
 
 	private String resolveExportPath(String modelPath, String format) {
@@ -373,9 +377,132 @@ public class RemoteTrainingService {
 		}
 		String lowerModelPath = modelPath.toLowerCase();
 		if (lowerModelPath.endsWith(".pt")) {
-			return modelPath.substring(0, modelPath.length() - 3) + "." + format;
+			String modelStem = modelPath.substring(0, modelPath.length() - 3);
+			if ("rknn".equals(format)) {
+				return modelStem + "-rk3588.rknn";
+			}
+			return modelStem + "." + format;
 		}
 		return modelPath + "." + format;
+	}
+
+	/**
+	 * Convert a trained YOLOv8 checkpoint into the SVP ACL OM expected by Hi3519DV500.
+	 */
+	public String exportHisiliconOm(String modelPath, String datasetYamlPath) {
+		RemoteServers server = remoteServerMapper.selectActiveServer();
+		if (server == null) {
+			throw new IllegalStateException("未找到可用的Hi3519DV500模型转换服务器");
+		}
+		if (modelPath == null || modelPath.trim().isEmpty()) {
+			throw new IllegalArgumentException("待转换的PT模型路径不能为空");
+		}
+		if (datasetYamlPath == null || datasetYamlPath.trim().isEmpty()) {
+			throw new IllegalArgumentException("OM转换缺少数据集配置路径，无法生成校准图片列表");
+		}
+
+		String normalizedModelPath = modelPath.trim();
+		String normalizedDatasetPath = datasetYamlPath.trim();
+		String targetPath = replaceExtension(normalizedModelPath, ".om");
+		String parentDirectory = resolveParentDirectory(normalizedModelPath);
+		String datasetDirectory = resolveParentDirectory(normalizedDatasetPath);
+		String workDirectory = parentDirectory + "/.om-convert-" + UUID.randomUUID().toString().replace("-", "");
+		String customOnnxPath = workDirectory + "/model_hisilicon.onnx";
+		String outputBasePath = workDirectory + "/model_hisilicon";
+		String generatedOmPath = outputBasePath + "_original.om";
+		String calibrationListPath = workDirectory + "/image_ref_list.txt";
+		int calibrationCount = modelConversionProperties.getCalibrationImageCount() == null
+			? 20 : Math.max(1, modelConversionProperties.getCalibrationImageCount());
+
+		StringBuilder command = new StringBuilder("set -e; ");
+		command.append("mkdir -p ").append(quoteShellArgument(workDirectory)).append("; ");
+		command.append("trap ").append(quoteShellArgument("rm -rf " + quoteShellArgument(workDirectory))).append(" EXIT; ");
+		command.append("source /data/work/anaconda3/etc/profile.d/conda.sh; ");
+		if (server.getCondaEnv() != null && !server.getCondaEnv().trim().isEmpty()) {
+			command.append("conda activate ").append(quoteShellArgument(server.getCondaEnv().trim())).append("; ");
+		}
+		command.append("find ").append(quoteShellArgument(datasetDirectory))
+			.append(" -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \\) | head -n ")
+			.append(calibrationCount).append(" > ").append(quoteShellArgument(calibrationListPath)).append("; ");
+		command.append("test -s ").append(quoteShellArgument(calibrationListPath)).append("; ");
+		command.append("python ").append(quoteShellArgument(modelConversionProperties.getHisiliconExporterScript()))
+			.append(" --model ").append(quoteShellArgument(normalizedModelPath))
+			.append(" --output ").append(quoteShellArgument(customOnnxPath))
+			.append(" --imgsz 640; ");
+		command.append("source ").append(quoteShellArgument(modelConversionProperties.getAtcEnvScript())).append("; ");
+		command.append("atc --dump_data=0 --input_shape='images:1,3,640,640' --input_type='images:UINT8'")
+			.append(" --log_level=0 --online_model_type=0 --batch_num=1 --input_format=NCHW")
+			.append(" --output=").append(quoteShellArgument(outputBasePath))
+			.append(" --soc_version=").append(quoteShellArgument(modelConversionProperties.getSocVersion()))
+			.append(" --insert_op_conf=").append(quoteShellArgument(modelConversionProperties.getInsertOpConfig()))
+			.append(" --framework=5 --compile_mode=0 --save_original_model=true")
+			.append(" --model=").append(quoteShellArgument(customOnnxPath))
+			.append(" --image_list=").append(quoteShellArgument("images:" + calibrationListPath)).append("; ");
+		command.append("test -s ").append(quoteShellArgument(generatedOmPath)).append("; ");
+		command.append("mv -f ").append(quoteShellArgument(generatedOmPath)).append(" ")
+			.append(quoteShellArgument(targetPath)).append("; ");
+		command.append("test -s ").append(quoteShellArgument(targetPath));
+
+		SSHService.SSHExecutionResult result = executeWithFallback(server, wrapWithSingleQuotedBash(command.toString()));
+		if (result != null && result.isSuccess()) {
+			log.info("HiSilicon OM export completed: {}", targetPath);
+			return targetPath;
+		}
+		log.warn("HiSilicon OM export failed: modelPath={}, error={}", normalizedModelPath,
+			buildExportError(result));
+		throw new IllegalStateException(buildExportError(result));
+	}
+
+	private String buildExportError(SSHService.SSHExecutionResult result) {
+		if (result == null) {
+			return "远程转换命令未返回执行结果";
+		}
+		String error = result.getErrorMsg();
+		String output = result.getOutput();
+		if (error != null && !error.trim().isEmpty()) {
+			if (output != null && !output.trim().isEmpty()) {
+				return "stderr:\n" + error.trim() + "\nstdout:\n" + output.trim();
+			}
+			return "stderr:\n" + error.trim();
+		}
+		if (output != null && !output.trim().isEmpty()) {
+			return "stdout:\n" + output.trim();
+		}
+		return "远程转换命令执行失败，但未返回错误输出";
+	}
+
+	/**
+	 * Replace the checkpoint suffix while preserving its remote directory.
+	 */
+	private String replaceExtension(String path, String extension) {
+		int lastSlash = path.lastIndexOf('/');
+		int lastDot = path.lastIndexOf('.');
+		if (lastDot > lastSlash) {
+			return path.substring(0, lastDot) + extension;
+		}
+		return path + extension;
+	}
+
+	/**
+	 * Resolve the parent directory of a remote POSIX path.
+	 */
+	private String resolveParentDirectory(String path) {
+		int lastSlash = path.lastIndexOf('/');
+		return lastSlash > 0 ? path.substring(0, lastSlash) : ".";
+	}
+
+	/**
+	 * Run a compound command through bash without allowing the outer shell to expand variables.
+	 */
+	private String wrapWithSingleQuotedBash(String command) {
+		return "bash -lc " + quoteShellArgument(command);
+	}
+
+	/**
+	 * Quote one POSIX shell argument and escape embedded single quotes.
+	 */
+	private String quoteShellArgument(String value) {
+		return "'" + value.replace("'", "'\"'\"'") + "'";
 	}
 
 	public void generateOnnxSynsetFile(Long trainingId, String onnxModelPath, String datasetYamlPath) {
