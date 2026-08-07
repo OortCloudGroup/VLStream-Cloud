@@ -225,21 +225,98 @@ $bytes = New-Object byte[] 32
 
 ## 🏗️ 架构与项目结构
 
-VLStream Cloud 由两个客户端和一个共享服务平台组成：Vue 管理控制台供运营人员使用，
-原生 SDK 运行在 Hi3519DV500 摄像机上。两个客户端都通过 Spring Boot 后端交互，后端
-负责协调业务模块，以及 MySQL、Redis、MinIO、MQTT、GPU 训练和 AI 服务等外部基础设施。
+VLStream Cloud 的核心业务架构分为三大类：
+
+- **硬件：** IPC、BOX、NVR，覆盖产线写入、初始化安装与协议接入、平台运营以及设备转让。
+- **平台 Server：** VLS 负责设备运营和平台业务；WVP 负责视频设备接入和视频控制；ZLMediaKit 是 WVP 依赖的流媒体服务器；MQTT、MySQL、Redis、MinIO 分别提供消息、持久化、缓存和对象存储能力。
+- **客户端：** VLStream-ui 承载平台运营功能，WVP UI 承载视频预览、回放、云台和通道管理。
+
+完整的生命周期时序图和依赖清单见
+[核心业务技术架构文档](./architecture/vlstream-core-business-technical-architecture.md)。
 
 ```mermaid
-flowchart LR
-    UI["VLStream-ui<br/>Vue 3 管理控制台"] --> API["ruoyi-admin<br/>Spring Boot API"]
-    CAM["Hi3519DV500 摄像机"] --> SDK["sdk/<br/>原生 C/C++ 设备侧业务 SDK"]
-    SDK -->|MQTT / HTTP| API
-    SDK -->|RTSP / WebRTC 视频帧| MEDIA["WebRTC Streamer<br/>和视频客户端"]
-    API --> BIZ["ruoyi-vlstream<br/>设备、流媒体、AI 与模型服务"]
-    API --> PLATFORM["system / framework / flowable<br/>job / oss / sms / extend"]
-    BIZ --> DATA["MySQL / Redis / MinIO / MQTT"]
-    API --> EXT["GPU 训练 / APaaS AI<br/>及其他外部服务"]
+sequenceDiagram
+    autonumber
+    participant P as 产线烧录/配置工具
+    participant H as 硬件<br/>IPC / BOX / NVR
+    participant C as 客户端<br/>VLStream-ui / WVP UI
+    participant V as VLS Server
+    participant M as MQTT Broker<br/>EMQX
+    participant W as WVP Server
+    participant Z as ZLMediaKit
+    participant D as MySQL / Redis
+    participant O as MinIO / S3
+
+    rect rgb(255, 248, 235)
+        Note over P,H: 1. 硬件生产：写入设备身份和平台接入配置
+        P->>H: 写入设备 ID、密钥、MQTT 地址和基础配置
+        H->>M: 使用预置身份建立连接
+        M-->>V: 转发设备身份和上线消息
+        V->>D: 保存身份和设备状态
+    end
+
+    rect rgb(239, 246, 255)
+        Note over C,H: 2. 初始化、安装与视频接入
+        C->>V: 初始化或注册设备
+        V->>M: 下发初始化和控制配置
+        M->>H: MQTT 配置/控制消息
+        alt GB28181 / SIP
+            H->>W: SIP 注册、心跳和设备目录
+            C->>W: 请求预览或回放
+            W->>H: SIP INVITE / 回放控制
+            H->>Z: RTP 媒体流
+        else RTSP / ONVIF
+            C->>W: 设备发现、拉流或设备控制
+            W->>H: ONVIF / RTSP 请求
+            H->>Z: RTSP / RTP 媒体流
+        end
+        W->>Z: REST API、Hook 和流协同
+        Z-->>C: WebRTC / HTTP-FLV / HLS / RTSP 播放流
+    end
+
+    rect rgb(240, 253, 244)
+        Note over C,H: 3. 平台运营与硬件交互
+        C->>V: 设备管理、用户绑定和状态查询
+        H->>M: 心跳、事件、状态和模型回执
+        M-->>V: 转发硬件消息
+        V->>D: 保存业务状态和事件结果
+        C->>V: 下发控制或模型任务
+        V->>M: 发布控制指令或模型任务
+        M->>H: MQTT 指令
+        H-->>M: 执行回执
+        M-->>V: 转发执行结果
+        V->>O: 保存或读取事件媒体和模型文件
+    end
+
+    rect rgb(254, 242, 242)
+        Note over C,H: 4. 硬件转让：解绑并恢复待绑定状态
+        C->>V: 发起解绑或转让
+        V->>M: 清理绑定并重置设备
+        M->>H: 恢复待绑定状态
+        H-->>M: 重置回执
+        M-->>V: 转发回执
+        V->>D: 清理用户与设备关系
+    end
 ```
+
+### Server 运行依赖
+
+以下版本优先取当前发布 Compose 或项目配置。标记为“未固定”的组件，
+正式发布前需要在部署清单中锁定版本。
+
+| 名称 | 用途 | 版本号 | 授权协议 |
+| --- | --- | --- | --- |
+| VLStream Server（VLS） | 设备注册、用户绑定、事件、模型任务和平台 API | Maven `0.8.3`；Spring Boot `2.7.11`；发布镜像 `1.1.2` | [MIT](./LICENSE) |
+| WVP Server | GB28181/SIP、ONVIF、RTSP、预览、回放、云台和视频控制 | `3.8.9`；Spring Boot `2.7.18` | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE) |
+| ZLMediaKit | RTP 收流、媒体管理、REST/Hook 和播放输出 | WVP/VLStream 仓库中**未固定** | [MIT](https://docs.zlmediakit.com/zh/more/license.html) |
+| MQTT Broker / EMQX | 设备消息、心跳、事件、指令和模型回执 | `5.4`；发布 Compose 作为外部服务接入 | [Apache-2.0](https://github.com/emqx/emqx-docker/blob/main/LICENSE) |
+| MySQL | 业务数据库 | `8.4.10-oraclelinux9` | [GPLv2 或商业许可](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |
+| Redis | 缓存、会话、在线状态和运行态数据 | `7.4.9-alpine` | [RSALv2 或 SSPLv1](https://redis.io/legal/licenses/) |
+| MinIO / S3 | 事件媒体、模型文件和对象存储 | `RELEASE.2025-09-07T16-13-09Z` | [AGPLv3 或商业许可](https://min.io/compliance) |
+
+前端部署通常还需要 Nginx 或等价网关，用于静态文件和反向代理。WebRTC
+Streamer `v0.8.16` 仅用于 VLS 直连 RTSP 转 WebRTC 的可选链路；FFmpeg 是
+WVP/ZLMediaKit 的按需拉流和格式转换辅助程序，不是另一套独立流媒体平台。
 
 ### 仓库分层
 
@@ -662,6 +739,7 @@ docker compose down
 | 前端指南 | [`VLStream-Web/README.md`](./VLStream-Web/README.md) |
 | 前端中文指南 | [`VLStream-Web/README-cn.md`](./VLStream-Web/README-cn.md) |
 | 设备 SDK 指南 | [`sdk/README.md`](./sdk/README.md) |
+| 核心业务技术架构 | [`architecture/vlstream-core-business-technical-architecture.md`](./architecture/vlstream-core-business-technical-architecture.md) |
 | 后端环境变量 | [`ENVIRONMENT_VARIABLES.md`](./VLStream-Cloud-Backend-Server/vls-stream/ENVIRONMENT_VARIABLES.md) |
 | 部署指南 | [`deploy/release/README.zh-CN.md`](./deploy/release/README.zh-CN.md) |
 | 数据库迁移 | [`DATABASE_MIGRATIONS.md`](./VLStream-Cloud-Backend-Server/vls-stream/DATABASE_MIGRATIONS.md) |

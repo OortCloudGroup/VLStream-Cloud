@@ -223,23 +223,100 @@ for each environment; never commit the real secret to Git.
 
 ## 🏗️ Architecture and Project Structure
 
-VLStream Cloud is organized around two clients and one shared service platform:
-the Vue management console is used by operators, while the native SDK runs on
-Hi3519DV500 cameras. Both clients communicate with the Spring Boot backend; the
-backend coordinates business modules and external infrastructure such as MySQL,
-Redis, MinIO, MQTT, GPU training, and AI services.
+VLStream Cloud's core business architecture is organized into three categories:
+
+- **Hardware:** IPC, BOX, and NVR devices. The lifecycle covers production provisioning, installation and protocol access, platform operations, and device transfer.
+- **Platform servers:** VLS owns device operations and platform business; WVP owns video-device access and video control; ZLMediaKit provides the media server behind WVP; MQTT, MySQL, Redis, and MinIO provide messaging, persistence, cache, and object storage.
+- **Client:** VLStream-ui provides platform operations, while the WVP UI provides video preview, playback, PTZ, and channel management.
+
+The complete lifecycle sequence diagram and dependency inventory are maintained in
+[Core Business and Technical Architecture](./architecture/vlstream-core-business-technical-architecture.md).
 
 ```mermaid
-flowchart LR
-    UI["VLStream-ui<br/>Vue 3 management console"] --> API["ruoyi-admin<br/>Spring Boot API"]
-    CAM["Hi3519DV500 camera"] --> SDK["sdk/<br/>Native C/C++ business SDK"]
-    SDK -->|MQTT / HTTP| API
-    SDK -->|RTSP / WebRTC frames| MEDIA["WebRTC Streamer<br/>and video clients"]
-    API --> BIZ["ruoyi-vlstream<br/>device, stream, AI, and model services"]
-    API --> PLATFORM["system / framework / flowable<br/>job / oss / sms / extend"]
-    BIZ --> DATA["MySQL / Redis / MinIO / MQTT"]
-    API --> EXT["GPU training / APaaS AI<br/>and other external services"]
+sequenceDiagram
+    autonumber
+    participant P as Production Provisioning
+    participant H as Hardware<br/>IPC / BOX / NVR
+    participant C as Client<br/>VLStream-ui / WVP UI
+    participant V as VLS Server
+    participant M as MQTT Broker<br/>EMQX
+    participant W as WVP Server
+    participant Z as ZLMediaKit
+    participant D as MySQL / Redis
+    participant O as MinIO / S3
+
+    rect rgb(255, 248, 235)
+        Note over P,H: 1. Production provisioning
+        P->>H: Write device ID, secret, MQTT address and base configuration
+        H->>M: Connect with pre-provisioned identity
+        M-->>V: Forward device identity and online message
+        V->>D: Persist identity and status
+    end
+
+    rect rgb(239, 246, 255)
+        Note over C,H: 2. Initialization, installation and video access
+        C->>V: Initialize or register device
+        V->>M: Publish initialization and control configuration
+        M->>H: MQTT configuration/control message
+        alt GB28181 / SIP
+            H->>W: SIP registration, heartbeat and catalog
+            C->>W: Preview or playback request
+            W->>H: SIP INVITE / playback control
+            H->>Z: RTP media
+        else RTSP / ONVIF
+            C->>W: Discovery, pull or device control
+            W->>H: ONVIF / RTSP request
+            H->>Z: RTSP / RTP media
+        end
+        W->>Z: REST API, Hook and stream coordination
+        Z-->>C: WebRTC / HTTP-FLV / HLS / RTSP playback
+    end
+
+    rect rgb(240, 253, 244)
+        Note over C,H: 3. Platform operations and hardware interaction
+        C->>V: Device management, user binding and status query
+        H->>M: Heartbeat, event, status and model receipt
+        M-->>V: Forward hardware message
+        V->>D: Persist business state and event result
+        C->>V: Send control or model task
+        V->>M: Publish command or model task
+        M->>H: MQTT command
+        H-->>M: Execution receipt
+        M-->>V: Forward result
+        V->>O: Store or read event media and model artifacts
+    end
+
+    rect rgb(254, 242, 242)
+        Note over C,H: 4. Device transfer
+        C->>V: Unbind or transfer device
+        V->>M: Clear binding and reset device
+        M->>H: Reset to pending-binding state
+        H-->>M: Reset receipt
+        M-->>V: Forward receipt
+        V->>D: Clean up user-device relationship
+    end
 ```
+
+### Runtime Server Dependencies
+
+The following versions are taken from the current release Compose or project
+configuration. A version marked **not pinned** must be fixed in the formal
+deployment manifest before production release.
+
+| Name | Purpose | Version | License |
+| --- | --- | --- | --- |
+| VLStream Server (VLS) | Device registration, user binding, events, model tasks, and platform APIs | Maven `0.8.3`; Spring Boot `2.7.11`; release image `1.1.2` | [MIT](./LICENSE) |
+| WVP Server | GB28181/SIP, ONVIF, RTSP, preview, playback, PTZ, and video control | `3.8.9`; Spring Boot `2.7.18` | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE) |
+| ZLMediaKit | RTP ingest, media management, REST/Hook, and playback output | **Not pinned** in WVP/VLStream repositories | [MIT](https://docs.zlmediakit.com/zh/more/license.html) |
+| MQTT Broker / EMQX | Device messaging, heartbeat, events, commands, and model receipts | `5.4`; external service in release Compose | [Apache-2.0](https://github.com/emqx/emqx-docker/blob/main/LICENSE) |
+| MySQL | Business database | `8.4.10-oraclelinux9` | [GPLv2 or commercial license](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |
+| Redis | Cache, sessions, online state, and runtime state | `7.4.9-alpine` | [RSALv2 or SSPLv1](https://redis.io/legal/licenses/) |
+| MinIO / S3 | Event media, model files, and object storage | `RELEASE.2025-09-07T16-13-09Z` | [AGPLv3 or commercial license](https://min.io/compliance) |
+
+Nginx or an equivalent gateway is normally required for frontend static files
+and reverse proxying. WebRTC Streamer `v0.8.16` is optional for the VLS direct
+RTSP-to-WebRTC path; FFmpeg is an optional WVP/ZLMediaKit pull and conversion
+helper, not another standalone media platform.
 
 ### Repository layers
 
@@ -581,6 +658,7 @@ docker compose down
 | Frontend Guide | [`VLStream-Web/README.md`](./VLStream-Web/README.md) |
 | Frontend Guide (Chinese) | [`VLStream-Web/README-cn.md`](./VLStream-Web/README-cn.md) |
 | Device SDK Guide | [`sdk/README.md`](./sdk/README.md) |
+| Core Business and Technical Architecture | [`architecture/vlstream-core-business-technical-architecture.md`](./architecture/vlstream-core-business-technical-architecture.md) |
 | Backend Environment Variables | [`ENVIRONMENT_VARIABLES.md`](./VLStream-Cloud-Backend-Server/vls-stream/ENVIRONMENT_VARIABLES.md) |
 | Deployment Guide | [`deploy/release/README.md`](./deploy/release/README.md) |
 | Database Migrations | [`DATABASE_MIGRATIONS.md`](./VLStream-Cloud-Backend-Server/vls-stream/DATABASE_MIGRATIONS.md) |
