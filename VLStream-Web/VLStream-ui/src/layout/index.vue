@@ -427,10 +427,22 @@ const menuRoutesMap = {
         }
       ]
     },
-    { path: '/scene-governance', meta: { title: '场景治理', icon: '场景治理' } },
-    { path: '/algorithm-arrangement', meta: { title: '算法配置', icon: '算法配置' } },
-    { path: '/intelligent-analysis-request', meta: { title: '智能分析申请', icon: '智能分析申请' } },
-    { path: '/algorithm-task', meta: { title: '任务配置', icon: '任务配置' } },
+    {
+      path: 'edge-intelligence-menu',
+      meta: { title: '端侧智能', icon: '端侧智能' },
+      children: [
+        { path: '/algorithm-arrangement', meta: { title: '算法配置', icon: '算法配置' } }
+      ]
+    },
+    {
+      path: 'cloud-intelligence-menu',
+      meta: { title: '云端智能', icon: '云端智能' },
+      children: [
+        { path: '/scene-governance', meta: { title: '场景治理', icon: '场景治理' } },
+        { path: '/algorithm-task', meta: { title: '任务配置', icon: '任务配置' } },
+        { path: '/intelligent-analysis-request', meta: { title: '智能分析', icon: '智能分析' } }
+      ]
+    }
   ],
   'algorithm-warehouse': [
     { path: '/algorithm-management', meta: { title: '算法管理', icon: '算法管理' } },
@@ -816,6 +828,9 @@ const getMenuIcon = (iconName) => {
     '视频回放': VideoPlay,
     '开放服务中心': Connection,
     '容器实例': Monitor,
+    '端侧智能': DataAnalysis,
+    '云端智能': Connection,
+    '智能分析': DataAnalysis,
     '用户管理': UserFilled,
     '角色管理': User,
     '菜单管理': MenuIcon,
