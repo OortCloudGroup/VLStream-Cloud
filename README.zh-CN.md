@@ -201,7 +201,7 @@ $bytes = New-Object byte[] 32
 | 分类 | 技术 |
 | --- | --- |
 | 运行环境 | Java 8 |
-| 基础框架 | Spring Boot 2.7.11、RuoYi-Flowable-Plus 0.8.3 |
+| 基础框架 | Spring Boot 2.7.11、RuoYi-Flowable-Plus 1.1.3 |
 | 数据访问 | MyBatis-Plus 3.5.3.1 |
 | 身份认证 | Sa-Token 1.34.0 |
 | 工作流 | Flowable 6.8.0 |
@@ -306,7 +306,7 @@ sequenceDiagram
 
 | 名称 | 用途 | 版本号 | 授权协议 |
 | --- | --- | --- | --- |
-| VLStream Server（VLS） | 设备注册、用户绑定、事件、模型任务和平台 API | Maven `0.8.3`；Spring Boot `2.7.11`；发布镜像 `1.1.2` | [MIT](./LICENSE) |
+| VLStream Server（VLS） | 设备注册、用户绑定、事件、模型任务和平台 API | Maven `1.1.3`；Spring Boot `2.7.11`；发布镜像 `1.1.3` | [MIT](./LICENSE) |
 | WVP Server | GB28181/SIP、ONVIF、RTSP、预览、回放、云台和视频控制 | `3.8.9`；Spring Boot `2.7.18` | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE) |
 | ZLMediaKit | RTP 收流、媒体管理、REST/Hook 和播放输出 | WVP/VLStream 仓库中**未固定** | [MIT](https://docs.zlmediakit.com/zh/more/license.html) |
 | MQTT Broker / EMQX | 设备消息、心跳、事件、指令和模型回执 | `5.4`；发布 Compose 作为外部服务接入 | [Apache-2.0](https://github.com/emqx/emqx-docker/blob/main/LICENSE) |

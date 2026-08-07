@@ -199,7 +199,7 @@ for each environment; never commit the real secret to Git.
 | Category | Technology |
 | --- | --- |
 | Runtime | Java 8 |
-| Framework | Spring Boot 2.7.11, RuoYi-Flowable-Plus 0.8.3 |
+| Framework | Spring Boot 2.7.11, RuoYi-Flowable-Plus 1.1.3 |
 | Persistence | MyBatis-Plus 3.5.3.1 |
 | Authentication | Sa-Token 1.34.0 |
 | Workflow | Flowable 6.8.0 |
@@ -305,7 +305,7 @@ deployment manifest before production release.
 
 | Name | Purpose | Version | License |
 | --- | --- | --- | --- |
-| VLStream Server (VLS) | Device registration, user binding, events, model tasks, and platform APIs | Maven `0.8.3`; Spring Boot `2.7.11`; release image `1.1.2` | [MIT](./LICENSE) |
+| VLStream Server (VLS) | Device registration, user binding, events, model tasks, and platform APIs | Maven `1.1.3`; Spring Boot `2.7.11`; release image `1.1.3` | [MIT](./LICENSE) |
 | WVP Server | GB28181/SIP, ONVIF, RTSP, preview, playback, PTZ, and video control | `3.8.9`; Spring Boot `2.7.18` | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE) |
 | ZLMediaKit | RTP ingest, media management, REST/Hook, and playback output | **Not pinned** in WVP/VLStream repositories | [MIT](https://docs.zlmediakit.com/zh/more/license.html) |
 | MQTT Broker / EMQX | Device messaging, heartbeat, events, commands, and model receipts | `5.4`; external service in release Compose | [Apache-2.0](https://github.com/emqx/emqx-docker/blob/main/LICENSE) |
