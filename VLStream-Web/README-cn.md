@@ -149,6 +149,8 @@ build-prod.bat
 | 变量 | 说明 | 默认值 |
 | --- | --- | --- |
 | `VITE_DEV_PROXY_TARGET` | 开发环境后端代理目标 | `http://127.0.0.1:8080` |
+| `VITE_WVP_PROXY_TARGET` | 五协议页面的开发环境 WVP 代理目标 | `http://127.0.0.1:9080` |
+| `VITE_WVP_API_BASE_URL` | 可选的 WVP 接口基址；默认开发 `/wvp-api`、生产 `/bus/wvp-server` | 空 |
 | `VITE_SSO_PROXY_TARGET` | 开发环境 SSO 代理目标 | `http://oort.oortcloudsmart.com:21410/bus/apaas-sso` |
 | `VITE_API_BASE_URL` | 生产环境接口基址 | `http://oort.oortcloudsmart.com:21410/bus/vls-server` |
 | `VITE_BLADE_CLIENT_AUTH_HEADER` | OAuth Client Basic 认证头 | `Basic c2FiZXI6c2FiZXJfc2VjcmV0` |
@@ -158,7 +160,10 @@ build-prod.bat
 ```ini
 # 将开发请求代理到本地后端
 VITE_DEV_PROXY_TARGET=http://127.0.0.1:8080
+VITE_WVP_PROXY_TARGET=http://127.0.0.1:9080
 ```
+
+ISUP、RTSP、ONVIF、国标和大华页面采用前端双服务接入，业务仍由独立 WVP 后端处理；WVP 仅增加用于校验 VLStream Token 的轻量认证适配，协议服务、数据和原生 SDK 不迁移到 VLStream 后端。部署、Token、Nginx 代理及 Windows/Linux SDK 边界见 [WVP 五协议前端联合接入说明](./VLStream-ui/docs/wvp-protocol-federation.md)。
 
 ## 构建与部署
 

@@ -72,12 +72,14 @@ const createCameraPreviewPlugin = () => ({
   }
 })
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(async ({ mode }) => {
+  const { default: AutoImport } = await import('unplugin-auto-import/vite')
   const env = loadEnv(mode, process.cwd(), '')
   const backendTarget = env.VITE_DEV_PROXY_TARGET || 'http://127.0.0.1:8080'
   const ssoTarget = env.VITE_SSO_PROXY_TARGET || backendTarget
   const apaasTarget = env.VITE_APAAS_PROXY_TARGET || 'http://oort.oortcloudsmart.com:21410'
   const webRtcTarget = env.VITE_WEBRTC_PROXY_TARGET || 'http://127.0.0.1:8000'
+  const wvpTarget = env.VITE_WVP_PROXY_TARGET || 'http://127.0.0.1:9080'
 
   const backendProxy = {
     target: backendTarget,
@@ -88,6 +90,10 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       vue(),
+      AutoImport({
+        imports: ['vue', 'vue-router'],
+        dts: false
+      }),
       createCameraPreviewPlugin(),
       createSvgIconsPlugin({
         iconDirs: [
@@ -96,6 +102,7 @@ export default defineConfig(({ mode }) => {
           path.resolve(vlsSrc, 'assets/img/processui/svgs'),
           path.resolve(vlsSrc, 'assets/img/unifi/svgs'),
           path.resolve(vlsSrc, 'assets/img/message/svgs'),
+          path.resolve(vlsSrc, 'assets/wvp/icons'),
         ],
         symbolId: 'icon-[dir]-[name]'
       })
@@ -115,6 +122,12 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       host: '0.0.0.0',
       proxy: {
+        '/wvp-api': {
+          target: wvpTarget,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/wvp-api/, '')
+        },
         '/system': backendProxy,
         '/blade-auth': backendProxy,
         '/blade-system': backendProxy,

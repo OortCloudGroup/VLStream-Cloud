@@ -395,7 +395,58 @@ const menuRoutesMap = {
     { path: '/video-playback', meta: { title: '视频回放', icon: '视频回放' } },
     // { path: '/monitoring-alarm', meta: { title: '监控告警', icon: '监控告警' } },
     { path: '/intelligent-analysis-result', meta: { title: '智能分析结果', icon: '智能分析结果' } },
-    { path: '/device-management', meta: { title: '设备管理', icon: '设备管理' } },
+    {
+      path: 'device-management-menu',
+      meta: { title: '设备管理', icon: '设备管理' },
+      children: [
+        { path: '/device-management', meta: { title: '设备总览', icon: '设备管理' } },
+        {
+          path: 'isup-protocol-menu',
+          meta: { title: 'ISUP', icon: '设备管理' },
+          children: [
+            { path: '/isup/isupDevice', meta: { title: '设备管理', icon: '设备管理' } }
+          ]
+        },
+        {
+          path: 'rtsp-protocol-menu',
+          meta: { title: 'RTSP', icon: '设备管理' },
+          children: [
+            { path: '/rtsp/rtspDevice', meta: { title: '设备列表', icon: '设备管理' } }
+          ]
+        },
+        {
+          path: 'onvif-protocol-menu',
+          meta: { title: 'ONVIF', icon: '设备管理' },
+          children: [
+            { path: '/onvif/cameraManage', meta: { title: '设备管理', icon: '设备管理' } }
+          ]
+        },
+        {
+          path: 'gb-protocol-menu',
+          meta: { title: '国标', icon: '设备管理' },
+          children: [
+            { path: '/gbmanger/device', meta: { title: '国标设备', icon: '设备管理' } },
+            { path: '/gbmanger/cloudRecord', meta: { title: '云端录像', icon: '视频回放' } },
+            { path: '/gbmanger/streamPush', meta: { title: '推流列表', icon: '视频广场' } },
+            { path: '/gbmanger/streamProxy', meta: { title: '拉流列表', icon: '视频广场' } },
+            { path: '/gbmanger/platform', meta: { title: '国标级联', icon: '设备管理' } },
+            { path: '/gbmanger/recordPlan', meta: { title: '录像计划', icon: '视频回放' } },
+            { path: '/gbmanger/administrativeGrouping', meta: { title: '行政分组', icon: '分组管理' } },
+            { path: '/gbmanger/thoroughfare', meta: { title: '通道管理', icon: '设备管理' } },
+            { path: '/gbmanger/alarm', meta: { title: '报警管理', icon: '事件' } },
+            { path: '/gbmanger/node', meta: { title: '节点管理', icon: '设备管理' } },
+            { path: '/gbmanger/wvpLive', meta: { title: '分屏监控', icon: '视频广场' } }
+          ]
+        },
+        {
+          path: 'dahua-protocol-menu',
+          meta: { title: '大华', icon: '设备管理' },
+          children: [
+            { path: '/dahua/dahuaDevice', meta: { title: '设备管理', icon: '设备管理' } }
+          ]
+        }
+      ]
+    },
     // { path: '/camera-settings', meta: { title: '设置摄像机', icon: '摄像机设置' } },
     { path: '/tag-management', meta: { title: '标签管理', icon: '标签管理' } },
     { path: '/region-management', meta: { title: '区域管理', icon: '区域管理' } },

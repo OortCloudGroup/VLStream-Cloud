@@ -1,0 +1,29 @@
+.wvp-protocol-page,
+.app-container {
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: 20px;
+  background: #fff;
+}
+
+.pagination-container {
+  margin-top: 18px;
+}
+
+.mb8 {
+  margin-bottom: 8px;
+}
+
+.mr5 {
+  margin-right: 5px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.el-table .cell .el-button + .el-button {
+  margin-left: 6px;
+}

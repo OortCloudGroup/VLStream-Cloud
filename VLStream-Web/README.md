@@ -149,6 +149,8 @@ The project is configured via Vite environment variables. Create a `.env.local` 
 | Variable | Description | Default |
 | --- | --- | --- |
 | `VITE_DEV_PROXY_TARGET` | Dev backend proxy target | `http://127.0.0.1:8080` |
+| `VITE_WVP_PROXY_TARGET` | Dev WVP proxy target for the five protocol groups | `http://127.0.0.1:9080` |
+| `VITE_WVP_API_BASE_URL` | Optional WVP API base; defaults to `/wvp-api` in dev and `/bus/wvp-server` in production | empty |
 | `VITE_SSO_PROXY_TARGET` | Dev SSO proxy target | `http://oort.oortcloudsmart.com:21410/bus/apaas-sso` |
 | `VITE_API_BASE_URL` | Production API base URL | `http://oort.oortcloudsmart.com:21410/bus/vls-server` |
 | `VITE_BLADE_CLIENT_AUTH_HEADER` | OAuth Client Basic auth header | `Basic c2FiZXI6c2FiZXJfc2VjcmV0` |
@@ -158,7 +160,10 @@ Example `.env.local`:
 ```ini
 # Proxy dev requests to a local backend
 VITE_DEV_PROXY_TARGET=http://127.0.0.1:8080
+VITE_WVP_PROXY_TARGET=http://127.0.0.1:9080
 ```
+
+The ISUP, RTSP, ONVIF, GB28181, and Dahua pages use a frontend federation model: an independent WVP backend keeps providing their business capabilities, while a small WVP authentication adapter validates VLStream tokens. Protocol services, data, and native SDKs are not migrated into the VLStream backend. See the [WVP protocol federation guide](./VLStream-ui/docs/wvp-protocol-federation.md) for proxy, token, deployment, and native SDK boundaries.
 
 ## Build & Deployment
 
