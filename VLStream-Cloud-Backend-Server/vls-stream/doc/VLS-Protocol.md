@@ -513,34 +513,53 @@ HTTP 2xx 表示对象存储已接收图片。硬件随后在 `faceEvent` 或 `st
 
 ### 业务说明
 
-设备定时上报在线、硬件资源、版本，消息 Retain=true，断网自动下发遗嘱离线消息。
+设备定时上报在线、硬件资源、版本以及平台可拉取的视频源。消息 Retain=true，断网自动下发遗嘱离线消息。平台以首次收到的合法 `deviceBiz/state` 自动登记未知设备；设备只负责提供源流，不直接调用 ZLMediaKit，也不生成浏览器 WebRTC 地址。
 
 ### 上报 payload 字段
 
-|     |     |     |
-| --- | --- | --- |
-| **字段** | **类型** | **释义** |
-| online | bool | true 在线 /false 离线 |
-| reason | string | normal/mqtt_connection_lost/power_off |
-| heartbeatIndex | int | 心跳计数，重启重置 1 |
-| deviceName | string | 设备名称 |
-| deviceSerial | string | 硬件序列号 |
-| version | string | 固件版本 |
-| deviceFaceVer | string | 人脸库版本（人脸机专属） |
-| ipAddr | string | 局域网 IP |
-| mac | string | MAC 地址 |
-| telemetry | object | 硬件资源 |
-| telemetry.cpu | int | CPU 占用 % |
-| telemetry.mem | int | 内存占用 % |
-| telemetry.diskUsed | int | 磁盘使用率 % |
-| telemetry.diskTotalGB | int | 磁盘总容量 |
-| telemetry.temp | int | 设备温度℃ |
-| telemetry.netUpMbps | float | 上行带宽 |
-| telemetry.netDownMbps | float | 下行带宽 |
-| serviceStatus | object | 后台服务状态 |
-| serviceStatus.rtsp | bool | RTSP 服务 |
-| serviceStatus.gb28181 | bool | GB28181 服务 |
-| serviceStatus.aiInfer | bool | AI 推理服务 |
+| **字段** | **类型** | **必填** | **释义** |
+| --- | --- | --- | --- |
+| online | bool | 是 | true 在线 /false 离线 |
+| reason | string | 是 | normal/mqtt_connection_lost/power_off |
+| heartbeatIndex | int | 是 | 心跳计数，重启重置 1 |
+| deviceName | string | 是 | 设备名称 |
+| deviceSerial | string | 否 | 硬件序列号 |
+| version | string | 否 | 固件版本 |
+| deviceFaceVer | string | 否 | 人脸库版本（人脸机专属） |
+| ipAddr | string | 否 | 局域网 IP |
+| mac | string | 否 | MAC 地址 |
+| telemetry | object | 否 | 硬件资源 |
+| telemetry.cpu | int | 否 | CPU 占用 % |
+| telemetry.mem | int | 否 | 内存占用 % |
+| telemetry.diskUsed | int | 否 | 磁盘使用率 % |
+| telemetry.diskTotalMB | int | 否 | 磁盘总容量，单位 MB；适用于存储容量较小的嵌入式设备 |
+| telemetry.temp | int | 否 | 设备温度℃ |
+| telemetry.netUpMbps | float | 否 | 上行带宽 |
+| telemetry.netDownMbps | float | 否 | 下行带宽 |
+| serviceStatus | object | 否 | 后台服务状态 |
+| serviceStatus.rtsp | bool | 否 | RTSP 服务 |
+| serviceStatus.gb28181 | bool | 否 | GB28181 服务 |
+| serviceStatus.aiInfer | bool | 否 | AI 推理服务 |
+| streams | array | 是 | 视频源描述对象数组，不是视频数据；每个元素代表一路平台可主动拉取的 RTSP/RTMP 地址，每次上报全部已配置流，无视频源时传 `[]` |
+| streams[].channelId | string | 条件必填 | `streams` 非空时必填；同一设备内稳定且唯一 |
+| streams[].name | string | 否 | 视频流显示名称 |
+| streams[].streamType | string | 否 | `main` 主码流 / `sub` 子码流 / `custom` 自定义码流；默认 `main` |
+| streams[].protocol | string | 条件必填 | `streams` 非空时必填；当前支持 `rtsp` 或 `rtmp` |
+| streams[].url | string | 条件必填 | `streams` 非空时必填；平台后端可访问的完整拉流地址，可包含认证信息 |
+| streams[].default | bool | 否 | 是否为默认预览流；默认 `false`，全设备最多一个 `true` |
+| streams[].available | bool | 否 | 当前源流是否可用，默认 `true` |
+
+`streams` 是视频源描述对象数组，不是视频文件、视频帧，也不是要求设备向平台推流。每个数组元素描述一路平台后端可以主动拉取的 RTSP/RTMP 视频源。硬件端按以下规则填写：
+
+1. 每次 `deviceBiz/state` 都上报当前全部已配置视频流，不得只传新增或变化的流。
+2. 同一摄像头通道有主码流和子码流时，传两个对象：`channelId` 相同，`streamType` 分别为 `main` 和 `sub`。
+3. 已配置但暂时无法拉取的流仍保留在数组中，并传 `available=false`；流被永久删除后才从数组移除。
+4. 设备没有视频能力或尚未配置拉流地址时传 `streams: []`。
+5. `channelId + streamType` 是一路流的稳定标识，设备重启或拉流地址变化后不得随意改变；`url` 必须能被平台后端访问。
+
+平台收到新心跳后，会把未出现在本次数组中的旧流标记为不可用。`url` 属于敏感信息，只允许通过受控 MQTT/TLS 上报，不得写入日志或返回浏览器。平台仅在用户预览时按需拉取该 URL 并转换为 WebRTC，无人观看后自动释放拉流代理。
+
+`state` 上报和平台回执使用 `mainBizType=deviceBiz`。为兼容已按早期文档实现的设备，平台在过渡期也接收旧值 `device`，并在回执中原样返回上报消息使用的 `mainBizType`。
 
 正常心跳上报完整示例
 
@@ -550,7 +569,7 @@ HTTP 2xx 表示对象存储已接收图片。硬件随后在 `faceEvent` 或 `st
 "deviceId": "CAM-20260001",  
 "sentAt": "2026-07-24T09:38:00Z",  
 "msgDir": "dev2platform",  
-"mainBizType": "device",  
+"mainBizType": "deviceBiz",
 "subBizType": "state",  
 "payload": {  
 "online": true,  
@@ -566,7 +585,7 @@ HTTP 2xx 表示对象存储已接收图片。硬件随后在 `faceEvent` 或 `st
 "cpu": 32,  
 "mem": 45,  
 "diskUsed": 68,  
-"diskTotalGB": 1024,  
+"diskTotalMB": 136,
 "temp": 48,  
 "netUpMbps": 8.2,  
 "netDownMbps": 12.5  
@@ -575,9 +594,50 @@ HTTP 2xx 表示对象存储已接收图片。硬件随后在 `faceEvent` 或 `st
 "rtsp": true,  
 "gb28181": false,  
 "aiInfer": true  
-}  
+},
+"streams": [
+{
+"channelId": "CH-1",
+"name": "东门主码流",
+"streamType": "main",
+"protocol": "rtsp",
+"url": "rtsp://user:password@192.168.1.100:554/Streaming/Channels/101",
+"default": true,
+"available": true
+},
+{
+"channelId": "CH-1",
+"name": "东门子码流",
+"streamType": "sub",
+"protocol": "rtsp",
+"url": "rtsp://user:password@192.168.1.100:554/Streaming/Channels/102",
+"default": false,
+"available": true
+}
+]
 },  
 "extend": {}  
+}
+
+平台接收成功回执示例
+
+{
+"protocolVersion": "2.2",
+"messageId": "ack-heartbeat-33445566-77889900-1122aabbccdd",
+"deviceId": "CAM-20260001",
+"sentAt": "2026-07-24T09:38:01Z",
+"msgDir": "platform2dev",
+"mainBizType": "deviceBiz",
+"subBizType": "state",
+"payload": {
+"sourceMsgId": "up-heartbeat-33445566-77889900-1122aabbccdd",
+"code": 200,
+"msg": "状态已接收",
+"errCode": 0,
+"errDetail": "",
+"bizData": {}
+},
+"extend": {}
 }
 
 离线遗嘱消息示例
@@ -588,7 +648,7 @@ HTTP 2xx 表示对象存储已接收图片。硬件随后在 `faceEvent` 或 `st
 "deviceId": "CAM-20260001",  
 "sentAt": "2026-07-24T09:38:50Z",  
 "msgDir": "dev2platform",  
-"mainBizType": "device",  
+"mainBizType": "deviceBiz",
 "subBizType": "state",  
 "payload": {  
 "online": false,  
@@ -600,11 +660,10 @@ HTTP 2xx 表示对象存储已接收图片。硬件随后在 `faceEvent` 或 `st
 "ipAddr": "192.168.1.100",  
 "mac": "00:11:22:33:44:55",  
 "telemetry": {},  
-"serviceStatus": {}  
+"serviceStatus": {},
+"streams": []
 },  
 "extend": {}  
-}
-
 }
 
 ## 3.8 二维码识别上报
@@ -1600,3 +1659,30 @@ POST 保存RS-485配置
         3.  **三要素校验**：MQTT 登录账号、Topic 内 deviceId、消息体 deviceId 三者必须完全一致，不一致丢弃并记录安全日志；
         4.  **传输加密**：生产环境强制 TLS 8883，1883 明文仅内网测试；
         5.  **敏感脱敏**：身份证、密钥、临时上传 URL、人脸原图支持配置脱敏输出；
+
+# 七、VLStream 原生设备当前实现说明
+
+本章记录平台工程实现，不属于硬件必须实现的线协议字段；硬件对接以第二、三、六章为准。
+
+## 7.1 数据与租户边界
+
+- 原生 MQTT 设备使用独立的 `vls_mqtt_device`、`vls_mqtt_device_stream` 表，不读写旧自定义协议的 `vls_device_info`。
+- 未预绑定的设备首次合法 `device/state` 上报会自动注册到 `VLSTREAM_NATIVE_DEVICE_DEFAULT_TENANT_ID`，默认值为 `000000`。
+- 平台通过独立幂等记录按 `tenantId + deviceId + messageId` 确认 QoS 1 重复消息，并以 `sentAt` 忽略旧于已接收快照的乱序状态。
+- 默认 180 秒未收到心跳后标记离线，可通过 `VLSTREAM_NATIVE_DEVICE_OFFLINE_TIMEOUT_SECONDS` 调整。
+
+## 7.2 管理与预览接口
+
+| 方法 | 路径 | 用途 |
+| --- | --- | --- |
+| GET | `/vlsMqttDevice/page` | 原生 MQTT 设备分页、关键字和在线状态筛选 |
+| GET | `/vlsMqttDevice/{deviceId}/streams` | 查询设备当前可用流，不返回源流 URL |
+| POST | `/vlsMqttDevice/{deviceId}/preview` | 传 `streamId`，按需创建 ZLM 拉流代理并返回 WebRTC URL |
+| DELETE | `/vlsMqttDevice/{deviceId}/streams/{streamId}/preview` | 页面关闭时结束本次预览；共享代理由 ZLM 按真实观看人数释放 |
+| GET | `/vlsMqttDevice/media/status` | 检查 VLS 后端到 ZLMediaKit 的连接状态 |
+
+## 7.3 ZLMediaKit 运行边界
+
+VLS 后端直接调用 ZLMediaKit，不经过 WVP 后端。两套系统可以通过相同的环境变量连接同一 ZLM 实例，但认证和业务数据互不依赖。`VLSTREAM_ZLM_INTERNAL_URL` 供后端 REST 调用，`VLSTREAM_ZLM_PUBLIC_URL` 必须是浏览器可访问地址，`ZLMEDIAKIT_SECRET` 仅保存在后端。按需代理使用 `auto_close=1`，重复预览复用相同媒体流；浏览器关闭 WebRTC 连接后 ZLM 按真实观看人数自动关闭代理，避免一个用户退出时中断其他用户。
+
+`dev` 配置默认连接 Docker Desktop 中映射到 `http://127.0.0.1:8090` 的本地 ZLM，内部 REST 调用与浏览器 WebRTC 地址相同。本地 ZLM 的 `ZLM_API_SECRET` 必须与 VLS 后端的 `ZLMEDIAKIT_SECRET` 一致。部署或切换实例时可分别通过 `VLSTREAM_ZLM_INTERNAL_URL`、`VLSTREAM_ZLM_PUBLIC_URL` 覆盖地址；地址可达但 secret 不匹配时，设备页仍会显示 ZLM 不可用。

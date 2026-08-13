@@ -68,6 +68,7 @@ public class VlsDeviceInfoController extends BladeController {
 	private final ObjectProvider<DevicePersonDetectionManager> devicePersonDetectionManagerProvider;
 	private final ObjectProvider<DevicePoseDetectionManager> devicePoseDetectionManagerProvider;
 	private final ObjectProvider<DeviceSemSegDetectionManager> deviceSemSegDetectionManagerProvider;
+	private final VlsZlmService zlmService;
 
 	/**
 	 * 设备信息表 详情
@@ -326,6 +327,28 @@ public class VlsDeviceInfoController extends BladeController {
 
 		Map<String, Object> result = buildDeviceInfoMap(deviceInfo);
 		return R.data(result);
+	}
+
+	/**
+	 * 通过 ZLMediaKit 将自定义设备的 RTSP/RTMP 地址转换为浏览器可播放的 WebRTC。
+	 */
+	@PostMapping("/{id}/preview")
+	@Operation(summary = "创建ZLM实时预览")
+	public R<Map<String, Object>> preview(@PathVariable Long id) {
+		DeviceInfo deviceInfo = vlsDeviceInfoService.getById(id);
+		if (deviceInfo == null) {
+			return R.fail("设备不存在");
+		}
+		String streamUrl = StringUtils.trimToEmpty(deviceInfo.getStreamUrl());
+		if (!(StringUtils.startsWithIgnoreCase(streamUrl, "rtsp://")
+			|| StringUtils.startsWithIgnoreCase(streamUrl, "rtmp://"))) {
+			return R.fail("设备未配置可由ZLM代理的RTSP/RTMP视频流");
+		}
+		try {
+			return R.data(zlmService.createProxy("custom_device_" + id, streamUrl));
+		} catch (RuntimeException exception) {
+			return R.fail(exception.getMessage());
+		}
 	}
 
 	@Operation(summary = "获取设备训练模型")

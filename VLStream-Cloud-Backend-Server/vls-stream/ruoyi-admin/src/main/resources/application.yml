@@ -133,6 +133,26 @@ sa-token:
   jwt-secret-key: abcdefghijklmnopqrstuvwxyz
 
 vlstream:
+  # VLStream 原生 MQTT 设备（独立于旧 vls_device_info 自定义协议设备）
+  native-device:
+    # 无预绑定关系的设备首次上报时归属的默认租户
+    default-tenant-id: ${VLSTREAM_NATIVE_DEVICE_DEFAULT_TENANT_ID:000000}
+    # 超过该秒数未收到心跳时，页面可判定设备离线
+    offline-timeout-seconds: ${VLSTREAM_NATIVE_DEVICE_OFFLINE_TIMEOUT_SECONDS:180}
+    # QoS 1 幂等消息记录保留时长
+    message-retention-hours: ${VLSTREAM_NATIVE_DEVICE_MESSAGE_RETENTION_HOURS:24}
+  # ZLMediaKit 按需拉流与 WebRTC 播放配置
+  zlm:
+    enabled: ${VLSTREAM_ZLM_ENABLED:true}
+    # 仅后端调用 ZLM REST API；可与 WVP 指向同一实例，但不依赖 WVP 服务
+    internal-base-url: ${VLSTREAM_ZLM_INTERNAL_URL:http://127.0.0.1}
+    # 浏览器可访问的 ZLM HTTP(S) 地址
+    public-base-url: ${VLSTREAM_ZLM_PUBLIC_URL:http://127.0.0.1}
+    secret: ${ZLMEDIAKIT_SECRET:}
+    app: ${VLSTREAM_ZLM_APP:vlstream}
+    connect-timeout-millis: ${VLSTREAM_ZLM_CONNECT_TIMEOUT_MILLIS:3000}
+    read-timeout-millis: ${VLSTREAM_ZLM_READ_TIMEOUT_MILLIS:10000}
+    proxy-timeout-seconds: ${VLSTREAM_ZLM_PROXY_TIMEOUT_SECONDS:10}
   # OAuth2/JWT 认证配置
   auth:
     # JWT 公钥，用于验证 token 签名（ECDSA 非对称加密）

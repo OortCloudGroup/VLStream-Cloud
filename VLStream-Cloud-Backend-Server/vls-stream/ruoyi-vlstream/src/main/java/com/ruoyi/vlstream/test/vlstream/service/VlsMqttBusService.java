@@ -25,13 +25,13 @@ import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-/**
- * Long-lived MQTT connection used for model dispatch and device acknowledgements.
- */
+/** Maintains the shared VLS MQTT device-bus connection and publishes handler replies. */
 @Slf4j
 @Service
-public class ModelDispatchMqttService {
+public class VlsMqttBusService {
 
 	@Resource
 	private VlsMqttProperties mqttProperties;
@@ -40,10 +40,7 @@ public class ModelDispatchMqttService {
 	private VlsModelDispatchProperties dispatchProperties;
 
 	@Resource
-	private ModelDispatchTaskService taskService;
-
-	@Resource
-	private DeviceEventMqttHandler deviceEventHandler;
+	private VlsMqttInboundDispatcher inboundDispatcher;
 
 	private final Object clientMonitor = new Object();
 	private final ExecutorService inboundExecutor = Executors.newFixedThreadPool(2, runnable -> {
@@ -51,20 +48,32 @@ public class ModelDispatchMqttService {
 		thread.setDaemon(true);
 		return thread;
 	});
+	private final ScheduledExecutorService connectionExecutor =
+		Executors.newSingleThreadScheduledExecutor(runnable -> {
+			Thread thread = new Thread(runnable, "vls-mqtt-connect");
+			thread.setDaemon(true);
+			return thread;
+		});
 	private MqttClient client;
 
 	@PostConstruct
 	public void initialize() {
+		connectionExecutor.scheduleWithFixedDelay(
+			this::connectIfNecessary, 0, 10, TimeUnit.SECONDS);
+	}
+
+	void connectIfNecessary() {
 		try {
 			ensureConnected();
 		} catch (Exception ex) {
-			log.warn("MQTT acknowledgement subscriber is not connected yet: {}", ex.getMessage());
+			log.warn("VLS MQTT device bus connection failed, retrying in 10 seconds: {}:{} - {}",
+				mqttProperties.getHost(), mqttProperties.getPort(), ex.getMessage());
 		}
 	}
 
 	public void publish(String topic, Object payload) {
-		if (!isAllowedTopic(topic, false)) {
-			throw new IllegalArgumentException("Invalid MQTT model dispatch topic: " + topic);
+		if (!isAllowedTopic(topic)) {
+			throw new IllegalArgumentException("Invalid VLS MQTT device bus topic: " + topic);
 		}
 		try {
 			MqttClient connectedClient = ensureConnected();
@@ -74,7 +83,7 @@ public class ModelDispatchMqttService {
 			message.setRetained(false);
 			connectedClient.publish(topic, message);
 		} catch (Exception ex) {
-			throw new IllegalStateException("MQTT model dispatch failed: " + ex.getMessage(), ex);
+			throw new IllegalStateException("VLS MQTT publish failed: " + ex.getMessage(), ex);
 		}
 	}
 
@@ -90,7 +99,7 @@ public class ModelDispatchMqttService {
 			client = new MqttClient(brokerUrl, clientId, new MemoryPersistence());
 			client.setCallback(callback());
 			client.connect(connectOptions());
-			subscribeReplies(client);
+			subscribeDeviceBus(client);
 			return client;
 		}
 	}
@@ -101,16 +110,16 @@ public class ModelDispatchMqttService {
 			public void connectComplete(boolean reconnect, String serverURI) {
 				if (reconnect && client != null) {
 					try {
-						subscribeReplies(client);
+						subscribeDeviceBus(client);
 					} catch (Exception ex) {
-						log.error("Failed to restore MQTT model reply subscription", ex);
+						log.error("Failed to restore VLS MQTT device bus subscription", ex);
 					}
 				}
 			}
 
 			@Override
 			public void connectionLost(Throwable cause) {
-				log.warn("MQTT model dispatch connection lost: {}",
+				log.warn("VLS MQTT device bus connection lost: {}",
 					cause == null ? "unknown" : cause.getMessage());
 			}
 
@@ -122,75 +131,26 @@ public class ModelDispatchMqttService {
 
 			@Override
 			public void deliveryComplete(IMqttDeliveryToken token) {
-				// QoS delivery completion is not a hardware deployment acknowledgement.
+				// QoS delivery completion is not a hardware business acknowledgement.
 			}
 		};
 	}
 
 	void handleIncomingMessage(String topic, String payload) {
-		try {
-			JSONObject json = JSONUtil.parseObj(payload);
-			if (!VlsMqttProtocol.VERSION.equals(json.getStr("protocolVersion"))
-				|| !VlsMqttProtocol.DEVICE_TO_PLATFORM.equals(json.getStr("msgDir"))
-				|| !VlsMqttProtocol.AI_BIZ.equals(json.getStr("mainBizType"))) {
-				return;
-			}
-			String deviceId = json.getStr("deviceId");
-			if (!StringUtils.equals(topic, VlsMqttProtocol.deviceBusTopic(deviceId))) {
-				log.warn("Ignoring modelDeploy reply on another device bus: topic={}, deviceId={}",
-					topic, deviceId);
-				return;
-			}
-			String subBizType = json.getStr("subBizType");
-			if (VlsMqttProtocol.FACE_EVENT.equals(subBizType)
-				|| VlsMqttProtocol.STRUCT_EVENT.equals(subBizType)) {
-				JSONObject reply = deviceEventHandler.handle(json);
-				publish(topic, reply);
-				return;
-			}
-			if (!VlsMqttProtocol.MODEL_DEPLOY.equals(subBizType)) {
-				return;
-			}
-
-			JSONObject reply = json.getJSONObject("payload");
-			JSONObject bizData = reply == null ? null : reply.getJSONObject("bizData");
-			String sourceMsgId = reply == null ? null : reply.getStr("sourceMsgId");
-			String requestId = bizData == null ? null : bizData.getStr("requestId");
-			String status = bizData == null ? null : bizData.getStr("status");
-			String fileSha256 = bizData == null ? null : bizData.getStr("fileSha256");
-			String message = reply == null ? null : reply.getStr("msg");
-			String errDetail = reply == null ? null : reply.getStr("errDetail");
-			if (StringUtils.isNotBlank(errDetail) && !StringUtils.equals(message, errDetail)) {
-				message = StringUtils.defaultString(message) + ": " + errDetail;
-			}
-			if (StringUtils.isAnyBlank(sourceMsgId, requestId, deviceId, status)) {
-				log.warn("Ignoring incomplete model dispatch reply: topic={}", topic);
-				return;
-			}
-			if (!taskService.applyHardwareReply(
-				sourceMsgId, requestId, deviceId, status, fileSha256, message, payload)) {
-				log.warn("Ignoring unmatched model dispatch reply: sourceMsgId={}, requestId={}, deviceId={}",
-					sourceMsgId, requestId, deviceId);
-			}
-		} catch (Exception ex) {
-			log.error("Failed to process model dispatch reply: topic={}", topic, ex);
+		JSONObject reply = inboundDispatcher.dispatch(topic, payload);
+		if (reply != null) {
+			publish(topic, reply);
 		}
 	}
 
-	private void subscribeReplies(MqttClient mqttClient) throws Exception {
-		String topic = VlsMqttProtocol.BUS_TOPIC_FILTER;
-		mqttClient.subscribe(topic, qos());
-		log.info("Subscribed to VLS 2.2 device bus: {}", topic);
+	private void subscribeDeviceBus(MqttClient mqttClient) throws Exception {
+		mqttClient.subscribe(VlsMqttProtocol.BUS_TOPIC_FILTER, qos());
+		log.info("Subscribed to VLS 2.2 device bus: {}", VlsMqttProtocol.BUS_TOPIC_FILTER);
 	}
 
-	private boolean isAllowedTopic(String topic, boolean allowWildcard) {
-		if (StringUtils.isBlank(topic)) {
-			return false;
-		}
-		if (allowWildcard) {
-			return VlsMqttProtocol.BUS_TOPIC_FILTER.equals(topic);
-		}
-		return topic.matches("vlstream/v2\\.2/dev/[^/+#]+/bus");
+	private boolean isAllowedTopic(String topic) {
+		return StringUtils.isNotBlank(topic)
+			&& topic.matches("vlstream/v2\\.2/dev/[^/+#]+/bus");
 	}
 
 	private int qos() {
@@ -218,6 +178,7 @@ public class ModelDispatchMqttService {
 
 	@PreDestroy
 	public void destroy() {
+		connectionExecutor.shutdownNow();
 		inboundExecutor.shutdownNow();
 		synchronized (clientMonitor) {
 			closeClient();
@@ -234,7 +195,7 @@ public class ModelDispatchMqttService {
 			}
 			client.close();
 		} catch (Exception ex) {
-			log.debug("Failed to close MQTT model dispatch client", ex);
+			log.debug("Failed to close VLS MQTT device bus client", ex);
 		} finally {
 			client = null;
 		}

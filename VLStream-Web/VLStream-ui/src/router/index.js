@@ -36,6 +36,12 @@ const routes = [
         meta: { title: '设备管理', icon: '设备管理' }
       },
       {
+        path: '/vlstream/device',
+        name: 'VlstreamMqttDevice',
+        component: () => import('@/views/VideoAggregation/VlstreamMqttDevice.vue'),
+        meta: { title: 'VLStream 设备', parentMenu: 'video-aggregation' }
+      },
+      {
         path: '/isup/isupDevice',
         name: 'WvpIsupDevice',
         component: () => import('@/views/isup/lsupDevice/index.vue'),

@@ -1,6 +1,6 @@
 <template>
   <div id="rtcPlayer">
-    <video id='webRtcPlayerBox' controls autoplay style="text-align:left;">
+    <video id='webRtcPlayerBox' ref="videoElement" controls autoplay style="text-align:left;">
       Your browser is too old which doesn't support HTML5 video.
     </video>
   </div>
@@ -9,12 +9,12 @@
 <script>
 import {ZLMRTCClient} from './js/ZLMRTCClient';
 
-let webrtcPlayer = null;
 export default {
   name: 'rtcPlayer',
   data() {
     return {
-      timer: null
+      timer: null,
+      webrtcPlayer: null
     };
   },
   props: ['videoUrl', 'error', 'hasaudio'],
@@ -38,8 +38,8 @@ export default {
   methods: {
     play: function (url) {
       console.log(ZLMRTCClient)
-      webrtcPlayer = new ZLMRTCClient.Endpoint({
-        element: document.getElementById('webRtcPlayerBox'),// video 标签
+      this.webrtcPlayer = new ZLMRTCClient.Endpoint({
+        element: this.$refs.videoElement,// video 标签
         debug: true,// 是否打印日志
         zlmsdpUrl: url,//流地址
         simulecast: false,
@@ -49,30 +49,30 @@ export default {
         recvOnly: true,
         usedatachannel: false,
       })
-      webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_ICE_CANDIDATE_ERROR,(e)=>{// ICE 协商出错
+      this.webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_ICE_CANDIDATE_ERROR,(e)=>{// ICE 协商出错
         console.error('ICE 协商出错')
         this.eventcallbacK("ICE ERROR", "ICE 协商出错")
       });
 
-      webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_ON_REMOTE_STREAMS,(e)=>{//获取到了远端流，可以播放
+      this.webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_ON_REMOTE_STREAMS,(e)=>{//获取到了远端流，可以播放
         console.log('播放成功',e.streams)
         this.eventcallbacK("playing", "播放成功")
       });
 
-      webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_OFFER_ANWSER_EXCHANGE_FAILED,(e)=>{// offer anwser 交换失败
+      this.webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_OFFER_ANWSER_EXCHANGE_FAILED,(e)=>{// offer anwser 交换失败
         console.error('offer anwser 交换失败',e)
         this.eventcallbacK("OFFER ANSWER ERROR ", "offer anwser 交换失败")
         if (e.code ==-400 && e.msg=="流不存在"){
           console.log("流不存在")
           this.timer = setTimeout(()=>{
-            this.webrtcPlayer.close();
+            this.pause();
             this.play(url)
           }, 100)
 
         }
       });
 
-      webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_ON_LOCAL_STREAM,(s)=>{// 获取到了本地流
+      this.webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_ON_LOCAL_STREAM,(s)=>{// 获取到了本地流
 
         // document.getElementById('selfVideo').srcObject=s;
         this.eventcallbacK("LOCAL STREAM", "获取到了本地流")
@@ -80,9 +80,9 @@ export default {
 
     },
     pause: function () {
-      if (webrtcPlayer != null) {
-        webrtcPlayer.close();
-        webrtcPlayer = null;
+      if (this.webrtcPlayer != null) {
+        this.webrtcPlayer.close();
+        this.webrtcPlayer = null;
       }
 
     },
@@ -92,8 +92,9 @@ export default {
       console.log(message)
     }
   },
-  destroyed() {
+  beforeUnmount() {
     clearTimeout(this.timer);
+    this.pause();
   },
 }
 </script>
