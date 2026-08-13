@@ -1,11 +1,6 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="所属部门" prop="deptId">
-        <el-tree-select style="width: 202px" v-model="queryParams.deptId" :data="enabledDeptOptions"
-                        :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id"
-                        placeholder="请选择归属部门" check-strictly/>
-      </el-form-item>
       <el-form-item label="ip" prop="ip">
         <el-input
             v-model="queryParams.ip"
@@ -76,7 +71,6 @@
 
     <el-table v-loading="loading" :data="deviceList" @selection-change="handleSelectionChange" border>
       <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="所属部门" align="center" prop="deptName"/>
       <el-table-column label="ip" align="center" prop="ip"/>
       <el-table-column label="设备名称" align="center" prop="name"/>
       <el-table-column label="地址" align="center" prop="addressMap"/>
@@ -168,11 +162,6 @@
     <!-- 添加或修改大华设备对话框 -->
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
       <el-form ref="deviceRef" :model="form" :rules="rules" label-width="120px">
-        <el-form-item label="所属部门" prop="deptId">
-          <el-tree-select v-model="form.deptId" :data="enabledDeptOptions"
-                          :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id"
-                          placeholder="请选择归属部门" check-strictly/>
-        </el-form-item>
         <el-form-item label="名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入摄像头名称" maxlength="30" show-word-limit/>
         </el-form-item>
@@ -612,7 +601,6 @@ import {
   stopRealPlay,
   updateDevice
 } from "@/api/dahua/device";
-import {deptTreeSelect} from "@/api/wvp/systemUser";
 import {
   dahuaLogin, delRegisterDevice,
   getRegisterDeviceList, getTime,
@@ -647,9 +635,6 @@ const {proxy} = getCurrentInstance();
 const {play_type} = proxy.useDict('play_type');
 
 
-
-const deptOptions = ref(undefined);
-const enabledDeptOptions = ref(undefined);
 
 const channelList = ref([]);
 const passwordVisibility = ref({});
@@ -718,12 +703,10 @@ const data = reactive({
   queryParams: {
     pageNum: 1,
     pageSize: 10,
-    deptId: null,
     ip: null,
     name: null,
   },
   rules: {
-    deptId: [{required: true, message: "请选择所属部门", trigger: 'blur'}],
     ip: [
       {required: true, message: "ip不能为空", trigger: "blur"}
     ],
@@ -878,7 +861,6 @@ function cancel() {
 function reset() {
   form.value = {
     id: null,
-    deptId: null,
     deviceId: null,
     ip: null,
     name: null,
@@ -1022,28 +1004,6 @@ function handleExport() {
     ...queryParams.value
   }, `device_${new Date().getTime()}.xlsx`)
 }
-
-/** 查询部门下拉树结构 */
-function getDeptTree() {
-  deptTreeSelect().then(response => {
-    deptOptions.value = response.data;
-    enabledDeptOptions.value = filterDisabledDept(JSON.parse(JSON.stringify(response.data)));
-  });
-};
-
-/** 过滤禁用的部门 */
-function filterDisabledDept(deptList) {
-  return deptList.filter(dept => {
-    if (dept.disabled) {
-      return false;
-    }
-    if (dept.children && dept.children.length) {
-      dept.children = filterDisabledDept(dept.children);
-    }
-    return true;
-  });
-};
-
 
 function login() {
   proxy.$refs["deviceRef"].validate(valid => {
@@ -1248,7 +1208,6 @@ function handleRegisterDeviceSelectionChange(selection) {
   multipleRegisterDevice.value = !selection.length;
 }
 
-getDeptTree();
 getList();
 </script>
 

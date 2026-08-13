@@ -98,12 +98,3 @@ export function ptzCtrlFocus(id,controSpeed) {
     }
   })
 }
-
-// 获取所有数字通道状态
-export function getAllDigitalChannelStatus(id) {
-  return request({
-    url: '/isup/lsupDevice/getAllDigitalChannelStatus/' + id,
-    method: 'get',
-  })
-}
-

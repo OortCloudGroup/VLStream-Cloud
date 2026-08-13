@@ -1,9 +1,6 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="所属部门" prop="deptId">
-        <el-tree-select style="width: 202px" v-model="queryParams.deptId" :data="enabledDeptOptions" :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id" placeholder="请选择归属部门" check-strictly />
-      </el-form-item>
       <el-form-item label="设备名称" prop="name">
         <el-input
             v-model="queryParams.name"
@@ -72,7 +69,6 @@
     <el-table v-loading="loading" :data="deviceList" border @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column type="index" label="编号" width="80" align="center"/>
-      <el-table-column label="所属部门" align="center" prop="deptName"/>
       <el-table-column prop="name" label="名称" width="100" align="center"/>
       <el-table-column prop="deviceId" label="设备编号" align="center" width="150">
       </el-table-column>
@@ -201,9 +197,6 @@
         <el-form-item label="设备编号" prop="deviceId">
           <el-input v-model="form.deviceId" disabled></el-input>
         </el-form-item>
-        <el-form-item label="所属部门" prop="deptId">
-          <el-tree-select v-model="form.deptId" :data="enabledDeptOptions" :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id" placeholder="请选择归属部门" check-strictly />
-        </el-form-item>
         <el-form-item label="设备名称" prop="name">
           <el-input v-model="form.name" clearable></el-input>
         </el-form-item>
@@ -308,7 +301,6 @@ import router from "@/router";
 import {guardApi} from "../../../api/wvp/control.js";
 import {ElMessage} from 'element-plus'
 import {configDownloadApi} from "../../../api/wvp/config.js";
-import {deptTreeSelect} from "@/api/wvp/systemUser";
 
 const {proxy} = getCurrentInstance();
 
@@ -324,9 +316,6 @@ const percentage = ref(0)
 
 const showDialog = ref(false);
 const showProgress = ref(false);
-
-const deptOptions = ref(undefined);
-const enabledDeptOptions = ref(undefined);
 
 const ids = ref([]);
 const multiple = ref(true);
@@ -358,7 +347,6 @@ const data = reactive({
   },
   rules: {
     deviceId: [{required: true, message: "请输入设备编号", trigger: "blur"}],
-    deptId: [{ required: true, message: "请选择所属部门", trigger: 'blur' }],
   }
 });
 
@@ -373,27 +361,6 @@ function getList() {
     loading.value = false;
   });
 }
-
-/** 查询部门下拉树结构 */
-function getDeptTree() {
-  deptTreeSelect().then(response => {
-    deptOptions.value = response.data;
-    enabledDeptOptions.value = filterDisabledDept(JSON.parse(JSON.stringify(response.data)));
-  });
-};
-
-/** 过滤禁用的部门 */
-function filterDisabledDept(deptList) {
-  return deptList.filter(dept => {
-    if (dept.disabled) {
-      return false;
-    }
-    if (dept.children && dept.children.length) {
-      dept.children = filterDisabledDept(dept.children);
-    }
-    return true;
-  });
-};
 
 /** 取消按钮 */
 function cancel() {
@@ -685,7 +652,6 @@ const handleBatchDelete = () => {
   });
 }
 
-getDeptTree();
 getList();
 </script>
 

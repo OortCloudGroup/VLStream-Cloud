@@ -32,15 +32,16 @@ WVP 后端通过环境变量配置 VLStream 校验接口：
 ```ini
 # WVP 与 VLStream 同机部署示例
 VLSTREAM_VERIFY_TOKEN=http://127.0.0.1:8080/blade-system/user/info
-VLSTREAM_DEFAULT_ROLE_ID=2
+# 可选；留空时五协议设备不写入 WVP dept_id
+# VLSTREAM_DEFAULT_DEPT_ID=100
 
 # 经内部网关访问示例；应使用服务端可达地址，不要使用浏览器地址
 # VLSTREAM_VERIFY_TOKEN=http://gateway:21410/bus/vls-server/blade-system/user/info
 ```
 
-`VLSTREAM_VERIFY_TOKEN` 只能指向可信的 VLStream 服务。WVP 会使用 `Authorization: Bearer <token>`、`blade-auth` 和 `AccessToken` 三种兼容请求头调用该接口。校验失败或服务不可用时请求直接失败，不会降级为匿名访问。
+`VLSTREAM_VERIFY_TOKEN` 只能指向可信的 VLStream 服务。WVP 仅对携带 `X-WVP-Auth-Source: vlstream` 的请求使用该地址，并使用 `Authorization: Bearer <token>`、`blade-auth`、`AccessToken` 和 `accesstoken` 兼容请求头调用接口。校验失败、未配置地址或服务不可用时请求直接失败，不会降级为匿名访问；不带该标记的原 WVP 请求仍走原有平台 SSO。
 
-VLStream 用户首次访问时，WVP 默认为其创建本地映射用户并绑定 `VLSTREAM_DEFAULT_ROLE_ID`（默认普通角色 `2`），随后始终从 WVP 用户角色表加载真实权限。不要把该值配置为超级管理员角色 `1`；如需更细权限，应在 WVP 中创建五协议专用角色并将其 ID 配置到这里。
+VLStream 联邦用户不写入 WVP 的 `sys_user`、`sys_user_role` 或 `sys_role` 表。校验成功后，WVP 只在当前请求上下文中构造临时用户和全量协议数据范围，并允许 `isup:*`、`rtsp:*`、`onvif:*`、`dahua:*`、`wvp:*`、`gb:*` 权限；系统管理、监控、工具和部门树接口不会授予。五协议页面不再请求 WVP 部门树，也不要求填写 WVP `deptId`。
 
 ## Windows / Linux 边界
 

@@ -1,11 +1,6 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="所属部门" prop="deptId">
-        <el-tree-select style="width: 202px" v-model="queryParams.deptId" :data="enabledDeptOptions"
-                        :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id"
-                        placeholder="请选择归属部门" check-strictly/>
-      </el-form-item>
       <el-form-item label="设备ID" prop="deviceId">
         <el-input
             v-model="queryParams.deviceId"
@@ -71,7 +66,6 @@
 
     <el-table v-loading="loading" :data="lsupDeviceList" @selection-change="handleSelectionChange" border>
       <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="所属部门" align="center" prop="deptName"/>
       <el-table-column label="设备ID" align="center" prop="deviceId"/>
       <el-table-column label="设备名称" align="center" prop="name"/>
       <el-table-column label="地址" align="center" prop="addressMap"/>
@@ -153,11 +147,6 @@
         </el-form-item>
         <el-form-item label="IP地址" prop="ipAddress">
           <el-input v-model="form.ipAddress" disabled placeholder="请输入设备的 IP 地址"/>
-        </el-form-item>
-        <el-form-item label="所属部门" prop="deptId">
-          <el-tree-select v-model="form.deptId" :data="enabledDeptOptions"
-                          :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id"
-                          placeholder="请选择归属部门" check-strictly/>
         </el-form-item>
         <el-form-item label="设备名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入设备名称"/>
@@ -407,14 +396,12 @@
 import {checkPermi} from "@/utils/wvpPermission";
 import {delLsupDevice, getLsupDevice, start as startSDK, stopRealPlay, updateLsupDevice} from "@/api/isup/lsupDevice";
 import {
-  getAllDigitalChannelStatus,
   listIsupDevice,
   ptzCtrlEnd,
   ptzCtrlFocus,
   ptzCtrlStart
 } from "../../../api/isup/lsupDevice.js";
 import Hikvision from "@/components/Hikvision/index.vue";
-import {deptTreeSelect} from "@/api/wvp/systemUser";
 import MapGaoDe from "@/components/MapGaoDe/index.vue";
 
 import Jessibuca from "@/components/jessibuca/index.vue";
@@ -453,9 +440,6 @@ const controSpeed = ref(5);
 
 const controSpeedFocus = ref(0);
 
-const deptOptions = ref(undefined);
-const enabledDeptOptions = ref(undefined);
-
 const position = ref(null);
 const MapContainer = ref(null);
 const toponym = ref('');
@@ -481,7 +465,6 @@ const data = reactive({
   queryParams: {
     pageNum: 1,
     pageSize: 10,
-    deptId: null,
     deviceId: null,
     ipAddress: null,
     deviceSerial: null,
@@ -501,7 +484,6 @@ const data = reactive({
     channel: [
       {required: true, message: "请选择通道", trigger: "change"}
     ],
-    deptId: [{required: true, message: "请选择所属部门", trigger: 'blur'}],
     streamId: [
       {required: true, message: "流id不能为空", trigger: "blur"}
     ],
@@ -585,27 +567,6 @@ function getList() {
   });
 }
 
-/** 查询部门下拉树结构 */
-function getDeptTree() {
-  deptTreeSelect().then(response => {
-    deptOptions.value = response.data;
-    enabledDeptOptions.value = filterDisabledDept(JSON.parse(JSON.stringify(response.data)));
-  });
-};
-
-/** 过滤禁用的部门 */
-function filterDisabledDept(deptList) {
-  return deptList.filter(dept => {
-    if (dept.disabled) {
-      return false;
-    }
-    if (dept.children && dept.children.length) {
-      dept.children = filterDisabledDept(dept.children);
-    }
-    return true;
-  });
-};
-
 const togglePasswordVisibility = (id) => {
   passwordVisibility.value[id] = !passwordVisibility.value[id];
 };
@@ -620,7 +581,6 @@ function cancel() {
 function reset() {
   form.value = {
     id: null,
-    deptId: null,
     deviceId: null,
     name: null,
     channel: null,
@@ -663,7 +623,6 @@ function reset() {
 function handleQuery() {
   queryParams.value.pageNum = 1;
   getList();
-  getAllDigitalChannelStatusFun();
 }
 
 /** 重置按钮操作 */
@@ -809,13 +768,6 @@ function focusCamera() {
   ptzCtrlFocus(ptzCameraQueryParams.value.id, controSpeedFocus.value)
 }
 
-const getAllDigitalChannelStatusFun = () => {
-  getAllDigitalChannelStatus(1).then((res) => {
-    console.log(res)
-  })
-}
-
-getDeptTree();
 getList();
 </script>
 

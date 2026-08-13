@@ -3,11 +3,6 @@
     <el-alert title="ONVIF协议 16的设备可以使用Digest/WS,2.20版本使用WS" type="success" style="margin-bottom: 10px;" />
     <el-card>
       <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-        <el-form-item label="所属部门" prop="deptId">
-          <el-tree-select style="width: 202px" v-model="queryParams.deptId" :data="enabledDeptOptions"
-                          :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id"
-                          placeholder="请选择归属部门" check-strictly/>
-        </el-form-item>
         <el-form-item label="ip" prop="ip">
           <el-input
               v-model="queryParams.ip"
@@ -88,7 +83,6 @@
 
       <el-table v-loading="loading" :data="deviceList" @selection-change="handleSelectionChange" border>
         <el-table-column type="selection" width="55" align="center"/>
-        <el-table-column label="所属部门" align="center" prop="deptName"/>
         <el-table-column label="名称" align="center" prop="name"/>
         <el-table-column label="ip" align="center" prop="ip"/>
         <el-table-column label="地址" align="center" prop="addressMap"/>
@@ -166,11 +160,6 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="所属部门" prop="deptId">
-              <el-tree-select v-model="form.deptId" :data="enabledDeptOptions"
-                              :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id"
-                              placeholder="请选择归属部门" check-strictly/>
-            </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="设备名称" prop="userName">
@@ -447,11 +436,6 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form ref="probeRef" :model="probeForm" :rules="rules" label-width="120px">
-            <el-form-item label="所属部门" prop="deptId">
-              <el-tree-select v-model="probeForm.deptId" :data="enabledDeptOptions"
-                              :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id"
-                              placeholder="请选择归属部门" check-strictly/>
-            </el-form-item>
             <el-form-item label="设备名称" prop="name">
               <el-input v-model="probeForm.name" placeholder="请输入设备名称"/>
             </el-form-item>
@@ -590,11 +574,6 @@
             <el-form ref="resultRef" :model="resultForm" :rules="rulesResult2" label-width="120px">
               <el-row :gutter="20">
                 <el-col :span="12">
-                  <el-form-item label="所属部门" prop="deptId">
-                  <el-tree-select v-model="resultForm.deptId" :data="enabledDeptOptions"
-                                  :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id"
-                                  placeholder="请选择归属部门" check-strictly/>
-                  </el-form-item>
                   <el-form-item label="设备名称" prop="name">
                     <el-input v-model="resultForm.name" placeholder="请输入设备名称"/>
                   </el-form-item>
@@ -696,7 +675,6 @@ import {
 import Hikvision from "@/components/Hikvision/index.vue";
 import {ref} from "vue";
 import {probe} from "../../../api/onvif/addCamera.js";
-import {deptTreeSelect} from "@/api/wvp/systemUser";
 import MapGaoDe from "@/components/MapGaoDe/index.vue";
 import {ElLoading} from 'element-plus';
 import Jessibuca from "@/components/jessibuca/index.vue";
@@ -735,8 +713,6 @@ const video = ref(null);
 const rtspUrl = ref({});
 const dahuaPlayer = ref(null);
 const optionsPresetsToken = ref([]);
-const deptOptions = ref(undefined);
-const enabledDeptOptions = ref(undefined);
 const rtcUrl = ref("");
 const flvUrl = ref("");
 const wsUrl = ref('');
@@ -751,7 +727,6 @@ const data = reactive({
   queryParams: {
     pageNum: 1,
     pageSize: 10,
-    deptId: null,
     ip: null,
     userName: null,
     password: null,
@@ -766,7 +741,6 @@ const data = reactive({
     ip: [{required: true, message: "ip不能为空", trigger: "blur"}],
     userName: [{required: true, message: "用户名不能为空", trigger: "blur"}],
     password: [{required: true, message: "密码不能为空", trigger: "blur"}],
-    deptId: [{required: true, message: "请选择所属部门", trigger: 'blur'}],
     name: [{required: true, message: "名称不能为空", trigger: 'blur'}],
     url: [{required: true, message: "直播流地址不能为空", trigger: "blur"}],
     streamId: [
@@ -795,7 +769,6 @@ const data = reactive({
     ip: [{required: true, message: "ip不能为空", trigger: "blur"}],
     userName: [{required: true, message: "用户名不能为空", trigger: "blur"}],
     password: [{required: true, message: "密码不能为空", trigger: "blur"}],
-    deptId: [{required: true, message: "请选择所属部门", trigger: 'blur'}],
     name: [{required: true, message: "名称不能为空", trigger: 'blur'}],
     firm: [{required: true, message: "设备厂商不能为空", trigger: "blur"}],
     model: [{required: true, message: "设备型号不能为空", trigger: "blur"}],
@@ -894,27 +867,6 @@ const updateDialogMap = (value) => {
   })
 }
 
-/** 查询部门下拉树结构 */
-function getDeptTree() {
-  deptTreeSelect().then(response => {
-    deptOptions.value = response.data;
-    enabledDeptOptions.value = filterDisabledDept(JSON.parse(JSON.stringify(response.data)));
-  });
-};
-
-/** 过滤禁用的部门 */
-function filterDisabledDept(deptList) {
-  return deptList.filter(dept => {
-    if (dept.disabled) {
-      return false;
-    }
-    if (dept.children && dept.children.length) {
-      dept.children = filterDisabledDept(dept.children);
-    }
-    return true;
-  });
-};
-
 const submitDetectionForm = () => {
   proxy.$refs["probeRef"].validate(async valid => {
     if (valid) {
@@ -939,7 +891,6 @@ const submitResultForm = () => {
     if (valid) {
       const data = {
         id: null,
-        deptId: probeForm.value.deptId,
         name: probeForm.value.name,
         ip: probeForm.value.ip,
         userName: probeForm.value.username,
@@ -969,7 +920,6 @@ const submitResultForm2 = () => {
     if (valid) {
       const data = {
         id: null,
-        deptId: resultForm.value.deptId,
         name: resultForm.value.name,
         ip: resultForm.value.ip,
         userName: resultForm.value.username,
@@ -1138,7 +1088,6 @@ function cancel() {
 function reset() {
   form.value = {
     id: null,
-    deptId: null,
     ip: null,
     userName: null,
     password: null,
@@ -1332,7 +1281,6 @@ function onvifPtzCtrlEndFun() {
   }, 200)
 }
 
-getDeptTree();
 getList();
 </script>
 
