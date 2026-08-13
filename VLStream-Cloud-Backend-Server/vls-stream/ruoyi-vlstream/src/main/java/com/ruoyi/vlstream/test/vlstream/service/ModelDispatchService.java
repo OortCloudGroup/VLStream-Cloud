@@ -47,7 +47,7 @@ public class ModelDispatchService {
 	private ModelDispatchTaskService taskService;
 
 	@Resource
-	private ModelDispatchMqttService mqttService;
+	private VlsMqttBusService mqttService;
 
 	@Resource
 	private ModelDownloadSignatureService signatureService;

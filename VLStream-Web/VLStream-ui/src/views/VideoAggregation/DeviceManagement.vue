@@ -309,9 +309,17 @@
 <!--                <div v-if="currentVideoDevice.playMode">播放模式: {{ getPlayModeText(currentVideoDevice.playMode) }}</div>-->
 <!--              </div>-->
 
-              <!-- OPlayer 统一播放器 -->
+              <!-- RTSP 统一经过 ZLMediaKit 转为 WebRTC -->
+              <RtcPlayer
+                v-if="zlmWebrtcUrl"
+                :key="zlmWebrtcUrl"
+                :video-url="zlmWebrtcUrl"
+                class="zlm-rtc-player"
+              />
+
+              <!-- 非RTSP地址继续使用 OPlayer -->
               <div
-                v-if="currentVideoDevice.streamUrl"
+                v-else-if="currentVideoDevice.streamUrl"
                 ref="oplayerContainer"
                 class="oplayer-container"
               />
@@ -485,12 +493,14 @@ import Hls from 'hls.js'
 import PTZControl from '@/components/PTZControl.vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
 import RtspPlayer from '@/components/RtspPlayer.vue'
+import RtcPlayer from '@/components/rtcPlayer/index.vue'
 import DeviceEditForm from './DeviceEditForm.vue'
 
 // 导入API
 import {
   batchDeleteDevices,
   createDevice,
+  createDevicePreview,
   deleteDevice,
   getDeviceById,
   getDeviceList,
@@ -619,6 +629,7 @@ const cameraRtcContainer = ref(null)
 const cameraRtcPlayer = shallowRef(null)
 const oplayerContainer = ref(null)
 const oplayerInstance = shallowRef(null)
+const zlmWebrtcUrl = ref('')
 let activeOPlayerTask = null
 const converting = ref(false)
 
@@ -1101,18 +1112,7 @@ const createDeviceOPlayerOptions = async (streamUrl) => {
   }
 
   if (streamType === 'rtsp') {
-    await ensureWebRTCBackendConfig()
-    playerConfig.rtspServerURL = WEBRTC_SERVER_BASE_URL
-    return {
-      playerConfig,
-      playConfig: {
-        type: 'rtsp',
-        src: streamUrl,
-        transport: 'tcp',
-        timeout: 60,
-        preferredMime: 'video/H264'
-      }
-    }
+    throw new Error('RTSP视频流必须通过ZLMediaKit预览接口播放')
   }
 
   const playTypeMap = { flv: 'flv', hls: 'm3u8', video: 'mp4', http: 'mp4' }
@@ -1134,6 +1134,7 @@ const handlePlay = async (row) => {
   }
 
   cleanupDeviceOPlayer()
+  zlmWebrtcUrl.value = ''
   const playbackTask = Symbol('device-oplayer')
   activeOPlayerTask = playbackTask
   currentVideoDevice.value = deviceForPlay
@@ -1147,6 +1148,23 @@ const handlePlay = async (row) => {
   })
 
   try {
+    if (getStreamType(deviceForPlay.streamUrl) === 'rtsp') {
+      const response = await createDevicePreview(deviceForPlay.id)
+      const preview = response?.data ?? response
+      const webrtcUrl = preview?.webrtcUrl
+      if (!webrtcUrl) throw new Error('后端未返回ZLM WebRTC播放地址')
+      if (activeOPlayerTask !== playbackTask) return
+
+      zlmWebrtcUrl.value = webrtcUrl
+      currentVideoDevice.value.playMode = 'zlm-webrtc'
+      await nextTick()
+      playStatus.value.isConnecting = false
+      playStatus.value.isPlaying = true
+      playStatus.value.hasError = false
+      playStatus.value.connectionState = 'connected'
+      return
+    }
+
     await Promise.all([ensureOPlayer(), nextTick()])
     const { playerConfig, playConfig } = await createDeviceOPlayerOptions(deviceForPlay.streamUrl)
     const container = oplayerContainer.value
@@ -1690,6 +1708,7 @@ const isCameraRtcDevice = (device) => {
 
 
 const handleVideoClose = () => {
+  zlmWebrtcUrl.value = ''
   // 清理HLS播放器
   if (simpleHlsPlayer.value && simpleHlsPlayer.value.hlsInstance) {
     simpleHlsPlayer.value.hlsInstance.destroy()
@@ -2022,6 +2041,7 @@ const cleanupWebRTCStream = async () => {
 const getPlayModeTagType = (playMode) => {
   switch (playMode) {
     case 'webrtc':
+    case 'zlm-webrtc':
       return 'success'
     case 'hls':
       return 'warning'
@@ -2041,6 +2061,8 @@ const getPlayModeText = (playMode) => {
   switch (playMode) {
     case 'webrtc':
       return 'WebRTC'
+    case 'zlm-webrtc':
+      return 'ZLM WebRTC'
     case 'hls':
       return 'HLS'
     case 'native':

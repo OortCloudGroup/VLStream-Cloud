@@ -36,6 +36,144 @@ const routes = [
         meta: { title: '设备管理', icon: '设备管理' }
       },
       {
+        path: '/vlstream/device',
+        name: 'VlstreamMqttDevice',
+        component: () => import('@/views/VideoAggregation/VlstreamMqttDevice.vue'),
+        meta: { title: 'VLStream 设备', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/isup/isupDevice',
+        name: 'WvpIsupDevice',
+        component: () => import('@/views/isup/lsupDevice/index.vue'),
+        meta: { title: 'ISUP 设备', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/rtsp/rtspDevice',
+        name: 'WvpRtspDevice',
+        component: () => import('@/views/rtsp/RtspDevice/index.vue'),
+        meta: { title: 'RTSP 设备', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/onvif/cameraManage',
+        name: 'WvpOnvifDevice',
+        component: () => import('@/views/onvif/cameraManage/index.vue'),
+        meta: { title: 'ONVIF 设备', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/dahua/dahuaDevice',
+        name: 'WvpDahuaDevice',
+        component: () => import('@/views/dahua/device/index.vue'),
+        meta: { title: '大华设备', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/gbmanger/device',
+        name: 'WvpGbDevice',
+        component: () => import('@/views/wvp/device/index.vue'),
+        meta: { title: '国标设备', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/gbmanger/cloudRecord',
+        name: 'WvpCloudRecord',
+        component: () => import('@/views/wvp/cloudRecord/index.vue'),
+        meta: { title: '云端录像', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/gbmanger/streamPush',
+        name: 'WvpStreamPush',
+        component: () => import('@/views/wvp/streamPush/index.vue'),
+        meta: { title: '推流列表', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/gbmanger/streamProxy',
+        name: 'WvpStreamProxy',
+        component: () => import('@/views/wvp/streamProxy/index.vue'),
+        meta: { title: '拉流列表', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/gbmanger/platform',
+        name: 'WvpPlatform',
+        component: () => import('@/views/wvp/platform/index.vue'),
+        meta: { title: '国标级联', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/gbmanger/recordPlan',
+        name: 'WvpRecordPlan',
+        component: () => import('@/views/wvp/recordPlan/index.vue'),
+        meta: { title: '录像计划', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/gbmanger/administrativeGrouping',
+        name: 'WvpAdministrativeGrouping',
+        component: () => import('@/views/wvp/administrativeGrouping/index.vue'),
+        meta: { title: '行政分组', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/gbmanger/thoroughfare',
+        name: 'WvpThoroughfare',
+        component: () => import('@/views/wvp/thoroughfare/index.vue'),
+        meta: { title: '通道管理', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/gbmanger/alarm',
+        name: 'WvpAlarm',
+        component: () => import('@/views/wvp/alarm/index.vue'),
+        meta: { title: '报警管理', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/gbmanger/node',
+        name: 'WvpMediaServer',
+        component: () => import('@/views/wvp/mediaServer/index.vue'),
+        meta: { title: '节点管理', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/gbmanger/wvpLive',
+        name: 'WvpLive',
+        component: () => import('@/views/wvp/live/index.vue'),
+        meta: { title: '分屏监控', parentMenu: 'video-aggregation' }
+      },
+      {
+        path: '/channel/list/index/:deviceId/:parentChannelId?',
+        name: 'WvpChannelList',
+        component: () => import('@/views/wvp/channel/index.vue'),
+        meta: { title: '通道列表', hideInMenu: true, parentMenu: 'video-aggregation', parentPath: '/gbmanger/device' }
+      },
+      {
+        path: '/channel/gbRecordDetail/index/:deviceId/:channelId',
+        name: 'WvpGbRecordDetail',
+        component: () => import('@/views/wvp/gbRecordDetail/index.vue'),
+        meta: { title: '设备录像', hideInMenu: true, parentMenu: 'video-aggregation', parentPath: '/gbmanger/device' }
+      },
+      {
+        path: '/channel/cloudRecordDetail/index',
+        name: 'WvpCloudRecordDetail',
+        component: () => import('@/views/wvp/cloudRecordDetail/index.vue'),
+        meta: { title: '云端录像', hideInMenu: true, parentMenu: 'video-aggregation', parentPath: '/gbmanger/cloudRecord' }
+      },
+      {
+        path: '/platform/chooseChannel/index/:platformId',
+        name: 'WvpChooseChannel',
+        component: () => import('@/views/wvp/platform/chooseChannel.vue'),
+        meta: { title: '通道共享', hideInMenu: true, parentMenu: 'video-aggregation', parentPath: '/gbmanger/platform' }
+      },
+      {
+        path: '/recordPlan/associatedChannel/index/:id',
+        name: 'WvpAssociatedChannel',
+        component: () => import('@/views/wvp/recordPlan/associatedChannel.vue'),
+        meta: { title: '关联通道', hideInMenu: true, parentMenu: 'video-aggregation', parentPath: '/gbmanger/recordPlan' }
+      },
+      {
+        path: '/gbmanger/node/addMediaServer/index',
+        name: 'WvpAddMediaServer',
+        component: () => import('@/views/wvp/mediaServer/addMediaServer.vue'),
+        meta: { title: '新增节点', hideInMenu: true, parentMenu: 'video-aggregation', parentPath: '/gbmanger/node' }
+      },
+      {
+        path: '/gbmanger/node/updateMediaServer/index',
+        name: 'WvpUpdateMediaServer',
+        component: () => import('@/views/wvp/mediaServer/updateMediaServer.vue'),
+        meta: { title: '编辑节点', hideInMenu: true, parentMenu: 'video-aggregation', parentPath: '/gbmanger/node' }
+      },
+      {
         path: '/device-edit',
         name: 'DeviceEdit',
         component: () => import('@/views/VideoAggregation/DeviceEditPage.vue'),

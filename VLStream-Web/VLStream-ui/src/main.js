@@ -17,6 +17,9 @@ import basicContainer from './components/basic-container/main.vue';
 // 与 apaas-web events 项目保持一致的样式
 import '@/assets/style/index.scss'
 import 'virtual:svg-icons-register'
+import '@/assets/wvp/iconfont.css'
+import '@/assets/wvp/compat.scss'
+import { installWvpCompat } from '@/utils/wvpCompat'
 
 window.$crudCommon = crudCommon;
 
@@ -45,6 +48,10 @@ import Directive from '@/directive/index'
 import commonComponents from '@/components/index.js'
 import indexVform from '@/components/index_vform.js'
 import Draggable from 'vuedraggable'
+import Pagination from '@/components/Pagination/index.vue'
+import RightToolbar from '@/components/RightToolbar/index.vue'
+import DictTag from '@/components/DictTag/index.vue'
+import SvgIcon from '@/components/SvgIcon/index.vue'
 
 app.component('AiIconRemark', aiIconRemark)
 app.component('TableSelf', TableSelf)
@@ -55,6 +62,11 @@ app.use(Directive)
 app.use(commonComponents)
 app.use(indexVform)
 app.component('Draggable', Draggable)
+app.component('Pagination', Pagination)
+app.component('RightToolbar', RightToolbar)
+app.component('DictTag', DictTag)
+app.component('SvgIcon', SvgIcon)
+installWvpCompat(app)
 
 app.use(ElementPlus, {
   locale: zhCn,

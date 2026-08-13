@@ -234,3 +234,14 @@ export function dispatchAlgorithmToDevices(algorithmId, deviceIdsStr, modelType 
     params: { deviceIds: deviceIdsStr, modelType }
   })
 }
+
+/**
+ * 通过 VLS 后端创建 ZLMediaKit 实时预览。
+ * 原始 RTSP/RTMP 地址由后端从设备记录读取，不传给浏览器媒体服务。
+ */
+export function createDevicePreview(id) {
+  return request({
+    url: `/vlsDeviceInfo/${id}/preview`,
+    method: 'post'
+  })
+}

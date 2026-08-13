@@ -3,7 +3,13 @@
     <el-sub-menu v-if="item.children && item.children.length > 0" :index="item.path">
       <template #title>
         <el-icon>
-          <component :is="getMenuIcon(item.meta?.icon)" />
+          <img
+            v-if="isSvgIcon(getMenuIcon(item.meta?.icon))"
+            :src="getMenuIcon(item.meta?.icon)"
+            class="menu-svg-icon"
+            alt=""
+          />
+          <component v-else :is="getMenuIcon(item.meta?.icon)" />
         </el-icon>
         <span>{{ item.meta?.title }}</span>
       </template>
@@ -15,7 +21,13 @@
 
     <el-menu-item v-else :index="item.path">
       <el-icon>
-        <component :is="getMenuIcon(item.meta?.icon)" />
+        <img
+          v-if="isSvgIcon(getMenuIcon(item.meta?.icon))"
+          :src="getMenuIcon(item.meta?.icon)"
+          class="menu-svg-icon"
+          alt=""
+        />
+        <component v-else :is="getMenuIcon(item.meta?.icon)" />
       </el-icon>
       <template #title>
         <span>{{ item.meta?.title }}</span>
@@ -35,4 +47,14 @@ defineProps({
     required: true
   }
 })
+
+const isSvgIcon = (icon) => typeof icon === 'string'
 </script>
+
+<style scoped>
+.menu-svg-icon {
+  width: 1em;
+  height: 1em;
+  object-fit: contain;
+}
+</style>
