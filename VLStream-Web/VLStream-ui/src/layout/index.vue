@@ -119,6 +119,11 @@ import {
 } from '@element-plus/icons-vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
 import SidebarMenuNode from './SidebarMenuNode.vue'
+import wvpHaikangIcon from '@/assets/wvp/icons/protocol/haikang.svg'
+import wvpRtspIcon from '@/assets/wvp/icons/protocol/rtsp.svg'
+import wvpOnvifIcon from '@/assets/wvp/icons/protocol/onvif.svg'
+import wvpGbIcon from '@/assets/wvp/icons/protocol/gb.svg'
+import wvpDahuaIcon from '@/assets/wvp/icons/protocol/dahua.svg'
 
 const route = useRoute()
 const router = useRouter()
@@ -399,31 +404,13 @@ const menuRoutesMap = {
       path: 'device-management-menu',
       meta: { title: '设备管理', icon: '设备管理' },
       children: [
-        { path: '/device-management', meta: { title: '设备总览', icon: '设备管理' } },
-        {
-          path: 'isup-protocol-menu',
-          meta: { title: 'ISUP', icon: '设备管理' },
-          children: [
-            { path: '/isup/isupDevice', meta: { title: '设备管理', icon: '设备管理' } }
-          ]
-        },
-        {
-          path: 'rtsp-protocol-menu',
-          meta: { title: 'RTSP', icon: '设备管理' },
-          children: [
-            { path: '/rtsp/rtspDevice', meta: { title: '设备列表', icon: '设备管理' } }
-          ]
-        },
-        {
-          path: 'onvif-protocol-menu',
-          meta: { title: 'ONVIF', icon: '设备管理' },
-          children: [
-            { path: '/onvif/cameraManage', meta: { title: '设备管理', icon: '设备管理' } }
-          ]
-        },
+        { path: '/vlstream/device', meta: { title: 'VLStream', icon: '设备管理' } },
+        { path: '/isup/isupDevice', meta: { title: 'ISUP', icon: 'wvp-haikang' } },
+        { path: '/rtsp/rtspDevice', meta: { title: 'RTSP', icon: 'wvp-rtsp' } },
+        { path: '/onvif/cameraManage', meta: { title: 'ONVIF', icon: 'wvp-onvif' } },
         {
           path: 'gb-protocol-menu',
-          meta: { title: '国标', icon: '设备管理' },
+          meta: { title: '国标', icon: 'wvp-gb' },
           children: [
             { path: '/gbmanger/device', meta: { title: '国标设备', icon: '设备管理' } },
             { path: '/gbmanger/cloudRecord', meta: { title: '云端录像', icon: '视频回放' } },
@@ -438,13 +425,8 @@ const menuRoutesMap = {
             { path: '/gbmanger/wvpLive', meta: { title: '分屏监控', icon: '视频广场' } }
           ]
         },
-        {
-          path: 'dahua-protocol-menu',
-          meta: { title: '大华', icon: '设备管理' },
-          children: [
-            { path: '/dahua/dahuaDevice', meta: { title: '设备管理', icon: '设备管理' } }
-          ]
-        }
+        { path: '/dahua/dahuaDevice', meta: { title: '大华', icon: 'wvp-dahua' } },
+        { path: '/device-management', meta: { title: '自定义', icon: '设备管理' } }
       ]
     },
     // { path: '/camera-settings', meta: { title: '设置摄像机', icon: '摄像机设置' } },
@@ -888,7 +870,12 @@ const getMenuIcon = (iconName) => {
     '部门管理': OfficeBuilding,
     '岗位管理': Briefcase,
     '数据权限': Key,
-    '接口权限': Lock
+    '接口权限': Lock,
+    'wvp-haikang': wvpHaikangIcon,
+    'wvp-rtsp': wvpRtspIcon,
+    'wvp-onvif': wvpOnvifIcon,
+    'wvp-gb': wvpGbIcon,
+    'wvp-dahua': wvpDahuaIcon
   }
   return iconMap[iconName] || Setting
 }
