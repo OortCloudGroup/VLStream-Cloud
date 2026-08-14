@@ -9,22 +9,61 @@ services:
     command: ["-C", "config.json", "-R", "50000:50010", "-e", "${WEBRTC_EXTERNAL_HOST:-host.docker.internal}"]
     ports:
       - "${WEBRTC_PORT:-8000}:8000"
-      - "50000-50010:50000-50010/udp"
+      - "${WEBRTC_RTP_START_PORT:-50000}-${WEBRTC_RTP_END_PORT:-50010}:50000-50010/udp"
+    healthcheck:
+      test: ["CMD", "bash", "-ec", "exec 3<>/dev/tcp/127.0.0.1/8000"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  zlmediakit:
+    image: ${ZLMEDIAKIT_IMAGE:-zlmediakit/zlmediakit@sha256:2c03e739e5461f32fe6609d8ae3c77c15d02815e01e09b02d580b3eb10e804fc}
+    restart: unless-stopped
+    environment:
+      ZLMEDIAKIT_SECRET: ${ZLMEDIAKIT_SECRET:-change-this-zlmediakit-secret}
+      ZLMEDIAKIT_HOOK_BASE_URL: http://wvp-backend:9080/index/hook
+    entrypoint: ["/bin/sh", "/opt/media/bin/vlstream-entrypoint.sh"]
+    ports:
+      - "${ZLMEDIAKIT_HTTP_PORT:-8090}:80"
+      - "${ZLMEDIAKIT_RTSP_PORT:-554}:554/tcp"
+      - "${ZLMEDIAKIT_RTMP_PORT:-1935}:1935/tcp"
+      - "${ZLMEDIAKIT_RTC_PORT:-8000}:8000/udp"
+      - "${ZLMEDIAKIT_RTP_START_PORT:-40000}-${ZLMEDIAKIT_RTP_END_PORT:-40300}:40000-40300/tcp"
+      - "${ZLMEDIAKIT_RTP_START_PORT:-40000}-${ZLMEDIAKIT_RTP_END_PORT:-40300}:40000-40300/udp"
+    volumes:
+      - ./zlmediakit/entrypoint.sh:/opt/media/bin/vlstream-entrypoint.sh:ro
+      - zlmediakit-data:/opt/media/www
+      - zlmediakit-logs:/opt/media/bin/log
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
 
   backend:
-    image: ${BACKEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-backend:1.1.2}
+    image: ${BACKEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-backend:1.2.0}
     restart: unless-stopped
+    depends_on:
+      webrtc-streamer:
+        condition: service_healthy
     environment:
       TZ: ${TZ:-Asia/Shanghai}
       SERVER_PORT: 8080
       SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_URL: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:-3306}/${MYSQL_DATABASE}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_USERNAME: ${MYSQL_USER}
-      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_PASSWORD: ${MYSQL_PASSWORD}
-      SPRING_REDIS_HOST: ${REDIS_HOST}
-      SPRING_REDIS_PORT: ${REDIS_PORT:-6379}
-      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD}
-      FLYWAY_ENABLED: "true"
+      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_URL: ${EXTERNAL_MYSQL_URL:?请设置 EXTERNAL_MYSQL_URL}
+      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_USERNAME: ${EXTERNAL_MYSQL_USERNAME:?请设置 EXTERNAL_MYSQL_USERNAME}
+      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_PASSWORD: ${EXTERNAL_MYSQL_PASSWORD:?请设置 EXTERNAL_MYSQL_PASSWORD}
+      SPRING_REDIS_HOST: ${EXTERNAL_REDIS_HOST:?请设置 EXTERNAL_REDIS_HOST}
+      SPRING_REDIS_PORT: ${EXTERNAL_REDIS_PORT:-6379}
+      SPRING_REDIS_PASSWORD: ${EXTERNAL_REDIS_PASSWORD:-}
+      SPRING_BOOT_ADMIN_CLIENT_ENABLED: "false"
+      XXL_JOB_ENABLED: "false"
+      XXL_JOB_ADMIN_ADDRESSES: ${XXL_JOB_ADMIN_ADDRESSES:-}
+      UNIFIEDMESSAGINGSEND_URL: ${UNIFIEDMESSAGINGSEND_URL:-}
+      AUTH_REPORT_EXCLUDECLASSES: ${AUTH_REPORT_EXCLUDECLASSES:-ReModeJsonController,ProcessTemplateController,WfTXController}
+      TOKEN_TENANTTYPE: ${TOKEN_TENANTTYPE:-single}
+      DEPT_EXCLUDEDUDID: ${DEPT_EXCLUDEDUDID:-273ed9a4-0e77-4169-af46-dd2da2aa1fcc}
+      VLS_DATA_INITIALIZATION_ENABLED: "true"
       VLSTREAM_WEBRTC_ENABLED: "true"
       VLSTREAM_WEBRTC_PUBLIC_URL: /bus/webrtc-streamer-server
       VLSTREAM_WEBRTC_INTERNAL_URL: http://webrtc-streamer:8000
@@ -34,16 +73,76 @@ services:
     volumes:
       - backend-data:/app/data
       - backend-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
 
-  frontend:
-    image: ${FRONTEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-frontend:1.1.2}
+  wvp-backend:
+    image: ${WVP_BACKEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-wvp-backend:1.2.0}
     restart: unless-stopped
     depends_on:
-      - backend
-      - webrtc-streamer
+      backend:
+        condition: service_healthy
+      zlmediakit:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      SERVER_PORT: 9080
+      DB_HOST: ${EXTERNAL_WVP_MYSQL_HOST:?set EXTERNAL_WVP_MYSQL_HOST}
+      DB_PORT: ${EXTERNAL_WVP_MYSQL_PORT:-3306}
+      DB_NAME: ${EXTERNAL_WVP_MYSQL_DATABASE:-ry-wvp}
+      DB_USERNAME: ${EXTERNAL_WVP_MYSQL_USERNAME:?set EXTERNAL_WVP_MYSQL_USERNAME}
+      DB_PASSWORD: ${EXTERNAL_WVP_MYSQL_PASSWORD:?set EXTERNAL_WVP_MYSQL_PASSWORD}
+      REDIS_HOST: ${EXTERNAL_REDIS_HOST:?set EXTERNAL_REDIS_HOST}
+      REDIS_PORT: ${EXTERNAL_REDIS_PORT:-6379}
+      REDIS_DATABASE: ${WVP_REDIS_DATABASE:-10}
+      REDIS_PASSWORD: ${EXTERNAL_REDIS_PASSWORD:-}
+      TOKEN_SECRET: ${WVP_TOKEN_SECRET:-change-this-wvp-token-secret}
+      VLSTREAM_VERIFY_TOKEN: http://backend:8080/blade-system/user/info
+      VLSTREAM_DEFAULT_DEPT_ID: ${VLSTREAM_DEFAULT_DEPT_ID:-}
+      ZLMEDIAKIT_ID: zlmediakit-local
+      ZLMEDIAKIT_HOST: zlmediakit
+      ZLMEDIAKIT_HTTP_PORT: 80
+      ZLMEDIAKIT_PUBLIC_HOST: ${ZLMEDIAKIT_PUBLIC_HOST:-127.0.0.1}
+      ZLMEDIAKIT_PUBLIC_HTTP_PORT: ${ZLMEDIAKIT_HTTP_PORT:-8090}
+      ZLMEDIAKIT_RTSP_PORT: ${ZLMEDIAKIT_RTSP_PORT:-554}
+      ZLMEDIAKIT_RTMP_PORT: ${ZLMEDIAKIT_RTMP_PORT:-1935}
+      ZLMEDIAKIT_HOOK_HOST: wvp-backend
+      ZLMEDIAKIT_SECRET: ${ZLMEDIAKIT_SECRET:-035c73f7-bb6b-4889-a715-d9eb2d1925cc}
+      ZLMEDIAKIT_RTP_PORT_RANGE: 40000,40300
+      SIP_LISTEN_IP: 0.0.0.0
+      SIP_PUBLIC_IP: ${SIP_PUBLIC_IP:-127.0.0.1}
+      ISUP_LINUX_ENABLED: "false"
+      DAHUA_ENABLED: "false"
+      JAVA_OPTS: ${WVP_JAVA_OPTS:--Xms256m -Xmx1024m -Dfile.encoding=UTF-8}
+    ports:
+      - "${WVP_BACKEND_PORT:-9080}:9080"
+      - "${WVP_SIP_PORT:-8116}:8116/tcp"
+      - "${WVP_SIP_PORT:-8116}:8116/udp"
+    volumes:
+      - wvp-data:/app/upload
+      - wvp-logs:/app/logs
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-frontend:1.2.0}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+      wvp-backend:
+        condition: service_healthy
+      webrtc-streamer:
+        condition: service_healthy
     ports:
       - "${HTTP_PORT:-80}:80"
 
 volumes:
   backend-data:
   backend-logs:
+  wvp-data:
+  wvp-logs:
+  zlmediakit-data:
+  zlmediakit-logs:
