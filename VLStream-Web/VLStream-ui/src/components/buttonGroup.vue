@@ -11,11 +11,11 @@
     <!-- eslint-disable-next-line vue/no-v-for-template-key -->
     <template v-for="(item, index) in buttonList" :key="index">
       <div class="oort_button_group_item">
-        <oort-svg-icon width="16" height="16" :name="item.svg" @click="item.clickFn" />
+        <oort-svg-icon width="20" height="20" :name="item.svg" @click="item.clickFn" />
         <span @click="item.clickFn">{{ item.name }}</span>
         <el-dropdown v-if="item.children && item.children.length > 0">
           <div class="new_table_svg_group new_item_more">
-            <oort-svg-icon width="16" height="16" name="more" class="new_table_svg_group_svg" />
+            <oort-svg-icon width="20" height="20" name="more" class="new_table_svg_group_svg" />
           </div>
           <template #dropdown>
             <el-dropdown-menu>

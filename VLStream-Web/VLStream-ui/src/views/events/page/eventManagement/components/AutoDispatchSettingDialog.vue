@@ -31,13 +31,13 @@
       更多自动派单
       <router-link to="/sysWork" class="workorder-content-item">
         <span>工单设置</span>
-        <oort-svg-icon class="app-card-logo" name="forward" />
+        <oort-svg-icon class="app-card-logo" name="forward" width="20" height="20" />
       </router-link>
       ,
       或联系管理员在
       <div class="workorder-content-item" @click="processuiRouterLinkFn">
         <span>统一工单中台配置</span>
-        <oort-svg-icon class="app-card-logo" name="forward" />
+        <oort-svg-icon class="app-card-logo" name="forward" width="20" height="20" />
       </div>
     </div>
     <div class="dialog-footer">

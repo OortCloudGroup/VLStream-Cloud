@@ -31,8 +31,7 @@
           class="icon_sel"
           :class="{act:visible}"
           name="searchHeight"
-          @click.stop="isfocus=false"
-        />
+          @click.stop="isfocus=false" width="20" height="20" />
         <el-icon class="icon_ser" @click="searchFn">
           <Search />
         </el-icon>

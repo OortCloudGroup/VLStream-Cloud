@@ -1225,7 +1225,15 @@ onUnmounted(() => {
   :deep(.header_tenant_cell) { background: #F8F8F9; }
 }
 .paginationBox { justify-content: center; height: 100px; }
-.operateAppBox { justify-content: flex-end; gap: 2px; flex-wrap: wrap; }
+.operateAppBox {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  white-space: nowrap;
+}
 
 .container-instances {
   margin: 0;

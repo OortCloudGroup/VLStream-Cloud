@@ -37,8 +37,8 @@
                 <div class="custom-tree-node flexRowAC">
                   <span class="tree-node-label">{{ node.label }}</span>
                   <div v-if="data.type !== 'root'" class="tree-node-actions flexRowAC" @click.stop>
-                    <oort-svg-icon v-if="data.level > 1" width="16" height="16" name="delete" color="red" @click="deleteNode(data)" />
-                    <oort-svg-icon v-if="data.level === 1" width="16" height="16" name="add" @click="addChild(data)" />
+                    <oort-svg-icon v-if="data.level > 1" width="20" height="20" name="delete" color="red" @click="deleteNode(data)" />
+                    <oort-svg-icon v-if="data.level === 1" width="20" height="20" name="add" @click="addChild(data)" />
                   </div>
                 </div>
               </template>

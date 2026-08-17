@@ -31,7 +31,7 @@
     </div>
     <template #reference>
       <div class="aiIconPage flexRowAC" @click="AIBtnClick">
-        <oort-svg-icon class="aiIconRemark" width="14" height="14" name="ai" />
+        <oort-svg-icon class="aiIconRemark" width="20" height="20" name="ai" />
         AI
       </div>
     </template>

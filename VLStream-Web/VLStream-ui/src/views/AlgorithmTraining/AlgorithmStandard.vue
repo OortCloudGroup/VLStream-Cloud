@@ -393,9 +393,9 @@
                     @click="switchImage(index)"
                   >
                     <img :src="image.url"
-                      :alt="image.name" 
-                      class="thumbnail-image" 
-                      @error="handleThumbnailError" 
+                      :alt="image.name"
+                      class="thumbnail-image"
+                      @error="handleThumbnailError"
                     />
                     <div class="thumbnail-overlay">
                       <span class="thumbnail-index">{{ index + 1 }}</span>
@@ -826,7 +826,7 @@ const labelDialogData = ref({
 // 预定义颜色
 const predefineColors = [
   '#409EFF',
-  '#67C23A', 
+  '#67C23A',
   '#E6A23C',
   '#F56C6C',
   '#909399',
@@ -897,7 +897,7 @@ const filteredAnnotationLabels = computed(() => {
   if (!labelSearchKeyword.value.trim()) {
     return annotationLabels.value
   }
-  return annotationLabels.value.filter(label => 
+  return annotationLabels.value.filter(label =>
     label.name.toLowerCase().includes(labelSearchKeyword.value.toLowerCase())
   )
 })
@@ -935,10 +935,10 @@ const annotationTypes = ref([
 // 工具函数
 // 验证图片对象是否有效
 const isValidImage = (image) => {
-  return image && 
-         image.name && 
-         typeof image.name === 'string' && 
-         image.url && 
+  return image &&
+         image.name &&
+         typeof image.name === 'string' &&
+         image.url &&
          typeof image.url === 'string' &&
          image.url.trim() !== ''
 }
@@ -957,19 +957,19 @@ const checkImageExists = async (imageUrl) => {
 // 将RGB颜色转换为RGBA格式
 const convertToRgba = (rgbColor, alpha = 0.2) => {
   if (!rgbColor) return 'rgba(64, 158, 255, 0.2)'
-  
+
   // 如果已经是rgba格式，直接返回
   if (rgbColor.startsWith('rgba')) {
     return rgbColor
   }
-  
+
   // 提取rgb值
   const rgbMatch = rgbColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/)
   if (rgbMatch) {
     const [, r, g, b] = rgbMatch
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
   }
-  
+
   // 如果是十六进制格式
   if (rgbColor.startsWith('#')) {
     const hex = rgbColor.slice(1)
@@ -978,7 +978,7 @@ const convertToRgba = (rgbColor, alpha = 0.2) => {
     const b = parseInt(hex.slice(4, 6), 16)
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
   }
-  
+
   // 默认返回蓝色透明
   return 'rgba(64, 158, 255, 0.2)'
 }
@@ -995,7 +995,7 @@ const loadData = async () => {
       startTime: searchForm.value.dateRange?.[0],
       endTime: searchForm.value.dateRange?.[1]
     }
-    
+
     const response = await getAlgorithmAnnotationPage(params)
     console.log('API响应:', response)
     if (response.code === 200) {
@@ -1085,7 +1085,7 @@ const handleExport = async () => {
     ElMessage.warning('请选择要导出的数据')
     return
   }
-  
+
   try {
     for (const row of selectedRows.value) {
       const blob = await exportAnnotationData(row.id)
@@ -1108,7 +1108,7 @@ const handleDelete = async () => {
     ElMessage.warning('请选择要删除的数据')
     return
   }
-  
+
   try {
     await ElMessageBox.confirm(
       `确定要删除选中的${selectedRows.value.length}个标注吗？\n注意：删除后将同时删除标注数据和相关图片文件！`,
@@ -1119,14 +1119,14 @@ const handleDelete = async () => {
         type: 'warning'
       }
     )
-    
+
     if (selectedRows.value.length === 1) {
       await deleteAlgorithmAnnotation(selectedRows.value[0].id)
     } else {
       const ids = selectedRows.value.map(row => row.id)
       await batchDeleteAlgorithmAnnotation(ids)
     }
-    
+
     ElMessage.success('删除成功')
     selectedRows.value = []
     await loadData()
@@ -1148,7 +1148,7 @@ const handleRowClick = (row) => {
 
 const handleView = async (row) => {
   console.log('查看与标注', row)
-  
+
   // 清理之前的数据
   uploadedImages.value = []
   annotationLabels.value = []
@@ -1168,11 +1168,11 @@ const handleView = async (row) => {
   imageNaturalHeight.value = 0
   imageRotation.value = 0
   labelSearchKeyword.value = ''
-  
+
   // 切换到标注视图
   currentAnnotationData.value = row
   showAnnotationView.value = true
-  
+
   // 进入标注页面，获取所有标注数据
   console.log('进入标注页面，获取所有标注数据')
   try {
@@ -1254,7 +1254,7 @@ const handleDeleteItem = async (row) => {
         type: 'warning'
       }
     )
-    
+
     await deleteAlgorithmAnnotation(row.id)
     ElMessage.success('删除成功')
     await loadData()
@@ -1811,7 +1811,7 @@ const loadAnnotationLabels = async (keyword = '') => {
     labelsLoading.value = true
     const annotationId = getCurrentAnnotationId()
     const response = await getAnnotationLabels(annotationId, keyword)
-    
+
     if (response.code === 200) {
       annotationLabels.value = response.data || []
       // 如果有第一个标签，默认选中
@@ -1834,7 +1834,7 @@ const createLabelAPI = async (labelData) => {
   try {
     const annotationId = getCurrentAnnotationId()
     const response = await createAnnotationLabel(annotationId, labelData)
-    
+
     if (response.code === 200) {
       ElMessage.success('标签创建成功')
       // 重新加载标签列表
@@ -1884,7 +1884,7 @@ const addAnnotationLabel = async (labelData) => {
 const updateLabelAPI = async (labelId, labelData) => {
   try {
     const response = await updateAnnotationLabel(labelId, labelData)
-    
+
     if (response.code === 200) {
       ElMessage.success('标签更新成功')
       // 重新加载标签列表
@@ -1905,7 +1905,7 @@ const updateLabelAPI = async (labelId, labelData) => {
 const deleteLabelAPI = async (labelId) => {
   try {
     const response = await deleteAnnotationLabel(labelId)
-    
+
     if (response.code === 200) {
       ElMessage.success('标签删除成功')
       // 重新加载标签列表
@@ -1928,7 +1928,7 @@ const loadAllAnnotationData = async () => {
     const annotationId = getCurrentAnnotationId()
     console.log('=== 加载所有标注数据（带真实标签名称） ===')
     console.log('标注项目ID:', annotationId)
-    
+
     // 并行调用三个API：获取标签信息、图片列表和标注实例
     const [labelsResponse, imagesResponse, instancesResponse] = await Promise.all([
       getAnnotationLabels(annotationId),
@@ -1937,11 +1937,11 @@ const loadAllAnnotationData = async () => {
     ])
     // 记录图片元信息，便于按 imageId 反查名称/URL
     const imageMetaMap = new Map()
-    
+
     console.log('标签API响应:', labelsResponse)
     console.log('图片列表API响应:', imagesResponse)
     console.log('标注实例API响应:', instancesResponse)
-    
+
     // 详细分析图片列表API响应
     if (imagesResponse.success && imagesResponse.data) {
       console.log('图片列表数据结构分析:')
@@ -1955,15 +1955,15 @@ const loadAllAnnotationData = async () => {
     if (labelsResponse.code === 200) {
       const labelsList = labelsResponse.data || []
       const instances = instancesResponse.code === 200 ? instancesResponse.data || [] : []
-      
+
       console.log('标签数量:', labelsList.length)
       console.log('标注实例数量:', instances.length)
-      
+
       // 1. 显示所有标签，并重新计算使用次数
       labelsList.forEach(label => {
         label.usageCount = instances.filter(instance => instance.labelId === label.id).length
       })
-      
+
       annotationLabels.value = labelsList.sort((a, b) => a.sortOrder - b.sortOrder)
       console.log('所有标签列表:', annotationLabels.value)
 
@@ -1985,7 +1985,7 @@ const loadAllAnnotationData = async () => {
       // 为每个图片创建前端显示对象
       allImages.forEach((dbImage, index) => {
         console.log(`处理第${index + 1}张图片:`, dbImage)
-        
+
         // 检查图片名称是否存在且有效 - 使用imageName字段（完整文件名）
         if (!dbImage.imageName || typeof dbImage.imageName !== 'string') {
           console.warn('跳过无效的图片数据:', dbImage)
@@ -2021,11 +2021,11 @@ const loadAllAnnotationData = async () => {
           console.log('图片已存在，跳过:', dbImage.imageName)
         }
       })
-      
+
       // 过滤掉无效的图片
       uploadedImages.value = uploadedImages.value.filter(isValidImage)
       console.log('图片列表过滤后的有效图片数量:', uploadedImages.value.length)
-      
+
       console.log('=== 图片URL设置完成 ===')
       uploadedImages.value.forEach((img, index) => {
         console.log(`图片${index + 1}:`, {
@@ -2044,12 +2044,12 @@ const loadAllAnnotationData = async () => {
     // 处理标注实例数据
     if (instancesResponse.code === 200) {
       const instances = instancesResponse.data || []
-      
+
       // 2. 按图片名称分组标注数据
       const imageGroups = {}
       instances.forEach((instance, index) => {
         console.log(`处理标注实例 ${index + 1}:`, instance)
-        
+
         // 检查标注实例的图片名称字段 - 可能是imageName或originalName
         const meta = imageMetaMap.get(instance.imageId) || {}
         const instanceImageName = meta.name || instance.imageName || instance.originalName
@@ -2057,15 +2057,15 @@ const loadAllAnnotationData = async () => {
           console.warn('跳过无效的标注实例（缺少图片名称）:', instance)
           return
         }
-        
+
         if (!imageGroups[instanceImageName]) {
           imageGroups[instanceImageName] = []
         }
         imageGroups[instanceImageName].push(instance)
       })
-      
+
       console.log('按图片分组的标注数据:', imageGroups)
-      
+
       // 3. 为每个图片创建图片对象
       Object.keys(imageGroups).forEach(imageName => {
         // 检查图片名称是否有效
@@ -2075,12 +2075,12 @@ const loadAllAnnotationData = async () => {
         }
 
         const imageInstances = imageGroups[imageName]
-        
+
         // 检查是否已经存在该图片（兼容使用 originalName 保存的老数据）
         const existingImageIndex = uploadedImages.value.findIndex(
           img => img.id === imageInstances?.[0]?.imageId || img.name === imageName || img.originalName === imageName
         )
-        
+
         // 转换标注数据格式
         const annotations = imageInstances.map(instance => {
           let data
@@ -2090,9 +2090,9 @@ const loadAllAnnotationData = async () => {
             console.error('解析标注数据失败:', parseError)
             return null
           }
-          
+
           const label = annotationLabels.value.find(l => l.id === instance.labelId)
-          
+
           return {
             id: instance.id,
             labelId: instance.labelId,
@@ -2102,7 +2102,7 @@ const loadAllAnnotationData = async () => {
             ...data
           }
         }).filter(Boolean)
-        
+
         if (existingImageIndex >= 0) {
           // 如果图片已存在，更新其标注数据
           uploadedImages.value[existingImageIndex].annotations = annotations
@@ -2124,17 +2124,17 @@ const loadAllAnnotationData = async () => {
           console.log(`添加数据库图片 ${imageName}，URL: ${imageUrl}，标注数量:`, annotations.length)
         }
       })
-      
+
       // 4. 过滤掉无效的图片，只保留有效的图片
       uploadedImages.value = uploadedImages.value.filter(isValidImage)
       console.log('过滤后的有效图片数量:', uploadedImages.value.length)
-      
+
       // 如果当前没有选中图片且有图片数据，选中第一张
       if (currentImageIndex.value < 0 && uploadedImages.value.length > 0) {
         currentImageIndex.value = 0
         imageAnnotations.value = uploadedImages.value[0].annotations || []
       }
-      
+
       console.log('标注实例数据加载完成')
       console.log('- 图片数量:', uploadedImages.value.length)
       console.log('- 当前图片索引:', currentImageIndex.value)
@@ -2142,7 +2142,7 @@ const loadAllAnnotationData = async () => {
       console.error('加载标注实例失败:', instancesResponse.message)
       // 标注实例加载失败不影响标签显示
     }
-    
+
     console.log('所有标注数据加载完成（含真实标签名称）')
     console.log('- 标签数量:', annotationLabels.value.length)
     console.log('- 图片数量:', uploadedImages.value.length)
@@ -2169,7 +2169,7 @@ const saveImageAnnotations = async (imageId, annotations) => {
     console.log('图片ID:', imageId)
     console.log('标注数量:', annotations.length)
     console.log('标注详情:', annotations)
-    
+
     // 转换标注数据格式
     const instances = annotations.map(annotation => ({
       labelId: annotation.labelId,
@@ -2185,12 +2185,12 @@ const saveImageAnnotations = async (imageId, annotations) => {
         r: annotation.r
       })
     }))
-    
+
     console.log('转换后的实例数据:', instances)
-    
+
     const response = await batchSaveAnnotationInstances(annotationId, imageId, instances)
     console.log('保存响应:', response)
-    
+
     if (response.code === 200) {
       ElMessage.success('标注保存成功')
       // 重新加载标签列表以更新使用次数
@@ -2251,7 +2251,7 @@ const handleSaveAnnotation = async () => {
     ElMessage.warning('请先选择图片')
     return
   }
-  
+
   if (!currentAnnotationData.value || !currentAnnotationData.value.id) {
     ElMessage.warning('请先选择标注项目')
     return
@@ -2278,12 +2278,12 @@ const handleResetZoom = () => {
 const handleRotateLeft = () => {
   // 逆时针旋转90度
   imageRotation.value = (imageRotation.value - 90 + 360) % 360
-  
+
   // 如果有当前图片和标注，需要变换标注坐标
   if (currentImage.value && currentImage.value.annotations.length > 0) {
     transformAnnotationsForRotation(-90)
   }
-  
+
   console.log('逆时针旋转90°，当前角度:', imageRotation.value)
   ElMessage.success('逆时针旋转90°')
 }
@@ -2291,12 +2291,12 @@ const handleRotateLeft = () => {
 const handleRotateRight = () => {
   // 顺时针旋转90度
   imageRotation.value = (imageRotation.value + 90) % 360
-  
+
   // 如果有当前图片和标注，需要变换标注坐标
   if (currentImage.value && currentImage.value.annotations.length > 0) {
     transformAnnotationsForRotation(90)
   }
-  
+
   console.log('顺时针旋转90°，当前角度:', imageRotation.value)
   ElMessage.success('顺时针旋转90°')
 }
@@ -2305,11 +2305,11 @@ const handleRotateRight = () => {
 const transformAnnotationsForRotation = (angleDelta) => {
   const { width, height } = getAnnotationCanvasSize()
   if (!currentImage.value || !width || !height) return
-  
+
   const centerX = width / 2
   const centerY = height / 2
   const angleRad = (angleDelta * Math.PI) / 180
-  
+
   currentImage.value.annotations.forEach(annotation => {
     if (annotation.type === 'rect') {
       // 矩形标注的四个关键点
@@ -2319,39 +2319,39 @@ const transformAnnotationsForRotation = (angleDelta) => {
         { x: annotation.x + annotation.width, y: annotation.y + annotation.height },
         { x: annotation.x, y: annotation.y + annotation.height }
       ]
-      
+
       // 旋转所有点
       const rotatedPoints = points.map(point => {
         const dx = point.x - centerX
         const dy = point.y - centerY
-        
+
         return {
           x: centerX + dx * Math.cos(angleRad) - dy * Math.sin(angleRad),
           y: centerY + dx * Math.sin(angleRad) + dy * Math.cos(angleRad)
         }
       })
-      
+
       // 计算新的边界框
       const minX = Math.min(...rotatedPoints.map(p => p.x))
       const maxX = Math.max(...rotatedPoints.map(p => p.x))
       const minY = Math.min(...rotatedPoints.map(p => p.y))
       const maxY = Math.max(...rotatedPoints.map(p => p.y))
-      
+
       annotation.x = minX
       annotation.y = minY
       annotation.width = maxX - minX
       annotation.height = maxY - minY
-      
+
     } else if (annotation.type === 'circle') {
       // 圆形标注的中心点旋转
       const dx = annotation.cx - centerX
       const dy = annotation.cy - centerY
-      
+
       annotation.cx = centerX + dx * Math.cos(angleRad) - dy * Math.sin(angleRad)
       annotation.cy = centerY + dx * Math.sin(angleRad) + dy * Math.cos(angleRad)
     }
   })
-  
+
   // 刷新显示的标注
   imageAnnotations.value = [...currentImage.value.annotations]
   console.log('标注坐标已旋转变换')
@@ -2426,33 +2426,33 @@ const saveImageToLocal = async (file) => {
 // 图片上传方法
 const handleImageUpload = async (uploadFile) => {
   console.log('上传文件对象:', uploadFile)
-  
+
   // Element Plus 上传组件传递的是包装后的文件对象
   const file = uploadFile.raw || uploadFile
-  
+
   if (!file) {
     ElMessage.error('文件上传失败，请重试')
     return
   }
-  
+
   // 检查文件类型
   if (!file.type.startsWith('image/')) {
     ElMessage.error('请选择图片文件')
     return
   }
-  
+
   // 检查文件大小（10MB限制）
   const maxSize = 10 * 1024 * 1024
   if (file.size > maxSize) {
     ElMessage.error('图片大小不能超过10MB')
     return
   }
-  
+
   try {
     // 以服务端返回的图片记录作为界面模型，避免本地生成的文件名与数据库不一致。
     const timestamp = Date.now()
     const uploadedImage = await saveImageToLocal(file)
-    
+
     // 读取图片作为base64用于显示
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -2466,17 +2466,17 @@ const handleImageUpload = async (uploadFile) => {
         isUploaded: true // 标记为已上传
       }
       console.log('创建新图片对象:', newImage)
-      
+
       uploadedImages.value.push(newImage)
       currentImageIndex.value = uploadedImages.value.length - 1
-      
+
       // 切换到新图片时清空当前标注显示（新图片还没有标注）
       imageAnnotations.value = []
       selectedAnnotation.value = null
-      
+
       // 重置旋转角度
       imageRotation.value = 0
-      
+
       console.log('图片上传成功，当前图片索引:', currentImageIndex.value)
       console.log('当前图片列表长度:', uploadedImages.value.length)
       console.log('当前选中图片:', currentImage.value)
@@ -2678,14 +2678,14 @@ const handleImageLoad = (event) => {
 const handleImageError = (event) => {
   const failedImage = currentImage.value
   console.error('图片加载失败:', failedImage?.url)
-  
+
   if (failedImage) {
     ElMessage.error(`图片加载失败: ${failedImage.name}`)
-    
+
     // 标记当前图片为无效
     failedImage.url = ''
     failedImage.isInvalid = true
-    
+
     // 尝试切换到下一个有效的图片
     const validImages = uploadedImages.value.filter(isValidImage)
     if (validImages.length > 0) {
@@ -2732,7 +2732,7 @@ const handleMouseDown = (event) => {
     // 获取图片元素的位置和尺寸
     const imageEl = document.querySelector('.main-image')
     if (!imageEl) return
-    
+
     const imageRect = imageEl.getBoundingClientRect()
     const xDisplay = event.clientX - imageRect.left
     const yDisplay = event.clientY - imageRect.top
@@ -2742,7 +2742,7 @@ const handleMouseDown = (event) => {
     const scaleY = height ? height / imageRect.height : 1
     const x = xDisplay * scaleX
     const y = yDisplay * scaleY
-    
+
     // 确保坐标在图片范围内
     if (xDisplay >= 0 && xDisplay <= imageRect.width && yDisplay >= 0 && yDisplay <= imageRect.height) {
       isDrawing.value = true
@@ -2761,7 +2761,7 @@ const handleMouseMove = (event) => {
   if (isDrawing.value && currentDrawing.value) {
     const imageEl = document.querySelector('.main-image')
     if (!imageEl) return
-    
+
     const imageRect = imageEl.getBoundingClientRect()
     const xDisplay = event.clientX - imageRect.left
     const yDisplay = event.clientY - imageRect.top
@@ -2771,7 +2771,7 @@ const handleMouseMove = (event) => {
     const scaleY = height ? height / imageRect.height : 1
     const x = xDisplay * scaleX
     const y = yDisplay * scaleY
-    
+
     currentDrawing.value.endX = x
     currentDrawing.value.endY = y
     // console.log('绘制中:', currentDrawing.value)
@@ -2781,9 +2781,9 @@ const handleMouseMove = (event) => {
 const handleMouseUp = (event) => {
   if (isDrawing.value && currentDrawing.value) {
     const drawing = currentDrawing.value
-    
+
     let newAnnotation = null
-    
+
     if (selectedTool.value === 'rect') {
       newAnnotation = {
         id: Date.now(),
@@ -2809,21 +2809,21 @@ const handleMouseUp = (event) => {
         labelColor: '#409EFF'
       }
     }
-    
+
     if (newAnnotation && (newAnnotation.width > 10 || newAnnotation.r > 10)) {
       // 阻止事件冒泡，防止立即触发全局click事件隐藏菜单
       event.stopPropagation()
       event.preventDefault()
-      
+
       // 设置防护标志，防止立即的click事件干扰
       justFinishedDrawing.value = true
       setTimeout(() => {
         justFinishedDrawing.value = false
       }, 200) // 200ms后清除标志
-      
+
       pendingAnnotation.value = newAnnotation
       console.log('创建标注:', newAnnotation)
-      
+
       // 延迟显示右键菜单，避免与click事件冲突
       setTimeout(() => {
         // 显示右键菜单选择标签 - 使用页面坐标
@@ -2836,10 +2836,10 @@ const handleMouseUp = (event) => {
         console.log('可用标签数量:', annotationLabels.value.length)
         console.log('标签列表:', annotationLabels.value)
       }, 100) // 延迟100ms显示
-      
+
       // 正常流程：显示右键菜单让用户选择标签
     }
-    
+
     isDrawing.value = false
     currentDrawing.value = null
   }
@@ -2892,18 +2892,18 @@ const handleDeleteAnnotation = async () => {
 
         // 调用后端API删除标注实例
         await deleteAnnotationInstance(annotationToDelete.id)
-        
+
         // 从当前图片的标注数组中删除
         currentImage.value.annotations.splice(annotationIndex, 1)
-        
+
         // 刷新当前显示的标注 - 重新从当前图片加载
         imageAnnotations.value = [...currentImage.value.annotations]
-        
+
         // 如果删除的是当前选中的标注，清除选中状态
         if (selectedAnnotation.value === annotationToDelete.id) {
           selectedAnnotation.value = null
         }
-        
+
         ElMessage.success('标注已删除')
       } catch (error) {
         if (error !== 'cancel') {
@@ -2963,17 +2963,17 @@ const handleDeleteAnnotation = async () => {
         await deleteImage(currentImage.value.name)
         console.log(`已删除图片文件: ${currentImage.value.name}`)
       }
-      
+
       // 从图片列表中删除
       const imageIndex = uploadedImages.value.findIndex(img => img.id === currentImage.value.id)
       if (imageIndex > -1) {
         uploadedImages.value.splice(imageIndex, 1)
-        
+
         // 如果删除的是当前图片，切换到上一张图片
         if (currentImageIndex.value >= uploadedImages.value.length) {
           currentImageIndex.value = Math.max(0, uploadedImages.value.length - 1)
         }
-        
+
         // 更新当前图片和标注显示
         if (uploadedImages.value.length > 0) {
           currentImage.value = uploadedImages.value[currentImageIndex.value]
@@ -2982,7 +2982,7 @@ const handleDeleteAnnotation = async () => {
           currentImage.value = null
           imageAnnotations.value = []
         }
-        
+
         selectedAnnotation.value = null
         ElMessage.success('图片已删除')
       } else {
@@ -3002,32 +3002,32 @@ const selectLabelForAnnotation = (label) => {
   console.log('pendingAnnotation:', pendingAnnotation.value)
   console.log('currentImage:', currentImage.value)
   console.log('currentImageIndex:', currentImageIndex.value)
-  
+
   if (pendingAnnotation.value && currentImage.value) {
     pendingAnnotation.value.labelId = label.id
     pendingAnnotation.value.labelName = label.name
     pendingAnnotation.value.labelColor = label.color
-    
+
     console.log('标注信息设置完成:', pendingAnnotation.value)
-    
+
     // 确保当前图片有annotations数组
     if (!currentImage.value.annotations) {
       currentImage.value.annotations = []
       console.log('创建了annotations数组')
     }
-    
+
     // 将标注保存到当前图片的annotations数组中
     currentImage.value.annotations.push(pendingAnnotation.value)
     console.log('标注已添加到图片:', currentImage.value.annotations.length)
-    
+
     // 刷新当前显示的标注 - 重新从当前图片加载
     imageAnnotations.value = [...currentImage.value.annotations]
     console.log('刷新显示标注数量:', imageAnnotations.value.length)
     console.log('所有显示标注:', imageAnnotations.value)
-    
+
     pendingAnnotation.value = null
     console.log('=== 标签选择完成 ===')
-    
+
     ElMessage.success(`已添加${label.name}标注`)
   } else {
     console.log('标注保存失败 - 缺少必要条件')
@@ -3039,13 +3039,13 @@ const selectLabelForAnnotation = (label) => {
 
 const hideContextMenu = () => {
   console.log('hideContextMenu调用，当前菜单状态:', showContextMenu.value)
-  
+
   // 只有菜单真正显示时才隐藏
   if (showContextMenu.value) {
     showContextMenu.value = false
     contextMenuX.value = 0
     contextMenuY.value = 0
-    
+
     // 如果有未完成的标注，清除它
     if (pendingAnnotation.value) {
       console.log('清除未完成的标注')
@@ -3064,19 +3064,19 @@ const handleGlobalClick = (event) => {
   console.log('刚完成绘制标志:', justFinishedDrawing.value)
   console.log('事件类型:', event.type)
   console.log('事件时间戳:', event.timeStamp)
-  
+
   // 如果刚完成绘制，忽略这次点击事件
   if (justFinishedDrawing.value) {
     console.log('刚完成绘制，忽略此次点击事件')
     return
   }
-  
+
   // 如果右键菜单显示中
   if (showContextMenu.value) {
     // 检查点击是否在右键菜单内部
     const contextMenu = document.querySelector('.context-menu')
     console.log('找到右键菜单元素:', contextMenu)
-    
+
     if (contextMenu && !contextMenu.contains(event.target)) {
       // 点击在菜单外部，隐藏菜单
       console.log('点击在菜单外部，隐藏菜单')
@@ -3108,7 +3108,7 @@ const searchResetFn = (val, reset) => {
 // 高级搜索相关方法
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索:', searchData)
-  
+
   // 更新搜索表单
   if (searchData.keyword) {
     searchForm.keyword = searchData.keyword
@@ -3122,7 +3122,7 @@ const handleAdvancedSearch = (searchData) => {
   if (searchData.dateRange && searchData.dateRange.length > 0) {
     searchForm.dateRange = searchData.dateRange
   }
-  
+
   handleSearch()
 }
 
@@ -3180,17 +3180,17 @@ watch(currentImage, async (newImage, oldImage) => {
   if (newImage && newImage.name && showAnnotationView.value) {
     // 只有在标注视图中且图片有名称时才更新显示
     console.log('currentImage变化，从缓存加载标注数据:', newImage.name)
-    
+
     // 检查是否是同一张图片，避免重复处理
     if (oldImage && newImage.name === oldImage.name) {
       console.log('同一张图片，跳过处理')
       return
     }
-    
+
     // 优化：直接从已加载的数据中获取标注信息
     const annotations = newImage.annotations || []
     imageAnnotations.value = [...annotations]
-    
+
     console.log('从缓存加载的标注数量:', annotations.length)
   }
 })
@@ -3289,16 +3289,16 @@ const handleMoreActions = (label) => {
     try {
       // 调用API删除标签
       await deleteLabelAPI(label.id)
-      
+
       // 删除成功后，从本地数组中移除
       const index = annotationLabels.value.findIndex(l => l.id === label.id)
       if (index > -1) {
         annotationLabels.value.splice(index, 1)
       }
-      
+
       // 重新加载标签列表以确保数据同步
       await loadAnnotationLabels()
-      
+
       ElMessage.success('标签已删除')
     } catch (error) {
       console.error('删除标签失败:', error)

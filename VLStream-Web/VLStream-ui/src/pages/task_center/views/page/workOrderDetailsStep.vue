@@ -14,7 +14,7 @@
           <el-tab-pane label="基础信息" name="1">
             <template #label>
               <span class="flexRowAC">
-                <oort-svg-icon name="1" width="14" height="14" />
+                <oort-svg-icon name="1" width="20" height="20" />
                 <span>&nbsp;基础信息</span>
               </span>
             </template>
@@ -22,7 +22,7 @@
           <el-tab-pane label="表单设计" name="2">
             <template #label>
               <span class="flexRowAC">
-                <oort-svg-icon name="2" width="14" height="14" />
+                <oort-svg-icon name="2" width="20" height="20" />
                 <span>&nbsp;表单设计</span>
               </span>
             </template>
@@ -30,7 +30,7 @@
           <el-tab-pane label="流程设计" name="3">
             <template #label>
               <span class="flexRowAC">
-                <oort-svg-icon name="3" width="14" height="14" />
+                <oort-svg-icon name="3" width="20" height="20" />
                 <span>&nbsp;流程设计</span>
               </span>
             </template>
@@ -38,7 +38,7 @@
           <el-tab-pane label="权限" name="4">
             <template #label>
               <span class="flexRowAC">
-                <oort-svg-icon name="4" width="14" height="14" />
+                <oort-svg-icon name="4" width="20" height="20" />
                 <span>&nbsp;权限</span>
               </span>
             </template>

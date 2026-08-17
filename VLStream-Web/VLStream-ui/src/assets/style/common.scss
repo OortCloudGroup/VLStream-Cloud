@@ -776,6 +776,7 @@ td {
   margin: 0 4px;
   padding: 4px 6px;
   border-radius: 4px;
+  cursor: pointer;
 
   span {
     margin-right: 6px;
@@ -784,6 +785,10 @@ td {
     line-height: 100%;
     color: var(--el-color-primary);
   }
+}
+
+.new_table_svg_group:hover {
+  background-color: var(--el-color-primary-hb2);
 }
 
 .new_table .new_table_svg_group {
@@ -806,6 +811,10 @@ td {
 
 .new_table .new_table_svg_group_svg {
   margin: 0 4px;
+}
+
+.new_table .new_table_svg_group:hover {
+  background-color: var(--el-color-primary-hb2);
 }
 
 // ----------

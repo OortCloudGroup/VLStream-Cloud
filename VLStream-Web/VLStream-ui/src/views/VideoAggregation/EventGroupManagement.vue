@@ -32,9 +32,9 @@
                 <div class="custom-tree-node flexRowAC">
                   <span class="tree-node-label">{{ data.name }}</span>
                   <div class="tree-node-actions flexRowAC" @click.stop>
-                    <oort-svg-icon width="16" height="16" name="add" @click="openCreate(data)" />
-                    <oort-svg-icon width="16" height="16" name="edit_icon" @click="openEdit(data)" />
-                    <oort-svg-icon width="16" height="16" name="delete" color="red" @click="removeGroup(data)" />
+                    <oort-svg-icon width="20" height="20" name="add" @click="openCreate(data)" />
+                    <oort-svg-icon width="20" height="20" name="edit_icon" @click="openEdit(data)" />
+                    <oort-svg-icon width="20" height="20" name="delete" color="red" @click="removeGroup(data)" />
                   </div>
                 </div>
               </template>

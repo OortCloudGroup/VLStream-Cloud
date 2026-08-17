@@ -7,7 +7,7 @@
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
-  <oort-svg-icon v-if="defaultType === 'dept' && defaultStyle" :class="{'defaultS': defaultStyle}" round name="dept" width="48" height="48" />
+  <oort-svg-icon v-if="defaultType === 'dept' && defaultStyle" :class="{'defaultS': defaultStyle}" round name="dept" width="20" height="20" />
   <img
     v-else
     :src="imageSrc"

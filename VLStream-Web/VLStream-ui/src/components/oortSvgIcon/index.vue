@@ -31,8 +31,8 @@ const props = defineProps<{
 const tag = inject('tag')
 const inXorkWeb = computed(() => tag === 'XorkWeb')
 
-const selfWidth = clacPXToVW(parseInt(props.width || 24), inXorkWeb.value ? 1440 : 1920)
-const selfHeight = clacPXToVW(parseInt(props.height || 24), inXorkWeb.value ? 1440 : 1920)
+const selfWidth = clacPXToVW(parseInt(props.width || 20), inXorkWeb.value ? 1440 : 1920)
+const selfHeight = clacPXToVW(parseInt(props.height || 20), inXorkWeb.value ? 1440 : 1920)
 
 </script>
 

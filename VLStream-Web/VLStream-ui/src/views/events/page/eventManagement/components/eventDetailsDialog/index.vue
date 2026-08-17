@@ -5,8 +5,8 @@
       <div class="line" />
       <div class="lineT flexRowAC" @click="codeAct=!codeAct">
         {{ codeAct === true ? '收起' : '展开' }}
-        <oort-svg-icon v-if="codeAct" class="elmenuIconImg" name="shrink" width="24" height="24" color="#999" />
-        <oort-svg-icon v-else class="elmenuIconImg" name="open" width="24" height="24" />
+        <oort-svg-icon v-if="codeAct" class="elmenuIconImg" name="shrink" width="20" height="20" color="#999" />
+        <oort-svg-icon v-else class="elmenuIconImg" name="open" width="20" height="20" />
       </div>
     </div>
     <div v-if="codeAct">
@@ -124,8 +124,8 @@
           <div class="line" />
           <div class="lineT flexRowAC" @click="codeAct_2=!codeAct_2">
             {{ codeAct_2 === true ? '收起' : '展开' }}
-            <oort-svg-icon v-if="codeAct_2" class="elmenuIconImg" name="shrink" width="24" height="24" color="#999" />
-            <oort-svg-icon v-else class="elmenuIconImg" name="open" width="24" height="24" />
+            <oort-svg-icon v-if="codeAct_2" class="elmenuIconImg" name="shrink" width="20" height="20" color="#999" />
+            <oort-svg-icon v-else class="elmenuIconImg" name="open" width="20" height="20" />
           </div>
         </div>
         <div v-if="codeAct_2" class="e_addFeedback">
@@ -187,8 +187,8 @@
         <div class="line" />
         <div class="lineT flexRowAC" @click="harvest=!harvest">
           {{ harvest === true ? '收起' : '展开' }}
-          <oort-svg-icon v-if="harvest" class="elmenuIconImg" name="shrink" width="24" height="24" color="#999" />
-          <oort-svg-icon v-else class="elmenuIconImg" name="open" width="24" height="24" />
+          <oort-svg-icon v-if="harvest" class="elmenuIconImg" name="shrink" width="20" height="20" color="#999" />
+          <oort-svg-icon v-else class="elmenuIconImg" name="open" width="20" height="20" />
         </div>
       </div>
       <div v-if="harvest">

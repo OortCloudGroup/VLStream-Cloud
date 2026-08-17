@@ -61,16 +61,16 @@
                   @click.stop
                 >
                   <oort-svg-icon
-                    width="16"
-                    height="16"
+                    width="20"
+                    height="20"
                     name="delete"
                     color="red"
                     class="tree-action-icon"
                     @click="handleDeleteDevice(data)"
                   />
                   <oort-svg-icon
-                    width="16"
-                    height="16"
+                    width="20"
+                    height="20"
                     name="add"
                     class="tree-action-icon"
                     @click="handleAddDevice({ command: 'child', data })"

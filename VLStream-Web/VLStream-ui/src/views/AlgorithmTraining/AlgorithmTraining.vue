@@ -136,28 +136,26 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" :width="clacPXToVW(320)" fixed="right" align="right">
+        <el-table-column label="操作" :min-width="clacPXToVW(420)" fixed="right" align="right">
           <template #default="scope">
-            <div class="table-action-buttons">
+            <div class="operate" @click.stop>
               <!-- 空状态：训练和更多 -->
               <template v-if="!scope.row.trainStatus || scope.row.trainStatus === '等待'">
-                <el-button 
-                  type="primary"
-                  text
-                  size="small"
-                  @click="handleTrain(scope.row)"
-                >
-                  训练
-                </el-button>
+                <div class="new_table_svg_group" @click="handleTrain(scope.row)">
+                  <span>训练</span>
+                </div>
                 <el-dropdown @command="(command) => handleMoreAction(command, scope.row)">
-                  <el-button type="primary" text size="small">
-                    更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
-                  </el-button>
+                  <div class="new_table_svg_group">
+                    <oort-svg-icon width="20" height="20" name="table_more" class="new_table_svg_group_svg" />
+                    <span>更多</span>
+                  </div>
                   <template #dropdown>
                     <el-dropdown-menu>
                       <el-dropdown-item command="version">查看版本配置</el-dropdown-item>
                       <el-dropdown-item command="history">历史版本</el-dropdown-item>
-                      <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
+                      <el-dropdown-item command="delete" divided>
+                        <span style="color: #F62E2E;">删除</span>
+                      </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -165,23 +163,21 @@
 
               <!-- 训练中状态：终止训练和更多 -->
               <template v-else-if="scope.row.trainStatus === '训练中'">
-                <el-button 
-                  type="danger"
-                  text
-                  size="small"
-                  @click="handleStopTraining(scope.row)"
-                >
-                  终止训练
-                </el-button>
+                <div class="new_table_svg_group" @click="handleStopTraining(scope.row)">
+                  <span style="color: #F62E2E;">终止训练</span>
+                </div>
                 <el-dropdown @command="(command) => handleMoreAction(command, scope.row)">
-                  <el-button type="primary" text size="small">
-                    更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
-                  </el-button>
+                  <div class="new_table_svg_group">
+                    <oort-svg-icon width="20" height="20" name="table_more" class="new_table_svg_group_svg" />
+                    <span>更多</span>
+                  </div>
                   <template #dropdown>
                     <el-dropdown-menu>
                       <el-dropdown-item command="version">查看版本配置</el-dropdown-item>
                       <el-dropdown-item command="history">历史版本</el-dropdown-item>
-                      <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
+                      <el-dropdown-item command="delete" divided>
+                        <span style="color: #F62E2E;">删除</span>
+                      </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -189,75 +185,52 @@
 
               <!-- 训练完成状态：下载模型、重新训练、发布为模型、校验和更多 -->
               <template v-else-if="scope.row.trainStatus === '训练完成'">
-                <div class="completed-actions">
-                  <el-button
-                    type="success"
-                    text
-                    size="small"
-                    @click="handleDownloadModel(scope.row)"
-                    :icon="Download"
-                  >
-                    下载模型
-                  </el-button>
-                  <el-button
-                    type="warning"
-                    text
-                    size="small"
-                    @click="handleRetrainModel(scope.row)"
-                    :icon="Refresh"
-                  >
-                    重新训练
-                  </el-button>
-                  <el-button
-                    type="primary"
-                    text
-                    size="small"
-                    @click="handlePublishModel(scope.row)"
-                  >
-                    发布为模型
-                  </el-button>
-                  <el-button
-                    type="info"
-                    text
-                    size="small"
-                    @click="handleValidateModel(scope.row)"
-                  >
-                    校验
-                  </el-button>
-                  <el-dropdown @command="(command) => handleMoreAction(command, scope.row)">
-                    <el-button type="primary" text size="small">
-                      更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
-                    </el-button>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item command="version">查看版本配置</el-dropdown-item>
-                        <el-dropdown-item command="history">历史版本</el-dropdown-item>
-                        <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
+                <div class="new_table_svg_group" @click="handleDownloadModel(scope.row)">
+                  <span>下载模型</span>
                 </div>
-              </template>
-
-              <!-- 训练失败状态：重新训练和更多 -->
-              <template v-else-if="scope.row.trainStatus === '训练失败'">
-                <el-button 
-                  type="primary"
-                  text
-                  size="small"
-                  @click="handleTrain(scope.row)"
-                >
-                  重新训练
-                </el-button>
+                <div class="new_table_svg_group" @click="handleRetrainModel(scope.row)">
+                  <span>重新训练</span>
+                </div>
+                <div class="new_table_svg_group" @click="handlePublishModel(scope.row)">
+                  <span>发布为模型</span>
+                </div>
+                <div class="new_table_svg_group" @click="handleValidateModel(scope.row)">
+                  <span>校验</span>
+                </div>
                 <el-dropdown @command="(command) => handleMoreAction(command, scope.row)">
-                  <el-button type="primary" text size="small">
-                    更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
-                  </el-button>
+                  <div class="new_table_svg_group">
+                    <oort-svg-icon width="20" height="20" name="table_more" class="new_table_svg_group_svg" />
+                    <span>更多</span>
+                  </div>
                   <template #dropdown>
                     <el-dropdown-menu>
                       <el-dropdown-item command="version">查看版本配置</el-dropdown-item>
                       <el-dropdown-item command="history">历史版本</el-dropdown-item>
-                      <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
+                      <el-dropdown-item command="delete" divided>
+                        <span style="color: #F62E2E;">删除</span>
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </template>
+
+              <!-- 训练失败状态：重新训练和更多 -->
+              <template v-else-if="scope.row.trainStatus === '训练失败'">
+                <div class="new_table_svg_group" @click="handleTrain(scope.row)">
+                  <span>重新训练</span>
+                </div>
+                <el-dropdown @command="(command) => handleMoreAction(command, scope.row)">
+                  <div class="new_table_svg_group">
+                    <oort-svg-icon width="20" height="20" name="table_more" class="new_table_svg_group_svg" />
+                    <span>更多</span>
+                  </div>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="version">查看版本配置</el-dropdown-item>
+                      <el-dropdown-item command="history">历史版本</el-dropdown-item>
+                      <el-dropdown-item command="delete" divided>
+                        <span style="color: #F62E2E;">删除</span>
+                      </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -266,14 +239,17 @@
               <!-- 其他状态：更多 -->
               <template v-else>
                 <el-dropdown @command="(command) => handleMoreAction(command, scope.row)">
-                  <el-button type="primary" text size="small">
-                    更多<el-icon class="el-icon--right"><ArrowDown /></el-icon>
-                  </el-button>
+                  <div class="new_table_svg_group">
+                    <oort-svg-icon width="20" height="20" name="table_more" class="new_table_svg_group_svg" />
+                    <span>更多</span>
+                  </div>
                   <template #dropdown>
                     <el-dropdown-menu>
                       <el-dropdown-item command="version">查看版本配置</el-dropdown-item>
                       <el-dropdown-item command="history">历史版本</el-dropdown-item>
-                      <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
+                      <el-dropdown-item command="delete" divided>
+                        <span style="color: #F62E2E;">删除</span>
+                      </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -1109,7 +1085,7 @@
 <script setup>
 import {computed, h, nextTick, onMounted, onUnmounted, ref} from 'vue'
 import {ElMessage, ElMessageBox, ElRadio, ElRadioGroup} from 'element-plus'
-import {ArrowDown, Download, Plus, QuestionFilled, Refresh, Search} from '@element-plus/icons-vue'
+import {Plus, QuestionFilled, Search} from '@element-plus/icons-vue'
 import { clacPXToVW } from '@/utils/index'
 import {
   batchDeleteTraining,
@@ -3033,7 +3009,15 @@ const openDatasetSelector = async () => {
   :deep(.header_tenant_cell) { background: #F8F8F9; }
 }
 .paginationBox { justify-content: center; height: 100px; }
-.operateAppBox { justify-content: flex-end; gap: 2px; flex-wrap: wrap; }
+
+.operate {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
 
 .page-container {
   height: 100%;
@@ -3458,52 +3442,6 @@ const openDatasetSelector = async () => {
   gap: 8px;
   white-space: nowrap;
   flex-wrap: nowrap;
-}
-
-/* 训练完成状态的操作按钮 */
-.completed-actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-}
-
-.completed-actions .el-button {
-  font-size: 12px;
-  padding: 4px 8px;
-  min-width: auto;
-}
-
-/* 下载模型按钮 - 绿色 */
-.completed-actions .el-button--success.is-text {
-  color: #67c23a !important;
-}
-
-.completed-actions .el-button--success.is-text:hover {
-  color: #529b2e !important;
-  background-color: rgba(103, 194, 58, 0.1) !important;
-}
-
-/* 发布为模型按钮 - 蓝色 */
-.completed-actions .el-button--primary.is-text {
-  color: #409eff !important;
-}
-
-.completed-actions .el-button--primary.is-text:hover {
-  color: #337ecc !important;
-  background-color: rgba(64, 158, 255, 0.1) !important;
-}
-
-/* 校验按钮 - 橙色 */
-.completed-actions .el-button--warning.is-text {
-  color: #e6a23c !important;
-}
-
-.completed-actions .el-button--warning.is-text:hover {
-  color: #b88230 !important;
-  background-color: rgba(230, 162, 60, 0.1) !important;
 }
 
 /* 分页区域 */
@@ -4293,57 +4231,19 @@ const openDatasetSelector = async () => {
   flex-shrink: 0;
 }
 
-/* 表格操作按钮样式 */
-.table-action-buttons {
+/* 表格操作列：横向单行排布 */
+.operate {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
-}
+  white-space: nowrap;
 
-/* 确保操作按钮为纯文字样式 */
-.table-action-buttons :deep(.el-button--primary.is-text) {
-  color: #1A53FF !important;
-  background: transparent !important;
-  border: none !important;
-  padding: 2px 8px !important;
-}
-
-.table-action-buttons :deep(.el-button--primary.is-text:hover) {
-  color: #3d70ff !important;
-  background: transparent !important;
-  border: none !important;
-}
-
-.table-action-buttons :deep(.el-button--danger.is-text) {
-  color: #f56c6c !important;
-  background: transparent !important;
-  border: none !important;
-  padding: 2px 8px !important;
-}
-
-.table-action-buttons :deep(.el-button--danger.is-text:hover) {
-  color: #f78989 !important;
-  background: transparent !important;
-  border: none !important;
-}
-
-/* 下拉菜单样式 */
-.table-action-buttons :deep(.el-dropdown) {
-  margin-left: 8px;
-}
-
-.table-action-buttons :deep(.el-dropdown .el-button) {
-  color: #1A53FF !important;
-  background: transparent !important;
-  border: none !important;
-  padding: 2px 8px !important;
-}
-
-.table-action-buttons :deep(.el-dropdown .el-button:hover) {
-  color: #3d70ff !important;
-  background: transparent !important;
-  border: none !important;
+  span {
+    font-size: 14px;
+    margin-left: 4px;
+  }
 }
 
 /* 新增训练任务弹窗样式 */

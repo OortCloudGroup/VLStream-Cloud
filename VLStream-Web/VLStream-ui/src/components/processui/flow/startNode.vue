@@ -4,8 +4,8 @@
       <oort-svg-icon
         class="start_img"
         name="start_node"
-        width="100"
-        height="100"
+        width="20"
+        height="20"
         :color="isFinished?'var(--node-main-color)':'var(--el-color-primary)'"
       />
       <!-- <img src="@/assets/img/processui/flownode/start.png" /> -->

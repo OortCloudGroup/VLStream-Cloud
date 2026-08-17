@@ -10,7 +10,7 @@
   <div class="exportExcelPDF flexRowAC">
     <el-dropdown trigger="hover">
       <el-button class="exportBtn Btn2 flexRowAC" title="导出">
-        <oort-svg-icon class="BtnImg export" name="export" />
+        <oort-svg-icon class="BtnImg export" name="export" width="20" height="20" />
         <div class="line" />
         <el-icon>
           <ArrowDown />
