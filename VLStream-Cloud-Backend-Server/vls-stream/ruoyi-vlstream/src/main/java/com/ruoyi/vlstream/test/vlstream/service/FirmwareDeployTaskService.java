@@ -1,0 +1,205 @@
+package com.ruoyi.vlstream.test.vlstream.service;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.vlstream.test.compat.SingleTenant;
+import com.ruoyi.vlstream.test.vlstream.mapper.FirmwareDeployTaskMapper;
+import com.ruoyi.vlstream.test.vlstream.pojo.dto.FirmwareDeployTaskView;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.FirmwareDeployTask;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+import java.util.Date;
+
+/** Persists monotonic OTA progress reported by the platform and hardware. */
+@Service
+@RequiredArgsConstructor
+public class FirmwareDeployTaskService {
+
+	private static final String SUCCESS = "SUCCESS";
+	private static final String FAILED = "FAILED";
+	private static final java.util.List<String> ACTIVE_STATUSES = Arrays.asList(
+		"CREATED", "PUBLISHED", "ACCEPTED", "DOWNLOADING", "VERIFYING", "INSTALLING", "REBOOTING");
+
+	private final FirmwareDeployTaskMapper mapper;
+
+	public void create(FirmwareDeployTask task) {
+		Date now = new Date();
+		task.setTenantId(SingleTenant.DEFAULT_TENANT_ID);
+		task.setStatus(1);
+		task.setIsDeleted(0);
+		task.setCreateTime(now);
+		task.setUpdateTime(now);
+		try {
+			mapper.insert(task);
+		} catch (DuplicateKeyException exception) {
+			throw new ServiceException("该设备的 " + task.getTarget() + " OTA 任务仍在处理中");
+		}
+	}
+
+	public FirmwareDeployTask getByRequestId(String requestId) {
+		if (StringUtils.isBlank(requestId)) {
+			return null;
+		}
+		return mapper.selectOne(new LambdaQueryWrapper<FirmwareDeployTask>()
+			.eq(FirmwareDeployTask::getTenantId, SingleTenant.DEFAULT_TENANT_ID)
+			.eq(FirmwareDeployTask::getRequestId, requestId)
+			.eq(FirmwareDeployTask::getIsDeleted, 0)
+			.last("limit 1"));
+	}
+
+	public FirmwareDeployTask latestForDevice(Long deviceRowId) {
+		return mapper.selectOne(new LambdaQueryWrapper<FirmwareDeployTask>()
+			.eq(FirmwareDeployTask::getTenantId, SingleTenant.DEFAULT_TENANT_ID)
+			.eq(FirmwareDeployTask::getDeviceRowId, deviceRowId)
+			.eq(FirmwareDeployTask::getIsDeleted, 0)
+			.orderByDesc(FirmwareDeployTask::getCreateTime)
+			.last("limit 1"));
+	}
+
+	public boolean hasActiveTask(Long deviceRowId, String target) {
+		return mapper.selectCount(new LambdaQueryWrapper<FirmwareDeployTask>()
+			.eq(FirmwareDeployTask::getTenantId, SingleTenant.DEFAULT_TENANT_ID)
+			.eq(FirmwareDeployTask::getDeviceRowId, deviceRowId)
+			.eq(FirmwareDeployTask::getTarget, target)
+			.in(FirmwareDeployTask::getDeployStatus, ACTIVE_STATUSES)
+			.eq(FirmwareDeployTask::getIsDeleted, 0)) > 0;
+	}
+
+	public void markPublished(String requestId) {
+		mapper.update(null, new LambdaUpdateWrapper<FirmwareDeployTask>()
+			.eq(FirmwareDeployTask::getTenantId, SingleTenant.DEFAULT_TENANT_ID)
+			.eq(FirmwareDeployTask::getRequestId, requestId)
+			.eq(FirmwareDeployTask::getDeployStatus, "CREATED")
+			.set(FirmwareDeployTask::getDeployStatus, "PUBLISHED")
+			.set(FirmwareDeployTask::getPublishedAt, new Date())
+			.set(FirmwareDeployTask::getUpdateTime, new Date()));
+	}
+
+	public void markPublishFailed(String requestId, String reason) {
+		Date now = new Date();
+		mapper.update(null, new LambdaUpdateWrapper<FirmwareDeployTask>()
+			.eq(FirmwareDeployTask::getTenantId, SingleTenant.DEFAULT_TENANT_ID)
+			.eq(FirmwareDeployTask::getRequestId, requestId)
+			.eq(FirmwareDeployTask::getDeployStatus, "CREATED")
+			.set(FirmwareDeployTask::getDeployStatus, FAILED)
+			.set(FirmwareDeployTask::getFailureReason, StringUtils.abbreviate(reason, 2000))
+			.set(FirmwareDeployTask::getCompletedAt, now)
+			.set(FirmwareDeployTask::getUpdateTime, now));
+	}
+
+	public boolean applyHardwareReply(String sourceMsgId, String requestId, String deviceId,
+		String deviceModel, String target, String version, String fileSha256, String incomingStatus,
+		String message, String rawPayload) {
+		FirmwareDeployTask task = getByRequestId(requestId);
+		if (task == null
+			|| !StringUtils.equals(task.getMqttMessageId(), sourceMsgId)
+			|| !StringUtils.equals(task.getDeviceId(), deviceId)
+			|| !StringUtils.equals(task.getDeviceModel(), deviceModel)
+			|| !StringUtils.equals(task.getTarget(), target)
+			|| !StringUtils.equals(task.getTargetVersion(), version)) {
+			return false;
+		}
+		String status = normalizeStatus(incomingStatus);
+		if (status == null) {
+			return false;
+		}
+		if (SUCCESS.equals(status)
+			&& !StringUtils.equalsIgnoreCase(task.getSha256(), StringUtils.trimToEmpty(fileSha256))) {
+			status = FAILED;
+			message = "OTA package SHA-256 mismatch: expected=" + task.getSha256()
+				+ ", actual=" + StringUtils.defaultIfBlank(fileSha256, "empty");
+		}
+		if (!canApply(task.getDeployStatus(), status)) {
+			return true;
+		}
+		Date now = new Date();
+		LambdaUpdateWrapper<FirmwareDeployTask> update = new LambdaUpdateWrapper<FirmwareDeployTask>()
+			.eq(FirmwareDeployTask::getTenantId, SingleTenant.DEFAULT_TENANT_ID)
+			.eq(FirmwareDeployTask::getRequestId, requestId)
+			.set(FirmwareDeployTask::getDeployStatus, status)
+			.set(FirmwareDeployTask::getLastReplyAt, now)
+			.set(FirmwareDeployTask::getReplyPayload, StringUtils.abbreviate(rawPayload, 8000))
+			.set(FirmwareDeployTask::getFailureReason,
+				FAILED.equals(status) ? StringUtils.abbreviate(message, 2000) : null)
+			.set(FirmwareDeployTask::getUpdateTime, now);
+		if (SUCCESS.equals(status) || FAILED.equals(status)) {
+			update.set(FirmwareDeployTask::getCompletedAt, now);
+		}
+		if (FAILED.equals(status)) {
+			update.ne(FirmwareDeployTask::getDeployStatus, SUCCESS);
+		} else if (SUCCESS.equals(status)) {
+			update.ne(FirmwareDeployTask::getDeployStatus, FAILED);
+		} else {
+			update.notIn(FirmwareDeployTask::getDeployStatus, SUCCESS, FAILED);
+		}
+		return mapper.update(null, update) > 0;
+	}
+
+	public FirmwareDeployTaskView toView(FirmwareDeployTask task) {
+		if (task == null) {
+			return null;
+		}
+		return FirmwareDeployTaskView.builder()
+			.requestId(task.getRequestId())
+			.target(task.getTarget())
+			.currentVersion(task.getCurrentVersion())
+			.targetVersion(task.getTargetVersion())
+			.deployStatus(task.getDeployStatus())
+			.publishedAt(task.getPublishedAt())
+			.lastReplyAt(task.getLastReplyAt())
+			.completedAt(task.getCompletedAt())
+			.failureReason(task.getFailureReason())
+			.build();
+	}
+
+	private String normalizeStatus(String status) {
+		String normalized = StringUtils.upperCase(StringUtils.trimToEmpty(status));
+		switch (normalized) {
+			case "RECEIVED":
+				return "ACCEPTED";
+			case "DOWNLOADED":
+				return "VERIFYING";
+			case "DEPLOYING":
+				return "INSTALLING";
+			case "ACCEPTED":
+			case "DOWNLOADING":
+			case "VERIFYING":
+			case "INSTALLING":
+			case "REBOOTING":
+			case SUCCESS:
+			case FAILED:
+				return normalized;
+			default:
+				return null;
+		}
+	}
+
+	private boolean canApply(String currentStatus, String incomingStatus) {
+		String current = StringUtils.upperCase(StringUtils.trimToEmpty(currentStatus));
+		if (SUCCESS.equals(current) || FAILED.equals(current)) {
+			return current.equals(incomingStatus);
+		}
+		if (FAILED.equals(incomingStatus)) {
+			return true;
+		}
+		return statusOrder(incomingStatus) >= statusOrder(current);
+	}
+
+	private int statusOrder(String status) {
+		switch (StringUtils.upperCase(StringUtils.trimToEmpty(status))) {
+			case "PUBLISHED": return 1;
+			case "ACCEPTED": return 2;
+			case "DOWNLOADING": return 3;
+			case "VERIFYING": return 4;
+			case "INSTALLING": return 5;
+			case "REBOOTING": return 6;
+			case SUCCESS: return 7;
+			default: return 0;
+		}
+	}
+}

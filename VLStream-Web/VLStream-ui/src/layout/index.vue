@@ -115,7 +115,8 @@ import {
   Menu as MenuIcon,
   Briefcase,
   Key,
-  Lock
+  Lock,
+  UploadFilled
 } from '@element-plus/icons-vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
 import SidebarMenuNode from './SidebarMenuNode.vue'
@@ -501,7 +502,8 @@ const menuRoutesMap = {
     { path: '/system/depts', meta: { title: '部门管理', icon: '部门管理' } },
     { path: '/system/posts', meta: { title: '岗位管理', icon: '岗位管理' } },
     { path: '/system/data-scopes', meta: { title: '数据权限', icon: '数据权限' } },
-    { path: '/system/api-scopes', meta: { title: '接口权限', icon: '接口权限' } }
+    { path: '/system/api-scopes', meta: { title: '接口权限', icon: '接口权限' } },
+    { path: '/system/device-firmwares', meta: { title: 'VLS协议设备固件管理', icon: '固件管理' } }
   ]
 }
 
@@ -872,6 +874,7 @@ const getMenuIcon = (iconName) => {
     '岗位管理': Briefcase,
     '数据权限': Key,
     '接口权限': Lock,
+    '固件管理': UploadFilled,
     'wvp-haikang': wvpHaikangIcon,
     'wvp-rtsp': wvpRtspIcon,
     'wvp-onvif': wvpOnvifIcon,

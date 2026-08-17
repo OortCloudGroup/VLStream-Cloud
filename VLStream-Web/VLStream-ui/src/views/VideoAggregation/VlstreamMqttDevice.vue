@@ -32,8 +32,11 @@
         <el-table-column prop="ipAddr" label="IP" min-width="120" />
         <el-table-column prop="firmwareVersion" label="固件版本" min-width="110" />
         <el-table-column prop="lastHeartbeatTime" label="最后心跳" min-width="170" />
-        <el-table-column label="操作" width="100" fixed="right">
-          <template #default="{ row }"><el-button link type="primary" :disabled="!row.online" @click="openPreview(row)">预览</el-button></template>
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button link type="primary" @click="openDetail(row)">详情</el-button>
+            <el-button link type="primary" :disabled="!row.online" @click="openPreview(row)">预览</el-button>
+          </template>
         </el-table-column>
       </el-table>
 
@@ -57,16 +60,61 @@
         <el-empty v-else description="请选择可用视频流" />
       </div>
     </el-dialog>
+
+    <el-dialog v-model="detailVisible" title="设备详情" width="780px" destroy-on-close>
+      <div v-loading="detailLoading">
+        <el-descriptions v-if="detail?.device" :column="2" border>
+          <el-descriptions-item label="设备名称">{{ detail.device.deviceName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="设备 ID">{{ detail.device.deviceId }}</el-descriptions-item>
+          <el-descriptions-item label="设备型号">{{ detail.device.deviceModel || '尚未上报' }}</el-descriptions-item>
+          <el-descriptions-item label="在线状态">{{ detail.device.online ? '在线' : '离线' }}</el-descriptions-item>
+          <el-descriptions-item label="Application 版本">{{ detail.device.applicationVersion || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="RootFS 版本">{{ detail.device.rootfsVersion || '-' }}</el-descriptions-item>
+        </el-descriptions>
+
+        <el-alert v-if="detail?.upgradeBlockedReason" :title="detail.upgradeBlockedReason" type="info"
+          :closable="false" show-icon class="upgrade-alert" />
+
+        <h4>可用固件升级</h4>
+        <el-table :data="detail?.availableUpgrades || []" border empty-text="没有更高版本的兼容固件">
+          <el-table-column label="目标" width="110">
+            <template #default="{ row }">{{ targetLabel(row.target) }}</template>
+          </el-table-column>
+          <el-table-column prop="currentVersion" label="当前版本" width="130" />
+          <el-table-column prop="latestVersion" label="最新版本" width="130" />
+          <el-table-column prop="fileName" label="固件包" min-width="180" show-overflow-tooltip />
+          <el-table-column label="操作" width="120" align="center">
+            <template #default="{ row }">
+              <el-button type="primary" :disabled="!detail?.canUpgrade" :loading="deployingFirmwareId === row.firmwareId"
+                @click="deployFirmware(row)">固件升级</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <template v-if="detail?.latestTask">
+          <h4>最近 OTA 任务</h4>
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="目标">{{ targetLabel(detail.latestTask.target) }}</el-descriptions-item>
+            <el-descriptions-item label="状态">{{ taskStatusLabel(detail.latestTask.deployStatus) }}</el-descriptions-item>
+            <el-descriptions-item label="版本">{{ detail.latestTask.currentVersion }} → {{ detail.latestTask.targetVersion }}</el-descriptions-item>
+            <el-descriptions-item label="任务 ID">{{ detail.latestTask.requestId }}</el-descriptions-item>
+            <el-descriptions-item v-if="detail.latestTask.failureReason" label="失败原因" :span="2">
+              {{ detail.latestTask.failureReason }}
+            </el-descriptions-item>
+          </el-descriptions>
+        </template>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import RtcPlayer from '@/components/rtcPlayer/index.vue'
 import {
-  closeMqttDevicePreview, createMqttDevicePreview, getMqttDeviceMediaStatus,
-  getMqttDevicePage, getMqttDeviceStreams
+  closeMqttDevicePreview, createMqttDevicePreview, deployMqttDeviceFirmware, getMqttDeviceDetail,
+  getMqttDeviceMediaStatus, getMqttDevicePage, getMqttDeviceStreams
 } from '@/api/vlstreamMqttDevice'
 
 const loading = ref(false)
@@ -80,6 +128,11 @@ const streams = ref([])
 const selectedStreamId = ref(null)
 const activeStreamId = ref(null)
 const webrtcUrl = ref('')
+const detailVisible = ref(false)
+const detailLoading = ref(false)
+const detail = ref(null)
+const detailDeviceId = ref(null)
+const deployingFirmwareId = ref(null)
 const query = reactive({ current: 1, size: 10, keyword: '', online: null })
 
 const unwrap = response => response?.data ?? response
@@ -99,6 +152,52 @@ async function loadMediaStatus() {
 
 function search() { query.current = 1; loadDevices() }
 function reset() { Object.assign(query, { current: 1, size: 10, keyword: '', online: null }); loadDevices() }
+
+async function openDetail(device) {
+  detailDeviceId.value = device.id
+  detailVisible.value = true
+  await loadDetail()
+}
+
+async function loadDetail() {
+  if (!detailDeviceId.value) return
+  detailLoading.value = true
+  try {
+    detail.value = unwrap(await getMqttDeviceDetail(detailDeviceId.value)) || null
+  } catch (error) {
+    detail.value = null
+    ElMessage.error(error?.response?.data?.msg || error?.message || '加载设备详情失败')
+  } finally { detailLoading.value = false }
+}
+
+async function deployFirmware(candidate) {
+  if (!detail.value?.canUpgrade || !detailDeviceId.value) return
+  try {
+    await ElMessageBox.confirm(
+      `确定将 ${targetLabel(candidate.target)} 从 ${candidate.currentVersion} 升级到 ${candidate.latestVersion} 吗？`,
+      '下发固件升级',
+      { type: 'warning', confirmButtonText: '确认下发', cancelButtonText: '取消' }
+    )
+    deployingFirmwareId.value = candidate.firmwareId
+    const task = unwrap(await deployMqttDeviceFirmware(detailDeviceId.value, candidate.firmwareId))
+    ElMessage.success(`OTA 指令已发布，任务状态：${taskStatusLabel(task?.deployStatus)}`)
+    await Promise.all([loadDetail(), loadDevices()])
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error(error?.response?.data?.msg || error?.message || 'OTA 指令下发失败')
+    }
+  } finally { deployingFirmwareId.value = null }
+}
+
+function targetLabel(target) { return target === 'rootfs' ? 'RootFS' : '应用程序' }
+
+function taskStatusLabel(status) {
+  const labels = {
+    CREATED: '已创建', PUBLISHED: '已发布', ACCEPTED: '设备已接收', DOWNLOADING: '下载中',
+    VERIFYING: '校验中', INSTALLING: '安装中', REBOOTING: '重启验证中', SUCCESS: '升级成功', FAILED: '升级失败'
+  }
+  return labels[status] || status || '-'
+}
 
 async function openPreview(device) {
   currentDevice.value = device
@@ -147,4 +246,6 @@ onMounted(() => { loadDevices(); loadMediaStatus() })
 .stream-bar .el-select { width: 360px; }
 .player { min-height: 480px; background: #000; display: flex; align-items: center; justify-content: center; }
 .player :deep(#webRtcPlayerBox) { max-height: 520px; }
+.upgrade-alert { margin: 16px 0; }
+h4 { margin: 18px 0 10px; }
 </style>

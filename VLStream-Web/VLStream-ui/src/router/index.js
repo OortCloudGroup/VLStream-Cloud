@@ -378,6 +378,12 @@ const routes = [
         component: () => import('@/views/System/ApiScopeManagement.vue'),
         meta: { title: '接口权限', icon: '接口权限' }
       },
+      {
+        path: '/system/device-firmwares',
+        name: 'SystemDeviceFirmwareManagement',
+        component: () => import('@/views/System/DeviceFirmwareManagement.vue'),
+        meta: { title: 'VLS协议设备固件管理', icon: '固件管理' }
+      },
       // === 主动安全模块路由配置 ===
       {
         path: '/active-safety/events/secure',

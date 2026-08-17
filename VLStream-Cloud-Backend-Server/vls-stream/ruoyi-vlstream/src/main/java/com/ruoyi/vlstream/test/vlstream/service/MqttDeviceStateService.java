@@ -68,7 +68,25 @@ public class MqttDeviceStateService {
 		}
 		device.setDeviceName(payload.getStr("deviceName"));
 		device.setDeviceSerial(payload.getStr("deviceSerial"));
-		device.setFirmwareVersion(payload.getStr("version"));
+		String deviceModel = StringUtils.trim(payload.getStr("deviceModel"));
+		if (StringUtils.isNotBlank(deviceModel)) {
+			device.setDeviceModel(deviceModel);
+		}
+		JSONObject firmwareVersions = payload.getJSONObject("firmwareVersions");
+		String applicationVersion = firmwareVersions == null
+			? null : StringUtils.trim(firmwareVersions.getStr("application"));
+		String rootfsVersion = firmwareVersions == null
+			? null : StringUtils.trim(firmwareVersions.getStr("rootfs"));
+		if (StringUtils.isBlank(applicationVersion)) {
+			applicationVersion = StringUtils.trim(payload.getStr("version"));
+		}
+		if (StringUtils.isNotBlank(applicationVersion)) {
+			device.setApplicationVersion(applicationVersion);
+			device.setFirmwareVersion(applicationVersion);
+		}
+		if (StringUtils.isNotBlank(rootfsVersion)) {
+			device.setRootfsVersion(rootfsVersion);
+		}
 		device.setFaceVersion(payload.getStr("deviceFaceVer"));
 		device.setIpAddr(payload.getStr("ipAddr"));
 		device.setMac(payload.getStr("mac"));

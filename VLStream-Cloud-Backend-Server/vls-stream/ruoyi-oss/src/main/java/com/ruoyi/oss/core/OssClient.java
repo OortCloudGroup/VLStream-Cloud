@@ -51,27 +51,7 @@ public class OssClient {
         this.configKey = configKey;
         this.properties = ossProperties;
         try {
-            AwsClientBuilder.EndpointConfiguration endpointConfig =
-                new AwsClientBuilder.EndpointConfiguration(properties.getEndpoint(), properties.getRegion());
-
-            AWSCredentials credentials = new BasicAWSCredentials(properties.getAccessKey(), properties.getSecretKey());
-            AWSCredentialsProvider credentialsProvider = new AWSStaticCredentialsProvider(credentials);
-            ClientConfiguration clientConfig = new ClientConfiguration();
-            if (OssConstant.IS_HTTPS.equals(properties.getIsHttps())) {
-                clientConfig.setProtocol(Protocol.HTTPS);
-            } else {
-                clientConfig.setProtocol(Protocol.HTTP);
-            }
-            AmazonS3ClientBuilder build = AmazonS3Client.builder()
-                .withEndpointConfiguration(endpointConfig)
-                .withClientConfiguration(clientConfig)
-                .withCredentials(credentialsProvider)
-                .disableChunkedEncoding();
-            if (!StringUtils.containsAny(properties.getEndpoint(), OssConstant.CLOUD_SERVICE)) {
-                // minio 使用https限制使用域名访问 需要此配置 站点填域名
-                build.enablePathStyleAccess();
-            }
-            this.client = build.build();
+            this.client = buildClient(properties.getEndpoint());
 
             createBucket();
         } catch (Exception e) {
@@ -194,12 +174,25 @@ public class OssClient {
      * @param second    授权时间
      */
     public String getPrivateUrl(String objectKey, Integer second) {
+        return getPrivateUrl(objectKey, second, null);
+    }
+
+    /**
+     * 获取使用客户端可达站点签名的私有URL链接。
+     * publicEndpoint 为空时继续使用后端 OSS endpoint。
+     */
+    public String getPrivateUrl(String objectKey, Integer second, String publicEndpoint) {
+        AmazonS3 signingClient = signingClient(publicEndpoint);
         GeneratePresignedUrlRequest generatePresignedUrlRequest =
             new GeneratePresignedUrlRequest(properties.getBucketName(), objectKey)
                 .withMethod(HttpMethod.GET)
                 .withExpiration(new Date(System.currentTimeMillis() + 1000L * second));
-        URL url = client.generatePresignedUrl(generatePresignedUrlRequest);
-        return url.toString();
+        try {
+            URL url = signingClient.generatePresignedUrl(generatePresignedUrlRequest);
+            return url.toString();
+        } finally {
+            shutdownSigningClient(signingClient);
+        }
     }
 
     /**
@@ -211,6 +204,15 @@ public class OssClient {
      * @param second     授权时间
      */
     public String getPresignedPutUrl(String objectKey, String contentType, Integer second) {
+        return getPresignedPutUrl(objectKey, contentType, second, null);
+    }
+
+    /**
+     * 获取使用客户端可达站点签名的对象短期 PUT 上传地址。
+     */
+    public String getPresignedPutUrl(String objectKey, String contentType, Integer second,
+                                     String publicEndpoint) {
+        AmazonS3 signingClient = signingClient(publicEndpoint);
         GeneratePresignedUrlRequest request =
             new GeneratePresignedUrlRequest(properties.getBucketName(), objectKey)
                 .withMethod(HttpMethod.PUT)
@@ -218,7 +220,11 @@ public class OssClient {
         if (StringUtils.isNotBlank(contentType)) {
             request.setContentType(contentType);
         }
-        return client.generatePresignedUrl(request).toString();
+        try {
+            return signingClient.generatePresignedUrl(request).toString();
+        } finally {
+            shutdownSigningClient(signingClient);
+        }
     }
 
     /**
@@ -242,6 +248,44 @@ public class OssClient {
      */
     public AccessPolicyType getAccessPolicy() {
         return AccessPolicyType.getByType(properties.getAccessPolicy());
+    }
+
+    private AmazonS3 signingClient(String publicEndpoint) {
+        if (StringUtils.isBlank(publicEndpoint)
+            || StringUtils.equals(publicEndpoint, properties.getEndpoint())) {
+            return client;
+        }
+        return buildClient(publicEndpoint);
+    }
+
+    private void shutdownSigningClient(AmazonS3 signingClient) {
+        if (signingClient != client) {
+            signingClient.shutdown();
+        }
+    }
+
+    private AmazonS3 buildClient(String endpoint) {
+        AwsClientBuilder.EndpointConfiguration endpointConfig =
+            new AwsClientBuilder.EndpointConfiguration(endpoint, properties.getRegion());
+        AWSCredentials credentials = new BasicAWSCredentials(properties.getAccessKey(), properties.getSecretKey());
+        AWSCredentialsProvider credentialsProvider = new AWSStaticCredentialsProvider(credentials);
+        ClientConfiguration clientConfig = new ClientConfiguration();
+        if (StringUtils.startsWithIgnoreCase(endpoint, "https://")
+            || OssConstant.IS_HTTPS.equals(properties.getIsHttps())) {
+            clientConfig.setProtocol(Protocol.HTTPS);
+        } else {
+            clientConfig.setProtocol(Protocol.HTTP);
+        }
+        AmazonS3ClientBuilder build = AmazonS3Client.builder()
+            .withEndpointConfiguration(endpointConfig)
+            .withClientConfiguration(clientConfig)
+            .withCredentials(credentialsProvider)
+            .disableChunkedEncoding();
+        if (!StringUtils.containsAny(endpoint, OssConstant.CLOUD_SERVICE)) {
+            // MinIO 使用路径风格访问，签名时的 Host 必须与客户端实际访问地址一致。
+            build.enablePathStyleAccess();
+        }
+        return build.build();
     }
 
     private static String getPolicy(String bucketName, PolicyType policyType) {

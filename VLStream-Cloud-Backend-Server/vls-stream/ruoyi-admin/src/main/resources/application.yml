@@ -258,6 +258,21 @@ vlstream:
     max-image-bytes: ${VLSTREAM_DEVICE_MEDIA_MAX_IMAGE_BYTES:10485760}
     # 生产环境必须保持 false；dev 配置允许局域网先联调
     allow-unauthenticated: ${VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED:false}
+  # VLS 协议设备固件包（管理员预签名 PUT 直传 MinIO）
+  firmware:
+    # 对应私有 sys_oss_config.config_key；固件默认使用独立桶，避免影响公共业务文件
+    oss-config-key: ${VLSTREAM_FIRMWARE_OSS_CONFIG_KEY:minio-firmware}
+    # 浏览器和摄像头可直接访问的 MinIO API endpoint；为空时使用 OSS endpoint
+    # 例如 https://minio.example.com，不能填写仅容器内可解析的 minio:9000
+    public-endpoint: ${VLSTREAM_FIRMWARE_PUBLIC_ENDPOINT:}
+    # 摄像头访问的平台短链接根地址；平台校验任务后从私有 MinIO 流式返回固件
+    platform-base-url: ${VLSTREAM_FIRMWARE_PLATFORM_BASE_URL:http://192.168.88.31:8080}
+    upload-url-ttl-seconds: ${VLSTREAM_FIRMWARE_UPLOAD_TTL_SECONDS:600}
+    download-url-ttl-seconds: ${VLSTREAM_FIRMWARE_DOWNLOAD_TTL_SECONDS:1800}
+    # OTA 指令中的地址需要覆盖排队、下载和校验启动时间，默认 2 小时
+    ota-download-url-ttl-seconds: ${VLSTREAM_FIRMWARE_OTA_DOWNLOAD_TTL_SECONDS:7200}
+    # VLS 2.2 OTA 协议上限 160 MiB
+    max-package-bytes: ${VLSTREAM_FIRMWARE_MAX_PACKAGE_BYTES:167772160}
   # RTSP 视频录制配置
   rtsp-recording:
     # 是否启用 RTSP 录制功能
@@ -356,6 +371,8 @@ security:
     # 局域网联调阶段，硬件无需平台用户 Token 即可申请单对象预签名 PUT 地址；
     # 业务服务仍受 VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED 开关保护
     - /vlsDeviceMedia/public/**
+    # OTA 短链接携带不可猜测的任务标识，并由业务层校验有效期和固件一致性
+    - /vlsDeviceFirmware/ota/**
     - /monitor/**
 #    - /xxl-job-admin/**
 

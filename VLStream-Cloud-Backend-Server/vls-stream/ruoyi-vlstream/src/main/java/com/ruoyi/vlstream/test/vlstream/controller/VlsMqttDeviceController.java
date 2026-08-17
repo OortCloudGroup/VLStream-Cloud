@@ -1,11 +1,16 @@
 package com.ruoyi.vlstream.test.vlstream.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.vlstream.test.vlstream.mapper.MqttDeviceMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.MqttDeviceStreamMapper;
+import com.ruoyi.vlstream.test.vlstream.pojo.dto.FirmwareDeployRequest;
+import com.ruoyi.vlstream.test.vlstream.pojo.dto.FirmwareDeployTaskView;
+import com.ruoyi.vlstream.test.vlstream.pojo.dto.MqttDeviceDetailView;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.MqttDevice;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.MqttDeviceStream;
+import com.ruoyi.vlstream.test.vlstream.service.FirmwareDeploymentService;
 import com.ruoyi.vlstream.test.vlstream.service.VlsZlmService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +38,7 @@ public class VlsMqttDeviceController {
 	private final MqttDeviceMapper deviceMapper;
 	private final MqttDeviceStreamMapper streamMapper;
 	private final VlsZlmService zlmService;
+	private final FirmwareDeploymentService firmwareDeploymentService;
 
 	@GetMapping("/page")
 	public R<Page<MqttDevice>> page(@RequestParam(defaultValue = "1") long current,
@@ -58,6 +64,19 @@ public class VlsMqttDeviceController {
 			.eq(MqttDeviceStream::getIsDeleted, 0)
 			.orderByDesc(MqttDeviceStream::getIsDefault)
 			.orderByAsc(MqttDeviceStream::getChannelId, MqttDeviceStream::getStreamType)));
+	}
+
+	@GetMapping("/{deviceId}/detail")
+	public R<MqttDeviceDetailView> detail(@PathVariable Long deviceId) {
+		return R.data(firmwareDeploymentService.detail(deviceId));
+	}
+
+	@SaCheckPermission("vls:firmware:deploy")
+	@PostMapping("/{deviceId}/firmware-upgrades")
+	public R<FirmwareDeployTaskView> deployFirmware(@PathVariable Long deviceId,
+		@RequestBody FirmwareDeployRequest request) {
+		return R.data(firmwareDeploymentService.deploy(deviceId,
+			request == null ? null : request.getFirmwareId()));
 	}
 
 	@PostMapping("/{deviceId}/preview")

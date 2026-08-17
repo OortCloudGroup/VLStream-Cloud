@@ -19,6 +19,7 @@ public final class VlsMqttProtocol {
 	public static final String DEVICE_BIZ = "device";
 	public static final String DEVICE_BIZ_COMPAT = "deviceBiz";
 	public static final String STATE = "state";
+	public static final String FIRMWARE_DEPLOY = "firmwareDeploy";
 	public static final String AI_BIZ = "aiBiz";
 	public static final String MODEL_DEPLOY = "modelDeploy";
 	public static final String FACE_EVENT = "faceEvent";
