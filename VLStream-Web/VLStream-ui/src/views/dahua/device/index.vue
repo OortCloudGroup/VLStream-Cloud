@@ -1,4 +1,5 @@
 <template>
+  <DeviceClassificationLayout protocol-type="DAHUA" :selected-device-keys="classificationDeviceKeys" @filter-change="handleClassificationFilter" @assigned="getList">
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="ip" prop="ip">
@@ -589,9 +590,11 @@
 
 
   </div>
+</DeviceClassificationLayout>
 </template>
 
 <script setup name="DahuaDevice">
+import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import {
   addDevice,
   delDevice,
@@ -735,6 +738,8 @@ const data = reactive({
 });
 
 const {queryParams, form, rules} = toRefs(data);
+const classificationDeviceKeys = ref([]);
+function handleClassificationFilter(filter) { Object.assign(queryParams.value, filter, { pageNum: 1 }); getList(); }
 const statusPlay = ref("");
 const SDKID = ref("");
 function handleSDKPlay(row){
@@ -898,6 +903,7 @@ function resetQuery() {
 
 // 多选框选中数据
 function handleSelectionChange(selection) {
+  classificationDeviceKeys.value = selection.map(item => String(item.id));
   ids.value = selection.map(item => item.id);
   single.value = selection.length != 1;
   multiple.value = !selection.length;

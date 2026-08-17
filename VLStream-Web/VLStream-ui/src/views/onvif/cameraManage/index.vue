@@ -1,4 +1,5 @@
 <template>
+  <DeviceClassificationLayout protocol-type="ONVIF" :selected-device-keys="classificationDeviceKeys" @filter-change="handleClassificationFilter" @assigned="getList">
   <div class="app-container">
     <el-alert title="ONVIF协议 16的设备可以使用Digest/WS,2.20版本使用WS" type="success" style="margin-bottom: 10px;" />
     <el-card>
@@ -656,9 +657,11 @@
       </div>
     </el-dialog>
   </div>
+</DeviceClassificationLayout>
 </template>
 
 <script setup name="CameraManage">
+import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import {checkPermi} from "@/utils/wvpPermission";
 import {
   addDevice, addOnvif,
@@ -784,6 +787,8 @@ const data = reactive({
   }
 });
 const {queryParams, form, rules, probeForm, rulesResult, rulesResult2} = toRefs(data);
+const classificationDeviceKeys = ref([]);
+function handleClassificationFilter(filter) { Object.assign(queryParams.value, filter, { pageNum: 1 }); getList(); }
 const passwordVisibility = ref({});
 const url = ref('');
 const disabledAdd = ref(true);
@@ -1125,6 +1130,7 @@ function resetQuery() {
 
 // 多选框选中数据
 function handleSelectionChange(selection) {
+  classificationDeviceKeys.value = selection.map(item => String(item.id));
   ids.value = selection.map(item => item.id);
   single.value = selection.length != 1;
   multiple.value = !selection.length;

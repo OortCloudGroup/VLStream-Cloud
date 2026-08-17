@@ -1,4 +1,5 @@
 <template>
+  <DeviceClassificationLayout protocol-type="RTSP" :selected-device-keys="classificationDeviceKeys" @filter-change="handleClassificationFilter" @assigned="getList">
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
       <el-form-item label="ip" prop="ip">
@@ -350,9 +351,11 @@
     </el-dialog>
 
   </div>
+</DeviceClassificationLayout>
 </template>
 
 <script setup name="RtspDevice">
+import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import {
   addDetection,
   addRtspDevice,
@@ -449,6 +452,8 @@ const data = reactive({
 });
 
 const {queryParams, form, rules} = toRefs(data);
+const classificationDeviceKeys = ref([]);
+function handleClassificationFilter(filter) { Object.assign(queryParams.value, filter, { pageNum: 1 }); getList(); }
 
 const videoError = (e) => {
   console.log("播放器错误：" + JSON.stringify(e));
@@ -677,6 +682,7 @@ function resetQuery() {
 
 // 多选框选中数据
 function handleSelectionChange(selection) {
+  classificationDeviceKeys.value = selection.map(item => String(item.id));
   ids.value = selection.map(item => item.id);
   single.value = selection.length != 1;
   multiple.value = !selection.length;

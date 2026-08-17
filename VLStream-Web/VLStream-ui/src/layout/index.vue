@@ -124,6 +124,7 @@ import wvpRtspIcon from '@/assets/wvp/icons/protocol/rtsp.svg'
 import wvpOnvifIcon from '@/assets/wvp/icons/protocol/onvif.svg'
 import wvpGbIcon from '@/assets/wvp/icons/protocol/gb.svg'
 import wvpDahuaIcon from '@/assets/wvp/icons/protocol/dahua.svg'
+import vlsIcon from '@/assets/wvp/icons/protocol/vls.svg'
 
 const route = useRoute()
 const router = useRouter()
@@ -404,7 +405,7 @@ const menuRoutesMap = {
       path: 'device-management-menu',
       meta: { title: '设备管理', icon: '设备管理' },
       children: [
-        { path: '/vlstream/device', meta: { title: 'VLStream', icon: '设备管理' } },
+        { path: '/vlstream/device', meta: { title: 'VLStream', icon: 'wvp-vls' } },
         { path: '/isup/isupDevice', meta: { title: 'ISUP', icon: 'wvp-haikang' } },
         { path: '/rtsp/rtspDevice', meta: { title: 'RTSP', icon: 'wvp-rtsp' } },
         { path: '/onvif/cameraManage', meta: { title: 'ONVIF', icon: 'wvp-onvif' } },
@@ -439,25 +440,25 @@ const menuRoutesMap = {
       path: 'event-management-menu',
       meta: { title: '事件管理', icon: '事件' },
       children: [
-        { path: '/event-management', meta: { title: '主动安全', icon: '监控告警' } },
-        {
-          path: '/active-safety/work-orders',
-          meta: { title: '工单管理', icon: '岗位管理' },
-          children: [
-            { path: '/active-safety/work-orders/my', meta: { title: '我的工单', icon: '角色管理' } },
-            { path: '/active-safety/work-orders/pending', meta: { title: '待办工单', icon: '事件' } },
-            { path: '/active-safety/work-orders/completed', meta: { title: '已办工单', icon: '标签管理' } },
-            { path: '/active-safety/work-orders/claimable', meta: { title: '可接工单', icon: '智能分析结果' } }
-          ]
-        },
-        {
-          path: '/active-safety/settings',
-          meta: { title: '系统管理', icon: '摄像机设置' },
-          children: [
-            { path: '/active-safety/settings/secure', meta: { title: '主动安全', icon: '摄像机设置' } },
-            { path: '/active-safety/settings/work-orders', meta: { title: '工单设置', icon: '摄像机设置' } }
-          ]
-        }
+        { path: '/event-management', meta: { title: '主动安全', icon: '监控告警' } }
+      ]
+    },
+    {
+      path: '/active-safety/work-orders',
+      meta: { title: '工单管理', icon: '岗位管理' },
+      children: [
+        { path: '/active-safety/work-orders/my', meta: { title: '我的工单', icon: '角色管理' } },
+        { path: '/active-safety/work-orders/pending', meta: { title: '待办工单', icon: '事件' } },
+        { path: '/active-safety/work-orders/completed', meta: { title: '已办工单', icon: '标签管理' } },
+        { path: '/active-safety/work-orders/claimable', meta: { title: '可接工单', icon: '智能分析结果' } }
+      ]
+    },
+    {
+      path: '/active-safety/settings',
+      meta: { title: '系统管理', icon: '摄像机设置' },
+      children: [
+        { path: '/active-safety/settings/secure', meta: { title: '主动安全', icon: '摄像机设置' } },
+        { path: '/active-safety/settings/work-orders', meta: { title: '工单设置', icon: '摄像机设置' } }
       ]
     },
     {
@@ -557,7 +558,7 @@ const getFirstNavigablePath = (items) => {
   return ''
 }
 
-// 当前页面所在的多级菜单自动展开，避免用户看不到已归入事件管理的子菜单。
+// 当前页面所在的多级菜单自动展开，避免用户看不到当前页面对应的子菜单。
 const defaultOpenMenuPaths = computed(() => {
   return getOpenMenuPaths(currentMenuRoutes.value, sidebarActivePath.value)
 })
@@ -875,7 +876,8 @@ const getMenuIcon = (iconName) => {
     'wvp-rtsp': wvpRtspIcon,
     'wvp-onvif': wvpOnvifIcon,
     'wvp-gb': wvpGbIcon,
-    'wvp-dahua': wvpDahuaIcon
+    'wvp-dahua': wvpDahuaIcon,
+    'wvp-vls': vlsIcon
   }
   return iconMap[iconName] || Setting
 }

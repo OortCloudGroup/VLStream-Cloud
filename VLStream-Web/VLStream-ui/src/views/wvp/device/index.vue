@@ -1,4 +1,5 @@
 <template>
+  <DeviceClassificationLayout protocol-type="GB28181" :selected-device-keys="classificationDeviceKeys" @filter-change="handleClassificationFilter" @assigned="getList">
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="设备名称" prop="name">
@@ -279,9 +280,11 @@
       <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
     </el-dialog>
   </div>
+</DeviceClassificationLayout>
 </template>
 
 <script setup name="Device">
+import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import {checkPermi} from "@/utils/wvpPermission";
 import MapGaoDe from "@/components/MapGaoDe/index.vue";
 import {
@@ -351,6 +354,8 @@ const data = reactive({
 });
 
 const {queryParams, form, rules} = toRefs(data);
+const classificationDeviceKeys = ref([]);
+function handleClassificationFilter(filter) { Object.assign(queryParams.value, filter, { pageNum: 1 }); getList(); }
 
 /** 查询列表 */
 function getList() {
@@ -637,6 +642,7 @@ function syncBasicParam(row) {
 
 // 多选框选中数据
 function handleSelectionChange(selection) {
+  classificationDeviceKeys.value = selection.map(item => String(item.id));
   ids.value = selection.map(item => item.deviceId);
   multiple.value = !selection.length;
 }

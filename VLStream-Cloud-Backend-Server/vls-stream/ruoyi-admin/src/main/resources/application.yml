@@ -71,7 +71,8 @@ spring:
     # 国际化资源文件路径
     basename: i18n/messages
   profiles:
-    active: @profiles.active@
+    # IDE 直接运行时不经过 Maven 资源过滤，环境通过 SPRING_PROFILES_ACTIVE 覆盖
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   # 文件上传
   servlet:
     multipart:
@@ -144,10 +145,11 @@ vlstream:
   # ZLMediaKit 按需拉流与 WebRTC 播放配置
   zlm:
     enabled: ${VLSTREAM_ZLM_ENABLED:true}
-    # 仅后端调用 ZLM REST API；可与 WVP 指向同一实例，但不依赖 WVP 服务
-    internal-base-url: ${VLSTREAM_ZLM_INTERNAL_URL:http://127.0.0.1}
-    # 浏览器可访问的 ZLM HTTP(S) 地址
-    public-base-url: ${VLSTREAM_ZLM_PUBLIC_URL:http://127.0.0.1}
+    # 仅后端调用 ZLM REST API；本地默认使用 Docker Desktop 中的 ZLM
+    internal-base-url: ${VLSTREAM_ZLM_INTERNAL_URL:http://127.0.0.1:8090}
+    # 浏览器可访问的 ZLM HTTP(S) 地址；部署环境通过环境变量覆盖
+    public-base-url: ${VLSTREAM_ZLM_PUBLIC_URL:http://127.0.0.1:8090}
+    # ZLM API 密钥不写入任何环境配置文件，统一通过环境变量注入
     secret: ${ZLMEDIAKIT_SECRET:}
     app: ${VLSTREAM_ZLM_APP:vlstream}
     connect-timeout-millis: ${VLSTREAM_ZLM_CONNECT_TIMEOUT_MILLIS:3000}
