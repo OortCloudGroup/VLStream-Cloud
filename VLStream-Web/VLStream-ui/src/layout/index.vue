@@ -59,7 +59,7 @@
       <div
         v-if="showSidebar"
         class="layout-sidebar"
-        :style="{ width: sidebarCollapsed ? '64px' : '200px' }"
+        :style="{ width: sidebarCollapsed ? '64px' : '260px' }"
       >
         <el-menu
           :key="sidebarActivePath"
@@ -68,8 +68,8 @@
           router
           class="sidebar-menu"
           background-color="transparent"
-          text-color="#303133"
-          active-text-color="#409eff"
+          text-color="rgba(0, 0, 0, 0.65)"
+          active-text-color="var(--el-color-primary)"
           :collapse="sidebarCollapsed"
           style="--el-menu-bg-color: transparent; background: transparent;"
         >
@@ -1036,6 +1036,8 @@ const handleUserTokenUpdated = async (event) => {
   flex: 1;
   overflow: hidden;
   display: flex;
+  align-items: flex-start;
+  gap: 12px;
   transition: all 0.3s ease;
   position: relative;
   background: #f5f7fa;
@@ -1066,7 +1068,8 @@ const handleUserTokenUpdated = async (event) => {
   resize: none;
   overflow: hidden;
   --el-menu-bg-color: transparent;
-  --el-menu-hover-bg-color: #ecf5ff;
+  --el-menu-hover-bg-color: #ffffff;
+  --el-menu-active-color: var(--el-color-primary);
 }
 
 /* 隐藏Element Plus可能的拖拽句柄 */
@@ -1090,45 +1093,134 @@ const handleUserTokenUpdated = async (event) => {
 .sidebar-menu {
   border-right: none !important;
   height: 100%;
+  overflow: auto;
+  padding-top: 16px;
+  padding-left: 12px;
+  padding-right: 12px;
   background: transparent !important;
   background-color: transparent !important;
   --el-menu-bg-color: transparent;
+  border-radius: 16px;
 }
 
 .sidebar-menu.el-menu,
 .layout-sidebar :deep(.el-menu),
-.layout-sidebar :deep(.el-menu--vertical),
-.layout-sidebar :deep(.el-sub-menu__title) {
+.layout-sidebar :deep(.el-menu--vertical) {
   background: transparent !important;
   background-color: transparent !important;
+  border-right: 0 !important;
+  color: rgba(0, 0, 0, 0.65);
 }
 
-.sidebar-menu .el-menu-item {
-  height: 50px;
-  line-height: 50px;
-  margin: 0 8px;
-  border-radius: 6px;
-  transition: all 0.3s;
-  background-color: transparent;
+.layout-sidebar :deep(.el-menu-item),
+.layout-sidebar :deep(.el-sub-menu__title) {
+  height: 32px !important;
+  line-height: 32px !important;
+  border-radius: 16px;
+  margin-bottom: 2px;
+  color: rgba(0, 0, 0, 0.65);
+  transition: background-color 0.2s ease, color 0.2s ease;
+  background: transparent !important;
+  background-color: transparent !important;
+  gap: 10px;
 }
 
-.sidebar-menu .el-menu-item:hover {
-  background-color: #ecf5ff !important;
+.layout-sidebar :deep(.el-sub-menu > .el-sub-menu__title) {
+  margin-bottom: 2px;
 }
 
-.sidebar-menu .el-menu-item.is-active {
-  background-color: #ecf5ff !important;
-  color: #409eff;
-  font-weight: 500;
+.layout-sidebar :deep(.el-menu-item:hover),
+.layout-sidebar :deep(.el-sub-menu > .el-sub-menu__title:hover) {
+  background-color: #ffffff !important;
+  color: rgba(0, 0, 0, 0.65) !important;
+}
+
+.layout-sidebar :deep(.el-menu-item.is-active) {
+  background-color: var(--el-color-primary-hb) !important;
+  color: var(--el-color-primary) !important;
+}
+
+.layout-sidebar :deep(.el-menu-item.is-active .el-icon),
+.layout-sidebar :deep(.el-menu-item.is-active .menu-icon-box) {
+  color: var(--el-color-primary) !important;
+}
+
+.layout-sidebar :deep(.el-menu-item.is-active:hover) {
+  background-color: var(--el-color-primary-hb) !important;
+  color: var(--el-color-primary) !important;
+}
+
+.layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title) {
+  background-color: var(--el-color-primary-hb) !important;
+  color: var(--el-color-primary) !important;
+}
+
+.layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title:hover) {
+  background-color: var(--el-color-primary-hb) !important;
+  color: var(--el-color-primary) !important;
+}
+
+.layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title .el-icon),
+.layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title .menu-icon-box) {
+  color: var(--el-color-primary) !important;
+}
+
+.layout-sidebar :deep(.el-sub-menu__icon-arrow) {
+  display: none !important;
+}
+
+/* 折叠态：仅显示居中图标，隐藏左侧展开箭头 */
+.layout-sidebar :deep(.el-menu--collapse) {
+  width: auto;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.layout-sidebar :deep(.el-menu--collapse > .el-menu-item),
+.layout-sidebar :deep(.el-menu--collapse > .el-sub-menu) {
+  width: 32px;
+  margin: 0 auto 2px;
+}
+
+.layout-sidebar :deep(.el-menu--collapse > .el-menu-item),
+.layout-sidebar :deep(.el-menu--collapse .el-sub-menu > .el-sub-menu__title) {
+  width: 32px;
+  min-width: 32px;
+  padding: 0 !important;
+  margin: 0 auto 2px;
+  justify-content: center;
+  gap: 0;
+  position: relative;
+}
+
+.layout-sidebar :deep(.el-menu--collapse > .el-menu-item .el-menu-tooltip__trigger) {
+  width: 32px;
+  padding: 0 !important;
+  justify-content: center;
+}
+
+.layout-sidebar :deep(.el-menu--collapse .submenu-caret) {
+  display: none !important;
+}
+
+.layout-sidebar :deep(.el-menu--collapse .menu-icon-box) {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: 0;
+  transform: translate(-50%, -50%);
 }
 
 .layout-content {
-  background: #f5f7fa;
+  background: #ffffff;
+  border-radius: var(--common-border-radius, 6px) var(--common-border-radius, 6px) 0 0;
   overflow-y: auto;
   flex: 1;
   transition: all 0.3s ease;
   min-width: 0;
-  padding: 20px 0 0;
+  margin-top: 20px;
+  height: calc(100% - 20px);
+  padding: 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -1166,5 +1258,22 @@ const handleUserTokenUpdated = async (event) => {
   border-right: none !important;
   margin-top: 20px !important;
   height: calc(100% - 20px) !important;
+}
+
+/* 菜单项圆角/高度与 Manage 侧栏对齐 */
+.layout-sidebar .el-menu-item,
+.layout-sidebar .el-sub-menu__title {
+  height: 32px !important;
+  line-height: 32px !important;
+  border-radius: 16px !important;
+}
+
+.layout-sidebar .el-menu-item.is-active {
+  background-color: var(--el-color-primary-hb) !important;
+  color: var(--el-color-primary) !important;
+}
+
+.layout-sidebar .el-sub-menu__icon-arrow {
+  display: none !important;
 }
 </style>
