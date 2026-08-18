@@ -989,23 +989,35 @@ const handleUserTokenUpdated = async (event) => {
   display: flex;
   align-items: center;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  color: #666;
+  font-size: 18px;
+  font-weight: 400;
+  color: #33333360;
   position: relative;
-  transition: all 0.3s;
-  border-bottom: 3px solid transparent;
+  transition: color 0.3s;
+  background-color: transparent;
+  border-bottom: none;
 }
 
 .menu-item:hover {
-  color: #409eff;
-  background-color: #f8f9fa;
+  color: var(--el-color-primary);
+  background-color: transparent;
 }
 
 .menu-item.active {
-  color: #409eff;
-  background-color: #f0f9ff;
-  border-bottom-color: #409eff;
+  color: var(--el-color-primary);
+  font-weight: 700;
+  background-color: transparent;
+}
+
+.menu-item.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  height: 3px;
+  width: 24px;
+  background: var(--el-color-primary);
+  transform: translateX(-50%);
 }
 
 /* 用户信息样式 */
