@@ -803,30 +803,33 @@ const handleOSDSettingsSave = (settings) => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  overflow: hidden;
 }
 
 /* 内容头部导航样式 */
 .content-header {
   padding: 16px 20px;
-  border-bottom: 1px solid #e4e7ed;
-  background: white;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
 }
 
 .breadcrumb {
   display: flex;
   align-items: center;
   font-size: 14px;
+  color: #606266;
 }
 
 .breadcrumb-item {
-  color: #409eff;
+  color: var(--el-color-primary);
   cursor: pointer;
-  transition: color 0.3s ease;
+  transition: color 0.3s;
 }
 
 .breadcrumb-item:hover {
-  color: #66b1ff;
+  color: #3d70ff;
 }
 
 .breadcrumb-item.active {

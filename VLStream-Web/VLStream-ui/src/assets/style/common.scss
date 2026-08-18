@@ -1012,6 +1012,90 @@ td {
   padding-left: 20px;
 }
 
+/* 二级页面整体样式（对齐事件详情） */
+.subpage-view,
+.detail-view,
+.edit-view {
+  height: 100%;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-header,
+.content-header,
+.breadcrumb-section,
+.device-sub-page > .page-header,
+.edit-view > .breadcrumb-nav {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+  flex-shrink: 0;
+  margin-bottom: 0;
+  box-shadow: none;
+}
+
+.detail-header .breadcrumb-nav,
+.detail-header .breadcrumb,
+.content-header .breadcrumb,
+.breadcrumb-section .breadcrumb,
+.device-sub-page .page-header .breadcrumb,
+.edit-view > .breadcrumb-nav {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #606266;
+}
+
+.detail-header .breadcrumb-item,
+.content-header .breadcrumb-item,
+.breadcrumb-section .breadcrumb-item,
+.device-sub-page .page-header .breadcrumb-item,
+.edit-view .breadcrumb-item,
+.breadcrumb-nav .breadcrumb-item {
+  cursor: pointer;
+  color: var(--el-color-primary);
+  transition: color 0.3s;
+}
+
+.detail-header .breadcrumb-item:hover,
+.content-header .breadcrumb-item:hover,
+.breadcrumb-section .breadcrumb-item:hover,
+.device-sub-page .page-header .breadcrumb-item:hover,
+.edit-view .breadcrumb-item:hover,
+.breadcrumb-nav .breadcrumb-item:hover {
+  color: #3d70ff;
+}
+
+.detail-header .breadcrumb-item.active,
+.content-header .breadcrumb-item.active,
+.breadcrumb-section .breadcrumb-item.active,
+.device-sub-page .page-header .breadcrumb-item.active,
+.edit-view .breadcrumb-item.active,
+.breadcrumb-nav .breadcrumb-item.active {
+  color: #303133;
+  cursor: default;
+}
+
+.detail-header .breadcrumb-separator,
+.content-header .breadcrumb-separator,
+.breadcrumb-section .breadcrumb-separator,
+.device-sub-page .page-header .breadcrumb-separator,
+.edit-view .breadcrumb-separator,
+.breadcrumb-nav .breadcrumb-separator {
+  margin: 0 8px;
+  color: #c0c4cc;
+}
+
+.subpage-body,
+.detail-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
 // 顶部内容区 Tab
 .tenanat-tabs {
   padding: 0 20px;

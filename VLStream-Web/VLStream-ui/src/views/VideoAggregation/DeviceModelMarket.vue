@@ -1,13 +1,6 @@
 <template>
   <div class="device-model-market">
     <div class="model-market-container">
-      <!-- 面包屑导航 -->
-      <div class="breadcrumb-nav">
-<!--        <span class="breadcrumb-item">配置AI事件</span>-->
-        <span class="breadcrumb-separator">></span>
-        <span class="breadcrumb-item active">算法超市</span>
-        </div>
-        
       <!-- 算法分类标签 -->
       <div class="category-tabs">
         <div 
@@ -214,47 +207,23 @@ const handleCancel = () => {
 
 <style scoped lang="scss">
 .device-model-market {
-  padding: 20px;
-  background: #f5f7fa;
-  height: 100vh;
+  padding: 0;
+  background: #fff;
+  height: 100%;
   overflow: hidden;
   
   .model-market-container {
     height: 100%;
     display: flex;
     flex-direction: column;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-  }
-  
-  .breadcrumb-nav {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-    padding: 10px 0;
-    border-bottom: 1px solid #ebeef5;
-    
-    .breadcrumb-item {
-      color: #606266;
-      font-size: 14px;
-      
-      &.active {
-        color: #303133;
-        font-weight: 500;
-      }
-    }
-    
-    .breadcrumb-separator {
-      margin: 0 12px;
-      color: #c0c4cc;
-    }
+    background: #fff;
+    padding: 0;
   }
   
   .category-tabs {
     display: flex;
     margin-bottom: 20px;
+    padding: 0 20px;
     border-bottom: 1px solid #ebeef5;
     
     .category-tab {
@@ -283,6 +252,7 @@ const handleCancel = () => {
     display: flex;
     gap: 20px;
     overflow: hidden;
+    padding: 0 20px;
     
     .algorithms-section {
       flex: 1;
@@ -452,9 +422,9 @@ const handleCancel = () => {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    padding-top: 20px;
+    padding: 20px;
     border-top: 1px solid #ebeef5;
-    margin-top: 20px;
+    margin-top: 0;
   }
 }
 

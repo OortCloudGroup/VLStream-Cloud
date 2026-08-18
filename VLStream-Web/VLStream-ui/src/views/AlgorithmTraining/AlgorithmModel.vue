@@ -815,7 +815,15 @@ onMounted(() => {
   width: 100%;
   border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
   background: #f0f2f5;
-  .tenant_content { width: 100%; height: 100%; border-radius: 8px; }
+  .tenant_content {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
   .tableTenBox {
     padding: 20px;
     width: 100%;
@@ -1059,51 +1067,53 @@ onMounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
-  min-height: calc(100vh - 60px);
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* 面包屑导航 */
 .breadcrumb-section {
-  background: white;
-  border-radius: 8px 8px 0 0;
+  background: #fff;
   padding: 16px 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid #f0f0f0;
+  box-shadow: none;
 }
 
 .breadcrumb {
   display: flex;
   align-items: center;
-  gap: 8px;
   font-size: 14px;
+  color: #606266;
 }
 
 .breadcrumb-item {
-  color: #409eff;
+  color: var(--el-color-primary);
   cursor: pointer;
   transition: color 0.3s;
 }
 
 .breadcrumb-item:hover {
-  color: #337ecc;
+  color: #3d70ff;
 }
 
 .breadcrumb-item.active {
-  color: #262626;
+  color: #303133;
   cursor: default;
 }
 
 .breadcrumb-separator {
-  color: #999;
+  margin: 0 8px;
+  color: #c0c4cc;
 }
 
 /* 基础信息区域 */
 .detail-info-section {
-  background: white;
+  background: #fff;
   border-radius: 0;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-top: 1px solid #e8e8e8;
+  padding: 20px;
+  box-shadow: none;
 }
 
 .info-grid {
@@ -1134,11 +1144,10 @@ onMounted(() => {
 
 /* 版本区域 */
 .version-section {
-  background: white;
-  border-radius: 0 0 8px 8px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-top: 1px solid #e8e8e8;
+  background: #fff;
+  border-radius: 0;
+  padding: 0 20px 20px;
+  box-shadow: none;
   flex: 1;
 }
 

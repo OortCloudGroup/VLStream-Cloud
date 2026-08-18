@@ -725,7 +725,15 @@ onMounted(() => {
   width: 100%;
   border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
   background: #f0f2f5;
-  .tenant_content { width: 100%; height: 100%; border-radius: 8px; }
+  .tenant_content {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
   .tableTenBox {
     padding: 20px;
     width: 100%;

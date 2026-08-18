@@ -82,20 +82,23 @@ onMounted(loadDevice)
 }
 
 .page-header {
-  padding: 16px 20px 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
   flex-shrink: 0;
+  background: #fff;
 }
 
 .breadcrumb {
   display: flex;
   align-items: center;
-  gap: 8px;
   font-size: 14px;
+  color: #606266;
 }
 
 .breadcrumb-item {
-  color: #606266;
+  color: var(--el-color-primary);
   cursor: pointer;
+  transition: color 0.3s;
 
   &.active {
     color: #303133;
@@ -103,11 +106,12 @@ onMounted(loadDevice)
   }
 
   &:not(.active):hover {
-    color: var(--el-color-primary);
+    color: #3d70ff;
   }
 }
 
 .breadcrumb-separator {
+  margin: 0 8px;
   color: #c0c4cc;
 }
 

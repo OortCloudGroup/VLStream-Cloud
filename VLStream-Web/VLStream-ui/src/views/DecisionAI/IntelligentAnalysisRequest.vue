@@ -647,7 +647,15 @@ const handleBatchOperation = () => {
   width: 100%;
   border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
   background: #f0f2f5;
-  .tenant_content { width: 100%; height: 100%; border-radius: 8px; }
+  .tenant_content {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
   .tableTenBox {
     padding: 20px;
     width: 100%;
@@ -756,39 +764,40 @@ const handleBatchOperation = () => {
 
 /* 编辑视图样式 */
 .edit-view {
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 0;
-  background-color: #f5f7fa;
-  padding: 20px;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  padding: 0;
   overflow: hidden;
 }
 
 /* 面包屑导航 */
 .breadcrumb-nav {
-  background: #F0F2F5;
-  border-radius: 8px 8px 0 0;
-  padding: 20px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 20px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .breadcrumb-item {
-  color: #606266;
+  color: var(--el-color-primary);
   cursor: pointer;
   font-size: 14px;
+  transition: color 0.3s;
 }
 
 .breadcrumb-item:hover {
-  color: #1A53FF;
+  color: #3d70ff;
 }
 
 .breadcrumb-item.active {
   color: #303133;
-  font-weight: 500;
+  cursor: default;
 }
 
 .breadcrumb-separator {
@@ -799,9 +808,7 @@ const handleBatchOperation = () => {
 /* 编辑内容区域 */
 .edit-content {
   flex: 1;
-  background: white;
-  border-radius: 0 0 8px 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #fff;
   padding: 20px;
   overflow-y: auto;
 }

@@ -1260,7 +1260,11 @@ onUnmounted(() => {
   .tenant_content {
     width: 100%;
     height: 100%;
-    border-radius: 8px;
+    background: #fff;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .tableTenBox {
@@ -1418,7 +1422,8 @@ onUnmounted(() => {
 
 .content-header {
   padding: 16px 20px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
 }
 
 .breadcrumb {

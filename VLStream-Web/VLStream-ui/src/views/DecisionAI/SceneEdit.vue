@@ -1,10 +1,11 @@
 <template>
   <div class="scene-edit">
-    <!-- 面包屑导航 -->
-    <div class="breadcrumb">
-      <span class="breadcrumb-item" @click="goBack">场景列表</span>
-      <span class="breadcrumb-separator">></span>
-      <span class="breadcrumb-item active">编辑场景</span>
+    <div class="content-header">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item" @click="goBack">场景列表</span>
+        <span class="breadcrumb-separator">></span>
+        <span class="breadcrumb-item active">编辑场景</span>
+      </div>
     </div>
 
     <div class="edit-container">
@@ -362,25 +363,37 @@ onMounted(() => {
 .scene-edit {
   height: 100%;
   margin: 0;
-  padding: 20px;
+  padding: 0;
   background: #fff;
   border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
-  overflow: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
 }
 
+.content-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+  flex-shrink: 0;
+}
+
 .breadcrumb {
-  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
   font-size: 14px;
+  color: #606266;
 }
 
 .breadcrumb-item {
-  color: #606266;
+  color: var(--el-color-primary);
   cursor: pointer;
+  transition: color 0.3s;
 }
 
 .breadcrumb-item:hover {
-  color: #409eff;
+  color: #3d70ff;
 }
 
 .breadcrumb-item.active {
@@ -394,11 +407,11 @@ onMounted(() => {
 }
 
 .edit-container {
-  background: white;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  max-width: 800px;
+  flex: 1;
+  min-height: 0;
+  background: #fff;
+  padding: 20px;
+  overflow-y: auto;
 }
 
 /* 上传区域样式 */

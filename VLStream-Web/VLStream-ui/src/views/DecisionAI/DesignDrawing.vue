@@ -1,10 +1,11 @@
 <template>
   <div class="event-detail">
-    <!-- 面包屑导航 -->
-    <div class="breadcrumb">
-      <span class="breadcrumb-item" @click="goBack">事件列表</span>
-      <span class="breadcrumb-separator">></span>
-      <span class="breadcrumb-item active">事件详情</span>
+    <div class="content-header">
+      <div class="breadcrumb">
+        <span class="breadcrumb-item" @click="goBack">事件列表</span>
+        <span class="breadcrumb-separator">></span>
+        <span class="breadcrumb-item active">事件详情</span>
+      </div>
     </div>
 
     <div class="detail-container">
@@ -257,21 +258,37 @@ onMounted(() => {
 
 <style scoped>
 .event-detail {
-  padding: 16px 24px;
-  background-color: #f5f7fa;
-  min-height: calc(100vh - 60px);
+  height: 100%;
+  padding: 0;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-/* 面包屑导航 */
+.content-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+  flex-shrink: 0;
+}
+
 .breadcrumb {
-  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
   font-size: 14px;
   color: #606266;
 }
 
 .breadcrumb-item {
   cursor: pointer;
-  color: #409eff;
+  color: var(--el-color-primary);
+  transition: color 0.3s;
+}
+
+.breadcrumb-item:hover {
+  color: #3d70ff;
 }
 
 .breadcrumb-item.active {
@@ -284,12 +301,11 @@ onMounted(() => {
   color: #c0c4cc;
 }
 
-/* 详情容器 */
 .detail-container {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  background: #fff;
+  overflow-y: auto;
 }
 
 /* 区域标题 */

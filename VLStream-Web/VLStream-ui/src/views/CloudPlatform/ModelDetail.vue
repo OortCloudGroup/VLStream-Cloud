@@ -167,28 +167,33 @@ onMounted(() => {
 <style scoped>
 .model-detail {
   min-height: 360px;
-  padding: 8px 4px 24px;
+  padding: 0 0 24px;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
 }
 
 .detail-breadcrumb {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
-  font-size: 18px;
-  color: #909399;
+  padding: 16px 20px;
+  margin: 0 0 20px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  color: #606266;
 }
 
 .crumb-link {
   cursor: pointer;
-  color: #606266;
+  color: var(--el-color-primary);
+  transition: color 0.3s;
 }
 
 .crumb-link:hover {
-  color: #1a53ff;
+  color: #3d70ff;
 }
 
 .crumb-sep {
+  margin: 0 8px;
   color: #c0c4cc;
 }
 
@@ -197,7 +202,7 @@ onMounted(() => {
 }
 
 .detail-title {
-  margin: 0;
+  margin: 0 20px;
   font-size: 28px;
   font-weight: 700;
   line-height: 40px;
@@ -205,13 +210,13 @@ onMounted(() => {
 }
 
 .detail-alias {
-  margin-top: 8px;
+  margin: 8px 20px 0;
   font-size: 14px;
   color: #606266;
 }
 
 .detail-desc {
-  margin: 12px 0 28px;
+  margin: 12px 20px 28px;
   font-size: 14px;
   line-height: 22px;
   color: #606266;
@@ -219,6 +224,7 @@ onMounted(() => {
 
 .detail-descriptions {
   max-width: 920px;
+  margin: 0 20px;
 }
 
 .info-label {

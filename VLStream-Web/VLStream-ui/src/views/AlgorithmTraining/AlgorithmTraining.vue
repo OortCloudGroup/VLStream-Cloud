@@ -279,17 +279,16 @@
     <!-- 版本配置视图 -->
     <div v-if="showVersionConfig" class="version-config-view">
       <!-- 导航栏 -->
-      <div class="content-header"></div>
+      <div class="content-header">
+        <div class="breadcrumb">
+          <span class="breadcrumb-item" @click="handleBackFromVersion">算法训练</span>
+          <span class="breadcrumb-separator">></span>
+          <span class="breadcrumb-item active">查看版本配置</span>
+        </div>
+      </div>
 
       <div class="version-config-container">
         <div class="version-content-block">
-          <!-- 面包屑导航 -->
-          <div class="breadcrumb">
-            <span class="breadcrumb-item" @click="handleBackFromVersion">算法训练</span>
-            <span class="breadcrumb-separator">></span>
-            <span class="breadcrumb-item active">查看版本配置</span>
-          </div>
-
           <!-- 基础信息 -->
                     <!-- Basic Info -->
           <div class="basic-info-section">
@@ -353,17 +352,16 @@
     <!-- 校验模型视图 -->
     <div v-if="showValidationView" class="validation-view">
       <!-- 导航栏 -->
-      <div class="content-header"></div>
+      <div class="content-header">
+        <div class="breadcrumb">
+          <span class="breadcrumb-item" @click="handleBackFromValidation">算法训练</span>
+          <span class="breadcrumb-separator">></span>
+          <span class="breadcrumb-item active">校验模型</span>
+        </div>
+      </div>
 
       <div class="validation-config-container">
         <div class="validation-content-block">
-          <!-- 面包屑导航 -->
-          <div class="breadcrumb">
-            <span class="breadcrumb-item" @click="handleBackFromValidation">算法训练</span>
-            <span class="breadcrumb-separator">></span>
-            <span class="breadcrumb-item active">校验模型</span>
-          </div>
-
           <!-- 模型选择区域 -->
           <div class="model-selection-section">
             <div class="model-info-inputs">
@@ -2987,6 +2985,8 @@ const openDatasetSelector = async () => {
     background: #fff;
     border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
   .tableTenBox {
     padding: 20px;
@@ -3462,13 +3462,15 @@ const openDatasetSelector = async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  overflow: hidden;
 }
 
 /* 导航栏样式 */
 .content-header {
-  background: white;
-  border-bottom: 1px solid #e8e8e8;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
   margin-bottom: 0;
   padding: 16px 20px;
 }
@@ -3476,27 +3478,28 @@ const openDatasetSelector = async () => {
 .breadcrumb {
   display: flex;
   align-items: center;
-  gap: 8px;
   font-size: 14px;
+  color: #606266;
 }
 
 .breadcrumb-item {
-  color: #409eff;
+  color: var(--el-color-primary);
   cursor: pointer;
   transition: color 0.3s;
 }
 
 .breadcrumb-item:hover {
-  color: #337ecc;
+  color: #3d70ff;
 }
 
 .breadcrumb-item.active {
-  color: #262626;
+  color: #303133;
   cursor: default;
 }
 
 .breadcrumb-separator {
-  color: #999;
+  margin: 0 8px;
+  color: #c0c4cc;
 }
 
 /* 训练配置容器 */
@@ -3721,38 +3724,26 @@ const openDatasetSelector = async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
-  min-height: calc(100vh - 60px);
-}
-
-/* 整体内容区域 */
-.version-config-view .content-header {
-  background: transparent;
-  border: none;
-  margin: 0;
-  padding: 0;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .version-config-container {
   flex: 1;
   padding: 20px;
-  overflow: hidden;
+  overflow: auto;
 }
 
-/* 完整的白色内容区域 */
 .version-content-block {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #fff;
   width: 100%;
-  max-width: 1670px;
   overflow: hidden;
 }
 
 /* 导航栏在内容块内部 */
 .version-config-view .breadcrumb {
-  padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
   margin: 0;
 }
 
@@ -3867,36 +3858,26 @@ const openDatasetSelector = async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
-  min-height: calc(100vh - 60px);
-}
-
-.validation-view .content-header {
-  background: transparent;
-  border: none;
-  margin: 0;
-  padding: 0;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .validation-config-container {
   flex: 1;
   padding: 20px;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .validation-content-block {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #fff;
   width: 100%;
-  max-width: 1670px;
   overflow: hidden;
   padding-bottom: 40px;
 }
 
 .validation-view .breadcrumb {
-  padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
   margin: 0;
 }
 
@@ -4134,33 +4115,35 @@ const openDatasetSelector = async () => {
   display: flex;
   flex-direction: column;
   gap: 0;
-  background-color: #f5f7fa;
-  padding: 16px;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  padding: 0;
   overflow: hidden;
 }
 
 .breadcrumb-nav {
-  background: #F0F2F5;
-  border-radius: 8px 8px 0 0;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
   padding: 16px 20px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-shrink: 0;
 }
 
 .breadcrumb-item {
-  color: #606266;
+  color: var(--el-color-primary);
   cursor: pointer;
   font-size: 14px;
+  transition: color 0.3s;
 }
 
 .breadcrumb-item:hover {
-  color: #1A53FF;
+  color: #3d70ff;
 }
 
 .breadcrumb-item.active {
   color: #303133;
-  font-weight: 500;
+  cursor: default;
 }
 
 .breadcrumb-separator {
@@ -4170,9 +4153,7 @@ const openDatasetSelector = async () => {
 
 .edit-content {
   flex: 1;
-  background: white;
-  border-radius: 0 0 8px 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #fff;
   padding: 16px 20px;
   display: flex;
   flex-direction: column;

@@ -3357,6 +3357,8 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
     background: #fff;
     border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
   .tableTenBox {
     padding: 20px;
@@ -3395,6 +3397,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
     flex: 1;
     min-height: 0;
     overflow: hidden;
+    background: #fff;
   }
 }
 
@@ -3672,37 +3675,39 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   margin-bottom: 0;
 }
 
-/* 导航栏样式 */
+/* 导航栏样式（对齐事件详情） */
 .content-header {
-  padding: 12px 0;
-  background: white;
+  padding: 16px 20px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
   flex-shrink: 0;
 }
 
 .breadcrumb {
   display: flex;
   align-items: center;
-  gap: 8px;
   font-size: 14px;
+  color: #606266;
 }
 
 .breadcrumb-item {
-  color: #409eff;
+  color: var(--el-color-primary);
   cursor: pointer;
   transition: color 0.3s;
 }
 
 .breadcrumb-item:hover {
-  color: #337ecc;
+  color: #3d70ff;
 }
 
 .breadcrumb-item.active {
-  color: #262626;
+  color: #303133;
   cursor: default;
 }
 
 .breadcrumb-separator {
-  color: #999;
+  margin: 0 8px;
+  color: #c0c4cc;
 }
 
 .annotation-view-container {
@@ -3722,15 +3727,19 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 
 /* 标注视图样式 */
 .annotation-view-grid {
-  height: 1200px;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
+  background: #fff;
   overflow: hidden;
 }
 
 .grid-container {
-  height: 1200px;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
   display: flex;
   gap: 0;
   overflow: hidden;

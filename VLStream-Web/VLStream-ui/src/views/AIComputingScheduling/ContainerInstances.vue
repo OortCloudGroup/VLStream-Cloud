@@ -1206,7 +1206,15 @@ onUnmounted(() => {
   width: 100%;
   border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
   background: #f0f2f5;
-  .tenant_content { width: 100%; height: 100%; border-radius: 8px; }
+  .tenant_content {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
   .tableTenBox {
     padding: 20px;
     width: 100%;
@@ -1474,24 +1482,51 @@ onUnmounted(() => {
 }
 
 /* 监控页面样式 */
-.monitoring-view {
+.monitoring-view,
+.details-view {
   margin: 0;
+  height: 100%;
+  background: #fff;
+  border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .breadcrumb-section {
-  background: white;
+  background: #fff;
   padding: 16px 20px;
-  border-radius: 8px 8px 0 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid #f0f0f0;
+  box-shadow: none;
+}
+
+.breadcrumb-section :deep(.el-breadcrumb) {
+  font-size: 14px;
+}
+
+.breadcrumb-section :deep(.el-breadcrumb__inner) {
+  font-weight: 400;
+  color: var(--el-color-primary);
+}
+
+.breadcrumb-section :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
+  color: #303133;
+  cursor: default;
+}
+
+.breadcrumb-section :deep(.el-breadcrumb__separator) {
+  margin: 0 8px;
+  color: #c0c4cc;
 }
 
 .breadcrumb-link {
-  color: #409eff;
+  color: var(--el-color-primary);
   cursor: pointer;
 }
 
 .breadcrumb-link:hover {
-  text-decoration: underline;
+  color: #3d70ff;
+  text-decoration: none;
 }
 
 .monitoring-content {
@@ -1990,11 +2025,6 @@ onUnmounted(() => {
 .cancel-btn:hover {
   color: #1A53FF;
   border-color: #1A53FF;
-}
-
-/* 详情页面样式 */
-.details-view {
-  margin: 0;
 }
 
 .details-view .breadcrumb-section {
