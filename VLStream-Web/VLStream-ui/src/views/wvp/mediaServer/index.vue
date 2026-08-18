@@ -1,50 +1,60 @@
 <template>
-  <div class="app-container">
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-            type="primary"
-            plain
-            icon="Plus"
-            @click="handleAdd"
-            v-hasPermi="['wvp:server:add']"
-        >新增
-        </el-button>
-      </el-col>
-      <right-toolbar :search="false" @queryTable="getList"></right-toolbar>
-    </el-row>
-
-    <el-row :gutter="12">
-      <el-col :xs="24" :sm="24" :md="12" :lg="6" v-for="item in wvpMediaServerList" :key="item.id">
-        <el-card shadow="hover" class="server-card">
-          <div v-if="item.type === 'zlm'" class="card-img-zlm"></div>
-          <div v-if="item.type === 'abl'" class="card-img-abl"></div>
-          <div style="padding: 10px;display: flex;justify-content: space-between;align-items: center">
-            <div>
-              <div style="font-size: 16px">{{ item.id }}</div>
-              <div style="font-size: 14px; color: #999; margin-top: 5px; ">{{ item.ip }}</div>
-            </div>
-
-            <div>
-              <!-- v-if="item.defaultServer"-->
-              <el-button type="text"
-                         @click="handleView(item)" v-hasPermi="['wvp:server:view']">查看
-              </el-button>
-              <el-button type="text" v-if="!item.defaultServer"
-                         v-hasPermi="['wvp:server:edit']"
-                         @click="handleUpdate(item)">编辑
-              </el-button>
-              <el-button type="text" @click="handleDelete(item)" v-if="!item.defaultServer"  v-hasPermi="['wvp:server:delete']">移除
-              </el-button>
+  <div class="tenant_Page draHeaPB">
+    <div class="tenant_content">
+      <div class="tableTenBox">
+        <div class="depNameBox_out flexRowAC">
+          <div class="depNameBox flexRowAC">
+            <div class="exportBtnBox flexRowAC">
+              <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd" v-hasPermi="['wvp:server:add']">
+                <el-icon class="BtnImg"><Plus /></el-icon>新增
+              </button>
             </div>
           </div>
-          <el-icon v-if="item.defaultServer" class="server-card-status-offline" color="#67C23A">
-            <SuccessFilled/>
-          </el-icon>
-          <i v-if="item.defaultServer" class="server-card-default">默认</i>
-        </el-card>
-      </el-col>
-    </el-row>
+          <div class="searchHeight_out flexRowAC">
+            <search-height-box keyword="keyword" placeholder="搜索节点" :data="searchData" @handle="searchResetFn" />
+            <export-excel-pdf />
+          </div>
+        </div>
+
+        <TableSelf
+          class="new_table"
+          header-cell-class-name="header_tenant_cell"
+          stripe
+          v-loading="loading"
+          :data="filteredServerList"
+        >
+          <el-table-column label="节点ID" prop="id" show-overflow-tooltip />
+          <el-table-column label="类型" :width="clacPXToVW(140)">
+            <template #default="scope">
+              <el-tag v-if="scope.row.type === 'zlm'">ZLMediaKit</el-tag>
+              <el-tag v-else-if="scope.row.type === 'abl'">ABLMediaServer</el-tag>
+              <span v-else>{{ scope.row.type }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="IP" prop="ip" show-overflow-tooltip />
+          <el-table-column label="默认节点" :width="clacPXToVW(110)">
+            <template #default="scope">
+              <el-tag v-if="scope.row.defaultServer" type="success">默认</el-tag>
+              <el-tag v-else type="info">否</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(200)">
+            <template #default="scope">
+              <div class="operateAppBox flexRowAC" @click.stop>
+                <div class="new_table_svg_group" @click="handleView(scope.row)" v-hasPermi="['wvp:server:view']">
+                  <span>查看</span>
+                </div>
+                <div v-if="!scope.row.defaultServer" class="new_table_svg_group" @click="handleUpdate(scope.row)" v-hasPermi="['wvp:server:edit']">
+                  <span>编辑</span>
+                </div>
+                <div v-if="!scope.row.defaultServer" class="new_table_svg_group" @click="handleDelete(scope.row)" v-hasPermi="['wvp:server:delete']">
+                  <span>移除</span>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+        </TableSelf>
+
     <el-dialog title="媒体节点" v-model="openView" width="1000px" append-to-body>
       <el-descriptions border>
         <el-descriptions-item label="媒体服务IP">
@@ -100,21 +110,34 @@
         </el-descriptions-item>
       </el-descriptions>
     </el-dialog>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup name="WvpMediaServer">
 import {delWvpMediaServer, listWvpMediaServer} from "@/api/wvp/wvpMediaServer";
 import router from "@/router";
+import { clacPXToVW } from "@/utils/wvpCompat";
 
 const {proxy} = getCurrentInstance();
 
 const wvpMediaServerList = ref([]);
 const openView = ref(false);
-
 const loading = ref(true);
-
 const rowData = ref({});
+const keyword = ref('')
+const searchData = ref([])
+const filteredServerList = computed(() => {
+  if (!keyword.value) return wvpMediaServerList.value
+  return wvpMediaServerList.value.filter(item =>
+    (item.id || '').includes(keyword.value) || (item.ip || '').includes(keyword.value)
+  )
+})
+
+function searchResetFn(val) {
+  keyword.value = val?.keyword || ''
+}
 
 /** 查询媒体服务器列表 */
 function getList() {

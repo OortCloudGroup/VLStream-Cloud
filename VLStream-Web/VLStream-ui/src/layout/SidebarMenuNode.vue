@@ -9,11 +9,10 @@
           <CaretBottom />
         </el-icon>
         <div class="menu-icon-box">
-          <img
+          <span
             v-if="isSvgIcon(getMenuIcon(item.meta?.icon))"
-            :src="getMenuIcon(item.meta?.icon)"
             class="menu-svg-icon"
-            alt=""
+            :style="svgMaskStyle(getMenuIcon(item.meta?.icon))"
           />
           <el-icon v-else>
             <component :is="getMenuIcon(item.meta?.icon)" />
@@ -29,11 +28,10 @@
 
     <el-menu-item v-else :index="item.path">
       <div class="menu-icon-box">
-        <img
+        <span
           v-if="isSvgIcon(getMenuIcon(item.meta?.icon))"
-          :src="getMenuIcon(item.meta?.icon)"
           class="menu-svg-icon"
-          alt=""
+          :style="svgMaskStyle(getMenuIcon(item.meta?.icon))"
         />
         <el-icon v-else>
           <component :is="getMenuIcon(item.meta?.icon)" />
@@ -61,14 +59,25 @@ defineProps({
 })
 
 const isSvgIcon = (icon) => typeof icon === 'string'
+const svgMaskStyle = (src) => ({
+  maskImage: `url("${src}")`,
+  WebkitMaskImage: `url("${src}")`
+})
 </script>
 
 <style scoped>
 .menu-svg-icon {
   width: 20px;
   height: 20px;
-  object-fit: contain;
   flex-shrink: 0;
+  display: inline-block;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
 }
 
 .menu-icon-box {
@@ -78,6 +87,7 @@ const isSvgIcon = (icon) => typeof icon === 'string'
   flex-shrink: 0;
   width: 20px;
   height: 20px;
+  color: inherit;
 }
 
 .menu-icon-box .el-icon {

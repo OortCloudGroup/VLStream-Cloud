@@ -1,11 +1,14 @@
 <template>
-  <div class="app-container">
-    <el-tabs v-model="queryParams.hasLink" class="demo-tabs" @tab-click="handleClick">
+  <div class="tenant_Page draHeaPB">
+    <el-tabs v-model="queryParams.hasLink" class="tenanat-tabs" @tab-click="handleClick">
       <el-tab-pane label="未关联" name="false"/>
       <el-tab-pane label="已关联" name="true"/>
-
-      <div class="toolbar-with-search">
-        <div class="toolbar-left">
+    </el-tabs>
+    <div class="tenant_content">
+      <div class="tableTenBox">
+      <div class="depNameBox_out flexRowAC">
+        <div class="depNameBox flexRowAC">
+          <div class="exportBtnBox flexRowAC">
           <button
             v-if="queryParams.hasLink !== 'true'"
             type="button"
@@ -27,6 +30,7 @@
             <el-icon class="BtnImg"><Delete /></el-icon>删除
           </button>
           <button-group :button-list="toolbarButtons" />
+          </div>
         </div>
         <div class="searchHeight_out flexRowAC">
           <search-height-box keyword="query" placeholder="请输入关键字" :data="searchData" @handle="searchResetFn" />
@@ -109,7 +113,8 @@
             @pagination="getDeviceList"
         />
       </el-dialog>
-    </el-tabs>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -374,6 +379,29 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.tenant_Page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #f0f2f5;
+  overflow: hidden;
+}
 
+.tenant_content {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tableTenBox {
+  padding: 20px;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  background: #fff;
+  min-height: 0;
+}
 </style>

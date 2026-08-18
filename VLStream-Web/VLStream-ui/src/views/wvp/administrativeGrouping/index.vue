@@ -1,49 +1,124 @@
 <template>
-  <div class="app-container">
-    <el-tabs v-model="activeName" class="work-tabs" @tab-click="handleClick">
-      <el-tab-pane label="行政区划" name="region">
-
-        <div class="toolbar-with-search">
-          <div class="toolbar-left">
-            <button-group :button-list="toolbarButtons" />
+  <div class="group-management tenant_Page draHeaPB">
+    <el-tabs v-model="activeName" class="tenanat-tabs" @tab-change="handleClick">
+      <el-tab-pane label="行政区划" name="region" />
+      <el-tab-pane label="业务分组" name="group" />
+    </el-tabs>
+    <div class="tenant_content">
+      <div class="tableTenBox flexRowAC">
+        <div v-show="!treeCollapsed" v-yResize class="police_aside_use">
+          <div class="treeTitle">{{ activeName === 'region' ? '行政区划' : '业务分组' }}</div>
+          <div class="tree_search_content flexRowAC">
+            <el-input
+              v-model="treeSearchKeyword"
+              placeholder="搜索"
+              clearable
+              prefix-icon="Search"
+            />
           </div>
-          <right-toolbar :search="false" @queryTable="getList"></right-toolbar>
-        </div>
-
-        <table-self
-            v-if="refreshTable"
-            v-loading="loading"
-            :data="treeRegionData"
-            row-key="id"
-            :default-expand-all="isExpandAll"
-            :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-         class="new_table" header-cell-class-name="header_tenant_cell" stripe>
-          <el-table-column prop="name" label="名称" :show-overflow-tooltip="true"></el-table-column>
-          <el-table-column prop="deviceId" label="设备编号" :show-overflow-tooltip="true"
-          ></el-table-column>
-          <el-table-column prop="createTime" label="创建时间" :show-overflow-tooltip="true"
-          ></el-table-column>
-          <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(220)">
-            <template #default="scope">
-              <div class="operateAppBox flexRowAC" style="justify-content: flex-end;">
-                <div class="new_table_svg_group" @click.stop="handleRegionUpdate(scope.row)" v-if="scope.row.id" v-hasPermi="['wvp:region:edit']">
-                  <el-icon><Edit /></el-icon>
-                  <span>修改</span>
+          <el-tree
+            ref="leftTreeRef"
+            style="background: #fff;"
+            :data="currentTreeData"
+            :props="{ label: 'name', children: 'children' }"
+            :filter-node-method="filterNode"
+            :expand-on-click-node="false"
+            default-expand-all
+            highlight-current
+            node-key="id"
+            @node-click="handleTreeNodeClick"
+          >
+            <template #default="{ node, data }">
+              <div
+                class="custom-tree-node flexRowAC"
+                @mouseenter="hoveredTreeNodeId = data.id || data.name"
+                @mouseleave="hoveredTreeNodeId = null"
+              >
+                <div class="tree-node-main flexRowAC">
+                  <el-icon class="tree-icon"><Folder /></el-icon>
+                  <el-tooltip :open-delay="500" effect="light" :content="node.label" placement="top">
+                    <div class="tree-node-label">{{ node.label }}</div>
+                  </el-tooltip>
                 </div>
-                <div class="new_table_svg_group" @click.stop="handleRegionAdd(scope.row)" v-hasPermi="['wvp:region:add']">
-                  <el-icon><Plus /></el-icon>
-                  <span>新增</span>
-                </div>
-                <div class="new_table_svg_group" @click.stop="handleRegionDelete(scope.row)" v-if="scope.row.id" v-hasPermi="['wvp:region:delete']">
-                  <el-icon><Delete /></el-icon>
-                  <span>删除</span>
+                <div
+                  v-show="hoveredTreeNodeId === (data.id || data.name) || (currentTreeNode && currentTreeNode.id === data.id)"
+                  class="tree-node-actions flexRowAC"
+                  @click.stop
+                >
+                  <oort-svg-icon v-if="data.id" width="20" height="20" name="delete" color="red" class="tree-action-icon" @click="handleToolbarDelete(data)" />
+                  <oort-svg-icon width="20" height="20" name="add" class="tree-action-icon" @click="handleToolbarAdd(data)" />
                 </div>
               </div>
             </template>
-          </el-table-column>
-        </table-self>
+          </el-tree>
+        </div>
 
-        <el-dialog :title="title" v-model="openRegion" width="1000px" append-to-body>
+        <div class="tableTenItU">
+          <div class="depNameBox_out flexRowAC">
+            <div class="depNameBox flexRowAC">
+              <CollapseToggle
+                v-if="treeCollapsed"
+                class="expand-device-tree-btn"
+                :is-expanded="false"
+                @toggle="treeCollapsed = false"
+              />
+              <div class="exportBtnBox flexRowAC">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleToolbarAdd()">
+                  <el-icon class="BtnImg"><Plus /></el-icon>新建
+                </button>
+                <button-group :button-list="toolbarButtonList" />
+              </div>
+            </div>
+            <div class="searchHeight_out flexRowAC">
+              <search-height-box
+                keyword="keyword"
+                placeholder="搜索"
+                :data="searchData"
+                @handle="searchResetFn"
+              />
+              <export-excel-pdf />
+            </div>
+          </div>
+
+          <TableSelf
+            class="new_table"
+            header-cell-class-name="header_tenant_cell"
+            stripe
+            v-loading="loading"
+            :data="tableRows"
+            row-key="id"
+            @selection-change="handleSelectionChange"
+          >
+            <el-table-column type="selection" :width="clacPXToVW(55)" />
+            <el-table-column label="序号" :width="clacPXToVW(65)">
+              <template #default="scope">
+                {{ scope.$index + 1 }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="name" label="名称" show-overflow-tooltip />
+            <el-table-column prop="deviceId" label="设备编号" show-overflow-tooltip />
+            <el-table-column prop="createTime" label="创建时间" show-overflow-tooltip />
+            <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(220)">
+              <template #default="scope">
+                <div class="operateAppBox flexRowAC" @click.stop>
+                  <div v-if="scope.row.id && checkEditPermi" class="new_table_svg_group" @click="handleRowUpdate(scope.row)">
+                    <span>修改</span>
+                  </div>
+                  <div v-if="checkAddPermi" class="new_table_svg_group" @click="handleToolbarAdd(scope.row)">
+                    <span>新增</span>
+                  </div>
+                  <div v-if="scope.row.id && checkDeletePermi" class="new_table_svg_group" @click="handleToolbarDelete(scope.row)">
+                    <span>删除</span>
+                  </div>
+                </div>
+              </template>
+            </el-table-column>
+          </TableSelf>
+        </div>
+      </div>
+    </div>
+
+    <el-dialog :title="title" v-model="openRegion" width="1000px" append-to-body>
           <el-tabs v-model="activeKeyRegion" style="padding: 0 1rem; margin: auto 0" @tab-click="getRegionList">
             <el-tab-pane name="0">
               <template #label>
@@ -125,47 +200,6 @@
             </div>
           </template>
         </el-dialog>
-      </el-tab-pane>
-      <el-tab-pane label="业务分组" name="group">
-        <div class="toolbar-with-search">
-          <div class="toolbar-left">
-            <button-group :button-list="toolbarButtons" />
-          </div>
-          <right-toolbar :search="false" @queryTable="getList"></right-toolbar>
-        </div>
-
-        <table-self
-            v-if="refreshTable"
-            v-loading="loading"
-            :data="treeGroupData"
-            row-key="id"
-            :default-expand-all="isExpandAll"
-            :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-         class="new_table" header-cell-class-name="header_tenant_cell" stripe>
-          <el-table-column prop="name" label="名称" :show-overflow-tooltip="true"></el-table-column>
-          <el-table-column prop="deviceId" label="设备编号" :show-overflow-tooltip="true"
-          ></el-table-column>
-          <el-table-column prop="createTime" label="创建时间" :show-overflow-tooltip="true"
-          ></el-table-column>
-          <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(220)">
-            <template #default="scope">
-              <div class="operateAppBox flexRowAC" style="justify-content: flex-end;">
-                <div class="new_table_svg_group" @click.stop="handleGroupUpdate(scope.row)" v-if="scope.row.id" v-hasPermi="['wvp:group:edit']">
-                  <el-icon><Edit /></el-icon>
-                  <span>修改</span>
-                </div>
-                <div class="new_table_svg_group" @click.stop="handleGroupAdd(scope.row)" v-hasPermi="['wvp:group:add']">
-                  <el-icon><Plus /></el-icon>
-                  <span>新增</span>
-                </div>
-                <div class="new_table_svg_group" @click.stop="handleGroupDelete(scope.row)" v-if="scope.row.id" v-hasPermi="['wvp:group:delete']">
-                  <el-icon><Delete /></el-icon>
-                  <span>删除</span>
-                </div>
-              </div>
-            </template>
-          </el-table-column>
-        </table-self>
 
         <el-dialog :title="title" v-model="openGroup" width="1000px" append-to-body>
           <el-form ref="formGroupRef" :model="formGroup" :rules="rulesGroup" label-width="80px">
@@ -196,15 +230,14 @@
         </el-dialog>
 
         <ChannelCode ref="channelCodeRef" @handleOk="handleOk"></ChannelCode>
-
         <ChooseCivilCode ref="chooseCivilCodeRef" @onSubmit="gbCivilCodeOnSubmit"></ChooseCivilCode>
-      </el-tab-pane>
-    </el-tabs>
   </div>
 </template>
 
 <script setup name="AdministrativeGrouping">
 import { clacPXToVW } from "@/utils/wvpCompat";
+import { checkPermi } from "@/utils/wvpPermission";
+import CollapseToggle from "@/components/CollapseToggle.vue";
 import ChannelCode from "../../components/common/channelCode.vue"
 import ChooseCivilCode from "../../components/common/chooseCivilCode.vue"
 import {addRegion, deleteRegion, getAllChild, queryForTree, updateRegion} from "../../../api/wvp/region.js";
@@ -213,8 +246,6 @@ import {addGroup, deleteGroup, queryForTree as queryGroupForTree, updateGroup} f
 const {proxy} = getCurrentInstance();
 
 const treeRegionData = ref([])
-const isExpandAll = ref(false);
-const refreshTable = ref(true);
 const loading = ref(true);
 const activeName = ref('region')
 const title = ref("");
@@ -241,9 +272,86 @@ const openGroup = ref(false);
 const channelCodeRef = ref(null);
 const chooseCivilCodeRef = ref(null);
 
-const toolbarButtons = computed(() => [
-  { name: '展开/折叠', svg: 'list', clickFn: () => toggleExpandAll() }
-]);
+const treeCollapsed = ref(false)
+const hoveredTreeNodeId = ref(null)
+const treeSearchKeyword = ref('')
+const leftTreeRef = ref()
+const currentTreeNode = ref(null)
+const selectedTableRows = ref([])
+const searchKeyword = ref('')
+const searchDeviceId = ref('')
+const searchData = ref([
+  { label: '名称', value: 'keyword', type: 'text', default: '' },
+  { label: '设备编号', value: 'deviceId', type: 'text', default: '' }
+])
+const currentTreeData = computed(() => activeName.value === 'region' ? treeRegionData.value : treeGroupData.value)
+const tableRows = computed(() => {
+  const node = currentTreeNode.value
+  const children = node ? (node.children || []) : (currentTreeData.value[0]?.children || [])
+  return children.filter(row => {
+    const matchName = !searchKeyword.value || (row.name || '').includes(searchKeyword.value)
+    const matchId = !searchDeviceId.value || (row.deviceId || '').includes(searchDeviceId.value)
+    return matchName && matchId
+  })
+})
+const checkAddPermi = computed(() => activeName.value === 'region' ? checkPermi(['wvp:region:add']) : checkPermi(['wvp:group:add']))
+const checkEditPermi = computed(() => activeName.value === 'region' ? checkPermi(['wvp:region:edit']) : checkPermi(['wvp:group:edit']))
+const checkDeletePermi = computed(() => activeName.value === 'region' ? checkPermi(['wvp:region:delete']) : checkPermi(['wvp:group:delete']))
+const toolbarButtonList = computed(() => [
+  { name: '编辑', svg: 'table_edit', clickFn: handleToolbarEdit },
+  { name: '删除', svg: 'table_del', clickFn: () => handleToolbarDelete() }
+])
+
+watch(treeSearchKeyword, val => {
+  leftTreeRef.value?.filter(val)
+})
+
+function filterNode(value, data) {
+  if (!value) return true
+  return (data.name || '').indexOf(value) !== -1
+}
+
+function handleTreeNodeClick(data) {
+  currentTreeNode.value = data
+}
+
+function searchResetFn(val) {
+  searchKeyword.value = val?.keyword || ''
+  searchDeviceId.value = val?.deviceId || ''
+}
+
+function handleSelectionChange(selection) {
+  selectedTableRows.value = selection
+}
+
+function handleToolbarAdd(row) {
+  const target = row && row.name !== undefined ? row : (currentTreeNode.value || currentTreeData.value[0] || {})
+  if (activeName.value === 'region') handleRegionAdd(target)
+  else handleGroupAdd(target)
+}
+
+function handleToolbarEdit() {
+  if (selectedTableRows.value.length !== 1) {
+    proxy.$modal.msgWarning('请选择一条要修改的数据')
+    return
+  }
+  handleRowUpdate(selectedTableRows.value[0])
+}
+
+function handleRowUpdate(row) {
+  if (activeName.value === 'region') handleRegionUpdate(row)
+  else handleGroupUpdate(row)
+}
+
+function handleToolbarDelete(row) {
+  const target = row && row.id ? row : selectedTableRows.value[0]
+  if (!target?.id) {
+    proxy.$modal.msgWarning('请选择要删除的数据')
+    return
+  }
+  if (activeName.value === 'region') handleRegionDelete(target)
+  else handleGroupDelete(target)
+}
 
 const {formRegion, rulesRegion, formGroup, rulesGroup} = toRefs(data);
 
@@ -487,16 +595,9 @@ function deviceChange(item) {
   })
 }
 
-/** 展开/折叠操作 */
-function toggleExpandAll() {
-  refreshTable.value = false;
-  isExpandAll.value = !isExpandAll.value;
-  nextTick(() => {
-    refreshTable.value = true;
-  });
-}
-
 const handleClick = () => {
+  currentTreeNode.value = null
+  selectedTableRows.value = []
   nextTick(() => {
     getList()
   })
@@ -588,41 +689,131 @@ onMounted(() => {
   font-size: 3rem;
 }
 
-:deep(.work-tabs) {
-  --el-tabs-header-height: 32px;
+.group-management {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #f0f2f5;
+  overflow: hidden;
+}
 
-  .el-tabs__header {
-    margin: 0 0 12px;
-    border-bottom: 1px solid #f0f0f0;
+.tenant_content {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tableTenBox {
+  padding: 20px;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  background: #fff;
+  align-items: flex-start;
+  min-height: 0;
+}
+
+.police_aside_use {
+  width: 300px;
+  padding-right: 20px;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+
+  .treeTitle {
+    color: var(--el-color-primary);
+    padding-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 4px;
+
+    &::before {
+      content: '';
+      width: 3px;
+      height: 18px;
+      background-color: var(--el-color-primary);
+    }
   }
 
-  .el-tabs__nav-wrap::after {
-    display: none;
+  .tree_search_content {
+    justify-content: center;
+    padding-bottom: 10px;
+
+    :deep(.el-input__wrapper) {
+      background: #fff;
+      box-shadow: none;
+      border: 1px solid #dcdfe6;
+      border-radius: 4px;
+    }
   }
 
-  .el-tabs__item {
-    width: 96px;
-    height: 32px;
-    padding: 0;
-    line-height: 32px;
-    text-align: center;
-    color: #333;
+  :deep(.el-tree-node__content) {
+    --el-tree-node-hover-bg-color: var(--el-menu-hover-bg-color);
+    height: 38px;
     font-size: 14px;
-    font-weight: 400;
-    box-sizing: border-box;
+    color: #333;
+
+    .custom-tree-node {
+      width: 100%;
+      justify-content: space-between;
+      padding-right: 4px;
+    }
   }
 
-  .el-tabs__item.is-active {
+  :deep(.el-tree) {
+    height: calc(100% - 80px);
+    overflow: auto;
+  }
+}
+
+.custom-tree-node {
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+
+  .tree-node-main {
+    flex: 1;
+    min-width: 0;
+    gap: 4px;
+    overflow: hidden;
+  }
+
+  .tree-node-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tree-node-actions {
+    flex-shrink: 0;
+    gap: 8px;
+    margin-left: 8px;
+  }
+
+  .tree-action-icon {
+    cursor: pointer;
+  }
+
+  .tree-icon {
+    flex-shrink: 0;
+    font-size: 14px;
     color: var(--el-color-primary);
   }
+}
 
-  .el-tabs__item:hover {
-    color: var(--el-color-primary);
-  }
+.tableTenItU {
+  flex: 1;
+  height: 100%;
+  overflow: auto;
+  min-width: 0;
 
-  .el-tabs__active-bar {
-    height: 2px;
-    background-color: var(--el-color-primary);
+  :deep(.header_tenant_cell) {
+    background: #F8F8F9;
   }
 }
 </style>

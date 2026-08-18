@@ -1,7 +1,11 @@
 <template>
-  <div class="app-container">
-    <div class="toolbar-with-search">
-      <div class="toolbar-left" />
+  <div class="tenant_Page draHeaPB">
+    <div class="tenant_content">
+      <div class="tableTenBox">
+    <div class="depNameBox_out flexRowAC">
+      <div class="depNameBox flexRowAC">
+        <div class="exportBtnBox flexRowAC" />
+      </div>
       <div class="searchHeight_out flexRowAC">
         <search-height-box
           keyword="query"
@@ -77,6 +81,8 @@
         <easy-player class="player" :video-url="videoUrl" autoplay :live="true"></easy-player>
       </div>
     </el-dialog>
+      </div>
+    </div>
   </div>
 </template>
 

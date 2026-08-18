@@ -817,6 +817,17 @@ td {
   background-color: var(--el-color-primary-hb2);
 }
 
+.operateAppBox {
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.new_table_svg_group.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 // ----------
 // 用法： 只需要在需要使用的 <el-table> 标签上添加 class="new-table" 即可
 // 以上css是处理 table右侧的操作栏目的悬浮效果的

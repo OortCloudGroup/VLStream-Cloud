@@ -1,164 +1,100 @@
 <template>
   <DeviceClassificationLayout protocol-type="DAHUA" :selected-device-keys="classificationDeviceKeys" @filter-change="handleClassificationFilter" @assigned="getList">
-  <div class="app-container">
-    <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="ip" prop="ip">
-        <el-input
-            v-model="queryParams.ip"
-            placeholder="请输入ip"
-            clearable
-            @keyup.enter="handleQuery"
+  <div class="device-table-panel">
+    <div class="depNameBox_out flexRowAC">
+      <div class="depNameBox flexRowAC">
+        <div class="exportBtnBox flexRowAC">
+          <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd" v-hasPermi="['dahua:device:add']">
+            <el-icon class="BtnImg"><Plus /></el-icon>新增
+          </button>
+          <button-group :button-list="toolbarButtonList" />
+        </div>
+      </div>
+      <div class="searchHeight_out flexRowAC">
+        <search-height-box
+          keyword="name"
+          placeholder="搜索设备名称"
+          :data="searchData"
+          @handle="searchResetFn"
         />
-      </el-form-item>
-      <el-form-item label="设备名称" prop="name">
-        <el-input
-            v-model="queryParams.name"
-            placeholder="请输入设备名称"
-            clearable
-            @keyup.enter="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+        <export-excel-pdf :item="exportItem" @handle="handleExport" />
+      </div>
+    </div>
 
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-            type="primary"
-            plain
-            icon="Plus"
-            @click="handleAdd"
-            v-hasPermi="['dahua:device:add']"
-        >新增
-        </el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-            type="success"
-            plain
-            icon="Edit"
-            :disabled="single"
-            @click="handleUpdate"
-            v-hasPermi="['dahua:device:edit']"
-        >修改
-        </el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-            type="danger"
-            plain
-            icon="Delete"
-            :disabled="multiple"
-            @click="handleDelete"
-            v-hasPermi="['dahua:device:remove']"
-        >删除
-        </el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-            type="warning"
-            plain
-            icon="Download"
-            @click="handleExport"
-            v-hasPermi="['dahua:device:export']"
-        >导出
-        </el-button>
-      </el-col>
-      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-    </el-row>
-
-    <el-table v-loading="loading" :data="deviceList" @selection-change="handleSelectionChange" border>
-      <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="ip" align="center" prop="ip"/>
-      <el-table-column label="设备名称" align="center" prop="name"/>
-      <el-table-column label="地址" align="center" prop="addressMap"/>
-      <el-table-column label="端口" align="center" prop="port"/>
-      <el-table-column label="用户名" align="center" prop="userName"/>
-      <el-table-column label="密码" align="center" prop="password">
+    <table-self
+      class="new_table"
+      header-cell-class-name="header_tenant_cell"
+      stripe
+      v-loading="loading"
+      :data="deviceList"
+      current-row-key="id"
+      @selection-change="handleSelectionChange"
+    >
+      <el-table-column type="selection" :width="clacPXToVW(55)" />
+      <el-table-column label="ip" prop="ip" show-overflow-tooltip />
+      <el-table-column label="设备名称" prop="name" show-overflow-tooltip />
+      <el-table-column label="地址" prop="addressMap" show-overflow-tooltip />
+      <el-table-column label="端口" prop="port" :width="clacPXToVW(90)" />
+      <el-table-column label="用户名" prop="userName" show-overflow-tooltip />
+      <el-table-column label="密码" prop="password">
         <template #default="scope">
           <div class="password-container">
             <span v-if="!passwordVisibility[scope.row.id]">******</span>
             <span v-else>{{ scope.row.password }}</span>
-            <el-icon class="eye-icon" @click="togglePasswordVisibility(scope.row.id)">
+            <el-icon class="eye-icon" @click.stop="togglePasswordVisibility(scope.row.id)">
               <component :is="passwordVisibility[scope.row.id] ? 'Hide' : 'View'"/>
             </el-icon>
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="播放类型" align="center" prop="playType">
+      <el-table-column label="播放类型" prop="playType" :width="clacPXToVW(100)">
         <template #default="scope">
           <dict-tag :options="play_type" :value="scope.row.playType"/>
         </template>
       </el-table-column>
-      <el-table-column key="streamId" label="流id" prop="streamId" min-width="150" align="center"/>
-      <el-table-column label="备注" align="center" prop="remark"/>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="250"  fixed="right">
+      <el-table-column key="streamId" label="流id" prop="streamId" min-width="150" show-overflow-tooltip />
+      <el-table-column label="备注" prop="remark" show-overflow-tooltip />
+      <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(260)">
         <template #default="scope">
-          <div style="display:flex; align-items: center;justify-content: center;flex-wrap: wrap;">
-<!--            <el-button link type="primary" icon="VideoPlay" @click="handleSDKPlay(scope.row)"-->
-<!--                       v-hasPermi="['dahua:zlmApi:play']">SDK播放-->
-<!--            </el-button>-->
-<!--            <el-button link type="primary" icon="VideoPlay" @click="handleProxyPlay(scope.row)"-->
-<!--                       v-hasPermi="['dahua:zlmApi:play']">代理播放-->
-<!--            </el-button>-->
-            <el-button link type="primary" icon="VideoPlay" @click="handleStartPlay(scope.row)"
-                       v-hasPermi="['dahua:device:start']">播放
-            </el-button>
-            <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
-                       v-hasPermi="['dahua:device:edit']">修改
-            </el-button>
-            <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
-                       v-hasPermi="['dahua:device:remove']">删除
-            </el-button>
-
-            <el-dropdown @command="(command)=>{moreClick(command, scope.row)}"
-                         v-if="checkPermi(['dahua:device:edit'])">
-             <span class="el-dropdown-link">
-              <el-button type="text">
-                更多
-                <el-icon>
-                  <arrow-down/>
-                </el-icon>
-              </el-button>
-            </span>
+          <div class="operateAppBox flexRowAC" @click.stop>
+            <div class="new_table_svg_group" @click="handleStartPlay(scope.row)" v-hasPermi="['dahua:device:start']">
+              <span>播放</span>
+            </div>
+            <div class="new_table_svg_group" @click="handleUpdate(scope.row)" v-hasPermi="['dahua:device:edit']">
+              <span>修改</span>
+            </div>
+            <div class="new_table_svg_group" @click="handleDelete(scope.row)" v-hasPermi="['dahua:device:remove']">
+              <span>删除</span>
+            </div>
+            <el-dropdown @command="(command)=>{moreClick(command, scope.row)}" v-if="checkPermi(['dahua:device:edit'])">
+              <div class="new_table_svg_group">
+                <span>更多</span>
+              </div>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="handleMap" v-if="checkPermi(['dahua:device:edit'])">修改位置
-                  </el-dropdown-item>
-                  <el-dropdown-item command="snapPictureList" v-if="checkPermi(['dahua:device:listScreenshot'])">
-                    抓图列表
-                  </el-dropdown-item>
-                  <el-dropdown-item command="snapPicture" v-if="checkPermi(['dahua:device:snapPicture'])">
-                    抓图
-                  </el-dropdown-item>
-                  <el-dropdown-item command="timerCapturePicture"
-                                    v-if="checkPermi(['dahua:device:timerCapturePicture'])">
-                    定时抓图
-                  </el-dropdown-item>
-                  <el-dropdown-item command="stopCapturePicture" v-if="checkPermi(['dahua:device:stopCapturePicture'])">
-                    停止定时抓图
-                  </el-dropdown-item>
-                  <el-dropdown-item command="control" v-if="checkPermi(['dahua:device:control'])">
-                    设备控制
-                  </el-dropdown-item>
+                  <el-dropdown-item command="handleMap" v-if="checkPermi(['dahua:device:edit'])">修改位置</el-dropdown-item>
+                  <el-dropdown-item command="snapPictureList" v-if="checkPermi(['dahua:device:listScreenshot'])">抓图列表</el-dropdown-item>
+                  <el-dropdown-item command="snapPicture" v-if="checkPermi(['dahua:device:snapPicture'])">抓图</el-dropdown-item>
+                  <el-dropdown-item command="timerCapturePicture" v-if="checkPermi(['dahua:device:timerCapturePicture'])">定时抓图</el-dropdown-item>
+                  <el-dropdown-item command="stopCapturePicture" v-if="checkPermi(['dahua:device:stopCapturePicture'])">停止定时抓图</el-dropdown-item>
+                  <el-dropdown-item command="control" v-if="checkPermi(['dahua:device:control'])">设备控制</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
           </div>
         </template>
       </el-table-column>
-    </el-table>
+    </table-self>
 
-    <pagination
-        v-show="total>0"
-        :total="total"
-        v-model:page="queryParams.pageNum"
-        v-model:limit="queryParams.pageSize"
-        @pagination="getList"
-    />
+    <div class="paginationBox flexRowAC">
+      <pagination
+          v-show="total>0"
+          :total="total"
+          v-model:page="queryParams.pageNum"
+          v-model:limit="queryParams.pageSize"
+          @pagination="getList"
+      />
+    </div>
 
     <!-- 添加或修改大华设备对话框 -->
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
@@ -632,6 +568,7 @@ import {ElMessage} from "element-plus";
 import {startPlay} from "../../../api/wvp/push.js";
 import {proxyPlay, stopProxy} from "@/api/dahua/zlmApi.js";
 import useClipboard from "vue-clipboard3";
+import { clacPXToVW } from "@/utils/wvpCompat";
 const { toClipboard } = useClipboard()
 
 const {proxy} = getCurrentInstance();
@@ -740,6 +677,35 @@ const data = reactive({
 const {queryParams, form, rules} = toRefs(data);
 const classificationDeviceKeys = ref([]);
 function handleClassificationFilter(filter) { Object.assign(queryParams.value, filter, { pageNum: 1 }); getList(); }
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: 'ip', value: 'ip', type: 'text', default: '' },
+  { label: '设备名称', value: 'name', type: 'text', default: '' },
+])
+const toolbarButtonList = computed(() => [
+  { name: '修改', svg: 'table_edit', clickFn: handleToolbarUpdate },
+  { name: '删除', svg: 'table_del', clickFn: handleToolbarDelete },
+])
+function searchResetFn(val) {
+  queryParams.value.pageNum = 1
+  queryParams.value.ip = val?.ip || null
+  queryParams.value.name = val?.name || null
+  getList()
+}
+function handleToolbarUpdate() {
+  if (single.value) {
+    proxy.$modal.msgWarning('请选择一条要修改的数据')
+    return
+  }
+  handleUpdate({ id: Array.isArray(ids.value) ? ids.value[0] : ids.value })
+}
+function handleToolbarDelete() {
+  if (multiple.value) {
+    proxy.$modal.msgWarning('请选择要删除的数据')
+    return
+  }
+  handleDelete()
+}
 const statusPlay = ref("");
 const SDKID = ref("");
 function handleSDKPlay(row){
@@ -955,7 +921,7 @@ function handleDeviceDelete(row){
 function handleUpdate(row) {
   reset();
   channelList.value = []
-  const _id = row.id || ids.value
+  const _id = row?.id || ids.value
   getDevice(_id).then(response => {
     form.value = response.data;
     open.value = true;
@@ -994,7 +960,7 @@ function submitForm() {
 
 /** 删除按钮操作 */
 function handleDelete(row) {
-  const _ids = row.id || ids.value;
+  const _ids = row?.id || ids.value;
   proxy.$modal.confirm('是否确认删除大华设备编号为"' + _ids + '"的数据项？').then(function () {
     return delDevice(_ids);
   }).then(() => {
@@ -1218,8 +1184,8 @@ getList();
 </script>
 
 <style scoped>
-::v-deep(.el-icon) {
-  height: auto !important;
+.control-wrapper :deep(.el-icon) {
+  height: auto;
 }
 
 .control-wrapper {

@@ -1,13 +1,13 @@
 <template>
-  <div class="app-container">
-    <el-tabs v-model="activeName" class="work-tabs" @tab-click="handleClick">
-      <el-tab-pane label="行政区划" name="region">
-        <Region/>
-      </el-tab-pane>
-      <el-tab-pane label="业务分组" name="group">
-        <Group/>
-      </el-tab-pane>
+  <div class="thoroughfare-page tenant_Page draHeaPB">
+    <el-tabs v-model="activeName" class="tenanat-tabs">
+      <el-tab-pane label="行政区划" name="region" />
+      <el-tab-pane label="业务分组" name="group" />
     </el-tabs>
+    <div class="tenant_content">
+      <Region v-if="activeName === 'region'" />
+      <Group v-if="activeName === 'group'" />
+    </div>
   </div>
 </template>
 
@@ -16,50 +16,22 @@ import Region from "./region.vue"
 import Group from "./group.vue"
 
 const activeName = ref('region')
-
-const handleClick = () => {
-  nextTick(() => {
-
-  })
-}
 </script>
 
 <style scoped lang="scss">
-:deep(.work-tabs) {
-  --el-tabs-header-height: 32px;
+.thoroughfare-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #f0f2f5;
+  overflow: hidden;
+}
 
-  .el-tabs__header {
-    margin: 0 0 12px;
-    border-bottom: 1px solid #f0f0f0;
-  }
-
-  .el-tabs__nav-wrap::after {
-    display: none;
-  }
-
-  .el-tabs__item {
-    width: 96px;
-    height: 32px;
-    padding: 0;
-    line-height: 32px;
-    text-align: center;
-    color: #333;
-    font-size: 14px;
-    font-weight: 400;
-    box-sizing: border-box;
-  }
-
-  .el-tabs__item.is-active {
-    color: var(--el-color-primary);
-  }
-
-  .el-tabs__item:hover {
-    color: var(--el-color-primary);
-  }
-
-  .el-tabs__active-bar {
-    height: 2px;
-    background-color: var(--el-color-primary);
-  }
+.tenant_content {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 </style>

@@ -1,165 +1,105 @@
 <template>
   <DeviceClassificationLayout protocol-type="RTSP" :selected-device-keys="classificationDeviceKeys" @filter-change="handleClassificationFilter" @assigned="getList">
-  <div class="app-container">
-    <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-      <el-form-item label="ip" prop="ip">
-        <el-input
-            v-model="queryParams.ip"
-            placeholder="请输入ip"
-            clearable
-            @keyup.enter="handleQuery"
+  <div class="device-table-panel">
+    <div class="depNameBox_out flexRowAC">
+      <div class="depNameBox flexRowAC">
+        <div class="exportBtnBox flexRowAC">
+          <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd" v-hasPermi="['rtsp:RtspDevice:add']">
+            <el-icon class="BtnImg"><Plus /></el-icon>新增
+          </button>
+          <button-group :button-list="toolbarButtonList" />
+        </div>
+      </div>
+      <div class="searchHeight_out flexRowAC">
+        <search-height-box
+          keyword="name"
+          placeholder="搜索摄像头名称"
+          :data="searchData"
+          @handle="searchResetFn"
         />
-      </el-form-item>
-      <el-form-item label="摄像头名称" prop="name">
-        <el-input
-            v-model="queryParams.name"
-            placeholder="请输入摄像头名称"
-            clearable
-            @keyup.enter="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="设备厂商" prop="firm">
-        <el-select v-model="queryParams.firm" placeholder="请选择设备厂商" clearable style="width: 180px;">
-          <el-option
-              v-for="dict in rtsp_manufacturer"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+        <export-excel-pdf :item="exportItem" @handle="handleExport" />
+      </div>
+    </div>
 
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-            type="primary"
-            plain
-            icon="Plus"
-            @click="handleAdd"
-            v-hasPermi="['rtsp:RtspDevice:add']"
-        >新增
-        </el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-            type="success"
-            plain
-            icon="Edit"
-            :disabled="single"
-            @click="handleUpdate"
-            v-hasPermi="['rtsp:RtspDevice:edit']"
-        >修改
-        </el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-            type="danger"
-            plain
-            icon="Delete"
-            :disabled="multiple"
-            @click="handleDelete"
-            v-hasPermi="['rtsp:RtspDevice:remove']"
-        >删除
-        </el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-            type="warning"
-            plain
-            icon="Download"
-            @click="handleExport"
-            v-hasPermi="['rtsp:RtspDevice:export']"
-        >导出
-        </el-button>
-      </el-col>
-      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-    </el-row>
-
-    <el-table v-loading="loading" :data="RtspDeviceList" @selection-change="handleSelectionChange" border>
-      <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="ip" align="center" prop="ip"/>
-      <el-table-column label="摄像头名称" align="center" prop="name"/>
-      <el-table-column label="地址" align="center" prop="addressMap"/>
-      <el-table-column label="用户名" align="center" prop="userName"/>
-      <el-table-column label="密码" align="center" prop="password">
+    <table-self
+      class="new_table"
+      header-cell-class-name="header_tenant_cell"
+      stripe
+      v-loading="loading"
+      :data="RtspDeviceList"
+      current-row-key="id"
+      @selection-change="handleSelectionChange"
+    >
+      <el-table-column type="selection" :width="clacPXToVW(55)" />
+      <el-table-column label="ip" prop="ip" show-overflow-tooltip />
+      <el-table-column label="摄像头名称" prop="name" show-overflow-tooltip />
+      <el-table-column label="地址" prop="addressMap" show-overflow-tooltip />
+      <el-table-column label="用户名" prop="userName" show-overflow-tooltip />
+      <el-table-column label="密码" prop="password">
         <template #default="scope">
           <div class="password-container">
             <span v-if="!passwordVisibility[scope.row.id]">******</span>
             <span v-else>{{ scope.row.password }}</span>
-            <el-icon class="eye-icon" @click="togglePasswordVisibility(scope.row.id)">
+            <el-icon class="eye-icon" @click.stop="togglePasswordVisibility(scope.row.id)">
               <component :is="passwordVisibility[scope.row.id] ? 'Hide' : 'View'"/>
             </el-icon>
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="通道号" align="center" prop="channel"/>
-      <el-table-column label="设备厂商" align="center" prop="firm">
+      <el-table-column label="通道号" prop="channel" :width="clacPXToVW(90)" />
+      <el-table-column label="设备厂商" prop="firm" :width="clacPXToVW(120)">
         <template #default="scope">
           <dict-tag :options="rtsp_manufacturer" :value="scope.row.firm"/>
         </template>
       </el-table-column>
-      <el-table-column label="播放类型" align="center" prop="playType">
+      <el-table-column label="播放类型" prop="playType" :width="clacPXToVW(100)">
         <template #default="scope">
           <el-tag type="primary" v-if="scope.row.playType === '1'">本地</el-tag>
           <el-tag type="primary" v-if="scope.row.playType === '2'">推流</el-tag>
           <el-tag type="primary" v-if="scope.row.playType === '3'">EasyNTS</el-tag>
         </template>
       </el-table-column>
-      <el-table-column key="streamId" label="流id" prop="streamId" min-width="150" align="center"/>
-      <el-table-column key="remark" label="备注" prop="remark" min-width="150" align="center"/>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="250">
+      <el-table-column key="streamId" label="流id" prop="streamId" min-width="150" show-overflow-tooltip />
+      <el-table-column key="remark" label="备注" prop="remark" min-width="150" show-overflow-tooltip />
+      <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(260)">
         <template #default="scope">
-          <div style="display:flex; align-items: center;justify-content: center">
-            <el-button link type="primary" icon="View" @click="handleView(scope.row)"
-                       v-hasPermi="['rtsp:RtspDevice:view']">播放
-            </el-button>
-            <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
-                       v-hasPermi="['rtsp:RtspDevice:edit']">修改
-            </el-button>
-            <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
-                       v-hasPermi="['rtsp:RtspDevice:remove']">删除
-            </el-button>
-
+          <div class="operateAppBox flexRowAC" @click.stop>
+            <div class="new_table_svg_group" @click="handleView(scope.row)" v-hasPermi="['rtsp:RtspDevice:view']">
+              <span>播放</span>
+            </div>
+            <div class="new_table_svg_group" @click="handleUpdate(scope.row)" v-hasPermi="['rtsp:RtspDevice:edit']">
+              <span>修改</span>
+            </div>
+            <div class="new_table_svg_group" @click="handleDelete(scope.row)" v-hasPermi="['rtsp:RtspDevice:remove']">
+              <span>删除</span>
+            </div>
             <el-dropdown @command="(command)=>{moreClick(command, scope.row)}"
                          v-if="checkPermi(['rtsp:RtspDevice:edit', 'rtsp:RtspDevice:Avatar', 'rtsp:RtspDevice:AlarmClock'])">
-             <span class="el-dropdown-link">
-              <el-button type="text">
-                更多
-                <el-icon>
-                  <arrow-down/>
-                </el-icon>
-              </el-button>
-            </span>
+              <div class="new_table_svg_group">
+                <span>更多</span>
+              </div>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="handleMap" v-if="checkPermi(['rtsp:RtspDevice:edit'])">修改位置
-                  </el-dropdown-item>
-                  <el-dropdown-item command="handleAI" v-if="checkPermi(['rtsp:RtspDevice:Avatar'])">AI播放
-                  </el-dropdown-item>
-                  <el-dropdown-item command="handleAlarmClock" v-if="checkPermi(['rtsp:RtspDevice:AlarmClock'])">
-                    历史播放
-                  </el-dropdown-item>
+                  <el-dropdown-item command="handleMap" v-if="checkPermi(['rtsp:RtspDevice:edit'])">修改位置</el-dropdown-item>
+                  <el-dropdown-item command="handleAI" v-if="checkPermi(['rtsp:RtspDevice:Avatar'])">AI播放</el-dropdown-item>
+                  <el-dropdown-item command="handleAlarmClock" v-if="checkPermi(['rtsp:RtspDevice:AlarmClock'])">历史播放</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
           </div>
-
         </template>
       </el-table-column>
-    </el-table>
+    </table-self>
 
-    <pagination
-        v-show="total>0"
-        :total="total"
-        v-model:page="queryParams.pageNum"
-        v-model:limit="queryParams.pageSize"
-        @pagination="getList"
-    />
+    <div class="paginationBox flexRowAC">
+      <pagination
+          v-show="total>0"
+          :total="total"
+          v-model:page="queryParams.pageNum"
+          v-model:limit="queryParams.pageSize"
+          @pagination="getList"
+      />
+    </div>
 
     <!-- 添加或修改rtsp设备对话框 -->
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
@@ -379,6 +319,7 @@ import RtcPlayer from "@/components/rtcPlayer/index.vue";
 import H265web from "@/components/H265web/index.vue";
 import StreamDropdown from "@/views/wvp/channel/components/streamDropdown.vue";
 import MediaInfo from "@/views/wvp/channel/components/mediaInfo.vue";
+import { clacPXToVW } from "@/utils/wvpCompat";
 import useClipboard from "vue-clipboard3";
 const { toClipboard } = useClipboard()
 
@@ -454,6 +395,42 @@ const data = reactive({
 const {queryParams, form, rules} = toRefs(data);
 const classificationDeviceKeys = ref([]);
 function handleClassificationFilter(filter) { Object.assign(queryParams.value, filter, { pageNum: 1 }); getList(); }
+
+const exportItem = ref({ isDisabledExcel: false })
+const searchData = ref([
+  { label: 'ip', value: 'ip', type: 'text', default: '' },
+  { label: '摄像头名称', value: 'name', type: 'text', default: '' },
+  { label: '设备厂商', value: 'firm', type: 'select', option: [], default: '' },
+])
+const toolbarButtonList = computed(() => [
+  { name: '修改', svg: 'table_edit', clickFn: handleToolbarUpdate },
+  { name: '删除', svg: 'table_del', clickFn: handleToolbarDelete },
+])
+watch(rtsp_manufacturer, (val) => {
+  const item = searchData.value.find(i => i.value === 'firm')
+  if (item) item.option = val || []
+}, { immediate: true, deep: true })
+function searchResetFn(val) {
+  queryParams.value.pageNum = 1
+  queryParams.value.ip = val?.ip || null
+  queryParams.value.name = val?.name || null
+  queryParams.value.firm = val?.firm || null
+  getList()
+}
+function handleToolbarUpdate() {
+  if (single.value) {
+    proxy.$modal.msgWarning('请选择一条要修改的数据')
+    return
+  }
+  handleUpdate({ id: Array.isArray(ids.value) ? ids.value[0] : ids.value })
+}
+function handleToolbarDelete() {
+  if (multiple.value) {
+    proxy.$modal.msgWarning('请选择要删除的数据')
+    return
+  }
+  handleDelete()
+}
 
 const videoError = (e) => {
   console.log("播放器错误：" + JSON.stringify(e));
@@ -698,7 +675,7 @@ function handleAdd() {
 /** 修改按钮操作 */
 function handleUpdate(row) {
   reset();
-  const _id = row.id || ids.value
+  const _id = row?.id || ids.value
   getRtspDevice(_id).then(response => {
     form.value = response.data;
     open.value = true;
@@ -729,7 +706,7 @@ function submitForm() {
 
 /** 删除按钮操作 */
 function handleDelete(row) {
-  const _ids = row.id || ids.value;
+  const _ids = row?.id || ids.value;
   proxy.$modal.confirm('是否确认删除rtsp设备编号为"' + _ids + '"的数据项？').then(function () {
     return delRtspDevice(_ids);
   }).then(() => {

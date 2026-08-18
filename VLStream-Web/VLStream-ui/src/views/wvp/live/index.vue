@@ -1,61 +1,90 @@
 <template>
-  <div class="app-container">
-    <el-row :gutter="20">
-      <el-col :span="4">
-        <el-card>
-          <div class="top">
-            <div>通道列表</div>
-            <div>
-              <el-switch
-                  v-model="activeValue"
-                  active-text="行政区划"
-                  inactive-text="业务分组"
-                  @change="onSwitch"
-              />
+  <div class="live-page tenant_Page draHeaPB">
+    <div class="tenant_content">
+      <div class="tableTenBox flexRowAC">
+        <div class="police_aside_use">
+          <div class="treeTitle">通道列表</div>
+          <div class="live-switch-row flexRowAC">
+            <el-switch
+              v-model="activeValue"
+              active-text="行政区划"
+              inactive-text="业务分组"
+              @change="onSwitch"
+            />
+          </div>
+          <el-tree
+            :data="treeData"
+            :props="defaultProps"
+            lazy
+            :load="loadNode"
+            highlight-current
+            :expand-on-click-node="false"
+            style="background: #fff;"
+            @node-click="handleNodeClick"
+          >
+            <template #default="{ node, data }">
+              <div class="custom-tree-node flexRowAC">
+                <div class="tree-node-main flexRowAC">
+                  <el-icon class="tree-icon">
+                    <VideoCamera v-if="data.leaf" />
+                    <Folder v-else />
+                  </el-icon>
+                  <el-tooltip :open-delay="500" effect="light" :content="node.label" placement="top">
+                    <div class="tree-node-label">{{ node.label }}</div>
+                  </el-tooltip>
+                </div>
+              </div>
+            </template>
+          </el-tree>
+        </div>
+
+        <div class="tableTenItU live-right">
+          <div class="depNameBox_out flexRowAC">
+            <div class="depNameBox flexRowAC">
+              <span class="live-toolbar-label">分屏</span>
+              <div class="live-split-btns flexRowAC">
+                <svg-icon
+                  :class="['flex-icon', { active: splitShow === 1 }]"
+                  icon-class="splitOne"
+                  @click="spiltIndex(1)"
+                />
+                <svg-icon
+                  :class="['flex-icon', { active: splitShow === 4 }]"
+                  icon-class="splitFour"
+                  @click="spiltIndex(4)"
+                />
+                <svg-icon
+                  :class="['flex-icon', { active: splitShow === 6 }]"
+                  icon-class="splitSix"
+                  @click="spiltIndex(6)"
+                />
+                <svg-icon
+                  :class="['flex-icon', { active: splitShow === 9 }]"
+                  icon-class="splitNine"
+                  @click="spiltIndex(9)"
+                />
+              </div>
             </div>
           </div>
-          <div>
-            <el-tree
-                :data="treeData"
-                :props="defaultProps"
-                lazy
-                :load="loadNode"
-                @node-click="handleNodeClick"/>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="20">
-        <el-card>
-          <div class="flex">
-            分屏:
-            <svg-icon :class="['flex-icon', { active: model === 1 }]"
-                icon-class="splitOne" @click="spiltIndex(1)" class="flex-icon" />
-            <svg-icon :class="['flex-icon', { active: model === 4 }]"
-                icon-class="splitFour" @click="spiltIndex(4)" class="flex-icon" />
-            <svg-icon :class="['flex-icon', { active: model === 6 }]"
-                icon-class="splitSix" @click="spiltIndex(6)" class="flex-icon" />
-            <svg-icon :class="['flex-icon', { active: model === 9 }]"
-                icon-class="splitNine" @click="spiltIndex(9)" class="flex-icon" />
-          </div>
 
-          <div style="display: flex; flex-wrap: wrap; margin-top: 20px;">
+          <div class="live-player-grid" :class="'split-' + splitShow">
             <div
-                v-for="(item, index) in splitLayouts[splitShow]"
-                :key="index"
-                :style="getCellStyle(splitShow)"
-                :class="['player-cell', { active: activePlayerIndex === index }]"
-                @click="setActivePlayer(index)">
+              v-for="(item, index) in splitLayouts[splitShow]"
+              :key="index"
+              :class="['player-cell', { active: activePlayerIndex === index }]"
+              @click="setActivePlayer(index)"
+            >
               <CusPlayer :ref="'video' + index" />
             </div>
           </div>
-
-        </el-card>
-      </el-col>
-    </el-row>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup name="WVPLive">
+import { Folder, VideoCamera } from '@element-plus/icons-vue'
 import {queryForTree} from "@/api/wvp/region";
 import {queryListByCivilCode, queryListByParentId, sendDevicePush} from "@/api/wvp/channel.js";
 import {queryForTree as groupQueryForTree} from "@/api/wvp/group.js";
@@ -69,8 +98,6 @@ const queryParams = ref({
   pageNum: 1,
   pageSize: 200,
 })
-
-const video = ref(null);
 
 const treeData = ref([]);
 
@@ -87,7 +114,7 @@ const splitLayouts = {
   9: [1, 2, 3, 4, 5, 6, 7, 8, 9],
 };
 
-async function onSwitch(e) {
+async function onSwitch() {
   if (activeValue.value) {
     await getTreeData();
   } else {
@@ -183,44 +210,8 @@ const handleNodeClick = async (data) => {
 };
 
 const splitShow = ref(1)
-const borderWidth = ref(2)
 const activePlayerIndex = ref(null);
-const model = ref(1);
 const activeValue = ref(true);
-
-function getCellStyle(splitMode) {
-  model.value = splitMode;
-  const style = {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#000000",
-    boxSizing: "border-box",
-  };
-
-  if (splitMode === 1) {
-    style.width = "100%";
-    style.height = "600px";
-    style.border  = `${borderWidth.value}px solid #409EFF`;
-  } else if (splitMode === 4) {
-    style.width = "50%";
-    style.height = "400px";
-    style.border  = `${borderWidth.value}px solid #409EFF`;
-    style.margin = "-2px";
-  } else if (splitMode === 6) {
-    style.width = "50%";
-    style.height = "300px";
-    style.border  = `${borderWidth.value}px solid #409EFF`;
-    style.margin = "-2px";
-  } else if (splitMode === 9) {
-    style.width = "33.33%";
-    style.height = "280px";
-    style.border  = `${borderWidth.value}px solid #409EFF`;
-    style.margin = "-2px";
-  }
-
-  return style;
-}
 
 function setActivePlayer(index) {
   activePlayerIndex.value = index;
@@ -261,50 +252,211 @@ onMounted(async () => {
 
 </script>
 
-<style scoped>
-.top {
+<style scoped lang="scss">
+.live-page {
+  height: 100%;
   width: 100%;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  background: #f0f2f5;
+  overflow: hidden;
+
+  .tenant_content {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tableTenBox {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    flex: 1;
+    background: #fff;
+    align-items: stretch;
+    box-sizing: border-box;
+  }
 }
 
-.flex {
-  width: 100%;
+.police_aside_use {
+  width: 300px;
+  padding-right: 20px;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+
+  .treeTitle {
+    color: var(--el-color-primary);
+    padding: 4px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+
+    &::before {
+      content: "";
+      width: 3px;
+      height: 18px;
+      background-color: var(--el-color-primary);
+    }
+  }
+
+  :deep(.el-tree-node__content) {
+    --el-tree-node-hover-bg-color: var(--el-menu-hover-bg-color);
+    height: 38px;
+    font-size: 14px;
+    color: #333;
+
+    .custom-tree-node {
+      width: 100%;
+      justify-content: space-between;
+      padding-right: 4px;
+    }
+  }
+
+  :deep(.el-tree) {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
+.live-switch-row {
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.custom-tree-node {
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+
+  .tree-node-main {
+    flex: 1;
+    min-width: 0;
+    gap: 4px;
+    overflow: hidden;
+  }
+
+  .tree-node-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tree-icon {
+    flex-shrink: 0;
+    font-size: 14px;
+    color: var(--el-color-primary);
+  }
+}
+
+.live-right {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.depNameBox_out {
+  padding-bottom: 16px;
+}
+
+.live-toolbar-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.live-split-btns {
+  gap: 10px;
+}
+
+.live-player-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  gap: 2px;
+  background: #000;
+  border-radius: 4px;
+  overflow: hidden;
+
+  &.split-1 {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+  }
+
+  &.split-4 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+
+  &.split-6 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+  }
+
+  &.split-9 {
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+  }
 }
 
 .player-cell {
   position: relative;
-  transition: border-color 0.3s ease;
-}
-
-.player-cell:hover {
+  min-width: 0;
+  min-height: 0;
+  background: #000;
+  border: 2px solid #409eff;
+  box-sizing: border-box;
+  overflow: hidden;
   cursor: pointer;
-}
+  transition: border-color 0.2s ease;
 
-.player-cell.active {
-  border-color: #67C23A !important;
-  z-index: 999;
-  boxSizing: "border-box"
+  &.active {
+    border-color: #67c23a;
+    z-index: 2;
+  }
+
+  :deep(.wvp-flv-player) {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    object-fit: contain;
+    display: block;
+    background: #000;
+  }
 }
 
 .flex-icon {
-  margin-left: 10px;
-}
-
-.flex-icon {
-  margin-left: 10px;
   cursor: pointer;
   font-size: 20px;
-  transition: color 0.3s ease, transform 0.3s ease;
-}
+  color: #909399;
+  transition: color 0.2s ease, transform 0.2s ease;
 
-.flex-icon.active {
-  color: #409EFF;
-  transform: scale(1.2);
+  &.active {
+    color: #409eff;
+    transform: scale(1.15);
+  }
+
+  &:hover {
+    color: #409eff;
+  }
 }
 </style>
-
-

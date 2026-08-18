@@ -1,203 +1,202 @@
 <template>
-  <div>
-    <el-row :gutter="20">
-      <el-col :span="4">
-        <div class="head-container">
-          <el-input v-model="groupName" placeholder="请输入分组名称" clearable prefix-icon="Search"
-                    style="margin-bottom: 20px"/>
+  <div class="channel-panel tableTenBox flexRowAC">
+    <div v-show="!treeCollapsed" v-yResize class="police_aside_use">
+      <div class="treeTitle">业务分组</div>
+      <div class="tree_search_content flexRowAC">
+        <el-input
+          v-model="groupName"
+          placeholder="搜索"
+          clearable
+          prefix-icon="Search"
+        />
+      </div>
+      <el-tree
+        ref="leftTreeRef"
+        style="background: #fff;"
+        :data="groupOptions"
+        :props="{ label: 'name', children: 'children' }"
+        :expand-on-click-node="false"
+        :filter-node-method="filterNode"
+        node-key="id"
+        highlight-current
+        default-expand-all
+        @node-click="handleNodeClick"
+      >
+        <template #default="{ node }">
+          <div class="custom-tree-node flexRowAC">
+            <div class="tree-node-main flexRowAC">
+              <el-icon class="tree-icon"><Folder /></el-icon>
+              <el-tooltip :open-delay="500" effect="light" :content="node.label" placement="top">
+                <div class="tree-node-label">{{ node.label }}</div>
+              </el-tooltip>
+            </div>
+          </div>
+        </template>
+      </el-tree>
+    </div>
+
+    <div class="tableTenItU">
+      <div class="depNameBox_out flexRowAC">
+        <div class="depNameBox flexRowAC">
+          <CollapseToggle
+            v-if="treeCollapsed"
+            class="expand-device-tree-btn"
+            :is-expanded="false"
+            @toggle="treeCollapsed = false"
+          />
+          <div class="exportBtnBox flexRowAC">
+            <button
+              v-hasPermi="['wvp:channel:addGroupChannel']"
+              type="button"
+              class="exportBtn newBtn flexRowAC"
+              :disabled="addDisabled"
+              @click="handleAdd"
+            >
+              <el-icon class="BtnImg"><Plus /></el-icon>新建
+            </button>
+            <button-group :button-list="toolbarButtonList" />
+          </div>
         </div>
-        <div class="head-container">
-          <el-tree :data="groupOptions"
-                   :props="{label: 'name', children: 'children'}"
-                   :expand-on-click-node="false"
-                   :filter-node-method="filterNode"
-                   ref="groupTreeRef"
-                   node-key="id"
-                   highlight-current
-                   default-expand-all
-                   @node-click="handleNodeClick"/>
+        <div class="searchHeight_out flexRowAC">
+          <search-height-box
+            keyword="query"
+            placeholder="搜索"
+            :data="searchData"
+            @handle="searchResetFn"
+          />
+          <export-excel-pdf />
         </div>
-      </el-col>
-      <el-col :span="20">
-        <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
+      </div>
+
+      <TableSelf
+        class="new_table"
+        header-cell-class-name="header_tenant_cell"
+        stripe
+        v-loading="loading"
+        :data="channelList"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" :width="clacPXToVW(55)" />
+        <el-table-column prop="gbName" label="名称" show-overflow-tooltip />
+        <el-table-column prop="gbDeviceId" label="编号" show-overflow-tooltip />
+        <el-table-column prop="gbManufacturer" label="厂家" show-overflow-tooltip />
+        <el-table-column label="类型" :width="clacPXToVW(120)">
+          <template #default="scope">
+            <el-tag effect="plain" v-if="scope.row.dataType === 1">国标设备</el-tag>
+            <el-tag effect="plain" type="success" v-else-if="scope.row.dataType === 2">推流设备</el-tag>
+            <el-tag effect="plain" type="warning" v-else-if="scope.row.dataType === 3">拉流代理</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" :width="clacPXToVW(90)">
+          <template #default="scope">
+            <el-tag v-if="scope.row.gbStatus === 'ON'">在线</el-tag>
+            <el-tag type="info" v-else>离线</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(140)">
+          <template #default="scope">
+            <div class="operateAppBox flexRowAC" @click.stop>
+              <div class="new_table_svg_group" @click="onMap(scope.row)">
+                <span>设置位置</span>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+      </TableSelf>
+
+      <div class="paginationBox flexRowAC">
+        <pagination
+          v-show="total > 0"
+          :total="total"
+          v-model:page="queryParams.pageNum"
+          v-model:limit="queryParams.pageSize"
+          @pagination="getList"
+        />
+      </div>
+
+      <el-dialog :title="title" v-model="open" width="1100px" append-to-body>
+        <el-form :model="queryParamsSelect" ref="querySelectRef" :inline="true" v-show="showSearchSelect" label-width="68px">
           <el-form-item label="关键字" prop="query">
-            <el-input v-model="queryParams.query" placeholder="请输入关键字" clearable style="width: 240px"
-                      @keyup.enter="handleQuery"/>
+            <el-input v-model="queryParamsSelect.query" placeholder="请输入关键字" clearable style="width: 240px" @keyup.enter="handleSelectQuery" />
           </el-form-item>
           <el-form-item label="类型" prop="channelType">
-            <el-select v-model="queryParams.channelType" placeholder="请选择类型" style="width: 250px;"
-                       default-first-option>
+            <el-select v-model="queryParamsSelect.channelType" placeholder="请选择类型" style="width: 250px;" default-first-option>
               <el-option label="国标设备" :value="1"></el-option>
               <el-option label="推流设备" :value="2"></el-option>
               <el-option label="拉流代理" :value="3"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="在线状态" prop="online">
-            <el-select v-model="queryParams.online" placeholder="请选择在线状态" style="width: 250px;"
-                       default-first-option>
+            <el-select v-model="queryParamsSelect.online" placeholder="请选择在线状态" style="width: 250px;" default-first-option>
               <el-option label="在线" value="true"></el-option>
               <el-option label="离线" value="false"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+            <el-button type="primary" icon="Search" @click="handleSelectQuery">搜索</el-button>
+            <el-button icon="Refresh" @click="resetSelectQuery">重置</el-button>
           </el-form-item>
         </el-form>
 
         <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5" v-hasPermi="['wvp:channel:addGroupChannel']">
-            <el-button type="primary"
-                       plain
-                       icon="Plus"
-                       :disabled="addDisabled"
-                       @click="handleAdd">新增
-            </el-button>
+          <el-col :span="1.5">
+            <el-button type="primary" plain icon="Select" :disabled="multipleSelect" @click="handleSelect">选择</el-button>
           </el-col>
-          <el-col :span="1.5" v-hasPermi="['wvp:channel:deleteGroupChannel']">
-            <el-button
-                type="danger"
-                plain
-                icon="Delete"
-                :disabled="multiple"
-                @click="handleDelete">
-              删除
-            </el-button>
-          </el-col>
-          <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
+          <right-toolbar v-model:showSearch="showSearchSelect" @queryTable="getChannelList"></right-toolbar>
         </el-row>
 
-        <el-table v-loading="loading" :data="channelList" @selection-change="handleSelectionChange">
-          <el-table-column type="selection" width="55" align="center"/>
-          <el-table-column prop="gbName" label="名称" align="center"/>
-          <el-table-column prop="gbDeviceId" label="编号" align="center"/>
-          <el-table-column prop="gbManufacturer" label="厂家" align="center"/>
+        <el-table v-loading="loadingSelect" :data="channelSelectList" @selection-change="handleSelectionSelectChange">
+          <el-table-column type="selection" width="55" align="center" />
+          <el-table-column prop="gbName" label="名称" align="center" />
+          <el-table-column prop="gbDeviceId" label="编号" align="center" />
+          <el-table-column prop="gbManufacturer" label="厂家" align="center" />
+          <el-table-column prop="gbAddress" label="位置" align="center" />
           <el-table-column label="类型" align="center">
             <template #default="scope">
-              <div slot="reference" class="name-wrapper">
-                <el-tag effect="plain" v-if="scope.row.dataType === 1">国标设备</el-tag>
-                <el-tag effect="plain" type="success" v-else-if="scope.row.dataType === 2">推流设备</el-tag>
-                <el-tag effect="plain" type="warning" v-else-if="scope.row.dataType === 3">拉流代理</el-tag>
-              </div>
+              <el-tag effect="plain" v-if="scope.row.dataType === 1">国标设备</el-tag>
+              <el-tag effect="plain" type="success" v-else-if="scope.row.dataType === 2">推流设备</el-tag>
+              <el-tag effect="plain" type="warning" v-else-if="scope.row.dataType === 3">拉流代理</el-tag>
             </template>
           </el-table-column>
           <el-table-column label="状态" align="center">
             <template #default="scope">
-              <div slot="reference" class="name-wrapper">
-                <el-tag v-if="scope.row.gbStatus === 'ON'">在线</el-tag>
-                <el-tag type="info" v-if="scope.row.gbStatus !== 'ON'">离线</el-tag>
-              </div>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" align="center" width="180" class-name="small-padding fixed-width" fixed="right">
-            <template #default="scope">
-              <el-button @click="onMap(scope.row)" type="text">设置位置</el-button>
+              <el-tag v-if="scope.row.gbStatus === 'ON'">在线</el-tag>
+              <el-tag type="info" v-else>离线</el-tag>
             </template>
           </el-table-column>
         </el-table>
 
         <pagination
-            v-show="total > 0"
-            :total="total"
-            v-model:page="queryParams.pageNum"
-            v-model:limit="queryParams.pageSize"
-            @pagination="getList"
+          v-show="totalSelect > 0"
+          :total="totalSelect"
+          v-model:page="queryParamsSelect.pageNum"
+          v-model:limit="queryParamsSelect.pageSize"
+          @pagination="getChannelList"
         />
-
-        <el-dialog :title="title" v-model="open" width="1100px" append-to-body>
-          <el-form :model="queryParamsSelect" ref="querySelectRef" :inline="true" v-show="showSearchSelect"
-                   label-width="68px">
-            <el-form-item label="关键字" prop="query">
-              <el-input v-model="queryParamsSelect.query" placeholder="请输入关键字" clearable style="width: 240px"
-                        @keyup.enter="handleSelectQuery"/>
-            </el-form-item>
-            <el-form-item label="类型" prop="channelType">
-              <el-select v-model="queryParamsSelect.channelType" placeholder="请选择类型" style="width: 250px;"
-                         default-first-option>
-                <el-option label="国标设备" :value="1"></el-option>
-                <el-option label="推流设备" :value="2"></el-option>
-                <el-option label="拉流代理" :value="3"></el-option>
-              </el-select>
-            </el-form-item>
-            <el-form-item label="在线状态" prop="online">
-              <el-select v-model="queryParamsSelect.online" placeholder="请选择在线状态" style="width: 250px;"
-                         default-first-option>
-                <el-option label="在线" value="true"></el-option>
-                <el-option label="离线" value="false"></el-option>
-              </el-select>
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" icon="Search" @click="handleSelectQuery">搜索</el-button>
-              <el-button icon="Refresh" @click="resetSelectQuery">重置</el-button>
-            </el-form-item>
-          </el-form>
-
-          <el-row :gutter="10" class="mb8">
-            <el-col :span="1.5">
-              <el-button type="primary"
-                         plain
-                         icon="Select"
-                         :disabled="multipleSelect"
-                         @click="handleSelect">
-                选择
-              </el-button>
-            </el-col>
-            <right-toolbar v-model:showSearch="showSearchSelect" @queryTable="getChannelList"></right-toolbar>
-          </el-row>
-
-          <el-table v-loading="loadingSelect" :data="channelSelectList" @selection-change="handleSelectionSelectChange">
-            <el-table-column type="selection" width="55" align="center"/>
-            <el-table-column prop="gbName" label="名称" align="center"/>
-            <el-table-column prop="gbDeviceId" label="编号" align="center"/>
-            <el-table-column prop="gbManufacturer" label="厂家" align="center"/>
-            <el-table-column prop="gbAddress" label="位置" align="center"/>
-            <el-table-column label="类型" align="center">
-              <template #default="scope">
-                <div slot="reference" class="name-wrapper">
-                  <el-tag effect="plain" v-if="scope.row.dataType === 1">国标设备</el-tag>
-                  <el-tag effect="plain" type="success" v-else-if="scope.row.dataType === 2">推流设备</el-tag>
-                  <el-tag effect="plain" type="warning" v-else-if="scope.row.dataType === 3">拉流代理</el-tag>
-                </div>
-              </template>
-            </el-table-column>
-            <el-table-column label="状态" align="center">
-              <template #default="scope">
-                <div slot="reference" class="name-wrapper">
-                  <el-tag v-if="scope.row.gbStatus === 'ON'">在线</el-tag>
-                  <el-tag type="info" v-if="scope.row.gbStatus !== 'ON'">离线</el-tag>
-                </div>
-              </template>
-            </el-table-column>
-          </el-table>
-
-          <pagination
-              v-show="totalSelect > 0"
-              :total="totalSelect"
-              v-model:page="queryParamsSelect.pageNum"
-              v-model:limit="queryParamsSelect.pageSize"
-              @pagination="getChannelList"
-          />
-        </el-dialog>
-      </el-col>
-    </el-row>
+      </el-dialog>
+    </div>
 
     <el-dialog title="修改地址" v-model="showMap" width="800px" append-to-body>
-      <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="formMap.gbAddress"/>
+      <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="formMap.gbAddress" />
     </el-dialog>
   </div>
 </template>
 
 <script setup name="Group">
-import {queryForTree} from "../../../api/wvp/group.js";
+import { clacPXToVW } from "@/utils/wvpCompat";
+import CollapseToggle from "@/components/CollapseToggle.vue";
+import { checkPermi } from "@/utils/wvpPermission";
+import { queryForTree } from "../../../api/wvp/group.js";
 import MapGaoDe from "@/components/MapGaoDe/index.vue";
 import {
   addChannelToGroup,
   deleteChannelToGroup,
   queryListByCivilCode,
-  queryListByParentId, updateChannelData
+  queryListByParentId,
+  updateChannelData
 } from "../../../api/wvp/channel.js";
 
-const {proxy} = getCurrentInstance();
+const { proxy } = getCurrentInstance();
 
 const groupName = ref('')
 const groupOptions = ref([]);
@@ -213,6 +212,27 @@ const addDisabled = ref(true);
 const open = ref(false);
 const title = ref("");
 const dataType = ref('group');
+const treeCollapsed = ref(false)
+const leftTreeRef = ref()
+const searchData = ref([
+  { label: '关键字', value: 'query', type: 'text', default: '' },
+  { label: '类型', value: 'channelType', type: 'select', option: [
+    { label: '国标设备', value: 1 },
+    { label: '推流设备', value: 2 },
+    { label: '拉流代理', value: 3 }
+  ], default: '' },
+  { label: '在线状态', value: 'online', type: 'select', option: [
+    { label: '在线', value: 'true' },
+    { label: '离线', value: 'false' }
+  ], default: '' }
+])
+const toolbarButtonList = computed(() => {
+  const list = []
+  if (checkPermi(['wvp:channel:deleteGroupChannel'])) {
+    list.push({ name: '删除', svg: 'table_del', clickFn: handleToolbarDelete })
+  }
+  return list
+})
 
 const channelSelectList = ref([]);
 const loadingSelect = ref(true);
@@ -243,7 +263,7 @@ const data = reactive({
   }
 });
 
-const {queryParams, form, rules, queryParamsSelect} = toRefs(data);
+const { queryParams, form, rules, queryParamsSelect } = toRefs(data);
 
 /**
  * map
@@ -282,7 +302,6 @@ const updateDialogMap = (value) => {
   })
 }
 
-
 function getList() {
   loading.value = true
   queryListByParentId(queryParams.value).then((res) => {
@@ -292,10 +311,17 @@ function getList() {
   })
 }
 
-/** 根据名称筛选树 */
 watch(groupName, val => {
-  proxy.$refs["groupTreeRef"].filter(val);
+  leftTreeRef.value?.filter(val);
 });
+
+function searchResetFn(val) {
+  queryParams.value.pageNum = 1;
+  queryParams.value.query = val?.query || undefined;
+  queryParams.value.channelType = val?.channelType === '' || val?.channelType === undefined ? undefined : val.channelType;
+  queryParams.value.online = val?.online || undefined;
+  getList();
+}
 
 /** 搜索按钮操作 */
 function handleQuery() {
@@ -311,12 +337,20 @@ function resetQuery() {
 
 /** 选择条数  */
 function handleSelectionChange(selection) {
-  if(queryParams.value.groupDeviceId === null){
+  if (queryParams.value.groupDeviceId === null) {
     multiple.value = true
-  }else {
+  } else {
     multiple.value = !selection.length;
   }
   selectionList.value = selection
+}
+
+function handleToolbarDelete() {
+  if (!selectionList.value.length) {
+    proxy.$modal.msgWarning('请选择要删除的数据')
+    return
+  }
+  handleDelete()
 }
 
 function handleDelete() {
@@ -325,7 +359,7 @@ function handleDelete() {
     channels.push(selectionList.value[i].gbId)
   }
   proxy.$modal.confirm('是否删除选择的数据？').then(function () {
-    return deleteChannelToGroup({channelIds: channels});
+    return deleteChannelToGroup({ channelIds: channels });
   }).then(() => {
     getList()
     proxy.$modal.msgSuccess("删除成功");
@@ -341,7 +375,7 @@ const filterNode = (value, data) => {
 
 /** 节点单击事件 */
 function handleNodeClick(data) {
-  if (data.deviceId != null || data.deviceId != undefined)  {
+  if (data.deviceId != null || data.deviceId != undefined) {
     queryParams.value.groupDeviceId = data.deviceId;
     addDisabled.value = false
   } else {
@@ -438,6 +472,106 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.channel-panel {
+  padding: 20px;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  background: #fff;
+  align-items: flex-start;
+  min-height: 0;
+}
 
+.police_aside_use {
+  width: 300px;
+  padding-right: 20px;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+
+  .treeTitle {
+    color: var(--el-color-primary);
+    padding-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 4px;
+
+    &::before {
+      content: '';
+      width: 3px;
+      height: 18px;
+      background-color: var(--el-color-primary);
+    }
+  }
+
+  .tree_search_content {
+    justify-content: center;
+    padding-bottom: 10px;
+
+    :deep(.el-input__wrapper) {
+      background: #fff;
+      box-shadow: none;
+      border: 1px solid #dcdfe6;
+      border-radius: 4px;
+    }
+  }
+
+  :deep(.el-tree-node__content) {
+    --el-tree-node-hover-bg-color: var(--el-menu-hover-bg-color);
+    height: 38px;
+    font-size: 14px;
+    color: #333;
+
+    .custom-tree-node {
+      width: 100%;
+      justify-content: space-between;
+      padding-right: 4px;
+    }
+  }
+
+  :deep(.el-tree) {
+    height: calc(100% - 80px);
+    overflow: auto;
+  }
+}
+
+.custom-tree-node {
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+
+  .tree-node-main {
+    flex: 1;
+    min-width: 0;
+    gap: 4px;
+    overflow: hidden;
+  }
+
+  .tree-node-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tree-icon {
+    flex-shrink: 0;
+    font-size: 14px;
+    color: var(--el-color-primary);
+  }
+}
+
+.tableTenItU {
+  flex: 1;
+  height: 100%;
+  overflow: auto;
+  min-width: 0;
+
+  :deep(.header_tenant_cell) {
+    background: #F8F8F9;
+  }
+}
 </style>

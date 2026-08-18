@@ -120,12 +120,13 @@ import {
 } from '@element-plus/icons-vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
 import SidebarMenuNode from './SidebarMenuNode.vue'
-import wvpHaikangIcon from '@/assets/wvp/icons/protocol/haikang.svg'
-import wvpRtspIcon from '@/assets/wvp/icons/protocol/rtsp.svg'
-import wvpOnvifIcon from '@/assets/wvp/icons/protocol/onvif.svg'
-import wvpGbIcon from '@/assets/wvp/icons/protocol/gb.svg'
-import wvpDahuaIcon from '@/assets/wvp/icons/protocol/dahua.svg'
-import vlsIcon from '@/assets/wvp/icons/protocol/vls.svg'
+import deviceManagementIcon from '@/assets/img/svg/device-management.svg'
+import vlstreamIcon from '@/assets/img/svg/vlstream.svg'
+import isupIcon from '@/assets/img/svg/isup.svg'
+import rtspIcon from '@/assets/img/svg/rtsp.svg'
+import onvifIcon from '@/assets/img/svg/onvif.svg'
+import gbIcon from '@/assets/img/svg/gb.svg'
+import dahuaIcon from '@/assets/img/svg/dahua.svg'
 
 const route = useRoute()
 const router = useRouter()
@@ -406,13 +407,13 @@ const menuRoutesMap = {
       path: 'device-management-menu',
       meta: { title: '设备管理', icon: '设备管理' },
       children: [
-        { path: '/vlstream/device', meta: { title: 'VLStream', icon: 'wvp-vls' } },
-        { path: '/isup/isupDevice', meta: { title: 'ISUP', icon: 'wvp-haikang' } },
-        { path: '/rtsp/rtspDevice', meta: { title: 'RTSP', icon: 'wvp-rtsp' } },
-        { path: '/onvif/cameraManage', meta: { title: 'ONVIF', icon: 'wvp-onvif' } },
+        { path: '/vlstream/device', meta: { title: 'VLStream协议', icon: 'wvp-vls' } },
+        { path: '/isup/isupDevice', meta: { title: 'ISUP协议', icon: 'wvp-haikang' } },
+        { path: '/rtsp/rtspDevice', meta: { title: 'RTSP协议', icon: 'wvp-rtsp' } },
+        { path: '/onvif/cameraManage', meta: { title: 'ONVIF协议', icon: 'wvp-onvif' } },
         {
           path: 'gb-protocol-menu',
-          meta: { title: '国标', icon: 'wvp-gb' },
+          meta: { title: '国际协议', icon: 'wvp-gb' },
           children: [
             { path: '/gbmanger/device', meta: { title: '国标设备', icon: '设备管理' } },
             { path: '/gbmanger/cloudRecord', meta: { title: '云端录像', icon: '视频回放' } },
@@ -427,7 +428,7 @@ const menuRoutesMap = {
             { path: '/gbmanger/wvpLive', meta: { title: '分屏监控', icon: '视频广场' } }
           ]
         },
-        { path: '/dahua/dahuaDevice', meta: { title: '大华', icon: 'wvp-dahua' } },
+        { path: '/dahua/dahuaDevice', meta: { title: '大华协议', icon: 'wvp-dahua' } },
         { path: '/device-management', meta: { title: '自定义', icon: '设备管理' } }
       ]
     },
@@ -845,7 +846,7 @@ onUnmounted(() => {
 const getMenuIcon = (iconName) => {
   const iconMap = {
     '视频广场': VideoCamera,
-    '设备管理': Monitor,
+    '设备管理': deviceManagementIcon,
     '摄像机设置': Setting,
     '事件': Bell,
     '算法管理': Setting,
@@ -875,12 +876,12 @@ const getMenuIcon = (iconName) => {
     '数据权限': Key,
     '接口权限': Lock,
     '固件管理': UploadFilled,
-    'wvp-haikang': wvpHaikangIcon,
-    'wvp-rtsp': wvpRtspIcon,
-    'wvp-onvif': wvpOnvifIcon,
-    'wvp-gb': wvpGbIcon,
-    'wvp-dahua': wvpDahuaIcon,
-    'wvp-vls': vlsIcon
+    'wvp-haikang': isupIcon,
+    'wvp-rtsp': rtspIcon,
+    'wvp-onvif': onvifIcon,
+    'wvp-gb': gbIcon,
+    'wvp-dahua': dahuaIcon,
+    'wvp-vls': vlstreamIcon
   }
   return iconMap[iconName] || Setting
 }
@@ -1148,24 +1149,29 @@ const handleUserTokenUpdated = async (event) => {
   color: var(--el-color-primary) !important;
 }
 
+.layout-sidebar :deep(.el-menu-item.is-active .menu-svg-icon) {
+  background-color: var(--el-color-primary) !important;
+}
+
 .layout-sidebar :deep(.el-menu-item.is-active:hover) {
   background-color: var(--el-color-primary-hb) !important;
   color: var(--el-color-primary) !important;
 }
 
-.layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title) {
-  background-color: var(--el-color-primary-hb) !important;
-  color: var(--el-color-primary) !important;
+.layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title),
+.layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title .el-icon),
+.layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title .menu-icon-box) {
+  background-color: transparent !important;
+  color: rgba(0, 0, 0, 0.65) !important;
 }
 
 .layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title:hover) {
-  background-color: var(--el-color-primary-hb) !important;
-  color: var(--el-color-primary) !important;
+  background-color: #ffffff !important;
+  color: rgba(0, 0, 0, 0.65) !important;
 }
 
-.layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title .el-icon),
-.layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title .menu-icon-box) {
-  color: var(--el-color-primary) !important;
+.layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title .menu-svg-icon) {
+  background-color: currentColor !important;
 }
 
 .layout-sidebar :deep(.el-sub-menu__icon-arrow) {

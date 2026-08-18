@@ -1,10 +1,14 @@
 <template>
-  <div class="app-container">
-    <div class="toolbar-with-search">
-      <div class="toolbar-left">
-        <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd" v-hasPermi="['wvp:proxy:add']">
-          <el-icon class="BtnImg"><Plus /></el-icon>新增
-        </button>
+  <div class="tenant_Page draHeaPB">
+    <div class="tenant_content">
+      <div class="tableTenBox">
+    <div class="depNameBox_out flexRowAC">
+      <div class="depNameBox flexRowAC">
+        <div class="exportBtnBox flexRowAC">
+          <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd" v-hasPermi="['wvp:proxy:add']">
+            <el-icon class="BtnImg"><Plus /></el-icon>新增
+          </button>
+        </div>
       </div>
       <div class="searchHeight_out flexRowAC">
         <search-height-box
@@ -581,6 +585,8 @@
         </el-tab-pane>
       </el-tabs>
     </el-dialog>
+      </div>
+    </div>
   </div>
 </template>
 
