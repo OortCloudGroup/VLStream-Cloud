@@ -96,7 +96,7 @@
     </div>
 
     <!-- 添加或修改isup设备对话框 -->
-    <el-dialog :title="title" v-model="open" width="500px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="30%" append-to-body>
       <el-form ref="lsupDeviceRef" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="设备ID" prop="deviceId">
           <el-input v-model="form.deviceId" disabled placeholder="请输入设备ID"/>
@@ -151,13 +151,13 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button type="primary" @click="submitForm" class="common_btn">确 定</el-button>
+          <el-button @click="cancel" class="common_btn">取 消</el-button>
         </div>
       </template>
     </el-dialog>
 
-    <el-dialog title="播放视频" v-model="openPlay" width="835px" append-to-body>
+    <el-dialog title="播放视频" v-model="openPlay" width="45%" append-to-body>
       <div>
         <Hikvision :rtsp="videoUrl" v-if="openPlay && (playType === '1' || playType === '3' || playType === '4') "/>
 
@@ -336,11 +336,11 @@
       </div>
     </el-dialog>
 
-    <el-dialog title="修改地址" v-model="showMap" width="800px" append-to-body>
+    <el-dialog title="修改地址" v-model="showMap" width="45%" append-to-body>
       <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
     </el-dialog>
 
-    <el-dialog title="SDK播放" v-model="openPlaySDK" width="835px" append-to-body @close="closeSDK">
+    <el-dialog title="SDK播放" v-model="openPlaySDK" width="45%" append-to-body @close="closeSDK">
       <div>
         <Hikvision :rtsp="videoUrl"/>
       </div>

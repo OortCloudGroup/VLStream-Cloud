@@ -87,7 +87,7 @@
   <el-dialog
     v-model="previewVisible"
     :title="`${currentDevice?.deviceName || currentDevice?.deviceId || ''} 实时预览`"
-    width="900px"
+    width="50%"
     destroy-on-close
     @closed="releasePreview"
   >
@@ -108,7 +108,7 @@
     </div>
   </el-dialog>
 
-  <el-dialog v-model="detailVisible" title="设备详情" width="780px" destroy-on-close>
+  <el-dialog v-model="detailVisible" title="设备详情" width="45%" destroy-on-close>
     <div v-loading="detailLoading">
       <el-descriptions v-if="detail?.device" :column="2" border>
         <el-descriptions-item label="设备名称">{{ detail.device.deviceName || '-' }}</el-descriptions-item>

@@ -102,7 +102,7 @@
     </div>
 
     <!-- 添加或修改rtsp设备对话框 -->
-    <el-dialog :title="title" v-model="open" width="500px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="30%" append-to-body>
       <el-form ref="RtspDeviceRef" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="ip" prop="ip">
           <el-input v-model="form.ip" placeholder="请输入ip" maxlength="50" show-word-limit/>
@@ -151,14 +151,14 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button type="primary" @click="submitForm" class="common_btn">确 定</el-button>
+          <el-button @click="cancel" class="common_btn">取 消</el-button>
         </div>
       </template>
     </el-dialog>
 
     <!-- 播放弹窗 对话框 -->
-    <el-dialog :title="title" v-model="showPaly" width="835px">
+    <el-dialog :title="title" v-model="showPaly" width="45%">
       <div>
         <Hikvision :rtsp="rtspURL" v-if="showPaly && (playType === '1' || playType === '3') "/>
 
@@ -237,7 +237,7 @@
       </div>
     </el-dialog>
 
-    <el-dialog title="选择时间" v-model="showAlarmClock" width="505px" append-to-body>
+    <el-dialog title="选择时间" v-model="showAlarmClock" width="30%" append-to-body>
       <el-form :model="alarmClockOptions" :rules="rulesAlarm" ref="alarmClockFormRef" label-width="100px">
         <el-form-item label="开始时间" prop="startTime">
           <el-date-picker
@@ -259,13 +259,13 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitFormAlarmClock">确 定</el-button>
-          <el-button @click="showAlarmClock = false">取 消</el-button>
+          <el-button type="primary" @click="submitFormAlarmClock" class="common_btn">确 定</el-button>
+          <el-button @click="showAlarmClock = false" class="common_btn">取 消</el-button>
         </div>
       </template>
     </el-dialog>
 
-    <el-dialog title="选择ai模式" v-model="showAI" width="505px">
+    <el-dialog title="选择ai模式" v-model="showAI" width="30%">
       <div>
         <el-button type="primary" style="width: 100%;" @click="handlDetection('detection')">目标检测</el-button>
       </div>
@@ -274,7 +274,7 @@
       </div>
     </el-dialog>
 
-    <el-dialog title="目标检测算法" v-model="showAIPaly" width="835px" @close="closeAI">
+    <el-dialog title="目标检测算法" v-model="showAIPaly" width="45%" @close="closeAI">
       <div style="width: 800px; height: 600px;">
         <el-row>
           <el-col :span="24">
@@ -286,7 +286,7 @@
       </div>
     </el-dialog>
 
-    <el-dialog title="修改地址" v-model="showMap" width="800px" append-to-body>
+    <el-dialog title="修改地址" v-model="showMap" width="45%" append-to-body>
       <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
     </el-dialog>
 

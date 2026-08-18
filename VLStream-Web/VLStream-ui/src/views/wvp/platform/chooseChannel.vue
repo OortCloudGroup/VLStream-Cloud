@@ -70,7 +70,7 @@
           @pagination="getList"
       />
 
-      <el-dialog :title="title" v-model="open" width="800px" append-to-body>
+      <el-dialog :title="title" v-model="open" width="45%" append-to-body>
         <div class="searchHeight_out flexRowAC" style="margin-bottom: 12px; justify-content: flex-end;">
           <search-height-box keyword="name" placeholder="请输入设备名称等关键词" :data="deviceSearchData" @handle="deviceSearchResetFn" />
           <export-excel-pdf />

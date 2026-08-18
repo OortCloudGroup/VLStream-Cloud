@@ -107,7 +107,7 @@
         @pagination="getList"
     />
 
-    <el-dialog :title="title" v-model="open" width="1000px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="60%" append-to-body>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="130px">
         <el-row>
           <el-col :span="12">
@@ -302,8 +302,8 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button type="primary" @click="submitForm" class="common_btn">确 定</el-button>
+          <el-button @click="cancel" class="common_btn">取 消</el-button>
         </div>
       </template>
     </el-dialog>
