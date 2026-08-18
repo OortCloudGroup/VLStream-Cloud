@@ -22,8 +22,8 @@
                     />
                   </div>
                   <oort-svg-icon
-                      width="20"
-                      height="20"
+                      width="14"
+                      height="14"
                       name="setting"
                       style="cursor:pointer"
                       @click="handleHeaderSettingsClick"
@@ -44,8 +44,8 @@
                     />
                   </div>
                   <oort-svg-icon
-                      width="20"
-                      height="20"
+                      width="14"
+                      height="14"
                       name="setting"
                       style="cursor:pointer"
                       @click="handleHeaderSettingsClick"
@@ -66,8 +66,8 @@
                     />
                   </div>
                   <oort-svg-icon
-                    width="20"
-                    height="20"
+                    width="14"
+                    height="14"
                     name="setting"
                     style="cursor:pointer"
                     @click="handleHeaderSettingsClick"
@@ -111,8 +111,8 @@
                       />
                     </div>
                     <oort-svg-icon
-                        width="20"
-                        height="20"
+                        width="14"
+                        height="14"
                         name="setting"
                         style="cursor:pointer"
                         @click="handleSettingsClick(data)"

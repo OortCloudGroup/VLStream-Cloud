@@ -45,8 +45,8 @@
                   class="tree-node-actions flexRowAC"
                   @click.stop
                 >
-                  <oort-svg-icon v-if="data.id" width="20" height="20" name="delete" color="red" class="tree-action-icon" @click="handleToolbarDelete(data)" />
-                  <oort-svg-icon width="20" height="20" name="add" class="tree-action-icon" @click="handleToolbarAdd(data)" />
+                  <oort-svg-icon v-if="data.id" width="14" height="14" name="delete" color="red" class="tree-action-icon" @click="handleToolbarDelete(data)" />
+                  <oort-svg-icon width="14" height="14" name="add" class="tree-action-icon" @click="handleToolbarAdd(data)" />
                 </div>
               </div>
             </template>

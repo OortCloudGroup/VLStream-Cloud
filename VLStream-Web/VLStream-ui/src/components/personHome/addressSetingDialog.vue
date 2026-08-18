@@ -238,8 +238,8 @@
       <div v-if="showAddressBookSettings" class="saveTi flexRowAC" @click="goToMyAddress">
         <oort-svg-icon
           name="setting"
-          width="20"
-          height="20"
+          width="14"
+          height="14"
         />
         <span>设置我的地址本</span>
       </div>

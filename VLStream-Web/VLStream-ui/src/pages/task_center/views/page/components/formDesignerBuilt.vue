@@ -15,12 +15,12 @@
       <el-form-item label="表单类型" prop="formType" class="">
         <div class="messModeBox flexRowAC">
           <div class="messModeItem flexRowAC" :class="{act:form.formType ===0}" @click="form.formType=0">
-            <oort-svg-icon class="messModeItem_img" name="select" width="20" height="20" />
+            <oort-svg-icon class="messModeItem_img" name="select" width="14" height="14" />
             <img class="messModeItem_dot" src="@/assets/img/processui/formType1.png" />
             流式布局
           </div>
           <div class="messModeItem flexRowAC" :class="{act:form.formType===1}" @click="form.formType=1">
-            <oort-svg-icon class="messModeItem_img" name="select" width="20" height="20" />
+            <oort-svg-icon class="messModeItem_img" name="select" width="14" height="14" />
             <img class="messModeItem_dot" src="@/assets/img/processui/formType2.png" />
             签批卡片式布局
           </div>

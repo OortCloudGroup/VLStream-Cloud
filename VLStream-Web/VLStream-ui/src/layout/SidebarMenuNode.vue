@@ -67,8 +67,8 @@ const svgMaskStyle = (src) => ({
 
 <style scoped>
 .menu-svg-icon {
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
   display: inline-block;
   background-color: currentColor;
@@ -85,15 +85,15 @@ const svgMaskStyle = (src) => ({
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
   color: inherit;
 }
 
 .menu-icon-box .el-icon {
-  width: 20px;
-  height: 20px;
-  font-size: 18px;
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
 }
 
 .menu-title-text {

@@ -61,16 +61,16 @@
                   @click.stop
                 >
                   <oort-svg-icon
-                    width="20"
-                    height="20"
+                    width="14"
+                    height="14"
                     name="delete"
                     color="red"
                     class="tree-action-icon"
                     @click="handleDeleteDevice(data)"
                   />
                   <oort-svg-icon
-                    width="20"
-                    height="20"
+                    width="14"
+                    height="14"
                     name="add"
                     class="tree-action-icon"
                     @click="handleAddDevice({ command: 'child', data })"
@@ -163,16 +163,16 @@
                 <template #default="scope">
                   <div class="operateAppBox flexRowAC" @click.stop>
                     <div class="new_table_svg_group" @click="handlePlay(scope.row)">
-                      <oort-svg-icon width="20" height="20" name="play" class="new_table_svg_group_svg" />
+                      <oort-svg-icon width="14" height="14" name="play" class="new_table_svg_group_svg" />
                       <span>播放</span>
                     </div>
                     <div class="new_table_svg_group" @click="handleConfig(scope.row)">
-                      <oort-svg-icon width="20" height="20" name="setting" class="new_table_svg_group_svg" />
+                      <oort-svg-icon width="14" height="14" name="setting" class="new_table_svg_group_svg" />
                       <span>配置录像</span>
                     </div>
                     <el-dropdown @command="handleMoreActions" trigger="click">
                       <div class="new_table_svg_group">
-                        <oort-svg-icon width="20" height="20" name="table_more" class="new_table_svg_group_svg" />
+                        <oort-svg-icon width="14" height="14" name="table_more" class="new_table_svg_group_svg" />
                         <span>更多</span>
                       </div>
                       <template #dropdown>

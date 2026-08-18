@@ -494,12 +494,12 @@
             <template #default="{ row }">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="viewDetails(row)">
-                  <oort-svg-icon width="20" height="20" name="detail_icon" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="detail_icon" class="new_table_svg_group_svg" />
                   <span>详情</span>
                 </div>
                 <el-dropdown trigger="click">
                   <div class="new_table_svg_group">
-                    <oort-svg-icon width="20" height="20" name="table_more" class="new_table_svg_group_svg" />
+                    <oort-svg-icon width="14" height="14" name="table_more" class="new_table_svg_group_svg" />
                     <span>更多</span>
                   </div>
                   <template #dropdown>

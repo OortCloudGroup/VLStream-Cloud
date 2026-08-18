@@ -31,7 +31,7 @@
           class="icon_sel"
           :class="{act:visible}"
           name="searchHeight"
-          @click.stop="isfocus=false" width="20" height="20" />
+          @click.stop="isfocus=false" width="14" height="14" />
         <el-icon class="icon_ser" @click="searchFn">
           <Search />
         </el-icon>
@@ -363,8 +363,8 @@ watch(() => props.data, (val) => {
   .icon_sel {
     cursor: pointer;
     fill: #999 !important;
-    width: 24px;
-    height: 24px;
+    width: 14px;
+    height: 14px;
     position: absolute;
     right: 62px;
     top: 6px;

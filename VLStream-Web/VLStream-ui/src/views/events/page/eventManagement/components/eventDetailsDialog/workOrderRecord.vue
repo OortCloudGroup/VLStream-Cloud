@@ -26,22 +26,22 @@
               <div class="icons">
                 <oort-svg-icon
                   :color="currentView==='grid'?'':'#999'"
-                  width="20"
-                  height="20"
+                  width="14"
+                  height="14"
                   name="list"
                   @click="currentView='grid'"
                 />
                 <oort-svg-icon
                   :color="currentView==='flow'?'':'#999'"
-                  width="20"
-                  height="20"
+                  width="14"
+                  height="14"
                   name="vertical"
                   @click="currentView='flow'"
                 />
                 <oort-svg-icon
                   :color="currentView==='list'?'':'#999'"
-                  width="20"
-                  height="20"
+                  width="14"
+                  height="14"
                   name="flow_chart"
                   @click="currentView='list'"
                 />

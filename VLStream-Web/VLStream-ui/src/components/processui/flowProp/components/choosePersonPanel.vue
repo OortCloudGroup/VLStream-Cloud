@@ -104,7 +104,7 @@
             <div class="flexRowAC universeBox">
               <span class="sp">{{ JJ ? '从最高上级向下选择' : '从直属上级向上选择' }}</span>
               <el-button class="flexRowAC universeItem" @click="JJ=!JJ">
-                <oort-svg-icon width="20" height="20" name="universe" />
+                <oort-svg-icon width="14" height="14" name="universe" />
                 {{ JJ ? '切为直属上级向上' : '切为最高上级向下' }}
               </el-button>
             </div>
@@ -117,7 +117,7 @@
                 :label="item !== 1 ? '最高上级减' + i + '级' : '最高上级'"
               >
                 {{ item !== 1 ? '最高上级减' + i + '级' : '最高上级' }}
-                <oort-svg-icon class="optsvg" width="20" height="20" name="consent" />
+                <oort-svg-icon class="optsvg" width="14" height="14" name="consent" />
               </el-option>
             </div>
             <div v-else class="optBox">
@@ -129,7 +129,7 @@
                 :label="item !== 1 ? '直属上级加' + i + '级' : '直属上级'"
               >
                 {{ item !== 1 ? '直属上级加' + i + '级' : '直属上级' }}
-                <oort-svg-icon class="optsvg" width="20" height="20" name="consent" />
+                <oort-svg-icon class="optsvg" width="14" height="14" name="consent" />
               </el-option>
             </div>
           </el-select>
@@ -140,7 +140,7 @@
             <div class="flexRowAC universeBox">
               <span class="sp">{{ JP ? '从最高上级向下选择' : '从直属上级向上选择' }}</span>
               <el-button class="flexRowAC universeItem" @click="JP=!JP">
-                <oort-svg-icon width="20" height="20" name="universe" />
+                <oort-svg-icon width="14" height="14" name="universe" />
                 {{ JP ? '切为直属上级向上' : '切为最高上级向下' }}
               </el-button>
             </div>
@@ -153,7 +153,7 @@
                 :label="item !== 1 ? `最高上级减${i}级` : '最高上级'"
               >
                 {{ item !== 1 ? `最高上级减${i}级` : '最高上级' }}
-                <oort-svg-icon class="optsvg" width="20" height="20" name="consent" />
+                <oort-svg-icon class="optsvg" width="14" height="14" name="consent" />
               </el-option>
             </div>
             <div v-else class="optBox">
@@ -165,7 +165,7 @@
                 :label="item !== 1 ? `直属上级加${i}级` : '直属上级'"
               >
                 {{ item !== 1 ? `直属上级加${i}级` : '直属上级' }}
-                <oort-svg-icon class="optsvg" width="20" height="20" name="consent" />
+                <oort-svg-icon class="optsvg" width="14" height="14" name="consent" />
               </el-option>
             </div>
           </el-select>

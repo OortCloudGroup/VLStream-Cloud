@@ -6,8 +6,8 @@
         <div class="line" />
         <div class="lineT flexRowAC" @click="codeAct=!codeAct">
           {{ codeAct === true ? '收起' : '展开' }}
-          <oort-svg-icon v-if="codeAct" class="elmenuIconImg" name="shrink" width="20" height="20" color="#999" />
-          <oort-svg-icon v-else class="elmenuIconImg" name="open" width="20" height="20" />
+          <oort-svg-icon v-if="codeAct" class="elmenuIconImg" name="shrink" width="14" height="14" color="#999" />
+          <oort-svg-icon v-else class="elmenuIconImg" name="open" width="14" height="14" />
         </div>
       </div>
       <template v-if="codeAct">
@@ -113,8 +113,8 @@
           <div class="line" />
           <div class="lineT flexRowAC" @click="codeAct_2=!codeAct_2">
             {{ codeAct_2 === true ? '收起' : '展开' }}
-            <oort-svg-icon v-if="codeAct_2" class="elmenuIconImg" name="shrink" width="20" height="20" color="#999" />
-            <oort-svg-icon v-else class="elmenuIconImg" name="open" width="20" height="20" />
+            <oort-svg-icon v-if="codeAct_2" class="elmenuIconImg" name="shrink" width="14" height="14" color="#999" />
+            <oort-svg-icon v-else class="elmenuIconImg" name="open" width="14" height="14" />
           </div>
         </div>
         <template v-if="codeAct_2">

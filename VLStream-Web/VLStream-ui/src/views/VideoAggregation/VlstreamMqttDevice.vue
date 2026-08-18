@@ -53,7 +53,7 @@
           <template #default="{ row }">
             <div class="operateAppBox flexRowAC" @click.stop>
               <div class="new_table_svg_group" @click="openDetail(row)">
-                <oort-svg-icon width="20" height="20" name="detail_icon" class="new_table_svg_group_svg" />
+                <oort-svg-icon width="14" height="14" name="detail_icon" class="new_table_svg_group_svg" />
                 <span>详情</span>
               </div>
               <div
@@ -61,7 +61,7 @@
                 :class="{ 'is-disabled': !row.online }"
                 @click="row.online && openPreview(row)"
               >
-                <oort-svg-icon width="20" height="20" name="play" class="new_table_svg_group_svg" />
+                <oort-svg-icon width="14" height="14" name="play" class="new_table_svg_group_svg" />
                 <span>预览</span>
               </div>
             </div>

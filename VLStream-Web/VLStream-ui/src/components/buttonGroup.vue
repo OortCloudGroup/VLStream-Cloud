@@ -11,17 +11,17 @@
     <!-- eslint-disable-next-line vue/no-v-for-template-key -->
     <template v-for="(item, index) in buttonList" :key="index">
       <div class="oort_button_group_item">
-        <oort-svg-icon width="20" height="20" :name="item.svg" @click="item.clickFn" />
+        <oort-svg-icon width="14" height="14" :name="item.svg" @click="item.clickFn" />
         <span @click="item.clickFn">{{ item.name }}</span>
         <el-dropdown v-if="item.children && item.children.length > 0">
           <div class="new_table_svg_group new_item_more">
-            <oort-svg-icon width="20" height="20" name="more" class="new_table_svg_group_svg" />
+            <oort-svg-icon width="14" height="14" name="more" class="new_table_svg_group_svg" />
           </div>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item v-for="(itd, ind) in item.children" :key="ind" @click="itd.clickFn">
                 <div class="new_table_svg_group">
-                  <oort-svg-icon v-if="itd.svg" width="20" height="20" :name="itd.svg" class="new_table_svg_group_svg" />
+                  <oort-svg-icon v-if="itd.svg" width="14" height="14" :name="itd.svg" class="new_table_svg_group_svg" />
                   <span>{{ itd.name }}</span>
                 </div>
               </el-dropdown-item>

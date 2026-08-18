@@ -45,7 +45,7 @@
             <template #default="scope">
               <div class="operateBox flexRowAC">
                 <div class="new_table_svg_group" @click="handleDetail(scope.row)">
-                  <oort-svg-icon width="20" height="20" name="table_jiedan" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="table_jiedan" class="new_table_svg_group_svg" />
                   <span>接单</span>
                 </div>
               </div>

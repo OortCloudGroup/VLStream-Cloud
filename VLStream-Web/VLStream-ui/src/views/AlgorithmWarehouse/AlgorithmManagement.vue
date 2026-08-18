@@ -164,11 +164,11 @@
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="editLibraryItem(scope.row)">
-                  <oort-svg-icon width="20" height="20" name="edit_icon" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="edit_icon" class="new_table_svg_group_svg" />
                   <span>编辑</span>
                 </div>
                 <div class="new_table_svg_group" @click="toggleRepositoryStatus(scope.row)">
-                  <oort-svg-icon width="20" height="20" name="enable" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="enable" class="new_table_svg_group_svg" />
                   <span>{{ scope.row.status === 1 ? '禁用' : '启用' }}</span>
                 </div>
                 <div
@@ -178,8 +178,8 @@
                 >
                   <oort-svg-icon
                       color="red"
-                      width="20"
-                      height="20"
+                      width="14"
+                      height="14"
                       name="delete_icon"
                       class="new_table_svg_group_svg"
                   />

@@ -173,8 +173,8 @@
                 <div class="operateAppBox flexRowAC">
                   <div v-if="scope.row.status !== 1 && scope.row.mod_status === 0&&false" class="new_table_svg_group" @click="confirmAlert(scope.row, 'confirm')">
                     <oort-svg-icon
-                      width="20"
-                      height="20"
+                      width="14"
+                      height="14"
                       name="enable"
                       class="new_table_svg_group_svg"
                     />
@@ -182,13 +182,13 @@
                   </div>
                   <template v-else>
                     <div class="new_table_svg_group" @click="phoneFBackFn(scope.row)">
-                      <oort-svg-icon width="20" height="20" name="table_incoming" class="new_table_svg_group_svg" />
+                      <oort-svg-icon width="14" height="14" name="table_incoming" class="new_table_svg_group_svg" />
                       <span>反馈</span>
                     </div>
                     <div class="new_table_svg_group" @click="confirmAlert(scope.row, 'ignore')">
                       <oort-svg-icon
-                        width="20"
-                        height="20"
+                        width="14"
+                        height="14"
                         name="table_detail"
                         class="new_table_svg_group_svg"
                       />
@@ -196,8 +196,8 @@
                   </template>
                   <div v-if="scope.row.status === 2&&false" class="new_table_svg_group" @click="taskAssignment(scope.row)">
                     <oort-svg-icon
-                      width="20"
-                      height="20"
+                      width="14"
+                      height="14"
                       name="allocation"
                       class="new_table_svg_group_svg"
                     />

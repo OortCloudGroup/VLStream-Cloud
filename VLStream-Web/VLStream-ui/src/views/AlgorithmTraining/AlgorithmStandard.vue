@@ -69,23 +69,23 @@
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="handleView(scope.row)">
-                  <oort-svg-icon width="20" height="20" name="detail_icon" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="detail_icon" class="new_table_svg_group_svg" />
                   <span>标注</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleSaveDataset(scope.row)">
-                  <oort-svg-icon width="20" height="20" name="export" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="export" class="new_table_svg_group_svg" />
                   <span>生成</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleImportData(scope.row)">
-                  <oort-svg-icon width="20" height="20" name="table_incoming" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="table_incoming" class="new_table_svg_group_svg" />
                   <span>导入</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleExportData(scope.row)">
-                  <oort-svg-icon width="20" height="20" name="export" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="export" class="new_table_svg_group_svg" />
                   <span>导出</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleDeleteItem(scope.row)">
-                  <oort-svg-icon color="red" width="20" height="20" name="delete_icon" class="new_table_svg_group_svg" />
+                  <oort-svg-icon color="red" width="14" height="14" name="delete_icon" class="new_table_svg_group_svg" />
                   <span>删除</span>
                 </div>
               </div>

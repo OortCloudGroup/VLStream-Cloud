@@ -8,7 +8,7 @@
           placement="top"
         >
           <div class="new_table_svg_group">
-            <oort-svg-icon width="20" height="20" name="comp_pre" class="new_table_svg_group_svg" @click="undoHistory" />
+            <oort-svg-icon width="14" height="14" name="comp_pre" class="new_table_svg_group_svg" @click="undoHistory" />
           </div>
         </el-tooltip>
         <el-tooltip
@@ -17,7 +17,7 @@
           placement="top"
         >
           <div class="new_table_svg_group">
-            <oort-svg-icon width="20" height="20" name="comp_next" class="new_table_svg_group_svg" @click="redoHistory" />
+            <oort-svg-icon width="14" height="14" name="comp_next" class="new_table_svg_group_svg" @click="redoHistory" />
           </div>
         </el-tooltip>
 
@@ -27,7 +27,7 @@
           placement="top"
         >
           <div class="new_table_svg_group">
-            <oort-svg-icon width="20" height="20" name="comp_pc" class="new_table_svg_group_svg" @click="changeLayoutType('PC')" />
+            <oort-svg-icon width="14" height="14" name="comp_pc" class="new_table_svg_group_svg" @click="changeLayoutType('PC')" />
           </div>
         </el-tooltip>
 
@@ -37,7 +37,7 @@
           placement="top"
         >
           <div class="new_table_svg_group">
-            <oort-svg-icon width="20" height="20" name="comp_pad" class="new_table_svg_group_svg" @click="changeLayoutType('Pad')" />
+            <oort-svg-icon width="14" height="14" name="comp_pad" class="new_table_svg_group_svg" @click="changeLayoutType('Pad')" />
           </div>
         </el-tooltip>
         <el-tooltip
@@ -46,7 +46,7 @@
           placement="top"
         >
           <div class="new_table_svg_group">
-            <oort-svg-icon width="20" height="20" name="comp_phone" class="new_table_svg_group_svg" @click="changeLayoutType('H5')" />
+            <oort-svg-icon width="14" height="14" name="comp_phone" class="new_table_svg_group_svg" @click="changeLayoutType('H5')" />
           </div>
         </el-tooltip>
 
@@ -78,7 +78,7 @@
           placement="top"
         >
           <div class="new_table_svg_group">
-            <oort-svg-icon width="20" height="20" name="comp_save" class="new_table_svg_group_svg" @click="saveForm(0)" />
+            <oort-svg-icon width="14" height="14" name="comp_save" class="new_table_svg_group_svg" @click="saveForm(0)" />
           </div>
         </el-tooltip>
         <el-tooltip
@@ -87,7 +87,7 @@
           placement="top"
         >
           <div class="new_table_svg_group">
-            <oort-svg-icon width="20" height="20" name="comp_preview" class="new_table_svg_group_svg" @click="previewForm" />
+            <oort-svg-icon width="14" height="14" name="comp_preview" class="new_table_svg_group_svg" @click="previewForm" />
           </div>
         </el-tooltip>
         <el-tooltip
@@ -96,37 +96,37 @@
           placement="top"
         >
           <div class="new_table_svg_group">
-            <oort-svg-icon width="20" height="20" name="comp_delete" class="new_table_svg_group_svg" @click="clearFormWidget" />
+            <oort-svg-icon width="14" height="14" name="comp_delete" class="new_table_svg_group_svg" @click="clearFormWidget" />
           </div>
         </el-tooltip>
         <el-dropdown :teleported="false">
           <div class="new_table_svg_group">
-            <oort-svg-icon width="20" height="20" name="comp_more" class="new_table_svg_group_svg" />
+            <oort-svg-icon width="14" height="14" name="comp_more" class="new_table_svg_group_svg" />
             <span>更多</span>
           </div>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item @click="saveForm(1)">
                 <div class="new_table_svg_group">
-                  <oort-svg-icon width="20" height="20" name="comp_save" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="comp_save" class="new_table_svg_group_svg" />
                   <span>保存为组件</span>
                 </div>
               </el-dropdown-item>
               <el-dropdown-item @click="exportJson">
                 <div class="new_table_svg_group">
-                  <oort-svg-icon width="20" height="20" name="comp_preview" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="comp_preview" class="new_table_svg_group_svg" />
                   <span>查看json</span>
                 </div>
               </el-dropdown-item>
               <el-dropdown-item @click="generateSFC">
                 <div class="new_table_svg_group">
-                  <oort-svg-icon width="20" height="20" name="comp_export_vue" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="comp_export_vue" class="new_table_svg_group_svg" />
                   <span>导出Vue文件</span>
                 </div>
               </el-dropdown-item>
               <el-dropdown-item @click="exportCode">
                 <div class="new_table_svg_group">
-                  <oort-svg-icon width="20" height="20" name="comp_copy" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="comp_copy" class="new_table_svg_group_svg" />
                   <span>复制代码</span>
                 </div>
               </el-dropdown-item>

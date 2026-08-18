@@ -2,7 +2,7 @@
   <div class="add_node" :class="{'add_node_only_r':!isEdit, 'node_inactive': isFinish}">
     <el-popover v-model:visible="visible" placement="bottom" :width="clacPXToVW(528)" height="auto" :style="'min-width: ' +clacPXToVW(528)+ 'px'" trigger="click">
       <template #reference>
-        <oort-svg-icon v-if="isEdit" class="arrorBox_add" name="add_node_flow" width="20" height="20" />
+        <oort-svg-icon v-if="isEdit" class="arrorBox_add" name="add_node_flow" width="14" height="14" />
       </template>
       <div class="node_list">
         <div class="node_list_header">

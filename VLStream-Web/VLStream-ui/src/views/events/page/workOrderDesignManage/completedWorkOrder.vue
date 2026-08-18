@@ -62,11 +62,11 @@
             <template #default="scope">
               <div class="operateBox flexRowAC">
                 <div class="new_table_svg_group" @click="handleDetail(scope.row)">
-                  <oort-svg-icon width="20" height="20" name="table_record" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="table_record" class="new_table_svg_group_svg" />
                   <span>流转记录</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleCallBack(scope.row)">
-                  <oort-svg-icon width="20" height="20" name="table_withdraw" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="table_withdraw" class="new_table_svg_group_svg" />
                   <span>撤回</span>
                 </div>
               </div>

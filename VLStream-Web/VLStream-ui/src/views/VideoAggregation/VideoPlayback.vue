@@ -72,16 +72,16 @@
                   @click.stop
                 >
                   <oort-svg-icon
-                    width="20"
-                    height="20"
+                    width="14"
+                    height="14"
                     name="delete"
                     color="red"
                     class="tree-action-icon delete-icon"
                     @click="handleTreeDelete(data)"
                   />
                   <oort-svg-icon
-                    width="20"
-                    height="20"
+                    width="14"
+                    height="14"
                     name="add"
                     class="tree-action-icon add-icon"
                     @click="handleTreeAdd(data)"
@@ -152,7 +152,7 @@
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handlePlay(scope.row)">
-                    <oort-svg-icon width="20" height="20" name="play" class="new_table_svg_group_svg" />
+                    <oort-svg-icon width="14" height="14" name="play" class="new_table_svg_group_svg" />
                     <span>播放</span>
                   </div>
                 </div>

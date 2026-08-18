@@ -46,15 +46,15 @@
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="handleView(scope.row)">
-                  <oort-svg-icon width="20" height="20" name="detail_icon" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="detail_icon" class="new_table_svg_group_svg" />
                   <span>查看</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleDownloadModel(scope.row)">
-                  <oort-svg-icon width="20" height="20" name="export" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="export" class="new_table_svg_group_svg" />
                   <span>下载</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleDeleteItem(scope.row)">
-                  <oort-svg-icon color="red" width="20" height="20" name="delete_icon" class="new_table_svg_group_svg" />
+                  <oort-svg-icon color="red" width="14" height="14" name="delete_icon" class="new_table_svg_group_svg" />
                   <span>删除</span>
                 </div>
               </div>

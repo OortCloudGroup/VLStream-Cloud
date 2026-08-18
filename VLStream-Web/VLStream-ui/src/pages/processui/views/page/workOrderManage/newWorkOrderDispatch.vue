@@ -207,7 +207,7 @@
                   <CircleCloseFilled />
                 </el-icon>
                 <img v-if="item.photo" :src="item?.photo" class="avatarPho" />
-                <oort-svg-icon v-else class="avatarPho" name="dept_default" width="20" height="20" />
+                <oort-svg-icon v-else class="avatarPho" name="dept_default" width="14" height="14" />
                 <div>
                   <div>{{ item?.dept_name }}</div>
                 </div>

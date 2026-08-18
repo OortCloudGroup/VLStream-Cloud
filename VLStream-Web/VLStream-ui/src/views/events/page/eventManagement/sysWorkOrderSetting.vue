@@ -40,38 +40,38 @@
           </div>
           <el-dropdown>
             <div class="new_table_svg_group " @click.stop>
-              <oort-svg-icon width="20" height="20" name="table_more" class="new_table_svg_group_svg" />
+              <oort-svg-icon width="14" height="14" name="table_more" class="new_table_svg_group_svg" />
               <span>更多</span>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item>
                   <div class="new_table_svg_group" @click.stop="formClick(item,'1')">
-                    <oort-svg-icon width="20" height="20" name="table_detail" class="new_table_svg_group_svg" />
+                    <oort-svg-icon width="14" height="14" name="table_detail" class="new_table_svg_group_svg" />
                     <span>详情</span>
                   </div>
                 </el-dropdown-item>
                 <el-dropdown-item>
                   <div class="new_table_svg_group" @click.stop="formClick(item,'1')">
-                    <oort-svg-icon width="20" height="20" name="table_edit" class="new_table_svg_group_svg" />
+                    <oort-svg-icon width="14" height="14" name="table_edit" class="new_table_svg_group_svg" />
                     <span>编辑</span>
                   </div>
                 </el-dropdown-item>
                 <el-dropdown-item>
                   <div class="new_table_svg_group" @click.stop="formClick(item,'2')">
-                    <oort-svg-icon width="20" height="20" name="table_design" class="new_table_svg_group_svg" />
+                    <oort-svg-icon width="14" height="14" name="table_design" class="new_table_svg_group_svg" />
                     <span>表单设计</span>
                   </div>
                 </el-dropdown-item>
                 <el-dropdown-item>
                   <div class="new_table_svg_group" @click.stop="formClick(item, '3')">
-                    <oort-svg-icon width="20" height="20" name="taskCenter_btn_design" class="new_table_svg_group_svg" />
+                    <oort-svg-icon width="14" height="14" name="taskCenter_btn_design" class="new_table_svg_group_svg" />
                     <span>流程设计</span>
                   </div>
                 </el-dropdown-item>
                 <el-dropdown-item>
                   <div class="new_table_svg_group" @click.stop="delClick(item)">
-                    <oort-svg-icon width="20" height="20" name="table_del" class="new_table_svg_group_svg" />
+                    <oort-svg-icon width="14" height="14" name="table_del" class="new_table_svg_group_svg" />
                     <span>删除</span>
                   </div>
                 </el-dropdown-item>

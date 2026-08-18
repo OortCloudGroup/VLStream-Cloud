@@ -3,13 +3,13 @@
     <div v-if="copyNodeConfig.type < 99" class="node_wrap">
       <div class="node_warp_box" :class="{'error_node': !!errorInfo && isEdit}">
         <div class="node" @click="showPropDialog">
-          <oort-svg-icon v-if="copyNodeConfig.type === 0" class="node_img" name="fqr_node" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" width="20" height="20" />
-          <oort-svg-icon v-if="copyNodeConfig.type === 1" class="node_img" name="sp_node" width="20" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" height="20" />
-          <oort-svg-icon v-if="copyNodeConfig.type === 2" class="node_img" name="cs_node" width="20" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" height="20" />
-          <oort-svg-icon v-if="copyNodeConfig.type === 3" class="node_img" name="ys_node" width="20" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" height="20" />
-          <oort-svg-icon v-if="copyNodeConfig.type === 4" class="node_img" name="cfq_node" width="20" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" height="20" />
+          <oort-svg-icon v-if="copyNodeConfig.type === 0" class="node_img" name="fqr_node" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" width="14" height="14" />
+          <oort-svg-icon v-if="copyNodeConfig.type === 1" class="node_img" name="sp_node" width="14" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" height="14" />
+          <oort-svg-icon v-if="copyNodeConfig.type === 2" class="node_img" name="cs_node" width="14" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" height="14" />
+          <oort-svg-icon v-if="copyNodeConfig.type === 3" class="node_img" name="ys_node" width="14" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" height="14" />
+          <oort-svg-icon v-if="copyNodeConfig.type === 4" class="node_img" name="cfq_node" width="14" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" height="14" />
           <!--通知节点：工单有,流程无-->
-          <oort-svg-icon v-if="copyNodeConfig.type === 5" class="node_img" name="sp_node" width="20" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" height="20" />
+          <oort-svg-icon v-if="copyNodeConfig.type === 5" class="node_img" name="sp_node" width="14" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" height="14" />
           <!-- <img v-if="nodeConfig.type === 0" src="@/assets/img/processui/flownode/fqr.png" />
           <img v-if="nodeConfig.type === 1" src="@/assets/img/processui/flownode/spr.png" />
           <img v-if="nodeConfig.type === 2" src="@/assets/img/processui/flownode/csr.png" />
@@ -37,7 +37,7 @@
             <div class="branch_arrow" />
             <div class="node" @click="showPropDialog(item, index)">
               <!-- <img src="@/assets/img/processui/flownode/tjfz.png" /> -->
-              <oort-svg-icon class="node_img" name="tj_node" width="20" :color="isTJFinish(item.id)?'var(--node-main-color)':'var(--el-color-primary)'" height="20" />
+              <oort-svg-icon class="node_img" name="tj_node" width="14" :color="isTJFinish(item.id)?'var(--node-main-color)':'var(--el-color-primary)'" height="14" />
               <span>{{ item.nodeName }}</span>
               <el-icon v-if="isEdit" :size="clacPXToVW(20)" color="red" class="close" @click.stop.prevent="delTerm(index)">
                 <CircleCloseFilled />

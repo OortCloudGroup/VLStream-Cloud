@@ -54,16 +54,16 @@
                   @click.stop
                 >
                   <oort-svg-icon
-                    width="20"
-                    height="20"
+                    width="14"
+                    height="14"
                     name="delete"
                     color="red"
                     class="tree-action-icon"
                     @click="handleRemoveNode(data)"
                   />
                   <oort-svg-icon
-                    width="20"
-                    height="20"
+                    width="14"
+                    height="14"
                     name="add"
                     class="tree-action-icon"
                     @click="handleAddChild(data)"

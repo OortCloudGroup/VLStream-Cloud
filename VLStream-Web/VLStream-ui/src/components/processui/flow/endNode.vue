@@ -4,8 +4,8 @@
     <oort-svg-icon
       class="end_node_img"
       name="finish_node"
-      width="20"
-      :color="!!isFinished?'var(--node-main-color)':'var(--el-color-primary)'" height="20" />
+      width="14"
+      :color="!!isFinished?'var(--node-main-color)':'var(--el-color-primary)'" height="14" />
     <!-- <img src="@/assets/img/processui/flownode/start.png" /> -->
   </div>
 </template>

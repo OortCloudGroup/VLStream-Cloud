@@ -99,11 +99,11 @@
                     :class="{ disabled: !getDeviceStreamUrl(scope.row) }"
                     @click="getDeviceStreamUrl(scope.row) && handlePlay(scope.row)"
                   >
-                    <oort-svg-icon width="20" height="20" name="play" class="new_table_svg_group_svg" />
+                    <oort-svg-icon width="14" height="14" name="play" class="new_table_svg_group_svg" />
                     <span>播放</span>
                   </div>
                   <div class="new_table_svg_group" @click="configureAlgorithm(scope.row)">
-                    <oort-svg-icon width="20" height="20" name="setting" class="new_table_svg_group_svg" />
+                    <oort-svg-icon width="14" height="14" name="setting" class="new_table_svg_group_svg" />
                     <span>配置</span>
                   </div>
                 </div>

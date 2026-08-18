@@ -78,7 +78,7 @@
                     class="new_table_svg_group"
                     @click="newEditClick(scope.row,2)"
                   >
-                    <oort-svg-icon width="20" height="20" name="table_paidan" class="new_table_svg_group_svg" />
+                    <oort-svg-icon width="14" height="14" name="table_paidan" class="new_table_svg_group_svg" />
                     <span>派单</span>
                   </div>
                   <div
@@ -86,7 +86,7 @@
                     class="new_table_svg_group"
                     @click="newEditClick(scope.row,3)"
                   >
-                    <oort-svg-icon width="20" height="20" name="table_chuli" class="new_table_svg_group_svg" />
+                    <oort-svg-icon width="14" height="14" name="table_chuli" class="new_table_svg_group_svg" />
                     <span>处理</span>
                   </div>
                 </template>
@@ -96,7 +96,7 @@
                   placement="top"
                 >
                   <div class="new_table_svg_group" @click="handleDetail(scope.row)">
-                    <oort-svg-icon width="20" height="20" name="table_detail" class="new_table_svg_group_svg" />
+                    <oort-svg-icon width="14" height="14" name="table_detail" class="new_table_svg_group_svg" />
                   </div>
                 </el-tooltip>
                 <el-tooltip
@@ -106,7 +106,7 @@
                   placement="top"
                 >
                   <div class="new_table_svg_group" @click="handleDelete(scope.row)">
-                    <oort-svg-icon color="red" width="20" height="20" name="table_del" />
+                    <oort-svg-icon color="red" width="14" height="14" name="table_del" />
                   </div>
                 </el-tooltip>
                 <div
@@ -114,7 +114,7 @@
                   class="new_table_svg_group"
                   @click="handleCancel(scope.row)"
                 >
-                  <oort-svg-icon width="20" height="20" name="table_positiveclose" class="new_table_svg_group_svg" />
+                  <oort-svg-icon width="14" height="14" name="table_positiveclose" class="new_table_svg_group_svg" />
                   <span>强制关闭</span>
                 </div>
               </div>

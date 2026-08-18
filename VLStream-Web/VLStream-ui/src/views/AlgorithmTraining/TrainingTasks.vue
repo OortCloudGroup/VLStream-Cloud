@@ -64,15 +64,15 @@
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handleDetailRow(scope.row)">
-                    <oort-svg-icon width="20" height="20" name="detail_icon" class="new_table_svg_group_svg" />
+                    <oort-svg-icon width="14" height="14" name="detail_icon" class="new_table_svg_group_svg" />
                     <span>详情</span>
                   </div>
                   <div class="new_table_svg_group" @click="handleEditRow(scope.row)">
-                    <oort-svg-icon width="20" height="20" name="edit_icon" class="new_table_svg_group_svg" />
+                    <oort-svg-icon width="14" height="14" name="edit_icon" class="new_table_svg_group_svg" />
                     <span>编辑</span>
                   </div>
                   <div class="new_table_svg_group" @click="handleDeleteRow(scope.row)">
-                    <oort-svg-icon color="red" width="20" height="20" name="delete_icon" class="new_table_svg_group_svg" />
+                    <oort-svg-icon color="red" width="14" height="14" name="delete_icon" class="new_table_svg_group_svg" />
                     <span>删除</span>
                   </div>
                 </div>
