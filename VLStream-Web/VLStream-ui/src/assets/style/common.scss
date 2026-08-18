@@ -1006,6 +1006,12 @@ td {
   }
 }
 
+/* 左侧树形 + 右侧内容：右侧整块距离分隔竖线 20px */
+.police_aside_use + .tableTenIt,
+.police_aside_use + .tableTenItU {
+  padding-left: 20px;
+}
+
 // 顶部内容区 Tab
 .tenanat-tabs {
   padding: 0 20px;

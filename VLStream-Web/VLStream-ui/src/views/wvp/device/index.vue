@@ -5,6 +5,7 @@
       <div class="depNameBox flexRowAC">
         <div class="exportBtnBox flexRowAC">
           <button type="button" class="exportBtn newBtn flexRowAC" @click="showInfo" v-hasPermi="['wvp:server:configInfo']">
+            <oort-svg-icon class="BtnImg" name="platform_info" width="14" height="14" color="#fff" />
             平台信息
           </button>
           <button-group :button-list="toolbarButtonList" />
