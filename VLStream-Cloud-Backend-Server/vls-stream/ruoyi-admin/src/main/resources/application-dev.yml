@@ -203,11 +203,26 @@ auth:
 ---
 token:
   #租户类型配置 单租户还是多租户 single multi
-  tenantType: ${SSO_TENANT_TYPE:single}
+  tenantType: ${SSO_TENANT_TYPE:multi}
+  #多租户校验token地址
+  multiTenantVerifyTokenAddress: ${SSO_MULTI_TENANT_VERIFY_TOKEN:http://183.62.103.20:21410/bus/apaas-sso/sso/v1/verifyToken}
   #获取多租户用户信息
   multiTenantAdminUserUrl: ${GET_MULTI_TENANT_ADMIN_USER_URL:http://183.62.103.20:21410/bus/apaas-user/user/v1/userInfo}
+  #获取当前平台用户可进入的租户列表
+  multiTenantUserTenantsUrl: ${SSO_MULTI_TENANT_USER_TENANTS_URL:http://183.62.103.20:21410/bus/apaas-sso/sso/v1/getUserTenants}
+  #平台确认并切换目标租户
+  multiTenantLoginUrl: ${SSO_MULTI_TENANT_LOGIN_URL:http://183.62.103.20:21410/bus/apaas-sso/sso/v1/login}
+  #影子用户角色与权限模板
+  multiTenantRoleKey: ${SSO_MULTI_TENANT_ROLE_KEY:tenant_admin}
+  multiTenantRoleName: ${SSO_MULTI_TENANT_ROLE_NAME:租户管理员}
+  multiTenantRoleTemplateKey: ${SSO_MULTI_TENANT_ROLE_TEMPLATE_KEY:admin}
   #单租户id
   singleTenantId: ${SINGLE_TENANT_ID:000000}
+---
+vlstream:
+  event-report:
+    # 第三方接口为匿名接口，不附加 AccessToken
+    url: ${VLSTREAM_EVENT_REPORT_URL:http://183.62.103.20:21410/bus/apaas-location-service/task/v1/event_report_cameras}
 ---
 dept:
   excludedUdid: ${EXCLUDEDUDID:273ed9a4-0e77-4169-af46-dd2da2aa1fcc}
@@ -217,5 +232,4 @@ UnifiedMessagingSend:
 auth:
   report:
     excludeClasses: ReModeJsonController,ProcessTemplateController,WfTXController
-
 
