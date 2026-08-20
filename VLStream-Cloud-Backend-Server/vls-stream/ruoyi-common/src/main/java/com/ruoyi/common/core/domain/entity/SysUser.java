@@ -56,6 +56,11 @@ public class SysUser implements Serializable {
     private String tenantId;
 
     /**
+     * 统一平台用户ID；本地账号为空，多租户影子用户必填。
+     */
+    private String platformUserId;
+
+    /**
      * 岗位id
      */
     private String jobId;

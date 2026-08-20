@@ -6,56 +6,49 @@
 package com.ruoyi.framework.config;
 
 import com.baomidou.mybatisplus.extension.plugins.handler.TenantLineHandler;
-import com.ruoyi.common.core.domain.entity.SysUser;
+import com.baomidou.mybatisplus.core.metadata.TableFieldInfo;
+import com.baomidou.mybatisplus.core.metadata.TableInfo;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
+import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.enums.TenantType;
+import com.ruoyi.common.helper.LoginHelper;
 import com.ruoyi.common.helper.TenantContextHolder;
-import com.ruoyi.common.interceptor.AuthorizationInterceptor;
 import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.redis.RedisUtils;
+import com.ruoyi.framework.config.properties.TokenProperties;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.StringValue;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * 多租户处理插件
  */
 @Slf4j
 @Component
-public class CustomTenantLineHandler implements TenantLineHandler {
-    /**
-     * 忽略添加租户ID的表
-     */
-    private static final List<String> IGNORE_TABLE_NAMES = new ArrayList<>();
+public class CustomTenantLineHandler implements TenantLineHandler, SmartInitializingSingleton {
 
-    static {
-        //  IGNORE_TABLE_NAMES.add("report_user");
-        IGNORE_TABLE_NAMES.add("sys_dict_data");
-        IGNORE_TABLE_NAMES.add("sys_dict_type");
-        IGNORE_TABLE_NAMES.add("sys_user");
-        IGNORE_TABLE_NAMES.add("ACT_RE_MODEL");
-        IGNORE_TABLE_NAMES.add("process_template");
+    private static final String TENANT_COLUMN = "tenant_id";
+    private static final String NO_TENANT = "__NO_TENANT__";
+
+    private final TokenProperties tokenProperties;
+    private final Set<String> tenantTables = new HashSet<String>();
+
+    public CustomTenantLineHandler(TokenProperties tokenProperties) {
+        this.tokenProperties = tokenProperties;
     }
-
-    /**
-     * 单租户校验地址
-     */
-    @Value("${vls.tenant.id:000000}")
-    private String singleTenantId;
-    @Value("${token.tenantType}")
-    private String tenantType;
 
     /**
      * 获取租户ID值表达式
      */
     @Override
     public Expression getTenantId() {
-        String tid = returnTenantId();
-        return new StringValue("'" + tid + "'");
+        return new StringValue(resolveTenantId());
     }
 
     /**
@@ -63,7 +56,7 @@ public class CustomTenantLineHandler implements TenantLineHandler {
      */
     @Override
     public String getTenantIdColumn() {
-        return "tenant_id";
+        return TENANT_COLUMN;
     }
 
     /**
@@ -71,38 +64,59 @@ public class CustomTenantLineHandler implements TenantLineHandler {
      */
     @Override
     public boolean ignoreTable(String tableName) {
-        return true;
+        return tableName == null || !tenantTables.contains(tableName.toLowerCase(Locale.ROOT));
     }
 
     /**
-     * 从请求中获取到token，从token中解析出tenantId
+     * 优先使用显式线程上下文，其次使用 Sa-Token 会话；单租户最后回退到固定租户。
+     * 多租户缺少上下文时使用永不匹配的租户值，避免查询退化为跨租户访问。
      */
-    private String returnTenantId() {
+    public String resolveTenantId() {
         String tenantIdFromContext = TenantContextHolder.getTenantId();
         if (StringUtils.isNotBlank(tenantIdFromContext)) {
             return tenantIdFromContext;
         }
-        if (tenantType.equals(TenantType.SIGNLE_TENANT.getType())) {
-            return singleTenantId;
+        try {
+            LoginUser loginUser = LoginHelper.getLoginUser();
+            if (loginUser != null && StringUtils.isNotBlank(loginUser.getTenantId())) {
+                return loginUser.getTenantId();
+            }
+        } catch (Exception ignored) {
+            // 未登录的公开接口继续按部署模式处理。
         }
-        //获取当前请求的HttpServletRequest
-        String accessToken = AuthorizationInterceptor.getToken();
-        SysUser sysUser = null;
-        if (StringUtils.isNotBlank(accessToken)) {
-            sysUser = RedisUtils.getCacheObject(accessToken);
+        if (!TenantType.MULTI_TENANT.getType().equalsIgnoreCase(tokenProperties.getTenantType())) {
+            return tokenProperties.getSingleTenantId();
         }
-        // 检查JSON字符串是否为null
-        if (sysUser == null) {
-            // 处理未找到的情况，比如返回默认租户ID
-            return "";
+        return NO_TENANT;
+    }
+
+    public boolean hasResolvedTenant() {
+        return !NO_TENANT.equals(resolveTenantId());
+    }
+
+    @Override
+    public void afterSingletonsInstantiated() {
+        for (TableInfo tableInfo : TableInfoHelper.getTableInfos()) {
+            if (containsTenantColumn(tableInfo)) {
+                tenantTables.add(tableInfo.getTableName().toLowerCase(Locale.ROOT));
+            }
         }
-//        // 租户Id，可以从缓存或者cookie，token等中获取
-//        String tenantId = reportLoginUser.getTenantId();
-        String tenantId = sysUser.getTenantId();
-        String toTenantId = RedisUtils.getCacheObject("to_tenant_id");
-        if (StringUtils.isNotBlank(toTenantId)) {
-            return toTenantId;
+        log.info("租户 SQL 隔离已识别 {} 张包含 {} 字段的实体表", tenantTables.size(), TENANT_COLUMN);
+    }
+
+    private boolean containsTenantColumn(TableInfo tableInfo) {
+        if (tableInfo == null) {
+            return false;
         }
-        return tenantId;
+        for (TableFieldInfo fieldInfo : tableInfo.getFieldList()) {
+            if (TENANT_COLUMN.equalsIgnoreCase(fieldInfo.getColumn())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    Set<String> getTenantTables() {
+        return Collections.unmodifiableSet(tenantTables);
     }
 }

@@ -1,4 +1,5 @@
 import { verifyToken } from '@/api/auth'
+import { exchangePlatformToken, getTenantMode } from '@/api/system/localAuth'
 
 // 兼容 axios 原始响应与请求拦截器已经解包的 SpringBlade 响应。
 const normalizeApiResponse = (response) => {
@@ -7,8 +8,14 @@ const normalizeApiResponse = (response) => {
 }
 
 export class AuthManager {
-  /** 只检查本项目保存的 token，不再探测或跳转任何外部 SSO。 */
+  /** 根据后端模式处理平台换票或本地 token 校验。 */
   async checkExternalPlatformLogin() {
+    const mode = await this.getTenantMode()
+    const url = new URL(window.location.href)
+    const urlToken = url.searchParams.get('accessToken') || url.searchParams.get('access_token') || url.searchParams.get('token')
+    if (mode === 'multi' && urlToken) {
+      return this.exchangePlatformToken(urlToken, this.getUrlTenantId(url))
+    }
     return this.checkLocalToken()
   }
 
@@ -20,10 +27,13 @@ export class AuthManager {
   /** 校验 URL 中的本地 token，成功后保存并移除查询参数。 */
   async checkUrlToken() {
     const url = new URL(window.location.href)
-    const token = url.searchParams.get('accessToken') || url.searchParams.get('token')
+    const token = url.searchParams.get('accessToken') || url.searchParams.get('access_token') || url.searchParams.get('token')
     if (!token) return null
 
-    const userInfo = await this.verifyToken(token)
+    const mode = await this.getTenantMode()
+    const userInfo = mode === 'multi'
+      ? await this.exchangePlatformToken(token, this.getUrlTenantId(url))
+      : await this.verifyToken(token)
     if (!userInfo) return null
     await this.saveUserToLocal(userInfo)
     this.cleanUrlToken()
@@ -60,25 +70,32 @@ export class AuthManager {
     sessionStorage.setItem('accessToken', userInfo.accessToken)
     localStorage.setItem('userInfo', serialized)
     localStorage.setItem('accessToken', userInfo.accessToken)
+    if (userInfo.tenantId) {
+      sessionStorage.setItem('tenantId', userInfo.tenantId)
+      localStorage.setItem('tenantId', userInfo.tenantId)
+    }
   }
 
   /** 移除 URL 中用于本地自动登录的 token 参数。 */
   cleanUrlToken() {
     const url = new URL(window.location.href)
     url.searchParams.delete('accessToken')
+    url.searchParams.delete('access_token')
     url.searchParams.delete('token')
+    url.searchParams.delete('tenantId')
+    url.searchParams.delete('tenant_id')
     window.history.replaceState({}, '', url.toString())
   }
 
   /** 清除会话级认证信息。 */
   clearSessionTokens() {
-    ;['accessToken', 'token', 'userCenterToken', 'userInfo', 'platformAccessToken']
+    ;['accessToken', 'access_token', 'token', 'userCenterToken', 'userInfo', 'platformAccessToken', 'tenantId', 'tenant_id']
       .forEach((key) => sessionStorage.removeItem(key))
   }
 
   /** 清除持久化认证信息。 */
   clearLocalTokens() {
-    ;['accessToken', 'token', 'userCenterToken', 'userInfo', 'platformAccessToken']
+    ;['accessToken', 'access_token', 'token', 'userCenterToken', 'userInfo', 'platformAccessToken', 'tenantId', 'tenant_id']
       .forEach((key) => localStorage.removeItem(key))
   }
 
@@ -114,22 +131,66 @@ export class AuthManager {
 
   /** 验证并保存一个新的本地 token。 */
   async setNewToken(token) {
-    const userInfo = await this.verifyToken(token)
-    if (!userInfo) return false
     this.clearAllTokens()
+    sessionStorage.setItem('accessToken', token)
+    localStorage.setItem('accessToken', token)
+    const userInfo = await this.verifyToken(token)
+    if (!userInfo) {
+      this.clearAllTokens()
+      return false
+    }
     await this.saveUserToLocal(userInfo)
     return true
+  }
+
+  async getTenantMode() {
+    try {
+      const response = normalizeApiResponse(await getTenantMode())
+      return response?.data?.tenantType === 'multi' ? 'multi' : 'single'
+    } catch (error) {
+      console.warn('获取租户模式失败，按单租户处理:', error?.message)
+      return 'single'
+    }
+  }
+
+  async exchangePlatformToken(platformToken, tenantId) {
+    try {
+      const response = normalizeApiResponse(await exchangePlatformToken(platformToken, tenantId))
+      if (response?.code !== 200 || !response?.data?.accessToken) return null
+      const data = response.data
+      const user = data.user || {}
+      const userInfo = {
+        ...user,
+        ...data,
+        accessToken: data.accessToken,
+        userName: data.userName || user.nickName || user.userName,
+        loginId: data.account || user.loginId || user.userName,
+        tenantId: data.tenantId || user.tenantId
+      }
+      this.clearAllTokens()
+      await this.saveUserToLocal(userInfo)
+      this.cleanUrlToken()
+      return userInfo
+    } catch (error) {
+      console.warn('平台 token 换票失败:', error?.response?.data?.msg || error?.message)
+      return null
+    }
   }
 
   /** 按 URL、会话、持久化存储顺序获取当前本地 token。 */
   getCurrentToken() {
     const url = new URL(window.location.href)
     return url.searchParams.get('accessToken')
+      || url.searchParams.get('access_token')
       || url.searchParams.get('token')
       || sessionStorage.getItem('accessToken')
       || sessionStorage.getItem('token')
       || localStorage.getItem('accessToken')
       || localStorage.getItem('token')
+  }
+
+  getUrlTenantId(url = new URL(window.location.href)) {
+    return url.searchParams.get('tenantId') || url.searchParams.get('tenant_id') || undefined
   }
 
   /** 获取缓存的本地用户信息。 */

@@ -33,5 +33,8 @@ public class VlsFirmwareProperties {
 
 	private Integer otaDownloadUrlTtlSeconds = 7200;
 
+	/** Maximum silence after VERIFYING/INSTALLING/REBOOTING before the task times out. */
+	private Integer otaTaskInactivityTimeoutMinutes = 30;
+
 	private Long maxPackageBytes = 160L * 1024L * 1024L;
 }

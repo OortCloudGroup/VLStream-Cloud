@@ -7,8 +7,12 @@ package com.ruoyi.web.controller.compat;
 
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.interceptor.TokenHeaderResolver;
+import com.ruoyi.common.enums.TenantType;
+import com.ruoyi.framework.config.properties.TokenProperties;
 import com.ruoyi.vlstream.test.compat.BladeResult;
-import org.springframework.beans.factory.annotation.Value;
+import com.ruoyi.web.controller.compat.tenant.MultiTenantAuthService;
+import com.ruoyi.web.controller.compat.tenant.PlatformTenantSession;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,11 +29,59 @@ import java.util.Map;
 public class SsoCompatController {
 
     private final BladeTokenUserStore tokenUserStore;
-    @Value("${vls.tenant.id:000000}")
-    private String singleTenantId = "000000";
+    private final TokenProperties tokenProperties;
+    private final MultiTenantAuthService multiTenantAuthService;
 
-    public SsoCompatController(BladeTokenUserStore tokenUserStore) {
+    public SsoCompatController(BladeTokenUserStore tokenUserStore,
+                               TokenProperties tokenProperties,
+                               MultiTenantAuthService multiTenantAuthService) {
         this.tokenUserStore = tokenUserStore;
+        this.tokenProperties = tokenProperties;
+        this.multiTenantAuthService = multiTenantAuthService;
+    }
+
+    @GetMapping("/mode")
+    public BladeResult<Map<String, Object>> mode() {
+        Map<String, Object> data = new LinkedHashMap<String, Object>();
+        data.put("tenantType", isMultiTenant() ? "multi" : "single");
+        data.put("multiTenant", isMultiTenant());
+        return BladeResult.success(data);
+    }
+
+    @PostMapping("/exchangeToken")
+    public BladeResult<Map<String, Object>> exchangeToken(HttpServletRequest request,
+                                                           @RequestBody(required = false) Map<String, Object> body) {
+        if (!isMultiTenant()) {
+            return BladeResult.fail("当前为单租户模式，不支持平台换票");
+        }
+        String platformToken = firstNonBlank(TokenHeaderResolver.resolve(request), bodyValue(body, "accessToken"));
+        if (platformToken == null) {
+            return BladeResult.fail("缺少平台访问令牌");
+        }
+        try {
+            String tenantId = firstNonBlank(bodyValue(body, "tenantId"), bodyValue(body, "tenant_id"));
+            return BladeResult.success(multiTenantAuthService.exchange(platformToken, tenantId, request));
+        } catch (Exception exception) {
+            return BladeResult.fail(firstNonBlank(exception.getMessage(), "平台换票失败"));
+        }
+    }
+
+    @PostMapping("/switchTenant")
+    public BladeResult<Map<String, Object>> switchTenant(HttpServletRequest request,
+                                                          @RequestBody(required = false) Map<String, Object> body) {
+        if (!isMultiTenant()) {
+            return BladeResult.fail("当前为单租户模式，不支持切换租户");
+        }
+        String localToken = TokenHeaderResolver.resolve(request);
+        String tenantId = firstNonBlank(bodyValue(body, "tenantId"), bodyValue(body, "tenant_id"));
+        if (localToken == null || tenantId == null) {
+            return BladeResult.fail("缺少本地令牌或目标租户");
+        }
+        try {
+            return BladeResult.success(multiTenantAuthService.switchTenant(localToken, tenantId));
+        } catch (Exception exception) {
+            return BladeResult.fail(firstNonBlank(exception.getMessage(), "切换租户失败"));
+        }
     }
 
     @PostMapping("/getUserTenants")
@@ -44,8 +96,23 @@ public class SsoCompatController {
             return BladeResult.fail("未找到用户缓存信息");
         }
 
+        if (isMultiTenant()) {
+            try {
+                PlatformTenantSession session = multiTenantAuthService.requireSession(token);
+                Map<String, Object> data = new LinkedHashMap<String, Object>();
+                data.put("list", MultiTenantAuthService.tenantMaps(session.getTenants()));
+                data.put("user", user);
+                data.put("accessToken", token);
+                data.put("token", token);
+                data.put("tenantId", user.getTenantId());
+                return BladeResult.success(data);
+            } catch (Exception exception) {
+                return BladeResult.fail(firstNonBlank(exception.getMessage(), "多租户平台会话已失效"));
+            }
+        }
+
         Map<String, Object> tenant = new LinkedHashMap<String, Object>();
-        String tenantId = singleTenantId;
+        String tenantId = firstNonBlank(user.getTenantId(), tokenProperties.getSingleTenantId());
         String userName = firstNonBlank(user.getUserName(), user.getLoginId());
         tenant.put("tenant_id", tenantId);
         tenant.put("tenant_name", tenantId);
@@ -87,7 +154,7 @@ public class SsoCompatController {
         data.put("userInfo", user);
         data.put("account", account);
         data.put("userName", userName);
-        data.put("tenantId", singleTenantId);
+        data.put("tenantId", firstNonBlank(user.getTenantId(), tokenProperties.getSingleTenantId()));
         data.put("user_id", user.getUserId());
         data.put("user_name", userName);
         data.put("accessToken", token);
@@ -120,8 +187,12 @@ public class SsoCompatController {
         data.put("tokenType", "Bearer");
         data.put("user", user);
         data.put("userName", userName);
-        data.put("tenantId", singleTenantId);
+        data.put("tenantId", firstNonBlank(user.getTenantId(), tokenProperties.getSingleTenantId()));
         return BladeResult.success(data);
+    }
+
+    private boolean isMultiTenant() {
+        return TenantType.MULTI_TENANT.getType().equalsIgnoreCase(tokenProperties.getTenantType());
     }
 
     private static String firstNonBlank(String first, String second) {

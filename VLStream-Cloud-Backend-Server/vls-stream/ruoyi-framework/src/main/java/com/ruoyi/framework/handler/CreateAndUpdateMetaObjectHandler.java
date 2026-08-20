@@ -11,7 +11,10 @@ import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.helper.LoginHelper;
+import com.ruoyi.common.helper.TenantContextHolder;
+import com.ruoyi.common.enums.TenantType;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.framework.config.properties.TokenProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.reflection.MetaObject;
 
@@ -26,19 +29,19 @@ import java.util.Date;
 @Slf4j
 public class CreateAndUpdateMetaObjectHandler implements MetaObjectHandler {
 
-    private final String singleTenantId;
+    private final TokenProperties tokenProperties;
 
     /**
      * 创建字段填充器，并绑定后台唯一可信的租户标识。
      */
-    public CreateAndUpdateMetaObjectHandler(String singleTenantId) {
-        this.singleTenantId = singleTenantId;
+    public CreateAndUpdateMetaObjectHandler(TokenProperties tokenProperties) {
+        this.tokenProperties = tokenProperties;
     }
 
     @Override
     public void insertFill(MetaObject metaObject) {
         try {
-            fillSingleTenant(metaObject);
+            fillTenant(metaObject);
             Date current = new Date();
             LoginUser loginUser = getLoginUser();
             fillAuditField(metaObject, "createTime", current);
@@ -56,7 +59,7 @@ public class CreateAndUpdateMetaObjectHandler implements MetaObjectHandler {
     @Override
     public void updateFill(MetaObject metaObject) {
         try {
-            fillSingleTenant(metaObject);
+            fillTenant(metaObject);
             LoginUser loginUser = getLoginUser();
             fillAuditField(metaObject, "updateTime", new Date());
             fillAuditField(metaObject, "updateBy", auditUsername(loginUser));
@@ -69,10 +72,29 @@ public class CreateAndUpdateMetaObjectHandler implements MetaObjectHandler {
     /**
      * 强制覆盖实体上的租户值，保证客户端值、空值和内部硬编码都不能影响持久化结果。
      */
-    private void fillSingleTenant(MetaObject metaObject) {
+    private void fillTenant(MetaObject metaObject) {
         if (ObjectUtil.isNotNull(metaObject) && metaObject.hasSetter("tenantId")) {
-            metaObject.setValue("tenantId", singleTenantId);
+            String tenantId = resolveTenantId();
+            if (StringUtils.isBlank(tenantId)) {
+                throw new ServiceException("多租户模式下缺少可信租户上下文");
+            }
+            metaObject.setValue("tenantId", tenantId);
         }
+    }
+
+    private String resolveTenantId() {
+        String contextTenantId = TenantContextHolder.getTenantId();
+        if (StringUtils.isNotBlank(contextTenantId)) {
+            return contextTenantId;
+        }
+        LoginUser loginUser = getLoginUser();
+        if (loginUser != null && StringUtils.isNotBlank(loginUser.getTenantId())) {
+            return loginUser.getTenantId();
+        }
+        if (!TenantType.MULTI_TENANT.getType().equalsIgnoreCase(tokenProperties.getTenantType())) {
+            return tokenProperties.getSingleTenantId();
+        }
+        return null;
     }
 
     /**

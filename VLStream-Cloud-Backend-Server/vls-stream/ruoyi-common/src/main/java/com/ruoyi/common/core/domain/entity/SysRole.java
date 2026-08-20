@@ -37,6 +37,11 @@ import javax.validation.constraints.Size;
 public class SysRole extends BaseEntity {
 
     /**
+     * 租户ID。
+     */
+    private String tenantId;
+
+    /**
      * 角色ID
      */
     @ExcelProperty(value = "角色序号")

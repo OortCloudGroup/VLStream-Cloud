@@ -17,6 +17,7 @@ import java.io.ByteArrayInputStream;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,18 +50,18 @@ class FirmwareDeploymentServiceTest {
 		device.setId(10L);
 		device.setDeviceId("CAM-1");
 		device.setDeviceModel("OORT-6600-2.5");
-		device.setApplicationVersion("1.0.1.14");
+		device.setRootfsVersion("1.0.1.14");
 		device.setOnline(true);
 		firmware = new DeviceFirmware();
 		firmware.setId(20L);
 		firmware.setCameraModel(device.getDeviceModel());
-		firmware.setTarget("application");
+		firmware.setTarget("rootfs");
 		firmware.setFirmwareVersion("1.0.1.15");
-		firmware.setOriginalFileName("app-1.0.1.15.ota");
+		firmware.setOriginalFileName("rootfs-1.0.1.15.ota");
 		firmware.setFileSize(1024L);
 		firmware.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 		when(deviceMapper.selectOne(any())).thenReturn(device);
-		when(firmwareService.findLatestReady(device.getDeviceModel(), "application")).thenReturn(firmware);
+		when(firmwareService.findLatestReady(device.getDeviceModel(), "rootfs")).thenReturn(firmware);
 	}
 
 	@Test
@@ -70,6 +71,34 @@ class FirmwareDeploymentServiceTest {
 		assertTrue(detail.isHasNewFirmware());
 		assertTrue(detail.isCanUpgrade());
 		assertEquals("1.0.1.15", detail.getAvailableUpgrades().get(0).getLatestVersion());
+	}
+
+	@Test
+	void detailTreatsLegacyFirmwareVersionAsRootfsVersion() {
+		device.setRootfsVersion(null);
+		device.setFirmwareVersion("1.0.1.14");
+
+		MqttDeviceDetailView detail = service.detail(device.getId());
+
+		assertEquals("1.0.1.14", detail.getDevice().getRootfsVersion());
+		assertTrue(detail.isHasNewFirmware());
+		assertTrue(detail.isCanUpgrade());
+		assertEquals("1.0.1.14", detail.getAvailableUpgrades().get(0).getCurrentVersion());
+	}
+
+	@Test
+	void detailDisablesUpgradeWhileAnotherOtaTaskIsActive() {
+		FirmwareDeployTask activeTask = new FirmwareDeployTask();
+		activeTask.setDeployStatus("INSTALLING");
+		when(taskService.latestForDevice(device.getId())).thenReturn(activeTask);
+		when(taskService.isActiveStatus("INSTALLING")).thenReturn(true);
+
+		MqttDeviceDetailView detail = service.detail(device.getId());
+
+		assertTrue(detail.isHasNewFirmware());
+		assertFalse(detail.isCanUpgrade());
+		assertEquals("设备存在进行中的 OTA 任务，请等待完成或先终止任务",
+			detail.getUpgradeBlockedReason());
 	}
 
 	@Test
@@ -91,7 +120,9 @@ class FirmwareDeploymentServiceTest {
 		assertEquals(firmware.getSha256(), payload.get("sha256"));
 		assertTrue(String.valueOf(payload.get("packageUrl")).startsWith(
 			"http://192.168.88.31:8080/vlsDeviceFirmware/ota/"));
-		assertEquals(Boolean.FALSE, payload.get("rebootAfter"));
+		assertEquals("rootfs", payload.get("target"));
+		assertEquals(Boolean.TRUE, payload.get("rollbackEnable"));
+		assertEquals(Boolean.TRUE, payload.get("rebootAfter"));
 		verify(taskService).markPublished(taskCaptor.getValue().getRequestId());
 	}
 

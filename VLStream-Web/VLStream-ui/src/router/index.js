@@ -331,12 +331,6 @@ const routes = [
         meta: { title: '云平台', icon: '云平台' }
       },
       {
-        path: '/open-service-center',
-        name: 'OpenServiceCenter',
-        component: () => import('@/views/OpenServiceCenter.vue'),
-        meta: { title: '开放服务中心', icon: '开放服务中心' }
-      },
-      {
         path: '/system/users',
         name: 'SystemUserManagement',
         component: () => import('@/views/System/UserManagement.vue'),
@@ -480,7 +474,7 @@ router.beforeEach(async (to, from, next) => {
     const urlParams = new URLSearchParams(window.location.search)
     const urlAccessToken = urlParams.get('accessToken')
     if (urlAccessToken) {
-      console.log('检测到URL中的accessToken，进行SSO验证:', urlAccessToken)
+      console.log('检测到URL中的accessToken，进行SSO验证')
       try {
         const userInfo = await authManager.verifyToken(urlAccessToken)
         if (userInfo) {
@@ -527,7 +521,7 @@ router.beforeEach(async (to, from, next) => {
     const sessionToken = sessionStorage.getItem('accessToken')
     // console.log('Session Storage中的token:', sessionToken)
     if (sessionToken) {
-      console.log('检测到Session Storage中的token:', sessionToken)
+      console.log('检测到Session Storage中的token')
           try {
       const sessionUserInfo = await authManager.verifyToken(sessionToken)
       if (sessionUserInfo) {

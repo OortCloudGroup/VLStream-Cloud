@@ -8,6 +8,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceMediaUpload;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import org.mockito.ArgumentCaptor;
 import java.lang.reflect.Field;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -29,6 +31,8 @@ class DeviceEventMqttHandlerTest {
 	private VlsDeviceInfoMapper deviceInfoMapper;
 	private DeviceMediaUploadService mediaUploadService;
 	private ActiveSafetyEventReportService activeSafetyEventReportService;
+	private TenantDeviceResolver tenantDeviceResolver;
+	private VlsEventReportApplicationService eventReportApplicationService;
 	private DeviceEventMqttHandler handler;
 
 	@BeforeEach
@@ -36,10 +40,42 @@ class DeviceEventMqttHandlerTest {
 		deviceInfoMapper = mock(VlsDeviceInfoMapper.class);
 		mediaUploadService = mock(DeviceMediaUploadService.class);
 		activeSafetyEventReportService = mock(ActiveSafetyEventReportService.class);
+		tenantDeviceResolver = mock(TenantDeviceResolver.class);
+		eventReportApplicationService = mock(VlsEventReportApplicationService.class);
 		handler = new DeviceEventMqttHandler();
 		setField(handler, "deviceInfoMapper", deviceInfoMapper);
 		setField(handler, "mediaUploadService", mediaUploadService);
 		setField(handler, "activeSafetyEventReportService", activeSafetyEventReportService);
+		setField(handler, "tenantDeviceResolver", tenantDeviceResolver);
+		setField(handler, "eventReportApplicationService", eventReportApplicationService);
+	}
+
+	@Test
+	void storesMultiTenantFaceEventAndEnqueuesThirdPartyReport() {
+		DeviceInfo device = new DeviceInfo();
+		device.setDeviceId("CAM-1");
+		device.setTenantId("tenant-a");
+		device.setDeviceName("多租户摄像头");
+		DeviceMediaUpload upload = new DeviceMediaUpload();
+		upload.setMediaId("media-1");
+		upload.setObjectKey("events/CAM-1/2026/07/29/media-1.jpg");
+		when(eventReportApplicationService.isMultiTenant()).thenReturn(true);
+		when(tenantDeviceResolver.resolveUnique("CAM-1")).thenReturn(device);
+		when(mediaUploadService.validateAndBind(
+			"media-1", "CAM-1", upload.getObjectKey(), sha256(), "event-message-1"))
+			.thenReturn(upload);
+
+		JSONObject reply = handler.handle(faceEventMessage());
+
+		assertEquals("SUCCESS", reply.getByPath("payload.bizData.status"));
+		ArgumentCaptor<EventManagement> eventCaptor = ArgumentCaptor.forClass(EventManagement.class);
+		verify(eventReportApplicationService).persistDeviceEvent(eventCaptor.capture(), any(DeviceInfo.class));
+		EventManagement event = eventCaptor.getValue();
+		assertEquals("event-message-1", event.getMqttMessageId());
+		assertEquals("device-event-1", event.getDeviceEventId());
+		assertEquals("vls-media://media-1", event.getReportImg());
+		verify(activeSafetyEventReportService, never()).report(any());
+		assertNull(com.ruoyi.common.helper.TenantContextHolder.getTenantId());
 	}
 
 	@Test
@@ -134,6 +170,12 @@ class DeviceEventMqttHandlerTest {
 			+ "\"objectKey\":\"events/CAM-1/2026/07/29/media-1.jpg\","
 			+ "\"sha256\":\"" + sha256() + "\"}]},"
 			+ "\"extend\":{}}");
+	}
+
+	private JSONObject faceEventMessage() {
+		JSONObject message = eventMessage();
+		message.set("subBizType", "faceEvent");
+		return message;
 	}
 
 	private String sha256() {

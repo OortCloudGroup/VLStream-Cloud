@@ -32,6 +32,11 @@ public class LoginUser implements Serializable {
     private String userId;
 
     /**
+     * 当前登录会话绑定的租户ID。
+     */
+    private String tenantId;
+
+    /**
      * 部门ID
      */
     private String deptId;

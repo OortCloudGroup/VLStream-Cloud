@@ -38,12 +38,16 @@ public class FirmwareDeploymentService {
 
 	public MqttDeviceDetailView detail(Long deviceRowId) {
 		MqttDevice device = requiredDevice(deviceRowId);
+		taskService.expireStaleTasksForDevice(device.getId(), FirmwareTarget.ROOTFS.getValue());
+		String currentRootfsVersion = currentRootfsVersion(device);
+		device.setRootfsVersion(currentRootfsVersion);
 		List<FirmwareUpgradeCandidate> upgrades = new ArrayList<FirmwareUpgradeCandidate>();
-		addUpgrade(upgrades, device, FirmwareTarget.APPLICATION, device.getApplicationVersion());
-		addUpgrade(upgrades, device, FirmwareTarget.ROOTFS, device.getRootfsVersion());
+		addUpgrade(upgrades, device, FirmwareTarget.ROOTFS, currentRootfsVersion);
 
 		boolean hasNewFirmware = !upgrades.isEmpty();
-		boolean canUpgrade = hasNewFirmware && Boolean.TRUE.equals(device.getOnline());
+		FirmwareDeployTask latestTask = taskService.latestForDevice(deviceRowId);
+		boolean hasActiveTask = latestTask != null && taskService.isActiveStatus(latestTask.getDeployStatus());
+		boolean canUpgrade = hasNewFirmware && Boolean.TRUE.equals(device.getOnline()) && !hasActiveTask;
 		String blockedReason = null;
 		if (StringUtils.isBlank(device.getDeviceModel())) {
 			blockedReason = "设备尚未上报 deviceModel";
@@ -51,11 +55,13 @@ public class FirmwareDeploymentService {
 			blockedReason = "设备离线，不能创建短期下载地址";
 		} else if (!hasKnownCurrentVersion(device)) {
 			blockedReason = "设备尚未上报可比较的固件版本";
+		} else if (hasActiveTask) {
+			blockedReason = "设备存在进行中的 OTA 任务，请等待完成或先终止任务";
 		} else if (!hasNewFirmware) {
 			blockedReason = "当前已是最新兼容版本";
 		}
 		if (StringUtils.isNotBlank(device.getDeviceModel()) && hasKnownCurrentVersion(device)
-			&& Boolean.TRUE.equals(device.getOnline())) {
+			&& Boolean.TRUE.equals(device.getOnline()) && !hasActiveTask) {
 			canUpgrade = hasNewFirmware;
 		}
 		return MqttDeviceDetailView.builder()
@@ -64,8 +70,13 @@ public class FirmwareDeploymentService {
 			.canUpgrade(canUpgrade)
 			.upgradeBlockedReason(blockedReason)
 			.availableUpgrades(upgrades)
-			.latestTask(taskService.toView(taskService.latestForDevice(deviceRowId)))
+			.latestTask(taskService.toView(latestTask))
 			.build();
+	}
+
+	public FirmwareDeployTaskView cancel(Long deviceRowId, String requestId) {
+		requiredDevice(deviceRowId);
+		return taskService.cancelActiveTask(deviceRowId, requestId);
 	}
 
 	public FirmwareDeployTaskView deploy(Long deviceRowId, Long firmwareId) {
@@ -97,6 +108,7 @@ public class FirmwareDeploymentService {
 		if (latest == null || !firmware.getId().equals(latest.getId())) {
 			throw new ServiceException("所选固件不是该型号和升级目标的最新可用版本，请刷新设备详情");
 		}
+		taskService.expireStaleTasksForDevice(device.getId(), target.getValue());
 		if (taskService.hasActiveTask(device.getId(), target.getValue())) {
 			throw new ServiceException("该设备的 " + target.getValue() + " OTA 任务仍在处理中");
 		}
@@ -221,13 +233,15 @@ public class FirmwareDeploymentService {
 	}
 
 	private boolean hasKnownCurrentVersion(MqttDevice device) {
-		return FirmwareVersion.isValid(device.getApplicationVersion())
-			|| FirmwareVersion.isValid(device.getRootfsVersion());
+		return FirmwareVersion.isValid(currentRootfsVersion(device));
 	}
 
 	private String currentVersion(MqttDevice device, FirmwareTarget target) {
-		return target == FirmwareTarget.ROOTFS
-			? device.getRootfsVersion() : device.getApplicationVersion();
+		return currentRootfsVersion(device);
+	}
+
+	private String currentRootfsVersion(MqttDevice device) {
+		return StringUtils.defaultIfBlank(device.getRootfsVersion(), device.getFirmwareVersion());
 	}
 
 	private String rootMessage(Throwable throwable) {

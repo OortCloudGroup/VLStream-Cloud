@@ -25,6 +25,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebMvcConfigToken implements WebMvcConfigurer {
     private final SecurityProperties securityProperties;
+    private final TenantContextInterceptor tenantContextInterceptor;
     @Autowired
     private AuthorizationInterceptor authorizationInterceptor;
 
@@ -36,6 +37,7 @@ public class WebMvcConfigToken implements WebMvcConfigurer {
         registry.addInterceptor(new SaInterceptor(handler -> StpUtil.checkLogin()))
             .addPathPatterns("/**")
             .excludePathPatterns(securityProperties.getExcludes());
+        registry.addInterceptor(tenantContextInterceptor).addPathPatterns("/**");
         registry.addInterceptor(authorizationInterceptor).addPathPatterns("/**");
     }
 }

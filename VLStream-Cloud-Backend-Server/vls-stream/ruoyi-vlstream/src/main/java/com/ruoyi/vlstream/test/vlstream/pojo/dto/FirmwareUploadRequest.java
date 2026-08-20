@@ -11,7 +11,6 @@ import lombok.Data;
 @Data
 public class FirmwareUploadRequest {
 	private String cameraModel;
-	private String target;
 	private String firmwareVersion;
 	private String fileName;
 	private String contentType;

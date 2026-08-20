@@ -94,6 +94,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { AuthManager } from '@/utils/auth'
 import { getUserInfo, logoutUser } from '@/api/auth'
+import { getUserTenants, switchTenant as switchTenantApi } from '@/api/system/localAuth'
 import {
   User,
   ArrowDown,
@@ -209,14 +210,11 @@ const loadBladeUserInfo = async () => {
 // 加载租户信息
 const loadTenantInfo = async () => {
   console.log('🚀 loadTenantInfo函数开始执行...')
-  await loadBladeUserInfo()
-  return
   try {
     console.log('🔍 loadTenantInfo函数开始执行...')
     console.log('🔍 当前URL:', window.location.href)
     console.log('🔍 当前URL参数:', window.location.search)
-    console.log('🔍 sessionStorage token:', sessionStorage.getItem('accessToken'))
-    console.log('🔍 localStorage token:', localStorage.getItem('accessToken'))
+    console.log('🔍 已读取本地认证状态')
 
     console.log('开始调用getUserTenants API获取用户和租户信息...')
 
@@ -234,7 +232,7 @@ const loadTenantInfo = async () => {
       return
     }
 
-    console.log('✅ loadTenantInfo: 使用token:', token.substring(0, 8) + '...')
+    console.log('✅ loadTenantInfo: 已找到有效token')
 
     // 修复：传递正确的参数，包含accessToken
     const response = await getUserTenants({ accessToken: token })
@@ -266,11 +264,13 @@ const loadTenantInfo = async () => {
         console.log('🔍 第一个租户数据:', firstTenant)
 
         // 根据实际API响应结构提取用户信息
+        const responseUser = response.data.user || {}
         const userInfo = {
-          userName: firstTenant.user_name || '管理员',
-          userId: firstTenant.user_id || '',
-          loginId: firstTenant.user_name || '', // 使用user_name作为loginId
-          tenantId: firstTenant.tenant_id || '',
+          ...responseUser,
+          userName: responseUser.nickName || responseUser.userName || firstTenant.user_name || '管理员',
+          userId: responseUser.userId || firstTenant.user_id || '',
+          loginId: responseUser.loginId || responseUser.userName || firstTenant.user_name || '',
+          tenantId: responseUser.tenantId || firstTenant.tenant_id || '',
           accessToken: token // 使用当前token
         }
 
@@ -298,7 +298,7 @@ const loadTenantInfo = async () => {
         })
 
         // 设置当前租户为第一个租户
-        const currentTenantData = tenants[0]
+        const currentTenantData = tenants.find(item => item.id === userInfo.tenantId) || tenants[0]
         if (currentTenantData) {
           currentTenant.value = currentTenantData
           console.log('✅ 设置当前租户:', currentTenantData.name)
@@ -356,10 +356,26 @@ const loadTenantInfo = async () => {
 }
 
 // 切换租户
-const switchTenant = (tenant) => {
-  currentTenant.value = tenant
-  // 这里可以添加切换租户的业务逻辑
-  console.log('切换到租户:', tenant.name)
+const switchTenant = async (tenant) => {
+  if (!tenant?.id || tenant.id === currentTenant.value.id) return
+  try {
+    await ElMessageBox.confirm(`确认切换到租户“${tenant.name}”吗？`, '切换租户', {
+      confirmButtonText: '切换',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    const response = await switchTenantApi(tenant.id)
+    const newToken = response?.data?.accessToken
+    if (response?.code !== 200 || !newToken || !(await authManager.setNewToken(newToken))) {
+      throw new Error(response?.msg || '新租户会话校验失败')
+    }
+    ElMessage.success('租户切换成功')
+    window.location.reload()
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error(error?.response?.data?.msg || error?.message || '租户切换失败')
+    }
+  }
 }
 
 // 退出登录时先通知后端，再清理本地认证状态并返回登录页。
@@ -491,7 +507,6 @@ const menuRoutesMap = {
         { path: '/algorithm-model', meta: { title: '算法模型', icon: '算法模型' } }
       ]
     },
-    { path: '/open-service-center', meta: { title: '开放服务中心', icon: '开放服务中心' } },
   ],
   'ai-computing': [
     { path: '/container-instances', meta: { title: '容器实例', icon: '容器实例' } }
@@ -620,7 +635,10 @@ watch(() => route.path, (newPath) => {
 // 强制加载用户和租户信息
 const forceLoadUserAndTenantInfo = async () => {
   console.log('🚀 forceLoadUserAndTenantInfo函数开始执行...')
-  await loadBladeUserInfo()
+  const loaded = await loadBladeUserInfo()
+  if (loaded) {
+    await loadTenantInfo()
+  }
   return
 
   try {
@@ -637,7 +655,7 @@ const forceLoadUserAndTenantInfo = async () => {
       return
     }
 
-    console.log('✅ 使用token:', token.substring(0, 8) + '...')
+    console.log('✅ 已找到有效token')
 
     // 直接调用getUserTenants API
     const response = await getUserTenants({ accessToken: token })
@@ -863,7 +881,6 @@ const getMenuIcon = (iconName) => {
     '算法模型': Setting,
     '监控告警': Warning,
     '视频回放': VideoPlay,
-    '开放服务中心': Connection,
     '容器实例': Monitor,
     '端侧智能': DataAnalysis,
     '云端智能': Connection,

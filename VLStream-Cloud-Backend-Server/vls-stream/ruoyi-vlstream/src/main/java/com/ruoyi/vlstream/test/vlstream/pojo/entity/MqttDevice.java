@@ -16,7 +16,6 @@ public class MqttDevice extends TenantEntity {
 	private String deviceSerial;
 	private String deviceModel;
 	private String firmwareVersion;
-	private String applicationVersion;
 	private String rootfsVersion;
 	private String faceVersion;
 	private String ipAddr;

@@ -13,7 +13,9 @@ import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
 import com.ruoyi.framework.handler.CreateAndUpdateMetaObjectHandler;
+import com.ruoyi.framework.config.properties.TokenProperties;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -30,9 +32,18 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @MapperScan("${mybatis-plus.mapperPackage}")
 public class MybatisPlusConfig {
 
+    private final CustomTenantLineHandler tenantLineHandler;
+    private final TokenProperties tokenProperties;
+
+    public MybatisPlusConfig(CustomTenantLineHandler tenantLineHandler, TokenProperties tokenProperties) {
+        this.tenantLineHandler = tenantLineHandler;
+        this.tokenProperties = tokenProperties;
+    }
+
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+        interceptor.addInnerInterceptor(new TenantLineInnerInterceptor(tenantLineHandler));
 //        // 数据权限处理
 //        interceptor.addInnerInterceptor(dataPermissionInterceptor());
         // 分页插件
@@ -73,8 +84,8 @@ public class MybatisPlusConfig {
      * 元对象字段填充控制器
      */
     @Bean
-    public MetaObjectHandler metaObjectHandler(@Value("${vls.tenant.id:000000}") String singleTenantId) {
-        return new CreateAndUpdateMetaObjectHandler(singleTenantId);
+    public MetaObjectHandler metaObjectHandler() {
+        return new CreateAndUpdateMetaObjectHandler(tokenProperties);
     }
 
     /**

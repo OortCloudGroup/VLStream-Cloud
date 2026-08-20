@@ -6,11 +6,13 @@
 package com.ruoyi.web.controller.compat;
 
 import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.framework.config.properties.TokenProperties;
 import com.ruoyi.system.service.ISysUserService;
 import com.ruoyi.system.service.SysLoginService;
-import com.ruoyi.vlstream.compat.BladeAuthInfo;
-import com.ruoyi.vlstream.compat.BladePasswordDecoder;
-import com.ruoyi.vlstream.compat.BladeResult;
+import com.ruoyi.web.controller.compat.tenant.MultiTenantAuthService;
+import com.ruoyi.vlstream.test.compat.BladeAuthInfo;
+import com.ruoyi.vlstream.test.compat.BladePasswordDecoder;
+import com.ruoyi.vlstream.test.compat.BladeResult;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -42,7 +44,8 @@ class BladeAuthCompatControllerTest {
         BladeTokenUserStore tokenUserStore = mock(BladeTokenUserStore.class);
         BladeTokenSessionService tokenSessionService = mock(BladeTokenSessionService.class);
         BladeAuthCompatController controller = new BladeAuthCompatController(
-            loginService, userService, passwordDecoder, tokenUserStore, tokenSessionService, 86400L);
+            loginService, userService, passwordDecoder, tokenUserStore, tokenSessionService,
+            new TokenProperties(), mock(MultiTenantAuthService.class), 86400L);
         Map<String, String> params = new HashMap<String, String>();
         params.put("grantType", "password");
         params.put("tenantId", "tenant-a");
@@ -78,7 +81,8 @@ class BladeAuthCompatControllerTest {
         BladeTokenUserStore tokenUserStore = mock(BladeTokenUserStore.class);
         BladeTokenSessionService tokenSessionService = mock(BladeTokenSessionService.class);
         BladeAuthCompatController controller = new BladeAuthCompatController(
-            loginService, userService, passwordDecoder, tokenUserStore, tokenSessionService, 86400L);
+            loginService, userService, passwordDecoder, tokenUserStore, tokenSessionService,
+            new TokenProperties(), mock(MultiTenantAuthService.class), 86400L);
         Map<String, String> params = new HashMap<String, String>();
         params.put("grantType", "password");
         params.put("tenantId", "tenant-a");
@@ -103,7 +107,8 @@ class BladeAuthCompatControllerTest {
         BladeTokenUserStore tokenUserStore = mock(BladeTokenUserStore.class);
         BladeTokenSessionService tokenSessionService = mock(BladeTokenSessionService.class);
         BladeAuthCompatController controller = new BladeAuthCompatController(
-            loginService, userService, passwordDecoder, tokenUserStore, tokenSessionService, 86400L);
+            loginService, userService, passwordDecoder, tokenUserStore, tokenSessionService,
+            new TokenProperties(), mock(MultiTenantAuthService.class), 86400L);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("blade-auth", "Bearer sa-token");
 

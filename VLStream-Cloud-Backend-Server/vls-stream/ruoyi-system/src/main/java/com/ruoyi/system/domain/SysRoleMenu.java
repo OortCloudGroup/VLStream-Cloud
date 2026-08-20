@@ -22,6 +22,11 @@ import lombok.Data;
 public class SysRoleMenu {
 
     /**
+     * 租户ID。
+     */
+    private String tenantId;
+
+    /**
      * 角色ID
      */
     @TableId(type = IdType.INPUT)

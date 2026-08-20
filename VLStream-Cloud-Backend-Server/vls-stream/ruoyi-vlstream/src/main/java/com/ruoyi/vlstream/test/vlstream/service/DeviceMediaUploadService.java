@@ -9,10 +9,10 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.oss.core.OssClient;
 import com.ruoyi.oss.factory.OssFactory;
 import com.ruoyi.vlstream.test.vlstream.config.VlsDeviceMediaProperties;
-import com.ruoyi.vlstream.test.vlstream.mapper.VlsDeviceInfoMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsDeviceMediaUploadMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.DeviceMediaUploadRequest;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.DeviceMediaUploadResponse;
@@ -44,7 +44,7 @@ public class DeviceMediaUploadService {
 	private VlsDeviceMediaProperties properties;
 
 	@Resource
-	private VlsDeviceInfoMapper deviceInfoMapper;
+	private TenantDeviceResolver tenantDeviceResolver;
 
 	@Resource
 	private VlsDeviceMediaUploadMapper uploadMapper;
@@ -54,41 +54,43 @@ public class DeviceMediaUploadService {
 			throw new ServiceException("设备媒体上传接口未启用；生产环境必须先配置设备身份认证");
 		}
 		validateRequest(request);
-		DeviceInfo device = deviceInfoMapper.selectOne(new LambdaQueryWrapper<DeviceInfo>()
-			.eq(DeviceInfo::getDeviceId, request.getDeviceId())
-			.last("limit 1"));
-		if (device == null) {
-			throw new ServiceException("设备不存在：" + request.getDeviceId());
+		DeviceInfo device = tenantDeviceResolver.resolveUnique(request.getDeviceId());
+		String previousTenant = TenantContextHolder.getTenantId();
+		TenantContextHolder.setTenantId(device.getTenantId());
+		try {
+
+			OssClient ossClient = ossClient();
+			String mediaId = UUID.randomUUID().toString();
+			String objectKey = buildObjectKey(request.getDeviceId(), mediaId, request.getContentType());
+			int ttlSeconds = Math.max(60, Math.min(defaultInt(properties.getUploadUrlTtlSeconds(), 600), 3600));
+			Date expiresAt = new Date(System.currentTimeMillis() + ttlSeconds * 1000L);
+
+			DeviceMediaUpload upload = new DeviceMediaUpload();
+			upload.setTenantId(device.getTenantId());
+			upload.setMediaId(mediaId);
+			upload.setDeviceId(request.getDeviceId());
+			upload.setOssConfigKey(ossClient.getConfigKey());
+			upload.setObjectKey(objectKey);
+			upload.setFileName(StringUtils.abbreviate(request.getFileName(), 255));
+			upload.setContentType(request.getContentType());
+			upload.setFileSize(request.getFileSize());
+			upload.setSha256(StringUtils.lowerCase(request.getSha256(), Locale.ROOT));
+			upload.setUploadStatus(STATUS_ISSUED);
+			upload.setExpiresAt(expiresAt);
+			upload.setCreateTime(new Date());
+			upload.setUpdateTime(new Date());
+			uploadMapper.insert(upload);
+
+			return DeviceMediaUploadResponse.builder()
+				.mediaId(mediaId)
+				.objectKey(objectKey)
+				.uploadUrl(ossClient.getPresignedPutUrl(objectKey, request.getContentType(), ttlSeconds))
+				.expiresAt(Instant.ofEpochMilli(expiresAt.getTime()).toString())
+				.requiredContentType(request.getContentType())
+				.build();
+		} finally {
+			TenantContextHolder.setTenantId(previousTenant);
 		}
-
-		OssClient ossClient = ossClient();
-		String mediaId = UUID.randomUUID().toString();
-		String objectKey = buildObjectKey(request.getDeviceId(), mediaId, request.getContentType());
-		int ttlSeconds = Math.max(60, Math.min(defaultInt(properties.getUploadUrlTtlSeconds(), 600), 3600));
-		Date expiresAt = new Date(System.currentTimeMillis() + ttlSeconds * 1000L);
-
-		DeviceMediaUpload upload = new DeviceMediaUpload();
-		upload.setMediaId(mediaId);
-		upload.setDeviceId(request.getDeviceId());
-		upload.setOssConfigKey(ossClient.getConfigKey());
-		upload.setObjectKey(objectKey);
-		upload.setFileName(StringUtils.abbreviate(request.getFileName(), 255));
-		upload.setContentType(request.getContentType());
-		upload.setFileSize(request.getFileSize());
-		upload.setSha256(StringUtils.lowerCase(request.getSha256(), Locale.ROOT));
-		upload.setUploadStatus(STATUS_ISSUED);
-		upload.setExpiresAt(expiresAt);
-		upload.setCreateTime(new Date());
-		upload.setUpdateTime(new Date());
-		uploadMapper.insert(upload);
-
-		return DeviceMediaUploadResponse.builder()
-			.mediaId(mediaId)
-			.objectKey(objectKey)
-			.uploadUrl(ossClient.getPresignedPutUrl(objectKey, request.getContentType(), ttlSeconds))
-			.expiresAt(Instant.ofEpochMilli(expiresAt.getTime()).toString())
-			.requiredContentType(request.getContentType())
-			.build();
 	}
 
 	/**

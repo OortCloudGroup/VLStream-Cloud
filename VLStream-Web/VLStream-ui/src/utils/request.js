@@ -2,6 +2,9 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
 export const BLADE_CLIENT_AUTH_HEADER = import.meta.env.VITE_BLADE_CLIENT_AUTH_HEADER || 'Basic c2FiZXI6c2FiZXJfc2VjcmV0'
+const PLATFORM_APP_ID = import.meta.env.VITE_PLATFORM_APP_ID || ''
+const PLATFORM_SECRET_KEY = import.meta.env.VITE_PLATFORM_SECRET_KEY || ''
+const PLATFORM_REQUEST_TYPE = import.meta.env.VITE_PLATFORM_REQUEST_TYPE || 'app'
 
 // 根据环境确定baseURL
 export const getBaseURL = () => {
@@ -21,7 +24,7 @@ export const getBaseURL = () => {
 // 按 URL、sessionStorage、localStorage 的顺序读取当前 token。
 export const getStoredToken = () => {
   const urlParams = new URLSearchParams(window.location.search)
-  const urlToken = urlParams.get('accessToken') || urlParams.get('token')
+  const urlToken = urlParams.get('accessToken') || urlParams.get('access_token') || urlParams.get('token')
   if (urlToken) {
     return urlToken
   }
@@ -34,6 +37,14 @@ export const getStoredToken = () => {
   return localStorage.getItem('accessToken') || localStorage.getItem('token')
 }
 
+// 统一平台网关要求每个请求都携带应用身份参数。
+export const applyPlatformGatewayHeaders = (config) => {
+  config.headers = config.headers || {}
+  config.headers.requestType = PLATFORM_REQUEST_TYPE
+  if (PLATFORM_APP_ID) config.headers.appID = PLATFORM_APP_ID
+  if (PLATFORM_SECRET_KEY) config.headers.secretKey = PLATFORM_SECRET_KEY
+}
+
 // 为请求写入 SpringBlade 识别的 Authorization 与 blade-auth 头。
 // 只写入规范大小写，避免浏览器把 Authorization/authorization 合并成不可识别的重复 token。
 export const applyAuthHeaders = (config) => {
@@ -43,6 +54,8 @@ export const applyAuthHeaders = (config) => {
     config.headers.Authorization = authValue
     config.headers['blade-auth'] = authValue
     config.headers.AccessToken = token
+    const tenantId = sessionStorage.getItem('tenantId') || localStorage.getItem('tenantId') || '000000'
+    config.headers.tenantId = tenantId
   }
   return token
 }
@@ -117,9 +130,7 @@ const authRequest = axios.create({
 // 认证请求拦截器
 authRequest.interceptors.request.use(
   config => {
-    config.headers.requesttype = 'app'
-    config.headers.appid = '6551b0147c4649a894e86bf8de248da4'
-    config.headers.secretkey = '58f9eeefc65f4b318204ba21f39a8861'
+    applyPlatformGatewayHeaders(config)
 
     const shouldUseBladeClientAuth = config.useBladeClientAuth || isBladeAuthTokenRequest(config)
     if (shouldUseBladeClientAuth) {
@@ -139,9 +150,7 @@ authRequest.interceptors.request.use(
 // 请求拦截器
 request.interceptors.request.use(
   config => {
-    config.headers.requesttype = 'app'
-    config.headers.appid = '6551b0147c4649a894e86bf8de248da4'
-    config.headers.secretkey = '58f9eeefc65f4b318204ba21f39a8861'
+    applyPlatformGatewayHeaders(config)
     applyAuthHeaders(config)
     
     return config
@@ -155,9 +164,7 @@ request.interceptors.request.use(
 // 图片上传请求拦截器
 imageUploadRequest.interceptors.request.use(
   config => {
-    config.headers.requesttype = 'app'
-    config.headers.appid = '6551b0147c4649a894e86bf8de248da4'
-    config.headers.secretkey = '58f9eeefc65f4b318204ba21f39a8861'
+    applyPlatformGatewayHeaders(config)
     applyAuthHeaders(config)
     return config
   },
@@ -287,17 +294,8 @@ authRequest.interceptors.response.use(
   error => {
     console.error('认证响应错误:', error)
     
-    // 添加详细的调试信息
     if (error.response) {
-      const { status, data, config } = error.response
-      console.error('=== 认证请求调试信息 ===')
-      console.error('请求URL:', config.url)
-      console.error('请求方法:', config.method)
-      console.error('请求数据:', config.data)
-      console.error('请求头:', config.headers)
-      console.error('响应状态:', status)
-      console.error('响应数据:', data)
-      console.error('=======================')
+      console.error('认证请求失败:', error.response.status, error.response.config?.url)
     }
     
     // 对于认证相关的API，不显示错误提示，让调用方自己处理

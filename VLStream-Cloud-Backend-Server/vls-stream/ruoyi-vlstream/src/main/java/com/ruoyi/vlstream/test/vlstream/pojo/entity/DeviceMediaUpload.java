@@ -21,6 +21,7 @@ public class DeviceMediaUpload {
 
 	@TableId(type = IdType.ASSIGN_ID)
 	private Long id;
+	private String tenantId;
 	private String mediaId;
 	private String deviceId;
 	private String ossConfigKey;

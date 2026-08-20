@@ -4,7 +4,6 @@ import org.apache.commons.lang3.StringUtils;
 
 /** OTA partitions supported by the VLS 2.2 device protocol. */
 public enum FirmwareTarget {
-	APPLICATION("application", false, false),
 	ROOTFS("rootfs", true, true);
 
 	private final String value;
@@ -35,6 +34,6 @@ public enum FirmwareTarget {
 				return target;
 			}
 		}
-		throw new IllegalArgumentException("target must be application or rootfs");
+		throw new IllegalArgumentException("target must be rootfs");
 	}
 }

@@ -6,10 +6,11 @@
 package com.ruoyi.framework.config;
 
 import com.ruoyi.common.helper.TenantContextHolder;
+import com.ruoyi.framework.config.properties.TokenProperties;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Tag("dev")
@@ -17,9 +18,10 @@ class CustomTenantLineHandlerLoginTenantTest {
 
     @Test
     void usesBoundTenantBeforeTokenExists() {
-        CustomTenantLineHandler handler = new CustomTenantLineHandler();
-        ReflectionTestUtils.setField(handler, "tenantType", "multi");
-        ReflectionTestUtils.setField(handler, "singleTenantId", "single-tenant");
+        TokenProperties properties = new TokenProperties();
+        properties.setTenantType("multi");
+        properties.setSingleTenantId("single-tenant");
+        CustomTenantLineHandler handler = new CustomTenantLineHandler(properties);
 
         TenantContextHolder.setTenantId("tenant-from-login");
         try {
@@ -30,20 +32,19 @@ class CustomTenantLineHandlerLoginTenantTest {
     }
 
     @Test
-    void ignoresLocalSysUserShadowTableWithoutTenantColumn() {
-        CustomTenantLineHandler handler = new CustomTenantLineHandler();
+    void ignoresUnknownTableWithoutTenantColumn() {
+        CustomTenantLineHandler handler = new CustomTenantLineHandler(new TokenProperties());
 
-        assertTrue(handler.ignoreTable("sys_user"));
+        assertTrue(handler.ignoreTable("unknown_table"));
     }
 
-    /**
-     * 单租户模式不应再给任何业务表拼接租户过滤条件，历史空租户数据也必须可见。
-     */
     @Test
-    void ignoresEveryTableInSingleTenantMode() {
-        CustomTenantLineHandler handler = new CustomTenantLineHandler();
+    void singleTenantModeUsesConfiguredDefaultTenant() {
+        TokenProperties properties = new TokenProperties();
+        properties.setTenantType("single");
+        properties.setSingleTenantId("000000");
+        CustomTenantLineHandler handler = new CustomTenantLineHandler(properties);
 
-        assertTrue(handler.ignoreTable("vls_device_info"));
-        assertTrue(handler.ignoreTable("oort_task_event"));
+        assertEquals("000000", handler.resolveTenantId());
     }
 }

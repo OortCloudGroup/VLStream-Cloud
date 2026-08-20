@@ -556,7 +556,11 @@ public class LocationTaskCompatController {
         if (userName.isEmpty()) {
             userName = stringValue(currentUser.getLoginId());
         }
-        UserContext user = new UserContext(token, singleTenantId, stringValue(currentUser.getUserId()),
+        String tenantId = stringValue(currentUser.getTenantId());
+        if (tenantId.isEmpty()) {
+            tenantId = singleTenantId;
+        }
+        UserContext user = new UserContext(token, tenantId, stringValue(currentUser.getUserId()),
             userName, currentClient());
         try {
             return operation.execute(request, user);

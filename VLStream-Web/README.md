@@ -100,7 +100,7 @@ VLStream-Web/
 - **Annotation / Models / Training** — Dataset annotation, model management, training jobs, SSH remote connections
 - **Container Instances** — Compute container scheduling and monitoring
 - **System Management** — Complete RBAC permissions and tenant system
-- **User Profile / Open Service Center**
+- **User Profile**
 
 ## Quick Start
 

@@ -87,6 +87,24 @@ public class SysLoginService {
         return StpUtil.getTokenValue();
     }
 
+    /**
+     * 为已经通过统一平台校验的影子用户创建本地 Sa-Token 会话。
+     * 此入口不接受密码，调用方必须先完成平台 token 与租户归属校验。
+     */
+    public String loginPlatformUser(SysUser user) {
+        if (ObjectUtil.isNull(user)) {
+            throw new UserException("user.not.exists", "platform-user");
+        }
+        if (isLoginBlockedStatus(user.getStatus())) {
+            throw new UserException("user.blocked", user.getUserName());
+        }
+        LoginUser loginUser = buildLoginUser(user);
+        LoginHelper.loginByDevice(loginUser, DeviceType.PC);
+        recordLogininfor(user.getUserName(), Constants.LOGIN_SUCCESS, "统一平台登录成功");
+        recordLoginInfo(user.getUserId(), user.getUserName());
+        return StpUtil.getTokenValue();
+    }
+
     public String smsLogin(String phonenumber, String smsCode) {
         // 通过手机号查找用户
         SysUser user = loadUserByPhonenumber(phonenumber);
@@ -127,6 +145,7 @@ public class SysLoginService {
         // 此处可根据登录用户的数据不同 自行创建 loginUser
         XcxLoginUser loginUser = new XcxLoginUser();
         loginUser.setUserId(user.getUserId());
+        loginUser.setTenantId(user.getTenantId());
         loginUser.setUsername(user.getUserName());
         loginUser.setUserType(user.getUserType());
         loginUser.setOpenid(openid);
@@ -284,6 +303,7 @@ public class SysLoginService {
     private LoginUser buildLoginUser(SysUser user) {
         LoginUser loginUser = new LoginUser();
         loginUser.setUserId(user.getUserId());
+        loginUser.setTenantId(user.getTenantId());
         loginUser.setDeptId(user.getDeptId());
         loginUser.setUsername(user.getUserName());
         loginUser.setNickName(user.getUserName());

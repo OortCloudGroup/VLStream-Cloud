@@ -22,6 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
+import com.ruoyi.common.enums.TenantType;
+import com.ruoyi.framework.config.properties.TokenProperties;
+import com.ruoyi.web.controller.compat.tenant.MultiTenantAuthService;
 
 @RestController
 @RequestMapping("/blade-auth")
@@ -35,25 +38,32 @@ public class BladeAuthCompatController {
     private final BladeTokenUserStore tokenUserStore;
     private final BladeTokenSessionService tokenSessionService;
     private final long tokenTimeout;
-    @Value("${vls.tenant.id:000000}")
-    private String singleTenantId = "000000";
+    private final TokenProperties tokenProperties;
+    private final MultiTenantAuthService multiTenantAuthService;
 
     public BladeAuthCompatController(SysLoginService loginService,
                                      ISysUserService userService,
                                      BladePasswordDecoder passwordDecoder,
                                      BladeTokenUserStore tokenUserStore,
                                      BladeTokenSessionService tokenSessionService,
+                                     TokenProperties tokenProperties,
+                                     MultiTenantAuthService multiTenantAuthService,
                                      @Value("${sa-token.timeout:86400}") long tokenTimeout) {
         this.loginService = loginService;
         this.userService = userService;
         this.passwordDecoder = passwordDecoder;
         this.tokenUserStore = tokenUserStore;
         this.tokenSessionService = tokenSessionService;
+        this.tokenProperties = tokenProperties;
+        this.multiTenantAuthService = multiTenantAuthService;
         this.tokenTimeout = tokenTimeout;
     }
 
     @PostMapping("/token")
     public BladeResult<BladeAuthInfo> token(@RequestParam Map<String, String> params) {
+        if (TenantType.MULTI_TENANT.getType().equalsIgnoreCase(tokenProperties.getTenantType())) {
+            return BladeResult.fail("多租户模式请使用统一平台登录");
+        }
         String grantType = firstNonBlank(params.get("grantType"), PASSWORD_GRANT_TYPE);
         if (!PASSWORD_GRANT_TYPE.equalsIgnoreCase(grantType)) {
             return BladeResult.fail("不支持的授权类型");
@@ -66,17 +76,18 @@ public class BladeAuthCompatController {
         }
 
         try {
-            TenantContextHolder.setTenantId(singleTenantId);
+            TenantContextHolder.setTenantId(tokenProperties.getSingleTenantId());
             String password = passwordDecoder.decode(encryptedPassword);
             String token = loginService.login(account, password, params.get("code"), params.get("uuid"));
             SysUser user = userService.selectUserByUserName(account);
             if (user == null) {
                 throw new IllegalStateException("本地用户不存在");
             }
-            user.setTenantId(singleTenantId);
+            user.setTenantId(tokenProperties.getSingleTenantId());
             tokenUserStore.put(token, user, tokenTimeout);
             String userName = firstNonBlank(user.getUserName(), account);
-            BladeAuthInfo authInfo = BladeAuthInfo.passwordToken(token, account, userName, singleTenantId, tokenTimeout);
+            BladeAuthInfo authInfo = BladeAuthInfo.passwordToken(token, account, userName,
+                tokenProperties.getSingleTenantId(), tokenTimeout);
             return BladeResult.success(authInfo);
         } catch (Exception ex) {
             return BladeResult.fail(firstNonBlank(ex.getMessage(), "登录失败"));
@@ -91,6 +102,7 @@ public class BladeAuthCompatController {
         if (token != null) {
             tokenSessionService.logoutByToken(token);
             tokenUserStore.remove(token);
+            multiTenantAuthService.removeSession(token);
         }
         return BladeResult.success();
     }

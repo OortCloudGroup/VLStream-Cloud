@@ -134,6 +134,18 @@ sa-token:
   jwt-secret-key: abcdefghijklmnopqrstuvwxyz
 
 vlstream:
+  # 多租户事件先本地落库，再通过可靠 Outbox 匿名上报第三方
+  event-report:
+    enabled: ${VLSTREAM_EVENT_REPORT_ENABLED:true}
+    url: ${VLSTREAM_EVENT_REPORT_URL:http://apaas-location-service.p-lvgemgroup/task/v1/event_report_cameras}
+    scan-interval-millis: ${VLSTREAM_EVENT_REPORT_SCAN_INTERVAL_MILLIS:5000}
+    batch-size: ${VLSTREAM_EVENT_REPORT_BATCH_SIZE:50}
+    timeout-millis: ${VLSTREAM_EVENT_REPORT_TIMEOUT_MILLIS:5000}
+    max-retries: ${VLSTREAM_EVENT_REPORT_MAX_RETRIES:10}
+    base-retry-millis: ${VLSTREAM_EVENT_REPORT_BASE_RETRY_MILLIS:10000}
+    max-retry-millis: ${VLSTREAM_EVENT_REPORT_MAX_RETRY_MILLIS:1800000}
+    stale-lock-millis: ${VLSTREAM_EVENT_REPORT_STALE_LOCK_MILLIS:60000}
+    media-url-ttl-seconds: ${VLSTREAM_EVENT_REPORT_MEDIA_URL_TTL_SECONDS:3600}
   # VLStream 原生 MQTT 设备（独立于旧 vls_device_info 自定义协议设备）
   native-device:
     # 无预绑定关系的设备首次上报时归属的默认租户
@@ -360,6 +372,8 @@ security:
     - /logout
     - /blade-auth/token
     - /blade-auth/logout
+    - /sso/v1/mode
+    - /sso/v1/exchangeToken
     - /captchaImage
     - /login
     # 主动安全设备上报接口沿用 Go 服务的公开调用约定

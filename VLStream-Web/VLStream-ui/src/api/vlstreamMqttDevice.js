@@ -6,6 +6,9 @@ export const getMqttDeviceDetail = deviceId => request({ url: `/vlsMqttDevice/${
 export const deployMqttDeviceFirmware = (deviceId, firmwareId) => request({
   url: `/vlsMqttDevice/${deviceId}/firmware-upgrades`, method: 'post', data: { firmwareId }
 })
+export const cancelMqttDeviceFirmwareTask = (deviceId, requestId) => request({
+  url: `/vlsMqttDevice/${deviceId}/firmware-upgrades/${requestId}/cancel`, method: 'post'
+})
 export const createMqttDevicePreview = (deviceId, streamId) => request({
   url: `/vlsMqttDevice/${deviceId}/preview`, method: 'post', data: { streamId }
 })

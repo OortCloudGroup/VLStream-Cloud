@@ -44,7 +44,7 @@ public class DeviceFirmwareService {
 	private final FirmwareObjectStorage storage;
 	private final VlsFirmwareProperties properties;
 
-	public Page<DeviceFirmwareView> page(long current, long size, String cameraModel, String target,
+	public Page<DeviceFirmwareView> page(long current, long size, String cameraModel,
 		String firmwareVersion) {
 		long safeCurrent = Math.max(1, current);
 		long safeSize = Math.max(1, Math.min(size, 100));
@@ -54,8 +54,7 @@ public class DeviceFirmwareService {
 				.eq(DeviceFirmware::getIsDeleted, 0)
 				.like(StringUtils.isNotBlank(cameraModel), DeviceFirmware::getCameraModel,
 					StringUtils.trim(cameraModel))
-				.eq(StringUtils.isNotBlank(target), DeviceFirmware::getTarget,
-					StringUtils.lowerCase(StringUtils.trim(target)))
+				.eq(DeviceFirmware::getTarget, FirmwareTarget.ROOTFS.getValue())
 				.like(StringUtils.isNotBlank(firmwareVersion), DeviceFirmware::getFirmwareVersion,
 					StringUtils.trim(firmwareVersion))
 				.orderByDesc(DeviceFirmware::getCreateTime));
@@ -231,12 +230,7 @@ public class DeviceFirmwareService {
 			|| cameraModel.indexOf('/') >= 0 || cameraModel.indexOf('\\') >= 0) {
 			throw new ServiceException("摄像头型号不能为空、不能超过 128 个字符且不能包含路径分隔符");
 		}
-		String target;
-		try {
-			target = FirmwareTarget.fromValue(request.getTarget()).getValue();
-		} catch (IllegalArgumentException exception) {
-			throw new ServiceException("升级目标必须是 application 或 rootfs");
-		}
+		String target = FirmwareTarget.ROOTFS.getValue();
 		String firmwareVersion = StringUtils.trim(request.getFirmwareVersion());
 		if (!FirmwareVersion.isValid(firmwareVersion)) {
 			throw new ServiceException("固件版本号必须使用至少三段的纯数字点分格式，例如 1.0.1.14");

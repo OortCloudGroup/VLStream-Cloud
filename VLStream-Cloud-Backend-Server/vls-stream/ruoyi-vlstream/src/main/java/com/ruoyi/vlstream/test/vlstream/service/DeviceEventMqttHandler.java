@@ -13,6 +13,8 @@ import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceMediaUpload;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement;
+import com.ruoyi.common.helper.TenantContextHolder;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +44,12 @@ public class DeviceEventMqttHandler {
 	@Resource
 	private ActiveSafetyEventReportService activeSafetyEventReportService;
 
+	@Resource
+	private TenantDeviceResolver tenantDeviceResolver;
+
+	@Resource
+	private VlsEventReportApplicationService eventReportApplicationService;
+
 	@Transactional(rollbackFor = Exception.class)
 	public JSONObject handle(JSONObject envelope) {
 		String sourceMessageId = envelope.getStr("messageId");
@@ -51,22 +59,46 @@ public class DeviceEventMqttHandler {
 		String eventId = payload == null ? null
 			: StringUtils.defaultIfBlank(payload.getStr("eventId"), sourceMessageId);
 		String mediaId = null;
+		String previousTenant = TenantContextHolder.getTenantId();
 		try {
 			if (StringUtils.isAnyBlank(sourceMessageId, deviceId, eventId) || payload == null) {
 				throw new IllegalArgumentException("事件 messageId、deviceId、eventId 和 payload 均不能为空");
 			}
-			ActiveSafetyEventReportResult duplicate = activeSafetyEventReportService.findDuplicate(
-				sourceMessageId, deviceId, eventId);
-			if (duplicate != null) {
-				return buildReply(envelope, eventId, duplicate.getMediaId(), true,
-					"事件已处理，重复消息已忽略");
+			boolean multiTenant = eventReportApplicationService.isMultiTenant();
+			boolean platformFaceEvent = multiTenant && VlsMqttProtocol.FACE_EVENT.equals(subBizType);
+			if (!multiTenant) {
+				ActiveSafetyEventReportResult duplicate = activeSafetyEventReportService.findDuplicate(
+					sourceMessageId, deviceId, eventId);
+				if (duplicate != null) {
+					return buildReply(envelope, eventId, duplicate.getMediaId(), true,
+						"事件已处理，重复消息已忽略");
+				}
 			}
-			DeviceInfo device = deviceInfoMapper.selectOne(
-				new LambdaQueryWrapper<DeviceInfo>()
+			DeviceInfo device = multiTenant ? tenantDeviceResolver.resolveUnique(deviceId)
+				: deviceInfoMapper.selectOne(new LambdaQueryWrapper<DeviceInfo>()
 					.eq(DeviceInfo::getDeviceId, deviceId)
 					.last("limit 1"));
 			if (device == null) {
 				throw new IllegalArgumentException("平台不存在该设备");
+			}
+			if (multiTenant) {
+				TenantContextHolder.setTenantId(device.getTenantId());
+			}
+
+			if (platformFaceEvent) {
+				EventManagement duplicate = eventReportApplicationService.findDuplicate(
+					sourceMessageId, deviceId, eventId);
+				if (duplicate != null) {
+					return buildReply(envelope, eventId, duplicate.getMediaId(), true,
+						"事件已处理，重复消息已忽略");
+				}
+			} else if (multiTenant) {
+				ActiveSafetyEventReportResult duplicate = activeSafetyEventReportService.findDuplicate(
+					sourceMessageId, deviceId, eventId);
+				if (duplicate != null) {
+					return buildReply(envelope, eventId, duplicate.getMediaId(), true,
+						"事件已处理，重复消息已忽略");
+				}
 			}
 
 			JSONObject media = firstMedia(payload);
@@ -81,25 +113,44 @@ public class DeviceEventMqttHandler {
 			}
 			DeviceMediaUpload upload = mediaUploadService.validateAndBind(
 				mediaId, deviceId, objectKey, sha256, sourceMessageId);
-			ActiveSafetyEventReportResult result = activeSafetyEventReportService.report(
-				ActiveSafetyEventReport.builder()
-					.sourceMessageId(sourceMessageId)
-					.deviceEventId(eventId)
-					.deviceId(deviceId)
-					.deviceName(StringUtils.defaultIfBlank(device.getDeviceName(), deviceId))
-					.deviceTag(device.getTag())
-					.eventType(StringUtils.defaultIfBlank(payload.getStr("eventType"),
-						defaultEventType(subBizType, payload)))
-					.description(StringUtils.defaultIfBlank(payload.getStr("eventDesc"),
-						defaultDescription(subBizType, payload)))
-					.eventTime(parseEventTime(envelope, payload))
-					.mediaId(upload.getMediaId())
-					.address(device.getAddress())
-					.longitude(device.getLongitude())
-					.latitude(device.getLatitude())
-					.build());
-			if (result == null) {
-				throw new IllegalStateException("事件写入数据库失败");
+			String eventType = StringUtils.defaultIfBlank(payload.getStr("eventType"),
+				defaultEventType(subBizType, payload));
+			String description = StringUtils.defaultIfBlank(payload.getStr("eventDesc"),
+				defaultDescription(subBizType, payload));
+			Date eventTime = parseEventTime(envelope, payload);
+			if (platformFaceEvent) {
+				EventManagement event = new EventManagement();
+				event.setMqttMessageId(sourceMessageId);
+				event.setDeviceEventId(eventId);
+				event.setMediaId(upload.getMediaId());
+				event.setEventDesc(description);
+				event.setEventType(eventType);
+				event.setReportLocation(device.getAddress());
+				event.setReportDevice(deviceId);
+				event.setReportImg(VlsEventReportApplicationService.mediaReference(upload.getMediaId()));
+				event.setReportTime(eventTime);
+				event.setEventData(payload.toString());
+				event.setHandleResult(description);
+				eventReportApplicationService.persistDeviceEvent(event, device);
+			} else {
+				ActiveSafetyEventReportResult result = activeSafetyEventReportService.report(
+					ActiveSafetyEventReport.builder()
+						.sourceMessageId(sourceMessageId)
+						.deviceEventId(eventId)
+						.deviceId(deviceId)
+						.deviceName(StringUtils.defaultIfBlank(device.getDeviceName(), deviceId))
+						.deviceTag(device.getTag())
+						.eventType(eventType)
+						.description(description)
+						.eventTime(eventTime)
+						.mediaId(upload.getMediaId())
+						.address(device.getAddress())
+						.longitude(device.getLongitude())
+						.latitude(device.getLatitude())
+						.build());
+				if (result == null) {
+					throw new IllegalStateException("事件写入数据库失败");
+				}
 			}
 			return buildReply(envelope, eventId, mediaId, true, "事件已接收并入库");
 		} catch (Exception ex) {
@@ -108,6 +159,8 @@ public class DeviceEventMqttHandler {
 			}
 			return buildReply(envelope, eventId, mediaId, false,
 				StringUtils.defaultIfBlank(ex.getMessage(), "事件处理失败"));
+		} finally {
+			TenantContextHolder.setTenantId(previousTenant);
 		}
 	}
 

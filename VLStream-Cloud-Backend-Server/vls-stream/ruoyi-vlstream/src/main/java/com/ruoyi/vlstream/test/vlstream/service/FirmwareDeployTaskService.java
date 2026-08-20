@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.compat.SingleTenant;
+import com.ruoyi.vlstream.test.vlstream.config.VlsFirmwareProperties;
 import com.ruoyi.vlstream.test.vlstream.mapper.FirmwareDeployTaskMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.FirmwareDeployTaskView;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.FirmwareDeployTask;
@@ -22,10 +23,17 @@ public class FirmwareDeployTaskService {
 
 	private static final String SUCCESS = "SUCCESS";
 	private static final String FAILED = "FAILED";
+	private static final String CANCELLED = "CANCELLED";
+	private static final String TIMED_OUT = "TIMED_OUT";
 	private static final java.util.List<String> ACTIVE_STATUSES = Arrays.asList(
 		"CREATED", "PUBLISHED", "ACCEPTED", "DOWNLOADING", "VERIFYING", "INSTALLING", "REBOOTING");
+	private static final java.util.List<String> DOWNLOAD_STATUSES = Arrays.asList(
+		"CREATED", "PUBLISHED", "ACCEPTED", "DOWNLOADING");
+	private static final java.util.List<String> EXECUTION_STATUSES = Arrays.asList(
+		"VERIFYING", "INSTALLING", "REBOOTING");
 
 	private final FirmwareDeployTaskMapper mapper;
+	private final VlsFirmwareProperties properties;
 
 	public void create(FirmwareDeployTask task) {
 		Date now = new Date();
@@ -68,6 +76,46 @@ public class FirmwareDeployTaskService {
 			.eq(FirmwareDeployTask::getTarget, target)
 			.in(FirmwareDeployTask::getDeployStatus, ACTIVE_STATUSES)
 			.eq(FirmwareDeployTask::getIsDeleted, 0)) > 0;
+	}
+
+	public boolean isActiveStatus(String status) {
+		return ACTIVE_STATUSES.contains(StringUtils.upperCase(StringUtils.trimToEmpty(status)));
+	}
+
+	public FirmwareDeployTaskView cancelActiveTask(Long deviceRowId, String requestId) {
+		FirmwareDeployTask task = getByRequestId(requestId);
+		if (task == null || !deviceRowId.equals(task.getDeviceRowId())) {
+			throw new ServiceException("OTA 任务不存在或不属于该设备");
+		}
+		if (!isActiveStatus(task.getDeployStatus())) {
+			throw new ServiceException("OTA 任务已结束，无需终止");
+		}
+		Date now = new Date();
+		String reason = "管理员终止任务；仅解除平台任务锁，未向设备发送取消指令";
+		int updated = mapper.update(null, new LambdaUpdateWrapper<FirmwareDeployTask>()
+			.eq(FirmwareDeployTask::getTenantId, SingleTenant.DEFAULT_TENANT_ID)
+			.eq(FirmwareDeployTask::getRequestId, requestId)
+			.in(FirmwareDeployTask::getDeployStatus, ACTIVE_STATUSES)
+			.set(FirmwareDeployTask::getDeployStatus, CANCELLED)
+			.set(FirmwareDeployTask::getFailureReason, reason)
+			.set(FirmwareDeployTask::getCompletedAt, now)
+			.set(FirmwareDeployTask::getUpdateTime, now));
+		if (updated == 0) {
+			throw new ServiceException("OTA 任务状态已变化，请刷新后重试");
+		}
+		task.setDeployStatus(CANCELLED);
+		task.setFailureReason(reason);
+		task.setCompletedAt(now);
+		task.setUpdateTime(now);
+		return toView(task);
+	}
+
+	public int expireStaleTasks() {
+		return expireStaleTasks(null, null);
+	}
+
+	public int expireStaleTasksForDevice(Long deviceRowId, String target) {
+		return expireStaleTasks(deviceRowId, target);
 	}
 
 	public void markPublished(String requestId) {
@@ -184,10 +232,48 @@ public class FirmwareDeployTaskService {
 		if (SUCCESS.equals(current) || FAILED.equals(current)) {
 			return current.equals(incomingStatus);
 		}
+		if (CANCELLED.equals(current) || TIMED_OUT.equals(current)) {
+			return false;
+		}
 		if (FAILED.equals(incomingStatus)) {
 			return true;
 		}
 		return statusOrder(incomingStatus) >= statusOrder(current);
+	}
+
+	private int expireStaleTasks(Long deviceRowId, String target) {
+		Date now = new Date();
+		long nowEpochSeconds = now.getTime() / 1000L;
+		int inactivityMinutes = properties.getOtaTaskInactivityTimeoutMinutes() == null
+			? 30 : Math.max(5, properties.getOtaTaskInactivityTimeoutMinutes());
+		Date inactiveBefore = new Date(now.getTime() - inactivityMinutes * 60L * 1000L);
+
+		LambdaUpdateWrapper<FirmwareDeployTask> downloadTimeout =
+			new LambdaUpdateWrapper<FirmwareDeployTask>()
+				.eq(FirmwareDeployTask::getTenantId, SingleTenant.DEFAULT_TENANT_ID)
+				.eq(deviceRowId != null, FirmwareDeployTask::getDeviceRowId, deviceRowId)
+				.eq(StringUtils.isNotBlank(target), FirmwareDeployTask::getTarget, target)
+				.in(FirmwareDeployTask::getDeployStatus, DOWNLOAD_STATUSES)
+				.lt(FirmwareDeployTask::getDownloadExpiresAt, nowEpochSeconds)
+				.set(FirmwareDeployTask::getDeployStatus, TIMED_OUT)
+				.set(FirmwareDeployTask::getFailureReason, "OTA 下载地址已过期，设备未进入安装阶段")
+				.set(FirmwareDeployTask::getCompletedAt, now)
+				.set(FirmwareDeployTask::getUpdateTime, now);
+
+		LambdaUpdateWrapper<FirmwareDeployTask> executionTimeout =
+			new LambdaUpdateWrapper<FirmwareDeployTask>()
+				.eq(FirmwareDeployTask::getTenantId, SingleTenant.DEFAULT_TENANT_ID)
+				.eq(deviceRowId != null, FirmwareDeployTask::getDeviceRowId, deviceRowId)
+				.eq(StringUtils.isNotBlank(target), FirmwareDeployTask::getTarget, target)
+				.in(FirmwareDeployTask::getDeployStatus, EXECUTION_STATUSES)
+				.lt(FirmwareDeployTask::getUpdateTime, inactiveBefore)
+				.set(FirmwareDeployTask::getDeployStatus, TIMED_OUT)
+				.set(FirmwareDeployTask::getFailureReason,
+					"设备超过 " + inactivityMinutes + " 分钟未上报 OTA 进度")
+				.set(FirmwareDeployTask::getCompletedAt, now)
+				.set(FirmwareDeployTask::getUpdateTime, now);
+
+		return mapper.update(null, downloadTimeout) + mapper.update(null, executionTimeout);
 	}
 
 	private int statusOrder(String status) {

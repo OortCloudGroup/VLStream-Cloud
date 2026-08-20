@@ -13,6 +13,15 @@ import org.springframework.stereotype.Component;
 @Component
 @Data
 public class TokenProperties {
-    private String tenantType;
-    private String singleTenantId;
+    private String tenantType = "single";
+    private String singleTenantId = "000000";
+    private String multiTenantVerifyTokenAddress;
+    private String multiTenantAdminUserUrl;
+    private String multiTenantUserTenantsUrl;
+    private String multiTenantLoginUrl;
+    private String multiTenantRoleKey = "tenant_admin";
+    private String multiTenantRoleName = "租户管理员";
+    private String multiTenantRoleTemplateKey = "admin";
+    private int multiTenantConnectTimeoutMillis = 3000;
+    private int multiTenantReadTimeoutMillis = 5000;
 }

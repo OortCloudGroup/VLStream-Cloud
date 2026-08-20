@@ -200,7 +200,6 @@ import iconVideoPlayback from '@/assets/img/workbench/video_playback.png'
 import iconOperationLog from '@/assets/img/workbench/operation_log.png'
 import iconAlgoTraining from '@/assets/img/workbench/algo_training.png'
 import iconAlgoOrchestration from '@/assets/img/workbench/algo_orchestration.png'
-import iconServiceCenter from '@/assets/img/workbench/service_center.png'
 
 const router = useRouter()
 
@@ -248,8 +247,7 @@ const functionList = [
   { key: 'video-playback', label: '视频回放', path: 'video-playback', icon: iconVideoPlayback },
   { key: 'operation-log', label: '操作日志', path: '', icon: iconOperationLog },
   { key: 'algo-training', label: '算法自主训练', path: 'algorithm-training', icon: iconAlgoTraining },
-  { key: 'algo-orchestration', label: '算法编排', path: 'algorithm-orchestration', icon: iconAlgoOrchestration },
-  { key: 'service-center', label: '开放服务中心', path: 'open-service-center', icon: iconServiceCenter }
+  { key: 'algo-orchestration', label: '算法编排', path: 'algorithm-orchestration', icon: iconAlgoOrchestration }
 ]
 
 const updateNow = () => {

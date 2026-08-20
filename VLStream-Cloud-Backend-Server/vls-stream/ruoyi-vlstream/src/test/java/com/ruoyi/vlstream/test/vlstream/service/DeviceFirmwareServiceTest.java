@@ -12,6 +12,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceFirmware;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.util.Date;
 
@@ -58,7 +59,9 @@ class DeviceFirmwareServiceTest {
 		assertEquals(91L, grant.getFirmwareId());
 		assertEquals("http://minio.example/upload", grant.getUploadUrl());
 		assertEquals("application/octet-stream", grant.getRequiredContentType());
-		verify(mapper).insert(any(DeviceFirmware.class));
+		ArgumentCaptor<DeviceFirmware> firmwareCaptor = ArgumentCaptor.forClass(DeviceFirmware.class);
+		verify(mapper).insert(firmwareCaptor.capture());
+		assertEquals("rootfs", firmwareCaptor.getValue().getTarget());
 	}
 
 	@Test
@@ -114,7 +117,6 @@ class DeviceFirmwareServiceTest {
 	private FirmwareUploadRequest validRequest() {
 		FirmwareUploadRequest request = new FirmwareUploadRequest();
 		request.setCameraModel("IPC-A100");
-		request.setTarget("application");
 		request.setFirmwareVersion("1.0.1.14");
 		request.setFileName("camera-1.0.1.14.ota");
 		request.setContentType("application/octet-stream");
@@ -127,10 +129,10 @@ class DeviceFirmwareServiceTest {
 		firmware.setId(91L);
 		firmware.setTenantId(SingleTenant.DEFAULT_TENANT_ID);
 		firmware.setCameraModel("IPC-A100");
-		firmware.setTarget("application");
+		firmware.setTarget("rootfs");
 		firmware.setFirmwareVersion("1.0.1.14");
 		firmware.setOssConfigKey("minio");
-		firmware.setObjectKey("firmware/IPC-A100/application/1.0.1.14/camera.ota");
+		firmware.setObjectKey("firmware/IPC-A100/rootfs/1.0.1.14/camera.ota");
 		firmware.setOriginalFileName("camera-1.0.1.14.ota");
 		firmware.setFileSize(1024L);
 		firmware.setUploadStatus(uploadStatus);

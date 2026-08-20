@@ -12,12 +12,6 @@
               <el-form-item label="固件版本">
                 <el-input v-model.trim="query.firmwareVersion" clearable placeholder="例如 1.0.1.14" @keyup.enter="search" />
               </el-form-item>
-              <el-form-item label="升级目标">
-                <el-select v-model="query.target" clearable placeholder="全部目标" style="width: 130px">
-                  <el-option label="应用程序" value="application" />
-                  <el-option label="RootFS" value="rootfs" />
-                </el-select>
-              </el-form-item>
               <el-form-item>
                 <el-button type="primary" @click="search">搜索</el-button>
                 <el-button @click="resetSearch">重置</el-button>
@@ -32,9 +26,6 @@
               </template>
             </el-table-column>
             <el-table-column prop="cameraModel" label="摄像头型号" min-width="150" show-overflow-tooltip />
-            <el-table-column label="升级目标" width="110">
-              <template #default="{ row }">{{ targetLabel(row.target) }}</template>
-            </el-table-column>
             <el-table-column prop="firmwareVersion" label="固件版本号" min-width="120" />
             <el-table-column prop="originalFileName" label="固件包" min-width="220" show-overflow-tooltip />
             <el-table-column label="文件大小" width="120">
@@ -93,12 +84,9 @@
         <el-form-item label="固件版本号" prop="firmwareVersion">
           <el-input v-model.trim="form.firmwareVersion" placeholder="例如 1.0.1.14" />
         </el-form-item>
-        <el-form-item label="升级目标" prop="target">
-          <el-select v-model="form.target" placeholder="请选择升级目标" style="width: 100%">
-            <el-option label="应用程序（application）" value="application" />
-            <el-option label="根文件系统（rootfs）" value="rootfs" />
-          </el-select>
-          <div class="form-tip">RootFS 升级将强制开启回滚并在完成后重启。</div>
+        <el-form-item label="升级目标">
+          <el-input model-value="RootFS" disabled />
+          <div class="form-tip">VLS 固件固定升级 RootFS，并强制开启回滚及升级后重启。</div>
         </el-form-item>
         <el-form-item label="固件包" prop="file">
           <el-upload
@@ -150,16 +138,15 @@ const dialogVisible = ref(false)
 const formRef = ref()
 const uploadRef = ref()
 const records = ref([])
-const query = reactive({ cameraModel: '', target: '', firmwareVersion: '' })
+const query = reactive({ cameraModel: '', firmwareVersion: '' })
 const pagination = reactive({ current: 1, size: 10, total: 0 })
-const form = reactive({ cameraModel: '', target: 'application', firmwareVersion: '', file: null })
+const form = reactive({ cameraModel: '', firmwareVersion: '', file: null })
 
 const rules = {
   cameraModel: [
     { required: true, message: '请输入摄像头型号', trigger: 'blur' },
     { validator: (_rule, value, callback) => value?.length <= 128 && !/[\\/]/.test(value) ? callback() : callback(new Error('型号不能超过 128 个字符或包含路径分隔符')), trigger: 'blur' }
   ],
-  target: [{ required: true, message: '请选择升级目标', trigger: 'change' }],
   firmwareVersion: [
     { required: true, message: '请输入固件版本号', trigger: 'blur' },
     { pattern: /^(0|[1-9]\d*)(\.(0|[1-9]\d*)){2,}$/, message: '请输入至少三段的纯数字点分版本号', trigger: 'blur' }
@@ -174,7 +161,6 @@ async function loadData() {
       current: pagination.current,
       size: pagination.size,
       cameraModel: query.cameraModel || undefined,
-      target: query.target || undefined,
       firmwareVersion: query.firmwareVersion || undefined
     })
     const page = response?.data || {}
@@ -194,7 +180,6 @@ function search() {
 
 function resetSearch() {
   query.cameraModel = ''
-  query.target = ''
   query.firmwareVersion = ''
   pagination.current = 1
   loadData()
@@ -202,7 +187,6 @@ function resetSearch() {
 
 function openUploadDialog() {
   form.cameraModel = ''
-  form.target = 'application'
   form.firmwareVersion = ''
   form.file = null
   uploadProgress.value = 0
@@ -245,7 +229,6 @@ async function submitUpload() {
     const contentType = form.file.type || 'application/octet-stream'
     const grantResponse = await issueFirmwareUpload({
       cameraModel: form.cameraModel,
-      target: form.target,
       firmwareVersion: form.firmwareVersion,
       fileName: form.file.name,
       contentType,
@@ -293,7 +276,7 @@ async function download(row) {
 async function remove(row) {
   try {
     await ElMessageBox.confirm(
-      `确定删除 ${row.cameraModel} / ${targetLabel(row.target)} / ${row.firmwareVersion} 及其 MinIO 固件包吗？`,
+      `确定删除 ${row.cameraModel} / RootFS / ${row.firmwareVersion} 及其 MinIO 固件包吗？`,
       '删除固件',
       { type: 'warning', confirmButtonText: '确定删除', cancelButtonText: '取消' }
     )
@@ -312,10 +295,6 @@ function formatFileSize(bytes) {
   if (size < 1024) return `${size} B`
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
   return `${(size / 1024 / 1024).toFixed(1)} MB`
-}
-
-function targetLabel(target) {
-  return target === 'rootfs' ? 'RootFS' : '应用程序'
 }
 
 function formatDateTime(value) {

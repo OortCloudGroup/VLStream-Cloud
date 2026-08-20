@@ -2,6 +2,26 @@ import { authRequest } from '@/utils/request'
 
 const LOCAL_TENANT_ID = '000000'
 
+/** 获取后端当前租户模式。 */
+export function getTenantMode() {
+  return authRequest.get('/sso/v1/mode', { skipTokenAuth: true } as any)
+}
+
+/** 将统一平台 token 换成本系统本地 Sa-Token。 */
+export function exchangePlatformToken(accessToken: string, tenantId?: string) {
+  return authRequest.post('/sso/v1/exchangeToken', {
+    accessToken,
+    ...(tenantId ? { tenantId } : {})
+  }, {
+    skipTokenAuth: true,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      AccessToken: accessToken,
+      ...(tenantId ? { tenantid: tenantId } : {})
+    }
+  } as any)
+}
+
 /** 使用本项目 SpringBlade 认证端点登录，并兼容旧 store 需要的响应字段。 */
 export async function loginSSO(data: Record<string, any>) {
   const response: any = await authRequest.post('/blade-auth/token', null, {
@@ -43,6 +63,11 @@ export function getUserInfo() {
 /** 获取本地单租户信息。 */
 export function getUserTenants() {
   return authRequest.post('/sso/v1/getUserTenants', {})
+}
+
+/** 校验平台租户归属后切换，并返回绑定目标租户的新本地 token。 */
+export function switchTenant(tenantId: string) {
+  return authRequest.post('/sso/v1/switchTenant', { tenantId })
 }
 
 /** 在本地鉴权体系内刷新当前 token。 */

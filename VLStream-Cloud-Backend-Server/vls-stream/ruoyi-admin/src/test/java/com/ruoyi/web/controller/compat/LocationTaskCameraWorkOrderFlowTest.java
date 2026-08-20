@@ -33,7 +33,10 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 @Tag("dev")
-@SpringBootTest(classes = RuoYiApplication.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(
+    classes = RuoYiApplication.class,
+    properties = "vls.tenant.id=codex-camera-flow-test",
+    webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 class LocationTaskCameraWorkOrderFlowTest {
 
     private static final String TENANT_ID = "codex-camera-flow-test";

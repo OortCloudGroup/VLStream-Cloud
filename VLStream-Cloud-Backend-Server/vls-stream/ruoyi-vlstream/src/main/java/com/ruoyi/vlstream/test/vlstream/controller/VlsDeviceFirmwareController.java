@@ -46,9 +46,8 @@ public class VlsDeviceFirmwareController {
 	public R<Page<DeviceFirmwareView>> page(@RequestParam(defaultValue = "1") long current,
 		@RequestParam(defaultValue = "10") long size,
 		@RequestParam(required = false) String cameraModel,
-		@RequestParam(required = false) String target,
 		@RequestParam(required = false) String firmwareVersion) {
-		return R.data(firmwareService.page(current, size, cameraModel, target, firmwareVersion));
+		return R.data(firmwareService.page(current, size, cameraModel, firmwareVersion));
 	}
 
 	@SaCheckPermission("vls:firmware:upload")

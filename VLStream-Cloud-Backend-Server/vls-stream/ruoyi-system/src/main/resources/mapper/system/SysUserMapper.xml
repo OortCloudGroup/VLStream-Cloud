@@ -7,6 +7,7 @@
     <resultMap type="com.ruoyi.common.core.domain.entity.SysUser" id="SysUserResult">
         <id property="userId" column="user_id"/>
         <result property="tenantId" column="tenant_id"/>
+        <result property="platformUserId" column="platform_user_id"/>
         <result property="idcard" column="idcard"/>
         <result property="deptId" column="dept_id"/>
         <result property="deptName" column="dept_name"/>
@@ -85,6 +86,7 @@
         SELECT
             u.user_id,
             u.tenant_id,
+            u.platform_user_id,
             u.dept_id,
             u.dept_info,
             COALESCE(u.dept_code, d.oort_dcode) AS deptCode,

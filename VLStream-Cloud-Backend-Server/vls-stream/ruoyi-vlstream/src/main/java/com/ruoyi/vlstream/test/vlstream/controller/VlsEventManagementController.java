@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springblade.core.boot.ctrl.BladeController;
 import org.springblade.core.excel.util.ExcelUtil;
 import org.springblade.core.mp.support.Condition;
@@ -23,17 +22,17 @@ import org.springblade.core.secure.BladeUser;
 import org.springblade.core.tool.api.R;
 import org.springblade.core.tool.utils.DateUtil;
 import org.springblade.core.tool.utils.Func;
-import com.ruoyi.vlstream.test.modules.system.service.IFileUploadService;
 import com.ruoyi.vlstream.test.vlstream.excel.VlsEventManagementExcel;
-import com.ruoyi.vlstream.test.vlstream.pojo.dto.FileResponseDto;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.EventManagementVO;
+import com.ruoyi.vlstream.test.vlstream.service.IVlsDeviceInfoService;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsEventManagementService;
+import com.ruoyi.vlstream.test.vlstream.service.VlsEventReportApplicationService;
 import com.ruoyi.vlstream.test.vlstream.wrapper.VlsEventManagementWrapper;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -50,10 +49,8 @@ import java.util.Map;
 public class VlsEventManagementController extends BladeController {
 
 	private final IVlsEventManagementService vlsEventManagementService;
-	private final IFileUploadService fileUploadService;
-
-	private static final String FILE_UPLOAD_APP_ID = "818301f0e77f4cd8a117414cbeb32d9e";
-	private static final String FILE_UPLOAD_SECRET_KEY = "5f0de11687d744bc95e84e207d319493";
+	private final IVlsDeviceInfoService deviceInfoService;
+	private final VlsEventReportApplicationService eventReportApplicationService;
 
 	/**
 	 * 事件管理表 详情
@@ -173,16 +170,11 @@ public class VlsEventManagementController extends BladeController {
 		if (file == null || file.isEmpty()) {
 			return R.fail("File is required");
 		}
-		File localFile = fileUploadService.multipartFileToFile(file);
-		if (localFile == null) {
-			return R.fail("File convert failed");
+		DeviceInfo device = deviceInfoService.getByDeviceId(eventManagement.getReportDevice());
+		if (device == null) {
+			return R.fail("Report device not found in current tenant");
 		}
-		FileResponseDto fileResponseDto = fileUploadService.uploadFile(FILE_UPLOAD_APP_ID, FILE_UPLOAD_SECRET_KEY, localFile);
-		if (fileResponseDto == null || StringUtils.isBlank(fileResponseDto.getUrl())) {
-			return R.fail("File upload failed");
-		}
-		eventManagement.setReportImg(fileResponseDto.getUrl());
-		boolean created = vlsEventManagementService.createEvent(eventManagement);
+		boolean created = eventReportApplicationService.reportMultipartEvent(eventManagement, file, device);
 		if (created) {
 			return R.data(true);
 		}

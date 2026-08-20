@@ -6,6 +6,8 @@
 package com.ruoyi.web.controller.compat;
 
 import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.framework.config.properties.TokenProperties;
+import com.ruoyi.web.controller.compat.tenant.MultiTenantAuthService;
 import com.ruoyi.vlstream.test.compat.BladeResult;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -29,7 +31,7 @@ class SsoCompatControllerTest {
     @Test
     void getUserTenantsReturnsCachedLocalUserAndTenantList() {
         BladeTokenUserStore tokenUserStore = mock(BladeTokenUserStore.class);
-        SsoCompatController controller = new SsoCompatController(tokenUserStore);
+        SsoCompatController controller = createController(tokenUserStore);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("accesstoken", "sa-token");
         SysUser user = new SysUser();
@@ -57,7 +59,7 @@ class SsoCompatControllerTest {
     @Test
     void getUserInfoReturnsCachedLocalUserAliasesAndToken() {
         BladeTokenUserStore tokenUserStore = mock(BladeTokenUserStore.class);
-        SsoCompatController controller = new SsoCompatController(tokenUserStore);
+        SsoCompatController controller = createController(tokenUserStore);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("accesstoken", "sa-token");
         SysUser user = new SysUser();
@@ -83,7 +85,7 @@ class SsoCompatControllerTest {
     @Test
     void refreshTokenReturnsCurrentAccessTokenWhenCached() {
         BladeTokenUserStore tokenUserStore = mock(BladeTokenUserStore.class);
-        SsoCompatController controller = new SsoCompatController(tokenUserStore);
+        SsoCompatController controller = createController(tokenUserStore);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("AccessToken", "sa-token");
         SysUser user = new SysUser();
@@ -123,5 +125,12 @@ class SsoCompatControllerTest {
             "refreshToken", javax.servlet.http.HttpServletRequest.class, Map.class);
 
         assertArrayEquals(new String[] {"/refreshToken"}, refreshToken.getAnnotation(PostMapping.class).value());
+    }
+
+    private SsoCompatController createController(BladeTokenUserStore tokenUserStore) {
+        TokenProperties properties = new TokenProperties();
+        properties.setTenantType("single");
+        properties.setSingleTenantId("000000");
+        return new SsoCompatController(tokenUserStore, properties, mock(MultiTenantAuthService.class));
     }
 }

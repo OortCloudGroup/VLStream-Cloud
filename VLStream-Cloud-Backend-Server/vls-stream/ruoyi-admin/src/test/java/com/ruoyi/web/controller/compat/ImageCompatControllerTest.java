@@ -5,7 +5,7 @@
 
 package com.ruoyi.web.controller.compat;
 
-import com.ruoyi.vlstream.compat.BladeResult;
+import com.ruoyi.vlstream.test.compat.BladeResult;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.bind.annotation.DeleteMapping;

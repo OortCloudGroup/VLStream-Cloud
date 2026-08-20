@@ -79,6 +79,13 @@ public class VlsMqttDeviceController {
 			request == null ? null : request.getFirmwareId()));
 	}
 
+	@SaCheckPermission("vls:firmware:deploy")
+	@PostMapping("/{deviceId}/firmware-upgrades/{requestId}/cancel")
+	public R<FirmwareDeployTaskView> cancelFirmwareUpgrade(@PathVariable Long deviceId,
+		@PathVariable String requestId) {
+		return R.data(firmwareDeploymentService.cancel(deviceId, requestId));
+	}
+
 	@PostMapping("/{deviceId}/preview")
 	public R<Map<String, Object>> preview(@PathVariable Long deviceId, @RequestBody PreviewRequest request) {
 		MqttDevice device = deviceMapper.selectById(deviceId);
