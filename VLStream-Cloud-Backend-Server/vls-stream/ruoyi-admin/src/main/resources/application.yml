@@ -162,7 +162,7 @@ vlstream:
     # 浏览器可访问的 ZLM HTTP(S) 地址；部署环境通过环境变量覆盖
     public-base-url: ${VLSTREAM_ZLM_PUBLIC_URL:http://127.0.0.1:8090}
     # ZLM API 密钥不写入任何环境配置文件，统一通过环境变量注入
-    secret: ${ZLMEDIAKIT_SECRET:}
+    secret: ${ZLMEDIAKIT_SECRET:su6TiedN2rVAmBbIDX0aa0QTiBJLBdcf}
     app: ${VLSTREAM_ZLM_APP:vlstream}
     connect-timeout-millis: ${VLSTREAM_ZLM_CONNECT_TIMEOUT_MILLIS:3000}
     read-timeout-millis: ${VLSTREAM_ZLM_READ_TIMEOUT_MILLIS:10000}
