@@ -305,7 +305,7 @@ deployment manifest before production release.
 
 | Name | Purpose | Version | License |
 | --- | --- | --- | --- |
-| VLStream Server (VLS) | Device registration, user binding, events, model tasks, and platform APIs | Maven `0.8.3`; Spring Boot `2.7.11`; release image `1.1.2` | [MIT](./LICENSE) |
+| VLStream Server (VLS) | Device registration, user binding, events, model tasks, and platform APIs | Maven `1.2.1`; Spring Boot `2.7.11`; release image `1.2.1` | [MIT](./LICENSE) |
 | WVP Server | Required unified video-device center for VLStream, GB28181/SIP, ONVIF, RTSP, preview, playback, PTZ, and video control | `3.8.9`; Spring Boot `2.7.18` | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE) |
 | ZLMediaKit | RTP ingest, media management, REST/Hook, and playback output | **Not pinned** in WVP/VLStream repositories | [MIT](https://docs.zlmediakit.com/zh/more/license.html) |
 | MQTT Broker / EMQX | Device messaging, heartbeat, events, commands, and model receipts | `5.4`; external service in release Compose | [Apache-2.0](https://github.com/emqx/emqx-docker/blob/main/LICENSE) |
@@ -641,7 +641,9 @@ Use the generated OpenAPI documentation for the complete and current API list.
 
 Download the deployment package from
 [GitHub Releases](https://github.com/OortCloudGroup/VLStream-Cloud/releases),
-extract it, copy the environment template, and start the bundled services:
+extract it, and configure the environment template. VLStream v1.2.1 requires
+[APaaS WVP Server v1.0.1](https://github.com/OortCloudGroup/apaas-wvp-server/releases/tag/v1.0.1)
+to be running first. Then start the bundled VLStream services:
 
 ```powershell
 Copy-Item .env.example .env
@@ -656,7 +658,8 @@ docker compose down
 
 > [!TIP]
 > The package includes MySQL, Redis, MinIO, WebRTC-streamer, the backend, and
-> the frontend. Existing external infrastructure is also supported. See the
+> the frontend. WVP and its ZLMediaKit service are deployed separately through
+> the WVP v1.0.1 package. Existing external infrastructure is also supported. See the
 > [deployment guide](./deploy/release/README.md) for configuration and upgrade
 > instructions.
 

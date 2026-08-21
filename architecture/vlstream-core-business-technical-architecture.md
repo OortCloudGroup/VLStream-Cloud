@@ -114,8 +114,8 @@ sequenceDiagram
 
 | 名称 | 用途 | 版本号 | 授权协议 |
 | --- | --- | --- | --- |
-| VLStream Server（VLS） | 当前项目业务后端：设备注册、用户绑定、设备运营、事件处理、模型任务和平台 API | 源码 Maven `0.8.3`；Spring Boot `2.7.11`；Java `8`；发布镜像默认 `1.1.2` | [MIT](../LICENSE)（项目自有代码；第三方依赖另行遵循其协议） |
-| WVP Server | 独立视频业务后端：GB28181/SIP、ONVIF、RTSP、设备目录、实时预览、回放、云台控制，并负责协调 ZLMediaKit | 项目 `3.8.9`；Spring Boot `2.7.18`；Java `8` | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE)（项目自有代码；第三方依赖另行遵循其协议） |
+| VLStream Server（VLS） | 当前项目业务后端：设备注册、用户绑定、设备运营、事件处理、模型任务和平台 API | 源码 Maven `1.2.1`；Spring Boot `2.7.11`；Java `8`；发布镜像默认 `1.2.1` | [MIT](../LICENSE)（项目自有代码；第三方依赖另行遵循其协议） |
+| WVP Server | 独立视频业务后端：GB28181/SIP、ONVIF、RTSP、设备目录、实时预览、回放、云台控制，并负责协调 ZLMediaKit | APaaS WVP Server `1.0.1`；Spring Boot `2.7.18`；Java `8` | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE)（项目自有代码；第三方依赖另行遵循其协议） |
 | ZLMediaKit | WVP 依赖的流媒体服务器：RTP 收流、媒体流管理、REST/Hook、WebRTC/HTTP-FLV/HLS/RTSP 等播放输出 | WVP 配置中未固定；部署时应显式锁定镜像或源码 Tag | [MIT](https://docs.zlmediakit.com/zh/more/license.html)（自有代码；第三方依赖另行遵循其协议） |
 | MQTT Broker / EMQX | 硬件与 VLS 之间的消息通道：连接、心跳、事件上报、控制下发、模型任务和执行回执 | `5.4`（现有后端 Compose 固定；发布 Compose 作为外部服务接入） | [Apache-2.0](https://github.com/emqx/emqx-docker/blob/main/LICENSE)（EMQX `5.9.0+` 已变更为 BSL，不适用于当前 `5.4`） |
 | MySQL | 业务主数据库：设备、租户、用户绑定、事件、任务、系统配置和审计数据 | `8.4.10-oraclelinux9`（当前发布 Compose；旧脚本为 `8.0.31`） | [GPLv2 或 Oracle 商业许可](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |
@@ -126,7 +126,7 @@ sequenceDiagram
 
 | 名称 | 用途 | 版本号 | 授权协议 |
 | --- | --- | --- | --- |
-| 前端静态文件/网关 Server（通常为 Nginx） | 托管 VLStream 前端静态资源，反向代理后端 API、WebSocket 及 WebRTC 路径 | 当前发布前端镜像为 `vlstream-frontend:1.1.2`，内部 Web Server 版本未在仓库公开；旧 Compose 固定 `nginx:1.22.1` | [2-clause BSD-like](https://nginx.org/en/docs/faq/license_copyright.html) |
+| 前端静态文件/网关 Server（通常为 Nginx） | 托管 VLStream 前端静态资源，反向代理后端 API、WebSocket 及 WebRTC 路径 | 当前发布前端镜像为 `vlstream-frontend:1.2.1`，内部使用 Nginx `1.28`；旧 Compose 固定 `nginx:1.22.1` | [2-clause BSD-like](https://nginx.org/en/docs/faq/license_copyright.html) |
 | WebRTC Streamer | VLS 直连 RTSP 到 WebRTC 的可选播放链路；不是 WVP 的核心流媒体服务器 | `v0.8.16`（当前发布 Compose） | [Unlicense](https://github.com/mpromonet/webrtc-streamer/blob/v0.8.16/UNLICENSE)；其内含 WebRTC、civetweb、live555 等依赖还需分别遵循对应协议 |
 | FFmpeg | WVP/ZLMediaKit 的按需拉流、转码、截图或格式转换辅助程序；不是独立的媒体平台 | 未固定，由部署环境提供 | [LGPLv2.1+；启用 GPL 部件时为 GPLv2+](https://ffmpeg.org/legal.html) |
 | 外部 AI/训练推理服务 | 算法训练、模型转换、推理或模型产物生成；当前时序图只画了模型任务下发和对象存储，不把该服务作为核心视频链路 | 未在本仓库固定 | 外部服务协议，待具体部署确认 |
