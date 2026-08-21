@@ -7,8 +7,6 @@ package com.ruoyi.vlstream.test.vlstream.service;
 
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.ruoyi.vlstream.test.vlstream.mapper.VlsDeviceInfoMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceMediaUpload;
@@ -36,16 +34,13 @@ import java.util.UUID;
 public class DeviceEventMqttHandler {
 
 	@Resource
-	private VlsDeviceInfoMapper deviceInfoMapper;
-
-	@Resource
 	private DeviceMediaUploadService mediaUploadService;
 
 	@Resource
 	private ActiveSafetyEventReportService activeSafetyEventReportService;
 
 	@Resource
-	private TenantDeviceResolver tenantDeviceResolver;
+	private WvpVlStreamDeviceResolver wvpDeviceResolver;
 
 	@Resource
 	private VlsEventReportApplicationService eventReportApplicationService;
@@ -66,24 +61,8 @@ public class DeviceEventMqttHandler {
 			}
 			boolean multiTenant = eventReportApplicationService.isMultiTenant();
 			boolean platformFaceEvent = multiTenant && VlsMqttProtocol.FACE_EVENT.equals(subBizType);
-			if (!multiTenant) {
-				ActiveSafetyEventReportResult duplicate = activeSafetyEventReportService.findDuplicate(
-					sourceMessageId, deviceId, eventId);
-				if (duplicate != null) {
-					return buildReply(envelope, eventId, duplicate.getMediaId(), true,
-						"事件已处理，重复消息已忽略");
-				}
-			}
-			DeviceInfo device = multiTenant ? tenantDeviceResolver.resolveUnique(deviceId)
-				: deviceInfoMapper.selectOne(new LambdaQueryWrapper<DeviceInfo>()
-					.eq(DeviceInfo::getDeviceId, deviceId)
-					.last("limit 1"));
-			if (device == null) {
-				throw new IllegalArgumentException("平台不存在该设备");
-			}
-			if (multiTenant) {
-				TenantContextHolder.setTenantId(device.getTenantId());
-			}
+			DeviceInfo device = wvpDeviceResolver.resolve(deviceId);
+			TenantContextHolder.setTenantId(device.getTenantId());
 
 			if (platformFaceEvent) {
 				EventManagement duplicate = eventReportApplicationService.findDuplicate(
@@ -92,7 +71,7 @@ public class DeviceEventMqttHandler {
 					return buildReply(envelope, eventId, duplicate.getMediaId(), true,
 						"事件已处理，重复消息已忽略");
 				}
-			} else if (multiTenant) {
+			} else {
 				ActiveSafetyEventReportResult duplicate = activeSafetyEventReportService.findDuplicate(
 					sourceMessageId, deviceId, eventId);
 				if (duplicate != null) {

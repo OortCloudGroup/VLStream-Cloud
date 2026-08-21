@@ -1,14 +1,14 @@
 import axios from 'axios'
-import request from '@/utils/request'
+import request from '@/utils/wvpRequest'
 
 export const getDeviceFirmwarePage = params => request({
-  url: '/vlsDeviceFirmware/page',
+  url: '/vlstream/firmware/page',
   method: 'get',
   params
 })
 
 export const issueFirmwareUpload = data => request({
-  url: '/vlsDeviceFirmware/upload-grant',
+  url: '/vlstream/firmware/upload-grant',
   method: 'post',
   data
 })
@@ -28,16 +28,16 @@ export const uploadFirmwareToMinio = (uploadUrl, file, contentType, onProgress) 
 )
 
 export const completeFirmwareUpload = id => request({
-  url: `/vlsDeviceFirmware/${id}/complete`,
+  url: `/vlstream/firmware/${id}/complete`,
   method: 'post'
 })
 
 export const getFirmwareDownloadUrl = id => request({
-  url: `/vlsDeviceFirmware/${id}/download-url`,
+  url: `/vlstream/firmware/${id}/download-url`,
   method: 'get'
 })
 
 export const removeDeviceFirmware = id => request({
-  url: `/vlsDeviceFirmware/${id}`,
+  url: `/vlstream/firmware/${id}`,
   method: 'delete'
 })

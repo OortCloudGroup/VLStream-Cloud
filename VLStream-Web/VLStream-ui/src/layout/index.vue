@@ -445,7 +445,7 @@ const menuRoutesMap = {
           ]
         },
         { path: '/dahua/dahuaDevice', meta: { title: '大华协议', icon: 'wvp-dahua' } },
-        { path: '/device-management', meta: { title: '自定义', icon: '设备管理' } }
+        { path: '/custom/device', meta: { title: '自定义', icon: '设备管理' } }
       ]
     },
     // { path: '/camera-settings', meta: { title: '设置摄像机', icon: '摄像机设置' } },

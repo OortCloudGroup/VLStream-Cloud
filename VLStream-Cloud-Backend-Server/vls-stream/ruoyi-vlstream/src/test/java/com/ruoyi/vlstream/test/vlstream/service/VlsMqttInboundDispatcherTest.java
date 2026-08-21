@@ -1,12 +1,14 @@
 package com.ruoyi.vlstream.test.vlstream.service;
 
 import cn.hutool.json.JSONObject;
+import com.ruoyi.vlstream.test.vlstream.config.VlsMqttProperties;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -19,6 +21,15 @@ import static org.mockito.Mockito.when;
 
 @Tag("dev")
 class VlsMqttInboundDispatcherTest {
+
+	@Test
+	void scheduledMaintenanceIsTheOnlyReconnectOwner() throws Exception {
+		VlsMqttBusService busService = new VlsMqttBusService();
+		setField(busService, "mqttProperties", new VlsMqttProperties());
+
+		assertFalse(busService.connectOptions().isAutomaticReconnect());
+		busService.destroy();
+	}
 
 	@Test
 	void routesDeviceStateToRegisteredHandler() {

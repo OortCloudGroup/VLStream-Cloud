@@ -3,7 +3,6 @@ package com.ruoyi.vlstream.test.vlstream.service;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.ruoyi.common.exception.ServiceException;
-import com.ruoyi.vlstream.test.vlstream.mapper.VlsDeviceInfoMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceMediaUpload;
@@ -28,25 +27,22 @@ import static org.mockito.Mockito.when;
 @Tag("dev")
 class DeviceEventMqttHandlerTest {
 
-	private VlsDeviceInfoMapper deviceInfoMapper;
 	private DeviceMediaUploadService mediaUploadService;
 	private ActiveSafetyEventReportService activeSafetyEventReportService;
-	private TenantDeviceResolver tenantDeviceResolver;
+	private WvpVlStreamDeviceResolver wvpDeviceResolver;
 	private VlsEventReportApplicationService eventReportApplicationService;
 	private DeviceEventMqttHandler handler;
 
 	@BeforeEach
 	void setUp() throws Exception {
-		deviceInfoMapper = mock(VlsDeviceInfoMapper.class);
 		mediaUploadService = mock(DeviceMediaUploadService.class);
 		activeSafetyEventReportService = mock(ActiveSafetyEventReportService.class);
-		tenantDeviceResolver = mock(TenantDeviceResolver.class);
+		wvpDeviceResolver = mock(WvpVlStreamDeviceResolver.class);
 		eventReportApplicationService = mock(VlsEventReportApplicationService.class);
 		handler = new DeviceEventMqttHandler();
-		setField(handler, "deviceInfoMapper", deviceInfoMapper);
 		setField(handler, "mediaUploadService", mediaUploadService);
 		setField(handler, "activeSafetyEventReportService", activeSafetyEventReportService);
-		setField(handler, "tenantDeviceResolver", tenantDeviceResolver);
+		setField(handler, "wvpDeviceResolver", wvpDeviceResolver);
 		setField(handler, "eventReportApplicationService", eventReportApplicationService);
 	}
 
@@ -60,7 +56,7 @@ class DeviceEventMqttHandlerTest {
 		upload.setMediaId("media-1");
 		upload.setObjectKey("events/CAM-1/2026/07/29/media-1.jpg");
 		when(eventReportApplicationService.isMultiTenant()).thenReturn(true);
-		when(tenantDeviceResolver.resolveUnique("CAM-1")).thenReturn(device);
+		when(wvpDeviceResolver.resolve("CAM-1")).thenReturn(device);
 		when(mediaUploadService.validateAndBind(
 			"media-1", "CAM-1", upload.getObjectKey(), sha256(), "event-message-1"))
 			.thenReturn(upload);
@@ -83,13 +79,14 @@ class DeviceEventMqttHandlerTest {
 		DeviceInfo device = new DeviceInfo();
 		device.setDeviceId("CAM-1");
 		device.setDeviceName("测试摄像头");
+		device.setTenantId("000000");
 		device.setTag("重点区域");
 		device.setAddress("测试位置");
 		DeviceMediaUpload upload = new DeviceMediaUpload();
 		upload.setMediaId("media-1");
 		upload.setOssConfigKey("minio");
 		upload.setObjectKey("events/CAM-1/2026/07/29/media-1.jpg");
-		when(deviceInfoMapper.selectOne(any())).thenReturn(device);
+		when(wvpDeviceResolver.resolve("CAM-1")).thenReturn(device);
 		when(mediaUploadService.validateAndBind(
 			"media-1", "CAM-1", upload.getObjectKey(), sha256(), "event-message-1"))
 			.thenReturn(upload);
@@ -122,7 +119,8 @@ class DeviceEventMqttHandlerTest {
 	void returnsFailedReplyWhenMinioValidationFails() {
 		DeviceInfo device = new DeviceInfo();
 		device.setDeviceId("CAM-1");
-		when(deviceInfoMapper.selectOne(any())).thenReturn(device);
+		device.setTenantId("000000");
+		when(wvpDeviceResolver.resolve("CAM-1")).thenReturn(device);
 		when(mediaUploadService.validateAndBind(any(), any(), any(), any(), any()))
 			.thenThrow(new ServiceException("MinIO 图片尚未上传"));
 
@@ -135,6 +133,10 @@ class DeviceEventMqttHandlerTest {
 
 	@Test
 	void ignoresDuplicateBeforeValidatingMediaAgain() {
+		DeviceInfo device = new DeviceInfo();
+		device.setDeviceId("CAM-1");
+		device.setTenantId("000000");
+		when(wvpDeviceResolver.resolve("CAM-1")).thenReturn(device);
 		when(activeSafetyEventReportService.findDuplicate(
 			"event-message-1", "CAM-1", "device-event-1"))
 			.thenReturn(ActiveSafetyEventReportResult.builder()

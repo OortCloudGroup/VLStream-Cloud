@@ -226,7 +226,7 @@ for each environment; never commit the real secret to Git.
 VLStream Cloud's core business architecture is organized into three categories:
 
 - **Hardware:** IPC, BOX, and NVR devices. The lifecycle covers production provisioning, installation and protocol access, platform operations, and device transfer.
-- **Platform servers:** VLS owns device operations and platform business; WVP owns video-device access and video control; ZLMediaKit provides the media server behind WVP; MQTT, MySQL, Redis, and MinIO provide messaging, persistence, cache, and object storage.
+- **Platform servers:** VLS owns AI events, model delivery, and platform business; WVP is the sole video-device center for VLStream and other protocols, device state, and video control; ZLMediaKit provides the media server behind WVP; MQTT, MySQL, Redis, and MinIO provide messaging, persistence, cache, and object storage.
 - **Client:** VLStream-ui provides platform operations, while the WVP UI provides video preview, playback, PTZ, and channel management.
 
 The complete lifecycle sequence diagram and dependency inventory are maintained in
@@ -306,7 +306,7 @@ deployment manifest before production release.
 | Name | Purpose | Version | License |
 | --- | --- | --- | --- |
 | VLStream Server (VLS) | Device registration, user binding, events, model tasks, and platform APIs | Maven `0.8.3`; Spring Boot `2.7.11`; release image `1.1.2` | [MIT](./LICENSE) |
-| WVP Server | GB28181/SIP, ONVIF, RTSP, preview, playback, PTZ, and video control | `3.8.9`; Spring Boot `2.7.18` | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE) |
+| WVP Server | Required unified video-device center for VLStream, GB28181/SIP, ONVIF, RTSP, preview, playback, PTZ, and video control | `3.8.9`; Spring Boot `2.7.18` | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE) |
 | ZLMediaKit | RTP ingest, media management, REST/Hook, and playback output | **Not pinned** in WVP/VLStream repositories | [MIT](https://docs.zlmediakit.com/zh/more/license.html) |
 | MQTT Broker / EMQX | Device messaging, heartbeat, events, commands, and model receipts | `5.4`; external service in release Compose | [Apache-2.0](https://github.com/emqx/emqx-docker/blob/main/LICENSE) |
 | MySQL | Business database | `8.4.10-oraclelinux9` | [GPLv2 or commercial license](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |
@@ -477,6 +477,7 @@ deployment. Configure at least the following services before startup:
 | --- | --- | --- |
 | MySQL | Business data, training jobs, and delivery jobs | `application-dev.yml` / `application-prod.yml` |
 | Redis | Sessions, cache, and distributed state | `application-dev.yml` / `application-prod.yml` |
+| WVP Server | Required unified video-device center and VLStream device validation | `VLSTREAM_WVP_INTERNAL_BASE_URL` |
 | MinIO | Annotation images, datasets, and file uploads | Database table `sys_oss_config` |
 | GPU training server | Training, conversion, and model artifacts | `VLSTREAM_SSH_*`, `VLSTREAM_TRAINING_*` |
 | MQTT broker | Device control, model delivery, and receipts | `VLSTREAM_MQTT_*` |
@@ -496,6 +497,10 @@ MYSQL_PASSWORD=replace-me
 REDIS_HOST=redis.example.internal
 REDIS_PORT=6379
 REDIS_PASSWORD=replace-me
+
+# WVP is required; this address must be reachable from the VLS backend
+VLSTREAM_WVP_INTERNAL_BASE_URL=http://wvp-server:9080
+VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED=false
 
 VLSTREAM_SSH_HOST=gpu.example.internal
 VLSTREAM_SSH_PORT=22
@@ -520,6 +525,12 @@ VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS=600
 VLSTREAM_DEVICE_MEDIA_MAX_IMAGE_BYTES=10485760
 VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED=false
 ```
+
+WVP owns VLStream device registration, heartbeat, video streams, and firmware
+jobs. VLS keeps the existing hardware-facing HTTP and MQTT contracts and calls
+WVP internally when issuing media upload URLs or consuming device events. Start
+WVP before VLS. Keep `VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED=false`; the switch
+exists only to roll back to the legacy VLS device-management implementation.
 
 Each backend instance must use a unique
 `VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID`. MQTT topics, ACL rules, and hardware

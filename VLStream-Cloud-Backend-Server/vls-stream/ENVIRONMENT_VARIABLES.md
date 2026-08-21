@@ -156,6 +156,25 @@
 > 每设备 HMAC-SHA256 身份认证后再开放上传地址申请接口。MinIO API endpoint 必须是硬件可访问
 > 的地址，不能配置成相对硬件自身的 `127.0.0.1:9000`。
 
+### 8.6 WVP VLStream 设备中心
+
+WVP 是 VLStream 设备、心跳、视频流和固件任务的唯一数据源。VLS 对硬件保持原有 HTTP/MQTT
+协议不变，在图片上传申请和事件消费时通过 WVP 内部接口校验设备。
+
+| 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |
+|--------|------|--------|----------|----------|----------|
+| `VLSTREAM_WVP_INTERNAL_BASE_URL` | VLS 访问 WVP 内部接口的根地址 | `http://127.0.0.1:9080` | 是 | VLS 进程可访问的 HTTP/HTTPS URL | `http://wvp-server:9080` |
+| `VLSTREAM_WVP_CONNECT_TIMEOUT_MILLIS` | VLS 连接 WVP 的超时时间 | `3000` | 否 | 大于等于 500 的毫秒数 | `3000` |
+| `VLSTREAM_WVP_READ_TIMEOUT_MILLIS` | VLS 等待 WVP 响应的超时时间 | `5000` | 否 | 大于等于 500 的毫秒数 | `5000` |
+| `VLSTREAM_NATIVE_DEVICE_DEFAULT_TENANT_ID` | 单租户模式下 WVP 设备映射到的 VLS 默认租户 | `000000` | 是 | VLS 中存在的租户 ID | `000000` |
+| `VLSTREAM_NATIVE_DEVICE_MULTI_TENANT_DEFAULT_TENANT_ID` | 多租户模式下 WVP 设备映射到的 VLS 默认租户 | 由项目配置提供 | 多租户必填 | VLS 中存在的租户 ID | `0e391fd7-1033-4f09-88c0-187582fee462` |
+| `VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED` | 是否恢复 VLS 旧设备/心跳/固件管理实现 | `false` | 否 | `true/false` | 正常部署保持 `false` |
+
+> 内部设备查询接口只返回设备校验所需的最小只读字段，不使用用户鉴权或额外共享密钥；
+> 部署时应仅允许 VLS 后端通过服务网络访问。VLS 查询到设备已登记即可继续，不要求设备
+> 当时在线。正常部署不要启用 `VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED`，否则 VLS
+> 与 WVP 会同时消费心跳和固件回执，产生重复状态和重复业务回执。
+
 ## 九、Swagger文档配置
 
 | 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |

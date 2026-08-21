@@ -16,6 +16,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springblade.core.tool.api.R;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +33,7 @@ import java.util.Map;
 /** Management and preview APIs for native MQTT devices. */
 @RestController
 @RequestMapping("/vlsMqttDevice")
+@ConditionalOnProperty(value = "vlstream.native-device.legacy-enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class VlsMqttDeviceController {
 

@@ -1,5 +1,6 @@
 package com.ruoyi.vlstream.test.vlstream.mapper;
 
+import com.baomidou.mybatisplus.annotation.InterceptorIgnore;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
@@ -17,5 +18,6 @@ public interface MqttDeviceMessageMapper {
 		@Param("receivedAt") Date receivedAt);
 
 	@Delete("DELETE FROM vls_mqtt_device_message WHERE received_at < #{before}")
+	@InterceptorIgnore(tenantLine = "true")
 	int deleteBefore(@Param("before") Date before);
 }

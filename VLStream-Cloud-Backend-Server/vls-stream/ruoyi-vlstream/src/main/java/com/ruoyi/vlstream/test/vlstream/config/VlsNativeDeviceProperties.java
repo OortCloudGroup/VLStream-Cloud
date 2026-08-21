@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "vlstream.native-device")
 public class VlsNativeDeviceProperties {
 	private String defaultTenantId = "000000";
+	private String multiTenantDefaultTenantId = "0e391fd7-1033-4f09-88c0-187582fee462";
 	private long offlineTimeoutSeconds = 180L;
 	private long messageRetentionHours = 24L;
 }

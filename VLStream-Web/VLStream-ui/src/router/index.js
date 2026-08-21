@@ -42,6 +42,12 @@ const routes = [
         meta: { title: 'VLStream 设备', parentMenu: 'video-aggregation' }
       },
       {
+        path: '/custom/device',
+        name: 'WvpCustomDevice',
+        component: () => import('@/views/VideoAggregation/CustomProtocolDevice.vue'),
+        meta: { title: '自定义协议设备', parentMenu: 'video-aggregation' }
+      },
+      {
         path: '/isup/isupDevice',
         name: 'WvpIsupDevice',
         component: () => import('@/views/isup/lsupDevice/index.vue'),

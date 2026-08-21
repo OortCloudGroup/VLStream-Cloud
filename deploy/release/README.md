@@ -19,6 +19,13 @@ docker compose up -d
 Change every password in `.env` before startup and change the application
 password immediately after the first sign-in.
 
+WVP is a required dependency and the sole video-device center. This package
+does not bundle a second WVP copy; deploy `apaas-wvp-server` first and set
+`VLSTREAM_WVP_INTERNAL_BASE_URL` to an address reachable from the backend
+container, such as `http://host.docker.internal:9080` for a separate service on
+the same host. The read-only device lookup uses no additional shared secret;
+keep the internal path reachable only through the backend service network.
+
 The default Compose file starts MySQL, Redis, MinIO, WebRTC-streamer, the
 backend, and the frontend. To use existing MySQL and Redis services, provide
 their connection variables and run:

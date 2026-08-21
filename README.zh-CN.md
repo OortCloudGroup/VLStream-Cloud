@@ -228,7 +228,7 @@ $bytes = New-Object byte[] 32
 VLStream Cloud 的核心业务架构分为三大类：
 
 - **硬件：** IPC、BOX、NVR，覆盖产线写入、初始化安装与协议接入、平台运营以及设备转让。
-- **平台 Server：** VLS 负责设备运营和平台业务；WVP 负责视频设备接入和视频控制；ZLMediaKit 是 WVP 依赖的流媒体服务器；MQTT、MySQL、Redis、MinIO 分别提供消息、持久化、缓存和对象存储能力。
+- **平台 Server：** VLS 负责 AI 事件、模型和平台业务；WVP 是唯一的视频设备中心，负责 VLStream 等协议接入、设备状态和视频控制；ZLMediaKit 是 WVP 依赖的流媒体服务器；MQTT、MySQL、Redis、MinIO 分别提供消息、持久化、缓存和对象存储能力。
 - **客户端：** VLStream-ui 承载平台运营功能，WVP UI 承载视频预览、回放、云台和通道管理。
 
 完整的生命周期时序图和依赖清单见
@@ -307,7 +307,7 @@ sequenceDiagram
 | 名称 | 用途 | 版本号 | 授权协议 |
 | --- | --- | --- | --- |
 | VLStream Server（VLS） | 设备注册、用户绑定、事件、模型任务和平台 API | Maven `0.8.3`；Spring Boot `2.7.11`；发布镜像 `1.1.2` | [MIT](./LICENSE) |
-| WVP Server | GB28181/SIP、ONVIF、RTSP、预览、回放、云台和视频控制 | `3.8.9`；Spring Boot `2.7.18` | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE) |
+| WVP Server | 必选的统一视频设备中心；负责 VLStream、GB28181/SIP、ONVIF、RTSP、预览、回放、云台和视频控制 | `3.8.9`；Spring Boot `2.7.18` | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE) |
 | ZLMediaKit | RTP 收流、媒体管理、REST/Hook 和播放输出 | WVP/VLStream 仓库中**未固定** | [MIT](https://docs.zlmediakit.com/zh/more/license.html) |
 | MQTT Broker / EMQX | 设备消息、心跳、事件、指令和模型回执 | `5.4`；发布 Compose 作为外部服务接入 | [Apache-2.0](https://github.com/emqx/emqx-docker/blob/main/LICENSE) |
 | MySQL | 业务数据库 | `8.4.10-oraclelinux9` | [GPLv2 或商业许可](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |
@@ -467,6 +467,7 @@ mysql -u root -p vlstream --execute="source script/sql/mysql/mysql_ry_v0.8.X.sql
 | --- | --- | --- |
 | MySQL | 业务数据、训练任务、下发任务 | `application-dev.yml` / `application-prod.yml` |
 | Redis | 登录状态、缓存和分布式状态 | `application-dev.yml` / `application-prod.yml` |
+| WVP Server | 必选的统一视频设备中心和 VLStream 设备校验 | `VLSTREAM_WVP_INTERNAL_BASE_URL` |
 | MinIO | 算法标注图片、数据集和普通文件上传 | 数据库表 `sys_oss_config` |
 | GPU 训练服务器 | 训练、格式转换、模型产物保存 | `VLSTREAM_SSH_*`、`VLSTREAM_TRAINING_*` |
 | MQTT Broker | 设备控制、模型任务发布和硬件回执 | `VLSTREAM_MQTT_*` |
@@ -487,6 +488,10 @@ MYSQL_PASSWORD=replace-me
 REDIS_HOST=redis.example.internal
 REDIS_PORT=6379
 REDIS_PASSWORD=replace-me
+
+# WVP 是必选依赖；该地址必须能从 VLS 后端访问
+VLSTREAM_WVP_INTERNAL_BASE_URL=http://wvp-server:9080
+VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED=false
 
 # GPU 训练服务器；模型产物实际保存在该服务器的 /data/work
 VLSTREAM_SSH_HOST=gpu.example.internal
@@ -515,6 +520,10 @@ VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS=600
 VLSTREAM_DEVICE_MEDIA_MAX_IMAGE_BYTES=10485760
 VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED=false
 ```
+
+WVP 负责 VLStream 设备注册、心跳、视频流和固件任务；VLS 保留硬件现有接口与 MQTT 协议，
+并在图片上传申请、事件消费时通过内部接口向 WVP 校验设备。正常部署必须先启动 WVP，再启动
+VLS；不要启用 `VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED`，该开关只用于回滚旧设备管理实现。
 
 多实例部署时，每个后端实例的 `VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID` 必须唯一。
 VLS-Protocol 2.2 的设备 bus Topic

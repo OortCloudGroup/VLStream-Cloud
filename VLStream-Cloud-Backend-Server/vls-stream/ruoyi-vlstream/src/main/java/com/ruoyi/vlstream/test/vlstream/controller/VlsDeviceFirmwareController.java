@@ -18,6 +18,7 @@ import com.ruoyi.vlstream.test.vlstream.service.FirmwareDeploymentService;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.FirmwarePackageDownload;
 import lombok.RequiredArgsConstructor;
 import org.springblade.core.tool.api.R;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,6 +36,7 @@ import java.net.URLEncoder;
 /** VLS protocol device firmware management APIs. */
 @RestController
 @RequestMapping("/vlsDeviceFirmware")
+@ConditionalOnProperty(value = "vlstream.native-device.legacy-enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class VlsDeviceFirmwareController {
 

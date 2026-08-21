@@ -14,6 +14,8 @@ services:
   backend:
     image: ${BACKEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-backend:1.1.2}
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       TZ: ${TZ:-Asia/Shanghai}
       SERVER_PORT: 8080
@@ -28,6 +30,8 @@ services:
       VLSTREAM_WEBRTC_ENABLED: "true"
       VLSTREAM_WEBRTC_PUBLIC_URL: /bus/webrtc-streamer-server
       VLSTREAM_WEBRTC_INTERNAL_URL: http://webrtc-streamer:8000
+      VLSTREAM_WVP_INTERNAL_BASE_URL: ${VLSTREAM_WVP_INTERNAL_BASE_URL}
+      VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED: "false"
       JAVA_OPTS: ${JAVA_OPTS:--Xms512m -Xmx2048m -Dfile.encoding=UTF-8}
     ports:
       - "${BACKEND_PORT:-8080}:8080"

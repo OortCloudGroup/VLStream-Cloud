@@ -44,7 +44,7 @@ public class DeviceMediaUploadService {
 	private VlsDeviceMediaProperties properties;
 
 	@Resource
-	private TenantDeviceResolver tenantDeviceResolver;
+	private WvpVlStreamDeviceResolver wvpDeviceResolver;
 
 	@Resource
 	private VlsDeviceMediaUploadMapper uploadMapper;
@@ -54,7 +54,7 @@ public class DeviceMediaUploadService {
 			throw new ServiceException("设备媒体上传接口未启用；生产环境必须先配置设备身份认证");
 		}
 		validateRequest(request);
-		DeviceInfo device = tenantDeviceResolver.resolveUnique(request.getDeviceId());
+		DeviceInfo device = wvpDeviceResolver.resolve(request.getDeviceId());
 		String previousTenant = TenantContextHolder.getTenantId();
 		TenantContextHolder.setTenantId(device.getTenantId());
 		try {

@@ -8,6 +8,7 @@ package com.ruoyi.vlstream.test.vlstream.mapper;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.annotation.InterceptorIgnore;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -26,6 +27,23 @@ import java.util.Map;
  * @since 2025-12-23
  */
 public interface VlsContainerInstanceMapper extends BaseMapper<ContainerInstance> {
+
+	/**
+	 * Scheduler-only cross-tenant scan for active training containers.
+	 */
+	@InterceptorIgnore(tenantLine = "true")
+	@Select("SELECT * FROM vls_container_instance WHERE is_deleted = 0 "
+		+ "AND instance_type = 'training' AND instance_status IN ('starting', 'running') ORDER BY id")
+	List<ContainerInstance> selectActiveTrainingForScheduler();
+
+	/**
+	 * Scheduler-only cross-tenant lookup for the oldest queued training task.
+	 */
+	@InterceptorIgnore(tenantLine = "true")
+	@Select("SELECT * FROM vls_container_instance WHERE is_deleted = 0 "
+		+ "AND instance_type = 'training' AND instance_status = 'queued' "
+		+ "ORDER BY queue_time ASC, id ASC LIMIT 1")
+	ContainerInstance selectNextQueuedTrainingForScheduler();
 
 	/**
 	 * 自定义分页

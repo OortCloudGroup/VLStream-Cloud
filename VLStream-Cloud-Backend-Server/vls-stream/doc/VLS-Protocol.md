@@ -1666,23 +1666,30 @@ POST 保存RS-485配置
 
 ## 7.1 数据与租户边界
 
-- 原生 MQTT 设备使用独立的 `vls_mqtt_device`、`vls_mqtt_device_stream` 表，不读写旧自定义协议的 `vls_device_info`。
-- 未预绑定的设备首次合法 `device/state` 上报会自动注册到 `VLSTREAM_NATIVE_DEVICE_DEFAULT_TENANT_ID`，默认值为 `000000`。
-- 平台通过独立幂等记录按 `tenantId + deviceId + messageId` 确认 QoS 1 重复消息，并以 `sentAt` 忽略旧于已接收快照的乱序状态。
-- 默认 180 秒未收到心跳后标记离线，可通过 `VLSTREAM_NATIVE_DEVICE_OFFLINE_TIMEOUT_SECONDS` 调整。
+- WVP 是 VLStream 设备、心跳、视频流和固件任务的唯一数据源，使用 WVP 自己的
+  `wvp_vlstream_device`、`wvp_vlstream_device_stream` 和消息幂等表。
+- VLS 继续负责 `aiBiz/struct`、`aiBiz/faceEvent`、模型下发及其回执，不改变硬件已有的
+  HTTP 地址、MQTT Topic 或报文字段。
+- VLS 在签发事件图片上传地址和消费 AI 事件前，通过
+  `GET /internal/vlstream/device/{deviceId}` 向 WVP 校验设备。该只读接口仅供后端服务网络
+  调用，不使用用户鉴权或额外共享密钥；硬件端和平台用户不调用。
+- 设备只要已登记在 WVP 即可上传和补报事件，不要求当时在线。WVP 不存在该设备时，VLS
+  拒绝签发上传地址或返回事件失败回执。
+- WVP 设备进入 VLS 业务表时映射到配置的默认租户：单租户使用
+  `VLSTREAM_NATIVE_DEVICE_DEFAULT_TENANT_ID`，多租户使用
+  `VLSTREAM_NATIVE_DEVICE_MULTI_TENANT_DEFAULT_TENANT_ID`。
+- VLS 旧 `vls_mqtt_device` 设备管理、心跳和固件实现仅保留用于回滚，默认由
+  `VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED=false` 禁用，正常部署不得同时启用。
 
 ## 7.2 管理与预览接口
 
-| 方法 | 路径 | 用途 |
-| --- | --- | --- |
-| GET | `/vlsMqttDevice/page` | 原生 MQTT 设备分页、关键字和在线状态筛选 |
-| GET | `/vlsMqttDevice/{deviceId}/streams` | 查询设备当前可用流，不返回源流 URL |
-| POST | `/vlsMqttDevice/{deviceId}/preview` | 传 `streamId`，按需创建 ZLM 拉流代理并返回 WebRTC URL |
-| DELETE | `/vlsMqttDevice/{deviceId}/streams/{streamId}/preview` | 页面关闭时结束本次预览；共享代理由 ZLM 按真实观看人数释放 |
-| GET | `/vlsMqttDevice/media/status` | 检查 VLS 后端到 ZLMediaKit 的连接状态 |
+设备管理入口为平台“设备管理 / VLStream 协议”菜单，列表、详情、在线状态、流信息和预览
+能力由 WVP 提供。VLS 旧 `/vlsMqttDevice/**` 与 `/vlsDeviceFirmware/**` 控制器在正常部署中
+不注册；只有显式启用旧实现回滚开关时才恢复。
 
 ## 7.3 ZLMediaKit 运行边界
 
-VLS 后端直接调用 ZLMediaKit，不经过 WVP 后端。两套系统可以通过相同的环境变量连接同一 ZLM 实例，但认证和业务数据互不依赖。`VLSTREAM_ZLM_INTERNAL_URL` 供后端 REST 调用，`VLSTREAM_ZLM_PUBLIC_URL` 必须是浏览器可访问地址，`ZLMEDIAKIT_SECRET` 仅保存在后端。按需代理使用 `auto_close=1`，重复预览复用相同媒体流；浏览器关闭 WebRTC 连接后 ZLM 按真实观看人数自动关闭代理，避免一个用户退出时中断其他用户。
-
-`dev` 配置默认连接 Docker Desktop 中映射到 `http://127.0.0.1:8090` 的本地 ZLM，内部 REST 调用与浏览器 WebRTC 地址相同。本地 ZLM 的 `ZLM_API_SECRET` 必须与 VLS 后端的 `ZLMEDIAKIT_SECRET` 一致。部署或切换实例时可分别通过 `VLSTREAM_ZLM_INTERNAL_URL`、`VLSTREAM_ZLM_PUBLIC_URL` 覆盖地址；地址可达但 secret 不匹配时，设备页仍会显示 ZLM 不可用。
+WVP 统一调用 ZLMediaKit 完成拉流、预览、回放和流状态管理。VLS 的 AI 事件与模型业务不直接
+管理视频流。WVP 到 ZLMediaKit 的内部 REST 地址、ZLMediaKit 回调 WVP 的地址以及浏览器播放
+地址属于三个不同方向，部署时必须分别保证可达，并保证 WVP 使用的 API Secret 与
+ZLMediaKit `api.secret` 一致。

@@ -5,32 +5,48 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.ruoyi.common.enums.TenantType;
+import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.vlstream.test.vlstream.config.VlsNativeDeviceProperties;
 import com.ruoyi.vlstream.test.vlstream.mapper.MqttDeviceMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.MqttDeviceMessageMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.MqttDeviceStreamMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.MqttDevice;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.MqttDeviceStream;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 /** Persists the full device/state snapshot reported by native VLStream hardware. */
 @Service
-@RequiredArgsConstructor
 public class MqttDeviceStateService {
 
 	private final MqttDeviceMapper deviceMapper;
 	private final MqttDeviceStreamMapper streamMapper;
 	private final MqttDeviceMessageMapper messageMapper;
 	private final VlsNativeDeviceProperties properties;
+	private final String tenantType;
+
+	public MqttDeviceStateService(MqttDeviceMapper deviceMapper,
+								  MqttDeviceStreamMapper streamMapper,
+								  MqttDeviceMessageMapper messageMapper,
+								  VlsNativeDeviceProperties properties,
+								  @Value("${token.tenant-type:${token.tenantType:single}}") String tenantType) {
+		this.deviceMapper = deviceMapper;
+		this.streamMapper = streamMapper;
+		this.messageMapper = messageMapper;
+		this.properties = properties;
+		this.tenantType = tenantType;
+	}
 
 	@Transactional(rollbackFor = Exception.class)
 	public synchronized JSONObject handle(JSONObject message) {
@@ -44,7 +60,18 @@ public class MqttDeviceStateService {
 			return reply(message, 400, "payload不能为空");
 		}
 
-		String tenantId = StringUtils.defaultIfBlank(properties.getDefaultTenantId(), "000000");
+		String previousTenant = TenantContextHolder.getTenantId();
+		try {
+			String tenantId = resolveTenantId(deviceId);
+			TenantContextHolder.setTenantId(tenantId);
+			return persistState(message, payload, deviceId, messageId, tenantId);
+		} finally {
+			TenantContextHolder.setTenantId(previousTenant);
+		}
+	}
+
+	private JSONObject persistState(JSONObject message, JSONObject payload, String deviceId,
+									String messageId, String tenantId) {
 		Date receivedAt = new Date();
 		Date reportedAt = parseDate(message.getStr("sentAt"), receivedAt);
 		if (messageMapper.insertIgnore(tenantId, deviceId, messageId, reportedAt, receivedAt) == 0) {
@@ -101,6 +128,24 @@ public class MqttDeviceStateService {
 
 		synchronizeStreams(device, payload.getJSONArray("streams"), receivedAt);
 		return reply(message, 200, "状态已接收");
+	}
+
+	private String resolveTenantId(String deviceId) {
+		if (!TenantType.MULTI_TENANT.getType().equalsIgnoreCase(tenantType)) {
+			return StringUtils.defaultIfBlank(properties.getDefaultTenantId(), "000000");
+		}
+		List<String> tenantIds = deviceMapper.selectTenantIdsByDeviceId(deviceId);
+		if (tenantIds != null && tenantIds.size() > 1) {
+			throw new ServiceException("设备编号映射到多个租户，拒绝写入状态：" + deviceId);
+		}
+		if (tenantIds != null && tenantIds.size() == 1 && StringUtils.isNotBlank(tenantIds.get(0))) {
+			return tenantIds.get(0);
+		}
+		String defaultTenantId = properties.getMultiTenantDefaultTenantId();
+		if (StringUtils.isBlank(defaultTenantId)) {
+			throw new ServiceException("多租户模式未配置原生设备默认租户");
+		}
+		return defaultTenantId;
 	}
 
 	private void synchronizeStreams(MqttDevice device, JSONArray streams, Date receivedAt) {

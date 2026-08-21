@@ -8,9 +8,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.vlstream.test.vlstream.config.VlsSshProperties;
 import com.ruoyi.vlstream.test.vlstream.config.VlsTrainingContainerProperties;
 import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmTrainingStatusEnum;
+import com.ruoyi.vlstream.test.vlstream.mapper.VlsContainerInstanceMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsRemoteServersMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.ContainerInstance;
@@ -47,6 +49,8 @@ public class GpuTrainingSchedulerService {
 
 	@Resource
 	private IVlsContainerInstanceService containerInstanceService;
+	@Resource
+	private VlsContainerInstanceMapper containerInstanceMapper;
 	@Resource
 	private IVlsAlgorithmTrainingService algorithmTrainingService;
 	@Resource
@@ -203,75 +207,98 @@ public class GpuTrainingSchedulerService {
 
 	private void scheduleSafely() {
 		try {
-			reconcileActiveContainer();
-			dispatchNext();
+			if (!reconcileActiveContainers()) {
+				dispatchNext();
+			}
 		} catch (Exception exception) {
 			log.error("GPU scheduler iteration failed: {}", exception.getMessage(), exception);
 		}
 	}
 
 	private synchronized void dispatchNext() {
-		if (countByStatus(STATUS_RUNNING) + countByStatus(STATUS_STARTING) > 0 || !isGpuIdle()) {
+		ContainerInstance instance = containerInstanceMapper.selectNextQueuedTrainingForScheduler();
+		if (instance == null || !isGpuIdle()) {
 			return;
 		}
-		List<ContainerInstance> queued = containerInstanceService.list(
-			new LambdaQueryWrapper<ContainerInstance>()
-				.eq(ContainerInstance::getInstanceType, TYPE_TRAINING)
-				.eq(ContainerInstance::getInstanceStatus, STATUS_QUEUED)
-				.orderByAsc(ContainerInstance::getQueueTime)
-				.last("limit 1"));
-		if (queued.isEmpty()) {
-			return;
-		}
-		ContainerInstance instance = queued.get(0);
-		updateStatus(instance, STATUS_STARTING, null, null);
-		String launchCommand = readJsonText(instance.getEnvConfig(), "launchCommand");
-		if (isBlank(launchCommand)) {
-			fail(instance, "训练容器启动命令不存在");
-			return;
-		}
-		SSHService.SSHExecutionResult start = execute(launchCommand);
-		if (!start.isSuccess() || isBlank(start.getOutput())) {
-			fail(instance, "Docker容器启动失败: " + start.getErrorMsg());
-			return;
-		}
-		updateStatus(instance, STATUS_RUNNING, start.getOutput().trim(), null);
-		AlgorithmTraining training = new AlgorithmTraining();
-		training.setId(instance.getTrainingTaskId());
-		training.setTrainStatus(AlgorithmTrainingStatusEnum.training);
-		training.setStartTime(new Date());
-		algorithmTrainingService.updateAlgorithmTraining(training);
+		withTenant(instance, () -> {
+			updateStatus(instance, STATUS_STARTING, null, null);
+			String launchCommand = readJsonText(instance.getEnvConfig(), "launchCommand");
+			if (isBlank(launchCommand)) {
+				fail(instance, "训练容器启动命令不存在");
+				return;
+			}
+			SSHService.SSHExecutionResult start = execute(launchCommand);
+			if (!start.isSuccess() || isBlank(start.getOutput())) {
+				fail(instance, "Docker容器启动失败: " + start.getErrorMsg());
+				return;
+			}
+			updateStatus(instance, STATUS_RUNNING, start.getOutput().trim(), null);
+			AlgorithmTraining training = new AlgorithmTraining();
+			training.setId(instance.getTrainingTaskId());
+			training.setTrainStatus(AlgorithmTrainingStatusEnum.training);
+			training.setStartTime(new Date());
+			algorithmTrainingService.updateAlgorithmTraining(training);
+		});
 	}
 
-	private void reconcileActiveContainer() {
-		List<ContainerInstance> active = containerInstanceService.list(
-			new LambdaQueryWrapper<ContainerInstance>()
-				.eq(ContainerInstance::getInstanceType, TYPE_TRAINING)
-				.in(ContainerInstance::getInstanceStatus, STATUS_STARTING, STATUS_RUNNING));
+	private boolean reconcileActiveContainers() {
+		List<ContainerInstance> active = containerInstanceMapper.selectActiveTrainingForScheduler();
+		boolean busy = false;
 		for (ContainerInstance instance : active) {
-			String inspect = "docker inspect -f '{{.State.Status}}|{{.State.ExitCode}}|{{.Id}}' "
-				+ shellQuote(instance.getInstanceName()) + " 2>/dev/null || echo missing";
-			SSHService.SSHExecutionResult stateResult = execute(inspect);
-			String state = stateResult.getOutput() == null ? "" : stateResult.getOutput().trim();
-			if (state.startsWith("running|")) {
-				String[] fields = state.split("\\|");
-				updateStatus(instance, STATUS_RUNNING, fields.length > 2 ? fields[2] : instance.getContainerId(), null);
-				updateGpuUsage(instance);
-				continue;
-			}
-			if (state.startsWith("exited|") || state.startsWith("dead|")) {
-				String[] fields = state.split("\\|");
-				int exitCode = fields.length > 1 ? Integer.parseInt(fields[1]) : 1;
-				execute("docker rm -f " + shellQuote(instance.getInstanceName()) + " >/dev/null 2>&1 || true");
-				if (exitCode == 0) {
-					complete(instance);
-				} else {
-					fail(instance, "训练容器退出，exitCode=" + exitCode);
-				}
-			} else if ("missing".equals(state) && STATUS_RUNNING.equals(instance.getInstanceStatus())) {
-				fail(instance, "训练容器不存在，可能被外部删除");
-			}
+			busy = withTenant(instance, () -> reconcileActiveContainer(instance)) || busy;
 		}
+		return busy;
+	}
+
+	private boolean reconcileActiveContainer(ContainerInstance instance) {
+		String inspect = "docker inspect -f '{{.State.Status}}|{{.State.ExitCode}}|{{.Id}}' "
+			+ shellQuote(instance.getInstanceName()) + " 2>/dev/null || echo missing";
+		SSHService.SSHExecutionResult stateResult = execute(inspect);
+		String state = stateResult.getOutput() == null ? "" : stateResult.getOutput().trim();
+		if (state.startsWith("running|")) {
+			String[] fields = state.split("\\|");
+			updateStatus(instance, STATUS_RUNNING, fields.length > 2 ? fields[2] : instance.getContainerId(), null);
+			updateGpuUsage(instance);
+			return true;
+		}
+		if (state.startsWith("exited|") || state.startsWith("dead|")) {
+			String[] fields = state.split("\\|");
+			int exitCode = fields.length > 1 ? Integer.parseInt(fields[1]) : 1;
+			execute("docker rm -f " + shellQuote(instance.getInstanceName()) + " >/dev/null 2>&1 || true");
+			if (exitCode == 0) {
+				complete(instance);
+			} else {
+				fail(instance, "训练容器退出，exitCode=" + exitCode);
+			}
+		} else if ("missing".equals(state) && STATUS_RUNNING.equals(instance.getInstanceStatus())) {
+			fail(instance, "训练容器不存在，可能被外部删除");
+			return false;
+		}
+		return STATUS_STARTING.equals(instance.getInstanceStatus());
+	}
+
+	private void withTenant(ContainerInstance instance, Runnable operation) {
+		withTenant(instance, () -> {
+			operation.run();
+			return null;
+		});
+	}
+
+	private <T> T withTenant(ContainerInstance instance, TenantOperation<T> operation) {
+		if (instance == null || isBlank(instance.getTenantId())) {
+			throw new IllegalStateException("GPU训练任务缺少租户标识");
+		}
+		String previousTenant = TenantContextHolder.getTenantId();
+		TenantContextHolder.setTenantId(instance.getTenantId());
+		try {
+			return operation.execute();
+		} finally {
+			TenantContextHolder.setTenantId(previousTenant);
+		}
+	}
+
+	private interface TenantOperation<T> {
+		T execute();
 	}
 
 	private void complete(ContainerInstance instance) {

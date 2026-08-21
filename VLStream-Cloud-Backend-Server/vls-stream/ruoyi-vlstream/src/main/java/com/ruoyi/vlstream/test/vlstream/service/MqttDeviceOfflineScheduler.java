@@ -1,11 +1,10 @@
 package com.ruoyi.vlstream.test.vlstream.service;
 
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.ruoyi.vlstream.test.vlstream.config.VlsNativeDeviceProperties;
 import com.ruoyi.vlstream.test.vlstream.mapper.MqttDeviceMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.MqttDeviceMessageMapper;
-import com.ruoyi.vlstream.test.vlstream.pojo.entity.MqttDevice;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +12,7 @@ import java.util.Date;
 
 /** Marks devices offline when their MQTT heartbeat expires. */
 @Component
+@ConditionalOnProperty(value = "vlstream.native-device.legacy-enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class MqttDeviceOfflineScheduler {
 	private final MqttDeviceMapper deviceMapper;
@@ -22,12 +22,9 @@ public class MqttDeviceOfflineScheduler {
 	@Scheduled(fixedDelayString = "${vlstream.native-device.offline-scan-millis:30000}")
 	public void markExpiredDevicesOffline() {
 		long timeoutMillis = Math.max(30L, properties.getOfflineTimeoutSeconds()) * 1000L;
-		deviceMapper.update(null, new LambdaUpdateWrapper<MqttDevice>()
-			.eq(MqttDevice::getOnline, true)
-			.lt(MqttDevice::getLastHeartbeatTime, new Date(System.currentTimeMillis() - timeoutMillis))
-			.set(MqttDevice::getOnline, false)
-			.set(MqttDevice::getOnlineReason, "heartbeat_timeout")
-			.set(MqttDevice::getUpdateTime, new Date()));
+		Date now = new Date();
+		deviceMapper.markExpiredDevicesOffline(
+			new Date(now.getTime() - timeoutMillis), now);
 	}
 
 	@Scheduled(cron = "${vlstream.native-device.message-cleanup-cron:0 15 3 * * ?}")

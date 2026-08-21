@@ -2,12 +2,14 @@ package com.ruoyi.vlstream.test.vlstream.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /** Closes OTA tasks that can no longer make progress and releases their device lock. */
 @Slf4j
 @Component
+@ConditionalOnProperty(value = "vlstream.native-device.legacy-enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class FirmwareDeployTaskTimeoutScheduler {
 

@@ -50,7 +50,7 @@ public class SSHService {
 
             // 连接
             session.connect(CONNECT_TIMEOUT);
-            log.info("SSH连接成功: {}@{}:{}", username, host, port);
+            log.debug("SSH连接成功: {}@{}:{}", username, host, port);
 
             // 创建执行通道
             channel = (ChannelExec) session.openChannel("exec");
@@ -66,7 +66,7 @@ public class SSHService {
 
             // 执行命令
             channel.connect(SESSION_TIMEOUT);
-            log.info("SSH命令执行: {}", command);
+            log.debug("SSH命令执行: {}", command);
 
             // 等待命令执行完成
             while (!channel.isClosed()) {
@@ -89,7 +89,7 @@ public class SSHService {
             result.setOutput(output);
             result.setErrorMsg(error);
 
-            log.info("SSH命令执行完成，输出长度: {}, 错误长度: {}", output.length(), error.length());
+            log.debug("SSH命令执行完成，输出长度: {}, 错误长度: {}", output.length(), error.length());
 //            if (org.bytedeco.librealsense.error.length() > 0) {
 //                log.warn("SSH命令执行错误信息: {}", error);
 //            }

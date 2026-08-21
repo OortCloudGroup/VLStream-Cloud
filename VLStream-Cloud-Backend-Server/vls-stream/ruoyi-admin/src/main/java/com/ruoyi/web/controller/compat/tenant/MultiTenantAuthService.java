@@ -15,9 +15,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 完成平台 token 到本地 Sa-Token 的换票以及受校验的租户切换。
@@ -33,6 +35,7 @@ public class MultiTenantAuthService {
     private final BladeTokenSessionService tokenSessionService;
     private final SysLoginService loginService;
     private final long tokenTimeout;
+    private final ConcurrentHashMap<String, Object> exchangeLocks = new ConcurrentHashMap<String, Object>();
 
     public MultiTenantAuthService(PlatformTenantClient platformClient,
                                   MultiTenantShadowUserService shadowUserService,
@@ -53,18 +56,49 @@ public class MultiTenantAuthService {
     public Map<String, Object> exchange(String platformToken, String requestedTenantId,
                                         HttpServletRequest request) {
         PlatformGatewayHeaders gatewayHeaders = platformClient.resolveGatewayHeaders(request);
-        List<PlatformTenant> tenants = platformClient.getUserTenants(platformToken, gatewayHeaders);
         PlatformIdentity identity = platformClient.verifyToken(platformToken, gatewayHeaders);
+        List<PlatformTenant> tenants;
         String selectedPlatformToken = platformToken;
 
         if (StringUtils.isNotBlank(requestedTenantId)
             && !requestedTenantId.trim().equals(identity.getTenantId())) {
+            tenants = platformClient.getUserTenants(platformToken, gatewayHeaders);
             requireMembership(tenants, requestedTenantId);
             selectedPlatformToken = platformClient.selectTenant(platformToken, requestedTenantId.trim(), gatewayHeaders);
             identity = platformClient.verifyToken(selectedPlatformToken, gatewayHeaders);
+        } else {
+            tenants = loadCurrentTenantsBestEffort(platformToken, gatewayHeaders, identity);
         }
         validateIdentity(identity, requestedTenantId, tenants);
         return createLocalSession(identity, selectedPlatformToken, gatewayHeaders, tenants);
+    }
+
+    /**
+     * Resolve a raw platform token to a reusable local Sa-Token for a protected request.
+     */
+    public String resolveLocalToken(String platformToken, String requestedTenantId,
+                                    HttpServletRequest request) {
+        String cachedToken = validCachedLocalToken(platformToken, requestedTenantId);
+        if (cachedToken != null) {
+            return cachedToken;
+        }
+
+        String lockKey = cn.hutool.crypto.digest.DigestUtil.sha256Hex(platformToken);
+        Object newLock = new Object();
+        Object lock = exchangeLocks.putIfAbsent(lockKey, newLock);
+        lock = lock == null ? newLock : lock;
+        synchronized (lock) {
+            try {
+                cachedToken = validCachedLocalToken(platformToken, requestedTenantId);
+                if (cachedToken != null) {
+                    return cachedToken;
+                }
+                Map<String, Object> result = exchange(platformToken, requestedTenantId, request);
+                return String.valueOf(result.get("accessToken"));
+            } finally {
+                exchangeLocks.remove(lockKey, lock);
+            }
+        }
     }
 
     public Map<String, Object> switchTenant(String oldLocalToken, String targetTenantId) {
@@ -85,6 +119,9 @@ public class MultiTenantAuthService {
         tokenSessionService.logoutByToken(oldLocalToken);
         tokenUserStore.remove(oldLocalToken);
         platformSessionStore.remove(oldLocalToken);
+        if (!selectedPlatformToken.equals(oldSession.getPlatformAccessToken())) {
+            platformSessionStore.removePlatformToken(oldSession.getPlatformAccessToken());
+        }
         return result;
     }
 
@@ -97,7 +134,11 @@ public class MultiTenantAuthService {
     }
 
     public void removeSession(String localToken) {
+        PlatformTenantSession session = platformSessionStore.get(localToken);
         platformSessionStore.remove(localToken);
+        if (session != null && StringUtils.isNotBlank(session.getPlatformAccessToken())) {
+            platformSessionStore.removePlatformToken(session.getPlatformAccessToken());
+        }
     }
 
     private Map<String, Object> createLocalSession(PlatformIdentity identity, String platformToken,
@@ -125,6 +166,7 @@ public class MultiTenantAuthService {
         session.setGatewayHeaders(gatewayHeaders);
         session.setTenants(tenants);
         platformSessionStore.put(localToken, session, tokenTimeout);
+        platformSessionStore.bindPlatformToken(platformToken, localToken, tokenTimeout);
 
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("accessToken", localToken);
@@ -137,6 +179,64 @@ public class MultiTenantAuthService {
         result.put("user", user);
         result.put("list", tenantMaps(tenants));
         return result;
+    }
+
+    private String validCachedLocalToken(String platformToken, String requestedTenantId) {
+        String localToken = platformSessionStore.getLocalToken(platformToken);
+        if (StringUtils.isBlank(localToken)) {
+            return null;
+        }
+        PlatformTenantSession session = platformSessionStore.get(localToken);
+        SysUser user = tokenUserStore.get(localToken);
+        if (session != null && user != null
+            && (StringUtils.isBlank(requestedTenantId)
+            || requestedTenantId.trim().equals(session.getTenantId()))) {
+            return localToken;
+        }
+        platformSessionStore.removePlatformToken(platformToken);
+        return null;
+    }
+
+    private List<PlatformTenant> loadCurrentTenantsBestEffort(String platformToken,
+                                                               PlatformGatewayHeaders gatewayHeaders,
+                                                               PlatformIdentity identity) {
+        try {
+            List<PlatformTenant> tenants = platformClient.getUserTenants(platformToken, gatewayHeaders);
+            if (containsTenant(tenants, identity.getTenantId())) {
+                return tenants;
+            }
+            log.warn("平台租户列表未包含 verifyToken 当前租户，使用已校验身份继续: tenantId={}, platformUserId={}",
+                identity.getTenantId(), identity.getUserId());
+        } catch (Exception exception) {
+            log.warn("获取平台租户列表失败，使用 verifyToken 已校验的当前租户继续: tenantId={}, platformUserId={}, reason={}",
+                identity.getTenantId(), identity.getUserId(), exception.getMessage());
+        }
+        List<PlatformTenant> fallback = new ArrayList<PlatformTenant>();
+        fallback.add(toTenant(identity));
+        return fallback;
+    }
+
+    private static PlatformTenant toTenant(PlatformIdentity identity) {
+        PlatformTenant tenant = new PlatformTenant();
+        tenant.setTenantId(identity.getTenantId());
+        tenant.setTenantName(identity.getTenantId());
+        tenant.setUserId(identity.getUserId());
+        tenant.setUserName(identity.getUserName());
+        tenant.setStatus(1);
+        tenant.setPhrase(identity.getTenantId());
+        return tenant;
+    }
+
+    private static boolean containsTenant(List<PlatformTenant> tenants, String tenantId) {
+        if (tenants == null) {
+            return false;
+        }
+        for (PlatformTenant tenant : tenants) {
+            if (tenantId.equals(tenant.getTenantId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static List<Map<String, Object>> tenantMaps(List<PlatformTenant> tenants) {

@@ -4,11 +4,13 @@ import cn.hutool.json.JSONObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /** Correlates firmwareDeploy progress replies with durable OTA tasks. */
 @Slf4j
 @Component
+@ConditionalOnProperty(value = "vlstream.native-device.legacy-enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class FirmwareDeployReplyMqttMessageHandler implements VlsMqttMessageHandler {
 

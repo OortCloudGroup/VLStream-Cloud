@@ -1,18 +1,44 @@
-import request from '@/utils/request'
+import request from '@/utils/wvpRequest'
 
-export const getMqttDevicePage = params => request({ url: '/vlsMqttDevice/page', method: 'get', params })
-export const getMqttDeviceStreams = deviceId => request({ url: `/vlsMqttDevice/${deviceId}/streams`, method: 'get' })
-export const getMqttDeviceDetail = deviceId => request({ url: `/vlsMqttDevice/${deviceId}/detail`, method: 'get' })
-export const deployMqttDeviceFirmware = (deviceId, firmwareId) => request({
-  url: `/vlsMqttDevice/${deviceId}/firmware-upgrades`, method: 'post', data: { firmwareId }
+// VLStream 协议页面统一使用 WVP 的设备、媒体和预览能力，不回退 VLS 本地接口。
+export const getMqttDevicePage = params => request({
+  url: '/vlstream/device/list',
+  method: 'get',
+  params: {
+    ...params,
+    pageNum: params.pageNum ?? params.current,
+    pageSize: params.pageSize ?? params.size
+  }
 })
-export const cancelMqttDeviceFirmwareTask = (deviceId, requestId) => request({
-  url: `/vlsMqttDevice/${deviceId}/firmware-upgrades/${requestId}/cancel`, method: 'post'
+
+export const getMqttDeviceStreams = deviceRowId => request({
+  url: `/vlstream/device/${deviceRowId}/streams`,
+  method: 'get'
 })
-export const createMqttDevicePreview = (deviceId, streamId) => request({
-  url: `/vlsMqttDevice/${deviceId}/preview`, method: 'post', data: { streamId }
+
+export const getMqttDeviceDetail = deviceRowId => request({
+  url: `/vlstream/device/${deviceRowId}/detail`,
+  method: 'get'
 })
-export const closeMqttDevicePreview = (deviceId, streamId) => request({
-  url: `/vlsMqttDevice/${deviceId}/streams/${streamId}/preview`, method: 'delete'
+
+export const deployMqttDeviceFirmware = (deviceRowId, firmwareId) => request({
+  url: `/vlstream/device/${deviceRowId}/firmware-upgrades`,
+  method: 'post',
+  data: { firmwareId }
 })
-export const getMqttDeviceMediaStatus = () => request({ url: '/vlsMqttDevice/media/status', method: 'get' })
+
+export const cancelMqttDeviceFirmwareTask = (deviceRowId, requestId) => request({
+  url: `/vlstream/device/${deviceRowId}/firmware-upgrades/${requestId}/cancel`,
+  method: 'post'
+})
+
+export const createMqttDevicePreview = (deviceRowId, streamId) => request({
+  url: `/vlstream/device/${deviceRowId}/preview`,
+  method: 'post',
+  data: { streamId }
+})
+
+export const getMqttDeviceMediaStatus = () => request({
+  url: '/vlstream/device/media/status',
+  method: 'get'
+})

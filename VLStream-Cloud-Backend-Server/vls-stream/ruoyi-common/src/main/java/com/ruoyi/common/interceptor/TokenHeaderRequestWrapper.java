@@ -23,8 +23,15 @@ public class TokenHeaderRequestWrapper extends HttpServletRequestWrapper {
     private final String normalizedToken;
 
     public TokenHeaderRequestWrapper(HttpServletRequest request) {
+        this(request, TokenHeaderResolver.resolve(request));
+    }
+
+    /**
+     * Wrap a request with an explicitly supplied downstream token.
+     */
+    public TokenHeaderRequestWrapper(HttpServletRequest request, String normalizedToken) {
         super(request);
-        this.normalizedToken = TokenHeaderResolver.resolve(request);
+        this.normalizedToken = normalizedToken;
     }
 
     @Override

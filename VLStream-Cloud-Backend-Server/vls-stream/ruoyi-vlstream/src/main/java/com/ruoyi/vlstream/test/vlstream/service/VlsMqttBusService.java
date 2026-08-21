@@ -157,9 +157,12 @@ public class VlsMqttBusService {
 		return 1;
 	}
 
-	private MqttConnectOptions connectOptions() {
+	MqttConnectOptions connectOptions() {
 		MqttConnectOptions options = new MqttConnectOptions();
-		options.setAutomaticReconnect(true);
+		// Reconnection is exclusively owned by connectionExecutor. Enabling Paho's
+		// automatic reconnect at the same time can create a second client with the
+		// same client ID and make the broker repeatedly take over the old session.
+		options.setAutomaticReconnect(false);
 		options.setCleanSession(false);
 		options.setConnectionTimeout(defaultInt(mqttProperties.getConnectionTimeoutSeconds(), 10));
 		options.setKeepAliveInterval(defaultInt(mqttProperties.getKeepAliveSeconds(), 60));
