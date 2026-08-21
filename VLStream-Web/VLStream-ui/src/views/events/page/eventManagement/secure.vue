@@ -1,45 +1,13 @@
 <!-- eslint-disable no-unused-vars -->
 
 <template>
-  <div class="tenant_Page draHeaPB">
-    <div class="tenant_content">
-      <div class="tableTenBox flexRowAC">
-        <!-- 左侧菜单 -->
-        <div class="left_menu_panel">
-          <el-tabs v-model="leftTabActive" class="left-tabs" @tab-change="handleLeftTabChange">
-            <el-tab-pane label="区域" name="region" />
-            <el-tab-pane label="分组" name="group" />
-            <el-tab-pane label="标签" name="tag" />
-          </el-tabs>
-          <div class="tree-container">
-            <el-tree
-              ref="leftTreeRef"
-              style="background: #fff;"
-              :load="getDeptTreeUI"
-              :data="treeData"
-              lazy
-              highlight-current
-              node-key="id"
-              :default-expanded-keys="defaultExpandedKeys"
-              :props="defaultProps"
-              :expand-on-click-node="false"
-              @node-click="handleTreeNodeClick"
-            >
-              <template #default="{ node, data }">
-                <div class="custom-tree-node flexRowAC">
-                  <oort-img :src="data?.dept_photo" style="width: 1rem;height:1rem;margin: 0 0.25rem;border-radius: 50%" default-type="dept" />
-                  <el-tooltip :open-delay="500" class="item" effect="light" :content="node.label" placement="top">
-                    <div :class="{'delete_text': data.oort_status === 9, 'activeDept': data.uid === currentTreeNodeId}">
-                      {{ node.label }}
-                    </div>
-                  </el-tooltip>
-                </div>
-              </template>
-            </el-tree>
-          </div>
-        </div>
-        <!--table-->
-        <div class="tableTenIt">
+  <div class="event-management-page">
+    <DeviceClassificationLayout
+      protocol-type="ALL"
+      :show-assignment="false"
+      @filter-change="handleClassificationFilter"
+    >
+      <div class="device-table-panel">
           <div class="depNameBox_out flexRowAC">
             <div class="depNameBox flexRowAC">
               <div class="exportBtnBox flexRowAC">
@@ -219,9 +187,8 @@
               @current-change="handleCurrentChange"
             />
           </div>
-        </div>
       </div>
-    </div>
+    </DeviceClassificationLayout>
     <!-- 确认事件/忽略事件 弹框-->
     <!-- <ConfirmAlertDialog
       v-model:visible="confirmAlertVis"
@@ -258,20 +225,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive, nextTick, computed } from 'vue'
-import { ElMessage, ElMessageBox, ElTree } from 'element-plus'
-import type Node from 'element-plus/es/components/tree/src/model/node'
+import { ref, onMounted, reactive } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 // import { Delete } from '@element-plus/icons-vue'
 import SchedulingDialog from './components/schedulingDialog.vue'
 import ConfirmEventDialog from './components/confirmEventDialog/index.vue'
 import eventDetailsDialog from './components/eventDetailsDialog/index.vue'
 import OortVideoPlayer from '@/components/oortVideoPlayer.vue'
-import { delEvent, eventList, event_item_list, event_group_list } from '@/api/smartCity/events'
+import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
+import { getClassificationDeviceIds } from '@/api/device/classification'
+import { delEvent, eventList, event_item_list } from '@/api/smartCity/events'
 import { clacPXToVW } from '@/utils/index'
 import { useUserStore } from '@/store/modules/useraPaas'
 import EventPhoneFBack from '@/pages/events/views/page/eventManagement/eventPhoneFBack.vue'
 import EventPhoneConfirm from '@/pages/events/views/page/eventManagement/eventPhoneConfirm.vue'
-import AppConfig from '@/config/AppConfig'
 import { covertCurrentLocationURL } from '@/utils/converGatewayPath'
 import dayjs from 'dayjs'
 
@@ -361,12 +328,37 @@ const params = reactive({
   status: 0, // 1:已完成 2:正在处理 0:全部
   mod_type: 2 // 主动安全
 })
+const classificationFilter = reactive({
+  active: false,
+  deviceIds: [] as string[]
+})
+
+const handleClassificationFilter = async(filter: { categoryType?: string, categoryId?: string }) => {
+  params.page = 1
+  page.value = 1
+  if (!filter.categoryType || !filter.categoryId) {
+    classificationFilter.active = false
+    classificationFilter.deviceIds = []
+    await getList()
+    return
+  }
+  try {
+    const response: any = await getClassificationDeviceIds(filter.categoryType, filter.categoryId)
+    classificationFilter.active = true
+    classificationFilter.deviceIds = (response.data || []).map((id: any) => String(id))
+    await getList()
+  } catch (error: any) {
+    ElMessage.error(error.message || '获取分类设备失败')
+  }
+}
+
 const getList = async() => {
   try {
     let data = {
       ...params,
       item: itemTemp.value,
-      group_uid: currentTreeNodeId.value
+      device_filter_active: classificationFilter.active,
+      device_ids: classificationFilter.active ? classificationFilter.deviceIds : undefined
     }
     if (datePickerTime.value && datePickerTime.value?.length !== 0) {
       data['start_at'] = dayjs(datePickerTime.value[0]).format('YYYY-MM-DD HH:mm:ss')
@@ -463,93 +455,6 @@ const closeVideoDialog = () => {
   currentVideoUrl.value = ''
 }
 
-// 左侧菜单相关
-const leftTabActive = ref('region')
-const leftTreeRef = ref<InstanceType<typeof ElTree>>()
-const treeData = ref<any>([]) // 部门树date
-const currentTreeNodeId = ref<any>('') // 当前节点id
-// 配置选项
-const defaultProps = {
-  label: 'name',
-  children: 'children',
-  isLeaf: (data: any) => {
-    return !data.is_subtenant && !data.children
-  }
-}
-const defaultExpandedKeys = ref<string[]>([''])
-
-interface Tree {
-  name: string
-  uid: string
-  puid: string
-  label?: string
-  id?: string
-  hadchild?: number
-  children?: Tree[]
-  dept_photo?: string
-}
-
-const activeGroupType = computed(() => (leftTabActive.value === 'tag' ? 3 : leftTabActive.value === 'group' ? 2 : 1))
-
-// 部门树列表
-const getDeptTreeUI = async(node: Node, resolve: (data: Tree[]) => void) => {
-  const params: any = {
-    accessToken: store.userInfo?.accessToken,
-    app_id: AppConfig.events?.appID,
-    group_type: activeGroupType.value, // 区域为1，分组为2
-    mod_type: 2 // 主动安全
-  }
-
-  if (node.level === 0) {
-    return resolve([{
-      name: '全部',
-      label: '全部',
-      uid: '',
-      id: '',
-      puid: '',
-      hadchild: 1
-    }])
-  } else {
-    params.puid = node.data?.uid
-  }
-
-  try {
-    const res: any = await event_group_list(params)
-    if (res?.code === 200 && res?.data?.list) {
-      const list = res.data.list || []
-      // 转换数据格式，将 name 映射为 label，uid 映射为 id
-      const treeData: Tree[] = list.map((item: any) => ({
-        name: item.name,
-        label: item.name,
-        uid: item.uid,
-        id: item.uid,
-        puid: item.puid,
-        hadchild: item.hadchild || 0,
-        dept_photo: item.dept_photo,
-        children: []
-      }))
-      resolve(treeData)
-
-      // 如果是第一级节点,展开第二级
-      if (node.level === 1 && list.length > 0) {
-        setTimeout(() => {
-          list.forEach((item: any) => {
-            const childNode = leftTreeRef.value?.getNode(item.uid)
-            if (childNode && item.hadchild > 0) {
-              childNode.expand()
-            }
-          })
-        }, 100)
-      }
-    } else {
-      resolve([])
-    }
-  } catch (error) {
-    // 获取树形数据失败
-    resolve([])
-  }
-}
-
 // 搜索相关
 const datePickerTime = ref([])
 const searchData = ref<any>([])
@@ -563,43 +468,6 @@ const searchResetFn = (val: any, reset) => {
   }
   params.keyword = val?.keyword || ''
   datePickerTime.value = val.datePickerTime
-  getList()
-}
-
-// 重新加载树数据
-const reloadTree = () => {
-  const rootDept = {
-    name: '全部',
-    label: '全部',
-    uid: '',
-    id: '',
-    puid: '',
-    hadchild: 1
-  }
-  treeData.value = [rootDept]
-  defaultExpandedKeys.value = ['']
-  // 展开根节点,触发懒加载
-  nextTick(() => {
-    setTimeout(() => {
-      const rootNode = leftTreeRef.value?.getNode('')
-      if (rootNode) {
-        rootNode.expand()
-      }
-    }, 100)
-  })
-}
-
-const handleLeftTabChange = (_tabName: string) => {
-  itemTemp.value = ''
-  currentTreeNodeId.value = ''
-  // 切换标签时重新加载树数据
-  reloadTree()
-  getList()
-}
-
-// 部门树选中
-const handleTreeNodeClick = (data: any) => {
-  currentTreeNodeId.value = data.uid || data.id
   getList()
 }
 
@@ -630,8 +498,6 @@ const event_item_listFn = async() => {
 onMounted(() => {
   event_item_listFn() // 事件类型过滤-list
   getList()
-  // 初始化树数据
-  reloadTree()
 })
 </script>
 <style>
@@ -641,100 +507,18 @@ onMounted(() => {
 
 </style>
 <style lang="scss" scoped>
-.tenant_Page {
+.event-management-page {
   height: 100%;
   width: 100%;
-  border-radius: var(--common-border-radius) var(--common-border-radius) 0px 0px;
-  background: #F7F7F7;
-
-  .tenant_content {
-    width: 100%;
-    height: calc(100% - 66px);
-    height: 100%;
-    border-radius: var(--common-border-radius) var(--common-border-radius) 0px 0px;
-    overflow: auto;
-  }
-
-  .tableTenBox {
-    padding: 20px;
-    width: 100%;
-    height: 100%;
-    border-radius: var(--common-border-radius) var(--common-border-radius) 0px 0px;
-    flex: 1;
-    background: #fff;
-    gap: 20px;
-  }
 }
 
-// 左侧菜单样式
-.left_menu_panel {
-  width: 280px;
-  min-width: 280px;
-  height: calc(100vh - 120px);
-  max-height: calc(100vh - 120px);
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  overflow: hidden;
-  border-right: 1px solid #E8E8E8;
-}
-
-.left-tabs {
-  margin-bottom: 16px;
-  flex-shrink: 0;
-
-  :deep(.el-tabs__header) {
-    margin: 0;
-    border-bottom: 1px solid #e4e7ed;
-  }
-
-  :deep(.el-tabs__nav-wrap::after) {
-    display: none;
-  }
-
-  :deep(.el-tabs__nav) {
-    display: flex;
-    width: 100%;
-  }
-
-  :deep(.el-tabs__item) {
-    flex: 1;
-    text-align: center;
-    padding: 0;
-    height: 40px;
-    line-height: 40px;
-  }
-}
-
-.tree-container {
-  flex: 1;
-  overflow: auto;
-
-  :deep(.el-tree-node__content) {
-    --el-tree-node-hover-bg-color: var(--el-menu-hover-bg-color);
-    height: 38px;
-    font-size: 14px;
-    color: #333;
-  }
-
-  // 树选中
-  :deep(.el-tree-node) {
-    .el-tree-node.is-current.is-focusable > .el-tree-node__content {
-      background-color: var(--el-color-primary-hb);
-      color: var(--el-color-primary);
-    }
-  }
-}
-
-.custom-tree-node {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.tableTenIt {
+.device-table-panel {
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 :deep(.depNameBox_out) {

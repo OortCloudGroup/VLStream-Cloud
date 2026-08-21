@@ -194,7 +194,6 @@ import iconSceneGovernance from '@/assets/img/workbench/scene_governance.png'
 import iconEventManagement from '@/assets/img/workbench/event_management.png'
 import iconAlgoMarket from '@/assets/img/workbench/algo_market.png'
 import iconAlgoTunnel from '@/assets/img/workbench/algo_tunnel.png'
-import iconLabelManagement from '@/assets/img/workbench/label_management.png'
 import iconDeviceManagement from '@/assets/img/workbench/device_management.png'
 import iconVideoPlayback from '@/assets/img/workbench/video_playback.png'
 import iconOperationLog from '@/assets/img/workbench/operation_log.png'
@@ -242,7 +241,6 @@ const functionList = [
   { key: 'event-management', label: '事件管理', path: 'event-management', icon: iconEventManagement },
   { key: 'algo-market', label: '算法超市', path: 'algorithm-management', icon: iconAlgoMarket },
   { key: 'algo-tunnel', label: '算法隧道', path: '', icon: iconAlgoTunnel },
-  { key: 'label-management', label: '标签管理', path: 'tag-management', icon: iconLabelManagement },
   { key: 'device-management', label: '设备管理', path: 'device-management', icon: iconDeviceManagement },
   { key: 'video-playback', label: '视频回放', path: 'video-playback', icon: iconVideoPlayback },
   { key: 'operation-log', label: '操作日志', path: '', icon: iconOperationLog },

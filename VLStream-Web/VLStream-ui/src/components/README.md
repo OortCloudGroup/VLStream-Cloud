@@ -140,7 +140,6 @@ const disabledDate = (time) => {
 
 该组件已在以下页面中使用：
 - 监控告警页面 (`/monitoring-alarm`)
-- 标签管理页面 (`/tag-management`)
 - 智能分析结果页面 (`/intelligent-analysis-result`)
 
 ### 默认配置
@@ -158,4 +157,4 @@ const disabledDate = (time) => {
 1. 该组件基于 Element Plus 的 `el-date-picker` 组件封装
 2. 支持所有 `el-date-picker` 的原生属性和事件
 3. 默认提供中文的快捷选项和占位符
-4. 可以通过 CSS 变量或深度选择器自定义样式 
+4. 可以通过 CSS 变量或深度选择器自定义样式

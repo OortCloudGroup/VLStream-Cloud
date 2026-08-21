@@ -2,7 +2,7 @@
 
 ## 概述
 
-VideoAggregation 模块包含了视频聚合相关的所有页面组件，主要功能包括设备管理、标签管理、视频广场、视频回放、监控告警等。
+VideoAggregation 模块包含了视频聚合相关的页面组件，主要功能包括设备管理、视频广场、视频回放、监控告警等。
 
 ## 设备管理重构
 
@@ -164,9 +164,6 @@ import { deviceStatus, weekDays, modelListData } from '@/views/VideoAggregation/
 
 ## 其他组件
 
-### TagManagement.vue (标签管理)
-设备标签的增删改查功能，支持树形结构管理。
-
 ### VideoSquare.vue (视频广场)
 视频流的集中展示和管理，支持多路视频同时播放。
 
@@ -201,7 +198,6 @@ VideoAggregation/
 ├── MonitoringAlarm.vue               # 监控告警页面
 ├── CameraSettings.vue               # 设置摄像机页面
 ├── IntelligentAnalysisResult.vue    # 智能分析结果页面
-├── TagManagement.vue                # 标签管理页面
 └── README.md                         # 模块说明文档
 ```
 
@@ -242,11 +238,6 @@ VideoAggregation/
 - 分析视频播放
 - 结果数据导出
 
-### TagManagement.vue - 标签管理
-- 标签创建和编辑
-- 标签分类管理
-- 标签关联和应用
-
 ## 共享组件
 
 这些页面都使用了以下共享组件：
@@ -262,7 +253,6 @@ VideoAggregation/
 - `/monitoring-alarm` → `@/views/VideoAggregation/MonitoringAlarm.vue`
 - `/camera-settings` → `@/views/VideoAggregation/CameraSettings.vue`
 - `/intelligent-analysis-result` → `@/views/VideoAggregation/IntelligentAnalysisResult.vue`
-- `/tag-management` → `@/views/VideoAggregation/TagManagement.vue`
 
 ## 使用方式
 
@@ -276,4 +266,4 @@ import { VideoSquare, DeviceManagement } from '@/views/VideoAggregation'
 
 ```javascript
 import VideoSquare from '@/views/VideoAggregation/VideoSquare.vue'
-``` 
+```

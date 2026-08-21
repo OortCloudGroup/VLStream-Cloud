@@ -72,10 +72,12 @@
               </div>
             </template>
           </el-tree>
-          <el-button class="assign-button" type="primary" plain :disabled="normalizedDeviceKeys.length === 0" @click="openAssignment">
-            设置分类<span v-if="normalizedDeviceKeys.length">（{{ normalizedDeviceKeys.length }}）</span>
-          </el-button>
-          <div class="selection-hint">勾选一台可单独设置，勾选多台可批量设置</div>
+          <template v-if="showAssignment">
+            <el-button class="assign-button" type="primary" plain :disabled="normalizedDeviceKeys.length === 0" @click="openAssignment">
+              设置分类<span v-if="normalizedDeviceKeys.length">（{{ normalizedDeviceKeys.length }}）</span>
+            </el-button>
+            <div class="selection-hint">勾选一台可单独设置，勾选多台可批量设置</div>
+          </template>
         </div>
 
         <div class="tableTenIt">
@@ -110,7 +112,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="assignmentDialog.visible" title="设置设备分类" width="30%" append-to-body>
+    <el-dialog v-if="showAssignment" v-model="assignmentDialog.visible" title="设置设备分类" width="30%" append-to-body>
       <el-alert
         v-if="normalizedDeviceKeys.length > 1"
         title="批量设置会用本次选择覆盖这些设备原有的区域、分组和标签"
@@ -153,7 +155,8 @@ import {
 
 const props = defineProps({
   protocolType: { type: String, required: true },
-  selectedDeviceKeys: { type: Array, default: () => [] }
+  selectedDeviceKeys: { type: Array, default: () => [] },
+  showAssignment: { type: Boolean, default: true }
 })
 const emit = defineEmits(['filter-change', 'assigned'])
 

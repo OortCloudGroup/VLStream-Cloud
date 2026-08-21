@@ -43,6 +43,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -389,6 +390,10 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         appendEquals(where, args, body, "task_id", "te.task_id");
         appendPositiveEquals(where, args, body, "status", "te.status");
         appendPictureFilter(where, body, "te.pic_len");
+        LocationTaskResult<?> deviceFilterError = appendDeviceClassificationFilter(where, args, body);
+        if (deviceFilterError != null) {
+            return deviceFilterError;
+        }
 
         String uuid = stringValue(body, "uuid");
         String deptId = stringValue(body, "dept_id");
@@ -2513,6 +2518,38 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
             LocationTaskEventContracts.PictureFilter.values(), false)) {
             return parameterError("参数错误 had_pic只能为0、1或2");
         }
+        return validateOptionalBoolean(body, "device_filter_active");
+    }
+
+    /**
+     * Filter events by the business device IDs returned by WVP classification.
+     * An active but empty classification deliberately matches no events.
+     */
+    static LocationTaskResult<?> appendDeviceClassificationFilter(List<String> where, List<Object> args,
+                                                                   Map<String, Object> body) {
+        if (!booleanValue(body, "device_filter_active", false)) {
+            return null;
+        }
+        Object rawDeviceIds = body.get("device_ids");
+        if (!(rawDeviceIds instanceof List)) {
+            return parameterError("参数错误 device_ids必须为数组");
+        }
+        LinkedHashSet<String> deviceIds = new LinkedHashSet<String>();
+        for (Object rawDeviceId : (List<?>) rawDeviceIds) {
+            if (rawDeviceId instanceof Map || rawDeviceId instanceof Collection) {
+                return parameterError("参数错误 device_ids只能包含设备编号");
+            }
+            String deviceId = string(rawDeviceId).trim();
+            if (!deviceId.isEmpty()) {
+                deviceIds.add(deviceId);
+            }
+        }
+        if (deviceIds.isEmpty()) {
+            where.add("1 = 0");
+            return null;
+        }
+        where.add("te.device_id IN (" + placeholders(deviceIds.size()) + ")");
+        args.addAll(deviceIds);
         return null;
     }
 

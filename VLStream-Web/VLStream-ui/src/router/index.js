@@ -229,24 +229,6 @@ const routes = [
         meta: { title: '智能分析结果', icon: '智能分析结果' }
       },
       {
-        path: '/tag-management',
-        name: 'TagManagement',
-        component: () => import('@/views/VideoAggregation/TagManagement.vue'),
-        meta: { title: '标签管理', icon: '标签管理', groupType: 3 }
-      },
-      {
-        path: '/region-management',
-        name: 'RegionManagement',
-        component: () => import('@/views/VideoAggregation/EventGroupManagement.vue'),
-        meta: { title: '区域管理', icon: '区域管理', groupType: 1 }
-      },
-      {
-        path: '/group-management',
-        name: 'GroupManagement',
-        component: () => import('@/views/VideoAggregation/EventGroupManagement.vue'),
-        meta: { title: '分组管理', icon: '分组管理', groupType: 2 }
-      },
-      {
         path: '/algorithm-training-platform',
         name: 'AlgorithmTrainingPlatform',
         component: () => import('@/views/AlgorithmWarehouse/AlgorithmTrainingPlatform.vue'),

@@ -449,9 +449,6 @@ const menuRoutesMap = {
       ]
     },
     // { path: '/camera-settings', meta: { title: '设置摄像机', icon: '摄像机设置' } },
-    { path: '/tag-management', meta: { title: '标签管理', icon: '标签管理' } },
-    { path: '/region-management', meta: { title: '区域管理', icon: '区域管理' } },
-    { path: '/group-management', meta: { title: '分组管理', icon: '分组管理' } }
   ],
   'decision-ai': [
     {

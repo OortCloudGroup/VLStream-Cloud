@@ -8,6 +8,14 @@ export function getClassificationTree(categoryType, protocolType) {
   })
 }
 
+export function getClassificationDeviceIds(categoryType, categoryId) {
+  return request({
+    url: '/device/classification/device-ids',
+    method: 'get',
+    params: { categoryType, categoryId }
+  })
+}
+
 export function addClassificationCategory(data) {
   return request({ url: '/device/classification/category', method: 'post', data })
 }
