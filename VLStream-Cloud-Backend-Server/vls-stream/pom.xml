@@ -461,29 +461,4 @@
         </resources>
     </build>
 
-    <repositories>
-        <repository>
-            <id>maven-public</id>
-            <name>maven-public Repository</name>
-            <url>http://192.168.88.218:8403/repository/maven-public/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>maven-public</id>
-            <name>maven-public Repository</name>
-            <url>http://192.168.88.218:8403/repository/maven-public/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
-
 </project>

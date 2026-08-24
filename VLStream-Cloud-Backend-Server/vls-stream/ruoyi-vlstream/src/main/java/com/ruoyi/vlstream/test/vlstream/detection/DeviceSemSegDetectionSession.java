@@ -27,7 +27,9 @@ import com.ruoyi.vlstream.test.vlstream.service.IVlsEventManagementService;
 import com.ruoyi.vlstream.test.vlstream.service.SSHService;
 
 import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -214,7 +216,12 @@ public class DeviceSemSegDetectionSession implements DeviceDetectionSession {
         }
         try {
             if (isHttpUrl(imagePath)) {
-                return SmartImageFactory.getInstance().fromUrl(new URL(imagePath));
+                URLConnection connection = new URL(imagePath).openConnection();
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(10000);
+                try (InputStream inputStream = connection.getInputStream()) {
+                    return SmartImageFactory.getInstance().fromInputStream(inputStream);
+                }
             }
             return SmartImageFactory.getInstance().fromFile(Paths.get(imagePath));
         } catch (Exception exception) {

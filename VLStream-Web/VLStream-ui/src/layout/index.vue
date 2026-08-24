@@ -444,7 +444,6 @@ const menuRoutesMap = {
             { path: '/gbmanger/wvpLive', meta: { title: '分屏监控', icon: '视频广场' } }
           ]
         },
-        { path: '/dahua/dahuaDevice', meta: { title: '大华协议', icon: 'wvp-dahua' } },
         { path: '/custom/device', meta: { title: '自定义', icon: '设备管理' } }
       ]
     },
