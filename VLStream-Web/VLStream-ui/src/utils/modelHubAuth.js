@@ -6,9 +6,9 @@
  */
 
 const PLATFORM_BASE_URL = 'https://workup-dev.myoumuamua.com:6433'
-const LOGIN_PAGE_PATH = '/bus/apaas-web/loginPage/index.html'
-const MODEL_HUB_PAGE_PATH = '/bus/apaas-web/newapi/index.html'
-const APP_NAME = 'OortToolKit'
+const PLATFORM_LOGIN_URL = import.meta.env.VITE_PLATFORM_LOGIN_URL || `${PLATFORM_BASE_URL}/bus/apaas-web/loginPage/index.html`
+const OORTCLOUD_MODEL_HUB_URL = import.meta.env.VITE_OORTCLOUD_MODEL_HUB_URL || 'https://vls.oortcloudsmart.com/zh/ModelHub/ModelHub'
+const APP_NAME = import.meta.env.VITE_PLATFORM_APP_NAME || 'VLStream'
 /**
  * 登录回调地址不要带 ?query：
  * 登录页会再拼 ?access_token=xxx，若 redirect_uri 已有 ? 会变成
@@ -18,12 +18,16 @@ const DEFAULT_CALLBACK_PATH = '/bus/vls-ui/cloud-platform'
 
 const ACCESS_TOKEN_KEY = 'modelHubAccessToken'
 const PENDING_PUBLISH_KEY = 'pendingPublishToModelHub'
+const AUTH_PENDING_KEY = 'modelHubAuthPendingAt'
+const RETURN_LOCATION_KEY = 'modelHubReturnLocation'
+const AUTH_PENDING_MAX_AGE = 30 * 60 * 1000
 
 /** 构建登录页地址 */
 export function buildModelHubLoginUrl(redirectUri) {
-  const loginUrl = new URL(`${PLATFORM_BASE_URL}${LOGIN_PAGE_PATH}`)
+  const loginUrl = new URL(PLATFORM_LOGIN_URL)
   loginUrl.searchParams.set('appname', APP_NAME)
   loginUrl.searchParams.set('redirect_uri', redirectUri)
+  if (!loginUrl.hash) loginUrl.hash = '/'
   return loginUrl.toString()
 }
 
@@ -38,6 +42,11 @@ export function startModelHubLogin(pendingPayload) {
   if (pendingPayload) {
     sessionStorage.setItem(PENDING_PUBLISH_KEY, JSON.stringify(pendingPayload))
   }
+  sessionStorage.setItem(AUTH_PENDING_KEY, String(Date.now()))
+  sessionStorage.setItem(
+    RETURN_LOCATION_KEY,
+    `${window.location.pathname}${window.location.search}${window.location.hash}`
+  )
   window.location.href = buildModelHubLoginUrl(getModelHubRedirectUri())
 }
 
@@ -88,6 +97,75 @@ function extractCallbackParams(href) {
   return result
 }
 
+function clearPendingModelHubAuth() {
+  sessionStorage.removeItem(AUTH_PENDING_KEY)
+  sessionStorage.removeItem(RETURN_LOCATION_KEY)
+}
+
+function isPendingModelHubCallback() {
+  const callbackPath = new URL(DEFAULT_CALLBACK_PATH, window.location.origin).pathname
+  if (window.location.pathname !== callbackPath) {
+    return false
+  }
+
+  const pendingAt = Number(sessionStorage.getItem(AUTH_PENDING_KEY))
+  if (!pendingAt || Date.now() - pendingAt > AUTH_PENDING_MAX_AGE) {
+    clearPendingModelHubAuth()
+    return false
+  }
+  return true
+}
+
+function getSafeReturnLocation() {
+  const fallback = DEFAULT_CALLBACK_PATH
+  const rawLocation = sessionStorage.getItem(RETURN_LOCATION_KEY)
+  if (!rawLocation) {
+    return fallback
+  }
+
+  try {
+    const returnUrl = new URL(rawLocation, window.location.origin)
+    const appBasePath = new URL(import.meta.env.BASE_URL, window.location.origin).pathname
+    if (
+      returnUrl.origin === window.location.origin &&
+      returnUrl.pathname.startsWith(appBasePath)
+    ) {
+      return `${returnUrl.pathname}${returnUrl.search}${returnUrl.hash}`
+    }
+  } catch {
+    // ignore invalid or unsafe return location
+  }
+  return fallback
+}
+
+/**
+ * 在 Vue Router 启动前接管本次 OortCloud 授权回调。
+ * 只处理由 startModelHubLogin 发起且仍在有效期内的回调，避免把 VLStream
+ * 自身登录回调里的同名 accessToken 当成 OortCloud Token。
+ */
+export function capturePendingModelHubCallback() {
+  if (!isPendingModelHubCallback()) {
+    return null
+  }
+
+  const { accessToken, tenantId } = extractCallbackParams(window.location.href)
+  if (!accessToken) {
+    return null
+  }
+
+  const returnLocation = getSafeReturnLocation()
+  saveModelHubAccessToken(accessToken)
+  if (tenantId) {
+    sessionStorage.setItem('modelHubTenantId', tenantId)
+    localStorage.setItem('modelHubTenantId', tenantId)
+  }
+  clearPendingModelHubAuth()
+
+  // 路由守卫运行前恢复发起登录的业务页，同时移除回调 Token。
+  window.history.replaceState({}, '', returnLocation)
+  return accessToken
+}
+
 /** 从 URL 回调中解析并保存 accessToken */
 export function captureModelHubTokenFromUrl() {
   const href = window.location.href
@@ -100,6 +178,7 @@ export function captureModelHubTokenFromUrl() {
   saveModelHubAccessToken(accessToken)
   if (tenantId) {
     sessionStorage.setItem('modelHubTenantId', tenantId)
+    localStorage.setItem('modelHubTenantId', tenantId)
   }
 
   // 清掉回调参数，恢复成干净的云平台地址，并带上 tab=user
@@ -114,8 +193,7 @@ export function saveModelHubAccessToken(accessToken) {
   if (!accessToken) return
   sessionStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
   localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
-  sessionStorage.setItem('accessToken', accessToken)
-  localStorage.setItem('accessToken', accessToken)
+  window.dispatchEvent(new CustomEvent('modelHubAuthChanged'))
 }
 
 export function getModelHubAccessToken() {
@@ -124,6 +202,17 @@ export function getModelHubAccessToken() {
     localStorage.getItem(ACCESS_TOKEN_KEY) ||
     ''
   )
+}
+
+/** 只清理 OortCloud 登录态，保留 VLStream 主系统会话。 */
+export function clearModelHubAuth() {
+  ;[sessionStorage, localStorage].forEach((storage) => {
+    storage.removeItem(ACCESS_TOKEN_KEY)
+    storage.removeItem('modelHubTenantId')
+  })
+  sessionStorage.removeItem(PENDING_PUBLISH_KEY)
+  clearPendingModelHubAuth()
+  window.dispatchEvent(new CustomEvent('modelHubAuthChanged'))
 }
 
 export function getPendingModelHubPublish() {
@@ -139,13 +228,7 @@ export function clearPendingModelHubPublish() {
   sessionStorage.removeItem(PENDING_PUBLISH_KEY)
 }
 
-/** 打开 Model Hub（带 accessToken） */
-export function openModelHubWithToken(accessToken) {
-  const token = accessToken || getModelHubAccessToken()
-  if (!token) {
-    throw new Error('缺少 accessToken，请先登录')
-  }
-  const websiteUrl = new URL(`${PLATFORM_BASE_URL}${MODEL_HUB_PAGE_PATH}`)
-  websiteUrl.searchParams.set('accessToken', token)
-  window.open(websiteUrl.toString(), '_blank', 'noopener,noreferrer')
+/** 打开公开 Model Hub。目标站不接收外部 Token，禁止将凭证放入 URL。 */
+export function openOortCloudModelHub() {
+  window.open(OORTCLOUD_MODEL_HUB_URL, '_blank', 'noopener,noreferrer')
 }

@@ -24,7 +24,7 @@ import { useErrorMsgStoreHook } from '@/store/modules/useErrorMsg'
 import useGoWhere  from '@/hooks/useGoWhere'
 import { ElMessageBox } from 'element-plus'
 import { refreshToken } from '@/api/system/localAuth'
-import { applyAuthHeaders, getStoredToken } from '@/utils/request'
+import { applyAuthHeaders, applyPlatformGatewayHeaders, getStoredToken } from '@/utils/request'
 
 
 import { useUserStoreHook } from '@/store/modules/useraPaas'
@@ -70,8 +70,8 @@ const handleTokenRefresh = (originalResponse: any, originalConfig?: AxiosRequest
           const updateTokenInRequest = (requestConfig: AxiosRequestConfig) => {
             // 添加类型断言以兼容 axios 1.x
             const headers = requestConfig.headers as Record<string, any> || {};
-            // 更新请求头中的AccessToken
-            requestConfig.headers = { ...headers, 'AccessToken': refreshRes.data.accessToken };
+            // 更新请求头中的 accesstoken
+            requestConfig.headers = { ...headers, accesstoken: refreshRes.data.accessToken };
             // 如果URL中有token参数，也需要更新
             if (requestConfig.params) {
               requestConfig.params = { ...requestConfig.params };
@@ -246,7 +246,11 @@ function createService() {
       }
       const token = applyAuthHeaders(config)
       if (token && headers) {
-        headers.AccessToken = token
+        delete headers.AccessToken
+        headers.accesstoken = token
+      }
+      if (String(config.url || '').includes('/bus/apaas-vls-server')) {
+        applyPlatformGatewayHeaders(config)
       }
       return config
     },
@@ -360,7 +364,7 @@ function createRequestFunction(service: AxiosInstance) {
         // 携带 Token
         'Content-Type': get(config, 'headers.Content-Type', 'application/json'),
         ...Config.headers,
-        'AccessToken': getStoredToken() || getToken()
+        accesstoken: getStoredToken() || getToken()
       },
       timeout: config.timeout || 10 * 1000,
       data: {}
@@ -372,7 +376,11 @@ function createRequestFunction(service: AxiosInstance) {
     }
     const token = applyAuthHeaders(mergedConfig)
     if (token) {
-      mergedConfig.headers.AccessToken = token
+      delete mergedConfig.headers.AccessToken
+      mergedConfig.headers.accesstoken = token
+    }
+    if (String(mergedConfig.url || '').includes('/bus/apaas-vls-server')) {
+      applyPlatformGatewayHeaders(mergedConfig)
     }
     return service(mergedConfig).then()
   }

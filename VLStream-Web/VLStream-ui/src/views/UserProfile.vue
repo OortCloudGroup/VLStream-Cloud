@@ -19,7 +19,18 @@
           </el-avatar>
         </div>
         <div class="user-basic-info">
-          <h3 class="user-name">{{ userInfo.userName || '未登录' }}</h3>
+          <div class="user-name-row">
+            <h3 class="user-name">{{ userInfo.userName || '未登录' }}</h3>
+            <el-button
+              v-if="!isEditing"
+              class="edit-profile-button"
+              type="primary"
+              link
+              :icon="Edit"
+              aria-label="编辑用户信息"
+              @click="startEdit"
+            />
+          </div>
           <p class="user-id">用户ID: {{ userInfo.userId || '未知' }}</p>
           <p class="user-status">
             <el-tag 
@@ -32,8 +43,26 @@
         </div>
       </div>
 
+      <!-- 只读信息展示 -->
+      <div v-if="!isEditing" class="profile-details">
+        <div
+          v-for="item in profileDetails"
+          :key="item.label"
+          class="profile-detail-item"
+        >
+          <el-icon class="detail-icon">
+            <component :is="item.icon" />
+          </el-icon>
+          <span class="detail-label">{{ item.label }}</span>
+          <span class="detail-value" :class="{ 'token-value': item.isToken }">
+            {{ item.value }}
+          </span>
+        </div>
+      </div>
+
       <!-- 详细信息表单 -->
       <el-form 
+        v-else
         :model="userInfo" 
         label-width="120px" 
         class="user-form"
@@ -179,31 +208,22 @@
         <!-- 操作按钮 -->
         <el-form-item>
           <div class="form-actions">
-            <el-button 
-              v-if="!isEditing" 
+            <el-button
               type="primary" 
-              @click="startEdit"
-              :icon="Edit"
+              @click="saveChanges"
+              :icon="Check"
+              :loading="saving"
+              class="common_btn"
             >
-              编辑信息
+              保存
             </el-button>
-            <template v-else>
-              <el-button 
-                type="primary" 
-                @click="saveChanges"
-                :icon="Check"
-                :loading="saving"
-                class="common_btn"
-              >
-                保存
-              </el-button>
-              <el-button 
-                @click="cancelEdit"
-                :icon="Close"
-               class="common_btn">
-                取消
-              </el-button>
-            </template>
+            <el-button
+              @click="cancelEdit"
+              :icon="Close"
+              class="common_btn"
+            >
+              取消
+            </el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -231,7 +251,18 @@
 <script setup>
 import { ref, onMounted, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Edit, Check, Close } from '@element-plus/icons-vue'
+import {
+  Calendar,
+  Check,
+  Clock,
+  Close,
+  Connection,
+  Edit,
+  Key,
+  Monitor,
+  OfficeBuilding,
+  User
+} from '@element-plus/icons-vue'
 import { AuthManager } from '@/utils/auth'
 import { getUserInfo } from '@/api/system/localAuth'
 
@@ -243,6 +274,18 @@ const userInfo = ref({})
 const isEditing = ref(false)
 const saving = ref(false)
 const loginHistory = ref([])
+
+const getUserSourceLabel = (value) => ({
+  1: '系统创建',
+  2: '组织创建',
+  3: '用户池创建',
+  4: '统一用户中心'
+}[value] || '未知')
+
+const getLoginTypeLabel = (value) => ({
+  1: 'B/E端用户',
+  2: 'C端用户'
+}[value] || '未知')
 
 // 默认头像
 const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjVGNUY1Ii8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjgwIiByPSIzMCIgZmlsbD0iI0NDQ0NDQyIvPgo8cGF0aCBkPSJNNDAgMTYwQzQwIDEyMCA4MCAxMDAgMTAwIDEwMEMxMjAgMTAwIDE2MCAxMjAgMTYwIDE2MEg0MFoiIGZpbGw9IiNDQ0NDQ0MiLz4KPC9zdmc+'
@@ -267,6 +310,21 @@ const maskToken = (token) => {
   if (token.length <= 8) return token
   return token.substring(0, 8) + '****' + token.substring(token.length - 8)
 }
+
+const profileDetails = computed(() => [
+  { label: '登录账号', value: userInfo.value.loginId || '—', icon: User },
+  { label: '用户姓名', value: userInfo.value.userName || '—', icon: User },
+  { label: '租户ID', value: userInfo.value.tenantId || '—', icon: OfficeBuilding },
+  { label: '用户来源', value: getUserSourceLabel(userInfo.value.form), icon: Connection },
+  { label: '登录类型', value: getLoginTypeLabel(userInfo.value.loginType), icon: Key },
+  { label: '客户端类型', value: userInfo.value.client || '—', icon: Monitor },
+  { label: '最后登录时间', value: formatDateTime(userInfo.value.loginTime), icon: Clock },
+  { label: '最后登录IP', value: userInfo.value.loginIp || '—', icon: Connection },
+  { label: '令牌过期时间', value: formatDateTime(userInfo.value.tokenExpireTime), icon: Clock },
+  { label: '创建时间', value: formatDateTime(userInfo.value.createdAt), icon: Calendar },
+  { label: '更新时间', value: formatDateTime(userInfo.value.updatedAt), icon: Calendar },
+  { label: '访问令牌', value: maskToken(userInfo.value.accessToken) || '—', icon: Key, isToken: true }
+])
 
 // 开始编辑
 const startEdit = () => {
@@ -475,6 +533,22 @@ onMounted(async () => {
   margin: 0 0 8px 0;
 }
 
+.user-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.user-name-row .user-name {
+  margin-bottom: 0;
+}
+
+.edit-profile-button {
+  padding: 4px;
+  font-size: 18px;
+}
+
 .user-id {
   font-size: 14px;
   color: #909399;
@@ -487,6 +561,44 @@ onMounted(async () => {
 
 .user-form {
   margin-top: 24px;
+}
+
+.profile-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 72px;
+  row-gap: 24px;
+  padding: 4px 8px 8px;
+}
+
+.profile-detail-item {
+  display: grid;
+  grid-template-columns: 20px 112px minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+}
+
+.detail-icon {
+  color: #8a9bb5;
+  font-size: 18px;
+}
+
+.detail-label {
+  color: #8a9bb5;
+  font-size: 15px;
+}
+
+.detail-value {
+  min-width: 0;
+  color: #303744;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.token-value {
+  font-family: Consolas, Monaco, monospace;
+  font-size: 14px;
 }
 
 .form-actions {
@@ -533,6 +645,21 @@ onMounted(async () => {
   
   .form-actions {
     flex-direction: column;
+  }
+
+  .user-name-row {
+    justify-content: center;
+  }
+
+  .profile-details {
+    grid-template-columns: 1fr;
+    row-gap: 18px;
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .profile-detail-item {
+    grid-template-columns: 20px 104px minmax(0, 1fr);
   }
 }
 </style> 

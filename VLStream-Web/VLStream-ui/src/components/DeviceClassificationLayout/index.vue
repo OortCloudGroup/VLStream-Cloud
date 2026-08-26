@@ -28,7 +28,9 @@
             @node-click="handleNodeClick"
           >
             <template #empty>
-              <div class="tree-empty" @click="openRootAdd">暂无数据，点击新增</div>
+              <div class="tree-empty" :class="{ readonly }" @click="openRootAdd">
+                {{ readonly ? '暂无数据' : '暂无数据，点击新增' }}
+              </div>
             </template>
             <template #default="{ node, data }">
               <div
@@ -49,6 +51,7 @@
                   </el-tooltip>
                 </div>
                 <div
+                  v-if="!readonly"
                   v-show="hoveredTreeNodeId === data.id || (selectedCategory && selectedCategory.id === data.id)"
                   class="tree-node-actions flexRowAC"
                   @click.stop
@@ -156,7 +159,8 @@ import {
 const props = defineProps({
   protocolType: { type: String, required: true },
   selectedDeviceKeys: { type: Array, default: () => [] },
-  showAssignment: { type: Boolean, default: true }
+  showAssignment: { type: Boolean, default: true },
+  readonly: { type: Boolean, default: false }
 })
 const emit = defineEmits(['filter-change', 'assigned'])
 
@@ -249,6 +253,7 @@ function handleAddChild(data) {
 }
 
 function openRootAdd() {
+  if (props.readonly) return
   selectedCategory.value = null
   openCategoryDialog('add')
 }
@@ -259,6 +264,7 @@ function handleRemoveNode(data) {
 }
 
 function handleEditNode(data) {
+  if (props.readonly) return
   selectedCategory.value = data
   openCategoryDialog('edit')
 }
@@ -497,6 +503,10 @@ onMounted(async () => {
   font-size: 14px;
   text-align: center;
   cursor: pointer;
+}
+
+.tree-empty.readonly {
+  cursor: default;
 }
 
 .tableTenIt {

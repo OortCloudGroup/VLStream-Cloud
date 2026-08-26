@@ -20,8 +20,12 @@ import 'virtual:svg-icons-register'
 import '@/assets/wvp/iconfont.css'
 import '@/assets/wvp/compat.scss'
 import { installWvpCompat } from '@/utils/wvpCompat'
+import { capturePendingModelHubCallback } from '@/utils/modelHubAuth'
 
 window.$crudCommon = crudCommon;
+
+// OortCloud 与 VLStream 都使用 accessToken 参数；必须在主路由鉴权前完成分流。
+capturePendingModelHubCallback()
 
 // 同步 VLStream token 到 apaas 认证存储
 const vlsAccessToken = localStorage.getItem('accessToken')

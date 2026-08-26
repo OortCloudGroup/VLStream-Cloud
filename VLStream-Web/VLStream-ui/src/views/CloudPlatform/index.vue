@@ -7,9 +7,6 @@
 
     <div class="content-card">
       <el-tabs v-model="activeTab" class="cloud-tabs" lazy>
-        <el-tab-pane label="平台信息" name="platform">
-          <div class="placeholder-panel">平台信息功能开发中</div>
-        </el-tab-pane>
         <el-tab-pane label="用户信息" name="user">
           <!-- 仅当前 tab 挂载，避免切到模型页仍走用户信息逻辑 -->
           <CloudUserInfo v-if="hasToken && activeTab === 'user'" />
@@ -49,7 +46,7 @@ const hasToken = ref(!!getModelHubAccessToken())
 
 function resolveActiveTab(rawTab) {
   const tab = String(rawTab || '').split('?')[0]
-  if (tab === 'user' || tab === 'models' || tab === 'platform') {
+  if (tab === 'user' || tab === 'models') {
     return tab
   }
   return 'user'
@@ -65,6 +62,10 @@ function syncTabToUrl(tab) {
 }
 
 onMounted(() => {
+  if (String(route.query.tab || '') !== activeTab.value) {
+    syncTabToUrl(activeTab.value)
+  }
+
   if (tokenFromUrl) {
     ElMessage.success('登录成功')
     activeTab.value = 'user'

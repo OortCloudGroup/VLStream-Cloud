@@ -167,6 +167,12 @@ export default defineConfig(async ({ mode }) => {
           changeOrigin: true,
           secure: false
         },
+        // OortCloud New API 账户、令牌和额度接口
+        '/bus/apaas-newapi': {
+          target: 'https://workup-dev.myoumuamua.com:6433',
+          changeOrigin: true,
+          secure: false
+        },
         // Model Hub 头像上传 fastdfs
         '/bus/apaas-fastdfsservice': {
           target: 'https://workup-dev.myoumuamua.com:6433',

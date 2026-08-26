@@ -54,12 +54,9 @@
         </el-form>
       </div>
       <div v-else-if="tenantMode === 'multi'" class="platform-login-tip">
-        <h3>统一平台登录</h3>
-        <p>{{ platformRedirecting ? '正在前往统一平台登录...' : '当前服务已启用多租户模式。' }}</p>
+        <h3>请从应用平台进入</h3>
+        <p>当前服务已启用多租户模式，请从应用平台点击 VLStream 进入。</p>
         <p v-if="platformLoginError" class="platform-login-error">{{ platformLoginError }}</p>
-        <el-button type="primary" :loading="platformRedirecting" class="login-button" @click="redirectToPlatformLogin">
-          {{ platformRedirecting ? '正在跳转...' : '前往统一平台登录' }}
-        </el-button>
       </div>
       <div v-else class="platform-login-tip">正在读取登录模式...</div>
 
@@ -89,10 +86,6 @@ const authManager = new AuthManager()
 const { sm2 } = smCrypto
 const BLADE_AUTH_PUBLIC_KEY = import.meta.env.VITE_BLADE_AUTH_PUBLIC_KEY || '049787e408dea94acb3655acc5a7c7c7010bb9f140c84926c667ea616366082a118141c8dcb3e78a9d85d64fb765a250ff73448b18938f2219b94f782e28e1df64'
 const SINGLE_TENANT_ID = '000000'
-const PLATFORM_LOGIN_URL = import.meta.env.VITE_PLATFORM_LOGIN_URL || 'https://workup-dev.myoumuamua.com:6433/bus/apaas-web/loginPage/index.html'
-const PLATFORM_APP_NAME = import.meta.env.VITE_PLATFORM_APP_NAME || 'VLStream'
-const PLATFORM_REDIRECT_KEY = 'platformLoginRedirect'
-
 // 表单引用
 const loginFormRef = ref()
 
@@ -107,7 +100,6 @@ const loginForm = reactive({
 const loginLoading = ref(false)
 const tenantMode = ref('loading')
 const platformLoginError = ref('')
-const platformRedirecting = ref(false)
 
 // 表单验证规则
 const loginRules = {
@@ -123,21 +115,6 @@ const loginRules = {
 // 使用后端配置的 SM2 公钥加密登录密码。
 const encryptPassword = (password) => {
   return sm2.doEncrypt(password, BLADE_AUTH_PUBLIC_KEY, 0)
-}
-
-const platformCallbackUrl = () => {
-  return new URL(`${import.meta.env.BASE_URL}login`, window.location.origin).toString()
-}
-
-const redirectToPlatformLogin = () => {
-  platformRedirecting.value = true
-  platformLoginError.value = ''
-  sessionStorage.setItem(PLATFORM_REDIRECT_KEY, String(route.query.redirect || '/'))
-  const loginUrl = new URL(PLATFORM_LOGIN_URL)
-  loginUrl.searchParams.set('appname', PLATFORM_APP_NAME)
-  loginUrl.searchParams.set('redirect_uri', platformCallbackUrl())
-  if (!loginUrl.hash) loginUrl.hash = '/'
-  window.location.replace(loginUrl.toString())
 }
 
 // 处理登录
@@ -212,8 +189,7 @@ onMounted(async () => {
       const userInfo = await authManager.checkUrlToken()
       if (userInfo) {
         ElMessage.success('自动登录成功')
-        const redirect = sessionStorage.getItem(PLATFORM_REDIRECT_KEY) || route.query.redirect || '/'
-        sessionStorage.removeItem(PLATFORM_REDIRECT_KEY)
+        const redirect = route.query.redirect || '/workspace'
         await router.replace(redirect)
         return
       }
@@ -227,7 +203,6 @@ onMounted(async () => {
   }
 
   if (tenantMode.value === 'multi') {
-    if (!token) redirectToPlatformLogin()
     return
   }
 

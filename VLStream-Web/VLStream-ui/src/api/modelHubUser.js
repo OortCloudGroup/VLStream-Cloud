@@ -9,7 +9,7 @@ const PLATFORM_SSO_BASE = import.meta.env.DEV
   ? '/bus/apaas-sso'
   : 'https://workup-dev.myoumuamua.com:6433/bus/apaas-sso'
 
-const MODEL_HUB_HEADERS = {
+export const MODEL_HUB_HEADERS = {
   'Content-Type': 'application/json',
   accept: 'application/json, text/plain, */*',
   requesttype: 'app',
@@ -52,6 +52,13 @@ export function getModelHubUserInfo(data = {}) {
     accessToken,
     desensitize: data.desensitize !== undefined ? data.desensitize : true
   })
+}
+
+/** 退出 OortCloud 平台登录，不影响 VLStream 本地会话。 */
+export function logoutModelHubUser() {
+  const accessToken = getModelHubAccessToken()
+  const request = createModelHubRequest(accessToken)
+  return request.post('/sso/v1/logout', { accessToken })
 }
 
 /** 编辑用户信息 */

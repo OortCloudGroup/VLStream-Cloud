@@ -4,7 +4,7 @@ const LOCAL_TENANT_ID = '000000'
 
 /** 获取后端当前租户模式。 */
 export function getTenantMode() {
-  return authRequest.get('/sso/v1/mode', { skipTokenAuth: true } as any)
+  return authRequest.get('/sso/v1/mode')
 }
 
 /** 将统一平台 token 换成本系统本地 Sa-Token。 */
@@ -16,7 +16,7 @@ export function exchangePlatformToken(accessToken: string, tenantId?: string) {
     skipTokenAuth: true,
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      AccessToken: accessToken,
+      accesstoken: accessToken,
       ...(tenantId ? { tenantid: tenantId } : {})
     }
   } as any)

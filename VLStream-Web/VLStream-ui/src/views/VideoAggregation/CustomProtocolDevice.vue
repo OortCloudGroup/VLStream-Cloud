@@ -4,12 +4,12 @@
     <div class="protocol-page">
       <el-card shadow="never">
         <template #header>
-          <div class="header">
-            <div class="header-title">
+          <div class="custom-device-header">
+            <div class="custom-device-header-title">
               <span class="title">自定义协议设备</span>
               <el-tag :type="mediaAvailable ? 'success' : 'danger'" size="small">WVP ZLM {{ mediaAvailable ? '可用' : '不可用' }}</el-tag>
             </div>
-            <div class="filters">
+            <div class="custom-device-filters">
               <el-input v-model="query.deviceName" clearable placeholder="设备名称" @keyup.enter="search" />
               <el-input v-model="query.deviceCode" clearable placeholder="设备 ID" @keyup.enter="search" />
               <el-select v-model="query.status" clearable placeholder="全部状态">
@@ -22,7 +22,7 @@
 
         <el-alert v-if="serviceError" :title="serviceError" type="error" :closable="false" show-icon class="service-alert" />
 
-        <div class="toolbar">
+        <div class="custom-device-actions">
           <el-button type="primary" @click="openAdd">新增</el-button>
           <el-button type="success" :disabled="selectedIds.length !== 1" @click="openEdit()">修改</el-button>
           <el-button type="danger" :disabled="selectedIds.length === 0" @click="removeDevices()">删除</el-button>
@@ -210,13 +210,46 @@ onMounted(loadDevices)
 
 <style scoped>
 .protocol-page { padding: 20px; }
-.header, .filters, .header-title, .toolbar { display: flex; align-items: center; gap: 12px; }
-.header { justify-content: space-between; }
+.custom-device-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+.custom-device-header-title {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
 .title { font-size: 18px; font-weight: 600; }
-.filters .el-input { width: 160px; }.filters .el-select { width: 120px; }
-.service-alert, .toolbar { margin-bottom: 14px; }.pagination { display: flex; justify-content: center; padding-top: 20px; }
+.custom-device-filters {
+  display: flex;
+  flex: 1 1 520px;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.custom-device-filters .el-input { width: 150px; }
+.custom-device-filters .el-select { width: 120px; }
+.custom-device-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.custom-device-actions :deep(.el-button + .el-button) { margin-left: 0; }
+.service-alert { margin-bottom: 14px; }.pagination { display: flex; justify-content: center; padding-top: 20px; }
 .tag-item { margin-right: 4px; }.player { min-height: 480px; background: #000; display: flex; align-items: center; justify-content: center; }
 .oplayer-container { width: 100%; height: 480px; }.player :deep(#webRtcPlayerBox), .player :deep(#rtcPlayer) { width: 100%; max-height: 520px; }
 .record-alert { margin-bottom: 16px; }
-@media (max-width: 1320px) { .header { align-items: flex-start; flex-direction: column; }.filters { flex-wrap: wrap; } }
+@media (max-width: 1200px) {
+  .custom-device-filters { flex-basis: 100%; justify-content: flex-start; }
+}
 </style>

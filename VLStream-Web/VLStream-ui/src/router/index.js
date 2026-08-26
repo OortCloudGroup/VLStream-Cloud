@@ -206,7 +206,7 @@ const routes = [
       {
         path: '/event-management',
         name: 'EventManagement',
-        component: () => import('@/views/events/page/eventManagement/secure.vue'),
+        component: () => import('@/views/DecisionAI/TenantEventManagement.vue'),
         meta: { title: '事件管理', icon: '事件' }
       },
       {
@@ -445,119 +445,24 @@ router.beforeEach(async (to, from, next) => {
 
   // 检查是否需要登录验证
   if (to.meta.requiresAuth) {
-      try {
-    // 优先级1：检查外部统一用户平台登录状态（SSO）
-    const externalUserInfo = await authManager.checkExternalPlatformLogin()
-    if (externalUserInfo) {
-      console.log('外部平台SSO验证成功，用户:', externalUserInfo.userName || externalUserInfo.loginId)
+    const userInfo = await authManager.checkExternalPlatformLogin()
+    if (userInfo) {
+      console.log('登录验证成功，用户:', userInfo.userName || userInfo.loginId)
       next()
       return
     }
 
-    // 如果没有外部平台token，尝试同步外部平台信息
-    // console.log('没有外部平台token，尝试同步外部平台Session Storage信息')
-    // 不跳转，让用户手动处理或显示登录页面
-
-    // 优先级2：检查URL中的accessToken（SSO跳转）
-    const urlParams = new URLSearchParams(window.location.search)
-    const urlAccessToken = urlParams.get('accessToken')
-    if (urlAccessToken) {
-      console.log('检测到URL中的accessToken，进行SSO验证')
-      try {
-        const userInfo = await authManager.verifyToken(urlAccessToken)
-        if (userInfo) {
-          console.log('URL accessToken验证成功，用户:', userInfo.userName)
-          // 保存用户信息到本地，避免重复验证
-          await authManager.saveUserToLocal(userInfo)
-          // 只有在验证成功后才保存token到Session Storage
-          sessionStorage.setItem('token', urlAccessToken)
-          sessionStorage.setItem('accessToken', urlAccessToken)
-          // 清除URL参数
-          const newUrl = window.location.pathname
-          window.history.replaceState({}, document.title, newUrl)
-          next()
-          return
-        } else {
-          console.log('URL accessToken验证失败，清除可能存在的无效token')
-          // 验证失败时立即清除可能存在的无效token
-          sessionStorage.removeItem('token')
-          sessionStorage.removeItem('accessToken')
-          // 不再清除URL参数，让系统继续检查其他token
-        }
-      } catch (error) {
-        console.error('URL accessToken验证失败:', error)
-        // 验证失败时立即清除可能存在的无效token
-        sessionStorage.removeItem('token')
-        sessionStorage.removeItem('accessToken')
-        // 不再清除URL参数，让系统继续检查其他token
-      }
-    }
-
-    // 优先级2.5：检查URL中的token（兼容旧格式）
-        try {
-    const urlUserInfo = await authManager.checkUrlToken()
-    if (urlUserInfo) {
-      console.log('URL token验证成功，用户:', urlUserInfo.userName)
-      next()
-      return
-          }
-        } catch (error) {
-          console.error('检查URL token失败:', error)
-    }
-
-    // 优先级2.5：检查Session Storage中的新token
-    const sessionToken = sessionStorage.getItem('accessToken')
-    // console.log('Session Storage中的token:', sessionToken)
-    if (sessionToken) {
-      console.log('检测到Session Storage中的token')
-          try {
-      const sessionUserInfo = await authManager.verifyToken(sessionToken)
-      if (sessionUserInfo) {
-        console.log('Session token验证成功，用户:', sessionUserInfo.userName)
-        await authManager.saveUserToLocal(sessionUserInfo)
-        next()
-        return
-      } else {
-        console.log('Session token验证失败，清除无效token')
-        authManager.clearSessionTokens()
-            }
-          } catch (error) {
-            console.error('Session token验证失败:', error)
-        authManager.clearSessionTokens()
-      }
-    }
-
-    // 优先级3：检查本地存储的token
-        try {
-    const localUserInfo = await authManager.checkLocalToken()
-    if (localUserInfo) {
-      console.log('本地token验证成功，用户:', localUserInfo.userName)
-      next()
-      return
-          }
-        } catch (error) {
-          console.error('检查本地token失败:', error)
-    }
-
-    // 没有有效 token 时跳转登录页，避免后续业务接口持续返回 401。
+    // 多租户平台直接回调业务页；没有有效凭证时只显示入口提示，不再跳统一授权页。
     next({
       path: '/login',
-      query: {
-        redirect: to.fullPath
-      }
+      query: { redirect: to.fullPath }
     })
-      } catch (error) {
-        console.error('路由守卫验证过程中发生错误:', error)
-        // 即使出错也要允许页面继续加载
-        next()
-      }
   } else {
-      next()
-    }
+    next()
+  }
   } catch (error) {
     console.error('路由守卫发生严重错误:', error)
-    // 确保总是调用next()
-    next()
+    next({ path: '/login', query: { redirect: to.fullPath } })
   }
 })
 

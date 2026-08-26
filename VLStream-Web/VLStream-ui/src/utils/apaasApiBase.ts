@@ -9,7 +9,7 @@ function getLocalBackendPrefix(): string {
   if (configuredBase !== undefined && configuredBase !== '') {
     return String(configuredBase).replace(/\/$/, '')
   }
-  return import.meta.env.DEV ? '' : '/bus/vls-server'
+  return import.meta.env.DEV ? '' : '/bus/apaas-vls-server'
 }
 
 export function getApaasGatewayPrefix(): string {
@@ -51,8 +51,13 @@ export function apaasServiceUrl(service: string, path = ''): string {
 }
 
 function resolveAuthToken(): string {
+  const urlParams = new URLSearchParams(window.location.search)
   return (
-    getToken()
+    urlParams.get('accessToken')
+    || urlParams.get('accesstoken')
+    || sessionStorage.getItem('platformAccessToken')
+    || localStorage.getItem('platformAccessToken')
+    || getToken()
     || localStorage.getItem('accessToken')
     || localStorage.getItem('apaas_token')
     || sessionStorage.getItem('token')
@@ -65,7 +70,7 @@ export const apaasRequestHeaders: Record<string, any> = {
   get authorization() {
     return resolveAuthToken()
   },
-  get AccessToken() {
+  get accesstoken() {
     return resolveAuthToken()
   },
   get tenantid() {

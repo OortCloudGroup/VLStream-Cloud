@@ -44,7 +44,7 @@ export class AuthManager {
   async verifyToken(token) {
     if (!token) return null
     try {
-      const apiResponse = normalizeApiResponse(await verifyToken())
+      const apiResponse = normalizeApiResponse(await verifyToken(token))
       if (!apiResponse || (apiResponse.code !== 200 && apiResponse.success !== true)) return null
       const data = apiResponse.data || {}
       const user = data.user || data
@@ -70,6 +70,10 @@ export class AuthManager {
     sessionStorage.setItem('accessToken', userInfo.accessToken)
     localStorage.setItem('userInfo', serialized)
     localStorage.setItem('accessToken', userInfo.accessToken)
+    if (userInfo.platformAccessToken) {
+      sessionStorage.setItem('platformAccessToken', userInfo.platformAccessToken)
+      localStorage.setItem('platformAccessToken', userInfo.platformAccessToken)
+    }
     if (userInfo.tenantId) {
       sessionStorage.setItem('tenantId', userInfo.tenantId)
       localStorage.setItem('tenantId', userInfo.tenantId)
@@ -163,6 +167,7 @@ export class AuthManager {
         ...user,
         ...data,
         accessToken: data.accessToken,
+        platformAccessToken: platformToken,
         userName: data.userName || user.nickName || user.userName,
         loginId: data.account || user.loginId || user.userName,
         tenantId: data.tenantId || user.tenantId
@@ -183,6 +188,8 @@ export class AuthManager {
     return url.searchParams.get('accessToken')
       || url.searchParams.get('access_token')
       || url.searchParams.get('token')
+      || sessionStorage.getItem('platformAccessToken')
+      || localStorage.getItem('platformAccessToken')
       || sessionStorage.getItem('accessToken')
       || sessionStorage.getItem('token')
       || localStorage.getItem('accessToken')

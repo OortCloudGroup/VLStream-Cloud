@@ -17,47 +17,61 @@ export const getBaseURL = () => {
   if (import.meta.env.DEV) {
     return ''
   }
-  // 生产环境默认访问线上网关，也可通过 VITE_API_BASE_URL 覆盖
-  return 'http://oort.oortcloudsmart.com:21410/bus/vls-server'
+  // 生产环境默认通过当前站点网关访问 VLStream 后端，也可通过 VITE_API_BASE_URL 覆盖
+  return '/bus/apaas-vls-server'
 }
 
-// 按 URL、sessionStorage、localStorage 的顺序读取当前 token。
-export const getStoredToken = () => {
+// 平台原始 token 只用于公司网关校验，不能替代 VLS 换票后的本地会话 token。
+export const getPlatformAccessToken = () => {
   const urlParams = new URLSearchParams(window.location.search)
   const urlToken = urlParams.get('accessToken') || urlParams.get('access_token') || urlParams.get('token')
   if (urlToken) {
     return urlToken
   }
 
-  const sessionToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token')
-  if (sessionToken) {
-    return sessionToken
-  }
-
-  return localStorage.getItem('accessToken') || localStorage.getItem('token')
+  return sessionStorage.getItem('platformAccessToken') || localStorage.getItem('platformAccessToken')
 }
+
+// VLS 本地会话 token 用于 SpringBlade / Sa-Token 用户鉴权。
+export const getLocalSessionToken = () => sessionStorage.getItem('accessToken')
+  || sessionStorage.getItem('token')
+  || localStorage.getItem('accessToken')
+  || localStorage.getItem('token')
+
+// 保持原有调用语义：需要穿过平台网关时优先返回平台 token。
+export const getStoredToken = () => getPlatformAccessToken() || getLocalSessionToken()
 
 // 统一平台网关要求每个请求都携带应用身份参数。
 export const applyPlatformGatewayHeaders = (config) => {
   config.headers = config.headers || {}
-  config.headers.requestType = PLATFORM_REQUEST_TYPE
-  if (PLATFORM_APP_ID) config.headers.appID = PLATFORM_APP_ID
-  if (PLATFORM_SECRET_KEY) config.headers.secretKey = PLATFORM_SECRET_KEY
+  delete config.headers.requestType
+  delete config.headers.appID
+  delete config.headers.secretKey
+  config.headers.requesttype = PLATFORM_REQUEST_TYPE
+  if (PLATFORM_APP_ID) config.headers.appid = PLATFORM_APP_ID
+  if (PLATFORM_SECRET_KEY) config.headers.secretkey = PLATFORM_SECRET_KEY
 }
 
 // 为请求写入 SpringBlade 识别的 Authorization 与 blade-auth 头。
 // 只写入规范大小写，避免浏览器把 Authorization/authorization 合并成不可识别的重复 token。
 export const applyAuthHeaders = (config) => {
-  const token = getStoredToken()
-  if (token) {
-    const authValue = token.toLowerCase().startsWith('bearer ') ? token : `Bearer ${token}`
+  const localToken = config.localAuthToken || getLocalSessionToken()
+  const platformToken = getPlatformAccessToken()
+  const authToken = localToken || platformToken
+  const gatewayToken = platformToken || localToken
+
+  if (authToken) {
+    const authValue = authToken.toLowerCase().startsWith('bearer ') ? authToken : `Bearer ${authToken}`
     config.headers.Authorization = authValue
     config.headers['blade-auth'] = authValue
-    config.headers.AccessToken = token
+  }
+  if (gatewayToken) {
+    delete config.headers.AccessToken
+    config.headers.accesstoken = gatewayToken.replace(/^Bearer\s+/i, '')
     const tenantId = sessionStorage.getItem('tenantId') || localStorage.getItem('tenantId') || '000000'
     config.headers.tenantId = tenantId
   }
-  return token
+  return authToken
 }
 
 // 登录取 token 时必须使用 OAuth client Basic 认证，不能携带旧用户 token。

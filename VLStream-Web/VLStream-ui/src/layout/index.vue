@@ -35,6 +35,8 @@
         </div>
 
         <div class="header-right">
+          <OortCloudPopover />
+
           <!-- 用户信息下拉框 -->
           <el-dropdown>
             <span class="user-info">
@@ -94,7 +96,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { AuthManager } from '@/utils/auth'
 import { getUserInfo, logoutUser } from '@/api/auth'
-import { getUserTenants, switchTenant as switchTenantApi } from '@/api/system/localAuth'
+import { getTenantMode, getUserTenants, switchTenant as switchTenantApi } from '@/api/system/localAuth'
 import {
   User,
   ArrowDown,
@@ -121,6 +123,7 @@ import {
 } from '@element-plus/icons-vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
 import SidebarMenuNode from './SidebarMenuNode.vue'
+import OortCloudPopover from './OortCloudPopover.vue'
 import deviceManagementIcon from '@/assets/img/svg/device-management.svg'
 import vlstreamIcon from '@/assets/img/svg/vlstream.svg'
 import isupIcon from '@/assets/img/svg/isup.svg'
@@ -160,6 +163,7 @@ const currentTenant = ref({
 })
 
 const tenantList = ref([])
+const tenantMode = ref('loading')
 
 // 使用 SpringBlade 当前用户接口更新右上角用户和租户信息。
 const loadBladeUserInfo = async () => {
@@ -519,6 +523,29 @@ const menuRoutesMap = {
   ]
 }
 
+const getMenuRoutes = (menuKey) => {
+  const routes = menuRoutesMap[menuKey] || []
+  if (menuKey !== 'decision-ai') {
+    return routes
+  }
+
+  // 租户模式尚未确定时不显示该业务菜单，避免多租户用户短暂看到单租户菜单。
+  if (tenantMode.value === 'loading') {
+    return []
+  }
+
+  if (tenantMode.value !== 'multi') {
+    return routes
+  }
+
+  return [
+    { path: '/event-management', meta: { title: '事件管理', icon: '事件' } },
+    ...routes.filter(item => item.path !== 'event-management-menu'
+      && item.path !== '/active-safety/work-orders'
+      && item.path !== '/active-safety/settings')
+  ]
+}
+
 // 是否显示侧边栏
 const showSidebar = computed(() => {
   return activeTopMenu.value !== 'workspace'
@@ -531,7 +558,7 @@ const sidebarActivePath = computed(() => {
 
 // 当前菜单的路由
 const currentMenuRoutes = computed(() => {
-  return menuRoutesMap[activeTopMenu.value] || []
+  return getMenuRoutes(activeTopMenu.value)
 })
 
 const menuContainsPath = (items, routePath) => {
@@ -590,7 +617,7 @@ const handleTopMenuClick = (menuKey) => {
   if (menuKey === 'workspace') {
     router.push('/workspace') // 工作台页面
   } else {
-    const routes = menuRoutesMap[menuKey]
+    const routes = getMenuRoutes(menuKey)
     if (routes && routes.length > 0) {
       const firstNavigablePath = getFirstNavigablePath(routes)
       if (firstNavigablePath) {
@@ -612,7 +639,8 @@ const getActiveMenuByRoute = (routePath) => {
   ) {
     return 'video-aggregation'
   }
-  for (const [menuKey, routes] of Object.entries(menuRoutesMap)) {
+  for (const menuKey of Object.keys(menuRoutesMap)) {
+    const routes = getMenuRoutes(menuKey)
     if (menuContainsPath(routes, routePath)) {
       return menuKey
     }
@@ -798,8 +826,15 @@ onMounted(async () => {
   console.log('🎬 组件开始挂载...')
 
   try {
-  const activeMenu = getActiveMenuByRoute(route.path)
-  activeTopMenu.value = activeMenu
+    try {
+      const modeResponse = await getTenantMode()
+      tenantMode.value = modeResponse?.data?.tenantType || modeResponse?.data?.data?.tenantType || 'single'
+    } catch (error) {
+      tenantMode.value = 'single'
+      console.warn('获取租户模式失败，继续使用单租户菜单:', error?.message)
+    }
+    const activeMenu = getActiveMenuByRoute(route.path)
+    activeTopMenu.value = activeMenu
     console.log('✅ 设置初始菜单:', activeMenu)
 
     // 强制调用getUserTenants API并更新显示
@@ -1049,6 +1084,13 @@ const handleUserTokenUpdated = async (event) => {
 .user-info:hover {
   background-color: #f5f7fa;
   color: #409eff;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 /* 下拉菜单项激活状态 */

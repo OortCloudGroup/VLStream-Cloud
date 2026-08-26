@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { saveAs } from 'file-saver'
-import { getStoredToken } from '@/utils/request'
+import { applyPlatformGatewayHeaders, getStoredToken } from '@/utils/request'
 
 export const getWvpBaseURL = () => {
   const configuredBaseURL = import.meta.env.VITE_WVP_API_BASE_URL
@@ -17,6 +17,13 @@ export const getWvpToken = () => {
     || getStoredToken()
 }
 
+// WVP 对 VLStream 联邦身份的校验必须使用换票后的本地令牌。
+// 平台原始 token 仍通过 accessToken 交给网关，二者不能混用。
+export const getVlstreamFederatedToken = () => sessionStorage.getItem('accessToken')
+  || sessionStorage.getItem('token')
+  || localStorage.getItem('accessToken')
+  || localStorage.getItem('token')
+
 const wvpRequest = axios.create({
   baseURL: getWvpBaseURL(),
   timeout: 1000000,
@@ -25,11 +32,15 @@ const wvpRequest = axios.create({
   }
 })
 
-const applyWvpHeaders = (config) => {
+export const applyWvpHeaders = (config) => {
   const token = getWvpToken()
+  const federatedToken = getVlstreamFederatedToken()
+  const tenantId = sessionStorage.getItem('tenantId') || localStorage.getItem('tenantId')
   if (token) config.headers.accessToken = token.replace(/^Bearer\s+/i, '')
+  if (federatedToken) config.headers['X-VLStream-Token'] = federatedToken.replace(/^Bearer\s+/i, '')
+  if (tenantId) config.headers.tenantid = tenantId
 
-  config.headers.requestType = 'app'
+  applyPlatformGatewayHeaders(config)
   config.headers['X-WVP-Auth-Source'] = 'vlstream'
   return config
 }

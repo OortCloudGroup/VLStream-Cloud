@@ -438,66 +438,18 @@
         title="下发到摄像机"
         direction="rtl"
         size="55%"
+        destroy-on-close
         :before-close="handleDrawerClose"
         class="device-deploy-drawer"
     >
-      <div class="device-drawer-content tableTenBox flexRowAC">
-        <!-- 左侧设备树 -->
-        <div
-            v-yResize
-            class="police_aside_use"
-        >
-          <div class="treeTitle">设备树</div>
-          <div class="tree_search_content flexRowAC">
-            <el-input
-                v-model="searchTreeKeyword"
-                placeholder="搜索"
-                debounce="300"
-                prefix-icon="Search"
-                clearable
-            />
-          </div>
-          <el-tree
-              style="background: #fff;"
-              :data="filteredDeviceTreeData"
-              highlight-current
-              node-key="id"
-              default-expand-all
-              :props="treeDefaultProps"
-              :expand-on-click-node="false"
-              @node-click="handleDeviceNodeClick"
-          >
-            <template #default="{ node, data }">
-              <div class="custom-tree-node flexRowAC">
-                <div class="tree-node-main flexRowAC">
-                  <el-icon v-if="data.type === 'tag'" class="tree-icon tag-icon">
-                    <Collection />
-                  </el-icon>
-                  <el-icon v-else-if="data.type === 'device'" class="tree-icon device-icon">
-                    <VideoCamera />
-                  </el-icon>
-                  <el-icon v-else class="tree-icon">
-                    <Folder />
-                  </el-icon>
-                  <el-tooltip :open-delay="500" effect="light" :content="node.label" placement="top">
-                    <div
-                        class="tree-node-label"
-                        :class="{ activeDept: data.id === currentTreeNodeId }"
-                    >
-                      {{ node.label }}
-                      <span v-if="data.type === 'tag'" class="node-count">
-                          ({{ data.children?.length || 0 }})
-                        </span>
-                    </div>
-                  </el-tooltip>
-                </div>
-              </div>
-            </template>
-          </el-tree>
-        </div>
-
-        <!-- 右侧设备列表 -->
-        <div class="tableTenItU">
+      <DeviceClassificationLayout
+          class="device-drawer-content"
+          protocol-type="VLSTREAM"
+          :show-assignment="false"
+          readonly
+          @filter-change="handleDeviceFilterChange"
+      >
+        <div class="device-table-panel">
           <div class="depNameBox_out flexRowAC">
             <div class="depNameBox flexRowAC">
               <div class="exportBtnBox flexRowAC">
@@ -534,22 +486,20 @@
                 {{ scope.row.index || (scope.$index + (currentPage - 1) * pageSize + 1) }}
               </template>
             </el-table-column>
-            <el-table-column prop="name" label="设备名称" show-overflow-tooltip />
-            <el-table-column prop="tag" label="标签" :width="clacPXToVW(120)">
+            <el-table-column prop="deviceName" label="设备名称" show-overflow-tooltip />
+            <el-table-column prop="deviceId" label="设备ID" show-overflow-tooltip />
+            <el-table-column prop="deviceModel" label="设备型号" show-overflow-tooltip />
+            <el-table-column prop="deviceSerial" label="序列号" show-overflow-tooltip />
+            <el-table-column label="状态" :width="clacPXToVW(90)">
               <template #default="scope">
-                <el-tag
-                    v-if="scope.row.tag && scope.row.tag !== '-'"
-                    size="small"
-                    type="primary"
-                >
-                  {{ scope.row.tag }}
+                <el-tag :type="scope.row.online ? 'success' : 'info'">
+                  {{ scope.row.online ? '在线' : '离线' }}
                 </el-tag>
-                <span v-else>-</span>
               </template>
             </el-table-column>
-            <el-table-column prop="deviceId" label="设备ID" show-overflow-tooltip />
-            <el-table-column prop="location" label="设备位置" show-overflow-tooltip />
-            <el-table-column label="操作" />
+            <el-table-column prop="ipAddr" label="IP" show-overflow-tooltip />
+            <el-table-column prop="firmwareVersion" label="RootFS版本" show-overflow-tooltip />
+            <el-table-column prop="lastHeartbeatTime" label="最后心跳" show-overflow-tooltip />
           </TableSelf>
 
           <div class="paginationBox flexRowAC">
@@ -566,7 +516,7 @@
             />
           </div>
         </div>
-      </div>
+      </DeviceClassificationLayout>
     </el-drawer>
   </div>
 </template>
@@ -575,8 +525,9 @@
 import {computed, onMounted, ref} from 'vue'
 import { useRouter } from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
-import {DataAnalysis, Delete, Download, Edit, MoreFilled, Plus, Folder, VideoCamera, Collection, Upload} from '@element-plus/icons-vue'
+import {DataAnalysis, Delete, Download, Edit, MoreFilled, Plus, Upload} from '@element-plus/icons-vue'
 import { clacPXToVW } from '@/utils/index'
+import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import Config from '@/config'
 import {
   getCloudPlatformUserPath,
@@ -596,8 +547,8 @@ import {
   updateAlgorithmRepository,
   updateAlgorithmRepositoryStatus
 } from '@/api/algorithmManagement'
-import {getDeviceById, getDeviceList, getDeviceTree, dispatchAlgorithmToDevices} from '@/api/device'
-import {getTagTree} from '@/api/tagManagement'
+import {dispatchAlgorithmToDevices} from '@/api/device'
+import {getMqttDevicePage} from '@/api/vlstreamMqttDevice'
 
 const router = useRouter()
 
@@ -622,23 +573,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const totalDevices = ref(0)
 const deviceLoading = ref(false)
-const searchTreeKeyword = ref('')
-const currentTreeNodeId = ref(null)
-const treeDefaultProps = {
-  children: 'children',
-  label: 'label'
-}
-
-const filteredDeviceTreeData = computed(() => {
-  if (!searchTreeKeyword.value) return deviceTreeData.value
-  const keyword = searchTreeKeyword.value.toLowerCase()
-  const filterNode = (nodes) => (nodes || []).filter(node => {
-    if (node.label?.toLowerCase().includes(keyword)) return true
-    if (node.children?.length) return filterNode(node.children).length > 0
-    return false
-  }).map(node => (node.children?.length ? { ...node, children: filterNode(node.children) } : node))
-  return filterNode(deviceTreeData.value)
-})
+const deviceFilter = ref({})
 
 // 算法仓库数据
 const algorithmRepositories = ref([])
@@ -652,9 +587,6 @@ const algorithmTotal = ref(0)
 const currentRepositoryId = ref(null)
 const algorithmRequestId = ref(0)
 
-// 设备树数据
-const deviceTreeData = ref([])
-
 // 从当前算法列表中提取所有分类
 const typeOptions = ref([
   { label: '全部', value: 'all' },
@@ -667,7 +599,6 @@ const typeOptions = ref([
 
 // 设备表格数据
 const deviceTableData = ref([])
-const tagNameMap = ref(new Map())
 const selectedDeviceRows = ref([])
 const dispatchModelType = ref('om')
 const modelTypeOptions = [
@@ -979,93 +910,21 @@ const loadAlgorithmsByRepository = async (repositoryId) => {
   }
 }
 
-const loadDeviceTree = async () => {
-  try {
-    const response = await getDeviceTree()
-    if (response.data) {
-      deviceTreeData.value = response.data
-    }
-  } catch (error) {
-    console.error('加载设备树失败:', error)
-  }
-}
-
-const loadTagNameMap = async () => {
-  try {
-    const response = await getTagTree()
-    if (response.code === 200 && response.data) {
-      const tagMap = new Map()
-      const traverse = (nodes) => {
-        if (!Array.isArray(nodes)) return
-        nodes.forEach(node => {
-          if (node.id && node.tagName) {
-            tagMap.set(node.id, node.tagName)
-          }
-          if (node.children) {
-            traverse(node.children)
-          }
-        })
-      }
-      traverse(response.data)
-      tagNameMap.value = tagMap
-    }
-  } catch (error) {
-    console.warn('load tag map failed:', error)
-  }
-}
-
 const loadDeviceList = async () => {
   deviceLoading.value = true
   try {
-    if (tagNameMap.value.size === 0) {
-      await loadTagNameMap()
-    }
-
-    const response = await getDeviceList({
-      page: currentPage.value,
-      size: pageSize.value
+    const response = await getMqttDevicePage({
+      pageNum: currentPage.value,
+      pageSize: pageSize.value,
+      ...deviceFilter.value
     })
-    const devices = (response.data && response.data.records) ? response.data.records : []
+    const devices = Array.isArray(response?.rows) ? response.rows : []
     const startIndex = (currentPage.value - 1) * pageSize.value
-
-    deviceTableData.value = await Promise.all(
-        devices.map(async (device, idx) => {
-          try {
-            const detailResponse = await getDeviceById(device.id)
-            if (detailResponse.code === 200 && detailResponse.data) {
-              const detail = detailResponse.data
-              let tags = []
-              if (Array.isArray(detail.selectedTags) && detail.selectedTags.length > 0) {
-                tags = detail.selectedTags.map(tagId => tagNameMap.value.get(tagId) || `tag-${tagId}`)
-              }
-              const displayTag = tags.length > 0 ? tags[0] : '-'
-              return {
-                ...device,
-                ...detail,
-                index: startIndex + idx + 1,
-                name: device.deviceName || device.name || '',
-                tag: displayTag,
-                tags,
-                displayTag,
-                location: detail.address || detail.location || device.address || ''
-              }
-            }
-          } catch (error) {
-            console.warn(`load device detail failed: ${device.id}`, error)
-          }
-          return {
-            ...device,
-            index: startIndex + idx + 1,
-            name: device.deviceName || device.name || '',
-            tag: '-',
-            tags: [],
-            displayTag: '-',
-            location: device.address || ''
-          }
-        })
-    )
-
-    totalDevices.value = (response.data && response.data.total) ? response.data.total : 0
+    deviceTableData.value = devices.map((device, idx) => ({
+      ...device,
+      index: startIndex + idx + 1
+    }))
+    totalDevices.value = Number(response?.total || 0)
   } catch (error) {
     console.error('load device list failed:', error)
     ElMessage.error('加载设备列表失败')
@@ -1077,7 +936,6 @@ const loadDeviceList = async () => {
 // 初始化数据
 const initData = async () => {
   await loadAlgorithmRepositories()
-  await loadDeviceTree()
   // 如果有可用的仓库，默认加载第一个仓库的算法
   if (algorithmRepositories.value.length > 0) {
     const firstEnabledRepo = algorithmRepositories.value.find(repo => repo.status === 1)
@@ -1212,8 +1070,7 @@ const deployAlgorithm = async (algorithm) => {
   showDeviceDrawer.value = true
   selectedDeviceRows.value = []
   currentPage.value = 1
-  searchTreeKeyword.value = ''
-  currentTreeNodeId.value = null
+  deviceFilter.value = {}
   await loadDeviceList()
 }
 
@@ -1271,8 +1128,11 @@ const handleDrawerClose = (done) => {
   done()
 }
 
-const handleDeviceNodeClick = (data) => {
-  currentTreeNodeId.value = data.id
+const handleDeviceFilterChange = async (filter) => {
+  deviceFilter.value = filter || {}
+  currentPage.value = 1
+  selectedDeviceRows.value = []
+  await loadDeviceList()
 }
 
 const handleDeviceSelectionChange = (selection) => {
@@ -1286,7 +1146,7 @@ const handleDeployToDevice = async () => {
   }
 
   const deviceIds = selectedDeviceRows.value
-      .map(item => item.id || item.deviceId)
+      .map(item => item.deviceId)
       .filter(Boolean)
 
   if (deviceIds.length === 0) {
@@ -1306,7 +1166,7 @@ const handleDeployToDevice = async () => {
       ElMessage.success('下发成功')
       showDeviceDrawer.value = false
     } else {
-      ElMessage.error(response.message || '下发失败')
+      ElMessage.error(response.msg || response.message || '下发失败')
     }
   } catch (error) {
     console.error('下发失败:', error)
@@ -2110,120 +1970,22 @@ onMounted(() => {
 .device-drawer-content {
   height: 100%;
   padding: 0;
-  align-items: flex-start;
   background: #fff;
-}
 
-.police_aside_use {
-  width: 280px;
-  padding-right: 20px;
-  flex-shrink: 0;
-  height: 100%;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-
-  .treeTitle {
-    color: var(--el-color-primary);
-    padding-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding-top: 4px;
-    flex-shrink: 0;
-
-    &::before {
-      content: '';
-      width: 3px;
-      height: 18px;
-      background-color: var(--el-color-primary);
-    }
-  }
-
-  .tree_search_content {
-    justify-content: center;
-    padding-bottom: 10px;
-    flex-shrink: 0;
-
-    :deep(.el-input__wrapper) {
-      background: #fff;
-      box-shadow: none;
-      border: 1px solid #dcdfe6;
-      border-radius: 4px;
-    }
-
-    :deep(.el-input__inner) {
-      background: #fff;
-      border: none;
-    }
-  }
-
-  :deep(.el-tree) {
-    flex: 1;
-    overflow: auto;
-  }
-
-  :deep(.el-tree-node__content) {
-    --el-tree-node-hover-bg-color: var(--el-menu-hover-bg-color);
-    height: 38px;
-    font-size: 14px;
-    color: #333;
-
-    .custom-tree-node {
-      width: 100%;
-      justify-content: space-between;
-      padding-right: 4px;
-    }
-  }
-
-  :deep(.el-tree-node.is-current > .el-tree-node__content) {
-    background-color: var(--el-color-primary-hb, #ecf5ff);
-    color: var(--el-color-primary);
+  :deep(.tenant_content),
+  :deep(.tableTenBox) {
+    height: 100%;
+    padding: 0;
   }
 }
 
-.tree-node-main {
-  gap: 6px;
-  min-width: 0;
-  flex: 1;
-}
-
-.tree-icon {
-  flex-shrink: 0;
-  color: #909399;
-}
-
-.tree-icon.device-icon {
-  color: var(--el-color-primary);
-}
-
-.tree-node-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tree-node-label.activeDept {
-  color: var(--el-color-primary);
-}
-
-.node-count {
-  margin-left: 4px;
-  color: #909399;
-  font-size: 12px;
-}
-
-.tableTenItU {
+.device-table-panel {
   flex: 1;
   min-width: 0;
   height: 100%;
   overflow: auto;
   display: flex;
   flex-direction: column;
-
-  :deep(.header_tenant_cell) {
-    background: #F8F8F9;
-  }
 }
 
 /* 算法库管理容器样式 */
