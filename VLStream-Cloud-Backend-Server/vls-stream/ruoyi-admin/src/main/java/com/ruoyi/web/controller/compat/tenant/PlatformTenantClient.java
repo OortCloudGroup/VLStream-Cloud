@@ -118,21 +118,21 @@ public class PlatformTenantClient {
             tokenProperties.getMultiTenantReadTimeoutMillis());
         try (HttpResponse httpResponse = HttpRequest.post(url)
             .header("Content-Type", "application/json")
-            .header("requestType", headers.getRequestType())
+            .header("requesttype", headers.getRequestType())
             .header("appid", headers.getAppId())
             .header("secretkey", headers.getSecretKey())
-            .header("AccessToken", platformToken)
+            .header("accesstoken", platformToken)
             .body(body.toString())
             .timeout(timeout)
             .execute()) {
             if (!httpResponse.isOk()) {
-                throw new IllegalStateException("平台接口 HTTP 状态异常: " + httpResponse.getStatus());
+                throw new IllegalStateException("平台接口 HTTP 状态异常: " + httpResponse.getStatus() + ", url=" + url);
             }
             JSONObject response = JSONUtil.parseObj(httpResponse.body());
             Integer code = response.getInt("code");
             if (code == null || code.intValue() != 200) {
                 String message = firstValue(response, "msg", "message");
-                throw new IllegalStateException(StringUtils.isBlank(message) ? "平台接口校验失败" : message);
+                throw new IllegalStateException((StringUtils.isBlank(message) ? "平台接口校验失败" : message) + ", url=" + url);
             }
             return response;
         } catch (IllegalStateException exception) {

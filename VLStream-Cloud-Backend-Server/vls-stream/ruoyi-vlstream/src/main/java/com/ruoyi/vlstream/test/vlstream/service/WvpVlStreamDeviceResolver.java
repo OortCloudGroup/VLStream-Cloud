@@ -83,7 +83,12 @@ public class WvpVlStreamDeviceResolver {
 		if (!StringUtils.equals(requestedDeviceId, returnedDeviceId)) {
 			throw new ServiceException("WVP设备查询结果与请求设备不一致");
 		}
+		Long deviceRowId = data.getLong("id");
+		if (deviceRowId == null) {
+			throw new ServiceException("WVP设备查询结果缺少设备行号");
+		}
 		DeviceInfo device = new DeviceInfo();
+		device.setId(deviceRowId);
 		device.setDeviceId(returnedDeviceId);
 		device.setDeviceName(StringUtils.defaultIfBlank(data.getStr("deviceName"), returnedDeviceId));
 		device.setTenantId(resolveTenantId());

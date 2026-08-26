@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.config.VlsModelDispatchProperties;
 import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmTrainingStatusEnum;
-import com.ruoyi.vlstream.test.vlstream.mapper.VlsDeviceInfoMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.ModelDispatchTask;
@@ -38,7 +37,7 @@ public class ModelDispatchService {
 	private IVlsAlgorithmTrainingService trainingService;
 
 	@Resource
-	private VlsDeviceInfoMapper deviceInfoMapper;
+	private WvpVlStreamDeviceResolver wvpDeviceResolver;
 
 	@Resource
 	private RemoteModelArtifactService artifactService;
@@ -73,23 +72,20 @@ public class ModelDispatchService {
 		boolean allSucceeded = true;
 		int publishedCount = 0;
 		List<String> failures = new ArrayList<String>();
-		for (String rowIdText : deviceIds.split(",")) {
-			if (StringUtils.isBlank(rowIdText)) {
+		for (String deviceIdText : deviceIds.split(",")) {
+			if (StringUtils.isBlank(deviceIdText)) {
 				continue;
 			}
 			try {
-				Long rowId = Long.valueOf(rowIdText.trim());
-				DeviceInfo device = deviceInfoMapper.selectById(rowId);
-				if (device == null || StringUtils.isBlank(device.getDeviceId())) {
-					throw new IllegalArgumentException("Device does not exist or device number is empty: " + rowId);
-				}
+				String deviceId = deviceIdText.trim();
+				DeviceInfo device = wvpDeviceResolver.resolve(deviceId);
 				dispatchToDevice(algorithmId, preparedArtifact.training, normalizedType,
 					preparedArtifact.remotePath, preparedArtifact.metadata, device);
 				publishedCount++;
 			} catch (Exception ex) {
 				allSucceeded = false;
-				failures.add("设备记录 " + rowIdText.trim() + "：" + rootMessage(ex));
-				log.error("Model dispatch failed for device row: {}", rowIdText, ex);
+				failures.add("设备 " + deviceIdText.trim() + "：" + rootMessage(ex));
+				log.error("Model dispatch failed for WVP device: {}", deviceIdText, ex);
 			}
 		}
 		if (!allSucceeded) {
@@ -159,12 +155,6 @@ public class ModelDispatchService {
 		try {
 			mqttService.publish(topic, envelope);
 			taskService.markPublished(requestId, topic);
-			DeviceInfo update = new DeviceInfo();
-			update.setId(device.getId());
-			update.setAlgorithmId(String.valueOf(algorithmId));
-			if (deviceInfoMapper.updateById(update) <= 0) {
-				log.warn("MQTT published but device algorithm relation was not updated: requestId={}", requestId);
-			}
 		} catch (RuntimeException ex) {
 			taskService.markFailed(requestId, ex.getMessage());
 			throw ex;

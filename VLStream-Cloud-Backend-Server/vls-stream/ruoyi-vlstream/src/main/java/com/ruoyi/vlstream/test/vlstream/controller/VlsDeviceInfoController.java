@@ -493,7 +493,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 接收管理端下发请求，并通过 VLS-Protocol 2.2 modelDeploy 逐台通知硬件下载指定格式模型。
+	 * 接收WVP设备业务编号，并通过 VLS-Protocol 2.2 modelDeploy 逐台通知硬件下载指定格式模型。
 	 */
 	@Operation(summary = "摄像头算法下发")
 	@PostMapping("/{algorithmId}/algorithms")

@@ -30,16 +30,19 @@ VITE_WVP_PROXY_TARGET=http://127.0.0.1:9080
 WVP 后端通过环境变量配置 VLStream 校验接口：
 
 ```ini
-# WVP 与 VLStream 同机部署示例
+# 仅限本地开发：WVP 与 VLStream 分别监听不同端口
 VLSTREAM_VERIFY_TOKEN=http://127.0.0.1:8080/blade-system/user/info
 # 可选；留空时五协议设备不写入 WVP dept_id
 # VLSTREAM_DEFAULT_DEPT_ID=100
+
+# Kubernetes 同命名空间部署：必须指向 VLS Service，不能使用 127.0.0.1
+# VLSTREAM_VERIFY_TOKEN=http://apaas-vls-server:8080/blade-system/user/info
 
 # 经内部网关访问示例；应使用服务端可达地址，不要使用浏览器地址
 # VLSTREAM_VERIFY_TOKEN=http://gateway:21410/bus/vls-server/blade-system/user/info
 ```
 
-`VLSTREAM_VERIFY_TOKEN` 只能指向可信的 VLStream 服务。WVP 仅对携带 `X-WVP-Auth-Source: vlstream` 的请求使用该地址，并使用 `Authorization: Bearer <token>`、`blade-auth`、`AccessToken` 和 `accesstoken` 兼容请求头调用接口。校验失败、未配置地址或服务不可用时请求直接失败，不会降级为匿名访问；不带该标记的原 WVP 请求仍走原有平台 SSO。
+`VLSTREAM_VERIFY_TOKEN` 只能指向可信的 VLStream 服务。WVP 仅对携带 `X-WVP-Auth-Source: vlstream` 的请求使用该地址。浏览器访问平台网关时，`accesstoken` 保留平台原始令牌，换票后的 VLStream 本地令牌通过 `X-VLStream-Token` 传给 WVP，同时携带 `requesttype`、`appid`、`secretkey` 和 `tenantid`。WVP 调用 VLStream 校验接口时，`Authorization` 与 `blade-auth` 使用本地令牌，而平台令牌和应用身份头原样转发给网关。校验失败、未配置地址或服务不可用时请求直接失败，不会降级为匿名访问；不带该标记的原 WVP 请求仍走原有平台 SSO。
 
 VLStream 联邦用户不写入 WVP 的 `sys_user`、`sys_user_role` 或 `sys_role` 表。校验成功后，WVP 只在当前请求上下文中构造临时用户和全量协议数据范围，并允许 `isup:*`、`rtsp:*`、`onvif:*`、`dahua:*`、`wvp:*`、`gb:*` 权限；系统管理、监控、工具和部门树接口不会授予。五协议页面不再请求 WVP 部门树，也不要求填写 WVP `deptId`。
 

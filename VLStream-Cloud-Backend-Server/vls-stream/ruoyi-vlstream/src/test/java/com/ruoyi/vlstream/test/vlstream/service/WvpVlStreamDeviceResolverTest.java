@@ -51,12 +51,13 @@ class WvpVlStreamDeviceResolverTest {
 		MockRestServiceServer server = MockRestServiceServer.createServer(restTemplate);
 		server.expect(requestTo("http://127.0.0.1:9080/internal/vlstream/device/CAM-1"))
 			.andExpect(method(HttpMethod.GET))
-			.andRespond(withSuccess("{\"code\":200,\"data\":{\"deviceId\":\"CAM-1\","
+			.andRespond(withSuccess("{\"code\":200,\"data\":{\"id\":101,\"deviceId\":\"CAM-1\","
 				+ "\"deviceName\":\"WVP Camera\",\"online\":false}}", MediaType.APPLICATION_JSON));
 
 		DeviceInfo device = new WvpVlStreamDeviceResolver(properties, nativeProperties,
 			applicationService, restTemplate).resolve("CAM-1");
 
+		assertEquals(101L, device.getId());
 		assertEquals("CAM-1", device.getDeviceId());
 		assertEquals("WVP Camera", device.getDeviceName());
 		assertEquals("000000", device.getTenantId());
