@@ -20,6 +20,7 @@ const ACCESS_TOKEN_KEY = 'modelHubAccessToken'
 const PENDING_PUBLISH_KEY = 'pendingPublishToModelHub'
 const AUTH_PENDING_KEY = 'modelHubAuthPendingAt'
 const RETURN_LOCATION_KEY = 'modelHubReturnLocation'
+const AUTH_CALLBACK_PATH_KEY = 'modelHubAuthCallbackPath'
 const AUTH_PENDING_MAX_AGE = 30 * 60 * 1000
 
 /** 构建登录页地址 */
@@ -37,8 +38,18 @@ export function getModelHubRedirectUri() {
   return url.toString()
 }
 
+/** OortCloud 顶栏登录直接回调当前 VLS 业务页，不经过云平台用户信息页。 */
+function getCurrentModelHubRedirectUri() {
+  const currentUrl = new URL(window.location.href)
+  const appBasePath = new URL(import.meta.env.BASE_URL, window.location.origin).pathname
+  if (currentUrl.origin === window.location.origin && currentUrl.pathname.startsWith(appBasePath)) {
+    return new URL(currentUrl.pathname, window.location.origin).toString()
+  }
+  return getModelHubRedirectUri()
+}
+
 /** 跳转登录页；可传入待发布算法信息，登录回来后继续处理 */
-export function startModelHubLogin(pendingPayload) {
+export function startModelHubLogin(pendingPayload, options = {}) {
   if (pendingPayload) {
     sessionStorage.setItem(PENDING_PUBLISH_KEY, JSON.stringify(pendingPayload))
   }
@@ -47,7 +58,9 @@ export function startModelHubLogin(pendingPayload) {
     RETURN_LOCATION_KEY,
     `${window.location.pathname}${window.location.search}${window.location.hash}`
   )
-  window.location.href = buildModelHubLoginUrl(getModelHubRedirectUri())
+  const redirectUri = options.returnToCurrent ? getCurrentModelHubRedirectUri() : getModelHubRedirectUri()
+  sessionStorage.setItem(AUTH_CALLBACK_PATH_KEY, new URL(redirectUri).pathname)
+  window.location.href = buildModelHubLoginUrl(redirectUri)
 }
 
 /** 云平台用户信息页路径（供路由跳转） */
@@ -100,10 +113,11 @@ function extractCallbackParams(href) {
 function clearPendingModelHubAuth() {
   sessionStorage.removeItem(AUTH_PENDING_KEY)
   sessionStorage.removeItem(RETURN_LOCATION_KEY)
+  sessionStorage.removeItem(AUTH_CALLBACK_PATH_KEY)
 }
 
 function isPendingModelHubCallback() {
-  const callbackPath = new URL(DEFAULT_CALLBACK_PATH, window.location.origin).pathname
+  const callbackPath = sessionStorage.getItem(AUTH_CALLBACK_PATH_KEY) || new URL(DEFAULT_CALLBACK_PATH, window.location.origin).pathname
   if (window.location.pathname !== callbackPath) {
     return false
   }

@@ -3,7 +3,7 @@
     v-model:visible="popoverVisible"
     placement="bottom-end"
     trigger="hover"
-    :width="420"
+    :width="380"
     :offset="10"
     popper-class="oortcloud-welcome-popper"
     @show="handlePopoverShow"
@@ -47,7 +47,7 @@
 
       <template v-else>
         <div class="account-profile">
-          <el-avatar :size="46" :src="account.photo">
+          <el-avatar :size="38" :src="account.photo">
             {{ account.userName.slice(0, 1) || 'O' }}
           </el-avatar>
           <span>{{ account.userName || 'OortCloud 用户' }}</span>
@@ -119,14 +119,16 @@
           </div>
         </section>
 
-        <el-button class="account-action visit-button" type="primary" round @click="handleVisitOortCloud">
-          <el-icon><Link /></el-icon>
-          访问 OortCloud
-        </el-button>
-        <el-button class="account-action logout-button" round @click="handleLogout">
-          <el-icon><SwitchButton /></el-icon>
-          退出登录
-        </el-button>
+        <div class="account-actions">
+          <el-button class="account-action visit-button" type="primary" round @click="handleVisitOortCloud">
+            <el-icon><Link /></el-icon>
+            访问 OortCloud
+          </el-button>
+          <el-button class="account-action logout-button" round @click="handleLogout">
+            <el-icon><SwitchButton /></el-icon>
+            退出登录
+          </el-button>
+        </div>
       </template>
     </div>
   </el-popover>
@@ -134,7 +136,6 @@
 
 <script setup>
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { Coin, CopyDocument, DataAnalysis, Hide, Key, Link, SwitchButton, TrendCharts, View, Wallet } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getModelHubUserInfo, logoutModelHubUser } from '@/api/modelHubUser'
@@ -147,13 +148,11 @@ import {
 } from '@/api/oortCloudAccount'
 import {
   clearModelHubAuth,
-  getCloudPlatformUserPath,
   getModelHubAccessToken,
   openOortCloudModelHub,
   startModelHubLogin
 } from '@/utils/modelHubAuth'
 
-const router = useRouter()
 const popoverVisible = ref(false)
 const authToken = ref(getModelHubAccessToken())
 const loading = ref(false)
@@ -428,13 +427,14 @@ const handleLogout = async () => {
   ElMessage.success('已退出 OortCloud')
 }
 
-const handleLogin = () => {
+const handleLogin = async () => {
   if (getModelHubAccessToken()) {
-    router.push(getCloudPlatformUserPath())
+    authToken.value = getModelHubAccessToken()
+    await loadAccount()
     return
   }
 
-  startModelHubLogin({ from: 'oortcloud-welcome' })
+  startModelHubLogin(null, { returnToCurrent: true })
 }
 
 onMounted(() => window.addEventListener('modelHubAuthChanged', handleAuthChanged))
@@ -482,6 +482,10 @@ onBeforeUnmount(() => {
   border-radius: 10px;
 }
 
+.oortcloud-card.account-view {
+  padding: 14px;
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -517,7 +521,8 @@ h2 {
 }
 
 .account-view h2 {
-  margin-bottom: 24px;
+  margin: 16px 0 10px;
+  font-size: 18px;
 }
 
 p {
@@ -550,37 +555,39 @@ p {
 .account-profile {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 22px;
-  font-size: 17px;
+  gap: 9px;
+  margin-bottom: 12px;
+  font-size: 15px;
   font-weight: 500;
 }
 
 .account-profile :deep(.el-avatar) {
-  border: 3px solid #f9cc27;
+  border: 2px solid #f9cc27;
   background: #e9f1fb;
   color: #287cff;
 }
 
 .account-error {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .info-panel {
-  padding: 16px;
+  padding: 11px;
+  border: 1px solid #e2ecf8;
   border-radius: 10px;
   background: #ffffff;
+  box-shadow: 0 3px 10px rgba(47, 93, 145, 0.05);
 }
 
 .statistics-panel {
-  margin-bottom: 14px;
+  margin-bottom: 9px;
 }
 
 .panel-title {
   display: flex;
   align-items: center;
   gap: 7px;
-  margin-bottom: 14px;
+  margin-bottom: 9px;
   color: #4a4a4a;
   font-size: 15px;
   font-weight: 600;
@@ -594,14 +601,14 @@ p {
 .statistics-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 6px;
 }
 
 .stat-item {
   display: flex;
   align-items: center;
   min-width: 0;
-  padding: 12px 8px;
+  padding: 8px 6px;
   border-radius: 9px;
   background: #eef5fb;
 }
@@ -611,13 +618,13 @@ p {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  margin-right: 7px;
+  width: 28px;
+  height: 28px;
+  margin-right: 6px;
   flex: none;
   border-radius: 50%;
   background: #e3ebf3;
-  font-size: 18px;
+  font-size: 15px;
 }
 
 .stat-item div {
@@ -632,19 +639,19 @@ p {
 .stat-item strong {
   overflow: hidden;
   margin-bottom: 3px;
-  font-size: 13px;
+  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .stat-item div > span {
   color: #747474;
-  font-size: 11px;
+  font-size: 10px;
   white-space: nowrap;
 }
 
 .token-panel {
-  margin-bottom: 24px;
+  margin-bottom: 10px;
 }
 
 .token-title,
@@ -653,14 +660,22 @@ p {
 }
 
 .token-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3px 10px;
   color: #777777;
-  font-size: 12px;
-  line-height: 1.7;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.token-summary div {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .token-divider {
   height: 1px;
-  margin: 15px 0;
+  margin: 10px 0;
   border-top: 1px dashed #c8cdd3;
 }
 
@@ -668,7 +683,7 @@ p {
   display: flex;
   align-items: center;
   min-width: 0;
-  padding: 10px;
+  padding: 8px;
   border-radius: 9px;
   background: #eef8ff;
 }
@@ -691,8 +706,8 @@ p {
 }
 
 .current-token-copy strong {
-  margin-bottom: 4px;
-  font-size: 13px;
+  margin-bottom: 2px;
+  font-size: 12px;
 }
 
 .current-token-copy span {
@@ -703,7 +718,7 @@ p {
 .connection-state {
   display: flex;
   align-items: center;
-  margin: 0 8px;
+  margin: 0 5px;
   flex: none;
   color: #777777;
   font-size: 11px;
@@ -722,19 +737,25 @@ p {
 }
 
 .icon-button {
-  width: 30px;
-  height: 30px;
-  margin-left: 5px !important;
+  width: 27px;
+  height: 27px;
+  margin-left: 4px !important;
   flex: none;
   border-color: #cdd3da;
   background: transparent;
 }
 
+.account-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .account-action {
-  width: 72%;
-  height: 40px;
-  margin-left: 14% !important;
-  font-size: 14px;
+  width: 100%;
+  height: 34px;
+  margin: 0 !important;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -744,7 +765,6 @@ p {
 }
 
 .logout-button {
-  margin-top: 12px;
   border: none;
   color: #3f3f3f;
   background: #e4e4e4;

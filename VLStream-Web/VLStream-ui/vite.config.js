@@ -78,6 +78,13 @@ export default defineConfig(async ({ mode }) => {
   const backendTarget = env.VITE_DEV_PROXY_TARGET || 'http://127.0.0.1:8080'
   const ssoTarget = env.VITE_SSO_PROXY_TARGET || backendTarget
   const apaasTarget = env.VITE_APAAS_PROXY_TARGET || 'http://oort.oortcloudsmart.com:21410'
+  const platformTarget = env.VITE_PLATFORM_PROXY_TARGET || (() => {
+    try {
+      return new URL(env.VITE_PLATFORM_LOGIN_URL).origin
+    } catch (error) {
+      return 'https://workup-dev.myoumuamua.com:6433'
+    }
+  })()
   const webRtcTarget = env.VITE_WEBRTC_PROXY_TARGET || 'http://127.0.0.1:8000'
   const wvpTarget = env.VITE_WVP_PROXY_TARGET || 'http://127.0.0.1:9080'
 
@@ -163,7 +170,23 @@ export default defineConfig(async ({ mode }) => {
         },
         // Model Hub / OortToolKit SSO（workup-dev）
         '/bus/apaas-sso': {
-          target: 'https://workup-dev.myoumuamua.com:6433',
+          target: platformTarget,
+          changeOrigin: true,
+          secure: false
+        },
+        // 多租户顶部栏的应用列表与统一消息。
+        '/bus/apaas-admin-platform': {
+          target: platformTarget,
+          changeOrigin: true,
+          secure: false
+        },
+        '/bus/apaas-unified-msg': {
+          target: platformTarget,
+          changeOrigin: true,
+          secure: false
+        },
+        '/bus/apaas-user': {
+          target: platformTarget,
           changeOrigin: true,
           secure: false
         },

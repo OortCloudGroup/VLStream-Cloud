@@ -37,8 +37,15 @@
         <div class="header-right">
           <OortCloudPopover />
 
+          <PlatformHeaderRight
+            v-if="tenantMode === 'multi'"
+            :fallback-user="currentUser"
+            :fallback-tenant="currentTenant"
+            @switch-tenant="switchTenant"
+          />
+
           <!-- 用户信息下拉框 -->
-          <el-dropdown>
+          <el-dropdown v-if="tenantMode !== 'multi'">
             <span class="user-info">
               <el-icon><User /></el-icon>
               {{ currentUser.userName }}
@@ -124,6 +131,7 @@ import {
 import CollapseToggle from '@/components/CollapseToggle.vue'
 import SidebarMenuNode from './SidebarMenuNode.vue'
 import OortCloudPopover from './OortCloudPopover.vue'
+import PlatformHeaderRight from './PlatformHeaderRight.vue'
 import deviceManagementIcon from '@/assets/img/svg/device-management.svg'
 import vlstreamIcon from '@/assets/img/svg/vlstream.svg'
 import isupIcon from '@/assets/img/svg/isup.svg'
@@ -137,6 +145,7 @@ const router = useRouter()
 
 // 认证管理器
 const authManager = new AuthManager()
+
 
 // 当前用户信息
 const currentUser = ref({
@@ -406,7 +415,7 @@ const handleLogout = async () => {
 }
 
 // 顶部菜单配置
-const topMenus = [
+const allTopMenus = [
   { key: 'workspace', title: '工作台' },
   { key: 'video-aggregation', title: '视频汇聚' },
   { key: 'decision-ai', title: '决策式AI' },
@@ -414,6 +423,11 @@ const topMenus = [
   { key: 'ai-computing', title: 'AI算力调度' },
   { key: 'system-management', title: '系统管理' }
 ]
+
+const topMenus = computed(() => tenantMode.value === 'single'
+  ? allTopMenus
+  : allTopMenus.filter(menu => menu.key !== 'system-management')
+)
 
 // 不同菜单对应的侧边栏路由
 const menuRoutesMap = {
@@ -1009,19 +1023,12 @@ const handleUserTokenUpdated = async (event) => {
 
 /* 侧边栏伸缩图标样式 */
 .sidebar-toggle {
-  background: #ffffff;
-  border-radius: 4px;
-  border: 1px solid #e4e7ed;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-left: 24px;
-  transition: all 0.3s;
   flex-shrink: 0;
 }
 
 .sidebar-toggle:hover {
-  background: #ecf5ff;
-  border-color: #b3d8ff;
-  transform: scale(1.05);
+  color: var(--el-color-primary);
 }
 
 /* 顶部菜单样式 */

@@ -81,9 +81,32 @@ export const apaasRequestHeaders: Record<string, any> = {
   }
 }
 
-export function openApaasWebPage(pagePath: string, query = '') {
-  const base = config.URL.replace(/\/$/, '') + (config.frontURLStr || '/bus/apaas-web')
+function getPlatformWebBase() {
+  const configuredBase = import.meta.env.VITE_PLATFORM_WEB_BASE
+  if (configuredBase) {
+    return String(configuredBase).replace(/\/$/, '')
+  }
+
+  const loginUrl = import.meta.env.VITE_PLATFORM_LOGIN_URL
+  if (loginUrl) {
+    try {
+      const parsed = new URL(loginUrl)
+      const appRoot = parsed.pathname.split('/loginPage/')[0]
+      return `${parsed.origin}${appRoot}`.replace(/\/$/, '')
+    } catch (error) {
+      console.warn('平台登录地址配置无效，使用默认前端地址:', error)
+    }
+  }
+
+  return config.URL.replace(/\/$/, '') + (config.frontURLStr || '/bus/apaas-web')
+}
+
+export function openApaasWebPage(pagePath: string, query = '', targetWindow = '_blank', windowFeatures = '') {
+  const base = getPlatformWebBase()
   const normalizedPath = pagePath.startsWith('/') ? pagePath : `/${pagePath}`
   const qs = query ? (query.startsWith('?') ? query : `?${query}`) : ''
-  window.open(`${base}${normalizedPath}${qs}`, '_blank')
+  const target = normalizedPath.startsWith('/bus/')
+    ? `${new URL(base).origin}${normalizedPath}`
+    : `${base}${normalizedPath}`
+  window.open(`${target}${qs}`, targetWindow, windowFeatures)
 }
