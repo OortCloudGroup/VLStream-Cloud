@@ -203,7 +203,7 @@ auth:
 ---
 token:
   #租户类型配置 单租户还是多租户 single multi
-  tenantType: ${SSO_TENANT_TYPE:multi}
+  tenantType: ${SSO_TENANT_TYPE:single}
   #多租户校验token地址
   multiTenantVerifyTokenAddress: ${SSO_MULTI_TENANT_VERIFY_TOKEN:http://183.62.103.20:21410/bus/apaas-sso/sso/v1/verifyToken}
   #获取多租户用户信息
