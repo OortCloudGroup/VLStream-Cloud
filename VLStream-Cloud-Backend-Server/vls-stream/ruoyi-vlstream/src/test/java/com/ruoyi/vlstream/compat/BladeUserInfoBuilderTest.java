@@ -27,7 +27,7 @@ class BladeUserInfoBuilderTest {
     @Test
     void buildsBladeUserInfoAliasesFromRuoYiUser() {
         SysUser user = new SysUser();
-        user.setUserId("user-1");
+        user.setUserId("1");
         user.setTenantId("tenant-a");
         user.setUserName("admin");
         Set<String> roles = new LinkedHashSet<String>(Arrays.asList("admin", "ops"));
@@ -42,8 +42,23 @@ class BladeUserInfoBuilderTest {
         assertEquals("admin", info.get("userName"));
         assertEquals("admin", info.get("realName"));
         assertEquals("tenant-a", info.get("tenantId"));
+        assertEquals(true, info.get("isAdmin"));
+        assertEquals(true, info.get("is_admin"));
         assertEquals("sa-token", info.get("accessToken"));
         assertEquals("sa-token", info.get("token"));
         assertEquals("Bearer", info.get("tokenType"));
+    }
+
+    @Test
+    void marksOrdinaryUserAsNonAdmin() {
+        SysUser user = new SysUser();
+        user.setUserId("user-2");
+        user.setUserName("operator");
+
+        Map<String, Object> info = new BladeUserInfoBuilder().build(
+            "sa-token", user, new LinkedHashSet<String>(), new LinkedHashSet<String>());
+
+        assertEquals(false, info.get("isAdmin"));
+        assertEquals(false, info.get("is_admin"));
     }
 }

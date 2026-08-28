@@ -42,6 +42,7 @@ class BladeSystemUserCompatControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer sa-token");
         SysUser user = new SysUser();
+        user.setUserId("1");
         user.setUserName("admin");
         user.setTenantId("tenant-a");
         Set<String> roles = new LinkedHashSet<String>(Arrays.asList("admin"));
@@ -60,6 +61,8 @@ class BladeSystemUserCompatControllerTest {
         assertEquals("admin", result.getData().get("account"));
         assertEquals("admin", result.getData().get("userName"));
         assertEquals("tenant-a", result.getData().get("tenantId"));
+        assertEquals(true, result.getData().get("isAdmin"));
+        assertEquals(true, result.getData().get("is_admin"));
         assertEquals("sa-token", result.getData().get("accessToken"));
     }
 

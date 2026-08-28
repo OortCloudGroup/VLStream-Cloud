@@ -42,12 +42,13 @@
         </div>
 
         <div class="header-right">
-          <OortCloudPopover />
+          <OortCloudPopover v-if="isSuperAdmin" />
 
           <PlatformHeaderRight
             v-if="tenantMode === 'multi'"
             :fallback-user="currentUser"
             :fallback-tenant="currentTenant"
+            @admin-status-change="platformSuperAdmin = $event"
             @switch-tenant="switchTenant"
           />
 
@@ -158,8 +159,21 @@ const authManager = new AuthManager()
 const currentUser = ref({
   userName: '管理员',
   userId: '',
-  loginId: ''
+  loginId: '',
+  isAdmin: false
 })
+const resolveAdminFlag = userInfo => Boolean(
+  userInfo?.isAdmin ||
+  userInfo?.is_admin ||
+  userInfo?.admin ||
+  userInfo?.user?.isAdmin ||
+  userInfo?.user?.is_admin ||
+  userInfo?.user?.admin
+)
+const platformSuperAdmin = ref(false)
+const isSuperAdmin = computed(() => tenantMode.value === 'multi'
+  ? platformSuperAdmin.value
+  : Boolean(currentUser.value.isAdmin || currentUser.value.is_admin))
 
 // current menu
 const activeTopMenu = ref('workspace')
@@ -218,7 +232,8 @@ const loadBladeUserInfo = async () => {
   currentUser.value = {
     userName: userInfo.userName,
     userId: userInfo.userId,
-    loginId: userInfo.loginId
+    loginId: userInfo.loginId,
+    isAdmin: resolveAdminFlag(userInfo)
   }
   currentTenant.value = tenant
   tenantList.value = [tenant]
@@ -300,7 +315,8 @@ const loadTenantInfo = async () => {
         currentUser.value = {
           userName: userInfo.userName,
           userId: userInfo.userId,
-          loginId: userInfo.loginId
+          loginId: userInfo.loginId,
+          isAdmin: resolveAdminFlag(userInfo)
         }
 
         console.log('✅ 更新currentUser:', currentUser.value)
@@ -721,7 +737,8 @@ const forceLoadUserAndTenantInfo = async () => {
       currentUser.value = {
         userName: firstTenant.user_name || '管理员',
         userId: firstTenant.user_id || '',
-        loginId: firstTenant.user_name || ''
+        loginId: firstTenant.user_name || '',
+        isAdmin: resolveAdminFlag(firstTenant)
       }
 
       console.log('✅ 更新currentUser:', currentUser.value)

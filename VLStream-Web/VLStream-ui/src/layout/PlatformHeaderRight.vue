@@ -204,7 +204,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight, Check, Close } from '@element-plus/icons-vue'
 import { getPlatformAccounts, getPlatformHeaderUser, getPlatformMessageInfo, getPlatformMessages, logoutPlatform, markPlatformMessageRead, markPlatformMessagesRead, switchPlatformAccount, verifyPlatformToken } from '@/api/platformHeader'
@@ -228,7 +228,7 @@ const props = defineProps({
   fallbackUser: { type: Object, default: () => ({}) },
   fallbackTenant: { type: Object, default: () => ({}) }
 })
-const emit = defineEmits(['switch-tenant'])
+const emit = defineEmits(['admin-status-change', 'switch-tenant'])
 const DEFAULT_PERSONAL_TENANT_ID = '0e391fd7-1033-4f09-88c0-187582fee462'
 const locale = ref(localStorage.getItem('language') || 'zh')
 const headerUser = ref({})
@@ -274,6 +274,7 @@ const tenantId = computed(() => headerUser.value.tenant_id || headerUser.value.t
 const userId = computed(() => headerUser.value.user_id || headerUser.value.userId || headerUser.value.id || props.fallbackUser?.userId || '')
 const isAdmin = computed(() => Boolean(headerUser.value.isAdmin || headerUser.value.is_admin))
 const isTenantAdmin = computed(() => Boolean(headerUser.value.isTenantAdmin || headerUser.value.is_tenant_admin || headerUser.value.user?.is_tenant_admin))
+watch(isAdmin, value => emit('admin-status-change', value), { immediate: true })
 const credentialText = group => group?.credential?.credential || group?.credential || ''
 const currentAccount = computed(() => {
   for (const group of accountGroups.value) {

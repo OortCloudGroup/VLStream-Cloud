@@ -249,7 +249,12 @@ export function clearPendingModelHubPublish() {
   sessionStorage.removeItem(PENDING_PUBLISH_KEY)
 }
 
-/* * Model Hub. Token, URL. */
+/* * Model Hub. Token, accessToken query. */
 export function openOortCloudModelHub() {
-  window.open(OORTCLOUD_MODEL_HUB_URL, '_blank', 'noopener,noreferrer')
+  const targetUrl = new URL(OORTCLOUD_MODEL_HUB_URL)
+  const accessToken = getModelHubAccessToken()
+  if (accessToken) {
+    targetUrl.searchParams.set('accessToken', accessToken)
+  }
+  window.open(targetUrl.toString(), '_blank', 'noopener,noreferrer')
 }

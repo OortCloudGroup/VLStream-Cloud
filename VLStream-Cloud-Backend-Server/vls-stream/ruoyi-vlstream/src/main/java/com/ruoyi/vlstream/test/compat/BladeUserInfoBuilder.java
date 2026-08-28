@@ -33,6 +33,8 @@ public class BladeUserInfoBuilder {
         info.put("userName", displayName);
         info.put("realName", displayName);
         info.put("tenantId", user.getTenantId());
+        info.put("isAdmin", user.isAdmin());
+        info.put("is_admin", user.isAdmin());
         info.put("accessToken", token);
         info.put("token", token);
         info.put("tokenType", "Bearer");
