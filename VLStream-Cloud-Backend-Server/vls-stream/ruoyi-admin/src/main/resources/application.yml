@@ -303,18 +303,14 @@ vlstream:
     refresh-interval-millis: ${VLSTREAM_RTSP_REFRESH_INTERVAL_MILLIS:10000}
   # MQTT 消息队列配置（用于设备通信和指令下发）
   mqtt:
-#    # MQTT Broker 地址
-#    host: ${VLSTREAM_MQTT_HOST:127.0.0.1}
-#    # MQTT Broker 端口
-#    port: ${VLSTREAM_MQTT_PORT:1883}
     # MQTT Broker 地址
-    host: ${VLSTREAM_MQTT_HOST:192.168.60.79}
+    host: ${VLSTREAM_MQTT_HOST:127.0.0.1}
     # MQTT Broker 端口
-    port: ${VLSTREAM_MQTT_PORT:32570}
+    port: ${VLSTREAM_MQTT_PORT:1883}
     # MQTT 认证用户名（为空则匿名连接）
-    username: ${VLSTREAM_MQTT_USERNAME:VLStream}
+    username: ${VLSTREAM_MQTT_USERNAME:}
     # MQTT 认证密码
-    password: ${VLSTREAM_MQTT_PASSWORD:oort@123}
+    password: ${VLSTREAM_MQTT_PASSWORD:}
     # 主题前缀（所有自定义主题的公共前缀）
     topic-prefix: ${VLSTREAM_MQTT_TOPIC_PREFIX:oortcloud}
     # MQTT 客户端 ID 前缀（实际 ID 会追加随机后缀避免冲突）
