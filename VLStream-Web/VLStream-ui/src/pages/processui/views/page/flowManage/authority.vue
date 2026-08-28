@@ -1,6 +1,8 @@
 <!--
   SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
   SPDX-License-Identifier: MIT
+  Created by: ChaoQun Lei
+  Updated by: ChaoQun Lei
 -->
 
 <template>
@@ -187,7 +189,7 @@ const tempEditingUserList = ref<any[]>([]) // user
 
 //
 const userDialogVisible = ref(false) // user
-const dialogTitle = ref('选择可阅读者') //
+const dialogTitle = ref('选择可阅读者') // 
 const currentUserList = ref<any[]>([]) // current user
 const currentEditType = ref<'reading' | 'editing' | null>(null) // current
 

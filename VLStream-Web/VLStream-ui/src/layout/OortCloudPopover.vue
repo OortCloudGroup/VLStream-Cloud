@@ -1,6 +1,8 @@
 <!--
   SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
   SPDX-License-Identifier: MIT
+  Created by: ChaoQun Lei
+  Updated by: ChaoQun Lei
 -->
 
 <template>
@@ -15,7 +17,12 @@
     @hide="stopRefreshTimer"
   >
     <template #reference>
-      <button class="oortcloud-entry" type="button" aria-label="打开 OortCloud">
+      <button
+        class="oortcloud-entry"
+        :class="{ 'is-logged-in': isLoggedIn }"
+        type="button"
+        aria-label="打开 OortCloud"
+      >
         <img class="entry-logo" src="@/assets/img/OortCloud@3x.png" alt="" aria-hidden="true" />
         <span>OortCloud</span>
       </button>
@@ -457,24 +464,41 @@ onBeforeUnmount(() => {
   padding: 8px 10px;
   border: 0;
   border-radius: 6px;
-  color: #287cff;
+  color: #8a94a6;
   background: transparent;
   font: inherit;
   font-size: 14px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.oortcloud-entry.is-logged-in {
+  color: #287cff;
 }
 
 .oortcloud-entry:hover,
 .oortcloud-entry:focus-visible {
-  background: rgba(40, 124, 255, 0.08);
+  background: rgba(138, 148, 166, 0.1);
   outline: none;
+}
+
+.oortcloud-entry.is-logged-in:hover,
+.oortcloud-entry.is-logged-in:focus-visible {
+  background: rgba(40, 124, 255, 0.08);
 }
 
 .entry-logo {
   width: 24px;
   height: 24px;
   flex: none;
+  filter: grayscale(1);
+  opacity: 0.62;
+  transition: filter 0.2s ease, opacity 0.2s ease;
+}
+
+.oortcloud-entry.is-logged-in .entry-logo {
+  filter: none;
+  opacity: 1;
 }
 
 .oortcloud-card {
@@ -618,7 +642,7 @@ p {
   background: #eef5fb;
 }
 
-.stat-icon,
+.stat-item .stat-icon,
 .current-token-icon {
   display: inline-flex;
   align-items: center;
@@ -742,12 +766,15 @@ p {
 }
 
 .icon-button {
-  width: 27px;
-  height: 27px;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
   margin-left: 4px !important;
+  padding: 4px;
   flex: none;
   border-color: #cdd3da;
   background: transparent;
+  font-size: 12px;
 }
 
 .account-actions {

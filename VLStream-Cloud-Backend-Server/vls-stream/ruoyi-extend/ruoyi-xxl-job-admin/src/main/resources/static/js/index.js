@@ -1,3 +1,10 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ * Created by: ChaoQun Lei
+ * Updated by: ChaoQun Lei
+ */
+
 /**
  * Created by xuxueli on 17/4/24.
  */
@@ -15,11 +22,11 @@ $(function () {
     $('#filterTime').daterangepicker({
         autoApply:false,
         singleDatePicker:false,
-        showDropdowns:false,        // 是否显示年月选择条件
-        timePicker: true, 			// 是否显示小时和分钟选择条件
-        timePickerIncrement: 10, 	// 时间的增量，单位为分钟
+        showDropdowns:false,        // whether
+        timePicker: true, 			// whether and
+        timePickerIncrement: 10, 	// , to
         timePicker24Hour : true,
-        opens : 'left', //日期选择框的弹出位置
+        opens : 'left', // 
         ranges: rangesConf,
         locale : {
             format: 'YYYY-MM-DD HH:mm:ss',
@@ -29,8 +36,8 @@ $(function () {
             cancelLabel : I18n.system_cancel ,
             fromLabel : I18n.daterangepicker_custom_starttime ,
             toLabel : I18n.daterangepicker_custom_endtime ,
-            daysOfWeek : I18n.daterangepicker_custom_daysofweek.split(',') ,        // '日', '一', '二', '三', '四', '五', '六'
-            monthNames : I18n.daterangepicker_custom_monthnames.split(',') ,        // '一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'
+            daysOfWeek : I18n.daterangepicker_custom_daysofweek.split(',') ,        // ' ', ' ', ' ', ' ', ' ', ' ', ' '
+            monthNames : I18n.daterangepicker_custom_monthnames.split(',') ,        // ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '
             firstDay : 1
         },
         startDate: rangesConf[I18n.daterangepicker_ranges_recent_week][0] ,
@@ -171,7 +178,7 @@ $(function () {
             },
             series : [
                 {
-                    //name: '分布比例',
+                    // name: ' ',
                     type: 'pie',
                     radius : '55%',
                     center: ['50%', '60%'],

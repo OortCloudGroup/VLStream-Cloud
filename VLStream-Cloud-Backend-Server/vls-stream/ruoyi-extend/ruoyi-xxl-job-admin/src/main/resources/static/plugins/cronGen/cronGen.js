@@ -1,4 +1,11 @@
-﻿(function ($) {
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ * Created by: ChaoQun Lei
+ * Updated by: ChaoQun Lei
+ */
+
+(function ($) {
     // var resultsName = "";
     var inputElement;
     var displayElement;
@@ -370,7 +377,7 @@
 
                 $.fn.cronGen.tools.cronParse(inputElement.val());
 
-                //绑定指定事件
+                // event
                 $.fn.cronGen.tools.initChangeEvent();
 
 
@@ -663,14 +670,14 @@
     };
     $.fn.cronGen.tools = {
         /**
-         * 每周期
+         * 
          */
         everyTime : function(dom){
             $("#"+dom+"Hidden").val("*");
             $.fn.cronGen.tools.clearCheckbox(dom);
         },
         /**
-         * 不指定
+         * 
          */
         unAppoint : function(dom){
             var val = "?";
@@ -682,7 +689,7 @@
             $.fn.cronGen.tools.clearCheckbox(dom);
         },
         /**
-         * 周期
+         * 
          */
         cycle : function(dom){
             var start = $("#"+dom+"Start_0").val();
@@ -691,7 +698,7 @@
             $.fn.cronGen.tools.clearCheckbox(dom);
         },
         /**
-         * 从开始
+         * from start
          */
         startOn : function(dom) {
             var start = $("#"+dom+"Start_1").val();
@@ -700,14 +707,14 @@
             $.fn.cronGen.tools.clearCheckbox(dom);
         },
         /**
-         * 最后一天
+         * after
          */
         lastDay : function(dom){
             $("#"+dom+"Hidden").val("L");
             $.fn.cronGen.tools.clearCheckbox(dom);
         },
         /**
-         * 每周的某一天
+         * 
          */
         weekOfDay : function(dom){
             var start = $("#"+dom+"Start_0").val();
@@ -716,7 +723,7 @@
             $.fn.cronGen.tools.clearCheckbox(dom);
         },
         /**
-         * 最后一周
+         * after
          */
         lastWeek : function(dom){
             var start = $("#"+dom+"Start_2").val();
@@ -724,7 +731,7 @@
             $.fn.cronGen.tools.clearCheckbox(dom);
         },
         /**
-         * 工作日
+         * 
          */
         workDay : function(dom) {
             var start = $("#"+dom+"Start_2").val();
@@ -1035,7 +1042,7 @@
             }
         },
         cronParse : function(cronExpress) {
-            //获取参数中表达式的值
+            // Get parameter in value
             if (cronExpress) {
                 var regs = cronExpress.split(' ');
                 $("#secondHidden").val(regs[0]);
@@ -1083,7 +1090,7 @@
             return result;
         },
         clearCheckbox : function(dom){
-        	//清除选中的checkbox
+        	// in checkbox
             var list = $("."+dom+"List").children().filter(":checked");
             if ($(list).length > 0) {
             	$.each(list, function(index){
@@ -1094,7 +1101,7 @@
             }
         },
         initCheckBox : function(dom) {
-        	//移除checkbox禁用
+        	// checkbox
             var list = $("."+dom+"List").children();
             if ($(list).length > 0) {
             	$.each(list, function(index){

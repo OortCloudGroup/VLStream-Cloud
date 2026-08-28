@@ -1,6 +1,8 @@
 <!--
   SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
   SPDX-License-Identifier: MIT
+  Created by: ChaoQun Lei
+  Updated by: ChaoQun Lei
 -->
 
 <template>
@@ -69,7 +71,7 @@ const activeName = ref('zero')
 
 const activeChooseData = ref({
   waitType: 'duration', // duration , date ( )
-  unit: '时', //
+  unit: '时', // 
   delayDuration: 0, //
   timeDate: '' //
 })

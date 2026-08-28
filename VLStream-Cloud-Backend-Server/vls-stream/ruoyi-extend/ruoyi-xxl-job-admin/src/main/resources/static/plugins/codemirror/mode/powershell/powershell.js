@@ -1,3 +1,10 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ * Created by: ChaoQun Lei
+ * Updated by: ChaoQun Lei
+ */
+
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/LICENSE
 

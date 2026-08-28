@@ -1,6 +1,8 @@
 /*
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
+ * Created by: ChaoQun Lei
+ * Updated by: ChaoQun Lei
  */
 
 const OPLAYER_SCRIPT_URL = import.meta.env.DEV
@@ -62,9 +64,27 @@ export const ensureOPlayer = async () => {
   }
 }
 
+/** Parse the CameraRTC camera ID and WebSocket signaling endpoint from its HTTP URL. */
+export const parseCameraRtcConfig = (streamUrl) => {
+  const url = new URL(String(streamUrl || '').trim())
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    throw new Error('CameraRTC requires an HTTP(S) URL')
+  }
+  const segments = url.pathname.split('/').filter(Boolean)
+  const markerIndex = segments.findIndex(segment => segment.toLowerCase() === 'videocall')
+  const cameraId = markerIndex >= 0 ? segments[markerIndex + 1] : ''
+  if (!cameraId) throw new Error('CameraRTC URL is missing camera ID')
+  return {
+    cameraId: decodeURIComponent(cameraId),
+    socketUrl: url.origin.replace(/^http/, 'ws')
+  }
+}
+
 export const isCameraRtcStream = (streamUrl) => {
-  if (!streamUrl) return false
-  const normalized = String(streamUrl).trim().toLowerCase()
-  if (!normalized) return false
-  return normalized.startsWith(CAMERA_RTC_SOCKET_URL)
+  try {
+    parseCameraRtcConfig(streamUrl)
+    return true
+  } catch {
+    return false
+  }
 }

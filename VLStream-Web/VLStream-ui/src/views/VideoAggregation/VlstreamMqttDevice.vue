@@ -1,6 +1,8 @@
 <!--
   SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
   SPDX-License-Identifier: MIT
+  Created by: ChaoQun Lei
+  Updated by: ChaoQun Lei
 -->
 
 <template>
@@ -50,7 +52,7 @@
           <el-table-column label="操作" width="150" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" @click="openDetail(row)">详情</el-button>
-              <el-button link type="primary" :disabled="!mediaAvailable" @click="openPreview(row)">预览</el-button>
+              <el-button link type="primary" @click="openPreview(row)">预览</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -72,6 +74,7 @@
         </div>
         <div v-loading="previewLoading" class="player">
           <rtc-player v-if="webrtcUrl" :video-url="webrtcUrl" :hasaudio="true" />
+          <div v-else-if="cameraRtcUrl" ref="cameraRtcContainer" class="camera-rtc-player" />
           <el-empty v-else description="请选择可用视频流" />
         </div>
       </el-dialog>
@@ -137,10 +140,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import RtcPlayer from '@/components/rtcPlayer/index.vue'
+import { ensureOPlayer, parseCameraRtcConfig } from '@/utils/oplayer'
 import {
   cancelMqttDeviceFirmwareTask,
   createMqttDevicePreview,
@@ -163,6 +167,9 @@ const currentDevice = ref(null)
 const streams = ref([])
 const selectedStreamId = ref(null)
 const webrtcUrl = ref('')
+const cameraRtcUrl = ref('')
+const cameraRtcContainer = ref(null)
+let cameraRtcPlayer = null
 const detailVisible = ref(false)
 const detailLoading = ref(false)
 const detailStreams = ref([])
@@ -291,15 +298,37 @@ async function startPreview(streamId) {
   previewLoading.value = true
   try {
     const stream = (await createMqttDevicePreview(currentDevice.value.id, streamId))?.data || {}
-    webrtcUrl.value = location.protocol === 'https:' ? stream.rtcs : stream.rtc
-    if (!webrtcUrl.value) ElMessage.error('WVP 未返回 WebRTC 播放地址')
+    if (stream.playMode === 'cameraRTC' && stream.url) {
+      cameraRtcUrl.value = stream.url
+      await Promise.all([ensureOPlayer(), nextTick()])
+      const { cameraId, socketUrl } = parseCameraRtcConfig(stream.url)
+      if (!cameraRtcContainer.value) throw new Error('CameraRTC 播放容器初始化失败')
+      cameraRtcPlayer = new window.OToolBox.OPlayer(cameraRtcContainer.value, {
+        debuggerMode: false,
+        autoSize: true,
+        backgroundColor: '#000000',
+        showHeader: true,
+        webRTCSocketURL: socketUrl
+      })
+      cameraRtcPlayer.play({ type: 'cameraRTC', src: cameraId, name: currentDevice.value.deviceName || '' })
+      return
+    }
+    webrtcUrl.value = location.protocol === 'https:' ? (stream.rtcs || stream.webrtcUrl) : (stream.rtc || stream.webrtcUrl)
+    if (!webrtcUrl.value) ElMessage.error('WVP 未返回可用播放地址')
   } catch (error) { ElMessage.error(errorMessage(error, '创建预览失败')) }
   finally { previewLoading.value = false }
 }
 
-function releasePreview() { webrtcUrl.value = '' }
+function releasePreview() {
+  if (cameraRtcPlayer?.compInstance?.$destroy) cameraRtcPlayer.compInstance.$destroy()
+  cameraRtcPlayer = null
+  if (cameraRtcContainer.value) cameraRtcContainer.value.innerHTML = ''
+  cameraRtcUrl.value = ''
+  webrtcUrl.value = ''
+}
 
 onMounted(() => { loadDevices(); loadMediaStatus() })
+onBeforeUnmount(releasePreview)
 </script>
 
 <style scoped>
@@ -316,6 +345,7 @@ onMounted(() => { loadDevices(); loadMediaStatus() })
 .stream-bar .el-select { width: 360px; }
 .player { min-height: 480px; background: #000; display: flex; align-items: center; justify-content: center; }
 .player :deep(#webRtcPlayerBox), .player :deep(#rtcPlayer) { width: 100%; max-height: 520px; }
+.camera-rtc-player { width: 100%; height: 480px; }
 h4 { margin: 18px 0 10px; }
 @media (max-width: 1200px) { .header { align-items: flex-start; flex-direction: column; } }
 </style>

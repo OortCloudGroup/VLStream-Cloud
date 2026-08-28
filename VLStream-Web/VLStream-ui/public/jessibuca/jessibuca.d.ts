@@ -1,175 +1,182 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ * Created by: ChaoQun Lei
+ * Updated by: ChaoQun Lei
+ */
+
 declare namespace Jessibuca {
 
-    /** 超时信息 */
+    /* * info */
     enum TIMEOUT {
-        /** 当play()的时候，如果没有数据返回 */
+        /* * play() , if data */
         loadingTimeout = 'loadingTimeout',
-        /** 当播放过程中，如果超过timeout之后没有数据渲染 */
+        /* * in , if timeout after data */
         delayTimeout = 'delayTimeout',
     }
 
-    /** 错误信息 */
+    /* * info */
     enum ERROR {
-        /** 播放错误，url 为空的时候，调用 play 方法 */
+        /* * , url is empty , play method */
         playError = 'playError',
-        /** http 请求失败 */
+        /* * http failed */
         fetchError = 'fetchError',
-        /** websocket 请求失败 */
+        /* * websocket failed */
         websocketError = 'websocketError',
-        /** webcodecs 解码 h265 失败 */
+        /* * webcodecs h265 failed */
         webcodecsH265NotSupport = 'webcodecsH265NotSupport',
-        /** mediaSource 解码 h265 失败 */
+        /* * mediaSource h265 failed */
         mediaSourceH265NotSupport = 'mediaSourceH265NotSupport',
-        /** wasm 解码失败 */
+        /* * wasm failed */
         wasmDecodeError = 'wasmDecodeError',
     }
 
     interface Config {
         /**
-         * 播放器容器
-         * *  若为 string ，则底层调用的是 document.getElementById('id')
+         * 
+         * * to string , layer is document.getElementById('id')
          * */
         container: HTMLElement | string;
         /**
-         * 设置最大缓冲时长，单位秒，播放器会自动消除延迟
+         * Set , , will
          */
         videoBuffer?: number;
         /**
-         * worker地址
-         * *  默认引用的是根目录下面的decoder.js文件 ，decoder.js 与 decoder.wasm文件必须是放在同一个目录下面。 */
+         * worker
+         * * is decoder.js , decoder.js and decoder.wasm is in . */
         decoder?: string;
         /**
-         * 是否不使用离屏模式（提升渲染能力）
+         * whether ( can )
          */
         forceNoOffscreen?: boolean;
         /**
-         * 是否开启当页面的'visibilityState'变为'hidden'的时候，自动暂停播放。
+         * whether page 'visibilityState' to 'hidden' , .
          */
         hiddenAutoPause?: boolean;
         /**
-         * 是否有音频，如果设置`false`，则不对音频数据解码，提升性能。
+         * whether , if Set `false`, data , can .
          */
         hasAudio?: boolean;
         /**
-         * 设置旋转角度，只支持，0(默认)，180，270 三个值
+         * Set , only , 0( ), 180, 270 value
          */
         rotate?: boolean;
         /**
-         * 1. 当为`true`的时候：视频画面做等比缩放后,高或宽对齐canvas区域,画面不被拉伸,但有黑边。 等同于 `setScaleMode(1)`
-         * 2. 当为`false`的时候：视频画面完全填充canvas区域,画面会被拉伸。等同于 `setScaleMode(0)`
+         * 1. to `true` : etc. after, canvas , , . etc. `setScaleMode(1)`
+         * 2. to `false` : full fill canvas , will . etc. `setScaleMode(0)`
          */
         isResize?: boolean;
         /**
-         * 1. 当为`true`的时候：视频画面做等比缩放后,完全填充canvas区域,画面不被拉伸,没有黑边,但画面显示不全。等同于 `setScaleMode(2)`
+         * 1. to `true` : etc. after, full fill canvas , , , full . etc. `setScaleMode(2)`
          */
         isFullResize?: boolean;
         /**
-         * 1. 当为`true`的时候：ws协议不检验是否以.flv为依据，进行协议解析。
+         * 1. to `true` : ws whether .flv to , Parse .
          */
         isFlv?: boolean;
         /**
-         * 是否开启控制台调试打
+         * whether control
          */
         debug?: boolean;
         /**
-         * 1. 设置超时时长, 单位秒
-         * 2. 在连接成功之前(loading)和播放中途(heart),如果超过设定时长无数据返回,则回调timeout事件
+         * 1. Set ,
+         * 2. in successfully before(loading) and in (heart),if data , timeoutevent
          */
         timeout?: number;
         /**
-         * 1. 设置超时时长, 单位秒
-         * 2. 在连接成功之前,如果超过设定时长无数据返回,则回调timeout事件
+         * 1. Set ,
+         * 2. in successfully before,if data , timeoutevent
          */
         heartTimeout?: number;
         /**
-         * 1. 设置超时时长, 单位秒
-         * 2. 在连接成功之前,如果超过设定时长无数据返回,则回调timeout事件
+         * 1. Set ,
+         * 2. in successfully before,if data , timeoutevent
          */
         loadingTimeout?: number;
         /**
-         * 是否支持屏幕的双击事件，触发全屏，取消全屏事件
+         * whether event, full , full event
          */
         supportDblclickFullscreen?: boolean;
         /**
-         * 是否显示网
+         * whether
          */
         showBandwidth?: boolean;
         /**
-         * 配置操作按钮
+         * configurationoperationbutton
          */
         operateBtns?: {
-            /** 是否显示全屏按钮 */
+            /* * whether full button */
             fullscreen?: boolean;
-            /** 是否显示截图按钮 */
+            /* * whether snapshotbutton */
             screenshot?: boolean;
-            /** 是否显示播放暂停按钮 */
+            /* * whether button */
             play?: boolean;
-            /** 是否显示声音按钮 */
+            /* * whether button */
             audio?: boolean;
-            /** 是否显示录制按 */
+            /* * whether */
             record?: boolean;
         };
         /**
-         * 开启屏幕常亮，在手机浏览器上, canvas标签渲染视频并不会像video标签那样保持屏幕常亮
+         * , in , canvas will video
          */
         keepScreenOn?: boolean;
         /**
-         * 是否开启声音，默认是关闭声音播放的
+         * whether , is
          */
         isNotMute?: boolean;
         /**
-         * 加载过程中文案
+         * Load in
          */
         loadingText?: string;
         /**
-         * 背景图片
+         * 
          */
         background?: string;
         /**
-         * 是否开启MediaSource硬解码
-         * * 视频编码只支持H.264视频（Safari on iOS不支持）
-         * * 不支持 forceNoOffscreen 为 false (开启离屏渲染)
+         * whether MediaSource
+         * * only H.264 (Safari on iOS )
+         * * forceNoOffscreen to false ( )
          */
         useMSE?: boolean;
         /**
-         * 是否开启Webcodecs硬解码
-         * *  视频编码只支持H.264视频 (需在chrome 94版本以上，需要https或者localhost环境)
-         * *  支持 forceNoOffscreen 为 false （开启离屏渲染)
+         * whether Webcodecs
+         * * only H.264 ( in chrome 94 , need to https localhost )
+         * * forceNoOffscreen to false ( )
          * */
         useWCS?: boolean;
         /**
-         * 是否开启键盘快捷键
-         * 目前支持的键盘快捷键有：esc -> 退出全屏；arrowUp -> 声音增加；arrowDown -> 声音减少；
+         * whether
+         * before : esc -> exit full ; arrowUp -> ; arrowDown -> ;
          */
         hotKey?: boolean;
         /**
-         *  在使用MSE或者Webcodecs 播放H265的时候，是否自动降级到wasm模式。
-         *  设置为false 则直接关闭播放，抛出Error 异常，设置为true 则会自动切换成wasm模式播放。
+         * in MSE Webcodecs H265 , whether wasm .
+         * Set to false , Error , Set to true will wasm .
          */
         autoWasm?: boolean;
         /**
-         * heartTimeout 心跳超时之后自动再播放,不再抛出异常，而直接重新播放视频地址。
+         * heartTimeout after , , new .
          */
         heartTimeoutReplay?: boolean,
         /**
-         * heartTimeoutReplay 从试次数，超过之后，不再自动播放
+         * heartTimeoutReplay from , after,
          */
         heartTimeoutReplayTimes?: number,
         /**
-         * loadingTimeout loading之后自动再播放,不再抛出异常，而直接重新播放视频地址。
+         * loadingTimeout loading after , , new .
          */
         loadingTimeoutReplay?: boolean,
         /**
-         * heartTimeoutReplay 从试次数，超过之后，不再自动播放
+         * heartTimeoutReplay from , after,
          */
         loadingTimeoutReplayTimes?: number
         /**
-         * wasm解码报错之后，不再抛出异常，而是直接重新播放视频地址。
+         * wasm after, , is new .
          */
         wasmDecodeErrorReplay?: boolean,
         /**
-         * https://github.com/langhuihui/jessibuca/issues/152 解决方案
-         * 例如：WebGL图像预处理默认每次取4字节的数据，但是540x960分辨率下的U、V分量宽度是540/2=270不能被4整除，导致绿屏。
+         * https://github.com/langhuihui/jessibuca/issues/152
+         * : WebGL Process 4 data, is 540x960 U、V is 540/2=270 can 4 , .
          */
         openWebglAlignment?: boolean
     }
@@ -181,33 +188,33 @@ declare class Jessibuca {
     constructor(config?: Jessibuca.Config);
 
     /**
-     * 是否开启控制台调试打印
+     * whether control
      @example
-     // 开启
+     // 
      jessibuca.setDebug(true)
-     // 关闭
+     // 
      jessibuca.setDebug(false)
      */
     setDebug(flag: boolean): void;
 
     /**
-     * 静音
+     * 
      @example
      jessibuca.mute()
      */
     mute(): void;
 
     /**
-     * 取消静音
+     * 
      @example
      jessibuca.cancelMute()
      */
     cancelMute(): void;
 
     /**
-     * 留给上层用户操作来触发音频恢复的方法。
+     * layer useroperation method .
      *
-     * iPhone，chrome等要求自动播放时，音频必须静音，需要由一个真实的用户交互操作来恢复，不能使用代码。
+     * iPhone, chrome etc. need to , , need to user operation , can .
      *
      * https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
      */
@@ -215,8 +222,8 @@ declare class Jessibuca {
 
     /**
      *
-     * 设置超时时长, 单位秒
-     * 在连接成功之前和播放中途,如果超过设定时长无数据返回,则回调timeout事件
+     * Set ,
+     * in successfully before and in ,if data , timeoutevent
 
      @example
      jessibuca.setTimeout(10)
@@ -229,11 +236,11 @@ declare class Jessibuca {
 
     /**
      * @param mode
-     *      0 视频画面完全填充canvas区域,画面会被拉伸  等同于参数 `isResize` 为false
+     * 0 full fill canvas , will etc. parameter `isResize` to false
      *
-     *      1 视频画面做等比缩放后,高或宽对齐canvas区域,画面不被拉伸,但有黑边 等同于参数 `isResize` 为true
+     * 1 etc. after, canvas , , etc. parameter `isResize` to true
      *
-     *      2 视频画面做等比缩放后,完全填充canvas区域,画面不被拉伸,没有黑边,但画面显示不全 等同于参数 `isFullResize` 为true
+     * 2 etc. after, full fill canvas , , , full etc. parameter `isFullResize` to true
      @example
      jessibuca.setScaleMode(0)
 
@@ -244,9 +251,9 @@ declare class Jessibuca {
     setScaleMode(mode: number): void;
 
     /**
-     * 暂停播放
+     * 
      *
-     * 可以在pause 之后，再调用 `play()`方法就继续播放之前的流。
+     * in pause after, `play()` method then before .
      @example
      jessibuca.pause().then(()=>{
         console.log('pause success')
@@ -264,28 +271,28 @@ declare class Jessibuca {
     pause(): Promise<void>;
 
     /**
-     * 关闭视频,不释放底层资源
+     * , layer
      @example
      jessibuca.close();
      */
     close(): void;
 
     /**
-     * 关闭视频，释放底层资源
+     * , layer
      @example
      jessibuca.destroy()
      */
     destroy(): void;
 
     /**
-     * 清理画布为黑色背景
+     * to
      @example
      jessibuca.clearView()
      */
     clearView(): void;
 
     /**
-     * 播放视频
+     * 
      @example
 
      jessibuca.play('url').then(()=>{
@@ -299,25 +306,25 @@ declare class Jessibuca {
     play(url?: string): Promise<void>;
 
     /**
-     * 重新调整视图大小
+     * new
      */
     resize(): void;
 
     /**
-     * 设置最大缓冲时长，单位秒，播放器会自动消除延迟。
+     * Set , , will .
      *
-     * 等同于 `videoBuffer` 参数。
+     * etc. `videoBuffer` parameter.
      *
      @example
-     // 设置 200ms 缓冲
+     // Set 200ms
      jessibuca.setBufferTime(0.2)
      */
     setBufferTime(time: number): void;
 
     /**
-     * 设置旋转角度，只支持，0(默认) ，180，270 三个值。
+     * Set , only , 0( ) , 180, 270 value .
      *
-     * > 可用于实现监控画面小窗和全屏效果，由于iOS没有全屏API，此方法可以模拟页面内全屏效果而且多端效果一致。   *
+     * > and full , iOS full API, method page full . *
      @example
      jessibuca.setRotate(0)
 
@@ -329,10 +336,10 @@ declare class Jessibuca {
 
     /**
      *
-     * 设置音量大小，取值0 — 1
+     * Set , value 0 — 1
      *
-     * > 区别于 mute 和 cancelMute 方法，虽然设置setVolume(0) 也能达到 mute方法，但是mute 方法是不调用底层播放音频的，能提高性能。而setVolume(0)只是把声音设置为0 ，以达到效果。
-     * @param volume 当为0时，完全无声;当为1时，最大音量，默认值
+     * > mute and cancelMute method , Set setVolume(0) also can mute method , is mute method is layer , can can . setVolume(0)only is Set to 0 , .
+     * @param volume to 0 , full ; to 1 , , value
      @example
      jessibuca.setVolume(0.2)
 
@@ -343,7 +350,7 @@ declare class Jessibuca {
     setVolume(volume: number): void;
 
     /**
-     * 返回是否加载完毕
+     * whether Load
      @example
      var result = jessibuca.hasLoaded()
      console.log(result) // true
@@ -351,16 +358,16 @@ declare class Jessibuca {
     hasLoaded(): boolean;
 
     /**
-     * 开启屏幕常亮，在手机浏览器上, canvas标签渲染视频并不会像video标签那样保持屏幕常亮。
-     * H5目前在chrome\edge 84, android chrome 84及以上有原生亮屏API, 需要是https页面
-     * 其余平台为模拟实现，此时为兼容实现，并不保证所有浏览器都支持
+     * , in , canvas will video .
+     * H5 before in chrome\edge 84, android chrome 84 API, need to is httpspage
+     * to , to , all
      @example
      jessibuca.setKeepScreenOn()
      */
     setKeepScreenOn(): boolean;
 
     /**
-     * 全屏(取消全屏)播放视频
+     * full ( full )
      @example
      jessibuca.setFullscreen(true)
      //
@@ -370,11 +377,11 @@ declare class Jessibuca {
 
     /**
      *
-     * 截图，调用后弹出下载框保存截图
-     * @param filename 可选参数, 保存的文件名, 默认 `时间戳`
-     * @param format   可选参数, 截图的格式，可选png或jpeg或者webp ,默认 `png`
-     * @param quality  可选参数, 当格式是jpeg或者webp时，压缩质量，取值0 ~ 1 ,默认 `0.92`
-     * @param type 可选参数, 可选download或者base64或者blob，默认`download`
+     * snapshot, after snapshot
+     * @param filename parameter, , ` `
+     * @param format parameter, snapshot , png jpeg webp , `png`
+     * @param quality parameter, is jpeg webp , , value 0 ~ 1 , `0.92`
+     * @param type parameter, download base64 blob, `download`
 
      @example
 
@@ -387,9 +394,9 @@ declare class Jessibuca {
     screenshot(filename?: string, format?: string, quality?: number, type?: string): void;
 
     /**
-     * 开始录制。
-     * @param fileName 可选，默认时间戳
-     * @param fileType 可选，默认webm，支持webm 和mp4 格式
+     * start .
+     * @param fileName ,
+     * @param fileType , webm, webm and mp4
 
      @example
      jessibuca.startRecord('xxx','webm')
@@ -397,14 +404,14 @@ declare class Jessibuca {
     startRecord(fileName: string, fileType: string): void;
 
     /**
-     * 暂停录制并下载。
+     * .
      @example
      jessibuca.stopRecordAndSave()
      */
     stopRecordAndSave(): void;
 
     /**
-     * 返回是否正在播放中状态。
+     * whether in in .
      @example
      var result = jessibuca.isPlaying()
      console.log(result) // true
@@ -412,7 +419,7 @@ declare class Jessibuca {
     isPlaying(): boolean;
 
     /**
-     *   返回是否静音。
+     * whether .
      @example
      var result = jessibuca.isMute()
      console.log(result) // true
@@ -420,7 +427,7 @@ declare class Jessibuca {
     isMute(): boolean;
 
     /**
-     * 返回是否正在录制。
+     * whether in .
      @example
      var result = jessibuca.isRecording()
      console.log(result) // true
@@ -429,52 +436,52 @@ declare class Jessibuca {
 
 
     /**
-     * 监听 jessibuca 初始化事件
+     * jessibuca Initialize event
      * @example
      * jessibuca.on("load",function(){console.log('load')})
      */
     on(event: 'load', callback: () => void): void;
 
     /**
-     * 视频播放持续时间，单位ms
+     * , ms
      * @example
      * jessibuca.on('timeUpdate',function (ts) {console.log('timeUpdate',ts);})
      */
     on(event: 'timeUpdate', callback: () => void): void;
 
     /**
-     * 当解析出视频信息时回调，2个回调参数
+     * Parse info , 2 parameter
      * @example
      * jessibuca.on("videoInfo",function(data){console.log('width:',data.width,'height:',data.width)})
      */
     on(event: 'videoInfo', callback: (data: {
-        /** 视频宽 */
+        /* * */
         width: number;
-        /** 视频高 */
+        /* * */
         height: number;
     }) => void): void;
 
     /**
-     * 当解析出音频信息时回调，2个回调参数
+     * Parse info , 2 parameter
      * @example
      * jessibuca.on("audioInfo",function(data){console.log('numOfChannels:',data.numOfChannels,'sampleRate',data.sampleRate)})
      */
     on(event: 'audioInfo', callback: (data: {
-        /** 声频通道 */
+        /* * channel */
         numOfChannels: number;
-        /** 采样率 */
+        /* * */
         sampleRate: number;
     }) => void): void;
 
     /**
-     * 信息，包含错误信息
+     * info, info
      * @example
      * jessibuca.on("log",function(data){console.log('data:',data)})
      */
     on(event: 'log', callback: () => void): void;
 
     /**
-     * 错误信息
+     * info
      * @example
      * jessibuca.on("error",function(error){
         if(error === Jessibuca.ERROR.fetchError){
@@ -489,96 +496,96 @@ declare class Jessibuca {
     on(event: 'error', callback: (err: Jessibuca.ERROR) => void): void;
 
     /**
-     * 当前网速， 单位KB 每秒1次,
+     * current , KB 1 ,
      * @example
      * jessibuca.on("kBps",function(data){console.log('kBps:',data)})
      */
     on(event: 'kBps', callback: (value: number) => void): void;
 
     /**
-     * 渲染开始
+     * start
      * @example
      * jessibuca.on("start",function(){console.log('start render')})
      */
     on(event: 'start', callback: () => void): void;
 
     /**
-     * 当设定的超时时间内无数据返回,则回调
+     * data ,
      * @example
      * jessibuca.on("timeout",function(error){console.log('timeout:',error)})
      */
     on(event: 'timeout', callback: (error: Jessibuca.TIMEOUT) => void): void;
 
     /**
-     * 当play()的时候，如果没有数据返回，则回调
+     * play() , if data ,
      * @example
      * jessibuca.on("loadingTimeout",function(){console.log('timeout')})
      */
     on(event: 'loadingTimeout', callback: () => void): void;
 
     /**
-     * 当播放过程中，如果超过timeout之后没有数据渲染，则抛出异常。
+     * in , if timeout after data , .
      * @example
      * jessibuca.on("delayTimeout",function(){console.log('timeout')})
      */
     on(event: 'delayTimeout', callback: () => void): void;
 
     /**
-     * 当前是否全屏
+     * current whether full
      * @example
      * jessibuca.on("fullscreen",function(flag){console.log('is fullscreen',flag)})
      */
     on(event: 'fullscreen', callback: () => void): void;
 
     /**
-     * 触发播放事件
+     * event
      * @example
      * jessibuca.on("play",function(flag){console.log('play')})
      */
     on(event: 'play', callback: () => void): void;
 
     /**
-     * 触发暂停事件
+     * event
      * @example
      * jessibuca.on("pause",function(flag){console.log('pause')})
      */
     on(event: 'pause', callback: () => void): void;
 
     /**
-     * 触发声音事件，返回boolean值
+     * event, boolean value
      * @example
      * jessibuca.on("mute",function(flag){console.log('is mute',flag)})
      */
     on(event: 'mute', callback: () => void): void;
 
     /**
-     * 流状态统计，流开始播放后回调，每秒1次。
+     * , start after , 1 .
      * @example
      * jessibuca.on("stats",function(s){console.log("stats is",s)})
      */
     on(event: 'stats', callback: (stats: {
-        /** 当前缓冲区时长，单位毫秒 */
+        /* * current , */
         buf: number;
-        /** 当前视频帧率 */
+        /* * current */
         fps: number;
-        /** 当前音频码率，单位byte */
+        /* * current , byte */
         abps: number;
-        /** 当前视频码率，单位byte */
+        /* * current , byte */
         vbps: number;
-        /** 当前视频帧pts，单位毫秒 */
+        /* * current pts, */
         ts: number;
     }) => void): void;
 
     /**
-     * 渲染性能统计，流开始播放后回调，每秒1次。
-     * @param performance 0: 表示卡顿,1: 表示流畅,2: 表示非常流程
+     * can , start after , 1 .
+     * @param performance 0: ,1: ,2: non- workflow
      * @example
      * jessibuca.on("performance",function(performance){console.log("performance is",performance)})
      */
     on(event: 'performance', callback: (performance: 0 | 1 | 2) => void): void;
 
     /**
-     * 录制开始的事件
+     * start event
 
      * @example
      * jessibuca.on("recordStart",function(){console.log("record start")})
@@ -586,7 +593,7 @@ declare class Jessibuca {
     on(event: 'recordStart', callback: () => void): void;
 
     /**
-     * 录制结束的事件
+     * finish event
 
      * @example
      * jessibuca.on("recordEnd",function(){console.log("record end")})
@@ -594,7 +601,7 @@ declare class Jessibuca {
     on(event: 'recordEnd', callback: () => void): void;
 
     /**
-     * 录制的时候，返回的录制时长，1s一次
+     * , , 1s
 
      * @example
      * jessibuca.on("recordingTimestamp",function(timestamp){console.log("recordingTimestamp is",timestamp)})
@@ -602,18 +609,18 @@ declare class Jessibuca {
     on(event: 'recordingTimestamp', callback: (timestamp: number) => void): void;
 
     /**
-     * 监听调用play方法 经过 初始化-> 网络请求-> 解封装 -> 解码 -> 渲染 一系列过程的时间消耗
+     * play method Initialize -> -> -> ->
      * @param event
      * @param callback
      */
     on(event: 'playToRenderTimes', callback: (times: {
-        playInitStart: number, // 1 初始化
-        playStart: number, // 2 初始化
-        streamStart: number, // 3 网络请求
-        streamResponse: number, // 4 网络请求
-        demuxStart: number, // 5 解封装
-        decodeStart: number, // 6 解码
-        videoStart: number, // 7 渲染
+        playInitStart: number, // 1 Initialize
+        playStart: number, // 2 Initialize
+        streamStart: number, // 3
+        streamResponse: number, // 4
+        demuxStart: number, // 5
+        decodeStart: number, // 6
+        videoStart: number, // 7
         playTimestamp: number,// playStart- playInitStart
         streamTimestamp: number,// streamStart - playStart
         streamResponseTimestamp: number,// streamResponse - streamStart
@@ -624,7 +631,7 @@ declare class Jessibuca {
     }) => void): void
 
     /**
-     * 监听方法
+     * method
      *
      @example
 

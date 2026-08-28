@@ -1,3 +1,10 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ * Created by: ChaoQun Lei
+ * Updated by: ChaoQun Lei
+ */
+
 $(function(){
 
 	// input iCheck
@@ -32,7 +39,7 @@ $(function(){
             password : {
             	required  : I18n.login_password_empty  ,
                 minlength : I18n.login_password_lt_4
-                /*,maxlength:"登录密码不应超过18位"*/
+                /* ,maxlength:" 18 " */
             }
         }, 
 		highlight : function(element) {  

@@ -1,3 +1,10 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ * Created by: ChaoQun Lei
+ * Updated by: ChaoQun Lei
+ */
+
 $(function() {
 
 	// init date tables
@@ -262,7 +269,7 @@ $(function() {
 		var addressType = $(this).val();
 		var $addressList = $(this).parents("form").find("textarea[name=addressList]");
 		if (addressType == 0) {
-            $addressList.css("background-color", "#eee");	// 自动注册
+            $addressList.css("background-color", "#eee");	// 
             $addressList.attr("readonly","readonly");
 			$addressList.val("");
 		} else {
@@ -280,10 +287,10 @@ $(function() {
 		$("#updateModal .form input[name='appname']").val( row.appname );
 		$("#updateModal .form input[name='title']").val( row.title );
 
-		// 注册方式
+		// 
 		$("#updateModal .form input[name='addressType']").removeAttr('checked');
 		$("#updateModal .form input[name='addressType'][value='"+ row.addressType +"']").click();
-		// 机器地址
+		// 
 		$("#updateModal .form textarea[name='addressList']").val( row.addressList );
 
 		$('#updateModal').modal({backdrop: false, keyboard: false}).modal('show');

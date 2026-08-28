@@ -1,6 +1,8 @@
 /*
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
+ * Created by: ChaoQun Lei
+ * Updated by: ChaoQun Lei
  */
 
 const OPLAYER_SCRIPT_URL = `${import.meta.env.BASE_URL}OPlayer.min.js`
