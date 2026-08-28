@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-form-item v-if="!noLabelSetting && (selectedWidget.type !== 'button')" :label="i18nt('designer.setting.labelAlign')">
     <el-radio-group v-model="optionModel.labelAlign" class="radio-group-custom">

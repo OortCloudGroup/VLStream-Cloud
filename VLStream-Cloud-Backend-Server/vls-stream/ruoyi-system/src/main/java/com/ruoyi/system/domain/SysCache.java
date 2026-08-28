@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,7 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 缓存信息
+ * info
  *
  * @author Lion Li
  */
@@ -19,22 +20,22 @@ import lombok.NoArgsConstructor;
 public class SysCache {
 
     /**
-     * 缓存名称
+     *
      */
     private String cacheName = "";
 
     /**
-     * 缓存键名
+     *
      */
     private String cacheKey = "";
 
     /**
-     * 缓存内容
+     *
      */
     private String cacheValue = "";
 
     /**
-     * 备注
+     * remark
      */
     private String remark = "";
 

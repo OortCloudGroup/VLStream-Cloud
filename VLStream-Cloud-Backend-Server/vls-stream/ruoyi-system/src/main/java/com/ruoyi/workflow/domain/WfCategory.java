@@ -16,7 +16,7 @@ import lombok.EqualsAndHashCode;
 import javax.validation.constraints.NotBlank;
 
 /**
- * 流程分类对象 wf_category
+ * workflow object wf_category
  *
  * @author KonBAI
  * @date 2022-01-15
@@ -29,36 +29,36 @@ public class WfCategory extends BaseEntity {
     private static final long serialVersionUID=1L;
 
     /**
-     * 分类ID
+     * ID
      */
     @TableId(value = "category_id")
     private Long categoryId;
 
     /**
-     * 租户id
+     * id
      */
     private String tenantId;
     /**
-     * 用户id
+     * user ID
      */
     private String userId;
 
     /**
-     * 分类名称
+     *
      */
     @NotBlank(message = "分类名称不能为空")
     private String categoryName;
     /**
-     * 分类编码
+     *
      */
     @NotBlank(message = "分类编码不能为空")
     private String code;
     /**
-     * 备注
+     * remark
      */
     private String remark;
     /**
-     * 删除标志（0代表存在 2代表删除）
+     * Delete (0represents in 2represents Delete )
      */
     @TableLogic
     private String delFlag;

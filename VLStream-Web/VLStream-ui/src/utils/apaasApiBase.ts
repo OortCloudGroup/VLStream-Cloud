@@ -1,5 +1,10 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * apaas 接口基础路径，开发环境走 Vite /oort 代理
+ * apaas interface , Vite /oort
  */
 import config from '@/config'
 import { getToken } from '@/utils/cache/cookies'

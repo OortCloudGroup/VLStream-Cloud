@@ -1,6 +1,11 @@
-// 算法仓库模块统一导出
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// algorithm Export
 export { default as AlgorithmManagement } from './AlgorithmManagement.vue'
 
-// 如果需要添加其他算法仓库相关的页面，可以在这里导出
+// if need to algorithm related page, in Export
 // export { default as AlgorithmDetails } from './AlgorithmDetails.vue'
-// export { default as AlgorithmUpload } from './AlgorithmUpload.vue' 
+// export { default as AlgorithmUpload } from './AlgorithmUpload.vue'

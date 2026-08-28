@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -11,7 +12,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.TimeStrategy;
 
 
 /**
- * 时间策略表 数据传输对象实体类
+ * data object
  *
  * @author Oort
  * @since 2025-12-23

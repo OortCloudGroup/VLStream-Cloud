@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -25,9 +26,9 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * 表单分类Service业务层处理
+ * form Service layer Process
  *
- * @author 雷超群
+ * @author
  * @date 2024-12-25
  */
 @RequiredArgsConstructor
@@ -37,7 +38,7 @@ public class WfFormSynthesisServiceImpl extends ServiceImpl<WfFormSynthesisMappe
     private final WfFormSynthesisMapper baseMapper;
 
     /**
-     * 查询表单分类
+     * Query form
      */
     @Override
     public WfFormSynthesisVo queryById(String categoryId) {
@@ -46,7 +47,7 @@ public class WfFormSynthesisServiceImpl extends ServiceImpl<WfFormSynthesisMappe
 
 
     /**
-     * 查询表单分类列表
+     * Query form list
      */
     @Override
     public Optional<List<WfFormSynthesisVo>> queryList(WfFormSynthesisBo bo) {
@@ -63,13 +64,13 @@ public class WfFormSynthesisServiceImpl extends ServiceImpl<WfFormSynthesisMappe
         lqw.eq(StringUtils.isNotBlank(bo.getCode()), WfFormSynthesis::getCode, bo.getCode());
         lqw.eq(StringUtils.isNotBlank(bo.getType()), WfFormSynthesis::getType, bo.getType());
         if (StringUtils.isBlank(bo.getCategoryId()) && StringUtils.isBlank(bo.getParentId())) {
-            lqw.isNull(WfFormSynthesis::getParentId);  // 如果bo.getId()和bo.getParentId()都为空，查询parent_id为NULL
+            lqw.isNull(WfFormSynthesis::getParentId);  // if bo.getId() and bo.getParentId() is empty, Query parent_id to NULL
         }
         return lqw;
     }
 
     /**
-     * 新增表单分类
+     * Add form
      */
     @Override
     public Boolean insertByBo(WfFormSynthesisBo bo) {
@@ -90,7 +91,7 @@ public class WfFormSynthesisServiceImpl extends ServiceImpl<WfFormSynthesisMappe
     }
 
     /**
-     * 修改表单分类
+     * Update form
      */
     @Override
     public Boolean updateByBo(WfFormSynthesisBo bo) {
@@ -100,20 +101,20 @@ public class WfFormSynthesisServiceImpl extends ServiceImpl<WfFormSynthesisMappe
     }
 
     /**
-     * 保存前的数据校验
+     * before dataValidate
      */
     private void validEntityBeforeSave(WfFormSynthesis entity) {
-        //TODO 做一些数据校验,如唯一约束
+        // TODO dataValidate ,
     }
 
     /**
-     * 批量删除表单分类
+     * Batch delete form
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid) {
         if (isValid) {
-            //TODO 做一些业务上的校验,判断是否需要校验
+            // TODO Validate ,Check whether need to Validate
         }
         return baseMapper.deleteBatchIds(ids) > 0;
     }

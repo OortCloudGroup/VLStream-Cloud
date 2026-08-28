@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -217,7 +217,7 @@ package com.xxl.job.admin.core.old;//package com.xxl.job.admin.core.schedule;
 //        }
 //
 //        // 3、corn trigger
-//        CronScheduleBuilder cronScheduleBuilder = CronScheduleBuilder.cronSchedule(cronExpression).withMisfireHandlingInstructionDoNothing();   // withMisfireHandlingInstructionDoNothing 忽略掉调度终止过程中忽略的调度
+// CronScheduleBuilder cronScheduleBuilder = CronScheduleBuilder.cronSchedule(cronExpression).withMisfireHandlingInstructionDoNothing(); // withMisfireHandlingInstructionDoNothing in
 //        CronTrigger cronTrigger = TriggerBuilder.newTrigger().withIdentity(triggerKey).withSchedule(cronScheduleBuilder).build();
 //
 //        // 4、job detail

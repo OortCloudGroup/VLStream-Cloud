@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { createRouter, createWebHistory } from 'vue-router'
 import Layout from '@/layout/index.vue'
 import { AuthManager } from '@/utils/auth'
@@ -366,7 +371,7 @@ const routes = [
         component: () => import('@/views/System/DeviceFirmwareManagement.vue'),
         meta: { title: 'VLS协议设备固件管理', icon: '固件管理' }
       },
-      // === 主动安全模块路由配置 ===
+      // === main full configuration ===
       {
         path: '/active-safety/events/secure',
         name: 'ActiveSafetySecureEvents',
@@ -424,18 +429,18 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫
+//
 router.beforeEach(async (to, from, next) => {
   console.log('路由跳转:', to.path)
 
   try {
-  // 登录页不需要本地 token 校验。
+  // need to token Validate .
   if (to.path === '/login') {
     next()
     return
   }
 
-  // 强制清除旧的测试token
+  // old token
   const oldTestToken = 'c0c81bef2c934f829df667a202c99d1e'
   if (localStorage.getItem('accessToken') === oldTestToken) {
     console.log('检测到旧测试token，正在清除...')
@@ -443,7 +448,7 @@ router.beforeEach(async (to, from, next) => {
     localStorage.removeItem('userInfo')
   }
 
-  // 检查是否需要登录验证
+  // whether need to
   if (to.meta.requiresAuth) {
     const userInfo = await authManager.checkExternalPlatformLogin()
     if (userInfo) {
@@ -452,7 +457,7 @@ router.beforeEach(async (to, from, next) => {
       return
     }
 
-    // 多租户平台直接回调业务页；没有有效凭证时只显示入口提示，不再跳统一授权页。
+    // ; only prompt / tip, .
     next({
       path: '/login',
       query: { redirect: to.fullPath }

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="cron-builder">
     <div class="cron-row" v-for="def in segmentDefs" :key="def.key">

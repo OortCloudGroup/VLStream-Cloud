@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -10,32 +11,32 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * 循环定时信息参数设定
+ * loop infoparameter
  */
 @Data
 public class Job {
     /**
-     * 定时任务开始时间
+     * taskstart
      */
     private String start;
     /**
-     * 定时任务结束时间
+     * taskfinish
      */
     private String end;
     /**
-     * 发送间隔，隔天、每周时生效
+     * , 、
      */
     private int interval;
     /**
-     * 触发时间（每天、隔天为时分秒；每周为星期；每月为日期）
+     * ( 、 to ; to ; to )
      */
     private List<String> run;
     /**
-     * 定时类型：1每天,2隔天,3每周,4每月
+     * : 1 ,2 ,3 ,4
      */
     private int types;
     /**
-     * 每周、每月类型触发时的具体时分秒（格式为 HHmmss, 例如 170633表示17:06:33）
+     * 、 ( to HHmmss, 170633 17:06:33)
      */
     private int trgTime;
 }

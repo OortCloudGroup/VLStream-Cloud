@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 import java.util.Set;
 
 /**
- * 任务追踪视图对象
+ * task object
  *
  * @author KonBAI
  * @createTime 2022/1/8 19:42
@@ -25,22 +25,22 @@ import java.util.Set;
 @ExcelIgnoreUnannotated
 public class WfViewerVo {
     /**
-     * 获取流程实例的历史节点（去重）
+     * Get workflow instance history node ( )
      */
     private Set<String> finishedTaskSet;
 
     /**
-     * 已完成
+     * already
      */
     private Set<String> finishedSequenceFlowSet;
 
     /**
-     * 获取流程实例当前正在待办的节点（去重）
+     * Get workflow instancecurrent in node ( )
      */
     private Set<String> unfinishedTaskSet;
 
     /**
-     * 已拒绝
+     * already
      */
     private Set<String> rejectedTaskSet;
 }

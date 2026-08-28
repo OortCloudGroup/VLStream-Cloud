@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 export const SINGLE_TENANT_ID = '000000'
 export const DEFAULT_USER_PASSWORD = 'Codex@123456'
 

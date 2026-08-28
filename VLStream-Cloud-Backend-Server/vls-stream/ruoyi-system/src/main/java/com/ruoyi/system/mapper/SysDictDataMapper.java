@@ -14,7 +14,7 @@ import com.ruoyi.common.core.mapper.BaseMapperPlus;
 import java.util.List;
 
 /**
- * 字典表 数据层
+ * dict data layer
  *
  * @author Lion Li
  */

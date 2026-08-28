@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * swagger3 用法示例
+ * swagger3 method
  *
  * @author Lion Li
  */
@@ -23,10 +24,10 @@ import org.springframework.web.multipart.MultipartFile;
 public class Swagger3DemoController {
 
     /**
-     * 上传请求
-     * 必须使用 @RequestPart 注解标注为文件
      *
-     * @param file 文件
+     * @RequestPart annotation to
+     *
+     * @param file
      */
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public R<String> upload(@RequestPart("file") MultipartFile file) {

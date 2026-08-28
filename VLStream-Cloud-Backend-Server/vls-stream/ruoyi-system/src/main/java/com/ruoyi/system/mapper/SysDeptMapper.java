@@ -17,7 +17,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 部门管理 数据层
+ * department data layer
  *
  * @author Lion Li
  */
@@ -32,10 +32,10 @@ public interface SysDeptMapper extends BaseMapperPlus<SysDeptMapper, SysDeptView
 
     Long selectDeptIdByCode(@Param("code") String code);
     /**
-     * 查询部门管理数据
+     * Query department data
      *
-     * @param queryWrapper 查询条件
-     * @return 部门信息集合
+     * @param queryWrapper Query
+     * @return departmentinfocollection
      */
 //    @DataPermission({
 //        @DataColumn(key = "deptName", value = "dept_id")
@@ -43,11 +43,11 @@ public interface SysDeptMapper extends BaseMapperPlus<SysDeptMapper, SysDeptView
     List<SysDeptView> selectDeptList(@Param(Constants.WRAPPER) Wrapper<SysDeptView> queryWrapper);
 
     /**
-     * 根据角色ID查询部门树信息
+     * role IDQuery department info
      *
-     * @param roleId            角色ID
-     * @param deptCheckStrictly 部门树选择项是否关联显示
-     * @return 选中部门列表
+     * @param roleId role ID
+     * @param deptCheckStrictly department item whether
+     * @return in department
      */
     List<Long> selectDeptListByRoleId(@Param("roleId") Long roleId, @Param("deptCheckStrictly") boolean deptCheckStrictly);
 

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -12,17 +13,17 @@ import com.ruoyi.generator.domain.GenTableColumn;
 import java.util.List;
 
 /**
- * 业务字段 数据层
+ * field data layer
  *
  * @author Lion Li
  */
 @InterceptorIgnore(dataPermission = "true")
 public interface GenTableColumnMapper extends BaseMapperPlus<GenTableColumnMapper, GenTableColumn, GenTableColumn> {
     /**
-     * 根据表名称查询列信息
+     * Query info
      *
-     * @param tableName 表名称
-     * @return 列信息
+     * @param tableName
+     * @return info
      */
     List<GenTableColumn> selectDbTableColumnsByName(String tableName);
 

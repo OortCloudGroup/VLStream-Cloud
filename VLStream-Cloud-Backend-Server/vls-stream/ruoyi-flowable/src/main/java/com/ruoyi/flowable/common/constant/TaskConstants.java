@@ -13,26 +13,26 @@ package com.ruoyi.flowable.common.constant;
 public class TaskConstants {
 
     /**
-     * 流程发起人
+     * workflow
      */
     public static final String PROCESS_INITIATOR = "initiator";
 
     /**
-     * 角色候选组前缀
+     * rolecandidate group before
      */
     public static final String ROLE_GROUP_PREFIX = "ROLE";
 
     /**
-     * 部门候选组前缀
+     * departmentcandidate group before
      */
     public static final String DEPT_GROUP_PREFIX = "DEPT";
     /**
-     * 岗位候选组前缀
+     * candidate group before
      */
     public static final String POST_GROUP_PREFIX = "POST";
 
     /**
-     * 职位候选组前缀
+     * candidate group before
      */
     public static final String JOB_GROUP_PREFIX = "JOB";
 }

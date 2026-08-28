@@ -1,13 +1,18 @@
-// 测试正确的API配置
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// correct APIconfiguration
 const axios = require('axios');
 
 async function testCorrectAPIs() {
   console.log('🚀 测试正确的API配置...\n');
-  
+
   const testToken = '421e68dff50a4c2d8387949d482a467a';
   const tenantId = '0e391fd7-1033-4f09-88c0-187582fee462';
   const baseURL = 'http://oort.oortcloudsmart.com:21410/bus/vls-server';
-  
+
   const testConfigs = [
     {
       name: 'verifyToken API',
@@ -54,21 +59,21 @@ async function testCorrectAPIs() {
       }
     }
   ];
-  
+
   for (const config of testConfigs) {
     console.log(`\n=== 测试: ${config.name} ===`);
     console.log('URL:', config.url);
     console.log('请求头:', config.headers);
     console.log('请求数据:', config.data);
     console.log('');
-    
+
     try {
       const response = await axios.post(config.url, config.data, {
         headers: config.headers,
         timeout: 10000,
         validateStatus: () => true
       });
-      
+
       console.log(`响应状态: ${response.status}`);
       if (response.status === 200) {
         console.log('✅ 请求成功！');
@@ -77,7 +82,7 @@ async function testCorrectAPIs() {
         console.log('❌ 请求失败！');
         console.log('响应数据:', response.data);
       }
-      
+
     } catch (error) {
       console.log(`❌ 请求异常: ${error.message}`);
       if (error.response) {
@@ -86,7 +91,7 @@ async function testCorrectAPIs() {
       }
     }
   }
-  
+
   console.log('\n📝 配置说明：');
   console.log('- 所有API都使用apaas-sso网关');
   console.log('- 请求头名称使用小写');
@@ -94,5 +99,5 @@ async function testCorrectAPIs() {
   console.log('- getTenant需要额外的tenantid请求头');
 }
 
-// 运行测试
-testCorrectAPIs().catch(console.error); 
+//
+testCorrectAPIs().catch(console.error);

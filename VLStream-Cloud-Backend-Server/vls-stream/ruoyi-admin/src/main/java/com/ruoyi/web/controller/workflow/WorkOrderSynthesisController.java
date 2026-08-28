@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -28,7 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 综合工单流程
+ * work orderworkflow
  *
  * @author Lei Chao Qun
  * @date 2025-01-04
@@ -42,7 +43,7 @@ public class WorkOrderSynthesisController extends BaseController {
     private final IWorkOrderSynthesisService iWorkOrderSynthesisService;
 
     /**
-     * 查询综合工单流程列表
+     * Query work orderworkflow list
      */
     @SaCheckPermission("workorder:synthesis:list")
     @GetMapping("/list")
@@ -52,7 +53,7 @@ public class WorkOrderSynthesisController extends BaseController {
     }
 
     /**
-     * 查询全部综合工单流程
+     * Query full work orderworkflow
      */
     @SaCheckPermission("workorder:synthesis:queryListAll")
     @GetMapping("/listAll")
@@ -61,7 +62,7 @@ public class WorkOrderSynthesisController extends BaseController {
     }
 
     /**
-     * 导出综合工单流程列表
+     * Export work orderworkflow
      */
     @SaCheckPermission("workorder:synthesis:export")
     @Log(title = "综合工单流程", businessType = BusinessType.EXPORT)
@@ -72,9 +73,9 @@ public class WorkOrderSynthesisController extends BaseController {
     }
 
     /**
-     * 获取综合工单流程详细信息
+     * Get work orderworkflow info
      *
-     * @param synthesisId 主键
+     * @param synthesisId primary key
      */
     @SaCheckPermission("workorder:synthesis:getInfo")
     @GetMapping("/{synthesisId}")
@@ -84,7 +85,7 @@ public class WorkOrderSynthesisController extends BaseController {
     }
 
     /**
-     * 新增综合工单流程
+     * Add work orderworkflow
      */
     @SaCheckPermission("workorder:synthesis:add")
     @Log(title = "综合工单流程", businessType = BusinessType.INSERT)
@@ -95,7 +96,7 @@ public class WorkOrderSynthesisController extends BaseController {
     }
 
     /**
-     * 修改综合工单流程
+     * Update work orderworkflow
      */
     @SaCheckPermission("workorder:synthesis:edit")
     @Log(title = "综合工单流程", businessType = BusinessType.UPDATE)
@@ -106,9 +107,9 @@ public class WorkOrderSynthesisController extends BaseController {
     }
 
     /**
-     * 删除综合工单流程
+     * Delete work orderworkflow
      *
-     * @param synthesisIds 主键串
+     * @param synthesisIds primary key
      */
     @SaCheckPermission("workorder:synthesis:remove")
     @Log(title = "综合工单流程", businessType = BusinessType.DELETE)

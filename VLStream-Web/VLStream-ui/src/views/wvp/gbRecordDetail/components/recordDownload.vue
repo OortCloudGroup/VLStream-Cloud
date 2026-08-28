@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div id="recordDownload">
     <el-dialog
@@ -147,7 +152,7 @@ const downloadFileClientEvent = () => {
   x.send()
 }
 
-// 生命周期钩子
+// sub
 onMounted(() => {
   window.addEventListener('beforeunload', stopDownloadRecord)
 })
@@ -156,7 +161,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', stopDownloadRecord)
 })
 
-// 暴露方法给父组件使用
+// method component
 defineExpose({
   openDialog,
   close,

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,25 +16,25 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.SceneGovernanceVO;
 import java.util.List;
 
 /**
- * 场景治理表 服务类
+ * service
  *
  * @author Oort
  * @since 2025-12-23
  */
 public interface IVlsSceneGovernanceService extends BaseService<SceneGovernance> {
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsSceneGovernance 查询参数
+	 * @param page parameter
+	 * @param vlsSceneGovernance Query parameter
 	 * @return IPage<VlsSceneGovernanceVO>
 	 */
 	IPage<SceneGovernanceVO> selectVlsSceneGovernancePage(IPage<SceneGovernanceVO> page, SceneGovernanceVO vlsSceneGovernance);
 
 	/**
-	 * 导出数据
+	 * Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsSceneGovernanceExcel>
 	 */
 	List<VlsSceneGovernanceExcel> exportVlsSceneGovernance(Wrapper<SceneGovernance> queryWrapper);

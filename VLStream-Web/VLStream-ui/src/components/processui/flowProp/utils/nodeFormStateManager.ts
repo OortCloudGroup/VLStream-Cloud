@@ -1,12 +1,17 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * 节点级别的表单状态管理工具
- * 为每个流程节点维护独立的表单字段列表，避免全局Store污染
+ * node form
+ * to each workflownode formfield , full Store
  *
- * 特点：
- * 1. 每个节点有独立的formFiledList副本
- * 2. 节点之间的数据完全隔离
- * 3. 支持动态更新和重置
- * 4. 通过Ref保证响应式更新
+ * :
+ * 1. each node formFiledList
+ * 2. node data full
+ * 3. new and
+ * 4. Ref new
  */
 
 import { ref, Ref } from 'vue'
@@ -20,33 +25,33 @@ export interface FormFieldInfo {
 }
 
 /**
- * 节点级别的表单字段状态
+ * node formfield
  */
 export interface NodeFormState {
-  nodeId: string // 节点唯一标识
-  formFiledList: Ref<FormFieldInfo[]> // 该节点的表单字段列表
-  formKey: string // 当前选择的表单ID
-  updateFormFields: (fields: FormFieldInfo[]) => void // 更新字段列表
-  clearFormFields: () => void // 清空字段列表
+  nodeId: string // node
+  formFiledList: Ref<FormFieldInfo[]> // node formfield
+  formKey: string // current formID
+  updateFormFields: (fields: FormFieldInfo[]) => void // new field
+  clearFormFields: () => void // null / empty field
 }
 
 /**
- * 节点表单状态缓存（防止重复创建）
+ * nodeform ( )
  */
 const nodeFormStates = new Map<string, NodeFormState>()
 
 /**
- * 获取或创建节点的表单状态
- * @param nodeId - 节点唯一标识
- * @returns 节点的表单状态对象
+ * Get node form
+ * @param nodeId - node
+ * @return s node form object
  */
 export const getOrCreateNodeFormState = (nodeId: string): NodeFormState => {
-  // 如果已存在该节点的状态，直接返回
+  // if already in node ,
   if (nodeFormStates.has(nodeId)) {
     return nodeFormStates.get(nodeId)!
   }
 
-  // 创建新的节点状态
+  // new node
   const formFiledList = ref<FormFieldInfo[]>([])
 
   const nodeState: NodeFormState = {
@@ -61,14 +66,14 @@ export const getOrCreateNodeFormState = (nodeId: string): NodeFormState => {
     }
   }
 
-  // 缓存该节点状态
+  // node
   nodeFormStates.set(nodeId, nodeState)
   return nodeState
 }
 
 /**
- * 清理节点的表单状态（节点删除时调用）
- * @param nodeId - 节点唯一标识
+ * node form (nodeDelete )
+ * @param nodeId - node
  */
 export const clearNodeFormState = (nodeId: string): void => {
   if (nodeFormStates.has(nodeId)) {
@@ -79,9 +84,9 @@ export const clearNodeFormState = (nodeId: string): void => {
 }
 
 /**
- * 获取节点的表单字段列表
- * @param nodeId - 节点唯一标识
- * @returns 表单字段数组
+ * Get node formfield
+ * @param nodeId - node
+ * @return s formfieldarray
  */
 export const getNodeFormFields = (nodeId: string): FormFieldInfo[] => {
   const nodeState = nodeFormStates.get(nodeId)
@@ -89,9 +94,9 @@ export const getNodeFormFields = (nodeId: string): FormFieldInfo[] => {
 }
 
 /**
- * 更新节点的表单字段列表
- * @param nodeId - 节点唯一标识
- * @param fields - 新的字段列表
+ * new node formfield
+ * @param nodeId - node
+ * @param fields - new field
  */
 export const updateNodeFormFields = (nodeId: string, fields: FormFieldInfo[]): void => {
   const nodeState = getOrCreateNodeFormState(nodeId)
@@ -99,15 +104,15 @@ export const updateNodeFormFields = (nodeId: string, fields: FormFieldInfo[]): v
 }
 
 /**
- * 批量清理多个节点的表单状态
- * @param nodeIds - 节点ID数组
+ * node form
+ * @param nodeIds - nodeIDarray
  */
 export const clearNodeFormStates = (nodeIds: string[]): void => {
   nodeIds.forEach(nodeId => clearNodeFormState(nodeId))
 }
 
 /**
- * 获取所有已缓存的节点状态（调试用）
+ * Get all already node ( )
  */
 export const getAllNodeFormStates = (): Map<string, NodeFormState> => {
   return new Map(nodeFormStates)

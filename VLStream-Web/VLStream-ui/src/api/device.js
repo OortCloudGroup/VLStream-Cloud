@@ -1,13 +1,18 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
-// 设备管理API接口
+// device APIinterface
 
 /**
- * 获取设备列表（分页）
- * @param {Object} params - 查询参数
- * @param {number} params.current - 当前页码
- * @param {number} params.size - 每页大小
- * @param {string} params.keyword - 搜索关键字（设备名称或设备ID�? * @param {string} params.status - 设备状�? * @param {string} params.tag - 标签
+ * Get device ( )
+ * @param {Object} params - Query parameter
+ * @param {number} params.current - current
+ * @param {number} params.size -
+ * @param {string} params.keyword - (device deviceID�? * @param {string} params.status - device �? * @param {string} params.tag -
  */
 export function getDeviceList(params) {
   console.log('API调用 getDeviceList，参数', params)
@@ -19,8 +24,8 @@ export function getDeviceList(params) {
 }
 
 /**
- * 获取设备详情
- * @param {number} id - 设备ID
+ * Get device
+ * @param {number} id - deviceID
  */
 export function getDeviceById(id) {
   return request({
@@ -30,8 +35,8 @@ export function getDeviceById(id) {
 }
 
 /**
- * 创建设备
- * @param {Object} data - 设备信息
+ * device
+ * @param {Object} data - deviceinfo
  */
 export function createDevice(data) {
   return request({
@@ -42,9 +47,9 @@ export function createDevice(data) {
 }
 
 /**
- * 更新设备
- * @param {number} id - 设备ID
- * @param {Object} data - 设备信息
+ * new device
+ * @param {number} id - deviceID
+ * @param {Object} data - deviceinfo
  */
 export function updateDevice(id, data) {
   return request({
@@ -55,8 +60,8 @@ export function updateDevice(id, data) {
 }
 
 /**
- * 删除设备
- * @param {number} id - 设备ID
+ * Delete device
+ * @param {number} id - deviceID
  */
 export function deleteDevice(id) {
   return request({
@@ -66,8 +71,8 @@ export function deleteDevice(id) {
 }
 
 /**
- * 批量删除设备
- * @param {Array} ids - 设备ID数组
+ * Batch delete device
+ * @param {Array} ids - deviceIDarray
  */
 export function batchDeleteDevices(ids) {
   return request({
@@ -78,7 +83,7 @@ export function batchDeleteDevices(ids) {
 }
 
 /**
- * 获取设备统计信息
+ * Get device info
  */
 export function getDeviceStatistics() {
   return request({
@@ -88,7 +93,7 @@ export function getDeviceStatistics() {
 }
 
 /**
- * 获取设备树结�? */
+ * Get device �? */
 export function getDeviceTree() {
   return request({
     url: '/vlsDeviceInfo/tree',
@@ -97,8 +102,8 @@ export function getDeviceTree() {
 }
 
 /**
- * 测试设备连接
- * @param {number} id - 设备ID
+ * device
+ * @param {number} id - deviceID
  */
 export function testDeviceConnection(id) {
   return request({
@@ -108,7 +113,7 @@ export function testDeviceConnection(id) {
 }
 
 /**
- * 刷新设备状�? * @param {number} id - 设备ID
+ * new device �? * @param {number} id - deviceID
  */
 export function refreshDeviceStatus(id) {
   return request({
@@ -118,7 +123,7 @@ export function refreshDeviceStatus(id) {
 }
 
 /**
- * 批量刷新设备状�? * @param {Array} ids - 设备ID数组
+ * new device �? * @param {Array} ids - deviceIDarray
  */
 export function batchRefreshDevices(ids) {
   return request({
@@ -129,7 +134,7 @@ export function batchRefreshDevices(ids) {
 }
 
 /**
- * 获取设备类型统计
+ * Get device
  */
 export function getDeviceTypeStatistics() {
   return request({
@@ -139,7 +144,7 @@ export function getDeviceTypeStatistics() {
 }
 
 /**
- * 获取所有标签列�? */
+ * Get all �? */
 export function getDeviceTags() {
   return request({
     url: '/vlsDeviceInfo/tags',
@@ -148,10 +153,10 @@ export function getDeviceTags() {
 }
 
 /**
- * PTZ控制 - 上下左右移动
- * @param {number} id - 设备ID
- * @param {string} direction - 方向：up, down, left, right
- * @param {number} speed - 速度�?-8�? */
+ * PTZcontrol -
+ * @param {number} id - deviceID
+ * @param {string} direction - : up, down, left, right
+ * @param {number} speed - �?-8�? */
 export function ptzMove(id, direction, speed = 4) {
   return request({
     url: `/vlsDeviceInfo/${id}/ptz/move`,
@@ -161,8 +166,8 @@ export function ptzMove(id, direction, speed = 4) {
 }
 
 /**
- * PTZ控制 - 停止移动
- * @param {number} id - 设备ID
+ * PTZcontrol -
+ * @param {number} id - deviceID
  */
 export function ptzStop(id) {
   return request({
@@ -172,10 +177,10 @@ export function ptzStop(id) {
 }
 
 /**
- * PTZ控制 - 缩放
- * @param {number} id - 设备ID
- * @param {string} action - 动作：zoom_in, zoom_out
- * @param {number} speed - 速度�?-8�? */
+ * PTZcontrol -
+ * @param {number} id - deviceID
+ * @param {string} action - : zoom_in, zoom_out
+ * @param {number} speed - �?-8�? */
 export function ptzZoom(id, action, speed = 4) {
   return request({
     url: `/vlsDeviceInfo/${id}/ptz/zoom`,
@@ -185,7 +190,7 @@ export function ptzZoom(id, action, speed = 4) {
 }
 
 /**
- * 获取设备视频流信�? * @param {number} id - 设备ID
+ * Get device �? * @param {number} id - deviceID
  */
 export function getDeviceStreamInfo(id) {
   return request({
@@ -195,8 +200,8 @@ export function getDeviceStreamInfo(id) {
 }
 
 /**
- * 导出设备列表
- * @param {Object} params - 查询参数
+ * Export device
+ * @param {Object} params - Query parameter
  */
 export function exportDevices(params) {
   return request({
@@ -208,8 +213,8 @@ export function exportDevices(params) {
 }
 
 /**
- * 导入设备列表
- * @param {FormData} formData - 包含文件的表单数�? */
+ * Import device
+ * @param {FormData} formData - form �? */
 export function importDevices(formData) {
   return request({
     url: '/vlsDeviceInfo/import',
@@ -222,10 +227,10 @@ export function importDevices(formData) {
 }
 
 /**
- * 摄像头算法下发（算法ID + WVP设备业务编号逗号串）
- * @param {number} algorithmId 算法ID
- * @param {string} deviceIdsStr WVP设备业务编号逗号分隔字符串
- * @param {string} modelType 模型格式：pt/onnx/rknn/int8-rknn/om
+ * algorithm (algorithmID + WVPdevice )
+ * @param {number} algorithmId algorithmID
+ * @param {string} deviceIdsStr WVPdevice
+ * @param {string} modelType model : pt/onnx/rknn/int8-rknn/om
  */
 export function dispatchAlgorithmToDevices(algorithmId, deviceIdsStr, modelType = 'om') {
   return request({
@@ -236,8 +241,8 @@ export function dispatchAlgorithmToDevices(algorithmId, deviceIdsStr, modelType 
 }
 
 /**
- * 通过 VLS 后端创建 ZLMediaKit 实时预览。
- * 原始 RTSP/RTMP 地址由后端从设备记录读取，不传给浏览器媒体服务。
+ * VLS after ZLMediaKit .
+ * RTSP/RTMP after from devicerecord , service.
  */
 export function createDevicePreview(id) {
   return request({

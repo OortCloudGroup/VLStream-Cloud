@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="flow_opration_panel">
     <div class="prop_title">
@@ -128,7 +133,7 @@
           </el-col>
           <el-col :span="10">
             <el-select v-if="item.keyType === 1" v-model="item.value" placeholder="请选择表单字段项">
-              <!-- 主表单 -->
+              <!-- main form -->
               <el-option-group
                 key="主表单（发起节点）"
                 label="主表单（发起节点）"
@@ -181,7 +186,7 @@ const props = defineProps({
 })
 
 const copyData = ref(props.data)
-// watch 监听nodeConfig
+// watch nodeConfig
 watch(() => props.data, () => {
   initData()
 })
@@ -190,22 +195,22 @@ const initData = () => {
   copyData.value = {
     ...{
       triggerType: 1, // 1:网络请求，2:消息
-      event: 'complete', // 触发时机
-      url: '', // 请求地址
-      method: 'GET', // 请求方式
-      headers: [], // 请求头
-      params: [], // 请求参数
-      paramsType: 1 // 请求参数类型，1:json，2:form
+      event: 'complete', //
+      url: '', //
+      method: 'GET', //
+      headers: [], //
+      params: [], // parameter
+      paramsType: 1 // parameter , 1:json, 2:form
     }, ...props.data }
 }
 
-// 从节点级别的状态管理器中获取表单字段，而不是从全局Store
+// from node in Get formfield, is from full Store
 const nodeFormState = getOrCreateNodeFormState(props.nodeId)
 const options = ref(nodeFormState.formFiledList.value || [])
 const flowStore = useFlowStore()
 const optionsMain = ref(flowStore.formFiledList || [])
 
-// 监听节点管理的formFiledList变化，实时更新组件中的options
+// node formFiledList , new component in options
 watch(
   () => nodeFormState.formFiledList.value,
   (newVal) => {

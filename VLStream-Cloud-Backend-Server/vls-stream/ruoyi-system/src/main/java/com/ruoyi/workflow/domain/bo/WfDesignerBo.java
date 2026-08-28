@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -13,7 +14,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 /**
- * 流程设计业务对象
+ * workflow object
  *
  * @author KonBAI
  * @createTime 2022/3/10 00:12
@@ -22,19 +23,19 @@ import javax.validation.constraints.NotNull;
 public class WfDesignerBo {
 
     /**
-     * 流程名称
+     * workflow
      */
     @NotNull(message = "流程名称", groups = { AddGroup.class, EditGroup.class })
     private String name;
 
     /**
-     * 流程分类
+     * workflow
      */
     @NotBlank(message = "流程分类", groups = { AddGroup.class, EditGroup.class })
     private String category;
 
     /**
-     * XML字符串
+     * XML
      */
     @NotBlank(message = "XML字符串", groups = { AddGroup.class, EditGroup.class })
     private String xml;

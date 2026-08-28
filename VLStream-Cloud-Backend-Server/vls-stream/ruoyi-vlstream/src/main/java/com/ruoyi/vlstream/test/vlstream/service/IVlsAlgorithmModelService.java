@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,172 +16,172 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmModelVO;
 import java.util.List;
 
 /**
- * 算法模型表 服务类
+ * algorithmmodel service
  *
  * @author Oort
  * @since 2025-12-23
  */
 public interface IVlsAlgorithmModelService extends BaseService<AlgorithmModel> {
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsAlgorithmModel 查询参数
+	 * @param page parameter
+	 * @param vlsAlgorithmModel Query parameter
 	 * @return IPage<VlsAlgorithmModelVO>
 	 */
 	IPage<AlgorithmModelVO> selectVlsAlgorithmModelPage(IPage<AlgorithmModelVO> page, AlgorithmModelVO vlsAlgorithmModel);
 
 	/**
-	 * 导出数据
+	 * Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsAlgorithmModelExcel>
 	 */
 	List<VlsAlgorithmModelExcel> exportVlsAlgorithmModel(Wrapper<AlgorithmModel> queryWrapper);
 
 	/**
-	 * 根据ID查询算法模型详情
+	 * IDQuery algorithmmodel
 	 *
-	 * @param id 模型ID
-	 * @return 算法模型
+	 * @param id modelID
+	 * @return algorithmmodel
 	 */
 	AlgorithmModel getModelById(Long id);
 
 	/**
-	 * 创建算法模型
+	 * algorithmmodel
 	 *
-	 * @param createDTO 创建参数
-	 * @return 创建成功的模型
+	 * @param createDTO parameter
+	 * @return successfully model
 	 */
 	AlgorithmModel createModel(AlgorithmModelVO createDTO);
 
 	/**
-	 * 删除算法模型
+	 * Delete algorithmmodel
 	 *
-	 * @param id 模型ID
-	 * @return 是否成功
+	 * @param id modelID
+	 * @return whether successfully
 	 */
 	boolean deleteModel(Long id);
 
 	/**
-	 * 批量删除算法模型
+	 * Batch delete algorithmmodel
 	 *
-	 * @param ids 模型ID列表
-	 * @return 是否成功
+	 * @param ids modelID
+	 * @return whether successfully
 	 */
 	boolean batchDeleteModel(List<Long> ids);
 
 	/**
-	 * 根据算法ID查询模型列表
+	 * algorithmIDQuery model list
 	 *
-	 * @param algorithmId 算法ID
-	 * @return 模型列表
+	 * @param algorithmId algorithmID
+	 * @return model
 	 */
 	List<AlgorithmModel> getModelsByAlgorithmId(Long algorithmId);
 
 	/**
-	 * 根据训练任务ID查询模型列表
+	 * trainingtaskIDQuery model list
 	 *
-	 * @param trainingId 训练任务ID
-	 * @return 模型列表
+	 * @param trainingId trainingtaskID
+	 * @return model
 	 */
 	List<AlgorithmModel> getModelsByTrainingId(Long trainingId);
 
 	/**
-	 * 根据状态查询模型列表
+	 * Query model list
 	 *
-	 * @param status 状态
-	 * @return 模型列表
+	 * @param status
+	 * @return model
 	 */
 	List<AlgorithmModel> getModelsByStatus(String status);
 
 	/**
-	 * 发布模型
+	 * model
 	 *
-	 * @param id 模型ID
-	 * @return 是否成功
+	 * @param id modelID
+	 * @return whether successfully
 	 */
 	boolean publishModel(Long id);
 
 	/**
-	 * 撤销发布模型
+	 * model
 	 *
-	 * @param id 模型ID
-	 * @return 是否成功
+	 * @param id modelID
+	 * @return whether successfully
 	 */
 	boolean unpublishModel(Long id);
 
 	/**
-	 * 批量发布模型
+	 * model
 	 *
-	 * @param ids 模型ID列表
-	 * @return 是否成功
+	 * @param ids modelID
+	 * @return whether successfully
 	 */
 	boolean batchPublishModel(List<Long> ids);
 
 	/**
-	 * 下载模型
+	 * model
 	 *
-	 * @param id 模型ID
-	 * @return 模型文件路径
+	 * @param id modelID
+	 * @return model
 	 */
 	String downloadModel(Long id);
 
 	/**
-	 * 部署模型
+	 * model
 	 *
-	 * @param id 模型ID
-	 * @return 是否成功
+	 * @param id modelID
+	 * @return whether successfully
 	 */
 	boolean deployModel(Long id);
 
 	/**
-	 * 检查模型名称和版本是否存在
+	 * model and whether in
 	 *
-	 * @param modelName 模型名称
-	 * @param version 版本
-	 * @param excludeId 排除的ID（更新时使用）
-	 * @return 是否存在
+	 * @param modelName model
+	 * @param version
+	 * @param excludeId ID ( new )
+	 * @return whether in
 	 */
 	boolean checkModelNameAndVersion(String modelName, Integer version, Long excludeId);
 
 	/**
-	 * 根据算法ID和版本查询模型
+	 * algorithmID and Query model
 	 *
-	 * @param algorithmId 算法ID
-	 * @param version 版本
-	 * @return 算法模型
+	 * @param algorithmId algorithmID
+	 * @param version
+	 * @return algorithmmodel
 	 */
 	AlgorithmModel getModelByAlgorithmIdAndVersion(Long algorithmId, Integer version);
 
 	/**
-	 * 获取算法下最新版本的模型
+	 * Get algorithm new model
 	 *
-	 * @param algorithmId 算法ID
-	 * @return 算法模型
+	 * @param algorithmId algorithmID
+	 * @return algorithmmodel
 	 */
 	AlgorithmModel getLatestModelByAlgorithmId(Long algorithmId);
 
 	/**
-	 * 查询热门模型（按下载次数排序）
+	 * Query model ( )
 	 *
-	 * @param limit 限制数量
-	 * @return 模型列表
+	 * @param limit
+	 * @return model
 	 */
 	List<AlgorithmModel> getPopularModels(Integer limit);
 
 	/**
-	 * 根据创建人查询模型数量
+	 * Query model
 	 *
-	 * @param createdBy 创建人ID
-	 * @return 模型数量
+	 * @param createdBy ID
+	 * @return model
 	 */
 	Long countModelsByCreatedBy(Long createdBy);
 
 	/**
-	 * 获取算法模型的总大小
+	 * Get algorithmmodel
 	 *
-	 * @return 总大小（字节）
+	 * @return ( )
 	 */
 	Long getTotalModelSize();
 

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -11,9 +12,9 @@ import com.ruoyi.common.enums.AlgorithmType;
 import com.ruoyi.common.enums.EncodeType;
 
 /**
- * Base64算法实现
+ * Base64algorithm
  *
- * @author 老马
+ * @author
  * @version 4.6.0
  */
 public class Base64Encryptor extends AbstractEncryptor {
@@ -23,7 +24,7 @@ public class Base64Encryptor extends AbstractEncryptor {
     }
 
     /**
-     * 获得当前算法
+     * current algorithm
      */
     @Override
     public AlgorithmType algorithm() {
@@ -31,10 +32,10 @@ public class Base64Encryptor extends AbstractEncryptor {
     }
 
     /**
-     * 加密
      *
-     * @param value      待加密字符串
-     * @param encodeType 加密后的编码格式
+     *
+     * @param value
+     * @param encodeType after
      */
     @Override
     public String encrypt(String value, EncodeType encodeType) {
@@ -42,9 +43,9 @@ public class Base64Encryptor extends AbstractEncryptor {
     }
 
     /**
-     * 解密
      *
-     * @param value      待加密字符串
+     *
+     * @param value
      */
     @Override
     public String decrypt(String value) {

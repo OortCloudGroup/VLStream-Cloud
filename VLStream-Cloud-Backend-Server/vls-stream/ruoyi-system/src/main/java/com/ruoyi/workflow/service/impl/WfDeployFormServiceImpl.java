@@ -34,7 +34,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 流程实例关联表单Service业务层处理
+ * workflow instance formService layer Process
  *
  * @author KonBAI
  * @createTime 2022/3/7 22:07
@@ -48,17 +48,17 @@ public class WfDeployFormServiceImpl implements IWfDeployFormService {
     private final WfFormMapper formMapper;
 
     /**
-     * 新增流程实例关联表单
+     * Add workflow instance form
      *
-     * @param deployForm 流程实例关联表单
-     * @return 结果
+     * @param deployForm workflow instance form
+     * @return
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int insertWfDeployForm(WfDeployForm deployForm) {
-        // 删除部署流程和表单的关联关系
+        // Delete workflow and form
         baseMapper.delete(new LambdaQueryWrapper<WfDeployForm>().eq(WfDeployForm::getDeployId, deployForm.getDeployId()));
-        // 新增部署流程和表单关系
+        // Add workflow and form
         return baseMapper.insert(deployForm);
     }
 
@@ -66,17 +66,17 @@ public class WfDeployFormServiceImpl implements IWfDeployFormService {
     @Transactional(rollbackFor = Exception.class)
     public boolean saveInternalDeployForm(String deployId, BpmnModel bpmnModel) {
         List<WfDeployForm> deployFormList = new ArrayList<>();
-        // 获取开始节点
+        // Get startnode
         StartEvent startEvent = ModelUtils.getStartEvent(bpmnModel);
         if (ObjectUtil.isNull(startEvent)) {
             throw new RuntimeException("开始节点不存在，请检查流程设计是否有误！");
         }
-        // 保存开始节点表单信息
+        // startnodeforminfo
         WfDeployForm startDeployForm = buildDeployForm(deployId, startEvent);
         if (ObjectUtil.isNotNull(startDeployForm)) {
             deployFormList.add(startDeployForm);
         }
-        // 保存用户节点表单信息
+        // usernodeforminfo
         Collection<UserTask> userTasks = ModelUtils.getAllUserTaskEvent(bpmnModel);
         if (CollUtil.isNotEmpty(userTasks)) {
             for (UserTask userTask : userTasks) {
@@ -86,13 +86,13 @@ public class WfDeployFormServiceImpl implements IWfDeployFormService {
                 }
             }
         }
-        // 批量新增部署流程和表单关联信息
+        // Add workflow and form info
         return baseMapper.insertBatch(deployFormList);
     }
 
 
     /**
-     * 查询流程挂着的表单
+     * Query workflow form
      *
      * @param deployId
      * @return
@@ -104,7 +104,7 @@ public class WfDeployFormServiceImpl implements IWfDeployFormService {
         List<WfFormVo> list = formMapper.selectFormVoList(wrapper);
 //        if (ObjectUtil.isNotEmpty(list)) {
 //            if (list.size() != 1) {
-//                throw new ServiceException("表单信息查询错误");
+// throw new ServiceException("forminfoQuery ");
 //            } else {
         return list.get(0);
 //            }
@@ -114,11 +114,11 @@ public class WfDeployFormServiceImpl implements IWfDeployFormService {
     }
 
     /**
-     * 构建部署表单关联信息对象
+     * Build form infoobject
      *
-     * @param deployId 部署ID
-     * @param node     节点信息
-     * @return 部署表单关联对象。若无表单信息（formKey），则返回null
+     * @param deployId ID
+     * @param node nodeinfo
+     * @return form object. forminfo (formKey), null
      */
     private WfDeployForm buildDeployForm(String deployId, FlowNode node) {
         String formKey = ModelUtils.getFormKey(node);

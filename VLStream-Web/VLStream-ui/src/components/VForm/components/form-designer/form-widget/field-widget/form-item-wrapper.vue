@@ -1,10 +1,15 @@
 <!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
 /**
  * author: vformAdmin
  * email: vdpadmin@163.com
  * website: https://www.vform666.com
  * date: 2021.08.18
- * remark: 如果要分发VForm源码，需在本文件顶部保留此文件头信息！！
+ * remark: if need to VForm , in info! !
  */
 -->
 
@@ -179,7 +184,7 @@ export default {
     selectField(field) {
       if (!!this.designer) {
         this.designer.setSelected(field)
-        this.designer.emitEvent('field-selected', this.parentWidget) // 发送选中组件的父组件对象
+        this.designer.emitEvent('field-selected', this.parentWidget) // in component componentobject
       }
     },
 
@@ -220,7 +225,7 @@ export default {
           this.parentList.splice(this.indexOfParentList, 1)
           this.designer.setSelected(nextSelected)
 
-          this.designer.formWidget.deleteWidgetRef(fieldRefName) // 删除组件ref！！！
+          this.designer.formWidget.deleteWidgetRef(fieldRefName) // Delete componentref! ! !
           this.designer.emitHistoryChange()
         })
       }
@@ -268,7 +273,7 @@ export default {
     .drag-handler {
       position: absolute;
       top: 0;
-      //bottom: -22px;  /* 拖拽手柄位于组件下方，有时无法正常拖动，原因未明？？ */
+      // bottom: -22px; /* component , method , not ? ? */
       left: -1px;
       height: 20px;
       line-height: 20px;
@@ -306,20 +311,20 @@ export default {
     }
 
     :deep(.el-form-item__content) {
-      //position: unset;  /* TODO: 忘了这个样式设置是为了解决什么问题？？ */
+      // position: unset; /* TODO: Set is to ? ? */
     }
 
     span.custom-label i {
       margin: 0 3px;
     }
 
-    /* 隐藏Chrome浏览器中el-input数字输入框右侧的上下调整小箭头 */
+    /* Chrome in el-input */
     :deep(.hide-spin-button) input::-webkit-outer-spin-button,
     :deep(.hide-spin-button) input::-webkit-inner-spin-button {
       -webkit-appearance: none !important;
     }
 
-    /* 隐藏Firefox浏览器中el-input数字输入框右侧的上下调整小箭头 */
+    /* Firefox in el-input */
     :deep(.hide-spin-button) input[type="number"] {
       -moz-appearance: textfield;
     }

@@ -1,9 +1,14 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import axios from 'axios'
 import { getModelHubAccessToken } from '@/utils/modelHubAuth'
 
 /**
- * AI 模型接口（apaas-deployment-service）
- * 路径：{platform}/bus/apaas-deployment-service/aiModel/v1/*
+ * AI modelinterface (apaas-deployment-service)
+ * : {platform}/bus/apaas-deployment-service/aiModel/v1/*
  */
 const DEPLOYMENT_BASE = import.meta.env.DEV
   ? '/bus/apaas-deployment-service'
@@ -49,7 +54,7 @@ function withToken(data = {}) {
   }
 }
 
-/** 获取模型列表 POST /aiModel/v1/list */
+/* * Get model POST /aiModel/v1/list */
 export function getAiModelList(data = {}) {
   const request = createRequest(data.accessToken)
   return request.post('/aiModel/v1/list', withToken({
@@ -62,7 +67,7 @@ export function getAiModelList(data = {}) {
   }))
 }
 
-/** 获取模型详情 POST /aiModel/v1/detail */
+/* * Get model POST /aiModel/v1/detail */
 export function getAiModelDetail(data = {}) {
   const request = createRequest(data.accessToken)
   return request.post('/aiModel/v1/detail', withToken({
@@ -70,7 +75,7 @@ export function getAiModelDetail(data = {}) {
   }))
 }
 
-/** 创建模型 POST /aiModel/v1/add */
+/* * model POST /aiModel/v1/add */
 export function addAiModel(data = {}) {
   const request = createRequest(data.accessToken)
   return request.post('/aiModel/v1/add', withToken({
@@ -82,7 +87,7 @@ export function addAiModel(data = {}) {
   }))
 }
 
-/** 编辑模型 POST /aiModel/v1/edit */
+/* * model POST /aiModel/v1/edit */
 export function editAiModel(data = {}) {
   const request = createRequest(data.accessToken)
   return request.post('/aiModel/v1/edit', withToken({
@@ -95,7 +100,7 @@ export function editAiModel(data = {}) {
   }))
 }
 
-/** 删除模型 POST /aiModel/v1/delete */
+/* * Delete model POST /aiModel/v1/delete */
 export function deleteAiModel(data = {}) {
   const request = createRequest(data.accessToken)
   return request.post('/aiModel/v1/delete', withToken({

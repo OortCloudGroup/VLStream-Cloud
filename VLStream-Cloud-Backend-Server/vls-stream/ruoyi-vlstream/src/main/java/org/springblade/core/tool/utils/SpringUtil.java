@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 package org.springblade.core.tool.utils;
 
 import com.ruoyi.common.utils.spring.SpringUtils;

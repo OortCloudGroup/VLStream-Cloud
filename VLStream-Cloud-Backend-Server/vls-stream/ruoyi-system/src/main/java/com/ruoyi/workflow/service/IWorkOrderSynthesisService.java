@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,7 +16,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 综合工单流程Service接口
+ * work orderworkflowServiceinterface
  *
  * @author Lei Chao Qun
  * @date 2025-01-04
@@ -23,32 +24,32 @@ import java.util.List;
 public interface IWorkOrderSynthesisService extends IService<WorkOrderSynthesis> {
 
     /**
-     * 查询综合工单流程
+     * Query work orderworkflow
      */
     WorkOrderSynthesisVo queryById(String synthesisId);
 
     /**
-     * 查询综合工单流程列表
+     * Query work orderworkflow list
      */
     List<WorkOrderSynthesisVo> queryList(WorkOrderSynthesisBo bo);
 
     /**
-     * 新增综合工单流程
+     * Add work orderworkflow
      */
     Boolean insertByBo(WorkOrderSynthesisBo bo);
 
     /**
-     * 修改综合工单流程
+     * Update work orderworkflow
      */
     Boolean updateByBo(WorkOrderSynthesisBo bo);
 
     /**
-     * 校验并批量删除综合工单流程信息
+     * Validate Batch delete work orderworkflowinfo
      */
     Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid);
 
     /**
-     * 根据父id递归查询子节点
+     * id Query sub node
      */
     List<String> selectChildById(@Param("parentId") String parentId);
 

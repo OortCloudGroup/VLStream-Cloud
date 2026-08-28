@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmModelVO;
 import java.util.List;
 
 /**
- * 算法模型表 Mapper 接口
+ * algorithmmodel Mapper interface
  *
  * @author Oort
  * @since 2025-12-23
@@ -24,130 +25,130 @@ import java.util.List;
 public interface VlsAlgorithmModelMapper extends BaseMapper<AlgorithmModel> {
 
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsAlgorithmModel 查询参数
+	 * @param page parameter
+	 * @param vlsAlgorithmModel Query parameter
 	 * @return List<VlsAlgorithmModelVO>
 	 */
 	List<AlgorithmModelVO> selectVlsAlgorithmModelPage(IPage page, AlgorithmModelVO vlsAlgorithmModel);
 
 	/**
-	 * 获取导出数据
+	 * Get Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsAlgorithmModelExcel>
 	 */
 	List<VlsAlgorithmModelExcel> exportVlsAlgorithmModel(@Param("ew") Wrapper<AlgorithmModel> queryWrapper);
 
 	/**
-	 * 根据算法ID查询模型列表
+	 * algorithmIDQuery model list
 	 *
-	 * @param algorithmId 算法ID
-	 * @return 算法模型列表
+	 * @param algorithmId algorithmID
+	 * @return algorithmmodel
 	 */
 	List<AlgorithmModel> selectByAlgorithmId(@Param("algorithmId") Long algorithmId);
 
 	/**
-	 * 根据训练任务ID查询模型列表
+	 * trainingtaskIDQuery model list
 	 *
-	 * @param trainingId 训练任务ID
-	 * @return 算法模型列表
+	 * @param trainingId trainingtaskID
+	 * @return algorithmmodel
 	 */
 	List<AlgorithmModel> selectByTrainingId(@Param("trainingId") Long trainingId);
 
 	/**
-	 * 根据状态查询模型列表
+	 * Query model list
 	 *
-	 * @param status 状态
-	 * @return 算法模型列表
+	 * @param status
+	 * @return algorithmmodel
 	 */
 	List<AlgorithmModel> selectByStatus(@Param("status") String status);
 
 	/**
-	 * 更新模型状态
+	 * new model
 	 *
-	 * @param id 模型ID
-	 * @param status 新状态
-	 * @return 影响行数
+	 * @param id modelID
+	 * @param status new
+	 * @return
 	 */
 	int updateStatus(@Param("id") Long id, @Param("status") String status);
 
 	/**
-	 * 更新模型下载次数
+	 * new model
 	 *
-	 * @param id 模型ID
-	 * @return 影响行数
+	 * @param id modelID
+	 * @return
 	 */
 	int updateDownloadCount(@Param("id") Long id);
 
 	/**
-	 * 更新模型部署次数
+	 * new model
 	 *
-	 * @param id 模型ID
-	 * @return 影响行数
+	 * @param id modelID
+	 * @return
 	 */
 	int updateDeployCount(@Param("id") Long id);
 
 	/**
-	 * 批量更新模型状态
+	 * new model
 	 *
-	 * @param ids 模型ID列表
-	 * @param status 新状态
-	 * @return 影响行数
+	 * @param ids modelID
+	 * @param status new
+	 * @return
 	 */
 	int batchUpdateStatus(@Param("ids") List<Long> ids, @Param("status") String status);
 
 	/**
-	 * 检查模型名称和版本是否存在
+	 * model and whether in
 	 *
-	 * @param modelName 模型名称
-	 * @param version 版本
-	 * @param excludeId 排除的ID（更新时使用）
-	 * @return 存在的数量
+	 * @param modelName model
+	 * @param version
+	 * @param excludeId ID ( new )
+	 * @return in
 	 */
 	int checkModelNameAndVersion(@Param("modelName") String modelName,
 								 @Param("version") Integer version,
 								 @Param("excludeId") Long excludeId);
 
 	/**
-	 * 根据算法ID和版本查询模型
+	 * algorithmID and Query model
 	 *
-	 * @param algorithmId 算法ID
-	 * @param version 版本
-	 * @return 算法模型
+	 * @param algorithmId algorithmID
+	 * @param version
+	 * @return algorithmmodel
 	 */
 	AlgorithmModel selectByAlgorithmIdAndVersion(@Param("algorithmId") Long algorithmId,
 												 @Param("version") Integer version);
 
 	/**
-	 * 获取算法下最新版本的模型
+	 * Get algorithm new model
 	 *
-	 * @param algorithmId 算法ID
-	 * @return 算法模型
+	 * @param algorithmId algorithmID
+	 * @return algorithmmodel
 	 */
 	AlgorithmModel selectLatestByAlgorithmId(@Param("algorithmId") Long algorithmId);
 
 	/**
-	 * 查询热门模型（按下载次数排序）
+	 * Query model ( )
 	 *
-	 * @param limit 限制数量
-	 * @return 算法模型列表
+	 * @param limit
+	 * @return algorithmmodel
 	 */
 	List<AlgorithmModel> selectPopularModels(@Param("limit") Integer limit);
 
 	/**
-	 * 根据创建人查询模型数量
+	 * Query model
 	 *
-	 * @param createdBy 创建人ID
-	 * @return 模型数量
+	 * @param createdBy ID
+	 * @return model
 	 */
 	Long countByCreatedBy(@Param("createdBy") Long createdBy);
 
 	/**
-	 * 获取算法模型的总大小（所有已发布模型的文件大小总和）
+	 * Get algorithmmodel (all already model and )
 	 *
-	 * @return 总大小（字节）
+	 * @return ( )
 	 */
 	Long getTotalModelSize();
 

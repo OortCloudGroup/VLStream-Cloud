@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -21,8 +22,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * WorkOrderAppServiceImpl 单元测试
- * 验证 resolveAppPackageByApplicationId 查询顺序和兜底行为
+ * WorkOrderAppServiceImpl
+ * resolveAppPackageByApplicationId Query and to
  */
 @Tag("dev")
 public class WorkOrderAppServiceImplTest {
@@ -36,7 +37,7 @@ public class WorkOrderAppServiceImplTest {
     );
 
     /**
-     * 请求头应用 ID 命中 workorder_app 时，返回 workorder_app.appPackage
+     * ID in workorder_app , workorder_app.appPackage
      */
     @Test
     public void resolveAppPackageShouldReturnWorkOrderAppPackageWhenMatched() {
@@ -52,7 +53,7 @@ public class WorkOrderAppServiceImplTest {
     }
 
     /**
-     * workorder_app 查不到、wf_app 命中时，返回 wf_app.appPackage
+     * workorder_app 、wf_app in , wf_app.appPackage
      */
     @Test
     public void resolveAppPackageShouldFallbackToWfAppWhenWorkOrderAppNotFound() {
@@ -70,7 +71,7 @@ public class WorkOrderAppServiceImplTest {
     }
 
     /**
-     * 两张表都查不到时，返回 null
+     * , null
      */
     @Test
     public void resolveAppPackageShouldReturnNullWhenBothTablesMiss() {
@@ -83,7 +84,7 @@ public class WorkOrderAppServiceImplTest {
     }
 
     /**
-     * 参数为空时返回 null
+     * parameter is empty null
      */
     @Test
     public void resolveAppPackageShouldReturnNullForBlankArgument() {
@@ -93,7 +94,7 @@ public class WorkOrderAppServiceImplTest {
     }
 
     /**
-     * workorder_app 查到但 appPackage 为空时，继续查 wf_app
+     * workorder_app appPackage is empty , wf_app
      */
     @Test
     public void resolveAppPackageShouldFallbackToWfAppWhenWorkOrderAppPackageIsBlank() {

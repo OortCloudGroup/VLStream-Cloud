@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,34 +14,34 @@ import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
 
 /**
- * 流程附件视图对象
+ * workflow object
  */
 @Data
 public class WfAttachmentVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 附件主键
+     * primary key
      */
     private Long id;
 
     /**
-     * 流程实例id
+     * workflow instanceid
      */
     private String procInsId;
 
     /**
-     * 流程节点id
+     * workflownodeid
      */
     private String taskId;
 
     /**
-     * 附件链接
+     *
      */
     private String attachmentLink;
 
     /**
-     * 是否已经签名（0代表未签名 1代表已签名）
+     * whether already (0represents not 1represents already )
      */
     private String isSignature;
 }

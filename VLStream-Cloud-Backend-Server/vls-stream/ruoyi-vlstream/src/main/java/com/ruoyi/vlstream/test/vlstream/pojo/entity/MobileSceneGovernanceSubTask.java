@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,7 +15,7 @@ import org.springblade.core.mp.base.TenantEntity;
 import java.time.LocalDateTime;
 
 /**
- * 移动端场景治理子循环任务表 实体类
+ * sub looptask
  */
 @Data
 @TableName("vls_mobile_scene_governance_sub_task")

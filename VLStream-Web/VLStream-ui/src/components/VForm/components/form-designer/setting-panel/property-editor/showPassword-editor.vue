@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-form-item v-if="optionModel.type === 'password'" :label="i18nt('designer.setting.showPassword')">
     <el-switch v-model="optionModel.showPassword" />

@@ -1,17 +1,22 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="user-profile-container">
-    <!-- 页面标题 -->
+    <!-- page -->
     <div class="page-header">
       <h2 class="page-title">个人设置</h2>
       <p class="page-subtitle">查看和管理您的个人信息</p>
     </div>
 
-    <!-- 用户信息卡片 -->
+    <!-- userinfo -->
     <div class="profile-card">
       <div class="card-header">
         <div class="user-avatar">
-          <el-avatar 
-            :size="80" 
+          <el-avatar
+            :size="80"
             :src="userInfo.photo || defaultAvatar"
             :alt="userInfo.userName"
           >
@@ -33,7 +38,7 @@
           </div>
           <p class="user-id">用户ID: {{ userInfo.userId || '未知' }}</p>
           <p class="user-status">
-            <el-tag 
+            <el-tag
               :type="userInfo.status === 1 ? 'success' : 'danger'"
               size="small"
             >
@@ -43,7 +48,7 @@
         </div>
       </div>
 
-      <!-- 只读信息展示 -->
+      <!-- only info -->
       <div v-if="!isEditing" class="profile-details">
         <div
           v-for="item in profileDetails"
@@ -60,19 +65,19 @@
         </div>
       </div>
 
-      <!-- 详细信息表单 -->
-      <el-form 
+      <!-- infoform -->
+      <el-form
         v-else
-        :model="userInfo" 
-        label-width="120px" 
+        :model="userInfo"
+        label-width="120px"
         class="user-form"
         :disabled="!isEditing"
       >
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item label="登录账号">
-              <el-input 
-                v-model="userInfo.loginId" 
+              <el-input
+                v-model="userInfo.loginId"
                 placeholder="登录账号"
                 readonly
               />
@@ -80,8 +85,8 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="用户姓名">
-              <el-input 
-                v-model="userInfo.userName" 
+              <el-input
+                v-model="userInfo.userName"
                 placeholder="用户姓名"
                 :readonly="!isEditing"
               />
@@ -92,8 +97,8 @@
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item label="租户ID">
-              <el-input 
-                v-model="userInfo.tenantId" 
+              <el-input
+                v-model="userInfo.tenantId"
                 placeholder="租户ID"
                 readonly
               />
@@ -101,8 +106,8 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="用户来源">
-              <el-select 
-                v-model="userInfo.form" 
+              <el-select
+                v-model="userInfo.form"
                 placeholder="用户来源"
                 :disabled="!isEditing"
                 style="width: 100%"
@@ -119,8 +124,8 @@
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item label="登录类型">
-              <el-select 
-                v-model="userInfo.loginType" 
+              <el-select
+                v-model="userInfo.loginType"
                 placeholder="登录类型"
                 :disabled="!isEditing"
                 style="width: 100%"
@@ -132,8 +137,8 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="客户端类型">
-              <el-input 
-                v-model="userInfo.client" 
+              <el-input
+                v-model="userInfo.client"
                 placeholder="客户端类型"
                 :readonly="!isEditing"
               />
@@ -144,8 +149,8 @@
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item label="最后登录时间">
-              <el-input 
-                :value="formatDateTime(userInfo.loginTime)" 
+              <el-input
+                :value="formatDateTime(userInfo.loginTime)"
                 placeholder="最后登录时间"
                 readonly
               />
@@ -153,8 +158,8 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="最后登录IP">
-              <el-input 
-                v-model="userInfo.loginIp" 
+              <el-input
+                v-model="userInfo.loginIp"
                 placeholder="最后登录IP"
                 readonly
               />
@@ -165,8 +170,8 @@
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item label="令牌过期时间">
-              <el-input 
-                :value="formatDateTime(userInfo.tokenExpireTime)" 
+              <el-input
+                :value="formatDateTime(userInfo.tokenExpireTime)"
                 placeholder="令牌过期时间"
                 readonly
               />
@@ -174,8 +179,8 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="创建时间">
-              <el-input 
-                :value="formatDateTime(userInfo.createdAt)" 
+              <el-input
+                :value="formatDateTime(userInfo.createdAt)"
                 placeholder="创建时间"
                 readonly
               />
@@ -186,8 +191,8 @@
         <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item label="更新时间">
-              <el-input 
-                :value="formatDateTime(userInfo.updatedAt)" 
+              <el-input
+                :value="formatDateTime(userInfo.updatedAt)"
                 placeholder="更新时间"
                 readonly
               />
@@ -195,8 +200,8 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="访问令牌">
-              <el-input 
-                :value="maskToken(userInfo.accessToken)" 
+              <el-input
+                :value="maskToken(userInfo.accessToken)"
                 placeholder="访问令牌"
                 readonly
                 show-password
@@ -205,11 +210,11 @@
           </el-col>
         </el-row>
 
-        <!-- 操作按钮 -->
+        <!-- operationbutton -->
         <el-form-item>
           <div class="form-actions">
             <el-button
-              type="primary" 
+              type="primary"
               @click="saveChanges"
               :icon="Check"
               :loading="saving"
@@ -229,7 +234,7 @@
       </el-form>
     </div>
 
-    <!-- 登录历史 -->
+    <!-- history -->
     <div class="login-history-card">
       <div class="card-header">
         <h3>登录历史</h3>
@@ -266,10 +271,10 @@ import {
 import { AuthManager } from '@/utils/auth'
 import { getUserInfo } from '@/api/system/localAuth'
 
-// 认证管理器
+//
 const authManager = new AuthManager()
 
-// 响应式数据
+// data
 const userInfo = ref({})
 const isEditing = ref(false)
 const saving = ref(false)
@@ -287,10 +292,10 @@ const getLoginTypeLabel = (value) => ({
   2: 'C端用户'
 }[value] || '未知')
 
-// 默认头像
+//
 const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjVGNUY1Ii8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjgwIiByPSIzMCIgZmlsbD0iI0NDQ0NDQyIvPgo8cGF0aCBkPSJNNDAgMTYwQzQwIDEyMCA4MCAxMDAgMTAwIDEwMEMxMjAgMTAwIDE2MCAxMjAgMTYwIDE2MEg0MFoiIGZpbGw9IiNDQ0NDQ0MiLz4KPC9zdmc+'
 
-// 格式化日期时间
+// Format
 const formatDateTime = (dateTime) => {
   if (!dateTime) return '未知'
   const date = new Date(dateTime)
@@ -304,7 +309,7 @@ const formatDateTime = (dateTime) => {
   })
 }
 
-// 掩码令牌
+//
 const maskToken = (token) => {
   if (!token) return ''
   if (token.length <= 8) return token
@@ -326,24 +331,24 @@ const profileDetails = computed(() => [
   { label: '访问令牌', value: maskToken(userInfo.value.accessToken) || '—', icon: Key, isToken: true }
 ])
 
-// 开始编辑
+// start
 const startEdit = () => {
   isEditing.value = true
 }
 
-// 保存更改
+//
 const saveChanges = async () => {
   try {
     saving.value = true
-    
-    // 暂时只保存到localStorage，因为API可能不支持更新
+
+    // only localStorage, to API can new
     localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
-    
+
       ElMessage.success('用户信息更新成功')
       isEditing.value = false
-    
+
     console.log('✅ 用户信息已保存到localStorage')
-    
+
   } catch (error) {
     console.error('❌ 保存用户信息失败:', error)
     ElMessage.error('保存失败，请重试')
@@ -352,59 +357,59 @@ const saveChanges = async () => {
   }
 }
 
-// 取消编辑
+//
 const cancelEdit = async () => {
   await ElMessageBox.confirm('确定要取消编辑吗？未保存的更改将丢失。', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   })
-  
+
   isEditing.value = false
-  await loadUserInfo() // 重新加载用户信息，恢复原始数据
+  await loadUserInfo() // new Load userinfo, data
 }
 
-// 加载用户信息
+// Load userinfo
 const loadUserInfo = async () => {
   try {
     console.log('🚀 开始加载用户信息...')
-    
-    // 获取token
+
+    // Get token
     const urlParams = new URLSearchParams(window.location.search)
     const urlToken = urlParams.get('accessToken') || urlParams.get('token')
     const sessionToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token')
     const localToken = localStorage.getItem('accessToken') || localStorage.getItem('token')
-    
+
     const token = urlToken || sessionToken || localToken
-    
+
     if (!token) {
       console.log('❌ 没有找到有效的token')
       ElMessage.warning('未找到用户信息，请先登录')
       return
     }
-    
+
     console.log('✅ 使用token:', token.substring(0, 8) + '...')
-    
-    // 调用getUserInfo API获取用户详细信息
+
+    // getUserInfo APIGet user info
     const response = await getUserInfo({ accessToken: token })
-    
+
     console.log('📥 getUserInfo响应:', response)
-    
-    // 检查响应格式 - 直接返回的数据格式
+
+    // - data
           if (response.code === 200 && response.data) {
       const userData = response.data
-      
+
       console.log('📋 解析到的用户信息:')
       console.log('- 用户名称:', userData.user_name)
       console.log('- 用户ID:', userData.user_id)
       console.log('- 登录ID:', userData.login_id)
       console.log('- 租户ID:', userData.tenant_id)
-      
-      // 更新用户信息 - 使用实际返回的字段
+
+      // new userinfo - field
       userInfo.value = {
         userName: userData.user_name || '未知用户',
         userId: userData.user_id || '',
-        loginId: userData.user_name || '', // 使用user_name作为loginId
+        loginId: userData.user_name || '', // user_name to loginId
         tenantId: userData.tenant_id || '',
         status: userData.status || 1,
         form: userData.form || 1,
@@ -417,29 +422,29 @@ const loadUserInfo = async () => {
         updatedAt: userData.updated_at || new Date().toISOString(),
         accessToken: token
       }
-      
+
       console.log('✅ 用户信息已更新:', userInfo.value)
-      
-      // 保存到localStorage
+
+      // localStorage
       localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
-      
-      // 强制触发Vue响应式更新
+
+      // Vue new
       await nextTick()
       console.log('🔄 强制触发Vue响应式更新')
-      
-      // 检查页面元素是否更新
+
+      // pageelementwhether new
       setTimeout(() => {
         const userNameElement = document.querySelector('.user-name')
         if (userNameElement) {
           console.log('📋 页面用户名称元素:', userNameElement.textContent.trim())
         }
-        
+
         const loginIdInput = document.querySelector('.user-form .el-input__inner')
         if (loginIdInput) {
           console.log('📋 页面登录账号输入框:', loginIdInput.value)
         }
       }, 100)
-      
+
     } else {
       console.warn('getUserInfo API返回数据格式不正确:', response)
       ElMessage.warning('获取用户信息失败')
@@ -450,9 +455,9 @@ const loadUserInfo = async () => {
   }
 }
 
-// 加载登录历史
+// Load history
 const loadLoginHistory = () => {
-  // 模拟登录历史数据
+  // history data
   loginHistory.value = [
     {
       loginTime: new Date(),
@@ -471,7 +476,7 @@ const loadLoginHistory = () => {
   ]
 }
 
-// 页面加载时执行
+// pageLoad Execute
 onMounted(async () => {
   await loadUserInfo()
   loadLoginHistory()
@@ -627,22 +632,22 @@ onMounted(async () => {
   margin: 0;
 }
 
-/* 响应式设计 */
+/*  */
 @media (max-width: 768px) {
   .user-profile-container {
     padding: 16px;
   }
-  
+
   .card-header {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .user-avatar {
     margin-right: 0;
     margin-bottom: 16px;
   }
-  
+
   .form-actions {
     flex-direction: column;
   }
@@ -662,4 +667,4 @@ onMounted(async () => {
     grid-template-columns: 20px 104px minmax(0, 1fr);
   }
 }
-</style> 
+</style>

@@ -1,12 +1,17 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
 /**
- * 连接远程服务器
- * @param {Object} params - 连接参数
- * @param {string} params.host - 服务器地址
- * @param {string} params.username - 用户名
- * @param {string} params.password - 密码
- * @param {string} params.path - 数据集路径
+ * service
+ * @param {Object} params - parameter
+ * @param {string} params.host - service
+ * @param {string} params.username - user
+ * @param {string} params.password -
+ * @param {string} params.path - dataset
  */
 export function connectToServer(params) {
   return request({
@@ -20,10 +25,10 @@ export function connectToServer(params) {
 }
 
 /**
- * 获取远程服务器文件列表
- * @param {Object} params - 查询参数
- * @param {string} params.host - 服务器地址
- * @param {string} params.path - 文件路径
+ * Get service
+ * @param {Object} params - Query parameter
+ * @param {string} params.host - service
+ * @param {string} params.path -
  */
 export function getServerFiles(params) {
   return request({
@@ -34,11 +39,11 @@ export function getServerFiles(params) {
 }
 
 /**
- * 获取远程文件内容
- * @param {Object} params - 查询参数
- * @param {string} params.host - 服务器地址
- * @param {string} params.path - 文件路径
- * @param {string} params.filename - 文件名
+ * Get
+ * @param {Object} params - Query parameter
+ * @param {string} params.host - service
+ * @param {string} params.path -
+ * @param {string} params.filename -
  */
 export function getFileContent(params) {
   return request({
@@ -49,11 +54,11 @@ export function getFileContent(params) {
 }
 
 /**
- * 下载远程文件
- * @param {Object} params - 下载参数
- * @param {string} params.host - 服务器地址
- * @param {string} params.path - 文件路径
- * @param {string} params.filename - 文件名
+ *
+ * @param {Object} params - parameter
+ * @param {string} params.host - service
+ * @param {string} params.path -
+ * @param {string} params.filename -
  */
 export function downloadFile(params) {
   return request({
@@ -65,11 +70,11 @@ export function downloadFile(params) {
 }
 
 /**
- * 上传文件到远程服务器
- * @param {Object} params - 上传参数
- * @param {string} params.host - 服务器地址
- * @param {string} params.path - 目标路径
- * @param {File} params.file - 要上传的文件
+ * service
+ * @param {Object} params - parameter
+ * @param {string} params.host - service
+ * @param {string} params.path -
+ * @param {File} params.file - need to
  */
 export function uploadFileToServer(params) {
   const formData = new FormData()
@@ -88,10 +93,10 @@ export function uploadFileToServer(params) {
 }
 
 /**
- * 创建远程目录
- * @param {Object} params - 创建参数
- * @param {string} params.host - 服务器地址
- * @param {string} params.path - 目录路径
+ *
+ * @param {Object} params - parameter
+ * @param {string} params.host - service
+ * @param {string} params.path -
  */
 export function createRemoteDirectory(params) {
   return request({
@@ -102,10 +107,10 @@ export function createRemoteDirectory(params) {
 }
 
 /**
- * 删除远程文件或目录
- * @param {Object} params - 删除参数
- * @param {string} params.host - 服务器地址
- * @param {string} params.path - 文件或目录路径
+ * Delete
+ * @param {Object} params - Delete parameter
+ * @param {string} params.host - service
+ * @param {string} params.path -
  */
 export function deleteRemoteFile(params) {
   return request({

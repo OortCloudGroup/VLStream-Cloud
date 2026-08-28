@@ -1,9 +1,14 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="video-layout-controls">
-    <!-- 布局模式选择 -->
+    <!--  -->
     <div class="layout-mode-selector">
       <div class="layout-buttons">
-        <button 
+        <button
           class="layout-btn"
           :class="{ active: layoutMode === 1 }"
           @click="selectLayout(1)"
@@ -12,7 +17,7 @@
           <img v-if="typeof mode1Icon === 'string'" :src="mode1Icon" alt="1x1" />
           <component v-else :is="mode1Icon" />
         </button>
-        <button 
+        <button
           class="layout-btn"
           :class="{ active: layoutMode === 2 }"
           @click="selectLayout(2)"
@@ -21,7 +26,7 @@
           <img v-if="typeof mode2Icon === 'string'" :src="mode2Icon" alt="2x2" />
           <component v-else :is="mode2Icon" />
         </button>
-        <button 
+        <button
           class="layout-btn"
           :class="{ active: layoutMode === 3 }"
           @click="selectLayout(3)"
@@ -30,7 +35,7 @@
           <img v-if="typeof mode3Icon === 'string'" :src="mode3Icon" alt="3x3" />
           <component v-else :is="mode3Icon" />
         </button>
-        <button 
+        <button
           class="layout-btn"
           :class="{ active: layoutMode === 4 }"
           @click="selectLayout(4)"
@@ -39,7 +44,7 @@
           <img v-if="typeof mode4Icon === 'string'" :src="mode4Icon" alt="4x4" />
           <component v-else :is="mode4Icon" />
         </button>
-        <button 
+        <button
           class="layout-btn"
           :class="{ active: layoutMode === 5 }"
           @click="selectLayout(5)"
@@ -48,7 +53,7 @@
           <img v-if="typeof mode5Icon === 'string'" :src="mode5Icon" alt="5x5" />
           <component v-else :is="mode5Icon" />
         </button>
-        <button 
+        <button
           class="layout-btn"
           :class="{ active: layoutMode === 6 }"
           @click="selectLayout(6)"
@@ -58,9 +63,9 @@
           <component v-else :is="mode6Icon" />
         </button>
       </div>
-      
-      <!-- 扩展布局按钮 -->
-      <button 
+
+      <!-- button -->
+      <button
         v-if="showExtendedLayout"
         class="extended-layout-btn"
         @click="showExtendedLayoutDialog"
@@ -72,7 +77,7 @@
       </button>
     </div>
 
-    <!-- 设备统计信息 -->
+    <!-- device info -->
     <div class="device-stats">
       <div class="stat-item">
         <span class="stat-label">在线设备:</span>
@@ -88,9 +93,9 @@
       </div>
     </div>
 
-    <!-- 操作按钮 -->
+    <!-- operationbutton -->
     <div class="action-buttons">
-      <button 
+      <button
         class="action-btn"
         @click="openVideoDialogs"
         title="打开视频弹窗"
@@ -100,8 +105,8 @@
         </svg>
         视频弹窗
       </button>
-      
-      <button 
+
+      <button
         class="action-btn"
         @click="openCustomVideoDialogs"
         title="自定义视频布局"
@@ -111,8 +116,8 @@
         </svg>
         自定义布局
       </button>
-      
-      <button 
+
+      <button
         class="action-btn"
         @click="toggleFullscreen"
         :title="isFullscreen ? '退出全屏' : '全屏显示'"
@@ -191,7 +196,7 @@ const emit = defineEmits([
   'toggle-fullscreen'
 ])
 
-// 方法
+// method
 const selectLayout = (mode) => {
   emit('select-layout', mode)
 }
@@ -370,22 +375,22 @@ const toggleFullscreen = () => {
   transform: translateY(0);
 }
 
-/* 响应式设计 */
+/*  */
 @media (max-width: 1200px) {
   .video-layout-controls {
     flex-direction: column;
     gap: 16px;
     align-items: stretch;
   }
-  
+
   .layout-mode-selector {
     justify-content: center;
   }
-  
+
   .device-stats {
     justify-content: center;
   }
-  
+
   .action-buttons {
     justify-content: center;
   }
@@ -395,20 +400,20 @@ const toggleFullscreen = () => {
   .video-layout-controls {
     padding: 12px 16px;
   }
-  
+
   .layout-btn,
   .extended-layout-btn {
     width: 36px;
     height: 36px;
   }
-  
+
   .device-stats {
     gap: 12px;
   }
-  
+
   .action-btn {
     padding: 6px 12px;
     font-size: 13px;
   }
 }
-</style> 
+</style>

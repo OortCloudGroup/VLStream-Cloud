@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="tenant_Page draHeaPB">
     <div class="tenant_content">
@@ -548,9 +553,9 @@
         </el-tab-pane>
         <el-tab-pane label="云台控制" name="control">
           <div style="display: grid; grid-template-columns: 240px auto; height: 180px; overflow: auto">
-            <!-- 左侧控制区域 -->
+            <!-- control -->
             <div style="display: grid; grid-template-columns: 100px auto;">
-              <!-- 方向控制 -->
+              <!-- control -->
               <div class="control-wrapper">
                 <div class="control-btn control-top" @mousedown="ptzCamera('up')" @mouseup="ptzCamera('stop')">
                   <el-icon class="icon"><CaretTop /></el-icon>
@@ -571,12 +576,12 @@
                 <div class="control-round">
                   <div class="control-round-inner"><i class="fa fa-pause-circle"></i></div>
                 </div>
-                <!-- 速度控制 -->
+                <!-- control -->
                 <div class="contro-speed" style="position: absolute; left: 4px; top: 112px; width: 100px;">
                   <el-slider v-model="controSpeed" :min="1"></el-slider>
                 </div>
               </div>
-              <!-- 变倍、聚焦、光圈控制 -->
+              <!-- 、 、 control -->
               <div>
                 <div class="ptz-btn-box">
                   <div @mousedown="ptzCamera('zoomin')" @mouseup="ptzCamera('stop')" title="变倍+">
@@ -605,7 +610,7 @@
               </div>
             </div>
 
-            <!-- 右侧功能选择区域 -->
+            <!-- can -->
             <div style="text-align: left">
               <el-select
                   v-model="ptzMethod"
@@ -730,7 +735,7 @@ const controSpeed = ref(30);
 const channelId = ref('');
 const ptzMethod = ref('preset');
 const broadcastMode = ref(true);
-const broadcastStatus = ref(-1); // -2 正在释放资源 -1 默认状态 0 等待接通 1 接通成功
+const broadcastStatus = ref(-1); // -2 in -1 0 etc. 1 successfully
 
 const broadcastStatusClick = async () => {
   if (broadcastStatus.value == -1){
@@ -966,19 +971,19 @@ function paly() {
   video.value.createPlayer(vUrl.value, 0)
 }
 
-/** 搜索按钮操作 */
+/* * buttonoperation */
 function handleQuery() {
   queryParams.value.pageNum = 1;
   initData();
 }
 
-/** 重置按钮操作 */
+/* * buttonoperation */
 function resetQuery() {
   proxy.resetForm("queryRef");
   handleQuery();
 }
 
-/** 表单重置 */
+/* * form */
 function reset() {
   form.value = {
     gbName: undefined,
@@ -1018,7 +1023,7 @@ function reset() {
   proxy.resetForm("formRef");
 }
 
-/** 提交按钮 */
+/* * button */
 function submitForm() {
   proxy.$refs["formRef"].validate(valid => {
     if (valid) {
@@ -1038,7 +1043,7 @@ function submitForm() {
   });
 }
 
-/** 取消按钮 */
+/* * button */
 function cancel() {
   open.value = false;
   reset();
@@ -1076,7 +1081,7 @@ function gbParentOnSubmit(deviceId, businessGroupId) {
 }
 
 /**
- * 初始化数据
+ * Initialize data
  */
 function initData() {
   if (typeof (parentChannelId.value) == "undefined" || parentChannelId.value === '0') {
@@ -1087,7 +1092,7 @@ function initData() {
 }
 
 /**
- * 显示子通道
+ * sub channel
  */
 function showSubchannels() {
   if (!showTree.value) {
@@ -1104,7 +1109,7 @@ function showSubchannels() {
         e.ptzType = e.ptzType + "";
       });
 
-      // 防止出现表格错位
+      // table
       nextTick(() => {
         channelListTable.value.doLayout();
       })
@@ -1114,7 +1119,7 @@ function showSubchannels() {
   }
 }
 
-/** 获取设备通道列表 */
+/* * Get devicechannel */
 function getDeviceChannelList() {
   loading.value = true;
   listDeviceChannel(
@@ -1138,7 +1143,7 @@ function getSnap(row) {
 }
 
 /**
- * 开启音频
+ *
  *
  * @param row
  */
@@ -1150,7 +1155,7 @@ function updateChannel(row) {
 }
 
 /**
- * 码流类型
+ *
  *
  * @param row
  */
@@ -1163,7 +1168,7 @@ function channelSubStreamChange(row) {
 }
 
 /**
- * 停止设备推流
+ * device
  *
  * @param itemData
  */
@@ -1203,7 +1208,7 @@ function resetData() {
       })
 }
 
-// 编辑
+//
 function handleEdit(row) {
   getCommonChannelFun(row.id)
 }

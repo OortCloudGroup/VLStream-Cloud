@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -66,7 +66,7 @@ public class JobFailMonitorHelper {
                                 }
 
                                 // 2、fail alarm monitor
-                                int newAlarmStatus = 0;        // 告警状态：0-默认、-1=锁定状态、1-无需告警、2-告警成功、3-告警失败
+                                int newAlarmStatus = 0;        // alarm / alert : 0- 、-1= 、1- alarm / alert、2-alarm / alertsuccessfully、3-alarm / alertfailed
                                 if (info != null) {
                                     boolean alarmResult = XxlJobAdminConfig.getAdminConfig().getJobAlarmer().alarm(info, log);
                                     newAlarmStatus = alarmResult ? 2 : 3;

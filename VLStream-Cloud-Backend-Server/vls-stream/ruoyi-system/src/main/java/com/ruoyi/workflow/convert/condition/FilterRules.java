@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -10,11 +11,11 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * 筛选规则
+ *
  */
 @Data
 public class FilterRules {
-    private String operator;//运算符
+    private String operator;//
     private List<Condition> conditions;
     private List<FilterRules> groups;
 }

@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * 数据字典信息
+ * datadictinfo
  *
  * @author Lion Li
  */
@@ -39,7 +39,7 @@ public class SysDictDataController extends BaseController {
     private final ISysDictTypeService dictTypeService;
 
     /**
-     * 查询字典数据列表
+     * Query dictdata list
      */
     @SaCheckPermission("system:dict:list")
     @GetMapping("/list")
@@ -48,7 +48,7 @@ public class SysDictDataController extends BaseController {
     }
 
     /**
-     * 导出字典数据列表
+     * Export dictdata
      */
     @Log(title = "字典数据", businessType = BusinessType.EXPORT)
     @SaCheckPermission("system:dict:export")
@@ -59,9 +59,9 @@ public class SysDictDataController extends BaseController {
     }
 
     /**
-     * 查询字典数据详细
+     * Query dictdata
      *
-     * @param dictCode 字典code
+     * @param dictCode dictcode
      */
     @SaCheckPermission("system:dict:query")
     @GetMapping(value = "/{dictCode}")
@@ -70,9 +70,9 @@ public class SysDictDataController extends BaseController {
     }
 
     /**
-     * 根据字典类型查询字典数据信息
+     * dict typeQuery dictdatainfo
      *
-     * @param dictType 字典类型
+     * @param dictType dict type
      */
     @GetMapping(value = "/type/{dictType}")
     public R<List<SysDictData>> dictType(@PathVariable String dictType) {
@@ -81,7 +81,7 @@ public class SysDictDataController extends BaseController {
     }
 
     /**
-     * 新增字典类型
+     * Add dict type
      */
     @SaCheckPermission("system:dict:add")
     @Log(title = "字典数据", businessType = BusinessType.INSERT)
@@ -92,7 +92,7 @@ public class SysDictDataController extends BaseController {
     }
 
     /**
-     * 修改保存字典类型
+     * Update dict type
      */
     @SaCheckPermission("system:dict:edit")
     @Log(title = "字典数据", businessType = BusinessType.UPDATE)
@@ -103,9 +103,9 @@ public class SysDictDataController extends BaseController {
     }
 
     /**
-     * 删除字典类型
+     * Delete dict type
      *
-     * @param dictCodes 字典code串
+     * @param dictCodes dictcode
      */
     @SaCheckPermission("system:dict:remove")
     @Log(title = "字典类型", businessType = BusinessType.DELETE)

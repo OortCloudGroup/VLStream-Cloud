@@ -31,7 +31,7 @@
 //import java.util.List;
 //
 ///**
-// * 数据权限拦截器
+// * data
 // *
 // * @author Lion Li
 // * @version 3.5.0
@@ -42,15 +42,15 @@
 //
 //    @Override
 //    public void beforeQuery(Executor executor, MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) throws SQLException {
-//        // 检查忽略注解
+// //
 //        if (InterceptorIgnoreHelper.willIgnoreDataPermission(ms.getId())) {
 //            return;
 //        }
-//        // 检查是否无效 无数据权限注解
+// // whether data
 //        if (dataPermissionHandler.isInvalid(ms.getId())) {
 //            return;
 //        }
-//        // 解析 sql 分配对应方法
+// // Parse sql method
 //        PluginUtils.MPBoundSql mpBs = PluginUtils.mpBoundSql(boundSql);
 //        mpBs.sql(parserSingle(mpBs.sql(), ms.getId()));
 //    }
@@ -98,10 +98,10 @@
 //    }
 //
 //    /**
-//     * 设置 where 条件
+// * Set where
 //     *
-//     * @param plainSelect       查询对象
-//     * @param mappedStatementId 执行方法id
+// * @param plainSelect Query object
+// * @param mappedStatementId Execute method id
 //     */
 //    protected void setWhere(PlainSelect plainSelect, String mappedStatementId) {
 //        Expression sqlSegment = dataPermissionHandler.getSqlSegment(plainSelect.getWhere(), mappedStatementId, true);

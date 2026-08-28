@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -24,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.lang.reflect.Field;
 
 /**
- * 字典格式化转换处理
+ * dictFormat Convert Process
  *
  * @author Lion Li
  */

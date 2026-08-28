@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -30,7 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 流程初始化模版
+ * workflowInitialize
  *
  * @author lcq
  * @date 2025-01-07
@@ -44,7 +45,7 @@ public class ProcessTemplateController extends BaseController {
     private final IProcessTemplateService iProcessTemplateService;
 
     /**
-     * 查询流程初始化模版列表
+     * Query workflowInitialize list
      */
     @SaCheckPermission("workflow:template:list")
     @GetMapping("/list")
@@ -53,7 +54,7 @@ public class ProcessTemplateController extends BaseController {
     }
 
     /**
-     * 导出流程初始化模版列表
+     * Export workflowInitialize
      */
     @SaCheckPermission("workflow:template:export")
     @Log(title = "流程初始化模版", businessType = BusinessType.EXPORT)
@@ -64,9 +65,9 @@ public class ProcessTemplateController extends BaseController {
     }
 
     /**
-     * 获取流程初始化模版详细信息
+     * Get workflowInitialize info
      *
-     * @param id 主键
+     * @param id primary key
      */
     @SaCheckPermission("workflow:template:getInfo")
     @GetMapping("/{id}")
@@ -76,7 +77,7 @@ public class ProcessTemplateController extends BaseController {
     }
 
     /**
-     * 新增流程初始化模版
+     * Add workflowInitialize
      */
     @SaCheckPermission("workflow:template:add")
     @Log(title = "流程初始化模版", businessType = BusinessType.INSERT)
@@ -87,7 +88,7 @@ public class ProcessTemplateController extends BaseController {
     }
 
     /**
-     * 修改流程初始化模版
+     * Update workflowInitialize
      */
     @SaCheckPermission("workflow:template:edit")
     @Log(title = "流程初始化模版", businessType = BusinessType.UPDATE)
@@ -98,9 +99,9 @@ public class ProcessTemplateController extends BaseController {
     }
 
     /**
-     * 删除流程初始化模版
+     * Delete workflowInitialize
      *
-     * @param ids 主键串
+     * @param ids primary key
      */
     @SaCheckPermission("workflow:template:remove")
     @Log(title = "流程初始化模版", businessType = BusinessType.DELETE)

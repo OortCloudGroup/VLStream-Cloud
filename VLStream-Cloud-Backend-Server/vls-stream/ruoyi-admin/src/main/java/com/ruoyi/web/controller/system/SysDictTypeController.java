@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * 数据字典信息
+ * datadictinfo
  *
  * @author Lion Li
  */
@@ -39,7 +39,7 @@ SysDictTypeController extends BaseController {
     private final ISysDictTypeService dictTypeService;
 
     /**
-     * 查询字典类型列表
+     * Query dict type list
      */
     @SaCheckPermission("system:dict:list")
     @GetMapping("/list")
@@ -48,7 +48,7 @@ SysDictTypeController extends BaseController {
     }
 
     /**
-     * 导出字典类型列表
+     * Export dict type
      */
     @Log(title = "字典类型", businessType = BusinessType.EXPORT)
     @SaCheckPermission("system:dict:export")
@@ -59,9 +59,9 @@ SysDictTypeController extends BaseController {
     }
 
     /**
-     * 查询字典类型详细
+     * Query dict type
      *
-     * @param dictId 字典ID
+     * @param dictId dictID
      */
     @SaCheckPermission("system:dict:query")
     @GetMapping(value = "/{dictId}")
@@ -70,7 +70,7 @@ SysDictTypeController extends BaseController {
     }
 
     /**
-     * 新增字典类型
+     * Add dict type
      */
     @SaCheckPermission("system:dict:add")
     @Log(title = "字典类型", businessType = BusinessType.INSERT)
@@ -84,7 +84,7 @@ SysDictTypeController extends BaseController {
     }
 
     /**
-     * 修改字典类型
+     * Update dict type
      */
     @SaCheckPermission("system:dict:edit")
     @Log(title = "字典类型", businessType = BusinessType.UPDATE)
@@ -98,9 +98,9 @@ SysDictTypeController extends BaseController {
     }
 
     /**
-     * 删除字典类型
+     * Delete dict type
      *
-     * @param dictIds 字典ID串
+     * @param dictIds dictID
      */
     @SaCheckPermission("system:dict:remove")
     @Log(title = "字典类型", businessType = BusinessType.DELETE)
@@ -111,7 +111,7 @@ SysDictTypeController extends BaseController {
     }
 
     /**
-     * 刷新字典缓存
+     * new dict
      */
     @SaCheckPermission("system:dict:remove")
     @Log(title = "字典类型", businessType = BusinessType.CLEAN)
@@ -122,7 +122,7 @@ SysDictTypeController extends BaseController {
     }
 
     /**
-     * 获取字典选择框列表
+     * Get dict
      */
     @GetMapping("/optionselect")
     public R<List<SysDictType>> optionselect() {

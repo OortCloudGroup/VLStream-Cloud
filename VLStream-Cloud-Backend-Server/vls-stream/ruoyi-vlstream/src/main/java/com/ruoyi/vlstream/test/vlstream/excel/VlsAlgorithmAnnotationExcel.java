@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import java.io.Serializable;
 
 
 /**
- * 算法标注数据表 Excel实体类
+ * algorithmannotationdata Excel
  *
  * @author Oort
  * @since 2025-12-23
@@ -29,55 +30,55 @@ public class VlsAlgorithmAnnotationExcel implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 标注名称
+	 * annotation
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("标注名称")
 	private String annotationName;
 	/**
-	 * 标注类型：object_detection-物体检测,image_classification-图像分类,instance_segmentation-实例分割,semantic_segmentation-语义分割
+	 * annotation : object_detection- ,image_classification- ,instance_segmentation-instance ,semantic_segmentation-
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("标注类型：object_detection-物体检测,image_classification-图像分类,instance_segmentation-实例分割,semantic_segmentation-语义分割")
 	private String annotationType;
 	/**
-	 * 数据集路径
+	 * dataset
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("数据集路径")
 	private String datasetPath;
 	/**
-	 * 总数量
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("总数量")
 	private Integer totalCount;
 	/**
-	 * 已标注数量
+	 * already annotation
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("已标注数量")
 	private Integer annotatedCount;
 	/**
-	 * 标注状态：none-未标注,partial-部分标注,completed-完成标注
+	 * annotation : none- not annotation,partial- annotation,completed- annotation
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("标注状态：none-未标注,partial-部分标注,completed-完成标注")
 	private String annotationStatus;
 	/**
-	 * 标注进度百分比
+	 * annotation
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("标注进度百分比")
 	private Integer progress;
 	/**
-	 * 标注规则
+	 * annotation
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("标注规则")
 	private String annotationRules;
 	/**
-	 * 备注
+	 * remark
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("备注")

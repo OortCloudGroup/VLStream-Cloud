@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -19,7 +20,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.util.Date;
 
 /**
- * 事件管理表 实体类
+ * event
  *
  * @author Oort
  * @since 2025-12-23
@@ -32,91 +33,91 @@ public class EventManagement extends TenantEntity {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * MQTT 上报消息唯一 ID，用于 QoS 1 重复消息去重。
+	 * MQTT ID, QoS 1 .
 	 */
 	@Schema(description = "MQTT上报消息唯一ID")
 	private String mqttMessageId;
 	/**
-	 * 设备侧事件唯一 ID。
+	 * device event ID.
 	 */
 	@Schema(description = "设备侧事件唯一ID")
 	private String deviceEventId;
 	/**
-	 * 关联的事件图片 mediaId。
+	 * event mediaId.
 	 */
 	@Schema(description = "事件图片mediaId")
 	private String mediaId;
 
 	/**
-	 * 事件描述
+	 * event
 	 */
 	@Schema(description = "事件描述")
 	private String eventDesc;
 	/**
-	 * 事件类型
+	 * event
 	 */
 	@Schema(description = "事件类型")
 	private String eventType;
 	/**
-	 * 上报位置
+	 *
 	 */
 	@Schema(description = "上报位置")
 	private String reportLocation;
 	/**
-	 * 上报设备
+	 * device
 	 */
 	@Schema(description = "上报设备")
 	private String reportDevice;
 	/**
-	 * 上报图片
+	 *
 	 */
 	@Schema(description = "上报图片")
 	private String reportImg;
 	/**
-	 * 上报时间
+	 *
 	 */
 	@Schema(description = "上报时间")
 	@DateTimeFormat(pattern = DateUtil.PATTERN_DATETIME)
 	@JsonFormat(pattern = DateUtil.PATTERN_DATETIME)
 	private Date reportTime;
 	/**
-	 * 事件级别
+	 * event
 	 */
 	@Schema(description = "事件级别")
 	private EventLevelEnum eventLevel;
 	/**
-	 * 事件状态
+	 * event
 	 */
 	@Schema(description = "事件状态")
 	private EventStatusEnum eventStatus;
 	/**
-	 * 事件数据
+	 * eventdata
 	 */
 	@Schema(description = "事件数据")
 	private String eventData;
 	/**
-	 * 处理结果
+	 * Process
 	 */
 	@Schema(description = "处理结果")
 	private String handleResult;
 	/**
-	 * 反馈信息
+	 * info
 	 */
 	@Schema(description = "反馈信息")
 	private String feedbackInfo;
 	/**
-	 * 反馈图片
+	 *
 	 */
 	@Schema(description = "反馈图片")
 	private String feedbackImg;
 	/**
-	 * 反馈状态
+	 *
 	 */
 	@Schema(description = "反馈状态")
 	private Integer feedbackStatus;
 
 	/**
-	 * 是否已上报
+	 * whether already
 	 */
 	@Schema(description = "是否已上报")
 	private Integer isReport;

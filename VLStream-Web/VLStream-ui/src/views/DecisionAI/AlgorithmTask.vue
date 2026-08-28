@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="algorithm-task tenant_Page draHeaPB">
     <div class="tenant_content">
@@ -15,7 +20,7 @@
                 <button-group :button-list="toolbarButtonList" />
               </div>
             </div>
-            <!--搜索-->
+            <!--  -->
             <div class="searchHeight_out flexRowAC">
               <search-height-box
                 keyword="jobName"
@@ -133,7 +138,7 @@ export default {
     }
   },
   methods: {
-    // 当前页面暂时禁用接口交互，只保留本地空态和操作提示。
+    // current page interface , only null / empty and operationprompt / tip.
     disableRemoteCall(message = '当前页面接口调用已暂时关闭') {
       this.$message.info(message)
     },
@@ -314,7 +319,7 @@ export default {
   background-color: #f5f7fa;
   overflow: hidden;
 
-  /* 隐藏 avue-crud 自带搜索区域与搜索切换按钮 */
+  /* avue-crud and button */
   :deep(.avue-crud__search) {
     display: none !important;
   }

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div id="ptzWiper">
     <el-button size="mini" @click="() => open('on')">开启</el-button>
@@ -10,7 +15,7 @@ import { ref } from 'vue';
 import { ElLoading, ElMessage } from 'element-plus';
 import {GetPtzWiper} from "@/api/wvp/channel.js";
 
-// 接收 props
+// props
 const props = defineProps({
   channelDeviceId: String,
   deviceId: String,
@@ -20,7 +25,7 @@ const url = ref({
   deviceId: props.deviceId,
   channelDeviceId: props.channelDeviceId,
 });
-// 定义方法
+// method
 const open = async (command) => {
   const loading = ElLoading.service({
     lock: true,

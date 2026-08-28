@@ -18,7 +18,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
- * 菜单权限表 sys_menu
+ * menu sys_menu
  *
  * @author Lion Li
  */
@@ -29,81 +29,81 @@ import javax.validation.constraints.Size;
 public class SysMenu extends TreeEntity<SysMenu> {
 
     /**
-     * 菜单ID
+     * menu ID
      */
     @TableId(value = "menu_id")
     private Long  menuId;
 
     /**
-     * 菜单名称
+     * menu name
      */
     @NotBlank(message = "菜单名称不能为空")
     @Size(min = 0, max = 50, message = "菜单名称长度不能超过{max}个字符")
     private String menuName;
 
     /**
-     * 显示顺序
+     *
      */
     @NotNull(message = "显示顺序不能为空")
     private Integer orderNum;
 
     /**
-     * 路由地址
+     *
      */
     @Size(min = 0, max = 200, message = "路由地址不能超过{max}个字符")
     private String path;
 
     /**
-     * 组件路径
+     * component
      */
     @Size(min = 0, max = 200, message = "组件路径不能超过{max}个字符")
     private String component;
 
     /**
-     * 路由参数
+     * parameter
      */
     private String queryParam;
 
     /**
-     * 是否为外链（0是 1否）
+     * whether to (0 is 1 )
      */
     private String isFrame;
 
     /**
-     * 是否缓存（0缓存 1不缓存）
+     * whether (0 1 )
      */
     private String isCache;
 
     /**
-     * 类型（M目录 C菜单 F按钮）
+     * (M Cmenu Fbutton)
      */
     @NotBlank(message = "菜单类型不能为空")
     private String menuType;
 
     /**
-     * 显示状态（0显示 1隐藏）
+     * (0 1 )
      */
     private String visible;
 
     /**
-     * 菜单状态（0正常 1停用）
+     * menuStatus (0 normal 1 disabled)
      */
     private String status;
 
     /**
-     * 权限字符串
+     *
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Size(min = 0, max = 100, message = "权限标识长度不能超过{max}个字符")
     private String perms;
 
     /**
-     * 菜单图标
+     * menu
      */
     private String icon;
 
     /**
-     * 备注
+     * remark
      */
     private String remark;
 

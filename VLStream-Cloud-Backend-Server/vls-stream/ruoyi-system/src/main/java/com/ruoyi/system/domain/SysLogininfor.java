@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -20,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 系统访问记录表 sys_logininfor
+ * record sys_logininfor
  *
  * @author Lion Li
  */
@@ -39,56 +40,56 @@ public class SysLogininfor implements Serializable {
     private Long infoId;
 
     /**
-     * 用户账号
+     * user
      */
     @ExcelProperty(value = "用户账号")
     private String userName;
 
     /**
-     * 登录状态 0成功 1失败
+     * 0successfully 1failed
      */
     @ExcelProperty(value = "登录状态", converter = ExcelDictConvert.class)
     @ExcelDictFormat(dictType = "sys_common_status")
     private String status;
 
     /**
-     * 登录IP地址
+     * IP
      */
     @ExcelProperty(value = "登录地址")
     private String ipaddr;
 
     /**
-     * 登录地点
+     *
      */
     @ExcelProperty(value = "登录地点")
     private String loginLocation;
 
     /**
-     * 浏览器类型
+     *
      */
     @ExcelProperty(value = "浏览器")
     private String browser;
 
     /**
-     * 操作系统
+     * operation
      */
     @ExcelProperty(value = "操作系统")
     private String os;
 
     /**
-     * 提示消息
+     * prompt / tip
      */
     @ExcelProperty(value = "提示消息")
     private String msg;
 
     /**
-     * 访问时间
+     *
      */
     @ExcelProperty(value = "访问时间")
     private Date loginTime;
 
     /**
-     * 请求参数
+     * parameter
      */
     @TableField(exist = false)
     private Map<String, Object> params = new HashMap<>();

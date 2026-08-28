@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -23,7 +24,7 @@ import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 音频异常侦测设置表 控制器
+ * Set control
  */
 @RestController
 @AllArgsConstructor

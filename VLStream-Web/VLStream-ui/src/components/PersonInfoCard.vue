@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="person-info-card">
     <img v-if="userInfo.photo" :src="userInfo.photo" class="person-info-card-head-pic" />
@@ -59,7 +64,7 @@ const getUserInfo = async() => {
     let jobName = user.dept_list.flatMap((item: any) => item.deptinfo?.job || []).join('｜')
     let phone = user.dept_list
       .map((item: any) => item.deptinfo?.ex_data?.phone || user.phone)
-      .filter(phone => phone && phone.trim() !== '') // 过滤掉空字符串和只包含空格的字符串
+      .filter(phone => phone && phone.trim() !== '') // null / empty and only null / empty
       .join('｜')
     userInfo.value = {
       name: user.user_name,

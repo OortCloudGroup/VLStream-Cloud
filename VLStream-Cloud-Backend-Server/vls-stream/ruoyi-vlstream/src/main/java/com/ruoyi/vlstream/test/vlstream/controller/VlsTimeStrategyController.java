@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -39,7 +40,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * 时间策略表 控制器
+ * control
  *
  * @author Oort
  * @since 2025-12-23
@@ -65,7 +66,7 @@ public class VlsTimeStrategyController extends BladeController {
 	private final ObjectProvider<VlsRtspRecordingManager> rtspRecordingManagerProvider;
 
 	/**
-	 * 时间策略表 详情
+	 *
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -86,7 +87,7 @@ public class VlsTimeStrategyController extends BladeController {
 	}
 
 	/**
-	 * 时间策略表 分页
+	 *
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -98,7 +99,7 @@ public class VlsTimeStrategyController extends BladeController {
 
 
 	/**
-	 * 时间策略表 自定义分页
+	 * Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -109,7 +110,7 @@ public class VlsTimeStrategyController extends BladeController {
 	}
 
 	/**
-	 * 时间策略表 新增
+	 * Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -128,7 +129,7 @@ public class VlsTimeStrategyController extends BladeController {
 	}
 
 	/**
-	 * 时间策略表 修改
+	 * Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -142,7 +143,7 @@ public class VlsTimeStrategyController extends BladeController {
 	}
 
 	/**
-	 * 时间策略表 新增或修改
+	 * Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -161,7 +162,7 @@ public class VlsTimeStrategyController extends BladeController {
 	}
 
 	/**
-	 * 时间策略表 删除
+	 * Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -175,7 +176,7 @@ public class VlsTimeStrategyController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsTimeStrategy")
 	@ApiOperationSupport(order = 8)
@@ -192,7 +193,7 @@ public class VlsTimeStrategyController extends BladeController {
 
 
 	/**
-	 * 保存或更新时间策略
+	 * update time
 	 */
 	@PostMapping
 	@Operation(summary = "保存时间策略", description = "保存或更新时间策略")
@@ -210,7 +211,7 @@ public class VlsTimeStrategyController extends BladeController {
 	}
 
 	/**
-	 * 根据设备ID删除时间策略
+	 * deviceIDDelete
 	 */
 	@DeleteMapping("/{deviceId}")
 	@Operation(summary = "删除时间策略", description = "根据设备ID删除时间策略")

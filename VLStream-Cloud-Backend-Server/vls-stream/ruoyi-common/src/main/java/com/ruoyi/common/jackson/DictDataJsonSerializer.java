@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -24,10 +25,10 @@ import java.io.IOException;
 import java.util.Objects;
 
 /**
- * 字典数据json序列化工具
+ * dictdatajson
  *
  * @author itino
- * @deprecated 建议使用通用翻译注解
+ * @deprecated
  */
 @Deprecated
 @Slf4j

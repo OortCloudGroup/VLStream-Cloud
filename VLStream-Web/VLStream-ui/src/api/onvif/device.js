@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest';
 
 export function WSDiscovery(){
@@ -16,7 +21,7 @@ export function addOnvif(data) {
   })
 }
 
-// 查询onvif 设备列表
+// Query onvif device list
 export function listDevice(query) {
   return request({
     url: '/onvif/device/list',
@@ -25,7 +30,7 @@ export function listDevice(query) {
   })
 }
 
-// 查询onvif 设备列表
+// Query onvif device list
 export function deviceList(query) {
   return request({
     url: '/onvif/device/deviceList',
@@ -34,7 +39,7 @@ export function deviceList(query) {
   })
 }
 
-// 查询onvif 设备详细
+// Query onvif device
 export function getDevice(id) {
   return request({
     url: '/onvif/device/' + id,
@@ -42,7 +47,7 @@ export function getDevice(id) {
   })
 }
 
-// 新增onvif 设备
+// Add onvif device
 export function addDevice(data) {
   return request({
     url: '/onvif/device',
@@ -51,7 +56,7 @@ export function addDevice(data) {
   })
 }
 
-// 修改onvif 设备
+// Update onvif device
 export function updateDevice(data) {
   return request({
     url: '/onvif/device',
@@ -60,7 +65,7 @@ export function updateDevice(data) {
   })
 }
 
-// 删除onvif 设备
+// Delete onvif device
 export function delDevice(id) {
   return request({
     url: '/onvif/device/' + id,
@@ -68,7 +73,7 @@ export function delDevice(id) {
   })
 }
 
-// 获取通道token
+// Get channeltoken
 export function getChannelToken(query) {
   return request({
     url: '/onvif/service/getChannelToken',
@@ -77,7 +82,7 @@ export function getChannelToken(query) {
   })
 }
 
-// 绝对位置移动
+//
 export function absoluteMove(query) {
   return request({
     url: '/onvif/service/absoluteMove',
@@ -86,7 +91,7 @@ export function absoluteMove(query) {
   })
 }
 
-// 连续移动
+//
 export function continuousMove(query) {
   return request({
     url: '/onvif/service/continuousMove',
@@ -95,7 +100,7 @@ export function continuousMove(query) {
   })
 }
 
-// 连续移动停止
+//
 export function continuousMoveStop(query) {
   return request({
     url: '/onvif/service/continuousMoveStop',
@@ -105,7 +110,7 @@ export function continuousMoveStop(query) {
 }
 
 
-// 获取预置点列表
+// Get
 export function getPresetList(query) {
   return request({
     url: '/onvif/service/getPresets',
@@ -114,7 +119,7 @@ export function getPresetList(query) {
   })
 }
 
-// 移动到预置点
+//
 export function getGotoPreset(query) {
   return request({
     url: '/onvif/service/gotoPreset',
@@ -123,7 +128,7 @@ export function getGotoPreset(query) {
   })
 }
 
-// 删除预置点
+// Delete
 export function removePreset(query) {
   return request({
     url: '/onvif/service/removePreset',
@@ -132,7 +137,7 @@ export function removePreset(query) {
   })
 }
 
-// 添加预置点
+//
 export function addPreset(query) {
   return request({
     url: '/onvif/service/addPreset',
@@ -142,7 +147,7 @@ export function addPreset(query) {
 }
 
 
-// 云台开始
+// start
 export function onvifPZTStart(query) {
   return request({
     url: '/onvif/service/onvifPZTStart',
@@ -151,7 +156,7 @@ export function onvifPZTStart(query) {
   })
 }
 
-// 云台结束
+// finish
 export function onvifPZTEnd(query) {
   return request({
     url: '/onvif/service/onvifPZTEnd',

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -19,7 +20,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.util.Date;
 
 /**
- * 标注图片信息表 实体类
+ * annotation info
  *
  * @author Oort
  * @since 2025-12-23
@@ -32,45 +33,45 @@ public class AnnotationImage extends TenantEntity {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 标注项目ID
+	 * annotation item ID
 	 */
 	@Schema(description = "标注项目ID")
 	@JsonSerialize(using = ToStringSerializer.class)
 	private Long annotationId;
 	/**
-	 * 图片名称
+	 *
 	 */
 	@Schema(description = "图片名称")
 	private String imageName;
 	/**
-	 * 原始文件名
+	 *
 	 */
 	@Schema(description = "原始文件名")
 	private String originalName;
 	/**
-	 * 本地存储路径
+	 *
 	 */
 	@Schema(description = "本地存储路径")
 	private String localPath;
 	/**
-	 * 文件大小（字节）
+	 * ( )
 	 */
 	@Schema(description = "文件大小（字节）")
 	private Long fileSize;
 	/**
-	 * 最后修改时间
+	 * afterUpdate
 	 */
 	@Schema(description = "最后修改时间")
 	@DateTimeFormat(pattern = DateUtil.PATTERN_DATETIME)
 	@JsonFormat(pattern = DateUtil.PATTERN_DATETIME)
 	private Date lastModified;
 	/**
-	 * 是否为导入的图片：0-否，1-是
+	 * whether to Import : 0- , 1- is
 	 */
 	@Schema(description = "是否为导入的图片：0-否，1-是")
 	private Integer isImported;
 	/**
-	 * 导入时间
+	 * Import
 	 */
 	@Schema(description = "导入时间")
 	@DateTimeFormat(pattern = DateUtil.PATTERN_DATETIME)

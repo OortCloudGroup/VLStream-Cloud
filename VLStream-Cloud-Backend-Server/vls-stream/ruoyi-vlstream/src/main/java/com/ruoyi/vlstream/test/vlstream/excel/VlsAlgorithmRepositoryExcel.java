@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import java.io.Serializable;
 
 
 /**
- * 算法仓库表 Excel实体类
+ * algorithm Excel
  *
  * @author Oort
  * @since 2025-12-23
@@ -29,25 +30,25 @@ public class VlsAlgorithmRepositoryExcel implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 算法仓库名称
+	 * algorithm
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("算法仓库名称")
 	private String name;
 	/**
-	 * 拥有算法数量
+	 * algorithm
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("拥有算法数量")
 	private Integer algorithmCount;
 	/**
-	 * 仓库类型：basic-基础预置, extended-扩展
+	 * : basic- , extended-
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("仓库类型：basic-基础预置, extended-扩展")
 	private String repositoryType;
 	/**
-	 * 备注
+	 * remark
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("备注")

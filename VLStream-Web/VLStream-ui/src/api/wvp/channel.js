@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 获取通道信息
+// Get channelinfo
 export function getCommonChannel(id) {
     return request({
         url: `/api/common/channel/one/${id}`,
@@ -8,7 +13,7 @@ export function getCommonChannel(id) {
     })
 }
 
-// 获取通道信息列表
+// Get channelinfo
 export function getIndustryCodeList() {
     return request({
         url: `/api/common/channel/industry/list`,
@@ -17,7 +22,7 @@ export function getIndustryCodeList() {
 }
 
 
-// 获取通道类型列表
+// Get channel
 export function getDeviceTypeList() {
     return request({
         url: `/api/common/channel/type/list`,
@@ -25,7 +30,7 @@ export function getDeviceTypeList() {
     })
 }
 
-// 获取网络标识列表
+// Get
 export function getNetworkIdentificationTypeList() {
     return request({
         url: `/api/common/channel/network/identification/list`,
@@ -33,7 +38,7 @@ export function getNetworkIdentificationTypeList() {
     })
 }
 
-// 重置通道
+// channel
 export function resetChannel(id) {
     return request({
         url: `/api/common/channel/reset/${id}`,
@@ -41,7 +46,7 @@ export function resetChannel(id) {
     })
 }
 
-// 修改通道信息
+// Update channelinfo
 export function updateChannelData(data) {
     return request({
         url: `/api/common/channel/update`,
@@ -50,7 +55,7 @@ export function updateChannelData(data) {
     })
 }
 
-// 通知设备上传媒体流
+// notificationdevice
 export function sendDevicePush(params) {
     return request({
         url: `/api/play/start/${params.deviceId}/${params.channelId}`,
@@ -59,7 +64,7 @@ export function sendDevicePush(params) {
     })
 }
 
-// 新增通道信息
+// Add channelinfo
 export function addChannelData(data) {
     return request({
         url: `/api/common/channel/add`,
@@ -68,7 +73,7 @@ export function addChannelData(data) {
     })
 }
 
-// 获取通道列表
+// Get channel
 export function queryListByCivilCode(query) {
     return request({
         url: `/api/common/channel/civilcode/list`,
@@ -78,7 +83,7 @@ export function queryListByCivilCode(query) {
 }
 
 
-// 根据ParentId获取通道列表
+// ParentIdGet channel
 export function queryListByParentId(query) {
     return request({
         url: `/api/common/channel/parent/list`,
@@ -87,7 +92,7 @@ export function queryListByParentId(query) {
     })
 }
 
-// 获取流信息
+// Get info
 export function getServerMediaInfo(query) {
     return request({
         url: `/api/server/media_server/media_info`,
@@ -96,7 +101,7 @@ export function getServerMediaInfo(query) {
     })
 }
 
-// 云台控制
+// control
 export function getPtzCamera(url, query) {
     return request({
         url: '/api/front-end/ptz/' + url.deviceId + '/' + url.channelId,
@@ -105,7 +110,7 @@ export function getPtzCamera(url, query) {
     })
 }
 
-// 云台控制 - 聚焦
+// control -
 export function getFocusCamera(url, query) {
     return request({
         url: '/api/front-end/fi/focus/' + url.deviceId + '/' + url.channelId,
@@ -113,7 +118,7 @@ export function getFocusCamera(url, query) {
         params: query
     })
 }
-// 云台控制 - 聚焦
+// control -
 export function getIrIsCamera(url, query) {
     return request({
         url: '/api/front-end/fi/iris/' + url.deviceId + '/' + url.channelId,
@@ -121,14 +126,14 @@ export function getIrIsCamera(url, query) {
         params: query
     })
 }
-// 云台控制 - 预置位列表查询
+// control - Query
 export function gotoPresetList(url) {
     return request({
         url: '/api/front-end/preset/query/' + url.deviceId + '/' + url.channelDeviceId,
         method: 'get'
     })
 }
-// 云台控制 - 预置位新增
+// control - Add
 export function getAddPreset(url, query) {
     return request({
         url: '/api/front-end/preset/add/' + url.deviceId + '/' + url.channelDeviceId,
@@ -136,7 +141,7 @@ export function getAddPreset(url, query) {
         params: query
     })
 }
-// 云台控制 - 调用预置位
+// control -
 export function callPreset(url, query) {
     return request({
         url: '/api/front-end/preset/call/' + url.deviceId + '/' + url.channelDeviceId,
@@ -144,7 +149,7 @@ export function callPreset(url, query) {
         params: query
     })
 }
-// 云台控制 - 删除预置位
+// control - Delete
 export function deletePreset(url, query) {
     return request({
         url: '/api/front-end/preset/delete/' + url.deviceId + '/' + url.channelDeviceId,
@@ -153,7 +158,7 @@ export function deletePreset(url, query) {
     })
 }
 
-// 云台控制 - 巡航组新增
+// control - Add
 export function GetAddCruisePoint(url, query) {
     return request({
         url: '/api/front-end/cruise/point/add/' + url.deviceId + '/' + url.channelDeviceId,
@@ -162,7 +167,7 @@ export function GetAddCruisePoint(url, query) {
     })
 }
 
-// 云台控制 - 巡航组删除
+// control - Delete
 export function GetDeleteCruisePoint(url, query) {
     return request({
         url: '/api/front-end/cruise/point/delete/' + url.deviceId + '/' + url.channelDeviceId,
@@ -171,7 +176,7 @@ export function GetDeleteCruisePoint(url, query) {
     })
 }
 
-// 云台控制 - 设置扫描速度
+// control - Set
 export function GetSetSpeed(url, query) {
     return request({
         url: '/api/front-end/scan/set/speed/' + url.deviceId + '/' + url.channelDeviceId,
@@ -180,7 +185,7 @@ export function GetSetSpeed(url, query) {
     })
 }
 
-// 云台控制 - 设置左边界
+// control - Set
 export function GetSetScanLeft(url, query) {
     return request({
         url: '/api/front-end/scan/set/left/' + url.deviceId + '/' + url.channelDeviceId,
@@ -189,7 +194,7 @@ export function GetSetScanLeft(url, query) {
     })
 }
 
-// 云台控制 - 开始自动扫描
+// control - start
 export function GetStartScan(url, query) {
     return request({
         url: '/api/front-end/scan/start/' + url.deviceId + '/' + url.channelDeviceId,
@@ -199,7 +204,7 @@ export function GetStartScan(url, query) {
 }
 
 
-// 云台控制 - 停止自动扫描
+// control -
 export function GetStopScan(url, query) {
     return request({
         url: '/api/front-end/scan/stop/' + url.deviceId + '/' + url.channelDeviceId,
@@ -208,7 +213,7 @@ export function GetStopScan(url, query) {
     })
 }
 
-// 云台控制 - 设置右边界
+// control - Set
 export function GetSetScanRight(url, query) {
     return request({
         url: '/api/front-end/scan/set/right/' + url.deviceId + '/' + url.channelDeviceId,
@@ -217,7 +222,7 @@ export function GetSetScanRight(url, query) {
     })
 }
 
-// 云台控制 - 雨刷开关
+// control -
 export function GetPtzWiper(url, query) {
     return request({
         url: '/api/front-end/wiper/' + url.deviceId + '/' + url.channelDeviceId,
@@ -226,7 +231,7 @@ export function GetPtzWiper(url, query) {
     })
 }
 
-// 云台控制 - 辅助功能
+// control - can
 export function GetPtzSwitch(url, query) {
     return request({
         url: '/api/front-end/auxiliary/' + url.deviceId + '/' + url.channelDeviceId,
@@ -235,7 +240,7 @@ export function GetPtzSwitch(url, query) {
     })
 }
 
-// 云台控制 - 语音对讲
+// control -
 export function GetBroadcast(url, query) {
     return request({
         url: '/api/play/broadcast/' + url.deviceId + '/' + url.channelId,
@@ -244,7 +249,7 @@ export function GetBroadcast(url, query) {
     })
 }
 
-// 添加通道
+// channel
 export function addChannelToRegion(data) {
     return request({
         url: `/api/common/channel/region/add`,
@@ -253,7 +258,7 @@ export function addChannelToRegion(data) {
     })
 }
 
-// 删除通道
+// Delete channel
 export function deleteChannelToRegion(data) {
     return request({
         url: `/api/common/channel/region/delete`,
@@ -262,7 +267,7 @@ export function deleteChannelToRegion(data) {
     })
 }
 
-// 删除通道
+// Delete channel
 export function deleteChannelToGroup(data) {
     return request({
         url: `/api/common/channel/group/delete`,
@@ -271,7 +276,7 @@ export function deleteChannelToGroup(data) {
     })
 }
 
-// 添加通道信息
+// channelinfo
 export function addChannelToGroup(data) {
     return request({
         url: `/api/common/channel/group/add`,

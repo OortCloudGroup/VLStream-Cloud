@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="rup_page flexRowAC">
     <div class="rup_inputBox flexRowAC">
@@ -61,17 +66,17 @@ import { ElCheckbox, ElCheckboxGroup } from 'element-plus'
 
 const store: any = useUserStore()
 const props = defineProps({
-  // 是否单选
+  // whether
   isSingle: {
     type: Boolean,
     default: false
   },
-  // 已选的人员list
+  // already list
   userList: {
     type: Array,
     default: null
   },
-  // 禁止选择的的用户
+  // user
   disalbedUserList: {
     type: Array,
     default: null
@@ -82,11 +87,11 @@ let keyWord = ref<any>('')
 let checkedAll = ref<any>(false)
 let checkList = ref<any>([])
 let usedList = ref<any>([])
-let tempChooseList = ref<any>([]) // 当前已经选择的，但当前box框没有的
+let tempChooseList = ref<any>([]) // current already , current box
 let isIndeterminate = ref<any>(false)
 let searchDebounce = ref<any>(null)
 
-// 清空联系人
+// null / empty
 const clearContact = () => {
   ElMessageBox.confirm('确认清空最近使用', '提示', {
     confirmButtonText: '确定',
@@ -105,7 +110,7 @@ const clearContact = () => {
   })
 }
 
-// 获取最近联系人
+// Get
 const getRecentyPerson = () => {
   let data = {
     accessToken: store.token,
@@ -114,11 +119,11 @@ const getRecentyPerson = () => {
   usedGet(data).then((res: any) => {
     if (res.code === 200) {
       usedList.value = res.data.list || []
-      // 默认选择的回填
+      //
       props.userList.forEach((itt: any) => {
         usedList.value.forEach((idd: any) => {
           if (itt.user_id === idd.user_id) {
-            // 是否checklist 有个
+            // whether checklist
             let index = checkList.value.findIndex(itd => {
               return idd.user_id === itd.user_id
             })
@@ -126,7 +131,7 @@ const getRecentyPerson = () => {
           }
         })
       })
-      // 禁止选择的人
+      //
       let tempD = props.disalbedUserList || []
       tempD.forEach((itt: any) => {
         usedList.value.forEach(idd => {
@@ -135,7 +140,7 @@ const getRecentyPerson = () => {
           }
         })
       })
-      // 计算出那些是在当前tab选的
+      // is in current tab
       checkList.value.forEach(itm => {
         let index = tempChooseList.value.findIndex(itd => {
           return itm.user_id === itd.user_id
@@ -146,15 +151,15 @@ const getRecentyPerson = () => {
   })
 }
 
-// 全选
+// full
 const handleCheckAllChange = (val) => {
   isIndeterminate.value = false
   checkList.value = val ? usedList.value : []
-  // 全选 把之前的加进来
+  // full before
   emits('addPerson', val ? [...usedList.value, ...tempChooseList.value] : tempChooseList.value)
 }
 
-// 勾选
+//
 const handleCheckedPersonsChange = (value) => {
   let checkedCount = value.length
   checkedAll.value = checkedCount === usedList.value.length
@@ -200,7 +205,7 @@ onMounted(() => {
   }
 }
 
-// 全选
+// full
 .rup_useL_selBox {
   height: 48px;
   width: 100%;
@@ -214,7 +219,7 @@ onMounted(() => {
   }
 }
 
-// 人员
+//
 .rup_useLBox {
   padding-left: 20px;
   padding-right: 20px;
@@ -255,7 +260,7 @@ onMounted(() => {
   }
 }
 
-// 暂未选择
+// not
 .selPer {
   width: 100%;
   height: 100%;

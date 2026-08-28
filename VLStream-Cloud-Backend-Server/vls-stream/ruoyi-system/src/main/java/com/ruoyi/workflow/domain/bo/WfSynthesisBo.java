@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,9 +15,9 @@ import lombok.EqualsAndHashCode;
 import javax.validation.constraints.NotBlank;
 
 /**
- * 综合通用流程业务对象 wf_synthesis
+ * workflow object wf_synthesis
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-04
  */
 
@@ -25,23 +26,23 @@ import javax.validation.constraints.NotBlank;
 public class WfSynthesisBo extends TreeEntity<WfSynthesisBo> {
 
     /**
-     * 主键ID
+     * primary key ID
      */
     private String synthesisId;
 
     /**
-     * 分类名称
+     *
      */
     @NotBlank(message = "分类名称不能为空", groups = { AddGroup.class, EditGroup.class })
     private String categoryName;
 
     /**
-     * 用户id
+     * user ID
      */
     private String userId;
 
     /**
-     * 租户id
+     * id
      */
     private String tenantId;
 }

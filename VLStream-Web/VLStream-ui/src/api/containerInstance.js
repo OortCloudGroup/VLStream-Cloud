@@ -1,23 +1,28 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
 /**
- * 容器实例管理API接口
- * 
+ * instance APIinterface
+ *
  * @author VLStream Team
  * @since 1.0.0
  */
 
 /**
- * 分页查询容器实例
- * @param {Object} params 查询参数
- * @param {number} params.current 当前页
- * @param {number} params.size 每页大小
- * @param {string} params.name 实例名称（模糊查询）
- * @param {string} params.status 实例状态
- * @param {number} params.algorithmId 算法ID
- * @param {string} params.healthStatus 健康状态
- * @param {string} params.startTime 创建时间开始
- * @param {string} params.endTime 创建时间结束
+ * Query instance
+ * @param {Object} params Query parameter
+ * @param {number} params.current current
+ * @param {number} params.size
+ * @param {string} params.name instance ( Query )
+ * @param {string} params.status instance
+ * @param {number} params.algorithmId algorithmID
+ * @param {string} params.healthStatus
+ * @param {string} params.startTime create timestart
+ * @param {string} params.endTime create timefinish
  */
 export function getContainerInstancePage(params) {
   return request({
@@ -28,8 +33,8 @@ export function getContainerInstancePage(params) {
 }
 
 /**
- * 获取容器实例详情
- * @param {number} id 实例ID
+ * Get instance
+ * @param {number} id instanceID
  */
 export function getContainerInstanceById(id) {
   return request({
@@ -39,17 +44,17 @@ export function getContainerInstanceById(id) {
 }
 
 /**
- * 创建容器实例
- * @param {Object} data 容器实例信息
- * @param {string} data.name 实例名称
- * @param {string} data.image 镜像地址
- * @param {number} data.algorithmId 算法ID
- * @param {string} data.cpuLimit CPU限制
- * @param {string} data.memoryLimit 内存限制
- * @param {string} data.gpuLimit GPU限制
- * @param {string} data.description 描述
- * @param {string} data.envVariables 环境变量JSON
- * @param {string} data.portMappings 端口映射JSON
+ * instance
+ * @param {Object} data instanceinfo
+ * @param {string} data.name instance
+ * @param {string} data.image
+ * @param {number} data.algorithmId algorithmID
+ * @param {string} data.cpuLimit CPU
+ * @param {string} data.memoryLimit
+ * @param {string} data.gpuLimit GPU
+ * @param {string} data.description
+ * @param {string} data.envVariables variableJSON
+ * @param {string} data.portMappings JSON
  */
 export function createContainerInstance(data) {
   return request({
@@ -60,13 +65,13 @@ export function createContainerInstance(data) {
 }
 
 /**
- * 更新容器实例
- * @param {Object} data 容器实例信息
- * @param {number} data.id 实例ID
- * @param {string} data.name 实例名称
- * @param {string} data.description 描述
- * @param {string} data.envVariables 环境变量JSON
- * @param {string} data.portMappings 端口映射JSON
+ * new instance
+ * @param {Object} data instanceinfo
+ * @param {number} data.id instanceID
+ * @param {string} data.name instance
+ * @param {string} data.description
+ * @param {string} data.envVariables variableJSON
+ * @param {string} data.portMappings JSON
  */
 export function updateContainerInstance(data) {
   return request({
@@ -77,8 +82,8 @@ export function updateContainerInstance(data) {
 }
 
 /**
- * 删除容器实例
- * @param {number} id 实例ID
+ * Delete instance
+ * @param {number} id instanceID
  */
 export function deleteContainerInstance(id) {
   return request({
@@ -88,8 +93,8 @@ export function deleteContainerInstance(id) {
 }
 
 /**
- * 批量删除容器实例
- * @param {Array<number>} ids 实例ID数组
+ * Batch delete instance
+ * @param {Array<number>} ids instanceIDarray
  */
 export function batchDeleteContainerInstances(ids) {
   return request({
@@ -100,8 +105,8 @@ export function batchDeleteContainerInstances(ids) {
 }
 
 /**
- * 启动容器实例
- * @param {number} id 实例ID
+ * instance
+ * @param {number} id instanceID
  */
 export function startContainerInstance(id) {
   return request({
@@ -111,8 +116,8 @@ export function startContainerInstance(id) {
 }
 
 /**
- * 停止容器实例
- * @param {number} id 实例ID
+ * instance
+ * @param {number} id instanceID
  */
 export function stopContainerInstance(id) {
   return request({
@@ -122,8 +127,8 @@ export function stopContainerInstance(id) {
 }
 
 /**
- * 重启容器实例
- * @param {number} id 实例ID
+ * instance
+ * @param {number} id instanceID
  */
 export function restartContainerInstance(id) {
   return request({
@@ -133,7 +138,7 @@ export function restartContainerInstance(id) {
 }
 
 /**
- * 获取容器实例统计信息
+ * Get instance info
  */
 export function getContainerInstanceStatistics() {
   return request({
@@ -158,7 +163,7 @@ export function getContainerInstanceLogs(id, lines = 500) {
 }
 
 /**
- * 获取运行中的容器实例列表
+ * Get in instance
  */
 export function getRunningContainerInstances() {
   return request({
@@ -168,7 +173,7 @@ export function getRunningContainerInstances() {
 }
 
 /**
- * 获取错误状态的容器实例列表
+ * Get instance
  */
 export function getErrorContainerInstances() {
   return request({
@@ -178,7 +183,7 @@ export function getErrorContainerInstances() {
 }
 
 /**
- * 获取不健康的容器实例列表
+ * Get instance
  */
 export function getUnhealthyContainerInstances() {
   return request({
@@ -188,9 +193,9 @@ export function getUnhealthyContainerInstances() {
 }
 
 /**
- * 检查实例名称是否存在
- * @param {string} name 实例名称
- * @param {number} excludeId 排除的实例ID（编辑时使用）
+ * instance whether in
+ * @param {string} name instance
+ * @param {number} excludeId instanceID ( )
  */
 export function checkContainerInstanceName(name, excludeId = null) {
   return request({
@@ -201,8 +206,8 @@ export function checkContainerInstanceName(name, excludeId = null) {
 }
 
 /**
- * 根据算法ID获取容器实例列表
- * @param {number} algorithmId 算法ID
+ * algorithmIDGet instance
+ * @param {number} algorithmId algorithmID
  */
 export function getContainerInstancesByAlgorithm(algorithmId) {
   return request({
@@ -212,12 +217,12 @@ export function getContainerInstancesByAlgorithm(algorithmId) {
 }
 
 /**
- * 更新容器实例监控数据
- * @param {number} id 实例ID
- * @param {Object} data 监控数据
- * @param {number} data.cpuUsage CPU使用率
- * @param {number} data.memoryUsage 内存使用率
- * @param {number} data.gpuUsage GPU使用率
+ * new instance data
+ * @param {number} id instanceID
+ * @param {Object} data data
+ * @param {number} data.cpuUsage CPU
+ * @param {number} data.memoryUsage
+ * @param {number} data.gpuUsage GPU
  */
 export function updateContainerInstanceMonitoring(id, data) {
   return request({

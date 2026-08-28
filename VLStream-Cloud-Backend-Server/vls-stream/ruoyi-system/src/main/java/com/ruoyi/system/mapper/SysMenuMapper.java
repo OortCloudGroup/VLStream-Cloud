@@ -17,47 +17,47 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
- * 菜单表 数据层
+ * menu data layer
  *
  * @author Lion Li
  */
 public interface SysMenuMapper extends BaseMapperPlus<SysMenuMapper, SysMenu, SysMenu> {
 
     /**
-     * 根据用户所有权限
+     * userall
      *
-     * @return 权限列表
+     * @return
      */
     List<String> selectMenuPerms();
 
     /**
-     * 根据用户查询系统菜单列表
+     * userQuery menu list
      *
-     * @param queryWrapper 查询条件
-     * @return 菜单列表
+     * @param queryWrapper Query
+     * @return menu
      */
     List<SysMenu> selectMenuListByUserId(@Param(Constants.WRAPPER) Wrapper<SysMenu> queryWrapper);
 
     /**
-     * 根据用户ID查询权限
+     * user IDQuery
      *
-     * @param userId 用户ID
-     * @return 权限列表
+     * @param userId user ID
+     * @return
      */
     List<String> selectMenuPermsByUserId(String userId);
 
     /**
-     * 根据角色ID查询权限
+     * role IDQuery
      *
-     * @param roleId 角色ID
-     * @return 权限列表
+     * @param roleId role ID
+     * @return
      */
     List<String> selectMenuPermsByRoleId(Long roleId);
 
     /**
-     * 根据用户ID查询菜单
+     * user IDQuery menu
      *
-     * @return 菜单列表
+     * @return menu
      */
     default List<SysMenu> selectMenuTreeAll() {
         LambdaQueryWrapper<SysMenu> lqw = new LambdaQueryWrapper<SysMenu>()
@@ -69,19 +69,19 @@ public interface SysMenuMapper extends BaseMapperPlus<SysMenuMapper, SysMenu, Sy
     }
 
     /**
-     * 根据用户ID查询菜单
+     * user IDQuery menu
      *
-     * @param userId 用户ID
-     * @return 菜单列表
+     * @param userId user ID
+     * @return menu
      */
     List<SysMenu> selectMenuTreeByUserId(String userId);
 
     /**
-     * 根据角色ID查询菜单树信息
+     * role IDQuery menu info
      *
-     * @param roleId            角色ID
-     * @param menuCheckStrictly 菜单树选择项是否关联显示
-     * @return 选中菜单列表
+     * @param roleId role ID
+     * @param menuCheckStrictly menu item whether
+     * @return in menu
      */
     List<Long> selectMenuListByRoleId(@Param("roleId") Long roleId, @Param("menuCheckStrictly") boolean menuCheckStrictly);
 

@@ -40,7 +40,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 验证码操作处理
+ * operationProcess
  *
  * @author Lion Li
  */
@@ -57,9 +57,9 @@ public class CaptchaController {
     private final MailProperties mailProperties;
 
     /**
-     * 短信验证码
      *
-     * @param phonenumber 用户手机号
+     *
+     * @param phonenumber user
      */
     @GetMapping("/captchaSms")
     public R<Void> smsCaptcha(@NotBlank(message = "{user.phonenumber.not.blank}") String phonenumber) {
@@ -69,7 +69,7 @@ public class CaptchaController {
         String key = CacheConstants.CAPTCHA_CODE_KEY + phonenumber;
         String code = RandomUtil.randomNumbers(4);
         RedisUtils.setCacheObject(key, code, Duration.ofMinutes(Constants.CAPTCHA_EXPIRATION));
-        // 验证码模板id 自行处理 (查数据库或写死均可)
+        // id Process ( data )
         String templateId = "";
         Map<String, String> map = new HashMap<>(1);
         map.put("code", code);
@@ -83,9 +83,9 @@ public class CaptchaController {
     }
 
     /**
-     * 邮箱验证码
      *
-     * @param email 邮箱
+     *
+     * @param email
      */
     @GetMapping("/captchaEmail")
     public R<Void> emailCode(@NotBlank(message = "{user.email.not.blank}") String email) {
@@ -105,7 +105,7 @@ public class CaptchaController {
     }
 
     /**
-     * 生成验证码
+     * Generate
      */
     @GetMapping("/captchaImage")
     public R<Map<String, Object>> getCode() {
@@ -115,10 +115,10 @@ public class CaptchaController {
         if (!captchaEnabled) {
             return R.ok(ajax);
         }
-        // 保存验证码信息
+        // info
         String uuid = IdUtil.simpleUUID();
         String verifyKey = CacheConstants.CAPTCHA_CODE_KEY + uuid;
-        // 生成验证码
+        // Generate
         CaptchaType captchaType = captchaProperties.getType();
         boolean isMath = CaptchaType.MATH == captchaType;
         Integer length = isMath ? captchaProperties.getNumberLength() : captchaProperties.getCharLength();

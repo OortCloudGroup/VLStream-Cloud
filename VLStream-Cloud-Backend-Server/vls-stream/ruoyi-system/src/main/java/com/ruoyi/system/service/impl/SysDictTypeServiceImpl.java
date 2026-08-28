@@ -38,7 +38,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 字典 业务层处理
+ * dict layer Process
  *
  * @author Lion Li
  */
@@ -63,10 +63,10 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService, DictService 
     }
 
     /**
-     * 根据条件分页查询字典类型
+     * Query dict type
      *
-     * @param dictType 字典类型信息
-     * @return 字典类型集合信息
+     * @param dictType dict typeinfo
+     * @return dict typecollectioninfo
      */
     @Override
     public List<SysDictType> selectDictTypeList(SysDictType dictType) {
@@ -80,9 +80,9 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService, DictService 
     }
 
     /**
-     * 根据所有字典类型
+     * all dict type
      *
-     * @return 字典类型集合信息
+     * @return dict typecollectioninfo
      */
     @Override
     public List<SysDictType> selectDictTypeAll() {
@@ -90,10 +90,10 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService, DictService 
     }
 
     /**
-     * 根据字典类型查询字典数据
+     * dict typeQuery dictdata
      *
-     * @param dictType 字典类型
-     * @return 字典数据集合信息
+     * @param dictType dict type
+     * @return dictdataset info
      */
 //    @Cacheable(cacheNames = CacheNames.SYS_DICT, key = "#dictType",unless = "#result == null")
     @Override
@@ -106,10 +106,10 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService, DictService 
     }
 
     /**
-     * 根据字典类型ID查询信息
+     * dict typeIDQuery info
      *
-     * @param dictId 字典类型ID
-     * @return 字典类型
+     * @param dictId dict typeID
+     * @return dict type
      */
     @Override
     public SysDictType selectDictTypeById(Long dictId) {
@@ -117,10 +117,10 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService, DictService 
     }
 
     /**
-     * 根据字典类型查询信息
+     * dict typeQuery info
      *
-     * @param dictType 字典类型
-     * @return 字典类型
+     * @param dictType dict type
+     * @return dict type
      */
     @Cacheable(cacheNames = CacheNames.SYS_DICT, key = "#dictType")
     @Override
@@ -129,9 +129,9 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService, DictService 
     }
 
     /**
-     * 批量删除字典类型信息
+     * Batch delete dict typeinfo
      *
-     * @param dictIds 需要删除的字典ID
+     * @param dictIds need to Delete dictID
      */
     @Override
     public void deleteDictTypeByIds(Long[] dictIds) {
@@ -147,7 +147,7 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService, DictService 
     }
 
     /**
-     * 加载字典缓存数据
+     * Load dict data
      */
     @Override
     public void loadingDictCache() {
@@ -161,7 +161,7 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService, DictService 
     }
 
     /**
-     * 清空字典缓存数据
+     * null / empty dict data
      */
     @Override
     public void clearDictCache() {
@@ -169,7 +169,7 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService, DictService 
     }
 
     /**
-     * 重置字典缓存数据
+     * dict data
      */
     @Override
     public void resetDictCache() {
@@ -178,10 +178,10 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService, DictService 
     }
 
     /**
-     * 新增保存字典类型信息
+     * Add dict typeinfo
      *
-     * @param dict 字典类型信息
-     * @return 结果
+     * @param dict dict typeinfo
+     * @return
      */
     @CachePut(cacheNames = CacheNames.SYS_DICT, key = "#dict.dictType")
     @Override
@@ -194,10 +194,10 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService, DictService 
     }
 
     /**
-     * 修改保存字典类型信息
+     * Update dict typeinfo
      *
-     * @param dict 字典类型信息
-     * @return 结果
+     * @param dict dict typeinfo
+     * @return
      */
     @CachePut(cacheNames = CacheNames.SYS_DICT, key = "#dict.dictType")
     @Override
@@ -216,10 +216,10 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService, DictService 
     }
 
     /**
-     * 校验字典类型称是否唯一
+     * Validate dict type whether
      *
-     * @param dict 字典类型
-     * @return 结果
+     * @param dict dict type
+     * @return
      */
     @Override
     public boolean checkDictTypeUnique(SysDictType dict) {
@@ -230,17 +230,17 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService, DictService 
     }
 
     /**
-     * 根据字典类型和字典值获取字典标签
+     * dict type and dict value Get dict
      *
-     * @param dictType  字典类型
-     * @param dictValue 字典值
-     * @param separator 分隔符
-     * @return 字典标签
+     * @param dictType dict type
+     * @param dictValue dict value
+     * @param separator
+     * @return dict
      */
     @SuppressWarnings("unchecked cast")
     @Override
     public String getDictLabel(String dictType, String dictValue, String separator) {
-        // 优先从本地缓存获取
+        // from Get
         List<SysDictData> datas = (List<SysDictData>) SaHolder.getStorage().get(CacheConstants.SYS_DICT_KEY + dictType);
         if (ObjectUtil.isNull(datas)) {
             datas = SpringUtils.getAopProxy(this).selectDictDataByType(dictType);
@@ -258,17 +258,17 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService, DictService 
     }
 
     /**
-     * 根据字典类型和字典标签获取字典值
+     * dict type and dict Get dict value
      *
-     * @param dictType  字典类型
-     * @param dictLabel 字典标签
-     * @param separator 分隔符
-     * @return 字典值
+     * @param dictType dict type
+     * @param dictLabel dict
+     * @param separator
+     * @return dict value
      */
     @SuppressWarnings("unchecked cast")
     @Override
     public String getDictValue(String dictType, String dictLabel, String separator) {
-        // 优先从本地缓存获取
+        // from Get
         List<SysDictData> datas = (List<SysDictData>) SaHolder.getStorage().get(CacheConstants.SYS_DICT_KEY + dictType);
         if (ObjectUtil.isNull(datas)) {
             datas = SpringUtils.getAopProxy(this).selectDictDataByType(dictType);

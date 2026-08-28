@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Redis 发布订阅 演示案例
+ * Redis
  *
  * @author Lion Li
  */
@@ -23,10 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class RedisPubSubController {
 
     /**
-     * 发布消息
      *
-     * @param key   通道Key
-     * @param value 发送内容
+     *
+     * @param key channelKey
+     * @param value
      */
     @GetMapping("/pub")
     public R<Void> pub(String key, String value) {
@@ -37,9 +38,9 @@ public class RedisPubSubController {
     }
 
     /**
-     * 订阅消息
      *
-     * @param key 通道Key
+     *
+     * @param key channelKey
      */
     @GetMapping("/sub")
     public R<Void> sub(String key) {

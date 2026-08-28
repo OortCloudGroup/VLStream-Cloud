@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -18,7 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 将 Sa-Token 会话里的租户放入当前请求线程，并在请求完成后强制清理。
+ * Sa-Token will current , in after .
  */
 @Component
 public class TenantContextInterceptor implements HandlerInterceptor {
@@ -48,7 +49,7 @@ public class TenantContextInterceptor implements HandlerInterceptor {
                 TenantContextHolder.setTenantId(loginUser.getTenantId());
             }
         } catch (Exception ignored) {
-            // 公开接口没有本地会话，由具体业务在校验后显式建立租户上下文。
+            // interface will , in Validate after .
         }
         return true;
     }

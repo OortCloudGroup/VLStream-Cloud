@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import axios from 'axios'
 import { getModelHubAccessToken } from '@/utils/modelHubAuth'
 import { MODEL_HUB_HEADERS } from '@/api/modelHubUser'

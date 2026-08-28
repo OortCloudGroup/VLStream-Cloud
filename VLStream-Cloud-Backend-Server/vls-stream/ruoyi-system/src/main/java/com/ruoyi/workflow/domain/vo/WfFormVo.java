@@ -11,7 +11,7 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import lombok.Data;
 
 /**
- * 流程分类视图对象
+ * workflow object
  *
  * @author KonBAI
  * @createTime 2022/3/7 22:07
@@ -23,19 +23,19 @@ public class WfFormVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 表单主键
+     * formprimary key
      */
     @ExcelProperty(value = "表单ID")
     private String formId;
 
     /**
-     * 表单名称
+     * form
      */
     @ExcelProperty(value = "表单名称")
     private String formName;
 
     /**
-     * 表单类型（0流式布局 1签批卡片布局）
+     * form (0 1 )
      */
     private Integer formType;
 
@@ -43,17 +43,17 @@ public class WfFormVo {
     private String categoryId;
 
     /**
-     * 表单内容
+     * form
      */
-//    @ExcelProperty(value = "表单内容")
+// @ExcelProperty(value = "form ")
     private String content;
 
     /**
-     * 0选择应用，1添加应用
+     * 0 , 1
      */
     private String appFlag;
     /**
-     * 备注
+     * remark
      */
     @ExcelProperty(value = "备注")
     private String remark;

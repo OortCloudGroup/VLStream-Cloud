@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -27,7 +28,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * 多租户处理插件
+ * Process
  */
 @Slf4j
 @Component
@@ -44,7 +45,7 @@ public class CustomTenantLineHandler implements TenantLineHandler, SmartInitiali
     }
 
     /**
-     * 获取租户ID值表达式
+     * Get tenant ID value
      */
     @Override
     public Expression getTenantId() {
@@ -52,7 +53,7 @@ public class CustomTenantLineHandler implements TenantLineHandler, SmartInitiali
     }
 
     /**
-     * 获取租户字段名(数据库的租户ID字段名)
+     * Get field (data tenant IDfield )
      */
     @Override
     public String getTenantIdColumn() {
@@ -60,7 +61,7 @@ public class CustomTenantLineHandler implements TenantLineHandler, SmartInitiali
     }
 
     /**
-     * 根据表名判断是否忽略拼接多租户条件
+     * Check whether
      */
     @Override
     public boolean ignoreTable(String tableName) {
@@ -68,8 +69,8 @@ public class CustomTenantLineHandler implements TenantLineHandler, SmartInitiali
     }
 
     /**
-     * 优先使用显式线程上下文，其次使用 Sa-Token 会话；单租户最后回退到固定租户。
-     * 多租户缺少上下文时使用永不匹配的租户值，避免查询退化为跨租户访问。
+     * , Sa-Token will ; after .
+     * value , Query to .
      */
     public String resolveTenantId() {
         String tenantIdFromContext = TenantContextHolder.getTenantId();
@@ -82,7 +83,7 @@ public class CustomTenantLineHandler implements TenantLineHandler, SmartInitiali
                 return loginUser.getTenantId();
             }
         } catch (Exception ignored) {
-            // 未登录的公开接口继续按部署模式处理。
+            // not interface Process .
         }
         if (!TenantType.MULTI_TENANT.getType().equalsIgnoreCase(tokenProperties.getTenantType())) {
             return tokenProperties.getSingleTenantId();

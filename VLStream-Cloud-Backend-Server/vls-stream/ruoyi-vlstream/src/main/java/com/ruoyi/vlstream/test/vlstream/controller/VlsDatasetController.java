@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,7 +16,7 @@ import com.ruoyi.vlstream.test.vlstream.service.DatasetService;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 数据集管理控制器
+ * dataset control
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -29,7 +30,7 @@ public class VlsDatasetController {
 	private final DatasetService datasetService;
 
 	/**
-	 * 连接远程服务器
+	 * service
 	 */
 	@PostMapping("/connect")
 	@Operation(summary = "连接远程服务器", description = "连接到远程服务器并验证连接状态")
@@ -55,7 +56,7 @@ public class VlsDatasetController {
 	}
 
 	/**
-	 * 获取数据集文件列表
+	 * Get dataset
 	 */
 	@GetMapping("/files")
 	@Operation(summary = "获取文件列表", description = "获取远程服务器指定路径下的文件列表")
@@ -75,7 +76,7 @@ public class VlsDatasetController {
 	}
 
 	/**
-	 * 获取文件内容
+	 * Get
 	 */
 	@GetMapping("/file-content")
 	@Operation(summary = "获取文件内容", description = "获取远程服务器指定文件的内容")
@@ -96,7 +97,7 @@ public class VlsDatasetController {
 	}
 
 	/**
-	 * 下载文件
+	 *
 	 */
 	@GetMapping("/download")
 	@Operation(summary = "下载文件", description = "从远程服务器下载指定文件")

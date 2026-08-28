@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -33,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 算法编排表 控制器
+ * algorithm control
  *
  * @author Oort
  * @since 2025-12-23
@@ -47,7 +48,7 @@ public class VlsAlgorithmOrchestrationController extends BladeController {
 	private final IVlsAlgorithmOrchestrationService vlsAlgorithmOrchestrationService;
 
 	/**
-	 * 算法编排表 详情
+	 * algorithm
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -58,7 +59,7 @@ public class VlsAlgorithmOrchestrationController extends BladeController {
 	}
 
 	/**
-	 * 算法编排表 分页
+	 * algorithm
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -70,7 +71,7 @@ public class VlsAlgorithmOrchestrationController extends BladeController {
 
 
 	/**
-	 * 算法编排表 自定义分页
+	 * algorithm Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -81,7 +82,7 @@ public class VlsAlgorithmOrchestrationController extends BladeController {
 	}
 
 	/**
-	 * 算法编排表 新增
+	 * algorithm Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -91,7 +92,7 @@ public class VlsAlgorithmOrchestrationController extends BladeController {
 	}
 
 	/**
-	 * 算法编排表 修改
+	 * algorithm Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -101,7 +102,7 @@ public class VlsAlgorithmOrchestrationController extends BladeController {
 	}
 
 	/**
-	 * 算法编排表 新增或修改
+	 * algorithm Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -111,7 +112,7 @@ public class VlsAlgorithmOrchestrationController extends BladeController {
 	}
 
 	/**
-	 * 算法编排表 删除
+	 * algorithm Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -121,7 +122,7 @@ public class VlsAlgorithmOrchestrationController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsAlgorithmOrchestration")
 	@ApiOperationSupport(order = 8)

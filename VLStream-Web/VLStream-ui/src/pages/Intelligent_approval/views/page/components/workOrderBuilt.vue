@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2024-11-15 11:45:51
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -12,7 +17,7 @@
       <el-form-item label="模型标识" prop="modelKey">
         <el-input v-model="form.modelKey" disabled placeholder="请输入模型标识" />
       </el-form-item>
-      <!--任务管理-没有分组-->
+      <!-- task - group -->
       <el-form-item v-if="props.isType===0" label="分组" prop="processCategoryId">
         <el-select v-model="form.processCategoryId" placeholder="请选择" clearable>
           <el-option v-for="(item,i) in menuList" :key="i" :label="item.processCategoryName" :value="item.processCategoryId" />
@@ -93,17 +98,17 @@ const headers = ref(Config.headers)
 const upfileURL = ref(Config.URL + Config.gateWay + 'apaas-fastdfsservice/fastdfs/v1/uploadFile')
 let ruleFormRef = ref(null)
 const iconId = ref('')
-const addModelType = ref(props.type || 0) // 0 新增 、1，copy ， 2 编辑
-let appObj = ref<any>('') // 任务管理app
-let menuList = ref<any>([]) //  分组(例如人事分类)列表
+const addModelType = ref(props.type || 0) // 0 Add 、1, copy , 2
+let appObj = ref<any>('') // task app
+let menuList = ref<any>([]) // group( )
 appObj.value = props.app?.appId ? props.app : getStoredWorkOrderAppContext() || {}
 const form = reactive({
   modelId: undefined,
   modelKey: 'Process_' + new Date().getTime(),
   modelName: '',
   category: props.app?.appId || appObj.value?.appId,
-  description: undefined, // 所属分类
-  processCategoryId: undefined, // 分组
+  description: undefined, //
+  processCategoryId: undefined, // group
   showMobile: 0,
   wfCategory: undefined,
   workOrderCategory: undefined
@@ -120,7 +125,7 @@ const rules = reactive({
   ]
 })
 
-// 分组
+// group
 const processCategoryFn = () => {
   let data = {
     pageNum: 1,
@@ -132,7 +137,7 @@ const processCategoryFn = () => {
   })
 }
 
-// 模型图标
+// model
 function handleAvatarSuccess(res) {
   if (res.code === 200) {
     iconId.value = res.data.url
@@ -141,7 +146,7 @@ function handleAvatarSuccess(res) {
   }
 }
 
-// 文件大小
+//
 const beforeAvatarUpload = (file: any) => {
   let isLt2M = file.size / 1024 / 1024 < 5
   if (!isLt2M) {
@@ -150,7 +155,7 @@ const beforeAvatarUpload = (file: any) => {
   return isLt2M
 }
 
-// 保存
+//
 const saveCategory = async(formEl: any) => {
   if (!formEl) return
   await formEl.validate(async(valid: boolean) => {
@@ -159,12 +164,12 @@ const saveCategory = async(formEl: any) => {
         ElMessage.error('工单应用分类未初始化，无法保存模型')
         return
       }
-      // 自动创建表单-标识工单还是流程-表单所属分类
-      form['type'] = props.isType // 0 流程 1 工单
-      form['categoryId'] = appObj.value?.categoryId // 表单所属分类，同时标识是否需要同时创建表单
+      // form- work order is workflow-form
+      form['type'] = props.isType // 0 workflow 1 work order
+      form['categoryId'] = appObj.value?.categoryId // form , whether need to form
       let c = form.category
-      // 工单-workOrderCategory 流程-wfCategory
-      if (props.isType === 0) { // 工单1 流程0
+      // work order-workOrderCategory workflow-wfCategory
+      if (props.isType === 0) { // work order1 workflow0
         form['wfCategory'] = c
       } else {
         form.workOrderCategory = c
@@ -199,12 +204,12 @@ const saveCategory = async(formEl: any) => {
 
 if (props.item) {
   let id_ = props.item?.appId || props.item?.synthesisId
-  if (props.isType === 0) { // 工单1 流程0
+  if (props.isType === 0) { // work order1 workflow0
     form['wfAppAll'] = true
     form['wfCategory'] = id_
   } else {
-    // 工单-workOrderCategory 流程-wfCategory
-    // 工单应用WorkOrderAppAll 工单综合-WorkOrderSynthesisAll 流程应用-wfAppAll 流程综合-wfAppAll
+    // work order-workOrderCategory workflow-wfCategory
+    // work order WorkOrderAppAll work order -WorkOrderSynthesisAll workflow -wfAppAll workflow -wfAppAll
     form['WorkOrderAppAll'] = true
     form.workOrderCategory = id_
   }

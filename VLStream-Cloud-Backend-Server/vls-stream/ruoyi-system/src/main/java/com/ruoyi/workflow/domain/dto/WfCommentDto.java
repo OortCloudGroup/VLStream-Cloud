@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -19,12 +20,12 @@ import java.io.Serializable;
 public class WfCommentDto implements Serializable {
 
     /**
-     * 意见类别 0 正常意见  1 退回意见 2 驳回意见
+     * 0 1 2
      */
     private String type;
 
     /**
-     * 意见内容
+     *
      */
     private String comment;
 }

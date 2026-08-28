@@ -1,22 +1,23 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
 package com.ruoyi.common.translation;
 
 /**
- * 翻译接口 (实现类需标注 {@link com.ruoyi.common.annotation.TranslationType} 注解标明翻译类型)
+ * interface ( annotation {@link com.ruoyi.common.annotation.TranslationType} )
  *
  * @author Lion Li
  */
 public interface TranslationInterface<T> {
 
     /**
-     * 翻译
      *
-     * @param key 需要被翻译的键(不为空)
-     * @return 返回键对应的值
+     *
+     * @param key need to ( is empty)
+     * @return value
      */
     T translation(Object key, String other);
 }

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -11,7 +12,7 @@ import com.ruoyi.common.utils.redis.RedisUtils;
 public class SysUserUtils {
 
     /**
-     * 通过token获取用户信息
+     * tokenGet userinfo
      * @param token
      * @return
      */

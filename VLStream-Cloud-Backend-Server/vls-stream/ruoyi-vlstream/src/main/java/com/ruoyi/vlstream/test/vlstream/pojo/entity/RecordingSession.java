@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,7 +15,7 @@ import org.springblade.core.mp.base.TenantEntity;
 import java.time.LocalDateTime;
 
 /**
- * 录制会话持久化记录
+ * will record
  */
 @Data
 @TableName("vls_recording_session")

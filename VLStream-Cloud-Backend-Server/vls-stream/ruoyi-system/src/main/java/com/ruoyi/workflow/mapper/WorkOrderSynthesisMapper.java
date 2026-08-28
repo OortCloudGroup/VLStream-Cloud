@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,7 +15,7 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
- * 综合工单流程Mapper接口
+ * work orderworkflowMapperinterface
  *
  * @author Lei Chao Qun
  * @date 2025-01-04
@@ -22,7 +23,7 @@ import java.util.List;
 @Mapper
 public interface WorkOrderSynthesisMapper extends BaseMapperPlus<WorkOrderSynthesisMapper, WorkOrderSynthesis, WorkOrderSynthesisVo> {
     /**
-     * 根据父id递归查询子节点
+     * id Query sub node
      */
     List<String> selectChildById(@Param("parentId") String  parentId);
 }

@@ -14,7 +14,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * 用户名翻译实现
+ * user
  *
  * @author Lion Li
  */

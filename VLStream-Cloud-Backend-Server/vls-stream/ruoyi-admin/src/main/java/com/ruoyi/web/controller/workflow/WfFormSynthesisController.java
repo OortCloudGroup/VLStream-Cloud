@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -28,9 +29,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 表单综合分类
+ * form
  *
- * @author 雷超群
+ * @author
  * @date 2024-12-25
  */
 @Validated
@@ -42,7 +43,7 @@ public class WfFormSynthesisController extends BaseController {
     private final IWfFormSynthesisService iWfFormSynthesisService;
 
     /**
-     * 查询表单分类列表
+     * Query form list
      */
     @SaCheckPermission("workflow:formSynthesis:list")
     @GetMapping("/list")
@@ -52,7 +53,7 @@ public class WfFormSynthesisController extends BaseController {
     }
 
     /**
-     * 导出表单分类列表
+     * Export form
      */
     @SaCheckPermission("workflow:formSynthesis:export")
     @Log(title = "表单分类", businessType = BusinessType.EXPORT)
@@ -63,9 +64,9 @@ public class WfFormSynthesisController extends BaseController {
     }
 
     /**
-     * 获取表单分类详细信息
+     * Get form info
      *
-     * @param categoryId 主键
+     * @param categoryId primary key
      */
     @SaCheckPermission("workflow:formSynthesis:getInfo")
     @GetMapping("/{categoryId}")
@@ -75,7 +76,7 @@ public class WfFormSynthesisController extends BaseController {
     }
 
     /**
-     * 新增表单分类
+     * Add form
      */
     @SaCheckPermission("workflow:formSynthesis:add")
     @Log(title = "表单分类", businessType = BusinessType.INSERT)
@@ -86,7 +87,7 @@ public class WfFormSynthesisController extends BaseController {
     }
 
     /**
-     * 修改表单分类
+     * Update form
      */
     @SaCheckPermission("workflow:formSynthesis:edit")
     @Log(title = "表单分类", businessType = BusinessType.UPDATE)
@@ -97,9 +98,9 @@ public class WfFormSynthesisController extends BaseController {
     }
 
     /**
-     * 删除表单分类
+     * Delete form
      *
-     * @param categoryIds 主键串
+     * @param categoryIds primary key
      */
     @SaCheckPermission("workflow:formSynthesis:remove")
     @Log(title = "表单分类", businessType = BusinessType.DELETE)

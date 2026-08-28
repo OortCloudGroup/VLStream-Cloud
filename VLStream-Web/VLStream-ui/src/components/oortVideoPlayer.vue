@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div :id="playerId" class="video-player-wrapper" />
 </template>
@@ -5,11 +10,11 @@
 <script setup lang="ts">
 import { watch, onMounted, onBeforeUnmount, ref, nextTick } from 'vue'
 import Player from 'xgplayer'
-import 'xgplayer/dist/index.min.css' // 必须引入的样式文件
+import 'xgplayer/dist/index.min.css' //
 
 interface VideoProps {
   url: string
-  // 其他视频属性按需添加
+  // property
 }
 
 const props = defineProps<{
@@ -17,7 +22,7 @@ const props = defineProps<{
   autoplay?: boolean
 }>()
 
-// 生成唯一的播放器ID
+// Generate ID
 const playerId = ref(`xgplayer-${Math.random().toString(36).substr(2, 9)}`)
 let player: InstanceType<typeof Player> | null = null
 
@@ -25,20 +30,20 @@ const initPlayer = async() => {
   try {
     await nextTick()
 
-    // 如果播放器已存在，先销毁
+    // if already in ,
     if (player) {
       player.destroy()
       player = null
     }
 
-    // 检查容器是否存在
+    // whether in
     const container = document.getElementById(playerId.value)
     if (!container) {
       console.error('视频播放器容器未找到')
       return
     }
 
-    // 检查视频URL
+    // URL
     if (!props.video?.url) {
       console.error('视频URL为空')
       return
@@ -58,9 +63,9 @@ const initPlayer = async() => {
         'flex'
       ],
       pip: true,
-      autoplay: !!props.autoplay, // 禁用自动播放
-      playsinline: true, // 内联播放
-      preload: 'auto' // 预加载元数据
+      autoplay: !!props.autoplay, //
+      playsinline: true, //
+      preload: 'auto' // Load data
     })
 
     player.on('error', (error) => {
@@ -138,7 +143,7 @@ onBeforeUnmount(() => {
   opacity: 1;
 }
 
-// 在表格中的特殊样式
+// in table in
 :deep(.el-table .video-player-wrapper) {
   height: 48px;
   width: 48px;

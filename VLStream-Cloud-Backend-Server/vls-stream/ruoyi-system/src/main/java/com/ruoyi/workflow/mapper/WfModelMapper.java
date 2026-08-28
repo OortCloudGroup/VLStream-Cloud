@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -18,7 +19,7 @@ import java.util.List;
 public interface WfModelMapper extends BaseMapperPlus<WfModelMapper, Model, WfModelVo> {
 
     /**
-     * 查询模型总数
+     * Query model
      * @param modelBo
      * @param wfSyntheses
      * @param workOrderSyntheses
@@ -27,7 +28,7 @@ public interface WfModelMapper extends BaseMapperPlus<WfModelMapper, Model, WfMo
      */
     Long selectModelCount(@Param("modelBo") WfModelBo modelBo, @Param("wfSyntheses") List<String> wfSyntheses, @Param("workOrderSyntheses") List<String> workOrderSyntheses,@Param("tenantId")String tenantId,@Param("history")Boolean history);
     /**
-     * 查询模型列表
+     * Query model list
      */
     List<Model> selectModelList(@Param("modelBo") WfModelBo modelBo, @Param("page") IPage<Model> page, @Param("wfSyntheses") List<String> wfSyntheses, @Param("workOrderSyntheses") List<String> workOrderSyntheses, @Param("tenantId")String tenantId,@Param("history")Boolean history);
 }

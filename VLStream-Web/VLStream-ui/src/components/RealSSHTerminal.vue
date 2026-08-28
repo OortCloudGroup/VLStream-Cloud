@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="real-ssh-terminal">
     <div class="terminal-wrapper">
@@ -7,7 +12,7 @@
 </template>
 
 <script>
-// 注意：这里需要安装 xterm 相关包
+// : need to xterm related
 // npm install xterm xterm-addon-fit xterm-addon-web-links
 
 export default {
@@ -34,11 +39,11 @@ export default {
   methods: {
     async initTerminal() {
       try {
-        // 动态导入 xterm（如果已安装）
+        // Import xterm (if already )
         const { Terminal } = await import('xterm')
         const { FitAddon } = await import('xterm-addon-fit')
         const { WebLinksAddon } = await import('xterm-addon-web-links')
-        
+
         this.terminal = new Terminal({
           cursorBlink: true,
           fontSize: 14,
@@ -50,15 +55,15 @@ export default {
             selection: '#ffffff40'
           }
         })
-        
+
         this.fitAddon = new FitAddon()
         this.terminal.loadAddon(this.fitAddon)
         this.terminal.loadAddon(new WebLinksAddon())
-        
+
         this.terminal.open(this.$refs.terminal)
         this.fitAddon.fit()
-        
-        // 监听终端输入
+
+        //
         this.terminal.onData(data => {
           if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify({
@@ -67,17 +72,17 @@ export default {
             }))
           }
         })
-        
-        // 连接WebSocket
+
+        // WebSocket
         this.connectWebSocket()
-        
+
       } catch (error) {
         console.error('初始化终端失败:', error)
-        // 如果xterm未安装，显示简单的文本终端
+        // if xterm not ,
         this.initSimpleTerminal()
       }
     },
-    
+
     initSimpleTerminal() {
       this.$refs.terminal.innerHTML = `
         <div style="background: #1e1e1e; color: #ffffff; padding: 20px; font-family: monospace;">
@@ -88,36 +93,36 @@ export default {
         </div>
       `
     },
-    
+
     connectWebSocket() {
       const wsUrl = `ws://localhost:8080/ssh-terminal`
       this.ws = new WebSocket(wsUrl)
-      
+
       this.ws.onopen = () => {
         console.log('WebSocket连接已建立')
-        // 发送连接信息
+        // info
         this.ws.send(JSON.stringify({
           type: 'connect',
           connection: this.connection
         }))
       }
-      
+
       this.ws.onmessage = (event) => {
         const message = JSON.parse(event.data)
         if (message.type === 'output' && this.terminal) {
           this.terminal.write(message.data)
         }
       }
-      
+
       this.ws.onclose = () => {
         console.log('WebSocket连接已关闭')
       }
-      
+
       this.ws.onerror = (error) => {
         console.error('WebSocket错误:', error)
       }
     },
-    
+
     cleanup() {
       if (this.ws) {
         this.ws.close()
@@ -159,7 +164,7 @@ export default {
   width: 100%;
 }
 
-/* xterm样式 */
+/* xterm */
 :deep(.xterm) {
   height: 100% !important;
 }

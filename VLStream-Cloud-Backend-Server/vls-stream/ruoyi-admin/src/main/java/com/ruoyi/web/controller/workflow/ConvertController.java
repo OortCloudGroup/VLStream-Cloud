@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -22,7 +23,7 @@ import java.net.URLEncoder;
 import java.util.Objects;
 
 /**
- * JSON转BPMN.xml
+ * JSON BPMN.xml
  */
 @RestController
 @CrossOrigin
@@ -30,7 +31,7 @@ import java.util.Objects;
 public class ConvertController {
 
     /**
-     * json转为bpmn并下载
+     * json to bpmn
      */
     @PostMapping("/download")
     @SaCheckPermission("model:downloadXml")
@@ -56,7 +57,7 @@ public class ConvertController {
                     }
                     servletOutputStream.write(buffer, 0, count);
                 }
-                // 刷新并关闭流
+                // new
                 servletOutputStream.flush();
                 servletOutputStream.close();
             }

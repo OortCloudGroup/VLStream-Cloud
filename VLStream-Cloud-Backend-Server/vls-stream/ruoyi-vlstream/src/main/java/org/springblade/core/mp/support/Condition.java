@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 package org.springblade.core.mp.support;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;

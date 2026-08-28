@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -13,7 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * 验证码类别
+ *
  *
  * @author Lion Li
  */
@@ -22,17 +23,17 @@ import lombok.Getter;
 public enum CaptchaCategory {
 
     /**
-     * 线段干扰
+     *
      */
     LINE(LineCaptcha.class),
 
     /**
-     * 圆圈干扰
+     *
      */
     CIRCLE(CircleCaptcha.class),
 
     /**
-     * 扭曲干扰
+     *
      */
     SHEAR(ShearCaptcha.class);
 

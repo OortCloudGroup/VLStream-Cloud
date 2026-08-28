@@ -16,7 +16,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 /**
- * 测试树表业务对象 test_tree
+ * object test_tree
  *
  * @author Lion Li
  * @date 2021-07-26
@@ -27,25 +27,25 @@ import javax.validation.constraints.NotNull;
 public class TestTreeBo extends TreeEntity<TestTreeBo> {
 
     /**
-     * 主键
+     * primary key
      */
     @NotNull(message = "主键不能为空", groups = {EditGroup.class})
     private Long id;
 
     /**
-     * 部门id
+     * department ID
      */
     @NotNull(message = "部门id不能为空", groups = {AddGroup.class, EditGroup.class})
     private String deptId;
 
     /**
-     * 用户id
+     * user ID
      */
     @NotNull(message = "用户id不能为空", groups = {AddGroup.class, EditGroup.class})
     private Long userId;
 
     /**
-     * 树节点名
+     * node
      */
     @NotBlank(message = "树节点名不能为空", groups = {AddGroup.class, EditGroup.class})
     private String treeName;

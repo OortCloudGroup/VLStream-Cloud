@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -12,7 +13,7 @@ import java.io.Serializable;
 import java.util.Collection;
 
 /**
- * @Description: 规则列表
+ * @Description:
  *
  * @Date:   2024-12-20
  * @Version: V1.0
@@ -20,28 +21,28 @@ import java.util.Collection;
 public interface IRuleListService extends IService<RuleList> {
 
 	/**
-	 * 添加一对多
+	 *
 	 *
 	 * @param ruleList
 	 */
 	public void saveMain(RuleList ruleList) ;
 
 	/**
-	 * 修改一对多
+	 * Update
 	 *
    * @param ruleList
 	 */
 	public void updateMain(RuleList ruleList);
 
 	/**
-	 * 删除一对多
+	 * Delete
 	 *
 	 * @param id
 	 */
 	public void delMain (String id);
 
 	/**
-	 * 批量删除一对多
+	 * Batch delete
 	 *
 	 * @param idList
 	 */

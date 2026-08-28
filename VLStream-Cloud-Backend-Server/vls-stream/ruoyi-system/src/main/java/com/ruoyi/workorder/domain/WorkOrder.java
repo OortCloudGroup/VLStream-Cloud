@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,9 +14,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 工单对象 work_order
+ * work orderobject work_order
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-02
  */
 @Data
@@ -26,113 +27,113 @@ public class WorkOrder extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 工单主键ID
+     * work orderprimary key ID
      */
     @TableId(value = "id")
     private String id;
     /**
-     * 租户id
+     * id
      */
     private String tenantId;
     /**
-     * 用户id
+     * user ID
      */
     private String userId;
     /**
-     * 所属系统
+     *
      */
     private String systemId;
     /**
-     * 项目名称
+     * item
      */
     private String projectId;
     /**
-     * 工单(流程)类型
+     * work order(workflow)
      */
     private String workorderId;
     /**
-     * 关联的流程key
+     * workflowkey
      */
     private String processKey;
     /**
-     * 工单编号
+     * work order
      */
     private String workorderNumber;
     /**
-     * 工单标题
+     * work order
      */
     private String title;
     /**
-     * 工单描述
+     * work order
      */
     private String description;
     /**
-     * 工单状态
+     * work order
      */
     private String workorderStatus;
     /**
-     * 工单紧急程度
+     * work order
      */
     private String priority;
     /**
-     * 审批状态
+     * approval
      */
     private String processStatus;
     /**
-     * 工单来源
+     * work order
      */
     private String source;
     /**
-     * 是否有偿
+     * whether
      */
     private String compensation;
     /**
-     * 评价
+     *
      */
     private String evaluate;
     /**
-     * 房号
+     *
      */
     private String roomNumber;
     /**
-     * 删除标记，0表示未删除，1表示删除
+     * Delete , 0 not Delete , 1 Delete
      */
     @TableLogic
     private String delFlag;
     /**
-     * 附件地址（JSON格式）
+     * (JSON )
      */
     private String attachmentUrls;
     /**
-     * 工单(流程)类型_用于前端回显
+     * work order(workflow) _ before
      */
     private String workorderIdExtend;
     /**
-     * 流程实例id
+     * workflow instanceid
      */
     private String procInsId;
     /**
-     * 任务ID
+     * taskID
      */
     private String taskId;
     /**
-     * 派单人
+     *
      */
     private String assignId;
     /**
-     * 周期性工单标识
+     * work order
      */
     private String workOrderJobFlag;
     /**
-     * 周期性工单统一序号
+     * work order
      */
     private String workOrderJobSerial;
     /**
-     * 事件编号
+     * event
      */
     private String eventNumber;
     /**
-     * 流程名称
+     * workflow
      */
     private String processName;
 }

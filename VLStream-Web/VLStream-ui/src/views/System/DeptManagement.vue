@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="dept-management tenant_Page draHeaPB">
     <div class="tenant_content">
@@ -58,7 +63,7 @@
       </div>
     </div>
 
-    <!-- 新增/编辑部门对话框 -->
+    <!-- Add / department -->
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="channel-panel tableTenBox flexRowAC">
     <div v-show="!treeCollapsed" v-yResize class="police_aside_use">
@@ -322,19 +327,19 @@ function searchResetFn(val) {
   getList();
 }
 
-/** 搜索按钮操作 */
+/* * buttonoperation */
 function handleQuery() {
   queryParams.value.pageNum = 1;
   getList();
 }
 
-/** 重置按钮操作 */
+/* * buttonoperation */
 function resetQuery() {
   proxy.resetForm("queryRef");
   handleQuery();
 }
 
-/** 选择条数  */
+/* * */
 function handleSelectionChange(selection) {
   if (queryParams.value.civilCode === null) {
     multiple.value = true
@@ -366,13 +371,13 @@ function handleDelete() {
   });
 }
 
-/** 通过条件过滤节点  */
+/* * node */
 const filterNode = (value, data) => {
   if (!value) return true;
   return data.name.indexOf(value) !== -1;
 };
 
-/** 节点单击事件 */
+/* * node event */
 function handleNodeClick(data) {
   if (data.deviceId != null || data.deviceId != undefined) {
     queryParams.value.civilCode = data.deviceId;
@@ -386,7 +391,7 @@ function handleNodeClick(data) {
   handleQuery();
 }
 
-/** 新增按钮操作 */
+/* * Add buttonoperation */
 function handleAdd() {
   if (regionDeviceId.value === "" || regionDeviceId.value === ' ') {
     proxy.$modal.msgError("请选择左侧行政区划");
@@ -417,13 +422,13 @@ function getChannelList() {
   }
 }
 
-/** 搜索按钮操作 */
+/* * buttonoperation */
 function handleSelectQuery() {
   queryParams.value.pageNum = 1;
   getChannelList();
 }
 
-/** 重置按钮操作 */
+/* * buttonoperation */
 function resetSelectQuery() {
   proxy.resetForm("querySelectRef");
   handleSelectQuery();

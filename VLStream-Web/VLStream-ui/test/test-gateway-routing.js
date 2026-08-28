@@ -1,11 +1,16 @@
-// 测试网关路由配置
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// configuration
 async function testGatewayRouting() {
   const currentToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token')
-  
+
   console.log('🔍 测试网关路由配置')
   console.log('当前token:', currentToken)
   console.log('')
-  
+
   const testRoutes = [
     {
       name: '直接访问VLStream-server（本地端口）',
@@ -35,12 +40,12 @@ async function testGatewayRouting() {
       skipAuth: true
     }
   ]
-  
+
   for (const route of testRoutes) {
     console.log(`\n=== 测试: ${route.name} ===`)
     console.log('URL:', route.url)
     console.log('Method:', route.method)
-    
+
     const headers = route.skipAuth ? {
       'Content-Type': 'application/json'
     } : {
@@ -50,17 +55,17 @@ async function testGatewayRouting() {
       'secretkey': '58f9eeefc65f4b318204ba21f39a8861',
       'accesstoken': currentToken
     }
-    
+
     console.log('Headers:', headers)
-    
+
     try {
       const response = await fetch(route.url, {
         method: route.method,
         headers: headers
       })
-      
+
       console.log(`响应状态: ${response.status}`)
-      
+
       if (response.ok) {
         const data = await response.json()
         console.log('✅ 请求成功！')
@@ -69,8 +74,8 @@ async function testGatewayRouting() {
         const errorData = await response.json()
         console.log('❌ 请求失败！')
         console.log('错误信息:', errorData)
-        
-        // 错误分析
+
+        //
         if (response.status === 503) {
           console.log('🔍 错误分析: 服务不可用')
           console.log('可能原因: 服务未注册到网关')
@@ -82,7 +87,7 @@ async function testGatewayRouting() {
           console.log('可能原因: 服务名不匹配或路由配置错误')
         }
       }
-      
+
     } catch (error) {
       console.log(`❌ 请求异常: ${error.message}`)
       if (error.message.includes('Failed to fetch')) {
@@ -91,12 +96,12 @@ async function testGatewayRouting() {
       }
     }
   }
-  
+
   console.log('\n📝 测试总结:')
   console.log('- 如果直接访问成功但网关访问失败，说明网关路由配置有问题')
   console.log('- 如果所有网关路由都返回40001，说明服务注册有问题')
   console.log('- 如果部分路由成功，说明路由规则配置不一致')
 }
 
-// 运行测试
-testGatewayRouting().catch(console.error) 
+//
+testGatewayRouting().catch(console.error)

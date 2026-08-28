@@ -1,7 +1,12 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="algorithm-model tenant_Page draHeaPB">
     <div class="tenant_content">
-    <!-- 列表视图 -->
+    <!--  -->
     <div v-if="!showDetailView" class="tableTenBox flexRowAC">
       <div class="tableTenItU">
         <div class="depNameBox_out flexRowAC">
@@ -78,9 +83,9 @@
       </div>
     </div>
 
-    <!-- 详情视图 -->
+    <!--  -->
     <div v-if="showDetailView" class="detail-view">
-      <!-- 面包屑导航 -->
+      <!--  -->
       <div class="breadcrumb-section">
         <div class="breadcrumb">
           <span class="breadcrumb-item" @click="handleBackToList">算法模型</span>
@@ -89,7 +94,7 @@
         </div>
       </div>
 
-      <!-- 基础信息 -->
+      <!-- info -->
       <div class="detail-info-section">
         <div class="info-grid">
           <div class="info-item">
@@ -111,7 +116,7 @@
         </div>
       </div>
 
-      <!-- 版本列表 -->
+      <!--  -->
       <div class="version-section">
         <div class="version-table">
           <el-table :data="versionData" stripe style="width: 100%">
@@ -137,7 +142,7 @@
       </div>
     </div>
 
-    <!-- 新增/编辑模型弹窗 -->
+    <!-- Add / modeldialog -->
     <el-dialog
       v-model="showModelDialog"
       :title="isEditingModel ? '编辑算法模型' : '新增算法模型'"
@@ -237,7 +242,7 @@ import {
 } from '@/api/algorithmModel'
 import request from "@/utils/request";
 
-// 搜索表单
+// form
 const searchForm = ref({
   modelName: '',
   modelSource: '',
@@ -245,32 +250,32 @@ const searchForm = ref({
   createTime: []
 })
 
-// 表格数据
+// tabledata
 const tableData = ref([])
 const loading = ref(false)
 
-// 分页相关
+// related
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 
-// 计算当前页数据
+// current data
 const currentPageData = computed(() => {
   return tableData.value
 })
 
-// 选中行
+// in
 const selectedRow = ref(null)
 const selectedRows = ref([])
 
-// 视图状态
+//
 const showDetailView = ref(false)
 const currentModel = ref(null)
 
-// 版本数据
+// data
 const versionData = ref([])
 
-// 模型新增/编辑
+// modelAdd /
 const showModelDialog = ref(false)
 const isEditingModel = ref(false)
 const modelDialogLoading = ref(false)
@@ -363,7 +368,7 @@ const toNumberOrNull = (value) => {
   return Number.isNaN(num) ? null : num
 }
 
-// 生成版本数据
+// Generate data
 const generateVersionData = (modelData) => {
   if (!modelData) return []
 
@@ -381,7 +386,7 @@ const generateVersionData = (modelData) => {
   ]
 }
 
-// 加载模型数据
+// Load modeldata
 const loadModelData = async () => {
   try {
     loading.value = true
@@ -389,15 +394,15 @@ const loadModelData = async () => {
       current: currentPage.value,
       size: pageSize.value,
       modelName: searchForm.value.modelName,
-      status: 'published' // 只显示已发布的模型
+      status: 'published' // only already model
     }
 
-    // 处理日期范围
+    // Process
     if (searchForm.value.createTime && searchForm.value.createTime.length === 2) {
       params.createdTimeBegin = searchForm.value.createTime[0]
       params.createdTimeEnd = searchForm.value.createTime[1]
     }
-    
+
     const response = await getModelPage(params)
     if (response.data) {
       tableData.value = response.data.records.map(item => ({
@@ -418,12 +423,12 @@ const loadModelData = async () => {
   }
 }
 
-// 模型来源映射
+// model
 const getModelSource = (trainingId) => {
   return trainingId ? '零代码训练' : '导入模型'
 }
 
-// 事件处理
+// eventProcess
 const handleSearch = () => {
   currentPage.value = 1
   loadModelData()
@@ -474,23 +479,23 @@ const handleDelete = async () => {
     ElMessage.warning('请选择要删除的模型')
     return
   }
-  
+
   try {
-    const message = selectedRows.value.length === 1 
+    const message = selectedRows.value.length === 1
       ? `确认要删除模型"${selectedRows.value[0].name}"吗？`
       : `确认要删除选中的${selectedRows.value.length}个模型吗？`
-    
+
     await ElMessageBox.confirm(message, '确认删除', {
       type: 'warning'
     })
-    
+
     if (selectedRows.value.length === 1) {
       await deleteModel(selectedRows.value[0].originalData.id)
     } else {
       const ids = selectedRows.value.map(row => row.originalData.id)
       await batchDeleteModel(ids)
     }
-    
+
     ElMessage.success('删除成功')
     selectedRows.value = []
     await loadModelData()
@@ -513,7 +518,7 @@ const handleView = (row) => {
   console.log('查看模型', row)
   currentModel.value = row
 
-  // 生成版本数据
+  // Generate data
   versionData.value = generateVersionData(row)
 
   showDetailView.value = true
@@ -523,7 +528,7 @@ const handleDownloadModel = async (row) => {
   try {
     console.log('下载模型', row)
 
-    // 直接下载模型文件
+    // model
     await downloadModelFile(row)
 
   } catch (error) {
@@ -537,7 +542,7 @@ const handleDeleteItem = async (row) => {
     await ElMessageBox.confirm(`确认要删除模型"${row.name}"吗？`, '确认删除', {
       type: 'warning'
     })
-    
+
     await deleteModel(row.originalData.id)
     ElMessage.success('删除成功')
     await loadModelData()
@@ -548,13 +553,13 @@ const handleDeleteItem = async (row) => {
   }
 }
 
-// 详情视图相关方法
+// related method
 const handleBackToList = () => {
   showDetailView.value = false
   currentModel.value = null
 }
 
-// 下载模型文件
+// model
 const promptDownloadModelType = async (modelRow) => {
   const modelData = modelRow?.originalData || modelRow || {}
   const modelTypes = [
@@ -677,7 +682,7 @@ const handleExportModel = async (version) => {
   try {
     console.log('导出模型版本:', version)
 
-    // 下载当前模型文件
+    // current model
     await downloadModelFile(currentModel.value)
 
   } catch (error) {
@@ -713,11 +718,11 @@ const searchResetFn = (val, reset) => {
   handleAdvancedSearch(val || {})
 }
 
-// 高级搜索相关方法
+// related method
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索:', searchData)
-  
-  // 更新搜索表单
+
+  // new form
   if (searchData.keyword) {
     searchForm.modelName = searchData.keyword
   }
@@ -733,7 +738,7 @@ const handleAdvancedSearch = (searchData) => {
   if (searchData.dateRange && searchData.dateRange.length > 0) {
     searchForm.createTime = searchData.dateRange
   }
-  
+
   handleSearch()
 }
 
@@ -802,7 +807,7 @@ const handleSubmitModel = async () => {
   }
 }
 
-// 页面挂载时加载数据
+// page Load data
 onMounted(() => {
   loadModelData()
 })
@@ -854,7 +859,7 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* 搜索区域 */
+/*  */
 .search-section {
   background: #F5F5F5;
   border-radius: 8px 8px 0 0;
@@ -873,7 +878,7 @@ onMounted(() => {
   width: 200px;
 }
 
-/* 工具栏区域 */
+/*  */
 .toolbar-section {
   background: white;
   border-radius: 0;
@@ -895,7 +900,7 @@ onMounted(() => {
   align-items: center;
 }
 
-/* 新增按钮自定义样式 */
+/* Add buttonCustom */
 .add-btn-custom {
   width: 82px !important;
   height: 36px !important;
@@ -927,7 +932,7 @@ onMounted(() => {
   opacity: 0.9;
 }
 
-/* 编辑删除按钮组合 */
+/* Delete button */
 .edit-delete-group {
   display: flex;
   align-items: center;
@@ -939,7 +944,7 @@ onMounted(() => {
   margin-left: 0 !important;
 }
 
-/* 编辑按钮自定义样式 */
+/* buttonCustom */
 .edit-btn-custom {
   height: 36px !important;
   border-radius: 18px 0 0 18px !important;
@@ -966,7 +971,7 @@ onMounted(() => {
   border-color: #e4e7ed !important;
 }
 
-/* 删除按钮自定义样式 */
+/* Delete buttonCustom */
 .delete-btn-custom {
   height: 36px !important;
   border-radius: 0 18px 18px 0 !important;
@@ -1006,7 +1011,7 @@ onMounted(() => {
   border-color: #e4e7ed !important;
 }
 
-/* 表格区域 */
+/* table */
 .table-section {
   background: white;
   border-radius: 0;
@@ -1041,7 +1046,7 @@ onMounted(() => {
   border-bottom: 1px solid #ebeef5;
 }
 
-/* 操作按钮强制一行展示 */
+/* operationbutton */
 .action-buttons {
   display: flex;
   justify-content: center;
@@ -1051,7 +1056,7 @@ onMounted(() => {
   flex-wrap: nowrap;
 }
 
-/* 分页区域 */
+/*  */
 .pagination-section {
   display: flex;
   justify-content: center;
@@ -1062,7 +1067,7 @@ onMounted(() => {
   border-top: 1px solid #e8e8e8;
 }
 
-/* 详情视图样式 */
+/*  */
 .detail-view {
   flex: 1;
   display: flex;
@@ -1073,7 +1078,7 @@ onMounted(() => {
   min-height: 0;
 }
 
-/* 面包屑导航 */
+/*  */
 .breadcrumb-section {
   background: #fff;
   padding: 16px 20px;
@@ -1108,7 +1113,7 @@ onMounted(() => {
   color: #c0c4cc;
 }
 
-/* 基础信息区域 */
+/* info */
 .detail-info-section {
   background: #fff;
   border-radius: 0;
@@ -1142,7 +1147,7 @@ onMounted(() => {
   font-weight: 500;
 }
 
-/* 版本区域 */
+/*  */
 .version-section {
   background: #fff;
   border-radius: 0;
@@ -1182,4 +1187,4 @@ onMounted(() => {
 .version-table :deep(.el-table td) {
   border-bottom: 1px solid #ebeef5;
 }
-</style> 
+</style>

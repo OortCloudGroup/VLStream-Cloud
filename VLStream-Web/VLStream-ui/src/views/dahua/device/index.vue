@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <DeviceClassificationLayout protocol-type="DAHUA" :selected-device-keys="classificationDeviceKeys" @filter-change="handleClassificationFilter" @assigned="getList">
   <div class="device-table-panel">
@@ -96,7 +101,7 @@
       />
     </div>
 
-    <!-- 添加或修改大华设备对话框 -->
+    <!-- Update device -->
     <el-dialog :title="title" v-model="open" width="30%" append-to-body>
       <el-form ref="deviceRef" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="名称" prop="name">
@@ -214,9 +219,9 @@
         <div v-if="checkPermi(['dahua:device:ptzCtrl'])">
           <div style="display: grid; grid-template-columns: 240px auto; height: 180px; overflow: auto"
                v-if="openPlay && (playType === '1' || playType === '3' || playType === '4') ">
-            <!-- 左侧控制区域 -->
+            <!-- control -->
             <div style="display: grid; grid-template-columns: 100px auto;">
-              <!-- 方向控制 -->
+              <!-- control -->
               <div class="control-wrapper">
                 <div class="control-btn control-top" @mousedown="ptzControlUpStartFun('up')"
                      @mouseup="ptzControlUpEndFun('up')">
@@ -249,13 +254,13 @@
                 <div class="control-round">
                   <div class="control-round-inner"><i class="fa fa-pause-circle"></i></div>
                 </div>
-                <!-- 速度控制 -->
+                <!-- control -->
                 <div class="contro-speed" style="position: absolute; left: 4px; top: 112px; width: 100px;">
                   <el-slider v-model="controSpeed" :min="1" :max="15"></el-slider>
                 </div>
               </div>
 
-              <!-- 变倍、聚焦、光圈控制 -->
+              <!-- 、 、 control -->
               <div>
                 <div class="ptz-btn-box">
                   <div @mousedown="ptzControlUpStartFun('doubling+')" @mouseup="ptzControlUpEndFun('doubling+')"
@@ -356,9 +361,9 @@
 
             <el-tab-pane v-if="checkPermi(['dahua:device:ptzCtrl'])" label="云台控制" name="control">
               <div style="display: grid; grid-template-columns: 240px auto; height: 180px; overflow: auto">
-                <!-- 左侧控制区域 -->
+                <!-- control -->
                 <div style="display: grid; grid-template-columns: 100px auto;">
-                  <!-- 方向控制 -->
+                  <!-- control -->
                   <div class="control-wrapper">
                     <div class="control-btn control-top" @mousedown="ptzControlUpStartFun('up')"
                          @mouseup="ptzControlUpEndFun('up')">
@@ -391,13 +396,13 @@
                     <div class="control-round">
                       <div class="control-round-inner"><i class="fa fa-pause-circle"></i></div>
                     </div>
-                    <!-- 速度控制 -->
+                    <!-- control -->
                     <div class="contro-speed" style="position: absolute; left: 4px; top: 112px; width: 100px;">
                       <el-slider v-model="controSpeed" :min="1" :max="15"></el-slider>
                     </div>
                   </div>
 
-                  <!-- 变倍、聚焦、光圈控制 -->
+                  <!-- 、 、 control -->
                   <div>
                     <div class="ptz-btn-box">
                       <div @mousedown="ptzControlUpStartFun('doubling+')" @mouseup="ptzControlUpEndFun('doubling+')"
@@ -519,7 +524,7 @@
       </el-row>
     </el-dialog>
 
-<!--    <el-dialog title="播放视频" v-model="openProxyPlay" width="835px" append-to-body @close="closeProxyPlay">-->
+<!-- <el-dialog title=" " v-model="openProxyPlay" width="835px" append-to-body @close="closeProxyPlay"> -->
 <!--      <Hikvision :rtsp="videoUrl"/>-->
 <!--    </el-dialog>-->
 
@@ -812,7 +817,7 @@ const Destruction = () => {
   MapContainer.value?.Destruction();
 };
 
-/** 查询大华设备列表 */
+/* * Query device list */
 function getList() {
   loading.value = true;
   listDevice(queryParams.value).then(response => {
@@ -822,13 +827,13 @@ function getList() {
   });
 }
 
-// 取消按钮
+// button
 function cancel() {
   open.value = false;
   reset();
 }
 
-// 表单重置
+// form
 function reset() {
   form.value = {
     id: null,
@@ -855,19 +860,19 @@ function reset() {
   proxy.resetForm("deviceRef");
 }
 
-/** 搜索按钮操作 */
+/* * buttonoperation */
 function handleQuery() {
   queryParams.value.pageNum = 1;
   getList();
 }
 
-/** 重置按钮操作 */
+/* * buttonoperation */
 function resetQuery() {
   proxy.resetForm("queryRef");
   handleQuery();
 }
 
-// 多选框选中数据
+// in data
 function handleSelectionChange(selection) {
   classificationDeviceKeys.value = selection.map(item => String(item.id));
   ids.value = selection.map(item => item.id);
@@ -875,7 +880,7 @@ function handleSelectionChange(selection) {
   multiple.value = !selection.length;
 }
 
-/** 新增按钮操作 */
+/* * Add buttonoperation */
 function handleAdd() {
   reset();
   openDevice.value = true;
@@ -883,7 +888,7 @@ function handleAdd() {
 }
 
 /**
- * 获取自动注册设备列表
+ * Get device
  */
 function getRegisterDeviceListFun() {
   getRegisterDeviceList().then((res) => {
@@ -892,7 +897,7 @@ function getRegisterDeviceListFun() {
 }
 
 /**
- * 设备新增按钮操作
+ * deviceAdd buttonoperation
  */
 function handleDeviceAdd(row) {
   form.value.ip = row.ip
@@ -904,7 +909,7 @@ function handleDeviceAdd(row) {
 }
 
 /**
- * 设备新增删除按钮操作
+ * deviceAdd Delete buttonoperation
  */
 function handleDeviceDelete(row){
  const iplist = row.ip || ips.value;
@@ -917,7 +922,7 @@ function handleDeviceDelete(row){
   });
 }
 
-/** 修改按钮操作 */
+/* * Update buttonoperation */
 function handleUpdate(row) {
   reset();
   channelList.value = []
@@ -929,7 +934,7 @@ function handleUpdate(row) {
   });
 }
 
-/** 提交按钮 */
+/* * button */
 function submitForm() {
   proxy.$refs["deviceRef"].validate(valid => {
     if (valid) {
@@ -958,7 +963,7 @@ function submitForm() {
   });
 }
 
-/** 删除按钮操作 */
+/* * Delete buttonoperation */
 function handleDelete(row) {
   const _ids = row?.id || ids.value;
   proxy.$modal.confirm('是否确认删除大华设备编号为"' + _ids + '"的数据项？').then(function () {
@@ -970,7 +975,7 @@ function handleDelete(row) {
   });
 }
 
-/** 导出按钮操作 */
+/* * Export buttonoperation */
 function handleExport() {
   proxy.download('dahua/device/export', {
     ...queryParams.value
@@ -1000,7 +1005,7 @@ const togglePasswordVisibility = (id) => {
 };
 
 /**
- * 开始播放
+ * start
  *
  * @param row
  */
@@ -1046,7 +1051,7 @@ async function handleStartPlay(row) {
 }
 
 /**
- * 大华设备云台控制（开始）
+ * device control (start)
  *
  * @param direction
  */
@@ -1055,7 +1060,7 @@ function ptzControlUpStartFun(direction) {
 }
 
 /**
- * 大华设备云台控制（开始）
+ * device control (start)
  *
  * @param direction
  */
@@ -1066,7 +1071,7 @@ function ptzControlUpEndFun(direction) {
 }
 
 /**
- * 大华设备抓图
+ * device
  *
  * @param row
  */
@@ -1077,7 +1082,7 @@ function handleSnapPicture(row) {
 }
 
 /**
- * 大华设备抓图列表
+ * device
  *
  * @param row
  */
@@ -1089,7 +1094,7 @@ function handleSnapPictureList(row) {
 }
 
 /**
- * 设备抓图列表
+ * device
  */
 function getListScreenshotFun() {
   listScreenshot(screenshotQueryParams.value).then(res => {
@@ -1099,7 +1104,7 @@ function getListScreenshotFun() {
 }
 
 /**
- * 删除大华设备抓图
+ * Delete device
  *
  * @param row
  */
@@ -1115,7 +1120,7 @@ function handleRemoveScreenshot(row) {
 }
 
 /**
- * 大华设备定时抓图
+ * device
  *
  * @param row
  */
@@ -1126,7 +1131,7 @@ function handleTimerCapturePicture(row) {
 }
 
 /**
- * 大华设备停止定时抓图
+ * device
  */
 function handleStopCapturePicture(row) {
   stopCapturePicture(row.id).then(() => {
@@ -1135,7 +1140,7 @@ function handleStopCapturePicture(row) {
 }
 
 /**
- * 大华设备控制
+ * devicecontrol
  */
 function handleControl(row) {
   controlQueryParams.value.dahuaDeviceId = row.id
@@ -1145,7 +1150,7 @@ function handleControl(row) {
 }
 
 /**
- * 大华设备重启
+ * device
  */
 function handleReboot() {
   proxy.$modal.confirm('是否重启设备').then(function () {
@@ -1157,7 +1162,7 @@ function handleReboot() {
 }
 
 /**
- * 大华设备获取时间
+ * deviceGet
  */
 function handleGetTime(){
   getTime(controlQueryParams.value.dahuaDeviceId).then((res)=>{
@@ -1166,7 +1171,7 @@ function handleGetTime(){
 }
 
 /**
- * 大华设备设置时间
+ * deviceSet
  */
 function handleSetTime(){
   setTime(controlQueryParams.value.dahuaDeviceId,controlQueryParams.value.date,controlQueryParams.value.type).then(()=>{
@@ -1174,7 +1179,7 @@ function handleSetTime(){
   })
 }
 
-// 多选框选中数据
+// in data
 function handleRegisterDeviceSelectionChange(selection) {
   ips.value = selection.map(item => item.ip);
   multipleRegisterDevice.value = !selection.length;

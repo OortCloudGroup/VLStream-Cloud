@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="scene-edit">
     <div class="content-header">
@@ -10,19 +15,19 @@
 
     <div class="edit-container">
       <el-form :model="sceneForm" :rules="sceneRules" ref="sceneFormRef" label-width="120px">
-        <!-- 场景名称 -->
+        <!--  -->
         <el-form-item label="场景名称" prop="sceneName">
-          <el-input 
-            v-model="sceneForm.sceneName" 
-            placeholder="请输入场景名称" 
+          <el-input
+            v-model="sceneForm.sceneName"
+            placeholder="请输入场景名称"
             style="width: 400px;"
           />
         </el-form-item>
 
-        <!-- 分析类型 -->
+        <!--  -->
         <el-form-item label="分析类型" prop="analysisType">
-          <el-select 
-            v-model="sceneForm.analysisType" 
+          <el-select
+            v-model="sceneForm.analysisType"
             placeholder="请选择分析类型"
             style="width: 400px;"
           >
@@ -36,17 +41,17 @@
           </el-select>
         </el-form-item>
 
-        <!-- 抓拍截图上传 -->
+        <!-- snapshot -->
         <el-form-item label="抓拍截图上传" prop="screenshots">
           <div class="upload-section">
             <div class="upload-info">
               <span class="upload-count">({{ uploadedFiles.length }}/5)</span>
             </div>
             <div class="upload-container">
-              <!-- 已上传的图片 -->
-              <div 
-                v-for="(file, index) in uploadedFiles" 
-                :key="index" 
+              <!-- already -->
+              <div
+                v-for="(file, index) in uploadedFiles"
+                :key="index"
                 class="upload-item uploaded"
               >
                 <img :src="file.url" :alt="file.name" class="uploaded-image" />
@@ -56,9 +61,9 @@
                   </el-icon>
                 </div>
               </div>
-              
-              <!-- 上传区域 -->
-              <div 
+
+              <!--  -->
+              <div
                 v-if="uploadedFiles.length < 5"
                 class="upload-item upload-area"
                 @click="triggerUpload"
@@ -66,11 +71,11 @@
                 <el-icon class="upload-icon">
                   <Plus />
                 </el-icon>
-                <input 
+                <input
                   ref="fileInput"
-                  type="file" 
-                  accept="image/*" 
-                  multiple 
+                  type="file"
+                  accept="image/*"
+                  multiple
                   style="display: none;"
                   @change="handleFileUpload"
                 />
@@ -79,7 +84,7 @@
           </div>
         </el-form-item>
 
-        <!-- 选择区域 -->
+        <!--  -->
         <el-form-item label="选择区域" prop="selectedRegions">
           <div class="region-section">
             <div class="region-tags">
@@ -94,7 +99,7 @@
                 {{ region }}
               </el-tag>
             </div>
-            <el-button 
+            <el-button
               class="add-region-btn"
               @click="showRegionDialog = true"
             >
@@ -103,7 +108,7 @@
           </div>
         </el-form-item>
 
-        <!-- 选择摄像头 -->
+        <!--  -->
         <el-form-item label="选择摄像头" prop="selectedCameras">
           <div class="camera-section">
             <div class="camera-tags">
@@ -118,7 +123,7 @@
                 {{ camera }}
               </el-tag>
             </div>
-            <el-button 
+            <el-button
               class="add-camera-btn"
               @click="showCameraDialog = true"
             >
@@ -127,7 +132,7 @@
           </div>
         </el-form-item>
 
-        <!-- 选择时间段 -->
+        <!--  -->
         <el-form-item label="选择时间段" prop="timeRange">
           <div class="time-range-section">
             <DateRangePicker
@@ -144,7 +149,7 @@
           </div>
         </el-form-item>
 
-        <!-- 操作按钮 -->
+        <!-- operationbutton -->
         <el-form-item>
           <div class="form-actions">
             <el-button type="primary" @click="handleSubmit" :loading="saving" class="common_btn">申请</el-button>
@@ -154,7 +159,7 @@
       </el-form>
     </div>
 
-    <!-- 选择区域对话框 -->
+    <!--  -->
     <el-dialog
       v-model="showRegionDialog"
       title="选择区域"
@@ -163,7 +168,7 @@
       <div class="dialog-content">
         <el-checkbox-group v-model="tempSelectedRegions">
           <div class="checkbox-grid">
-            <el-checkbox 
+            <el-checkbox
               v-for="region in availableRegions"
               :key="region.value"
               :label="region.value"
@@ -182,7 +187,7 @@
       </template>
     </el-dialog>
 
-    <!-- 选择摄像头对话框 -->
+    <!--  -->
     <el-dialog
       v-model="showCameraDialog"
       title="选择摄像头"
@@ -191,7 +196,7 @@
       <div class="dialog-content">
         <el-checkbox-group v-model="tempSelectedCameras">
           <div class="checkbox-grid">
-            <el-checkbox 
+            <el-checkbox
               v-for="camera in availableCameras"
               :key="camera.value"
               :label="camera.value"
@@ -222,22 +227,22 @@ import DateRangePicker from '@/components/DateRangePicker.vue'
 const route = useRoute()
 const router = useRouter()
 
-// 保存状态
+//
 const saving = ref(false)
 
-// 对话框显示状态
+//
 const showRegionDialog = ref(false)
 const showCameraDialog = ref(false)
 
-// 文件上传
+//
 const fileInput = ref(null)
 const uploadedFiles = ref([])
 
-// 临时选择状态
+//
 const tempSelectedRegions = ref([])
 const tempSelectedCameras = ref([])
 
-// 场景表单数据
+// formdata
 const sceneForm = reactive({
   sceneName: '',
   analysisType: '',
@@ -247,13 +252,13 @@ const sceneForm = reactive({
   timeRange: []
 })
 
-// 可选区域列表
+//
 const availableRegions = ref([])
 
-// 可选摄像头列表
+//
 const availableCameras = ref([])
 
-// 表单验证规则
+// form
 const sceneRules = {
   sceneName: [
     { required: true, message: '请输入场景名称', trigger: 'blur' }
@@ -272,10 +277,10 @@ const sceneRules = {
   ]
 }
 
-// 表单引用
+// form
 const sceneFormRef = ref(null)
 
-// 方法
+// method
 const goBack = () => {
   router.push('/intelligent-analysis-request')
 }
@@ -334,15 +339,15 @@ const handleSubmit = async () => {
     if (sceneFormRef.value) {
       await sceneFormRef.value.validate()
     }
-    
+
     saving.value = true
-    
+
     setTimeout(() => {
       saving.value = false
       ElMessage.success('申请提交成功')
       goBack()
     }, 1000)
-    
+
   } catch (error) {
     ElMessage.error('请完善表单信息')
   }
@@ -352,7 +357,7 @@ const handleCancel = () => {
   goBack()
 }
 
-// 初始化临时选择状态
+// Initialize
 onMounted(() => {
   tempSelectedRegions.value = [...sceneForm.selectedRegions]
   tempSelectedCameras.value = [...sceneForm.selectedCameras]
@@ -414,7 +419,7 @@ onMounted(() => {
   overflow-y: auto;
 }
 
-/* 上传区域样式 */
+/*  */
 .upload-section {
   display: flex;
   flex-direction: column;
@@ -492,7 +497,7 @@ onMounted(() => {
   color: #409eff;
 }
 
-/* 区域和摄像头选择样式 */
+/* and */
 .region-section,
 .camera-section {
   display: flex;
@@ -526,7 +531,7 @@ onMounted(() => {
   background: #ecf5ff;
 }
 
-/* 时间选择样式 */
+/*  */
 .time-range-section {
   display: flex;
   align-items: center;
@@ -542,14 +547,14 @@ onMounted(() => {
   color: #409eff;
 }
 
-/* 操作按钮样式 */
+/* operationbutton */
 .form-actions {
   display: flex;
   gap: 16px;
   padding-top: 20px;
 }
 
-/* 对话框样式 */
+/*  */
 .dialog-content {
   padding: 20px 0;
 }
@@ -571,7 +576,7 @@ onMounted(() => {
   gap: 16px;
 }
 
-/* 表单样式调整 */
+/* form */
 :deep(.el-form-item__label) {
   font-weight: 500;
   color: #303133;
@@ -589,18 +594,18 @@ onMounted(() => {
   border-radius: 6px;
 }
 
-/* 响应式设计 */
+/*  */
 @media (max-width: 768px) {
   .edit-container {
     padding: 20px;
   }
-  
+
   .upload-container {
     justify-content: center;
   }
-  
+
   .checkbox-grid {
     grid-template-columns: 1fr;
   }
 }
-</style> 
+</style>

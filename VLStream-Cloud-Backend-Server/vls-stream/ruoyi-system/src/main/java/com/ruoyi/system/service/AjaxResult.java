@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -10,13 +11,13 @@ import java.io.Serializable;
 public class AjaxResult<T> implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /** 状态码 */
+    /* * */
     private int code;
 
-    /** 返回内容 */
+    /* * */
     private String msg;
 
-    /** 数据对象 */
+    /* * dataobject */
     private T data;
 
     public static final int SUCCESS = 200;

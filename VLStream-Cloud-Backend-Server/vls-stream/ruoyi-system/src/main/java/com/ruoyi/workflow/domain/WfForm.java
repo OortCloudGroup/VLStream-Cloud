@@ -13,7 +13,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 流程表单对象 wf_form
+ * workflowformobject wf_form
  *
  * @author KonBAI
  * @createTime 2022/3/7 22:07
@@ -25,50 +25,50 @@ public class WfForm extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 表单主键
+     * formprimary key
      */
     @TableId(value = "form_id")
     private String formId;
 
     /**
-     * 租户id
+     * id
      */
     private String tenantId;
     /**
-     * 用户id
+     * user ID
      */
     private String userId;
     /**
-     * 分类id
+     * id
      */
     private String categoryId;
 
     /**
-     * 表单名称
+     * form
      */
     private String formName;
 
     /**
-     * 表单内容
+     * form
      */
     private String content;
 
     /**
-     * 组件标志（0代表表单 1代表组件）
+     * component (0represents form 1represents component)
      */
     private String isFormComponents;
 
     /**
-     * 表单类型（0流式布局 1签批卡片布局）
+     * form (0 1 )
      */
     private Integer formType;
 
     /**
-     * 备注
+     * remark
      */
     private String remark;
     /**
-     * 0流程 1工单
+     * 0workflow 1work order
      */
     private String type;
 }

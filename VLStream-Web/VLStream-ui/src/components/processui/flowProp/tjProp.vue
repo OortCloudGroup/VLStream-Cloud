@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="prop_body">
     <div class="prop_body_tab">
@@ -146,7 +151,7 @@
       </el-tabs>
     </div>
     <div class="prop_body_bottom button_group">
-      <!-- 两个按钮 一个取消 ，一个确定 -->
+      <!-- button , -->
       <el-button @click="cancel" class="common_btn">
         取消
       </el-button>
@@ -184,10 +189,10 @@ const props = defineProps({
 
 const activeName = ref('zero')
 const flowStore = useFlowStore()
-// 26个英文字母
+// 26
 const letter = ref(['A', 'B', 'C', 'D', 'E', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
 const activeChooseData = ref({
-  operator: '||', // 1或 ，2 且
+  operator: '||', // 1 , 2
   group: [
     // { operator: '||', conditions: [] } // { field: '', operator: 'eq', value: '' }
   ],
@@ -196,16 +201,16 @@ const activeChooseData = ref({
 
 import { setTjErrorMsg } from '@/utils/setNodeErrorMsg'
 const setErrorMsg = () => {
-  // 默认条件不设置error
+  // Set error
   if (!currentCondition.value.def) {
     setTjErrorMsg(currentCondition.value, currentCondition.value.id)
   }
 }
 
-// 过滤表单字段 必填的
+// formfield
 // const options = ref((flowStore.formFiledList || []).filter(item => item.required))
 const options = ref(flowStore.formFiledList || [])
-// 添加发起人的条件选项
+// item
 if (options.value.findIndex(item => item.id === 'initiator') === -1) {
   options.value.unshift({ id: 'initiator', name: '发起人' })
 }
@@ -241,12 +246,12 @@ const currentPriorityIndex = computed(() => {
   return conditionList.value.findIndex(item => item.nodeName === currentCondition.value.nodeName && item.id === currentCondition.value.id)
 })
 
-// 监听index的变化
+// index
 watch(() => currentCondition.value, () => {
   initPropCondition()
 })
 
-// 调整conditionList的顺序
+// conditionList
 const downCondition = (index) => {
   let temp = conditionList.value[index]
   conditionList.value[index] = conditionList.value[index + 1]
@@ -260,12 +265,12 @@ const upCondition = (index) => {
 
 const nodeName = ref(props.nodeConfig.conditionNodes[props.index].nodeName)
 function confirm() {
-  // 属性
+  // property
   // props.nodeConfig.conditionNodes[currentPriorityIndex.value] = activeChooseData.value
   const nodeConfig = props.nodeConfig
   nodeConfig.conditionNodes[currentPriorityIndex.value].property = activeChooseData.value
   nodeConfig.conditionNodes[currentPriorityIndex.value].nodeName = nodeName.value
-  // 更新express
+  // new express
   nodeConfig.conditionNodes[currentPriorityIndex.value].expression = saveRules()
   setErrorMsg()
   emits('update:nodeConfig', nodeConfig)
@@ -291,7 +296,7 @@ const saveRules = () => {
   return JSON.stringify(rule)
 }
 const parseRules = (rules) => {
-  // 应用规则舍弃掉外层的rule_flag
+  // layer rule_flag
   // activeChooseData.value.operator = rules.rule_flag
   if (rules.rule) {
     let tempRules = rules.rule
@@ -301,9 +306,9 @@ const parseRules = (rules) => {
         conditions: []
       }
       for (let i in tempRules[key]) {
-        // i 是否在小写字母中
+        // i whether in in
         if (lowerLetter.value.includes(i)) {
-          // tempRules[key][i] 是个字符串，以操作符切割，保存在filed operator value 中，eg: a < 1, b < 2, d < 3, b>0, d>0 ,a = "11", b!= 0, b !=="00" a<=1 a<="99"
+          // tempRules[key][i] is , operation , in filed operator value in , eg: a < 1, b < 2, d < 3, b>0, d>0 ,a = "11", b!= 0, b !=="00" a<=1 a<="99"
           let tempArr = tempRules[key][i].split(/(==|!=|>=|<=|<|>)/)
           if (tempArr.length === 3) {
             tempGroupItem.conditions.push({
@@ -321,7 +326,7 @@ const parseRules = (rules) => {
 
 const getActiveDataFromNodeConfig = () => {
   activeChooseData.value = {
-    operator: '||', // 1或 ，2 且
+    operator: '||', // 1 , 2
     group: [
     // { operator: '||', conditions: [] } // { field: '', operator: 'eq', value: '' }
     ],

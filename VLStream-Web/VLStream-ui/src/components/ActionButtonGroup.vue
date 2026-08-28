@@ -1,10 +1,17 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--SPDX-License-Identifier: MIT-->
+
 <template>
   <div class="action-button-group">
-    <!-- 新增按钮 -->
-    <el-button 
+    <!-- Add button -->
+    <el-button
       v-if="showAdd"
-      type="primary" 
-      class="add-btn-custom" 
+      type="primary"
+      class="add-btn-custom"
       @click="handleAdd"
       :disabled="addDisabled"
     >
@@ -12,20 +19,20 @@
       {{ addText }}
     </el-button>
 
-    <!-- 编辑删除按钮组 -->
+    <!-- Delete button -->
     <div v-if="showEditDelete" class="edit-delete-group">
-      <el-button 
-        class="edit-btn-custom" 
-        @click="handleEdit" 
+      <el-button
+        class="edit-btn-custom"
+        @click="handleEdit"
         :disabled="computedEditDisabled"
       >
         <el-icon><Edit /></el-icon>
         {{ editText }}
       </el-button>
-      <el-button 
-        type="danger" 
-        class="delete-btn-custom" 
-        @click="handleDelete" 
+      <el-button
+        type="danger"
+        class="delete-btn-custom"
+        @click="handleDelete"
         :disabled="computedDeleteDisabled"
       >
         <el-icon><Delete /></el-icon>
@@ -33,7 +40,7 @@
       </el-button>
     </div>
 
-    <!-- 自定义按钮插槽 -->
+    <!-- Custombutton -->
     <slot name="extra-buttons"></slot>
   </div>
 </template>
@@ -43,13 +50,13 @@ import { computed } from 'vue'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 
 const props = defineProps({
-  // 选中的行数，用于控制按钮禁用状态
+  // in , controlbutton
   selectedCount: {
     type: Number,
     default: 0
   },
-  
-  // 控制按钮显示
+
+  // controlbutton
   showAdd: {
     type: Boolean,
     default: true
@@ -58,8 +65,8 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
-  
-  // 按钮文本
+
+  // button
   addText: {
     type: String,
     default: '新增'
@@ -76,8 +83,8 @@ const props = defineProps({
     type: String,
     default: '批量删除'
   },
-  
-  // 自定义禁用状态
+
+  // Custom
   addDisabled: {
     type: Boolean,
     default: false
@@ -94,7 +101,7 @@ const props = defineProps({
 
 const emit = defineEmits(['add', 'edit', 'delete'])
 
-// 计算编辑按钮的禁用状态
+// button
 const computedEditDisabled = computed(() => {
   if (props.editDisabled !== undefined) {
     return props.editDisabled
@@ -102,7 +109,7 @@ const computedEditDisabled = computed(() => {
   return props.selectedCount !== 1
 })
 
-// 计算删除按钮的禁用状态
+// Delete button
 const computedDeleteDisabled = computed(() => {
   if (props.deleteDisabled !== undefined) {
     return props.deleteDisabled
@@ -110,7 +117,7 @@ const computedDeleteDisabled = computed(() => {
   return props.selectedCount === 0
 })
 
-// 计算删除按钮文本
+// Delete button
 const computedDeleteText = computed(() => {
   if (props.selectedCount > 1) {
     return props.batchDeleteText
@@ -118,7 +125,7 @@ const computedDeleteText = computed(() => {
   return props.deleteText
 })
 
-// 事件处理
+// eventProcess
 const handleAdd = () => {
   emit('add')
 }
@@ -139,7 +146,7 @@ const handleDelete = () => {
   gap: 16px;
 }
 
-/* 新增按钮自定义样式 */
+/* Add buttonCustom */
 .add-btn-custom {
   width: 82px !important;
   height: 36px !important;
@@ -171,7 +178,7 @@ const handleDelete = () => {
   opacity: 0.9;
 }
 
-/* 编辑删除按钮组合 */
+/* Delete button */
 .edit-delete-group {
   display: flex;
   align-items: center;
@@ -183,7 +190,7 @@ const handleDelete = () => {
   margin-left: 0 !important;
 }
 
-/* 编辑按钮自定义样式 */
+/* buttonCustom */
 .edit-btn-custom {
   height: 36px !important;
   border-radius: 18px 0 0 18px !important;
@@ -210,7 +217,7 @@ const handleDelete = () => {
   border-color: #e4e7ed !important;
 }
 
-/* 删除按钮自定义样式 */
+/* Delete buttonCustom */
 .delete-btn-custom {
   height: 36px !important;
   border-radius: 0 18px 18px 0 !important;
@@ -249,4 +256,4 @@ const handleDelete = () => {
   color: #c0c4cc !important;
   border-color: #e4e7ed !important;
 }
-</style> 
+</style>

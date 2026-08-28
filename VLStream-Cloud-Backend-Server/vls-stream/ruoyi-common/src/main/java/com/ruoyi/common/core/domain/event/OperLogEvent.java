@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -11,7 +12,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 操作日志事件
+ * operationlogevent
  *
  * @author Lion Li
  */
@@ -22,87 +23,87 @@ public class OperLogEvent implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 日志主键
+     * logprimary key
      */
     private Long operId;
 
     /**
-     * 操作模块
+     * operation
      */
     private String title;
 
     /**
-     * 业务类型（0其它 1新增 2修改 3删除）
+     * (0 1Add 2Update 3Delete )
      */
     private Integer businessType;
 
     /**
-     * 业务类型数组
+     * array
      */
     private Integer[] businessTypes;
 
     /**
-     * 请求方法
+     * method
      */
     private String method;
 
     /**
-     * 请求方式
+     *
      */
     private String requestMethod;
 
     /**
-     * 操作类别（0其它 1后台用户 2手机端用户）
+     * operation (0 1 after user 2 user)
      */
     private Integer operatorType;
 
     /**
-     * 操作人员
+     * operation
      */
     private String operName;
 
     /**
-     * 部门名称
+     * department name
      */
     private String deptName;
 
     /**
-     * 请求url
+     * url
      */
     private String operUrl;
 
     /**
-     * 操作地址
+     * operation
      */
     private String operIp;
 
     /**
-     * 操作地点
+     * operation
      */
     private String operLocation;
 
     /**
-     * 请求参数
+     * parameter
      */
     private String operParam;
 
     /**
-     * 返回参数
+     * parameter
      */
     private String jsonResult;
 
     /**
-     * 操作状态（0正常 1异常）
+     * operation (0 1 )
      */
     private Integer status;
 
     /**
-     * 错误消息
+     *
      */
     private String errorMsg;
 
     /**
-     * 操作时间
+     * operation
      */
     private Date operTime;
 

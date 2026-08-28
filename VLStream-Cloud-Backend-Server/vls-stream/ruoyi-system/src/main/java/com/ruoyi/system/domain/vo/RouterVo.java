@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -11,7 +12,7 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * 路由配置信息
+ * configurationinfo
  *
  * @author Lion Li
  */
@@ -20,47 +21,47 @@ import java.util.List;
 public class RouterVo {
 
     /**
-     * 路由名字
+     *
      */
     private String name;
 
     /**
-     * 路由地址
+     *
      */
     private String path;
 
     /**
-     * 是否隐藏路由，当设置 true 的时候该路由不会再侧边栏出现
+     * whether , Set true will
      */
     private boolean hidden;
 
     /**
-     * 重定向地址，当设置 noRedirect 的时候该路由在面包屑导航中不可被点击
+     * , Set noRedirect in in
      */
     private String redirect;
 
     /**
-     * 组件地址
+     * component
      */
     private String component;
 
     /**
-     * 路由参数：如 {"id": 1, "name": "ry"}
+     * parameter: {"id": 1, "name": "ry"}
      */
     private String query;
 
     /**
-     * 当你一个路由下面的 children 声明的路由大于1个时，自动会变成嵌套的模式--如组件页面
+     * children 1 , will -- componentpage
      */
     private Boolean alwaysShow;
 
     /**
-     * 其他元素
+     * element
      */
     private MetaVo meta;
 
     /**
-     * 子路由
+     * sub
      */
     private List<RouterVo> children;
 

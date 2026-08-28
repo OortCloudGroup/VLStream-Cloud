@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,38 +18,38 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 算法表 服务类
+ * algorithm service
  *
  * @author Oort
  * @since 2025-12-23
  */
 public interface IVlsAlgorithmService extends BaseService<Algorithm> {
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsAlgorithm 查询参数
+	 * @param page parameter
+	 * @param vlsAlgorithm Query parameter
 	 * @return IPage<VlsAlgorithmVO>
 	 */
 	IPage<AlgorithmVO> selectVlsAlgorithmPage(IPage<AlgorithmVO> page, AlgorithmVO vlsAlgorithm);
 
 	/**
-	 * 导出数据
+	 * Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsAlgorithmExcel>
 	 */
 	List<VlsAlgorithmExcel> exportVlsAlgorithm(Wrapper<Algorithm> queryWrapper);
 
 	/**
-	 * 分页查询算法列表
+	 * Query algorithm list
 	 *
-	 * @param page 分页参数
-	 * @param repositoryId 仓库ID
-	 * @param name 算法名称（模糊查询）
-	 * @param category 算法类型
-	 * @param deployStatus 部署状态
-	 * @return 分页结果
+	 * @param page parameter
+	 * @param repositoryId ID
+	 * @param name algorithm ( Query )
+	 * @param category algorithm
+	 * @param deployStatus
+	 * @return
 	 */
 	IPage<Algorithm> selectAlgorithmPage(Page<Algorithm> page,
 										 Long repositoryId,
@@ -57,114 +58,114 @@ public interface IVlsAlgorithmService extends BaseService<Algorithm> {
 										 String deployStatus);
 
 	/**
-	 * 根据仓库ID查询算法列表
+	 * IDQuery algorithm list
 	 *
-	 * @param repositoryId 仓库ID
-	 * @return 算法列表
+	 * @param repositoryId ID
+	 * @return algorithm
 	 */
 	List<Algorithm> getByRepositoryId(Long repositoryId);
 
 	/**
-	 * 根据分类查询算法列表
+	 * Query algorithm list
 	 *
-	 * @param category 算法分类
-	 * @return 算法列表
+	 * @param category algorithm
+	 * @return algorithm
 	 */
 	List<Algorithm> getByCategory(String category);
 
 	/**
-	 * 创建算法
+	 * algorithm
 	 *
-	 * @param algorithm 算法信息
-	 * @return 是否成功
+	 * @param algorithm algorithminfo
+	 * @return whether successfully
 	 */
 	boolean createAlgorithm(Algorithm algorithm);
 
 	/**
-	 * 更新算法
+	 * new algorithm
 	 *
-	 * @param algorithm 算法信息
-	 * @return 是否成功
+	 * @param algorithm algorithminfo
+	 * @return whether successfully
 	 */
 	boolean updateAlgorithm(Algorithm algorithm);
 
 	/**
-	 * 删除算法
+	 * Delete algorithm
 	 *
-	 * @param id 算法ID
-	 * @return 是否成功
+	 * @param id algorithmID
+	 * @return whether successfully
 	 */
 	boolean deleteAlgorithm(Long id);
 
 	/**
-	 * 批量删除算法
+	 * Batch delete algorithm
 	 *
-	 * @param ids 算法ID列表
-	 * @return 是否成功
+	 * @param ids algorithmID
+	 * @return whether successfully
 	 */
 	boolean batchDeleteAlgorithms(List<Long> ids);
 
 	/**
-	 * 更新部署状态
+	 * new
 	 *
-	 * @param id 算法ID
-	 * @param deployStatus 新部署状态
-	 * @return 是否成功
+	 * @param id algorithmID
+	 * @param deployStatus new
+	 * @return whether successfully
 	 */
 	boolean updateDeployStatus(Long id, String deployStatus);
 
 	/**
-	 * 批量更新部署状态
+	 * new
 	 *
-	 * @param ids 算法ID列表
-	 * @param deployStatus 新部署状态
-	 * @return 是否成功
+	 * @param ids algorithmID
+	 * @param deployStatus new
+	 * @return whether successfully
 	 */
 	boolean batchUpdateDeployStatus(List<Long> ids, String deployStatus);
 
 	/**
-	 * 部署算法到设备
+	 * algorithm device
 	 *
-	 * @param algorithmId 算法ID
-	 * @param deviceIds 设备ID列表
-	 * @return 是否成功
+	 * @param algorithmId algorithmID
+	 * @param deviceIds deviceID
+	 * @return whether successfully
 	 */
 	boolean deployAlgorithmToDevices(Long algorithmId, List<Long> deviceIds);
 
 	/**
-	 * 统计某仓库下的算法数量
+	 * algorithm
 	 *
-	 * @param repositoryId 仓库ID
-	 * @return 算法数量
+	 * @param repositoryId ID
+	 * @return algorithm
 	 */
 	Long countByRepositoryId(Long repositoryId);
 
 	/**
-	 * 获取算法分类统计
+	 * Get algorithm
 	 *
-	 * @return 分类统计信息
+	 * @return info
 	 */
 	List<Map<String, Object>> getCategoryStatistics();
 
 	/**
-	 * 获取算法类型统计
+	 * Get algorithm
 	 *
-	 * @return 类型统计信息
+	 * @return info
 	 */
 	List<Map<String, Object>> getTypeStatistics();
 
 	/**
-	 * 获取部署状态统计
+	 * Get
 	 *
-	 * @return 部署状态统计信息
+	 * @return info
 	 */
 	List<Map<String, Object>> getDeployStatusStatistics();
 
 	/**
-	 * 算法评估
+	 * algorithm
 	 *
-	 * @param algorithmId 算法ID
-	 * @return 评估结果
+	 * @param algorithmId algorithmID
+	 * @return
 	 */
 	Map<String, Object> evaluateAlgorithm(Long algorithmId);
 

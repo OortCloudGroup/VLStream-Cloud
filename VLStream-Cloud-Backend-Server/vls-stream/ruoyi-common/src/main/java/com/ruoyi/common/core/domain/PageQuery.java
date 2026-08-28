@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 分页查询实体类
+ * Query
  *
  * @author Lion Li
  */
@@ -32,34 +32,34 @@ public class PageQuery implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 分页大小
+     *
      */
     @NotNull(message = "分页大小不能为空")
     private Integer pageSize=10;
 
     /**
-     * 当前页数
+     * current
      */
     @NotNull(message = "当前页数不能为空")
     private Integer pageNum=1;
 
     /**
-     * 排序列
+     *
      */
     private String orderByColumn;
 
     /**
-     * 排序的方向desc或者asc
+     * desc asc
      */
     private String isAsc;
 
     /**
-     * 当前记录起始索引 默认值
+     * current record value
      */
     public static final int DEFAULT_PAGE_NUM = 1;
 
     /**
-     * 每页显示记录数 默认值 默认查全部
+     * record value full
      */
     public static final int DEFAULT_PAGE_SIZE = Integer.MAX_VALUE;
 
@@ -78,9 +78,9 @@ public class PageQuery implements Serializable {
     }
 
     /**
-     * 构建排序
+     * Build
      *
-     * 支持的用法如下:
+     * method :
      * {isAsc:"asc",orderByColumn:"id"} order by id asc
      * {isAsc:"asc",orderByColumn:"id,createTime"} order by id asc,create_time asc
      * {isAsc:"desc",orderByColumn:"id,createTime"} order by id desc,create_time desc
@@ -93,7 +93,7 @@ public class PageQuery implements Serializable {
         String orderBy = SqlUtil.escapeOrderBySql(orderByColumn);
         orderBy = StringUtils.toUnderScoreCase(orderBy);
 
-        // 兼容前端排序类型
+        // before
         isAsc = StringUtils.replaceEach(isAsc, new String[]{"ascending", "descending"}, new String[]{"asc", "desc"});
 
         String[] orderByArr = orderBy.split(StringUtils.SEPARATOR);
@@ -103,7 +103,7 @@ public class PageQuery implements Serializable {
         }
 
         List<OrderItem> list = new ArrayList<>();
-        // 每个字段各自排序
+        // each field
         for (int i = 0; i < orderByArr.length; i++) {
             String orderByStr = orderByArr[i];
             String isAscStr = isAscArr.length == 1 ? isAscArr[0] : isAscArr[i];

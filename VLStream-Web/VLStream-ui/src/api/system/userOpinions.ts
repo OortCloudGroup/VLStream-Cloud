@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { request } from '@/utils/service'
 
-/** 查询当前本地登录用户的常用语。 */
+/* * Query current user . */
 export function myOpinionList(data: Record<string, unknown>) {
   return request({
     url: '/api/v1/myOpinionList',
@@ -9,7 +14,7 @@ export function myOpinionList(data: Record<string, unknown>) {
   })
 }
 
-/** 保存当前本地登录用户的常用语。 */
+/* * current user . */
 export function myOpinionSave(data: Record<string, unknown>) {
   return request({
     url: '/api/v1/myOpinionSave',
@@ -18,7 +23,7 @@ export function myOpinionSave(data: Record<string, unknown>) {
   })
 }
 
-/** 删除当前本地登录用户拥有的常用语。 */
+/* * Delete current user . */
 export function myOpinionDel(data: Record<string, unknown>) {
   return request({
     url: '/api/v1/myOpinionDel',

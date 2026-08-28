@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <!-- eslint-disable vue/valid-v-for -->
 <template>
   <el-container class="panel-container">
@@ -231,7 +236,7 @@ export default {
       }
     },
 
-    'selectedWidget.options': { // 组件属性变动后，立即保存表单JSON！！
+    'selectedWidget.options': { // componentproperty after, formJSON! !
       deep: true,
       handler() {
         this.designer.saveCurrentHistoryStep()
@@ -285,7 +290,7 @@ export default {
         return false
       }
 
-      /* alert组件注册了两个type属性编辑器，跳过第一个type属性编辑器，只显示第二个alert-type属性编辑器！！ */
+      /* alertcomponent typeproperty , typeproperty , only alert-typeproperty ! ! */
       if (propName.indexOf('-') <= -1) {
         let uniquePropName = this.selectedWidget.type + '-' + propName
         if (propertyRegistered(uniquePropName)) {
@@ -293,20 +298,20 @@ export default {
         }
       }
 
-      let originalPropName = propName.replace(this.selectedWidget.type + '-', '') // 去掉组件名称前缀-，如果有的话！！
+      let originalPropName = propName.replace(this.selectedWidget.type + '-', '') // component before -, if ! !
       return this.designer.hasConfig(this.selectedWidget, originalPropName)
     },
 
     getPropEditor(propName, editorName) {
       console.log('propName-----', propName, editorName)
-      let originalPropName = propName.replace(this.selectedWidget.type + '-', '') // 去掉组件名称前缀-，如果有的话！！
+      let originalPropName = propName.replace(this.selectedWidget.type + '-', '') // component before -, if ! !
       let ownPropEditorName = `${this.selectedWidget.type}-${originalPropName}-editor`
       // console.log(ownPropEditorName, this.$options.components[ownPropEditorName])
-      if (!!this.$options.components[ownPropEditorName]) { // 局部注册的属性编辑器组件
+      if (!!this.$options.components[ownPropEditorName]) { // property component
         return ownPropEditorName
       }
-      // return !!this.$root.$options.components[ownPropEditorName] ? ownPropEditorName : editorName  //Vue2全局注册的属性编辑器组件
-      return !!this.$root.$.appContext.components[ownPropEditorName] ? ownPropEditorName : editorName // Vue3全局注册的属性编辑器组件
+      // return !!this.$root.$options.components[ownPropEditorName] ? ownPropEditorName : editorName //Vue2 full property component
+      return !!this.$root.$.appContext.components[ownPropEditorName] ? ownPropEditorName : editorName // Vue3 full property component
     },
 
     showCollapse(propsObj) {
@@ -334,7 +339,7 @@ export default {
       this.eventHeader = `${this.optionModel.name}.${eventName}(${eventParams.join(', ')}) {`
       this.eventHandlerCode = this.selectedWidget.options[eventName] || ''
 
-      // 设置字段校验函数示例代码
+      // Set fieldValidate
       if ((eventName === 'onValidate') && (!this.optionModel['onValidate'])) {
         this.eventHandlerCode = '  /* sample code */\n  /*\n  if ((value > 100) || (value < 0)) {\n    callback(new Error(\'error message\'))  //fail\n  } else {\n    callback();  //pass\n  }\n  */'
       }
@@ -402,13 +407,13 @@ export default {
     }
   }
 
-  /* 隐藏Chrome浏览器中el-input数字输入框右侧的上下调整小箭头 */
+  /* Chrome in el-input */
   :deep(.hide-spin-button) input::-webkit-outer-spin-button,
   :deep(.hide-spin-button) input::-webkit-inner-spin-button {
     -webkit-appearance: none !important;
   }
 
-  /* 隐藏Firefox浏览器中el-input数字输入框右侧的上下调整小箭头 */
+  /* Firefox in el-input */
   :deep(.hide-spin-button) input[type="number"] {
     -moz-appearance: textfield;
   }

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -13,7 +14,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * Redisson 配置属性
+ * Redisson configurationproperty
  *
  * @author Lion Li
  */
@@ -23,27 +24,27 @@ import org.springframework.stereotype.Component;
 public class RedissonProperties {
 
     /**
-     * redis缓存key前缀
+     * redis key before
      */
     private String keyPrefix;
 
     /**
-     * 线程池数量,默认值 = 当前处理核数量 * 2
+     * , value = current Process * 2
      */
     private int threads;
 
     /**
-     * Netty线程池数量,默认值 = 当前处理核数量 * 2
+     * Netty , value = current Process * 2
      */
     private int nettyThreads;
 
     /**
-     * 单机服务配置
+     * serviceconfiguration
      */
     private SingleServerConfig singleServerConfig;
 
     /**
-     * 集群服务配置
+     * serviceconfiguration
      */
     private ClusterServersConfig clusterServersConfig;
 
@@ -52,32 +53,32 @@ public class RedissonProperties {
     public static class SingleServerConfig {
 
         /**
-         * 客户端名称
+         *
          */
         private String clientName;
 
         /**
-         * 最小空闲连接数
+         * null / empty
          */
         private int connectionMinimumIdleSize;
 
         /**
-         * 连接池大小
+         *
          */
         private int connectionPoolSize;
 
         /**
-         * 连接空闲超时，单位：毫秒
+         * null / empty , :
          */
         private int idleConnectionTimeout;
 
         /**
-         * 命令等待超时，单位：毫秒
+         * etc. , :
          */
         private int timeout;
 
         /**
-         * 发布和订阅连接池大小
+         * and
          */
         private int subscriptionConnectionPoolSize;
 
@@ -88,52 +89,52 @@ public class RedissonProperties {
     public static class ClusterServersConfig {
 
         /**
-         * 客户端名称
+         *
          */
         private String clientName;
 
         /**
-         * master最小空闲连接数
+         * master null / empty
          */
         private int masterConnectionMinimumIdleSize;
 
         /**
-         * master连接池大小
+         * master
          */
         private int masterConnectionPoolSize;
 
         /**
-         * slave最小空闲连接数
+         * slave null / empty
          */
         private int slaveConnectionMinimumIdleSize;
 
         /**
-         * slave连接池大小
+         * slave
          */
         private int slaveConnectionPoolSize;
 
         /**
-         * 连接空闲超时，单位：毫秒
+         * null / empty , :
          */
         private int idleConnectionTimeout;
 
         /**
-         * 命令等待超时，单位：毫秒
+         * etc. , :
          */
         private int timeout;
 
         /**
-         * 发布和订阅连接池大小
+         * and
          */
         private int subscriptionConnectionPoolSize;
 
         /**
-         * 读取模式
+         *
          */
         private ReadMode readMode;
 
         /**
-         * 订阅模式
+         *
          */
         private SubscriptionMode subscriptionMode;
 

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -13,7 +14,7 @@ import lombok.NoArgsConstructor;
 import java.lang.reflect.Method;
 
 /**
- * 反射工具类. 提供调用getter/setter方法, 访问私有变量, 调用私有方法, 获取泛型类型Class, 被AOP过的真实类等工具函数.
+ * . getter/setter method , variable, method , Get Class, AOP etc. .
  *
  * @author Lion Li
  */
@@ -26,8 +27,8 @@ public class ReflectUtils extends ReflectUtil {
     private static final String GETTER_PREFIX = "get";
 
     /**
-     * 调用Getter方法.
-     * 支持多级，如：对象名.对象名.方法
+     * Getter method .
+     * , : object .object . method
      */
     @SuppressWarnings("unchecked")
     public static <E> E invokeGetter(Object obj, String propertyName) {
@@ -40,8 +41,8 @@ public class ReflectUtils extends ReflectUtil {
     }
 
     /**
-     * 调用Setter方法, 仅匹配方法名。
-     * 支持多级，如：对象名.对象名.方法
+     * Setter method , method .
+     * , : object .object . method
      */
     public static <E> void invokeSetter(Object obj, String propertyName, E value) {
         Object object = obj;

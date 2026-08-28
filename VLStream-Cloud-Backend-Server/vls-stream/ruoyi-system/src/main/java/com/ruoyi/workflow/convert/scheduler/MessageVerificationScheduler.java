@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -24,14 +25,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * MessageNode 验证定时任务
- * 定期扫描待验证的消息通知任务，并调用接口验证状态
+ * MessageNode task
+ * notificationtask, interface
  */
 @Slf4j
 @Component
 public class MessageVerificationScheduler {
 
-    // 最大验证次数（默认3次）
+    // ( 3 )
     private static final int MAX_VERIFY_COUNT = 3;
 
     @Autowired
@@ -41,12 +42,12 @@ public class MessageVerificationScheduler {
     private ApplicationContext applicationContext;
 
     /**
-     * 每20秒执行一次验证
+     * 20 Execute
      */
     @Scheduled(fixedDelay = 20000)
     public void verifyPendingMessages() {
         try {
-            // 1. 处理标记为 "readyToComplete" 的任务 (priority != 0/1)
+            // 1. Process to "readyToComplete" task (priority != 0/1)
             List<Task> readyTasks = taskService.createTaskQuery()
                     .taskVariableValueEquals("messageNode_readyToComplete", true)
                     .list();
@@ -60,7 +61,7 @@ public class MessageVerificationScheduler {
                 }
             }
 
-            // 2. 处理需要验证的任务 (priority == 0/1)
+            // 2. Process need to task (priority == 0/1)
             List<Task> verifyTasks = taskService.createTaskQuery()
                     .taskVariableValueEquals("messageNode_needVerify", true)
                     .list();
@@ -76,21 +77,21 @@ public class MessageVerificationScheduler {
 
     private void verifyTask(Task task) {
         try {
-            // 获取局部变量
+            // Get variable
             Map<String, Object> variables = taskService.getVariablesLocal(task.getId());
 
 
-            // 获取当前验证次数
+            // Get current
             Integer verifyCount = (Integer) variables.get("messageNode_verifyCount");
             if (verifyCount == null) {
                 verifyCount = 0;
             }
 
-            // 检查验证次数是否超过上限
+            // whether
             if (verifyCount >= MAX_VERIFY_COUNT) {
                 log.info("任务 {} 验证次数已达上限 ({}/{}), 停止验证，等待超时处理",
                     task.getId(), verifyCount, MAX_VERIFY_COUNT);
-                // 移除验证标记，停止后续验证
+                // , after
                 taskService.removeVariableLocal(task.getId(), "messageNode_needVerify");
                 return;
             }
@@ -103,16 +104,16 @@ public class MessageVerificationScheduler {
                 return;
             }
 
-            // 调用验证接口
+            // interface
             int status = callVerificationApi(msgNo, uid);
 
-            // receipt_status: 1:已到达, 2:已完成 => 成功
+            // receipt_status: 1: already , 2: already => successfully
             if (status == 1 || status == 2) {
                 log.info("消息验证成功 (status={}, 验证次数={}), 完成任务 taskId={}",
                         status, verifyCount + 1, task.getId());
                 taskService.complete(task.getId());
             } else {
-                // 验证失败，增加验证次数
+                // failed,
                 verifyCount++;
                 taskService.setVariableLocal(task.getId(), "messageNode_verifyCount", verifyCount);
                 log.debug("消息验证未通过 (status={}, 验证次数={}/{}), 继续等待 taskId={}",
@@ -128,8 +129,8 @@ public class MessageVerificationScheduler {
         try {
             Environment env = applicationContext.getBean(Environment.class);
             String url = env.getProperty("UnifiedMessagingSend.url") + "msg/v1/recipient/status";
-            // 这是一个 GET 请求，参数在 URL 中？
-            // 用户描述：这是一个get请求，有两个必须参数msg_no，uid
+            // is GET , parameter in URL in ?
+            // user : is get , parametermsg_no, uid
 
             String fullUrl = url + "?msg_no=" + msgNo + "&uid=" + uid;
 
@@ -153,6 +154,6 @@ public class MessageVerificationScheduler {
         } catch (Exception e) {
             log.error("调用验证接口失败", e);
         }
-        return -1; // 未知状态
+        return -1; // not
     }
 }

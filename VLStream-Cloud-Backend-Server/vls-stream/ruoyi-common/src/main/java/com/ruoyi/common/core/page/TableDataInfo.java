@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -14,7 +15,7 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 表格分页数据对象
+ * table dataobject
  *
  * @author Lion Li
  */
@@ -25,30 +26,30 @@ public class TableDataInfo<T> implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 总记录数
+     * record
      */
     private long total;
 
     /**
-     * 列表数据
+     * data
      */
     private List<T> rows;
 
     /**
-     * 消息状态码
+     *
      */
     private int code;
 
     /**
-     * 消息内容
+     *
      */
     private String msg;
 
     /**
-     * 分页
      *
-     * @param list  列表数据
-     * @param total 总记录数
+     *
+     * @param list data
+     * @param total record
      */
     public TableDataInfo(List<T> list, long total) {
         this.rows = list;

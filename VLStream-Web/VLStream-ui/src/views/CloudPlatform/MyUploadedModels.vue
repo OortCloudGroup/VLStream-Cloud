@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="my-uploaded-models" v-loading="loading">
-    <!-- 模型详情 -->
+    <!-- model -->
     <ModelDetail
       v-if="detailUid"
       :uid="detailUid"
@@ -96,7 +101,7 @@
     </div>
     </template>
 
-    <!-- 上传 / 编辑弹窗 -->
+    <!-- / dialog -->
     <el-dialog
       v-model="dialogVisible"
       :title="editingUid ? '编辑模型' : '创建模型'"
@@ -230,7 +235,7 @@ const dialogVisible = ref(false)
 const editingUid = ref('')
 const formRef = ref(null)
 
-/** 高级搜索配置 */
+/* * configuration */
 const searchData = ref([
   { label: '模型名称', value: 'keyword', type: 'text', default: '' },
   {
@@ -325,7 +330,7 @@ const loadModels = async () => {
   }
 }
 
-/** SearchHeightBox 回调：搜索 / 重置 */
+/* * SearchHeightBox : / */
 const searchResetFn = (val, reset) => {
   if (reset) {
     page.value = 1
@@ -395,7 +400,7 @@ const beforeFileUpload = (file) => {
   return true
 }
 
-/** fastdfs 返回 path 作为 file_path */
+/* * fastdfs path to file_path */
 const handleFileSuccess = (res) => {
   const path = res?.data?.path || res?.data?.filePath || res?.data?.url || ''
   if (res?.code === 200 && path) {

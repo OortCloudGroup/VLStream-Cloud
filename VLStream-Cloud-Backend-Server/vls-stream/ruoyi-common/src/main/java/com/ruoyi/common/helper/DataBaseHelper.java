@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -19,7 +20,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 
 /**
- * 数据库助手
+ * data
  *
  * @author Lion Li
  */
@@ -29,7 +30,7 @@ public class DataBaseHelper {
     private static final DynamicRoutingDataSource DS = SpringUtils.getBean(DynamicRoutingDataSource.class);
 
     /**
-     * 获取当前数据库类型
+     * Get current data
      */
     public static DataBaseType getDataBaseType() {
         DataSource dataSource = DS.determineDataSource();

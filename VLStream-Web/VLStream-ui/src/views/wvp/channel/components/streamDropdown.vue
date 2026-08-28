@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-dropdown v-if="streamInfo" trigger="click" @command="copyUrl">
     <el-button :icon="ArrowDownBold">
@@ -116,7 +121,7 @@ import { defineProps } from 'vue';
 import { ElMessage } from 'element-plus';
 import { ArrowDownBold } from '@element-plus/icons-vue'
 
-// 定义 Props
+// Props
 const props = defineProps({
   streamInfo: {
     type: Object,
@@ -125,14 +130,14 @@ const props = defineProps({
   }
 });
 
-// 复制 URL 的方法
+// URL method
 const copyUrl = (url) => {
   if (!url) {
     ElMessage.error('内容为空，无法复制');
     return;
   }
 
-  // 使用 Clipboard API
+  // Clipboard API
   navigator.clipboard.writeText(url).then(
       () => {
         ElMessage.success('成功拷贝到粘贴板');

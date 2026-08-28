@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -19,7 +20,7 @@ import lombok.SneakyThrows;
 import java.util.Map;
 
 /**
- * Aliyun 短信模板
+ * Aliyun
  *
  * @author Lion Li
  * @version 4.2.0
@@ -34,11 +35,11 @@ public class AliyunSmsTemplate implements SmsTemplate {
     public AliyunSmsTemplate(SmsProperties smsProperties) {
         this.properties = smsProperties;
         Config config = new Config()
-            // 您的AccessKey ID
+            // AccessKey ID
             .setAccessKeyId(smsProperties.getAccessKeyId())
-            // 您的AccessKey Secret
+            // AccessKey Secret
             .setAccessKeySecret(smsProperties.getAccessKeySecret())
-            // 访问的域名
+            //
             .setEndpoint(smsProperties.getEndpoint());
         this.client = new Client(config);
     }

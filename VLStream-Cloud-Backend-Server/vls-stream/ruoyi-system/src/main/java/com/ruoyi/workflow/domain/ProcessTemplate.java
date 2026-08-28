@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,7 +14,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 流程初始化模版对象 process_template
+ * workflowInitialize object process_template
  *
  * @author lcq
  * @date 2025-01-07
@@ -26,44 +27,44 @@ public class ProcessTemplate extends BaseEntity {
     private static final long serialVersionUID=1L;
 
     /**
-     * 模板ID
+     * ID
      */
     @TableId(value = "id")
     private String id;
     /**
-     * 部署id
+     * id
      */
     private String deploymentId;
     /**
-     * 模型id
+     * modelid
      */
     private String modelId;
     /**
-     * 模型Key
+     * modelKey
      */
     private String modelKey;
     /**
-     * 模型名称
+     * model
      */
     private String modelName;
     /**
-     * 手机端是否显示 0（显示） 1（不显示）
+     * whether 0 ( ) 1 ( )
      */
     private String showMobile;
     /**
-     * 租户id
+     * id
      */
     private String tenantId;
     /**
-     * 用户id
+     * user ID
      */
     private String userId;
     /**
-     * 描述
+     *
      */
     private String description;
     /**
-     * 删除标记，0表示未删除，1表示删除
+     * Delete , 0 not Delete , 1 Delete
      */
     @TableLogic
     private String delFlag;

@@ -1,20 +1,25 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2024-11-15 11:45:51
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
   <div class="tenantN_Page">
     <!--    <div class="nav_status flexRowAC">-->
     <!--      <router-link to="" class="nav_title" @click="goBack">-->
-    <!--        返回-->
+    <!--  -->
     <!--      </router-link>-->
     <!--      <div class="nav_title lth">-->
     <!--        /&nbsp;&nbsp;-->
-    <!--        <span>流程详情</span>-->
+    <!-- <span>workflow </span> -->
     <!--      </div>-->
     <!--    </div>-->
     <div v-if="taskInfo?.workorderId==='true'" class="infoBoxOut">
@@ -83,7 +88,7 @@
         <el-tab-pane label="基本信息" name="form" />
         <el-tab-pane label="权限" name="auth" />
       </el-tabs>
-      <!--审批记录 -->
+      <!-- approvalrecord -->
       <div v-if="activeName === 'record'" class="flow_designer_page">
         <task-handle-detail-record
           :node-config-prop="nodeConfig"
@@ -92,7 +97,7 @@
           :history-proc-node-list="historyProcNodeList"
         />
       </div>
-      <!--  流程图-->
+      <!-- workflow -->
       <div v-if="activeName==='flow'" class="flow_designer_page">
         <FlowChart
           v-if="nodeConfig"
@@ -122,7 +127,7 @@
         </template>
       </div>
       <div v-if="activeName==='task'" class="taskBox">
-        <!--子表单-->
+        <!-- sub form -->
         <template v-if="formJsonSub&&formJsonSub.length">
           <div v-for="(item,i) in formJsonSub" :key="i" style="width: 50%;">
             <VFormRender
@@ -210,7 +215,7 @@
             </div>
           </div>
         </div>
-        <!--3退回 1委派 2转办-->
+        <!-- 3 1 2 -->
         <div class="dia_btn flexRowAC">
           <el-row :gutter="10" type="flex">
             <template v-for="(item, index) in buttonsArr">
@@ -283,30 +288,30 @@ const buttonsArr = ref([])
 const targetKey = ref('')
 const returnTaskList = ref([])
 const showTaskTab = ref(false)
-const nodeConfig = ref(null) // 流程图
+const nodeConfig = ref(null) // workflow
 const showSP = ref(true)
-const finishedTaskNode = ref([]) // 流程图
-const unFinishedTaskNode = ref([]) // 流程图
+const finishedTaskNode = ref([]) // workflow
+const unFinishedTaskNode = ref([]) // workflow
 const rejectTaskNode = ref([])
 // const oprArr = ref(['0', '1', '2', '3', '4'])
 const oprArr = ref([])
-const formJson = ref(null) // 表单信息
-const preFormSub = ref<any>(null) // 子表单信息
-const preFormSubTemp = ref<any>(null) // 子表单信息
+const formJson = ref(null) // forminfo
+const preFormSub = ref<any>(null) // sub forminfo
+const preFormSubTemp = ref<any>(null) // sub forminfo
 const formJsonSub = ref<any>(null)
-const historyProcNodeList = ref<any>([]) // 流转记录
-const infoTemp = ref<any>(null) // 工单详情
-const categoryOptions = ref<any>([]) // 工单类型
-let userVisi = ref(false) // 人员选择
-let userRangeList = ref([]) // 人员选择[]
-let deptRangeList = ref([]) // 部门选择[]
+const historyProcNodeList = ref<any>([]) // record
+const infoTemp = ref<any>(null) // work order
+const categoryOptions = ref<any>([]) // work order
+let userVisi = ref(false) //
+let userRangeList = ref([]) // []
+let deptRangeList = ref([]) // department []
 const form = ref({
   comment: ''
 })
 
-// 保存用户选中
+// user in
 const saveConfirm = async(address: any) => {
-  // 选择的用户
+  // user
   if (address.user) {
     userRangeList.value = address.user || []
     deptRangeList.value = address.dept || []
@@ -314,7 +319,7 @@ const saveConfirm = async(address: any) => {
   userVisi.value = false
 }
 
-// 工单类型
+// work order
 const workorderTypeFn = async() => {
   categoryOptions.value = []
   let data = {
@@ -327,7 +332,7 @@ const workorderTypeFn = async() => {
   })
 }
 
-// 过滤器-工单类型
+// -work order
 const workorderIdFormat = (cellValue) => {
   if (categoryOptions.value && categoryOptions.value.length) {
     const category:any = categoryOptions.value.find((item:any) => item.synthesisId === cellValue)
@@ -335,7 +340,7 @@ const workorderIdFormat = (cellValue) => {
   }
 }
 
-// 子表单-提交
+// sub form-
 let preFormSubFlage = false
 const startFlow = async() => {
   if (preFormSub.value && Array.isArray(preFormSub.value)) {
@@ -357,12 +362,12 @@ const startFlow = async() => {
   return false
 }
 
-// 获取按钮
+// Get button
 const getOprBtns = async() => {
   let res: any = props.item?.workorderId ? await getApprovalButton_wk('') : await getApprovalButton('')
   buttonsArr.value = (res.data || [])
 }
-// 移除
+//
 const removeClick = (index) => {
   userRangeList.value.splice(index, 1)
 }
@@ -378,21 +383,21 @@ function approveTypeBtn(val) {
   }
 }
 
-// 获取按钮-通过
+// Get button-
 const submitTask = async(flag) => {
   await startFlow()
-  // flag 0 同意 ，1委派， 2 转办 ，3退回 ，4拒绝 7退单
+  // flag 0 , 1 , 2 , 3 , 4 7
   if (flag === '5' && !userRangeList.value.length && !deptRangeList.value.length && !infoTemp.value?.assignId) return ElMessage.warning('请选择处理人或者部门')
   const params:any = {
     taskId: taskInfo.value.taskId,
     procInsId: taskInfo.value.procInsId,
-    businessKey: taskInfo.value?.businessKey || undefined, // 干预记录需要businessKey
+    businessKey: taskInfo.value?.businessKey || undefined, // record need to businessKey
     comment: form.value.comment,
     nextUserIds: nextUserIds.value,
     copyUserIds: copyUserIds.value
   }
   if (!params.comment) params.comment = buttonsArr.value.find((item: any) => item.dictValue === flag)?.['dictLabel']
-  // 子表单
+  // sub form
   if (!!preFormSub.value) {
     if (preFormSubFlage) {
       params['variables'] = preFormSubTemp.value.reduce((acc, item) => {
@@ -425,18 +430,18 @@ const submitTask = async(flag) => {
   if (flag === '4') {
     res = await rejectTask(params)
   }
-  // 指派
+  //
   if (flag === '5') {
-    // 人或者部门
+    // department
     if (userRangeList.value.length) params['candidateUsers'] = userRangeList.value.map((item:any) => item.user_id)
     if (deptRangeList.value.length) params['candidateGroups'] = deptRangeList.value.map((item:any) => item.dept_id)
     res = await completeTask(params)
   }
-  // 接单-签收
+  // -
   if (flag === '6') {
     res = await claimTask(params)
   }
-  // 7退单
+  // 7
   if (flag === '7') {
     res = await unClaimTask(params)
   }
@@ -448,7 +453,7 @@ const submitTask = async(flag) => {
   }
 }
 
-// 可退回的节点
+// node
 const getReturnList = async() => {
   const params = {
     procInsId: taskInfo.value.procInsId,
@@ -461,7 +466,7 @@ const getReturnList = async() => {
   })
 }
 
-// finishedTaskNode 排除在 UnFinishedTaskNode
+// finishedTaskNode in UnFinishedTaskNode
 const getFinishedTaskNode = () => {
   const arr = []
   finishedTaskNode.value.forEach(item => {
@@ -473,7 +478,7 @@ const getFinishedTaskNode = () => {
 }
 
 const nodeFormProperties = ref('')
-// 流程节点详情
+// workflownode
 const getProcessDetail = async() => {
   const params = {
     procInsId: taskInfo.value.procInsId
@@ -496,15 +501,15 @@ const getProcessDetail = async() => {
           unFinishedTaskNode.value = res.data.flowViewer.unfinishedTaskSet || []
           finishedTaskNode.value = [...(res.data.flowViewer.finishedTaskSet || []), ...(res.data.flowViewer.finishedSequenceFlowSet || [])]
           rejectTaskNode.value = res.data.flowViewer.rejectedTaskSet || []
-          // 存在退回节点的逻辑 使用这里要排除 (包括退回的逻辑)
+          // in node need to ( )
           finishedTaskNode.value = getFinishedTaskNode()
         }
         if (res.data.bpmnJson) {
-          // 去除第一个开始节点
+          // startnode
           nodeConfig.value = JSON.parse(res.data.bpmnJson).process.childNode
           nodeFormProperties.value = getNodeById(nodeConfig.value, res.data.wfBasicInfoVo.taskDefId)?.formProperties || []
           console.log('-------0000----', res.data.wfBasicInfoVo.taskDefId, nodeConfig.value, getNodeById(nodeConfig.value, res.data.wfBasicInfoVo.taskDefId))
-          // 获取最后一个节点 ，判断当前节点是不是最后一个节点
+          // Get after node , Check current node is is after node
           let lastNode = jugeLastTwoNode(nodeConfig.value)
           if (historyProcNodeList.value.length > 0 && lastNode) {
             showSP.value = historyProcNodeList.value[historyProcNodeList.value.length - 1]?.activityId !== lastNode.id
@@ -517,7 +522,7 @@ const getProcessDetail = async() => {
   })
 }
 
-// 递归判断是否倒数第二节点
+// Check whether node
 const jugeLastTwoNode = (node) => {
   if (node.childNode.id === 'end') {
     return node
@@ -527,7 +532,7 @@ const jugeLastTwoNode = (node) => {
   }
 }
 
-// 递归获取指定id的node
+// Get id node
 const getNodeById = (node, id = 'end') => {
   if (node.id === id) {
     return node
@@ -539,18 +544,18 @@ const getNodeById = (node, id = 'end') => {
 
 onMounted(async() => {
   if (taskInfo.value?.workorderId !== 'true') {
-    workorderTypeFn() // 工单类型
+    workorderTypeFn() // work order
   }
   if (taskInfo.value.taskId) {
     showTaskTab.value = true
     activeName.value = 'task'
-    await getReturnList() // 可退回的节点
+    await getReturnList() // node
   }
   if (taskInfo.value.tabName) {
     activeName.value = taskInfo.value.tabName
   }
-  await getOprBtns() // 按钮
-  getProcessDetail() // 流程节点详情
+  await getOprBtns() // button
+  getProcessDetail() // workflownode
 })
 
 </script>
@@ -569,7 +574,7 @@ onMounted(async() => {
   padding: 20px;
 }
 
-// 确定取消
+//
 .subBtnsBox {
   position: absolute;
   right: 20px;
@@ -707,7 +712,7 @@ onMounted(async() => {
   overflow: auto;
 }
 
-// 流程
+// workflow
 :deep(.el-card.is-hover-shadow.box-card) {
   .el-card__body {
     background: #F7F7F7;
@@ -752,13 +757,13 @@ onMounted(async() => {
   }
 }
 
-// 通过
+//
 .commentBox {
   justify-content: space-between;
 }
 
 :deep(.task_form) {
-  // 审批-抄送人
+  // approval-
   .chooose_item.chooose_item_group {
     margin: 0;
     padding: 0 12px;
@@ -775,7 +780,7 @@ onMounted(async() => {
   border-color: gray;
 }
 
-// 工单信息
+// work orderinfo
 .infoBox {
   .infoItem {
     padding-bottom: 20px;
@@ -824,7 +829,7 @@ onMounted(async() => {
   }
 }
 
-// 处理人
+// Process
 .infoItem_add{
   flex-direction: column;
   justify-content: center;
@@ -843,7 +848,7 @@ onMounted(async() => {
   }
 }
 
-// 人员选择
+//
 .elIconPerBox{
   width: 200px;
   height: 72px;
@@ -883,7 +888,7 @@ onMounted(async() => {
     gap: 20px;
   }
 }
-// 基本信息
+// info
 .preFormBox{
   border-radius: 4px;
   padding: 20px;
@@ -891,7 +896,7 @@ onMounted(async() => {
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-// 任务办理
+// task
 .taskBox{
   padding: 20px;
 }

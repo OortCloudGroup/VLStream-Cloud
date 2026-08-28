@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <template v-for="item in items" :key="item.path">
     <el-sub-menu v-if="item.children && item.children.length > 0" :index="item.path">

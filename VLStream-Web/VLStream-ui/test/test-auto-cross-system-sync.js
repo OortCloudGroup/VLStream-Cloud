@@ -1,21 +1,26 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * 自动跨系统Token同步测试脚本
- * 测试真正的自动跨系统token同步功能
+ * Token
+ * token can
  */
 
 console.log('🎯 自动跨系统Token同步测试')
 console.log('=' * 50)
 
-// 测试自动同步器是否已加载
+// whether already Load
 function testAutoSyncLoaded() {
   console.log('\n🔍 检查自动同步器是否已加载...')
-  
+
   if (window.autoCrossSystemSync) {
     console.log('✅ 自动跨系统Token同步器已加载')
     console.log('📊 同步器状态:', {
       isInitialized: window.autoCrossSystemSync.isInitialized,
       checkInterval: window.autoCrossSystemSync.checkInterval,
-      lastUnifiedToken: window.autoCrossSystemSync.lastUnifiedToken ? 
+      lastUnifiedToken: window.autoCrossSystemSync.lastUnifiedToken ?
         window.autoCrossSystemSync.lastUnifiedToken.substring(0, 8) + '...' : 'null'
     })
     return true
@@ -25,34 +30,34 @@ function testAutoSyncLoaded() {
   }
 }
 
-// 测试当前token状态
+// current token
 function testCurrentTokenStatus() {
   console.log('\n🔍 检查当前Token状态...')
-  
+
   const currentToken = window.autoCrossSystemSync.getCurrentSystemToken()
-  const urlToken = new URLSearchParams(window.location.search).get('accessToken') || 
+  const urlToken = new URLSearchParams(window.location.search).get('accessToken') ||
                   new URLSearchParams(window.location.search).get('token')
-  
+
   console.log('📊 当前Token状态:', {
     currentToken: currentToken ? currentToken.substring(0, 8) + '...' : 'null',
     urlToken: urlToken ? urlToken.substring(0, 8) + '...' : 'null',
-    sessionStorageToken: sessionStorage.getItem('token') ? 
+    sessionStorageToken: sessionStorage.getItem('token') ?
       sessionStorage.getItem('token').substring(0, 8) + '...' : 'null',
-    sessionStorageAccessToken: sessionStorage.getItem('accessToken') ? 
+    sessionStorageAccessToken: sessionStorage.getItem('accessToken') ?
       sessionStorage.getItem('accessToken').substring(0, 8) + '...' : 'null',
-    localStorageToken: localStorage.getItem('token') ? 
+    localStorageToken: localStorage.getItem('token') ?
       localStorage.getItem('token').substring(0, 8) + '...' : 'null',
-    localStorageAccessToken: localStorage.getItem('accessToken') ? 
+    localStorageAccessToken: localStorage.getItem('accessToken') ?
       localStorage.getItem('accessToken').substring(0, 8) + '...' : 'null'
   })
-  
+
   return { currentToken, urlToken }
 }
 
-// 测试手动触发同步
+//
 function testManualSync() {
   console.log('\n🔄 测试手动触发自动同步...')
-  
+
   try {
     window.autoCrossSystemSync.forceSync()
     console.log('✅ 手动触发同步成功')
@@ -63,36 +68,36 @@ function testManualSync() {
   }
 }
 
-// 测试URL参数token同步
+// URLparametertoken
 function testUrlTokenSync() {
   console.log('\n🔗 测试URL参数Token同步...')
-  
-  // 模拟URL参数中的token
+
+  // URLparameter in token
   const testToken = 'test_token_' + Date.now()
   const currentUrl = new URL(window.location.href)
   currentUrl.searchParams.set('accessToken', testToken)
-  
+
   console.log('📝 模拟URL参数token:', testToken.substring(0, 8) + '...')
   console.log('🔗 新URL:', currentUrl.toString())
-  
-  // 更新URL（不刷新页面）
+
+  // new URL ( new page)
   window.history.pushState({}, document.title, currentUrl.toString())
-  
-  // 手动触发同步检查
+
+  //
   setTimeout(() => {
     window.autoCrossSystemSync.forceSync()
   }, 1000)
-  
+
   return testToken
 }
 
-// 测试统一用户平台token获取
+// user tokenGet
 async function testUnifiedPlatformTokenFetch() {
   console.log('\n👤 测试统一用户平台Token获取...')
-  
+
   try {
     const unifiedToken = await window.autoCrossSystemSync.getUnifiedPlatformToken()
-    
+
     if (unifiedToken) {
       console.log('✅ 成功获取统一用户平台token:', unifiedToken.substring(0, 8) + '...')
       return unifiedToken
@@ -106,26 +111,26 @@ async function testUnifiedPlatformTokenFetch() {
   }
 }
 
-// 测试token验证
+// token
 async function testTokenValidation() {
   console.log('\n🔍 测试Token验证...')
-  
+
   const currentToken = window.autoCrossSystemSync.getCurrentSystemToken()
-  
+
   if (!currentToken) {
     console.log('⚠️ 当前没有token，跳过验证测试')
     return false
   }
-  
+
   try {
     const isValid = await window.autoCrossSystemSync.validateToken(currentToken)
-    
+
     if (isValid) {
       console.log('✅ 当前token验证成功')
     } else {
       console.log('❌ 当前token验证失败')
     }
-    
+
     return isValid
   } catch (error) {
     console.error('❌ Token验证失败:', error)
@@ -133,20 +138,20 @@ async function testTokenValidation() {
   }
 }
 
-// 测试用户信息获取
+// userinfoGet
 async function testUserInfoFetch() {
   console.log('\n👤 测试用户信息获取...')
-  
+
   const currentToken = window.autoCrossSystemSync.getCurrentSystemToken()
-  
+
   if (!currentToken) {
     console.log('⚠️ 当前没有token，跳过用户信息获取测试')
     return null
   }
-  
+
   try {
     const userInfo = await window.autoCrossSystemSync.getUnifiedUserInfo(currentToken)
-    
+
     if (userInfo) {
       console.log('✅ 成功获取用户信息:', {
         userName: userInfo.userName,
@@ -164,10 +169,10 @@ async function testUserInfoFetch() {
   }
 }
 
-// 测试iframe监听
+// iframe
 function testIframeMonitoring() {
   console.log('\n🖼️ 测试Iframe监听...')
-  
+
   if (window.autoCrossSystemSync.iframe) {
     console.log('✅ iframe已创建')
     console.log('📊 iframe状态:', {
@@ -181,15 +186,15 @@ function testIframeMonitoring() {
   }
 }
 
-// 测试事件监听
+// event
 function testEventListeners() {
   console.log('\n🎧 测试事件监听...')
-  
-  // 测试自定义事件触发
+
+  // Customevent
   const testEvent = new CustomEvent('autoCrossSystemTokenUpdated', {
     detail: { token: 'test_token', source: 'test' }
   })
-  
+
   try {
     window.dispatchEvent(testEvent)
     console.log('✅ 事件监听器工作正常')
@@ -200,39 +205,39 @@ function testEventListeners() {
   }
 }
 
-// 完整测试流程
+// workflow
 async function runCompleteTest() {
   console.log('🚀 开始完整自动跨系统Token同步测试')
   console.log('=' * 60)
-  
-  // 1. 检查同步器是否加载
+
+  // 1. whether Load
   const syncLoaded = testAutoSyncLoaded()
   if (!syncLoaded) {
     console.log('❌ 同步器未加载，测试终止')
     return
   }
-  
-  // 2. 检查当前token状态
+
+  // 2. current token
   const tokenStatus = testCurrentTokenStatus()
-  
-  // 3. 测试手动同步
+
+  // 3.
   testManualSync()
-  
-  // 4. 测试统一用户平台token获取
+
+  // 4. user tokenGet
   await testUnifiedPlatformTokenFetch()
-  
-  // 5. 测试token验证
+
+  // 5. token
   await testTokenValidation()
-  
-  // 6. 测试用户信息获取
+
+  // 6. userinfoGet
   await testUserInfoFetch()
-  
-  // 7. 测试iframe监听
+
+  // 7. iframe
   testIframeMonitoring()
-  
-  // 8. 测试事件监听
+
+  // 8. event
   testEventListeners()
-  
+
   console.log('\n' + '=' * 60)
   console.log('🎯 自动跨系统Token同步测试完成')
   console.log('\n💡 测试说明:')
@@ -247,34 +252,34 @@ async function runCompleteTest() {
   console.log('- window.autoCrossSystemSync.init() - 重新初始化')
 }
 
-// 实时监控测试
+//
 function startRealTimeMonitoring() {
   console.log('\n📊 启动实时监控...')
-  
+
   let monitorCount = 0
   const maxMonitors = 10
-  
+
   const monitor = setInterval(() => {
     monitorCount++
     const currentToken = window.autoCrossSystemSync.getCurrentSystemToken()
     const lastUnifiedToken = window.autoCrossSystemSync.lastUnifiedToken
-    
+
     console.log(`📊 监控 ${monitorCount}/${maxMonitors}:`, {
       currentToken: currentToken ? currentToken.substring(0, 8) + '...' : 'null',
       lastUnifiedToken: lastUnifiedToken ? lastUnifiedToken.substring(0, 8) + '...' : 'null',
       isInitialized: window.autoCrossSystemSync.isInitialized
     })
-    
+
     if (monitorCount >= maxMonitors) {
       clearInterval(monitor)
       console.log('📊 实时监控结束')
     }
   }, 3000)
-  
+
   return monitor
 }
 
-// 导出测试函数
+// Export
 window.testAutoCrossSystemSync = {
   runCompleteTest,
   startRealTimeMonitoring,
@@ -291,4 +296,4 @@ window.testAutoCrossSystemSync = {
 
 console.log('✅ 自动跨系统Token同步测试脚本已加载')
 console.log('💡 运行测试: testAutoCrossSystemSync.runCompleteTest()')
-console.log('💡 启动监控: testAutoCrossSystemSync.startRealTimeMonitoring()') 
+console.log('💡 启动监控: testAutoCrossSystemSync.startRealTimeMonitoring()')

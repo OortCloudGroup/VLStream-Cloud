@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 录像信息查询
+// recordinginfoQuery
 export function recordinfo(query) {
     return request({
         url: `/api/gb_record/query`,
@@ -10,7 +15,7 @@ export function recordinfo(query) {
     })
 }
 
-// 录像下载
+// recording
 export function download(query) {
     return request({
         url: `/api/gb_record/download/start`,

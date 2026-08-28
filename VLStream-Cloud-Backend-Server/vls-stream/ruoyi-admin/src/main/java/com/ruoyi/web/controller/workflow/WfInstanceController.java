@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 工作流流程实例管理
+ * workflow instance
  *
  * @author KonBAI
  * @createTime 2022/3/10 00:12
@@ -31,10 +31,10 @@ public class WfInstanceController {
     private final IWfInstanceService instanceService;
 
     /**
-     * 激活或挂起流程实例
+     * workflow instance
      *
-     * @param state 1:激活,2:挂起
-     * @param instanceId 流程实例ID
+     * @param state 1: ,2:
+     * @param instanceId workflow instance ID
      */
     @SaCheckPermission("workflow:instance:updateState")
     @PostMapping(value = "/updateState")
@@ -44,9 +44,9 @@ public class WfInstanceController {
     }
 
 //    /**
-//     * 结束流程实例
+// * finishworkflow instance
 //     *
-//     * @param bo 流程任务业务对象
+// * @param bo workflowtask object
 //     */
 //    @SaCheckPermission("workflow:instance:stopProcessInstance")
 //    @PostMapping(value = "/stopProcessInstance")
@@ -56,10 +56,10 @@ public class WfInstanceController {
 //    }
 
     /**
-     * 删除流程实例
+     * Delete workflow instance
      *
-     * @param instanceId 流程实例ID
-     * @param deleteReason 删除原因
+     * @param instanceId workflow instance ID
+     * @param deleteReason Delete
      */
     @SaCheckPermission("workflow:instance:delete")
     @Deprecated
@@ -70,10 +70,10 @@ public class WfInstanceController {
     }
 
     /**
-     * 查询流程实例详情信息
+     * Query workflow instance info
      *
-     * @param procInsId 流程实例ID
-     * @param deployId 流程部署ID
+     * @param procInsId workflow instance ID
+     * @param deployId workflow ID
      */
     @SaCheckPermission("workflow:instance:detail")
     @GetMapping("/detail")

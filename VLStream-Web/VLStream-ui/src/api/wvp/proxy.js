@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 分页获取拉流代理
+// Get
 export function listProxy(query) {
     return request({
         url: `/api/proxy/list`,
@@ -9,7 +14,7 @@ export function listProxy(query) {
     })
 }
 
-// 获取ffmpeg.cmd模板
+// Get ffmpeg.cmd
 export function getFFmpegCMDs(query) {
     return request({
         url: `/api/proxy/ffmpeg_cmd/list`,
@@ -18,7 +23,7 @@ export function getFFmpegCMDs(query) {
     })
 }
 
-// 更新拉流代理
+// new
 export function updateProxy(data) {
     return request({
         url: `/api/proxy/update`,
@@ -27,7 +32,7 @@ export function updateProxy(data) {
     })
 }
 
-// 新增拉流代理
+// Add
 export function addProxy(data) {
     return request({
         url: `/api/proxy/add`,
@@ -36,7 +41,7 @@ export function addProxy(data) {
     })
 }
 
-// 删除拉流代理
+// Delete
 export function deleteProxy(id) {
     return request({
         url: `/api/proxy/delete/${id}`,
@@ -44,7 +49,7 @@ export function deleteProxy(id) {
     })
 }
 
-// 停止拉流代理
+//
 export function stopProxy(id) {
     return request({
         url: `/api/proxy/stop/${id}`,
@@ -52,7 +57,7 @@ export function stopProxy(id) {
     })
 }
 
-// 启用代理
+//
 export function start(query) {
     return request({
         url: `/api/proxy/start`,

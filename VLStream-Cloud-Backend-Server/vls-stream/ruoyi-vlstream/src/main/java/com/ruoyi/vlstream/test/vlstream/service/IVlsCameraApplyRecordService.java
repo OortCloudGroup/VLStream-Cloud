@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -12,7 +13,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.CameraApplyRecord;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.CameraApplyRecordVO;
 
 /**
- * 摄像头申请审批记录 服务类
+ * approvalrecord service
  */
 public interface IVlsCameraApplyRecordService extends BaseService<CameraApplyRecord> {
 

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 提供给腾讯的流程接口
+ * workflowinterface
  *
  * @author KonBAI
  * @createTime 2022/3/7 22:07
@@ -26,7 +27,7 @@ public class WfTXController extends BaseController {
     private final IWfProcessService processService;
 
     /**
-     * 根据流程标识，查询流程定义id和最新版的部署id
+     * workflow , Query workflow definitionid and new id
      */
     @GetMapping(value = "/getDefIdAndDepIdByProcKey/{processKey}")
     public R<WfDefAndDepVo> getDefIdAndDepIdByProcKey(@PathVariable String processKey, @RequestHeader("Authorization")String token) {

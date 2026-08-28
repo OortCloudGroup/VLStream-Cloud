@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 获取上级平台列表
+// Get
 export function listPlatform(query) {
     return request({
         url: `/api/platform/query`,
@@ -9,7 +14,7 @@ export function listPlatform(query) {
     })
 }
 
-// 判断上级平台是否存在
+// Check whether in
 export function exitPlatform(serverGBId) {
     return request({
         url: `/api/platform/exit/${serverGBId}`,
@@ -17,7 +22,7 @@ export function exitPlatform(serverGBId) {
     })
 }
 
-// 获取上级平台信息
+// Get info
 export function serverConfig() {
     return request({
         url: `/api/platform/server_config`,
@@ -25,7 +30,7 @@ export function serverConfig() {
     })
 }
 
-// 添加上级平台信息
+// info
 export function addPlatform(data) {
     return request({
         url: `/api/platform/add`,
@@ -34,7 +39,7 @@ export function addPlatform(data) {
     })
 }
 
-// 更新上级平台信息
+// new info
 export function updatePlatform(data) {
     return request({
         url: `/api/platform/update`,
@@ -43,7 +48,7 @@ export function updatePlatform(data) {
     })
 }
 
-// 删除上级平台信息
+// Delete info
 export function delPlatform(id) {
     return request({
         url: `/api/platform/delete/${id}`,
@@ -51,7 +56,7 @@ export function delPlatform(id) {
     })
 }
 
-// 上级平台推送通道
+// Push channel
 export function pushChannel(id) {
     return request({
         url: `/api/platform/channel/push/${id}`,
@@ -59,7 +64,7 @@ export function pushChannel(id) {
     })
 }
 
-// 查询上级平台列表
+// Query list
 export function queryChannelList(query) {
     return request({
         url: `/api/platform/channel/list`,

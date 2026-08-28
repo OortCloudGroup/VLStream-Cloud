@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="device-list-panel">
-    <!-- 设备列表头部 -->
+    <!-- device -->
     <div class="device-list-header">
       <span class="device-list-title">设备列表</span>
       <div class="device-list-actions">
@@ -17,19 +22,19 @@
         </button>
       </div>
       </div>
-      
+
     <div class="device-list-content">
-      <!-- 显示设备信息项 - 始终显示，不依赖勾选状态 -->
+      <!-- deviceinfo item - , -->
       <div class="selected-display-items">
         <div class="display-items-list">
-          <div 
-            v-for="item in selectedDisplayItems" 
+          <div
+            v-for="item in selectedDisplayItems"
             :key="item.id"
             class="display-item-tag"
           >
             <div class="tag-content">
-              <el-checkbox 
-                :model-value="item.checked" 
+              <el-checkbox
+                :model-value="item.checked"
                 @update:model-value="updateItemChecked(item, $event)"
                 class="tag-checkbox"
               />
@@ -44,8 +49,8 @@
               popper-class="device-stats-popover"
             >
               <template #reference>
-        <button 
-                  class="tag-stats-btn" 
+        <button
+                  class="tag-stats-btn"
                   @click="toggleDeviceStatsModal(item)"
                   title="展开/收起设备统计详情"
                 >
@@ -54,8 +59,8 @@
                   </svg>
         </button>
               </template>
-              
-              <!-- Popover内容 -->
+
+              <!-- Popover -->
               <div class="device-stats-content">
                 <div class="device-stats-expanded">
                   <div class="stats-header">
@@ -66,19 +71,19 @@
       </div>
                     <span class="device-type-title">{{ item.label }}</span>
     </div>
-    
+
                   <div class="total-count">
                     <span class="count-label">总数</span>
                     <span class="count-number">{{ getDeviceCount(item.id) }}</span>
                   </div>
 
-                  <!-- 位置分类统计 -->
+                  <!--  -->
                   <div class="location-stats">
                     <div v-for="location in locationCategories" :key="location.id" class="location-group">
                       <div class="location-title">{{ location.label }}</div>
                       <div class="status-options">
                         <div v-for="status in statusOptions" :key="`${location.id}-${status.id}`" class="status-item">
-                          <el-checkbox 
+                          <el-checkbox
                             v-model="item.locationStats[location.id][status.id]"
                             class="status-checkbox"
                           >
@@ -94,13 +99,13 @@
           </div>
         </div>
     </div>
-    
-      <!-- 设备搜索框 -->
+
+      <!-- device -->
       <div class="device-search-container">
         <div class="device-search-wrapper">
-          <input 
+          <input
             v-model="searchKeyword"
-            type="text" 
+            type="text"
             placeholder="搜索摄像机"
             class="device-search-input"
             @keyup.enter="handleSearch"
@@ -112,13 +117,13 @@
           </button>
         </div>
       </div>
-      
-      <!-- 设备列表 -->
+
+      <!-- device -->
       <div class="device-list-items">
-      <!-- 列表视图 -->
+      <!--  -->
         <template v-if="!isTreeView">
-          <div 
-            v-for="device in filteredDevices" 
+          <div
+            v-for="device in filteredDevices"
             :key="device.id"
             class="device-item"
             @click="$emit('device-click', device)"
@@ -141,7 +146,7 @@
             </div>
         </template>
 
-        <!-- 树形视图 -->
+        <!--  -->
         <template v-else>
           <div class="tree-view">
             <template v-for="group in treeData" :key="group.id">
@@ -158,7 +163,7 @@
             </div>
             </div>
               <template v-if="group.expanded">
-                <div 
+                <div
                   v-for="device in group.children"
                   :key="device.id"
                   class="tree-device-item"
@@ -216,16 +221,16 @@ const emit = defineEmits([
   'search'
 ])
 
-// 响应式数据
+// data
 const searchKeyword = ref('')
 const isTreeView = ref(false)
 
-// 所有可能的设备类型（内部状态，不会消失）
+// all can device ( , will )
 const allDeviceTypes = ref([
-  { 
-    id: 'bulletCamera', 
-    label: '枪机', 
-    checked: true, 
+  {
+    id: 'bulletCamera',
+    label: '枪机',
+    checked: true,
     expanded: true,
     locationStats: {
       'aerial': { 'online': true, 'offline': true },
@@ -233,10 +238,10 @@ const allDeviceTypes = ref([
       'underground': { 'online': true, 'offline': true }
     }
   },
-  { 
-    id: 'ballCamera', 
-    label: '球机', 
-    checked: true, 
+  {
+    id: 'ballCamera',
+    label: '球机',
+    checked: true,
     expanded: true,
     locationStats: {
       'aerial': { 'online': true, 'offline': true },
@@ -246,9 +251,9 @@ const allDeviceTypes = ref([
   }
 ])
 
-// 显示的设备类型选项（基于父组件的displaySettings控制）
+// device item ( component displaySettingscontrol)
 const deviceTypeOptions = computed(() => {
-  return allDeviceTypes.value.filter(deviceType => 
+  return allDeviceTypes.value.filter(deviceType =>
     props.displaySettings.deviceTypes.includes(deviceType.id)
   )
 })
@@ -265,8 +270,8 @@ const statusOptions = ref([
 ])
 
 const selectedDisplayItems = computed(() => {
-  // 显示所有在displaySettings中允许的设备类型，不管是否勾选
-  return allDeviceTypes.value.filter(item => 
+  // all in displaySettings in device , whether
+  return allDeviceTypes.value.filter(item =>
     props.displaySettings.deviceTypes.includes(item.id)
   )
 })
@@ -276,46 +281,46 @@ const currentStatsItem = ref(null)
 
 const filteredDevices = computed(() => {
   let devices = props.devices
-  
-  // 根据设备类型勾选状态过滤
+
+  // device
   const checkedDeviceTypes = allDeviceTypes.value.filter(item => item.checked).map(item => item.id)
   devices = devices.filter(device => {
     const deviceType = getDeviceTypeFromName(device.deviceName, device)
-    // 根据设备类型映射到对应的ID
-    const typeId = deviceType === '枪机' || deviceType === '摄像头' ? 'bulletCamera' : 
+    // device ID
+    const typeId = deviceType === '枪机' || deviceType === '摄像头' ? 'bulletCamera' :
                    deviceType === '球机' ? 'ballCamera' : null
     return typeId && checkedDeviceTypes.includes(typeId)
   })
-  
-  // 根据搜索关键词过滤
+
+  //
   if (searchKeyword.value.trim()) {
-    devices = devices.filter(device => 
+    devices = devices.filter(device =>
       device.deviceName.toLowerCase().includes(searchKeyword.value.toLowerCase())
     )
   }
-  
+
   return devices
 })
 
-// 根据设备名称或类型判断设备类型
+// device Check device
 const getDeviceTypeFromName = (deviceName, device) => {
   if (device.deviceType) {
     return device.deviceType
   }
-  
-  // 根据设备名称判断类型
+
+  // device Check
   const name = deviceName.toLowerCase()
   if (name.includes('枪机') || name.includes('摄像头') || name.includes('camera')) {
     return '枪机'
   } else if (name.includes('球机') || name.includes('球形') || name.includes('dome')) {
     return '球机'
   }
-  
-  // 默认返回枪机
+
+  //
   return '枪机'
 }
 
-// 方法
+// method
 const updateItemChecked = (item, checked) => {
   const index = allDeviceTypes.value.findIndex(option => option.id === item.id)
   if (index !== -1) {
@@ -336,7 +341,7 @@ const toggleListView = () => {
 const handleSearch = () => {
   console.log('设备搜索:', searchKeyword.value)
   emit('search', searchKeyword.value)
-  
+
   if (filteredDevices.value.length === 0) {
     ElMessage.warning('未找到匹配的设备')
   } else {
@@ -350,47 +355,47 @@ const toggleDeviceStatsModal = (item) => {
   } else {
     currentStatsItem.value = item
     showDeviceStatsDialog.value = true
-    
-    // 等待DOM更新后应用深色模式样式 - 多次尝试确保生效
+
+    // etc. DOM new after -
     nextTick(() => {
       applyDarkModeToPopover()
     })
-    
-    // 延迟100ms再次尝试，确保Element Plus弹窗完全渲染
+
+    // 100ms , Element Plusdialog full
     setTimeout(() => {
       applyDarkModeToPopover()
     }, 100)
-    
-    // 延迟300ms最后一次尝试
+
+    // 300ms after
     setTimeout(() => {
       applyDarkModeToPopover()
     }, 300)
   }
 }
 
-// 强制为弹窗应用深色模式样式
+// to dialog
 const applyDarkModeToPopover = () => {
   const mapArea = document.querySelector('.map-area')
   if (!mapArea) return
-  
+
   const isDarkMode = mapArea.classList.contains('dark-mode')
-  
-  // 查找所有可能的弹窗元素
-  const popover = document.querySelector('.device-stats-popover') || 
+
+  // find all can dialogelement
+  const popover = document.querySelector('.device-stats-popover') ||
                   document.querySelector('.el-popper.device-stats-popover') ||
                   document.querySelector('.el-popper[data-popper-placement]') ||
                   document.querySelector('.el-popper') ||
                   document.querySelector('[data-popper-placement]') ||
                   document.querySelector('[role="tooltip"]')
-  
+
   if (popover && isDarkMode) {
-    // 强制应用深色模式样式到弹窗元素本身
+    // dialogelement
     popover.style.setProperty('background', 'rgba(40, 44, 52, 0.95)', 'important')
     popover.style.setProperty('border', 'none', 'important')
     popover.style.setProperty('box-shadow', '0 4px 12px rgba(0, 0, 0, 0.3)', 'important')
     popover.style.setProperty('color', '#e8f4fd', 'important')
-    
-    // 强制应用弹窗内部所有可能的背景元素
+
+    // dialog all can element
     const innerElements = [
       popover,
       popover.querySelector('.device-stats-content'),
@@ -398,7 +403,7 @@ const applyDarkModeToPopover = () => {
       popover.querySelector('.el-popper__content'),
       popover.querySelector('.el-popover__content')
     ]
-    
+
     innerElements.forEach(element => {
       if (element) {
         element.style.setProperty('background', 'rgba(40, 44, 52, 0.95)', 'important')
@@ -406,8 +411,8 @@ const applyDarkModeToPopover = () => {
         element.style.setProperty('color', '#e8f4fd', 'important')
       }
     })
-    
-    // 强制应用内部元素样式
+
+    // element
     const content = popover.querySelector('.device-stats-content')
     if (content) {
       content.style.setProperty('color', '#e8f4fd', 'important')
@@ -417,64 +422,64 @@ const applyDarkModeToPopover = () => {
       content.style.setProperty('border-radius', '8px', 'important')
       content.style.setProperty('padding', '12px', 'important')
     }
-    
+
     const typeTitle = popover.querySelector('.device-type-title')
     if (typeTitle) typeTitle.style.setProperty('color', '#e8f4fd', 'important')
-    
+
     const deviceIcon = popover.querySelector('.device-icon')
     if (deviceIcon) deviceIcon.style.setProperty('color', '#7db8ff', 'important')
-    
+
     const totalCount = popover.querySelector('.total-count')
     if (totalCount) {
       totalCount.style.setProperty('background', 'rgba(30, 34, 42, 0.6)', 'important')
       totalCount.style.setProperty('background-color', 'rgba(30, 34, 42, 0.6)', 'important')
       totalCount.style.setProperty('border-bottom', '1px solid rgba(100, 149, 237, 0.3)', 'important')
     }
-    
-    // 强制应用location-stats区域背景
+
+    // location-stats
     const locationStats = popover.querySelector('.location-stats')
     if (locationStats) {
       locationStats.style.setProperty('background', 'rgba(40, 44, 52, 0.95)', 'important')
       locationStats.style.setProperty('background-color', 'rgba(40, 44, 52, 0.95)', 'important')
     }
-    
+
     const countLabel = popover.querySelector('.count-label')
     if (countLabel) countLabel.style.setProperty('color', '#b0c4de', 'important')
-    
+
     const countNumber = popover.querySelector('.count-number')
     if (countNumber) countNumber.style.setProperty('color', '#7db8ff', 'important')
-    
+
     const locationTitles = popover.querySelectorAll('.location-title')
     locationTitles.forEach(title => {
       title.style.setProperty('color', '#e8f4fd', 'important')
     })
-    
-    // 强制应用复选框样式
+
+    //
     const checkboxLabels = popover.querySelectorAll('.el-checkbox__label')
     checkboxLabels.forEach(label => {
       label.style.setProperty('color', '#e8f4fd', 'important')
     })
-    
+
     const checkboxInners = popover.querySelectorAll('.el-checkbox__inner')
     checkboxInners.forEach(inner => {
       inner.style.setProperty('background-color', 'rgba(30, 34, 42, 0.8)', 'important')
       inner.style.setProperty('border-color', 'rgba(100, 149, 237, 0.5)', 'important')
     })
-    
+
     const checkedInners = popover.querySelectorAll('.el-checkbox__input.is-checked .el-checkbox__inner')
     checkedInners.forEach(inner => {
       inner.style.setProperty('background-color', '#7db8ff', 'important')
       inner.style.setProperty('border-color', '#7db8ff', 'important')
     })
-    
-    // 强制处理所有div元素的背景
+
+    // Process all divelement
     const allDivs = popover.querySelectorAll('div')
     allDivs.forEach(div => {
-      // 跳过特殊背景的元素
-      if (!div.classList.contains('total-count') && 
+      // element
+      if (!div.classList.contains('total-count') &&
           !div.classList.contains('el-checkbox__inner')) {
         const computedStyle = window.getComputedStyle(div)
-        if (computedStyle.backgroundColor === 'rgb(255, 255, 255)' || 
+        if (computedStyle.backgroundColor === 'rgb(255, 255, 255)' ||
             computedStyle.backgroundColor === 'white' ||
             computedStyle.backgroundColor === 'rgba(255, 255, 255, 1)') {
           div.style.setProperty('background', 'rgba(40, 44, 52, 0.95)', 'important')
@@ -483,43 +488,43 @@ const applyDarkModeToPopover = () => {
       }
     })
   } else if (popover && !isDarkMode) {
-    // 移除深色模式样式，恢复正常样式
+    // ,
     popover.style.background = ''
     popover.style.border = ''
     popover.style.boxShadow = ''
     popover.style.color = ''
-    
+
     const content = popover.querySelector('.device-stats-content')
     if (content) content.style.color = ''
-    
+
     const typeTitle = popover.querySelector('.device-type-title')
     if (typeTitle) typeTitle.style.color = ''
-    
+
     const deviceIcon = popover.querySelector('.device-icon')
     if (deviceIcon) deviceIcon.style.color = ''
-    
+
     const totalCount = popover.querySelector('.total-count')
     if (totalCount) {
       totalCount.style.background = ''
       totalCount.style.borderBottom = ''
     }
-    
+
     const countLabel = popover.querySelector('.count-label')
     if (countLabel) countLabel.style.color = ''
-    
+
     const countNumber = popover.querySelector('.count-number')
     if (countNumber) countNumber.style.color = ''
-    
+
     const locationTitles = popover.querySelectorAll('.location-title')
     locationTitles.forEach(title => {
       title.style.color = ''
     })
-    
+
     const checkboxLabels = popover.querySelectorAll('.el-checkbox__label')
     checkboxLabels.forEach(label => {
       label.style.color = ''
     })
-    
+
     const checkboxInners = popover.querySelectorAll('.el-checkbox__inner')
     checkboxInners.forEach(inner => {
       inner.style.backgroundColor = ''
@@ -560,98 +565,98 @@ const handleGlobalClick = (event) => {
   }
 }
 
-// 强制应用树形结构样式
+//
 const applyTreeStructureStyles = () => {
   const mapArea = document.querySelector('.map-area')
   if (!mapArea) return
-  
+
   const isDarkMode = mapArea.classList.contains('dark-mode')
-  
-  // 查找树形结构元素和列表结构元素
+
+  // find element and element
   const treeDeviceNames = document.querySelectorAll('.tree-device-name')
   const treeDeviceDetails = document.querySelectorAll('.tree-device-details')
   const treeGroupLabels = document.querySelectorAll('.tree-group-label')
-  // 列表结构元素
+  // element
   const deviceNames = document.querySelectorAll('.device-name')
   const deviceDetails = document.querySelectorAll('.device-details')
   const deviceIps = document.querySelectorAll('.device-ip')
-  
+
   if (isDarkMode) {
-    // 深色模式样式
+    //
     treeDeviceNames.forEach(name => {
       name.style.setProperty('color', '#ffffff', 'important')
       name.style.setProperty('font-weight', '500', 'important')
     })
-    
+
     treeDeviceDetails.forEach(detail => {
       detail.style.setProperty('color', '#a0a0a0', 'important')
     })
-    
+
     treeGroupLabels.forEach(label => {
       label.style.setProperty('color', '#ffffff', 'important')
       label.style.setProperty('font-weight', '600', 'important')
     })
-    
-    // 深色模式列表结构样式
+
+    //
     deviceNames.forEach(name => {
       name.style.setProperty('color', '#ffffff', 'important')
       name.style.setProperty('font-weight', '500', 'important')
     })
-    
+
     deviceDetails.forEach(detail => {
       detail.style.setProperty('color', '#a0a0a0', 'important')
     })
-    
+
     deviceIps.forEach(ip => {
       ip.style.setProperty('color', '#a0a0a0', 'important')
     })
-    
+
     console.log('应用树形结构和列表结构深色模式样式')
   } else {
-    // 浅色模式样式
+    //
     treeDeviceNames.forEach(name => {
       name.style.setProperty('color', '#303133', 'important')
       name.style.setProperty('font-weight', '500', 'important')
     })
-    
+
     treeDeviceDetails.forEach(detail => {
       detail.style.setProperty('color', '#909399', 'important')
     })
-    
+
     treeGroupLabels.forEach(label => {
       label.style.setProperty('color', '#606266', 'important')
       label.style.setProperty('font-weight', '600', 'important')
     })
-    
-    // 浅色模式列表结构样式
+
+    //
     deviceNames.forEach(name => {
       name.style.setProperty('color', '#303133', 'important')
       name.style.setProperty('font-weight', '500', 'important')
     })
-    
+
     deviceDetails.forEach(detail => {
       detail.style.setProperty('color', '#909399', 'important')
     })
-    
+
     deviceIps.forEach(ip => {
       ip.style.setProperty('color', '#909399', 'important')
     })
-    
+
     console.log('恢复树形结构和列表结构浅色模式样式')
   }
 }
 
 onMounted(() => {
   document.addEventListener('click', handleGlobalClick)
-  
-  // 监听弹窗DOM变化，自动应用深色模式样式
+
+  // dialogDOM ,
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       mutation.addedNodes.forEach((node) => {
         if (node.nodeType === 1) { // Element node
-          // 检查是否是弹窗元素
+          // whether is dialogelement
           if (node.classList && (
-            node.classList.contains('el-popper') || 
+            node.classList.contains('el-popper') ||
             node.classList.contains('device-stats-popover') ||
             node.hasAttribute('data-popper-placement')
           )) {
@@ -659,16 +664,16 @@ onMounted(() => {
               applyDarkModeToPopover()
             }, 50)
           }
-          
-          // 检查子元素中是否有弹窗
+
+          // sub element in whether dialog
           const popovers = node.querySelectorAll && node.querySelectorAll('.el-popper, .device-stats-popover, [data-popper-placement]')
           if (popovers && popovers.length > 0) {
             setTimeout(() => {
               applyDarkModeToPopover()
             }, 50)
           }
-          
-          // 检查是否有树形结构或列表结构元素
+
+          // whether element
           const structureElements = node.querySelectorAll && node.querySelectorAll('.tree-device-name, .tree-device-details, .tree-group-label, .device-name, .device-details, .device-ip')
           if (structureElements && structureElements.length > 0) {
             setTimeout(() => {
@@ -679,24 +684,24 @@ onMounted(() => {
       })
     })
   })
-  
-  // 监听body的变化
+
+  // body
   observer.observe(document.body, {
     childList: true,
     subtree: true
   })
-  
-  // 组件卸载时清理观察器
+
+  // component
   onUnmounted(() => {
     observer.disconnect()
   })
-  
-  // 初始化时应用树形结构样式
+
+  // Initialize
   nextTick(() => {
     applyTreeStructureStyles()
   })
-  
-  // 延迟一点再次确保样式应用
+
+  //
   setTimeout(() => {
     applyTreeStructureStyles()
   }, 200)
@@ -725,7 +730,7 @@ onUnmounted(() => {
   z-index: 1001;
 }
 
-/* 深色模式下的设备列表面板 */
+/* device */
 :deep(.map-area.dark-mode) .device-list-panel,
 .map-area.dark-mode .device-list-panel {
   background: rgba(40, 44, 52, 0.95) !important;
@@ -1162,7 +1167,7 @@ onUnmounted(() => {
   gap: 6px;
 }
 
-/* 设备统计弹窗样式 */
+/* device dialog */
 .device-stats-content {
   color: #303133;
   font-size: 14px;
@@ -1245,7 +1250,7 @@ onUnmounted(() => {
   font-size: 12px;
 }
 
-/* 深色模式下的弹窗样式 */
+/* dialog */
 :deep(.map-area.dark-mode) .device-stats-popover {
   background: rgba(40, 44, 52, 0.95) !important;
   border: 1px solid rgba(100, 149, 237, 0.3) !important;
@@ -1290,4 +1295,4 @@ onUnmounted(() => {
 :deep(.map-area.dark-mode) .location-title {
   color: #e8f4fd;
 }
-</style> 
+</style>

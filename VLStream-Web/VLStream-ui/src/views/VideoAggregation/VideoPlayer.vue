@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="video-player-dialog">
     <el-dialog
@@ -8,8 +13,8 @@
       @close="handleClose"
     >
       <div class="video-container">
-        <!-- 调试信息 -->
-        <div v-if="process.env.NODE_ENV === 'development'" class="debug-info" 
+        <!-- info -->
+        <div v-if="process.env.NODE_ENV === 'development'" class="debug-info"
              style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 4px; font-size: 12px; z-index: 999;">
           <div>设备信息: {{ JSON.stringify(deviceInfo, null, 2) }}</div>
           <div>流类型: {{ streamType }}</div>
@@ -17,10 +22,10 @@
           <div>对话框可见: {{ visible }}</div>
           <div>错误信息: {{ videoError }}</div>
         </div>
-        
-        <!-- 视频播放区域 -->
+
+        <!--  -->
         <div class="video-area">
-          <!-- YouTube视频 -->
+          <!-- YouTube -->
           <iframe
             v-if="streamType === 'youtube'"
             ref="youtubePlayer"
@@ -29,16 +34,16 @@
             frameborder="0"
             allowfullscreen
           ></iframe>
-          
-          <!-- HTTP流视频 -->
+
+          <!-- HTTP -->
           <iframe
             v-else-if="streamType === 'http'"
             :src="deviceInfo.streamUrl"
             class="video-iframe"
             frameborder="0"
           ></iframe>
-          
-          <!-- HLS流视频 -->
+
+          <!-- HLS -->
           <video
             v-else-if="streamType === 'hls'"
             ref="hlsPlayer"
@@ -47,9 +52,9 @@
             autoplay
             muted
           ></video>
-          
-          <!-- RTSP流视频 -->
-          
+
+          <!-- RTSP -->
+
           <!-- CameraRTC -->
           <div
             v-else-if="streamType === 'cameraRTC'"
@@ -71,8 +76,8 @@
               </div>
             </div>
           </div>
-          
-          <!-- 普通视频文件 -->
+
+          <!--  -->
           <video
             v-else-if="streamType === 'video'"
             ref="videoPlayer"
@@ -84,8 +89,8 @@
             <source :src="deviceInfo.streamUrl" type="video/mp4">
             您的浏览器不支持视频播放
           </video>
-          
-          <!-- 错误或未知格式 -->
+
+          <!-- not -->
           <div v-else class="video-error">
             <div class="error-content">
               <h3>无法播放视频</h3>
@@ -96,8 +101,8 @@
               </div>
             </div>
           </div>
-          
-          <!-- 视频信息覆盖层 -->
+
+          <!-- info layer -->
           <div class="video-overlay" v-if="streamType !== 'rtsp' && streamType !== 'unknown'">
             <div class="overlay-content">
               <div class="stream-info">
@@ -117,8 +122,8 @@
             </div>
           </div>
         </div>
-        
-        <!-- PTZ控制面板 -->
+
+        <!-- PTZcontrol -->
         <div class="ptz-control-area" v-if="showPTZControl">
           <PTZControl
             :device-info="deviceInfo"
@@ -134,11 +139,11 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import PTZControl from '@/components/PTZControl.vue'
-import { 
-  getStreamType, 
-  getYouTubeEmbedUrl, 
-  copyStreamUrl as copyUrl, 
-  openInVlc as openVlc 
+import {
+  getStreamType,
+  getYouTubeEmbedUrl,
+  copyStreamUrl as copyUrl,
+  openInVlc as openVlc
 } from './deviceUtils.js'
 import { CAMERA_RTC_SOCKET_URL, ensureOPlayer } from '@/utils/oplayer'
 
@@ -159,7 +164,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'close', 'ptz-command'])
 
-// 响应式数据
+// data
 const visible = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
@@ -169,14 +174,14 @@ const isRecording = ref(false)
 const currentTime = ref('')
 const videoError = ref('')
 
-// 视频播放器引用
+//
 const youtubePlayer = ref(null)
 const hlsPlayer = ref(null)
 const videoPlayer = ref(null)
 const cameraRtcContainer = ref(null)
 const cameraRtcPlayer = ref(null)
 
-// 计算属性
+// property
 const streamType = computed(() => {
   return getStreamType(props.deviceInfo.streamUrl)
 })
@@ -198,10 +203,10 @@ const streamTypeText = computed(() => {
   return typeMap[streamType.value] || '未知格式'
 })
 
-// 定时器
+//
 let timeTimer = null
 
-// 方法
+// method
 const updateCurrentTime = () => {
   const now = new Date()
   currentTime.value = now.toLocaleString('zh-CN', {
@@ -227,27 +232,27 @@ const stopTimeTimer = () => {
 }
 
 const handleClose = () => {
-  // 停止录制
+  //
   if (isRecording.value) {
     toggleRecording()
   }
-  
-  // 清理播放器资源
+
+  //
   cleanupPlayers()
-  
-  // 停止定时器
+
+  //
   stopTimeTimer()
-  
-  // 清理错误状态
+
+  //
   videoError.value = ''
   cleanupCameraRtcPlayer()
-  
+
   emit('close')
 }
 
 const toggleRecording = () => {
   isRecording.value = !isRecording.value
-  
+
   if (isRecording.value) {
     ElMessage.success('开始录制')
     startTimeTimer()
@@ -269,19 +274,19 @@ const handlePTZCommand = (command) => {
   emit('ptz-command', command)
 }
 
-// 初始化HLS播放器
+// Initialize HLS
 const initHLSPlayer = () => {
   if (streamType.value === 'hls' && hlsPlayer.value) {
     const video = hlsPlayer.value
-    
-    // 清理之前的HLS实例
+
+    // before HLSinstance
     if (video.hlsInstance) {
       video.hlsInstance.destroy()
       video.hlsInstance = null
     }
-    
+
     console.log('初始化HLS播放器，URL:', props.deviceInfo.streamUrl)
-    
+
     if (window.Hls && window.Hls.isSupported()) {
       const hls = new window.Hls({
         debug: process.env.NODE_ENV === 'development',
@@ -289,13 +294,13 @@ const initHLSPlayer = () => {
         lowLatencyMode: true,
         backBufferLength: 90
       })
-      
-      // 保存实例引用以便后续清理
+
+      // instance after
       video.hlsInstance = hls
-      
+
       hls.loadSource(props.deviceInfo.streamUrl)
       hls.attachMedia(video)
-      
+
       hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
         console.log('HLS manifest 解析成功')
         video.play().catch(error => {
@@ -303,7 +308,7 @@ const initHLSPlayer = () => {
           ElMessage.warning('视频自动播放失败，请手动点击播放')
         })
       })
-      
+
       hls.on(window.Hls.Events.ERROR, (event, data) => {
         console.error('HLS播放错误:', data)
         if (data.fatal) {
@@ -325,11 +330,11 @@ const initHLSPlayer = () => {
           }
         }
       })
-      
+
       hls.on(window.Hls.Events.MEDIA_ATTACHED, () => {
         console.log('HLS媒体已附加')
       })
-      
+
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       console.log('使用原生HLS支持')
       video.src = props.deviceInfo.streamUrl
@@ -340,7 +345,7 @@ const initHLSPlayer = () => {
           ElMessage.warning('视频自动播放失败，请手动点击播放')
         })
       })
-      
+
       video.addEventListener('error', (e) => {
         console.error('原生视频播放错误:', e)
         videoError.value = '视频播放失败'
@@ -354,30 +359,30 @@ const initHLSPlayer = () => {
   }
 }
 
-// 初始化普通视频播放器
+// Initialize
 const initVideoPlayer = () => {
   if (streamType.value === 'video' && videoPlayer.value) {
     const video = videoPlayer.value
-    
+
     console.log('初始化视频播放器，URL:', props.deviceInfo.streamUrl)
-    
+
     video.addEventListener('loadedmetadata', () => {
       console.log('视频元数据加载完成')
     })
-    
+
     video.addEventListener('error', (e) => {
       console.error('视频播放错误:', e)
       videoError.value = '视频播放失败'
       ElMessage.error('视频播放失败')
     })
-    
+
     video.addEventListener('canplay', () => {
       console.log('视频可以开始播放')
     })
   }
 }
 
-// 清理播放器资源
+//
 
 const initCameraRtcPlayer = async () => {
   if (streamType.value !== 'cameraRTC' || !cameraRtcContainer.value) {
@@ -428,20 +433,20 @@ const cleanupCameraRtcPlayer = () => {
 
 const cleanupPlayers = () => {
   cleanupCameraRtcPlayer()
-  // 清理HLS播放器
+  // HLS
   if (hlsPlayer.value && hlsPlayer.value.hlsInstance) {
     hlsPlayer.value.hlsInstance.destroy()
     hlsPlayer.value.hlsInstance = null
   }
-  
-  // 清理普通视频播放器
+
+  //
   if (videoPlayer.value) {
     videoPlayer.value.pause()
     videoPlayer.value.currentTime = 0
     videoPlayer.value.src = ''
   }
-  
-  // 清理HLS播放器
+
+  // HLS
   if (hlsPlayer.value) {
     hlsPlayer.value.pause()
     hlsPlayer.value.currentTime = 0
@@ -449,7 +454,7 @@ const cleanupPlayers = () => {
   }
 }
 
-// 监听设备信息变化
+// deviceinfo
 watch(() => props.deviceInfo, (newDeviceInfo, oldDeviceInfo) => {
   console.log('VideoPlayer - 设备信息变化:', {
     new: newDeviceInfo,
@@ -457,10 +462,10 @@ watch(() => props.deviceInfo, (newDeviceInfo, oldDeviceInfo) => {
     streamUrl: newDeviceInfo?.streamUrl,
     streamType: getStreamType(newDeviceInfo?.streamUrl)
   })
-  
+
   videoError.value = ''
-  
-  // 当设备信息变化时，重新初始化播放器
+
+  // deviceinfo , new Initialize
   if (visible.value && newDeviceInfo?.streamUrl) {
     console.log('VideoPlayer - 重新初始化播放器')
     setTimeout(() => {
@@ -471,15 +476,15 @@ watch(() => props.deviceInfo, (newDeviceInfo, oldDeviceInfo) => {
   }
 }, { deep: true, immediate: true })
 
-// 监听对话框显示状态
+//
 watch(visible, (newValue) => {
   console.log('VideoPlayer - 对话框显示状态变化:', newValue)
-  
+
   if (newValue) {
     console.log('VideoPlayer - 对话框打开，设备信息:', props.deviceInfo)
     startTimeTimer()
-    
-    // 延迟初始化播放器，确保DOM已渲染
+
+    // Initialize , DOM already
     setTimeout(() => {
       console.log('VideoPlayer - 开始初始化播放器')
       initHLSPlayer()
@@ -493,7 +498,7 @@ watch(visible, (newValue) => {
   }
 })
 
-// 生命周期
+//
 onMounted(() => {
   if (visible.value) {
     startTimeTimer()
@@ -513,7 +518,7 @@ onBeforeUnmount(() => {
     height: 70vh;
     min-height: 500px;
   }
-  
+
   .video-area {
     flex: 1;
     position: relative;
@@ -521,14 +526,14 @@ onBeforeUnmount(() => {
     border-radius: 8px;
     overflow: hidden;
   }
-  
+
   .video-iframe,
   .video-player {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
-  
+
   .rtsp-info,
   .video-error {
     display: flex;
@@ -536,23 +541,23 @@ onBeforeUnmount(() => {
     justify-content: center;
     height: 100%;
     background: #f5f5f5;
-    
+
     .rtsp-content,
     .error-content {
       text-align: center;
       padding: 40px;
-      
+
       h3 {
         margin: 0 0 16px 0;
         font-size: 20px;
         color: #333;
       }
-      
+
       p {
         margin: 0 0 20px 0;
         color: #666;
       }
-      
+
       .rtsp-url,
       .error-url {
         margin: 20px 0;
@@ -560,14 +565,14 @@ onBeforeUnmount(() => {
         background: #fff;
         border: 1px solid #dcdfe6;
         border-radius: 6px;
-        
+
         .url-text {
           font-family: monospace;
           color: #409eff;
           word-break: break-all;
         }
       }
-      
+
       .rtsp-actions {
         display: flex;
         gap: 12px;
@@ -575,7 +580,7 @@ onBeforeUnmount(() => {
       }
     }
   }
-  
+
   .video-overlay {
     position: absolute;
     top: 0;
@@ -590,7 +595,7 @@ onBeforeUnmount(() => {
       rgba(0, 0, 0, 0.7) 100%
     );
     pointer-events: none;
-    
+
     .overlay-content {
       position: absolute;
       top: 0;
@@ -601,12 +606,12 @@ onBeforeUnmount(() => {
       flex-direction: column;
       justify-content: space-between;
       padding: 20px;
-      
+
       .stream-info {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        
+
         .stream-type {
           background: rgba(24, 144, 255, 0.8);
           color: white;
@@ -614,19 +619,19 @@ onBeforeUnmount(() => {
           border-radius: 4px;
           font-size: 12px;
         }
-        
+
         .device-name {
           color: white;
           font-weight: 500;
         }
       }
-      
+
       .controls {
         display: flex;
         justify-content: space-between;
         align-items: center;
         pointer-events: auto;
-        
+
         .current-time {
           color: white;
           font-family: monospace;
@@ -637,24 +642,24 @@ onBeforeUnmount(() => {
       }
     }
   }
-  
+
   .ptz-control-area {
     width: 300px;
     flex-shrink: 0;
   }
 }
 
-// 响应式设计
+//
 @media (max-width: 1200px) {
   .video-player-dialog {
     .video-container {
       flex-direction: column;
       height: auto;
     }
-    
+
     .ptz-control-area {
       width: 100%;
     }
   }
 }
-</style> 
+</style>

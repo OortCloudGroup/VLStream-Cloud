@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 分页查询国标设备
+// Query device
 export function listDevice(query) {
     return request({
         url: '/api/device/query/devices',
@@ -9,7 +14,7 @@ export function listDevice(query) {
     })
 }
 
-// 查询国标设备
+// Query device
 export function deviceList(query) {
     return request({
         url: '/api/device/query/deviceList',
@@ -18,7 +23,7 @@ export function deviceList(query) {
     })
 }
 
-// 修改数据流传输模式
+// Update data
 export function updateTransport(data) {
     return request({
         url: `/api/device/query/transport/${data.deviceId}/${data.streamMode}`,
@@ -26,7 +31,7 @@ export function updateTransport(data) {
     })
 }
 
-// 开启/关闭目录订阅
+// /
 export function subscribeCatalog(data) {
     return request({
         url: `/api/device/query/subscribe/catalog/${data.id}/${data.cycle}`,
@@ -34,7 +39,7 @@ export function subscribeCatalog(data) {
     })
 }
 
-// 开启/关闭移动位置订阅
+// /
 export function subscribeMobilePosition(data) {
     return request({
         url: `/api/device/query/subscribe/mobile-position/${data.id}/${data.cycle}/${data.interval}`,
@@ -42,7 +47,7 @@ export function subscribeMobilePosition(data) {
     })
 }
 
-// 使用ID查询国标设备
+// IDQuery device
 export function getDeviceById(deviceId) {
     return request({
         url: `/api/device/query/devices/${deviceId}`,
@@ -50,7 +55,7 @@ export function getDeviceById(deviceId) {
     })
 }
 
-// 更新设备信息
+// new deviceinfo
 export function updateDevice(data) {
     return request({
         url: `/api/device/query/device/update/`,
@@ -59,7 +64,7 @@ export function updateDevice(data) {
     })
 }
 
-// 移除设备
+// device
 export function deleteDevice(deviceId) {
     return request({
         url: `/api/device/query/devices/${deviceId}/delete`,
@@ -67,7 +72,7 @@ export function deleteDevice(deviceId) {
     })
 }
 
-// 批量移除设备
+// device
 export function batchDeleteDevice(deviceId) {
     return request({
         url: `/api/device/query/devices/batchDelete/${deviceId}`,
@@ -76,7 +81,7 @@ export function batchDeleteDevice(deviceId) {
 }
 
 
-// 同步进度查询
+// Query
 export function syncStatus(deviceId) {
     return request({
         url: `/api/device/query/${deviceId}/sync_status`,
@@ -84,7 +89,7 @@ export function syncStatus(deviceId) {
     })
 }
 
-//  同步设备通道
+// devicechannel
 export function devicesSync(deviceId) {
     return request({
         url: `/api/device/query/devices/${deviceId}/sync`,
@@ -92,7 +97,7 @@ export function devicesSync(deviceId) {
     })
 }
 
-// 分页查询国标设备
+// Query device
 export function listDeviceChannel(query) {
     return request({
         url: `/api/device/query/devices/channels`,
@@ -101,7 +106,7 @@ export function listDeviceChannel(query) {
     })
 }
 
-// 修改通道音频
+// Update channel
 export function changeAudio(data) {
     return request({
         url: `/api/device/query/channel/audio`,
@@ -110,7 +115,7 @@ export function changeAudio(data) {
     })
 }
 
-// 修改通道码流
+// Update channel
 export function updateChannelStreamIdentification(data) {
     return request({
         url: `/api/device/query/channel/stream/identification/update/`,
@@ -119,7 +124,7 @@ export function updateChannelStreamIdentification(data) {
     })
 }
 
-// 分页查询子目录通道
+// Query sub channel
 export function subChannels(query) {
     return request({
         url: `/api/device/query/sub_channels/channels`,

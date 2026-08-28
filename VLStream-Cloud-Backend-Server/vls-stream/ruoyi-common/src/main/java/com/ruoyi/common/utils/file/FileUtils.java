@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -15,7 +16,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 /**
- * 文件处理工具类
+ * Process
  *
  * @author Lion Li
  */
@@ -23,10 +24,10 @@ import java.nio.charset.StandardCharsets;
 public class FileUtils extends FileUtil {
 
     /**
-     * 下载文件名重新编码
+     * new
      *
-     * @param response     响应对象
-     * @param realFileName 真实文件名
+     * @param response object
+     * @param realFileName
      */
     public static void setAttachmentResponseHeader(HttpServletResponse response, String realFileName) throws UnsupportedEncodingException {
         String percentEncodedFileName = percentEncode(realFileName);
@@ -45,10 +46,10 @@ public class FileUtils extends FileUtil {
     }
 
     /**
-     * 百分号编码工具方法
+     * method
      *
-     * @param s 需要百分号编码的字符串
-     * @return 百分号编码后的字符串
+     * @param s need to
+     * @return after
      */
     public static String percentEncode(String s) throws UnsupportedEncodingException {
         String encode = URLEncoder.encode(s, StandardCharsets.UTF_8.toString());

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -23,7 +24,7 @@ import org.springframework.util.Assert;
 import java.util.Date;
 
 /**
- * 摄像头申请审批记录 服务实现类
+ * approvalrecord service
  */
 @Service
 @RequiredArgsConstructor

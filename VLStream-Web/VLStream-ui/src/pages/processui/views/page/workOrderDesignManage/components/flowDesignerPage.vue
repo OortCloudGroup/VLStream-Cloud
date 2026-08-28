@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2024-11-15 11:45:51
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -88,7 +93,7 @@ const nodeConfig = ref({
   }
 })
 
-// 提示节点必填的信息 {id, name, msg}
+// prompt / tipnode info {id, name, msg}
 const errorInfo = ref([])
 provide('flowDesign', {
   nodesError: errorInfo
@@ -99,11 +104,11 @@ const props = defineProps({
     type: Object,
     default: null
   },
-  confirmTip: { // 是否将此模型保存为新版本-审批默认新版本
+  confirmTip: { // whether model to new -approval new
     type: Boolean,
     default: true
   },
-  processuiTs: { // 是否是工单
+  processuiTs: { // whether is work order
     type: Boolean,
     default: true
   }
@@ -116,7 +121,7 @@ function cancel() {
 }
 
 async function confirmSave(isNewVersion) {
-  // 发起人前面加一个startEvent
+  // before startEvent
   nodeConfig.value.pid = 'root'
   const startNode = {
     id: 'root',
@@ -134,7 +139,7 @@ async function confirmSave(isNewVersion) {
     process: startNode,
     newVersion: isNewVersion
   }
-  // 发起人-自动创建表单，修改传formId
+  // - form, Update formId
   if (route.query && route.query.formId) params['formId'] = startNode.formKey
   params['formId'] = startNode?.formKey
   params.notifyAllSteps = form.notifyAllSteps
@@ -147,8 +152,8 @@ async function confirmSave(isNewVersion) {
 
 const flowChartRef = ref(null)
 function saveFlow() {
-  // 保存模型
-  // console.log('最终保存的流程数据----；-', JSON.parse(JSON.stringify(nodeConfig.value)))
+  // model
+  // console.log(' workflowdata----; -', JSON.parse(JSON.stringify(nodeConfig.value)))
   // return
   if (flowChartRef.value && !flowChartRef.value?.isflowChartConfigOk) {
     ElMessage.warning(flowChartRef.value.errorStoreMsg.join(','))
@@ -178,14 +183,14 @@ function saveFlow() {
 
 const showFlowChart = ref(false)
 function getFlowDetail() {
-  // 获取流程详情
+  // Get workflow
   const params = {
     modelId: props.modelObject.modelId
   }
   getJSONModel(params).then(res => {
     if (res.code === 200 && res.data?.jsonContent) {
       try {
-        // 去除第一个开始节点
+        // startnode
         nodeConfig.value = JSON.parse(res.data.jsonContent).process.childNode
         showFlowChart.value = true
         let tempContentObj = JSON.parse(res.data.jsonContent)

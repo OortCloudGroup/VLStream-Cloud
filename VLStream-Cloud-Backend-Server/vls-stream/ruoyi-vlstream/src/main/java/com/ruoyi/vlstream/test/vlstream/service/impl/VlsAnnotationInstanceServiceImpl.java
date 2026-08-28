@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -30,7 +31,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 标注实例实体类 服务实现类
+ * annotationinstance service
  *
  * @author Oort
  * @since 2025-12-23
@@ -81,7 +82,7 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 
 		save(instance);
 
-		// 更新标签使用次数
+		// new
 		annotationLabelService.updateUsageCount(labelId);
 
 		log.info("标注实例保存成功，ID: {}", instance.getId());
@@ -107,7 +108,7 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 
 		updateById(instance);
 
-		// 更新标签使用次数
+		// new
 		if (!oldLabelId.equals(labelId)) {
 			annotationLabelService.updateUsageCount(oldLabelId);
 			annotationLabelService.updateUsageCount(labelId);
@@ -131,7 +132,7 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 
 		int result = baseMapper.deleteById(instanceId);
 
-		// 更新标签使用次数
+		// new
 		annotationLabelService.updateUsageCount(labelId);
 
 		log.info("标注实例删除成功");
@@ -143,7 +144,7 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 	public boolean batchSaveAnnotations(Long annotationId, Long imageId, List<AnnotationInstance> annotations) {
 		log.info("批量保存标注实例: annotationId={}, imageName={}, count={}", annotationId, imageId, annotations.size());
 
-		// 先删除该图片的所有现有标注
+		// Delete all annotation
 		LambdaQueryWrapper<AnnotationInstance> wrapper = new LambdaQueryWrapper<>();
 		wrapper.eq(AnnotationInstance::getAnnotationId, annotationId)
 			.eq(AnnotationInstance::getImageId, imageId);
@@ -152,17 +153,17 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 		if (!existingInstances.isEmpty()) {
 			baseMapper.delete(wrapper);
 
-			// 更新被删除标注的标签使用次数
+			// new Delete annotation
 			existingInstances.forEach(instance -> {
 				annotationLabelService.updateUsageCount(instance.getLabelId());
 			});
 		}
 
-		// 批量插入新标注
+		// new annotation
 		for (AnnotationInstance annotation : annotations) {
 			save(annotation);
 
-			// 更新标签使用次数
+			// new
 			annotationLabelService.updateUsageCount(annotation.getLabelId());
 		}
 
@@ -188,7 +189,7 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 		log.info("开始删除图片及相关数据：annotationId={}, imageName={}", annotationId, imageId);
 
 		try {
-			// 1. 查询该图片的所有标注实例
+			// 1. Query all annotationinstance
 			LambdaQueryWrapper<AnnotationInstance> instanceQuery = new LambdaQueryWrapper<>();
 			instanceQuery.eq(AnnotationInstance::getAnnotationId, annotationId)
 				.eq(AnnotationInstance::getImageId, imageId);
@@ -196,14 +197,14 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 
 			log.info("找到 {} 个标注实例需要删除", instances.size());
 
-			// 2. 统计每个标签的使用次数，用于后续更新标签计数
+			// 2. each , after new
 			Map<Long, Integer> labelCountMap = new HashMap<>();
 			for (AnnotationInstance instance : instances) {
 				Long labelId = instance.getLabelId();
 				labelCountMap.put(labelId, labelCountMap.getOrDefault(labelId, 0) + 1);
 			}
 
-			// 3. 删除所有标注实例
+			// 3. Delete all annotationinstance
 			if (!instances.isEmpty()) {
 				List<Long> instanceIds = instances.stream()
 					.map(AnnotationInstance::getId)
@@ -213,12 +214,12 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 				log.info("删除了 {} 个标注实例", deletedInstances);
 			}
 
-			// 4. 删除图片记录（annotation_image表）
+			// 4. Delete record (annotation_image )
 			try {
-				// 获取该标注项目的所有图片
+				// Get annotation item all
 				List<AnnotationImage> allImages = annotationImageService.getImagesByAnnotationId(annotationId);
 
-				// 找到要删除的图片记录
+				// need to Delete record
 				AnnotationImage imageToDelete = null;
 				for (AnnotationImage image : allImages) {
 					if (imageId.equals(image.getId())) {
@@ -235,15 +236,15 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 				}
 			} catch (Exception e) {
 				log.error("删除图片记录失败: imageId={}", imageId, e);
-				// 不抛出异常，继续执行后续逻辑
+				// , Execute after
 			}
 
-			// 5. 更新标签使用计数（annotation_label表）
+			// 5. new (annotation_label )
 			for (Map.Entry<Long, Integer> entry : labelCountMap.entrySet()) {
 				Long labelId = entry.getKey();
 				Integer count = entry.getValue();
 
-				// 减少标签的使用计数
+				//
 				annotationLabelService.updateUsageCount(labelId);
 				log.info("更新标签 {} 的使用计数", labelId);
 			}

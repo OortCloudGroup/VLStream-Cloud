@@ -12,7 +12,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 /**
- * 用户和岗位关联 sys_user_post
+ * user and sys_user_post
  *
  * @author Lion Li
  */
@@ -22,13 +22,13 @@ import lombok.Data;
 public class SysUserPost {
 
     /**
-     * 用户ID
+     * user ID
      */
     @TableId(type = IdType.INPUT)
     private String userId;
 
     /**
-     * 岗位ID
+     * ID
      */
     private Long postId;
 

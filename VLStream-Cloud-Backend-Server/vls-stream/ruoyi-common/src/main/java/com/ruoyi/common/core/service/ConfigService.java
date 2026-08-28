@@ -1,22 +1,23 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
 package com.ruoyi.common.core.service;
 
 /**
- * 通用 参数配置服务
+ * parameterconfigurationservice
  *
  * @author Lion Li
  */
 public interface ConfigService {
 
     /**
-     * 根据参数 key 获取参数值
+     * parameter key Get parameter value
      *
-     * @param configKey 参数 key
-     * @return 参数值
+     * @param configKey parameter key
+     * @return parameter value
      */
     String getConfigValue(String configKey);
 

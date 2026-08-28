@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /* eslint-disable no-eval */
 import { isNotNull, traverseContainerWidgets, traverseFieldWidgets } from '~@/utils/util'
 import { translate } from '~@/utils/i18n'
@@ -43,7 +48,7 @@ export function buildRulesListFn(formConfig, widgetList, resultList) {
       }
     }
 
-    // TODO: 自定义校验函数
+    // TODO: CustomValidate
 
     fieldRules.length > 0 && resultList.push(`${fop.name}: [${fieldRules.join(',')}],`)
   }
@@ -108,15 +113,15 @@ export const genVue2JS = function(formConfig, widgetList) {
         ${formConfig.modelName}: {
           ${defaultValueList.join('\n')}
         },
-        
+
         ${formConfig.rulesName}: {
           ${rulesList.join('\n')}
         },
-        
+
         ${activeTabs.join('\n')}
-        
+
         ${fieldOptions.join('\n')}
-        
+
         ${uploadData.join('\n')}
       }
     },
@@ -130,11 +135,11 @@ export const genVue2JS = function(formConfig, widgetList) {
       submitForm() {
         this.$refs['vForm'].validate(valid => {
           if (!valid) return
-          
-          //TODO: 提交表单
+
+          // TODO: form
         })
       },
-      
+
       resetForm() {
         this.$refs['vForm'].resetFields()
       }

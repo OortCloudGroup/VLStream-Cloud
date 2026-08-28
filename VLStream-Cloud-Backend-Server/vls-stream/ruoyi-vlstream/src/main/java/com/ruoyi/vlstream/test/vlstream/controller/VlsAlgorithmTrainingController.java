@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -49,7 +50,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * 算法训练任务表 控制器
+ * algorithmtrainingtask control
  *
  * @author Oort
  * @since 2025-12-23
@@ -98,7 +99,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	private ModelFileDownloadService modelFileDownloadService;
 
 	/**
-	 * 算法训练任务表 详情
+	 * algorithmtrainingtask
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -109,7 +110,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 算法训练任务表 分页
+	 * algorithmtrainingtask
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -121,7 +122,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 
 
 	/**
-	 * 算法训练任务表 自定义分页
+	 * algorithmtrainingtask Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -138,7 +139,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 算法训练任务表 新增
+	 * algorithmtrainingtask Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -148,7 +149,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 算法训练任务表 修改
+	 * algorithmtrainingtask Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -158,7 +159,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 算法训练任务表 新增或修改
+	 * algorithmtrainingtask Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -168,7 +169,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 算法训练任务表 删除
+	 * algorithmtrainingtask Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -178,7 +179,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsAlgorithmTraining")
 	@ApiOperationSupport(order = 8)
@@ -194,7 +195,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 根据ID查询训练任务详情
+	 * IDQuery trainingtask
 	 */
 	@GetMapping("/{id}")
 	@Operation(summary = "查询训练任务详情", description = "根据ID获取训练任务详细信息")
@@ -212,7 +213,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 新增训练任务
+	 * Add trainingtask
 	 */
 	@PostMapping
 	@Operation(summary = "创建训练任务", description = "新增训练任务")
@@ -230,7 +231,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 修改训练任务
+	 * Update trainingtask
 	 */
 	@PutMapping("/{id}")
 	@Operation(summary = "更新训练任务", description = "根据ID更新训练任务信息")
@@ -250,7 +251,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 更新训练状态
+	 * new training
 	 */
 	@PutMapping("/{id}/status")
 	@Operation(summary = "更新训练状态", description = "更新指定训练任务的状态")
@@ -262,13 +263,13 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		log.info("更新训练状态：ID={}, 状态={}", id, trainStatus);
 
 		try {
-			// 获取现有的训练任务
+			// Get trainingtask
 			AlgorithmTraining training = vlsAlgorithmTrainingService.selectAlgorithmTrainingById(id);
 			if (training == null) {
 				return R.fail("训练任务不存在");
 			}
 
-			// 更新状态
+			// new
 			training.setTrainStatus(AlgorithmTrainingStatusEnum.of(trainStatus));
 			int result = vlsAlgorithmTrainingService.updateAlgorithmTraining(training);
 
@@ -285,7 +286,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 删除训练任务
+	 * Delete trainingtask
 	 */
 	@DeleteMapping("/{id}")
 	@Operation(summary = "删除训练任务", description = "根据ID删除训练任务")
@@ -303,7 +304,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 批量删除训练任务
+	 * Batch delete trainingtask
 	 */
 	@DeleteMapping("/batch")
 	@Operation(summary = "批量删除训练任务", description = "根据ID列表批量删除训练任务")
@@ -324,7 +325,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 开始训练任务
+	 * starttrainingtask
 	 */
 	@PostMapping("/{id}/start")
 	@Operation(summary = "开始训练任务", description = "开始指定的训练任务")
@@ -406,7 +407,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 转换模型
+	 * Convert model
 	 */
 	@PostMapping("/{id}/convert-model")
 	@ApiOperationSupport(order = 9)
@@ -587,13 +588,13 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 诊断远程服务器conda环境
+	 * service conda
 	 */
 	@GetMapping("/diagnose-conda")
 	@Operation(summary = "诊断conda环境", description = "检查远程服务器上的conda安装情况")
 	public R<String> diagnoseConda() {
 		try {
-			// 构建诊断命令
+			// Build
 			StringBuilder diagCmd = new StringBuilder();
 			diagCmd.append("echo '=== 环境诊断 ===' && ");
 			diagCmd.append("echo 'PATH: '$PATH && ");
@@ -635,7 +636,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 停止训练任务
+	 * trainingtask
 	 */
 	@PostMapping("/{id}/stop")
 	@Operation(summary = "停止训练任务", description = "停止指定的训练任务")
@@ -660,7 +661,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 获取训练日志
+	 * Get traininglog
 	 */
 	@GetMapping("/{id}/logs")
 	@Operation(summary = "获取训练状态", description = "获取指定训练任务的日志")
@@ -689,7 +690,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 获取训练状态
+	 * Get training
 	 */
 	@GetMapping("/{id}/status")
 	@Operation(summary = "获取训练状态", description = "获取指定训练任务的状态")
@@ -832,7 +833,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 获取配置
+	 * Get configuration
 	 */
 	private Integer getIntFromConfig(Map<String, Object> config, String key, Integer fallback, Integer defaultValue) {
 		if (config != null && config.containsKey(key)) {
@@ -884,7 +885,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 按训练任务 ID 下载训练产物，避免把训练 ID 误当成模型表 ID。
+	 * trainingtask ID training , training ID model ID.
 	 */
 	@GetMapping("/{id}/download-model")
 	@Operation(summary = "下载训练产物", description = "根据训练任务ID下载该任务生成的模型文件")
@@ -894,7 +895,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 保留旧的模型下载地址，仅用于兼容仍传模型表 ID 的历史调用方。
+	 * old model , model ID history .
 	 */
 	@Deprecated
 	@GetMapping("/download-model")
@@ -905,7 +906,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 统一将下载异常转换为明确的 HTTP 状态码和错误信息。
+	 * Convert to HTTP and info.
 	 */
 	private void downloadFile(HttpServletResponse response, DownloadAction action) {
 		try {
@@ -921,7 +922,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 在响应尚未提交时写入下载失败原因。
+	 * in not failed .
 	 */
 	private void writeDownloadError(HttpServletResponse response, int status, String message) {
 		try {
@@ -936,7 +937,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	}
 
 	/**
-	 * 表示一个可能抛出异常的模型下载动作。
+	 * can model .
 	 */
 	@FunctionalInterface
 	private interface DownloadAction {

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 测试单表Service业务层处理
+ * Service layer Process
  *
  * @author Lion Li
  * @date 2021-07-26
@@ -49,7 +50,7 @@ public class TestDemoServiceImpl implements ITestDemoService {
     }
 
     /**
-     * 自定义分页查询
+     * Custom Query
      */
     @Override
     public TableDataInfo<TestDemoVo> customPageList(TestDemoBo bo, PageQuery pageQuery) {
@@ -92,18 +93,18 @@ public class TestDemoServiceImpl implements ITestDemoService {
     }
 
     /**
-     * 保存前的数据校验
+     * before dataValidate
      *
-     * @param entity 实体类数据
+     * @param entity data
      */
     private void validEntityBeforeSave(TestDemo entity) {
-        //TODO 做一些数据校验,如唯一约束
+        // TODO dataValidate ,
     }
 
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
         if (isValid) {
-            //TODO 做一些业务上的校验,判断是否需要校验
+            // TODO Validate ,Check whether need to Validate
         }
         return baseMapper.deleteBatchIds(ids) > 0;
     }

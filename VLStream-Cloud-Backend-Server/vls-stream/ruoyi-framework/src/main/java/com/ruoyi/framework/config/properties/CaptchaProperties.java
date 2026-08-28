@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -12,7 +13,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * 验证码 配置属性
+ * configurationproperty
  *
  * @author Lion Li
  */
@@ -22,22 +23,22 @@ import org.springframework.stereotype.Component;
 public class CaptchaProperties {
 
     /**
-     * 验证码类型
+     *
      */
     private CaptchaType type;
 
     /**
-     * 验证码类别
+     *
      */
     private CaptchaCategory category;
 
     /**
-     * 数字验证码位数
+     *
      */
     private Integer numberLength;
 
     /**
-     * 字符验证码长度
+     *
      */
     private Integer charLength;
 }

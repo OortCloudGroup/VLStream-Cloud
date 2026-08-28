@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -12,7 +13,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
- * 基础异常
+ *
  *
  * @author ruoyi
  */
@@ -23,22 +24,22 @@ public class BaseException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 所属模块
+     *
      */
     private String module;
 
     /**
-     * 错误码
+     *
      */
     private String code;
 
     /**
-     * 错误码对应的参数
+     * parameter
      */
     private Object[] args;
 
     /**
-     * 错误消息
+     *
      */
     private String defaultMessage;
 

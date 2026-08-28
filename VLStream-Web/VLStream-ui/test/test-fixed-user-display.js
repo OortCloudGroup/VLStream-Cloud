@@ -1,7 +1,12 @@
-// 测试修复后的用户信息显示逻辑
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// after userinfo
 console.log('🔧 测试修复后的用户信息显示逻辑...')
 
-// 模拟实际的API响应数据
+// API data
 const mockApiResponse = {
   "code": 200,
   "data": {
@@ -23,29 +28,29 @@ const mockApiResponse = {
 
 function testUserInfoExtraction() {
   console.log('🧪 测试用户信息提取逻辑...')
-  
-  // 模拟layout组件的处理逻辑
+
+  // layoutcomponent Process
   const response = mockApiResponse
   const token = '848b2618754e44be9b98d7fa55996f0c'
-  
+
   console.log('📋 模拟API响应:', response)
-  
+
   if (response.code === 200 && response.data) {
     if (response.data.list && response.data.list.length > 0) {
-      // 处理租户列表
+      // Process
       const tenants = response.data.list.map(tenant => ({
         id: tenant.tenant_id,
         name: tenant.tenant_name || '未知租户',
         status: tenant.status,
         phrase: tenant.phrase
       }))
-      
+
       console.log('✅ 提取的租户列表:', tenants)
-      
-      // 提取用户信息
+
+      // userinfo
       const firstTenant = response.data.list[0]
       console.log('🔍 第一个租户数据:', firstTenant)
-      
+
       const userInfo = {
         userName: firstTenant.user_name || '管理员',
         userId: firstTenant.user_id || '',
@@ -53,33 +58,33 @@ function testUserInfoExtraction() {
         tenantId: firstTenant.tenant_id || '',
         accessToken: token
       }
-      
+
       console.log('✅ 提取的用户信息:', userInfo)
-      
-      // 模拟currentUser更新
+
+      // currentUser new
       const currentUser = {
         userName: userInfo.userName,
         userId: userInfo.userId,
         loginId: userInfo.loginId
       }
-      
+
       console.log('✅ 模拟currentUser更新:', currentUser)
-      
-      // 模拟currentTenant更新
+
+      // currentTenant new
       const currentTenant = tenants[0]
       console.log('✅ 模拟currentTenant更新:', currentTenant)
-      
-      // 验证结果
+
+      //
       console.log('\n🎯 验证结果:')
       console.log('- 用户名称:', currentUser.userName)
       console.log('- 用户ID:', currentUser.userId)
       console.log('- 租户名称:', currentTenant.name)
       console.log('- 租户ID:', currentTenant.id)
-      
-      // 检查是否与预期一致
+
+      // whether and
       const expectedUser = '周亮'
       const expectedTenant = '陵水运营管理平台'
-      
+
       if (currentUser.userName === expectedUser && currentTenant.name === expectedTenant) {
         console.log('✅ 用户信息显示逻辑正确！')
         console.log('- 用户名称匹配:', currentUser.userName === expectedUser)
@@ -97,7 +102,7 @@ function testUserInfoExtraction() {
   }
 }
 
-// 运行测试
+//
 console.log('📋 测试修复后的用户信息显示逻辑')
 testUserInfoExtraction()
 
@@ -105,4 +110,4 @@ console.log('\n🎉 测试完成！')
 console.log('总结:')
 console.log('- 验证了用户信息提取逻辑')
 console.log('- 确认了字段名映射正确')
-console.log('- 模拟了页面显示更新') 
+console.log('- 模拟了页面显示更新')

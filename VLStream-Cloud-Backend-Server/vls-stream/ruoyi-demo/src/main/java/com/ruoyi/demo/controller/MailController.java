@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -17,7 +18,7 @@ import java.io.File;
 
 
 /**
- * 邮件发送案例
+ *
  *
  * @author Michelle.Chung
  */
@@ -28,11 +29,11 @@ import java.io.File;
 public class MailController {
 
     /**
-     * 发送邮件
      *
-     * @param to      接收人
-     * @param subject 标题
-     * @param text    内容
+     *
+     * @param to
+     * @param subject
+     * @param text
      */
     @GetMapping("/sendSimpleMessage")
     public R<Void> sendSimpleMessage(String to, String subject, String text) {
@@ -41,12 +42,12 @@ public class MailController {
     }
 
     /**
-     * 发送邮件（带附件）
+     * ( )
      *
-     * @param to       接收人
-     * @param subject  标题
-     * @param text     内容
-     * @param filePath 附件路径
+     * @param to
+     * @param subject
+     * @param text
+     * @param filePath
      */
     @GetMapping("/sendMessageWithAttachment")
     public R<Void> sendMessageWithAttachment(String to, String subject, String text, String filePath) {

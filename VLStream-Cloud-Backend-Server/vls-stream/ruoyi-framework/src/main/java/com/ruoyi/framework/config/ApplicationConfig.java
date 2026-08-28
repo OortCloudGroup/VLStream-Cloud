@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -9,12 +10,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 /**
- * 程序注解配置
+ * configuration
  *
  * @author Lion Li
  */
 @Configuration
-// 表示通过aop框架暴露该代理对象,AopContext能够访问
+// aop object,AopContext can
 @EnableAspectJAutoProxy(exposeProxy = true)
 public class ApplicationConfig {
 

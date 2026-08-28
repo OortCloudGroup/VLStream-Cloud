@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,9 +15,9 @@ import lombok.Data;
 import java.util.Date;
 
 /**
- * 表单应用分类视图对象 wf_form_app
+ * form object wf_form_app
  *
- * @author 雷超群
+ * @author
  * @date 2025-04-26
  */
 @Data
@@ -26,71 +27,71 @@ public class WfFormAppVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 表单分类id
+     * form id
      */
     @ExcelProperty(value = "表单分类id")
     private String categoryId;
 
     /**
-     * 应用ID
+     * ID
      */
     @ExcelProperty(value = "应用ID")
     private String applicationId;
 
     /**
-     * 应用名称
+     *
      */
     @ExcelProperty(value = "应用名称")
     private String applicationName;
 
     /**
-     * 应用密钥
+     *
      */
     @ExcelProperty(value = "应用密钥")
     private String applicationSecret;
 
     /**
-     * 分类父id
+     * id
      */
     @ExcelProperty(value = "分类父id")
     private String parentId;
 
     /**
-     * 表单分类名称
+     * form
      */
     @ExcelProperty(value = "表单分类名称")
     private String categoryName;
 
     /**
-     * 分类编码
+     *
      */
     @ExcelProperty(value = "分类编码")
     private String code;
 
     /**
-     * 备注
+     * remark
      */
     @ExcelProperty(value = "备注")
     private String remark;
 
     /**
-     * 创建时间
+     * create time
      */
     @ExcelProperty(value = "创建时间")
     private Date createTime;
 
     /**
-     * 删除标志（0代表存在 1代表删除）
+     * Delete (0represents in 1represents Delete )
      */
     @ExcelProperty(value = "删除标志", converter = ExcelDictConvert.class)
     @ExcelDictFormat(readConverterExp = "0=代表存在,1=代表删除")
     private String delFlag;
     /**
-     * 0选择应用，1添加应用
+     * 0 , 1
      */
     private String appFlag;
     /**
-     * 图标地址
+     *
      */
     private String images;
 }

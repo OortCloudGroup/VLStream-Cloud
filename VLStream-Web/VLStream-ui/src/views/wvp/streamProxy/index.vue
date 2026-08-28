@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="tenant_Page draHeaPB">
     <div class="tenant_content">
@@ -684,7 +689,7 @@ const copyToClipboard = (text) => {
     return;
   }
 
-  // 使用 Clipboard API
+  // Clipboard API
   navigator.clipboard.writeText(text).then(
       () => {
         ElMessage.success('成功拷贝到粘贴板');
@@ -758,7 +763,7 @@ function initData() {
   })
 }
 
-/** 搜索按钮操作 */
+/* * buttonoperation */
 function searchResetFn(val) {
   queryParams.value.pageNum = 1;
   queryParams.value.query = val.query || undefined;
@@ -767,7 +772,7 @@ function searchResetFn(val) {
   getStreamProxyList();
 }
 
-/** 表单重置 */
+/* * form */
 function reset() {
   form.value = {
     type: undefined,
@@ -838,14 +843,14 @@ function mediaServerIdChange() {
   }
 }
 
-/** 取消按钮 */
+/* * button */
 function cancel() {
   open.value = false;
   openChannel.value = false;
   reset();
 }
 
-/** 提交按钮 */
+/* * button */
 function submitForm() {
   proxy.$refs["formRef"].validate(valid => {
     if (valid) {
@@ -945,7 +950,7 @@ function queryCloudRecords(row) {
   });
 }
 
-/** 编辑通道按钮 */
+/* * channelbutton */
 function submitFormChannel() {
   proxy.$refs["formRef"].validate(valid => {
     if (valid) {

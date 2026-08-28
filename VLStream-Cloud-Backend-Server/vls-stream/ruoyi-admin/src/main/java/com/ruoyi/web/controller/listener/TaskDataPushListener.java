@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -37,7 +38,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.*;
 
 /**
- * 每个操作结束后，推送操作数据和表单数据
+ * each operationfinish after, Push operationdata and formdata
  */
 @Configuration
 public class TaskDataPushListener implements TaskListener, ExecutionListener, ApplicationContextAware {
@@ -73,42 +74,42 @@ public class TaskDataPushListener implements TaskListener, ExecutionListener, Ap
         RestTemplate restTemplate = (RestTemplate) applicationContext.getBean("restTemplate");
         WfProcessServiceImpl wfProcessService = (WfProcessServiceImpl) applicationContext.getBean("wfProcessServiceImpl");
         SysUserRoleViewMapper sysUserRoleViewMapper = applicationContext.getBean(SysUserRoleViewMapper.class);
-        // 获取当前任务的信息
-        String taskId = delegateTask.getId(); // 获取任务 ID
-        String taskName = delegateTask.getName(); // 获取任务名称
-        String assignee = delegateTask.getAssignee(); // 获取任务的办理人
-        Set<IdentityLink> candidates = delegateTask.getCandidates();// 获取当前任务的候选人集合
+        // Get current task info
+        String taskId = delegateTask.getId(); // Get task ID
+        String taskName = delegateTask.getName(); // Get task
+        String assignee = delegateTask.getAssignee(); // Get task assignee
+        Set<IdentityLink> candidates = delegateTask.getCandidates();// Get current task candidate users collection
         String processDefinitionId = delegateTask.getProcessDefinitionId();
-        String taskDefKey = delegateTask.getTaskDefinitionKey();//获取任务id
-        String eventName = delegateTask.getEventName();//获取当前监听器类型
+        String taskDefKey = delegateTask.getTaskDefinitionKey();// Get taskid
+        String eventName = delegateTask.getEventName();// Get current listener
 
-        //如果办理人为空，获取候选人并设置为办理人
-        // 如果存在候选组
+        // if assignee is empty, Get candidate user Set to assignee
+        // if in candidate group
         for (IdentityLink candidate : candidates) {
             if (candidate.getGroupId() != null) {
                 String groupId = candidate.getGroupId();
                 int startIndex = "ROLE".length();
                 Long roleId = Long.valueOf(groupId.substring(startIndex));
-                // 用户服务可以通过组ID查询该组的用户
+                // userservice IDQuery user
                 List<String > usersInRoleIds =  sysUserRoleViewMapper.selectUserIdsByRoleId(roleId);
 
                 if (!usersInRoleIds.isEmpty()) {
                     assignee=usersInRoleIds.get(0);
                     Log.info("任务的候选办理人用户ID: " + usersInRoleIds.get(0));
-                    break; // 退出循环，只设置一个办理人
+                    break; // exit loop, only Set assignee
                 }
             }
         }
 
 
-// 判断是否是指定用户审批
-        // 获取流程模型 BpmnModel 对象
+// Check whether is userapproval
+        // Get workflowmodel BpmnModel object
         BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
-        // 查找当前任务的 BPMN 元素定义
+        // find current task BPMN element
         FlowElement flowElement = bpmnModel.getFlowElement(delegateTask.getTaskDefinitionKey());
         if (flowElement instanceof UserTask) {
             UserTask userTask = (org.flowable.bpmn.model.UserTask) flowElement;
-            // 获取任务的扩展属性，例如 assigneeUsers
+            // Get task extension properties, assigneeUsers
             String userTaskAssignee = userTask.getAssignee();
             if (StringUtils.isNotBlank(userTaskAssignee) && assignee.equals(userTaskAssignee)) {
                 taskDataPushVo.setAssigneeType("2");
@@ -119,9 +120,9 @@ public class TaskDataPushListener implements TaskListener, ExecutionListener, Ap
 //        String[] split = assignee.split(",");
 //        List<Long> longs = iSysRoleService.selectRoleListByUserId(split[0]);
         SysUser sysUser = sysUserService.selectUserById(assignee);
-        // 获取身份证号
+        // Get ID card number
         String idcard = sysUser.getIdcard();
-        String processInstanceId = delegateTask.getProcessInstanceId(); // 获取流程实例 ID
+        String processInstanceId = delegateTask.getProcessInstanceId(); // Get workflow instance ID
         List<Comment> commentList = taskService.getProcessInstanceComments(processInstanceId);
         for (Comment comment : commentList) {
             if (StringUtils.isNotBlank(comment.getTaskId()) && comment.getTaskId().equals(delegateTask.getId())) {
@@ -129,7 +130,7 @@ public class TaskDataPushListener implements TaskListener, ExecutionListener, Ap
                 taskDataPushVo.setOperateType(FlowComment.getRemarkByType(comment.getType()));
             }
         }
-        // 获取历史流程实例对象
+        // Get history workflow instanceobject
         HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
             .processInstanceTenantId(delegateTask.getTenantId())
             .processInstanceId(delegateTask.getProcessInstanceId())
@@ -139,11 +140,11 @@ public class TaskDataPushListener implements TaskListener, ExecutionListener, Ap
         List<Map<String, Object>> formDataMap = new ArrayList<>();
 
         for (Object formConf : formConfs) {
-            FormConf formConfObj = (FormConf) formConf;  // 将 Object 类型转换为 FormConf
+            FormConf formConfObj = (FormConf) formConf;  // Object Convert to FormConf
             List<Map<String, Object>> fields = formConfObj.getFields();
             Map<String, Object> fieldMap = new HashMap<>();
             for (Map<String, Object> field : fields) {
-                // 假设每个 field 中包含 key 和 value 属性
+                // assuming each field in key and value property
                 String key = (String) field.get("__vModel__");
                 Object defaultValue = runtimeService.getVariable(processInstanceId, key);
                 fieldMap.put(key, defaultValue);
@@ -151,7 +152,7 @@ public class TaskDataPushListener implements TaskListener, ExecutionListener, Ap
             formDataMap.add(fieldMap);
         }
 
-        // 整合数据
+        // integrate data
         // taskDataPushVo.setNextUserIds();
         taskDataPushVo.setTaskId(taskId);
         taskDataPushVo.setTaskName(taskName);
@@ -194,35 +195,35 @@ public class TaskDataPushListener implements TaskListener, ExecutionListener, Ap
         RestTemplate restTemplate = (RestTemplate) applicationContext.getBean("restTemplate");
         Log.info("=================触发了流程结束监听=================");
         TaskDataPushVo taskDataPushVo = new TaskDataPushVo();
-        // 从DelegateExecution中获取流程实例相关信息
+        // from DelegateExecution in Get workflow instancerelatedinfo
         String processInstanceId = delegateExecution.getProcessInstanceId();
         String processDefinitionId = delegateExecution.getProcessDefinitionId();
-        String eventName = delegateExecution.getEventName();//获取当前监听器类型
-        // 获取拒绝节点的处理人信息
+        String eventName = delegateExecution.getEventName();// Get current listener
+        // Get node Process info
 //        List<HistoricTaskInstance> historicTasks = historyService.createHistoricTaskInstanceQuery()
 //            .processInstanceId(processInstanceId)
-//            .taskDeleteReason(FlowComment.REJECT.getType()) // 假设拒绝节点的任务类型是 REJECT
+// .taskDeleteReason(FlowComment.REJECT.getType()) // assuming node task is REJECT
 //            .list();
-        // 获取拒绝节点的处理人信息从流程变量中
+        // Get node Process infofrom workflow variable in
         String assignee = (String) runtimeService.getVariable(processInstanceId, "rejectAssignee");
         String rejectTaskId = (String) runtimeService.getVariable(processInstanceId, "rejectTaskId");
         taskDataPushVo.setTaskId(rejectTaskId);
         String rejectTaskName = (String) runtimeService.getVariable(processInstanceId, "rejectTaskName");
         taskDataPushVo.setTaskName(rejectTaskName);
-        // 获取当前节点的ID
+        // Get current node ID
         String currentActivityId = delegateExecution.getCurrentActivityId();
-        if (StringUtils.isNotBlank(assignee)) { // 手动结束的流程
+        if (StringUtils.isNotBlank(assignee)) { // finish workflow
             taskDataPushVo.setAssignee(assignee);
-            // 获取身份证号
+            // Get ID card number
             SysUser sysUser = sysUserService.selectUserById(assignee);
             taskDataPushVo.setAssigneeIdCard(sysUser.getIdcard());
-            // 判断是否是管理员
+            // Check whether is administrator
             String[] split = assignee.split(",");
             List<Long> longs = iSysRoleService.selectRoleListByUserId(split[0]);
-            // 判断是否是指定用户审批
-            // 获取流程模型 BpmnModel 对象
+            // Check whether is userapproval
+            // Get workflowmodel BpmnModel object
             BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
-            // 查找当前任务的 BPMN 元素定义
+            // find current task BPMN element
             Task task = taskService.createTaskQuery()
                 .taskTenantId(delegateExecution.getTenantId())
                 .taskId(rejectTaskId)
@@ -230,9 +231,9 @@ public class TaskDataPushListener implements TaskListener, ExecutionListener, Ap
             FlowElement flowElement = bpmnModel.getFlowElement(task.getTaskDefinitionKey());
             if (flowElement instanceof UserTask) {
                 UserTask userTask = (org.flowable.bpmn.model.UserTask) flowElement;
-                // 获取任务的扩展属性，例如 assigneeUsers
+                // Get task extension properties, assigneeUsers
                 if (flowElement instanceof UserTask) {
-                    // 获取任务的扩展属性，例如 assigneeUsers
+                    // Get task extension properties, assigneeUsers
                     String userTaskAssignee = userTask.getAssignee();
                     if (assignee.equals(userTaskAssignee)) {
                         taskDataPushVo.setAssigneeType("2");
@@ -253,9 +254,9 @@ public class TaskDataPushListener implements TaskListener, ExecutionListener, Ap
             taskDataPushVo.setProcessInstanceId(processInstanceId);
             taskDataPushVo.setOperateType("拒绝");
 
-            // ... 其他数据填充逻辑，可能需要从历史记录或流程变量中获取
-            // 获取流程模型 BpmnModel对象
-            // 获取历史流程实例对象
+            // ... datafilling logic, can need to from history record workflow variable in Get
+            // Get workflowmodel BpmnModelobject
+            // Get history workflow instanceobject
             HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
                 .processInstanceTenantId(delegateExecution.getTenantId())
                 .processInstanceId(delegateExecution.getProcessInstanceId())
@@ -264,12 +265,12 @@ public class TaskDataPushListener implements TaskListener, ExecutionListener, Ap
             List<Map<String, Object>> formDataMap = new ArrayList<>();
 
             for (Object formConf : formConfs) {
-                FormConf formConfObj = (FormConf) formConf;  // 将 Object 类型转换为 FormConf
+                FormConf formConfObj = (FormConf) formConf;  // Object Convert to FormConf
                 List<Map<String, Object>> fields = formConfObj.getFields();
 
                 Map<String, Object> fieldMap = new HashMap<>();
                 for (Map<String, Object> field : fields) {
-                    // 假设每个 field 中包含 key 和 value 属性
+                    // assuming each field in key and value property
                     String key = (String) field.get("__vModel__");
                     Object defaultValue = runtimeService.getVariable(processInstanceId, key);
                     fieldMap.put(key, defaultValue);
@@ -278,7 +279,7 @@ public class TaskDataPushListener implements TaskListener, ExecutionListener, Ap
             }
             taskDataPushVo.setFormDataMap(formDataMap);
             Log.info("流程结束时的数据推送对象: " + taskDataPushVo);
-            // 执行回调逻辑
+            // Execute
             String pushUrl = getUrl(processDefinitionId, eventName);
             if (!StringUtils.isNotBlank(pushUrl)) {
                 throw new RuntimeException("未获取到回调地址，请在流程绘制页面添加");

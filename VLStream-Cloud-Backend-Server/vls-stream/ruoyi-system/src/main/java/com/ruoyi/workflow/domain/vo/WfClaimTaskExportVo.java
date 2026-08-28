@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -14,7 +15,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 待签流程对象导出VO
+ * workflow objectExport VO
  *
  * @author konbai
  */
@@ -24,37 +25,37 @@ public class WfClaimTaskExportVo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 任务编号
+     * task
      */
     @ExcelProperty(value = "任务编号")
     private String taskId;
 
     /**
-     * 流程名称
+     * workflow
      */
     @ExcelProperty(value = "流程名称")
     private String procDefName;
 
     /**
-     * 任务节点
+     * tasknode
      */
     @ExcelProperty(value = "任务节点")
     private String taskName;
 
     /**
-     * 流程版本
+     * workflow
      */
     @ExcelProperty(value = "流程版本")
     private int procDefVersion;
 
     /**
-     * 流程发起人名称
+     * workflow
      */
     @ExcelProperty(value = "流程发起人")
     private String startUserName;
 
     /**
-     * 接收时间
+     *
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ExcelProperty(value = "接收时间")

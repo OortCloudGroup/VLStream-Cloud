@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,14 +11,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * 数据权限类型
+ * data
  * <p>
- * 语法支持 spel 模板表达式
+ * method spel
  * <p>
- * 内置数据 user 当前用户 内容参考 LoginUser
- * 如需扩展数据 可使用 {@link com.ruoyi.common.helper.DataPermissionHelper} 操作
- * 内置服务 sdss 系统数据权限服务 内容参考 SysDataScopeService
- * 如需扩展更多自定义服务 可以参考 sdss 自行编写
+ * data user current user LoginUser
+ * data {@link com.ruoyi.common.helper.DataPermissionHelper} operation
+ * service sdss data service SysDataScopeService
+ * Customservice sdss
  *
  * @author Lion Li
  * @version 3.5.0
@@ -27,39 +28,39 @@ import lombok.Getter;
 public enum DataScopeType {
 
     /**
-     * 全部数据权限
+     * full data
      */
     ALL("1", "", ""),
 
     /**
-     * 自定数据权限
+     * data
      */
     CUSTOM("2", " #{#deptName} IN ( #{@sdss.getRoleCustom( #user.roleId )} ) ", ""),
 
     /**
-     * 部门数据权限
+     * departmentdata
      */
     DEPT("3", " #{#deptName} = #{#user.deptId} ", ""),
 
     /**
-     * 部门及以下数据权限
+     * department data
      */
     DEPT_AND_CHILD("4", " #{#deptName} IN ( #{@sdss.getDeptAndChild( #user.deptId )} )", ""),
 
     /**
-     * 仅本人数据权限
+     * data
      */
     SELF("5", " #{#userName} = #{#user.userId} ", " 1 = 0 ");
 
     private final String code;
 
     /**
-     * 语法 采用 spel 模板表达式
+     * method spel
      */
     private final String sqlTemplate;
 
     /**
-     * 不满足 sqlTemplate 则填充
+     * sqlTemplate fill
      */
     private final String elseSql;
 

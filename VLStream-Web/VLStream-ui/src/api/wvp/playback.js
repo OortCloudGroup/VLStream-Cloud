@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 停止回放
+//
 export function playStop(query) {
     return request({
         url: `/api/playback/stop/${query.deviceId}/${query.channelId}/${query.streamId}`,
@@ -8,7 +13,7 @@ export function playStop(query) {
     })
 }
 
-// 开始回放
+// start
 export function start(query) {
     return request({
         url: `/api/playback/start`,

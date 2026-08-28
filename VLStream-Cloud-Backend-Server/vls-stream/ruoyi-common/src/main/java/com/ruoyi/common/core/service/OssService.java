@@ -1,22 +1,23 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
 package com.ruoyi.common.core.service;
 
 /**
- * 通用 OSS服务
+ * OSSservice
  *
  * @author Lion Li
  */
 public interface OssService {
 
     /**
-     * 通过ossId查询对应的url
+     * ossIdQuery url
      *
-     * @param ossIds ossId串逗号分隔
-     * @return url串逗号分隔
+     * @param ossIds ossId
+     * @return url
      */
     String selectUrlByIds(String ossIds);
 

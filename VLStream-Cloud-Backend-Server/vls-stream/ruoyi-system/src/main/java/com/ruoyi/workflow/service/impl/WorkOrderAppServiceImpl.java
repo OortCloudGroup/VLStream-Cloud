@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -32,9 +33,9 @@ import java.util.Map;
 import static com.ruoyi.workflow.service.impl.WfAppServiceImpl.generateUuid;
 
 /**
- * 应用工单分类Service业务层处理
+ * work order Service layer Process
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-04
  */
 @Slf4j
@@ -51,7 +52,7 @@ public class WorkOrderAppServiceImpl extends ServiceImpl<WorkOrderAppMapper, Wor
 
 
     /**
-     * 查询应用工单分类
+     * Query work order
      */
     @Override
     public WorkOrderAppVo queryById(String appId) {
@@ -61,7 +62,7 @@ public class WorkOrderAppServiceImpl extends ServiceImpl<WorkOrderAppMapper, Wor
     }
 
     /**
-     * 查询应用工单分类列表
+     * Query work order list
      */
     @Override
     public List<WorkOrderAppVo> queryPageList(WorkOrderAppBo bo, PageQuery pageQuery) {
@@ -73,7 +74,7 @@ public class WorkOrderAppServiceImpl extends ServiceImpl<WorkOrderAppMapper, Wor
 
 
     /**
-     * 查询应用工单分类列表
+     * Query work order list
      */
     @Override
     public List<WorkOrderAppVo> queryList(WorkOrderAppBo bo) {
@@ -137,7 +138,7 @@ public class WorkOrderAppServiceImpl extends ServiceImpl<WorkOrderAppMapper, Wor
     }
 
     /**
-     * 新增应用工单分类
+     * Add work order
      */
     @Override
     public Boolean insertByBo(WorkOrderAppBo bo) {
@@ -164,7 +165,7 @@ public class WorkOrderAppServiceImpl extends ServiceImpl<WorkOrderAppMapper, Wor
     }
 
     /**
-     * 修改应用工单分类
+     * Update work order
      */
     @Override
     public Boolean updateByBo(WorkOrderAppBo bo) {
@@ -174,16 +175,16 @@ public class WorkOrderAppServiceImpl extends ServiceImpl<WorkOrderAppMapper, Wor
     }
 
     /**
-     * 根据应用ID（applicationId）解析应用包名。
-     * 查询顺序：先查 workorder_app，再查 wf_app。
-     * 两张表都查不到或 appPackage 为空时返回 null，由调用方流程变量 app_package 兜底。
+     * ID (applicationId)Parse .
+     * Query : workorder_app, wf_app.
+     * appPackage is empty null, workflow variable app_package .
      */
     public String resolveAppPackageByApplicationId(String applicationId) {
         if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(applicationId)) {
             return null;
         }
         try {
-            // 1. 先查 workorder_app
+            // 1. workorder_app
             LambdaQueryWrapper<WorkOrderApp> wrapper = Wrappers.lambdaQuery();
             wrapper.eq(WorkOrderApp::getApplicationId, applicationId);
             wrapper.last("LIMIT 1");
@@ -191,7 +192,7 @@ public class WorkOrderAppServiceImpl extends ServiceImpl<WorkOrderAppMapper, Wor
             if (workOrderApp != null && com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(workOrderApp.getAppPackage())) {
                 return workOrderApp.getAppPackage();
             }
-            // 2. workorder_app 查不到，再查 wf_app
+            // 2. workorder_app , wf_app
             LambdaQueryWrapper<WfApp> wfWrapper = Wrappers.lambdaQuery();
             wfWrapper.eq(WfApp::getApplicationId, applicationId);
             wfWrapper.last("LIMIT 1");
@@ -206,19 +207,19 @@ public class WorkOrderAppServiceImpl extends ServiceImpl<WorkOrderAppMapper, Wor
     }
 
     /**
-     * 保存前的数据校验
+     * before dataValidate
      */
     private void validEntityBeforeSave(WorkOrderApp entity) {
-        //TODO 做一些数据校验,如唯一约束
+        // TODO dataValidate ,
     }
 
     /**
-     * 批量删除应用工单分类
+     * Batch delete work order
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid) {
         if (isValid) {
-            //效验这个分类下是否还有别的数据
+            // whether data
             validateService.validateBeforeDeletion(ids);    }
         return baseMapper.deleteBatchIds(ids) > 0;
     }

@@ -21,14 +21,14 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 /**
- * 登录鉴权助手
+ *
  * <p>
- * user_type 为 用户类型 同一个用户表 可以有多种用户类型 例如 pc,app
- * deivce 为 设备类型 同一个用户类型 可以有 多种设备类型 例如 web,ios
- * 可以组成 用户类型与设备类型多对多的 权限灵活控制
+ * user_type to user user user pc,app
+ * deivce to device user device web,ios
+ * user and device control
  * <p>
- * 多用户体系 针对 多种用户类型 但权限控制不一致
- * 可以组成 多用户类型表与多设备类型 分别控制权限
+ * user user control
+ * user and device control
  *
  * @author Lion Li
  */
@@ -39,19 +39,19 @@ public class LoginHelper {
     public static final String USER_KEY = "userId";
 
     /**
-     * 登录系统
      *
-     * @param loginUser 登录用户信息
+     *
+     * @param loginUser userinfo
      */
     public static void login(LoginUser loginUser) {
         loginByDevice(loginUser, null);
     }
 
     /**
-     * 登录系统 基于 设备类型
-     * 针对相同用户体系不同设备
+     * device
+     * user device
      *
-     * @param loginUser 登录用户信息
+     * @param loginUser userinfo
      */
     public static void loginByDevice(LoginUser loginUser, DeviceType deviceType) {
         SaStorage storage = SaHolder.getStorage();
@@ -66,7 +66,7 @@ public class LoginHelper {
     }
 
     /**
-     * 获取用户(多级缓存)
+     * Get user( )
      */
     public static LoginUser getLoginUser() {
         LoginUser loginUser = (LoginUser) SaHolder.getStorage().get(LOGIN_USER_KEY);
@@ -79,14 +79,14 @@ public class LoginHelper {
     }
 
     /**
-     * 获取用户基于token
+     * Get user token
      */
     public static LoginUser getLoginUser(String token) {
         return (LoginUser) StpUtil.getTokenSessionByToken(token).get(LOGIN_USER_KEY);
     }
 
     /**
-     * 获取用户id
+     * Get user ID
      */
     public static String getUserId() {
         String userId;
@@ -103,14 +103,14 @@ public class LoginHelper {
     }
 
     /**
-     * 获取部门ID
+     * Get department ID
      */
     public static String  getDeptId() {
         return getLoginUser().getDeptId();
     }
 
     /**
-     * 获取用户账户
+     * Get user
      */
     public static String getUsername() {
         try {
@@ -122,14 +122,14 @@ public class LoginHelper {
     }
 
     /**
-     * 获取用户昵称
+     * Get user
      */
     public static String getNickName() {
         return getLoginUser().getNickName();
     }
 
     /**
-     * 获取用户类型
+     * Get user
      */
     public static UserType getUserType() {
         String loginId = StpUtil.getLoginIdAsString();
@@ -137,10 +137,10 @@ public class LoginHelper {
     }
 
     /**
-     * 是否为管理员
+     * whether to administrator
      *
-     * @param userId 用户ID
-     * @return 结果
+     * @param userId user ID
+     * @return
      */
     public static boolean isAdmin(String userId) {
         return UserConstants.ADMIN_ID.equals(userId);

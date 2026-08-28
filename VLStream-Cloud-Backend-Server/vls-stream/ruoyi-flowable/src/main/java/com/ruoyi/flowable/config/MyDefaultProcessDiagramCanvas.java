@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -17,7 +18,7 @@ import java.awt.geom.RoundRectangle2D;
  * @date 2021-04-03
  */
 public class MyDefaultProcessDiagramCanvas extends DefaultProcessDiagramCanvas {
-    //设置高亮线的颜色  这里我设置成绿色
+    // Set Set
     protected static Color HIGHLIGHT_SEQUENCEFLOW_COLOR = Color.GREEN;
 
     public MyDefaultProcessDiagramCanvas(int width, int height, int minX, int minY, String imageType, String activityFontName, String labelFontName, String annotationFontName, ClassLoader customClassLoader) {
@@ -30,7 +31,7 @@ public class MyDefaultProcessDiagramCanvas extends DefaultProcessDiagramCanvas {
 
 
     /**
-     * 画线颜色设置
+     * Set
      */
     @Override
     public void drawConnection(int[] xPoints, int[] yPoints, boolean conditional, boolean isDefault, String connectionType,
@@ -43,7 +44,7 @@ public class MyDefaultProcessDiagramCanvas extends DefaultProcessDiagramCanvas {
         if (connectionType.equals("association")) {
             g.setStroke(ASSOCIATION_STROKE);
         } else if (highLighted) {
-            //设置线的颜色
+            // Set
             g.setPaint(originalPaint);
             g.setStroke(HIGHLIGHT_FLOW_STROKE);
         }
@@ -80,13 +81,13 @@ public class MyDefaultProcessDiagramCanvas extends DefaultProcessDiagramCanvas {
     }
 
     /**
-     * 高亮节点设置
+     * nodeSet
      */
     @Override
     public void drawHighLight(int x, int y, int width, int height) {
         Paint originalPaint = g.getPaint();
         Stroke originalStroke = g.getStroke();
-        //设置高亮节点的颜色
+        // Set node
         g.setPaint(HIGHLIGHT_COLOR);
         g.setStroke(THICK_TASK_BORDER_STROKE);
 

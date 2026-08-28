@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 测试批量方法
+ * method
  *
  * @author Lion Li
  * @date 2021-05-30
@@ -31,14 +32,14 @@ import java.util.List;
 public class TestBatchController extends BaseController {
 
     /**
-     * 为了便于测试 直接引入mapper
+     * to mapper
      */
     private final TestDemoMapper testDemoMapper;
 
     /**
-     * 新增批量方法 可完美替代 saveBatch 秒级插入上万数据 (对mysql负荷较大)
+     * Add method saveBatch data ( mysql )
      * <p>
-     * 3.5.0 版本 增加 rewriteBatchedStatements=true 批处理参数 使 MP 原生批处理可以达到同样的速度
+     * 3.5.0 rewriteBatchedStatements=true Process parameter MP Process
      */
     @PostMapping("/add")
 //    @DS("slave")
@@ -55,9 +56,9 @@ public class TestBatchController extends BaseController {
     }
 
     /**
-     * 新增或更新 可完美替代 saveOrUpdateBatch 高性能
+     * Add new saveOrUpdateBatch can
      * <p>
-     * 3.5.0 版本 增加 rewriteBatchedStatements=true 批处理参数 使 MP 原生批处理可以达到同样的速度
+     * 3.5.0 rewriteBatchedStatements=true Process parameter MP Process
      */
     @PostMapping("/addOrUpdate")
 //    @DS("slave")
@@ -83,7 +84,7 @@ public class TestBatchController extends BaseController {
     }
 
     /**
-     * 删除批量方法
+     * Delete method
      */
     @DeleteMapping()
 //    @DS("slave")

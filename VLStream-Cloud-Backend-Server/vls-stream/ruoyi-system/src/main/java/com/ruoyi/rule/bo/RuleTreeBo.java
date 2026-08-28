@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,9 +15,9 @@ import lombok.EqualsAndHashCode;
 import javax.validation.constraints.NotBlank;
 
 /**
- * 规则树业务对象 rule_tree
+ * object rule_tree
  *
- * @author 雷超群
+ * @author
  * @date 2024-12-18
  */
 
@@ -27,27 +28,27 @@ public class RuleTreeBo extends TreeEntity<RuleTreeBo> {
     private String id;
 
     /**
-     * 租户id
+     * id
      */
     private String tenantId;
 
     /**
-     * 用户id
+     * user ID
      */
     private String userId;
 
     /**
-     * 规则树名称
+     *
      */
     @NotBlank(message = "规则树名称不能为空", groups = {AddGroup.class, EditGroup.class})
     private String name;
 
     /**
-     * 规则树描述
+     *
      */
     private String description;
     /**
-     * 0流程 1工单
+     * 0workflow 1work order
      */
     private String type;
 

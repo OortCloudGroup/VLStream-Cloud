@@ -1,7 +1,12 @@
-// 测试两个网关配置
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// configuration
 const axios = require('axios');
 
-// 测试配置
+// configuration
 const testConfigs = [
   {
     name: '用户平台网关 (apaas-sso)',
@@ -48,42 +53,42 @@ const testConfigs = [
 async function testGateway(gatewayConfig) {
   console.log(`\n=== 测试: ${gatewayConfig.name} ===`);
   console.log(`BaseURL: ${gatewayConfig.baseURL}`);
-  
+
   for (const api of gatewayConfig.apis) {
     console.log(`\n--- 测试API: ${api.method} ${api.path} ---`);
     const fullUrl = gatewayConfig.baseURL + api.path;
     console.log(`完整URL: ${fullUrl}`);
-    
+
     try {
-      // 测试OPTIONS预检请求
+      // OPTIONS
       console.log('1. 测试OPTIONS预检请求...');
       const optionsResponse = await axios.options(fullUrl, {
         timeout: 5000,
         validateStatus: () => true
       });
-      
+
       console.log(`OPTIONS响应状态: ${optionsResponse.status}`);
       console.log(`CORS头:`, {
         'Access-Control-Allow-Origin': optionsResponse.headers['access-control-allow-origin'],
         'Access-Control-Allow-Methods': optionsResponse.headers['access-control-allow-methods'],
         'Access-Control-Allow-Headers': optionsResponse.headers['access-control-allow-headers']
       });
-      
-      // 测试实际请求
+
+      //
       console.log('2. 测试实际请求...');
       const requestConfig = {
         timeout: 10000,
         headers: api.headers,
         validateStatus: () => true
       };
-      
+
       let response;
       if (api.method === 'GET') {
         response = await axios.get(fullUrl, requestConfig);
       } else if (api.method === 'POST') {
         response = await axios.post(fullUrl, api.data, requestConfig);
       }
-      
+
       console.log(`${api.method}响应状态: ${response.status}`);
       if (response.status === 200) {
         console.log('✅ 请求成功！');
@@ -92,7 +97,7 @@ async function testGateway(gatewayConfig) {
         console.log('❌ 请求失败！');
         console.log(`响应数据:`, response.data);
       }
-      
+
     } catch (error) {
       console.log(`❌ 请求异常: ${error.message}`);
       if (error.response) {
@@ -105,11 +110,11 @@ async function testGateway(gatewayConfig) {
 
 async function runTests() {
   console.log('🚀 开始测试两个网关配置...\n');
-  
+
   for (const config of testConfigs) {
     await testGateway(config);
   }
-  
+
   console.log('\n✅ 测试完成！');
   console.log('\n📝 网关分工说明：');
   console.log('- apaas-sso：用户平台网关，处理用户认证相关API');
@@ -120,5 +125,5 @@ async function runTests() {
   console.log('- Nginx需要代理两个网关路径');
 }
 
-// 运行测试
-runTests().catch(console.error); 
+//
+runTests().catch(console.error);

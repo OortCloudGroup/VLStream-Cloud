@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -11,7 +12,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.VideoRecord;
 
 
 /**
- * 视频录制记录表 数据传输对象实体类
+ * record data object
  *
  * @author Oort
  * @since 2025-12-25

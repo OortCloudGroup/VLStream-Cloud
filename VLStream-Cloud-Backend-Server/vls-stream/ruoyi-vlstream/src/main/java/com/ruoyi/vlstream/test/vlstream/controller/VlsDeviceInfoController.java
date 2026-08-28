@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -45,7 +46,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * 设备信息表 控制器
+ * deviceinfo control
  *
  * @author Oort
  * @since 2025-12-23
@@ -71,7 +72,7 @@ public class VlsDeviceInfoController extends BladeController {
 	private final VlsZlmService zlmService;
 
 	/**
-	 * 设备信息表 详情
+	 * deviceinfo
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -84,7 +85,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 设备信息表 分页
+	 * deviceinfo
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -98,7 +99,7 @@ public class VlsDeviceInfoController extends BladeController {
 
 
 	/**
-	 * 设备信息表 自定义分页
+	 * deviceinfo Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -174,7 +175,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 设备信息表 新增
+	 * deviceinfo Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -184,7 +185,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 设备信息表 修改
+	 * deviceinfo Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -207,7 +208,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 设备信息表 新增或修改
+	 * deviceinfo Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -289,7 +290,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 设备信息表 删除
+	 * deviceinfo Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -299,7 +300,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsDeviceInfo")
 	@ApiOperationSupport(order = 8)
@@ -315,7 +316,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 根据ID查询设备信息
+	 * IDQuery deviceinfo
 	 */
 	@Operation(summary = "根据ID查询设备信息")
 	@GetMapping("/{id}")
@@ -330,7 +331,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 通过 ZLMediaKit 将自定义设备的 RTSP/RTMP 地址转换为浏览器可播放的 WebRTC。
+	 * ZLMediaKit Customdevice RTSP/RTMP Convert to WebRTC.
 	 */
 	@PostMapping("/{id}/preview")
 	@Operation(summary = "创建ZLM实时预览")
@@ -391,7 +392,7 @@ public class VlsDeviceInfoController extends BladeController {
 
 
 	/**
-	 * 根据设备编号查询设备信息
+	 * device Query deviceinfo
 	 */
 	@Operation(summary = "根据设备编号查询设备信息")
 	@GetMapping("/deviceId/{deviceId}")
@@ -406,7 +407,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 新增设备信息
+	 * Add deviceinfo
 	 */
 	@Operation(summary = "新增设备信息")
 	@PostMapping
@@ -414,7 +415,7 @@ public class VlsDeviceInfoController extends BladeController {
 	public R<String> addDevice(@RequestBody Map<String, Object> requestData) {
 		DeviceInfo deviceInfo = extractDeviceInfo(requestData);
 
-		// 检查设备编号是否已存在
+		// device whether already in
 		if (vlsDeviceInfoService.checkDeviceIdExists(deviceInfo.getDeviceId())) {
 			return R.fail("设备编号已存在");
 		}
@@ -432,24 +433,24 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 更新设备信息
+	 * new deviceinfo
 	 */
 	@Operation(summary = "更新设备信息")
 	@PutMapping("/{id}")
 	@Transactional(rollbackFor = Exception.class)
 	public R<String> updateDevice(@PathVariable Long id, @RequestBody Map<String, Object> requestData) {
 
-		// 提取设备信息
+		// deviceinfo
 		DeviceInfo deviceInfo = extractDeviceInfo(requestData);
 		deviceInfo.setId(id);
 
-		// 更新设备信息
+		// new deviceinfo
 		boolean success = vlsDeviceInfoService.updateDevice(deviceInfo);
 		if (!success) {
 			return R.fail("设备信息更新失败");
 		}
 
-		// 处理设备标签
+		// Process device
 		if (requestData.containsKey("selectedTags")) {
 			Object selectedTagsObj = requestData.get("selectedTags");
 			if (selectedTagsObj instanceof List) {
@@ -482,7 +483,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 兼容旧调用方使用查询参数发起算法下发。
+	 * old Query parameter algorithm .
 	 */
 	@Operation(summary = "摄像头算法下发（兼容）")
 	@GetMapping("/dispatchAlgorithms")
@@ -493,7 +494,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 接收WVP设备业务编号，并通过 VLS-Protocol 2.2 modelDeploy 逐台通知硬件下载指定格式模型。
+	 * WVPdevice , VLS-Protocol 2.2 modelDeploy notification model.
 	 */
 	@Operation(summary = "摄像头算法下发")
 	@PostMapping("/{algorithmId}/algorithms")
@@ -504,7 +505,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 统一新旧接口的返回结果，避免两套下发逻辑产生差异。
+	 * new old interface , .
 	 */
 	private R<String> dispatchAlgorithmRequest(Long algorithmId, String deviceIds, String modelType) {
 		boolean success = vlsDeviceInfoService.dispatchAlgorithms(algorithmId, deviceIds, modelType);
@@ -516,19 +517,19 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 从请求数据中提取设备信息
+	 * from data in deviceinfo
 	 */
 	private DeviceInfo extractDeviceInfo(Map<String, Object> requestData) {
 		DeviceInfo deviceInfo = new DeviceInfo();
 
-		// 设置基本字段
+		// Set field
 		setIfNotNull(deviceInfo::setDeviceName, requestData.get("deviceName"));
 		setIfNotNull(deviceInfo::setDeviceId, requestData.get("deviceId"));
 		setIfNotNull(deviceInfo::setStreamUrl, requestData.get("streamUrl"));
 		setIfNotNull(deviceInfo::setDeviceType, requestData.get("deviceType"));
 		setIfNotNull(deviceInfo::setRemark, requestData.get("remark"));
 
-		// 处理新增字段
+		// Process Add field
 		setIfNotNull(deviceInfo::setTag, requestData.get("tag"));
 		setIfNotNull(deviceInfo::setImagePath, requestData.get("imagePath"));
 		setIfNotNull(deviceInfo::setHeightPosition, requestData.get("heightPosition"));
@@ -536,7 +537,7 @@ public class VlsDeviceInfoController extends BladeController {
 		setDecimalIfNotNull(deviceInfo::setLongitude, requestData.get("longitude"), "longitude");
 		setDecimalIfNotNull(deviceInfo::setLatitude, requestData.get("latitude"), "latitude");
 
-		// 处理region字段（JSON格式）
+		// Process regionfield (JSON )
 		if (requestData.containsKey("region")) {
 			Object regionObj = requestData.get("region");
 			if (regionObj != null) {
@@ -552,7 +553,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 辅助方法：如果值不为null则设置
+	 * method : if value to null Set
 	 */
 	private void setIfNotNull(java.util.function.Consumer<String> setter, Object value) {
 		if (value != null) {
@@ -561,7 +562,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 将请求中的经纬度转换为数值，并在格式错误时返回明确的参数信息。
+	 * in Convert to value , in parameterinfo.
 	 */
 	private void setDecimalIfNotNull(java.util.function.Consumer<java.math.BigDecimal> setter, Object value, String fieldName) {
 		if (value == null || StringUtils.isBlank(value.toString())) {
@@ -575,7 +576,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 将请求中的标签编号归一化为 Long 列表，忽略无法解析的值。
+	 * in to Long , method Parse value .
 	 */
 	private List<Long> extractTagIds(Object selectedTags) {
 		if (!(selectedTags instanceof List)) {
@@ -594,7 +595,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 将认证上下文中的字符串用户编号转换为标签审计字段要求的 Long。
+	 * in user Convert to field need to Long.
 	 */
 	private Long currentUserId() {
 		String userId = getUserId();
@@ -609,12 +610,12 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 构建设备信息的完整Map，包含关联的标签信息
+	 * Build deviceinfo Map, info
 	 */
 	private Map<String, Object> buildDeviceInfoMap(DeviceInfo deviceInfo) {
 		Map<String, Object> result = new HashMap<>();
 
-		// 设备基本信息
+		// device info
 		result.put("id", deviceInfo.getId());
 		result.put("deviceName", deviceInfo.getDeviceName());
 		result.put("deviceId", deviceInfo.getDeviceId());
@@ -625,7 +626,7 @@ public class VlsDeviceInfoController extends BladeController {
 		result.put("createTime", deviceInfo.getCreateTime());
 		result.put("updateTime", deviceInfo.getUpdateTime());
 
-		// 新增字段
+		// Add field
 		result.put("tag", deviceInfo.getTag());
 		result.put("longitude", deviceInfo.getLongitude());
 		result.put("latitude", deviceInfo.getLatitude());
@@ -634,7 +635,7 @@ public class VlsDeviceInfoController extends BladeController {
 		result.put("address", deviceInfo.getAddress());
 		result.put("region", deviceInfo.getRegion());
 
-		// 查询关联的标签信息
+		// Query info
 		try {
 			List<DeviceTagRelationDTO> tagRelations = deviceTagRelationService.getDeviceTags(deviceInfo.getId());
 			List<Long> selectedTags = new ArrayList<>();
@@ -651,7 +652,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 删除设备信息
+	 * Delete deviceinfo
 	 */
 	@Operation(description = "删除设备信息")
 	@DeleteMapping("/{id}")
@@ -665,7 +666,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 批量删除设备信息
+	 * Batch delete deviceinfo
 	 */
 	@Operation(description = "批量删除设备信息")
 	@DeleteMapping("/batch")
@@ -683,7 +684,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 更新设备状态
+	 * new device
 	 */
 	@Operation(description = "更新设备状态")
 	@PutMapping("/{id}/status/{status}")
@@ -698,7 +699,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 批量更新设备状态
+	 * new device
 	 */
 	@Operation(description = "批量更新设备状态")
 	@PutMapping("/status/{status}")
@@ -717,7 +718,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 根据状态查询设备列表
+	 * Query device list
 	 */
 	@Operation(description = "根据状态查询设备列表")
 	@GetMapping("/status/{status}")
@@ -727,7 +728,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 根据设备类型查询设备列表
+	 * device Query device list
 	 */
 	@Operation(description = "根据设备类型查询设备列表")
 	@GetMapping("/type/{deviceType}")
@@ -737,7 +738,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 测试设备连接
+	 * device
 	 */
 	@Operation(description = "测试设备连接")
 	@PostMapping("/{id}/test")
@@ -751,7 +752,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 获取设备统计信息
+	 * Get device info
 	 */
 	@Operation(description = "获取设备统计信息")
 	@GetMapping("/statistics")
@@ -761,15 +762,15 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 获取设备分组统计（按标签分组）
+	 * Get devicegroup ( group)
 	 */
 	@Operation(description = "获取设备分组统计")
 	@GetMapping("/group-statistics")
 	public R<List<Map<String, Object>>> getDeviceGroupStatistics() {
-		// 获取所有设备
+		// Get all device
 		List<DeviceInfo> allDevices = vlsDeviceInfoService.list();
 
-		// 按设备类型分组统计
+		// device group
 		Map<String, List<DeviceInfo>> devicesByType = new HashMap<>();
 		for (DeviceInfo deviceInfo : allDevices) {
 			String type = deviceInfo.getDeviceType();
@@ -779,7 +780,7 @@ public class VlsDeviceInfoController extends BladeController {
 			devicesByType.computeIfAbsent(type, k -> new ArrayList<>()).add(deviceInfo);
 		}
 
-		// 构建统计结果
+		// Build
 		List<Map<String, Object>> result = new ArrayList<>();
 		for (Map.Entry<String, List<DeviceInfo>> entry : devicesByType.entrySet()) {
 			String typeName = entry.getKey();
@@ -789,7 +790,7 @@ public class VlsDeviceInfoController extends BladeController {
 			groupStat.put("type", typeName);
 			groupStat.put("total", devices.size());
 
-			// 统计各状态数量
+			//
 			long online = devices.stream().filter(d -> "在线".equals(d.getStatus())).count();
 			long offline = devices.stream().filter(d -> "离线".equals(d.getStatus())).count();
 			long fault = devices.stream().filter(d -> "故障".equals(d.getStatus())).count();
@@ -805,12 +806,12 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 获取设备类型统计
+	 * Get device
 	 */
 	@Operation(description = "获取设备类型统计")
 	@GetMapping("/type-statistics")
 	public R<Map<String, Object>> getDeviceTypeStatistics() {
-		// 获取所有设备类型
+		// Get all device
 		List<String> allTypes = vlsDeviceInfoService.getAllTags();
 		Map<String, Object> statistics = new HashMap<>();
 
@@ -823,7 +824,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 获取所有设备类型列表（标签列表）
+	 * Get all device ( )
 	 */
 	@Operation(description = "获取所有设备类型列表")
 	@GetMapping("/tags")
@@ -833,7 +834,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 获取所有设备品牌列表
+	 * Get all device
 	 */
 	@Operation(description = "获取所有设备品牌列表")
 	@GetMapping("/brands")
@@ -843,7 +844,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 刷新设备状态
+	 * new device
 	 */
 	@Operation(description = "刷新设备状态")
 	@PostMapping("/{id}/refresh")
@@ -857,7 +858,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 批量刷新设备状态
+	 * new device
 	 */
 	@Operation(description = "批量刷新设备状态")
 	@PostMapping("/batch/refresh")
@@ -879,7 +880,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * PTZ控制 - 移动
+	 * PTZcontrol -
 	 */
 	@Operation(description = "PTZ控制 - 移动")
 	@PostMapping("/{id}/ptz/move")
@@ -888,7 +889,7 @@ public class VlsDeviceInfoController extends BladeController {
 		String direction = (String) params.get("direction");
 		Integer speed = (Integer) params.getOrDefault("speed", 4);
 
-		// 检查设备是否存在
+		// devicewhether in
 		DeviceInfo device = vlsDeviceInfoService.getById(id);
 		if (device == null) {
 			return R.fail("设备不存在");
@@ -903,12 +904,12 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * PTZ控制 - 停止
+	 * PTZcontrol -
 	 */
 	@Operation(description = "PTZ控制 - 停止")
 	@PostMapping("/{id}/ptz/stop")
 	public R<String> ptzStop(@PathVariable Long id) {
-		// 检查设备是否存在
+		// devicewhether in
 		DeviceInfo device = vlsDeviceInfoService.getById(id);
 		if (device == null) {
 			return R.fail("设备不存在");
@@ -923,7 +924,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * PTZ控制 - 缩放
+	 * PTZcontrol -
 	 */
 	@Operation(description = "PTZ控制 - 缩放")
 	@PostMapping("/{id}/ptz/zoom")
@@ -933,7 +934,7 @@ public class VlsDeviceInfoController extends BladeController {
 		String action = (String) params.get("action");
 		Integer speed = (Integer) params.getOrDefault("speed", 4);
 
-		// 检查设备是否存在
+		// devicewhether in
 		DeviceInfo device = vlsDeviceInfoService.getById(id);
 		if (device == null) {
 			return R.fail("设备不存在");
@@ -948,7 +949,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 获取设备视频流信息
+	 * Get device info
 	 */
 	@Operation(description = "获取设备视频流信息")
 	@GetMapping("/{id}/stream")
@@ -961,7 +962,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 导出设备列表
+	 * Export device
 	 */
 	@Operation(description = "导出设备列表")
 	@GetMapping("/export")
@@ -971,19 +972,19 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 导入设备列表
+	 * Import device
 	 */
 	@Operation(description = "导入设备列表")
 	@PostMapping("/import")
 	public R<Map<String, Object>> importDevices(@RequestParam("file") MultipartFile file) {
-		// TODO: 实现文件解析和设备导入功能
+		// TODO: Parse and deviceImport can
 		Map<String, Object> result = new HashMap<>();
 		result.put("message", "导入功能待实现");
 		return R.data(result);
 	}
 
 	/**
-	 * 获取设备配置
+	 * Get deviceconfiguration
 	 */
 	@Operation(description = "获取设备配置")
 	@GetMapping("/{id}/config")
@@ -996,7 +997,7 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 更新设备配置
+	 * new deviceconfiguration
 	 */
 	@Operation(description = "更新设备配置")
 	@PutMapping("/{id}/config")
@@ -1011,16 +1012,16 @@ public class VlsDeviceInfoController extends BladeController {
 		}
 	}
 
-	// ==================== 设备标签相关接口 ====================
+	// ==================== device relatedinterface ====================
 
 	/**
-	 * 设置设备标签
+	 * Set device
 	 */
 	@Operation(description = "设置设备标签")
 	@PutMapping("/{id}/tags")
 	public R<String> setDeviceTags(@PathVariable Long id, @RequestBody List<Long> tagIds) {
 
-		// 验证设备是否存在
+		// devicewhether in
 		DeviceInfo device = vlsDeviceInfoService.getById(id);
 		if (device == null) {
 			return R.fail("设备不存在");
@@ -1035,13 +1036,13 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 获取设备标签
+	 * Get device
 	 */
 	@Operation(description = "获取设备标签")
 	@GetMapping("/{id}/tags")
 	public R<List<DeviceTagRelationDTO>> getDeviceTags(@PathVariable Long id) {
 
-		// 验证设备是否存在
+		// devicewhether in
 		DeviceInfo device = vlsDeviceInfoService.getById(id);
 		if (device == null) {
 			return R.fail("设备不存在");
@@ -1052,13 +1053,13 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 添加设备标签
+	 * device
 	 */
 	@Operation(description = "添加设备标签")
 	@PostMapping("/{id}/tags")
 	public R<String> addDeviceTags(@PathVariable Long id, @RequestBody List<Long> tagIds) {
 
-		// 验证设备是否存在
+		// devicewhether in
 		DeviceInfo device = vlsDeviceInfoService.getById(id);
 		if (device == null) {
 			return R.fail("设备不存在");
@@ -1073,13 +1074,13 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 移除设备标签
+	 * device
 	 */
 	@Operation(description = "移除设备标签")
 	@DeleteMapping("/{id}/tags")
 	public R<String> removeDeviceTags(@PathVariable Long id, @RequestBody List<Long> tagIds) {
 
-		// 验证设备是否存在
+		// devicewhether in
 		DeviceInfo device = vlsDeviceInfoService.getById(id);
 		if (device == null) {
 			return R.fail("设备不存在");
@@ -1094,13 +1095,13 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 清除设备的所有标签
+	 * device all
 	 */
 	@Operation(description = "清除设备的所有标签")
 	@DeleteMapping("/{id}/tags/all")
 	public R<String> clearDeviceTags(@PathVariable Long id) {
 
-		// 验证设备是否存在
+		// devicewhether in
 		DeviceInfo device = vlsDeviceInfoService.getById(id);
 		if (device == null) {
 			return R.fail("设备不存在");
@@ -1115,13 +1116,13 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 获取设备标签详细信息
+	 * Get device info
 	 */
 	@Operation(description = "获取设备标签详细信息")
 	@GetMapping("/{id}/tag-details")
 	public R<Map<String, Object>> getDeviceTagDetails(@PathVariable Long id) {
 
-		// 验证设备是否存在
+		// devicewhether in
 		DeviceInfo device = vlsDeviceInfoService.getById(id);
 		if (device == null) {
 			return R.fail("设备不存在");
@@ -1132,19 +1133,19 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 复制设备标签
+	 * device
 	 */
 	@Operation(description = "复制设备标签到其他设备")
 	@PostMapping("/{sourceId}/copy-tags")
 	public R<String> copyDeviceTags(@PathVariable Long sourceId, @RequestBody List<Long> targetDeviceIds) {
 
-		// 验证源设备是否存在
+		// devicewhether in
 		DeviceInfo sourceDevice = vlsDeviceInfoService.getById(sourceId);
 		if (sourceDevice == null) {
 			return R.fail("源设备不存在");
 		}
 
-		// 验证目标设备是否都存在
+		// devicewhether in
 		for (Long targetId : targetDeviceIds) {
 			DeviceInfo targetDevice = vlsDeviceInfoService.getById(targetId);
 			if (targetDevice == null) {
@@ -1161,13 +1162,13 @@ public class VlsDeviceInfoController extends BladeController {
 	}
 
 	/**
-	 * 获取设备树形结构
+	 * Get device
 	 */
 	@Operation(description = "获取设备树形结构")
 	@GetMapping("/tree")
 	public R<List<Map<String, Object>>> getDeviceTree() {
 		try {
-			// 定义固定的设备类型
+			// device
 			String[] deviceTypes = {"球机", "云台", "摄像头", "枪机", "半球"};
 
 			List<Map<String, Object>> treeData = new ArrayList<>();
@@ -1178,13 +1179,13 @@ public class VlsDeviceInfoController extends BladeController {
 				typeNode.put("label", deviceType);
 				typeNode.put("type", "device_type");
 
-				// 使用分页API查询该类型下的所有设备（设置大页面获取全部数据）
-				Page<DeviceInfo> page = new Page<>(1, 1000); // 设置大页面获取全部数据
+				// APIQuery all device (Set pageGet full data)
+				Page<DeviceInfo> page = new Page<>(1, 1000); // Set pageGet full data
 				IPage<DeviceInfo> devicePage = vlsDeviceInfoService.getDevicePage(page, null, deviceType, null);
 				List<DeviceInfo> devices = devicePage.getRecords();
 				typeNode.put("deviceCount", devices.size());
 
-				// 构建设备节点
+				// Build devicenode
 				List<Map<String, Object>> deviceNodes = new ArrayList<>();
 				for (DeviceInfo deviceInfo : devices) {
 					Map<String, Object> deviceNode = new HashMap<>();
@@ -1201,7 +1202,7 @@ public class VlsDeviceInfoController extends BladeController {
 
 				typeNode.put("children", deviceNodes);
 
-				// 更新label以显示数量
+				// new label
 				typeNode.put("label", deviceType + " (" + devices.size() + ")");
 
 				treeData.add(typeNode);

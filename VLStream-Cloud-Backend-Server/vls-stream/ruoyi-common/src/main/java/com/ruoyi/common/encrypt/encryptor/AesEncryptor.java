@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -16,9 +17,9 @@ import com.ruoyi.common.enums.EncodeType;
 import java.nio.charset.StandardCharsets;
 
 /**
- * AES算法实现
+ * AESalgorithm
  *
- * @author 老马
+ * @author
  * @version 4.6.0
  */
 public class AesEncryptor extends AbstractEncryptor {
@@ -31,7 +32,7 @@ public class AesEncryptor extends AbstractEncryptor {
         if (StrUtil.isBlank(password)) {
             throw new IllegalArgumentException("AES没有获得秘钥信息");
         }
-        // aes算法的秘钥要求是16位、24位、32位
+        // aesalgorithm need to is 16 、24 、32
         int[] array = {16, 24, 32};
         if (!ArrayUtil.contains(array, password.length())) {
             throw new IllegalArgumentException("AES秘钥长度应该为16位、24位、32位，实际为" + password.length() + "位");
@@ -40,7 +41,7 @@ public class AesEncryptor extends AbstractEncryptor {
     }
 
     /**
-     * 获得当前算法
+     * current algorithm
      */
     @Override
     public AlgorithmType algorithm() {
@@ -48,10 +49,10 @@ public class AesEncryptor extends AbstractEncryptor {
     }
 
     /**
-     * 加密
      *
-     * @param value      待加密字符串
-     * @param encodeType 加密后的编码格式
+     *
+     * @param value
+     * @param encodeType after
      */
     @Override
     public String encrypt(String value, EncodeType encodeType) {
@@ -63,9 +64,9 @@ public class AesEncryptor extends AbstractEncryptor {
     }
 
     /**
-     * 解密
      *
-     * @param value      待加密字符串
+     *
+     * @param value
      */
     @Override
     public String decrypt(String value) {

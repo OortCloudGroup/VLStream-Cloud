@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -14,7 +15,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 我拥有流程对象导出VO
+ * workflow objectExport VO
  *
  * @author konbai
  */
@@ -24,56 +25,56 @@ public class WfOwnTaskExportVo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 流程实例ID
+     * workflow instance ID
      */
     @ExcelProperty(value = "流程编号")
     private String procInsId;
 
     /**
-     * 流程名称
+     * workflow
      */
     @ExcelProperty(value = "流程名称")
     private String procDefName;
 
     /**
-     * 流程类别
+     * workflow
      */
     @ExcelProperty(value = "流程类别")
     private String category;
 
     /**
-     * 流程版本
+     * workflow
      */
     @ExcelProperty(value = "流程版本")
     private int procDefVersion;
 
     /**
-     * 提交时间
+     *
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ExcelProperty(value = "提交时间")
     private Date createTime;
 
     /**
-     * 流程状态
+     * workflow
      */
     @ExcelProperty(value = "流程状态")
     private String status;
 
     /**
-     * 任务耗时
+     * task
      */
     @ExcelProperty(value = "任务耗时")
     private String duration;
 
     /**
-     * 当前节点
+     * current node
      */
     @ExcelProperty(value = "当前节点")
     private String taskName;
 
     /**
-     * 任务完成时间
+     * task
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date finishTime;

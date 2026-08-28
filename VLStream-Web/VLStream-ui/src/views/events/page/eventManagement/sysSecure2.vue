@@ -1,10 +1,15 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <!-- eslint-disable no-unused-vars,vue/html-indent -->
 
 <template>
   <div class="tenant_Page draHeaPB">
     <div class="tenant_content">
       <div class="tableTenBox flexRowAC">
-        <!-- 左侧菜单 -->
+        <!-- menu -->
         <div class="left_menu_panel">
           <div class="left-menu-header">
             <div class="custom-tabs">
@@ -151,15 +156,15 @@ import AppConfig from '@/config/AppConfig'
 
 const store: any = useUserStore()
 
-// 左侧菜单相关
+// menurelated
 const leftTabActive = ref('region')
 const regionAutoDispatch = ref(false)
 const groupAutoDispatch = ref(false)
 const leftTreeRef = ref<InstanceType<typeof ElTree>>()
-const treeData = ref<any>([]) // 部门树date
-const currentTreeNodeId = ref<any>('') // 当前节点id
+const treeData = ref<any>([]) // department date
+const currentTreeNodeId = ref<any>('') // current nodeid
 const currentTreeNodeLabel = ref('')
-// 配置选项
+// configuration item
 const defaultProps = {
   label: 'name',
   children: 'children',
@@ -192,7 +197,7 @@ interface Tree {
 
 const activeGroupType = computed(() => (leftTabActive.value === 'tag' ? 3 : leftTabActive.value === 'group' ? 2 : 1))
 
-// 部门树列表（与 secure.vue 一致，从接口获取）
+// department ( and secure.vue , from interfaceGet )
 const getDeptTreeUI = async(node: Node, resolve: (data: Tree[]) => void) => {
   const params: any = {
     accessToken: store.userInfo?.accessToken,
@@ -250,7 +255,7 @@ const getDeptTreeUI = async(node: Node, resolve: (data: Tree[]) => void) => {
   }
 }
 
-// 重新加载树数据
+// new Load data
 const reloadTree = () => {
   const rootDept = {
     name: '全部',
@@ -273,9 +278,9 @@ const reloadTree = () => {
 }
 
 const settingDialogVisible = ref(false)
-const currentProcessId = ref<string>('') // 当前配置的 process_id
-const currentGroupType = ref<number>(1) // 当前分组类型：1-区域，2-分组
-const currentAutoToWork = ref<boolean>(false) // 当前自动转工单状态
+const currentProcessId = ref<string>('') // current configuration process_id
+const currentGroupType = ref<number>(1) // current group : 1- , 2-group
+const currentAutoToWork = ref<boolean>(false) // current work order
 const currentNodeUid = ref<string>('')
 
 const dialogContext = ref({
@@ -293,13 +298,13 @@ const handleTabClick = (tabName: string) => {
   reloadTree()
 }
 
-// 部门树选中
+// department in
 const handleTreeNodeClick = (data: any) => {
   currentTreeNodeId.value = data.id
   currentTreeNodeLabel.value = data.label
 }
 
-// 自动派单开关变化
+//
 const handleAutoDispatchChange = async(data: any) => {
   const nextVal = data.autoDispatch
   const params = {
@@ -320,7 +325,7 @@ const handleAutoDispatchChange = async(data: any) => {
   }
 }
 
-// 设置图标点击
+// Set
 const handleSettingsClick = async(data: any) => {
   currentNodeUid.value = data.uid || data.id
   currentGroupType.value = activeGroupType.value
@@ -333,7 +338,7 @@ const handleSettingsClick = async(data: any) => {
   settingDialogVisible.value = true
 }
 
-// 区域自动派单开关变化
+//
 const handleRegionAutoDispatchChange = async(val: boolean) => {
   try {
     const params = {
@@ -353,7 +358,7 @@ const handleRegionAutoDispatchChange = async(val: boolean) => {
   }
 }
 
-// 分组自动派单开关变化
+// group
 const handleGroupAutoDispatchChange = async(val: boolean) => {
   try {
     const params = {
@@ -373,20 +378,20 @@ const handleGroupAutoDispatchChange = async(val: boolean) => {
   }
 }
 
-// 顶部设置图标点击
+// Set
 const handleHeaderSettingsClick = async() => {
-  // 顶部设置始终对应“全部”范围，清空此前可能选中的区域、分组或标签节点。
+  // Set " full " , null / empty before can in 、group node.
   currentNodeUid.value = ''
   dialogContext.value = {
     regionName: leftTabActive.value === 'region' ? '区域' : '分组',
     nodeLabel: currentTreeNodeLabel.value || '目标追踪类AI主动安全事件'
   }
 
-  // 根据当前标签页确定 group_type
+  // current group_type
   const groupType = leftTabActive.value === 'region' ? 1 : 2
   currentGroupType.value = groupType
 
-  // 调用接口获取配置
+  // interfaceGet configuration
   try {
     const params = {
       accessToken: store.userInfo?.accessToken,
@@ -413,7 +418,7 @@ const handleSettingConfirm = async(value: any) => {
   const { definitionId } = value
   let res: any
   if (!currentNodeUid.value) {
-    // “全部”配置写入租户级设置；流程字段与开关必须保存到同一条记录。
+    // " full "configuration Set ; workflowfield and record.
     res = await workflowConfigSet({
       accessToken: store.userInfo?.accessToken,
       group_type: currentGroupType.value,
@@ -423,7 +428,7 @@ const handleSettingConfirm = async(value: any) => {
       process_id: definitionId
     }) as any
   } else {
-    // 具体区域、分组或标签继续使用节点级 V2 配置。
+    // 、group node V2 configuration.
     res = await event_group_setting_save({
       accessToken: store.userInfo?.accessToken,
       uid: currentNodeUid.value,
@@ -441,9 +446,9 @@ const handleSettingConfirm = async(value: any) => {
   }
 }
 
-// 获取区域和分组的自动派单配置
+// Get and group configuration
 const fetchAutoDispatchConfig = async() => {
-  // 获取区域配置 (group_type: 1)
+  // Get configuration (group_type: 1)
   const regionParams = {
     accessToken: store.userInfo?.accessToken,
     group_type: 1,
@@ -454,7 +459,7 @@ const fetchAutoDispatchConfig = async() => {
     regionAutoDispatch.value = regionRes.data.auto_to_work ?? false
   }
 
-  // 获取分组配置 (group_type: 2)
+  // Get groupconfiguration (group_type: 2)
   const groupParams = {
     accessToken: store.userInfo?.accessToken,
     group_type: 2,
@@ -498,7 +503,7 @@ onMounted(() => {
   }
 }
 
-// 左侧菜单样式
+// menu
 .left_menu_panel {
   width: 460px;
   min-width: 360px;

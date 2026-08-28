@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 场景治理检测编排器：按摄像头（设备）ID集合触发 detection 包下全部算法的会话刷新/停止。
+ * : (device)IDcollection detection full algorithm will new / .
  */
 @Service
 @RequiredArgsConstructor

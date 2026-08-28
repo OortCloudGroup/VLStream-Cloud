@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -33,7 +34,7 @@ public class WorkOrderJobService {
 
     @XxlJob(value = "createWorkOrderJob")
     public  void createWorkOrderJob() {
-        // 获取参数
+        // Get parameter
         ObjectMapper objectMapper=new ObjectMapper();
         Map<String, Object> map;
         try {
@@ -42,14 +43,14 @@ public class WorkOrderJobService {
             log.error("参数解析失败");
             throw new RuntimeException(e);
         }
-        //启动流程
+        // workflow
         ProcessStartBo processStartBoProperty = objectMapper.convertValue(map.get("processStartBo"), ProcessStartBo.class);
         SysUser sysUser = objectMapper.convertValue(map.get("sysUser"), SysUser.class);
 
         String processInstanceId = processService.startProcessByDefId(processStartBoProperty,sysUser);
 
 
-        // 从map中安全获取参数，避免空指针异常
+        // from map in full Get parameter, null / empty
         Object workOrderJobFlagObj = map.get("workOrderJobFlag");
         if (workOrderJobFlagObj != null
             && StringUtils.isNotBlank(workOrderJobFlagObj.toString())
@@ -59,7 +60,7 @@ public class WorkOrderJobService {
             Double newValue = Double.valueOf(processStartBoProperty.getWorkOrderBo().getWorkOrderJobFlag());
             processStartBoProperty.getWorkOrderBo().setWorkOrderJobFlag(String.valueOf(newValue+0.1));
         }
-        //创建工单
+        // work order
         String taskId = processService.getTaskId(processInstanceId,sysUser);
         processStartBoProperty.getWorkOrderBo().setTaskId(taskId);
         processStartBoProperty.getWorkOrderBo().setProcInsId(processInstanceId);

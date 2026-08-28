@@ -1,11 +1,16 @@
-// 测试后端token验证逻辑
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// after token
 async function testBackendTokenValidation() {
   const currentToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token')
-  
+
   console.log('🔍 测试后端token验证逻辑')
   console.log('当前token:', currentToken)
   console.log('')
-  
+
   const testAPIs = [
     {
       name: '设备列表API',
@@ -35,12 +40,12 @@ async function testBackendTokenValidation() {
       data: { accessToken: currentToken }
     }
   ]
-  
+
   for (const api of testAPIs) {
     console.log(`\n=== 测试: ${api.name} ===`)
     console.log('URL:', api.url)
     console.log('Method:', api.method)
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'requesttype': 'app',
@@ -48,12 +53,12 @@ async function testBackendTokenValidation() {
       'secretkey': '58f9eeefc65f4b318204ba21f39a8861',
       'accesstoken': currentToken
     }
-    
+
     console.log('Headers:', headers)
-    
+
     try {
       let response
-      
+
       if (api.method === 'GET') {
         const url = new URL(api.url)
         if (api.params) {
@@ -72,9 +77,9 @@ async function testBackendTokenValidation() {
           body: JSON.stringify(api.data || {})
         })
       }
-      
+
       console.log(`响应状态: ${response.status}`)
-      
+
       if (response.ok) {
         const data = await response.json()
         console.log('✅ 请求成功！')
@@ -83,8 +88,8 @@ async function testBackendTokenValidation() {
         const errorData = await response.json()
         console.log('❌ 请求失败！')
         console.log('错误信息:', errorData)
-        
-        // 分析错误类型
+
+        //
         if (errorData.code === 4004) {
           console.log('🔍 错误分析: accessToken无效.校验不通过')
           console.log('可能原因:')
@@ -93,17 +98,17 @@ async function testBackendTokenValidation() {
           console.log('3. token格式或签名验证失败')
         }
       }
-      
+
     } catch (error) {
       console.log(`❌ 请求异常: ${error.message}`)
     }
   }
-  
+
   console.log('\n📝 测试总结:')
   console.log('- 如果所有API都返回4004错误，说明后端配置有问题')
   console.log('- 如果只有部分API返回4004错误，说明特定API的验证逻辑有问题')
   console.log('- 如果统一用户中心API正常，说明token本身是有效的')
 }
 
-// 运行测试
-testBackendTokenValidation().catch(console.error) 
+//
+testBackendTokenValidation().catch(console.error)

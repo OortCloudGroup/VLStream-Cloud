@@ -1,16 +1,21 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
-// 标签管理 API
+// API
 
 /**
- * 分页查询标签信息
- * @param {Object} params - 查询参数
- * @param {number} params.current - 当前�?
- * @param {number} params.size - 每页大小
- * @param {string} params.keyword - 搜索关键�?
- * @param {string} params.categoryType - 标签大类
- * @param {number} params.level - 标签层级
- * @param {number} params.parentId - 父级ID
+ * Query info
+ * @param {Object} params - Query parameter
+ * @param {number} params.current - current �?
+ * @param {number} params.size -
+ * @param {string} params.keyword - �?
+ * @param {string} params.categoryType -
+ * @param {number} params.level - layer
+ * @param {number} params.parentId - ID
  */
 export function getTagManagementPage(params) {
   return request({
@@ -21,7 +26,7 @@ export function getTagManagementPage(params) {
 }
 
 /**
- * 获取标签树形结构（用于左侧导航）
+ * Get ( )
  */
 export function getTagTree() {
   return request({
@@ -31,8 +36,8 @@ export function getTagTree() {
 }
 
 /**
- * 获取标签详情
- * @param {number} id - 标签ID
+ * Get
+ * @param {number} id - ID
  */
 export function getTagById(id) {
   return request({
@@ -42,8 +47,8 @@ export function getTagById(id) {
 }
 
 /**
- * 创建标签
- * @param {Object} data - 标签数据
+ *
+ * @param {Object} data - data
  */
 export function createTag(data) {
   return request({
@@ -54,9 +59,9 @@ export function createTag(data) {
 }
 
 /**
- * 更新标签
- * @param {number} id - 标签ID
- * @param {Object} data - 更新数据
+ * new
+ * @param {number} id - ID
+ * @param {Object} data - new data
  */
 export function updateTag(id, data) {
   return request({
@@ -67,8 +72,8 @@ export function updateTag(id, data) {
 }
 
 /**
- * 删除标签
- * @param {number} id - 标签ID
+ * Delete
+ * @param {number} id - ID
  */
 export function deleteTag(id) {
   return request({
@@ -78,8 +83,8 @@ export function deleteTag(id) {
 }
 
 /**
- * 批量删除标签
- * @param {Array} ids - 标签ID数组
+ * Batch delete
+ * @param {Array} ids - IDarray
  */
 export function batchDeleteTags(ids) {
   return request({
@@ -90,7 +95,7 @@ export function batchDeleteTags(ids) {
 }
 
 /**
- * 获取标签统计信息
+ * Get info
  */
 export function getTagStatistics() {
   return request({
@@ -100,8 +105,8 @@ export function getTagStatistics() {
 }
 
 /**
- * 获取标签的使用统计
- * @param {number} id - 标签ID
+ * Get
+ * @param {number} id - ID
  */
 export function getTagUsageStats(id) {
   return request({
@@ -111,16 +116,16 @@ export function getTagUsageStats(id) {
 }
 
 /**
- * 检查标签名称是否重复
- * @param {string} tagName - 标签名称
- * @param {number} parentId - 父级ID（可选）
- * @param {number} excludeId - 排除的ID（可选，用于编辑时验证）
+ * whether
+ * @param {string} tagName -
+ * @param {number} parentId - ID ( )
+ * @param {number} excludeId - ID ( , )
  */
 export function checkTagNameDuplicate(tagName, parentId = null, excludeId = null) {
   const params = { tagName }
   if (parentId !== null) params.parentId = parentId
   if (excludeId !== null) params.excludeId = excludeId
-  
+
   return request({
     url: '/vlsTagManagement/check-name',
     method: 'get',
@@ -129,8 +134,8 @@ export function checkTagNameDuplicate(tagName, parentId = null, excludeId = null
 }
 
 /**
- * 获取标签的所有子标签
- * @param {number} parentId - 父级ID
+ * Get all sub
+ * @param {number} parentId - ID
  */
 export function getChildTags(parentId) {
   return request({
@@ -140,9 +145,9 @@ export function getChildTags(parentId) {
 }
 
 /**
- * 移动标签到新的父级
- * @param {number} id - 标签ID
- * @param {number} newParentId - 新的父级ID
+ * new
+ * @param {number} id - ID
+ * @param {number} newParentId - new ID
  */
 export function moveTag(id, newParentId) {
   return request({
@@ -152,11 +157,11 @@ export function moveTag(id, newParentId) {
   })
 }
 
-// 设备标签关联 API
+// device API
 
 /**
- * 获取设备的所有标签
- * @param {number} deviceId - 设备ID
+ * Get device all
+ * @param {number} deviceId - deviceID
  */
 export function getDeviceTags(deviceId) {
   return request({
@@ -166,8 +171,8 @@ export function getDeviceTags(deviceId) {
 }
 
 /**
- * 获取标签关联的所有设备
- * @param {number} tagId - 标签ID
+ * Get all device
+ * @param {number} tagId - ID
  */
 export function getTagDevices(tagId) {
   return request({
@@ -177,10 +182,10 @@ export function getTagDevices(tagId) {
 }
 
 /**
- * 为设备添加标签
- * @param {number} deviceId - 设备ID
- * @param {number} tagId - 标签ID
- * @param {string} createdBy - 创建者
+ * to device
+ * @param {number} deviceId - deviceID
+ * @param {number} tagId - ID
+ * @param {string} createdBy - creator
  */
 export function addDeviceTag(deviceId, tagId, createdBy = 'system') {
   return request({
@@ -191,10 +196,10 @@ export function addDeviceTag(deviceId, tagId, createdBy = 'system') {
 }
 
 /**
- * 批量为设备添加标签
- * @param {number} deviceId - 设备ID
- * @param {Array} tagIds - 标签ID数组
- * @param {string} createdBy - 创建者
+ * to device
+ * @param {number} deviceId - deviceID
+ * @param {Array} tagIds - IDarray
+ * @param {string} createdBy - creator
  */
 export function addDeviceTags(deviceId, tagIds, createdBy = 'system') {
   return request({
@@ -206,9 +211,9 @@ export function addDeviceTags(deviceId, tagIds, createdBy = 'system') {
 }
 
 /**
- * 移除设备标签
- * @param {number} deviceId - 设备ID
- * @param {number} tagId - 标签ID
+ * device
+ * @param {number} deviceId - deviceID
+ * @param {number} tagId - ID
  */
 export function removeDeviceTag(deviceId, tagId) {
   return request({
@@ -218,9 +223,9 @@ export function removeDeviceTag(deviceId, tagId) {
 }
 
 /**
- * 批量移除设备标签
- * @param {number} deviceId - 设备ID
- * @param {Array} tagIds - 标签ID数组
+ * device
+ * @param {number} deviceId - deviceID
+ * @param {Array} tagIds - IDarray
  */
 export function removeDeviceTags(deviceId, tagIds) {
   return request({
@@ -231,10 +236,10 @@ export function removeDeviceTags(deviceId, tagIds) {
 }
 
 /**
- * 更新设备的所有标签
- * @param {number} deviceId - 设备ID
- * @param {Array} tagIds - 标签ID数组
- * @param {string} createdBy - 创建者
+ * new device all
+ * @param {number} deviceId - deviceID
+ * @param {Array} tagIds - IDarray
+ * @param {string} createdBy - creator
  */
 export function updateDeviceTags(deviceId, tagIds, createdBy = 'system') {
   return request({
@@ -246,8 +251,8 @@ export function updateDeviceTags(deviceId, tagIds, createdBy = 'system') {
 }
 
 /**
- * 删除设备的所有标签关联
- * @param {number} deviceId - 设备ID
+ * Delete device all
+ * @param {number} deviceId - deviceID
  */
 export function removeAllDeviceTags(deviceId) {
   return request({
@@ -257,8 +262,8 @@ export function removeAllDeviceTags(deviceId) {
 }
 
 /**
- * 删除标签的所有设备关联
- * @param {number} tagId - 标签ID
+ * Delete all device
+ * @param {number} tagId - ID
  */
 export function removeAllTagDevices(tagId) {
   return request({
@@ -268,9 +273,9 @@ export function removeAllTagDevices(tagId) {
 }
 
 /**
- * 检查设备标签关联是否存在
- * @param {number} deviceId - 设备ID
- * @param {number} tagId - 标签ID
+ * device whether in
+ * @param {number} deviceId - deviceID
+ * @param {number} tagId - ID
  */
 export function checkDeviceTagRelation(deviceId, tagId) {
   return request({
@@ -281,4 +286,4 @@ export function checkDeviceTagRelation(deviceId, tagId) {
       tagId
     }
   })
-} 
+}

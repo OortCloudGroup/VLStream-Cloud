@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -12,7 +13,7 @@ import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Undertow 自定义配置
+ * Undertow Customconfiguration
  *
  * @author Lion Li
  */
@@ -20,11 +21,11 @@ import org.springframework.context.annotation.Configuration;
 public class UndertowConfig implements WebServerFactoryCustomizer<UndertowServletWebServerFactory> {
 
     /**
-     * 设置 Undertow 的 websocket 缓冲池
+     * Set Undertow websocket
      */
     @Override
     public void customize(UndertowServletWebServerFactory factory) {
-        // 默认不直接分配内存 如果项目中使用了 websocket 建议直接分配
+        // if item in websocket
         factory.addDeploymentInfoCustomizers(deploymentInfo -> {
             WebSocketDeploymentInfo webSocketDeploymentInfo = new WebSocketDeploymentInfo();
             webSocketDeploymentInfo.setBuffers(new DefaultByteBufferPool(false, 512));

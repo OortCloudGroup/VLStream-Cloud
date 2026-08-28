@@ -1,7 +1,12 @@
-// 测试axios响应结构处理
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// axios Process
 console.log('🔧 测试axios响应结构处理...')
 
-// 模拟axios响应结构
+// axios
 const mockAxiosResponse = {
   data: {
     code: 200,
@@ -19,7 +24,7 @@ const mockAxiosResponse = {
   config: {}
 }
 
-// 模拟直接API响应结构
+// API
 const mockDirectResponse = {
   code: 200,
   data: {
@@ -31,14 +36,14 @@ const mockDirectResponse = {
   msg: '成功'
 }
 
-// 测试响应处理函数
+// Process
 function testResponseProcessing(response) {
   console.log('📥 原始响应:', response)
-  
-  // 修复后的响应处理逻辑
+
+  // after Process
   const apiResponse = response.data || response
   console.log('🔧 处理后的API响应:', apiResponse)
-  
+
   if (apiResponse && (apiResponse.code === 200 || apiResponse.success === true)) {
     console.log('✅ Token验证成功，用户信息:', apiResponse.data)
     return {
@@ -54,17 +59,17 @@ function testResponseProcessing(response) {
   }
 }
 
-// 测试axios响应结构
+// axios
 console.log('\n📋 测试1: axios响应结构')
 const result1 = testResponseProcessing(mockAxiosResponse)
 console.log('结果:', result1)
 
-// 测试直接API响应结构
+// API
 console.log('\n📋 测试2: 直接API响应结构')
 const result2 = testResponseProcessing(mockDirectResponse)
 console.log('结果:', result2)
 
-// 测试失败响应
+// failed
 console.log('\n📋 测试3: 失败响应')
 const mockFailureResponse = {
   data: {
@@ -77,4 +82,4 @@ const mockFailureResponse = {
 const result3 = testResponseProcessing(mockFailureResponse)
 console.log('结果:', result3)
 
-console.log('\n🎉 测试完成！') 
+console.log('\n🎉 测试完成！')

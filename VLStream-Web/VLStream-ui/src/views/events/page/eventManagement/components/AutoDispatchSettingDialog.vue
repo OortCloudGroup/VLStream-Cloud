@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-dialog
     :model-value="modelValue"
@@ -88,9 +93,9 @@ const emit = defineEmits(['update:modelValue', 'confirm'])
 const store: any = useUserStore()
 const localValue = ref(props.model)
 const options = ref<OptionItem[]>([])
-const workOrderList = ref<any[]>([]) // 保存完整的工单列表数据
+const workOrderList = ref<any[]>([]) // work order data
 
-// 获取工单列表
+// Get work order
 const fetchWorkOrderList = async() => {
   try {
     const appObj = await resolveWorkOrderAppContext()
@@ -102,13 +107,13 @@ const fetchWorkOrderList = async() => {
     }
     const res: any = await listModel(data)
     if (res?.code === 200 && res?.rows) {
-      workOrderList.value = res.rows // 保存完整数据
+      workOrderList.value = res.rows // data
       options.value = res.rows.map((item: any) => ({
         label: item.modelName,
         value: item.modelId
       }))
 
-      // 根据 processId 匹配 definitionId，设置选中的工单
+      // processId definitionId, Set in work order
       if (props.processId && workOrderList.value.length > 0) {
         const matchedWorkOrder = workOrderList.value.find((item: any) => item.definitionId === props.processId)
         if (matchedWorkOrder) {
@@ -120,13 +125,13 @@ const fetchWorkOrderList = async() => {
       workOrderList.value = []
     }
   } catch (error) {
-    // 获取工单列表失败，使用空数组
+    // Get work order failed, null / empty array
     options.value = []
     workOrderList.value = []
   }
 }
 
-// 统一工单中台配置
+// work order in configuration
 const processuiRouterLinkFn = () => {
   let appendStr = '?accessToken=' + store.token + '&fromWhere=console_manage'
   'http://183.62.103.20:21410/bus/apaas-web/processui/index.html#/ybpHome'
@@ -145,7 +150,7 @@ watch(
   () => props.modelValue,
   (val) => {
     if (val) {
-      // 对话框打开时获取工单列表
+      // Get work order
       fetchWorkOrderList()
       localValue.value = props.model
     } else {
@@ -154,7 +159,7 @@ watch(
   }
 )
 
-// 监听 processId 变化，更新选中的工单
+// processId , new in work order
 watch(
   () => props.processId,
   (val) => {
@@ -174,7 +179,7 @@ const handleCancel = () => {
 }
 
 const handleConfirm = () => {
-  // 根据选择的 modelId 找到对应的 definitionId 和 modelName
+  // modelId definitionId and modelName
   const selectedWorkOrder = workOrderList.value.find((item: any) => item.modelId === localValue.value)
   const definitionId = selectedWorkOrder?.definitionId || ''
   const modelName = selectedWorkOrder?.modelName || ''

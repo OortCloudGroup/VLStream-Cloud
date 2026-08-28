@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -13,10 +13,10 @@ import org.springframework.util.StringUtils;
 public class XxlJobUser {
 
     private int id;
-    private String username;        // 账号
-    private String password;        // 密码
-    private int role;                // 角色：0-普通用户、1-管理员
-    private String permission;    // 权限：执行器ID列表，多个逗号分割
+    private String username;        //
+    private String password;        //
+    private int role;                // role: 0- user、1-administrator
+    private String permission;    // : Execute ID ,
 
     public int getId() {
         return id;

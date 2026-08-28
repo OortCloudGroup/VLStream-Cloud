@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -15,7 +16,7 @@ import javax.validation.Validator;
 import java.util.Set;
 
 /**
- * Validator 校验框架工具
+ * Validator Validate
  *
  * @author Lion Li
  */

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -20,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 操作日志记录表 oper_log
+ * operationlogrecord oper_log
  *
  * @author Lion Li
  */
@@ -33,113 +34,113 @@ public class SysOperLog implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 日志主键
+     * logprimary key
      */
     @ExcelProperty(value = "日志主键")
     @TableId(value = "oper_id")
     private Long operId;
 
     /**
-     * 操作模块
+     * operation
      */
     @ExcelProperty(value = "操作模块")
     private String title;
 
     /**
-     * 业务类型（0其它 1新增 2修改 3删除）
+     * (0 1Add 2Update 3Delete )
      */
     @ExcelProperty(value = "业务类型", converter = ExcelDictConvert.class)
     @ExcelDictFormat(dictType = "sys_oper_type")
     private Integer businessType;
 
     /**
-     * 业务类型数组
+     * array
      */
     @TableField(exist = false)
     private Integer[] businessTypes;
 
     /**
-     * 请求方法
+     * method
      */
     @ExcelProperty(value = "请求方法")
     private String method;
 
     /**
-     * 请求方式
+     *
      */
     @ExcelProperty(value = "请求方式")
     private String requestMethod;
 
     /**
-     * 操作类别（0其它 1后台用户 2手机端用户）
+     * operation (0 1 after user 2 user)
      */
     @ExcelProperty(value = "操作类别", converter = ExcelDictConvert.class)
     @ExcelDictFormat(readConverterExp = "0=其它,1=后台用户,2=手机端用户")
     private Integer operatorType;
 
     /**
-     * 操作人员
+     * operation
      */
     @ExcelProperty(value = "操作人员")
     private String operName;
 
     /**
-     * 部门名称
+     * department name
      */
     @ExcelProperty(value = "部门名称")
     private String deptName;
 
     /**
-     * 请求url
+     * url
      */
     @ExcelProperty(value = "请求地址")
     private String operUrl;
 
     /**
-     * 操作地址
+     * operation
      */
     @ExcelProperty(value = "操作地址")
     private String operIp;
 
     /**
-     * 操作地点
+     * operation
      */
     @ExcelProperty(value = "操作地点")
     private String operLocation;
 
     /**
-     * 请求参数
+     * parameter
      */
     @ExcelProperty(value = "请求参数")
     private String operParam;
 
     /**
-     * 返回参数
+     * parameter
      */
     @ExcelProperty(value = "返回参数")
     private String jsonResult;
 
     /**
-     * 操作状态（0正常 1异常）
+     * operation (0 1 )
      */
     @ExcelProperty(value = "状态", converter = ExcelDictConvert.class)
     @ExcelDictFormat(dictType = "sys_common_status")
     private Integer status;
 
     /**
-     * 错误消息
+     *
      */
     @ExcelProperty(value = "错误消息")
     private String errorMsg;
 
     /**
-     * 操作时间
+     * operation
      */
     @ExcelProperty(value = "操作时间")
     private Date operTime;
 
     /**
-     * 请求参数
+     * parameter
      */
     @TableField(exist = false)
     private Map<String, Object> params = new HashMap<>();

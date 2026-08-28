@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 岗位信息 服务层处理
+ * info service layer Process
  *
  * @author Lion Li
  */
@@ -47,10 +47,10 @@ public class SysPostServiceImpl implements ISysPostService {
     }
 
     /**
-     * 查询岗位信息集合
+     * Query infocollection
      *
-     * @param post 岗位信息
-     * @return 岗位信息集合
+     * @param post info
+     * @return infocollection
      */
     @Override
     public List<SysPost> selectPostList(SysPost post) {
@@ -61,9 +61,9 @@ public class SysPostServiceImpl implements ISysPostService {
     }
 
     /**
-     * 查询所有岗位
+     * Query all
      *
-     * @return 岗位列表
+     * @return
      */
     @Override
     public List<SysPost> selectPostAll() {
@@ -71,10 +71,10 @@ public class SysPostServiceImpl implements ISysPostService {
     }
 
     /**
-     * 通过岗位ID查询岗位信息
+     * IDQuery info
      *
-     * @param postId 岗位ID
-     * @return 角色对象信息
+     * @param postId ID
+     * @return roleobjectinfo
      */
     @Override
     public SysPost selectPostById(Long postId) {
@@ -82,10 +82,10 @@ public class SysPostServiceImpl implements ISysPostService {
     }
 
     /**
-     * 根据用户ID获取岗位选择框列表
+     * user IDGet
      *
-     * @param userId 用户ID
-     * @return 选中岗位ID列表
+     * @param userId user ID
+     * @return in ID
      */
     @Override
     public List<Long> selectPostListByUserId(String userId) {
@@ -93,10 +93,10 @@ public class SysPostServiceImpl implements ISysPostService {
     }
 
     /**
-     * 校验岗位名称是否唯一
+     * Validate whether
      *
-     * @param post 岗位信息
-     * @return 结果
+     * @param post info
+     * @return
      */
     @Override
     public boolean checkPostNameUnique(SysPost post) {
@@ -107,10 +107,10 @@ public class SysPostServiceImpl implements ISysPostService {
     }
 
     /**
-     * 校验岗位编码是否唯一
+     * Validate whether
      *
-     * @param post 岗位信息
-     * @return 结果
+     * @param post info
+     * @return
      */
     @Override
     public boolean checkPostCodeUnique(SysPost post) {
@@ -121,10 +121,10 @@ public class SysPostServiceImpl implements ISysPostService {
     }
 
     /**
-     * 通过岗位ID查询岗位使用数量
+     * IDQuery
      *
-     * @param postId 岗位ID
-     * @return 结果
+     * @param postId ID
+     * @return
      */
     @Override
     public long countUserPostById(Long postId) {
@@ -132,10 +132,10 @@ public class SysPostServiceImpl implements ISysPostService {
     }
 
     /**
-     * 删除岗位信息
+     * Delete info
      *
-     * @param postId 岗位ID
-     * @return 结果
+     * @param postId ID
+     * @return
      */
     @Override
     public int deletePostById(Long postId) {
@@ -143,10 +143,10 @@ public class SysPostServiceImpl implements ISysPostService {
     }
 
     /**
-     * 批量删除岗位信息
+     * Batch delete info
      *
-     * @param postIds 需要删除的岗位ID
-     * @return 结果
+     * @param postIds need to Delete ID
+     * @return
      */
     @Override
     public int deletePostByIds(Long[] postIds) {
@@ -160,10 +160,10 @@ public class SysPostServiceImpl implements ISysPostService {
     }
 
     /**
-     * 新增保存岗位信息
+     * Add info
      *
-     * @param post 岗位信息
-     * @return 结果
+     * @param post info
+     * @return
      */
     @Override
     public int insertPost(SysPost post) {
@@ -171,10 +171,10 @@ public class SysPostServiceImpl implements ISysPostService {
     }
 
     /**
-     * 修改保存岗位信息
+     * Update info
      *
-     * @param post 岗位信息
-     * @return 结果
+     * @param post info
+     * @return
      */
     @Override
     public int updatePost(SysPost post) {

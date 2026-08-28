@@ -1,27 +1,32 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="device-time-strategy">
     <div class="config-container">
-      <!-- 标签页 -->
+      <!--  -->
       <el-tabs v-model="activeTab" class="tenanat-tabs">
         <el-tab-pane label="时间策略" name="time" />
         <el-tab-pane label="事件策略" name="event" />
       </el-tabs>
 
-      <!-- 时间策略内容 -->
+      <!--  -->
       <div v-if="activeTab === 'time'" class="config-tab-content">
-        <!-- 录制设置 -->
+        <!-- Set -->
         <div class="config-section">
           <h3 class="config-title">录制设置</h3>
           <div class="config-buttons">
-            <el-button 
-              :type="configForm.deleteAll ? 'danger' : ''" 
+            <el-button
+              :type="configForm.deleteAll ? 'danger' : ''"
               :plain="!configForm.deleteAll"
               @click="toggleDeleteAll"
             >
               删除
             </el-button>
-            <el-button 
-              :type="configForm.deleteAllTime ? 'danger' : ''" 
+            <el-button
+              :type="configForm.deleteAllTime ? 'danger' : ''"
               :plain="!configForm.deleteAllTime"
               @click="toggleDeleteAllTime"
             >
@@ -30,32 +35,32 @@
           </div>
         </div>
 
-        <!-- 录制设置选项 -->
+        <!-- Set item -->
         <div class="config-section">
           <div class="record-options">
-            <el-button 
-              :type="configForm.recordSettings.everyday ? 'primary' : ''" 
+            <el-button
+              :type="configForm.recordSettings.everyday ? 'primary' : ''"
               :plain="!configForm.recordSettings.everyday"
               @click="setRecordType('everyday')"
             >
               每天
             </el-button>
-            <el-button 
-              :type="configForm.recordSettings.weekly ? 'primary' : ''" 
+            <el-button
+              :type="configForm.recordSettings.weekly ? 'primary' : ''"
               :plain="!configForm.recordSettings.weekly"
               @click="setRecordType('weekly')"
             >
               每周
             </el-button>
-            <el-button 
-              :type="configForm.recordSettings.monthly ? 'primary' : ''" 
+            <el-button
+              :type="configForm.recordSettings.monthly ? 'primary' : ''"
               :plain="!configForm.recordSettings.monthly"
               @click="setRecordType('monthly')"
             >
               每月
             </el-button>
-            <el-button 
-              :type="configForm.recordSettings.custom ? 'primary' : ''" 
+            <el-button
+              :type="configForm.recordSettings.custom ? 'primary' : ''"
               :plain="!configForm.recordSettings.custom"
               @click="setRecordType('custom')"
             >
@@ -64,13 +69,13 @@
           </div>
         </div>
 
-        <!-- 时间表 -->
+        <!--  -->
         <div class="config-section">
           <div class="schedule-container">
-            <!-- 每天模式 -->
+            <!--  -->
             <div v-if="configForm.recordSettings.everyday" class="daily-schedule">
               <h4 class="schedule-title">每天录制时间</h4>
-              <!-- 时间轴标签 -->
+              <!--  -->
               <div class="time-axis-daily">
                 <div class="time-labels-daily">
                   <span v-for="labelIndex in timeLabelCount" :key="labelIndex" class="time-label-daily">
@@ -78,18 +83,18 @@
                   </span>
                 </div>
               </div>
-              <!-- 时间选择区域 -->
+              <!--  -->
               <div class="time-selector-daily">
-                <div 
+                <div
                   class="time-track"
                   @mousedown="startDragDaily"
                   @mousemove="onDragDaily"
                   @mouseup="endDragDaily"
                   @mouseleave="endDragDaily"
                 >
-                  <div 
-                    v-for="slot in timeSlotCount" 
-                    :key="slot" 
+                  <div
+                    v-for="slot in timeSlotCount"
+                    :key="slot"
                     class="time-segment"
                     :class="{ selected: isDailyTimeSelected(slot - 1) }"
                     :data-slot="slot - 1"
@@ -98,37 +103,37 @@
               </div>
             </div>
 
-            <!-- 每周模式 -->
+            <!--  -->
             <div v-if="configForm.recordSettings.weekly" class="weekly-schedule">
               <h4 class="schedule-title">每周录制时间</h4>
-              <!-- 星期列表 -->
+              <!--  -->
               <div class="week-rows">
-                <div 
-                  v-for="(dayName, dayKey) in weekDays" 
-                  :key="dayKey" 
+                <div
+                  v-for="(dayName, dayKey) in weekDays"
+                  :key="dayKey"
                   class="week-row"
                 >
                   <div class="day-label-weekly">
                     <span>{{ dayName }}</span>
                   </div>
                   <div class="time-section-weekly">
-                    <!-- 时间标签 -->
+                    <!--  -->
                     <div class="time-labels-weekly">
                       <span v-for="labelIndex in timeLabelCount" :key="labelIndex" class="time-label-weekly">
                         {{ (labelIndex - 1).toString().padStart(2, '0') }}
                       </span>
                     </div>
-                    <!-- 时间轨道 -->
-                    <div 
+                    <!--  -->
+                    <div
                       class="time-track"
                       @mousedown="startDragWeekly($event, dayKey)"
                       @mousemove="onDragWeekly($event, dayKey)"
                       @mouseup="endDragWeekly"
                       @mouseleave="endDragWeekly"
                     >
-                      <div 
-                        v-for="slot in timeSlotCount" 
-                        :key="slot" 
+                      <div
+                        v-for="slot in timeSlotCount"
+                        :key="slot"
                         class="time-segment"
                         :class="{ selected: isWeeklyTimeSelected(dayKey, slot - 1) }"
                         :data-slot="slot - 1"
@@ -137,9 +142,9 @@
                     </div>
                   </div>
                   <div class="copy-action-weekly">
-                    <el-button 
-                      size="small" 
-                      text 
+                    <el-button
+                      size="small"
+                      text
                       @click="showCopyDialog(dayKey)"
                       class="copy-btn"
                     >
@@ -148,8 +153,8 @@
                   </div>
                 </div>
               </div>
-              
-              <!-- 复制对话框 -->
+
+              <!--  -->
               <el-dialog
                 v-model="copyDialogVisible"
                 title="复制时间设置"
@@ -160,8 +165,8 @@
                   <p>将 {{ sourceDay }} 的时间设置复制到：</p>
                   <div class="copy-day-options">
                     <el-checkbox-group v-model="copyTargetDays">
-                      <el-checkbox 
-                        v-for="(dayName, dayKey) in weekDays" 
+                      <el-checkbox
+                        v-for="(dayName, dayKey) in weekDays"
                         :key="dayKey"
                         :label="dayKey"
                         :disabled="dayKey === sourceDayKey"
@@ -185,13 +190,13 @@
               </el-dialog>
             </div>
 
-            <!-- 每月录制时间 -->
+            <!--  -->
             <div v-if="configForm.recordSettings.monthly" class="monthly-schedule">
               <h4 class="schedule-title">每月录制时间</h4>
               <div class="month-rows">
-                <div 
-                  v-for="day in monthDays" 
-                  :key="day" 
+                <div
+                  v-for="day in monthDays"
+                  :key="day"
                   class="month-row"
                 >
                   <div class="day-label-weekly">
@@ -203,16 +208,16 @@
                         {{ (labelIndex - 1).toString().padStart(2, '0') }}
                       </span>
                     </div>
-                    <div 
+                    <div
                       class="time-track"
                       @mousedown="startDragMonthly($event, day)"
                       @mousemove="onDragMonthly($event, day)"
                       @mouseup="endDragMonthly"
                       @mouseleave="endDragMonthly"
                     >
-                      <div 
-                        v-for="slot in timeSlotCount" 
-                        :key="slot" 
+                      <div
+                        v-for="slot in timeSlotCount"
+                        :key="slot"
                         class="time-segment"
                         :class="{ selected: isMonthlyTimeSelected(day, slot - 1) }"
                         :data-slot="slot - 1"
@@ -224,7 +229,7 @@
               </div>
             </div>
 
-            <!-- 自定义录制时间 -->
+            <!-- Custom -->
             <div v-if="configForm.recordSettings.custom" class="custom-schedule">
               <h4 class="schedule-title">自定义录制时间</h4>
               <div class="custom-actions">
@@ -243,9 +248,9 @@
               </div>
               <div v-if="!customDateList.length" class="custom-empty">没有添加自定义录制时间</div>
               <div v-else class="custom-rows">
-                <div 
-                  v-for="dateKey in customDateList" 
-                  :key="dateKey" 
+                <div
+                  v-for="dateKey in customDateList"
+                  :key="dateKey"
                   class="custom-row"
                 >
                   <div class="day-label-weekly">
@@ -257,16 +262,16 @@
                         {{ (labelIndex - 1).toString().padStart(2, '0') }}
                       </span>
                     </div>
-                    <div 
+                    <div
                       class="time-track"
                       @mousedown="startDragCustom($event, dateKey)"
                       @mousemove="onDragCustom($event, dateKey)"
                       @mouseup="endDragCustom"
                       @mouseleave="endDragCustom"
                     >
-                      <div 
-                        v-for="slot in timeSlotCount" 
-                        :key="slot" 
+                      <div
+                        v-for="slot in timeSlotCount"
+                        :key="slot"
                         class="time-segment"
                         :class="{ selected: isCustomTimeSelected(dateKey, slot - 1) }"
                         :data-slot="slot - 1"
@@ -284,15 +289,15 @@
         </div>
       </div>
 
-      <!-- 事件策略内容 -->
+      <!-- event -->
       <div v-if="activeTab === 'event'" class="config-tab-content">
-        <!-- 事件策略标签页 -->
+        <!-- event -->
         <div class="event-tabs">
           <div class="event-tab-item active">移动侦测</div>
           <div class="event-tab-item">遮挡报警</div>
         </div>
 
-        <!-- 事件选项 -->
+        <!-- event item -->
         <div class="config-section">
           <div class="event-options">
             <el-checkbox v-model="eventForm.motionDetection" label="启用移动侦测" />
@@ -301,7 +306,7 @@
           </div>
         </div>
 
-        <!-- 触发报警时 -->
+        <!--  -->
         <div class="config-section">
           <h3 class="config-title">触发报警时</h3>
           <div class="alert-options">
@@ -312,22 +317,22 @@
           </div>
         </div>
 
-        <!-- 触发报警前后录制时间 -->
+        <!-- before after -->
         <div class="config-section">
           <h3 class="config-title">触发报警前后录制时间</h3>
           <div class="time-inputs">
             <div class="time-input-group">
               <span class="time-label">前</span>
-              <el-input 
-                v-model="eventForm.preRecordTime" 
-                placeholder="请输入" 
+              <el-input
+                v-model="eventForm.preRecordTime"
+                placeholder="请输入"
                 style="width: 120px"
               />
               <span class="time-unit">秒</span>
               <span class="time-label" style="margin-left: 20px">后</span>
-              <el-input 
-                v-model="eventForm.postRecordTime" 
-                placeholder="请输入" 
+              <el-input
+                v-model="eventForm.postRecordTime"
+                placeholder="请输入"
                 style="width: 120px"
               />
               <span class="time-unit">秒</span>
@@ -336,10 +341,10 @@
         </div>
       </div>
 
-      <!-- 保存按钮 -->
+      <!-- button -->
       <div class="config-footer">
-        <el-button 
-          type="primary" 
+        <el-button
+          type="primary"
           class="save-config-btn"
           @click="saveTimeStrategy"
         >
@@ -355,12 +360,12 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { DocumentCopy } from '@element-plus/icons-vue'
 import { weekDays } from './constants.js'
-import { 
-  parseTimeRanges, 
-  isTimeSelected, 
-  addTimeRange, 
-  clearTimeSelection, 
-  copyTimeConfig 
+import {
+  parseTimeRanges,
+  isTimeSelected,
+  addTimeRange,
+  clearTimeSelection,
+  copyTimeConfig
 } from './deviceUtils.js'
 import { getTimeStrategy } from '@/api/timeStrategy'
 
@@ -373,10 +378,10 @@ const props = defineProps({
 
 const emit = defineEmits(['save', 'cancel'])
 
-// 响应式数据
+// data
 const activeTab = ref('time')
 
-// 配置表单数据
+// configurationformdata
 const configForm = reactive({
   deleteAll: false,
   deleteAllTime: false,
@@ -388,7 +393,7 @@ const configForm = reactive({
   }
 })
 
-// 事件表单数据
+// eventformdata
 const eventForm = reactive({
   motionDetection: true,
   ptzUpload: false,
@@ -398,7 +403,7 @@ const eventForm = reactive({
   postRecordTime: '10'
 })
 
-// 时间策略数据
+// data
 const createWeeklyTimes = () => ({
   monday: [],
   tuesday: [],
@@ -426,7 +431,7 @@ const timeStrategyData = reactive({
   customTimes: {}
 })
 
-// 拖拽相关
+// related
 const timeSlotCount = 48
 const slotsPerHour = 2
 const timeLabelCount = 25
@@ -434,23 +439,23 @@ const timeLabelCount = 25
 const isDragging = ref(false)
 const dragStartSlot = ref(null)
 
-// 复制对话框相关
+// related
 const copyDialogVisible = ref(false)
 const sourceDayKey = ref('')
 const copyTargetDays = ref([])
 const customDateValue = ref('')
 const customDateList = ref([])
 
-// 计算属性
+// property
 const sourceDay = computed(() => {
   return weekDays[sourceDayKey.value] || ''
 })
 
-// 方法
+// method
 const toggleDeleteAll = () => {
   configForm.deleteAll = !configForm.deleteAll
   if (configForm.deleteAll) {
-    // 清除所有时间设置
+    // all Set
     timeStrategyData.dailyTimes = []
     timeStrategyData.weeklyTimes = createWeeklyTimes()
     timeStrategyData.monthlyTimes = createMonthlyTimes()
@@ -468,16 +473,16 @@ const toggleDeleteAllTime = () => {
 }
 
 const setRecordType = (type) => {
-  // 重置所有类型
+  // all
   Object.keys(configForm.recordSettings).forEach(key => {
     configForm.recordSettings[key] = false
   })
-  
-  // 设置选中的类型
+
+  // Set in
   configForm.recordSettings[type] = true
 }
 
-// 每日时间选择
+//
 const isDailyTimeSelected = (slotIndex) => {
   return isTimeSelected(timeStrategyData.dailyTimes, slotIndex)
 }
@@ -487,7 +492,7 @@ const startDragDaily = (event) => {
   if (Number.isNaN(slotIndex)) return
   isDragging.value = true
   dragStartSlot.value = slotIndex
-  
+
   if (isDailyTimeSelected(slotIndex)) {
     removeDailyTimeRange(slotIndex, slotIndex)
   } else {
@@ -497,14 +502,14 @@ const startDragDaily = (event) => {
 
 const onDragDaily = (event) => {
   if (!isDragging.value || !event.target.dataset.slot) return
-  
+
   const currentSlot = Number(event.target.dataset.slot)
   if (Number.isNaN(currentSlot) || dragStartSlot.value === null) return
   const startSlot = Math.min(dragStartSlot.value, currentSlot)
   const endSlot = Math.max(dragStartSlot.value, currentSlot)
-  
+
   const isAddMode = !isDailyTimeSelected(dragStartSlot.value)
-  
+
   if (isAddMode) {
     timeStrategyData.dailyTimes = addTimeRange(timeStrategyData.dailyTimes, startSlot, endSlot)
   } else {
@@ -532,7 +537,7 @@ const startDragWeekly = (event, dayKey) => {
   if (Number.isNaN(slotIndex)) return
   isDragging.value = true
   dragStartSlot.value = slotIndex
-  
+
   if (isWeeklyTimeSelected(dayKey, slotIndex)) {
     removeWeeklyTimeRange(dayKey, slotIndex, slotIndex)
   } else {
@@ -542,14 +547,14 @@ const startDragWeekly = (event, dayKey) => {
 
 const onDragWeekly = (event, dayKey) => {
   if (!isDragging.value || !event.target.dataset.slot) return
-  
+
   const currentSlot = Number(event.target.dataset.slot)
   if (Number.isNaN(currentSlot) || dragStartSlot.value === null) return
   const startSlot = Math.min(dragStartSlot.value, currentSlot)
   const endSlot = Math.max(dragStartSlot.value, currentSlot)
-  
+
   const isAddMode = !isWeeklyTimeSelected(dayKey, dragStartSlot.value)
-  
+
   if (isAddMode) {
     timeStrategyData.weeklyTimes[dayKey] = addTimeRange(timeStrategyData.weeklyTimes[dayKey], startSlot, endSlot)
   } else {
@@ -689,18 +694,18 @@ const confirmCopy = () => {
     ElMessage.warning('请选择要复制到的日期')
     return
   }
-  
+
   const sourceConfig = timeStrategyData.weeklyTimes[sourceDayKey.value]
-  
+
   copyTargetDays.value.forEach(targetDay => {
     timeStrategyData.weeklyTimes[targetDay] = [...sourceConfig]
   })
-  
+
   ElMessage.success(`已复制到 ${copyTargetDays.value.length} 个日期`)
   cancelCopy()
 }
 
-// 将小时数组转换为时间范围对象
+// arrayConvert to object
 const addCustomDate = () => {
   if (!customDateValue.value) {
     ElMessage.warning('Please select a date')
@@ -757,12 +762,12 @@ const normalizeTimeSlots = (values) => {
 
 const convertSlotsToTimeRanges = (slots) => {
   if (!Array.isArray(slots) || slots.length === 0) return []
-  
+
   const sortedSlots = [...slots].sort((a, b) => a - b)
   const ranges = []
   let start = sortedSlots[0]
   let end = sortedSlots[0]
-  
+
   for (let i = 1; i < sortedSlots.length; i++) {
     if (sortedSlots[i] === end + 1) {
       end = sortedSlots[i]
@@ -772,14 +777,14 @@ const convertSlotsToTimeRanges = (slots) => {
       end = sortedSlots[i]
     }
   }
-  
+
   ranges.push({ start, end })
   return ranges
 }
 
 const convertTimeRangesToSlots = (timeRanges) => {
   if (!Array.isArray(timeRanges)) return []
-  
+
   const slots = []
   timeRanges.forEach(range => {
     for (let slot = range.start; slot <= range.end; slot += 1) {
@@ -788,16 +793,16 @@ const convertTimeRangesToSlots = (timeRanges) => {
       }
     }
   })
-  
+
   return slots.sort((a, b) => a - b)
 }
 
 const loadTimeStrategy = async () => {
   if (!props.deviceInfo.id) return
-  
+
   try {
     const response = await getTimeStrategy(props.deviceInfo.id)
-    
+
     if (response.code === 200 && response.data) {
       const strategy = response.data
       const validTypes = ['everyday', 'weekly', 'monthly', 'custom']
@@ -815,7 +820,7 @@ const loadTimeStrategy = async () => {
         const dailySlots = normalizeTimeSlots(strategy.dailyTimes)
         timeStrategyData.dailyTimes = convertSlotsToTimeRanges(dailySlots)
       }
-      
+
       if (strategy.weeklyTimes) {
         Object.keys(strategy.weeklyTimes).forEach(day => {
           if (timeStrategyData.weeklyTimes[day] !== undefined) {
@@ -841,7 +846,7 @@ const loadTimeStrategy = async () => {
         })
         customDateList.value = Object.keys(timeStrategyData.customTimes).sort()
       }
-      
+
       console.log('Loaded time strategy:', strategy)
       console.log('Normalized time strategy:', timeStrategyData)
     }
@@ -852,11 +857,11 @@ const loadTimeStrategy = async () => {
 
 
 
-// 保存时间策略
+//
 const saveTimeStrategy = async () => {
   try {
     const recordType = Object.keys(configForm.recordSettings).find(key => configForm.recordSettings[key]) || 'everyday'
-    
+
     const dailySlots = convertTimeRangesToSlots(timeStrategyData.dailyTimes)
     const weeklySlots = {}
     Object.keys(timeStrategyData.weeklyTimes).forEach(day => {
@@ -885,16 +890,16 @@ const saveTimeStrategy = async () => {
       dailyTimes = dailySlots
       weeklyTimes = weeklySlots
     }
-    
+
     const strategyData = {
       deviceId: props.deviceInfo.id,
       strategyType: recordType, // everyday, weekly, monthly, custom
       dailyTimes,
       weeklyTimes
     }
-    
+
     console.log('Saving time strategy:', strategyData)
-    
+
     emit('save', strategyData)
   } catch (error) {
     console.error('Failed to save time strategy:', error)
@@ -908,7 +913,7 @@ const handleCancel = () => {
   emit('cancel')
 }
 
-// 组件挂载时加载时间策略
+// component Load
 onMounted(() => {
   loadTimeStrategy()
 })
@@ -917,41 +922,41 @@ onMounted(() => {
 <style scoped lang="scss">
 .device-time-strategy {
   padding: 20px;
-  
+
   .config-container {
     max-width: none;
     width: 100%;
     margin: 0;
   }
-  
+
   .tenanat-tabs {
     padding: 0;
     margin-bottom: 20px;
   }
-  
+
   .config-section {
     margin-bottom: 30px;
-    
+
     .config-title {
       margin: 0 0 16px 0;
       font-size: 16px;
       font-weight: 600;
       color: #333;
     }
-    
+
     .config-buttons {
       display: flex;
       gap: 12px;
     }
-    
+
     .record-options {
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
     }
   }
-  
-  // 每日时间选择样式
+
+  //
   .daily-schedule {
     .schedule-title {
       margin: 0 0 20px 0;
@@ -959,22 +964,22 @@ onMounted(() => {
       font-weight: 500;
       color: #666;
     }
-    
+
     .time-axis-daily {
       margin-bottom: 8px;
-      
+
       .time-labels-daily {
         display: flex;
         justify-content: space-between;
         padding: 0 8px;
-        
+
         .time-label-daily {
           font-size: 12px;
           color: #909399;
         }
       }
     }
-    
+
     .time-selector-daily {
       .time-track {
         display: flex;
@@ -983,21 +988,21 @@ onMounted(() => {
         border-radius: 4px;
         overflow: hidden;
         cursor: pointer;
-        
+
         .time-segment {
           flex: 1;
           height: 100%;
           border-right: 1px solid #f0f0f0;
           transition: background-color 0.2s;
-          
+
           &:last-child {
             border-right: none;
           }
-          
+
           &:hover {
             background-color: #e6f3ff;
           }
-          
+
           &.selected {
             background-color: #409eff;
           }
@@ -1005,8 +1010,8 @@ onMounted(() => {
       }
     }
   }
-  
-  // 每周时间选择样式
+
+  //
   .weekly-schedule,
   .monthly-schedule,
   .custom-schedule {
@@ -1039,29 +1044,29 @@ onMounted(() => {
     display: flex;
     align-items: center;
     gap: 12px;
-    
+
     .day-label-weekly {
       width: 80px;
       text-align: center;
       font-weight: 500;
       color: #333;
     }
-    
+
     .time-section-weekly {
       flex: 1;
-      
+
       .time-labels-weekly {
         display: flex;
         justify-content: space-between;
         padding: 0 8px;
         margin-bottom: 4px;
-        
+
         .time-label-weekly {
           font-size: 10px;
           color: #c0c4cc;
         }
       }
-      
+
       .time-track {
         display: flex;
         height: 24px;
@@ -1069,37 +1074,37 @@ onMounted(() => {
         border-radius: 3px;
         overflow: hidden;
         cursor: pointer;
-        
+
         .time-segment {
           flex: 1;
           height: 100%;
           border-right: 1px solid #f5f5f5;
           transition: background-color 0.2s;
-          
+
           &:last-child {
             border-right: none;
           }
-          
+
           &:hover {
             background-color: #e6f3ff;
           }
-          
+
           &.selected {
             background-color: #409eff;
           }
         }
       }
     }
-    
+
     .copy-action-weekly {
       width: 40px;
       display: flex;
       justify-content: center;
-      
+
       .copy-btn {
         padding: 4px;
         min-height: auto;
-        
+
         .el-icon {
           font-size: 14px;
         }
@@ -1152,49 +1157,49 @@ onMounted(() => {
     display: flex;
     gap: 1px;
     margin-bottom: 20px;
-    
+
     .event-tab-item {
       padding: 8px 16px;
       background: #f5f7fa;
       cursor: pointer;
-      
+
       &.active {
         background: #409eff;
         color: white;
       }
     }
   }
-  
+
   .event-options {
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .alert-options {
     .el-radio-group {
       display: flex;
       gap: 20px;
     }
   }
-  
+
   .time-inputs {
     .time-input-group {
       display: flex;
       align-items: center;
       gap: 8px;
-      
+
       .time-label {
         font-weight: 500;
         color: #333;
       }
-      
+
       .time-unit {
         color: #666;
       }
     }
   }
-  
+
   .config-footer {
     display: flex;
     justify-content: flex-start;
@@ -1202,7 +1207,7 @@ onMounted(() => {
     padding: 20px 0;
     border-top: 1px solid #ebeef5;
     margin-top: 30px;
-    
+
     .save-config-btn {
       width: 170px !important;
       height: 48px !important;
@@ -1210,24 +1215,24 @@ onMounted(() => {
       font-weight: 500;
     }
   }
-  
-  // 复制对话框样式
+
+  //
   .copy-dialog-content {
     .copy-day-options {
       margin-top: 16px;
-      
+
       .el-checkbox {
         width: 100%;
         margin: 8px 0;
-        
+
         &.source-day {
           color: #909399;
-          
+
           :deep(.el-checkbox__label) {
             color: #909399;
           }
         }
-        
+
         &.has-time-setting {
           .time-indicator {
             color: #67c23a;
@@ -1237,7 +1242,7 @@ onMounted(() => {
       }
     }
   }
-  
+
   .copy-dialog-footer {
     display: flex;
     justify-content: flex-end;
@@ -1245,7 +1250,7 @@ onMounted(() => {
   }
 }
 
-// 响应式设计
+//
 @media (max-width: 768px) {
   .device-time-strategy {
     .week-row,
@@ -1254,31 +1259,31 @@ onMounted(() => {
       flex-direction: column;
       align-items: stretch;
       gap: 8px;
-      
+
       .day-label-weekly {
         width: auto;
         text-align: left;
       }
-      
+
       .copy-action-weekly,
       .custom-action {
         width: auto;
         justify-content: flex-start;
       }
     }
-    
+
     .record-options {
       flex-direction: column;
-      
+
       .el-button {
         justify-content: flex-start;
       }
     }
-    
+
     .time-input-group {
       flex-wrap: wrap;
       gap: 8px;
     }
   }
 }
-</style> 
+</style>

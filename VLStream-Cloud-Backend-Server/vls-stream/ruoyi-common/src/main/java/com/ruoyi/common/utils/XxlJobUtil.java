@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -29,7 +30,7 @@ public class XxlJobUtil {
     @Value("${xxl.job.admin.addresses}")
     private String adminAddresses;
 
-    //执行器名称
+    // Execute
     @Value("${xxl.job.executor.appname}")
     private String appname;
 
@@ -45,7 +46,7 @@ public class XxlJobUtil {
 
 
     public String add(CommonJobInfo jobInfo){
-        // 查询对应groupId:
+        // Query groupId:
         Map<String,Object> param = new HashMap<>();
         param.put("appname", appname);
         String json = JSON.toJSONString(param);

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,40 +18,40 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 表单应用分类Service接口
+ * form Serviceinterface
  *
- * @author 雷超群
+ * @author
  * @date 2025-04-26
  */
 public interface IWfFormAppService extends IService<WfFormApp> {
 
     /**
-     * 查询表单应用分类
+     * Query form
      */
     WfFormAppVo queryById(String categoryId);
 
     /**
-     * 查询表单应用分类列表
+     * Query form list
      */
     TableDataInfo<WfFormAppVo> queryPageList(WfFormAppBo bo, PageQuery pageQuery);
 
     /**
-     * 查询表单应用分类列表
+     * Query form list
      */
     Optional<List<WfFormAppVo>> queryList(WfFormAppBo bo);
 
     /**
-     * 新增表单应用分类
+     * Add form
      */
     WfFormApp insertByBo(WfFormAppBo bo);
 
     /**
-     * 修改表单应用分类
+     * Update form
      */
     Boolean updateByBo(WfFormAppBo bo);
 
     /**
-     * 校验并批量删除表单应用分类信息
+     * Validate Batch delete form info
      */
     Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid);
 }

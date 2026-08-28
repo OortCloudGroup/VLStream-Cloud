@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,7 +11,7 @@ import com.ruoyi.workflow.domain.vo.WfFormVo;
 import org.flowable.bpmn.model.BpmnModel;
 
 /**
- * 流程实例关联表单Service接口
+ * workflow instance formServiceinterface
  *
  * @author KonBAI
  * @createTime 2022/3/7 22:07
@@ -18,23 +19,23 @@ import org.flowable.bpmn.model.BpmnModel;
 public interface IWfDeployFormService {
 
     /**
-     * 新增流程实例关联表单
+     * Add workflow instance form
      *
-     * @param wfDeployForm 流程实例关联表单
-     * @return 结果
+     * @param wfDeployForm workflow instance form
+     * @return
      */
     int insertWfDeployForm(WfDeployForm wfDeployForm);
 
     /**
-     * 保存流程实例关联表单
-     * @param deployId 部署ID
-     * @param bpmnModel bpmnModel对象
+     * workflow instance form
+     * @param deployId ID
+     * @param bpmnModel bpmnModelobject
      * @return
      */
     boolean saveInternalDeployForm(String deployId, BpmnModel bpmnModel);
 
     /**
-     * 查询流程挂着的表单
+     * Query workflow form
      *
      * @param deployId
      * @return

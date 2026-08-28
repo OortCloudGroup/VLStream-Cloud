@@ -149,7 +149,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     private String getTenantAdmin;
 
     /**
-     * 获取当前请求登录用户；启动初始化等无请求上下文场景返回 null，避免使用空 token 访问 Redis。
+     * Get current user; Initialize etc. null, null / empty token Redis.
      */
     private SysUser getCurrentSysUser() {
         String token = AuthorizationInterceptor.getToken();
@@ -160,7 +160,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 获取必须存在的当前请求登录用户；普通接口缺少登录上下文时抛出业务异常。
+     * Get in current user; interface .
      */
     private SysUser getCurrentSysUserRequired() {
         SysUser sysUser = getCurrentSysUser();
@@ -171,26 +171,26 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 根据模型 ID 级联删除模型、流程图信息、所有模型版本、部署及其运行实例与历史数据
+     * model ID Delete model、workflow info、all model 、 instance and history data
      *
-     * @param modelId     要删除的模型 ID
+     * @param modelId need to Delete model ID
      * @param isWorkOrder
      */
     @Transactional(rollbackFor = Exception.class)
     public void deleteModelCascade(String modelId, boolean isWorkOrder) {
-        // 1. 查询当前模型，获取 key
+        // 1. Query current model, Get key
         Model currentModel = repositoryService.getModel(modelId);
         if (currentModel == null) {
             throw new FlowableObjectNotFoundException("无法找到模型，id=" + modelId);
         }
         String modelKey = currentModel.getKey();
 
-        // 2. 查询该 key 下的所有模型版本
+        // 2. Query key all model
         List<Model> allVersions = repositoryService.createModelQuery()
                 .modelKey(modelKey)
                 .list();
 
-        // 3. 遍历每个版本，先删部署，再删模型
+        // 3. each , , model
         for (Model versionModel : allVersions) {
             String versionModelId = versionModel.getId();
             String deploymentId = versionModel.getDeploymentId();
@@ -200,13 +200,13 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
                 queryWrapper.eq(WorkOrder::getProcessKey, versionModel.getKey());
                 workOrderService.remove(queryWrapper);
             }
-            // 如果已部署，级联删除部署及所有流程实例和历史数据
+            // if already , Delete all workflow instance and history data
             if (deploymentId != null) {
                 repositoryService.deleteDeployment(deploymentId, true);
             }
             reModeJsonService.removeById(versionModelId);
 
-            // 删除模型（会一并删除 editor bytearrays）
+            // Delete model ( will Delete editor bytearrays)
             repositoryService.deleteModel(versionModelId);
         }
     }
@@ -246,7 +246,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 校验事件管理初始化的租户参数。
+     * Validate event Initialize parameter.
      */
     private void validateEventManagementInitBo(InitBo initBo) {
         if (initBo == null || StringUtils.isBlank(initBo.getTenantId()) || StringUtils.isBlank(initBo.getToTenantId())) {
@@ -255,7 +255,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 源租户没有事件管理模板时，回退到固定顶级租户模板。
+     * event , .
      */
     private String resolveEventManagementSourceTenantId(String sourceTenantId) {
         WorkOrderApp sourceApp = getEventManagementWorkOrderApp(sourceTenantId);
@@ -270,7 +270,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 获取指定租户的事件管理工单应用。
+     * Get event work order .
      */
     private WorkOrderApp getEventManagementWorkOrderApp(String tenantId) {
         return workOrderAppService.getOne(new LambdaQueryWrapper<WorkOrderApp>()
@@ -282,7 +282,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 获取或创建目标租户的事件管理工单应用。
+     * Get event work order .
      */
     private WorkOrderApp getOrCreateEventManagementWorkOrderApp(String tenantId, WorkOrderApp sourceApp) {
         WorkOrderApp exists = getEventManagementWorkOrderApp(tenantId);
@@ -301,7 +301,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 获取或创建目标租户的事件管理表单应用。
+     * Get event form .
      */
     private WfFormApp getOrCreateEventManagementFormApp(String tenantId) {
         WfFormApp exists = wfFormAppService.getOne(new LambdaQueryWrapper<WfFormApp>()
@@ -326,7 +326,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 查询事件管理源租户下最新流程模型。
+     * Query event new workflowmodel.
      */
     private List<Model> getSourceEventManagementModels(String tenantId, WorkOrderApp app) {
         if (app == null) {
@@ -340,7 +340,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 复制事件管理模型、表单和设计 JSON，并部署到目标租户。
+     * event model、form and JSON, .
      */
     private void cloneAndDeployEventManagementModel(String sourceTenantId, String targetTenantId,
                                                     WorkOrderApp targetApp, WfFormApp targetFormApp, Model sourceModel) {
@@ -383,7 +383,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 判断目标租户是否已有同名事件管理模型。
+     * Check whether already event model.
      */
     private boolean hasTargetEventManagementModel(String tenantId, String appId, String modelName) {
         return repositoryService.createModelQuery()
@@ -396,7 +396,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 查询源模型绑定的表单。
+     * Query model form.
      */
     private WfForm getEventManagementSourceForm(String sourceTenantId, String formId) {
         WfForm wfForm = formService.getOne(new LambdaQueryWrapper<WfForm>()
@@ -410,7 +410,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 目标租户同分类同名表单存在时复用，否则复制源表单。
+     * form in , form.
      */
     private WfForm getOrCreateEventManagementTargetForm(String tenantId, String targetFormCategoryId, WfForm sourceForm) {
         WfForm exists = formService.getOne(new LambdaQueryWrapper<WfForm>()
@@ -434,7 +434,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 复制模型设计 JSON，并同步新模型 key 和表单 key。
+     * model JSON, new model key and form key.
      */
     private void copyEventManagementModelJson(String sourceModelId, String targetModelId, String targetModelKey,
                                               String targetFormId, String targetTenantId) {
@@ -453,7 +453,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 在初始化链路中临时切换租户上下文并部署模型。
+     * in Initialize in model.
      */
     private void deployEventManagementModel(String modelId, String tenantId) {
         normalizeEventManagementModelBpmnFormKey(modelId);
@@ -468,7 +468,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * seed 中保留的是设计器 JSON 的表单 id，部署用 BPMN 需要转换成现有部署逻辑识别的 key_表单id。
+     * seed in is JSON form id, BPMN need to Convert key_formid.
      */
     private void normalizeEventManagementModelBpmnFormKey(String modelId) {
         Model model = repositoryService.getModel(modelId);
@@ -489,7 +489,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 顶级租户 seed 已写入但未部署时，部署现有事件管理模型。
+     * seed already not , event model.
      */
     private void deployEventManagementModelsIfNeeded(String tenantId, WorkOrderApp app) {
         for (Model model : getSourceEventManagementModels(tenantId, app)) {
@@ -503,14 +503,14 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 统计源租户可复制的事件管理模型数。
+     * event model .
      */
     private int getSourceEventManagementModelCount(String tenantId, WorkOrderApp app) {
         return getSourceEventManagementModels(tenantId, app).size();
     }
 
     /**
-     * 判断目标租户事件管理是否已经有部署好的流程。
+     * Check event whether already workflow.
      */
     private boolean isEventManagementTenantReady(String tenantId, int sourceModelCount) {
         WorkOrderApp app = getEventManagementWorkOrderApp(tenantId);
@@ -538,7 +538,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
         try {
             flag = "同步完成";
             WfSynthesisBo wfSynthesisBO = new WfSynthesisBo();
-            // 关闭多租户插件
+            //
             InterceptorIgnoreHelper.handle(IgnoreStrategy.builder().tenantLine(true).build());
             WfSynthesis wfSynthesisOne = wfSynthesisService
                     .getOne(new LambdaQueryWrapper<WfSynthesis>().eq(WfSynthesis::getCategoryName,
@@ -549,7 +549,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
                 wfSynthesisService.insertByBo(wfSynthesisBO);
             }
             InterceptorIgnoreHelper.clearIgnoreStrategy();
-            // 公用模版列表
+            //
             List<ProcessTemplate> processTemplateVos = processTemplateMapper.selectList(new LambdaQueryWrapper<>());
             for (ProcessTemplate processTemplateVo : processTemplateVos) {
                 List<Model> list = repositoryService.createModelQuery().modelTenantId(initBo.getToTenantId())
@@ -591,7 +591,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
                         processTemplateVo.getShowMobile(), wfFormOne.getFormId());
                 newModel.setMetaInfo(metaInfo);
                 newModel.setTenantId(initBo.getToTenantId());
-                // 保存流程模型
+                // workflowmodel
                 repositoryService.saveModel(newModel);
                 Model model = repositoryService.createModelQuery().modelKey(processTemplateVo.getModelKey())
                         .latestVersion().singleResult();
@@ -604,9 +604,9 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
                 }
                 String bpmnXml = StringUtils.toEncodedString(bpmnBytes, StandardCharsets.UTF_8);
                 BpmnModel bpmnModel = ModelUtils.getBpmnModel(bpmnXml);
-                // 获取租户admin用户
+                // Get adminuser
                 // String userId = getTenantAdmin(initBo);
-                // 更新formKey
+                // new formKey
                 BpmnModel bpmnModel1 = updateBpmnFormBinding(bpmnModel, String.valueOf(wfFormOne.getFormId()),
                         newModel.getKey());
                 byte[] xmlBytes = new BpmnXMLConverter().convertToXML(bpmnModel1);
@@ -615,7 +615,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
                 wfModelBo.setBpmnXml(new String(xmlBytes, StandardCharsets.UTF_8));
                 wfModelBo.setModelId(newModel.getId());
                 wfModelBo.setModelName(processTemplateVo.getModelName());
-                // 流程图保存后返回的model
+                // workflow after model
                 InterceptorIgnoreHelper.handle(IgnoreStrategy.builder().tenantLine(true).build());
                 Model finalModel = saveModel(wfModelBo, initBo.getToTenantId(), null);
                 ReModelJson reModelJson = reModelJsonMapper.selectById(model.getId());
@@ -625,14 +625,14 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
                 ReModeJsonBo remodeJsonBo = new ReModeJsonBo();
                 JSONObject jsonObject1 = JSON.parseObject(reModelJson.getJsonContent());
                 jsonObject1.put("code", finalModel.getKey());
-                // 递归修改 formKey
+                // Update formKey
                 updateFormKey(jsonObject1.getJSONObject("process"), String.valueOf(wfFormOne.getFormId()));
-                remodeJsonBo.setJsonContent(jsonObject1.toJSONString()); // 将 JSON 字符串设置到字段中
+                remodeJsonBo.setJsonContent(jsonObject1.toJSONString()); // JSON Set field in
                 remodeJsonBo.setModelId(finalModel.getId());
                 remodeJsonBo.setTenantId(initBo.getToTenantId());
                 reModeJsonService.insertByBo(remodeJsonBo);
                 InterceptorIgnoreHelper.clearIgnoreStrategy();
-                // 部署模型
+                // model
                 RedisUtils.setCacheObject("to_tenant_id", initBo.getToTenantId(), Duration.ofMinutes(1));
                 try {
                     InterceptorIgnoreHelper.handle(IgnoreStrategy.builder().tenantLine(true).build());
@@ -652,20 +652,20 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 递归更新 JSON 中的 formKey。
-     * 只有原本 formKey 不为空的节点，才会将其更新为传入的新值 newFormKey。
+     * new JSON in formKey.
+     * only formKey is empty node, will new to new value newFormKey.
      *
-     * @param node       当前节点对象(process)
-     * @param newFormKey 新的 formKey 值
+     * @param node current nodeobject(process)
+     * @param newFormKey new formKey value
      */
     public JSONObject updateFormKey(JSONObject node, String newFormKey) {
         if (node == null) {
             return null;
         }
 
-        // 获取当前节点的 formKey
+        // Get current node formKey
         String formKey = node.getString("formKey");
-        // 只有 formKey 非空时才更新
+        // only formKey non- null / empty new
         if (StringUtils.isNotBlank(formKey)) {
             node.put("formKey", newFormKey);
         }
@@ -678,7 +678,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
             node.put("users", users);
         }
 
-        // 如果存在子节点，则递归更新
+        // if in sub node, new
         JSONObject childNode = node.getJSONObject("childNode");
         if (childNode != null) {
             updateFormKey(childNode, newFormKey);
@@ -687,7 +687,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 修改formKey以及修改审批人为新租户的admin
+     * Update formKey Update approver to new admin
      *
      * @param bpmnModel
      * @param newFormKey
@@ -701,65 +701,65 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
         Collection<UserTask> userTasks = ModelUtils.getAllUserTaskEvent(bpmnModel);
         for (UserTask userTask : userTasks) {
             userTask.setFormKey("key_" + newFormKey);
-            // 将 user_id 设置到 userTask 的 assignee 属性中
+            // user_id Set userTask assignee property in
             userTask.setAssignee(String.format("${%s}", TaskConstants.PROCESS_INITIATOR));
         }
-        // 修改流程图标识
+        // Update workflow
         bpmnModel.getMainProcess().setId(processId);
         return bpmnModel;
     }
 
     /**
-     * 通过租户id获取租户admin信息
+     * idGet admininfo
      *
      * @param initBo
      * @return
      */
     public String getTenantAdmin(InitBo initBo) {
         String userId = null;
-        // 获取当前请求的请求参数
+        // Get current parameter
         HttpServletRequest httpServletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
                 .getRequest();
         OkHttpClient client = new OkHttpClient().newBuilder().connectTimeout(30, TimeUnit.SECONDS).readTimeout(30,
                 TimeUnit.SECONDS).writeTimeout(30, TimeUnit.SECONDS).build();
         Request.Builder requestBuilder = new Request.Builder().url(String.format("%s?tenant_id=%s", getTenantAdmin,
                 initBo.getToTenantId())).get();
-        // 遍历当前请求的所有头信息，并添加到新的请求中
+        // current all info, new in
         ApiHeaderUtil.transferHeaders(requestBuilder);
-        // 构建并执行请求
+        // Build Execute
         Request request = requestBuilder.build();
         try (Response response = client.newCall(request).execute()) {
             if (response.isSuccessful() && response.body() != null) {
-                // 获取响应体并解析为字符串
+                // Get Parse to
                 String responseBody = response.body().string();
 
-                // 使用 FastJSON 解析响应数据
+                // FastJSON Parse data
                 JSONObject jsonResponse = JSON.parseObject(responseBody);
 
-                // 检查返回的状态码是否为 200
+                // whether to 200
                 int code = jsonResponse.getIntValue("code");
                 if (code == 200) {
-                    // 提取 user_id
+                    // user_id
                     userId = jsonResponse.getJSONObject("data").getString("user_id");
 
                 } else {
-                    // 如果状态码不是 200，抛出异常或记录日志
+                    // if is 200, recordlog
                     String msg = jsonResponse.getString("msg");
                     throw new RuntimeException("接口调用失败，错误信息：" + msg);
                 }
             } else {
-                // 如果响应不成功，抛出异常
+                // if successfully,
                 throw new RuntimeException("接口调用失败，HTTP 状态码：" + response.code());
             }
         } catch (IOException e) {
-            // 捕获 IO 异常并抛出自定义运行时异常
+            // IO Custom
             throw new RuntimeException("接口调用过程中发生异常", e);
         }
         return userId;
     }
 
     /**
-     * 初始化表单数据
+     * Initialize formdata
      *
      * @param initBo
      */
@@ -880,27 +880,27 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
 
     @Override
     public List<List<String>> initShow() {
-        // 调用查询接口获取初始化数据
-        List<ProcessTemplate> processTemplateVos = processTemplateMapper.selectList(new LambdaQueryWrapper<>()); // 查询模板数据
+        // Query interfaceGet Initialize data
+        List<ProcessTemplate> processTemplateVos = processTemplateMapper.selectList(new LambdaQueryWrapper<>()); // Query data
 
-        // 准备返回的数据，表头为“模型id”，“模型Key”，“模型名称”
+        // data, to "modelid", "modelKey", "model "
         List<List<String>> data = new ArrayList<>();
-        data.add(Arrays.asList("模型id", "模型Key", "模型名称")); // 添加表头
+        data.add(Arrays.asList("模型id", "模型Key", "模型名称")); //
 
-        // 遍历查询结果，填充数据
+        // Query , fill data
         for (int index = 0; index < processTemplateVos.size(); index++) {
             ProcessTemplate vo = processTemplateVos.get(index);
-            data.add(Arrays.asList(vo.getModelId(), // 模型id
-                    vo.getModelKey(), // 模型Key
-                    vo.getModelName() // 模型名称
+            data.add(Arrays.asList(vo.getModelId(), // modelid
+                    vo.getModelKey(), // modelKey
+                    vo.getModelName() // model
             ));
         }
 
-        // 返回构造的结果数据
+        // data
         return data;
     }
 
-    // 将分类id列表合并到已有的分类列表中，并去重
+    // id already in ,
     private List<String> mergeAllCategories(List<String> existingList, List<?> categoryList,
             Function<Object, String> mapper) {
         if (categoryList != null && !categoryList.isEmpty()) {
@@ -912,7 +912,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 根据前端传的条件判断，查询哪个分类
+     * before Check , Query
      *
      * @param modelBo
      * @return
@@ -921,17 +921,17 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
         List<String> workOrderSyntheses = new ArrayList<>();
         List<String> wfSyntheses = new ArrayList<>();
 
-        // 查询子分类ID
+        // Query sub ID
         if (modelBo.getWfCategory() != null) {
             wfSyntheses = wfSynthesisService.selectChildById(modelBo.getWfCategory());
         }
-        // 查询子分类ID
+        // Query sub ID
         if (modelBo.getWorkOrderCategory() != null) {
             workOrderSyntheses = workerSynthesisService.selectChildById(modelBo.getWorkOrderCategory());
         }
 
         if (Boolean.TRUE.equals(modelBo.getWorkOrderAppAll())) {
-            // 查询所有分类
+            // Query all
             workOrderSyntheses = mergeAllCategories(wfSyntheses, workOrderAppService.list(),
                     category -> ((WorkOrderApp) category).getAppId());
         }
@@ -945,12 +945,12 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
                     category -> ((WfApp) category).getAppId());
         }
         // if (Boolean.TRUE.equals(modelBo.getWfSynthesisAll())) {
-        // // 查询所有分类
+        // // Query all
         // wfSyntheses = mergeAllCategories(wfSyntheses, wfSynthesisService.list(),
         // category -> ((WfSynthesis) category).getSynthesisId());
         // }
 
-        // 返回结果
+        //
         Map<String, List<String>> result = new HashMap<>();
         result.put("workOrderSyntheses", workOrderSyntheses);
         result.put("wfSyntheses", wfSyntheses);
@@ -958,7 +958,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 返回分页数据
+     * data
      *
      * @param modelBo
      * @param page
@@ -970,17 +970,17 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     public TableDataInfo<WfModelVo> getModelPageData(WfModelBo modelBo, Page<Model> page, List<String> wfSyntheses,
             List<String> workOrderSyntheses, String tenantId,
             Boolean history) {
-        // 查询模型列表
+        // Query model list
         List<Model> modelList = wfModelMapper.selectModelList(modelBo, page, wfSyntheses, workOrderSyntheses,
                 tenantId, history);
 
-        // 转换为 VO 列表
+        // Convert to VO
         List<WfModelVo> modelVoList = convertModelToVoList(modelList, modelBo);
 
-        // 构建分页数据
+        // Build data
         Page<WfModelVo> pageResult = new Page<>(page.getCurrent(), page.getSize());
         pageResult.setRecords(modelVoList);
-        pageResult.setTotal(page.getTotal()); // 从分页对象中获取总记录数
+        pageResult.setTotal(page.getTotal()); // from object in Get record
 
         return TableDataInfo.build(pageResult);
     }
@@ -996,7 +996,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
             appId = wfAppService.getOne(objectLambdaQueryWrapper).getAppId();
             modelBo.setWfCategory(appId);
         }
-        // 查询总数
+        // Query
         Long pageTotal = wfModelMapper.selectModelCount(modelBo, mergedCategories.get("wfSyntheses"),
                 mergedCategories.get("workOrderSyntheses"), sysUser.getTenantId(), false);
         if (pageTotal <= 0 || mergedCategories.get("wfSyntheses").isEmpty() && mergedCategories.get(
@@ -1032,7 +1032,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
                     modelVo.setSuspended(true);
                 }
 
-                // 根据 modelBo 中的参数设置查询类别标识
+                // modelBo in parameterSet Query
                 if (Boolean.TRUE.equals(modelBo.getWfAppAll())) {
                     modelVo.setWfAppAll(true);
                 }
@@ -1070,7 +1070,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
         Map<String, List<String>> mergedCategories = getMergedCategories(modelBo);
         List<Model> modelList = wfModelMapper.selectModelList(modelBo, null, mergedCategories.get("wfSyntheses"),
                 mergedCategories.get("workOrderSyntheses"), sysUser.getTenantId(), false);
-        // 转换为 VO 列表
+        // Convert to VO
         return convertModelToVoList(modelList, modelBo);
     }
 
@@ -1078,13 +1078,13 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     public TableDataInfo<WfModelVo> historyList(WfModelBo modelBo, PageQuery pageQuery) {
         SysUser sysUser = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
         Map<String, List<String>> mergedCategories = getMergedCategories(modelBo);
-        // 查询总数
+        // Query
         Long pageTotal = wfModelMapper.selectModelCount(modelBo, mergedCategories.get("wfSyntheses"),
                 mergedCategories.get("workOrderSyntheses"), sysUser.getTenantId(), true);
         if (pageTotal <= 0) {
             return TableDataInfo.build();
         }
-        // offset+1，去掉最新版
+        // offset+1, new
         int offset = pageQuery.getPageSize() * (pageQuery.getPageNum() - 1);
         IPage<Model> page = new Page<>(offset, pageQuery.getPageSize());
         return getModelPageData(modelBo, (Page<Model>) page, mergedCategories.get("wfSyntheses"),
@@ -1109,7 +1109,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
         if (ObjectUtil.isNull(model)) {
             throw new RuntimeException("流程模型不存在！");
         }
-        // 获取流程图
+        // Get workflow
         String bpmnXml = queryBpmnXmlById(modelId);
         WfModelVo modelVo = getWfModelVo(model);
         modelVo.setBpmnXml(bpmnXml);
@@ -1160,7 +1160,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
                 modelBo.getShowMobile(), modelBo.getFormId());
         model.setMetaInfo(metaInfo);
         model.setTenantId(sysUser.getTenantId());
-        // 保存流程模型
+        // workflowmodel
         repositoryService.saveModel(model);
         if (StringUtils.isNotBlank(modelBo.getCategoryId())) {
             WfFormBo bo = new WfFormBo();
@@ -1210,7 +1210,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateModel(WfModelBo modelBo) {
-        // 根据模型Key查询模型信息
+        // modelKeyQuery modelinfo
         Model model = repositoryService.getModel(modelBo.getModelId());
         if (ObjectUtil.isNull(model)) {
             throw new RuntimeException("流程模型不存在！");
@@ -1234,7 +1234,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
             model.setTenantId(modelBo.getTenantId());
         }
         if (StringUtils.isNotBlank(modelBo.getModelName()) && !modelBo.getModelName().equals(model.getName())) {
-            // 设置流程名称为新名称
+            // Set workflow to new
             model.setName(modelBo.getModelName());
             byte[] bpmnBytes = repositoryService.getModelEditorSource(model.getId());
             if (bpmnBytes != null) {
@@ -1242,20 +1242,20 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
                 repositoryService.addModelEditorSource(model.getId(), bytes);
             }
         }
-        // 保存流程模型
+        // workflowmodel
         repositoryService.saveModel(model);
     }
 
     private byte[] updateProcessName(byte[] bpmnBytes, WfModelBo modelBo) {
-        byte[] updatedBpmnBytes = null; // 声明并初始化更新后的 BPMN 字节数组
+        byte[] updatedBpmnBytes = null; // Initialize new after BPMN array
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder;
         try {
             builder = factory.newDocumentBuilder();
             Document doc = builder.parse(new InputSource(new ByteArrayInputStream(bpmnBytes)));
-            // 使用 XPath 定位流程名称
+            // XPath workflow
             XPath xpath = XPathFactory.newInstance().newXPath();
-            // 设置命名空间前缀和 URI 上下文
+            // Set null / empty before and URI
             NamespaceContext context = new NamespaceContext() {
                 @Override
                 public String getNamespaceURI(String prefix) {
@@ -1301,23 +1301,23 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Model saveModel(WfModelBo modelBo, String ToTenantId, ProcessModel processModel) {
-        // 查询模型信息
+        // Query modelinfo
         Model model = repositoryService.getModel(modelBo.getModelId());
         if (ObjectUtil.isNull(model)) {
             throw new RuntimeException("流程模型不存在！");
         }
         ReModeJsonBo remodeJsonBo = new ReModeJsonBo();
         if (StringUtils.isBlank(ToTenantId)) {
-            // 创建 ObjectMapper 实例
+            // ObjectMapper instance
             ObjectMapper objectMapper = new ObjectMapper();
-            // 将 processModel 转换为 JSON 字符串
+            // processModel Convert to JSON
             String jsonContent = null;
             try {
                 jsonContent = objectMapper.writeValueAsString(processModel);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e + "processModel 转换为 JSON 字符串错误");
             }
-            remodeJsonBo.setJsonContent(jsonContent); // 将 JSON 字符串设置到字段中
+            remodeJsonBo.setJsonContent(jsonContent); // JSON Set field in
             SysUser sysUser = getCurrentSysUserRequired();
             remodeJsonBo.setUserId(sysUser.getUserId());
             BpmnModel bpmnModelXml = processModel.toBpmnModel();
@@ -1331,12 +1331,12 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
             throw new RuntimeException("获取模型设计失败！");
         }
         String processName = model.getName();
-        // 获取开始节点
+        // Get startnode
         StartEvent startEvent = ModelUtils.getStartEvent(bpmnModel);
         if (ObjectUtil.isNull(startEvent)) {
             throw new RuntimeException("开始节点不存在，请检查流程设计是否有误！");
         }
-        // 获取开始节点配置的表单Key
+        // Get startnodeconfiguration formKey
         if (StrUtil.isBlank(startEvent.getFormKey())) {
             throw new RuntimeException("请配置流程表单");
         }
@@ -1357,7 +1357,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
             }
         } else {
             newModel = model;
-            // 设置流程名称
+            // Set workflow
             newModel.setName(processName);
         }
 
@@ -1368,13 +1368,13 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
                 newModel.setMetaInfo(JsonUtils.toJsonString(metaInfo));
             }
         }
-        // 保存流程模型
+        // workflowmodel
         repositoryService.saveModel(newModel);
         if (StringUtils.isBlank(ToTenantId)) {
             remodeJsonBo.setModelId(newModel.getId());
             reModeJsonService.insertByBo(remodeJsonBo);
         }
-        // 保存 BPMN XML
+        // BPMN XML
         byte[] bpmnXmlBytes = StringUtils.getBytes(modelBo.getBpmnXml(), StandardCharsets.UTF_8);
         repositoryService.addModelEditorSource(newModel.getId(), bpmnXmlBytes);
         return newModel;
@@ -1384,7 +1384,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     @Transactional(rollbackFor = Exception.class)
     public void latestModel(String modelId) {
         SysUser sysUser = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
-        // 获取流程模型
+        // Get workflowmodel
         Model model = repositoryService.getModel(modelId);
         if (ObjectUtil.isNull(model)) {
             throw new RuntimeException("流程模型不存在！");
@@ -1394,7 +1394,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
         if (model.getVersion().equals(latestVersion)) {
             throw new RuntimeException("当前版本已是最新版！");
         }
-        // 获取 BPMN XML
+        // Get BPMN XML
         byte[] bpmnBytes = repositoryService.getModelEditorSource(modelId);
         Model newModel = repositoryService.newModel();
         newModel.setName(model.getName());
@@ -1403,9 +1403,9 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
         newModel.setMetaInfo(model.getMetaInfo());
         newModel.setVersion(latestVersion + 1);
         newModel.setTenantId(sysUser.getTenantId());
-        // 保存流程模型
+        // workflowmodel
         repositoryService.saveModel(newModel);
-        // 保存 BPMN XML
+        // BPMN XML
         repositoryService.addModelEditorSource(newModel.getId(), bpmnBytes);
     }
 
@@ -1430,17 +1430,17 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deployModel(String modelId) {
-        // 流程数据初始化需要
+        // workflowdataInitialize need to
         String toTenantId = RedisUtils.getCacheObject("to_tenant_id");
         SysUser sysUser = getCurrentSysUser();
         if (sysUser == null) {
             sysUser = new SysUser();
         }
-        // 流程数据初始化需要
+        // workflowdataInitialize need to
         if (StringUtil.isNotBlank(toTenantId)) {
             sysUser.setTenantId(toTenantId);
         }
-        // 获取流程模型
+        // Get workflowmodel
         Model model = repositoryService.getModel(modelId);
         if (ObjectUtil.isNull(model)) {
             throw new RuntimeException("流程模型不存在！");
@@ -1448,7 +1448,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
         if (StringUtils.isBlank(sysUser.getTenantId())) {
             sysUser.setTenantId(model.getTenantId());
         }
-        // 获取流程图
+        // Get workflow
         byte[] bpmnBytes = repositoryService.getModelEditorSource(modelId);
         if (ArrayUtil.isEmpty(bpmnBytes)) {
             throw new RuntimeException("请先设计流程图！");
@@ -1458,9 +1458,9 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
         String processName = model.getName() + ProcessConstants.SUFFIX;
         List<ProcessDefinition> definitions = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionKey(model.getKey()) //
-                // 同一流程标识
-                .processDefinitionTenantId(sysUser.getTenantId()) // 当前租户过滤
-                .orderByProcessDefinitionVersion().desc() // 按版本号倒序
+                // workflow
+                .processDefinitionTenantId(sysUser.getTenantId()) // current
+                .orderByProcessDefinitionVersion().desc() //
                 .list();
         if (definitions.size() > 1 && !definitions.get(0).isSuspended()) {
             ProcessDefinition previous = definitions.get(0);
@@ -1469,7 +1469,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
                     .singleResult();
             deployService.updateState(processDefinition2.getId(), SuspensionState.SUSPENDED.toString());
         }
-        // 部署流程
+        // workflow
         Deployment deployment = repositoryService.createDeployment().tenantId(sysUser.getTenantId())
                 .name(model.getName()).key(model.getKey()).category(model.getCategory())
                 .addBytes(processName, bpmnBytes).deploy();
@@ -1480,7 +1480,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
         wfModelBo.setDeploymentId(deployment.getId());
         wfModelBo.setModelId(modelId);
         wfModelBo.setTenantId(sysUser.getTenantId());
-        // 类似JAVA的短路求值
+        // JAVA value
         List<String> wfSyntheses = wfSynthesisService.selectChildById(model.getCategory());
         if (!wfSyntheses.isEmpty()) {
             wfModelBo.setWfCategory(model.getCategory());
@@ -1488,14 +1488,14 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
             wfModelBo.setWorkOrderCategory(model.getCategory());
         }
         updateModel(wfModelBo);
-        // 修改流程定义的分类，便于搜索流程
+        // Update workflow definition , workflow
         repositoryService.setProcessDefinitionCategory(procDef.getId(), model.getCategory());
-        // 保存部署表单
+        // form
         return deployFormService.saveInternalDeployForm(deployment.getId(), bpmnModel);
     }
 
     /**
-     * 复制流程模型
+     * workflowmodel
      *
      * @param modelBo
      */
@@ -1503,63 +1503,63 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     public void copyModel(WfModelBo modelBo) {
         SysUser sysUser = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
         String modelKey = modelBo.getModelKey();
-        // 判断该modelKey是否已存在
+        // Check modelKeywhether already in
         Model model = repositoryService.createModelQuery().modelTenantId(sysUser.getTenantId()).modelKey(modelKey)
                 .singleResult();
         if (model != null) {
             throw new RuntimeException("模型标识已存在");
         }
-        // 获取被复制的流程模型id
+        // Get workflowmodelid
         String copyModelId = modelBo.getCopyModelId();
-        // 根据模型id获取原始流程模型信息
+        // modelidGet workflowmodelinfo
         Model originalModel = repositoryService.createModelQuery().modelTenantId(sysUser.getTenantId())
                 .modelId(copyModelId).singleResult();
         if (originalModel == null) {
             throw new IllegalArgumentException("原始模型ID不存在: " + copyModelId);
         }
 
-        // 获取原始模型的BPMN XML
+        // Get model BPMN XML
         byte[] bpmnBytes = repositoryService.getModelEditorSource(originalModel.getId());
         if (bpmnBytes == null || bpmnBytes.length == 0) {
             throw new IllegalStateException("无法获取原始模型的BPMN XML");
         }
-        // 创建新的模型实体
+        // new model
         Model newModel = repositoryService.newModel();
 
-        newModel.setKey(modelBo.getModelKey()); // 为新模型设定一个新的唯一键
-        newModel.setName(modelBo.getModelName()); // 设置模型名称，可以加上（副本）之类的标识
+        newModel.setKey(modelBo.getModelKey()); // to new model new
+        newModel.setName(modelBo.getModelName()); // Set model , ( )
         if (!StringUtils.isBlank(modelBo.getWfCategory())) {
             newModel.setCategory(modelBo.getWfCategory());
         } else {
             newModel.setCategory(modelBo.getWorkOrderCategory());
         }
-        newModel.setVersion(1); // 新模型的初始版本
-        newModel.setDeploymentId(null); // 新模型尚未部署
+        newModel.setVersion(1); // new model
+        newModel.setDeploymentId(null); // new model not
         String metaInfo = buildMetaInfo(new WfMetaInfoDto(), modelBo.getDescription(), modelBo.getIconId(),
-                modelBo.getShowMobile(), modelBo.getFormId()); // 设置图标和描述
+                modelBo.getShowMobile(), modelBo.getFormId()); // Set and
         newModel.setMetaInfo(metaInfo);
-        newModel.setTenantId(originalModel.getTenantId()); // 继承租户ID
+        newModel.setTenantId(originalModel.getTenantId()); // tenant ID
 
         ReModelJsonVo reModelJsonVo = remodeJsonService.queryById(modelBo.getCopyModelId());
 
-        // 将 processModel 转换为 JSON 字符串
+        // processModel Convert to JSON
         ReModeJsonBo remodeJsonBo = new ReModeJsonBo();
 
-        remodeJsonBo.setJsonContent(reModelJsonVo.getJsonContent()); // 将 JSON 字符串设置到字段中
+        remodeJsonBo.setJsonContent(reModelJsonVo.getJsonContent()); // JSON Set field in
         remodeJsonBo.setTenantId(sysUser.getTenantId());
         remodeJsonBo.setUserId(sysUser.getUserId());
 
-        // 保存新模型
+        // new model
         repositoryService.saveModel(newModel);
 
         remodeJsonBo.setModelId(newModel.getId());
         remodeJsonService.insertByBo(remodeJsonBo);
         try {
-            // 解析BPMN XML
+            // Parse BPMN XML
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(new ByteArrayInputStream(bpmnBytes));
-            // 清空所有flowable:formKey属性
+            // null / empty all flowable:formKeyproperty
             // NodeList elementsWithFormKey = doc.getElementsByTagName("*");
             // for (int i = 0; i < elementsWithFormKey.getLength(); i++) {
             // Node node = elementsWithFormKey.item(i);
@@ -1567,39 +1567,39 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
             // if (attributes != null) {
             // Node formKeyAttr = attributes.getNamedItem("flowable:formKey");
             // if (formKeyAttr != null) {
-            // formKeyAttr.setTextContent(""); // 清空formKey属性值
+            // formKeyAttr.setTextContent(""); // null / empty formKeyproperty value
             // }
             // }
             // }
 
-            // 设置流程名称
+            // Set workflow
             NodeList processes = doc.getElementsByTagNameNS("http://www.omg.org/spec/BPMN/20100524/MODEL", "process");
             if (processes.getLength() > 0) {
-                org.w3c.dom.Node processNode = processes.item(0); // 假设只有一个流程定义，如果有多个，你需要根据实际情况选择
+                org.w3c.dom.Node processNode = processes.item(0); // assuming only workflow definition, if , need to
                 NamedNodeMap attributes = processNode.getAttributes();
                 Node nameAttr = attributes.getNamedItem("name");
                 if (nameAttr != null) {
-                    // 修改流程定义的name属性值
+                    // Update workflow definition nameproperty value
                     nameAttr.setTextContent(modelBo.getModelName());
                 }
             }
 
-            // // 定位到所有的startEvent元素并修改第一个startEvent的flowable:formKey
-            // // 获取所有的 startEvent 元素
+            // // all startEventelement Update startEvent flowable:formKey
+            // // Get all startEvent element
             // NodeList startEvents =
             // doc.getElementsByTagNameNS("http://www.omg.org/spec/BPMN/20100524/MODEL",
             // "startEvent");
-            // // 遍历 NodeList，找到第一个符合条件的 startEvent 元素
+            // // NodeList, startEvent element
             // for (int i = 0; i < startEvents.getLength(); i++) {
             // Node node = startEvents.item(i);
             // if (node instanceof Element) {
             // Element startEventElement = (Element) node;
-            // // 在这里进行你的条件判断或属性处理
-            // String elementName = startEventElement.getNodeName(); // 获取元素名，例如
+            // // in Check propertyProcess
+            // String elementName = startEventElement.getNodeName(); // Get element ,
             // "startEvent"
-            // String namespaceURI = startEventElement.getNamespaceURI(); // 获取命名空间 URI
+            // String namespaceURI = startEventElement.getNamespaceURI(); // Get null / empty URI
             //
-            // // 例：检查是否有 flowable:formKey 属性，如果没有则设置
+            // // : whether flowable:formKey property, if Set
             // if (!startEventElement.hasAttributeNS("http://flowable.org/bpmn", "formKey"))
             // {
             // startEventElement.setAttributeNS("http://flowable.org/bpmn",
@@ -1607,12 +1607,12 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
             // .valueOf(modelBo.getFormId()));
             // }
             //
-            // // 处理完第一个符合条件的 startEvent 元素后退出循环
+            // // Process startEvent element afterexit loop
             // break;
             // }
             // }
 
-            // 将修改后的文档转换回字节数组
+            // Update after Convert array
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
             DOMSource source = new DOMSource(doc);
@@ -1620,7 +1620,7 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
             StreamResult result = new StreamResult(baos);
             transformer.transform(source, result);
             byte[] modifiedBpmnBytes = baos.toByteArray();
-            // 保存修改后的BPMN XML至新模型
+            // Update after BPMN XML to new model
             repositoryService.addModelEditorSource(newModel.getId(), modifiedBpmnBytes);
         } catch (ParserConfigurationException | SAXException | IOException | TransformerException e) {
             e.printStackTrace();
@@ -1648,13 +1648,13 @@ public class WfModelServiceImpl extends FlowServiceFactory implements IWfModelSe
     }
 
     /**
-     * 构建模型扩展信息
+     * Build model info
      *
      * @return
      */
     private String buildMetaInfo(WfMetaInfoDto metaInfo, String description, String iconId, String showMobile,
             String formId) {
-        // 只有非空，才进行设置，避免更新时的覆盖
+        // only non- null / empty , Set , new
         if (StringUtils.isNotEmpty(description)) {
             metaInfo.setDescription(description);
         }

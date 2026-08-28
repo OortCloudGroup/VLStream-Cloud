@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,40 +16,40 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 应用工单分类Service接口
+ * work order Serviceinterface
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-04
  */
 public interface IWorkOrderAppService extends IService<WorkOrderApp> {
 
     /**
-     * 查询应用工单分类
+     * Query work order
      */
     WorkOrderAppVo queryById(String appId);
 
     /**
-     * 查询应用工单分类列表
+     * Query work order list
      */
     List<WorkOrderAppVo> queryPageList(WorkOrderAppBo bo, PageQuery pageQuery);
 
     /**
-     * 查询应用工单分类列表
+     * Query work order list
      */
     List<WorkOrderAppVo> queryList(WorkOrderAppBo bo);
 
     /**
-     * 新增应用工单分类
+     * Add work order
      */
     Boolean insertByBo(WorkOrderAppBo bo);
 
     /**
-     * 修改应用工单分类
+     * Update work order
      */
     Boolean updateByBo(WorkOrderAppBo bo);
 
     /**
-     * 校验并批量删除应用工单分类信息
+     * Validate Batch delete work order info
      */
     Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid);
 }

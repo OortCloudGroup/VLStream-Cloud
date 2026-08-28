@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
 export const getOrchestrationPage = params => request({ url: '/vlsAlgorithmOrchestration/page', method: 'get', params })

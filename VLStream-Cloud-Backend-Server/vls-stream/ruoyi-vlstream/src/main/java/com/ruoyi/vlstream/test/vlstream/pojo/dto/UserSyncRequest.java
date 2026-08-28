@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -8,53 +9,53 @@ package com.ruoyi.vlstream.test.vlstream.pojo.dto;
 import lombok.Data;
 
 /**
- * 用户同步请求DTO
+ * user DTO
  */
 @Data
 public class UserSyncRequest {
 
     /**
-     * 用户ID
+     * user ID
      */
     private String userId;
 
     /**
-     * 租户ID
+     * tenant ID
      */
     private String tenantId;
 
     /**
-     * 登录账号
+     *
      */
     private String loginId;
 
     /**
-     * 用户姓名
+     * user
      */
     private String userName;
 
     /**
-     * 登录时间
+     *
      */
     private String loginTime;
 
     /**
-     * 登录IP
+     * IP
      */
     private String loginIP;
 
     /**
-     * 登录类型
+     *
      */
     private Integer loginType;
 
     /**
-     * 客户端类型
+     *
      */
     private String client;
 
     /**
-     * 访问令牌
+     *
      */
     private String accessToken;
 }

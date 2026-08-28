@@ -28,7 +28,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 缓存监控
+ * Cache monitoring
  *
  * @author Lion Li
  */
@@ -53,7 +53,7 @@ public class CacheController {
     }
 
     /**
-     * 获取缓存监控列表
+     * Get Cache monitoring
      */
     @SaCheckPermission("monitor:cache:list")
     @GetMapping()
@@ -82,7 +82,7 @@ public class CacheController {
     }
 
     /**
-     * 获取缓存监控缓存名列表
+     * Get Cache monitoring
      */
     @SaCheckPermission("monitor:cache:list")
     @GetMapping("/getNames")
@@ -91,9 +91,9 @@ public class CacheController {
     }
 
     /**
-     * 获取缓存监控Key列表
+     * Get Cache monitoringKey
      *
-     * @param cacheName 缓存名
+     * @param cacheName
      */
     @SaCheckPermission("monitor:cache:list")
     @GetMapping("/getKeys/{cacheName}")
@@ -111,10 +111,10 @@ public class CacheController {
     }
 
     /**
-     * 获取缓存监控缓存值详情
+     * Get Cache monitoring value
      *
-     * @param cacheName 缓存名
-     * @param cacheKey  缓存key
+     * @param cacheName
+     * @param cacheKey key
      */
     @SaCheckPermission("monitor:cache:list")
     @GetMapping("/getValue/{cacheName}/{cacheKey}")
@@ -130,9 +130,9 @@ public class CacheController {
     }
 
     /**
-     * 清理缓存监控缓存名
+     * Cache monitoring
      *
-     * @param cacheName 缓存名
+     * @param cacheName
      */
     @SaCheckPermission("monitor:cache:list")
     @DeleteMapping("/clearCacheName/{cacheName}")
@@ -146,9 +146,9 @@ public class CacheController {
     }
 
     /**
-     * 清理缓存监控Key
+     * Cache monitoringKey
      *
-     * @param cacheKey key名
+     * @param cacheKey key
      */
     @SaCheckPermission("monitor:cache:list")
     @DeleteMapping("/clearCacheKey/{cacheName}/{cacheKey}")
@@ -162,7 +162,7 @@ public class CacheController {
     }
 
     /**
-     * 清理全部缓存监控
+     * full Cache monitoring
      */
     @SaCheckPermission("monitor:cache:list")
     @DeleteMapping("/clearCacheAll")

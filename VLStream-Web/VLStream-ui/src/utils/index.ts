@@ -1,12 +1,8 @@
 /*
-* @Created by: 兰舰
-* Email: gglanjian@qq.com
-* Phone: 16620805419
-* @Date: 2024-11-15 11:05:36
- * @Last Modified by: 兰舰
- * @Last Modified time: 2025-05-08 10:29:09
-* @Copyright aPaaS-front-team. All rights reserved.
-*/
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 export function getTimeStampByDate(t) {
     const d = new Date(t);
     return d.getTime();
@@ -36,7 +32,7 @@ export function getTimeStampByDate(t) {
     return formatedString;
   }
 
-  // 时间戳转换为 时间格式
+  // Convert to
   export function formatDate(value) {
     if (!value) {
       return ''
@@ -145,7 +141,7 @@ export function getTimeStampByDate(t) {
   }
 
   export function shortRandomStr(prefix = 'node_') {
-      const randomPart = Math.random().toString(36).substring(2, 7); // 生成一个 5 位的随机字符串
+      const randomPart = Math.random().toString(36).substring(2, 7); // Generate 5
       return prefix + randomPart;
   }
 
@@ -158,7 +154,7 @@ export function getTimeStampByDate(t) {
     }
   }
 
-  // 距离转换函数
+  // Convert
   export function getConverDistance(meters: number): string {
     if (meters < 1000) {
       return `${Math.round(meters)}米`
@@ -167,7 +163,7 @@ export function getTimeStampByDate(t) {
     }
   }
 
-  // 时间格式化函数
+  // Format
   export function formatDateToHM(timestamp: number): string {
     const date = new Date(timestamp)
     const hours = date.getHours().toString().padStart(2, '0')
@@ -179,19 +175,19 @@ export function getVideoCover(url) {
   return new Promise(function(resolve, reject) {
     let dataURL = ''
     let video = document.createElement('video')
-    video.setAttribute('crossOrigin', 'anonymous')// 处理跨域
+    video.setAttribute('crossOrigin', 'anonymous')// Process
     video.setAttribute('src', url)
     video.setAttribute('width', 400)
     video.setAttribute('height', 240)
     video.setAttribute('preload', 'auto')
     video.addEventListener('loadeddata', function() {
       let canvas = document.createElement('canvas')
-      let width = video.width // canvas的尺寸和图片一样
+      let width = video.width // canvas and
       let height = video.height
       canvas.width = width
       canvas.height = height
-      canvas.getContext('2d').drawImage(video, 0, 0, width, height) // 绘制canvas
-      dataURL = canvas.toDataURL('image/jpeg') // 转换为base64
+      canvas.getContext('2d').drawImage(video, 0, 0, width, height) // canvas
+      dataURL = canvas.toDataURL('image/jpeg') // Convert to base64
       resolve(dataURL)
     })
   })
@@ -199,9 +195,9 @@ export function getVideoCover(url) {
 
 
 /**
- * 判断当前页面是否运行在本地开发主机，避免鉴权失败时跳往外部统一门户。
+ * Check current pagewhether in main , failed .
  */
 export function jugeIsInLocalhostEnv () {
   return ['localhost', '127.0.0.1', '::1', '[::1]', 'lanjian.com'].includes(window.location.hostname)
-  //  || window.location.hostname === 'workup-dev.myoumuamua.com'  // 这个为测试环境网关的跳转设置 记得注释，只用于调试跨域 这些问题
+  // || window.location.hostname === 'workup-dev.myoumuamua.com' // to Set , only
 }

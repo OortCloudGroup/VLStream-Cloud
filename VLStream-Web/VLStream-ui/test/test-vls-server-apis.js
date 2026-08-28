@@ -1,11 +1,16 @@
-// 测试VLStream-server API（vls-server服务名）
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// VLStream-server API (vls-serverservice )
 async function testVLSServerAPIs() {
   const currentToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token')
-  
+
   console.log('🔍 测试VLStream-server API（vls-server服务名）')
   console.log('当前token:', currentToken)
   console.log('')
-  
+
   const testAPIs = [
     {
       name: 'VLStream设备列表API（直接访问）',
@@ -47,12 +52,12 @@ async function testVLSServerAPIs() {
       method: 'GET'
     }
   ]
-  
+
   for (const api of testAPIs) {
     console.log(`\n=== 测试: ${api.name} ===`)
     console.log('URL:', api.url)
     console.log('Method:', api.method)
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'requesttype': 'app',
@@ -60,12 +65,12 @@ async function testVLSServerAPIs() {
       'secretkey': '58f9eeefc65f4b318204ba21f39a8861',
       'accesstoken': currentToken
     }
-    
+
     console.log('Headers:', headers)
-    
+
     try {
       let response
-      
+
       if (api.method === 'GET') {
         const url = new URL(api.url)
         if (api.params) {
@@ -84,9 +89,9 @@ async function testVLSServerAPIs() {
           body: JSON.stringify(api.data || {})
         })
       }
-      
+
       console.log(`响应状态: ${response.status}`)
-      
+
       if (response.ok) {
         const data = await response.json()
         console.log('✅ 请求成功！')
@@ -95,8 +100,8 @@ async function testVLSServerAPIs() {
         const errorData = await response.json()
         console.log('❌ 请求失败！')
         console.log('错误信息:', errorData)
-        
-        // 错误分析
+
+        //
         if (response.status === 503) {
           console.log('🔍 错误分析: 服务不可用')
           console.log('可能原因:')
@@ -116,7 +121,7 @@ async function testVLSServerAPIs() {
           console.log('2. 控制器映射问题')
         }
       }
-      
+
     } catch (error) {
       console.log(`❌ 请求异常: ${error.message}`)
       if (error.message.includes('Failed to fetch')) {
@@ -128,7 +133,7 @@ async function testVLSServerAPIs() {
       }
     }
   }
-  
+
   console.log('\n📝 测试总结:')
   console.log('- 如果所有API都返回503错误，说明VLStream-server服务未启动或网关路由有问题')
   console.log('- 如果部分API返回4004错误，说明需要检查认证拦截器配置')
@@ -136,5 +141,5 @@ async function testVLSServerAPIs() {
   console.log('- 如果健康检查成功，说明服务已启动，问题在API路径或认证')
 }
 
-// 运行测试
-testVLSServerAPIs().catch(console.error) 
+//
+testVLSServerAPIs().catch(console.error)

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -13,7 +14,7 @@ import com.ruoyi.common.core.page.TableDataInfo;
 import java.util.List;
 
 /**
- * 字典 业务层
+ * dict layer
  *
  * @author Lion Li
  */
@@ -23,87 +24,87 @@ public interface ISysDictTypeService {
     TableDataInfo<SysDictType> selectPageDictTypeList(SysDictType dictType, PageQuery pageQuery);
 
     /**
-     * 根据条件分页查询字典类型
+     * Query dict type
      *
-     * @param dictType 字典类型信息
-     * @return 字典类型集合信息
+     * @param dictType dict typeinfo
+     * @return dict typecollectioninfo
      */
     List<SysDictType> selectDictTypeList(SysDictType dictType);
 
     /**
-     * 根据所有字典类型
+     * all dict type
      *
-     * @return 字典类型集合信息
+     * @return dict typecollectioninfo
      */
     List<SysDictType> selectDictTypeAll();
 
     /**
-     * 根据字典类型查询字典数据
+     * dict typeQuery dictdata
      *
-     * @param dictType 字典类型
-     * @return 字典数据集合信息
+     * @param dictType dict type
+     * @return dictdataset info
      */
     List<SysDictData> selectDictDataByType(String dictType);
 
     /**
-     * 根据字典类型ID查询信息
+     * dict typeIDQuery info
      *
-     * @param dictId 字典类型ID
-     * @return 字典类型
+     * @param dictId dict typeID
+     * @return dict type
      */
     SysDictType selectDictTypeById(Long dictId);
 
     /**
-     * 根据字典类型查询信息
+     * dict typeQuery info
      *
-     * @param dictType 字典类型
-     * @return 字典类型
+     * @param dictType dict type
+     * @return dict type
      */
     SysDictType selectDictTypeByType(String dictType);
 
     /**
-     * 批量删除字典信息
+     * Batch delete dictinfo
      *
-     * @param dictIds 需要删除的字典ID
+     * @param dictIds need to Delete dictID
      */
     void deleteDictTypeByIds(Long[] dictIds);
 
     /**
-     * 加载字典缓存数据
+     * Load dict data
      */
     void loadingDictCache();
 
     /**
-     * 清空字典缓存数据
+     * null / empty dict data
      */
     void clearDictCache();
 
     /**
-     * 重置字典缓存数据
+     * dict data
      */
     void resetDictCache();
 
     /**
-     * 新增保存字典类型信息
+     * Add dict typeinfo
      *
-     * @param dictType 字典类型信息
-     * @return 结果
+     * @param dictType dict typeinfo
+     * @return
      */
     List<SysDictData> insertDictType(SysDictType dictType);
 
     /**
-     * 修改保存字典类型信息
+     * Update dict typeinfo
      *
-     * @param dictType 字典类型信息
-     * @return 结果
+     * @param dictType dict typeinfo
+     * @return
      */
     List<SysDictData> updateDictType(SysDictType dictType);
 
     /**
-     * 校验字典类型称是否唯一
+     * Validate dict type whether
      *
-     * @param dictType 字典类型
-     * @return 结果
+     * @param dictType dict type
+     * @return
      */
     boolean checkDictTypeUnique(SysDictType dictType);
 }

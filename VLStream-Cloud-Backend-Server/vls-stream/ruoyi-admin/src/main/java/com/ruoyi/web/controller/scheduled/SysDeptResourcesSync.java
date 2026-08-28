@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -23,7 +24,7 @@
 //import java.util.Date;
 //import java.util.List;
 //
-// * 部门同步定时任务
+// * department task
 // */
 //@Component
 //@Transactional(rollbackFor = Exception.class)
@@ -33,54 +34,54 @@
 //    private String deptSynUrl;
 //
 //    @Resource
-//    private SysDeptMapper sysDeptMapper; // 假设已经注入了对应的Service
+// private SysDeptMapper sysDeptMapper; // assuming already Service
 //    final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 //
 //    @Scheduled(cron = "0 */2 * * * ?")
 //    public void syncDeptData() {
-//        System.out.println("开始部门数据同步：" + new Date());
-//        System.out.println("部门数据同步接口为：" + deptSynUrl);
+// System.out.println("startdepartmentdata : " + new Date());
+// System.out.println("departmentdata interface to : " + deptSynUrl);
 //
-//        // 准备请求参数，这里你可能需要根据具体情况设置请求参数
+// // parameter, can need to Set parameter
 //        JSONObject requestBody = new JSONObject();
 //        requestBody.put("oort_dcode", null);
 //        requestBody.put("oort_udid", null);
 //        requestBody.put("page", 1);
 //        requestBody.put("pagesize", Integer.MAX_VALUE);
-//        // 查询当前数据库最后一次更新的时间
+// // Query current data after new
 //        Date latestUpdateTime = sysDeptMapper.selectLatestUpdateTime();
 //        if (latestUpdateTime != null) {
-//            requestBody.put("startDate", latestUpdateTime.getTime()+1000); // 将日期时间转换为时间戳并放入请求体
+// requestBody.put("startDate", latestUpdateTime.getTime()+1000); // Convert to
 //        } else {
-//            requestBody.put("startDate", null); // 如果latestUpdateTime为null，直接放入null
+// requestBody.put("startDate", null); // if latestUpdateTime to null, null
 //        }
 //        requestBody.put("tag", null);
 //        if(latestUpdateTime == null) {
-//            System.out.println("查询部门全量数据");
+// System.out.println("Query department full data");
 //        } else {
-//            System.out.println("查询部门"+ sdf.format(new Date(latestUpdateTime.getTime()+1000)) + "后的增量数据");
+// System.out.println("Query department"+ sdf.format(new Date(latestUpdateTime.getTime()+1000)) + " after data");
 //        }
-//        // 发送 POST 请求并获取响应数据
+// // POST Get data
 //        JSONArray departmentList = fetchDataFromSyncAPI(requestBody);
 //
-//        // 处理响应数据
+// // Process data
 //        if (CollectionUtils.isNotEmpty(departmentList)) {
-//            // 查询已有的所有数据的oort_udid
+// // Query already all data oort_udid
 //            List<String> oortUdidList = sysDeptMapper.selectOortUdidList();
 //            List<SysDept> sysDeptList = new ArrayList<>();
 //            List<String> sysDeptUdidList = new ArrayList<>();
 //            for (Object obj : departmentList) {
 //                JSONObject deptJson = (JSONObject) obj;
-//                SysDept sysDept = parseDeptJson(deptJson, sysDeptUdidList); // 解析 JSON 数据为 SysDept 对象
+// SysDept sysDept = parseDeptJson(deptJson, sysDeptUdidList); // Parse JSON data to SysDept object
 //                if (sysDept != null) {
 //                    sysDeptList.add(sysDept);
 //                }
 //            }
-//            boolean b = sysDeptMapper.insertOrUpdateBatch(sysDeptList);// 批量插入部门数据
-//            // 插入部门数据后根据父部门code写入父部门id
+// boolean b = sysDeptMapper.insertOrUpdateBatch(sysDeptList);// departmentdata
+// // departmentdata after departmentcode department ID
 //            if(b){
 //                for (String uuid : sysDeptUdidList) {
-//                    //先根据查出数据
+// // data
 //                    SysDept sysDept = sysDeptMapper.selectDeptByUdid(uuid);
 //                    String oortPdcode = sysDept.getOortPdcode();
 //                    System.out.println("oortPdcode = " + oortPdcode);
@@ -89,22 +90,22 @@
 //                    sysDeptMapper.updateById(sysDept);
 //                }
 //            }
-//            System.out.println("部门数据同步成功，共同步部门数量：" + sysDeptList.size());
+// System.out.println("departmentdata successfully, department : " + sysDeptList.size());
 //        } else {
-//            System.out.println("部门数据同步成功：共同步部门数量：0");
+// System.out.println("departmentdata successfully: department : 0");
 //        }
-//        System.out.println("结束部门数据同步：" + sdf.format(new Date()));
+// System.out.println("finishdepartmentdata : " + sdf.format(new Date()));
 //    }
 //
 //    private JSONArray fetchDataFromSyncAPI(JSONObject requestBody) {
-//        // 发送 POST 请求
+// // POST
 //        HttpResponse response = HttpRequest.post(deptSynUrl)
 //            .header("accept", "application/json")
 //            .header("Content-Type", "application/json")
 //            .body(requestBody.toString())
 //            .execute();
 //
-//        // 处理响应
+// // Process
 //        String responseBody = response.body();
 //        JSONObject jsonObject = new JSONObject(responseBody);
 //        JSONObject data = jsonObject.getJSONObject("data");
@@ -116,16 +117,16 @@
 //    private SysDept parseDeptJson(JSONObject deptJson, List<String> sysDeptUdidList) {
 //        SysDept sysDept = new SysDept();
 //        sysDept.setParentId(0L);
-//        sysDept.setOortUdid(deptJson.getStr("oort_udid")); // 部门id
+// sysDept.setOortUdid(deptJson.getStr("oort_udid")); // department ID
 //        sysDeptUdidList.add(deptJson.getStr("oort_udid"));
-//        sysDept.setOortDcode(deptJson.getStr("oort_dcode")); // 部门code
-//        sysDept.setOortPdcode(deptJson.getStr("oort_pdcode")); // 父部门code
-//        sysDept.setDeptName(deptJson.getStr("oort_dname")); // 部门名称
-//        sysDept.setOrderNum(deptJson.getInt("oort_dsort")); // 显示顺序
+// sysDept.setOortDcode(deptJson.getStr("oort_dcode")); // departmentcode
+// sysDept.setOortPdcode(deptJson.getStr("oort_pdcode")); // departmentcode
+// sysDept.setDeptName(deptJson.getStr("oort_dname")); // department name
+// sysDept.setOrderNum(deptJson.getInt("oort_dsort")); //
 //        Date updateDate = new Date(deptJson.getLong("oort_dupdate"));
-//        sysDept.setUpdateTime(updateDate); // 修改时间
+// sysDept.setUpdateTime(updateDate); // Update
 //        Date createDate = new Date(deptJson.getLong("oort_dtcreate"));
-//        sysDept.setCreateTime(createDate); // 创建时间
+// sysDept.setCreateTime(createDate); // create time
 //        sysDept.setStatus("0".equals(deptJson.getStr("oort_status")) ? "1" : "0" );
 //        return sysDept;
 //    }

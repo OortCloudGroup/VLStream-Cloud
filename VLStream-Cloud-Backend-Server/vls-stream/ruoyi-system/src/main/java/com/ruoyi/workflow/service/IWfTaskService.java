@@ -23,26 +23,26 @@ import java.util.Map;
  * @createTime 2022/3/10 00:12
  */
 public interface IWfTaskService {
-    //推送消息
+    // Push
     void sendMessage(boolean isPushMessage, String userIds);
 
     void unifiedMessageSend(boolean isPushMessage, Map<String, Object> params);
 
     /**
-     * 审批任务
+     * approvaltask
      *
-     * @param task 请求实体参数
+     * @param task parameter
      */
     void complete(WfTaskBo task);
     /**
-     * 审批任务
+     * approvaltask
      *
-     * @param task 请求实体参数
+     * @param task parameter
      */
     //  void complete(WfTaskBo task);
 
     /**
-     * 拒绝任务
+     * task
      *
      * @param taskBo
      * @param user
@@ -52,13 +52,13 @@ public interface IWfTaskService {
 
     /**
      *
-     * 退回任务
-     * @param bo    请求实体参数
+     * task
+     * @param bo parameter
      */
     void taskReturn(WfTaskBo bo,SysUser sysUser);
 
     /**
-     * 获取所有可回退的节点
+     * Get all node
      *
      * @param bo
      * @return
@@ -66,50 +66,50 @@ public interface IWfTaskService {
     List<FlowElement> findReturnTaskList(WfTaskBo bo);
 
     /**
-     * 删除任务
+     * Delete task
      *
-     * @param bo 请求实体参数
+     * @param bo parameter
      */
     void deleteTask(WfTaskBo bo);
 
     /**
-     * 认领/签收任务
+     * / task
      *
-     * @param bo 请求实体参数
+     * @param bo parameter
      */
     void claim(WfTaskBo bo);
 
     /**
-     * 取消认领/签收任务
+     * / task
      *
-     * @param bo 请求实体参数
+     * @param bo parameter
      */
     void unClaim(WfTaskBo bo);
 
     /**
-     * 委派任务
+     * task
      *
-     * @param bo 请求实体参数
+     * @param bo parameter
      */
     //  void delegateTask(WfTaskBo bo);
 
     /**
-     * 委派任务
+     * task
      *
-     * @param bo 请求实体参数
+     * @param bo parameter
      */
     void delegateTask(WfTaskBo bo);
 
 
     /**
-     * 转办任务
+     * task
      *
-     * @param bo 请求实体参数
+     * @param bo parameter
      */
     void transferTask(WfTaskBo bo);
 
     /**
-     * 取消申请
+     *
      *
      * @param bo
      * @return
@@ -117,7 +117,7 @@ public interface IWfTaskService {
     void stopProcess(WfTaskBo bo);
 
     /**
-     * 撤回流程
+     * workflow
      *
      * @param bo
      * @return
@@ -125,7 +125,7 @@ public interface IWfTaskService {
     void revokeProcess(WfTaskBo bo);
 
     /**
-     * 获取流程过程图
+     * Get workflow
      *
      * @param processId
      * @return
@@ -133,25 +133,25 @@ public interface IWfTaskService {
     InputStream diagram(String processId);
 
     /**
-     * 获取流程变量
+     * Get workflow variable
      *
-     * @param taskId 任务ID
-     * @return 流程变量
+     * @param taskId taskID
+     * @return workflow variable
      */
     Map<String, Object> getProcessVariables(String taskId);
 
 //    /**
-//     * 启动第一个任务
-//     * @param processInstance 流程实例
-//     * @param variables 流程参数
+// * task
+// * @param processInstance workflow instance
+// * @param variables workflowparameter
 //     */
 //    void startFirstTask(ProcessInstance processInstance, Map<String, Object> variables);
 
     /**
-     * 启动第一个任务
+     * task
      *
-     * @param processInstance 流程实例
-     * @param variables       流程参数
+     * @param processInstance workflow instance
+     * @param variables workflowparameter
      */
     void startFirstTask(ProcessInstance processInstance, Map<String, Object> variables,SysUser sysUser);
 
@@ -160,29 +160,29 @@ public interface IWfTaskService {
     List<String> getApproverIds(String procInstId);
 
     /**
-     * 获取流程名称
+     * Get workflow
      *
-     * @param historicProcessInstance 流程实例
-     * @param sysUser                 当前用户
-     * @return 流程名称
+     * @param historicProcessInstance workflow instance
+     * @param sysUser current user
+     * @return workflow
      */
     String getProcessName(HistoricProcessInstance historicProcessInstance, SysUser sysUser);
 
     /**
-     * 构建并发送统一消息
+     * Build
      *
-     * @param task           当前任务
-     * @param receive_userId 目标id
-     * @param notifyAllSteps 是否推送消息
+     * @param task current task
+     * @param receive_userId id
+     * @param notifyAllSteps whether Push
      */
     void buildAndSendUnifiedMessage(Task task, String receive_userId, boolean notifyAllSteps,SysUser sysUser);
 
     /**
-     * 加签
+     *
      */
     void addSignTask(WfTaskBo bo);
     /**
-     * 减签
+     *
      */
     void subSignTask(WfTaskBo bo);
 }

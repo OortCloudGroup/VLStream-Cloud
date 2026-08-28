@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="home">
     <div class="table_c flexColumn">
@@ -32,7 +37,7 @@
             <el-table-column type="selection" />
             <el-table-column label="序号" type="index" width="60" align="center" />
             <el-table-column label="规则名称" align="center" prop="name" />
-            <!-- <el-table-column label="结构数据类别" align="center" prop="processName" :show-overflow-tooltip="true" /> -->
+            <!-- <el-table-column label=" data " align="center" prop="processName" :show-overflow-tooltip="true" /> -->
             <el-table-column label="规则说明" align="center" prop="description" />
             <el-table-column label="状态" align="center">
               <template #default="scope">

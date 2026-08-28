@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,11 +15,11 @@ import java.util.Date;
 @Data
 public class assigneeInfoVo {
     /**
-     * 审批人名字
+     * approver
      */
     private String assigneeName;
     /**
-     * 审批时间
+     * approval
      */
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date completeTime;

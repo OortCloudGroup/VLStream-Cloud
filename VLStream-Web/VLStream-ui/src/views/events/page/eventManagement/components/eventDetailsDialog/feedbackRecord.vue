@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="timeline-container">
     <el-timeline>
@@ -22,7 +27,7 @@
               <div class="name_box">
                 <i-d2-name :id="item.uuid" />
               </div>
-              <!-- 接口没有返回status字段 -->
+              <!-- interface statusfield -->
               <!-- <el-tag type="success" class="tag_box">
                 {{ item.status === 1 ? '已完成' : '正在处理' }}
               </el-tag> -->
@@ -95,7 +100,7 @@ interface Props {
 
 defineProps<Props>()
 
-// 格式化时间戳
+// Format
 const formatTimestamp = (time?: string) => {
   if (!time) return ''
   let timeArr = time.split(' ')
@@ -108,7 +113,7 @@ const formatTimestamp = (time?: string) => {
 <style scoped lang="scss">
 .detailsBox {
   display: flex;
-  align-items: flex-start; // 改为flex-start以便内容换行时对齐顶部
+  align-items: flex-start; // to flex-start
   flex-wrap: nowrap;
   font-family: SourceHanSansSC-Regular;
   font-size: 14px;
@@ -175,7 +180,7 @@ const formatTimestamp = (time?: string) => {
   margin-left: 5px;
 }
 
-// 时间线虚线样式
+//
 :deep(.el-timeline-item__node) {
   // background-color: #409eff;
   border: 2px solid var(--el-color-primary);
@@ -189,13 +194,13 @@ const formatTimestamp = (time?: string) => {
   display: none;
 }
 
-// 时间线容器样式
+//
 .timeline-container {
   padding-left: 80px;
   position: relative;
 }
 
-// 时间戳样式
+//
 :deep(.el-timeline-item__timestamp) {
   position: absolute;
   left: -80px;
@@ -209,7 +214,7 @@ const formatTimestamp = (time?: string) => {
   direction: rtl;
 }
 
-// 让第一行（时间）加粗加大
+// ( )
 :deep(.el-timeline-item__timestamp) {
   &::first-line {
     font-size: 16px;

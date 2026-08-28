@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -8,7 +9,7 @@ package com.ruoyi.common.annotation;
 import java.lang.annotation.*;
 
 /**
- * 枚举格式化
+ * Format
  *
  * @author Liang
  */
@@ -18,17 +19,17 @@ import java.lang.annotation.*;
 public @interface ExcelEnumFormat {
 
     /**
-     * 字典枚举类型
+     * dict
      */
     Class<? extends Enum<?>> enumClass();
 
     /**
-     * 字典枚举类中对应的code属性名称，默认为code
+     * dict in codeproperty , to code
      */
     String codeField() default "code";
 
     /**
-     * 字典枚举类中对应的text属性名称，默认为text
+     * dict in textproperty , to text
      */
     String textField() default "text";
 

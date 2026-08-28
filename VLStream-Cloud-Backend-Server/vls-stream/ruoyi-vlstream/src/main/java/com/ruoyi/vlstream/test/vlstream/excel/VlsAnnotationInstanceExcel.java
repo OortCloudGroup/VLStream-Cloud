@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,7 +18,7 @@ import java.math.BigDecimal;
 
 
 /**
- * 标注实例实体类 Excel实体类
+ * annotationinstance Excel
  *
  * @author Oort
  * @since 2025-12-23
@@ -30,43 +31,43 @@ public class VlsAnnotationInstanceExcel implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 关联的标注项目ID
+	 * annotation item ID
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("关联的标注项目ID")
 	private Long annotationId;
 	/**
-	 * 标签ID
+	 * ID
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("标签ID")
 	private Long labelId;
 	/**
-	 * 图片id
+	 * id
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("图片id")
 	private Long imageId;
 	/**
-	 * 标注类型：rect-矩形,circle-圆形,polygon-多边形
+	 * annotation : rect- ,circle- ,polygon-
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("标注类型：rect-矩形,circle-圆形,polygon-多边形")
 	private String annotationType;
 	/**
-	 * 标注坐标数据(JSON格式)
+	 * annotation data(JSON )
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("标注坐标数据(JSON格式)")
 	private String annotationData;
 	/**
-	 * 置信度
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("置信度")
 	private BigDecimal confidence;
 	/**
-	 * 是否已验证
+	 * whether already
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("是否已验证")

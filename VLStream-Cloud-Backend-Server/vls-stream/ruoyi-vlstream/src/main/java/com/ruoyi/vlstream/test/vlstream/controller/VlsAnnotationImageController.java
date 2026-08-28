@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -37,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 标注图片信息表 控制器
+ * annotation info control
  *
  * @author Oort
  * @since 2025-12-23
@@ -52,7 +53,7 @@ public class VlsAnnotationImageController extends BladeController {
 	private final IVlsAnnotationImageService vlsAnnotationImageService;
 
 	/**
-	 * 标注图片信息表 详情
+	 * annotation info
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -63,7 +64,7 @@ public class VlsAnnotationImageController extends BladeController {
 	}
 
 	/**
-	 * 标注图片信息表 分页
+	 * annotation info
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -75,7 +76,7 @@ public class VlsAnnotationImageController extends BladeController {
 
 
 	/**
-	 * 标注图片信息表 自定义分页
+	 * annotation info Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -86,7 +87,7 @@ public class VlsAnnotationImageController extends BladeController {
 	}
 
 	/**
-	 * 标注图片信息表 新增
+	 * annotation info Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -96,7 +97,7 @@ public class VlsAnnotationImageController extends BladeController {
 	}
 
 	/**
-	 * 标注图片信息表 修改
+	 * annotation info Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -106,7 +107,7 @@ public class VlsAnnotationImageController extends BladeController {
 	}
 
 	/**
-	 * 标注图片信息表 新增或修改
+	 * annotation info Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -116,7 +117,7 @@ public class VlsAnnotationImageController extends BladeController {
 	}
 
 	/**
-	 * 标注图片信息表 删除
+	 * annotation info Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -126,7 +127,7 @@ public class VlsAnnotationImageController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsAnnotationImage")
 	@ApiOperationSupport(order = 8)
@@ -142,7 +143,7 @@ public class VlsAnnotationImageController extends BladeController {
 	}
 
 	/**
-	 * 上传标注图片
+	 * annotation
 	 */
 	@PostMapping("/upload")
 	public ResponseEntity<?> uploadImages(
@@ -164,7 +165,7 @@ public class VlsAnnotationImageController extends BladeController {
 	}
 
 	/**
-	 * 获取数据集的所有图片
+	 * Get dataset all
 	 */
 	@GetMapping("/dataset/{annotationId}")
 	public ResponseEntity<?> getImagesByDataset(@PathVariable Long annotationId) {
@@ -183,7 +184,7 @@ public class VlsAnnotationImageController extends BladeController {
 	}
 
 	/**
-	 * 获取图片详情
+	 * Get
 	 */
 	@GetMapping("/{id}")
 	public ResponseEntity<?> getImageById(@PathVariable Long id) {
@@ -206,7 +207,7 @@ public class VlsAnnotationImageController extends BladeController {
 	}
 
 	/**
-	 * 更新图片标注信息
+	 * new annotationinfo
 	 */
 	@PutMapping("/{id}")
 	public ResponseEntity<?> updateImage(@PathVariable Long id, @RequestBody AnnotationImage image) {
@@ -227,7 +228,7 @@ public class VlsAnnotationImageController extends BladeController {
 	}
 
 	/**
-	 * 删除图片
+	 * Delete
 	 */
 	@DeleteMapping("/{id}")
 	public ResponseEntity<?> deleteImage(@PathVariable Long id) {
@@ -246,7 +247,7 @@ public class VlsAnnotationImageController extends BladeController {
 	}
 
 	/**
-	 * 批量删除图片
+	 * Batch delete
 	 */
 	@DeleteMapping("/batch")
 	public ResponseEntity<?> batchDeleteImages(@RequestBody List<Long> ids) {
@@ -265,7 +266,7 @@ public class VlsAnnotationImageController extends BladeController {
 	}
 
 	/**
-	 * 获取数据集统计信息
+	 * Get dataset info
 	 */
 	@GetMapping("/dataset/{datasetId}/stats")
 	public ResponseEntity<?> getDatasetStats(@PathVariable Long datasetId) {
@@ -284,10 +285,10 @@ public class VlsAnnotationImageController extends BladeController {
 	}
 
 	/**
-	 * 批量保存图片信息到annotation_image表
+	 * info annotation_image
 	 *
-	 * @param annotationImages 图片信息列表
-	 * @return 保存结果
+	 * @param annotationImages info
+	 * @return
 	 */
 	@PostMapping("/images/batch")
 	public ResponseEntity<?> batchSaveImages(@RequestBody List<AnnotationImage> annotationImages) {

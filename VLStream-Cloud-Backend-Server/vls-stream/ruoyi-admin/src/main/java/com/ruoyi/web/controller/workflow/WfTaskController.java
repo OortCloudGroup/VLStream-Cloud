@@ -30,7 +30,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 /**
- * 工作流任务管理
+ * task
  *
  * @author KonBAI
  * @createTime 2022/3/10 00:12
@@ -46,7 +46,7 @@ public class WfTaskController {
     private final IWfProcessService processService;
 
     /**
-     * 取消流程
+     * workflow
      */
     @PostMapping(value = "/stopProcess")
     @SaCheckPermission("workflow:process:stopProcess")
@@ -56,7 +56,7 @@ public class WfTaskController {
     }
 
     /**
-     * 撤回流程
+     * workflow
      */
     @PostMapping(value = "/revokeProcess")
     @SaCheckPermission("workflow:process:revokeProcess")
@@ -66,9 +66,9 @@ public class WfTaskController {
     }
 
     /**
-     * 获取流程变量
+     * Get workflow variable
      *
-     * @param taskId 流程任务Id
+     * @param taskId workflowtaskId
      */
     @GetMapping(value = "/processVariables/{taskId}")
     @SaCheckPermission("workflow:process:processVariables")
@@ -77,7 +77,7 @@ public class WfTaskController {
     }
 
     /**
-     * 审批任务
+     * approvaltask
      */
     @PostMapping(value = "/complete")
     @SaCheckPermission("workflow:process:complete")
@@ -89,7 +89,7 @@ public class WfTaskController {
     }
 
     /**
-     * 拒绝任务
+     * task
      */
     @PostMapping(value = "/reject")
     @SaCheckPermission("workflow:process:taskReject")
@@ -100,7 +100,7 @@ public class WfTaskController {
     }
 
     /**
-     * 退回任务
+     * task
      */
     @PostMapping(value = "/return")
     @SaCheckPermission("workflow:process:taskReturn")
@@ -111,7 +111,7 @@ public class WfTaskController {
     }
 
     /**
-     * 获取所有可回退的节点
+     * Get all node
      */
     @PostMapping(value = "/returnList")
     @SaCheckPermission("workflow:process:findReturnTaskList")
@@ -120,7 +120,7 @@ public class WfTaskController {
     }
 
     /**
-     * 删除任务
+     * Delete task
      */
     @DeleteMapping(value = "/delete")
     @SaCheckPermission("workflow:process:delete")
@@ -130,7 +130,7 @@ public class WfTaskController {
     }
 
     /**
-     * 认领/签收任务
+     * / task
      */
     @PostMapping(value = "/claim")
     @SaCheckPermission("workflow:process:claim")
@@ -140,7 +140,7 @@ public class WfTaskController {
     }
 
     /**
-     * 取消认领/签收任务
+     * / task
      */
     @PostMapping(value = "/unClaim")
     @SaCheckPermission("workflow:process:unClaim")
@@ -150,7 +150,7 @@ public class WfTaskController {
     }
 
     /**
-     * 委派任务
+     * task
      */
     @PostMapping(value = "/delegate")
     @SaCheckPermission("workflow:process:delegate")
@@ -163,7 +163,7 @@ public class WfTaskController {
     }
 
     /**
-     * 转办任务
+     * task
      */
     @PostMapping(value = "/transfer")
     @SaCheckPermission("workflow:process:transfer")
@@ -176,9 +176,9 @@ public class WfTaskController {
     }
 
     /**
-     * 生成流程图
+     * Generate workflow
      *
-     * @param processId 任务ID
+     * @param processId taskID
      */
 
     @GetMapping("/diagram/{processId}")
@@ -210,7 +210,7 @@ public class WfTaskController {
     }
 
     /**
-     * 页面上传pdf，保存pdf链接
+     * page pdf, pdf
      */
     @PostMapping(value = "/savePdf")
     @SaCheckPermission("workflow:process:savePdf")
@@ -220,7 +220,7 @@ public class WfTaskController {
     }
 
     /**
-     * 获取流程最新节点的审批人信息
+     * Get workflow new node approverinfo
      */
     @SaCheckPermission("workflow:process:getApproverIds")
     @GetMapping(value = "/getApproverIds/{procInstId}")
@@ -229,7 +229,7 @@ public class WfTaskController {
     }
 
     /**
-     * 多实例加签接口
+     * instance interface
      */
     @SaCheckPermission("workflow:process:addSignTask")
     @PostMapping("/addSignTask")
@@ -239,7 +239,7 @@ public class WfTaskController {
     }
 
     /**
-     * 多实例减签接口
+     * instance interface
      */
     @SaCheckPermission("workflow:process:subSignTask")
     @PostMapping("/subSignTask")

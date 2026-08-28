@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// VLStream 协议页面统一使用 WVP 的设备、媒体和预览能力，不回退 VLS 本地接口。
+// VLStream page WVP device、 and can , VLS interface.
 export const getMqttDevicePage = params => request({
   url: '/vlstream/device/list',
   method: 'get',

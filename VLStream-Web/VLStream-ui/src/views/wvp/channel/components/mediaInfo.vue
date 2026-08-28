@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div id="mediaInfo">
-    <!-- 刷新按钮 -->
+    <!-- new button -->
     <el-button
         style="position: absolute; right: 1rem;"
         icon="RefreshRight"
@@ -9,16 +14,16 @@
         @click="getMediaInfo"
     ></el-button>
 
-    <!-- 概况信息 -->
+    <!-- info -->
     <el-descriptions size="mini" :column="3" title="概况">
       <el-descriptions-item label="观看人数">{{ info.readerCount }}</el-descriptions-item>
       <el-descriptions-item label="网络">{{ formatByteSpeed() }}</el-descriptions-item>
       <el-descriptions-item label="持续时间">{{ formatAliveSecond() }}</el-descriptions-item>
     </el-descriptions>
 
-    <!-- 视频和音频信息 -->
+    <!-- and info -->
     <div style="display: grid; grid-template-columns: 1fr 1fr">
-      <!-- 视频信息 -->
+      <!-- info -->
       <el-descriptions size="mini" v-if="info.videoCodec" :column="2" title="视频信息">
         <el-descriptions-item label="编码">{{ info.videoCodec }}</el-descriptions-item>
         <el-descriptions-item label="分辨率">
@@ -28,7 +33,7 @@
         <el-descriptions-item label="丢包率">{{ info.loss }}</el-descriptions-item>
       </el-descriptions>
 
-      <!-- 音频信息 -->
+      <!-- info -->
       <el-descriptions size="mini" v-if="info.audioCodec" :column="2" title="音频信息">
         <el-descriptions-item label="编码">{{ info.audioCodec }}</el-descriptions-item>
         <el-descriptions-item label="采样率">{{ info.audioSampleRate }}</el-descriptions-item>
@@ -41,7 +46,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import {getServerMediaInfo} from "@/api/wvp/channel.js";
 
-// 定义 Props
+// Props
 const props = defineProps({
   app: {
     type: String,
@@ -57,11 +62,11 @@ const props = defineProps({
   }
 });
 
-// 数据定义
+// data
 const info = ref({});
 const task = ref(null);
 
-// 获取媒体信息
+// Get info
 const getMediaInfo = async () => {
   const params = {
     app: props.app,
@@ -72,7 +77,7 @@ const getMediaInfo = async () => {
   info.value = res.data;
 };
 
-// 格式化字节速度
+// Format
 const formatByteSpeed = () => {
   const bytesSpeed = info.value.bytesSpeed || 0;
   const num = 1024.0;
@@ -84,7 +89,7 @@ const formatByteSpeed = () => {
   return `${(bytesSpeed / Math.pow(num, 4)).toFixed(2)} T/S`;
 };
 
-// 格式化持续时间
+// Format
 const formatAliveSecond = () => {
   const aliveSecond = info.value.aliveSecond || 0;
   const h = Math.floor(aliveSecond / 3600);
@@ -98,12 +103,12 @@ const formatAliveSecond = () => {
   return `${hours}${minutes}分${seconds}秒`;
 };
 
-// 启动定时任务
+// task
 const startTask = () => {
   task.value = setInterval(getMediaInfo, 1000);
 };
 
-// 停止定时任务
+// task
 const stopTask = () => {
   if (task.value) {
     clearInterval(task.value);
@@ -111,10 +116,10 @@ const stopTask = () => {
   }
 };
 
-// 生命周期钩子
+// sub
 onMounted(() => {
-  getMediaInfo(); // 初始化时获取数据
-  startTask(); // 启动定时任务
+  getMediaInfo(); // Initialize Get data
+  startTask(); // task
 });
 
 onUnmounted(() => {

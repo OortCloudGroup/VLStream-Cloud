@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div id="app">
     <router-view />
@@ -5,7 +10,7 @@
 </template>
 
 <script setup>
-// 主应用组件
+// main component
 </script>
 
 <style scoped>

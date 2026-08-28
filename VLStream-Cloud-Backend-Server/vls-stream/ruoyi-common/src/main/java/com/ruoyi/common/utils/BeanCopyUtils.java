@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -22,11 +23,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * bean深拷贝工具(基于 cglib 性能优异)
+ * bean ( cglib can )
  * <p>
- * 重点 cglib 不支持 拷贝到链式对象
- * 例如: 源对象 拷贝到 目标(链式对象)
- * 请区分好`浅拷贝`和`深拷贝`再做使用
+ * cglib object
+ * : object ( object)
+ * ` ` and ` `
  *
  * @author Lion Li
  */
@@ -34,10 +35,10 @@ import java.util.Map;
 public class BeanCopyUtils {
 
     /**
-     * 单对象基于class创建拷贝
+     * object class
      *
-     * @param source 数据来源实体
-     * @param desc   描述对象 转换后的对象
+     * @param source data
+     * @param desc object Convert after object
      * @return desc
      */
     public static <T, V> V copy(T source, Class<V> desc) {
@@ -52,10 +53,10 @@ public class BeanCopyUtils {
     }
 
     /**
-     * 单对象基于对象创建拷贝
+     * object object
      *
-     * @param source 数据来源实体
-     * @param desc   转换后的对象
+     * @param source data
+     * @param desc Convert after object
      * @return desc
      */
     public static <T, V> V copy(T source, V desc) {
@@ -71,10 +72,10 @@ public class BeanCopyUtils {
     }
 
     /**
-     * 列表对象基于class创建拷贝
+     * object class
      *
-     * @param sourceList 数据来源实体列表
-     * @param desc       描述对象 转换后的对象
+     * @param sourceList data
+     * @param desc object Convert after object
      * @return desc
      */
     public static <T, V> List<V> copyList(List<T> sourceList, Class<V> desc) {
@@ -92,10 +93,10 @@ public class BeanCopyUtils {
     }
 
     /**
-     * bean拷贝到map
+     * bean map
      *
-     * @param bean 数据来源实体
-     * @return map对象
+     * @param bean data
+     * @return mapobject
      */
     @SuppressWarnings("unchecked")
     public static <T> Map<String, Object> copyToMap(T bean) {
@@ -106,11 +107,11 @@ public class BeanCopyUtils {
     }
 
     /**
-     * map拷贝到bean
+     * map bean
      *
-     * @param map       数据来源
-     * @param beanClass bean类
-     * @return bean对象
+     * @param map data
+     * @param beanClass bean
+     * @return beanobject
      */
     public static <T> T mapToBean(Map<String, Object> map, Class<T> beanClass) {
         if (MapUtil.isEmpty(map)) {
@@ -124,11 +125,11 @@ public class BeanCopyUtils {
     }
 
     /**
-     * map拷贝到bean
+     * map bean
      *
-     * @param map  数据来源
-     * @param bean bean对象
-     * @return bean对象
+     * @param map data
+     * @param bean beanobject
+     * @return beanobject
      */
     public static <T> T mapToBean(Map<String, Object> map, T bean) {
         if (MapUtil.isEmpty(map)) {
@@ -142,11 +143,11 @@ public class BeanCopyUtils {
     }
 
     /**
-     * map拷贝到map
+     * map map
      *
-     * @param map   数据来源
-     * @param clazz 返回的对象类型
-     * @return map对象
+     * @param map data
+     * @param clazz object
+     * @return mapobject
      */
     public static <T, V> Map<String, V> mapToMap(Map<String, T> map, Class<V> clazz) {
         if (MapUtil.isEmpty(map)) {
@@ -161,27 +162,27 @@ public class BeanCopyUtils {
     }
 
     /**
-     * BeanCopier属性缓存<br>
-     * 缓存用于防止多次反射造成的性能问题
+     * BeanCopierproperty <br>
+     * can
      *
      * @author Looly
      * @since 5.4.1
      */
     public enum BeanCopierCache {
         /**
-         * BeanCopier属性缓存单例
+         * BeanCopierproperty
          */
         INSTANCE;
 
         private final SimpleCache<String, BeanCopier> cache = new SimpleCache<>();
 
         /**
-         * 获得类与转换器生成的key在{@link BeanCopier}的Map中对应的元素
+         * and Convert Generate key in {@link BeanCopier} Map in element
          *
-         * @param srcClass    源Bean的类
-         * @param targetClass 目标Bean的类
-         * @param converter   转换器
-         * @return Map中对应的BeanCopier
+         * @param srcClass Bean
+         * @param targetClass Bean
+         * @param converter Convert
+         * @return Map in BeanCopier
          */
         public BeanCopier get(Class<?> srcClass, Class<?> targetClass, Converter converter) {
             final String key = genKey(srcClass, targetClass, converter);
@@ -189,12 +190,12 @@ public class BeanCopyUtils {
         }
 
         /**
-         * 获得类与转换器生成的key
+         * and Convert Generate key
          *
-         * @param srcClass    源Bean的类
-         * @param targetClass 目标Bean的类
-         * @param converter   转换器
-         * @return 属性名和Map映射的key
+         * @param srcClass Bean
+         * @param targetClass Bean
+         * @param converter Convert
+         * @return property and Map key
          */
         private String genKey(Class<?> srcClass, Class<?> targetClass, Converter converter) {
             final StringBuilder key = StrUtil.builder()

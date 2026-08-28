@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -14,56 +15,56 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 流程分类Service接口
+ * workflow Serviceinterface
  *
  * @author KonBAI
  * @date 2022-01-15
  */
 public interface IWfCategoryService {
     /**
-     * 查询单个
+     * Query
      * @return
      */
     WfCategoryVo queryById(Long categoryId);
 
     /**
-     * 查询列表
+     * Query list
      */
     TableDataInfo<WfCategoryVo> queryPageList(WfCategory category, PageQuery pageQuery);
 
     /**
-     * 查询列表
+     * Query list
      */
     List<WfCategoryVo> queryList(WfCategory category);
 
     /**
-     * 新增流程分类
+     * Add workflow
      *
-     * @param category 流程分类信息
-     * @return 结果
+     * @param category workflow info
+     * @return
      */
     int insertCategory(WfCategory category);
 
     /**
-     * 编辑流程分类
-     * @param category 流程分类信息
-     * @return 结果
+     * workflow
+     * @param category workflow info
+     * @return
      */
     int updateCategory(WfCategory category);
 
     /**
-     * 校验并删除数据
-     * @param ids 主键集合
-     * @param isValid 是否校验,true-删除前校验,false-不校验
-     * @return 结果
+     * Validate Delete data
+     * @param ids primary keycollection
+     * @param isValid whether Validate ,true-Delete beforeValidate ,false- Validate
+     * @return
      */
     int deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
 
     /**
-     * 校验分类编码是否唯一
+     * Validate whether
      *
-     * @param category 流程分类
-     * @return 结果
+     * @param category workflow
+     * @return
      */
     boolean checkCategoryCodeUnique(WfCategory category);
 }

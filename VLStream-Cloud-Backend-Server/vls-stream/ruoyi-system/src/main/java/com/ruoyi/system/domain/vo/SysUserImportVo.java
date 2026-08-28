@@ -15,62 +15,62 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 /**
- * 用户对象导入VO
+ * userobjectImport VO
  *
  * @author Lion Li
  */
 
 @Data
 @NoArgsConstructor
-// @Accessors(chain = true) // 导入不允许使用 会找不到set方法
+// @Accessors(chain = true) // Import will set method
 public class SysUserImportVo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 用户ID
+     * user ID
      */
     @ExcelProperty(value = "用户序号")
     private Long userId;
 
     /**
-     * 部门ID
+     * department ID
      */
     @ExcelProperty(value = "部门编号")
     private String  deptId;
 
     /**
-     * 用户账号
+     * user
      */
     @ExcelProperty(value = "登录名称")
     private String userName;
 
     /**
-     * 用户昵称
+     * user
      */
     @ExcelProperty(value = "用户名称")
     private String nickName;
 
     /**
-     * 用户邮箱
+     * user
      */
     @ExcelProperty(value = "用户邮箱")
     private String email;
 
     /**
-     * 手机号码
+     *
      */
     @ExcelProperty(value = "手机号码")
     private String phonenumber;
 
     /**
-     * 用户性别
+     * user
      */
     @ExcelProperty(value = "用户性别", converter = ExcelDictConvert.class)
     @ExcelDictFormat(dictType = "sys_user_sex")
     private String sex;
 
     /**
-     * 帐号状态（0正常 1停用）
+     * Status (0 normal 1 disabled)
      */
     @ExcelProperty(value = "帐号状态", converter = ExcelDictConvert.class)
     @ExcelDictFormat(dictType = "sys_normal_disable")

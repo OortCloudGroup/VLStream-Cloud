@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-card class="box-card rePage" shadow="never">
     <el-col>
@@ -50,7 +55,7 @@
           align="center"
         >
           <template #default="scope">
-            <!-- 通过 -->
+            <!--  -->
             <div v-if="scope.row['commentList'] && scope.row['commentList']?.length > 0">
               <div v-for="(comment, index) in scope.row['commentList'].slice().reverse()" :key="index">
                 <el-tag :type="approveTypeTag(comment.type)" size="small">
@@ -69,7 +74,7 @@
           width="200"
         >
           <template #default="scope">
-            <!-- 通过 -->
+            <!--  -->
             <div v-if="scope.row['commentList'] && scope.row['commentList']?.length > 0">
               <div v-for="(comment, index) in scope.row['commentList'].slice().reverse()" :key="index">
                 <div>{{ comment['fullMessage'] }}</div>
@@ -109,7 +114,7 @@
             :icon="setIcon(item.endTime)"
             :color="setColor(item.endTime)"
           >
-            <!--用户-时间-->
+            <!-- user- -->
             <div class="avatarBox flexRowAC">
               <div class="flexRowAC">
                 <i-d2-head-pic v-if="item['assigneeId']" :id="item['assigneeId']" class="avatarImg" />
@@ -131,7 +136,7 @@
                 耗时{{ item.duration || '-' }}
               </div>
             </div>
-            <!--节点-->
+            <!-- node -->
             <div v-if="item['activityType'] === 'userTask'">
               <div v-if="item['commentList'] && item['commentList'].length > 0">
                 <div v-for="(comment, index) in item['commentList'].slice().reverse()" :key="index">
@@ -165,8 +170,8 @@ const props = defineProps(['historyProcNodeList',
   'nodeConfigProp',
   'unFinishedTaskNode',
   'finishedTaskNode'])
-const nodeConfig = ref(null) // 流程图
-const currentView = ref('list')// 视图模式
+const nodeConfig = ref(null) // workflow
+const currentView = ref('list')//
 
 const commentType = val => {
   switch (val) {
@@ -246,7 +251,7 @@ watch(() => props.nodeConfigProp, (val) => {
   padding: 20px;
 }
 
-// 确定取消
+//
 .subBtnsBox {
   position: absolute;
   right: 20px;
@@ -384,7 +389,7 @@ watch(() => props.nodeConfigProp, (val) => {
   overflow: auto;
 }
 
-// 流程
+// workflow
 :deep(.el-card.is-hover-shadow.box-card) {
   .el-card__body {
     background: #F7F7F7;
@@ -429,13 +434,13 @@ watch(() => props.nodeConfigProp, (val) => {
   }
 }
 
-// 通过
+//
 .commentBox {
   justify-content: space-between;
 }
 
 :deep(.task_form) {
-  // 审批-抄送人
+  // approval-
   .chooose_item.chooose_item_group {
     margin: 0;
     padding: 0 12px;
@@ -452,7 +457,7 @@ watch(() => props.nodeConfigProp, (val) => {
   border-color: gray;
 }
 
-// 工单信息
+// work orderinfo
 .infoBox {
   .infoItem {
     padding-bottom: 20px;
@@ -502,7 +507,7 @@ watch(() => props.nodeConfigProp, (val) => {
   }
 }
 
-// 处理人
+// Process
 .infoItem_add {
   flex-direction: column;
   justify-content: center;
@@ -521,7 +526,7 @@ watch(() => props.nodeConfigProp, (val) => {
   }
 }
 
-// 人员选择
+//
 .elIconPerBox {
   width: 200px;
   height: 72px;
@@ -563,7 +568,7 @@ watch(() => props.nodeConfigProp, (val) => {
   }
 }
 
-// 基本信息
+// info
 .preFormBox {
   border-radius: 4px;
   padding: 20px;
@@ -571,7 +576,7 @@ watch(() => props.nodeConfigProp, (val) => {
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-// 任务办理
+// task
 .taskBox {
   padding: 20px;
 }

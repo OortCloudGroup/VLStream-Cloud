@@ -14,7 +14,7 @@ import java.util.Date;
 
 
 /**
- * 测试树表视图对象 test_tree
+ * object test_tree
  *
  * @author Lion Li
  * @date 2021-07-26
@@ -26,36 +26,36 @@ public class TestTreeVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 主键
+     * primary key
      */
     private Long id;
 
     /**
-     * 父id
+     * id
      */
     @ExcelProperty(value = "父id")
     private String parentId;
 
     /**
-     * 部门id
+     * department ID
      */
     @ExcelProperty(value = "部门id")
     private String deptId;
 
     /**
-     * 用户id
+     * user ID
      */
     @ExcelProperty(value = "用户id")
     private Long userId;
 
     /**
-     * 树节点名
+     * node
      */
     @ExcelProperty(value = "树节点名")
     private String treeName;
 
     /**
-     * 创建时间
+     * create time
      */
     @ExcelProperty(value = "创建时间")
     private Date createTime;

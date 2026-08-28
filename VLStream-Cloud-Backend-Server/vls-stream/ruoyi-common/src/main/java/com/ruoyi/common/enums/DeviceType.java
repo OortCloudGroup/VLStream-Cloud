@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -9,8 +10,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * 设备类型
- * 针对一套 用户体系
+ * device
+ * user
  *
  * @author Lion Li
  */
@@ -19,17 +20,17 @@ import lombok.Getter;
 public enum DeviceType {
 
     /**
-     * pc端
+     * pc
      */
     PC("pc"),
 
     /**
-     * app端
+     * app
      */
     APP("app"),
 
     /**
-     * 小程序端
+     *
      */
     XCX("xcx");
 

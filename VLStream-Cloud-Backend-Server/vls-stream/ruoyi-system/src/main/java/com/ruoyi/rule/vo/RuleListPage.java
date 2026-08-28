@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -11,7 +12,7 @@ import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
 /**
- * @Description: 规则列表
+ * @Description:
  * @Date: 2024-12-20
  * @Version: V1.0
  */
@@ -19,79 +20,79 @@ import org.springframework.format.annotation.DateTimeFormat;
 public class RuleListPage {
 
     /**
-     * 规则ID
+     * ID
      */
     @ExcelProperty(value = "规则ID")
     private String id;
     /**
-     * 租户id
+     * id
      */
 
     private String tenantId;
     /**
-     * 用户id
+     * user ID
      */
 
     private String userId;
     /**
-     * 关联的规则树ID
+     * ID
      */
     @ExcelProperty(value = "关联的规则树ID")
     private String treeId;
     /**
-     * 规则名称
+     *
      */
     @ExcelProperty(value = "规则名称")
     private String name;
     /**
-     * 规则表达式，使用AviatorScript语言
+     * , AviatorScript
      */
     @ExcelProperty(value = "规则表达式")
     private String expression;
     /**
-     * 规则描述
+     *
      */
     @ExcelProperty(value = "规则描述")
     private String description;
     /**
-     * 创建人
+     *
      */
 
     private String createBy;
     /**
-     * 创建时间
+     * create time
      */
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private java.util.Date createTime;
     /**
-     * 修改人
+     * Update
      */
     private String updateBy;
     /**
-     * 修改时间
+     * Update
      */
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private java.util.Date updateTime;
     /**
-     * 删除标记，0表示未删除，1表示删除
+     * Delete , 0 not Delete , 1 Delete
      */
 
     private String delFlag;
     /**
-     * 是否生效，0表示未生效，1表示删除未生效
+     * whether , 0 not , 1 Delete not
      */
 
     private String status;
     /**
-     * 启动状态
+     *
      */
 
     private String enable;
 
     /**
-     * 表单id
+     * formid
      */
     private Long formId;
 

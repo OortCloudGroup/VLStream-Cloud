@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -35,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 算法仓库表 控制器
+ * algorithm control
  *
  * @author Oort
  * @since 2025-12-23
@@ -50,7 +51,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	private final IVlsAlgorithmRepositoryService vlsAlgorithmRepositoryService;
 
 	/**
-	 * 算法仓库表 详情
+	 * algorithm
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -61,7 +62,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 算法仓库表 分页
+	 * algorithm
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -73,7 +74,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 
 
 	/**
-	 * 算法仓库表 自定义分页
+	 * algorithm Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -84,7 +85,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 算法仓库表 新增
+	 * algorithm Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -94,7 +95,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 算法仓库表 修改
+	 * algorithm Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -104,7 +105,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 算法仓库表 新增或修改
+	 * algorithm Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -114,7 +115,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 算法仓库表 删除
+	 * algorithm Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -124,7 +125,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsAlgorithmRepository")
 	@ApiOperationSupport(order = 8)
@@ -140,7 +141,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 查询所有启用的算法仓库
+	 * Query all algorithm
 	 */
 	@GetMapping("/enabled")
 	@Operation(summary = "查询所有启用的算法仓库", description = "获取状态为启用的所有算法仓库")
@@ -152,7 +153,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 根据类型查询算法仓库
+	 * Query algorithm
 	 */
 	@GetMapping("/type/{repositoryType}")
 	@Operation(summary = "根据类型查询算法仓库", description = "根据仓库类型获取算法仓库列表")
@@ -166,7 +167,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 根据ID查询算法仓库详情
+	 * IDQuery algorithm
 	 */
 	@GetMapping("/{id}")
 	@Operation(summary = "查询算法仓库详情", description = "根据ID获取算法仓库详细信息")
@@ -184,7 +185,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 创建算法仓库
+	 * algorithm
 	 */
 	@PostMapping
 	@Operation(summary = "创建算法仓库", description = "新增算法仓库")
@@ -200,7 +201,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 更新算法仓库
+	 * new algorithm
 	 */
 	@PutMapping("/{id}")
 	@Operation(summary = "更新算法仓库", description = "根据ID更新算法仓库信息")
@@ -221,7 +222,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 删除算法仓库
+	 * Delete algorithm
 	 */
 	@DeleteMapping("/{id}")
 	@Operation(summary = "删除算法仓库", description = "根据ID删除算法仓库（软删除）")
@@ -239,7 +240,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 批量删除算法仓库
+	 * Batch delete algorithm
 	 */
 	@DeleteMapping("/batch")
 	@Operation(summary = "批量删除算法仓库", description = "根据ID列表批量删除算法仓库")
@@ -259,7 +260,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 更新仓库状态
+	 * new
 	 */
 	@PutMapping("/{id}/status")
 	@Operation(summary = "更新仓库状态", description = "启用或禁用算法仓库")
@@ -278,7 +279,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 批量更新仓库状态
+	 * new
 	 */
 	@PutMapping("/batch/status")
 	@Operation(summary = "批量更新仓库状态", description = "批量启用或禁用算法仓库")
@@ -301,7 +302,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 统计算法仓库数量
+	 * algorithm
 	 */
 	@GetMapping("/count")
 	@Operation(summary = "统计算法仓库数量", description = "获取算法仓库总数")
@@ -313,7 +314,7 @@ public class VlsAlgorithmRepositoryController extends BladeController {
 	}
 
 	/**
-	 * 刷新仓库算法数量
+	 * new algorithm
 	 */
 	@PutMapping("/{id}/refresh-count")
 	@Operation(summary = "刷新仓库算法数量", description = "重新计算并更新仓库的算法数量")

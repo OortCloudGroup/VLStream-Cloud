@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,7 +15,7 @@ import lombok.EqualsAndHashCode;
 import javax.validation.constraints.NotBlank;
 
 /**
- * 规则列业务对象 rule_list
+ * object rule_list
  *
  * @author ruoyi
  * @date 2024-12-18
@@ -27,39 +28,39 @@ public class RuleListBo extends BaseEntity {
     private String id;
 
     /**
-     * 关联的规则树ID
+     * ID
      */
     @NotBlank(message = "关联的规则树ID不能为空", groups = { AddGroup.class, EditGroup.class })
     private String treeId;
 
     /**
-     * 规则名称
+     *
      */
     @NotBlank(message = "规则名称不能为空", groups = { AddGroup.class, EditGroup.class })
     private String name;
 
     /**
-     * 规则表达式，使用AviatorScript语言
+     * , AviatorScript
      */
     private String expression;
 
     /**
-     * 规则描述
+     *
      */
     private String description;
 
     /**
-     * 规则状态，ACTIVE表示生效，INACTIVE表示无效
+     * , ACTIVE , INACTIVE
      */
     @NotBlank(message = "规则状态，ACTIVE表示生效，INACTIVE表示无效不能为空", groups = { AddGroup.class, EditGroup.class })
     private String status;
 
     /**
-     * 表单id
+     * formid
      */
     private String formId;
     /**
-     * 0流程 1工单
+     * 0workflow 1work order
      */
     private String type;
 }

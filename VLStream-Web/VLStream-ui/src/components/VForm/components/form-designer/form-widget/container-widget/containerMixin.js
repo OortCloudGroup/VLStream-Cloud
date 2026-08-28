@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 export default {
   inject: ['getFormConfig', 'getGlobalDsv'],
 
@@ -84,13 +89,13 @@ export default {
           this.parentList.splice(this.indexOfParentList, 1)
           this.designer.setSelected(nextSelected)
 
-          this.designer.formWidget.deleteWidgetRef(widgetRefName) // 删除组件ref！！！
+          this.designer.formWidget.deleteWidgetRef(widgetRefName) // Delete componentref! ! !
           this.designer.emitHistoryChange()
         })
       }
     },
 
-    setWidgetOption(optionName, optionValue) { // 通用组件选项修改API
+    setWidgetOption(optionName, optionValue) { // component item Update API
       // eslint-disable-next-line no-prototype-builtins
       if (this.widget.options.hasOwnProperty(optionName)) {
         this.widget.options[optionName] = optionValue

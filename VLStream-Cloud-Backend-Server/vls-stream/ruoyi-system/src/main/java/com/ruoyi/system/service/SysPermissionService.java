@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -13,7 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * 用户权限处理
+ * user Process
  *
  * @author ruoyi
  */
@@ -25,14 +26,14 @@ public class SysPermissionService {
     private final ISysMenuService menuService;
 
     /**
-     * 获取角色数据权限
+     * Get roledata
      *
-     * @param user 用户信息
-     * @return 角色权限信息
+     * @param user userinfo
+     * @return role info
      */
     public Set<String> getRolePermission(SysUser user) {
         Set<String> roles = new HashSet<>();
-        // 管理员拥有所有权限
+        // administrator all
         if (user.isAdmin()) {
             roles.add("admin");
         } else {
@@ -42,14 +43,14 @@ public class SysPermissionService {
     }
 
     /**
-     * 获取菜单数据权限
+     * Get menudata
      *
-     * @param user 用户信息
-     * @return 菜单权限信息
+     * @param user userinfo
+     * @return menu info
      */
     public Set<String> getMenuPermission(SysUser user) {
         Set<String> perms = new HashSet<>();
-        // 管理员拥有所有权限
+        // administrator all
         if (user.isAdmin()) {
             perms.add("*:*:*");
         } else {

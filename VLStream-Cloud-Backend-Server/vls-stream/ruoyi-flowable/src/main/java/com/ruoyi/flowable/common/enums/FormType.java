@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -17,22 +18,22 @@ import lombok.Getter;
 public enum FormType {
 
     /**
-     * 流程表单
+     * workflowform
      */
     PROCESS(0),
 
     /**
-     * 外置表单
+     * form
      */
     EXTERNAL(1),
 
     /**
-     * 节点独立表单
+     * node form
      */
     INDEPENDENT(2);
 
     /**
-     * 表单类型
+     * form
      */
     private final Integer type;
 }

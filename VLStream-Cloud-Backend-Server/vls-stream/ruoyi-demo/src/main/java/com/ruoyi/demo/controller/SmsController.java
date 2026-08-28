@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -19,8 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 短信演示案例
- * 请先阅读文档 否则无法使用
+ *
+ * method
  *
  * @author Lion Li
  * @version 4.2.0
@@ -32,14 +33,14 @@ import java.util.Map;
 public class SmsController {
 
     private final SmsProperties smsProperties;
-//    private final SmsTemplate smsTemplate; // 可以使用spring注入
-//    private final AliyunSmsTemplate smsTemplate; // 也可以注入某个厂家的模板工具
+// private final SmsTemplate smsTemplate; // spring
+// private final AliyunSmsTemplate smsTemplate; // also
 
     /**
-     * 发送短信Aliyun
+     * Aliyun
      *
-     * @param phones     电话号
-     * @param templateId 模板ID
+     * @param phones
+     * @param templateId ID
      */
     @GetMapping("/sendAliyun")
     public R<Object> sendAliyun(String phones, String templateId) {
@@ -57,10 +58,10 @@ public class SmsController {
     }
 
     /**
-     * 发送短信Tencent
+     * Tencent
      *
-     * @param phones     电话号
-     * @param templateId 模板ID
+     * @param phones
+     * @param templateId ID
      */
     @GetMapping("/sendTencent")
     public R<Object> sendTencent(String phones, String templateId) {
@@ -72,7 +73,7 @@ public class SmsController {
         }
         SmsTemplate smsTemplate = SpringUtils.getBean(SmsTemplate.class);
         Map<String, String> map = new HashMap<>(1);
-//        map.put("2", "测试测试");
+// map.put("2", " ");
         map.put("1", "1234");
         Object send = smsTemplate.send(phones, templateId, map);
         return R.ok(send);

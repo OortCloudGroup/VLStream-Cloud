@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="toolbar-container new_table">
     <div class="toolbar_opr_group">
@@ -602,7 +607,7 @@ export default {
           })
         })
       } else if (widget.type === 'table') {
-        // TODO: 需要考虑合并单元格！！
+        // TODO: need to ! !
         widget.rows.map(row => {
           let rowNode = {
             id: row.id,
@@ -613,7 +618,7 @@ export default {
           curNode.children.push(rowNode)
 
           row.cols.map(cell => {
-            if (!!cell.merged) { // 跳过合并单元格！！
+            if (!!cell.merged) { // ! !
               return
             }
 
@@ -647,7 +652,7 @@ export default {
         widget.widgetList.map(wChild => {
           this.buildTreeNodeOfWidget(wChild, curNode.children)
         })
-      } else if (widget.category === 'container') { // 自定义容器
+      } else if (widget.category === 'container') { // Custom
         widget.widgetList.map(wChild => {
           this.buildTreeNodeOfWidget(wChild, curNode.children)
         })
@@ -665,7 +670,7 @@ export default {
       this.refreshNodeTree()
       this.showNodeTreeDrawerFlag = true
       this.$nextTick(() => {
-        if (!!this.designer.selectedId) { // 同步当前选中组件到节点树！！！
+        if (!!this.designer.selectedId) { // current in component node ! ! !
           this.$refs.nodeTree.setCurrentKey(this.designer.selectedId)
         }
       })
@@ -1045,7 +1050,7 @@ export default {
 
   .form-render-wrapper {
     //height: calc(100vh - 142px);
-    //all: revert !important; /* 防止表单继承el-dialog等外部样式，未生效，原因不明？？ */
+    // all: revert !important; /* form el-dialog etc. , not , ? ? */
   }
 
   .form-render-wrapper.h5-layout {

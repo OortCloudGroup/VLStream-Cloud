@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <td
     class="table-cell"
@@ -219,7 +224,7 @@ export default {
       //
     },
 
-    onTableDragAdd(evt, subList) { // 重复代码，可合并
+    onTableDragAdd(evt, subList) { // ,
       const newIndex = evt.newIndex
       if (!!subList[newIndex]) {
         this.designer.setSelected(subList[newIndex])
@@ -377,7 +382,7 @@ export default {
     .table-cell-handler {
       position: absolute;
       top: -2px;
-      //bottom: -24px;  /* 拖拽手柄位于组件下方，有时无法正常拖动，原因未明？？ */
+      // bottom: -24px; /* component , method , not ? ? */
       left: -2px;
       height: 22px;
       line-height: 22px;

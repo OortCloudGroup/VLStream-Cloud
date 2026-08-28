@@ -1,9 +1,14 @@
-// 快速测试verifyToken API配置
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// verifyToken APIconfiguration
 const axios = require('axios');
 
 async function testVerifyToken() {
   console.log('🚀 测试verifyToken API配置...\n');
-  
+
   const testConfig = {
     url: 'http://oort.oortcloudsmart.com:21410/bus/apaas-sso/sso/v1/verifyToken',
     method: 'POST',
@@ -18,22 +23,22 @@ async function testVerifyToken() {
       accessToken: '421e68dff50a4c2d8387949d482a467a'
     }
   };
-  
+
   console.log('请求配置:');
   console.log('URL:', testConfig.url);
   console.log('方法:', testConfig.method);
   console.log('请求头:', testConfig.headers);
   console.log('请求数据:', testConfig.data);
   console.log('');
-  
+
   try {
-    // 测试OPTIONS预检请求
+    // OPTIONS
     console.log('1. 测试OPTIONS预检请求...');
     const optionsResponse = await axios.options(testConfig.url, {
       timeout: 5000,
       validateStatus: () => true
     });
-    
+
     console.log(`OPTIONS响应状态: ${optionsResponse.status}`);
     console.log('CORS头:', {
       'Access-Control-Allow-Origin': optionsResponse.headers['access-control-allow-origin'],
@@ -41,15 +46,15 @@ async function testVerifyToken() {
       'Access-Control-Allow-Headers': optionsResponse.headers['access-control-allow-headers']
     });
     console.log('');
-    
-    // 测试POST请求
+
+    // POST
     console.log('2. 测试POST请求...');
     const postResponse = await axios.post(testConfig.url, testConfig.data, {
       headers: testConfig.headers,
       timeout: 10000,
       validateStatus: () => true
     });
-    
+
     console.log(`POST响应状态: ${postResponse.status}`);
     if (postResponse.status === 200) {
       console.log('✅ 请求成功！');
@@ -58,7 +63,7 @@ async function testVerifyToken() {
       console.log('❌ 请求失败！');
       console.log('响应数据:', postResponse.data);
     }
-    
+
   } catch (error) {
     console.log(`❌ 请求异常: ${error.message}`);
     if (error.response) {
@@ -66,12 +71,12 @@ async function testVerifyToken() {
       console.log(`响应数据:`, error.response.data);
     }
   }
-  
+
   console.log('\n📝 配置说明：');
   console.log('- 使用正确的appid和secretkey');
   console.log('- 请求头名称使用小写');
   console.log('- token同时作为请求头和请求体传递');
 }
 
-// 运行测试
-testVerifyToken().catch(console.error); 
+//
+testVerifyToken().catch(console.error);

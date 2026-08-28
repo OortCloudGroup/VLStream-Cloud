@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -36,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 算法模型表 控制器
+ * algorithmmodel control
  *
  * @author Oort
  * @since 2025-12-23
@@ -52,7 +53,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	private final ModelFileDownloadService modelFileDownloadService;
 
 	/**
-	 * 算法模型表 详情
+	 * algorithmmodel
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -63,7 +64,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	/**
-	 * 算法模型表 分页
+	 * algorithmmodel
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -75,7 +76,7 @@ public class VlsAlgorithmModelController extends BladeController {
 
 
 	/**
-	 * 算法模型表 自定义分页
+	 * algorithmmodel Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -86,7 +87,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	/**
-	 * 算法模型表 新增
+	 * algorithmmodel Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -96,7 +97,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	/**
-	 * 算法模型表 修改
+	 * algorithmmodel Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -106,7 +107,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	/**
-	 * 算法模型表 新增或修改
+	 * algorithmmodel Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -116,7 +117,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	/**
-	 * 算法模型表 删除
+	 * algorithmmodel Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -126,7 +127,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsAlgorithmModel")
 	@ApiOperationSupport(order = 8)
@@ -277,7 +278,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	/**
-	 * 按模型表 ID 下载已入库模型的指定格式文件。
+	 * model ID already model .
 	 */
 	@Operation(description = "下载模型文件")
 	@GetMapping("/{id}/download-file")
@@ -296,7 +297,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	}
 
 	/**
-	 * 在响应尚未提交时写入下载失败原因。
+	 * in not failed .
 	 */
 	private void writeDownloadError(HttpServletResponse response, int status, String message) {
 		try {

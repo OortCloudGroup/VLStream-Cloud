@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * 在线用户监控
+ * in user
  *
  * @author Lion Li
  */
@@ -42,20 +42,20 @@ import java.util.List;
 public class SysUserOnlineController extends BaseController {
 
     /**
-     * 获取在线用户监控列表
+     * Get in user
      *
-     * @param ipaddr   IP地址
-     * @param userName 用户名
+     * @param ipaddr IP
+     * @param userName user
      */
     @SaCheckPermission("monitor:online:list")
     @GetMapping("/list")
     public TableDataInfo<SysUserOnline> list(String ipaddr, String userName) {
-        // 获取所有未过期的 token
+        // Get all not token
         List<String> keys = StpUtil.searchTokenValue("", 0, -1, false);
         List<UserOnlineDTO> userOnlineDTOList = new ArrayList<>();
         for (String key : keys) {
             String token = StringUtils.substringAfterLast(key, ":");
-            // 如果已经过期则跳过
+            // if already
             if (StpUtil.stpLogic.getTokenActivityTimeoutByToken(token) < -1) {
                 continue;
             }
@@ -82,9 +82,9 @@ public class SysUserOnlineController extends BaseController {
     }
 
     /**
-     * 强退用户
+     * user
      *
-     * @param tokenId token值
+     * @param tokenId token value
      */
     @SaCheckPermission("monitor:online:forceLogout")
     @Log(title = "在线用户", businessType = BusinessType.FORCE)

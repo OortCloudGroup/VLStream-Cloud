@@ -1,14 +1,19 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="page-container tenant_Page draHeaPB">
     <div class="tenant_content">
-    <!-- 列表视图 -->
+    <!--  -->
     <div v-if="!showTrainingConfig && !showVersionConfig && !showValidationView" class="list-view">
-      <!-- 介绍内容区 -->
+      <!--  -->
       <div class="intro-section">
         <div class="intro-header">
           <h2 class="intro-title">零代码训练介绍</h2>
-          <CollapseToggle 
-            :is-expanded="isIntroExpanded" 
+          <CollapseToggle
+            :is-expanded="isIntroExpanded"
             @toggle="handleIntroToggle"
           />
         </div>
@@ -18,7 +23,7 @@
             面向应用开发者提供AutoDL训练练模式及高阶训练模式，AutoDL训练模式自动化程度高，高级训练模式支持训练参数灵活性高，两种训练模式可以灵活选择。对训练完成的任务可通过完整评估报告、校验来验证效果，满足业务应用需求的任务可发布为模型进行后续部署操作。
           </p>
 
-          <!-- 流程步骤 -->
+          <!-- workflow -->
           <div class="process-steps">
             <div class="step-item">
               <div class="step-icon step-1">
@@ -82,7 +87,7 @@
             <export-excel-pdf :item="exportItem" @handle="handleExport" />
           </div>
         </div>
-        
+
         <TableSelf
         class="new_table"
         header-cell-class-name="header_tenant_cell"
@@ -139,7 +144,7 @@
         <el-table-column label="操作" :min-width="clacPXToVW(420)" fixed="right" align="right">
           <template #default="scope">
             <div class="operate" @click.stop>
-              <!-- 空状态：训练和更多 -->
+              <!-- null / empty : training and -->
               <template v-if="!scope.row.trainStatus || scope.row.trainStatus === '等待'">
                 <div class="new_table_svg_group" @click="handleTrain(scope.row)">
                   <span>训练</span>
@@ -161,7 +166,7 @@
                 </el-dropdown>
               </template>
 
-              <!-- 训练中状态：终止训练和更多 -->
+              <!-- training in : training and -->
               <template v-else-if="scope.row.trainStatus === '训练中'">
                 <div class="new_table_svg_group" @click="handleStopTraining(scope.row)">
                   <span style="color: #F62E2E;">终止训练</span>
@@ -183,7 +188,7 @@
                 </el-dropdown>
               </template>
 
-              <!-- 训练完成状态：下载模型、重新训练、发布为模型、校验和更多 -->
+              <!-- training : model、 new training、 to model、Validate and -->
               <template v-else-if="scope.row.trainStatus === '训练完成'">
                 <div class="new_table_svg_group" @click="handleDownloadModel(scope.row)">
                   <span>下载模型</span>
@@ -214,7 +219,7 @@
                 </el-dropdown>
               </template>
 
-              <!-- 训练失败状态：重新训练和更多 -->
+              <!-- trainingfailed : new training and -->
               <template v-else-if="scope.row.trainStatus === '训练失败'">
                 <div class="new_table_svg_group" @click="handleTrain(scope.row)">
                   <span>重新训练</span>
@@ -236,7 +241,7 @@
                 </el-dropdown>
               </template>
 
-              <!-- 其他状态：更多 -->
+              <!-- : -->
               <template v-else>
                 <el-dropdown @command="(command) => handleMoreAction(command, scope.row)">
                   <div class="new_table_svg_group">
@@ -276,9 +281,9 @@
       </div>
     </div>
 
-    <!-- 版本配置视图 -->
+    <!-- configuration -->
     <div v-if="showVersionConfig" class="version-config-view">
-      <!-- 导航栏 -->
+      <!--  -->
       <div class="content-header">
         <div class="breadcrumb">
           <span class="breadcrumb-item" @click="handleBackFromVersion">算法训练</span>
@@ -289,7 +294,7 @@
 
       <div class="version-config-container">
         <div class="version-content-block">
-          <!-- 基础信息 -->
+          <!-- info -->
                     <!-- Basic Info -->
           <div class="basic-info-section">
             <h3 class="section-title">基础信息</h3>
@@ -349,9 +354,9 @@
       </div>
     </div>
 
-    <!-- 校验模型视图 -->
+    <!-- Validate model -->
     <div v-if="showValidationView" class="validation-view">
-      <!-- 导航栏 -->
+      <!--  -->
       <div class="content-header">
         <div class="breadcrumb">
           <span class="breadcrumb-item" @click="handleBackFromValidation">算法训练</span>
@@ -362,11 +367,11 @@
 
       <div class="validation-config-container">
         <div class="validation-content-block">
-          <!-- 模型选择区域 -->
+          <!-- model -->
           <div class="model-selection-section">
             <div class="model-info-inputs">
-              <el-select 
-                v-model="validationModelName" 
+              <el-select
+                v-model="validationModelName"
                 class="model-name-select"
                 placeholder="选择模型"
               >
@@ -377,8 +382,8 @@
                   :value="item.value"
                 />
               </el-select>
-              <el-select 
-                v-model="validationVersion" 
+              <el-select
+                v-model="validationVersion"
                 class="model-version-select"
                 placeholder="选择版本"
               >
@@ -392,11 +397,11 @@
             </div>
           </div>
 
-          <!-- 图片上传和阈值配置区域 -->
+          <!-- and value configuration -->
           <div class="upload-threshold-section">
-            <!-- 图片上传区域 -->
+            <!--  -->
             <div class="image-upload-area">
-              <div 
+              <div
                 class="upload-area"
                 @click="handleImageUpload"
                 @drop="handleImageDrop"
@@ -420,7 +425,7 @@
               </div>
             </div>
 
-            <!-- 阈值配置区域 -->
+            <!-- value configuration -->
             <div class="threshold-config-area">
               <div class="threshold-section">
                 <div class="threshold-header">
@@ -446,7 +451,7 @@
                 </div>
               </div>
 
-              <!-- 预测标签结果显示 -->
+              <!--  -->
               <div class="prediction-result">
                 <span class="no-result-text">没有满足检测的目标结果</span>
               </div>
@@ -456,9 +461,9 @@
       </div>
     </div>
 
-    <!-- 训练配置视图 -->
+    <!-- trainingconfiguration -->
     <div v-if="showTrainingConfig" class="training-config-view">
-      <!-- 导航栏 -->
+      <!--  -->
       <div class="content-header">
         <div class="breadcrumb">
           <span class="breadcrumb-item" @click="handleBackToList">算法训练</span>
@@ -468,21 +473,21 @@
       </div>
 
       <div class="training-config-container">
-        <!-- 左侧配置区域 -->
+        <!-- configuration -->
         <div class="config-sidebar">
-          <!-- 训练方式 -->
+          <!-- training -->
           <div class="config-section">
             <h3 class="section-title">训练方式</h3>
             <div class="training-mode-tabs">
-              <div 
-                class="mode-tab" 
+              <div
+                class="mode-tab"
                 :class="{ active: trainingMode === 'auto' }"
                 @click="trainingMode = 'auto'"
               >
                 AutoDL模式
               </div>
-              <div 
-                class="mode-tab" 
+              <div
+                class="mode-tab"
                 :class="{ active: trainingMode === 'advanced' }"
                 @click="trainingMode = 'advanced'"
               >
@@ -491,53 +496,53 @@
             </div>
           </div>
 
-          <!-- 训练配置 -->
+          <!-- trainingconfiguration -->
           <div class="config-section">
             <h3 class="section-title">训练配置</h3>
-            
-            <!-- 导出类型 -->
+
+            <!-- Export -->
 <!--            <div class="config-item">-->
-<!--              <label class="config-label">导出类型-->
+<!-- <label class="config-label">Export -->
 <!--                <el-icon class="help-icon"><QuestionFilled /></el-icon>-->
 <!--              </label>-->
 <!--              <div class="radio-options">-->
-<!--                <el-radio v-model="exportType" label="仅导出模型">-->
-<!--                  仅导出模型-->
+<!-- <el-radio v-model="exportType" label=" Export model"> -->
+<!-- Export model -->
 <!--                  <el-icon class="help-icon"><QuestionFilled /></el-icon>-->
 <!--                </el-radio>-->
-<!--                <el-radio v-model="exportType" label="导出模型文件与离线SDK">-->
-<!--                  导出模型文件与离线SDK-->
+<!-- <el-radio v-model="exportType" label="Export model and SDK"> -->
+<!-- Export model and SDK -->
 <!--                  <el-icon class="help-icon"><QuestionFilled /></el-icon>-->
 <!--                </el-radio>-->
 <!--              </div>-->
 <!--            </div>-->
 
-            <!-- 选择算法 -->
+            <!-- algorithm -->
 <!--            <div class="config-item">-->
-<!--              <label class="config-label">选择算法 -->
+<!-- <label class="config-label"> algorithm -->
 <!--                <el-icon class="help-icon"><QuestionFilled /></el-icon>-->
 <!--              </label>-->
 <!--              <div class="algorithm-options">-->
-<!--                <el-radio v-model="selectedAlgorithm" label="超简作图">-->
-<!--                  超简作图-->
+<!-- <el-radio v-model="selectedAlgorithm" label=" "> -->
+<!--  -->
 <!--                  <el-icon class="help-icon"><QuestionFilled /></el-icon>-->
 <!--                </el-radio>-->
-<!--                <el-radio v-model="selectedAlgorithm" label="富标格">-->
-<!--                  富标格-->
+<!-- <el-radio v-model="selectedAlgorithm" label=" "> -->
+<!--  -->
 <!--                  <el-icon class="help-icon"><QuestionFilled /></el-icon>-->
 <!--                </el-radio>-->
-<!--                <el-radio v-model="selectedAlgorithm" label="高精版">-->
-<!--                  高精版-->
+<!-- <el-radio v-model="selectedAlgorithm" label=" "> -->
+<!--  -->
 <!--                  <el-icon class="help-icon"><QuestionFilled /></el-icon>-->
 <!--                </el-radio>-->
 <!--              </div>-->
 <!--            </div>-->
 
-            <!-- 高级训练配置 -->
+            <!-- trainingconfiguration -->
             <div class="config-item">
               <div class="switch-item">
                 <span class="switch-label">高级训练配置</span>
-                
+
               </div>
               <el-switch v-model="advancedConfig" />
               <div class="config-tip">
@@ -545,9 +550,9 @@
               </div>
             </div>
 
-            <!-- 备入调分辨率 -->
+            <!--  -->
             <div class="config-item">
-              <label class="config-label">备入调分辨率 
+              <label class="config-label">备入调分辨率
                 <el-icon class="help-icon"><QuestionFilled /></el-icon>
               </label>
               <el-select v-model="resolution" class="config-select">
@@ -555,9 +560,9 @@
               </el-select>
             </div>
 
-            <!-- 训练完成后同步发布为模型 -->
+            <!-- training after to model -->
             <div class="config-item">
-              <label class="config-label">训练完成后同步发布为模型 
+              <label class="config-label">训练完成后同步发布为模型
                 <el-icon class="help-icon"><QuestionFilled /></el-icon>
               </label>
               <div class="publish-options">
@@ -567,18 +572,18 @@
             </div>
           </div>
 
-          <!-- 添加数据集 -->
+          <!-- dataset -->
           <div class="config-section">
             <h3 class="section-title">添加数据集</h3>
-            
+
             <div class="config-item">
-<!--              <label class="config-label">添加标注集 *</label>-->
+<!-- <label class="config-label"> annotation *</label> -->
               <el-button type="text" class="add-dataset-btn" @click="openDatasetSelector">
                 <el-icon><Plus /></el-icon>
                 请选择
               </el-button>
-              
-              <!-- 数据集列表 -->
+
+              <!-- dataset -->
               <div class="dataset-table" v-if="selectedDatasets.length > 0">
                 <div class="dataset-header">
                   <span>数据集</span>
@@ -602,59 +607,59 @@
                 </div>
               </div>
 
-              <!-- 空状态提示 -->
+              <!-- null / empty prompt / tip -->
               <div v-else class="empty-dataset-hint">
                 <el-text type="info">请点击上方"请选择"按钮添加数据集</el-text>
               </div>
             </div>
 
-            <!-- 自定义验证集 -->
+            <!-- Custom -->
 <!--            <div class="config-item">-->
 <!--              <div class="switch-item">-->
-<!--                <span class="switch-label">自定义验证集 -->
+<!-- <span class="switch-label">Custom -->
 <!--                  <el-icon class="help-icon"><QuestionFilled /></el-icon>-->
 <!--                </span>-->
 <!--                -->
 <!--              </div>-->
 <!--              <el-switch v-model="customValidation" />-->
-<!--               <label class="config-label">选择验证集</label>-->
+<!-- <label class="config-label"> </label> -->
 <!--              <el-button type="text" class="add-dataset-btn">-->
 <!--                <el-icon><Plus /></el-icon>-->
-<!--                请选择-->
+<!--  -->
 <!--              </el-button>-->
-<!--              <div class="config-hint">验证集标签应与训练集完全一致。为获得效果更好的模型，验证集数据需更贴近实际应用场景</div>-->
+<!-- <div class="config-hint"> and training full . to model, data </div> -->
 <!--            </div>-->
 <!--            <div class="switch-item">-->
-<!--                <span class="switch-label">自定义测试集 -->
+<!-- <span class="switch-label">Custom -->
 <!--                  <el-icon class="help-icon"><QuestionFilled /></el-icon>-->
 <!--                </span>-->
 <!--                -->
 <!--            </div>-->
 <!--              <el-switch v-model="customValidation" />-->
 <!--            <div class="config-item">-->
-<!--              <label class="config-label">选择验证集</label>-->
+<!-- <label class="config-label"> </label> -->
 <!--              <el-button type="text" class="add-dataset-btn">-->
 <!--                <el-icon><Plus /></el-icon>-->
-<!--                请选择-->
+<!--  -->
 <!--              </el-button>-->
-<!--              <div class="config-hint">测试集标签应该是训练集的子集或全集</div>-->
+<!-- <div class="config-hint"> is training sub full </div> -->
 <!--            </div>-->
 
-<!--            &lt;!&ndash; 数据增强策略 &ndash;&gt;-->
+<!-- &lt;!&ndash; data &ndash;&gt; -->
 <!--            <div class="config-item">-->
-<!--              <label class="config-label">数据增强策略 *</label>-->
+<!-- <label class="config-label">data *</label> -->
 <!--              <div class="strategy-options">-->
-<!--                <el-radio v-model="dataStrategy" label="default">默认配置</el-radio>-->
-<!--                <el-radio v-model="dataStrategy" label="manual">手动配置</el-radio>-->
+<!-- <el-radio v-model="dataStrategy" label="default"> configuration</el-radio> -->
+<!-- <el-radio v-model="dataStrategy" label="manual"> configuration</el-radio> -->
 <!--              </div>-->
 <!--            </div>-->
           </div>
 
-          <!-- 训练环境 -->
+          <!-- training -->
           <div class="config-section">
             <h3 class="section-title">训练环境</h3>
             <el-button type="text" class="detail-link">了解详情</el-button>
-            
+
             <div class="environment-info">
               <div class="env-item">
                 <span class="env-label">名称</span>
@@ -667,7 +672,7 @@
             </div>
           </div>
 
-          <!-- 开始训练按钮 -->
+          <!-- starttrainingbutton -->
           <div class="training-actions">
             <el-button
               type="primary"
@@ -684,7 +689,7 @@
           </div>
         </div>
 
-        <!-- 右侧SSH终端区域 -->
+        <!-- SSH -->
         <div class="ssh-terminal-container">
           <div class="terminal-header">
             <h3 class="terminal-title">训练日志</h3>
@@ -703,7 +708,7 @@
       </div>
     </div>
 
-  <!-- 发布为模型弹窗 -->
+  <!-- to modeldialog -->
   <el-dialog
     v-model="showDeployDialog"
     title="发布至模型仓库"
@@ -711,28 +716,28 @@
     :before-close="handleDeployCancel"
   >
     <el-form :model="deployForm" label-width="100px" style="max-width: 500px">
-      <!-- 模型名称 -->
+      <!-- model -->
       <el-form-item label="模型名称" required>
-        <el-input 
-          v-model="deployForm.modelName" 
+        <el-input
+          v-model="deployForm.modelName"
           placeholder="请输入"
           style="width: 100%"
         />
       </el-form-item>
 
-      <!-- 模型类型 -->
+      <!-- model -->
       <el-form-item label="模型类型">
-        <el-input 
-          v-model="deployForm.modelType" 
+        <el-input
+          v-model="deployForm.modelType"
           disabled
           style="width: 100%"
         />
       </el-form-item>
 
-      <!-- 发布仓库 -->
+      <!--  -->
       <el-form-item label="发布仓库" required>
-        <el-select 
-          v-model="deployForm.repository" 
+        <el-select
+          v-model="deployForm.repository"
           placeholder="选择仓库"
           style="width: 100%"
           suffix-icon="ArrowRight"
@@ -746,18 +751,18 @@
         </el-select>
       </el-form-item>
 
-      <!-- 模型版本 -->
+      <!-- model -->
       <el-form-item label="模型版本">
-        <el-input 
-          v-model="deployForm.modelVersion" 
+        <el-input
+          v-model="deployForm.modelVersion"
           style="width: 100%"
         />
       </el-form-item>
 
-      <!-- 版本描述 -->
+      <!--  -->
       <el-form-item label="版本描述">
-        <el-input 
-          v-model="deployForm.versionDescription" 
+        <el-input
+          v-model="deployForm.versionDescription"
           type="textarea"
           :rows="4"
           placeholder="请输入..."
@@ -776,7 +781,7 @@
 
 
 
-  <!-- 新增训练任务弹窗 -->
+  <!-- Add trainingtaskdialog -->
   <el-dialog
     v-model="showAddDialog"
     title="新增训练任务"
@@ -822,7 +827,7 @@
           </el-option>
         </el-select>
       </el-form-item>
-      
+
       <el-form-item label="选择数据集" prop="datasetId" required>
         <el-select
           v-model="addForm.datasetId"
@@ -851,7 +856,7 @@
           </el-option>
         </el-select>
       </el-form-item>
-      
+
       <el-form-item label="训练轮数" prop="epochTotal" required>
         <el-input-number
           v-model="addForm.epochTotal"
@@ -861,7 +866,7 @@
           style="width: 100%"
         />
       </el-form-item>
-      
+
       <el-form-item label="配置参数" prop="configParams">
         <el-input
           v-model="addForm.configParams"
@@ -872,7 +877,7 @@
           show-word-limit
         />
       </el-form-item>
-      
+
       <el-form-item label="任务描述" prop="description">
         <el-input
           v-model="addForm.description"
@@ -884,7 +889,7 @@
         />
       </el-form-item>
     </el-form>
-    
+
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleCloseDialog" class="common_btn">取消</el-button>
@@ -893,7 +898,7 @@
     </template>
   </el-dialog>
 
-  <!-- 编辑训练任务弹窗 -->
+  <!-- trainingtaskdialog -->
   <el-dialog
     v-model="showEditDialog"
     title="编辑训练任务"
@@ -914,7 +919,7 @@
           clearable
         />
       </el-form-item>
-      
+
       <el-form-item label="选择算法" prop="algorithmId" required>
         <el-select
           v-model="editForm.algorithmId"
@@ -940,7 +945,7 @@
           </el-option>
         </el-select>
       </el-form-item>
-      
+
       <el-form-item label="选择数据集" prop="datasetId" required>
         <el-select
           v-model="editForm.datasetId"
@@ -969,7 +974,7 @@
           </el-option>
         </el-select>
       </el-form-item>
-      
+
       <el-form-item label="训练轮数" prop="epochTotal" required>
         <el-input-number
           v-model="editForm.epochTotal"
@@ -979,7 +984,7 @@
           style="width: 100%"
         />
       </el-form-item>
-      
+
       <el-form-item label="配置参数" prop="configParams">
         <el-input
           v-model="editForm.configParams"
@@ -990,7 +995,7 @@
           show-word-limit
         />
       </el-form-item>
-      
+
       <el-form-item label="任务描述" prop="description">
         <el-input
           v-model="editForm.description"
@@ -1002,7 +1007,7 @@
         />
       </el-form-item>
     </el-form>
-    
+
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleCloseEditDialog" class="common_btn">取消</el-button>
@@ -1011,7 +1016,7 @@
     </template>
   </el-dialog>
 
-  <!-- 数据集选择弹窗 -->
+  <!-- dataset dialog -->
   <el-dialog
     v-model="showDatasetSelector"
     title="选择数据集"
@@ -1019,7 +1024,7 @@
     :before-close="handleCloseDatasetSelector"
   >
     <div class="dataset-selector-content">
-      <!-- 搜索框 -->
+      <!--  -->
       <div class="dataset-search">
         <el-input
           v-model="datasetSearchKeyword"
@@ -1030,7 +1035,7 @@
         />
       </div>
 
-      <!-- 数据集列表 -->
+      <!-- dataset -->
       <div class="dataset-list" v-loading="datasetLoading">
         <div
           v-for="dataset in filteredDatasetOptions"
@@ -1060,7 +1065,7 @@
           </div>
         </div>
 
-        <!-- 空状态 -->
+        <!-- null / empty -->
         <div v-if="filteredDatasetOptions.length === 0 && !datasetLoading" class="empty-state">
           <el-empty description="暂无数据集" />
         </div>
@@ -1103,42 +1108,42 @@ import {getAlgorithmAnnotationPage} from '@/api/algorithmAnnotation.js'
 import {getAlgorithmPage} from '@/api/algorithmManagement.js'
 import CollapseToggle from '@/components/CollapseToggle.vue'
 
-// 导入步骤图标
+// Import
 import trainIcon from '@/assets/start-training@3x.png'
 import selectDatasetIcon from '@/assets/select-dataset@3x.png'
 import evaluateIcon from '@/assets/validation@3x.png'
 import publishModelIcon from '@/assets/publish-model@3x.png'
 import request, {getBaseURL} from "@/utils/request";
 
-// 搜索表单
+// form
 const searchForm = ref({
   trainName: '',
   dateRange: []
 })
 
-// 表格数据
+// tabledata
 const tableData = ref([])
 const loading = ref(false)
 
-// 分页相关
+// related
 const currentPage = ref(1)
 const pageSize = ref(5)
 const total = ref(0)
 
-// 计算当前页数据
+// current data
 const currentPageData = computed(() => {
   return tableData.value
 })
 
-// 选中行
+// in
 const selectedRow = ref(null)
 const selectedRows = ref([])
 
-// 训练配置视图的状态控制
+// trainingconfiguration control
 const showTrainingConfig = ref(false)
 const currentTrainingItem = ref(null)
 
-// 版本配置视图的状态控制
+// configuration control
 const showVersionConfig = ref(false)
 const currentVersionItem = ref(null)
 const modelHistoryList = ref([])
@@ -1148,17 +1153,17 @@ const modelHistoryPageSize = ref(10)
 const modelHistoryTotal = ref(0)
 const historyTrainingId = ref(null)
 
-// 校验模型视图的状态控制
+// Validate model control
 const showValidationView = ref(false)
 const currentValidationItem = ref(null)
 
-// 编辑视图的状态控制 - 已移除，改用弹窗模式
+// control - already , dialog
 
-// 发布为模型弹窗的状态控制
+// to modeldialog control
 const showDeployDialog = ref(false)
 const currentDeployItem = ref(null)
 
-// 发布为模型表单数据
+// to modelformdata
 const deployForm = ref({
   modelName: '',
   modelType: '物体检测',
@@ -1166,21 +1171,21 @@ const deployForm = ref({
   versionDescription: ''
 })
 
-// 校验相关数据
+// Validate relateddata
 const validationModelName = ref('螺丝螺母识别')
 const validationVersion = ref('V1')
 const confidenceThreshold = ref(30)
 const uploadedImage = ref(null)
 const detectionResults = ref([])
 
-// 下拉选项数据
+// item data
 const modelNameOptions = ref([
   { label: '螺丝螺母识别', value: '螺丝螺母识别' },
   { label: '螺栓检测模型', value: '螺栓检测模型' },
   { label: '工件识别模型', value: '工件识别模型' }
 ])
 
-// 新增弹窗相关
+// Add dialogrelated
 const showAddDialog = ref(false)
 const addFormRef = ref(null)
 const addForm = ref({
@@ -1192,7 +1197,7 @@ const addForm = ref({
   description: ''
 })
 
-// 编辑弹窗相关
+// dialogrelated
 const showEditDialog = ref(false)
 const editFormRef = ref(null)
 const editForm = ref({
@@ -1205,7 +1210,7 @@ const editForm = ref({
 })
 const editingTrainingItem = ref(null)
 
-// SSH终端相关数据
+// SSH relateddata
 const sshConnected = ref(true)
 const terminalOutput = ref('')
 const currentCommand = ref('')
@@ -1220,7 +1225,7 @@ const lastLogCount = ref(0)
 const lastModelPath = ref('')
 const lastLogPath = ref('')
 
-// 表单验证规则
+// form
 const addFormRules = {
   taskName: [
     { required: true, message: '请输入任务名称', trigger: 'blur' },
@@ -1261,14 +1266,14 @@ const versionOptions = ref([
   { label: 'V3', value: 'V3' }
 ])
 
-// 发布仓库选项数据
+// item data
 const repositoryOptions = ref([
   { label: '私有仓库', value: 'private' },
   { label: '公共仓库', value: 'public' },
   { label: '项目仓库', value: 'project' }
 ])
 
-// 训练配置相关数据
+// trainingconfigurationrelateddata
 const trainingMode = ref('auto')
 const advancedConfig = ref(true)
 const resolution = ref('auto')
@@ -1278,7 +1283,7 @@ const autoPublishTriggered = ref(new Set())
 const customValidation = ref(true)
 const dataStrategy = ref('default')
 
-// 训练类型选项/映射
+// training item /
 const TRAIN_TYPE_OPTIONS = [
   { label: '目标检测算法', value: 'detect' },
   { label: '实例分割算法', value: 'segment' },
@@ -1295,15 +1300,15 @@ const TRAIN_TYPE_LABELS = {
   obb: '旋转目标检测算法'
 }
 
-// 介绍内容折叠状态
+//
 const isIntroExpanded = ref(true)
 
-// 训练配置参数
+// trainingconfigurationparameter
 const epochTotal = ref(10)
 const batchSize = ref(16)
 const trainImgSize = ref(640)
 
-// 获取状态类型
+// Get
 const getStatusType = (status) => {
   switch (status) {
     case 'completed':
@@ -1319,7 +1324,7 @@ const getStatusType = (status) => {
   }
 }
 
-// 获取状态样式类
+// Get
 const getStatusClass = (status) => {
   switch (status) {
     case 'completed':
@@ -1335,10 +1340,10 @@ const getStatusClass = (status) => {
   }
 }
 
-// 事件处理
+// eventProcess
 const handleAdd = async () => {
   showAddDialog.value = true
-  // 重置表单
+  // form
   addForm.value = {
     taskName: '',
     algorithmId: '',
@@ -1347,7 +1352,7 @@ const handleAdd = async () => {
     configParams: '',
     description: ''
   }
-  // 加载算法与数据集选项
+  // Load algorithm and dataset item
   await Promise.all([loadAlgorithmOptions(), loadDatasetOptions()])
 }
 
@@ -1414,7 +1419,7 @@ const handleDelete = async () => {
       await batchDeleteTraining(ids)
       ElMessage.success(`批量删除${selectedRows.value.length}个任务成功`)
     }
-    
+
     selectedRows.value = []
     loadTrainingData()
   } catch (error) {
@@ -1441,11 +1446,11 @@ const handleTrain = (row) => {
   lastLogPath.value = ''
   terminalOutput.value = ''
 
-  // 清空数据集选择 - 新训练应该从空白配置开始
+  // null / empty dataset - new training from null / empty configurationstart
   selectedDatasets.value = []
   selectedDatasetIds.value = []
 
-  // 重置其他训练配置为默认值
+  // trainingconfiguration to value
   dataStrategy.value = 'default'
   resolution.value = 'auto'
   epochMode.value = 'auto'
@@ -1457,7 +1462,7 @@ const handleTrain = (row) => {
 
   showTrainingConfig.value = true
 
-  // 已在训练中的任务，立即开始日志/状态轮询
+  // already in training in task, startlog/
   const taskId = row.originalData?.id || row.id
   const rawStatus = row.originalData?.trainStatus || row.trainStatus
   if (rawStatus === 'training' || rawStatus === '训练中') {
@@ -1465,7 +1470,7 @@ const handleTrain = (row) => {
   }
 }
 
-// 按算法配置、任务快照和历史训练产物的优先级解析可用的 PT 基础模型路径。
+// algorithmconfiguration、task and history training Parse PT model .
 const resolveBaseModelPath = (algorithm, trainingData) => {
   const candidates = [
     algorithm?.ptModelFilePath,
@@ -1478,7 +1483,7 @@ const resolveBaseModelPath = (algorithm, trainingData) => {
   return matchedPath?.trim() || ''
 }
 
-// 校验当前任务和数据集，并构建后端开始训练接口所需的参数。
+// Validate current task and dataset, Build after starttraininginterface parameter.
 const buildTrainingPayload = async () => {
   if (!currentTrainingItem.value) {
     throw new Error('请先选择训练任务')
@@ -1529,7 +1534,7 @@ const buildTrainingPayload = async () => {
   }
 }
 
-// 开始训练
+// starttraining
 const handleStartTraining = async () => {
   try {
     stopAllPolling()
@@ -1556,7 +1561,7 @@ const handleStartTraining = async () => {
     })
 
     appendLogLines(`[INFO] 准备启动训练任务 #${taskId}`)
-    // appendLogLines(`[INFO] 使用数据集: ${dataset.annotationName || dataset.label || params.datasetPath}`)
+    // appendLogLines(`[INFO] dataset: ${dataset.annotationName || dataset.label || params.datasetPath}`)
     appendLogLines(`[CMD] ${commandText}`)
     appendLogLines('[INFO] 正在向后端提交训练请求...')
 
@@ -1573,7 +1578,7 @@ const handleStartTraining = async () => {
   }
 }
 
-// 返回列表
+//
 const handleBackToList = () => {
   stopAllPolling()
   isTraining.value = false
@@ -1590,7 +1595,7 @@ const handleStopTraining = async (row) => {
     await ElMessageBox.confirm(`确认要终止训练任务"${row.algorithmName}"吗？`, '确认终止', {
       type: 'warning'
     })
-    
+
     await stopTraining(row.originalData.id)
     ElMessage.success('训练任务已终止')
     appendLogLines('[INFO] 训练已停止')
@@ -1616,7 +1621,7 @@ const handleEditRow = async (row) => {
     description: row.originalData.description || ''
   }
   showEditDialog.value = true
-  // 加载算法与数据集选项
+  // Load algorithm and dataset item
   await Promise.all([loadAlgorithmOptions(), loadDatasetOptions()])
 }
 
@@ -1625,7 +1630,7 @@ const handleDeleteRow = async (row) => {
     await ElMessageBox.confirm(`确认要删除训练任务"${row.algorithmName}"吗？`, '确认删除', {
       type: 'warning'
     })
-    
+
     await deleteTraining(row.originalData.id)
     ElMessage.success('训练任务已删除')
     loadTrainingData()
@@ -1740,7 +1745,7 @@ const handleMoreAction = async (command, data) => {
   }
 }
 
-// 下载模型
+// model
 const promptDownloadModelType = async (row) => {
   const modelData = row?.originalData || row || {}
   const modelTypes = [
@@ -1879,14 +1884,14 @@ const handleRetrainModel = async (row) => {
   try {
     console.log('重新训练模型 - 原始数据:', row)
 
-    // 获取原始训练配置
+    // Get trainingconfiguration
     const originalData = row.originalData
     if (!originalData) {
       ElMessage.error('无法获取原始训练配置')
       return
     }
 
-    // 确认重新训练
+    // new training
     await ElMessageBox.confirm(
       `确认要重新训练任务"${originalData.taskName}"吗？这将打开训练配置页面，您可以查看和修改配置后再开始训练。`,
       '重新训练',
@@ -1897,7 +1902,7 @@ const handleRetrainModel = async (row) => {
       }
     )
 
-    // 设置当前训练项目
+    // Set current training item
     currentTrainingItem.value = {
       id: originalData.id,
       name: originalData.taskName,
@@ -1906,16 +1911,16 @@ const handleRetrainModel = async (row) => {
       originalData: originalData
     }
 
-    // 恢复原始训练配置
+    // trainingconfiguration
     await restoreTrainingConfig(originalData)
 
-    // 切换到训练配置页面
+    // trainingconfigurationpage
     showTrainingConfig.value = true
 
-    // 显示重新训练信息
+    // new traininginfo
     ElMessage.success(`已打开训练配置页面，基于任务"${originalData.taskName}"的原有配置`)
 
-    // 在SSH终端显示重新训练信息
+    // in SSH new traininginfo
     if (sshConnected.value) {
       terminalOutput.value += `<div class="terminal-line"><span class="terminal-info">[INFO]</span> 🔄 重新训练任务: ${originalData.taskName}</div>`
       terminalOutput.value += `<div class="terminal-line"><span class="terminal-info">[INFO]</span> 📋 已加载原始训练配置</div>`
@@ -1934,19 +1939,19 @@ const handleRetrainModel = async (row) => {
   }
 }
 
-// 恢复训练配置
+// trainingconfiguration
 const restoreTrainingConfig = async (originalData) => {
   try {
     console.log('恢复训练配置:', originalData)
 
-    // 1. 恢复数据集选择
+    // 1. dataset
     if (originalData.datasetId) {
-      // 加载数据集选项（如果还没有加载）
+      // Load dataset item (if Load )
       if (datasetOptions.value.length === 0) {
         await loadDatasetOptions()
       }
 
-      // 查找对应的数据集
+      // find dataset
       const dataset = datasetOptions.value.find(d => d.value === originalData.datasetId)
       if (dataset) {
         selectedDatasets.value = [dataset]
@@ -1962,7 +1967,7 @@ const restoreTrainingConfig = async (originalData) => {
       selectedDatasetIds.value = []
     }
 
-    // 2. 恢复训练参数配置
+    // 2. trainingparameterconfiguration
     if (originalData.configParams) {
       try {
         const config = typeof originalData.configParams === 'string'
@@ -1971,7 +1976,7 @@ const restoreTrainingConfig = async (originalData) => {
 
         console.log('恢复训练参数配置:', config)
 
-        // 恢复各种配置参数
+        // configurationparameter
         if (config.dataStrategy) dataStrategy.value = config.dataStrategy
         if (config.resolution) resolution.value = config.resolution
         if (config.epochMode) epochMode.value = config.epochMode
@@ -1982,7 +1987,7 @@ const restoreTrainingConfig = async (originalData) => {
 
       } catch (parseError) {
         console.error('解析训练配置失败:', parseError)
-        // 使用默认配置
+        // configuration
         resetToDefaultConfig()
       }
     } else {
@@ -1993,12 +1998,12 @@ const restoreTrainingConfig = async (originalData) => {
   } catch (error) {
     console.error('恢复训练配置失败:', error)
     ElMessage.error('恢复训练配置失败：' + error.message)
-    // 使用默认配置
+    // configuration
     resetToDefaultConfig()
   }
 }
 
-// 重置为默认配置
+// to configuration
 const resetToDefaultConfig = () => {
   dataStrategy.value = 'default'
   resolution.value = 'auto'
@@ -2007,7 +2012,7 @@ const resetToDefaultConfig = () => {
   customValidation.value = true
 }
 
-// 保存训练配置到数据库
+// trainingconfiguration data
 const saveTrainingConfig = async (dataset) => {
   try {
     if (!currentTrainingItem.value) {
@@ -2015,7 +2020,7 @@ const saveTrainingConfig = async (dataset) => {
       return
     }
 
-    // 构建训练配置对象
+    // Build trainingconfigurationobject
     const trainingConfig = {
       datasetId: dataset ? dataset.value : null,
       datasetName: dataset ? dataset.annotationName : null,
@@ -2031,7 +2036,7 @@ const saveTrainingConfig = async (dataset) => {
 
     console.log('保存训练配置:', trainingConfig)
 
-    // 调用后端API保存配置
+    // after API configuration
     const response = await fetch(getBaseURL() + `/vlsAlgorithmTraining/${currentTrainingItem.value.id}`, {
       method: 'PUT',
       headers: {
@@ -2046,7 +2051,7 @@ const saveTrainingConfig = async (dataset) => {
     if (response.ok) {
       console.log('训练配置已保存到数据库')
 
-      // 在SSH终端显示保存信息
+      // in SSH info
       if (sshConnected.value) {
         terminalOutput.value += `<div class="terminal-line"><span class="terminal-success">[SUCCESS]</span> 💾 训练配置已保存到数据库</div>`
         terminalOutput.value += `<div class="terminal-line"><span class="terminal-info">[INFO]</span> 📊 数据集: ${trainingConfig.datasetName || '未选择'}</div>`
@@ -2063,22 +2068,22 @@ const saveTrainingConfig = async (dataset) => {
   }
 }
 
-// 发布为模型
+// to model
 const handlePublishModel = async (row) => {
   try {
     await ElMessageBox.confirm(`确认要将训练任务"${row.algorithmName}"发布为模型吗？`, '确认发布', {
       type: 'warning'
     })
-    
-    // 构建模型数据
+
+    // Build modeldata
     const modelData = {
       modelName: row.algorithmName,
       algorithmId: row.originalData.algorithmId,
       trainingId: row.originalData.id,
-      modelFormat: 'pt',  // 默认模型格式
-      accuracy: row.originalData.accuracy || 0.0,  // 添加准确率
+      modelFormat: 'pt',  // model
+      accuracy: row.originalData.accuracy || 0.0,  //
     }
-    
+
     await createModel(modelData)
     ElMessage.success('模型发布成功')
     await loadTrainingData()
@@ -2089,10 +2094,10 @@ const handlePublishModel = async (row) => {
   }
 }
 
-// 校验模型
+// Validate model
 const handleValidateModel = (row) => {
   try {
-    // 设置当前校验项
+    // Set current Validate item
     currentValidationItem.value = row
     showValidationView.value = true
     ElMessage.info('进入模型校验页面')
@@ -2101,13 +2106,13 @@ const handleValidateModel = (row) => {
   }
 }
 
-// 删除训练任务
+// Delete trainingtask
 const handleDeleteTraining = async (row) => {
   try {
     await ElMessageBox.confirm(`确认要删除训练任务"${row.algorithmName}"吗？`, '确认删除', {
       type: 'warning'
     })
-    
+
     await deleteTraining(row.originalData.id)
     ElMessage.success('训练任务已删除')
     await loadTrainingData()
@@ -2129,7 +2134,7 @@ const handleCurrentChange = (val) => {
   loadTrainingData()
 }
 
-// 加载训练数据
+// Load trainingdata
 const loadTrainingData = async () => {
   try {
     loading.value = true
@@ -2138,13 +2143,13 @@ const loadTrainingData = async () => {
       size: pageSize.value,
       taskName: searchForm.value.trainName,
     }
-    
-    // 处理日期范围
+
+    // Process
     if (searchForm.value.dateRange && searchForm.value.dateRange.length === 2) {
       params.createdTimeBegin = searchForm.value.dateRange[0]
       params.createdTimeEnd = searchForm.value.dateRange[1]
     }
-    
+
     const response = await getTrainingPage(params)
     if (response.data) {
       tableData.value = response.data.records.map(item => ({
@@ -2170,7 +2175,7 @@ const loadTrainingData = async () => {
   }
 }
 
-// 训练状态转换
+// training Convert
 const getTrainStatusText = (status) => {
   const statusMap = {
     'pending': '等待',
@@ -2182,7 +2187,7 @@ const getTrainStatusText = (status) => {
   return statusMap[status] || status
 }
 
-// 生成训练命令字符串（仅用于展示）
+// Generate training ( )
 const buildTrainCommand = ({ task, datasetPath, modelPath, epochs, imgsz, batchSize: batch }) => {
   const safeModel = modelPath || '<默认模型>'
   const safeData = datasetPath || '<未配置数据集>'
@@ -2276,7 +2281,7 @@ const triggerAutoPublish = async (taskId, statusValue, displayStatus) => {
 }
 
 
-// 训练日志与状态轮询
+// traininglog and
 const appendLogLines = (logData) => {
   if (logData === undefined || logData === null) return
   const raw = Array.isArray(logData) ? logData.join('\n') : String(logData)
@@ -2446,7 +2451,7 @@ const startLogPolling = (taskId) => {
 		await handleTrainingFinished(taskId, resolvedStatus)
       }
 
-      // 日志接口返回了完成状态时，提前停止轮询
+      // loginterface , before
     } catch (error) {
       console.error('拉取训练日志失败:', error)
     }
@@ -2482,7 +2487,7 @@ const startStatusPolling = (taskId) => {
   }, 3000)
 }
 
-// 启动日志+状态轮询的统一入口
+// log+
 const startPollingForTask = (taskId, tip = true) => {
   if (!taskId) return
   if (tip) {
@@ -2492,7 +2497,7 @@ const startPollingForTask = (taskId, tip = true) => {
   startStatusPolling(taskId)
 }
 
-// 搜索和重置处理
+// and Process
 const handleSearch = () => {
   currentPage.value = 1
   loadTrainingData()
@@ -2507,14 +2512,14 @@ const handleReset = () => {
   loadTrainingData()
 }
 
-// 返回列表页面 - 已移除，改用弹窗模式
+// page - already , dialog
 
-// 提交表单 - 已移除，改用弹窗模式
+// form - already , dialog
 
-// 弹窗相关方法
+// dialogrelated method
 const handleCloseDialog = () => {
   showAddDialog.value = false
-  // 重置表单
+  // form
   if (addFormRef.value) {
     addFormRef.value.resetFields()
   }
@@ -2522,7 +2527,7 @@ const handleCloseDialog = () => {
 
 const handleCloseEditDialog = () => {
   showEditDialog.value = false
-  // 重置表单
+  // form
   if (editFormRef.value) {
     editFormRef.value.resetFields()
   }
@@ -2531,10 +2536,10 @@ const handleCloseEditDialog = () => {
 
 const handleConfirmEdit = async () => {
   if (!editFormRef.value) return
-  
+
   try {
     await editFormRef.value.validate()
-    
+
     const formData = {
       id: editingTrainingItem.value.originalData.id,
       taskName: editForm.value.taskName,
@@ -2544,10 +2549,10 @@ const handleConfirmEdit = async () => {
       configParams: editForm.value.configParams ? JSON.parse(editForm.value.configParams) : null,
       description: editForm.value.description
     }
-    
+
     await updateTraining(formData)
     ElMessage.success('训练任务更新成功')
-    
+
     showEditDialog.value = false
     editingTrainingItem.value = null
     selectedRows.value = []
@@ -2558,7 +2563,7 @@ const handleConfirmEdit = async () => {
   }
 }
 
-// SSH 终端相关：仅用于展示后台日志，保持接口兼容
+// SSH related: after log, interface
 const connectSSH = () => {
   sshConnected.value = true
   appendLogLines('[INFO] 终端已连接，开始展示后台实时日志')
@@ -2578,12 +2583,12 @@ const executeCommand = () => {
   appendLogLines('[WARN] 训练命令由后台触发，前端终端仅用于展示日志')
 }
 
-// 训练命令执行已移除，保持接口兼容
+// training Execute already , interface
 const executeCommandInternal = async () => {
   appendLogLines('[WARN] 训练命令执行已移除，终端仅展示后台日志')
 }
 
-// 滚动到最新日志
+// new log
 const scrollToBottom = () => {
   nextTick(() => {
     if (terminalRef.value) {
@@ -2592,29 +2597,29 @@ const scrollToBottom = () => {
   })
 }
 
-// 发布为模型
+// to model
 const handleDeployModel = async () => {
   try {
     if (!deployForm.value.modelName) {
       ElMessage.error('请输入模型名称')
       return
     }
-    
+
     const trainingData = currentDeployItem.value.originalData
     const modelData = {
       modelName: deployForm.value.modelName,
       algorithmId: trainingData.algorithmId,
       trainingId: trainingData.id,
       version: deployForm.value.modelVersion,
-      modelFormat: 'pt', // 默认格式
+      modelFormat: 'pt', //
       accuracy: trainingData.accuracy
     }
-    
+
     await createModel(modelData)
     ElMessage.success('模型发布成功')
     showDeployDialog.value = false
-    
-    // 重置表单
+
+    // form
     deployForm.value = {
       modelName: '',
       modelType: '物体检测',
@@ -2643,11 +2648,11 @@ const searchResetFn = (val, reset) => {
   handleAdvancedSearch(val || {})
 }
 
-// 高级搜索相关方法
+// related method
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索:', searchData)
-  
-  // 更新搜索表单
+
+  // new form
   if (searchData.keyword) {
     searchForm.trainName = searchData.keyword
   }
@@ -2657,7 +2662,7 @@ const handleAdvancedSearch = (searchData) => {
   if (searchData.dateRange && searchData.dateRange.length > 0) {
     searchForm.dateRange = searchData.dateRange
   }
-  
+
   handleSearch()
 }
 
@@ -2688,7 +2693,7 @@ const handleBatchOperation = () => {
   ElMessage.success('批量操作')
 }
 
-// 页面挂载时加载数据
+// page Load data
 onMounted(() => {
   loadTrainingData()
   loadAlgorithmOptions()
@@ -2698,7 +2703,7 @@ onUnmounted(() => {
   stopAllPolling()
 })
 
-// 版本配置页面返回方法
+// configurationpage method
 const handleBackFromVersion = () => {
   showVersionConfig.value = false
   currentVersionItem.value = null
@@ -2709,7 +2714,7 @@ const handleBackFromVersion = () => {
   historyTrainingId.value = null
 }
 
-// 校验页面返回方法
+// Validate page method
 const handleBackFromValidation = () => {
   showValidationView.value = false
   currentValidationItem.value = null
@@ -2717,7 +2722,7 @@ const handleBackFromValidation = () => {
   detectionResults.value = []
 }
 
-// 图片上传相关方法
+// related method
 const handleImageUpload = () => {
   ElMessage.info('点击选择图片')
 }
@@ -2737,29 +2742,29 @@ const handleImageDrop = (event) => {
 const validateImageFile = (file) => {
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/bmp']
   const maxSize = 4 * 1024 * 1024 // 4MB
-  
+
   if (!validTypes.includes(file.type)) {
     ElMessage.error('图片格式不支持，请上传jpg、png、bmp、jpeg格式的图片')
     return false
   }
-  
+
   if (file.size > maxSize) {
     ElMessage.error('图片大小不能超过4M')
     return false
   }
-  
+
   return true
 }
 
-// 发布为模型相关方法
+// to modelrelated method
 const handleDeployConfirm = () => {
   handleDeployModel()
 }
 
 const handleDeployCancel = () => {
   showDeployDialog.value = false
-  
-  // 重置表单
+
+  // form
   deployForm.value = {
     modelName: '',
     modelType: '物体检测',
@@ -2768,20 +2773,20 @@ const handleDeployCancel = () => {
   }
 }
 
-// 介绍内容折叠/展开处理
+// / Process
 const handleIntroToggle = () => {
   isIntroExpanded.value = !isIntroExpanded.value
 }
 
-// 数据集相关变量
+// datasetrelatedvariable
 const datasetOptions = ref([])
 const datasetLoading = ref(false)
 
-// 算法列表（基础预置算法库）
+// algorithm ( algorithm )
 const algorithmOptions = ref([])
 const algorithmLoading = ref(false)
 
-// 数据集选择弹窗相关
+// dataset dialogrelated
 const showDatasetSelector = ref(false)
 const datasetSearchKeyword = ref('')
 const selectedDatasetIds = ref([])
@@ -2796,7 +2801,7 @@ const filteredDatasetOptions = computed(() => {
   )
 })
 
-// 标注类型常量
+// annotation
 const ANNOTATION_TYPES = {
   OBJECT_DETECTION: 'object_detection',
   IMAGE_CLASSIFICATION: 'image_classification',
@@ -2804,7 +2809,7 @@ const ANNOTATION_TYPES = {
   SEMANTIC_SEGMENTATION: 'semantic_segmentation'
 }
 
-// 标注类型显示映射
+// annotation
 const ANNOTATION_TYPE_LABELS = {
   [ANNOTATION_TYPES.OBJECT_DETECTION]: '物体检测',
   [ANNOTATION_TYPES.IMAGE_CLASSIFICATION]: '图像分类',
@@ -2812,27 +2817,27 @@ const ANNOTATION_TYPE_LABELS = {
   [ANNOTATION_TYPES.SEMANTIC_SEGMENTATION]: '语义分割'
 }
 
-// 标注状态常量
+// annotation
 const ANNOTATION_STATUS = {
   NONE: 'none',
   PARTIAL: 'partial',
   COMPLETED: 'completed'
 }
 
-// 标注状态显示映射
+// annotation
 const ANNOTATION_STATUS_LABELS = {
   [ANNOTATION_STATUS.NONE]: '未标注',
   [ANNOTATION_STATUS.PARTIAL]: '标注中',
   [ANNOTATION_STATUS.COMPLETED]: '已完成'
 }
 
-// 获取进度百分比
+// Get
 const getProgressPercentage = (annotatedCount, totalCount) => {
   if (totalCount === 0) return 0
   return Math.round((annotatedCount / totalCount) * 100)
 }
 
-// 获取状态对应的标签类型
+// Get
 const getStatusTagType = (status) => {
   switch(status) {
     case ANNOTATION_STATUS.NONE:
@@ -2846,15 +2851,15 @@ const getStatusTagType = (status) => {
   }
 }
 
-// 加载数据集选项
+// Load dataset item
 const loadDatasetOptions = async () => {
   datasetLoading.value = true
   try {
     const params = {
       current: 1,
-      size: 1000 // 获取所有数据集，不限制状态
+      size: 1000 // Get all dataset,
     }
-    
+
     const response = await getAlgorithmAnnotationPage(params)
     if (response.code === 200) {
       datasetOptions.value = response.data.records.map(item => ({
@@ -2879,7 +2884,7 @@ const loadDatasetOptions = async () => {
   }
 }
 
-// 加载基础预置算法列表
+// Load algorithm
 const loadAlgorithmOptions = async () => {
   algorithmLoading.value = true
   try {
@@ -2904,9 +2909,9 @@ const loadAlgorithmOptions = async () => {
   }
 }
 
-// 数据集选择相关方法
+// dataset related method
 const handleDatasetSearch = () => {
-  // 搜索逻辑已在计算属性中处理
+  // already in property in Process
 }
 
 const toggleDatasetSelection = (dataset) => {
@@ -2925,7 +2930,7 @@ const toggleDatasetSelection = (dataset) => {
 
 const handleCloseDatasetSelector = () => {
   showDatasetSelector.value = false
-  // 重置搜索关键词
+  //
   datasetSearchKeyword.value = ''
 }
 
@@ -2935,10 +2940,10 @@ const handleConfirmDatasetSelection = () => {
     return
   }
 
-  // 更新数据集表格显示
+  // new datasettable
   updateDatasetTable()
 
-  // 关闭弹窗
+  // dialog
   showDatasetSelector.value = false
   datasetSearchKeyword.value = ''
 
@@ -2946,7 +2951,7 @@ const handleConfirmDatasetSelection = () => {
 }
 
 const updateDatasetTable = () => {
-  // 这里可以更新训练配置页面中的数据集表格显示
+  // new trainingconfigurationpage in datasettable
   console.log('选中的数据集:', selectedDatasets.value)
 }
 
@@ -2963,7 +2968,7 @@ const removeDataset = (datasetId) => {
   }
 }
 
-// 打开数据集选择器时加载数据
+// dataset Load data
 const openDatasetSelector = async () => {
   showDatasetSelector.value = true
   if (datasetOptions.value.length === 0) {
@@ -3034,7 +3039,7 @@ const openDatasetSelector = async () => {
   gap: 0;
 }
 
-/* 主内容区域 */
+/* main */
 .main-content {
   background: white;
   border-radius: 0 0 8px 8px;
@@ -3047,7 +3052,7 @@ const openDatasetSelector = async () => {
   flex: 1;
 }
 
-/* 工具栏 */
+/*  */
 .toolbar {
   display: flex;
   justify-content: space-between;
@@ -3059,7 +3064,7 @@ const openDatasetSelector = async () => {
   align-items: center;
 }
 
-/* 搜索区域 */
+/*  */
 .search-section {
   background: #F5F5F5;
   border-radius: 8px 8px 0 0;
@@ -3078,7 +3083,7 @@ const openDatasetSelector = async () => {
   width: 200px;
 }
 
-/* 页面标题 */
+/* page */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -3103,7 +3108,7 @@ const openDatasetSelector = async () => {
   padding: 0;
 }
 
-/* 介绍区域 */
+/*  */
 .intro-section {
   background: white;
   border-radius: var(--common-border-radius) var(--common-border-radius) 0 0;
@@ -3139,7 +3144,7 @@ const openDatasetSelector = async () => {
   font-size: 16px;
 }
 
-/* 流程步骤 */
+/* workflow */
 .process-steps {
   display: flex;
   justify-content: space-between;
@@ -3202,7 +3207,7 @@ const openDatasetSelector = async () => {
   display: none;
 }
 
-/* 工具栏区域 */
+/*  */
 .toolbar-section {
   background: white;
   border-radius: 0;
@@ -3224,7 +3229,7 @@ const openDatasetSelector = async () => {
   align-items: center;
 }
 
-/* 新增按钮自定义样式 */
+/* Add buttonCustom */
 .add-btn-custom {
   width: 82px !important;
   height: 36px !important;
@@ -3256,7 +3261,7 @@ const openDatasetSelector = async () => {
   opacity: 0.9;
 }
 
-/* 编辑删除按钮组合 */
+/* Delete button */
 .edit-delete-group {
   display: flex;
   align-items: center;
@@ -3268,7 +3273,7 @@ const openDatasetSelector = async () => {
   margin-left: 0 !important;
 }
 
-/* 编辑按钮自定义样式 */
+/* buttonCustom */
 .edit-btn-custom {
   height: 36px !important;
   border-radius: 18px 0 0 18px !important;
@@ -3295,7 +3300,7 @@ const openDatasetSelector = async () => {
   border-color: #e4e7ed !important;
 }
 
-/* 删除按钮自定义样式 */
+/* Delete buttonCustom */
 .delete-btn-custom {
   height: 36px !important;
   border-radius: 0 18px 18px 0 !important;
@@ -3335,7 +3340,7 @@ const openDatasetSelector = async () => {
   border-color: #e4e7ed !important;
 }
 
-/* 表格区域 */
+/* table */
 .table-section {
   background: white;
   border-radius: 0;
@@ -3370,7 +3375,7 @@ const openDatasetSelector = async () => {
   border-bottom: 1px solid #ebeef5;
 }
 
-/* 状态标签 */
+/*  */
 .status-tag {
   display: flex;
   align-items: center;
@@ -3399,7 +3404,7 @@ const openDatasetSelector = async () => {
   background-color: #f56c6c;
 }
 
-/* 模型效果 */
+/* model */
 .model-metrics {
   text-align: left;
 }
@@ -3434,7 +3439,7 @@ const openDatasetSelector = async () => {
   margin-top: 4px;
 }
 
-/* 操作按钮强制一行展示 */
+/* operationbutton */
 .action-buttons {
   display: flex;
   justify-content: center;
@@ -3444,7 +3449,7 @@ const openDatasetSelector = async () => {
   flex-wrap: nowrap;
 }
 
-/* 分页区域 */
+/*  */
 .pagination-section {
   display: flex;
   justify-content: center;
@@ -3457,7 +3462,7 @@ const openDatasetSelector = async () => {
   flex-shrink: 0;
 }
 
-/* 训练配置视图 */
+/* trainingconfiguration */
 .training-config-view {
   flex: 1;
   display: flex;
@@ -3467,7 +3472,7 @@ const openDatasetSelector = async () => {
   overflow: hidden;
 }
 
-/* 导航栏样式 */
+/*  */
 .content-header {
   background: #fff;
   border-bottom: 1px solid #f0f0f0;
@@ -3502,7 +3507,7 @@ const openDatasetSelector = async () => {
   color: #c0c4cc;
 }
 
-/* 训练配置容器 */
+/* trainingconfiguration */
 .training-config-container {
   display: flex;
   gap: 20px;
@@ -3511,7 +3516,7 @@ const openDatasetSelector = async () => {
   align-items: flex-start;
 }
 
-/* 配置区域 */
+/* configuration */
 .config-sidebar {
   width: 100%;
   max-width: 720px;
@@ -3539,7 +3544,7 @@ const openDatasetSelector = async () => {
   margin: 0 0 20px 0;
 }
 
-/* 训练方式标签 */
+/* training */
 .training-mode-tabs {
   display: flex;
   width: 320px;
@@ -3565,7 +3570,7 @@ const openDatasetSelector = async () => {
   color: white;
 }
 
-/* 配置项 */
+/* configuration item */
 .config-item {
   margin-bottom: 24px;
 }
@@ -3638,7 +3643,7 @@ const openDatasetSelector = async () => {
   margin-bottom: 16px;
 }
 
-/* 数据集表格 */
+/* datasettable */
 .dataset-table {
   border: 1px solid #e8e8e8;
   border-radius: 6px;
@@ -3669,7 +3674,7 @@ const openDatasetSelector = async () => {
   padding: 0;
 }
 
-/* 训练环境 */
+/* training */
 .detail-link {
   color: #409eff;
   padding: 0;
@@ -3703,7 +3708,7 @@ const openDatasetSelector = async () => {
   color: #262626;
 }
 
-/* 训练操作按钮区域 */
+/* trainingoperationbutton */
 .training-actions {
   margin-top: 32px;
   padding: 20px 0;
@@ -3719,7 +3724,7 @@ const openDatasetSelector = async () => {
   border-radius: 6px;
 }
 
-/* 版本配置视图 */
+/* configuration */
 .version-config-view {
   flex: 1;
   display: flex;
@@ -3742,12 +3747,12 @@ const openDatasetSelector = async () => {
   overflow: hidden;
 }
 
-/* 导航栏在内容块内部 */
+/* in */
 .version-config-view .breadcrumb {
   margin: 0;
 }
 
-/* 基础信息区域 */
+/* info */
 .basic-info-section {
   background: white;
   border-radius: 0;
@@ -3794,7 +3799,7 @@ const openDatasetSelector = async () => {
   line-height: 1.5;
 }
 
-/* 数据详情区域 */
+/* data */
 .data-details-section {
   background: white;
   border-radius: 0;
@@ -3853,7 +3858,7 @@ const openDatasetSelector = async () => {
   align-items: center;
 }
 
-/* 校验模型视图 */
+/* Validate model */
 .validation-view {
   flex: 1;
   display: flex;
@@ -3881,7 +3886,7 @@ const openDatasetSelector = async () => {
   margin: 0;
 }
 
-/* 模型选择区域 */
+/* model */
 .model-selection-section {
   padding: 20px 20px 0;
 }
@@ -3922,7 +3927,7 @@ const openDatasetSelector = async () => {
   box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
 }
 
-/* 图片上传和阈值配置水平对齐区域 */
+/* and value configuration */
 .upload-threshold-section {
   display: flex;
   gap: 40px;
@@ -4011,7 +4016,7 @@ const openDatasetSelector = async () => {
   font-weight: 500;
 }
 
-/* 图片上传区域样式 */
+/*  */
 .upload-area {
   display: flex;
   flex-direction: column;
@@ -4059,7 +4064,7 @@ const openDatasetSelector = async () => {
   line-height: 1.4;
 }
 
-/* 预测标签结果显示 */
+/*  */
 .prediction-result {
   flex: 1;
   display: flex;
@@ -4078,7 +4083,7 @@ const openDatasetSelector = async () => {
   font-style: italic;
 }
 
-/* 发布为模型弹窗样式 */
+/* to modeldialog */
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
@@ -4109,7 +4114,7 @@ const openDatasetSelector = async () => {
   font-family: inherit;
 }
 
-/* 编辑视图样式 */
+/*  */
 .edit-view {
   height: 100%;
   display: flex;
@@ -4167,7 +4172,7 @@ const openDatasetSelector = async () => {
   padding-right: 10px;
 }
 
-/* 优化表单字段间距 */
+/* formfield */
 .training-form :deep(.el-form-item) {
   margin-bottom: 16px;
 }
@@ -4183,7 +4188,7 @@ const openDatasetSelector = async () => {
   width: 480px;
 }
 
-/* 新增任务状态提示样式 */
+/* Add task prompt / tip */
 .status-hint {
   margin-bottom: 16px;
   flex-shrink: 0;
@@ -4212,7 +4217,7 @@ const openDatasetSelector = async () => {
   flex-shrink: 0;
 }
 
-/* 表格操作列：横向单行排布 */
+/* tableoperation : */
 .operate {
   display: flex;
   flex-direction: row;
@@ -4227,7 +4232,7 @@ const openDatasetSelector = async () => {
   }
 }
 
-/* 新增训练任务弹窗样式 */
+/* Add trainingtaskdialog */
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
@@ -4235,7 +4240,7 @@ const openDatasetSelector = async () => {
   padding-top: 16px;
 }
 
-/* 弹窗表单字段样式 */
+/* dialogformfield */
 :deep(.el-form-item__label) {
   font-weight: 500;
   color: #303133;
@@ -4252,7 +4257,7 @@ const openDatasetSelector = async () => {
   font-size: 12px;
 }
 
-/* 数据集选项样式 */
+/* dataset item */
 .dataset-option {
   display: flex;
   flex-direction: column;
@@ -4300,7 +4305,7 @@ const openDatasetSelector = async () => {
   margin-top: 2px;
 }
 
-/* 数据集选择器样式 */
+/* dataset */
 :deep(.el-select-dropdown__item) {
   padding: 8px 12px;
 }
@@ -4314,7 +4319,7 @@ const openDatasetSelector = async () => {
   background-color: #f5f7fa;
 }
 
-/* SSH终端样式 */
+/* SSH */
 .ssh-terminal-container {
   position: sticky;
   top: 20px;
@@ -4435,7 +4440,7 @@ const openDatasetSelector = async () => {
   color: #c0c4cc;
 }
 
-/* 终端颜色样式 - 使用 :deep() 穿透到 v-html 内容 */
+/* - :deep() v-html */
 .terminal-output :deep(.terminal-dir) {
   color: #5dade2 !important;
   font-weight: bold;
@@ -4529,7 +4534,7 @@ const openDatasetSelector = async () => {
   font-weight: bold;
 }
 
-/* YOLO训练相关颜色 */
+/* YOLOtrainingrelated */
 .terminal-output :deep(.terminal-training) {
   color: #f39c12 !important;
   font-weight: bold;
@@ -4563,7 +4568,7 @@ const openDatasetSelector = async () => {
   color: #95a5a6 !important;
 }
 
-/* YOLO输出专用样式 */
+/* YOLO */
 .terminal-output :deep(.terminal-yolo-output) {
   display: block;
   line-height: 1.6;
@@ -4605,7 +4610,7 @@ const openDatasetSelector = async () => {
   color: #ecf0f1 !important;
 }
 
-/* 下载链接样式 */
+/*  */
 .terminal-output :deep(.terminal-download) {
   color: #27ae60 !important;
   font-weight: bold;
@@ -4621,7 +4626,7 @@ const openDatasetSelector = async () => {
   color: #2980b9 !important;
 }
 
-/* 数据集选择弹窗样式 */
+/* dataset dialog */
 .dataset-selector-content {
   max-height: 500px;
   overflow: hidden;
@@ -4715,7 +4720,7 @@ const openDatasetSelector = async () => {
   border: 1px dashed #e4e7ed;
 }
 
-/* 训练按钮相关样式 */
+/* trainingbuttonrelated */
 .training-hint {
   margin-top: 8px;
   text-align: center;

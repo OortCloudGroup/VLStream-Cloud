@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -9,7 +10,7 @@ import lombok.Builder;
 import lombok.Data;
 
 /**
- * 上传返回体
+ *
  *
  * @author Lion Li
  */
@@ -18,19 +19,19 @@ import lombok.Data;
 public class SmsResult {
 
     /**
-     * 是否成功
+     * whether successfully
      */
     private boolean isSuccess;
 
     /**
-     * 响应消息
+     *
      */
     private String message;
 
     /**
-     * 实际响应体
+     *
      * <p>
-     * 可自行转换为 SDK 对应的 SendSmsResponse
+     * Convert to SDK SendSmsResponse
      */
     private String response;
 }

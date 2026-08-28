@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,7 +14,7 @@ import lombok.EqualsAndHashCode;
 import java.util.Date;
 
 /**
- * VIEW对象 sys_user_dept_view_tenant
+ * VIEWobject sys_user_dept_view_tenant
  *
  * @author ruoyi
  * @date 2024-10-29
@@ -26,43 +27,43 @@ public class SysUserDeptView extends BaseEntity {
     private static final long serialVersionUID=1L;
 
     /**
-     * 账号ID
+     * ID
      */
     private String userId;
     /**
-     * 租户ID
+     * tenant ID
      */
     private String tenantId;
     /**
-     * 组织机构编码
+     *
      */
     private String deptId;
     /**
-     * 组织机构名称
+     *
      */
     private String deptName;
     /**
-     * 组织机构类型 1:集团 2:公司 3:部门 4:项目 0:未知
+     * 1: 2: 3:department 4: item 0: not
      */
     private Long deptType;
     /**
-     * 用户排序越小越靠前
+     * user before
      */
     private Long sort;
     /**
-     * 最后更新者的标识
+     * afterupdater
      */
     private String updatedBy;
     /**
-     * 创建时间
+     * create time
      */
     private Date createdAt;
     /**
-     * 更新时间
+     * update time
      */
     private Date updatedAt;
     /**
-     * 删除时间戳
+     * Delete
      */
     private String deletedAt;
 

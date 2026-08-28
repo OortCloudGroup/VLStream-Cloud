@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 查询rtsp设备列表
+// Query rtspdevice list
 export function listRtspDevice(query) {
     return request({
         url: '/rtsp/RtspDevice/list',
@@ -9,7 +14,7 @@ export function listRtspDevice(query) {
     })
 }
 
-// 查询rtsp设备列表
+// Query rtspdevice list
 export function rtspDeviceList(query) {
   return request({
     url: '/rtsp/RtspDevice/rtspDeviceList',
@@ -19,7 +24,7 @@ export function rtspDeviceList(query) {
 }
 
 
-// 查询rtsp设备详细
+// Query rtspdevice
 export function getRtspDevice(id) {
     return request({
         url: '/rtsp/RtspDevice/' + id,
@@ -27,7 +32,7 @@ export function getRtspDevice(id) {
     })
 }
 
-// 新增rtsp设备
+// Add rtspdevice
 export function addRtspDevice(data) {
     return request({
         url: '/rtsp/RtspDevice',
@@ -36,7 +41,7 @@ export function addRtspDevice(data) {
     })
 }
 
-// 修改rtsp设备
+// Update rtspdevice
 export function updateRtspDevice(data) {
     return request({
         url: '/rtsp/RtspDevice',
@@ -45,7 +50,7 @@ export function updateRtspDevice(data) {
     })
 }
 
-// 删除rtsp设备
+// Delete rtspdevice
 export function delRtspDevice(id) {
     return request({
         url: '/rtsp/RtspDevice/' + id,

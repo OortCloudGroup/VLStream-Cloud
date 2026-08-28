@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="algorithm-orchestration">
-    <!-- 页面头部 -->
+    <!-- page -->
     <div class="page-header">
       <div class="header-left">
         <h1>算法编排</h1>
@@ -14,10 +19,10 @@
       </div>
     </div>
 
-    <!-- 编排列表 -->
+    <!--  -->
     <div class="orchestration-cards">
-      <div 
-        v-for="orchestration in orchestrations" 
+      <div
+        v-for="orchestration in orchestrations"
         :key="orchestration.id"
         class="orchestration-card"
         @click="editOrchestration(orchestration)"
@@ -46,13 +51,13 @@
             </el-dropdown>
           </div>
         </div>
-        
+
         <div class="card-content">
-          <!-- 算法流程图 -->
+          <!-- algorithmworkflow -->
           <div class="flow-diagram">
-            <div 
-              v-for="(step, index) in orchestration.steps" 
-              :key="index" 
+            <div
+              v-for="(step, index) in orchestration.steps"
+              :key="index"
               class="flow-step"
             >
               <div class="step-node" :class="getStepClass(step.type)">
@@ -64,8 +69,8 @@
               </div>
             </div>
           </div>
-          
-          <!-- 统计信息 -->
+
+          <!-- info -->
           <div class="card-stats">
             <div class="stat-item">
               <span class="stat-label">算法数量</span>
@@ -81,7 +86,7 @@
             </div>
           </div>
         </div>
-        
+
         <div class="card-footer">
           <div class="orchestration-status">
             <el-tag :type="orchestration.status === 'active' ? 'success' : 'info'" size="small">
@@ -93,8 +98,8 @@
           </div>
         </div>
       </div>
-      
-      <!-- 新建编排卡片 -->
+
+      <!-- new -->
       <div class="orchestration-card create-card" @click="createOrchestration">
         <div class="create-content">
           <el-icon size="48" color="#c0c4cc"><Plus /></el-icon>
@@ -104,7 +109,7 @@
       </div>
     </div>
 
-    <!-- 编排编辑器对话框 -->
+    <!--  -->
     <el-dialog
       v-model="showEditor"
       title="算法编排编辑器"
@@ -113,7 +118,7 @@
       class="orchestration-editor-dialog"
     >
       <div class="editor-container">
-        <!-- 左侧算法库 -->
+        <!-- algorithm -->
         <div class="algorithm-library">
           <h4>算法库</h4>
           <div class="library-search">
@@ -128,8 +133,8 @@
             </el-input>
           </div>
           <div class="algorithm-list">
-            <div 
-              v-for="algorithm in filteredAlgorithms" 
+            <div
+              v-for="algorithm in filteredAlgorithms"
               :key="algorithm.id"
               class="algorithm-item"
               draggable="true"
@@ -146,7 +151,7 @@
           </div>
         </div>
 
-        <!-- 中间编排画布 -->
+        <!-- in -->
         <div class="orchestration-canvas">
           <div class="canvas-header">
             <h4>编排画布</h4>
@@ -155,7 +160,7 @@
               <el-button size="small" type="primary" @click="saveOrchestration">保存</el-button>
             </div>
           </div>
-          <div 
+          <div
             class="canvas-area"
             @drop="handleDrop"
             @dragover.prevent
@@ -165,10 +170,10 @@
               <el-icon size="64" color="#c0c4cc"><Connection /></el-icon>
               <p>从左侧拖拽算法到此处开始编排</p>
             </div>
-            
+
             <div v-else class="canvas-flow">
-              <div 
-                v-for="(step, index) in currentSteps" 
+              <div
+                v-for="(step, index) in currentSteps"
                 :key="step.id || index"
                 class="canvas-step"
               >
@@ -176,10 +181,10 @@
                   <div class="step-node" :class="getStepClass(step.type)">
                     <el-icon><component :is="getStepIcon(step.type)" /></el-icon>
                     <span class="step-name">{{ step.name }}</span>
-                    <el-button 
-                      class="remove-step" 
-                      size="small" 
-                      type="danger" 
+                    <el-button
+                      class="remove-step"
+                      size="small"
+                      type="danger"
                       circle
                       @click="removeStep(index)"
                     >
@@ -198,7 +203,7 @@
           </div>
         </div>
 
-        <!-- 右侧属性面板 -->
+        <!-- property -->
         <div class="property-panel">
           <h4>编排配置</h4>
           <el-form :model="orchestrationForm" label-width="80px" size="small">
@@ -206,11 +211,11 @@
               <el-input v-model="orchestrationForm.name" placeholder="请输入编排名称" />
             </el-form-item>
             <el-form-item label="描述">
-              <el-input 
-                v-model="orchestrationForm.description" 
-                type="textarea" 
+              <el-input
+                v-model="orchestrationForm.description"
+                type="textarea"
                 :rows="3"
-                placeholder="请输入编排描述" 
+                placeholder="请输入编排描述"
               />
             </el-form-item>
             <el-form-item label="触发条件">
@@ -250,13 +255,13 @@ import {
 import { getAlgorithmPage } from '@/api/algorithmManagement'
 import { getOrchestrationPage, saveOrchestrationRecord, updateOrchestrationRecord, removeOrchestrationRecord } from '@/api/algorithmOrchestration'
 
-// 响应式数据
+// data
 const showEditor = ref(false)
 const algorithmSearch = ref('')
 const currentSteps = ref([])
 const editingOrchestration = ref(null)
 
-// 编排表单数据
+// formdata
 const orchestrationForm = ref({
   name: '',
   description: '',
@@ -264,21 +269,21 @@ const orchestrationForm = ref({
   mode: 'serial'
 })
 
-// 编排数据
+// data
 const orchestrations = ref([])
 
-// 算法库数据
+// algorithm data
 const algorithms = ref([])
 
-// 计算属性
+// property
 const filteredAlgorithms = computed(() => {
   if (!algorithmSearch.value) return algorithms.value
-  return algorithms.value.filter(alg => 
+  return algorithms.value.filter(alg =>
     alg.name.toLowerCase().includes(algorithmSearch.value.toLowerCase())
   )
 })
 
-// 方法
+// method
 const getStepClass = (type) => {
   const classMap = {
     '人脸识别': 'face-detection',
@@ -369,7 +374,7 @@ const deleteOrchestration = (orchestration) => {
 }
 
 const handleDragStart = (algorithm) => {
-  // 存储拖拽的算法信息
+  // algorithminfo
   window.draggedAlgorithm = algorithm
 }
 
@@ -403,7 +408,7 @@ const saveOrchestration = async () => {
     ElMessage.warning('请输入编排名称')
     return
   }
-  
+
   if (currentSteps.value.length === 0) {
     ElMessage.warning('请至少添加一个算法步骤')
     return
@@ -437,7 +442,7 @@ const handleEditorClose = (done) => {
       done()
     })
     .catch(() => {
-      // 取消关闭
+      //
     })
 }
 
@@ -658,7 +663,7 @@ onMounted(() => Promise.all([loadOrchestrations(), loadAlgorithms()]))
   color: #909399;
 }
 
-/* 编辑器样式 */
+/*  */
 .orchestration-editor-dialog {
   position: relative;
 }
@@ -819,4 +824,4 @@ onMounted(() => Promise.all([loadOrchestrations(), loadAlgorithms()]))
   margin: 0 0 16px 0;
   color: #303133;
 }
-</style> 
+</style>

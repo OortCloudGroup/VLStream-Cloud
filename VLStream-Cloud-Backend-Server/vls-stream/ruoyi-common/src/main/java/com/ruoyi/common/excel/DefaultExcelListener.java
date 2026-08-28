@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -22,7 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Excel 导入监听
+ * Excel Import
  *
  * @author Yjoioooo
  * @author Lion Li
@@ -32,17 +33,17 @@ import java.util.Set;
 public class DefaultExcelListener<T> extends AnalysisEventListener<T> implements ExcelListener<T> {
 
     /**
-     * 是否Validator检验，默认为是
+     * whether Validator , to is
      */
     private Boolean isValidate = Boolean.TRUE;
 
     /**
-     * excel 表头数据
+     * excel data
      */
     private Map<Integer, String> headMap;
 
     /**
-     * 导入回执
+     * Import
      */
     private ExcelResult<T> excelResult;
 
@@ -52,16 +53,16 @@ public class DefaultExcelListener<T> extends AnalysisEventListener<T> implements
     }
 
     /**
-     * 处理异常
+     * Process
      *
      * @param exception ExcelDataConvertException
-     * @param context   Excel 上下文
+     * @param context Excel
      */
     @Override
     public void onException(Exception exception, AnalysisContext context) throws Exception {
         String errMsg = null;
         if (exception instanceof ExcelDataConvertException) {
-            // 如果是某一个单元格的转换异常 能获取到具体行号
+            // if is Convert can Get
             ExcelDataConvertException excelDataConvertException = (ExcelDataConvertException) exception;
             Integer rowIndex = excelDataConvertException.getRowIndex();
             Integer columnIndex = excelDataConvertException.getColumnIndex();

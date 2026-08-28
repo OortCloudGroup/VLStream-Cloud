@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-dialog
     v-model="visible"
@@ -159,7 +164,7 @@ const handleConfirm = async () => {
 
 <style scoped>
 
-/* 图标样式 */
+/*  */
 .icon-image-classification,
 .icon-object-detection,
 .icon-instance-segmentation,
@@ -169,7 +174,7 @@ const handleConfirm = async () => {
   position: relative;
 }
 
-/* 图像分类图标 */
+/*  */
 .icon-image-classification::before {
   content: '';
   position: absolute;
@@ -192,7 +197,7 @@ const handleConfirm = async () => {
   border-radius: 50%;
 }
 
-/* 物体检测图标 */
+/*  */
 .icon-object-detection::before {
   content: '';
   position: absolute;
@@ -215,7 +220,7 @@ const handleConfirm = async () => {
   border-radius: 50%;
 }
 
-/* 实例分割图标 */
+/* instance */
 .icon-instance-segmentation::before {
   content: '';
   position: absolute;
@@ -227,7 +232,7 @@ const handleConfirm = async () => {
   border-radius: 50%;
 }
 
-/* 语义分割图标 */
+/*  */
 .icon-semantic-segmentation::before {
   content: '';
   position: absolute;

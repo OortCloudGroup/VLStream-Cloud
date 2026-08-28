@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,9 +15,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 表单应用分类对象 wf_form_app
+ * form object wf_form_app
  *
- * @author 雷超群
+ * @author
  * @date 2025-04-26
  */
 @Data
@@ -27,61 +28,61 @@ public class WfFormApp extends BaseEntity {
     private static final long serialVersionUID=1L;
 
     /**
-     * 表单分类id
+     * form id
      */
     @TableId(value = "category_id")
     private String categoryId;
     /**
-     * 应用ID
+     * ID
      */
     private String applicationId;
     /**
-     * 应用名称
+     *
      */
     private String applicationName;
     /**
-     * 应用密钥
+     *
      */
     private String applicationSecret;
     /**
-     * 租户ID
+     * tenant ID
      */
     private String tenantId;
     /**
-     * 用户id
+     * user ID
      */
     private String userId;
     /**
-     * 分类父id
+     * id
      */
     private String parentId;
     /**
-     * 表单分类名称
+     * form
      */
     private String categoryName;
     /**
-     * 分类编码
+     *
      */
     private String code;
     /**
-     * 备注
+     * remark
      */
     private String remark;
     /**
-     * 删除标志（0代表存在 1代表删除）
+     * Delete (0represents in 1represents Delete )
      */
     @TableLogic
     private String delFlag;
     /**
-     * 0选择应用，1添加应用
+     * 0 , 1
      */
     private String appFlag;
     /**
-     * 图标地址
+     *
      */
     private String images;
     /**
-     * 0流程 1工单
+     * 0workflow 1work order
      */
     private String type;
 }

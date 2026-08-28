@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -24,7 +25,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 翻译处理器
+ * Process
  *
  * @author Lion Li
  */
@@ -32,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TranslationHandler extends JsonSerializer<Object> implements ContextualSerializer {
 
     /**
-     * 全局翻译实现类映射器
+     * full
      */
     public static final Map<String, TranslationInterface<?>> TRANSLATION_MAPPER = new ConcurrentHashMap<>();
 
@@ -42,11 +43,11 @@ public class TranslationHandler extends JsonSerializer<Object> implements Contex
     public void serialize(Object value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
         TranslationInterface<?> trans = TRANSLATION_MAPPER.get(translation.type());
         if (ObjectUtil.isNotNull(trans)) {
-            // 如果映射字段不为空 则取映射字段的值
+            // if field is empty field value
             if (StringUtils.isNotBlank(translation.mapper())) {
                 value = ReflectUtils.invokeGetter(gen.getCurrentValue(), translation.mapper());
             }
-            // 如果为 null 直接写出
+            // if to null
             if (ObjectUtil.isNull(value)) {
                 gen.writeNull();
                 return;

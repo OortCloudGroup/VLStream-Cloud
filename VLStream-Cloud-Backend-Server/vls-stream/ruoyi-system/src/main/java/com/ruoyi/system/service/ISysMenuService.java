@@ -14,130 +14,130 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * 菜单 业务层
+ * menu layer
  *
  * @author Lion Li
  */
 public interface ISysMenuService {
 
     /**
-     * 根据用户查询系统菜单列表
+     * userQuery menu list
      *
-     * @param userId 用户ID
-     * @return 菜单列表
+     * @param userId user ID
+     * @return menu
      */
     List<SysMenu> selectMenuList(String userId);
 
     /**
-     * 根据用户查询系统菜单列表
+     * userQuery menu list
      *
-     * @param menu   菜单信息
-     * @param userId 用户ID
-     * @return 菜单列表
+     * @param menu menuinfo
+     * @param userId user ID
+     * @return menu
      */
     List<SysMenu> selectMenuList(SysMenu menu, String userId);
 
     /**
-     * 根据用户ID查询权限
+     * user IDQuery
      *
-     * @param userId 用户ID
-     * @return 权限列表
+     * @param userId user ID
+     * @return
      */
     Set<String> selectMenuPermsByUserId(String userId);
 
     /**
-     * 根据角色ID查询权限
+     * role IDQuery
      *
-     * @param roleId 角色ID
-     * @return 权限列表
+     * @param roleId role ID
+     * @return
      */
     Set<String> selectMenuPermsByRoleId(Long roleId);
 
     /**
-     * 根据用户ID查询菜单树信息
+     * user IDQuery menu info
      *
-     * @param userId 用户ID
-     * @return 菜单列表
+     * @param userId user ID
+     * @return menu
      */
     List<SysMenu> selectMenuTreeByUserId(String userId);
 
     /**
-     * 根据角色ID查询菜单树信息
+     * role IDQuery menu info
      *
-     * @param roleId 角色ID
-     * @return 选中菜单列表
+     * @param roleId role ID
+     * @return in menu
      */
     List<Long> selectMenuListByRoleId(Long roleId);
 
     /**
-     * 构建前端路由所需要的菜单
+     * Build before need to menu
      *
-     * @param menus 菜单列表
-     * @return 路由列表
+     * @param menus menu
+     * @return
      */
     List<RouterVo> buildMenus(List<SysMenu> menus);
 
     /**
-     * 构建前端所需要下拉树结构
+     * Build before need to
      *
-     * @param menus 菜单列表
-     * @return 下拉树结构列表
+     * @param menus menu
+     * @return
      */
     List<Tree<String >> buildMenuTreeSelect(List<SysMenu> menus);
 
     /**
-     * 根据菜单ID查询信息
+     * menu IDQuery info
      *
-     * @param menuId 菜单ID
-     * @return 菜单信息
+     * @param menuId menu ID
+     * @return menuinfo
      */
     SysMenu selectMenuById(Long menuId);
 
     /**
-     * 是否存在菜单子节点
+     * whether in menu sub node
      *
-     * @param menuId 菜单ID
-     * @return 结果 true 存在 false 不存在
+     * @param menuId menu ID
+     * @return true in false in
      */
     boolean hasChildByMenuId(Long menuId);
 
     /**
-     * 查询菜单是否存在角色
+     * Query menuwhether in role
      *
-     * @param menuId 菜单ID
-     * @return 结果 true 存在 false 不存在
+     * @param menuId menu ID
+     * @return true in false in
      */
     boolean checkMenuExistRole(Long menuId);
 
     /**
-     * 新增保存菜单信息
+     * Add menuinfo
      *
-     * @param menu 菜单信息
-     * @return 结果
+     * @param menu menuinfo
+     * @return
      */
     int insertMenu(SysMenu menu);
 
     /**
-     * 修改保存菜单信息
+     * Update menuinfo
      *
-     * @param menu 菜单信息
-     * @return 结果
+     * @param menu menuinfo
+     * @return
      */
     int updateMenu(SysMenu menu);
 
     /**
-     * 删除菜单管理信息
+     * Delete menu info
      *
-     * @param menuId 菜单ID
-     * @return 结果
+     * @param menuId menu ID
+     * @return
      */
     int deleteMenuById(Long menuId);
 
     /**
-     * 校验菜单名称是否唯一
+     * Validate menu namewhether
      *
-     * @param menu 菜单信息
-     * @return 结果
+     * @param menu menuinfo
+     * @return
      */
     boolean checkMenuNameUnique(SysMenu menu);
 }

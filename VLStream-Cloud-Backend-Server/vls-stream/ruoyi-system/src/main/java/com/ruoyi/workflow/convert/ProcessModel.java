@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -22,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @description：流程模型
+ * @description: workflowmodel
  */
 @Data
 public class ProcessModel {
@@ -40,15 +41,15 @@ public class ProcessModel {
 
     public BpmnModel toBpmnModel() {
         BpmnModel bpmnModel = new BpmnModel();
-        // 命名空间
+        // null / empty
         bpmnModel.setTargetNamespace("https://flowable.org/bpmn20");
-        // 创建一个流程
+        // workflow
         Process process = new Process();
-        // 设置流程的id
+        // Set workflow id
         process.setId(this.getCode());
-        // 设置流程的name
+        // Set workflow name
         process.setName(this.getName());
-        //是否需要消息推送
+        // whether need to Push
         if (notifyAllSteps) {
             Map<String, List<ExtensionAttribute>> attributes = new HashMap<>();
             ExtensionAttribute extensionAttribute = new ExtensionAttribute();
@@ -58,18 +59,18 @@ public class ProcessModel {
             process.setAttributes(attributes);
         }
 
-        // 设置流程的文档
+        // Set workflow
         process.setDocumentation(this.getRemark());
-        // 递归构建所有节点
+        // Build all node
         Node node = this.getProcess();
         List<FlowElement> flowElementList = node.convert();
         System.out.println("=========dddddddd=========" + JSONUtil.toJsonStr(flowElementList));
         for (FlowElement flowElement : flowElementList) {
             process.addFlowElement(flowElement);
         }
-        // 设置流程
+        // Set workflow
         bpmnModel.addProcess(process);
-        // 自动布局
+        //
         new BpmnAutoLayout(bpmnModel).execute();
         return bpmnModel;
     }

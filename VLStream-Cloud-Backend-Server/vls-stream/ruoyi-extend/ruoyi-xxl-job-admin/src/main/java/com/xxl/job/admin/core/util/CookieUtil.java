@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -16,13 +16,13 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class CookieUtil {
 
-    // 默认缓存时间,单位/秒, 2H
+    // , / , 2H
     private static final int COOKIE_MAX_AGE = Integer.MAX_VALUE;
-    // 保存路径,根路径
+    // ,
     private static final String COOKIE_PATH = "/";
 
     /**
-     * 保存
+     *
      *
      * @param response
      * @param key
@@ -35,7 +35,7 @@ public class CookieUtil {
     }
 
     /**
-     * 保存
+     *
      *
      * @param response
      * @param key
@@ -54,7 +54,7 @@ public class CookieUtil {
     }
 
     /**
-     * 查询value
+     * Query value
      *
      * @param request
      * @param key
@@ -69,7 +69,7 @@ public class CookieUtil {
     }
 
     /**
-     * 查询Cookie
+     * Query Cookie
      *
      * @param request
      * @param key
@@ -87,7 +87,7 @@ public class CookieUtil {
     }
 
     /**
-     * 删除Cookie
+     * Delete Cookie
      *
      * @param request
      * @param response

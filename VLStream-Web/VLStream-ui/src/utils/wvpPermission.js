@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 const readPermissions = () => {
   const raw = sessionStorage.getItem('wvpPermissions') || localStorage.getItem('wvpPermissions')
   if (!raw) return null
@@ -10,8 +15,8 @@ const readPermissions = () => {
 }
 
 /**
- * WVP 后端仍是权限最终判定方。未同步 WVP 权限清单时显示操作入口，
- * 接口若无权限会返回真实的 401/403，不在前端伪造授权结果。
+ * WVP after is . not WVP operation ,
+ * interface will 401/403, in before .
  */
 export function checkPermi(requiredPermissions) {
   const permissions = readPermissions()

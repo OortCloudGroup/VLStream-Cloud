@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div id="ptzScan">
     <div style="display: grid; grid-template-columns: 80px auto; line-height: 28px; margin-bottom: 10px;">

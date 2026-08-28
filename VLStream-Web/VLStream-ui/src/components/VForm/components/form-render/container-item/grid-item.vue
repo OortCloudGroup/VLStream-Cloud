@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <container-item-wrapper :widget="widget">
     <el-row
@@ -16,7 +21,7 @@
           :parent-widget="widget"
           :col-height="widget.options.colHeight"
         >
-          <!-- 递归传递插槽！！！ -->
+          <!-- ! ! ! -->
           <template v-for="slot in Object.keys($slots)" #[slot]="scope">
             <slot :name="slot" v-bind="scope" />
           </template>
@@ -36,7 +41,7 @@ import containerItemMixin from './containerItemMixin'
 import { ElRow } from 'element-plus'
 
 export default {
-  name: 'VfGridItem', // grid-item跟VueGridLayout全局注册组件重名，故特殊处理！！
+  name: 'VfGridItem', // grid-item VueGridLayout full component , Process ! !
   componentName: 'ContainerItem',
   components: {
     ElRow,

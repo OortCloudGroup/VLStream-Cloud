@@ -1,14 +1,19 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="login-container">
     <div class="login-card">
-      <!-- 登录头部 -->
+      <!--  -->
       <div class="login-header">
         <div class="logo-section">
           <img :src="loginLogo" alt="VLStream" class="login-logo">
         </div>
       </div>
 
-      <!-- 登录表单 -->
+      <!-- form -->
       <div v-if="tenantMode === 'single'" class="login-form">
         <el-form
           ref="loginFormRef"
@@ -16,7 +21,7 @@
           :rules="loginRules"
           @submit.prevent="handleLogin"
         >
-          <!-- 用户名 -->
+          <!-- user -->
           <el-form-item prop="loginId">
             <el-input
               v-model="loginForm.loginId"
@@ -26,7 +31,7 @@
             />
           </el-form-item>
 
-          <!-- 密码 -->
+          <!--  -->
           <el-form-item prop="password">
             <el-input
               v-model="loginForm.password"
@@ -39,7 +44,7 @@
             />
           </el-form-item>
 
-          <!-- 登录按钮 -->
+          <!-- button -->
           <el-form-item>
             <el-button
               type="primary"
@@ -62,7 +67,7 @@
 
     </div>
 
-    <!-- 背景装饰 -->
+    <!--  -->
     <div class="bg-decoration">
       <div class="circle circle-1"></div>
       <div class="circle circle-2"></div>
@@ -86,22 +91,22 @@ const authManager = new AuthManager()
 const { sm2 } = smCrypto
 const BLADE_AUTH_PUBLIC_KEY = import.meta.env.VITE_BLADE_AUTH_PUBLIC_KEY || '049787e408dea94acb3655acc5a7c7c7010bb9f140c84926c667ea616366082a118141c8dcb3e78a9d85d64fb765a250ff73448b18938f2219b94f782e28e1df64'
 const SINGLE_TENANT_ID = '000000'
-// 表单引用
+// form
 const loginFormRef = ref()
 
-// 登录表单数据
+// formdata
 const loginForm = reactive({
   loginId: '',
   password: '',
   tenantId: SINGLE_TENANT_ID
 })
 
-// 登录状态
+//
 const loginLoading = ref(false)
 const tenantMode = ref('loading')
 const platformLoginError = ref('')
 
-// 表单验证规则
+// form
 const loginRules = {
   loginId: [
     { required: true, message: '请输入用户名', trigger: 'blur' }
@@ -112,12 +117,12 @@ const loginRules = {
   ]
 }
 
-// 使用后端配置的 SM2 公钥加密登录密码。
+// after configuration SM2 .
 const encryptPassword = (password) => {
   return sm2.doEncrypt(password, BLADE_AUTH_PUBLIC_KEY, 0)
 }
 
-// 处理登录
+// Process
 const handleLogin = async () => {
   if (!loginFormRef.value) return
 
@@ -127,7 +132,7 @@ const handleLogin = async () => {
 
     loginLoading.value = true
 
-    // 构建 SpringBlade 登录参数
+    // Build SpringBlade parameter
     const loginData = {
       grantType: 'password',
       tenantId: SINGLE_TENANT_ID,
@@ -137,7 +142,7 @@ const handleLogin = async () => {
 
     console.log('登录数据:', loginData)
 
-    // 调用登录接口
+    // interface
     const response = await loginUser(loginData)
 
     if (response.code === 200) {
@@ -148,18 +153,18 @@ const handleLogin = async () => {
         userName: authInfo.userName || authInfo.account
       }
 
-      // 保存用户信息和token
+      // userinfo and token
       localStorage.setItem('userInfo', JSON.stringify(userData))
       localStorage.setItem('accessToken', userData.accessToken)
       sessionStorage.setItem('userInfo', JSON.stringify(userData))
       sessionStorage.setItem('accessToken', userData.accessToken)
 
-      // 同步用户信息到本地数据库
+      // userinfo data
       await authManager.saveUserToLocal(userData)
 
       ElMessage.success('登录成功')
 
-      // 登录成功后回到原目标页，没有 redirect 时进入首页。
+      // successfully after , redirect .
       await router.replace(route.query.redirect || '/')
 
     } else {
@@ -168,7 +173,7 @@ const handleLogin = async () => {
 
   } catch (error) {
     console.error('登录失败:', error)
-    // 认证拦截器会把业务失败响应封装在 error.data 中；优先读取该消息，避免将账号密码错误误显示为网络错误。
+    // will failed in error.data in ; , to .
     const errorData = error.response?.data || error.data
     const errorMsg = errorData?.msg || errorData?.message || (typeof errorData === 'string' && errorData) || error.message || '网络错误'
     ElMessage.error('登录失败: ' + errorMsg)
@@ -177,10 +182,10 @@ const handleLogin = async () => {
   }
 }
 
-// 页面加载时检查是否已登录
+// pageLoad whether already
 onMounted(async () => {
   tenantMode.value = await authManager.getTenantMode()
-  // 检查URL中的token（外部系统跳转）
+  // URL in token ( )
   const urlParams = new URLSearchParams(window.location.search)
   const token = urlParams.get('accessToken') || urlParams.get('access_token') || urlParams.get('token')
 
@@ -206,7 +211,7 @@ onMounted(async () => {
     return
   }
 
-  // 检查本地token
+  // token
   const localToken = localStorage.getItem('accessToken')
   if (localToken) {
     try {
@@ -344,7 +349,7 @@ onMounted(async () => {
   }
 }
 
-/* 响应式设计 */
+/*  */
 @media (max-width: 480px) {
   .login-card {
     width: 90%;

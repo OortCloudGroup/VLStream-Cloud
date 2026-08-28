@@ -1,10 +1,15 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
 /**
- * 视频录制记录 API
+ * record API
  */
 
-// 分页查询视频录制记录
+// Query record
 export function getVideoRecordPage(params) {
   return request({
     url: '/vlsVideoRecord/page',
@@ -13,7 +18,7 @@ export function getVideoRecordPage(params) {
   })
 }
 
-// 根据ID获取视频录制记录
+// IDGet record
 export function getVideoRecordById(id) {
   return request({
     url: `/vlsVideoRecord/${id}`,
@@ -21,7 +26,7 @@ export function getVideoRecordById(id) {
   })
 }
 
-// 创建视频录制记录
+// record
 export function createVideoRecord(data) {
   return request({
     url: '/vlsVideoRecord',
@@ -30,7 +35,7 @@ export function createVideoRecord(data) {
   })
 }
 
-// 更新视频录制记录
+// new record
 export function updateVideoRecord(id, data) {
   return request({
     url: `/vlsVideoRecord/${id}`,
@@ -39,7 +44,7 @@ export function updateVideoRecord(id, data) {
   })
 }
 
-// 删除视频录制记录
+// Delete record
 export function deleteVideoRecord(id) {
   return request({
     url: `/vlsVideoRecord/${id}`,
@@ -47,7 +52,7 @@ export function deleteVideoRecord(id) {
   })
 }
 
-// 批量删除视频录制记录
+// Batch delete record
 export function batchDeleteVideoRecords(ids) {
   return request({
     url: '/vlsVideoRecord/batch',
@@ -56,7 +61,7 @@ export function batchDeleteVideoRecords(ids) {
   })
 }
 
-// 开始录制
+// start
 export function startRecording(deviceId, deviceName = '设备', duration = 600, quality = 'medium') {
   return request({
     url: `/vlsVideoRecord/start`,
@@ -70,7 +75,7 @@ export function startRecording(deviceId, deviceName = '设备', duration = 600, 
   })
 }
 
-// 停止录制 
+//
 export function stopRecording(recordId) {
   return request({
     url: `/vlsVideoRecord/stop/${recordId}`,
@@ -78,7 +83,7 @@ export function stopRecording(recordId) {
   })
 }
 
-// 获取录制状态
+// Get
 export function getRecordingStatus(deviceId) {
   return request({
     url: `/vlsVideoRecord/status/${deviceId}`,
@@ -86,7 +91,7 @@ export function getRecordingStatus(deviceId) {
   })
 }
 
-// 获取录制统计信息
+// Get info
 export function getRecordingStatistics() {
   return request({
     url: '/vlsVideoRecord/statistics',
@@ -94,7 +99,7 @@ export function getRecordingStatistics() {
   })
 }
 
-// 获取设备录制记录
+// Get device record
 export function getDeviceRecords(deviceId, params) {
   return request({
     url: `/vlsVideoRecord/device/${deviceId}`,
@@ -103,7 +108,7 @@ export function getDeviceRecords(deviceId, params) {
   })
 }
 
-// 下载录制文件
+//
 export function downloadRecordFile(id) {
   return request({
     url: `/vlsVideoRecord/${id}/download`,
@@ -112,7 +117,7 @@ export function downloadRecordFile(id) {
   })
 }
 
-// 预览录制文件
+//
 export function previewRecordFile(id) {
   return request({
     url: `/vlsVideoRecord/${id}/preview`,
@@ -120,7 +125,7 @@ export function previewRecordFile(id) {
   })
 }
 
-// 获取录制文件
+// Get
 export function getRecordFile(filePath) {
   return request({
     url: `/vlsVideoRecord/file/${encodeURIComponent(filePath)}`,
@@ -128,7 +133,7 @@ export function getRecordFile(filePath) {
   })
 }
 
-// 获取录制文件缩略图
+// Get
 export function getRecordThumbnail(filePath) {
   return request({
     url: `/vlsVideoRecord/thumbnail/${encodeURIComponent(filePath)}`,

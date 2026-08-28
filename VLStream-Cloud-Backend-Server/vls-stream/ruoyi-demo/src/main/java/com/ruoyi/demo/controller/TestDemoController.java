@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -39,7 +40,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 测试单表Controller
+ * Controller
  *
  * @author Lion Li
  * @date 2021-07-26
@@ -53,7 +54,7 @@ public class TestDemoController extends BaseController {
     private final ITestDemoService iTestDemoService;
 
     /**
-     * 查询测试单表列表
+     * Query list
      */
     @SaCheckPermission("demo:demo:list")
     @GetMapping("/list")
@@ -62,7 +63,7 @@ public class TestDemoController extends BaseController {
     }
 
     /**
-     * 自定义分页查询
+     * Custom Query
      */
     @SaCheckPermission("demo:demo:list")
     @GetMapping("/page")
@@ -71,9 +72,9 @@ public class TestDemoController extends BaseController {
     }
 
     /**
-     * 导入数据
+     * Import data
      *
-     * @param file 导入文件
+     * @param file Import
      */
     @Log(title = "测试单表", businessType = BusinessType.IMPORT)
     @SaCheckPermission("demo:demo:import")
@@ -87,14 +88,14 @@ public class TestDemoController extends BaseController {
     }
 
     /**
-     * 导出测试单表列表
+     * Export
      */
     @SaCheckPermission("demo:demo:export")
     @Log(title = "测试单表", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(@Validated TestDemoBo bo, HttpServletResponse response) {
         List<TestDemoVo> list = iTestDemoService.queryList(bo);
-        // 测试雪花id导出
+        // idExport
 //        for (TestDemoVo vo : list) {
 //            vo.setId(1234567891234567893L);
 //        }
@@ -102,9 +103,9 @@ public class TestDemoController extends BaseController {
     }
 
     /**
-     * 获取测试单表详细信息
+     * Get info
      *
-     * @param id 测试ID
+     * @param id ID
      */
     @SaCheckPermission("demo:demo:query")
     @GetMapping("/{id}")
@@ -114,21 +115,21 @@ public class TestDemoController extends BaseController {
     }
 
     /**
-     * 新增测试单表
+     * Add
      */
     @SaCheckPermission("demo:demo:add")
     @Log(title = "测试单表", businessType = BusinessType.INSERT)
     @RepeatSubmit(interval = 2, timeUnit = TimeUnit.SECONDS, message = "{repeat.submit.message}")
     @PostMapping()
     public R<Void> add(@RequestBody TestDemoBo bo) {
-        // 使用校验工具对标 @Validated(AddGroup.class) 注解
-        // 用于在非 Controller 的地方校验对象
+        // Validate @Validated(AddGroup.class)
+        // in non- Controller Validate object
         ValidatorUtils.validate(bo, AddGroup.class);
         return toAjax(iTestDemoService.insertByBo(bo));
     }
 
     /**
-     * 修改测试单表
+     * Update
      */
     @SaCheckPermission("demo:demo:edit")
     @Log(title = "测试单表", businessType = BusinessType.UPDATE)
@@ -139,9 +140,9 @@ public class TestDemoController extends BaseController {
     }
 
     /**
-     * 删除测试单表
+     * Delete
      *
-     * @param ids 测试ID串
+     * @param ids ID
      */
     @SaCheckPermission("demo:demo:remove")
     @Log(title = "测试单表", businessType = BusinessType.DELETE)

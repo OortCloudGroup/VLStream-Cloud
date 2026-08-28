@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -20,7 +21,7 @@ import java.time.LocalTime;
 
 
 /**
- * 测试分布式锁的样例
+ *
  *
  * @author shenxinquan
  */
@@ -33,7 +34,7 @@ public class RedisLockController {
     private LockTemplate lockTemplate;
 
     /**
-     * 测试lock4j 注解
+     * lock4j
      */
     @Lock4j(keys = {"#key"})
     @GetMapping("/testLock4j")
@@ -49,7 +50,7 @@ public class RedisLockController {
     }
 
     /**
-     * 测试lock4j 工具
+     * lock4j
      */
     @GetMapping("/testLock4jLockTemplate")
     public R<String> testLock4jLockTemplate(String key, String value) {
@@ -57,7 +58,7 @@ public class RedisLockController {
         if (null == lockInfo) {
             throw new RuntimeException("业务处理中,请稍后再试");
         }
-        // 获取锁成功，处理业务
+        // Get successfully, Process
         try {
             try {
                 Thread.sleep(8000);
@@ -66,10 +67,10 @@ public class RedisLockController {
             }
             System.out.println("执行简单方法1 , 当前线程:" + Thread.currentThread().getName());
         } finally {
-            //释放锁
+            //
             lockTemplate.releaseLock(lockInfo);
         }
-        //结束
+        // finish
         return R.ok("操作成功", value);
     }
 

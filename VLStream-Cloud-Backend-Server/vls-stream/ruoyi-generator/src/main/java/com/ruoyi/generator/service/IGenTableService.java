@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -14,125 +15,125 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 业务 服务层
+ * service layer
  *
  * @author Lion Li
  */
 public interface IGenTableService {
 
     /**
-     * 查询业务字段列表
+     * Query field list
      *
-     * @param tableId 业务字段编号
-     * @return 业务字段集合
+     * @param tableId field
+     * @return fieldcollection
      */
     List<GenTableColumn> selectGenTableColumnListByTableId(Long tableId);
 
     /**
-     * 查询业务列表
+     * Query list
      *
-     * @param genTable 业务信息
-     * @return 业务集合
+     * @param genTable info
+     * @return collection
      */
     TableDataInfo<GenTable> selectPageGenTableList(GenTable genTable, PageQuery pageQuery);
 
     /**
-     * 查询据库列表
+     * Query list
      *
-     * @param genTable 业务信息
-     * @return 数据库表集合
+     * @param genTable info
+     * @return data collection
      */
     TableDataInfo<GenTable> selectPageDbTableList(GenTable genTable, PageQuery pageQuery);
 
     /**
-     * 查询据库列表
+     * Query list
      *
-     * @param tableNames 表名称组
-     * @return 数据库表集合
+     * @param tableNames
+     * @return data collection
      */
     List<GenTable> selectDbTableListByNames(String[] tableNames);
 
     /**
-     * 查询所有表信息
+     * Query all info
      *
-     * @return 表信息集合
+     * @return infocollection
      */
     List<GenTable> selectGenTableAll();
 
     /**
-     * 查询业务信息
+     * Query info
      *
-     * @param id 业务ID
-     * @return 业务信息
+     * @param id ID
+     * @return info
      */
     GenTable selectGenTableById(Long id);
 
     /**
-     * 修改业务
+     * Update
      *
-     * @param genTable 业务信息
-     * @return 结果
+     * @param genTable info
+     * @return
      */
     void updateGenTable(GenTable genTable);
 
     /**
-     * 删除业务信息
+     * Delete info
      *
-     * @param tableIds 需要删除的表数据ID
-     * @return 结果
+     * @param tableIds need to Delete dataID
+     * @return
      */
     void deleteGenTableByIds(Long[] tableIds);
 
     /**
-     * 导入表结构
+     * Import
      *
-     * @param tableList 导入表列表
+     * @param tableList Import
      */
     void importGenTable(List<GenTable> tableList);
 
     /**
-     * 预览代码
      *
-     * @param tableId 表编号
-     * @return 预览数据列表
+     *
+     * @param tableId
+     * @return data
      */
     Map<String, String> previewCode(Long tableId);
 
     /**
-     * 生成代码（下载方式）
+     * Generate ( )
      *
-     * @param tableName 表名称
-     * @return 数据
+     * @param tableName
+     * @return data
      */
     byte[] downloadCode(String tableName);
 
     /**
-     * 生成代码（自定义路径）
+     * Generate (Custom )
      *
-     * @param tableName 表名称
-     * @return 数据
+     * @param tableName
+     * @return data
      */
     void generatorCode(String tableName);
 
     /**
-     * 同步数据库
+     * data
      *
-     * @param tableName 表名称
+     * @param tableName
      */
     void synchDb(String tableName);
 
     /**
-     * 批量生成代码（下载方式）
+     * Generate ( )
      *
-     * @param tableNames 表数组
-     * @return 数据
+     * @param tableNames array
+     * @return data
      */
     byte[] downloadCode(String[] tableNames);
 
     /**
-     * 修改保存参数校验
+     * Update parameterValidate
      *
-     * @param genTable 业务信息
+     * @param genTable info
      */
     void validateEdit(GenTable genTable);
 }

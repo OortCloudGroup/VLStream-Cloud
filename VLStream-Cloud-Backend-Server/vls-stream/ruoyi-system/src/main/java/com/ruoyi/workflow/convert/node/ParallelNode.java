@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,7 +14,7 @@ import java.util.List;
 
 /**
  * @Title: ParallelNode
- * @description：并行节点
+ * @description: node
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -22,7 +23,7 @@ public class ParallelNode extends BranchNode {
 
     @Override
     public List<FlowElement> convert() {
-        // 待添加
+        //
         return null;
     }
 }

@@ -26,7 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * 系统访问记录
+ * record
  *
  * @author Lion Li
  */
@@ -39,7 +39,7 @@ public class SysLogininforController extends BaseController {
     private final ISysLogininforService logininforService;
 
     /**
-     * 获取系统访问记录列表
+     * Get record
      */
     @SaCheckPermission("monitor:logininfor:list")
     @GetMapping("/list")
@@ -48,7 +48,7 @@ public class SysLogininforController extends BaseController {
     }
 
     /**
-     * 导出系统访问记录列表
+     * Export record
      */
     @Log(title = "登录日志", businessType = BusinessType.EXPORT)
     @SaCheckPermission("monitor:logininfor:export")
@@ -59,8 +59,8 @@ public class SysLogininforController extends BaseController {
     }
 
     /**
-     * 批量删除登录日志
-     * @param infoIds 日志ids
+     * Batch delete log
+     * @param infoIds logids
      */
     @SaCheckPermission("monitor:logininfor:remove")
     @Log(title = "登录日志", businessType = BusinessType.DELETE)
@@ -70,7 +70,7 @@ public class SysLogininforController extends BaseController {
     }
 
     /**
-     * 清理系统访问记录
+     * record
      */
     @SaCheckPermission("monitor:logininfor:remove")
     @Log(title = "登录日志", businessType = BusinessType.CLEAN)

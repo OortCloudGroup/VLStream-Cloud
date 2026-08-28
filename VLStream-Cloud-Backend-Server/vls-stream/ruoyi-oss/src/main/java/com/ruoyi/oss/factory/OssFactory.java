@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -20,7 +21,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 文件上传Factory
+ * Factory
  *
  * @author Lion Li
  */
@@ -30,10 +31,10 @@ public class OssFactory {
     private static final Map<String, OssClient> CLIENT_CACHE = new ConcurrentHashMap<>();
 
     /**
-     * 获取默认实例
+     * Get instance
      */
     public static OssClient instance() {
-        // 获取redis 默认类型
+        // Get redis
         String configKey = RedisUtils.getCacheObject(OssConstant.DEFAULT_CONFIG_KEY);
         if (StringUtils.isEmpty(configKey)) {
             throw new OssException("文件存储服务类型无法找到!");
@@ -42,7 +43,7 @@ public class OssFactory {
     }
 
     /**
-     * 根据类型获取实例
+     * Get instance
      */
     public static OssClient instance(String configKey) {
         String json = CacheUtils.get(CacheNames.SYS_OSS_CONFIG, configKey);
@@ -56,7 +57,7 @@ public class OssFactory {
             log.info("创建OSS实例 key => {}", configKey);
             return CLIENT_CACHE.get(configKey);
         }
-        // 配置不相同则重新构建
+        // configuration new Build
         if (!client.checkPropertiesSame(properties)) {
             CLIENT_CACHE.put(configKey, new OssClient(configKey, properties));
             log.info("重载OSS实例 key => {}", configKey);

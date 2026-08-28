@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { loadRemoteScript } from '~@/utils/util'
 import { BEAUTIFIER_PATH } from '~@/utils/config'
 
@@ -71,7 +76,7 @@ export default function loadBeautifier(callback) {
 
   loadRemoteScript(BEAUTIFIER_PATH, () => {
     // eslint-disable-next-line no-undef
-    beautifierObj = beautifier // beautifier为全局对象
+    beautifierObj = beautifier // beautifier to full object
     callback(beautifierObj)
   })
 }

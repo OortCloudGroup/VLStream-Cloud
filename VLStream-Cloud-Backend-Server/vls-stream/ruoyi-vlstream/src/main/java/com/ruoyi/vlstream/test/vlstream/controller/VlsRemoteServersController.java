@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -33,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 远程服务器配置表 控制器
+ * service configuration control
  *
  * @author Oort
  * @since 2025-12-23
@@ -47,7 +48,7 @@ public class VlsRemoteServersController extends BladeController {
 	private final IVlsRemoteServersService vlsRemoteServersService;
 
 	/**
-	 * 远程服务器配置表 详情
+	 * service configuration
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -58,7 +59,7 @@ public class VlsRemoteServersController extends BladeController {
 	}
 
 	/**
-	 * 远程服务器配置表 分页
+	 * service configuration
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -70,7 +71,7 @@ public class VlsRemoteServersController extends BladeController {
 
 
 	/**
-	 * 远程服务器配置表 自定义分页
+	 * service configuration Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -81,7 +82,7 @@ public class VlsRemoteServersController extends BladeController {
 	}
 
 	/**
-	 * 远程服务器配置表 新增
+	 * service configuration Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -91,7 +92,7 @@ public class VlsRemoteServersController extends BladeController {
 	}
 
 	/**
-	 * 远程服务器配置表 修改
+	 * service configuration Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -101,7 +102,7 @@ public class VlsRemoteServersController extends BladeController {
 	}
 
 	/**
-	 * 远程服务器配置表 新增或修改
+	 * service configuration Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -111,7 +112,7 @@ public class VlsRemoteServersController extends BladeController {
 	}
 
 	/**
-	 * 远程服务器配置表 删除
+	 * service configuration Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -121,7 +122,7 @@ public class VlsRemoteServersController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsRemoteServers")
 	@ApiOperationSupport(order = 8)

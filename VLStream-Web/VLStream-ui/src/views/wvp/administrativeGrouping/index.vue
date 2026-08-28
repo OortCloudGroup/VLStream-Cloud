@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="group-management tenant_Page draHeaPB">
     <el-tabs v-model="activeName" class="tenanat-tabs" @tab-change="handleClick">
@@ -507,7 +512,7 @@ function resetRegion() {
   proxy.resetForm("formRegionRef");
 }
 
-/** 取消按钮 */
+/* * button */
 function cancel() {
   openRegion.value = false;
   openGroup.value = false;

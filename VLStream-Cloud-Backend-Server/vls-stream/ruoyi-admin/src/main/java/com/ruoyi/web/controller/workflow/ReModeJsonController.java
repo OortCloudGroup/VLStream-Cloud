@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -29,9 +30,9 @@ import javax.validation.constraints.NotNull;
 import java.util.Arrays;
 import java.util.List;
 /**
- * 流程图JSON
+ * workflow JSON
  *
- * @author 雷超群
+ * @author
  * @date 2024-11-02
  */
 @Validated
@@ -43,7 +44,7 @@ public class ReModeJsonController extends BaseController {
     private final IReModeJsonService iReModeJsonService;
 
     /**
-     * 查询流程图JSON列表
+     * Query workflow JSON list
      */
     @SaCheckPermission("work:modeJson:list")
     @GetMapping("/list")
@@ -52,7 +53,7 @@ public class ReModeJsonController extends BaseController {
     }
 
     /**
-     * 导出流程图JSON列表
+     * Export workflow JSON
      */
     @SaCheckPermission("work:modeJson:export")
     @Log(title = "流程图JSON", businessType = BusinessType.EXPORT)
@@ -63,9 +64,9 @@ public class ReModeJsonController extends BaseController {
     }
 
     /**
-     * 获取流程图JSON详细信息
+     * Get workflow JSON info
      *
-     * @param modelId 主键
+     * @param modelId primary key
      */
     @SaCheckPermission("work:modeJson:getInfo")
     @GetMapping("/{modelId}")
@@ -75,7 +76,7 @@ public class ReModeJsonController extends BaseController {
     }
 
     /**
-     * 新增流程图JSON
+     * Add workflow JSON
      */
     @SaCheckPermission("work:modeJson:add")
     @Log(title = "流程图JSON", businessType = BusinessType.INSERT)
@@ -86,7 +87,7 @@ public class ReModeJsonController extends BaseController {
     }
 
     /**
-     * 修改流程图JSON
+     * Update workflow JSON
      */
     @SaCheckPermission("work:modeJson:edit")
     @Log(title = "流程图JSON", businessType = BusinessType.UPDATE)
@@ -97,9 +98,9 @@ public class ReModeJsonController extends BaseController {
     }
 
     /**
-     * 删除流程图JSON
+     * Delete workflow JSON
      *
-     * @param modelIds 主键串
+     * @param modelIds primary key
      */
     @SaCheckPermission("work:modeJson:remove")
     @Log(title = "流程图JSON", businessType = BusinessType.DELETE)

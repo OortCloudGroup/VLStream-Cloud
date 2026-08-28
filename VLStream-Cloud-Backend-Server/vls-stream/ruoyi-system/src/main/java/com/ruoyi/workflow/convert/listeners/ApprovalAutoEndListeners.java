@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 自动拒绝监听器
+ * listener
  */
 @Component
 public class ApprovalAutoEndListeners  implements TaskListener{
@@ -38,13 +39,13 @@ public class ApprovalAutoEndListeners  implements TaskListener{
         RepositoryService repositoryService = processEngineConfiguration.getRepositoryService();
 
         String processInstanceId = delegateTask.getProcessInstanceId();
-        // 添加审批意见
+        // approval
         taskService.addComment(delegateTask.getId(), processInstanceId,
             FlowComment.REJECT.getType(),"系统自动拒绝");
-        // 设置流程状态为已终结
+        // Set workflow to already
         runtimeService.setVariable(processInstanceId, ProcessConstants.PROCESS_STATUS_KEY,
             ProcessStatus.TERMINATED.getStatus());
-        // 将拒绝节点的处理人信息存储到流程变量中
+        // node Process info workflow variable in
         runtimeService.setVariable(processInstanceId, "rejectAssignee", "系统自动拒绝");
         runtimeService.setVariable(processInstanceId, "rejectTaskId", delegateTask.getId());
         runtimeService.setVariable(processInstanceId, "rejectTaskName", delegateTask.getName());
@@ -59,7 +60,7 @@ public class ApprovalAutoEndListeners  implements TaskListener{
             .collect(Collectors.toList());
         runtimeService.createChangeActivityStateBuilder().processInstanceId(delegateTask.getProcessInstanceId())
             .moveExecutionsToSingleActivityId(executionIds,endEvent.getId());
-        // 替换原有移动执行实例的代码
+        // Replace Execute instance
         runtimeService.deleteProcessInstance(processInstanceId, "系统自动拒绝");
     }
 }

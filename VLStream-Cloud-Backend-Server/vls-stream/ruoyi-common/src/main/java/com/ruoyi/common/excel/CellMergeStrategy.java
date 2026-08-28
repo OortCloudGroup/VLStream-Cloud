@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 列值重复合并策略
+ * value
  *
  * @author Lion Li
  */
@@ -58,7 +59,7 @@ public class CellMergeStrategy extends AbstractMergeStrategy {
 		}
 		Class<?> clazz = list.get(0).getClass();
 		Field[] fields = clazz.getDeclaredFields();
-		// 有注解的字段
+		// field
 		List<Field> mergeFields = new ArrayList<>();
 		List<Integer> mergeFieldsIndex = new ArrayList<>();
 		for (int i = 0; i < fields.length; i++) {
@@ -69,10 +70,10 @@ public class CellMergeStrategy extends AbstractMergeStrategy {
 				mergeFieldsIndex.add(cm.index() == -1 ? i : cm.index());
 			}
 		}
-		// 行合并开始下标
+		// start
 		int rowIndex = hasTitle ? 1 : 0;
 		Map<Field, RepeatCell> map = new HashMap<>();
-		// 生成两两合并单元格
+		// Generate
 		for (int i = 0; i < list.size(); i++) {
 			for (int j = 0; j < mergeFields.size(); j++) {
 				Field field = mergeFields.get(j);
@@ -88,7 +89,7 @@ public class CellMergeStrategy extends AbstractMergeStrategy {
 					RepeatCell repeatCell = map.get(field);
 					Object cellValue = repeatCell.getValue();
 					if (cellValue == null || "".equals(cellValue)) {
-						// 空值跳过不合并
+						// null / empty value
 						continue;
 					}
 					if (!cellValue.equals(val)) {

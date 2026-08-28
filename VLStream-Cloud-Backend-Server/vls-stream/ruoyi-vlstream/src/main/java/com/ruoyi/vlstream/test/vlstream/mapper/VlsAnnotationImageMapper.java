@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.AnnotationImageVO;
 import java.util.List;
 
 /**
- * 标注图片信息表 Mapper 接口
+ * annotation info Mapper interface
  *
  * @author Oort
  * @since 2025-12-23
@@ -24,24 +25,24 @@ import java.util.List;
 public interface VlsAnnotationImageMapper extends BaseMapper<AnnotationImage> {
 
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsAnnotationImage 查询参数
+	 * @param page parameter
+	 * @param vlsAnnotationImage Query parameter
 	 * @return List<VlsAnnotationImageVO>
 	 */
 	List<AnnotationImageVO> selectVlsAnnotationImagePage(IPage page, AnnotationImageVO vlsAnnotationImage);
 
 	/**
-	 * 获取导出数据
+	 * Get Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsAnnotationImageExcel>
 	 */
 	List<VlsAnnotationImageExcel> exportVlsAnnotationImage(@Param("ew") Wrapper<AnnotationImage> queryWrapper);
 
 	/**
-	 * 结果映射：数据库字段到Java属性的映射
+	 * : data field Javaproperty
 	 */
 	@Results(id = "AnnotationImageResultMap", value = {
 		@Result(property = "id", column = "id"),
@@ -61,7 +62,7 @@ public interface VlsAnnotationImageMapper extends BaseMapper<AnnotationImage> {
 	AnnotationImage selectById(Long id);
 
 	/**
-	 * 插入图片记录
+	 * record
 	 */
 	@Insert("INSERT INTO vls_annotation_image (annotation_id, image_name, original_name, local_path, " +
 		"file_size, is_imported, import_time, create_time, update_time) " +
@@ -71,21 +72,21 @@ public interface VlsAnnotationImageMapper extends BaseMapper<AnnotationImage> {
 	int insert(AnnotationImage image);
 
 	/**
-	 * 根据数据集ID查询图片列表 (兼容旧接口，实际使用annotation_id)
+	 * datasetIDQuery list ( old interface, annotation_id)
 	 */
 	@ResultMap("AnnotationImageResultMap")
 	@Select("SELECT * FROM vls_annotation_image WHERE annotation_id = #{annotationId} ORDER BY create_time DESC")
 	List<AnnotationImage> selectByDatasetId(Long annotationId);
 
 	/**
-	 * 根据标注项目ID查询图片列表
+	 * annotation item IDQuery list
 	 */
 	@ResultMap("AnnotationImageResultMap")
 	@Select("SELECT * FROM vls_annotation_image WHERE annotation_id = #{annotationId} AND is_deleted = 0 ORDER BY create_time DESC")
 	List<AnnotationImage> selectByAnnotationId(@Param("annotationId") Long annotationId);
 
 	/**
-	 * 更新图片信息
+	 * new info
 	 */
 	@Update("UPDATE vls_annotation_image SET " +
 		"image_name = #{imageName}, original_name = #{originalName}, local_path = #{localPath}, " +
@@ -97,25 +98,25 @@ public interface VlsAnnotationImageMapper extends BaseMapper<AnnotationImage> {
 	int updateById(AnnotationImage image);
 
 	/**
-	 * 删除图片记录
+	 * Delete record
 	 */
 	@Delete("DELETE FROM vls_annotation_image WHERE id = #{id}")
 	int deleteById(Long id);
 
 	/**
-	 * 根据数据集ID删除所有图片 (兼容旧接口，实际使用annotation_id)
+	 * datasetIDDelete all ( old interface, annotation_id)
 	 */
 	@Delete("DELETE FROM vls_annotation_image WHERE annotation_id = #{datasetId}")
 	int deleteByDatasetId(Long datasetId);
 
 	/**
-	 * 统计数据集图片数量 (兼容旧接口，实际使用annotation_id)
+	 * dataset ( old interface, annotation_id)
 	 */
 	@Select("SELECT COUNT(*) FROM vls_annotation_image WHERE annotation_id = #{datasetId}")
 	int countByDatasetId(Long datasetId);
 
 	/**
-	 * 根据状态统计图片数量 (兼容旧接口，实际使用annotation_id)
+	 * ( old interface, annotation_id)
 	 */
 	@Select("SELECT COUNT(*) FROM vls_annotation_image WHERE annotation_id = #{datasetId} AND status = #{status}")
 	int countByDatasetIdAndStatus(@Param("datasetId") Long datasetId, @Param("status") String status);

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,36 +18,36 @@ import java.util.Optional;
 
 
 /**
- * 表单分类Service接口
+ * form Serviceinterface
  *
- * @author 雷超群
+ * @author
  * @date 2024-12-25
  */
 public interface IWfFormSynthesisService extends IService<WfFormSynthesis> {
 
     /**
-     * 查询表单分类
+     * Query form
      */
     WfFormSynthesisVo queryById(String categoryId);
 
 
     /**
-     * 查询表单分类列表
+     * Query form list
      */
     Optional<List<WfFormSynthesisVo>> queryList(WfFormSynthesisBo bo);
 
     /**
-     * 新增表单分类
+     * Add form
      */
     Boolean insertByBo(WfFormSynthesisBo bo);
 
     /**
-     * 修改表单分类
+     * Update form
      */
     Boolean updateByBo(WfFormSynthesisBo bo);
 
     /**
-     * 校验并批量删除表单分类信息
+     * Validate Batch delete form info
      */
     Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid);
 }

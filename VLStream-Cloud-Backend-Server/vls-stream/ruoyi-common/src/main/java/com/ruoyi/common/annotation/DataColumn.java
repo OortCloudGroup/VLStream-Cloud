@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -8,9 +9,9 @@ package com.ruoyi.common.annotation;
 import java.lang.annotation.*;
 
 /**
- * 数据权限
+ * data
  *
- * 一个注解只能对应一个模板
+ * only can
  *
  * @author Lion Li
  * @version 3.5.0
@@ -21,12 +22,12 @@ import java.lang.annotation.*;
 public @interface DataColumn {
 
     /**
-     * 占位符关键字
+     *
      */
     String[] key() default "deptName";
 
     /**
-     * 占位符替换值
+     * Replace value
      */
     String[] value() default "dept_id";
 

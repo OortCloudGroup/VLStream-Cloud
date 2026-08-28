@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2024-11-15 11:45:51
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -109,7 +114,7 @@ async function saveForm(data) {
       message: '保存成功'
     })
     dialogVisible.value = false
-    // // 路由返回上一层
+    // // layer
     // emits('close')
   } else {
     ElMessage.error(res.msg)
@@ -153,18 +158,18 @@ const queryParams = reactive({
 function getFormComponentList() {
   listForm(queryParams).then(response => {
     componentList.value = response.rows || []
-    // 生产环境组件可能异步加载，使用 nextTick + 重试
+    // component can Load , nextTick +
     setCustomFieldsWithRetry()
   })
 }
 
-// 重试机制：确保组件完全初始化后再调用
+// : component full Initialize after
 function setCustomFieldsWithRetry(retryCount = 0) {
   nextTick(() => {
     if (vfDesignerRef.value && typeof vfDesignerRef.value.setCustomFields === 'function') {
       vfDesignerRef.value.setCustomFields(componentList.value)
     } else if (retryCount < 3) {
-      // 最多重试3次，每次间隔300ms
+      // 3 , 300ms
       setTimeout(() => setCustomFieldsWithRetry(retryCount + 1), 300)
     } else {
       console.warn('VFormDesigner 组件初始化超时，setCustomFields 调用失败')
@@ -198,7 +203,7 @@ defineExpose({
 
 .form_designer_page{
   height: 100%;
-  /* 拖拽组件会选中文字的 */
+  /* component will in */
   user-select: none;
   &_header{
     height: 60px;

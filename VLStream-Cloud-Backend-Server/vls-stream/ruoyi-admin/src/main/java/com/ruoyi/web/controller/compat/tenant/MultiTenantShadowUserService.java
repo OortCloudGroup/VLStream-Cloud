@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -27,7 +28,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * 按 (tenant_id, platform_user_id) 创建并加载本地影子用户。
+ * (tenant_id, platform_user_id) Load sub user.
  */
 @Service
 public class MultiTenantShadowUserService {

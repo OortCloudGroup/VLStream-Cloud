@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -23,7 +24,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 字典 业务层处理
+ * dict layer Process
  *
  * @author Lion Li
  */
@@ -45,10 +46,10 @@ public class SysDictDataServiceImpl implements ISysDictDataService {
     }
 
     /**
-     * 根据条件分页查询字典数据
+     * Query dictdata
      *
-     * @param dictData 字典数据信息
-     * @return 字典数据集合信息
+     * @param dictData dictdatainfo
+     * @return dictdataset info
      */
     @Override
     public List<SysDictData> selectDictDataList(SysDictData dictData) {
@@ -60,11 +61,11 @@ public class SysDictDataServiceImpl implements ISysDictDataService {
     }
 
     /**
-     * 根据字典类型和字典键值查询字典数据信息
+     * dict type and dict value Query dictdatainfo
      *
-     * @param dictType  字典类型
-     * @param dictValue 字典键值
-     * @return 字典标签
+     * @param dictType dict type
+     * @param dictValue dict value
+     * @return dict
      */
     @Override
     public String selectDictLabel(String dictType, String dictValue) {
@@ -76,10 +77,10 @@ public class SysDictDataServiceImpl implements ISysDictDataService {
     }
 
     /**
-     * 根据字典数据ID查询信息
+     * dictdataIDQuery info
      *
-     * @param dictCode 字典数据ID
-     * @return 字典数据
+     * @param dictCode dictdataID
+     * @return dictdata
      */
     @Override
     public SysDictData selectDictDataById(Long dictCode) {
@@ -87,9 +88,9 @@ public class SysDictDataServiceImpl implements ISysDictDataService {
     }
 
     /**
-     * 批量删除字典数据信息
+     * Batch delete dictdatainfo
      *
-     * @param dictCodes 需要删除的字典数据ID
+     * @param dictCodes need to Delete dictdataID
      */
     @Override
     public void deleteDictDataByIds(Long[] dictCodes) {
@@ -101,10 +102,10 @@ public class SysDictDataServiceImpl implements ISysDictDataService {
     }
 
     /**
-     * 新增保存字典数据信息
+     * Add dictdatainfo
      *
-     * @param data 字典数据信息
-     * @return 结果
+     * @param data dictdatainfo
+     * @return
      */
     @CachePut(cacheNames = CacheNames.SYS_DICT, key = "#data.dictType")
     @Override
@@ -117,10 +118,10 @@ public class SysDictDataServiceImpl implements ISysDictDataService {
     }
 
     /**
-     * 修改保存字典数据信息
+     * Update dictdatainfo
      *
-     * @param data 字典数据信息
-     * @return 结果
+     * @param data dictdatainfo
+     * @return
      */
     @CachePut(cacheNames = CacheNames.SYS_DICT, key = "#data.dictType")
     @Override

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,7 +11,7 @@ import com.ruoyi.common.enums.LimitType;
 import java.lang.annotation.*;
 
 /**
- * 限流注解
+ *
  *
  * @author Lion Li
  */
@@ -19,28 +20,28 @@ import java.lang.annotation.*;
 @Documented
 public @interface RateLimiter {
     /**
-     * 限流key,支持使用Spring el表达式来动态获取方法上的参数值
-     * 格式类似于  #code.id #{#code}
+     * key, Spring el Get method parameter value
+     * #code.id #{#code}
      */
     String key() default "";
 
     /**
-     * 限流时间,单位秒
+     * ,
      */
     int time() default 60;
 
     /**
-     * 限流次数
+     *
      */
     int count() default 100;
 
     /**
-     * 限流类型
+     *
      */
     LimitType limitType() default LimitType.DEFAULT;
 
     /**
-     * 提示消息 支持国际化 格式为 {code}
+     * prompt / tip to {code}
      */
     String message() default "{rate.limiter.message}";
 }

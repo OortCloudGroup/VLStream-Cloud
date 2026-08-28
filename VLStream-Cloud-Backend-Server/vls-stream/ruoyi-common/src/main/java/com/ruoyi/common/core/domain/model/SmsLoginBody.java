@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,7 +11,7 @@ import lombok.Data;
 import javax.validation.constraints.NotBlank;
 
 /**
- * 短信登录对象
+ * object
  *
  * @author Lion Li
  */
@@ -19,13 +20,13 @@ import javax.validation.constraints.NotBlank;
 public class SmsLoginBody {
 
     /**
-     * 手机号
+     *
      */
     @NotBlank(message = "{user.phonenumber.not.blank}")
     private String phonenumber;
 
     /**
-     * 短信code
+     * code
      */
     @NotBlank(message = "{sms.code.not.blank}")
     private String smsCode;

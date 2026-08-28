@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -31,7 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 个人信息 业务处理
+ * info Process
  *
  * @author Lion Li
  */
@@ -45,7 +46,7 @@ public class SysProfileController extends BaseController {
     private final ISysOssService iSysOssService;
 
     /**
-     * 个人信息
+     * info
      */
     @GetMapping
     public R<Map<String, Object>> profile() {
@@ -58,7 +59,7 @@ public class SysProfileController extends BaseController {
     }
 
     /**
-     * 修改用户
+     * Update user
      */
     @Log(title = "个人信息", businessType = BusinessType.UPDATE)
     @PutMapping
@@ -81,10 +82,10 @@ public class SysProfileController extends BaseController {
     }
 
     /**
-     * 重置密码
      *
-     * @param newPassword 旧密码
-     * @param oldPassword 新密码
+     *
+     * @param newPassword old
+     * @param oldPassword new
      */
     @Log(title = "个人信息", businessType = BusinessType.UPDATE)
     @PutMapping("/updatePwd")
@@ -106,9 +107,9 @@ public class SysProfileController extends BaseController {
     }
 
     /**
-     * 头像上传
      *
-     * @param avatarfile 用户头像
+     *
+     * @param avatarfile user
      */
     @Log(title = "用户头像", businessType = BusinessType.UPDATE)
     @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

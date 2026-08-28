@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 设备配置查询请求API接口
+// deviceconfigurationQuery APIinterface
 export function configDownloadApi(query) {
     return request({
         url: `/api/device/config/query/${query.deviceId}/${query.configType}`,

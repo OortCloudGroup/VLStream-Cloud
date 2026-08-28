@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="user-management tenant_Page draHeaPB">
     <div class="tenant_content">
@@ -99,7 +104,7 @@
       </div>
     </div>
 
-  <!-- 新增/编辑用户对话框 -->
+  <!-- Add / user -->
   <el-dialog
     v-model="dialogVisible"
     :title="dialogTitle"
@@ -222,7 +227,7 @@
     </template>
   </el-dialog>
 
-  <!-- 分配角色单独对话框 -->
+  <!-- role -->
   <el-dialog
     v-model="grantVisible"
     title="分配角色"
@@ -263,15 +268,15 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { clacPXToVW } from '@/utils/index'
-import { 
-  getUserList, 
+import {
+  getUserList,
   getUserDetail,
-  submitUser, 
+  submitUser,
   updateUser,
-  removeUsers, 
-  grantUserRoles, 
-  resetUserPassword, 
-  unlockUsers 
+  removeUsers,
+  grantUserRoles,
+  resetUserPassword,
+  unlockUsers
 } from '@/api/system/user'
 import { getRoleTree } from '@/api/system/role'
 import { getDeptTree } from '@/api/system/dept'
@@ -280,7 +285,7 @@ import { getPayload, getRecords, getTotal, normalizeTree, joinIds, isSuccess } f
 
 const SINGLE_TENANT_ID = '000000'
 
-// 搜索过滤与加载状态
+// and Load
 const loading = ref(false)
 const saving = ref(false)
 const dialogVisible = ref(false)
@@ -299,20 +304,20 @@ const toolbarButtonList = computed(() => [
   { name: '分配角色', svg: 'more', clickFn: handleToolbarGrant }
 ])
 
-// 分页数据
+// data
 const pagination = reactive({
   current: 1,
   size: 10,
   total: 0
 })
 
-// 过滤参数
+// parameter
 const queryParams = reactive({
   account: '',
   realName: ''
 })
 
-// 表单对象与表单校验规则
+// formobject and formValidate
 const formRef = ref()
 const form = ref({
   account: '',
@@ -333,14 +338,14 @@ const rules = {
   realName: [{ required: true, message: '请输入真实姓名', trigger: 'blur' }]
 }
 
-// 选项数据
+// item data
 const options = reactive({
   roles: [],
   depts: [],
   posts: []
 })
 
-// 独立分配角色弹窗数据
+// roledialogdata
 const grantVisible = ref(false)
 const grantLoading = ref(false)
 const activeUser = ref(null)
@@ -349,7 +354,7 @@ const grantForm = reactive({
 })
 
 /**
- * 异步加载下拉/树形选择器选项，包括角色树、部门树、岗位列表
+ * Load / item , role 、department 、
  */
 async function loadOptions() {
   try {
@@ -367,7 +372,7 @@ async function loadOptions() {
 }
 
 /**
- * 异步查询分页用户列表，提取记录并绑定到表格数据
+ * Query user list, record tabledata
  */
 async function loadData() {
   loading.value = true
@@ -389,7 +394,7 @@ async function loadData() {
 }
 
 /**
- * 处理搜索查询，将当前页重置为 1 并加载数据
+ * Process Query , current to 1 Load data
  */
 function handleSearch() {
   pagination.current = 1
@@ -397,7 +402,7 @@ function handleSearch() {
 }
 
 /**
- * 重置搜索过滤项，将当前页重置为 1 并重新查询列表
+ * item , current to 1 new Query list
  */
 function handleReset() {
   queryParams.account = ''
@@ -437,8 +442,8 @@ function handleToolbarGrant() {
 }
 
 /**
- * 分页大小改变时重新加载数据
- * @param {Number} size 分页大小
+ * new Load data
+ * @param {Number} size
  */
 function handleSizeChange(size) {
   pagination.size = size
@@ -447,8 +452,8 @@ function handleSizeChange(size) {
 }
 
 /**
- * 当前页改变时重新加载数据
- * @param {Number} current 当前页码
+ * current new Load data
+ * @param {Number} current current
  */
 function handleCurrentChange(current) {
   pagination.current = current
@@ -456,15 +461,15 @@ function handleCurrentChange(current) {
 }
 
 /**
- * 处理表格复选框选中状态变化
- * @param {Array} rows 选中的行数据
+ * Process table in
+ * @param {Array} rows in data
  */
 function handleSelectionChange(rows) {
   selectedRows.value = rows
 }
 
 /**
- * 打开新增用户弹窗
+ * Add userdialog
  */
 function handleCreate() {
   dialogTitle.value = '新增用户'
@@ -485,8 +490,8 @@ function handleCreate() {
 }
 
 /**
- * 打开编辑用户弹窗，先从接口拉取该用户详细信息进行精准回显
- * @param {Object} row 用户行数据
+ * userdialog, from interface user info
+ * @param {Object} row user data
  */
 async function handleEdit(row) {
   if (!row?.id) return
@@ -496,7 +501,7 @@ async function handleEdit(row) {
     if (payload) {
       form.value = { ...payload }
     } else {
-      // 降级使用行数据
+      // data
       form.value = { ...row }
     }
     dialogTitle.value = '编辑用户'
@@ -510,7 +515,7 @@ async function handleEdit(row) {
 }
 
 /**
- * 确定并提交新增或编辑用户的表单，校验通过后调用后台 submit 接口
+ * Add user form, Validate after after submit interface
  */
 async function handleSaveSubmit() {
   if (!formRef.value) return
@@ -542,9 +547,9 @@ async function handleSaveSubmit() {
 }
 
 /**
- * 执行通用删除操作，带二次确认提示
- * @param {String} ids 逗号分隔的用户ID列表
- * @param {String} msg 确认消息提示文案
+ * Execute Delete operation, prompt / tip
+ * @param {String} ids user ID
+ * @param {String} msg prompt / tip
  */
 function executeRemove(ids, msg) {
   ElMessageBox.confirm(msg, '提示', {
@@ -568,15 +573,15 @@ function executeRemove(ids, msg) {
 }
 
 /**
- * 行内单项删除操作
- * @param {Object} row 待删除的用户行
+ * item Delete operation
+ * @param {Object} row Delete user
  */
 function handleSingleRemove(row) {
   executeRemove(String(row.id), `确定删除用户 [${row.realName || row.account}] 吗？`)
 }
 
 /**
- * 批量删除已勾选的所有用户行
+ * Batch delete already all user
  */
 function handleBatchRemove() {
   if (selectedRows.value.length === 0) {
@@ -588,8 +593,8 @@ function handleBatchRemove() {
 }
 
 /**
- * 打开角色分配弹窗，回显当前已持有的角色ID
- * @param {Object} row 目标用户数据
+ * role dialog, current already role ID
+ * @param {Object} row userdata
  */
 function handleOpenGrant(row) {
   activeUser.value = row
@@ -598,7 +603,7 @@ function handleOpenGrant(row) {
 }
 
 /**
- * 提交角色分配修改，调用后端 /system/user/authRole 接口
+ * role Update , after /system/user/authRole interface
  */
 async function handleGrantSubmit() {
   if (!activeUser.value?.id) return
@@ -623,8 +628,8 @@ async function handleGrantSubmit() {
 }
 
 /**
- * 提示确认并重置指定用户的密码
- * @param {Object} row 目标用户数据
+ * prompt / tip user
+ * @param {Object} row userdata
  */
 function handleResetPassword(row) {
   ElMessageBox.confirm(`确定重置用户 [${row.realName || row.account}] 的密码为默认密码吗？`, '提示', {
@@ -647,8 +652,8 @@ function handleResetPassword(row) {
 }
 
 /**
- * 提示确认并解锁指定的被锁账号
- * @param {Object} row 目标用户数据
+ * prompt / tip
+ * @param {Object} row userdata
  */
 function handleUnlock(row) {
   ElMessageBox.confirm(`确定解锁用户 [${row.realName || row.account}] 吗？`, '提示', {
@@ -670,7 +675,7 @@ function handleUnlock(row) {
   }).catch(() => {})
 }
 
-// 挂载时加载字典/配置项及用户列表数据
+// Load dict/configuration item user data
 onMounted(() => {
   loadOptions()
   loadData()

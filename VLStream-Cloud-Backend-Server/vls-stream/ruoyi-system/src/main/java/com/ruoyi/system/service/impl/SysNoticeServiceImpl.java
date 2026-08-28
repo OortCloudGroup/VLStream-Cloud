@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -20,7 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 公告 服务层实现
+ * service layer
  *
  * @author Lion Li
  */
@@ -41,10 +42,10 @@ public class SysNoticeServiceImpl implements ISysNoticeService {
     }
 
     /**
-     * 查询公告信息
+     * Query info
      *
-     * @param noticeId 公告ID
-     * @return 公告信息
+     * @param noticeId ID
+     * @return info
      */
     @Override
     public SysNotice selectNoticeById(Long noticeId) {
@@ -52,10 +53,10 @@ public class SysNoticeServiceImpl implements ISysNoticeService {
     }
 
     /**
-     * 查询公告列表
+     * Query list
      *
-     * @param notice 公告信息
-     * @return 公告集合
+     * @param notice info
+     * @return collection
      */
     @Override
     public List<SysNotice> selectNoticeList(SysNotice notice) {
@@ -66,10 +67,10 @@ public class SysNoticeServiceImpl implements ISysNoticeService {
     }
 
     /**
-     * 新增公告
+     * Add
      *
-     * @param notice 公告信息
-     * @return 结果
+     * @param notice info
+     * @return
      */
     @Override
     public int insertNotice(SysNotice notice) {
@@ -77,10 +78,10 @@ public class SysNoticeServiceImpl implements ISysNoticeService {
     }
 
     /**
-     * 修改公告
+     * Update
      *
-     * @param notice 公告信息
-     * @return 结果
+     * @param notice info
+     * @return
      */
     @Override
     public int updateNotice(SysNotice notice) {
@@ -88,10 +89,10 @@ public class SysNoticeServiceImpl implements ISysNoticeService {
     }
 
     /**
-     * 删除公告对象
+     * Delete object
      *
-     * @param noticeId 公告ID
-     * @return 结果
+     * @param noticeId ID
+     * @return
      */
     @Override
     public int deleteNoticeById(Long noticeId) {
@@ -99,10 +100,10 @@ public class SysNoticeServiceImpl implements ISysNoticeService {
     }
 
     /**
-     * 批量删除公告信息
+     * Batch delete info
      *
-     * @param noticeIds 需要删除的公告ID
-     * @return 结果
+     * @param noticeIds need to Delete ID
+     * @return
      */
     @Override
     public int deleteNoticeByIds(Long[] noticeIds) {

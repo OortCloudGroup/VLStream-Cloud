@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -21,7 +22,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 /**
- * XSS过滤处理
+ * XSS Process
  *
  * @author ruoyi
  */
@@ -40,7 +41,7 @@ public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper {
             int length = values.length;
             String[] escapesValues = new String[length];
             for (int i = 0; i < length; i++) {
-                // 防xss攻击和过滤前后空格
+                // xss and before after null / empty
                 escapesValues[i] = HtmlUtil.cleanHtmlTag(values[i]).trim();
             }
             return escapesValues;
@@ -50,18 +51,18 @@ public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper {
 
     @Override
     public ServletInputStream getInputStream() throws IOException {
-        // 非json类型，直接返回
+        // non-json ,
         if (!isJsonRequest()) {
             return super.getInputStream();
         }
 
-        // 为空，直接返回
+        // is empty,
         String json = StrUtil.str(IoUtil.readBytes(super.getInputStream(), false), StandardCharsets.UTF_8);
         if (StringUtils.isEmpty(json)) {
             return super.getInputStream();
         }
 
-        // xss过滤
+        // xss
         json = HtmlUtil.cleanHtmlTag(json).trim();
         byte[] jsonBytes = json.getBytes(StandardCharsets.UTF_8);
         final ByteArrayInputStream bis = IoUtil.toStream(jsonBytes);
@@ -93,7 +94,7 @@ public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper {
     }
 
     /**
-     * 是否是Json请求
+     * whether is Json
      */
     public boolean isJsonRequest() {
         String header = super.getHeader(HttpHeaders.CONTENT_TYPE);

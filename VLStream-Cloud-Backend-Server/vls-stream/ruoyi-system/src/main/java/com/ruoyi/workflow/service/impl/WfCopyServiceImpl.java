@@ -42,7 +42,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 流程抄送Service业务层处理
+ * workflow Service layer Process
  *
  * @author KonBAI
  * @date 2022-05-19
@@ -60,10 +60,10 @@ public class WfCopyServiceImpl extends FlowServiceFactory implements IWfCopyServ
     private final SysUserServiceImpl sysUserServiceImpl;
 
     /**
-     * 查询流程抄送
+     * Query workflow
      *
-     * @param copyId 流程抄送主键
-     * @return 流程抄送
+     * @param copyId workflow primary key
+     * @return workflow
      */
     @Override
     public WfCopyVo queryById(Long copyId) {
@@ -71,11 +71,11 @@ public class WfCopyServiceImpl extends FlowServiceFactory implements IWfCopyServ
     }
 
     /**
-     * 查询流程抄送列表
+     * Query workflow list
      *
-     * @param bo      流程抄送
+     * @param bo workflow
      * @param sysUser
-     * @return 流程抄送
+     * @return workflow
      */
     @Override
     public TableDataInfo<WfCopyVo> selectPageList(WfCopyBo bo, PageQuery pageQuery, SysUser sysUser) {
@@ -91,7 +91,7 @@ public class WfCopyServiceImpl extends FlowServiceFactory implements IWfCopyServ
                 lqw.in(WfCopy::getCategoryId, appList);
             }
         }
-        // 如果 processQuery 指定获取全部综合分类
+        // if processQuery Get full
         else if (Boolean.TRUE.equals(bo.getWfSynthesisAll())) {
             List<String> wfSynthesisList = wfSynthesisService.list()
                                                              .stream()
@@ -104,7 +104,7 @@ public class WfCopyServiceImpl extends FlowServiceFactory implements IWfCopyServ
         if (ObjectUtil.isNotNull(bo.getProStartBeginTime()) && ObjectUtil.isNotNull(bo.getProStartEndTime())) {
             Date instanceBeginTime = bo.getProStartBeginTime();
             Date instanceEndTime = bo.getProStartEndTime();
-            // 使用ProcessInstanceQuery筛选出符合条件的流程实例ID
+            // ProcessInstanceQuery workflow instance ID
             ProcessInstanceQuery processInstanceQuery = runtimeService.createProcessInstanceQuery()
                 .processInstanceTenantId(sysUser.getTenantId())
                 .startedAfter(instanceBeginTime)
@@ -133,10 +133,10 @@ public class WfCopyServiceImpl extends FlowServiceFactory implements IWfCopyServ
     }
 
     /**
-     * 查询流程抄送列表
+     * Query workflow list
      *
-     * @param bo 流程抄送
-     * @return 流程抄送
+     * @param bo workflow
+     * @return workflow
      */
     @Override
     public List<WfCopyVo> selectList(WfCopyBo bo) {
@@ -156,7 +156,7 @@ public class WfCopyServiceImpl extends FlowServiceFactory implements IWfCopyServ
 //    @Override
 //    public Boolean makeCopy(WfTaskBo taskBo, SysUser sysUser) {
 //        if (StringUtils.isBlank(taskBo.getCopyUserIds())) {
-//            // 若抄送用户为空，则不需要处理，返回成功
+// // user is empty, need to Process , successfully
 //            return true;
 //        }
 //        HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
@@ -182,7 +182,7 @@ public class WfCopyServiceImpl extends FlowServiceFactory implements IWfCopyServ
 //            copyList.add(copy);
 //        }
 //
-//        //判断抄送用户是否需要消息推送
+// //Check userwhether need to Push
 //        if (taskBo.isPushMessage()) {
 ////            wfTaskService.sendMessage(true,taskBo.getCopyUserIds());
 //            Task task = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId()).processInstanceId(taskBo.getProcInsId()).orderByTaskCreateTime().desc().singleResult();
@@ -202,7 +202,7 @@ public class WfCopyServiceImpl extends FlowServiceFactory implements IWfCopyServ
 
     public Boolean makeCopy(WfTaskBo taskBo, SysUser sysUser) {
         if (StringUtils.isBlank(taskBo.getCopyUserIds())) {
-            // 若抄送用户为空，则不需要处理，返回成功
+            // user is empty, need to Process , successfully
             return true;
         }
         HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
@@ -225,7 +225,7 @@ public class WfCopyServiceImpl extends FlowServiceFactory implements IWfCopyServ
             copy.setUserId(id);
             copy.setOriginatorId(originatorId);
             copy.setOriginatorName(originatorName);
-            // 获取分类
+            // Get
             String processDefinitionId = historicProcessInstance.getProcessDefinitionId();
             ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionTenantId(sysUser.getTenantId())
@@ -233,7 +233,7 @@ public class WfCopyServiceImpl extends FlowServiceFactory implements IWfCopyServ
                 .singleResult();
             copy.setCategoryId(processDefinition.getCategory());
             copyList.add(copy);
-            //判断抄送用户是否需要消息推送
+            // Check userwhether need to Push
 //            if (taskBo.isPushMessage()) {
 //            wfTaskService.sendMessage(true, taskBo.getCopyUserIds());
 //                Task task = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId()).processInstanceId(taskBo.getProcInsId()).orderByTaskCreateTime().desc().singleResult();

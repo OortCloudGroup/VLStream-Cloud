@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 流程分类Service业务层处理
+ * workflow Service layer Process
  *
  * @author KonBAI
  * @date 2022-01-15
@@ -77,16 +78,16 @@ public class WfCategoryServiceImpl implements IWfCategoryService {
     @Override
     public int deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
         if(isValid){
-            //TODO 做一些业务上的校验,判断是否需要校验
+            // TODO Validate ,Check whether need to Validate
         }
         return baseMapper.deleteBatchIds(ids);
     }
 
     /**
-     * 校验分类编码是否唯一
+     * Validate whether
      *
-     * @param category 流程分类
-     * @return 结果
+     * @param category workflow
+     * @return
      */
     @Override
     public boolean checkCategoryCodeUnique(WfCategory category) {

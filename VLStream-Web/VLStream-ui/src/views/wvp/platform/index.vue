@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="tenant_Page draHeaPB">
     <div class="tenant_content">
@@ -397,7 +402,7 @@ function getList() {
   })
 }
 
-/** 搜索按钮操作 */
+/* * buttonoperation */
 function searchResetFn(val) {
   queryParams.value.page = 1;
   queryParams.value.query = val.query || undefined;
@@ -437,7 +442,7 @@ function rtcpCheckBoxChange(result) {
   }
 }
 
-/** 取消按钮 */
+/* * button */
 function cancel() {
   open.value = false;
   reset();
@@ -470,7 +475,7 @@ function moreClick(command, row) {
   }
 }
 
-/** 提交按钮 */
+/* * button */
 function submitForm() {
   proxy.$refs["formRef"].validate(valid => {
     if (valid) {

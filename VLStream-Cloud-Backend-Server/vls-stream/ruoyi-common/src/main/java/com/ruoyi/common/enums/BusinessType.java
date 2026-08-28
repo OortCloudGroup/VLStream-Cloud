@@ -7,63 +7,63 @@
 package com.ruoyi.common.enums;
 
 /**
- * 业务操作类型
+ * operation
  *
  * @author ruoyi
  */
 public enum BusinessType {
     /**
-     * 其它
+     *
      */
     OTHER,
 
     /**
-     * 新增
+     * Add
      */
     INSERT,
 
     /**
-     * 复制
+     *
      */
     COPY,
 
     /**
-     * 修改
+     * Update
      */
     UPDATE,
 
     /**
-     * 删除
+     * Delete
      */
     DELETE,
 
     /**
-     * 授权
+     *
      */
     GRANT,
 
     /**
-     * 导出
+     * Export
      */
     EXPORT,
 
     /**
-     * 导入
+     * Import
      */
     IMPORT,
 
     /**
-     * 强退
+     *
      */
     FORCE,
 
     /**
-     * 生成代码
+     * Generate
      */
     GENCODE,
 
     /**
-     * 清空数据
+     * null / empty data
      */
     CLEAN,
 }

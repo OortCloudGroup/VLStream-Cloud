@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,10 +18,10 @@ import org.springframework.stereotype.Component;
 public class AutoSkipNullAssigneeListener implements TaskListener {
     @Override
     public void notify(DelegateTask delegateTask) {
-        // 直接从 DelegateTask 上拿分配人
+        // from DelegateTask
         String assignee = delegateTask.getAssignee();
 
-        // 2. 没有候选用户和候选组
+        // 2. user and candidate group
         boolean noCandidateUsers = delegateTask.getCandidates()
                                                .stream().noneMatch(identityLink -> "candidate".equals(identityLink.getType()) && identityLink.getUserId() != null);
 

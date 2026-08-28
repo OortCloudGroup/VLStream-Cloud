@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="role-management tenant_Page draHeaPB">
     <div class="tenant_content">
@@ -62,7 +67,7 @@
       </div>
     </div>
 
-    <!-- 新增/编辑角色对话框 -->
+    <!-- Add / role -->
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
@@ -107,7 +112,7 @@
       </template>
     </el-dialog>
 
-    <!-- 复合权限授权弹窗 -->
+    <!-- dialog -->
     <PermissionGrantDialog
       v-model="grantVisible"
       :role="activeRole"
@@ -143,16 +148,16 @@ const toolbarButtonList = computed(() => [
   { name: '权限配置', svg: 'more', clickFn: handleToolbarGrant }
 ])
 
-// 选项下拉列表数据
+// item data
 const roleTreeOptions = ref([])
 
-// 查询参数
+// Query parameter
 const queryParams = reactive({
   roleName: '',
   roleAlias: ''
 })
 
-// 表单对象与表单校验规则
+// formobject and formValidate
 const formRef = ref()
 const form = ref({
   id: undefined,
@@ -168,12 +173,12 @@ const rules = {
   roleAlias: [{ required: true, message: '请输入角色别名', trigger: 'blur' }]
 }
 
-// 授权弹窗状态
+// dialog
 const grantVisible = ref(false)
 const activeRole = ref(null)
 
 /**
- * 异步查询角色列表数据，若后端返回扁平格式则通过 buildTree 重构为树，最后规范化属性名
+ * Query role listdata, after buildTree to , after property
  */
 async function loadData() {
   loading.value = true

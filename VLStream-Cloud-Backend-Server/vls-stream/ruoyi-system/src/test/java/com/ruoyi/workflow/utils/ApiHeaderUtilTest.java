@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -29,7 +30,7 @@ import static org.mockito.Mockito.when;
 public class ApiHeaderUtilTest {
 
     /**
-     * 清理当前线程绑定的请求上下文，避免影响后续测试。
+     * current , after .
      */
     @AfterEach
     public void tearDown() {
@@ -37,7 +38,7 @@ public class ApiHeaderUtilTest {
     }
 
     /**
-     * 验证容器枚举小写请求头时，白名单请求头仍能被复制到 OkHttp 请求。
+     * , can OkHttp .
      */
     @Test
     public void transferHeadersShouldCopyAllowedHeadersWhenContainerLowercasesNames() {

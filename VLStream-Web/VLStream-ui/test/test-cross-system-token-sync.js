@@ -1,23 +1,28 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * 跨系统Token同步测试
- * 验证VLStream-ui和统一用户平台之间的token同步
+ * Token
+ * VLStream-ui and user token
  */
 
 async function testCrossSystemTokenSync() {
     console.log('🔍 跨系统Token同步测试');
-    
-    // 等待一下让同步器运行
+
+    // etc.
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // 检查当前系统token状态
+
+    // current token
     console.log('=== 检查当前系统Token状态 ===');
-    
+
     const currentToken = getCurrentSystemToken();
     console.log('当前系统Token:', currentToken ? currentToken.substring(0, 8) + '...' : 'null');
-    
-    // 检查跨系统同步器状态
+
+    //
     console.log('=== 检查跨系统同步器状态 ===');
-    
+
     if (window.crossSystemTokenSync) {
         console.log('✅ crossSystemTokenSync已加载');
         console.log('同步器状态:', {
@@ -25,28 +30,28 @@ async function testCrossSystemTokenSync() {
             syncInterval: window.crossSystemTokenSync.syncInterval ? '运行中' : '已停止',
             lastUnifiedToken: window.crossSystemTokenSync.lastUnifiedToken ? window.crossSystemTokenSync.lastUnifiedToken.substring(0, 8) + '...' : 'null'
         });
-        
-        // 显示同步器配置
+
+        // configuration
         console.log('同步器配置:');
         console.log('- 检查间隔: 3秒');
         console.log('- 自动初始化: 是');
         console.log('- 页面可见性监听: 是');
         console.log('- 跨标签页同步: 是');
-        
+
     } else {
         console.log('❌ crossSystemTokenSync未加载');
     }
-    
+
     console.log('');
-    
-    // 测试获取统一用户平台token
+
+    // Get user token
     console.log('=== 测试获取统一用户平台Token ===');
-    
+
     if (window.crossSystemTokenSync) {
         try {
             const unifiedToken = await window.crossSystemTokenSync.getUnifiedPlatformToken();
             console.log('统一用户平台Token:', unifiedToken ? unifiedToken.substring(0, 8) + '...' : 'null');
-            
+
             if (unifiedToken) {
                 console.log('✅ 成功获取统一用户平台token');
             } else {
@@ -56,12 +61,12 @@ async function testCrossSystemTokenSync() {
             console.log('❌ 获取统一用户平台token失败:', error.message);
         }
     }
-    
+
     console.log('');
-    
-    // 测试token验证
+
+    // token
     console.log('=== 测试Token验证 ===');
-    
+
     if (currentToken) {
         try {
             const response = await fetch('http://oort.oortcloudsmart.com:21410/bus/apaas-sso/sso/v1/verifyToken', {
@@ -77,9 +82,9 @@ async function testCrossSystemTokenSync() {
                     accessToken: currentToken
                 })
             });
-            
+
             console.log('Token验证响应状态:', response.status);
-            
+
             if (response.ok) {
                 const result = await response.json();
                 console.log('✅ Token验证成功:', result);
@@ -95,23 +100,23 @@ async function testCrossSystemTokenSync() {
     } else {
         console.log('💡 没有可验证的token');
     }
-    
+
     console.log('');
-    
-    // 手动触发跨系统同步
+
+    //
     console.log('=== 手动触发跨系统同步 ===');
-    
+
     if (window.crossSystemTokenSync) {
         console.log('🔄 手动触发跨系统token同步');
         window.crossSystemTokenSync.forceSync();
-        
-        // 等待同步完成
+
+        // etc.
         setTimeout(async () => {
             console.log('检查同步结果:');
-            
+
             const newCurrentToken = getCurrentSystemToken();
             console.log('- 同步后的当前系统Token:', newCurrentToken ? newCurrentToken.substring(0, 8) + '...' : 'null');
-            
+
             if (newCurrentToken && newCurrentToken !== currentToken) {
                 console.log('✅ 跨系统Token同步成功！');
                 console.log('💡 token已从统一用户平台同步到当前系统');
@@ -122,12 +127,12 @@ async function testCrossSystemTokenSync() {
             }
         }, 3000);
     }
-    
+
     console.log('');
-    
-    // 检查用户信息同步
+
+    // userinfo
     console.log('=== 检查用户信息同步 ===');
-    
+
     const userInfo = sessionStorage.getItem('userInfo');
     if (userInfo) {
         try {
@@ -137,17 +142,17 @@ async function testCrossSystemTokenSync() {
             console.log('- 用户ID:', parsedUserInfo.userId);
             console.log('- 租户ID:', parsedUserInfo.tenantId);
             console.log('- 是否有token:', !!parsedUserInfo.accessToken);
-            
+
         } catch (error) {
             console.log('❌ 用户信息解析失败:', error.message);
         }
     } else {
         console.log('💡 没有找到用户信息');
     }
-    
+
     console.log('');
-    
-    // 模拟真实场景测试
+
+    //
     console.log('=== 模拟真实场景测试 ===');
     console.log('🎯 真实使用场景测试:');
     console.log('1. 在统一用户平台换用户登录');
@@ -160,7 +165,7 @@ async function testCrossSystemTokenSync() {
     console.log('3. 复制新token到VLStream-ui的URL参数中');
     console.log('4. 观察VLStream-ui是否自动同步新用户信息');
     console.log('5. 验证两个系统的token是否一致');
-    
+
     console.log('');
     console.log('📝 跨系统同步机制总结:');
     console.log('✅ 定时检查: 每3秒检查一次跨系统token变化');
@@ -179,13 +184,13 @@ async function testCrossSystemTokenSync() {
     console.log('- 自动清理无效token');
 }
 
-// 获取当前系统token
+// Get current token
 function getCurrentSystemToken() {
-    return sessionStorage.getItem('accessToken') || 
+    return sessionStorage.getItem('accessToken') ||
            localStorage.getItem('accessToken') ||
            sessionStorage.getItem('token') ||
            localStorage.getItem('token')
 }
 
-// 运行测试
-testCrossSystemTokenSync().catch(console.error); 
+//
+testCrossSystemTokenSync().catch(console.error);

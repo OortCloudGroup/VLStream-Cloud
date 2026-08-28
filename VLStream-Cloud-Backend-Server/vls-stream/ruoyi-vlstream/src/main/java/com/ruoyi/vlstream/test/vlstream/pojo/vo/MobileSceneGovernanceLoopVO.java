@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,7 +15,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.MobileSceneGovernanceSubTask
 import java.util.List;
 
 /**
- * 移动端循环治理视图对象
+ * loop object
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

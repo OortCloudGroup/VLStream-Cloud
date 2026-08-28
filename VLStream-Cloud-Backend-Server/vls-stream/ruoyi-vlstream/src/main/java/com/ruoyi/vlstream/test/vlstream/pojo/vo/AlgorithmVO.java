@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -12,7 +13,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.Algorithm;
 
 
 /**
- * 算法表 视图实体类
+ * algorithm
  *
  * @author Oort
  * @since 2025-12-23
@@ -23,7 +24,7 @@ public class AlgorithmVO extends Algorithm {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 算法类型名称
+	 * algorithm
 	 */
 	@Schema(description = "分类名称")
 	private String categoryName;

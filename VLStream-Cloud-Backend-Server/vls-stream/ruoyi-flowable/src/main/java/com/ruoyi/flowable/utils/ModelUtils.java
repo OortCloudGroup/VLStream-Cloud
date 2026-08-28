@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -23,21 +24,21 @@ public class ModelUtils {
     private static final BpmnXMLConverter bpmnXMLConverter = new BpmnXMLConverter();
 
     /**
-     * xml转bpmnModel对象
+     * xml bpmnModelobject
      *
      * @param xml xml
-     * @return bpmnModel对象
+     * @return bpmnModelobject
      */
     public static BpmnModel getBpmnModel(String xml) {
         return bpmnXMLConverter.convertToBpmnModel(new StringStreamSource(xml), false, false);
     }
 
     /**
-     * bpmnModel转xml字符串
+     * bpmnModel xml
      *
-     * @deprecated 存在会丢失 bpmn 连线问题
-     * @param bpmnModel bpmnModel对象
-     * @return xml字符串
+     * @deprecated in will bpmn
+     * @param bpmnModel bpmnModelobject
+     * @return xml
      */
     @Deprecated
     public static String getBpmnXmlStr(BpmnModel bpmnModel) {
@@ -45,10 +46,10 @@ public class ModelUtils {
     }
 
     /**
-     * bpmnModel转xml对象
+     * bpmnModel xmlobject
      *
-     * @deprecated 存在丢失 bpmn 连线问题
-     * @param bpmnModel bpmnModel对象
+     * @deprecated in bpmn
+     * @param bpmnModel bpmnModelobject
      * @return xml
      */
     @Deprecated
@@ -57,10 +58,10 @@ public class ModelUtils {
     }
 
     /**
-     * 根据节点，获取入口连线
+     * node, Get
      *
-     * @param source 起始节点
-     * @return 入口连线列表
+     * @param source node
+     * @return
      */
     public static List<SequenceFlow> getElementIncomingFlows(FlowElement source) {
         List<SequenceFlow> sequenceFlows = new ArrayList<>();
@@ -72,10 +73,10 @@ public class ModelUtils {
 
 
     /**
-     * 根据节点，获取出口连线
+     * node, Get
      *
-     * @param source 起始节点
-     * @return 出口连线列表
+     * @param source node
+     * @return
      */
     public static List<SequenceFlow> getElementOutgoingFlows(FlowElement source) {
         List<SequenceFlow> sequenceFlows = new ArrayList<>();
@@ -86,10 +87,10 @@ public class ModelUtils {
     }
 
     /**
-     * 获取开始节点
+     * Get startnode
      *
-     * @param model bpmnModel对象
-     * @return 开始节点（未找到开始节点，返回null）
+     * @param model bpmnModelobject
+     * @return startnode ( not startnode, null)
      */
     public static StartEvent getStartEvent(BpmnModel model) {
         Process process = model.getMainProcess();
@@ -101,10 +102,10 @@ public class ModelUtils {
     }
 
     /**
-     * 获取开始节点
+     * Get startnode
      *
-     * @param flowElements 流程元素集合
-     * @return 开始节点（未找到开始节点，返回null）
+     * @param flowElements workflowelementcollection
+     * @return startnode ( not startnode, null)
      */
     public static StartEvent getStartEvent(Collection<FlowElement> flowElements) {
         for (FlowElement flowElement : flowElements) {
@@ -116,10 +117,10 @@ public class ModelUtils {
     }
 
     /**
-     * 获取结束节点
+     * Get finishnode
      *
-     * @param model bpmnModel对象
-     * @return 结束节点（未找到开始节点，返回null）
+     * @param model bpmnModelobject
+     * @return finishnode ( not startnode, null)
      */
     public static EndEvent getEndEvent(BpmnModel model) {
         Process process = model.getMainProcess();
@@ -127,10 +128,10 @@ public class ModelUtils {
     }
 
     /**
-     * 获取结束节点
+     * Get finishnode
      *
-     * @param flowElements 流程元素集合
-     * @return 结束节点（未找到开始节点，返回null）
+     * @param flowElements workflowelementcollection
+     * @return finishnode ( not startnode, null)
      */
     public static EndEvent getEndEvent(Collection<FlowElement> flowElements) {
         for (FlowElement flowElement : flowElements) {
@@ -151,11 +152,11 @@ public class ModelUtils {
     }
 
     /**
-     * 获取流程元素信息
+     * Get workflowelementinfo
      *
-     * @param model bpmnModel对象
-     * @param flowElementId 元素ID
-     * @return 元素信息
+     * @param model bpmnModelobject
+     * @param flowElementId elementID
+     * @return elementinfo
      */
     public static FlowElement getFlowElementById(BpmnModel model, String flowElementId) {
         Process process = model.getMainProcess();
@@ -163,10 +164,10 @@ public class ModelUtils {
     }
 
     /**
-     * 获取元素表单Key（限开始节点和用户节点可用）
+     * Get elementformKey ( startnode and usernode )
      *
-     * @param flowElement 元素
-     * @return 表单Key
+     * @param flowElement element
+     * @return formKey
      */
     public static String getFormKey(FlowElement flowElement) {
         if (flowElement != null) {
@@ -180,10 +181,10 @@ public class ModelUtils {
     }
 
     /**
-     * 获取开始节点属性值
-     * @param model bpmnModel对象
-     * @param name 属性名
-     * @return 属性值
+     * Get startnodeproperty value
+     * @param model bpmnModelobject
+     * @param name property
+     * @return property value
      */
     public static String getStartEventAttributeValue(BpmnModel model, String name) {
         StartEvent startEvent = getStartEvent(model);
@@ -191,10 +192,10 @@ public class ModelUtils {
     }
 
     /**
-     * 获取结束节点属性值
-     * @param model bpmnModel对象
-     * @param name 属性名
-     * @return 属性值
+     * Get finishnodeproperty value
+     * @param model bpmnModelobject
+     * @param name property
+     * @return property value
      */
     public static String getEndEventAttributeValue(BpmnModel model, String name) {
         EndEvent endEvent = getEndEvent(model);
@@ -202,11 +203,11 @@ public class ModelUtils {
     }
 
     /**
-     * 获取用户任务节点属性值
-     * @param model bpmnModel对象
-     * @param taskKey 任务Key
-     * @param name 属性名
-     * @return 属性值
+     * Get usertasknodeproperty value
+     * @param model bpmnModelobject
+     * @param taskKey taskKey
+     * @param name property
+     * @return property value
      */
     public static String getUserTaskAttributeValue(BpmnModel model, String taskKey, String name) {
         UserTask userTask = getUserTaskByKey(model, taskKey);
@@ -214,10 +215,10 @@ public class ModelUtils {
     }
 
     /**
-     * 获取元素属性值
-     * @param baseElement 流程元素
-     * @param name 属性名
-     * @return 属性值
+     * Get elementproperty value
+     * @param baseElement workflowelement
+     * @param name property
+     * @return property value
      */
     public static String getElementAttributeValue(BaseElement baseElement, String name) {
         if (baseElement != null) {
@@ -243,10 +244,10 @@ public class ModelUtils {
     }
 
     /**
-     * 获取所有用户任务节点
+     * Get all usertasknode
      *
-     * @param model bpmnModel对象
-     * @return 用户任务节点列表
+     * @param model bpmnModelobject
+     * @return usertasknode
      */
     public static Collection<UserTask> getAllUserTaskEvent(BpmnModel model) {
         Process process = model.getMainProcess();
@@ -255,10 +256,10 @@ public class ModelUtils {
     }
 
     /**
-     * 获取所有用户任务节点
-     * @param flowElements 流程元素集合
-     * @param allElements 所有流程元素集合
-     * @return 用户任务节点列表
+     * Get all usertasknode
+     * @param flowElements workflowelementcollection
+     * @param allElements all workflowelementcollection
+     * @return usertasknode
      */
     public static Collection<UserTask> getAllUserTaskEvent(Collection<FlowElement> flowElements, Collection<UserTask> allElements) {
         allElements = allElements == null ? new ArrayList<>() : allElements;
@@ -267,7 +268,7 @@ public class ModelUtils {
                 allElements.add((UserTask) flowElement);
             }
             if (flowElement instanceof SubProcess) {
-                // 继续深入子流程，进一步获取子流程
+                // sub workflow, Get sub workflow
                 allElements = getAllUserTaskEvent(((SubProcess) flowElement).getFlowElements(), allElements);
             }
         }
@@ -275,40 +276,40 @@ public class ModelUtils {
     }
 
     /**
-     * 查找起始节点下一个用户任务列表列表
-     * @param source 起始节点
-     * @return 结果
+     * find node usertask
+     * @param source node
+     * @return
      */
     public static List<UserTask> findNextUserTasks(FlowElement source) {
         return findNextUserTasks(source, null, null);
     }
 
     /**
-     * 查找起始节点下一个用户任务列表列表
-     * @param source 起始节点
-     * @param hasSequenceFlow 已经经过的连线的 ID，用于判断线路是否重复
-     * @param userTaskList 用户任务列表
-     * @return 结果
+     * find node usertask
+     * @param source node
+     * @param hasSequenceFlow already ID, Check whether
+     * @param userTaskList usertask
+     * @return
      */
     public static List<UserTask> findNextUserTasks(FlowElement source, Set<String> hasSequenceFlow, List<UserTask> userTaskList) {
         hasSequenceFlow = Optional.ofNullable(hasSequenceFlow).orElse(new HashSet<>());
         userTaskList = Optional.ofNullable(userTaskList).orElse(new ArrayList<>());
-        // 获取出口连线
+        // Get
         List<SequenceFlow> sequenceFlows = getElementOutgoingFlows(source);
         if (!sequenceFlows.isEmpty()) {
             for (SequenceFlow sequenceFlow : sequenceFlows) {
-                // 如果发现连线重复，说明循环了，跳过这个循环
+                // if , loop , loop
                 if (hasSequenceFlow.contains(sequenceFlow.getId())) {
                     continue;
                 }
-                // 添加已经走过的连线
+                // already
                 hasSequenceFlow.add(sequenceFlow.getId());
                 FlowElement targetFlowElement = sequenceFlow.getTargetFlowElement();
                 if (targetFlowElement instanceof UserTask) {
-                    // 若节点为用户任务，加入到结果列表中
+                    // node to usertask, in
                     userTaskList.add((UserTask) targetFlowElement);
                 } else {
-                    // 若节点非用户任务，继续递归查找下一个节点
+                    // node non-usertask, find node
                     findNextUserTasks(targetFlowElement, hasSequenceFlow, userTaskList);
                 }
             }
@@ -317,12 +318,12 @@ public class ModelUtils {
     }
 
     /**
-     * 迭代从后向前扫描，判断目标节点相对于当前节点是否是串行
-     * 不存在直接回退到子流程中的情况，但存在从子流程出去到父流程情况
-     * @param source 起始节点
-     * @param target 目标节点
-     * @param visitedElements 已经经过的连线的 ID，用于判断线路是否重复
-     * @return 结果
+     * from after before , Check node current nodewhether is
+     * in sub workflow in , in from sub workflow workflow
+     * @param source node
+     * @param target node
+     * @param visitedElements already ID, Check whether
+     * @return
      */
     public static boolean isSequentialReachable(FlowElement source, FlowElement target, Set<String> visitedElements) {
         visitedElements = visitedElements == null ? new HashSet<>() : visitedElements;
@@ -330,27 +331,27 @@ public class ModelUtils {
             return false;
         }
 
-        // 根据类型，获取入口连线
+        // , Get
         List<SequenceFlow> sequenceFlows = getElementIncomingFlows(source);
         if (sequenceFlows != null && sequenceFlows.size() > 0) {
-            // 循环找到目标元素
+            // loop element
             for (SequenceFlow sequenceFlow: sequenceFlows) {
-                // 如果发现连线重复，说明循环了，跳过这个循环
+                // if , loop , loop
                 if (visitedElements.contains(sequenceFlow.getId())) {
                     continue;
                 }
-                // 添加已经走过的连线
+                // already
                 visitedElements.add(sequenceFlow.getId());
                 FlowElement sourceFlowElement = sequenceFlow.getSourceFlowElement();
-                // 这条线路存在目标节点，这条线路完成，进入下个线路
+                // in node, ,
                 if (target.getId().equals(sourceFlowElement.getId())) {
                     continue;
                 }
-                // 如果目标节点为并行网关，则不继续
+                // if node to ,
                 if (sourceFlowElement instanceof ParallelGateway) {
                     return false;
                 }
-                // 否则就继续迭代
+                // then
                 boolean isSequential = isSequentialReachable(sourceFlowElement, target, visitedElements);
                 if (!isSequential) {
                     return false;

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -22,7 +23,7 @@ import java.util.Base64;
 import java.util.Locale;
 
 /**
- * 模型文件下载服务，统一处理训练产物和已发布模型的远程文件读取。
+ * model service, Process training and already model .
  */
 @Slf4j
 @Service
@@ -41,7 +42,7 @@ public class ModelFileDownloadService {
 	private VlsSshProperties sshProperties;
 
 	/**
-	 * 按训练任务 ID 下载该任务直接生成的模型文件。
+	 * trainingtask ID task Generate model .
 	 */
 	public void downloadTrainingModel(Long trainingId, String type, HttpServletResponse response) throws IOException {
 		AlgorithmTraining training = algorithmTrainingService.getById(trainingId);
@@ -54,7 +55,7 @@ public class ModelFileDownloadService {
 	}
 
 	/**
-	 * 按模型表 ID 下载已入库的模型文件，并在成功后增加下载次数。
+	 * model ID already model , in successfully after .
 	 */
 	public void downloadModel(Long modelId, String type, HttpServletResponse response) throws IOException {
 		AlgorithmModel model = algorithmModelService.getById(modelId);
@@ -68,7 +69,7 @@ public class ModelFileDownloadService {
 	}
 
 	/**
-	 * 将前端传入的模型格式标准化，并拒绝不支持的格式。
+	 * before model , .
 	 */
 	private String normalizeType(String type) {
 		String normalizedType = StringUtils.defaultIfBlank(type, "pt").trim().toLowerCase(Locale.ROOT);
@@ -81,7 +82,7 @@ public class ModelFileDownloadService {
 	}
 
 	/**
-	 * 根据格式选择训练任务自身记录的产物路径。
+	 * trainingtask record .
 	 */
 	private String resolveTrainingPath(AlgorithmTraining training, String type) throws FileNotFoundException {
 		String downloadPath;
@@ -107,7 +108,7 @@ public class ModelFileDownloadService {
 	}
 
 	/**
-	 * 根据格式选择模型表中已保存的文件路径。
+	 * model in already .
 	 */
 	private String resolveModelPath(AlgorithmModel model, String type) throws FileNotFoundException {
 		String downloadPath;
@@ -133,7 +134,7 @@ public class ModelFileDownloadService {
 	}
 
 	/**
-	 * 校验对应格式是否已经生成了可下载路径。
+	 * Validate whether already Generate .
 	 */
 	private String requirePath(String downloadPath, String type) throws FileNotFoundException {
 		if (StringUtils.isBlank(downloadPath)) {
@@ -143,7 +144,7 @@ public class ModelFileDownloadService {
 	}
 
 	/**
-	 * 通过 SSH 读取远程文件并写入 HTTP 响应。
+	 * SSH HTTP .
 	 */
 	private void writeRemoteFile(String downloadPath, HttpServletResponse response) throws IOException {
 		SSHService.SSHExecutionResult result = sshService.executeCommand(
@@ -176,14 +177,14 @@ public class ModelFileDownloadService {
 	}
 
 	/**
-	 * 对远程 Shell 参数做单引号转义，避免路径中的空格或特殊字符改变命令含义。
+	 * Shell parameter , in null / empty .
 	 */
 	private String quoteShellArgument(String value) {
 		return "'" + value.replace("'", "'\\\"'\\\"'") + "'";
 	}
 
 	/**
-	 * 在文件成功写入响应后增加模型下载次数。
+	 * in successfully after model .
 	 */
 	private void incrementDownloadCount(Long modelId) {
 		try {

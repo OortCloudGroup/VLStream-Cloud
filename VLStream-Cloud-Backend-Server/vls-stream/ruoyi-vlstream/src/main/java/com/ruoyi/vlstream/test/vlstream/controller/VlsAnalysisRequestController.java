@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -36,7 +37,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 /**
- * 智能分析请求表 控制器
+ * can control
  *
  * @author Oort
  * @since 2025-12-23
@@ -51,7 +52,7 @@ public class VlsAnalysisRequestController extends BladeController {
 	private final IVlsDeviceInfoService vlsDeviceInfoService;
 
 	/**
-	 * 智能分析申请
+	 * can
 	 */
 	@PostMapping("/apply")
 	@ApiOperationSupport(order = 0)
@@ -69,7 +70,7 @@ public class VlsAnalysisRequestController extends BladeController {
 	}
 
 	/**
-	 * 取消智能分析申请
+	 * can
 	 */
 	@GetMapping("/cancel")
 	@ApiOperationSupport(order = 0)
@@ -89,7 +90,7 @@ public class VlsAnalysisRequestController extends BladeController {
 	}
 
 	/**
-	 * 智能分析请求表 详情
+	 * can
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -102,7 +103,7 @@ public class VlsAnalysisRequestController extends BladeController {
 	}
 
 	/**
-	 * 智能分析请求表 分页
+	 * can
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -181,7 +182,7 @@ public class VlsAnalysisRequestController extends BladeController {
 	}
 
 	/**
-	 * 智能分析请求表 新增
+	 * can Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -191,7 +192,7 @@ public class VlsAnalysisRequestController extends BladeController {
 	}
 
 	/**
-	 * 智能分析请求表 修改
+	 * can Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -201,7 +202,7 @@ public class VlsAnalysisRequestController extends BladeController {
 	}
 
 	/**
-	 * 智能分析请求表 新增或修改
+	 * can Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -211,7 +212,7 @@ public class VlsAnalysisRequestController extends BladeController {
 	}
 
 	/**
-	 * 智能分析请求表 删除
+	 * can Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -221,7 +222,7 @@ public class VlsAnalysisRequestController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsAnalysisRequest")
 	@ApiOperationSupport(order = 8)

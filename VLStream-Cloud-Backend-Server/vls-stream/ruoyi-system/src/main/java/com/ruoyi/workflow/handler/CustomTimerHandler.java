@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -29,7 +30,7 @@ public class CustomTimerHandler  extends TimerEventHandler implements JobHandler
 
     public static final String TYPE = "customJobType";
 
-    //自定义的类型
+    // Custom
     @Override
     public String getType() {
         return TYPE;
@@ -39,7 +40,7 @@ public class CustomTimerHandler  extends TimerEventHandler implements JobHandler
     public void execute(JobEntity jobEntity, String configuration, VariableScope variableScope, CommandContext commandContext) {
         try {
             log.info("✅ 任务执行成功: {}", configuration);
-            // 计算下一次触发时间（比如 5 秒后）
+            // ( 5 after)
             int waitTimeInSeconds = 20;
             Date nextDueDate = new Date(System.currentTimeMillis() + waitTimeInSeconds * 1000);
             ProcessEngineConfigurationImpl config = CommandContextUtil.getProcessEngineConfiguration(commandContext);
@@ -48,9 +49,9 @@ public class CustomTimerHandler  extends TimerEventHandler implements JobHandler
 //            SysUser sysUser = objectMapper.readValue(configuration, SysUser.class);
             log.info("🛠️ 开始创建定时任务，处理器类型: {}", CustomTimerHandler.TYPE);
             managementService.executeCommand(context -> {
-                // 获取定时任务服务
+                // Get taskservice
                 TimerJobService timerJobService = config.getJobServiceConfiguration().getTimerJobService();
-                // 创建定时任务
+                // task
                 TimerJobEntity timerJob = timerJobService.createTimerJob();
                 timerJob.setJobType(JobEntity.JOB_TYPE_TIMER);
 //          timerJob.setExclusive(true);

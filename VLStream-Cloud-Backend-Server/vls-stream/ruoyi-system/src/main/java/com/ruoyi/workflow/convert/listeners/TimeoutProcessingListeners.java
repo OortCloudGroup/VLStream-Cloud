@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -23,11 +24,11 @@ import org.springframework.stereotype.Component;
 import java.util.stream.Collectors;
 
 /**
- * 任务超时处理监听器
+ * task Process listener
  */
 /**
- * @deprecated 已被 TimeoutNotificationListener 和 TimeoutAutoApproveListener 替代
- *             保留此类仅为兼容性考虑，新项目请使用多超时处理器机制（timeoutHandlers）
+ * @deprecated already TimeoutNotificationListener and TimeoutAutoApproveListener
+ * to , new item Process (timeoutHandlers)
  */
 @Deprecated
 @Data
@@ -59,7 +60,7 @@ public class TimeoutProcessingListeners implements JavaDelegate, ApplicationCont
                 .findFirst().orElse(null);
         String initiatorTaskDefKey = null;
         if (initiatorTask != null) {
-            initiatorTaskDefKey = initiatorTask.getTaskDefinitionKey(); // 用户任务节点的 ID
+            initiatorTaskDefKey = initiatorTask.getTaskDefinitionKey(); // usertasknode ID
         }
         WfTaskBo bo = new WfTaskBo();
         bo.setProcInsId(procInsId);
@@ -68,7 +69,7 @@ public class TimeoutProcessingListeners implements JavaDelegate, ApplicationCont
         bo.setVariables(delegateExecution.getVariables());
         SysUser sysUser = new SysUser();
         sysUser.setTenantId(initiatorTask.getTenantId());
-        if (approTimeoutProcessing2.equals("2")) {// 退回
+        if (approTimeoutProcessing2.equals("2")) {//
             bo.setComment("任务超时退回");
             wfTaskService.taskReturn(bo, sysUser);
         } else {

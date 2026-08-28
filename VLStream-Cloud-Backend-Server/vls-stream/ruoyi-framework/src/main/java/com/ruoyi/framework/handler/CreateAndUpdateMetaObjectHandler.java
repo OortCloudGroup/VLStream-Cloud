@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -21,7 +22,7 @@ import org.apache.ibatis.reflection.MetaObject;
 import java.util.Date;
 
 /**
- * MP注入处理器
+ * MP Process
  *
  * @author Lion Li
  * @date 2021/4/25
@@ -32,7 +33,7 @@ public class CreateAndUpdateMetaObjectHandler implements MetaObjectHandler {
     private final TokenProperties tokenProperties;
 
     /**
-     * 创建字段填充器，并绑定后台唯一可信的租户标识。
+     * fieldfill , after .
      */
     public CreateAndUpdateMetaObjectHandler(TokenProperties tokenProperties) {
         this.tokenProperties = tokenProperties;
@@ -70,7 +71,7 @@ public class CreateAndUpdateMetaObjectHandler implements MetaObjectHandler {
     }
 
     /**
-     * 强制覆盖实体上的租户值，保证客户端值、空值和内部硬编码都不能影响持久化结果。
+     * value , value 、 null / empty value and can .
      */
     private void fillTenant(MetaObject metaObject) {
         if (ObjectUtil.isNotNull(metaObject) && metaObject.hasSetter("tenantId")) {

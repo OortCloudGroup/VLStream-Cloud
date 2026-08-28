@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,7 +18,7 @@ import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmCategoryEnum;
 
 
 /**
- * 算法表 实体类
+ * algorithm
  *
  * @author Oort
  * @since 2025-12-23
@@ -30,63 +31,63 @@ public class Algorithm extends TenantEntity {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 所属算法仓库ID
+	 * algorithm ID
 	 */
 	@Schema(description = "所属算法仓库ID")
 	@JsonSerialize(using = ToStringSerializer.class)
 	private Long repositoryId;
 	/**
-	 * 算法名称
+	 * algorithm
 	 */
 	@Schema(description = "算法名称")
 	private String name;
 	/**
-	 * 算法分类
+	 * algorithm
 	 */
 	@Schema(description = "算法分类")
 	private AlgorithmCategoryEnum category;
 	/**
-	 * 算法描述
+	 * algorithm
 	 */
 	@Schema(description = "算法描述")
 	private String description;
 	/**
-	 * 算法图片URL
+	 * algorithm URL
 	 */
 	@Schema(description = "算法图片URL")
 	private String imageUrl;
 	/**
-	 * pt模型文件路径
+	 * ptmodel
 	 */
 	@Schema(description = "pt模型文件路径")
 	private String ptModelFilePath;
 	/**
-	 * 模型文件路径
+	 * model
 	 */
 	@Schema(description = "onnx模型文件路径")
 	private String onnxModelFilePath;
 	/**
-	 * 算法配置参数（JSON格式）
+	 * algorithmconfigurationparameter (JSON )
 	 */
 	@Schema(description = "算法配置参数（JSON格式）")
 	private String configParams;
 	/**
-	 * 输入格式（image、video等）
+	 * (image、video etc.)
 	 */
 	@Schema(description = "输入格式（image、video等）")
 	private String inputFormat;
 	/**
-	 * 输出格式（bbox、mask、keypoint等）
+	 * (bbox、mask、keypoint etc.)
 	 */
 	@Schema(description = "输出格式（bbox、mask、keypoint等）")
 	private String outputFormat;
 	/**
-	 * 是否需要GPU：0-否，1-是
+	 * whether need to GPU: 0- , 1- is
 	 */
 	@Schema(description = "是否需要GPU：0-否，1-是")
 	private Integer gpuRequired;
 	/**
-	 * 是否为系统预置算法
+	 * whether to algorithm
 	 */
 	@Schema(description = "是否为系统预置算法")
 	private YesNoEnum isSystem;

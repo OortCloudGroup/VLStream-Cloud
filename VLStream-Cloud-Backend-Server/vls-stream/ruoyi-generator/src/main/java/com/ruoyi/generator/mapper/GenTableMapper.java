@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -14,7 +15,7 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
- * 业务 数据层
+ * data layer
  *
  * @author Lion Li
  */
@@ -22,41 +23,41 @@ import java.util.List;
 public interface GenTableMapper extends BaseMapperPlus<GenTableMapper, GenTable, GenTable> {
 
     /**
-     * 查询据库列表
+     * Query list
      *
-     * @param genTable 查询条件
-     * @return 数据库表集合
+     * @param genTable Query
+     * @return data collection
      */
     Page<GenTable> selectPageDbTableList(@Param("page") Page<GenTable> page, @Param("genTable") GenTable genTable);
 
     /**
-     * 查询据库列表
+     * Query list
      *
-     * @param tableNames 表名称组
-     * @return 数据库表集合
+     * @param tableNames
+     * @return data collection
      */
     List<GenTable> selectDbTableListByNames(String[] tableNames);
 
     /**
-     * 查询所有表信息
+     * Query all info
      *
-     * @return 表信息集合
+     * @return infocollection
      */
     List<GenTable> selectGenTableAll();
 
     /**
-     * 查询表ID业务信息
+     * Query ID info
      *
-     * @param id 业务ID
-     * @return 业务信息
+     * @param id ID
+     * @return info
      */
     GenTable selectGenTableById(Long id);
 
     /**
-     * 查询表名称业务信息
+     * Query info
      *
-     * @param tableName 表名称
-     * @return 业务信息
+     * @param tableName
+     * @return info
      */
     GenTable selectGenTableByName(String tableName);
 

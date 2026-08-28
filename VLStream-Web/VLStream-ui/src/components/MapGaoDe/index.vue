@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-row :gutter="20">
     <el-col :span="12">
@@ -34,7 +39,7 @@ let map = null;
 const lng = ref(116.3912757);
 const lat = ref(39.906217);
 
-/** 要传输给父组件的值 */
+/* * need to component value */
 const MapLng = ref('');
 const MapLat = ref('');
 const address = ref('');
@@ -115,7 +120,7 @@ const inGaDeMap = async () => {
           }
         });
       } else {
-        /** 获取当前位置 */
+        /* * Get current */
         let location = new AMap.Geolocation({
           enableHighAccuracy: true,
           timeout: 10000
@@ -141,44 +146,44 @@ const inGaDeMap = async () => {
       }
     }
 
-    /** 初始化地图 */
+    /* * Initialize */
     map = new AMap.Map('container', {
       resizeEnable: true,
       zoom: 11,
       center: coordinate
     });
 
-    // 添加比例尺
+    //
     map.addControl(new AMap.Scale());
 
     AMapUI.loadUI(['control/BasicControl'], function (BasicControl) {
-      // 添加一个缩放控件
+      //
       map.addControl(new BasicControl.Zoom({
         position: 'lt'
       }));
 
-      // 图层切换控件
+      // layer
       map.addControl(new BasicControl.LayerSwitcher({
         position: 'rt'
       }));
     });
 
-    // 在图面添加鹰眼控件，在地图右下角显示地图的缩略图
+    // in , in
     var hawkEye = new AMap.HawkEye();
     map.addControl(hawkEye);
 
-    /** 添加标记点 */
+    /* * */
     const marker = new AMap.Marker({
       position: coordinate,
     });
     map.add(marker);
 
-    /** 联想搜索 */
+    /* * */
     searchBox.value = new AMap.AutoComplete({
       input: document.getElementById('searchInput'),
     });
 
-    // 监听搜索结果事件
+    // event
     if (searchBox.value) {
       searchBox.value.on('select', (status, result) => {
         MapLng.value = status.poi.location.lng;
@@ -188,7 +193,7 @@ const inGaDeMap = async () => {
 
         map.clearMap();
         map.setCenter([status.poi.location.lng, status.poi.location.lat]);
-        map.setZoom(18); // 设置地图显示的缩放级别
+        map.setZoom(18); // Set
 
         const marker = new AMap.Marker({
           title: status.poi.name,
@@ -199,7 +204,7 @@ const inGaDeMap = async () => {
       });
     }
 
-    /** 点击地图事件 */
+    /* * event */
     map.on('click', (e) => {
       map.clearMap();
       var lnglat = e.lnglat;
@@ -234,7 +239,7 @@ const inGaDeMap = async () => {
 
 var emit = defineEmits(['update-value']);
 
-/** 子组件向父组件传值 */
+/* * sub component component value */
 const onConfirm = () => {
   if (site.value.length <= 0) {
     proxy?.$modal.msgWarning("未选择任何地址");
@@ -249,7 +254,7 @@ const onConfirm = () => {
   }
 };
 
-/** 销毁地图 */
+/* * */
 const Destruction = () => {
   site.value = '';
   map.destroy();
@@ -260,7 +265,7 @@ defineExpose({
   inGaDeMap
 });
 
-/** 点击搜索事件 */
+/* * event */
 const poiS = ref(null);
 
 const onSearch = () => {
@@ -288,7 +293,7 @@ const onSearch = () => {
 
           map.add(marker);
 
-          /** 给标记点添加事件 */
+          /* * event */
           marker.on('click', (e) => {
             var geocoder = new AMap.Geocoder({
               radius: 1000,
@@ -327,7 +332,7 @@ onMounted(async () => {
     });
   });
 
-  /** 安全密钥 */
+  /* * full */
   window._AMapSecurityConfig = {
     securityJsCode: AMapSecurityConfig.value,
   };

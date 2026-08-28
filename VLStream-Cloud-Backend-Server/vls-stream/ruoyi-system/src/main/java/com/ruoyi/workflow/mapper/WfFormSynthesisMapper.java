@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -10,9 +11,9 @@ import com.ruoyi.workflow.domain.WfFormSynthesis;
 import com.ruoyi.workflow.domain.vo.WfFormSynthesisVo;
 
 /**
- * 表单分类Mapper接口
+ * form Mapperinterface
  *
- * @author 雷超群
+ * @author
  * @date 2024-12-25
  */
 public interface WfFormSynthesisMapper extends BaseMapperPlus<WfFormSynthesisMapper, WfFormSynthesis, WfFormSynthesisVo> {

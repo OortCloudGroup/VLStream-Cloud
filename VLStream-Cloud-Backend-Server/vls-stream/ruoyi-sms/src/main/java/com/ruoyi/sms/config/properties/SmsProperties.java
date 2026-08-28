@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * SMS短信 配置属性
+ * SMS configurationproperty
  *
  * @author Lion Li
  * @version 4.2.0
@@ -23,9 +24,9 @@ public class SmsProperties {
     private Boolean enabled;
 
     /**
-     * 配置节点
-     * 阿里云 dysmsapi.aliyuncs.com
-     * 腾讯云 sms.tencentcloudapi.com
+     * configurationnode
+     * dysmsapi.aliyuncs.com
+     * sms.tencentcloudapi.com
      */
     private String endpoint;
 
@@ -35,17 +36,17 @@ public class SmsProperties {
     private String accessKeyId;
 
     /**
-     * 密匙
+     *
      */
     private String accessKeySecret;
 
     /*
-     * 短信签名
+     *
      */
     private String signName;
 
     /**
-     * 短信应用ID (腾讯专属)
+     * ID ( )
      */
     private String sdkAppId;
 

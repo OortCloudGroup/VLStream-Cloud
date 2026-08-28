@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,16 +18,16 @@ public class NodeListener {
     private String event;
     private String implementation= ApprovalListeners.class.getName();
     private String implementationType= ImplementationType.IMPLEMENTATION_TYPE_CLASS;
-    //  1:网络请求，2:消息
+    // 1: , 2:
     private Integer triggerType;
-    // 请求地址
+    //
     private String url;
-    // 请求方法
+    // method
     private String method = "GET";
-    // 请求参数类型 1 json , 2 form
+    // parameter 1 json , 2 form
     private Integer paramsType = 1;
-    // 请求头
+    //
     private List<HeaderOrParams> headers = new ArrayList<>();
-    // 请求参数
+    // parameter
     private List<HeaderOrParams> params = new ArrayList<>();
 }

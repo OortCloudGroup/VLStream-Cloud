@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,7 +18,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.AnnotationInstanceVO;
 import java.util.List;
 
 /**
- * 标注实例实体类 Mapper 接口
+ * annotationinstance Mapper interface
  *
  * @author Oort
  * @since 2025-12-23
@@ -25,28 +26,28 @@ import java.util.List;
 public interface VlsAnnotationInstanceMapper extends BaseMapper<AnnotationInstance> {
 
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsAnnotationInstance 查询参数
+	 * @param page parameter
+	 * @param vlsAnnotationInstance Query parameter
 	 * @return List<VlsAnnotationInstanceVO>
 	 */
 	List<AnnotationInstanceVO> selectVlsAnnotationInstancePage(IPage page, AnnotationInstanceVO vlsAnnotationInstance);
 
 	/**
-	 * 获取导出数据
+	 * Get Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsAnnotationInstanceExcel>
 	 */
 	List<VlsAnnotationInstanceExcel> exportVlsAnnotationInstance(@Param("ew") Wrapper<AnnotationInstance> queryWrapper);
 
 	/**
-	 * 根据标注项目ID和图片名称查询标注实例
+	 * annotation item ID and Query annotationinstance
 	 *
-	 * @param annotationId 标注项目ID
-	 * @param imageId 图片id
-	 * @return 标注实例列表
+	 * @param annotationId annotation item ID
+	 * @param imageId id
+	 * @return annotationinstance
 	 */
 	@Select("SELECT * FROM vls_annotation_instance " +
 		"WHERE annotation_id = #{annotationId} AND image_id = #{imageId} AND is_deleted = 0")
@@ -54,20 +55,20 @@ public interface VlsAnnotationInstanceMapper extends BaseMapper<AnnotationInstan
 															  @Param("imageId") String imageId);
 
 	/**
-	 * 根据标签ID统计使用次数
+	 * ID
 	 *
-	 * @param labelId 标签ID
-	 * @return 使用次数
+	 * @param labelId ID
+	 * @return
 	 */
 	@Select("SELECT COUNT(*) FROM vls_annotation_instance " +
 		"WHERE label_id = #{labelId} AND is_deleted = 0")
 	Integer countByLabelId(@Param("labelId") Long labelId);
 
 	/**
-	 * 根据标注项目ID查询所有标注实例
+	 * annotation item IDQuery all annotationinstance
 	 *
-	 * @param annotationId 标注项目ID
-	 * @return 标注实例列表
+	 * @param annotationId annotation item ID
+	 * @return annotationinstance
 	 */
 	@Select("SELECT * FROM vls_annotation_instance " +
 		"WHERE annotation_id = #{annotationId} AND is_deleted = 0 " +
@@ -75,11 +76,11 @@ public interface VlsAnnotationInstanceMapper extends BaseMapper<AnnotationInstan
 	List<AnnotationInstance> selectByAnnotationId(@Param("annotationId") Long annotationId);
 
 	/**
-	 * 根据标注项目ID和标签ID查询标注实例
+	 * annotation item ID and IDQuery annotationinstance
 	 *
-	 * @param annotationId 标注项目ID
-	 * @param labelId 标签ID
-	 * @return 标注实例列表
+	 * @param annotationId annotation item ID
+	 * @param labelId ID
+	 * @return annotationinstance
 	 */
 	@Select("SELECT * FROM vls_annotation_instance " +
 		"WHERE annotation_id = #{annotationId} AND label_id = #{labelId} AND is_deleted = 0")

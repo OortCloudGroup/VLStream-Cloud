@@ -12,7 +12,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 测试单表对象 test_demo
+ * object test_demo
  *
  * @author Lion Li
  * @date 2021-07-26
@@ -26,45 +26,45 @@ public class TestDemo extends BaseEntity {
 
 
     /**
-     * 主键
+     * primary key
      */
     @TableId(value = "id")
     private Long id;
 
     /**
-     * 部门id
+     * department ID
      */
     private String deptId;
 
     /**
-     * 用户id
+     * user ID
      */
     private Long userId;
 
     /**
-     * 排序号
+     *
      */
     @OrderBy(asc = false, sort = 1)
     private Integer orderNum;
 
     /**
-     * key键
+     * key
      */
     private String testKey;
 
     /**
-     * 值
+     * value
      */
     private String value;
 
     /**
-     * 版本
+     *
      */
     @Version
     private Long version;
 
     /**
-     * 删除标志
+     * Delete
      */
     @TableLogic
     private Long delFlag;

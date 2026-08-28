@@ -1,9 +1,14 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import axios from 'axios'
 import { getModelHubAccessToken } from '@/utils/modelHubAuth'
 
 /**
- * Model Hub SSO 地址
- * 正确路径：{platform}/bus/apaas-sso/sso/v1/getUserInfo
+ * Model Hub SSO
+ * correct : {platform}/bus/apaas-sso/sso/v1/getUserInfo
  */
 const PLATFORM_SSO_BASE = import.meta.env.DEV
   ? '/bus/apaas-sso'
@@ -44,7 +49,7 @@ function createModelHubRequest(accessToken) {
   return instance
 }
 
-/** 获取用户信息 */
+/* * Get userinfo */
 export function getModelHubUserInfo(data = {}) {
   const accessToken = data.accessToken || getModelHubAccessToken()
   const request = createModelHubRequest(accessToken)
@@ -54,14 +59,14 @@ export function getModelHubUserInfo(data = {}) {
   })
 }
 
-/** 退出 OortCloud 平台登录，不影响 VLStream 本地会话。 */
+/* * exit OortCloud , VLStream will . */
 export function logoutModelHubUser() {
   const accessToken = getModelHubAccessToken()
   const request = createModelHubRequest(accessToken)
   return request.post('/sso/v1/logout', { accessToken })
 }
 
-/** 编辑用户信息 */
+/* * userinfo */
 export function editModelHubUser(data = {}) {
   const accessToken = data.accessToken || getModelHubAccessToken()
   const request = createModelHubRequest(accessToken)

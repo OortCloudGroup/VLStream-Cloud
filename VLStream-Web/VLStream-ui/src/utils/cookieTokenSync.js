@@ -1,4 +1,9 @@
-// 使用Cookie进行token同步
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// Cookie token
 class CookieTokenSync {
   constructor() {
     this.cookieName = 'oort_access_token'
@@ -7,40 +12,40 @@ class CookieTokenSync {
     this.lastKnownToken = null
   }
 
-  // 初始化
+  // Initialize
   init() {
-    // 立即检查一次
+    //
     this.checkCookieToken()
-    
-    // 每5秒检查一次cookie变化
+
+    // 5 cookie
     this.checkInterval = setInterval(() => {
       this.checkCookieToken()
     }, 5000)
-    
+
     console.log('🍪 Cookie token同步已初始化')
   }
 
-  // 检查cookie中的token
+  // cookie in token
   checkCookieToken() {
     const cookieToken = this.getCookie(this.cookieName)
     const cookieUserInfo = this.getCookie(this.userInfoCookieName)
-    
+
     if (cookieToken && cookieToken !== this.lastKnownToken) {
       console.log('🔄 检测到cookie token变化:', cookieToken.substring(0, 8) + '...')
-      
+
       this.lastKnownToken = cookieToken
-      
-      // 保存到本地存储
+
+      //
       sessionStorage.setItem('accessToken', cookieToken)
       sessionStorage.setItem('token', cookieToken)
-      
+
       if (cookieUserInfo) {
         try {
           const userInfo = JSON.parse(decodeURIComponent(cookieUserInfo))
           sessionStorage.setItem('userInfo', JSON.stringify(userInfo))
           localStorage.setItem('userInfo', JSON.stringify(userInfo))
-          
-          // 触发更新事件
+
+          // new event
           this.triggerUpdateEvent(cookieToken, userInfo)
         } catch (error) {
           console.error('❌ 解析cookie用户信息失败:', error)
@@ -49,7 +54,7 @@ class CookieTokenSync {
     }
   }
 
-  // 获取cookie值
+  // Get cookie value
   getCookie(name) {
     const value = `; ${document.cookie}`
     const parts = value.split(`; ${name}=`)
@@ -59,14 +64,14 @@ class CookieTokenSync {
     return null
   }
 
-  // 设置cookie
+  // Set cookie
   setCookie(name, value, days = 7) {
     const expires = new Date()
     expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000))
     document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;domain=.oortcloudsmart.com`
   }
 
-  // 保存token到cookie
+  // token cookie
   saveTokenToCookie(token, userInfo) {
     this.setCookie(this.cookieName, token)
     if (userInfo) {
@@ -75,7 +80,7 @@ class CookieTokenSync {
     console.log('💾 Token已保存到cookie')
   }
 
-  // 触发更新事件
+  // new event
   triggerUpdateEvent(token, userInfo) {
     const event = new CustomEvent('cookieTokenUpdated', {
       detail: { token, userInfo }
@@ -83,7 +88,7 @@ class CookieTokenSync {
     window.dispatchEvent(event)
   }
 
-  // 销毁
+  //
   destroy() {
     if (this.checkInterval) {
       clearInterval(this.checkInterval)

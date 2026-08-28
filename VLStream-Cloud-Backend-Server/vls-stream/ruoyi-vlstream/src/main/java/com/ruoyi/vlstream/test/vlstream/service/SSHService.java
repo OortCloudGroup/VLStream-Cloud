@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,20 +16,20 @@ import java.io.ByteArrayOutputStream;
 import java.util.Properties;
 
 /**
- * SSH连接服务类
+ * SSH service
  */
 @Slf4j
 @Service
 public class SSHService {
 
     /**
-     * SSH连接配置
+     * SSH configuration
      */
     private static final int CONNECT_TIMEOUT = 30000;
     private static final int SESSION_TIMEOUT = 30000;
 
     /**
-     * 执行SSH命令
+     * Execute SSH
      */
     public SSHExecutionResult executeCommand(String host, int port, String username, String password, String command) {
         Session session = null;
@@ -36,39 +37,39 @@ public class SSHService {
         SSHExecutionResult result = new SSHExecutionResult();
 
         try {
-            // 创建JSch实例
+            // JSchinstance
             JSch jsch = new JSch();
 
-            // 创建会话
+            // will
             session = jsch.getSession(username, host, port);
             session.setPassword(password);
 
-            // 设置连接属性
+            // Set property
             Properties config = new Properties();
             config.put("StrictHostKeyChecking", "no");
             session.setConfig(config);
 
-            // 连接
+            //
             session.connect(CONNECT_TIMEOUT);
             log.debug("SSH连接成功: {}@{}:{}", username, host, port);
 
-            // 创建执行通道
+            // Execute channel
             channel = (ChannelExec) session.openChannel("exec");
             channel.setCommand(command);
 
-            // 获取输出流
+            // Get
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             channel.setOutputStream(outputStream);
 
-            // 获取错误流
+            // Get
             ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
             channel.setErrStream(errorStream);
 
-            // 执行命令
+            // Execute
             channel.connect(SESSION_TIMEOUT);
             log.debug("SSH命令执行: {}", command);
 
-            // 等待命令执行完成
+            // etc. Execute
             while (!channel.isClosed()) {
                 try {
                     Thread.sleep(100);
@@ -78,23 +79,23 @@ public class SSHService {
                 }
             }
 
-            // 获取执行结果，使用UTF-8编码确保中文正确显示
+            // Get Execute , UTF-8 in correct
             String output = outputStream.toString("UTF-8");
             String error = errorStream.toString("UTF-8");
 
             int exitStatus = channel.getExitStatus();
 
-            // 设置结果
+            // Set
             result.setSuccess(exitStatus == 0 || exitStatus == -1);
             result.setOutput(output);
             result.setErrorMsg(error);
 
             log.debug("SSH命令执行完成，输出长度: {}, 错误长度: {}", output.length(), error.length());
 //            if (org.bytedeco.librealsense.error.length() > 0) {
-//                log.warn("SSH命令执行错误信息: {}", error);
+// log.warn("SSH Execute info: {}", error);
 //            }
 //            if (output.length() > 0) {
-//                log.info("SSH命令执行输出: {}", output);
+// log.info("SSH Execute : {}", output);
 //            }
 
         } catch (Exception e) {
@@ -102,7 +103,7 @@ public class SSHService {
             result.setSuccess(false);
             result.setErrorMsg(e.getMessage());
         } finally {
-            // 关闭连接
+            //
             if (channel != null) {
                 channel.disconnect();
             }
@@ -115,7 +116,7 @@ public class SSHService {
     }
 
     /**
-     * 测试SSH连接
+     * SSH
      */
     public boolean testConnection(String host, int port, String username, String password) {
         Session session = null;
@@ -142,7 +143,7 @@ public class SSHService {
     }
 
     /**
-     * SSH执行结果类
+     * SSHExecute
      */
     public static class SSHExecutionResult {
         private boolean success;

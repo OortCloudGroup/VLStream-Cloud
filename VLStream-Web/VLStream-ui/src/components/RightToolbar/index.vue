@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="top-right-btn" :style="style">
     <el-row>
@@ -36,26 +41,26 @@
 
 <script setup>
 const props = defineProps({
-  /* 是否显示检索条件 */
+  /* whether */
   showSearch: {
     type: Boolean,
     default: true,
   },
-  /* 显隐列信息 */
+  /* info */
   columns: {
     type: Array,
   },
-  /* 是否显示检索图标 */
+  /* whether */
   search: {
     type: Boolean,
     default: true,
   },
-  /* 显隐列类型（transfer穿梭框、checkbox复选框） */
+  /* (transfer 、checkbox ) */
   showColumnsType: {
     type: String,
     default: "checkbox",
   },
-  /* 右外边距 */
+  /*  */
   gutter: {
     type: Number,
     default: 10,
@@ -64,11 +69,11 @@ const props = defineProps({
 
 const emits = defineEmits(['update:showSearch', 'queryTable']);
 
-// 显隐数据
+// data
 const value = ref([]);
-// 弹出层标题
+// layer
 const title = ref("显示/隐藏");
-// 是否显示弹出层
+// whether layer
 const open = ref(false);
 
 const style = computed(() => {
@@ -79,17 +84,17 @@ const style = computed(() => {
   return ret;
 });
 
-// 搜索
+//
 function toggleSearch() {
   emits("update:showSearch", !props.showSearch);
 }
 
-// 刷新
+// new
 function refresh() {
   emits("queryTable");
 }
 
-// 右侧列表元素变化
+// element
 function dataChange(data) {
   for (let item in props.columns) {
     const key = props.columns[item].key;
@@ -97,13 +102,13 @@ function dataChange(data) {
   }
 }
 
-// 打开显隐列dialog
+// dialog
 function showColumn() {
   open.value = true;
 }
 
 if (props.showColumnsType == 'transfer') {
-  // 显隐列初始默认隐藏列
+  //
   for (let item in props.columns) {
     if (props.columns[item].visible === false) {
       value.value.push(parseInt(item));
@@ -111,7 +116,7 @@ if (props.showColumnsType == 'transfer') {
   }
 }
 
-// 勾选
+//
 function checkboxChange(event, label) {
   props.columns.filter(item => item.label == label)[0].visible = event;
 }

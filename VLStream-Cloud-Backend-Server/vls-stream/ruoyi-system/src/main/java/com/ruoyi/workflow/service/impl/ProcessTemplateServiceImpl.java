@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 流程初始化模版Service业务层处理
+ * workflowInitialize Service layer Process
  *
  * @author lcq
  * @date 2025-01-07
@@ -37,7 +38,7 @@ public class ProcessTemplateServiceImpl implements IProcessTemplateService {
     private final ProcessTemplateMapper baseMapper;
 
     /**
-     * 查询流程初始化模版
+     * Query workflowInitialize
      */
     @Override
     public ProcessTemplateVo queryById(String id) {
@@ -45,7 +46,7 @@ public class ProcessTemplateServiceImpl implements IProcessTemplateService {
     }
 
     /**
-     * 查询流程初始化模版列表
+     * Query workflowInitialize list
      */
     @Override
     public TableDataInfo<ProcessTemplateVo> queryPageList(ProcessTemplateBo bo, PageQuery pageQuery) {
@@ -55,7 +56,7 @@ public class ProcessTemplateServiceImpl implements IProcessTemplateService {
     }
 
     /**
-     * 查询流程初始化模版列表
+     * Query workflowInitialize list
      */
     @Override
     public List<ProcessTemplateVo> queryList(ProcessTemplateBo bo) {
@@ -81,7 +82,7 @@ public class ProcessTemplateServiceImpl implements IProcessTemplateService {
     }
 
     /**
-     * 新增流程初始化模版
+     * Add workflowInitialize
      */
     @Override
     public Boolean insertByBo(ProcessTemplateBo bo) {
@@ -95,7 +96,7 @@ public class ProcessTemplateServiceImpl implements IProcessTemplateService {
     }
 
     /**
-     * 修改流程初始化模版
+     * Update workflowInitialize
      */
     @Override
     public Boolean updateByBo(ProcessTemplateBo bo) {
@@ -105,19 +106,19 @@ public class ProcessTemplateServiceImpl implements IProcessTemplateService {
     }
 
     /**
-     * 保存前的数据校验
+     * before dataValidate
      */
     private void validEntityBeforeSave(ProcessTemplate entity) {
-        //TODO 做一些数据校验,如唯一约束
+        // TODO dataValidate ,
     }
 
     /**
-     * 批量删除流程初始化模版
+     * Batch delete workflowInitialize
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid) {
         if (isValid) {
-            //TODO 做一些业务上的校验,判断是否需要校验
+            // TODO Validate ,Check whether need to Validate
         }
         return baseMapper.deleteBatchIds(ids) > 0;
     }

@@ -20,7 +20,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 公告 信息操作处理
+ * infooperationProcess
  *
  * @author Lion Li
  */
@@ -33,7 +33,7 @@ public class SysNoticeController extends BaseController {
     private final ISysNoticeService noticeService;
 
     /**
-     * 获取通知公告列表
+     * Get notification
      */
     @SaCheckPermission("system:notice:list")
     @GetMapping("/list")
@@ -42,9 +42,9 @@ public class SysNoticeController extends BaseController {
     }
 
     /**
-     * 根据通知公告编号获取详细信息
+     * notification Get info
      *
-     * @param noticeId 公告ID
+     * @param noticeId ID
      */
     @SaCheckPermission("system:notice:query")
     @GetMapping(value = "/{noticeId}")
@@ -53,7 +53,7 @@ public class SysNoticeController extends BaseController {
     }
 
     /**
-     * 新增通知公告
+     * Add notification
      */
     @SaCheckPermission("system:notice:add")
     @Log(title = "通知公告", businessType = BusinessType.INSERT)
@@ -63,7 +63,7 @@ public class SysNoticeController extends BaseController {
     }
 
     /**
-     * 修改通知公告
+     * Update notification
      */
     @SaCheckPermission("system:notice:edit")
     @Log(title = "通知公告", businessType = BusinessType.UPDATE)
@@ -73,9 +73,9 @@ public class SysNoticeController extends BaseController {
     }
 
     /**
-     * 删除通知公告
+     * Delete notification
      *
-     * @param noticeIds 公告ID串
+     * @param noticeIds ID
      */
     @SaCheckPermission("system:notice:remove")
     @Log(title = "通知公告", businessType = BusinessType.DELETE)

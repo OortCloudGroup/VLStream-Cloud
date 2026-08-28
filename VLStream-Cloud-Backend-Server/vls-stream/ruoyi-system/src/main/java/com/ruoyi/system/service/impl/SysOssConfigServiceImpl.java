@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -35,10 +36,10 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 对象存储配置Service业务层处理
+ * object configurationService layer Process
  *
  * @author Lion Li
- * @author 孤舟烟雨
+ * @author
  * @date 2021-08-13
  */
 @Slf4j
@@ -49,12 +50,12 @@ public class SysOssConfigServiceImpl implements ISysOssConfigService {
     private final SysOssConfigMapper baseMapper;
 
     /**
-     * 项目启动时，初始化参数到缓存，加载配置类
+     * item , Initialize parameter , Load configuration
      */
     @Override
     public void init() {
         List<SysOssConfig> list = baseMapper.selectList();
-        // 加载OSS初始化配置
+        // Load OSSInitialize configuration
         for (SysOssConfig config : list) {
             String configKey = config.getConfigKey();
             if ("0".equals(config.getStatus())) {
@@ -114,7 +115,7 @@ public class SysOssConfigServiceImpl implements ISysOssConfigService {
     }
 
     /**
-     * 保存前的数据校验
+     * before dataValidate
      */
     private void validEntityBeforeSave(SysOssConfig entity) {
         if (StringUtils.isNotEmpty(entity.getConfigKey()) && !checkConfigKeyUnique(entity)) {
@@ -143,7 +144,7 @@ public class SysOssConfigServiceImpl implements ISysOssConfigService {
     }
 
     /**
-     * 判断configKey是否唯一
+     * Check configKeywhether
      */
     private boolean checkConfigKeyUnique(SysOssConfig sysOssConfig) {
         long ossConfigId = ObjectUtil.isNull(sysOssConfig.getOssConfigId()) ? -1L : sysOssConfig.getOssConfigId();
@@ -157,7 +158,7 @@ public class SysOssConfigServiceImpl implements ISysOssConfigService {
     }
 
     /**
-     * 启用禁用状态
+     *
      */
     @Override
     @Transactional(rollbackFor = Exception.class)

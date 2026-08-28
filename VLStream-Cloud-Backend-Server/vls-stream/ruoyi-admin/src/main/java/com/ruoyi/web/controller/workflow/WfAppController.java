@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -29,9 +30,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 应用通用流程
+ * workflow
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-04
  */
 @Validated
@@ -43,7 +44,7 @@ public class WfAppController extends BaseController {
     private final IWfAppService iWfAppService;
 
     /**
-     * 查询应用通用流程列表
+     * Query workflow list
      */
     @SaCheckPermission("wf:app:list")
     @GetMapping("/list")
@@ -52,7 +53,7 @@ public class WfAppController extends BaseController {
     }
 
     /**
-     * 导出应用通用流程列表
+     * Export workflow
      */
     @SaCheckPermission("wf:app:export")
     @Log(title = "应用通用流程", businessType = BusinessType.EXPORT)
@@ -63,9 +64,9 @@ public class WfAppController extends BaseController {
     }
 
     /**
-     * 获取应用通用流程详细信息
+     * Get workflow info
      *
-     * @param appId 主键
+     * @param appId primary key
      */
     @SaCheckPermission("wf:app:getInfo")
     @GetMapping("/{appId}")
@@ -75,7 +76,7 @@ public class WfAppController extends BaseController {
     }
 
     /**
-     * 新增应用通用流程
+     * Add workflow
      */
     @SaCheckPermission("wf:app:add")
     @RepeatSubmit()
@@ -85,7 +86,7 @@ public class WfAppController extends BaseController {
     }
 
     /**
-     * 修改应用通用流程
+     * Update workflow
      */
     @SaCheckPermission("wf:app:edit")
     @Log(title = "应用通用流程", businessType = BusinessType.UPDATE)
@@ -96,9 +97,9 @@ public class WfAppController extends BaseController {
     }
 
     /**
-     * 删除应用通用流程
+     * Delete workflow
      *
-     * @param appIds 主键串
+     * @param appIds primary key
      */
     @SaCheckPermission("wf:app:remove")
     @Log(title = "应用通用流程", businessType = BusinessType.DELETE)

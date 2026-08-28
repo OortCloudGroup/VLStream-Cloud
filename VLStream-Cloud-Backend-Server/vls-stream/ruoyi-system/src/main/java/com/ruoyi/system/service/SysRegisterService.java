@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
- * 注册校验方法
+ * Validate method
  *
  * @author Lion Li
  */
@@ -37,16 +37,16 @@ public class SysRegisterService {
     private final ISysConfigService configService;
 
     /**
-     * 注册
+     *
      */
     public void register(RegisterBody registerBody) {
         String username = registerBody.getUsername();
         String password = registerBody.getPassword();
-        // 校验用户类型是否存在
+        // Validate user whether in
         String userType = UserType.getUserType(registerBody.getUserType()).getUserType();
 
         boolean captchaEnabled = configService.selectCaptchaEnabled();
-        // 验证码开关
+        //
         if (captchaEnabled) {
             validateCaptcha(username, registerBody.getCode(), registerBody.getUuid());
         }
@@ -66,11 +66,11 @@ public class SysRegisterService {
     }
 
     /**
-     * 校验验证码
+     * Validate
      *
-     * @param username 用户名
-     * @param code     验证码
-     * @param uuid     唯一标识
+     * @param username user
+     * @param code
+     * @param uuid
      */
     public void validateCaptcha(String username, String code, String uuid) {
         String verifyKey = CacheConstants.CAPTCHA_CODE_KEY + StringUtils.defaultString(uuid, "");
@@ -87,11 +87,11 @@ public class SysRegisterService {
     }
 
     /**
-     * 记录登录信息
+     * record info
      *
-     * @param username 用户名
-     * @param status   状态
-     * @param message  消息内容
+     * @param username user
+     * @param status
+     * @param message
      * @return
      */
     private void recordLogininfor(String username, String status, String message) {

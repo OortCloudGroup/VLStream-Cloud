@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 /**
- * 测试分布式限流样例
+ *
  *
  * @author Lion Li
  */
@@ -25,8 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class RedisRateLimiterController {
 
     /**
-     * 测试全局限流
-     * 全局影响
+     * full
+     * full
      */
     @RateLimiter(count = 2, time = 10)
     @GetMapping("/test")
@@ -35,8 +36,8 @@ public class RedisRateLimiterController {
     }
 
     /**
-     * 测试请求IP限流
-     * 同一IP请求受影响
+     * IP
+     * IP
      */
     @RateLimiter(count = 2, time = 10, limitType = LimitType.IP)
     @GetMapping("/testip")
@@ -45,8 +46,8 @@ public class RedisRateLimiterController {
     }
 
     /**
-     * 测试集群实例限流
-     * 启动两个后端服务互不影响
+     * instance
+     * after service
      */
     @RateLimiter(count = 2, time = 10, limitType = LimitType.CLUSTER)
     @GetMapping("/testcluster")
@@ -55,10 +56,10 @@ public class RedisRateLimiterController {
     }
 
     /**
-     * 测试请求IP限流(key基于参数获取)
-     * 同一IP请求受影响
+     * IP (key parameterGet )
+     * IP
      *
-     * 简单变量获取 #变量 复杂表达式 #{#变量 != 1 ? 1 : 0}
+     * variableGet #variable #{#variable != 1 ? 1 : 0}
      */
     @RateLimiter(count = 2, time = 10, limitType = LimitType.IP, key = "#value")
     @GetMapping("/testObj")

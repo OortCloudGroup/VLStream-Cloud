@@ -1,10 +1,15 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="home">
     <div class="table_c flexColumn">
       <div class="table_cc">
         <div class="depNameBox_out flexRowAC">
           <div class="depNameBox flexRowAC" />
-          <!--搜索-->
+          <!--  -->
           <div class="searchHeight_out flexRowAC">
             <search-height-box keyword="processName" placeholder="流程名称" :data="searchData" @handle="searchResetFn" />
             <export-excel-pdf />
@@ -111,11 +116,11 @@ import { resolveWorkOrderAppContext } from '@/utils/workOrderAppContext'
 // const route = useRoute()
 const dVisi = ref<boolean>(false)
 const ditem = ref<any>('')
-let appObj = ref<any>('')// 分类
+let appObj = ref<any>('')//
 const dateRange = ref('')
 const tableData = ref<any>([])
 const count = ref<number>(0)
-const searchData = ref<any>([]) // 高级搜索框内容
+const searchData = ref<any>([]) //
 searchData.value = [
   { label: '流程名称', value: 'processName', type: 'text', default: '' },
   { label: '时间', value: 'dateRange', type: 'daterange', format: 'YYYY-MM-DD HH:mm:ss', default: [] }
@@ -130,7 +135,7 @@ const queryParams = reactive({
 function getProcessList() {
   let data = {
     ...queryParams,
-    categoryType: 'WorkOrderAppAll', // 工单-应用分类
+    categoryType: 'WorkOrderAppAll', // work order-
     category: appObj.value?.appId
   }
   if (dateRange.value && dateRange.value?.length !== 0) {
@@ -143,7 +148,7 @@ function getProcessList() {
   })
 }
 
-// 搜索重置
+//
 function searchResetFn(val, reset) {
   if (reset) queryParams.pageNum = 1
   queryParams.processName = val.processName
@@ -179,7 +184,7 @@ function handleCallBack(row) {
       })
     }
   })
-  // todo 撤回
+  // todo
   console.log('撤回', row)
 }
 
@@ -273,7 +278,7 @@ onMounted(async() => {
   }
 }
 
-// 工单状态
+// work order
 .workorderStatus {
   font-size: 12px;
   line-height: 22px;

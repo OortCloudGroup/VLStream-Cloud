@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -20,7 +21,7 @@ import com.ruoyi.workorder.service.IWorkOrderService;
 import org.springframework.stereotype.Component;
 
 /**
- * MessageNode 超时处理器
+ * MessageNode Process
  */
 @Slf4j
 @Component
@@ -43,7 +44,7 @@ public class MessageTimeoutHandler implements JavaDelegate {
         try {
             log.info("MessageTimeoutHandler 执行: executionId={}", execution.getId());
 
-            int action = 2; // 默认自动通过
+            int action = 2; //
             if (timeoutAction != null) {
                 Object val = timeoutAction.getValue(execution);
                 if (val != null)
@@ -57,32 +58,32 @@ public class MessageTimeoutHandler implements JavaDelegate {
                     maxRepeat = Integer.parseInt(val.toString());
             }
 
-            // 获取当前重试次数 (Local 变量在 UserTask 销毁后可能丢失，需要用 execution 变量)
-            // 注意：BoundaryEvent 触发后，execution 还是同一个吗？
-            // 对于中断型，UserTask 结束，execution 进入 ServiceTask。
-            // 我们使用流程变量来持久化重试次数
+            // Get current (Local variable in UserTask after can , need to execution variable)
+            // : BoundaryEvent after, execution is ?
+            // in , UserTask finish, execution ServiceTask.
+            // workflow variable
             String countVarName = "messageNode_" + execution.getCurrentActivityId() + "_retryCount";
-            // 注意：execution.getCurrentActivityId() 是 ServiceTask 的 ID，不是 UserTask 的 ID
-            // 我们需要一个稳定的 key。可以使用 UserTask 的 ID (但在 convert 中生成的 ID 是固定的吗？是的)
-            // 这里的 execution 是 ServiceTask 的 execution。
+            // : execution.getCurrentActivityId() is ServiceTask ID, is UserTask ID
+            // need to key. UserTask ID ( in convert in Generate ID is ? is )
+            // execution is ServiceTask execution.
 
-            // 简单起见，使用一个特定的变量名，假设流程中只有一个活跃的 MessageNode 重试循环
-            // 或者使用 "messageNode_retryCount"
+            // , variable , assuming workflow in only MessageNode loop
+            // "messageNode_retryCount"
             Integer currentRetry = (Integer) execution.getVariable("messageNode_retryCount");
             if (currentRetry == null)
                 currentRetry = 0;
 
             log.info("超时处理: action={}, maxRepeat={}, currentRetry={}", action, maxRepeat, currentRetry);
 
-            if (action == 1) { // 重复通知
+            if (action == 1) { // notification
                 if (currentRetry < maxRepeat) {
-                    // 增加流程级别的重试计数
+                    // workflow
                     execution.setVariable("messageNode_retryCount", currentRetry + 1);
 
-                    // 【新增】重置验证次数标记
+                    // 【Add 】
                     execution.setVariable("messageNode_verifyCount_reset", true);
 
-                    // 设置循环标志
+                    // Set loop
                     execution.setVariable("messageNode_loopBack", true);
                     execution.setVariable("messageNode_autoReject", false);
 
@@ -92,28 +93,28 @@ public class MessageTimeoutHandler implements JavaDelegate {
                     execution.setVariable("messageNode_loopBack", false);
                     execution.setVariable("messageNode_autoReject", false);
                 }
-            } else if (action == 2) { // 自动通过
+            } else if (action == 2) { //
                 log.info("触发自动通过，流程继续到下一个节点");
                 execution.setVariable("messageNode_loopBack", false);
                 execution.setVariable("messageNode_autoReject", false);
-            } else if (action == 3) { // 自动驳回
+            } else if (action == 3) { //
                 log.info("触发自动驳回，流程跳转到 EndEvent");
                 execution.setVariable("messageNode_autoReject", true);
                 execution.setVariable("messageNode_loopBack", false);
 
-                // 设置流程状态为 TERMINATED
+                // Set workflow to TERMINATED
                 execution.setVariable("processStatus", "TERMINATED");
                 execution.setVariable("rejectReason", "消息通知超时自动驳回");
 
-                // 【新增】更新工单状态并清除任务ID
+                // 【Add 】 new work order taskID
                 String workorderId = (String) execution.getVariable("workorderId");
                 if (StringUtils.isNotBlank(workorderId)) {
                     try {
                         LambdaUpdateWrapper<WorkOrder> updateWrapper = new LambdaUpdateWrapper<>();
                         updateWrapper.eq(WorkOrder::getId, workorderId);
-                        // 设置状态为已退回 (RETURNED)
+                        // Set to already (RETURNED)
                         updateWrapper.set(WorkOrder::getWorkorderStatus, WorkOrderStatus.RETURNED.getStatus());
-                        // 清除任务ID
+                        // taskID
                         updateWrapper.set(WorkOrder::getTaskId, "");
                         workOrderService.update(updateWrapper);
                         log.info("MessageNode自动驳回，更新工单状态为已退回，并清除任务ID: workorderId={}", workorderId);

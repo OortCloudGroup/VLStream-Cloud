@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -25,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 
 /**
- * 设备信息表 服务实现类
+ * deviceinfo service
  *
  * @author Oort
  * @since 2025-12-23
@@ -68,7 +69,7 @@ public class VlsDeviceInfoServiceImpl extends BaseServiceImpl<VlsDeviceInfoMappe
 	@Transactional(rollbackFor = Exception.class)
 	public boolean addDevice(DeviceInfo deviceInfo) {
 		try {
-			// 自动生成device_id（如果没有提供）
+			// Generate device_id (if )
 			if (deviceInfo.getDeviceId() == null || deviceInfo.getDeviceId().trim().isEmpty()) {
 				String deviceId = generateDeviceId();
 				deviceInfo.setDeviceId(deviceId);
@@ -157,8 +158,8 @@ public class VlsDeviceInfoServiceImpl extends BaseServiceImpl<VlsDeviceInfoMappe
 		}
 
 		try {
-			// 这里实现实际的设备连接测试逻辑
-			// TODO: 根据设备类型和连接参数测试连接
+			// device
+			// TODO: device and parameter
 			log.info("测试设备连接: {}", deviceInfo.getDeviceName());
 
 			result.put("success", true);
@@ -226,12 +227,12 @@ public class VlsDeviceInfoServiceImpl extends BaseServiceImpl<VlsDeviceInfoMappe
 		Map<String, Object> result = new HashMap<>();
 		List<String> errors = new ArrayList<>();
 
-		// 验证设备名称
+		// device
 		if (deviceInfo.getDeviceName() == null || deviceInfo.getDeviceName().trim().isEmpty()) {
 			errors.add("设备名称不能为空");
 		}
 
-		// 验证设备ID
+		// deviceID
 		if (deviceInfo.getDeviceId() == null || deviceInfo.getDeviceId().trim().isEmpty()) {
 			errors.add("设备ID不能为空");
 		} else if (checkDeviceIdExists(deviceInfo.getDeviceId())) {
@@ -283,7 +284,7 @@ public class VlsDeviceInfoServiceImpl extends BaseServiceImpl<VlsDeviceInfoMappe
 		}
 
 		try {
-			// 模拟状态刷新
+			// new
 			updateDeviceStatus(deviceId, 1);
 
 			result.put("success", true);
@@ -307,7 +308,7 @@ public class VlsDeviceInfoServiceImpl extends BaseServiceImpl<VlsDeviceInfoMappe
 
 		for (DeviceInfo device : deviceList) {
 			try {
-				// 验证设备信息
+				// deviceinfo
 				Map<String, Object> validation = validateDevice(device);
 				if (!(Boolean) validation.get("valid")) {
 					failCount++;
@@ -315,7 +316,7 @@ public class VlsDeviceInfoServiceImpl extends BaseServiceImpl<VlsDeviceInfoMappe
 					continue;
 				}
 
-				// 保存设备
+				// device
 				if (addDevice(device)) {
 					successCount++;
 				} else {
@@ -368,7 +369,7 @@ public class VlsDeviceInfoServiceImpl extends BaseServiceImpl<VlsDeviceInfoMappe
 				return false;
 			}
 
-			// 更新配置
+			// new configuration
 			if (config.containsKey("deviceName")) {
 				device.setDeviceName((String) config.get("deviceName"));
 			}
@@ -395,8 +396,8 @@ public class VlsDeviceInfoServiceImpl extends BaseServiceImpl<VlsDeviceInfoMappe
 		}
 
 		try {
-			// 这里实现实际的PTZ控制逻辑
-			// TODO: 根据设备类型和命令执行PTZ控制
+			// PTZcontrol
+			// TODO: device and Execute PTZcontrol
 			log.info("PTZ控制: 设备={}, 命令={}, 参数={}", deviceInfo.getDeviceName(), command, params);
 
 			result.put("success", true);

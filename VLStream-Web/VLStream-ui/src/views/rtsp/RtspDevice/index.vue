@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <DeviceClassificationLayout protocol-type="RTSP" :selected-device-keys="classificationDeviceKeys" @filter-change="handleClassificationFilter" @assigned="getList">
   <div class="device-table-panel">
@@ -101,7 +106,7 @@
       />
     </div>
 
-    <!-- 添加或修改rtsp设备对话框 -->
+    <!-- Update rtspdevice -->
     <el-dialog :title="title" v-model="open" width="30%" append-to-body>
       <el-form ref="RtspDeviceRef" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="ip" prop="ip">
@@ -157,7 +162,7 @@
       </template>
     </el-dialog>
 
-    <!-- 播放弹窗 对话框 -->
+    <!-- dialog -->
     <el-dialog :title="title" v-model="showPaly" width="45%">
       <div>
         <Hikvision :rtsp="rtspURL" v-if="showPaly && (playType === '1' || playType === '3') "/>
@@ -603,7 +608,7 @@ const handleView = async (row) => {
   }
 }
 
-/** 查询rtsp设备列表 */
+/* * Query rtspdevice list */
 function getList() {
   loading.value = true;
   listRtspDevice(queryParams.value).then(response => {
@@ -613,13 +618,13 @@ function getList() {
   });
 }
 
-// 取消按钮
+// button
 function cancel() {
   open.value = false;
   reset();
 }
 
-// 表单重置
+// form
 function reset() {
   form.value = {
     id: null,
@@ -645,19 +650,19 @@ function reset() {
   proxy.resetForm("RtspDeviceRef");
 }
 
-/** 搜索按钮操作 */
+/* * buttonoperation */
 function handleQuery() {
   queryParams.value.pageNum = 1;
   getList();
 }
 
-/** 重置按钮操作 */
+/* * buttonoperation */
 function resetQuery() {
   proxy.resetForm("queryRef");
   handleQuery();
 }
 
-// 多选框选中数据
+// in data
 function handleSelectionChange(selection) {
   classificationDeviceKeys.value = selection.map(item => String(item.id));
   ids.value = selection.map(item => item.id);
@@ -665,14 +670,14 @@ function handleSelectionChange(selection) {
   multiple.value = !selection.length;
 }
 
-/** 新增按钮操作 */
+/* * Add buttonoperation */
 function handleAdd() {
   reset();
   open.value = true;
   title.value = "添加rtsp设备";
 }
 
-/** 修改按钮操作 */
+/* * Update buttonoperation */
 function handleUpdate(row) {
   reset();
   const _id = row?.id || ids.value
@@ -683,7 +688,7 @@ function handleUpdate(row) {
   });
 }
 
-/** 提交按钮 */
+/* * button */
 function submitForm() {
   proxy.$refs["RtspDeviceRef"].validate(valid => {
     if (valid) {
@@ -704,7 +709,7 @@ function submitForm() {
   });
 }
 
-/** 删除按钮操作 */
+/* * Delete buttonoperation */
 function handleDelete(row) {
   const _ids = row?.id || ids.value;
   proxy.$modal.confirm('是否确认删除rtsp设备编号为"' + _ids + '"的数据项？').then(function () {
@@ -716,7 +721,7 @@ function handleDelete(row) {
   });
 }
 
-/** 导出按钮操作 */
+/* * Export buttonoperation */
 function handleExport() {
   proxy.download('rtsp/RtspDevice/export', {
     ...queryParams.value

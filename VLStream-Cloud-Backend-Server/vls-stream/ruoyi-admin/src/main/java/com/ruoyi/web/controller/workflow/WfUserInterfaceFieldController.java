@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 用户按接口配置要显示的字段 code 列表
+ * user interfaceconfiguration need to field code
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -27,10 +28,10 @@ public class WfUserInterfaceFieldController extends BaseController {
 
 
     /**
-     * 获取用户对某接口的字段配置
-     * @param userId 用户ID
-     * @param interfacePath 接口路径
-     * @return 字段代码列表，null表示未配置应使用默认字段列表
+     * Get user interface fieldconfiguration
+     * @param userId user ID
+     * @param interfacePath interface
+     * @return field , null not configuration field
      */
     @SaCheckPermission("workflow:field:codes")
     @GetMapping("/field-codes")
@@ -46,9 +47,9 @@ public class WfUserInterfaceFieldController extends BaseController {
     }
 
     /**
-     * 保存或修改用户字段配置
-     * @param bo 保存请求对象
-     * @return 操作结果
+     * Update userfieldconfiguration
+     * @param bo object
+     * @return operation
      */
     @SaCheckPermission("workflow:field:saveCodes")
     @PostMapping("/field-codes")

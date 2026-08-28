@@ -1,9 +1,14 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * 通用工具类
+ *
  */
 export default class func {
   /**
-   * 不为空
+   * is empty
    * @param val
    * @returns {boolean}
    */
@@ -12,7 +17,7 @@ export default class func {
   }
 
   /**
-   * 是否为定义
+   * whether to
    * @param val
    * @returns {boolean}
    */
@@ -21,7 +26,7 @@ export default class func {
   }
 
   /**
-   * 为空
+   * is empty
    * @param val
    * @returns {boolean}
    */
@@ -37,7 +42,7 @@ export default class func {
   }
 
   /**
-   * 强转int型
+   * int
    * @param val
    * @param defaultValue
    * @returns {number}
@@ -51,7 +56,7 @@ export default class func {
   }
 
   /**
-   * 转为数字型(转换失败则返回原值)
+   * to (Convert failed value )
    * @param val
    */
   static toNumber(val) {
@@ -63,7 +68,7 @@ export default class func {
   }
 
   /**
-   * Json强转为Form类型
+   * Json to Form
    * @param obj
    * @returns {FormData}
    */
@@ -76,7 +81,7 @@ export default class func {
   }
 
   /**
-   * date类转为字符串格式
+   * date to
    * @param date
    * @param format
    * @returns {null}
@@ -86,7 +91,7 @@ export default class func {
   }
 
   /**
-   * data类格式化
+   * data Format
    * @param timestamp
    * @returns {string}
    */
@@ -95,7 +100,7 @@ export default class func {
   }
 
   /**
-   * data类格式化
+   * data Format
    * @param date
    * @returns {string}
    */
@@ -103,7 +108,7 @@ export default class func {
     const pad = num => (num < 10 ? '0' + num : num);
 
     const year = date.getFullYear();
-    const month = pad(date.getMonth() + 1); // 月份从0开始，所以+1
+    const month = pad(date.getMonth() + 1); // from 0start, +1
     const day = pad(date.getDate());
     const hour = pad(date.getHours());
     const minute = pad(date.getMinutes());
@@ -113,18 +118,18 @@ export default class func {
   }
 
   /**
-   * 格式化时区解决时间差问题
+   * Format
    * @param datetime
    * @returns {string}
    */
   static toLocalISOString(datetime) {
-    let timezoneOffset = datetime.getTimezoneOffset() * 60000; // 获取当前时区与UTC的时间差（以毫秒为单位）
-    let localDatetime = new Date(datetime - timezoneOffset); // 调整时间，得到当前时区时间
+    let timezoneOffset = datetime.getTimezoneOffset() * 60000; // Get current and UTC ( to )
+    let localDatetime = new Date(datetime - timezoneOffset); // , current
     return localDatetime.toISOString();
   }
 
   /**
-   * 根据逗号联合
+   *
    * @param arr
    * @returns {string}
    */
@@ -133,7 +138,7 @@ export default class func {
   }
 
   /**
-   * 根据逗号分隔
+   *
    * @param str
    * @returns {string}
    */
@@ -142,7 +147,7 @@ export default class func {
   }
 
   /**
-   * 转换空字符串
+   * Convert null / empty
    * @param str
    * @returns {string|*}
    */
@@ -154,7 +159,7 @@ export default class func {
   }
 
   /**
-   * 判断是否为数组
+   * Check whether to array
    * @param param
    * @returns {boolean}
    */
@@ -163,7 +168,7 @@ export default class func {
   }
 
   /**
-   * 格式化URL
+   * Format URL
    * @param url
    * @returns {*|string}
    */
@@ -177,7 +182,7 @@ export default class func {
   }
 
   /**
-   * bytes转换为kb单位
+   * bytesConvert to kb
    * @param bytes
    * @returns {string}
    */
@@ -187,7 +192,7 @@ export default class func {
   }
 
   /**
-   * json数组转换成key value字符串
+   * jsonarrayConvert key value
    * @param jsonArray "[{enumKey: 'key', enumValue: 'value'}]"
    * @returns {*}
    */
@@ -199,7 +204,7 @@ export default class func {
   }
 
   /**
-   * key value字符串转换成json数组
+   * key value Convert jsonarray
    * @param keyValue key:value;key:value
    * @returns {*[]}
    */
@@ -218,13 +223,13 @@ export default class func {
   }
 
   /**
-   * 检查字符串str中是否包含子字符串val
-   * @param {string} str 要检查的字符串
-   * @param {string} val 要查找的子字符串
-   * @return {boolean} 如果str包含val则返回true，否则返回false
+   * str in whether sub val
+   * @param {string} str need to
+   * @param {string} val need to find sub
+   * @return {boolean} if str val true, false
    */
   static contains(str, val) {
-    // 检查str是否为字符串且不为空
+    // strwhether to is empty
     if (typeof str === 'string' && str.length > 0) {
       return str.includes(val);
     }
@@ -232,9 +237,9 @@ export default class func {
   }
 
   /**
-   * 截取字符串
-   * @param str 字符串
-   * @param len 截取长度
+   *
+   * @param str
+   * @param len
    * @returns {*|string}
    */
   static truncateString(str, len = 20) {
@@ -245,7 +250,7 @@ export default class func {
   }
 
   /**
-   * 驼峰转下划线
+   *
    * @param str
    * @returns {*}
    */
@@ -254,8 +259,8 @@ export default class func {
   }
 
   /**
-   * 生成随机字符串
-   * @param length 长度
+   * Generate
+   * @param length
    * @returns {string}
    */
   static strGenerate(length) {
@@ -271,7 +276,7 @@ export default class func {
   }
 
   /**
-   * 生成UUID
+   * Generate UUID
    * @returns {string}
    */
   static generateUUID() {
@@ -283,7 +288,7 @@ export default class func {
   }
 
   /**
-   * 过滤空对象
+   * null / empty object
    * @param obj
    * @returns {Object}
    */
@@ -296,7 +301,7 @@ export default class func {
   }
 
   /**
-   * 获取用户租户ID
+   * Get usertenant ID
    * @param userInfo
    * @returns {string}
    */

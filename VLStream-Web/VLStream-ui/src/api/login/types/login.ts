@@ -1,12 +1,8 @@
 /*
-* @Created by: 兰舰
-* Email: gglanjian@qq.com
-* Phone: 16620805419
-* @Date: 2024-11-15 10:42:40
- * @Last Modified by: 兰舰
- * @Last Modified time: 2025-07-31 15:36:56
-* @Copyright aPaaS-front-team. All rights reserved.
-*/
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 export interface ILoginRequestData {
   userInfo: string
 }
@@ -18,15 +14,15 @@ export interface IGetUserInfoData {
 
 export interface IVerifyTokenData {
   accessToken: string,
-  with_im?: number, // 是否待IM 登录 0否 1是
+  with_im?: number, // whether IM 0 1 is
 }
 
 export interface ILoginFormData {
-  /** admin 或 editor */
+  /* * admin editor */
   username: string
-  /** 密码 */
+  /* * */
   password: string
-  /** 验证码 */
+  /* * */
   code: string,
   tenant_id: string,
   login_id: string

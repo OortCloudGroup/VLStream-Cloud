@@ -1,21 +1,26 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="ssh-connection-page">
     <div class="page-header">
       <h2>SSH远程连接</h2>
       <p>配置SSH连接信息，连接到远程服务器进行算法训练</p>
     </div>
-    
+
     <el-row :gutter="20">
       <el-col :span="8">
         <el-card header="连接配置">
           <SSHConnectionConfig @connection-ready="onConnectionReady" />
         </el-card>
       </el-col>
-      
+
       <el-col :span="16">
         <el-card header="SSH终端">
           <div class="terminal-container">
-            <SSHTerminal 
+            <SSHTerminal
               v-if="connectionConfig"
               :connection="connectionConfig"
             />
@@ -26,8 +31,8 @@
         </el-card>
       </el-col>
     </el-row>
-    
-    <!-- 快捷命令面板 -->
+
+    <!--  -->
     <el-row :gutter="20" style="margin-top: 20px;">
       <el-col :span="24">
         <el-card header="快捷命令">
@@ -39,16 +44,16 @@
               <el-button @click="executeQuickCommand('free -h')">内存使用</el-button>
               <el-button @click="executeQuickCommand('nvidia-smi')">GPU状态</el-button>
             </el-button-group>
-            
+
             <div class="custom-command">
-              <el-input 
+              <el-input
                 v-model="customCommand"
                 placeholder="输入自定义命令"
                 @keyup.enter="executeQuickCommand(customCommand)"
                 style="width: 300px; margin-left: 20px;"
               />
-              <el-button 
-                type="primary" 
+              <el-button
+                type="primary"
                 @click="executeQuickCommand(customCommand)"
                 :disabled="!customCommand.trim()"
                 style="margin-left: 10px;"
@@ -84,14 +89,14 @@ export default {
       this.connectionConfig = config
       this.$message.success('SSH连接配置已就绪')
     },
-    
+
     executeQuickCommand(command) {
       if (!command.trim()) return
-      
-      // 这里可以通过事件或ref调用终端组件的方法
+
+      // event ref component method
       this.$message.info(`执行命令: ${command}`)
-      
-      // 清空自定义命令输入
+
+      // null / empty Custom
       if (command === this.customCommand) {
         this.customCommand = ''
       }

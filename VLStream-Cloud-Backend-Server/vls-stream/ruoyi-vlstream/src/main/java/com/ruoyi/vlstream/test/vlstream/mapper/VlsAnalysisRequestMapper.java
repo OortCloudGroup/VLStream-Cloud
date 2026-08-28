@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.AnalysisRequestVO;
 import java.util.List;
 
 /**
- * 智能分析请求表 Mapper 接口
+ * can Mapper interface
  *
  * @author Oort
  * @since 2025-12-23
@@ -24,18 +25,18 @@ import java.util.List;
 public interface VlsAnalysisRequestMapper extends BaseMapper<AnalysisRequest> {
 
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsAnalysisRequest 查询参数
+	 * @param page parameter
+	 * @param vlsAnalysisRequest Query parameter
 	 * @return List<VlsAnalysisRequestVO>
 	 */
 	List<AnalysisRequestVO> selectVlsAnalysisRequestPage(IPage page, AnalysisRequestVO vlsAnalysisRequest);
 
 	/**
-	 * 获取导出数据
+	 * Get Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsAnalysisRequestExcel>
 	 */
 	List<VlsAnalysisRequestExcel> exportVlsAnalysisRequest(@Param("ew") Wrapper<AnalysisRequest> queryWrapper);

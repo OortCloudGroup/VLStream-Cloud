@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -8,7 +9,7 @@ package com.ruoyi.oss.properties;
 import lombok.Data;
 
 /**
- * OSS对象存储 配置属性
+ * OSSobject configurationproperty
  *
  * @author Lion Li
  */
@@ -16,17 +17,17 @@ import lombok.Data;
 public class OssProperties {
 
     /**
-     * 访问站点
+     *
      */
     private String endpoint;
 
     /**
-     * 自定义域名
+     * Custom
      */
     private String domain;
 
     /**
-     * 前缀
+     * before
      */
     private String prefix;
 
@@ -41,22 +42,22 @@ public class OssProperties {
     private String secretKey;
 
     /**
-     * 存储空间名
+     * null / empty
      */
     private String bucketName;
 
     /**
-     * 存储区域
+     *
      */
     private String region;
 
     /**
-     * 是否https（Y=是,N=否）
+     * whether https (Y= is ,N= )
      */
     private String isHttps;
 
     /**
-     * 桶权限类型(0private 1public 2custom)
+     * (0private 1public 2custom)
      */
     private String accessPolicy;
 

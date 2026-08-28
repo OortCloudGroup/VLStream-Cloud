@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -18,7 +19,7 @@ public class WfUserTaskInfoVo implements Serializable {
     private String userTaskId;
     private String userTaskName;
     /**
-     * 会签/ 或签
+     * will /
      */
     private String multiInstanceType;
     private List<SysUser> candidateUsers;

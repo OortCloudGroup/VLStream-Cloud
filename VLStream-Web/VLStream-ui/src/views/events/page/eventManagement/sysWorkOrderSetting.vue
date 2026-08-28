@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2024-11-15 11:45:51
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -19,7 +24,7 @@
           </div>
         </div>
       </div>
-      <!--搜索-->
+      <!--  -->
       <div class="searchHeight_out flexRowAC">
         <search-height-box keyword="modelName" placeholder="流程名称" :data="searchData" @handle="searchResetFn" />
         <export-excel-pdf />
@@ -87,7 +92,7 @@
       width="46%"
       :close-on-click-modal="false"
     >
-      <!--模型 0 新增 、1，copy ， 2 编辑-->
+      <!-- model 0 Add 、1, copy , 2 -->
       <work-order-built v-if="dVisi" :is-type="1" :type="dItem?.modelId?2:0" :app="appObj" :item="dItem" @close="dVisi=false" @handle="getListFn" />
     </el-dialog>
     <el-dialog
@@ -119,11 +124,11 @@ const router = useRouter()
 const props: any = defineProps(['act', 'app'])
 const tableData = ref<any>([])
 let appObj = ref<any>(props?.app)
-const dVisi = ref<boolean>(false)// 新建工单
-const fVisi = ref<boolean>(false)// 新建表单
-let dItem = ref<any>('')// 详情 obj
+const dVisi = ref<boolean>(false)// new work order
+const fVisi = ref<boolean>(false)// new form
+let dItem = ref<any>('')// obj
 let isAct = ref('')
-const searchData = ref<any>([]) // 高级搜索框内容
+const searchData = ref<any>([]) //
 searchData.value = [
   { label: '模型名称', value: 'modelName', type: 'text', default: '' },
   { label: '模型标识', value: 'modelKey', type: 'text', default: '' }
@@ -136,7 +141,7 @@ const queryParams = reactive({
   modelKey: undefined
 })
 
-// 搜索重置
+//
 function searchResetFn(val, reset) {
   if (reset) {
     queryParams.pageNum = 1
@@ -147,13 +152,13 @@ function searchResetFn(val, reset) {
   getListFn()
 }
 
-// 选中
+// in
 const startClick = (item, index) => {
   isAct.value = index
   formClick(item, '1')
 }
 
-// 新建
+// new
 function newEditClick(row) {
   if (!appObj.value?.appId) {
     ElMessage.warning('工单应用分类未初始化，暂不能新建模型')
@@ -163,7 +168,7 @@ function newEditClick(row) {
   dItem.value = row || ''
 }
 
-// 表单
+// form
 const formClick = (item, step) => {
   if (step === '2' && !item.formId) {
     fVisi.value = true
@@ -174,7 +179,7 @@ const formClick = (item, step) => {
   router.push({
     path: '/workOrderDetails',
     query: {
-      // 通知节点：工单有,流程无(workOrderAppAll:true)
+      // notificationnode: work order ,workflow (workOrderAppAll:true)
       workOrderAppAll: item.workOrderAppAll,
       modelId: item.modelId,
       formId: item.formId,
@@ -183,7 +188,7 @@ const formClick = (item, step) => {
   })
 }
 
-// 删除
+// Delete
 function delClick(row) {
   ElMessageBox.confirm('是否确定删除该模型?', '提示', {
     confirmButtonText: '确定',
@@ -195,7 +200,7 @@ function delClick(row) {
     }
     let res: any = await deleteModel(data)
     if (res.code === 200) {
-      // 列表 刷新
+      // new
       getListFn()
       ElMessage.success('模型删除成功')
     } else {
@@ -204,7 +209,7 @@ function delClick(row) {
   })
 }
 
-// 模型列表
+// model
 function getListFn() {
   if (!appObj.value?.appId) {
     tableData.value = []
@@ -296,7 +301,7 @@ onMounted(async() => {
   }
 }
 
-// 紧急程度
+//
 :deep(.priority) {
   .el-select__selected-item > span {
     color: var(--el-color-primary);
@@ -317,12 +322,12 @@ onMounted(async() => {
   }
 }
 
-// 新增
+// Add
 .exportBtnBox {
   gap: 12px;
   padding: 0;
 
-  // 新增
+  // Add
   .exportBtn {
     cursor: pointer;
     justify-content: center;

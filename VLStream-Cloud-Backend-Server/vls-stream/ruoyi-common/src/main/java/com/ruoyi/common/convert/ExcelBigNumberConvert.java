@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -18,8 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.math.BigDecimal;
 
 /**
- * 大数值转换
- * Excel 数值长度位15位 大于15位的数值转换位字符串
+ * value Convert
+ * Excel value 15 15 value Convert
  *
  * @author Lion Li
  */

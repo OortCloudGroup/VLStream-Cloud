@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { createI18n } from './smart-vue-i18n/index'
 
 import enLocale from '~@/lang/en-US'
@@ -42,7 +47,7 @@ export const translate = function(key) {
 }
 
 export const installI18n = (app) => {
-  // 将i18n方法注入到全局属性中
+  // i18n method full property in
   app.config.globalProperties.i18nt = function(key) {
     return i18n.$st(key)
   }
@@ -51,7 +56,7 @@ export const installI18n = (app) => {
     return i18n.$st2(key1, key2)
   }
 
-  // 同时提供Composition API的使用方式
+  // Composition API
   app.provide('i18nt', function(key) {
     return i18n.$st(key)
   })
@@ -67,7 +72,7 @@ export default {
       return i18n.$st(key)
     },
 
-    /* 如果key1不存在，则查找key2 */
+    /* if key1 in , find key2 */
     i18n2t(key1, key2) {
       return i18n.$st2(key1, key2)
     }

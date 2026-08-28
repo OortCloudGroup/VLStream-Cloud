@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -8,7 +9,7 @@ package com.ruoyi.common.annotation;
 import java.lang.annotation.*;
 
 /**
- * 数据权限组
+ * data
  *
  * @author Lion Li
  * @version 3.5.0

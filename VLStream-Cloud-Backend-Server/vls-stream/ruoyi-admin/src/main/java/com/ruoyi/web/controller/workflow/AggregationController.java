@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 /**
- * 聚合接口
+ * interface
  */
 @RestController
 @RequestMapping("/workflow/aggregation")
@@ -25,7 +26,7 @@ public class AggregationController {
     private final IAggregationService aggregationService;
 
     /**
-     * 根据applicationId获取流程或工单的表单id和应用id
+     * applicationIdGet workflow work order formid and id
      * @param applicationId
      * @return
      */

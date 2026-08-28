@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,50 +14,50 @@ import com.ruoyi.rule.vo.RuleTreeVo;
 import java.util.List;
 
 /**
- * 规则树Mapper接口
+ * Mapperinterface
  *
- * @author 雷超群
+ * @author
  * @date 2024-12-17
  */
 public interface RuleTreeMapper extends BaseMapperPlus<RuleTreeMapper, RuleTree, RuleTreeVo> {
     /**
-     * 查询规则树
+     * Query
      *
-     * @param id 规则树主键
-     * @return 规则树
+     * @param id primary key
+     * @return
      */
     public RuleTree selectRuleTreeById(String id);
 
     /**
-     * 查询规则树列表
+     * Query list
      *
-     * @param ruleTree 规则树
-     * @return 规则树集合
+     * @param ruleTree
+     * @return collection
      */
     public List<RuleTree> selectRuleTreeList(RuleTree ruleTree);
 
 
     /**
-     * 修改规则树
+     * Update
      *
-     * @param ruleTree 规则树
-     * @return 结果
+     * @param ruleTree
+     * @return
      */
     public int updateRuleTree(RuleTree ruleTree);
 
     /**
-     * 删除规则树
+     * Delete
      *
-     * @param id 规则树主键
-     * @return 结果
+     * @param id primary key
+     * @return
      */
     public int deleteRuleTreeById(String id);
 
     /**
-     * 批量删除规则树
+     * Batch delete
      *
-     * @param ids 需要删除的数据主键集合
-     * @return 结果
+     * @param ids need to Delete dataprimary keycollection
+     * @return
      */
     public int deleteRuleTreeByIds(String[] ids);
 }

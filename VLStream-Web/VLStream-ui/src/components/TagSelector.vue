@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="tag-selector">
     <el-select
@@ -17,7 +22,7 @@
         :label="typeGroup.label"
       >
         <template v-for="item in typeGroup.children" :key="item.value">
-          <!-- level=0 大类标签 - 可选，显示为分组第一项 -->
+          <!-- level=0 - , to group item -->
           <el-option
             v-if="item.level === 0 && props.allowedLevels.includes(0)"
             :label="item.label"
@@ -31,7 +36,7 @@
               {{ item.label }}
             </div>
           </el-option>
-          <!-- level=1 父级标签 - 根据是否包含level=2决定是否可选 -->
+          <!-- level=1 - whether level=2 whether -->
           <el-option
             v-else-if="item.level === 1 && props.allowedLevels.includes(1)"
             :label="item.label"
@@ -40,24 +45,24 @@
             :class="props.allowedLevels.includes(2) ? 'parent-option' : 'parent-selectable-option'"
             :style="{ padding: '0 !important', cursor: props.allowedLevels.includes(2) ? 'not-allowed !important' : 'pointer !important', backgroundColor: props.allowedLevels.includes(2) ? '#f0f2f5 !important' : '#ffffff !important' }"
           >
-            <div :style="{ 
-              display: 'block', 
-              padding: '2px 12px 2px 35px', 
-              color: props.allowedLevels.includes(2) ? '#3F63F3' : '#1A53FF', 
-              fontSize: '12px', 
-              fontWeight: props.allowedLevels.includes(2) ? '500' : '600', 
-              backgroundColor: props.allowedLevels.includes(2) ? '#f0f2f5' : '#ffffff', 
-              borderBottom: props.allowedLevels.includes(2) ? '1px solid #e4e7ed' : 'none', 
-              cursor: props.allowedLevels.includes(2) ? 'not-allowed' : 'pointer', 
-              position: 'relative', 
-              width: '100%', 
-              boxSizing: 'border-box' 
+            <div :style="{
+              display: 'block',
+              padding: '2px 12px 2px 35px',
+              color: props.allowedLevels.includes(2) ? '#3F63F3' : '#1A53FF',
+              fontSize: '12px',
+              fontWeight: props.allowedLevels.includes(2) ? '500' : '600',
+              backgroundColor: props.allowedLevels.includes(2) ? '#f0f2f5' : '#ffffff',
+              borderBottom: props.allowedLevels.includes(2) ? '1px solid #e4e7ed' : 'none',
+              cursor: props.allowedLevels.includes(2) ? 'not-allowed' : 'pointer',
+              position: 'relative',
+              width: '100%',
+              boxSizing: 'border-box'
             }">
               <span :style="{ position: 'absolute', left: '18px', top: '50%', color: '#d9d9d9', fontSize: '10px', transform: 'translateY(-50%)', lineHeight: '1' }">—</span>
               {{ item.label }}
             </div>
           </el-option>
-          <!-- level=2 子级标签 - 可选 -->
+          <!-- level=2 sub - -->
           <el-option
             v-else-if="item.level === 2 && props.allowedLevels.includes(2)"
             :label="item.label"
@@ -97,7 +102,7 @@ const props = defineProps({
   },
   allowedLevels: {
     type: Array,
-    default: () => [0, 1, 2], // 默认显示所有层级
+    default: () => [0, 1, 2], // all layer
     validator: (value) => {
       return Array.isArray(value) && value.every(level => [0, 1, 2].includes(level))
     }
@@ -106,25 +111,25 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'change'])
 
-// 响应式数据
+// data
 const selectedValues = ref([])
 const loading = ref(false)
 const tagTreeData = ref([])
 
-// 内联样式方法已移除，现在直接在模板中使用内联样式
+// method already , in in in
 
-// 计算属性 - 处理标签选项数据
+// property - Process item data
 const tagOptions = computed(() => {
   return transformTagTreeToOptions(tagTreeData.value)
 })
 
-// 计算属性 - 创建值到标签名称的映射
+// property - value
 const valueToLabelMap = computed(() => {
   const map = new Map()
-  
+
   const addToMap = (options) => {
     if (!Array.isArray(options)) return
-    
+
     options.forEach(option => {
       map.set(option.value, option.label)
       if (option.children && Array.isArray(option.children)) {
@@ -132,30 +137,30 @@ const valueToLabelMap = computed(() => {
       }
     })
   }
-  
+
   addToMap(tagOptions.value)
   return map
 })
 
-// 计算属性 - 处理显示的选中值（转换为标签名称）
+// property - Process in value (Convert to )
 const displaySelectedValues = computed(() => {
   return selectedValues.value.map(value => {
     const label = valueToLabelMap.value.get(value)
-    return label || value // 如果找不到对应的标签名称，则使用原值
+    return label || value // if , value
   })
 })
 
-// 监听 modelValue 变化
+// modelValue
 watch(() => props.modelValue, (newValue) => {
   selectedValues.value = Array.isArray(newValue) ? newValue : []
 }, { immediate: true })
 
-// 方法
+// method
 const loadTagTree = async () => {
   loading.value = true
   try {
     const response = await getTagTree()
-    
+
     if ((!response.code || response.code === 200) && response.data) {
       tagTreeData.value = response.data
       console.log('加载标签树数据:', response.data)
@@ -172,17 +177,17 @@ const loadTagTree = async () => {
   }
 }
 
-// 处理下拉框显示状态变化
+// Process
 const handleVisibleChange = (visible) => {
   if (visible) {
-    // 下拉框打开时，通过添加CSS类来确保样式生效
+    // , CSS
     nextTick(() => {
       addDropdownClass()
     })
   }
 }
 
-// 添加CSS类来确保样式生效
+// CSS
 const addDropdownClass = () => {
   setTimeout(() => {
     try {
@@ -190,19 +195,19 @@ const addDropdownClass = () => {
       if (dropdown) {
         dropdown.classList.add('tag-selector-dropdown')
         console.log('已添加下拉选项样式类')
-        
-        // 调试信息：检查样式是否正确应用
+
+        // info: whether correct
         const parentOptions = dropdown.querySelectorAll('.parent-option')
         const childOptions = dropdown.querySelectorAll('.child-option')
         const typeOptions = dropdown.querySelectorAll('.type-option')
         const parentSelectableOptions = dropdown.querySelectorAll('.parent-selectable-option')
-        
+
         console.log('找到大类选项:', typeOptions.length)
         console.log('找到父级选项:', parentOptions.length)
         console.log('找到可选父级选项:', parentSelectableOptions.length)
         console.log('找到子级选项:', childOptions.length)
-        
-        // 强制应用样式
+
+        //
         typeOptions.forEach((option, index) => {
           const div = option.querySelector('div')
           if (div) {
@@ -216,7 +221,7 @@ const addDropdownClass = () => {
             span.style.setProperty('left', '18px', 'important')
           }
         })
-        
+
         parentOptions.forEach((option, index) => {
           const div = option.querySelector('div')
           if (div) {
@@ -228,7 +233,7 @@ const addDropdownClass = () => {
             span.style.setProperty('left', '18px', 'important')
           }
         })
-        
+
         parentSelectableOptions.forEach((option, index) => {
           const div = option.querySelector('div')
           if (div) {
@@ -244,7 +249,7 @@ const addDropdownClass = () => {
             span.style.setProperty('left', '18px', 'important')
           }
         })
-        
+
         childOptions.forEach((option, index) => {
           const div = option.querySelector('div')
           if (div) {
@@ -263,20 +268,20 @@ const addDropdownClass = () => {
   }, 50)
 }
 
-// 转换标签树数据为选项格式
+// Convert data to item
 const transformTagTreeToOptions = (treeData) => {
   if (!Array.isArray(treeData)) return []
-  
+
   return treeData.map(typeNode => {
-    // level=0: 类型级（大类）
+    // level=0: ( )
     const typeOption = {
       label: typeNode.tagName || typeNode.name,
       value: typeNode.id || typeNode.tagName,
       level: typeNode.level || 0,
       children: []
     }
-    
-    // 只有当allowedLevels包含level=0时，才添加大类本身作为可选项
+
+    // only allowedLevels level=0 , to item
     if (props.allowedLevels.includes(0)) {
       typeOption.children.push({
         label: typeNode.tagName || typeNode.name,
@@ -284,15 +289,15 @@ const transformTagTreeToOptions = (treeData) => {
         level: 0
       })
     }
-    
-    // 扁平化所有子节点，保持level信息，并根据allowedLevels过滤
+
+    // all sub node, levelinfo, allowedLevels
     const flattenChildren = (nodes, result = []) => {
       if (!Array.isArray(nodes)) return result
-      
+
       nodes.forEach(node => {
         const nodeLevel = node.level || 1
-        
-        // 只添加允许的层级
+
+        // only layer
         if (props.allowedLevels.includes(nodeLevel)) {
           result.push({
             label: node.tagName || node.name,
@@ -300,22 +305,22 @@ const transformTagTreeToOptions = (treeData) => {
             level: nodeLevel
           })
         }
-        
-        // 递归处理子节点（即使当前节点不显示，子节点可能需要显示）
+
+        // Process sub node ( current node , sub node can need to )
         if (node.children && Array.isArray(node.children)) {
           flattenChildren(node.children, result)
         }
       })
-      
+
       return result
     }
-    
+
     if (typeNode.children && Array.isArray(typeNode.children)) {
-      // 将子节点添加到大类选项后面，只包含允许的层级
+      // sub node item after , only layer
       const childrenOptions = flattenChildren(typeNode.children)
       typeOption.children.push(...childrenOptions)
     }
-    
+
     return typeOption
   })
 }
@@ -333,12 +338,12 @@ const handleClear = () => {
   emit('change', [])
 }
 
-// 组件挂载时加载数据
+// component Load data
 onMounted(() => {
   loadTagTree()
 })
 
-// 暴露方法
+// method
 defineExpose({
   loadTagTree
 })
@@ -353,7 +358,7 @@ defineExpose({
   width: 100%;
 }
 
-/* 基础样式作为后备 */
+/* to after */
 .tag-selector .el-select__tags .el-tag {
   margin-right: 6px !important;
   margin-bottom: 2px !important;
@@ -365,7 +370,7 @@ defineExpose({
   color: #409eff !important;
 }
 
-/* 全局样式 - 确保下拉选项样式正确 */
+/* full - item correct */
 :global(.tag-selector-dropdown .type-option) {
   padding: 0 !important;
   background-color: #ffffff !important;
@@ -478,7 +483,7 @@ defineExpose({
   color: #409eff !important;
 }
 
-/* 备用样式 - 确保在没有添加类的情况下也能正常显示 */
+/* - in also can */
 :global(.el-select-dropdown .type-option) {
   padding: 0 !important;
   background-color: #ffffff !important;
@@ -557,7 +562,7 @@ defineExpose({
   line-height: 1 !important;
 }
 
-/* 可选的父级标签样式 */
+/*  */
 :global(.tag-selector-dropdown .parent-selectable-option) {
   padding: 0 !important;
   background-color: #ffffff !important;

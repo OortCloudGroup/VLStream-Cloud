@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 查询报警列表
+// Query list
 export function listAlarm(query) {
   return request({
     url: '/api/alarm/all',
@@ -9,7 +14,7 @@ export function listAlarm(query) {
   })
 }
 
-// 删除报警
+// Delete
 export function delAlarm(alarmIds) {
   return request({
     url: '/api/alarm/delete/' + alarmIds,

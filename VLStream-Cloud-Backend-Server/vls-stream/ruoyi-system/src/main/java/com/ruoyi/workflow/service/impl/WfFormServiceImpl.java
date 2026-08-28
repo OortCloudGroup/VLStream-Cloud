@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 流程表单Service业务层处理
+ * workflowformService layer Process
  *
  * @author KonBAI
  * @createTime 2022/3/7 22:07
@@ -61,10 +61,10 @@ public class WfFormServiceImpl extends ServiceImpl<WfFormMapper, WfForm> impleme
     IWfModelService wfModelService;
 
     /**
-     * 查询流程表单
+     * Query workflowform
      *
-     * @param formId 流程表单ID
-     * @return 流程表单
+     * @param formId workflowformID
+     * @return workflowform
      */
     @Override
     public WfFormVo queryById(String formId) {
@@ -72,10 +72,10 @@ public class WfFormServiceImpl extends ServiceImpl<WfFormMapper, WfForm> impleme
     }
 
     /**
-     * 查询流程表单列表
+     * Query workflowform list
      *
-     * @param bo 流程表单
-     * @return 流程表单
+     * @param bo workflowform
+     * @return workflowform
      */
     @Override
     public TableDataInfo<WfFormVo> queryPageList(WfFormBo bo, PageQuery pageQuery) {
@@ -86,10 +86,10 @@ public class WfFormServiceImpl extends ServiceImpl<WfFormMapper, WfForm> impleme
     }
 
     /**
-     * 查询流程表单列表（导出）
+     * Query workflowform list (Export )
      *
-     * @param bo 流程表单
-     * @return 流程表单
+     * @param bo workflowform
+     * @return workflowform
      */
     @Override
     public List<WfFormVo> queryList(WfFormBo bo) {
@@ -98,10 +98,10 @@ public class WfFormServiceImpl extends ServiceImpl<WfFormMapper, WfForm> impleme
     }
 
     /**
-     * 新增流程表单
+     * Add workflowform
      *
-     * @param bo 流程表单
-     * @return 结果
+     * @param bo workflowform
+     * @return
      */
     @Override
     public WfForm insertForm(WfFormBo bo) {
@@ -126,10 +126,10 @@ public class WfFormServiceImpl extends ServiceImpl<WfFormMapper, WfForm> impleme
     }
 
     /**
-     * 修改流程表单
+     * Update workflowform
      *
-     * @param bo 流程表单
-     * @return 结果
+     * @param bo workflowform
+     * @return
      */
     @Override
     public int updateForm(WfFormBo bo) {
@@ -142,10 +142,10 @@ public class WfFormServiceImpl extends ServiceImpl<WfFormMapper, WfForm> impleme
     }
 
     /**
-     * 批量删除流程表单
+     * Batch delete workflowform
      *
-     * @param ids 需要删除的流程表单ID
-     * @return 结果
+     * @param ids need to Delete workflowformID
+     * @return
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids) {

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -12,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.*;
 
 /**
- * 线程相关工具类.
+ * related .
  *
  * @author ruoyi
  */
@@ -21,7 +22,7 @@ import java.util.concurrent.*;
 public class Threads {
 
     /**
-     * sleep等待,单位为毫秒
+     * sleep etc. , to
      */
     public static void sleep(long milliseconds) {
         try {
@@ -32,11 +33,11 @@ public class Threads {
     }
 
     /**
-     * 停止线程池
-     * 先使用shutdown, 停止接收新任务并尝试完成所有已存在任务.
-     * 如果超时, 则调用shutdownNow, 取消在workQueue中Pending的任务,并中断所有阻塞函数.
-     * 如果仍然超時，則強制退出.
-     * 另对在shutdown时线程本身被调用中断做了处理.
+     *
+     * shutdown, new task all already in task.
+     * if , shutdownNow, in workQueue in Pending task, in all .
+     * if , exit .
+     * in shutdown in Process .
      */
     public static void shutdownAndAwaitTermination(ExecutorService pool) {
         if (pool != null && !pool.isShutdown()) {
@@ -56,7 +57,7 @@ public class Threads {
     }
 
     /**
-     * 打印线程异常信息
+     * info
      */
     public static void printException(Runnable r, Throwable t) {
         if (t == null && r instanceof Future<?>) {

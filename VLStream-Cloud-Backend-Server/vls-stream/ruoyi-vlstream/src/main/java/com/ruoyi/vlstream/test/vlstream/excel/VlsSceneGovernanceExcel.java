@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 
 
 /**
- * 场景治理表 Excel实体类
+ * Excel
  *
  * @author Oort
  * @since 2025-12-23

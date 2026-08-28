@@ -7,141 +7,141 @@
 package com.ruoyi.common.constant;
 
 /**
- * 用户常量信息
+ * user info
  *
  * @author ruoyi
  */
 public interface UserConstants {
 
     /**
-     * 平台内系统用户的唯一标志
+     * user
      */
     String SYS_USER = "SYS_USER";
 
     /**
-     * 正常状态
+     *
      */
     String NORMAL = "0";
 
     /**
-     * 异常状态
+     *
      */
     String EXCEPTION = "1";
 
     /**
-     * 用户正常状态
+     * user
      */
     String USER_NORMAL = "0";
 
     /**
-     * 用户封禁状态
+     * user
      */
     String USER_DISABLE = "1";
 
     /**
-     * 角色正常状态
+     * role
      */
     String ROLE_NORMAL = "0";
 
     /**
-     * 角色封禁状态
+     * role
      */
     String ROLE_DISABLE = "1";
 
     /**
-     * 部门正常状态
+     * department
      */
     String DEPT_NORMAL = "0";
 
     /**
-     * 部门停用状态
+     * department
      */
     String DEPT_DISABLE = "1";
 
     /**
-     * 字典正常状态
+     * dict
      */
     String DICT_NORMAL = "0";
 
     /**
-     * 是否为系统默认（是）
+     * whether to ( is )
      */
     String YES = "Y";
 
     /**
-     * 是否菜单外链（是）
+     * whether menu ( is )
      */
     String YES_FRAME = "0";
 
     /**
-     * 是否菜单外链（否）
+     * whether menu ( )
      */
     String NO_FRAME = "1";
 
     /**
-     * 菜单正常状态
+     * menu
      */
     String MENU_NORMAL = "0";
 
     /**
-     * 菜单停用状态
+     * menu
      */
     String MENU_DISABLE = "1";
 
     /**
-     * 菜单类型（目录）
+     * menu ( )
      */
     String TYPE_DIR = "M";
 
     /**
-     * 菜单类型（菜单）
+     * menu (menu)
      */
     String TYPE_MENU = "C";
 
     /**
-     * 菜单类型（按钮）
+     * menu (button)
      */
     String TYPE_BUTTON = "F";
 
     /**
-     * Layout组件标识
+     * Layoutcomponent
      */
     String LAYOUT = "Layout";
 
     /**
-     * ParentView组件标识
+     * ParentViewcomponent
      */
     String PARENT_VIEW = "ParentView";
 
     /**
-     * InnerLink组件标识
+     * InnerLinkcomponent
      */
     String INNER_LINK = "InnerLink";
 
     /**
-     * 用户名长度限制
+     * user
      */
     int USERNAME_MIN_LENGTH = 2;
     int USERNAME_MAX_LENGTH = 20;
 
     /**
-     * 密码长度限制
+     *
      */
     int PASSWORD_MIN_LENGTH = 5;
     int PASSWORD_MAX_LENGTH = 20;
 
     /**
-     * 管理员ID
+     * administratorID
      */
     String ADMIN_ID = "1";
 
     /**
-     * 管理员权限id
+     * administrator id
      */
     Long AD_ID = 1L;
 
     /**
-     * 普通角色权限id
+     * role id
      */
     Long COMMON_ID = 2L;
 

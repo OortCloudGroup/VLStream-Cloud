@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -27,7 +28,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 /**
- * 标注图片信息表 服务实现类
+ * annotation info service
  *
  * @author Oort
  * @since 2025-12-23
@@ -97,7 +98,7 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 			}
 		}
 
-		// 更新标注 totalCount
+		// new annotation totalCount
 		try {
 			if (addedCount > 0) {
 				AlgorithmAnnotation annotation = algorithmAnnotationMapper.selectById(annotationId);

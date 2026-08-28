@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div>
     <el-form-item v-if="!optionModel.responsive" :label="i18nt('designer.setting.colSpanTitle')">

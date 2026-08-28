@@ -1,3 +1,7 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
 
 <!-- eslint-disable vue/no-v-for-template-key -->
 <template>

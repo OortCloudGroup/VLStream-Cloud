@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="intelligent-analysis-request tenant_Page draHeaPB">
     <div class="tenant_content">
@@ -86,21 +91,21 @@
         </div>
       </div>
 
-    <!-- 编辑视图 -->
+    <!--  -->
     <div v-if="showEditView" class="edit-view">
-      <!-- 面包屑导航 -->
+      <!--  -->
       <div class="breadcrumb-nav">
         <span class="breadcrumb-item" @click="showListView">场景列表</span>
         <span class="breadcrumb-separator">></span>
         <span class="breadcrumb-item active">{{ editTitle }}</span>
       </div>
 
-      <!-- 编辑内容 -->
+      <!--  -->
       <div class="edit-content">
         <el-form :model="form" class="analysis-form" label-width="120px">
           <el-form-item label="场景名称" prop="sceneName">
-            <el-input 
-              v-model="form.sceneName" 
+            <el-input
+              v-model="form.sceneName"
               placeholder="请输入场景名称"
               style="width: 480px"
             />
@@ -119,9 +124,9 @@
                 <span class="upload-count">({{ uploadedFiles.length }}/5)</span>
               </div>
               <div class="upload-grid">
-                <div 
-                  v-for="(file, index) in uploadedFiles" 
-                  :key="index" 
+                <div
+                  v-for="(file, index) in uploadedFiles"
+                  :key="index"
                   class="upload-item"
                 >
                   <img :src="file.url" :alt="file.name" class="upload-image" />
@@ -131,12 +136,12 @@
                   <el-icon class="upload-plus"><Plus /></el-icon>
                 </div>
               </div>
-              <input 
-                ref="fileInput" 
-                type="file" 
-                multiple 
-                accept="image/*" 
-                style="display: none" 
+              <input
+                ref="fileInput"
+                type="file"
+                multiple
+                accept="image/*"
+                style="display: none"
                 @change="handleFileUpload"
               />
             </div>
@@ -145,10 +150,10 @@
           <el-form-item label="选择区域" prop="selectedRegions">
             <div class="selector-container" style="width: 480px">
               <div class="tag-list">
-                <el-tag 
-                  v-for="region in form.selectedRegions" 
-                  :key="region" 
-                  closable 
+                <el-tag
+                  v-for="region in form.selectedRegions"
+                  :key="region"
+                  closable
                   @close="removeRegion(region)"
                   class="region-tag"
                 >
@@ -162,10 +167,10 @@
           <el-form-item label="选择摄像头" prop="selectedCameras">
             <div class="selector-container" style="width: 480px">
               <div class="tag-list">
-                <el-tag 
-                  v-for="camera in form.selectedCameras" 
-                  :key="camera" 
-                  closable 
+                <el-tag
+                  v-for="camera in form.selectedCameras"
+                  :key="camera"
+                  closable
                   @close="removeCamera(camera)"
                   class="camera-tag"
                 >
@@ -190,14 +195,14 @@
             </div>
           </el-form-item>
 
-          <!-- 操作按钮 -->
+          <!-- operationbutton -->
           <div class="form-actions">
             <el-button type="primary" @click="handleSubmit" class="common_btn">申请</el-button>
             <el-button @click="showListView" class="common_btn">取消</el-button>
           </div>
         </el-form>
 
-        <!-- 分析类型选择对话框 -->
+        <!--  -->
         <el-dialog v-model="showAnalysisTypeSelector" title="选择分析类型" width="25%">
           <el-radio-group v-model="tempAnalysisType" direction="vertical">
             <el-radio value="人员">人员</el-radio>
@@ -213,7 +218,7 @@
           </template>
         </el-dialog>
 
-        <!-- 区域选择对话框 -->
+        <!--  -->
         <el-dialog v-model="showRegionSelector" title="选择区域" width="25%">
           <el-checkbox-group v-model="tempSelectedRegions">
             <div class="checkbox-grid">
@@ -233,7 +238,7 @@
           </template>
         </el-dialog>
 
-        <!-- 摄像头选择对话框 -->
+        <!--  -->
         <el-dialog v-model="showCameraSelector" title="选择摄像头" width="25%">
           <el-checkbox-group v-model="tempSelectedCameras">
             <div class="checkbox-grid">
@@ -269,7 +274,7 @@ import { getAnalysisRequestPage, applyAnalysisRequest, updateAnalysisRequest } f
 
 const router = useRouter()
 
-// 搜索表单
+// form
 const searchForm = reactive({
   analysisName: '',
   analysisType: '',
@@ -277,22 +282,22 @@ const searchForm = reactive({
   createDateRange: []
 })
 
-// 分页配置
+// configuration
 const pagination = reactive({
   currentPage: 1,
   pageSize: 10,
   total: 0
 })
 
-// 选中的行
+// in
 const selectedRows = ref([])
 
-// 视图控制
+// control
 const showEditView = ref(false)
 const editingItem = ref(null)
 const editTitle = ref('编辑场景')
 
-// 编辑表单数据
+// formdata
 const form = ref({
   sceneName: '',
   analysisType: '',
@@ -301,28 +306,28 @@ const form = ref({
   timeRange: ''
 })
 
-// 对话框控制
+// control
 const showAnalysisTypeSelector = ref(false)
 const showRegionSelector = ref(false)
 const showCameraSelector = ref(false)
 
-// 临时选择数据
+// data
 const tempAnalysisType = ref('')
 const tempSelectedRegions = ref([])
 const tempSelectedCameras = ref([])
 
-// 文件上传
+//
 const fileInput = ref(null)
 const uploadedFiles = ref([])
 
-// 占位图片数据URL
+// dataURL
 const placeholderImage80x60 = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2Y1ZjVmNSIvPjxwYXRoIGQ9Ik0zNSAzMGMwIDUuNDE4IDMuMDgyIDEwIDcgMTBzNy00LjU4MiA3LTEwUzQ2LjQxOCAyMCA0MiAyMCAzNSAyNC41ODIgMzUgMzB6bTIwIDIwTDUwIDQ1bC01LTUtMTAgMTB6IiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNDAiIHk9IjUwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+ODAgeCAwPC90ZXh0Pjwvc3ZnPg=='
 
-// 表格数据
-// 表格仅由后端真实记录填充，不展示历史静态样例。
+// tabledata
+// table after recordfill , history .
 const tableData = ref([])
 
-// 方法
+// method
 const handleSearch = () => {
   console.log('搜索:', searchForm)
 }
@@ -364,7 +369,7 @@ const handleEdit = () => {
     ElMessage.warning('请选择要编辑的记录')
     return
   }
-  
+
   const row = selectedRows.value[0]
   editingItem.value = row
   form.value = {
@@ -383,7 +388,7 @@ const handleDelete = async () => {
     ElMessage.warning('请选择要删除的记录')
     return
   }
-  
+
   try {
     await ElMessageBox.confirm(
       `确定要删除选中的 ${selectedRows.value.length} 条记录吗？`,
@@ -394,11 +399,11 @@ const handleDelete = async () => {
         type: 'warning'
       }
     )
-    
+
     ElMessage.success('删除成功')
-    
+
   } catch {
-    // 用户取消删除
+    // user Delete
   }
 }
 
@@ -421,13 +426,13 @@ const getStatusTagType = (status) => {
   return statusMap[status] || 'info'
 }
 
-// 返回列表页面
+// page
 const showListView = () => {
   showEditView.value = false
   resetForm()
 }
 
-// 重置表单
+// form
 const resetForm = () => {
   form.value = {
     sceneName: '',
@@ -439,7 +444,7 @@ const resetForm = () => {
   editingItem.value = null
 }
 
-// 从真实分析请求表加载列表，失败时保持空数据并显示原因。
+// from Load , failed null / empty data .
 const loadAnalysisRequests = async () => {
   try {
     const response = await getAnalysisRequestPage({
@@ -466,7 +471,7 @@ const loadAnalysisRequests = async () => {
   }
 }
 
-// 提交表单
+// form
 const handleSubmit = async () => {
   if (!form.value.sceneName.trim()) {
     ElMessage.warning('请输入场景名称')
@@ -497,7 +502,7 @@ const handleSubmit = async () => {
   }
 }
 
-// 文件上传相关方法
+// related method
 const triggerUpload = () => {
   fileInput.value?.click()
 }
@@ -525,7 +530,7 @@ const removeFile = (index) => {
 
 onMounted(loadAnalysisRequests)
 
-// 标签删除方法
+// Delete method
 const removeRegion = (region) => {
   const index = form.value.selectedRegions.indexOf(region)
   if (index > -1) {
@@ -540,7 +545,7 @@ const removeCamera = (camera) => {
   }
 }
 
-// 打开对话框方法
+// method
 const openAnalysisTypeSelector = () => {
   tempAnalysisType.value = form.value.analysisType
   showAnalysisTypeSelector.value = true
@@ -556,7 +561,7 @@ const openCameraSelector = () => {
   showCameraSelector.value = true
 }
 
-// 对话框确认方法
+// method
 const confirmAnalysisType = () => {
   form.value.analysisType = tempAnalysisType.value
   showAnalysisTypeSelector.value = false
@@ -585,11 +590,11 @@ const searchResetFn = (val, reset) => {
   handleAdvancedSearch(val || {})
 }
 
-// 高级搜索相关方法
+// related method
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索:', searchData)
-  
-  // 更新搜索表单
+
+  // new form
   if (searchData.keyword) {
     searchForm.analysisName = searchData.keyword
   }
@@ -605,7 +610,7 @@ const handleAdvancedSearch = (searchData) => {
   if (searchData.dateRange && searchData.dateRange.length > 0) {
     searchForm.createDateRange = searchData.dateRange
   }
-  
+
   ElMessage.success('高级搜索完成')
 }
 
@@ -680,7 +685,7 @@ const handleBatchOperation = () => {
   height: 100%;
 }
 
-/* 查询栏 - 无缝连接设计 */
+/* Query - */
 .query-bar {
   background: #F0F2F5;
   border-radius: 8px 8px 0 0;
@@ -726,7 +731,7 @@ const handleBatchOperation = () => {
   flex-shrink: 0;
 }
 
-/* 视频缩略图样式 */
+/*  */
 .thumbnail-container {
   position: relative;
   display: inline-block;
@@ -751,7 +756,7 @@ const handleBatchOperation = () => {
   border-radius: 2px;
 }
 
-/* 主题色更新 */
+/* main new */
 :deep(.el-button--primary) {
   background-color: #1A53FF;
   border-color: #1A53FF;
@@ -762,7 +767,7 @@ const handleBatchOperation = () => {
   border-color: #3d70ff;
 }
 
-/* 编辑视图样式 */
+/*  */
 .edit-view {
   height: 100%;
   display: flex;
@@ -774,7 +779,7 @@ const handleBatchOperation = () => {
   overflow: hidden;
 }
 
-/* 面包屑导航 */
+/*  */
 .breadcrumb-nav {
   background: #fff;
   border-bottom: 1px solid #f0f0f0;
@@ -805,7 +810,7 @@ const handleBatchOperation = () => {
   margin: 0 8px;
 }
 
-/* 编辑内容区域 */
+/*  */
 .edit-content {
   flex: 1;
   background: #fff;
@@ -817,13 +822,13 @@ const handleBatchOperation = () => {
   max-width: 600px;
 }
 
-/* 表单字段宽度480px */
+/* formfield 480px */
 .analysis-form .el-input,
 .analysis-form .el-select {
   width: 480px;
 }
 
-/* 操作按钮 */
+/* operationbutton */
 .form-actions {
   margin-top: 32px;
   padding-top: 20px;
@@ -832,7 +837,7 @@ const handleBatchOperation = () => {
   gap: 12px;
 }
 
-/* 选择器样式 */
+/*  */
 .selector-item {
   height: 40px;
   border: 1px solid #dcdfe6;
@@ -860,7 +865,7 @@ const handleBatchOperation = () => {
   font-size: 14px;
 }
 
-/* 标签容器样式 */
+/*  */
 .selector-container {
   min-height: 40px;
   border: 1px solid #dcdfe6;
@@ -887,7 +892,7 @@ const handleBatchOperation = () => {
   color: #409eff;
 }
 
-/* 文件上传样式 */
+/*  */
 .upload-section {
   border: 1px solid #dcdfe6;
   border-radius: 6px;
@@ -961,7 +966,7 @@ const handleBatchOperation = () => {
   color: #c0c4cc;
 }
 
-/* 时间选择器容器 */
+/*  */
 .time-range-container {
   display: flex;
   align-items: center;
@@ -973,7 +978,7 @@ const handleBatchOperation = () => {
   font-size: 16px;
 }
 
-/* 对话框样式 */
+/*  */
 .checkbox-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -985,4 +990,4 @@ const handleBatchOperation = () => {
   justify-content: flex-end;
   gap: 12px;
 }
-</style> 
+</style>

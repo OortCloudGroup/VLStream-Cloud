@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 /**
- * 系统用户自定义导入
+ * userCustomImport
  *
  * @author Lion Li
  */
@@ -58,7 +58,7 @@ public class SysUserImportListener extends AnalysisEventListener<SysUserImportVo
     public void invoke(SysUserImportVo userVo, AnalysisContext context) {
         SysUser user = this.userService.selectUserByUserName(userVo.getUserName());
         try {
-            // 验证是否存在这个用户
+            // whether in user
             if (ObjectUtil.isNull(user)) {
                 user = BeanUtil.toBean(userVo, SysUser.class);
                 ValidatorUtils.validate(user);

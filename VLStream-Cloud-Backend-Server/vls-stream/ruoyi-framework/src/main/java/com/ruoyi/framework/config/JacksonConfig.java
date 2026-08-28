@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -22,7 +23,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.TimeZone;
 
 /**
- * jackson 配置
+ * jackson configuration
  *
  * @author Lion Li
  */
@@ -33,7 +34,7 @@ public class JacksonConfig {
     @Bean
     public Jackson2ObjectMapperBuilderCustomizer customizer() {
         return builder -> {
-            // 全局配置序列化返回 JSON 处理
+            // full configuration JSON Process
             JavaTimeModule javaTimeModule = new JavaTimeModule();
             javaTimeModule.addSerializer(Long.class, BigNumberSerializer.INSTANCE);
             javaTimeModule.addSerializer(Long.TYPE, BigNumberSerializer.INSTANCE);

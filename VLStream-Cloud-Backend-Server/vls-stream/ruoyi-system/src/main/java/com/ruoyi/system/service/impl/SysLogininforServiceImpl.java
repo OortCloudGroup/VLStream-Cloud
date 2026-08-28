@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -32,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 系统访问日志情况信息 服务层处理
+ * log info service layer Process
  *
  * @author Lion Li
  */
@@ -44,9 +45,9 @@ public class SysLogininforServiceImpl implements ISysLogininforService {
     private final SysLogininforMapper baseMapper;
 
     /**
-     * 记录登录信息
+     * record info
      *
-     * @param logininforEvent 登录事件
+     * @param logininforEvent event
      */
     @Async
     @EventListener
@@ -62,13 +63,13 @@ public class SysLogininforServiceImpl implements ISysLogininforService {
         s.append(getBlock(logininforEvent.getUsername()));
         s.append(getBlock(logininforEvent.getStatus()));
         s.append(getBlock(logininforEvent.getMessage()));
-        // 打印信息到日志
+        // info log
         log.info(s.toString(), logininforEvent.getArgs());
-        // 获取客户端操作系统
+        // Get operation
         String os = userAgent.getOs().getName();
-        // 获取客户端浏览器
+        // Get
         String browser = userAgent.getBrowser().getName();
-        // 封装对象
+        // object
         SysLogininfor logininfor = new SysLogininfor();
         logininfor.setUserName(logininforEvent.getUsername());
         logininfor.setIpaddr(ip);
@@ -76,13 +77,13 @@ public class SysLogininforServiceImpl implements ISysLogininforService {
         logininfor.setBrowser(browser);
         logininfor.setOs(os);
         logininfor.setMsg(logininforEvent.getMessage());
-        // 日志状态
+        // log
         if (StringUtils.equalsAny(logininforEvent.getStatus(), Constants.LOGIN_SUCCESS, Constants.LOGOUT, Constants.REGISTER)) {
             logininfor.setStatus(Constants.SUCCESS);
         } else if (Constants.LOGIN_FAIL.equals(logininforEvent.getStatus())) {
             logininfor.setStatus(Constants.FAIL);
         }
-        // 插入数据
+        // data
         insertLogininfor(logininfor);
     }
 
@@ -111,9 +112,9 @@ public class SysLogininforServiceImpl implements ISysLogininforService {
     }
 
     /**
-     * 新增系统登录日志
+     * Add log
      *
-     * @param logininfor 访问日志对象
+     * @param logininfor logobject
      */
     @Override
     public void insertLogininfor(SysLogininfor logininfor) {
@@ -122,10 +123,10 @@ public class SysLogininforServiceImpl implements ISysLogininforService {
     }
 
     /**
-     * 查询系统登录日志集合
+     * Query logcollection
      *
-     * @param logininfor 访问日志对象
-     * @return 登录记录集合
+     * @param logininfor logobject
+     * @return recordcollection
      */
     @Override
     public List<SysLogininfor> selectLogininforList(SysLogininfor logininfor) {
@@ -140,10 +141,10 @@ public class SysLogininforServiceImpl implements ISysLogininforService {
     }
 
     /**
-     * 批量删除系统登录日志
+     * Batch delete log
      *
-     * @param infoIds 需要删除的登录日志ID
-     * @return 结果
+     * @param infoIds need to Delete logID
+     * @return
      */
     @Override
     public int deleteLogininforByIds(Long[] infoIds) {
@@ -151,7 +152,7 @@ public class SysLogininforServiceImpl implements ISysLogininforService {
     }
 
     /**
-     * 清空系统登录日志
+     * null / empty log
      */
     @Override
     public void cleanLogininfor() {

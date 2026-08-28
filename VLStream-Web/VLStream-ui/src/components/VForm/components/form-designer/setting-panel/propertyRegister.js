@@ -1,10 +1,15 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 // import { vfApp } from '~@/utils/create-app'
 
 /**
- * 格式说明：属性名称==对应属性编辑器的组件名称
+ * : property == property component
  */
 const COMMON_PROPERTIES = {
-  // 字段
+  // field
   'name': 'name-editor',
   'customName': 'customName-editor',
   'label': 'label-editor',
@@ -76,7 +81,7 @@ const COMMON_PROPERTIES = {
   'scanType': 'scanType-editor',
   'height': 'height-editor',
   'fontWeight': 'fontWeight-editor',
-  // 容器
+  //
   'showBlankRow': 'showBlankRow-editor',
   'showRowNumber': 'showRowNumber-editor',
   'cellWidth': 'cellWidth-editor',
@@ -128,7 +133,7 @@ const ADVANCED_PROPERTIES = {
 }
 
 const EVENT_PROPERTIES = {
-  // 字段
+  // field
   'onCreated': 'onCreated-editor',
   'onMounted': 'onMounted-editor',
   'onClick': 'onClick-editor',
@@ -144,7 +149,7 @@ const EVENT_PROPERTIES = {
   'onValidate': 'onValidate-editor',
   'onAppendButtonClick': 'onAppendButtonClick-editor',
 
-  // 容器
+  //
   'onSubFormRowAdd': 'onSubFormRowAdd-editor',
   'onSubFormRowInsert': 'onSubFormRowInsert-editor',
   'onSubFormRowDelete': 'onSubFormRowDelete-editor',
@@ -153,45 +158,45 @@ const EVENT_PROPERTIES = {
 }
 
 /**
- * 注册组件常见属性
- * 如属性编辑器的组件名称propEditorName设置为null，则不显示该属性编辑器！！
- * @param uniquePropName 属性名称（保证名称唯一，不跟其他组件属性冲突）
- * @param propEditorName 对应属性编辑器的组件名称
+ * component property
+ * property component propEditorNameSet to null, property ! !
+ * @param uniquePropName property ( , componentproperty )
+ * @param propEditorName property component
  */
 export function registerCommonProperty(uniquePropName, propEditorName) {
   COMMON_PROPERTIES[uniquePropName] = propEditorName
 }
 
 /**
- * 注册组件高级属性
- * 如属性编辑器的组件名称propEditorName设置为null，则不显示该属性编辑器！！
- * @param uniquePropName 属性名称（保证名称唯一，不跟其他组件属性冲突）
- * @param propEditorName 对应属性编辑器的组件名称
+ * component property
+ * property component propEditorNameSet to null, property ! !
+ * @param uniquePropName property ( , componentproperty )
+ * @param propEditorName property component
  */
 export function registerAdvancedProperty(uniquePropName, propEditorName) {
   ADVANCED_PROPERTIES[uniquePropName] = propEditorName
 }
 
 /**
- * 注册组件事件属性
- * 如属性编辑器的组件名称propEditorName设置为null，则不显示该属性编辑器！！
- * @param uniquePropName 属性名称（保证名称唯一，不跟其他组件属性冲突）
- * @param propEditorName 对应属性编辑器的组件名称
+ * componenteventproperty
+ * property component propEditorNameSet to null, property ! !
+ * @param uniquePropName property ( , componentproperty )
+ * @param propEditorName property component
  */
 export function registerEventProperty(uniquePropName, propEditorName) {
   EVENT_PROPERTIES[uniquePropName] = propEditorName
 }
 
 /**
- * 判断属性是否已注册
- * @param uniquePropName 属性名称（保证名称唯一，不跟其他组件属性冲突）
+ * Check propertywhether already
+ * @param uniquePropName property ( , componentproperty )
  */
 export function propertyRegistered(uniquePropName) {
   return !!COMMON_PROPERTIES[uniquePropName] || !!ADVANCED_PROPERTIES[uniquePropName] || !!EVENT_PROPERTIES[uniquePropName]
 }
 
 /**
- * 注册常见属性对应的属性编辑器
+ * property property
  * @param app
  * @param uniquePropName
  * @param propEditorName
@@ -203,7 +208,7 @@ export function registerCPEditor(app, uniquePropName, propEditorName, editorComp
 }
 
 /**
- * 注册高级属性对应的属性编辑器
+ * property property
  * @param app
  * @param uniquePropName
  * @param propEditorName
@@ -215,7 +220,7 @@ export function registerAPEditor(app, uniquePropName, propEditorName, editorComp
 }
 
 /**
- * 注册事件属性对应的属性编辑器
+ * eventproperty property
  * @param app
  * @param uniquePropName
  * @param propEditorName

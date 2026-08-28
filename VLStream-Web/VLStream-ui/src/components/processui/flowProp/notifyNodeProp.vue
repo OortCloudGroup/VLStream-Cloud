@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="prop_body">
     <div class="prop_body_tab">
@@ -66,7 +71,7 @@
               placeholder="请输入"
             />
           </div>
-          <!-- 设置通知对象-->
+          <!-- Set notificationobject -->
           <choose-person-panel-notify-node ref="choosePersonPanelRef" v-model:active-choose-data="activeChooseData" />
           <div class="prop_title">
             <span>通知期限（为0则不生效）</span>
@@ -82,7 +87,7 @@
                 分钟
               </template>
             </el-input>
-            <!--当用户添加了通知期限后，给用户选择超时处理是退回给发起人还是驳回 -->
+            <!-- user notification after, user Process is is -->
             &nbsp;   &nbsp;   &nbsp; &nbsp;
             <el-radio-group v-model="activeChooseData.timeoutAction">
               <el-radio :value="1">
@@ -117,7 +122,7 @@
       </el-tabs>
     </div>
     <div class="prop_body_bottom button_group">
-      <!-- 两个按钮 一个取消 ，一个确定 -->
+      <!-- button , -->
       <el-button @click="cancel" class="common_btn">
         取消
       </el-button>
@@ -155,55 +160,55 @@ const props = defineProps({
   }
 })
 
-const chooseUserVis = ref(false) // 选人
-const addTimeoutRuleIndex = ref(0) // 选人index
-// 模型-列表数据
+const chooseUserVis = ref(false) //
+const addTimeoutRuleIndex = ref(0) // index
+// model- data
 const flowDesignerPage = inject('flowDesignerPage')
-// 0 流程 1 工单
+// 0 workflow 1 work order
 let formDesignType = ref(undefined)
-// 默认应用
+//
 let classifyType = ref(true)
 formDesignType.value = flowDesignerPage.formDesignType
 if (flowDesignerPage?.synthesisId) classifyType.value = false
 
 const activeName = ref('first')
-// 初始化时从节点级别的状态管理器获取表单字段，而不是从全局Store
+// Initialize from node Get formfield, is from full Store
 const nodeFormState = getOrCreateNodeFormState(props.nodeConfig.id)
 const activeChooseData = ref({
-  noNotifyAllSteps: false, // 站内消息推送(关掉加上：noNotifyAllSteps=true)
-  priority: undefined, // 通知优先级
+  noNotifyAllSteps: false, // Push ( : noNotifyAllSteps=true)
+  priority: undefined, // notification
   channelTypes: {
-    0: [], // 对应 priority=0 的 channelTypes
-    1: [], // 对应 priority=1 的 channelTypes
-    2: [], // 对应 priority=2 的 channelTypes
-    3: [], // 对应 priority=3 的 channelTypes
-    4: [], // 对应 priority=4 的 channelTypes
-    5: [] // 对应 priority=5 的 channelTypes
+    0: [], // priority=0 channelTypes
+    1: [], // priority=1 channelTypes
+    2: [], // priority=2 channelTypes
+    3: [], // priority=3 channelTypes
+    4: [], // priority=4 channelTypes
+    5: [] // priority=5 channelTypes
   },
-  data: '', // 通知说明文字
-  timeoutMinutes: 0, // 超时时间
-  timeoutAction: '', // 超时动作: 1-重复通知, 2-自动转下个节点, 3-自动驳回
-  repeatCount: 1, // 重复通知次数
-  approvalType: 1, // 通知类型
-  users: [], // 用户列表
-  dept: [], // 部门列表
-  multiPercent: 100, // 或签-100%人员通过
-  roles: [], // 角色列表
-  leader: 1, // 直接上级
-  multi: 'sequential', // 多人通知方式
-  emptyApproType: 1, // 通知人为空类型
-  emptyApproUser: [], // 通知人为空人员列表
-  shouldSign: false, // 通知人同意时是否需要签字
-  approDueTime: 0, // 通知期限
-  approDueTimeUnit: 1, // 通知期限单位
-  disAgreenEnd: false, // 如果通知被驳回,是否直接结束
-  formProperties: nodeFormState.formFiledList.value || [], // 从节点级别状态获取，而不是全局Store
-  operations: ['0', '3', '4'], // 操作权限列表-默认有这三个权限（通过，退回，拒绝）
+  data: '', // notification
+  timeoutMinutes: 0, //
+  timeoutAction: '', // : 1- notification, 2- node, 3-
+  repeatCount: 1, // notification
+  approvalType: 1, // notification
+  users: [], // user
+  dept: [], // department
+  multiPercent: 100, // -100%
+  roles: [], // role
+  leader: 1, //
+  multi: 'sequential', // notification
+  emptyApproType: 1, // notification is empty
+  emptyApproUser: [], // notification is empty
+  shouldSign: false, // notification whether need to
+  approDueTime: 0, // notification
+  approDueTimeUnit: 1, // notification
+  disAgreenEnd: false, // if notification ,whether finish
+  formProperties: nodeFormState.formFiledList.value || [], // from node Get , is full Store
+  operations: ['0', '3', '4'], // operation - ( , , )
   taskListeners: [],
-  formKey: '' // 节点表单
+  formKey: '' // nodeform
 })
 
-// 通知优先级选项数据
+// notification item data
 const priorityOptions = [
   {
     label: 'PSTN电话通知',
@@ -237,7 +242,7 @@ const priorityOptions = [
   }
 ]
 
-// 选择优先级
+//
 function selectPriority(priority, index) {
   if (activeChooseData.value.priority === priority) {
     // activeChooseData.value.priority = undefined
@@ -249,7 +254,7 @@ function selectPriority(priority, index) {
         activeChooseData.value.channelTypes[index] = [0]
       }
     }
-    // 清空其他优先级的 channelTypes
+    // null / empty channelTypes
     // for (let i = 0; i < priorityOptions.length; i++) {
     //   if (i !== index) {
     //     activeChooseData.value.channelTypes[i] = []
@@ -258,20 +263,20 @@ function selectPriority(priority, index) {
   }
 }
 
-// 保存人员
+//
 function confirmUser(data) {
   activeChooseData.value.timeoutHandlers[addTimeoutRuleIndex.value].notificationUserIds = data.user.map(item => item.user_id)
   chooseUserVis.value = false
 }
 
-// 添加超时规则
+//
 if (!activeChooseData.value.timeoutHandlers) {
   activeChooseData.value.timeoutHandlers = [{
     triggerId: null,
-    triggerTime: 0, // 触发时间数值
-    triggerTimeUnit: 2, // 时间单位 1天/2小时/3分钟
-    triggerType: 1, // 触发类型（1=消息通知/2=自动通过）
-    notificationUserIds: [] // 通知对象ID列表
+    triggerTime: 0, // value
+    triggerTimeUnit: 2, // 1 /2 /3
+    triggerType: 1, // (1= notification/2= )
+    notificationUserIds: [] // notificationobjectID
   }]
   addTimeoutRuleIndex.value = 0
 }
@@ -286,10 +291,10 @@ function cancel() {
 }
 
 const nodeName = ref(props.nodeConfig.nodeName)
-let choosePersonPanelRef = ref(null) // 设置通知对象
+let choosePersonPanelRef = ref(null) // Set notificationobject
 function confirm() {
-  // 设置通知对象-岗位和职位-单选
-  if (activeChooseData.value?.approvalType === 6) { // 选择了上级才传参
+  // Set notificationobject- and -
+  if (activeChooseData.value?.approvalType === 6) { //
     if (choosePersonPanelRef.value?.jobPost === '0') {
       activeChooseData.value.jobLeaders = [choosePersonPanelRef.value?.jobMod]
       activeChooseData.value.postLeaders = undefined
@@ -302,44 +307,44 @@ function confirm() {
     activeChooseData.value.jobLeaders = undefined
   }
 
-  // 指定了人员，postLeaders不能有值
+  // , postLeaders can value
   if (activeChooseData.value?.approvalType === 1) {
     activeChooseData.value.postLeaders = []
     activeChooseData.value.leader = null
   } else {
-    // leader 主管 1 直属上级 ，2 二级上级， 3 三级上级， 4 四级上级
+    // leader main 1 , 2 , 3 , 4
     let num = choosePersonPanelRef.value?.postMod || choosePersonPanelRef.value?.jobMod
-    // postMod/jobMod 是字符串('0','1','2','3')，leader 是数字(1,2,3,4)
+    // postMod/jobMod is ('0','1','2','3'), leader is (1,2,3,4)
     activeChooseData.value.leader = num ? parseInt(num) + 1 : 1
   }
 
-  /* 必填项-start */
-  // 超时动作: 1-重复通知, 2-自动转下个节点, 3-自动驳回 timeoutAction不等于1不传
+  /* item -start */
+  // : 1- notification, 2- node, 3- timeoutAction etc. 1
   if (activeChooseData.value.timeoutAction !== 1) {
     activeChooseData.value.repeatCount = undefined
   }
-  // 必须设置通知谁
+  // Set notification
   if (!activeChooseData.value.users || !activeChooseData.value.users?.length) {
     activeChooseData.value.repeatCount = undefined
     return ElMessage.warning('请设置通知对象')
   }
-  // 电话或者视频通话，期限必填
+  // ,
   if (activeChooseData.value.priority === 0 || activeChooseData.value.priority === 1) {
     if (!activeChooseData.value.timeoutMinutes) {
       return ElMessage.warning('通知期限不能为0')
     }
   }
-  // /* 必填项-end */
+  // /* item -end */
   // props.nodeConfig.property = activeChooseData.value
   const nodeConfig = { ...props.nodeConfig, ...activeChooseData.value }
   nodeConfig.nodeName = nodeName.value
-  /* 通知优先级 */
+  /* notification */
   if (nodeConfig.priority !== undefined) {
     nodeConfig.channelTypes = [...(nodeConfig.channelTypes[nodeConfig.priority] || [])]
   } else {
     nodeConfig.channelTypes = []
   }
-  // 更新必填项的错误提示
+  // new item prompt / tip
   setErrorMsg()
   emits('update:nodeConfig', nodeConfig)
   emits('close')
@@ -375,15 +380,15 @@ const setNodeFormFieldProp = async(formKey) => {
   let res = await getForm(params)
   if (res.code === 200) {
     try {
-      // 使用统一的字段提取函数
+      // field
       const jsonList = JSON.parse(res.data.content)
       const formFields = extractFormFields(jsonList)
       currentNodeFormProp.value = JSON.parse(JSON.stringify(formFields))
-      // 切换表单强制将权限修改为当前切换的
+      // form Update to current
       activeChooseData.value.formProperties = currentNodeFormProp.value || []
-      // 更新节点级别的表单字段状态，确保数据隔离性
+      // new node formfield , data
       updateNodeFormFields(props.nodeConfig.id, activeChooseData.value.formProperties)
-      // store保存当前表单信息
+      // store current forminfo
     } catch (error) {
       console.log(error)
     }
@@ -391,7 +396,7 @@ const setNodeFormFieldProp = async(formKey) => {
 }
 onMounted(async() => {
   activeChooseData.value = { ...activeChooseData.value, ...props.nodeConfig }
-  /* 通知优先级 */
+  /* notification */
   if (props.nodeConfig.priority !== undefined && props.nodeConfig.channelTypes !== undefined) {
     if (Array.isArray(props.nodeConfig.channelTypes)) {
       activeChooseData.value.channelTypes[props.nodeConfig.priority] = [...props.nodeConfig.channelTypes]
@@ -399,7 +404,7 @@ onMounted(async() => {
       activeChooseData.value.channelTypes[props.nodeConfig.priority] = [props.nodeConfig.channelTypes]
     }
   }
-  // 如果nodeConfig中有formProperties，需要同步到节点级别的状态管理器
+  // if nodeConfig in formProperties, need to node
   if (props.nodeConfig.formProperties && props.nodeConfig.formProperties.length > 0) {
     updateNodeFormFields(props.nodeConfig.id, props.nodeConfig.formProperties)
     activeChooseData.value.formProperties = props.nodeConfig.formProperties
@@ -409,7 +414,7 @@ onMounted(async() => {
   if (!props.nodeConfig.formKey) {
     activeChooseData.value.formProperties = []
   }
-  // 或签-100%人员通过
+  // -100%
   if (!props.nodeConfig.activeChooseData) {
     activeChooseData.value.multiPercent = 100
   }

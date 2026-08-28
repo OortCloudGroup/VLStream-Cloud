@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -19,13 +20,13 @@ import java.net.URL;
 import java.util.Arrays;
 
 /**
- * XxlJob开发示例（Bean模式）
+ * XxlJob (Bean )
  * <p>
- * 开发步骤：
- * 1、任务开发：在Spring Bean实例中，开发Job方法；
- * 2、注解配置：为Job方法添加注解 "@XxlJob(value="自定义jobhandler名称", init = "JobHandler初始化方法", destroy = "JobHandler销毁方法")"，注解value值对应的是调度中心新建任务的JobHandler属性的值。
- * 3、执行日志：需要通过 "XxlJobHelper.log" 打印执行日志；
- * 4、任务结果：默认任务结果为 "成功" 状态，不需要主动设置；如有诉求，比如设置任务结果为失败，可以通过 "XxlJobHelper.handleFail/handleSuccess" 自主设置任务结果；
+ * :
+ * 1、task : in Spring Beaninstance in , Job method ;
+ * 2、 configuration: to Job method "@XxlJob(value="Customjobhandler ", init = "JobHandlerInitialize method ", destroy = "JobHandler method ")", value value is in new task JobHandlerproperty value .
+ * 3、Execute log: need to "XxlJobHelper.log" Execute log;
+ * 4、task : task to "successfully" , need to main Set ; , Set task to failed, "XxlJobHelper.handleFail/handleSuccess" main Set task ;
  *
  * @author xuxueli 2019-12-11 21:52:51
  */
@@ -35,7 +36,7 @@ public class SampleService {
 
 
     /**
-     * 1、简单任务示例（Bean模式）
+     * 1、 task (Bean )
      */
     @XxlJob("demoJobHandler")
     public void demoJobHandler() throws Exception {
@@ -49,18 +50,18 @@ public class SampleService {
 
 
     /**
-     * 2、分片广播任务
+     * 2、 task
      */
     @XxlJob("shardingJobHandler")
     public void shardingJobHandler() throws Exception {
 
-        // 分片参数
+        // parameter
         int shardIndex = XxlJobHelper.getShardIndex();
         int shardTotal = XxlJobHelper.getShardTotal();
 
         XxlJobHelper.log("分片参数：当前分片序号 = {}, 总分片数 = {}", shardIndex, shardTotal);
 
-        // 业务逻辑
+        //
         for (int i = 0; i < shardTotal; i++) {
             if (i == shardIndex) {
                 XxlJobHelper.log("第 {} 片, 命中分片开始处理", i);
@@ -73,7 +74,7 @@ public class SampleService {
 
 
     /**
-     * 3、命令行任务
+     * 3、 task
      */
     @XxlJob("commandJobHandler")
     public void commandJobHandler() throws Exception {
@@ -120,8 +121,8 @@ public class SampleService {
 
 
     /**
-     * 4、跨平台Http任务
-     * 参数示例：
+     * 4、 Httptask
+     * parameter :
      * "url: http://www.baidu.com\n" +
      * "method: get\n" +
      * "data: content\n";
@@ -238,7 +239,7 @@ public class SampleService {
     }
 
     /**
-     * 5、生命周期任务示例：任务初始化与销毁时，支持自定义相关逻辑；
+     * 5、 task : taskInitialize and , Customrelated ;
      */
     @XxlJob(value = "demoJobHandler2", init = "init", destroy = "destroy")
     public void demoJobHandler2() throws Exception {

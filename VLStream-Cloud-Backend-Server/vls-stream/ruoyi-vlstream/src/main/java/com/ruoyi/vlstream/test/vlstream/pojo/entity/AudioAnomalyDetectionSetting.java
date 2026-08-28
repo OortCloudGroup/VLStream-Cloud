@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,7 +16,7 @@ import org.springblade.core.mp.base.TenantEntity;
 
 
 /**
- * 音频异常侦测设置表 实体类
+ * Set
  */
 @Data
 @TableName("vls_audio_anomaly_detection_setting")

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -33,9 +34,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 表单应用分类
+ * form
  *
- * @author 雷超群
+ * @author
  * @date 2025-04-26
  */
 @Validated
@@ -47,7 +48,7 @@ public class WfFormAppController extends BaseController {
     private final IWfFormAppService iWfFormAppService;
 
     /**
-     * 查询表单应用分类列表
+     * Query form list
      */
     @SaCheckPermission("system:formApp:list")
     @GetMapping("/list")
@@ -56,7 +57,7 @@ public class WfFormAppController extends BaseController {
     }
 
     /**
-     * 导出表单应用分类列表
+     * Export form
      */
     @SaCheckPermission("system:formApp:export")
     @Log(title = "表单应用分类", businessType = BusinessType.EXPORT)
@@ -67,9 +68,9 @@ public class WfFormAppController extends BaseController {
     }
 
     /**
-     * 获取表单应用分类详细信息
+     * Get form info
      *
-     * @param categoryId 主键
+     * @param categoryId primary key
      */
     @SaCheckPermission("system:formApp:query")
     @GetMapping("/{categoryId}")
@@ -79,7 +80,7 @@ public class WfFormAppController extends BaseController {
     }
 
     /**
-     * 新增表单应用分类
+     * Add form
      */
     @SaCheckPermission("system:formApp:add")
     @Log(title = "表单应用分类", businessType = BusinessType.INSERT)
@@ -90,7 +91,7 @@ public class WfFormAppController extends BaseController {
     }
 
     /**
-     * 修改表单应用分类
+     * Update form
      */
     @SaCheckPermission("system:formApp:edit")
     @Log(title = "表单应用分类", businessType = BusinessType.UPDATE)
@@ -101,8 +102,8 @@ public class WfFormAppController extends BaseController {
     }
 
     /**
-     * 删除表单应用分类
-     * @param categoryIds 主键串
+     * Delete form
+     * @param categoryIds primary key
      */
     @SaCheckPermission("system:formApp:remove")
     @Log(title = "表单应用分类", businessType = BusinessType.DELETE)

@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 import {
   mapBladeMenuToRuoyi,
@@ -7,9 +13,9 @@ import {
 } from './ruoyiCompat'
 
 /**
- * 获取所有菜单与按钮扁平列表 (前端可自行转换为树)
- * @param {Object} params 查询过滤参数
- * @returns {Promise} 返回请求响应的 Promise 对象
+ * Get all menu and button ( before Convert to )
+ * @param {Object} params Query parameter
+ * @return s {Promise} Promise object
  */
 export function getMenuList(params) {
   const ruoyiParams = {
@@ -22,18 +28,18 @@ export function getMenuList(params) {
 }
 
 /**
- * 仅获取菜单分类的列表 (不含按钮)
- * @param {Object} params 查询过滤参数
- * @returns {Promise} 返回请求响应的 Promise 对象
+ * Get menu ( button)
+ * @param {Object} params Query parameter
+ * @return s {Promise} Promise object
  */
 export function getMenuOnlyList(params) {
   return getMenuList(params)
 }
 
 /**
- * 获取菜单树形结构数据
- * @param {Object} params 查询过滤参数
- * @returns {Promise} 返回请求响应的 Promise 对象
+ * Get menu data
+ * @param {Object} params Query parameter
+ * @return s {Promise} Promise object
  */
 export function getMenuTree(params) {
   return request({ url: '/system/menu/treeselect', method: 'get', params })
@@ -45,9 +51,9 @@ export function getMenuTree(params) {
 }
 
 /**
- * 获取给角色授权所用的完整权限树结构 (包含菜单树、数据权限树、接口权限树)
- * @param {Object} params 查询过滤参数
- * @returns {Promise} 返回权限授权树的 Promise 对象
+ * Get role ( menu 、data 、interface )
+ * @param {Object} params Query parameter
+ * @return s {Promise} Promise object
  */
 export function getGrantTree(params) {
   return request({ url: '/system/menu/treeselect', method: 'get', params })
@@ -63,9 +69,9 @@ export function getGrantTree(params) {
 }
 
 /**
- * 获取指定角色当前拥有的已选中权限ID列表
- * @param {String} roleIds 逗号分隔的角色ID
- * @returns {Promise} 返回已选中的 key 列表
+ * Get rolecurrent already in ID
+ * @param {String} roleIds role ID
+ * @return s {Promise} already in key
  */
 export function getRoleTreeKeys(roleIds) {
   const roleId = toStringIds(roleIds)[0]
@@ -82,9 +88,9 @@ export function getRoleTreeKeys(roleIds) {
 }
 
 /**
- * 新增或更新菜单、按钮项
- * @param {Object} data 菜单实体数据
- * @returns {Promise} 返回操作结果的 Promise 对象
+ * Add new menu、button item
+ * @param {Object} data menu data
+ * @return s {Promise} operation Promise object
  */
 export function submitMenu(data) {
   const payload = mapBladeMenuToRuoyi(data)
@@ -96,9 +102,9 @@ export function submitMenu(data) {
 }
 
 /**
- * 批量或单个删除菜单
- * @param {String} ids 逗号分隔的菜单ID字符串
- * @returns {Promise} 返回操作结果的 Promise 对象
+ * Delete menu
+ * @param {String} ids menu ID
+ * @return s {Promise} operation Promise object
  */
 export function removeMenus(ids) {
   const menuIds = toStringIds(ids)

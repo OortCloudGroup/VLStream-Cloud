@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -20,7 +21,7 @@ import java.util.Map;
 
 
 /**
- * 测试数据库加解密功能
+ * data can
  *
  * @author Lion Li
  */
@@ -35,10 +36,10 @@ public class TestEncryptController {
     private Boolean encryptEnable;
 
     /**
-     * 测试数据库加解密
+     * data
      *
-     * @param key   测试key
-     * @param value 测试value
+     * @param key key
+     * @param value value
      */
     @GetMapping()
     public R<Map<String, TestDemoEncrypt>> test(String key, String value) {

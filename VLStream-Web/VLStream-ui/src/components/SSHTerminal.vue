@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="ssh-terminal">
     <div class="terminal-header">
@@ -18,7 +23,7 @@
       </div>
       <div class="terminal-input" v-if="isConnected">
         <span class="prompt">{{ prompt }}</span>
-        <input 
+        <input
           ref="commandInput"
           v-model="currentCommand"
           @keyup.enter="executeCommand"
@@ -71,17 +76,17 @@ export default {
       this.addOutputLine('SSH终端已初始化')
       this.addOutputLine('使用连接配置建立SSH连接...')
     },
-    
+
     connect() {
       if (!this.connection.host) {
         this.addOutputLine('错误: 缺少连接配置')
         return
       }
-      
+
       this.isConnected = false
       this.addOutputLine('错误: 当前未接入真实 SSH 交互式 WebSocket 终端，未建立连接')
     },
-    
+
     disconnect() {
       if (this.ws) {
         this.ws.close()
@@ -91,59 +96,59 @@ export default {
       this.addOutputLine('连接已断开')
       this.prompt = '$'
     },
-    
+
     executeCommand() {
       if (!this.currentCommand.trim()) return
-      
+
       const command = this.currentCommand.trim()
       this.addOutputLine(`${this.prompt} ${command}`)
-      
-      // 添加到命令历史
+
+      // history
       this.commandHistory.unshift(command)
       if (this.commandHistory.length > 100) {
         this.commandHistory.pop()
       }
       this.historyIndex = -1
-      
-      // 处理特殊命令
+
+      // Process
       this.handleCommand(command)
-      
+
       this.currentCommand = ''
     },
-    
+
     handleCommand(command) {
       if (command === 'clear') {
         this.clearTerminal()
         return
       }
-      
+
       if (command === 'exit') {
         this.disconnect()
         return
       }
-      
+
       this.addOutputLine('错误: 未连接真实 SSH 终端，命令未执行')
       this.addOutputLine('命令执行完成')
     },
-    
+
     addOutputLine(line) {
       this.outputLines.push(line)
       this.$nextTick(() => {
         this.scrollToBottom()
       })
     },
-    
+
     clearTerminal() {
       this.outputLines = []
     },
-    
+
     previousCommand() {
       if (this.historyIndex < this.commandHistory.length - 1) {
         this.historyIndex++
         this.currentCommand = this.commandHistory[this.historyIndex] || ''
       }
     },
-    
+
     nextCommand() {
       if (this.historyIndex > 0) {
         this.historyIndex--
@@ -153,7 +158,7 @@ export default {
         this.currentCommand = ''
       }
     },
-    
+
     scrollToBottom() {
       const output = this.$refs.terminalOutput
       if (output) {

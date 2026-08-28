@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { isNotNull } from '~@/utils/util'
 import { genVue2JS } from '~@/utils/vue2js-generator'
 import { beautifierOpts } from '~@/utils/beautifierLoader'
@@ -11,7 +16,7 @@ export function buildClassAttr(ctn, defaultClass) {
   return gridClassArray.length > 0 ? `class="${gridClassArray.join(' ')}"` : ''
 }
 
-const containerTemplates = { // 容器组件属性
+const containerTemplates = { // componentproperty
   'grid': (ctn, formConfig) => {
     const gridClassAttr = buildClassAttr(ctn)
     const gridTemplate =
@@ -114,7 +119,7 @@ export function buildContainerWidget(widget, formConfig) {
   return containerTemplates[widget.type] ? containerTemplates[widget.type](widget, formConfig) : null
 }
 
-function getElAttrs(widget, formConfig) { // 获取El组件属性
+function getElAttrs(widget, formConfig) { // Get Elcomponentproperty
   let wop = widget.options
   return {
     vModel: `v-model="${formConfig.modelName}.${wop.name}"`,
@@ -214,7 +219,7 @@ function buildSelectChildren(widget) {
           :value="item.value" :disabled="item.disabled"></${childTag}>`
 }
 
-const elTemplates = { // 字段组件属性
+const elTemplates = { // fieldcomponentproperty
   'input': (widget, formConfig) => {
     const { vModel, readonly, disabled, size, type, showPassword, placeholder, clearable,
       minlength, maxlength, showWordLimit, prefixIcon, suffixIcon, appendButtonChild } = getElAttrs(widget, formConfig)
@@ -316,8 +321,8 @@ const elTemplates = { // 字段组件属性
     const { disabled, uploadAction, withCredentials, multipleSelect, showFileList, limit,
       uploadTipSlotChild, pictureUploadIconChild } = getElAttrs(widget, formConfig)
     let wop = widget.options
-    return `<el-upload :file-list="${wop.name}FileList" :headers="${wop.name}UploadHeaders" :data="${wop.name}UploadData" 
-            ${disabled} ${uploadAction} list-type="picture-card" ${withCredentials} ${multipleSelect} ${showFileList} 
+    return `<el-upload :file-list="${wop.name}FileList" :headers="${wop.name}UploadHeaders" :data="${wop.name}UploadData"
+            ${disabled} ${uploadAction} list-type="picture-card" ${withCredentials} ${multipleSelect} ${showFileList}
             ${limit}>${uploadTipSlotChild} ${pictureUploadIconChild}</el-upload>`
   },
 
@@ -325,8 +330,8 @@ const elTemplates = { // 字段组件属性
     const { disabled, uploadAction, withCredentials, multipleSelect, showFileList, limit,
       uploadTipSlotChild, fileUploadIconChild } = getElAttrs(widget, formConfig)
     let wop = widget.options
-    return `<el-upload :file-list="${wop.name}FileList" :headers="${wop.name}UploadHeaders" :data="${wop.name}UploadData" 
-            ${disabled} ${uploadAction} list-type="picture-card" ${withCredentials} ${multipleSelect} ${showFileList} 
+    return `<el-upload :file-list="${wop.name}FileList" :headers="${wop.name}UploadHeaders" :data="${wop.name}UploadData"
+            ${disabled} ${uploadAction} list-type="picture-card" ${withCredentials} ${multipleSelect} ${showFileList}
             ${limit}>${uploadTipSlotChild} ${fileUploadIconChild}</el-upload>`
   },
 
@@ -437,12 +442,12 @@ const genGlobalCSS = function(formConfig) {
 `  .el-input-number.full-width-input, .el-cascader.full-width-input {
     width: 100% !important;
   }
-  
+
   .el-form-item--medium {
     .el-radio {
       line-height: 36px !important;
     }
-  
+
     .el-rate{
       margin-top: 8px;
     }
@@ -452,7 +457,7 @@ const genGlobalCSS = function(formConfig) {
     .el-radio {
       line-height: 32px !important;
     }
-  
+
     .el-rate{
       margin-top: 6px;
     }
@@ -462,12 +467,12 @@ const genGlobalCSS = function(formConfig) {
     .el-radio {
       line-height: 28px !important;
     }
-  
+
     .el-rate{
       margin-top: 4px;
     }
   }
-  
+
   .clear-fix:before, .clear-fix:after {
     display: table;
     content: "";
@@ -494,7 +499,7 @@ const genScopedCSS = function(formConfig, vue3Flag = false) {
       width: 100%;
       table-layout: fixed;
       border-collapse: collapse;
-      
+
       td.table-cell {
         display: table-cell;
         height: 36px;
@@ -502,10 +507,10 @@ const genScopedCSS = function(formConfig, vue3Flag = false) {
       }
     }
   }
-  
+
   div.tab-container {
   }
-  
+
   .label-left-align ${!!vue3Flag ? ':deep(.el-form-item__label)' : '::v-deep .el-form-item__label'} {
     text-align: left;
   }
@@ -517,10 +522,10 @@ const genScopedCSS = function(formConfig, vue3Flag = false) {
   .label-right-align ${!!vue3Flag ? ':deep(.el-form-item__label)' : '::v-deep .el-form-item__label'} {
     text-align: right;
   }
-  
+
   .custom-label {
   }
-  
+
   .static-content-item {
     min-height: 20px;
     display: flex;
@@ -535,18 +540,18 @@ const genScopedCSS = function(formConfig, vue3Flag = false) {
 }
 
 /**
- * 注册容器组件的代码生成器
- * @param containerType 容器类型，必须唯一
- * @param ctGenerator 代码生成器函数，接收两个参数(containerWidget, formConfig)，返回生成的容器组件代码
+ * component Generate
+ * @param containerType ,
+ * @param ctGenerator Generate , parameter(containerWidget, formConfig), Generate component
  */
 export const registerCWGenerator = function(containerType, ctGenerator) {
   containerTemplates[containerType] = ctGenerator
 }
 
 /**
- * 注册字段组件的代码生成器
- * @param fieldType 字段类型，必须唯一
- * @param ftGenerator 代码生成器函数，接收两个参数(fieldWidget, formConfig)，返回生成的字段组件代码
+ * fieldcomponent Generate
+ * @param fieldType field ,
+ * @param ftGenerator Generate , parameter(fieldWidget, formConfig), Generate fieldcomponent
  */
 export const registerFWGenerator = function(fieldType, ftGenerator) {
   elTemplates[fieldType] = ftGenerator
@@ -558,7 +563,7 @@ export const genSFC = function(formConfig, widgetList, beautifier, vue3Flag = fa
   const globalCss = beautifier.css(genGlobalCSS(formConfig), beautifierOpts.css)
   const scopedCss = beautifier.css(genScopedCSS(formConfig, vue3Flag), beautifierOpts.css)
 
-  return `<!-- 
+  return `<!--
 Codes Generated By VForm:
 https://www.vform666.com
 -->

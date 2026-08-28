@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -33,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 设备标签关联表 控制器
+ * device control
  *
  * @author Oort
  * @since 2025-12-23
@@ -47,7 +48,7 @@ public class VlsDeviceTagRelationController extends BladeController {
 	private final IVlsDeviceTagRelationService vlsDeviceTagRelationService;
 
 	/**
-	 * 设备标签关联表 详情
+	 * device
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -58,7 +59,7 @@ public class VlsDeviceTagRelationController extends BladeController {
 	}
 
 	/**
-	 * 设备标签关联表 分页
+	 * device
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -70,7 +71,7 @@ public class VlsDeviceTagRelationController extends BladeController {
 
 
 	/**
-	 * 设备标签关联表 自定义分页
+	 * device Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -81,7 +82,7 @@ public class VlsDeviceTagRelationController extends BladeController {
 	}
 
 	/**
-	 * 设备标签关联表 新增
+	 * device Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -91,7 +92,7 @@ public class VlsDeviceTagRelationController extends BladeController {
 	}
 
 	/**
-	 * 设备标签关联表 修改
+	 * device Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -101,7 +102,7 @@ public class VlsDeviceTagRelationController extends BladeController {
 	}
 
 	/**
-	 * 设备标签关联表 新增或修改
+	 * device Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -111,7 +112,7 @@ public class VlsDeviceTagRelationController extends BladeController {
 	}
 
 	/**
-	 * 设备标签关联表 删除
+	 * device Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -121,7 +122,7 @@ public class VlsDeviceTagRelationController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsDeviceTagRelation")
 	@ApiOperationSupport(order = 8)

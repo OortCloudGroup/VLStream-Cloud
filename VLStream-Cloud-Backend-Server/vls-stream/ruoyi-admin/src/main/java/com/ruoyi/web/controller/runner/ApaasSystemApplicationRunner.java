@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -42,7 +43,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * 工单模块对应权限上报
+ * work order
  *
  * @author Lion Li
  */
@@ -83,12 +84,12 @@ public class ApaasSystemApplicationRunner implements ApplicationRunner {
         }
 
         try {
-            // 要加密的数据
+            // need to data
             JSONObject data = new JSONObject();
-            //租户id从/apaas-sso/sso/v1/getTenantIdByPhrase接口获取
+            // idfrom /apaas-sso/sso/v1/getTenantIdByPhraseinterfaceGet
             data.set("loginId", "admin");
             data.set("password", "123456");
-            //转换为秒级时间戳
+            // Convert to
             data.set("timestamp", System.currentTimeMillis() / 1000);
             data.set("client", "pcweb");
 
@@ -159,37 +160,37 @@ public class ApaasSystemApplicationRunner implements ApplicationRunner {
 
 
     /**
-     * 上报权限
+     *
      *
      * @param token
      */
     private void reportModel(String token) {
-//        //数据权限接口权限上报
+// //data interface
 //        JSONObject requestParam = new JSONObject();
 //
 //
-//// 2. 构造 do_list 对象
+// // 2. do_list object
 //        JSONObject doList = new JSONObject();
-//        doList.put("query",  new JSONObject().put("name", "查询"));
-//        doList.put("update", new JSONObject().put("name", "修改"));
-//        doList.put("add",    new JSONObject().put("name", "新增"));
-//        doList.put("del",    new JSONObject().put("name", "删除"));
+// doList.put("query", new JSONObject().put("name", "Query "));
+// doList.put("update", new JSONObject().put("name", "Update "));
+// doList.put("add", new JSONObject().put("name", "Add "));
+// doList.put("del", new JSONObject().put("name", "Delete "));
 //
-//// 3. 构造 act（动作）节点
+// // 3. act ( )node
 //        JSONObject gongdanAct = new JSONObject();
-//        gongdanAct.put("name",     "工单设计");
+// gongdanAct.put("name", "work order ");
 //        gongdanAct.put("do_list",  doList);
 //
-//// 4. 构造 sub（子集）节点
+// // 4. sub ( sub )node
 //        JSONObject sub = new JSONObject();
 //        sub.put("workOrder", gongdanAct);
 //
-//// 5. 构造 pact（分类）节点
+// // 5. pact ( )node
 //        JSONObject workflowforms = new JSONObject();
-//        workflowforms.put("name", "工单中心");
+// workflowforms.put("name", "work order in ");
 //        workflowforms.put("sub",  sub);
 //
-//// 6. 构造 auth 根节点，并放入 pact
+// // 6. auth node, pact
 //        JSONObject auth = new JSONObject();
 //        auth.put("workflowforms", workflowforms);
 
@@ -211,7 +212,7 @@ public class ApaasSystemApplicationRunner implements ApplicationRunner {
             JSONObject columnData = new JSONObject();
 
             Table<?> table = ServiceProxy.metadata().table(tableData.getName());
-            //获取列名
+            // Get
             table.getColumns().forEach((columnName, column) -> {
                 if (StringUtils.isNotBlank(column.getComment())) {
                     JSONObject fieldInfo = new JSONObject();
@@ -232,11 +233,11 @@ public class ApaasSystemApplicationRunner implements ApplicationRunner {
         requestParam.set("service_name", "统一工单服务");
         requestParam.set("timestamp", System.currentTimeMillis() / 1000);
         requestParam.set("ticket_alg ", "md5");
-        //拼接密钥
+        //
         requestParam.set("ticket ",
             SecureUtil.md5(requestParam.toString().concat(PlatformConstants.DATA_REPORT_SECRET)));
 
-        // 发送POST请求
+        // POST
         String respBody = HttpRequest.post(reportDataScopeUrl)
                                      .header(PlatformConstants.HEADER_ACCESS_TOKEN, token)
                                      .header(PlatformConstants.HEADER_REQUEST_TYPE, PlatformConstants.APP)
@@ -249,14 +250,14 @@ public class ApaasSystemApplicationRunner implements ApplicationRunner {
         verifyDataScope(tableList, token);
     }
     /**
-     * 从配置中读取要上报的 Controller 列表，逗号分隔。
+     * from configuration in need to Controller , .
      */
     @Value("${auth.report.excludeClasses}")
     private String excludeClasses;
     private static void collectJavaFiles(File dir, List<File> result) {
         for (File file : dir.listFiles()) {
             if (file.isDirectory()) {
-                collectJavaFiles(file, result); // 递归子目录
+                collectJavaFiles(file, result); // sub
             } else if (file.getName().endsWith(".java")) {
                 result.add(file);
             }
@@ -265,34 +266,34 @@ public class ApaasSystemApplicationRunner implements ApplicationRunner {
     public JSONObject buildAuthReportFromSource() throws Exception {
         JSONObject auth = new JSONObject();
 
-// 1. 定位源码目录
+// 1.
         String projectRoot = System.getProperty("user.dir");
         File srcDir = new File(projectRoot, "ruoyi-admin/src/main/java/com/ruoyi/web/controller/workflow");
         if (!srcDir.exists() || !srcDir.isDirectory()) {
-            // 打印详细错误日志
+            // log
             log.error("源码目录不存在，实际路径: {}", srcDir.getAbsolutePath());
             throw new IllegalStateException("源码目录不存在：" + srcDir.getAbsolutePath());
         }
 
-// 2. 初始化代码解析器
+// 2. Initialize Parse
         JavaProjectBuilder builder = new JavaProjectBuilder();
         builder.addSourceTree(srcDir);
 
-// 3. 构建 pact 节点
+// 3. Build pact node
         JSONObject pact = new JSONObject();
         pact.put("name", "统一工单服务");
 
         JSONObject sub = new JSONObject();
 
-// 关键修改点：递归获取所有子目录的Java文件
+// Update : Get all sub Java
         List<File> javaFiles = new ArrayList<>();
-        collectJavaFiles(srcDir, javaFiles); // 新增递归收集方法
+        collectJavaFiles(srcDir, javaFiles); // Add method
 
-// 4. 处理每个 Controller 类
+// 4. Process each Controller
         for (File file : javaFiles) {
             String className = file.getName().replace(".java", "");
 
-            // 关键修改点：动态生成包路径 ------------------------------------
+            // Update : Generate ------------------------------------
             String relativePackage = srcDir.toPath()
                                            .relativize(file.getParentFile().toPath())
                                            .toString()
@@ -311,22 +312,22 @@ public class ApaasSystemApplicationRunner implements ApplicationRunner {
                 continue;
             }
 
-            // 4.1 过滤非RestController
+            // 4.1 non-RestController
             if (!clazz.isAnnotationPresent(RestController.class)) continue;
             if (excludeClasses.contains(clazz.getSimpleName())) continue;
 
-            // 4.2 获取类路径（act key）
+            // 4.2 Get (act key)
             String classPath = "";
             RequestMapping rm = clazz.getAnnotation(RequestMapping.class);
             if (rm != null && rm.value().length > 0) {
                 classPath = rm.value()[0].replace("/", "");
             }
 
-            // 4.3 获取类注释（act name）
+            // 4.3 Get (act name)
             String classComment = jc.getComment() != null ?
                                   jc.getComment().trim() : className;
 
-            // 4.4 构建 do_list
+            // 4.4 Build do_list
             JSONObject doList = new JSONObject();
             for (Method method : clazz.getDeclaredMethods()) {
                 if (!hasMappingAnnotation(method)) continue;
@@ -343,16 +344,16 @@ public class ApaasSystemApplicationRunner implements ApplicationRunner {
                 );
             }
 
-            // 4.5 构建 act 节点
+            // 4.5 Build act node
             JSONObject act = new JSONObject();
             act.put("name", classComment);
             act.put("do_list", doList);
-            sub.put(classPath, act);  // classPath 作为 act key
+            sub.put(classPath, act);  // classPath to act key
         }
 
-        // 5. 组装最终结构
+        // 5.
         pact.put("sub", sub);
-        auth.put("workflowforms", pact);  // 固定 pact key
+        auth.put("workflowforms", pact);  // pact key
 
         JSONObject result = new JSONObject();
         result.put("auth", auth);
@@ -360,13 +361,13 @@ public class ApaasSystemApplicationRunner implements ApplicationRunner {
         return result;
     }
 
-    // 判断方法是否有请求映射注解
+    // Check method whether
     private boolean hasMappingAnnotation(Method method) {
         return method.isAnnotationPresent(SaCheckPermission.class)
             ;
     }
 
-    // 获取方法注释（优先QDox，其次方法名）
+    // Get method ( QDox, method )
     private String getMethodComment(JavaClass jc, Method method) {
         return jc.getMethods().stream()
                  .filter(m -> m.getName().equals(method.getName()) &&
@@ -377,12 +378,12 @@ public class ApaasSystemApplicationRunner implements ApplicationRunner {
     }
 
     /**
-     * 校验数据权限
+     * Validate data
      *
      * @param tableList
      */
     private void verifyDataScope(List<Table<?>> tableList, String token) {
-        //校验权限
+        // Validate
         JSONObject verifyRequestParam = new JSONObject();
         verifyRequestParam.set(PlatformConstants.HEADER_ACCESS_TOKEN, token);
         verifyRequestParam.set("service", "apaas-workflowforms");
@@ -391,7 +392,7 @@ public class ApaasSystemApplicationRunner implements ApplicationRunner {
         verifyRequestParam.set("do", "downloadXml");
         verifyRequestParam.set("table", tableList.stream().map(Table::getName).collect(Collectors.toList()));
         Console.log(verifyRequestParam.toString());
-        // 发送POST请求
+        // POST
         String verifyRespBody = HttpRequest.post(verifyDataScopeUrl)
                                            .header(PlatformConstants.HEADER_ACCESS_TOKEN, token)
                                            .header(PlatformConstants.HEADER_REQUEST_TYPE, PlatformConstants.APP)

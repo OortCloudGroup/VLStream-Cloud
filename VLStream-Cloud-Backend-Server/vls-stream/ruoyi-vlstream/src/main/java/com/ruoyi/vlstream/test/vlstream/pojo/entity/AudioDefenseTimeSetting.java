@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -18,7 +19,7 @@ import org.springblade.core.mp.base.TenantEntity;
 import java.util.Map;
 
 /**
- * 音频布防时间设置表 实体类
+ * Set
  */
 @Data
 @TableName(value = "vls_audio_defense_time_setting", autoResultMap = true)

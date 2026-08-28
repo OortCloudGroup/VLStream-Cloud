@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -20,7 +21,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 测试单表Mapper接口
+ * Mapperinterface
  *
  * @author Lion Li
  * @date 2021-07-26

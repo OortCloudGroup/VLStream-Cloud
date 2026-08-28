@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -21,7 +22,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * 算法训练任务表 实体类
+ * algorithmtrainingtask
  *
  * @author Oort
  * @since 2025-12-23
@@ -34,158 +35,158 @@ public class AlgorithmTraining extends TenantEntity {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 任务名称
+	 * task
 	 */
 	@Schema(description = "任务名称")
 	private String taskName;
 	/**
-	 * 算法ID
+	 * algorithmID
 	 */
 	@Schema(description = "算法ID")
 	@JsonSerialize(using = ToStringSerializer.class)
 	private Long algorithmId;
 	/**
-	 * 数据集ID
+	 * datasetID
 	 */
 	@Schema(description = "数据集ID")
 	@JsonSerialize(using = ToStringSerializer.class)
 	private Long datasetId;
 	/**
-	 * 训练状态：pending-等待,training-训练中,completed-完成,failed-失败
+	 * training : pending- etc. ,training-training in ,completed- ,failed-failed
 	 */
 	@Schema(description = "训练状态")
 	private AlgorithmTrainingStatusEnum trainStatus;
 	/**
-	 * 训练进度百分比
+	 * training
 	 */
 	@Schema(description = "训练进度百分比")
 	private Integer progress;
 	/**
-	 * 当前轮次
+	 * current
 	 */
 	@Schema(description = "当前轮次")
 	private Integer epochCurrent;
 	/**
-	 * 总轮次
+	 *
 	 */
 	@Schema(description = "总轮次")
 	private Integer epochTotal;
 	/**
-	 * 准确率
+	 *
 	 */
 	@Schema(description = "准确率")
 	private BigDecimal accuracy;
 	/**
-	 * 精确率
+	 *
 	 */
 	@Schema(description = "精确率")
 	private BigDecimal precisionValue;
 	/**
-	 * 召回率
+	 *
 	 */
 	@Schema(description = "召回率")
 	private BigDecimal recallValue;
 	/**
-	 * mAP值
+	 * mAP value
 	 */
 	@Schema(description = "mAP值")
 	private BigDecimal mapValue;
 	/**
-	 * 损失值
+	 * value
 	 */
 	@Schema(description = "损失值")
 	private BigDecimal lossValue;
 	/**
-	 * GPU使用率
+	 * GPU
 	 */
 	@Schema(description = "GPU使用率")
 	private String gpuUsage;
 	/**
-	 * 开始时间
+	 * start
 	 */
 	@Schema(description = "开始时间")
 	@DateTimeFormat(pattern = DateUtil.PATTERN_DATETIME)
 	@JsonFormat(pattern = DateUtil.PATTERN_DATETIME)
 	private Date startTime;
 	/**
-	 * 结束时间
+	 * finish
 	 */
 	@Schema(description = "结束时间")
 	@DateTimeFormat(pattern = DateUtil.PATTERN_DATETIME)
 	@JsonFormat(pattern = DateUtil.PATTERN_DATETIME)
 	private Date endTime;
 	/**
-	 * 预计时间
+	 *
 	 */
 	@Schema(description = "预计时间")
 	private String estimatedTime;
 	/**
-	 * 模型输出路径
+	 * model
 	 */
 	@Schema(description = "模型输出路径")
 	private String modelOutputPath;
 	/**
-	 * onnx模型输出路径
+	 * onnxmodel
 	 */
 	@Schema(description = "onnx模型输出路径")
 	private String onnxModelOutputPath;
 	/**
-	 * ONNX转换状态：converting-转换中,completed-完成,failed-失败
+	 * ONNXConvert : converting-Convert in ,completed- ,failed-failed
 	 */
 	@Schema(description = "ONNX转换状态")
 	private String onnxConversionStatus;
 	/**
-	 * ONNX转换失败原因
+	 * ONNXConvert failed
 	 */
 	@Schema(description = "ONNX转换失败原因")
 	private String onnxConversionError;
 	/**
-	 * rknn模型输出路径
+	 * rknnmodel
 	 */
 	@Schema(description = "rknn模型输出路径")
 	private String rknnModelOutputPath;
 	/**
-	 * int8 rknn模型输出路径
+	 * int8 rknnmodel
 	 */
 	@Schema(description = "int8 rknn模型输出路径")
 	private String int8RknnModelOutputPath;
 	/**
-	 * Hi3519DV500 SVP ACL OM模型输出路径
+	 * Hi3519DV500 SVP ACL OMmodel
 	 */
 	@Schema(description = "Hi3519DV500 OM模型输出路径")
 	private String omModelOutputPath;
 	/**
-	 * OM转换状态：converting-转换中,completed-完成,failed-失败
+	 * OMConvert : converting-Convert in ,completed- ,failed-failed
 	 */
 	@Schema(description = "OM转换状态")
 	private String omConversionStatus;
 	/**
-	 * OM转换失败原因
+	 * OMConvert failed
 	 */
 	@Schema(description = "OM转换失败原因")
 	private String omConversionError;
 	/**
-	 * 日志路径
+	 * log
 	 */
 	@Schema(description = "日志路径")
 	private String logPath;
 	/**
-	 * 训练参数
+	 * trainingparameter
 	 */
 	@Schema(description = "训练参数")
 	private String configParams;
 	/**
-	 * 错误信息
+	 * info
 	 */
 	@Schema(description = "错误信息")
 	private String errorMessage;
 	/**
-	 * 模型文件路径
+	 * model
 	 */
 	@Schema(description = "模型文件路径")
 	private String modelPath;
 	/**
-	 * 完成时间
+	 *
 	 */
 	@Schema(description = "完成时间")
 	private String completedAt;

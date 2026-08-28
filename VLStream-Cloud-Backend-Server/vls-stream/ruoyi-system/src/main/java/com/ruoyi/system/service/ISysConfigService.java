@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -12,7 +13,7 @@ import com.ruoyi.system.domain.SysConfig;
 import java.util.List;
 
 /**
- * 参数配置 服务层
+ * parameterconfiguration service layer
  *
  * @author Lion Li
  */
@@ -22,79 +23,79 @@ public interface ISysConfigService {
     TableDataInfo<SysConfig> selectPageConfigList(SysConfig config, PageQuery pageQuery);
 
     /**
-     * 查询参数配置信息
+     * Query parameterconfigurationinfo
      *
-     * @param configId 参数配置ID
-     * @return 参数配置信息
+     * @param configId parameterconfigurationID
+     * @return parameterconfigurationinfo
      */
     SysConfig selectConfigById(Long configId);
 
     /**
-     * 根据键名查询参数配置信息
+     * Query parameterconfigurationinfo
      *
-     * @param configKey 参数键名
-     * @return 参数键值
+     * @param configKey parameter key
+     * @return parameter value
      */
     String selectConfigByKey(String configKey);
 
     /**
-     * 获取验证码开关
+     * Get
      *
-     * @return true开启，false关闭
+     * @return true , false
      */
     boolean selectCaptchaEnabled();
 
     /**
-     * 查询参数配置列表
+     * Query parameterconfiguration list
      *
-     * @param config 参数配置信息
-     * @return 参数配置集合
+     * @param config parameterconfigurationinfo
+     * @return parameterconfigurationcollection
      */
     List<SysConfig> selectConfigList(SysConfig config);
 
     /**
-     * 新增参数配置
+     * Add parameterconfiguration
      *
-     * @param config 参数配置信息
-     * @return 结果
+     * @param config parameterconfigurationinfo
+     * @return
      */
     String insertConfig(SysConfig config);
 
     /**
-     * 修改参数配置
+     * Update parameterconfiguration
      *
-     * @param config 参数配置信息
-     * @return 结果
+     * @param config parameterconfigurationinfo
+     * @return
      */
     String updateConfig(SysConfig config);
 
     /**
-     * 批量删除参数信息
+     * Batch delete parameterinfo
      *
-     * @param configIds 需要删除的参数ID
+     * @param configIds need to Delete parameterID
      */
     void deleteConfigByIds(Long[] configIds);
 
     /**
-     * 加载参数缓存数据
+     * Load parameter data
      */
     void loadingConfigCache();
 
     /**
-     * 清空参数缓存数据
+     * null / empty parameter data
      */
     void clearConfigCache();
 
     /**
-     * 重置参数缓存数据
+     * parameter data
      */
     void resetConfigCache();
 
     /**
-     * 校验参数键名是否唯一
+     * Validate parameter keywhether
      *
-     * @param config 参数信息
-     * @return 结果
+     * @param config parameterinfo
+     * @return
      */
     boolean checkConfigKeyUnique(SysConfig config);
 

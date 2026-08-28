@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,13 +14,13 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface WfUserInterfaceFieldMapper extends BaseMapper<WfUserInterfaceField> {
     /**
-     * 查询某用户、某接口的 field_codes JSON
+     * Query user、 interface field_codes JSON
      */
     String selectFieldCodes(@Param("userId") String userId,
                             @Param("interfacePath") String interfacePath);
 
     /**
-     * 插入或更新一条配置
+     * new configuration
      */
     int upsert(@Param("userId") String userId,
                @Param("interfacePath") String interfacePath,

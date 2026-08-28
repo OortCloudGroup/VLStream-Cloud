@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -17,7 +18,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * stream 流工具类
+ * stream
  *
  * @author Lion Li
  */
@@ -25,11 +26,11 @@ import java.util.stream.Collectors;
 public class StreamUtils {
 
     /**
-     * 将collection过滤
+     * collection
      *
-     * @param collection 需要转化的集合
-     * @param function   过滤方法
-     * @return 过滤后的list
+     * @param collection need to collection
+     * @param function method
+     * @return after list
      */
     public static <E> List<E> filter(Collection<E> collection, Predicate<E> function) {
         if (CollUtil.isEmpty(collection)) {
@@ -39,23 +40,23 @@ public class StreamUtils {
     }
 
     /**
-     * 将collection拼接
+     * collection
      *
-     * @param collection 需要转化的集合
-     * @param function   拼接方法
-     * @return 拼接后的list
+     * @param collection need to collection
+     * @param function method
+     * @return after list
      */
     public static <E> String join(Collection<E> collection, Function<E, String> function) {
         return join(collection, function, StringUtils.SEPARATOR);
     }
 
     /**
-     * 将collection拼接
+     * collection
      *
-     * @param collection 需要转化的集合
-     * @param function   拼接方法
-     * @param delimiter  拼接符
-     * @return 拼接后的list
+     * @param collection need to collection
+     * @param function method
+     * @param delimiter
+     * @return after list
      */
     public static <E> String join(Collection<E> collection, Function<E, String> function, CharSequence delimiter) {
         if (CollUtil.isEmpty(collection)) {
@@ -65,11 +66,11 @@ public class StreamUtils {
     }
 
     /**
-     * 将collection排序
+     * collection
      *
-     * @param collection 需要转化的集合
-     * @param comparing  排序方法
-     * @return 排序后的list
+     * @param collection need to collection
+     * @param comparing method
+     * @return after list
      */
     public static <E> List<E> sorted(Collection<E> collection, Comparator<E> comparing) {
         if (CollUtil.isEmpty(collection)) {
@@ -79,14 +80,14 @@ public class StreamUtils {
     }
 
     /**
-     * 将collection转化为类型不变的map<br>
+     * collection to map<br>
      * <B>{@code Collection<V>  ---->  Map<K,V>}</B>
      *
-     * @param collection 需要转化的集合
-     * @param key        V类型转化为K类型的lambda方法
-     * @param <V>        collection中的泛型
-     * @param <K>        map中的key类型
-     * @return 转化后的map
+     * @param collection need to collection
+     * @param key V to K lambda method
+     * @param <V> collection in
+     * @param <K> map in key
+     * @return after map
      */
     public static <V, K> Map<K, V> toIdentityMap(Collection<V> collection, Function<V, K> key) {
         if (CollUtil.isEmpty(collection)) {
@@ -96,16 +97,16 @@ public class StreamUtils {
     }
 
     /**
-     * 将Collection转化为map(value类型与collection的泛型不同)<br>
+     * Collection to map(value and collection )<br>
      * <B>{@code Collection<E> -----> Map<K,V>  }</B>
      *
-     * @param collection 需要转化的集合
-     * @param key        E类型转化为K类型的lambda方法
-     * @param value      E类型转化为V类型的lambda方法
-     * @param <E>        collection中的泛型
-     * @param <K>        map中的key类型
-     * @param <V>        map中的value类型
-     * @return 转化后的map
+     * @param collection need to collection
+     * @param key E to K lambda method
+     * @param value E to V lambda method
+     * @param <E> collection in
+     * @param <K> map in key
+     * @param <V> map in value
+     * @return after map
      */
     public static <E, K, V> Map<K, V> toMap(Collection<E> collection, Function<E, K> key, Function<E, V> value) {
         if (CollUtil.isEmpty(collection)) {
@@ -115,14 +116,14 @@ public class StreamUtils {
     }
 
     /**
-     * 将collection按照规则(比如有相同的班级id)分类成map<br>
+     * collection ( id) map<br>
      * <B>{@code Collection<E> -------> Map<K,List<E>> } </B>
      *
-     * @param collection 需要分类的集合
-     * @param key        分类的规则
-     * @param <E>        collection中的泛型
-     * @param <K>        map中的key类型
-     * @return 分类后的map
+     * @param collection need to collection
+     * @param key
+     * @param <E> collection in
+     * @param <K> map in key
+     * @return after map
      */
     public static <E, K> Map<K, List<E>> groupByKey(Collection<E> collection, Function<E, K> key) {
         if (CollUtil.isEmpty(collection)) {
@@ -134,16 +135,16 @@ public class StreamUtils {
     }
 
     /**
-     * 将collection按照两个规则(比如有相同的年级id,班级id)分类成双层map<br>
+     * collection ( id, id) layer map<br>
      * <B>{@code Collection<E>  --->  Map<T,Map<U,List<E>>> } </B>
      *
-     * @param collection 需要分类的集合
-     * @param key1       第一个分类的规则
-     * @param key2       第二个分类的规则
-     * @param <E>        集合元素类型
-     * @param <K>        第一个map中的key类型
-     * @param <U>        第二个map中的key类型
-     * @return 分类后的map
+     * @param collection need to collection
+     * @param key1
+     * @param key2
+     * @param <E> collectionelement
+     * @param <K> map in key
+     * @param <U> map in key
+     * @return after map
      */
     public static <E, K, U> Map<K, Map<U, List<E>>> groupBy2Key(Collection<E> collection, Function<E, K> key1, Function<E, U> key2) {
         if (CollUtil.isEmpty(collection)) {
@@ -155,16 +156,16 @@ public class StreamUtils {
     }
 
     /**
-     * 将collection按照两个规则(比如有相同的年级id,班级id)分类成双层map<br>
+     * collection ( id, id) layer map<br>
      * <B>{@code Collection<E>  --->  Map<T,Map<U,E>> } </B>
      *
-     * @param collection 需要分类的集合
-     * @param key1       第一个分类的规则
-     * @param key2       第二个分类的规则
-     * @param <T>        第一个map中的key类型
-     * @param <U>        第二个map中的key类型
-     * @param <E>        collection中的泛型
-     * @return 分类后的map
+     * @param collection need to collection
+     * @param key1
+     * @param key2
+     * @param <T> map in key
+     * @param <U> map in key
+     * @param <E> collection in
+     * @return after map
      */
     public static <E, T, U> Map<T, Map<U, E>> group2Map(Collection<E> collection, Function<E, T> key1, Function<E, U> key2) {
         if (CollUtil.isEmpty(collection) || key1 == null || key2 == null) {
@@ -176,14 +177,14 @@ public class StreamUtils {
     }
 
     /**
-     * 将collection转化为List集合，但是两者的泛型不同<br>
+     * collection to Listcollection, is <br>
      * <B>{@code Collection<E>  ------>  List<T> } </B>
      *
-     * @param collection 需要转化的集合
-     * @param function   collection中的泛型转化为list泛型的lambda表达式
-     * @param <E>        collection中的泛型
-     * @param <T>        List中的泛型
-     * @return 转化后的list
+     * @param collection need to collection
+     * @param function collection in to list lambda
+     * @param <E> collection in
+     * @param <T> List in
+     * @return after list
      */
     public static <E, T> List<T> toList(Collection<E> collection, Function<E, T> function) {
         if (CollUtil.isEmpty(collection)) {
@@ -197,14 +198,14 @@ public class StreamUtils {
     }
 
     /**
-     * 将collection转化为Set集合，但是两者的泛型不同<br>
+     * collection to Setcollection, is <br>
      * <B>{@code Collection<E>  ------>  Set<T> } </B>
      *
-     * @param collection 需要转化的集合
-     * @param function   collection中的泛型转化为set泛型的lambda表达式
-     * @param <E>        collection中的泛型
-     * @param <T>        Set中的泛型
-     * @return 转化后的Set
+     * @param collection need to collection
+     * @param function collection in to set lambda
+     * @param <E> collection in
+     * @param <T> Set in
+     * @return after Set
      */
     public static <E, T> Set<T> toSet(Collection<E> collection, Function<E, T> function) {
         if (CollUtil.isEmpty(collection) || function == null) {
@@ -219,16 +220,16 @@ public class StreamUtils {
 
 
     /**
-     * 合并两个相同key类型的map
+     * key map
      *
-     * @param map1  第一个需要合并的 map
-     * @param map2  第二个需要合并的 map
-     * @param merge 合并的lambda，将key  value1 value2合并成最终的类型,注意value可能为空的情况
-     * @param <K>   map中的key类型
-     * @param <X>   第一个 map的value类型
-     * @param <Y>   第二个 map的value类型
-     * @param <V>   最终map的value类型
-     * @return 合并后的map
+     * @param map1 need to map
+     * @param map2 need to map
+     * @param merge lambda, key value1 value2 , value can is empty
+     * @param <K> map in key
+     * @param <X> map value
+     * @param <Y> map value
+     * @param <V> map value
+     * @return after map
      */
     public static <K, X, Y, V> Map<K, V> merge(Map<K, X> map1, Map<K, Y> map2, BiFunction<X, Y, V> merge) {
         if (MapUtil.isEmpty(map1) && MapUtil.isEmpty(map2)) {

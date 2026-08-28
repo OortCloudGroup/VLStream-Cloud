@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-dialog
     v-model="visible"
@@ -8,10 +13,10 @@
     @close="handleClose"
   >
     <div class="edit-content">
-      <!-- 基本信息 -->
+      <!-- info -->
       <div class="section">
         <h3 class="section-title">基本信息</h3>
-        
+
         <el-form
           :model="deviceForm"
           :rules="deviceRules"
@@ -25,14 +30,14 @@
               placeholder="rtsp://192.168.88.58:524/stream/aaa"
             />
           </el-form-item>
-          
+
           <el-form-item label="设备名称" prop="name">
             <el-input
               v-model="deviceForm.name"
               placeholder="自动生成名称"
             />
           </el-form-item>
-          
+
           <el-form-item label="设备标签" prop="tags">
             <div class="tags-container">
               <el-tag
@@ -51,11 +56,11 @@
           </el-form-item>
         </el-form>
       </div>
-      
-      <!-- 更多信息 -->
+
+      <!-- info -->
       <div class="section">
         <h3 class="section-title">更多信息</h3>
-        
+
         <el-form
           :model="deviceForm"
           label-width="100px"
@@ -67,21 +72,21 @@
               placeholder="输入设备ID"
             />
           </el-form-item>
-          
+
           <el-form-item label="类型">
             <el-input
               v-model="deviceForm.type"
               placeholder="输入类型：枪机、球机"
             />
           </el-form-item>
-          
+
           <el-form-item label="图片路径">
             <el-input
               v-model="deviceForm.imagePath"
               placeholder="输入图片路径"
             />
           </el-form-item>
-          
+
           <el-form-item label="经纬度坐标">
             <div class="coordinate-input">
               <el-input
@@ -97,7 +102,7 @@
               <el-button type="primary" class="locate-btn">地图选点</el-button>
             </div>
           </el-form-item>
-          
+
           <el-form-item label="高度位置">
             <div class="height-options">
               <el-radio-group v-model="deviceForm.heightPosition">
@@ -108,14 +113,14 @@
               </el-radio-group>
             </div>
           </el-form-item>
-          
+
           <el-form-item label="详细地址">
             <el-input
               v-model="deviceForm.address"
               placeholder="输入详细地址：省/市/区（县）/街道（村）"
             />
           </el-form-item>
-          
+
           <el-form-item label="区划选择">
             <el-select
               v-model="deviceForm.region"
@@ -125,7 +130,7 @@
               <el-option label="选择区划" value="" />
             </el-select>
           </el-form-item>
-          
+
           <el-form-item label="备注">
             <el-input
               v-model="deviceForm.remark"
@@ -137,7 +142,7 @@
         </el-form>
       </div>
     </div>
-    
+
     <template #footer>
       <div class="dialog-footer">
         <el-button type="primary" @click="handleSave" class="save-btn common_btn">保存</el-button>
@@ -185,11 +190,11 @@ const deviceRules = {
   streamPath: [{ required: true, message: '请输入视频流路径', trigger: 'blur' }]
 }
 
-// 监听props变化
+// props
 watch(() => props.modelValue, (val) => {
   visible.value = val
   if (val && props.deviceData) {
-    // 填充表单数据
+    // fill formdata
     deviceForm.value = {
       streamPath: props.deviceData.streamPath || '',
       name: props.deviceData.name || '',
@@ -228,7 +233,7 @@ const handleClose = () => {
 
 const handleSave = async () => {
   if (!deviceFormRef.value) return
-  
+
   try {
     await deviceFormRef.value.validate()
     emit('save', deviceForm.value)
@@ -356,4 +361,4 @@ const handleSave = async () => {
 .save-btn:hover {
   background: linear-gradient(135deg, #66b1ff 0%, #409eff 100%);
 }
-</style> 
+</style>

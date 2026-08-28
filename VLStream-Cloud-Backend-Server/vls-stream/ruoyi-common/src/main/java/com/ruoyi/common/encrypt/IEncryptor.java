@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -9,32 +10,32 @@ import com.ruoyi.common.enums.AlgorithmType;
 import com.ruoyi.common.enums.EncodeType;
 
 /**
- * 加解者
  *
- * @author 老马
+ *
+ * @author
  * @version 4.6.0
  */
 public interface IEncryptor {
 
     /**
-     * 获得当前算法
+     * current algorithm
      */
     AlgorithmType algorithm();
 
     /**
-     * 加密
      *
-     * @param value      待加密字符串
-     * @param encodeType 加密后的编码格式
-     * @return 加密后的字符串
+     *
+     * @param value
+     * @param encodeType after
+     * @return after
      */
     String encrypt(String value, EncodeType encodeType);
 
     /**
-     * 解密
      *
-     * @param value      待加密字符串
-     * @return 解密后的字符串
+     *
+     * @param value
+     * @return after
      */
     String decrypt(String value);
 }

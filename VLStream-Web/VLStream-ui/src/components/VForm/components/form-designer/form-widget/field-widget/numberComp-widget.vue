@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <form-item-wrapper
     :designer="designer"
@@ -31,11 +36,11 @@
       @input="handleInputCustomEvent"
       @change="handleSelfChangeEvent"
     >
-      <!-- 货币才用前缀 -->
+      <!-- before -->
       <template v-if="field.options.numberOptions.type ===3" #prepend>
         <span> {{ field.options.numberOptions.moneyType }}</span>
       </template>
-      <!-- 货币才用前缀 -->
+      <!-- before -->
       <template v-if="field.options.numberOptions.type ===4" #append>
         <span>%</span>
       </template>
@@ -56,7 +61,7 @@ export default {
   components: {
     ElInput,
     FormItemWrapper
-  }, // 必须固定为FieldWidget，用于接收父级组件的broadcast事件
+  }, // to FieldWidget, component broadcastevent
   mixins: [emitter, fieldMixin, i18n],
   props: {
     field: Object,
@@ -86,7 +91,7 @@ export default {
   },
   data() {
     return {
-      oldFieldValue: null, // field组件change之前的值
+      oldFieldValue: null, // fieldcomponentchange before value
       fieldModel: 0,
       rules: []
     }
@@ -98,11 +103,11 @@ export default {
   },
 
   beforeCreate() {
-    /* 这里不能访问方法和属性！！ */
+    /* can method and property! ! */
   },
 
   created() {
-    /* 注意：子组件mounted在父组件created之后、父组件mounted之前触发，故子组件mounted需要用到的prop
+    /* : sub componentmounted in componentcreated after、 componentmounted before , sub componentmounted need to prop
          需要在父组件created中初始化！！ */
     this.initFieldModel()
     this.registerToRefList()

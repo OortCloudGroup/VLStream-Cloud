@@ -1,7 +1,8 @@
-/**
-Created by  lanjian   on 2021/10/16  9:38
-Copyright apaas-front-team. All rights reserved.
-*/
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="dept_page w-full h-full flex flex-row">
     <div class="w50 h-full overflow-y-auto">
@@ -31,7 +32,7 @@ Copyright apaas-front-team. All rights reserved.
       <!--          v-model="keyWord"-->
       <!--          class="w-1/3"-->
       <!--          size="mini"-->
-      <!--          placeholder="请输入关键字"-->
+      <!-- placeholder=" " -->
       <!--        >-->
       <!--          <i slot="suffix" class="el-input__icon el-icon-search" />-->
       <!--        </el-input>-->
@@ -90,17 +91,17 @@ export default {
     ElCheckboxGroup
   },
   props: {
-    // 是否单选
+    // whether
     isSingle: {
       type: Boolean,
       default: false
     },
-    // 已选的人员list
+    // already list
     userList: {
       type: Array,
       default: null
     },
-    // 禁止选择的的用户
+    // user
     disalbedUserList: {
       type: Array,
       default: null
@@ -117,7 +118,7 @@ export default {
       personList: [],
       currentTag: null,
       tagList: [],
-      tempChooseList: [] // 当前已经选择的，但当前box框没有的
+      tempChooseList: [] // current already , current box
     }
   },
   watch: {
@@ -137,7 +138,7 @@ export default {
       this.publicP = index
       this.getTagList()
     },
-    // 再次选中 为取消选中
+    // in to in
     chooseTag(tag, index) {
       // if (this.active !== index) {
       this.currentTag = tag
@@ -172,17 +173,17 @@ export default {
         if (res.code === 200) {
           this.personList = res.data.list || []
           this.checkList = []
-          // 默认选择的回填
+          //
           this.userList.forEach(itt => {
             this.personList.forEach(idd => {
               if (itt.user_id === idd.user_id) {
-                // 是否checklist 有个
+                // whether checklist
                 let index = this.checkList.findIndex(itd => { return idd.user_id === itd.user_id })
                 index === -1 && this.checkList.push(idd)
               }
             })
           })
-          // 禁止选择的人
+          //
           let tempD = this.disalbedUserList || []
           tempD.forEach(itt => {
             this.personList.forEach(idd => {
@@ -191,7 +192,7 @@ export default {
               }
             })
           })
-          // 设置全选按钮的状态
+          // Set full button
           if (this.checkList.length === this.personList.length) {
             this.checkedAll = true
           }
@@ -202,7 +203,7 @@ export default {
             this.checkedAll = false
             this.isIndeterminate = true
           }
-          // // 计算出那些是在当前tab选的
+          // // is in current tab
           // this.checkList.forEach(itm => {
           //   let index = this.tempChooseList.findIndex(itd => { return itm.user_id === itd.user_id })
           //   index !== -1 && this.tempChooseList.splice(index, 1)
@@ -215,7 +216,7 @@ export default {
       this.checkList = val ? this.personList : []
       this.isIndeterminate = false
       let tempUser = []
-      // 根据全选的开关，决定值
+      // full , value
       if (val) {
         this.personList.forEach(item => {
           let index = this.tempChooseList.findIndex(itd => { return item.user_id === itd.user_id })
@@ -243,8 +244,8 @@ export default {
           this.checkList = [value[checkedCount - 1]]
         }
       } else {
-        // 先把所有的去除，在根据选中的添加进来
-        // 第一步
+        // all , in in
+        //
         this.personList.forEach(item => {
           let index = this.tempChooseList.findIndex(itd => { return item.user_id === itd.user_id })
           index !== -1 && this.tempChooseList.splice(index, 1)

@@ -1,16 +1,21 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
-// 读取真实分析请求表分页数据。
+// data.
 export function getAnalysisRequestPage(params) {
   return request({ url: '/vlsAnalysisRequest/list', method: 'get', params })
 }
 
-// 提交真实分析申请，后端仅在成功入库后返回成功。
+// , after in successfully after successfully.
 export function applyAnalysisRequest(data) {
   return request({ url: '/vlsAnalysisRequest/apply', method: 'post', data })
 }
 
-// 更新已持久化的分析请求。
+// new already .
 export function updateAnalysisRequest(data) {
   return request({ url: '/vlsAnalysisRequest/update', method: 'post', data })
 }

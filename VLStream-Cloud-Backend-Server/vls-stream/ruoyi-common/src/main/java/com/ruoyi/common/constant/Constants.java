@@ -1,79 +1,80 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
 package com.ruoyi.common.constant;
 
 /**
- * 通用常量信息
+ * info
  *
  * @author ruoyi
  */
 public interface Constants {
 
     /**
-     * UTF-8 字符集
+     * UTF-8
      */
     String UTF8 = "UTF-8";
 
     /**
-     * GBK 字符集
+     * GBK
      */
     String GBK = "GBK";
 
     /**
-     * www主域
+     * www main
      */
     String WWW = "www.";
 
     /**
-     * http请求
+     * http
      */
     String HTTP = "http://";
 
     /**
-     * https请求
+     * https
      */
     String HTTPS = "https://";
 
     /**
-     * 通用成功标识
+     * successfully
      */
     String SUCCESS = "0";
 
     /**
-     * 通用失败标识
+     * failed
      */
     String FAIL = "1";
 
     /**
-     * 登录成功
+     * successfully
      */
     String LOGIN_SUCCESS = "Success";
 
     /**
-     * 注销
+     *
      */
     String LOGOUT = "Logout";
 
     /**
-     * 注册
+     *
      */
     String REGISTER = "Register";
 
     /**
-     * 登录失败
+     * failed
      */
     String LOGIN_FAIL = "Error";
 
     /**
-     * 验证码有效期（分钟）
+     * ( )
      */
     Integer CAPTCHA_EXPIRATION = 2;
 
     /**
-     * 令牌
+     *
      */
     String TOKEN = "token";
 

@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { listWorkOrder } from '@/api/processui'
 
 const STORAGE_KEY = 'taskCenterClassify'

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-form-item :label="i18nt('designer.setting.format')">
     <el-select v-model="optionModel.format" filterable allow-create>

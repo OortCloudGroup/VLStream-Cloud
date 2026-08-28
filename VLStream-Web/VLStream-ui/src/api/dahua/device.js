@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 查询大华设备列表（分页）
+// Query device list ( )
 export function listDevice(query) {
   return request({
     url: '/dahua/device/list',
@@ -10,7 +15,7 @@ export function listDevice(query) {
 }
 
 
-// 查询大华设备列表（不分页）
+// Query device list ( )
 export function listDahuaDevice(query) {
   return request({
     url: '/dahua/device/listDahuaDevice',
@@ -20,7 +25,7 @@ export function listDahuaDevice(query) {
 }
 
 
-// 查询大华设备详细
+// Query device
 export function getDevice(id) {
   return request({
     url: '/dahua/device/' + id,
@@ -28,7 +33,7 @@ export function getDevice(id) {
   })
 }
 
-// 新增大华设备
+// Add device
 export function addDevice(data) {
   return request({
     url: '/dahua/device',
@@ -37,7 +42,7 @@ export function addDevice(data) {
   })
 }
 
-// 修改大华设备
+// Update device
 export function updateDevice(data) {
   return request({
     url: '/dahua/device',
@@ -46,7 +51,7 @@ export function updateDevice(data) {
   })
 }
 
-// 删除大华设备
+// Delete device
 export function delDevice(id) {
   return request({
     url: '/dahua/device/' + id,
@@ -54,7 +59,7 @@ export function delDevice(id) {
   })
 }
 
-// 大华设备实时预览
+// device
 export function startRealPlay(id) {
   return request({
     url: '/dahua/device/startRealPlay/' + id,
@@ -69,7 +74,7 @@ export function stopRealPlay(id) {
   })
 }
 
-// 大华设备登录
+// device
 export function dahuaLogin(data) {
   return request({
     url: '/dahua/device/login',
@@ -78,7 +83,7 @@ export function dahuaLogin(data) {
   })
 }
 
-// 获取自动注册设备列表
+// Get device
 export function getRegisterDeviceList() {
   return request({
     url: '/dahua/device/getRegisterDeviceList',
@@ -86,7 +91,7 @@ export function getRegisterDeviceList() {
   })
 }
 
-// 大华设备云台控制（开始）
+// device control (start)
 export function ptzControlUpStart(id,direction,speed) {
   return request({
     url: '/dahua/device/ptzControlUpStart/'+id,
@@ -98,7 +103,7 @@ export function ptzControlUpStart(id,direction,speed) {
   })
 }
 
-// 大华设备云台控制（停止）
+// device control ( )
 export function ptzControlUpEnd(id,direction) {
     return request({
         url: '/dahua/device/ptzControlUpEnd/'+id,
@@ -109,7 +114,7 @@ export function ptzControlUpEnd(id,direction) {
     })
 }
 
-// 大华设备抓图
+// device
 export function snapPicture(id) {
   return request({
     url: '/dahua/device/snapPicture/'+id,
@@ -117,7 +122,7 @@ export function snapPicture(id) {
   })
 }
 
-// 查询大华设备抓图列表
+// Query device list
 export function listScreenshot(query) {
   return request({
     url: '/dahua/device/listScreenshot',
@@ -126,7 +131,7 @@ export function listScreenshot(query) {
   })
 }
 
-// 删除大华设备抓图
+// Delete device
 export function removeScreenshot(id) {
   return request({
     url: '/dahua/device/removeScreenshot/' + id,
@@ -134,7 +139,7 @@ export function removeScreenshot(id) {
   })
 }
 
-// 大华设备定时抓图
+// device
 export function timerCapturePicture(id,interval) {
   return request({
     url: '/dahua/device/timerCapturePicture/' + id,
@@ -145,7 +150,7 @@ export function timerCapturePicture(id,interval) {
   })
 }
 
-// 大华设备停止定时抓图
+// device
 export function stopCapturePicture(id) {
   return request({
     url: '/dahua/device/stopCapturePicture/' + id,
@@ -153,7 +158,7 @@ export function stopCapturePicture(id) {
   })
 }
 
-// 大华设备获取时间
+// deviceGet
 export function getTime(id) {
   return request({
     url: '/dahua/device/getTime/' + id,
@@ -161,7 +166,7 @@ export function getTime(id) {
   })
 }
 
-// 大华设备设置时间
+// deviceSet
 export function setTime(id,date,type) {
   return request({
     url: '/dahua/device/setTime/' + id,
@@ -173,7 +178,7 @@ export function setTime(id,date,type) {
   })
 }
 
-// 大华设备重启
+// device
 export function reboot(id) {
   return request({
     url: '/dahua/device/reboot/' + id,
@@ -181,7 +186,7 @@ export function reboot(id) {
   })
 }
 
-// 删除自动注册设备列表
+// Delete device
 export function delRegisterDevice(ips) {
   return request({
     url: '/dahua/device/delRegisterDevice/' + ips,

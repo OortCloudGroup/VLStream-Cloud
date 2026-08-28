@@ -1,15 +1,20 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * Token验证修复测试脚本
- * 测试修复后的token验证逻辑
+ * Token
+ * after token
  */
 
 console.log('🔧 Token验证修复测试')
 console.log('=' * 50)
 
-// 测试token有效性检查
+// token
 function testTokenValidityCheck() {
   console.log('\n🔍 测试Token有效性检查...')
-  
+
   const testTokens = [
     'valid_token_123',
     'undefined',
@@ -19,46 +24,46 @@ function testTokenValidityCheck() {
     null,
     undefined
   ]
-  
+
   testTokens.forEach((token, index) => {
     const isValid = isValidToken(token)
     console.log(`Token ${index + 1}: "${token}" -> ${isValid ? '✅ 有效' : '❌ 无效'}`)
   })
 }
 
-// 检查token是否有效
+// tokenwhether
 function isValidToken(token) {
-  return token && 
-         token !== 'undefined' && 
-         token !== 'null' && 
+  return token &&
+         token !== 'undefined' &&
+         token !== 'null' &&
          token.trim() !== ''
 }
 
-// 测试当前系统token获取
+// current tokenGet
 function testCurrentSystemToken() {
   console.log('\n🔍 测试当前系统Token获取...')
-  
+
   if (!window.autoCrossSystemSync) {
     console.log('❌ 自动同步器未找到')
     return
   }
-  
+
   const currentToken = window.autoCrossSystemSync.getCurrentSystemToken()
   console.log('📊 当前系统Token:', {
     token: currentToken ? currentToken.substring(0, 8) + '...' : 'null',
     isValid: isValidToken(currentToken)
   })
-  
+
   return currentToken
 }
 
-// 测试存储中的token
+// in token
 function testStoredTokens() {
   console.log('\n💾 测试存储中的Token...')
-  
+
   const storageKeys = ['accessToken', 'token']
   const storageTypes = ['sessionStorage', 'localStorage']
-  
+
   storageTypes.forEach(type => {
     console.log(`\n📂 ${type}:`)
     storageKeys.forEach(key => {
@@ -69,15 +74,15 @@ function testStoredTokens() {
   })
 }
 
-// 清理无效token
+// token
 function cleanInvalidTokens() {
   console.log('\n🧹 清理无效Token...')
-  
+
   const storageKeys = ['accessToken', 'token']
   const storageTypes = ['sessionStorage', 'localStorage']
-  
+
   let cleanedCount = 0
-  
+
   storageTypes.forEach(type => {
     storageKeys.forEach(key => {
       const value = type === 'sessionStorage' ? sessionStorage.getItem(key) : localStorage.getItem(key)
@@ -92,20 +97,20 @@ function cleanInvalidTokens() {
       }
     })
   })
-  
+
   console.log(`✅ 清理完成，共清理 ${cleanedCount} 个无效token`)
   return cleanedCount
 }
 
-// 测试手动触发同步
+//
 function testManualSync() {
   console.log('\n🔄 测试手动触发同步...')
-  
+
   if (!window.autoCrossSystemSync) {
     console.log('❌ 自动同步器未找到')
     return false
   }
-  
+
   try {
     window.autoCrossSystemSync.forceSync()
     console.log('✅ 手动触发同步成功')
@@ -116,49 +121,49 @@ function testManualSync() {
   }
 }
 
-// 测试验证缓存
+//
 function testValidationCache() {
   console.log('\n💾 测试验证缓存...')
-  
+
   if (!window.autoCrossSystemSync) {
     console.log('❌ 自动同步器未找到')
     return
   }
-  
+
   console.log('📊 验证缓存状态:', {
     tokenValidationCache: window.autoCrossSystemSync.tokenValidationCache.size,
     failedTokenCache: window.autoCrossSystemSync.failedTokenCache.size,
     failedAttempts: window.autoCrossSystemSync.failedAttempts.size
   })
-  
-  // 清理缓存
+
+  //
   window.autoCrossSystemSync.clearValidationCache()
   console.log('🧹 验证缓存已清理')
 }
 
-// 完整修复测试
+//
 async function runTokenValidationFixTest() {
   console.log('🔧 开始Token验证修复测试')
   console.log('=' * 60)
-  
-  // 1. 测试token有效性检查
+
+  // 1. token
   testTokenValidityCheck()
-  
-  // 2. 测试存储中的token
+
+  // 2. in token
   testStoredTokens()
-  
-  // 3. 清理无效token
+
+  // 3. token
   const cleanedCount = cleanInvalidTokens()
-  
-  // 4. 测试当前系统token获取
+
+  // 4. current tokenGet
   const currentToken = testCurrentSystemToken()
-  
-  // 5. 测试验证缓存
+
+  // 5.
   testValidationCache()
-  
-  // 6. 测试手动触发同步
+
+  // 6.
   testManualSync()
-  
+
   console.log('\n' + '=' * 60)
   console.log('🎯 Token验证修复测试完成')
   console.log('\n💡 修复内容:')
@@ -174,7 +179,7 @@ async function runTokenValidationFixTest() {
   console.log('- testValidationCache() - 测试验证缓存')
 }
 
-// 导出测试函数
+// Export
 window.testTokenValidationFix = {
   runTokenValidationFixTest,
   testTokenValidityCheck,
@@ -187,4 +192,4 @@ window.testTokenValidationFix = {
 }
 
 console.log('✅ Token验证修复测试脚本已加载')
-console.log('💡 运行测试: testTokenValidationFix.runTokenValidationFixTest()') 
+console.log('💡 运行测试: testTokenValidationFix.runTokenValidationFixTest()')

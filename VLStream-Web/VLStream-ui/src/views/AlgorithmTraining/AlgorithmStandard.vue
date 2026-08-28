@@ -1,7 +1,12 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="page-container tenant_Page draHeaPB">
     <div class="tenant_content">
-    <!-- 导航栏（标注视图时显示） -->
+    <!-- (annotation ) -->
     <div v-if="showAnnotationView" class="content-header">
       <div class="breadcrumb">
         <span class="breadcrumb-item" @click="showTableView">算法标注</span>
@@ -10,7 +15,7 @@
       </div>
     </div>
 
-    <!-- 列表视图 -->
+    <!--  -->
     <div v-if="!showAnnotationView" class="tableTenBox flexRowAC">
       <div class="tableTenItU">
         <div class="depNameBox_out flexRowAC">
@@ -109,9 +114,9 @@
       </div>
     </div>
 
-    <!-- 网格视图 (第二层) -->
+    <!-- ( layer ) -->
     <div v-if="showAnnotationView && !showDetailAnnotation" class="annotation-view-container">
-      <!-- 使用网格视图组件 -->
+      <!-- component -->
       <AnnotationGridView
         :annotation-data="{
           ...currentAnnotationData,
@@ -130,10 +135,10 @@
       />
     </div>
 
-    <!-- 详细标注页面 (第三层) - 完整的标注界面 -->
+    <!-- annotationpage ( layer ) - annotation -->
     <div v-if="showDetailAnnotation" class="annotation-view-grid">
       <div class="grid-container">
-        <!-- 左侧标签面板 -->
+        <!--  -->
         <div class="left-sidebar">
           <AnnotationLabelPanel
             :labels="annotationLabels"
@@ -145,9 +150,9 @@
           />
         </div>
 
-        <!-- 右侧图像区域 -->
+        <!--  -->
         <div class="image-annotation-area">
-          <!-- 保存按钮 - 顶部单独一行 -->
+          <!-- button - -->
           <div class="save-annotation-section">
             <div class="save-buttons-left">
               <el-button
@@ -176,9 +181,9 @@
             </div>
           </div>
 
-          <!-- 主要编辑区域 -->
+          <!-- main need to -->
           <div class="image-edit-main">
-            <!-- 左侧工具栏 -->
+            <!--  -->
             <div class="annotation-toolbar-left">
               <div class="tool-group-vertical">
                 <el-button
@@ -242,10 +247,10 @@
               </div>
             </div>
 
-            <!-- 图片与上传区域 -->
+            <!-- and -->
             <div class="image-content-area">
               <div class="image-canvas-wrapper">
-                <!-- 左侧切换按钮 -->
+                <!-- button -->
                 <div class="image-nav-button image-nav-left"
                      v-if="uploadedImages.length > 1"
                      @click="previousImage"
@@ -253,7 +258,7 @@
                   <el-icon><ArrowLeft /></el-icon>
                 </div>
 
-                <!-- 右侧切换按钮 -->
+                <!-- button -->
                 <div class="image-nav-button image-nav-right"
                      v-if="uploadedImages.length > 1"
                      @click="nextImage"
@@ -269,7 +274,7 @@
                 @mousemove="handleMouseMove"
                 @mouseup="handleMouseUp"
               >
-                <!-- 真实图片显示 -->
+                <!--  -->
                 <div v-if="currentImage" class="image-container"
                   :style="{ transform: `rotate(${imageRotation}deg)` }"
                 >
@@ -282,14 +287,14 @@
                     draggable="false"
                   />
 
-                  <!-- SVG标注层 -->
+                  <!-- SVGannotation layer -->
                   <svg
                     class="annotation-overlay"
                     xmlns="http://www.w3.org/2000/svg"
                     :viewBox="annotationViewBox"
                     preserveAspectRatio="xMidYMid meet"
                   >
-                    <!-- 已有标注 -->
+                    <!-- already annotation -->
                     <g v-for="annotation in imageAnnotations" :key="annotation.id" class="annotation-group">
                       <rect
                         v-if="annotation.type === 'rect'"
@@ -316,7 +321,7 @@
                         @click="selectAnnotation(annotation.id)"
                       />
 
-                      <!-- 标签文本显示 -->
+                      <!--  -->
                       <text
                         v-if="annotation.labelName"
                         :x="annotation.type === 'rect' ? annotation.x + annotation.width/2 : annotation.cx"
@@ -334,7 +339,7 @@
                       </text>
                     </g>
 
-                    <!-- 正在绘制的标注 -->
+                    <!-- in annotation -->
                     <g v-if="currentDrawing" class="drawing-annotation">
                       <rect
                         v-if="selectedTool === 'rect'"
@@ -362,7 +367,7 @@
                   </svg>
                 </div>
 
-                <!-- 无图片占位符 -->
+                <!--  -->
                 <div v-else class="no-image-placeholder">
                   <el-icon class="placeholder-icon"><Picture /></el-icon>
                   <p class="placeholder-text">请上传图片开始标注</p>
@@ -382,7 +387,7 @@
               </div>
               </div>
 
-              <!-- 缩略图导航 - 移到图片区域下方 -->
+              <!-- - -->
               <div v-if="uploadedImages.length > 0" class="thumbnail-navigation">
                 <div class="thumbnail-container">
                   <div
@@ -412,7 +417,7 @@
       </div>
     </div>
 
-    <!-- 右键菜单 -->
+    <!-- menu -->
     <div
       v-if="showContextMenu"
       class="context-menu"
@@ -450,7 +455,7 @@
       :predefine-colors="predefineColors"
       @submit="handleLabelDialogSubmit"/>
 
-    <!-- 数据集文件校验弹窗 -->
+    <!-- dataset Validate dialog -->
     <el-dialog
       v-model="showDatasetDialog"
       title="数据集文件校验"
@@ -459,7 +464,7 @@
       class="dataset-validation-dialog"
     >
       <div class="dataset-validation-content">
-        <!-- 当前标注项目信息 -->
+        <!-- current annotation item info -->
         <div class="annotation-info">
           <h4>{{ currentAnnotationRow?.name || '未选择' }}</h4>
           <div class="path-info">
@@ -474,7 +479,7 @@
           </div>
         </div>
 
-        <!-- 校验结果显示 -->
+        <!-- Validate -->
         <div class="validation-section">
           <div class="validation-status" v-if="pathValidationResult">
             <div v-if="pathValidationResult.valid" class="status-success">
@@ -494,7 +499,7 @@
           </div>
         </div>
 
-        <!-- 路径验证结果 -->
+        <!--  -->
         <div class="path-validation-section" v-if="pathValidationResult">
           <div class="section-header">
             <h3>路径验证结果</h3>
@@ -526,7 +531,7 @@
       </template>
     </el-dialog>
 
-    <!-- 全屏图片预览弹窗 -->
+    <!-- full dialog -->
     <el-dialog
       v-model="showFullScreenPreview"
       title="图片全屏预览"
@@ -538,7 +543,7 @@
       :close-on-press-escape="true"
     >
       <div class="fullscreen-preview-content" v-if="currentImage">
-        <!-- 顶部工具栏 -->
+        <!--  -->
         <div class="preview-toolbar">
           <div class="toolbar-left">
             <span class="image-info">
@@ -572,7 +577,7 @@
           </div>
         </div>
 
-        <!-- 图片显示区域 -->
+        <!--  -->
         <div class="preview-image-container">
           <img
             :src="currentImage.url"
@@ -581,7 +586,7 @@
             @load="handlePreviewImageLoad"
           />
 
-          <!-- 标注层 -->
+          <!-- annotation layer -->
           <svg
             class="preview-annotation-overlay"
             xmlns="http://www.w3.org/2000/svg"
@@ -611,7 +616,7 @@
           </svg>
         </div>
 
-        <!-- 底部控制栏 -->
+        <!-- control -->
         <div class="preview-controls">
           <el-switch
             v-model="showAnnotationsInPreview"
@@ -622,7 +627,7 @@
       </div>
     </el-dialog>
 
-    <!-- 导入图片弹窗 -->
+    <!-- Import dialog -->
     <el-dialog
       v-model="showImportDialog"
       title="导入图片"
@@ -720,7 +725,7 @@ import {
   updateAlgorithmAnnotation
 } from '@/api/algorithmAnnotation'
 
-// 导入标注标签API
+// Import annotation API
 import {
   createAnnotationLabel,
   deleteAnnotationLabel,
@@ -737,33 +742,33 @@ import {
 import request, {getBaseURL} from '@/utils/request'
 import {batchSaveAnnotationImages, getAnnotationImages, uploadAnnotationImages} from '@/api/annotationImage'
 
-// 视图控制
+// control
 const showAnnotationView = ref(false)
 const currentAnnotationData = ref(null)
-const showDetailAnnotation = ref(false) // 是否显示详细标注页面
-const currentAnnotationImage = ref(null) // 当前标注的图片
+const showDetailAnnotation = ref(false) // whether annotationpage
+const currentAnnotationImage = ref(null) // current annotation
 
-// 搜索表单
+// form
 const searchForm = ref({
   keyword: '',
   type: '',
   dateRange: []
 })
 
-// 表格数据
+// tabledata
 const tableData = ref([])
 const loading = ref(false)
 
-// 分页相关
+// related
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 
-// 选中行
+// in
 const selectedRow = ref(null)
 const selectedRows = ref([])
 
-// 导入弹窗相关
+// Import dialogrelated
 const showImportDialog = ref(false)
 const importForm = ref({
   annotationStatus: 'none',
@@ -773,14 +778,14 @@ const importTargetId = ref(null)
 const pendingImportZipFile = ref(null)
 
 
-// 帮助面板展开状态
+//
 const expandedSections = ref({
   howToAnnotate: true,
   imageRequirements: false,
   importRequirements: false
 })
 
-// 标注视图相关数据
+// annotation relateddata
 const annotationFilters = ref([
   { key: 'all', label: '全部', count: 8 },
   { key: 'labeled', label: '有标注信息', count: 4 },
@@ -789,17 +794,17 @@ const annotationFilters = ref([
 
 const activeAnnotationFilter = ref('all')
 
-// 标签数据（从API获取）
+// data (from APIGet )
 const annotationLabels = ref([])
 const labelsLoading = ref(false)
 
-// 数据集文件校验相关
+// dataset Validate related
 const showDatasetDialog = ref(false)
 const currentAnnotationRow = ref(null)
 const pathValidationResult = ref(null)
 const validatingPath = ref(false)
 
-// 全屏预览相关
+// full related
 const showFullScreenPreview = ref(false)
 const showAnnotationsInPreview = ref(true)
 const previewImageScale = ref(1)
@@ -808,14 +813,14 @@ const selectedAnnotationLabel = ref(1)
 
 
 
-// 标签搜索
+//
 const labelSearchKeyword = ref('')
 
-// 图像标注编辑相关数据
+// annotation relateddata
 const currentImageIndex = ref(0)
 const selectedTool = ref('rect')
 
-// 标签管理相关
+// related
 const showLabelDialog = ref(false)
 const labelDialogData = ref({
   id: null,
@@ -823,7 +828,7 @@ const labelDialogData = ref({
   color: '#409EFF'
 })
 
-// 预定义颜色
+//
 const predefineColors = [
   '#409EFF',
   '#67C23A',
@@ -837,20 +842,20 @@ const predefineColors = [
   '#FF5722'
 ]
 
-// 图片上传相关
+// related
 const uploadedImages = ref([])
 const imageWidth = ref(0)
 const imageHeight = ref(0)
 const imageNaturalWidth = ref(0)
 const imageNaturalHeight = ref(0)
-const imageRotation = ref(0) // 图片旋转角度，每次90度
+const imageRotation = ref(0) // , 90
 
-// 计算属性 - 当前图片
+// property - current
 const currentImage = computed(() => {
   if (currentImageIndex.value >= 0 && currentImageIndex.value < uploadedImages.value.length) {
     const image = uploadedImages.value[currentImageIndex.value]
 
-    // 确保图片对象有效且URL存在
+    // object URL in
     if (image && image.url && typeof image.url === 'string') {
       return image
     }
@@ -860,7 +865,7 @@ const currentImage = computed(() => {
   return null
 })
 
-// 标注相关数据（当前显示的标注，来自当前选中的图片）
+// annotationrelateddata (current annotation, current in )
 const imageAnnotations = ref([])
 const getAnnotationCanvasSize = () => {
   const annotationWithSize = imageAnnotations.value.find((item) =>
@@ -881,18 +886,18 @@ const annotationViewBox = computed(() => {
 
 const selectedAnnotation = ref(null)
 
-// 绘制相关
+// related
 const isDrawing = ref(false)
 const currentDrawing = ref(null)
 
-// 右键菜单
+// menu
 const showContextMenu = ref(false)
 const contextMenuX = ref(0)
 const contextMenuY = ref(0)
 const pendingAnnotation = ref(null)
-const justFinishedDrawing = ref(false) // 防止绘制完成后立即触发click事件
+const justFinishedDrawing = ref(false) // after clickevent
 
-// 计算属性 - 过滤标签（使用服务器端的count数据）
+// property - ( service countdata)
 const filteredAnnotationLabels = computed(() => {
   if (!labelSearchKeyword.value.trim()) {
     return annotationLabels.value
@@ -904,11 +909,11 @@ const filteredAnnotationLabels = computed(() => {
 
 
 
-// 新增弹窗相关
+// Add dialogrelated
 const showAddDialog = ref(false)
 const annotationDialogData = ref(null)
 
-// 标注类型选项
+// annotation item
 const annotationTypes = ref([
   {
     value: ANNOTATION_TYPES.IMAGE_CLASSIFICATION,
@@ -932,8 +937,8 @@ const annotationTypes = ref([
   }
 ])
 
-// 工具函数
-// 验证图片对象是否有效
+//
+// objectwhether
 const isValidImage = (image) => {
   return image &&
          image.name &&
@@ -943,7 +948,7 @@ const isValidImage = (image) => {
          image.url.trim() !== ''
 }
 
-// 检查图片是否存在
+// whether in
 const checkImageExists = async (imageUrl) => {
   try {
     const response = await fetch(imageUrl, { method: 'HEAD' })
@@ -954,23 +959,23 @@ const checkImageExists = async (imageUrl) => {
   }
 }
 
-// 将RGB颜色转换为RGBA格式
+// RGB Convert to RGBA
 const convertToRgba = (rgbColor, alpha = 0.2) => {
   if (!rgbColor) return 'rgba(64, 158, 255, 0.2)'
 
-  // 如果已经是rgba格式，直接返回
+  // if already is rgba ,
   if (rgbColor.startsWith('rgba')) {
     return rgbColor
   }
 
-  // 提取rgb值
+  // rgb value
   const rgbMatch = rgbColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/)
   if (rgbMatch) {
     const [, r, g, b] = rgbMatch
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
   }
 
-  // 如果是十六进制格式
+  // if is
   if (rgbColor.startsWith('#')) {
     const hex = rgbColor.slice(1)
     const r = parseInt(hex.slice(0, 2), 16)
@@ -979,11 +984,11 @@ const convertToRgba = (rgbColor, alpha = 0.2) => {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
   }
 
-  // 默认返回蓝色透明
+  //
   return 'rgba(64, 158, 255, 0.2)'
 }
 
-// 数据加载
+// dataLoad
 const loadData = async () => {
   loading.value = true
   try {
@@ -1011,7 +1016,7 @@ const loadData = async () => {
         annotatedCount: item.annotatedCount,
         totalCount: item.totalCount,
         annotationType: item.annotationType,
-        datasetPath: item.datasetPath // 添加datasetPath字段
+        datasetPath: item.datasetPath // datasetPathfield
       }))
       total.value = response.data.total
     }
@@ -1023,7 +1028,7 @@ const loadData = async () => {
   }
 }
 
-// 事件处理
+// eventProcess
 const handleSearch = () => {
   currentPage.value = 1
   loadData()
@@ -1053,7 +1058,7 @@ const handleAdd = () => {
 const handleEdit = async () => {
   if (selectedRows.value.length === 1) {
     const row = selectedRows.value[0]
-    // 填充编辑数据
+    // fill data
     annotationDialogData.value = {
       id: row.id,
       name: row.name,
@@ -1149,7 +1154,7 @@ const handleRowClick = (row) => {
 const handleView = async (row) => {
   console.log('查看与标注', row)
 
-  // 清理之前的数据
+  // before data
   uploadedImages.value = []
   annotationLabels.value = []
   imageAnnotations.value = []
@@ -1169,17 +1174,17 @@ const handleView = async (row) => {
   imageRotation.value = 0
   labelSearchKeyword.value = ''
 
-  // 切换到标注视图
+  // annotation
   currentAnnotationData.value = row
   showAnnotationView.value = true
 
-  // 进入标注页面，获取所有标注数据
+  // annotationpage, Get all annotationdata
   console.log('进入标注页面，获取所有标注数据')
   try {
     await loadAllAnnotationData()
   } catch (error) {
     console.error('加载标注数据失败，尝试单独加载标签:', error)
-    // 如果加载失败，至少尝试单独加载标签
+    // if Load failed, to Load
     try {
       await loadAnnotationLabels()
     } catch (labelError) {
@@ -1189,7 +1194,7 @@ const handleView = async (row) => {
   }
 }
 
-// 生成数据集文件
+// Generate dataset
 const handleSaveDataset = async (row) => {
   const target = row || currentAnnotationData.value
   if (!target?.id) {
@@ -1266,51 +1271,51 @@ const handleDeleteItem = async (row) => {
   }
 }
 
-// 提取数据集文件名的方法
+// dataset method
 const extractDatasetFileName = (datasetPath) => {
   if (!datasetPath) return '未设置'
 
-  // 提取文件名，如：//192.168.88.173/data/work/ultralytics_yolov8-main/datasets/vls/1756697884961.yaml
-  // 返回：1756697884961.yaml
+  // , : //192.168.88.173/data/work/ultralytics_yolov8-main/datasets/vls/1756697884961.yaml
+  // : 1756697884961.yaml
   const parts = datasetPath.split('/')
   return parts[parts.length - 1] || '未知文件'
 }
 
-// 数据集文件校验相关方法
+// dataset Validate related method
 const handleViewDataset = async (row) => {
   console.log('校验数据集文件', row)
   console.log('当前datasetPath:', row.datasetPath)
 
-  // 保存当前行数据
+  // current data
   currentAnnotationRow.value = row
 
-  // 清除之前的验证结果
+  // before
   pathValidationResult.value = null
 
-  // 显示弹窗
+  // dialog
   showDatasetDialog.value = true
 
-  // 自动开始校验
+  // startValidate
   await handleValidateDatasetPath()
 }
 
-// 浏览选择数据集路径
+// dataset
 const handleBrowseDatasetPath = () => {
-  // 创建隐藏的文件输入元素，支持文件夹选择
+  // element,
   const input = document.createElement('input')
   input.type = 'file'
-  input.webkitdirectory = true // 允许选择文件夹
+  input.webkitdirectory = true //
   input.multiple = true
 
   input.onchange = (event) => {
     const files = Array.from(event.target.files)
     if (files.length > 0) {
-      // 获取选择的文件夹路径（取第一个文件的路径去掉文件名）
+      // Get ( )
       const firstFile = files[0]
       const fullPath = firstFile.webkitRelativePath
       const folderPath = fullPath.substring(0, fullPath.lastIndexOf('/'))
 
-      // 设置数据集路径
+      // Set dataset
       datasetPathForm.value.datasetPath = folderPath || firstFile.name.split('/')[0]
 
       ElMessage.success(`已选择文件夹：${datasetPathForm.value.datasetPath}`)
@@ -1320,7 +1325,7 @@ const handleBrowseDatasetPath = () => {
   input.click()
 }
 
-// 校验数据集文件是否存在
+// Validate dataset whether in
 const handleValidateDatasetPath = async () => {
   if (!currentAnnotationRow.value?.datasetPath) {
     ElMessage.warning('当前项目没有设置数据集路径')
@@ -1349,7 +1354,7 @@ const handleValidateDatasetPath = async () => {
   }
 }
 
-// 关闭数据集文件校验弹窗
+// dataset Validate dialog
 const handleDatasetDialogClose = () => {
   showDatasetDialog.value = false
   currentAnnotationRow.value = null
@@ -1366,7 +1371,7 @@ const handleCurrentChange = (val) => {
   loadData()
 }
 
-// 导入弹窗相关方法
+// Import dialogrelated method
 const handleSelectDirectory = () => {
   const isZipImport = importForm.value.annotationStatus === 'exist'
   const input = document.createElement('input')
@@ -1437,7 +1442,7 @@ const batchUploadImages = async (files, annotationId) => {
     for (let i = 0; i < files.length; i += batchSize) {
       const batch = files.slice(i, i + batchSize)
 
-      // 上传接口会保存文件、创建图片记录并更新标注项目的图片总数。
+      // interface will 、 record new annotation item .
       const uploadResponse = await uploadAnnotationImages(batch, annotationId)
 
       if (!uploadResponse?.success && uploadResponse?.code !== 200) {
@@ -1472,7 +1477,7 @@ const batchUploadImages = async (files, annotationId) => {
 
     ElMessage.success(`批量导入完成！成功导入 ${uploadedImagesList.length} 张图片`)
 
-    // 如果当前没有选中图片，选中第一个
+    // if current in , in
     if (currentImageIndex.value === -1 && uploadedImages.value.length > 0) {
       currentImageIndex.value = 0
     }
@@ -1522,7 +1527,7 @@ const handleConfirmImport = async () => {
       return
     }
 
-    // 图片在选择目录时已由上传接口持久化，确认操作不再重复写入数据库。
+    // in already interface , operation data .
     ElMessage.success('导入成功')
 
     showImportDialog.value = false
@@ -1575,12 +1580,12 @@ const saveImagesToDatabase = async (images, annotationId) => {
   }
 }
 
-// 视图切换方法
+// method
 const showTableView = () => {
   showAnnotationView.value = false
-  showDetailAnnotation.value = false  // 确保详细标注页面也被隐藏
+  showDetailAnnotation.value = false  // annotationpage also
   currentAnnotationData.value = null
-  currentAnnotationImage.value = null  // 清空当前标注图片
+  currentAnnotationImage.value = null  // null / empty current annotation
 }
 
 const handleBackToList = () => {
@@ -1592,13 +1597,13 @@ const handleBackToList = () => {
 
 const handleStartAnnotation = (data) => {
   if (data.type === 'batch') {
-    // 批量标注模式
+    // annotation
     console.log('开始批量标注:', data.images)
 
-    // 将所有图片添加到标注列表
+    // all annotation
     uploadedImages.value = [...uploadedImages.value, ...data.images]
 
-    // 设置第一张图片为当前图片
+    // Set to current
     if (data.images.length > 0) {
       const firstImageIndex = uploadedImages.value.findIndex(img => img.id === data.images[0].id)
       currentImageIndex.value = firstImageIndex >= 0 ? firstImageIndex : 0
@@ -1607,11 +1612,11 @@ const handleStartAnnotation = (data) => {
 
     ElMessage.success(`已加载 ${data.images.length} 张图片，可以开始批量标注`)
   } else {
-    // 单张图片标注模式
+    // annotation
     console.log('开始标注图片:', data)
     currentAnnotationImage.value = data
 
-    // 确保图片在uploadedImages中
+    // in uploadedImages in
     const imageIndex = uploadedImages.value.findIndex(img => img.id === data.id)
     if (imageIndex >= 0) {
       currentImageIndex.value = imageIndex
@@ -1621,14 +1626,14 @@ const handleStartAnnotation = (data) => {
   showDetailAnnotation.value = true
 }
 
-// 处理从网格视图导入的图片
+// Process from Import
 const handleImagesImported = (importedImages) => {
   console.log('接收到导入的图片:', importedImages)
 
-  // 将导入的图片添加到当前图片列表
+  // Import current
   uploadedImages.value.push(...importedImages)
 
-  // 如果当前没有选中图片，选中第一张导入的图片
+  // if current in , in Import
   if (currentImageIndex.value === -1 && importedImages.length > 0) {
     currentImageIndex.value = uploadedImages.value.length - importedImages.length
   }
@@ -1636,7 +1641,7 @@ const handleImagesImported = (importedImages) => {
   ElMessage.success(`成功导入 ${importedImages.length} 张图片到标注项目`)
 }
 
-// 处理从网格视图添加标签
+// Process from
 const handleAddLabelFromGrid = async (labelData) => {
   try {
     await createLabelAPI(labelData)
@@ -1645,7 +1650,7 @@ const handleAddLabelFromGrid = async (labelData) => {
   }
 }
 
-// 处理从网格视图更新标签
+// Process from new
 const handleUpdateLabelFromGrid = async (labelData) => {
   try {
     await updateLabelAPI(labelData.id, labelData)
@@ -1654,7 +1659,7 @@ const handleUpdateLabelFromGrid = async (labelData) => {
   }
 }
 
-// 处理从网格视图删除标签
+// Process from Delete
 const handleDeleteLabelFromGrid = async (labelId) => {
   try {
     await deleteLabelAPI(labelId)
@@ -1663,7 +1668,7 @@ const handleDeleteLabelFromGrid = async (labelId) => {
   }
 }
 
-// 处理从网格视图删除图片及相关数据
+// Process from Delete relateddata
 const handleDeleteImageAndDataFromGrid = async ({ annotationId, imageIds }) => {
   console.log('=== 父组件收到删除图片及相关数据的请求 ===')
 
@@ -1676,8 +1681,8 @@ const handleDeleteImageAndDataFromGrid = async ({ annotationId, imageIds }) => {
 
     if (response && response.code === 200) {
       console.log('删除图片及相关数据成功:', imageIds)
-      // 不在这里显示成功消息，让子组件处理
-      // ElMessage.success('图片及相关标注数据删除成功')
+      // in successfully , sub componentProcess
+      // ElMessage.success(' relatedannotationdataDelete successfully')
     } else {
       console.error('API返回错误:', response)
       throw new Error(response?.message || '删除失败')
@@ -1721,7 +1726,7 @@ const handleAutoSaveToDatabase = async () => {
   try {
     console.log('=== 网格视图自动保存到数据库 ===')
 
-    // 检查是否有已上传但未保存到数据库的图片
+    // whether already not data
     const imagesToSave = uploadedImages.value.filter(img => img.isFromUpload && !img.savedToDb)
     console.log('需要自动保存到数据库的图片:', imagesToSave)
 
@@ -1747,18 +1752,18 @@ const handleBackToGrid = () => {
   currentAnnotationImage.value = null
 }
 
-// 标注视图相关方法
+// annotation related method
 const selectAnnotationLabel = (labelId) => {
   selectedAnnotationLabel.value = labelId
 }
 
 const handleAddAnnotationLabel = (labelData) => {
-  // 新组件传递的是标签数据对象
+  // new component is dataobject
   if (labelData && labelData.name) {
-    // 处理新增标签
+    // Process Add
     addAnnotationLabel(labelData)
   } else {
-    // 兼容原有调用方式
+    //
     labelDialogData.value = {
       id: null,
       name: '',
@@ -1769,12 +1774,12 @@ const handleAddAnnotationLabel = (labelData) => {
 }
 
 const handleEditAnnotationLabel = (labelData) => {
-  // 新组件传递的是标签数据对象
+  // new component is dataobject
   if (labelData && labelData.id) {
-    // 处理编辑标签
+    // Process
     updateAnnotationLabel(labelData)
   } else {
-    // 兼容原有调用方式
+    //
     labelDialogData.value = {
       id: labelData?.id ?? null,
       name: labelData?.name || '',
@@ -1787,16 +1792,16 @@ const handleEditAnnotationLabel = (labelData) => {
 const handleDeleteAnnotationLabel = async (labelId) => {
   try {
     await deleteLabelAPI(labelId)
-    // 重新加载标签列表
+    // new Load
     await loadAnnotationLabels()
   } catch (error) {
     console.error('删除标签失败:', error)
   }
 }
 
-// API相关函数
+// APIrelated
 
-// 获取当前标注项目ID
+// Get current annotation item ID
 const getCurrentAnnotationId = () => {
   const id = currentAnnotationData.value?.id || 1
   console.log('getCurrentAnnotationId 调用:')
@@ -1805,7 +1810,7 @@ const getCurrentAnnotationId = () => {
   return id
 }
 
-// 加载标签数据
+// Load data
 const loadAnnotationLabels = async (keyword = '') => {
   try {
     labelsLoading.value = true
@@ -1814,7 +1819,7 @@ const loadAnnotationLabels = async (keyword = '') => {
 
     if (response.code === 200) {
       annotationLabels.value = response.data || []
-      // 如果有第一个标签，默认选中
+      // if , in
       if (annotationLabels.value.length > 0 && !selectedAnnotationLabel.value) {
         selectedAnnotationLabel.value = annotationLabels.value[0].id
       }
@@ -1829,7 +1834,7 @@ const loadAnnotationLabels = async (keyword = '') => {
   }
 }
 
-// 创建标签
+//
 const createLabelAPI = async (labelData) => {
   try {
     const annotationId = getCurrentAnnotationId()
@@ -1837,7 +1842,7 @@ const createLabelAPI = async (labelData) => {
 
     if (response.code === 200) {
       ElMessage.success('标签创建成功')
-      // 重新加载标签列表
+      // new Load
       await loadAnnotationLabels(labelSearchKeyword.value)
       return response.data
     } else {
@@ -1851,7 +1856,7 @@ const createLabelAPI = async (labelData) => {
   }
 }
 
-// 新增标签（调用 createAnnotationLabel API）
+// Add ( createAnnotationLabel API)
 const addAnnotationLabel = async (labelData) => {
   if (!labelData?.name) {
     ElMessage.warning('标签名称不能为空')
@@ -1880,14 +1885,14 @@ const addAnnotationLabel = async (labelData) => {
   }
 }
 
-// 更新标签
+// new
 const updateLabelAPI = async (labelId, labelData) => {
   try {
     const response = await updateAnnotationLabel(labelId, labelData)
 
     if (response.code === 200) {
       ElMessage.success('标签更新成功')
-      // 重新加载标签列表
+      // new Load
       await loadAnnotationLabels(labelSearchKeyword.value)
       return response.data
     } else {
@@ -1901,14 +1906,14 @@ const updateLabelAPI = async (labelId, labelData) => {
   }
 }
 
-// 删除标签
+// Delete
 const deleteLabelAPI = async (labelId) => {
   try {
     const response = await deleteAnnotationLabel(labelId)
 
     if (response.code === 200) {
       ElMessage.success('标签删除成功')
-      // 重新加载标签列表
+      // new Load
       await loadAnnotationLabels(labelSearchKeyword.value)
       return true
     } else {
@@ -1922,27 +1927,27 @@ const deleteLabelAPI = async (labelId) => {
   }
 }
 
-// 优化：获取真实的标签信息和标注数据
+// : Get info and annotationdata
 const loadAllAnnotationData = async () => {
   try {
     const annotationId = getCurrentAnnotationId()
     console.log('=== 加载所有标注数据（带真实标签名称） ===')
     console.log('标注项目ID:', annotationId)
 
-    // 并行调用三个API：获取标签信息、图片列表和标注实例
+    // API: Get info、 and annotationinstance
     const [labelsResponse, imagesResponse, instancesResponse] = await Promise.all([
       getAnnotationLabels(annotationId),
       getAnnotationImages(annotationId),
       getAllAnnotationInstances(annotationId)
     ])
-    // 记录图片元信息，便于按 imageId 反查名称/URL
+    // record info, imageId /URL
     const imageMetaMap = new Map()
 
     console.log('标签API响应:', labelsResponse)
     console.log('图片列表API响应:', imagesResponse)
     console.log('标注实例API响应:', instancesResponse)
 
-    // 详细分析图片列表API响应
+    // API
     if (imagesResponse.success && imagesResponse.data) {
       console.log('图片列表数据结构分析:')
       console.log('- 响应状态:', imagesResponse.success)
@@ -1951,7 +1956,7 @@ const loadAllAnnotationData = async () => {
       console.log('- 所有图片名称:', imagesResponse.data.map(img => img.originalName))
     }
 
-    // 处理标签数据（即使实例API失败也要显示标签）
+    // Process data ( instanceAPIfailed also need to )
     if (labelsResponse.code === 200) {
       const labelsList = labelsResponse.data || []
       const instances = instancesResponse.code === 200 ? instancesResponse.data || [] : []
@@ -1959,7 +1964,7 @@ const loadAllAnnotationData = async () => {
       console.log('标签数量:', labelsList.length)
       console.log('标注实例数量:', instances.length)
 
-      // 1. 显示所有标签，并重新计算使用次数
+      // 1. all , new
       labelsList.forEach(label => {
         label.usageCount = instances.filter(instance => instance.labelId === label.id).length
       })
@@ -1967,7 +1972,7 @@ const loadAllAnnotationData = async () => {
       annotationLabels.value = labelsList.sort((a, b) => a.sortOrder - b.sortOrder)
       console.log('所有标签列表:', annotationLabels.value)
 
-      // 如果有第一个标签，默认选中
+      // if , in
       if (annotationLabels.value.length > 0 && !selectedAnnotationLabel.value) {
         selectedAnnotationLabel.value = annotationLabels.value[0].id
       }
@@ -1976,17 +1981,17 @@ const loadAllAnnotationData = async () => {
       ElMessage.error('加载标签失败: ' + labelsResponse.message)
     }
 
-    // 处理图片列表数据（从annotation_image表）
+    // Process data (from annotation_image )
     if (imagesResponse.success && imagesResponse.data) {
       const allImages = imagesResponse.data
       console.log('从数据库加载的图片数量:', allImages.length)
       console.log('图片数据详情:', allImages)
 
-      // 为每个图片创建前端显示对象
+      // to each before object
       allImages.forEach((dbImage, index) => {
         console.log(`处理第${index + 1}张图片:`, dbImage)
 
-        // 检查图片名称是否存在且有效 - 使用imageName字段（完整文件名）
+        // whether in - imageNamefield ( )
         if (!dbImage.imageName || typeof dbImage.imageName !== 'string') {
           console.warn('跳过无效的图片数据:', dbImage)
           return
@@ -1996,22 +2001,22 @@ const loadAllAnnotationData = async () => {
         imageMetaMap.set(dbImage.id, { name: metaName, originalName: dbImage.originalName, url: metaUrl })
 
 
-        // 检查是否已经存在该图片
+        // whether already in
         const existingImageIndex = uploadedImages.value.findIndex(
           img => img.id === dbImage.id || img.name === dbImage.imageName || img.originalName === dbImage.imageName
         )
 
         if (existingImageIndex === -1) {
-          // 创建新的图片对象
+          // new object
           const imageObj = {
             id: dbImage.id,
-            name: dbImage.imageName,  // 使用完整文件名（包含时间戳前缀）
-            originalName: dbImage.originalName,  // 保留原始文件名
+            name: dbImage.imageName,  // ( before )
+            originalName: dbImage.originalName,  //
             url: metaUrl,
             annotations: [],
             isFromDatabase: true,
             dbData: dbImage,
-            // 简化状态标记
+            //
             needsImageCheck: false,
             imageExists: true
           }
@@ -2022,7 +2027,7 @@ const loadAllAnnotationData = async () => {
         }
       })
 
-      // 过滤掉无效的图片
+      //
       uploadedImages.value = uploadedImages.value.filter(isValidImage)
       console.log('图片列表过滤后的有效图片数量:', uploadedImages.value.length)
 
@@ -2041,16 +2046,16 @@ const loadAllAnnotationData = async () => {
       console.warn('图片列表API响应无效:', imagesResponse)
     }
 
-    // 处理标注实例数据
+    // Process annotationinstancedata
     if (instancesResponse.code === 200) {
       const instances = instancesResponse.data || []
 
-      // 2. 按图片名称分组标注数据
+      // 2. groupannotationdata
       const imageGroups = {}
       instances.forEach((instance, index) => {
         console.log(`处理标注实例 ${index + 1}:`, instance)
 
-        // 检查标注实例的图片名称字段 - 可能是imageName或originalName
+        // annotationinstance field - can is imageName originalName
         const meta = imageMetaMap.get(instance.imageId) || {}
         const instanceImageName = meta.name || instance.imageName || instance.originalName
         if (!instanceImageName || typeof instanceImageName !== 'string') {
@@ -2066,9 +2071,9 @@ const loadAllAnnotationData = async () => {
 
       console.log('按图片分组的标注数据:', imageGroups)
 
-      // 3. 为每个图片创建图片对象
+      // 3. to each object
       Object.keys(imageGroups).forEach(imageName => {
-        // 检查图片名称是否有效
+        // whether
         if (!imageName || typeof imageName !== 'string') {
           console.warn('跳过无效的图片名称:', imageName)
           return
@@ -2076,12 +2081,12 @@ const loadAllAnnotationData = async () => {
 
         const imageInstances = imageGroups[imageName]
 
-        // 检查是否已经存在该图片（兼容使用 originalName 保存的老数据）
+        // whether already in ( originalName data)
         const existingImageIndex = uploadedImages.value.findIndex(
           img => img.id === imageInstances?.[0]?.imageId || img.name === imageName || img.originalName === imageName
         )
 
-        // 转换标注数据格式
+        // Convert annotationdata
         const annotations = imageInstances.map(instance => {
           let data
           try {
@@ -2104,11 +2109,11 @@ const loadAllAnnotationData = async () => {
         }).filter(Boolean)
 
         if (existingImageIndex >= 0) {
-          // 如果图片已存在，更新其标注数据
+          // if already in , new annotationdata
           uploadedImages.value[existingImageIndex].annotations = annotations
           console.log(`更新现有图片 ${imageName} 的标注数据，数量:`, annotations.length)
         } else {
-          // 如果图片不存在，创建新的图片对象（根据 imageId 反查元数据）
+          // if in , new object ( imageId data)
           const meta = imageMetaMap.get(imageInstances?.[0]?.imageId) || {}
           const imageUrl = meta.url
           const newImage = {
@@ -2117,19 +2122,19 @@ const loadAllAnnotationData = async () => {
             originalName: meta.originalName || imageName,
             url: imageUrl,
             annotations: annotations,
-            isFromDatabase: true, // 标记这是从数据库加载的
-            needsImageCheck: true // 标记需要检查图片是否存在
+            isFromDatabase: true, // is from data Load
+            needsImageCheck: true // need to whether in
           }
           uploadedImages.value.push(newImage)
           console.log(`添加数据库图片 ${imageName}，URL: ${imageUrl}，标注数量:`, annotations.length)
         }
       })
 
-      // 4. 过滤掉无效的图片，只保留有效的图片
+      // 4. , only
       uploadedImages.value = uploadedImages.value.filter(isValidImage)
       console.log('过滤后的有效图片数量:', uploadedImages.value.length)
 
-      // 如果当前没有选中图片且有图片数据，选中第一张
+      // if current in data, in
       if (currentImageIndex.value < 0 && uploadedImages.value.length > 0) {
         currentImageIndex.value = 0
         imageAnnotations.value = uploadedImages.value[0].annotations || []
@@ -2140,7 +2145,7 @@ const loadAllAnnotationData = async () => {
       console.log('- 当前图片索引:', currentImageIndex.value)
     } else {
       console.error('加载标注实例失败:', instancesResponse.message)
-      // 标注实例加载失败不影响标签显示
+      // annotationinstanceLoad failed
     }
 
     console.log('所有标注数据加载完成（含真实标签名称）')
@@ -2150,7 +2155,7 @@ const loadAllAnnotationData = async () => {
     console.log('- 图片列表详情:', uploadedImages.value.map(img => ({ name: img.name, url: img.url, isFromDatabase: img.isFromDatabase })))
   } catch (error) {
     console.error('加载所有标注数据失败:', error)
-    // 如果加载失败，至少尝试单独加载标签
+    // if Load failed, to Load
     try {
       await loadAnnotationLabels()
     } catch (labelError) {
@@ -2160,7 +2165,7 @@ const loadAllAnnotationData = async () => {
   }
 }
 
-// 保存图片标注实例
+// annotationinstance
 const saveImageAnnotations = async (imageId, annotations) => {
   try {
     const annotationId = getCurrentAnnotationId()
@@ -2170,7 +2175,7 @@ const saveImageAnnotations = async (imageId, annotations) => {
     console.log('标注数量:', annotations.length)
     console.log('标注详情:', annotations)
 
-    // 转换标注数据格式
+    // Convert annotationdata
     const instances = annotations.map(annotation => ({
       labelId: annotation.labelId,
       imageId: imageId,
@@ -2193,7 +2198,7 @@ const saveImageAnnotations = async (imageId, annotations) => {
 
     if (response.code === 200) {
       ElMessage.success('标注保存成功')
-      // 重新加载标签列表以更新使用次数
+      // new Load new
       await loadAnnotationLabels(labelSearchKeyword.value)
       return true
     } else {
@@ -2209,7 +2214,7 @@ const saveImageAnnotations = async (imageId, annotations) => {
 
 
 
-// 弹窗相关方法
+// dialogrelated method
 const handleAnnotationDialogSubmit = async (formData) => {
   try {
     const data = {
@@ -2241,7 +2246,7 @@ const handleAnnotationDialogSubmit = async (formData) => {
   }
 }
 
-// 图像标注编辑相关方法
+// annotation related method
 const selectTool = (tool) => {
   selectedTool.value = tool
 }
@@ -2269,17 +2274,17 @@ const handleZoomOut = () => {
 }
 
 const handleResetZoom = () => {
-  // 重置旋转角度
+  //
   imageRotation.value = 0
   console.log('重置缩放和旋转')
   ElMessage.success('已重置缩放和旋转')
 }
 
 const handleRotateLeft = () => {
-  // 逆时针旋转90度
+  // 90
   imageRotation.value = (imageRotation.value - 90 + 360) % 360
 
-  // 如果有当前图片和标注，需要变换标注坐标
+  // if current and annotation, need to annotation
   if (currentImage.value && currentImage.value.annotations.length > 0) {
     transformAnnotationsForRotation(-90)
   }
@@ -2289,10 +2294,10 @@ const handleRotateLeft = () => {
 }
 
 const handleRotateRight = () => {
-  // 顺时针旋转90度
+  // 90
   imageRotation.value = (imageRotation.value + 90) % 360
 
-  // 如果有当前图片和标注，需要变换标注坐标
+  // if current and annotation, need to annotation
   if (currentImage.value && currentImage.value.annotations.length > 0) {
     transformAnnotationsForRotation(90)
   }
@@ -2301,7 +2306,7 @@ const handleRotateRight = () => {
   ElMessage.success('顺时针旋转90°')
 }
 
-// 旋转时变换标注坐标
+// annotation
 const transformAnnotationsForRotation = (angleDelta) => {
   const { width, height } = getAnnotationCanvasSize()
   if (!currentImage.value || !width || !height) return
@@ -2312,7 +2317,7 @@ const transformAnnotationsForRotation = (angleDelta) => {
 
   currentImage.value.annotations.forEach(annotation => {
     if (annotation.type === 'rect') {
-      // 矩形标注的四个关键点
+      // annotation
       const points = [
         { x: annotation.x, y: annotation.y },
         { x: annotation.x + annotation.width, y: annotation.y },
@@ -2320,7 +2325,7 @@ const transformAnnotationsForRotation = (angleDelta) => {
         { x: annotation.x, y: annotation.y + annotation.height }
       ]
 
-      // 旋转所有点
+      // all
       const rotatedPoints = points.map(point => {
         const dx = point.x - centerX
         const dy = point.y - centerY
@@ -2331,7 +2336,7 @@ const transformAnnotationsForRotation = (angleDelta) => {
         }
       })
 
-      // 计算新的边界框
+      // new
       const minX = Math.min(...rotatedPoints.map(p => p.x))
       const maxX = Math.max(...rotatedPoints.map(p => p.x))
       const minY = Math.min(...rotatedPoints.map(p => p.y))
@@ -2343,7 +2348,7 @@ const transformAnnotationsForRotation = (angleDelta) => {
       annotation.height = maxY - minY
 
     } else if (annotation.type === 'circle') {
-      // 圆形标注的中心点旋转
+      // annotation in
       const dx = annotation.cx - centerX
       const dy = annotation.cy - centerY
 
@@ -2352,12 +2357,12 @@ const transformAnnotationsForRotation = (angleDelta) => {
     }
   })
 
-  // 刷新显示的标注
+  // new annotation
   imageAnnotations.value = [...currentImage.value.annotations]
   console.log('标注坐标已旋转变换')
 }
 
-// 标签管理方法
+// method
 const handleLabelDialogSubmit = async (labelData) => {
   try {
     const payload = {
@@ -2369,7 +2374,7 @@ const handleLabelDialogSubmit = async (labelData) => {
     if (labelData.id) {
       await updateLabelAPI(labelData.id, payload)
 
-      // 更新所有图片中使用该标签的标注
+      // new all in annotation
       uploadedImages.value.forEach(image => {
         if (image.annotations) {
           image.annotations.forEach(annotation => {
@@ -2400,7 +2405,7 @@ const handleLabelDialogSubmit = async (labelData) => {
   }
 }
 
-// 上传单张图片并返回后端创建的图片记录，保证界面与数据库使用相同的图片标识。
+// after record, and data .
 const saveImageToLocal = async (file) => {
   try {
     console.log('保存图片到标注项目:', file.name)
@@ -2423,11 +2428,11 @@ const saveImageToLocal = async (file) => {
   }
 }
 
-// 图片上传方法
+// method
 const handleImageUpload = async (uploadFile) => {
   console.log('上传文件对象:', uploadFile)
 
-  // Element Plus 上传组件传递的是包装后的文件对象
+  // Element Plus component is after object
   const file = uploadFile.raw || uploadFile
 
   if (!file) {
@@ -2435,13 +2440,13 @@ const handleImageUpload = async (uploadFile) => {
     return
   }
 
-  // 检查文件类型
+  //
   if (!file.type.startsWith('image/')) {
     ElMessage.error('请选择图片文件')
     return
   }
 
-  // 检查文件大小（10MB限制）
+  // (10MB )
   const maxSize = 10 * 1024 * 1024
   if (file.size > maxSize) {
     ElMessage.error('图片大小不能超过10MB')
@@ -2449,32 +2454,32 @@ const handleImageUpload = async (uploadFile) => {
   }
 
   try {
-    // 以服务端返回的图片记录作为界面模型，避免本地生成的文件名与数据库不一致。
+    // service record to model, Generate and data .
     const timestamp = Date.now()
     const uploadedImage = await saveImageToLocal(file)
 
-    // 读取图片作为base64用于显示
+    // to base64
     const reader = new FileReader()
     reader.onload = (e) => {
       const newImage = {
         id: uploadedImage.id || timestamp,
         name: uploadedImage.imageName || file.name,
         originalName: uploadedImage.originalName || file.name,
-        url: e.target.result, // 用于显示的base64
+        url: e.target.result, // base64
         localPath: uploadedImage.localPath,
-        annotations: [], // 确保每个图片都有annotations数组
-        isUploaded: true // 标记为已上传
+        annotations: [], // each annotationsarray
+        isUploaded: true // to already
       }
       console.log('创建新图片对象:', newImage)
 
       uploadedImages.value.push(newImage)
       currentImageIndex.value = uploadedImages.value.length - 1
 
-      // 切换到新图片时清空当前标注显示（新图片还没有标注）
+      // new null / empty current annotation ( new annotation)
       imageAnnotations.value = []
       selectedAnnotation.value = null
 
-      // 重置旋转角度
+      //
       imageRotation.value = 0
 
       console.log('图片上传成功，当前图片索引:', currentImageIndex.value)
@@ -2498,13 +2503,13 @@ const switchImage = async (index) => {
   console.log('切换到索引:', index)
   console.log('原索引:', currentImageIndex.value)
 
-  // 检查索引是否有效
+  // whether
   if (index < 0 || index >= uploadedImages.value.length) {
     console.warn('无效的图片索引:', index)
     return
   }
 
-  // 检查图片是否有效
+  // whether
   const targetImage = uploadedImages.value[index]
   if (!isValidImage(targetImage)) {
     console.warn('目标图片无效:', targetImage)
@@ -2514,18 +2519,18 @@ const switchImage = async (index) => {
   currentImageIndex.value = index
   selectedAnnotation.value = null
 
-  // 重置旋转角度
+  //
   imageRotation.value = 0
   imageWidth.value = 0
   imageHeight.value = 0
   imageNaturalWidth.value = 0
   imageNaturalHeight.value = 0
 
-  // 优化：直接从已加载的数据中获取标注信息，无需再调用API
+  // : from already Load data in Get annotationinfo, API
   const imageName = targetImage.name
   console.log('切换到图片:', imageName)
 
-  // 直接使用已加载的标注数据
+  // already Load annotationdata
   const annotations = targetImage.annotations || []
   imageAnnotations.value = [...annotations]
 
@@ -2542,21 +2547,21 @@ const switchImage = async (index) => {
   console.log('=== 切换完成（无API调用） ===')
 }
 
-// 上一张图片
+//
 const previousImage = () => {
   if (currentImageIndex.value > 0) {
     switchImage(currentImageIndex.value - 1)
   }
 }
 
-// 下一张图片
+//
 const nextImage = () => {
   if (currentImageIndex.value < uploadedImages.value.length - 1) {
     switchImage(currentImageIndex.value + 1)
   }
 }
 
-// 保存所有标注
+// all annotation
 const handleSaveAllAnnotations = async () => {
   if (uploadedImages.value.length === 0) {
     ElMessage.warning('没有图片需要保存')
@@ -2572,7 +2577,7 @@ const handleSaveAllAnnotations = async () => {
       const image = uploadedImages.value[i]
       if (image.annotations && image.annotations.length > 0) {
         try {
-          // 这里应该调用保存单个图片标注的API
+          // annotation API
           // await saveImageAnnotations(image.name, image.annotations)
           savedCount++
         } catch (error) {
@@ -2593,7 +2598,7 @@ const handleSaveAllAnnotations = async () => {
   }
 }
 
-// 清空所有图片
+// null / empty all
 const handleClearAllImages = () => {
   ElMessageBox.confirm(
     '确定要清空所有图片吗？此操作不可恢复！',
@@ -2610,11 +2615,11 @@ const handleClearAllImages = () => {
     selectedAnnotation.value = null
     ElMessage.success('已清空所有图片')
   }).catch(() => {
-    // 用户取消操作
+    // user operation
   })
 }
 
-// 全屏预览功能
+// full can
 const handleFullScreenPreview = () => {
   if (!currentImage.value) {
     ElMessage.warning('请先选择要预览的图片')
@@ -2624,32 +2629,32 @@ const handleFullScreenPreview = () => {
   showFullScreenPreview.value = true
 }
 
-// 关闭全屏预览
+// full
 const handleCloseFullScreenPreview = () => {
   showFullScreenPreview.value = false
   previewImageScale.value = 1
 }
 
-// 预览中的上一张图片
+// in
 const previousImageInPreview = () => {
   if (currentImageIndex.value > 0) {
     switchImage(currentImageIndex.value - 1)
   }
 }
 
-// 预览中的下一张图片
+// in
 const nextImageInPreview = () => {
   if (currentImageIndex.value < uploadedImages.value.length - 1) {
     switchImage(currentImageIndex.value + 1)
   }
 }
 
-// 预览图片加载完成
+// Load
 const handlePreviewImageLoad = (event) => {
   const img = event.target
   const container = img.parentElement
 
-  // 计算缩放比例以适应容器
+  //
   const containerWidth = container.clientWidth
   const containerHeight = container.clientHeight
   const imgWidth = img.naturalWidth
@@ -2657,15 +2662,15 @@ const handlePreviewImageLoad = (event) => {
 
   const scaleX = containerWidth / imgWidth
   const scaleY = containerHeight / imgHeight
-  previewImageScale.value = Math.min(scaleX, scaleY, 1) // 不超过原始大小
+  previewImageScale.value = Math.min(scaleX, scaleY, 1) //
 
   console.log('预览图片缩放比例:', previewImageScale.value)
 }
 
-// 图片加载完成时获取显示尺寸
+// Load Get
 const handleImageLoad = (event) => {
   const img = event.target
-  // 获取图片的实际显示尺寸，而不是原始尺寸
+  // Get , is
   imageWidth.value = img.clientWidth
   imageHeight.value = img.clientHeight
   imageNaturalWidth.value = img.naturalWidth
@@ -2674,7 +2679,7 @@ const handleImageLoad = (event) => {
   console.log('图片原始尺寸:', img.naturalWidth, img.naturalHeight)
 }
 
-// 图片加载错误处理
+// Load Process
 const handleImageError = (event) => {
   const failedImage = currentImage.value
   console.error('图片加载失败:', failedImage?.url)
@@ -2682,11 +2687,11 @@ const handleImageError = (event) => {
   if (failedImage) {
     ElMessage.error(`图片加载失败: ${failedImage.name}`)
 
-    // 标记当前图片为无效
+    // current to
     failedImage.url = ''
     failedImage.isInvalid = true
 
-    // 尝试切换到下一个有效的图片
+    //
     const validImages = uploadedImages.value.filter(isValidImage)
     if (validImages.length > 0) {
       const nextImageIndex = uploadedImages.value.findIndex(img => img.id === validImages[0].id)
@@ -2695,7 +2700,7 @@ const handleImageError = (event) => {
         currentImageIndex.value = nextImageIndex
       }
     } else {
-      // 如果没有有效图片，清空显示
+      // if , null / empty
       currentImageIndex.value = -1
       imageAnnotations.value = []
       ElMessage.warning('没有可用的图片')
@@ -2703,17 +2708,17 @@ const handleImageError = (event) => {
   }
 }
 
-// 缩略图加载错误处理
+// Load Process
 const handleThumbnailError = (event) => {
   console.error('缩略图加载失败:', event.target.src)
-  // 设置默认占位图片
+  // Set
   event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwIiB5PSI1MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+5Zu+54mH5LiN5a2Y5ZyoPC90ZXh0Pjwvc3ZnPg=='
 }
 
-// 画布事件处理方法
+// eventProcess method
 const handleCanvasClick = (event) => {
   if (selectedTool.value === 'select') {
-    // 取消选中
+    // in
     selectedAnnotation.value = null
   }
   hideContextMenu()
@@ -2729,7 +2734,7 @@ const handleCanvasRightClick = (event) => {
 
 const handleMouseDown = (event) => {
   if (selectedTool.value === 'brush' || selectedTool.value === 'rect' || selectedTool.value === 'circle') {
-    // 获取图片元素的位置和尺寸
+    // Get element and
     const imageEl = document.querySelector('.main-image')
     if (!imageEl) return
 
@@ -2743,7 +2748,7 @@ const handleMouseDown = (event) => {
     const x = xDisplay * scaleX
     const y = yDisplay * scaleY
 
-    // 确保坐标在图片范围内
+    // in
     if (xDisplay >= 0 && xDisplay <= imageRect.width && yDisplay >= 0 && yDisplay <= imageRect.height) {
       isDrawing.value = true
       currentDrawing.value = {
@@ -2774,7 +2779,7 @@ const handleMouseMove = (event) => {
 
     currentDrawing.value.endX = x
     currentDrawing.value.endY = y
-    // console.log('绘制中:', currentDrawing.value)
+    // console.log(' in :', currentDrawing.value)
   }
 }
 
@@ -2811,22 +2816,22 @@ const handleMouseUp = (event) => {
     }
 
     if (newAnnotation && (newAnnotation.width > 10 || newAnnotation.r > 10)) {
-      // 阻止事件冒泡，防止立即触发全局click事件隐藏菜单
+      // event , full clickevent menu
       event.stopPropagation()
       event.preventDefault()
 
-      // 设置防护标志，防止立即的click事件干扰
+      // Set , clickevent
       justFinishedDrawing.value = true
       setTimeout(() => {
         justFinishedDrawing.value = false
-      }, 200) // 200ms后清除标志
+      }, 200) // 200ms after
 
       pendingAnnotation.value = newAnnotation
       console.log('创建标注:', newAnnotation)
 
-      // 延迟显示右键菜单，避免与click事件冲突
+      // menu, and clickevent
       setTimeout(() => {
-        // 显示右键菜单选择标签 - 使用页面坐标
+        // menu - page
         contextMenuX.value = event.clientX
         contextMenuY.value = event.clientY
         showContextMenu.value = true
@@ -2835,9 +2840,9 @@ const handleMouseUp = (event) => {
         console.log('右键菜单显示状态:', showContextMenu.value)
         console.log('可用标签数量:', annotationLabels.value.length)
         console.log('标签列表:', annotationLabels.value)
-      }, 100) // 延迟100ms显示
+      }, 100) // 100ms
 
-      // 正常流程：显示右键菜单让用户选择标签
+      // workflow: menu user
     }
 
     isDrawing.value = false
@@ -2845,26 +2850,26 @@ const handleMouseUp = (event) => {
   }
 }
 
-// 标注选择和标签分配
+// annotation and
 const selectAnnotation = (annotationId) => {
   selectedAnnotation.value = annotationId
 }
 
-// 删除选中的标注或整个图片
+// Delete in annotation
 const handleDeleteAnnotation = async () => {
   if (!currentImage.value) {
     ElMessage.warning('没有可删除的图片')
     return
   }
 
-  // 如果有标注，删除标注；如果没有标注，删除整个图片
+  // if annotation, Delete annotation; if annotation, Delete
   if (currentImage.value.annotations && currentImage.value.annotations.length > 0) {
-    // 删除标注逻辑
+    // Delete annotation
     let annotationToDelete = null
     let annotationIndex = -1
 
     if (selectedAnnotation.value) {
-      // 删除选中的标注
+      // Delete in annotation
       annotationIndex = currentImage.value.annotations.findIndex(
         annotation => annotation.id === selectedAnnotation.value
       )
@@ -2872,14 +2877,14 @@ const handleDeleteAnnotation = async () => {
         annotationToDelete = currentImage.value.annotations[annotationIndex]
       }
     } else {
-      // 删除最后一个标注
+      // Delete after annotation
       annotationIndex = currentImage.value.annotations.length - 1
       annotationToDelete = currentImage.value.annotations[annotationIndex]
     }
 
     if (annotationToDelete) {
       try {
-        // 确认删除标注
+        // Delete annotation
         await ElMessageBox.confirm(
           `确定要删除这个标注吗？\n注意：删除后将同时删除标注数据和相关图片文件！`,
           '提示',
@@ -2890,16 +2895,16 @@ const handleDeleteAnnotation = async () => {
           }
         )
 
-        // 调用后端API删除标注实例
+        // after APIDelete annotationinstance
         await deleteAnnotationInstance(annotationToDelete.id)
 
-        // 从当前图片的标注数组中删除
+        // from current annotationarray in Delete
         currentImage.value.annotations.splice(annotationIndex, 1)
 
-        // 刷新当前显示的标注 - 重新从当前图片加载
+        // new current annotation - new from current Load
         imageAnnotations.value = [...currentImage.value.annotations]
 
-        // 如果删除的是当前选中的标注，清除选中状态
+        // if Delete is current in annotation, in
         if (selectedAnnotation.value === annotationToDelete.id) {
           selectedAnnotation.value = null
         }
@@ -2915,9 +2920,9 @@ const handleDeleteAnnotation = async () => {
       ElMessage.warning('未找到要删除的标注')
     }
   } else {
-    // 删除整个图片
+    // Delete
     try {
-      // 确认删除图片
+      // Delete
       await ElMessageBox.confirm(
         `确定要删除这张图片吗？\n注意：删除后将同时删除图片文件和所有相关数据！`,
         '提示',
@@ -2928,17 +2933,17 @@ const handleDeleteAnnotation = async () => {
         }
       )
 
-      // 先删除该图片的所有标注实例
+      // Delete all annotationinstance
       if (currentImage.value.annotations && currentImage.value.annotations.length > 0) {
         console.log(`删除图片 ${currentImage.value.name} 的 ${currentImage.value.annotations.length} 个标注实例`)
 
         try {
-          // 方法1：使用根据图片名称删除的API（更高效）
+          // method 1: Delete API ( )
           if (currentAnnotationData.value && currentAnnotationData.value.id) {
             await deleteAnnotationInstancesByImage(currentAnnotationData.value.id, [currentImage.value.name])
             console.log(`已批量删除图片 ${currentImage.value.name} 的所有标注实例`)
           } else {
-            // 方法2：批量删除标注实例
+            // method 2: Batch delete annotationinstance
             const instanceIds = currentImage.value.annotations.map(annotation => annotation.id)
             await batchDeleteAnnotationInstances(instanceIds)
             console.log(`已批量删除 ${instanceIds.length} 个标注实例`)
@@ -2946,7 +2951,7 @@ const handleDeleteAnnotation = async () => {
         } catch (error) {
           console.error('批量删除标注实例失败，尝试逐个删除:', error)
 
-          // 方法3：逐个删除（备用方案）
+          // method 3: Delete ( )
           for (const annotation of currentImage.value.annotations) {
             try {
               await deleteAnnotationInstance(annotation.id)
@@ -2958,23 +2963,23 @@ const handleDeleteAnnotation = async () => {
         }
       }
 
-      // 然后删除图片文件
+      // afterDelete
       if (currentImage.value.name) {
         await deleteImage(currentImage.value.name)
         console.log(`已删除图片文件: ${currentImage.value.name}`)
       }
 
-      // 从图片列表中删除
+      // from in Delete
       const imageIndex = uploadedImages.value.findIndex(img => img.id === currentImage.value.id)
       if (imageIndex > -1) {
         uploadedImages.value.splice(imageIndex, 1)
 
-        // 如果删除的是当前图片，切换到上一张图片
+        // if Delete is current ,
         if (currentImageIndex.value >= uploadedImages.value.length) {
           currentImageIndex.value = Math.max(0, uploadedImages.value.length - 1)
         }
 
-        // 更新当前图片和标注显示
+        // new current and annotation
         if (uploadedImages.value.length > 0) {
           currentImage.value = uploadedImages.value[currentImageIndex.value]
           imageAnnotations.value = [...currentImage.value.annotations]
@@ -3010,17 +3015,17 @@ const selectLabelForAnnotation = (label) => {
 
     console.log('标注信息设置完成:', pendingAnnotation.value)
 
-    // 确保当前图片有annotations数组
+    // current annotationsarray
     if (!currentImage.value.annotations) {
       currentImage.value.annotations = []
       console.log('创建了annotations数组')
     }
 
-    // 将标注保存到当前图片的annotations数组中
+    // annotation current annotationsarray in
     currentImage.value.annotations.push(pendingAnnotation.value)
     console.log('标注已添加到图片:', currentImage.value.annotations.length)
 
-    // 刷新当前显示的标注 - 重新从当前图片加载
+    // new current annotation - new from current Load
     imageAnnotations.value = [...currentImage.value.annotations]
     console.log('刷新显示标注数量:', imageAnnotations.value.length)
     console.log('所有显示标注:', imageAnnotations.value)
@@ -3040,13 +3045,13 @@ const selectLabelForAnnotation = (label) => {
 const hideContextMenu = () => {
   console.log('hideContextMenu调用，当前菜单状态:', showContextMenu.value)
 
-  // 只有菜单真正显示时才隐藏
+  // only menu
   if (showContextMenu.value) {
     showContextMenu.value = false
     contextMenuX.value = 0
     contextMenuY.value = 0
 
-    // 如果有未完成的标注，清除它
+    // if not annotation,
     if (pendingAnnotation.value) {
       console.log('清除未完成的标注')
       pendingAnnotation.value = null
@@ -3056,7 +3061,7 @@ const hideContextMenu = () => {
   }
 }
 
-// 智能的全局点击监听器 - 只在点击菜单外部时隐藏
+// can full listener - only in menu
 const handleGlobalClick = (event) => {
   console.log('=== 全局点击事件触发 ===')
   console.log('点击目标:', event.target)
@@ -3065,20 +3070,20 @@ const handleGlobalClick = (event) => {
   console.log('事件类型:', event.type)
   console.log('事件时间戳:', event.timeStamp)
 
-  // 如果刚完成绘制，忽略这次点击事件
+  // if , event
   if (justFinishedDrawing.value) {
     console.log('刚完成绘制，忽略此次点击事件')
     return
   }
 
-  // 如果右键菜单显示中
+  // if menu in
   if (showContextMenu.value) {
-    // 检查点击是否在右键菜单内部
+    // whether in menu
     const contextMenu = document.querySelector('.context-menu')
     console.log('找到右键菜单元素:', contextMenu)
 
     if (contextMenu && !contextMenu.contains(event.target)) {
-      // 点击在菜单外部，隐藏菜单
+      // in menu , menu
       console.log('点击在菜单外部，隐藏菜单')
       hideContextMenu()
     } else {
@@ -3105,11 +3110,11 @@ const searchResetFn = (val, reset) => {
   handleAdvancedSearch(val || {})
 }
 
-// 高级搜索相关方法
+// related method
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索:', searchData)
 
-  // 更新搜索表单
+  // new form
   if (searchData.keyword) {
     searchForm.keyword = searchData.keyword
   }
@@ -3175,19 +3180,19 @@ const handleBatchOperation = async () => {
   }
 }
 
-// 监听当前图片变化，自动加载标注数据（优化版本：无需API调用）
+// current , Load annotationdata ( : API )
 watch(currentImage, async (newImage, oldImage) => {
   if (newImage && newImage.name && showAnnotationView.value) {
-    // 只有在标注视图中且图片有名称时才更新显示
+    // only in annotation in new
     console.log('currentImage变化，从缓存加载标注数据:', newImage.name)
 
-    // 检查是否是同一张图片，避免重复处理
+    // whether is , Process
     if (oldImage && newImage.name === oldImage.name) {
       console.log('同一张图片，跳过处理')
       return
     }
 
-    // 优化：直接从已加载的数据中获取标注信息
+    // : from already Load data in Get annotationinfo
     const annotations = newImage.annotations || []
     imageAnnotations.value = [...annotations]
 
@@ -3195,9 +3200,9 @@ watch(currentImage, async (newImage, oldImage) => {
   }
 })
 
-// 键盘事件处理
+// eventProcess
 const handleKeyDown = (event) => {
-  // 全屏预览中的键盘事件
+  // full in event
   if (showFullScreenPreview.value) {
     switch (event.key) {
       case 'Escape':
@@ -3216,7 +3221,7 @@ const handleKeyDown = (event) => {
     return
   }
 
-  // 只在标注视图中响应键盘事件
+  // only in annotation in event
   if (!showAnnotationView.value) return
 
   switch (event.key) {
@@ -3242,28 +3247,28 @@ const handleKeyDown = (event) => {
   }
 }
 
-// 组件挂载时加载数据
+// component Load data
 onMounted(() => {
   loadData()
-  // 添加全局点击监听器
+  // full listener
   document.addEventListener('click', handleGlobalClick)
-  // 添加键盘事件监听器
+  // eventlistener
   document.addEventListener('keydown', handleKeyDown)
 })
 
-// 组件卸载时清理事件监听器
+// component eventlistener
 onUnmounted(() => {
   document.removeEventListener('click', handleGlobalClick)
   document.removeEventListener('keydown', handleKeyDown)
 })
 
-// 组件卸载时清理事件监听器
+// component eventlistener
 onUnmounted(() => {
   document.removeEventListener('click', handleGlobalClick)
 })
 
 const handleCopyLabel = (label) => {
-  // 复制标签功能
+  // can
   const newLabel = {
     id: Date.now(),
     name: `${label.name}_副本`,
@@ -3276,7 +3281,7 @@ const handleCopyLabel = (label) => {
 }
 
 const handleMoreActions = (label) => {
-  // 更多操作功能（可以展开菜单等）
+  // operation can ( menu etc.)
   ElMessageBox.confirm(
     `确定要删除标签 "${label.name}" 吗？此操作不可恢复。`,
     '删除标签',
@@ -3287,16 +3292,16 @@ const handleMoreActions = (label) => {
     }
   ).then(async () => {
     try {
-      // 调用API删除标签
+      // APIDelete
       await deleteLabelAPI(label.id)
 
-      // 删除成功后，从本地数组中移除
+      // Delete successfully after, from array in
       const index = annotationLabels.value.findIndex(l => l.id === label.id)
       if (index > -1) {
         annotationLabels.value.splice(index, 1)
       }
 
-      // 重新加载标签列表以确保数据同步
+      // new Load data
       await loadAnnotationLabels()
 
       ElMessage.success('标签已删除')
@@ -3309,7 +3314,7 @@ const handleMoreActions = (label) => {
   })
 }
 
-// 测试删除标注实例的方法
+// Delete annotationinstance method
 const testDeleteAnnotationInstance = async (instanceId) => {
   try {
     console.log('开始删除标注实例:', instanceId)
@@ -3324,7 +3329,7 @@ const testDeleteAnnotationInstance = async (instanceId) => {
   }
 }
 
-// 测试删除图片及相关数据的方法
+// Delete relateddata method
 const testDeleteImageAndRelatedData = async (annotationId, imageName) => {
   try {
     console.log('开始删除图片及相关数据:', annotationId, imageName)
@@ -3339,7 +3344,7 @@ const testDeleteImageAndRelatedData = async (annotationId, imageName) => {
   }
 }
 
-// 暴露测试方法到全局
+// method full
 window.testDeleteAnnotation = testDeleteAnnotationInstance
 window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 </script>
@@ -3408,7 +3413,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   gap: 0;
 }
 
-/* 主内容区域 */
+/* main */
 .main-content {
   background: white;
   border-radius: 0 0 8px 8px;
@@ -3420,7 +3425,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   overflow: hidden;
 }
 
-/* 工具栏 */
+/*  */
 .toolbar {
   display: flex;
   justify-content: space-between;
@@ -3437,7 +3442,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   align-items: center;
 }
 
-/* 表格内容 */
+/* table */
 .table-content {
   flex: 1;
   display: flex;
@@ -3470,7 +3475,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   border-bottom: 1px solid #ebeef5;
 }
 
-/* 操作按钮强制一行展示 */
+/* operationbutton */
 .action-buttons {
   display: flex;
   justify-content: center;
@@ -3480,7 +3485,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   flex-wrap: nowrap;
 }
 
-/* 分页 */
+/*  */
 .table-pagination {
   display: flex;
   justify-content: flex-end;
@@ -3503,7 +3508,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   gap: 12px;
 }
 
-/* 导入弹窗样式 */
+/* Import dialog */
 .import-dialog-content {
   display: flex;
   gap: 24px;
@@ -3675,7 +3680,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   margin-bottom: 0;
 }
 
-/* 导航栏样式（对齐事件详情） */
+/* ( event ) */
 .content-header {
   padding: 16px 20px;
   background: #fff;
@@ -3725,7 +3730,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   }
 }
 
-/* 标注视图样式 */
+/* annotation */
 .annotation-view-grid {
   flex: 1;
   min-height: 0;
@@ -3745,7 +3750,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   overflow: hidden;
 }
 
-/* 左侧标签面板 */
+/*  */
 .left-sidebar {
   width: 280px;
   background: white;
@@ -3772,7 +3777,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   font-size: 12px;
 }
 
-/* 保存按钮区域 */
+/* button */
 .save-annotation-section {
   padding: 16px 20px;
   background: white;
@@ -3801,7 +3806,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   font-weight: 500;
 }
 
-/* 主要编辑区域 */
+/* main need to */
 .image-edit-main {
   height: 920px;
   display: flex;
@@ -3809,7 +3814,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   overflow: hidden;
 }
 
-/* 左侧工具栏样式 */
+/*  */
 .annotation-toolbar-left {
   width: 70px;
   background: white;
@@ -3857,7 +3862,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   font-size: 18px;
 }
 
-/* 图片内容区域 */
+/*  */
 .image-content-area {
   height: 800px;
   display: flex;
@@ -3867,7 +3872,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   flex-shrink: 0;
 }
 
-/* 图片画布包装器 */
+/*  */
 .image-canvas-wrapper {
   position: relative;
   flex: 1;
@@ -3875,7 +3880,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   flex-direction: column;
 }
 
-/* 图片切换按钮 */
+/* button */
 .image-nav-button {
   position: absolute;
   top: 50%;
@@ -3911,17 +3916,17 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   transform: translateY(-50%);
 }
 
-/* 左侧切换按钮 */
+/* button */
 .image-nav-left {
   left: 20px;
 }
 
-/* 右侧切换按钮 */
+/* button */
 .image-nav-right {
   right: 20px;
 }
 
-/* 图片画布 */
+/*  */
 .image-canvas {
   width: 1040px;
   height: 590px;
@@ -3953,7 +3958,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   display: block;
 }
 
-/* SVG标注层 */
+/* SVGannotation layer */
 .annotation-overlay {
   position: absolute;
   top: 0;
@@ -3978,7 +3983,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   pointer-events: none;
 }
 
-/* 无图片占位符 */
+/*  */
 .no-image-placeholder {
   display: flex;
   flex-direction: column;
@@ -4018,7 +4023,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   font-size: 24px;
 }
 
-/* 缩略图导航 - 位于图片区域下方 */
+/* - */
 .thumbnail-navigation {
   height: 120px;
   background: white;
@@ -4100,7 +4105,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   text-align: center;
 }
 
-/* 右键菜单样式 */
+/* menu */
 .context-menu {
   position: fixed;
   background: white;
@@ -4168,7 +4173,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   font-size: 13px;
 }
 
-/* 画布交互样式 */
+/*  */
 .image-canvas {
   cursor: crosshair;
 }
@@ -4257,7 +4262,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   opacity: 1;
 }
 
-/* 右侧图像标注区域 */
+/* annotation */
 .image-annotation-area {
   width: calc(100% - 350px);
   display: flex;
@@ -4266,7 +4271,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   position: relative;
 }
 
-/* 保存按钮区域 - 单独一行 */
+/* button - */
 .save-annotation-section {
   padding: 12px 20px;
   background: #f8f9fa;
@@ -4301,7 +4306,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   font-weight: 500;
 }
 
-/* 主要编辑区域 */
+/* main need to */
 .image-edit-main {
   flex: 1;
   display: flex;
@@ -4309,7 +4314,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   overflow: hidden;
 }
 
-/* 图片内容区域 */
+/*  */
 .image-content-area {
   flex: 1;
   display: flex;
@@ -4317,7 +4322,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   position: relative;
 }
 
-/* 图片左上角保存按钮 */
+/* button */
 .image-annotation-area .save-annotation-overlay {
   position: absolute;
   top: 20px;
@@ -4348,7 +4353,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   transform: translateY(-1px);
 }
 
-/* 图像标注区域的文件名显示 */
+/* annotation */
 .image-annotation-area .image-filename {
   padding: 16px 20px;
   background: white;
@@ -4358,7 +4363,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   text-align: right;
 }
 
-/* 图像标注区域的主图像容器 */
+/* annotation main */
 .image-annotation-area .main-image-container {
   flex: 1;
   display: flex;
@@ -4376,7 +4381,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   position: relative;
 }
 
-/* 图片容器 */
+/*  */
 .image-annotation-area .image-container {
   position: relative;
   display: inline-block;
@@ -4393,7 +4398,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   display: block;
 }
 
-/* SVG标注层 */
+/* SVGannotation layer */
 .image-annotation-area .annotation-overlay {
   position: absolute;
   top: 0;
@@ -4408,7 +4413,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   cursor: pointer;
 }
 
-/* 无图片占位符 */
+/*  */
 .image-annotation-area .no-image-placeholder {
   display: flex;
   flex-direction: column;
@@ -4437,7 +4442,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   background: white;
 }
 
-/* SVG交互样式 */
+/* SVG */
 .image-annotation-area .main-image-svg .screw-item:hover,
 .image-annotation-area .main-image-svg .nut-item:hover {
   cursor: pointer;
@@ -4472,7 +4477,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   }
 }
 
-/* 工具栏按钮活跃状态优化 */
+/* button */
 .image-annotation-area .tool-btn-right.active {
   border-color: #409eff;
   color: white;
@@ -4480,7 +4485,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
 }
 
-/* 图像标注的右侧工具栏 */
+/* annotation */
 .image-annotation-area .annotation-toolbar-right {
   width: 70px;
   background: white;
@@ -4527,7 +4532,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   font-size: 18px;
 }
 
-/* 左侧工具栏样式 */
+/*  */
 .annotation-toolbar-left {
   width: 70px;
   background: white;
@@ -4598,7 +4603,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   background: #f0f9ff;
 }
 
-/* 底部图片缩略图 */
+/*  */
 .image-thumbnails {
   display: flex;
   gap: 12px;
@@ -4635,7 +4640,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   object-fit: cover;
 }
 
-/* 右键菜单样式 */
+/* menu */
 .context-menu {
   position: fixed;
   background: white;
@@ -4680,7 +4685,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   color: #262626;
 }
 
-/* 标签管理弹窗样式 */
+/* dialog */
 .color-picker-section {
   display: flex;
   align-items: center;
@@ -4703,7 +4708,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* SVG 标注相关样式 */
+/* SVG annotationrelated */
 .annotation-group {
   cursor: pointer;
 }
@@ -4723,7 +4728,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   pointer-events: none;
 }
 
-/* 画布交互样式 */
+/*  */
 .image-canvas {
   cursor: crosshair;
 }
@@ -4749,7 +4754,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   font-size: 12px;
 }
 
-/* 图片容器样式 */
+/*  */
 .image-container {
   position: relative;
   display: flex;
@@ -4759,7 +4764,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   transform-origin: center center; /* 设置旋转中心点 */
 }
 
-/* 数据集文件校验弹窗样式 */
+/* dataset Validate dialog */
 .dataset-validation-content {
   .annotation-info {
     margin-bottom: 24px;
@@ -4927,7 +4932,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   gap: 12px;
 }
 
-/* 数据集路径样式 */
+/* dataset */
 .dataset-path {
   color: #409eff;
   font-size: 12px;

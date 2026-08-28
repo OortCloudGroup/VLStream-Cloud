@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -8,24 +9,24 @@ package com.ruoyi.common.excel;
 import java.util.List;
 
 /**
- * excel返回对象
+ * excel object
  *
  * @author Lion Li
  */
 public interface ExcelResult<T> {
 
     /**
-     * 对象列表
+     * object
      */
     List<T> getList();
 
     /**
-     * 错误列表
+     *
      */
     List<String> getErrorList();
 
     /**
-     * 导入回执
+     * Import
      */
     String getAnalysis();
 }

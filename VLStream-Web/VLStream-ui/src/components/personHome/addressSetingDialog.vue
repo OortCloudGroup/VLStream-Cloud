@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="asdPage flexRowAC">
     <div class="asd_hea_sel flexRowAC">
@@ -104,7 +109,7 @@
         </div>
       </template>
     </div>
-    <!--选择 -->
+    <!--  -->
     <div v-if="selectScope ===1" class="asd_data_sel">
       <recently-use-person
         v-if="active === 1 && props.mode !==2"
@@ -169,7 +174,7 @@
         @addPerson="addDeptPerson"
       />
     </div>
-    <!--选择的人员 -->
+    <!--  -->
     <div
       class="asd_content_sel flexRowAC"
       :class="{'open_select': openSelect , 'close_select': !openSelect && startSelect }"
@@ -233,7 +238,7 @@
         </div>
       </div>
     </div>
-    <!--设置我的地址本-->
+    <!-- Set -->
     <div class="saveBox flexRowAC">
       <div v-if="showAddressBookSettings" class="saveTi flexRowAC" @click="goToMyAddress">
         <oort-svg-icon
@@ -271,64 +276,64 @@ import Config from '@/config'
 import { verifyToken } from '@/api/system/localAuth'
 
 const props = defineProps({
-  // 激活的tab栏目
+  // tab
   activeTab: {
     type: Number,
     default: 1
   },
-  // 已选的人员list
+  // already list
   userList: {
     type: Array,
     default: null
   },
-  // 已选的部门
+  // already department
   deptList: {
     type: Array,
     default: null
   },
-  // 选择模式 1, 部门和人都可以选， 2 只选部门  3 只选人
+  // 1, department and , 2 only department 3 only
   mode: {
     type: Number,
     default: 2
   },
-  // 是否单选
+  // whether
   isSingle: {
     type: Boolean,
     default: null
   },
-  // 禁止选择的的部门
+  // department
   disalbedDeptList: {
     type: Array,
     default: null
   },
-  // 禁止选择的的用户
+  // user
   disalbedUserList: {
     type: Array,
     default: null
   },
-  // 选择范围 1 全部 2 本部门 3 自定义（scopeUserList, scopeDeptList）
+  // 1 full 2 department 3 Custom (scopeUserList, scopeDeptList)
   selectScope: {
     type: Number,
     default: 1
   },
-  // 自定义选择范围的人员
+  // Custom
   scopeUserList: {
     type: Array,
     default: null
   },
-  // 自定义选择范围的部门
+  // Custom department
   scopeDeptList: {
     type: Array,
     default: null
   }
 })
 const emits = defineEmits(['close', 'cancelChoose', 'saveChoose'])
-let chooseDeptList = ref<any>([]) // 选择的部门的合集
-let choosePersonList = ref<any>([]) // 选择人员的合集
-let chooseScopeUserList = ref<any>([]) // 选择的部门的合集
-let chooseScopeDeptList = ref<any>([]) // 选择人员的合集
+let chooseDeptList = ref<any>([]) // department
+let choosePersonList = ref<any>([]) //
+let chooseScopeUserList = ref<any>([]) // department
+let chooseScopeDeptList = ref<any>([]) //
 const showAddressBookSettings = false
-let active = ref<any>(1) // 激活的tab栏目
+let active = ref<any>(1) // tab
 if (props.mode === 2) {
   active.value = 2
 }
@@ -346,7 +351,7 @@ const refreshRefDom = () => {
     tabBody5.value.initData()
   }
 }
-// 处理userList
+// Process userList
 if (props.userList && props.userList.length > 0) {
   const params = {
     user_id: props.userList,
@@ -365,7 +370,7 @@ if (props.userList && props.userList.length > 0) {
     }
   })
 }
-// 处理deptList
+// Process deptList
 if (props.deptList && props.deptList.length > 0) {
   const params = {
     dept_id: props.deptList,
@@ -381,7 +386,7 @@ if (props.deptList && props.deptList.length > 0) {
     }
   })
 }
-// 处理scopeUserList
+// Process scopeUserList
 if (props.scopeUserList && props.scopeUserList.length > 0) {
   const params = {
     user_id: props.scopeUserList,
@@ -397,7 +402,7 @@ if (props.scopeUserList && props.scopeUserList.length > 0) {
     }
   })
 }
-// 处理scopeDeptList
+// Process scopeDeptList
 if (props.scopeDeptList && props.scopeDeptList.length > 0) {
   const params = {
     dept_id: props.scopeDeptList,
@@ -413,7 +418,7 @@ if (props.scopeDeptList && props.scopeDeptList.length > 0) {
     }
   })
 }
-// 使用reduce去重
+// reduce
 const deleteRepeat = (arr, repeatKey) => {
   let tObj = {}
   return arr.reduce((pre, cur) => {
@@ -430,44 +435,44 @@ const closeChoose = () => {
   emits('close')
 }
 
-// 选择最近联系人
+//
 const addRecentPerson = (data: any) => {
-  // 去重
+  //
   choosePersonList.value = deleteRepeat(data, 'user_id')
 }
 
-// 组织
+//
 const addDeptPerson = (data: any) => {
   choosePersonList.value = deleteRepeat(data.user, 'user_id')
   chooseDeptList.value = deleteRepeat(data.dept, 'dept_id')
 }
 
-// 我的常用
+//
 const addAlwaysPerson = (data: any) => {
   choosePersonList.value = deleteRepeat(data, 'user_id')
 }
 
-// 标签
+//
 const addTagPerson = (data: any) => {
   choosePersonList.value = deleteRepeat(data, 'user_id')
 }
 
-// 搜索
+//
 const addSearchPerson = (data: any) => {
   choosePersonList.value = deleteRepeat(data, 'user_id')
 }
 
-// 移除人员
+//
 const removeUser = (index: number) => {
   choosePersonList.value.splice(index, 1)
 }
 
-// 移除部门
+// department
 const removeDept = (index: number) => {
   chooseDeptList.value.splice(index, 1)
 }
 
-// 确定
+//
 const confirmChoose = (flag: any) => {
   if (flag) {
     emits('saveChoose', { user: choosePersonList.value, dept: chooseDeptList.value })
@@ -476,9 +481,9 @@ const confirmChoose = (flag: any) => {
   }
 }
 
-// 跳转到个人地址本
+//
 const goToMyAddress = async() => {
-  // 校验token
+  // Validate token
   const params = {
     accessToken: store.token
   }
@@ -537,7 +542,7 @@ const goToMyAddress = async() => {
   }
 }
 
-// 图标
+//
 .wh5Img {
   width: 20px;
   height: 20px;
@@ -545,14 +550,14 @@ const goToMyAddress = async() => {
   margin-right: 4px;
 }
 
-// 数据选择
+// data
 .asd_data_sel {
   width: 100%;
   height: 320px;
   margin-bottom: 116px;
 }
 
-// 已选择
+// already
 .asd_content_sel {
   width: 100%;
   height: 102px;
@@ -572,7 +577,7 @@ const goToMyAddress = async() => {
     }
   }
 
-  // 暂未选择
+  // not
   .selPerChLeBox {
     z-index: 10;
     width: 100%;
@@ -625,7 +630,7 @@ const goToMyAddress = async() => {
   }
 }
 
-// 确定
+//
 .saveBox {
   padding-left: 20px;
   padding-right: 20px;
@@ -701,13 +706,13 @@ const goToMyAddress = async() => {
 }
 
 .items_container {
-  align-content: flex-start; // 解决换行的中间空隙
+  align-content: flex-start; // in null / empty
   height: calc(100% - 16px);
   border-top: 0.5px solid #00000020;
   border-bottom: 0.5px solid #00000020;
 }
 
-// 颜色
+//
 .svgColor {
   color: var(--el-color-primary);
 }

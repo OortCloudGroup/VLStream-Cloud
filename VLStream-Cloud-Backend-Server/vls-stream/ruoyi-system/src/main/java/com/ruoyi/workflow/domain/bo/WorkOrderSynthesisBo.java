@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,7 +15,7 @@ import lombok.EqualsAndHashCode;
 import javax.validation.constraints.NotBlank;
 
 /**
- * 综合工单流程业务对象 workorder_synthesis
+ * work orderworkflow object workorder_synthesis
  *
  * @author Lei Chao Qun
  * @date 2025-01-04
@@ -25,23 +26,23 @@ import javax.validation.constraints.NotBlank;
 public class WorkOrderSynthesisBo extends TreeEntity<WorkOrderSynthesisBo> {
 
     /**
-     * 主键ID
+     * primary key ID
      */
     private String synthesisId;
 
     /**
-     * 分类名称
+     *
      */
     @NotBlank(message = "分类名称不能为空", groups = { AddGroup.class, EditGroup.class })
     private String categoryName;
 
     /**
-     * 流程描述
+     * workflow
      */
     private String description;
 
     /**
-     * 用户id
+     * user ID
      */
     private String userId;
 

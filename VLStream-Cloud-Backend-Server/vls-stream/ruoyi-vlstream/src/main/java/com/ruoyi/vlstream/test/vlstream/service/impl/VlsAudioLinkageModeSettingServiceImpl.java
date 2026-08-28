@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -12,7 +13,7 @@ import com.ruoyi.vlstream.test.vlstream.service.IVlsAudioLinkageModeSettingServi
 import org.springframework.stereotype.Service;
 
 /**
- * 音频联动方式设置表 服务实现类
+ * Set service
  */
 @Service
 public class VlsAudioLinkageModeSettingServiceImpl extends BaseServiceImpl<VlsAudioLinkageModeSettingMapper, AudioLinkageModeSetting> implements IVlsAudioLinkageModeSettingService {

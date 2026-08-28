@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -11,27 +12,27 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.MobileSceneGovernance;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.MobileSceneGovernanceLoopVO;
 
 /**
- * 移动端场景治理主任务表 服务类
+ * main task service
  */
 public interface IVlsMobileSceneGovernanceService extends BaseService<MobileSceneGovernance> {
 
 	/**
-	 * 新增即时治理
+	 * Add
 	 */
 	boolean saveImmediate(MobileSceneGovernance mobileSceneGovernance);
 
 	/**
-	 * 新增循环治理，并生成子循环任务
+	 * Add loop , Generate sub looptask
 	 */
 	boolean saveLoop(MobileSceneGovernance mobileSceneGovernance);
 
 	/**
-	 * 查询即时治理列表
+	 * Query list
 	 */
 	IPage<MobileSceneGovernance> listImmediate(IPage<MobileSceneGovernance> page);
 
 	/**
-	 * 查询循环治理列表（包含子循环任务）
+	 * Query loop list ( sub looptask)
 	 */
 	IPage<MobileSceneGovernanceLoopVO> listLoop(IPage<MobileSceneGovernance> page);
 }

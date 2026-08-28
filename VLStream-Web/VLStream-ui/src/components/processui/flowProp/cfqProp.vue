@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="prop_body">
     <div class="prop_body_tab">
@@ -152,7 +157,7 @@
       </template>
     </div>
     <div class="prop_body_bottom button_group">
-      <!-- 两个按钮 一个取消 ，一个确定 -->
+      <!-- button , -->
       <el-button @click="cancel" class="common_btn">
         取消
       </el-button>
@@ -181,11 +186,11 @@ const props = defineProps({
 
 const activeChooseData = ref({
   triggerType: 1, // 1:网络请求，2:消息
-  url: '', // 请求地址
-  method: 'GET', // 请求方式
-  headers: [], // 请求头
-  params: [], // 请求参数
-  paramsType: 1 // 请求参数类型，1:json，2:form
+  url: '', //
+  method: 'GET', //
+  headers: [], //
+  params: [], // parameter
+  paramsType: 1 // parameter , 1:json, 2:form
 })
 
 import { setCfqErrorMsg } from '@/utils/setNodeErrorMsg'
@@ -200,7 +205,7 @@ function cancel() {
 
 const nodeName = ref(props.nodeConfig.nodeName)
 function confirm() {
-  // 属性单词
+  // property
   // props.nodeConfig.property = activeChooseData.value
   const nodeConfig = { ...props.nodeConfig, ...activeChooseData.value }
   nodeConfig.nodeName = nodeName.value
@@ -209,7 +214,7 @@ function confirm() {
   emits('close')
 }
 
-// 获取发起人的表单  即主表表单
+// Get form main form
 const flowStore = useFlowStore()
 const options = ref(flowStore.formFiledList || [])
 

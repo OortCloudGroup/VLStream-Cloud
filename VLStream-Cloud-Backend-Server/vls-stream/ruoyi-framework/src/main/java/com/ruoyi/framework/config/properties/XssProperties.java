@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * xss过滤 配置属性
+ * xss configurationproperty
  *
  * @author Lion Li
  */
@@ -20,17 +21,17 @@ import org.springframework.stereotype.Component;
 public class XssProperties {
 
     /**
-     * 过滤开关
+     *
      */
     private String enabled;
 
     /**
-     * 排除链接（多个用逗号分隔）
+     * ( )
      */
     private String excludes;
 
     /**
-     * 匹配链接
+     *
      */
     private String urlPatterns;
 

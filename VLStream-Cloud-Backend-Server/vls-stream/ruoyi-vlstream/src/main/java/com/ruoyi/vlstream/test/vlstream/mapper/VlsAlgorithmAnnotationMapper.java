@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -19,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 算法标注数据表 Mapper 接口
+ * algorithmannotationdata Mapper interface
  *
  * @author Oort
  * @since 2025-12-23
@@ -27,24 +28,24 @@ import java.util.Map;
 public interface VlsAlgorithmAnnotationMapper extends BaseMapper<AlgorithmAnnotation> {
 
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsAlgorithmAnnotation 查询参数
+	 * @param page parameter
+	 * @param vlsAlgorithmAnnotation Query parameter
 	 * @return List<VlsAlgorithmAnnotationVO>
 	 */
 	List<AlgorithmAnnotationVO> selectVlsAlgorithmAnnotationPage(IPage page, AlgorithmAnnotationVO vlsAlgorithmAnnotation);
 
 	/**
-	 * 获取导出数据
+	 * Get Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsAlgorithmAnnotationExcel>
 	 */
 	List<VlsAlgorithmAnnotationExcel> exportVlsAlgorithmAnnotation(@Param("ew") Wrapper<AlgorithmAnnotation> queryWrapper);
 
 	/**
-	 * 分页查询算法标注列表
+	 * Query algorithmannotation list
 	 */
 	@Select("SELECT * FROM algorithm_annotation " +
 		"WHERE is_deleted = 0 " +
@@ -58,31 +59,31 @@ public interface VlsAlgorithmAnnotationMapper extends BaseMapper<AlgorithmAnnota
 													@Param("annotationStatus") String annotationStatus);
 
 	/**
-	 * 根据标注类型查询算法标注列表
+	 * annotation Query algorithmannotation list
 	 */
 	@Select("SELECT * FROM algorithm_annotation WHERE is_deleted = 0 AND annotation_type = #{annotationType} ORDER BY create_time DESC")
 	List<AlgorithmAnnotation> selectByAnnotationType(@Param("annotationType") String annotationType);
 
 	/**
-	 * 根据标注状态查询算法标注列表
+	 * annotation Query algorithmannotation list
 	 */
 	@Select("SELECT * FROM algorithm_annotation WHERE is_deleted = 0 AND annotation_status = #{annotationStatus} ORDER BY create_time DESC")
 	List<AlgorithmAnnotation> selectByAnnotationStatus(@Param("annotationStatus") String annotationStatus);
 
 	/**
-	 * 查询标注类型统计
+	 * Query annotation
 	 */
 	@Select("SELECT annotation_type, COUNT(*) as count FROM algorithm_annotation WHERE is_deleted = 0 GROUP BY annotation_type")
 	List<Map<String, Object>> selectAnnotationTypeStatistics();
 
 	/**
-	 * 查询标注状态统计
+	 * Query annotation
 	 */
 	@Select("SELECT annotation_status, COUNT(*) as count FROM algorithm_annotation WHERE is_deleted = 0 GROUP BY annotation_status")
 	List<Map<String, Object>> selectAnnotationStatusStatistics();
 
 	/**
-	 * 查询标注进度统计
+	 * Query annotation
 	 */
 	@Select("SELECT " +
 		"CASE " +
@@ -99,7 +100,7 @@ public interface VlsAlgorithmAnnotationMapper extends BaseMapper<AlgorithmAnnota
 	List<Map<String, Object>> selectProgressStatistics();
 
 	/**
-	 * 获取标注工作量统计
+	 * Get annotation
 	 */
 	@Select("SELECT " +
 		"SUM(total_count) as total_count, " +

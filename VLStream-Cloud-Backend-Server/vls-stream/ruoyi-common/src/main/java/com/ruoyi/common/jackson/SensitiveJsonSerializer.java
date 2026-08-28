@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -23,7 +24,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 /**
- * 数据脱敏json序列化工具
+ * data json
  *
  * @author Yjoioooo
  */

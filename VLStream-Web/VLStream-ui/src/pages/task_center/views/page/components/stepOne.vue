@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2025-5-15 11:45:51
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -18,7 +23,7 @@
       <span class="flexRowAC basic"><span>描述</span>{{ infoTemp?.createTime || '--' }}</span>
       <span class="flexRowAC basic"><span>创建时间</span>{{ infoTemp?.createTime || '--' }}</span> -->
 
-      <!--模型 0 新增 、1，copy ， 2 编辑   工单1 流程0-->
+      <!-- model 0 Add 、1, copy , 2 work order1 workflow0 -->
       <work-order-built :is-type="1" :type="infoTemp?.modelId?2:0" :app="infoTemp.appObj" :item="infoTemp" @close="router.back()" @handle="getListFn" />
     </div>
   </div>
@@ -54,7 +59,7 @@ watch(() => props.item, (val) => {
 }, { immediate: true })
 
 const tableData = ref<any>([])
-// 模型列表
+// model
 function getListFn() {
   let data = {
     accessToken: store.userInfo.accessToken,

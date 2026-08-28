@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -9,7 +10,7 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.Getter;
 
 /**
- * 仓库类型枚举
+ *
  *
  * @author Administrator
  */
@@ -29,10 +30,10 @@ public enum AlgorithmRepositoryTypeEnum {
 	}
 
 	/**
-	 * 根据code获取枚举
+	 * codeGet
 	 *
-	 * @param code 状态码
-	 * @return 枚举对象
+	 * @param code
+	 * @return object
 	 */
 	public static AlgorithmRepositoryTypeEnum of(String code) {
 		if (code == null) {

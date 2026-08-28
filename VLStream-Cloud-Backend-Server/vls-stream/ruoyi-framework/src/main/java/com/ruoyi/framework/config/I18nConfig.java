@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -15,7 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Locale;
 
 /**
- * 国际化配置
+ * configuration
  *
  * @author Lion Li
  */
@@ -28,7 +29,7 @@ public class I18nConfig {
     }
 
     /**
-     * 获取请求头国际化信息
+     * Get info
      */
     static class I18nLocaleResolver implements LocaleResolver {
 

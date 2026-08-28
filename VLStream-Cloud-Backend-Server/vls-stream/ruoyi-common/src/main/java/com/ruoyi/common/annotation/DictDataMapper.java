@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -15,10 +16,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 字典数据映射注解
+ * dictdata
  *
  * @author itino
- * @deprecated 建议使用通用翻译注解
+ * @deprecated
  */
 @Deprecated
 @Retention(RetentionPolicy.RUNTIME)
@@ -28,7 +29,7 @@ import java.lang.annotation.Target;
 public @interface DictDataMapper {
 
     /**
-     * 设置字典的type值 (如: sys_user_sex)
+     * Set dict type value ( : sys_user_sex)
      */
     String dictType() default "";
 }

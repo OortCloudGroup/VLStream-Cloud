@@ -1,12 +1,13 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
 package com.ruoyi.common.exception;
 
 /**
- * 业务异常
+ *
  *
  * @author ruoyi
  */
@@ -14,24 +15,24 @@ public final class ServiceException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 错误码
+     *
      */
     private Integer code;
 
     /**
-     * 错误提示
+     * prompt / tip
      */
     private String message;
 
     /**
-     * 错误明细，内部调试错误
+     * ,
      * <p>
-     * 和 {@link CommonResult#getDetailMessage()} 一致的设计
+     * and {@link CommonResult#getDetailMessage()}
      */
     private String detailMessage;
 
     /**
-     * 空构造方法，避免反序列化问题
+     * null / empty method ,
      */
     public ServiceException() {
     }

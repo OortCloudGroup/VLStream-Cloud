@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -12,7 +13,7 @@ import lombok.EqualsAndHashCode;
 import java.util.Date;
 
 /**
- * 流程访问日志业务对象 process_view_log
+ * workflow log object process_view_log
  *
  * @author lcq
  * @date 2025-08-15
@@ -23,67 +24,67 @@ import java.util.Date;
 public class ProcessViewLogBo extends BaseEntity {
 
     /**
-     * 主键
+     * primary key
      */
     private String id;
 
     /**
-     * 流程实例id（processInstanceId）
+     * workflow instanceid (processInstanceId)
      */
     private String processInstanceId;
 
     /**
-     * 流程定义 key（processKey）
+     * workflow definition key (processKey)
      */
     private String processKey;
 
     /**
-     * 访问者用户id
+     * user ID
      */
     private String viewerUserId;
 
     /**
-     * 访问者用户名/显示名
+     * user /
      */
     private String viewerUsername;
 
     /**
-     * 访问者部门id
+     * department ID
      */
     private String viewerDeptId;
 
     /**
-     * 访问者部门名称
+     * department name
      */
     private String viewerDeptName;
 
     /**
-     * 操作类型
+     * operation
      */
     private String operationType;
 
     /**
-     * 流程状态
+     * workflow
      */
     private String processStatus;
 
     /**
-     * 访问时间
+     *
      */
     private Date viewTime;
 
     /**
-     * 附件名称
+     *
      */
     private String attachmentName;
 
     /**
-     * 租户id
+     * id
      */
     private String tenantId;
 
     /**
-     * 删除标记，0表示未删除，1表示删除
+     * Delete , 0 not Delete , 1 Delete
      */
     private String delFlag;
 

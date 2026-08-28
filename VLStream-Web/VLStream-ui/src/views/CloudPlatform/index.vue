@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="cloud-platform">
     <div class="page-header">
@@ -8,7 +13,7 @@
     <div class="content-card">
       <el-tabs v-model="activeTab" class="cloud-tabs" lazy>
         <el-tab-pane label="用户信息" name="user">
-          <!-- 仅当前 tab 挂载，避免切到模型页仍走用户信息逻辑 -->
+          <!-- current tab , model userinfo -->
           <CloudUserInfo v-if="hasToken && activeTab === 'user'" />
           <div v-else-if="activeTab === 'user'" class="placeholder-panel">正在准备登录...</div>
         </el-tab-pane>
@@ -36,7 +41,7 @@ import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 
-// setup 阶段同步解析回调 token（早于子组件 onMounted）
+// setup Parse token ( sub component onMounted)
 const tokenFromUrl = captureModelHubTokenFromUrl()
 if (tokenFromUrl) {
   clearPendingModelHubPublish()
@@ -54,7 +59,7 @@ function resolveActiveTab(rawTab) {
 
 const activeTab = ref(resolveActiveTab(route.query.tab))
 
-/** 只改 URL query，不走 vue-router 守卫（避免误调 /blade-system/user/info） */
+/* * only URL query, vue-router ( /blade-system/user/info) */
 function syncTabToUrl(tab) {
   const url = new URL(window.location.href)
   url.searchParams.set('tab', tab)

@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 import {
   mapBladeDeptToRuoyi,
@@ -7,9 +13,9 @@ import {
 } from './ruoyiCompat'
 
 /**
- * 获取部门列表
- * @param {Object} params 过滤参数，如 deptName, fullName, tenantId 等
- * @returns {Promise} 返回部门扁平列表数据
+ * Get department
+ * @param {Object} params parameter, deptName, fullName, tenantId etc.
+ * @return s {Promise} department data
  */
 export function getDeptList(params) {
   const ruoyiParams = {
@@ -21,9 +27,9 @@ export function getDeptList(params) {
 }
 
 /**
- * 获取部门树形结构数据
- * @param {Object} params 可包含 tenantId 等过滤参数
- * @returns {Promise} 返回部门树形数据
+ * Get department data
+ * @param {Object} params tenantId etc. parameter
+ * @return s {Promise} department data
  */
 export function getDeptTree(params) {
   return request({ url: '/system/dept/list', method: 'get', params })
@@ -31,9 +37,9 @@ export function getDeptTree(params) {
 }
 
 /**
- * 新增或修改部门数据
- * @param {Object} data 部门实体对象
- * @returns {Promise} 返回请求响应的 Promise 对象
+ * Add Update departmentdata
+ * @param {Object} data department object
+ * @return s {Promise} Promise object
  */
 export function submitDept(data) {
   const payload = mapBladeDeptToRuoyi(data)
@@ -45,9 +51,9 @@ export function submitDept(data) {
 }
 
 /**
- * 批量或单个删除部门
- * @param {String} ids 逗号分隔的部门ID
- * @returns {Promise} 返回请求响应的 Promise 对象
+ * Delete department
+ * @param {String} ids department ID
+ * @return s {Promise} Promise object
  */
 export function removeDepts(ids) {
   const deptIds = toStringIds(ids)

@@ -1,10 +1,15 @@
 <!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
 /**
  * author: vformAdmin
  * email: vdpadmin@163.com
  * website: https://www.vform666.com
  * date: 2021.08.18
- * remark: 如果要分发VForm源码，需在本文件顶部保留此文件头信息！！
+ * remark: if need to VForm , in info! !
  */
 -->
 
@@ -77,13 +82,13 @@ export default {
     }
   },
   props: {
-    /* 后端字段列表API */
+    /* after field API */
     fieldListApi: {
       type: Object,
       default: null
     },
 
-    /* 禁止显示的组件名称数组 */
+    /* component array */
     bannedWidgets: {
       type: Array,
       default: () => []
@@ -93,30 +98,30 @@ export default {
       type: Object,
       default: () => {
         return {
-          languageMenu: true, // 是否显示语言切换菜单
-          externalLink: true, // 是否显示GitHub、文档等外部链接
-          formTemplates: false, // 是否显示表单模板
-          eventCollapse: false, // 是否显示组件事件属性折叠面板
-          widgetNameReadonly: false, // 禁止修改组件名称
+          languageMenu: true, // whether menu
+          externalLink: true, // whether GitHub、 etc.
+          formTemplates: false, // whether form
+          eventCollapse: false, // whether componenteventproperty
+          widgetNameReadonly: false, // Update component
 
-          clearDesignerButton: true, // 是否显示清空设计器按钮
-          previewFormButton: true, // 是否显示预览表单按钮
-          importJsonButton: true, // 是否显示导入JSON按钮
-          exportJsonButton: true, // 是否显示导出JSON器按钮
-          exportCodeButton: true, // 是否显示导出代码按钮
-          generateSFCButton: false, // 是否显示生成SFC按钮
+          clearDesignerButton: true, // whether null / empty button
+          previewFormButton: true, // whether formbutton
+          importJsonButton: true, // whether Import JSONbutton
+          exportJsonButton: true, // whether Export JSON button
+          exportCodeButton: true, // whether Export button
+          generateSFCButton: false, // whether Generate SFCbutton
 
-          toolbarMaxWidth: 450, // 设计器工具按钮栏最大宽度（单位像素）
-          toolbarMinWidth: 300, // 设计器工具按钮栏最小宽度（单位像素）
+          toolbarMaxWidth: 450, // button ( )
+          toolbarMinWidth: 300, // button ( )
 
-          presetCssCode: '', // 设计器预设CSS样式代码
+          presetCssCode: '', // CSS
 
-          resetFormJson: true // 是否在设计器初始化时将表单内容重置为空
+          resetFormJson: true // whether in Initialize form is empty
         }
       }
     },
 
-    /* 全局数据源变量 */
+    /* full data variable */
     globalDsv: {
       type: Object,
       default: () => ({})
@@ -163,7 +168,7 @@ export default {
     closeDesigner() {
       this.$emit('close')
     },
-    // 外部添加组件进来
+    // component
     setCustomFields(data) {
       bus.$emit('setCustomFields', data)
     },
@@ -211,7 +216,7 @@ export default {
         let labelKey = this.fieldListApi.labelKey || 'label'
         let nameKey = this.fieldListApi.nameKey || 'name'
 
-        this.fieldList.splice(0, this.fieldList.length) // 清空已有
+        this.fieldList.splice(0, this.fieldList.length) // null / empty already
         res.data.forEach(fieldItem => {
           this.fieldList.push({
             label: fieldItem[labelKey],
@@ -252,7 +257,7 @@ export default {
         widgetList: deepClone(this.designer.widgetList),
         formConfig: deepClone(this.designer.formConfig)
       }
-      // 配合后台需要将option里面的customName 提取到上一级
+      // after need to option customName
       tempObj.widgetList.forEach(widget => {
         if (!!widget.options.customName) {
           widget.customName = widget.options.customName
@@ -275,53 +280,53 @@ export default {
     },
 
     /**
-       * 刷新表单设计器
+       * new form
        */
     refreshDesigner() {
-      // this.designer.loadFormJson( this.getFormJson() )  //只有第一次调用生效？？
+      // this.designer.loadFormJson( this.getFormJson() ) //only ? ?
 
       let fJson = this.getFormJson()
-      this.designer.clearDesigner(true) // 不触发历史记录变更
+      this.designer.clearDesigner(true) // history record
       this.designer.loadFormJson(fJson)
     },
 
     /**
-       * 预览表单
+       * form
        */
     previewForm() {
       this.$refs.toolbarRef.previewForm()
     },
 
     /**
-       * 导入表单JSON
+       * Import formJSON
        */
     importJson() {
       this.$refs.toolbarRef.importJson()
     },
 
     /**
-       * 导出表单JSON
+       * Export formJSON
        */
     exportJson() {
       this.$refs.toolbarRef.exportJson()
     },
 
     /**
-       * 导出Vue/HTML代码
+       * Export Vue/HTML
        */
     exportCode() {
       this.$refs.toolbarRef.exportCode()
     },
 
     /**
-       * 生成SFC代码
+       * Generate SFC
        */
     generateSFC() {
       this.$refs.toolbarRef.generateSFC()
     },
 
     /**
-       * 获取所有字段组件
+       * Get all fieldcomponent
        * @returns {*[]}
        */
     getFieldWidgets(widgetList = null) {
@@ -329,7 +334,7 @@ export default {
     },
 
     /**
-       * 获取所有容器组件
+       * Get all component
        * @returns {*[]}
        */
     getContainerWidgets(widgetList = null) {
@@ -337,7 +342,7 @@ export default {
     },
 
     /**
-       * 升级表单json，以补充最新的组件属性
+       * formjson, new componentproperty
        * @param formJson
        */
     upgradeFormJson(formJson) {
@@ -362,7 +367,7 @@ export default {
       return this.$refs['formRef'].getSelectedWidgetRef()
     }
 
-    // TODO: 增加更多方法！！
+    // TODO: method ! !
 
   }
 }

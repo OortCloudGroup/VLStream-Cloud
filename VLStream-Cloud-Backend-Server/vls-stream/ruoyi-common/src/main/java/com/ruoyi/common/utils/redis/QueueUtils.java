@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -14,12 +15,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
- * 分布式队列工具
- * 轻量级队列 重量级数据量 请使用 MQ
- * 要求 redis 5.X 以上
+ *
+ * data MQ
+ * need to redis 5.X
  *
  * @author Lion Li
- * @version 3.6.0 新增
+ * @version 3.6.0 Add
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class QueueUtils {
@@ -28,17 +29,17 @@ public class QueueUtils {
 
 
     /**
-     * 获取客户端实例
+     * Get instance
      */
     public static RedissonClient getClient() {
         return CLIENT;
     }
 
     /**
-     * 添加普通队列数据
+     * data
      *
-     * @param queueName 队列名
-     * @param data      数据
+     * @param queueName
+     * @param data data
      */
     public static <T> boolean addQueueObject(String queueName, T data) {
         RBlockingQueue<T> queue = CLIENT.getBlockingQueue(queueName);
@@ -46,9 +47,9 @@ public class QueueUtils {
     }
 
     /**
-     * 通用获取一个队列数据 没有数据返回 null(不支持延迟队列)
+     * Get data data null( )
      *
-     * @param queueName 队列名
+     * @param queueName
      */
     public static <T> T getQueueObject(String queueName) {
         RBlockingQueue<T> queue = CLIENT.getBlockingQueue(queueName);
@@ -56,7 +57,7 @@ public class QueueUtils {
     }
 
     /**
-     * 通用删除队列数据(不支持延迟队列)
+     * Delete data( )
      */
     public static <T> boolean removeQueueObject(String queueName, T data) {
         RBlockingQueue<T> queue = CLIENT.getBlockingQueue(queueName);
@@ -64,7 +65,7 @@ public class QueueUtils {
     }
 
     /**
-     * 通用销毁队列 所有阻塞监听 报错(不支持延迟队列)
+     * all ( )
      */
     public static <T> boolean destroyQueue(String queueName) {
         RBlockingQueue<T> queue = CLIENT.getBlockingQueue(queueName);
@@ -72,23 +73,23 @@ public class QueueUtils {
     }
 
     /**
-     * 添加延迟队列数据 默认毫秒
+     * data
      *
-     * @param queueName 队列名
-     * @param data      数据
-     * @param time      延迟时间
+     * @param queueName
+     * @param data data
+     * @param time
      */
     public static <T> void addDelayedQueueObject(String queueName, T data, long time) {
         addDelayedQueueObject(queueName, data, time, TimeUnit.MILLISECONDS);
     }
 
     /**
-     * 添加延迟队列数据
+     * data
      *
-     * @param queueName 队列名
-     * @param data      数据
-     * @param time      延迟时间
-     * @param timeUnit  单位
+     * @param queueName
+     * @param data data
+     * @param time
+     * @param timeUnit
      */
     public static <T> void addDelayedQueueObject(String queueName, T data, long time, TimeUnit timeUnit) {
         RBlockingQueue<T> queue = CLIENT.getBlockingQueue(queueName);
@@ -97,9 +98,9 @@ public class QueueUtils {
     }
 
     /**
-     * 获取一个延迟队列数据 没有数据返回 null
+     * Get data data null
      *
-     * @param queueName 队列名
+     * @param queueName
      */
     public static <T> T getDelayedQueueObject(String queueName) {
         RBlockingQueue<T> queue = CLIENT.getBlockingQueue(queueName);
@@ -108,7 +109,7 @@ public class QueueUtils {
     }
 
     /**
-     * 删除延迟队列数据
+     * Delete data
      */
     public static <T> boolean removeDelayedQueueObject(String queueName, T data) {
         RBlockingQueue<T> queue = CLIENT.getBlockingQueue(queueName);
@@ -117,7 +118,7 @@ public class QueueUtils {
     }
 
     /**
-     * 销毁延迟队列 所有阻塞监听 报错
+     * all
      */
     public static <T> void destroyDelayedQueue(String queueName) {
         RBlockingQueue<T> queue = CLIENT.getBlockingQueue(queueName);
@@ -126,10 +127,10 @@ public class QueueUtils {
     }
 
     /**
-     * 添加优先队列数据
+     * data
      *
-     * @param queueName 队列名
-     * @param data      数据
+     * @param queueName
+     * @param data data
      */
     public static <T> boolean addPriorityQueueObject(String queueName, T data) {
         RPriorityBlockingQueue<T> priorityBlockingQueue = CLIENT.getPriorityBlockingQueue(queueName);
@@ -137,10 +138,10 @@ public class QueueUtils {
     }
 
     /**
-     * 尝试设置 有界队列 容量 用于限制数量
+     * Set
      *
-     * @param queueName 队列名
-     * @param capacity  容量
+     * @param queueName
+     * @param capacity
      */
     public static <T> boolean trySetBoundedQueueCapacity(String queueName, int capacity) {
         RBoundedBlockingQueue<T> boundedBlockingQueue = CLIENT.getBoundedBlockingQueue(queueName);
@@ -148,11 +149,11 @@ public class QueueUtils {
     }
 
     /**
-     * 尝试设置 有界队列 容量 用于限制数量
+     * Set
      *
-     * @param queueName 队列名
-     * @param capacity  容量
-     * @param destroy   已存在是否销毁
+     * @param queueName
+     * @param capacity
+     * @param destroy already in whether
      */
     public static <T> boolean trySetBoundedQueueCapacity(String queueName, int capacity, boolean destroy) {
         RBoundedBlockingQueue<T> boundedBlockingQueue = CLIENT.getBoundedBlockingQueue(queueName);
@@ -163,11 +164,11 @@ public class QueueUtils {
     }
 
     /**
-     * 添加有界队列数据
+     * data
      *
-     * @param queueName 队列名
-     * @param data      数据
-     * @return 添加成功 true 已达到界限 false
+     * @param queueName
+     * @param data data
+     * @return successfully true already false
      */
     public static <T> boolean addBoundedQueueObject(String queueName, T data) {
         RBoundedBlockingQueue<T> boundedBlockingQueue = CLIENT.getBoundedBlockingQueue(queueName);
@@ -175,7 +176,7 @@ public class QueueUtils {
     }
 
     /**
-     * 订阅阻塞队列(可订阅所有实现类 例如: 延迟 优先 有界 等)
+     * ( all : etc.)
      */
     public static <T> void subscribeBlockingQueue(String queueName, Consumer<T> consumer) {
         RBlockingQueue<T> queue = CLIENT.getBlockingQueue(queueName);

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div>
     <VFormRender
@@ -48,9 +53,9 @@ const optionData = ref(props.optionData)
 const globalDsv = ref(props.globalDsv)
 
 onMounted(() => {
-  // 禁用表单
+  // form
   if (formJson.value) {
-    // TODO 禁用表单
+    // TODO form
     nextTick(() => {
       preForm.value?.disableForm()
       preForm.value?.setFormItemAuth(props.nodeFormProperties)

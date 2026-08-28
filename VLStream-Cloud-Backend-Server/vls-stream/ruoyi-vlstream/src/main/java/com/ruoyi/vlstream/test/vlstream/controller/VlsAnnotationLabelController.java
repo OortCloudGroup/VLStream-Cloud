@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 标注标签实体类 控制器
+ * annotation control
  *
  * @author Oort
  * @since 2025-12-23
@@ -49,7 +50,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	private final IVlsAnnotationLabelService vlsAnnotationLabelService;
 
 	/**
-	 * 标注标签实体类 详情
+	 * annotation
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -60,7 +61,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	}
 
 	/**
-	 * 标注标签实体类 分页
+	 * annotation
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -72,7 +73,7 @@ public class VlsAnnotationLabelController extends BladeController {
 
 
 	/**
-	 * 标注标签实体类 自定义分页
+	 * annotation Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -83,7 +84,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	}
 
 	/**
-	 * 标注标签实体类 新增
+	 * annotation Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -93,7 +94,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	}
 
 	/**
-	 * 标注标签实体类 修改
+	 * annotation Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -103,7 +104,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	}
 
 	/**
-	 * 标注标签实体类 新增或修改
+	 * annotation Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -113,7 +114,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	}
 
 	/**
-	 * 标注标签实体类 删除
+	 * annotation Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -123,7 +124,7 @@ public class VlsAnnotationLabelController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsAnnotationLabel")
 	@ApiOperationSupport(order = 8)
@@ -139,11 +140,11 @@ public class VlsAnnotationLabelController extends BladeController {
 	}
 
 	/**
-	 * 获取标注项目的标签列表
+	 * Get annotation item
 	 *
-	 * @param annotationId 标注项目ID
-	 * @param keyword      搜索关键词（可选）
-	 * @return 标签列表
+	 * @param annotationId annotation item ID
+	 * @param keyword ( )
+	 * @return
 	 */
 	@GetMapping("/{annotationId}/labels")
 	public R<List<AnnotationLabel>> getLabels(@PathVariable Long annotationId,
@@ -163,11 +164,11 @@ public class VlsAnnotationLabelController extends BladeController {
 	}
 
 	/**
-	 * 创建标签
 	 *
-	 * @param annotationId 标注项目ID
-	 * @param requestBody  请求体
-	 * @return 创建的标签
+	 *
+	 * @param annotationId annotation item ID
+	 * @param requestBody
+	 * @return
 	 */
 	@PostMapping("/{annotationId}/labels")
 	public R<AnnotationLabel> createLabel(@PathVariable Long annotationId,
@@ -193,11 +194,11 @@ public class VlsAnnotationLabelController extends BladeController {
 	}
 
 	/**
-	 * 更新标签
+	 * new
 	 *
-	 * @param labelId     标签ID
-	 * @param requestBody 请求体
-	 * @return 更新后的标签
+	 * @param labelId ID
+	 * @param requestBody
+	 * @return new after
 	 */
 	@PutMapping("/labels/{labelId}")
 	public R<AnnotationLabel> updateLabel(@PathVariable Long labelId,
@@ -223,10 +224,10 @@ public class VlsAnnotationLabelController extends BladeController {
 	}
 
 	/**
-	 * 删除标签
+	 * Delete
 	 *
-	 * @param labelId 标签ID
-	 * @return 删除结果
+	 * @param labelId ID
+	 * @return Delete
 	 */
 	@DeleteMapping("/labels/{labelId}")
 	public R<Boolean> deleteLabel(@PathVariable Long labelId) {
@@ -240,11 +241,11 @@ public class VlsAnnotationLabelController extends BladeController {
 	}
 
 	/**
-	 * 批量更新标签排序
+	 * new
 	 *
-	 * @param annotationId 标注项目ID
-	 * @param requestBody  请求体（包含labelIds数组）
-	 * @return 更新结果
+	 * @param annotationId annotation item ID
+	 * @param requestBody ( labelIdsarray)
+	 * @return new
 	 */
 	@PutMapping("/{annotationId}/labels/sort")
 	public R<Boolean> updateLabelSort(@PathVariable Long annotationId,

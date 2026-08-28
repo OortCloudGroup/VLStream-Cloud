@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,9 +11,9 @@ import com.ruoyi.common.excel.CellMergeStrategy;
 import java.lang.annotation.*;
 
 /**
- * excel 列单元格合并(合并列相同项)
+ * excel ( item )
  *
- * 需搭配 {@link CellMergeStrategy} 策略使用
+ * {@link CellMergeStrategy}
  *
  * @author Lion Li
  */

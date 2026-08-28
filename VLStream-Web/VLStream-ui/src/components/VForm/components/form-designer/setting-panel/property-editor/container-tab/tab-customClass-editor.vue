@@ -1,4 +1,9 @@
 <!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
   因tabs属性并不包含于options属性之中，故只能跟其他options属性之内的属性值合并设置，此处选择与customClass合并！！
 -->
 
@@ -85,7 +90,7 @@ export default {
   },
   created() {
     this.cssClassList = deepClone(this.designer.getCssClassList())
-    // 监听表单css代码改动事件并重新加载！
+    // formcss event new Load !
     this.designer.handleEvent('form-css-updated', (cssClassList) => {
       this.cssClassList = cssClassList
     })

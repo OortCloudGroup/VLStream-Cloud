@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -31,7 +32,7 @@ public class AggregationService implements IAggregationService {
         Map<String, Object> map = null;
         try {
             map = new HashMap<>();
-            if (formType.equals("0")) {//流程
+            if (formType.equals("0")) {// workflow
                 map.put("WfApp", appService.
                     getOne(new LambdaQueryWrapper<>(WfApp.class).
                         eq(WfApp::getApplicationId, applicationId)));

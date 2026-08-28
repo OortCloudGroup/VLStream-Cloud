@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <DeviceClassificationLayout protocol-type="ISUP" :selected-device-keys="classificationDeviceKeys" @filter-change="handleClassificationFilter" @assigned="getList">
   <div class="device-table-panel">
@@ -95,7 +100,7 @@
       />
     </div>
 
-    <!-- 添加或修改isup设备对话框 -->
+    <!-- Update isupdevice -->
     <el-dialog :title="title" v-model="open" width="30%" append-to-body>
       <el-form ref="lsupDeviceRef" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="设备ID" prop="deviceId">
@@ -173,9 +178,9 @@
         </el-row>
 
         <div style="display: grid; height: 180px; overflow: auto" v-if="openPlay && (playType === '1' || playType === '3' || playType === '4') ">
-            <!-- 左侧控制区域 -->
+            <!-- control -->
             <div style="display: grid; grid-template-columns: 100px auto;">
-              <!-- 方向控制 -->
+              <!-- control -->
               <div class="control-wrapper">
                 <div class="control-btn control-top" @mousedown="ptzCtrlStartFun(3)" @mouseup="ptzCtrlEndFun()">
                   <el-icon class="icon">
@@ -204,13 +209,13 @@
                 <div class="control-round">
                   <div class="control-round-inner"><i class="fa fa-pause-circle"></i></div>
                 </div>
-                <!-- 速度控制 -->
+                <!-- control -->
                 <div class="contro-speed" style="position: absolute; left: 4px; top: 112px; width: 100px;">
                   <el-slider v-model="controSpeed" :min="1" :max="15"></el-slider>
                 </div>
               </div>
 
-              <!-- 变倍、聚焦、光圈控制 -->
+              <!-- 、 、 control -->
               <div>
                 <div style="margin-left: 20px;width: 300px;">
                   聚焦
@@ -284,9 +289,9 @@
 
           <el-tab-pane v-if="checkPermi(['isup:lsupDevice:ptzCtrl'])" label="云台控制" name="control">
             <div style="display: grid; height: 180px; overflow: auto">
-              <!-- 左侧控制区域 -->
+              <!-- control -->
               <div style="display: grid; grid-template-columns: 100px auto;">
-                <!-- 方向控制 -->
+                <!-- control -->
                 <div class="control-wrapper">
                   <div class="control-btn control-top" @mousedown="ptzCtrlStartFun(3)" @mouseup="ptzCtrlEndFun()">
                     <el-icon class="icon">
@@ -315,13 +320,13 @@
                   <div class="control-round">
                     <div class="control-round-inner"><i class="fa fa-pause-circle"></i></div>
                   </div>
-                  <!-- 速度控制 -->
+                  <!-- control -->
                   <div class="contro-speed" style="position: absolute; left: 4px; top: 112px; width: 100px;">
                     <el-slider v-model="controSpeed" :min="1" :max="15"></el-slider>
                   </div>
                 </div>
 
-                <!-- 变倍、聚焦、光圈控制 -->
+                <!-- 、 、 control -->
                 <div>
                   <div style="margin-left: 20px;width: 300px;">
                     聚焦
@@ -518,7 +523,7 @@ function closeSDK() {
 }
 
 /**
- * SDK 播放
+ * SDK
  * @param row
  */
 function handleSDKPlay(row) {
@@ -542,7 +547,7 @@ function handleSDKPlay(row) {
 }
 
 
-/** 查询isup设备列表 */
+/* * Query isupdevice list */
 function getList() {
   loading.value = true;
   queryParams.value.params = {};
@@ -565,13 +570,13 @@ const togglePasswordVisibility = (id) => {
   passwordVisibility.value[id] = !passwordVisibility.value[id];
 };
 
-// 取消按钮
+// button
 function cancel() {
   open.value = false;
   reset();
 }
 
-// 表单重置
+// form
 function reset() {
   form.value = {
     id: null,
@@ -613,13 +618,13 @@ function reset() {
   proxy.resetForm("lsupDeviceRef");
 }
 
-/** 搜索按钮操作 */
+/* * buttonoperation */
 function handleQuery() {
   queryParams.value.pageNum = 1;
   getList();
 }
 
-/** 重置按钮操作 */
+/* * buttonoperation */
 function resetQuery() {
   daterangeCreateTime.value = [];
   daterangeUpdateTime.value = [];
@@ -627,7 +632,7 @@ function resetQuery() {
   handleQuery();
 }
 
-// 多选框选中数据
+// in data
 function handleSelectionChange(selection) {
   classificationDeviceKeys.value = selection.map(item => String(item.id));
   ids.value = selection.map(item => item.id);
@@ -645,7 +650,7 @@ function moreClick(command, itemData) {
 
 
 /**
- * 修改位置
+ * Update
  *
  * @param row
  */
@@ -680,7 +685,7 @@ const updateDialogMap = (value) => {
   })
 }
 
-/** 修改按钮操作 */
+/* * Update buttonoperation */
 function handleUpdate(row) {
   reset();
   const _id = row?.id || ids.value
@@ -715,7 +720,7 @@ async function handleStartPlay(row) {
 
 }
 
-/** 提交按钮 */
+/* * button */
 function submitForm() {
   proxy.$refs["lsupDeviceRef"].validate(valid => {
     if (valid) {
@@ -730,7 +735,7 @@ function submitForm() {
   });
 }
 
-/** 删除按钮操作 */
+/* * Delete buttonoperation */
 function handleDelete(row) {
   const _ids = row?.id || ids.value;
   proxy.$modal.confirm('是否确认删除isup设备编号为"' + _ids + '"的数据项？').then(function () {
@@ -743,21 +748,21 @@ function handleDelete(row) {
 }
 
 /**
- * 云台控制（开始）
+ * control (start)
  */
 function ptzCtrlStartFun(direction) {
   ptzCtrlStart(ptzCameraQueryParams.value.id, direction, controSpeed.value)
 }
 
 /**
- * 云台控制（结束）
+ * control (finish)
  */
 function ptzCtrlEndFun() {
   ptzCtrlEnd(ptzCameraQueryParams.value.id)
 }
 
 /**
- * 聚焦
+ *
  */
 function focusCamera() {
   ptzCtrlFocus(ptzCameraQueryParams.value.id, controSpeedFocus.value)

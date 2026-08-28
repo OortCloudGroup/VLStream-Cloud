@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="choosePerBox">
     <div class="prop_title he">
@@ -95,7 +100,7 @@
         />
       </el-select>
     </div>
-    <!--岗位和职位-start-->
+    <!-- and -start -->
     <div v-if="copyActiveChooseData.approvalType === 6" class="prop_item bo">
       <el-radio-group v-model="jobPost" class="prop_item jobPostBox">
         <el-radio value="0" class="flexRowAC">
@@ -172,7 +177,7 @@
         </el-radio>
       </el-radio-group>
     </div>
-    <!--岗位和职位-end-->
+    <!-- and -end -->
     <el-dialog v-model="chooseUserVis" title="选择人员" width="50%">
       <address-seting-dialog
         v-if="chooseUserVis"
@@ -216,17 +221,17 @@ const props = defineProps({
   }
 })
 
-// 模型-列表数据
+// model- data
 const flowDesignerPage = inject('flowDesignerPage')
 const copyActiveChooseData = ref(props.activeChooseData)
 let JJ = ref(false)
 let JP = ref(false)
-// 设置审批对象-岗位和职位-单选 (0岗位 1职位）
+// Set approvalobject- and - (0 1 )
 let jobPost = ref(copyActiveChooseData.value?.jobLeaders ? '0' : '1')
 let jobMod = ref('1')
 let postMod = ref('1')
 
-// watch 监听nodeConfig
+// watch nodeConfig
 watch(() => props.activeChooseData, () => {
   copyActiveChooseData.value = props.activeChooseData
   if (props.activeChooseData.dept?.length) {
@@ -240,7 +245,7 @@ watch(() => props.activeChooseData, () => {
     })
   }
   console.log('设置审批对象', props.activeChooseData)
-  // 设置审批对象-岗位和职位-单选 (0岗位 1职位）
+  // Set approvalobject- and - (0 1 )
   jobPost.value = copyActiveChooseData.value?.jobLeaders ? '0' : '1'
   jobMod.value = copyActiveChooseData.value?.jobLeaders?.[0] || '1'
   postMod.value = copyActiveChooseData.value?.postLeaders?.[0] || '1'
@@ -284,13 +289,13 @@ function confirmUser(data) {
 }
 
 function changeApprovalType() {
-  // 发起人自己 或 发起人自选
+  //
   if (copyActiveChooseData.value.approvalType === 3 || copyActiveChooseData.value.approvalType === 5) {
     copyActiveChooseData.value.users = ['initiator']
     copyActiveChooseData.value.dept = []
     emit('update:activeChooseData', copyActiveChooseData.value)
   }
-  // 节点不能又有指定人initiator，又有上级
+  // node can and initiator, and
   if (copyActiveChooseData.value.approvalType === 6) {
     copyActiveChooseData.value.users = undefined
   }
@@ -298,7 +303,7 @@ function changeApprovalType() {
 
 const roleListArr = ref([])
 function getRoleList() {
-  // 角色拿统一用户的
+  // role user
   let data = {
     accessToken: store.token || store.userInfo?.accessToken || '',
     page: 1,

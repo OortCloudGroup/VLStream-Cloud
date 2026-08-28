@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
@@ -14,7 +19,7 @@ import crudCommon from '@/mixins/crud.js';
 import axios from './utils/request';
 import basicContainer from './components/basic-container/main.vue';
 
-// 与 apaas-web events 项目保持一致的样式
+// and apaas-web events item
 import '@/assets/style/index.scss'
 import 'virtual:svg-icons-register'
 import '@/assets/wvp/iconfont.css'
@@ -24,10 +29,10 @@ import { capturePendingModelHubCallback } from '@/utils/modelHubAuth'
 
 window.$crudCommon = crudCommon;
 
-// OortCloud 与 VLStream 都使用 accessToken 参数；必须在主路由鉴权前完成分流。
+// OortCloud and VLStream accessToken parameter; in main before .
 capturePendingModelHubCallback()
 
-// 同步 VLStream token 到 apaas 认证存储
+// VLStream token apaas
 const vlsAccessToken = localStorage.getItem('accessToken')
 if (vlsAccessToken) {
   localStorage.setItem('apaas_token', vlsAccessToken)
@@ -42,7 +47,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 
 app.component('basicContainer', basicContainer);
 
-// 与 apaas-web events/main.ts 一致的全局组件注册
+// and apaas-web events/main.ts full component
 import aiIconRemark from '@/components/aiIconRemark.vue'
 import TableSelf from '@/components/TableSelf.vue'
 import ButtonGroup from '@/components/buttonGroup.vue'

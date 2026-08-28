@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2025-03-13 11:45:51
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -47,11 +52,11 @@ import { useUserStore } from '@/store/modules/useraPaas'
 const store = useUserStore()
 
 const props = defineProps({
-  selfDefine: { // 是否需要用户自己输入关键字等参数来生成. 默认false.
+  selfDefine: { // whether need to user etc.parameter Generate . false.
     type: Boolean,
     default: false
   },
-  disabled: { // 是否禁用. 默认false. 禁用显示功能正在开发中的提示
+  disabled: { // whether . false. can in in prompt / tip
     type: Boolean,
     default: false
   },
@@ -245,7 +250,7 @@ const submitForm = async(formEl) => {
 </script>
 
 <style lang="scss" scoped>
-/*引入 position: relative*/
+/* position: relative */
 .aiIconPage {
   cursor: pointer;
   justify-content: center;

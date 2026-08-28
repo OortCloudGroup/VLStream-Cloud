@@ -1,23 +1,28 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * 测试onUnmounted修复效果
- * 验证layout组件中的生命周期钩子是否正确工作
+ * onUnmounted
+ * layoutcomponent in sub whether correct
  */
 
 function testOnUnmountedFix() {
     console.log('🔍 测试onUnmounted修复效果');
-    
-    // 检查Vue组件是否正确加载
+
+    // Vuecomponentwhether correctLoad
     console.log('=== 检查Vue组件状态 ===');
-    
-    // 检查layout组件是否存在
+
+    // layoutcomponentwhether in
     const layoutElement = document.querySelector('.layout-container');
     if (layoutElement) {
         console.log('✅ Layout组件已正确渲染');
     } else {
         console.log('❌ Layout组件未找到');
     }
-    
-    // 检查用户信息显示
+
+    // userinfo
     const userInfoElement = document.querySelector('.user-info');
     if (userInfoElement) {
         console.log('✅ 用户信息组件已渲染');
@@ -25,8 +30,8 @@ function testOnUnmountedFix() {
     } else {
         console.log('❌ 用户信息组件未找到');
     }
-    
-    // 检查租户信息显示
+
+    // info
     const tenantInfoElement = document.querySelector('.tenant-info');
     if (tenantInfoElement) {
         console.log('✅ 租户信息组件已渲染');
@@ -34,64 +39,64 @@ function testOnUnmountedFix() {
     } else {
         console.log('❌ 租户信息组件未找到');
     }
-    
+
     console.log('');
-    
-    // 检查控制台错误
+
+    // control
     console.log('=== 检查控制台错误 ===');
     console.log('如果修复成功，应该不会再有 "onUnmounted is not defined" 错误');
     console.log('请检查浏览器控制台是否还有相关错误信息');
-    
+
     console.log('');
-    
-    // 测试token同步功能
+
+    // token can
     console.log('=== 测试token同步功能 ===');
-    
-    // 检查tokenSyncManager是否可用
+
+    // tokenSyncManagerwhether
     if (window.tokenSyncManager) {
         console.log('✅ tokenSyncManager已加载');
         console.log('同步器状态:', window.tokenSyncManager.isInitialized ? '已初始化' : '未初始化');
-        
-        // 手动触发同步测试
+
+        //
         console.log('🔄 手动触发token同步测试');
         window.tokenSyncManager.forceSync();
-        
+
     } else {
         console.log('❌ tokenSyncManager未加载');
     }
-    
+
     console.log('');
-    
-    // 测试事件监听器
+
+    // eventlistener
     console.log('=== 测试事件监听器 ===');
-    
-    // 模拟token更新事件
+
+    // token new event
     console.log('🔄 模拟token更新事件');
     const tokenUpdateEvent = new CustomEvent('tokenUpdated', {
         detail: { token: 'test_token_' + Date.now() }
     });
     window.dispatchEvent(tokenUpdateEvent);
-    
-    // 模拟token失效事件
+
+    // token event
     console.log('⚠️ 模拟token失效事件');
     const tokenInvalidEvent = new CustomEvent('tokenInvalid');
     window.dispatchEvent(tokenInvalidEvent);
-    
+
     console.log('');
-    
-    // 检查当前token状态
+
+    // current token
     console.log('=== 当前Token状态 ===');
     const urlToken = getTokenFromUrl();
     const sessionToken = sessionStorage.getItem('accessToken');
     const localToken = localStorage.getItem('accessToken');
-    
+
     console.log('- URL Token:', urlToken ? urlToken.substring(0, 8) + '...' : 'null');
     console.log('- Session Token:', sessionToken ? sessionToken.substring(0, 8) + '...' : 'null');
     console.log('- Local Token:', localToken ? localToken.substring(0, 8) + '...' : 'null');
-    
+
     console.log('');
-    
-    // 检查用户信息状态
+
+    // userinfo
     console.log('=== 当前用户信息状态 ===');
     const userInfo = sessionStorage.getItem('userInfo');
     if (userInfo) {
@@ -107,7 +112,7 @@ function testOnUnmountedFix() {
     } else {
         console.log('💡 没有找到用户信息');
     }
-    
+
     console.log('');
     console.log('📝 修复总结:');
     console.log('1. ✅ 添加了 onUnmounted 到 Vue 导入语句');
@@ -124,11 +129,11 @@ function testOnUnmountedFix() {
     console.log('- 组件卸载时正确清理事件监听器');
 }
 
-// 辅助函数：从URL获取token
+// : from URLGet token
 function getTokenFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('accessToken') || urlParams.get('token');
 }
 
-// 运行测试
-testOnUnmountedFix(); 
+//
+testOnUnmountedFix();

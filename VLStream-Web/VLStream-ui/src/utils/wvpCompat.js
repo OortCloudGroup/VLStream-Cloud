@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { ref, toRefs } from 'vue'
 import { ElLoading, ElMessage, ElMessageBox, ElNotification } from 'element-plus'
 import router from '@/router'

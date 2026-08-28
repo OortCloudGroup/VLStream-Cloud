@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -20,7 +21,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 /**
- * 字典数据表 sys_dict_data
+ * dictdata sys_dict_data
  *
  * @author Lion Li
  */
@@ -32,20 +33,20 @@ import javax.validation.constraints.Size;
 public class SysDictData extends BaseEntity {
 
     /**
-     * 字典编码
+     * dict
      */
     @ExcelProperty(value = "字典编码")
     @TableId(value = "dict_code")
     private Long dictCode;
 
     /**
-     * 字典排序
+     * dict
      */
     @ExcelProperty(value = "字典排序")
     private Integer dictSort;
 
     /**
-     * 字典标签
+     * dict
      */
     @ExcelProperty(value = "字典标签")
     @NotBlank(message = "字典标签不能为空")
@@ -53,7 +54,7 @@ public class SysDictData extends BaseEntity {
     private String dictLabel;
 
     /**
-     * 字典键值
+     * dict value
      */
     @ExcelProperty(value = "字典键值")
     @NotBlank(message = "字典键值不能为空")
@@ -61,7 +62,7 @@ public class SysDictData extends BaseEntity {
     private String dictValue;
 
     /**
-     * 字典类型
+     * dict type
      */
     @ExcelProperty(value = "字典类型")
     @NotBlank(message = "字典类型不能为空")
@@ -69,32 +70,32 @@ public class SysDictData extends BaseEntity {
     private String dictType;
 
     /**
-     * 样式属性（其他样式扩展）
+     * property ( )
      */
     @Size(min = 0, max = 100, message = "样式属性长度不能超过{max}个字符")
     private String cssClass;
 
     /**
-     * 表格字典样式
+     * tabledict
      */
     private String listClass;
 
     /**
-     * 是否默认（Y是 N否）
+     * whether (Y is N )
      */
     @ExcelProperty(value = "是否默认", converter = ExcelDictConvert.class)
     @ExcelDictFormat(dictType = "sys_yes_no")
     private String isDefault;
 
     /**
-     * 状态（0正常 1停用）
+     * Status (0 normal 1 disabled)
      */
     @ExcelProperty(value = "状态", converter = ExcelDictConvert.class)
     @ExcelDictFormat(dictType = "sys_normal_disable")
     private String status;
 
     /**
-     * 备注
+     * remark
      */
     private String remark;
 

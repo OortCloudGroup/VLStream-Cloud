@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -23,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 综合工单流程Service业务层处理
+ * work orderworkflowService layer Process
  *
  * @author Lei Chao Qun
  * @date 2025-01-04
@@ -37,7 +38,7 @@ public class WorkOrderSynthesisServiceImpl extends ServiceImpl<WorkOrderSynthesi
 
 
     /**
-     * 查询综合工单流程
+     * Query work orderworkflow
      */
     @Override
     public WorkOrderSynthesisVo queryById(String synthesisId) {
@@ -46,13 +47,13 @@ public class WorkOrderSynthesisServiceImpl extends ServiceImpl<WorkOrderSynthesi
 
 
     /**
-     * 查询综合工单流程列表
+     * Query work orderworkflow list
      */
     @Override
     public List<WorkOrderSynthesisVo> queryList(WorkOrderSynthesisBo bo) {
         LambdaQueryWrapper<WorkOrderSynthesis> lqw = buildQueryWrapper(bo);
         List<WorkOrderSynthesisVo> workOrderSynthesisVos = baseMapper.selectVoList(lqw);
-        //记录是否有子集，发起工单需要用到
+        // recordwhether sub , work order need to
         for (WorkOrderSynthesisVo workOrderSynthesisVo : workOrderSynthesisVos) {
             Long l = baseMapper.selectCount(new LambdaQueryWrapper<WorkOrderSynthesis>().eq(WorkOrderSynthesis::getParentId, workOrderSynthesisVo.getSynthesisId()));
             workOrderSynthesisVo.setChildFlag(l > 0);
@@ -67,13 +68,13 @@ public class WorkOrderSynthesisServiceImpl extends ServiceImpl<WorkOrderSynthesi
         lqw.like(StringUtils.isNotBlank(bo.getCategoryName()), WorkOrderSynthesis::getCategoryName, bo.getCategoryName());
         lqw.eq(StringUtils.isNotBlank(bo.getDescription()), WorkOrderSynthesis::getDescription, bo.getDescription());
         if (StringUtils.isBlank(bo.getSynthesisId()) && StringUtils.isBlank(bo.getParentId())) {
-            lqw.isNull(WorkOrderSynthesis::getParentId);  // 如果bo.getId()和bo.getParentId()都为空，查询parent_id为NULL
+            lqw.isNull(WorkOrderSynthesis::getParentId);  // if bo.getId() and bo.getParentId() is empty, Query parent_id to NULL
         }
         return lqw;
     }
 
     /**
-     * 新增综合工单流程
+     * Add work orderworkflow
      */
     @Override
     public Boolean insertByBo(WorkOrderSynthesisBo bo) {
@@ -87,7 +88,7 @@ public class WorkOrderSynthesisServiceImpl extends ServiceImpl<WorkOrderSynthesi
     }
 
     /**
-     * 修改综合工单流程
+     * Update work orderworkflow
      */
     @Override
     public Boolean updateByBo(WorkOrderSynthesisBo bo) {
@@ -97,19 +98,19 @@ public class WorkOrderSynthesisServiceImpl extends ServiceImpl<WorkOrderSynthesi
     }
 
     /**
-     * 保存前的数据校验
+     * before dataValidate
      */
     private void validEntityBeforeSave(WorkOrderSynthesis entity) {
-        //TODO 做一些数据校验,如唯一约束
+        // TODO dataValidate ,
     }
 
     /**
-     * 批量删除综合工单流程
+     * Batch delete work orderworkflow
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid) {
         if (isValid) {
-            //效验这个分类下是否还有别的数据
+            // whether data
             validateService.validateBeforeDeletion(ids);
         }
         return baseMapper.deleteBatchIds(ids) > 0;

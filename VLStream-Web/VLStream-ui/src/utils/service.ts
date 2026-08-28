@@ -1,15 +1,11 @@
 /*
-* @Created by: 兰舰
-* Email: gglanjian@qq.com
-* Phone: 16620805419
-* @Date: 2024-11-15 11:05:50
- * @Last Modified by: 兰舰
- * @Last Modified time: 2025-07-24 15:37:45
-* @Copyright aPaaS-front-team. All rights reserved.
-*/
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios'
 
-// 扩展AxiosRequestConfig接口以包含metadata属性
+// AxiosRequestConfiginterface metadataproperty
 interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
   metadata?: {
     startTime: number;
@@ -30,7 +26,7 @@ import { applyAuthHeaders, applyPlatformGatewayHeaders, getStoredToken } from '@
 import { useUserStoreHook } from '@/store/modules/useraPaas'
 
 
-// 定义请求队列和刷新状态
+// and new
 let isRefreshing = false;
 let requestsQueue: Array<{
   resolve: (value: any) => void,
@@ -38,10 +34,10 @@ let requestsQueue: Array<{
   config: AxiosRequestConfig
 }> = [];
 
-// 通用的token刷新处理方法
+// token new Process method
 const handleTokenRefresh = (originalResponse: any, originalConfig?: AxiosRequestConfig) => {
   return new Promise((resolve, reject) => {
-    // 如果正在刷新token，则将当前请求加入队列
+    // if in new token, current
     if (isRefreshing) {
       requestsQueue.push({ resolve, reject, config: originalConfig || originalResponse.config });
       return;
@@ -49,7 +45,7 @@ const handleTokenRefresh = (originalResponse: any, originalConfig?: AxiosRequest
 
     isRefreshing = true;
 
-    // 使用刷新token来获取新的访问令牌
+    // new token Get new
     const refreshTokenValue = getRefreshToken();
     let params = { refreshToken: '' }
     if (!!refreshTokenValue) {
@@ -59,33 +55,33 @@ const handleTokenRefresh = (originalResponse: any, originalConfig?: AxiosRequest
       .then((res: any) => {
         const refreshRes = res as { code: number, data: { accessToken: string, refreshToken?: string }, msg: string };
         if (refreshRes.code === 200 && refreshRes.data && refreshRes.data.accessToken) {
-          // 更新刷新token
+          // new new token
           if(refreshRes.data.refreshToken) {
             setRefreshToken(refreshRes.data.refreshToken);
           }
-          // 更新token
+          // new token
           const setToken = useUserStoreHook().setStoreToken
           setToken(refreshRes.data.accessToken);
-          // 创建一个通用函数来更新请求中的token
+          // new in token
           const updateTokenInRequest = (requestConfig: AxiosRequestConfig) => {
-            // 添加类型断言以兼容 axios 1.x
+            // axios 1.x
             const headers = requestConfig.headers as Record<string, any> || {};
-            // 更新请求头中的 accesstoken
+            // new in accesstoken
             requestConfig.headers = { ...headers, accesstoken: refreshRes.data.accessToken };
-            // 如果URL中有token参数，也需要更新
+            // if URL in tokenparameter, also need to new
             if (requestConfig.params) {
               requestConfig.params = { ...requestConfig.params };
               if (requestConfig.params.accessToken) {
                 requestConfig.params.accessToken = refreshRes.data.accessToken;
               }
             }
-            // 如果URL中包含accessToken查询参数，也需要更新
+            // if URL in accessTokenQuery parameter, also need to new
             if (requestConfig.url && requestConfig.url.includes('accessToken=')) {
               requestConfig.url = requestConfig.url.replace(/accessToken=[^&]*/g, `accessToken=${encodeURIComponent(refreshRes.data.accessToken)}`);
             }
             if(requestConfig.data) {
               try {
-                // 如果是字符串格式的数据（通常是JSON字符串）
+                // if is data ( is JSON )
                 if (typeof requestConfig.data === 'string') {
                   let tempData = JSON.parse(requestConfig.data);
                   if (tempData.accessToken) {
@@ -93,14 +89,14 @@ const handleTokenRefresh = (originalResponse: any, originalConfig?: AxiosRequest
                     requestConfig.data = JSON.stringify(tempData);
                   }
                 } else if (typeof requestConfig.data === 'object') {
-                  // 如果是对象格式的数据
+                  // if is object data
                   requestConfig.data = { ...requestConfig.data };
                   if (requestConfig.data.accessToken) {
                     requestConfig.data.accessToken = res.data.accessToken;
                   }
                 }
               } catch (e) {
-                // 如果解析JSON失败，忽略错误
+                // if Parse JSONfailed,
                 console.warn('Failed to parse request data:', e);
               }
             }
@@ -108,7 +104,7 @@ const handleTokenRefresh = (originalResponse: any, originalConfig?: AxiosRequest
             return requestConfig;
           };
 
-          // 重新发送队列中的请求
+          // new in
           const tokenRefreshed = () => {
             requestsQueue.forEach(request => {
               const newRequest = { ...request.config };
@@ -124,9 +120,9 @@ const handleTokenRefresh = (originalResponse: any, originalConfig?: AxiosRequest
 
           tokenRefreshed();
 
-          // 重新发送当前请求
+          // new current
           if (originalConfig) {
-            // 来自错误处理的请求
+            // Process
             updateTokenInRequest(originalConfig);
             service(originalConfig).then(resp => {
               resolve(resp);
@@ -134,7 +130,7 @@ const handleTokenRefresh = (originalResponse: any, originalConfig?: AxiosRequest
               reject(err);
             });
           } else {
-            // 来自成功响应的请求
+            // successfully
             const originalRequest = originalResponse.config;
             updateTokenInRequest(originalRequest);
             service(originalRequest).then(resp => {
@@ -144,14 +140,14 @@ const handleTokenRefresh = (originalResponse: any, originalConfig?: AxiosRequest
             });
           }
         } else {
-          // 刷新失败，跳转到登录页
+          // new failed,
           removeToken();
           useGoWhere().goWhere();
           reject(originalResponse);
         }
       })
       .catch(error => {
-        // 刷新失败，跳转到登录页
+        // new failed,
         removeToken();
         useGoWhere().goWhere();
         reject(error);
@@ -161,7 +157,7 @@ const handleTokenRefresh = (originalResponse: any, originalConfig?: AxiosRequest
       });
   });
 };
- // 节流白名单
+ //
 const whiteApi = ['/menu/v1/myAuth','sso/v1/getUserList', 'sso/v1/getDeptUser']
 function includeApi(url) {
   return whiteApi.some(item=> { return url.includes(item)})
@@ -172,14 +168,14 @@ function shouldShowWarningByApi(url = '') {
 }
 
 /**
- * 判断是否为已经迁移到本项目后端、只使用本地登录态的任务接口。
+ * Check whether to already item after 、only taskinterface.
  */
 function isLocalTaskApi(url = '') {
   return /^\/?task\//.test(url)
 }
 
 /**
- * 本地登录态失效时直接结束会话，不再调用旧 SSO 刷新接口并重试原请求。
+ * finish will , old SSO new interface .
  */
 function rejectExpiredLocalSession(originalResponse: any) {
   removeToken()
@@ -190,20 +186,20 @@ function rejectExpiredLocalSession(originalResponse: any) {
   })
 }
 
-/** 创建请求实例 */
+/* * instance */
 function createService() {
- // 节流: n 秒内只运行一次，若在n 秒内重复触发，只有一次生效
+ // : n only , in n , only
   let  repeatArr = new Map<string, number>()
   let timer: number | NodeJS.Timeout | null = 0
-  let duration = 800 // 间隔时间
+  let duration = 800 //
   const store = useErrorMsgStoreHook()
-  // 创建一个 Axios 实例
+  // Axios instance
   const service = axios.create()
-  // 请求拦截
+  //
   service.interceptors.request.use(
     (config: AxiosRequestConfig) => {
       const nowTime = new Date().getTime()
-      // console.log('节流处理中，稍后再试',repeatArr.get(`${config.method}-${config.url}`) && (nowTime -  repeatArr.get(`${config.method}-${config.url}`)) < 1000,repeatArr.get(`${config.method}-${config.url}`), `${config.url}`,  !includeApi(`${config.url}`))
+      // console.log(' Process in , after ',repeatArr.get(`${config.method}-${config.url}`) && (nowTime - repeatArr.get(`${config.method}-${config.url}`)) < 1000,repeatArr.get(`${config.method}-${config.url}`), `${config.url}`, !includeApi(`${config.url}`))
       //   console.log(repeatArr)
       const existingTime = repeatArr.get(`${config.method}-${config.url}`);
       if (existingTime !== undefined && (nowTime -  existingTime) < duration  && !includeApi(`${config.url}`)) {
@@ -219,9 +215,9 @@ function createService() {
       (config as ExtendedAxiosRequestConfig).metadata = {
         startTime: new Date().getTime(),
       };
-      // 添加类型断言以兼容 axios 1.x
+      // axios 1.x
       const headers = config.headers as Record<string, any>;
-      // FormData 上传须为 multipart/form-data
+      // FormData to multipart/form-data
       if (config.data instanceof FormData && headers) {
         delete headers['Content-Type']
         delete headers['content-type']
@@ -230,7 +226,7 @@ function createService() {
         && !config.url?.includes('/sso/v1/getCaptcha')
         && !config.url?.includes('sso/v2/getLoginCode')
         &&!config.url?.includes('sso/v1/verifyToken') ) {
-        // 如果 sessionStoage 的 租户id和请求的不不一致，说切换了租户
+        // if sessionStoage id and ,
         if(window.localStorage.getItem('recentlyLoginTenantId') !== headers?.tenantid) {
           ElMessageBox.alert('当前登录账号身份已变更，请刷新后重试', '提示', {
             confirmButtonText: '确定',
@@ -239,7 +235,7 @@ function createService() {
             },
           })
           return Promise.reject({
-            isInterceptorDetour: true, // 自定义标识，方便在响应拦截器里区分
+            isInterceptorDetour: true, // Custom , in
             message: '当前登录账号身份已变更，请刷新后重试'
           });
         }
@@ -254,7 +250,7 @@ function createService() {
       }
       return config
     },
-    // 发送失败
+    // failed
     (error) =>{
       store.addErrorMsg({
         msg: error.message,interfaceName: error.config.url,
@@ -263,35 +259,35 @@ function createService() {
       return Promise.reject(error)
     }
   )
-  // 响应拦截（可根据具体业务作出相应的调整）
+  // ( )
   service.interceptors.response.use(
     (response) => {
       console.log('response-----------------', response)
       // console.log(apiData)
-      // 如果返回的状态码为200，说明接口请求成功，可以正常拿到数据
-      // 否则的话抛出错误 结合自身业务和后台返回的接口状态约定写respone拦截器
+      // if to 200, interface successfully, data
+      // and after interface respone
       if (response.status === 200) {
         if (response.data.code !== 200) {
-          // 判断 response.data.code  === 4004  就去调用刷新token
+          // Check response.data.code === 4004 then new token
           if (response.data.code === 4004) {
             if (isLocalTaskApi(response.config?.url || '')) {
               return rejectExpiredLocalSession(response)
             }
             return handleTokenRefresh(response);
           }
-          // 针对刷新接口  和 其他 msg接口的处理
+          // new interface and msginterface Process
           if(response.data?.code === 4444 || response.data?.msg === '无效的accesstoken') {
-            // 刷新失败，跳转到登录页
+            // new failed,
             removeToken();
             useGoWhere().goWhere();
             return Promise.reject({
-              isInterceptorDetour: true, // 自定义标识，方便在响应拦截器里区分
+              isInterceptorDetour: true, // Custom , in
               message: '当前用户登录信息已过期'
             });
           } else {
             if (response.data.msg){
               const url = response.config?.url || ''
-              // 判断当前是否在登陆页面
+              // Check current whether in page
               if(location.hash.substring(1) === '') {
                 (message as any).warning(response.data.msg)
               } else {
@@ -317,7 +313,7 @@ function createService() {
       let errMessage = error.message
       const errorBody = error.response?.data
       if(errorBody && errorBody.code ) {
-        // 检查是否需要刷新token
+        // whether need to new token
         if (errorBody.code === 4004) {
           if (isLocalTaskApi(error.config?.url || '')) {
             return rejectExpiredLocalSession(error)
@@ -340,7 +336,7 @@ function createService() {
       if(httpStatusCode === 404) {
         return Promise.reject(errMessage)
       }
-      // 以下两个状态码的返回错误
+      //
       if(httpStatusCode === 400) {
         return errorBody
       }
@@ -356,12 +352,12 @@ function createService() {
   return service
 }
 
-/** 创建请求方法 */
+/* * method */
 function createRequestFunction(service: AxiosInstance) {
   return function <T>(config: AxiosRequestConfig): Promise<T> {
       const configDefault = {
       headers: {
-        // 携带 Token
+        // Token
         'Content-Type': get(config, 'headers.Content-Type', 'application/json'),
         ...Config.headers,
         accesstoken: getStoredToken() || getToken()
@@ -386,7 +382,7 @@ function createRequestFunction(service: AxiosInstance) {
   }
 }
 
-/** 用于网络请求的实例 */
+/* * instance */
 export const service = createService()
-/** 用于网络请求的方法 */
+/* * method */
 export const request = createRequestFunction(service)

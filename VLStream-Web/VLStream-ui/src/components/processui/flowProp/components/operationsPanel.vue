@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="flow_opration_panel">
     <el-checkbox-group v-model="copyActiveChooseData.operations" @change="checkChange">
@@ -22,10 +27,10 @@ const props = defineProps({
     default: () => ({})
   }
 })
-const flowDesignerPage = inject('flowDesignerPage') // 通知节点：工单有,流程无
+const flowDesignerPage = inject('flowDesignerPage') // notificationnode: work order ,workflow
 
 const copyActiveChooseData = ref(props.activeChooseData)
-// watch 监听nodeConfig
+// watch nodeConfig
 watch(() => props.activeChooseData, () => {
   copyActiveChooseData.value = props.activeChooseData
 })
@@ -33,7 +38,7 @@ watch(() => props.activeChooseData, () => {
 const options = ref([])
 
 async function getOpertaList() {
-  // 操作权限：工单wk_approval_button,流程wf_approval_button
+  // operation : work orderwk_approval_button,workflowwf_approval_button
   let res = flowDesignerPage?.notifyNode ? await getApprovalButton_wk() : await getApprovalButton()
   if (res.code === 200) {
     options.value = res.data

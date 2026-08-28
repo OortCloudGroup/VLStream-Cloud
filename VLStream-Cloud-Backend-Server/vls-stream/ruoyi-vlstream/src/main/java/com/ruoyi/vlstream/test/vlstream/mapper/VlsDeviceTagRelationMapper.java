@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -21,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 设备标签关联表 Mapper 接口
+ * device Mapper interface
  *
  * @author Oort
  * @since 2025-12-23
@@ -29,27 +30,27 @@ import java.util.Map;
 public interface VlsDeviceTagRelationMapper extends BaseMapper<DeviceTagRelation> {
 
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsDeviceTagRelation 查询参数
+	 * @param page parameter
+	 * @param vlsDeviceTagRelation Query parameter
 	 * @return List<VlsDeviceTagRelationVO>
 	 */
 	List<DeviceTagRelationVO> selectVlsDeviceTagRelationPage(IPage page, DeviceTagRelationVO vlsDeviceTagRelation);
 
 	/**
-	 * 获取导出数据
+	 * Get Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsDeviceTagRelationExcel>
 	 */
 	List<VlsDeviceTagRelationExcel> exportVlsDeviceTagRelation(@Param("ew") Wrapper<DeviceTagRelation> queryWrapper);
 
 	/**
-	 * 根据设备ID获取标签信息
+	 * deviceIDGet info
 	 *
-	 * @param deviceId 设备ID
-	 * @return 标签信息列表
+	 * @param deviceId deviceID
+	 * @return info
 	 */
 	@Select("SELECT " +
 		"dtr.id, dtr.device_id, dtr.tag_id, dtr.create_user, dtr.create_time, " +
@@ -61,10 +62,10 @@ public interface VlsDeviceTagRelationMapper extends BaseMapper<DeviceTagRelation
 	List<DeviceTagRelationDTO> selectTagsByDeviceId(@Param("deviceId") Long deviceId);
 
 	/**
-	 * 根据标签ID获取设备列表
+	 * IDGet device
 	 *
-	 * @param tagId 标签ID
-	 * @return 设备标签关联列表
+	 * @param tagId ID
+	 * @return device
 	 */
 	@Select("SELECT " +
 		"dtr.id, dtr.device_id, dtr.tag_id, dtr.create_user, dtr.create_time, " +
@@ -76,12 +77,12 @@ public interface VlsDeviceTagRelationMapper extends BaseMapper<DeviceTagRelation
 	List<Map<String, Object>> selectDevicesByTagId(@Param("tagId") Long tagId);
 
 	/**
-	 * 批量添加设备标签关联
+	 * device
 	 *
-	 * @param deviceId 设备ID
-	 * @param tagIds 标签ID列表
-	 * @param createdBy 创建人
-	 * @return 插入数量
+	 * @param deviceId deviceID
+	 * @param tagIds ID
+	 * @param createdBy
+	 * @return
 	 */
 	@Insert("<script>" +
 		"INSERT INTO vls_device_tag_relation (device_id, tag_id, create_user) VALUES " +
@@ -94,20 +95,20 @@ public interface VlsDeviceTagRelationMapper extends BaseMapper<DeviceTagRelation
 							  @Param("createdBy") Long createdBy);
 
 	/**
-	 * 删除设备的所有标签关联
+	 * Delete device all
 	 *
-	 * @param deviceId 设备ID
-	 * @return 删除数量
+	 * @param deviceId deviceID
+	 * @return Delete
 	 */
 	@Delete("DELETE FROM vls_device_tag_relation WHERE device_id = #{deviceId}")
 	int deleteByDeviceId(@Param("deviceId") Long deviceId);
 
 	/**
-	 * 删除设备的指定标签关联
+	 * Delete device
 	 *
-	 * @param deviceId 设备ID
-	 * @param tagIds 标签ID列表
-	 * @return 删除数量
+	 * @param deviceId deviceID
+	 * @param tagIds ID
+	 * @return Delete
 	 */
 	@Delete("<script>" +
 		"DELETE FROM vls_device_tag_relation " +
@@ -119,9 +120,9 @@ public interface VlsDeviceTagRelationMapper extends BaseMapper<DeviceTagRelation
 	int deleteDeviceTagsBatch(@Param("deviceId") Long deviceId, @Param("tagIds") List<Long> tagIds);
 
 	/**
-	 * 获取设备标签统计信息
+	 * Get device info
 	 *
-	 * @return 统计信息
+	 * @return info
 	 */
 	@Select("SELECT " +
 		"device_id, " +
@@ -135,9 +136,9 @@ public interface VlsDeviceTagRelationMapper extends BaseMapper<DeviceTagRelation
 	List<Map<String, Object>> getDeviceTagStatistics();
 
 	/**
-	 * 获取标签使用统计
+	 * Get
 	 *
-	 * @return 标签使用统计
+	 * @return
 	 */
 	@Select("SELECT " +
 		"tm.id as tag_id, " +
@@ -154,10 +155,10 @@ public interface VlsDeviceTagRelationMapper extends BaseMapper<DeviceTagRelation
 	List<Map<String, Object>> getTagUsageStatistics();
 
 	/**
-	 * 根据多个标签查询设备（交集）
+	 * Query device ( )
 	 *
-	 * @param tagIds 标签ID列表
-	 * @return 设备ID列表
+	 * @param tagIds ID
+	 * @return deviceID
 	 */
 	@Select("<script>" +
 		"SELECT device_id " +
@@ -172,10 +173,10 @@ public interface VlsDeviceTagRelationMapper extends BaseMapper<DeviceTagRelation
 	List<Long> findDevicesByAllTags(@Param("tagIds") List<Long> tagIds);
 
 	/**
-	 * 根据多个标签查询设备（并集）
+	 * Query device ( )
 	 *
-	 * @param tagIds 标签ID列表
-	 * @return 设备ID列表
+	 * @param tagIds ID
+	 * @return deviceID
 	 */
 	@Select("<script>" +
 		"SELECT DISTINCT device_id " +
@@ -188,47 +189,47 @@ public interface VlsDeviceTagRelationMapper extends BaseMapper<DeviceTagRelation
 	List<Long> findDevicesByAnyTags(@Param("tagIds") List<Long> tagIds);
 
 	/**
-	 * 检查设备是否已有指定标签
+	 * devicewhether already
 	 *
-	 * @param deviceId 设备ID
-	 * @param tagId 标签ID
-	 * @return 数量
+	 * @param deviceId deviceID
+	 * @param tagId ID
+	 * @return
 	 */
 	@Select("SELECT COUNT(*) FROM vls_device_tag_relation WHERE device_id = #{deviceId} AND tag_id = #{tagId}")
 	int checkDeviceTagExists(@Param("deviceId") Long deviceId, @Param("tagId") Long tagId);
 
 	/**
-	 * 获取设备的标签ID列表
+	 * Get device ID
 	 *
-	 * @param deviceId 设备ID
-	 * @return 标签ID列表
+	 * @param deviceId deviceID
+	 * @return ID
 	 */
 	@Select("SELECT tag_id FROM vls_device_tag_relation WHERE device_id = #{deviceId}")
 	List<Long> selectTagIdsByDeviceId(@Param("deviceId") Long deviceId);
 
 	/**
-	 * 获取使用某个标签的设备数量
+	 * Get device
 	 *
-	 * @param tagId 标签ID
-	 * @return 设备数量
+	 * @param tagId ID
+	 * @return device
 	 */
 	@Select("SELECT COUNT(*) FROM vls_device_tag_relation WHERE tag_id = #{tagId}")
 	int countDevicesByTagId(@Param("tagId") Long tagId);
 
 	/**
-	 * 根据标签ID删除所有相关的设备标签关联
+	 * IDDelete all related device
 	 *
-	 * @param tagId 标签ID
-	 * @return 删除数量
+	 * @param tagId ID
+	 * @return Delete
 	 */
 	@Delete("DELETE FROM vls_device_tag_relation WHERE tag_id = #{tagId}")
 	int deleteByTagId(@Param("tagId") Long tagId);
 
 	/**
-	 * 根据标签ID获取设备标签关联列表（用于TagManagementServiceImpl兼容）
+	 * IDGet device ( TagManagementServiceImpl )
 	 *
-	 * @param tagId 标签ID
-	 * @return 设备标签关联列表
+	 * @param tagId ID
+	 * @return device
 	 */
 	@Select("SELECT " +
 		"dtr.id, dtr.device_id, dtr.tag_id, dtr.create_user, dtr.create_time " +

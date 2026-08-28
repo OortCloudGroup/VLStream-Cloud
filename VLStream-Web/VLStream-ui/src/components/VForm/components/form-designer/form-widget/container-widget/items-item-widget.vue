@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div
     v-bind="layoutProps"
@@ -298,7 +303,7 @@ export default {
 <style lang="scss" scoped>
   .grid-cell {
     min-height: 38px !important;
-    //margin: 6px 0;  /* 设置了margin，栅格列的offset、push、pull会失效！！ */
+    // margin: 6px 0; /* Set margin, offset、push、pull will ! ! */
     padding: 3px;
     outline: 3px solid #f9f9f9;
     position: relative;

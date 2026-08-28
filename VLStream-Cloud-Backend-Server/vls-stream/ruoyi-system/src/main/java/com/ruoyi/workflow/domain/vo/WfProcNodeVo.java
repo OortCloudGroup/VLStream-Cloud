@@ -17,7 +17,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 工作流节点元素视图对象
+ * nodeelement object
  *
  * @author KonBAI
  * @createTime 2022/9/11 22:04
@@ -26,60 +26,60 @@ import java.util.List;
 @ExcelIgnoreUnannotated
 public class WfProcNodeVo implements Serializable {
     /**
-     * 流程ID
+     * workflowID
      */
     private String procDefId;
     /**
-     * 活动ID
+     * ID
      */
     private String activityId;
     /**
-     * 活动名称
+     *
      */
     private String activityName;
     /**
-     * 活动类型
+     *
      */
     private String activityType;
     /**
-     * 活动耗时
+     *
      */
     private String duration;
     /**
-     * 执行人Id
+     * Execute Id
      */
     private String assigneeId;
     /**
-     * 执行人名称
+     * Execute
      */
     private String assigneeName;
 
     /**
-     * 存储同一活动ID下所有执行人名称和是否审批的列表
+     * ID all Execute and whether approval
 
      */
     private List<assigneeInfoVo> assigneeInfoList;
 
     /**
-     * 候选执行人
+     * Execute
      */
     private String candidate;
     /**
-     * 任务意见
+     * task
      */
     private List<Comment> commentList;
     /**
-     * 创建时间
+     * create time
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date createTime;
     /**
-     * 结束时间
+     * finish
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date endTime;
     /**
-     * 抄送人信息
+     * info
      */
     private List<SysUser> wfCopyUser;
     /**
@@ -91,7 +91,7 @@ public class WfProcNodeVo implements Serializable {
      */
     private String executionId;
     /**
-     * 任务id
+     * taskid
      */
     private String taskId;
 }

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,76 +18,76 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 标注图片信息表 服务类
+ * annotation info service
  *
  * @author Oort
  * @since 2025-12-23
  */
 public interface IVlsAnnotationImageService extends BaseService<AnnotationImage> {
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsAnnotationImage 查询参数
+	 * @param page parameter
+	 * @param vlsAnnotationImage Query parameter
 	 * @return IPage<VlsAnnotationImageVO>
 	 */
 	IPage<AnnotationImageVO> selectVlsAnnotationImagePage(IPage<AnnotationImageVO> page, AnnotationImageVO vlsAnnotationImage);
 
 	/**
-	 * 导出数据
+	 * Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsAnnotationImageExcel>
 	 */
 	List<VlsAnnotationImageExcel> exportVlsAnnotationImage(Wrapper<AnnotationImage> queryWrapper);
 
 	/**
-	 * 上传图片
+	 *
 	 */
 	List<AnnotationImage> uploadImages(MultipartFile[] files, Long annotationId);
 
 	/**
-	 * 根据数据集ID获取图片列表
+	 * datasetIDGet
 	 */
 	List<AnnotationImage> getImagesByDataset(Long annotationId);
 
 	/**
-	 * 根据ID获取图片详情
+	 * IDGet
 	 */
 	AnnotationImage getImageById(Long id);
 
 	/**
-	 * 更新图片信息
+	 * new info
 	 */
 	AnnotationImage updateImage(AnnotationImage image);
 
 	/**
-	 * 删除图片
+	 * Delete
 	 */
 	void deleteImage(Long id);
 
 	/**
-	 * 批量删除图片
+	 * Batch delete
 	 */
 	void batchDeleteImages(List<Long> ids);
 
 	/**
-	 * 获取数据集统计信息
+	 * Get dataset info
 	 */
 	Map<String, Object> getDatasetStats(Long datasetId);
 
 	/**
-	 * 保存图片信息到annotation_image表
+	 * info annotation_image
 	 */
 	boolean saveImage(AnnotationImage annotationImage);
 
 	/**
-	 * 批量保存图片信息到annotation_image表
+	 * info annotation_image
 	 */
 	boolean batchSaveImages(List<AnnotationImage> annotationImages);
 
 	/**
-	 * 根据标注项目ID获取图片列表
+	 * annotation item IDGet
 	 */
 	List<AnnotationImage> getImagesByAnnotationId(Long annotationId);
 

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -16,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * Flowable 全局监听器
+ * Flowable full listener
  *
  * @author konbai
  * @since 2023/3/8 22:45
@@ -28,7 +29,7 @@ public class GlobalEventListener extends AbstractFlowableEngineEventListener {
     private RuntimeService runtimeService;
 
     /**
-     * 流程结束监听器
+     * workflowfinishlistener
      */
     @Override
     protected void processCompleted(FlowableEngineEntityEvent event) {

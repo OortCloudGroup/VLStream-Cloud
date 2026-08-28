@@ -17,7 +17,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 工作流任务视图对象
+ * task object
  *
  * @author KonBAI
  * @createTime 2022/3/10 00:12
@@ -26,129 +26,129 @@ import java.util.List;
 @ExcelIgnoreUnannotated
 public class WfTaskVo implements Serializable {
     /**
-     * 任务编号
+     * task
      */
     private String taskId;
     /**
-     * 任务名称
+     * task
      */
     private String taskName;
     /**
-     * 任务Key
+     * taskKey
      */
     private String taskDefKey;
     /**
-     * 任务执行人Id
+     * taskExecute Id
      */
     private String assigneeId;
     /**
-     * 部门名称
+     * department name
      */
     @Deprecated
     private String deptName;
     /**
-     * 流程发起人部门名称
+     * workflow department name
      */
     private String startDeptName;
     /**
-     * 任务执行人名称
+     * taskExecute
      */
     private String assigneeName;
     /**
-     * 流程发起人Id
+     * workflow Id
      */
     private String startUserId;
     /**
-     * 流程发起人名称
+     * workflow
      */
     private String startUserName;
     /**
-     * 流程类型
+     * workflow
      */
     private String category;
     /**
-     * 流程分类名称
+     * workflow
      */
     private String categoryName;
     /**
-     * 流程变量信息
+     * workflow variableinfo
      */
     private Object procVars;
     /**
-     * 局部变量信息
+     * variableinfo
      */
     private Object taskLocalVars;
     /**
-     * 流程部署编号
+     * workflow
      */
     private String deployId;
     /**
-     * 流程ID
+     * workflowID
      */
     private String procDefId;
     /**
-     * 流程key
+     * workflowkey
      */
     private String procDefKey;
     /**
-     * 流程定义名称
+     * workflow definition
      */
     private String procDefName;
     /**
-     * 流程定义内置使用版本
+     * workflow definition
      */
     private int procDefVersion;
     /**
-     * 流程实例ID
+     * workflow instance ID
      */
     private String procInsId;
     /**
-     * 历史流程实例ID
+     * history workflow instance ID
      */
     private String hisProcInsId;
     /**
-     * 任务耗时
+     * task
      */
     private String duration;
     /**
-     * 任务意见
+     * task
      */
     private WfCommentDto comment;
     /**
-     * 任务意见
+     * task
      */
     private List<Comment> commentList;
     /**
-     * 候选执行人
+     * Execute
      */
     private String candidate;
     /**
-     * 任务创建时间
+     * taskcreate time
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date createTime;
     /**
-     * 任务完成时间
+     * task
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date finishTime;
 
     /**
-     * 流程状态
+     * workflow
      */
     private String processStatus;
 
     /**
-     * 流程实例创建时间
+     * workflow instancecreate time
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date proInsCreateTime;
     /**
-     * 工单id
+     * work orderid
      */
     private String workOrderId;
     /**
-     * 工单标题
+     * work order
      */
     private String workOrderName;
 }

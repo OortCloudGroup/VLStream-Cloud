@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -11,7 +12,7 @@ import javax.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
- * 摄像头申请驳回参数
+ * parameter
  */
 @Data
 public class CameraApplyRejectDTO {

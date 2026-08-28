@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 流程分类
+ * workflow
  *
  * @author KonBAI
  * @createTime 2022/3/10 00:12
@@ -45,7 +45,7 @@ public class WfCategoryController extends BaseController {
     private final IWfCategoryService categoryService;
 
     /**
-     * 查询流程分类列表
+     * Query workflow list
      */
     @SaCheckPermission("workflow:category:list")
     @GetMapping("/list")
@@ -53,7 +53,7 @@ public class WfCategoryController extends BaseController {
         return categoryService.queryPageList(category, pageQuery);
     }
     /**
-     * 查询全部的流程分类列表
+     * Query full workflow list
      */
     @SaCheckLogin
     @SaCheckPermission("workflow:category:listAll")
@@ -63,7 +63,7 @@ public class WfCategoryController extends BaseController {
     }
 
     /**
-     * 导出流程分类列表
+     * Export workflow
      */
     @SaCheckPermission("workflow:category:export")
     @Log(title = "流程分类", businessType = BusinessType.EXPORT)
@@ -74,8 +74,8 @@ public class WfCategoryController extends BaseController {
     }
 
     /**
-     * 获取流程分类详细信息
-     * @param categoryId 分类主键
+     * Get workflow info
+     * @param categoryId primary key
      */
     @SaCheckPermission("workflow:category:getInfo")
     @GetMapping("/{categoryId}")
@@ -84,7 +84,7 @@ public class WfCategoryController extends BaseController {
     }
 
     /**
-     * 新增流程分类
+     * Add workflow
      */
     @SaCheckPermission("workflow:category:add")
     @Log(title = "流程分类", businessType = BusinessType.INSERT)
@@ -98,7 +98,7 @@ public class WfCategoryController extends BaseController {
     }
 
     /**
-     * 修改流程分类
+     * Update workflow
      */
     @SaCheckPermission("workflow:category:edit")
     @Log(title = "流程分类", businessType = BusinessType.UPDATE)
@@ -112,8 +112,8 @@ public class WfCategoryController extends BaseController {
     }
 
     /**
-     * 删除流程分类
-     * @param categoryIds 分类主键串
+     * Delete workflow
+     * @param categoryIds primary key
      */
     @SaCheckPermission("workflow:category:remove")
     @Log(title = "流程分类" , businessType = BusinessType.DELETE)

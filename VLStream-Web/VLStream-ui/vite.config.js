@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
@@ -156,7 +161,7 @@ export default defineConfig(async ({ mode }) => {
         '/vlsDevice': backendProxy,
         '/video-record': backendProxy,
         '/api': backendProxy,
-        // WebRTC-streamer 仅通过开发服务器转发，浏览器不需要直接访问内网媒体端口。
+        // WebRTC-streamer service , need to .
         '/bus/webrtc-streamer-server': {
           target: webRtcTarget,
           changeOrigin: true,
@@ -174,7 +179,7 @@ export default defineConfig(async ({ mode }) => {
           changeOrigin: true,
           secure: false
         },
-        // 多租户顶部栏的应用列表与统一消息。
+        // and .
         '/bus/apaas-admin-platform': {
           target: platformTarget,
           changeOrigin: true,
@@ -190,19 +195,19 @@ export default defineConfig(async ({ mode }) => {
           changeOrigin: true,
           secure: false
         },
-        // OortCloud New API 账户、令牌和额度接口
+        // OortCloud New API 、 and interface
         '/bus/apaas-newapi': {
           target: 'https://workup-dev.myoumuamua.com:6433',
           changeOrigin: true,
           secure: false
         },
-        // Model Hub 头像上传 fastdfs
+        // Model Hub fastdfs
         '/bus/apaas-fastdfsservice': {
           target: 'https://workup-dev.myoumuamua.com:6433',
           changeOrigin: true,
           secure: false
         },
-        // AI 模型（我上传的模型）
+        // AI model ( model)
         '/bus/apaas-deployment-service': {
           target: 'https://workup-dev.myoumuamua.com:6433',
           changeOrigin: true,

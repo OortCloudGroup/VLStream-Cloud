@@ -29,10 +29,10 @@ import javax.validation.constraints.NotNull;
 import java.util.Arrays;
 
 /**
- * 对象存储配置
+ * object configuration
  *
  * @author Lion Li
- * @author 孤舟烟雨
+ * @author
  * @date 2021-08-13
  */
 @Validated
@@ -44,7 +44,7 @@ public class SysOssConfigController extends BaseController {
     private final ISysOssConfigService iSysOssConfigService;
 
     /**
-     * 查询对象存储配置列表
+     * Query object configuration list
      */
     @SaCheckPermission("system:oss:list")
     @GetMapping("/list")
@@ -53,9 +53,9 @@ public class SysOssConfigController extends BaseController {
     }
 
     /**
-     * 获取对象存储配置详细信息
+     * Get object configuration info
      *
-     * @param ossConfigId OSS配置ID
+     * @param ossConfigId OSSconfigurationID
      */
     @SaCheckPermission("system:oss:query")
     @GetMapping("/{ossConfigId}")
@@ -65,7 +65,7 @@ public class SysOssConfigController extends BaseController {
     }
 
     /**
-     * 新增对象存储配置
+     * Add object configuration
      */
     @SaCheckPermission("system:oss:add")
     @Log(title = "对象存储配置", businessType = BusinessType.INSERT)
@@ -76,7 +76,7 @@ public class SysOssConfigController extends BaseController {
     }
 
     /**
-     * 修改对象存储配置
+     * Update object configuration
      */
     @SaCheckPermission("system:oss:edit")
     @Log(title = "对象存储配置", businessType = BusinessType.UPDATE)
@@ -87,9 +87,9 @@ public class SysOssConfigController extends BaseController {
     }
 
     /**
-     * 删除对象存储配置
+     * Delete object configuration
      *
-     * @param ossConfigIds OSS配置ID串
+     * @param ossConfigIds OSSconfigurationID
      */
     @SaCheckPermission("system:oss:remove")
     @Log(title = "对象存储配置", businessType = BusinessType.DELETE)
@@ -100,7 +100,7 @@ public class SysOssConfigController extends BaseController {
     }
 
     /**
-     * 状态修改
+     * Update
      */
     @SaCheckPermission("system:oss:edit")
     @Log(title = "对象存储状态修改", businessType = BusinessType.UPDATE)

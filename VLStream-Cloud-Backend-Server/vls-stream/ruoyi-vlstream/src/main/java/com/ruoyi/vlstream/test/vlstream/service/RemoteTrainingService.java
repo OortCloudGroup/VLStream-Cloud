@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -26,7 +27,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * 远程训练服务类
+ * trainingservice
  */
 @Slf4j
 @Service
@@ -50,7 +51,7 @@ public class RemoteTrainingService {
 	private static final String DEFAULT_LOG_DIR = "logs";
 
 	/**
-	 * 启动远端YOLO训练（后台运行，日志落盘）
+	 * YOLOtraining ( after , log )
 	 */
 	public StartResult startTraining(String taskType,
 									 Long taskId,
@@ -156,7 +157,7 @@ public class RemoteTrainingService {
 	}
 
 	/**
-	 * 执行SSH命令，如果认证失败则使用默认配置的SSH账号重试一次。
+	 * Execute SSH , if failed configuration SSH .
 	 */
 	private SSHService.SSHExecutionResult executeWithFallback(RemoteServers server, String command) {
 		String host = server != null ? server.getServerIp() : sshProperties.getHost();
@@ -191,7 +192,7 @@ public class RemoteTrainingService {
 	}
 
 	/**
-	 * 处理训练完成后的模型文件
+	 * Process training after model
 	 */
 	public String processTrainingResult(Long taskId, RemoteServers server, String trainType, String taskName) {
 		try {
@@ -254,7 +255,7 @@ public class RemoteTrainingService {
 	}
 
 	/**
-	 * 获取训练进度
+	 * Get training
 	 */
 	public LogResult getTrainingLogs(Long taskId, String logPath, String trainType, String taskName, int lines) {
 		LogResult logResult = new LogResult();
@@ -687,7 +688,7 @@ public class RemoteTrainingService {
 	}
 
 	/**
-	 * 获取训练进度
+	 * Get training
 	 */
 	public TrainingProgress getProgress(Long taskId, String logPath) {
 		try {
@@ -770,7 +771,7 @@ public class RemoteTrainingService {
 	}
 
 	/**
-	 * 判断训练日志是否包含明确失败标志。
+	 * Check traininglogwhether failed .
 	 */
 	private boolean containsTrainingFailure(String normalizedLog) {
 		return normalizedLog.contains("training failed")
@@ -783,7 +784,7 @@ public class RemoteTrainingService {
 	}
 
 	/**
-	 * 提取日志最后一条非空内容作为失败原因。
+	 * log after non- null / empty to failed .
 	 */
 	private String resolveFailureMessage(String logContent) {
 		if (logContent == null || logContent.trim().isEmpty()) {
@@ -801,7 +802,7 @@ public class RemoteTrainingService {
 	@PostConstruct
 	public void initDefaultServer() {
 		try {
-			// 先尝试创建表（如果不存在）
+			// (if in )
 			try {
 				remoteServerMapper.createTableIfNotExists();
 				log.info("远程服务器配置表检查完成");
@@ -809,7 +810,7 @@ public class RemoteTrainingService {
 				log.warn("创建远程服务器配置表失败: {}", e.getMessage());
 			}
 
-			// 如果没有配置服务器，则添加默认服务器配置
+			// if configurationservice , service configuration
 			if (remoteServerMapper.count() == 0) {
 				RemoteServers server = new RemoteServers();
 				server.setServerName("YOLOv8训练服务器");
@@ -826,20 +827,20 @@ public class RemoteTrainingService {
 				log.info("远程服务器配置已存在，跳过初始化");
 			}
 		} catch (Exception e) {
-			// 不阻止应用启动，只记录警告
+			// , only record
 			log.warn("初始化默认服务器配置失败，跳过此步骤: {}", e.getMessage());
 		}
 	}
 
 	/**
-	 * 加密密码(实际实现中应使用更安全的加密方式)
+	 * ( in full )
 	 */
 	private String encryptPassword(String password) {
 		return Base64.getEncoder().encodeToString(password.getBytes());
 	}
 
 	/**
-	 * 解密密码
+	 *
 	 */
 	private String decryptPassword(String encryptedPassword) {
 		if (encryptedPassword == null) {
@@ -848,14 +849,14 @@ public class RemoteTrainingService {
 		try {
 			return new String(Base64.getDecoder().decode(encryptedPassword));
 		} catch (IllegalArgumentException e) {
-			// 如果不是Base64编码，则直接返回原始值，避免因格式问题导致认证失败
+			// if is Base64 , value , failed
 			log.warn("Remote server password is not Base64 encoded, using raw value.");
 			return encryptedPassword;
 		}
 	}
 
 	/**
-	 * 训练进度类
+	 * training
 	 */
 	@Data
 	public static class StartResult {
@@ -869,7 +870,7 @@ public class RemoteTrainingService {
 	}
 
 	/**
-	 * 训练进度类
+	 * training
 	 */
 	@Data
 	public static class LogResult {

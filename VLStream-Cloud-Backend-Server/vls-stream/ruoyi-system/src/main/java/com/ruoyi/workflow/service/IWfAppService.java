@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,40 +16,40 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 应用通用流程Service接口
+ * workflowServiceinterface
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-04
  */
 public interface IWfAppService extends IService<WfApp> {
 
     /**
-     * 查询应用通用流程
+     * Query workflow
      */
     WfAppVo queryById(String appId);
 
     /**
-     * 查询应用通用流程列表
+     * Query workflow list
      */
     List<WfAppVo> queryPageList(WfAppBo bo, PageQuery pageQuery);
 
     /**
-     * 查询应用通用流程列表
+     * Query workflow list
      */
     List<WfAppVo> queryList(WfAppBo bo);
 
     /**
-     * 新增应用通用流程
+     * Add workflow
      */
     WfApp insertByBo(WfAppBo bo);
 
     /**
-     * 修改应用通用流程
+     * Update workflow
      */
     Boolean updateByBo(WfAppBo bo);
 
     /**
-     * 校验并批量删除应用通用流程信息
+     * Validate Batch delete workflowinfo
      */
     Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid);
 }

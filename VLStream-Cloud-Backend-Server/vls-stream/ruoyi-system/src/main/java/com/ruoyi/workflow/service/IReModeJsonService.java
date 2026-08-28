@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,40 +17,40 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 流程图JSONService接口
+ * workflow JSONServiceinterface
  *
- * @author 雷超群
+ * @author
  * @date 2024-11-02
  */
 public interface IReModeJsonService extends IService<ReModelJson> {
 
     /**
-     * 查询流程图JSON
+     * Query workflow JSON
      */
     ReModelJsonVo queryById(String modelId);
 
     /**
-     * 查询流程图JSON列表
+     * Query workflow JSON list
      */
     TableDataInfo<ReModelJsonVo> queryPageList(ReModeJsonBo bo, PageQuery pageQuery);
 
     /**
-     * 查询流程图JSON列表
+     * Query workflow JSON list
      */
     List<ReModelJsonVo> queryList(ReModeJsonBo bo);
 
     /**
-     * 新增流程图JSON
+     * Add workflow JSON
      */
     Boolean insertByBo(ReModeJsonBo bo);
 
     /**
-     * 修改流程图JSON
+     * Update workflow JSON
      */
     Boolean updateByBo(ReModeJsonBo bo);
 
     /**
-     * 校验并批量删除流程图JSON信息
+     * Validate Batch delete workflow JSONinfo
      */
     Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid);
 }

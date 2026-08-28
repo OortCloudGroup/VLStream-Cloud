@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,7 +11,7 @@ import lombok.Data;
 import java.util.Date;
 
 /**
- * OSS对象存储视图对象 sys_oss
+ * OSSobject object sys_oss
  *
  * @author Lion Li
  */
@@ -20,42 +21,42 @@ public class SysOssVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 对象存储主键
+     * object primary key
      */
     private Long ossId;
 
     /**
-     * 文件名
+     *
      */
     private String fileName;
 
     /**
-     * 原名
+     *
      */
     private String originalName;
 
     /**
-     * 文件后缀名
+     * after
      */
     private String fileSuffix;
 
     /**
-     * URL地址
+     * URL
      */
     private String url;
 
     /**
-     * 创建时间
+     * create time
      */
     private Date createTime;
 
     /**
-     * 上传人
+     *
      */
     private String createBy;
 
     /**
-     * 服务商
+     * service
      */
     private String service;
 

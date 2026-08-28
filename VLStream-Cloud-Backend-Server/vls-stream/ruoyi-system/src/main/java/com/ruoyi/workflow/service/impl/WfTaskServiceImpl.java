@@ -99,7 +99,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     private String msgUrl;
 
 
-    // 消息推送
+    // Push
     public void sendMessage(boolean isPushMessage, String userIds) {
         if (isPushMessage) {
             List<String> idCards = new ArrayList<>();
@@ -114,7 +114,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 对接统一消息推送
+     * Push
      *
      * @return
      */
@@ -122,22 +122,22 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         if (isPushMessage) {
             OkHttpClient client = new OkHttpClient.Builder().build();
 
-            // 使用 FastJSON 构建请求体
+            // FastJSON Build
             String jsonBody = JSON.toJSONString(ApiHeaderUtil.createRequestBody(params));
 
-            // 创建 MediaType 和 RequestBody
+            // MediaType and RequestBody
             MediaType mediaType = MediaType.parse("application/json");
             RequestBody body = RequestBody.create(mediaType, jsonBody);
 
-            // 构建请求
+            // Build
             Request.Builder requestBuilder = new Request.Builder().url(msgUrl + "msg/v1/send").post(body);
 
-            // 遍历当前请求的所有头信息，并添加到新的请求中
+            // current all info, new in
             ApiHeaderUtil.transferHeaders(requestBuilder);
 
             Request request = requestBuilder.build();
 
-            // 执行请求并处理响应
+            // Execute Process
             try (Response response = client.newCall(request).execute()) {
                 System.out.println("Response Code: " + response.code());
                 System.out.println("Response Body: " + response.body().string());
@@ -148,9 +148,9 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     // /**
-    // * 完成任务
+    // * task
     // *
-    // * @param taskBo 请求实体参数
+    // * @param taskBo parameter
     // */
     // @Transactional(rollbackFor = Exception.class)
     // @Override
@@ -158,9 +158,9 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     // Task task =
     // taskService.createTaskQuery().taskId(taskBo.getTaskId()).singleResult();
     // if (Objects.isNull(task)) {
-    // throw new ServiceException("任务不存在");
+    // throw new ServiceException("task in ");
     // }
-    // // 获取 bpmn 模型
+    // // Get bpmn model
     // BpmnModel bpmnModel =
     // repositoryService.getBpmnModel(task.getProcessDefinitionId());
     // identityService.setAuthenticatedUserId(TaskUtils.getUserId());
@@ -175,7 +175,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     // .getComment());
     // taskService.setAssignee(taskBo.getTaskId(), TaskUtils.getUserId());
     // if (ObjectUtil.isNotEmpty(taskBo.getVariables())) {
-    // // 获取模型信息
+    // // Get modelinfo
     // String localScopeValue = ModelUtils.getUserTaskAttributeValue(bpmnModel,
     // task.getTaskDefinitionKey
     // (), ProcessConstants.PROCESS_FORM_LOCAL_SCOPE);
@@ -185,24 +185,24 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     // taskService.complete(taskBo.getTaskId());
     // }
     // }
-    // // 设置任务节点名称
+    // // Set tasknode
     // taskBo.setTaskName(task.getName());
-    // // 处理下一级审批人
+    // // Process approver
     // if (StringUtils.isNotBlank(taskBo.getNextUserIds())) {
     // this.assignORCandidateUserNextUsers(bpmnModel, taskBo.getProcInsId(),
     // taskBo.getNextUserIds(), taskBo
     // .isPushMessage());
     // }
-    // // 处理抄送用户
+    // // Process user
     // if (!copyService.makeCopy(taskBo)) {
-    // throw new RuntimeException("抄送任务失败");
+    // throw new RuntimeException(" taskfailed");
     // }
     // }
 
     /**
-     * 完成任务
+     * task
      *
-     * @param taskBo 请求实体参数
+     * @param taskBo parameter
      */
     @Transactional(rollbackFor = Exception.class)
     public void complete(WfTaskBo taskBo) {
@@ -217,10 +217,10 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
                 .processInstanceTenantId(user.getTenantId()).processInstanceId(task.getProcessInstanceId())
                 .singleResult();
         if (processInstance.isSuspended()) {
-            // 流程已挂起，禁止操作
+            // workflow already , operation
             throw new RuntimeException("流程实例已被挂起，无法继续操作");
         }
-        // 获取 bpmn 模型
+        // Get bpmn model
         BpmnModel bpmnModel = repositoryService.getBpmnModel(task.getProcessDefinitionId());
 
         if (user == null) {
@@ -230,19 +230,19 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         queryWrapper.eq(WorkOrder::getProcInsId, taskBo.getProcInsId());
         WorkOrder one = wfWorkOrderService.getOne(queryWrapper);
         runtimeService.setVariable(taskBo.getProcInsId(), "currentAssignee", user.getUserId());
-        // 获取是否需要消息推送
+        // Get whether need to Push
         boolean notifyAllSteps = (boolean) runtimeService.getVariable(task.getExecutionId(), "notifyAllSteps");
         if (ObjectUtil.isNotNull(runtimeService.getVariable(taskBo.getProcInsId(), "flowDirection"))) {
             if (StringUtils.isNotBlank(taskBo.getNextUserIds()) || ObjectUtil.isNotEmpty(taskBo.getCandidateUsers())
                     || ObjectUtil.isNotEmpty(taskBo.getCandidateGroups())) {
                 runtimeService.setVariable(taskBo.getProcInsId(), "nextUserIds", taskBo.getNextUserIds());
             } else {
-                // 判断是不是局领导提交
+                // Check if it is bureau leader
                 SysUser sysUser = sysUserMapper.selectUserById(user.getUserId());
                 SysDeptView sysDeptView = sysDeptMapper.selectVoById(sysUser.getDeptId());
-//                if (sysDeptView.getDeptId().equals(excludedUdid)) { // 属于局领导，直接结束流程
+// if (sysDeptView.getDeptId().equals(excludedUdid)) { // bureau leader, finishworkflow
 //                    runtimeService.setVariable(taskBo.getProcInsId(), "flowDirection", "end");
-//                } else { // 不属于局领导，获取所有领导并写入
+// } else { // bureau leader, Get all leader
                     List<SysUser> leaders = sysUserService.getLeaders(user.getUserId());
                     String join = leaders.stream().map(SysUser::getUserId).collect(Collectors.joining(","));
                     this.assignORCandidateUserNextUsers(bpmnModel, taskBo.getProcInsId(), join,
@@ -269,7 +269,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
             taskService.setAssignee(taskBo.getTaskId(), user.getUserId());
             // taskService.setAssignee(taskBo.getTaskId(), TaskUtils.getUserId());
             if (ObjectUtil.isNotEmpty(taskBo.getVariables())) {
-                // 获取模型信息
+                // Get modelinfo
                 String localScopeValue = ModelUtils.getUserTaskAttributeValue(bpmnModel, task.getTaskDefinitionKey(),
                         ProcessConstants.PROCESS_FORM_LOCAL_SCOPE);
                 boolean localScope = Convert.toBool(localScopeValue, false);
@@ -299,12 +299,12 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
             wfWorkOrderService.updateWorkOrderToPending(newTask, WorkOrderStatus.PROCESSING.getStatus(), null);
         }
 
-        // 设置任务节点名称
+        // Set tasknode
         taskBo.setTaskName(task.getName());
-        // 处理下一级审批人
+        // Process approver
         if (StringUtils.isNotBlank(taskBo.getNextUserIds()) || ObjectUtil.isNotEmpty(taskBo.getCandidateUsers())
-                || ObjectUtil.isNotEmpty(taskBo.getCandidateGroups())) { // 有指定审批人
-            // 防止用户在最后一个节点还设置下一个节点的审批人
+                || ObjectUtil.isNotEmpty(taskBo.getCandidateGroups())) { // approver
+            // user in after node Set node approver
             ProcessInstance processInstance2 = runtimeService.createProcessInstanceQuery()
                     .processInstanceId(taskBo.getProcInsId()).singleResult();
             if (processInstance2 == null) {
@@ -328,7 +328,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 拒绝任务
+     * task
      *
      * @param taskBo
      * @param user
@@ -336,7 +336,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void taskReject(WfTaskBo taskBo, SysUser user) {
-        // 当前任务 task
+        // current task task
         Task task = taskService.createTaskQuery().taskTenantId(user.getTenantId()).taskId(taskBo.getTaskId())
                 .singleResult();
         if (ObjectUtil.isNull(task)) {
@@ -345,45 +345,45 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         if (task.isSuspended()) {
             throw new RuntimeException("任务处于挂起状态");
         }
-        // 获取流程实例
+        // Get workflow instance
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
                 .processInstanceTenantId(user.getTenantId()).processInstanceId(taskBo.getProcInsId()).singleResult();
         if (processInstance == null) {
             throw new RuntimeException("流程实例不存在，请确认！");
         }
-        // 获取流程定义信息
+        // Get workflow definitioninfo
         ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionTenantId(user.getTenantId()).processDefinitionId(task.getProcessDefinitionId())
                 .singleResult();
 
         identityService.setAuthenticatedUserId(TaskUtils.getUserId());
-        // 添加审批意见
+        // approval
         taskService.addComment(taskBo.getTaskId(), taskBo.getProcInsId(), FlowComment.REJECT.getType(),
                 taskBo.getComment());
-        // 设置流程状态为已终结
+        // Set workflow to already
         runtimeService.setVariable(processInstance.getId(), ProcessConstants.PROCESS_STATUS_KEY,
                 ProcessStatus.TERMINATED.getStatus());
-        // 将拒绝节点的处理人信息存储到流程变量中
+        // node Process info workflow variable in
         runtimeService.setVariable(taskBo.getProcInsId(), "rejectAssignee", user.getUserId());
         runtimeService.setVariable(taskBo.getProcInsId(), "rejectTaskId", task.getId());
         runtimeService.setVariable(taskBo.getProcInsId(), "rejectTaskName", task.getName());
-        // 获取所有节点信息
+        // Get all nodeinfo
         BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinition.getId());
         EndEvent endEvent = ModelUtils.getEndEvent(bpmnModel);
-        // 获取发起人的用户ID
+        // Get user ID
         String initiatorId = (String) runtimeService.getVariable(processInstance.getId(), "initiator");
         boolean notifyAllSteps = (boolean) runtimeService.getVariable(task.getProcessInstanceId(), "notifyAllSteps");
         // sendMessage(notifyAllSteps, initiatorId);
 
-        // 调用统一消息推送方法
+        // Push method
 //        buildAndSendUnifiedMessage(task, initiatorId, notifyAllSteps, user);
 
-        // 终止流程
+        // workflow
         List<Execution> executions = runtimeService.createExecutionQuery().parentId(task.getProcessInstanceId()).list();
         List<String> executionIds = executions.stream().map(Execution::getId).collect(Collectors.toList());
         runtimeService.createChangeActivityStateBuilder().processInstanceId(task.getProcessInstanceId())
                 .moveExecutionsToSingleActivityId(executionIds, endEvent.getId()).changeState();
-        // 处理抄送用户
+        // Process user
         taskBo.setPushMessage(notifyAllSteps);
         if (!copyService.makeCopy(taskBo, user)) {
             throw new RuntimeException("抄送任务失败");
@@ -391,44 +391,44 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 构建 content 值
+     * Build content value
      *
-     * @param processName      流程名称
-     * @param processVariables 流程变量
-     * @return 动态生成的 content 值
+     * @param processName workflow
+     * @param processVariables workflow variable
+     * @return Generate content value
      */
     private String buildContent(String processName, Map<String, Object> processVariables, String receiveUserName) {
-        // 获取特殊流程的表单项 ID 映射
+        // Get workflow form item ID
         Map<String, String[]> processVariableIds = UnifiedMessageUtil.getProcessVariableIds();
 
-        // 判断是否是特殊流程
+        // Check whether is workflow
         if (processVariableIds.containsKey(processName)) {
-            // 获取当前流程的表单项 ID
+            // Get current workflow form item ID
             String[] variableIds = processVariableIds.get(processName);
             String typeVariableId = variableIds[0];
             String nameVariableId = variableIds[1];
 
-            // 获取类型和名称
+            // Get and
             String type = (String) processVariables.getOrDefault(typeVariableId, "默认类型");
             String name = (String) processVariables.getOrDefault(nameVariableId, "默认名称");
 
-            // 拼接 content 值
+            // content value
             return type + name + processName;
         } else {
-            // 非特殊流程，content 值为流程名称
+            // non- workflow, content value to workflow
             return receiveUserName + processName;
         }
     }
 
     /**
-     * 退回任务
+     * task
      *
-     * @param bo 请求实体参数
+     * @param bo parameter
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void taskReturn(WfTaskBo bo, SysUser sysUser) {
-        // 当前任务 task
+        // current task task
         Task task = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId()).taskId(bo.getTaskId())
                 .singleResult();
         if (ObjectUtil.isNull(task)) {
@@ -437,35 +437,35 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         if (task.isSuspended()) {
             throw new RuntimeException("任务处于挂起状态");
         }
-        // 获取流程定义信息
+        // Get workflow definitioninfo
         ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionTenantId(sysUser.getTenantId()).processDefinitionId(task.getProcessDefinitionId())
                 .singleResult();
-        // 获取流程模型信息
+        // Get workflowmodelinfo
         BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinition.getId());
-        // 获取当前任务节点元素
+        // Get current tasknodeelement
         FlowElement source = ModelUtils.getFlowElementById(bpmnModel, task.getTaskDefinitionKey());
-        // 获取跳转的节点元素
+        // Get nodeelement
         FlowElement target = ModelUtils.getFlowElementById(bpmnModel, bo.getTargetKey());
-        // 从当前节点向前扫描，判断当前节点与目标节点是否属于串行，若目标节点是在并行网关上或非同一路线上，不可跳转
+        // from current node before , Check current node and nodewhether , node is in non- ,
         boolean isSequential = ModelUtils.isSequentialReachable(source, target, new HashSet<>());
         if (!isSequential) {
             throw new RuntimeException("当前节点相对于目标节点，不属于串行关系，无法回退");
         }
 
-        // 获取所有正常进行的任务节点 Key，这些任务不能直接使用，需要找出其中需要撤回的任务
+        // Get all tasknode Key, task can , need to in need to task
         List<Task> runTaskList = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId())
                 .processInstanceId(task.getProcessInstanceId()).list();
         List<String> runTaskKeyList = new ArrayList<>();
         runTaskList.forEach(item -> runTaskKeyList.add(item.getTaskDefinitionKey()));
-        // 需退回任务列表
+        // task
         List<String> currentIds = new ArrayList<>();
-        // 通过父级网关的出口连线，结合 runTaskList 比对，获取需要撤回的任务
+        // , runTaskList , Get need to task
         List<UserTask> currentUserTaskList = FlowableUtils.iteratorFindChildUserTasks(target, runTaskKeyList, null,
                 null);
         currentUserTaskList.forEach(item -> currentIds.add(item.getId()));
 
-        // 循环获取那些需要被撤回的节点的ID，用来设置驳回原因
+        // loopGet need to node ID, Set
         List<String> currentTaskIds = new ArrayList<>();
         currentIds.forEach(currentId -> runTaskList.forEach(runTask -> {
             if (currentId.equals(runTask.getTaskDefinitionKey())) {
@@ -473,14 +473,14 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
             }
         }));
         identityService.setAuthenticatedUserId(TaskUtils.getUserId());
-        // 设置回退意见
+        // Set
         for (String currentTaskId : currentTaskIds) {
             taskService.addComment(currentTaskId, task.getProcessInstanceId(), FlowComment.REBACK.getType(),
                     bo.getComment());
         }
 
         try {
-            // 1 对 1 或 多 对 1 情况，currentIds 当前要跳转的节点列表(1或多)，targetKey 跳转到的节点(1)
+            // 1 1 1 , currentIds current need to node (1 ), targetKey node(1)
             runtimeService.createChangeActivityStateBuilder().processInstanceId(task.getProcessInstanceId())
                     .moveActivityIdsToSingleActivityId(currentIds, bo.getTargetKey()).changeState();
         } catch (FlowableObjectNotFoundException e) {
@@ -488,24 +488,24 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         } catch (FlowableException e) {
             throw new RuntimeException("无法取消或开始活动");
         }
-        // 设置任务节点名称
+        // Set tasknode
         bo.setTaskName(task.getName());
         boolean notifyAllSteps = (boolean) runtimeService.getVariable(task.getProcessInstanceId(), "notifyAllSteps");
         bo.setPushMessage(notifyAllSteps);
-        // 处理抄送用户
+        // Process user
         if (!copyService.makeCopy(bo, sysUser)) {
             throw new RuntimeException("抄送任务失败");
         }
-        // 获取目标节点的任务办理人ID
+        // Get node taskassigneeID
         Task targetTask = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId())
                 .processInstanceId(task.getProcessInstanceId()).taskDefinitionKey(bo.getTargetKey()).singleResult();
-        // 1. 更新工单状态
+        // 1. new work order
         wfWorkOrderService.updateWorkOrderToPending(targetTask, WorkOrderStatus.RETURNED.getStatus(), null);
         if (targetTask != null) {
             String targetAssignee = targetTask.getAssignee();
             // sendMessage(notifyAllSteps, targetAssignee);
 
-            // 调用统一消息推送方法
+            // Push method
 //            buildAndSendUnifiedMessage(task, targetAssignee, notifyAllSteps, sysUser);
         } else {
             throw new RuntimeException("未找到目标节点的任务");
@@ -513,7 +513,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 获取所有可回退的节点
+     * Get all node
      *
      * @param bo
      * @return
@@ -522,16 +522,16 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     @Override
     public List<FlowElement> findReturnTaskList(WfTaskBo bo) {
         SysUser user = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
-        // 当前任务 task
+        // current task task
         Task task = taskService.createTaskQuery().taskTenantId(user.getTenantId()).taskId(bo.getTaskId())
                 .singleResult();
-        // 获取流程定义信息
+        // Get workflow definitioninfo
         ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionTenantId(user.getTenantId())
                 .processDefinitionId(task.getProcessDefinitionId()).singleResult();
-        // 获取流程模型信息
+        // Get workflowmodelinfo
         BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinition.getId());
-        // 查询历史节点实例
+        // Query history nodeinstance
         List<HistoricActivityInstance> activityInstanceList = historyService.createHistoricActivityInstanceQuery()
                 .processInstanceId(task.getProcessInstanceId())
                 .activityType(BpmnXMLConstants.ELEMENT_TASK_USER)
@@ -544,7 +544,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
                         task.getTaskDefinitionKey()))
                 .distinct()
                 .collect(Collectors.toList());
-        // 获取当前任务节点元素
+        // Get current tasknodeelement
         FlowElement source = ModelUtils.getFlowElementById(bpmnModel, task.getTaskDefinitionKey());
         List<FlowElement> elementList = new ArrayList<>();
         for (String activityId : activityIdList) {
@@ -558,22 +558,22 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 删除任务
+     * Delete task
      *
-     * @param bo 请求实体参数
+     * @param bo parameter
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void deleteTask(WfTaskBo bo) {
-        // todo 待确认删除任务是物理删除任务 还是逻辑删除，让这个任务直接通过？
+        // todo Delete task is Delete task is Delete , task ?
         identityService.setAuthenticatedUserId(TaskUtils.getUserId());
         taskService.deleteTask(bo.getTaskId(), bo.getComment());
     }
 
     /**
-     * 认领/签收任务
+     * / task
      *
-     * @param taskBo 请求实体参数
+     * @param taskBo parameter
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -589,9 +589,9 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 取消认领/签收任务
+     * / task
      *
-     * @param bo 请求实体参数
+     * @param bo parameter
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -604,18 +604,18 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     // /**
-    // * 委派任务
+    // * task
     // *
-    // * @param bo 请求实体参数
+    // * @param bo parameter
     // */
     // @Override
     // @Transactional(rollbackFor = Exception.class)
     // public void delegateTask(WfTaskBo bo) {
-    // // 当前任务 task
+    // // current task task
     // Task task =
     // taskService.createTaskQuery().taskId(bo.getTaskId()).singleResult();
     // if (ObjectUtil.isEmpty(task)) {
-    // throw new ServiceException("获取任务失败！");
+    // throw new ServiceException("Get taskfailed! ");
     // }
     // StringBuilder commentBuilder = new StringBuilder(LoginHelper.getNickName())
     // .append("->");
@@ -629,32 +629,32 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     // commentBuilder.append(": ").append(bo.getComment());
     // }
     // identityService.setAuthenticatedUserId(TaskUtils.getUserId());
-    // // 添加审批意见
+    // // approval
     // taskService.addComment(bo.getTaskId(), task.getProcessInstanceId(),
     // FlowComment.DELEGATE.getType(),
     // commentBuilder.toString());
-    // // 设置办理人为当前登录人
+    // // Set assignee to current
     // taskService.setOwner(bo.getTaskId(), TaskUtils.getUserId());
-    // // 执行委派
+    // // Execute
     // taskService.delegateTask(bo.getTaskId(), bo.getUserId());
-    // // 设置任务节点名称
+    // // Set tasknode
     // bo.setTaskName(task.getName());
-    // // 处理抄送用户
+    // // Process user
     // if (!copyService.makeCopy(bo)) {
-    // throw new RuntimeException("抄送任务失败");
+    // throw new RuntimeException(" taskfailed");
     // }
     // }
 
     /**
-     * 委派任务
+     * task
      *
-     * @param bo 请求实体参数
+     * @param bo parameter
      */
     @Transactional(rollbackFor = Exception.class)
     public void delegateTask(WfTaskBo bo) {
         String token = AuthorizationInterceptor.getToken();
         SysUser sysUser = getSysUser(token);
-        // 当前任务 task
+        // current task task
         Task task = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId()).taskId(bo.getTaskId())
                 .singleResult();
         if (ObjectUtil.isEmpty(task)) {
@@ -673,20 +673,20 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
             commentBuilder.append(": ").append(bo.getComment());
         }
         identityService.setAuthenticatedUserId(TaskUtils.getUserId());
-        // 添加审批意见
+        // approval
         taskService.addComment(bo.getTaskId(), task.getProcessInstanceId(), FlowComment.DELEGATE.getType(),
                 commentBuilder.toString());
-        // 设置办理人为当前登录人
+        // Set assignee to current
         taskService.setOwner(bo.getTaskId(), TaskUtils.getUserId());
-        // 执行委派
+        // Execute
         taskService.delegateTask(bo.getTaskId(), bo.getUserId());
-        // 设置任务节点名称
+        // Set tasknode
         bo.setTaskName(task.getName());
         boolean notifyAllSteps = (boolean) runtimeService.getVariable(task.getExecutionId(), "notifyAllSteps");
         // sendMessage(notifyAllSteps, bo.getUserId());
-        // 调用统一消息推送方法
+        // Push method
 //        buildAndSendUnifiedMessage(task, bo.getUserId(), notifyAllSteps, sysUser);
-        // 处理抄送用户
+        // Process user
         bo.setPushMessage(notifyAllSteps);
         if (!copyService.makeCopy(bo, sysUser)) {
             throw new RuntimeException("抄送任务失败");
@@ -694,16 +694,16 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 转办任务
+     * task
      *
-     * @param bo 请求实体参数
+     * @param bo parameter
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void transferTask(WfTaskBo bo) {
         String token = AuthorizationInterceptor.getToken();
         SysUser sysUser = getSysUser(token);
-        // 当前任务 task
+        // current task task
         Task task = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId()).taskId(bo.getTaskId())
                 .singleResult();
         if (ObjectUtil.isEmpty(task)) {
@@ -720,43 +720,43 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         if (StringUtils.isNotBlank(bo.getComment())) {
             commentBuilder.append(": ").append(bo.getComment());
         }
-        // 1. 更新工单状态
+        // 1. new work order
         identityService.setAuthenticatedUserId(TaskUtils.getUserId());
-        // 添加审批意见
+        // approval
         taskService.addComment(bo.getTaskId(), task.getProcessInstanceId(), FlowComment.TRANSFER.getType(),
                 commentBuilder.toString());
-        // 设置拥有者为当前登录人
+        // Set to current
         taskService.setOwner(bo.getTaskId(), TaskUtils.getUserId());
-        // 转办任务
+        // task
         taskService.setAssignee(bo.getTaskId(), bo.getUserId());
         wfWorkOrderService.updateWorkOrderToPending(task, WorkOrderStatus.REFERRED.getStatus(), sysUser.getUserId());
-        // 设置任务节点名称
+        // Set tasknode
         bo.setTaskName(task.getName());
         boolean notifyAllSteps = (boolean) runtimeService.getVariable(task.getExecutionId(), "notifyAllSteps");
         // sendMessage(notifyAllSteps, bo.getUserId());
         bo.setPushMessage(notifyAllSteps);
 
-        // 调用统一消息推送方法
+        // Push method
 //        buildAndSendUnifiedMessage(task, bo.getUserId(), notifyAllSteps, sysUser);
-        // 处理抄送用户
+        // Process user
         if (!copyService.makeCopy(bo, sysUser)) {
             throw new RuntimeException("抄送任务失败");
         }
     }
     //
     // /**
-    // * 转办任务
+    // * task
     // *
-    // * @param bo 请求实体参数
+    // * @param bo parameter
     // */
     // @Override
     // @Transactional(rollbackFor = Exception.class)
     // public void transferTask(WfTaskBo bo) {
-    // // 当前任务 task
+    // // current task task
     // Task task =
     // taskService.createTaskQuery().taskId(bo.getTaskId()).singleResult();
     // if (ObjectUtil.isEmpty(task)) {
-    // throw new ServiceException("获取任务失败！");
+    // throw new ServiceException("Get taskfailed! ");
     // }
     // StringBuilder commentBuilder = new StringBuilder(LoginHelper.getNickName())
     // .append("->");
@@ -771,24 +771,24 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     // commentBuilder.append(": ").append(bo.getComment());
     // }
     // identityService.setAuthenticatedUserId(TaskUtils.getUserId());
-    // // 添加审批意见
+    // // approval
     // taskService.addComment(bo.getTaskId(), task.getProcessInstanceId(),
     // FlowComment.TRANSFER.getType(),
     // commentBuilder.toString());
-    // // 设置拥有者为当前登录人
+    // // Set to current
     // taskService.setOwner(bo.getTaskId(), TaskUtils.getUserId());
-    // // 转办任务
+    // // task
     // taskService.setAssignee(bo.getTaskId(), bo.getUserId());
-    // // 设置任务节点名称
+    // // Set tasknode
     // bo.setTaskName(task.getName());
-    // // 处理抄送用户
+    // // Process user
     // if (!copyService.makeCopy(bo)) {
-    // throw new RuntimeException("抄送任务失败");
+    // throw new RuntimeException(" taskfailed");
     // }
     // }
 
     /**
-     * 取消申请
+     *
      *
      * @param bo
      * @return
@@ -814,7 +814,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
                 // taskService.addComment(task.getId(), processInstance.getProcessInstanceId(),
                 // FlowComment.STOP
                 // .getType(),
-                // StringUtils.isBlank(flowTaskVo.getComment()) ? "取消申请" :
+                // StringUtils.isBlank(flowTaskVo.getComment()) ? " " :
                 // flowTaskVo.getComment());
                 runtimeService.setVariable(processInstance.getId(), ProcessConstants.PROCESS_STATUS_KEY,
                         ProcessStatus.CANCELED.getStatus());
@@ -822,18 +822,18 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
                     taskService.addComment(task.getId(), processInstance.getProcessInstanceId(),
                             FlowComment.STOP.getType(), "取消流程");
                 }
-                // 1. 更新工单状态
+                // 1. new work order
                 wfWorkOrderService.updateWorkOrderToPending(
                         taskService.createTaskQuery().taskTenantId(sysUser.getTenantId())
                                 .processInstanceId(bo.getProcInsId()).singleResult(),
                         WorkOrderStatus.CLOSED.getStatus(), null);
-                // 获取当前流程最后一个节点
+                // Get current workflow after node
                 String endId = endNodes.get(0).getId();
                 List<Execution> executions = runtimeService.createExecutionQuery()
                         .parentId(processInstance.getProcessInstanceId()).list();
                 List<String> executionIds = new ArrayList<>();
                 executions.forEach(execution -> executionIds.add(execution.getId()));
-                // 变更流程为已结束状态
+                // workflow to already finish
                 runtimeService.createChangeActivityStateBuilder()
                         .moveExecutionsToSingleActivityId(executionIds, endId).changeState();
             }
@@ -841,9 +841,9 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 撤回流程
+     * workflow
      *
-     * @param taskBo 请求实体参数
+     * @param taskBo parameter
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -851,7 +851,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         SysUser sysUser = getSysUser(AuthorizationInterceptor.getToken());
         String procInsId = taskBo.getProcInsId();
         String taskId = taskBo.getTaskId();
-        // 校验流程是否结束
+        // Validate workflowwhether finish
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
                 .processInstanceTenantId(sysUser.getTenantId())
                 .processInstanceId(procInsId)
@@ -860,7 +860,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         if (ObjectUtil.isNull(processInstance)) {
             throw new RuntimeException("流程已结束或已挂起，无法执行撤回操作");
         }
-        // 获取待撤回任务实例
+        // Get taskinstance
         HistoricTaskInstance currTaskIns = historyService.createHistoricTaskInstanceQuery()
                 .taskId(taskId)
                 .taskAssignee(TaskUtils.getUserId())
@@ -868,34 +868,34 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         if (ObjectUtil.isNull(currTaskIns)) {
             throw new RuntimeException("当前任务不存在，无法执行撤回操作");
         }
-        // 获取 bpmn 模型
+        // Get bpmn model
         BpmnModel bpmnModel = repositoryService.getBpmnModel(currTaskIns.getProcessDefinitionId());
         UserTask currUserTask = ModelUtils.getUserTaskByKey(bpmnModel, currTaskIns.getTaskDefinitionKey());
-        // 查找下一级用户任务列表
+        // find usertask
         List<UserTask> nextUserTaskList = ModelUtils.findNextUserTasks(currUserTask);
         List<String> nextUserTaskKeys = nextUserTaskList.stream().map(UserTask::getId).collect(Collectors.toList());
 
-        // 获取当前节点之后已完成的流程历史节点
+        // Get current node after already workflowhistory node
         List<HistoricTaskInstance> finishedTaskInsList = historyService.createHistoricTaskInstanceQuery()
                 .processInstanceId(procInsId)
                 .taskCreatedAfter(currTaskIns.getEndTime())
                 .finished()
                 .list();
         for (HistoricTaskInstance finishedTaskInstance : finishedTaskInsList) {
-            // 检查已完成流程历史节点是否存在下一级中
+            // already workflowhistory nodewhether in in
             if (CollUtil.contains(nextUserTaskKeys, finishedTaskInstance.getTaskDefinitionKey())) {
                 throw new RuntimeException("下一流程已处理，无法执行撤回操作");
             }
         }
-        // 获取所有激活的任务节点，找到需要撤回的任务
+        // Get all tasknode, need to task
         List<Task> activateTaskList = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId())
                 .processInstanceId(procInsId).list();
         List<String> revokeExecutionIds = new ArrayList<>();
         identityService.setAuthenticatedUserId(TaskUtils.getUserId());
         for (Task task : activateTaskList) {
-            // 检查激活的任务节点是否存在下一级中，如果存在，则加入到需要撤回的节点
+            // tasknodewhether in in , if in , need to node
             if (CollUtil.contains(nextUserTaskKeys, task.getTaskDefinitionKey())) {
-                // 添加撤回审批信息
+                // approvalinfo
                 taskService.setAssignee(task.getId(), TaskUtils.getUserId());
                 taskService.addComment(task.getId(), task.getProcessInstanceId(), FlowComment.REVOKE.getType(),
                         LoginHelper.getUsername() + "撤回流程审批");
@@ -915,7 +915,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 获取流程过程图
+     * Get workflow
      *
      * @param processId
      * @return
@@ -924,43 +924,43 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     public InputStream diagram(String processId) {
         SysUser sysUser = getSysUser(AuthorizationInterceptor.getToken());
         String processDefinitionId;
-        // 获取当前的流程实例
+        // Get current workflow instance
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
                 .processInstanceTenantId(sysUser.getTenantId()).processInstanceId(processId).singleResult();
-        // 如果流程已经结束，则得到结束节点
+        // if workflow already finish, finishnode
         if (Objects.isNull(processInstance)) {
             HistoricProcessInstance pi = historyService.createHistoricProcessInstanceQuery()
                     .processInstanceTenantId(sysUser.getTenantId())
                     .processInstanceId(processId).singleResult();
             processDefinitionId = pi.getProcessDefinitionId();
-        } else {// 如果流程没有结束，则取当前活动节点
-            // 根据流程实例ID获得当前处于活动状态的ActivityId合集
+        } else {// if workflow finish, current node
+            // workflow instance ID current ActivityId
             ProcessInstance pi = runtimeService.createProcessInstanceQuery()
                     .processInstanceTenantId(sysUser.getTenantId()).processInstanceId(processId).singleResult();
             processDefinitionId = pi.getProcessDefinitionId();
         }
 
-        // 获得活动的节点
+        // node
         List<HistoricActivityInstance> highLightedFlowList = historyService.createHistoricActivityInstanceQuery()
                 .processInstanceId(processId).orderByHistoricActivityInstanceStartTime().asc().list();
 
         List<String> highLightedFlows = new ArrayList<>();
         List<String> highLightedNodes = new ArrayList<>();
-        // 高亮线
+        //
         for (HistoricActivityInstance tempActivity : highLightedFlowList) {
             if ("sequenceFlow".equals(tempActivity.getActivityType())) {
-                // 高亮线
+                //
                 highLightedFlows.add(tempActivity.getActivityId());
             } else {
-                // 高亮节点
+                // node
                 highLightedNodes.add(tempActivity.getActivityId());
             }
         }
 
-        // 获取流程图
+        // Get workflow
         BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
         ProcessEngineConfiguration configuration = processEngine.getProcessEngineConfiguration();
-        // 获取自定义图片生成器
+        // Get Custom Generate
         ProcessDiagramGenerator diagramGenerator = new CustomProcessDiagramGenerator();
         return diagramGenerator.generateDiagram(bpmnModel, "png", highLightedNodes, highLightedFlows,
                 configuration.getActivityFontName(),
@@ -970,10 +970,10 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 获取流程变量
+     * Get workflow variable
      *
-     * @param taskId 任务ID
-     * @return 流程变量
+     * @param taskId taskID
+     * @return workflow variable
      */
     @Override
     public Map<String, Object> getProcessVariables(String taskId) {
@@ -989,15 +989,15 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     // /**
-    // * 启动第一个任务
+    // * task
     // *
-    // * @param processInstance 流程实例
-    // * @param variables 流程参数
+    // * @param processInstance workflow instance
+    // * @param variables workflowparameter
     // */
     // @Override
     // public void startFirstTask(ProcessInstance processInstance, Map<String,
     // Object> variables) {
-    // // 若第一个用户任务为发起人，则自动完成任务
+    // // usertask to , task
     // List<Task> tasks = taskService.createTaskQuery().
     // taskTenantId(sysUser.getTenantId()).
     // processInstanceId(processInstance.getProcessInstanceId()).list();
@@ -1008,10 +1008,10 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     // if (StrUtil.equals(task.getAssignee(), userIdStr)) {
     // taskService.addComment(task.getId(), processInstance.getProcessInstanceId(),
     // FlowComment.NORMAL
-    // .getType(), LoginHelper.getNickName() + "发起流程申请");
+    // .getType(), LoginHelper.getNickName() + " workflow ");
     // taskService.addComment(task.getId(), processInstance.getProcessInstanceId(),
     // FlowComment.NORMAL
-    // .getType(), LoginHelper.getNickName() + "发起流程申请");
+    // .getType(), LoginHelper.getNickName() + " workflow ");
     // taskService.complete(task.getId(), variables);
     // }
     // }
@@ -1019,14 +1019,14 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     // }
 
     /**
-     * 启动第一个任务
+     * task
      *
-     * @param processInstance 流程实例
-     * @param variables       流程参数
+     * @param processInstance workflow instance
+     * @param variables workflowparameter
      */
     @Override
     public void startFirstTask(ProcessInstance processInstance, Map<String, Object> variables, SysUser sysUser) {
-        // 若第一个用户任务为发起人，则自动完成任务
+        // usertask to , task
         List<Task> tasks = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId())
                 .processInstanceId(processInstance.getProcessInstanceId()).list();
         if (CollUtil.isNotEmpty(tasks)) {
@@ -1035,7 +1035,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
             for (Task task : tasks) {
                 BpmnModel model = repositoryService.getBpmnModel(task.getProcessDefinitionId());
                 log.info("==========model:{}", ModelUtils.getBpmnXmlStr(model));
-                // 判断当前节点的审批人是否是发起人
+                // Check current node approverwhether is
                 boolean a = sysUser.getUserId().equals(task.getAssignee());
                 if (StrUtil.equals(task.getAssignee(), userIdStr)) {
                     if (sysUser != null) {
@@ -1043,7 +1043,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
                                 FlowComment.NORMAL.getType(), sysUser.getUserName() + "发起流程申请");
                     }
                     taskService.complete(task.getId(), variables);
-                    // 完成后立刻查询
+                    // after Query
                     List<Task> nextTasks = taskService.createTaskQuery()
                             .processInstanceId(processInstance.getId())
                             .active()
@@ -1052,10 +1052,10 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
                     nextTasks.forEach(t -> System.out
                             .println("taskId=" + t.getId() + ", taskDefKey=" + t.getTaskDefinitionKey()));
 
-                    // 获取最新节点
+                    // Get new node
                     List<Task> newTaskList = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId())
                             .processInstanceId(processInstance.getId()).active().list();
-                    // 当前节点的审批人是发起人，则将页面上指定的审批人传入新的节点
+                    // current node approver is , page approver new node
                     newTaskList.stream().forEach(newTask -> {
                         if (a) {
                             String nextUserIds = (String) variables.get("nextUserIds");
@@ -1063,12 +1063,12 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
                                 String[] userIdArray = nextUserIds.split(",");
                                 List<String> candidateUserIds = Arrays.asList(userIdArray);
                                 for (String userId : candidateUserIds) {
-                                    // 置空审批人，防止待签查不到流程
+                                    // null / empty approver, workflow
                                     taskService.setAssignee(newTask.getId(), null);
                                     taskService.addCandidateUser(newTask.getId(), userId);
                                 }
                             }
-                            // 腾讯需要，设置办理人
+                            // need to , Set assignee
                             String nextAssignees = (String) variables.get("nextAssignee");
                             if (StringUtils.isNotBlank(nextAssignees)) {
                                 String[] userIdArray = nextAssignees.split(",");
@@ -1084,7 +1084,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
                         // variables.get
                         // ("isPushNotification");
                         // sendMessage(notifyAllSteps, newtask.getAssignee());
-                        // 调用统一消息推送方法
+                        // Push method
 //                        buildAndSendUnifiedMessage(newTask, newTask.getAssignee(), notifyAllSteps, sysUser);
                     });
                 }
@@ -1093,19 +1093,19 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 指派下一任务审批人或设置候选审批人
+     * taskapprover Set approver
      *
-     * @param bpmnModel      BPMN模型
-     * @param processInsId   流程实例ID
-     * @param userIds        直接指派的用户ID列表（逗号分隔）
-     * @param candidateUsers 候选用户ID列表（若不为空，则优先设置候选用户）
-     * @param isPushMessage  是否发送通知
-     * @param sysUser        当前用户（用于租户隔离）
+     * @param bpmnModel BPMNmodel
+     * @param processInsId workflow instance ID
+     * @param userIds user ID ( )
+     * @param candidateUsers user ID ( is empty, Set user)
+     * @param isPushMessage whether notification
+     * @param sysUser current user ( )
      */
     private void assignORCandidateUserNextUsers(BpmnModel bpmnModel, String processInsId, String userIds,
             List<String> candidateUsers, List<String> candidateGroups,
             boolean isPushMessage, SysUser sysUser) {
-        // 1. 查询当前任务列表
+        // 1. Query current task list
         List<Task> tasks = taskService.createTaskQuery()
                 .taskTenantId(sysUser.getTenantId())
                 .processInstanceId(processInsId)
@@ -1114,7 +1114,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
             return;
         }
 
-        // 2. 处理候选用户逻辑（优先级高于直接指派）
+        // 2. Process user ( )
         if (CollUtil.isNotEmpty(candidateUsers)) {
             handleCandidateUsers(bpmnModel, tasks, candidateUsers);
         } else if (CollUtil.isNotEmpty(candidateGroups)) {
@@ -1124,7 +1124,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         }
 
         // if (CollUtil.isEmpty(candidateGroups)) {
-        // // 3. 发送通知
+        // // 3. notification
         // Task latestTask = taskService.createTaskQuery()
         // .taskTenantId(sysUser.getTenantId())
         // .processInstanceId(processInsId)
@@ -1136,18 +1136,18 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 处理候选用户设置
+     * Process userSet
      */
     private void handleCandidateUsers(BpmnModel bpmnModel, List<Task> tasks, List<String> candidateUsers) {
         Iterator<Task> iterator = tasks.iterator();
-        // 1. 更新工单状态为待接单
+        // 1. new work order to
         wfWorkOrderService.updateWorkOrderToPending(tasks.get(0), WorkOrderStatus.PENDING_ORDERS.getStatus(), null);
 
         while (iterator.hasNext()) {
             Task task = iterator.next();
             String taskDefKey = task.getTaskDefinitionKey();
 
-            // 非多实例任务：直接添加候选用户
+            // non- instancetask: user
             if (!ModelUtils.isMultiInstance(bpmnModel, taskDefKey)) {
                 taskService.setAssignee(task.getId(), null);
                 candidateUsers.forEach(userId -> taskService.addCandidateUser(task.getId(), userId));
@@ -1155,11 +1155,11 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
             }
         }
 
-        // 多实例任务：批量添加候选用户实例
+        // instancetask: userinstance
         if (CollUtil.isNotEmpty(tasks)) {
             tasks.forEach(task -> {
                 Map<String, Object> variables = new HashMap<>();
-                variables.put(ProcessConstants.USER_TYPE_USERS, candidateUsers); // 批量传递用户集合
+                variables.put(ProcessConstants.USER_TYPE_USERS, candidateUsers); // usercollection
                 runtimeService.addMultiInstanceExecution(
                         task.getTaskDefinitionKey(),
                         task.getProcessInstanceId(),
@@ -1169,7 +1169,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 处理直接指派逻辑（原逻辑改造）
+     * Process ( )
      */
     private void handleDirectAssignment(BpmnModel bpmnModel, List<Task> tasks, String userIds) {
         Queue<String> assignIds = CollUtil.newLinkedList(userIds.split(","));
@@ -1177,7 +1177,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
             tasks.forEach(task -> taskService.setAssignee(task.getId(), assignIds.poll()));
             return;
         }
-        // 1. 更新工单状态为处理中
+        // 1. new work order to Process in
         wfWorkOrderService.updateWorkOrderToPending(tasks.get(0), WorkOrderStatus.PROCESSING.getStatus(), null);
 
         Iterator<Task> iterator = tasks.iterator();
@@ -1208,20 +1208,20 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 设置下一任务的候选审批组（部门）
+     * Set task approval (department)
      *
-     * @param bpmnModel       BPMN模型
-     * @param processInsId    流程实例ID
-     * @param candidateGroups 候选部门ID列表（逗号分隔）
-     * @param sysUser         当前用户（用于租户隔离）
+     * @param bpmnModel BPMNmodel
+     * @param processInsId workflow instance ID
+     * @param candidateGroups department ID ( )
+     * @param sysUser current user ( )
      */
     private void CandidateNextGroups(BpmnModel bpmnModel, String processInsId, List<String> candidateGroups, SysUser sysUser) {
-        // 1. 查询当前流程实例的所有任务
+        // 1. Query current workflow instance all task
         List<Task> tasks = taskService.createTaskQuery()
                 .taskTenantId(sysUser.getTenantId())
                 .processInstanceId(processInsId)
                 .list();
-        // 1. 更新工单状态为待接单
+        // 1. new work order to
         wfWorkOrderService.updateWorkOrderToPending(tasks.get(0), WorkOrderStatus.PENDING_ORDERS.getStatus(), null);
         if (CollUtil.isEmpty(tasks)) {
             return;
@@ -1229,13 +1229,13 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         if (CollUtil.isEmpty(candidateGroups)) {
             throw new RuntimeException("候选部门ID不能为空");
         }
-        // 3. 遍历任务，设置候选组（优先处理非多实例任务）
+        // 3. task, Set candidate group ( Process non- instancetask)
         Iterator<Task> iterator = tasks.iterator();
         while (iterator.hasNext()) {
             Task task = iterator.next();
             String taskDefKey = task.getTaskDefinitionKey();
 
-            // 3.1 非多实例任务：直接设置候选组
+            // 3.1 non- instancetask: Set candidate group
             if (!ModelUtils.isMultiInstance(bpmnModel, taskDefKey)) {
                 taskService.setAssignee(task.getId(), null);
                 for (String groupId : candidateGroups) {
@@ -1245,13 +1245,13 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
             }
         }
 
-        // 4. 处理多实例任务（动态调整候选组）
+        // 4. Process instancetask ( candidate group)
         if (CollUtil.isNotEmpty(tasks)) {
             tasks.forEach(task -> {
                 Map<String, Object> variables = new HashMap<>();
-                variables.put(ProcessConstants.USER_TYPE_ROUPS, candidateGroups); // 传递完整集合
+                variables.put(ProcessConstants.USER_TYPE_ROUPS, candidateGroups); // collection
                 runtimeService.addMultiInstanceExecution(
-                        task.getTaskDefinitionKey(), // 遍历所有任务
+                        task.getTaskDefinitionKey(), // all task
                         task.getProcessInstanceId(),
                         variables);
             });
@@ -1259,7 +1259,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 保存流程pdf1
+     * workflowpdf1
      *
      * @param bo
      */
@@ -1281,7 +1281,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 获取流程最新节点的审批人信息
+     * Get workflow new node approverinfo
      *
      * @param processInstanceId
      * @return
@@ -1290,30 +1290,30 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     public List<String> getApproverIds(String processInstanceId) {
         SysUser sysUser = getSysUser(AuthorizationInterceptor.getToken());
         List<String> approvers = new ArrayList<>();
-        // 1. 获取流程实例
+        // 1. Get workflow instance
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
                 .processInstanceTenantId(sysUser.getTenantId())
                 .processInstanceId(processInstanceId)
                 .singleResult();
 
         if (processInstance != null) {
-            // 2. 获取当前任务
+            // 2. Get current task
             Task currentTask = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId())
                     .processInstanceId(processInstanceId)
                     .singleResult();
 
             if (currentTask != null) {
-                // 3. 获取当前任务的审批人信息
+                // 3. Get current task approverinfo
                 List<IdentityLink> identityLinks = taskService.getIdentityLinksForTask(currentTask.getId());
                 for (IdentityLink identityLink : identityLinks) {
                     if (IdentityLinkType.CANDIDATE.equals(identityLink.getType())) {
                         if (StringUtils.isNotBlank(identityLink.getUserId())) {
-                            approvers.add(identityLink.getUserId()); // 获取审批人的用户ID
+                            approvers.add(identityLink.getUserId()); // Get approver user ID
                         } else if (StringUtils.isNotBlank(identityLink.getGroupId())
                                 && identityLink.getGroupId().startsWith("ROLE")) {
                             int startIndex = "ROLE".length();
                             Long roleId = Long.valueOf(identityLink.getGroupId().substring(startIndex));
-                            // 获取role下所有人
+                            // Get role all
                             List<String> s = sysUserRoleViewMapper.selectUserIdsByRoleId(roleId);
                             approvers.addAll(s);
                         } else if (StringUtils.isNotBlank(identityLink.getGroupId())
@@ -1336,7 +1336,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 通过token获取用户信息
+     * tokenGet userinfo
      *
      * @param token
      * @return
@@ -1351,23 +1351,23 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 获取任务节点的 noNotifyAllSteps 配置
-     * 从任务节点的扩展属性中读取配置，判断是否需要发送消息通知
+     * Get tasknode noNotifyAllSteps configuration
+     * from tasknode extension properties in configuration, Check whether need to notification
      *
-     * @param task 任务对象
-     * @return 如果配置了不通知返回 true，否则返回 false
+     * @param task taskobject
+     * @return if configuration notification true, false
      */
     private Boolean getNoNotifyAllSteps(Task task) {
-        // 获取流程定义模型
+        // Get workflow definitionmodel
         BpmnModel bpmnModel = repositoryService.getBpmnModel(task.getProcessDefinitionId());
 
-        // 获取当前任务节点
+        // Get current tasknode
         FlowElement flowElement = bpmnModel.getFlowElement(task.getTaskDefinitionKey());
 
         if (flowElement instanceof UserTask) {
             UserTask userTask = (UserTask) flowElement;
 
-            // 从扩展属性中读取 noNotifyAllSteps
+            // from extension properties in noNotifyAllSteps
             Map<String, List<ExtensionAttribute>> attributes = userTask.getAttributes();
             if (attributes != null && attributes.containsKey("http://flowable.org/bpmn")) {
                 List<ExtensionAttribute> bpmnAttributes = attributes.get("http://flowable.org/bpmn");
@@ -1379,16 +1379,16 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
             }
         }
 
-        // 默认返回 false（需要通知）
+        // false ( need to notification)
         return false;
     }
 
     /**
-     * 获取流程名称
+     * Get workflow
      *
-     * @param historicProcessInstance 流程实例
-     * @param sysUser                 当前用户
-     * @return 流程名称
+     * @param historicProcessInstance workflow instance
+     * @param sysUser current user
+     * @return workflow
      */
     public String getProcessName(HistoricProcessInstance historicProcessInstance, SysUser sysUser) {
         return repositoryService.createDeploymentQuery()
@@ -1399,23 +1399,23 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 根据流程定义ID获取流程定义中存储的标识变量
+     * workflow definition IDGet workflow definition in variable
      *
-     * @param processDefinitionId 流程定义ID
+     * @param processDefinitionId workflow definition ID
      */
     public Map<String, String> getProcessDefinitionProperties(String processDefinitionId) {
-        // 1. 获取流程定义的扩展元素信息
+        // 1. Get workflow definition elementinfo
         ProcessDefinition processDefinition = repositoryService.getProcessDefinition(processDefinitionId);
 
-        // 2. 通过 BPMNModel 获取扩展属性
+        // 2. BPMNModel Get extension properties
         BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
 
-        // 获取流程定义（Process）对象
+        // Get workflow definition (Process)object
         org.flowable.bpmn.model.Process process = bpmnModel.getProcessById(processDefinition.getKey());
 
         Map<String, String> properties = new HashMap<>();
         if (process != null) {
-            // 获取所有 flowable:property 扩展元素
+            // Get all flowable:property element
             List<ExtensionElement> extensionElements = process.getExtensionElements().get("property");
 
             if (extensionElements != null) {
@@ -1432,14 +1432,14 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
     }
 
     /**
-     * 构建并发送统一消息
+     * Build
      *
-     * @param task           当前任务
-     * @param receive_userId 目标id
-     * @param notifyAllSteps 是否推送消息
+     * @param task current task
+     * @param receive_userId id
+     * @param notifyAllSteps whether Push
      */
     public void buildAndSendUnifiedMessage(Task task, String receive_userId, boolean notifyAllSteps, SysUser sysUser) {
-        // 从任务节点的扩展属性中获取 noNotifyAllSteps 配置
+        // from tasknode extension properties in Get noNotifyAllSteps configuration
         Boolean noNotifyAllSteps = getNoNotifyAllSteps(task);
         if (noNotifyAllSteps) {
             log.warn("任务节点配置了 noNotifyAllSteps，无需推送信息");
@@ -1451,7 +1451,7 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
             return;
         }
 
-        // 查询流程实例及其变量
+        // Query workflow instance variable
         HistoricProcessInstance historicProcessInstance =
             wfInstanceService.getHistoricProcessInstanceById(task.getProcessInstanceId(), sysUser);
         Map<String, Object> processVariables = runtimeService.getVariables(historicProcessInstance.getId());
@@ -1460,13 +1460,13 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
             log.error("没找到应用ID");
             return;
         }
-        // 获取流程变量
+        // Get workflow variable
         String receiveUserName = sysUserService.selectUserNameById(receive_userId);
 
-        // 获取流程名称
+        // Get workflow
         String processName = getProcessName(historicProcessInstance, sysUser);
 
-        // 构建 content 值
+        // Build content value
         String content = buildContent(processName, processVariables, receiveUserName);
         OkHttpClient client = OkHttpClientHolder.CLIENT;
         HttpUrl.Builder urlBuilder = HttpUrl.get(msgUrl + "app/v1/relatesinfo").newBuilder();
@@ -1490,26 +1490,26 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode root = objectMapper.readTree(jsonData);
 
-            // 定位到 data.list 数组
+            // data.list array
             JsonNode listNode = root.path("data").path("list");
             if (!listNode.isArray()) {
                 log.error("返回结构里找不到 data.list"+root.toString());
                 return;
             }
-            // 遍历 list 数组
+            // list array
             for (JsonNode item : listNode) {
-                // 拿到子节点 channel_list
+                // sub node channel_list
                 JsonNode channelList = item.path("channel_list");
 
-                // 只有当 channel_list 存在且是数组，且至少有一个元素时，才取第一个
+                // only channel_list in is array, to element ,
                 if (channelList.isArray() && channelList.size() > 0) {
                     for (JsonNode jsonNode : channelList) {
                         if (jsonNode.path("channel_types").asText().equals("1")) {
-                            // 取当前项的 duct_code
+                            // current item duct_code
                             ductCode = item.path("duct_code").asText();
-                            // 取 channel_list 下第一个元素的 channel_code
+                            // channel_list element channel_code
                             channelCode = jsonNode.path("channel_code").asText();
-                            break; // 找到第一个就退出循环
+                            break; // then exit loop
                         }
                     }
                     break;
@@ -1518,19 +1518,19 @@ public class WfTaskServiceImpl extends FlowServiceFactory implements IWfTaskServ
         } catch (IOException e) {
             throw new RuntimeException("请求或解析返回数据失败", e);
         }
-        // 构建推送参数
-        Map<String, Object> params = ApiHeaderUtil.buildParams(ductCode, // 通道编码
-                channelCode, // 渠道编码
-                receive_userId, // 接收用户ID
-                receiveUserName, // 接收用户名称
-                processName, // 消息标题
-                content, // 消息内容
-                "1", // 消息类型
-                task.getProcessInstanceId(), // 流程实例ID
-                task.getId(), // 任务ID
+        // Build Push parameter
+        Map<String, Object> params = ApiHeaderUtil.buildParams(ductCode, // channel
+                channelCode, //
+                receive_userId, // user ID
+                receiveUserName, // username
+                processName, //
+                content, //
+                "1", //
+                task.getProcessInstanceId(), // workflow instance ID
+                task.getId(), // taskID
                 templateCode, variableValue);
 
-        // 调用统一消息推送方法
+        // Push method
         unifiedMessageSend(notifyAllSteps, params);
     }
 

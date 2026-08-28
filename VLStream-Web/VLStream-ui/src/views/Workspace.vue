@@ -1,7 +1,12 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="workspace">
     <div class="main-content">
-      <!-- 顶部问候 + 引导 -->
+      <!-- + -->
       <div class="top-greeting">
         <div class="greeting-stats-card">
           <div class="greeting-weather">
@@ -64,7 +69,7 @@
         </div>
       </div>
 
-      <!-- 中间功能区域 -->
+      <!-- in can -->
       <div class="content-section">
         <div class="functions-panel">
           <div class="panel-header">
@@ -103,7 +108,7 @@
         </div>
       </div>
 
-      <!-- 我的待审核 -->
+      <!--  -->
       <div class="approval-panel">
         <div class="panel-header">
           <h3>我的待审核</h3>
@@ -151,7 +156,7 @@
     </div>
   </div>
 
-  <!-- 热门设备播放弹窗 -->
+  <!-- device dialog -->
   <el-dialog
     v-model="showPlayer"
     class="workspace-player-dialog"
@@ -314,7 +319,7 @@ const hotDevices = ref([])
 const approvalData = ref([])
 
 /**
- * 切换工作台播放器全屏状态。
+ * full .
  */
 const toggleFullscreen = async () => {
   const playerElement = workspacePlayerRef.value
@@ -333,7 +338,7 @@ const toggleFullscreen = async () => {
 }
 
 /**
- * 释放工作台播放器资源。
+ * .
  */
 const cleanupOPlayer = () => {
   activePlaybackTask = null
@@ -358,7 +363,7 @@ const gotoMoreDevice = async () => {
 }
 
 /**
- * 根据流类型生成工作台 OPlayer 参数。
+ * Generate OPlayer parameter.
  */
 const createWorkspacePlayerOptions = async (streamUrl) => {
   const streamType = getStreamType(streamUrl)
@@ -416,7 +421,7 @@ const createWorkspacePlayerOptions = async (streamUrl) => {
 }
 
 /**
- * 播放热门设备的视频流。
+ * device .
  */
 const handlePlay = async (device) => {
   const streamUrl = device?.streamUrl || device?.originalRtspUrl || device?.rtspUrl || device?.url

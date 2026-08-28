@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import java.io.Serializable;
 
 
 /**
- * 设备标签关联表 Excel实体类
+ * device Excel
  *
  * @author Oort
  * @since 2025-12-23
@@ -29,13 +30,13 @@ public class VlsDeviceTagRelationExcel implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 设备ID，关联device_info.id
+	 * deviceID, device_info.id
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("设备ID，关联device_info.id")
 	private Long deviceId;
 	/**
-	 * 标签ID，关联tag_management.id
+	 * ID, tag_management.id
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("标签ID，关联tag_management.id")

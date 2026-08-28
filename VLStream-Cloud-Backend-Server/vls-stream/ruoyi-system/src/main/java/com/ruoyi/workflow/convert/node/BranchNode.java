@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -11,7 +12,7 @@ import org.flowable.bpmn.model.FlowElement;
 import java.util.List;
 
 /**
- * @description：分支节点
+ * @description: node
  */
 @Data
 public abstract class BranchNode extends Node {

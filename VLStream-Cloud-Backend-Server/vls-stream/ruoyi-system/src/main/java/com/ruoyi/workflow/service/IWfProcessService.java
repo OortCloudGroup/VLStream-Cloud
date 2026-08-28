@@ -24,27 +24,27 @@ import java.util.List;
 public interface IWfProcessService {
 
     /**
-     * 查询可发起流程列表
+     * Query workflow list
      *
-     * @param pageQuery 分页参数
+     * @param pageQuery parameter
      * @return
      */
     TableDataInfo<WfDefinitionVo> selectPageStartProcessList(ProcessQuery processQuery, PageQuery pageQuery);
 
     /**
-     * 查询可发起流程列表
+     * Query workflow list
      */
     List<WfDefinitionVo> selectStartProcessList(ProcessQuery processQuery);
 
     /**
-     * 查询我的流程列表
-     * 
-     * @param pageQuery 分页参数
+     * Query workflow list
+     *
+     * @param pageQuery parameter
      */
     TableDataInfo<Object> selectPageOwnProcessList(ProcessQuery processQuery, PageQuery pageQuery);
 
     /**
-     * 查询所有流程
+     * Query all workflow
      *
      * @param processQuery
      * @param pageQuery
@@ -54,102 +54,102 @@ public interface IWfProcessService {
     TableDataInfo<WfTaskVo> selectPageAllProcessList(ProcessQuery processQuery, PageQuery pageQuery, String token);
 
     /**
-     * 查询我的流程列表
+     * Query workflow list
      */
     List<WfTaskVo> selectOwnProcessList(ProcessQuery processQuery, boolean allFlag, String token);
 
     /**
-     * 查询代办任务列表
-     * 
-     * @param pageQuery 分页参数
+     * Query task list
+     *
+     * @param pageQuery parameter
      */
     TableDataInfo<WfTaskVo> selectPageTodoProcessList(ProcessQuery processQuery, PageQuery pageQuery, SysUser sysUser);
 
     /**
-     * 查询代办任务列表
+     * Query task list
      */
     List<WfTaskVo> selectTodoProcessList(ProcessQuery processQuery, String token);
 
     /**
-     * 查询待签任务列表
-     * 
-     * @param pageQuery 分页参数
+     * Query task list
+     *
+     * @param pageQuery parameter
      */
     TableDataInfo<WfTaskVo> selectPageClaimProcessList(ProcessQuery processQuery, PageQuery pageQuery, SysUser sysUser);
 
     /**
-     * 查询待签任务列表
+     * Query task list
      */
     List<WfTaskVo> selectClaimProcessList(ProcessQuery processQuery, SysUser sysUser);
 
     /**
-     * 查询已办任务列表
-     * 
-     * @param pageQuery 分页参数
+     * Query already task list
+     *
+     * @param pageQuery parameter
      */
     TableDataInfo<WfTaskVo> selectPageFinishedProcessList(ProcessQuery processQuery, PageQuery pageQuery,
             SysUser sysUser);
 
     /**
-     * 查询已办任务列表
+     * Query already task list
      */
     List<WfTaskVo> selectFinishedProcessList(ProcessQuery processQuery, String token);
 
     /**
-     * 查询流程部署关联表单信息
+     * Query workflow forminfo
      *
-     * @param definitionId 流程定义ID
-     * @param deployId     部署ID
+     * @param definitionId workflow definition ID
+     * @param deployId ID
      * @param procInsId
      */
     Object selectFormContent(String definitionId, String deployId, String procInsId);
 
     /**
-     * 启动流程实例
+     * workflow instance
      */
     String startProcessByDefId(ProcessStartBo processStartBo, SysUser sysUser);
 
     /**
-     * 根据流程实例id获取任务id
+     * workflow instanceidGet taskid
      *
-     * @param procDefId 流程定义ID
+     * @param procDefId workflow definition ID
      */
     String getTaskId(String procDefId, SysUser sysUser);
 
     // /**
-    // * 通过DefinitionKey启动流程
-    // * @param procDefKey 流程定义Key
-    // * @param variables 扩展参数
+    // * DefinitionKey workflow
+    // * @param procDefKey workflow definitionKey
+    // * @param variables parameter
     // */
     // void startProcessByDefKey(String procDefKey, Map<String, Object> variables);
 
     /**
-     * 删除流程实例
+     * Delete workflow instance
      */
     void deleteProcessByIds(String[] instanceIds);
 
     /**
-     * 读取xml文件
-     * 
-     * @param processDefId 流程定义ID
+     * xml
+     *
+     * @param processDefId workflow definition ID
      */
     String queryBpmnXmlById(String processDefId);
 
     /**
-     * 读取Json文件
+     * Json
      *
-     * @param processDefId 流程定义ID
+     * @param processDefId workflow definition ID
      * @param sysUser
      */
     String queryBpmnJsonById(String processDefId, SysUser sysUser);
 
     /**
-     * 查询流程任务详情信息
+     * Query workflowtask info
      *
-     * @param procInsId          流程实例ID
-     * @param taskIds            任务ID
+     * @param procInsId workflow instance ID
+     * @param taskIds taskID
      * @param sysUser
-     * @param includeApproverIds 是否需要返回所有审批人ID列表
+     * @param includeApproverIds whether need to all approverID
      */
     WfDetailVo queryProcessDetail(String procInsId, String taskIds, SysUser sysUser, Boolean includeApproverIds);
 

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-col
     v-show="!widget.options.hidden"
@@ -18,7 +23,7 @@
             :index-of-parent-list="swIdx"
             :parent-widget="widget"
           >
-            <!-- 递归传递插槽！！！ -->
+            <!-- ! ! ! -->
             <template v-for="slot in Object.keys($slots)" #[slot]="scope">
               <slot :name="slot" v-bind="scope" />
             </template>
@@ -34,7 +39,7 @@
             :index-of-parent-list="swIdx"
             :parent-widget="widget"
           >
-            <!-- 递归传递插槽！！！ -->
+            <!-- ! ! ! -->
             <template v-for="slot in Object.keys($slots)" #[slot]="scope">
               <slot :name="slot" v-bind="scope" />
             </template>

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -21,12 +22,12 @@ public class ClearTimeoutJobListener implements TaskListener {
     public void notify(DelegateTask delegateTask) {
         ManagementService managementService =  SpringUtils.getBean(ManagementService.class);
         String procInsId = delegateTask.getProcessInstanceId();
-        // 查所有挂在同一 boundaryEvent 的定时器
+        // all in boundaryEvent
         List<Job> timer = managementService.createTimerJobQuery()
                                            .processInstanceId(procInsId)
                                            .handlerType("timer")
                                            .list();
-        // 删除定时器
+        // Delete
         for (Job tj : timer) {
             managementService.deleteTimerJob(tj.getId());
         }

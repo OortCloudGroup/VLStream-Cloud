@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 /**
- * 注册验证
+ *
  *
  * @author Lion Li
  */
@@ -31,7 +31,7 @@ public class SysRegisterController extends BaseController {
     private final ISysConfigService configService;
 
     /**
-     * 用户注册
+     * user
      */
     @SaIgnore
     @PostMapping("/register")

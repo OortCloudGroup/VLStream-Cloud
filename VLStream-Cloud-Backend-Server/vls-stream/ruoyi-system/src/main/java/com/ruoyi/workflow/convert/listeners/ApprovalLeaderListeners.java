@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -42,7 +43,7 @@ public class ApprovalLeaderListeners implements TaskListener, ApplicationContext
     @Override
     public void notify(DelegateTask delegateTask) {
         try {
-            // 1. 预先获取所有需要的 Bean 和工具
+            // 1. Get all need to Bean and
             ApplicationContext ctx = applicationContext;
             SysUserServiceImpl userService = ctx.getBean(SysUserServiceImpl.class);
             Environment env = ctx.getBean(Environment.class);
@@ -51,19 +52,19 @@ public class ApprovalLeaderListeners implements TaskListener, ApplicationContext
             String authUrlPrefix = null;
             String token = AuthorizationInterceptor.getToken();
 
-            // 2. 解析 assignee ("前缀-级别")
+            // 2. Parse assignee (" before - ")
             String assignee = delegateTask.getAssignee();
             int dashIndex = assignee.indexOf('-');
-            String prefix = assignee.substring(0, dashIndex);   // "job" 或 "post"
+            String prefix = assignee.substring(0, dashIndex);   // "job" "post"
             int level = Integer.parseInt(assignee.substring(dashIndex + 1));
 
-            // 3. 从流程变量取 id 值
+            // 3. from workflow variable id value
             String jobId = Optional.ofNullable(delegateTask.getVariable("jobId"))
                                    .map(Object::toString).orElse("");
             String postId = Optional.ofNullable(delegateTask.getVariable("postId"))
                                     .map(Object::toString).orElse("");
 
-            // 4. 根据前缀调用通用处理逻辑
+            // 4. before Process
             if ("job".equals(prefix) && StringUtils.isNotBlank(jobId)) {
                 handleApproval(delegateTask, userService, mapper,
                     authUrlPrefix, token, "job", jobId, level);
@@ -79,16 +80,16 @@ public class ApprovalLeaderListeners implements TaskListener, ApplicationContext
     }
 
     /**
-     * 通用处理：先查最大审批层级，再查父级信息并分配
+     * Process : approval layer , info
      *
-     * @param task         Flowable 任务
-     * @param userService  用户服务
+     * @param task Flowable task
+     * @param userService userservice
      * @param mapper       Jackson ObjectMapper
-     * @param urlPrefix    平台鉴权地址前缀
-     * @param token        鉴权 Token
-     * @param groupType    "job" 或 "post"
-     * @param idValue      jobId 或 postId
-     * @param currentLevel 发起人自己层级
+     * @param urlPrefix before
+     * @param token Token
+     * @param groupType "job" "post"
+     * @param idValue jobId postId
+     * @param currentLevel layer
      */
     private void handleApproval(DelegateTask task,
                                 SysUserServiceImpl userService,
@@ -101,7 +102,7 @@ public class ApprovalLeaderListeners implements TaskListener, ApplicationContext
         OkHttpClient client = OkHttpClientHolder.CLIENT;
         MediaType jsonType = MediaType.parse("application/json");
 
-        // —— 第一步：查询最大审批层级 —— //
+        // —— : Query approval layer —— //
         String urlLevel = urlPrefix + "admin/v1/" + groupType + "Level";
         ObjectNode reqLev = mapper.createObjectNode()
                                   .put("accessToken", token)
@@ -125,7 +126,7 @@ public class ApprovalLeaderListeners implements TaskListener, ApplicationContext
             }
         }
 
-        // —— 第二步：根据当前层级查询父级信息 —— //
+        // —— : current layer Query info —— //
         String urlParent = urlPrefix + "admin/v1/" + groupType + "ParentInfo";
         ObjectNode reqPar = mapper.createObjectNode()
                                   .put("accessToken", token)

@@ -1,19 +1,24 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
-  <div 
+  <div
     class="layout-dialog-overlay"
     :style="{ zIndex: 3000 + dialog.id }"
   >
-    <div 
+    <div
       class="layout-dialog draggable-dialog"
-      :style="{ 
-        left: dialog.position.x + 'px', 
+      :style="{
+        left: dialog.position.x + 'px',
         top: dialog.position.y + 'px',
         position: 'fixed',
         transform: 'none'
       }"
       @mousedown="bringToFront"
     >
-      <div 
+      <div
         class="layout-dialog-header draggable-handle"
         @mousedown="startDrag"
       >
@@ -31,19 +36,19 @@
           </button>
         </div>
       </div>
-      
+
       <div class="layout-dialog-content" v-show="!dialog.minimized">
         <div class="dialog-main-content">
-          <!-- 视频播放区域 -->
+          <!--  -->
           <div class="video-player-section">
             <div class="video-area">
-              <!-- 视频网格布局 -->
+              <!--  -->
               <div class="video-grid" :class="`layout-${getLayoutClass(dialog.layoutCount)}`">
-                <div 
-                  v-for="index in dialog.layoutCount" 
+                <div
+                  v-for="index in dialog.layoutCount"
                   :key="`window-${index}`"
                   class="video-window"
-                  :class="{ 
+                  :class="{
                     'dragging': draggedWindowIndex === index - 1,
                     'drag-over': dragOverWindowIndex === index - 1
                   }"
@@ -59,8 +64,8 @@
                   @drop="handleDrop($event, index - 1)"
                   @dragend="handleDragEnd"
                 >
-                  <!-- 拖拽遮罩层 - 确保所有窗口都能被选中和拖拽 -->
-                  <div class="drag-overlay" 
+                  <!-- layer - all can in and -->
+                  <div class="drag-overlay"
                        @click.stop="handleVideoWindowClick(index - 1)"
                        @dblclick.stop="handleVideoWindowDoubleClick(index - 1)"
                        @dragstart.stop="handleDragStart($event, index - 1)"
@@ -70,9 +75,9 @@
                        @drop.stop="handleDrop($event, index - 1)"
                        @dragend.stop="handleDragEnd">
                   </div>
-                  <!-- 如果有对应的摄像头数据，显示视频内容 -->
+                  <!-- if data, -->
                   <template v-if="dialog.cameras[index - 1]">
-                    <!-- OPlayer 统一播放器 -->
+                    <!-- OPlayer -->
                     <div
                       v-if="dialog.cameras[index - 1].deviceData && dialog.cameras[index - 1].deviceData.streamUrl"
                       :ref="el => setOPlayerContainer(index - 1, el)"
@@ -87,8 +92,8 @@
                           <div>设备: {{ dialog.cameras[index - 1].name }}</div>
                           <div>状态: 在线</div>
                         </div>
-                        
-                        <!-- 备用操作选项 -->
+
+                        <!-- operation item -->
                         <div class="placeholder-actions">
                           <button class="action-btn primary" @click="retryWebRTCConnection(dialog.cameras[index - 1])">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -112,8 +117,8 @@
                       </div>
                     </div>
                   </template>
-                  
-                  <!-- 没有对应摄像头数据时显示空白占位符 -->
+
+                  <!-- data null / empty -->
                   <template v-else>
                     <div class="video-placeholder empty-placeholder">
                       <div class="placeholder-content">
@@ -123,8 +128,8 @@
                           <div>位置: {{ index }}</div>
                           <div>状态: 待分配</div>
                         </div>
-                        
-                        <!-- 添加设备选项 -->
+
+                        <!-- device item -->
                         <div class="placeholder-actions">
                           <button class="action-btn primary" @click="addDeviceToWindow(index - 1)">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -138,10 +143,10 @@
                   </template>
                 </div>
               </div>
-              
-              <!-- 录像控制区域 -->
+
+              <!-- recordingcontrol -->
               <div class="video-controls">
-                <!-- 录像状态显示 -->
+                <!-- recording -->
                 <div v-if="dialog.recording?.isRecording" class="recording-status">
                   <div class="recording-indicator">
                     <span class="recording-dot"></span>
@@ -151,10 +156,10 @@
               </div>
             </div>
           </div>
-          
-          <!-- PTZ控制面板区域 -->
+
+          <!-- PTZcontrol -->
           <div class="ptz-control-section">
-            <PTZControl 
+            <PTZControl
               :show-camera-management="true"
               @ptz-control="handlePTZControl"
               @zoom-control="handleZoomControl"
@@ -204,7 +209,7 @@ const emit = defineEmits([
   'video-window-swap'
 ])
 
-// 获取布局类名
+// Get
 const getLayoutClass = (count) => {
   const classes = {
     1: '1x1',
@@ -213,14 +218,14 @@ const getLayoutClass = (count) => {
     8: '4x4',
     9: '5x5',
     16: '6x6',
-    22: '6x6', // 二十二画面使用6x6布局
-    24: '6x6', // 二十四画面使用6x6布局
-    25: '6x6'  // 二十五画面使用6x6布局
+    22: '6x6', // 6x6
+    24: '6x6', // 6x6
+    25: '6x6'  // 6x6
   }
   return classes[count] || '1x1'
 }
 
-// 获取布局标题
+// Get
 const getLayoutTitle = (count) => {
   const titleMap = {
     1: '单画面',
@@ -236,7 +241,7 @@ const getLayoutTitle = (count) => {
   return titleMap[count] || '视频播放'
 }
 
-// 事件处理函数
+// eventProcess
 const close = () => {
   emit('close', props.dialog.id)
 }
@@ -282,13 +287,13 @@ const addDeviceToWindow = (windowIndex) => {
 }
 
 
-// OPlayer 播放器状态
+// OPlayer
 const oplayerContainers = ref(new Map())
 const oplayerInstances = ref(new Map())
 const oplayerTasks = ref(new Map())
 
 /**
- * 记录分屏播放器容器，容器移除时同步释放播放器。
+ * record , .
  */
 const setOPlayerContainer = (windowIndex, element) => {
   if (element) {
@@ -301,7 +306,7 @@ const setOPlayerContainer = (windowIndex, element) => {
 }
 
 /**
- * 释放指定分屏的播放器和异步播放任务。
+ * and task.
  */
 const cleanupOPlayer = (windowIndex) => {
   oplayerTasks.value.delete(windowIndex)
@@ -319,7 +324,7 @@ const cleanupOPlayer = (windowIndex) => {
 }
 
 /**
- * 释放当前弹窗内的全部播放器。
+ * current dialog full .
  */
 const cleanupAllOPlayers = () => {
   const windowIndexes = new Set([
@@ -330,7 +335,7 @@ const cleanupAllOPlayers = () => {
 }
 
 /**
- * 从 CameraRTC 地址中解析信令服务地址和摄像头ID。
+ * from CameraRTC in Parse service and ID.
  */
 const parseCameraRtcConfig = (streamUrl) => {
   const url = new URL(streamUrl)
@@ -346,7 +351,7 @@ const parseCameraRtcConfig = (streamUrl) => {
 }
 
 /**
- * 根据视频流类型生成 OPlayer 播放参数。
+ * Generate OPlayer parameter.
  */
 const createOPlayerOptions = async (streamUrl, streamType) => {
   const playerConfig = {
@@ -404,7 +409,7 @@ const createOPlayerOptions = async (streamUrl, streamType) => {
 }
 
 /**
- * 在指定分屏中创建并启动 OPlayer。
+ * in in OPlayer.
  */
 const playOPlayerStream = async (camera, windowIndex) => {
   const taskId = Symbol(`oplayer-${windowIndex}`)
@@ -439,7 +444,7 @@ const playOPlayerStream = async (camera, windowIndex) => {
 }
 
 /**
- * 根据当前分屏摄像头数据同步播放器实例。
+ * current data instance.
  */
 const syncOPlayerPlayers = async () => {
   await nextTick()
@@ -471,32 +476,32 @@ watch(
 onMounted(syncOPlayerPlayers)
 onBeforeUnmount(cleanupAllOPlayers)
 
-// 拖拽状态管理
+//
 const draggedWindowIndex = ref(null)
 const dragOverWindowIndex = ref(null)
 
-// 视频窗口点击处理
+// Process
 const handleVideoWindowClick = (windowIndex) => {
   emit('video-window-click', props.dialog.id, windowIndex)
 }
 
-// 视频窗口双击处理
+// Process
 const handleVideoWindowDoubleClick = (windowIndex) => {
   emit('video-window-double-click', props.dialog.id, windowIndex)
 }
 
-// 拖拽开始
+// start
 const handleDragStart = (event, windowIndex) => {
   const dialog = props.dialog
   if (!dialog) {
     event.preventDefault()
     return
   }
-  
-  // 设置拖拽状态
+
+  // Set
   draggedWindowIndex.value = windowIndex
-  
-  // 设置拖拽数据
+
+  // Set data
   event.dataTransfer.effectAllowed = 'move'
   try {
     event.dataTransfer.setData('text/plain', JSON.stringify({
@@ -509,48 +514,48 @@ const handleDragStart = (event, windowIndex) => {
     event.preventDefault()
     return
   }
-  
+
   console.log('开始拖拽窗口:', dialog.id, windowIndex)
 }
 
-// 拖拽结束
+// finish
 const handleDragEnd = (event) => {
   console.log('窗口拖拽结束')
-  
-  // 清理拖拽状态
+
+  //
   draggedWindowIndex.value = null
   dragOverWindowIndex.value = null
 }
 
-// 拖拽悬停
+//
 const handleDragOver = (event, windowIndex) => {
   event.preventDefault()
   event.dataTransfer.dropEffect = 'move'
 }
 
-// 拖拽进入
+//
 const handleDragEnter = (event, windowIndex) => {
   event.preventDefault()
   dragOverWindowIndex.value = windowIndex
 }
 
-// 拖拽离开
+//
 const handleDragLeave = (event, windowIndex) => {
-  // 确保鼠标真正离开了元素
+  // element
   const rect = event.currentTarget.getBoundingClientRect()
   const x = event.clientX
   const y = event.clientY
-  
+
   if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
     dragOverWindowIndex.value = null
   }
 }
 
-// 拖拽放置
+//
 const handleDrop = (event, targetWindowIndex) => {
   event.preventDefault()
   event.stopPropagation()
-  
+
   try {
     const data = event.dataTransfer.getData('text/plain')
     if (!data) {
@@ -559,32 +564,32 @@ const handleDrop = (event, targetWindowIndex) => {
     const dragData = JSON.parse(data)
     const sourceDialogId = dragData.dialogId
     const sourceWindowIndex = dragData.windowIndex
-    
-    // 如果是同一个窗口，不处理
+
+    // if is , Process
     if (sourceDialogId === props.dialog.id && sourceWindowIndex === targetWindowIndex) {
       return
     }
-    
-    // 执行窗口交换
+
+    // Execute
     emit('video-window-swap', sourceDialogId, sourceWindowIndex, props.dialog.id, targetWindowIndex)
-    
+
     console.log('窗口交换完成:', {
       from: { dialogId: sourceDialogId, windowIndex: sourceWindowIndex },
       to: { dialogId: props.dialog.id, windowIndex: targetWindowIndex }
     })
-    
+
   } catch (e) {
     console.error('处理拖拽放置失败:', e)
   }
-  
-  // 清理拖拽状态
+
+  //
   draggedWindowIndex.value = null
   dragOverWindowIndex.value = null
 }
 </script>
 
 <style scoped>
-/* 布局弹窗样式 */
+/* dialog */
 .layout-dialog-overlay {
   position: fixed;
   top: 0;
@@ -707,7 +712,7 @@ const handleDrop = (event, targetWindowIndex) => {
   height: calc(100% - 48px);
 }
 
-/* 布局类样式 */
+/*  */
 .video-grid.layout-1x1 {
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
@@ -718,7 +723,7 @@ const handleDrop = (event, targetWindowIndex) => {
   grid-template-rows: 1fr 1fr;
 }
 
-/* 6分屏L形布局：主屏占据4个位置，5个小屏围绕在右侧和底部 */
+/* 6 L : main 4 , 5 in and */
 .video-grid.layout-3x3 {
   grid-template-columns: 1fr 1fr 1fr;
   grid-template-rows: 1fr 1fr 1fr;
@@ -754,7 +759,7 @@ const handleDrop = (event, targetWindowIndex) => {
   grid-row: 3 / 4;
 }
 
-/* 8分屏L形布局：3×3主屏+右侧列4个+底部行4个，第5个屏右下角共享 */
+/* 8 L : 3×3 main + 4 + 4 , 5 */
 .video-grid.layout-4x4 {
   grid-template-columns: 1fr 1fr 1fr 1fr;
   grid-template-rows: 1fr 1fr 1fr 1fr;
@@ -836,13 +841,13 @@ const handleDrop = (event, targetWindowIndex) => {
   background: transparent;
 }
 
-/* 四分屏布局 - 确保每个子区域都占满网格单元格 */
+/* - each sub */
 .video-grid.layout-2x2 .video-window {
   height: 100%;
   width: 100%;
 }
 
-/* 小屏等高布局 - 移除强制正方形，让小屏等高分布 */
+/* etc. - , etc. */
 .video-grid.layout-4x4 .video-window:not(:first-child),
 .video-grid.layout-3x3 .video-window:not(:first-child) {
   height: 100%;
@@ -853,7 +858,7 @@ const handleDrop = (event, targetWindowIndex) => {
   border: 2px solid #409eff;
 }
 
-/* 视频窗口过渡动画 */
+/*  */
 .video-window {
   transition: all 0.3s ease-in-out;
 }
@@ -887,7 +892,7 @@ const handleDrop = (event, targetWindowIndex) => {
   transition: width 0.3s ease-in-out, height 0.3s ease-in-out;
 }
 
-/* 拖拽时的视觉反馈 */
+/*  */
 .video-window.dragging {
   opacity: 0.8;
   transform: scale(0.95);
@@ -922,7 +927,7 @@ const handleDrop = (event, targetWindowIndex) => {
   cursor: grabbing;
 }
 
-/* 拖拽时的提示样式 */
+/* prompt / tip */
 .video-window.dragging::before {
   content: "拖拽到目标位置";
   position: absolute;
@@ -955,14 +960,14 @@ const handleDrop = (event, targetWindowIndex) => {
   pointer-events: none;
 }
 
-/* 不同布局下的WebRTC播放器优化 */
+/* WebRTC */
 .video-grid.layout-1x1 .webrtc-iframe-player {
   min-height: 650px;
   width: 100% !important;
   height: 100% !important;
 }
 
-/* 确保视频播放器能够正确扩展 */
+/* can correct */
 .video-window iframe,
 .video-window .webrtc-iframe-player,
 .video-window .rtsp-player-container {
@@ -984,7 +989,7 @@ const handleDrop = (event, targetWindowIndex) => {
   min-height: 150px;
 }
 
-/* WebRTC iframe基础样式（简化版） */
+/* WebRTC iframe ( ) */
 .webrtc-iframe {
   border: 0 !important;
   margin: 0 !important;
@@ -1024,7 +1029,7 @@ const handleDrop = (event, targetWindowIndex) => {
   box-sizing: border-box !important;
 }
 
-/* 优化小窗口模式下的播放器信息显示 */
+/* info */
 .video-grid.layout-4x4 .player-info,
 .video-grid.layout-5x5 .player-info,
 .video-grid.layout-6x6 .player-info {
@@ -1035,14 +1040,14 @@ const handleDrop = (event, targetWindowIndex) => {
   padding: 4px;
 }
 
-/* WebRTC播放器容器的额外优化 */
+/* WebRTC */
 .webrtc-iframe-player {
   background: #000;
   border-radius: 0;
   contain: layout style paint;
 }
 
-/* 视频窗口内的WebRTC iframe特殊处理 */
+/* WebRTC iframe Process */
 .video-window .webrtc-iframe-player {
   position: absolute;
   top: 0;
@@ -1052,7 +1057,7 @@ const handleDrop = (event, targetWindowIndex) => {
   z-index: 1;
 }
 
-/* WebRTC iframe容器 */
+/* WebRTC iframe */
 .webrtc-iframe-container {
   width: 100%;
   height: 100%;
@@ -1066,7 +1071,7 @@ const handleDrop = (event, targetWindowIndex) => {
   border: none;
 }
 
-/* YouTube iframe容器 */
+/* YouTube iframe */
 .youtube-iframe-container {
   width: 100%;
   height: 100%;
@@ -1087,7 +1092,7 @@ const handleDrop = (event, targetWindowIndex) => {
   overflow: hidden;
 }
 
-/* 视频弹窗新增样式 */
+/* dialogAdd */
 .video-placeholder {
   width: 100%;
   height: 100%;
@@ -1100,7 +1105,7 @@ const handleDrop = (event, targetWindowIndex) => {
   left: 0;
 }
 
-/* 空白占位符样式 */
+/* null / empty */
 .video-placeholder.empty-placeholder {
   background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
   border: 2px dashed #404040;
@@ -1137,7 +1142,7 @@ const handleDrop = (event, targetWindowIndex) => {
   background: #000;
 }
 
-/* RTSP播放器容器样式 */
+/* RTSP */
 .rtsp-player-container {
   width: 100%;
   height: 100%;
@@ -1146,7 +1151,7 @@ const handleDrop = (event, targetWindowIndex) => {
   overflow: hidden;
 }
 
-/* WebRTC iframe播放器样式 */
+/* WebRTC iframe */
 .webrtc-iframe-player {
   width: 100%;
   height: 100%;
@@ -1193,13 +1198,13 @@ const handleDrop = (event, targetWindowIndex) => {
   text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
 }
 
-/* 直接WebRTC播放器样式 */
+/* WebRTC */
 .rtsp-webrtc-player {
   width: 100%;
   height: 100%;
 }
 
-/* RTSP备用显示样式 */
+/* RTSP */
 .rtsp-fallback {
   width: 100%;
   height: 100%;
@@ -1229,7 +1234,7 @@ const handleDrop = (event, targetWindowIndex) => {
   margin-bottom: 8px;
 }
 
-/* 小窗口模式优化 */
+/*  */
 .video-grid.layout-4x4 .rtsp-info-content,
 .video-grid.layout-5x5 .rtsp-info-content,
 .video-grid.layout-6x6 .rtsp-info-content {
@@ -1262,7 +1267,7 @@ const handleDrop = (event, targetWindowIndex) => {
   gap: 4px;
 }
 
-/* 小窗口模式下的加载状态优化 */
+/* Load */
 .video-grid.layout-4x4 .loading-content,
 .video-grid.layout-5x5 .loading-content,
 .video-grid.layout-6x6 .loading-content {
@@ -1282,7 +1287,7 @@ const handleDrop = (event, targetWindowIndex) => {
   font-size: 8px;
 }
 
-/* 视频区域全屏样式 */
+/* full */
 .video-area.fullscreen-active {
   width: 100vw !important;
   height: 100vh !important;
@@ -1297,7 +1302,7 @@ const handleDrop = (event, targetWindowIndex) => {
   z-index: 9999 !important;
 }
 
-/* 全屏状态下的视频网格优化 */
+/* full */
 .video-area.fullscreen-active .video-grid {
   width: 100vw !important;
   height: 100vh !important;
@@ -1306,14 +1311,14 @@ const handleDrop = (event, targetWindowIndex) => {
   max-height: 100vh !important;
 }
 
-/* 全屏状态下的视频窗口优化 */
+/* full */
 .video-area.fullscreen-active .video-window {
   border: 1px solid #333 !important;
   min-height: auto !important;
   min-width: auto !important;
 }
 
-/* 视频控制区域 */
+/* control */
 .video-controls {
   display: flex;
   align-items: center;
@@ -1326,7 +1331,7 @@ const handleDrop = (event, targetWindowIndex) => {
   height: 40px;
 }
 
-/* PTZ控制面板区域 */
+/* PTZcontrol */
 .ptz-control-section {
   flex: 0 0 320px;
   background: #ffffff;
@@ -1339,7 +1344,7 @@ const handleDrop = (event, targetWindowIndex) => {
   flex-direction: column;
 }
 
-/* 占位符内容样式 */
+/*  */
 .placeholder-content {
   text-align: center;
   padding: 20px;
@@ -1400,7 +1405,7 @@ const handleDrop = (event, targetWindowIndex) => {
   background: #e9e9eb;
 }
 
-/* 录像状态样式 */
+/* recording */
 .recording-status {
   display: flex;
   align-items: center;
@@ -1430,7 +1435,7 @@ const handleDrop = (event, targetWindowIndex) => {
   100% { opacity: 1; }
 }
 
-/* WebRTC和YouTube信息样式 */
+/* WebRTC and YouTubeinfo */
 .webrtc-info,
 .youtube-info {
   position: absolute;
@@ -1442,4 +1447,4 @@ const handleDrop = (event, targetWindowIndex) => {
   border-radius: 4px;
   font-size: 10px;
 }
-</style> 
+</style>

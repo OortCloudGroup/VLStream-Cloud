@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -18,7 +19,7 @@ import java.io.Serializable;
 import java.util.Collection;
 
 /**
- * @Description: 规则列表
+ * @Description:
  * @Date: 2024-12-20
  * @Version: V1.0
  */
@@ -39,13 +40,13 @@ public class RuleListServiceImpl extends ServiceImpl<RuleListMapper, RuleList> i
     public void updateMain(RuleList ruleList) {
         ruleListMapper.updateById(ruleList);
 
-        //1.先删除子表数据
+        // 1. Delete sub data
 //		ruleConditionGroupMapper.deleteByMainId(ruleList.getId());
 
-        //2.子表数据重新插入
+        // 2. sub data new
 //		if(ruleConditionGroupList!=null && ruleConditionGroupList.size()>0) {
 //			for(RuleConditionGroup entity:ruleConditionGroupList) {
-//				//外键设置
+// // Set
 //				entity.setRuleListId(ruleList.getId());
 //				ruleConditionGroupMapper.insert(entity);
 //			}

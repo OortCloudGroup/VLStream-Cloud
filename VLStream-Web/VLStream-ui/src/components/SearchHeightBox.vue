@@ -1,10 +1,15 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <!-- eslint-disable vue/no-v-model-argument -->
 <!--
- *@Created by: 兰舰
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2025-3-18 11:45:51
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -102,7 +107,7 @@
               </div>
             </template>
           </div>
-          <!-- 整体-->
+          <!--  -->
           <template v-if="item.type==='serchItem'">
             <slot :name="item.slotName" />
           </template>
@@ -139,14 +144,14 @@ const props = defineProps({
     default: 'keyword',
     required: true
   },
-  /* data搜索框内容 [
+  /* data [
   { label: '登录账号', value: 'login_id', type: 'text', default: '' },
   { label: '状态', value: 'status', type: 'select', option: [{ label: '启用', value: 1 }, { label: '禁用', value: 2 }], default: undefined },
   { label: '时间', value: 'datePickerTime', type: 'daterange', startP: '注册时间', endP: '注册时间', format: 'YYYY-MM-DD HH:mm:ss', default: [] },
   { label: '包含下级', value: 'all_child', type: 'checkbox', default: false },
 ] */
-  /* type 判断搜索框-类型 已有text、select、daterange、checkbox  */
-  /* serchItem(slotName) 整体搜索嵌入*/
+  /* type Check - already text、select、daterange、checkbox */
+  /* serchItem(slotName) */
   /* cascader slot */
   /* rules
    [{
@@ -162,8 +167,8 @@ const props = defineProps({
 })
 const emits = defineEmits(['handle'])
 const popoverRef = ref()
-let dataTemp = ref<any>(props.data || []) // 高级搜索框内容
-let rulesTemp = reactive<any>({}) // 校验
+let dataTemp = ref<any>(props.data || []) //
+let rulesTemp = reactive<any>({}) // Validate
 let form = reactive<any>({})
 let visible = ref<boolean>(false)
 let isfocus = ref<boolean>(false)
@@ -178,7 +183,7 @@ const blurFn = async() => {
   }, 300)
 }
 
-// 搜索
+//
 const searchFn = (val) => {
   let reset = false
   if (val === true) reset = true
@@ -188,7 +193,7 @@ const searchFn = (val) => {
   }, 300)
 }
 
-// 重置
+//
 const resetFn = () => {
   props.data?.forEach((item: any) => {
     form[item.value] = item.default
@@ -197,10 +202,10 @@ const resetFn = () => {
   searchFn(true)
 }
 
-// 高级搜索框内容
+//
 dataTemp.value.forEach(item => {
   form[item.value] = item.default
-  rulesTemp[item.value] = item.rules // rules验证
+  rulesTemp[item.value] = item.rules // rules
 })
 
 watch(() => visible.value, (value) => {
@@ -209,7 +214,7 @@ watch(() => visible.value, (value) => {
   }
 })
 
-// 点击不收起来
+//
 import { onClickOutside } from '@vueuse/core'
 import { useTemplateRef } from 'vue'
 
@@ -235,8 +240,8 @@ const shortcuts = [
     value: () => {
       const now = new Date()
       const start = new Date(now)
-      // 调整为周一开始（中国习惯）
-      const day = start.getDay() || 7 // 周日转换为7
+      // to start ( in )
+      const day = start.getDay() || 7 // Convert to 7
       start.setDate(start.getDate() - day + 1)
       start.setHours(0, 0, 0, 0)
 
@@ -308,17 +313,17 @@ const shortcuts = [
 watch(() => props.data, (val) => {
   if (val && val.length) {
     dataTemp.value = val
-    // 高级搜索框内容
+    //
     dataTemp.value.forEach(item => {
       form[item.value] = item.default
-      rulesTemp[item.value] = item.rules // rules验证
+      rulesTemp[item.value] = item.rules // rules
     })
   }
 })
 </script>
 
 <style lang="scss" scoped>
-/*高级搜索框*/
+/*  */
 .searchHeight {
   position: relative;
   height: 36px;
@@ -376,7 +381,7 @@ watch(() => props.data, (val) => {
   }
 }
 
-/*搜索框-popper*/
+/* -popper */
 .searchBox {
   width: 540px;
   width: 100%;

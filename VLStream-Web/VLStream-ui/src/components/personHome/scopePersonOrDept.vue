@@ -1,7 +1,8 @@
-/**
-Created by  lanjian   on 2021/10/16  10:28
-Copyright apaas-front-team. All rights reserved.
-*/
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="dept_page w-full h-full flex flex-col box-border">
     <div v-if="tableData.length > 0" class="w-full h-12 box-border px-5 flex flex-row justify-between items-center">
@@ -68,12 +69,12 @@ export default {
     OortImg
   },
   props: {
-    // 是否单选
+    // whether
     isSingle: {
       type: Boolean,
       default: false
     },
-    // 已选的人员list
+    // already list
     userList: {
       type: Array,
       default: null
@@ -82,17 +83,17 @@ export default {
       type: Array,
       default: null
     },
-    // 禁止选择的的用户
+    // user
     disalbedUserList: {
       type: Array,
       default: null
     },
-    // 选择范围的人员
+    //
     scopeUserList: {
       type: Array,
       default: null
     },
-    // 选择范围的部门
+    // department
     scopeDeptList: {
       type: Array,
       default: null
@@ -105,7 +106,7 @@ export default {
       checkList: [],
       tableData: [],
       isIndeterminate: false,
-      tempChooseList: [] // 当前已经选择的，但当前box框没有的
+      tempChooseList: [] // current already , current box
     }
   },
   watch: {
@@ -127,11 +128,11 @@ export default {
     },
     initScopeSelect() {
       this.tableData = [...(this.scopeUserList || []), ...(this.scopeDeptList || [])]
-      // 默认选择的回填
+      //
       this.userList.forEach(itt => {
         this.tableData.forEach(idd => {
           if (itt.user_id === idd.user_id) {
-            // 是否checklist 有个
+            // whether checklist
             let index = this.checkList.findIndex(itd => {
               return idd.user_id === itd.user_id
             })
@@ -139,7 +140,7 @@ export default {
           }
         })
       })
-      // 禁止选择的人
+      //
       let tempD = this.disalbedUserList || []
       tempD.forEach(itt => {
         this.tableData.forEach(idd => {
@@ -148,7 +149,7 @@ export default {
           }
         })
       })
-      // 计算出那些是在当前tab选的
+      // is in current tab
       this.checkList.forEach(itm => {
         let index = this.tempChooseList.findIndex(itd => {
           return itm.user_id === itd.user_id
@@ -160,8 +161,8 @@ export default {
       this.isIndeterminate = false
       this.checkList = val ? this.tableData : []
       this.isIndeterminate = false
-      // 全选 把之前的加进来
-      // 区分是部门还是人员tableData
+      // full before
+      // is department is tableData
       let valueUser = this.tableData.filter(itm => itm.user_id)
       let valueDept = this.tableData.filter(itm => itm.dept_id)
       this.$emit('addPerson', { user: [...valueUser, ...this.tempChooseList], dept: [...valueDept, ...this.tempChooseDeptList] })
@@ -174,7 +175,7 @@ export default {
         if (checkedCount === 0) {
           this.$emit('addPerson', { user: [], dept: [] })
         } else {
-          // 区分是部门还是人员
+          // is department is
           if (value[checkedCount - 1].user_id) {
             this.$emit('addPerson', { user: [value[checkedCount - 1]] })
           } else {
@@ -183,7 +184,7 @@ export default {
           this.checkList = [value[checkedCount - 1]]
         }
       } else {
-        // 区分是部门还是人员
+        // is department is
         let valueUser = value.filter(itm => itm.user_id)
         let valueDept = value.filter(itm => itm.dept_id)
         this.$emit('addPerson', { user: [...valueUser, ...this.tempChooseList], dept: [...valueDept, ...this.tempChooseDeptList] })

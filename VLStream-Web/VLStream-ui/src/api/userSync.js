@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
-// 同步用户信息到本地
+// userinfo
 export function syncUserToLocal(userInfo) {
   return request.post('/api/user/sync', {
     userId: userInfo.userId,
@@ -15,19 +20,19 @@ export function syncUserToLocal(userInfo) {
   })
 }
 
-// 获取本地用户信息
+// Get userinfo
 export function getLocalUserInfo(userId) {
   return request.get(`/api/user/${userId}`)
 }
 
-// 更新本地用户信息
+// new userinfo
 export function updateLocalUserInfo(userId, userData) {
   return request.put(`/api/user/${userId}`, userData)
 }
 
-// 统一的API对象
+// APIobject
 export const userSyncApi = {
   syncUser: syncUserToLocal,
   getUserInfo: getLocalUserInfo,
   updateUser: updateLocalUserInfo
-} 
+}

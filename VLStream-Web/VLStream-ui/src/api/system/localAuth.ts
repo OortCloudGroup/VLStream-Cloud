@@ -1,13 +1,18 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { authRequest } from '@/utils/request'
 
 const LOCAL_TENANT_ID = '000000'
 
-/** 获取后端当前租户模式。 */
+/* * Get after current . */
 export function getTenantMode() {
   return authRequest.get('/sso/v1/mode')
 }
 
-/** 将统一平台 token 换成本系统本地 Sa-Token。 */
+/* * token Sa-Token. */
 export function exchangePlatformToken(accessToken: string, tenantId?: string) {
   return authRequest.post('/sso/v1/exchangeToken', {
     accessToken,
@@ -22,7 +27,7 @@ export function exchangePlatformToken(accessToken: string, tenantId?: string) {
   } as any)
 }
 
-/** 使用本项目 SpringBlade 认证端点登录，并兼容旧 store 需要的响应字段。 */
+/* * item SpringBlade , old store need to field. */
 export async function loginSSO(data: Record<string, any>) {
   const response: any = await authRequest.post('/blade-auth/token', null, {
     params: {
@@ -50,48 +55,48 @@ export async function loginSSO(data: Record<string, any>) {
   }
 }
 
-/** 使用本地用户缓存校验当前请求头中的 token。 */
+/* * user Validate current in token. */
 export function verifyToken() {
   return authRequest.post('/sso/v1/getUserInfo', {})
 }
 
-/** 获取当前本地登录用户信息。 */
+/* * Get current userinfo. */
 export function getUserInfo() {
   return authRequest.post('/sso/v1/getUserInfo', {})
 }
 
-/** 获取本地单租户信息。 */
+/* * Get info. */
 export function getUserTenants() {
   return authRequest.post('/sso/v1/getUserTenants', {})
 }
 
-/** 校验平台租户归属后切换，并返回绑定目标租户的新本地 token。 */
+/* * Validate after , new token. */
 export function switchTenant(tenantId: string) {
   return authRequest.post('/sso/v1/switchTenant', { tenantId })
 }
 
-/** 在本地鉴权体系内刷新当前 token。 */
+/* * in new current token. */
 export function refreshToken(data: Record<string, any>) {
   return authRequest.post('/sso/v1/refreshToken', data)
 }
 
-/** 注销当前本地会话。 */
+/* * current will . */
 export async function logout() {
   const response: any = await authRequest.post('/blade-auth/logout')
   return response?.code === undefined ? { code: 200, data: response } : response
 }
 
-/** 旧双阶段登录入口统一收敛到本地账号密码登录。 */
+/* * old . */
 export function getLoginCodeV2(data: Record<string, any>) {
   return loginSSO(data)
 }
 
-/** 旧快速登录入口统一收敛到本地账号密码登录。 */
+/* * old . */
 export function fastLogin(data: Record<string, any>) {
   return loginSSO(data)
 }
 
-/** 使用本地用户中心修改密码。 */
+/* * user in Update . */
 export function resetPassword(data: Record<string, any>) {
   return authRequest.put('/system/user/profile/updatePwd', null, {
     params: { oldPassword: data.oldPassword, newPassword: data.password }

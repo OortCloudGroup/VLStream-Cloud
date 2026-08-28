@@ -1,11 +1,16 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
 /**
- * 启动HLS流转换
- * @param {Object} data - 转换请求数据
- * @param {string} data.deviceId - 设备ID
- * @param {string} data.rtspUrl - RTSP流地址
- * @param {string} data.quality - 转换质量 (low/medium/high)
+ * HLS Convert
+ * @param {Object} data - Convert data
+ * @param {string} data.deviceId - deviceID
+ * @param {string} data.rtspUrl - RTSP
+ * @param {string} data.quality - Convert (low/medium/high)
  */
 export function startHLSStream(data) {
   return request({
@@ -16,9 +21,9 @@ export function startHLSStream(data) {
 }
 
 /**
- * 停止HLS流转换
- * @param {Object} data - 停止请求数据
- * @param {string} data.deviceId - 设备ID
+ * HLS Convert
+ * @param {Object} data - data
+ * @param {string} data.deviceId - deviceID
  */
 export function stopHLSStream(data) {
   return request({
@@ -29,7 +34,7 @@ export function stopHLSStream(data) {
 }
 
 /**
- * 获取活跃的流信息
+ * Get info
  */
 export function getActiveStreams() {
   return request({
@@ -39,8 +44,8 @@ export function getActiveStreams() {
 }
 
 /**
- * 检查设备流是否活跃
- * @param {string} deviceId - 设备ID
+ * device whether
+ * @param {string} deviceId - deviceID
  */
 export function checkStreamStatus(deviceId) {
   return request({
@@ -50,11 +55,11 @@ export function checkStreamStatus(deviceId) {
 }
 
 /**
- * 停止所有转换（管理员功能）
+ * all Convert (administrator can )
  */
 export function stopAllStreams() {
   return request({
     url: '/api/stream/stop-all',
     method: 'post'
   })
-} 
+}

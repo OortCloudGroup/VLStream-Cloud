@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -10,7 +11,7 @@ import com.ruoyi.workflow.domain.ProcessTemplate;
 import com.ruoyi.workflow.domain.vo.ProcessTemplateVo;
 
 /**
- * 流程初始化模版Mapper接口
+ * workflowInitialize Mapperinterface
  *
  * @author lcq
  * @date 2025-01-07

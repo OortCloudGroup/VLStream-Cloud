@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div id="rtcPlayer">
     <video id='webRtcPlayerBox' ref="videoElement" controls autoplay style="text-align:left;">
@@ -39,9 +44,9 @@ export default {
     play: function (url) {
       console.log(ZLMRTCClient)
       this.webrtcPlayer = new ZLMRTCClient.Endpoint({
-        element: this.$refs.videoElement,// video 标签
-        debug: true,// 是否打印日志
-        zlmsdpUrl: url,//流地址
+        element: this.$refs.videoElement,// video
+        debug: true,// whether log
+        zlmsdpUrl: url,//
         simulecast: false,
         useCamera: false,
         audioEnable: true,
@@ -49,17 +54,17 @@ export default {
         recvOnly: true,
         usedatachannel: false,
       })
-      this.webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_ICE_CANDIDATE_ERROR,(e)=>{// ICE 协商出错
+      this.webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_ICE_CANDIDATE_ERROR,(e)=>{// ICE
         console.error('ICE 协商出错')
         this.eventcallbacK("ICE ERROR", "ICE 协商出错")
       });
 
-      this.webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_ON_REMOTE_STREAMS,(e)=>{//获取到了远端流，可以播放
+      this.webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_ON_REMOTE_STREAMS,(e)=>{// Get ,
         console.log('播放成功',e.streams)
         this.eventcallbacK("playing", "播放成功")
       });
 
-      this.webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_OFFER_ANWSER_EXCHANGE_FAILED,(e)=>{// offer anwser 交换失败
+      this.webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_OFFER_ANWSER_EXCHANGE_FAILED,(e)=>{// offer anwser failed
         console.error('offer anwser 交换失败',e)
         this.eventcallbacK("OFFER ANSWER ERROR ", "offer anwser 交换失败")
         if (e.code ==-400 && e.msg=="流不存在"){
@@ -72,7 +77,7 @@ export default {
         }
       });
 
-      this.webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_ON_LOCAL_STREAM,(s)=>{// 获取到了本地流
+      this.webrtcPlayer.on(ZLMRTCClient.Events.WEBRTC_ON_LOCAL_STREAM,(s)=>{// Get
 
         // document.getElementById('selfVideo').srcObject=s;
         this.eventcallbacK("LOCAL STREAM", "获取到了本地流")
@@ -111,7 +116,7 @@ export default {
   max-height: 450px;
   background-color: #000;
 }
-/* 隐藏logo */
+/* logo */
 /* .iconqingxiLOGO {
     display: none !important;
 } */

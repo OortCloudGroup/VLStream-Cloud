@@ -1,12 +1,8 @@
 /*
-* @Created by: 兰舰
-* Email: gglanjian@qq.com
-* Phone: 16620805419
-* @Date: 2024-11-15 10:47:24
- * @Last Modified by: 兰舰
- * @Last Modified time: 2025-03-22 19:04:59
-* @Copyright aPaaS-front-team. All rights reserved.
-*/
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { request } from '@/utils/service'
 import config from '@/config'
 
@@ -46,42 +42,42 @@ function commonFunc3<T, K>(interfaceName: string, data: T, method = 'post', isPa
   })
 }
 
-// 日志列表
+// log
 export function logList(data) {
   return commonFunc('/api/v1/reportLogList', data)
 }
 
-// 群聊列表
+//
 export function groupList(data) {
   return commonFunc('/api/v1/roomList', data)
 }
 
-// 群聊消息列表
+//
 export function groupChatList(data) {
   return commonFunc('/api/v1/roomMsgList', data)
 }
 
-// 单聊消息列表
+//
 export function singleChatList(data) {
   return commonFunc('/api/v1/msgList', data)
 }
 
-// 用户与应用列表
+// user and
 export function userAndAppList(data) {
   return commonFunc('/api/v1/appMsgList', data)
 }
 
-// 应用使用统计
+//
 export function appUseStats(data) {
   return commonFunc('/api/v1/appUseStatistics', data)
 }
 
-// 应用使用人数
+//
 export function appUserTotal(data) {
   return commonFunc('/api/v1/appUserTotal', data)
 }
 
-// 图文消息统计
+//
 export function messageStats(data) {
   return commonFunc('/api/v1/appSendStatistics', data)
 }
@@ -103,7 +99,7 @@ export function myOpinionSave(data) {
   return commonFunc('/api/v1/myOpinionSave', data)
 }
 
-// 收藏列表
+//
 export function myCollectList(data) {
   return commonFunc('/api/v1/myCollectList', data)
 }
@@ -120,48 +116,48 @@ export function serviceLogDetail(data) {
   return commonFunc('/log/v1/detail', data)
 }
 
-// api调用统计
+// api
 export function logServiceStatistics(data) {
   return commonFunc('/log/v1/service.statistics', data)
 }
 
-// api调用状态统计
+// api
 export function logServiceStatus(data) {
   return commonFunc('/log/v1/status.statistics', data)
 }
 
-// qps统计
+// qps
 export function qpsStatistics(data) {
   return commonFunc('/log/v1/qps.statistics', data)
 }
 
-// 灰度发布统计
+//
 export function canaryStatistics(data) {
   return commonFunc('/log/v1/canary.statistics', data)
 }
 
-// 熔断访问统计
+//
 export function breakerStatistics(data) {
   return commonFunc('/log/v1/circuit_breaker.statistics', data)
 }
 
-// 调用异常统计
+//
 export function serverExceptionStatis(data) {
   return commonFunc('/log/v1/server_exception.statistics', data)
 }
 
-// beijing 旧总线的服务日志相关接口
-// 日志详情
+// beijing old servicelogrelatedinterface
+// log
 export function proxyBusLogDetail(data) {
   return commonFunc('/log/v1/proxybus_detail', data)
 }
 
-// 日志列表
+// log
 export function proxyBusLogList(data) {
   return commonFunc('/log/v1/proxybus_list', data)
 }
 
-// api调用统计
+// api
 export function proxyBusLogStatistics(data) {
   return commonFunc('/log/v1/proxybus_statistics', data)
 }
@@ -178,52 +174,52 @@ export function reportLogExport(data) {
   return commonFunc('/api/v1/reportLogExport', data)
 }
 
-// 告警规则
-// 新增告警规则
+// alarm / alert
+// Add alarm / alert
 export function alarmRuleAdd(data) {
   return commonFunc('/alertrule/v1/add', data)
 }
-// 获取分组名列表
+// Get group
 export function alarmRuleInfo(data) {
   return commonFunc('/alertrule/v1/info', data)
 }
 
-// 查询告警规则列表
+// Query alarm / alert list
 export function alarmRuleList(data) {
   return commonFunc('/alertrule/v1/list', data)
 }
 
-// 查询告警日志列表
+// Query alarm / alertlog list
 export function alarmRuleLogList(data) {
   return commonFunc('/alertrule/v1/add', data)
 }
 
-// 创建问题整改信息
+// info
 export function createProblemCorrectionProgress(data) {
   return commonFunc2('/smartCity/problem-correction-progress/create', data, 'post')
 }
 
-// 获得园林巡查巡查任务
+// task
 export function getGardenInspectionTask(data) {
   return commonFunc3('/smartCity/garden-inspection-task/get', data, 'get')
 }
 
-// 获得园林养护应急事件处理
+// eventProcess
 export function getGreeneryManagementEmergencyIncident(data) {
   return commonFunc3('/smartCity/greenery-management-emergency-incident/get', data, 'get')
 }
 
-// 获得园林养护任务
+// task
 export function getGreeneryManagementTask(data) {
   return commonFunc3('/smartCity/greenery-management-task/get', data, 'get')
 }
 
-// 获得问题整改进度
+//
 export function getProblemCorrectionProgress(data) {
   return commonFunc3('/smartCity/problem-correction-progress/get', data, 'get')
 }
 
-// 获得问题整改进度分页
+//
 export function pageProblemCorrectionProgress(data) {
   return commonFunc3('/smartCity/problem-correction-progress/page', data, 'get')
 }

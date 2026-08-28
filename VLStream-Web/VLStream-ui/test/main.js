@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
@@ -10,23 +15,23 @@ import router from './router'
 import './style.css'
 import './assets/styles/pagination.css'
 
-// 导入StorageEvent token同步机制（备用方案）
+// Import StorageEvent token ( )
 import { storageEventSync } from './utils/storageEventSync.js'
 
-// 创建Vue应用实例
+// Vue instance
 const app = createApp(App)
 
-// 初始化StorageEvent同步机制
+// Initialize StorageEvent
 storageEventSync.init()
 
-// 监听token更新事件
+// token new event
 window.addEventListener('storageEventTokenUpdated', (event) => {
   console.log('Token updated via StorageEvent, reloading page...', event.detail);
-  // 可以在这里添加更精细的逻辑，例如只更新用户信息而不刷新页面
+  // in , only new userinfo new page
   window.location.reload();
 });
 
-// 暴露token调试方法
+// token method
 window.debugTokens = () => {
   console.log('=== Token调试信息 ===');
   console.log('sessionStorage.accessToken:', sessionStorage.getItem('accessToken'));
@@ -38,7 +43,7 @@ window.debugTokens = () => {
   console.log('用户信息 (local):', localStorage.getItem('userInfo'));
 };
 
-// 暴露token清理方法
+// token method
 window.clearAllTokens = () => {
   console.log('🧹 清理所有token');
   sessionStorage.removeItem('accessToken');
@@ -48,7 +53,7 @@ window.clearAllTokens = () => {
   console.log('✅ 所有token已清理');
 };
 
-// 暴露强制token同步方法
+// token method
 window.forceTokenSync = () => {
   console.log('🔄 强制token同步');
   if (storageEventSync && storageEventSync.manualSync) {
@@ -58,54 +63,54 @@ window.forceTokenSync = () => {
   }
 };
 
-// 暴露完整的token重置方法
+// token method
 window.resetTokenSync = () => {
   console.log('🔄 完整重置token同步');
-  
-  // 1. 清理所有token
+
+  // 1. all token
   window.clearAllTokens();
-  
-  // 2. 等待一秒后重新请求
+
+  // 2. etc. after new
   setTimeout(() => {
     if (storageEventSync && storageEventSync.requestTokenFromOtherWindows) {
       storageEventSync.requestTokenFromOtherWindows();
       console.log('📡 已发送新的token请求');
     }
   }, 1000);
-  
-  // 3. 显示当前状态
+
+  // 3. current
   setTimeout(() => {
     window.debugTokens();
   }, 2000);
 };
 
-// 暴露手动同步方法用于调试
+// method
 window.manualTokenSync = () => {
   storageEventSync.manualSync();
 };
 
-// 暴露StorageEvent同步实例到全局，供统一用户平台调用
+// StorageEvent instance full , user
 window.storageEventSync = storageEventSync;
 
-// 将HLS.js添加到全局window对象，供VideoPlayer组件使用
+// HLS.js full windowobject, VideoPlayercomponent
 window.Hls = Hls
 
-// 注册所有图标
+// all
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 
-// 配置应用插件
+// configuration
 app.use(createPinia())
 app.use(router)
 app.use(ElementPlus, {
   locale: zhCn,
 })
 
-// 挂载应用到DOM
+// DOM
 app.mount('#app')
 
-// 添加更多全局调试函数
+// full
 window.checkPlatformNow = () => {
   console.log('🔍 手动检查平台token...')
   const result = window.storageEventSync.checkPlatformToken()
@@ -126,7 +131,7 @@ window.validateCurrentToken = async () => {
   }
 }
 
-// 添加更多全局调试函数
+// full
 window.fetchPlatformToken = () => {
   console.log('🔗 手动获取统一用户平台token...')
   window.storageEventSync.fetchTokenFromUnifiedPlatform()

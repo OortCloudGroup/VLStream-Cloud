@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 登录验证
+ *
  *
  * @author Lion Li
  */
@@ -47,16 +47,16 @@ public class SysLoginController {
     private final ISysUserService userService;
     private final SysPermissionService permissionService;
     /**
-     * 登录方法
+     * method
      *
-     * @param loginBody 登录信息
-     * @return 结果
+     * @param loginBody info
+     * @return
      */
     @SaIgnore
     @PostMapping("/login")
     public R<Map<String, Object>> login(@Validated @RequestBody LoginBody loginBody) {
         Map<String, Object> ajax = new HashMap<>();
-        // 生成令牌
+        // Generate
         String token = loginService.login(loginBody.getUsername(), loginBody.getPassword(), loginBody.getCode(),
             loginBody.getUuid());
         ajax.put(Constants.TOKEN, token);
@@ -64,54 +64,54 @@ public class SysLoginController {
     }
 
     /**
-     * 短信登录
      *
-     * @param smsLoginBody 登录信息
-     * @return 结果
+     *
+     * @param smsLoginBody info
+     * @return
      */
     @SaIgnore
     @PostMapping("/smsLogin")
     public R<Map<String, Object>> smsLogin(@Validated @RequestBody SmsLoginBody smsLoginBody) {
         Map<String, Object> ajax = new HashMap<>();
-        // 生成令牌
+        // Generate
         String token = loginService.smsLogin(smsLoginBody.getPhonenumber(), smsLoginBody.getSmsCode());
         ajax.put(Constants.TOKEN, token);
         return R.ok(ajax);
     }
 
     /**
-     * 邮件登录
      *
-     * @param body 登录信息
-     * @return 结果
+     *
+     * @param body info
+     * @return
      */
     @PostMapping("/emailLogin")
     public R<Map<String, Object>> emailLogin(@Validated @RequestBody EmailLoginBody body) {
         Map<String, Object> ajax = new HashMap<>();
-        // 生成令牌
+        // Generate
         String token = loginService.emailLogin(body.getEmail(), body.getEmailCode());
         ajax.put(Constants.TOKEN, token);
         return R.ok(ajax);
     }
 
     /**
-     * 小程序登录(示例)
+     * ( )
      *
-     * @param xcxCode 小程序code
-     * @return 结果
+     * @param xcxCode code
+     * @return
      */
     @SaIgnore
     @PostMapping("/xcxLogin")
     public R<Map<String, Object>> xcxLogin(@NotBlank(message = "{xcx.code.not.blank}") String xcxCode) {
         Map<String, Object> ajax = new HashMap<>();
-        // 生成令牌
+        // Generate
         String token = loginService.xcxLogin(xcxCode);
         ajax.put(Constants.TOKEN, token);
         return R.ok(ajax);
     }
 
     /**
-     * 退出登录
+     * exit
      */
     @SaIgnore
     @PostMapping("/logout")
@@ -121,9 +121,9 @@ public class SysLoginController {
     }
 
     /**
-     * 获取用户信息
+     * Get userinfo
      *
-     * @return 用户信息(根据tocken获取用户信息)
+     * @return userinfo( tockenGet userinfo)
      */
     @GetMapping("getInfo")
     public R<Map<String, Object>> getInfo(@RequestHeader("Authorization")String token) {
@@ -141,9 +141,9 @@ public class SysLoginController {
     }
 
     /**
-     * 获取路由信息
+     * Get info
      *
-     * @return 路由信息
+     * @return info
      */
     @GetMapping("getRouters")
     public R<List<RouterVo>> getRouters(@RequestHeader("Authorization")String token) {

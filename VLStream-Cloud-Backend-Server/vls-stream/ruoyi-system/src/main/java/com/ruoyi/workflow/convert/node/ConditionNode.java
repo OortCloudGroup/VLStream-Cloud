@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -21,7 +22,7 @@ import org.flowable.bpmn.model.SequenceFlow;
 import java.util.*;
 
 /**
- * @description：条件(分支)
+ * @description: ( )
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -33,27 +34,27 @@ public class ConditionNode extends Node {
     private Map<String, String> operatorMap = new HashMap<>();
 
     {
-        // 等于
+        // etc.
         operatorMap.put("eq", "var:eq(%s, %s)");
-        // 不等于
+        // etc.
         operatorMap.put("ne", "var:notEquals(%s, %s)");
-        // 包含
+        //
         operatorMap.put("in", "var:containsAny(%s, %s)");
-        // 不包含
+        //
         operatorMap.put("ni", "var:notContainsAny(%s, %s)");
-        // 为空
+        // is empty
         operatorMap.put("ul", "var:isNull(%s)");
-        // 不为空
+        // is empty
         operatorMap.put("nu", "var:isNotNull(%s)");
-        // 字符包含
+        //
         operatorMap.put("lk", "var:contains(%s, %s)");
-        // 大于
+        //
         operatorMap.put("gt", "var:gt(%s, %s)");
-        // 小于
+        //
         operatorMap.put("lt", "var:lt(%s, %s)");
-        // 小于或等于
+        // etc.
         operatorMap.put("lte", "var:lte(%s, %s)");
-        // 大于或等于
+        // etc.
         operatorMap.put("gte", "var:gte(%s, %s)");
     }
 
@@ -109,7 +110,7 @@ public class ConditionNode extends Node {
 //        }
 //    }
 
-    // 将JSON转换为表达式的方法
+    // JSONConvert to method
     public static String jsonToExpression(JsonNode jsonNode) {
         if (jsonNode == null || jsonNode.isNull()) {
             return "";
@@ -158,7 +159,7 @@ public class ConditionNode extends Node {
         return subExpression.toString();
     }
 
-    // 将表达式转换为JSON的方法
+    // Convert to JSON method
     public static JsonNode expressionToJson(String expression) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode rootNode = mapper.createObjectNode();
@@ -176,7 +177,7 @@ public class ConditionNode extends Node {
         }
 
         rootNode.set("rule", ruleNode);
-        rootNode.put("rule_flag", "&&"); // 顶层规则标志，根据需要调整
+        rootNode.put("rule_flag", "&&"); // layer , need to
 
         return rootNode;
     }
@@ -213,7 +214,7 @@ public class ConditionNode extends Node {
     @Override
     public List<FlowElement> convert() {
         ArrayList<FlowElement> elements = new ArrayList<>();
-        // 条件节点
+        // node
         SequenceFlow sequenceFlow = this.buildSequence(this);
         sequenceFlow.setId(this.getId());
         sequenceFlow.setName(this.getNodeName());
@@ -224,10 +225,10 @@ public class ConditionNode extends Node {
         if (StringUtils.isNotBlank(expression) && def != true) {
             ExtensionElement extensionElement = new ExtensionElement();
             extensionElement.setName("expression");
-            // 设置命名空间 URI 和前缀
+            // Set null / empty URI and before
             extensionElement.setNamespace("http://oortcloud.com/flowable/extensions");
             extensionElement.setNamespacePrefix("ext");
-            // 设置元素的文本内容
+            // Set element
             ObjectMapper objectMapper = new ObjectMapper();
             try {
                 JsonNode JsonNode = objectMapper.readTree(expression);
@@ -240,7 +241,7 @@ public class ConditionNode extends Node {
             }
         }
         elements.add(sequenceFlow);
-        // 下一个节点
+        // node
         Node child = this.getChildNode();
         if (Objects.nonNull(child)) {
             child.setBranchId(this.getBranchId());

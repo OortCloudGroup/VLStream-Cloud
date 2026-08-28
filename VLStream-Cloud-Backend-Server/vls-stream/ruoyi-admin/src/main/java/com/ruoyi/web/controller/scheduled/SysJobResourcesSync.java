@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -23,7 +24,7 @@
 //import java.util.List;
 //
 //**
-// * 部门同步定时任务
+// * department task
 // */
 //@Component
 //@Transactional(rollbackFor = Exception.class)
@@ -33,65 +34,65 @@
 //    private String jobSynUrl;
 //
 //    @Resource
-//    private SysJobLevelMapper sysJobLevelMapper; // 假设已经注入了对应的Service
+// private SysJobLevelMapper sysJobLevelMapper; // assuming already Service
 //    final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 //
 //    //@Scheduled(cron = "0 */2 * * * ?")
 //    public void syncDeptData() {
-//        System.out.println("开始职务等级数据同步：" + new Date());
-//        System.out.println("部门数据同步接口为：" + jobSynUrl);
+// System.out.println("start etc. data : " + new Date());
+// System.out.println("departmentdata interface to : " + jobSynUrl);
 //
-//        // 准备请求参数，这里你可能需要根据具体情况设置请求参数
+// // parameter, can need to Set parameter
 //        JSONObject requestBody = new JSONObject();
 //        requestBody.put("oort_dcode", null);
 //        requestBody.put("oort_udid", null);
 //        requestBody.put("page", 1);
 //        requestBody.put("pagesize", Integer.MAX_VALUE);
-//        // 查询当前数据库最后一次更新的时间
+// // Query current data after new
 //        Long latestUpdateTime = sysJobLevelMapper.selectLatestUpdateTime();
 //        if (latestUpdateTime != null) {
-//            requestBody.put("startDate", latestUpdateTime+1); // 将日期时间转换为时间戳并放入请求体
+// requestBody.put("startDate", latestUpdateTime+1); // Convert to
 //        } else {
-//            requestBody.put("startDate", null); // 如果latestUpdateTime为null，直接放入null
+// requestBody.put("startDate", null); // if latestUpdateTime to null, null
 //        }
 //        requestBody.put("tag", null);
 //        if(latestUpdateTime == null) {
-//            System.out.println("查询职务等级全量数据");
+// System.out.println("Query etc. full data");
 //        } else {
-//            System.out.println("查询职务等级"+ sdf.format(new Date(latestUpdateTime+1)) + "后的增量数据");
+// System.out.println("Query etc. "+ sdf.format(new Date(latestUpdateTime+1)) + " after data");
 //        }
-//        // 发送 POST 请求并获取响应数据
+// // POST Get data
 //        JSONArray jobLevelList = fetchDataFromSyncAPI(requestBody);
 //
-//        // 处理响应数据
+// // Process data
 //        if (CollectionUtils.isNotEmpty(jobLevelList)) {
-//            // 查询已有的所有数据的oort_udid
+// // Query already all data oort_udid
 //            List<String> oortUdidList = sysDeptMapper.selectOortUdidList();
 //            List<SysJobLevel> sysJobLevelList = new ArrayList<>();
 //            for (Object obj : jobLevelList) {
 //                JSONObject deptJson = (JSONObject) obj;
-//                SysJobLevel sysJobLevel = parseDeptJson(deptJson); // 解析 JSON 数据为 SysDept 对象
+// SysJobLevel sysJobLevel = parseDeptJson(deptJson); // Parse JSON data to SysDept object
 //                if (sysJobLevel != null) {
 //                    sysJobLevelList.add(sysJobLevel);
 //                }
 //            }
-//            boolean b = sysJobLevelMapper.insertOrUpdateBatch(sysJobLevelList);// 批量插入部门数据
-//            System.out.println("职务等级据同步成功，共同步职务等级数量：" + sysJobLevelList.size());
+// boolean b = sysJobLevelMapper.insertOrUpdateBatch(sysJobLevelList);// departmentdata
+// System.out.println(" etc. successfully, etc. : " + sysJobLevelList.size());
 //        } else {
-//            System.out.println("职务等级数据同步成功：共同步职务等级数量：0");
+// System.out.println(" etc. data successfully: etc. : 0");
 //        }
-//        System.out.println("结束职务等级数据同步：" + sdf.format(new Date()));
+// System.out.println("finish etc. data : " + sdf.format(new Date()));
 //    }
 //
 //    private JSONArray fetchDataFromSyncAPI(JSONObject requestBody) {
-//        // 发送 POST 请求
+// // POST
 //        HttpResponse response = HttpRequest.post(jobSynUrl)
 //            .header("accept", "application/json")
 //            .header("Content-Type", "application/json")
 //            .body(requestBody.toString())
 //            .execute();
 //
-//        // 处理响应
+// // Process
 //        String responseBody = response.body();
 //        JSONObject jsonObject = new JSONObject(responseBody);
 //        JSONObject data = jsonObject.getJSONObject("data");

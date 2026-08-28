@@ -55,11 +55,11 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 单元测试案例
+ *
  *
  * @author Lion Li
  */
-@SpringBootTest // 此注解只能在 springboot 主包下使用 需包含 main 方法与 yml 配置文件
+@SpringBootTest // only can in springboot main main method and yml configuration
 @DisplayName("单元测试案例")
 public class DemoUnitTest extends FlowServiceFactory {
 
@@ -165,9 +165,9 @@ public class DemoUnitTest extends FlowServiceFactory {
 
     @Test
     public void Test2() {
-        LocalDateTime now = LocalDateTime.now(); // 获取当前日期和时间
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"); // 设置格式化模式
-        String formattedDate = now.format(formatter); // 格式化当前时间
+        LocalDateTime now = LocalDateTime.now(); // Get current and
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"); // Set Format
+        String formattedDate = now.format(formatter); // Format current
         System.out.println(formattedDate);
     }
 
@@ -177,9 +177,9 @@ public class DemoUnitTest extends FlowServiceFactory {
             "-6cf6da435cd3");
         Task currentTask = taskService.createTaskQuery().processInstanceId("Process_1724752895621:2:4c12d8d4-6a86" +
             "-11ef-9011-6cf6da435cd3").active().singleResult();
-        // 获取流程定义的主流程对象
+        // Get workflow definition main workflow object
         Process process = bpmnModel.getMainProcess();
-        // 获取自定义属性(http://flowable.org/bpmn为命名空间专门用户获取自定义属性)
+        // Get Customproperty(http://flowable.org/bpmn to null / empty userGet Customproperty)
         // String notifyAllSteps = process.getAttributeValue("http://flowable.org/bpmn", "notifyAllSteps");
         //runtimeService.setVariable(, "notifyAllSteps", notifyAllSteps);
         //  boolean notifyAllSteps = runtimeService.getVariable(task.getExecutionId(), "notifyAllSteps") != null &&
@@ -190,18 +190,18 @@ public class DemoUnitTest extends FlowServiceFactory {
     public void test2() {
         BpmnModel bpmnModel = repositoryService.getBpmnModel("Process_1724983557619:6:c7044bc6-667c-11ef-b764" +
             "-6cf6da435cd3");
-        // 获取流程定义的主流程对象
+        // Get workflow definition main workflow object
         Process process = bpmnModel.getMainProcess();
         if (process == null) {
             System.err.println("Main process is null in BpmnModel!");
             return;
         }
 
-        // 获取自定义属性
+        // Get Customproperty
         String notifyAllSteps = process.getAttributeValue("http://flowable.org/bpmn", "notifyAllSteps");
-        System.out.println("notifyAllSteps 属性值: " + notifyAllSteps);  // 确认属性值是否正确
+        System.out.println("notifyAllSteps 属性值: " + notifyAllSteps);  // property valuewhether correct
 
-        // 获取当前任务节点信息
+        // Get current tasknodeinfo
         String currentTaskId = process.getId();
         System.out.println("当前任务ID: " + currentTaskId);
     }
@@ -216,7 +216,7 @@ public class DemoUnitTest extends FlowServiceFactory {
                                          .header("AccessToken", "4fc9b66609ff4e2bbc24e52b472df80f").body(requestBody);
 
         HttpResponse response = request.execute();
-        String responseBody = response.body(); // 获取响应体字符串
+        String responseBody = response.body(); // Get
 
         JSONObject resultJson = JSONUtil.parseObj(responseBody);
         System.out.println("resultJson = " + resultJson.toString());
@@ -224,41 +224,41 @@ public class DemoUnitTest extends FlowServiceFactory {
 
     @Test
     public void test4() {
-        // 创建解释器
+        //
         AviatorEvaluatorInstance engine = AviatorEvaluator.newInstance(EvalMode.INTERPRETER);
-        // 打开跟踪执行
+        // Execute
         engine.setOption(Options.TRACE_EVAL, true);
 //        Expression exp = engine.compile("score < 80 ? 'true' : 'false'");
-        // 将 UUID 字符串用引号括起来('cdbe6b06-f353-4dab-8f6a-e6c1bf253c95'=='cdbe6b06-f353-4dab-8f6a-e6c1bf253c95' && 99>=12)
-        // || (77==77 && 12<=99 && 事假==事假)
+        // UUID ('cdbe6b06-f353-4dab-8f6a-e6c1bf253c95'=='cdbe6b06-f353-4dab-8f6a-e6c1bf253c95' && 99>=12)
+        // || (77==77 && 12<=99 && == )
         Expression exp = engine.compile("('Process_1733280629879:5:570e4971-b924-11ef-a5a9-52a3bb44796a'=='d03295b4" +
             "-b732-47a9-abf6-821fa42ae297' && 'input57439'==12) || ('cdbe6b06-f353-4dab-8f6a-e6c1bf253c95'==77 && " +
             "'2024-12-17'==99 && '事假'=='d03295b4-b732-47a9-abf6-821fa42ae297')");
         System.out.println(exp.execute(exp.newEnv()));
     }
 
-    //使用函数contains，contains 方法是区分大小写的，如果你需要不区分大小写地判断是否包含，可以考虑先将字符串转换为统一的大小写格式（比如 toLowerCase() 或 toUpperCase()）
+    // contains, contains method is , if need to Check whether , Convert to ( toLowerCase() toUpperCase())
     @Test
     public void test6() throws Exception {
-        // 创建解释器
+        //
         AviatorEvaluatorInstance engine = AviatorEvaluator.newInstance(EvalMode.INTERPRETER);
 
-// 定义表达式
+//
         String expression = "string.contains(s1, s2)";
 
-// 编译表达式
+//
         Expression exp = engine.compile(expression);
 
-// 设置参数
+// Set parameter
         Map<String, Object> env = new HashMap<>();
         env.put("s1", "Hello, Aviator!");
         env.put("s2", "6");
 
-// 执行表达式
+// Execute
         Object result = exp.execute(env);
 
-// 打印结果
-        System.out.println(result);  // 输出 true 或 false
+//
+        System.out.println(result);  // true false
     }
 
     @Test
@@ -339,9 +339,9 @@ public class DemoUnitTest extends FlowServiceFactory {
                                                                     "-6cf6da435cd3")
                                                                 .includeProcessVariables()
                                                                 .singleResult();
-        // 创建解释器
+        //
         AviatorEvaluatorInstance engine = AviatorEvaluator.newInstance(EvalMode.INTERPRETER);
-        // 打开跟踪执行
+        // Execute
         engine.setOption(Options.TRACE_EVAL, true);
         Expression exp = engine.compile("('测试'==2) || ('a4d6fb90-1270-4f3b-aaae-188759fcd87d'=='a4d6fb90-1270-4f3b" +
             "-aaae-188759fcd87d')");
@@ -350,7 +350,7 @@ public class DemoUnitTest extends FlowServiceFactory {
     }
 
 
-    // 将JSON转换为表达式的方法
+    // JSONConvert to method
     public static String jsonToExpression(JsonNode jsonNode) {
         if (jsonNode == null || jsonNode.isNull()) {
             return "";
@@ -400,7 +400,7 @@ public class DemoUnitTest extends FlowServiceFactory {
     }
 
 
-    // 将表达式转换为JSON的方法
+    // Convert to JSON method
     public static JsonNode expressionToJson(String expression) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode rootNode = mapper.createObjectNode();
@@ -419,7 +419,7 @@ public class DemoUnitTest extends FlowServiceFactory {
         }
 
         rootNode.set("rule", ruleNode);
-        rootNode.put("rule_flag", "&&"); // 顶层规则标志，根据需要调整
+        rootNode.put("rule_flag", "&&"); // layer , need to
 
         return rootNode;
     }
@@ -454,13 +454,13 @@ public class DemoUnitTest extends FlowServiceFactory {
     }
 
 
-    // 解析表达式并替换流程变量值的方法
+    // Parse Replace workflow variable value method
     public static String resolveExpression(String expression, HistoricProcessInstance historicProcIns) {
         if (expression == null || expression.isEmpty() || historicProcIns == null) {
             return expression;
         }
 
-        // 改进的分割逻辑，保护 UUID
+        // , UUID
         String[] tokens = splitExpressionSafely(expression);
 
         StringBuilder resolvedExpression = new StringBuilder();
@@ -476,18 +476,18 @@ public class DemoUnitTest extends FlowServiceFactory {
         return resolvedExpression.toString();
     }
 
-    // 改进后的分割方法，保护 UUID
+    // after method , UUID
     private static String[] splitExpressionSafely(String expression) {
         return expression.split("(?<![0-9a-fA-F\\-])(?<=\\W)(?=\\w)|(?<=\\w)(?=\\W)(?![0-9a-fA-F\\-])");
     }
 
-    // 判断是否是变量名（例如：processDefId, initiator, notifyAllSteps）
+    // Check whether is variable ( : processDefId, initiator, notifyAllSteps)
     private static boolean isVariableToken(String token) {
         return token.matches("^[a-zA-Z_][a-zA-Z0-9_]*$")
             || isUUID(token);
     }
 
-    // 处理流程变量的值
+    // Process workflow variable value
     private static String processBooleanParameter(String param, HistoricProcessInstance historicProcIns) {
         Map<String, Object> processVariables = historicProcIns.getProcessVariables();
         Object o = processVariables.get(param);
@@ -499,7 +499,7 @@ public class DemoUnitTest extends FlowServiceFactory {
         } else if ("0".equals(valueStr)) {
             return "false";
         } else if (isNumeric(valueStr)) {
-            return valueStr; // 数字不加引号
+            return valueStr; //
         } else {
             if (isUUID(valueStr)) {
                 return "'" + valueStr + "'";
@@ -508,12 +508,12 @@ public class DemoUnitTest extends FlowServiceFactory {
         }
     }
 
-    // 判断是否为UUID格式
+    // Check whether to UUID
     private static boolean isUUID(String value) {
         return value.matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
     }
 
-    // 判断是否为数字
+    // Check whether to
     private static boolean isNumeric(String str) {
         return str.matches("-?\\d+(\\.\\d+)?");
     }
@@ -521,36 +521,36 @@ public class DemoUnitTest extends FlowServiceFactory {
 
     @Test
     public void initSchedule() {
-        // 设置首次触发时间
+        // Set
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY,18 );
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
 
-        // 调度每日巡检流程
+        // workflow
         scheduleDailyProcess("Process_1740969345770:5:e279750e-087d-11f0-97e4-8c688be18ef6",
             calendar.getTime());
     }
 
         /**
-     * 创建初始定时任务
-     * @param processDefinitionKey 流程定义KEY
-     * @param firstTriggerTime 首次触发时间
+     * task
+     * @param processDefinitionKey workflow definitionKEY
+     * @param firstTriggerTime
      */
     public void scheduleDailyProcess(String processDefinitionKey, Date firstTriggerTime) {
         ProcessEngineConfigurationImpl config = (ProcessEngineConfigurationImpl) processEngineConfiguration;
 
         managementService.executeCommand(commandContext -> {
-            // 获取定时任务服务
+            // Get taskservice
             TimerJobService timerJobService = config.getJobServiceConfiguration().getTimerJobService();
 
-            // 创建定时任务
+            // task
             TimerJobEntity timerJob = timerJobService.createTimerJob();
             timerJob.setJobType(JobEntity.JOB_TYPE_TIMER);
             timerJob.setDuedate(firstTriggerTime);
             timerJob.setJobHandlerType(CustomTimerHandler.TYPE);
             timerJob.setJobHandlerConfiguration(processDefinitionKey);
-            // 持久化任务
+            // task
             timerJobService.scheduleTimerJob(timerJob);
             return null;
         });
@@ -559,54 +559,54 @@ public class DemoUnitTest extends FlowServiceFactory {
     public void executePendingJobs() {
 
 
-        // 手动触发执行所有待执行的Job
+        // Execute all Execute Job
 //        managementService.moveTimerToExecutableJob("5e05441f-0a20-11f0-887b-8c688be18ef6");
 //        managementService.executeJob("5e05441f-0a20-11f0-887b-8c688be18ef6");
     }
 
     @Test
     public void runTimeoutReminderJobDemo() throws Exception {
-        //自定义命令
+        // Custom
         Command customTimerJobCommand = (Command<Void>) commandContext -> {
-            //获取JobServiceConfiguration
+            // Get JobServiceConfiguration
             JobServiceConfiguration jobServiceConfiguration =
                 processEngineConfiguration.getAsyncExecutor().getJobServiceConfiguration();
-            //获取TimerJob实体管理器
+            // Get TimerJob
             TimerJobEntityManager timerJobEntityManager = jobServiceConfiguration
                 .getTimerJobEntityManager();
-            //创建TimerJob对象
+            // TimerJobobject
             TimerJobEntity timer = timerJobEntityManager.create();
-            //设置TimerJob类型
+            // Set TimerJob
             timer.setJobType(JobEntity.JOB_TYPE_TIMER);
-            //设置作业处理器
+            // Set Process
             timer.setJobHandlerType(CustomTimerHandler.TYPE);
-            //设置传递给作业处理器的参数
+            // Set Process parameter
             Map<String, Object> userInfo = new HashMap<>();
             timer.setJobHandlerConfiguration(com.alibaba.fastjson.JSONObject.toJSONString(userInfo));
-            //设置定时器任务执行周期
+            // Set taskExecute
             timer.setRepeat("R/PT2M");
             timer.setExclusive(true);
-            //时间计算
+            //
             Date now = new Date();
-            //delay为相较当前时间，延时的时间变量
+            // delay to current , variable
             Date target = new Date(now.getTime() + 10 * 10);
-            //设置当前定时器任务的触发时间
+            // Set current task
             timer.setDuedate(target);
-            //保存并触发定时器任务
+            // task
             JobManager jobManager = jobServiceConfiguration.getJobManager();
             jobManager.scheduleTimerJob(timer);
             return null;
         };
-        //执行自定义命令
+        // Execute Custom
         managementService.executeCommand(customTimerJobCommand);
-        //主线程暂停
+        // main
         Thread.sleep(1000 * 60 * 10);
     }
     /**
-     * 将前端传递的 Job 参数转换为 CRON 表达式。
+     * before Job parameterConvert to CRON .
      *
-     * @param job 前端传入的定时任务参数对象
-     * @return 对应的 CRON 表达式字符串
+     * @param job before taskparameterobject
+     * @return CRON
      */
     public String convertToCron(Job job) {
         String cron = "";
@@ -614,14 +614,14 @@ public class DemoUnitTest extends FlowServiceFactory {
 
         switch (type) {
             case 1: // 每天
-                // 假设 run 数组中存放的格式为 "HH:mm:ss"
+                // assuming run array in to "HH:mm:ss"
                 String[] hmsDaily = job.getRun().get(0).split(":");
                 cron = String.format("%s %s %s * * ?", hmsDaily[2], hmsDaily[1], hmsDaily[0]);
                 break;
             case 2: // 隔天
-                // 隔天使用 start 日期的“日”作为起始日，并结合 interval（间隔天数）构造CRON
+                // start " " to , interval ( ) CRON
                 String[] hmsInterval = job.getRun().get(0).split(":");
-                // 解析 job.start 获取开始日（仅解析到日，不考虑月之间的衔接问题）
+                // Parse job.start Get start ( Parse , )
                 Calendar calendar = Calendar.getInstance();
                 try {
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -630,34 +630,34 @@ public class DemoUnitTest extends FlowServiceFactory {
                     throw new RuntimeException("日期解析失败：" + job.getStart(), e);
                 }
                 int startDay = calendar.get(Calendar.DAY_OF_MONTH);
-                // 这里用 "startDay/interval" 表示从指定日开始每隔 interval 天
-                // 注意：这种写法只在当前月内有效，如需支持跨月需要更复杂的处理逻辑
+                // "startDay/interval" from start interval
+                // : method only in current , need to Process
                 cron = String.format("%s %s %s %d/%d * ?", hmsInterval[2], hmsInterval[1], hmsInterval[0],
                     startDay, job.getInterval());
                 break;
             case 3: // 每周
-                // 假设 job.run 传入的是星期几（如 "1" 表示星期一），而 Quartz 中星期定义为 1=SUN,2=MON,...,7=SAT
-                // 因此我们将前端的星期数字做一个映射（如：传入“1”（星期一）转换为 Quartz 中的“2”）
+                // assuming job.run is ( "1" ), Quartz in to 1=SUN,2=MON,...,7=SAT
+                // before ( : "1" ( )Convert to Quartz in "2")
                 int inputWeekDay = Integer.parseInt(job.getRun().get(0));
-                int quartzWeekDay = inputWeekDay % 7 + 1; // 如：1 -> 2, 2 -> 3, …, 7 -> 1
-                // trg_time 为 int 类型，假定格式为 HHmmss，例如 170633 表示 17:06:33，
-                // 需要将其格式化为 HH:mm:ss
+                int quartzWeekDay = inputWeekDay % 7 + 1; // : 1 -> 2, 2 -> 3, …, 7 -> 1
+                // trg_time to int , to HHmmss, 170633 17:06:33,
+                // need to Format to HH:mm:ss
                 String triggerTimeWeek = String.format("%06d", job.getTrgTime());
                 String h_week = triggerTimeWeek.substring(0, 2);
                 String m_week = triggerTimeWeek.substring(2, 4);
                 String s_week = triggerTimeWeek.substring(4, 6);
                 cron = String.format("%s %s %s ? * %d", s_week, m_week, h_week, quartzWeekDay);
-                // 如果 interval 大于 0，则说明希望每隔几周执行，
-                // 原生 CRON 表达式无法直接支持多周间隔，此处暂不处理
+                // if interval 0, Execute ,
+                // CRON method , Process
                 break;
             case 4: // 每月
-                // trg_time 为 int 类型，假定格式为 HHmmss，例如 170633 表示 17:06:33，
-                // 需要将其格式化为 HH:mm:ss
+                // trg_time to int , to HHmmss, 170633 17:06:33,
+                // need to Format to HH:mm:ss
                 String triggerTimeMonth = String.format("%06d", job.getTrgTime());
                 String h_month = triggerTimeMonth.substring(0, 2);
                 String m_month = triggerTimeMonth.substring(2, 4);
                 String s_month = triggerTimeMonth.substring(4, 6);
-                // 当传入多个日期时，将 job.run 中的多个值用逗号分隔
+                // , job.run in value
                 String daysOfMonth = String.join(",", job.getRun());
                 cron = String.format("%s %s %s %s * ?", s_month, m_month, h_month, daysOfMonth);
                 break;
@@ -670,63 +670,63 @@ public class DemoUnitTest extends FlowServiceFactory {
     void test20(){
 
         // ---------------------------------------
-        // Case 1: 每天定时任务测试
-        // 示例：每天 17:06:33 触发
+        // Case 1: task
+        // : 17:06:33
         Job jobDaily = new Job();
         jobDaily.setStart("2025-03-11 10:23:00");
         jobDaily.setEnd("2025-11-29 18:46:18");
         jobDaily.setInterval(0);
-        // 每天的触发时间采用完整时间格式字符串传递
+        //
         jobDaily.setRun(java.util.Arrays.asList("17:06:33"));
         jobDaily.setTypes(1);
-        // 每天不需要 trg_time，此处忽略
+        // need to trg_time,
         String cronDaily = convertToCron(jobDaily);
         System.out.println("【每天】 CRON 表达式：" + cronDaily);
-        // 输出预期：33 06 17 * * ?
+        // : 33 06 17 * * ?
 
         // ---------------------------------------
-        // Case 2: 隔天定时任务测试
-        // 示例：从 start 的日期为起点，每隔3天执行一次，触发时间采用 "HH:mm:ss"
+        // Case 2: task
+        // : from start to , 3 Execute , "HH:mm:ss"
         Job jobInterval = new Job();
-        jobInterval.setStart("2025-03-11 10:23:00");   // 假设起始于 11 号
+        jobInterval.setStart("2025-03-11 10:23:00");   // assuming 11
         jobInterval.setEnd("2025-11-29 18:46:18");
-        jobInterval.setInterval(3); // 每隔 3 天执行一次
-        // 触发时间为 "08:30:00"
+        jobInterval.setInterval(3); // 3 Execute
+        // to "08:30:00"
         jobInterval.setRun(java.util.Arrays.asList("08:30:00"));
         jobInterval.setTypes(2);
         String cronInterval = convertToCron(jobInterval);
         System.out.println("【隔天】 CRON 表达式：" + cronInterval);
-        // 输出类似：00 30 08 11/3 * ?
-        // 表示从 11 号开始，每隔 3 天触发一次（仅在当前月有效）
+        // : 00 30 08 11/3 * ?
+        // from 11 start, 3 ( in current )
 
         // ---------------------------------------
-        // Case 3: 每周定时任务测试
-        // 示例：每周星期一，在 trg_time 指定的时间触发
+        // Case 3: task
+        // : , in trg_time
         Job jobWeekly = new Job();
         jobWeekly.setStart("2025-03-11 10:23:00");
         jobWeekly.setEnd("2025-11-29 18:46:18");
-        // 每周只需要传入星期几，例如 "1" 表示星期一
+        // only need to , "1"
         jobWeekly.setRun(java.util.Arrays.asList("1"));
         jobWeekly.setTypes(3);
-        // trg_time 为 170633 表示 17:06:33
+        // trg_time to 170633 17:06:33
         jobWeekly.setTrgTime(170633);
         String cronWeekly = convertToCron(jobWeekly);
         System.out.println("【每周】 CRON 表达式：" + cronWeekly);
-        // 输出预期：33 06 17 ? * 2  (Quartz中星期1表示2)
+        // : 33 06 17 ? * 2 (Quartz in 1 2)
 
         // ---------------------------------------
-        // Case 4: 每月定时任务测试
-        // 示例：每月在 10、15、2、5 号，在 trg_time 指定时间触发
+        // Case 4: task
+        // : in 10、15、2、5 , in trg_time
         Job jobMonthly = new Job();
         jobMonthly.setStart("2025-03-11 10:23:00");
         jobMonthly.setEnd("2025-11-29 18:46:18");
-        // 多个日期通过 run 数组传入
+        // run array
         jobMonthly.setRun(java.util.Arrays.asList("10", "15", "2", "5"));
         jobMonthly.setTypes(4);
-        // trg_time 为 170633 表示 17:06:33
+        // trg_time to 170633 17:06:33
         jobMonthly.setTrgTime(170633);
         String cronMonthly = convertToCron(jobMonthly);
         System.out.println("【每月】 CRON 表达式：" + cronMonthly);
-        // 输出预期：33 06 17 10,15,2,5 * ?
+        // : 33 06 17 10,15,2,5 * ?
     }
 }

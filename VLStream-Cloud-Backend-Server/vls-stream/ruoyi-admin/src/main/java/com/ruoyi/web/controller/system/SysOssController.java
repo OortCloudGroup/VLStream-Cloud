@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 文件上传 控制层
+ * control layer
  *
  * @author Lion Li
  */
@@ -47,7 +47,7 @@ public class SysOssController extends BaseController {
     private final ISysOssService iSysOssService;
 
     /**
-     * 查询OSS对象存储列表
+     * Query OSSobject list
      */
     @SaCheckPermission("system:oss:list")
     @GetMapping("/list")
@@ -56,9 +56,9 @@ public class SysOssController extends BaseController {
     }
 
     /**
-     * 查询OSS对象基于id串
+     * Query OSSobject id
      *
-     * @param ossIds OSS对象ID串
+     * @param ossIds OSSobjectID
      */
     @SaCheckPermission("system:oss:list")
     @GetMapping("/listByIds/{ossIds}")
@@ -69,9 +69,9 @@ public class SysOssController extends BaseController {
     }
 
     /**
-     * 上传OSS对象存储
+     * OSSobject
      *
-     * @param file 文件
+     * @param file
      */
     @SaCheckPermission("system:oss:upload")
     @Log(title = "OSS对象存储", businessType = BusinessType.INSERT)
@@ -89,9 +89,9 @@ public class SysOssController extends BaseController {
     }
 
     /**
-     * 下载OSS对象
+     * OSSobject
      *
-     * @param ossId OSS对象ID
+     * @param ossId OSSobjectID
      */
     @SaCheckPermission("system:oss:download")
     @GetMapping("/download/{ossId}")
@@ -100,9 +100,9 @@ public class SysOssController extends BaseController {
     }
 
     /**
-     * 删除OSS对象存储
+     * Delete OSSobject
      *
-     * @param ossIds OSS对象ID串
+     * @param ossIds OSSobjectID
      */
     @SaCheckPermission("system:oss:remove")
     @Log(title = "OSS对象存储", businessType = BusinessType.DELETE)

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -45,7 +46,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
- * 视频录制记录表 控制器
+ * record control
  *
  * @author Oort
  * @since 2025-12-25
@@ -62,7 +63,7 @@ public class VlsVideoRecordController extends BladeController {
 	private final IVlsVideoRecordService vlsVideoRecordService;
 
 	/**
-	 * 视频录制记录表 详情
+	 * record
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -73,7 +74,7 @@ public class VlsVideoRecordController extends BladeController {
 	}
 
 	/**
-	 * 视频录制记录表 分页
+	 * record
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -85,7 +86,7 @@ public class VlsVideoRecordController extends BladeController {
 
 
 	/**
-	 * 视频录制记录表 自定义分页
+	 * record Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -96,7 +97,7 @@ public class VlsVideoRecordController extends BladeController {
 	}
 
 	/**
-	 * 视频回放查询
+	 * Query
 	 */
 	@GetMapping("/playback")
 	@ApiOperationSupport(order = 4)
@@ -109,7 +110,7 @@ public class VlsVideoRecordController extends BladeController {
 	}
 
 	/**
-	 * 时间轴日历查询
+	 * Query
 	 */
 	@GetMapping("/timeline/calendar")
 	@ApiOperationSupport(order = 5)
@@ -125,7 +126,7 @@ public class VlsVideoRecordController extends BladeController {
 	}
 
 	/**
-	 * 时间轴某天录像列表
+	 * recording
 	 */
 	@GetMapping("/timeline/day")
 	@ApiOperationSupport(order = 6)
@@ -136,7 +137,7 @@ public class VlsVideoRecordController extends BladeController {
 	}
 
 	/**
-	 * 视频文件流播放
+	 *
 	 */
 	@GetMapping(value = "/stream/{recordId}")
 	@ApiOperationSupport(order = 7)
@@ -191,7 +192,7 @@ public class VlsVideoRecordController extends BladeController {
 	}
 
 	/**
-	 * 视频录制记录表 新增
+	 * record Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 8)
@@ -201,7 +202,7 @@ public class VlsVideoRecordController extends BladeController {
 	}
 
 	/**
-	 * 视频录制记录表 修改
+	 * record Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 9)
@@ -211,7 +212,7 @@ public class VlsVideoRecordController extends BladeController {
 	}
 
 	/**
-	 * 视频录制记录表 新增或修改
+	 * record Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 10)
@@ -221,7 +222,7 @@ public class VlsVideoRecordController extends BladeController {
 	}
 
 	/**
-	 * 视频录制记录表 删除
+	 * record Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 11)
@@ -231,7 +232,7 @@ public class VlsVideoRecordController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsVideoRecord")
 	@ApiOperationSupport(order = 12)

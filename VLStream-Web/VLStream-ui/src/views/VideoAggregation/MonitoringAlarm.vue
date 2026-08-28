@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="monitoring-alarms tenant_Page draHeaPB">
     <div class="tenant_content">
@@ -70,7 +75,7 @@
       </div>
     </div>
 
-    <!-- 视频播放弹窗 -->
+    <!-- dialog -->
     <el-dialog
       v-model="videoDialogVisible"
       title="视频播放"
@@ -79,11 +84,11 @@
       class="video-dialog"
     >
       <div class="video-playback-container">
-        <!-- 右侧播放器区域 -->
+        <!--  -->
         <div class="player-section">
           <div class="video-player">
             <div class="video-content">
-              <!-- 模拟视频画面 -->
+              <!--  -->
               <div class="video-placeholder">
                 <div class="video-info">
                   <div class="device-name">{{ selectedRow?.deviceName || '奥尔特云前台' }}</div>
@@ -91,7 +96,7 @@
                 </div>
               </div>
 
-              <!-- 视频控制条 -->
+              <!-- control -->
               <div class="video-controls">
                 <div class="progress-bar">
                   <div class="progress-track">
@@ -137,44 +142,44 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import DateRangePicker from '@/components/DateRangePicker.vue'
 import { clacPXToVW } from '@/utils/index'
 
-// 搜索表单
+// form
 const searchForm = reactive({
   deviceName: '',
   alarmType: '',
   dateRange: []
 })
 
-// 视频播放弹窗相关
+// dialogrelated
 const videoDialogVisible = ref(false)
 const selectedRow = ref(null)
 const selectedVideoIndex = ref(0)
 const selectedYear = ref(2021)
 const selectedMonth = ref(4)
 
-// 年份和月份数据
+// and data
 const years = ref([2021, 2022, 2023, 2024])
 const months = ref([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
 
-// 未获得真实告警录像前保持空列表。
+// not alarm / alertrecording before null / empty .
 const videoList = ref([])
 
-// 表格数据
-// 告警表格不再展示静态样例；只能由真实事件接口填充。
+// tabledata
+// alarm / alerttable ; only can eventinterfacefill .
 const tableData = ref([])
 
-// 分页相关
+// related
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = computed(() => tableData.value.length)
 
-// 当前页数据
+// current data
 const currentPageData = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
   return tableData.value.slice(start, end)
 })
 
-// 选中行
+// in
 const selectedRows = ref([])
 
 const toolbarButtonList = computed(() => [
@@ -182,7 +187,7 @@ const toolbarButtonList = computed(() => [
   { name: '删除', svg: 'table_del', clickFn: () => handleDelete() }
 ])
 
-// 方法
+// method
 const handleSearch = () => {
   console.log('搜索:', searchForm)
   ElMessage.success('搜索完成')
@@ -219,7 +224,7 @@ const handleExport = async () => {
     )
 
     ElMessage.success(`导出 ${selectedRows.value.length} 条记录成功`)
-    // 这里可以添加实际的导出逻辑
+    // Export
   } catch {
     ElMessage.info('已取消导出')
   }
@@ -242,7 +247,7 @@ const handleDelete = async () => {
     }
     )
 
-    // 删除逻辑
+    // Delete
     selectedRows.value.forEach(row => {
       const index = tableData.value.findIndex(item => item.id === row.id)
       if (index !== -1) {
@@ -286,11 +291,11 @@ const searchResetFn = (val, reset) => {
   handleAdvancedSearch(val || {})
 }
 
-// 高级搜索相关方法
+// related method
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索:', searchData)
 
-  // 更新搜索表单
+  // new form
   if (searchData.keyword) {
     searchForm.deviceName = searchData.keyword
   }
@@ -333,7 +338,7 @@ const handleBatchOperation = () => {
   ElMessage.success('批量操作')
 }
 
-// 视频播放相关方法
+// related method
 const selectYear = (year) => {
   selectedYear.value = year
 }
@@ -381,7 +386,7 @@ const selectVideo = (index) => {
   background: #f0f2f5;
 }
 
-/* 搜索区域 - 查询栏背景颜色：#F0F2F5 */
+/* - Query : #F0F2F5 */
 .search-section {
   background: #F0F2F5;
   border-radius: 8px 8px 0 0;
@@ -406,7 +411,7 @@ const selectVideo = (index) => {
   gap: 12px;
 }
 
-/* 主要内容区域 - 容器无缝连接，零间隙 */
+/* main need to - , */
 .main-content {
   background: white;
   border-radius: 0 0 8px 8px;
@@ -417,7 +422,7 @@ const selectVideo = (index) => {
   overflow: hidden;
 }
 
-/* 操作按钮区域 */
+/* operationbutton */
 .action-section {
   background: white;
   padding: 20px;
@@ -431,7 +436,7 @@ const selectVideo = (index) => {
   gap: 16px;
 }
 
-/* 导出删除按钮组合 */
+/* Export Delete button */
 .export-delete-group {
   display: flex;
   align-items: center;
@@ -439,7 +444,7 @@ const selectVideo = (index) => {
   padding: 0;
 }
 
-/* 高级搜索组件区域 */
+/* component */
 .advanced-search-group {
   display: flex;
   align-items: center;
@@ -449,7 +454,7 @@ const selectVideo = (index) => {
   margin-left: 0 !important;
 }
 
-/* 导出按钮自定义样式 */
+/* Export buttonCustom */
 .export-btn-custom {
   height: 36px !important;
   border-radius: 18px 0 0 18px !important;
@@ -476,7 +481,7 @@ const selectVideo = (index) => {
   border-color: #e4e7ed !important;
 }
 
-/* 删除按钮自定义样式 */
+/* Delete buttonCustom */
 .delete-btn-custom {
   height: 36px !important;
   border-radius: 0 18px 18px 0 !important;
@@ -516,7 +521,7 @@ const selectVideo = (index) => {
   border-color: #e4e7ed !important;
 }
 
-/* 表格区域 */
+/* table */
 .table-section {
   background: white;
   padding: 20px;
@@ -524,7 +529,7 @@ const selectVideo = (index) => {
   overflow: hidden;
 }
 
-/* 操作列按钮样式 */
+/* operation button */
 .table-section .action-buttons {
   display: flex;
   align-items: center;
@@ -532,7 +537,7 @@ const selectVideo = (index) => {
   gap: 0;
 }
 
-/* 分页区域 - 使用全局样式，居中对齐 */
+/* - full , in */
 .pagination-section {
   background: white;
   padding: 20px;
@@ -542,7 +547,7 @@ const selectVideo = (index) => {
   align-items: center;
 }
 
-/* 表格样式调整 */
+/* table */
 :deep(.el-table) {
   font-size: 14px;
 }
@@ -556,12 +561,12 @@ const selectVideo = (index) => {
   padding: 12px 0;
 }
 
-/* 标签样式 */
+/*  */
 :deep(.el-tag) {
   border-radius: 4px;
 }
 
-/* 视频播放弹窗样式 */
+/* dialog */
 .video-dialog {
   :deep(.el-dialog__body) {
     padding: 0;
@@ -576,7 +581,7 @@ const selectVideo = (index) => {
   gap: 20px;
 }
 
-/* 右侧播放器区域 */
+/*  */
 .player-section {
   flex: 1;
   display: flex;
@@ -630,7 +635,7 @@ const selectVideo = (index) => {
   opacity: 0.8;
 }
 
-/* 视频控制条 */
+/* control */
 .video-controls {
   position: absolute;
   bottom: 0;

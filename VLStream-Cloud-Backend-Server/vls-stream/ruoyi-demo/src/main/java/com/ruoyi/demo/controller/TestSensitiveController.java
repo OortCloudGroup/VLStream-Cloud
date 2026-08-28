@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -15,10 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 测试数据脱敏控制器
+ * data control
  * <p>
- * 默认管理员不过滤
- * 需自行根据业务重写实现
+ * administrator
+ *
  *
  * @author Lion Li
  * @version 3.6.0
@@ -29,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class TestSensitiveController extends BaseController {
 
     /**
-     * 测试数据脱敏
+     * data
      */
     @GetMapping("/test")
     public R<TestSensitive> test() {
@@ -46,31 +47,31 @@ public class TestSensitiveController extends BaseController {
     static class TestSensitive {
 
         /**
-         * 身份证
+         *
          */
         @Sensitive(strategy = SensitiveStrategy.ID_CARD)
         private String idCard;
 
         /**
-         * 电话
+         *
          */
         @Sensitive(strategy = SensitiveStrategy.PHONE)
         private String phone;
 
         /**
-         * 地址
+         *
          */
         @Sensitive(strategy = SensitiveStrategy.ADDRESS)
         private String address;
 
         /**
-         * 邮箱
+         *
          */
         @Sensitive(strategy = SensitiveStrategy.EMAIL)
         private String email;
 
         /**
-         * 银行卡
+         *
          */
         @Sensitive(strategy = SensitiveStrategy.BANK_CARD)
         private String bankCard;

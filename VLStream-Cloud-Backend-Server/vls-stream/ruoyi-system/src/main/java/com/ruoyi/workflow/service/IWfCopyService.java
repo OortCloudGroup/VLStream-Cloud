@@ -16,7 +16,7 @@ import com.ruoyi.workflow.domain.vo.WfCopyVo;
 import java.util.List;
 
 /**
- * 流程抄送Service接口
+ * workflow Serviceinterface
  *
  * @author KonBAI
  * @date 2022-05-19
@@ -24,32 +24,32 @@ import java.util.List;
 public interface IWfCopyService {
 
     /**
-     * 查询流程抄送
+     * Query workflow
      *
-     * @param copyId 流程抄送主键
-     * @return 流程抄送
+     * @param copyId workflow primary key
+     * @return workflow
      */
     WfCopyVo queryById(Long copyId);
 
     /**
-     * 查询流程抄送列表
+     * Query workflow list
      *
-     * @param wfCopy  流程抄送
+     * @param wfCopy workflow
      * @param sysUser
-     * @return 流程抄送集合
+     * @return workflow collection
      */
     TableDataInfo<WfCopyVo> selectPageList(WfCopyBo wfCopy, PageQuery pageQuery, SysUser sysUser);
 
     /**
-     * 查询流程抄送列表
+     * Query workflow list
      *
-     * @param wfCopy 流程抄送
-     * @return 流程抄送集合
+     * @param wfCopy workflow
+     * @return workflow collection
      */
     List<WfCopyVo> selectList(WfCopyBo wfCopy);
 
     /**
-     * 抄送
+     *
      *
      * @param taskBo
      * @param sysUser
@@ -58,7 +58,7 @@ public interface IWfCopyService {
 //    Boolean makeCopy(WfTaskBo taskBo, SysUser sysUser);
 
     /**
-     * 抄送
+     *
      * @param taskBo
      * @return
      */
@@ -66,7 +66,7 @@ public interface IWfCopyService {
 
 
     /**
-     * 根据taskID查询抄送用户id
+     * taskIDQuery user ID
      * @param taskId
      * @return
      */

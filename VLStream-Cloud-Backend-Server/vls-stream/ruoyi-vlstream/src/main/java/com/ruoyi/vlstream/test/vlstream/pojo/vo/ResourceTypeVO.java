@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -11,7 +12,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.ResourceType;
 
 
 /**
- * 资源类型配置表 视图实体类
+ * configuration
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

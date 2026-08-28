@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <SystemPageShell>
-    <!-- 顶部工具栏 -->
+    <!--  -->
     <template #toolbar>
       <div class="toolbar-left">
         <el-form :inline="true" :model="queryParams" size="default">
@@ -22,7 +27,7 @@
       </div>
 
       <div class="toolbar-right">
-        <!-- 按钮操作组 -->
+        <!-- buttonoperation -->
         <ActionButtonGroup
           :selected-count="selectedRows.length"
           @add="handleCreate"
@@ -32,7 +37,7 @@
       </div>
     </template>
 
-    <!-- 数据列表表格 -->
+    <!-- data table -->
     <el-table
       v-loading="loading"
       :data="tableData"
@@ -61,7 +66,7 @@
       </el-table-column>
     </el-table>
 
-    <!-- 底部分页 -->
+    <!--  -->
     <template #pagination>
       <el-pagination
         v-model:current-page="pagination.current"
@@ -75,7 +80,7 @@
     </template>
   </SystemPageShell>
 
-  <!-- 新增/编辑租户对话框 -->
+  <!-- Add / -->
   <el-dialog
     v-model="dialogVisible"
     :title="dialogTitle"
@@ -136,20 +141,20 @@ const dialogTitle = ref('新增租户')
 const selectedRows = ref([])
 const tableData = ref([])
 
-// 分页数据
+// data
 const pagination = reactive({
   current: 1,
   size: 10,
   total: 0
 })
 
-// 过滤参数
+// parameter
 const queryParams = reactive({
   tenantId: '',
   tenantName: ''
 })
 
-// 表单对象与表单校验规则
+// formobject and formValidate
 const formRef = ref()
 const form = ref({
   id: undefined,
@@ -170,7 +175,7 @@ const rules = {
 }
 
 /**
- * 异步查询租户分页列表数据
+ * Query listdata
  */
 async function loadData() {
   loading.value = true
@@ -192,7 +197,7 @@ async function loadData() {
 }
 
 /**
- * 搜索过滤
+ *
  */
 function handleSearch() {
   pagination.current = 1
@@ -200,7 +205,7 @@ function handleSearch() {
 }
 
 /**
- * 重置过滤，重新加载
+ * , new Load
  */
 function handleReset() {
   queryParams.tenantId = ''
@@ -210,8 +215,8 @@ function handleReset() {
 }
 
 /**
- * 分页大小改变时重新拉取数据
- * @param {Number} size 分页大小
+ * new data
+ * @param {Number} size
  */
 function handleSizeChange(size) {
   pagination.size = size
@@ -220,8 +225,8 @@ function handleSizeChange(size) {
 }
 
 /**
- * 页码改变时重新拉取数据
- * @param {Number} current 页码
+ * new data
+ * @param {Number} current
  */
 function handleCurrentChange(current) {
   pagination.current = current
@@ -229,15 +234,15 @@ function handleCurrentChange(current) {
 }
 
 /**
- * 表格行选中变化
- * @param {Array} rows 选中的所有行对象
+ * table in
+ * @param {Array} rows in all object
  */
 function handleSelectionChange(rows) {
   selectedRows.value = rows
 }
 
 /**
- * 打开新增租户弹窗
+ * Add dialog
  */
 function handleCreate() {
   dialogTitle.value = '新增租户'
@@ -254,8 +259,8 @@ function handleCreate() {
 }
 
 /**
- * 打开修改租户对话框，回显行数据
- * @param {Object} row 待修改的租户行
+ * Update , data
+ * @param {Object} row Update
  */
 function handleEdit(row) {
   if (!row) return
@@ -265,7 +270,7 @@ function handleEdit(row) {
 }
 
 /**
- * 确定并提交新增或修改数据
+ * Add Update data
  */
 async function handleSaveSubmit() {
   if (!formRef.value) return
@@ -292,9 +297,9 @@ async function handleSaveSubmit() {
 }
 
 /**
- * 调用后台 API 删除租户配置，带二次提示层
- * @param {String} ids 逗号拼接的租户ID列表
- * @param {String} msg 确认消息提示
+ * after API Delete configuration, prompt / tip layer
+ * @param {String} ids tenant ID
+ * @param {String} msg prompt / tip
  */
 function executeRemove(ids, msg) {
   ElMessageBox.confirm(msg, '提示', {
@@ -318,15 +323,15 @@ function executeRemove(ids, msg) {
 }
 
 /**
- * 行内删除单条租户数据
- * @param {Object} row 行数据
+ * Delete data
+ * @param {Object} row data
  */
 function handleSingleRemove(row) {
   executeRemove(String(row.id), `确定删除租户 [${row.tenantName}] 吗？`)
 }
 
 /**
- * 批量删除选中的所有租户
+ * Batch delete in all
  */
 function handleBatchRemove() {
   if (selectedRows.value.length === 0) return
@@ -334,7 +339,7 @@ function handleBatchRemove() {
   executeRemove(ids, `确定删除选中的 ${selectedRows.value.length} 个租户吗？`)
 }
 
-// 挂载加载数据
+// Load data
 onMounted(() => {
   loadData()
 })

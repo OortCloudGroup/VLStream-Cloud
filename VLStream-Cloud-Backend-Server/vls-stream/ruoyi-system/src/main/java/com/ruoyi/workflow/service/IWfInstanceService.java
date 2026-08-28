@@ -19,30 +19,30 @@ import java.util.Map;
 public interface IWfInstanceService {
 
     /**
-     * 结束流程实例
+     * finishworkflow instance
      *
      * @param vo
      */
     void stopProcessInstance(WfTaskBo vo);
 
     /**
-     * 激活或挂起流程实例
+     * workflow instance
      *
-     * @param state      状态
-     * @param instanceId 流程实例ID
+     * @param state
+     * @param instanceId workflow instance ID
      */
     void updateState(Integer state, String instanceId);
 
     /**
-     * 删除流程实例ID
+     * Delete workflow instance ID
      *
-     * @param instanceId   流程实例ID
-     * @param deleteReason 删除原因
+     * @param instanceId workflow instance ID
+     * @param deleteReason Delete
      */
     void delete(String instanceId, String deleteReason, SysUser sysUser);
 
     /**
-     * 根据实例ID查询历史实例数据
+     * instanceIDQuery history instancedata
      *
      * @param processInstanceId
      * @return
@@ -51,9 +51,9 @@ public interface IWfInstanceService {
 
 
     /**
-     * 查询流程详情信息
-     * @param procInsId 流程实例ID
-     * @param deployId 流程部署ID
+     * Query workflow info
+     * @param procInsId workflow instance ID
+     * @param deployId workflow ID
      */
     Map<String, Object> queryDetailProcess(String procInsId, String deployId);
 }

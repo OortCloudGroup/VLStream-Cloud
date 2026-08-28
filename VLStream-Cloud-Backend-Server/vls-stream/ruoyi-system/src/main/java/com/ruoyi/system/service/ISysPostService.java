@@ -13,7 +13,7 @@ import com.ruoyi.system.domain.SysPost;
 import java.util.List;
 
 /**
- * 岗位信息 服务层
+ * info service layer
  *
  * @author Lion Li
  */
@@ -23,89 +23,89 @@ public interface ISysPostService {
     TableDataInfo<SysPost> selectPagePostList(SysPost post, PageQuery pageQuery);
 
     /**
-     * 查询岗位信息集合
+     * Query infocollection
      *
-     * @param post 岗位信息
-     * @return 岗位列表
+     * @param post info
+     * @return
      */
     List<SysPost> selectPostList(SysPost post);
 
     /**
-     * 查询所有岗位
+     * Query all
      *
-     * @return 岗位列表
+     * @return
      */
     List<SysPost> selectPostAll();
 
     /**
-     * 通过岗位ID查询岗位信息
+     * IDQuery info
      *
-     * @param postId 岗位ID
-     * @return 角色对象信息
+     * @param postId ID
+     * @return roleobjectinfo
      */
     SysPost selectPostById(Long postId);
 
     /**
-     * 根据用户ID获取岗位选择框列表
+     * user IDGet
      *
-     * @param userId 用户ID
-     * @return 选中岗位ID列表
+     * @param userId user ID
+     * @return in ID
      */
     List<Long> selectPostListByUserId(String userId);
 
     /**
-     * 校验岗位名称
+     * Validate
      *
-     * @param post 岗位信息
-     * @return 结果
+     * @param post info
+     * @return
      */
     boolean checkPostNameUnique(SysPost post);
 
     /**
-     * 校验岗位编码
+     * Validate
      *
-     * @param post 岗位信息
-     * @return 结果
+     * @param post info
+     * @return
      */
     boolean checkPostCodeUnique(SysPost post);
 
     /**
-     * 通过岗位ID查询岗位使用数量
+     * IDQuery
      *
-     * @param postId 岗位ID
-     * @return 结果
+     * @param postId ID
+     * @return
      */
     long countUserPostById(Long postId);
 
     /**
-     * 删除岗位信息
+     * Delete info
      *
-     * @param postId 岗位ID
-     * @return 结果
+     * @param postId ID
+     * @return
      */
     int deletePostById(Long postId);
 
     /**
-     * 批量删除岗位信息
+     * Batch delete info
      *
-     * @param postIds 需要删除的岗位ID
-     * @return 结果
+     * @param postIds need to Delete ID
+     * @return
      */
     int deletePostByIds(Long[] postIds);
 
     /**
-     * 新增保存岗位信息
+     * Add info
      *
-     * @param post 岗位信息
-     * @return 结果
+     * @param post info
+     * @return
      */
     int insertPost(SysPost post);
 
     /**
-     * 修改保存岗位信息
+     * Update info
      *
-     * @param post 岗位信息
-     * @return 结果
+     * @param post info
+     * @return
      */
     int updatePost(SysPost post);
 }

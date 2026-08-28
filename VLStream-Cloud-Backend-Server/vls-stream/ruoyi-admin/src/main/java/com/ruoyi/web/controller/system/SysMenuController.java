@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 菜单信息
+ * menuinfo
  *
  * @author Lion Li
  */
@@ -38,7 +38,7 @@ public class SysMenuController extends BaseController {
     private final ISysMenuService menuService;
 
     /**
-     * 获取菜单列表
+     * Get menu
      */
     @SaCheckPermission("system:menu:list")
     @GetMapping("/list")
@@ -48,9 +48,9 @@ public class SysMenuController extends BaseController {
     }
 
     /**
-     * 根据菜单编号获取详细信息
+     * menu Get info
      *
-     * @param menuId 菜单ID
+     * @param menuId menu ID
      */
     @SaCheckPermission("system:menu:query")
     @GetMapping(value = "/{menuId}")
@@ -59,7 +59,7 @@ public class SysMenuController extends BaseController {
     }
 
     /**
-     * 获取菜单下拉树列表
+     * Get menu
      */
     @GetMapping("/treeselect")
     public R<List<Tree<String >>> treeselect(SysMenu menu, @RequestHeader("Authorization")String token) {
@@ -68,9 +68,9 @@ public class SysMenuController extends BaseController {
     }
 
     /**
-     * 加载对应角色菜单列表树
+     * Load rolemenu
      *
-     * @param roleId 角色ID
+     * @param roleId role ID
      */
     @GetMapping(value = "/roleMenuTreeselect/{roleId}")
     public R<Map<String, Object>> roleMenuTreeselect(@PathVariable("roleId") Long roleId, @RequestHeader("Authorization")String token) {
@@ -82,7 +82,7 @@ public class SysMenuController extends BaseController {
     }
 
     /**
-     * 新增菜单
+     * Add menu
      */
     @SaCheckPermission("system:menu:add")
     @Log(title = "菜单管理", businessType = BusinessType.INSERT)
@@ -97,7 +97,7 @@ public class SysMenuController extends BaseController {
     }
 
     /**
-     * 修改菜单
+     * Update menu
      */
     @SaCheckPermission("system:menu:edit")
     @Log(title = "菜单管理", businessType = BusinessType.UPDATE)
@@ -114,9 +114,9 @@ public class SysMenuController extends BaseController {
     }
 
     /**
-     * 删除菜单
+     * Delete menu
      *
-     * @param menuId 菜单ID
+     * @param menuId menu ID
      */
     @SaCheckPermission("system:menu:remove")
     @Log(title = "菜单管理", businessType = BusinessType.DELETE)

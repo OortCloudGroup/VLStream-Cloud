@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -36,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 算法标注数据表 控制器
+ * algorithmannotationdata control
  *
  * @author Oort
  * @since 2025-12-23
@@ -51,7 +52,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	private final IVlsAlgorithmAnnotationService vlsAlgorithmAnnotationService;
 
 	/**
-	 * 算法标注数据表 详情
+	 * algorithmannotationdata
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -62,7 +63,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 算法标注数据表 分页
+	 * algorithmannotationdata
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -74,7 +75,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 
 
 	/**
-	 * 算法标注数据表 自定义分页
+	 * algorithmannotationdata Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -85,7 +86,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 算法标注数据表 新增
+	 * algorithmannotationdata Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -95,7 +96,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 算法标注数据表 修改
+	 * algorithmannotationdata Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -105,7 +106,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 算法标注数据表 新增或修改
+	 * algorithmannotationdata Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -115,7 +116,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 算法标注数据表 删除
+	 * algorithmannotationdata Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -125,7 +126,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsAlgorithmAnnotation")
 	@ApiOperationSupport(order = 8)
@@ -141,7 +142,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 根据标注类型查询标注列表
+	 * annotation Query annotation list
 	 */
 	@GetMapping("/type/{annotationType}")
 	@Operation(summary = "根据标注类型查询标注列表", description = "获取指定类型的所有标注")
@@ -155,7 +156,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 根据标注状态查询标注列表
+	 * annotation Query annotation list
 	 */
 	@GetMapping("/status/{annotationStatus}")
 	@Operation(summary = "根据标注状态查询标注列表", description = "获取指定状态的所有标注")
@@ -169,7 +170,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 根据ID查询标注详情
+	 * IDQuery annotation
 	 */
 	@GetMapping("/{id}")
 	@Operation(summary = "查询标注详情", description = "根据ID获取标注详细信息")
@@ -187,7 +188,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 创建算法标注
+	 * algorithmannotation
 	 */
 	@PostMapping
 	@Operation(summary = "创建算法标注", description = "新增算法标注")
@@ -203,7 +204,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 更新算法标注
+	 * new algorithmannotation
 	 */
 	@PutMapping("/{id}")
 	@Operation(summary = "更新算法标注", description = "根据ID更新标注信息")
@@ -224,7 +225,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 删除算法标注
+	 * Delete algorithmannotation
 	 */
 	@DeleteMapping("/{id}")
 	@Operation(summary = "删除算法标注", description = "根据ID删除标注（软删除）")
@@ -242,7 +243,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 批量删除算法标注
+	 * Batch delete algorithmannotation
 	 */
 	@DeleteMapping("/batch")
 	@Operation(summary = "批量删除算法标注", description = "根据ID列表批量删除标注")
@@ -262,7 +263,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 更新标注进度
+	 * new annotation
 	 */
 	@PutMapping("/{id}/progress")
 	@Operation(summary = "更新标注进度", description = "更新标注的进度信息")
@@ -281,7 +282,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 批量更新标注状态
+	 * new annotation
 	 */
 	@PutMapping("/batch/status")
 	@Operation(summary = "批量更新标注状态", description = "批量更新标注的状态")
@@ -304,7 +305,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 开始标注任务
+	 * startannotationtask
 	 */
 	@PostMapping("/{id}/start")
 	@Operation(summary = "开始标注任务", description = "开始指定的标注任务")
@@ -322,7 +323,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 完成标注任务
+	 * annotationtask
 	 */
 	@PostMapping("/{id}/complete")
 	@Operation(summary = "完成标注任务", description = "完成指定的标注任务")
@@ -340,7 +341,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 重置标注任务
+	 * annotationtask
 	 */
 	@PostMapping("/{id}/reset")
 	@Operation(summary = "重置标注任务", description = "重置指定的标注任务")
@@ -358,7 +359,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 导出标注数据
+	 * Export annotationdata
 	 */
 	@PostMapping("/{id}/export")
 	@Operation(summary = "导出标注数据", description = "导出指定标注的数据")
@@ -368,7 +369,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 导入标注数据
+	 * Import annotationdata
 	 */
 	@PostMapping("/{id}/import")
 	@Operation(summary = "导入标注数据", description = "导入标注数据")
@@ -387,7 +388,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 验证标注数据
+	 * annotationdata
 	 */
 	/**
 	 * Import annotation dataset zip.
@@ -431,7 +432,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 获取标注类型统计
+	 * Get annotation
 	 */
 	@GetMapping("/statistics/type")
 	@Operation(summary = "获取标注类型统计", description = "获取各类型的标注数量统计")
@@ -443,7 +444,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 获取标注状态统计
+	 * Get annotation
 	 */
 	@GetMapping("/statistics/status")
 	@Operation(summary = "获取标注状态统计", description = "获取各状态的标注数量统计")
@@ -455,7 +456,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 获取标注进度统计
+	 * Get annotation
 	 */
 	@GetMapping("/statistics/progress")
 	@Operation(summary = "获取标注进度统计", description = "获取各进度区间的标注数量统计")
@@ -467,7 +468,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 获取标注工作量统计
+	 * Get annotation
 	 */
 	@GetMapping("/statistics/workload")
 	@Operation(summary = "获取标注工作量统计", description = "获取标注工作量的总体统计")
@@ -479,7 +480,7 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	}
 
 	/**
-	 * 保存标注数据到数据集文件
+	 * annotationdata dataset
 	 */
 	@PostMapping("/{id}/save-dataset")
 	@Operation(summary = "保存标注数据到数据集", description = "将标注数据保存到数据集文件并更新数据库路径")

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -15,7 +16,7 @@ import javax.annotation.PreDestroy;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * 确保应用退出时能关闭后台线程
+ * exit can after
  *
  * @author Lion Li
  */
@@ -33,7 +34,7 @@ public class ShutdownManager {
     }
 
     /**
-     * 停止异步执行任务
+     * Execute task
      */
     private void shutdownAsyncManager() {
         try {

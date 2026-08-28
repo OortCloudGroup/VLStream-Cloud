@@ -1,16 +1,21 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
 /**
- * 分页查询事件列表
+ * Query event list
  * @param {Object} params
- * @param {number} params.current 当前页
- * @param {number} params.size 每页数量
- * @param {string} [params.eventType] 事件类型
- * @param {string} [params.eventStatus] 事件状态
- * @param {string} [params.eventLevel] 事件级别
- * @param {string} [params.keyword] 搜索关键词
- * @param {string} [params.startTime] 上报开始时间 yyyy-MM-dd HH:mm:ss
- * @param {string} [params.endTime] 上报结束时间 yyyy-MM-dd HH:mm:ss
+ * @param {number} params.current current
+ * @param {number} params.size
+ * @param {string} [params.eventType] event
+ * @param {string} [params.eventStatus] event
+ * @param {string} [params.eventLevel] event
+ * @param {string} [params.keyword]
+ * @param {string} [params.startTime] start yyyy-MM-dd HH:mm:ss
+ * @param {string} [params.endTime] finish yyyy-MM-dd HH:mm:ss
  */
 export function getEventPage(params) {
   return request({
@@ -21,8 +26,8 @@ export function getEventPage(params) {
 }
 
 /**
- * 获取事件详情
- * @param {number} id 事件ID
+ * Get event
+ * @param {number} id eventID
  */
 export function getEventById(id) {
   return request({
@@ -32,8 +37,8 @@ export function getEventById(id) {
 }
 
 /**
- * 新建事件
- * @param {Object} data 事件数据
+ * new event
+ * @param {Object} data eventdata
  */
 export function createEvent(data) {
   return request({
@@ -44,8 +49,8 @@ export function createEvent(data) {
 }
 
 /**
- * 更新事件
- * @param {Object} data 事件数据（需包含id）
+ * new event
+ * @param {Object} data eventdata ( id)
  */
 export function updateEvent(data) {
   return request({
@@ -56,12 +61,12 @@ export function updateEvent(data) {
 }
 
 /**
- * 更新事件状态
- * @param {number} id 事件ID
+ * new event
+ * @param {number} id eventID
  * @param {Object} params
- * @param {string} params.status 事件状态
- * @param {string} [params.executor] 执行人
- * @param {string} [params.handleResult] 处理结果
+ * @param {string} params.status event
+ * @param {string} [params.executor] Execute
+ * @param {string} [params.handleResult] Process
  */
 export function updateEventStatus(id, params) {
   return request({
@@ -72,8 +77,8 @@ export function updateEventStatus(id, params) {
 }
 
 /**
- * 删除事件
- * @param {number} id 事件ID
+ * Delete event
+ * @param {number} id eventID
  */
 export function deleteEvent(id) {
   return request({
@@ -83,8 +88,8 @@ export function deleteEvent(id) {
 }
 
 /**
- * 批量删除事件
- * @param {Array<number>} ids 事件ID列表
+ * Batch delete event
+ * @param {Array<number>} ids eventID
  */
 export function batchDeleteEvents(ids) {
   return request({

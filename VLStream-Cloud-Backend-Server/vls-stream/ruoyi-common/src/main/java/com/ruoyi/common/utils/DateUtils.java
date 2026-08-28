@@ -22,7 +22,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 /**
- * 时间工具类
+ *
  *
  * @author ruoyi
  */
@@ -45,16 +45,16 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
         "yyyy.MM.dd", "yyyy.MM.dd HH:mm:ss", "yyyy.MM.dd HH:mm", "yyyy.MM"};
 
     /**
-     * 获取当前Date型日期
+     * Get current Date
      *
-     * @return Date() 当前日期
+     * @return Date() current
      */
     public static Date getNowDate() {
         return new Date();
     }
 
     /**
-     * 获取当前日期, 默认格式为yyyy-MM-dd
+     * Get current , to yyyy-MM-dd
      *
      * @return String
      */
@@ -91,7 +91,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     }
 
     /**
-     * 日期路径 即年/月/日 如2018/08/08
+     * / / 2018/08/08
      */
     public static String datePath() {
         Date now = new Date();
@@ -99,7 +99,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     }
 
     /**
-     * 日期路径 即年/月/日 如20180808
+     * / / 20180808
      */
     public static String dateTime() {
         Date now = new Date();
@@ -107,7 +107,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     }
 
     /**
-     * 日期型字符串转化为日期 格式
+     * to
      */
     public static Date parseDate(Object str) {
         if (str == null) {
@@ -121,7 +121,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     }
 
     /**
-     * 获取服务器启动时间
+     * Get service
      */
     public static Date getServerStartDate() {
         long time = ManagementFactory.getRuntimeMXBean().getStartTime();
@@ -129,35 +129,35 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     }
 
     /**
-     * 计算相差天数
+     *
      */
     public static int differentDaysByMillisecond(Date date1, Date date2) {
         return Math.abs((int) ((date2.getTime() - date1.getTime()) / (1000 * 3600 * 24)));
     }
 
     /**
-     * 计算两个时间差
+     *
      */
     public static String getDatePoor(Date endDate, Date nowDate) {
         long nd = 1000 * 24 * 60 * 60;
         long nh = 1000 * 60 * 60;
         long nm = 1000 * 60;
         // long ns = 1000;
-        // 获得两个时间的毫秒时间差异
+        //
         long diff = endDate.getTime() - nowDate.getTime();
-        // 计算差多少天
+        //
         long day = diff / nd;
-        // 计算差多少小时
+        //
         long hour = diff % nd / nh;
-        // 计算差多少分钟
+        //
         long min = diff % nd % nh / nm;
-        // 计算差多少秒//输出结果
+        // //
         // long sec = diff % nd % nh % nm / ns;
         return day + "天" + hour + "小时" + min + "分钟";
     }
 
     /**
-     * 增加 LocalDateTime ==> Date
+     * LocalDateTime ==> Date
      */
     public static Date toDate(LocalDateTime temporalAccessor) {
         ZonedDateTime zdt = temporalAccessor.atZone(ZoneId.systemDefault());
@@ -165,7 +165,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     }
 
     /**
-     * 增加 LocalDate ==> Date
+     * LocalDate ==> Date
      */
     public static Date toDate(LocalDate temporalAccessor) {
         LocalDateTime localDateTime = LocalDateTime.of(temporalAccessor, LocalTime.of(0, 0, 0));
@@ -174,25 +174,25 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     }
 
     /**
-     * 获取本周一0点
+     * Get 0
      * @return
      */
     public static String getThisWeekMonday() {
-        // 获取当前日期的Calendar实例
+        // Get current Calendarinstance
         Calendar calendar = Calendar.getInstance();
-        // 设置Calendar到本周的周一
-        // 注意：Calendar.SUNDAY是1，Calendar.MONDAY是2，由于国外周日是一周的第一天，
-        // 所以需要根据实际情况调整，这里直接设置为(Calendar.MONDAY)来获取周一
+        // Set Calendar
+        // : Calendar.SUNDAY is 1, Calendar.MONDAY is 2, is ,
+        // need to , Set to (Calendar.MONDAY) Get
         int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
         if (dayOfWeek != Calendar.MONDAY) {
             calendar.add(Calendar.DATE, -(dayOfWeek - Calendar.MONDAY));
         }
-        // 设置时间为当天的00:00:00
+        // Set to 00:00:00
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
-        // 获取Date对象表示本周一的00:00:00
+        // Get Dateobject 00:00:00
         String thisWeekMonday = parseDateToStr(YYYY_MM_DD_HH_MM_SS, calendar.getTime());
         return thisWeekMonday;
     }

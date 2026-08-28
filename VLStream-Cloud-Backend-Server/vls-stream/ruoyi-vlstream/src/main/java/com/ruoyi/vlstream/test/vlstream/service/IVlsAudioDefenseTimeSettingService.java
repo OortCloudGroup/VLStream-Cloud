@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -9,7 +10,7 @@ import org.springblade.core.mp.base.BaseService;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AudioDefenseTimeSetting;
 
 /**
- * 音频布防时间设置表 服务类
+ * Set service
  */
 public interface IVlsAudioDefenseTimeSettingService extends BaseService<AudioDefenseTimeSetting> {
 }

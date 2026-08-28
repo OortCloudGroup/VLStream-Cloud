@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -18,12 +18,12 @@ public class XxlJobGroup {
     private int id;
     private String appname;
     private String title;
-    private int addressType;        // 执行器地址类型：0=自动注册、1=手动录入
-    private String addressList;     // 执行器地址列表，多地址逗号分隔(手动录入)
+    private int addressType;        // Execute : 0= 、1=
+    private String addressList;     // Execute , ( )
     private Date updateTime;
 
     // registry list
-    private List<String> registryList;  // 执行器地址列表(系统注册)
+    private List<String> registryList;  // Execute ( )
 
     public List<String> getRegistryList() {
         if (addressList != null && addressList.trim().length() > 0) {

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <!-- eslint-disable no-unused-vars -->
 
 <template>
@@ -33,7 +38,7 @@
                   <!--                    <el-icon>-->
                   <!--                      <Delete />-->
                   <!--                    </el-icon>-->
-                  <!--                    <span>删除</span>-->
+                  <!-- <span>Delete </span> -->
                   <!--                  </div>-->
                   <button-group
                     :button-list="[
@@ -189,7 +194,7 @@
           </div>
       </div>
     </DeviceClassificationLayout>
-    <!-- 确认事件/忽略事件 弹框-->
+    <!-- event/ event -->
     <!-- <ConfirmAlertDialog
       v-model:visible="confirmAlertVis"
       :data="currentItem"
@@ -198,13 +203,13 @@
       @close="confirmAlertVis = false"
     /> -->
     <ConfirmEventDialog v-model:visible="confirmAlertVis" :data="currentItem" @refresh="getList" />
-    <!-- 事件反馈 弹框 -->
+    <!-- event -->
     <event-phone-f-back v-model:visible="eventDetailsFBVis" :data="currentItem" @close="eventDetailsFBVis = false" />
-    <!-- 详情 弹框 -->
+    <!--  -->
     <event-details-dialog v-model="eventDetailsVis" :data="currentItem" @close="eventDetailsVis = false" />
-    <!-- 确认事件 弹框 -->
+    <!-- event -->
     <event-phone-confirm v-model:visible="eventDetailsCoVis" :data="currentItem" @close="eventDetailsCoVis = false" @refresh="getList" />
-    <!-- 视频播放弹窗 -->
+    <!-- dialog -->
     <el-dialog
       v-model="videoDialogVisible"
       title="视频播放"
@@ -215,7 +220,7 @@
         <OortVideoPlayer v-if="currentVideoUrl" :video="{ url: currentVideoUrl }" />
       </div>
     </el-dialog>
-    <!-- 任务分配弹框 -->
+    <!-- task -->
     <SchedulingDialog
       v-model:visible="schedulingVisible"
       :current-item="currentItem"
@@ -246,16 +251,16 @@ const store = useUserStore()
 const getAccessToken = () => store.userInfo?.accessToken || store.token || sessionStorage.getItem('token') || sessionStorage.getItem('accessToken') || localStorage.getItem('apaas_token') || localStorage.getItem('accessToken') || ''
 const editShow = ref(false)
 const showMoreDelete = ref(false)
-const eventDetailsFBVis = ref(false) // 事件反馈
-const eventDetailsCoVis = ref(false) // 确认事件
+const eventDetailsFBVis = ref(false) // event
+const eventDetailsCoVis = ref(false) // event
 const tabActive = ref('0')
 const currentItem = ref<any>(null)
 const eventDetailsVis = ref(false)
 const videoDialogVisible = ref(false)
 const currentVideoUrl = ref<string>('')
 const selectedRows = ref<any[]>([])
-const eventItemList = ref<any[]>([]) // 事件类型过滤
-const itemTemp = ref<any>('') // 事件类型过滤 传值
+const eventItemList = ref<any[]>([]) // event
+const itemTemp = ref<any>('') // event value
 const tableRowClassName = ({ row }) => {
   if (row.status === 2) {
     return 'blueFont'
@@ -326,7 +331,7 @@ const params = reactive({
   page: 1,
   pagesize: 10,
   status: 0, // 1:已完成 2:正在处理 0:全部
-  mod_type: 2 // 主动安全
+  mod_type: 2 // main full
 })
 const classificationFilter = reactive({
   active: false,
@@ -389,7 +394,7 @@ const _editTask = (data) => {
   console.log(data)
 }
 
-// 处理表格选择变化
+// Process table
 const handleSelectionChange = (selection: any[]) => {
   selectedRows.value = selection
 }
@@ -400,7 +405,7 @@ const deleteTask = async() => {
     return
   }
 
-  // 确认删除
+  // Delete
   await ElMessageBox.confirm(
     `确定要删除选中的 ${selectedRows.value.length} 个事件吗？`,
     '删除确认',
@@ -411,7 +416,7 @@ const deleteTask = async() => {
     }
   )
 
-  // 批量删除
+  // Batch delete
   const deletePromises = selectedRows.value.map(row => {
     const params = {
       accessToken: store.token,
@@ -423,11 +428,11 @@ const deleteTask = async() => {
   await Promise.all(deletePromises)
 
   ElMessage.success('删除成功')
-  // 重新获取列表
+  // new Get
   getList()
 }
 
-// 事件反馈
+// event
 const phoneFBackFn = (data) => {
   eventDetailsFBVis.value = true
   currentItem.value = data
@@ -455,7 +460,7 @@ const closeVideoDialog = () => {
   currentVideoUrl.value = ''
 }
 
-// 搜索相关
+// related
 const datePickerTime = ref([])
 const searchData = ref<any>([])
 searchData.value = [
@@ -471,17 +476,17 @@ const searchResetFn = (val: any, reset) => {
   getList()
 }
 
-// 事件类型过滤-刷新
+// event - new
 const itemFn = (tt) => {
   itemTemp.value = tt.item
   getList()
 }
 
-// 事件类型过滤
+// event
 const event_item_listFn = async() => {
   let data = {
     accessToken: getAccessToken(),
-    mod_type: 2 // 事件类型 1:事件拍传 2:主动安全
+    mod_type: 2 // event 1:event 2: main full
   }
   let res: any = await event_item_list(data)
   if (res.code === 200) {
@@ -496,7 +501,7 @@ const event_item_listFn = async() => {
 }
 
 onMounted(() => {
-  event_item_listFn() // 事件类型过滤-list
+  event_item_listFn() // event -list
   getList()
 })
 </script>
@@ -750,7 +755,7 @@ onMounted(() => {
 }
 
 .eventImgText {
-  /* 点击穿透 */
+  /*  */
   pointer-events: none;
   position: absolute;
   top: 20px;
@@ -787,7 +792,7 @@ onMounted(() => {
   }
 
   :deep(.xgplayer-controls) {
-    display: none; // 隐藏控制条以节省空间
+    display: none; // control null / empty
   }
 
   .video-play-overlay {

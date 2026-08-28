@@ -1,8 +1,13 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
 /**
- * 根据设备ID获取时间策略
- * @param {string} deviceId - 设备ID
+ * deviceIDGet
+ * @param {string} deviceId - deviceID
  * @returns {Promise}
  */
 export const getTimeStrategy = (deviceId) => {
@@ -13,8 +18,8 @@ export const getTimeStrategy = (deviceId) => {
 }
 
 /**
- * 保存或更新时间策�?
- * @param {Object} timeStrategy - 时间策略对象
+ * update time �?
+ * @param {Object} timeStrategy - object
  * @returns {Promise}
  */
 export const saveTimeStrategy = (timeStrategy) => {
@@ -26,8 +31,8 @@ export const saveTimeStrategy = (timeStrategy) => {
 }
 
 /**
- * 根据设备ID删除时间策略
- * @param {string} deviceId - 设备ID
+ * deviceIDDelete
+ * @param {string} deviceId - deviceID
  * @returns {Promise}
  */
 export const deleteTimeStrategy = (deviceId) => {
@@ -35,4 +40,4 @@ export const deleteTimeStrategy = (deviceId) => {
     url: `/vlsTimeStrategy/${deviceId}`,
     method: 'delete'
   })
-} 
+}

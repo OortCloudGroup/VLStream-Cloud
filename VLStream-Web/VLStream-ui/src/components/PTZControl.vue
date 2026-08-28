@@ -1,40 +1,45 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="ptz-control-panel">
-    <!-- PTZ控制 -->
+    <!-- PTZcontrol -->
     <div class="ptz-section">
       <h4 class="section-title ptz-title">PTZ</h4>
       <div class="ptz-wrapper">
-        <!-- 圆形方向控制 -->
+        <!-- control -->
         <div class="ptz-control-area">
           <div class="ptz-circle-container">
-            <!-- 外圆环 -->
+            <!--  -->
             <div class="ptz-outer-ring">
-              <!-- 内圆 -->
+              <!--  -->
               <div class="ptz-inner-circle">
-                <!-- 中心旋转箭头图标 -->
+                <!-- in -->
                 <div class="ptz-center-icon">
                   <img :src="rotateIcon" alt="旋转" class="ptz-center-rotate-icon" />
                 </div>
               </div>
-              
-              <!-- 方向箭头 -->
+
+              <!--  -->
               <div class="ptz-direction-arrows">
-                <!-- 上箭头 -->
+                <!--  -->
                 <div class="ptz-arrow ptz-arrow-up" @click="ptzControl('up')">
                   <img :src="directionUpIcon" alt="上" class="ptz-direction-icon" />
                 </div>
-                
-                <!-- 右箭头 -->
+
+                <!--  -->
                 <div class="ptz-arrow ptz-arrow-right" @click="ptzControl('right')">
                   <img :src="directionUpIcon" alt="右" class="ptz-direction-icon ptz-rotate-90" />
                 </div>
-                
-                <!-- 下箭头 -->
+
+                <!--  -->
                 <div class="ptz-arrow ptz-arrow-down" @click="ptzControl('down')">
                   <img :src="directionUpIcon" alt="下" class="ptz-direction-icon ptz-rotate-180" />
                 </div>
-                
-                <!-- 左箭头 -->
+
+                <!--  -->
                 <div class="ptz-arrow ptz-arrow-left" @click="ptzControl('left')">
                   <img :src="directionUpIcon" alt="左" class="ptz-direction-icon ptz-rotate-270" />
                 </div>
@@ -45,7 +50,7 @@
       </div>
     </div>
 
-    <!-- 光学变倍控制 -->
+    <!-- control -->
     <div class="zoom-section">
       <h4 class="section-title">光学变倍控制</h4>
       <div class="zoom-wrapper">
@@ -71,10 +76,10 @@
       </div>
     </div>
 
-    <!-- 功能控制按钮 -->
+    <!-- can controlbutton -->
     <div class="function-section">
       <div class="control-layout">
-        <!-- 调焦控制组 -->
+        <!-- control -->
         <div class="focus-control-group">
           <button class="focus-btn" @click="controlAction('focus-plus')" title="调焦+">
             <img :src="focusPlusIcon" alt="调焦+" class="function-icon" />
@@ -83,8 +88,8 @@
             <img :src="focusMinusIcon" alt="调焦-" class="function-icon" />
           </button>
         </div>
-        
-        <!-- 聚集控制组 -->
+
+        <!-- control -->
         <div class="zoom-control-group">
           <button class="zoom-btn" @click="controlAction('zoom-plus')" title="聚集+">
             <img :src="zoomPlusIcon" alt="聚集+" class="function-icon" />
@@ -93,8 +98,8 @@
             <img :src="zoomMinusIcon" alt="聚集-" class="function-icon" />
           </button>
         </div>
-        
-        <!-- 光圈控制组 -->
+
+        <!-- control -->
         <div class="iris-control-group">
           <button class="iris-btn" @click="controlAction('iris-plus')" title="光圈+">
             <img :src="irisPlusIcon" alt="光圈+" class="function-icon" />
@@ -104,11 +109,11 @@
           </button>
         </div>
       </div>
-      
-      <!-- 其他功能按钮 -->
+
+      <!-- can button -->
       <div class="function-grid">
         <div class="function-buttons-container">
-          <!-- 第三行：灯光、辅助聚集、镜头初始化、菜单 -->
+          <!-- : 、 、 Initialize 、menu -->
           <div class="function-row four-cols">
             <button class="function-btn" @click="controlAction('light')" title="灯光">
               <img :src="lightIcon" alt="灯光" class="function-icon" />
@@ -123,8 +128,8 @@
               <img :src="menuIcon" alt="菜单" class="function-icon" />
             </button>
           </div>
-          
-          <!-- 第四行：开启手动跟踪、开启3D定位、一键巡航、一键守望 -->
+
+          <!-- : 、 3D 、 、 -->
           <div class="function-row four-cols">
             <button class="function-btn" @click="controlAction('manual-track')" title="开启手动跟踪">
               <img :src="manualTrackIcon" alt="开启手动跟踪" class="function-icon" />
@@ -140,8 +145,8 @@
             </button>
           </div>
         </div>
-        
-        <!-- 第五行：摄像机管理后台按钮 -->
+
+        <!-- : after button -->
         <div class="function-row camera-management-row" v-if="showCameraManagement">
           <button class="function-btn camera-management" @click="controlAction('camera-management')" title="摄像机管理后台">
             <img :src="cameraManagementIcon" alt="摄像机管理后台" class="function-icon" />
@@ -156,7 +161,7 @@
 <script setup>
 import { defineProps, defineEmits } from 'vue'
 
-// 导入PNG图标
+// Import PNG
 import focusPlusIcon from '@/assets/调焦+.png'
 import focusMinusIcon from '@/assets/调焦-.png'
 import zoomPlusIcon from '@/assets/聚集+.png'
@@ -175,7 +180,7 @@ import cameraManagementIcon from '@/assets/摄像机管理后台.png'
 import directionUpIcon from '@/assets/directionUpIcon.png'
 import rotateIcon from '@/assets/rotateIcon.png'
 
-// 定义props
+// props
 const props = defineProps({
   showCameraManagement: {
     type: Boolean,
@@ -183,20 +188,20 @@ const props = defineProps({
   }
 })
 
-// 定义emits
+// emits
 const emit = defineEmits(['ptz-control', 'zoom-control', 'control-action'])
 
-// PTZ控制方法
+// PTZcontrol method
 const ptzControl = (direction) => {
   emit('ptz-control', direction)
 }
 
-// 变倍控制方法
+// control method
 const zoomControl = (action) => {
   emit('zoom-control', action)
 }
 
-// 功能控制方法
+// can control method
 const controlAction = (action) => {
   emit('control-action', action)
 }
@@ -218,7 +223,7 @@ const controlAction = (action) => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* PTZ控制区域 */
+/* PTZcontrol */
 .ptz-section {
   margin-bottom: 24px;
   margin-top: -20px;
@@ -239,7 +244,7 @@ const controlAction = (action) => {
   text-align: left;
 }
 
-/* PTZ标题特殊样式 */
+/* PTZ */
 .ptz-section .ptz-title {
   position: relative;
   transform: translateY(15px) translateX(-24px);
@@ -265,7 +270,7 @@ const controlAction = (action) => {
   z-index: 1;
 }
 
-/* 外圆环 - 200px */
+/* - 200px */
 .ptz-outer-ring {
   width: 240px;
   height: 240px;
@@ -278,7 +283,7 @@ const controlAction = (action) => {
   margin-left: 0;
 }
 
-/* 内圆 - 85px */
+/* - 85px */
 .ptz-inner-circle {
   width: 85px;
   height: 85px;
@@ -291,7 +296,7 @@ const controlAction = (action) => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 中心旋转箭头图标 */
+/* in */
 .ptz-center-icon {
   display: flex;
   justify-content: center;
@@ -304,7 +309,7 @@ const controlAction = (action) => {
   object-fit: contain;
 }
 
-/* 方向箭头容器 */
+/*  */
 .ptz-direction-arrows {
   position: absolute;
   width: 100%;
@@ -313,7 +318,7 @@ const controlAction = (action) => {
   left: 0;
 }
 
-/* 箭头通用样式 */
+/*  */
 .ptz-arrow {
   position: absolute;
   cursor: pointer;
@@ -327,7 +332,7 @@ const controlAction = (action) => {
   opacity: 0.8;
 }
 
-/* 方向图标样式 */
+/*  */
 .ptz-direction-icon {
   width: 48px;
   height: 48px;
@@ -335,7 +340,7 @@ const controlAction = (action) => {
   transition: transform 0.2s ease;
 }
 
-/* 旋转样式 */
+/*  */
 .ptz-rotate-90 {
   transform: rotate(90deg);
 }
@@ -348,7 +353,7 @@ const controlAction = (action) => {
   transform: rotate(270deg);
 }
 
-/* 上箭头 */
+/*  */
 .ptz-arrow-up {
   top: 8px;
   left: 50%;
@@ -361,7 +366,7 @@ const controlAction = (action) => {
   transform: scale(1.1);
 }
 
-/* 右箭头 */
+/*  */
 .ptz-arrow-right {
   top: 50%;
   right: 8px;
@@ -374,7 +379,7 @@ const controlAction = (action) => {
   transform: rotate(90deg) scale(1.1);
 }
 
-/* 下箭头 */
+/*  */
 .ptz-arrow-down {
   bottom: 8px;
   left: 50%;
@@ -387,7 +392,7 @@ const controlAction = (action) => {
   transform: rotate(180deg) scale(1.1);
 }
 
-/* 左箭头 */
+/*  */
 .ptz-arrow-left {
   top: 50%;
   left: 8px;
@@ -399,7 +404,7 @@ const controlAction = (action) => {
 .ptz-arrow-left:hover .ptz-direction-icon {
   transform: rotate(270deg) scale(1.1);
 }
-/* 光学变倍控制区域 */
+/* control */
 .zoom-section {
   margin-bottom: 6px;
   margin-top: -30px;
@@ -482,7 +487,7 @@ const controlAction = (action) => {
   font-weight: 500;
 }
 
-/* 功能控制区域 */
+/* can control */
 .function-section {
   margin-bottom: 0;
   margin-top: -20px;
@@ -727,7 +732,7 @@ const controlAction = (action) => {
   transform: scale(1.05);
 }
 
-/* 摄像机管理后台按钮行 */
+/* after button */
 .camera-management-row {
   justify-content: center;
   margin-top: 12px;
@@ -762,4 +767,4 @@ const controlAction = (action) => {
   white-space: nowrap;
   font-size: 12px;
 }
-</style> 
+</style>

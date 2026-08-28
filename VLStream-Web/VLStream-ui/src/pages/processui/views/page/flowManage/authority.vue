@@ -1,7 +1,12 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="au_authority_container">
     <div class="au_authority_content">
-      <!-- 可阅读者 -->
+      <!--  -->
       <div class="au_authority_row">
         <div class="au_authority_label">
           可阅读者
@@ -35,7 +40,7 @@
         </div>
       </div>
 
-      <!-- 可编辑者 -->
+      <!--  -->
       <div class="au_authority_row">
         <div class="au_authority_label">
           可编辑者
@@ -69,7 +74,7 @@
         </div>
       </div>
 
-      <!-- 附件可下载者 -->
+      <!--  -->
       <div class="au_authority_row">
         <div class="au_authority_label">
           附件可下载者
@@ -89,7 +94,7 @@
         </div>
       </div>
 
-      <!-- 附件可打印者 -->
+      <!--  -->
       <div class="au_authority_row">
         <div class="au_authority_label">
           附件可打印者
@@ -109,7 +114,7 @@
         </div>
       </div>
 
-      <!-- 附件可拷贝者 -->
+      <!--  -->
       <div class="au_authority_row">
         <div class="au_authority_label">
           附件可拷贝者
@@ -130,7 +135,7 @@
       </div>
     </div>
 
-    <!-- 操作按钮 -->
+    <!-- operationbutton -->
     <div v-if="props.submit" style="text-align: right;">
       <el-button class="bigBtn common_btn" @click="emits('close')">
         取消
@@ -140,7 +145,7 @@
       </el-button>
     </div>
 
-    <!-- 选人对话框 -->
+    <!--  -->
     <el-dialog v-model="userDialogVisible" :title="dialogTitle" width="50%">
       <address-seting-dialog
         :user-list="currentUserList"
@@ -165,28 +170,28 @@ const props = defineProps({
 })
 const emits: any = defineEmits(['handle', 'close'])
 
-// 权限设置响应式数据
-const downloadPermission = ref('all') // 附件可下载权限
-const printPermission = ref('all') // 附件可打印权限
-const copyPermission = ref('all') // 附件可拷贝权限
+// Set data
+const downloadPermission = ref('all') //
+const printPermission = ref('all') //
+const copyPermission = ref('all') //
 
-// 编辑状态管理
-const isReadingEditable = ref(false) // 可阅读者编辑状态
-const isEditingEditable = ref(false) // 可编辑者编辑状态
+//
+const isReadingEditable = ref(false) //
+const isEditingEditable = ref(false) //
 
-// 用户数据管理
-const readingUserList = ref<any[]>([]) // 可阅读者用户列表
-const editingUserList = ref<any[]>([]) // 可编辑者用户列表
-const tempReadingUserList = ref<any[]>([]) // 可阅读者临时用户列表
-const tempEditingUserList = ref<any[]>([]) // 可编辑者临时用户列表
+// userdata
+const readingUserList = ref<any[]>([]) // user
+const editingUserList = ref<any[]>([]) // user
+const tempReadingUserList = ref<any[]>([]) // user
+const tempEditingUserList = ref<any[]>([]) // user
 
-// 对话框状态
-const userDialogVisible = ref(false) // 用户选择对话框显示状态
-const dialogTitle = ref('选择可阅读者') // 对话框标题
-const currentUserList = ref<any[]>([]) // 当前对话框显示的用户列表
-const currentEditType = ref<'reading' | 'editing' | null>(null) // 当前编辑类型
+//
+const userDialogVisible = ref(false) // user
+const dialogTitle = ref('选择可阅读者') //
+const currentUserList = ref<any[]>([]) // current user
+const currentEditType = ref<'reading' | 'editing' | null>(null) // current
 
-// 权限项配置
+// item configuration
 const permissionConfig = {
   reading: {
     userList: readingUserList,
@@ -206,11 +211,11 @@ const permissionConfig = {
   }
 } as const
 
-// 通用方法
+// method
 
 /**
- * 切换编辑状态
- * @param type 权限类型：'reading' | 'editing'
+ *
+ * @param type : 'reading' | 'editing'
  */
 const toggleEdit = async(type: keyof typeof permissionConfig) => {
   const config = permissionConfig[type]
@@ -222,8 +227,8 @@ const toggleEdit = async(type: keyof typeof permissionConfig) => {
 }
 
 /**
- * 打开用户选择对话框
- * @param type 权限类型：'reading' | 'editing'
+ * user
+ * @param type : 'reading' | 'editing'
  */
 const openUserSelect = (type: keyof typeof permissionConfig) => {
   const config = permissionConfig[type]
@@ -234,8 +239,8 @@ const openUserSelect = (type: keyof typeof permissionConfig) => {
 }
 
 /**
- * 确认用户选择
- * @param data 选中的用户数据
+ * user
+ * @param data in userdata
  */
 const confirmUser = (data: any) => {
   if (!currentEditType.value) return
@@ -246,9 +251,9 @@ const confirmUser = (data: any) => {
 }
 
 /**
- * 删除用户
- * @param type 权限类型：'reading' | 'editing'
- * @param index 要删除的用户索引
+ * Delete user
+ * @param type : 'reading' | 'editing'
+ * @param index need to Delete user
  */
 const removeUser = (type: keyof typeof permissionConfig, index: number) => {
   const config = permissionConfig[type]
@@ -256,9 +261,9 @@ const removeUser = (type: keyof typeof permissionConfig, index: number) => {
 }
 
 /**
- * 获取显示文本
- * @param type 权限类型：'reading' | 'editing'
- * @returns 显示文本
+ * Get
+ * @param type : 'reading' | 'editing'
+ * @return s
  */
 const getDisplayText = (type: keyof typeof permissionConfig) => {
   const config = permissionConfig[type]

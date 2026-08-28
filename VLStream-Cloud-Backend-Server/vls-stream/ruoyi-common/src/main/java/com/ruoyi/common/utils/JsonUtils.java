@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -21,9 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * JSON 工具类
+ * JSON
  *
- * @author 芋道源码
+ * @author
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JsonUtils {
@@ -85,7 +86,7 @@ public class JsonUtils {
         try {
             return OBJECT_MAPPER.readValue(text, OBJECT_MAPPER.getTypeFactory().constructType(Dict.class));
         } catch (MismatchedInputException e) {
-            // 类型不匹配说明不是json
+            // is json
             return null;
         } catch (IOException e) {
             throw new RuntimeException(e);

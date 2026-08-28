@@ -1,5 +1,4 @@
 /*
- * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -56,14 +55,14 @@ public class JobInfoController {
     @RequestMapping
     public String index(HttpServletRequest request, Model model, @RequestParam(required = false, defaultValue = "-1") int jobGroup) {
 
-        // 枚举-字典
-        model.addAttribute("ExecutorRouteStrategyEnum", ExecutorRouteStrategyEnum.values());        // 路由策略-列表
-        model.addAttribute("GlueTypeEnum", GlueTypeEnum.values());                                // Glue类型-字典
-        model.addAttribute("ExecutorBlockStrategyEnum", ExecutorBlockStrategyEnum.values());        // 阻塞处理策略-字典
-        model.addAttribute("ScheduleTypeEnum", ScheduleTypeEnum.values());                        // 调度类型
-        model.addAttribute("MisfireStrategyEnum", MisfireStrategyEnum.values());                    // 调度过期策略
+        // -dict
+        model.addAttribute("ExecutorRouteStrategyEnum", ExecutorRouteStrategyEnum.values());        // -
+        model.addAttribute("GlueTypeEnum", GlueTypeEnum.values());                                // Glue -dict
+        model.addAttribute("ExecutorBlockStrategyEnum", ExecutorBlockStrategyEnum.values());        // Process -dict
+        model.addAttribute("ScheduleTypeEnum", ScheduleTypeEnum.values());                        //
+        model.addAttribute("MisfireStrategyEnum", MisfireStrategyEnum.values());                    //
 
-        // 执行器列表
+        // Execute
         List<XxlJobGroup> jobGroupList_all = xxlJobGroupDao.findAll();
 
         // filter group
@@ -186,7 +185,7 @@ public class JobInfoController {
     }
 
 
-    /*------------------自定义方法----------------------  */
+    /* ------------------Custom method---------------------- */
     @RequestMapping("/addJob")
     @ResponseBody
     @PermissionLimit(limit = false)

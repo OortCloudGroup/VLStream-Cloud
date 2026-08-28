@@ -20,7 +20,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 用户表 数据层
+ * user data layer
  *
  * @author Lion Li
  */
@@ -33,10 +33,10 @@ public interface SysUserMapper extends BaseMapperPlus<SysUserMapper, SysUser, Sy
     Page<SysUser> selectPageUserList(@Param("page") Page<SysUser> page, @Param(Constants.WRAPPER) Wrapper<SysUser> queryWrapper);
 
     /**
-     * 根据条件分页查询用户列表
+     * Query user list
      *
-     * @param queryWrapper 查询条件
-     * @return 用户信息集合信息
+     * @param queryWrapper Query
+     * @return userinfocollectioninfo
      */
     @DataPermission({
         @DataColumn(key = "deptName", value = "d.dept_id"),
@@ -45,10 +45,10 @@ public interface SysUserMapper extends BaseMapperPlus<SysUserMapper, SysUser, Sy
     List<SysUser> selectUserList(@Param(Constants.WRAPPER) Wrapper<SysUser> queryWrapper);
 
     /**
-     * 根据条件分页查询已配用户角色列表
+     * Query already userrole list
      *
-     * @param queryWrapper 查询条件
-     * @return 用户信息集合信息
+     * @param queryWrapper Query
+     * @return userinfocollectioninfo
      */
     @DataPermission({
         @DataColumn(key = "deptName", value = "d.dept_id"),
@@ -57,10 +57,10 @@ public interface SysUserMapper extends BaseMapperPlus<SysUserMapper, SysUser, Sy
     Page<SysUser> selectAllocatedList(@Param("page") Page<SysUser> page, @Param(Constants.WRAPPER) Wrapper<SysUser> queryWrapper);
 
     /**
-     * 根据条件分页查询未分配用户角色列表
+     * Query not userrole list
      *
-     * @param queryWrapper 查询条件
-     * @return 用户信息集合信息
+     * @param queryWrapper Query
+     * @return userinfocollectioninfo
      */
     @DataPermission({
         @DataColumn(key = "deptName", value = "d.dept_id"),
@@ -69,34 +69,34 @@ public interface SysUserMapper extends BaseMapperPlus<SysUserMapper, SysUser, Sy
     Page<SysUser> selectUnallocatedList(@Param("page") Page<SysUser> page, @Param(Constants.WRAPPER) Wrapper<SysUser> queryWrapper);
 
     /**
-     * 通过用户名查询用户
+     * user Query user
      *
-     * @param userName 用户名
-     * @return 用户对象信息
+     * @param userName user
+     * @return userobjectinfo
      */
     SysUser selectUserByUserName(String userName);
 
     /**
-     * 通过手机号查询用户
+     * Query user
      *
-     * @param phonenumber 手机号
-     * @return 用户对象信息
+     * @param phonenumber
+     * @return userobjectinfo
      */
     SysUser selectUserByPhonenumber(String phonenumber);
 
     /**
-     * 通过邮箱查询用户
+     * Query user
      *
-     * @param email 邮箱
-     * @return 用户对象信息
+     * @param email
+     * @return userobjectinfo
      */
     SysUser selectUserByEmail(String email);
 
     /**
-     * 通过用户ID查询用户
+     * user IDQuery user
      *
-     * @param userId 用户ID
-     * @return 用户对象信息
+     * @param userId user ID
+     * @return userobjectinfo
      */
     SysUser selectUserById(String userId);
 
@@ -104,25 +104,25 @@ public interface SysUserMapper extends BaseMapperPlus<SysUserMapper, SysUser, Sy
     List<String> selectOortUuidList();
 
     /**
-     * 通过用户uuid查询用户
+     * useruuidQuery user
      *
-     * @param UserId   用户uuID
-     * @return 用户对象信息
+     * @param UserId useruuID
+     * @return userobjectinfo
      */
     SysUser selectUserByUserId(@Param("UserId") String UserId);
 
     /**
-     * 通过用户id查询用户
+     * user IDQuery user
      *
-     * @param UserIds   用户uuID
-     * @return 用户对象信息
+     * @param UserIds useruuID
+     * @return userobjectinfo
      */
     List<SysUser> selectUserByUserIds(@Param("UserIds") List<String > UserIds);
 
     Date selectLatestUpdateTime();
 
     /**
-     * parentId部门id
+     * parentIddepartment ID
      * @param parentId
      * @return
      */

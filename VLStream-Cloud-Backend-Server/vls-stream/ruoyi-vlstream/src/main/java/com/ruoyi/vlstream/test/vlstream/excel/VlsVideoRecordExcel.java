@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -18,7 +19,7 @@ import java.time.LocalDateTime;
 
 
 /**
- * 视频录制记录表 Excel实体类
+ * record Excel
  *
  * @author Oort
  * @since 2025-12-25
@@ -49,79 +50,79 @@ public class VlsVideoRecordExcel implements Serializable {
 	@ExcelProperty("stream")
 	private String stream;
 	/**
-	 * 设备ID
+	 * deviceID
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("设备ID")
 	private Long deviceId;
 	/**
-	 * 设备名称
+	 * device
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("设备名称")
 	private String deviceName;
 	/**
-	 * 视频文件名
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("视频文件名")
 	private String fileName;
 	/**
-	 * 视频文件路径
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("视频文件路径")
 	private String filePath;
 	/**
-	 * 文件大小(字节)
+	 * ( )
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("文件大小(字节)")
 	private Long fileSize;
 	/**
-	 * 点播url
+	 * url
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("点播url")
 	private String url;
 	/**
-	 * 视频时长(秒)
+	 * ( )
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("视频时长(秒)")
 	private Integer duration;
 	/**
-	 * 视频格式
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("视频格式")
 	private String format;
 	/**
-	 * 录制开始时间
+	 * start
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("录制开始时间")
 	private LocalDateTime recordStartTime;
 	/**
-	 * 录制结束时间
+	 * finish
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("录制结束时间")
 	private LocalDateTime recordEndTime;
 	/**
-	 * 录制日期(用于按日期分组)
+	 * ( group)
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("录制日期(用于按日期分组)")
 	private LocalDate recordDate;
 	/**
-	 * 录制状态
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("录制状态")
 	private String recordStatus;
 	/**
-	 * 缩略图路径
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("缩略图路径")

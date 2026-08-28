@@ -1,8 +1,13 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
 /**
- * 获取标注项目的图片列表
- * @param {number} annotationId - 标注项目ID
+ * Get annotation item
+ * @param {number} annotationId - annotation item ID
  * @returns {Promise}
  */
 export function getAnnotationImages(annotationId) {
@@ -13,22 +18,22 @@ export function getAnnotationImages(annotationId) {
 }
 
 /**
- * 上传图片文件并保存信息到annotation_image表
- * @param {Array} files - 图片文件列表
- * @param {number} annotationId - 标注项目ID
- * @param {string} category - 图片分类
+ * info annotation_image
+ * @param {Array} files -
+ * @param {number} annotationId - annotation item ID
+ * @param {string} category -
  * @returns {Promise}
  */
 export function uploadAnnotationImages(files, annotationId) {
   const formData = new FormData()
 
-  // 添加所有文件（后端 @RequestPart("files") MultipartFile[]）
+  // all ( after @RequestPart("files") MultipartFile[])
   const fileList = Array.isArray(files) ? files : [files]
   fileList.forEach(file => {
     formData.append('files', file)
   })
 
-  // 添加标注项目ID（后端 @RequestParam("annotationId")）
+  // annotation item ID ( after @RequestParam("annotationId"))
   formData.append('annotationId', annotationId)
 
   return request({
@@ -42,8 +47,8 @@ export function uploadAnnotationImages(files, annotationId) {
 }
 
 /**
- * 保存单个图片信息到annotation_image表
- * @param {Object} imageData - 图片信息
+ * info annotation_image
+ * @param {Object} imageData - info
  * @returns {Promise}
  */
 export function saveAnnotationImage(imageData) {
@@ -55,8 +60,8 @@ export function saveAnnotationImage(imageData) {
 }
 
 /**
- * 批量保存图片信息到annotation_image表
- * @param {Array} imagesData - 图片信息列表
+ * info annotation_image
+ * @param {Array} imagesData - info
  * @returns {Promise}
  */
 export function batchSaveAnnotationImages(imagesData) {

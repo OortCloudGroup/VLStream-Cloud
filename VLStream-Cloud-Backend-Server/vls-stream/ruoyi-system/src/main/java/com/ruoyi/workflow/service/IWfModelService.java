@@ -27,7 +27,7 @@ public interface IWfModelService {
     void deleteModelCascade(String modelId,boolean isWorkOrder);
 
         /**
-         * 流程数据初始化
+         * workflowdataInitialize
          *
          * @return
          */
@@ -39,66 +39,66 @@ public interface IWfModelService {
 
 
     /**
-     * 查询流程模型列表
+     * Query workflowmodel list
      */
     TableDataInfo<WfModelVo> list(WfModelBo modelBo, PageQuery pageQuery);
 
     /**
-     * 查询流程模型列表
+     * Query workflowmodel list
      */
     List<WfModelVo> list(WfModelBo modelBo);
 
     /**
-     * 查询流程模型列表
+     * Query workflowmodel list
      */
     TableDataInfo<WfModelVo> historyList(WfModelBo modelBo, PageQuery pageQuery);
 
     /**
-     * 查询流程模型详情信息
+     * Query workflowmodel info
      */
     WfModelVo getModel(String modelId,String applicationId);
 
     /**
-     * 查询流程模型bpmn文件
+     * Query workflowmodelbpmn
      */
     String queryBpmnXmlById(String modelId);
 
     /**
-     * 新增模型信息
+     * Add modelinfo
      */
     String  insertModel(WfModelBo modelBo);
 
     /**
-     * 修改模型信息
+     * Update modelinfo
      */
     void updateModel(WfModelBo modelBo);
 
     /**
-     * 保存流程模型信息
+     * workflowmodelinfo
      *
      * @return
      */
     Model saveModel(WfModelBo modelBo, String ToTenantId, ProcessModel processModel);
 
     /**
-     * 设为最新流程模型
+     * to new workflowmodel
      */
     void latestModel(String modelId);
 
     /**
-     * 删除流程模型
+     * Delete workflowmodel
      */
     void deleteByIds(Collection<String> ids);
 
     /**
-     * 部署流程模型
+     * workflowmodel
      */
     boolean deployModel(String modelId);
 
     void copyModel(WfModelBo modelBo);
 
     /**
-     * 查询模型总数
+     * Query model
      *
      * @param modelBo
      * @param wfSyntheses
@@ -110,7 +110,7 @@ public interface IWfModelService {
     Long selectModelCount(WfModelBo modelBo, List<String> wfSyntheses, List<String> workOrderSyntheses,String tenantId,Boolean history);
 
     /**
-     * 查询模型列表
+     * Query model list
      */
     List<Model> selectModelList( WfModelBo modelBo, IPage<Model> page,List<String> wfSyntheses, List<String> workOrderSyntheses,String tenantId,Boolean history);
 

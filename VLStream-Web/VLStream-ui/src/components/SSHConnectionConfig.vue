@@ -1,43 +1,48 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="ssh-connection-config">
     <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
       <el-form-item label="服务器地址" prop="host">
         <el-input v-model="form.host" placeholder="请输入服务器IP或域名" />
       </el-form-item>
-      
+
       <el-form-item label="端口" prop="port">
         <el-input-number v-model="form.port" :min="1" :max="65535" />
       </el-form-item>
-      
+
       <el-form-item label="用户名" prop="username">
         <el-input v-model="form.username" placeholder="请输入用户名" />
       </el-form-item>
-      
+
       <el-form-item label="认证方式" prop="authType">
         <el-radio-group v-model="form.authType">
           <el-radio label="password">密码认证</el-radio>
           <el-radio label="key">密钥认证</el-radio>
         </el-radio-group>
       </el-form-item>
-      
+
       <el-form-item v-if="form.authType === 'password'" label="密码" prop="password">
-        <el-input 
-          v-model="form.password" 
-          type="password" 
+        <el-input
+          v-model="form.password"
+          type="password"
           placeholder="请输入密码"
-          show-password 
+          show-password
         />
       </el-form-item>
-      
+
       <el-form-item v-if="form.authType === 'key'" label="私钥文件" prop="privateKey">
-        <el-input 
-          v-model="form.privateKey" 
-          type="textarea" 
+        <el-input
+          v-model="form.privateKey"
+          type="textarea"
           :rows="4"
           placeholder="请粘贴私钥内容或选择私钥文件"
         />
       </el-form-item>
-      
+
       <el-form-item>
         <el-button type="primary" @click="testConnection" :loading="testing">
           测试连接
@@ -48,9 +53,9 @@
         <el-button @click="resetForm">重置</el-button>
       </el-form-item>
     </el-form>
-    
+
     <div v-if="connectionStatus" class="connection-status">
-      <el-alert 
+      <el-alert
         :title="connectionStatus.message"
         :type="connectionStatus.type"
         :closable="false"
@@ -101,7 +106,7 @@ export default {
         await this.$refs.formRef.validate()
         this.testing = true
         this.connectionStatus = null
-        
+
         if (this.form.authType !== 'password') {
           throw new Error('当前后端未接入私钥认证，未发起 SSH 连接')
         }
@@ -116,7 +121,7 @@ export default {
         }
         this.connectionStatus = { type: 'success', message: response.data.message || '真实 SSH 连接测试成功' }
         this.connectionValid = true
-        
+
       } catch (error) {
         this.testing = false
         this.connectionStatus = {
@@ -126,33 +131,33 @@ export default {
         this.connectionValid = false
       }
     },
-    
+
     saveConnection() {
       if (!this.connectionValid) {
         this.$message.warning('请先测试连接')
         return
       }
-      
-      // 密码不落入浏览器本地存储，只向当前组件链路交付已验证配置。
+
+      // , only current component already configuration.
       const connectionConfig = { ...this.form }
-      
-      // 触发连接就绪事件
+
+      // then event
       this.$emit('connection-ready', connectionConfig)
-      
+
       this.$message.success('已交付经真实连接测试的配置')
     },
-    
+
     resetForm() {
       this.$refs.formRef.resetFields()
       this.connectionStatus = null
       this.connectionValid = false
     },
-    
+
     loadSavedConnection() {
-      // 凭据不从 localStorage 读取。
+      // from localStorage .
     }
   },
-  
+
   mounted() {
     this.loadSavedConnection()
   }

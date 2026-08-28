@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -23,9 +24,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 规则树Service业务层处理
+ * Service layer Process
  *
- * @author 雷超群
+ * @author
  * @date 2024-12-18
  */
 @RequiredArgsConstructor
@@ -35,7 +36,7 @@ public class RuleTreeServiceImpl implements IRuleTreeService {
     private final RuleTreeMapper baseMapper;
 
     /**
-     * 查询规则树
+     * Query
      */
     @Override
     public RuleTreeVo queryById(String id) {
@@ -44,7 +45,7 @@ public class RuleTreeServiceImpl implements IRuleTreeService {
 
 
     /**
-     * 查询规则树列表
+     * Query list
      */
     @Override
     public List<RuleTreeVo> queryList(RuleTreeBo bo) {
@@ -61,13 +62,13 @@ public class RuleTreeServiceImpl implements IRuleTreeService {
         lqw.eq(StringUtils.isNotBlank(bo.getDescription()), RuleTree::getDescription, bo.getDescription());
         lqw.eq(StringUtils.isNotBlank(bo.getType()), RuleTree::getType, bo.getType());
         if (StringUtils.isBlank(bo.getId()) && StringUtils.isBlank(bo.getParentId())) {
-            lqw.isNull(RuleTree::getParentId);  // 如果bo.getId()和bo.getParentId()都为空，查询parent_id为NULL
+            lqw.isNull(RuleTree::getParentId);  // if bo.getId() and bo.getParentId() is empty, Query parent_id to NULL
         }
         return lqw;
     }
 
     /**
-     * 新增规则树
+     * Add
      */
     @Override
     public Boolean insertByBo(RuleTreeBo bo) {
@@ -78,7 +79,7 @@ public class RuleTreeServiceImpl implements IRuleTreeService {
     }
 
     /**
-     * 修改规则树
+     * Update
      */
     @Override
     public Boolean updateByBo(RuleTreeBo bo) {
@@ -88,19 +89,19 @@ public class RuleTreeServiceImpl implements IRuleTreeService {
     }
 
     /**
-     * 保存前的数据校验
+     * before dataValidate
      */
     private void validEntityBeforeSave(RuleTree entity) {
-        //TODO 做一些数据校验,如唯一约束
+        // TODO dataValidate ,
     }
 
     /**
-     * 批量删除规则树
+     * Batch delete
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid) {
         if (isValid) {
-            //TODO 做一些业务上的校验,判断是否需要校验
+            // TODO Validate ,Check whether need to Validate
         }
         return baseMapper.deleteBatchIds(ids) > 0;
     }

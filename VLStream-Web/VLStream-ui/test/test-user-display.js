@@ -1,7 +1,12 @@
-// 测试用户信息显示
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// userinfo
 console.log('🚀 测试用户信息显示...\n');
 
-// 模拟从localStorage获取用户信息
+// from localStorageGet userinfo
 function getLocalUserInfo() {
   const userInfoStr = localStorage.getItem('userInfo');
   if (userInfoStr) {
@@ -15,7 +20,7 @@ function getLocalUserInfo() {
   return null;
 }
 
-// 模拟从sessionStorage获取用户信息
+// from sessionStorageGet userinfo
 function getSessionUserInfo() {
   const userInfoStr = sessionStorage.getItem('userInfo');
   if (userInfoStr) {
@@ -29,7 +34,7 @@ function getSessionUserInfo() {
   return null;
 }
 
-// 检查用户信息
+// userinfo
 console.log('=== 检查本地存储的用户信息 ===');
 const localUserInfo = getLocalUserInfo();
 const sessionUserInfo = getSessionUserInfo();
@@ -53,7 +58,7 @@ if (localUserInfo) {
   console.log('❌ 本地存储中没有用户信息');
 }
 
-// 检查token
+// token
 console.log('\n=== 检查token ===');
 const localToken = localStorage.getItem('accessToken');
 const sessionToken = sessionStorage.getItem('accessToken');
@@ -70,4 +75,4 @@ if (localToken || sessionToken) {
 console.log('\n📝 说明：');
 console.log('- 如果用户信息存在，页面右上角应该显示用户名');
 console.log('- 如果token存在，应该能正常调用API');
-console.log('- 如果都没有，说明用户信息没有正确保存'); 
+console.log('- 如果都没有，说明用户信息没有正确保存');

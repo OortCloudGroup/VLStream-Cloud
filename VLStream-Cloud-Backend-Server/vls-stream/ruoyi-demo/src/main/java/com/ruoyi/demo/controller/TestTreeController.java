@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -29,7 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 测试树表Controller
+ * Controller
  *
  * @author Lion Li
  * @date 2021-07-26
@@ -43,7 +44,7 @@ public class TestTreeController extends BaseController {
     private final ITestTreeService iTestTreeService;
 
     /**
-     * 查询测试树表列表
+     * Query list
      */
     @SaCheckPermission("demo:tree:list")
     @GetMapping("/list")
@@ -53,7 +54,7 @@ public class TestTreeController extends BaseController {
     }
 
     /**
-     * 导出测试树表列表
+     * Export
      */
     @SaCheckPermission("demo:tree:export")
     @Log(title = "测试树表", businessType = BusinessType.EXPORT)
@@ -64,9 +65,9 @@ public class TestTreeController extends BaseController {
     }
 
     /**
-     * 获取测试树表详细信息
+     * Get info
      *
-     * @param id 测试树ID
+     * @param id ID
      */
     @SaCheckPermission("demo:tree:query")
     @GetMapping("/{id}")
@@ -76,7 +77,7 @@ public class TestTreeController extends BaseController {
     }
 
     /**
-     * 新增测试树表
+     * Add
      */
     @SaCheckPermission("demo:tree:add")
     @Log(title = "测试树表", businessType = BusinessType.INSERT)
@@ -87,7 +88,7 @@ public class TestTreeController extends BaseController {
     }
 
     /**
-     * 修改测试树表
+     * Update
      */
     @SaCheckPermission("demo:tree:edit")
     @Log(title = "测试树表", businessType = BusinessType.UPDATE)
@@ -98,9 +99,9 @@ public class TestTreeController extends BaseController {
     }
 
     /**
-     * 删除测试树表
+     * Delete
      *
-     * @param ids 测试树ID串
+     * @param ids ID
      */
     @SaCheckPermission("demo:tree:remove")
     @Log(title = "测试树表", businessType = BusinessType.DELETE)

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -11,7 +12,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * 读取项目相关配置
+ * item relatedconfiguration
  *
  * @author Lion Li
  */
@@ -22,32 +23,32 @@ import org.springframework.stereotype.Component;
 public class RuoYiConfig {
 
     /**
-     * 项目名称
+     * item
      */
     private String name;
 
     /**
-     * 版本
+     *
      */
     private String version;
 
     /**
-     * 版权年份
+     *
      */
     private String copyrightYear;
 
     /**
-     * 实例演示开关
+     * instance
      */
     private boolean demoEnabled;
 
     /**
-     * 缓存懒加载
+     * Load
      */
     private boolean cacheLazy;
 
     /**
-     * 获取地址开关
+     * Get
      */
     @Getter
     private static boolean addressEnabled;

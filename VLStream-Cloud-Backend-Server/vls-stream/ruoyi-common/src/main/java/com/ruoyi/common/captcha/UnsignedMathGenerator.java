@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -12,7 +13,7 @@ import cn.hutool.core.util.RandomUtil;
 import com.ruoyi.common.utils.StringUtils;
 
 /**
- * 无符号计算生成器
+ * Generate
  *
  * @author Lion Li
  */
@@ -23,21 +24,21 @@ public class UnsignedMathGenerator implements CodeGenerator {
     private static final String OPERATORS = "+-*";
 
     /**
-     * 参与计算数字最大长度
+     * and
      */
     private final int numberLength;
 
     /**
-     * 构造
+     *
      */
     public UnsignedMathGenerator() {
         this(2);
     }
 
     /**
-     * 构造
      *
-     * @param numberLength 参与计算最大数字位数
+     *
+     * @param numberLength and
      */
     public UnsignedMathGenerator(int numberLength) {
         this.numberLength = numberLength;
@@ -62,7 +63,7 @@ public class UnsignedMathGenerator implements CodeGenerator {
         try {
             result = Integer.parseInt(userInputCode);
         } catch (NumberFormatException e) {
-            // 用户输入非数字
+            // user non-
             return false;
         }
 
@@ -71,18 +72,18 @@ public class UnsignedMathGenerator implements CodeGenerator {
     }
 
     /**
-     * 获取验证码长度
+     * Get
      *
-     * @return 验证码长度
+     * @return
      */
     public int getLength() {
         return this.numberLength * 2 + 2;
     }
 
     /**
-     * 根据长度获取参与计算数字最大值
+     * Get and value
      *
-     * @return 最大值
+     * @return value
      */
     private int getLimit() {
         return Integer.parseInt("1" + StringUtils.repeat('0', this.numberLength));

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -8,7 +9,7 @@ package com.ruoyi.common.excel;
 import com.alibaba.excel.read.listener.ReadListener;
 
 /**
- * Excel 导入监听
+ * Excel Import
  *
  * @author Lion Li
  */

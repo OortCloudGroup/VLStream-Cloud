@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -12,7 +13,7 @@ import lombok.Data;
 import org.apache.ibatis.type.Alias;
 
 /**
- * 职务(职位)表
+ * ( )
  *
  * @author Lion Li
  */
@@ -23,7 +24,7 @@ import org.apache.ibatis.type.Alias;
 public class SysPost {
 
     /**
-     * 职务名称(老)
+     * ( )
      */
     @TableField("oort_jobname")
     private String oortJobname;
@@ -31,70 +32,70 @@ public class SysPost {
 
 
     /**
-     * 职务等级（数字越小等级越高）
+     * etc. ( etc. )
      */
     @TableField("oort_level")
     private Integer oortLevel;
 
     /**
-     * 创建时间
+     * create time
      */
     @TableField("oort_tcreate")
     private Long oortTcreate;
 
     /**
-     * 修改时间
+     * Update
      */
     @TableField("oort_tupdate")
     private Long oortTupdate;
 
     /**
-     * 是否删除 0否 1是
+     * whether Delete 0 1 is
      */
     @TableField("oort_tdelete")
     private Integer oortTdelete;
 
-    //新---------
+    // new ---------
 
     /**
-     * 职位ID
+     * ID
      */
     @TableId("post_id")
     private String postId;
 
     /**
-     * 用户ID
+     * user ID
      */
     @TableField(value = "user_id")
     private String userId;
 
     /**
-     * 职务名称
+     *
      */
     @TableField("name")
     private String name;
 
     /**
-     * 租户ID
+     * tenant ID
      */
     @TableField(value = "tenant_id")
     private String tenantId;
 
 
     /**
-     * 上级职位ID
+     * ID
      */
     @TableField("ppost_id")
     private String  ppostId;
 
     /**
-     * 编码
+     *
      */
     @TableField("code")
     private String  code;
 
     /**
-     * 职位类型
+     *
      */
     @TableField("type")
     private String  type;

@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { getDateString } from '@/utils/index'
 export const funcItems = [
   {
@@ -140,21 +145,21 @@ export const funcItems = [
 ]
 
 export const calcRules = (rules, widgetList) => {
-  //    操作的替换
+  // operation Replace
   funcItems[0].children.forEach(itt => {
     let hsgs = itt
     hsgs.children.forEach(item => {
-      // rules字符串的  /\[\[(.+?)\]\]/g， 匹配并替换
+      // rules /\[\[(.+?)\]\]/g, Replace
       let reg = new RegExp(`\\[\\[${item.id}.${item.label}\\]\\]`, 'g')
       rules = rules.replace(reg, item.label)
     })
   })
-  // 表单的替换
+  // form Replace
   widgetList.forEach(item => {
-    // rules字符串的  /\[\[(.+?)\]\]/g， 匹配并替换
+    // rules /\[\[(.+?)\]\]/g, Replace
     let reg = new RegExp(`\\[\\[${item.id}.${item.options.label}\\]\\]`, 'g')
-    // 先简单的替换为浮点型数字，后面再优化
-    // 处理数值还是 时间 还是字符串
+    // Replace to , after
+    // Process value is is
     if (item.type === 'date') {
       rules = rules.replace(reg, '"' + item.options.defaultValue + '"')
     }
@@ -219,7 +224,7 @@ const evalRULES = (rules) => {
   }
   window.COUNT = (a, b, unit = 'day') => {
     if (!a || !b || b === 'null' || a === 'null') return 0
-    // 计算a, b 两个日期的差值 默认以天为单位
+    // a, b value to
     let date1 = new Date(a).getTime()
     let date2 = new Date(b).getTime()
     let diff = date2 - date1
@@ -248,7 +253,7 @@ const evalRULES = (rules) => {
     }
   }
 
-  // TODO 暂时先用eval来优化解析rules
+  // TODO eval Parse rules
   try {
     // eslint-disable-next-line no-eval
     return eval(rules)

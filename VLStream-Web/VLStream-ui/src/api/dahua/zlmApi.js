@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest';
 
-// 代理播放
+//
 export function proxyPlay(data) {
     return request({
         url: '/dahua/zlmApi/proxyPlay',

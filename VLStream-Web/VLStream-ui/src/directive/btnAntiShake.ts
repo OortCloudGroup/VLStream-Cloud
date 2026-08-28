@@ -1,12 +1,8 @@
 /*
-* @Created by: 兰舰
-* Email: gglanjian@qq.com
-* Phone: 16620805419
-* @Date: 2024-11-15 10:54:07
-* @Last Modified by:   兰舰
-* @Last Modified time: 2024-11-15 10:54:07
-* @Copyright aPaaS-front-team. All rights reserved.
-*/
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 export default {
   mounted: (el, binding) => {
     el.addEventListener('click', () => {

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -34,7 +35,7 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.Method;
 
 /**
- * 限流处理
+ * Process
  *
  * @author Lion Li
  */
@@ -44,19 +45,19 @@ import java.lang.reflect.Method;
 public class RateLimiterAspect {
 
     /**
-     * 定义spel表达式解析器
+     * spel Parse
      */
     private final ExpressionParser parser = new SpelExpressionParser();
     /**
-     * 定义spel解析模版
+     * spelParse
      */
     private final ParserContext parserContext = new TemplateParserContext();
     /**
-     * 定义spel上下文对象进行解析
+     * spel object Parse
      */
     private final EvaluationContext context = new StandardEvaluationContext();
     /**
-     * 方法参数解析器
+     * method parameterParse
      */
     private final ParameterNameDiscoverer pnd = new DefaultParameterNameDiscoverer();
 
@@ -90,15 +91,15 @@ public class RateLimiterAspect {
 
     public String getCombineKey(RateLimiter rateLimiter, JoinPoint point) {
         String key = rateLimiter.key();
-        // 获取方法(通过方法签名来获取)
+        // Get method ( method Get )
         MethodSignature signature = (MethodSignature) point.getSignature();
         Method method = signature.getMethod();
         Class<?> targetClass = method.getDeclaringClass();
-        // 判断是否是spel格式
+        // Check whether is spel
         if (StringUtils.containsAny(key, "#")) {
-            // 获取参数值
+            // Get parameter value
             Object[] args = point.getArgs();
-            // 获取方法上参数的名称
+            // Get method parameter
             String[] parameterNames = pnd.getParameterNames(method);
             if (ArrayUtil.isEmpty(parameterNames)) {
                 throw new ServiceException("限流key解析异常!请联系管理员!");
@@ -106,7 +107,7 @@ public class RateLimiterAspect {
             for (int i = 0; i < parameterNames.length; i++) {
                 context.setVariable(parameterNames[i], args[i]);
             }
-            // 解析返回给key
+            // Parse key
             try {
                 Expression expression;
                 if (StringUtils.startsWith(key, parserContext.getExpressionPrefix())
@@ -123,10 +124,10 @@ public class RateLimiterAspect {
         StringBuilder stringBuffer = new StringBuilder(CacheConstants.RATE_LIMIT_KEY);
         stringBuffer.append(ServletUtils.getRequest().getRequestURI()).append(":");
         if (rateLimiter.limitType() == LimitType.IP) {
-            // 获取请求ip
+            // Get ip
             stringBuffer.append(ServletUtils.getClientIP()).append(":");
         } else if (rateLimiter.limitType() == LimitType.CLUSTER) {
-            // 获取客户端实例id
+            // Get instanceid
             stringBuffer.append(RedisUtils.getClient().getId()).append(":");
         }
         return stringBuffer.append(key).toString();

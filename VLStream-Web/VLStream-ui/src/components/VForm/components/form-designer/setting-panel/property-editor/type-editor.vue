@@ -1,8 +1,13 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-form-item v-if="selectedWidget.type === 'input'" :label="i18nt('designer.setting.displayType')">
     <el-select v-model="optionModel.type">
       <el-option label="text" value="text" />
-      <!-- 当input的type设置为number时，如果输入非数字字符，则v-model拿到的值为空字符串，无法实现输入校验！故屏蔽之！！ -->
+      <!-- input typeSet to number , if non- , v-model value is empty , method Validate ! ! ! -->
       <!--
       <el-option label="number" value="number"></el-option>
       -->

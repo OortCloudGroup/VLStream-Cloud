@@ -1,10 +1,15 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="home">
     <div class="table_c flexColumn">
       <div class="table_cc">
         <div class="depNameBox_out flexRowAC">
           <div class="depNameBox flexRowAC" />
-          <!--搜索-->
+          <!--  -->
           <div class="searchHeight_out flexRowAC">
             <search-height-box
               keyword="title"
@@ -174,15 +179,15 @@ const tableData = ref<any>([])
 const count = ref<any>(0)
 const page_num = ref<Number>(1)
 const page_size = ref<Number>(10)
-let appObj = ref<any>('')// 分类
-const woVisi = ref<boolean>(false)// 详情
-const wosVisi = ref<boolean>(false)// 发起dra
-const wodisVisi = ref<boolean>(false)// 处理dra
-const wodisVisiTitle = ref<any>('')// 处理dra
-const direction = ref<any>('rtl') // 详情左
-let detailsObj = ref<any>('')// 详情 obj
-const multipleSelection = ref<any>([]) // 批量
-const searchData = ref<any>([]) // 高级搜索框内容
+let appObj = ref<any>('')//
+const woVisi = ref<boolean>(false)//
+const wosVisi = ref<boolean>(false)// dra
+const wodisVisi = ref<boolean>(false)// Process dra
+const wodisVisiTitle = ref<any>('')// Process dra
+const direction = ref<any>('rtl') //
+let detailsObj = ref<any>('')// obj
+const multipleSelection = ref<any>([]) //
+const searchData = ref<any>([]) //
 searchData.value = [
   { label: '工单编号', value: 'workorderNumber', type: 'text', default: '' },
   { label: '工单标题', value: 'title', type: 'text', default: '' },
@@ -200,16 +205,16 @@ searchData.value = [
   { label: '时间', value: 'datePickerTime', type: 'daterange', default: [] }
 ]
 const form = reactive({
-  orderByColumn: '', // 工单编号
-  title: '', // 工单标题
-  source: '', // 工单来源
-  workorderId: '', // 工单类型
-  workorderNumber: '', // 工单编号
-  workorderStatus: '', // 工单状态
-  processStatus: '' // 审批状态
+  orderByColumn: '', // work order
+  title: '', // work order
+  source: '', // work order
+  workorderId: '', // work order
+  workorderNumber: '', // work order
+  workorderStatus: '', // work order
+  processStatus: '' // approval
 })
 
-// 搜索重置
+//
 function searchResetFn(val, reset) {
   if (reset) {
     page_num.value = 1
@@ -224,7 +229,7 @@ function searchResetFn(val, reset) {
   myWorkorderFn()
 }
 
-// 派单/处理
+// /Process
 const newEditClick = (val: any, type: number) => {
   if (type === 0) {
     wosVisi.value = true
@@ -245,12 +250,12 @@ const newEditClick = (val: any, type: number) => {
   }
 }
 
-// 批量
+//
 const handleSelectionChange = (val: any) => {
   multipleSelection.value = val
 }
 
-// 删除工单
+// Delete work order
 function handleDelete(row) {
   ElMessageBox.confirm(
     '删除该流程，是否继续',
@@ -263,7 +268,7 @@ function handleDelete(row) {
   ).then(() => {
     deleteProcess({ procInsId: row.procInsId }).then((res: any) => {
       if (res.code === 200) {
-        // 删除工单
+        // Delete work order
         ElMessage.success('流程删除成功')
         myWorkorderFn()
       }
@@ -272,7 +277,7 @@ function handleDelete(row) {
   })
 }
 
-// 强制关闭
+//
 function handleCancel(row) {
   ElMessageBox.confirm(
     '取消该流程，是否继续',
@@ -293,14 +298,14 @@ function handleCancel(row) {
   })
 }
 
-// 我的工单
+// work order
 const myWorkorderFn = async() => {
   try {
     const data = {
       accessToken: store.userInfo?.accessToken,
       pageNum: 1,
       pageSize: 99,
-      categoryType: 'WorkOrderAppAll', // 工单-应用分类
+      categoryType: 'WorkOrderAppAll', // work order-
       category: appObj.value?.appId
     }
     if (datePickerTime.value && datePickerTime.value?.length !== 0) {
@@ -424,12 +429,12 @@ onMounted(async() => {
   }
 }
 
-// 新增
+// Add
 .exportBtnBox {
   gap: 12px;
   padding: 0;
 
-  // 新增
+  // Add
   .exportBtn {
     cursor: pointer;
     justify-content: center;
@@ -478,7 +483,7 @@ onMounted(async() => {
   }
 }
 
-// 工单状态
+// work order
 .workorderStatus {
   font-size: 12px;
   line-height: 22px;
@@ -532,12 +537,12 @@ onMounted(async() => {
   }
 }
 
-// 紧急程度
+//
 .priority {
   width: 90px
 }
 
-// 打印
+//
 .printBox {
   width: 100%;
   height: 100vh;
@@ -550,7 +555,7 @@ onMounted(async() => {
   overflow: auto;
 }
 
-// 紧急程度
+//
 :deep(.priority) {
   .el-select__selected-item > span {
     color: var(--el-color-primary);

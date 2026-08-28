@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-form-item v-if="!noLabelSetting" :label="i18nt('designer.setting.label')">
     <el-input v-model="optionModel.label" type="text" />

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,7 +11,7 @@ import lombok.Data;
 import java.util.Date;
 
 /**
- * 流程批复视图对象
+ * workflow object
  *
  * @author konbai
  * @createTime 2022/4/4 02:03
@@ -19,17 +20,17 @@ import java.util.Date;
 public class WfCommentVo {
 
     /**
-     * 审批类别
+     * approval
      */
     private String type;
 
     /**
-     * 批复内容
+     *
      */
     private String message;
 
     /**
-     * 批复时间
+     *
      */
     private Date time;
 

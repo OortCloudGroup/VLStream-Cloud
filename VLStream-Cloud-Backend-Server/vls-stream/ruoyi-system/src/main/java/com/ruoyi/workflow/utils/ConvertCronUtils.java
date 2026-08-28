@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,10 +14,10 @@ import java.util.Calendar;
 
 public class ConvertCronUtils {
     /**
-     * 将前端传递的 Job 参数转换为 CRON 表达式。
+     * before Job parameterConvert to CRON .
      *
-     * @param job 前端传入的定时任务参数对象
-     * @return 对应的 CRON 表达式字符串
+     * @param job before taskparameterobject
+     * @return CRON
      */
     public static String convertToCron(Job job) {
         String cron;
@@ -24,7 +25,7 @@ public class ConvertCronUtils {
 
         switch (type) {
             case 1: // 每天
-                // job.run 数组中存放的格式为 "HH:mm:ss"
+                // job.run array in to "HH:mm:ss"
                 String[] hmsDaily = job.getRun().get(0).split(":");
                 cron = String.format("%s %s %s * * ?", hmsDaily[2], hmsDaily[1], hmsDaily[0]);
                 break;
@@ -38,32 +39,32 @@ public class ConvertCronUtils {
                     throw new RuntimeException("日期解析失败：" + job.getStart(), e);
                 }
                 int startDay = calendar.get(Calendar.DAY_OF_MONTH);
-                // 表达式为：秒 分 时 开始日/间隔 * ?
+                // to : start / * ?
                 cron = String.format("%s %s %s %d/%d * ?", hmsInterval[2], hmsInterval[1], hmsInterval[0],
                     startDay, job.getInterval());
                 break;
             case 3: // 每周
-                // job.run 传入的是星期几（例如传 "1" 代表星期一），Quartz 中星期定义为 1=SUN,2=MON,...,7=SAT
+                // job.run is ( "1" represents ), Quartz in to 1=SUN,2=MON,...,7=SAT
                 int inputWeekDay = Integer.parseInt(job.getRun().get(0));
-                // 映射算法：前端传1表示星期一，Quartz中星期一为2，即 (inputWeekDay % 7) + 1
+                // algorithm: before 1 , Quartz in to 2, (inputWeekDay % 7) + 1
                 int quartzWeekDay = inputWeekDay % 7 + 1;
-                // trg_time 为 int 类型，格式为 HHmmss，例如 170633 表示 17:06:33，需要格式化
+                // trg_time to int , to HHmmss, 170633 17:06:33, need to Format
                 String triggerTimeWeek = String.format("%06d", job.getTrgTime());
                 String h_week = triggerTimeWeek.substring(0, 2);
                 String m_week = triggerTimeWeek.substring(2, 4);
                 String s_week = triggerTimeWeek.substring(4, 6);
-                // 表达式格式为：秒 分 时 ? * 星期
+                // to : ? *
                 cron = String.format("%s %s %s ? * %d", s_week, m_week, h_week, quartzWeekDay);
                 break;
             case 4: // 每月
-                // trg_time 为 int 类型，格式为 HHmmss，例如 170633 表示 17:06:33，需要格式化
+                // trg_time to int , to HHmmss, 170633 17:06:33, need to Format
                 String triggerTimeMonth = String.format("%06d", job.getTrgTime());
                 String h_month = triggerTimeMonth.substring(0, 2);
                 String m_month = triggerTimeMonth.substring(2, 4);
                 String s_month = triggerTimeMonth.substring(4, 6);
-                // 当 job.run 包含多个日期时，用逗号连接，如 "10,15,2,5"
+                // job.run , , "10,15,2,5"
                 String daysOfMonth = String.join(",", job.getRun());
-                // 表达式格式为：秒 分 时 日 * ?
+                // to : * ?
                 cron = String.format("%s %s %s %s * ?", s_month, m_month, h_month, daysOfMonth);
                 break;
             default:

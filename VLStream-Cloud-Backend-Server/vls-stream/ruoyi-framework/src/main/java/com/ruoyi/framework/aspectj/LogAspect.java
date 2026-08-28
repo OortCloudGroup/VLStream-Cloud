@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -32,7 +33,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * 操作日志记录处理
+ * operationlogrecordProcess
  *
  * @author Lion Li
  */
@@ -42,14 +43,14 @@ import java.util.Map;
 public class LogAspect {
 
     /**
-     * 排除敏感属性字段
+     * propertyfield
      */
     public static final String[] EXCLUDE_PROPERTIES = { "password", "oldPassword", "newPassword", "confirmPassword" };
 
     /**
-     * 处理完请求后执行
+     * Process afterExecute
      *
-     * @param joinPoint 切点
+     * @param joinPoint
      */
     @AfterReturning(pointcut = "@annotation(controllerLog)", returning = "jsonResult")
     public void doAfterReturning(JoinPoint joinPoint, Log controllerLog, Object jsonResult) {
@@ -57,10 +58,10 @@ public class LogAspect {
     }
 
     /**
-     * 拦截异常操作
+     * operation
      *
-     * @param joinPoint 切点
-     * @param e         异常
+     * @param joinPoint
+     * @param e
      */
     @AfterThrowing(value = "@annotation(controllerLog)", throwing = "e")
     public void doAfterThrowing(JoinPoint joinPoint, Log controllerLog, Exception e) {
@@ -70,10 +71,10 @@ public class LogAspect {
     protected void handleLog(final JoinPoint joinPoint, Log controllerLog, final Exception e, Object jsonResult) {
         try {
 
-            // *========数据库日志=========*//
+            // *========data log=========*//
             OperLogEvent operLog = new OperLogEvent();
             operLog.setStatus(BusinessStatus.SUCCESS.ordinal());
-            // 请求的地址
+            //
             String ip = ServletUtils.getClientIP();
             operLog.setOperIp(ip);
             operLog.setOperUrl(StringUtils.substring(ServletUtils.getRequest().getRequestURI(), 0, 255));
@@ -83,53 +84,53 @@ public class LogAspect {
                 operLog.setStatus(BusinessStatus.FAIL.ordinal());
                 operLog.setErrorMsg(StringUtils.substring(e.getMessage(), 0, 2000));
             }
-            // 设置方法名称
+            // Set method
             String className = joinPoint.getTarget().getClass().getName();
             String methodName = joinPoint.getSignature().getName();
             operLog.setMethod(className + "." + methodName + "()");
-            // 设置请求方式
+            // Set
             operLog.setRequestMethod(ServletUtils.getRequest().getMethod());
-            // 处理设置注解上的参数
+            // Process Set parameter
             getControllerMethodDescription(joinPoint, controllerLog, operLog, jsonResult);
-            // 发布事件保存数据库
+            // event data
             SpringUtils.context().publishEvent(operLog);
         } catch (Exception exp) {
-            // 记录本地异常日志
+            // record log
             log.error("异常信息:{}", exp.getMessage());
             exp.printStackTrace();
         }
     }
 
     /**
-     * 获取注解中对方法的描述信息 用于Controller层注解
+     * Get in method info Controller layer
      *
-     * @param log     日志
-     * @param operLog 操作日志
+     * @param log log
+     * @param operLog operationlog
      * @throws Exception
      */
     public void getControllerMethodDescription(JoinPoint joinPoint, Log log, OperLogEvent operLog, Object jsonResult) throws Exception {
-        // 设置action动作
+        // Set action
         operLog.setBusinessType(log.businessType().ordinal());
-        // 设置标题
+        // Set
         operLog.setTitle(log.title());
-        // 设置操作人类别
+        // Set operation
         operLog.setOperatorType(log.operatorType().ordinal());
-        // 是否需要保存request，参数和值
+        // whether need to request, parameter and value
         if (log.isSaveRequestData()) {
-            // 获取参数的信息，传入到数据库中。
+            // Get parameter info, data in .
             setRequestValue(joinPoint, operLog, log.excludeParamNames());
         }
-        // 是否需要保存response，参数和值
+        // whether need to response, parameter and value
         if (log.isSaveResponseData() && ObjectUtil.isNotNull(jsonResult)) {
             operLog.setJsonResult(StringUtils.substring(JsonUtils.toJsonString(jsonResult), 0, 2000));
         }
     }
 
     /**
-     * 获取请求的参数，放到log中
+     * Get parameter, log in
      *
-     * @param operLog 操作日志
-     * @throws Exception 异常
+     * @param operLog operationlog
+     * @throws Exception
      */
     private void setRequestValue(JoinPoint joinPoint, OperLogEvent operLog, String[] excludeParamNames) throws Exception {
         Map<String, String> paramsMap = ServletUtils.getParamMap(ServletUtils.getRequest());
@@ -146,7 +147,7 @@ public class LogAspect {
     }
 
     /**
-     * 参数拼装
+     * parameter
      */
     private String argsArrayToString(Object[] paramsArray, String[] excludeParamNames) {
         StringBuilder params = new StringBuilder();
@@ -172,10 +173,10 @@ public class LogAspect {
     }
 
     /**
-     * 判断是否需要过滤的对象。
+     * Check whether need to object.
      *
-     * @param o 对象信息。
-     * @return 如果是需要过滤的对象，则返回true；否则返回false。
+     * @param o objectinfo.
+     * @return if is need to object, true; false.
      */
     @SuppressWarnings("rawtypes")
     public boolean isFilterObject(final Object o) {

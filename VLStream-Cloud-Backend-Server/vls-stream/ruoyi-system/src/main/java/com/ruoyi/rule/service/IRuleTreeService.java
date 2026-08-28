@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,36 +14,36 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 规则树Service接口
+ * Serviceinterface
  *
- * @author 雷超群
+ * @author
  * @date 2024-12-17
  */
 public interface IRuleTreeService
 {
     /**
-     * 查询规则树
+     * Query
      */
     RuleTreeVo queryById(String id);
 
 
     /**
-     * 查询规则树列表
+     * Query list
      */
     List<RuleTreeVo> queryList(RuleTreeBo bo);
 
     /**
-     * 新增规则树
+     * Add
      */
     Boolean insertByBo(RuleTreeBo bo);
 
     /**
-     * 修改规则树
+     * Update
      */
     Boolean updateByBo(RuleTreeBo bo);
 
     /**
-     * 校验并批量删除规则树信息
+     * Validate Batch delete info
      */
     Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid);
 }

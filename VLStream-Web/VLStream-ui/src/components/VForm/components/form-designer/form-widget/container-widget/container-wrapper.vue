@@ -1,10 +1,15 @@
 <!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
 /**
  * author: vformAdmin
  * email: vdpadmin@163.com
  * website: https://www.vform666.com
  * date: 2021.08.18
- * remark: 如果要分发VForm源码，需在本文件顶部保留此文件头信息！！
+ * remark: if need to VForm , in info! !
  */
 -->
 
@@ -107,7 +112,7 @@ export default {
     .drag-handler {
       position: absolute;
       top: -2px;
-      //bottom: -24px;  /* 拖拽手柄位于组件下方，有时无法正常拖动，原因未明？？ */
+      // bottom: -24px; /* component , method , not ? ? */
       left: -2px;
       height: 22px;
       line-height: 22px;

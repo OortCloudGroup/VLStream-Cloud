@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -9,7 +10,7 @@ import org.springblade.core.mp.base.BaseService;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.CameraOsdSetting;
 
 /**
- * 摄像机OSD设置表 服务类
+ * OSDSet service
  */
 public interface IVlsCameraOsdSettingService extends BaseService<CameraOsdSetting> {
 }

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,9 +15,9 @@ import lombok.Data;
 import java.util.Date;
 
 /**
- * 工单视图对象 work_order
+ * work order object work_order
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-02
  */
 @Data
@@ -26,220 +27,220 @@ public class WorkOrderVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 工单主键ID
+     * work orderprimary key ID
      */
     @ExcelProperty(value = "工单主键ID")
     private String id;
 
     /**
-     * 租户id
+     * id
      */
     @ExcelProperty(value = "租户id")
     private String tenantId;
 
     /**
-     * 用户id
+     * user ID
      */
     @ExcelProperty(value = "用户id")
     private String userId;
 
     /**
-     * 所属系统
+     *
      */
     @ExcelProperty(value = "所属系统")
     private String systemId;
 
     /**
-     * 项目名称
+     * item
      */
     @ExcelProperty(value = "项目名称")
     private String projectId;
 
     /**
-     * 工单(流程)类型
+     * work order(workflow)
      */
     @ExcelProperty(value = "工单(流程)类型")
     private String workorderId;
 
     /**
-     * 关联的流程key
+     * workflowkey
      */
     @ExcelProperty(value = "关联的流程key")
     private String processKey;
 
     /**
-     * 工单编号
+     * work order
      */
     @ExcelProperty(value = "工单编号")
     private String workorderNumber;
 
     /**
-     * 工单标题
+     * work order
      */
     @ExcelProperty(value = "工单标题")
     private String title;
 
     /**
-     * 工单描述
+     * work order
      */
     @ExcelProperty(value = "工单描述")
     private String description;
 
     /**
-     * 工单状态
+     * work order
      */
     @ExcelProperty(value = "工单状态")
     private String workorderStatus;
 
     /**
-     * 工单紧急程度
+     * work order
      */
     @ExcelProperty(value = "工单紧急程度")
     private String priority;
 
     /**
-     * 审批状态
+     * approval
      */
     @ExcelProperty(value = "审批状态")
     private String processStatus;
 
     /**
-     * 工单来源
+     * work order
      */
     @ExcelProperty(value = "工单来源")
     private String source;
 
     // /**
-    // * 是否有偿
+    // * whether
     // */
-    // @ExcelProperty(value = "是否有偿")
+    // @ExcelProperty(value = "whether ")
     // private String compensation;
     //
     // /**
-    // * 评价
+    // *
     // */
-    // @ExcelProperty(value = "评价")
+    // @ExcelProperty(value = " ")
     // private String evaluate;
 
     // /**
-    // * 房号
+    // *
     // */
-    // @ExcelProperty(value = "房号")
+    // @ExcelProperty(value = " ")
     // private String roomNumber;
 
     /**
-     * 创建人
+     *
      */
     @ExcelProperty(value = "创建人")
     private String createBy;
 
     /**
-     * 创建时间
+     * create time
      */
     @ExcelProperty(value = "创建时间")
     private Date createTime;
 
     /**
-     * 修改时间
+     * Update
      */
     @ExcelProperty(value = "修改时间")
     private Date updateTime;
 
     /**
-     * 附件地址（JSON格式）
+     * (JSON )
      */
     @ExcelProperty(value = "附件地址", converter = ExcelDictConvert.class)
     @ExcelDictFormat(readConverterExp = "JSON格式")
     private String attachmentUrls;
 
     /**
-     * 工单(流程)类型_用于前端回显
+     * work order(workflow) _ before
      */
     private String workorderIdExtend;
     /**
-     * 流程实例id
+     * workflow instanceid
      */
     private String procInsId;
 
     /**
-     * 流程实例id
+     * workflow instanceid
      */
     private String procInstId;
 
     /**
-     * 任务ID
+     * taskID
      */
     private String taskId;
     /**
-     * 派单人
+     *
      */
     private String assignId;
     /**
-     * 流程版本
+     * workflow
      */
     @ExcelProperty(value = "流程版本")
     private int procDefVersion;
 
     /**
-     * 任务名称
+     * task
      */
     private String taskName;
 
     /**
-     * 流程定义名称
+     * workflow definition
      */
     private String procDefName;
     /**
-     * 工单类型
+     * work order
      */
     private String categoryName;
     /**
-     * 流程发起人Id
+     * workflow Id
      */
     private String startUserId;
     /**
-     * 流程发起人名称
+     * workflow
      */
     private String startUserName;
     /**
-     * 周期性工单标识
+     * work order
      */
     private String workOrderJobFlag;
     /**
-     * 周期性工单统一序号
+     * work order
      */
     private String workOrderJobSerial;
     /**
-     * 流程结束时间
+     * workflowfinish
      */
     private String endTime;
     // /**
-    // * 图标id
+    // * id
     // */
     // private String iconId;
 
     /**
-     * 发起人部门名称
+     * department name
      */
     private String deptName;
     /**
-     * 当前处理人
+     * current Process
      */
     private String currentAssignName;
     /**
-     * 审批节点
+     * approvalnode
      */
     private String currentActivityName;
     /**
-     * 处理时长
+     * Process
      */
     private String processingTime;
     /**
-     * 事件编号
+     * event
      */
     private String eventNumber;
     /**
-     * 流程名称
+     * workflow
      */
     private String processName;
 }

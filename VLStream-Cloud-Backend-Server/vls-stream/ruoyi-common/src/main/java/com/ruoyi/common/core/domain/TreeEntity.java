@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Tree基类
+ * Tree
  *
  * @author Lion Li
  */
@@ -26,24 +26,24 @@ public class TreeEntity<T> extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 父菜单名称
+     * menu name
      */
     @TableField(exist = false)
     private String parentName;
 
     /**
-     * 父菜单ID
+     * menu ID
      */
     private String parentId;
 
     /**
-     * 父菜单code
+     * menucode
      */
-    @TableField(exist = false) // 忽略该字段
+    @TableField(exist = false) // field
     private String oortPdcode;
 
     /**
-     * 子部门
+     * sub department
      */
     @TableField(exist = false)
     private List<T> children = new ArrayList<>();

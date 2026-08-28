@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
-// 分页查询训练任务
+// Query trainingtask
 export function getTrainingPage(params) {
   return request({
     url: '/vlsAlgorithmTraining/page',
@@ -9,7 +14,7 @@ export function getTrainingPage(params) {
   })
 }
 
-// 查询训练任务详细
+// Query trainingtask
 export function getTrainingTask(id) {
   return request({
     url: '/vlsAlgorithmTraining/' + id,
@@ -17,7 +22,7 @@ export function getTrainingTask(id) {
   })
 }
 
-// 新增训练任务
+// Add trainingtask
 export function addTrainingTask(data) {
   return request({
     url: '/vlsAlgorithmTraining',
@@ -26,7 +31,7 @@ export function addTrainingTask(data) {
   })
 }
 
-// 修改训练任务
+// Update trainingtask
 export function updateTrainingTask(data) {
   return request({
     url: '/vlsAlgorithmTraining/' + data.id,
@@ -35,7 +40,7 @@ export function updateTrainingTask(data) {
   })
 }
 
-// 删除训练任务
+// Delete trainingtask
 export function delTrainingTask(id) {
   return request({
     url: '/vlsAlgorithmTraining/' + id,
@@ -43,7 +48,7 @@ export function delTrainingTask(id) {
   })
 }
 
-// 开始训练任务
+// starttrainingtask
 export function startTraining(id) {
   return request({
     url: '/vlsAlgorithmTraining/' + id + '/start',
@@ -51,7 +56,7 @@ export function startTraining(id) {
   })
 }
 
-// 开始训练任务（带参数）
+// starttrainingtask ( parameter)
 export function startTrainingWithParams(id, params) {
   return request({
     url: '/vlsAlgorithmTraining/' + id + '/start',
@@ -60,7 +65,7 @@ export function startTrainingWithParams(id, params) {
   })
 }
 
-// 停止训练任务
+// trainingtask
 export function stopTraining(id) {
   return request({
     url: '/vlsAlgorithmTraining/' + id + '/stop',
@@ -68,7 +73,7 @@ export function stopTraining(id) {
   })
 }
 
-// 获取训练日志
+// Get traininglog
 export function getTrainingLogs(id) {
   return request({
     url: '/vlsAlgorithmTraining/' + id + '/logs',
@@ -76,7 +81,7 @@ export function getTrainingLogs(id) {
   })
 }
 
-// 获取训练状态
+// Get training
 export function getTrainingStatus(id) {
   return request({
     url: '/vlsAlgorithmTraining/' + id + '/status',
@@ -84,7 +89,7 @@ export function getTrainingStatus(id) {
   })
 }
 
-// 批量删除训练任务
+// Batch delete trainingtask
 export function batchDeleteTraining(ids) {
   return request({
     url: '/vlsAlgorithmTraining/batch',
@@ -93,7 +98,7 @@ export function batchDeleteTraining(ids) {
   })
 }
 
-// 创建训练任务
+// trainingtask
 export function createTraining(data) {
   return request({
     url: '/vlsAlgorithmTraining',
@@ -102,7 +107,7 @@ export function createTraining(data) {
   })
 }
 
-// 更新训练任务
+// new trainingtask
 export function updateTraining(data) {
   return request({
     url: '/vlsAlgorithmTraining/' + data.id,
@@ -111,7 +116,7 @@ export function updateTraining(data) {
   })
 }
 
-// 删除训练任务
+// Delete trainingtask
 export function deleteTraining(id) {
   return request({
     url: '/vlsAlgorithmTraining/' + id,
@@ -119,7 +124,7 @@ export function deleteTraining(id) {
   })
 }
 
-// 转换模型
+// Convert model
 export function convertModel(id) {
   return request({
     url: '/vlsAlgorithmTraining/' + id + '/convert-model',

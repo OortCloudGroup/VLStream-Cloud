@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 查询云端录像
+// Query recording
 export function openRtpServer(query) {
     return request({
         url: `/api/cloud/record/list`,
@@ -9,7 +14,7 @@ export function openRtpServer(query) {
     })
 }
 
-// 获取播放地址
+// Get
 export function getPlayUrlPath(query) {
     return request({
         url: `/api/cloud/record/play/path`,
@@ -18,7 +23,7 @@ export function getPlayUrlPath(query) {
     })
 }
 
-// 查询录制计划列表
+// Query list
 export function listRecord(query) {
     return request({
         url: `/api/record/plan/query`,
@@ -27,7 +32,7 @@ export function listRecord(query) {
     })
 }
 
-// 新增录制计划
+// Add
 export function addRecord(data) {
     return request({
         url: `/api/record/plan/add`,
@@ -36,7 +41,7 @@ export function addRecord(data) {
     })
 }
 
-// 更新录制计划
+// new
 export function updateRecord(data) {
     return request({
         url: `/api/record/plan/update`,
@@ -45,7 +50,7 @@ export function updateRecord(data) {
     })
 }
 
-// 获取录制计划
+// Get
 export function getRecord(id) {
     return request({
         url: `/api/record/plan/get/${id}`,
@@ -53,7 +58,7 @@ export function getRecord(id) {
     })
 }
 
-// 删除录制计划
+// Delete
 export function deleteRecord(id) {
     return request({
         url: `/api/record/plan/delete/${id}`,
@@ -61,7 +66,7 @@ export function deleteRecord(id) {
     })
 }
 
-// 查询通道列表
+// Query channel list
 export function listPlanRecord(query) {
     return request({
         url: `/api/record/plan/channel/list`,
@@ -70,7 +75,7 @@ export function listPlanRecord(query) {
     })
 }
 
-// 通道关联录制计划
+// channel
 export function link(data) {
     return request({
         url: `/api/record/plan/link`,
@@ -79,7 +84,7 @@ export function link(data) {
     })
 }
 
-// 查询云端录像
+// Query recording
 export function listDateRecord(query) {
     return request({
         url: `/api/cloud/record/date/list`,

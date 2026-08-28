@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="cloud-user-info" v-loading="loading">
-    <!-- 展示模式 -->
+    <!--  -->
     <div v-if="!isEditing" class="view-mode">
       <div class="profile-header">
         <el-avatar :size="88" :src="photo || defaultAvatar" class="avatar">
@@ -90,7 +95,7 @@
       </el-descriptions>
     </div>
 
-    <!-- 编辑模式 -->
+    <!--  -->
     <div v-else class="edit-mode">
       <div class="avatar-edit">
         <el-avatar :size="88" :src="photo || defaultAvatar" class="avatar">
@@ -210,7 +215,7 @@
           </el-col>
         </el-row>
 
-        <!-- 自定义信息 -->
+        <!-- Custominfo -->
         <template v-if="sortedCustomFields.length > 0">
           <div class="section-title">自定义信息</div>
           <el-row :gutter="24">
@@ -313,7 +318,7 @@ import markIcon from '@/assets/img/personInfo/mark_icon.png'
 import maleIcon from '@/assets/img/personInfo/male_icon.png'
 import femaleIcon from '@/assets/img/personInfo/female_icon.png'
 
-/** fastdfs 上传 */
+/* * fastdfs */
 const PLATFORM_ORIGIN = import.meta.env.DEV
   ? ''
   : 'https://workup-dev.myoumuamua.com:6433'
@@ -368,7 +373,7 @@ const fullAddress = computed(() =>
   [form.province, form.city, form.area, form.address].filter(Boolean).join('')
 )
 
-/** 按 sort 排序的自定义字段 */
+/* * sort Customfield */
 const sortedCustomFields = computed(() => {
   return [...customFieldsList.value].sort((a, b) => {
     const sortA = a.sort !== undefined ? a.sort : 0
@@ -509,7 +514,7 @@ const toggleEdit = async () => {
   await fetchUserInfo()
 }
 
-/** 上传前校验 */
+/* * beforeValidate */
 const beforeAvatarUpload = (file) => {
   const isImage = ['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)
   const isLt2M = file.size / 1024 / 1024 < 2
@@ -524,7 +529,7 @@ const beforeAvatarUpload = (file) => {
   return true
 }
 
-/** 上传成功：更新本地头像预览，保存时一并提交 photo */
+/* * successfully: new , photo */
 const handleAvatarSuccess = (res) => {
   if (res?.code === 200 && res?.data?.url) {
     photo.value = `${res.data.url}?t=${Date.now()}`

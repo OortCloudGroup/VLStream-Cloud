@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -12,7 +13,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 /**
- * 响应信息主体
+ * info main
  *
  * @author Lion Li
  */
@@ -22,12 +23,12 @@ public class R<T> implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 成功
+     * successfully
      */
     public static final int SUCCESS = 200;
 
     /**
-     * 失败
+     * failed
      */
     public static final int FAIL = 500;
 
@@ -74,21 +75,21 @@ public class R<T> implements Serializable {
     }
 
     /**
-     * 返回警告消息
      *
-     * @param msg 返回内容
-     * @return 警告消息
+     *
+     * @param msg
+     * @return
      */
     public static <T> R<T> warn(String msg) {
         return restResult(null, HttpStatus.WARN, msg);
     }
 
     /**
-     * 返回警告消息
      *
-     * @param msg 返回内容
-     * @param data 数据对象
-     * @return 警告消息
+     *
+     * @param msg
+     * @param data dataobject
+     * @return
      */
     public static <T> R<T> warn(String msg, T data) {
         return restResult(data, HttpStatus.WARN, msg);

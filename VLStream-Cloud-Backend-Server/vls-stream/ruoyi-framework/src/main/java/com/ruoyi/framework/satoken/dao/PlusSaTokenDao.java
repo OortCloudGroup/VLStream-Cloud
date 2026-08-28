@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -15,14 +16,14 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Sa-Token持久层接口(使用框架自带RedisUtils实现 协议统一)
+ * Sa-Token layer interface( RedisUtils )
  *
  * @author Lion Li
  */
 public class PlusSaTokenDao implements SaTokenDao {
 
     /**
-     * 获取Value，如无返空
+     * Get Value, null / empty
      */
     @Override
     public String get(String key) {
@@ -30,14 +31,14 @@ public class PlusSaTokenDao implements SaTokenDao {
     }
 
     /**
-     * 写入Value，并设定存活时间 (单位: 秒)
+     * Value, ( : )
      */
     @Override
     public void set(String key, String value, long timeout) {
         if (timeout == 0 || timeout <= SaTokenDao.NOT_VALUE_EXPIRE) {
             return;
         }
-        // 判断是否为永不过期
+        // Check whether to
         if (timeout == SaTokenDao.NEVER_EXPIRE) {
             RedisUtils.setCacheObject(key, value);
         } else {
@@ -46,12 +47,12 @@ public class PlusSaTokenDao implements SaTokenDao {
     }
 
     /**
-     * 修修改指定key-value键值对 (过期时间不变)
+     * Update key-value value ( )
      */
     @Override
     public void update(String key, String value) {
         long expire = getTimeout(key);
-        // -2 = 无此键
+        // -2 =
         if (expire == SaTokenDao.NOT_VALUE_EXPIRE) {
             return;
         }
@@ -59,7 +60,7 @@ public class PlusSaTokenDao implements SaTokenDao {
     }
 
     /**
-     * 删除Value
+     * Delete Value
      */
     @Override
     public void delete(String key) {
@@ -67,7 +68,7 @@ public class PlusSaTokenDao implements SaTokenDao {
     }
 
     /**
-     * 获取Value的剩余存活时间 (单位: 秒)
+     * Get Value ( : )
      */
     @Override
     public long getTimeout(String key) {
@@ -76,17 +77,17 @@ public class PlusSaTokenDao implements SaTokenDao {
     }
 
     /**
-     * 修改Value的剩余存活时间 (单位: 秒)
+     * Update Value ( : )
      */
     @Override
     public void updateTimeout(String key, long timeout) {
-        // 判断是否想要设置为永久
+        // Check whether need to Set to
         if (timeout == SaTokenDao.NEVER_EXPIRE) {
             long expire = getTimeout(key);
             if (expire == SaTokenDao.NEVER_EXPIRE) {
-                // 如果其已经被设置为永久，则不作任何处理
+                // if already Set to , Process
             } else {
-                // 如果尚未被设置为永久，那么再次set一次
+                // if not Set to , set
                 this.set(key, this.get(key), timeout);
             }
             return;
@@ -96,7 +97,7 @@ public class PlusSaTokenDao implements SaTokenDao {
 
 
     /**
-     * 获取Object，如无返空
+     * Get Object, null / empty
      */
     @Override
     public Object getObject(String key) {
@@ -104,14 +105,14 @@ public class PlusSaTokenDao implements SaTokenDao {
     }
 
     /**
-     * 写入Object，并设定存活时间 (单位: 秒)
+     * Object, ( : )
      */
     @Override
     public void setObject(String key, Object object, long timeout) {
         if (timeout == 0 || timeout <= SaTokenDao.NOT_VALUE_EXPIRE) {
             return;
         }
-        // 判断是否为永不过期
+        // Check whether to
         if (timeout == SaTokenDao.NEVER_EXPIRE) {
             RedisUtils.setCacheObject(key, object);
         } else {
@@ -120,12 +121,12 @@ public class PlusSaTokenDao implements SaTokenDao {
     }
 
     /**
-     * 更新Object (过期时间不变)
+     * new Object ( )
      */
     @Override
     public void updateObject(String key, Object object) {
         long expire = getObjectTimeout(key);
-        // -2 = 无此键
+        // -2 =
         if (expire == SaTokenDao.NOT_VALUE_EXPIRE) {
             return;
         }
@@ -133,7 +134,7 @@ public class PlusSaTokenDao implements SaTokenDao {
     }
 
     /**
-     * 删除Object
+     * Delete Object
      */
     @Override
     public void deleteObject(String key) {
@@ -141,7 +142,7 @@ public class PlusSaTokenDao implements SaTokenDao {
     }
 
     /**
-     * 获取Object的剩余存活时间 (单位: 秒)
+     * Get Object ( : )
      */
     @Override
     public long getObjectTimeout(String key) {
@@ -150,17 +151,17 @@ public class PlusSaTokenDao implements SaTokenDao {
     }
 
     /**
-     * 修改Object的剩余存活时间 (单位: 秒)
+     * Update Object ( : )
      */
     @Override
     public void updateObjectTimeout(String key, long timeout) {
-        // 判断是否想要设置为永久
+        // Check whether need to Set to
         if (timeout == SaTokenDao.NEVER_EXPIRE) {
             long expire = getObjectTimeout(key);
             if (expire == SaTokenDao.NEVER_EXPIRE) {
-                // 如果其已经被设置为永久，则不作任何处理
+                // if already Set to , Process
             } else {
-                // 如果尚未被设置为永久，那么再次set一次
+                // if not Set to , set
                 this.setObject(key, this.getObject(key), timeout);
             }
             return;
@@ -170,7 +171,7 @@ public class PlusSaTokenDao implements SaTokenDao {
 
 
     /**
-     * 搜索数据
+     * data
      */
     @Override
     public List<String> searchData(String prefix, String keyword, int start, int size, boolean sortType) {

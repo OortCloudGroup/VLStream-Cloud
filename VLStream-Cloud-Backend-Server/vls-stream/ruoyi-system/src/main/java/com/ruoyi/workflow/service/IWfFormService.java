@@ -17,57 +17,57 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 表单
+ * form
  *
  * @author KonBAI
  * @createTime 2022/3/7 22:07
  */
 public interface IWfFormService extends IService<WfForm> {
     /**
-     * 查询流程表单
+     * Query workflowform
      *
-     * @param formId 流程表单ID
-     * @return 流程表单
+     * @param formId workflowformID
+     * @return workflowform
      */
     WfFormVo queryById(String formId);
 
     /**
-     * 查询流程表单列表
+     * Query workflowform list
      *
-     * @param bo 流程表单
-     * @return 流程表单集合
+     * @param bo workflowform
+     * @return workflowformcollection
      */
     TableDataInfo<WfFormVo>  queryPageList(WfFormBo bo, PageQuery pageQuery);
 
     /**
-     * 查询流程表单列表
+     * Query workflowform list
      *
-     * @param bo 流程表单
-     * @return 流程表单集合
+     * @param bo workflowform
+     * @return workflowformcollection
      */
     List<WfFormVo> queryList(WfFormBo bo);
 
     /**
-     * 新增流程表单
+     * Add workflowform
      *
-     * @param bo 流程表单
-     * @return 结果
+     * @param bo workflowform
+     * @return
      */
     WfForm insertForm(WfFormBo bo);
 
     /**
-     * 修改流程表单
+     * Update workflowform
      *
-     * @param bo 流程表单
-     * @return 结果
+     * @param bo workflowform
+     * @return
      */
     int updateForm(WfFormBo bo);
 
     /**
-     * 批量删除流程表单
+     * Batch delete workflowform
      *
-     * @param formIds 需要删除的流程表单ID
-     * @return 结果
+     * @param formIds need to Delete workflowformID
+     * @return
      */
     Boolean deleteWithValidByIds(Collection<Long> formIds);
 }

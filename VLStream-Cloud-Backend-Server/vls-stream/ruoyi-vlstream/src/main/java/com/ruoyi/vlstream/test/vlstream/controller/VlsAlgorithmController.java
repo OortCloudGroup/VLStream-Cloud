@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -35,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 算法表 控制器
+ * algorithm control
  *
  * @author Oort
  * @since 2025-12-23
@@ -50,7 +51,7 @@ public class VlsAlgorithmController extends BladeController {
 	private final IVlsAlgorithmService vlsAlgorithmService;
 
 	/**
-	 * 算法表 详情
+	 * algorithm
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -61,7 +62,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 算法表 分页
+	 * algorithm
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -73,7 +74,7 @@ public class VlsAlgorithmController extends BladeController {
 
 
 	/**
-	 * 算法表 自定义分页
+	 * algorithm Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -87,7 +88,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 算法表 新增
+	 * algorithm Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -97,7 +98,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 算法表 修改
+	 * algorithm Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -107,7 +108,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 算法表 新增或修改
+	 * algorithm Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -117,7 +118,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 算法表 删除
+	 * algorithm Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -127,7 +128,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsAlgorithm")
 	@ApiOperationSupport(order = 8)
@@ -143,7 +144,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 根据仓库ID查询算法列表
+	 * IDQuery algorithm list
 	 */
 	@GetMapping("/repository/{repositoryId}")
 	@Operation(summary = "根据仓库ID查询算法列表", description = "获取指定仓库下的所有算法")
@@ -157,7 +158,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 根据分类查询算法列表
+	 * Query algorithm list
 	 */
 	@GetMapping("/category/{category}")
 	@Operation(summary = "根据分类查询算法列表", description = "获取指定分类的所有算法")
@@ -171,7 +172,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 根据ID查询算法详情
+	 * IDQuery algorithm
 	 */
 	@GetMapping("/{id}")
 	@Operation(summary = "查询算法详情", description = "根据ID获取算法详细信息")
@@ -189,7 +190,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 创建算法
+	 * algorithm
 	 */
 	@PostMapping
 	@Operation(summary = "创建算法", description = "新增算法")
@@ -205,7 +206,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 更新算法
+	 * new algorithm
 	 */
 	@PutMapping("/{id}")
 	@Operation(summary = "更新算法", description = "根据ID更新算法信息")
@@ -226,7 +227,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 删除算法
+	 * Delete algorithm
 	 */
 	@DeleteMapping("/{id}")
 	@Operation(summary = "删除算法", description = "根据ID删除算法（软删除）")
@@ -244,7 +245,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 批量删除算法
+	 * Batch delete algorithm
 	 */
 	@DeleteMapping("/batch")
 	@Operation(summary = "批量删除算法", description = "根据ID列表批量删除算法")
@@ -264,7 +265,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 更新部署状态
+	 * new
 	 */
 	@PutMapping("/{id}/deploy-status")
 	@Operation(summary = "更新部署状态", description = "更新算法的部署状态")
@@ -283,7 +284,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 批量更新部署状态
+	 * new
 	 */
 	@PutMapping("/batch/deploy-status")
 	@Operation(summary = "批量更新部署状态", description = "批量更新算法的部署状态")
@@ -306,7 +307,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 部署算法到设备
+	 * algorithm device
 	 */
 	@PostMapping("/{id}/deploy")
 	@Operation(summary = "部署算法到设备", description = "将算法部署到指定设备")
@@ -329,7 +330,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 算法评估
+	 * algorithm
 	 */
 	@PostMapping("/{algorithmId}/evaluate")
 	@Operation(summary = "算法评估", description = "对算法进行性能评估")
@@ -346,7 +347,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 获取算法分类统计
+	 * Get algorithm
 	 */
 	@GetMapping("/statistics/category")
 	@Operation(summary = "获取算法分类统计", description = "获取各分类的算法数量统计")
@@ -358,7 +359,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 获取算法类型统计
+	 * Get algorithm
 	 */
 	@GetMapping("/statistics/type")
 	@Operation(summary = "获取算法类型统计", description = "获取各类型的算法数量统计")
@@ -370,7 +371,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 获取部署状态统计
+	 * Get
 	 */
 	@GetMapping("/statistics/deploy-status")
 	@Operation(summary = "获取部署状态统计", description = "获取各部署状态的算法数量统计")
@@ -382,7 +383,7 @@ public class VlsAlgorithmController extends BladeController {
 	}
 
 	/**
-	 * 统计某仓库下的算法数量
+	 * algorithm
 	 */
 	@GetMapping("/count/repository/{repositoryId}")
 	@Operation(summary = "统计某仓库下的算法数量", description = "获取指定仓库的算法数量")

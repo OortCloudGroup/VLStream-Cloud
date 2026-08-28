@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
-// 分页查询算法标注数据
+// Query algorithmannotationdata
 export function getAlgorithmAnnotationPage(params) {
   return request({
     url: '/vlsAlgorithmAnnotation/page',
@@ -9,7 +14,7 @@ export function getAlgorithmAnnotationPage(params) {
   })
 }
 
-// 根据ID查询算法标注
+// IDQuery algorithmannotation
 export function getAlgorithmAnnotationById(id) {
   return request({
     url: `/vlsAlgorithmAnnotation/${id}`,
@@ -17,7 +22,7 @@ export function getAlgorithmAnnotationById(id) {
   })
 }
 
-// 新增算法标注
+// Add algorithmannotation
 export function createAlgorithmAnnotation(data) {
   return request({
     url: '/vlsAlgorithmAnnotation',
@@ -26,7 +31,7 @@ export function createAlgorithmAnnotation(data) {
   })
 }
 
-// 更新算法标注
+// new algorithmannotation
 export function updateAlgorithmAnnotation(id, data) {
   return request({
     url: `/vlsAlgorithmAnnotation/${id}`,
@@ -35,7 +40,7 @@ export function updateAlgorithmAnnotation(id, data) {
   })
 }
 
-// 删除算法标注
+// Delete algorithmannotation
 export function deleteAlgorithmAnnotation(id) {
   return request({
     url: `/vlsAlgorithmAnnotation/${id}`,
@@ -43,7 +48,7 @@ export function deleteAlgorithmAnnotation(id) {
   })
 }
 
-// 批量删除算法标注
+// Batch delete algorithmannotation
 export function batchDeleteAlgorithmAnnotation(ids) {
   return request({
     url: '/vlsAlgorithmAnnotation/batch',
@@ -52,7 +57,7 @@ export function batchDeleteAlgorithmAnnotation(ids) {
   })
 }
 
-// 开始标注任务
+// startannotationtask
 export function startAnnotationTask(id) {
   return request({
     url: `/vlsAlgorithmAnnotation/${id}/start`,
@@ -60,7 +65,7 @@ export function startAnnotationTask(id) {
   })
 }
 
-// 完成标注任务
+// annotationtask
 export function completeAnnotationTask(id) {
   return request({
     url: `/vlsAlgorithmAnnotation/${id}/complete`,
@@ -68,7 +73,7 @@ export function completeAnnotationTask(id) {
   })
 }
 
-// 重置标注任务
+// annotationtask
 export function resetAnnotationTask(id) {
   return request({
     url: `/vlsAlgorithmAnnotation/${id}/reset`,
@@ -76,7 +81,7 @@ export function resetAnnotationTask(id) {
   })
 }
 
-// 更新标注进度
+// new annotation
 export function updateAnnotationProgress(id, annotatedCount) {
   return request({
     url: `/vlsAlgorithmAnnotation/${id}/progress`,
@@ -85,7 +90,7 @@ export function updateAnnotationProgress(id, annotatedCount) {
   })
 }
 
-// 导出标注数据
+// Export annotationdata
 export function exportAnnotationData(id) {
   return request({
     url: `/vlsAlgorithmAnnotation/${id}/export`,
@@ -94,7 +99,7 @@ export function exportAnnotationData(id) {
   })
 }
 
-// 导入标注数据
+// Import annotationdata
 export function importAnnotationData(id, file) {
   const formData = new FormData()
   formData.append('file', file)
@@ -108,7 +113,7 @@ export function importAnnotationData(id, file) {
   })
 }
 
-// 获取统计数据
+// Get data
 export function getStatistics() {
   return request({
     url: '/vlsAlgorithmAnnotation/statistics',
@@ -116,7 +121,7 @@ export function getStatistics() {
   })
 }
 
-// 获取类型统计
+// Get
 export function getTypeStatistics() {
   return request({
     url: '/vlsAlgorithmAnnotation/statistics/type',
@@ -124,7 +129,7 @@ export function getTypeStatistics() {
   })
 }
 
-// 获取状态统计
+// Get
 export function getStatusStatistics() {
   return request({
     url: '/vlsAlgorithmAnnotation/statistics/status',
@@ -132,7 +137,7 @@ export function getStatusStatistics() {
   })
 }
 
-// 获取进度统计
+// Get
 export function getProgressStatistics() {
   return request({
     url: '/vlsAlgorithmAnnotation/statistics/progress',
@@ -140,7 +145,7 @@ export function getProgressStatistics() {
   })
 }
 
-// 获取工作量统计
+// Get
 export function getWorkloadStatistics() {
   return request({
     url: '/vlsAlgorithmAnnotation/statistics/workload',
@@ -148,7 +153,7 @@ export function getWorkloadStatistics() {
   })
 }
 
-// 搜索算法标注
+// algorithmannotation
 export function searchAlgorithmAnnotation(params) {
   return request({
     url: '/vlsAlgorithmAnnotation/search',
@@ -157,7 +162,7 @@ export function searchAlgorithmAnnotation(params) {
   })
 }
 
-// 批量操作
+// operation
 export function batchOperation(operation, ids) {
   return request({
     url: '/vlsAlgorithmAnnotation/batch-operation',
@@ -166,7 +171,7 @@ export function batchOperation(operation, ids) {
   })
 }
 
-// 保存标注数据到服务器
+// annotationdata service
 export function saveDataset(id, annotationData) {
   const formData = new FormData()
   formData.append('annotationData', annotationData)
@@ -181,7 +186,7 @@ export function saveDataset(id, annotationData) {
 }
 
 
-// 删除标注实例
+// Delete annotationinstance
 export function deleteAnnotationInstance(instanceId) {
   return request({
     url: `/api/annotation-label/instances/${instanceId}`,
@@ -189,7 +194,7 @@ export function deleteAnnotationInstance(instanceId) {
   })
 }
 
-// 删除图片
+// Delete
 export function deleteImage(fileName) {
   return request({
     url: '/image/delete',
@@ -200,7 +205,7 @@ export function deleteImage(fileName) {
 
 
 
-// 标注类型常量
+// annotation
 export const ANNOTATION_TYPES = {
   OBJECT_DETECTION: 'object_detection',
   IMAGE_CLASSIFICATION: 'image_classification',
@@ -208,14 +213,14 @@ export const ANNOTATION_TYPES = {
   SEMANTIC_SEGMENTATION: 'semantic_segmentation'
 }
 
-// 标注状态常量
+// annotation
 export const ANNOTATION_STATUS = {
   NONE: 'none',
   PARTIAL: 'partial',
   COMPLETED: 'completed'
 }
 
-// 标注类型显示映射
+// annotation
 export const ANNOTATION_TYPE_LABELS = {
   [ANNOTATION_TYPES.OBJECT_DETECTION]: '物体检测',
   [ANNOTATION_TYPES.IMAGE_CLASSIFICATION]: '图像分类',
@@ -223,20 +228,20 @@ export const ANNOTATION_TYPE_LABELS = {
   [ANNOTATION_TYPES.SEMANTIC_SEGMENTATION]: '语义分割'
 }
 
-// 标注状态显示映射
+// annotation
 export const ANNOTATION_STATUS_LABELS = {
   [ANNOTATION_STATUS.NONE]: '未标注',
   [ANNOTATION_STATUS.PARTIAL]: '标注中',
   [ANNOTATION_STATUS.COMPLETED]: '已完成'
 }
 
-// 获取进度百分比
+// Get
 export function getProgressPercentage(annotatedCount, totalCount) {
   if (totalCount === 0) return 0
   return Math.round((annotatedCount / totalCount) * 100)
 }
 
-// 获取状态对应的标签类型
+// Get
 export function getStatusTagType(status) {
   switch(status) {
     case ANNOTATION_STATUS.NONE:
@@ -248,4 +253,4 @@ export function getStatusTagType(status) {
     default:
       return 'info'
   }
-} 
+}

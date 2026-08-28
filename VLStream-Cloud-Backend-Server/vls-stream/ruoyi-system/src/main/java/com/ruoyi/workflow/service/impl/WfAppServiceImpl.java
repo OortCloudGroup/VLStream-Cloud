@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -25,9 +26,9 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * 应用通用流程Service业务层处理
+ * workflowService layer Process
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-04
  */
 @RequiredArgsConstructor
@@ -39,7 +40,7 @@ public class WfAppServiceImpl extends ServiceImpl<WfAppMapper, WfApp> implements
 
 
     /**
-     * 查询应用通用流程
+     * Query workflow
      */
     @Override
     public WfAppVo queryById(String appId) {
@@ -47,7 +48,7 @@ public class WfAppServiceImpl extends ServiceImpl<WfAppMapper, WfApp> implements
     }
 
     /**
-     * 查询应用通用流程列表
+     * Query workflow list
      */
     @Override
     public List<WfAppVo> queryPageList(WfAppBo bo, PageQuery pageQuery) {
@@ -57,7 +58,7 @@ public class WfAppServiceImpl extends ServiceImpl<WfAppMapper, WfApp> implements
     }
 
     /**
-     * 查询应用通用流程列表
+     * Query workflow list
      */
     @Override
     public List<WfAppVo> queryList(WfAppBo bo) {
@@ -75,7 +76,7 @@ public class WfAppServiceImpl extends ServiceImpl<WfAppMapper, WfApp> implements
     }
 
     /**
-     * 新增应用通用流程
+     * Add workflow
      */
     @Override
     public WfApp insertByBo(WfAppBo bo) {
@@ -104,7 +105,7 @@ public class WfAppServiceImpl extends ServiceImpl<WfAppMapper, WfApp> implements
         return UUID.randomUUID().toString().replace("-", "");
     }
     /**
-     * 修改应用通用流程
+     * Update workflow
      */
     @Override
     public Boolean updateByBo(WfAppBo bo) {
@@ -114,19 +115,19 @@ public class WfAppServiceImpl extends ServiceImpl<WfAppMapper, WfApp> implements
     }
 
     /**
-     * 保存前的数据校验
+     * before dataValidate
      */
     private void validEntityBeforeSave(WfApp entity) {
-        //TODO 做一些数据校验,如唯一约束
+        // TODO dataValidate ,
     }
 
     /**
-     * 批量删除应用通用流程
+     * Batch delete workflow
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid) {
         if (isValid) {
-            //效验这个分类下是否还有别的数据
+            // whether data
             validateService.validateBeforeDeletion(ids);
         }
         return baseMapper.deleteBatchIds(ids) > 0;

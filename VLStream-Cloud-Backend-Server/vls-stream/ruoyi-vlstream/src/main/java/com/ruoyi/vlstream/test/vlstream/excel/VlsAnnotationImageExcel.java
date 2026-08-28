@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 
 
 /**
- * 标注图片信息表 Excel实体类
+ * annotation info Excel
  *
  * @author Oort
  * @since 2025-12-23
@@ -30,49 +31,49 @@ public class VlsAnnotationImageExcel implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 标注项目ID
+	 * annotation item ID
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("标注项目ID")
 	private Long annotationId;
 	/**
-	 * 图片名称
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("图片名称")
 	private String imageName;
 	/**
-	 * 原始文件名
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("原始文件名")
 	private String originalName;
 	/**
-	 * 本地存储路径
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("本地存储路径")
 	private String localPath;
 	/**
-	 * 文件大小（字节）
+	 * ( )
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("文件大小（字节）")
 	private Long fileSize;
 	/**
-	 * 最后修改时间
+	 * afterUpdate
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("最后修改时间")
 	private LocalDateTime lastModified;
 	/**
-	 * 是否为导入的图片：0-否，1-是
+	 * whether to Import : 0- , 1- is
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("是否为导入的图片：0-否，1-是")
 	private Byte isImported;
 	/**
-	 * 导入时间
+	 * Import
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("导入时间")

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 远程服务器配置表 服务实现类
+ * service configuration service
  *
  * @author Oort
  * @since 2025-12-23
@@ -45,10 +46,10 @@ public class VlsRemoteServersServiceImpl extends BaseServiceImpl<VlsRemoteServer
 	}
 
 	/**
-	 * 查询远程服务器配置
+	 * Query service configuration
 	 *
-	 * @param id 远程服务器配置主键
-	 * @return 远程服务器配置
+	 * @param id service configurationprimary key
+	 * @return service configuration
 	 */
 	@Override
 	public RemoteServers selectRemoteServerById(Long id) {
@@ -56,10 +57,10 @@ public class VlsRemoteServersServiceImpl extends BaseServiceImpl<VlsRemoteServer
 	}
 
 	/**
-	 * 查询远程服务器配置列表
+	 * Query service configuration list
 	 *
-	 * @param remoteServer 远程服务器配置
-	 * @return 远程服务器配置
+	 * @param remoteServer service configuration
+	 * @return service configuration
 	 */
 	@Override
 	public List<RemoteServers> selectRemoteServerList(RemoteServers remoteServer) {
@@ -67,10 +68,10 @@ public class VlsRemoteServersServiceImpl extends BaseServiceImpl<VlsRemoteServer
 	}
 
 	/**
-	 * 新增远程服务器配置
+	 * Add service configuration
 	 *
-	 * @param remoteServer 远程服务器配置
-	 * @return 结果
+	 * @param remoteServer service configuration
+	 * @return
 	 */
 	@Override
 	public int insertRemoteServer(RemoteServers remoteServer) {
@@ -78,10 +79,10 @@ public class VlsRemoteServersServiceImpl extends BaseServiceImpl<VlsRemoteServer
 	}
 
 	/**
-	 * 修改远程服务器配置
+	 * Update service configuration
 	 *
-	 * @param remoteServer 远程服务器配置
-	 * @return 结果
+	 * @param remoteServer service configuration
+	 * @return
 	 */
 	@Override
 	public int updateRemoteServer(RemoteServers remoteServer) {
@@ -89,10 +90,10 @@ public class VlsRemoteServersServiceImpl extends BaseServiceImpl<VlsRemoteServer
 	}
 
 	/**
-	 * 批量删除远程服务器配置
+	 * Batch delete service configuration
 	 *
-	 * @param ids 需要删除的远程服务器配置主键
-	 * @return 结果
+	 * @param ids need to Delete service configurationprimary key
+	 * @return
 	 */
 	@Override
 	public int deleteRemoteServerByIds(Long[] ids) {
@@ -100,10 +101,10 @@ public class VlsRemoteServersServiceImpl extends BaseServiceImpl<VlsRemoteServer
 	}
 
 	/**
-	 * 删除远程服务器配置信息
+	 * Delete service configurationinfo
 	 *
-	 * @param id 远程服务器配置主键
-	 * @return 结果
+	 * @param id service configurationprimary key
+	 * @return
 	 */
 	@Override
 	public int deleteRemoteServerById(Long id) {

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -17,9 +17,9 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
- * 分组下机器地址相同，不同JOB均匀散列在不同机器上，保证分组下机器分配JOB平均；且每个JOB固定调度其中一台机器；
- * a、virtual node：解决不均衡问题
- * b、hash method replace hashCode：String的hashCode可能重复，需要进一步扩大hashCode的取值范围
+ * group , JOB in , group JOB ; each JOB in ;
+ * a、virtual node:
+ * b、hash method replace hashCode: String hashCode can , need to hashCode value
  * Created by xuxueli on 17/3/10.
  */
 public class ExecutorRouteConsistentHash extends ExecutorRouter {
@@ -27,7 +27,7 @@ public class ExecutorRouteConsistentHash extends ExecutorRouter {
     private static int VIRTUAL_NODE_NUM = 100;
 
     /**
-     * get hash code on 2^32 ring (md5散列的方式计算hash值)
+     * get hash code on 2^32 ring (md5 hash value )
      *
      * @param key
      * @return

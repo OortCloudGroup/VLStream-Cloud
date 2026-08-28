@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import AppConfig from '@/config/AppConfig'
 import { event_group_delete_v2, event_group_save_v2, event_group_tree } from '@/api/smartCity/events'
 

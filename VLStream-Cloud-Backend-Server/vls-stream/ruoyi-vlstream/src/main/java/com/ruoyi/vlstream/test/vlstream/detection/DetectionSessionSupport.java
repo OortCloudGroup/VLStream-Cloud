@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -29,7 +30,7 @@ import java.util.Base64;
 import java.util.Date;
 
 /**
- * 检测会话通用工具：提供截图复制与资源静默关闭等辅助能力。
+ * will : snapshot and etc. can .
  */
 public final class DetectionSessionSupport {
 

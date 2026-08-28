@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -33,7 +34,7 @@ import java.util.List;
 public class DynamicUserTaskCreationDelegate implements JavaDelegate, ApplicationContextAware {
     private static ApplicationContext applicationContext;
     public DynamicUserTaskCreationDelegate() {
-        // 无参构造函数
+        // No-args constructor
     }
 
     public void setApplicationContext(ApplicationContext arg0) throws BeansException {
@@ -46,16 +47,16 @@ public class DynamicUserTaskCreationDelegate implements JavaDelegate, Applicatio
         TaskService taskService = (TaskService)applicationContext.getBean(TaskService.class);
         RuntimeService runtimeService = (RuntimeService)applicationContext.getBean(RuntimeService.class);
 
-        // 发起人
+        //
         String initiator = (String) execution.getVariable("initiator");
         List<SysUser> leaders = sysUserServiceImpl.getLeaders(initiator);
 
-//        // 将部门层级列表存储到流程变量
+// // department hierarchy workflow variable
 //        execution.setVariable("leaders", leaders);
-        // 初始化 complete 变量为 1
+        // Initialize complete variable to 1
         execution.setVariable("complete", "1");
 
-        // 设置初始审批人（第一个部门领导）
+        // Set approver ( departmentleader)
         if (!leaders.isEmpty()) {
             execution.setVariable("currentAssignee", initiator);
         }

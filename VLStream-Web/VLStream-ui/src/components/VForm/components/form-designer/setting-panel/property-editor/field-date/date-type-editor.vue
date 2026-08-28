@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <!-- eslint-disable vue/no-mutating-props -->
 <template>
   <el-form-item :label="i18nt('designer.setting.displayType')">

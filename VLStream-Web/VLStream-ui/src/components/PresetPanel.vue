@@ -1,23 +1,28 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="preset-panel-container">
-    <!-- 预制点列表 -->
-    <div 
+    <!--  -->
+    <div
       class="preset-container"
-      :class="{ 
+      :class="{
         'has-osd-settings': showOSDSettings
       }"
     >
       <div class="preset-list">
-        <div 
-          v-for="preset in presetPoints" 
+        <div
+          v-for="preset in presetPoints"
           :key="preset.id"
           class="preset-item"
           :class="{ 'selected': selectedPresetId === preset.id }"
           @click="handlePresetItemClick(preset)"
         >
           <span class="preset-name">{{ preset.name }}</span>
-          <el-icon 
-            class="preset-settings-icon" 
+          <el-icon
+            class="preset-settings-icon"
             @click.stop="toggleOSDSettings(preset)"
             v-if="selectedPresetId === preset.id"
           >
@@ -27,10 +32,10 @@
       </div>
     </div>
 
-    <!-- OSD显示设置区域 - 点击齿轮后显示 -->
+    <!-- OSD Set - after -->
     <div v-if="showOSDSettings" class="osd-display-container">
       <div class="osd-display-settings">
-        <!-- 显示选项 -->
+        <!-- item -->
         <div class="display-options">
           <div class="option-row">
             <el-checkbox v-model="osdSettings.showName">显示名称</el-checkbox>
@@ -39,17 +44,17 @@
           </div>
         </div>
 
-        <!-- 通道名称 -->
+        <!-- channel -->
         <div class="channel-name-section">
           <label class="channel-label">通道名称</label>
-          <el-input 
-            v-model="osdSettings.channelName" 
+          <el-input
+            v-model="osdSettings.channelName"
             placeholder="请输入通道名称"
             class="channel-input"
           />
         </div>
 
-        <!-- 时间格式 -->
+        <!--  -->
         <div class="time-format-section">
           <label class="format-label">时间格式</label>
           <el-select v-model="osdSettings.timeFormat" class="format-select">
@@ -58,7 +63,7 @@
           </el-select>
         </div>
 
-        <!-- 日期格式 -->
+        <!--  -->
         <div class="date-format-section">
           <label class="format-label">日期格式</label>
           <el-select v-model="osdSettings.dateFormat" class="format-select">
@@ -68,30 +73,30 @@
           </el-select>
         </div>
 
-        <!-- 字符叠加 -->
+        <!--  -->
         <div class="text-overlay-section">
           <label class="overlay-label">字符叠加</label>
           <div class="overlay-inputs">
             <div class="overlay-row">
               <el-checkbox :value="true">1</el-checkbox>
-              <el-input 
-                v-model="osdSettings.textOverlay1" 
+              <el-input
+                v-model="osdSettings.textOverlay1"
                 placeholder="请输入"
                 class="overlay-input"
               />
             </div>
             <div class="overlay-row">
               <el-checkbox :value="true">2</el-checkbox>
-              <el-input 
-                v-model="osdSettings.textOverlay2" 
+              <el-input
+                v-model="osdSettings.textOverlay2"
                 placeholder="请输入"
                 class="overlay-input"
               />
             </div>
             <div class="overlay-row">
               <el-checkbox :value="true">3</el-checkbox>
-              <el-input 
-                v-model="osdSettings.textOverlay3" 
+              <el-input
+                v-model="osdSettings.textOverlay3"
                 placeholder="请输入"
                 class="overlay-input"
               />
@@ -99,7 +104,7 @@
           </div>
         </div>
 
-        <!-- 保存按钮 -->
+        <!-- button -->
         <div class="osd-save-section">
           <el-button type="primary" @click="saveOSDSettings" class="save-btn">
             保存OSD设置
@@ -127,17 +132,17 @@ const props = defineProps({
   }
 })
 
-// 解构props以便在模板中使用
+// props in in
 const { showOsdFeatures } = toRefs(props)
 
 // Emits
 const emit = defineEmits(['preset-click', 'osd-settings-save'])
 
-// 响应式数据
+// data
 const selectedPresetId = ref(null)
 const showOSDSettings = ref(false)
 
-// OSD设置参数
+// OSDSet parameter
 const osdSettings = ref({
   showName: true,
   showDate: true,
@@ -150,28 +155,28 @@ const osdSettings = ref({
   textOverlay3: ''
 })
 
-// 处理预置点项目点击
+// Process item
 const handlePresetItemClick = (preset) => {
-  // 如果点击的是已选中的项目，则取消选中；否则选中当前项目
+  // if is already in item , in ; in current item
   if (selectedPresetId.value === preset.id) {
     selectedPresetId.value = null
     showOSDSettings.value = false
   } else {
     selectedPresetId.value = preset.id
-    showOSDSettings.value = false // 先隐藏OSD设置面板
+    showOSDSettings.value = false // OSDSet
   }
-  
-  // 触发预置点点击事件
+
+  // event
   emit('preset-click', preset)
 }
 
-// 切换OSD设置显示
+// OSDSet
 const toggleOSDSettings = (preset) => {
   showOSDSettings.value = !showOSDSettings.value
   console.log('切换OSD设置:', preset.name, showOSDSettings.value)
 }
 
-// 保存OSD设置
+// OSDSet
 const saveOSDSettings = () => {
   console.log('保存OSD设置:', osdSettings.value)
   ElMessage.success('OSD设置已保存')
@@ -185,7 +190,7 @@ const saveOSDSettings = () => {
   align-items: flex-start;
 }
 
-/* 预制点列表 */
+/*  */
 .preset-container {
   width: 200px;
   height: 762px;
@@ -198,7 +203,7 @@ const saveOSDSettings = () => {
   border-left: none; /* 移除左边框，与PTZ无缝连接 */
 }
 
-/* 当显示OSD设置时，预制点列表移除右侧圆角 */
+/* OSDSet , */
 .preset-container.has-osd-settings {
   border-radius: 0;
   margin: 0;
@@ -262,7 +267,7 @@ const saveOSDSettings = () => {
   transform: scale(1.1);
 }
 
-/* OSD显示设置区域 */
+/* OSD Set */
 .osd-display-container {
   width: 384px;
   height: 762px;
@@ -355,16 +360,16 @@ const saveOSDSettings = () => {
   background: #4084ff;
 }
 
-/* 响应式设计 */
+/*  */
 @media (max-width: 1200px) {
   .preset-panel-container {
     flex-direction: column;
   }
-  
+
   .preset-container,
   .osd-display-container {
     width: 100%;
     margin: 0 0 20px 0;
   }
 }
-</style> 
+</style>

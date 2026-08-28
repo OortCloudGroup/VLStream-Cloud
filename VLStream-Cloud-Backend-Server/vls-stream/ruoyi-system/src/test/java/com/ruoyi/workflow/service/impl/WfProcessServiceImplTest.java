@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.when;
 public class WfProcessServiceImplTest {
 
     /**
-     * 并行多实例节点没有唯一办理人，顶层 assigneeName 应为空，人员明细由 assigneeInfoList 承载。
+     * instancenode assignee, layer assigneeName is empty, assigneeInfoList .
      */
     @Test
     public void historyProcNodeListShouldClearAssigneeNameForParallelMultiInstanceTask() throws Exception {
@@ -92,7 +93,7 @@ public class WfProcessServiceImplTest {
     }
 
     /**
-     * 构造一个已流转到同一用户任务的历史活动实例。
+     * already usertask history instance.
      */
     private HistoricActivityInstance mockHistoricUserTask(String taskId, String executionId, String assignee) {
         HistoricActivityInstance activityInstance = mock(HistoricActivityInstance.class);
@@ -110,7 +111,7 @@ public class WfProcessServiceImplTest {
     }
 
     /**
-     * 构造 sequential=false 的用户任务模型，用于表示或签或并行会签节点。
+     * sequential=false usertaskmodel, will node.
      */
     private BpmnModel parallelMultiInstanceModel() {
         BpmnModel bpmnModel = new BpmnModel();
@@ -129,7 +130,7 @@ public class WfProcessServiceImplTest {
     }
 
     /**
-     * 注入 FlowServiceFactory 中通过 @Resource 注入的 Flowable 服务依赖。
+     * FlowServiceFactory in @Resource Flowable service .
      */
     private void setFlowServiceField(WfProcessServiceImpl service, String fieldName, Object value) throws Exception {
         Field field = FlowServiceFactory.class.getDeclaredField(fieldName);

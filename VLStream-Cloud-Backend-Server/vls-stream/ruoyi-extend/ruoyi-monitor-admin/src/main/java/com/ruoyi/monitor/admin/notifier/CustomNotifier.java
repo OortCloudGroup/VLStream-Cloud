@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 /**
- * 自定义事件通知处理
+ * CustomeventnotificationProcess
  *
  * @author Lion Li
  */
@@ -31,7 +32,7 @@ public class CustomNotifier extends AbstractEventNotifier {
     @SuppressWarnings("all")
     protected Mono<Void> doNotify(InstanceEvent event, Instance instance) {
         return Mono.fromRunnable(() -> {
-            // 实例状态改变事件
+            // instance event
             if (event instanceof InstanceStatusChangedEvent) {
                 String registName = instance.getRegistration().getName();
                 String instanceId = event.getInstance().getValue();

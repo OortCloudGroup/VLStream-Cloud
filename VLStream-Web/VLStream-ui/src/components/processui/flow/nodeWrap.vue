@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="node_node" :class="{'node_inactive': isFinish}">
     <div v-if="copyNodeConfig.type < 99" class="node_wrap">
@@ -8,7 +13,7 @@
           <oort-svg-icon v-if="copyNodeConfig.type === 2" class="node_img" name="cs_node" width="14" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" height="14" />
           <oort-svg-icon v-if="copyNodeConfig.type === 3" class="node_img" name="ys_node" width="14" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" height="14" />
           <oort-svg-icon v-if="copyNodeConfig.type === 4" class="node_img" name="cfq_node" width="14" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" height="14" />
-          <!--通知节点：工单有,流程无-->
+          <!-- notificationnode: work order ,workflow -->
           <oort-svg-icon v-if="copyNodeConfig.type === 5" class="node_img" name="sp_node" width="14" :color="isFinish?'var(--node-main-color)':'var(--el-color-primary)'" height="14" />
           <!-- <img v-if="nodeConfig.type === 0" src="@/assets/img/processui/flownode/fqr.png" />
           <img v-if="nodeConfig.type === 1" src="@/assets/img/processui/flownode/spr.png" />
@@ -126,17 +131,17 @@ let props = defineProps({
     type: Boolean,
     default: true
   },
-  finished: { // 已完成的节点
+  finished: { // already node
     type: Array,
     default: () => []
   },
-  showType: { // 属性的弹框类型，0 dialog 1 抽屉
+  showType: { // property , 0 dialog 1
     type: Number,
     default: 1
   }
 })
 
-// 模型-列表数据
+// model- data
 const flowDesignerPage = inject('flowDesignerPage')
 const copyNodeConfig = ref(props.nodeConfig)
 
@@ -144,9 +149,9 @@ watch(() => props.nodeConfig, () => {
   copyNodeConfig.value = props.nodeConfig
 })
 
-// 判断除了条件分支的 节点是否完成ff
+// Check nodewhether ff
 const isFinish = computed(() => {
-  // 如果是条件分支 要判断节点是否完成
+  // if is need to Check nodewhether
   if (props.nodeConfig.type === 100) {
     return false
   } else {
@@ -154,29 +159,29 @@ const isFinish = computed(() => {
   }
 })
 
-// 判断整个条件的组是否完成了
+// Check whether
 const isTJAllFinish = () => {
-  // 这里要怎么判断， 要判断条件组里面任意的 节点里面有没有直接连到 copyNodeConfig.childNode
-  // 如果完成的包含后置节点，那么说明添加组已经完成
+  // need to Check , need to Check node copyNodeConfig.childNode
+  // if after node, already
   if (props.finished.includes(copyNodeConfig.value?.childNode?.id)) {
     return true
   }
-  // 找到条件组里面有完成的
+  //
   let nodeObj = copyNodeConfig.value.conditionNodes.find(item => props.finished.includes(item.id))
   if (!nodeObj) {
     return false
   }
-  // 如果没有子节点或者没有条件分支，说明条件组已经完成
+  // if sub node , already
   if (!nodeObj.childNode && (!nodeObj.conditionNodes || nodeObj.conditionNodes.length === 0)) {
     return true
   }
-  // 如果有子节点，需要判断子节点是否完成，递归，直到没有节点或者找到没有完成的子节点
+  // if sub node, need to Check sub nodewhether , , node sub node
   let isFinishChildNode = checkChildNodeFindIsFinish(nodeObj?.childNode)
   return isFinishChildNode
 }
 
 const checkChildNodeFindIsFinish = (nodeObj) => {
-  if (!nodeObj) { // 如果没有子节点，则返回true
+  if (!nodeObj) { // if sub node, true
     return true
   }
   if (!props.finished.includes(nodeObj.id)) {
@@ -185,14 +190,14 @@ const checkChildNodeFindIsFinish = (nodeObj) => {
   return checkChildNodeFindIsFinish(nodeObj.childNode)
 }
 
-// 判断单个条件是否完成
+// Check whether
 const isTJFinish = (nodeId) => {
   return props.finished.includes(nodeId)
 }
 
 const returnTJIndex = computed(() => {
   if (copyNodeConfig.value.type === 100) {
-    if (!copyNodeConfig.value.conditionNodes || copyNodeConfig.value.conditionNodes.length === 0) { // 如果没有子节点，则返回true
+    if (!copyNodeConfig.value.conditionNodes || copyNodeConfig.value.conditionNodes.length === 0) { // if sub node, true
       return -1
     } else {
       return copyNodeConfig.value.conditionNodes.findIndex(item => isTJFinish(item.id))
@@ -202,7 +207,7 @@ const returnTJIndex = computed(() => {
   }
 })
 
-// // 计算条件节点是否在中间，如果在中间两边的线条不高亮
+// // nodewhether in in , if in in
 // const isMiddleTJ = computed(() => {
 //   if (copyNodeConfig.value.type !== 100) {
 //     return false
@@ -227,7 +232,7 @@ const errorInfo = computed(() => {
           errorInfoMsg.push('')
         }
       } else {
-        // 这里要赞个位置
+        // need to
         errorInfoMsg.push('')
       }
     })
@@ -274,7 +279,7 @@ const delNode = () => {
   errorStore.removeNodeError(copyNodeConfig.value.id)
 }
 
-// 记录添加过第几个条件
+// record
 const currentConLen = ref(copyNodeConfig.value.conditionNodes?.length + 1 || 2)
 const addTerm = () => {
   currentConLen.value++
@@ -299,7 +304,7 @@ const delTerm = (index) => {
   })
   // props.nodeConfig.conditionNodes.map((item, index) => {
   //   item.priorityLevel = index + 1
-  //   item.nodeName = `条件${index + 1}`
+  // item.nodeName = ` ${index + 1}`
   // })
   emits('update:nodeConfig', copyNodeConfig.value)
   if (copyNodeConfig.value.conditionNodes.length === 1) {
@@ -310,7 +315,7 @@ const delTerm = (index) => {
         copyNodeConfig.value.conditionNodes[0].childNode = copyNodeConfig.value.childNode
       }
     }
-    // 把pid指向调整过来
+    // pid
     copyNodeConfig.value.conditionNodes[0].childNode.pid = copyNodeConfig.value.pid
     emits('update:nodeConfig', copyNodeConfig.value.conditionNodes[0].childNode)
   }
@@ -333,7 +338,7 @@ import { setFqrErrorMsg, setApprovalErrorMsg, setYsclErrorMsg, setCfqErrorMsg, s
 
 function checkNodeRequireProp() {
   // copyNodeConfig.type === 0"
-  //  0:发起节点,1审批节点, 2抄送节点 3延时处理，4触发器， 99 100:独占网关
+  // 0: node,1approvalnode, 2 node 3 Process , 4 , 99 100:
   switch (copyNodeConfig.value.type) {
     case 0:
       setFqrErrorMsg(copyNodeConfig.value, props.nodeConfig.id)
@@ -366,7 +371,7 @@ const tjLeftHeight = ref(0)
 const isTop = ref(true)
 const tjLeftTop = ref('100%')
 
-// 监听属性变化
+// property
 watch(() => copyNodeConfig.value, () => {
   checkNodeRequireProp()
 })
@@ -402,7 +407,7 @@ const calculateNodePosition = () => {
 }
 
 onMounted(() => {
-  // 注意nodewrap是个递归组件，所以这里触发一次, 结合watch使用，监听递归的属性变化
+  // nodewrap is component, , watch , property
   checkNodeRequireProp()
   if (copyNodeConfig.value.type === 100) {
     calculateNodePosition()

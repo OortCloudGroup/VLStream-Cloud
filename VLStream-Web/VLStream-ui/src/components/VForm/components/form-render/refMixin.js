@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 export default {
   methods: {
     initRefList() {
@@ -19,7 +24,7 @@ export default {
     },
 
     getComponentByContainer(con) {
-      if (con.type === 'grid') { // grid-item跟VueGridLayout全局注册组件重名，故特殊处理！！
+      if (con.type === 'grid') { // grid-item VueGridLayout full component , Process ! !
         return 'vf-grid-item'
       }
 

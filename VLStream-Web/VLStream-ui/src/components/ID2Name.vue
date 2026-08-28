@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2024-11-15 11:45:51
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -32,17 +37,17 @@ const props = defineProps({
   }
 })
 const name = ref(props.id)
-// 刷新本地用户名称；无用户 ID 时保留空文本。
+// new username; user ID null / empty .
 const init = () => {
   name.value = props.id || ''
   void getUserInfoFn()
 }
 
-// 从本地用户目录解析名称，兼容仅存在本项目登录令牌的场景。
+// from user Parse , in item .
 const getUserInfoFn = async() => {
   if (!props.id) return
 
-  // 是否vuex中已经存在这个用户，避免重复请求
+  // whether vuex in already in user,
   const cachedUser = store.userListStore?.[props.id]
   if (cachedUser) {
     name.value = cachedUser[props.valueKey] || props.id

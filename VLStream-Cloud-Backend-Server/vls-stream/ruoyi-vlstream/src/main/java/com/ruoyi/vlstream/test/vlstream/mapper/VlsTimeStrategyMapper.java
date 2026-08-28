@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.TimeStrategyVO;
 import java.util.List;
 
 /**
- * 时间策略表 Mapper 接口
+ * Mapper interface
  *
  * @author Oort
  * @since 2025-12-23
@@ -24,18 +25,18 @@ import java.util.List;
 public interface VlsTimeStrategyMapper extends BaseMapper<TimeStrategy> {
 
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsTimeStrategy 查询参数
+	 * @param page parameter
+	 * @param vlsTimeStrategy Query parameter
 	 * @return List<VlsTimeStrategyVO>
 	 */
 	List<TimeStrategyVO> selectVlsTimeStrategyPage(IPage page, TimeStrategyVO vlsTimeStrategy);
 
 	/**
-	 * 获取导出数据
+	 * Get Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsTimeStrategyExcel>
 	 */
 	List<VlsTimeStrategyExcel> exportVlsTimeStrategy(@Param("ew") Wrapper<TimeStrategy> queryWrapper);

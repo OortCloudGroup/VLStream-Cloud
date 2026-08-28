@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,7 +15,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 流程附件对象 wf_attachment
+ * workflow object wf_attachment
  *
  * @author KonBAI
  * @createTime 2022/3/7 22:07
@@ -26,47 +27,47 @@ public class WfAttachment extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 附件主键
+     * primary key
      */
     @TableId(value = "id")
     private Long id;
 
     /**
-     * 租户id
+     * id
      */
     private String tenantId;
     /**
-     * 用户id
+     * user ID
      */
     private String userId;
 
     /**
-     * 流程实例id
+     * workflow instanceid
      */
     @TableField("proc_ins_id")
     private String procInsId;
 
     /**
-     * 流程节点id
+     * workflownodeid
      */
     @TableField("task_id")
     private String taskId;
 
     /**
-     * 附件链接
+     *
      */
     @TableField("attachment_link")
     private String attachmentLink;
 
     /**
-     * 删除标志（0代表存在 2代表删除）
+     * Delete (0represents in 2represents Delete )
      */
     @TableLogic()
     @TableField("del_flag")
     private String delFlag;
 
     /**
-     * 是否已经签名（0代表未签名 1代表已签名）
+     * whether already (0represents not 1represents already )
      */
     @TableField("is_signature")
     private String isSignature;

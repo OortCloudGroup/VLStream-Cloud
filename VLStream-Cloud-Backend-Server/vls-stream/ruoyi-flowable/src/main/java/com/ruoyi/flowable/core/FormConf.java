@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 表单属性类
+ * formproperty
  *
  * @author KonBAI
  * @createTime 2022/8/6 18:54
@@ -21,51 +21,51 @@ import java.util.Map;
 public class FormConf {
 
     /**
-     * 标题
+     *
      */
     private String title;
     /**
-     * 表单名
+     * form
      */
     private String formRef;
     /**
-     * 表单模型
+     * formmodel
      */
     private String formModel;
     /**
-     * 表单尺寸
+     * form
      */
     private String size;
     /**
-     * 标签对齐
+     *
      */
     private String labelPosition;
     /**
-     * 标签宽度
+     *
      */
     private Integer labelWidth;
     /**
-     * 校验模型
+     * Validate model
      */
     private String formRules;
     /**
-     * 栅格间隔
+     *
      */
     private Integer gutter;
     /**
-     * 禁用表单
+     * form
      */
     private Boolean disabled = false;
     /**
-     * 栅格占据的列数
+     *
      */
     private Integer span;
     /**
-     * 表单按钮
+     * formbutton
      */
     private Boolean formBtns = true;
     /**
-     * 表单项
+     * form item
      */
     private List<Map<String, Object>> fields;
 

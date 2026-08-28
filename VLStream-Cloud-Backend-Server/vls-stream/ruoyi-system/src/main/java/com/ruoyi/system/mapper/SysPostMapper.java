@@ -12,7 +12,7 @@ import com.ruoyi.system.domain.SysPost;
 import java.util.List;
 
 /**
- * 职务等级表
+ * etc.
  *
  * @author Lion Li
  */

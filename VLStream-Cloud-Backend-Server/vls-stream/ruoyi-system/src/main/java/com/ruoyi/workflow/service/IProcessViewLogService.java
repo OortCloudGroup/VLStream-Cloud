@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,7 +16,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 流程访问日志Service接口
+ * workflow logServiceinterface
  *
  * @author lcq
  * @date 2025-08-15
@@ -23,32 +24,32 @@ import java.util.List;
 public interface IProcessViewLogService {
 
     /**
-     * 查询流程访问日志
+     * Query workflow log
      */
     ProcessViewLogVo queryById(String id);
 
     /**
-     * 查询流程访问日志列表
+     * Query workflow log list
      */
     TableDataInfo<ProcessViewLogVo> queryPageList(ProcessViewLogBo bo, PageQuery pageQuery);
 
     /**
-     * 查询流程访问日志列表
+     * Query workflow log list
      */
     List<ProcessViewLogVo> queryList(ProcessViewLogBo bo);
 
     /**
-     * 新增流程访问日志
+     * Add workflow log
      */
     Boolean insertByBo(ProcessViewLogBo bo, SysUser sysUser);
 
     /**
-     * 修改流程访问日志
+     * Update workflow log
      */
     Boolean updateByBo(ProcessViewLogBo bo);
 
     /**
-     * 校验并批量删除流程访问日志信息
+     * Validate Batch delete workflow loginfo
      */
     Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid);
 

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -37,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 事件管理表 控制器
+ * event control
  *
  * @author Oort
  * @since 2025-12-23
@@ -53,7 +54,7 @@ public class VlsEventManagementController extends BladeController {
 	private final VlsEventReportApplicationService eventReportApplicationService;
 
 	/**
-	 * 事件管理表 详情
+	 * event
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -64,7 +65,7 @@ public class VlsEventManagementController extends BladeController {
 	}
 
 	/**
-	 * 事件管理表 分页
+	 * event
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -76,7 +77,7 @@ public class VlsEventManagementController extends BladeController {
 
 
 	/**
-	 * 事件管理表 自定义分页
+	 * event Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -87,7 +88,7 @@ public class VlsEventManagementController extends BladeController {
 	}
 
 	/**
-	 * 事件管理表 新增
+	 * event Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -97,7 +98,7 @@ public class VlsEventManagementController extends BladeController {
 	}
 
 	/**
-	 * 事件管理表 修改
+	 * event Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -107,7 +108,7 @@ public class VlsEventManagementController extends BladeController {
 	}
 
 	/**
-	 * 事件管理表 新增或修改
+	 * event Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -117,7 +118,7 @@ public class VlsEventManagementController extends BladeController {
 	}
 
 	/**
-	 * 事件管理表 删除
+	 * event Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -127,7 +128,7 @@ public class VlsEventManagementController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsEventManagement")
 	@ApiOperationSupport(order = 8)

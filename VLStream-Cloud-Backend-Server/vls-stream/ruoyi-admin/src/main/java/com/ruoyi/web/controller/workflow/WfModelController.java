@@ -44,7 +44,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 工作流流程模型管理
+ * workflowmodel
  *
  * @author KonBAI
  * @createTime 2022/6/21 9:09
@@ -61,7 +61,7 @@ public class WfModelController extends BaseController {
 
 
     /**
-     * 根据模型 ID 级联删除模型、流程图信息、所有模型版本、部署及其运行实例与历史数据
+     * model ID Delete model、workflow info、all model 、 instance and history data
      */
     @DeleteMapping("/deleteModelCascade")
     @SaCheckPermission("workflow:model:deleteModelCascade")
@@ -71,7 +71,7 @@ public class WfModelController extends BaseController {
     }
 
     /**
-     * 流程数据初始化
+     * workflowdataInitialize
      */
     @PostMapping("/initStart")
     @SaCheckPermission("workflow:model:initStart")
@@ -80,7 +80,7 @@ public class WfModelController extends BaseController {
     }
 
     /**
-     * 事件管理流程数据初始化
+     * event workflowdataInitialize
      */
     @PostMapping("/eventManagementInitStart")
     @SaCheckPermission("workflow:model:eventManagementInitStart")
@@ -89,7 +89,7 @@ public class WfModelController extends BaseController {
     }
 
     /**
-     * 展示需要初始化的信息
+     * need to Initialize info
      */
     @PostMapping("/initShow")
     @SaCheckPermission("workflow:model:initShow")
@@ -98,10 +98,10 @@ public class WfModelController extends BaseController {
     }
 
     /**
-     * 查询流程模型列表
+     * Query workflowmodel list
      *
-     * @param modelBo   流程模型对象
-     * @param pageQuery 分页参数
+     * @param modelBo workflowmodelobject
+     * @param pageQuery parameter
      */
     @SaCheckPermission("workflow:model:list")
     @GetMapping("/list")
@@ -110,10 +110,10 @@ public class WfModelController extends BaseController {
     }
 
     /**
-     * 查询历史流程模型列表
+     * Query history workflowmodel list
      *
-     * @param modelBo   流程模型对象
-     * @param pageQuery 分页参数
+     * @param modelBo workflowmodelobject
+     * @param pageQuery parameter
      */
     @SaCheckPermission("workflow:model:historyList")
     @GetMapping("/historyList")
@@ -122,9 +122,9 @@ public class WfModelController extends BaseController {
     }
 
     /**
-     * 获取流程模型详细信息
+     * Get workflowmodel info
      *
-     * @param modelId 模型主键
+     * @param modelId modelprimary key
      */
     @SaCheckPermission("workflow:model:getInfo")
     @GetMapping(value = "/{modelId}")
@@ -134,9 +134,9 @@ public class WfModelController extends BaseController {
     }
 
     /**
-     * 获取流程表单详细信息
+     * Get workflowform info
      *
-     * @param modelId 模型主键
+     * @param modelId modelprimary key
      */
     @SaCheckPermission("workflow:model:getBpmnXml")
     @GetMapping(value = "/bpmnXml/{modelId}")
@@ -145,7 +145,7 @@ public class WfModelController extends BaseController {
     }
 
     /**
-     * 新增流程模型
+     * Add workflowmodel
      */
     @SaCheckPermission("workflow:model:add")
     @Log(title = "流程模型", businessType = BusinessType.INSERT)
@@ -155,7 +155,7 @@ public class WfModelController extends BaseController {
     }
 
     /**
-     * 复制流程模型
+     * workflowmodel
      */
     @Log(title = "流程模型", businessType = BusinessType.COPY)
     @SaCheckPermission("workflow:model:copyModel")
@@ -166,7 +166,7 @@ public class WfModelController extends BaseController {
     }
 
     /**
-     * 修改流程模型
+     * Update workflowmodel
      */
     @SaCheckPermission("workflow:model:edit")
     @Log(title = "流程模型", businessType = BusinessType.UPDATE)
@@ -178,10 +178,10 @@ public class WfModelController extends BaseController {
 
 
     /**
-     * 保存流程模型
+     * workflowmodel
      */
     @SaCheckPermission("workflow:model:save")
-//    @Log(title = "保存流程模型", businessType = BusinessType.INSERT)
+// @Log(title = " workflowmodel", businessType = BusinessType.INSERT)
     @RepeatSubmit()
     @PostMapping("/save")
     public R<String> save(@RequestBody ProcessModel processModel, @RequestBody WfModelBo modelBo) {
@@ -189,14 +189,14 @@ public class WfModelController extends BaseController {
             Model model = modelService.saveModel(modelBo, null,processModel);
             return R.ok(model.getId());
         } catch (Exception e) {
-            // 处理异常
+            // Process
             return R.fail("保存失败：" + e.getMessage());
         }
     }
 
 
     /**
-     * 设为最新流程模型
+     * to new workflowmodel
      *
      * @param modelId
      * @return
@@ -211,9 +211,9 @@ public class WfModelController extends BaseController {
     }
 
     /**
-     * 删除流程模型
+     * Delete workflowmodel
      *
-     * @param modelIds 流程模型主键串
+     * @param modelIds workflowmodelprimary key
      */
     @SaCheckPermission("workflow:model:remove")
     @Log(title = "删除流程模型", businessType = BusinessType.DELETE)
@@ -224,9 +224,9 @@ public class WfModelController extends BaseController {
     }
 
     /**
-     * 批量删除流程模型
+     * Batch delete workflowmodel
      *
-     * @param modelKey 流程模型key
+     * @param modelKey workflowmodelkey
      */
     @SaCheckPermission("workflow:model:batchRemove")
     @Log(title = "批量删除流程模型", businessType = BusinessType.DELETE)
@@ -237,9 +237,9 @@ public class WfModelController extends BaseController {
     }
 
     /**
-     * 部署流程模型
+     * workflowmodel
      *
-     * @param modelId 流程模型主键
+     * @param modelId workflowmodelprimary key
      */
     @SaCheckPermission("workflow:model:deploy")
     @Log(title = "部署流程模型", businessType = BusinessType.INSERT)
@@ -250,7 +250,7 @@ public class WfModelController extends BaseController {
     }
 
     /**
-     * 导出流程模型数据
+     * Export workflowmodeldata
      */
     @Log(title = "导出流程模型数据", businessType = BusinessType.EXPORT)
     @SaCheckPermission("workflow:model:export")

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -36,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Excel相关处理
+ * ExcelrelatedProcess
  *
  * @author Lion Li
  */
@@ -44,10 +45,10 @@ import java.util.Map;
 public class ExcelUtil {
 
     /**
-     * 同步导入(适用于小数据量)
+     * Import ( data )
      *
-     * @param is 输入流
-     * @return 转换后集合
+     * @param is
+     * @return Convert aftercollection
      */
     public static <T> List<T> importExcel(InputStream is, Class<T> clazz) {
         return EasyExcel.read(is).head(clazz).autoCloseStream(false).sheet().doReadSync();
@@ -55,12 +56,12 @@ public class ExcelUtil {
 
 
     /**
-     * 使用校验监听器 异步导入 同步返回
+     * Validate listener Import
      *
-     * @param is         输入流
-     * @param clazz      对象类型
-     * @param isValidate 是否 Validator 检验 默认为是
-     * @return 转换后集合
+     * @param is
+     * @param clazz object
+     * @param isValidate whether Validator to is
+     * @return Convert aftercollection
      */
     public static <T> ExcelResult<T> importExcel(InputStream is, Class<T> clazz, boolean isValidate) {
         DefaultExcelListener<T> listener = new DefaultExcelListener<>(isValidate);
@@ -69,12 +70,12 @@ public class ExcelUtil {
     }
 
     /**
-     * 使用自定义监听器 异步导入 自定义返回
+     * Customlistener Import Custom
      *
-     * @param is       输入流
-     * @param clazz    对象类型
-     * @param listener 自定义监听器
-     * @return 转换后集合
+     * @param is
+     * @param clazz object
+     * @param listener Customlistener
+     * @return Convert aftercollection
      */
     public static <T> ExcelResult<T> importExcel(InputStream is, Class<T> clazz, ExcelListener<T> listener) {
         EasyExcel.read(is, clazz, listener).sheet().doRead();
@@ -82,12 +83,12 @@ public class ExcelUtil {
     }
 
     /**
-     * 导出excel
+     * Export excel
      *
-     * @param list      导出数据集合
-     * @param sheetName 工作表的名称
-     * @param clazz     实体类
-     * @param response  响应体
+     * @param list Export dataset
+     * @param sheetName
+     * @param clazz
+     * @param response
      */
     public static <T> void exportExcel(List<T> list, String sheetName, Class<T> clazz, HttpServletResponse response) {
         try {
@@ -100,13 +101,13 @@ public class ExcelUtil {
     }
 
     /**
-     * 导出excel
+     * Export excel
      *
-     * @param list      导出数据集合
-     * @param sheetName 工作表的名称
-     * @param clazz     实体类
-     * @param merge     是否合并单元格
-     * @param response  响应体
+     * @param list Export dataset
+     * @param sheetName
+     * @param clazz
+     * @param merge whether
+     * @param response
      */
     public static <T> void exportExcel(List<T> list, String sheetName, Class<T> clazz, boolean merge, HttpServletResponse response) {
         try {
@@ -119,50 +120,50 @@ public class ExcelUtil {
     }
 
     /**
-     * 导出excel
+     * Export excel
      *
-     * @param list      导出数据集合
-     * @param sheetName 工作表的名称
-     * @param clazz     实体类
-     * @param os        输出流
+     * @param list Export dataset
+     * @param sheetName
+     * @param clazz
+     * @param os
      */
     public static <T> void exportExcel(List<T> list, String sheetName, Class<T> clazz, OutputStream os) {
         exportExcel(list, sheetName, clazz, false, os);
     }
 
     /**
-     * 导出excel
+     * Export excel
      *
-     * @param list      导出数据集合
-     * @param sheetName 工作表的名称
-     * @param clazz     实体类
-     * @param merge     是否合并单元格
-     * @param os        输出流
+     * @param list Export dataset
+     * @param sheetName
+     * @param clazz
+     * @param merge whether
+     * @param os
      */
     public static <T> void exportExcel(List<T> list, String sheetName, Class<T> clazz, boolean merge, OutputStream os) {
         ExcelWriterSheetBuilder builder = EasyExcel.write(os, clazz)
             .autoCloseStream(false)
-            // 自动适配
+            //
             .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
-            // 大数值自动转换 防止失真
+            // value Convert
             .registerConverter(new ExcelBigNumberConvert())
             .sheet(sheetName);
         if (merge) {
-            // 合并处理器
+            // Process
             builder.registerWriteHandler(new CellMergeStrategy(list, true));
         }
         builder.doWrite(list);
     }
 
     /**
-     * 单表多数据模板导出 模板格式为 {.属性}
+     * data Export to {.property}
      *
-     * @param filename     文件名
-     * @param templatePath 模板路径 resource 目录下的路径包括模板文件名
-     *                     例如: excel/temp.xlsx
-     *                     重点: 模板文件必须放置到启动类对应的 resource 目录下
-     * @param data         模板需要的数据
-     * @param response     响应体
+     * @param filename
+     * @param templatePath resource
+     * : excel/temp.xlsx
+     * : resource
+     * @param data need to data
+     * @param response
      */
     public static void exportTemplate(List<Object> data, String filename, String templatePath, HttpServletResponse response) {
         try {
@@ -175,27 +176,27 @@ public class ExcelUtil {
     }
 
     /**
-     * 单表多数据模板导出 模板格式为 {.属性}
+     * data Export to {.property}
      *
-     * @param templatePath 模板路径 resource 目录下的路径包括模板文件名
-     *                     例如: excel/temp.xlsx
-     *                     重点: 模板文件必须放置到启动类对应的 resource 目录下
-     * @param data         模板需要的数据
-     * @param os           输出流
+     * @param templatePath resource
+     * : excel/temp.xlsx
+     * : resource
+     * @param data need to data
+     * @param os
      */
     public static void exportTemplate(List<Object> data, String templatePath, OutputStream os) {
         ClassPathResource templateResource = new ClassPathResource(templatePath);
         ExcelWriter excelWriter = EasyExcel.write(os)
             .withTemplate(templateResource.getStream())
             .autoCloseStream(false)
-            // 大数值自动转换 防止失真
+            // value Convert
             .registerConverter(new ExcelBigNumberConvert())
             .build();
         WriteSheet writeSheet = EasyExcel.writerSheet().build();
         if (CollUtil.isEmpty(data)) {
             throw new IllegalArgumentException("数据为空");
         }
-        // 单表多数据导出 模板格式为 {.属性}
+        // dataExport to {.property}
         for (Object d : data) {
             excelWriter.fill(d, writeSheet);
         }
@@ -203,14 +204,14 @@ public class ExcelUtil {
     }
 
     /**
-     * 多表多数据模板导出 模板格式为 {key.属性}
+     * data Export to {key.property}
      *
-     * @param filename     文件名
-     * @param templatePath 模板路径 resource 目录下的路径包括模板文件名
-     *                     例如: excel/temp.xlsx
-     *                     重点: 模板文件必须放置到启动类对应的 resource 目录下
-     * @param data         模板需要的数据
-     * @param response     响应体
+     * @param filename
+     * @param templatePath resource
+     * : excel/temp.xlsx
+     * : resource
+     * @param data need to data
+     * @param response
      */
     public static void exportTemplateMultiList(Map<String, Object> data, String filename, String templatePath, HttpServletResponse response) {
         try {
@@ -223,20 +224,20 @@ public class ExcelUtil {
     }
 
     /**
-     * 多表多数据模板导出 模板格式为 {key.属性}
+     * data Export to {key.property}
      *
-     * @param templatePath 模板路径 resource 目录下的路径包括模板文件名
-     *                     例如: excel/temp.xlsx
-     *                     重点: 模板文件必须放置到启动类对应的 resource 目录下
-     * @param data         模板需要的数据
-     * @param os           输出流
+     * @param templatePath resource
+     * : excel/temp.xlsx
+     * : resource
+     * @param data need to data
+     * @param os
      */
     public static void exportTemplateMultiList(Map<String, Object> data, String templatePath, OutputStream os) {
         ClassPathResource templateResource = new ClassPathResource(templatePath);
         ExcelWriter excelWriter = EasyExcel.write(os)
             .withTemplate(templateResource.getStream())
             .autoCloseStream(false)
-            // 大数值自动转换 防止失真
+            // value Convert
             .registerConverter(new ExcelBigNumberConvert())
             .build();
         WriteSheet writeSheet = EasyExcel.writerSheet().build();
@@ -244,10 +245,10 @@ public class ExcelUtil {
             throw new IllegalArgumentException("数据为空");
         }
         for (Map.Entry<String, Object> map : data.entrySet()) {
-            // 设置列表后续还有数据
+            // Set after data
             FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
             if (map.getValue() instanceof Collection) {
-                // 多表导出必须使用 FillWrapper
+                // Export FillWrapper
                 excelWriter.fill(new FillWrapper(map.getKey(), (Collection<?>) map.getValue()), fillConfig, writeSheet);
             } else {
                 excelWriter.fill(map.getValue(), writeSheet);
@@ -257,7 +258,7 @@ public class ExcelUtil {
     }
 
     /**
-     * 重置响应体
+     *
      */
     private static void resetResponse(String sheetName, HttpServletResponse response) throws UnsupportedEncodingException {
         String filename = encodingFilename(sheetName);
@@ -266,12 +267,12 @@ public class ExcelUtil {
     }
 
     /**
-     * 解析导出值 0=男,1=女,2=未知
+     * Parse Export value 0= ,1= ,2= not
      *
-     * @param propertyValue 参数值
-     * @param converterExp  翻译注解
-     * @param separator     分隔符
-     * @return 解析后值
+     * @param propertyValue parameter value
+     * @param converterExp
+     * @param separator
+     * @return Parse after value
      */
     public static String convertByExp(String propertyValue, String converterExp, String separator) {
         StringBuilder propertyString = new StringBuilder();
@@ -295,12 +296,12 @@ public class ExcelUtil {
     }
 
     /**
-     * 反向解析值 男=0,女=1,未知=2
+     * Parse value =0, =1, not =2
      *
-     * @param propertyValue 参数值
-     * @param converterExp  翻译注解
-     * @param separator     分隔符
-     * @return 解析后值
+     * @param propertyValue parameter value
+     * @param converterExp
+     * @param separator
+     * @return Parse after value
      */
     public static String reverseByExp(String propertyValue, String converterExp, String separator) {
         StringBuilder propertyString = new StringBuilder();
@@ -324,7 +325,7 @@ public class ExcelUtil {
     }
 
     /**
-     * 编码文件名
+     *
      */
     public static String encodingFilename(String filename) {
         return IdUtil.fastSimpleUUID() + "_" + filename + ".xlsx";

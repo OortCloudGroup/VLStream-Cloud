@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 export const generateCode = function(formJson, codeType = 'vue') {
   let formJsonStr = JSON.stringify(formJson)
 

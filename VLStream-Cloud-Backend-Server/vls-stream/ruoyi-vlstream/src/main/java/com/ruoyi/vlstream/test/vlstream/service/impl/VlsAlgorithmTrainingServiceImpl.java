@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 算法训练任务表 服务实现类
+ * algorithmtrainingtask service
  *
  * @author Oort
  * @since 2025-12-23
@@ -45,10 +46,10 @@ public class VlsAlgorithmTrainingServiceImpl extends BaseServiceImpl<VlsAlgorith
 	}
 
 	/**
-	 * 查询算法训练任务
+	 * Query algorithmtrainingtask
 	 *
-	 * @param id 算法训练任务主键
-	 * @return 算法训练任务
+	 * @param id algorithmtrainingtaskprimary key
+	 * @return algorithmtrainingtask
 	 */
 	@Override
 	public AlgorithmTraining selectAlgorithmTrainingById(Long id) {
@@ -56,10 +57,10 @@ public class VlsAlgorithmTrainingServiceImpl extends BaseServiceImpl<VlsAlgorith
 	}
 
 	/**
-	 * 查询算法训练任务列表
+	 * Query algorithmtrainingtask list
 	 *
-	 * @param algorithmTraining 算法训练任务
-	 * @return 算法训练任务
+	 * @param algorithmTraining algorithmtrainingtask
+	 * @return algorithmtrainingtask
 	 */
 	@Override
 	public List<AlgorithmTraining> selectAlgorithmTrainingList(AlgorithmTraining algorithmTraining) {
@@ -67,10 +68,10 @@ public class VlsAlgorithmTrainingServiceImpl extends BaseServiceImpl<VlsAlgorith
 	}
 
 	/**
-	 * 新增算法训练任务
+	 * Add algorithmtrainingtask
 	 *
-	 * @param algorithmTraining 算法训练任务
-	 * @return 结果
+	 * @param algorithmTraining algorithmtrainingtask
+	 * @return
 	 */
 	@Override
 	public int insertAlgorithmTraining(AlgorithmTraining algorithmTraining) {
@@ -78,10 +79,10 @@ public class VlsAlgorithmTrainingServiceImpl extends BaseServiceImpl<VlsAlgorith
 	}
 
 	/**
-	 * 修改算法训练任务
+	 * Update algorithmtrainingtask
 	 *
-	 * @param algorithmTraining 算法训练任务
-	 * @return 结果
+	 * @param algorithmTraining algorithmtrainingtask
+	 * @return
 	 */
 	@Override
 	public int updateAlgorithmTraining(AlgorithmTraining algorithmTraining) {
@@ -89,10 +90,10 @@ public class VlsAlgorithmTrainingServiceImpl extends BaseServiceImpl<VlsAlgorith
 	}
 
 	/**
-	 * 批量删除算法训练任务
+	 * Batch delete algorithmtrainingtask
 	 *
-	 * @param ids 需要删除的算法训练任务主键
-	 * @return 结果
+	 * @param ids need to Delete algorithmtrainingtaskprimary key
+	 * @return
 	 */
 	@Override
 	public int deleteAlgorithmTrainingByIds(Long[] ids) {
@@ -100,10 +101,10 @@ public class VlsAlgorithmTrainingServiceImpl extends BaseServiceImpl<VlsAlgorith
 	}
 
 	/**
-	 * 删除算法训练任务信息
+	 * Delete algorithmtrainingtaskinfo
 	 *
-	 * @param id 算法训练任务主键
-	 * @return 结果
+	 * @param id algorithmtrainingtaskprimary key
+	 * @return
 	 */
 	@Override
 	public int deleteAlgorithmTrainingById(Long id) {

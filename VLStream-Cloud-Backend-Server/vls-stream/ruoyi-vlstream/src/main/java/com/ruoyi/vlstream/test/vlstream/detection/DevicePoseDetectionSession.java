@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -34,7 +35,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * 单设备姿态估计会话：加载模型并对视频流进行姿态估计，在产生结果时截图上传并创建事件；支持异常重启与资源清理。
+ * device will : Load model , in snapshot event; and .
  */
 @Slf4j
 public class DevicePoseDetectionSession implements DeviceDetectionSession {

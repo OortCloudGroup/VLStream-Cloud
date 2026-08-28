@@ -1,11 +1,16 @@
-// 测试直接访问VLStream-server API
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// VLStream-server API
 async function testDirectAPI() {
   const currentToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token')
-  
+
   console.log('🔍 测试直接访问VLStream-server API')
   console.log('当前token:', currentToken)
   console.log('')
-  
+
   const testAPIs = [
     {
       name: '设备列表API（直接IP访问）',
@@ -36,12 +41,12 @@ async function testDirectAPI() {
       method: 'GET'
     }
   ]
-  
+
   for (const api of testAPIs) {
     console.log(`\n=== 测试: ${api.name} ===`)
     console.log('URL:', api.url)
     console.log('Method:', api.method)
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'requesttype': 'app',
@@ -49,12 +54,12 @@ async function testDirectAPI() {
       'secretkey': '58f9eeefc65f4b318204ba21f39a8861',
       'accesstoken': currentToken
     }
-    
+
     console.log('Headers:', headers)
-    
+
     try {
       let response
-      
+
       if (api.method === 'GET') {
         const url = new URL(api.url)
         if (api.params) {
@@ -73,9 +78,9 @@ async function testDirectAPI() {
           body: JSON.stringify(api.data || {})
         })
       }
-      
+
       console.log(`响应状态: ${response.status}`)
-      
+
       if (response.ok) {
         const data = await response.json()
         console.log('✅ 请求成功！')
@@ -85,17 +90,17 @@ async function testDirectAPI() {
         console.log('❌ 请求失败！')
         console.log('错误信息:', errorData)
       }
-      
+
     } catch (error) {
       console.log(`❌ 请求异常: ${error.message}`)
     }
   }
-  
+
   console.log('\n📝 测试总结:')
   console.log('- 如果直接IP访问成功，说明VLStream-server服务正常')
   console.log('- 如果认证拦截器正常工作，应该返回200状态码')
   console.log('- 如果返回4004错误，说明认证拦截器配置有问题')
 }
 
-// 运行测试
-testDirectAPI().catch(console.error) 
+//
+testDirectAPI().catch(console.error)

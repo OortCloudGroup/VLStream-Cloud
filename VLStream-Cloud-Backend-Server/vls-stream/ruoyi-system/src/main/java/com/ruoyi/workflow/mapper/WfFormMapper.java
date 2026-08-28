@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -15,7 +16,7 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
- * 流程表单Mapper接口
+ * workflowformMapperinterface
  *
  * @author KonBAI
  * @createTime 2022/3/7 22:07

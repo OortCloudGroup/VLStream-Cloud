@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 工作流任务工具类
+ * task
  *
  * @author konbai
  * @createTime 2022/4/24 12:42
@@ -30,7 +30,7 @@ public class TaskUtils {
     }
 
     /**
-     * 获取用户组信息
+     * Get user info
      *
      * @return candidateGroup
      */
@@ -49,7 +49,7 @@ public class TaskUtils {
     }
 
     /**
-     * 获取用户组信息
+     * Get user info
      *
      * @return candidateGroup
      */

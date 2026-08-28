@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <form-item-wrapper
     :designer="designer"
@@ -11,7 +16,7 @@
     :sub-form-col-index="subFormColIndex"
     :sub-form-row-id="subFormRowId"
   >
-    <!-- el-upload增加:name="field.options.name"后，会导致又拍云上传失败！故删除之！！ -->
+    <!-- el-upload :name="field.options.name" after, will and failed! Delete ! ! -->
     <el-upload
       ref="fieldEditor"
       :disabled="field.options.disabled"
@@ -80,7 +85,7 @@ export default {
     ElUpload,
     SvgIcon,
     FormItemWrapper
-  }, // 必须固定为FieldWidget，用于接收父级组件的broadcast事件
+  }, // to FieldWidget, component broadcastevent
   mixins: [emitter, fieldMixin, i18n],
   props: {
     field: Object,
@@ -110,19 +115,19 @@ export default {
   },
   data() {
     return {
-      oldFieldValue: null, // field组件change之前的值
+      oldFieldValue: null, // fieldcomponentchange before value
       fieldModel: [],
       rules: [],
 
       uploadHeaders: apaasRequestHeaders,
       uploadData: {
-        key: '' // 七牛云上传文件名
-        // token: '',  //七牛云上传token
+        key: '' //
+        // token: '', // token
 
-        // policy: '',  //又拍云上传policy
-        // authorization: '',  //又拍云上传签名
+        // policy: '', // and policy
+        // authorization: '', // and
       },
-      fileList: [], // 上传文件列表
+      fileList: [], //
       uploadBtnHidden: false,
 
       styleVariables: {
@@ -135,10 +140,10 @@ export default {
       let uploadURL = this.field.options.uploadURL
       if (!!uploadURL && ((uploadURL.indexOf('DSV.') > -1) || (uploadURL.indexOf('DSV[') > -1))) {
         let DSV = this.getGlobalDsv()
-        console.log('test DSV: ', DSV) // 防止DSV被打包工具优化！！！
+        console.log('test DSV: ', DSV) // DSV ! ! !
         return evalFn(this.field.options.uploadURL, DSV)
       }
-      // 如果为空这为fastdfs的上传地址
+      // if is empty to fastdfs
       if (!uploadURL) {
         return apaasServiceUrl('apaas-fastdfsservice/fastdfs/v1/uploadFile')
       }
@@ -147,11 +152,11 @@ export default {
 
   },
   beforeCreate() {
-    /* 这里不能访问方法和属性！！ */
+    /* can method and property! ! */
   },
 
   created() {
-    /* 注意：子组件mounted在父组件created之后、父组件mounted之前触发，故子组件mounted需要用到的prop
+    /* : sub componentmounted in componentcreated after、 componentmounted before , sub componentmounted need to prop
          需要在父组件created中初始化！！ */
     this.initFieldModel()
     this.registerToRefList()
@@ -246,7 +251,7 @@ export default {
           let mountFunc = new Function('result', 'file', 'fileList', this.field.options.onUploadSuccess)
           customResult = mountFunc.call(this, res, file, fileList)
         } else {
-          // 默认为fastfds的返回
+          // to fastfds
           if (res.code === 200) {
             customResult = { name: file.name, url: res.data.url }
           } else {

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 流程表单工具类
+ * workflowform
  *
  * @author KonBAI
  * @createTime 2022/8/7 17:09
@@ -23,10 +24,10 @@ public class ProcessFormUtils {
     private static final String MODEL = "__vModel__";
 
     /**
-     * 填充表单项内容
+     * fill form item
      *
-     * @param formConf 表单配置信息
-     * @param data 表单内容
+     * @param formConf formconfigurationinfo
+     * @param data form
      */
     public static void fillFormData(FormConf formConf, Map<String, Object> data) {
         for (Map<String, Object> field : formConf.getFields()) {

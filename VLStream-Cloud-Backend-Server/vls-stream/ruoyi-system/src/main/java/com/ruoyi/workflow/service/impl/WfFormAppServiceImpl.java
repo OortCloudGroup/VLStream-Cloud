@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -29,9 +30,9 @@ import java.util.Optional;
 import static com.ruoyi.workflow.service.impl.WfAppServiceImpl.generateUuid;
 
 /**
- * 表单应用分类Service业务层处理
+ * form Service layer Process
  *
- * @author 雷超群
+ * @author
  * @date 2025-04-26
  */
 @RequiredArgsConstructor
@@ -41,7 +42,7 @@ public class WfFormAppServiceImpl  extends ServiceImpl<WfFormAppMapper, WfFormAp
     private final WfFormAppMapper baseMapper;
 
     /**
-     * 查询表单应用分类
+     * Query form
      */
     @Override
     public WfFormAppVo queryById(String categoryId) {
@@ -49,7 +50,7 @@ public class WfFormAppServiceImpl  extends ServiceImpl<WfFormAppMapper, WfFormAp
     }
 
     /**
-     * 查询表单应用分类列表
+     * Query form list
      */
     @Override
     public TableDataInfo<WfFormAppVo> queryPageList(WfFormAppBo bo, PageQuery pageQuery) {
@@ -59,7 +60,7 @@ public class WfFormAppServiceImpl  extends ServiceImpl<WfFormAppMapper, WfFormAp
     }
 
     /**
-     * 查询表单应用分类列表
+     * Query form list
      */
     @Override
     public Optional<List<WfFormAppVo>> queryList(WfFormAppBo bo) {
@@ -85,16 +86,16 @@ public class WfFormAppServiceImpl  extends ServiceImpl<WfFormAppMapper, WfFormAp
     }
 
     /**
-     * 新增表单应用分类
+     * Add form
      */
     @Override
     public WfFormApp insertByBo(WfFormAppBo bo) {
         LambdaQueryWrapper<WfFormApp> queryWrapper = new LambdaQueryWrapper<>();
         if(bo.getType().equals("0")){
-            //流程
+            // workflow
             queryWrapper.eq(WfFormApp::getType, "0");
         }else{
-            //工单
+            // work order
             queryWrapper.eq(WfFormApp::getType, "1");
         }
         queryWrapper.eq(WfFormApp::getApplicationId, bo.getApplicationId());
@@ -119,7 +120,7 @@ public class WfFormAppServiceImpl  extends ServiceImpl<WfFormAppMapper, WfFormAp
     }
 
     /**
-     * 修改表单应用分类
+     * Update form
      */
     @Override
     public Boolean updateByBo(WfFormAppBo bo) {
@@ -129,19 +130,19 @@ public class WfFormAppServiceImpl  extends ServiceImpl<WfFormAppMapper, WfFormAp
     }
 
     /**
-     * 保存前的数据校验
+     * before dataValidate
      */
     private void validEntityBeforeSave(WfFormApp entity) {
-        //TODO 做一些数据校验,如唯一约束
+        // TODO dataValidate ,
     }
 
     /**
-     * 批量删除表单应用分类
+     * Batch delete form
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid) {
         if (isValid) {
-            //TODO 做一些业务上的校验,判断是否需要校验
+            // TODO Validate ,Check whether need to Validate
         }
         return baseMapper.deleteBatchIds(ids) > 0;
     }

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -8,7 +9,7 @@ package com.ruoyi.common.exception.file;
 import com.ruoyi.common.exception.base.BaseException;
 
 /**
- * 文件信息异常类
+ * info
  *
  * @author ruoyi
  */

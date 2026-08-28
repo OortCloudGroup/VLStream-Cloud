@@ -1,5 +1,4 @@
 /*
- * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -58,9 +57,9 @@ public class XxlJobServiceImpl implements XxlJobService  {
 
         // package result
         Map<String, Object> maps = new HashMap<String, Object>();
-        maps.put("recordsTotal", list_count);        // 总记录数
-        maps.put("recordsFiltered", list_count);    // 过滤后的总记录数
-        maps.put("data", list);                    // 分页列表
+        maps.put("recordsTotal", list_count);        // record
+        maps.put("recordsFiltered", list_count);    // after record
+        maps.put("data", list);                    //
         return maps;
     }
 
@@ -255,7 +254,7 @@ public class XxlJobServiceImpl implements XxlJobService  {
             return new ReturnT<String>(ReturnT.FAIL_CODE, (I18nUtil.getString("jobinfo_field_id") + I18nUtil.getString("system_not_found")));
         }
 
-        // next trigger time (5s后生效，避开预读周期)
+        // next trigger time (5s after , )
         long nextTriggerTime = exists_jobInfo.getTriggerNextTime();
         boolean scheduleDataNotChanged = jobInfo.getScheduleType().equals(exists_jobInfo.getScheduleType()) && jobInfo.getScheduleConf().equals(exists_jobInfo.getScheduleConf());
         if (exists_jobInfo.getTriggerStatus() == 1 && !scheduleDataNotChanged) {
@@ -317,7 +316,7 @@ public class XxlJobServiceImpl implements XxlJobService  {
             return new ReturnT<String>(ReturnT.FAIL_CODE, (I18nUtil.getString("schedule_type_none_limit_start")));
         }
 
-        // next trigger time (5s后生效，避开预读周期)
+        // next trigger time (5s after , )
         long nextTriggerTime = 0;
         try {
             Date nextValidTime = JobScheduleHelper.generateNextValidTime(xxlJobInfo, new Date(System.currentTimeMillis() + JobScheduleHelper.PRE_READ_MS));

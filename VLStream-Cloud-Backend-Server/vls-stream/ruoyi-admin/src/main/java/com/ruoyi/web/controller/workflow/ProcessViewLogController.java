@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -33,7 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 流程访问日志
+ * workflow log
  *
  * @author lcq
  * @date 2025-08-15
@@ -47,7 +48,7 @@ public class ProcessViewLogController extends BaseController {
     private final IProcessViewLogService iProcessViewLogService;
 
     /**
-     * 查询流程访问日志列表
+     * Query workflow log list
      */
     @SaCheckPermission("workflow:viewLog:list")
     @GetMapping("/list")
@@ -56,7 +57,7 @@ public class ProcessViewLogController extends BaseController {
     }
 
     /**
-     * 查询流程访问人员列表
+     * Query workflow list
      */
     @SaCheckPermission("workflow:UserViewLog:list")
     @GetMapping("/userList")
@@ -65,7 +66,7 @@ public class ProcessViewLogController extends BaseController {
     }
 
     /**
-     * 导出流程访问日志列表
+     * Export workflow log
      */
     @SaCheckPermission("workflow:viewLog:export")
     @PostMapping("/export")
@@ -75,9 +76,9 @@ public class ProcessViewLogController extends BaseController {
     }
 
     /**
-     * 获取流程访问日志详细信息
+     * Get workflow log info
      *
-     * @param id 主键
+     * @param id primary key
      */
     @SaCheckPermission("workflow:viewLog:query")
     @GetMapping("/{id}")
@@ -87,7 +88,7 @@ public class ProcessViewLogController extends BaseController {
     }
 
     /**
-     * 新增流程访问日志
+     * Add workflow log
      */
     @SaCheckPermission("workflow:viewLog:add")
     @Log(title = "流程访问日志", businessType = BusinessType.INSERT)
@@ -99,7 +100,7 @@ public class ProcessViewLogController extends BaseController {
     }
 
     /**
-     * 修改流程访问日志
+     * Update workflow log
      */
     @SaCheckPermission("workflow:viewLog:edit")
     @Log(title = "流程访问日志", businessType = BusinessType.UPDATE)
@@ -110,9 +111,9 @@ public class ProcessViewLogController extends BaseController {
     }
 
     /**
-     * 删除流程访问日志
+     * Delete workflow log
      *
-     * @param ids 主键串
+     * @param ids primary key
      */
     @SaCheckPermission("workflow:viewLog:remove")
     @Log(title = "流程访问日志", businessType = BusinessType.DELETE)

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,7 +18,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * 计时器节点
+ * node
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -30,7 +31,7 @@ public class TimerNode extends Node {
     @Override
     public List<FlowElement> convert() {
         ArrayList<FlowElement> elements = new ArrayList<>();
-        // 计时器节点
+        // node
         IntermediateCatchEvent intermediateCatchEvent = new IntermediateCatchEvent();
         intermediateCatchEvent.setId(this.getId());
         intermediateCatchEvent.setName(this.getNodeName());
@@ -48,11 +49,11 @@ public class TimerNode extends Node {
         eventDefinitions.add(timerEventDefinition);
         intermediateCatchEvent.setEventDefinitions(eventDefinitions);
         elements.add(intermediateCatchEvent);
-        // 下一个节点的连线
+        // node
         Node child = this.getChildNode();
         SequenceFlow sequenceFlow = this.buildSequence(child);
         elements.add(sequenceFlow);
-        // 下一个节点
+        // node
         if (Objects.nonNull(child)) {
             child.setBranchId(this.getBranchId());
             List<FlowElement> flowElements = child.convert();

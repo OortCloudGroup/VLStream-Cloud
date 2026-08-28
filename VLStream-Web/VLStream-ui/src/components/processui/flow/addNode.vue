@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="add_node" :class="{'add_node_only_r':!isEdit, 'node_inactive': isFinish}">
     <el-popover v-model:visible="visible" placement="bottom" :width="clacPXToVW(528)" height="auto" :style="'min-width: ' +clacPXToVW(528)+ 'px'" trigger="click">
@@ -67,7 +72,7 @@ let props = defineProps({
   }
 
 })
-const flowDesignerPage = inject('flowDesignerPage') // 通知节点：工单有,流程无
+const flowDesignerPage = inject('flowDesignerPage') // notificationnode: work order ,workflow
 let emits = defineEmits(['update:childNodeP'])
 let visible = ref(false)
 const addNode = (type) => {

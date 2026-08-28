@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 查询分组树
+// Query group
 export function queryForTree(query) {
     return request({
         url: `/api/group/tree/list`,
@@ -9,7 +14,7 @@ export function queryForTree(query) {
     })
 }
 
-// 更新分组
+// new group
 export function updateGroup(data) {
     return request({
         url: `/api/group/update`,
@@ -18,7 +23,7 @@ export function updateGroup(data) {
     })
 }
 
-// 添加分组
+// group
 export function addGroup(data) {
     return request({
         url: `/api/group/add`,
@@ -27,7 +32,7 @@ export function addGroup(data) {
     })
 }
 
-// 删除分组
+// Delete group
 export function deleteGroup(id) {
     return request({
         url: `/api/group/delete/${id}`,

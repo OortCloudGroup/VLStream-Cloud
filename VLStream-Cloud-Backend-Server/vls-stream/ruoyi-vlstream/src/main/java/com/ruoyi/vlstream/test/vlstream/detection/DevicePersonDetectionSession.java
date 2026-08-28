@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -43,7 +44,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * 单设备人体检测会话：加载模型并对视频流进行人体检测与结果过滤，在产生结果时截图上传并创建事件。
+ * device will : Load model and , in snapshot event.
  */
 @Slf4j
 public class DevicePersonDetectionSession implements DeviceDetectionSession {

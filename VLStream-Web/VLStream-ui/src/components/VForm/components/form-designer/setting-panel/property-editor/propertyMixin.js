@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 export default {
   methods: {
     hasConfig(configName) {
@@ -32,7 +37,7 @@ export default {
 
     onMultipleSelected(val) {
       if (val) {
-        this.optionModel.defaultValue = [] // 清空原默认值!!
+        this.optionModel.defaultValue = [] // null / empty value !!
       } else {
         if (!!this.optionModel.defaultValue && (this.optionModel.defaultValue.length > 0)) {
           this.optionModel.defaultValue = this.optionModel.defaultValue[0]

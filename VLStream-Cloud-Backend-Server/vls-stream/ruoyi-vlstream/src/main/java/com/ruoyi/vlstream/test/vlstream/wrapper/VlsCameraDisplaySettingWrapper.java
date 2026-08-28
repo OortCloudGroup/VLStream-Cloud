@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -11,7 +12,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.CameraDisplaySetting;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.CameraDisplaySettingVO;
 
 /**
- * 摄像机显示设置表 包装类
+ * Set
  */
 public class VlsCameraDisplaySettingWrapper extends BaseEntityWrapper<CameraDisplaySetting, CameraDisplaySettingVO> {
 

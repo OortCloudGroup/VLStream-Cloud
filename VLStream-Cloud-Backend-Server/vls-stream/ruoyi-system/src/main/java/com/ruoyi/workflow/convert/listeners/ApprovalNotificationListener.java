@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -40,16 +41,16 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * 审批节点消息推送  监听器
- * 当审批节点配置了 priority 和 data 参数时，自动推送消息给审批人
+ * approvalnode Push listener
+ * approvalnodeconfiguration priority and data parameter , Push approver
  */
 @Slf4j
 @Component
 public class ApprovalNotificationListener implements TaskListener, ApplicationContextAware {
     private static ApplicationContext applicationContext;
 
-    // 通过 FieldExtension 注入的参数（字段名必须与 FieldExtension 的 fieldName 一致）
-    // 使用 FixedValue 类型来接收 FieldExtension 的值
+    // FieldExtension parameter (field and FieldExtension fieldName )
+    // FixedValue FieldExtension value
     private FixedValue priority;
     private FixedValue data;
     private FixedValue channelTypes;
@@ -68,7 +69,7 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
                     delegateTask.getId(), getLoopCounter(delegateTask));
                 return;
             }
-            // 1. 获取 priority 和 data 参数
+            // 1. Get priority and data parameter
             Integer priorityValue = null;
             String dataValue = null;
             List<Integer> channelTypesValue = null;
@@ -97,7 +98,7 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
                 if (channelTypesObj != null) {
                     try {
                         String channelTypesJson = channelTypesObj.toString().trim();
-                        // 使用Gson反序列化JSON数组
+                        // Gson JSONarray
                         com.google.gson.Gson gson = new com.google.gson.Gson();
                         channelTypesValue = gson.fromJson(channelTypesJson,
                                 new com.google.gson.reflect.TypeToken<List<Integer>>() {
@@ -108,7 +109,7 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
                 }
             }
 
-            // 2. 如果 priority 或 data 为空，则不执行推送
+            // 2. if priority data is empty, Execute Push
             if (priorityValue == null || dataValue == null || dataValue.isEmpty()) {
                 log.debug("审批节点消息推送：priority 或 data 为空，跳过推送。priority={}, data={}", priority, data);
                 return;
@@ -116,14 +117,14 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
 
 
 
-            // 3. 获取当前审批人ID列表
+            // 3. Get current approverID
             List<String> assigneeIds = resolveNotificationAssigneeIds(delegateTask, userTask);
             if (assigneeIds.isEmpty()) {
                 log.warn("审批节点消息推送：未找到审批人，跳过推送");
                 return;
             }
 
-            // 4. 获取请求头信息
+            // 4. Get info
             HttpServletRequest request = getCurrentRequest();
             if (request == null) {
                 log.warn("审批节点消息推送：无法获取当前请求，跳过推送");
@@ -131,14 +132,14 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
             }
             String tenantId = delegateTask.getTenantId();
 
-            // 获取RepositoryService用于查询流程定义信息
+            // Get RepositoryService Query workflow definitioninfo
             ProcessEngineConfigurationImpl processEngineConfiguration = Context.getProcessEngineConfiguration();
             RepositoryService repositoryService = processEngineConfiguration.getRepositoryService();
 
-            // 从流程定义中获取分类信息
+            // from workflow definition in Get info
             String category = null;
             try {
-                // 获取流程定义信息
+                // Get workflow definitioninfo
                 category = repositoryService.createProcessDefinitionQuery()
                         .processDefinitionId(delegateTask.getProcessDefinitionId())
                         .singleResult()
@@ -147,12 +148,12 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
                 log.warn("获取流程分类信息失败: {}", e.getMessage());
             }
             String applicationId = null;
-            // 如果仍然没有获取到分类信息，可以使用workOrderApp的applicationId作为备用
+            // if Get info, workOrderApp applicationId to
             WorkOrderAppServiceImpl workOrderAppService = applicationContext.getBean(WorkOrderAppServiceImpl.class);
             applicationId = workOrderAppService.getById(category).getApplicationId();
-            // 调用 app/v1/relatesinfo 获取应用名称
+            // app/v1/relatesinfo Get
             String appName = getAppName(applicationId);
-            // 5. 构建推送请求体
+            // 5. Build Push
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("priority", priorityValue);
             requestBody.put("enable_instatmsg", true);
@@ -163,29 +164,29 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
             requestBody.put("token", "37b74dcb91e74f51a9ecb35360a5cf19");
             requestBody.put("tenant_id", tenantId);
 
-            // 构建 data 对象
+            // Build data object
             Map<String, Object> dataMap = new HashMap<>();
 
-            // 处理表单数据
+            // Process formdata
             FormDataResult formData = processFormData(delegateTask, dataValue);
             dataMap.put("msg_content", formData.getMsgContent());
             requestBody.put("data", dataMap);
 
-            // 如果有附件URL，添加到请求体
+            // if URL,
             if (!formData.getAnnexUrls().isEmpty()) {
                 requestBody.put("annex", formData.getAnnexUrls());
                 requestBody.put("file_source", 1);
                 log.debug("审批节点消息推送：添加附件URL，数量={}", formData.getAnnexUrls().size());
             }
 
-            // 从流程变量获取 ex_data 参数
+            // from workflow variableGet ex_data parameter
             Map<String, Object> variables = delegateTask.getVariables();
             requestBody.put("msg_source", Integer.parseInt(String.valueOf(variables.getOrDefault("msg_source", 1))));
             Object appPackage = variables.get("app_package");
             Object jumpPath = variables.get("jump_path");
             Object jumpParams = variables.get("jump_params");
 
-            // 解析应用包名：优先从请求头 appid/appID 查表获取，查不到则用流程变量兜底
+            // Parse : from appid/appID Get , workflow variable
             String resolvedAppPackage = null;
             try {
                 HttpServletRequest req = getCurrentRequest();
@@ -203,7 +204,7 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
                 log.warn("审批节点消息推送：解析 app_package 异常，将使用流程变量兜底", e);
             }
 
-            // 构建 ex_data
+            // Build ex_data
             Map<String, Object> exDataMap = new HashMap<>();
             boolean hasExData = false;
             if (resolvedAppPackage != null) {
@@ -231,7 +232,7 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
                         appPackage, jumpPath, jumpParams, appName);
             }
 
-            // 构建 to 数组
+            // Build to array
             List<Map<String, Object>> toList = new ArrayList<>();
             for (String assigneeId : assigneeIds) {
                 Map<String, Object> toItem = new HashMap<>();
@@ -240,26 +241,26 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
             }
             requestBody.put("to", toList);
 
-            // 6. 调用第三方接口推送消息
+            // 6. interfacePush
             sendNotification(requestBody);
 
         } catch (Exception e) {
             log.error("审批节点消息推送失败", e);
-            // 不抛出异常，避免影响流程执行
+            // , workflowExecute
         }
     }
 
     /**
-     * 获取当前审批人ID列表
-     * 包括 assignee 和 candidates
+     * Get current approverID
+     * assignee and candidates
      */
     private List<String> getAssigneeIds(DelegateTask delegateTask) {
         List<String> assigneeIds = new ArrayList<>();
 
-        // 获取直接分配人
+        // Get
         String assignee = delegateTask.getAssignee();
         if (assignee != null && !assignee.trim().isEmpty()) {
-            // 如果是多个用户，用逗号分隔
+            // if is user,
             String[] assignees = assignee.split(",");
             for (String assigneeId : assignees) {
                 assigneeId = assigneeId.trim();
@@ -269,7 +270,7 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
             }
         }
 
-        // 获取候选人
+        // Get candidate user
         // Set<IdentityLink> candidates = delegateTask.getCandidates();
         // if (candidates != null) {
         // for (IdentityLink candidate : candidates) {
@@ -287,7 +288,7 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
     }
 
     /**
-     * 获取本次消息推送接收人。
+     * Get Push .
      */
     List<String> resolveNotificationAssigneeIds(DelegateTask delegateTask, UserTask userTask) {
         if (isParallelMultiInstance(userTask)) {
@@ -300,7 +301,7 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
     }
 
     /**
-     * 并行多实例节点只允许首个任务发送聚合通知，避免同一批审批人重复调用推送接口。
+     * instancenodeonly task notification, approver Push interface.
      */
     boolean shouldSkipParallelMultiInstanceNotification(DelegateTask delegateTask, UserTask userTask) {
         if (!isParallelMultiInstance(userTask)) {
@@ -379,7 +380,7 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
     }
 
     /**
-     * 获取当前HTTP请求对象
+     * Get current HTTP object
      */
     private HttpServletRequest getCurrentRequest() {
         try {
@@ -395,7 +396,7 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
     }
 
     /**
-     * 调用第三方接口发送消息推送
+     * interface Push
      */
     private void sendNotification(Map<String, Object> requestBody) throws IOException {
         OkHttpClient client = OkHttpClientHolder.CLIENT;
@@ -404,28 +405,28 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
         org.springframework.core.env.Environment env = applicationContext
                 .getBean(org.springframework.core.env.Environment.class);
 
-        // 获取推送接口URL（从配置中获取，如果没有配置则使用默认值）
+        // Get Push interfaceURL (from configuration in Get , if configuration value )
         String pushUrl = env.getProperty("UnifiedMessagingSend.url") + "msg/v1/send/notice";
 
-        // 构建请求体
+        // Build
         String jsonBody = mapper.writeValueAsString(requestBody);
         log.info("审批节点消息推送请求：URL={}, Body={}", pushUrl, jsonBody);
 
         RequestBody body = RequestBody.create(jsonBody, jsonType);
 
-        // 构建请求
+        // Build
         Request.Builder requestBuilder = new Request.Builder()
                 .url(pushUrl)
                 .post(body)
                 .addHeader("Content-Type", "application/json");
 
-        // 复制当前请求的请求头
+        // current
         HttpServletRequest request = getCurrentRequest();
         if (request != null) {
             Enumeration<String> headerNames = request.getHeaderNames();
             while (headerNames.hasMoreElements()) {
                 String headerName = headerNames.nextElement();
-                // 只复制必要的请求头
+                // only need to
                 if (headerName != null && (headerName.equalsIgnoreCase("appID") ||
                         headerName.equalsIgnoreCase("accesstoken") ||
                         headerName.equalsIgnoreCase("AccessToken") ||
@@ -441,7 +442,7 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
 
         Request httpRequest = requestBuilder.build();
 
-        // 执行请求
+        // Execute
         try (Response response = client.newCall(httpRequest).execute()) {
             if (response.isSuccessful()) {
                 String responseBody = response.body() != null ? response.body().string() : "";
@@ -457,7 +458,7 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
         return UnifiedMessageUtils.getAppName(applicationId, applicationContext);
     }
 
-    // Getter 和 Setter 方法，用于 Flowable 注入 FieldExtension
+    // Getter and Setter method , Flowable FieldExtension
     public FixedValue getPriority() {
         return priority;
     }
@@ -483,29 +484,29 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
     }
 
     /**
-     * 处理表单数据
-     * 从表单配置中提取input和picture-upload控件的值
+     * Process formdata
+     * from formconfiguration in input and picture-upload value
      *
-     * @param delegateTask 任务委托对象
-     * @param originalData 原始data值
-     * @return 处理后的表单数据结果
+     * @param delegateTask task object
+     * @param originalData data value
+     * @return Process after formdata
      */
     private FormDataResult processFormData(DelegateTask delegateTask, String originalData) {
         FormDataResult result = new FormDataResult(originalData);
 
         try {
-            // 1. 获取formKey并验证
+            // 1. Get formKey
             String formKey = getFormKeyFromTask(delegateTask);
             if (StringUtils.isBlank(formKey) || !formKey.startsWith("key_")) {
                 log.debug("审批节点消息推送：FormKey为空或格式不正确，使用原始data值。formKey={}", formKey);
                 return result;
             }
 
-            // 2. 提取formId
+            // 2. formId
             String formId = formKey.substring(4);
             log.debug("审批节点消息推送：提取formId={}", formId);
 
-            // 3. 查询表单
+            // 3. Query form
             WfFormMapper wfFormMapper = applicationContext.getBean(WfFormMapper.class);
             WfForm wfForm = wfFormMapper.selectById(formId);
 
@@ -514,24 +515,24 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
                 return result;
             }
 
-            // 4. 解析表单内容
+            // 4. Parse form
             log.debug("审批节点消息推送：开始解析表单内容");
             parseFormContentSafely(wfForm.getContent(), delegateTask.getVariables(), result);
 
         } catch (Exception e) {
             log.error("审批节点消息推送：处理表单数据时发生异常，将使用原始data值", e);
-            // 异常时保持原始数据，不影响消息推送
+            // data, Push
         }
 
         return result;
     }
 
     /**
-     * 安全地解析表单内容
+     * full Parse form
      *
-     * @param content   表单JSON内容
-     * @param variables 流程变量
-     * @param result    结果对象
+     * @param content formJSON
+     * @param variables workflow variable
+     * @param result object
      */
     private void parseFormContentSafely(String content, Map<String, Object> variables, FormDataResult result) {
         try {
@@ -548,7 +549,7 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
             int inputCount = 0;
             int uploadCount = 0;
 
-            // 遍历所有控件
+            // all
             for (JsonNode widget : widgetList) {
                 try {
                     String type = widget.path("type").asText();
@@ -563,16 +564,16 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
                     }
                 } catch (Exception e) {
                     log.warn("审批节点消息推送：处理单个控件时发生异常，跳过该控件。error={}", e.getMessage());
-                    // 继续处理下一个控件
+                    // Process
                 }
             }
 
-            // 组合最终的msg_content：所有input控件内容 + 原始dataValue
+            // msg_content: all input + dataValue
             if (inputContent.length() > 0) {
-                // 如果有input内容，格式为：input内容\n原始值
+                // if input , to : input \n value
                 result.setMsgContent(inputContent.toString() + "\n" + result.getMsgContent());
             }
-            // 如果没有input内容，保持原始值不变
+            // if input , value
 
             log.info("审批节点消息推送：表单解析完成，处理了{}个input控件，{}个picture-upload控件", inputCount, uploadCount);
 
@@ -582,12 +583,12 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
     }
 
     /**
-     * 处理input类型控件
+     * Process input
      *
-     * @param widget       控件JSON节点
-     * @param variables    流程变量
-     * @param inputContent 用于收集input内容的StringBuilder
-     * @return 是否成功处理
+     * @param widget JSONnode
+     * @param variables workflow variable
+     * @param inputContent input StringBuilder
+     * @return whether successfullyProcess
      */
     private boolean processInputWidget(JsonNode widget, Map<String, Object> variables, StringBuilder inputContent) {
         String id = widget.path("id").asText();
@@ -606,12 +607,12 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
     }
 
     /**
-     * 处理picture-upload类型控件
+     * Process picture-upload
      *
-     * @param widget    控件JSON节点
-     * @param variables 流程变量
-     * @param annexUrls 附件URL列表
-     * @return 是否成功处理
+     * @param widget JSONnode
+     * @param variables workflow variable
+     * @param annexUrls URL
+     * @return whether successfullyProcess
      */
     private boolean processPictureUploadWidget(JsonNode widget, Map<String, Object> variables, List<String> annexUrls) {
         String id = widget.path("id").asText();
@@ -640,24 +641,24 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
     }
 
     /**
-     * 从任务获取formKey
-     * 优先从任务定义获取，如果为空则从流程定义中获取
+     * from taskGet formKey
+     * from task Get , if is empty from workflow definition in Get
      */
     private String getFormKeyFromTask(DelegateTask delegateTask) {
-        // 1. 首先尝试从任务直接获取
+        // 1. from task Get
         String formKey = delegateTask.getFormKey();
         if (StringUtils.isNotBlank(formKey)) {
             return formKey;
         }
 
-        // 2. 如果任务formKey为空，从流程定义的StartEvent获取
+        // 2. if taskformKey is empty, from workflow definition StartEventGet
         try {
             ProcessEngineConfigurationImpl processEngineConfiguration = Context.getProcessEngineConfiguration();
             RepositoryService repositoryService = processEngineConfiguration.getRepositoryService();
 
             BpmnModel bpmnModel = repositoryService.getBpmnModel(delegateTask.getProcessDefinitionId());
             if (bpmnModel != null) {
-                // 获取开始节点的formKey
+                // Get startnode formKey
                 for (org.flowable.bpmn.model.Process process : bpmnModel.getProcesses()) {
                     for (org.flowable.bpmn.model.FlowElement flowElement : process.getFlowElements()) {
                         if (flowElement instanceof org.flowable.bpmn.model.StartEvent) {
@@ -678,7 +679,7 @@ public class ApprovalNotificationListener implements TaskListener, ApplicationCo
     }
 
     /**
-     * 表单数据处理结果
+     * formdataProcess
      */
     @Data
     private static class FormDataResult {

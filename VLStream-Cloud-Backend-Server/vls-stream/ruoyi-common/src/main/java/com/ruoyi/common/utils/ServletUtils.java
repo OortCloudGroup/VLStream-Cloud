@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -30,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 客户端工具类
+ *
  *
  * @author ruoyi
  */
@@ -38,51 +39,51 @@ import java.util.Map;
 public class ServletUtils extends ServletUtil {
 
     /**
-     * 获取String参数
+     * Get Stringparameter
      */
     public static String getParameter(String name) {
         return getRequest().getParameter(name);
     }
 
     /**
-     * 获取String参数
+     * Get Stringparameter
      */
     public static String getParameter(String name, String defaultValue) {
         return Convert.toStr(getRequest().getParameter(name), defaultValue);
     }
 
     /**
-     * 获取Integer参数
+     * Get Integerparameter
      */
     public static Integer getParameterToInt(String name) {
         return Convert.toInt(getRequest().getParameter(name));
     }
 
     /**
-     * 获取Integer参数
+     * Get Integerparameter
      */
     public static Integer getParameterToInt(String name, Integer defaultValue) {
         return Convert.toInt(getRequest().getParameter(name), defaultValue);
     }
 
     /**
-     * 获取Boolean参数
+     * Get Booleanparameter
      */
     public static Boolean getParameterToBool(String name) {
         return Convert.toBool(getRequest().getParameter(name));
     }
 
     /**
-     * 获取Boolean参数
+     * Get Booleanparameter
      */
     public static Boolean getParameterToBool(String name, Boolean defaultValue) {
         return Convert.toBool(getRequest().getParameter(name), defaultValue);
     }
 
     /**
-     * 获得所有请求参数
+     * all parameter
      *
-     * @param request 请求对象{@link ServletRequest}
+     * @param request object{@link ServletRequest}
      * @return Map
      */
     public static Map<String, String[]> getParams(ServletRequest request) {
@@ -91,9 +92,9 @@ public class ServletUtils extends ServletUtil {
     }
 
     /**
-     * 获得所有请求参数
+     * all parameter
      *
-     * @param request 请求对象{@link ServletRequest}
+     * @param request object{@link ServletRequest}
      * @return Map
      */
     public static Map<String, String> getParamMap(ServletRequest request) {
@@ -105,21 +106,21 @@ public class ServletUtils extends ServletUtil {
     }
 
     /**
-     * 获取request
+     * Get request
      */
     public static HttpServletRequest getRequest() {
         return getRequestAttributes().getRequest();
     }
 
     /**
-     * 获取response
+     * Get response
      */
     public static HttpServletResponse getResponse() {
         return getRequestAttributes().getResponse();
     }
 
     /**
-     * 获取session
+     * Get session
      */
     public static HttpSession getSession() {
         return getRequest().getSession();
@@ -131,10 +132,10 @@ public class ServletUtils extends ServletUtil {
     }
 
     /**
-     * 将字符串渲染到客户端
      *
-     * @param response 渲染对象
-     * @param string   待渲染的字符串
+     *
+     * @param response object
+     * @param string
      */
     public static void renderString(HttpServletResponse response, String string) {
         try {
@@ -148,7 +149,7 @@ public class ServletUtils extends ServletUtil {
     }
 
     /**
-     * 是否是Ajax异步请求
+     * whether is Ajax
      *
      * @param request
      */
@@ -178,10 +179,10 @@ public class ServletUtils extends ServletUtil {
     }
 
     /**
-     * 内容编码
      *
-     * @param str 内容
-     * @return 编码后的内容
+     *
+     * @param str
+     * @return after
      */
     public static String urlEncode(String str) {
         try {
@@ -192,10 +193,10 @@ public class ServletUtils extends ServletUtil {
     }
 
     /**
-     * 内容解码
      *
-     * @param str 内容
-     * @return 解码后的内容
+     *
+     * @param str
+     * @return after
      */
     public static String urlDecode(String str) {
         try {

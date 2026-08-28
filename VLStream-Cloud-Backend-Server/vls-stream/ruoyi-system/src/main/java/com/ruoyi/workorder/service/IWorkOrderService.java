@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -21,29 +22,29 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 工单Service接口
+ * work orderServiceinterface
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-02
  */
 public interface IWorkOrderService extends IService<WorkOrder> {
 
     /**
-     * 查询工单
+     * Query work order
      */
     WorkOrderVo queryById(String id);
 
     /**
-     * 查询工单列表
+     * Query work order list
      */
     TableDataInfo<WorkOrderVo> queryPageList(WorkOrderBo bo, PageQuery pageQuery);
 
     /**
-     * 我的工单列表
+     * work order
      *
      * @param processQuery
      * @param workOrderBo
-     * @param pageQuery    分页参数
+     * @param pageQuery parameter
      * @param sysUser
      * @return
      */
@@ -52,83 +53,83 @@ public interface IWorkOrderService extends IService<WorkOrder> {
                                                           SysUser sysUser);
 
     /**
-     * 查询代办工单
+     * Query work order
      *
      * @param workOrderBo
-     * @param pageQuery   分页参数
+     * @param pageQuery parameter
      */
     TableDataInfo<WorkOrderVo> selectPageTodoWorkOrderList(ProcessQuery processQuery, WorkOrderBo workOrderBo,
                                                            PageQuery pageQuery,
                                                            SysUser sysUser);
 
     /**
-     * 查询已办任务列表
+     * Query already task list
      *
-     * @param pageQuery 分页参数
+     * @param pageQuery parameter
      */
     TableDataInfo<WorkOrderVo> selectPageFinishedWorkOrderList(ProcessQuery processQuery, WorkOrderBo workOrderBo,
                                                           PageQuery pageQuery,
                                                           SysUser sysUser);
 
     /**
-     * 查询工单列表
+     * Query work order list
      */
     List<WorkOrderVo> queryList(WorkOrderBo bo);
 
     /**
-     * 新增工单
+     * Add work order
      */
     WorkOrder insertByBo(WorkOrderBo bo, SysUser sysUser);
 
     /**
-     * 修改工单
+     * Update work order
      */
     Boolean updateByBo(WorkOrderBo bo);
 
     /**
-     * 更新工单状态
+     * new work order
      *
-     * @param task     任务列表（需确保非空且至少包含一个任务）
+     * @param task task ( non- null / empty to task)
      * @param assignId
-     * @return 是否更新成功
-     * @throws IllegalArgumentException 参数校验失败时抛出
+     * @return whether new successfully
+     * @throws IllegalArgumentException parameterValidate failed
      */
     boolean updateWorkOrderToPending(Task task, String status, String assignId);
 
     /**
-     * 工单结束更新状态
+     * work orderfinish new
      *
      * @param processInstanceId
      * @param assignId
-     * @return 是否更新成功
-     * @throws IllegalArgumentException 参数校验失败时抛出
+     * @return whether new successfully
+     * @throws IllegalArgumentException parameterValidate failed
      */
     boolean updateWorkOrderToPending(String  processInstanceId, String status, String assignId);
 
     ByteArrayOutputStream generatePdf(List<String > wordOrderIds,SysUser sysUser)throws IOException;
 
     /**
-     * 查询即时工单分页列表
+     * Query work order list
      */
     TableDataInfo<WorkOrderVo> queryImmediatePageList(WorkOrderBo bo, PageQuery pageQuery);
 
     /**
-     * 查询即时工单列表
+     * Query work order list
      */
     List<WorkOrderVo> queryImmediateList(WorkOrderBo bo);
 
     /**
-     * 查询循环工单分页列表
+     * Query loopwork order list
      */
     TableDataInfo<Object> queryLoopPageList(WorkOrderBo bo, PageQuery pageQuery,SysUser sysUser);
 
     /**
-     * 查询循环工单列表
+     * Query loopwork order list
      */
     List<WorkOrderVo> queryLoopList(WorkOrderBo bo);
 
     /**
-     * 校验并批量删除工单信息
+     * Validate Batch delete work orderinfo
      */
     Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid);
 

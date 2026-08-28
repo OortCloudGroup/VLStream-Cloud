@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { saveAs } from 'file-saver'
@@ -17,8 +22,8 @@ export const getWvpToken = () => {
     || getStoredToken()
 }
 
-// WVP 对 VLStream 联邦身份的校验必须使用换票后的本地令牌。
-// 平台原始 token 仍通过 accessToken 交给网关，二者不能混用。
+// WVP VLStream Validate after .
+// token accessToken , can .
 export const getVlstreamFederatedToken = () => sessionStorage.getItem('accessToken')
   || sessionStorage.getItem('token')
   || localStorage.getItem('accessToken')

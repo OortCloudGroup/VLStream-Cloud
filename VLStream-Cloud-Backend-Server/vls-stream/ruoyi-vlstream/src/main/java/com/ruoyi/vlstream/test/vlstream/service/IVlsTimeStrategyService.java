@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,47 +16,47 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.TimeStrategyVO;
 import java.util.List;
 
 /**
- * 时间策略表 服务类
+ * service
  *
  * @author Oort
  * @since 2025-12-23
  */
 public interface IVlsTimeStrategyService extends BaseService<TimeStrategy> {
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsTimeStrategy 查询参数
+	 * @param page parameter
+	 * @param vlsTimeStrategy Query parameter
 	 * @return IPage<VlsTimeStrategyVO>
 	 */
 	IPage<TimeStrategyVO> selectVlsTimeStrategyPage(IPage<TimeStrategyVO> page, TimeStrategyVO vlsTimeStrategy);
 
 	/**
-	 * 导出数据
+	 * Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsTimeStrategyExcel>
 	 */
 	List<VlsTimeStrategyExcel> exportVlsTimeStrategy(Wrapper<TimeStrategy> queryWrapper);
 
 	/**
-	 * 根据设备ID获取时间策略
-	 * @param deviceId 设备ID
-	 * @return 时间策略
+	 * deviceIDGet
+	 * @param deviceId deviceID
+	 * @return
 	 */
 	TimeStrategy getByDeviceId(String deviceId);
 
 	/**
-	 * 保存或更新时间策略
-	 * @param timeStrategy 时间策略
-	 * @return 是否成功
+	 * update time
+	 * @param timeStrategy
+	 * @return whether successfully
 	 */
 	boolean saveOrUpdateStrategy(TimeStrategy timeStrategy);
 
 	/**
-	 * 根据设备ID删除时间策略
-	 * @param deviceId 设备ID
-	 * @return 是否成功
+	 * deviceIDDelete
+	 * @param deviceId deviceID
+	 * @return whether successfully
 	 */
 	boolean deleteByDeviceId(String deviceId);
 

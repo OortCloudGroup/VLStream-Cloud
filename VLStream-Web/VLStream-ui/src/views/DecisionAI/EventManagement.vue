@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="event-management">
-    <!-- 详情页面视图 -->
+    <!-- page -->
     <div v-if="showDetailView" class="detail-view">
       <div class="detail-header">
         <div class="breadcrumb-nav">
@@ -11,11 +16,11 @@
       </div>
 
       <div class="detail-content">
-        <!-- 事件详情 -->
+        <!-- event -->
         <div class="detail-section">
           <h2 class="section-title">事件详情</h2>
 
-          <!-- 事件描述 -->
+          <!-- event -->
           <div class="detail-item">
             <div class="detail-icon">
               <el-icon>
@@ -45,7 +50,7 @@
             </div>
           </div>
 
-          <!-- 上报设备 -->
+          <!-- device -->
           <div class="detail-item">
             <div class="detail-icon">
               <el-icon>
@@ -85,7 +90,7 @@
             </div>
           </div>
 
-          <!-- 上报时间 -->
+          <!--  -->
           <div class="detail-item">
             <div class="detail-icon">
               <el-icon>
@@ -126,11 +131,11 @@
           </div>
         </div>
 
-        <!-- 事件反馈 -->
+        <!-- event -->
         <div class="feedback-section">
           <h2 class="section-title">事件反馈</h2>
 
-          <!-- 反馈描述 -->
+          <!--  -->
           <div class="detail-item">
             <div class="detail-icon">
               <el-icon>
@@ -154,7 +159,7 @@
             </div>
           </div>
 
-          <!-- 上传图像 -->
+          <!--  -->
           <div class="detail-item">
             <div class="detail-icon">
               <el-icon>
@@ -184,7 +189,7 @@
             </div>
           </div>
 
-          <!-- 事件状态 -->
+          <!-- event -->
           <div class="detail-item">
             <div class="detail-icon">
               <el-icon>
@@ -203,7 +208,7 @@
           </div>
         </div>
 
-        <!-- 操作按钮 -->
+        <!-- operationbutton -->
         <div class="action-buttons">
           <el-button type="primary" size="large" @click="handleSubmitFeedback" class="common_btn">
             确定
@@ -215,7 +220,7 @@
       </div>
     </div>
 
-    <!-- 列表页面视图 -->
+    <!-- page -->
     <div v-else class="list-view tenant_Page draHeaPB">
       <div class="tenant_content">
         <div class="tableTenBox flexRowAC">
@@ -350,43 +355,43 @@ const toolbarButtonList = computed(() => [
   { name: '导出', svg: 'export', clickFn: () => handleExportEvents() }
 ])
 
-// 当前激活的标签
+// current
 const activeTab = ref('maintenance')
 
-// 选中的行数据
+// in data
 const selectedRows = ref([])
 
-// 视图控制
+// control
 const showDetailView = ref(false)
 const selectedEvent = ref(null)
 
-// 反馈表单
+// form
 const feedbackForm = ref({
   description: '',
   uploadImage: '',
   status: '未完成'
 })
 
-// 搜索表单
+// form
 const searchForm = reactive({
   eventName: '',
   dateRange: []
 })
 
-// 分页配置
+// configuration
 const pagination = reactive({
   currentPage: 1,
   pageSize: 10,
   total: 0
 })
 
-// 加载态
+// Load
 const loading = ref(false)
 
-// 表格数据
+// tabledata
 const tableData = ref([])
 
-// 分页数据（后端已分页）
+// data ( after already )
 const paginatedData = computed(() => tableData.value)
 
 const statusLabelMap = {
@@ -463,7 +468,7 @@ const loadEvents = async () => {
   }
 }
 
-// 方法
+// method
 const handleSelectionChange = (selection) => {
   selectedRows.value = selection
 }
@@ -482,7 +487,7 @@ const handleReset = () => {
 
 const handleExportEvents = () => {
   ElMessage.success('正在导出事件列表...')
-  // 根据需要对接后端导出接口
+  // need to after Export interface
 }
 
 const handleDelete = async () => {
@@ -568,20 +573,20 @@ const handleDetail = async (row) => {
 
 const handleAssignExecutor = (row) => {
   ElMessage.info(`选择执行人: ${row.eventDesc}`)
-  // 实际项目中这里会打开执行人选择弹窗
+  // item in will Execute dialog
 }
 
 const handleTagMaintenance = () => {
   activeTab.value = 'maintenance'
   ElMessage.info('切换到标签维护')
-  // 实际项目中这里会跳转到标签维护页面
+  // item in will page
   // router.push('/tag-management')
 }
 
 const handleTagDevice = () => {
   activeTab.value = 'device'
   ElMessage.info('切换到标签设备')
-  // 实际项目中这里会跳转到标签设备页面
+  // item in will devicepage
 }
 
 const getStatusType = (status) => {
@@ -606,7 +611,7 @@ const handleCurrentChange = (val) => {
   loadEvents()
 }
 
-// 图片上传处理
+// Process
 const beforeUpload = (file) => {
   const isJPG = file.type === 'image/jpeg' || file.type === 'image/png'
   const isLt2M = file.size / 1024 / 1024 < 2
@@ -625,7 +630,7 @@ const handleUploadSuccess = (response, file) => {
   ElMessage.success('图片上传成功')
 }
 
-// 提交反馈 -> 使用状态更新接口
+// -> new interface
 const handleSubmitFeedback = async () => {
   if (!feedbackForm.value.description.trim()) {
     ElMessage.warning('请输入反馈描述')
@@ -671,9 +676,9 @@ const searchResetFn = (val, reset) => {
   handleAdvancedSearch(val || {})
 }
 
-// 高级搜索相关方法
+// related method
 const handleAdvancedSearch = (searchData) => {
-  // 更新搜索表单
+  // new form
   if (searchData.keyword) {
     searchForm.eventName = searchData.keyword
   }
@@ -754,7 +759,7 @@ onMounted(() => {
 .paginationBox { justify-content: center; height: 100px; }
 .operateAppBox { justify-content: flex-end; gap: 2px; }
 
-/* 详情视图样式 */
+/*  */
 .detail-view {
   flex: 1;
   margin: 0;
@@ -929,7 +934,7 @@ onMounted(() => {
   font-size: 12px;
 }
 
-/* 反馈表单样式 */
+/* form */
 .feedback-textarea {
   width: 530px;
 }
@@ -949,7 +954,7 @@ onMounted(() => {
   border-color: #1A53FF;
 }
 
-/* 上传区域样式 */
+/*  */
 .upload-area {
   width: 120px;
   height: 80px;
@@ -995,7 +1000,7 @@ onMounted(() => {
   object-fit: cover;
 }
 
-/* 状态单选组样式 */
+/*  */
 .status-radio-group {
   display: flex;
   gap: 24px;
@@ -1019,7 +1024,7 @@ onMounted(() => {
   color: #1A53FF;
 }
 
-/* 操作按钮样式 */
+/* operationbutton */
 .action-buttons {
   display: flex;
   justify-content: flex-start;
@@ -1047,7 +1052,7 @@ onMounted(() => {
   border-color: #3d70ff;
 }
 
-/* 列表视图 */
+/*  */
 .list-view {
   height: 100%;
   display: flex;
@@ -1055,7 +1060,7 @@ onMounted(() => {
   gap: 0;
 }
 
-/* 执行人信息 */
+/* Execute info */
 .executor-info {
   display: flex;
   align-items: center;
@@ -1090,12 +1095,12 @@ onMounted(() => {
   font-size: 12px;
 }
 
-/* 标签样式 */
+/*  */
 :deep(.el-tag) {
   border-radius: 4px;
 }
 
-/* 主题色更新 */
+/* main new */
 :deep(.el-button--primary) {
   background-color: #1A53FF;
   border-color: #1A53FF;

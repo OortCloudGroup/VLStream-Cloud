@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 流程表单
+ * workflowform
  *
  * @author KonBAI
  * @createTime 2022/3/7 22:07
@@ -47,7 +47,7 @@ public class WfFormController extends BaseController {
     private final IWfDeployFormService deployFormService;
 
     /**
-     * 查询流程表单列表
+     * Query workflowform list
      */
     @SaCheckPermission("workflow:form:list")
     @GetMapping("/list")
@@ -56,7 +56,7 @@ public class WfFormController extends BaseController {
     }
 
     /**
-     * 导出流程表单列表
+     * Export workflowform
      */
     @SaCheckPermission("workflow:form:export")
     @Log(title = "流程表单", businessType = BusinessType.EXPORT)
@@ -67,9 +67,9 @@ public class WfFormController extends BaseController {
     }
 
     /**
-     * 获取流程表单详细信息
+     * Get workflowform info
      *
-     * @param formId 主键
+     * @param formId primary key
      */
     @SaCheckPermission("workflow:form:getInfo")
     @GetMapping(value = "/{formId}")
@@ -78,7 +78,7 @@ public class WfFormController extends BaseController {
     }
 
     /**
-     * 新增流程表单
+     * Add workflowform
      */
     @SaCheckPermission("workflow:form:add")
     @Log(title = "流程表单", businessType = BusinessType.INSERT)
@@ -88,7 +88,7 @@ public class WfFormController extends BaseController {
     }
 
     /**
-     * 修改流程表单
+     * Update workflowform
      */
     @SaCheckPermission("workflow:form:edit")
     @Log(title = "流程表单", businessType = BusinessType.UPDATE)
@@ -98,9 +98,9 @@ public class WfFormController extends BaseController {
     }
 
     /**
-     * 删除流程表单
+     * Delete workflowform
      *
-     * @param formIds 主键串
+     * @param formIds primary key
      */
     @SaCheckPermission("workflow:form:remove")
     @Log(title = "流程表单", businessType = BusinessType.DELETE)
@@ -115,7 +115,7 @@ public class WfFormController extends BaseController {
 
 
     /**
-     * 新增流程实例关联表单
+     * Add workflow instance form
      */
     @Log(title = "流程表单", businessType = BusinessType.INSERT)
     @SaCheckPermission("workflow:form:addDeployForm")

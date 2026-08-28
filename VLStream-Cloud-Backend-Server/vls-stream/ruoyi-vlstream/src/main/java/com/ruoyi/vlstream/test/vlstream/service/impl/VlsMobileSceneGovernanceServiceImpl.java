@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -34,7 +35,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 移动端场景治理主任务表 服务实现类
+ * main task service
  */
 @Service
 @RequiredArgsConstructor

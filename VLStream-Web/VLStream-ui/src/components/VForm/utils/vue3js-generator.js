@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import {
   buildActiveTabs,
   buildDefaultValueListFn,
@@ -22,7 +27,7 @@ export const genVue3JS = function(formConfig, widgetList) {
 
   const v3JSTemplate =
 `  import { defineComponent, toRefs, reactive, getCurrentInstance } from 'vue'
-  
+
   export default defineComponent({
     components: {},
     props: {},
@@ -31,32 +36,32 @@ export const genVue3JS = function(formConfig, widgetList) {
         ${formConfig.modelName}: {
           ${defaultValueList.join('\n')}
         },
-        
+
         ${formConfig.rulesName}: {
           ${rulesList.join('\n')}
         },
-        
+
         ${activeTabs.join('\n')}
-        
+
         ${fieldOptions.join('\n')}
-        
+
         ${uploadData.join('\n')}
       })
-    
+
       const instance = getCurrentInstance()
-      
+
       const submitForm = () => {
         instance.proxy.$refs['vForm'].validate(valid => {
           if (!valid) return
-          
-          //TODO: 提交表单
+
+          // TODO: form
         })
       }
-      
+
       const resetForm = () => {
         instance.proxy.$refs['vForm'].resetFields()
       }
-      
+
       return {
         ...toRefs(state),
         submitForm,

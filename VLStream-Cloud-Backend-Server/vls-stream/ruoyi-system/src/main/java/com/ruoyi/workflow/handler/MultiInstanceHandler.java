@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 多实例处理类
+ * instanceProcess
  *
  * @author KonBAI
  */
@@ -48,26 +48,26 @@ public class MultiInstanceHandler {
         String dataType = userTask.getAttributeValue(ProcessConstants.NAMASPASE, ProcessConstants.PROCESS_CUSTOM_DATA_TYPE);
         if (CollUtil.isNotEmpty(userTask.getCandidateUsers())
             && (ObjectUtil.isEmpty(dataType) || "USERS".equals(dataType))) {
-            // 添加候选用户id
+            // user ID
             candidateUserIds.addAll(userTask.getCandidateUsers());
         } else if (CollUtil.isNotEmpty(userTask.getCandidateGroups())) {
-            // 获取组的ID，角色ID集合或部门ID集合
+            // Get ID, role IDcollection department IDcollection
             List<String > groups = userTask.getCandidateGroups().stream()
                 .map(item -> item.substring(4))
                 .collect(Collectors.toList());
             List<String> userIds = new ArrayList<>();
             if ("ROLES".equals(dataType)) {
-                // 通过角色id，获取所有用户id集合
+                // roleid, Get all user IDcollection
                 LambdaQueryWrapper<SysUserRoleView> lqw = Wrappers.lambdaQuery(SysUserRoleView.class).
                                                                   select(SysUserRoleView::getUserId).
                                                                   in(SysUserRoleView::getRoleId, groups);
                 userIds = SimpleQuery.list(lqw, SysUserRoleView::getUserId);
             } else if ("DEPTS".equals(dataType)) {
-                // 通过部门id，获取所有用户id集合
+                // department ID, Get all user IDcollection
                 LambdaQueryWrapper<SysUser> lqw = Wrappers.lambdaQuery(SysUser.class).select(SysUser::getUserId).in(SysUser::getDeptId, groups);
                 userIds = SimpleQuery.list(lqw, SysUser::getUserId);
             }
-            // 添加候选用户id
+            // user ID
             userIds.forEach(id -> candidateUserIds.add(String.valueOf(id)));
         }
         return candidateUserIds;

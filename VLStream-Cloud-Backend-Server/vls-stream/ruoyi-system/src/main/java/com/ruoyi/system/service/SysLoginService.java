@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * 登录校验方法
+ * Validate method
  *
  * @author Lion Li
  */
@@ -62,25 +62,25 @@ public class SysLoginService {
     private Integer lockTime;
 
     /**
-     * 登录验证
      *
-     * @param username 用户名
-     * @param password 密码
-     * @param code     验证码
-     * @param uuid     唯一标识
-     * @return 结果
+     *
+     * @param username user
+     * @param password
+     * @param code
+     * @param uuid
+     * @return
      */
     public String login(String username, String password, String code, String uuid) {
         boolean captchaEnabled = configService.selectCaptchaEnabled();
-        // 验证码开关
+        //
         if (captchaEnabled) {
             validateCaptcha(username, code, uuid);
         }
         SysUser user = loadUserByUsername(username);
         checkLogin(LoginType.PASSWORD, username, () -> !BCrypt.checkpw(password, user.getPassword()));
-        // 此处可根据登录用户的数据不同 自行创建 loginUser
+        // user data loginUser
         LoginUser loginUser = buildLoginUser(user);
-        // 生成token
+        // Generate token
         LoginHelper.loginByDevice(loginUser, DeviceType.PC);
         recordLogininfor(username, Constants.LOGIN_SUCCESS, MessageUtils.message("user.login.success"));
         recordLoginInfo(user.getUserId(), username);
@@ -88,8 +88,8 @@ public class SysLoginService {
     }
 
     /**
-     * 为已经通过统一平台校验的影子用户创建本地 Sa-Token 会话。
-     * 此入口不接受密码，调用方必须先完成平台 token 与租户归属校验。
+     * to already Validate sub user Sa-Token will .
+     * , token and Validate .
      */
     public String loginPlatformUser(SysUser user) {
         if (ObjectUtil.isNull(user)) {
@@ -106,13 +106,13 @@ public class SysLoginService {
     }
 
     public String smsLogin(String phonenumber, String smsCode) {
-        // 通过手机号查找用户
+        // find user
         SysUser user = loadUserByPhonenumber(phonenumber);
 
         checkLogin(LoginType.SMS, user.getUserName(), () -> !validateSmsCode(phonenumber, smsCode));
-        // 此处可根据登录用户的数据不同 自行创建 loginUser
+        // user data loginUser
         LoginUser loginUser = buildLoginUser(user);
-        // 生成token
+        // Generate token
         LoginHelper.loginByDevice(loginUser, DeviceType.APP);
 
         recordLogininfor(user.getUserName(), Constants.LOGIN_SUCCESS, MessageUtils.message("user.login.success"));
@@ -121,13 +121,13 @@ public class SysLoginService {
     }
 
     public String emailLogin(String email, String emailCode) {
-        // 通过手机号查找用户
+        // find user
         SysUser user = loadUserByEmail(email);
 
         checkLogin(LoginType.EMAIL, user.getUserName(), () -> !validateEmailCode(email, emailCode));
-        // 此处可根据登录用户的数据不同 自行创建 loginUser
+        // user data loginUser
         LoginUser loginUser = buildLoginUser(user);
-        // 生成token
+        // Generate token
         LoginHelper.loginByDevice(loginUser, DeviceType.APP);
 
         recordLogininfor(user.getUserName(), Constants.LOGIN_SUCCESS, MessageUtils.message("user.login.success"));
@@ -136,20 +136,20 @@ public class SysLoginService {
     }
 
     public String xcxLogin(String xcxCode) {
-        // xcxCode 为 小程序调用 wx.login 授权后获取
-        // todo 以下自行实现
-        // 校验 appid + appsrcret + xcxCode 调用登录凭证校验接口 获取 session_key 与 openid
+        // xcxCode to wx.login afterGet
+        // todo
+        // Validate appid + appsrcret + xcxCode Validate interface Get session_key and openid
         String openid = "";
         SysUser user = loadUserByOpenid(openid);
 
-        // 此处可根据登录用户的数据不同 自行创建 loginUser
+        // user data loginUser
         XcxLoginUser loginUser = new XcxLoginUser();
         loginUser.setUserId(user.getUserId());
         loginUser.setTenantId(user.getTenantId());
         loginUser.setUsername(user.getUserName());
         loginUser.setUserType(user.getUserType());
         loginUser.setOpenid(openid);
-        // 生成token
+        // Generate token
         LoginHelper.loginByDevice(loginUser, DeviceType.XCX);
 
         recordLogininfor(user.getUserName(), Constants.LOGIN_SUCCESS, MessageUtils.message("user.login.success"));
@@ -158,7 +158,7 @@ public class SysLoginService {
     }
 
     /**
-     * 退出登录
+     * exit
      */
     public void logout() {
         try {
@@ -169,7 +169,7 @@ public class SysLoginService {
         }
     }
     /**
-     * 退出登录
+     * exit
      */
     public void logout(String token) {
         try {
@@ -181,11 +181,11 @@ public class SysLoginService {
     }
 
     /**
-     * 记录登录信息
+     * record info
      *
-     * @param username 用户名
-     * @param status   状态
-     * @param message  消息内容
+     * @param username user
+     * @param status
+     * @param message
      */
     private void recordLogininfor(String username, String status, String message) {
         LogininforEvent logininforEvent = new LogininforEvent();
@@ -197,7 +197,7 @@ public class SysLoginService {
     }
 
     /**
-     * 校验短信验证码
+     * Validate
      */
     private boolean validateSmsCode(String phonenumber, String smsCode) {
         String code = RedisUtils.getCacheObject(CacheConstants.CAPTCHA_CODE_KEY + phonenumber);
@@ -209,7 +209,7 @@ public class SysLoginService {
     }
 
     /**
-     * 校验邮箱验证码
+     * Validate
      */
     private boolean validateEmailCode(String email, String emailCode) {
         String code = RedisUtils.getCacheObject(CacheConstants.CAPTCHA_CODE_KEY + email);
@@ -221,11 +221,11 @@ public class SysLoginService {
     }
 
     /**
-     * 校验验证码
+     * Validate
      *
-     * @param username 用户名
-     * @param code     验证码
-     * @param uuid     唯一标识
+     * @param username user
+     * @param code
+     * @param uuid
      */
     public void validateCaptcha(String username, String code, String uuid) {
         String verifyKey = CacheConstants.CAPTCHA_CODE_KEY + StringUtils.defaultString(uuid, "");
@@ -284,21 +284,21 @@ public class SysLoginService {
     }
 
     private SysUser loadUserByOpenid(String openid) {
-        // 使用 openid 查询绑定用户 如未绑定用户 则根据业务自行处理 例如 创建默认用户
-        // todo 自行实现 userService.selectUserByOpenid(openid);
+        // openid Query user not user Process user
+        // todo userService.selectUserByOpenid(openid);
         SysUser user = new SysUser();
         if (ObjectUtil.isNull(user)) {
             log.info("登录用户：{} 不存在.", openid);
-            // todo 用户不存在 业务逻辑自行实现
+            // todo user in
         } else if (isLoginBlockedStatus(user.getStatus())) {
             log.info("登录用户：{} 已被停用.", openid);
-            // todo 用户已被停用 业务逻辑自行实现
+            // todo user already
         }
         return user;
     }
 
     /**
-     * 构建登录用户
+     * Build user
      */
     private LoginUser buildLoginUser(SysUser user) {
         LoginUser loginUser = new LoginUser();
@@ -325,9 +325,9 @@ public class SysLoginService {
     }
 
     /**
-     * 记录登录信息
+     * record info
      *
-     * @param userId 用户ID
+     * @param userId user ID
      */
     public void recordLoginInfo(String userId, String username) {
         SysUser sysUser = new SysUser();
@@ -343,37 +343,37 @@ public class SysLoginService {
     }
 
     /**
-     * 登录校验
+     * Validate
      */
     private void checkLogin(LoginType loginType, String username, Supplier<Boolean> supplier) {
         String errorKey = CacheConstants.PWD_ERR_CNT_KEY + username;
         String loginFail = Constants.LOGIN_FAIL;
 
-        // 获取用户登录错误次数(可自定义限制策略 例如: key + username + ip)
+        // Get user ( Custom : key + username + ip)
         Integer errorNumber = RedisUtils.getCacheObject(errorKey);
-        // 锁定时间内登录 则踢出
+        //
         if (ObjectUtil.isNotNull(errorNumber) && errorNumber.equals(maxRetryCount)) {
             recordLogininfor(username, loginFail, MessageUtils.message(loginType.getRetryLimitExceed(), maxRetryCount, lockTime));
             throw new UserException(loginType.getRetryLimitExceed(), maxRetryCount, lockTime);
         }
 
         if (supplier.get()) {
-            // 是否第一次
+            // whether
             errorNumber = ObjectUtil.isNull(errorNumber) ? 1 : errorNumber + 1;
-            // 达到规定错误次数 则锁定登录
+            //
             if (errorNumber.equals(maxRetryCount)) {
                 RedisUtils.setCacheObject(errorKey, errorNumber, Duration.ofMinutes(lockTime));
                 recordLogininfor(username, loginFail, MessageUtils.message(loginType.getRetryLimitExceed(), maxRetryCount, lockTime));
                 throw new UserException(loginType.getRetryLimitExceed(), maxRetryCount, lockTime);
             } else {
-                // 未达到规定错误次数 则递增
+                // not
                 RedisUtils.setCacheObject(errorKey, errorNumber);
                 recordLogininfor(username, loginFail, MessageUtils.message(loginType.getRetryLimitCount(), errorNumber));
                 throw new UserException(loginType.getRetryLimitCount(), errorNumber);
             }
         }
 
-        // 登录成功 清空错误次数
+        // successfully null / empty
         RedisUtils.deleteObject(errorKey);
     }
 }

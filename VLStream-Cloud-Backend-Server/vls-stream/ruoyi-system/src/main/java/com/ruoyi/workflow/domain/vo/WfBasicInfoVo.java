@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -12,23 +13,23 @@ import java.util.Date;
 @Data
 public class WfBasicInfoVo {
     /**
-     * 流程分类
+     * workflow
      */
     private String processCategory;
     /**
-     * 流程名称
+     * workflow
      */
     private String processName;
     /**
-     * 流程编号
+     * workflow
      */
     private String processId;
     /**
-     * 提交时间
+     *
      */
     private Date submissionTime;
     /**
-     * 当前任务定义id
+     * current task id
      */
     private String taskDefId;
 }

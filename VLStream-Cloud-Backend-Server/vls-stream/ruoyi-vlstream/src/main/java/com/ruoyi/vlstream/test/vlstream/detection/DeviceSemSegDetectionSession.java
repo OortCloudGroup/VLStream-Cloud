@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -37,7 +38,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * 单设备语义分割会话：周期性拉取图片（URL/本地路径）并执行语义分割，在产生结果时输出分割图并创建事件。
+ * device will : (URL/ ) Execute , in event.
  */
 @Slf4j
 public class DeviceSemSegDetectionSession implements DeviceDetectionSession {

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -9,7 +10,7 @@ import lombok.Builder;
 import lombok.Data;
 
 /**
- * 上传返回体
+ *
  *
  * @author Lion Li
  */
@@ -18,12 +19,12 @@ import lombok.Data;
 public class UploadResult {
 
     /**
-     * 文件路径
+     *
      */
     private String url;
 
     /**
-     * 文件名
+     *
      */
     private String filename;
 }

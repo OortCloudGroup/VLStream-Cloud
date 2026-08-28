@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -24,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 容器实例表 服务实现类
+ * instance service
  *
  * @author Oort
  * @since 2025-12-23
@@ -57,7 +58,7 @@ public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContaine
 			throw new RuntimeException("容器实例不存在，ID: " + id);
 		}
 
-		// 检查是否可以删除
+		// whether Delete
 		if ("running".equals(instance.getInstanceStatus()) || "starting".equals(instance.getInstanceStatus())) {
 			throw new RuntimeException("容器实例正在运行中，无法删除");
 		}
@@ -70,7 +71,7 @@ public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContaine
 	public boolean deleteContainerInstanceBatch(List<Long> ids) {
 		log.info("批量删除容器实例，数量: {}", ids.size());
 
-		// 检查是否有运行中的实例
+		// whether in instance
 		List<ContainerInstance> instances = listByIds(ids);
 		for (ContainerInstance instance : instances) {
 			if ("running".equals(instance.getInstanceStatus()) || "starting".equals(instance.getInstanceStatus())) {
@@ -110,10 +111,10 @@ public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContaine
 			throw new RuntimeException("容器实例已在运行中");
 		}
 
-		// 这里应该调用Docker API启动容器
-		// TODO: 集成Docker API
+		// Docker API
+		// TODO: Docker API
 
-		// 更新状态
+		// new
 		return updateInstanceStatus(id, "starting", "unknown", containerId, new Date(), null);
 	}
 
@@ -131,10 +132,10 @@ public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContaine
 			throw new RuntimeException("容器实例已停止");
 		}
 
-		// 这里应该调用Docker API停止容器
-		// TODO: 集成Docker API
+		// Docker API
+		// TODO: Docker API
 
-		// 更新状态
+		// new
 		return updateInstanceStatus(id, "stopping", "unknown", instance.getContainerId(),
 			instance.getStartTime(), new Date());
 	}
@@ -149,13 +150,13 @@ public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContaine
 			throw new RuntimeException("容器实例不存在，ID: " + id);
 		}
 
-		// 这里应该调用Docker API重启容器
-		// TODO: 集成Docker API
+		// Docker API
+		// TODO: Docker API
 
-		// 增加重启次数
+		//
 		increaseRestartCount(id);
 
-		// 更新状态
+		// new
 		return updateInstanceStatus(id, "starting", "unknown", instance.getContainerId(),
 			new Date(), null);
 	}

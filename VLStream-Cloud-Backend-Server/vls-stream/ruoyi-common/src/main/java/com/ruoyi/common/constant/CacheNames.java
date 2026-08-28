@@ -7,72 +7,72 @@
 package com.ruoyi.common.constant;
 
 /**
- * 缓存组名称常量
+ *
  * <p>
- * key 格式为 cacheNames#ttl#maxIdleTime#maxSize
+ * key to cacheNames#ttl#maxIdleTime#maxSize
  * <p>
- * ttl 过期时间 如果设置为0则不过期 默认为0
- * maxIdleTime 最大空闲时间 根据LRU算法清理空闲数据 如果设置为0则不检测 默认为0
- * maxSize 组最大长度 根据LRU算法清理溢出数据 如果设置为0则无限长 默认为0
+ * ttl if Set to 0 to 0
+ * maxIdleTime null / empty LRUalgorithm null / empty data if Set to 0 to 0
+ * maxSize LRUalgorithm data if Set to 0 to 0
  * <p>
- * 例子: test#60s、test#0#60s、test#0#1m#1000、test#1h#0#500
+ * sub : test#60s、test#0#60s、test#0#1m#1000、test#1h#0#500
  *
  * @author Lion Li
  */
 public interface CacheNames {
 
     /**
-     * 演示案例
+     *
      */
     String DEMO_CACHE = "demo:cache#60s#10m#20";
 
     /**
-     * 系统配置
+     * configuration
      */
     String SYS_CONFIG = "sys_config";
 
     /**
-     * 数据字典
+     * datadict
      */
     String SYS_DICT = "sys_dict";
 
     /**
-     * 用户账户
+     * user
      */
     String SYS_USER_NAME = "sys_user_name#30d";
 
     /**
-     * 用户昵称
+     * user
      */
     String SYS_NICK_NAME = "sys_nick_name#30d";
 
     /**
-     * 部门
+     * department
      */
     String SYS_DEPT = "sys_dept#30d";
 
     /**
-     * OSS内容
+     * OSS
      */
     String SYS_OSS = "sys_oss#30d";
 
     /**
-     * OSS配置
+     * OSSconfiguration
      */
     String SYS_OSS_CONFIG = "sys_oss_config";
 
     /**
-     * 在线用户
+     * in user
      */
     String ONLINE_TOKEN = "online_tokens";
 
     /**
-     * 全局 redis key (业务无关的key)
+     * full redis key ( key)
      */
     String GLOBAL_REDIS_KEY = "global:";
 
     /**
-     * 数据权限 redis key
+     * data redis key
      */
     String DATA_SCOPE_AUTH_CODE_KEY = GLOBAL_REDIS_KEY + "data_scope_codes:";
 

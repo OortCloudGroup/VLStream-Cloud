@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -24,7 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * 参数配置 信息操作处理
+ * parameterconfiguration infooperationProcess
  *
  * @author Lion Li
  */
@@ -37,7 +38,7 @@ public class SysConfigController extends BaseController {
     private final ISysConfigService configService;
 
     /**
-     * 获取参数配置列表
+     * Get parameterconfiguration
      */
     @SaCheckPermission("system:config:list")
     @GetMapping("/list")
@@ -46,7 +47,7 @@ public class SysConfigController extends BaseController {
     }
 
     /**
-     * 导出参数配置列表
+     * Export parameterconfiguration
      */
     @Log(title = "参数管理", businessType = BusinessType.EXPORT)
     @SaCheckPermission("system:config:export")
@@ -57,9 +58,9 @@ public class SysConfigController extends BaseController {
     }
 
     /**
-     * 根据参数编号获取详细信息
+     * parameter Get info
      *
-     * @param configId 参数ID
+     * @param configId parameterID
      */
     @SaCheckPermission("system:config:query")
     @GetMapping(value = "/{configId}")
@@ -68,9 +69,9 @@ public class SysConfigController extends BaseController {
     }
 
     /**
-     * 根据参数键名查询参数值
+     * parameter keyQuery parameter value
      *
-     * @param configKey 参数Key
+     * @param configKey parameterKey
      */
     @GetMapping(value = "/configKey/{configKey}")
     public R<Void> getConfigKey(@PathVariable String configKey) {
@@ -78,7 +79,7 @@ public class SysConfigController extends BaseController {
     }
 
     /**
-     * 新增参数配置
+     * Add parameterconfiguration
      */
     @SaCheckPermission("system:config:add")
     @Log(title = "参数管理", businessType = BusinessType.INSERT)
@@ -92,7 +93,7 @@ public class SysConfigController extends BaseController {
     }
 
     /**
-     * 修改参数配置
+     * Update parameterconfiguration
      */
     @SaCheckPermission("system:config:edit")
     @Log(title = "参数管理", businessType = BusinessType.UPDATE)
@@ -106,7 +107,7 @@ public class SysConfigController extends BaseController {
     }
 
     /**
-     * 根据参数键名修改参数配置
+     * parameter keyUpdate parameterconfiguration
      */
     @SaCheckPermission("system:config:edit")
     @Log(title = "参数管理", businessType = BusinessType.UPDATE)
@@ -117,9 +118,9 @@ public class SysConfigController extends BaseController {
     }
 
     /**
-     * 删除参数配置
+     * Delete parameterconfiguration
      *
-     * @param configIds 参数ID串
+     * @param configIds parameterID
      */
     @SaCheckPermission("system:config:remove")
     @Log(title = "参数管理", businessType = BusinessType.DELETE)
@@ -130,7 +131,7 @@ public class SysConfigController extends BaseController {
     }
 
     /**
-     * 刷新参数缓存
+     * new parameter
      */
     @SaCheckPermission("system:config:remove")
     @Log(title = "参数管理", businessType = BusinessType.CLEAN)

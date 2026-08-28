@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,7 +18,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 算法模型表 实体类
+ * algorithmmodel
  *
  * @author Oort
  * @since 2025-12-23
@@ -30,84 +31,84 @@ public class AlgorithmModel extends TenantEntity {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 模型名称
+	 * model
 	 */
 	@Schema(description = "模型名称")
 	private String modelName;
 	/**
-	 * 算法ID
+	 * algorithmID
 	 */
 	@Schema(description = "算法ID")
 	@JsonSerialize(using = ToStringSerializer.class)
 	private Long algorithmId;
 	/**
-	 * 训练任务ID
+	 * trainingtaskID
 	 */
 	@Schema(description = "训练任务ID")
 	@JsonSerialize(using = ToStringSerializer.class)
 	private Long trainingId;
 	/**
-	 * 模型版本
+	 * model
 	 */
 	@Schema(description = "模型版本")
 	private Integer version;
 	/**
-	 * 模型格式：ONNX,PyTorch,TensorFlow
+	 * model : ONNX,PyTorch,TensorFlow
 	 */
 	@Schema(description = "模型格式：ONNX,PyTorch,TensorFlow")
 	private String modelFormat;
 	/**
-	 * 模型大小
+	 * model
 	 */
 	@Schema(description = "模型大小")
 	private String modelSize;
 	/**
-	 * 模型文件路径
+	 * model
 	 */
 	@Schema(description = "模型文件路径")
 	private String modelPath;
 	/**
-	 * onnx模型文件路径
+	 * onnxmodel
 	 */
 	@Schema(description = "onnx模型文件路径")
 	private String onnxModelPath;
 	/**
-	 * rknn模型文件路径
+	 * rknnmodel
 	 */
 	@Schema(description = "rknn模型文件路径")
 	private String rknnModelPath;
 	/**
-	 * int8 rknn模型输出路径
+	 * int8 rknnmodel
 	 */
 	@Schema(description = "int8 rknn模型输出路径")
 	private String int8RknnModelOutputPath;
 	/**
-	 * Hi3519DV500 SVP ACL OM模型输出路径
+	 * Hi3519DV500 SVP ACL OMmodel
 	 */
 	@Schema(description = "Hi3519DV500 OM模型输出路径")
 	private String omModelOutputPath;
 	/**
-	 * 模型准确率
+	 * model
 	 */
 	@Schema(description = "模型准确率")
 	private BigDecimal accuracy;
 	/**
-	 * 模型描述
+	 * model
 	 */
 	@Schema(description = "模型描述")
 	private String description;
 	/**
-	 * 下载次数
+	 *
 	 */
 	@Schema(description = "下载次数")
 	private Integer downloadCount;
 	/**
-	 * 部署次数
+	 *
 	 */
 	@Schema(description = "部署次数")
 	private Integer deployCount;
 	/**
-	 * 发布时间
+	 *
 	 */
 	@Schema(description = "发布时间")
 	private LocalDateTime publishTime;

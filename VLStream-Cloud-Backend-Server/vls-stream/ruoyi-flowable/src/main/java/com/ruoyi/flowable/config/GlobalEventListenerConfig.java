@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -14,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ContextRefreshedEvent;
 
 /**
- * flowable全局监听配置
+ * flowable full configuration
  *
  * @author ssc
  */
@@ -27,7 +28,7 @@ public class GlobalEventListenerConfig implements ApplicationListener<ContextRef
 
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
-		// 流程正常结束
+		// workflow finish
 		runtimeService.addEventListener(globalEventListener, FlowableEngineEventType.PROCESS_COMPLETED);
 	}
 }

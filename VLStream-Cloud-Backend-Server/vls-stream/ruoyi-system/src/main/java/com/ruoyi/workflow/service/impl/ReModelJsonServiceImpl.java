@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -27,9 +28,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 流程图JSONService业务层处理
+ * workflow JSONService layer Process
  *
- * @author 雷超群
+ * @author
  * @date 2024-11-02
  */
 @RequiredArgsConstructor
@@ -39,7 +40,7 @@ public class ReModelJsonServiceImpl extends ServiceImpl<ReModelJsonMapper, ReMod
     private final ReModelJsonMapper baseMapper;
 
     /**
-     * 查询流程图JSON
+     * Query workflow JSON
      */
     @Override
     public ReModelJsonVo queryById(String modelId){
@@ -47,7 +48,7 @@ public class ReModelJsonServiceImpl extends ServiceImpl<ReModelJsonMapper, ReMod
     }
 
     /**
-     * 查询流程图JSON列表
+     * Query workflow JSON list
      */
     @Override
     public TableDataInfo<ReModelJsonVo> queryPageList(ReModeJsonBo bo, PageQuery pageQuery) {
@@ -57,7 +58,7 @@ public class ReModelJsonServiceImpl extends ServiceImpl<ReModelJsonMapper, ReMod
     }
 
     /**
-     * 查询流程图JSON列表
+     * Query workflow JSON list
      */
     @Override
     public List<ReModelJsonVo> queryList(ReModeJsonBo bo) {
@@ -75,7 +76,7 @@ public class ReModelJsonServiceImpl extends ServiceImpl<ReModelJsonMapper, ReMod
     }
 
     /**
-     * 新增流程图JSON
+     * Add workflow JSON
      */
     @Override
     public Boolean insertByBo(ReModeJsonBo bo) {
@@ -91,7 +92,7 @@ public class ReModelJsonServiceImpl extends ServiceImpl<ReModelJsonMapper, ReMod
     }
 
     /**
-     * 修改流程图JSON
+     * Update workflow JSON
      */
     @Override
     public Boolean updateByBo(ReModeJsonBo bo) {
@@ -101,19 +102,19 @@ public class ReModelJsonServiceImpl extends ServiceImpl<ReModelJsonMapper, ReMod
     }
 
     /**
-     * 保存前的数据校验
+     * before dataValidate
      */
     private void validEntityBeforeSave(ReModelJson entity){
-        //TODO 做一些数据校验,如唯一约束
+        // TODO dataValidate ,
     }
 
     /**
-     * 批量删除流程图JSON
+     * Batch delete workflow JSON
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid) {
         if(isValid){
-            //TODO 做一些业务上的校验,判断是否需要校验
+            // TODO Validate ,Check whether need to Validate
         }
         return baseMapper.deleteBatchIds(ids) > 0;
     }

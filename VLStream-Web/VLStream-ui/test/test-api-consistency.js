@@ -1,7 +1,12 @@
-// 测试API调用一致性
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// API
 console.log('🔧 测试API调用一致性...')
 
-// 模拟API配置
+// APIconfiguration
 const testApiConfig = {
   baseURL: 'http://oort.oortcloudsmart.com:21410/bus/apaas-sso',
   headers: {
@@ -12,12 +17,12 @@ const testApiConfig = {
   }
 }
 
-// 测试verifyToken API
+// verifyToken API
 async function testVerifyToken() {
   console.log('🧪 测试verifyToken API...')
-  
+
   const testToken = '848b2618754e44be9b98d7fa55996f0c'
-  
+
   try {
     console.log('📡 发送verifyToken请求...')
     console.log('- URL:', `${testApiConfig.baseURL}/sso/v1/verifyToken`)
@@ -30,7 +35,7 @@ async function testVerifyToken() {
       'accesstoken': testToken
     })
     console.log('- Body:', { accessToken: testToken })
-    
+
     const response = await fetch(`${testApiConfig.baseURL}/sso/v1/verifyToken`, {
       method: 'POST',
       headers: {
@@ -42,11 +47,11 @@ async function testVerifyToken() {
       },
       body: JSON.stringify({ accessToken: testToken })
     })
-    
+
     console.log('📥 收到响应:')
     console.log('- Status:', response.status)
     console.log('- StatusText:', response.statusText)
-    
+
     if (response.ok) {
       const result = await response.json()
       console.log('✅ verifyToken响应成功:', result)
@@ -63,12 +68,12 @@ async function testVerifyToken() {
   }
 }
 
-// 测试getUserTenants API（修复前）
+// getUserTenants API ( before)
 async function testGetUserTenantsBefore() {
   console.log('\n🧪 测试getUserTenants API（修复前 - 空请求体）...')
-  
+
   const testToken = '848b2618754e44be9b98d7fa55996f0c'
-  
+
   try {
     console.log('📡 发送getUserTenants请求（修复前）...')
     console.log('- URL:', `${testApiConfig.baseURL}/sso/v1/getUserTenants`)
@@ -81,7 +86,7 @@ async function testGetUserTenantsBefore() {
       'accesstoken': testToken
     })
     console.log('- Body:', '{}')
-    
+
     const response = await fetch(`${testApiConfig.baseURL}/sso/v1/getUserTenants`, {
       method: 'POST',
       headers: {
@@ -93,11 +98,11 @@ async function testGetUserTenantsBefore() {
       },
       body: JSON.stringify({})
     })
-    
+
     console.log('📥 收到响应:')
     console.log('- Status:', response.status)
     console.log('- StatusText:', response.statusText)
-    
+
     if (response.ok) {
       const result = await response.json()
       console.log('✅ getUserTenants响应成功:', result)
@@ -114,12 +119,12 @@ async function testGetUserTenantsBefore() {
   }
 }
 
-// 测试getUserTenants API（修复后）
+// getUserTenants API ( after)
 async function testGetUserTenantsAfter() {
   console.log('\n🧪 测试getUserTenants API（修复后 - 带请求体）...')
-  
+
   const testToken = '848b2618754e44be9b98d7fa55996f0c'
-  
+
   try {
     console.log('📡 发送getUserTenants请求（修复后）...')
     console.log('- URL:', `${testApiConfig.baseURL}/sso/v1/getUserTenants`)
@@ -132,7 +137,7 @@ async function testGetUserTenantsAfter() {
       'accesstoken': testToken
     })
     console.log('- Body:', { accessToken: testToken })
-    
+
     const response = await fetch(`${testApiConfig.baseURL}/sso/v1/getUserTenants`, {
       method: 'POST',
       headers: {
@@ -144,11 +149,11 @@ async function testGetUserTenantsAfter() {
       },
       body: JSON.stringify({ accessToken: testToken })
     })
-    
+
     console.log('📥 收到响应:')
     console.log('- Status:', response.status)
     console.log('- StatusText:', response.statusText)
-    
+
     if (response.ok) {
       const result = await response.json()
       console.log('✅ getUserTenants响应成功:', result)
@@ -165,7 +170,7 @@ async function testGetUserTenantsAfter() {
   }
 }
 
-// 运行测试
+//
 console.log('📋 测试1: verifyToken API')
 const verifyResult = await testVerifyToken()
 
@@ -191,4 +196,4 @@ if (verifyResult.success && getUserTenantsAfterResult.success) {
   console.log('- 需要进一步检查API调用问题')
   console.log('- verifyToken错误:', verifyResult.error)
   console.log('- getUserTenants错误:', getUserTenantsAfterResult.error)
-} 
+}

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,7 +14,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 综合工单流程对象 workorder_synthesis
+ * work orderworkflow object workorder_synthesis
  *
  * @author Lei Chao Qun
  * @date 2025-01-04
@@ -26,28 +27,28 @@ public class WorkOrderSynthesis extends TreeEntity<WorkOrderSynthesis> {
     private static final long serialVersionUID=1L;
 
     /**
-     * 主键ID
+     * primary key ID
      */
     @TableId(value = "synthesis_id")
     private String synthesisId;
     /**
-     * 分类名称
+     *
      */
     private String categoryName;
     /**
-     * 流程描述
+     * workflow
      */
     private String description;
     /**
-     * 租户id
+     * id
      */
     private String tenantId;
     /**
-     * 用户id
+     * user ID
      */
     private String userId;
     /**
-     * 删除标记，0表示未删除，1表示删除
+     * Delete , 0 not Delete , 1 Delete
      */
     @TableLogic
     private String delFlag;

@@ -1,13 +1,7 @@
 /*
-* @Created by: 兰舰
-* Email: lanjian@oortcloudsmart.com
-* Phone: 16620805419
-* @Date: 2025-12-10
-* @Last Modified by: 兰舰
-* @Last Modified time: 2025-12-10
-* @Copyright aPaaS-front-team. All rights reserved.
-* @Description: 八方向调整大小指令 - 支持上下左右及四个角落调整元素大小
-*/
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
 
 interface ResizeState {
   isResizing: boolean
@@ -22,7 +16,7 @@ interface ResizeState {
   minHeight: number
 }
 
-// 八个方向的配置
+// configuration
 const createDirection = (name: string, cursor: string, position: any) => ({ name, cursor, position })
 
 const DIRECTIONS = [
@@ -38,12 +32,12 @@ const DIRECTIONS = [
 
 const resize = {
   mounted(el: HTMLElement, binding: any) {
-    // 获取配置选项
+    // Get configuration item
     const options = binding.value || {}
     const minWidth = options.minWidth || 100
     const minHeight = options.minHeight || 100
 
-    // 确保元素是可定位的
+    // element is
     if (getComputedStyle(el).position === 'static') {
       el.style.position = 'relative'
     }
@@ -61,7 +55,7 @@ const resize = {
       minHeight
     }
 
-    // 创建调整手柄
+    //
     const resizers: HTMLElement[] = []
 
     DIRECTIONS.forEach(dir => {
@@ -78,7 +72,7 @@ const resize = {
         ...dir.position
       })
 
-      // 悬停效果
+      //
       resizer.addEventListener('mouseenter', () => {
         resizer.style.backgroundColor = 'rgba(58, 142, 230, 0.3)'
       })
@@ -93,7 +87,7 @@ const resize = {
       resizers.push(resizer)
     })
 
-    // 鼠标按下事件
+    // event
     function handleMouseDown(e: MouseEvent) {
       if (e.button !== 0) return
 
@@ -119,7 +113,7 @@ const resize = {
       e.stopPropagation()
     }
 
-    // 鼠标移动事件
+    // event
     function handleMouseMove(e: MouseEvent) {
       if (!state.isResizing) return
 
@@ -131,7 +125,7 @@ const resize = {
       let newLeft = state.startLeft
       let newTop = state.startTop
 
-      // 根据方向调整尺寸和位置
+      // and
       switch (state.direction) {
         case 'right':
           newWidth = Math.max(state.minWidth, state.startWidth + deltaX)
@@ -181,11 +175,11 @@ const resize = {
           break
       }
 
-      // 应用新的尺寸和位置
+      // new and
       el.style.width = `${newWidth}px`
       el.style.height = `${newHeight}px`
 
-      // 如果需要调整位置（左侧或顶部调整时）
+      // if need to ( )
       if (state.direction.includes('left') || state.direction.includes('top')) {
         el.style.left = `${newLeft}px`
         el.style.top = `${newTop}px`
@@ -194,7 +188,7 @@ const resize = {
       e.preventDefault()
     }
 
-    // 鼠标释放事件
+    // event
     function handleMouseUp() {
       if (state.isResizing) {
         state.isResizing = false
@@ -202,7 +196,7 @@ const resize = {
         document.body.style.cursor = ''
         document.body.style.userSelect = ''
 
-        // 恢复所有手柄的背景色
+        // all
         resizers.forEach(r => {
           r.style.backgroundColor = 'transparent'
         })
@@ -212,7 +206,7 @@ const resize = {
       }
     }
 
-    // 保存状态和手柄以便卸载时清理
+    // and
     (el as any).__resizeState__ = {
       state,
       resizers,
@@ -225,18 +219,18 @@ const resize = {
     const resizeState = (el as any).__resizeState__
     if (!resizeState) return
 
-    // 清理事件监听器
+    // eventlistener
     document.removeEventListener('mousemove', resizeState.handleMouseMove)
     document.removeEventListener('mouseup', resizeState.handleMouseUp)
 
-    // 移除所有调整手柄
+    // all
     resizeState.resizers.forEach((resizer: HTMLElement) => {
       if (resizer.parentNode === el) {
         el.removeChild(resizer)
       }
     })
 
-    // 删除状态引用
+    // Delete
     delete (el as any).__resizeState__
   }
 }

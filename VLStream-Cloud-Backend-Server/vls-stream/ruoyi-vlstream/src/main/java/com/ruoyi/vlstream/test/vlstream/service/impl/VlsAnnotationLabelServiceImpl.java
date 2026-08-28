@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -24,7 +25,7 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 
 /**
- * 标注标签实体类 服务实现类
+ * annotation service
  *
  * @author Oort
  * @since 2025-12-23
@@ -61,7 +62,7 @@ public class VlsAnnotationLabelServiceImpl extends BaseServiceImpl<VlsAnnotation
 	public AnnotationLabel createLabel(Long annotationId, String name, String color, String description) {
 		log.info("创建标签: annotationId={}, name={}, color={}", annotationId, name, color);
 
-		// 检查同一标注项目下是否存在相同名称的标签
+		// annotation item whether in
 		LambdaQueryWrapper<AnnotationLabel> wrapper = new LambdaQueryWrapper<>();
 		wrapper.eq(AnnotationLabel::getAnnotationId, annotationId).eq(AnnotationLabel::getName, name);
 
@@ -70,14 +71,14 @@ public class VlsAnnotationLabelServiceImpl extends BaseServiceImpl<VlsAnnotation
 			throw new RuntimeException("标签名称已存在");
 		}
 
-		// 获取当前最大排序值
+		// Get current value
 		LambdaQueryWrapper<AnnotationLabel> sortWrapper = new LambdaQueryWrapper<>();
 		sortWrapper.eq(AnnotationLabel::getAnnotationId, annotationId).orderByDesc(AnnotationLabel::getSortOrder).last("LIMIT 1");
 
 		AnnotationLabel lastLabel = baseMapper.selectOne(sortWrapper);
 		int nextSortOrder = lastLabel != null ? lastLabel.getSortOrder() + 1 : 1;
 
-		// 创建新标签
+		// new
 		AnnotationLabel label = new AnnotationLabel();
 		label.setAnnotationId(annotationId);
 		label.setName(name);
@@ -102,7 +103,7 @@ public class VlsAnnotationLabelServiceImpl extends BaseServiceImpl<VlsAnnotation
 			throw new RuntimeException("标签不存在");
 		}
 
-		// 检查同一标注项目下是否存在相同名称的其他标签
+		// annotation item whether in
 		LambdaQueryWrapper<AnnotationLabel> wrapper = new LambdaQueryWrapper<>();
 		wrapper.eq(AnnotationLabel::getAnnotationId, label.getAnnotationId()).eq(AnnotationLabel::getName, name).ne(AnnotationLabel::getId, labelId);
 
@@ -111,7 +112,7 @@ public class VlsAnnotationLabelServiceImpl extends BaseServiceImpl<VlsAnnotation
 			throw new RuntimeException("标签名称已存在");
 		}
 
-		// 更新标签信息
+		// new info
 		label.setName(name);
 		label.setColor(color);
 		label.setDescription(description);
@@ -132,13 +133,13 @@ public class VlsAnnotationLabelServiceImpl extends BaseServiceImpl<VlsAnnotation
 			throw new RuntimeException("标签不存在");
 		}
 
-		// 检查是否有标注实例使用该标签
+		// whether annotationinstance
 		Integer usageCount = annotationInstanceMapper.countByLabelId(labelId);
 		if (usageCount > 0) {
 			throw new RuntimeException("该标签已被使用，无法删除");
 		}
 
-		// 执行软删除
+		// Execute Delete
 		int result = baseMapper.deleteById(labelId);
 		log.info("标签删除成功");
 
@@ -180,7 +181,7 @@ public class VlsAnnotationLabelServiceImpl extends BaseServiceImpl<VlsAnnotation
 
 		List<AnnotationLabel> labels = baseMapper.selectList(wrapper);
 
-		// 更新使用次数
+		// new
 		labels.forEach(label -> {
 			Integer usageCount = annotationInstanceMapper.countByLabelId(label.getId());
 			label.setUsageCount(usageCount);

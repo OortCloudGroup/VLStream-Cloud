@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,7 +18,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.SceneGovernanceVO;
 import java.util.List;
 
 /**
- * 场景治理表 Mapper 接口
+ * Mapper interface
  *
  * @author Oort
  * @since 2025-12-23
@@ -25,60 +26,60 @@ import java.util.List;
 public interface VlsSceneGovernanceMapper extends BaseMapper<SceneGovernance> {
 
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsSceneGovernance 查询参数
+	 * @param page parameter
+	 * @param vlsSceneGovernance Query parameter
 	 * @return List<VlsSceneGovernanceVO>
 	 */
 	List<SceneGovernanceVO> selectVlsSceneGovernancePage(IPage page, SceneGovernanceVO vlsSceneGovernance);
 
 	/**
-	 * 获取导出数据
+	 * Get Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsSceneGovernanceExcel>
 	 */
 	List<VlsSceneGovernanceExcel> exportVlsSceneGovernance(@Param("ew") Wrapper<SceneGovernance> queryWrapper);
 
 	/**
-	 * 根据名称查询场景治理信息
+	 * Query info
 	 *
-	 * @param name 场景名称
-	 * @return 场景治理信息
+	 * @param name
+	 * @return info
 	 */
 	@Select("SELECT * FROM vls_scene_governance WHERE name = #{name} AND is_deleted = 0")
 	SceneGovernance selectByName(@Param("name") String name);
 
 	/**
-	 * 根据状态查询场景治理列表
+	 * Query list
 	 *
-	 * @param status 场景状态
-	 * @return 场景治理列表
+	 * @param status
+	 * @return
 	 */
 	@Select("SELECT * FROM vls_scene_governance WHERE status = #{status} AND is_deleted = 0 ORDER BY created_at DESC")
 	List<SceneGovernance> selectByStatus(@Param("status") String status);
 
 	/**
-	 * 获取场景治理总数
+	 * Get
 	 *
-	 * @return 总数
+	 * @return
 	 */
 	@Select("SELECT COUNT(*) FROM vls_scene_governance WHERE is_deleted = 0")
 	Long getTotalCount();
 
 	/**
-	 * 获取启用的场景治理数量
+	 * Get
 	 *
-	 * @return 启用数量
+	 * @return
 	 */
 	@Select("SELECT COUNT(*) FROM vls_scene_governance WHERE status = 'enabled' AND is_deleted = 0")
 	Long getEnabledCount();
 
 	/**
-	 * 获取禁用的场景治理数量
+	 * Get
 	 *
-	 * @return 禁用数量
+	 * @return
 	 */
 	@Select("SELECT COUNT(*) FROM vls_scene_governance WHERE status = 'disabled' AND is_deleted = 0")
 	Long getDisabledCount();

@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 // import { vfApp } from '~@/utils/create-app'
 
 // import {
@@ -19,17 +24,17 @@
 
 export const loadExtension = function() {
   // /**
-  //  * 加载容器组件步骤：
-  //  * 1. 加载组件Json Schema;
-  //  * 2. 全局注册容器组件，容器组件有两种状态——设计期和运行期，故需要注册两个组件；
-  //  * 3. 全局注册属性编辑器组件（基本属性、高级属性、事件属性）；
-  //  * 4. 注册容器组件的代码生成器；
-  //  * 5. 加载完毕。
+  // * Load component :
+  // * 1. Load componentJson Schema;
+  // * 2. full component, component —— and , need to component;
+  // * 3. full property component ( property、 property、eventproperty);
+  // * 4. component Generate ;
+  // * 5. Load .
   //  */
-  // addContainerWidgetSchema(cardSchema) // 加载组件Json Schema
+  // addContainerWidgetSchema(cardSchema) // Load componentJson Schema
   // /* -------------------------------------------------- */
-  // app.component(CardWidget.name, CardWidget) // 注册设计期的容器组件
-  // app.component(CardItem.name, CardItem) // 注册运行期的容器组件
+  // app.component(CardWidget.name, CardWidget) // component
+  // app.component(CardItem.name, CardItem) // component
   // /* -------------------------------------------------- */
   // PERegister.registerCPEditor(app, 'card-folded', 'card-folded-editor',
   //   PEFactory.createBooleanEditor('folded', 'extension.setting.cardFolded'))
@@ -49,21 +54,21 @@ export const loadExtension = function() {
   //   PEFactory.createSelectEditor('shadow', 'extension.setting.cardShadow',
   //     { optionItems: shadowOptions }))
   // /* -------------------------------------------------- */
-  // registerCWGenerator('card', cardTemplateGenerator) // 注册容器组件的代码生成器
+  // registerCWGenerator('card', cardTemplateGenerator) // component Generate
   // /* -------------------------------------------------- */
-  // /* 容器组件加载完毕 end */
+  // /* componentLoad end */
 
   // /**
-  //  * 加载字段组件步骤：
-  //  * 1. 加载组件Json Schema;
-  //  * 2. 全局注册字段组件，字段组件设计期和运行期共用，故仅需注册一个组件；
-  //  * 3. 全局注册属性编辑器组件（基本属性、高级属性、事件属性）；
-  //  * 4. 注册字段组件的代码生成器；
-  //  * 5. 加载完毕。
+  // * Load fieldcomponent :
+  // * 1. Load componentJson Schema;
+  // * 2. full fieldcomponent, fieldcomponent and , component;
+  // * 3. full property component ( property、 property、eventproperty);
+  // * 4. fieldcomponent Generate ;
+  // * 5. Load .
   //  */
-  // // addCustomWidgetSchema(alertSchema) // 加载组件Json Schema
+  // // addCustomWidgetSchema(alertSchema) // Load componentJson Schema
   // /* -------------------------------------------------- */
-  // app.component(AlertWidget.name, AlertWidget) // 注册组件
+  // app.component(AlertWidget.name, AlertWidget) // component
   // /* -------------------------------------------------- */
   // PERegister.registerCPEditor(app, 'alert-title', 'alert-title-editor',
   //   PEFactory.createInputTextEditor('title', 'extension.setting.alertTitle'))
@@ -77,7 +82,7 @@ export const loadExtension = function() {
   // // PERegister.registerCPEditor(app, 'alert-type', 'alert-type-editor',
   // //     PEFactory.createSelectEditor('type', 'extension.setting.alertType',
   // //         {optionItems: typeOptions}))
-  // /* type属性映射已存在，无须再注册，故只需注册属性编辑器即可！！ */
+  // /* typeproperty already in , , only property ! ! */
   // app.component('AlertTypeEditor',
   //   PEFactory.createSelectEditor('type', 'extension.setting.alertType',
   //     { optionItems: typeOptions }))
@@ -108,7 +113,7 @@ export const loadExtension = function() {
   // PERegister.registerEPEditor(app, 'alert-onClose', 'alert-onClose-editor',
   //   PEFactory.createEventHandlerEditor('onClose', []))
   // /* -------------------------------------------------- */
-  // registerFWGenerator('alert', alertTemplateGenerator) // 注册字段组件的代码生成器
+  // registerFWGenerator('alert', alertTemplateGenerator) // fieldcomponent Generate
   // /* -------------------------------------------------- */
-  // /* 字段组件加载完毕 end */
+  // /* fieldcomponentLoad end */
 }

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -12,7 +13,7 @@ import com.ruoyi.vlstream.test.vlstream.service.IVlsCameraDisplaySettingService;
 import org.springframework.stereotype.Service;
 
 /**
- * 摄像机显示设置表 服务实现类
+ * Set service
  */
 @Service
 public class VlsCameraDisplaySettingServiceImpl extends BaseServiceImpl<VlsCameraDisplaySettingMapper, CameraDisplaySetting> implements IVlsCameraDisplaySettingService {

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -20,7 +21,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * @description：节点
+ * @description: node
  */
 @Data
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "nodeType", defaultImpl = Node.class, visible = true)
@@ -39,24 +40,24 @@ import java.util.stream.Collectors;
 })
 public abstract class Node implements Serializable {
     private static final long serialVersionUID = 132324315232123L;
-    // 节点表单key
+    // nodeformkey
     private String formKey;
-    // 节点id
+    // nodeid
     private String id;
-    // 父节点id
+    // nodeid
     private String pid;
-    // 节点名称
+    // node
     private String nodeName;
-    // 节点类型
+    // node
     @JsonTypeId
     private String nodeType;
-    // 执行监听器
+    // Execute listener
     private List<NodeListener> executionListeners;
-    // 子节点
+    // sub node
     private Node childNode;
-    // 服务任务(触发器)
+    // servicetask( )
     private String serviceTask;
-    // 分支id
+    // id
     @JsonIgnore
     private String branchId;
 

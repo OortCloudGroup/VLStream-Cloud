@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 翻译模块配置类
+ * configuration
  *
  * @author Lion Li
  */
@@ -46,7 +47,7 @@ public class TranslationConfig {
             }
         }
         TranslationHandler.TRANSLATION_MAPPER.putAll(map);
-        // 设置 Bean 序列化修改器
+        // Set Bean Update
         objectMapper.setSerializerFactory(
             objectMapper.getSerializerFactory()
                 .withSerializerModifier(new TranslationBeanSerializerModifier()));

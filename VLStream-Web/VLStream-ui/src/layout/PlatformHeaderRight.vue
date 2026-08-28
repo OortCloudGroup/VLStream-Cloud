@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="right_info">
     <el-tooltip :content="isFullscreen ? text.exitFullscreen : text.fullscreen" placement="bottom">

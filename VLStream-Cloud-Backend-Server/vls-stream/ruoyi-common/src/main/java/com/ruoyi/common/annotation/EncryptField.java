@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -11,9 +12,9 @@ import com.ruoyi.common.enums.EncodeType;
 import java.lang.annotation.*;
 
 /**
- * 字段加密注解
+ * field
  *
- * @author 老马
+ * @author
  */
 @Documented
 @Inherited
@@ -22,27 +23,27 @@ import java.lang.annotation.*;
 public @interface EncryptField {
 
     /**
-     * 加密算法
+     * algorithm
      */
     AlgorithmType algorithm() default AlgorithmType.DEFAULT;
 
     /**
-     * 秘钥。AES、SM4需要
+     * . AES、SM4 need to
      */
     String password() default "";
 
     /**
-     * 公钥。RSA、SM2需要
+     * . RSA、SM2 need to
      */
     String publicKey() default "";
 
     /**
-     * 公钥。RSA、SM2需要
+     * . RSA、SM2 need to
      */
     String privateKey() default "";
 
     /**
-     * 编码方式。对加密算法为BASE64的不起作用
+     * . algorithm to BASE64
      */
     EncodeType encode() default EncodeType.DEFAULT;
 

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -26,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 /**
- * 资源规格配置表 控制器
+ * configuration control
  */
 @RestController
 @AllArgsConstructor

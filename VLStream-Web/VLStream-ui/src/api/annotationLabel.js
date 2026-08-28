@@ -1,13 +1,18 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
 /**
- * 标注标签API
+ * annotation API
  */
 
 /**
- * 获取标注项目的标签列表
- * @param {number} annotationId - 标注项目ID
- * @param {string} keyword - 搜索关键词（可选）
+ * Get annotation item
+ * @param {number} annotationId - annotation item ID
+ * @param {string} keyword - ( )
  * @returns {Promise}
  */
 export function getAnnotationLabels(annotationId, keyword = '') {
@@ -19,9 +24,9 @@ export function getAnnotationLabels(annotationId, keyword = '') {
 }
 
 /**
- * 创建标注标签
- * @param {number} annotationId - 标注项目ID
- * @param {Object} data - 标签数据
+ * annotation
+ * @param {number} annotationId - annotation item ID
+ * @param {Object} data - data
  * @returns {Promise}
  */
 export function createAnnotationLabel(annotationId, data) {
@@ -33,9 +38,9 @@ export function createAnnotationLabel(annotationId, data) {
 }
 
 /**
- * 更新标注标签
- * @param {number} id - 标签ID
- * @param {Object} data - 更新数据
+ * new annotation
+ * @param {number} id - ID
+ * @param {Object} data - new data
  * @returns {Promise}
  */
 export function updateAnnotationLabel(id, data) {
@@ -47,8 +52,8 @@ export function updateAnnotationLabel(id, data) {
 }
 
 /**
- * 删除标注标签
- * @param {number} id - 标签ID
+ * Delete annotation
+ * @param {number} id - ID
  * @returns {Promise}
  */
 export function deleteAnnotationLabel(id) {

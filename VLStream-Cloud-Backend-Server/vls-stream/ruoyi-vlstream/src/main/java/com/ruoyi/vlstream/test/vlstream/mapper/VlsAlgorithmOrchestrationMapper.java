@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmOrchestrationVO;
 import java.util.List;
 
 /**
- * 算法编排表 Mapper 接口
+ * algorithm Mapper interface
  *
  * @author Oort
  * @since 2025-12-23
@@ -24,18 +25,18 @@ import java.util.List;
 public interface VlsAlgorithmOrchestrationMapper extends BaseMapper<AlgorithmOrchestration> {
 
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsAlgorithmOrchestration 查询参数
+	 * @param page parameter
+	 * @param vlsAlgorithmOrchestration Query parameter
 	 * @return List<VlsAlgorithmOrchestrationVO>
 	 */
 	List<AlgorithmOrchestrationVO> selectVlsAlgorithmOrchestrationPage(IPage page, AlgorithmOrchestrationVO vlsAlgorithmOrchestration);
 
 	/**
-	 * 获取导出数据
+	 * Get Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsAlgorithmOrchestrationExcel>
 	 */
 	List<VlsAlgorithmOrchestrationExcel> exportVlsAlgorithmOrchestration(@Param("ew") Wrapper<AlgorithmOrchestration> queryWrapper);

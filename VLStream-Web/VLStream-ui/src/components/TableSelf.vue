@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2025-03-25 18:11:12
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -16,11 +21,11 @@
     @row-click="handleRowClick"
     @select="handleSelect"
   >
-    <!-- 透传所有插槽 -->
+    <!-- all -->
     <template v-for="(_, slotName) in $slots" #[slotName]="slotProps">
       <slot :name="slotName" v-bind="slotProps" />
     </template>
-    <!-- 默认插槽（用于列） -->
+    <!-- ( ) -->
     <slot />
   </el-table>
 </template>
@@ -28,7 +33,7 @@
 import { ref, useAttrs, computed, watch } from 'vue'
 
 defineProps({
-  // 可添加自定义属性
+  // Customproperty
   customClass: {
     type: String,
     default: ''
@@ -38,31 +43,31 @@ defineProps({
 const selectedRows = ref([])
 const currentRows = ref(null)
 
-// 点击行事件处理
+// eventProcess
 const handleRowClick = (row) => {
   currentRows.value = row
-  // 直接切换该行的选中状态，由 element-plus 内部 select 事件来维护 selection
+  // in , element-plus select event selection
   if (tableRef.value) {
     tableRef.value.toggleRowSelection(row)
   }
 }
 
-// 保持勾选状态同步
+//
 const handleSelect = (selection) => {
-  // selection 是当前所有已选中的行
+  // selection is current all already in
   selectedRows.value = selection.slice()
 }
 
-// 获取未声明的原生属性
+// Get not property
 const $attrs = useAttrs()
 
-// 过滤掉 class 和 style 避免重复
+// class and style
 const mergedAttrs = computed(() => {
   const { class: _, style: __, ...rest } = $attrs
   return rest
 })
 
-// 暴露 table 实例
+// table instance
 const tableRef = ref(null)
 defineExpose({
   tableRef
@@ -70,13 +75,13 @@ defineExpose({
 
 watch(() => $attrs.data, (newData) => {
   if (!Array.isArray(newData)) return
-  // 如果有current-row-key 则回显是恢复选中 使用current-row-key
+  // if current-row-key is in current-row-key
   if (tableRef.value && currentRows.value) {
     let findRow = null
     if ($attrs['current-row-key']) {
       findRow = newData.find(item => item[$attrs['current-row-key']] === currentRows.value[$attrs['current-row-key']])
     } else {
-      // 默认id
+      // id
       if (newData.length > 0 && newData[0].id) {
         findRow = newData.find(item => item['id'] === currentRows.value['id'])
       }

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,48 +14,48 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum WorkOrderStatus {
     /**
-     * 待派单
+     *
      */
     PENDING_DISPATCH("pendingDispatch"),
 
     /**
-     * 待接单
+     *
      */
     PENDING_ORDERS("pendingOrders"),
 
     /**
-     * 处理中
+     * Process in
      */
     PROCESSING("processing"),
 
     /**
-     * 已转办
+     * already
      */
     REFERRED("referred"),
 
     /**
-     * 已退回
+     * already
      */
     RETURNED("Returned"),
 
     /**
-     * 待回访
+     *
      */
     RETURN("return"),
 
     /**
-     * 已完成
+     * already
      */
     COMPLETED("completed"),
 
     /**
-     * 已关闭
+     * already
      */
     CLOSED("closed"),
 
 
     /**
-     * 待评价
+     *
      */
     TO_BE_EVALUATED("toBeEvaluated");
 

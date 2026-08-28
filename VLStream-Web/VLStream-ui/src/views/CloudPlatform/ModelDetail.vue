@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="model-detail" v-loading="loading">
     <div class="detail-breadcrumb">
@@ -119,7 +124,7 @@ const fileName = computed(() => {
 const approveTimeText = computed(() => {
   const t = detail.value?.approver_time
   if (t === null || t === undefined || t === '') return '-'
-  // 接口示例可能是秒级时间戳
+  // interface can is
   if (typeof t === 'number' || /^\d+$/.test(String(t))) {
     const num = Number(t)
     const ms = num < 1e12 ? num * 1000 : num

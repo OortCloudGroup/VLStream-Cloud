@@ -1,31 +1,36 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="device-model-market">
     <div class="model-market-container">
-      <!-- 算法分类标签 -->
+      <!-- algorithm -->
       <div class="category-tabs">
-        <div 
-          class="category-tab" 
+        <div
+          class="category-tab"
           :class="{ active: activeCategory === 'all' }"
           @click="setActiveCategory('all')"
         >
           全部
         </div>
-        <div 
-          class="category-tab" 
+        <div
+          class="category-tab"
           :class="{ active: activeCategory === 'person' }"
           @click="setActiveCategory('person')"
         >
           人员检测类
         </div>
-        <div 
-          class="category-tab" 
+        <div
+          class="category-tab"
           :class="{ active: activeCategory === 'video' }"
           @click="setActiveCategory('video')"
         >
           视频分析类
         </div>
-        <div 
-          class="category-tab" 
+        <div
+          class="category-tab"
           :class="{ active: activeCategory === 'face' }"
           @click="setActiveCategory('face')"
         >
@@ -33,14 +38,14 @@
         </div>
       </div>
 
-      <!-- 主要内容区域 -->
+      <!-- main need to -->
       <div class="main-content">
-        <!-- 左侧算法网格 -->
+        <!-- algorithm -->
         <div class="algorithms-section">
           <div class="algorithm-grid">
-            <div 
-              v-for="model in filteredModelList" 
-            :key="model.id" 
+            <div
+              v-for="model in filteredModelList"
+            :key="model.id"
               class="algorithm-card"
             :class="{ selected: model.selected }"
             @click="toggleModelSelection(model)"
@@ -59,23 +64,23 @@
           </div>
         </div>
 
-        <!-- 右侧已选择模型列表 -->
+        <!-- already model -->
         <div class="selected-section">
           <div class="selected-header">
             <h3>已选取模型</h3>
             <div class="selected-count">{{ selectedModels.length }}</div>
           </div>
-          
+
           <div class="selected-list">
-          <div 
-            v-for="model in selectedModels" 
-            :key="model.id" 
+          <div
+            v-for="model in selectedModels"
+            :key="model.id"
               class="selected-item"
             >
               <div class="selected-item-content">
                 <span class="selected-item-name">{{ model.name }}</span>
-                <el-icon 
-                  class="remove-icon" 
+                <el-icon
+                  class="remove-icon"
                   @click="removeModelSelection(model)"
                 >
                   <Close />
@@ -90,11 +95,11 @@
         </div>
       </div>
 
-      <!-- 底部操作按钮 -->
+      <!-- operationbutton -->
         <div class="footer-actions">
           <el-button @click="handleCancel" class="common_btn">取消</el-button>
-          <el-button 
-            type="primary" 
+          <el-button
+            type="primary"
           @click="handleConfirm"
             :disabled="selectedModels.length === 0"
            class="common_btn">
@@ -120,13 +125,13 @@ const props = defineProps({
 
 const emit = defineEmits(['save', 'cancel'])
 
-// 响应式数据
+// data
 const activeCategory = ref('all')
 
-// 模型列表
+// model
 const modelList = ref([])
 
-// 从真实模型表加载可选模型，失败时不注入样例数据。
+// from model Load model, failed data.
 const loadModels = async () => {
   try {
     const response = await getModelPage({ current: 1, size: 200, status: 'published' })
@@ -147,7 +152,7 @@ const loadModels = async () => {
 
 onMounted(loadModels)
 
-// 计算属性
+// property
 const selectedModels = computed(() => {
   return modelList.value.filter(model => model.selected)
 })
@@ -155,7 +160,7 @@ const selectedModels = computed(() => {
 const filteredModelList = computed(() => {
   let filtered = modelList.value
 
-  // 分类过滤
+  //
   if (activeCategory.value !== 'all') {
     filtered = filtered.filter(model => model.category === activeCategory.value)
   }
@@ -163,14 +168,14 @@ const filteredModelList = computed(() => {
   return filtered
 })
 
-// 方法
+// method
 const setActiveCategory = (category) => {
   activeCategory.value = category
 }
 
 const toggleModelSelection = (model) => {
   model.selected = !model.selected
-  
+
   if (model.selected) {
     ElMessage.success(`已选择 "${model.name}"`)
   } else {
@@ -188,14 +193,14 @@ const handleConfirm = () => {
     ElMessage.warning('请至少选择一个模型')
     return
   }
-  
+
   const modelData = selectedModels.value.map(model => ({
     id: model.id,
     name: model.name,
     type: model.type,
     category: model.category
   }))
-  
+
   emit('save', modelData)
   ElMessage.success(`已选择 ${selectedModels.value.length} 个模型`)
 }
@@ -211,7 +216,7 @@ const handleCancel = () => {
   background: #fff;
   height: 100%;
   overflow: hidden;
-  
+
   .model-market-container {
     height: 100%;
     display: flex;
@@ -219,13 +224,13 @@ const handleCancel = () => {
     background: #fff;
     padding: 0;
   }
-  
+
   .category-tabs {
     display: flex;
     margin-bottom: 20px;
     padding: 0 20px;
     border-bottom: 1px solid #ebeef5;
-    
+
     .category-tab {
       padding: 12px 24px;
       cursor: pointer;
@@ -233,12 +238,12 @@ const handleCancel = () => {
       transition: all 0.3s;
       color: #606266;
       font-size: 14px;
-      
+
       &:hover {
         color: #1A53FF;
         background: #f0f2f5;
       }
-      
+
       &.active {
         color: #1A53FF;
         border-bottom-color: #1A53FF;
@@ -246,23 +251,23 @@ const handleCancel = () => {
       }
     }
   }
-  
+
   .main-content {
     flex: 1;
     display: flex;
     gap: 20px;
     overflow: hidden;
     padding: 0 20px;
-    
+
     .algorithms-section {
       flex: 1;
       overflow-y: auto;
-      
+
       .algorithm-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 16px;
-        
+
         .algorithm-card {
       border: 1px solid #ebeef5;
       border-radius: 8px;
@@ -270,28 +275,28 @@ const handleCancel = () => {
       transition: all 0.3s;
       cursor: pointer;
       background: white;
-      
+
       &:hover {
             border-color: #1A53FF;
             box-shadow: 0 2px 12px rgba(26, 83, 255, 0.15);
       }
-      
+
       &.selected {
             border-color: #1A53FF;
             box-shadow: 0 2px 12px rgba(26, 83, 255, 0.2);
           }
-          
+
           .algorithm-image {
         position: relative;
             height: 120px;
         overflow: hidden;
-        
+
         img {
           width: 100%;
           height: 100%;
           object-fit: cover;
         }
-        
+
             .selected-overlay {
           position: absolute;
               top: 0;
@@ -302,17 +307,17 @@ const handleCancel = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          
+
           .check-icon {
             color: white;
                 font-size: 24px;
               }
             }
           }
-          
+
           .algorithm-info {
             padding: 12px;
-            
+
             .algorithm-name {
               margin: 0 0 4px 0;
               font-size: 14px;
@@ -322,7 +327,7 @@ const handleCancel = () => {
               overflow: hidden;
               text-overflow: ellipsis;
             }
-            
+
             .algorithm-type {
               margin: 0;
               font-size: 12px;
@@ -335,26 +340,26 @@ const handleCancel = () => {
         }
       }
     }
-    
+
     .selected-section {
       width: 300px;
       border-left: 1px solid #ebeef5;
       padding-left: 20px;
       display: flex;
       flex-direction: column;
-      
+
       .selected-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 16px;
-        
+
         h3 {
           margin: 0;
           font-size: 16px;
           color: #333;
         }
-        
+
         .selected-count {
           background: #1A53FF;
           color: white;
@@ -365,14 +370,14 @@ const handleCancel = () => {
           text-align: center;
         }
       }
-      
+
       .selected-list {
         flex: 1;
         overflow-y: auto;
-        
+
         .selected-item {
           margin-bottom: 8px;
-          
+
           .selected-item-content {
             display: flex;
             justify-content: space-between;
@@ -381,7 +386,7 @@ const handleCancel = () => {
             background: #f8f9fa;
             border-radius: 4px;
             border: 1px solid #e9ecef;
-            
+
             .selected-item-name {
               flex: 1;
               font-size: 14px;
@@ -390,25 +395,25 @@ const handleCancel = () => {
               overflow: hidden;
               text-overflow: ellipsis;
             }
-            
+
             .remove-icon {
               color: #f56c6c;
               cursor: pointer;
               font-size: 14px;
               margin-left: 8px;
-              
+
               &:hover {
                 color: #f78989;
               }
             }
           }
         }
-        
+
         .empty-selected {
           text-align: center;
           padding: 40px 20px;
           color: #909399;
-          
+
           p {
             margin: 0;
             font-size: 14px;
@@ -417,7 +422,7 @@ const handleCancel = () => {
       }
     }
   }
-  
+
   .footer-actions {
     display: flex;
     justify-content: flex-end;
@@ -428,7 +433,7 @@ const handleCancel = () => {
   }
 }
 
-// 响应式设计
+//
 @media (max-width: 1200px) {
   .device-model-market {
     .algorithms-section {
@@ -443,7 +448,7 @@ const handleCancel = () => {
   .device-model-market {
     .main-content {
       flex-direction: column;
-      
+
       .selected-section {
         width: 100%;
         border-left: none;
@@ -452,7 +457,7 @@ const handleCancel = () => {
         padding-top: 20px;
       }
     }
-    
+
     .algorithms-section {
       .algorithm-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -460,4 +465,4 @@ const handleCancel = () => {
     }
   }
 }
-</style> 
+</style>

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -19,7 +20,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 /**
- * 构建可重复读取inputStream的request
+ * Build inputStream request
  *
  * @author ruoyi
  */

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -9,7 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * minio策略配置
+ * minio configuration
  *
  * @author Lion Li
  */
@@ -18,22 +19,22 @@ import lombok.Getter;
 public enum PolicyType {
 
     /**
-     * 只读
+     * only
      */
     READ("read-only"),
 
     /**
-     * 只写
+     * only
      */
     WRITE("write-only"),
 
     /**
-     * 读写
+     *
      */
     READ_WRITE("read-write");
 
     /**
-     * 类型
+     *
      */
     private final String type;
 

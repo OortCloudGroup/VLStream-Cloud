@@ -14,7 +14,7 @@ import java.util.Date;
 
 
 /**
- * 流程部署视图对象
+ * workflow object
  *
  * @author KonBAI
  * @date 2022-06-30
@@ -26,60 +26,60 @@ public class WfDeployVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 流程定义ID
+     * workflow definition ID
      */
     @ExcelProperty(value = "流程定义ID")
     private String definitionId;
 
     /**
-     * 流程名称
+     * workflow
      */
     @ExcelProperty(value = "流程名称")
     private String processName;
 
     /**
-     * 流程Key
+     * workflowKey
      */
     @ExcelProperty(value = "流程Key")
     private String processKey;
 
     /**
-     * 分类编码
+     *
      */
     @ExcelProperty(value = "分类编码")
     private String category;
 
     /**
-     * 版本
+     *
      */
     private Integer version;
 
     /**
-     * 表单ID
+     * formID
      */
     @ExcelProperty(value = "表单ID")
     private String formId;
 
     /**
-     * 表单名称
+     * form
      */
     @ExcelProperty(value = "表单名称")
     private String formName;
 
     /**
-     * 部署ID
+     * ID
      */
     @ExcelProperty(value = "部署ID")
     private String deploymentId;
 
     /**
-     * 流程定义状态: 1:激活 , 2:中止
+     * workflow definition : 1: , 2: in
      */
     @ExcelProperty(value = "流程定义状态: 1:激活 , 2:中止")
     private Boolean suspended;
 
     /**
-     * 部署时间
+     *
      */
     @ExcelProperty(value = "部署时间")
     private Date deploymentTime;

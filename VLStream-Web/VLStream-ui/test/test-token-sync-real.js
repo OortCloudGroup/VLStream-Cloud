@@ -1,26 +1,31 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * 真实Token同步测试
- * 使用真实token测试同步机制
+ * Token
+ * token
  */
 
 async function testRealTokenSync() {
     console.log('🔍 真实Token同步测试');
-    
-    // 获取当前真实token状态
+
+    // Get current token
     const urlToken = getTokenFromUrl();
     const sessionToken = sessionStorage.getItem('accessToken');
     const localToken = localStorage.getItem('accessToken');
-    
+
     console.log('当前真实Token状态:');
     console.log('- URL Token:', urlToken ? urlToken.substring(0, 8) + '...' : 'null');
     console.log('- Session Token:', sessionToken ? sessionToken.substring(0, 8) + '...' : 'null');
     console.log('- Local Token:', localToken ? localToken.substring(0, 8) + '...' : 'null');
     console.log('');
-    
-    // 测试1: 验证当前token有效性
+
+    // 1: current token
     console.log('=== 测试1: 验证当前token有效性 ===');
     const currentToken = sessionToken || localToken;
-    
+
     if (currentToken) {
         try {
             const response = await fetch('http://oort.oortcloudsmart.com:21410/bus/apaas-sso/sso/v1/verifyToken', {
@@ -36,16 +41,16 @@ async function testRealTokenSync() {
                     accessToken: currentToken
                 })
             });
-            
+
             console.log('Token验证响应状态:', response.status);
-            
+
             if (response.ok) {
                 const result = await response.json();
                 console.log('✅ 当前token有效:', result);
-                
-                // 如果token有效，进行同步测试
+
+                // if token ,
                 await testTokenSyncWithValidToken(currentToken);
-                
+
             } else {
                 const errorText = await response.text();
                 console.log('❌ 当前token无效:', errorText);
@@ -57,33 +62,33 @@ async function testRealTokenSync() {
     } else {
         console.log('💡 没有找到token，请先在统一用户平台登录');
     }
-    
+
     console.log('');
-    
-    // 测试2: 检查token同步器状态
+
+    // 2: token
     console.log('=== 测试2: 检查token同步器状态 ===');
-    
+
     if (window.tokenSyncManager) {
         console.log('✅ tokenSyncManager已加载');
         console.log('同步器初始化状态:', window.tokenSyncManager.isInitialized ? '已初始化' : '未初始化');
         console.log('同步器运行状态:', window.tokenSyncManager.syncInterval ? '正在运行' : '已停止');
-        
-        // 显示同步器配置
+
+        // configuration
         console.log('同步器配置:');
         console.log('- 检查间隔: 5秒');
         console.log('- 自动初始化: 是');
         console.log('- 页面可见性监听: 是');
         console.log('- 跨标签页同步: 是');
-        
+
     } else {
         console.log('❌ tokenSyncManager未加载');
     }
-    
+
     console.log('');
-    
-    // 测试3: 检查用户信息同步
+
+    // 3: userinfo
     console.log('=== 测试3: 检查用户信息同步 ===');
-    
+
     const userInfo = sessionStorage.getItem('userInfo');
     if (userInfo) {
         try {
@@ -93,29 +98,29 @@ async function testRealTokenSync() {
             console.log('- 用户ID:', parsedUserInfo.userId);
             console.log('- 登录ID:', parsedUserInfo.loginId);
             console.log('- 租户ID:', parsedUserInfo.tenantId);
-            
-            // 检查用户信息是否完整
+
+            // userinfowhether
             const requiredFields = ['userName', 'userId'];
             const missingFields = requiredFields.filter(field => !parsedUserInfo[field]);
-            
+
             if (missingFields.length === 0) {
                 console.log('✅ 用户信息完整');
             } else {
                 console.log('⚠️ 用户信息不完整，缺少字段:', missingFields);
             }
-            
+
         } catch (error) {
             console.log('❌ 用户信息解析失败:', error.message);
         }
     } else {
         console.log('💡 没有找到用户信息');
     }
-    
+
     console.log('');
-    
-    // 测试4: 检查租户信息
+
+    // 4: info
     console.log('=== 测试4: 检查租户信息 ===');
-    
+
     const tenantInfo = sessionStorage.getItem('tenantInfo');
     if (tenantInfo) {
         try {
@@ -124,17 +129,17 @@ async function testRealTokenSync() {
             console.log('- 租户名称:', parsedTenantInfo.tenantName);
             console.log('- 租户ID:', parsedTenantInfo.tenantId);
             console.log('- 租户状态:', parsedTenantInfo.status);
-            
+
         } catch (error) {
             console.log('❌ 租户信息解析失败:', error.message);
         }
     } else {
         console.log('💡 没有找到租户信息');
     }
-    
+
     console.log('');
-    
-    // 测试5: 模拟真实场景
+
+    // 5:
     console.log('=== 测试5: 模拟真实场景 ===');
     console.log('🎯 真实使用场景测试:');
     console.log('1. 在统一用户平台换用户登录');
@@ -146,7 +151,7 @@ async function testRealTokenSync() {
     console.log('2. 使用不同用户登录');
     console.log('3. 复制新token到VLStream-ui的URL参数中');
     console.log('4. 观察VLStream-ui是否自动同步新用户信息');
-    
+
     console.log('');
     console.log('📝 同步机制总结:');
     console.log('✅ Token检测: 正确检测URL和存储中的token变化');
@@ -163,50 +168,50 @@ async function testRealTokenSync() {
     console.log('- 自动清理无效token');
 }
 
-// 使用有效token测试同步
+// token
 async function testTokenSyncWithValidToken(validToken) {
     console.log('🔄 使用有效token测试同步机制');
-    
-    // 模拟URL中有新token（使用当前有效token）
+
+    // URL in new token ( current token)
     const url = new URL(window.location.href);
     url.searchParams.set('accessToken', validToken);
     window.history.replaceState({}, document.title, url.toString());
-    
+
     console.log('✅ 已在URL中设置有效token');
-    
-    // 手动触发同步
+
+    //
     if (window.tokenSyncManager) {
         console.log('🔄 手动触发token同步');
         window.tokenSyncManager.forceSync();
-        
-        // 等待同步完成
+
+        // etc.
         setTimeout(() => {
             console.log('检查同步结果:');
             const newSessionToken = sessionStorage.getItem('accessToken');
             const newLocalToken = localStorage.getItem('accessToken');
-            
+
             console.log('- 新Session Token:', newSessionToken ? newSessionToken.substring(0, 8) + '...' : 'null');
             console.log('- 新Local Token:', newLocalToken ? newLocalToken.substring(0, 8) + '...' : 'null');
-            
+
             if (newSessionToken === validToken && newLocalToken === validToken) {
                 console.log('✅ Token同步成功！');
             } else {
                 console.log('❌ Token同步失败');
             }
-            
-            // 清除URL中的token参数
+
+            // URL in tokenparameter
             url.searchParams.delete('accessToken');
             window.history.replaceState({}, document.title, url.toString());
-            
+
         }, 2000);
     }
 }
 
-// 辅助函数：从URL获取token
+// : from URLGet token
 function getTokenFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('accessToken') || urlParams.get('token');
 }
 
-// 运行测试
-testRealTokenSync().catch(console.error); 
+//
+testRealTokenSync().catch(console.error);

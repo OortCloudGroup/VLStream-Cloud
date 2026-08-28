@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 录像控制命令API接口
+// recordingcontrol APIinterface
 export function recordApi(query) {
     return request({
         url: `/api/device/control/record/${query.deviceId}/${query.recordCmdStr}`,
@@ -9,7 +14,7 @@ export function recordApi(query) {
     })
 }
 
-// 报警布防/撤防命令API接口
+// / APIinterface
 export function guardApi(query) {
     return request({
         url: `/api/device/control/guard/${query.deviceId}/${query.guardCmdStr}`,

@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
 const success = (list: any[], count = list.length) => ({
@@ -6,7 +12,7 @@ const success = (list: any[], count = list.length) => ({
   data: { list, count, total: count }
 })
 
-/** 将本地 RuoYi 字典项转换为表单设计器原有的数据结构。 */
+/* * RuoYi dict item Convert to form data . */
 export async function dictListByTag(data: Record<string, any>) {
   const dictType = data.dict_tag || data.dictType
   const response: any = await request({
@@ -23,7 +29,7 @@ export async function dictListByTag(data: Record<string, any>) {
   })))
 }
 
-/** 将本地 RuoYi 字典类型列表转换为表单设计器原有的数据结构。 */
+/* * RuoYi dict type Convert to form data . */
 export async function dictList(data: Record<string, any>) {
   const response: any = await request({
     url: '/system/dict/type/list',

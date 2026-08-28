@@ -1,7 +1,12 @@
-// 简单检查onMounted是否被调用
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// onMountedwhether
 console.log('🔧 简单检查onMounted调用...')
 
-// 重写console.log来捕获特定日志
+// console.log log
 const originalLog = console.log
 const capturedLogs = []
 
@@ -9,8 +14,8 @@ console.log = function(...args) {
   const message = args.join(' ')
   capturedLogs.push(message)
   originalLog.apply(console, args)
-  
-  // 检查是否有onMounted相关的日志
+
+  // whether onMountedrelated log
   if (message.includes('🎬 组件开始挂载')) {
     console.log('✅ 发现onMounted调用日志')
   }
@@ -22,19 +27,19 @@ console.log = function(...args) {
   }
 }
 
-// 延迟检查
+//
 setTimeout(() => {
   console.log('📋 检查捕获的日志...')
-  
-  const onMountedLogs = capturedLogs.filter(log => 
+
+  const onMountedLogs = capturedLogs.filter(log =>
     log.includes('🎬 组件开始挂载') ||
     log.includes('🔄 开始调用loadTenantInfo') ||
     log.includes('✅ loadTenantInfo调用完成')
   )
-  
+
   console.log('📋 找到的onMounted相关日志:')
   onMountedLogs.forEach(log => console.log('-', log))
-  
+
   if (onMountedLogs.length === 0) {
     console.log('❌ 没有找到任何onMounted相关日志')
     console.log('🔍 可能的原因:')
@@ -44,9 +49,9 @@ setTimeout(() => {
   } else {
     console.log('✅ 找到了onMounted相关日志')
   }
-  
-  // 恢复原始console.log
+
+  // console.log
   console.log = originalLog
 }, 3000)
 
-console.log('🔧 简单检查工具已加载，3秒后检查日志...') 
+console.log('🔧 简单检查工具已加载，3秒后检查日志...')

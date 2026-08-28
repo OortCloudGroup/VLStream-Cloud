@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 角色信息
+ * roleinfo
  *
  * @author Lion Li
  */
@@ -48,7 +48,7 @@ public class SysRoleController extends BaseController {
     private final SysPermissionService permissionService;
 
     /**
-     * 获取角色信息列表
+     * Get roleinfo
      */
     @SaCheckPermission("system:role:list")
     @GetMapping("/list")
@@ -57,7 +57,7 @@ public class SysRoleController extends BaseController {
     }
 
     /**
-     * 导出角色信息列表
+     * Export roleinfo
      */
     @Log(title = "角色管理", businessType = BusinessType.EXPORT)
     @SaCheckPermission("system:role:export")
@@ -68,9 +68,9 @@ public class SysRoleController extends BaseController {
     }
 
     /**
-     * 根据角色编号获取详细信息
+     * role Get info
      *
-     * @param roleId 角色ID
+     * @param roleId role ID
      */
     @SaCheckPermission("system:role:query")
     @GetMapping(value = "/{roleId}")
@@ -80,7 +80,7 @@ public class SysRoleController extends BaseController {
     }
 
     /**
-     * 新增角色
+     * Add role
      */
     @SaCheckPermission("system:role:add")
     @Log(title = "角色管理", businessType = BusinessType.INSERT)
@@ -96,7 +96,7 @@ public class SysRoleController extends BaseController {
     }
 
     /**
-     * 修改保存角色
+     * Update role
      */
     @SaCheckPermission("system:role:edit")
     @Log(title = "角色管理", businessType = BusinessType.UPDATE)
@@ -118,7 +118,7 @@ public class SysRoleController extends BaseController {
     }
 
     /**
-     * 修改保存数据权限
+     * Update data
      */
     @SaCheckPermission("system:role:edit")
     @Log(title = "角色管理", businessType = BusinessType.UPDATE)
@@ -130,7 +130,7 @@ public class SysRoleController extends BaseController {
     }
 
     /**
-     * 状态修改
+     * Update
      */
     @SaCheckPermission("system:role:edit")
     @Log(title = "角色管理", businessType = BusinessType.UPDATE)
@@ -142,9 +142,9 @@ public class SysRoleController extends BaseController {
     }
 
     /**
-     * 删除角色
+     * Delete role
      *
-     * @param roleIds 角色ID串
+     * @param roleIds role ID
      */
     @SaCheckPermission("system:role:remove")
     @Log(title = "角色管理", businessType = BusinessType.DELETE)
@@ -154,7 +154,7 @@ public class SysRoleController extends BaseController {
     }
 
     /**
-     * 获取角色选择框列表
+     * Get role
      */
     @SaCheckPermission("system:role:query")
     @GetMapping("/optionselect")
@@ -163,7 +163,7 @@ public class SysRoleController extends BaseController {
     }
 
     /**
-     * 查询已分配用户角色列表
+     * Query already userrole list
      */
     @SaCheckPermission("system:role:list")
     @GetMapping("/authUser/allocatedList")
@@ -172,7 +172,7 @@ public class SysRoleController extends BaseController {
     }
 
     /**
-     * 查询未分配用户角色列表
+     * Query not userrole list
      */
     @SaCheckPermission("system:role:list")
     @GetMapping("/authUser/unallocatedList")
@@ -181,7 +181,7 @@ public class SysRoleController extends BaseController {
     }
 
     /**
-     * 取消授权用户
+     * user
      */
     @SaCheckPermission("system:role:edit")
     @Log(title = "角色管理", businessType = BusinessType.GRANT)
@@ -191,10 +191,10 @@ public class SysRoleController extends BaseController {
     }
 
     /**
-     * 批量取消授权用户
+     * user
      *
-     * @param roleId  角色ID
-     * @param userIds 用户ID串
+     * @param roleId role ID
+     * @param userIds user ID
      */
     @SaCheckPermission("system:role:edit")
     @Log(title = "角色管理", businessType = BusinessType.GRANT)
@@ -204,10 +204,10 @@ public class SysRoleController extends BaseController {
     }
 
     /**
-     * 批量选择用户授权
+     * user
      *
-     * @param roleId  角色ID
-     * @param userIds 用户ID串
+     * @param roleId role ID
+     * @param userIds user ID
      */
     @SaCheckPermission("system:role:edit")
     @Log(title = "角色管理", businessType = BusinessType.GRANT)
@@ -218,9 +218,9 @@ public class SysRoleController extends BaseController {
     }
 
     /**
-     * 获取对应角色部门树列表
+     * Get roledepartment
      *
-     * @param roleId 角色ID
+     * @param roleId role ID
      */
     @SaCheckPermission("system:role:list")
     @GetMapping(value = "/deptTree/{roleId}")

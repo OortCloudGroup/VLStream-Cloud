@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -10,9 +11,9 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import lombok.Data;
 
 /**
- * 应用通用流程视图对象 wf_app
+ * workflow object wf_app
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-04
  */
 @Data
@@ -22,39 +23,39 @@ public class WfAppVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 主键ID
+     * primary key ID
      */
     @ExcelProperty(value = "主键ID")
     private String appId;
 
     /**
-     * 应用名称
+     *
      */
     @ExcelProperty(value = "应用名称")
     private String applicationName;
 
     /**
-     * 应用ID
+     * ID
      */
     @ExcelProperty(value = "应用ID")
     private String applicationId;
 
     /**
-     * 应用密钥
+     *
      */
     @ExcelProperty(value = "应用密钥")
     private String applicationSecret;
     /**
-     * 0选择应用，1添加应用
+     * 0 , 1
      */
     private String appFlag;
 
     /**
-     * 图标地址
+     *
      */
     private String images;
     /**
-     * 应用包名
+     *
      */
     @ExcelProperty(value = "应用包名")
     private String appPackage;

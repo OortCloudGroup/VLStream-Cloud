@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 流程pdf上传
+ * workflowpdf
  */
 @Data
 public class WfSavePdfBo {
@@ -22,22 +23,22 @@ public class WfSavePdfBo {
     private Long id;
 
     /**
-     * 任务Id
+     * taskId
      */
     private String taskId;
 
     /**
-     * 流程实例Id
+     * workflow instanceId
      */
     private String procInsId;
 
     /**
-     * 附件链接
+     *
      */
     private String attachmentLink;
 
     /**
-     * 是否签名
+     * whether
      */
     private String isSignature;
 }

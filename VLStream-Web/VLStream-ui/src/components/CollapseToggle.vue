@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div
     class="collapse-toggle"
@@ -27,7 +32,7 @@
 <script setup>
 import { defineProps, defineEmits } from 'vue'
 
-// 定义属性
+// property
 const props = defineProps({
   isExpanded: {
     type: Boolean,
@@ -35,10 +40,10 @@ const props = defineProps({
   }
 })
 
-// 定义事件
+// event
 const emit = defineEmits(['toggle'])
 
-// 处理点击事件
+// Process event
 const handleToggle = () => {
   emit('toggle')
 }

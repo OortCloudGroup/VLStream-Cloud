@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="basic-container" :style="styleName" :class="{ 'basic-container--block': block }">
     <el-card class="basic-container__card">

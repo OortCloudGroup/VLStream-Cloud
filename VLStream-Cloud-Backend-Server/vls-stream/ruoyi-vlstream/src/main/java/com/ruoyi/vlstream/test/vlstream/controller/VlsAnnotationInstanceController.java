@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -41,7 +42,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 标注实例实体类 控制器
+ * annotationinstance control
  *
  * @author Oort
  * @since 2025-12-23
@@ -57,7 +58,7 @@ public class VlsAnnotationInstanceController extends BladeController {
 	private final IVlsAlgorithmAnnotationService algorithmAnnotationService;
 
 	/**
-	 * 标注实例实体类 详情
+	 * annotationinstance
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -68,7 +69,7 @@ public class VlsAnnotationInstanceController extends BladeController {
 	}
 
 	/**
-	 * 标注实例实体类 分页
+	 * annotationinstance
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -80,7 +81,7 @@ public class VlsAnnotationInstanceController extends BladeController {
 
 
 	/**
-	 * 标注实例实体类 自定义分页
+	 * annotationinstance Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -91,7 +92,7 @@ public class VlsAnnotationInstanceController extends BladeController {
 	}
 
 	/**
-	 * 标注实例实体类 新增
+	 * annotationinstance Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -101,7 +102,7 @@ public class VlsAnnotationInstanceController extends BladeController {
 	}
 
 	/**
-	 * 标注实例实体类 修改
+	 * annotationinstance Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -111,7 +112,7 @@ public class VlsAnnotationInstanceController extends BladeController {
 	}
 
 	/**
-	 * 标注实例实体类 新增或修改
+	 * annotationinstance Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -121,7 +122,7 @@ public class VlsAnnotationInstanceController extends BladeController {
 	}
 
 	/**
-	 * 标注实例实体类 删除
+	 * annotationinstance Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -131,7 +132,7 @@ public class VlsAnnotationInstanceController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsAnnotationInstance")
 	@ApiOperationSupport(order = 8)
@@ -148,11 +149,11 @@ public class VlsAnnotationInstanceController extends BladeController {
 
 
 	/**
-	 * 获取图片的标注实例列表
+	 * Get annotationinstance
 	 *
-	 * @param annotationId 标注项目ID
-	 * @param imageName    图片名称
-	 * @return 标注实例列表
+	 * @param annotationId annotation item ID
+	 * @param imageName
+	 * @return annotationinstance
 	 */
 	@GetMapping("/{annotationId}/instances")
 	public R<List<AnnotationInstance>> getAnnotationInstances(@PathVariable Long annotationId,
@@ -167,10 +168,10 @@ public class VlsAnnotationInstanceController extends BladeController {
 	}
 
 	/**
-	 * 获取标注项目的所有标注实例列表
+	 * Get annotation item all annotationinstance
 	 *
-	 * @param annotationId 标注项目ID
-	 * @return 标注实例列表
+	 * @param annotationId annotation item ID
+	 * @return annotationinstance
 	 */
 	@GetMapping("/{annotationId}/instances/all")
 	public R<List<AnnotationInstanceVO>> getAllAnnotationInstances(@PathVariable Long annotationId) {
@@ -184,11 +185,11 @@ public class VlsAnnotationInstanceController extends BladeController {
 	}
 
 	/**
-	 * 保存标注实例
+	 * annotationinstance
 	 *
-	 * @param annotationId 标注项目ID
-	 * @param requestBody  请求体
-	 * @return 保存的标注实例
+	 * @param annotationId annotation item ID
+	 * @param requestBody
+	 * @return annotationinstance
 	 */
 	@PostMapping("/{annotationId}/instances")
 	public R<AnnotationInstance> saveAnnotationInstance(@PathVariable Long annotationId,
@@ -219,11 +220,11 @@ public class VlsAnnotationInstanceController extends BladeController {
 	}
 
 	/**
-	 * 批量保存图片的标注实例
+	 * annotationinstance
 	 *
-	 * @param annotationId 标注项目ID
-	 * @param requestBody  请求体
-	 * @return 保存结果
+	 * @param annotationId annotation item ID
+	 * @param requestBody
+	 * @return
 	 */
 	@PostMapping("/{annotationId}/instances/batch")
 	public R<Boolean> batchSaveAnnotationInstances(@PathVariable Long annotationId,
@@ -270,7 +271,7 @@ public class VlsAnnotationInstanceController extends BladeController {
 
 			boolean success = vlsAnnotationInstanceService.batchSaveAnnotations(annotationId, imageId, instances);
 
-			// 更新标注统计信息
+			// new annotation info
 			try {
 				int annotatedCount = Math.toIntExact(vlsAnnotationInstanceService.count(new QueryWrapper<AnnotationInstance>()
 					.eq("annotation_id", annotationId)
@@ -299,10 +300,10 @@ public class VlsAnnotationInstanceController extends BladeController {
 	}
 
 	/**
-	 * 删除标注实例
+	 * Delete annotationinstance
 	 *
-	 * @param instanceId 实例ID
-	 * @return 删除结果
+	 * @param instanceId instanceID
+	 * @return Delete
 	 */
 	@DeleteMapping("/instances/{instanceId}")
 	public R<Boolean> deleteAnnotationInstance(@PathVariable Long instanceId) {
@@ -318,10 +319,10 @@ public class VlsAnnotationInstanceController extends BladeController {
 	}
 
 	/**
-	 * 批量删除标注实例
+	 * Batch delete annotationinstance
 	 *
-	 * @param instanceIds 实例ID列表
-	 * @return 删除结果
+	 * @param instanceIds instanceID
+	 * @return Delete
 	 */
 	@DeleteMapping("/instances/batch")
 	public R<String> batchDeleteAnnotationInstances(@RequestBody List<Long> instanceIds) {
@@ -418,7 +419,7 @@ public class VlsAnnotationInstanceController extends BladeController {
 	}
 
 	/**
-	 * 计算标注进度（0-100）
+	 * annotation (0-100)
 	 */
 	private int calculateProgress(Integer annotatedCount, Integer totalCount) {
 		if (totalCount == null || totalCount == 0) {
@@ -431,7 +432,7 @@ public class VlsAnnotationInstanceController extends BladeController {
 	}
 
 	/**
-	 * 根据进度计算标注状态
+	 * annotation
 	 */
 	private String calculateAnnotationStatus(int progress) {
 		if (progress == 0) {

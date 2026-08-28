@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -16,7 +17,7 @@ import javax.validation.Validator;
 import java.util.Properties;
 
 /**
- * 校验框架配置类
+ * Validate configuration
  *
  * @author Lion Li
  */
@@ -27,20 +28,20 @@ public class ValidatorConfig {
     private MessageSource messageSource;
 
     /**
-     * 配置校验框架 快速返回模式
+     * configurationValidate
      */
     @Bean
     public Validator validator() {
         LocalValidatorFactoryBean factoryBean = new LocalValidatorFactoryBean();
-        // 国际化
+        //
         factoryBean.setValidationMessageSource(messageSource);
-        // 设置使用 HibernateValidator 校验器
+        // Set HibernateValidator Validate
         factoryBean.setProviderClass(HibernateValidator.class);
         Properties properties = new Properties();
-        // 设置 快速异常返回
+        // Set
         properties.setProperty("hibernate.validator.fail_fast", "true");
         factoryBean.setValidationProperties(properties);
-        // 加载配置
+        // Load configuration
         factoryBean.afterPropertiesSet();
         return factoryBean.getValidator();
     }

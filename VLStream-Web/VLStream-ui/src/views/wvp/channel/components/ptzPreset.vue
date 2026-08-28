@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div id="ptzPreset" style="width: 100%">
-    <!-- 预置位标签 -->
+    <!--  -->
     <el-tag
         v-if="presetList.length > 0"
         v-for="item in presetList"
@@ -14,7 +19,7 @@
       {{ item.presetName || item.presetId }}
     </el-tag>
 
-    <!-- 添加预置位输入框 -->
+    <!--  -->
     <el-input
         v-if="inputVisible"
         v-model="ptzPresetId"
@@ -32,7 +37,7 @@
       </template>
     </el-input>
 
-    <!-- 添加按钮 -->
+    <!-- button -->
     <el-button v-else size="small" @click="showInput">+ 添加</el-button>
   </div>
 </template>
@@ -43,7 +48,7 @@ import axios from 'axios';
 import {ElMessage, ElLoading, ElMessageBox} from 'element-plus';
 import {callPreset, deletePreset, getAddPreset, gotoPresetList} from "@/api/wvp/channel.js";
 
-// 定义 Props
+// Props
 const props = defineProps({
   channelDeviceId: {
     type: String,
@@ -55,18 +60,18 @@ const props = defineProps({
   }
 });
 
-// 数据定义
+// data
 const presetList = ref([]);
 const inputVisible = ref(false);
 const ptzPresetId = ref('');
 const saveTagInput = ref(null);
 
-// 生命周期钩子
+// sub
 onMounted(() => {
   getPresetList();
 });
 
-// 获取预置位列表
+// Get
 const getPresetList = async () => {
   const url = {
     deviceId: props.deviceId,
@@ -76,7 +81,7 @@ const getPresetList = async () => {
   presetList.value = res
 };
 
-// 显示输入框
+//
 const showInput = () => {
   inputVisible.value = true;
   nextTick(() => {
@@ -84,7 +89,7 @@ const showInput = () => {
   });
 };
 
-// 添加预置位
+//
 const addPreset = async () => {
   const loading = ElLoading.service({
     lock: true,
@@ -124,13 +129,13 @@ const addPreset = async () => {
 };
 
 
-// 取消添加
+//
 const cancel = () => {
   inputVisible.value = false;
   ptzPresetId.value = '';
 };
 
-// 调用预置位
+//
 const gotoPreset = async (preset) => {
   try {
     const url = {
@@ -159,7 +164,7 @@ const gotoPreset = async (preset) => {
   }
 };
 
-// 删除预置位
+// Delete
 const delPreset = (preset) => {
   ElMessageBox.confirm('确定删除此预置位？', '提示', {
     confirmButtonText: '确定',
@@ -202,7 +207,7 @@ const delPreset = (preset) => {
         }
       })
       .catch(() => {
-        // 用户取消操作
+        // user operation
       });
 };
 </script>

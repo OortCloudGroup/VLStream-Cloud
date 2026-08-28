@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import java.io.Serializable;
 
 
 /**
- * 标签管理表 Excel实体类
+ * Excel
  *
  * @author Oort
  * @since 2025-12-23
@@ -29,61 +30,61 @@ public class VlsTagManagementExcel implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 标签名称
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("标签名称")
 	private String tagName;
 	/**
-	 * 标签大类：own-自有标签，public-公共标签
+	 * : own- , public-
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("标签大类：own-自有标签，public-公共标签")
 	private String categoryType;
 	/**
-	 * 层级：1-标签类型，2-具体标签
+	 * layer : 1- , 2-
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("层级：1-标签类型，2-具体标签")
 	private Byte level;
 	/**
-	 * 父级ID，level=1时为NULL，level=2时为标签类型ID
+	 * ID, level=1 to NULL, level=2 to ID
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("父级ID，level=1时为NULL，level=2时为标签类型ID")
 	private Long parentId;
 	/**
-	 * 排序顺序
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("排序顺序")
 	private Integer sortOrder;
 	/**
-	 * 标签颜色
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("标签颜色")
 	private String tagColor;
 	/**
-	 * 标签图标
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("标签图标")
 	private String tagIcon;
 	/**
-	 * 标签描述
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("标签描述")
 	private String description;
 	/**
-	 * 是否启用：1-启用，0-禁用
+	 * whether : 1- , 0-
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("是否启用：1-启用，0-禁用")
 	private Byte isActive;
 	/**
-	 * 使用次数
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("使用次数")

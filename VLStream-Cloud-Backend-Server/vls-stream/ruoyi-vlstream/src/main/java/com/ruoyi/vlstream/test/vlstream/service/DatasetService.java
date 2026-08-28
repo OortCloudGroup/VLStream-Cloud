@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -9,7 +10,7 @@ package com.ruoyi.vlstream.test.vlstream.service;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 数据集服务接口
+ * datasetserviceinterface
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -17,42 +18,42 @@ import javax.servlet.http.HttpServletResponse;
 public interface DatasetService {
 
 	/**
-	 * 连接远程服务器
+	 * service
 	 *
-	 * @param host     服务器地址
-	 * @param username 用户名
-	 * @param password 密码
-	 * @param path     数据集路径
-	 * @return 是否连接成功
+	 * @param host service
+	 * @param username user
+	 * @param password
+	 * @param path dataset
+	 * @return whether successfully
 	 */
 	boolean connectToServer(String host, String username, String password, String path);
 
 	/**
-	 * 获取数据集文件列表
+	 * Get dataset
 	 *
-	 * @param host 服务器地址
-	 * @param path 数据集路径
-	 * @return 文件列表
+	 * @param host service
+	 * @param path dataset
+	 * @return
 	 */
 	Object getDatasetFiles(String host, String path);
 
 	/**
-	 * 获取文件内容
+	 * Get
 	 *
-	 * @param host     服务器地址
-	 * @param path     数据集路径
-	 * @param filename 文件名
-	 * @return 文件内容
+	 * @param host service
+	 * @param path dataset
+	 * @param filename
+	 * @return
 	 */
 	String getFileContent(String host, String path, String filename);
 
 	/**
-	 * 下载文件
 	 *
-	 * @param host     服务器地址
-	 * @param path     数据集路径
-	 * @param filename 文件名
-	 * @param response HTTP响应对象
+	 *
+	 * @param host service
+	 * @param path dataset
+	 * @param filename
+	 * @param response HTTP object
 	 */
 	void downloadFile(String host, String path, String filename, HttpServletResponse response);
 }

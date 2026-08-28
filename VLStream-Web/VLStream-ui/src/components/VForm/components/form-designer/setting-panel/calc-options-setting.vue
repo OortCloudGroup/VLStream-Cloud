@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2024-12-10 09:30:08
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -163,7 +168,7 @@ const editor = ref(null)
 const initCodemirror = () => {
   const placeholderMatcher = new MatchDecorator({
     // regexp: /\[\[(\w+)\]\]/g,
-    regexp: /\[\[(.+?)\]\]/g, // 支持中文
+    regexp: /\[\[(.+?)\]\]/g, // in
     decoration: match => Decoration.replace({
       widget: new PlaceholderWidget(match[1])
     })
@@ -293,7 +298,7 @@ const initCodemirror = () => {
   }
 
   .CodeMirror {
-    /*表单变量样式*/
+    /* formvariable */
     .cm-field {
       background: #007bff;
       padding: 3px 5px;
@@ -301,7 +306,7 @@ const initCodemirror = () => {
       color: #fff;
       margin: 0 1px;
     }
-    /*函数样式*/
+    /*  */
     .cm-func {
       font-weight: bold;
       color: var(--el-color-primary);

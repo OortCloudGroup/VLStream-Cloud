@@ -1,7 +1,12 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="scene-governance tenant_Page draHeaPB">
     <div class="tenant_content">
-    <!-- 列表视图 -->
+    <!--  -->
     <div v-if="!showEditView" class="tableTenBox flexRowAC">
       <div class="tableTenItU">
         <div class="depNameBox_out flexRowAC">
@@ -43,9 +48,9 @@
           </el-table-column>
           <el-table-column prop="name" label="场景名称" show-overflow-tooltip />
           <el-table-column prop="description" label="场景描述" show-overflow-tooltip />
-<!--            <el-table-column prop="algorithmName" label="关联算法" />-->
+<!-- <el-table-column prop="algorithmName" label=" algorithm" /> -->
           <el-table-column prop="camerasName" label="关联设备" show-overflow-tooltip />
-<!--            <el-table-column prop="rules" label="治理规则" />-->
+<!-- <el-table-column prop="rules" label=" " /> -->
           <el-table-column prop="status" label="状态" align="center">
             <template #default="scope">
               <el-tag
@@ -89,16 +94,16 @@
       </div>
     </div>
 
-    <!-- 编辑视图 -->
+    <!--  -->
     <div v-if="showEditView" class="edit-view">
-      <!-- 面包屑导航 -->
+      <!--  -->
       <div class="breadcrumb-nav">
         <span class="breadcrumb-item" @click="showListView">场景列表</span>
         <span class="breadcrumb-separator">></span>
         <span class="breadcrumb-item active">{{ editTitle }}</span>
       </div>
 
-      <!-- 编辑内容 -->
+      <!--  -->
       <div class="edit-content">
         <el-form
           ref="formRef"
@@ -107,31 +112,31 @@
           label-width="80px"
           class="scene-form">
           <el-form-item label="场景名称" prop="name">
-            <el-input 
-              v-model="form.name" 
+            <el-input
+              v-model="form.name"
               placeholder="请输入场景名称"
               style="width: 480px"
             />
           </el-form-item>
-          
+
           <el-form-item label="Cron表达式" prop="cronExpression" label-width="120">
             <CronExpressionBuilder v-model="form.cronExpression" />
           </el-form-item>
-          
-<!--          <el-form-item label="AI算法" prop="algorithm">-->
+
+<!-- <el-form-item label="AIalgorithm" prop="algorithm"> -->
 <!--            <div class="selector-item" @click="showAlgorithmSelector = true" style="width: 480px">-->
-<!--              <span class="selector-text">{{ form.algorithm || '请选择' }}</span>-->
+<!-- <span class="selector-text">{{ form.algorithm || ' ' }}</span> -->
 <!--              <el-icon class="selector-arrow"><ArrowRight /></el-icon>-->
 <!--            </div>-->
 <!--          </el-form-item>-->
-          
+
           <el-form-item label="区划地点" prop="location">
             <div class="selector-item" @click="showLocationSelector = true" style="width: 480px">
               <span class="selector-text">{{ form.location || '请选择' }}</span>
               <el-icon class="selector-arrow"><ArrowRight /></el-icon>
             </div>
           </el-form-item>
-          
+
           <el-form-item label="摄像头" prop="cameras">
             <div class="selector-item" @click="showCameraSelector = true" style="width: 480px">
               <span class="selector-text">{{ form.cameras || '请选择' }}</span>
@@ -139,7 +144,7 @@
             </div>
           </el-form-item>
 
-          <!-- 操作按钮 -->
+          <!-- operationbutton -->
           <div class="form-actions">
             <el-button @click="showListView" class="common_btn">取消</el-button>
             <el-button type="primary" @click="handleSubmit" class="common_btn">保存</el-button>
@@ -149,7 +154,7 @@
     </div>
     </div>
 
-    <!-- 新增场景弹窗 -->
+    <!-- Add dialog -->
     <el-dialog
       v-model="showAddDialog"
       title="新增场景"
@@ -160,7 +165,7 @@
       class="scene-dialog"
     >
       <el-form :model="addForm" label-width="100px" class="scene-dialog-form">
-        <!-- 场景名称 -->
+        <!--  -->
         <el-form-item label="场景名称" required>
           <el-input
             v-model="addForm.name"
@@ -169,29 +174,29 @@
             style="width: 100%"
           />
         </el-form-item>
-        
-        <!-- Cron表达式 -->
+
+        <!-- Cron -->
         <el-form-item label="Cron表达式" required>
           <CronExpressionBuilder v-model="addForm.cronExpression" />
         </el-form-item>
-        
-        <!-- AI算法 -->
-<!--        <el-form-item label="AI算法">-->
+
+        <!-- AIalgorithm -->
+<!-- <el-form-item label="AIalgorithm"> -->
 <!--          <div class="selector-item" @click="showAlgorithmDialog = true">-->
-<!--            <span class="selector-text">{{ addForm.algorithm || '请选择' }}</span>-->
+<!-- <span class="selector-text">{{ addForm.algorithm || ' ' }}</span> -->
 <!--            <el-icon class="selector-arrow"><ArrowRight /></el-icon>-->
 <!--          </div>-->
 <!--        </el-form-item>-->
-        
-        <!-- 区划地点 -->
+
+        <!--  -->
         <el-form-item label="区划地点">
           <div class="selector-item" @click="showLocationDialog = true">
             <span class="selector-text">{{ addForm.location || '请选择' }}</span>
             <el-icon class="selector-arrow"><ArrowRight /></el-icon>
           </div>
         </el-form-item>
-        
-        <!-- 摄像头 -->
+
+        <!--  -->
         <el-form-item label="摄像头">
           <div class="selector-item" @click="showCameraDialog = true">
             <span class="selector-text">{{ addForm.cameras || '请选择' }}</span>
@@ -199,7 +204,7 @@
           </div>
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="handleCancelAdd" size="large" class="common_btn">取消</el-button>
@@ -210,14 +215,14 @@
 
 <!--    <el-dialog-->
 <!--      v-model="showAlgorithmSelector"-->
-<!--      title="选择AI算法"-->
+<!-- title=" AIalgorithm" -->
 <!--      width="520px"-->
 <!--      class="selector-dialog"-->
 <!--    >-->
 <!--      <div class="dialog-content">-->
 <!--        <el-input-->
 <!--          v-model="algorithmSearch"-->
-<!--          placeholder="搜索算法"-->
+<!-- placeholder=" algorithm" -->
 <!--          clearable-->
 <!--          class="dialog-search"-->
 <!--        />-->
@@ -238,8 +243,8 @@
 <!--      </div>-->
 <!--      <template #footer>-->
 <!--        <div class="dialog-footer">-->
-<!--          <el-button @click="showAlgorithmSelector = false" class="common_btn">取消</el-button>-->
-<!--          <el-button type="primary" @click="confirmAlgorithmSelector" class="common_btn">确定</el-button>-->
+<!-- <el-button @click="showAlgorithmSelector = false" class="common_btn"> </el-button> -->
+<!-- <el-button type="primary" @click="confirmAlgorithmSelector" class="common_btn"> </el-button> -->
 <!--        </div>-->
 <!--      </template>-->
 <!--    </el-dialog>-->
@@ -282,14 +287,14 @@
 
 <!--    <el-dialog-->
 <!--      v-model="showAlgorithmDialog"-->
-<!--      title="选择AI算法"-->
+<!-- title=" AIalgorithm" -->
 <!--      width="30%"-->
 <!--      class="selector-dialog"-->
 <!--    >-->
 <!--      <div class="dialog-content">-->
 <!--        <el-input-->
 <!--          v-model="algorithmSearch"-->
-<!--          placeholder="搜索算法"-->
+<!-- placeholder=" algorithm" -->
 <!--          clearable-->
 <!--          class="dialog-search"-->
 <!--        />-->
@@ -310,8 +315,8 @@
 <!--      </div>-->
 <!--      <template #footer>-->
 <!--        <div class="dialog-footer">-->
-<!--          <el-button @click="showAlgorithmDialog = false" class="common_btn">取消</el-button>-->
-<!--          <el-button type="primary" @click="confirmAlgorithmDialog" class="common_btn">确定</el-button>-->
+<!-- <el-button @click="showAlgorithmDialog = false" class="common_btn"> </el-button> -->
+<!-- <el-button type="primary" @click="confirmAlgorithmDialog" class="common_btn"> </el-button> -->
 <!--        </div>-->
 <!--      </template>-->
 <!--    </el-dialog>-->
@@ -368,32 +373,32 @@ import { clacPXToVW } from '@/utils/index'
 
 const router = useRouter()
 
-// 搜索表单
+// form
 const queryForm = reactive({
   name: '',
   dateRange: null
 })
 
-// 分页相关
+// related
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 
-// 选中的行数据
+// in data
 const selectedRows = ref([])
 
-// 加载状态
+// Load
 const loading = ref(false)
 const tableLoading = ref(false)
 
-// 视图控制
+// control
 const showEditView = ref(false)
 const editingScene = ref(null)
 const editTitle = ref('新增场景')
 
 const DEFAULT_CRON_EXPRESSION = '0 0 0 * * ? *'
 
-// 新增弹窗控制
+// Add dialogcontrol
 const showAddDialog = ref(false)
 const addForm = ref({
   name: '',
@@ -405,7 +410,7 @@ const addForm = ref({
   cameraIds: []
 })
 
-// 场景表单
+// form
 const form = ref({
   name: '',
   cronExpression: DEFAULT_CRON_EXPRESSION,
@@ -416,12 +421,12 @@ const form = ref({
   cameraIds: []
 })
 
-// 选择器显示状态
+//
 const showAlgorithmSelector = ref(false)
 const showLocationSelector = ref(false)
 const showCameraSelector = ref(false)
 
-// 新增弹窗的选择器状态
+// Add dialog
 const showAlgorithmDialog = ref(false)
 const showLocationDialog = ref(false)
 const showCameraDialog = ref(false)
@@ -438,17 +443,17 @@ const tempSelectedAlgorithmDialogIds = ref([])
 const tempSelectedCameraIds = ref([])
 const tempSelectedCameraDialogIds = ref([])
 
-// 表单验证规则
+// form
 const rules = {
   name: [
     { required: true, message: '请输入场景名称', trigger: 'blur' }
   ]
 }
 
-// 表格数据
+// tabledata
 const tableData = ref([])
 
-// 直接使用API返回的数据（因为分页和筛选在后端完成）
+// API data ( to and in after )
 const currentPageData = computed(() => {
   return tableData.value
 })
@@ -750,27 +755,27 @@ watch(showCameraDialog, async (visible) => {
 })
 
 
-// 加载场景治理列表
+// Load
 const loadSceneGovernanceList = async () => {
   try {
     tableLoading.value = true
-    
+
     const params = {
       name: queryForm.name || undefined,
       startDate: queryForm.dateRange ? queryForm.dateRange[0] : undefined,
       endDate: queryForm.dateRange ? queryForm.dateRange[1] : undefined
     }
-    
+
     const response = await getList(currentPage.value, pageSize.value, params)
-    
+
     if (response.code === 200) {
       tableData.value = response.data.records || []
       total.value = response.data.total || 0
-      
-      // 为每条记录添加序号
+
+      // to record
       tableData.value.forEach((item, index) => {
         item.index = (currentPage.value - 1) * pageSize.value + index + 1
-        // 格式化时间显示
+        // Format
         if (item.createdAt) {
           item.createTime = new Date(item.createdAt).toLocaleString('zh-CN', {
             year: 'numeric',
@@ -780,8 +785,8 @@ const loadSceneGovernanceList = async () => {
             minute: '2-digit'
           }).replace(/\//g, '-')
         }
-        
-        // 处理selectedDays为JSON字符串的情况
+
+        // Process selectedDays to JSON
         if (typeof item.selectedDays === 'string') {
           try {
             item.selectedDays = JSON.parse(item.selectedDays)
@@ -789,8 +794,8 @@ const loadSceneGovernanceList = async () => {
             item.selectedDays = ['monday']
           }
         }
-        
-        // 设置默认值
+
+        // Set value
         item.devices = item.devices || '-'
         item.camerasName = item.camerasName || item.devices || '-'
         item.rules = item.rules || '-'
@@ -808,7 +813,7 @@ const loadSceneGovernanceList = async () => {
   }
 }
 
-// 生成描述文本
+// Generate
 const generateDescriptionText = (item) => {
   const cronExpression = getCronExpressionValue(item)
   if (cronExpression) return formatCronDescription(cronExpression)
@@ -842,13 +847,13 @@ const generateDescriptionText = (item) => {
   return text
 }
 
-// 方法
+// method
 const handleSelectionChange = (selection) => {
   selectedRows.value = selection
 }
 
 const handleSearch = async () => {
-  currentPage.value = 1 // 重置到第一页
+  currentPage.value = 1 //
   await loadSceneGovernanceList()
   ElMessage.success('搜索完成')
 }
@@ -856,13 +861,13 @@ const handleSearch = async () => {
 const handleReset = async () => {
   queryForm.name = ''
   queryForm.dateRange = null
-  currentPage.value = 1 // 重置到第一页
+  currentPage.value = 1 //
   await loadSceneGovernanceList()
   ElMessage.info('搜索条件已重置')
 }
 
 const handleAdd = () => {
-  // 重置新增表单
+  // Add form
   addForm.value = {
     name: '',
     cronExpression: DEFAULT_CRON_EXPRESSION,
@@ -875,7 +880,7 @@ const handleAdd = () => {
   showAddDialog.value = true
 }
 
-// 确认新增
+// Add
 const handleConfirmAdd = async () => {
   if (!addForm.value.name.trim()) {
     ElMessage.warning('请输入场景名称')
@@ -891,10 +896,10 @@ const handleConfirmAdd = async () => {
     ElMessage.warning('Cron表达式格式不正确')
     return
   }
-  
+
   try {
     loading.value = true
-    
+
     await Promise.all([ensureAlgorithmOptions(), ensureCameraOptions()])
     const algorithmIds = resolveIdsForSubmit(
       addForm.value.algorithmIds,
@@ -932,13 +937,13 @@ const handleConfirmAdd = async () => {
       devices: cameraText || '-',
       rules: algorithmText || '-'
     }
-    
+
     const response = await add(sceneData)
-    
+
     if (response.code === 200) {
       showAddDialog.value = false
       ElMessage.success('新增场景成功')
-      // 重新加载列表数据
+      // new Load data
       await loadSceneGovernanceList()
     } else {
       ElMessage.error(response.message || '新增失败')
@@ -951,7 +956,7 @@ const handleConfirmAdd = async () => {
   }
 }
 
-// 从表单生成描述文本
+// from formGenerate
 const generateDescriptionFromForm = (formData) => {
   return formatCronDescription(formData.cronExpression)
 }
@@ -963,7 +968,7 @@ const formatIdsParam = (ids) => {
   return ids
 }
 
-// 取消新增
+// Add
 const handleCancelAdd = () => {
   showAddDialog.value = false
 }
@@ -973,7 +978,7 @@ const handleEdit = () => {
     ElMessage.warning('请选择一条记录进行编辑')
     return
   }
-  
+
   const row = selectedRows.value[0]
   const cronExpression = resolveCronExpression(row)
   const algorithmText = row.algorithmName || row.rules || row.algorithm || ''
@@ -1000,7 +1005,7 @@ const handleDelete = async () => {
     ElMessage.warning('请选择要删除的记录')
     return
   }
-  
+
   try {
     await ElMessageBox.confirm(
       `确定要删除选中的 ${selectedRows.value.length} 条记录吗？`,
@@ -1011,17 +1016,17 @@ const handleDelete = async () => {
         type: 'warning',
       }
     )
-    
+
     loading.value = true
-    
-    // 批量删除
+
+    // Batch delete
     const idsToDelete = selectedRows.value.map(row => row.id)
     const response = await remove(formatIdsParam(idsToDelete))
-    
+
     if (response.code === 200) {
       selectedRows.value = []
       ElMessage.success('删除成功')
-      // 重新加载列表数据
+      // new Load data
       await loadSceneGovernanceList()
     } else {
       ElMessage.error(response.message || '删除失败')
@@ -1045,13 +1050,13 @@ const toolbarButtonList = [
 
 const handleDetailRow = (row) => {
   ElMessage.info(`查看场景详情: ${row.name}`)
-  // 实际项目中这里会打开详情页面或弹窗
+  // item in will page dialog
 }
 
 const handleEditRow = (row) => {
   editingScene.value = row
-  
-  // 处理Cron表达式回显
+
+  // Process Cron
   const cronExpression = resolveCronExpression(row)
   const algorithmText = row.algorithmName || row.rules || row.algorithm || ''
   const algorithmIds = normalizeIdArray(row.algorithmIds || row.algorithm)
@@ -1082,14 +1087,14 @@ const handleDeleteRow = async (row) => {
         type: 'warning',
       }
     )
-    
+
     loading.value = true
-    
+
     const response = await remove(formatIdsParam([row.id]))
-    
+
     if (response.code === 200) {
       ElMessage.success('删除成功')
-      // 重新加载列表数据
+      // new Load data
       await loadSceneGovernanceList()
     } else {
       ElMessage.error(response.message || '删除失败')
@@ -1141,7 +1146,7 @@ const handleSubmit = async () => {
 
   try {
     loading.value = true
-    
+
     await Promise.all([ensureAlgorithmOptions(), ensureCameraOptions()])
     const algorithmIds = resolveIdsForSubmit(
       form.value.algorithmIds,
@@ -1181,24 +1186,24 @@ const handleSubmit = async () => {
 
     if (editingScene.value) {
       const response = await update({ ...sceneData, id: editingScene.value.id })
-      
+
       if (response.code === 200) {
         ElMessage.success('更新成功')
         showEditView.value = false
         selectedRows.value = []
-        // 重新加载列表数据
+        // new Load data
         await loadSceneGovernanceList()
       } else {
         ElMessage.error(response.message || '更新失败')
       }
     } else {
       const response = await add(sceneData)
-      
+
       if (response.code === 200) {
         ElMessage.success('创建成功')
         showEditView.value = false
         selectedRows.value = []
-        // 重新加载列表数据
+        // new Load data
         await loadSceneGovernanceList()
       } else {
         ElMessage.error(response.message || '创建失败')
@@ -1228,7 +1233,7 @@ const handleCurrentChange = async (val) => {
   await loadSceneGovernanceList()
 }
 
-// 获取执行时间文本描述
+// Get Execute
 const getExecuteTimeText = (formData) => {
   return formatCronDescription(formData.cronExpression)
 }
@@ -1246,11 +1251,11 @@ const searchResetFn = (val, reset) => {
   handleAdvancedSearch(val || {})
 }
 
-// 高级搜索相关方法
+// related method
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索:', searchData)
-  
-  // 更新搜索表单
+
+  // new form
   if (searchData.keyword) {
     queryForm.name = searchData.keyword
   }
@@ -1260,7 +1265,7 @@ const handleAdvancedSearch = (searchData) => {
   if (searchData.dateRange && searchData.dateRange.length > 0) {
     queryForm.dateRange = searchData.dateRange
   }
-  
+
   handleSearch()
 }
 
@@ -1291,7 +1296,7 @@ const handleBatchOperation = () => {
   ElMessage.success('批量操作')
 }
 
-// 初始化加载数据
+// Initialize Load data
 onMounted(() => {
   loadSceneGovernanceList()
 })
@@ -1341,7 +1346,7 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* 查询栏 */
+/* Query */
 .query-bar {
   background: #F0F2F5;
   border-radius: 8px 8px 0 0;
@@ -1375,7 +1380,7 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-/* 主题色更新 */
+/* main new */
 :deep(.el-button--primary) {
   background-color: #1A53FF;
   border-color: #1A53FF;
@@ -1386,7 +1391,7 @@ onMounted(() => {
   border-color: #3d70ff;
 }
 
-/* 编辑视图样式 */
+/*  */
 .edit-view {
   height: 100%;
   display: flex;
@@ -1577,7 +1582,7 @@ onMounted(() => {
   gap: 12px;
 }
 
-/* 弹窗样式 */
+/* dialog */
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
@@ -1608,7 +1613,7 @@ onMounted(() => {
   width: 100%;
 }
 
-/* 弹窗表单样式 */
+/* dialogform */
 :deep(.el-form-item__label) {
   font-weight: 500;
   color: #303133;
@@ -1618,7 +1623,7 @@ onMounted(() => {
   flex: 1;
 }
 
-/* 弹窗按钮样式 */
+/* dialogbutton */
 .dialog-footer .el-button--primary {
   background-color: #1A53FF;
   border-color: #1A53FF;
@@ -1629,7 +1634,7 @@ onMounted(() => {
   border-color: #3d70ff;
 }
 
-/* 新增场景弹窗样式 */
+/* Add dialog */
 .scene-dialog :deep(.el-dialog__body) {
   max-height: 80vh;
   overflow-y: auto;
@@ -1639,14 +1644,14 @@ onMounted(() => {
   .el-form-item {
     margin-bottom: 20px;
   }
-  
+
   .el-form-item__label {
     font-weight: 500;
     color: #303133;
   }
 }
 
-/* 执行时间选择器样式 */
+/* Execute */
 .execute-time-selector {
   display: flex;
   gap: 8px;
@@ -1669,7 +1674,7 @@ onMounted(() => {
   color: white;
 }
 
-/* 时间选择器组样式 */
+/*  */
 .time-item {
   .el-form-item__content {
     flex-direction: column;
@@ -1702,7 +1707,7 @@ onMounted(() => {
   margin-right: 4px;
 }
 
-/* 星期选择器样式 */
+/*  */
 .week-selector {
   width: 100%;
   margin-top: 8px;
@@ -1743,7 +1748,7 @@ onMounted(() => {
   border-color: #1A53FF;
 }
 
-/* 间隔设置样式 */
+/* Set */
 .interval-row {
   display: flex;
   align-items: center;
@@ -1770,7 +1775,7 @@ onMounted(() => {
   color: #606266;
 }
 
-/* 时间提示样式 */
+/* prompt / tip */
 .time-hint {
   font-size: 12px;
   color: #909399;
@@ -1778,7 +1783,7 @@ onMounted(() => {
   margin-top: 8px;
 }
 
-/* 选择器样式 */
+/*  */
 .selector-item {
   display: flex;
   align-items: center;
@@ -1811,4 +1816,4 @@ onMounted(() => {
 .selector-item:hover .selector-arrow {
   color: #1A53FF;
 }
-</style> 
+</style>

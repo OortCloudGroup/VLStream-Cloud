@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -18,7 +19,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmRepositoryVO;
 import java.util.List;
 
 /**
- * 算法仓库表 Mapper 接口
+ * algorithm Mapper interface
  *
  * @author Oort
  * @since 2025-12-23
@@ -26,24 +27,24 @@ import java.util.List;
 public interface VlsAlgorithmRepositoryMapper extends BaseMapper<AlgorithmRepository> {
 
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsAlgorithmRepository 查询参数
+	 * @param page parameter
+	 * @param vlsAlgorithmRepository Query parameter
 	 * @return List<VlsAlgorithmRepositoryVO>
 	 */
 	List<AlgorithmRepositoryVO> selectVlsAlgorithmRepositoryPage(IPage page, AlgorithmRepositoryVO vlsAlgorithmRepository);
 
 	/**
-	 * 获取导出数据
+	 * Get Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsAlgorithmRepositoryExcel>
 	 */
 	List<VlsAlgorithmRepositoryExcel> exportVlsAlgorithmRepository(@Param("ew") Wrapper<AlgorithmRepository> queryWrapper);
 
 	/**
-	 * 分页查询算法仓库列表
+	 * Query algorithm list
 	 */
 	@Select("SELECT r.*, " +
 		"(SELECT COUNT(*) FROM algorithm a WHERE a.repository_id = r.id AND a.is_deleted = 0) as algorithm_count " +
@@ -59,19 +60,19 @@ public interface VlsAlgorithmRepositoryMapper extends BaseMapper<AlgorithmReposi
 													@Param("status") String status);
 
 	/**
-	 * 查询所有启用的算法仓库
+	 * Query all algorithm
 	 */
 	@Select("SELECT * FROM vls_algorithm_repository WHERE is_deleted = 0 AND status = 'enabled' ORDER BY id")
 	List<AlgorithmRepository> selectEnabledRepositories();
 
 	/**
-	 * 根据类型查询算法仓库
+	 * Query algorithm
 	 */
 	@Select("SELECT * FROM vls_algorithm_repository WHERE is_deleted = 0 AND repository_type = #{repositoryType} ORDER BY id")
 	List<AlgorithmRepository> selectByRepositoryType(@Param("repositoryType") String repositoryType);
 
 	/**
-	 * 统计算法仓库数量
+	 * algorithm
 	 */
 	@Select("SELECT COUNT(*) FROM vls_algorithm_repository WHERE is_deleted = 0")
 	Long countRepositories();

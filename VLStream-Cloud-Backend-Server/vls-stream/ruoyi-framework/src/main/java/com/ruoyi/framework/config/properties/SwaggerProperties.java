@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * swagger 配置属性
+ * swagger configurationproperty
  *
  * @author Lion Li
  */
@@ -29,70 +30,70 @@ import java.util.List;
 public class SwaggerProperties {
 
     /**
-     * 文档基本信息
+     * info
      */
     @NestedConfigurationProperty
     private InfoProperties info = new InfoProperties();
 
     /**
-     * 扩展文档地址
+     *
      */
     @NestedConfigurationProperty
     private ExternalDocumentation externalDocs;
 
     /**
-     * 标签
+     *
      */
     private List<Tag> tags = null;
 
     /**
-     * 路径
+     *
      */
     @NestedConfigurationProperty
     private Paths paths = null;
 
     /**
-     * 组件
+     * component
      */
     @NestedConfigurationProperty
     private Components components = null;
 
     /**
      * <p>
-     * 文档的基础属性信息
+     * propertyinfo
      * </p>
      *
      * @see io.swagger.v3.oas.models.info.Info
      *
-     * 为了 springboot 自动生产配置提示信息，所以这里复制一个类出来
+     * to springboot configurationprompt / tipinfo,
      */
     @Data
     public static class InfoProperties {
 
         /**
-         * 标题
+         *
          */
         private String title = null;
 
         /**
-         * 描述
+         *
          */
         private String description = null;
 
         /**
-         * 联系人信息
+         * info
          */
         @NestedConfigurationProperty
         private Contact contact = null;
 
         /**
-         * 许可证
+         *
          */
         @NestedConfigurationProperty
         private License license = null;
 
         /**
-         * 版本
+         *
          */
         private String version = null;
 

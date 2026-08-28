@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -17,7 +18,7 @@ import javax.validation.constraints.Size;
 
 
 /**
- * 通知公告表 sys_notice
+ * notification sys_notice
  *
  * @author Lion Li
  */
@@ -27,13 +28,13 @@ import javax.validation.constraints.Size;
 public class SysNotice extends BaseEntity {
 
     /**
-     * 公告ID
+     * ID
      */
     @TableId(value = "notice_id")
     private Long noticeId;
 
     /**
-     * 公告标题
+     *
      */
     @Xss(message = "公告标题不能包含脚本字符")
     @NotBlank(message = "公告标题不能为空")
@@ -41,22 +42,22 @@ public class SysNotice extends BaseEntity {
     private String noticeTitle;
 
     /**
-     * 公告类型（1通知 2公告）
+     * (1notification 2 )
      */
     private String noticeType;
 
     /**
-     * 公告内容
+     *
      */
     private String noticeContent;
 
     /**
-     * 公告状态（0正常 1关闭）
+     * (0 1 )
      */
     private String status;
 
     /**
-     * 备注
+     * remark
      */
     private String remark;
 

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,7 +18,7 @@ import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmAnnotationTypeEnum;
 import java.math.BigDecimal;
 
 /**
- * 标注实例实体类 实体类
+ * annotationinstance
  *
  * @author Oort
  * @since 2025-12-23
@@ -30,40 +31,40 @@ public class AnnotationInstance extends TenantEntity {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 关联的标注项目ID
+	 * annotation item ID
 	 */
 	@Schema(description = "关联的标注项目ID")
 	@JsonSerialize(using = ToStringSerializer.class)
 	private Long annotationId;
 	/**
-	 * 标签ID
+	 * ID
 	 */
 	@Schema(description = "标签ID")
 	@JsonSerialize(using = ToStringSerializer.class)
 	private Long labelId;
 	/**
-	 * 图片id
+	 * id
 	 */
 	@Schema(description = "图片id")
 	@JsonSerialize(using = ToStringSerializer.class)
 	private Long imageId;
 	/**
-	 * 标注类型
+	 * annotation
 	 */
 	@Schema(description = "标注类型")
 	private AlgorithmAnnotationTypeEnum annotationType;
 	/**
-	 * 标注坐标数据(JSON格式)
+	 * annotation data(JSON )
 	 */
 	@Schema(description = "标注坐标数据(JSON格式)")
 	private String annotationData;
 	/**
-	 * 置信度
+	 *
 	 */
 	@Schema(description = "置信度")
 	private BigDecimal confidence;
 	/**
-	 * 是否已验证
+	 * whether already
 	 */
 	@Schema(description = "是否已验证")
 	private Integer verified;

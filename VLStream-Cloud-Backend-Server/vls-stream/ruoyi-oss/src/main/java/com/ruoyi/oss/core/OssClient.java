@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -34,8 +35,8 @@ import java.net.URL;
 import java.util.Date;
 
 /**
- * S3 存储协议 所有兼容S3协议的云厂商均支持
- * 阿里云 腾讯云 七牛云 minio
+ * S3 all S3
+ * minio
  *
  * @author Lion Li
  */
@@ -91,7 +92,7 @@ public class OssClient {
             metadata.setContentType(contentType);
             metadata.setContentLength(inputStream.available());
             PutObjectRequest putObjectRequest = new PutObjectRequest(properties.getBucketName(), path, inputStream, metadata);
-            // 设置上传对象的 Acl 为公共读
+            // Set object Acl to
             putObjectRequest.setCannedAcl(getAccessPolicy().getAcl());
             client.putObject(putObjectRequest);
         } catch (Exception e) {
@@ -118,9 +119,9 @@ public class OssClient {
     }
 
     /**
-     * 获取文件元数据
+     * Get data
      *
-     * @param path 完整文件路径
+     * @param path
      */
     public ObjectMetadata getObjectMetadata(String path) {
         path = path.replace(getUrl() + "/", "");
@@ -137,14 +138,14 @@ public class OssClient {
         String domain = properties.getDomain();
         String endpoint = properties.getEndpoint();
         String header = OssConstant.IS_HTTPS.equals(properties.getIsHttps()) ? "https://" : "http://";
-        // 云服务商直接返回
+        // service
         if (StringUtils.containsAny(endpoint, OssConstant.CLOUD_SERVICE)) {
             if (StringUtils.isNotBlank(domain)) {
                 return header + domain;
             }
             return header + properties.getBucketName() + "." + endpoint;
         }
-        // minio 单独处理
+        // minio Process
         if (StringUtils.isNotBlank(domain)) {
             return header + domain + "/" + properties.getBucketName();
         }
@@ -152,9 +153,9 @@ public class OssClient {
     }
 
     public String getPath(String prefix, String suffix) {
-        // 生成uuid
+        // Generate uuid
         String uuid = IdUtil.fastSimpleUUID();
-        // 文件路径
+        //
         String path = DateUtils.datePath() + "/" + uuid;
         if (StringUtils.isNotBlank(prefix)) {
             path = prefix + "/" + path;
@@ -168,18 +169,18 @@ public class OssClient {
     }
 
     /**
-     * 获取私有URL链接
+     * Get URL
      *
-     * @param objectKey 对象KEY
-     * @param second    授权时间
+     * @param objectKey objectKEY
+     * @param second
      */
     public String getPrivateUrl(String objectKey, Integer second) {
         return getPrivateUrl(objectKey, second, null);
     }
 
     /**
-     * 获取使用客户端可达站点签名的私有URL链接。
-     * publicEndpoint 为空时继续使用后端 OSS endpoint。
+     * Get URL .
+     * publicEndpoint is empty after OSS endpoint.
      */
     public String getPrivateUrl(String objectKey, Integer second, String publicEndpoint) {
         AmazonS3 signingClient = signingClient(publicEndpoint);
@@ -196,19 +197,19 @@ public class OssClient {
     }
 
     /**
-     * 获取对象短期 PUT 上传地址。调用方只拿到单个对象的限时上传权限，
-     * 不需要也不应持有对象存储 AccessKey/SecretKey。
+     * Get object PUT . only object ,
+     * need to also object AccessKey/SecretKey.
      *
-     * @param objectKey  对象KEY
-     * @param contentType 上传时必须使用的 Content-Type
-     * @param second     授权时间
+     * @param objectKey objectKEY
+     * @param contentType Content-Type
+     * @param second
      */
     public String getPresignedPutUrl(String objectKey, String contentType, Integer second) {
         return getPresignedPutUrl(objectKey, contentType, second, null);
     }
 
     /**
-     * 获取使用客户端可达站点签名的对象短期 PUT 上传地址。
+     * Get object PUT .
      */
     public String getPresignedPutUrl(String objectKey, String contentType, Integer second,
                                      String publicEndpoint) {
@@ -228,23 +229,23 @@ public class OssClient {
     }
 
     /**
-     * 判断对象是否已经上传。
+     * Check objectwhether already .
      */
     public boolean doesObjectExist(String objectKey) {
         return client.doesObjectExist(properties.getBucketName(), objectKey);
     }
 
     /**
-     * 检查配置是否相同
+     * configurationwhether
      */
     public boolean checkPropertiesSame(OssProperties properties) {
         return this.properties.equals(properties);
     }
 
     /**
-     * 获取当前桶权限类型
+     * Get current
      *
-     * @return 当前桶权限类型code
+     * @return current code
      */
     public AccessPolicyType getAccessPolicy() {
         return AccessPolicyType.getByType(properties.getAccessPolicy());
@@ -282,7 +283,7 @@ public class OssClient {
             .withCredentials(credentialsProvider)
             .disableChunkedEncoding();
         if (!StringUtils.containsAny(endpoint, OssConstant.CLOUD_SERVICE)) {
-            // MinIO 使用路径风格访问，签名时的 Host 必须与客户端实际访问地址一致。
+            // MinIO , Host and .
             build.enablePathStyleAccess();
         }
         return build.build();

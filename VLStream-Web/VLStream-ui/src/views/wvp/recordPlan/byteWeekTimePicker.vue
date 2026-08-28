@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="weektime">
     <div class="weektime-main">
@@ -66,7 +71,7 @@ import 'element-plus/dist/index.css';
 
 const DayTimes = 24 * 2;
 
-// 组件的属性
+// component property
 const props = defineProps({
   modelValue: String,
   startTime: Number,
@@ -74,7 +79,7 @@ const props = defineProps({
   customDisableTimes: Array,
 });
 
-// 组件内部的响应式数据
+// component data
 const isMove = ref(false);
 const list = ref([]);
 const weekTimes = 7 * DayTimes;
@@ -85,7 +90,7 @@ const axis = ref({});
 const preViewIndex = ref([]);
 const showTimeText = ref([]);
 
-// 计算属性
+// property
 const disableTimes = computed(() => {
   if (Array.isArray(props.customDisableTimes) && props.customDisableTimes.every(num => typeof num === 'number')) {
     return props.customDisableTimes;
@@ -103,7 +108,7 @@ const disableTimes = computed(() => {
   return [];
 });
 
-// 方法
+// method
 const tiptxt = (index) => {
   let timeIndex = index % DayTimes;
   let weekIndex = ~~(index / DayTimes);
@@ -188,7 +193,7 @@ const showSelectTime = (list) => {
       listlength = list.length;
   showTimeText.value = [];
   if (listlength === 0) return;
-  // 把336长度的list分成7组，每组48个
+  // 336 list 7 , 48
   for (var i = 0; i < listlength; i += DayTimes) {
     weeksSelect.push(list.slice(i, i + DayTimes));
   }
@@ -244,7 +249,7 @@ onUnmounted(() => {
   document.removeEventListener('mouseup', resetMousemove);
 });
 
-// 定义组件的暴露事件
+// component event
 const emit = defineEmits(['update:modelValue']);
 </script>
 

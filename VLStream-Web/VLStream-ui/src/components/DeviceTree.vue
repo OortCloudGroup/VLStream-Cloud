@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="device-tree-component">
-    <!-- 搜索框 -->
+    <!--  -->
     <div v-if="showSearch" class="search-section">
       <SearchInput
         v-model="searchKeyword"
@@ -12,11 +17,11 @@
       />
     </div>
 
-    <!-- 树标题 -->
+    <!--  -->
     <div class="tree-header">
       <h4>{{ title }}</h4>
       <div class="header-controls">
-        <CollapseToggle 
+        <CollapseToggle
           v-if="showCollapseBtn"
           class="collapse-btn"
           :is-expanded="!collapsed"
@@ -26,7 +31,7 @@
 
     </div>
 
-    <!-- 设备树 -->
+    <!-- device -->
     <div class="device-tree">
       <el-tree
         :data="filteredTreeData"
@@ -37,12 +42,12 @@
         node-key="id"
       >
         <template #default="{ node, data }">
-          <span 
-            class="custom-tree-node" 
-            @mouseenter="showAddButton(node)" 
+          <span
+            class="custom-tree-node"
+            @mouseenter="showAddButton(node)"
             @mouseleave="hideAddButton(node)"
           >
-            <!-- 设备/标签图标 -->
+            <!-- device/ -->
             <el-icon v-if="data.type === 'tag'" class="tree-icon tag-icon">
               <Collection />
             </el-icon>
@@ -52,25 +57,25 @@
             <el-icon v-else class="tree-icon">
               <Folder />
             </el-icon>
-            
-            <!-- 节点标签 -->
+
+            <!-- node -->
             <span class="node-label">{{ data.label }}</span>
-            
-            <!-- 设备数量（仅标签） -->
+
+            <!-- device ( ) -->
             <span v-if="data.type === 'tag'" class="node-count">({{ data.children?.length || 0 }})</span>
 
-            <!-- 操作按钮组 -->
+            <!-- operationbutton -->
             <div v-if="node.showAdd" class="action-buttons">
-              <!-- 添加按钮 -->
-              <el-dropdown 
-                v-if="showAddActions" 
+              <!-- button -->
+              <el-dropdown
+                v-if="showAddActions"
                 class="add-dropdown"
                 @command="handleAddCommand($event, data)"
                 trigger="click"
               >
-                <el-button 
-                  size="small" 
-                  class="add-btn" 
+                <el-button
+                  size="small"
+                  class="add-btn"
                   type="text"
                   @click.stop
                 >
@@ -83,12 +88,12 @@
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
-              
-              <!-- 删除按钮 -->
-              <el-button 
+
+              <!-- Delete button -->
+              <el-button
                 v-if="showDeleteActions"
-                size="small" 
-                class="delete-btn" 
+                size="small"
+                class="delete-btn"
                 type="text"
                 @click.stop="handleDeleteCommand(data)"
               >
@@ -100,10 +105,10 @@
       </el-tree>
     </div>
 
-    <!-- 底部操作按钮 -->
+    <!-- operationbutton -->
     <div v-if="showBottomActions" class="bottom-actions">
       <div class="action-buttons-container">
-        <el-dropdown 
+        <el-dropdown
           v-if="showAddActions"
           @command="handleBottomAddCommand"
           trigger="click"
@@ -120,11 +125,11 @@
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        
-        <el-button 
+
+        <el-button
           v-if="showDeleteActions"
-          type="danger" 
-          size="small" 
+          type="danger"
+          size="small"
           class="bottom-delete-btn"
           @click="handleBottomDeleteCommand"
           :disabled="!selectedNode"
@@ -149,51 +154,51 @@ import {
 import CollapseToggle from '@/components/CollapseToggle.vue'
 import SearchInput from '@/components/SearchInput.vue'
 
-// Props定义
+// Props
 const props = defineProps({
-  // 树数据
+  // data
   treeData: {
     type: Array,
     default: () => []
   },
-  // 树标题
+  //
   title: {
     type: String,
     default: '设备树'
   },
-  // 是否显示搜索框
+  // whether
   showSearch: {
     type: Boolean,
     default: true
   },
-  // 是否显示折叠按钮
+  // whether button
   showCollapseBtn: {
     type: Boolean,
     default: false
   },
-  // 是否显示添加操作
+  // whether operation
   showAddActions: {
     type: Boolean,
     default: true
   },
-  // 是否显示删除操作
+  // whether Delete operation
   showDeleteActions: {
     type: Boolean,
     default: true
   },
-  // 是否显示底部操作按钮
+  // whether operationbutton
   showBottomActions: {
     type: Boolean,
     default: false
   },
-  // 是否折叠
+  // whether
   collapsed: {
     type: Boolean,
     default: false
   }
 })
 
-// Emits定义
+// Emits
 const emit = defineEmits([
   'node-click',
   'add-device',
@@ -204,22 +209,22 @@ const emit = defineEmits([
   'toggle-collapse'
 ])
 
-// 响应式数据
+// data
 const searchKeyword = ref('')
 const selectedNode = ref(null)
 
-// 树形组件属性
+// componentproperty
 const defaultProps = {
   children: 'children',
   label: 'label'
 }
 
-// 计算属性 - 过滤后的树数据
+// property - after data
 const filteredTreeData = computed(() => {
   if (!searchKeyword.value) {
     return props.treeData
   }
-  
+
   const filterNode = (nodes) => {
     return nodes.filter(node => {
       if (node.label.toLowerCase().includes(searchKeyword.value.toLowerCase())) {
@@ -242,11 +247,11 @@ const filteredTreeData = computed(() => {
       return node
     })
   }
-  
+
   return filterNode(props.treeData)
 })
 
-// 方法
+// method
 const handleSearch = (searchValue) => {
   emit('search', searchValue || searchKeyword.value)
 }
@@ -293,7 +298,7 @@ const handleBottomDeleteCommand = () => {
   }
 }
 
-// 监听搜索关键词变化
+//
 watch(searchKeyword, (newVal) => {
   if (newVal === '') {
     emit('search', '')
@@ -308,7 +313,7 @@ watch(searchKeyword, (newVal) => {
   flex-direction: column;
 }
 
-/* 搜索区域 */
+/*  */
 .search-section {
   padding: 15px;
   border-bottom: 1px solid #e4e7ed;
@@ -317,7 +322,7 @@ watch(searchKeyword, (newVal) => {
 
 
 
-/* 树标题 */
+/*  */
 .tree-header {
   padding: 15px;
   border-bottom: 1px solid #e4e7ed;
@@ -350,7 +355,7 @@ watch(searchKeyword, (newVal) => {
   pointer-events: auto;
 }
 
-/* 设备树 */
+/* device */
 .device-tree {
   flex: 1;
   padding: 10px;
@@ -396,7 +401,7 @@ watch(searchKeyword, (newVal) => {
 
 
 
-/* 操作按钮组 */
+/* operationbutton */
 .action-buttons {
   display: flex;
   align-items: center;
@@ -429,7 +434,7 @@ watch(searchKeyword, (newVal) => {
   color: #f56c6c;
 }
 
-/* 树节点样式 */
+/* node */
 :deep(.el-tree-node__content) {
   height: 32px;
   line-height: 32px;
@@ -453,12 +458,12 @@ watch(searchKeyword, (newVal) => {
   color: #303133;
 }
 
-/* 搜索高亮 */
+/*  */
 :deep(.el-tree-node__label) {
   position: relative;
 }
 
-/* 底部操作按钮区域 */
+/* operationbutton */
 .bottom-actions {
   padding: 15px;
   border-top: 1px solid #e4e7ed;
@@ -507,4 +512,4 @@ watch(searchKeyword, (newVal) => {
   color: white;
   cursor: not-allowed;
 }
-</style> 
+</style>

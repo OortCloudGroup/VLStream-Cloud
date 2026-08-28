@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -12,9 +13,9 @@ import lombok.EqualsAndHashCode;
 import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
- * 流程图JSON对象 re_mode_json
+ * workflow JSONobject re_mode_json
  *
- * @author 雷超群
+ * @author
  * @date 2024-11-02
  */
 @Data
@@ -25,24 +26,24 @@ public class ReModelJson extends BaseEntity {
     private static final long serialVersionUID=1L;
 
     /**
-     * 与act_re_model 表的关联ID
+     * and act_re_model ID
      */
     @TableId(value = "model_id")
     private String modelId;
     /**
-     * 租户id
+     * id
      */
     private String tenantId;
     /**
-     * 用户id
+     * user ID
      */
     private String userId;
     /**
-     * 流程图JSON
+     * workflow JSON
      */
     private String jsonContent;
     /**
-     * 0表示未删除,1表示删除
+     * 0 not Delete ,1 Delete
      */
     @TableLogic
     private String delFlag;

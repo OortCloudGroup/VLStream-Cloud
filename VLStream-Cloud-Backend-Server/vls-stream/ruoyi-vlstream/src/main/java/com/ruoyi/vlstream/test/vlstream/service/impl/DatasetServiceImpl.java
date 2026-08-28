@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -19,7 +20,7 @@ import java.io.OutputStream;
 import java.util.*;
 
 /**
- * 数据集服务实现类
+ * datasetservice
  *
  * @author VLStream Team
  * @since 1.0.0
@@ -39,20 +40,20 @@ public class DatasetServiceImpl implements DatasetService {
 		try {
 			log.info("尝试连接服务器：{}@{}", username, host);
 
-			// 创建SSH会话
+			// SSH will
 			session = jsch.getSession(username, host, sshProperties.getPort());
 			session.setPassword(password);
 			session.setConfig("StrictHostKeyChecking", "no");
-			session.connect(30000); // 30秒超时
+			session.connect(30000); // 30
 
 			log.info("SSH连接成功：{}@{}", username, host);
 
-			// 测试SFTP连接
+			// SFTP
 			Channel channel = session.openChannel("sftp");
 			channel.connect(30000);
 			ChannelSftp sftp = (ChannelSftp) channel;
 
-			// 尝试访问指定路径
+			//
 			try {
 				sftp.cd(path);
 				log.info("路径访问成功：{}", path);
@@ -81,21 +82,21 @@ public class DatasetServiceImpl implements DatasetService {
 		ChannelSftp sftp = null;
 
 		try {
-			// 创建SSH会话
+			// SSH will
 			session = jsch.getSession(sshProperties.getUsername(), host, sshProperties.getPort());
 			session.setPassword(sshProperties.getPassword());
 			session.setConfig("StrictHostKeyChecking", "no");
 			session.connect(30000);
 
-			// 创建SFTP通道
+			// SFTPchannel
 			Channel channel = session.openChannel("sftp");
 			channel.connect(30000);
 			sftp = (ChannelSftp) channel;
 
-			// 切换到指定路径
+			//
 			sftp.cd(path);
 
-			// 获取文件列表
+			// Get
 			Vector<ChannelSftp.LsEntry> files = sftp.ls("*");
 			List<Map<String, Object>> fileList = new ArrayList<>();
 
@@ -133,21 +134,21 @@ public class DatasetServiceImpl implements DatasetService {
 		ChannelSftp sftp = null;
 
 		try {
-			// 创建SSH会话
+			// SSH will
 			session = jsch.getSession(sshProperties.getUsername(), host, sshProperties.getPort());
 			session.setPassword(sshProperties.getPassword());
 			session.setConfig("StrictHostKeyChecking", "no");
 			session.connect(30000);
 
-			// 创建SFTP通道
+			// SFTPchannel
 			Channel channel = session.openChannel("sftp");
 			channel.connect(30000);
 			sftp = (ChannelSftp) channel;
 
-			// 切换到指定路径
+			//
 			sftp.cd(path);
 
-			// 读取文件内容
+			//
 			InputStream inputStream = sftp.get(filename);
 			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -184,25 +185,25 @@ public class DatasetServiceImpl implements DatasetService {
 		ChannelSftp sftp = null;
 
 		try {
-			// 创建SSH会话
+			// SSH will
 			session = jsch.getSession(sshProperties.getUsername(), host, sshProperties.getPort());
 			session.setPassword(sshProperties.getPassword());
 			session.setConfig("StrictHostKeyChecking", "no");
 			session.connect(30000);
 
-			// 创建SFTP通道
+			// SFTPchannel
 			Channel channel = session.openChannel("sftp");
 			channel.connect(30000);
 			sftp = (ChannelSftp) channel;
 
-			// 切换到指定路径
+			//
 			sftp.cd(path);
 
-			// 设置响应头
+			// Set
 			response.setContentType("application/octet-stream");
 			response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
 
-			// 下载文件
+			//
 			InputStream inputStream = sftp.get(filename);
 			OutputStream outputStream = response.getOutputStream();
 
@@ -231,10 +232,10 @@ public class DatasetServiceImpl implements DatasetService {
 	}
 
 	/**
-	 * 创建远程目录
 	 *
-	 * @param sftp SFTP通道
-	 * @param path 目录路径
+	 *
+	 * @param sftp SFTPchannel
+	 * @param path
 	 */
 	private void createRemoteDirectory(ChannelSftp sftp, String path) throws SftpException {
 		String[] dirs = path.split("/");
@@ -251,7 +252,7 @@ public class DatasetServiceImpl implements DatasetService {
 				sftp.cd(currentPath);
 				log.debug("目录已存在：{}", currentPath);
 			} catch (SftpException e) {
-				// 目录不存在，创建它
+				// in ,
 				sftp.mkdir(currentPath);
 				log.info("创建远程目录：{}", currentPath);
 			}
@@ -259,10 +260,10 @@ public class DatasetServiceImpl implements DatasetService {
 	}
 
 	/**
-	 * 格式化文件大小
+	 * Format
 	 *
-	 * @param size 文件大小（字节）
-	 * @return 格式化后的文件大小
+	 * @param size ( )
+	 * @return Format after
 	 */
 	private String formatFileSize(long size) {
 		if (size < 1024) {

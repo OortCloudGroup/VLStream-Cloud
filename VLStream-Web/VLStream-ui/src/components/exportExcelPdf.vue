@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2025-3-18 11:45:51
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -59,7 +64,7 @@ const props = defineProps({
 })
 const emits = defineEmits(['handle'])
 
-// 处理默认都为 true，只有传 false 才为 false
+// Process to true, only false to false
 const exportItem = computed(() => ({
   isDisabledExcel: props.item.isDisabledExcel !== false,
   isDisabledPDF: props.item.isDisabledPDF !== false,

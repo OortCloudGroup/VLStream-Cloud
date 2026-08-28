@@ -1,5 +1,4 @@
 /*
- * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -62,9 +61,9 @@ public class JobGroupController {
 
         // package result
         Map<String, Object> maps = new HashMap<String, Object>();
-        maps.put("recordsTotal", list_count);        // 总记录数
-        maps.put("recordsFiltered", list_count);    // 过滤后的总记录数
-        maps.put("data", list);                    // 分页列表
+        maps.put("recordsTotal", list_count);        // record
+        maps.put("recordsFiltered", list_count);    // after record
+        maps.put("data", list);                    //
         return maps;
     }
 
@@ -127,7 +126,7 @@ public class JobGroupController {
             return new ReturnT<String>(500, (I18nUtil.getString("system_please_input") + I18nUtil.getString("jobgroup_field_title")));
         }
         if (xxlJobGroup.getAddressType() == 0) {
-            // 0=自动注册
+            // 0=
             List<String> registryList = findRegistryByAppName(xxlJobGroup.getAppname());
             String addressListStr = null;
             if (registryList != null && !registryList.isEmpty()) {
@@ -140,7 +139,7 @@ public class JobGroupController {
             }
             xxlJobGroup.setAddressList(addressListStr);
         } else {
-            // 1=手动录入
+            // 1=
             if (xxlJobGroup.getAddressList() == null || xxlJobGroup.getAddressList().trim().length() == 0) {
                 return new ReturnT<String>(500, I18nUtil.getString("jobgroup_field_addressType_limit"));
             }

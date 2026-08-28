@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -17,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Entity基类
+ * Entity
  *
  * @author Lion Li
  */
@@ -28,38 +29,38 @@ public class BaseEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 搜索值
+     * value
      */
     @JsonIgnore
     @TableField(exist = false)
     private String searchValue;
 
     /**
-     * 创建者
+     * creator
      */
     @TableField(fill = FieldFill.INSERT)
     private String createBy;
 
     /**
-     * 创建时间
+     * create time
      */
     @TableField(fill = FieldFill.INSERT)
     private Date createTime;
 
     /**
-     * 更新者
+     * updater
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private String updateBy;
 
     /**
-     * 更新时间
+     * update time
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
     /**
-     * 请求参数
+     * parameter
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @TableField(exist = false)

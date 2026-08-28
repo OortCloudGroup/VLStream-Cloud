@@ -14,7 +14,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 流程抄送对象 wf_copy
+ * workflow object wf_copy
  *
  * @author KonBAI
  * @date 2022-05-19
@@ -27,57 +27,57 @@ public class WfCopy extends BaseEntity {
     private static final long serialVersionUID=1L;
 
     /**
-     * 抄送主键
+     * primary key
      */
     @TableId(value = "copy_id")
     private Long copyId;
 
     /**
-     * 租户id
+     * id
      */
     private String tenantId;
     /**
-     * 抄送标题
+     *
      */
     private String title;
     /**
-     * 流程主键
+     * workflowprimary key
      */
     private String processId;
     /**
-     * 流程名称
+     * workflow
      */
     private String processName;
     /**
-     * 流程分类主键
+     * workflow primary key
      */
     private String categoryId;
     /**
-     * 部署主键
+     * primary key
      */
     private String deploymentId;
     /**
-     * 流程实例主键
+     * workflow instanceprimary key
      */
     private String instanceId;
     /**
-     * 任务主键
+     * taskprimary key
      */
     private String taskId;
     /**
-     * 用户主键
+     * userprimary key
      */
     private String userId;
     /**
-     * 发起人Id
+     * Id
      */
     private String originatorId;
     /**
-     * 发起人名称
+     *
      */
     private String originatorName;
     /**
-     * 删除标志（0代表存在 2代表删除）
+     * Delete (0represents in 2represents Delete )
      */
     @TableLogic
     private String delFlag;

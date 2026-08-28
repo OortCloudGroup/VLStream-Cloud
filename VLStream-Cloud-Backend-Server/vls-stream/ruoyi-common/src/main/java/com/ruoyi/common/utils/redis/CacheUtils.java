@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -15,7 +16,7 @@ import org.springframework.cache.CacheManager;
 import java.util.Set;
 
 /**
- * 缓存操作工具类 {@link }
+ * operation {@link }
  *
  * @author Michelle.Chung
  * @date 2022/8/13
@@ -27,9 +28,9 @@ public class CacheUtils {
     private static final CacheManager CACHE_MANAGER = SpringUtils.getBean(CacheManager.class);
 
     /**
-     * 获取缓存组内所有的KEY
+     * Get all KEY
      *
-     * @param cacheNames 缓存组名称
+     * @param cacheNames
      */
     public static Set<Object> keys(String cacheNames) {
         RMap<Object, Object> rmap = (RMap<Object, Object>) CACHE_MANAGER.getCache(cacheNames).getNativeCache();
@@ -37,10 +38,10 @@ public class CacheUtils {
     }
 
     /**
-     * 获取缓存值
+     * Get value
      *
-     * @param cacheNames 缓存组名称
-     * @param key        缓存key
+     * @param cacheNames
+     * @param key key
      */
     public static <T> T get(String cacheNames, Object key) {
         Cache.ValueWrapper wrapper = CACHE_MANAGER.getCache(cacheNames).get(key);
@@ -48,30 +49,30 @@ public class CacheUtils {
     }
 
     /**
-     * 保存缓存值
+     * value
      *
-     * @param cacheNames 缓存组名称
-     * @param key        缓存key
-     * @param value      缓存值
+     * @param cacheNames
+     * @param key key
+     * @param value value
      */
     public static void put(String cacheNames, Object key, Object value) {
         CACHE_MANAGER.getCache(cacheNames).put(key, value);
     }
 
     /**
-     * 删除缓存值
+     * Delete value
      *
-     * @param cacheNames 缓存组名称
-     * @param key        缓存key
+     * @param cacheNames
+     * @param key key
      */
     public static void evict(String cacheNames, Object key) {
         CACHE_MANAGER.getCache(cacheNames).evict(key);
     }
 
     /**
-     * 清空缓存值
+     * null / empty value
      *
-     * @param cacheNames 缓存组名称
+     * @param cacheNames
      */
     public static void clear(String cacheNames) {
         CACHE_MANAGER.getCache(cacheNames).clear();

@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="algorithm-management tenant_Page draHeaPB">
-    <!-- 顶部 Tab + ModelHub -->
+    <!-- Tab + ModelHub -->
     <div class="top-tabs-header" v-loading="repositoriesLoading">
       <el-tabs
         v-model="activeTopMenu"
@@ -25,7 +30,7 @@
     </div>
 
     <div class="tenant_content">
-      <!-- 分类标签栏：样式对齐登录方式二级 tab（tenanat-tabs_act） -->
+      <!-- : tab (tenanat-tabs_act) -->
       <div
         v-if="showAddButton && typeOptions.length > 0"
         class="category-tabs-wrap"
@@ -44,7 +49,7 @@
         </el-tabs>
       </div>
 
-      <!-- category-tabs 下方：添加按钮 -->
+      <!-- category-tabs : button -->
       <div v-if="showAddButton" class="add-toolbar">
         <div class="exportBtnBox flexRowAC">
           <button type="button" class="exportBtn newBtn flexRowAC" @click="addAlgorithm">
@@ -56,7 +61,7 @@
         </div>
       </div>
 
-      <!-- 算法网格 -->
+      <!-- algorithm -->
       <div v-if="activeTopMenu !== 'management'" class="algorithm-grid" v-loading="algorithmsLoading">
         <div
           v-for="algorithm in currentPageAlgorithms"
@@ -109,7 +114,7 @@
         </div>
       </div>
 
-      <!-- 算法库管理表格 -->
+      <!-- algorithm table -->
       <div v-if="activeTopMenu === 'management'" class="algorithm-management-container">
         <div class="depNameBox_out flexRowAC">
           <div class="depNameBox flexRowAC">
@@ -206,7 +211,7 @@
       </div>
     </div>
 
-    <!-- 新增/编辑算法库弹框 -->
+    <!-- Add / algorithm -->
     <el-dialog
         v-model="showAddDialog"
         :title="editingRepository ? '编辑算法库' : '新增算法库'"
@@ -264,7 +269,7 @@
       </template>
     </el-dialog>
 
-    <!-- 添加算法弹框 -->
+    <!-- algorithm -->
     <el-dialog
         v-model="showAlgorithmAddDialog"
         title="添加算法"
@@ -330,7 +335,7 @@
       </template>
     </el-dialog>
 
-    <!-- 算法编辑弹框 -->
+    <!-- algorithm -->
     <el-dialog
         v-model="showAlgorithmEditDialog"
         title="编辑算法"
@@ -432,7 +437,7 @@
       </template>
     </el-dialog>
 
-    <!-- 下发到摄像机侧边栏 -->
+    <!--  -->
     <el-drawer
         v-model="showDeviceDrawer"
         title="下发到摄像机"
@@ -552,7 +557,7 @@ import {getMqttDevicePage} from '@/api/vlstreamMqttDevice'
 
 const router = useRouter()
 
-// 加载状态
+// Load
 const repositoriesLoading = ref(false)
 const algorithmsLoading = ref(false)
 const submitting = ref(false)
@@ -561,13 +566,13 @@ const imageUploading = ref(false)
 const algorithmImageUploadUrl = `${Config.URL}${Config.gateWay}apaas-fastdfsservice/fastdfs/v1/uploadFile`
 const algorithmImageUploadHeaders = Config.headers
 
-// 当前激活的顶部菜单
+// current menu
 const activeTopMenu = ref('management')
 
-// 当前激活的分类
+// current
 const activeCategory = ref('all')
 
-// 设备侧边栏相关数据
+// device relateddata
 const showDeviceDrawer = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -575,19 +580,19 @@ const totalDevices = ref(0)
 const deviceLoading = ref(false)
 const deviceFilter = ref({})
 
-// 算法仓库数据
+// algorithm data
 const algorithmRepositories = ref([])
 const repositoryCurrentPage = ref(1)
 const repositoryPageSize = ref(10)
 const repositoryTotal = ref(0)
 
-// 算法数据
+// algorithmdata
 const algorithms = ref([])
 const algorithmTotal = ref(0)
 const currentRepositoryId = ref(null)
 const algorithmRequestId = ref(0)
 
-// 从当前算法列表中提取所有分类
+// from current algorithm in all
 const typeOptions = ref([
   { label: '全部', value: 'all' },
   { label: '目标检测算法', value: 'detect' },
@@ -597,7 +602,7 @@ const typeOptions = ref([
   { label: '旋转目标检测算法', value: 'obb' }
 ])
 
-// 设备表格数据
+// devicetabledata
 const deviceTableData = ref([])
 const selectedDeviceRows = ref([])
 const dispatchModelType = ref('om')
@@ -609,7 +614,7 @@ const modelTypeOptions = [
   { label: 'PT（PyTorch）', value: 'pt' }
 ]
 
-// 算法库管理相关
+// algorithm related
 const selectedRepositories = ref([])
 const showAddDialog = ref(false)
 const editingRepository = ref(null)
@@ -620,7 +625,7 @@ const addForm = ref({
   remark: ''
 })
 
-// 算法添加相关
+// algorithm related
 const showAlgorithmAddDialog = ref(false)
 const algorithmAddForm = ref({
   name: '',
@@ -633,7 +638,7 @@ const algorithmAddForm = ref({
   onnxModelFilePath: ''
 })
 
-// 算法编辑相关
+// algorithm related
 const showAlgorithmEditDialog = ref(false)
 const editingAlgorithm = ref(null)
 const algorithmEditForm = ref({
@@ -649,7 +654,7 @@ const algorithmEditForm = ref({
   imageUrl: ''
 })
 
-// 表单验证规则
+// form
 const addFormRules = ref({
   name: [
     { required: true, message: '请输入算法库名称', trigger: 'blur' },
@@ -684,34 +689,34 @@ const addFormRef = ref(null)
 const algorithmAddFormRef = ref(null)
 const algorithmEditFormRef = ref(null)
 
-// 算法相关
+// algorithmrelated
 const selectedAlgorithm = ref(null)
 
-// 多种卡片背景图片 - 300x200尺寸
+// - 300x200
 const cardBackgrounds = [
-  // 蓝色渐变主题
+  // main
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImJsdWVHcmFkaWVudCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6IzQwOTZmZjtzdG9wLW9wYWNpdHk6MSIgLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMxODY3YzA7c3RvcC1vcGFjaXR5OjEiIC8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNibHVlR3JhZGllbnQpIi8+PGNpcmNsZSBjeD0iMjUwIiBjeT0iNTAiIHI9IjMwIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjE1MCIgcj0iMjAiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4xNSkiLz48cmVjdCB4PSIyMDAiIHk9IjEyMCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiByeD0iMTAiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wOCkiLz48L3N2Zz4=',
 
-  // 绿色渐变主题
+  // main
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImdyZWVuR3JhZGllbnQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiM2N0M5MkE7c3RvcC1vcGFjaXR5OjEiIC8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdHlsZT0ic3RvcC1jb2xvcjojNDE4MDE5O3N0b3Atb3BhY2l0eToxIiAvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JlZW5HcmFkaWVudCkiLz48cG9seWdvbiBwb2ludHM9IjAsMCAxMDAsMCA1MCw1MCIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjEpIi8+PGNpcmNsZSBjeD0iMjMwIiBjeT0iMTcwIiByPSIyNSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjEyKSIvPjxwYXRoIGQ9Ik0yMDAgNTBMMjUwIDUwTDIyNSAxMDBaIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDgpIi8+PC9zdmc+',
 
-  // 橙色渐变主题
+  // main
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9Im9yYW5nZUdyYWRpZW50IiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojRkY5ODAwO3N0b3Atb3BhY2l0eToxIiAvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6I0VGNkMwMDtzdG9wLW9wYWNpdHk6MSIgLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI29yYW5nZUdyYWRpZW50KSIvPjxlbGxpcHNlIGN4PSI4MCIgY3k9IjYwIiByeD0iNDAiIHJ5PSIyNSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjEpIi8+PHJlY3QgeD0iMjAwIiB5PSIzMCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiByeD0iMzAiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4xMikiLz48cG9seWdvbiBwb2ludHM9IjUwLDE1MCA5MCwxNTAgNzAsMTkwIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDgpIi8+PC9zdmc+',
 
-  // 紫色渐变主题
+  // main
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9InB1cnBsZUdyYWRpZW50IiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojOWM0ZGNjO3N0b3Atb3BhY2l0eToxIiAvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6IzVhNjc5ODtzdG9wLW9wYWNpdHk6MSIgLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3B1cnBsZUdyYWRpZW50KSIvPjxjaXJjbGUgY3g9IjYwIiBjeT0iNDAiIHI9IjE4IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMTUpIi8+PHJlY3QgeD0iMTgwIiB5PSIxMjAiIHdpZHRoPSI5MCIgaGVpZ2h0PSI0MCIgcng9IjIwIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiLz48Y2lyY2xlIGN4PSIyNDAiIGN5PSI3MCIgcj0iMjIiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wOCkiLz48L3N2Zz4=',
 
-  // 红色渐变主题
+  // main
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9InJlZEdyYWRpZW50IiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZjU2YzZjO3N0b3Atb3BhY2l0eToxIiAvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6I2UzMzY0NTtzdG9wLW9wYWNpdHk6MSIgLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3JlZEdyYWRpZW50KSIvPjxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiByeD0iOCIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjEyKSIvPjxjaXJjbGUgY3g9IjIyMCIgY3k9IjE0MCIgcj0iMzUiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wOCkiLz48cG9seWdvbiBwb2ludHM9IjEyMCwzMCAxNzAsMzAgMTQ1LDgwIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiLz48L3N2Zz4=',
 
-  // 青色渐变主题
+  // main
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImN5YW5HcmFkaWVudCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6IzE3YTJiODtzdG9wLW9wYWNpdHk6MSIgLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMxMzc5OGU7c3RvcC1vcGFjaXR5OjEiIC8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNjeWFuR3JhZGllbnQpIi8+PGVsbGlwc2UgY3g9IjE1MCIgY3k9IjQ0IiByeD0iNjAiIHJ5PSIyMCIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjEpIi8+PGNpcmNsZSBjeD0iNzAiIGN5PSIxMzAiIHI9IjI4IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMTIpIi8+PHJlY3QgeD0iMjIwIiB5PSIxMzAiIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgcng9IjI1IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDgpIi8+PC9zdmc+',
 
-  // 深灰色主题 - 原有的图片作为第7个背景
+  // main - to 7
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjVmNWY1Ii8+PHBhdGggZD0iTTEwMCA5MGMwIDEyLjQxOCAxMC4wODIgMjIuNSAyMi41IDIyLjVzMjIuNS0xMC4wODIgMjIuNS0yMi41Uzg3LjQxOCA2Ny41IDc1IDY3LjUgMTAwIDc3LjU4MiAxMDAgOTB6bTc4IDkwTDE1MCAyMDBsLTMwLTMwLTQwIDQweiIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjE1MCIgeT0iMTgwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjMwMCB4IDIwMDwvdGV4dD48L3N2Zz4='
 ]
 
-// 算法库 ID 来自后端 Long，按字符串取模可避免 JavaScript 数字精度丢失。
+// algorithm ID after Long, JavaScript .
 const getNumericModulo = (value, divisor) => {
   const digits = String(value ?? '')
   if (!/^\d+$/.test(digits)) return 0
@@ -723,14 +728,14 @@ const getNumericModulo = (value, divisor) => {
   return remainder
 }
 
-// 获取算法卡片背景图片
+// Get algorithm
 const getAlgorithmCardBackground = (algorithm, repositoryId) => {
-  // 如果算法已有图片，直接返回
+  // if algorithm already ,
   if (algorithm.imageUrl && algorithm.imageUrl.trim() !== '') {
     return algorithm.imageUrl
   }
 
-  // 根据算法ID和仓库ID计算背景图片索引
+  // algorithmID and ID
   const algorithmIndex = getNumericModulo(algorithm.id, cardBackgrounds.length)
   const repoIndex = getNumericModulo(repositoryId, cardBackgrounds.length)
   const backgroundIndex = (algorithmIndex + repoIndex) % cardBackgrounds.length
@@ -738,13 +743,13 @@ const getAlgorithmCardBackground = (algorithm, repositoryId) => {
   return cardBackgrounds[backgroundIndex]
 }
 
-// 计算属性
+// property
 
-// 顶部菜单列表（动态生成）
+// menu ( Generate )
 const topMenus = computed(() => {
   const menus = []
 
-  // 添加所有启用的算法仓库
+  // all algorithm
   algorithmRepositories.value.forEach(repo => {
     if (repo.status === 1) {
       menus.push({
@@ -754,7 +759,7 @@ const topMenus = computed(() => {
     }
   })
 
-  // 添加算法库管理
+  // algorithm
   menus.push({
     key: 'management',
     label: '算法库管理'
@@ -763,12 +768,12 @@ const topMenus = computed(() => {
   return menus
 })
 
-// 当前页仓库列表
+// current
 const currentPageRepositories = computed(() => {
   return algorithmRepositories.value
 })
 
-// 当前页算法列表
+// current algorithm
 const currentPageAlgorithms = computed(() => {
   if (activeCategory.value === 'all') {
     return algorithms.value
@@ -776,23 +781,23 @@ const currentPageAlgorithms = computed(() => {
   return algorithms.value.filter(alg => alg.category === activeCategory.value)
 })
 
-// 是否显示添加按钮
+// whether button
 const showAddButton = computed(() => {
-  // 算法库管理页面不显示添加按钮
+  // algorithm page button
   if (activeTopMenu.value === 'management') {
     return false
   }
 
-  // 找到当前选择的仓库
+  // current
   const currentRepo = algorithmRepositories.value.find(repo =>
       repo.id.toString() === activeTopMenu.value
   )
 
-  // 只有扩展算法库显示添加按钮
+  // only algorithm button
   return currentRepo
 })
 
-// 工具方法
+// method
 const formatDateTime = (dateStr) => {
   if (!dateStr) return '-'
   try {
@@ -826,7 +831,7 @@ const getRepositoryTypeTagType = (type) => {
   return typeMap[type] || ''
 }
 
-// API调用方法
+// API method
 
 const normalizeRepositoryId = (repositoryId) => {
   const normalizedRepositoryId = String(repositoryId ?? '').trim()
@@ -836,7 +841,7 @@ const normalizeRepositoryId = (repositoryId) => {
   return normalizedRepositoryId
 }
 
-// 加载算法仓库列表
+// Load algorithm
 const loadAlgorithmRepositories = async () => {
   try {
     repositoriesLoading.value = true
@@ -849,7 +854,7 @@ const loadAlgorithmRepositories = async () => {
       algorithmRepositories.value = response.data.records || []
       repositoryTotal.value = response.data.total || 0
 
-      // 格式化创建时间
+      // Format create time
       algorithmRepositories.value.forEach(repo => {
         repo.createTime = formatDateTime(repo.createTime)
       })
@@ -864,7 +869,7 @@ const loadAlgorithmRepositories = async () => {
   }
 }
 
-// 加载指定仓库的算法列表
+// Load algorithm
 const loadAlgorithmsByRepository = async (repositoryId) => {
   const requestId = ++algorithmRequestId.value
   const normalizedRepositoryId = normalizeRepositoryId(repositoryId)
@@ -876,7 +881,7 @@ const loadAlgorithmsByRepository = async (repositoryId) => {
     return
   }
 
-  // 切换算法库后先清空旧库数据，避免请求完成前继续显示上一库的算法。
+  // algorithm after null / empty old data, before algorithm.
   algorithms.value = []
   algorithmTotal.value = 0
   currentRepositoryId.value = normalizedRepositoryId
@@ -885,11 +890,11 @@ const loadAlgorithmsByRepository = async (repositoryId) => {
     algorithmsLoading.value = true
     const response = await getAlgorithmPage({
       current: 1,
-      size: 1000, // 使用较大的页面大小来获取所有算法
+      size: 1000, // page Get all algorithm
       repositoryId: normalizedRepositoryId
     })
 
-    // 快速切换算法库时，忽略较早请求的响应，避免跨库数据串回页面。
+    // algorithm , , data page.
     if (requestId !== algorithmRequestId.value) {
       return
     }
@@ -933,10 +938,10 @@ const loadDeviceList = async () => {
   }
 }
 
-// 初始化数据
+// Initialize data
 const initData = async () => {
   await loadAlgorithmRepositories()
-  // 如果有可用的仓库，默认加载第一个仓库的算法
+  // if , Load algorithm
   if (algorithmRepositories.value.length > 0) {
     const firstEnabledRepo = algorithmRepositories.value.find(repo => repo.status === 1)
     if (firstEnabledRepo) {
@@ -946,18 +951,18 @@ const initData = async () => {
   }
 }
 
-// 方法
+// method
 const setActiveTopMenu = async (menu) => {
   console.log('切换顶部菜单到:', menu)
   activeTopMenu.value = menu
-  // 切换顶部菜单时，重置分类为"全部"
+  // menu , to " full "
   activeCategory.value = 'all'
 
   if (menu === 'management') {
-    // 切换到算法库管理页面
+    // algorithm page
     console.log('切换到算法库管理页面')
   } else {
-    // 切换到具体算法库，加载算法列表
+    // algorithm , Load algorithm
     await loadAlgorithmsByRepository(menu)
   }
 }
@@ -966,16 +971,16 @@ const setActiveCategory = (category) => {
   activeCategory.value = category
 }
 
-// 算法相关操作
+// algorithmrelatedoperation
 const addAlgorithm = () => {
-  // 获取当前选择的算法库ID
+  // Get current algorithm ID
   const repositoryId = normalizeRepositoryId(activeTopMenu.value)
   if (!repositoryId) {
     ElMessage.error('无法获取算法库信息')
     return
   }
 
-  // 重置表单
+  // form
   algorithmAddForm.value = {
     name: '',
     category: '',
@@ -990,10 +995,10 @@ const addAlgorithm = () => {
 }
 
 const editAlgorithm = (algorithm) => {
-  // 设置编辑的算法
+  // Set algorithm
   editingAlgorithm.value = algorithm
 
-  // 加载算法数据到表单
+  // Load algorithmdata form
   algorithmEditForm.value = {
     name: algorithm.name || '',
     category: algorithm.category || '',
@@ -1006,7 +1011,7 @@ const editAlgorithm = (algorithm) => {
     repositoryId: algorithm.repositoryId || currentRepositoryId.value
   }
 
-  // 显示编辑弹窗
+  // dialog
   showAlgorithmEditDialog.value = true
 }
 
@@ -1074,7 +1079,7 @@ const deployAlgorithm = async (algorithm) => {
   await loadDeviceList()
 }
 
-/** 发布到 Model Hub：无 token 先登录，有 token 进入云平台用户信息页 */
+/* * Model Hub: token , token userinfo */
 const publishToModelHub = (algorithm) => {
   const pending = algorithm
       ? {
@@ -1108,7 +1113,7 @@ const handleDeleteAlgorithm = async (algorithm) => {
     const response = await deleteAlgorithm(algorithm.id)
     if (response.code === 200) {
       ElMessage.success('删除成功')
-      // 重新加载当前页算法列表
+      // new Load current algorithm
       if (currentRepositoryId.value) {
         await loadAlgorithmsByRepository(currentRepositoryId.value)
       }
@@ -1123,7 +1128,7 @@ const handleDeleteAlgorithm = async (algorithm) => {
   }
 }
 
-// 设备侧边栏相关方法
+// device related method
 const handleDrawerClose = (done) => {
   done()
 }
@@ -1170,11 +1175,11 @@ const handleDeployToDevice = async () => {
     }
   } catch (error) {
     console.error('下发失败:', error)
-    // 请求拦截器已经展示后端返回的具体业务错误，避免再用通用提示覆盖它。
+    // already after , prompt / tip .
   }
 }
 
-// 算法仓库分页
+// algorithm
 const handleRepositorySizeChange = async (val) => {
   repositoryPageSize.value = val
   repositoryCurrentPage.value = 1
@@ -1188,7 +1193,7 @@ const handleRepositoryCurrentChange = async (val) => {
 
 
 
-// 设备相关方法
+// devicerelated method
 const handleSizeChange = async (val) => {
   pageSize.value = val
   currentPage.value = 1
@@ -1200,7 +1205,7 @@ const handleCurrentChange = async (val) => {
   await loadDeviceList()
 }
 
-// 算法库管理相关方法
+// algorithm related method
 const handleLibrarySelectionChange = (selection) => {
   selectedRepositories.value = selection
 }
@@ -1355,10 +1360,10 @@ const handleAddConfirm = async () => {
 
     let response
     if (editingRepository.value) {
-      // 编辑模式
+      //
       response = await updateAlgorithmRepository(editingRepository.value.id, formData)
     } else {
-      // 新增模式
+      // Add
       response = await createAlgorithmRepository(formData)
     }
 
@@ -1367,7 +1372,7 @@ const handleAddConfirm = async () => {
       showAddDialog.value = false
       await loadAlgorithmRepositories()
 
-      // 重置表单
+      // form
       addForm.value = {
         name: '',
         repositoryType: 'extended',
@@ -1380,7 +1385,7 @@ const handleAddConfirm = async () => {
     }
   } catch (error) {
     if (typeof error === 'object' && error.message) {
-      // 表单验证错误
+      // form
       return
     }
     console.error('操作失败:', error)
@@ -1404,19 +1409,19 @@ const handleAddCancel = () => {
   }
 }
 
-// 算法添加弹窗处理方法
+// algorithm dialogProcess method
 const handleAlgorithmAddConfirm = async () => {
   try {
-    // 验证表单
+    // form
     await algorithmAddFormRef.value.validate()
 
     submitting.value = true
 
-    // 为新算法分配一个背景图片
+    // to new algorithm
     const randomBackgroundIndex = Math.floor(Math.random() * cardBackgrounds.length)
     const assignedBackground = cardBackgrounds[randomBackgroundIndex]
 
-    // 创建算法数据
+    // algorithmdata
     const algorithmData = {
       repositoryId: algorithmAddForm.value.repositoryId,
       name: algorithmAddForm.value.name,
@@ -1428,17 +1433,17 @@ const handleAlgorithmAddConfirm = async () => {
       inputFormat: 'image',
       outputFormat: 'json',
       gpuRequired: 0,
-      imageUrl: assignedBackground // 自动分配背景图片
+      imageUrl: assignedBackground //
     }
 
-    // 调用算法创建API
+    // algorithm API
     const response = await createAlgorithm(algorithmData)
 
     if (response.code === 200) {
       ElMessage.success('算法添加成功')
       showAlgorithmAddDialog.value = false
 
-      // 重新加载当前算法库的算法列表
+      // new Load current algorithm algorithm
       if (algorithmAddForm.value.repositoryId) {
         await loadAlgorithmsByRepository(algorithmAddForm.value.repositoryId)
       }
@@ -1470,15 +1475,15 @@ const handleAlgorithmAddCancel = () => {
   }
 }
 
-// 算法编辑弹窗处理方法
+// algorithm dialogProcess method
 const handleAlgorithmEditConfirm = async () => {
   try {
-    // 验证表单
+    // form
     await algorithmEditFormRef.value.validate()
 
     submitting.value = true
 
-    // 创建更新数据
+    // new data
     const updateData = {
       name: algorithmEditForm.value.name,
       category: algorithmEditForm.value.category,
@@ -1492,14 +1497,14 @@ const handleAlgorithmEditConfirm = async () => {
       imageUrl: algorithmEditForm.value.imageUrl.trim()
     }
 
-    // 调用算法更新API
+    // algorithm new API
     const response = await updateAlgorithm(editingAlgorithm.value.id, updateData)
 
     if (response.code === 200) {
       ElMessage.success('算法更新成功')
       showAlgorithmEditDialog.value = false
 
-      // 重新加载当前算法库的算法列表
+      // new Load current algorithm algorithm
       if (algorithmEditForm.value.repositoryId) {
         await loadAlgorithmsByRepository(algorithmEditForm.value.repositoryId)
       }
@@ -1536,7 +1541,7 @@ const handleAlgorithmEditCancel = () => {
 
 
 
-// 页面初始化
+// pageInitialize
 onMounted(() => {
   initData()
 })
@@ -1563,7 +1568,7 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-/* 顶部 Tab + ModelHub（样式对齐标签管理 tenanat-tabs） */
+/* Tab + ModelHub ( tenanat-tabs) */
 .top-tabs-header {
   display: flex;
   align-items: flex-end;
@@ -1595,12 +1600,12 @@ onMounted(() => {
   color: #3d70ff;
 }
 
-/* category-tabs 下方添加按钮 */
+/* category-tabs button */
 .add-toolbar {
   padding: 8px 0 16px;
 }
 
-/* 分类标签：短条圆角下划线选中态（如图） */
+/* : in ( ) */
 .category-tabs-wrap {
   margin: 0 -20px;
   background: #fff;
@@ -1630,7 +1635,7 @@ onMounted(() => {
     padding: 0 20px !important;
   }
 
-  /* Element Plus 首个 tab 默认 padding-left:0，会导致短下划线偏左，统一左右内边距 */
+  /* Element Plus tab padding-left:0, will , */
   .el-tabs__item:nth-child(2) {
     padding-left: 20px !important;
   }
@@ -1657,7 +1662,7 @@ onMounted(() => {
   }
 }
 
-/* 算法网格 */
+/* algorithm */
 .algorithm-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -1782,7 +1787,7 @@ onMounted(() => {
   font-size: 16px;
 }
 
-/* 下拉菜单样式 */
+/* menu */
 :deep(.el-dropdown-menu__item) {
   display: flex;
   align-items: center;
@@ -1842,7 +1847,7 @@ onMounted(() => {
 
 
 
-/* 表格操作按钮样式 */
+/* tableoperationbutton */
 .table-action-buttons {
   display: flex;
   align-items: center;
@@ -1850,7 +1855,7 @@ onMounted(() => {
   gap: 8px;
 }
 
-/* 确保操作按钮为纯文字样式 */
+/* operationbutton to */
 .table-action-buttons :deep(.el-button--primary.is-text) {
   color: #1A53FF !important;
   background: transparent !important;
@@ -1877,7 +1882,7 @@ onMounted(() => {
   border: none !important;
 }
 
-/* 表格分页样式 */
+/* table */
 .table-pagination {
   display: flex;
   justify-content: flex-end;
@@ -1885,7 +1890,7 @@ onMounted(() => {
   border-top: 1px solid #f0f0f0;
 }
 
-/* 响应式设计 */
+/*  */
 @media (max-width: 1200px) {
   .algorithm-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -1924,7 +1929,7 @@ onMounted(() => {
   }
 }
 
-/* 加载动画 */
+/* Load */
 .algorithm-card {
   animation: fadeInUp 0.5s ease forwards;
 }
@@ -1940,7 +1945,7 @@ onMounted(() => {
   }
 }
 
-/* 为不同索引的卡片添加延迟动画 */
+/* to */
 .algorithm-card:nth-child(1) { animation-delay: 0.1s; }
 .algorithm-card:nth-child(2) { animation-delay: 0.2s; }
 .algorithm-card:nth-child(3) { animation-delay: 0.3s; }
@@ -1948,7 +1953,7 @@ onMounted(() => {
 .algorithm-card:nth-child(5) { animation-delay: 0.5s; }
 .algorithm-card:nth-child(6) { animation-delay: 0.6s; }
 
-/* 卡片悬浮效果增强 */
+/*  */
 .algorithm-card::before {
   content: '';
   position: absolute;
@@ -1966,7 +1971,7 @@ onMounted(() => {
   opacity: 1;
 }
 
-/* 设备侧边栏样式 */
+/* device */
 .device-drawer-content {
   height: 100%;
   padding: 0;
@@ -1988,7 +1993,7 @@ onMounted(() => {
   flex-direction: column;
 }
 
-/* 算法库管理容器样式 */
+/* algorithm */
 .algorithm-management-container {
   margin-top: 0;
   padding: 0;
@@ -2018,7 +2023,7 @@ onMounted(() => {
   pointer-events: none;
 }
 
-/* 主题色更新 */
+/* main new */
 :deep(.el-button--primary) {
   background-color: #1A53FF;
   border-color: #1A53FF;
@@ -2029,7 +2034,7 @@ onMounted(() => {
   border-color: #3d70ff;
 }
 
-/* 表格样式优化 */
+/* table */
 :deep(.el-table) {
   border: 1px solid #ebeef5;
   border-radius: 4px;
@@ -2050,7 +2055,7 @@ onMounted(() => {
   border-bottom: 1px solid #ebeef5;
 }
 
-/* Drawer标题样式 */
+/* Drawer */
 :deep(.el-drawer__header) {
   margin-bottom: 0;
   padding: 20px 24px 16px;
@@ -2058,7 +2063,7 @@ onMounted(() => {
   background: #fafafa;
 }
 
-/* 表格操作列按钮样式 */
+/* tableoperation button */
 .table-action-buttons {
   display: flex;
   align-items: center;
@@ -2066,7 +2071,7 @@ onMounted(() => {
   gap: 8px;
 }
 
-/* 确保操作按钮为纯文字样式 */
+/* operationbutton to */
 .table-action-buttons :deep(.el-button--primary.is-text) {
   color: #1A53FF !important;
   background: transparent !important;
@@ -2093,7 +2098,7 @@ onMounted(() => {
   border: none !important;
 }
 
-/* 新增弹框样式 */
+/* Add */
 .add-form {
   padding: 20px 0;
 }

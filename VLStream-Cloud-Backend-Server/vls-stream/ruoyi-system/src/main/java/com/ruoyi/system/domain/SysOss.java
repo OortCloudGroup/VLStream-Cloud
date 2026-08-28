@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -12,7 +13,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * OSS对象存储对象
+ * OSSobject object
  *
  * @author Lion Li
  */
@@ -22,33 +23,33 @@ import lombok.EqualsAndHashCode;
 public class SysOss extends BaseEntity {
 
     /**
-     * 对象存储主键
+     * object primary key
      */
     @TableId(value = "oss_id")
     private Long ossId;
 
     /**
-     * 文件名
+     *
      */
     private String fileName;
 
     /**
-     * 原名
+     *
      */
     private String originalName;
 
     /**
-     * 文件后缀名
+     * after
      */
     private String fileSuffix;
 
     /**
-     * URL地址
+     * URL
      */
     private String url;
 
     /**
-     * 服务商
+     * service
      */
     private String service;
 

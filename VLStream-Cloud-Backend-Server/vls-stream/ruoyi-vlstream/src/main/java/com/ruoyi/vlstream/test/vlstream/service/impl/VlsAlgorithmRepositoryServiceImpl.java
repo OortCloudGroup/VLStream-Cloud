@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 算法仓库表 服务实现类
+ * algorithm service
  *
  * @author Oort
  * @since 2025-12-23
@@ -81,7 +82,7 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 	public boolean createRepository(AlgorithmRepository repository) {
 		log.info("创建算法仓库：{}", repository.getName());
 
-		// 检查名称是否重复
+		// whether
 		QueryWrapper<AlgorithmRepository> queryWrapper = new QueryWrapper<>();
 		queryWrapper.eq("name", repository.getName());
 		if (count(queryWrapper) > 0) {
@@ -89,7 +90,7 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 			return false;
 		}
 
-		// 设置默认值
+		// Set value
 		if (repository.getAlgorithmCount() == null) {
 			repository.setAlgorithmCount(0);
 		}
@@ -108,10 +109,10 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 	public boolean updateRepository(AlgorithmRepository repository) {
 		log.info("更新算法仓库：ID={}, Name={}", repository.getId(), repository.getName());
 
-		// 检查是否为基础预置算法库（不允许修改某些字段）
+		// whether to algorithm ( Update field)
 		AlgorithmRepository existing = getById(repository.getId());
 		if (existing != null && "basic".equals(existing.getRepositoryType())) {
-			// 基础预置算法库只允许修改备注和状态
+			// algorithm only Update remark and
 			repository.setName(existing.getName());
 			repository.setRepositoryType(existing.getRepositoryType());
 		}
@@ -124,7 +125,7 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 	public boolean deleteRepository(Long id) {
 		log.info("删除算法仓库：ID={}", id);
 
-		// 检查是否为基础预置算法库（不允许删除）
+		// whether to algorithm ( Delete )
 		AlgorithmRepository repository = getById(id);
 		if (repository != null && "basic".equals(repository.getRepositoryType())) {
 			log.warn("不允许删除基础预置算法库：ID={}", id);
@@ -139,7 +140,7 @@ public class VlsAlgorithmRepositoryServiceImpl extends BaseServiceImpl<VlsAlgori
 	public boolean batchDeleteRepositories(List<Long> ids) {
 		log.info("批量删除算法仓库：IDs={}", ids);
 
-		// 过滤掉基础预置算法库
+		// algorithm
 		List<AlgorithmRepository> repositories = listByIds(ids);
 		List<Long> allowedIds = repositories.stream()
 			.filter(repo -> !"basic".equals(repo.getRepositoryType()))

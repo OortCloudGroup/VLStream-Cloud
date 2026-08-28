@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -242,7 +242,7 @@ public class JobScheduleHelper {
                     try {
                         // second data
                         List<Integer> ringItemData = new ArrayList<>();
-                        int nowSecond = Calendar.getInstance().get(Calendar.SECOND);   // 避免处理耗时太长，跨过刻度，向前校验一个刻度；
+                        int nowSecond = Calendar.getInstance().get(Calendar.SECOND);   // Process , , beforeValidate ;
                         for (int i = 0; i < 2; i++) {
                             List<Integer> tmpData = ringData.remove((nowSecond + 60 - i) % 60);
                             if (tmpData != null) {

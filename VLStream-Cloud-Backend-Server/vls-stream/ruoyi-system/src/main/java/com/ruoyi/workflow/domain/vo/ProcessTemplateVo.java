@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -12,7 +13,7 @@ import com.ruoyi.common.convert.ExcelDictConvert;
 import lombok.Data;
 
 /**
- * 流程初始化模版视图对象 process_template
+ * workflowInitialize object process_template
  *
  * @author lcq
  * @date 2025-01-07
@@ -24,56 +25,56 @@ public class ProcessTemplateVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 模板ID
+     * ID
      */
     @ExcelProperty(value = "模板ID")
     private String id;
 
     /**
-     * 部署id
+     * id
      */
     @ExcelProperty(value = "部署id")
     private String deploymentId;
 
     /**
-     * 模型id
+     * modelid
      */
     @ExcelProperty(value = "模型id")
     private String modelId;
 
     /**
-     * 模型Key
+     * modelKey
      */
     @ExcelProperty(value = "模型Key")
     private String modelKey;
 
     /**
-     * 模型名称
+     * model
      */
     @ExcelProperty(value = "模型名称")
     private String modelName;
 
     /**
-     * 手机端是否显示 0（显示） 1（不显示）
+     * whether 0 ( ) 1 ( )
      */
     @ExcelProperty(value = "手机端是否显示 0", converter = ExcelDictConvert.class)
     @ExcelDictFormat(readConverterExp = "显=示")
     private String showMobile;
 
     /**
-     * 租户id
+     * id
      */
     @ExcelProperty(value = "租户id")
     private String tenantId;
 
     /**
-     * 用户id
+     * user ID
      */
     @ExcelProperty(value = "用户id")
     private String userId;
 
     /**
-     * 描述
+     *
      */
     @ExcelProperty(value = "描述")
     private String description;

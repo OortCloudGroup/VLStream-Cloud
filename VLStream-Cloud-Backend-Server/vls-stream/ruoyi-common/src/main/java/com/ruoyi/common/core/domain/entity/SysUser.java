@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 用户对象 sys_user
+ * userobject sys_user
  *
  * @author Lion Li
  */
@@ -40,59 +40,59 @@ import java.util.Map;
 public class SysUser implements Serializable {
 
     /**
-     * 用户ID
+     * user ID
      */
     @TableId(value = "user_id")
     private String userId;
 
 //    /**
-//     * 用户UUID
+// * userUUID
 //     */
 //    private String oortUuid;
 
     /**
-     * 租户ID
+     * tenant ID
      */
     private String tenantId;
 
     /**
-     * 统一平台用户ID；本地账号为空，多租户影子用户必填。
+     * user ID; is empty, sub user .
      */
     private String platformUserId;
 
     /**
-     * 岗位id
+     * id
      */
     private String jobId;
 
     /**
-     * 职位id
+     * id
      */
     private String postId;
 
     /**
-     * 用户身份证号
+     * user ID card number
      */
     private String idcard;
 
 
     /**
-     * 部门ID
+     * department ID
      */
     private String deptId;
 
     /**
-     * 部门名称
+     * department name
      */
     private String deptName;
 
     /**
-     * 部门UUID
+     * departmentUUID
      */
     private String deptCode;
 
     /**
-     * 用户账号
+     * user
      */
     @Xss(message = "用户账号不能包含脚本字符")
     @NotBlank(message = "用户账号不能为空")
@@ -100,24 +100,24 @@ public class SysUser implements Serializable {
     private String userName;
 
     /**
-     * 用户昵称
+     * user
      */
     @Xss(message = "用户昵称不能包含脚本字符")
     @Size(min = 0, max = 30, message = "用户昵称长度不能超过{max}个字符")
     private String nickName;
 
     /**
-     * 登录id
+     * id
      */
     private String loginId;
 
     /**
-     * 用户类型（sys_user系统用户）
+     * user (sys_user user)
      */
     private String userType;
 
     /**
-     * 用户邮箱
+     * user
      */
     @Sensitive(strategy = SensitiveStrategy.EMAIL)
     @Email(message = "邮箱格式不正确")
@@ -125,23 +125,23 @@ public class SysUser implements Serializable {
     private String email;
 
     /**
-     * 手机号码
+     *
      */
 //    @Sensitive(strategy = SensitiveStrategy.PHONE)
     private String phonenumber;
 
     /**
-     * 用户性别
+     * user
      */
     private String sex;
 
     /**
-     * 用户头像
+     * user
      */
     private String avatar;
 
     /**
-     * 密码
+     *
      */
     @TableField(
         insertStrategy = FieldStrategy.NOT_EMPTY,
@@ -157,100 +157,100 @@ public class SysUser implements Serializable {
     }
 
     /**
-     * 帐号状态（0正常 1停用）
+     * Status (0 normal 1 disabled)
      */
     private String status;
 
     /**
-     * 删除标志（0代表存在 2代表删除）
+     * Delete (0represents in 2represents Delete )
      */
     @TableLogic
     private String delFlag;
 
     /**
-     * 最后登录IP
+     * after IP
      */
     private String loginIp;
 
     /**
-     * 最后登录时间
+     * after
      */
     private String loginDate;
 
 //    /**
-//     * 职位类型（1:兼职 0:正职）
+// * (1: 0: )
 //     */
 //    private String oortIspart;
 
 //    /**
-//     * 职位名称
+// *
 //     */
 //    private String oortJobname;
 
     /**
-     * 部门信息
+     * departmentinfo
      */
     private String deptInfo;
 
     /**
-     * 部门对象
+     * departmentobject
      */
     @TableField(exist = false)
     private SysDeptView dept;
 
     /**
-     * 角色对象
+     * roleobject
      */
     @TableField(exist = false)
     private List<SysRole> roles;
 
     /**
-     * 角色组
+     * role
      */
     @TableField(exist = false)
     private String[] roleIds;
 
     /**
-     * 岗位组
+     *
      */
     @TableField(exist = false)
     private Long[] postIds;
 
     /**
-     * 数据权限 当前角色ID
+     * data current role ID
      */
     @TableField(exist = false)
     private Long roleId;
 
     /**
-     * 搜索值
+     * value
      */
     @JsonIgnore
     @TableField(exist = false)
     private String searchValue;
 
     /**
-     * 创建者
+     * creator
      */
     private String createBy;
 
     /**
-     * 创建时间
+     * create time
      */
     private Date createTime;
 
     /**
-     * 更新者
+     * updater
      */
     private String updateBy;
 
     /**
-     * 更新时间
+     * update time
      */
     private Date updateTime;
 
     /**
-     * 请求参数
+     * parameter
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @TableField(exist = false)

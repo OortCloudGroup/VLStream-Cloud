@@ -14,7 +14,7 @@ import org.springframework.boot.context.metrics.buffering.BufferingApplicationSt
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * 启动程序
+ * Startup application
  *
  * @author ruoyi
  */

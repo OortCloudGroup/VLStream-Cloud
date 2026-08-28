@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -18,7 +19,7 @@ import java.time.LocalDateTime;
 
 
 /**
- * 算法模型表 Excel实体类
+ * algorithmmodel Excel
  *
  * @author Oort
  * @since 2025-12-23
@@ -31,73 +32,73 @@ public class VlsAlgorithmModelExcel implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 模型名称
+	 * model
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("模型名称")
 	private String modelName;
 	/**
-	 * 算法ID
+	 * algorithmID
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("算法ID")
 	private Long algorithmId;
 	/**
-	 * 训练任务ID
+	 * trainingtaskID
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("训练任务ID")
 	private Long trainingId;
 	/**
-	 * 模型版本
+	 * model
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("模型版本")
 	private Integer version;
 	/**
-	 * 模型格式：ONNX,PyTorch,TensorFlow
+	 * model : ONNX,PyTorch,TensorFlow
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("模型格式：ONNX,PyTorch,TensorFlow")
 	private String modelFormat;
 	/**
-	 * 模型大小
+	 * model
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("模型大小")
 	private String modelSize;
 	/**
-	 * 模型文件路径
+	 * model
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("模型文件路径")
 	private String modelPath;
 	/**
-	 * 模型准确率
+	 * model
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("模型准确率")
 	private BigDecimal accuracy;
 	/**
-	 * 模型描述
+	 * model
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("模型描述")
 	private String description;
 	/**
-	 * 下载次数
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("下载次数")
 	private Integer downloadCount;
 	/**
-	 * 部署次数
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("部署次数")
 	private Integer deployCount;
 	/**
-	 * 发布时间
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("发布时间")

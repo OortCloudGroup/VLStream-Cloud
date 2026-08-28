@@ -1,12 +1,17 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="user-management">
-    <!-- 页面头部 -->
+    <!-- page -->
     <div class="page-header">
       <h1 class="page-title">用户管理</h1>
       <p>系统用户账户管理与权限配置</p>
     </div>
 
-    <!-- 工具栏 -->
+    <!--  -->
     <div class="toolbar">
       <div class="toolbar-left">
         <el-input
@@ -42,7 +47,7 @@
       </div>
     </div>
 
-    <!-- 用户列表 -->
+    <!-- user -->
     <el-table :data="filteredUsers" style="width: 100%" stripe>
       <el-table-column prop="avatar" label="头像" width="80">
         <template #default="{ row }">
@@ -115,7 +120,7 @@
       </el-table-column>
     </el-table>
 
-    <!-- 分页 -->
+    <!--  -->
     <div class="pagination">
       <el-pagination
         v-model:current-page="currentPage"
@@ -126,7 +131,7 @@
       />
     </div>
 
-    <!-- 添加/编辑用户对话框 -->
+    <!-- / user -->
     <el-dialog
       v-model="showAddDialog"
       :title="isEdit ? '编辑用户' : '添加用户'"
@@ -198,12 +203,12 @@
       </template>
     </el-dialog>
 
-    <!-- 权限配置对话框 -->
+    <!-- configuration -->
     <el-dialog v-model="showPermissionDialog" title="权限配置" width="45%">
       <div v-if="selectedUser" class="permission-content">
         <h3>{{ selectedUser.realName }} ({{ selectedUser.username }}) 的权限配置</h3>
         <el-divider />
-        
+
         <div class="permission-section">
           <h4>功能模块权限</h4>
           <el-checkbox-group v-model="permissions.modules">
@@ -217,9 +222,9 @@
             </div>
           </el-checkbox-group>
         </div>
-        
+
         <el-divider />
-        
+
         <div class="permission-section">
           <h4>操作权限</h4>
           <el-checkbox-group v-model="permissions.operations">
@@ -233,9 +238,9 @@
             </div>
           </el-checkbox-group>
         </div>
-        
+
         <el-divider />
-        
+
         <div class="permission-section">
           <h4>设备权限</h4>
           <el-checkbox-group v-model="permissions.devices">
@@ -266,7 +271,7 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
-// 响应式数据
+// data
 const searchKeyword = ref('')
 const statusFilter = ref('')
 const roleFilter = ref('')
@@ -280,7 +285,7 @@ const currentPage = ref(1)
 const pageSize = ref(20)
 const totalUsers = ref(0)
 
-// 表单数据
+// formdata
 const userForm = ref({
   username: '',
   realName: '',
@@ -293,14 +298,14 @@ const userForm = ref({
   remark: ''
 })
 
-// 权限数据
+// data
 const permissions = ref({
   modules: [],
   operations: [],
   devices: []
 })
 
-// 表单验证规则
+// form
 const userRules = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
@@ -339,11 +344,11 @@ const userRules = {
   ]
 }
 
-// 计算属性
+// property
 const filteredUsers = computed(() => {
   return users.value.filter(user => {
-    const matchesKeyword = !searchKeyword.value || 
-      user.username.includes(searchKeyword.value) || 
+    const matchesKeyword = !searchKeyword.value ||
+      user.username.includes(searchKeyword.value) ||
       user.email.includes(searchKeyword.value) ||
       user.realName.includes(searchKeyword.value)
     const matchesStatus = !statusFilter.value || user.status === statusFilter.value
@@ -352,9 +357,9 @@ const filteredUsers = computed(() => {
   })
 })
 
-// 方法
+// method
 const refreshUsers = () => {
-  // 模拟获取用户数据
+  // Get userdata
   users.value = [
     {
       id: 1,
@@ -412,12 +417,12 @@ const editUser = (user) => {
 
 const saveUser = async () => {
   if (!userFormRef.value) return
-  
+
   try {
     await userFormRef.value.validate()
-    
+
     if (isEdit.value) {
-      // 编辑用户
+      // user
       const index = users.value.findIndex(u => u.id === userForm.value.id)
       if (index !== -1) {
         users.value[index] = {
@@ -428,7 +433,7 @@ const saveUser = async () => {
         ElMessage.success('用户信息更新成功')
       }
     } else {
-      // 添加用户
+      // user
       const newUser = {
         id: Date.now(),
         ...userForm.value,
@@ -440,7 +445,7 @@ const saveUser = async () => {
       totalUsers.value++
       ElMessage.success('用户添加成功')
     }
-    
+
     showAddDialog.value = false
     resetUserForm()
   } catch (error) {
@@ -475,7 +480,7 @@ const deleteUser = async (user) => {
         type: 'warning'
       }
     )
-    
+
     const index = users.value.findIndex(u => u.id === user.id)
     if (index !== -1) {
       users.value.splice(index, 1)
@@ -548,7 +553,7 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleString()
 }
 
-// 生命周期
+//
 onMounted(() => {
   refreshUsers()
 })

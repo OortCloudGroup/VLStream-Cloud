@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2025-04-02 16:45:11
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -36,39 +41,39 @@
 
 <script setup lang="ts">
 
-// 接收父组件传过来的值 buttonList
-// 值说明 buttonList: [
+// component value buttonList
+// value buttonList: [
 //   {
-//     name: '按钮名称',
-//     svg: 'svg图标名称',
+// name: 'button ',
+// svg: 'svg ',
 //     clickFn: () => {
-//       // 点击按钮执行的函数
+// // buttonExecute
 //     },
-//     // 可选，若有下拉子菜单，则传 children
+// // , sub menu, children
 //     children: [
 //       {
-//         name: '子菜单名称',
-//         svg: '子菜单svg图标名称',
+// name: ' sub menu name',
+// svg: ' sub menusvg ',
 //         clickFn: () => {
-//           // 点击子菜单执行的函数
+// // sub menuExecute
 //         }
 //       },
-//       // ...更多子菜单
+// // ... sub menu
 //     ]
 //   }
 // ]
-// 使用示例：
+// :
 // <button-group
 //   :button-list="[
-//     {svg: 'export', name: '导出', clickFn: exportXls},
-//     {svg: 'delete', name: '删除', clickFn: delMoreClick},
+// {svg: 'export', name: 'Export ', clickFn: exportXls},
+// {svg: 'delete', name: 'Delete ', clickFn: delMoreClick},
 //     {
 //       svg: 'more',
-//       name: '更多操作',
+// name: ' operation',
 //       clickFn: () => {},
 //       children: [
-//         {svg: 'edit', name: '编辑', clickFn: editClick},
-//         {svg: 'copy', name: '复制', clickFn: copyClick}
+// {svg: 'edit', name: ' ', clickFn: editClick},
+// {svg: 'copy', name: ' ', clickFn: copyClick}
 //       ]
 //     }
 //   ]"

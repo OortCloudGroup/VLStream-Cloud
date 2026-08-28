@@ -1,11 +1,16 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
-// 默认使用同源反向代理，避免把公司测试环境域名固化进开源前端。
+// , before .
 export let WEBRTC_SERVER_BASE_URL = '/bus/webrtc-streamer-server'
 let webRTCBackendConfigLoader = null
 
 /**
- * 应用后端下发的浏览器公开地址，并保持已有导入方的 ES module live binding 可见。
+ * after , already Import ES module live binding .
  */
 export function applyWebRTCServerBaseUrl(serverUrl) {
   const normalized = String(serverUrl || '').trim().replace(/\/+$/, '')
@@ -16,7 +21,7 @@ export function applyWebRTCServerBaseUrl(serverUrl) {
 }
 
 /**
- * 获取 WebRTC 配置信息
+ * Get WebRTC configurationinfo
  */
 export function getWebRTCConfig() {
   return request({
@@ -26,7 +31,7 @@ export function getWebRTCConfig() {
 }
 
 /**
- * 获取 WebRTC 服务器状态
+ * Get WebRTC service
  */
 export function getWebRTCServerStatus() {
   return request({
@@ -36,14 +41,14 @@ export function getWebRTCServerStatus() {
 }
 
 /**
- * 获取 WebRTC 状态（别名函数，兼容旧版本）
+ * Get WebRTC ( , old )
  */
 export function getWebRTCStatus() {
   return getWebRTCServerStatus()
 }
 
 /**
- * 刷新 WebRTC 连接
+ * new WebRTC
  */
 export function refreshWebRTCConnection() {
   return request({
@@ -53,7 +58,7 @@ export function refreshWebRTCConnection() {
 }
 
 /**
- * 启动 WebRTC 服务器
+ * WebRTC service
  */
 export function startWebRTCServer() {
   return request({
@@ -63,7 +68,7 @@ export function startWebRTCServer() {
 }
 
 /**
- * 停止 WebRTC 服务器
+ * WebRTC service
  */
 export function stopWebRTCServer() {
   return request({
@@ -73,8 +78,8 @@ export function stopWebRTCServer() {
 }
 
 /**
- * 检查 RTSP 流是否可用
- * @param {string} rtspUrl RTSP 流地址
+ * RTSP whether
+ * @param {string} rtspUrl RTSP
  */
 export function checkRtspStream(rtspUrl) {
   return request({
@@ -87,8 +92,8 @@ export function checkRtspStream(rtspUrl) {
 }
 
 /**
- * 获取 WebRTC 流配置
- * @param {string} streamId 流ID
+ * Get WebRTC configuration
+ * @param {string} streamId ID
  */
 export function getStreamConfig(streamId) {
   return request({
@@ -98,9 +103,9 @@ export function getStreamConfig(streamId) {
 }
 
 /**
- * 创建 WebRTC 流
- * @param {string} rtspUrl RTSP 流地址
- * @param {object} options 配置选项
+ * WebRTC
+ * @param {string} rtspUrl RTSP
+ * @param {object} options configuration item
  */
 export function createWebRTCStream(rtspUrl, options = {}) {
   return request({
@@ -115,8 +120,8 @@ export function createWebRTCStream(rtspUrl, options = {}) {
 }
 
 /**
- * 销毁 WebRTC 流
- * @param {string} streamId 流ID
+ * WebRTC
+ * @param {string} streamId ID
  */
 export function destroyWebRTCStream(streamId) {
   return request({
@@ -129,7 +134,7 @@ export function destroyWebRTCStream(streamId) {
 }
 
 /**
- * 获取所有活动的 WebRTC 流
+ * Get all WebRTC
  */
 export function getActiveStreams() {
   return request({
@@ -139,8 +144,8 @@ export function getActiveStreams() {
 }
 
 /**
- * WebRTC 流统计信息
- * @param {string} streamId 流ID
+ * WebRTC info
+ * @param {string} streamId ID
  */
 export function getStreamStats(streamId) {
   return request({
@@ -150,9 +155,9 @@ export function getStreamStats(streamId) {
 }
 
 /**
- * 直接调用 WebRTC-streamer API (绕过后端)
- * @param {string} endpoint API 端点
- * @param {object} options 请求选项
+ * WebRTC-streamer API ( after )
+ * @param {string} endpoint API
+ * @param {object} options item
  */
 export function callWebRTCStreamerAPI(endpoint, options = {}) {
   const {
@@ -162,7 +167,7 @@ export function callWebRTCStreamerAPI(endpoint, options = {}) {
   } = options
 
   const url = `${WEBRTC_SERVER_BASE_URL}${endpoint}`
-  
+
   const config = {
     method,
     headers: {
@@ -189,8 +194,8 @@ export function callWebRTCStreamerAPI(endpoint, options = {}) {
 }
 
 /**
- * 创建 WebRTC Offer
- * @param {string} streamId 流ID
+ * WebRTC Offer
+ * @param {string} streamId ID
  * @param {RTCSessionDescription} offer WebRTC Offer
  */
 export function createWebRTCOffer(streamId, offer) {
@@ -205,13 +210,13 @@ export function createWebRTCOffer(streamId, offer) {
 }
 
 /**
- * 处理 WebRTC Answer
- * @param {string} streamId 流ID  
+ * Process WebRTC Answer
+ * @param {string} streamId ID
  * @param {RTCSessionDescription} answer WebRTC Answer
  */
 export function handleWebRTCAnswer(streamId, answer) {
   return callWebRTCStreamerAPI('/api/call', {
-    method: 'POST', 
+    method: 'POST',
     data: {
       type: 'answer',
       sdp: answer.sdp,
@@ -221,9 +226,9 @@ export function handleWebRTCAnswer(streamId, answer) {
 }
 
 /**
- * 发送 ICE Candidate
- * @param {string} streamId 流ID
- * @param {RTCIceCandidate} candidate ICE 候选
+ * ICE Candidate
+ * @param {string} streamId ID
+ * @param {RTCIceCandidate} candidate ICE
  */
 export function sendICECandidate(streamId, candidate) {
   return callWebRTCStreamerAPI('/api/call', {
@@ -239,29 +244,29 @@ export function sendICECandidate(streamId, candidate) {
 }
 
 /**
- * 获取 WebRTC-streamer 服务器信息
+ * Get WebRTC-streamer service info
  */
 export function getWebRTCStreamerInfo() {
   return callWebRTCStreamerAPI('/api/getServerOptions')
 }
 
 /**
- * 获取可用的视频设备列表
+ * Get device
  */
 export function getVideoDevices() {
   return callWebRTCStreamerAPI('/api/getVideoDeviceList')
 }
 
 /**
- * 获取可用的音频设备列表  
+ * Get device
  */
 export function getAudioDevices() {
   return callWebRTCStreamerAPI('/api/getAudioDeviceList')
 }
 
 /**
- * 添加 RTSP 流到 WebRTC-streamer
- * @param {string} name 流名称
+ * RTSP WebRTC-streamer
+ * @param {string} name
  * @param {string} url RTSP URL
  */
 export function addRTSPStream(name, url) {
@@ -275,8 +280,8 @@ export function addRTSPStream(name, url) {
 }
 
 /**
- * 移除 RTSP 流
- * @param {string} name 流名称
+ * RTSP
+ * @param {string} name
  */
 export function removeRTSPStream(name) {
   return callWebRTCStreamerAPI(`/api/removeStream?name=${encodeURIComponent(name)}`, {
@@ -285,14 +290,14 @@ export function removeRTSPStream(name) {
 }
 
 /**
- * 获取流列表
+ * Get
  */
 export function getStreamList() {
   return callWebRTCStreamerAPI('/api/getStreamList')
 }
 
 /**
- * 获取WebRTC配置
+ * Get WebRTCconfiguration
  */
 export async function getWebRTCBackendConfig() {
   console.log('🔧 getWebRTCBackendConfig 调用 - 版本v4-20250711 - 修复后路径: /api/webrtc/config')
@@ -307,7 +312,7 @@ export async function getWebRTCBackendConfig() {
 }
 
 /**
- * 在同一页面生命周期内只加载一次运行时配置，供所有 WebRTC 播放入口复用。
+ * in page only Load configuration, all WebRTC .
  */
 export function ensureWebRTCBackendConfig() {
   if (!webRTCBackendConfigLoader) {
@@ -321,7 +326,7 @@ export function ensureWebRTCBackendConfig() {
 }
 
 /**
- * 获取WebRTC状态
+ * Get WebRTC
  */
 export function getWebRTCBackendStatus() {
   return request({
@@ -331,8 +336,8 @@ export function getWebRTCBackendStatus() {
 }
 
 /**
- * 验证RTSP流是否可用
- * @param {string} rtspUrl RTSP流地址
+ * RTSP whether
+ * @param {string} rtspUrl RTSP
  */
 export function validateRtspStream(rtspUrl) {
   return request({
@@ -345,9 +350,9 @@ export function validateRtspStream(rtspUrl) {
 }
 
 /**
- * 启动WebRTC播放流
- * @param {string} deviceId 设备ID
- * @param {string} rtspUrl RTSP流地址
+ * WebRTC
+ * @param {string} deviceId deviceID
+ * @param {string} rtspUrl RTSP
  */
 export function startWebRTCPlay(deviceId, rtspUrl) {
   console.log('🚀 startWebRTCPlay调用 - 版本20250711-v4 - API路径已修复为: /api/webrtc/start')
@@ -362,8 +367,8 @@ export function startWebRTCPlay(deviceId, rtspUrl) {
 }
 
 /**
- * 停止WebRTC播放流
- * @param {string} deviceId 设备ID
+ * WebRTC
+ * @param {string} deviceId deviceID
  */
 export function stopWebRTCPlay(deviceId) {
   return request({
@@ -376,7 +381,7 @@ export function stopWebRTCPlay(deviceId) {
 }
 
 /**
- * 获取活跃的WebRTC流
+ * Get WebRTC
  */
 export function getActiveWebRTCStreams() {
   return request({
@@ -386,8 +391,8 @@ export function getActiveWebRTCStreams() {
 }
 
 /**
- * 检查设备WebRTC流状态
- * @param {string} deviceId 设备ID
+ * deviceWebRTC
+ * @param {string} deviceId deviceID
  */
 export function checkWebRTCStreamStatus(deviceId) {
   return request({
@@ -397,7 +402,7 @@ export function checkWebRTCStreamStatus(deviceId) {
 }
 
 /**
- * WebRTC 连接管理类
+ * WebRTC
  */
 export class WebRTCConnection {
   constructor(options = {}) {
@@ -426,7 +431,7 @@ export class WebRTCConnection {
 
     this.pc = new RTCPeerConnection(config)
 
-    // 处理远程流
+    // Process
     this.pc.ontrack = (event) => {
       console.log('Received remote stream:', event.streams[0])
       this.remoteStream = event.streams[0]
@@ -435,7 +440,7 @@ export class WebRTCConnection {
       }
     }
 
-    // 处理连接状态变化
+    // Process
     this.pc.onconnectionstatechange = () => {
       console.log('WebRTC connection state:', this.pc.connectionState)
       if (this.onConnectionStateChange) {
@@ -443,11 +448,11 @@ export class WebRTCConnection {
       }
     }
 
-    // 处理 ICE 候选
+    // Process ICE
     this.pc.onicecandidate = (event) => {
       if (event.candidate) {
         console.log('ICE candidate:', event.candidate)
-        // 发送 ICE 候选到信令服务器
+        // ICE service
         this.sendICECandidate(event.candidate)
       }
     }
@@ -457,13 +462,13 @@ export class WebRTCConnection {
     try {
       await this.createPeerConnection()
 
-      // 创建 offer
+      // offer
       const offer = await this.pc.createOffer()
       await this.pc.setLocalDescription(offer)
 
-      // 发送 offer 到 WebRTC-streamer
+      // offer WebRTC-streamer
       const response = await createWebRTCOffer(this.streamId, offer)
-      
+
       if (response.type === 'answer') {
         await this.pc.setRemoteDescription(new RTCSessionDescription(response))
       } else {
@@ -505,7 +510,7 @@ export class WebRTCConnection {
 }
 
 /**
- * 完整的WebRTC播放流程类
+ * WebRTC workflow
  */
 export class WebRTCPlayer {
   constructor(options = {}) {
@@ -515,36 +520,36 @@ export class WebRTCPlayer {
     this.username = options.username
     this.password = options.password
     this.options = options
-    
+
     this.peerConnection = null
     this.localStream = null
     this.remoteStream = null
     this.iceServers = []
     this.channelToken = null
     this.systemConfig = null
-    
+
     this.onTrack = options.onTrack || (() => {})
     this.onError = options.onError || (() => {})
     this.onConnectionStateChange = options.onConnectionStateChange || (() => {})
-    
+
     this.isPlaying = false
     this.isConnecting = false
   }
-  
+
   generatePeerId() {
     return Math.random().toString(36).substr(2, 15)
   }
-  
+
   /**
-   * 初始化播放流程
+   * Initialize workflow
    */
   async initialize() {
     try {
       this.isConnecting = true
       console.log('🚀 WebRTC初始化 - 版本v4-20250711-FINAL - API路径已修复')
       console.log('开始初始化WebRTC播放流程...')
-      
-      // 跳过配置检查，直接初始化完成
+
+      // configuration , Initialize
       console.log('WebRTC播放流程初始化完成（跳过配置检查）')
       return true
     } catch (error) {
@@ -555,14 +560,14 @@ export class WebRTCPlayer {
       this.isConnecting = false
     }
   }
-  
+
   /**
-   * 获取WebRTC配置
+   * Get WebRTCconfiguration
    */
   async getWebRTCConfig() {
     try {
       const response = await getWebRTCBackendConfig()
-      
+
       if (response.code === 200) {
         this.webrtcConfig = response.data
         console.log('获取WebRTC配置成功:', this.webrtcConfig)
@@ -574,14 +579,14 @@ export class WebRTCPlayer {
       throw error
     }
   }
-  
+
   /**
-   * 验证RTSP流
+   * RTSP
    */
   async validateRtspUrl() {
     try {
       const response = await validateRtspStream(this.rtspUrl)
-      
+
       if (response.code === 200) {
         console.log('RTSP流验证成功:', response.data)
         return true
@@ -593,9 +598,9 @@ export class WebRTCPlayer {
       throw error
     }
   }
-  
+
   /**
-   * 创建PeerConnection（简化版本）
+   * PeerConnection ( )
    */
   async createPeerConnection() {
     try {
@@ -605,55 +610,55 @@ export class WebRTCPlayer {
           { urls: 'stun:stun1.l.google.com:19302' }
         ]
       }
-      
+
       this.peerConnection = new RTCPeerConnection(config)
-      
-      // 监听远程流
+
+      //
       this.peerConnection.ontrack = (event) => {
         console.log('收到远程流:', event.streams[0])
         this.remoteStream = event.streams[0]
         this.onTrack(event.streams[0])
       }
-      
-      // 监听连接状态变化
+
+      //
       this.peerConnection.onconnectionstatechange = () => {
         const state = this.peerConnection.connectionState
         console.log('WebRTC连接状态变化:', state)
         this.onConnectionStateChange(state)
-        
+
         if (state === 'connected') {
           this.isPlaying = true
         } else if (state === 'disconnected' || state === 'failed') {
           this.isPlaying = false
         }
       }
-      
+
       console.log('PeerConnection创建成功')
     } catch (error) {
       console.error('创建PeerConnection失败:', error)
       throw error
     }
   }
-  
+
   /**
-   * 开始播放
+   * start
    */
   async play() {
     console.log('🎬 WebRTCPlayer.play() 调用')
     try {
-      // 初始化WebRTC播放流程（跳过配置检查）
+      // Initialize WebRTC workflow ( configuration )
       await this.initialize()
-      
+
       console.log('开始WebRTC播放...')
-      
-      // 后端请求失败时必须把真实错误交给上层，不再伪造 MediaStream。
+
+      // after failed layer , MediaStream.
       const response = await startWebRTCPlay(this.deviceId, this.rtspUrl)
-        
+
         if (response && response.code === 200) {
           const streamInfo = response.data
           console.log('WebRTC播放启动成功:', streamInfo)
-          
-          // 只有 PeerConnection 的 connected/ontrack 回调才能把 isPlaying 置为 true。
+
+          // only PeerConnection connected/ontrack can isPlaying to true.
           this.isPlaying = false
           return true
         } else {
@@ -665,33 +670,33 @@ export class WebRTCPlayer {
       return false
     }
   }
-  
+
   /**
-   * 停止播放
+   *
    */
   async stop() {
     try {
       if (this.isPlaying) {
         await stopWebRTCPlay(this.deviceId)
       }
-      
+
       if (this.peerConnection) {
         this.peerConnection.close()
         this.peerConnection = null
       }
-      
+
       this.isPlaying = false
       this.remoteStream = null
-      
+
       console.log('WebRTC播放已停止')
     } catch (error) {
       console.error('停止WebRTC播放失败:', error)
       this.onError(error)
     }
   }
-  
+
   /**
-   * 检查播放状态
+   *
    */
   async checkStatus() {
     try {
@@ -706,9 +711,9 @@ export class WebRTCPlayer {
       return null
     }
   }
-  
+
   /**
-   * 获取播放状态
+   * Get
    */
   getPlayState() {
     return {
@@ -720,7 +725,7 @@ export class WebRTCPlayer {
   }
 }
 
-// 默认导出
+// Export
 export default {
   getWebRTCConfig,
   getWebRTCServerStatus,
@@ -753,4 +758,4 @@ export default {
   getActiveWebRTCStreams,
   checkWebRTCStreamStatus,
   WebRTCPlayer
-} 
+}

@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 流程任务业务对象
+ * workflowtask object
  *
  * @author KonBAI
  * @createTime 2022/3/10 00:12
@@ -21,63 +21,63 @@ import java.util.Map;
 @Data
 public class WfTaskBo {
     /**
-     * 任务Id
+     * taskId
      */
     private String taskId;
     /**
-     * 任务名称
+     * task
      */
     private String taskName;
     /**
-     * 用户Id
+     * userId
      */
     private String userId;
     /**
-     * 任务意见
+     * task
      */
     private String comment;
     /**
-     * 回访方式 1电话,2上门,3微信
+     * 1 ,2 ,3
      */
     private String callbackType;
     /**
-     * 验收完成
+     *
      */
     private boolean acceptance;
     /**
-     * 流程实例Id
+     * workflow instanceId
      */
     private String procInsId;
     /**
-     * 节点
+     * node
      */
     private String targetKey;
     /**
-     * 流程变量信息
+     * workflow variableinfo
      */
     private Map<String, Object> variables;
     /**
-     * 审批人
+     * approver
      */
     private String assignee;
     /**
-     * 候选人
+     * candidate user
      */
     private List<String> candidateUsers;
     /**
-     * 审批组
+     * approval
      */
     private List<String> candidateGroups;
     /**
-     * 抄送用户Id
+     * userId
      */
     private String copyUserIds;
     /**
-     * 下一节点审批人
+     * nodeapprover
      */
     private String nextUserIds;
     /**
-     * 用户是否需要推送消息
+     * userwhether need to Push
      */
     @JsonProperty(value = "PushMessage")
     private boolean  PushMessage;

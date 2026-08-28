@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 操作日志 服务层处理
+ * operationlog service layer Process
  *
  * @author Lion Li
  */
@@ -39,15 +40,15 @@ public class SysOperLogServiceImpl implements ISysOperLogService {
     private final SysOperLogMapper baseMapper;
 
     /**
-     * 操作日志记录
+     * operationlogrecord
      *
-     * @param operLogEvent 操作日志事件
+     * @param operLogEvent operationlogevent
      */
     @Async
     @EventListener
     public void recordOper(OperLogEvent operLogEvent) {
         SysOperLog operLog = BeanUtil.toBean(operLogEvent, SysOperLog.class);
-        // 远程查询操作地点
+        // Query operation
         operLog.setOperLocation(AddressUtils.getRealAddressByIP(operLog.getOperIp()));
         insertOperlog(operLog);
     }
@@ -78,9 +79,9 @@ public class SysOperLogServiceImpl implements ISysOperLogService {
     }
 
     /**
-     * 新增操作日志
+     * Add operationlog
      *
-     * @param operLog 操作日志对象
+     * @param operLog operationlogobject
      */
     @Override
     public void insertOperlog(SysOperLog operLog) {
@@ -89,10 +90,10 @@ public class SysOperLogServiceImpl implements ISysOperLogService {
     }
 
     /**
-     * 查询系统操作日志集合
+     * Query operationlogcollection
      *
-     * @param operLog 操作日志对象
-     * @return 操作日志集合
+     * @param operLog operationlogobject
+     * @return operationlogcollection
      */
     @Override
     public List<SysOperLog> selectOperLogList(SysOperLog operLog) {
@@ -115,10 +116,10 @@ public class SysOperLogServiceImpl implements ISysOperLogService {
     }
 
     /**
-     * 批量删除系统操作日志
+     * Batch delete operationlog
      *
-     * @param operIds 需要删除的操作日志ID
-     * @return 结果
+     * @param operIds need to Delete operationlogID
+     * @return
      */
     @Override
     public int deleteOperLogByIds(Long[] operIds) {
@@ -126,10 +127,10 @@ public class SysOperLogServiceImpl implements ISysOperLogService {
     }
 
     /**
-     * 查询操作日志详细
+     * Query operationlog
      *
-     * @param operId 操作ID
-     * @return 操作日志对象
+     * @param operId operationID
+     * @return operationlogobject
      */
     @Override
     public SysOperLog selectOperLogById(Long operId) {
@@ -137,7 +138,7 @@ public class SysOperLogServiceImpl implements ISysOperLogService {
     }
 
     /**
-     * 清空操作日志
+     * null / empty operationlog
      */
     @Override
     public void cleanOperLog() {

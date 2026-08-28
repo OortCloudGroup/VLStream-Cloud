@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { deepClone } from '~@/utils/util'
 import FormValidators from '~@/utils/validators'
 import eventBus from '~@/utils/event-bus'
@@ -33,7 +38,7 @@ export default {
 
   methods: {
 
-    // --------------------- 组件内部方法 begin ------------------//
+    // --------------------- component method begin ------------------//
     getPropName() {
       if (this.subFormItemFlag && !this.designState) {
         return this.subFormName + '.' + this.subFormRowIndex + '.' + this.field.options.name + ''
@@ -47,7 +52,7 @@ export default {
         return
       }
 
-      if (!!this.subFormItemFlag && !this.designState) { // SubForm子表单组件需要特殊处理！！
+      if (!!this.subFormItemFlag && !this.designState) { // SubForm sub formcomponent need to Process ! !
         let subFormData = this.formModel[this.subFormName]
         if (((subFormData === undefined) || (subFormData[this.subFormRowIndex] === undefined) ||
             (subFormData[this.subFormRowIndex][this.field.options.name] === undefined)) &&
@@ -61,13 +66,13 @@ export default {
           this.fieldModel = subFormData[this.subFormRowIndex][this.field.options.name]
         }
 
-        /* 主动触发子表单内field-widget的onChange事件！！ */
-        setTimeout(() => { // 延时触发onChange事件, 便于更新计算字段！！
+        /* main sub form field-widget onChangeevent! ! */
+        setTimeout(() => { // onChangeevent, new field! !
           this.handleOnChangeForSubForm(this.fieldModel, this.oldFieldValue, subFormData, this.subFormRowId)
         }, 800)
         this.oldFieldValue = deepClone(this.fieldModel)
 
-        this.initFileList() // 处理图片上传、文件上传字段
+        this.initFileList() // Process 、 field
 
         return
       }
@@ -75,16 +80,16 @@ export default {
       if ((this.formModel[this.field.options.name] === undefined) &&
           (this.field.options.defaultValue !== undefined)) {
         this.fieldModel = this.field.options.defaultValue
-      } else if (this.formModel[this.field.options.name] === undefined) { // 如果formModel为空对象，则初始化字段值为null!!
+      } else if (this.formModel[this.field.options.name] === undefined) { // if formModel is emptyobject, Initialize field value to null!!
         this.formModel[this.field.options.name] = null
       } else {
         this.fieldModel = this.formModel[this.field.options.name]
       }
       this.oldFieldValue = deepClone(this.fieldModel)
-      this.initFileList() // 处理图片上传、文件上传字段
+      this.initFileList() // Process 、 field
     },
 
-    initFileList() { // 初始化上传组件的已上传文件列表
+    initFileList() { // Initialize component already
       if (((this.field.type !== 'picture-upload') && (this.field.type !== 'file-upload')) || (this.designState === true)) {
         return
       }
@@ -138,7 +143,7 @@ export default {
 
     registerToRefList(oldRefName) {
       if ((this.refList !== null) && !!this.field.options.name) {
-        if (this.subFormItemFlag && !this.designState) { // 处理子表单元素（且非设计状态）
+        if (this.subFormItemFlag && !this.designState) { // Process sub formelement ( non- )
           if (!!oldRefName) {
             delete this.refList[oldRefName + '@row' + this.subFormRowId]
           }
@@ -152,10 +157,10 @@ export default {
       }
     },
 
-    unregisterFromRefList() { // 销毁组件时注销组件ref
+    unregisterFromRefList() { // component componentref
       if ((this.refList !== null) && !!this.field.options.name) {
         let oldRefName = this.field.options.name
-        if (this.subFormItemFlag && !this.designState) { // 处理子表单元素（且非设计状态）
+        if (this.subFormItemFlag && !this.designState) { // Process sub formelement ( non- )
           delete this.refList[oldRefName + '@row' + this.subFormRowId]
         } else {
           delete this.refList[oldRefName]
@@ -170,7 +175,7 @@ export default {
 
       if ((this.field.type === 'radio') || (this.field.type === 'checkbox') ||
           (this.field.type === 'select') || (this.field.type === 'cascader')) {
-        /* 异步更新option-data之后globalOptionData不能获取到最新值，改用provide的getOptionData()方法 */
+        /* new option-data afterglobalOptionData can Get new value , provide getOptionData() method */
         const newOptionItems = this.getOptionData()
         // eslint-disable-next-line no-prototype-builtins
         if (!!newOptionItems && newOptionItems.hasOwnProperty(this.field.options.name)) {
@@ -194,21 +199,21 @@ export default {
         return
       }
 
-      this.rules.splice(0, this.rules.length) // 清空已有
+      this.rules.splice(0, this.rules.length) // null / empty already
     },
 
     buildFieldRules() {
       if (!this.field.formItemFlag && this.field.options.hidden) {
         return
       }
-      // 如果是明细组件，对于里面的组件规则校验，提升到父组件上，不在这里校验
+      // if is component, component Validate , component , in Validate
       if (this.parentWidget && this.parentWidget.type === 'items-item') {
         return
       }
       if (!this.rules) {
         this.rules = []
       }
-      this.rules.splice(0, this.rules.length) // 清空已有
+      this.rules.splice(0, this.rules.length) // null / empty already
       if (!!this.field.options.required) {
         this.rules.push({
           required: true,
@@ -252,7 +257,7 @@ export default {
     },
 
     /**
-     * 禁用字段值变动触发表单校验
+     * field value formValidate
      */
     disableChangeValidate() {
       if (!this.rules) {
@@ -267,7 +272,7 @@ export default {
     },
 
     /**
-     * 启用字段值变动触发表单校验
+     * field value formValidate
      */
     enableChangeValidate() {
       if (!this.rules) {
@@ -302,19 +307,19 @@ export default {
       }
     },
 
-    // --------------------- 组件内部方法 end ------------------//
+    // --------------------- component method end ------------------//
 
-    // --------------------- 事件处理 begin ------------------//
+    // --------------------- eventProcess begin ------------------//
 
     emitFieldDataChange(newValue, oldValue) {
       this.emit$('field-value-changed', [newValue, oldValue])
-      // 全局的事件
+      // full event
       eventBus.$emit('field-value-changed', this.field, newValue)
-      /* 必须用dispatch向指定父组件派发消息！！ */
+      /* dispatch component ! ! */
       this.dispatch('VFormRender', 'fieldChange',
         [this.field.options.name, newValue, oldValue, this.subFormName, this.subFormRowIndex])
 
-      // 如果父组件是容器组件的明细组件则触发父组件的change事件
+      // if component is component component component changeevent
       // console.log('handleChangeEvent--------', this.parentWidget)
       if (this.parentWidget && this.parentWidget.type === 'items-item') {
         // console.log('itemsItemChange--------', [this.indexOfParentList, this.field.options.name, newValue])
@@ -330,7 +335,7 @@ export default {
       if (!!this.subFormItemFlag) {
         let subFormData = this.formModel[this.subFormName] || [{}]
         let subFormDataRow = subFormData[this.subFormRowIndex]
-        if (!!subFormDataRow) { // 重置表单后subFormDataRow为undefined，应跳过！！
+        if (!!subFormDataRow) { // form aftersubFormDataRow to undefined, ! !
           subFormDataRow[this.field.options.name] = value
         }
       } else {
@@ -341,16 +346,16 @@ export default {
     handleChangeEvent(value) {
       this.syncUpdateFormModel(value)
       this.emitFieldDataChange(value, this.oldFieldValue)
-      // number组件一般不会触发focus事件，故此处需要手工赋值oldFieldValue！！
+      // numbercomponent will focusevent, need to value oldFieldValue! !
       this.oldFieldValue = deepClone(value) /* oldFieldValue需要在initFieldModel()方法中赋初值!! */
 
-      /* 主动触发表单的单个字段校验，用于清除字段可能存在的校验错误提示 */
+      /* main form fieldValidate , field can in Validate prompt / tip */
       this.dispatch('VFormRender', 'fieldValidation', [this.getPropName()])
-      // 如果父组件是容器组件的明细组件则触发父组件的change事件
+      // if component is component component component changeevent
     },
 
     handleFocusCustomEvent(event) {
-      this.oldFieldValue = deepClone(this.fieldModel) // 保存修改change之前的值
+      this.oldFieldValue = deepClone(this.fieldModel) // Update change before value
 
       if (!!this.field.options.onFocus) {
         let customFn = new Function('event', this.field.options.onFocus)
@@ -368,7 +373,7 @@ export default {
     handleInputCustomEvent(value) {
       this.syncUpdateFormModel(value)
 
-      /* 主动触发表单的单个字段校验，用于清除字段可能存在的校验错误提示 */
+      /* main form fieldValidate , field can in Validate prompt / tip */
       this.dispatch('VFormRender', 'fieldValidation', [this.getPropName()])
 
       if (!!this.field.options.onInput) {
@@ -378,7 +383,7 @@ export default {
     },
 
     emitAppendButtonClick() {
-      if (!!this.designState) { // 设计状态不触发点击事件
+      if (!!this.designState) { // event
         return
       }
 
@@ -386,19 +391,19 @@ export default {
         let customFn = new Function(this.field.options.onAppendButtonClick)
         customFn.call(this)
       } else {
-        /* 必须调用mixins中的dispatch方法逐级向父组件发送消息！！ */
+        /* mixins in dispatch method component ! ! */
         this.dispatch('VFormRender', 'appendButtonClick', [this])
       }
     },
 
-    handleOnChange(val, oldVal) { // 自定义onChange事件
+    handleOnChange(val, oldVal) { // CustomonChangeevent
       if (!!this.field.options.onChange) {
         let changeFn = new Function('value', 'oldValue', this.field.options.onChange)
         changeFn.call(this, val, oldVal)
       }
     },
 
-    handleOnChangeForSubForm(val, oldVal, subFormData, rowId) { // 子表单自定义onChange事件
+    handleOnChangeForSubForm(val, oldVal, subFormData, rowId) { // sub formCustomonChangeevent
       if (!!this.field.options.onChange) {
         let changeFn = new Function('value', 'oldValue', 'subFormData', 'rowId', this.field.options.onChange)
         changeFn.call(this, val, oldVal, subFormData, rowId)
@@ -406,7 +411,7 @@ export default {
     },
 
     handleButtonWidgetClick() {
-      if (!!this.designState) { // 设计状态不触发点击事件
+      if (!!this.designState) { // event
         return
       }
 
@@ -425,10 +430,10 @@ export default {
       }
     },
 
-    // --------------------- 事件处理 end ------------------//
+    // --------------------- eventProcess end ------------------//
 
-    // --------------------- 以下为组件支持外部调用的API方法 begin ------------------//
-    /* 提示：用户可自行扩充这些方法！！！ */
+    // --------------------- to component API method begin ------------------//
+    /* prompt / tip: user method ! ! ! */
 
     getFormRef() { /* 获取VFrom引用，必须在VForm组件created之后方可调用 */
       return this.refList['v_form_ref']
@@ -442,7 +447,7 @@ export default {
       return foundRef
     },
 
-    getFieldEditor() { // 获取内置的el表单组件
+    getFieldEditor() { // Get elformcomponent
       return this.$refs['fieldEditor']
     },
 
@@ -478,18 +483,18 @@ export default {
         //
       })
 
-      // 清空上传组件文件列表
+      // null / empty component
       if ((this.field.type === 'picture-upload') || (this.field.type === 'file-upload')) {
         this.$refs['fieldEditor'].clearFiles()
         this.fileList.splice(0, this.fileList.length)
       }
     },
 
-    setWidgetOption(optionName, optionValue) { // 通用组件选项修改API
+    setWidgetOption(optionName, optionValue) { // component item Update API
       // eslint-disable-next-line no-prototype-builtins
       if (this.field.options.hasOwnProperty(optionName)) {
         this.field.options[optionName] = optionValue
-        // TODO: 是否重新构建组件？？有些属性修改后必须重新构建组件才能生效，比如字段校验规则。
+        // TODO: whether new Build component? ? propertyUpdate after new Build component can , fieldValidate .
       }
     },
 
@@ -512,9 +517,9 @@ export default {
     setHidden(flag) {
       this.field.options.hidden = flag
 
-      if (!!flag) { // 清除组件校验规则
+      if (!!flag) { // componentValidate
         this.clearFieldRules()
-      } else { // 重建组件校验规则
+      } else { // componentValidate
         this.buildFieldRules()
       }
     },
@@ -534,7 +539,7 @@ export default {
       }
     },
 
-    clearSelectedOptions() { // 清空已选选项
+    clearSelectedOptions() { // null / empty already item
       if ((this.field.type !== 'checkbox') && (this.field.type !== 'radio') && (this.field.type !== 'select')) {
         return
       }
@@ -548,16 +553,16 @@ export default {
     },
 
     /**
-     * 加载选项，并清空字段值
+     * Load item , null / empty field value
      * @param options
      */
     loadOptions(options) {
       this.field.options.optionItems = deepClone(options)
-      // this.clearSelectedOptions()  //清空已选选项
+      // this.clearSelectedOptions() // null / empty already item
     },
 
     /**
-     * 重新加载选项，不清空字段值
+     * new Load item , null / empty field value
      * @param options
      */
     reloadOptions(options) {
@@ -573,7 +578,7 @@ export default {
     },
 
     /**
-     * 返回选择项
+     * item
      * @returns {*}
      */
     getOptionItems() {
@@ -593,7 +598,7 @@ export default {
     },
 
     /**
-     * 是否子表单内嵌的组件
+     * whether sub form component
      * @returns {boolean}
      */
     isSubFormItem() {
@@ -601,7 +606,7 @@ export default {
     },
 
     /**
-     * 动态增加自定义css样式
+     * Customcss
      * @param className
      */
     addCssClass(className) {
@@ -613,7 +618,7 @@ export default {
     },
 
     /**
-     * 动态移除自定义css样式
+     * Customcss
      * @param className
      */
     removeCssClass(className) {
@@ -632,7 +637,7 @@ export default {
       }
     }
 
-    // --------------------- 以上为组件支持外部调用的API方法 end ------------------//
+    // --------------------- to component API method end ------------------//
 
   }
 }

@@ -1,22 +1,27 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * 测试图片路径修复效果
- * 验证前端图片路径修改后的效果
+ *
+ * before Update after
  */
 
 async function testImagePathFix() {
     console.log('🔍 测试图片路径修复效果');
-    
+
     const baseUrl = 'http://192.168.60.77:32557';
     const token = sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken');
-    
+
     console.log('当前token:', token);
     console.log('');
-    
-    // 测试1: 获取标注实例数据，验证图片路径格式
+
+    // 1: Get annotationinstancedata,
     console.log('=== 测试1: 获取标注实例数据 ===');
     const annotationUrl = `${baseUrl}/api/annotation/1/instances/all`;
     console.log('API URL:', annotationUrl);
-    
+
     try {
         const response = await fetch(annotationUrl, {
             method: 'GET',
@@ -28,29 +33,29 @@ async function testImagePathFix() {
                 'accesstoken': token
             }
         });
-        
+
         console.log('响应状态:', response.status);
-        
+
         if (response.ok) {
             const result = await response.json();
             console.log('✅ 获取标注实例成功！');
             console.log('数据条数:', result.data.length);
-            
-            // 检查图片路径
+
+            //
             result.data.forEach((instance, index) => {
                 console.log(`实例${index + 1}:`);
                 console.log(`  - 图片路径: ${instance.imagePath}`);
                 console.log(`  - 图片名称: ${instance.imageName}`);
-                
-                // 验证URL格式
+
+                // URL
                 if (instance.imagePath.startsWith('/image/')) {
                     console.log(`  - ✅ 图片路径格式正确`);
-                    
-                    // 构建完整的图片访问URL
+
+                    // Build URL
                     const fullImageUrl = `${baseUrl}${instance.imagePath}`;
                     console.log(`  - 完整URL: ${fullImageUrl}`);
-                    
-                    // 测试图片访问
+
+                    //
                     testImageAccess(fullImageUrl, instance.imageName);
                 } else {
                     console.log(`  - ❌ 图片路径格式错误，应该是 /image/ 开头`);
@@ -64,7 +69,7 @@ async function testImagePathFix() {
     } catch (error) {
         console.log('❌ 请求异常:', error.message);
     }
-    
+
     console.log('');
     console.log('📝 修复总结:');
     console.log('1. ✅ 修改了前端 AlgorithmStandard.vue 中的图片路径从 /src/img/ 改为 /image/');
@@ -80,10 +85,10 @@ async function testImagePathFix() {
     console.log('- 图片能够正常显示');
 }
 
-// 测试图片访问
+//
 async function testImageAccess(imageUrl, imageName) {
     console.log(`  - 测试访问: ${imageName}`);
-    
+
     try {
         const response = await fetch(imageUrl, {
             method: 'GET',
@@ -95,7 +100,7 @@ async function testImageAccess(imageUrl, imageName) {
                 'accesstoken': sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken')
             }
         });
-        
+
         if (response.ok) {
             console.log(`    ✅ 图片访问成功 (${response.status})`);
             console.log(`    - Content-Type: ${response.headers.get('content-type')}`);
@@ -110,5 +115,5 @@ async function testImageAccess(imageUrl, imageName) {
     }
 }
 
-// 运行测试
-testImagePathFix().catch(console.error); 
+//
+testImagePathFix().catch(console.error);

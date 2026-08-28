@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div>
     <el-dialog v-model="dialogVisible" class="diaOutSet" title="任务分配" top="5vh" width="40%" :before-close="handleClose" destroy-on-close>
@@ -129,7 +134,7 @@
                 <img :src="carIcon" class="staff-icon" alt="车辆图标" />
               </div>
             </el-form-item> -->
-              <!-- 描述 -->
+              <!--  -->
               <el-form-item label="描述">
                 <div style="width: 100%;">
                   <el-input
@@ -209,8 +214,8 @@ const formRules = ref({
 })
 
 const chooseDeptVis = ref(false)
-let codeAct = ref(true) // 展开收缩
-let codeAct_1 = ref(false) // 展开收缩
+let codeAct = ref(true) //
+let codeAct_1 = ref(false) //
 const props = defineProps<{
   currentItem?: any
   visible?: boolean
@@ -228,18 +233,18 @@ const dialogVisible = computed({
 const handleClose = () => {
   dialogVisible.value = false
 }
-// 打开部门选择对话框
+// department
 const openStartDeptSelect = (selectType: number) => {
   type.value = selectType
   chooseDeptVis.value = true
 }
 
-// 取消操作
+// operation
 const handleCancel = () => {
   dialogVisible.value = false
 }
 
-// 提交表单
+// form
 const submitForm = async() => {
   await formRef.value.validate()
   formLoading.value = true
@@ -258,10 +263,10 @@ const submitForm = async() => {
   }
 }
 
-// 确认选择部门/人员
+// department/
 const confirmDept = async(data: any) => {
   if (type.value === 1) {
-    // 选择执行人员
+    // Execute
     if (data.user && data.user.length > 0) {
       formData.value.uuids = data.user.map((item: any) => ({
         u_type: 1,
@@ -270,7 +275,7 @@ const confirmDept = async(data: any) => {
       formData.value.userName = data.user.map((item: any) => item.user_name).join(',')
     }
   } else if (type.value === 2) {
-    // 选择执行人单位
+    // Execute
     if (data.dept && data.dept.length > 0) {
       formData.value.dept_name = data.dept[0].dept_name || data.dept[0].name || ''
     }
@@ -293,7 +298,7 @@ const selectContent = (content: any) => {
 <style scoped lang="scss">
 .detailsBox {
   display: flex;
-  align-items: flex-start; // 改为flex-start以便内容换行时对齐顶部
+  align-items: flex-start; // to flex-start
   flex-wrap: nowrap;
   font-family: SourceHanSansSC-Regular;
   font-size: 14px;
@@ -378,7 +383,7 @@ const selectContent = (content: any) => {
 
 .detailsBox {
   display: flex;
-  align-items: flex-start; // 改为flex-start以便内容换行时对齐顶部
+  align-items: flex-start; // to flex-start
   flex-wrap: nowrap;
   font-family: SourceHanSansSC-Regular;
   font-size: 14px;
@@ -456,7 +461,7 @@ const selectContent = (content: any) => {
   line-height: 30px;
 }
 
-/* 主题切换控件样式 */
+/* main */
 :deep(.theme-control) {
   background: transparent !important;
   border: none !important;
@@ -486,7 +491,7 @@ const selectContent = (content: any) => {
 }
 .detailsBox {
   display: flex;
-  align-items: flex-start; // 改为flex-start以便内容换行时对齐顶部
+  align-items: flex-start; // to flex-start
   flex-wrap: nowrap;
   font-family: SourceHanSansSC-Regular;
   font-size: 14px;
@@ -549,7 +554,7 @@ const selectContent = (content: any) => {
   }
 }
 
-// 更多-展开
+// -
 .codeActBox {
   gap: 10px;
   color: var(--el-color-primary);

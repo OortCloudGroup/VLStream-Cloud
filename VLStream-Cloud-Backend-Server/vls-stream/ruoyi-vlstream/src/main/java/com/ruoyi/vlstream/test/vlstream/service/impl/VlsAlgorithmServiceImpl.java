@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 算法表 服务实现类
+ * algorithm service
  *
  * @author Oort
  * @since 2025-12-23
@@ -78,7 +79,7 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 	public boolean createAlgorithm(Algorithm algorithm) {
 		log.info("创建算法：{}", algorithm.getName());
 
-		// 检查同一仓库下名称是否重复
+		// whether
 		QueryWrapper<Algorithm> queryWrapper = new QueryWrapper<>();
 		queryWrapper.eq("repository_id", algorithm.getRepositoryId()).eq("name", algorithm.getName()).eq("is_deleted", 0);
 		if (count(queryWrapper) > 0) {
@@ -86,13 +87,13 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 			return false;
 		}
 
-		// 设置默认值
+		// Set value
 		if (algorithm.getGpuRequired() == null) {
 			algorithm.setGpuRequired(0);
 		}
 		boolean result = save(algorithm);
 
-		// 更新仓库的算法数量
+		// new algorithm
 		if (result) {
 			algorithmRepositoryService.updateAlgorithmCount(algorithm.getRepositoryId());
 		}
@@ -105,19 +106,19 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 	public boolean updateAlgorithm(Algorithm algorithm) {
 		log.info("更新算法：ID={}, Name={}", algorithm.getId(), algorithm.getName());
 
-		// 获取原算法信息
+		// Get algorithminfo
 		Algorithm existing = getById(algorithm.getId());
 		if (existing == null) {
 			log.warn("算法不存在：ID={}", algorithm.getId());
 			return false;
 		}
 
-		// 如果仓库发生变化，需要更新两个仓库的算法数量
+		// if , need to new algorithm
 		Long oldRepositoryId = existing.getRepositoryId();
 		Long newRepositoryId = algorithm.getRepositoryId();
 		boolean result = updateById(algorithm);
 
-		// 更新算法数量
+		// new algorithm
 		if (result && !oldRepositoryId.equals(newRepositoryId)) {
 			algorithmRepositoryService.updateAlgorithmCount(oldRepositoryId);
 			algorithmRepositoryService.updateAlgorithmCount(newRepositoryId);
@@ -139,7 +140,7 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 
 		boolean result = removeById(id);
 
-		// 更新仓库的算法数量
+		// new algorithm
 		if (result) {
 			algorithmRepositoryService.updateAlgorithmCount(algorithm.getRepositoryId());
 		}
@@ -152,14 +153,14 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 	public boolean batchDeleteAlgorithms(List<Long> ids) {
 		log.info("批量删除算法：IDs={}", ids);
 
-		// 获取待删除算法的仓库信息
+		// Get Delete algorithm info
 		List<Algorithm> algorithms = listByIds(ids);
 		Map<Long, Boolean> repositoryMap = new HashMap<>();
 		algorithms.forEach(algo -> repositoryMap.put(algo.getRepositoryId(), true));
 
 		boolean result = removeByIds(ids);
 
-		// 更新相关仓库的算法数量
+		// new related algorithm
 		if (result) {
 			repositoryMap.keySet().forEach(algorithmRepositoryService::updateAlgorithmCount);
 		}
@@ -174,7 +175,7 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 		UpdateWrapper<Algorithm> updateWrapper = new UpdateWrapper<>();
 		updateWrapper.eq("id", id).set("deploy_status", deployStatus);
 
-		// 如果是部署成功，增加部署次数和更新部署时间
+		// if is successfully, and new
 		if ("deployed".equals(deployStatus)) {
 			updateWrapper.setSql("deploy_count = deploy_count + 1").set("last_deploy_time", LocalDateTime.now());
 		}
@@ -189,7 +190,7 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 		UpdateWrapper<Algorithm> updateWrapper = new UpdateWrapper<>();
 		updateWrapper.in("id", ids).set("deploy_status", deployStatus);
 
-		// 如果是部署成功，增加部署次数和更新部署时间
+		// if is successfully, and new
 		if ("deployed".equals(deployStatus)) {
 			updateWrapper.setSql("deploy_count = deploy_count + 1").set("last_deploy_time", LocalDateTime.now());
 		}
@@ -202,15 +203,15 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 	public boolean deployAlgorithmToDevices(Long algorithmId, List<Long> deviceIds) {
 		log.info("部署算法到设备：AlgorithmId={}, DeviceIds={}", algorithmId, deviceIds);
 
-		// 更新算法部署状态为部署中
+		// new algorithm to in
 		updateDeployStatus(algorithmId, "deploying");
 
 		try {
-			// 这里应该调用实际的部署服务
-			// 模拟部署过程
+			// service
+			//
 			Thread.sleep(1000);
 
-			// 部署成功，更新状态
+			// successfully, new
 			updateDeployStatus(algorithmId, "deployed");
 
 			log.info("算法部署成功：AlgorithmId={}", algorithmId);
@@ -219,7 +220,7 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 		} catch (Exception e) {
 			log.error("算法部署失败：AlgorithmId={}", algorithmId, e);
 
-			// 部署失败，更新状态
+			// failed, new
 			updateDeployStatus(algorithmId, "failed");
 			return false;
 		}
@@ -259,7 +260,7 @@ public class VlsAlgorithmServiceImpl extends BaseServiceImpl<VlsAlgorithmMapper,
 			return null;
 		}
 
-		// 模拟算法评估过程
+		// algorithm
 		Map<String, Object> result = new HashMap<>();
 		result.put("algorithmId", algorithmId);
 		result.put("algorithmName", algorithm.getName());

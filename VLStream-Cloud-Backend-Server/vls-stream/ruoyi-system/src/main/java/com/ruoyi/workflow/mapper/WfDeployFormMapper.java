@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,7 +11,7 @@ import com.ruoyi.workflow.domain.WfDeployForm;
 import com.ruoyi.workflow.domain.vo.WfDeployFormVo;
 
 /**
- * 流程实例关联表单Mapper接口
+ * workflow instance formMapperinterface
  *
  * @author KonBAI
  * @createTime 2022/3/7 22:07

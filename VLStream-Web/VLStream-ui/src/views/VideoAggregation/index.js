@@ -1,4 +1,9 @@
-// 视频汇聚模块统一导出
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// Export
 export { default as VideoSquare } from './VideoSquareRefactored.vue'
 export { default as DeviceManagement } from './DeviceManagement.vue'
 export { default as VideoPlayback } from './VideoPlayback.vue'

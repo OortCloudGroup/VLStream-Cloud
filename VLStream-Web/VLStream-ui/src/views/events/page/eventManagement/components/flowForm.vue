@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="eventItem">
     <el-form
@@ -43,20 +48,20 @@ let form = reactive({
 const formRef_1 = ref<any>(null)
 const appObj = ref<any>(null)
 
-// 表单验证规则
+// form
 const formRules = ref({
   processKey: [
     { required: true, message: '请选择工单', trigger: 'blur' }
   ]
 })
 
-// 选择工单
+// work order
 const workConfirm = (val) => {
   const target = options.value.find(item => item.value === val)
   if (target) selectedOptions.value = target
 }
 
-// 工单-列表（流程管理-事件管理）
+// work order- (workflow -event )
 const workListFn = async() => {
   try {
     appObj.value = await resolveWorkOrderAppContext()
@@ -73,17 +78,17 @@ const workListFn = async() => {
         label: item.modelName,
         value: item.modelKey
       }))
-      event_item_listFn() // 事件类型
+      event_item_listFn() // event
     } else {
       options.value = []
     }
   } catch (error) {
-    // 获取工单列表失败，使用空数组
+    // Get work order failed, null / empty array
     options.value = []
   }
 }
 
-// 选择的工单跟历史工单不一致的时候提示，同时发起新的工单，关闭旧的工单
+// work order history work order prompt / tip, new work order, old work order
 const closeWorkorderFn = async() => {
   let data = {
     procInsId: form.work_order_data?.procInsId,
@@ -95,16 +100,16 @@ const closeWorkorderFn = async() => {
   }
 }
 
-// 发起工单成功
+// work ordersuccessfully
 async function addWorkorderFn() {
-  // 1️⃣ 已存在工单逻辑
+  // 1️⃣ already in work order
   if (form.processKey && form.work_order_data) {
     const oldOrder = form.work_order_data
-    // 同一工单，直接返回
+    // work order,
     if (oldOrder.processKey === form.processKey) {
       return oldOrder
     }
-    // 不同工单，且旧工单未结束 → 提示是否关闭
+    // work order, old work order not finish → prompt / tipwhether
     if (oldOrder.processStatus !== 'canceled' && !oldOrder.finishTime) {
       try {
         await ElMessageBox.confirm(
@@ -118,15 +123,15 @@ async function addWorkorderFn() {
         )
         await closeWorkorderFn()
       } catch {
-        // 用户取消
+        // user
         return
       }
     }
   }
-  // 2️⃣ 表单校验
+  // 2️⃣ formValidate
   const valid = await formRef_1.value?.validate()
   if (!valid) return
-  // 3️⃣ 参数构建
+  // 3️⃣ parameterBuild
   const processDefId = selectedOptions.value?.definitionId
   if (!form.processKey && !processDefId) {
     ElMessage.warning('请选择工单')
@@ -142,28 +147,28 @@ async function addWorkorderFn() {
       workorderId: appObj.value?.appId,
       workorderIdExtend: `1,${appObj.value?.appId}`
     },
-    frontFlag: true, // 发起工单的时候传frontFlag参数为true跟表单参数同级
-    /* autoGetFormFlag这个参数为true表示自动查找表单值对应项，跟表单参数同级*/
-    /* 比如自定义名称这里是abc，你传variables给我就是{abc:"事件类型值"} */
+    frontFlag: true, // work order frontFlagparameter to true formparameter
+    /* autoGetFormFlag parameter to true find form value item , formparameter */
+    /* Custom is abc, variables then is {abc:"event value "} */
     autoGetFormFlag: true,
     variables: {
-      no: props.listObj?.id || undefined, // 编号
-      item: props.listObj?.item || undefined, // 类型
-      name: props.listObj?.name || undefined, // 名称
-      time: props.listObj?.created_at || undefined, // 时间
-      address: props.listObj?.point?.address || undefined, // 地址
-      describe: props.listObj?.describe || undefined, // 描述
-      image: props.listObj?.pics || undefined//  图片
+      no: props.listObj?.id || undefined, //
+      item: props.listObj?.item || undefined, //
+      name: props.listObj?.name || undefined, //
+      time: props.listObj?.created_at || undefined, //
+      address: props.listObj?.point?.address || undefined, //
+      describe: props.listObj?.describe || undefined, //
+      image: props.listObj?.pics || undefined//
     }
   }
-  // 4️⃣ 发起流程
+  // 4️⃣ workflow
   const res: any = await startProcess(data)
   const workOrder = res?.data?.workOrder
   form.work_order_data = workOrder
   return workOrder
 }
 
-// 事件类型-自动转工单默认选中
+// event - work order in
 const event_item_listFn = async() => {
   let data = {
     accessToken: store.userInfo?.accessToken
@@ -175,13 +180,13 @@ const event_item_listFn = async() => {
     let tt = list.find(v => v.item === targetText)
     if (targetText && list && !form.processKey) {
       form.processKey = tt?.config?.process_id?.split(':')?.[0]
-      workConfirm(form.processKey) // 选择工单
+      workConfirm(form.processKey) // work order
     }
   }
 }
 
 onMounted(() => {
-  workListFn() // 流程管理-事件管理
+  workListFn() // workflow -event
 })
 
 defineExpose({ form, vmFormRef, addWorkorderFn, closeWorkorderFn })

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -31,7 +32,7 @@
 //import java.util.regex.Pattern;
 //
 //**
-// * 用户同步定时任务
+// * user task
 // */
 //@Component
 //@Transactional(rollbackFor = Exception.class)
@@ -50,39 +51,39 @@
 //
 //   // @Scheduled(cron = "0 */2 * * * ?")
 //    public void syncDeptData() {
-//        System.out.println("开始用户数据同步：" + new Date());
-//        System.out.println("用户数据同步接口为：" + userSynUrl);
+// System.out.println("startuserdata : " + new Date());
+// System.out.println("userdata interface to : " + userSynUrl);
 //
-//        // 准备请求参数，这里你可能需要根据具体情况设置请求参数
+// // parameter, can need to Set parameter
 //        JSONObject requestBody = new JSONObject();
 //        requestBody.put("oort_dcode", null);
 //        requestBody.put("oort_udid", null);
 //        requestBody.put("page", 1);
 //        requestBody.put("pagesize", Integer.MAX_VALUE);
-//        // 查询当前数据库最后一次更新的时间
+// // Query current data after new
 //        Date latestUpdateTime = sysUserMapper.selectLatestUpdateTime();
 //
 //        if (latestUpdateTime != null) {
-//            requestBody.put("startDate", latestUpdateTime.getTime()+1000); // 将日期时间转换为时间戳并放入请求体
+// requestBody.put("startDate", latestUpdateTime.getTime()+1000); // Convert to
 //        } else {
-//            requestBody.put("startDate", null); // 如果latestUpdateTime为null，直接放入null
+// requestBody.put("startDate", null); // if latestUpdateTime to null, null
 //        }
 //        if(latestUpdateTime == null) {
-//            System.out.println("查询用户全量数据");
+// System.out.println("Query user full data");
 //        } else {
-//            System.out.println("查询用户"+ sdf.format(new Date(latestUpdateTime.getTime()+1000)) + "后的增量数据");
+// System.out.println("Query user"+ sdf.format(new Date(latestUpdateTime.getTime()+1000)) + " after data");
 //        }
 //        requestBody.put("tag", null);
 //
-//        // 发送 POST 请求并获取响应数据
+// // POST Get data
 //        JSONArray departmentList = fetchDataFromSyncAPI(requestBody);
 //
-//        // 处理响应数据
+// // Process data
 //        if (CollectionUtils.isNotEmpty(departmentList)) {
 //            List<SysUser> sysUserList = new ArrayList<>();
 //            for (Object obj : departmentList) {
 //                JSONObject deptJson = (JSONObject) obj;
-//                SysUser sysUser = parseUserJson(deptJson); // 解析 JSON 数据为 SysDept 对象
+// SysUser sysUser = parseUserJson(deptJson); // Parse JSON data to SysDept object
 //                if (sysUser != null) {
 //                    sysUserList.add(sysUser);
 //                }
@@ -90,8 +91,8 @@
 //                    System.out.println("sysUser = " + sysUser);
 //                }
 //            }
-//            sysUserMapper.insertOrUpdateBatch(sysUserList); // 批量插入用户数据
-//            // 为用户添加角色
+// sysUserMapper.insertOrUpdateBatch(sysUserList); // userdata
+// // to user role
 //            for (SysUser sysUser : sysUserList) {
 //                String userId = sysUser.getUserId();
 //                Long[] roleIds = {UserConstants.COMMON_ID};
@@ -105,23 +106,23 @@
 //                }
 //
 //            }
-//            System.out.println("用户数据同步成功，共同步用户数量：" + sysUserList.size());
+// System.out.println("userdata successfully, user : " + sysUserList.size());
 //        } else {
-//            System.out.println("用户数据同步成功：共同步用户数量：0");
+// System.out.println("userdata successfully: user : 0");
 //        }
 //
-//        System.out.println("结束用户数据同步：" + sdf.format(new Date()));
+// System.out.println("finishuserdata : " + sdf.format(new Date()));
 //    }
 //
 //    private JSONArray fetchDataFromSyncAPI(JSONObject requestBody) {
-//        // 发送 POST 请求
+// // POST
 //        HttpResponse response = HttpRequest.post(userSynUrl)
 //            .header("accept", "application/json")
 //            .header("Content-Type", "application/json")
 //            .body(requestBody.toString())
 //            .execute();
 //
-//        // 处理响应
+// // Process
 //        String responseBody = response.body();
 //        JSONObject jsonObject = new JSONObject(responseBody);
 //        JSONObject data = jsonObject.getJSONObject("data");
@@ -133,21 +134,21 @@
 //    private SysUser parseUserJson(JSONObject deptJson) {
 //        SysUser sysUser = new SysUser();
 //        sysUser.setOortUuid(deptJson.getStr("oort_uuid")); // uuid
-//        sysUser.setSex(String.valueOf(deptJson.getInt("oort_sex"))); // 性别
-//        sysUser.setPhonenumber(deptJson.getStr("oort_phone")); // 手机号
-//        sysUser.setNickName(deptJson.getStr("oort_name")); // 部门名称
-//        sysUser.setUserName(deptJson.getStr("oort_loginid")); // 部门名称
-//        sysUser.setIdcard(deptJson.getStr("oort_idcard")); // 身份证
+// sysUser.setSex(String.valueOf(deptJson.getInt("oort_sex"))); //
+// sysUser.setPhonenumber(deptJson.getStr("oort_phone")); //
+// sysUser.setNickName(deptJson.getStr("oort_name")); // department name
+// sysUser.setUserName(deptJson.getStr("oort_loginid")); // department name
+// sysUser.setIdcard(deptJson.getStr("oort_idcard")); //
 //        Date updateDate = new Date(deptJson.getLong("oort_tupdate"));
-//        sysUser.setUpdateTime(updateDate); // 修改时间
+// sysUser.setUpdateTime(updateDate); // Update
 //        Date createDate = new Date(deptJson.getLong("oort_tcreate"));
-//        sysUser.setCreateTime(createDate); // 创建时间
+// sysUser.setCreateTime(createDate); // create time
 //        sysUser.setDelFlag(deptJson.getInt("oort_tdelete") == 0 ? "0" : "2");
-//        sysUser.setStatus("0".equals(deptJson.getStr("oort_status")) ? "1" : "0" ); // 状态
-//        sysUser.setOortIspart(deptJson.getStr("oort_ispart")); // 1:兼职 0:正职
-//        sysUser.setOortJobname(deptJson.getStr("oort_jobname")); // 状态
+// sysUser.setStatus("0".equals(deptJson.getStr("oort_status")) ? "1" : "0" ); //
+// sysUser.setOortIspart(deptJson.getStr("oort_ispart")); // 1: 0:
+// sysUser.setOortJobname(deptJson.getStr("oort_jobname")); //
 //        sysUser.setPassword("$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2");
-//        sysUser.setDeptInfo(deptJson.getStr("deptinfo")); // 状态
+// sysUser.setDeptInfo(deptJson.getStr("deptinfo")); //
 //        JSONArray deptinfo = deptJson.getJSONArray("deptinfo");
 //        for (Object o : deptinfo) {
 //            JSONObject dept = (JSONObject) o;
@@ -158,7 +159,7 @@
 //                queryWrapper.eq("oort_udid", oortUdid);
 //                SysDept sysDept = sysDeptMapper.selectOne(queryWrapper);
 //                if(sysDept == null) {
-//                    throw new RuntimeException("部门数据未同步，请等待部门数据同步");
+// throw new RuntimeException("departmentdata not , etc. departmentdata ");
 //                }
 //                sysUser.setDeptId(sysDept.getDeptId());
 //            }
@@ -168,19 +169,19 @@
 //    }
 //
 //    /**
-//     * 是否是uuid
+// * whether is uuid
 //     * @param str
 //     * @return
 //     */
 //    public static boolean isUUID(String str) {
-//        // 使用正则表达式匹配 UUID 格式
+// // UUID
 //        Pattern pattern = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
-//        Matcher matcher = pattern.matcher(str.toLowerCase()); // 考虑到 UUID 可能包含大写字母，转换为小写进行匹配
+// Matcher matcher = pattern.matcher(str.toLowerCase()); // UUID can , Convert to
 //        return matcher.matches();
 //    }
 //
 //    /**
-//     * 是否是纯数字
+// * whether is
 //     * @param str
 //     * @return
 //     */

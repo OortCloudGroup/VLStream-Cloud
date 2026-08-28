@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="algorithm-training-platform">
-    <!-- 页面头部 -->
+    <!-- page -->
     <div class="page-header">
       <div class="header-left">
         <h1>算法训练平台</h1>
@@ -14,7 +19,7 @@
       </div>
     </div>
 
-    <!-- 统计卡片 -->
+    <!--  -->
     <div class="stats-overview">
       <div class="stat-card">
         <div class="stat-icon training">
@@ -54,12 +59,12 @@
       </div>
     </div>
 
-    <!-- 标签页 -->
+    <!--  -->
     <el-tabs v-model="activeTab" class="tenanat-tabs" @tab-click="handleTabClick">
-      <!-- 训练任务 -->
+      <!-- trainingtask -->
       <el-tab-pane label="训练任务" name="training">
         <div class="training-section">
-          <!-- 搜索筛选 -->
+          <!--  -->
           <div class="filter-bar">
             <el-input
               v-model="trainingSearch"
@@ -71,7 +76,7 @@
                 <el-icon><Search /></el-icon>
               </template>
             </el-input>
-            
+
             <el-select v-model="trainingStatusFilter" placeholder="状态" style="width: 150px" clearable>
               <el-option label="全部" value="" />
               <el-option label="训练中" value="training" />
@@ -79,7 +84,7 @@
               <el-option label="等待中" value="pending" />
               <el-option label="失败" value="failed" />
             </el-select>
-            
+
             <el-select v-model="algorithmTypeFilter" placeholder="算法类型" style="width: 180px" clearable>
               <el-option label="全部" value="" />
               <el-option label="人脸识别" value="人脸识别" />
@@ -89,10 +94,10 @@
             </el-select>
           </div>
 
-          <!-- 训练任务列表 -->
+          <!-- trainingtask -->
           <div class="training-cards">
-            <div 
-              v-for="task in filteredTrainingTasks" 
+            <div
+              v-for="task in filteredTrainingTasks"
               :key="task.id"
               class="training-card"
             >
@@ -125,7 +130,7 @@
                   </el-dropdown>
                 </div>
               </div>
-              
+
               <div class="card-content">
                 <div class="task-details">
                   <div class="detail-item">
@@ -152,7 +157,7 @@
                     <span class="accuracy">{{ task.accuracy }}%</span>
                   </div>
                 </div>
-                
+
                 <div v-if="task.status === 'training'" class="training-metrics">
                   <div class="metric-item">
                     <span class="metric-label">预计剩余时间</span>
@@ -168,11 +173,11 @@
           </div>
         </div>
       </el-tab-pane>
-      
-      <!-- 模型仓库 -->
+
+      <!-- model -->
       <el-tab-pane label="模型仓库" name="models">
         <div class="models-section">
-          <!-- 搜索筛选 -->
+          <!--  -->
           <div class="filter-bar">
             <el-input
               v-model="modelSearch"
@@ -184,7 +189,7 @@
                 <el-icon><Search /></el-icon>
               </template>
             </el-input>
-            
+
             <el-select v-model="modelStatusFilter" placeholder="状态" style="width: 150px" clearable>
               <el-option label="全部" value="" />
               <el-option label="已发布" value="published" />
@@ -193,7 +198,7 @@
             </el-select>
           </div>
 
-          <!-- 模型列表 -->
+          <!-- model -->
           <div class="model-table">
             <el-table :data="filteredModels" style="width: 100%">
               <el-table-column prop="name" label="模型名称" width="200" />
@@ -234,8 +239,8 @@
           </div>
         </div>
       </el-tab-pane>
-      
-      <!-- 数据标注 -->
+
+      <!-- dataannotation -->
       <el-tab-pane label="数据标注" name="annotation">
         <div class="annotation-section">
           <div class="coming-soon">
@@ -247,7 +252,7 @@
       </el-tab-pane>
     </el-tabs>
 
-    <!-- 新建训练任务对话框 -->
+    <!-- new trainingtask -->
     <el-dialog
       v-model="showCreateTrainingDialog"
       title="新建训练任务"
@@ -258,7 +263,7 @@
         <el-form-item label="任务名称" prop="name">
           <el-input v-model="trainingForm.name" placeholder="请输入训练任务名称" />
         </el-form-item>
-        
+
         <el-form-item label="算法类型" prop="algorithmType">
           <el-select v-model="trainingForm.algorithmType" placeholder="请选择算法类型" style="width: 100%">
             <el-option label="人脸识别" value="人脸识别" />
@@ -267,7 +272,7 @@
             <el-option label="物体检测" value="物体检测" />
           </el-select>
         </el-form-item>
-        
+
         <el-form-item label="训练数据集" prop="datasetId">
           <el-select v-model="trainingForm.datasetId" placeholder="请选择训练数据集" style="width: 100%">
             <el-option label="人脸数据集v1.0 (50000张图片)" value="dataset1" />
@@ -275,19 +280,19 @@
             <el-option label="行为数据集v1.5 (80000个视频片段)" value="dataset3" />
           </el-select>
         </el-form-item>
-        
+
         <el-form-item label="训练轮次" prop="epochs">
           <el-input-number v-model="trainingForm.epochs" :min="1" :max="1000" style="width: 100%" />
         </el-form-item>
-        
+
         <el-form-item label="学习率" prop="learningRate">
           <el-input-number v-model="trainingForm.learningRate" :min="0.0001" :max="1" :step="0.0001" :precision="4" style="width: 100%" />
         </el-form-item>
-        
+
         <el-form-item label="批处理大小" prop="batchSize">
           <el-input-number v-model="trainingForm.batchSize" :min="1" :max="128" style="width: 100%" />
         </el-form-item>
-        
+
         <el-form-item label="训练描述">
           <el-input
             v-model="trainingForm.description"
@@ -297,7 +302,7 @@
           />
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <el-button @click="showCreateTrainingDialog = false" class="common_btn">取消</el-button>
         <el-button type="primary" @click="createTrainingTask" class="common_btn">开始训练</el-button>
@@ -309,14 +314,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  Plus, Search, MoreFilled, View, VideoPause, Upload, Delete, 
-  Loading, Check, Clock, Box, Tools 
+import {
+  Plus, Search, MoreFilled, View, VideoPause, Upload, Delete,
+  Loading, Check, Clock, Box, Tools
 } from '@element-plus/icons-vue'
 import { getTrainingPage, stopTraining as stopTrainingApi, delTrainingTask } from '@/api/algorithmTraining'
 import { getModelPage, deleteModel as deleteModelApi } from '@/api/algorithmModel'
 
-// 响应式数据
+// data
 const activeTab = ref('training')
 const trainingSearch = ref('')
 const trainingStatusFilter = ref('')
@@ -324,10 +329,10 @@ const algorithmTypeFilter = ref('')
 const modelSearch = ref('')
 const modelStatusFilter = ref('')
 
-// 对话框控制
+// control
 const showCreateTrainingDialog = ref(false)
 
-// 统计数据
+// data
 const trainingStats = ref({
   running: 0,
   completed: 0,
@@ -335,13 +340,13 @@ const trainingStats = ref({
   models: 0
 })
 
-// 训练任务数据
+// trainingtaskdata
 const trainingTasks = ref([])
 
-// 模型数据
+// modeldata
 const models = ref([])
 
-// 训练表单
+// trainingform
 const trainingForm = ref({
   name: '',
   algorithmType: '',
@@ -352,7 +357,7 @@ const trainingForm = ref({
   description: ''
 })
 
-// 表单验证规则
+// form
 const trainingRules = {
   name: [{ required: true, message: '请输入任务名称', trigger: 'blur' }],
   algorithmType: [{ required: true, message: '请选择算法类型', trigger: 'change' }],
@@ -362,44 +367,44 @@ const trainingRules = {
   batchSize: [{ required: true, message: '请输入批处理大小', trigger: 'blur' }]
 }
 
-// 计算属性
+// property
 const filteredTrainingTasks = computed(() => {
   let result = trainingTasks.value
-  
+
   if (trainingSearch.value) {
-    result = result.filter(task => 
+    result = result.filter(task =>
       task.name.toLowerCase().includes(trainingSearch.value.toLowerCase())
     )
   }
-  
+
   if (trainingStatusFilter.value) {
     result = result.filter(task => task.status === trainingStatusFilter.value)
   }
-  
+
   if (algorithmTypeFilter.value) {
     result = result.filter(task => task.algorithmType === algorithmTypeFilter.value)
   }
-  
+
   return result
 })
 
 const filteredModels = computed(() => {
   let result = models.value
-  
+
   if (modelSearch.value) {
-    result = result.filter(model => 
+    result = result.filter(model =>
       model.name.toLowerCase().includes(modelSearch.value.toLowerCase())
     )
   }
-  
+
   if (modelStatusFilter.value) {
     result = result.filter(model => model.status === modelStatusFilter.value)
   }
-  
+
   return result
 })
 
-// 方法
+// method
 const getTaskStatusType = (status) => {
   const typeMap = {
     'training': 'primary',
@@ -785,4 +790,4 @@ onMounted(() => {
 .coming-soon p {
   margin: 0;
 }
-</style> 
+</style>

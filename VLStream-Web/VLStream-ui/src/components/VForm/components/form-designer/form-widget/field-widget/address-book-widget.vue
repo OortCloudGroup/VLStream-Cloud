@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2024-12-05 10:27:37
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -40,7 +45,7 @@ export default {
   components: {
     FormItemWrapper,
     ChoosePersonOrDept
-  }, // 必须固定为FieldWidget，用于接收父级组件的broadcast事件
+  }, // to FieldWidget, component broadcastevent
   mixins: [emitter, fieldMixin],
   props: {
     field: Object,
@@ -69,17 +74,17 @@ export default {
   },
   data() {
     return {
-      oldFieldValue: null, // field组件change之前的值
+      oldFieldValue: null, // fieldcomponentchange before value
       fieldModel: '',
       rules: []
     }
   },
   beforeCreate() {
-    /* 这里不能访问方法和属性！！ */
+    /* can method and property! ! */
   },
 
   created() {
-    /* 注意：子组件mounted在父组件created之后、父组件mounted之前触发，故子组件mounted需要用到的prop
+    /* : sub componentmounted in componentcreated after、 componentmounted before , sub componentmounted need to prop
          需要在父组件created中初始化！！ */
     this.initFieldModel()
     this.registerToRefList()
@@ -101,8 +106,8 @@ export default {
 
   methods: {
     initDefaultValue() {
-      // 判断默认值类型，如果是固定值，就将固定值赋值给fieldModel
-      // TODO 这里的其他值要看下表单怎么去获取，不建议直接使用this.$store，这样表单就有状态了
+      // Check value , if is value , then value value fieldModel
+      // TODO value need to form Get , this.$store, form then
       switch (this.field.options.addressSetting.defaultValueType) {
         case 1:
           this.fieldModel = ''
@@ -112,13 +117,13 @@ export default {
           break
         case 3: // 提交人
           break
-        case 4: // 提交部门
+        case 4: // Submit Department
           break
         case 5: // 创建人
           break
-        case 6: // 创建人部门
+        case 6: // Created by Department
           break
-        case 7: // 拥有者
+        case 7: // Owner
           break
         default:
           break

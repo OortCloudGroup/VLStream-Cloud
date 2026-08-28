@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -23,47 +24,47 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = true)
 public class ProcessStartBo extends BaseEntity {
     /**
-     * 流程定义id
+     * workflow definitionid
      */
     @NotBlank(message = "流程定义id不能为null", groups = {AddGroup.class, EditGroup.class})
     private String processDefId;
     /**
-     * 流程变量
+     * workflow variable
      */
     private Map<String, Object> variables;
     /**
-     * 工单对象
+     * work orderobject
      */
     private WorkOrderBo workOrderBo;
     /**
-     * 循环定时信息参数
+     * loop infoparameter
      */
     private Job job;
     /**
-     * 自动获取表单项标识
+     * Get form item
      */
     private boolean autoGetFormFlag;
     /**
-     * 摄像机服务传入的应用id
+     * service id
      */
     private String appId;
     /**
-     * 摄像机服务事件名称
+     * serviceevent
      */
     private String eventName;
     /**
-     * 工单对象
+     * work orderobject
      */
     private WorkOrder workOrder;
 
     /**
-     * 事件管理前后端调用
+     * event before after
      * @return
      */
     private boolean frontFlag;
 
 
-    // 添加 getter 方法确保不会返回 null
+    // getter method will null
     public Map<String, Object> getVariables() {
         if (variables == null) {
             variables = new HashMap<>();
@@ -71,7 +72,7 @@ public class ProcessStartBo extends BaseEntity {
         return variables;
     }
 
-    // 添加 setter 方法
+    // setter method
     public void setVariables(Map<String, Object> variables) {
         this.variables = variables;
     }

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <form-item-wrapper
     :designer="designer"
@@ -33,7 +38,7 @@ export default {
   components: {
     ElText,
     FormItemWrapper
-  }, // 必须固定为FieldWidget，用于接收父级组件的broadcast事件
+  }, // to FieldWidget, component broadcastevent
   mixins: [emitter, fieldMixin, i18n],
   props: {
     field: Object,
@@ -63,7 +68,7 @@ export default {
   },
   data() {
     return {
-      oldFieldValue: null, // field组件change之前的值
+      oldFieldValue: null, // fieldcomponentchange before value
       fieldModel: null,
       rules: []
     }
@@ -80,7 +85,7 @@ export default {
       let tempStr = ''
       tempArr.forEach(item => {
         if (item.type === 1) {
-          // TODO 接口获取当前值
+          // TODO interfaceGet current value
           tempStr += item.initNumber + ''
         }
         if (item.type === 2) {
@@ -90,7 +95,7 @@ export default {
           tempStr += item.content
         }
         if (item.type === 4) {
-          // TODO  从表单字段中获取值id的value
+          // TODO from formfield in Get value id value
           let val = this.findFormFieldIndex(item.formFiled)
           tempStr += val
         }
@@ -99,11 +104,11 @@ export default {
     }
   },
   beforeCreate() {
-    /* 这里不能访问方法和属性！！ */
+    /* can method and property! ! */
   },
 
   created() {
-    /* 注意：子组件mounted在父组件created之后、父组件mounted之前触发，故子组件mounted需要用到的prop
+    /* : sub componentmounted in componentcreated after、 componentmounted before , sub componentmounted need to prop
          需要在父组件created中初始化！！ */
     this.initFieldModel()
     this.registerToRefList()

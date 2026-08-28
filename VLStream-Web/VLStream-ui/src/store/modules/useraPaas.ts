@@ -1,12 +1,8 @@
 /*
-* @Created by: 兰舰
-* Email: gglanjian@qq.com
-* Phone: 16620805419
-* @Date: 2024-11-15 11:03:58
- * @Last Modified by: 兰舰
- * @Last Modified time: 2024-11-20 15:01:399
-* @Copyright aPaaS-front-team. All rights reserved.
-*/
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { ref } from 'vue'
 import store from '@/store/index'
 import { defineStore } from 'pinia'
@@ -35,18 +31,18 @@ export const useUserStore = defineStore('user', () => {
     data.oort_isadmin = data.isAdmin || data.is_admin
     userInfo.value = { ...userInfo.value, ...data }
   }
-  // 选人员
+  //
   const userListStore = ref<any>({})
   const addUser = (info) => {
-    // 检测是否以及存在
+    // whether in
     userListStore.value[info.user_id] = info
   }
   const tenantId = ref<string>(window.sessionStorage.getItem('tenantId') || '')
 
-  /* 临时登录*/
+  /*  */
   // const getLogin = (loginData) => {
   //   return new Promise((resolve, reject) => {
-  //     // 使用 公钥加密
+  // //
   //     const publicKey =
   //       'MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAzd2eYqgC6A3CvQN982C7s3xo2zjL97b0lHkfcAFEy50YHg+g5QD6RbvZt0NTQVOoC5Vv867lp0UBrwAslNCjt92QyxKkGLU+10UClkCJsiHpxy/J7AOOpS0wMGao80uWN94EZEsP/FKFfGNz3lJcZRtg4TGCMgXQGlKxBcYJDor/zK/06asTBGp4IxvTDAKTuMP+u88y5nQTUpKPnPstwmiLfqZLOSE3y4kIA7VC98GxPY8SqLZ7b9HzLSNoZNXKvA9US7A2F8/A97b8tExXsGPOodMQzrLFVr840ZV2WgpxJHqobqYReGhGMN4JdjfGlUvHyhYaCyOcSWalWuLh18cDQkum8yUrw5Tki8r8VPDTEZhsOXcq46cMr4437HGYeDA2ib7TOArFq1d0DD9Z0DAsjNfhgqqIP9A9kXrs6JIRrkz82skco2WQ5NUdpLT3yaAiXTxmFaajQGVIhFG24VL8CTloRo3FZmy9vMlUseCKmhfCBFbhUG9r7HOuhkO+jY4yfItE8BIrClbkQBAzMBMTuRM84VQQ4MnYlbdT3uSt5Qw5WmGIxsAKk93o8Hyhrg/OX8FCwntw2h5AjGDGn/H5H0TDAp8vX0NJgh4xhOpNT8pshuX7W1vcqr42sqOjM/mbRPV3s+tT4ynY0xQLuqp0P7GW3fu0fT0/OeHPwcsCAwEAAQ=='
   //     const encrypt = new JSEncrypt()
@@ -73,10 +69,10 @@ export const useUserStore = defineStore('user', () => {
   //   })
   // }
 
-  /* 临时登录2 - 支持多种登录方式 */
+  /* 2 - */
   const getLoginV2 = (loginData) => {
     return new Promise((resolve, reject) => {
-      // 使用公钥加密
+      //
       const publicKey =
           'MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAzd2eYqgC6A3CvQN982C7s3xo2zjL97b0lHkfcAFEy50YHg+g5QD6RbvZt0NTQVOoC5Vv867lp0UBrwAslNCjt92QyxKkGLU+10UClkCJsiHpxy/J7AOOpS0wMGao80uWN94EZEsP/FKFfGNz3lJcZRtg4TGCMgXQGlKxBcYJDor/zK/06asTBGp4IxvTDAKTuMP+u88y5nQTUpKPnPstwmiLfqZLOSE3y4kIA7VC98GxPY8SqLZ7b9HzLSNoZNXKvA9US7A2F8/A97b8tExXsGPOodMQzrLFVr840ZV2WgpxJHqobqYReGhGMN4JdjfGlUvHyhYaCyOcSWalWuLh18cDQkum8yUrw5Tki8r8VPDTEZhsOXcq46cMr4437HGYeDA2ib7TOArFq1d0DD9Z0DAsjNfhgqqIP9A9kXrs6JIRrkz82skco2WQ5NUdpLT3yaAiXTxmFaajQGVIhFG24VL8CTloRo3FZmy9vMlUseCKmhfCBFbhUG9r7HOuhkO+jY4yfItE8BIrClbkQBAzMBMTuRM84VQQ4MnYlbdT3uSt5Qw5WmGIxsAKk93o8Hyhrg/OX8FCwntw2h5AjGDGn/H5H0TDAp8vX0NJgh4xhOpNT8pshuX7W1vcqr42sqOjM/mbRPV3s+tT4ynY0xQLuqp0P7GW3fu0fT0/OeHPwcsCAwEAAQ=='
       const encrypt = new JSEncrypt()
@@ -126,10 +122,10 @@ export const useUserStore = defineStore('user', () => {
     })
   }
 
-  /* 临时登录3 - 双因子登录 */
+  /* 3 - sub */
   const getFastLogin = (loginData) => {
     return new Promise((resolve, reject) => {
-      // 使用公钥加密
+      //
       const publicKey =
           'MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAzd2eYqgC6A3CvQN982C7s3xo2zjL97b0lHkfcAFEy50YHg+g5QD6RbvZt0NTQVOoC5Vv867lp0UBrwAslNCjt92QyxKkGLU+10UClkCJsiHpxy/J7AOOpS0wMGao80uWN94EZEsP/FKFfGNz3lJcZRtg4TGCMgXQGlKxBcYJDor/zK/06asTBGp4IxvTDAKTuMP+u88y5nQTUpKPnPstwmiLfqZLOSE3y4kIA7VC98GxPY8SqLZ7b9HzLSNoZNXKvA9US7A2F8/A97b8tExXsGPOodMQzrLFVr840ZV2WgpxJHqobqYReGhGMN4JdjfGlUvHyhYaCyOcSWalWuLh18cDQkum8yUrw5Tki8r8VPDTEZhsOXcq46cMr4437HGYeDA2ib7TOArFq1d0DD9Z0DAsjNfhgqqIP9A9kXrs6JIRrkz82skco2WQ5NUdpLT3yaAiXTxmFaajQGVIhFG24VL8CTloRo3FZmy9vMlUseCKmhfCBFbhUG9r7HOuhkO+jY4yfItE8BIrClbkQBAzMBMTuRM84VQQ4MnYlbdT3uSt5Qw5WmGIxsAKk93o8Hyhrg/OX8FCwntw2h5AjGDGn/H5H0TDAp8vX0NJgh4xhOpNT8pshuX7W1vcqr42sqOjM/mbRPV3s+tT4ynY0xQLuqp0P7GW3fu0fT0/OeHPwcsCAwEAAQ=='
       const encrypt = new JSEncrypt()
@@ -187,7 +183,7 @@ export const useUserStore = defineStore('user', () => {
     })
   }
 
-  // 本项目后端登录
+  // item after
   const login = (loginData) => {
     return new Promise((resolve, reject) => {
       loginSSO(loginData)
@@ -197,7 +193,7 @@ export const useUserStore = defineStore('user', () => {
             setTenantId(res.data.tenantId)
             token.value = res.data.accessToken
             userInfo.value = res.data
-            // 保存刷新token
+            // new token
             if (res.data.refreshToken) setRefreshToken(res.data.refreshToken)
           }
           resolve(res)
@@ -208,7 +204,7 @@ export const useUserStore = defineStore('user', () => {
     })
   }
 
-  // 切换账号
+  //
   const switchAccounts = (loginData) => {
     setToken(loginData.accessToken)
     setTenantId(loginData.tenantId)
@@ -218,7 +214,7 @@ export const useUserStore = defineStore('user', () => {
 
   const resetPS = (data) => {
     return new Promise((resolve, reject) => {
-      // 使用 公钥加密
+      //
       // const publicKey =
       //   'MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAwQ9LMVuWA26f+pc4cyiZbZRY+XzJ6B6sC9ZHRU5x3C8g5Cu1MlpZ3v8baD8r+aZOE9t5NnmSLFqcVIlO3DY+bX03188m59zZqWmLhzdKPWJ2ibH4AjCHH0OlJFUIew3qzXOdZw4nk+nBmrRV7XeU7a/K4SYI7bKQg2hn4N9giKdSztvZcjO21ZS2/JiQQfSh7vZDWMsU9RH7MGAkaSkmcOmM4TVA5ponhinnpcf2cJBs94hJgFjC3JagnzqpD8ZPpPG37Ozjz3sG1iOVtC3SSh7Ejxxm75N0wjSpcVmzIitUqOrEiVyo8XoALsGUW24oLBW+LLUGZ/TxwRgHiFSLe5gTaTM+wZNZFK31lyJiZv1HYSRMzmN5SgSp5kh/8pRW42T8mPcSx6NrvZXN3BZKdjkOJ4/eEAY8PlgwKs3vF0DQt5TPrnJIuOo5RIhtbojofe6tFCukr2Fv3k6lPFTbqWRVyK0SVYRAk+V+VLEyj5bouX1gCDvh2evP4+/4/ZGHty04gGHlWWClcjo7iUP9EeWo1IftyuD4fPtFl8sPm/By+/vz3/meavzWEjxL28kOSpTJWIVC2UeVgjMS/0e0s5DllJI3jtAG6AhQTNYrQTtJbtc7SFY6SYptZ+LLZ8kn2pAA1bZUOUCuCnDICLiglEFpPrSPQlWJyzN3WvU4bU0CAwEAAQ=='
       const publicKey =
@@ -244,7 +240,7 @@ export const useUserStore = defineStore('user', () => {
   const setTenantId = (data: string) => {
     tenantId.value = data
     window.sessionStorage.setItem('tenantId', data)
-    // 保存最近登录的租户
+    //
     window.localStorage.setItem('recentlyLoginTenantId', data)
     setHeaders()
   }
@@ -258,7 +254,7 @@ export const useUserStore = defineStore('user', () => {
       token.value = getToken()
     }
     params.accessToken = params.accessToken || token.value
-    // 后台可以判断 ，这里不需要传了
+    // after Check , need to
     // params.with_im = params.with_im || 0
     return new Promise((resolve, reject) => {
       verifyToken(params)
@@ -280,7 +276,7 @@ export const useUserStore = defineStore('user', () => {
 
   const setStoreToken = (data: string) => {
     setToken(data)
-    // 更新userInfo 里面的accessToken
+    // new userInfo accessToken
     userInfo.value = { ...userInfo.value, accessToken: data }
     token.value = data
   }
@@ -319,7 +315,7 @@ export const useUserStore = defineStore('user', () => {
     menuList.value = info
   }
 
-  // 存储urlObj过来的传参
+  // urlObj
   const urlObj = ref(null)
   const setURLObj = (data) => {
     urlObj.value = data
@@ -333,7 +329,7 @@ export const useUserStore = defineStore('user', () => {
     return localRouter.value
   }
 
-  // 保存验证token的返回数据
+  // token data
   const verifyTokenUserInfo = ref(null)
   const setVerifyTokenUserInfo = (data) => {
     data.oort_uuid = data.user_id || data.userId
@@ -342,7 +338,7 @@ export const useUserStore = defineStore('user', () => {
     setTenantId(data.tenantId)
   }
 
-  // 处理im的数据写入sesstion
+  // Process im data sesstion
   const imDataHandle = (data) => {
     const imData = data.im
     const sessitonData = {
@@ -386,7 +382,7 @@ export const useUserStore = defineStore('user', () => {
   }
 })
 
-/** 在 setup 外使用 */
+/* * in setup */
 export function useUserStoreHook() {
   return useUserStore(store)
 }

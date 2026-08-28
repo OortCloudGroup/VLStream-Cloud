@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request, { downloadWvp } from '@/utils/wvpRequest'
 
 export const listCustomDevices = params => request({ url: '/custom/device/list', method: 'get', params })

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -11,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 请求方式
+ *
  *
  * @author ruoyi
  */

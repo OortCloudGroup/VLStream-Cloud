@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,29 +17,29 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 /**
- * rsa加密方法
+ * rsa method
  *
  * @author zhonghuixiong
  */
 public class LoginRsaUtils {
 
     /**
-     * rsa加密
+     * rsa
      *
      * @param encryptString
      * @return
      */
     public static String encrypt(String encryptString) {
         try {
-            // 将 PEM 格式的公钥转换为 PublicKey 对象
+            // PEM Convert to PublicKey object
             PublicKey publicKey = getPublicKeyFromPem(PlatformConstants.PEM_PUBLIC_KEY);
 
-            // 使用 RSA/ECB/PKCS1Padding 进行加密
+            // RSA/ECB/PKCS1Padding
             Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);
             byte[] encryptedBytes = cipher.doFinal(encryptString.getBytes("UTF-8"));
 
-            // 将加密后的数据转换为 Base64 字符串
+            // after dataConvert to Base64
             String encryptedData = Base64.getEncoder().encodeToString(encryptedBytes);
             System.out.println("加密后的数据: " + encryptedData);
             return encryptedData;
@@ -48,19 +49,19 @@ public class LoginRsaUtils {
     }
 
     /**
-     * 将 PEM 格式的公钥字符串转换为 PublicKey 对象
+     * PEM Convert to PublicKey object
      *
-     * @param pemPublicKey PEM 格式的公钥字符串
-     * @return PublicKey 对象
+     * @param pemPublicKey PEM
+     * @return PublicKey object
      */
     private static PublicKey getPublicKeyFromPem(String pemPublicKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        // 去掉 PEM 格式的头部和尾部
+        // PEM and
         String publicKeyPem = pemPublicKey.replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "").replaceAll("\\s", "");
 
-        // 将 Base64 编码的公钥字符串解码为字节数组
+        // Base64 to array
         byte[] publicKeyBytes = Base64.getDecoder().decode(publicKeyPem);
 
-        // 使用 X509EncodedKeySpec 创建 PublicKey 对象
+        // X509EncodedKeySpec PublicKey object
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         return keyFactory.generatePublic(keySpec);

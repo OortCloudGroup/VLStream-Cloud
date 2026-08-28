@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2024-11-15 11:45:51
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -21,7 +26,7 @@
           <div class="depNameBox flexRowAC">
             <div class="exportBtnBox flexRowAC" style="width: 100%;display: flex;justify-content: space-between;">
               <div class="tree_s_rep flexRowAC">
-                <!-- <span class="srep">审批记录</span>-->
+                <!-- <span class="srep">approvalrecord</span> -->
               </div>
               <div class="icons">
                 <oort-svg-icon
@@ -51,11 +56,11 @@
         </el-col>
         <el-col v-if="infoTemp">
           <div ref="containerRef" class="containerBox" style="">
-            <!-- 基本信息-start-->
+            <!-- info-start -->
             <div v-if="activeName==='form'" id="part1">
               <div class="preview_form">
                 <div v-if="formJsonSub || formJson" class="taskBox">
-                  <!--总表单-->
+                  <!-- form -->
                   <template v-if="formJson&&formJson.length">
                     <div v-for="(item,i) in formJson" :key="i" class="preFormBox">
                       <VFormRender
@@ -69,7 +74,7 @@
                       />
                     </div>
                   </template>
-                  <!--子表单-->
+                  <!-- sub form -->
                   <template v-if="formJsonSub&&formJsonSub.length">
                     <div v-for="(item,i) in formJsonSub" :key="i">
                       <VFormRender
@@ -84,20 +89,20 @@
                     </div>
                   </template>
                 </div>
-                <!--3退回 1委派 2转办-->
+                <!-- 3 1 2 -->
               </div>
             </div>
-            <!-- 基本信息-end-->
-            <!-- 权限 -->
+            <!-- info-end -->
+            <!--  -->
             <div v-else-if="activeName==='auth'">
               <authority :submit="false" />
             </div>
-            <!-- 审批记录-->
+            <!-- approvalrecord -->
             <div v-else id="part2">
               <div class="flow_designer_page">
                 <div class="approval-record-container">
                   <div class="header" />
-                  <!--审批记录-表格-->
+                  <!-- approvalrecord-table -->
                   <el-table
                     v-if="currentView === 'grid'"
                     :data="historyProcNodeList"
@@ -124,7 +129,7 @@
                       align="center"
                     >
                       <template #default="scope">
-                        <!-- 通过 -->
+                        <!--  -->
                         <div v-if="scope.row['commentList'] && scope.row['commentList']?.length > 0">
                           <div v-for="(comment, index) in scope.row['commentList'].slice().reverse()" :key="index">
                             <el-tag :type="approveTypeTag(comment.type)" size="small">
@@ -143,7 +148,7 @@
                       width="200"
                     >
                       <template #default="scope">
-                        <!-- 通过 -->
+                        <!--  -->
                         <div v-if="scope.row['commentList'] && scope.row['commentList']?.length > 0">
                           <div v-for="(comment, index) in scope.row['commentList'].slice().reverse()" :key="index">
                             <div>{{ comment['fullMessage'] }}</div>
@@ -208,7 +213,7 @@
                                 耗时{{ item.duration || '-' }}
                               </div>
                             </div>
-                            <!--节点-->
+                            <!-- node -->
                             <div v-if="item['activityType'] === 'userTask'">
                               <div v-if="item['commentList'] && item['commentList'].length > 0">
                                 <div v-for="(comment, index) in item['commentList'].slice().reverse()" :key="index">
@@ -254,19 +259,19 @@ import Authority from '@/pages/processui/views/page/flowManage/authority.vue'
 
 // const store: any = useUserStore()
 const props = defineProps(['item'])
-const historyProcNodeList = ref([]) // 流转记录
-const preForm = ref<any>(null) // 表单信息
-const preFormSub = ref<any>(null) // 子表单信息
-const formJsonSub = ref<any>(null) // 子表单信息
-const formJson = ref<any>(null) // 表单信息
-const nodeConfig = ref(null) // 流程图
-const finishedTaskNode = ref<any>([]) // 流程图
-const unFinishedTaskNode = ref([]) // 流程图
-const oprArr = ref([]) // 按钮-all
+const historyProcNodeList = ref([]) // record
+const preForm = ref<any>(null) // forminfo
+const preFormSub = ref<any>(null) // sub forminfo
+const formJsonSub = ref<any>(null) // sub forminfo
+const formJson = ref<any>(null) // forminfo
+const nodeConfig = ref(null) // workflow
+const finishedTaskNode = ref<any>([]) // workflow
+const unFinishedTaskNode = ref([]) // workflow
+const oprArr = ref([]) // button-all
 const infoTemp = ref<any>(null)
 const containerRef = ref<HTMLElement | null>(null)
 const activeName = ref<any>('record')
-const currentView = ref('list')// 视图模式
+const currentView = ref('list')//
 
 const commentType = val => {
   switch (val) {
@@ -322,20 +327,20 @@ const approveTypeTag = val => {
   }
 }
 
-// tab切换
+// tab
 const tabsFn = async() => {
   await nextTick()
   if (activeName.value === 'flow') currentView.value = 'flow'
   if (activeName.value === 'record') currentView.value = 'list'
   if (activeName.value === 'form') {
-    // 禁用表单
+    // form
     setTimeout(async() => {
       preForm.value?.map(item => item?.disableForm())
     }, 500)
   }
 }
 
-// 流程节点详情
+// workflownode
 const getProcessDetail = async(procInsId, taskId) => {
   formJsonSub.value = null
   formJson.value = null
@@ -361,7 +366,7 @@ const getProcessDetail = async(procInsId, taskId) => {
           unFinishedTaskNode.value = res.data.flowViewer.unfinishedTaskSet
         }
         if (res.data.bpmnJson) {
-          // 去除第一个开始节点
+          // startnode
           nodeConfig.value = JSON.parse(res.data.bpmnJson).process.childNode
         }
       } catch (error) {
@@ -378,7 +383,7 @@ const formTemp = async(params) => {
   infoTemp.value = val
   infoTemp.value['procInsId'] = val.procInsId
   infoTemp.value['taskId'] = val.taskId || undefined
-  if (val.procInsId) getProcessDetail(val.procInsId, val.taskId) // 流程节点详情
+  if (val.procInsId) getProcessDetail(val.procInsId, val.taskId) // workflownode
 }
 
 watch(() => props.item, (val) => {
@@ -425,7 +430,7 @@ watch(() => props.item, (val) => {
     }
   }
 
-  // 确定取消
+  //
   .subBtnsBox {
     position: absolute;
     right: 20px;
@@ -525,7 +530,7 @@ watch(() => props.item, (val) => {
   // min-height: 600px;
 }
 
-// 流转记录
+// record
 .flow_designer_page {
   width: 100%;
   height: calc(100% - 60px - 80px);
@@ -564,12 +569,12 @@ watch(() => props.item, (val) => {
     }
   }
 
-  // 通过
+  //
   .commentBox {
     justify-content: space-between;
   }
 
-  // 流程
+  // workflow
   :deep(.el-card.is-hover-shadow.box-card) {
     .el-card__body {
       background: #F7F7F7;
@@ -690,7 +695,7 @@ watch(() => props.item, (val) => {
   border-color: gray;
 }
 
-// 基本信息
+// info
 .preFormBox {
   border-radius: 4px;
   padding: 20px;
@@ -698,7 +703,7 @@ watch(() => props.item, (val) => {
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-// 任务办理
+// task
 .taskBox {
   padding: 20px;
 }
@@ -729,7 +734,7 @@ watch(() => props.item, (val) => {
   }
 }
 
-//聊天
+//
 .chat-container {
   margin: 0 auto;
   border-radius: var(--common-border-radius);
@@ -861,7 +866,7 @@ watch(() => props.item, (val) => {
   gap: 16px;
 }
 
-//表格
+// table
 .approval-record-container {
   width: 100%;
   margin: 0 auto;
@@ -892,12 +897,12 @@ watch(() => props.item, (val) => {
   color: #409eff;
 }
 
-/* 确保表格有竖线 */
+/* table */
 .approval-table .el-table__cell {
   border-right: 1px solid #EBEEF5;
 }
 
-/* 最后一列不需要右侧边框 */
+/* after need to */
 .approval-table .el-table__cell:last-child {
   border-right: none;
 }

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,10 +11,10 @@ import lombok.Data;
 
 
 /**
- * 对象存储配置视图对象 sys_oss_config
+ * object configuration object sys_oss_config
  *
  * @author Lion Li
- * @author 孤舟烟雨
+ * @author
  * @date 2021-08-13
  */
 @Data
@@ -23,12 +24,12 @@ public class SysOssConfigVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 主建
+     * main
      */
     private Long ossConfigId;
 
     /**
-     * 配置key
+     * configurationkey
      */
     private String configKey;
 
@@ -38,57 +39,57 @@ public class SysOssConfigVo {
     private String accessKey;
 
     /**
-     * 秘钥
+     *
      */
     private String secretKey;
 
     /**
-     * 桶名称
+     *
      */
     private String bucketName;
 
     /**
-     * 前缀
+     * before
      */
     private String prefix;
 
     /**
-     * 访问站点
+     *
      */
     private String endpoint;
 
     /**
-     * 自定义域名
+     * Custom
      */
     private String domain;
 
     /**
-     * 是否https（Y=是,N=否）
+     * whether https (Y= is ,N= )
      */
     private String isHttps;
 
     /**
-     * 域
+     *
      */
     private String region;
 
     /**
-     * 是否默认（0=是,1=否）
+     * whether (0= is ,1= )
      */
     private String status;
 
     /**
-     * 扩展字段
+     * field
      */
     private String ext1;
 
     /**
-     * 备注
+     * remark
      */
     private String remark;
 
     /**
-     * 桶权限类型(0private 1public 2custom)
+     * (0private 1public 2custom)
      */
     private String accessPolicy;
 

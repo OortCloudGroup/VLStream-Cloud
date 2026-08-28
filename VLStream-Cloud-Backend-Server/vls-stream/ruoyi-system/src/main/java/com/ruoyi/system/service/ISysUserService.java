@@ -14,7 +14,7 @@ import com.ruoyi.common.core.page.TableDataInfo;
 import java.util.List;
 
 /**
- * 用户 业务层
+ * user layer
  *
  * @author Lion Li
  */
@@ -24,216 +24,216 @@ public interface ISysUserService extends IService<SysUser> {
     TableDataInfo<SysUser> selectPageUserList(SysUser user, PageQuery pageQuery);
 
     /**
-     * 根据条件分页查询用户列表
+     * Query user list
      *
-     * @param user 用户信息
-     * @return 用户信息集合信息
+     * @param user userinfo
+     * @return userinfocollectioninfo
      */
     List<SysUser> selectUserList(SysUser user);
 
     /**
-     * 根据条件分页查询已分配用户角色列表
+     * Query already userrole list
      *
-     * @param user 用户信息
-     * @return 用户信息集合信息
+     * @param user userinfo
+     * @return userinfocollectioninfo
      */
     TableDataInfo<SysUser> selectAllocatedList(SysUser user, PageQuery pageQuery);
 
     /**
-     * 根据条件分页查询未分配用户角色列表
+     * Query not userrole list
      *
-     * @param user 用户信息
-     * @return 用户信息集合信息
+     * @param user userinfo
+     * @return userinfocollectioninfo
      */
     TableDataInfo<SysUser> selectUnallocatedList(SysUser user, PageQuery pageQuery);
 
     /**
-     * 通过用户名查询用户
+     * user Query user
      *
-     * @param userName 用户名
-     * @return 用户对象信息
+     * @param userName user
+     * @return userobjectinfo
      */
     SysUser selectUserByUserName(String userName);
 
     /**
-     * 通过手机号查询用户
+     * Query user
      *
-     * @param phonenumber 手机号
-     * @return 用户对象信息
+     * @param phonenumber
+     * @return userobjectinfo
      */
     SysUser selectUserByPhonenumber(String phonenumber);
 
     /**
-     * 通过用户ID查询用户
+     * user IDQuery user
      *
-     * @param userId 用户ID
-     * @return 用户对象信息
+     * @param userId user ID
+     * @return userobjectinfo
      */
     SysUser selectUserById(String userId);
 
     /**
-     * 根据用户ID查询用户所属角色组
+     * user IDQuery user role
      *
-     * @param userName 用户名
-     * @return 结果
+     * @param userName user
+     * @return
      */
     String selectUserRoleGroup(String userName);
 
     /**
-     * 根据用户ID查询用户所属岗位组
+     * user IDQuery user
      *
-     * @param userName 用户名
-     * @return 结果
+     * @param userName user
+     * @return
      */
     String selectUserPostGroup(String userName);
 
     /**
-     * 校验用户名称是否唯一
+     * Validate usernamewhether
      *
-     * @param user 用户信息
-     * @return 结果
+     * @param user userinfo
+     * @return
      */
     boolean checkUserNameUnique(SysUser user);
 
     /**
-     * 校验手机号码是否唯一
+     * Validate whether
      *
-     * @param user 用户信息
-     * @return 结果
+     * @param user userinfo
+     * @return
      */
     boolean checkPhoneUnique(SysUser user);
 
     /**
-     * 校验email是否唯一
+     * Validate emailwhether
      *
-     * @param user 用户信息
-     * @return 结果
+     * @param user userinfo
+     * @return
      */
     boolean checkEmailUnique(SysUser user);
 
     /**
-     * 校验用户是否允许操作
+     * Validate userwhether operation
      *
-     * @param user 用户信息
+     * @param user userinfo
      */
     void checkUserAllowed(SysUser user);
 
     /**
-     * 校验用户是否有数据权限
+     * Validate userwhether data
      *
-     * @param userId 用户id
+     * @param userId user ID
      */
     void checkUserDataScope(String userId);
 
     /**
-     * 新增用户信息
+     * Add userinfo
      *
-     * @param user 用户信息
-     * @return 结果
+     * @param user userinfo
+     * @return
      */
     int insertUser(SysUser user);
 
     /**
-     * 注册用户信息
+     * userinfo
      *
-     * @param user 用户信息
-     * @return 结果
+     * @param user userinfo
+     * @return
      */
     boolean registerUser(SysUser user);
 
     /**
-     * 修改用户信息
+     * Update userinfo
      *
-     * @param user 用户信息
-     * @return 结果
+     * @param user userinfo
+     * @return
      */
     int updateUser(SysUser user);
 
     /**
-     * 用户授权角色
+     * user role
      *
-     * @param userId  用户ID
-     * @param roleIds 角色组
+     * @param userId user ID
+     * @param roleIds role
      */
     void insertUserAuth(String userId, String[] roleIds);
 
     /**
-     * 修改用户状态
+     * Update user
      *
-     * @param user 用户信息
-     * @return 结果
+     * @param user userinfo
+     * @return
      */
     int updateUserStatus(SysUser user);
 
     /**
-     * 修改用户基本信息
+     * Update user info
      *
-     * @param user 用户信息
-     * @return 结果
+     * @param user userinfo
+     * @return
      */
     int updateUserProfile(SysUser user);
 
     /**
-     * 修改用户头像
+     * Update user
      *
-     * @param userName 用户名
-     * @param avatar   头像地址
-     * @return 结果
+     * @param userName user
+     * @param avatar
+     * @return
      */
     boolean updateUserAvatar(String userName, String avatar);
 
     /**
-     * 重置用户密码
+     * user
      *
-     * @param user 用户信息
-     * @return 结果
+     * @param user userinfo
+     * @return
      */
     int resetPwd(SysUser user);
 
     /**
-     * 重置用户密码
+     * user
      *
-     * @param userName 用户名
-     * @param password 密码
-     * @return 结果
+     * @param userName user
+     * @param password
+     * @return
      */
     int resetUserPwd(String userName, String password);
 
     /**
-     * 通过用户ID删除用户
+     * user IDDelete user
      *
-     * @param userId 用户ID
-     * @return 结果
+     * @param userId user ID
+     * @return
      */
     int deleteUserById(String userId);
 
     /**
-     * 批量删除用户信息
+     * Batch delete userinfo
      *
-     * @param userIds 需要删除的用户ID
-     * @return 结果
+     * @param userIds need to Delete user ID
+     * @return
      */
     int deleteUserByIds(String[] userIds);
 
     /**
-     * 通过用户uuid查询用户
+     * useruuidQuery user
      *
-     * @param UserId 用户uuID
-     * @return 用户对象信息
+     * @param UserId useruuID
+     * @return userobjectinfo
      */
     SysUser selectUserByUserId(String UserId);
 
 
     /**
-     * 通过用户id查询用户
+     * user IDQuery user
      *
-     * @param UserIds   用户uuID
-     * @return 用户对象信息
+     * @param UserIds useruuID
+     * @return userobjectinfo
      */
     List<SysUser> selectUserByUserIds( List<String > UserIds);
 
     /**
-     * 获取多级领导信息
+     * Get leaderinfo
      *
      */
     List<SysUser> getLeaders(String userId);

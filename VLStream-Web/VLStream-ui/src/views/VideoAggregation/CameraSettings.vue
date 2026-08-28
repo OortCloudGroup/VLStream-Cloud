@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="camera-settings">
-    <!-- 导航面包屑 - 独立页面模式或无内嵌 deviceInfo 时显示 -->
+    <!-- - page deviceInfo -->
     <div v-if="!props.deviceInfo" class="content-header">
       <div class="breadcrumb">
         <span class="breadcrumb-item" @click="goBack">设备列表</span>
@@ -10,16 +15,16 @@
     </div>
 
     <div class="settings-container">
-      <!-- 中间视频和控制区域 -->
+      <!-- in and control -->
       <div class="video-control-container">
-        <!-- 显示设置标签页 -->
+        <!-- Set -->
         <div class="settings-tabs">
           <el-tabs v-model="activeTab" class="tenanat-tabs">
             <el-tab-pane label="显示设置" name="display" />
             <el-tab-pane label="OSD设置" name="osd" />
           </el-tabs>
-          
-          <!-- 场景选择 -->
+
+          <!--  -->
           <div v-if="activeTab === 'display'" class="scene-selector">
             <div class="scene-label">场景</div>
             <div class="scene-select-container">
@@ -40,12 +45,12 @@
           </div>
         </div>
 
-        <!-- 视频显示区域 -->
+        <!--  -->
         <div class="video-display">
           <div class="video-container">
             <div class="video-content">
               <div class="video-timestamp">2021年04月15日</div>
-              <!-- 模拟视频画面 -->
+              <!--  -->
               <div class="video-placeholder">
                 <div class="placeholder-content">
                   <div class="plant-image"></div>
@@ -55,14 +60,14 @@
           </div>
         </div>
 
-        <!-- 图像调节区域 -->
+        <!--  -->
         <div class="image-adjustment">
-          <!-- 显示设置内容 -->
+          <!-- Set -->
           <div v-if="activeTab === 'display'" class="all-settings">
             <el-collapse v-model="activeCollapse">
               <el-collapse-item name="image-controls" title="图像调节">
                 <div class="adjustment-controls">
-                  <!-- 亮度 -->
+                  <!--  -->
                   <div class="control-item">
                     <span class="control-label">亮度</span>
                     <div class="slider-container">
@@ -76,7 +81,7 @@
                     </div>
                   </div>
 
-                  <!-- 对比度 -->
+                  <!--  -->
                   <div class="control-item">
                     <span class="control-label">对比度</span>
                     <div class="slider-container">
@@ -90,7 +95,7 @@
                     </div>
                   </div>
 
-                  <!-- 饱和度 -->
+                  <!-- and -->
                   <div class="control-item">
                     <span class="control-label">饱和度</span>
                     <div class="slider-container">
@@ -104,7 +109,7 @@
                     </div>
                   </div>
 
-                  <!-- 锐度 -->
+                  <!--  -->
                   <div class="control-item">
                     <span class="control-label">锐度</span>
                     <div class="slider-container">
@@ -119,10 +124,10 @@
                   </div>
                 </div>
               </el-collapse-item>
-              
+
               <el-collapse-item name="lighting" title="曝光">
                 <div class="setting-content">
-                  <!-- 曝光模式 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">曝光模式</label>
                     <el-select v-model="exposureSettings.mode" class="setting-select">
@@ -133,7 +138,7 @@
                     </el-select>
                   </div>
 
-                  <!-- 最大快门限制 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">最大快门限制</label>
                     <el-select v-model="exposureSettings.maxShutter" class="setting-select">
@@ -146,7 +151,7 @@
                     </el-select>
                   </div>
 
-                  <!-- 最小快门限制 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">最小快门限制</label>
                     <el-select v-model="exposureSettings.minShutter" class="setting-select">
@@ -159,7 +164,7 @@
                     </el-select>
                   </div>
 
-                  <!-- 增益限制 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">增益限制</label>
                     <div class="slider-container">
@@ -173,7 +178,7 @@
                     </div>
                   </div>
 
-                  <!-- 低照度电子快门 -->
+                  <!-- sub -->
                   <div class="setting-item">
                     <label class="setting-label">低照度电子快门</label>
                     <el-select v-model="exposureSettings.lowLightShutter" class="setting-select">
@@ -184,10 +189,10 @@
                   </div>
                 </div>
               </el-collapse-item>
-              
+
               <el-collapse-item name="focus" title="聚焦">
                 <div class="setting-content">
-                  <!-- 聚焦模式 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">聚焦模式</label>
                     <el-select v-model="focusSettings.mode" class="setting-select">
@@ -197,7 +202,7 @@
                     </el-select>
                   </div>
 
-                  <!-- 最小聚焦距离 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">最小聚焦距离</label>
                     <el-select v-model="focusSettings.minDistance" class="setting-select">
@@ -212,10 +217,10 @@
                   </div>
                 </div>
               </el-collapse-item>
-              
+
               <el-collapse-item name="day-night" title="日夜转换">
                 <div class="setting-content">
-                  <!-- 日夜转换 -->
+                  <!-- Convert -->
                   <div class="setting-item">
                     <label class="setting-label">日夜转换</label>
                     <el-select v-model="dayNightSettings.mode" class="setting-select">
@@ -226,7 +231,7 @@
                     </el-select>
                   </div>
 
-                  <!-- 灵敏度 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">灵敏度</label>
                     <el-select v-model="dayNightSettings.sensitivity" class="setting-select">
@@ -238,7 +243,7 @@
                     </el-select>
                   </div>
 
-                  <!-- 防补光过曝 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">防补光过曝</label>
                     <el-select v-model="dayNightSettings.antiOverexposure" class="setting-select">
@@ -247,7 +252,7 @@
                     </el-select>
                   </div>
 
-                  <!-- 红外灯模式 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">红外灯模式</label>
                     <el-select v-model="dayNightSettings.infraredMode" class="setting-select">
@@ -258,7 +263,7 @@
                     </el-select>
                   </div>
 
-                  <!-- 亮度限制 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">亮度限制</label>
                     <div class="slider-container">
@@ -273,10 +278,10 @@
                   </div>
                 </div>
               </el-collapse-item>
-              
+
               <el-collapse-item name="backlight" title="背光">
                 <div class="setting-content">
-                  <!-- 背光补偿 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">背光补偿</label>
                     <el-select v-model="backlightSettings.compensation" class="setting-select">
@@ -286,7 +291,7 @@
                     </el-select>
                   </div>
 
-                  <!-- 宽动态 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">宽动态</label>
                     <el-select v-model="backlightSettings.wideDynamic" class="setting-select">
@@ -296,7 +301,7 @@
                     </el-select>
                   </div>
 
-                  <!-- 强光抑制 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">强光抑制</label>
                     <el-select v-model="backlightSettings.strongLightSuppression" class="setting-select">
@@ -307,10 +312,10 @@
                   </div>
                 </div>
               </el-collapse-item>
-              
+
               <el-collapse-item name="white-balance" title="白平衡">
                 <div class="setting-content">
-                  <!-- 白平衡 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">白平衡</label>
                     <el-select v-model="whiteBalanceSettings.mode" class="setting-select">
@@ -325,10 +330,10 @@
                   </div>
                 </div>
               </el-collapse-item>
-              
+
               <el-collapse-item name="image-enhancement" title="图像增强">
                 <div class="setting-content">
-                  <!-- 数字降噪 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">数字降噪</label>
                     <el-select v-model="imageEnhancementSettings.digitalNoiseReduction" class="setting-select">
@@ -339,7 +344,7 @@
                     </el-select>
                   </div>
 
-                  <!-- 降噪等级 -->
+                  <!-- etc. -->
                   <div class="setting-item">
                     <label class="setting-label">降噪等级</label>
                     <div class="slider-container">
@@ -353,7 +358,7 @@
                     </div>
                   </div>
 
-                  <!-- 透雾模式 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">透雾模式</label>
                     <el-select v-model="imageEnhancementSettings.defogging" class="setting-select">
@@ -363,7 +368,7 @@
                     </el-select>
                   </div>
 
-                  <!-- 电子防抖 -->
+                  <!-- sub -->
                   <div class="setting-item">
                     <label class="setting-label">电子防抖</label>
                     <el-select v-model="imageEnhancementSettings.electronicStabilization" class="setting-select">
@@ -374,10 +379,10 @@
                   </div>
                 </div>
               </el-collapse-item>
-              
+
               <el-collapse-item name="video-adjustment" title="视频调整">
                 <div class="setting-content">
-                  <!-- 镜像 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">镜像</label>
                     <el-select v-model="videoAdjustmentSettings.mirror" class="setting-select">
@@ -388,7 +393,7 @@
                     </el-select>
                   </div>
 
-                  <!-- 视频制式 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">视频制式</label>
                     <el-select v-model="videoAdjustmentSettings.videoStandard" class="setting-select">
@@ -399,10 +404,10 @@
                   </div>
                 </div>
               </el-collapse-item>
-              
+
               <el-collapse-item name="other" title="其他">
                 <div class="setting-content">
-                  <!-- 镜头初始化 -->
+                  <!-- Initialize -->
                   <div class="setting-item">
                     <label class="setting-label">镜头初始化</label>
                     <el-select v-model="otherSettings.lensInitialization" class="setting-select">
@@ -412,7 +417,7 @@
                     </el-select>
                   </div>
 
-                  <!-- 变倍限制 -->
+                  <!--  -->
                   <div class="setting-item">
                     <label class="setting-label">变倍限制</label>
                     <el-select v-model="otherSettings.zoomLimit" class="setting-select">
@@ -431,9 +436,9 @@
             </el-collapse>
           </div>
 
-          <!-- OSD设置内容 -->
+          <!-- OSDSet -->
           <div v-else-if="activeTab === 'osd'" class="osd-settings">
-            <!-- OSD属性设置 -->
+            <!-- OSDpropertySet -->
             <div class="osd-config-section">
               <div class="osd-config-item">
                 <label class="osd-label">OSD属性</label>
@@ -485,18 +490,18 @@
             </div>
           </div>
 
-          <!-- 恢复默认设置按钮 -->
+          <!-- Set button -->
           <div v-if="activeTab === 'display'" class="reset-container">
             <el-button @click="resetToDefault" class="reset-btn">恢复默认设置</el-button>
           </div>
         </div>
       </div>
 
-      <!-- 右侧控制区域 - PTZ和预制点面板水平对齐 -->
+      <!-- control - PTZ and -->
       <div class="right-controls-container" :class="{ 'osd-mode': activeTab === 'osd' }">
-        <!-- PTZ控制区域 -->
+        <!-- PTZcontrol -->
         <div class="ptz-container">
-          <PTZControl 
+          <PTZControl
             :show-camera-management="false"
             @ptz-control="handlePTZControl"
             @zoom-control="handleZoomControl"
@@ -504,8 +509,8 @@
           />
         </div>
 
-        <!-- 预制点面板 - 显示设置和OSD设置都显示 -->
-        <PresetPanel 
+        <!-- - Set and OSDSet -->
+        <PresetPanel
           :preset-points="presetPoints"
           @preset-click="handlePresetClick"
           @osd-settings-save="handleOSDSettingsSave"
@@ -559,15 +564,15 @@ onMounted(async () => {
   }
 })
 
-// 当前激活的标签页
+// current
 const activeTab = ref('display')
 
 
 
-// 折叠面板激活项
+// item
 const activeCollapse = ref(['image-controls'])
 
-// 图像设置参数
+// Set parameter
 const imageSettings = ref({
   brightness: 50,
   contrast: 50,
@@ -575,7 +580,7 @@ const imageSettings = ref({
   sharpness: 50
 })
 
-// 曝光设置参数
+// Set parameter
 const exposureSettings = ref({
   mode: 'auto',
   maxShutter: '1/25',
@@ -584,13 +589,13 @@ const exposureSettings = ref({
   lowLightShutter: 'off'
 })
 
-// 聚焦设置参数
+// Set parameter
 const focusSettings = ref({
   mode: 'semi-auto',
   minDistance: '1.5m'
 })
 
-// 日夜转换设置参数
+// Convert Set parameter
 const dayNightSettings = ref({
   mode: 'auto',
   sensitivity: '2',
@@ -599,19 +604,19 @@ const dayNightSettings = ref({
   brightnessLimit: 50
 })
 
-// 背光设置参数
+// Set parameter
 const backlightSettings = ref({
   compensation: 'off',
   wideDynamic: 'off',
   strongLightSuppression: 'off'
 })
 
-// 白平衡设置参数
+// Set parameter
 const whiteBalanceSettings = ref({
   mode: 'auto'
 })
 
-// 图像增强设置参数
+// Set parameter
 const imageEnhancementSettings = ref({
   digitalNoiseReduction: 'normal',
   noiseReductionLevel: 50,
@@ -619,29 +624,29 @@ const imageEnhancementSettings = ref({
   electronicStabilization: 'off'
 })
 
-// 视频调整设置参数
+// Set parameter
 const videoAdjustmentSettings = ref({
   mirror: 'off',
   videoStandard: 'PAL_50HZ'
 })
 
-// 其他设置参数
+// Set parameter
 const otherSettings = ref({
   lensInitialization: 'off',
   zoomLimit: '2'
 })
 
-// OSD设置参数
+// OSDSet parameter
 const osdSettings = ref({
   attributes: 'opaque-stable',
-  font: 'adaptive', 
+  font: 'adaptive',
   color: 'auto-bw',
   alignment: 'adaptive'
 })
 
 
 
-// 场景选择相关
+// related
 const selectedScene = ref('indoor')
 const sceneOptions = ref([
   { label: '室内', value: 'indoor' },
@@ -651,7 +656,7 @@ const sceneOptions = ref([
   { label: '自定义', value: 'custom' }
 ])
 
-// 预制点数据
+// data
 const presetPoints = ref([
   { id: 1, name: '预置点1' },
   { id: 2, name: '预置点1' },
@@ -665,23 +670,23 @@ const presetPoints = ref([
   { id: 10, name: '预置点1' }
 ])
 
-// 返回设备列表
+// device
 const goBack = () => {
-  // 如果在内嵌模式（有deviceInfo props），发出back事件
+  // if in ( deviceInfo props), backevent
   if (props.deviceInfo) {
     emit('back')
   } else {
-    // 独立页面模式，使用路由跳转
+    // page ,
     router.push('/device-management')
   }
 }
 
-// 处理场景切换
+// Process
 const handleSceneChange = (value) => {
   console.log('切换场景:', value)
   ElMessage.success(`切换到场景: ${sceneOptions.value.find(s => s.value === value)?.label}`)
-  
-  // 根据不同场景自动调整图像参数
+
+  // parameter
   switch (value) {
     case 'indoor':
       imageSettings.value = { brightness: 50, contrast: 50, saturation: 50, sharpness: 50 }
@@ -696,30 +701,30 @@ const handleSceneChange = (value) => {
       imageSettings.value = { brightness: 55, contrast: 60, saturation: 50, sharpness: 50 }
       break
     case 'custom':
-      // 自定义场景保持当前设置
+      // Custom current Set
       break
   }
 }
 
-// PTZ控制事件处理
+// PTZcontroleventProcess
 const handlePTZControl = (direction) => {
   console.log('PTZ控制:', direction)
   ElMessage.success(`PTZ ${direction} 控制`)
 }
 
-// 变倍控制事件处理
+// controleventProcess
 const handleZoomControl = (action) => {
   console.log('变倍控制:', action)
   ElMessage.success(`变倍 ${action}`)
 }
 
-// 功能控制事件处理
+// can controleventProcess
 const handleControlAction = (action) => {
   console.log('控制操作:', action)
   ElMessage.success(`执行操作: ${action}`)
 }
 
-// 恢复默认设置
+// Set
 const resetToDefault = () => {
   imageSettings.value = {
     brightness: 50,
@@ -727,7 +732,7 @@ const resetToDefault = () => {
     saturation: 50,
     sharpness: 50
   }
-  
+
   exposureSettings.value = {
     mode: 'auto',
     maxShutter: '1/25',
@@ -735,12 +740,12 @@ const resetToDefault = () => {
     gainLimit: 50,
     lowLightShutter: 'off'
   }
-  
+
   focusSettings.value = {
     mode: 'semi-auto',
     minDistance: '1.5m'
   }
-  
+
   dayNightSettings.value = {
     mode: 'auto',
     sensitivity: '2',
@@ -748,50 +753,50 @@ const resetToDefault = () => {
     infraredMode: 'auto',
     brightnessLimit: 50
   }
-  
+
   backlightSettings.value = {
     compensation: 'off',
     wideDynamic: 'off',
     strongLightSuppression: 'off'
   }
-  
+
   whiteBalanceSettings.value = {
     mode: 'auto'
   }
-  
+
   imageEnhancementSettings.value = {
     digitalNoiseReduction: 'normal',
     noiseReductionLevel: 50,
     defogging: 'off',
     electronicStabilization: 'off'
   }
-  
+
   videoAdjustmentSettings.value = {
     mirror: 'off',
     videoStandard: 'PAL_50HZ'
   }
-  
+
   otherSettings.value = {
     lensInitialization: 'off',
     zoomLimit: '2'
   }
-  
+
   ElMessage.success('已恢复默认设置')
 }
 
-// 处理预制点点击
+// Process
 const handlePresetClick = (preset) => {
   console.log('点击预制点:', preset)
   ElMessage.success(`跳转到${preset.name}`)
 }
 
-// 保存OSD设置（主页面）
+// OSDSet ( main page)
 const saveOSDSettings = () => {
   console.log('保存OSD设置:', osdSettings.value)
   ElMessage.success('OSD设置已保存')
 }
 
-// 处理OSD设置保存（PresetPanel组件）
+// Process OSDSet (PresetPanelcomponent)
 const handleOSDSettingsSave = (settings) => {
   console.log('保存预置点OSD设置:', settings)
   ElMessage.success('预置点OSD设置已保存')
@@ -808,7 +813,7 @@ const handleOSDSettingsSave = (settings) => {
   overflow: hidden;
 }
 
-/* 内容头部导航样式 */
+/*  */
 .content-header {
   padding: 16px 20px;
   border-bottom: 1px solid #f0f0f0;
@@ -842,7 +847,7 @@ const handleOSDSettingsSave = (settings) => {
   color: #c0c4cc;
 }
 
-/* 主要容器布局 */
+/* main need to */
 .settings-container {
   flex: 1;
   display: flex;
@@ -854,7 +859,7 @@ const handleOSDSettingsSave = (settings) => {
   overflow: hidden; /* 允许子元素处理自己的滚动 */
 }
 
-/* 中间视频和控制区域 */
+/* in and control */
 .video-control-container {
   width: 25%;
   display: flex;
@@ -866,7 +871,7 @@ const handleOSDSettingsSave = (settings) => {
   max-height: 100%; /* 限制最大高度为容器高度 */
 }
 
-/* 标签页 */
+/*  */
 .settings-tabs {
   background: white;
   border-radius: 6px 6px 0 0;
@@ -879,7 +884,7 @@ const handleOSDSettingsSave = (settings) => {
   }
 }
 
-/* 场景选择器 */
+/*  */
 .scene-selector {
   padding: 16px 20px 16px 0px; /* 移除左内边距，与左边框对齐 */
   display: flex;
@@ -903,7 +908,7 @@ const handleOSDSettingsSave = (settings) => {
   width: 200px;
 }
 
-/* 视频显示区域 */
+/*  */
 .video-display {
   flex-shrink: 0; /* 防止视频区域被压缩 */
   background: white;
@@ -960,7 +965,7 @@ const handleOSDSettingsSave = (settings) => {
   margin: 0 auto;
 }
 
-/* 图像调节区域 */
+/*  */
 .image-adjustment {
   background: white;
   border-radius: 0 0 6px 6px; /* 只保留底部圆角 */
@@ -1020,7 +1025,7 @@ const handleOSDSettingsSave = (settings) => {
   font-size: 14px;
 }
 
-/* 设置项样式 */
+/* Set item */
 .setting-item {
   display: flex;
   align-items: center;
@@ -1067,7 +1072,7 @@ const handleOSDSettingsSave = (settings) => {
   background: #66b1ff;
 }
 
-/* 所有设置和OSD设置的布局支持 */
+/* all Set and OSDSet */
 .all-settings {
   flex: 1;
   min-height: 0;
@@ -1078,7 +1083,7 @@ const handleOSDSettingsSave = (settings) => {
   min-height: 0;
 }
 
-/* OSD配置区域样式 */
+/* OSDconfiguration */
 .osd-config-section {
   display: flex;
   flex-direction: column;
@@ -1129,24 +1134,24 @@ const handleOSDSettingsSave = (settings) => {
   background: #66b1ff;
 }
 
-/* 右侧控制区域 - PTZ和预制点面板的容器 */
+/* control - PTZ and */
 .right-controls-container {
   display: flex;
   align-items: flex-start;
   gap: 0; /* 无缝隙连接 */
   margin: 0;
   padding: 0; /* 确保容器本身无内边距 */
-  /* 添加上边距，使其与视频显示区域顶部对齐 */
+  /* , and */
   margin-top: 180px; /* 增加偏移量，对齐视频播放区域 */
   flex-shrink: 0; /* 防止右侧控制区域被压缩 */
 }
 
-/* OSD模式下的对齐（场景选择区域隐藏） */
+/* OSD ( ) */
 .right-controls-container.osd-mode {
   margin-top: 65px; /* 只有标签页区域(65px) */
 }
 
-/* PTZ控制区域 */
+/* PTZcontrol */
 .ptz-container {
   width: 320px;
   height: auto;
@@ -1158,22 +1163,22 @@ const handleOSDSettingsSave = (settings) => {
 
 
 
-/* 响应式设计 */
+/*  */
 @media (max-width: 1200px) {
   .settings-container {
     flex-direction: column;
   }
-  
+
   .video-control-container {
     width: 100%;
     margin-top: 0;
   }
-  
+
   .right-controls-container {
     flex-direction: column;
     width: 100%;
   }
-  
+
   .ptz-container {
     width: 100%;
     margin-top: 0;
@@ -1181,4 +1186,4 @@ const handleOSDSettingsSave = (settings) => {
 }
 
 
-</style> 
+</style>

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,74 +16,74 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO;
 import java.util.List;
 
 /**
- * 算法训练任务表 服务类
+ * algorithmtrainingtask service
  *
  * @author Oort
  * @since 2025-12-23
  */
 public interface IVlsAlgorithmTrainingService extends BaseService<AlgorithmTraining> {
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsAlgorithmTraining 查询参数
+	 * @param page parameter
+	 * @param vlsAlgorithmTraining Query parameter
 	 * @return IPage<VlsAlgorithmTrainingVO>
 	 */
 	IPage<AlgorithmTrainingVO> selectVlsAlgorithmTrainingPage(IPage<AlgorithmTrainingVO> page, AlgorithmTrainingVO vlsAlgorithmTraining);
 
 	/**
-	 * 导出数据
+	 * Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsAlgorithmTrainingExcel>
 	 */
 	List<VlsAlgorithmTrainingExcel> exportVlsAlgorithmTraining(Wrapper<AlgorithmTraining> queryWrapper);
 
 	/**
-	 * 查询算法训练任务
+	 * Query algorithmtrainingtask
 	 *
-	 * @param id 算法训练任务主键
-	 * @return 算法训练任务
+	 * @param id algorithmtrainingtaskprimary key
+	 * @return algorithmtrainingtask
 	 */
 	public AlgorithmTraining selectAlgorithmTrainingById(Long id);
 
 	/**
-	 * 查询算法训练任务列表
+	 * Query algorithmtrainingtask list
 	 *
-	 * @param algorithmTraining 算法训练任务
-	 * @return 算法训练任务集合
+	 * @param algorithmTraining algorithmtrainingtask
+	 * @return algorithmtrainingtaskcollection
 	 */
 	public List<AlgorithmTraining> selectAlgorithmTrainingList(AlgorithmTraining algorithmTraining);
 
 	/**
-	 * 新增算法训练任务
+	 * Add algorithmtrainingtask
 	 *
-	 * @param algorithmTraining 算法训练任务
-	 * @return 结果
+	 * @param algorithmTraining algorithmtrainingtask
+	 * @return
 	 */
 	public int insertAlgorithmTraining(AlgorithmTraining algorithmTraining);
 
 	/**
-	 * 修改算法训练任务
+	 * Update algorithmtrainingtask
 	 *
-	 * @param algorithmTraining 算法训练任务
-	 * @return 结果
+	 * @param algorithmTraining algorithmtrainingtask
+	 * @return
 	 */
 	public int updateAlgorithmTraining(AlgorithmTraining algorithmTraining);
 
 	/**
-	 * 批量删除算法训练任务
+	 * Batch delete algorithmtrainingtask
 	 *
-	 * @param ids 需要删除的算法训练任务主键集合
-	 * @return 结果
+	 * @param ids need to Delete algorithmtrainingtaskprimary keycollection
+	 * @return
 	 */
 	public int deleteAlgorithmTrainingByIds(Long[] ids);
 
 	/**
-	 * 删除算法训练任务信息
+	 * Delete algorithmtrainingtaskinfo
 	 *
-	 * @param id 算法训练任务主键
-	 * @return 结果
+	 * @param id algorithmtrainingtaskprimary key
+	 * @return
 	 */
 	public int deleteAlgorithmTrainingById(Long id);
 

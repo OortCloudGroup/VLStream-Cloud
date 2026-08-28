@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="start_node" :class="{'node_inactive': !!isFinished}">
     <div class="start">
@@ -20,7 +25,7 @@
 <script setup>
 
 defineProps({
-  isFinished: { // 已完成的节点
+  isFinished: { // already node
     type: Boolean,
     default: false
   }

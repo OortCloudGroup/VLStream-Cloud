@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import com.ruoyi.vlstream.test.vlstream.deserialize.AlgorithmRepositoryStatusDes
 
 
 /**
- * 算法仓库表 实体类
+ * algorithm
  *
  * @author Oort
  * @since 2025-12-23
@@ -29,22 +30,22 @@ public class AlgorithmRepository extends TenantEntity {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 算法仓库名称
+	 * algorithm
 	 */
 	@Schema(description = "算法仓库名称")
 	private String name;
 	/**
-	 * 拥有算法数量
+	 * algorithm
 	 */
 	@Schema(description = "拥有算法数量")
 	private Integer algorithmCount;
 	/**
-	 * 仓库类型
+	 *
 	 */
 	@Schema(description = "仓库类型")
 	private AlgorithmRepositoryTypeEnum repositoryType;
 	/**
-	 * 备注
+	 * remark
 	 */
 	@Schema(description = "备注")
 	private String remark;

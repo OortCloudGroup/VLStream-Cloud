@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div>
     <el-form
@@ -259,7 +264,7 @@ export default {
     }
   },
   created() {
-    // 导入表单JSON后需要重新加载自定义CSS样式！！！
+    // Import formJSON after need to new Load CustomCSS ! ! !
     this.designer.handleEvent('form-json-imported', () => {
       this.formCssCode = this.formConfig.cssCode
       insertCustomCssToHead(this.formCssCode)
@@ -268,7 +273,7 @@ export default {
     })
   },
   mounted() {
-    /* SettingPanel和FormWidget为兄弟组件, 在FormWidget加载formConfig时，
+    /* SettingPanel and FormWidget to component, in FormWidgetLoad formConfig ,
          此处SettingPanel可能无法获取到formConfig.cssCode, 故加个延时函数！ */
     setTimeout(() => {
       this.formCssCode = this.formConfig.cssCode
@@ -298,22 +303,22 @@ export default {
 
       if (!!result && result.length > 0) {
         result.forEach((rItem) => {
-          let classArray = rItem.split(',') // 切分逗号分割的多个class
+          let classArray = rItem.split(',') // class
           if (classArray.length > 0) {
             classArray.forEach((cItem) => {
               let caItem = cItem.trim()
-              if (caItem.indexOf('.', 1) !== -1) { // 查找第二个.位置
-                let newClass = caItem.substring(caItem.indexOf('.') + 1, caItem.indexOf('.', 1)) // 仅截取第一、二个.号之间的class
+              if (caItem.indexOf('.', 1) !== -1) { // find .
+                let newClass = caItem.substring(caItem.indexOf('.') + 1, caItem.indexOf('.', 1)) // 、 . class
                 if (!!newClass) {
                   cssNameArray.push(newClass.trim())
                 }
-              } else if (caItem.indexOf(' ') !== -1) { // 查找第一个空格位置
-                let newClass = caItem.substring(caItem.indexOf('.') + 1, caItem.indexOf(' ')) // 仅截取第一、二个.号之间的class
+              } else if (caItem.indexOf(' ') !== -1) { // find null / empty
+                let newClass = caItem.substring(caItem.indexOf('.') + 1, caItem.indexOf(' ')) // 、 . class
                 if (!!newClass) {
                   cssNameArray.push(newClass.trim())
                 }
               } else {
-                if (caItem.indexOf('{') !== -1) { // 查找第一个{位置
+                if (caItem.indexOf('{') !== -1) { // find {
                   let newClass = caItem.substring(caItem.indexOf('.') + 1, caItem.indexOf('{'))
                   cssNameArray.push(newClass.trim())
                 } else {
@@ -327,8 +332,8 @@ export default {
       }
 
       // this.cssClassList.length = 0
-      this.cssClassList.splice(0, this.cssClassList.length) // 清除数组必须用splice，length=0不会响应式更新！！
-      this.cssClassList = Array.from(new Set(cssNameArray)) // 数组去重
+      this.cssClassList.splice(0, this.cssClassList.length) // array splice, length=0 will new ! !
+      this.cssClassList = Array.from(new Set(cssNameArray)) // array
     },
 
     saveFormCss() {

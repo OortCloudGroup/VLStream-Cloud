@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <!-- eslint-disable vue/no-mutating-props -->
 <template>
   <el-form-item prop="name" :rules="nameRequiredRule">
@@ -68,7 +73,7 @@ export default {
       }
 
       if (!!this.designer.formWidget) {
-        let foundRef = this.designer.formWidget.getWidgetRef(newName) // 检查newName是否已存在！！
+        let foundRef = this.designer.formWidget.getWidgetRef(newName) // newNamewhether already in ! !
         if (!!foundRef) {
           this.selectedWidget.options.name = oldName
           this.$message.info(this.i18nt('designer.hint.duplicateName') + newName)
@@ -77,7 +82,7 @@ export default {
 
         let widgetInDesign = this.designer.formWidget.getWidgetRef(oldName)
         if (!!widgetInDesign && !!widgetInDesign.registerToRefList) {
-          widgetInDesign.registerToRefList(oldName) // 注册组件新的ref名称并删除老的ref！！
+          widgetInDesign.registerToRefList(oldName) // component new ref Delete ref! !
           let newLabel = this.getLabelByFieldName(newName)
           this.designer.updateSelectedWidgetNameAndLabel(this.selectedWidget, newName, newLabel)
         }

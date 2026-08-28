@@ -1,19 +1,24 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
-  <div 
+  <div
     class="video-dialog-overlay"
     :style="{ zIndex: 2000 + dialog.id }"
   >
-    <div 
+    <div
       class="video-dialog draggable-dialog"
-      :style="{ 
-        left: dialog.position.x + 'px', 
+      :style="{
+        left: dialog.position.x + 'px',
         top: dialog.position.y + 'px',
         position: 'fixed',
         transform: 'none'
       }"
       @mousedown="bringToFront(dialog.id)"
     >
-      <div 
+      <div
         class="video-dialog-header draggable-handle"
         @mousedown="startDrag($event, dialog.id)"
       >
@@ -31,14 +36,14 @@
           </button>
         </div>
       </div>
-      
+
       <div class="video-dialog-content" v-show="!dialog.minimized">
         <div class="video-player">
-          <!-- 实时视频播放区域 -->
+          <!--  -->
           <div class="video-placeholder-player">
-            <!-- 优先使用iframe播放WebRTC -->
+            <!-- iframe WebRTC -->
             <div v-if="dialog.camera.deviceData && dialog.camera.deviceData.webrtcUrl" class="webrtc-iframe-container">
-              <iframe 
+              <iframe
                 :src="dialog.camera.deviceData.webrtcUrl"
                 width="840"
                 height="520"
@@ -51,10 +56,10 @@
                 <small>WebRTC播放 - {{ dialog.camera.name }}</small>
               </div>
             </div>
-            
-            <!-- 备用：使用RtspPlayer组件直接连接 -->
+
+            <!-- : RtspPlayercomponent -->
             <div v-else-if="dialog.camera.deviceData && dialog.camera.deviceData.streamUrl && dialog.camera.deviceData.playMode === 'direct'" class="rtsp-player-container">
-              <RtspPlayer 
+              <RtspPlayer
                 :rtsp-url="dialog.camera.deviceData.streamUrl || dialog.camera.deviceData.originalRtspUrl"
                 :width="840"
                 :height="520"
@@ -63,8 +68,8 @@
                 @error="handleDialogRtspError"
               />
             </div>
-            
-            <!-- 无视频流时显示占位符 -->
+
+            <!--  -->
             <div v-else class="video-placeholder">
               <div class="placeholder-content">
                 <div class="placeholder-icon">📹</div>
@@ -73,8 +78,8 @@
                   <div>设备: {{ dialog.camera.name }}</div>
                   <div>状态: 在线</div>
                 </div>
-                
-                <!-- 备用操作选项 -->
+
+                <!-- operation item -->
                 <div class="placeholder-actions">
                   <button class="action-btn primary" @click="retryWebRTCConnection(dialog.camera)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -126,11 +131,11 @@ const emit = defineEmits([
   'copy-stream-url'
 ])
 
-// 拖拽相关状态
+// related
 const isDragging = ref(false)
 const dragOffset = ref({ x: 0, y: 0 })
 
-// 方法
+// method
 const bringToFront = (id) => {
   emit('bring-to-front', id)
 }
@@ -185,7 +190,7 @@ const copyStreamUrl = (url) => {
 </script>
 
 <style scoped>
-/* 视频弹窗样式 */
+/* dialog */
 .video-dialog-overlay {
   position: fixed;
   top: 0;
@@ -376,7 +381,7 @@ const copyStreamUrl = (url) => {
   color: #495057;
 }
 
-/* 拖拽相关样式 */
+/* related */
 .draggable-dialog {
   cursor: default;
 }
@@ -385,16 +390,16 @@ const copyStreamUrl = (url) => {
   cursor: move;
 }
 
-/* 响应式设计 */
+/*  */
 @media (max-width: 768px) {
   .video-dialog {
     min-width: 300px;
     min-height: 200px;
   }
-  
+
   .placeholder-actions {
     flex-direction: column;
     align-items: center;
   }
 }
-</style> 
+</style>

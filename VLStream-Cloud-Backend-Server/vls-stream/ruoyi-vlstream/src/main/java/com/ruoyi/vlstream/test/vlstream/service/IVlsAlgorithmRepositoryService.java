@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,37 +17,37 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmRepositoryVO;
 import java.util.List;
 
 /**
- * 算法仓库表 服务类
+ * algorithm service
  *
  * @author Oort
  * @since 2025-12-23
  */
 public interface IVlsAlgorithmRepositoryService extends BaseService<AlgorithmRepository> {
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsAlgorithmRepository 查询参数
+	 * @param page parameter
+	 * @param vlsAlgorithmRepository Query parameter
 	 * @return IPage<VlsAlgorithmRepositoryVO>
 	 */
 	IPage<AlgorithmRepositoryVO> selectVlsAlgorithmRepositoryPage(IPage<AlgorithmRepositoryVO> page, AlgorithmRepositoryVO vlsAlgorithmRepository);
 
 	/**
-	 * 导出数据
+	 * Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsAlgorithmRepositoryExcel>
 	 */
 	List<VlsAlgorithmRepositoryExcel> exportVlsAlgorithmRepository(Wrapper<AlgorithmRepository> queryWrapper);
 
 	/**
-	 * 分页查询算法仓库列表
+	 * Query algorithm list
 	 *
-	 * @param page 分页参数
-	 * @param name 仓库名称（模糊查询）
-	 * @param repositoryType 仓库类型
-	 * @param status 状态
-	 * @return 分页结果
+	 * @param page parameter
+	 * @param name ( Query )
+	 * @param repositoryType
+	 * @param status
+	 * @return
 	 */
 	IPage<AlgorithmRepository> selectRepositoryPage(Page<AlgorithmRepository> page,
 													String name,
@@ -54,81 +55,81 @@ public interface IVlsAlgorithmRepositoryService extends BaseService<AlgorithmRep
 													String status);
 
 	/**
-	 * 查询所有启用的算法仓库
+	 * Query all algorithm
 	 *
-	 * @return 启用的算法仓库列表
+	 * @return algorithm
 	 */
 	List<AlgorithmRepository> getEnabledRepositories();
 
 	/**
-	 * 根据类型查询算法仓库
+	 * Query algorithm
 	 *
-	 * @param repositoryType 仓库类型
-	 * @return 算法仓库列表
+	 * @param repositoryType
+	 * @return algorithm
 	 */
 	List<AlgorithmRepository> getByRepositoryType(String repositoryType);
 
 	/**
-	 * 创建算法仓库
+	 * algorithm
 	 *
-	 * @param repository 算法仓库信息
-	 * @return 是否成功
+	 * @param repository algorithm info
+	 * @return whether successfully
 	 */
 	boolean createRepository(AlgorithmRepository repository);
 
 	/**
-	 * 更新算法仓库
+	 * new algorithm
 	 *
-	 * @param repository 算法仓库信息
-	 * @return 是否成功
+	 * @param repository algorithm info
+	 * @return whether successfully
 	 */
 	boolean updateRepository(AlgorithmRepository repository);
 
 	/**
-	 * 删除算法仓库
+	 * Delete algorithm
 	 *
-	 * @param id 仓库ID
-	 * @return 是否成功
+	 * @param id ID
+	 * @return whether successfully
 	 */
 	boolean deleteRepository(Long id);
 
 	/**
-	 * 批量删除算法仓库
+	 * Batch delete algorithm
 	 *
-	 * @param ids 仓库ID列表
-	 * @return 是否成功
+	 * @param ids ID
+	 * @return whether successfully
 	 */
 	boolean batchDeleteRepositories(List<Long> ids);
 
 	/**
-	 * 更新仓库状态
+	 * new
 	 *
-	 * @param id 仓库ID
-	 * @param status 新状态
-	 * @return 是否成功
+	 * @param id ID
+	 * @param status new
+	 * @return whether successfully
 	 */
 	boolean updateRepositoryStatus(Long id, String status);
 
 	/**
-	 * 批量更新仓库状态
+	 * new
 	 *
-	 * @param ids 仓库ID列表
-	 * @param status 新状态
-	 * @return 是否成功
+	 * @param ids ID
+	 * @param status new
+	 * @return whether successfully
 	 */
 	boolean batchUpdateRepositoryStatus(List<Long> ids, String status);
 
 	/**
-	 * 统计算法仓库数量
+	 * algorithm
 	 *
-	 * @return 仓库总数
+	 * @return
 	 */
 	Long countRepositories();
 
 	/**
-	 * 更新仓库的算法数量
+	 * new algorithm
 	 *
-	 * @param repositoryId 仓库ID
+	 * @param repositoryId ID
 	 */
 	void updateAlgorithmCount(Long repositoryId);
 

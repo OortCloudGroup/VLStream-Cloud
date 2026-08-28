@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,28 +15,28 @@
 //import java.util.List;
 //
 ///**
-// * 经办人节点（只有属性）
+// * node (only property)
 // */
 //@EqualsAndHashCode(callSuper = true)
 //@Data
 //public abstract class AssigneeNode extends Node {
-//    // 审批对象
+// // approvalobject
 //    private AssigneeTypeEnum assigneeType;
-//    // 表单内人员
+// // form
 //    private String formUser;
-//    // 表单内角色
+// // form role
 //    private String formRole;
-//    // 审批人
+// // approver
 //    private List<String> users;
-//    // 审批人角色
+// // approverrole
 //    private List<String> roles;
-//    // 主管
+// // main
 //    private Integer leader;
-//    // 组织主管
+// // main
 //    private Integer orgLeader;
-//    // 发起人自选：true-单选，false-多选
+// // : true- , false-
 //    private Boolean choice;
-//    // 发起人自己
+// //
 //    private Boolean self;
 //
 //

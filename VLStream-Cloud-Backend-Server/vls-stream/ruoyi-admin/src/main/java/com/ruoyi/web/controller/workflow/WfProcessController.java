@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 工作流流程管理
+ * workflow
  *
  * @author KonBAI
  * @createTime 2022/3/24 18:54
@@ -59,9 +59,9 @@ public class WfProcessController extends BaseController {
     private final HistoryService historyService;
 
     /**
-     * 查询可发起流程列表
+     * Query workflow list
      *
-     * @param pageQuery 分页参数
+     * @param pageQuery parameter
      */
     @GetMapping(value = "/list")
     @SaCheckPermission("workflow:process:startProcessList")
@@ -70,7 +70,7 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 我拥有的流程
+     * workflow
      */
     @SaCheckPermission("workflow:process:ownProcessList")
     @GetMapping(value = "/ownList")
@@ -79,7 +79,7 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 查询所有流程
+     * Query all workflow
      */
     @SaCheckPermission("workflow:process:allProcessList")
     @GetMapping(value = "/allList")
@@ -89,7 +89,7 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 获取待办列表
+     * Get
      */
     @SaCheckPermission("workflow:process:todoProcessList")
     @GetMapping(value = "/todoList")
@@ -99,10 +99,10 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 获取待签列表
+     * Get
      *
-     * @param processQuery 流程业务对象
-     * @param pageQuery    分页参数
+     * @param processQuery workflow object
+     * @param pageQuery parameter
      */
     @SaCheckPermission("workflow:process:claimProcessList")
     @GetMapping(value = "/claimList")
@@ -112,9 +112,9 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 获取已办列表
+     * Get already
      *
-     * @param pageQuery 分页参数
+     * @param pageQuery parameter
      */
     @SaCheckPermission("workflow:process:finishedProcessList")
     @GetMapping(value = "/finishedList")
@@ -124,10 +124,10 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 获取抄送列表
+     * Get
      *
-     * @param copyBo    流程抄送对象
-     * @param pageQuery 分页参数
+     * @param copyBo workflow object
+     * @param pageQuery parameter
      */
     @SaCheckPermission("workflow:process:copyProcessList")
     @GetMapping(value = "/copyList")
@@ -138,7 +138,7 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 导出可发起流程列表
+     * Export workflow
      */
     @SaCheckPermission("workflow:process:startExport")
     @Log(title = "导出可发起流程", businessType = BusinessType.EXPORT)
@@ -149,7 +149,7 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 导出我拥有流程列表
+     * Export workflow
      */
     @SaCheckPermission("workflow:process:ownExport")
     @Log(title = "我拥有流程", businessType = BusinessType.EXPORT)
@@ -165,7 +165,7 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 导出所有流程列表
+     * Export all workflow
      */
     @SaCheckPermission("workflow:process:allExport")
     @Log(title = "所有流程", businessType = BusinessType.EXPORT)
@@ -181,7 +181,7 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 导出待办流程列表
+     * Export workflow
      */
     @SaCheckPermission("workflow:process:todoExport")
     @Log(title = "待办流程", businessType = BusinessType.EXPORT)
@@ -194,7 +194,7 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 导出待签流程列表
+     * Export workflow
      */
     @SaCheckPermission("workflow:process:claimExport")
     @Log(title = "待签流程", businessType = BusinessType.EXPORT)
@@ -207,7 +207,7 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 导出已办流程列表
+     * Export already workflow
      */
     @SaCheckPermission("workflow:process:finishedExport")
     @Log(title = "已办流程", businessType = BusinessType.EXPORT)
@@ -220,7 +220,7 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 导出抄送流程列表
+     * Export workflow
      */
     @SaCheckPermission("workflow:process:copyExport")
     @Log(title = "抄送流程", businessType = BusinessType.EXPORT)
@@ -233,10 +233,10 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 查询流程部署关联表单信息
+     * Query workflow forminfo
      *
-     * @param definitionId 流程定义id
-     * @param deployId     流程部署id
+     * @param definitionId workflow definitionid
+     * @param deployId workflow id
      */
     @GetMapping("/getProcessForm")
     @SaCheckPermission("workflow:process:getForm")
@@ -247,7 +247,7 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 根据流程定义id启动流程实例
+     * workflow definitionid workflow instance
      */
     @SaCheckPermission("workflow:process:start")
     @PostMapping("/start")
@@ -262,9 +262,9 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 删除流程实例
+     * Delete workflow instance
      *
-     * @param instanceIds 流程实例ID串
+     * @param instanceIds workflow instance ID
      */
     @DeleteMapping("/instance/{instanceIds}")
     @SaCheckPermission("workflow:process:delete")
@@ -274,9 +274,9 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 读取xml文件
+     * xml
      *
-     * @param processDefId 流程定义ID
+     * @param processDefId workflow definition ID
      */
     @SaCheckPermission("workflow:process:getBpmnXml")
     @GetMapping("/bpmnXml/{processDefId}")
@@ -285,9 +285,9 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 返回流程json
+     * workflowjson
      *
-     * @param processDefId 流程定义ID
+     * @param processDefId workflow definition ID
      */
     @SaCheckPermission("workflow:process:getBpmnJson")
     @GetMapping("/bpmnJson/{processDefId}")
@@ -297,11 +297,11 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 查询流程详情信息
+     * Query workflow info
      *
-     * @param procInsId          流程实例ID
-     * @param taskId             任务ID
-     * @param includeApproverIds 是否需要返回所有审批人ID列表
+     * @param procInsId workflow instance ID
+     * @param taskId taskID
+     * @param includeApproverIds whether need to all approverID
      */
     @SaCheckPermission("workflow:process:detail")
     @GetMapping("/detail")
@@ -312,9 +312,9 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 根据流程模板id获取所有用户节点相关联的用户信息
+     * workflow idGet all usernoderelated userinfo
      *
-     * @param processDefKey 流程定义ID
+     * @param processDefKey workflow definition ID
      */
     @SaCheckPermission("workflow:process:getAllUserInfo")
     @GetMapping("/getAllUserInfo/{processDefKey}")
@@ -323,7 +323,7 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 获取流程所有状态值
+     * Get workflowall value
      */
     @SaCheckPermission("workflow:process:getAllProcessStatus")
     @GetMapping("/getAllProcessStatus")
@@ -336,7 +336,7 @@ public class WfProcessController extends BaseController {
     }
 
     // /**
-    // * 获取当前流程所有待办候选人或者候选组
+    // * Get current workflowall candidate user candidate group
     // */
     // @GetMapping("/getAllCandidate")
     // public R getAllCandidate(String procInsId) {
@@ -345,7 +345,7 @@ public class WfProcessController extends BaseController {
     // }
 
     /**
-     * 根据流程实例id获取附件pdf信息
+     * workflow instanceidGet pdfinfo
      */
     @SaCheckPermission("workflow:process:getPDF")
     @PostMapping(value = "/getPDF/{procInstId}")
@@ -354,7 +354,7 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 根据流程实例id获取最新的已完成的用户节点信息
+     * workflow instanceidGet new already usernodeinfo
      */
     @SaCheckPermission("workflow:process:getLatestHisProInsInfo")
     @GetMapping(value = "/getLatestHisProInsInfo/{procInstId}")
@@ -363,7 +363,7 @@ public class WfProcessController extends BaseController {
     }
 
     /**
-     * 获取历史任务信息列表
+     * Get history taskinfo
      *
      * @param historicProcIns
      * @return

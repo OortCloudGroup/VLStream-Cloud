@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 容器实例表 控制器
+ * instance control
  *
  * @author Oort
  * @since 2025-12-23
@@ -68,7 +69,7 @@ public class VlsContainerInstanceController extends BladeController {
 	}
 
 	/**
-	 * 容器实例表 详情
+	 * instance
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -79,7 +80,7 @@ public class VlsContainerInstanceController extends BladeController {
 	}
 
 	/**
-	 * 容器实例表 分页
+	 * instance
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -91,7 +92,7 @@ public class VlsContainerInstanceController extends BladeController {
 
 
 	/**
-	 * 容器实例表 自定义分页
+	 * instance Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -102,7 +103,7 @@ public class VlsContainerInstanceController extends BladeController {
 	}
 
 	/**
-	 * 容器实例表 新增
+	 * instance Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -112,7 +113,7 @@ public class VlsContainerInstanceController extends BladeController {
 	}
 
 	/**
-	 * 容器实例表 修改
+	 * instance Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -122,7 +123,7 @@ public class VlsContainerInstanceController extends BladeController {
 	}
 
 	/**
-	 * 容器实例表 新增或修改
+	 * instance Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -132,7 +133,7 @@ public class VlsContainerInstanceController extends BladeController {
 	}
 
 	/**
-	 * 容器实例表 删除
+	 * instance Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -142,7 +143,7 @@ public class VlsContainerInstanceController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsContainerInstance")
 	@ApiOperationSupport(order = 8)

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-dialog v-model="dialogVisible" class="diaOutSet" title="确认事件" top="5vh" width="60%" :before-close="handleClose" destroy-on-close>
     <div v-if="eventDetailData">
@@ -206,7 +211,7 @@
         确 定
       </el-button>
     </div>
-    <!-- 视频播放弹窗 -->
+    <!-- dialog -->
     <el-dialog
       v-model="videoDialogVisible"
       title="视频播放"
@@ -275,8 +280,8 @@ interface FeedbackItem {
   task_event_id?: string
   uuid?: string
 }
-let codeAct_2 = ref(false) // 展开收缩
-let codeAct = ref(true) // 展开收缩
+let codeAct_2 = ref(false) //
+let codeAct = ref(true) //
 const options = ref<any>([])
 const props = defineProps<Props>()
 const emit = defineEmits(['update:visible', 'refresh'])
@@ -287,13 +292,13 @@ const dialogVisible = computed({
   set: (value: boolean) => emit('update:visible', value)
 })
 
-// 关闭对话框
+//
 const handleClose = () => {
   dialogVisible.value = false
   emit('refresh')
 }
 const _submitForm = () => {
-  // 提交
+  //
 }
 const selectContent = (content) => {
   formData.value.describe = content
@@ -321,7 +326,7 @@ const openVideoDialog = (data) => {
   }
 }
 
-// 数据初始化
+// dataInitialize
 watch([() => props.visible, () => props.data], async([newVisible, newData]) => {
   if (newVisible && newData) {
     formData.value = initFormData()
@@ -345,7 +350,7 @@ const initFormData = () => ({
 const formData = ref(initFormData())
 const formRef = ref()
 
-// 表单验证规则
+// form
 const formRules = ref({
   describe: [
     { required: true, message: '请输入反馈描述', trigger: 'blur' }
@@ -358,7 +363,7 @@ const formRules = ref({
   ]
 })
 
-// 获取工单列表
+// Get work order
 const fetchWorkOrderList = async() => {
   try {
     const appObj = await resolveWorkOrderAppContext()
@@ -379,26 +384,26 @@ const fetchWorkOrderList = async() => {
       options.value = []
     }
   } catch (error) {
-    // 获取工单列表失败，使用空数组
+    // Get work order failed, null / empty array
     options.value = []
   }
 }
 
-// 添加事件反馈
+// event
 const addFeedbackForm = async() => {
-  // 表单验证
+  // form
   if (!formRef.value) return
   try {
     await formRef.value.validate()
   } catch (error) {
-    return // 验证失败，不提交
+    return // failed,
   }
   const params = {
     accessToken: store.token,
     ...formData.value,
     id: eventDetailData.value?.id
   }
-  // 反馈时状态为待确认时,必填 (状态 1:已完成 2:待处理)
+  // to , ( 1: already 2: Process )
   if (eventDetailData.value.status === 2 && !params.mod_status) {
     return ElMessage.warning('请选择告警确认')
   }
@@ -415,7 +420,7 @@ const addFeedbackForm = async() => {
   }
 }
 const feedbackListData = ref<FeedbackItem[]>([])
-// 反馈列表
+//
 const getFeedbackList = async() => {
   const params = {
     accessToken: store.token,
@@ -430,7 +435,7 @@ const getFeedbackList = async() => {
 }
 
 onMounted(() => {
-  fetchWorkOrderList() // 获取工单列表
+  fetchWorkOrderList() // Get work order
 })
 </script>
 
@@ -593,7 +598,7 @@ onMounted(() => {
   border-left: 3px solid transparent !important;
 }
 
-// 更多-展开
+// -
 .codeActBox {
   gap: 10px;
   color: var(--el-color-primary);

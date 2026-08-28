@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 用户信息
+ * userinfo
  *
  * @author Lion Li
  */
@@ -65,7 +65,7 @@ public class SysUserController extends BaseController {
     private final ISysDeptService deptService;
 
     /**
-     * 获取用户列表
+     * Get user
      */
 
     @SaCheckPermission("system:user:list")
@@ -75,7 +75,7 @@ public class SysUserController extends BaseController {
     }
 
     /**
-     * 查询用户列表，用于用户选择场景
+     * Query user list, user
      */
     @SaCheckLogin
     @GetMapping("/selectUser")
@@ -84,7 +84,7 @@ public class SysUserController extends BaseController {
     }
 
     /**
-     * 导出用户列表
+     * Export user
      */
     @Log(title = "用户管理", businessType = BusinessType.EXPORT)
     @SaCheckPermission("system:user:export")
@@ -104,10 +104,10 @@ public class SysUserController extends BaseController {
     }
 
     /**
-     * 导入数据
+     * Import data
      *
-     * @param file          导入文件
-     * @param updateSupport 是否更新已存在数据
+     * @param file Import
+     * @param updateSupport whether new already in data
      */
     @Log(title = "用户管理", businessType = BusinessType.IMPORT)
     @SaCheckPermission("system:user:import")
@@ -118,7 +118,7 @@ public class SysUserController extends BaseController {
     }
 
     /**
-     * 获取导入模板
+     * Get Import
      */
     @PostMapping("/importTemplate")
     public void importTemplate(HttpServletResponse response) {
@@ -126,9 +126,9 @@ public class SysUserController extends BaseController {
     }
 
     /**
-     * 根据用户编号获取详细信息
+     * user Get info
      *
-     * @param userId 用户ID
+     * @param userId user ID
      */
     @SaCheckPermission("system:user:query")
     @GetMapping(value = {"/", "/{userId}"})
@@ -148,7 +148,7 @@ public class SysUserController extends BaseController {
     }
 
     /**
-     * 新增用户
+     * Add user
      */
     @SaCheckPermission("system:user:add")
     @Log(title = "用户管理", businessType = BusinessType.INSERT)
@@ -166,7 +166,7 @@ public class SysUserController extends BaseController {
     }
 
     /**
-     * 修改用户
+     * Update user
      */
     @SaCheckPermission("system:user:edit")
     @Log(title = "用户管理", businessType = BusinessType.UPDATE)
@@ -185,9 +185,9 @@ public class SysUserController extends BaseController {
     }
 
     /**
-     * 删除用户
+     * Delete user
      *
-     * @param userIds 角色ID串
+     * @param userIds role ID
      */
     @SaCheckPermission("system:user:remove")
     @Log(title = "用户管理", businessType = BusinessType.DELETE)
@@ -200,7 +200,7 @@ public class SysUserController extends BaseController {
     }
 
     /**
-     * 重置密码
+     *
      */
     @SaCheckPermission("system:user:resetPwd")
     @Log(title = "用户管理", businessType = BusinessType.UPDATE)
@@ -213,7 +213,7 @@ public class SysUserController extends BaseController {
     }
 
     /**
-     * 状态修改
+     * Update
      */
     @SaCheckPermission("system:user:edit")
     @Log(title = "用户管理", businessType = BusinessType.UPDATE)
@@ -225,9 +225,9 @@ public class SysUserController extends BaseController {
     }
 
     /**
-     * 根据用户编号获取授权角色
+     * user Get role
      *
-     * @param userId 用户ID
+     * @param userId user ID
      */
     @SaCheckPermission("system:user:query")
     @GetMapping("/authRole/{userId}")
@@ -241,10 +241,10 @@ public class SysUserController extends BaseController {
     }
 
     /**
-     * 用户授权角色
+     * user role
      *
-     * @param userId  用户Id
-     * @param roleIds 角色ID串
+     * @param userId userId
+     * @param roleIds role ID
      */
     @SaCheckPermission("system:user:edit")
     @Log(title = "用户管理", businessType = BusinessType.GRANT)
@@ -257,7 +257,7 @@ public class SysUserController extends BaseController {
     }
 
     /**
-     * 获取部门树列表
+     * Get department
      */
     @SaCheckPermission("system:user:list")
     @GetMapping("/deptTree")
@@ -266,7 +266,7 @@ public class SysUserController extends BaseController {
     }
 
     /**
-     * 获取领导(包括同部门领导)
+     * Get leader( departmentleader)
      */
     @GetMapping("/getLeaders")
     public R<List<SysUser>> getLeaders(@RequestHeader("Authorization")String token) {
@@ -275,7 +275,7 @@ public class SysUserController extends BaseController {
         return R.ok(leaders);
     }
     /**
-     * 获取领导(不包括同部门领导)
+     * Get leader( departmentleader)
      */
     @GetMapping("/getLeadersSuperior")
     public R<List<SysUser>> getLeadersSuperior(@RequestHeader("Authorization")String token) {

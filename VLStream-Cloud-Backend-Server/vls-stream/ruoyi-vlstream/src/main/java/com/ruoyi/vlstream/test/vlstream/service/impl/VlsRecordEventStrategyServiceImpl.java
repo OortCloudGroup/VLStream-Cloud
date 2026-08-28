@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,7 +16,7 @@ import com.ruoyi.vlstream.test.vlstream.service.IVlsRecordEventStrategyService;
 import org.springframework.stereotype.Service;
 
 /**
- * 摄像头事件策略 服务实现类
+ * event service
  */
 @Service
 public class VlsRecordEventStrategyServiceImpl extends BaseServiceImpl<VlsRecordEventStrategyMapper, RecordEventStrategy>

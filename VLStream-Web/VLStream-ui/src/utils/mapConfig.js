@@ -1,10 +1,15 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * 地图配置工具类
- * 提供稳定的瓦片服务器配置和错误处理
+ * configuration
+ * service configuration and Process
  */
 
 export class MapConfig {
-  // 标准地图瓦片服务器列表（按优先级排序）
+  // service ( )
   static standardServers = [
     {
       url: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
@@ -28,7 +33,7 @@ export class MapConfig {
     }
   ]
 
-  // 卫星地图瓦片服务器列表
+  // service
   static satelliteServers = [
     {
       url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -42,26 +47,26 @@ export class MapConfig {
     }
   ]
 
-  // 当前使用的服务器索引
+  // current service
   static currentStandardIndex = 0
   static currentSatelliteIndex = 0
 
   /**
-   * 获取当前标准地图服务器配置
+   * Get current service configuration
    */
   static getCurrentStandardServer() {
     return this.standardServers[this.currentStandardIndex]
   }
 
   /**
-   * 获取当前卫星地图服务器配置
+   * Get current service configuration
    */
   static getCurrentSatelliteServer() {
     return this.satelliteServers[this.currentSatelliteIndex]
   }
 
   /**
-   * 切换到下一个标准地图服务器
+   * service
    */
   static switchToNextStandardServer() {
     this.currentStandardIndex = (this.currentStandardIndex + 1) % this.standardServers.length
@@ -69,7 +74,7 @@ export class MapConfig {
   }
 
   /**
-   * 切换到下一个卫星地图服务器
+   * service
    */
   static switchToNextSatelliteServer() {
     this.currentSatelliteIndex = (this.currentSatelliteIndex + 1) % this.satelliteServers.length
@@ -77,7 +82,7 @@ export class MapConfig {
   }
 
   /**
-   * 创建标准地图图层
+   * layer
    */
   static createStandardLayer() {
     const server = this.getCurrentStandardServer()
@@ -85,13 +90,13 @@ export class MapConfig {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 18,
       errorTileUrl: '/src/assets/error-tile.svg',
-      timeout: 10000, // 10秒超时
-      retryUrl: true // 启用重试
+      timeout: 10000, // 10
+      retryUrl: true //
     })
   }
 
   /**
-   * 创建卫星地图图层
+   * layer
    */
   static createSatelliteLayer() {
     const server = this.getCurrentSatelliteServer()
@@ -99,20 +104,20 @@ export class MapConfig {
       attribution: '&copy; <a href="https://www.esri.com/">Esri</a> contributors',
       maxZoom: 18,
       errorTileUrl: '/src/assets/error-tile.svg',
-      timeout: 10000, // 10秒超时
-      retryUrl: true // 启用重试
+      timeout: 10000, // 10
+      retryUrl: true //
     })
   }
 
   /**
-   * 测试瓦片服务器连接
+   * service
    */
   static async testServer(server) {
     try {
       const testUrl = server.url.replace('{z}', '0').replace('{x}', '0').replace('{y}', '0').replace('{s}', 'a')
-      const response = await fetch(testUrl, { 
-        method: 'HEAD', 
-        timeout: 5000 
+      const response = await fetch(testUrl, {
+        method: 'HEAD',
+        timeout: 5000
       })
       return response.ok
     } catch (error) {
@@ -122,7 +127,7 @@ export class MapConfig {
   }
 
   /**
-   * 自动选择最优服务器
+   * service
    */
   static async selectBestServer(servers) {
     for (let i = 0; i < servers.length; i++) {
@@ -138,23 +143,23 @@ export class MapConfig {
   }
 }
 
-// 地图样式配置
+// configuration
 export const mapStyles = {
   container: {
     width: '100%',
     height: '100%',
     position: 'relative'
   },
-  
-  // 地图控件样式
+
+  //
   controls: {
     position: 'absolute',
     top: '10px',
     right: '10px',
     zIndex: 1000
   },
-  
-  // 加载提示样式
+
+  // Load prompt / tip
   loading: {
     position: 'absolute',
     top: '50%',
@@ -168,4 +173,4 @@ export const mapStyles = {
   }
 }
 
-export default MapConfig 
+export default MapConfig

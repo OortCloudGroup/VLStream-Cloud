@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,9 +15,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 规则树对象 rule_tree
+ * object rule_tree
  *
- * @author 雷超群
+ * @author
  * @date 2024-12-17
  */
 @Data
@@ -25,29 +26,29 @@ import lombok.EqualsAndHashCode;
 public class RuleTree extends TreeEntity {
     private static final long serialVersionUID = 1L;
 
-    /** 规则树ID */
+    /* * ID */
     @TableId(value = "id",type = IdType.ASSIGN_ID)
     private String id;
     /**
-     * 用户ID
+     * user ID
      */
     private String userId;
     /**
-     * 租户ID
+     * tenant ID
      */
     private String tenantId;
-    /** 规则树名称 */
+    /* * */
     @ExcelProperty("规则树名称")
     private String name;
 
-    /** 规则树描述 */
+    /* * */
     @ExcelProperty("规则树描述")
     private String description;
 
-    /** 删除标记，0表示未删除，1表示删除 */
+    /* * Delete , 0 not Delete , 1 Delete */
     private String delFlag;
     /**
-     * 0流程 1工单
+     * 0workflow 1work order
      */
     private String type;
 }

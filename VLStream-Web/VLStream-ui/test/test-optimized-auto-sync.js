@@ -1,20 +1,25 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * 优化后的自动跨系统Token同步测试脚本
- * 测试智能验证和缓存机制
+ * after Token
+ * can and
  */
 
 console.log('🎯 优化后的自动跨系统Token同步测试')
 console.log('=' * 60)
 
-// 测试智能验证机制
+// can
 function testSmartValidation() {
   console.log('\n🧠 测试智能验证机制...')
-  
+
   if (!window.autoCrossSystemSync) {
     console.log('❌ 自动同步器未加载')
     return false
   }
-  
+
   console.log('📊 验证缓存状态:', {
     tokenValidationCache: window.autoCrossSystemSync.tokenValidationCache.size,
     failedTokenCache: window.autoCrossSystemSync.failedTokenCache.size,
@@ -22,21 +27,21 @@ function testSmartValidation() {
     lastValidationTime: window.autoCrossSystemSync.lastValidationTime,
     validationCooldown: window.autoCrossSystemSync.validationCooldown
   })
-  
+
   return true
 }
 
-// 测试缓存清理
+//
 function testCacheClearing() {
   console.log('\n🧹 测试缓存清理功能...')
-  
+
   try {
-    // 清理验证缓存
+    //
     window.autoCrossSystemSync.clearValidationCache()
-    
-    // 重置失败记录
+
+    // failedrecord
     window.autoCrossSystemSync.resetFailedAttempts()
-    
+
     console.log('✅ 缓存清理成功')
     return true
   } catch (error) {
@@ -45,36 +50,36 @@ function testCacheClearing() {
   }
 }
 
-// 测试失败token处理
+// failedtokenProcess
 function testFailedTokenHandling() {
   console.log('\n🚫 测试失败Token处理...')
-  
+
   const testToken = 'invalid_token_' + Date.now()
-  
-  // 模拟失败token
+
+  // failedtoken
   window.autoCrossSystemSync.failedTokenCache.add(testToken)
   window.autoCrossSystemSync.failedAttempts.set(testToken, 3)
-  
+
   console.log('📝 添加测试失败token:', testToken.substring(0, 8) + '...')
-  
-  // 验证是否会被跳过
+
+  // whether will
   const isSkipped = window.autoCrossSystemSync.failedTokenCache.has(testToken)
   console.log('🔍 失败token是否被跳过:', isSkipped)
-  
+
   return isSkipped
 }
 
-// 测试验证冷却机制
+//
 function testValidationCooldown() {
   console.log('\n⏳ 测试验证冷却机制...')
-  
+
   const now = Date.now()
   const lastValidationTime = window.autoCrossSystemSync.lastValidationTime
   const cooldown = window.autoCrossSystemSync.validationCooldown
-  
+
   const timeSinceLastValidation = now - lastValidationTime
   const isInCooldown = timeSinceLastValidation < cooldown
-  
+
   console.log('📊 冷却状态:', {
     now,
     lastValidationTime,
@@ -83,34 +88,34 @@ function testValidationCooldown() {
     isInCooldown,
     remainingCooldown: Math.max(0, cooldown - timeSinceLastValidation)
   })
-  
+
   return isInCooldown
 }
 
-// 测试当前token状态
+// current token
 function testCurrentTokenStatus() {
   console.log('\n🔍 检查当前Token状态...')
-  
+
   const currentToken = window.autoCrossSystemSync.getCurrentSystemToken()
-  const urlToken = new URLSearchParams(window.location.search).get('accessToken') || 
+  const urlToken = new URLSearchParams(window.location.search).get('accessToken') ||
                   new URLSearchParams(window.location.search).get('token')
-  
+
   console.log('📊 当前Token状态:', {
     currentToken: currentToken ? currentToken.substring(0, 8) + '...' : 'null',
     urlToken: urlToken ? urlToken.substring(0, 8) + '...' : 'null',
-    sessionStorageToken: sessionStorage.getItem('token') ? 
+    sessionStorageToken: sessionStorage.getItem('token') ?
       sessionStorage.getItem('token').substring(0, 8) + '...' : 'null',
-    sessionStorageAccessToken: sessionStorage.getItem('accessToken') ? 
+    sessionStorageAccessToken: sessionStorage.getItem('accessToken') ?
       sessionStorage.getItem('accessToken').substring(0, 8) + '...' : 'null'
   })
-  
+
   return { currentToken, urlToken }
 }
 
-// 测试手动触发同步
+//
 function testManualSync() {
   console.log('\n🔄 测试手动触发优化后的同步...')
-  
+
   try {
     window.autoCrossSystemSync.forceSync()
     console.log('✅ 手动触发同步成功')
@@ -121,59 +126,59 @@ function testManualSync() {
   }
 }
 
-// 测试URL参数token同步
+// URLparametertoken
 function testUrlTokenSync() {
   console.log('\n🔗 测试URL参数Token同步...')
-  
-  // 模拟URL参数中的token
+
+  // URLparameter in token
   const testToken = 'test_token_' + Date.now()
   const currentUrl = new URL(window.location.href)
   currentUrl.searchParams.set('accessToken', testToken)
-  
+
   console.log('📝 模拟URL参数token:', testToken.substring(0, 8) + '...')
   console.log('🔗 新URL:', currentUrl.toString())
-  
-  // 更新URL（不刷新页面）
+
+  // new URL ( new page)
   window.history.pushState({}, document.title, currentUrl.toString())
-  
-  // 手动触发同步检查
+
+  //
   setTimeout(() => {
     window.autoCrossSystemSync.forceSync()
   }, 1000)
-  
+
   return testToken
 }
 
-// 完整测试流程
+// workflow
 async function runOptimizedTest() {
   console.log('🚀 开始优化后的自动跨系统Token同步测试')
   console.log('=' * 70)
-  
-  // 1. 测试智能验证机制
+
+  // 1. can
   const smartValidationOk = testSmartValidation()
   if (!smartValidationOk) {
     console.log('❌ 智能验证机制测试失败，测试终止')
     return
   }
-  
-  // 2. 测试缓存清理
+
+  // 2.
   testCacheClearing()
-  
-  // 3. 测试失败token处理
+
+  // 3. failedtokenProcess
   testFailedTokenHandling()
-  
-  // 4. 测试验证冷却机制
+
+  // 4.
   testValidationCooldown()
-  
-  // 5. 检查当前token状态
+
+  // 5. current token
   const tokenStatus = testCurrentTokenStatus()
-  
-  // 6. 测试手动同步
+
+  // 6.
   testManualSync()
-  
-  // 7. 测试URL参数同步
+
+  // 7. URLparameter
   testUrlTokenSync()
-  
+
   console.log('\n' + '=' * 70)
   console.log('🎯 优化后的自动跨系统Token同步测试完成')
   console.log('\n💡 优化特性:')
@@ -189,18 +194,18 @@ async function runOptimizedTest() {
   console.log('- window.autoCrossSystemSync.stop() - 停止同步')
 }
 
-// 实时监控测试
+//
 function startOptimizedMonitoring() {
   console.log('\n📊 启动优化后的实时监控...')
-  
+
   let monitorCount = 0
   const maxMonitors = 15
-  
+
   const monitor = setInterval(() => {
     monitorCount++
     const currentToken = window.autoCrossSystemSync.getCurrentSystemToken()
     const lastUnifiedToken = window.autoCrossSystemSync.lastUnifiedToken
-    
+
     console.log(`📊 监控 ${monitorCount}/${maxMonitors}:`, {
       currentToken: currentToken ? currentToken.substring(0, 8) + '...' : 'null',
       lastUnifiedToken: lastUnifiedToken ? lastUnifiedToken.substring(0, 8) + '...' : 'null',
@@ -208,17 +213,17 @@ function startOptimizedMonitoring() {
       failedTokenCache: window.autoCrossSystemSync.failedTokenCache.size,
       failedAttempts: window.autoCrossSystemSync.failedAttempts.size
     })
-    
+
     if (monitorCount >= maxMonitors) {
       clearInterval(monitor)
       console.log('📊 优化后的实时监控结束')
     }
   }, 4000)
-  
+
   return monitor
 }
 
-// 导出测试函数
+// Export
 window.testOptimizedAutoSync = {
   runOptimizedTest,
   startOptimizedMonitoring,
@@ -233,4 +238,4 @@ window.testOptimizedAutoSync = {
 
 console.log('✅ 优化后的自动跨系统Token同步测试脚本已加载')
 console.log('💡 运行测试: testOptimizedAutoSync.runOptimizedTest()')
-console.log('💡 启动监控: testOptimizedAutoSync.startOptimizedMonitoring()') 
+console.log('💡 启动监控: testOptimizedAutoSync.startOptimizedMonitoring()')

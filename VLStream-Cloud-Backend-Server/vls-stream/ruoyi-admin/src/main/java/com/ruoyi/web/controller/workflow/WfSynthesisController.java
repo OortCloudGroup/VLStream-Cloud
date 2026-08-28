@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -28,9 +29,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 综合通用流程
+ * workflow
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-04
  */
 @Validated
@@ -42,7 +43,7 @@ public class WfSynthesisController extends BaseController {
     private final IWfSynthesisService iWfSynthesisService;
 
     /**
-     * 查询综合通用流程列表
+     * Query workflow list
      */
     @SaCheckPermission("wf:synthesis:list")
     @GetMapping("/list")
@@ -52,7 +53,7 @@ public class WfSynthesisController extends BaseController {
     }
 
     /**
-     * 查询全部综合通用流程
+     * Query full workflow
      */
     @SaCheckPermission("wf:synthesis:queryListAll")
     @GetMapping("/listAll")
@@ -61,7 +62,7 @@ public class WfSynthesisController extends BaseController {
     }
 
     /**
-     * 导出综合通用流程列表
+     * Export workflow
      */
     @SaCheckPermission("wf:synthesis:export")
     @Log(title = "综合通用流程", businessType = BusinessType.EXPORT)
@@ -72,9 +73,9 @@ public class WfSynthesisController extends BaseController {
     }
 
     /**
-     * 获取综合通用流程详细信息
+     * Get workflow info
      *
-     * @param synthesisId 主键
+     * @param synthesisId primary key
      */
     @SaCheckPermission("wf:synthesis:getInfo")
     @GetMapping("/{synthesisId}")
@@ -83,7 +84,7 @@ public class WfSynthesisController extends BaseController {
     }
 
     /**
-     * 新增综合通用流程
+     * Add workflow
      */
     @SaCheckPermission("wf:synthesis:add")
     @Log(title = "综合通用流程", businessType = BusinessType.INSERT)
@@ -94,7 +95,7 @@ public class WfSynthesisController extends BaseController {
     }
 
     /**
-     * 修改综合通用流程
+     * Update workflow
      */
     @SaCheckPermission("wf:synthesis:edit")
     @Log(title = "综合通用流程", businessType = BusinessType.UPDATE)
@@ -105,9 +106,9 @@ public class WfSynthesisController extends BaseController {
     }
 
     /**
-     * 删除综合通用流程
+     * Delete workflow
      *
-     * @param synthesisIds 主键串
+     * @param synthesisIds primary key
      */
     @SaCheckPermission("wf:synthesis:remove")
     @Log(title = "综合通用流程", businessType = BusinessType.DELETE)

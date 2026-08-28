@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -20,7 +21,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * 容器实例表 实体类
+ * instance
  *
  * @author Oort
  * @since 2025-12-23
@@ -33,146 +34,146 @@ public class ContainerInstance extends TenantEntity {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 实例名称
+	 * instance
 	 */
 	@Schema(description = "实例名称")
 	private String instanceName;
 	/**
-	 * 容器ID
+	 * ID
 	 */
 	@Schema(description = "容器ID")
 	@JsonSerialize(using = ToStringSerializer.class)
 	private String containerId;
 	/**
-	 * 镜像名称
+	 *
 	 */
 	@Schema(description = "镜像名称")
 	private String imageName;
 	/**
-	 * 镜像类型：base-基础镜像,app-应用镜像,custom-自定义镜像,url-镜像地址
+	 * : base- ,app- ,custom-Custom ,url-
 	 */
 	@Schema(description = "镜像类型：base-基础镜像,app-应用镜像,custom-自定义镜像,url-镜像地址")
 	private String imageType;
 	/**
-	 * 镜像标签
+	 *
 	 */
 	@Schema(description = "镜像标签")
 	private String imageTag;
 	/**
-	 * 资源类型ID
+	 * ID
 	 */
 	@Schema(description = "资源类型ID")
 	@JsonSerialize(using = ToStringSerializer.class)
 	private Long resourceTypeId;
 	/**
-	 * 资源规格ID
+	 * ID
 	 */
 	@Schema(description = "资源规格ID")
 	@JsonSerialize(using = ToStringSerializer.class)
 	private Long resourceSpecId;
 	/**
-	 * 实例数量
+	 * instance
 	 */
 	@Schema(description = "实例数量")
 	private Integer instanceCount;
 	/**
-	 * 算法ID
+	 * algorithmID
 	 */
 	@Schema(description = "算法ID")
 	@JsonSerialize(using = ToStringSerializer.class)
 	private Long algorithmId;
 	/**
-	 * 实例类型
+	 * instance
 	 */
 	@Schema(description = "实例类型")
 	private String instanceType;
 	/**
-	 * CPU限制
+	 * CPU
 	 */
 	@Schema(description = "CPU限制")
 	private String cpuLimit;
 	/**
-	 * 内存限制
+	 *
 	 */
 	@Schema(description = "内存限制")
 	private String memoryLimit;
 	/**
-	 * GPU限制
+	 * GPU
 	 */
 	@Schema(description = "GPU限制")
 	private String gpuLimit;
 	/**
-	 * 端口配置
+	 * configuration
 	 */
 	@Schema(description = "端口配置")
 	private String portConfig;
 	/**
-	 * 环境变量配置
+	 * variableconfiguration
 	 */
 	@Schema(description = "环境变量配置")
 	private String envConfig;
 	/**
-	 * 存储卷配置
+	 * configuration
 	 */
 	@Schema(description = "存储卷配置")
 	private String volumeConfig;
 	/**
-	 * 实例状态：running-运行中,stopped-已停止,error-错误,starting-启动中,stopping-停止中
+	 * instance : running- in ,stopped- already ,error- ,starting- in ,stopping- in
 	 */
 	@Schema(description = "实例状态：running-运行中,stopped-已停止,error-错误,starting-启动中,stopping-停止中")
 	private String instanceStatus;
 	/**
-	 * 健康状态：healthy-健康,unhealthy-不健康,unknown-未知
+	 * : healthy- ,unhealthy- ,unknown- not
 	 */
 	@Schema(description = "健康状态：healthy-健康,unhealthy-不健康,unknown-未知")
 	private String healthStatus;
 	/**
-	 * 启动时间
+	 *
 	 */
 	@Schema(description = "启动时间")
 	@DateTimeFormat(pattern = DateUtil.PATTERN_DATETIME)
 	@JsonFormat(pattern = DateUtil.PATTERN_DATETIME)
 	private Date startTime;
 	/**
-	 * 停止时间
+	 *
 	 */
 	@Schema(description = "停止时间")
 	@DateTimeFormat(pattern = DateUtil.PATTERN_DATETIME)
 	@JsonFormat(pattern = DateUtil.PATTERN_DATETIME)
 	private Date stopTime;
 	/**
-	 * 重启次数
+	 *
 	 */
 	@Schema(description = "重启次数")
 	private Integer restartCount;
 	/**
-	 * CPU使用率
+	 * CPU
 	 */
 	@Schema(description = "CPU使用率")
 	private BigDecimal cpuUsage;
 	/**
-	 * 内存使用率
+	 *
 	 */
 	@Schema(description = "内存使用率")
 	private BigDecimal memoryUsage;
 	/**
-	 * GPU使用率
+	 * GPU
 	 */
 	@Schema(description = "GPU使用率")
 	private BigDecimal gpuUsage;
 	/**
-	 * 日志路径
+	 * log
 	 */
 	@Schema(description = "日志路径")
 	private String logsPath;
 	/**
-	 * 关联的算法训练任务ID
+	 * algorithmtrainingtaskID
 	 */
 	@Schema(description = "关联的算法训练任务ID")
 	@JsonSerialize(using = ToStringSerializer.class)
 	private Long trainingTaskId;
 	/**
-	 * GPU服务器与卡信息
+	 * GPUservice and info
 	 */
 	@Schema(description = "GPU服务器ID")
 	@JsonSerialize(using = ToStringSerializer.class)

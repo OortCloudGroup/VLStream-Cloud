@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="device-list-panel">
-    <!-- 面板头部 -->
+    <!--  -->
     <div class="panel-header">
       <div class="header-title">
         <h3>设备列表</h3>
@@ -14,11 +19,11 @@
       </div>
     </div>
 
-    <!-- 视图切换按钮 -->
+    <!-- button -->
     <div class="view-toggle">
-      <button 
-        class="toggle-btn" 
-        :class="{ active: isTreeView }" 
+      <button
+        class="toggle-btn"
+        :class="{ active: isTreeView }"
         @click="toggleTreeView"
         title="树形视图"
       >
@@ -27,9 +32,9 @@
         </svg>
         树形
       </button>
-      <button 
-        class="toggle-btn" 
-        :class="{ active: !isTreeView }" 
+      <button
+        class="toggle-btn"
+        :class="{ active: !isTreeView }"
         @click="toggleListView"
         title="列表视图"
       >
@@ -40,7 +45,7 @@
       </button>
     </div>
 
-    <!-- 设备统计弹窗触发按钮 -->
+    <!-- device dialog button -->
     <div class="stats-section">
       <button class="stats-btn" @click="showDeviceStatsModal" title="设备统计">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -50,7 +55,7 @@
       </button>
     </div>
 
-    <!-- 搜索框 -->
+    <!--  -->
     <div class="search-section">
       <el-input
         :model-value="mapSearchKeyword"
@@ -62,9 +67,9 @@
       />
     </div>
 
-    <!-- 设备列表内容 -->
+    <!-- device -->
     <div class="device-content">
-      <!-- 树形视图 -->
+      <!--  -->
       <div v-if="isTreeView" class="tree-view">
         <el-tree
           :data="treeData"
@@ -90,10 +95,10 @@
         </el-tree>
       </div>
 
-      <!-- 列表视图 -->
+      <!--  -->
       <div v-else class="list-view">
         <div class="filter-section">
-          <!-- 位置分类筛选 -->
+          <!--  -->
           <el-select
             v-model="selectedLocationCategory"
             placeholder="选择位置"
@@ -109,7 +114,7 @@
             />
           </el-select>
 
-          <!-- 状态筛选 -->
+          <!--  -->
           <el-select
             v-model="selectedStatus"
             placeholder="选择状态"
@@ -126,13 +131,13 @@
           </el-select>
         </div>
 
-        <!-- 设备列表 -->
+        <!-- device -->
         <div class="device-list">
           <div
             v-for="camera in filteredCameras"
             :key="camera.id"
             class="device-item"
-            :class="{ 
+            :class="{
               active: selectedDisplayItems.includes(camera.id),
               online: camera.status === 'online',
               offline: camera.status === 'offline'
@@ -143,15 +148,15 @@
               <div class="device-name">{{ camera.name }}</div>
               <div class="device-location">{{ camera.location }}</div>
               <div class="device-status">
-                <span 
-                  class="status-indicator" 
+                <span
+                  class="status-indicator"
                   :class="camera.status"
                 ></span>
                 {{ camera.status === 'online' ? '在线' : '离线' }}
               </div>
             </div>
-            
-            <!-- 实时流状态 -->
+
+            <!--  -->
             <div v-if="realCameraStreams[camera.id]" class="stream-status">
               <span class="stream-indicator active"></span>
               <small>直播中</small>
@@ -161,7 +166,7 @@
       </div>
     </div>
 
-    <!-- 设备统计弹窗 -->
+    <!-- device dialog -->
     <el-dialog
       :model-value="showDeviceStatsDialog"
       title="设备统计信息"
@@ -169,12 +174,12 @@
       @update:model-value="handleDialogClose"
     >
       <div v-if="currentStatsItem" class="stats-content">
-        <!-- 统计图表区域 -->
+        <!--  -->
         <div class="stats-charts">
           <div class="chart-item">
             <h4>设备状态分布</h4>
             <div class="chart-placeholder">
-              <!-- 这里可以集成图表库如ECharts -->
+              <!-- ECharts -->
               <div class="simple-chart">
                 <div class="chart-bar online" style="height: 70%;">
                   <span>在线: {{ currentStatsItem.onlineCount }}</span>
@@ -186,8 +191,8 @@
             </div>
           </div>
         </div>
-        
-        <!-- 详细统计信息 -->
+
+        <!-- info -->
         <div class="stats-details">
           <div class="detail-item">
             <label>总设备数量:</label>
@@ -267,11 +272,11 @@ const emit = defineEmits([
   'tree-node-click'
 ])
 
-// 本地状态
+//
 const selectedLocationCategory = ref('')
 const selectedStatus = ref('')
 
-// 只从父组件已加载的真实设备树解析摄像机。
+// only from component already Load device Parse .
 const cameras = computed(() => {
   const result = []
   const visit = (nodes, location = '') => {
@@ -292,25 +297,25 @@ const cameras = computed(() => {
   return result
 })
 
-// 过滤后的设备列表
+// after device
 const filteredCameras = computed(() => {
   let filtered = cameras.value
 
-  // 按位置筛选
+  //
   if (selectedLocationCategory.value) {
-    filtered = filtered.filter(camera => 
+    filtered = filtered.filter(camera =>
       camera.location === selectedLocationCategory.value
     )
   }
 
-  // 按状态筛选
+  //
   if (selectedStatus.value) {
-    filtered = filtered.filter(camera => 
+    filtered = filtered.filter(camera =>
       camera.status === selectedStatus.value
     )
   }
 
-  // 按搜索关键词筛选
+  //
   if (props.mapSearchKeyword) {
     filtered = filtered.filter(camera =>
       camera.name.toLowerCase().includes(props.mapSearchKeyword.toLowerCase()) ||
@@ -321,7 +326,7 @@ const filteredCameras = computed(() => {
   return filtered
 })
 
-// 方法
+// method
 const handleSettings = () => {
   emit('settings')
 }
@@ -365,7 +370,7 @@ const handleTreeNodeClick = (data) => {
 }
 
 const filterDevices = () => {
-  // 触发过滤逻辑
+  //
 }
 </script>
 
@@ -621,7 +626,7 @@ const filterDevices = () => {
   100% { opacity: 1; }
 }
 
-/* 统计弹窗样式 */
+/* dialog */
 .stats-content {
   padding: 16px 0;
 }
@@ -704,7 +709,7 @@ const filterDevices = () => {
   color: #ff4d4f;
 }
 
-/* 响应式设计 */
+/*  */
 @media (max-width: 1200px) {
   .device-list-panel {
     width: 280px;
@@ -721,4 +726,4 @@ const filterDevices = () => {
     height: calc(100vh - 80px);
   }
 }
-</style> 
+</style>

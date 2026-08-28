@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div ref="viewportRef" class="canvs_panel">
     <div class="zoom">
@@ -43,19 +48,19 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
-  finished: { // 已完成的节点
+  finished: { // already node
     type: Array,
     default: () => []
   },
-  unFinished: { // 未完成的节点
+  unFinished: { // not node
     type: Array,
     default: () => []
   },
-  showType: { // 属性的弹框类型，0 dialog 1 抽屉
+  showType: { // property , 0 dialog 1
     type: Number,
     default: 1
   },
-  nowVal: { // 属性的弹框类型，0 dialog 1 抽屉
+  nowVal: { // property , 0 dialog 1
     type: Number,
     default: 100
   }
@@ -73,13 +78,13 @@ const errorStore = useErrorMsgStoreHook()
 const emits = defineEmits(['update:nodeConfig'])
 watch(() => copyNodeConfig.value, () => {
   // if (!copyNodeConfig.value.formKey) {
-  //   errorStore.addNodeError({ id: copyNodeConfig.value.id, msg: ['发起人节点表单不能为空'] })
+  // errorStore.addNodeError({ id: copyNodeConfig.value.id, msg: [' nodeform can is empty'] })
   // } else {
   //   errorStore.removeNodeError(copyNodeConfig.value.id)
   // }
   // if (errorStore.nodeError.length > 0) {
   //   console.warn(errorStore.nodeError)
-  //   ElMessage.warning(errorStoreMsg.value ?? '请检查节点属性')
+  // ElMessage.warning(errorStoreMsg.value ?? ' nodeproperty')
   //   return
   // } else {
   //   emits('update:nodeConfig', copyNodeConfig.value)
@@ -92,7 +97,7 @@ const isflowChartConfigOk = computed(() => {
 })
 
 const errorStoreMsg = computed(() => {
-  // 去除重复的错误信息
+  // info
   return errorStore.nodeError.map(item => {
     return item.msg
   })
@@ -133,15 +138,15 @@ function getFormValue() {
           const jsonList = JSON.parse(res.data.content)
           tempFormProperties = extractFormFields(jsonList)
 
-          // 如果当前的formProperties为空，则从表单里面获取
+          // if current formProperties is empty, from form Get
           if (copyNodeConfig.value.formProperties.length === 0) {
             flowStore.setFormFiledList(JSON.parse(JSON.stringify(tempFormProperties)))
           } else {
-            // 对比下是否有差异，有差异提示用户
+            // whether , prompt / tipuser
             let newTempName = tempFormProperties.map(item => item.id)
             let oldTempName = copyNodeConfig.value.formProperties.map(item => item.id)
             if (JSON.stringify(newTempName) !== JSON.stringify(oldTempName)) {
-              // 表单数据有差异
+              // formdata
               flowStore.setFormFiledList(JSON.parse(JSON.stringify(tempFormProperties)))
             } else {
               flowStore.setFormFiledList(JSON.parse(JSON.stringify(copyNodeConfig.value.formProperties)))
@@ -199,11 +204,11 @@ const onMouseDown = (e) => {
 
 const isReady = ref(false)
 onMounted(() => {
-  // 清楚nodeErrorstor的报错
+  // nodeErrorstor
   errorStore.clearNodeError()
   isReady.value = true
   if (props.isEdit) {
-    // 获取表单
+    // Get form
     getFormValue()
   }
 })

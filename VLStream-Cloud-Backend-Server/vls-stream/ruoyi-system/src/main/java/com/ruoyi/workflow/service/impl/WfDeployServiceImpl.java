@@ -58,12 +58,12 @@ public class WfDeployServiceImpl implements IWfDeployService {
     private final IWorkOrderSynthesisService workerSynthesisService;
 //    @Override
 //    public TableDataInfo<WfDeployVo> queryPageList(ProcessQuery processQuery, PageQuery pageQuery) {
-//        // 流程定义列表数据查询
+// // workflow definition dataQuery
 //        ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery()
 //            .latestVersion()
 //            .orderByProcessDefinitionKey()
 //            .asc();
-//        // 构建搜索条件
+// // Build
 //        ProcessUtils.buildProcessSearch(processDefinitionQuery, processQuery, processEngine);
 //        long pageTotal = processDefinitionQuery.count();
 //        if (pageTotal <= 0) {
@@ -84,7 +84,7 @@ public class WfDeployServiceImpl implements IWfDeployService {
 //            vo.setCategory(processDefinition.getCategory());
 //            vo.setDeploymentId(processDefinition.getDeploymentId());
 //            vo.setSuspended(processDefinition.isSuspended());
-//            // 流程部署信息
+// // workflow info
 //            vo.setCategory(deployment.getCategory());
 //            vo.setDeploymentTime(deployment.getDeploymentTime());
 //            deployVoList.add(vo);
@@ -97,7 +97,7 @@ public class WfDeployServiceImpl implements IWfDeployService {
 
 
     //    /**
-//     * 查询对应分类流程定义
+// * Query workflow definition
 //     * @param processQuery
 //     * @param processDefinitionQuery
 //     * @return
@@ -118,12 +118,12 @@ public class WfDeployServiceImpl implements IWfDeployService {
     public TableDataInfo<WfDeployVo> queryPageList(ProcessQuery processQuery, PageQuery pageQuery) {
         SysUser sysUser = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
 
-        // 构建计数查询 SQL
+        // Build Query SQL
         String countSql = buildSql(processQuery, true);
-        // 构建数据查询 SQL
+        // Build dataQuery SQL
         String dataSql = buildSql(processQuery, false);
 
-        // 执行计数查询
+        // Execute Query
         NativeProcessDefinitionQuery countQuery = repositoryService.createNativeProcessDefinitionQuery().sql(countSql).parameter("tenantId", sysUser.getTenantId());
         setQueryParameters(countQuery, processQuery);
 
@@ -132,13 +132,13 @@ public class WfDeployServiceImpl implements IWfDeployService {
             return TableDataInfo.build();
         }
 
-        // 执行分页查询
+        // Execute Query
         NativeProcessDefinitionQuery dataQuery = repositoryService.createNativeProcessDefinitionQuery().sql(dataSql).parameter("tenantId", sysUser.getTenantId());
         setQueryParameters(dataQuery, processQuery);
 
         List<ProcessDefinition> definitions = dataQuery.listPage((pageQuery.getPageNum() - 1) * pageQuery.getPageSize(), pageQuery.getPageSize());
 
-        // 转换为 WfDeployVo
+        // Convert to WfDeployVo
         List<WfDeployVo> deployVoList = definitions.stream().map(def -> {
             Deployment deployment = repositoryService.createDeploymentQuery().deploymentId(def.getDeploymentId()).deploymentTenantId(sysUser.getTenantId()).singleResult();
             WfDeployVo vo = new WfDeployVo();
@@ -149,7 +149,7 @@ public class WfDeployServiceImpl implements IWfDeployService {
             vo.setCategory(def.getCategory());
             vo.setDeploymentId(def.getDeploymentId());
             vo.setSuspended(def.isSuspended());
-            vo.setDeploymentTime(deployment.getDeploymentTime()); // 添加部署时间
+            vo.setDeploymentTime(deployment.getDeploymentTime()); //
             return vo;
         }).collect(Collectors.toList());
 
@@ -161,11 +161,11 @@ public class WfDeployServiceImpl implements IWfDeployService {
     }
 
     /**
-     * 构建动态 SQL
+     * Build SQL
      *
-     * @param processQuery 查询条件
-     * @param isCount      是否是计数查询
-     * @return 构建的 SQL
+     * @param processQuery Query
+     * @param isCount whether is Query
+     * @return Build SQL
      */
     private String buildSql(ProcessQuery processQuery, boolean isCount) {
         StringBuilder sqlBuilder = new StringBuilder();
@@ -182,7 +182,7 @@ public class WfDeployServiceImpl implements IWfDeployService {
             .append("    WHERE SUB.TENANT_ID_ = #{tenantId} AND SUB.KEY_ = RES.KEY_")
             .append(")");
 
-        //根据参数分类
+        // parameter
         if (processQuery.getWorkOrderAppAll()) {
             processQuery.setCategoryList(mergeAllCategories(processQuery.getCategoryList(), workOrderAppService.list(), category -> ((WorkOrderApp) category).getAppId()));
         } else if (processQuery.getWorkOrderSynthesisAll()) {
@@ -193,12 +193,12 @@ public class WfDeployServiceImpl implements IWfDeployService {
             processQuery.setCategoryList(mergeAllCategories(processQuery.getCategoryList(), wfSynthesisService.list(), category -> ((WfSynthesis) category).getSynthesisId()));
         }
 
-        //没有分类时直接返回null
+        // null
         if(ObjectUtil.isEmpty(processQuery.getCategoryList())){
             sqlBuilder.append(" and 1=2");
         }
 
-        // 动态拼接分类条件
+        //
         if (processQuery.getWorkOrderAppAll() || processQuery.getWorkOrderSynthesisAll() || processQuery.getWfAppAll() || processQuery.getWfSynthesisAll()|| processQuery.getCategory()!=null) {
             List<String> categoryList = processQuery.getCategoryList();
             if (ObjectUtil.isNotEmpty(categoryList)) {
@@ -227,10 +227,10 @@ public class WfDeployServiceImpl implements IWfDeployService {
 
 
     /**
-     * 将查询参数占位符的值做替换
+     * Query parameter value Replace
      *
      * @param query        NativeQuery
-     * @param processQuery 查询条件
+     * @param processQuery Query
      */
     private void setQueryParameters(NativeProcessDefinitionQuery query, ProcessQuery processQuery) {
         if (StringUtils.isNotBlank(processQuery.getCategory())) {
@@ -249,7 +249,7 @@ public class WfDeployServiceImpl implements IWfDeployService {
     }
 
 
-    //将分类id列表合并到已有的分类列表中，并去重
+    // id already in ,
     private List<String> mergeAllCategories(List<String> existingList, List<?> categoryList, Function<Object, String> mapper) {
         if (categoryList != null && !categoryList.isEmpty()) {
             Set<String> resultSet = new HashSet<>(existingList);
@@ -262,13 +262,13 @@ public class WfDeployServiceImpl implements IWfDeployService {
     @Override
     public TableDataInfo<WfDeployVo> queryPublishList(String processKey, PageQuery pageQuery) {
         SysUser sysUser = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
-        // 创建查询条件
+        // Query
         ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery().processDefinitionKey(processKey).processDefinitionTenantId(sysUser.getTenantId()).orderByProcessDefinitionVersion().desc();
         long pageTotal = processDefinitionQuery.count();
         if (pageTotal <= 0) {
             return TableDataInfo.build();
         }
-        // 根据查询条件，查询所有版本
+        // Query , Query all
         int offset = pageQuery.getPageSize() * (pageQuery.getPageNum() - 1);
         List<ProcessDefinition> processDefinitionList = processDefinitionQuery.processDefinitionTenantId(sysUser.getTenantId()).listPage(offset, pageQuery.getPageSize());
         List<WfDeployVo> deployVoList = processDefinitionList.stream().map(item -> {
@@ -289,18 +289,18 @@ public class WfDeployServiceImpl implements IWfDeployService {
     }
 
     /**
-     * 激活或挂起流程
+     * workflow
      *
-     * @param state        状态
-     * @param definitionId 流程定义ID
+     * @param state
+     * @param definitionId workflow definition ID
      */
     @Override
     public void updateState(String definitionId, String state) {
         if (SuspensionState.ACTIVE.toString().equals(state)) {
-            // 激活
+            //
             repositoryService.activateProcessDefinitionById(definitionId, true, null);
         } else if (SuspensionState.SUSPENDED.toString().equals(state)) {
-            // 挂起
+            //
             repositoryService.suspendProcessDefinitionById(definitionId, true, null);
         }
     }

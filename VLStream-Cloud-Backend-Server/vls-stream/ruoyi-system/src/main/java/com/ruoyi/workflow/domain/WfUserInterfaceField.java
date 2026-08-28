@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,7 +14,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 用户接口字段显示配置
+ * userinterfacefield configuration
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -22,15 +23,15 @@ public class WfUserInterfaceField extends BaseEntity {
     @TableId(type = IdType.AUTO)
     private Long id;
     /**
-     * 用户id
+     * user ID
      */
     private String userId;
     /**
-     * 接口路径
+     * interface
      */
     private String interfacePath;
     /**
-     * 字段列表
+     * field
      */
-    private String fieldCodes; // JSON 字符串，存 ["taskId","taskName",…]
+    private String fieldCodes; // JSON , ["taskId","taskName",…]
 }

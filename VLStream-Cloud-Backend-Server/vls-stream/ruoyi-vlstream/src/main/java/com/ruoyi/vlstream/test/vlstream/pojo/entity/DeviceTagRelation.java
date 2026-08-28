@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,7 +16,7 @@ import org.springblade.core.mp.base.TenantEntity;
 
 
 /**
- * 设备标签关联表 实体类
+ * device
  *
  * @author Oort
  * @since 2025-12-23
@@ -28,13 +29,13 @@ public class DeviceTagRelation extends TenantEntity {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 设备ID，关联device_info.id
+	 * deviceID, device_info.id
 	 */
 	@Schema(description = "设备ID，关联device_info.id")
 	@JsonSerialize(using = ToStringSerializer.class)
 	private Long deviceId;
 	/**
-	 * 标签ID，关联tag_management.id
+	 * ID, tag_management.id
 	 */
 	@Schema(description = "标签ID，关联tag_management.id")
 	@JsonSerialize(using = ToStringSerializer.class)

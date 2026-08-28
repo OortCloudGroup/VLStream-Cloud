@@ -1,7 +1,8 @@
-/**
-Created by  lanjian   on 2021/10/16  10:28
-Copyright apaas-front-team. All rights reserved.
-*/
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="dept_page w-full h-full flex flex-col box-border">
     <div class="w-full h-12 flex flex-row justify-center items-center">
@@ -78,17 +79,17 @@ export default {
     OortImg
   },
   props: {
-    // 是否单选
+    // whether
     isSingle: {
       type: Boolean,
       default: false
     },
-    // 已选的人员list
+    // already list
     userList: {
       type: Array,
       default: null
     },
-    // 禁止选择的的用户
+    // user
     disalbedUserList: {
       type: Array,
       default: null
@@ -102,7 +103,7 @@ export default {
       tableData: [],
       isIndeterminate: false,
       searchDebounce: null,
-      tempChooseList: [], // 当前已经选择的，但当前box框没有的
+      tempChooseList: [], // current already , current box
       nameCountMap: {}
     }
   },
@@ -113,7 +114,7 @@ export default {
   methods: {
     getSearchDept() {
       const store = useUserStore()
-      // 调用部门
+      // department
       const params = {}
       params.accessToken = store.token
       params.page = 1
@@ -127,11 +128,11 @@ export default {
           if (res.code === 200) {
             this.tableData = res.data.list || []
             this.checkForDuplicateNames()
-            // 默认选择的回填
+            //
             this.userList.forEach(itt => {
               this.tableData.forEach(idd => {
                 if (itt.user_id === idd.user_id) {
-                  // 是否checklist 有个
+                  // whether checklist
                   let index = this.checkList.findIndex(itd => {
                     return idd.user_id === itd.user_id
                   })
@@ -139,7 +140,7 @@ export default {
                 }
               })
             })
-            // 禁止选择的人
+            //
             let tempD = this.disalbedUserList || []
             tempD.forEach(itt => {
               this.tableData.forEach(idd => {
@@ -148,7 +149,7 @@ export default {
                 }
               })
             })
-            // 计算出那些是在当前tab选的
+            // is in current tab
             this.checkList.forEach(itm => {
               let index = this.tempChooseList.findIndex(itd => {
                 return itm.user_id === itd.user_id
@@ -171,7 +172,7 @@ export default {
       this.isIndeterminate = false
       this.checkList = val ? this.tableData : []
       this.isIndeterminate = false
-      // 全选 把之前的加进来
+      // full before
       this.$emit('addPerson', val ? [...this.tableData, ...this.tempChooseList] : this.tempChooseList)
     },
     handleCheckedPersonsChange(value) {

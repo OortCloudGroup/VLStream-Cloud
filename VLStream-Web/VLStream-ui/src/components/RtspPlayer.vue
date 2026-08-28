@@ -1,9 +1,14 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="rtsp-player-container" :style="containerStyle">
-    <!-- 播放器容器 -->
+    <!--  -->
     <div class="video-container" :class="{ 'fullscreen': isFullscreen }">
-      <!-- YouTube iframe 播放器 -->
-      <iframe 
+      <!-- YouTube iframe -->
+      <iframe
         v-if="isYouTubeStream"
         ref="youtubeElement"
         class="youtube-video"
@@ -14,8 +19,8 @@
         @load="onYouTubeLoad"
       ></iframe>
 
-      <!-- WebRTC 视频元素 -->
-      <video 
+      <!-- WebRTC element -->
+      <video
         v-else
         ref="videoElement"
         class="rtsp-video"
@@ -29,41 +34,41 @@
         @click="togglePlay"
       ></video>
 
-      <!-- 加载状态 -->
+      <!-- Load -->
       <div v-if="isConnecting && !isYouTubeStream" class="loading-overlay">
         <div class="loading-spinner"></div>
         <div class="loading-text">正在连接 RTSP 流...</div>
       </div>
 
-      <!-- 错误状态 -->
+      <!--  -->
       <div v-if="hasError && !isYouTubeStream" class="error-overlay">
         <div class="error-icon">⚠</div>
         <div class="error-text">{{ errorMessage }}</div>
         <button class="retry-button" @click="reconnect">重新连接</button>
       </div>
 
-      <!-- 播放控制栏 -->
+      <!-- control -->
       <div class="controls-overlay" :class="{ 'visible': showControls }">
         <div class="controls-bar">
-          <!-- 播放/暂停按钮 -->
+          <!-- / button -->
           <button v-if="!isYouTubeStream" class="control-button" @click="togglePlay" :disabled="!isReady">
             <span v-if="isPlaying">⏸</span>
             <span v-else>▶</span>
           </button>
 
-          <!-- 音量控制 -->
+          <!-- control -->
           <button v-if="!isYouTubeStream" class="control-button" @click="toggleMute">
             <span v-if="isMuted">🔇</span>
             <span v-else>🔊</span>
           </button>
 
-          <!-- 连接状态 -->
+          <!--  -->
           <div class="status-indicator" :class="statusClass">
             <span class="status-dot"></span>
             <span class="status-text">{{ statusText }}</span>
           </div>
 
-          <!-- 全屏按钮 -->
+          <!-- full button -->
           <button class="control-button fullscreen-btn" @click="toggleFullscreen">
             <span v-if="isFullscreen">⏷</span>
             <span v-else>⏹</span>
@@ -72,7 +77,7 @@
       </div>
     </div>
 
-    <!-- 调试信息 -->
+    <!-- info -->
     <div v-if="showDebugInfo" class="debug-info">
       <div>RTSP URL: {{ rtspUrl }}</div>
       <div v-if="!isYouTubeStream">WebRTC Server: {{ webrtcServerUrlComputed }}</div>
@@ -109,7 +114,7 @@ const props = defineProps({
     type: String,
     default: 'http://localhost:8000'
   },
-  // 保持向后兼容
+  // after
   webrtcServerUrl: {
     type: String,
     default: 'http://localhost:8000'
@@ -127,7 +132,7 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['play', 'pause', 'error', 'ready', 'connecting'])
 
-// 响应式数据
+// data
 const videoElement = ref(null)
 const youtubeElement = ref(null)
 const isConnecting = ref(false)
@@ -142,49 +147,49 @@ const streamId = ref('')
 const videoResolution = ref('')
 const showControls = ref(true)
 
-// WebRTC 相关
+// WebRTC related
 let webrtcStreamer = null
 let pc = null
 
-// 计算属性
+// property
 const webrtcServerUrlComputed = computed(() => {
-  // 优先使用 webrtcServer，然后是 webrtcServerUrl，最后是默认值
+  // webrtcServer, after is webrtcServerUrl, after is value
   return props.webrtcServer || props.webrtcServerUrl || 'http://localhost:8000'
 })
 
-// 检测是否为YouTube流
+// whether to YouTube
 const isYouTubeStream = computed(() => {
   const lowerUrl = props.rtspUrl.toLowerCase()
   return lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')
 })
 
-// 生成YouTube嵌入URL
+// Generate YouTube URL
 const youtubeEmbedUrl = computed(() => {
   if (!isYouTubeStream.value) return ''
-  
+
   let url = props.rtspUrl
-  
-  // 如果是YouTube嵌入URL，直接使用
+
+  // if is YouTube URL,
   if (url.includes('/embed/')) {
     return url
   }
-  
-  // 如果是普通YouTube URL，转换为嵌入URL
+
+  // if is YouTube URL, Convert to URL
   if (url.includes('youtube.com/watch?v=')) {
     const videoId = url.split('v=')[1]?.split('&')[0]
     if (videoId) {
       return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1`
     }
   }
-  
-  // 如果是YouTube短链接
+
+  // if is YouTube
   if (url.includes('youtu.be/')) {
     const videoId = url.split('youtu.be/')[1]?.split('?')[0]
     if (videoId) {
       return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1`
     }
   }
-  
+
   return url
 })
 
@@ -192,7 +197,7 @@ const statusClass = computed(() => {
   if (isYouTubeStream.value) {
     return 'status-connected'
   }
-  
+
   switch (connectionState.value) {
     case 'connected': return 'status-connected'
     case 'connecting': return 'status-connecting'
@@ -205,7 +210,7 @@ const statusText = computed(() => {
   if (isYouTubeStream.value) {
     return 'YouTube直播'
   }
-  
+
   switch (connectionState.value) {
     case 'connected': return '已连接'
     case 'connecting': return '连接中'
@@ -221,17 +226,17 @@ const containerStyle = computed(() => {
   }
 })
 
-// 方法
+// method
 const initWebRTCStreamer = () => {
   try {
-    // 创建 WebRTC 配置
+    // WebRTC configuration
     const pcConfig = {
       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     }
-    
+
     pc = new RTCPeerConnection(pcConfig)
-    
-    // 处理远程流
+
+    // Process
     pc.ontrack = (event) => {
       console.log('Received remote stream:', event.streams[0])
       if (videoElement.value) {
@@ -242,11 +247,11 @@ const initWebRTCStreamer = () => {
       }
     }
 
-    // 处理连接状态变化
+    // Process
     pc.onconnectionstatechange = () => {
       connectionState.value = pc.connectionState
       console.log('WebRTC connection state:', pc.connectionState)
-      
+
       if (pc.connectionState === 'connected') {
         isConnecting.value = false
         isPlaying.value = true
@@ -256,16 +261,16 @@ const initWebRTCStreamer = () => {
       }
     }
 
-    // 处理ICE连接状态变化
+    // Process ICE
     pc.oniceconnectionstatechange = () => {
       console.log('ICE connection state:', pc.iceConnectionState)
       if (pc.iceConnectionState === 'new') {
-        // 获取ICE候选 (模仿webrtc-streamer.js的行为)
+        // Get ICE ( webrtc-streamer.js to )
         getIceCandidates()
       }
     }
 
-    // 处理 ICE 候选
+    // Process ICE
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         console.log('ICE candidate:', event.candidate)
@@ -289,22 +294,22 @@ const connectToWebRTCStreamer = async () => {
     hasError.value = false
     emit('connecting')
 
-    // 生成 peer ID (模仿工作版本)
+    // Generate peer ID ( )
     const peerid = Math.random().toString()
     streamId.value = peerid
-    
-    // 创建 offer
+
+    // offer
     const offer = await pc.createOffer()
     await pc.setLocalDescription(offer)
 
-    // 构建查询参数 (模仿工作版本的调用方式)
+    // Build Query parameter ( )
     const params = new URLSearchParams({
       peerid: peerid,
       url: props.rtspUrl,
       options: 'rtptransport=tcp&timeout=60'
     })
 
-    // 发送 offer 到 WebRTC-streamer (使用POST + query params + SDP body)
+    // offer WebRTC-streamer ( POST + query params + SDP body)
     const response = await fetch(`${webrtcServerUrlComputed.value}/api/call?${params}`, {
       method: 'POST',
       headers: {
@@ -319,7 +324,7 @@ const connectToWebRTCStreamer = async () => {
 
     const data = await response.json()
     console.log('WebRTC-streamer response:', data)
-    
+
     if (data.type === 'answer' && data.sdp) {
       await pc.setRemoteDescription(new RTCSessionDescription(data))
     } else {
@@ -340,8 +345,8 @@ const getIceCandidates = async () => {
     if (response.ok) {
       const candidates = await response.json()
       console.log('Received ICE candidates:', candidates)
-      
-      // 处理ICE候选
+
+      // Process ICE
       if (Array.isArray(candidates)) {
         for (const candidate of candidates) {
           if (candidate && pc) {
@@ -356,7 +361,7 @@ const getIceCandidates = async () => {
 }
 
 const generateStreamId = (rtspUrl) => {
-  // 基于 RTSP URL 生成唯一的流 ID
+  // RTSP URL Generate ID
   return btoa(rtspUrl).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16)
 }
 
@@ -371,7 +376,7 @@ const handleError = (message) => {
 const connect = async () => {
   if (isConnecting.value || isPlaying.value) return
 
-  // 如果是YouTube流，直接设置为就绪状态
+  // if is YouTube , Set to then
   if (isYouTubeStream.value) {
     console.log('检测到YouTube流，使用iframe播放')
     isReady.value = true
@@ -383,15 +388,15 @@ const connect = async () => {
     return
   }
 
-  // 初始化 WebRTC
+  // Initialize WebRTC
   initWebRTCStreamer()
-  
-  // 连接到 WebRTC-streamer
+
+  // WebRTC-streamer
   await connectToWebRTCStreamer()
 }
 
 const disconnect = async () => {
-  // 如果是YouTube流，直接重置状态
+  // if is YouTube ,
   if (isYouTubeStream.value) {
     isConnecting.value = false
     isPlaying.value = false
@@ -400,7 +405,7 @@ const disconnect = async () => {
     return
   }
 
-  // 调用 hangup API (模仿工作版本)
+  // hangup API ( )
   if (streamId.value) {
     try {
       await fetch(`${webrtcServerUrlComputed.value}/api/hangup?peerid=${streamId.value}`, {
@@ -416,7 +421,7 @@ const disconnect = async () => {
     pc.close()
     pc = null
   }
-  
+
   if (videoElement.value) {
     videoElement.value.srcObject = null
   }
@@ -430,7 +435,7 @@ const disconnect = async () => {
 
 const reconnect = async () => {
   disconnect()
-  await new Promise(resolve => setTimeout(resolve, 1000)) // 等待 1 秒
+  await new Promise(resolve => setTimeout(resolve, 1000)) // etc. 1
   await connect()
 }
 
@@ -457,7 +462,7 @@ const toggleMute = () => {
 
 const toggleFullscreen = () => {
   if (!document.fullscreenElement) {
-    // 如果是YouTube流，使用iframe的全屏
+    // if is YouTube , iframe full
     if (isYouTubeStream.value && youtubeElement.value) {
       youtubeElement.value.requestFullscreen()
     } else {
@@ -470,7 +475,7 @@ const toggleFullscreen = () => {
   }
 }
 
-// 事件处理
+// eventProcess
 const onLoadStart = () => {
   console.log('Video load started')
 }
@@ -488,7 +493,7 @@ const onVideoError = (event) => {
   handleError('视频播放错误')
 }
 
-// 控制栏显示逻辑
+// control
 let controlsTimeout = null
 const handleMouseMove = () => {
   showControls.value = true
@@ -500,9 +505,9 @@ const handleMouseMove = () => {
   }, 3000)
 }
 
-// 生命周期
+//
 onMounted(async () => {
-  // 添加鼠标移动监听
+  //
   const container = videoElement.value?.parentElement || youtubeElement.value?.parentElement
   if (container) {
     container.addEventListener('mousemove', handleMouseMove)
@@ -513,12 +518,12 @@ onMounted(async () => {
     })
   }
 
-  // 全屏状态监听
+  // full
   document.addEventListener('fullscreenchange', () => {
     isFullscreen.value = !!document.fullscreenElement
   })
 
-  // 自动播放
+  //
   if (props.autoplay) {
     await connect()
   }
@@ -529,14 +534,14 @@ onUnmounted(() => {
   clearTimeout(controlsTimeout)
 })
 
-// 监听 RTSP URL 变化
+// RTSP URL
 watch(() => props.rtspUrl, async (newUrl, oldUrl) => {
   if (newUrl !== oldUrl && newUrl) {
     await reconnect()
   }
 })
 
-// 暴露方法给父组件
+// method component
 defineExpose({
   connect,
   disconnect,
@@ -588,7 +593,7 @@ defineExpose({
   opacity: 0.3;
 }
 
-/* YouTube iframe 样式 */
+/* YouTube iframe */
 .youtube-video {
   width: 100%;
   height: 100%;
@@ -596,7 +601,7 @@ defineExpose({
   background: #000;
 }
 
-/* 加载状态 */
+/* Load */
 .loading-overlay {
   position: absolute;
   top: 0;
@@ -631,7 +636,7 @@ defineExpose({
   color: rgba(255, 255, 255, 0.9);
 }
 
-/* 错误状态 */
+/*  */
 .error-overlay {
   position: absolute;
   top: 0;
@@ -675,7 +680,7 @@ defineExpose({
   background: #3d70ff;
 }
 
-/* 控制栏 */
+/* control */
 .controls-overlay {
   position: absolute;
   bottom: 0;
@@ -726,7 +731,7 @@ defineExpose({
   margin-left: auto;
 }
 
-/* 状态指示器 */
+/*  */
 .status-indicator {
   display: flex;
   align-items: center;
@@ -765,7 +770,7 @@ defineExpose({
   color: rgba(255, 255, 255, 0.9);
 }
 
-/* 调试信息 */
+/* info */
 .debug-info {
   position: absolute;
   top: 8px;
@@ -787,21 +792,21 @@ defineExpose({
   margin-bottom: 0;
 }
 
-/* 响应式设计 */
+/*  */
 @media (max-width: 768px) {
   .controls-bar {
     padding: 8px 12px;
     gap: 8px;
   }
-  
+
   .control-button {
     width: 32px;
     height: 32px;
     font-size: 12px;
   }
-  
+
   .status-text {
     display: none;
   }
 }
-</style> 
+</style>

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -24,8 +25,8 @@ import java.io.BufferedReader;
 import java.util.Map;
 
 /**
- * web的调用时间统计拦截器
- * dev环境有效
+ * web
+ * dev
  *
  * @author Lion Li
  * @since 3.3.0
@@ -42,7 +43,7 @@ public class PlusWebInvokeTimeInterceptor implements HandlerInterceptor {
         if (!prodProfile.equals(SpringUtils.getActiveProfile())) {
             String url = request.getMethod() + " " + request.getRequestURI();
 
-            // 打印请求参数
+            // parameter
             if (isJsonRequest(request)) {
                 String jsonParam = "";
                 if (request instanceof RepeatedlyRequestWrapper) {
@@ -83,7 +84,7 @@ public class PlusWebInvokeTimeInterceptor implements HandlerInterceptor {
     }
 
     /**
-     * 判断本次请求的数据类型是否为json
+     * Check data whether to json
      *
      * @param request request
      * @return boolean

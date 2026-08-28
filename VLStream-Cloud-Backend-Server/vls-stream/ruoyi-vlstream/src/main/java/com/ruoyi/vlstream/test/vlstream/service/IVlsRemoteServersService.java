@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,74 +16,74 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.RemoteServersVO;
 import java.util.List;
 
 /**
- * 远程服务器配置表 服务类
+ * service configuration service
  *
  * @author Oort
  * @since 2025-12-23
  */
 public interface IVlsRemoteServersService extends BaseService<RemoteServers> {
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsRemoteServers 查询参数
+	 * @param page parameter
+	 * @param vlsRemoteServers Query parameter
 	 * @return IPage<VlsRemoteServersVO>
 	 */
 	IPage<RemoteServersVO> selectVlsRemoteServersPage(IPage<RemoteServersVO> page, RemoteServersVO vlsRemoteServers);
 
 	/**
-	 * 导出数据
+	 * Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsRemoteServersExcel>
 	 */
 	List<VlsRemoteServersExcel> exportVlsRemoteServers(Wrapper<RemoteServers> queryWrapper);
 
 	/**
-	 * 查询远程服务器配置
+	 * Query service configuration
 	 *
-	 * @param id 远程服务器配置主键
-	 * @return 远程服务器配置
+	 * @param id service configurationprimary key
+	 * @return service configuration
 	 */
 	public RemoteServers selectRemoteServerById(Long id);
 
 	/**
-	 * 查询远程服务器配置列表
+	 * Query service configuration list
 	 *
-	 * @param remoteServer 远程服务器配置
-	 * @return 远程服务器配置集合
+	 * @param remoteServer service configuration
+	 * @return service configurationcollection
 	 */
 	public List<RemoteServers> selectRemoteServerList(RemoteServers remoteServer);
 
 	/**
-	 * 新增远程服务器配置
+	 * Add service configuration
 	 *
-	 * @param remoteServer 远程服务器配置
-	 * @return 结果
+	 * @param remoteServer service configuration
+	 * @return
 	 */
 	public int insertRemoteServer(RemoteServers remoteServer);
 
 	/**
-	 * 修改远程服务器配置
+	 * Update service configuration
 	 *
-	 * @param remoteServer 远程服务器配置
-	 * @return 结果
+	 * @param remoteServer service configuration
+	 * @return
 	 */
 	public int updateRemoteServer(RemoteServers remoteServer);
 
 	/**
-	 * 批量删除远程服务器配置
+	 * Batch delete service configuration
 	 *
-	 * @param ids 需要删除的远程服务器配置主键集合
-	 * @return 结果
+	 * @param ids need to Delete service configurationprimary keycollection
+	 * @return
 	 */
 	public int deleteRemoteServerByIds(Long[] ids);
 
 	/**
-	 * 删除远程服务器配置信息
+	 * Delete service configurationinfo
 	 *
-	 * @param id 远程服务器配置主键
-	 * @return 结果
+	 * @param id service configurationprimary key
+	 * @return
 	 */
 	public int deleteRemoteServerById(Long id);
 

@@ -1,15 +1,20 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
-// ========== 算法仓库管理 API ==========
+// ========== algorithm API ==========
 
 /**
- * 分页查询算法仓库列表
- * @param {Object} params 查询参数
- * @param {number} params.current 当前页
- * @param {number} params.size 每页大小
- * @param {string} params.name 仓库名称（模糊查询）
- * @param {string} params.repositoryType 仓库类型
- * @param {string} params.status 状态
+ * Query algorithm list
+ * @param {Object} params Query parameter
+ * @param {number} params.current current
+ * @param {number} params.size
+ * @param {string} params.name ( Query )
+ * @param {string} params.repositoryType
+ * @param {string} params.status
  */
 export function getAlgorithmRepositoryPage(params) {
   return request({
@@ -20,7 +25,7 @@ export function getAlgorithmRepositoryPage(params) {
 }
 
 /**
- * 查询所有启用的算法仓库
+ * Query all algorithm
  */
 export function getEnabledAlgorithmRepositories() {
   return request({
@@ -30,8 +35,8 @@ export function getEnabledAlgorithmRepositories() {
 }
 
 /**
- * 根据类型查询算法仓库
- * @param {string} repositoryType 仓库类型
+ * Query algorithm
+ * @param {string} repositoryType
  */
 export function getAlgorithmRepositoriesByType(repositoryType) {
   return request({
@@ -41,8 +46,8 @@ export function getAlgorithmRepositoriesByType(repositoryType) {
 }
 
 /**
- * 根据ID查询算法仓库详情
- * @param {number} id 仓库ID
+ * IDQuery algorithm
+ * @param {number} id ID
  */
 export function getAlgorithmRepositoryById(id) {
   return request({
@@ -52,12 +57,12 @@ export function getAlgorithmRepositoryById(id) {
 }
 
 /**
- * 创建算法仓库
- * @param {Object} data 仓库数据
- * @param {string} data.name 仓库名称
- * @param {string} data.remark 备注说明
- * @param {string} data.repositoryType 仓库类型
- * @param {string} data.status 状态
+ * algorithm
+ * @param {Object} data data
+ * @param {string} data.name
+ * @param {string} data.remark remark
+ * @param {string} data.repositoryType
+ * @param {string} data.status
  */
 export function createAlgorithmRepository(data) {
   return request({
@@ -68,9 +73,9 @@ export function createAlgorithmRepository(data) {
 }
 
 /**
- * 更新算法仓库
- * @param {number} id 仓库ID
- * @param {Object} data 更新数据
+ * new algorithm
+ * @param {number} id ID
+ * @param {Object} data new data
  */
 export function updateAlgorithmRepository(id, data) {
   return request({
@@ -81,8 +86,8 @@ export function updateAlgorithmRepository(id, data) {
 }
 
 /**
- * 删除算法仓库
- * @param {number} id 仓库ID
+ * Delete algorithm
+ * @param {number} id ID
  */
 export function deleteAlgorithmRepository(id) {
   return request({
@@ -92,8 +97,8 @@ export function deleteAlgorithmRepository(id) {
 }
 
 /**
- * 批量删除算法仓库
- * @param {number[]} ids 仓库ID列表
+ * Batch delete algorithm
+ * @param {number[]} ids ID
  */
 export function batchDeleteAlgorithmRepositories(ids) {
   return request({
@@ -104,9 +109,9 @@ export function batchDeleteAlgorithmRepositories(ids) {
 }
 
 /**
- * 更新仓库状态
- * @param {number} id 仓库ID
- * @param {string} status 新状态
+ * new
+ * @param {number} id ID
+ * @param {string} status new
  */
 export function updateAlgorithmRepositoryStatus(id, status) {
   return request({
@@ -117,9 +122,9 @@ export function updateAlgorithmRepositoryStatus(id, status) {
 }
 
 /**
- * 批量更新仓库状态
- * @param {number[]} ids 仓库ID列表
- * @param {string} status 新状态
+ * new
+ * @param {number[]} ids ID
+ * @param {string} status new
  */
 export function batchUpdateAlgorithmRepositoryStatus(ids, status) {
   return request({
@@ -131,7 +136,7 @@ export function batchUpdateAlgorithmRepositoryStatus(ids, status) {
 }
 
 /**
- * 统计算法仓库数量
+ * algorithm
  */
 export function countAlgorithmRepositories() {
   return request({
@@ -141,8 +146,8 @@ export function countAlgorithmRepositories() {
 }
 
 /**
- * 刷新仓库算法数量
- * @param {number} id 仓库ID
+ * new algorithm
+ * @param {number} id ID
  */
 export function refreshAlgorithmCount(id) {
   return request({
@@ -151,18 +156,18 @@ export function refreshAlgorithmCount(id) {
   })
 }
 
-// ========== 算法管理 API ==========
+// ========== algorithm API ==========
 
 /**
- * 分页查询算法列表
- * @param {Object} params 查询参数
- * @param {number} params.current 当前页
- * @param {number} params.size 每页大小
- * @param {number} params.repositoryId 仓库ID
- * @param {string} params.name 算法名称（模糊查询）
- * @param {string} params.category 算法分类
- * @param {string} params.type 算法类型
- * @param {string} params.deployStatus 部署状态
+ * Query algorithm list
+ * @param {Object} params Query parameter
+ * @param {number} params.current current
+ * @param {number} params.size
+ * @param {number} params.repositoryId ID
+ * @param {string} params.name algorithm ( Query )
+ * @param {string} params.category algorithm
+ * @param {string} params.type algorithm
+ * @param {string} params.deployStatus
  */
 export function getAlgorithmPage(params) {
   return request({
@@ -173,8 +178,8 @@ export function getAlgorithmPage(params) {
 }
 
 /**
- * 根据仓库ID查询算法列表
- * @param {number} repositoryId 仓库ID
+ * IDQuery algorithm list
+ * @param {number} repositoryId ID
  */
 export function getAlgorithmsByRepositoryId(repositoryId) {
   return request({
@@ -184,8 +189,8 @@ export function getAlgorithmsByRepositoryId(repositoryId) {
 }
 
 /**
- * 根据分类查询算法列表
- * @param {string} category 算法分类
+ * Query algorithm list
+ * @param {string} category algorithm
  */
 export function getAlgorithmsByCategory(category) {
   return request({
@@ -195,8 +200,8 @@ export function getAlgorithmsByCategory(category) {
 }
 
 /**
- * 根据ID查询算法详情
- * @param {number} id 算法ID
+ * IDQuery algorithm
+ * @param {number} id algorithmID
  */
 export function getAlgorithmById(id) {
   return request({
@@ -206,17 +211,17 @@ export function getAlgorithmById(id) {
 }
 
 /**
- * 创建算法
- * @param {Object} data 算法数据
- * @param {number} data.repositoryId 所属仓库ID
- * @param {string} data.name 算法名称
- * @param {string} data.category 算法分类
- * @param {string} data.type 算法类型
- * @param {string} data.description 算法描述
- * @param {string} data.version 算法版本
- * @param {string} data.inputFormat 输入格式
- * @param {string} data.outputFormat 输出格式
- * @param {number} data.gpuRequired 是否需要GPU
+ * algorithm
+ * @param {Object} data algorithmdata
+ * @param {number} data.repositoryId ID
+ * @param {string} data.name algorithm
+ * @param {string} data.category algorithm
+ * @param {string} data.type algorithm
+ * @param {string} data.description algorithm
+ * @param {string} data.version algorithm
+ * @param {string} data.inputFormat
+ * @param {string} data.outputFormat
+ * @param {number} data.gpuRequired whether need to GPU
  */
 export function createAlgorithm(data) {
   return request({
@@ -227,9 +232,9 @@ export function createAlgorithm(data) {
 }
 
 /**
- * 更新算法
- * @param {number} id 算法ID
- * @param {Object} data 更新数据
+ * new algorithm
+ * @param {number} id algorithmID
+ * @param {Object} data new data
  */
 export function updateAlgorithm(id, data) {
   return request({
@@ -240,8 +245,8 @@ export function updateAlgorithm(id, data) {
 }
 
 /**
- * 删除算法
- * @param {number} id 算法ID
+ * Delete algorithm
+ * @param {number} id algorithmID
  */
 export function deleteAlgorithm(id) {
   return request({
@@ -251,8 +256,8 @@ export function deleteAlgorithm(id) {
 }
 
 /**
- * 批量删除算法
- * @param {number[]} ids 算法ID列表
+ * Batch delete algorithm
+ * @param {number[]} ids algorithmID
  */
 export function batchDeleteAlgorithms(ids) {
   return request({
@@ -263,9 +268,9 @@ export function batchDeleteAlgorithms(ids) {
 }
 
 /**
- * 更新部署状态
- * @param {number} id 算法ID
- * @param {string} deployStatus 部署状态
+ * new
+ * @param {number} id algorithmID
+ * @param {string} deployStatus
  */
 export function updateAlgorithmDeployStatus(id, deployStatus) {
   return request({
@@ -276,9 +281,9 @@ export function updateAlgorithmDeployStatus(id, deployStatus) {
 }
 
 /**
- * 批量更新部署状态
- * @param {number[]} ids 算法ID列表
- * @param {string} deployStatus 部署状态
+ * new
+ * @param {number[]} ids algorithmID
+ * @param {string} deployStatus
  */
 export function batchUpdateAlgorithmDeployStatus(ids, deployStatus) {
   return request({
@@ -290,9 +295,9 @@ export function batchUpdateAlgorithmDeployStatus(ids, deployStatus) {
 }
 
 /**
- * 部署算法到设备
- * @param {number} algorithmId 算法ID
- * @param {number[]} deviceIds 设备ID列表
+ * algorithm device
+ * @param {number} algorithmId algorithmID
+ * @param {number[]} deviceIds deviceID
  */
 export function deployAlgorithmToDevices(algorithmId, deviceIds) {
   return request({
@@ -303,9 +308,9 @@ export function deployAlgorithmToDevices(algorithmId, deviceIds) {
 }
 
 /**
- * 算法评估
- * @param {number} algorithmId 算法ID
- * @param {Object} testData 测试数据（可选）
+ * algorithm
+ * @param {number} algorithmId algorithmID
+ * @param {Object} testData data ( )
  */
 export function evaluateAlgorithm(algorithmId) {
   return request({
@@ -315,7 +320,7 @@ export function evaluateAlgorithm(algorithmId) {
 }
 
 /**
- * 获取算法分类统计
+ * Get algorithm
  */
 export function getAlgorithmCategoryStatistics() {
   return request({
@@ -325,7 +330,7 @@ export function getAlgorithmCategoryStatistics() {
 }
 
 /**
- * 获取算法类型统计
+ * Get algorithm
  */
 export function getAlgorithmTypeStatistics() {
   return request({
@@ -335,7 +340,7 @@ export function getAlgorithmTypeStatistics() {
 }
 
 /**
- * 获取部署状态统计
+ * Get
  */
 export function getAlgorithmDeployStatusStatistics() {
   return request({
@@ -345,12 +350,12 @@ export function getAlgorithmDeployStatusStatistics() {
 }
 
 /**
- * 统计某仓库下的算法数量
- * @param {number} repositoryId 仓库ID
+ * algorithm
+ * @param {number} repositoryId ID
  */
 export function countAlgorithmsByRepositoryId(repositoryId) {
   return request({
     url: `/vlsAlgorithm/count/repository/${repositoryId}`,
     method: 'get'
   })
-} 
+}

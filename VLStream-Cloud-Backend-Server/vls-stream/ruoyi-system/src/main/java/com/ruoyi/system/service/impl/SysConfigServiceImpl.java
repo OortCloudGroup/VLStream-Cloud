@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 参数配置 服务层实现
+ * parameterconfiguration service layer
  *
  * @author Lion Li
  */
@@ -57,10 +57,10 @@ public class SysConfigServiceImpl implements ISysConfigService, ConfigService {
     }
 
     /**
-     * 查询参数配置信息
+     * Query parameterconfigurationinfo
      *
-     * @param configId 参数配置ID
-     * @return 参数配置信息
+     * @param configId parameterconfigurationID
+     * @return parameterconfigurationinfo
      */
     @Override
     @DS("master")
@@ -69,10 +69,10 @@ public class SysConfigServiceImpl implements ISysConfigService, ConfigService {
     }
 
     /**
-     * 根据键名查询参数配置信息
+     * Query parameterconfigurationinfo
      *
-     * @param configKey 参数key
-     * @return 参数键值
+     * @param configKey parameterkey
+     * @return parameter value
      */
     @Cacheable(cacheNames = CacheNames.SYS_CONFIG, key = "#configKey")
     @Override
@@ -86,9 +86,9 @@ public class SysConfigServiceImpl implements ISysConfigService, ConfigService {
     }
 
     /**
-     * 获取验证码开关
+     * Get
      *
-     * @return true开启，false关闭
+     * @return true , false
      */
     @Override
     public boolean selectCaptchaEnabled() {
@@ -101,10 +101,10 @@ public class SysConfigServiceImpl implements ISysConfigService, ConfigService {
     }
 
     /**
-     * 查询参数配置列表
+     * Query parameterconfiguration list
      *
-     * @param config 参数配置信息
-     * @return 参数配置集合
+     * @param config parameterconfigurationinfo
+     * @return parameterconfigurationcollection
      */
     @Override
     public List<SysConfig> selectConfigList(SysConfig config) {
@@ -119,10 +119,10 @@ public class SysConfigServiceImpl implements ISysConfigService, ConfigService {
     }
 
     /**
-     * 新增参数配置
+     * Add parameterconfiguration
      *
-     * @param config 参数配置信息
-     * @return 结果
+     * @param config parameterconfigurationinfo
+     * @return
      */
     @CachePut(cacheNames = CacheNames.SYS_CONFIG, key = "#config.configKey")
     @Override
@@ -135,10 +135,10 @@ public class SysConfigServiceImpl implements ISysConfigService, ConfigService {
     }
 
     /**
-     * 修改参数配置
+     * Update parameterconfiguration
      *
-     * @param config 参数配置信息
-     * @return 结果
+     * @param config parameterconfigurationinfo
+     * @return
      */
     @CachePut(cacheNames = CacheNames.SYS_CONFIG, key = "#config.configKey")
     @Override
@@ -161,9 +161,9 @@ public class SysConfigServiceImpl implements ISysConfigService, ConfigService {
     }
 
     /**
-     * 批量删除参数信息
+     * Batch delete parameterinfo
      *
-     * @param configIds 需要删除的参数ID
+     * @param configIds need to Delete parameterID
      */
     @Override
     public void deleteConfigByIds(Long[] configIds) {
@@ -178,7 +178,7 @@ public class SysConfigServiceImpl implements ISysConfigService, ConfigService {
     }
 
     /**
-     * 加载参数缓存数据
+     * Load parameter data
      */
     @Override
     public void loadingConfigCache() {
@@ -188,7 +188,7 @@ public class SysConfigServiceImpl implements ISysConfigService, ConfigService {
     }
 
     /**
-     * 清空参数缓存数据
+     * null / empty parameter data
      */
     @Override
     public void clearConfigCache() {
@@ -196,7 +196,7 @@ public class SysConfigServiceImpl implements ISysConfigService, ConfigService {
     }
 
     /**
-     * 重置参数缓存数据
+     * parameter data
      */
     @Override
     public void resetConfigCache() {
@@ -205,10 +205,10 @@ public class SysConfigServiceImpl implements ISysConfigService, ConfigService {
     }
 
     /**
-     * 校验参数键名是否唯一
+     * Validate parameter keywhether
      *
-     * @param config 参数配置信息
-     * @return 结果
+     * @param config parameterconfigurationinfo
+     * @return
      */
     @Override
     public boolean checkConfigKeyUnique(SysConfig config) {
@@ -221,10 +221,10 @@ public class SysConfigServiceImpl implements ISysConfigService, ConfigService {
     }
 
     /**
-     * 根据参数 key 获取参数值
+     * parameter key Get parameter value
      *
-     * @param configKey 参数 key
-     * @return 参数值
+     * @param configKey parameter key
+     * @return parameter value
      */
     @Override
     public String getConfigValue(String configKey) {

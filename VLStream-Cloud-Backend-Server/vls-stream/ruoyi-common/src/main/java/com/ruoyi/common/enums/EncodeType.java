@@ -1,30 +1,31 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
 package com.ruoyi.common.enums;
 
 /**
- * 编码类型
  *
- * @author 老马
+ *
+ * @author
  * @version 4.6.0
  */
 public enum EncodeType {
 
     /**
-     * 默认使用yml配置
+     * ymlconfiguration
      */
     DEFAULT,
 
     /**
-     * base64编码
+     * base64
      */
     BASE64,
 
     /**
-     * 16进制编码
+     * 16
      */
     HEX;
 

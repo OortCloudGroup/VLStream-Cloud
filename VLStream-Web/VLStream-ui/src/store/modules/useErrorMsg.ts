@@ -1,12 +1,7 @@
 /*
-* @Created by: 兰舰
-* Email: gglanjian@qq.com
-* Phone: 16620805419
-* @Date: 2024-11-15 11:03:53
- * @Last Modified by: 兰舰
- * @Last Modified time: 2025-05-08 09:39:28
-* @Copyright aPaaS-front-team. All rights reserved.
-*/
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
 
 import { ref } from 'vue'
 import store from '@/store/index'
@@ -20,7 +15,7 @@ type ErrorMsg = {
 export const useErrorMsgStore = defineStore('errorMsg', () => {
   const errorMsgList = ref([])
   const addErrorMsg = (msg) => {
-    // 处理下接口里面的关键路径  包含 tigase  shiku 的字符 全部替换为 imany
+    // Process interface tigase shiku full Replace to imany
     msg.interfaceName = msg.interfaceName.replace(/tigase|shiku/g, 'imany')
     errorMsgList.value.unshift(msg)
   }
@@ -65,7 +60,7 @@ export const useErrorMsgStore = defineStore('errorMsg', () => {
   }
 })
 
-/** 在 setup 外使用 */
+/* * in setup */
 export function useErrorMsgStoreHook() {
   return useErrorMsgStore(store)
 }

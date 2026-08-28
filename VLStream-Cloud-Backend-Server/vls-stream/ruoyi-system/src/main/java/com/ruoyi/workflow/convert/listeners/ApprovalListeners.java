@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -48,8 +49,8 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
     private static final Logger log = LoggerFactory.getLogger(HttpTriggerDelegate.class);
     private FixedValue requestMethod;
     private FixedValue requestUrl;
-    private FixedValue headers;  // 用于接收 headers 的 JSON 字符串
-    private FixedValue params;   // 用于接收 params 的 JSON 字符串
+    private FixedValue headers;  // headers JSON
+    private FixedValue params;   // params JSON
     private FixedValue paramsType;
     private static ApplicationContext applicationContext;
 
@@ -60,7 +61,7 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
 
     @Override
     public void notify(DelegateTask delegateTask) {
-        // 检查必要的字段是否配置
+        // need to fieldwhether configuration
         if (requestMethod == null || requestUrl == null) {
             log.debug("审批监听器：requestMethod 或 requestUrl 未配置，跳过执行");
             return;
@@ -68,14 +69,14 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
 
         HistoryService historyService = applicationContext.getBean(HistoryService.class);
 
-        // 安全地获取流程变量，并进行空值检查
+        // full Get workflow variable, null / empty value
         String requestMethodValue = getStringValue(requestMethod, delegateTask, "requestMethod");
         String requestUrlValue = getStringValue(requestUrl, delegateTask, "requestUrl");
         String headersJson = getStringValue(headers, delegateTask, "headers");
         String paramsJson = getStringValue(params, delegateTask, "params");
         String paramsTypeValue = getStringValue(paramsType, delegateTask, "paramsType");
 
-        // 验证必要参数
+        // need to parameter
         if (requestMethodValue == null || requestUrlValue == null) {
             log.warn("审批监听器：requestMethod 或 requestUrl 值为空，跳过执行");
             return;
@@ -85,7 +86,7 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
         List<HeaderOrParams> headerList = null;
         List<HeaderOrParams> paramsList = null;
 
-        // 安全地解析 JSON
+        // full Parse JSON
         try {
             if (headersJson != null && !headersJson.isEmpty()) {
                 headerList = gson.fromJson(headersJson, new TypeToken<List<HeaderOrParams>>() {}.getType());
@@ -98,7 +99,7 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
             return;
         }
 
-        // 如果没有解析出数据，初始化为空列表
+        // if Parse data, Initialize is empty
         if (headerList == null) {
             headerList = new java.util.ArrayList<>();
         }
@@ -110,7 +111,7 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
             .processInstanceId(delegateTask.getProcessInstanceId())
             .includeProcessVariables()
             .singleResult();
-        // 根据请求类型执行不同的操作
+        // Execute operation
         try {
             LocationTaskWorkflowCallbackService locationTaskCallback =
                 applicationContext.getBean(LocationTaskWorkflowCallbackService.class);
@@ -136,7 +137,7 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
     }
 
     /**
-     * 安全地获取 FixedValue 的字符串值
+     * full Get FixedValue value
      */
     private String getStringValue(FixedValue fixedValue, DelegateTask delegateTask, String paramName) {
         if (fixedValue == null) {
@@ -152,10 +153,10 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
     }
 
     /**
-     * 执行 GET 请求
+     * Execute GET
      */
     private void executeGetRequest(String requestMethodValue, String url, List<HeaderOrParams> headers, List<HeaderOrParams> params, HistoricProcessInstance historicProcIns) {
-        // 拼接 GET 请求的 URL 和参数
+        // GET URL and parameter
         StringBuilder fullUrl = new StringBuilder(url);
         for (HeaderOrParams header : headers) {
             processBooleanParameter(header, historicProcIns);
@@ -169,14 +170,14 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
                     .append(param.getValue())
                     .append("&");
             }
-            // 去除最后一个多余的 "&"
+            // after "&"
             fullUrl.deleteCharAt(fullUrl.length() - 1);
         }
 
-        // 打印最终的 URL
+        // URL
         System.out.println("Executing GET request: " + fullUrl.toString());
 
-        // 使用 HttpClient 发送请求示例
+        // HttpClient
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpRequestBase http = requestMethodValue.equals("GET") ? new HttpGet(fullUrl.toString()) : new HttpDelete(fullUrl.toString());
             headers.forEach(header -> http.addHeader(new BasicHeader(header.getKey(), header.getValue())));
@@ -185,7 +186,7 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
 
             try (CloseableHttpResponse response = httpClient.execute(http)) {
                 System.out.println("Response Code: " + response.getStatusLine().getStatusCode());
-                // 处理响应内容...
+                // Process ...
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -193,7 +194,7 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
     }
 
     /**
-     * 执行 POST 请求
+     * Execute POST
      */
     private void executePostRequest(String requestMethodValue, String url, List<HeaderOrParams> headers, List<HeaderOrParams> params, String paramsType, HistoricProcessInstance historicProcIns) {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
@@ -204,15 +205,15 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
             processBooleanParameter(param, historicProcIns);
         }
         String body = getRequestBody(params, paramsType, historicProcIns);
-        // 打印最终的请求 body
+        // body
 
         System.out.println("Executing POST request: " + url);
         System.out.println("Request Body: " + body);
-        // 使用 HttpClient 发送请求示例
+        // HttpClient
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpEntityEnclosingRequestBase http = requestMethodValue.equals("POST") ? new HttpPost(url) : new HttpPut(url);
             ;
-            // 直接在请求头中添加额外的参数
+            // in in parameter
             http.addHeader("accesstoken", request.getHeader("accesstoken"));
             http.addHeader("tenantId", historicProcIns == null ? "" : historicProcIns.getTenantId());
             http.addHeader("appid", request.getHeader("appid"));
@@ -225,7 +226,7 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
 
             try (CloseableHttpResponse response = httpClient.execute(http)) {
                 System.out.println("Response Code: " + response.getStatusLine().getStatusCode());
-                // 处理响应内容...
+                // Process ...
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -260,7 +261,7 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
     }
 
     /**
-     * 将参数转换为 JSON 格式
+     * parameterConvert to JSON
      */
     private String convertParamsToJson(List<HeaderOrParams> params, HistoricProcessInstance historicProcIns) {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
@@ -271,7 +272,7 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
         IWfProcessService processService = applicationContext.getBean(IWfProcessService.class);
         jsonMap.put("processDetail", processService.queryProcessDetail(historicProcIns.getId(), null,sysUser,false));
         //SysUser sysUser = RedisUtils.getCacheObject(accesstoken);
-        // 从请求头中获取参数
+        // from in Get parameter
 
         jsonMap.put("procinsId", historicProcIns);
 
@@ -281,14 +282,14 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         try {
-            return mapper.writeValueAsString(jsonMap);  // 将参数列表转换为 JSON 字符串
+            return mapper.writeValueAsString(jsonMap);  // parameter Convert to JSON
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
     /**
-     * 将参数转换为 x-www-form-urlencoded 格式
+     * parameterConvert to x-www-form-urlencoded
      */
     private String convertParamsToFormData(List<HeaderOrParams> params) {
         StringBuilder formData = new StringBuilder();
@@ -298,7 +299,7 @@ public class ApprovalListeners implements TaskListener , ApplicationContextAware
                 .append(param.getValue())
                 .append("&");
         }
-        // 去除最后一个多余的 "&"
+        // after "&"
         if (formData.length() > 0) {
             formData.deleteCharAt(formData.length() - 1);
         }

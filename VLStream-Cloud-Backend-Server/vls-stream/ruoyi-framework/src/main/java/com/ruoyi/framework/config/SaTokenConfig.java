@@ -26,7 +26,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * sa-token 配置
+ * sa-token configuration
  *
  * @author Lion Li
  */
@@ -37,14 +37,14 @@ public class SaTokenConfig implements WebMvcConfigurer {
     private final SecurityProperties securityProperties;
 
     /**
-     * 注册sa-token的拦截器
+     * sa-token
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         // TokenInterceptor keeps handling token compatibility; SaInterceptor enforces controller annotations.
         registry.addInterceptor(new SaInterceptor().isAnnotation(true))
             .addPathPatterns("/**")
-            // 排除不需要拦截的路径
+            // need to
             .excludePathPatterns(securityProperties.getExcludes());
     }
 
@@ -55,35 +55,35 @@ public class SaTokenConfig implements WebMvcConfigurer {
                 .header("AccessToken", accessToken);
 
             HttpResponse response = request.execute();
-            String responseBody = response.body(); // 获取响应体字符串
+            String responseBody = response.body(); // Get
 
-            // 使用cn.hutool.json.JSONObject解析响应体
+            // cn.hutool.json.JSONObjectParse
             JSONObject resultJson = JSONUtil.parseObj(responseBody);
             System.out.println("resultJson = " + resultJson.toString());
-            int code = resultJson.getInt("code"); // 使用JSONUtil的getInt方法
+            int code = resultJson.getInt("code"); // JSONUtil getInt method
             if (code == 200) {
-                return true; // AccessToken有效
+                return true; // AccessToken
             } else if (code == 4004) {
                 log.warn("无效的AccessToken: {}", accessToken);
-                return false; // AccessToken无效
+                return false; // AccessToken
             } else {
                 log.error("未知错误，验证AccessToken时接收到异常响应: {}", resultJson);
-                return false; // 非预期响应，视为无效
+                return false; // non- , to
             }
         } catch (Exception e) {
             log.error("验证AccessToken时发生异常", e);
-            return false; // 发生网络或其他异常，视为无效
+            return false; // , to
         }
     }
 
     @Bean
     public StpLogic getStpLogicJwt() {
-        // Sa-Token 整合 jwt (简单模式)
+        // Sa-Token integrate jwt ( )
         return new StpLogicJwtForSimple();
     }
 
     /**
-     * 权限接口实现(使用bean注入方便用户替换)
+     * interface ( bean userReplace )
      */
     @Bean
     public StpInterface stpInterface() {
@@ -91,7 +91,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
     }
 
     /**
-     * 自定义dao层存储
+     * Customdao layer
      */
     @Bean
     public SaTokenDao saTokenDao() {

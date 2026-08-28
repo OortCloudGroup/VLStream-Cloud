@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -16,7 +17,7 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * 通用配置
+ * configuration
  *
  * @author Lion Li
  */
@@ -25,7 +26,7 @@ public class ResourcesConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // 全局访问性能拦截
+        // full can
         registry.addInterceptor(new PlusWebInvokeTimeInterceptor());
     }
 
@@ -34,24 +35,24 @@ public class ResourcesConfig implements WebMvcConfigurer {
     }
 
     /**
-     * 跨域配置
+     * configuration
      */
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        // 设置访问源地址
+        // Set
         config.addAllowedOriginPattern("*");
-        // 设置访问源请求头
+        // Set
         config.addAllowedHeader("*");
-        // 设置访问源请求方法
+        // Set method
         config.addAllowedMethod("*");
-        // 有效期 1800秒
+        // 1800
         config.setMaxAge(1800L);
-        // 添加映射路径，拦截一切请求
+        // ,
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
-        // 返回新的CorsFilter
+        // new CorsFilter
         return new CorsFilter(source);
     }
 }

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="prop_body">
     <div class="prop_body_tab">
@@ -37,7 +42,7 @@
       </el-tabs>
     </div>
     <div class="prop_body_bottom button_group">
-      <!-- 两个按钮 一个取消 ，一个确定 -->
+      <!-- button , -->
       <el-button @click="cancel" class="common_btn">
         取消
       </el-button>
@@ -63,10 +68,10 @@ const props = defineProps({
 const activeName = ref('zero')
 
 const activeChooseData = ref({
-  waitType: 'duration', // duration 固定时间，date 自动计算(日期)
-  unit: '时', // 单位
-  delayDuration: 0, // 延时时间
-  timeDate: '' // 自动计算时间
+  waitType: 'duration', // duration , date ( )
+  unit: '时', //
+  delayDuration: 0, //
+  timeDate: '' //
 })
 
 import { setYsclErrorMsg } from '@/utils/setNodeErrorMsg'
@@ -81,7 +86,7 @@ function cancel() {
 
 const nodeName = ref(props.nodeConfig.nodeName)
 function confirm() {
-  // 属性单词
+  // property
   // props.nodeConfig.property = activeChooseData.value
   const nodeConfig = { ...props.nodeConfig, ...activeChooseData.value }
   nodeConfig.nodeName = nodeName.value

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -19,7 +20,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * 线程池配置
+ * configuration
  *
  * @author Lion Li
  **/
@@ -27,7 +28,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class ThreadPoolConfig {
 
     /**
-     * 核心线程数 = cpu 核心数 + 1
+     * = cpu + 1
      */
     private final int core = Runtime.getRuntime().availableProcessors() + 1;
 
@@ -47,7 +48,7 @@ public class ThreadPoolConfig {
     }
 
     /**
-     * 执行周期性或定时任务
+     * Execute task
      */
     @Bean(name = "scheduledExecutorService")
     protected ScheduledExecutorService scheduledExecutorService() {

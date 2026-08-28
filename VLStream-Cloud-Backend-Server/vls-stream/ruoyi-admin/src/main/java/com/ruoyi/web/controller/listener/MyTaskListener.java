@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,21 +18,21 @@ import org.springframework.stereotype.Component;
 public class MyTaskListener extends FlowServiceFactory implements TaskListener {
     @Override
     public void notify(DelegateTask delegateTask) {
-        // 获取流程定义ID
+        // Get workflow definition ID
         String processDefinitionId = delegateTask.getProcessDefinitionId();
 
-        // 使用 RepositoryService 获取 BpmnModel
+        // RepositoryService Get BpmnModel
         BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
-        // 获取流程定义的主流程对象
+        // Get workflow definition main workflow object
         Process process = bpmnModel.getMainProcess();
-        // 获取自定义属性
+        // Get Customproperty
         String notifyAllSteps = process.getAttributeValue("http://flowable.org/bpmn", "notifyAllSteps");
-        System.out.println("notifyAllSteps 属性值: " + notifyAllSteps);  // 确认属性值是否正确
+        System.out.println("notifyAllSteps 属性值: " + notifyAllSteps);  // property valuewhether correct
 
         runtimeService.setVariable(delegateTask.getExecutionId(),"notifyAllSteps",notifyAllSteps);
         String  notifyAllSteps1 = (String) runtimeService.getVariable(delegateTask.getExecutionId(), "notifyAllSteps");
         System.out.println("notifyAllSteps1 属性值: " + notifyAllSteps1);
-        // 获取当前任务节点信息
+        // Get current tasknodeinfo
         String currentTaskId = delegateTask.getId();
         System.out.println("当前任务ID: " + currentTaskId);
     }

@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * 岗位信息操作处理
+ * infooperationProcess
  *
  * @author Lion Li
  */
@@ -37,7 +37,7 @@ public class SysPostController extends BaseController {
     private final ISysPostService postService;
 
     /**
-     * 获取岗位列表
+     * Get
      */
     @SaCheckPermission("system:post:list")
     @GetMapping("/list")
@@ -46,7 +46,7 @@ public class SysPostController extends BaseController {
     }
 
     /**
-     * 导出岗位列表
+     * Export
      */
     @Log(title = "岗位管理", businessType = BusinessType.EXPORT)
     @SaCheckPermission("system:post:export")
@@ -57,9 +57,9 @@ public class SysPostController extends BaseController {
     }
 
     /**
-     * 根据岗位编号获取详细信息
+     * Get info
      *
-     * @param postId 岗位ID
+     * @param postId ID
      */
     @SaCheckPermission("system:post:query")
     @GetMapping(value = "/{postId}")
@@ -68,7 +68,7 @@ public class SysPostController extends BaseController {
     }
 
     /**
-     * 新增岗位
+     * Add
      */
     @SaCheckPermission("system:post:add")
     @Log(title = "岗位管理", businessType = BusinessType.INSERT)
@@ -83,7 +83,7 @@ public class SysPostController extends BaseController {
     }
 
     /**
-     * 修改岗位
+     * Update
      */
     @SaCheckPermission("system:post:edit")
     @Log(title = "岗位管理", businessType = BusinessType.UPDATE)
@@ -98,9 +98,9 @@ public class SysPostController extends BaseController {
     }
 
     /**
-     * 删除岗位
+     * Delete
      *
-     * @param postIds 岗位ID串
+     * @param postIds ID
      */
     @SaCheckPermission("system:post:remove")
     @Log(title = "岗位管理", businessType = BusinessType.DELETE)
@@ -110,7 +110,7 @@ public class SysPostController extends BaseController {
     }
 
     /**
-     * 获取岗位选择框列表
+     * Get
      */
     @GetMapping("/optionselect")
     public R<List<SysPost>> optionselect() {

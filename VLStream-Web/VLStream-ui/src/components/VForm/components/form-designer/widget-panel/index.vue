@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-scrollbar class="side-scroll-bar" :style="{height: scrollerHeight}">
     <div class="panel-container">
@@ -239,7 +244,7 @@ export default {
       // })
     },
 
-    // 将组件列表转换成一个个自定义的组件，这里使用grid包裹起来先
+    // component Convert Custom component, grid
     setCustomFields(list) {
       this.customFields = list.map(item => {
         if (item.content) {

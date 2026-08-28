@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -18,7 +19,7 @@ import java.time.LocalDateTime;
 
 
 /**
- * 算法编排表 Excel实体类
+ * algorithm Excel
  *
  * @author Oort
  * @since 2025-12-23
@@ -31,79 +32,79 @@ public class VlsAlgorithmOrchestrationExcel implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 编排名称
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("编排名称")
 	private String orchestrationName;
 	/**
-	 * 编排描述
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("编排描述")
 	private String orchestrationDesc;
 	/**
-	 * 触发类型：realtime-实时,scheduled-定时,manual-手动
+	 * : realtime- ,scheduled- ,manual-
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("触发类型：realtime-实时,scheduled-定时,manual-手动")
 	private String triggerType;
 	/**
-	 * 执行模式：serial-串行,parallel-并行
+	 * Execute : serial- ,parallel-
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("执行模式：serial-串行,parallel-并行")
 	private String executeMode;
 	/**
-	 * 算法步骤配置
+	 * algorithm configuration
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("算法步骤配置")
 	private String algorithmSteps;
 	/**
-	 * 输入配置
+	 * configuration
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("输入配置")
 	private String inputConfig;
 	/**
-	 * 输出配置
+	 * configuration
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("输出配置")
 	private String outputConfig;
 	/**
-	 * 关联设备数量
+	 * device
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("关联设备数量")
 	private Integer deviceCount;
 	/**
-	 * 运行次数
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("运行次数")
 	private Integer runCount;
 	/**
-	 * 状态：active-活跃,inactive-非活跃,draft-草稿
+	 * : active- ,inactive- non- ,draft-
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("状态：active-活跃,inactive-非活跃,draft-草稿")
 	private String orchestrationStatus;
 	/**
-	 * 最后运行时间
+	 * after
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("最后运行时间")
 	private LocalDateTime lastRunTime;
 	/**
-	 * 平均运行时间(秒)
+	 * ( )
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("平均运行时间(秒)")
 	private Integer avgRunTime;
 	/**
-	 * 成功率
+	 * successfully
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("成功率")

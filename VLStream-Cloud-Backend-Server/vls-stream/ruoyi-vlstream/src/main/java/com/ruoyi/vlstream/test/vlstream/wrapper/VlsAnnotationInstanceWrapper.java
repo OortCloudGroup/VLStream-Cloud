@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.AnnotationInstanceVO;
 import java.util.Objects;
 
 /**
- * 标注实例实体类 包装类,返回视图层所需的字段
+ * annotationinstance , layer field
  *
  * @author Oort
  * @since 2025-12-23

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -12,7 +13,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 对象存储配置对象 sys_oss_config
+ * object configurationobject sys_oss_config
  *
  * @author Lion Li
  */
@@ -22,13 +23,13 @@ import lombok.EqualsAndHashCode;
 public class SysOssConfig extends BaseEntity {
 
     /**
-     * 主建
+     * main
      */
     @TableId(value = "oss_config_id")
     private Long ossConfigId;
 
     /**
-     * 配置key
+     * configurationkey
      */
     private String configKey;
 
@@ -38,57 +39,57 @@ public class SysOssConfig extends BaseEntity {
     private String accessKey;
 
     /**
-     * 秘钥
+     *
      */
     private String secretKey;
 
     /**
-     * 桶名称
+     *
      */
     private String bucketName;
 
     /**
-     * 前缀
+     * before
      */
     private String prefix;
 
     /**
-     * 访问站点
+     *
      */
     private String endpoint;
 
     /**
-     * 自定义域名
+     * Custom
      */
     private String domain;
 
     /**
-     * 是否https（0否 1是）
+     * whether https (0 1 is )
      */
     private String isHttps;
 
     /**
-     * 域
+     *
      */
     private String region;
 
     /**
-     * 是否默认（0=是,1=否）
+     * whether (0= is ,1= )
      */
     private String status;
 
     /**
-     * 扩展字段
+     * field
      */
     private String ext1;
 
     /**
-     * 备注
+     * remark
      */
     private String remark;
 
     /**
-     * 桶权限类型(0private 1public 2custom)
+     * (0private 1public 2custom)
      */
     private String accessPolicy;
 }

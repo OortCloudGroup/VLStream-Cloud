@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -19,52 +20,52 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 安全相关工具类
+ * full related
  *
- * @author 老马
+ * @author
  */
 public class EncryptUtils {
     /**
-     * 公钥
+     *
      */
     public static final String PUBLIC_KEY = "publicKey";
     /**
-     * 私钥
+     *
      */
     public static final String PRIVATE_KEY = "privateKey";
 
     /**
-     * Base64加密
+     * Base64
      *
-     * @param data 待加密数据
-     * @return 加密后字符串
+     * @param data data
+     * @return after
      */
     public static String encryptByBase64(String data) {
         return Base64.encode(data, StandardCharsets.UTF_8);
     }
 
     /**
-     * Base64解密
+     * Base64
      *
-     * @param data 待解密数据
-     * @return 解密后字符串
+     * @param data data
+     * @return after
      */
     public static String decryptByBase64(String data) {
         return Base64.decodeStr(data, StandardCharsets.UTF_8);
     }
 
     /**
-     * AES加密
+     * AES
      *
-     * @param data     待解密数据
-     * @param password 秘钥字符串
-     * @return 加密后字符串, 采用Base64编码
+     * @param data data
+     * @param password
+     * @return after , Base64
      */
     public static String encryptByAes(String data, String password) {
         if (StrUtil.isBlank(password)) {
             throw new IllegalArgumentException("AES需要传入秘钥信息");
         }
-        // aes算法的秘钥要求是16位、24位、32位
+        // aesalgorithm need to is 16 、24 、32
         int[] array = {16, 24, 32};
         if (!ArrayUtil.contains(array, password.length())) {
             throw new IllegalArgumentException("AES秘钥长度要求为16位、24位、32位");
@@ -73,17 +74,17 @@ public class EncryptUtils {
     }
 
     /**
-     * AES解密
+     * AES
      *
-     * @param data     待解密数据
-     * @param password 秘钥字符串
-     * @return 解密后字符串
+     * @param data data
+     * @param password
+     * @return after
      */
     public static String decryptByAes(String data, String password) {
         if (StrUtil.isBlank(password)) {
             throw new IllegalArgumentException("AES需要传入秘钥信息");
         }
-        // aes算法的秘钥要求是16位、24位、32位
+        // aesalgorithm need to is 16 、24 、32
         int[] array = {16, 24, 32};
         if (!ArrayUtil.contains(array, password.length())) {
             throw new IllegalArgumentException("AES秘钥长度要求为16位、24位、32位");
@@ -92,17 +93,17 @@ public class EncryptUtils {
     }
 
     /**
-     * sm4加密
+     * sm4
      *
-     * @param data     待加密数据
-     * @param password 秘钥字符串
-     * @return 加密后字符串, 采用Base64编码
+     * @param data data
+     * @param password
+     * @return after , Base64
      */
     public static String encryptBySm4(String data, String password) {
         if (StrUtil.isBlank(password)) {
             throw new IllegalArgumentException("SM4需要传入秘钥信息");
         }
-        // sm4算法的秘钥要求是16位长度
+        // sm4algorithm need to is 16
         int sm4PasswordLength = 16;
         if (sm4PasswordLength != password.length()) {
             throw new IllegalArgumentException("SM4秘钥长度要求为16位");
@@ -111,17 +112,17 @@ public class EncryptUtils {
     }
 
     /**
-     * sm4解密
+     * sm4
      *
-     * @param data     待解密数据
-     * @param password 秘钥字符串
-     * @return 解密后字符串
+     * @param data data
+     * @param password
+     * @return after
      */
     public static String decryptBySm4(String data, String password) {
         if (StrUtil.isBlank(password)) {
             throw new IllegalArgumentException("SM4需要传入秘钥信息");
         }
-        // sm4算法的秘钥要求是16位长度
+        // sm4algorithm need to is 16
         int sm4PasswordLength = 16;
         if (sm4PasswordLength != password.length()) {
             throw new IllegalArgumentException("SM4秘钥长度要求为16位");
@@ -130,9 +131,9 @@ public class EncryptUtils {
     }
 
     /**
-     * 产生sm2加解密需要的公钥和私钥
+     * sm2 need to and
      *
-     * @return 公私钥Map
+     * @return Map
      */
     public static Map<String, String> generateSm2Key() {
         Map<String, String> keyMap = new HashMap<>(2);
@@ -143,11 +144,11 @@ public class EncryptUtils {
     }
 
     /**
-     * sm2公钥加密
+     * sm2
      *
-     * @param data      待加密数据
-     * @param publicKey 公钥
-     * @return 加密后字符串, 采用Base64编码
+     * @param data data
+     * @param publicKey
+     * @return after , Base64
      */
     public static String encryptBySm2(String data, String publicKey) {
         if (StrUtil.isBlank(publicKey)) {
@@ -158,11 +159,11 @@ public class EncryptUtils {
     }
 
     /**
-     * sm2私钥解密
+     * sm2
      *
-     * @param data       待加密数据
-     * @param privateKey 私钥
-     * @return 解密后字符串
+     * @param data data
+     * @param privateKey
+     * @return after
      */
     public static String decryptBySm2(String data, String privateKey) {
         if (StrUtil.isBlank(privateKey)) {
@@ -173,9 +174,9 @@ public class EncryptUtils {
     }
 
     /**
-     * 产生RSA加解密需要的公钥和私钥
+     * RSA need to and
      *
-     * @return 公私钥Map
+     * @return Map
      */
     public static Map<String, String> generateRsaKey() {
         Map<String, String> keyMap = new HashMap<>(2);
@@ -186,11 +187,11 @@ public class EncryptUtils {
     }
 
     /**
-     * rsa公钥加密
+     * rsa
      *
-     * @param data      待加密数据
-     * @param publicKey 公钥
-     * @return 加密后字符串, 采用Base64编码
+     * @param data data
+     * @param publicKey
+     * @return after , Base64
      */
     public static String encryptByRsa(String data, String publicKey) {
         if (StrUtil.isBlank(publicKey)) {
@@ -201,11 +202,11 @@ public class EncryptUtils {
     }
 
     /**
-     * rsa私钥解密
+     * rsa
      *
-     * @param data       待加密数据
-     * @param privateKey 私钥
-     * @return 解密后字符串
+     * @param data data
+     * @param privateKey
+     * @return after
      */
     public static String decryptByRsa(String data, String privateKey) {
         if (StrUtil.isBlank(privateKey)) {
@@ -216,30 +217,30 @@ public class EncryptUtils {
     }
 
     /**
-     * md5加密
+     * md5
      *
-     * @param data 待加密数据
-     * @return 加密后字符串, 采用Hex编码
+     * @param data data
+     * @return after , Hex
      */
     public static String encryptByMd5(String data) {
         return SecureUtil.md5(data);
     }
 
     /**
-     * sha256加密
+     * sha256
      *
-     * @param data 待加密数据
-     * @return 加密后字符串, 采用Hex编码
+     * @param data data
+     * @return after , Hex
      */
     public static String encryptBySha256(String data) {
         return SecureUtil.sha256(data);
     }
 
     /**
-     * sm3加密
+     * sm3
      *
-     * @param data 待加密数据
-     * @return 加密后字符串, 采用Hex编码
+     * @param data data
+     * @return after , Hex
      */
     public static String encryptBySm3(String data) {
         return SmUtil.sm3(data);

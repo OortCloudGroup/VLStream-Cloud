@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -43,20 +44,20 @@ public class TaskEndListener implements TaskListener, ApplicationContextAware {
         SysDeptServiceImpl sysDeptServiceImpl = (SysDeptServiceImpl)applicationContext.getBean("sysDeptServiceImpl");
         Environment environment = (Environment)applicationContext.getBean("environment");
         RuntimeService runtimeService = applicationContext.getBean(RuntimeService.class);
-        // 获取流程实例 ID
+        // Get workflow instance ID
         String processInstanceId = delegateTask.getProcessInstanceId();
-        // 获取之前设置的流程变量
+        // Get beforeSet workflow variable
         String currentAssignee = delegateTask.getAssignee();
-        // 将当前任务的候选人设置为currentAssignees
+        // current task candidate userSet to currentAssignees
         if (StringUtils.isNotBlank(currentAssignee)) {
-            // 将当前任务的候选人列表设置为候选用户
+            // current task candidate user Set to user
             List<SysUser> leaders = sysUserServiceImpl.getLeaders(currentAssignee);
             if(!CollectionUtils.isEmpty(leaders)) {
 //                String nextUserIds = (String) delegateTask.getVariable("nextUserIds");
-//                if(StringUtils.isNotBlank(nextUserIds)){ // 页面选择了审批人
+// if(StringUtils.isNotBlank(nextUserIds)){ // page approver
 //                    List<String> leaderIds = Arrays.asList(nextUserIds.split(","));
 ////                    delegateTask.addCandidateUsers(leaderIds);
-//                }else { // 页面未选择审批人
+// }else { // page not approver
 //                    List<String> leaderIds = leaders.stream()
 //                        .map(SysUser::getUserId)
 //                        .collect(Collectors.toList());
@@ -65,11 +66,11 @@ public class TaskEndListener implements TaskListener, ApplicationContextAware {
                 delegateTask.setVariable("flowDirection", "continue");
             } else {
 //                delegateTask.setVariable("flowDirection", "end");
-                // 判断是不是局领导
+                // Check if it is bureau leader
                 SysUser sysUser = sysUserServiceImpl.selectUserById(currentAssignee);
                 SysDeptView sysDeptView = sysDeptServiceImpl.selectDeptById(sysUser.getDeptId());
                 if(!environment.getProperty("dept.excludedUdid").equals(sysDeptView.getDeptId())) {
-                    // 获取所有局领导
+                    // Get all bureau leader
 //                    Long parentDeptId = sysDept.getParentId();
                     String udid = environment.getProperty("dept.excludedUdid");
 //                    SysDept s = sysDeptServiceImpl.selectDeptByUdid(udid);

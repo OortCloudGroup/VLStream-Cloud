@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div ref="container" @dblclick="fullscreenSwich"
        style="width:100%; height: 100%; background-color: #000000;margin:0 auto;position: relative;">
@@ -36,13 +41,13 @@ export default {
       fullscreen: false,
       loaded: false, // mute
       speed: 0,
-      performance: "", // 工作情况
+      performance: "", //
       kBps: 0,
       btnDom: null,
       videoInfo: null,
       volume: 1,
       rotate: 0,
-      vod: true, // 点播
+      vod: true, //
       forceNoOffscreen: false,
     };
   },

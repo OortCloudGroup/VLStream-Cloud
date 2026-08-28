@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -19,7 +20,7 @@ import javax.validation.constraints.NotNull;
 
 
 /**
- * 测试国际化
+ *
  *
  * @author Lion Li
  */
@@ -29,12 +30,12 @@ import javax.validation.constraints.NotNull;
 public class TestI18nController {
 
     /**
-     * 通过code获取国际化内容
-     * code为 messages.properties 中的 key
+     * codeGet
+     * code to messages.properties in key
      * <p>
-     * 测试使用 user.register.success
+     * user.register.success
      *
-     * @param code 国际化code
+     * @param code code
      */
     @GetMapping()
     public R<Void> get(String code) {
@@ -42,10 +43,10 @@ public class TestI18nController {
     }
 
     /**
-     * Validator 校验国际化
-     * 不传值 分别查看异常返回
+     * Validator Validate
+     * value
      * <p>
-     * 测试使用 not.null
+     * not.null
      */
     @GetMapping("/test1")
     public R<Void> test1(@NotBlank(message = "{not.null}") String str) {
@@ -53,10 +54,10 @@ public class TestI18nController {
     }
 
     /**
-     * Bean 校验国际化
-     * 不传值 分别查看异常返回
+     * Bean Validate
+     * value
      * <p>
-     * 测试使用 not.null
+     * not.null
      */
     @GetMapping("/test2")
     public R<TestI18nBo> test2(@Validated TestI18nBo bo) {

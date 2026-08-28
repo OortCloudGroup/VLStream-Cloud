@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -9,7 +10,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.CommandLineRunner;
 
 /**
- * 检测启动触发器基类：应用启动时触发一次检测任务刷新。
+ * : task new .
  */
 public abstract class AbstractDetectionRunner<M extends AbstractDeviceDetectionManager<?>> implements CommandLineRunner {
 

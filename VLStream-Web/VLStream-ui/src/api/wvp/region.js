@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 获取所属的行政区划下的行政区划
+// Get
 export function getAllChild(query) {
     return request({
         url: `/api/region/base/child/list`,
@@ -9,7 +14,7 @@ export function getAllChild(query) {
     })
 }
 
-// 查询区域
+// Query
 export function queryForTree(query) {
     return request({
         url: `/api/region/tree/list`,
@@ -18,7 +23,7 @@ export function queryForTree(query) {
     })
 }
 
-// 更新区域
+// new
 export function updateRegion(data) {
     return request({
         url: `/api/region/update`,
@@ -27,7 +32,7 @@ export function updateRegion(data) {
     })
 }
 
-// 添加区域
+//
 export function addRegion(data) {
     return request({
         url: `/api/region/add`,
@@ -36,7 +41,7 @@ export function addRegion(data) {
     })
 }
 
-// 删除区域
+// Delete
 export function deleteRegion(id) {
     return request({
         url: `/api/region/delete/${id}`,

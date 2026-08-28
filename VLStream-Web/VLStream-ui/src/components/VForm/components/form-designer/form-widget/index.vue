@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="form-widget-container">
     <el-form
@@ -75,7 +80,7 @@ export default {
     return {
       refList: this.widgetRefList,
       getFormConfig: () => this.formConfig, /* 解决provide传递formConfig属性的响应式更新问题！！ */
-      getGlobalDsv: () => this.globalDsv, // 全局数据源变量
+      getGlobalDsv: () => this.globalDsv, // full data variable
       globalOptionData: this.optionData,
       getOptionData: () => this.optionData,
       globalModel: {
@@ -87,7 +92,7 @@ export default {
   props: {
     designer: Object,
     formConfig: Object,
-    optionData: { // prop传入的选项数据
+    optionData: { // prop item data
       type: Object,
       default: () => ({})
     },

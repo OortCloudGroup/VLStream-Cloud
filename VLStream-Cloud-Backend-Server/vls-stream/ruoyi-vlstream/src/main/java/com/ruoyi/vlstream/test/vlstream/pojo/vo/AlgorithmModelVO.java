@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -12,7 +13,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmModel;
 
 
 /**
- * 算法模型表 视图实体类
+ * algorithmmodel
  *
  * @author Oort
  * @since 2025-12-23

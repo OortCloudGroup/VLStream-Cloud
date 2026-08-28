@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * 角色业务层
+ * role layer
  *
  * @author Lion Li
  */
@@ -25,170 +25,170 @@ public interface ISysRoleService {
     TableDataInfo<SysRole> selectPageRoleList(SysRole role, PageQuery pageQuery);
 
     /**
-     * 根据条件分页查询角色数据
+     * Query roledata
      *
-     * @param role 角色信息
-     * @return 角色数据集合信息
+     * @param role roleinfo
+     * @return roledataset info
      */
     List<SysRole> selectRoleList(SysRole role);
 
     /**
-     * 根据用户ID查询角色列表
+     * user IDQuery role list
      *
-     * @param userId 用户ID
-     * @return 角色列表
+     * @param userId user ID
+     * @return role
      */
     List<SysRole> selectRolesByUserId(String userId);
 
     /**
-     * 根据用户ID查询角色权限
+     * user IDQuery role
      *
-     * @param userId 用户ID
-     * @return 权限列表
+     * @param userId user ID
+     * @return
      */
     Set<String> selectRolePermissionByUserId(String userId);
 
     /**
-     * 查询所有角色
+     * Query all role
      *
-     * @return 角色列表
+     * @return role
      */
     List<SysRole> selectRoleAll();
 
     /**
-     * 根据用户ID获取角色选择框列表
+     * user IDGet role
      *
-     * @param userId 用户ID
-     * @return 选中角色ID列表
+     * @param userId user ID
+     * @return in role ID
      */
     List<Long> selectRoleListByUserId(String userId);
 
     /**
-     * 通过角色ID查询角色
+     * role IDQuery role
      *
-     * @param roleId 角色ID
-     * @return 角色对象信息
+     * @param roleId role ID
+     * @return roleobjectinfo
      */
     SysUserRoleView selectRoleById(String roleId);
 
     /**
-     * 通过用户ID和角色ID查询角色（支持单独或组合条件）
+     * user ID and role IDQuery role ( )
      *
-     * @param userId 用户ID（可为null）
-     * @param roleId 角色ID（可为null）
-     * @return 角色对象信息
+     * @param userId user ID ( to null)
+     * @param roleId role ID ( to null)
+     * @return roleobjectinfo
      */
     SysUserRoleView selectRoleByCondition(String userId, String roleId);
 
     /**
-     * 校验角色名称是否唯一
+     * Validate role namewhether
      *
-     * @param role 角色信息
-     * @return 结果
+     * @param role roleinfo
+     * @return
      */
     boolean checkRoleNameUnique(SysRole role);
 
     /**
-     * 校验角色权限是否唯一
+     * Validate role whether
      *
-     * @param role 角色信息
-     * @return 结果
+     * @param role roleinfo
+     * @return
      */
     boolean checkRoleKeyUnique(SysRole role);
 
     /**
-     * 校验角色是否允许操作
+     * Validate rolewhether operation
      *
-     * @param role 角色信息
+     * @param role roleinfo
      */
     void checkRoleAllowed(SysRole role);
 
     /**
-     * 校验角色是否有数据权限
+     * Validate rolewhether data
      *
-     * @param roleId 角色id
+     * @param roleId roleid
      */
     void checkRoleDataScope(String roleId);
 
     /**
-     * 通过角色ID查询角色使用数量
+     * role IDQuery role
      *
-     * @param roleId 角色ID
-     * @return 结果
+     * @param roleId role ID
+     * @return
      */
     long countUserRoleByRoleId(String  roleId);
 
     /**
-     * 新增保存角色信息
+     * Add roleinfo
      *
-     * @param role 角色信息
-     * @return 结果
+     * @param role roleinfo
+     * @return
      */
     int insertRole(SysRole role);
 
     /**
-     * 修改保存角色信息
+     * Update roleinfo
      *
-     * @param role 角色信息
-     * @return 结果
+     * @param role roleinfo
+     * @return
      */
     int updateRole(SysRole role);
 
     /**
-     * 修改角色状态
+     * Update role
      *
-     * @param role 角色信息
-     * @return 结果
+     * @param role roleinfo
+     * @return
      */
     int updateRoleStatus(SysRole role);
 
     /**
-     * 修改数据权限信息
+     * Update data info
      *
-     * @param role 角色信息
-     * @return 结果
+     * @param role roleinfo
+     * @return
      */
     int authDataScope(SysRole role);
 
     /**
-     * 通过角色ID删除角色
+     * role IDDelete role
      *
-     * @param roleId 角色ID
-     * @return 结果
+     * @param roleId role ID
+     * @return
      */
     int deleteRoleById(String roleId);
 
     /**
-     * 批量删除角色信息
+     * Batch delete roleinfo
      *
-     * @param roleIds 需要删除的角色ID
-     * @return 结果
+     * @param roleIds need to Delete role ID
+     * @return
      */
     int deleteRoleByIds(String[] roleIds);
 
     /**
-     * 取消授权用户角色
+     * userrole
      *
-     * @param userRole 用户和角色关联信息
-     * @return 结果
+     * @param userRole user and role info
+     * @return
      */
     int deleteAuthUser(SysUserRoleView userRole);
 
     /**
-     * 批量取消授权用户角色
+     * userrole
      *
-     * @param roleId  角色ID
-     * @param userIds 需要取消授权的用户数据ID
-     * @return 结果
+     * @param roleId role ID
+     * @param userIds need to userdataID
+     * @return
      */
     int deleteAuthUsers(String roleId, String[] userIds);
 
     /**
-     * 批量选择授权用户角色
+     * userrole
      *
-     * @param roleId  角色ID
-     * @param userIds 需要删除的用户数据ID
-     * @return 结果
+     * @param roleId role ID
+     * @param userIds need to Delete userdataID
+     * @return
      */
     int insertAuthUsers(String roleId, String[] userIds);
 

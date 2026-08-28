@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * 操作日志记录
+ * operationlogrecord
  *
  * @author Lion Li
  */
@@ -37,7 +37,7 @@ public class SysOperlogController extends BaseController {
     private final ISysOperLogService operLogService;
 
     /**
-     * 获取操作日志记录列表
+     * Get operationlogrecord
      */
     @SaCheckPermission("monitor:operlog:list")
     @GetMapping("/list")
@@ -46,7 +46,7 @@ public class SysOperlogController extends BaseController {
     }
 
     /**
-     * 导出操作日志记录列表
+     * Export operationlogrecord
      */
     @Log(title = "操作日志", businessType = BusinessType.EXPORT)
     @SaCheckPermission("monitor:operlog:export")
@@ -57,8 +57,8 @@ public class SysOperlogController extends BaseController {
     }
 
     /**
-     * 批量删除操作日志记录
-     * @param operIds 日志ids
+     * Batch delete operationlogrecord
+     * @param operIds logids
      */
     @Log(title = "操作日志", businessType = BusinessType.DELETE)
     @SaCheckPermission("monitor:operlog:remove")
@@ -68,7 +68,7 @@ public class SysOperlogController extends BaseController {
     }
 
     /**
-     * 清理操作日志记录
+     * operationlogrecord
      */
     @Log(title = "操作日志", businessType = BusinessType.CLEAN)
     @SaCheckPermission("monitor:operlog:remove")

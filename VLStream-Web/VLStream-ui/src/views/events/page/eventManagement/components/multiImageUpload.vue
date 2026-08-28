@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="multi-image-upload">
-    <!-- 已上传的图片列表 -->
+    <!-- already -->
     <div class="image-list">
       <div
         v-for="(url, index) in modelValue"
@@ -13,11 +18,11 @@
           class="image-thumbnail"
           @error="handleImageError(index)"
         />
-        <!-- 右上角删除按钮 -->
+        <!-- Delete button -->
         <div class="delete-btn" @click.stop="handleRemove(index)">
           <el-icon><CircleCloseFilled /></el-icon>
         </div>
-        <!-- 底部操作按钮组 -->
+        <!-- operationbutton -->
         <div class="action-buttons">
           <div class="action-btn preview-btn" @click.stop="handlePreview(url)">
             <el-icon><View /></el-icon>
@@ -28,7 +33,7 @@
         </div>
       </div>
     </div>
-    <!-- 上传按钮 -->
+    <!-- button -->
     <el-upload
       v-if="modelValue.length < maxCount"
       :action="uploadURL"
@@ -49,7 +54,7 @@
       </div>
     </el-upload>
 
-    <!-- 图片预览对话框 -->
+    <!--  -->
     <el-dialog v-model="previewVisible" title="图片预览" width="50%">
       <img v-if="previewImage" :src="previewImage" style="width: 100%;" />
     </el-dialog>
@@ -93,19 +98,19 @@ const headers = ref(Config.headers)
 const previewVisible = ref(false)
 const previewImage = ref('')
 
-// 上传成功处理
+// successfullyProcess
 const handleSuccess = (res: any, _file: any) => {
   if (res.code === 200) {
     const newUrl = res.data.url
     const currentUrls = [...props.modelValue]
 
-    // 检查是否超过最大数量限制
+    // whether
     if (currentUrls.length >= props.maxCount) {
       ElMessage.warning(`最多只能上传${props.maxCount}张图片`)
       return
     }
 
-    // 添加新图片URL到数组
+    // new URL array
     currentUrls.push(newUrl)
     emit('update:modelValue', currentUrls)
 
@@ -115,7 +120,7 @@ const handleSuccess = (res: any, _file: any) => {
   }
 }
 
-// 文件大小检查
+//
 const beforeUpload = (file: File) => {
   const isLimit = file.size / 1024 / 1024 < props.sizeLimit
   if (!isLimit) {
@@ -124,7 +129,7 @@ const beforeUpload = (file: File) => {
   return isLimit
 }
 
-// 删除图片
+// Delete
 const handleRemove = (index: number) => {
   const currentUrls = [...props.modelValue]
   currentUrls.splice(index, 1)
@@ -132,7 +137,7 @@ const handleRemove = (index: number) => {
   ElMessage.success('删除成功')
 }
 
-// 下载图片
+//
 const handleDownload = (url: string) => {
   const link = document.createElement('a')
   link.href = url
@@ -143,13 +148,13 @@ const handleDownload = (url: string) => {
   ElMessage.success('下载成功')
 }
 
-// 预览图片
+//
 const handlePreview = (url: string) => {
   previewImage.value = url
   previewVisible.value = true
 }
 
-// 图片加载错误处理
+// Load Process
 const handleImageError = (index: number) => {
   ElMessage.error(`图片加载失败: ${props.modelValue[index]}`)
 }

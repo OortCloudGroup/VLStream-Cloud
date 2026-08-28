@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="debug-panel" v-if="showDebugInfo">
     <div class="debug-header">
@@ -8,9 +13,9 @@
         </svg>
       </button>
     </div>
-    
+
     <div class="debug-content">
-      <!-- 系统状态 -->
+      <!--  -->
       <div class="debug-section">
         <h4>系统状态</h4>
         <div class="status-grid">
@@ -34,8 +39,8 @@
           </div>
         </div>
       </div>
-      
-      <!-- WebRTC配置 -->
+
+      <!-- WebRTCconfiguration -->
       <div class="debug-section">
         <h4>WebRTC配置</h4>
         <div class="config-info">
@@ -57,13 +62,13 @@
           </div>
         </div>
       </div>
-      
-      <!-- 设备列表 -->
+
+      <!-- device -->
       <div class="debug-section">
         <h4>设备列表 ({{ deviceList.length }})</h4>
         <div class="device-list">
-          <div 
-            v-for="device in deviceList.slice(0, 10)" 
+          <div
+            v-for="device in deviceList.slice(0, 10)"
             :key="device.id"
             class="device-item"
             :class="{ online: isDeviceOnline(device) }"
@@ -82,13 +87,13 @@
           </div>
         </div>
       </div>
-      
-      <!-- 流信息 -->
+
+      <!-- info -->
       <div class="debug-section">
         <h4>流信息 ({{ realCameraStreams.length }})</h4>
         <div class="stream-list">
-          <div 
-            v-for="stream in realCameraStreams.slice(0, 5)" 
+          <div
+            v-for="stream in realCameraStreams.slice(0, 5)"
             :key="stream.id"
             class="stream-item"
           >
@@ -106,8 +111,8 @@
           </div>
         </div>
       </div>
-      
-      <!-- 布局信息 -->
+
+      <!-- info -->
       <div class="debug-section">
         <h4>布局信息</h4>
         <div class="layout-info">
@@ -165,23 +170,23 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['close'])
 
-// 计算属性
+// property
 const onlineDeviceCount = computed(() => {
-  return props.deviceList.filter(device => 
+  return props.deviceList.filter(device =>
     device.status && device.status.trim() === '在线'
   ).length
 })
 
 const offlineDeviceCount = computed(() => {
-  return props.deviceList.filter(device => 
+  return props.deviceList.filter(device =>
     !device.status || device.status.trim() !== '在线'
   ).length
 })
 
-// 方法
+// method
 const isDeviceOnline = (device) => {
   return device.status && (
-    device.status.trim() === '在线' || 
+    device.status.trim() === '在线' ||
     device.status.toLowerCase() === 'online'
   )
 }
@@ -512,7 +517,7 @@ const getLayoutDescription = (mode) => {
   color: #303133;
 }
 
-/* 深色模式样式 */
+/*  */
 .map-area.dark-mode .debug-panel {
   background: #1a1a1a;
   border: 1px solid #333;
@@ -576,4 +581,4 @@ const getLayoutDescription = (mode) => {
 .map-area.dark-mode .more-streams {
   color: #666;
 }
-</style> 
+</style>

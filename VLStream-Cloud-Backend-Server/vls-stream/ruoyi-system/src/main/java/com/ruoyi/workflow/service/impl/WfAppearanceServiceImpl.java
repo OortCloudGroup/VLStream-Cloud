@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -26,7 +27,7 @@ public class WfAppearanceServiceImpl extends FlowServiceFactory implements IWfAp
     public WfAppearanceAllCountVo getAllCount(String token) {
         SysUser sysUser = getSysUser(token);
 
-        // 获取待处理工单数量
+        // Get Process work order
         Long todoCount = taskService.createTaskQuery()
             .active()
             .taskCandidateOrAssigned(sysUser.getUserId())
@@ -34,20 +35,20 @@ public class WfAppearanceServiceImpl extends FlowServiceFactory implements IWfAp
             .taskTenantId(sysUser.getTenantId())
             .count();
 
-        // 获取已处理的工单数量
+        // Get already Process work order
         Long finishedCount = historyService.createHistoricTaskInstanceQuery()
             .taskTenantId(sysUser.getTenantId())
-            .finished() // 只查找已完成的任务
+            .finished() // only find already task
             .taskAssignee(sysUser.getUserId())
             .count();
 
-        // 获取我发起的工单数量
+        // Get work order
         Long ownCount = historyService.createHistoricProcessInstanceQuery()
             .processInstanceTenantId(sysUser.getTenantId())
             .startedBy(sysUser.getUserId())
             .count();
 
-        // 获取本周一的0点
+        // Get 0
         String thisWeekMondayStr  = DateUtils.getThisWeekMonday();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date thisWeekMonday = null;
@@ -57,7 +58,7 @@ public class WfAppearanceServiceImpl extends FlowServiceFactory implements IWfAp
             e.printStackTrace();
             throw new RuntimeException("解析本周一0点时间失败");
         }
-        // 获取本周一0点之前的数量
+        // Get 0 before
         Long todoCountLimitWeekMonday = taskService.createTaskQuery()
             .active()
             .taskCandidateOrAssigned(sysUser.getUserId())
@@ -76,7 +77,7 @@ public class WfAppearanceServiceImpl extends FlowServiceFactory implements IWfAp
             .startedBy(sysUser.getUserId())
             .startedBefore(thisWeekMonday)
             .count();
-        // 本周一0点之前总数量
+        // 0 before
         Long allCountLimitWeekMonday = todoCountLimitWeekMonday + finishedCountLimitWeekMonday + ownCountLimitWeekMonday;
 
         WfAppearanceAllCountVo wfAppearanceAllCountVo = new WfAppearanceAllCountVo();
@@ -88,7 +89,7 @@ public class WfAppearanceServiceImpl extends FlowServiceFactory implements IWfAp
     }
 
     /**
-     * 通过token获取用户信息
+     * tokenGet userinfo
      * @param token
      * @return
      */

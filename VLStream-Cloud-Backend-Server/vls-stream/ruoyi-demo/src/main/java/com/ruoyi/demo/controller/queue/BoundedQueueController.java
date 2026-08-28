@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -14,12 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 有界队列 演示案例
+ *
  * <p>
- * 轻量级队列 重量级数据量 请使用 MQ
+ * data MQ
  * <p>
- * 集群测试通过 同一个数据只会被消费一次 做好事务补偿
- * 集群测试流程 在其中一台发送数据 两端分别调用获取接口 一次获取一条
+ * dataonly will
+ * workflow in in data Get interface Get
  *
  * @author Lion Li
  * @version 3.6.0
@@ -32,17 +33,17 @@ public class BoundedQueueController {
 
 
     /**
-     * 添加队列数据
+     * data
      *
-     * @param queueName 队列名
-     * @param capacity  容量
+     * @param queueName
+     * @param capacity
      */
     @GetMapping("/add")
     public R<Void> add(String queueName, int capacity) {
-        // 用完了一定要销毁 否则会一直存在
+        // need to will in
         boolean b = QueueUtils.destroyQueue(queueName);
         log.info("通道: {} , 删除: {}", queueName, b);
-        // 初始化设置一次即可
+        // Initialize Set
         if (QueueUtils.trySetBoundedQueueCapacity(queueName, capacity)) {
             log.info("通道: {} , 设置容量: {}", queueName, capacity);
         } else {
@@ -62,9 +63,9 @@ public class BoundedQueueController {
     }
 
     /**
-     * 删除队列数据
+     * Delete data
      *
-     * @param queueName 队列名
+     * @param queueName
      */
     @GetMapping("/remove")
     public R<Void> remove(String queueName) {
@@ -78,9 +79,9 @@ public class BoundedQueueController {
     }
 
     /**
-     * 获取队列数据
+     * Get data
      *
-     * @param queueName 队列名
+     * @param queueName
      */
     @GetMapping("/get")
     public R<Void> get(String queueName) {

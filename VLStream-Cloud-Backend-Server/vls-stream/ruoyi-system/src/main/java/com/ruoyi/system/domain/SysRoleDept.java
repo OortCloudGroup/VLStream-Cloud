@@ -12,7 +12,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 /**
- * 角色和部门关联 sys_role_dept
+ * role and department sys_role_dept
  *
  * @author Lion Li
  */
@@ -22,13 +22,13 @@ import lombok.Data;
 public class SysRoleDept {
 
     /**
-     * 角色ID
+     * role ID
      */
     @TableId(type = IdType.INPUT)
     private String roleId;
 
     /**
-     * 部门ID
+     * department ID
      */
     private String deptId;
 

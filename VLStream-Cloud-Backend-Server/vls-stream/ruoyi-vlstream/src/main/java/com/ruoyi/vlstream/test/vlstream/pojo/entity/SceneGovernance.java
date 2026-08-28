@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,7 +14,7 @@ import org.springblade.core.mp.base.TenantEntity;
 
 
 /**
- * 场景治理表 实体类
+ *
  *
  * @author Oort
  * @since 2025-12-23

@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="debug-panel">
-    <!-- 面板头部 -->
+    <!--  -->
     <div class="debug-header">
       <div class="header-title">
         <h3>调试信息面板</h3>
@@ -22,9 +27,9 @@
       </div>
     </div>
 
-    <!-- 调试内容 -->
+    <!--  -->
     <div class="debug-content">
-      <!-- 系统状态 -->
+      <!--  -->
       <div class="debug-section">
         <h4>系统状态</h4>
         <div class="status-grid">
@@ -49,7 +54,7 @@
         </div>
       </div>
 
-      <!-- 设备列表 -->
+      <!-- device -->
       <div class="debug-section">
         <h4>设备列表 ({{ deviceList.length }})</h4>
         <div class="device-debug-list">
@@ -88,7 +93,7 @@
         </div>
       </div>
 
-      <!-- 实时流状态 -->
+      <!--  -->
       <div class="debug-section">
         <h4>实时流状态 ({{ activeStreamCount }})</h4>
         <div class="stream-debug-list">
@@ -101,7 +106,7 @@
               <div class="stream-id">摄像头 ID: {{ cameraId }}</div>
               <div class="stream-url">流地址: {{ stream.url || 'N/A' }}</div>
               <div class="stream-status">
-                状态: 
+                状态:
                 <span class="status-badge active">活动</span>
               </div>
               <div class="stream-quality">
@@ -115,7 +120,7 @@
         </div>
       </div>
 
-      <!-- WebRTC配置 -->
+      <!-- WebRTCconfiguration -->
       <div class="debug-section">
         <h4>WebRTC 配置</h4>
         <div class="config-content">
@@ -123,7 +128,7 @@
         </div>
       </div>
 
-      <!-- 性能监控 -->
+      <!-- can -->
       <div class="debug-section">
         <h4>性能监控</h4>
         <div class="performance-grid">
@@ -146,7 +151,7 @@
         </div>
       </div>
 
-      <!-- 操作日志 -->
+      <!-- operationlog -->
       <div class="debug-section">
         <h4>操作日志</h4>
         <div class="log-container">
@@ -199,14 +204,14 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['close'])
 
-// 本地状态
+//
 const memoryUsage = ref(0)
 const cpuUsage = ref(0)
 const networkLatency = ref(0)
 const frameRate = ref(0)
 const logs = ref([])
 
-// 计算属性
+// property
 const activeStreamCount = computed(() => {
   return Object.keys(props.realCameraStreams).length
 })
@@ -227,16 +232,16 @@ const formattedWebRTCConfig = computed(() => {
   return JSON.stringify(props.webrtcConfig, null, 2)
 })
 
-// 方法
+// method
 const closePanel = () => {
   emit('close')
 }
 
 const refreshDebugInfo = () => {
-  // 刷新性能数据
+  // new can data
   updatePerformanceMetrics()
-  
-  // 添加日志
+
+  // log
   addLog('info', '调试信息已刷新')
 }
 
@@ -255,27 +260,27 @@ const addLog = (type, message) => {
     time: new Date().toLocaleTimeString()
   }
   logs.value.unshift(log)
-  
-  // 保持日志数量在合理范围内
+
+  // log in
   if (logs.value.length > 50) {
     logs.value = logs.value.slice(0, 50)
   }
 }
 
-// 定时器
+//
 let performanceTimer = null
 
-// 生命周期
+//
 onMounted(() => {
-  // 初始化性能监控
+  // Initialize can
   updatePerformanceMetrics()
-  
-  // 启动定时更新
+
+  // new
   performanceTimer = setInterval(() => {
     updatePerformanceMetrics()
   }, 5000)
-  
-  // 添加初始化日志
+
+  // Initialize log
   addLog('info', '调试面板已启动')
 })
 
@@ -608,21 +613,21 @@ onUnmounted(() => {
   flex: 1;
 }
 
-/* 响应式设计 */
+/*  */
 @media (max-width: 768px) {
   .debug-panel {
     left: 10px;
     right: 10px;
     width: auto;
   }
-  
+
   .status-grid,
   .performance-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .device-technical-info {
     grid-template-columns: 1fr;
   }
 }
-</style> 
+</style>

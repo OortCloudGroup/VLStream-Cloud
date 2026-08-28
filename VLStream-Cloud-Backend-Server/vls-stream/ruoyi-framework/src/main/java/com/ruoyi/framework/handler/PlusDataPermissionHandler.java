@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -43,7 +44,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 数据权限过滤
+ * data
  *
  * @author Lion Li
  * @version 3.5.0
@@ -52,22 +53,22 @@ import java.util.stream.Collectors;
 public class PlusDataPermissionHandler {
 
     /**
-     * 方法或类(名称) 与 注解的映射关系缓存
+     * method ( ) and
      */
     private final Map<String, DataPermission> dataPermissionCacheMap = new ConcurrentHashMap<>();
 
     /**
-     * 无效注解方法缓存用于快速返回
+     * method
      */
     private final Set<String> invalidCacheSet = new ConcurrentHashSet<>();
 
     /**
-     * spel 解析器
+     * spel Parse
      */
     private final ExpressionParser parser = new SpelExpressionParser();
     private final ParserContext parserContext = new TemplateParserContext();
     /**
-     * bean解析器 用于处理 spel 表达式中对 bean 的调用
+     * beanParse Process spel in bean
      */
     private final BeanResolver beanResolver = new BeanFactoryResolver(SpringUtils.getBeanFactory());
 
@@ -83,7 +84,7 @@ public class PlusDataPermissionHandler {
             currentUser = LoginHelper.getLoginUser();
             DataPermissionHelper.setVariable("user", currentUser);
         }
-        // 如果是超级管理员，则不过滤数据
+        // if is administrator, data
         if (LoginHelper.isAdmin()) {
             return where;
         }
@@ -93,7 +94,7 @@ public class PlusDataPermissionHandler {
         }
         try {
             Expression expression = CCJSqlParserUtil.parseExpression(dataFilterSql);
-            // 数据权限使用单独的括号 防止与其他条件冲突
+            // data and
             Parenthesis parenthesis = new Parenthesis(expression);
             if (ObjectUtil.isNotNull(where)) {
                 return new AndExpression(where, parenthesis);
@@ -106,10 +107,10 @@ public class PlusDataPermissionHandler {
     }
 
     /**
-     * 构造数据过滤sql
+     * data sql
      */
     private String buildDataFilter(DataColumn[] dataColumns, boolean isSelect) {
-        // 更新或删除需满足所有条件
+        // new Delete all
         String joinStr = isSelect ? " OR " : " AND ";
         LoginUser user = DataPermissionHelper.getVariable("user");
         StandardEvaluationContext context = new StandardEvaluationContext();
@@ -118,12 +119,12 @@ public class PlusDataPermissionHandler {
         Set<String> conditions = new HashSet<>();
         for (RoleDTO role : user.getRoles()) {
             user.setRoleId(role.getRoleId());
-            // 获取角色权限泛型
+            // Get role
             DataScopeType type = DataScopeType.findCode(role.getDataScope());
             if (ObjectUtil.isNull(type)) {
                 throw new ServiceException("角色数据范围异常 => " + role.getDataScope());
             }
-            // 全部数据权限直接返回
+            // full data
             if (type == DataScopeType.ALL) {
                 return "";
             }
@@ -132,23 +133,23 @@ public class PlusDataPermissionHandler {
                 if (dataColumn.key().length != dataColumn.value().length) {
                     throw new ServiceException("角色数据范围异常 => key与value长度不匹配");
                 }
-                // 不包含 key 变量 则不处理
+                // key variable Process
                 if (!StringUtils.containsAny(type.getSqlTemplate(),
                     Arrays.stream(dataColumn.key()).map(key -> "#" + key).toArray(String[]::new)
                 )) {
                     continue;
                 }
-                // 设置注解变量 key 为表达式变量 value 为变量值
+                // Set variable key to variable value to variable value
                 for (int i = 0; i < dataColumn.key().length; i++) {
                     context.setVariable(dataColumn.key()[i], dataColumn.value()[i]);
                 }
 
-                // 解析sql模板并填充
+                // Parse sql fill
                 String sql = parser.parseExpression(type.getSqlTemplate(), parserContext).getValue(context, String.class);
                 conditions.add(joinStr + sql);
                 isSuccess = true;
             }
-            // 未处理成功则填充兜底方案
+            // not Process successfully fill
             if (!isSuccess && StringUtils.isNotBlank(type.getElseSql())) {
                 conditions.add(joinStr + type.getElseSql());
             }
@@ -170,7 +171,7 @@ public class PlusDataPermissionHandler {
         List<Method> methods = Arrays.stream(ClassUtil.getDeclaredMethods(clazz))
             .filter(method -> method.getName().equals(methodName)).collect(Collectors.toList());
         DataPermission dataPermission;
-        // 获取方法注解
+        // Get method
         for (Method method : methods) {
             dataPermission = dataPermissionCacheMap.get(mappedStatementId);
             if (ObjectUtil.isNotNull(dataPermission)) {
@@ -186,7 +187,7 @@ public class PlusDataPermissionHandler {
         if (ObjectUtil.isNotNull(dataPermission)) {
             return dataPermission.value();
         }
-        // 获取类注解
+        // Get
         if (AnnotationUtil.hasAnnotation(clazz, DataPermission.class)) {
             dataPermission = AnnotationUtil.getAnnotation(clazz, DataPermission.class);
             dataPermissionCacheMap.put(clazz.getName(), dataPermission);
@@ -196,7 +197,7 @@ public class PlusDataPermissionHandler {
     }
 
     /**
-     * 是否为无效方法 无数据权限
+     * whether to method data
      */
     public boolean isInvalid(String mappedStatementId) {
         return invalidCacheSet.contains(mappedStatementId);

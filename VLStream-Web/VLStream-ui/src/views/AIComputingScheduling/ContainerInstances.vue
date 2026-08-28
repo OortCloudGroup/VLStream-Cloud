@@ -1,10 +1,15 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="container-instances tenant_Page draHeaPB">
     <div class="tenant_content">
-    <!-- 监控页面 -->
-    <!-- 创建容器实例页面 -->
+    <!-- page -->
+    <!-- instancepage -->
     <div v-if="showCreateView" class="create-view">
-      <!-- 面包屑导航 -->
+      <!--  -->
       <div class="breadcrumb-section">
         <el-breadcrumb separator=">">
           <el-breadcrumb-item @click="backToList" class="breadcrumb-link">容器实例</el-breadcrumb-item>
@@ -12,25 +17,25 @@
         </el-breadcrumb>
       </div>
 
-      <!-- 创建表单内容 -->
+      <!-- form -->
       <div class="create-content">
-        <!-- 实例名称 -->
+        <!-- instance -->
         <div class="form-section">
           <div class="form-label">实例名称</div>
-          <el-input 
-            v-model="createInstanceForm.name" 
-            placeholder="请输入" 
+          <el-input
+            v-model="createInstanceForm.name"
+            placeholder="请输入"
             class="form-input"
           />
         </div>
 
-        <!-- 资源类型 -->
+        <!--  -->
         <div class="form-section">
           <div class="form-label">资源类型 <span class="required">*</span></div>
           <div class="resource-types">
-            <!-- 资源类型标题行 -->
+            <!--  -->
             <div class="resource-header-row">
-              <!-- 预留勾选框空间 -->
+              <!-- null / empty -->
               <div class="radio-space"></div>
               <div class="spec-columns">
                 <div class="spec-column">
@@ -48,7 +53,7 @@
       </div>
     </div>
 
-            <!-- 资源数据行 -->
+            <!-- data -->
             <div class="resource-data-rows">
               <div class="resource-data-row" v-for="(resource, index) in resourceOptions" :key="index">
                 <el-radio v-model="createInstanceForm.resourceType" :value="`aerte${index + 1}`">
@@ -74,8 +79,8 @@
             </div>
         </div>
       </div>
-      
-        <!-- 资源规格表格 -->
+
+        <!-- table -->
         <div class="form-section">
           <div class="form-label">资源规格：</div>
           <div class="spec-table">
@@ -100,7 +105,7 @@
         </div>
         </div>
 
-        <!-- 实例数量 -->
+        <!-- instance -->
         <div class="form-section">
           <div class="form-label">实例数量 <span class="required">*</span></div>
           <div class="quantity-control">
@@ -109,8 +114,8 @@
             <el-button @click="increaseQuantity" class="quantity-btn">+</el-button>
         </div>
       </div>
-      
-                <!-- 镜像 -->
+
+                <!--  -->
         <div class="form-section">
           <div class="form-label">镜像 <span class="required">*</span></div>
           <div class="image-types">
@@ -153,8 +158,8 @@
             </div>
           </div>
         </div>
-      
-        <!-- 操作按钮 -->
+
+        <!-- operationbutton -->
         <div class="form-actions">
           <el-button type="primary" @click="confirmCreate" class="confirm-btn common_btn">确定</el-button>
           <el-button @click="cancelCreate" class="cancel-btn common_btn">取消</el-button>
@@ -162,9 +167,9 @@
         </div>
       </div>
 
-    <!-- 监控页面 -->
+    <!-- page -->
     <div v-else-if="showMonitoringView" class="monitoring-view">
-      <!-- 面包屑导航 -->
+      <!--  -->
       <div class="breadcrumb-section">
         <el-breadcrumb separator=">">
           <el-breadcrumb-item @click="backToList" class="breadcrumb-link">容器实例</el-breadcrumb-item>
@@ -172,9 +177,9 @@
         </el-breadcrumb>
     </div>
 
-      <!-- 监控内容 -->
+      <!--  -->
       <div class="monitoring-content">
-        <!-- 数据盘使用情况 -->
+        <!-- data -->
         <div class="disk-usage-section">
           <div class="usage-card">
             <div class="usage-header">
@@ -186,11 +191,11 @@
           </div>
         </div>
 
-        <!-- GPU用量和GPU列表水平布局 -->
+        <!-- GPU and GPU -->
         <div class="gpu-main-section">
-          <!-- GPU用量和图表容器 -->
+          <!-- GPU and -->
           <div class="gpu-chart-container">
-            <!-- GPU用量标题行 -->
+            <!-- GPU -->
             <div class="gpu-title-row">
               <div class="title-left">
                 <h3>GPU用量</h3>
@@ -201,8 +206,8 @@
               </div>
               <div class="title-right">
                 <div class="time-filters">
-                  <span 
-                    v-for="filter in timeFilters" 
+                  <span
+                    v-for="filter in timeFilters"
                     :key="filter.value"
                     class="time-filter"
                     :class="{ active: activeTimeFilter === filter.value }"
@@ -213,34 +218,34 @@
                 </div>
               </div>
             </div>
-            
-            <!-- GPU使用量图表 -->
+
+            <!-- GPU -->
             <div class="chart-content">
               <div class="chart-placeholder">
                 <svg width="100%" height="300" viewBox="0 0 800 300">
-                  <!-- 网格线 -->
+                  <!--  -->
                   <defs>
                     <pattern id="grid" width="80" height="30" patternUnits="userSpaceOnUse">
                       <path d="M 80 0 L 0 0 0 30" fill="none" stroke="#f0f0f0" stroke-width="1"/>
                     </pattern>
                   </defs>
                   <rect width="100%" height="100%" fill="url(#grid)" />
-                  
-                  <!-- Y轴线 -->
+
+                  <!-- Y -->
                   <line x1="50" y1="30" x2="50" y2="270" stroke="#e8e8e8" stroke-width="1"/>
-                  
-                  <!-- X轴线 -->
+
+                  <!-- X -->
                   <line x1="50" y1="270" x2="750" y2="270" stroke="#e8e8e8" stroke-width="1"/>
-                  
-                  <!-- 趋势线 -->
+
+                  <!--  -->
                   <polyline
                     fill="none"
                     stroke="#1A53FF"
                     stroke-width="3"
                     points="80,180 150,140 220,200 290,120 360,160 430,100 500,180 570,130 640,170 710,110"
                   />
-                  
-                  <!-- 数据点 -->
+
+                  <!-- data -->
                   <circle cx="80" cy="180" r="4" fill="#1A53FF"/>
                   <circle cx="150" cy="140" r="4" fill="#1A53FF"/>
                   <circle cx="220" cy="200" r="4" fill="#1A53FF"/>
@@ -251,16 +256,16 @@
                   <circle cx="570" cy="130" r="4" fill="#1A53FF"/>
                   <circle cx="640" cy="170" r="4" fill="#1A53FF"/>
                   <circle cx="710" cy="110" r="4" fill="#1A53FF"/>
-                  
-                  <!-- Y轴标签 -->
+
+                  <!-- Y -->
                   <text x="35" y="50" fill="#909399" font-size="12" text-anchor="end">100%</text>
                   <text x="35" y="90" fill="#909399" font-size="12" text-anchor="end">80%</text>
                   <text x="35" y="130" fill="#909399" font-size="12" text-anchor="end">60%</text>
                   <text x="35" y="170" fill="#909399" font-size="12" text-anchor="end">40%</text>
                   <text x="35" y="210" fill="#909399" font-size="12" text-anchor="end">20%</text>
                   <text x="35" y="250" fill="#909399" font-size="12" text-anchor="end">0%</text>
-                  
-                  <!-- X轴标签 -->
+
+                  <!-- X -->
                   <text x="80" y="290" fill="#909399" font-size="12" text-anchor="middle">8-17</text>
                   <text x="180" y="290" fill="#909399" font-size="12" text-anchor="middle">8-18</text>
                   <text x="280" y="290" fill="#909399" font-size="12" text-anchor="middle">8-19</text>
@@ -272,8 +277,8 @@
               </div>
             </div>
           </div>
-          
-          <!-- GPU信息列表 -->
+
+          <!-- GPUinfo -->
           <div class="gpu-list-section">
             <div class="gpu-info-table">
               <table>
@@ -303,9 +308,9 @@
       </div>
     </div>
 
-    <!-- 详情页面 -->
+    <!-- page -->
     <div v-else-if="showDetailsView" class="details-view">
-      <!-- 面包屑导航 -->
+      <!--  -->
       <div class="breadcrumb-section">
         <el-breadcrumb separator=">">
           <el-breadcrumb-item @click="backToList" class="breadcrumb-link">容器实例</el-breadcrumb-item>
@@ -313,9 +318,9 @@
         </el-breadcrumb>
       </div>
 
-      <!-- 详情内容 -->
+      <!--  -->
       <div class="details-content">
-        <!-- 基本信息 -->
+        <!-- info -->
         <div class="form-section">
           <div class="form-label">实例名称</div>
           <div class="form-value">{{ detailsForm.instanceName || '--' }}</div>
@@ -338,7 +343,7 @@
           </div>
         </div>
 
-        <!-- 镜像信息 -->
+        <!-- info -->
         <div class="form-section">
           <div class="form-label">镜像地址</div>
           <div class="form-value">{{ detailsForm.imageName || '--' }}</div>
@@ -349,7 +354,7 @@
           <div class="form-value">{{ detailsForm.algorithmName || '--' }}</div>
         </div>
 
-        <!-- 资源配置 -->
+        <!-- configuration -->
         <div class="form-section">
           <div class="form-label">CPU限制</div>
           <div class="form-value">{{ detailsForm.cpuLimit || '--' }}</div>
@@ -365,13 +370,13 @@
           <div class="form-value">{{ detailsForm.gpuLimit || '--' }}</div>
         </div>
 
-        <!-- 网络配置 -->
+        <!-- configuration -->
         <div class="form-section">
           <div class="form-label">训练任务ID</div>
           <div class="form-value">{{ detailsForm.trainingTaskId || '--' }}</div>
         </div>
 
-        <!-- 环境配置 -->
+        <!-- configuration -->
         <div class="form-section">
           <div class="form-label">错误信息</div>
           <div class="form-value">
@@ -379,7 +384,7 @@
           </div>
         </div>
 
-        <!-- 时间信息 -->
+        <!-- info -->
         <div class="form-section">
           <div class="form-label">创建时间</div>
           <div class="form-value">{{ detailsForm.createTime || '--' }}</div>
@@ -390,13 +395,13 @@
           <div class="form-value">{{ detailsForm.updateTime || '--' }}</div>
         </div>
 
-        <!-- 描述信息 -->
+        <!-- info -->
         <div class="form-section">
           <div class="form-label">描述</div>
           <div class="form-value">{{ detailsForm.description || '--' }}</div>
         </div>
 
-        <!-- 操作按钮 -->
+        <!-- operationbutton -->
         <div class="form-actions">
           <el-button @click="backToList">返回列表</el-button>
           <el-button type="primary" @click="editContainer(detailsForm)">编辑实例</el-button>
@@ -404,7 +409,7 @@
       </div>
     </div>
 
-    <!-- 列表页面 -->
+    <!-- page -->
     <div v-else-if="!showCreateView && !showMonitoringView && !showDetailsView" class="tableTenBox flexRowAC">
       <div class="tableTenItU">
         <div class="depNameBox_out flexRowAC">
@@ -529,7 +534,7 @@
       </div>
     </div>
 
-    <!-- 创建容器对话框 -->
+    <!--  -->
     <el-dialog
       v-model="showCreateDialog"
       title="创建容器实例"
@@ -540,7 +545,7 @@
         <el-form-item label="容器名称" prop="name">
           <el-input v-model="createForm.name" placeholder="请输入容器名称" />
         </el-form-item>
-        
+
         <el-form-item label="算法镜像" prop="image">
           <el-select v-model="createForm.image" placeholder="请选择算法镜像" style="width: 100%">
             <el-option label="vlstream/face-recognition:v2.1.0" value="vlstream/face-recognition:v2.1.0" />
@@ -549,7 +554,7 @@
             <el-option label="vlstream/object-detection:v3.0.1" value="vlstream/object-detection:v3.0.1" />
           </el-select>
         </el-form-item>
-        
+
         <el-form-item label="CPU配置" prop="cpu">
           <el-select v-model="createForm.cpu" placeholder="请选择CPU配置" style="width: 100%">
             <el-option label="1 核心" value="1 core" />
@@ -558,7 +563,7 @@
             <el-option label="8 核心" value="8 cores" />
           </el-select>
         </el-form-item>
-        
+
         <el-form-item label="内存配置" prop="memory">
           <el-select v-model="createForm.memory" placeholder="请选择内存配置" style="width: 100%">
             <el-option label="2GB" value="2GB" />
@@ -567,7 +572,7 @@
             <el-option label="16GB" value="16GB" />
           </el-select>
         </el-form-item>
-        
+
         <el-form-item label="GPU配置" prop="gpu">
           <el-select v-model="createForm.gpu" placeholder="请选择GPU配置" style="width: 100%">
             <el-option label="NVIDIA GTX 1660" value="NVIDIA GTX 1660" />
@@ -575,11 +580,11 @@
             <el-option label="NVIDIA RTX 4090" value="NVIDIA RTX 4090" />
           </el-select>
         </el-form-item>
-        
+
         <el-form-item label="端口映射" prop="port">
           <el-input v-model="createForm.port" placeholder="请输入端口号，如8080" />
         </el-form-item>
-        
+
         <el-form-item label="环境变量">
           <el-input
             v-model="createForm.envVars"
@@ -589,14 +594,14 @@
           />
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <el-button @click="showCreateDialog = false" class="common_btn">取消</el-button>
         <el-button type="primary" @click="createContainer" class="common_btn">创建</el-button>
       </template>
     </el-dialog>
 
-    <!-- 日志查看对话框 -->
+    <!-- log -->
     <el-dialog
       v-model="showLogsDialog"
       :title="`${currentContainer?.instanceName} - 运行日志`"
@@ -614,8 +619,8 @@
           </el-button>
         </div>
         <div class="logs-content">
-          <div 
-            v-for="(log, index) in displayLogs" 
+          <div
+            v-for="(log, index) in displayLogs"
             :key="index"
             class="log-entry"
             :class="getLogLevelClass(log.level)"
@@ -636,7 +641,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { clacPXToVW } from '@/utils/index'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  Plus, Refresh, Search, Box, Cpu, Monitor, VideoCamera, 
+  Plus, Refresh, Search, Box, Cpu, Monitor, VideoCamera,
   Delete, View, Warning, Check, Loading, ArrowDown
 } from '@element-plus/icons-vue'
 import DateRangePicker from '@/components/DateRangePicker.vue'
@@ -656,7 +661,7 @@ import {
   getContainerInstanceLogs
 } from '@/api/containerInstance'
 
-// 响应式数据
+// data
 const searchKeyword = ref('')
 const createTimeRange = ref(null)
 const currentPage = ref(1)
@@ -668,7 +673,7 @@ const activeTimeFilter = ref('实时')
 const gpuResource = ref(null)
 let refreshTimer = null
 
-// 时间过滤器选项
+// item
 const timeFilters = ref([
   { label: '实时', value: '实时' },
   { label: '近1小时', value: '近1小时' },
@@ -679,12 +684,12 @@ const timeFilters = ref([
   { label: '近30天', value: '近30天' }
 ])
 
-// 对话框控制
+// control
 const showCreateDialog = ref(false)
 const showLogsDialog = ref(false)
 const currentContainer = ref(null)
 
-// 资源统计
+//
 const resourceStats = ref({
   cpuUsage: 65,
   memoryUsage: 72,
@@ -698,7 +703,7 @@ const resourceSummary = computed(() => {
   return `${resource.gpuName || 'GPU'} ${Math.round((resource.gpuMemoryTotalMb || 0) / 1024)}GB · ${state}`
 })
 
-// 容器数据
+// data
 const containers = ref([])
 const displayLogs = ref([])
 const loading = ref(false)
@@ -706,7 +711,7 @@ const selectedRows = ref([])
 const detailsTitle = ref('容器详情')
 const detailsForm = ref({})
 
-// 创建表单
+// form
 const createForm = ref({
   name: '',
   image: '',
@@ -719,7 +724,7 @@ const createForm = ref({
   portMappings: ''
 })
 
-// 创建实例表单
+// instanceform
 const createInstanceForm = ref({
   name: '',
   resourceType: 'aerte1',
@@ -729,7 +734,7 @@ const createInstanceForm = ref({
   selectedVersion: ''
 })
 
-// 资源选项数据
+// item data
 const resourceOptions = ref([
   { id: 1, name: '奥尔特云' },
   { id: 2, name: '奥尔特云' },
@@ -738,7 +743,7 @@ const resourceOptions = ref([
   { id: 5, name: '奥尔特云' }
 ])
 
-// 表单验证规则
+// form
 const createRules = {
   name: [{ required: true, message: '请输入容器名称', trigger: 'blur' }],
   image: [{ required: true, message: '请选择算法镜像', trigger: 'change' }],
@@ -748,9 +753,9 @@ const createRules = {
   port: [{ required: true, message: '请输入端口号', trigger: 'blur' }]
 }
 
-// 计算属性
+// property
 const filteredInstances = computed(() => {
-  // 由于使用API分页，直接返回containers
+  // API , containers
   return containers.value
 })
 
@@ -758,9 +763,9 @@ const runningInstances = computed(() => {
   return containers.value.filter(c => c.status === 'running').length
 })
 
-const totalInstances = ref(0) // 改为ref，从API获取总数
+const totalInstances = ref(0) // to ref, from APIGet
 
-// API方法
+// API method
 const loadContainerInstances = async () => {
   try {
     loading.value = true
@@ -771,7 +776,7 @@ const loadContainerInstances = async () => {
       startTime: createTimeRange.value?.[0] || undefined,
       endTime: createTimeRange.value?.[1] || undefined
     }
-    
+
     const response = await getContainerInstancePage(params)
     if (response.code === 200) {
       containers.value = response.data.records || []
@@ -787,7 +792,7 @@ const loadContainerInstances = async () => {
   }
 }
 
-// 方法
+// method
 const getStatusTagType = (status) => {
   const typeMap = {
     'running': 'success',
@@ -882,7 +887,7 @@ const startContainer = async (container) => {
     const response = await startContainerInstance(container.id)
     if (response.code === 200) {
       ElMessage.success(`容器 ${container.name} 启动成功`)
-      await loadContainerInstances() // 刷新列表
+      await loadContainerInstances() // new
     } else {
       ElMessage.error(response.message || '启动容器失败')
     }
@@ -898,7 +903,7 @@ const stopContainer = async (container) => {
     const response = await stopContainerInstance(container.id)
     if (response.code === 200) {
       ElMessage.success(`容器 ${container.name} 已停止`)
-      await loadContainerInstances() // 刷新列表
+      await loadContainerInstances() // new
     } else {
       ElMessage.error(response.message || '停止容器失败')
     }
@@ -917,7 +922,7 @@ const restartContainer = async (container) => {
     const response = await restartContainerInstance(container.id)
     if (response.code === 200) {
       ElMessage.success(`容器 ${container.name} 重启成功`)
-      await loadContainerInstances() // 刷新列表
+      await loadContainerInstances() // new
     } else {
       ElMessage.error(response.message || '重启容器失败')
     }
@@ -961,7 +966,7 @@ const viewDetails = async (container) => {
 
 const saveImage = (container) => {
   ElMessage.info(`保存镜像: ${container.name}`)
-  // 这里可以实现保存镜像的逻辑
+  //
 }
 
 const viewMonitoring = (container) => {
@@ -989,7 +994,7 @@ const decreaseQuantity = () => {
 
 const confirmCreate = async () => {
   try {
-    // 验证表单
+    // form
     if (!createInstanceForm.value.name.trim()) {
       ElMessage.warning('请输入实例名称')
       return
@@ -1011,7 +1016,7 @@ const confirmCreate = async () => {
       ElMessage.success('容器实例创建成功')
       showCreateView.value = false
       resetCreateInstanceForm()
-      await loadContainerInstances() // 刷新列表
+      await loadContainerInstances() // new
     } else {
       ElMessage.error(response.message || '创建容器实例失败')
     }
@@ -1043,7 +1048,7 @@ const deleteContainer = async (container) => {
     const response = await deleteContainerInstance(container.id)
     if (response.code === 200) {
       ElMessage.success('删除成功')
-      await loadContainerInstances() // 刷新列表
+      await loadContainerInstances() // new
     } else {
       ElMessage.error(response.message || '删除失败')
     }
@@ -1083,7 +1088,7 @@ const resetCreateForm = () => {
 
 const createContainer = async () => {
   try {
-    // 验证表单
+    // form
     if (!createForm.value.name.trim()) {
       ElMessage.warning('请输入容器名称')
       return
@@ -1094,7 +1099,7 @@ const createContainer = async () => {
       ElMessage.success('容器实例创建成功')
       showCreateDialog.value = false
       resetCreateForm()
-      await loadContainerInstances() // 刷新列表
+      await loadContainerInstances() // new
     } else {
       ElMessage.error(response.message || '创建容器实例失败')
     }
@@ -1106,25 +1111,25 @@ const createContainer = async () => {
 
 const editContainer = (container) => {
   ElMessage.info(`编辑容器实例: ${container.name}`)
-  // 这里可以实现编辑容器的逻辑
-  // 例如，将当前的detailsForm设置为container，并打开创建对话框
+  //
+  // , current detailsFormSet to container,
   Object.assign(createForm.value, container)
   showCreateDialog.value = true
 }
 
 const openJupyter = (container) => {
   ElMessage.info(`打开Jupyter: ${container.name}`)
-  // 这里可以实现打开Jupyter的逻辑
+  // Jupyter
 }
 
 const openWebConnection = (container) => {
   ElMessage.info(`打开Web连接: ${container.name}`)
-  // 这里可以实现打开Web连接的逻辑
+  // Web
 }
 
 const openTensorBoard = (container) => {
   ElMessage.info(`打开TensorBoard: ${container.name}`)
-  // 这里可以实现打开TensorBoard的逻辑
+  // TensorBoard
 }
 
 const exportItem = ref({ isDisabledExcel: false })
@@ -1140,11 +1145,11 @@ const searchResetFn = (val, reset) => {
   handleAdvancedSearch(val || {})
 }
 
-// 高级搜索相关方法
+// related method
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索:', searchData)
-  
-  // 更新搜索关键词
+
+  // new
   if (searchData.keyword) {
     searchKeyword.value = searchData.keyword
   }
@@ -1157,7 +1162,7 @@ const handleAdvancedSearch = (searchData) => {
   if (searchData.dateRange && searchData.dateRange.length > 0) {
     createTimeRange.value = searchData.dateRange
   }
-  
+
   handleSearch()
 }
 
@@ -1249,7 +1254,7 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* 搜索区域 */
+/*  */
 .search-section {
   background: #F5F5F5;
   padding: 20px;
@@ -1267,7 +1272,7 @@ onUnmounted(() => {
   width: 200px;
 }
 
-/* 操作栏 */
+/* operation */
 .action-section {
   background: white;
   padding: 20px;
@@ -1279,13 +1284,13 @@ onUnmounted(() => {
   align-items: center;
 }
 
-/* 高级搜索组件区域 */
+/* component */
 .advanced-search-group {
   display: flex;
   align-items: center;
 }
 
-/* 新增按钮样式 */
+/* Add button */
 .add-btn-custom {
   height: 36px;
   background: #1A53FF;
@@ -1315,7 +1320,7 @@ onUnmounted(() => {
   border-color: #0D2DB8;
 }
 
-/* 列表区域 */
+/*  */
 .list-section {
   background: white;
   padding: 20px;
@@ -1329,12 +1334,12 @@ onUnmounted(() => {
   width: 100%;
 }
 
-/* 表格操作列固定右侧 */
+/* tableoperation */
 :deep(.el-table__fixed-right) {
   border-left: 1px solid #e8e8e8;
 }
 
-/* 实例信息样式 */
+/* instanceinfo */
 .instance-info {
   display: flex;
   flex-direction: column;
@@ -1355,7 +1360,7 @@ onUnmounted(() => {
   margin-right: 4px;
 }
 
-/* 计算配置样式 */
+/* configuration */
 .compute-config {
   display: flex;
   flex-direction: column;
@@ -1367,7 +1372,7 @@ onUnmounted(() => {
   color: #606266;
 }
 
-/* 磁盘配置样式 */
+/* configuration */
 .disk-config {
   display: flex;
   flex-direction: column;
@@ -1379,7 +1384,7 @@ onUnmounted(() => {
   color: #606266;
 }
 
-/* 快捷访问样式 */
+/*  */
 .quick-access {
   display: flex;
   flex-wrap: wrap;
@@ -1393,7 +1398,7 @@ onUnmounted(() => {
   min-height: auto;
 }
 
-/* 操作按钮样式 */
+/* operationbutton */
 .action-buttons {
   display: flex;
   flex-wrap: wrap;
@@ -1407,7 +1412,7 @@ onUnmounted(() => {
   min-height: auto;
 }
 
-/* 删除项红色样式 */
+/* Delete item */
 :deep(.delete-item) {
   color: #f56c6c !important;
 }
@@ -1417,7 +1422,7 @@ onUnmounted(() => {
   background-color: #fef0f0 !important;
 }
 
-/* 分页区域 */
+/*  */
 .pagination-section {
   background: white;
   padding: 20px;
@@ -1428,7 +1433,7 @@ onUnmounted(() => {
   justify-content: center;
 }
 
-/* 日志相关样式 */
+/* logrelated */
 .logs-container {
   max-height: 500px;
 }
@@ -1481,7 +1486,7 @@ onUnmounted(() => {
   color: #67c23a;
 }
 
-/* 监控页面样式 */
+/* page */
 .monitoring-view,
 .details-view {
   margin: 0;
@@ -1695,7 +1700,7 @@ onUnmounted(() => {
   background: #ffffff;
 }
 
-/* 创建页面样式 */
+/* page */
 .create-view {
   margin: 0;
   width: 100%;
@@ -2068,4 +2073,4 @@ onUnmounted(() => {
   color: #333;
   line-height: 1.5;
 }
-</style> 
+</style>

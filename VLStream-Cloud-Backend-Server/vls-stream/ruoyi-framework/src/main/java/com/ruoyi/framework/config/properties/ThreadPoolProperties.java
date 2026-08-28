@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * 线程池 配置属性
+ * configurationproperty
  *
  * @author Lion Li
  */
@@ -20,17 +21,17 @@ import org.springframework.stereotype.Component;
 public class ThreadPoolProperties {
 
     /**
-     * 是否开启线程池
+     * whether
      */
     private boolean enabled;
 
     /**
-     * 队列最大长度
+     *
      */
     private int queueCapacity;
 
     /**
-     * 线程池维护线程所允许的空闲时间
+     * null / empty
      */
     private int keepAliveSeconds;
 

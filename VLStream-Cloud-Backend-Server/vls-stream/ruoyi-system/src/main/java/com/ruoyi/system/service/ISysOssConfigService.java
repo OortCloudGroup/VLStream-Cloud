@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -13,57 +14,57 @@ import com.ruoyi.system.domain.vo.SysOssConfigVo;
 import java.util.Collection;
 
 /**
- * 对象存储配置Service接口
+ * object configurationServiceinterface
  *
  * @author Lion Li
- * @author 孤舟烟雨
+ * @author
  * @date 2021-08-13
  */
 public interface ISysOssConfigService {
 
     /**
-     * 初始化OSS配置
+     * Initialize OSSconfiguration
      */
     void init();
 
     /**
-     * 查询单个
+     * Query
      */
     SysOssConfigVo queryById(Long ossConfigId);
 
     /**
-     * 查询列表
+     * Query list
      */
     TableDataInfo<SysOssConfigVo> queryPageList(SysOssConfigBo bo, PageQuery pageQuery);
 
 
     /**
-     * 根据新增业务对象插入对象存储配置
+     * Add object object configuration
      *
-     * @param bo 对象存储配置新增业务对象
+     * @param bo object configurationAdd object
      * @return
      */
     Boolean insertByBo(SysOssConfigBo bo);
 
     /**
-     * 根据编辑业务对象修改对象存储配置
+     * objectUpdate object configuration
      *
-     * @param bo 对象存储配置编辑业务对象
+     * @param bo object configuration object
      * @return
      */
     Boolean updateByBo(SysOssConfigBo bo);
 
     /**
-     * 校验并删除数据
+     * Validate Delete data
      *
-     * @param ids     主键集合
-     * @param isValid 是否校验,true-删除前校验,false-不校验
+     * @param ids primary keycollection
+     * @param isValid whether Validate ,true-Delete beforeValidate ,false- Validate
      * @return
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
 
     /**
-     * 启用停用状态
+     *
      */
     int updateOssConfigStatus(SysOssConfigBo bo);
 

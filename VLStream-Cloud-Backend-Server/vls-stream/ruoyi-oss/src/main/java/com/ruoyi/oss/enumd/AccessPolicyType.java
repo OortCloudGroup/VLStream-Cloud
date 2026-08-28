@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,9 +11,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * 桶访问策略配置
+ * configuration
  *
- * @author 陈賝
+ * @author
  */
 @Getter
 @AllArgsConstructor
@@ -34,17 +35,17 @@ public enum AccessPolicyType {
     CUSTOM("2",CannedAccessControlList.PublicRead, PolicyType.READ);
 
     /**
-     * 桶 权限类型
+     *
      */
     private final String type;
 
     /**
-     * 文件对象 权限类型
+     * object
      */
     private final CannedAccessControlList acl;
 
     /**
-     * 桶策略类型
+     *
      */
     private final PolicyType policyType;
 

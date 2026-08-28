@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -13,7 +14,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * 部门翻译实现
+ * department
  *
  * @author Lion Li
  */
@@ -23,7 +24,7 @@ import org.springframework.stereotype.Component;
 public class DeptNameTranslationImpl implements TranslationInterface<String> {
 
     private final DeptService deptService;
-    
+
     @Override
     public String translation(Object key, String other) {
         return deptService.selectDeptNameByIds(key.toString());

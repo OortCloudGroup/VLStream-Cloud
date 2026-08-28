@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 测试Excel功能
+ * Excel can
  *
  * @author Lion Li
  */
@@ -29,7 +30,7 @@ import java.util.Map;
 public class TestExcelController {
 
     /**
-     * 单列表多数据
+     * data
      */
     @GetMapping("/exportTemplateOne")
     public void exportTemplateOne(HttpServletResponse response) {
@@ -48,7 +49,7 @@ public class TestExcelController {
     }
 
     /**
-     * 多列表多数据
+     * data
      */
     @GetMapping("/exportTemplateMuliti")
     public void exportTemplateMuliti(HttpServletResponse response) {

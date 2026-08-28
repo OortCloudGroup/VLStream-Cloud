@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * 流程部署
+ * workflow
  *
  * @author KonBAI
  * @createTime 2022/3/24 20:57
@@ -44,7 +44,7 @@ public class WfDeployController extends BaseController {
     private final IWfDeployFormService deployFormService;
 
     /**
-     * 查询流程部署列表
+     * Query workflow list
      */
     @SaCheckPermission("workflow:deploy:list")
     @GetMapping("/list")
@@ -53,7 +53,7 @@ public class WfDeployController extends BaseController {
     }
 
     /**
-     * 查询流程部署版本列表
+     * Query workflow list
      */
     @SaCheckPermission("workflow:deploy:publishList")
     @GetMapping("/publishList")
@@ -62,10 +62,10 @@ public class WfDeployController extends BaseController {
     }
 
     /**
-     * 激活或挂起流程
+     * workflow
      *
-     * @param state 状态（active:激活 suspended:挂起）
-     * @param definitionId 流程定义ID
+     * @param state (active: suspended: )
+     * @param definitionId workflow definition ID
      */
     @SaCheckPermission("workflow:deploy:changeState")
     @PutMapping(value = "/changeState")
@@ -75,8 +75,8 @@ public class WfDeployController extends BaseController {
     }
 
     /**
-     * 读取xml文件
-     * @param definitionId 流程定义ID
+     * xml
+     * @param definitionId workflow definition ID
      * @return
      */
     @SaCheckPermission("workflow:deploy:getBpmnXml")
@@ -86,8 +86,8 @@ public class WfDeployController extends BaseController {
     }
 
     /**
-     * 删除流程模型
-     * @param deployIds 流程部署ids
+     * Delete workflowmodel
+     * @param deployIds workflow ids
      */
     @SaCheckPermission("workflow:deploy:remove")
     @Log(title = "删除流程部署", businessType = BusinessType.DELETE)
@@ -98,9 +98,9 @@ public class WfDeployController extends BaseController {
     }
 
     /**
-     * 查询流程部署关联表单信息
+     * Query workflow forminfo
      *
-     * @param deployId 流程部署id
+     * @param deployId workflow id
      */
     @SaCheckPermission("workflow:deploy:formByDeployId")
     @GetMapping("/form/{deployId}")

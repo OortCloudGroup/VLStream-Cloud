@@ -1,8 +1,13 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="video-square">
-    <!-- 主要内容区域 -->
+    <!-- main need to -->
     <div class="main-content">
-      <!-- 调试信息面板 -->
+      <!-- info -->
       <div v-if="showDebugInfo" class="debug-panel">
         <div class="debug-header">
           <h4>调试信息</h4>
@@ -12,7 +17,7 @@
         </div>
         <div class="debug-content">
           <div class="debug-item">
-            <strong>API状态:</strong> 
+            <strong>API状态:</strong>
             <span :class="{ 'status-success': !loading, 'status-loading': loading }">
               {{ loading ? '加载中...' : '已完成' }}
             </span>
@@ -27,7 +32,7 @@
             <strong>当前布局:</strong> {{ layoutMode }}
           </div>
           <div class="debug-item">
-            <strong>WebRTC状态:</strong> 
+            <strong>WebRTC状态:</strong>
             <span :class="{ 'status-success': webrtcConfig.available, 'status-error': !webrtcConfig.available }">
               {{ webrtcConfig.available ? '可用' : '不可用' }}
             </span>
@@ -35,10 +40,10 @@
         </div>
       </div>
 
-      <!-- 地图模式 - 与PTZ面板水平布局 -->
+      <!-- - and PTZ -->
       <div class="main-layout">
         <div class="map-area fullscreen-map">
-          <!-- 使用封装的布局控制组件 -->
+          <!-- controlcomponent -->
           <VideoLayoutControls
             :layout-mode="layoutMode"
             :show-extended-layout="showExtendedLayout"
@@ -52,13 +57,13 @@
             @toggle-fullscreen="toggleFullscreen"
           />
 
-          <!-- 地图主体 -->
+          <!-- main -->
           <div class="map-container">
-            
-            <!-- Leaflet地图容器 -->
+
+            <!-- Leaflet -->
             <div id="video-square-map" class="leaflet-map-container"></div>
-            
-            <!-- 地图控制工具栏 -->
+
+            <!-- control -->
             <div class="map-controls">
               <button class="map-control-btn" @click="fitBounds" title="显示全部摄像头">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -75,20 +80,20 @@
                   <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
                 </svg>
               </button>
-              <!-- 白天/黑夜模式切换 -->
+              <!-- / -->
               <button class="map-control-btn theme-toggle" @click="toggleDarkMode" :title="isDarkMode ? '切换到白天模式' : '切换到黑夜模式'">
                 <svg v-if="!isDarkMode" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <!-- 太阳图标 -->
+                  <!--  -->
                   <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>
                 </svg>
                 <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <!-- 月亮图标 -->
+                  <!--  -->
                   <path d="M9.37 5.51c-.18.64-.27 1.31-.27 1.99 0 4.08 3.32 7.4 7.4 7.4.68 0 1.35-.09 1.99-.27C17.45 17.19 14.93 19 12 19c-3.86 0-7-3.14-7-7 0-2.93 1.81-5.45 4.37-6.49zM12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
                 </svg>
               </button>
             </div>
 
-            <!-- 缩放控制按钮 -->
+            <!-- controlbutton -->
             <div class="zoom-controls">
               <button class="zoom-btn" @click="zoomIn" title="放大">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -104,8 +109,8 @@
         </div>
       </div>
       </div>
-      
-                <!-- 设备列表面板 - 固定在右侧 -->
+
+                <!-- device - in -->
           <DeviceListPanel
             :devices="realCameraStreams"
             :tree-data="[]"
@@ -116,24 +121,24 @@
           />
     </div>
 
-    <!-- 单个摄像头视频播放弹窗 -->
-    <div 
+    <!-- dialog -->
+    <div
       v-for="dialog in videoDialogs"
       :key="dialog.id"
       class="video-dialog-overlay"
       :style="{ zIndex: 2000 + dialog.id }"
     >
-      <div 
+      <div
         class="video-dialog draggable-dialog"
-        :style="{ 
-          left: dialog.position.x + 'px', 
+        :style="{
+          left: dialog.position.x + 'px',
           top: dialog.position.y + 'px',
           position: 'fixed',
           transform: 'none'
         }"
         @mousedown="bringToFront(dialog.id)"
       >
-        <div 
+        <div
           class="video-dialog-header draggable-handle"
           @mousedown="startDrag($event, dialog.id)"
         >
@@ -151,19 +156,19 @@
             </button>
           </div>
         </div>
-        
+
         <div class="video-dialog-content" v-show="!dialog.minimized">
           <div class="video-player">
-            <!-- 实时视频播放区域 -->
+            <!--  -->
             <div class="video-placeholder-player">
-              <!-- OPlayer 统一播放器 -->
+              <!-- OPlayer -->
               <div
                 v-if="dialog.camera.deviceData && dialog.camera.deviceData.streamUrl"
                 :ref="element => setDialogOPlayerContainer(dialog.id, element)"
                 class="oplayer-container"
               />
-              
-              <!-- 无视频流时显示占位符 -->
+
+              <!--  -->
               <div v-else class="video-placeholder">
                 <div class="placeholder-content">
                   <div class="placeholder-icon">📹</div>
@@ -172,8 +177,8 @@
                     <div>设备: {{ dialog.camera.name }}</div>
                     <div>状态: 在线</div>
                   </div>
-                  
-                  <!-- 备用操作选项 -->
+
+                  <!-- operation item -->
                   <div class="placeholder-actions">
                     <button class="action-btn primary" @click="retryWebRTCConnection(dialog.camera)">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -196,7 +201,7 @@
       </div>
     </div>
 
-    <!-- 布局视频播放弹窗 -->
+    <!-- dialog -->
     <VideoLayoutDialog
       v-for="dialog in layoutDialogs"
       :key="'layout-' + dialog.id"
@@ -222,9 +227,9 @@
       @video-window-swap="handleVideoWindowSwap"
     />
 
-    <!-- 设备显示设置弹窗 -->
+    <!-- device Set dialog -->
     <el-dialog
-      v-model="showSettingsDialog" 
+      v-model="showSettingsDialog"
       title="显示设置"
       width="25%"
       center
@@ -237,8 +242,8 @@
           <h4>设备类型</h4>
           <div class="setting-items">
             <el-checkbox-group v-model="displaySettings.deviceTypes">
-              <el-checkbox 
-                v-for="option in allDeviceTypeOptions" 
+              <el-checkbox
+                v-for="option in allDeviceTypeOptions"
                 :key="option.value"
                 :label="option.value"
               >
@@ -247,7 +252,7 @@
             </el-checkbox-group>
             </div>
         </div>
-        
+
         <div class="setting-actions">
           <el-button @click="cancelSettings" class="common_btn">取消</el-button>
           <el-button type="primary" @click="confirmSettings" class="common_btn">确定</el-button>
@@ -256,7 +261,7 @@
     </el-dialog>
   </div>
 
-  <!-- 扩展布局弹窗 -->
+  <!-- dialog -->
   <div v-if="showExtendedLayout" class="extended-layout-overlay" @click="hideExtendedLayoutDialog">
     <div class="extended-layout-dialog" :style="extendedLayoutPosition" @click.stop>
       <div class="extended-layout-content">
@@ -335,25 +340,25 @@ import {Close} from '@element-plus/icons-vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-// 导入布局控制组件
+// Import controlcomponent
 import VideoLayoutControls from '@/components/VideoLayoutControls.vue'
 
-// 导入视频布局弹窗组件
+// Import dialogcomponent
 import VideoLayoutDialog from '@/components/VideoLayoutDialog.vue'
 
-// 导入PTZ控制组件
-// 导入设备列表面板组件
+// Import PTZcontrolcomponent
+// Import device component
 import DeviceListPanel from '@/components/DeviceListPanel.vue'
 import {getDeviceList} from "@/api/device";
 import {ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL} from "@/api/webrtc";
 import { ensureOPlayer, isCameraRtcStream } from '@/utils/oplayer'
 import { getStreamType } from './deviceUtils.js'
 
-// 分页相关
+// related
 const currentPage = ref(1)
 const pageSize = ref(20)
 
-// 基础状态
+//
 const loading = ref(false)
 const showDebugInfo = ref(false)
 const isDarkMode = ref(false)
@@ -366,22 +371,22 @@ const extendedLayoutPosition = ref({
 })
 const mapViewMode = ref('normal') // 'normal' | 'satellite'
 
-// 设备相关状态
+// devicerelated
 const deviceList = ref([])
 const realCameraStreams = ref([])
 const mapSearchKeyword = ref('')
 
 
-// 视频弹窗状态
+// dialog
 const videoDialogs = ref([])
 const nextDialogId = ref(1)
 
-// 布局弹窗状态
+// dialog
 const layoutDialogs = ref([])
 const nextLayoutDialogId = ref(1000)
 const maxLayoutZIndex = ref(3000)
 
-// 播放服务状态
+// service
 const webrtcConfig = ref({
   serverUrl: WEBRTC_SERVER_BASE_URL,
   available: false,
@@ -391,7 +396,7 @@ const dialogOPlayerContainers = ref(new Map())
 const dialogOPlayerInstances = ref(new Map())
 const dialogOPlayerTasks = ref(new Map())
 
-// 地图相关变量
+// relatedvariable
 let mapInstance = null
 let mapMarkers = []
 let mapInitialized = false
@@ -399,7 +404,7 @@ let isComponentMounted = false
 let currentTileLayer = null
 
 /**
- * 记录单画面 OPlayer 容器。
+ * record OPlayer .
  */
 const setDialogOPlayerContainer = (dialogId, element) => {
   if (element) {
@@ -412,7 +417,7 @@ const setDialogOPlayerContainer = (dialogId, element) => {
 }
 
 /**
- * 清理单画面 OPlayer 实例。
+ * OPlayer instance.
  */
 const cleanupDialogOPlayer = (dialogId) => {
   dialogOPlayerTasks.value.delete(dialogId)
@@ -430,7 +435,7 @@ const cleanupDialogOPlayer = (dialogId) => {
 }
 
 /**
- * 根据流类型生成单画面 OPlayer 参数。
+ * Generate OPlayer parameter.
  */
 const createDialogOPlayerOptions = async (streamUrl) => {
   const streamType = getStreamType(streamUrl)
@@ -473,7 +478,7 @@ const createDialogOPlayerOptions = async (streamUrl) => {
 }
 
 /**
- * 播放视频广场单画面视频流。
+ * .
  */
 const playDialogOPlayer = async (dialog) => {
   const deviceData = dialog?.camera?.deviceData
@@ -507,7 +512,7 @@ const playDialogOPlayer = async (dialog) => {
   }
 }
 
-// 设备显示设置
+// device Set
 
 
 const showSettingsDialog = ref(false)
@@ -548,7 +553,7 @@ const isDeviceOnline = (status) => {
   return normalized === '在线' || normalized === 'online' || normalized === '1' || normalized === 'true'
 }
 
-// 计算属性
+// property
 const onlineDeviceCount = computed(() => {
   return deviceList.value.filter(device => isDeviceOnline(device.status)).length
 })
@@ -590,13 +595,13 @@ const filteredCameraMarkers = computed(() => {
   if (!mapSearchKeyword.value.trim()) {
     return deviceMapMarkers.value
   }
-  
-  return deviceMapMarkers.value.filter(marker => 
+
+  return deviceMapMarkers.value.filter(marker =>
     marker.name.toLowerCase().includes(mapSearchKeyword.value.toLowerCase())
   )
 })
 
-// 固定的真实设备数据
+// devicedata
 const getFixedRealDevices = () => {
   return [
     {
@@ -671,14 +676,14 @@ const getFixedRealDevices = () => {
   ]
 }
 
-// 方法
+// method
 const initMap = () => {
-  // 确保组件仍然挂载且地图容器存在
+  // component in
   if (!isComponentMounted || !document.getElementById('video-square-map')) {
     console.log('组件未挂载或地图容器不存在，跳过地图初始化')
     return
   }
-  
+
   if (mapInstance) {
     try {
       mapInstance.remove()
@@ -687,26 +692,26 @@ const initMap = () => {
     }
     mapInstance = null
   }
-  
+
   try {
     mapInstance = L.map('video-square-map', {
-      zoomControl: false // 禁用默认的缩放控件
-    }).setView([35.8617, 104.1954], 6) // 适中的初始缩放级别
-    
-    // 初始化地图图层
+      zoomControl: false //
+    }).setView([35.8617, 104.1954], 6) // in
+
+    // Initialize layer
     updateMapLayer()
-    
+
     mapInitialized = true
     console.log('地图初始化成功')
-    
-    // 地图初始化完成后，如果设备数据已加载，立即添加标记
+
+    // Initialize after, if devicedata already Load ,
     if (deviceList.value.length > 0) {
       updateMapMarkers()
-      // 默认最大化显示全部摄像头
+      // full
       nextTick(() => {
         setTimeout(() => {
           fitBounds()
-        }, 200) // 稍微延迟确保标记已添加到DOM
+        }, 200) // already DOM
       })
     }
   } catch (error) {
@@ -715,16 +720,16 @@ const initMap = () => {
   }
 }
 
-// 更新地图图层
+// new layer
 const updateMapLayer = () => {
   if (!mapInstance) return
-  
-  // 移除当前图层
+
+  // current layer
   if (currentTileLayer) {
     mapInstance.removeLayer(currentTileLayer)
   }
-  
-  // 定义瓦片服务器
+
+  // service
   const lightTileServers = [
   {
       url: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
@@ -751,7 +756,7 @@ const updateMapLayer = () => {
       name: 'OpenStreetMap (蓝色)'
     }
   ]
-  
+
   const darkTileServers = [
   {
       url: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
@@ -778,7 +783,7 @@ const updateMapLayer = () => {
       name: 'OpenStreetMap DE (蓝色)'
     }
   ]
-  
+
   const satelliteServers = [
     {
       url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -789,28 +794,28 @@ const updateMapLayer = () => {
       name: 'Google Satellite'
     }
   ]
-  
-  // 根据模式选择瓦片服务器
+
+  // service
   const tileServers = isDarkMode.value ? darkTileServers : lightTileServers
-  
-  // 添加地图图层
+
+  // layer
   if (mapViewMode.value === 'satellite') {
-    // 卫星图层
+    // layer
     const server = satelliteServers[0]
     currentTileLayer = L.tileLayer(server.url, {
       attribution: '&copy; <a href="https://www.esri.com/">Esri</a> contributors',
       maxZoom: 18
     }).addTo(mapInstance)
   } else {
-    // 标准地图图层
+    // layer
     const server = tileServers[0]
-    
-    // 为CartoDB瓦片服务添加子域名配置
+
+    // to CartoDB service sub configuration
     const tileLayerOptions = {
       maxZoom: 18
     }
-    
-    // 根据不同的瓦片服务设置不同的attribution
+
+    // serviceSet attribution
     if (server.url.includes('cartodb') || server.url.includes('cartocdn')) {
       tileLayerOptions.subdomains = 'abcd'
       if (server.url.includes('dark_all')) {
@@ -825,31 +830,31 @@ const updateMapLayer = () => {
     } else {
       tileLayerOptions.attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }
-    
+
     currentTileLayer = L.tileLayer(server.url, tileLayerOptions).addTo(mapInstance)
   }
-  
+
   console.log(`地图服务已更新: ${mapViewMode.value === '卫星' ? '卫星' : '标准'}视图，${isDarkMode.value ? '深色' : '浅色'}主题`)
 }
 
 const updateMapMarkers = () => {
   if (!mapInstance) return
-  
-  // 清除现有标记
+
+  //
   mapMarkers.forEach(marker => {
     mapInstance.removeLayer(marker)
   })
   mapMarkers = []
-  
-  // 创建摄像头设备图标 - 放大图标尺寸
+
+  // device -
   const deviceIcon = L.icon({
     iconUrl: new URL('@/assets/人员备份 2.png', import.meta.url).href,
-    iconSize: [40, 40], // 增大图标尺寸，更清晰可见
+    iconSize: [40, 40], // ,
     iconAnchor: [20, 20],
     popupAnchor: [0, -20]
   })
-  
-  // 添加设备标记
+
+  // device
   filteredCameraMarkers.value.forEach((markerData, index) => {
     const marker = L.marker([markerData.lat, markerData.lng], { icon: deviceIcon })
       .bindPopup(`
@@ -862,7 +867,7 @@ const updateMapMarkers = () => {
       `)
       .on('click', () => handleCameraClick(markerData))
       .addTo(mapInstance)
-    
+
     mapMarkers.push(marker)
   })
 }
@@ -871,8 +876,8 @@ const loadDeviceList = async () => {
   loading.value = true
   try {
     console.log('视频广场：使用固定的真实设备数据...')
-    
-    // 直接使用固定的真实设备数据
+
+    // devicedata
     const params = {
       page: currentPage.value,
       size: pageSize.value
@@ -880,29 +885,29 @@ const loadDeviceList = async () => {
 
     const response = await getDeviceList(params)
     deviceList.value = response.data.records || []
-    
-    // 过滤出有视频流且在线的设备
+
+    // in device
     realCameraStreams.value = deviceList.value.filter(device => {
       return device.streamUrl || device.originalRtspUrl || device.rtspUrl
     })
-    
+
     console.log('视频广场：有效设备数量:', realCameraStreams.value.length)
-    
-    // 更新地图标记（如果地图已初始化）
+
+    // new (if already Initialize )
     if (mapInstance && mapInitialized) {
       await nextTick(() => {
         updateMapMarkers()
-        // 默认最大化显示全部摄像头
+        // full
         if (filteredCameraMarkers.value.length > 0) {
           setTimeout(() => {
             fitBounds()
-          }, 300) // 延迟确保标记已添加并渲染完成
+          }, 300) // already
         }
       })
     }
-    
-    // ElMessage.success(`已加载 ${realCameraStreams.value.length} 个固定设备，地图将自动最大化显示全部摄像头位置`)
-    
+
+    // ElMessage.success(` already Load ${realCameraStreams.value.length} device, full `)
+
   } catch (error) {
     console.error('视频广场：加载设备列表失败:', error)
     ElMessage.error('加载设备列表失败')
@@ -914,26 +919,26 @@ const loadDeviceList = async () => {
 const openVideoDialogs = async (count) => {
   console.log(`打开${count}画面视频播放，count:`, count)
   console.log('realCameraStreams.value:', realCameraStreams.value)
-  
-  // 获取可用设备
+
+  // Get device
   const availableDevices = realCameraStreams.value.slice(0, count)
-  
+
   if (availableDevices.length === 0) {
     ElMessage.warning('暂无可用设备')
     return
   }
-  
-  // 显示加载提示
+
+  // Load prompt / tip
   const loading = ElMessage({
     message: `正在准备 ${availableDevices.length} 个视频播放窗口...`,
     type: 'info',
     duration: 0
   })
-  
+
   try {
-    // 为每个设备准备WebRTC播放URL
+    // to each device WebRTC URL
     const preparedDevices = []
-    
+
     for (const device of availableDevices) {
       const streamUrl = device.streamUrl ||
         device.originalRtspUrl ||
@@ -964,27 +969,27 @@ const openVideoDialogs = async (count) => {
         hasVideo: true,
         deviceData
       }
-      
+
       preparedDevices.push(cameraData)
     }
-    
-    // 创建布局弹窗
+
+    // dialog
     const dialogId = nextLayoutDialogId.value++
     maxLayoutZIndex.value++
-    
-    // 确保 cameras 数组长度与 layoutCount 一致，用 null 填充空白窗口
+
+    // cameras array and layoutCount , null fill null / empty
     const cameras = [...preparedDevices]
     while (cameras.length < count) {
       cameras.push(null)
     }
-    
+
     const newDialog = {
       id: dialogId,
-      cameras: cameras, // 存储所有摄像头，包括空白窗口
-      layoutCount: count, // 布局数量
-      position: { 
-        x: 50, 
-        y: 50 
+      cameras: cameras, // all , null / empty
+      layoutCount: count, //
+      position: {
+        x: 50,
+        y: 50
       },
       minimized: false,
       zIndex: maxLayoutZIndex.value,
@@ -996,16 +1001,16 @@ const openVideoDialogs = async (count) => {
         currentRecordTime: '00:00'
       }
     }
-    
-    // 清空现有弹窗并添加新弹窗
+
+    // null / empty dialog new dialog
     layoutDialogs.value = [newDialog]
-    
-    // 更新布局模式
+
+    // new
     layoutMode.value = count === 1 ? '1x1' : count === 4 ? '2x2' : count === 6 ? '3x3' : count === 8 ? '4x4' : count === 9 ? '5x5' : '6x6'
-    
+
     loading.close()
     ElMessage.success(`已打开${count}画面视频播放`)
-    
+
   } catch (error) {
     console.error('创建布局弹窗失败:', error)
     loading.close()
@@ -1018,35 +1023,35 @@ const openCustomVideoDialogs = () => {
 }
 
 const showExtendedLayoutDialog = () => {
-  // 如果弹窗已经显示，则隐藏它
+  // if dialog already ,
   if (showExtendedLayout.value) {
     showExtendedLayout.value = false
     console.log('隐藏扩展布局弹窗')
     return
   }
-  
-  // 计算按钮位置
+
+  // button
   nextTick(() => {
     const button = document.querySelector('.extended-layout-btn')
     if (button) {
       const rect = button.getBoundingClientRect()
-      const dialogWidth = 200 // 弹窗宽度
-      
-      // 计算弹窗位置：按钮下方，水平居中
+      const dialogWidth = 200 // dialog
+
+      // dialog : button , in
       const left = rect.left + (rect.width / 2) - (dialogWidth / 2)
-      const top = rect.bottom + 8 // 按钮下方8px间距
-      
+      const top = rect.bottom + 8 // button 8px
+
       extendedLayoutPosition.value = {
         top: `${top}px`,
         left: `${left}px`
       }
     }
   })
-  
+
   showExtendedLayout.value = true
   console.log('显示扩展布局弹窗')
-  
-  // 确保弹窗在显示后立即应用深色模式样式
+
+  // dialog in after
   nextTick(() => {
     setTimeout(() => {
       applyExtendedLayoutDarkMode()
@@ -1059,47 +1064,47 @@ const hideExtendedLayoutDialog = () => {
   console.log('隐藏扩展布局弹窗')
 }
 
-// 处理扩展布局选项选择
+// Process item
 const handleExtendedLayoutSelect = (count) => {
-  // 先关闭扩展布局弹窗
+  // dialog
   showExtendedLayout.value = false
-  
-  // 然后打开对应的视频弹窗
+
+  // after dialog
   openVideoDialogs(count)
-  
+
   console.log('选择扩展布局:', count)
 }
 
-// 专门应用扩展布局弹窗深色模式样式的函数
+// dialog
 const applyExtendedLayoutDarkMode = () => {
   if (!isDarkMode.value) return
-  
+
   const extendedLayoutDialog = document.querySelector('.extended-layout-dialog')
   if (extendedLayoutDialog) {
-    // 强制应用弹窗背景样式
+    // dialog
     extendedLayoutDialog.style.setProperty('background', 'rgba(40, 44, 52, 0.95)', 'important')
     extendedLayoutDialog.style.setProperty('border', '1px solid rgba(100, 149, 237, 0.3)', 'important')
     extendedLayoutDialog.style.setProperty('box-shadow', '0 8px 24px rgba(0, 0, 0, 0.5)', 'important')
     extendedLayoutDialog.style.setProperty('backdrop-filter', 'blur(8px)', 'important')
-    
-    // 强制应用选项样式
+
+    // item
     const layoutOptions = extendedLayoutDialog.querySelectorAll('.extended-layout-option')
     layoutOptions.forEach(option => {
       option.style.setProperty('color', '#ffffff', 'important')
     })
-    
-    // 强制应用选项文字样式
+
+    // item
     const layoutOptionTexts = extendedLayoutDialog.querySelectorAll('.layout-option-text')
     layoutOptionTexts.forEach(text => {
       text.style.setProperty('color', '#ffffff', 'important')
     })
-    
-    // 强制应用图标样式
+
+    //
     const layoutOptionIcons = extendedLayoutDialog.querySelectorAll('.layout-option-icon')
     layoutOptionIcons.forEach(icon => {
       icon.style.setProperty('color', '#7db8ff', 'important')
     })
-    
+
     console.log('强制应用扩展布局弹窗深色模式样式')
   }
 }
@@ -1115,39 +1120,39 @@ const bringLayoutToFront = (dialogId) => {
 
 const startLayoutDrag = (event, dialogId) => {
   console.log('开始拖拽布局弹窗:', dialogId)
-  
+
   const dialog = layoutDialogs.value.find(d => d.id === dialogId)
   if (!dialog) return
-  
-  // 防止默认行为
+
+  // to
   event.preventDefault()
-  
-  // 获取鼠标相对于弹窗的偏移量
+
+  // Get dialog
   const rect = event.currentTarget.closest('.layout-dialog').getBoundingClientRect()
   const offsetX = event.clientX - rect.left
   const offsetY = event.clientY - rect.top
-  
-  // 鼠标移动处理函数
+
+  // Process
   const handleMouseMove = (e) => {
     const newX = e.clientX - offsetX
     const newY = e.clientY - offsetY
-    
-    // 限制拖拽范围，确保弹窗不会超出视窗
-    const maxX = window.innerWidth - 200 // 至少保留200px可见
-    const maxY = window.innerHeight - 100 // 至少保留100px可见
-    
+
+    // , dialog will
+    const maxX = window.innerWidth - 200 // to 200px
+    const maxY = window.innerHeight - 100 // to 100px
+
     dialog.position.x = Math.max(0, Math.min(newX, maxX))
     dialog.position.y = Math.max(0, Math.min(newY, maxY))
   }
-  
-  // 鼠标释放处理函数
+
+  // Process
   const handleMouseUp = () => {
     document.removeEventListener('mousemove', handleMouseMove)
     document.removeEventListener('mouseup', handleMouseUp)
     console.log('结束拖拽布局弹窗:', dialogId)
   }
-  
-  // 添加事件监听器
+
+  // eventlistener
   document.addEventListener('mousemove', handleMouseMove)
   document.addEventListener('mouseup', handleMouseUp)
 }
@@ -1163,91 +1168,91 @@ const minimizeLayoutDialog = (dialogId) => {
 const closeLayoutDialog = (dialogId) => {
   const dialogIndex = layoutDialogs.value.findIndex(dialog => dialog.id === dialogId)
   if (dialogIndex === -1) return
-  
-  // 清除计时器
+
+  //
   // if (dialog.recording?.timer) {
   //   clearInterval(dialog.recording.timer)
   // }
-  
+
   layoutDialogs.value.splice(dialogIndex, 1)
   console.log('关闭布局弹窗:', dialogId)
 }
 
-// 视频窗口点击处理
+// Process
 const handleVideoWindowClick = (dialogId, windowIndex) => {
   const dialog = layoutDialogs.value.find(d => d.id === dialogId)
   if (!dialog) return
-  
+
   console.log('点击视频窗口:', dialogId, '窗口索引:', windowIndex)
 }
 
-// 视频窗口双击处理
+// Process
 const handleVideoWindowDoubleClick = (dialogId, windowIndex) => {
   const dialog = layoutDialogs.value.find(d => d.id === dialogId)
   if (!dialog) return
-  
+
   console.log('双击视频窗口:', dialogId, '窗口索引:', windowIndex)
-  
+
   const clickedCamera = dialog.cameras[windowIndex]
-  
+
   if (clickedCamera) {
-    // 有内容的窗口 - 关闭分屏弹窗，打开单画面播放
+    // - dialog,
     console.log(`双击布局弹窗中的摄像头: ${clickedCamera.name}，准备打开单画面播放`)
-    
-    // 关闭当前分屏弹窗
+
+    // current dialog
     closeLayoutDialog(dialogId)
-    
-    // 将该设备设置为第一个设备，然后打开单画面播放
+
+    // deviceSet to device, after
     const availableDevices = realCameraStreams.value
     if (availableDevices.length > 0) {
-      // 找到当前摄像头在设备列表中的索引
+      // current in device in
       const deviceIndex = availableDevices.findIndex(device => device.id === clickedCamera.id)
       if (deviceIndex !== -1) {
-        // 将该设备移到第一个位置
+        // device
         const device = availableDevices.splice(deviceIndex, 1)[0]
         availableDevices.unshift(device)
         console.log('已将设备移到第一位:', device.deviceName)
       }
     }
-    
-    // 打开单画面播放
+
+    //
     openVideoDialogs(1)
-    
-    // 显示操作提示
+
+    // operationprompt / tip
     ElMessage.success(`${clickedCamera.name} 已切换到单画面播放`)
   } else {
-    // 空白窗口
+    // null / empty
     console.log(`双击空白窗口: ${windowIndex}`)
     ElMessage.info('空白窗口，请先添加设备')
   }
 }
 
-// 处理布局选择
+// Process
 const handleLayoutSelect = (count) => {
   console.log('主文件收到布局选择事件，count:', count)
   openVideoDialogs(count)
 }
 
-// 视频窗口交换位置
+//
 const handleVideoWindowSwap = (sourceDialogId, sourceIndex, targetDialogId, targetIndex) => {
   const sourceDialog = layoutDialogs.value.find(d => d.id === sourceDialogId)
   const targetDialog = layoutDialogs.value.find(d => d.id === targetDialogId)
-  
+
   if (!sourceDialog || !targetDialog) return
-  
-  // 获取源窗口和目标窗口的摄像头数据
+
+  // Get and data
   const sourceCamera = sourceDialog.cameras[sourceIndex]
   const targetCamera = targetDialog.cameras[targetIndex]
-  
-  // 执行交换
+
+  // Execute
   sourceDialog.cameras[sourceIndex] = targetCamera
   targetDialog.cameras[targetIndex] = sourceCamera
-  
+
   console.log('视频窗口交换完成:', {
     source: { dialogId: sourceDialogId, windowIndex: sourceIndex, camera: sourceCamera?.name },
     target: { dialogId: targetDialogId, windowIndex: targetIndex, camera: targetCamera?.name }
   })
-  
+
   ElMessage.success('视频窗口位置已交换')
 }
 
@@ -1255,46 +1260,46 @@ const handleVideoWindowSwap = (sourceDialogId, sourceIndex, targetDialogId, targ
 
 const toggleFullscreen = () => {
   console.log('切换视频播放器全屏')
-  
-  // 检查是否有打开的视频播放器（包括单个视频弹窗和布局弹窗）
+
+  // whether ( dialog and dialog)
   const hasOpenDialogs = videoDialogs.value.length > 0 || layoutDialogs.value.length > 0
-  
+
   if (!hasOpenDialogs) {
     ElMessage.warning('请先打开视频播放器')
     return
   }
-  
+
   if (!isFullscreen.value) {
-    // 进入全屏模式
+    // full
     enterVideoPlayerFullscreen()
   } else {
-    // 退出全屏模式
+    // exit full
     exitVideoPlayerFullscreen()
   }
 }
 
-// 进入视频播放器全屏模式
+// full
 const enterVideoPlayerFullscreen = () => {
-  // 查找所有视频播放器弹窗
+  // find all dialog
   const videoDialogs = document.querySelectorAll('.video-dialog, .layout-dialog')
-  
+
   if (videoDialogs.length === 0) {
     ElMessage.error('未找到视频播放器')
     return
   }
-  
-  // 为每个视频播放器添加全屏样式
+
+  // to each full
   videoDialogs.forEach(dialog => {
     dialog.classList.add('fullscreen-active')
   })
-  
+
   isFullscreen.value = true
   ElMessage.success('视频播放器已进入全屏模式')
-  
-  // 添加ESC键监听
+
+  // ESC
   document.addEventListener('keydown', handleEscKey)
-  
-  // 使用浏览器全屏API
+
+  // full API
   const firstDialog = videoDialogs[0]
   if (firstDialog && firstDialog.requestFullscreen) {
     firstDialog.requestFullscreen().catch(err => {
@@ -1303,23 +1308,23 @@ const enterVideoPlayerFullscreen = () => {
   }
 }
 
-// 退出视频播放器全屏模式
+// exit full
 const exitVideoPlayerFullscreen = () => {
-  // 查找所有视频播放器弹窗
+  // find all dialog
   const videoDialogs = document.querySelectorAll('.video-dialog, .layout-dialog')
-  
-  // 移除全屏样式class
+
+  // full class
   videoDialogs.forEach(dialog => {
     dialog.classList.remove('fullscreen-active')
   })
-  
+
   isFullscreen.value = false
   ElMessage.info('已退出全屏模式')
-  
-  // 移除ESC键监听
+
+  // ESC
   document.removeEventListener('keydown', handleEscKey)
-  
-  // 退出浏览器全屏API（如果正在使用）
+
+  // exit full API (if in )
   if (document.exitFullscreen && document.fullscreenElement) {
     document.exitFullscreen().catch(err => {
       console.log('退出浏览器全屏失败:', err)
@@ -1327,25 +1332,25 @@ const exitVideoPlayerFullscreen = () => {
   }
 }
 
-// ESC键处理函数
+// ESC Process
 const handleEscKey = (event) => {
   if (event.key === 'Escape' && isFullscreen.value) {
     exitVideoPlayerFullscreen()
   }
 }
 
-// 监听全屏状态变化
+// full
 const handleFullscreenChange = () => {
-  // 检测浏览器全屏状态
+  // full
   const isCurrentlyFullscreen = !!(
     document.fullscreenElement ||
     document.webkitFullscreenElement ||
     document.mozFullScreenElement ||
     document.msFullscreenElement
   )
-  
+
   if (!isCurrentlyFullscreen && isFullscreen.value) {
-    // 用户通过浏览器的ESC键或其他方式退出全屏
+    // user ESC exit full
     const videoDialogs = document.querySelectorAll('.video-dialog, .layout-dialog')
     videoDialogs.forEach(dialog => {
       dialog.classList.remove('fullscreen-active')
@@ -1355,7 +1360,7 @@ const handleFullscreenChange = () => {
   }
 }
 
-// 添加缺失的函数
+//
 const handlePTZControl = (action, camera) => {
   console.log('PTZ控制:', action, camera)
   ElMessage.info(`PTZ控制: ${action}`)
@@ -1378,7 +1383,7 @@ const handleSettings = () => {
 const handleMapSearch = () => {
   console.log('地图搜索:', mapSearchKeyword.value)
   updateMapMarkers()
-  
+
   if (filteredCameraMarkers.value.length === 0) {
     ElMessage.warning('未找到匹配的设备')
   } else {
@@ -1389,26 +1394,26 @@ const handleMapSearch = () => {
 
 
 const handleCameraClick = async (deviceData) => {
-  // 兼容不同数据来源：地图标记(markerData)和设备列表(device)
+  // data : (markerData) and device (device)
   const deviceName = deviceData.name || deviceData.deviceName || '未知设备'
   const cameraData = deviceData.deviceData || deviceData
-  
+
   console.log('点击摄像头:', deviceName, '设备数据:', cameraData)
-  
-  // 确保设备数据包含流URL信息
+
+  // devicedata URLinfo
   let processedCameraData = { ...cameraData }
-  
-  // 如果没有streamUrl，尝试从其他字段获取
+
+  // if streamUrl, from fieldGet
   if (!processedCameraData.streamUrl) {
-    processedCameraData.streamUrl = processedCameraData.rtspUrl || 
-                                   processedCameraData.originalRtspUrl || 
+    processedCameraData.streamUrl = processedCameraData.rtspUrl ||
+                                   processedCameraData.originalRtspUrl ||
                                    processedCameraData.url ||
                                    'rtsp://admin:password@192.168.1.100/stream'  // 默认测试流
   }
-  
+
   processedCameraData.playMode = 'oplayer'
 
-  // 打开单画面视频播放
+  //
   const dialog = {
     id: nextDialogId.value++,
     camera: {
@@ -1417,9 +1422,9 @@ const handleCameraClick = async (deviceData) => {
     },
     position: { x: 150 + (videoDialogs.value.length * 50), y: 150 + (videoDialogs.value.length * 50) },
     minimized: false,
-    isDraggable: true  // 确保弹窗可拖动
+    isDraggable: true  // dialog
   }
-  
+
   videoDialogs.value.push(dialog)
   await nextTick()
   await playDialogOPlayer(dialog)
@@ -1429,8 +1434,8 @@ const handleCameraClick = async (deviceData) => {
 const handleTreeNodeClick = (node) => {
   if (node.type === 'device') {
     console.log('选择设备:', node.label)
-    
-    // 查找对应的设备数据
+
+    // find devicedata
     if (node.id === 14 || node.id === 13) {
       const deviceData = deviceList.value.find(device => device.id === node.id)
       if (deviceData) {
@@ -1443,13 +1448,13 @@ const handleTreeNodeClick = (node) => {
           hasVideo: true,
           deviceData: deviceData
         }
-        
+
         handleCameraClick(cameraMarker)
         ElMessage.success(`正在播放设备: ${node.label}`)
         return
       }
     }
-    
+
     ElMessage.info(`选择演示设备: ${node.label}`)
   } else if (node.type === 'group') {
     node.expanded = !node.expanded
@@ -1468,37 +1473,37 @@ const fitBounds = () => {
   if (mapInstance && mapInitialized && isComponentMounted) {
     try {
       if (filteredCameraMarkers.value.length === 0 || mapMarkers.length === 0) {
-        // 没有设备或标记时，显示默认视图
-        mapInstance.setView([35.8617, 104.1954], 6) // 适中的中国地图视图
+        // device ,
+        mapInstance.setView([35.8617, 104.1954], 6) // in in
         console.log('没有摄像头标记，显示默认地图视图')
         ElMessage.info('已重置地图视图')
       } else {
-        // 有设备标记时，自动调整视图显示所有标记并最大化
+        // device , all
         const group = new L.featureGroup(mapMarkers)
-        
-        // 获取所有标记的边界
+
+        // Get all
         const bounds = group.getBounds()
-        
-        // 如果只有一个标记，使用高放大级别
+
+        // if only ,
         if (mapMarkers.length === 1) {
           const center = bounds.getCenter()
-          mapInstance.setView([center.lat, center.lng], 18) // 单个设备时最大放大
+          mapInstance.setView([center.lat, center.lng], 18) // device
         } else {
-          // 多个标记时，使用最大化放大显示所有设备
-          mapInstance.fitBounds(bounds, { 
-            padding: [10, 10], // 最小边距，最大化利用屏幕空间
-            maxZoom: 20 // 允许非常高的缩放级别
+          // , all device
+          mapInstance.fitBounds(bounds, {
+            padding: [10, 10], // , null / empty
+            maxZoom: 20 // non-
           })
         }
-        // console.log(`自动最大化显示所有摄像头位置，共 ${mapMarkers.length} 个标记`)
-        // ElMessage.success(`已自动最大化显示所有 ${filteredCameraMarkers.value.length} 个摄像头位置`)
+        // console.log(` all , ${mapMarkers.length} `)
+        // ElMessage.success(` already all ${filteredCameraMarkers.value.length} `)
       }
     } catch (error) {
       console.error('调整地图视图失败:', error)
       ElMessage.error('调整地图视图失败')
-      // 失败时回退到默认视图
+      // failed
       try {
-        mapInstance.setView([35.8617, 104.1954], 6) // 回退到适中的地图视图
+        mapInstance.setView([35.8617, 104.1954], 6) // in
       } catch (fallbackError) {
         console.error('回退到默认视图也失败:', fallbackError)
       }
@@ -1517,40 +1522,40 @@ const toggleMapView = () => {
 
 const refreshCameraLocations = () => {
   updateMapMarkers()
-  // ElMessage.success(`设备位置已刷新，共 ${filteredCameraMarkers.value.length} 个设备`)
+  // ElMessage.success(`device already new , ${filteredCameraMarkers.value.length} device`)
 }
 
 const toggleDarkMode = () => {
   isDarkMode.value = !isDarkMode.value
-  
-  // 更新地图图层为深色/浅色主题
+
+  // new layer to / main
   updateMapLayer()
-  
-  // 为整个地图区域添加深色主题类（这将控制所有深色模式样式）
+
+  // to main ( controlall )
   const mapArea = document.querySelector('.map-area')
   if (mapArea) {
     if (isDarkMode.value) {
       mapArea.classList.add('dark-mode')
-      // 给body也添加dark-mode类，用于全局弹窗样式
+      // body also dark-mode , full dialog
       document.body.classList.add('dark-mode')
       console.log('添加深色模式类，当前类名:', mapArea.className)
-      // 添加深蓝色遮罩层
+      // layer
       addDarkOverlay()
     } else {
       mapArea.classList.remove('dark-mode')
-      // 移除body的dark-mode类
+      // body dark-mode
       document.body.classList.remove('dark-mode')
       console.log('移除深色模式类，当前类名:', mapArea.className)
-      // 移除深蓝色遮罩层
+      // layer
       removeDarkOverlay()
     }
   } else {
     console.error('未找到.map-area元素')
   }
-  
-  // 强制应用深色模式样式
+
+  //
   setTimeout(() => {
-    // 如果扩展布局弹窗正在显示，立即应用深色模式样式
+    // if dialog in ,
     if (showExtendedLayout.value) {
       applyExtendedLayoutDarkMode()
     }
@@ -1559,15 +1564,15 @@ const toggleDarkMode = () => {
     const deviceListPanel = document.querySelector('.device-list-panel')
     const extendedLayoutBtn = document.querySelector('.extended-layout-btn')
     const extendedLayoutDialog = document.querySelector('.extended-layout-dialog')
-    
+
     console.log('布局按钮组元素:', layoutButtonGroup)
     console.log('设备统计元素:', deviceStats)
     console.log('设备列表面板元素:', deviceListPanel)
     console.log('扩展布局按钮元素:', extendedLayoutBtn)
     console.log('扩展布局弹窗元素:', extendedLayoutDialog)
-    
+
     if (isDarkMode.value) {
-      // 强制应用深色模式样式
+      //
       if (layoutButtonGroup) {
         layoutButtonGroup.style.background = 'rgba(40, 44, 52, 0.95)'
         layoutButtonGroup.style.border = '1px solid rgba(100, 149, 237, 0.3)'
@@ -1583,8 +1588,8 @@ const toggleDarkMode = () => {
         deviceStats.style.color = '#e8f4fd'
         console.log('强制应用设备统计深色样式')
       }
-      
-      // 强制应用扩展布局按钮深色样式
+
+      // button
       if (extendedLayoutBtn) {
         extendedLayoutBtn.style.background = 'rgba(40, 44, 52, 0.95)'
         extendedLayoutBtn.style.borderColor = 'rgba(100, 149, 237, 0.3)'
@@ -1592,46 +1597,46 @@ const toggleDarkMode = () => {
         extendedLayoutBtn.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.3)'
         console.log('强制应用扩展布局按钮深色样式')
       }
-      
-      // 强制应用扩展布局弹窗深色样式
+
+      // dialog
       if (extendedLayoutDialog) {
         extendedLayoutDialog.style.background = 'rgba(40, 44, 52, 0.95)'
         extendedLayoutDialog.style.border = '1px solid rgba(100, 149, 237, 0.3)'
         extendedLayoutDialog.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.5)'
         extendedLayoutDialog.style.backdropFilter = 'blur(8px)'
-        
-        // 强制应用弹窗内选项的深色样式
+
+        // dialog item
         const layoutOptions = extendedLayoutDialog.querySelectorAll('.extended-layout-option')
         layoutOptions.forEach(option => {
           option.style.color = '#ffffff'
         })
-        
+
         const layoutOptionTexts = extendedLayoutDialog.querySelectorAll('.layout-option-text')
         layoutOptionTexts.forEach(text => {
           text.style.color = '#ffffff'
         })
-        
+
         const layoutOptionIcons = extendedLayoutDialog.querySelectorAll('.layout-option-icon')
         layoutOptionIcons.forEach(icon => {
           icon.style.color = '#7db8ff'
         })
-        
+
         console.log('强制应用扩展布局弹窗深色样式')
       }
-      
+
       if (deviceListPanel) {
         deviceListPanel.style.background = 'rgba(40, 44, 52, 0.95)'
         deviceListPanel.style.border = '1px solid rgba(100, 149, 237, 0.3)'
         deviceListPanel.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)'
         deviceListPanel.style.backdropFilter = 'blur(8px)'
-        
-        // 强制应用设备列表内部元素样式
+
+        // device element
         const deviceListContent = deviceListPanel.querySelector('.device-list-content')
         const deviceListItems = deviceListPanel.querySelector('.device-list-items')
         const deviceListHeader = deviceListPanel.querySelector('.device-list-header')
         const selectedDisplayItems = deviceListPanel.querySelector('.selected-display-items')
         const deviceSearchContainer = deviceListPanel.querySelector('.device-search-container')
-        
+
         if (deviceListContent) {
           deviceListContent.style.background = 'rgba(40, 44, 52, 0.95)'
         }
@@ -1650,19 +1655,19 @@ const toggleDarkMode = () => {
            deviceSearchContainer.style.background = 'rgba(30, 34, 42, 0.8)'
            deviceSearchContainer.style.borderBottom = '1px solid rgba(100, 149, 237, 0.3)'
          }
-         
-         // 强制应用文字颜色
+
+         //
          const deviceListTitle = deviceListPanel.querySelector('.device-list-title')
          const deviceNames = deviceListPanel.querySelectorAll('.device-name')
          const deviceDetails = deviceListPanel.querySelectorAll('.device-details')
          const tagLabels = deviceListPanel.querySelectorAll('.tag-label')
          const displayItemsTitle = deviceListPanel.querySelector('.display-items-title')
          const deviceSearchInput = deviceListPanel.querySelector('.device-search-input')
-         // 树形结构相关元素
+         // relatedelement
          const treeDeviceNames = deviceListPanel.querySelectorAll('.tree-device-name')
          const treeDeviceDetails = deviceListPanel.querySelectorAll('.tree-device-details')
          const treeGroupLabels = deviceListPanel.querySelectorAll('.tree-group-label')
-         
+
          if (deviceListTitle) {
            deviceListTitle.style.color = '#ffffff'
          }
@@ -1672,39 +1677,39 @@ const toggleDarkMode = () => {
          if (deviceSearchInput) {
            deviceSearchInput.style.color = '#ffffff'
          }
-         
+
          deviceNames.forEach(name => {
            name.style.setProperty('color', '#ffffff', 'important')
            name.style.setProperty('font-weight', '500', 'important')
          })
-         
+
          deviceDetails.forEach(detail => {
            detail.style.setProperty('color', '#a0a0a0', 'important')
          })
-         
+
          tagLabels.forEach(label => {
            label.style.color = '#ffffff'
          })
-         
-         // 强制应用树形结构样式
+
+         //
          treeDeviceNames.forEach(name => {
            name.style.setProperty('color', '#ffffff', 'important')
            name.style.setProperty('font-weight', '500', 'important')
          })
-         
+
          treeDeviceDetails.forEach(detail => {
            detail.style.setProperty('color', '#a0a0a0', 'important')
          })
-         
+
          treeGroupLabels.forEach(label => {
            label.style.setProperty('color', '#ffffff', 'important')
            label.style.setProperty('font-weight', '600', 'important')
          })
-         
+
          console.log('强制应用设备列表面板深色样式')
       }
     } else {
-      // 恢复浅色模式样式
+      //
       if (layoutButtonGroup) {
         layoutButtonGroup.style.background = 'rgba(255, 255, 255, 0.95)'
         layoutButtonGroup.style.border = '1px solid rgba(255, 255, 255, 0.2)'
@@ -1718,8 +1723,8 @@ const toggleDarkMode = () => {
         deviceStats.style.color = ''
         console.log('恢复设备统计浅色样式')
       }
-      
-      // 恢复扩展布局按钮浅色样式
+
+      // button
       if (extendedLayoutBtn) {
         extendedLayoutBtn.style.background = '#f8f9fa'
         extendedLayoutBtn.style.borderColor = '#ddd'
@@ -1727,45 +1732,45 @@ const toggleDarkMode = () => {
         extendedLayoutBtn.style.boxShadow = ''
         console.log('恢复扩展布局按钮浅色样式')
       }
-      
-      // 恢复扩展布局弹窗浅色样式
+
+      // dialog
       if (extendedLayoutDialog) {
         extendedLayoutDialog.style.background = 'white'
         extendedLayoutDialog.style.border = '1px solid #e0e0e0'
         extendedLayoutDialog.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.2)'
         extendedLayoutDialog.style.backdropFilter = ''
-        
-        // 恢复弹窗内选项的浅色样式
+
+        // dialog item
         const layoutOptions = extendedLayoutDialog.querySelectorAll('.extended-layout-option')
         layoutOptions.forEach(option => {
           option.style.color = '#333'
         })
-        
+
         const layoutOptionTexts = extendedLayoutDialog.querySelectorAll('.layout-option-text')
         layoutOptionTexts.forEach(text => {
           text.style.color = '#333'
         })
-        
+
         const layoutOptionIcons = extendedLayoutDialog.querySelectorAll('.layout-option-icon')
         layoutOptionIcons.forEach(icon => {
           icon.style.color = '#1A53FF'
         })
-        
+
         console.log('恢复扩展布局弹窗浅色样式')
       }
-      
+
       if (deviceListPanel) {
          deviceListPanel.style.background = 'rgba(255, 255, 255, 0.95)'
          deviceListPanel.style.border = '1px solid rgba(255, 255, 255, 0.2)'
          deviceListPanel.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.1)'
-         
-         // 恢复设备列表内部元素样式
+
+         // device element
          const deviceListContent = deviceListPanel.querySelector('.device-list-content')
          const deviceListItems = deviceListPanel.querySelector('.device-list-items')
          const deviceListHeader = deviceListPanel.querySelector('.device-list-header')
          const selectedDisplayItems = deviceListPanel.querySelector('.selected-display-items')
          const deviceSearchContainer = deviceListPanel.querySelector('.device-search-container')
-         
+
          if (deviceListContent) {
            deviceListContent.style.background = ''
          }
@@ -1784,19 +1789,19 @@ const toggleDarkMode = () => {
             deviceSearchContainer.style.background = 'rgba(248, 249, 250, 0.8)'
             deviceSearchContainer.style.borderBottom = '1px solid #e4e7ed'
           }
-          
-          // 恢复文字颜色
+
+          //
           const deviceListTitle = deviceListPanel.querySelector('.device-list-title')
           const deviceNames = deviceListPanel.querySelectorAll('.device-name')
           const deviceDetails = deviceListPanel.querySelectorAll('.device-details')
           const tagLabels = deviceListPanel.querySelectorAll('.tag-label')
           const displayItemsTitle = deviceListPanel.querySelector('.display-items-title')
           const deviceSearchInput = deviceListPanel.querySelector('.device-search-input')
-          // 树形结构相关元素
+          // relatedelement
           const treeDeviceNames = deviceListPanel.querySelectorAll('.tree-device-name')
           const treeDeviceDetails = deviceListPanel.querySelectorAll('.tree-device-details')
           const treeGroupLabels = deviceListPanel.querySelectorAll('.tree-group-label')
-          
+
           if (deviceListTitle) {
             deviceListTitle.style.color = '#303133'
           }
@@ -1806,157 +1811,157 @@ const toggleDarkMode = () => {
           if (deviceSearchInput) {
             deviceSearchInput.style.color = '#606266'
           }
-          
+
                      deviceNames.forEach(name => {
              name.style.setProperty('color', '#303133', 'important')
              name.style.setProperty('font-weight', '500', 'important')
            })
-           
+
            deviceDetails.forEach(detail => {
              detail.style.setProperty('color', '#909399', 'important')
            })
-          
+
           tagLabels.forEach(label => {
             label.style.color = '#606266'
           })
-          
-                     // 恢复树形结构样式
+
+                     //
            treeDeviceNames.forEach(name => {
              name.style.setProperty('color', '#303133', 'important')
              name.style.setProperty('font-weight', '500', 'important')
            })
-           
+
            treeDeviceDetails.forEach(detail => {
              detail.style.setProperty('color', '#909399', 'important')
            })
-           
+
            treeGroupLabels.forEach(label => {
              label.style.setProperty('color', '#606266', 'important')
              label.style.setProperty('font-weight', '600', 'important')
            })
-          
+
           console.log('恢复设备列表面板浅色样式')
        }
     }
-    
-    // 处理弹窗样式切换 - 查找所有可能的弹窗元素
-    const popover = document.querySelector('.device-stats-popover') || 
+
+    // Process dialog - find all can dialogelement
+    const popover = document.querySelector('.device-stats-popover') ||
                     document.querySelector('.el-popper.device-stats-popover') ||
                     document.querySelector('.el-popper[data-popper-placement]') ||
                     document.querySelector('.el-popper') ||
                     document.querySelector('[data-popper-placement]')
-    
+
     if (popover) {
       if (isDarkMode.value) {
-        // 应用深色模式弹窗样式
+        // dialog
         popover.style.setProperty('background', 'rgba(40, 44, 52, 0.95)', 'important')
         popover.style.setProperty('border', 'none', 'important')
         popover.style.setProperty('box-shadow', '0 4px 12px rgba(0, 0, 0, 0.3)', 'important')
         popover.style.setProperty('color', '#e8f4fd', 'important')
-        
-        // 强制应用内部元素样式
+
+        // element
         const content = popover.querySelector('.device-stats-content')
         if (content) content.style.color = '#e8f4fd'
-        
+
         const typeTitle = popover.querySelector('.device-type-title')
         if (typeTitle) typeTitle.style.color = '#e8f4fd'
-        
+
         const deviceIcon = popover.querySelector('.device-icon')
         if (deviceIcon) deviceIcon.style.color = '#7db8ff'
-        
+
         const totalCount = popover.querySelector('.total-count')
         if (totalCount) {
           totalCount.style.background = 'rgba(30, 34, 42, 0.6)'
           totalCount.style.borderBottom = '1px solid rgba(100, 149, 237, 0.3)'
         }
-        
+
         const countLabel = popover.querySelector('.count-label')
         if (countLabel) countLabel.style.color = '#b0c4de'
-        
+
         const countNumber = popover.querySelector('.count-number')
         if (countNumber) countNumber.style.color = '#7db8ff'
-        
+
         const locationTitles = popover.querySelectorAll('.location-title')
         locationTitles.forEach(title => {
           title.style.color = '#e8f4fd'
         })
-        
+
         const checkboxLabels = popover.querySelectorAll('.el-checkbox__label')
         checkboxLabels.forEach(label => {
           label.style.color = '#e8f4fd'
         })
-        
+
         const checkboxInners = popover.querySelectorAll('.el-checkbox__inner')
         checkboxInners.forEach(inner => {
           inner.style.backgroundColor = 'rgba(30, 34, 42, 0.8)'
           inner.style.borderColor = 'rgba(100, 149, 237, 0.5)'
         })
-        
+
         const checkedInners = popover.querySelectorAll('.el-checkbox__input.is-checked .el-checkbox__inner')
         checkedInners.forEach(inner => {
           inner.style.backgroundColor = '#7db8ff'
           inner.style.borderColor = '#7db8ff'
         })
-        
+
         console.log('强制应用弹窗深色样式')
       } else {
-        // 恢复浅色模式弹窗样式
+        // dialog
         popover.style.background = ''
         popover.style.border = 'none'
         popover.style.boxShadow = ''
         popover.style.color = ''
-        
+
         const content = popover.querySelector('.device-stats-content')
         if (content) content.style.color = ''
-        
+
         const typeTitle = popover.querySelector('.device-type-title')
         if (typeTitle) typeTitle.style.color = ''
-        
+
         const deviceIcon = popover.querySelector('.device-icon')
         if (deviceIcon) deviceIcon.style.color = ''
-        
+
         const totalCount = popover.querySelector('.total-count')
         if (totalCount) {
           totalCount.style.background = ''
           totalCount.style.borderBottom = ''
         }
-        
+
         const countLabel = popover.querySelector('.count-label')
         if (countLabel) countLabel.style.color = ''
-        
+
         const countNumber = popover.querySelector('.count-number')
         if (countNumber) countNumber.style.color = ''
-        
+
         const locationTitles = popover.querySelectorAll('.location-title')
         locationTitles.forEach(title => {
           title.style.color = ''
         })
-        
+
         const checkboxLabels = popover.querySelectorAll('.el-checkbox__label')
         checkboxLabels.forEach(label => {
           label.style.color = ''
         })
-        
+
         const checkboxInners = popover.querySelectorAll('.el-checkbox__inner')
         checkboxInners.forEach(inner => {
           inner.style.backgroundColor = ''
           inner.style.borderColor = ''
         })
-        
+
         console.log('恢复弹窗浅色样式')
       }
     }
   }, 100)
-  
+
   ElMessage.success(`已切换到${isDarkMode.value ? '夜晚' : '白天'}模式`)
 }
 
-// 添加深蓝色遮罩层
+// layer
 const addDarkOverlay = () => {
-  // 移除已存在的遮罩层
+  // already in layer
   removeDarkOverlay()
-  
-  // 创建深蓝色半透明遮罩层
+
+  // layer
   const overlay = document.createElement('div')
   overlay.id = 'dark-mode-overlay'
   overlay.style.cssText = `
@@ -1965,9 +1970,9 @@ const addDarkOverlay = () => {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, 
-      rgba(0, 20, 60, 0.6) 0%, 
-      rgba(0, 40, 100, 0.4) 50%, 
+    background: linear-gradient(135deg,
+      rgba(0, 20, 60, 0.6) 0%,
+      rgba(0, 40, 100, 0.4) 50%,
       rgba(0, 60, 120, 0.3) 100%);
     pointer-events: none;
     z-index: 1000;
@@ -1975,28 +1980,28 @@ const addDarkOverlay = () => {
     backdrop-filter: brightness(0.7) contrast(1.2);
     transition: all 0.3s ease;
   `
-  
-  // 找到地图容器并添加遮罩层
+
+  // layer
   const mapContainer = document.querySelector('.leaflet-container')
   if (mapContainer) {
     mapContainer.style.position = 'relative'
     mapContainer.appendChild(overlay)
-    
-    // 添加淡入效果
+
+    //
     setTimeout(() => {
       overlay.style.opacity = '1'
     }, 10)
   }
 }
 
-// 移除深蓝色遮罩层
+// layer
 const removeDarkOverlay = () => {
   const existingOverlay = document.getElementById('dark-mode-overlay')
   if (existingOverlay) {
-    // 添加淡出效果
+    //
     existingOverlay.style.opacity = '0'
     existingOverlay.style.transition = 'opacity 0.3s ease'
-    
+
     setTimeout(() => {
       if (existingOverlay.parentNode) {
         existingOverlay.remove()
@@ -2005,7 +2010,7 @@ const removeDarkOverlay = () => {
   }
 }
 
-// 缩放控制方法
+// control method
 const zoomIn = () => {
   if (mapInstance && mapInitialized && isComponentMounted) {
     try {
@@ -2043,7 +2048,7 @@ const confirmSettings = () => {
   ElMessage.success('设置已保存')
 }
 
-// 视频弹窗相关方法
+// dialogrelated method
 const closeVideoDialog = (id) => {
   const index = videoDialogs.value.findIndex(dialog => dialog.id === id)
   if (index > -1) {
@@ -2061,34 +2066,34 @@ const minimizeDialog = (id) => {
 }
 
 const bringToFront = (id) => {
-  // 实现置顶逻辑
+  //
 }
 
 const startDrag = (event, id) => {
   event.preventDefault()
   const dialog = videoDialogs.value.find(d => d.id === id)
   if (!dialog) return
-  
+
   const startX = event.clientX - dialog.position.x
   const startY = event.clientY - dialog.position.y
-  
+
   const handleMouseMove = (e) => {
     dialog.position.x = e.clientX - startX
     dialog.position.y = e.clientY - startY
-    
-    // 限制拖动范围在视窗内
-    const maxX = window.innerWidth - 400  // 弹窗宽度大约400px
-    const maxY = window.innerHeight - 300  // 弹窗高度大约300px
-    
+
+    // in
+    const maxX = window.innerWidth - 400  // dialog 400px
+    const maxY = window.innerHeight - 300  // dialog 300px
+
     dialog.position.x = Math.max(0, Math.min(dialog.position.x, maxX))
     dialog.position.y = Math.max(0, Math.min(dialog.position.y, maxY))
   }
-  
+
   const handleMouseUp = () => {
     document.removeEventListener('mousemove', handleMouseMove)
     document.removeEventListener('mouseup', handleMouseUp)
   }
-  
+
   document.addEventListener('mousemove', handleMouseMove)
   document.addEventListener('mouseup', handleMouseUp)
 }
@@ -2131,7 +2136,7 @@ const retryWebRTCConnection = async (camera) => {
     ElMessage.warning('缺少流地址，无法重试WebRTC')
     return
   }
-  
+
   const dialog = videoDialogs.value.find(d => d.camera === camera)
   if (dialog) {
     await playDialogOPlayer(dialog)
@@ -2164,45 +2169,45 @@ const addDeviceToWindow = (dialogId, windowIndex) => {
   ElMessage.info('添加设备功能')
 }
 
-// 生命周期
+//
 onMounted(async () => {
   try {
     isComponentMounted = true
     loading.value = true
-    
-    // 等待DOM完全渲染
+
+    // etc. DOM full
     await nextTick()
-    
-    // 检查组件是否仍然挂载
+
+    // componentwhether
     if (!isComponentMounted) {
       console.log('组件在初始化过程中被卸载')
       return
     }
-    
-    // 先加载设备列表
+
+    // Load device
     await loadDeviceList()
-    
-    // 然后初始化地图
+
+    // afterInitialize
     initMap()
-    
-    // 添加全屏状态监听
+
+    // full
     document.addEventListener('fullscreenchange', handleFullscreenChange)
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
     document.addEventListener('mozfullscreenchange', handleFullscreenChange)
     document.addEventListener('MSFullscreenChange', handleFullscreenChange)
-    
-    // 确保地图默认最大化显示全部摄像头
+
+    // full
     nextTick(() => {
       setTimeout(() => {
         if (mapInstance && mapInitialized && filteredCameraMarkers.value.length > 0) {
-          // console.log('执行默认最大化显示全部摄像头:', filteredCameraMarkers.value.length)
+          // console.log('Execute full :', filteredCameraMarkers.value.length)
           fitBounds()
         }
-      }, 600) // 给足够的时间让地图和标记完全加载
+      }, 600) // and full Load
     })
 
-    
-    // ElMessage.success('VideoSquare加载完成')
+
+    // ElMessage.success('VideoSquareLoad ')
   } catch (error) {
     console.error('初始化失败:', error)
     if (isComponentMounted) {
@@ -2219,15 +2224,15 @@ onUnmounted(() => {
   console.log('VideoSquareRefactored组件开始卸载')
   isComponentMounted = false
   mapInitialized = false
-  
-  // 清理全屏状态监听
+
+  // full
   document.removeEventListener('fullscreenchange', handleFullscreenChange)
   document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
   document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
   document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
   document.removeEventListener('keydown', handleEscKey)
-  
-  // 清理地图
+
+  //
   if (mapInstance) {
     try {
       mapInstance.remove()
@@ -2238,18 +2243,18 @@ onUnmounted(() => {
       mapInstance = null
     }
   }
-  
-  // 清理所有单画面播放器
+
+  // all
   Array.from(dialogOPlayerInstances.value.keys()).forEach(id => {
     cleanupDialogOPlayer(id)
   })
-  
+
   console.log('VideoSquareRefactored组件卸载完成')
 })
 </script>
 
 <style>
-/* 全局隐藏滚动条 */
+/* full */
 html, body {
   overflow-x: hidden !important;
   overflow-y: auto !important;
@@ -2257,12 +2262,12 @@ html, body {
   -ms-overflow-style: none !important; /* Internet Explorer 10+ */
 }
 
-html::-webkit-scrollbar, 
+html::-webkit-scrollbar,
 body::-webkit-scrollbar {
   display: none !important; /* Chrome, Safari, Opera */
 }
 
-/* 隐藏容器的滚动条，但保留地图标识 */
+/* , */
 *:not(.leaflet-control-attribution):not(.leaflet-control-attribution *) {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
@@ -2272,7 +2277,7 @@ body::-webkit-scrollbar {
   display: none !important;
 }
 
-/* 强制显示地图标识文字 */
+/*  */
 .leaflet-control-attribution {
   display: block !important;
   visibility: visible !important;
@@ -2303,7 +2308,7 @@ body::-webkit-scrollbar {
 
 <style scoped>
 
-/* 主容器样式 */
+/* main */
 .video-square {
   height: 100vh;
   display: flex;
@@ -2333,7 +2338,7 @@ body::-webkit-scrollbar {
   overflow: visible;
 }
 
-/* 调试面板样式 */
+/*  */
 .debug-panel {
   position: absolute;
   top: 20px;
@@ -2391,7 +2396,7 @@ body::-webkit-scrollbar {
   color: #ff4d4f;
 }
 
-/* 视频布局控制栏 */
+/* control */
 .video-layout-controls {
   position: absolute;
   top: 20px;
@@ -2546,7 +2551,7 @@ body::-webkit-scrollbar {
   opacity: 1;
 }
 
-/* 深色模式下的操作按钮 */
+/* operationbutton */
 .map-area.dark-mode .device-action-btn {
   background: rgba(26, 35, 50, 0.9);
   color: #ffffff;
@@ -2562,7 +2567,7 @@ body::-webkit-scrollbar {
     color: #ffffff;
   }
 
-  /* 选中的显示项目区域样式 */
+  /* in item */
   .selected-display-items {
     padding: 12px;
     border-bottom: 1px solid #e4e7ed;
@@ -2570,7 +2575,7 @@ body::-webkit-scrollbar {
     margin: 0;
   }
 
-  /* 深色模式下的选中显示项目 */
+  /* in item */
   .map-area.dark-mode .selected-display-items {
     background: rgba(15, 20, 25, 0.8);
     border-bottom: 1px solid rgba(100, 149, 237, 0.3);
@@ -2606,7 +2611,7 @@ body::-webkit-scrollbar {
     background: rgba(26, 83, 255, 0.05);
   }
 
-  /* 深色模式下的标签 */
+  /*  */
   .map-area.dark-mode .display-item-tag {
     background: rgba(26, 35, 50, 0.9);
     border-color: rgba(100, 149, 237, 0.3);
@@ -2650,7 +2655,7 @@ body::-webkit-scrollbar {
     transform: rotate(180deg);
   }
 
-  /* 设备统计弹窗内容 */
+  /* device dialog */
   .device-stats-content {
     padding: 0;
   }
@@ -2739,7 +2744,7 @@ body::-webkit-scrollbar {
   overflow: hidden;
 }
 
-/* 搜索框 */
+/*  */
 .device-search-container {
   padding: 16px;
   border-bottom: 1px solid #f0f0f0;
@@ -2783,7 +2788,7 @@ body::-webkit-scrollbar {
   color: #1A53FF;
 }
 
-/* 设备列表 */
+/* device */
 .device-list-items {
   flex: 1;
   overflow-y: auto;
@@ -2868,7 +2873,7 @@ body::-webkit-scrollbar {
   color: #999;
 }
 
-/* 树形视图 */
+/*  */
 .tree-view {
   padding: 8px;
 }
@@ -2956,14 +2961,14 @@ body::-webkit-scrollbar {
   gap: 6px;
 }
 
-/* 地图容器 */
+/*  */
 .map-container {
   flex: 1;
   position: relative;
   overflow: visible;
 }
 
-/* 确保地图标识文字可见 */
+/*  */
 .map-container .leaflet-control-attribution {
   position: absolute !important;
   bottom: 0 !important;
@@ -2982,7 +2987,7 @@ body::-webkit-scrollbar {
   height: 100%;
 }
 
-/* 地图控制工具栏 */
+/* control */
 .map-controls {
   position: absolute;
   top: 200px;
@@ -2993,7 +2998,7 @@ body::-webkit-scrollbar {
   z-index: 500;
 }
 
-/* 缩放控制按钮 */
+/* controlbutton */
 .zoom-controls {
   position: absolute;
   top: 120px;
@@ -3046,7 +3051,7 @@ body::-webkit-scrollbar {
   transform: translateY(-1px);
 }
 
-/* 视频弹窗样式 */
+/* dialog */
 .video-dialog-overlay {
   position: fixed;
   top: 0;
@@ -3245,7 +3250,7 @@ body::-webkit-scrollbar {
   background: #5a6268;
 }
 
-/* 设置弹窗样式 */
+/* Set dialog */
 .settings-content {
   padding: 16px;
 }
@@ -3274,7 +3279,7 @@ body::-webkit-scrollbar {
   margin-top: 24px;
 }
 
-/* 深色模式样式 */
+/*  */
 .map-area.dark-mode .video-layout-controls {
   background: rgba(40, 44, 52, 0.95);
   border-bottom: 1px solid rgba(100, 149, 237, 0.3);
@@ -3379,7 +3384,7 @@ body::-webkit-scrollbar {
   box-shadow: 0 2px 12px rgba(26, 83, 255, 0.4);
 }
 
-/* 主题切换按钮特殊样式 */
+/* main button */
 .map-area.dark-mode .theme-toggle {
   background: rgba(40, 44, 52, 0.95);
   border-color: rgba(100, 149, 237, 0.3);
@@ -3394,7 +3399,7 @@ body::-webkit-scrollbar {
   box-shadow: 0 2px 12px rgba(255, 215, 0, 0.3);
 }
 
-/* 地图控制面板黑夜模式 */
+/* control */
 .map-area.dark-mode .map-controls {
   background: rgba(40, 44, 52, 0.1);
   border-radius: 8px;
@@ -3416,7 +3421,7 @@ body::-webkit-scrollbar {
   backdrop-filter: blur(8px);
 }
 
-/* 响应式设计 */
+/*  */
 @media (max-width: 768px) {
   .video-layout-controls {
     position: static;
@@ -3425,24 +3430,24 @@ body::-webkit-scrollbar {
     flex-wrap: wrap;
     min-width: auto;
   }
-  
+
   .device-list-panel {
     position: static;
     width: 100%;
     height: 300px;
     margin: 20px;
   }
-  
+
   .layout-buttons {
     flex-wrap: wrap;
   }
-  
+
   .device-stats {
     flex-wrap: wrap;
   }
 }
 
-/* 扩展布局弹窗样式 */
+/* dialog */
 .extended-layout-overlay {
   position: fixed;
   top: 0;
@@ -3501,7 +3506,7 @@ body::-webkit-scrollbar {
   color: #333;
 }
 
-/* 深色模式下的扩展布局弹窗 */
+/* dialog */
 .map-area.dark-mode .extended-layout-dialog {
   background: rgba(40, 44, 52, 0.95) !important;
   border: 1px solid rgba(100, 149, 237, 0.3) !important;
@@ -3525,7 +3530,7 @@ body::-webkit-scrollbar {
   color: #ffffff !important;
 }
 
-/* 全局深色模式样式覆盖 - 确保所有组件都能正确应用深色主题 */
+/* full - all component can correct main */
 .map-area.dark-mode .layout-button-group {
   background: rgba(40, 44, 52, 0.95) !important;
   border: 1px solid rgba(100, 149, 237, 0.3) !important;
@@ -3548,7 +3553,7 @@ body::-webkit-scrollbar {
   backdrop-filter: blur(8px) !important;
 }
 
-/* 设备列表面板黑夜模式 */
+/* device */
 .map-area.dark-mode .device-list-panel {
   background: rgba(40, 44, 52, 0.95) !important;
   border: 1px solid rgba(100, 149, 237, 0.3) !important;
@@ -3613,7 +3618,7 @@ body::-webkit-scrollbar {
   border-color: rgba(100, 149, 237, 0.4) !important;
 }
 
-/* 设备列表面板的标签和状态样式 */
+/* device and */
 .map-area.dark-mode .device-list-panel .device-type-tag {
   background: rgba(26, 83, 255, 0.2) !important;
   color: #7db8ff !important;
@@ -3657,7 +3662,7 @@ body::-webkit-scrollbar {
   color: #a0a0a0 !important;
 }
 
-/* 设备列表面板的复选框样式 */
+/* device */
 .map-area.dark-mode .device-list-panel .el-checkbox__input.is-checked .el-checkbox__inner {
   background-color: #1A53FF !important;
   border-color: #1A53FF !important;
@@ -3673,7 +3678,7 @@ body::-webkit-scrollbar {
 }
 </style>
 
-<!-- 全局深色模式样式 - 最高优先级确保生效 -->
+<!-- full - -->
 <style>
 .map-area.dark-mode .layout-button-group {
   background: rgba(40, 44, 52, 0.95) !important;
@@ -3754,7 +3759,7 @@ body::-webkit-scrollbar {
   color: #ffffff !important;
 }
 
-/* 最高优先级强制覆盖列表结构样式 */
+/*  */
 body.dark-mode .device-name,
 .dark-mode .device-name,
 .map-area.dark-mode .device-item .device-name,
@@ -3799,7 +3804,7 @@ body.dark-mode .device-ip,
   border: 1px solid rgba(26, 83, 255, 0.4) !important;
 }
 
-/* 搜索框上面的显示数据标签 - 取消边框 */
+/* data - */
 .selected-display-items .display-item-tag {
   background: transparent !important;
   border: none !important;
@@ -3846,7 +3851,7 @@ body.dark-mode .device-ip,
   color: #7db8ff !important;
 }
 
-/* 深色模式下的弹窗样式 - 全局强制应用 */
+/* dialog - full */
 .map-area.dark-mode :deep(.device-stats-popover) {
   background: rgba(40, 44, 52, 0.95) !important;
   border: 1px solid rgba(100, 149, 237, 0.3) !important;
@@ -3914,7 +3919,7 @@ body.dark-mode .device-ip,
   border-color: rgba(30, 34, 42, 0.95) !important;
 }
 
-/* 全局深色模式弹窗样式 - 覆盖Element Plus */
+/* full dialog - Element Plus */
 body :deep(.el-popper.device-stats-popover) {
   background: rgba(40, 44, 52, 0.95) !important;
   border: 1px solid rgba(100, 149, 237, 0.3) !important;
@@ -3922,7 +3927,7 @@ body :deep(.el-popper.device-stats-popover) {
   color: #e8f4fd !important;
 }
 
-/* 当页面处于深色模式时强制应用弹窗深色样式 */
+/* page dialog */
 .dark-mode ~ * .el-popper.device-stats-popover,
 html.dark-mode .el-popper.device-stats-popover,
 body.dark-mode .el-popper.device-stats-popover,
@@ -3934,7 +3939,7 @@ body.dark-mode .device-stats-popover {
   color: #e8f4fd !important;
 }
 
-/* 深色模式下弹窗内容样式 */
+/* dialog */
 body.dark-mode .device-stats-popover * {
   color: #e8f4fd !important;
 }
@@ -3978,7 +3983,7 @@ body.dark-mode .device-stats-popover .el-checkbox__input.is-checked .el-checkbox
   border-color: #7db8ff !important;
 }
 
-/* 强制覆盖所有白色背景 - 限制在弹窗内部 */
+/* all - in dialog */
 body.dark-mode .device-stats-popover div:not(.leaflet-container):not(.leaflet-map-pane):not([class*="leaflet"]) {
   background-color: rgba(40, 44, 52, 0.95) !important;
 }
@@ -3995,7 +4000,7 @@ body.dark-mode .device-stats-popover .el-checkbox__input.is-checked .el-checkbox
   background-color: #7db8ff !important;
 }
 
-/* 最高优先级强制覆盖 Element Plus 弹窗样式 - 限制范围避免影响地图 */
+/* Element Plus dialog - */
 body.dark-mode .el-popper.device-stats-popover,
 body.dark-mode .el-popover.device-stats-popover {
   background: rgba(40, 44, 52, 0.95) !important;
@@ -4017,7 +4022,7 @@ body.dark-mode .el-popper .el-popper__arrow::before {
   border: 1px solid rgba(100, 149, 237, 0.3) !important;
 }
 
-/* 弹窗内容区域边框 */
+/* dialog */
 body.dark-mode .device-stats-popover .device-stats-content,
 body.dark-mode .el-popper .device-stats-content,
 body.dark-mode .el-popover .device-stats-content {
@@ -4026,7 +4031,7 @@ body.dark-mode .el-popover .device-stats-content {
   padding: 12px !important;
 }
 
-/* 特殊元素的特定背景 */
+/* element */
 body.dark-mode .el-popper.device-stats-popover .total-count,
 body.dark-mode .el-popover.device-stats-popover .total-count {
   background: rgba(30, 34, 42, 0.6) !important;
@@ -4049,13 +4054,13 @@ body.dark-mode .el-popover.device-stats-popover .el-checkbox__input.is-checked .
   border-color: #7db8ff !important;
 }
 
-/* 浅色模式弹窗样式 - 移除外边框，限制范围避免影响地图 */
+/* dialog - , */
 .el-popper.device-stats-popover,
 .el-popover.device-stats-popover {
   border: none !important;
 }
 
-/* 浅色模式弹窗内容区域 */
+/* dialog */
 .device-stats-popover .device-stats-content,
 .el-popper.device-stats-popover .device-stats-content,
 .el-popover.device-stats-popover .device-stats-content {
@@ -4099,12 +4104,12 @@ body.dark-mode .el-popover.device-stats-popover .el-checkbox__input.is-checked .
   color: #ffffff !important;
 }
 
-/* 提高优先级的树形结构深色模式样式 */
+/*  */
 .map-area.dark-mode .device-list-panel .tree-device-name {
   color: #ffffff !important;
 }
 
-/* 全局最高优先级的扩展布局弹窗深色模式样式 */
+/* full dialog */
 .map-area.dark-mode .extended-layout-dialog {
   background: rgba(40, 44, 52, 0.95) !important;
   border: 1px solid rgba(100, 149, 237, 0.3) !important;
@@ -4136,7 +4141,7 @@ body.dark-mode .el-popover.device-stats-popover .el-checkbox__input.is-checked .
   color: #ffffff !important;
 }
 
-/* 最高优先级强制覆盖树形结构样式 */
+/*  */
 body.dark-mode .tree-device-name,
 .dark-mode .tree-device-name,
 .map-area.dark-mode .tree-device-item .tree-device-name,
@@ -4172,7 +4177,7 @@ body.dark-mode .tree-group-label,
   color: #ffffff !important;
 }
 
-/* 视频播放器弹窗全屏样式 */
+/* dialog full */
 .video-dialog.fullscreen-active,
 .layout-dialog.fullscreen-active {
   width: 100vw !important;
@@ -4190,7 +4195,7 @@ body.dark-mode .tree-group-label,
   position: fixed !important;
 }
 
-/* 全屏状态下的视频播放器内容 */
+/* full */
 .video-dialog.fullscreen-active .video-dialog-content,
 .layout-dialog.fullscreen-active .layout-dialog-content {
   width: 100% !important;
@@ -4199,7 +4204,7 @@ body.dark-mode .tree-group-label,
   background: #000 !important;
 }
 
-/* 全屏状态下的视频播放器头部 */
+/* full */
 .video-dialog.fullscreen-active .video-dialog-header,
 .layout-dialog.fullscreen-active .layout-dialog-header {
   position: absolute !important;
@@ -4212,7 +4217,7 @@ body.dark-mode .tree-group-label,
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-/* 全屏状态下的视频播放器主体 */
+/* full main */
 .video-dialog.fullscreen-active .video-dialog-body,
 .layout-dialog.fullscreen-active .layout-dialog-body {
   width: 100% !important;
@@ -4223,7 +4228,7 @@ body.dark-mode .tree-group-label,
   flex-direction: column !important;
 }
 
-/* 全屏状态下的对话框内容 */
+/* full */
 .video-dialog.fullscreen-active .video-dialog-content,
 .layout-dialog.fullscreen-active .layout-dialog-content {
   width: 100% !important;
@@ -4234,7 +4239,7 @@ body.dark-mode .tree-group-label,
   flex-direction: column !important;
 }
 
-/* 全屏状态下的主要内容区域 */
+/* full main need to */
 .video-dialog.fullscreen-active .dialog-main-content,
 .layout-dialog.fullscreen-active .dialog-main-content {
   width: 100% !important;
@@ -4244,7 +4249,7 @@ body.dark-mode .tree-group-label,
   background: #000 !important;
 }
 
-/* 全屏状态下的视频播放区域 */
+/* full */
 .video-dialog.fullscreen-active .video-player-section,
 .layout-dialog.fullscreen-active .video-player-section {
   flex: 1 !important;
@@ -4255,7 +4260,7 @@ body.dark-mode .tree-group-label,
   background: #000 !important;
 }
 
-/* 全屏状态下的视频区域 */
+/* full */
 .video-dialog.fullscreen-active .video-area,
 .layout-dialog.fullscreen-active .video-area {
   flex: 1 !important;
@@ -4266,7 +4271,7 @@ body.dark-mode .tree-group-label,
   background: #000 !important;
 }
 
-/* 全屏状态下的视频网格 */
+/* full */
 .video-dialog.fullscreen-active .video-grid,
 .layout-dialog.fullscreen-active .video-grid {
   width: 100% !important;
@@ -4276,28 +4281,28 @@ body.dark-mode .tree-group-label,
   flex: 1 !important;
 }
 
-/* 全屏状态下的视频窗口 */
+/* full */
 .video-dialog.fullscreen-active .video-window,
 .layout-dialog.fullscreen-active .video-window {
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   background: #000 !important;
 }
 
-/* 全屏状态下的视频播放器 */
+/* full */
 .video-dialog.fullscreen-active .video-player-container,
 .layout-dialog.fullscreen-active .video-player-container {
   width: 100% !important;
   height: 100% !important;
 }
 
-/* 全屏状态下的视频内容 */
+/* full */
 .video-dialog.fullscreen-active .video-content,
 .layout-dialog.fullscreen-active .video-content {
   width: 100% !important;
   height: 100% !important;
 }
 
-/* 全屏状态下的iframe播放器 */
+/* full iframe */
 .video-dialog.fullscreen-active .stream-iframe,
 .layout-dialog.fullscreen-active .stream-iframe {
   width: 100% !important;
@@ -4305,7 +4310,7 @@ body.dark-mode .tree-group-label,
   object-fit: cover !important;
 }
 
-/* 全屏状态下的HLS视频播放器 */
+/* full HLS */
 .video-dialog.fullscreen-active .hls-video,
 .layout-dialog.fullscreen-active .hls-video {
   width: 100% !important;
@@ -4313,7 +4318,7 @@ body.dark-mode .tree-group-label,
   object-fit: cover !important;
 }
 
-/* 全屏状态下的HTTP和YouTube播放器 */
+/* full HTTP and YouTube */
 .video-dialog.fullscreen-active .http-stream-player,
 .video-dialog.fullscreen-active .youtube-stream-player,
 .video-dialog.fullscreen-active .hls-stream-player,
@@ -4324,14 +4329,14 @@ body.dark-mode .tree-group-label,
   height: 100% !important;
 }
 
-/* 全屏状态下的RTSP流信息 */
+/* full RTSP info */
 .video-dialog.fullscreen-active .rtsp-stream-info,
 .layout-dialog.fullscreen-active .rtsp-stream-info {
   width: 100% !important;
   height: 100% !important;
 }
 
-/* 全屏状态下的PTZ面板 - 隐藏 */
+/* full PTZ - */
 .video-dialog.fullscreen-active .ptz-panel,
 .layout-dialog.fullscreen-active .ptz-panel,
 .video-dialog.fullscreen-active .ptz-control-section,
@@ -4339,11 +4344,11 @@ body.dark-mode .tree-group-label,
   display: none !important;
 }
 
-/* 全屏状态下的空白占位符 */
+/* full null / empty */
 .video-dialog.fullscreen-active .video-placeholder,
 .layout-dialog.fullscreen-active .video-placeholder {
   background: #1a1a1a !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   color: rgba(255, 255, 255, 0.6) !important;
 }
-</style> 
+</style>

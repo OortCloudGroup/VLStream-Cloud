@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -8,7 +9,7 @@ package com.ruoyi.common.annotation;
 import java.lang.annotation.*;
 
 /**
- * 翻译类型注解 (标注到{@link com.ruoyi.common.translation.TranslationInterface} 的实现类)
+ * (annotation {@link com.ruoyi.common.translation.TranslationInterface} )
  *
  * @author Lion Li
  */
@@ -19,7 +20,7 @@ import java.lang.annotation.*;
 public @interface TranslationType {
 
     /**
-     * 类型
+     *
      */
     String type();
 

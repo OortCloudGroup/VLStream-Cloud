@@ -1,14 +1,19 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="system-settings">
-    <!-- 页面头部 -->
+    <!-- page -->
     <div class="page-header">
       <h1 class="page-title">系统设置</h1>
       <p>系统配置与参数管理</p>
     </div>
 
-    <!-- 设置选项卡 -->
+    <!-- Set item -->
     <el-tabs v-model="activeTab" class="tenanat-tabs settings-tabs">
-      <!-- 基础设置 -->
+      <!-- Set -->
       <el-tab-pane label="基础设置" name="basic">
         <el-card class="setting-card">
           <template #header>
@@ -53,7 +58,7 @@
         </el-card>
       </el-tab-pane>
 
-      <!-- 存储设置 -->
+      <!-- Set -->
       <el-tab-pane label="存储设置" name="storage">
         <el-card class="setting-card">
           <template #header>
@@ -105,7 +110,7 @@
           </el-form>
         </el-card>
 
-        <!-- 存储状态 -->
+        <!--  -->
         <el-card class="setting-card" style="margin-top: 20px;">
           <template #header>
             <div class="card-header">
@@ -138,7 +143,7 @@
         </el-card>
       </el-tab-pane>
 
-      <!-- 网络设置 -->
+      <!-- Set -->
       <el-tab-pane label="网络设置" name="network">
         <el-card class="setting-card">
           <template #header>
@@ -195,7 +200,7 @@
         </el-card>
       </el-tab-pane>
 
-      <!-- 安全设置 -->
+      <!-- full Set -->
       <el-tab-pane label="安全设置" name="security">
         <el-card class="setting-card">
           <template #header>
@@ -259,7 +264,7 @@
         </el-card>
       </el-tab-pane>
 
-      <!-- 日志设置 -->
+      <!-- logSet -->
       <el-tab-pane label="日志设置" name="logs">
         <el-card class="setting-card">
           <template #header>
@@ -321,10 +326,10 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
-// 响应式数据
+// data
 const activeTab = ref('basic')
 
-// 基础设置
+// Set
 const basicSettings = ref({
   systemName: 'VLStream Cloud',
   systemVersion: 'v1.0.0',
@@ -333,7 +338,7 @@ const basicSettings = ref({
   theme: 'light'
 })
 
-// 存储设置
+// Set
   const storageSettings = ref({
     videoPath: './data/videos',
       imagePath: './data/images',
@@ -343,7 +348,7 @@ const basicSettings = ref({
   retentionDays: 30
 })
 
-// 存储信息
+// info
 const storageInfo = ref({
   totalSpace: '1.0 TB',
   usedSpace: '256 GB',
@@ -351,7 +356,7 @@ const storageInfo = ref({
   usagePercentage: 25
 })
 
-// 网络设置
+// Set
 const networkSettings = ref({
   serverHost: '192.168.1.100',
   serverPort: 8080,
@@ -361,7 +366,7 @@ const networkSettings = ref({
   enableHttps: false
 })
 
-// 安全设置
+// full Set
 const securitySettings = ref({
   passwordComplexity: true,
   loginLockout: true,
@@ -373,7 +378,7 @@ const securitySettings = ref({
   allowedIPs: ''
 })
 
-// 日志设置
+// logSet
 const logSettings = ref({
   level: 'info',
   enableSystemLog: true,
@@ -384,7 +389,7 @@ const logSettings = ref({
   maxFiles: 10
 })
 
-// 方法
+// method
 const saveBasicSettings = () => {
   ElMessage.success('基础设置保存成功')
 }
@@ -421,7 +426,7 @@ const selectPath = (type) => {
 }
 
 const refreshStorageInfo = () => {
-  // 模拟刷新存储信息
+  // new info
   storageInfo.value = {
     totalSpace: '1.0 TB',
     usedSpace: Math.floor(Math.random() * 500 + 200) + ' GB',
@@ -512,9 +517,9 @@ const resetLogSettings = () => {
   ElMessage.info('日志设置已重置')
 }
 
-// 生命周期
+//
 onMounted(() => {
-  // 初始化设置
+  // Initialize Set
 })
 </script>
 

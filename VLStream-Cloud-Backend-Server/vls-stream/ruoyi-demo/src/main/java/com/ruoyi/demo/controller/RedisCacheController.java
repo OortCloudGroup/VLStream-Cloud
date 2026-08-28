@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -19,11 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Duration;
 
 /**
- * spring-cache 演示案例
+ * spring-cache
  *
  * @author Lion Li
  */
-// 类级别 缓存统一配置
+// configuration
 //@CacheConfig(cacheNames = CacheNames.DEMO_CACHE)
 @RequiredArgsConstructor
 @RestController
@@ -31,18 +32,18 @@ import java.time.Duration;
 public class RedisCacheController {
 
     /**
-     * 测试 @Cacheable
+     * @Cacheable
      * <p>
-     * 表示这个方法有了缓存的功能,方法的返回值会被缓存下来
-     * 下一次调用该方法前,会去检查是否缓存中已经有值
-     * 如果有就直接返回,不调用方法
-     * 如果没有,就调用方法,然后把结果缓存起来
-     * 这个注解「一般用在查询方法上」
+     * method can , method value will
+     * method before, will whether in already value
+     * if then , method
+     * if , then method , after
+     * 「 in Query method 」
      * <p>
-     * 重点说明: 缓存注解严谨与其他筛选数据功能一起使用
-     * 例如: 数据权限注解 会造成 缓存击穿 与 数据不一致问题
+     * : and data can
+     * : data will and data
      * <p>
-     * cacheNames 命名规则 查看 {@link CacheNames} 注释 支持多参数
+     * cacheNames {@link CacheNames} parameter
      */
     @Cacheable(cacheNames = "demo:cache#60s#10m#20", key = "#key", condition = "#key != null")
     @GetMapping("/test1")
@@ -51,12 +52,12 @@ public class RedisCacheController {
     }
 
     /**
-     * 测试 @CachePut
+     * @CachePut
      * <p>
-     * 加了@CachePut注解的方法,会把方法的返回值put到缓存里面缓存起来,供其它地方使用
-     * 它「通常用在新增或者实时更新方法上」
+     * @CachePut method , will method value put ,
+     * 「 in Add new method 」
      * <p>
-     * cacheNames 命名规则 查看 {@link CacheNames} 注释 支持多参数
+     * cacheNames {@link CacheNames} parameter
      */
     @CachePut(cacheNames = CacheNames.DEMO_CACHE, key = "#key", condition = "#key != null")
     @GetMapping("/test2")
@@ -65,12 +66,12 @@ public class RedisCacheController {
     }
 
     /**
-     * 测试 @CacheEvict
+     * @CacheEvict
      * <p>
-     * 使用了CacheEvict注解的方法,会清空指定缓存
-     * 「一般用在删除的方法上」
+     * CacheEvict method , will null / empty
+     * 「 in Delete method 」
      * <p>
-     * cacheNames 命名规则 查看 {@link CacheNames} 注释 支持多参数
+     * cacheNames {@link CacheNames} parameter
      */
     @CacheEvict(cacheNames = CacheNames.DEMO_CACHE, key = "#key", condition = "#key != null")
     @GetMapping("/test3")
@@ -79,9 +80,9 @@ public class RedisCacheController {
     }
 
     /**
-     * 测试设置过期时间
-     * 手动设置过期时间10秒
-     * 11秒后获取 判断是否相等
+     * Set
+     * Set 10
+     * 11 afterGet Check whether etc.
      */
     @GetMapping("/test6")
     public R<Boolean> test6(String key, String value) {

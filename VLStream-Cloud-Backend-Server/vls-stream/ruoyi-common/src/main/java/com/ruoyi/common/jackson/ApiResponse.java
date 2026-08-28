@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,8 +17,8 @@ public class ApiResponse<T> {
   private String msg;
   private T data;
 
-  // 工单类型
-  // 用于 addBasicInfo 的数据结构
+  // work order
+  // addBasicInfo data
   @Data
   public static class DataItem {
     private String appId;
@@ -26,8 +27,8 @@ public class ApiResponse<T> {
     private String categoryName;
   }
 
-  // 表单信息
-  // 用于 addFormInfo 的数据结构
+  // forminfo
+  // addFormInfo data
   @Data
   public static class FormResponse {
     private FormConfig formConfig;
@@ -58,7 +59,7 @@ public class ApiResponse<T> {
   public static class Options {
     private String label;
     //    @JsonDeserialize(using = DefaultValueDeserializer.class)
-    private Object defaultValue; // 支持 Integer/String
+    private Object defaultValue; // Integer/String
     private AreaOptionItems areaOptionItems;
     private List<OptionItems> optionItems;
   }
@@ -80,7 +81,7 @@ public class ApiResponse<T> {
     private Object value;
   }
 
-  // 项目名称
+  // item
   @Data
   public static class DeptResponse {
     @JsonProperty("list")
@@ -89,17 +90,17 @@ public class ApiResponse<T> {
 
   @Data
   public static class Dept {
-    @JsonProperty("dept_id") // 明确映射JSON字段
+    @JsonProperty("dept_id") // JSONfield
     private String deptId;
 
-    @JsonProperty("dept_name") // 明确映射JSON字段
+    @JsonProperty("dept_name") // JSONfield
     private String deptName;
 
     @JsonProperty("son_dept")
     private List<Dept> sonDept;
   }
 
-  // 审批信息
+  // approvalinfo
   @Data
   public static class HistoryProcNodeList {
     private String assigneeName;

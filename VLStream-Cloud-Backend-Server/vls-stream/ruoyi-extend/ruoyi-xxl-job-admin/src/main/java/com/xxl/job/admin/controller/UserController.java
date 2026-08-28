@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -43,7 +43,7 @@ public class UserController {
     @PermissionLimit(adminuser = true)
     public String index(Model model) {
 
-        // 执行器列表
+        // Execute
         List<XxlJobGroup> groupList = xxlJobGroupDao.findAll();
         model.addAttribute("groupList", groupList);
 
@@ -70,9 +70,9 @@ public class UserController {
 
         // package result
         Map<String, Object> maps = new HashMap<String, Object>();
-        maps.put("recordsTotal", list_count);        // 总记录数
-        maps.put("recordsFiltered", list_count);    // 过滤后的总记录数
-        maps.put("data", list);                    // 分页列表
+        maps.put("recordsTotal", list_count);        // record
+        maps.put("recordsFiltered", list_count);    // after record
+        maps.put("data", list);                    //
         return maps;
     }
 

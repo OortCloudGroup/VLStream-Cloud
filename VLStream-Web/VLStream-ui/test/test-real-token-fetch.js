@@ -1,23 +1,28 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * 真实Token获取测试
- * 测试从统一用户平台获取最新token的功能
+ * TokenGet
+ * from user Get new token can
  */
 
 async function testRealTokenFetch() {
     console.log('🎯 真实Token获取测试');
     console.log('测试从统一用户平台获取最新token的功能');
-    
-    // 等待一下让获取器初始化
+
+    // etc. Get Initialize
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     console.log('');
     console.log('=== 当前状态检查 ===');
-    
-    // 检查当前token状态
+
+    // current token
     const currentToken = getCurrentSystemToken();
     console.log('当前系统Token:', currentToken ? currentToken.substring(0, 8) + '...' : 'null');
-    
-    // 检查用户信息
+
+    // userinfo
     const userInfo = sessionStorage.getItem('userInfo');
     if (userInfo) {
         try {
@@ -27,49 +32,49 @@ async function testRealTokenFetch() {
             console.log('用户信息解析失败');
         }
     }
-    
+
     console.log('');
     console.log('=== 测试统一用户平台Token获取器 ===');
-    
+
     if (window.unifiedPlatformTokenFetcher) {
         console.log('✅ unifiedPlatformTokenFetcher已加载');
-        
-        // 测试获取最新token
+
+        // Get new token
         console.log('🔄 开始获取统一用户平台最新token...');
         const latestToken = await window.unifiedPlatformTokenFetcher.getLatestToken()
-        
+
         if (latestToken) {
             console.log('✅ 成功获取到统一用户平台最新token');
             console.log('最新Token:', latestToken.substring(0, 8) + '...');
-            
-            // 验证token有效性
+
+            // token
             console.log('🔍 验证最新token有效性...');
             const isValid = await window.unifiedPlatformTokenFetcher.validateToken(latestToken)
-            
+
             if (isValid) {
                 console.log('✅ 最新token验证成功');
-                
-                // 同步到当前系统
+
+                // current
                 console.log('🔄 同步最新token到当前系统...');
                 await syncTokenToCurrentSystem(latestToken)
-                
+
             } else {
                 console.log('❌ 最新token验证失败');
             }
-            
+
         } else {
             console.log('❌ 未能获取到统一用户平台最新token');
             console.log('💡 可能需要手动获取token');
-            
-            // 提供手动获取选项
+
+            // Get item
             console.log('');
             console.log('=== 手动获取Token选项 ===');
             console.log('1. 打开统一用户平台获取新token');
             console.log('2. 手动输入token');
             console.log('3. 查看获取token的详细说明');
-            
+
             const choice = prompt('请选择操作 (1-3):')
-            
+
             switch (choice) {
                 case '1':
                     window.unifiedPlatformTokenFetcher.openUnifiedPlatform()
@@ -87,11 +92,11 @@ async function testRealTokenFetch() {
                     console.log('未选择任何操作')
             }
         }
-        
+
     } else {
         console.log('❌ unifiedPlatformTokenFetcher未加载');
     }
-    
+
     console.log('');
     console.log('=== 真实场景测试指南 ===');
     console.log('🎯 为了验证真实的token获取，请按以下步骤操作:');
@@ -110,7 +115,7 @@ async function testRealTokenFetch() {
     console.log('   window.unifiedPlatformTokenFetcher.manualInputToken()');
     console.log('');
     console.log('6. 粘贴token值，观察是否自动同步');
-    
+
     console.log('');
     console.log('=== Token获取机制说明 ===');
     console.log('🔄 获取策略:');
@@ -124,7 +129,7 @@ async function testRealTokenFetch() {
     console.log('- 验证成功后同步到当前系统');
     console.log('- 更新用户信息和租户信息');
     console.log('- 触发组件更新事件');
-    
+
     console.log('');
     console.log('🎯 预期效果:');
     console.log('- 能够获取到统一用户平台的最新有效token');
@@ -133,39 +138,39 @@ async function testRealTokenFetch() {
     console.log('- 两个系统的token保持一致');
 }
 
-// 同步token到当前系统
+// token current
 async function syncTokenToCurrentSystem(token) {
     try {
         console.log('🔄 开始同步token到当前系统')
-        
-        // 更新token存储
+
+        // new token
         sessionStorage.setItem('accessToken', token)
         localStorage.setItem('accessToken', token)
         sessionStorage.setItem('token', token)
         localStorage.setItem('token', token)
-        
-        // 获取并更新用户信息
+
+        // Get new userinfo
         const userInfo = await getUserInfo(token)
         if (userInfo) {
             sessionStorage.setItem('userInfo', JSON.stringify(userInfo))
             localStorage.setItem('userInfo', JSON.stringify(userInfo))
             console.log('✅ 用户信息更新成功:', userInfo.userName)
         }
-        
-        // 触发token更新事件
+
+        // token new event
         const event = new CustomEvent('tokenUpdated', {
             detail: { token, source: 'unified-platform-fetcher' }
         })
         window.dispatchEvent(event)
-        
+
         console.log('✅ token同步到当前系统成功')
-        
+
     } catch (error) {
         console.error('❌ token同步失败:', error)
     }
 }
 
-// 获取用户信息
+// Get userinfo
 async function getUserInfo(token) {
     try {
         const response = await fetch('http://oort.oortcloudsmart.com:21410/bus/apaas-sso/sso/v1/getUserInfo', {
@@ -181,12 +186,12 @@ async function getUserInfo(token) {
                 accessToken: token
             })
         })
-        
+
         if (response.ok) {
             const result = await response.json()
             return result.data
         }
-        
+
         return null
     } catch (error) {
         console.error('获取用户信息失败:', error)
@@ -194,13 +199,13 @@ async function getUserInfo(token) {
     }
 }
 
-// 获取当前系统token
+// Get current token
 function getCurrentSystemToken() {
-    return sessionStorage.getItem('accessToken') || 
+    return sessionStorage.getItem('accessToken') ||
            localStorage.getItem('accessToken') ||
            sessionStorage.getItem('token') ||
            localStorage.getItem('token')
 }
 
-// 运行测试
-testRealTokenFetch().catch(console.error); 
+//
+testRealTokenFetch().catch(console.error);

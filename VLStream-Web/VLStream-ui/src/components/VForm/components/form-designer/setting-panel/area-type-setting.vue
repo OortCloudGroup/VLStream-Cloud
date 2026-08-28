@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-form-item label="地区精度" style="width: 100%;">
     <el-select v-model="type" class="item_width" placeholder="请选择" @change="changeAreaType">

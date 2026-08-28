@@ -7,25 +7,25 @@
 package com.ruoyi.system.service;
 
 /**
- * 通用 数据权限 服务
+ * data service
  *
  * @author Lion Li
  */
 public interface ISysDataScopeService {
 
     /**
-     * 获取角色自定义权限
+     * Get roleCustom
      *
-     * @param roleId 角色id
-     * @return 部门id组
+     * @param roleId roleid
+     * @return department ID
      */
     String getRoleCustom(Long roleId);
 
     /**
-     * 获取部门及以下权限
+     * Get department
      *
-     * @param deptId 部门id
-     * @return 部门id组
+     * @param deptId department ID
+     * @return department ID
      */
     String getDeptAndChild(String deptId);
 

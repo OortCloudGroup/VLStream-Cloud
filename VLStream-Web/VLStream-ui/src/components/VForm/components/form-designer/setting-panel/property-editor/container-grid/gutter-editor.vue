@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div>
     <el-form-item label-width="0">
@@ -64,9 +69,9 @@ export default {
         spanSum += colItem.options.span
       })
       if (spanSum > 24) {
-        // this.$message.info('列栅格之和超出24')
+        // this.$message.info(' and 24')
         console.log('列栅格之和超出24')
-        // TODO: 语言字符串资源化
+        // TODO:
       }
 
       this.designer.saveCurrentHistoryStep()

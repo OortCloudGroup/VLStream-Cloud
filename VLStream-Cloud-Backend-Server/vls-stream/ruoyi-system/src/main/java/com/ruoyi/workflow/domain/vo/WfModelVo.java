@@ -12,7 +12,7 @@ import lombok.Data;
 import java.util.Date;
 
 /**
- * 流程模型视图对象
+ * workflowmodel object
  *
  * @author KonBAI
  * @createTime 2022/6/21 9:16
@@ -20,91 +20,91 @@ import java.util.Date;
 @Data
 public class WfModelVo {
     /**
-     * 模型ID
+     * modelID
      */
     private String modelId;
     /**
-     * 模型名称
+     * model
      */
     private String modelName;
     /**
-     * 模型Key
+     * modelKey
      */
     private String modelKey;
     /**
-     * 分类编码
+     *
      */
     private String category;
     /**
-     * 版本
+     *
      */
     private Integer version;
     /**
-     * 表单类型
+     * form
      */
     private Integer formType;
     /**
-     * 表单ID
+     * formID
      */
     private String formId;
     /**
-     * 模型描述
+     * model
      */
     private String description;
     /**
-     * 创建时间
+     * create time
      */
     private Date createTime;
     /**
-     * 流程xml
+     * workflowxml
      */
     private String bpmnXml;
     /**
-     * 表单内容
+     * form
      */
     private String content;
     /**
-     * 图标id
+     * id
      */
     private String iconId;
     /**
-     * 手机端是否显示
+     * whether
      */
     private Integer showMobile;
 
     /**
-     * 流程定义状态: 1:激活 , 2:挂起
+     * workflow definition : 1: , 2:
      */
     @ExcelProperty(value = "流程定义状态: 1:激活 , 2:挂起")
     private Boolean suspended;
 
     /**
-     * true 为已部署 false 为未部署
+     * true to already false to not
      */
     private Boolean deploymentStatus;
 
     /**
-     * 流程定义id
+     * workflow definitionid
      */
     private String definitionId;
 
     /**
-     * 查询全部应用通用流程
+     * Query full workflow
      */
     private Boolean wfAppAll;
 
     /**
-     * 查询全部综合通用流程
+     * Query full workflow
      */
     private Boolean wfSynthesisAll;
 
     /**
-     * 查询全部应用工单流程
+     * Query full work orderworkflow
      */
     private Boolean WorkOrderAppAll;
 
     /**
-     * 查询全部综合工单流程
+     * Query full work orderworkflow
      */
     private Boolean WorkOrderSynthesisAll;
 }

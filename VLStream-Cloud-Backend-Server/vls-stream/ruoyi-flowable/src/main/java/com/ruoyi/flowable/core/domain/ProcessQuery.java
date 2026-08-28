@@ -12,7 +12,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.util.*;
 
 /**
- * 流程查询实体对象
+ * workflowQuery object
  *
  * @author KonBAI
  * @createTime 2022/6/11 01:15
@@ -21,74 +21,74 @@ import java.util.*;
 public class ProcessQuery {
 
     /**
-     * 流程标识
+     * workflow
      */
     private String processKey;
 
     /**
-     * 流程名称
+     * workflow
      */
     private String processName;
 
     /**
-     * 流程分类
+     * workflow
      */
     private String category;
 
     /**
-     * 状态
+     *
      */
     private String state;
 
     /**
-     * 手机端是否显示
+     * whether
      */
     private String showMobile;
 
     /**
-     * 流程创建时间开始时间
+     * workflowcreate timestart
      */
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date proStartBeginTime;
 
     /**
-     * 流程创建时间结束时间
+     * workflowcreate timefinish
      */
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date proStartEndTime;
 
     /**
-     * 请求参数
+     * parameter
      */
     private Map<String, Object> params = new HashMap<>();
 
     /**
-     * 分类类型
+     *
      */
     private String categoryType;
 
     /**
-     * 查询全部应用通用流程
+     * Query full workflow
      */
     private Boolean wfAppAll= false;
     /**
-     * 查询全部综合通用流程
+     * Query full workflow
      */
     private Boolean wfSynthesisAll= false;
     /**
-     * 查询全部应用工单流程
+     * Query full work orderworkflow
      */
     private Boolean WorkOrderAppAll= false;
     /**
-     * 查询全部综合工单流程
+     * Query full work orderworkflow
      */
     private Boolean WorkOrderSynthesisAll= false;
     /**
-     * 分类列表
+     *
      */
     List<String> categoryList = new ArrayList<>();
     /**
-     * 访问的接口路径
+     * interface
      */
     private String apiPath;
 }

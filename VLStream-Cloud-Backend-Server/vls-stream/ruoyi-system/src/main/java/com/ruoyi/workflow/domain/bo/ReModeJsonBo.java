@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,9 +15,9 @@ import lombok.EqualsAndHashCode;
 import javax.validation.constraints.NotBlank;
 
 /**
- * 流程图JSON业务对象 re_mode_json
+ * workflow JSON object re_mode_json
  *
- * @author 雷超群
+ * @author
  * @date 2024-11-02
  */
 
@@ -25,24 +26,24 @@ import javax.validation.constraints.NotBlank;
 public class ReModeJsonBo extends BaseEntity {
 
     /**
-     * 与act_re_model 表的关联ID
+     * and act_re_model ID
      */
     @NotBlank(message = "与act_re_model 表的关联ID不能为空", groups = { AddGroup.class, EditGroup.class })
     private String modelId;
 
     /**
-     * 后台单租户标识，客户端无需传入。
+     * after , .
      */
     private String tenantId;
 
     /**
-     * 用户id
+     * user ID
      */
     @NotBlank(message = "用户id不能为空", groups = { AddGroup.class, EditGroup.class })
     private String userId;
 
     /**
-     * 流程图JSON
+     * workflow JSON
      */
     @NotBlank(message = "流程图JSON不能为空", groups = { AddGroup.class, EditGroup.class })
     private String jsonContent;

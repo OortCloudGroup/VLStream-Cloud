@@ -1,3 +1,7 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
 
 <!-- eslint-disable vue/no-v-for-template-key -->
 <!--
@@ -6,7 +10,7 @@
  * email: vdpadmin@163.com
  * website: https://www.vform666.com
  * date: 2021.08.18
- * remark: 如果要分发VForm源码，需在本文件顶部保留此文件头信息！！
+ * remark: if need to VForm , in info! !
  */
 -->
 
@@ -65,7 +69,7 @@ import ContainerItemWrapper from './container-item-wrapper'
 import containerItemMixin from './containerItemMixin'
 import ItemC from './itemC'
 
-// 容器组件加入值的特性
+// component value
 import fieldMixin from '~@/components/form-designer/form-widget/field-widget/fieldMixin'
 
 export default {
@@ -93,7 +97,7 @@ export default {
   },
   created() {
     this.initRefList()
-    // 找到值对象
+    // value object
     if (!this.widget.items && this.widget.items.length === 0) {
       return
     }
@@ -110,23 +114,23 @@ export default {
     this.initRules()
   },
   mounted() {
-    this.off$('itemsItemChange') // 移除原有事件监听
+    this.off$('itemsItemChange') // event
     this.on$('itemsItemChange', (data) => {
       this.localDefaultValue[data[0]][data[1]] = data[2]
       this.handleChangeEvent(this.localDefaultValue)
     })
-    this.off$('selfFieldValidation') // 移除原有事件监听
+    this.off$('selfFieldValidation') // event
     this.on$('selfFieldValidation', (data) => {
       this.fieldValidation(data)
     })
-    // 加入el-item的校验
+    // el-item Validate
   },
   beforeUnmount() {
     this.unregisterFromRefList()
   },
   methods: {
     initRules() {
-      // 将items 里面的wigdes 的必填的字段 提出来，校验
+      // items wigdes field , Validate
       this.widget.items[0].widgetList.forEach(item => {
         if (item.options.required) {
           this.isRequiredFields.push(item.options.name)
@@ -134,7 +138,7 @@ export default {
       })
     },
     doValidate() {
-      // 调用一次fieldValidation，如果校验不通过，则返回false
+      // fieldValidation, if Validate , false
       this.fieldValidation()
       return new Promise((resolve) => {
         resolve(this.errorTipsArr.every(item => item === ''))
@@ -161,7 +165,7 @@ export default {
       this.field.options.disabled = flag
     },
     initItemsAndCopyItem() {
-    // 根据 localDefaultValue 的值来创建 copyItems，并把值传递到对应的 option 的 defaultValue
+    // localDefaultValue value copyItems, value option defaultValue
       this.copyItems = []
       if (Array.isArray(this.localDefaultValue) && this.widget.items && this.widget.items.length > 0) {
         this.localDefaultValue.forEach((rowValue, index) => {
@@ -173,9 +177,9 @@ export default {
               }
             })
           } else {
-            // 深拷贝一份 items[0] 作为每一行的 copyItem
+            // items[0] to copyItem
             let itemCopy = JSON.parse(JSON.stringify(this.widget.items[0]))
-            // 将 rowValue 的值赋值到 itemCopy 的 widgetList 的每个组件的 options.defaultValue
+            // rowValue value value itemCopy widgetList each component options.defaultValue
             if (itemCopy.widgetList && Array.isArray(itemCopy.widgetList)) {
               itemCopy.widgetList.forEach(widget => {
               // eslint-disable-next-line no-prototype-builtins

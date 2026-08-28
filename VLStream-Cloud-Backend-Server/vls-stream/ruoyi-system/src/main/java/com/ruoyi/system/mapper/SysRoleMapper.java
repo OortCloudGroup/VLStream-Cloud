@@ -18,7 +18,7 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
- * 角色表 数据层
+ * role data layer
  *
  * @author Lion Li
  */
@@ -30,10 +30,10 @@ public interface SysRoleMapper extends BaseMapperPlus<SysRoleMapper, SysRole, Sy
     Page<SysRole> selectPageRoleList(@Param("page") Page<SysRole> page, @Param(Constants.WRAPPER) Wrapper<SysRole> queryWrapper);
 
     /**
-     * 根据条件分页查询角色数据
+     * Query roledata
      *
-     * @param queryWrapper 查询条件
-     * @return 角色数据集合信息
+     * @param queryWrapper Query
+     * @return roledataset info
      */
     @DataPermission({
         @DataColumn(key = "deptName", value = "d.dept_id")
@@ -41,27 +41,27 @@ public interface SysRoleMapper extends BaseMapperPlus<SysRoleMapper, SysRole, Sy
     List<SysRole> selectRoleList(@Param(Constants.WRAPPER) Wrapper<SysRole> queryWrapper);
 
     /**
-     * 根据用户ID查询角色
+     * user IDQuery role
      *
-     * @param userId 用户ID
-     * @return 角色列表
+     * @param userId user ID
+     * @return role
      */
     List<SysRole> selectRolePermissionByUserId(String userId);
 
 
     /**
-     * 根据用户ID获取角色选择框列表
+     * user IDGet role
      *
-     * @param userId 用户ID
-     * @return 选中角色ID列表
+     * @param userId user ID
+     * @return in role ID
      */
     List<Long> selectRoleListByUserId(String userId);
 
     /**
-     * 根据用户ID查询角色
+     * user IDQuery role
      *
-     * @param userName 用户名
-     * @return 角色列表
+     * @param userName user
+     * @return role
      */
     List<SysRole> selectRolesByUserName(String userName);
 

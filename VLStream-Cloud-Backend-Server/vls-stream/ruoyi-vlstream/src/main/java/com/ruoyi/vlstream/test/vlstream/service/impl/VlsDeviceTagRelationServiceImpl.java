@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -25,7 +26,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 设备标签关联表 服务实现类
+ * device service
  *
  * @author Oort
  * @since 2025-12-23
@@ -54,12 +55,12 @@ public class VlsDeviceTagRelationServiceImpl extends BaseServiceImpl<VlsDeviceTa
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public boolean setDeviceTags(Long deviceId, List<Long> tagIds, Long createdBy) {
-		// 先删除设备的所有标签
+		// Delete device all
 		baseMapper.deleteByDeviceId(deviceId);
 
-		// 如果有新标签，则批量插入
+		// if new ,
 		if (tagIds != null && !tagIds.isEmpty()) {
-			// 去重并过滤无效标签
+			//
 			List<Long> validTagIds = validateAndFilterTagIds(tagIds);
 			if (!validTagIds.isEmpty()) {
 				saveDeviceTags(deviceId, validTagIds);
@@ -77,7 +78,7 @@ public class VlsDeviceTagRelationServiceImpl extends BaseServiceImpl<VlsDeviceTa
 			return true;
 		}
 
-		// 去重并过滤已存在的标签
+		// already in
 		List<Long> existingTagIds = getDeviceTagIds(deviceId);
 		List<Long> newTagIds = tagIds.stream()
 			.distinct()
@@ -85,7 +86,7 @@ public class VlsDeviceTagRelationServiceImpl extends BaseServiceImpl<VlsDeviceTa
 			.collect(Collectors.toList());
 
 		if (!newTagIds.isEmpty()) {
-			// 验证标签有效性
+			//
 			List<Long> validTagIds = validateAndFilterTagIds(newTagIds);
 			if (!validTagIds.isEmpty()) {
 				saveDeviceTags(deviceId, validTagIds);
@@ -97,7 +98,7 @@ public class VlsDeviceTagRelationServiceImpl extends BaseServiceImpl<VlsDeviceTa
 	}
 
 	/**
-	 * 通过统一实体写入链路保存关联，使租户及创建、更新审计字段由全局填充器负责。
+	 * , 、 new field full fill .
 	 */
 	private void saveDeviceTags(Long deviceId, List<Long> tagIds) {
 		List<DeviceTagRelation> relations = tagIds.stream().map(tagId -> {
@@ -187,14 +188,14 @@ public class VlsDeviceTagRelationServiceImpl extends BaseServiceImpl<VlsDeviceTa
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public boolean copyDeviceTags(Long sourceDeviceId, List<Long> targetDeviceIds, Long createdBy) {
-		// 获取源设备的标签
+		// Get device
 		List<Long> sourceTagIds = getDeviceTagIds(sourceDeviceId);
 		if (sourceTagIds.isEmpty()) {
 			log.info("源设备无标签，无需复制: sourceDeviceId={}", sourceDeviceId);
 			return true;
 		}
 
-		// 为每个目标设备设置标签
+		// to each deviceSet
 		for (Long targetDeviceId : targetDeviceIds) {
 			setDeviceTags(targetDeviceId, sourceTagIds, createdBy);
 		}
@@ -232,7 +233,7 @@ public class VlsDeviceTagRelationServiceImpl extends BaseServiceImpl<VlsDeviceTa
 
 		if (tagIds != null && !tagIds.isEmpty()) {
 			for (Long tagId : tagIds) {
-				// 检查标签是否存在且有效
+				// whether in
 				if (tagManagementMapper.selectById(tagId) != null) {
 					validTagIds.add(tagId);
 				} else {
@@ -259,7 +260,7 @@ public class VlsDeviceTagRelationServiceImpl extends BaseServiceImpl<VlsDeviceTa
 		result.put("deviceId", deviceId);
 		result.put("totalCount", deviceTags.size());
 
-		// 按类型分组
+		// group
 		Map<String, List<DeviceTagRelationDTO>> tagsByCategory = deviceTags.stream()
 			.collect(Collectors.groupingBy(DeviceTagRelationDTO::getCategoryType));
 
@@ -268,7 +269,7 @@ public class VlsDeviceTagRelationServiceImpl extends BaseServiceImpl<VlsDeviceTa
 		result.put("ownTagCount", tagsByCategory.getOrDefault("own", new ArrayList<>()).size());
 		result.put("publicTagCount", tagsByCategory.getOrDefault("public", new ArrayList<>()).size());
 
-		// 标签名称列表
+		//
 		List<String> tagNames = deviceTags.stream()
 			.map(DeviceTagRelationDTO::getTagName)
 			.collect(Collectors.toList());
@@ -279,8 +280,8 @@ public class VlsDeviceTagRelationServiceImpl extends BaseServiceImpl<VlsDeviceTa
 
 	@Override
 	public List<Map<String, Object>> getDevicesByTagCategory(String categoryType, Integer level) {
-		// 这里需要根据具体需求实现
-		// 可以结合DeviceInfoMapper和TagManagementMapper来查询
+		// need to
+		// DeviceInfoMapper and TagManagementMapper Query
 		return new ArrayList<>();
 	}
 
@@ -288,15 +289,15 @@ public class VlsDeviceTagRelationServiceImpl extends BaseServiceImpl<VlsDeviceTa
 	@Transactional(rollbackFor = Exception.class)
 	public boolean syncTagUsageCount() {
 		try {
-			// 获取标签使用统计
+			// Get
 			List<Map<String, Object>> usageStats = getTagUsageStatistics();
 
-			// 更新每个标签的使用次数
+			// new each
 			for (Map<String, Object> stat : usageStats) {
 				Long tagId = (Long) stat.get("tag_id");
 				Long deviceCount = (Long) stat.get("device_count");
 
-				// 设置tag_management表中的usage_count字段
+				// Set tag_management in usage_countfield
 				TagManagement tag = new TagManagement();
 				tag.setId(tagId);
 				tag.setUsageCount(deviceCount.intValue());
@@ -312,10 +313,10 @@ public class VlsDeviceTagRelationServiceImpl extends BaseServiceImpl<VlsDeviceTa
 	}
 
 	/**
-	 * 验证并过滤标签ID列表
+	 * ID
 	 *
-	 * @param tagIds 原始标签ID列表
-	 * @return 有效的标签ID列表
+	 * @param tagIds ID
+	 * @return ID
 	 */
 	private List<Long> validateAndFilterTagIds(List<Long> tagIds) {
 		if (tagIds == null || tagIds.isEmpty()) {

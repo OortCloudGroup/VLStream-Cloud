@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -23,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 枚举格式化转换处理
+ * Format Convert Process
  *
  * @author Liang
  */
@@ -43,7 +44,7 @@ public class ExcelEnumConvert implements Converter<Object> {
     @Override
     public Object convertToJavaData(ReadCellData<?> cellData, ExcelContentProperty contentProperty, GlobalConfiguration globalConfiguration) {
         Object codeValue = cellData.getData();
-        // 如果是空值
+        // if is null / empty value
         if (ObjectUtil.isNull(codeValue)) {
             return null;
         }

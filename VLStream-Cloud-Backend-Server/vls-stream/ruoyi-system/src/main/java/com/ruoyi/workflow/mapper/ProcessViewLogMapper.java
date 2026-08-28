@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,14 +16,14 @@ import com.ruoyi.workflow.domain.vo.ProcessViewLogVo;
 import org.apache.ibatis.annotations.Param;
 
 /**
- * 流程访问日志Mapper接口
+ * workflow logMapperinterface
  *
  * @author lcq
  * @date 2025-08-15
  */
 public interface ProcessViewLogMapper extends BaseMapperPlus<ProcessViewLogMapper, ProcessViewLog, ProcessViewLogVo> {
 
-    // 基于窗口函数的“每个用户最新一条访问记录”分页查询
+    // "each user new record" Query
     IPage<ProcessViewLogVo> selectLastVisitPerUserPage(
         Page<?> page,
         @Param(Constants.WRAPPER) Wrapper<ProcessViewLog> wrapper

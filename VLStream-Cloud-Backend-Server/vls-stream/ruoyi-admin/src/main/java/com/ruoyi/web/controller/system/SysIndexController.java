@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
- * 首页
+ *
  *
  * @author Lion Li
  */
@@ -22,12 +22,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class SysIndexController {
 
     /**
-     * 系统基础配置
+     * configuration
      */
     private final RuoYiConfig ruoyiConfig;
 
     /**
-     * 访问首页，提示语
+     * , prompt / tip
      */
     @SaIgnore
     @GetMapping("/")

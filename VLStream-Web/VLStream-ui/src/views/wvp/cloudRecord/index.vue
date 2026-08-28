@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="tenant_Page draHeaPB">
     <div class="tenant_content">
@@ -114,7 +119,7 @@ const data = reactive({
 
 const {queryParams} = toRefs(data);
 
-/** 高级搜索 / 重置 */
+/* * / */
 function searchResetFn(val) {
   queryParams.value.pageNum = 1;
   queryParams.value.query = val.query || '';

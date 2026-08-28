@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 获取推流列表
+// Get
 export function listPush(query) {
     return request({
         url: `/api/push/list`,
@@ -9,7 +14,7 @@ export function listPush(query) {
     })
 }
 
-// 添加推流信息
+// info
 export function addPush(data) {
     return request({
         url: `/api/push/add`,
@@ -18,7 +23,7 @@ export function addPush(data) {
     })
 }
 
-// 更新推流信息
+// new info
 export function updatePush(data) {
     return request({
         url: `/api/push/update`,
@@ -27,7 +32,7 @@ export function updatePush(data) {
     })
 }
 
-// 删除推流
+// Delete
 export function removePush(id) {
     return request({
         url: `/api/push/remove/${id}`,
@@ -35,7 +40,7 @@ export function removePush(id) {
     })
 }
 
-// 播放
+//
 export function start(query) {
     return request({
         url: `/api/push/start`,
@@ -44,7 +49,7 @@ export function start(query) {
     })
 }
 
-// 根据流id开始播放
+// idstart
 export function startPlay(stream) {
     return request({
         url: `/api/push/startPlay/${stream}`,

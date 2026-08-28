@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 流程访问日志Service业务层处理
+ * workflow logService layer Process
  *
  * @author lcq
  * @date 2025-08-15
@@ -40,7 +41,7 @@ public class ProcessViewLogServiceImpl implements IProcessViewLogService {
     private final ProcessViewLogMapper baseMapper;
 
     /**
-     * 查询流程访问日志
+     * Query workflow log
      */
     @Override
     public ProcessViewLogVo queryById(String id){
@@ -48,7 +49,7 @@ public class ProcessViewLogServiceImpl implements IProcessViewLogService {
     }
 
     /**
-     * 查询流程访问日志列表
+     * Query workflow log list
      */
     @Override
     public TableDataInfo<ProcessViewLogVo> queryPageList(ProcessViewLogBo bo, PageQuery pageQuery) {
@@ -58,7 +59,7 @@ public class ProcessViewLogServiceImpl implements IProcessViewLogService {
     }
 
     /**
-     * 查询流程访问日志列表
+     * Query workflow log list
      */
     @Override
     public List<ProcessViewLogVo> queryList(ProcessViewLogBo bo) {
@@ -84,7 +85,7 @@ public class ProcessViewLogServiceImpl implements IProcessViewLogService {
     }
 
     /**
-     * 新增流程访问日志
+     * Add workflow log
      */
     @Override
     public Boolean insertByBo(ProcessViewLogBo bo, SysUser sysUser) {
@@ -103,7 +104,7 @@ public class ProcessViewLogServiceImpl implements IProcessViewLogService {
     }
 
     /**
-     * 修改流程访问日志
+     * Update workflow log
      */
     @Override
     public Boolean updateByBo(ProcessViewLogBo bo) {
@@ -113,19 +114,19 @@ public class ProcessViewLogServiceImpl implements IProcessViewLogService {
     }
 
     /**
-     * 保存前的数据校验
+     * before dataValidate
      */
     private void validEntityBeforeSave(ProcessViewLog entity){
-        //TODO 做一些数据校验,如唯一约束
+        // TODO dataValidate ,
     }
 
     /**
-     * 批量删除流程访问日志
+     * Batch delete workflow log
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid) {
         if(isValid){
-            //TODO 做一些业务上的校验,判断是否需要校验
+            // TODO Validate ,Check whether need to Validate
         }
         return baseMapper.deleteBatchIds(ids) > 0;
     }

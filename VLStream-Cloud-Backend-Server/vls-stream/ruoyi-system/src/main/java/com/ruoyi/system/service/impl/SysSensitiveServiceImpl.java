@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,9 +11,9 @@ import com.ruoyi.common.helper.LoginHelper;
 import org.springframework.stereotype.Service;
 
 /**
- * 脱敏服务
- * 默认管理员不过滤
- * 需自行根据业务重写实现
+ * service
+ * administrator
+ *
  *
  * @author Lion Li
  * @version 3.6.0
@@ -21,7 +22,7 @@ import org.springframework.stereotype.Service;
 public class SysSensitiveServiceImpl implements SensitiveService {
 
     /**
-     * 是否脱敏
+     * whether
      */
     @Override
     public boolean isSensitive() {

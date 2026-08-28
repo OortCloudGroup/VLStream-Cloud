@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -12,7 +12,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 权限限制
+ *
  *
  * @author xuxueli 2015-12-12 18:29:02
  */
@@ -21,12 +21,12 @@ import java.lang.annotation.Target;
 public @interface PermissionLimit {
 
     /**
-     * 登录拦截 (默认拦截)
+     * ( )
      */
     boolean limit() default true;
 
     /**
-     * 要求管理员权限
+     * need to administrator
      *
      * @return
      */

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div :class="{ 'hidden': hidden }" class="pagination-container">
     <el-pagination
@@ -36,7 +41,7 @@ const props = defineProps({
       return [10, 20, 30, 50]
     }
   },
-  // 移动端页码按钮的数量端默认值5
+  // button value 5
   pagerCount: {
     type: Number,
     default: document.body.clientWidth < 992 ? 5 : 7

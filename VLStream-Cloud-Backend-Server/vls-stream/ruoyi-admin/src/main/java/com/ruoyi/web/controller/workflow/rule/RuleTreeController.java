@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -31,9 +32,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 规则树
  *
- * @author 雷超群
+ *
+ * @author
  * @date 2024-12-18
  */
 @Validated
@@ -47,7 +48,7 @@ public class RuleTreeController extends BaseController {
     private IRuleListService ruleListService;
 
     /**
-     * 查询规则树列表
+     * Query list
      */
     @SaCheckPermission("rule:tree:list")
     @GetMapping("/list")
@@ -57,7 +58,7 @@ public class RuleTreeController extends BaseController {
     }
 
     /**
-     * 导出规则树列表
+     * Export
      */
     @SaCheckPermission("rule:tree:export")
     @Log(title = "规则树", businessType = BusinessType.EXPORT)
@@ -68,9 +69,9 @@ public class RuleTreeController extends BaseController {
     }
 
     /**
-     * 获取规则树详细信息
+     * Get info
      *
-     * @param id 主键
+     * @param id primary key
      */
     @SaCheckPermission("rule:tree:getInfo")
     @GetMapping("/{id}")
@@ -80,7 +81,7 @@ public class RuleTreeController extends BaseController {
     }
 
     /**
-     * 新增规则树
+     * Add
      */
     @SaCheckPermission("rule:tree:add")
     @Log(title = "规则树", businessType = BusinessType.INSERT)
@@ -91,7 +92,7 @@ public class RuleTreeController extends BaseController {
     }
 
     /**
-     * 修改规则树
+     * Update
      */
     @SaCheckPermission("rule:tree:edit")
     @Log(title = "规则树", businessType = BusinessType.UPDATE)
@@ -102,9 +103,9 @@ public class RuleTreeController extends BaseController {
     }
 
     /**
-     * 删除规则树
+     * Delete
      *
-     * @param ids 主键串
+     * @param ids primary key
      */
     @SaCheckPermission("rule:tree:remove")
     @Log(title = "规则树", businessType = BusinessType.DELETE)

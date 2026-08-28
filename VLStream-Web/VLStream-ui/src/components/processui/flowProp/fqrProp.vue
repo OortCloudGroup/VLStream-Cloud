@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="prop_body">
     <div class="prop_body_tab">
@@ -50,7 +55,7 @@
       </el-tabs>
     </div>
     <div class="prop_body_bottom button_group">
-      <!-- 两个按钮 一个取消 ，一个确定 -->
+      <!-- button , -->
       <el-button @click="cancel" class="common_btn">
         取消
       </el-button>
@@ -86,30 +91,30 @@ const props = defineProps({
   }
 })
 
-// 模型-列表数据
+// model- data
 const flowDesignerPage = inject('flowDesignerPage')
-// 0 流程 1 工单
+// 0 workflow 1 work order
 let formDesignType = ref(undefined)
-// 默认应用
+//
 let classifyType = ref(true)
 formDesignType.value = flowDesignerPage.formDesignType
 if (flowDesignerPage?.synthesisId) classifyType.value = false
 console.log('project', flowDesignerPage)
 
 // formProperties
-// 字段ID
+// fieldID
 //   id: string
-//   // 字段名称
+// // field
 //   name: string
-//   // 只读
+// // only
 //   readonly: boolean
-//   // 必填
+// //
 //   required: boolean
-//   // 隐藏
+// //
 //   hidden: boolean
 const activeChooseData = ref({
-  formKey: '', // 表单
-  formProperties: [] // 表单字段
+  formKey: '', // form
+  formProperties: [] // formfield
 })
 
 import { setFqrErrorMsg } from '@/utils/setNodeErrorMsg'
@@ -124,17 +129,17 @@ function cancel() {
 
 const nodeName = ref(props.nodeConfig.nodeName)
 function confirm() {
-  // 属性单词
+  // property
   // props.nodeConfig.property = activeChooseData.value
   const nodeConfig = { ...props.nodeConfig, ...activeChooseData.value }
   nodeConfig.nodeName = nodeName.value
-  // 更新错误提示的必填项目
+  // new prompt / tip item
   setErrorMsg()
   emits('update:nodeConfig', nodeConfig)
   emits('close')
 
-  // 不再更新全局Store，而是保持节点级别的独立状态
-  // 当该节点被再次打开时，会恢复其独立的formFiledList
+  // new full Store, is node
+  // node , will formFiledList
 }
 
 import { listForm } from '@/api/processui'
@@ -168,7 +173,7 @@ const cascaderProps = {
     // if (level === 0) {
     //   resolve([{
     //     value: '',
-    //     label: '全部',
+    // label: ' full ',
     //     leaf: false
     //   }])
     //   return
@@ -228,7 +233,7 @@ const cascaderProps = {
 }
 
 const flowStore = useFlowStore()
-// 初始化该节点的独立表单状态
+// Initialize node form
 getOrCreateNodeFormState(props.nodeConfig.id)
 
 function changeFormValue() {
@@ -238,14 +243,14 @@ function changeFormValue() {
     }
     getForm(params).then(res => {
       if (res.code === 200) {
-        // store保存当前表单信息
+        // store current forminfo
         flowStore.setCurrentFlowForm(res.data)
         try {
-          // 切换表单的时候，要更新最新的表单数据
+          // form , need to new new formdata
           const jsonList = JSON.parse(res.data.content)
-          // 使用统一的字段提取函数
+          // field
           activeChooseData.value.formProperties = extractFormFields(jsonList)
-          // 更新状态
+          // new
           setStoreUpdate()
         } catch (error) {
           console.log(error)
@@ -255,9 +260,9 @@ function changeFormValue() {
   }
 }
 
-// 更新状态
+// new
 function setStoreUpdate() {
-  // 更新节点级别的表单字段状态，而不是全局Store（避免数据污染）
+  // new node formfield , is full Store ( data )
   updateNodeFormFields(props.nodeConfig.id, activeChooseData.value.formProperties)
   flowStore.setFormFiledList(activeChooseData.value.formProperties)
 }

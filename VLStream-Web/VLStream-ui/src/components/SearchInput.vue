@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="search-input-component">
     <div class="search-row">
@@ -9,10 +14,10 @@
         class="search-input"
         @keyup.enter="handleSearch"
       />
-      <el-button 
-        type="primary" 
-        :size="size" 
-        class="search-btn" 
+      <el-button
+        type="primary"
+        :size="size"
+        class="search-btn"
         @click="handleSearch"
       >
         {{ buttonText }}
@@ -24,43 +29,43 @@
 <script setup>
 import { ref, watch } from 'vue'
 
-// Props定义
+// Props
 const props = defineProps({
-  // 搜索值
+  // value
   modelValue: {
     type: String,
     default: ''
   },
-  // 占位符文本
+  //
   placeholder: {
     type: String,
     default: '搜索'
   },
-  // 按钮文本
+  // button
   buttonText: {
     type: String,
     default: '查询'
   },
-  // 组件大小
+  // component
   size: {
     type: String,
     default: 'small',
     validator: (value) => ['large', 'default', 'small'].includes(value)
   },
-  // 输入框宽度
+  //
   width: {
     type: String,
     default: '200px'
   }
 })
 
-// Emits定义
+// Emits
 const emit = defineEmits(['update:modelValue', 'search', 'clear'])
 
-// 响应式数据
+// data
 const searchValue = ref(props.modelValue)
 
-// 方法
+// method
 const handleSearch = () => {
   emit('search', searchValue.value)
   emit('update:modelValue', searchValue.value)
@@ -72,15 +77,15 @@ const handleClear = () => {
   emit('update:modelValue', '')
 }
 
-// 监听外部值变化
+// value
 watch(() => props.modelValue, (newVal) => {
   searchValue.value = newVal
 })
 
-// 监听内部值变化
+// value
 watch(searchValue, (newVal) => {
   emit('update:modelValue', newVal)
-  // 如果清空了搜索框，自动触发搜索
+  // if null / empty ,
   if (newVal === '') {
     emit('search', '')
   }
@@ -119,7 +124,7 @@ watch(searchValue, (newVal) => {
   border-bottom-left-radius: 0;
 }
 
-/* 不同尺寸的高度适配 */
+/*  */
 .search-input.el-input--large,
 .search-btn.el-button--large {
   height: 48px;
@@ -134,4 +139,4 @@ watch(searchValue, (newVal) => {
 .search-btn.el-button--small {
   height: 32px;
 }
-</style> 
+</style>

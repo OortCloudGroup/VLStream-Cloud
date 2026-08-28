@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -19,7 +20,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * 异步配置
+ * configuration
  *
  * @author Lion Li
  */
@@ -32,7 +33,7 @@ public class AsyncConfig extends AsyncConfigurerSupport {
     private ScheduledExecutorService scheduledExecutorService;
 
     /**
-     * 自定义 @Async 注解使用系统线程池
+     * Custom @Async
      */
     @Override
     public Executor getAsyncExecutor() {
@@ -40,7 +41,7 @@ public class AsyncConfig extends AsyncConfigurerSupport {
     }
 
     /**
-     * 异步执行异常处理
+     * Execute Process
      */
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {

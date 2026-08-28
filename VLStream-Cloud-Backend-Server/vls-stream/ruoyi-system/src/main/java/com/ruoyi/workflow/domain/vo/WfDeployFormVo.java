@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -8,7 +9,7 @@ package com.ruoyi.workflow.domain.vo;
 import lombok.Data;
 
 /**
- * 部署实例和表单关联视图对象
+ * instance and form object
  *
  * @author KonBAI
  * @createTime 2022/7/17 18:29
@@ -19,32 +20,32 @@ public class WfDeployFormVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 流程部署主键
+     * workflow primary key
      */
     private String deployId;
 
     /**
-     * 表单Key
+     * formKey
      */
     private String formKey;
 
     /**
-     * 节点Key
+     * nodeKey
      */
     private String nodeKey;
 
     /**
-     * 表单名称
+     * form
      */
     private String formName;
 
     /**
-     * 节点名称
+     * node
      */
     private String nodeName;
 
     /**
-     * 表单内容
+     * form
      */
     private String content;
 }

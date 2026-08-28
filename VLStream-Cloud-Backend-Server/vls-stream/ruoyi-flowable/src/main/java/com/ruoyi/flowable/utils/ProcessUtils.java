@@ -28,7 +28,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 流程工具类
+ * workflow
  *
  * @author konbai
  * @since 2022/12/11 03:35
@@ -49,23 +49,23 @@ public class ProcessUtils {
     }
 
     /**
-     * 构建流程定义搜索
+     * Build workflow definition
      */
     public static void buildProcessDefinitionSearch(ProcessDefinitionQuery query, ProcessQuery process) {
-        // 流程标识
+        // workflow
         if (StringUtils.isNotBlank(process.getProcessKey())) {
             query.processDefinitionKeyLike("%" + process.getProcessKey() + "%");
         }
-        // 流程名称
+        // workflow
         if (StringUtils.isNotBlank(process.getProcessName())) {
             query.processDefinitionNameLike("%" + process.getProcessName() + "%");
         }
-        // 流程分类
+        // workflow
         if (StringUtils.isNotBlank(process.getCategory())) {
             query.processDefinitionCategory(process.getCategory());
         }
 
-        // 流程状态
+        // workflow
         if (StringUtils.isNotBlank(process.getState())) {
             if (SuspensionState.ACTIVE.toString().equals(process.getState())) {
                 query.active();
@@ -76,7 +76,7 @@ public class ProcessUtils {
     }
 
     /**
-     * 构建任务搜索
+     * Build task
      */
     public static void buildTaskSearch(TaskQuery query, ProcessQuery process, ProcessEngine processEngine,SysUser sysUser) {
         Map<String, Object> params = process.getParams();
@@ -95,13 +95,13 @@ public class ProcessUtils {
             query.taskCreatedAfter(DateUtils.parseDate(params.get("beginTime")));
             query.taskCreatedBefore(DateUtils.parseDate(params.get("endTime")));
         }
-        // 筛选提交时间
+        //
         if (ObjectUtil.isNotNull(process.getProStartBeginTime()) && ObjectUtil.isNotNull(process.getProStartEndTime())) {
             Date instanceBeginTime = process.getProStartBeginTime();
             Date instanceEndTime = process.getProStartEndTime();
 //            Date instanceBeginTime = DateUtils.parseDate(process.getProStartBeginTime());
 //            Date instanceEndTime = DateUtils.parseDate(process.getProStartEndTime());
-            // 使用ProcessInstanceQuery筛选出符合条件的流程实例ID
+            // ProcessInstanceQuery workflow instance ID
             RuntimeService runtimeService = processEngine.getRuntimeService();
             ProcessInstanceQuery processInstanceQuery = runtimeService.createProcessInstanceQuery()
                 .processInstanceTenantId(sysUser.getTenantId())
@@ -137,7 +137,7 @@ public class ProcessUtils {
         if (StringUtils.isNotBlank(process.getState())) {
             query.processVariableValueEquals(ProcessConstants.PROCESS_STATUS_KEY, process.getState());
         }
-        // 筛选提交时间
+        //
         if (ObjectUtil.isNotNull(process.getProStartBeginTime()) && ObjectUtil.isNotNull(process.getProStartEndTime())) {
             Date instanceBeginTime = process.getProStartBeginTime();
             Date instanceEndTime = process.getProStartEndTime();
@@ -157,19 +157,19 @@ public class ProcessUtils {
     }
 
     /**
-     * 构建历史流程实例搜索
+     * Build history workflow instance
      */
     public static void buildHistoricProcessInstanceSearch(HistoricProcessInstanceQuery query, ProcessQuery process) {
         Map<String, Object> params = process.getParams();
-        // 流程标识
+        // workflow
         if (StringUtils.isNotBlank(process.getProcessKey())) {
             query.processDefinitionKey(process.getProcessKey());
         }
-        // 流程名称
+        // workflow
         if (StringUtils.isNotBlank(process.getProcessName())) {
             query.processDefinitionName(process.getProcessName());
         }
-        // 流程名称
+        // workflow
         if (StringUtils.isNotBlank(process.getCategory())) {
             query.processDefinitionCategory(process.getCategory());
         }

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div>
     <div class="prop_item">
@@ -70,10 +75,10 @@ const props = defineProps({
   }
 })
 
-// 模型-列表数据
+// model- data
 const flowDesignerPage = inject('flowDesignerPage')
 const copyActiveChooseData = ref(props.activeChooseData)
-// watch 监听nodeConfig
+// watch nodeConfig
 watch(() => props.activeChooseData, () => {
   copyActiveChooseData.value = props.activeChooseData
 })

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,7 +11,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * OSS对象存储分页查询对象 sys_oss
+ * OSSobject Query object sys_oss
  *
  * @author Lion Li
  */
@@ -24,27 +25,27 @@ public class SysOssBo extends BaseEntity {
     private Long ossId;
 
     /**
-     * 文件名
+     *
      */
     private String fileName;
 
     /**
-     * 原名
+     *
      */
     private String originalName;
 
     /**
-     * 文件后缀名
+     * after
      */
     private String fileSuffix;
 
     /**
-     * URL地址
+     * URL
      */
     private String url;
 
     /**
-     * 服务商
+     * service
      */
     private String service;
 

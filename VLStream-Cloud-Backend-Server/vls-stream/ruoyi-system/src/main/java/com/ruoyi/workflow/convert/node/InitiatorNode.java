@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,7 +14,7 @@ import org.flowable.bpmn.model.*;
 import java.util.*;
 
 /**
- * 发起人节点
+ * node
  */
 public class InitiatorNode extends Node {
     @JsonSetter(nulls = Nulls.AS_EMPTY)
@@ -21,7 +22,7 @@ public class InitiatorNode extends Node {
     @Override
     public List<FlowElement> convert() {
         ArrayList<FlowElement> elements = new ArrayList<>();
-        // 用户节点
+        // usernode
         UserTask userTask = new UserTask();
         userTask.setId(this.getId());
         userTask.setName(this.getNodeName());
@@ -48,15 +49,15 @@ public class InitiatorNode extends Node {
         userTask.setAttributes(attributes);
 
 
-        // 创建自定义扩展元素
+        // Custom element
         ExtensionElement propertiesBtn = new ExtensionElement();
         propertiesBtn.setName("flowable:propertiesBtn");
 
-        // 创建并添加 buttonOprArr 属性
+        // buttonOprArr property
         ExtensionElement property = new ExtensionElement();
         property.setName("flowable:property");
 
-        // 创建 ExtensionAttribute 来封装属性
+        // ExtensionAttribute property
         ExtensionAttribute buttonOprArr = new ExtensionAttribute();
         buttonOprArr.setName("name");
         buttonOprArr.setValue("buttonOprArr");
@@ -65,23 +66,23 @@ public class InitiatorNode extends Node {
         buttonOprArrValue.setName("value");
         buttonOprArrValue.setValue("0,1,2,3,4");
 
-        // 将属性添加到扩展元素
+        // property element
         property.addAttribute(buttonOprArr);
         property.addAttribute(buttonOprArrValue);
 
-        // 将 property 添加到 propertiesBtn 扩展元素
+        // property propertiesBtn element
         propertiesBtn.addChildElement(property);
 
-        // 将扩展元素添加到用户任务
+        // element usertask
         userTask.addExtensionElement(propertiesBtn);
 
 
         elements.add(userTask);
-        // 下一个节点的连线
+        // node
         Node child = this.getChildNode();
         SequenceFlow sequenceFlow = this.buildSequence(child);
         elements.add(sequenceFlow);
-        // 下一个节点
+        // node
         if (Objects.nonNull(child)) {
             child.setBranchId(this.getBranchId());
             List<FlowElement> flowElements = child.convert();

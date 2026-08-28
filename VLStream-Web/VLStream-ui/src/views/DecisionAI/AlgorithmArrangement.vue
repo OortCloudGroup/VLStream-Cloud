@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="algorithm-arrangement tenant_Page draHeaPB">
     <div class="tenant_content">
@@ -128,8 +133,8 @@
       </div>
     </div>
 
-    <!-- 配置AI算法对话框 -->
-    <!-- 视频播放对话框 -->
+    <!-- configurationAIalgorithm -->
+    <!--  -->
 
     <el-dialog
       v-model="videoDialogVisible"
@@ -201,7 +206,7 @@
           <label class="config-label">设备名称</label>
           <div class="device-name">{{ currentDevice?.deviceName || '海康云台' }}</div>
         </div>
-        
+
         <div class="config-item">
           <label class="config-label">AI算法</label>
           <div class="algorithm-selection">
@@ -218,7 +223,7 @@
                 {{ algorithm.name }}
               </el-tag>
             </div>
-            <el-button 
+            <el-button
               class="select-algorithm-btn"
               @click="showAlgorithmPanel = true"
             >
@@ -237,7 +242,7 @@
           </el-select>
         </div>
       </div>
-      
+
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="showConfigDialog = false" class="common_btn">取消</el-button>
@@ -246,7 +251,7 @@
       </template>
     </el-dialog>
 
-    <!-- AI算法选择面板 -->
+    <!-- AIalgorithm -->
     <Teleport to="body">
       <div v-if="showAlgorithmPanel" class="algorithm-panel-overlay" @click="closeAlgorithmPanel">
         <div class="algorithm-panel" @click.stop>
@@ -262,7 +267,7 @@
           </div>
 
           <div class="panel-content">
-            <!-- 分类标签 -->
+            <!--  -->
             <div class="category-tabs">
               <div
                 v-for="category in algorithmCategories"
@@ -275,7 +280,7 @@
               </div>
             </div>
 
-            <!-- 算法网格 -->
+            <!-- algorithm -->
             <div class="algorithm-grid">
               <div
                 v-for="algorithm in filteredAlgorithmList"
@@ -297,7 +302,7 @@
               </div>
             </div>
 
-            <!-- 分页 -->
+            <!--  -->
             <div class="panel-pagination">
               <el-pagination
                 v-model:current-page="algorithmPage.currentPage"
@@ -332,7 +337,7 @@ import { getStreamType, getYouTubeEmbedUrl } from '@/views/VideoAggregation/devi
 import { getAlgorithmPage } from '@/api/algorithmManagement'
 import { CAMERA_RTC_SOCKET_URL, ensureOPlayer } from '@/utils/oplayer'
 
-// 搜索表单
+// form
 const searchForm = ref({
   deviceName: '',
   deviceId: '',
@@ -343,23 +348,23 @@ const searchForm = ref({
 const loading = ref(false)
 const selectedTreeNode = ref(null)
 
-// 分页配置
+// configuration
 const pagination = reactive({
   currentPage: 1,
   pageSize: 10,
   total: 0
 })
 
-// 选中的设备
+// in device
 const selectedDevices = ref([])
 
-// 设备树折叠状态
+// device
 const deviceTreeCollapsed = ref(false)
 
-// 配置对话框显示状态
+// configuration
 const showConfigDialog = ref(false)
 
-// 视频播放对话框
+//
 const videoDialogVisible = ref(false)
 const currentVideoDevice = ref(null)
 const youtubeEmbedUrl = ref('')
@@ -386,9 +391,9 @@ const getDeviceStreamUrl = (device) => {
 const currentStreamUrl = computed(() => getDeviceStreamUrl(currentVideoDevice.value))
 const currentStreamType = computed(() => getStreamType(currentStreamUrl.value))
 
-// WebRTC (默认 RTSP 直连)
+// WebRTC ( RTSP )
 let WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
-// 配置请求完成后再生成脚本地址，避免继续使用模块初始化时的默认值。
+// configuration after Generate , Initialize value .
 const getWebRtcScriptUrls = () => [
   `${WEBRTC_STREAMER_BASE}/libs/adapter.min.js`,
   `${WEBRTC_STREAMER_BASE}/webrtcstreamer.js`
@@ -625,10 +630,10 @@ const handleVideoClose = async () => {
   currentVideoDevice.value = null
 }
 
-// 当前配置的设备
+// current configuration device
 const currentDevice = ref(null)
 
-// 可选的算法列表
+// algorithm
 const selectedAlgorithms = ref([])
 const dispatchModelType = ref('om')
 
@@ -694,7 +699,7 @@ const filteredAlgorithmList = computed(() => {
   return filteredAlgorithmSource.value.slice(start, end)
 })
 
-// 设备树/设备列表对接（参考 DeviceManagement.vue）
+// device /device ( DeviceManagement.vue)
 const deviceTreeData = ref([])
 const searchTreeKeyword = ref('')
 const treeDefaultProps = { children: 'children', label: 'label' }
@@ -911,8 +916,8 @@ const searchResetFn = (val, reset) => {
 
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索:', searchData)
-  
-  // 更新搜索表单
+
+  // new form
   if (searchData.keyword) {
     searchForm.value.deviceName = searchData.keyword
   }
@@ -926,13 +931,13 @@ const handleAdvancedSearch = (searchData) => {
     searchForm.value.tagName = searchData.tagName || ''
   }
   if (searchData.selectedTags && searchData.selectedTags.length > 0) {
-    // 可以根据需要处理标签搜索
+    // need to Process
     console.log('标签搜索:', searchData.selectedTags)
   }
   if (searchData.dateRange && searchData.dateRange.length === 2) {
     searchForm.value.dateRange = searchData.dateRange
   }
-  
+
   selectedTreeNode.value = null
   pagination.currentPage = 1
   loadDeviceList()
@@ -976,14 +981,14 @@ const handleTreeNodeClick = async (data) => {
   selectedTreeNode.value = data
   pagination.currentPage = 1
 
-  // 标签节点：使用 tagName 走接口过滤
+  // node: tagName interface
   if (data?.type === 'tag' && data.label) {
     searchForm.value.tagName = String(data.label).split(' (')[0]
     await loadDeviceList()
     return
   }
 
-  // 设备节点：直接加载单个设备
+  // devicenode: Load device
   if (data?.type === 'device') {
     const deviceId = data.deviceId ?? data.id
     if (!deviceId) return
@@ -1209,7 +1214,7 @@ const saveConfiguration = async () => {
     showAlgorithmPanel.value = false
   } catch (error) {
     console.error('Failed to configure algorithms:', error)
-    // 请求拦截器已经展示后端返回的具体业务错误，避免重复显示通用提示。
+    // already after , prompt / tip.
   }
 }
 
@@ -1350,7 +1355,7 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* 查询栏 */
+/* Query */
 .query-bar {
   background: #F0F2F5;
   border-radius: 8px 8px 0 0;
@@ -1384,7 +1389,7 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-/* 主要内容区域 */
+/* main need to */
 .main-content {
   flex: 1;
   background: white;
@@ -1395,7 +1400,7 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* 左侧设备树 */
+/* device */
 .device-tree-container {
   width: 280px;
   display: flex;
@@ -1406,13 +1411,13 @@ onUnmounted(() => {
   border-right: 1px solid #f0f0f0;
 }
 
-/* 设备树折叠状态 */
+/* device */
 .device-tree-container.collapsed {
   width: 0;
   min-width: 0;
 }
 
-/* 右侧表格区域 */
+/* table */
 .table-container {
   flex: 1;
   display: flex;
@@ -1454,13 +1459,13 @@ onUnmounted(() => {
   color: #409eff;
 }
 
-/* 确保CollapseToggle内部元素可点击 */
+/* CollapseToggle element */
 .expand-device-tree-btn :deep(.collapse-toggle) {
   pointer-events: auto !important;
   cursor: pointer !important;
 }
 
-/* 工具栏 */
+/*  */
 .toolbar {
   display: flex;
   justify-content: space-between;
@@ -1479,7 +1484,7 @@ onUnmounted(() => {
   align-items: center;
 }
 
-/* 配置AI算法按钮样式 */
+/* configurationAIalgorithmbutton */
 .config-ai-algorithm-btn {
   width: 124px !important;
   height: 36px !important;
@@ -1522,7 +1527,7 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-/* 表格内容 */
+/* table */
 .table-content {
   flex: 1;
   display: flex;
@@ -1540,7 +1545,7 @@ onUnmounted(() => {
   }
 }
 
- /* 分页容器样式 */
+ /*  */
 .table-pagination {
   display: flex;
   justify-content: flex-end;
@@ -1548,7 +1553,7 @@ onUnmounted(() => {
   border-top: 1px solid #f0f0f0;
 }
 
-/* 表格样式调整 */
+/* table */
 :deep(.el-table) {
   font-size: 14px;
 }
@@ -1561,7 +1566,7 @@ onUnmounted(() => {
   background-color: #f5f7fa;
 }
 
-/* 表格操作列按钮样式 */
+/* tableoperation button */
 :deep(.el-table .el-button--primary.is-text) {
   color: #1A53FF !important;
   background: transparent !important;
@@ -1576,7 +1581,7 @@ onUnmounted(() => {
   text-decoration: underline !important;
 }
 
-/* 主题色更新 */
+/* main new */
 :deep(.el-button--primary) {
   background-color: #1A53FF;
   border-color: #1A53FF;
@@ -1600,7 +1605,7 @@ onUnmounted(() => {
   color: #1A53FF;
 }
 
-/* 标签样式 */
+/*  */
 .device-tag {
   margin-right: 4px;
 }
@@ -1609,7 +1614,7 @@ onUnmounted(() => {
   margin-left: 4px;
 }
 
-/* 配置对话框样式 */
+/* configuration */
 .config-dialog-content {
   padding: 20px 0;
 }
@@ -1671,7 +1676,7 @@ onUnmounted(() => {
   padding: 20px 0 0;
 }
 
-/* 算法选择面板样式 */
+/* algorithm */
 .algorithm-panel-overlay {
   position: fixed;
   top: 0;
@@ -1877,4 +1882,4 @@ onUnmounted(() => {
     color: #1A53FF !important;
   }
 }
-</style> 
+</style>

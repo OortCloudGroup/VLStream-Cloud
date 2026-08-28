@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -10,9 +11,9 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import lombok.Data;
 
 /**
- * 规则树视图对象 rule_tree
+ * object rule_tree
  *
- * @author 雷超群
+ * @author
  * @date 2024-12-18
  */
 @Data
@@ -22,37 +23,37 @@ public class RuleTreeVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 规则树ID
+     * ID
      */
     @ExcelProperty(value = "规则树ID")
     private String id;
 
     /**
-     * 租户id
+     * id
      */
     @ExcelProperty(value = "租户id")
     private String tenantId;
 
     /**
-     * 用户id
+     * user ID
      */
     @ExcelProperty(value = "用户id")
     private String userId;
 
     /**
-     * 父节点ID, 根节点为NULL
+     * nodeID, node to NULL
      */
     @ExcelProperty(value = "父节点ID, 根节点为NULL")
     private String parentId;
 
     /**
-     * 规则树名称
+     *
      */
     @ExcelProperty(value = "规则树名称")
     private String name;
 
     /**
-     * 规则树描述
+     *
      */
     @ExcelProperty(value = "规则树描述")
     private String description;

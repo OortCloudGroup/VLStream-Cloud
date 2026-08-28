@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,7 +18,7 @@ public class WfUserInterfaceFieldServiceImpl implements IWfUserInterfaceFieldSer
     private final WfUserInterfaceFieldMapper wfUserInterfaceFieldMapper;
 
     /**
-     * 获取用户对某接口的字段配置；若返回 null，意味着未配置，应使用默认字段列表
+     * Get user interface fieldconfiguration; null, not configuration, field
      */
     @Override
     public String getFieldCodes(String userId, String interfacePath) {
@@ -29,7 +30,7 @@ public class WfUserInterfaceFieldServiceImpl implements IWfUserInterfaceFieldSer
     }
 
     /**
-     * 保存用户配置
+     * userconfiguration
      */
     @Override
     public int saveFieldCodes(String userId, String interfacePath, String codes) {

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -20,7 +21,7 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 /**
- * 字典类型表 sys_dict_type
+ * dict type sys_dict_type
  *
  * @author Lion Li
  */
@@ -32,14 +33,14 @@ import javax.validation.constraints.Size;
 public class SysDictType extends BaseEntity {
 
     /**
-     * 字典主键
+     * dictprimary key
      */
     @ExcelProperty(value = "字典主键")
     @TableId(value = "dict_id")
     private Long dictId;
 
     /**
-     * 字典名称
+     * dict name
      */
     @ExcelProperty(value = "字典名称")
     @NotBlank(message = "字典名称不能为空")
@@ -47,7 +48,7 @@ public class SysDictType extends BaseEntity {
     private String dictName;
 
     /**
-     * 字典类型
+     * dict type
      */
     @ExcelProperty(value = "字典类型")
     @NotBlank(message = "字典类型不能为空")
@@ -56,14 +57,14 @@ public class SysDictType extends BaseEntity {
     private String dictType;
 
     /**
-     * 状态（0正常 1停用）
+     * Status (0 normal 1 disabled)
      */
     @ExcelProperty(value = "状态", converter = ExcelDictConvert.class)
     @ExcelDictFormat(dictType = "sys_normal_disable")
     private String status;
 
     /**
-     * 备注
+     * remark
      */
     private String remark;
 

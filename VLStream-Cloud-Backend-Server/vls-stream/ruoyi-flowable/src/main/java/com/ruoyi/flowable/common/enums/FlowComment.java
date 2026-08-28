@@ -7,7 +7,7 @@
 package com.ruoyi.flowable.common.enums;
 
 /**
- * 流程意见类型
+ * workflow
  *
  * @author Xuan xuan
  * @date 2021/4/19
@@ -15,7 +15,7 @@ package com.ruoyi.flowable.common.enums;
 public enum FlowComment {
 
     /**
-     * 说明
+     *
      */
     NORMAL("1", "正常"),
     REBACK("2", "退回"),
@@ -26,12 +26,12 @@ public enum FlowComment {
     REVOKE("7", "撤回");
 
     /**
-     * 类型
+     *
      */
     private final String type;
 
     /**
-     * 说明
+     *
      */
     private final String remark;
 

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -37,9 +38,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 工单管理
+ * work order
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-02
  */
 @Validated
@@ -51,7 +52,7 @@ public class WorkOrderController extends BaseController {
     private final IWorkOrderService iWorkOrderService;
 
     /**
-     * 我的工单列表
+     * work order
      *
      * @param processQuery
      * @param workOrderBo
@@ -67,7 +68,7 @@ public class WorkOrderController extends BaseController {
     }
 
     /**
-     * 待办工单列表
+     * work order
      *
      * @param processQuery
      * @param workOrderBo
@@ -83,7 +84,7 @@ public class WorkOrderController extends BaseController {
     }
 
     /**
-     * 已办工单列表
+     * already work order
      *
      * @param processQuery
      * @param workOrderBo
@@ -100,10 +101,10 @@ public class WorkOrderController extends BaseController {
     }
 
     /**
-     * 可接工单列表
+     * work order
      *
-     * @param processQuery 流程业务对象
-     * @param pageQuery    分页参数
+     * @param processQuery workflow object
+     * @param pageQuery parameter
      */
     @SaCheckPermission("workflow:workorder:claimWorkOrderList")
     @GetMapping(value = "/claimWorkOrderList")
@@ -114,7 +115,7 @@ public class WorkOrderController extends BaseController {
     }
 
     /**
-     * 查询即时工单列表
+     * Query work order list
      */
     @SaCheckPermission("workorder:workorder:ImmediateList")
     @GetMapping("/ImmediateList")
@@ -123,7 +124,7 @@ public class WorkOrderController extends BaseController {
     }
 
     /**
-     * 查询循环工单列表
+     * Query loopwork order list
      */
     @SaCheckPermission("workorder:workorder:LoopList")
     @GetMapping("/LoopList")
@@ -133,7 +134,7 @@ public class WorkOrderController extends BaseController {
     }
 
     /**
-     * 导出工单列表
+     * Export work order
      */
     @SaCheckPermission("workorder:workorder:export")
     @Log(title = "工单", businessType = BusinessType.EXPORT)
@@ -144,9 +145,9 @@ public class WorkOrderController extends BaseController {
     }
 
     /**
-     * 获取工单详细信息
+     * Get work order info
      *
-     * @param id 主键
+     * @param id primary key
      */
     @SaCheckPermission("workorder:workorder:getInfo")
     @GetMapping("/{id}")
@@ -156,7 +157,7 @@ public class WorkOrderController extends BaseController {
     }
 
     /**
-     * 新增工单
+     * Add work order
      */
     @SaCheckPermission("workorder:workorder:add")
     @Log(title = "工单", businessType = BusinessType.INSERT)
@@ -168,7 +169,7 @@ public class WorkOrderController extends BaseController {
     }
 
     /**
-     * 修改工单
+     * Update work order
      */
     @SaCheckPermission("workorder:workorder:edit")
     @Log(title = "工单", businessType = BusinessType.UPDATE)
@@ -179,9 +180,9 @@ public class WorkOrderController extends BaseController {
     }
 
     /**
-     * 删除工单
+     * Delete work order
      *
-     * @param ids 主键串
+     * @param ids primary key
      */
     @SaCheckPermission("workorder:workorder:remove")
     @Log(title = "工单", businessType = BusinessType.DELETE)
@@ -192,7 +193,7 @@ public class WorkOrderController extends BaseController {
     }
 
     /**
-     * 批量打印工单
+     * work order
      *
      * @param wordOrderIds
      * @param response
@@ -201,11 +202,11 @@ public class WorkOrderController extends BaseController {
     @PostMapping("/exportPdf")
     public void exportPdf(@RequestBody List<String> wordOrderIds, HttpServletResponse response) {
         try {
-            // 设置响应头（关键修改：使用 inline）
+            // Set ( Update : inline)
             response.setContentType("application/pdf");
-            response.setHeader("Content-Disposition", "inline; filename=工单.pdf"); // 改为 inline
-            response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // 禁用缓存
-            // 生成并返回 PDF 流
+            response.setHeader("Content-Disposition", "inline; filename=工单.pdf"); // to inline
+            response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); //
+            // Generate PDF
             SysUser sysUser = RedisUtils.getCacheObject(AuthorizationInterceptor.getToken());
             ByteArrayOutputStream pdfStream = iWorkOrderService.generatePdf(wordOrderIds, sysUser);
             pdfStream.writeTo(response.getOutputStream());

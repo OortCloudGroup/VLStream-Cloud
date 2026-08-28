@@ -15,54 +15,54 @@ import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.redis.RedisUtils;
 
 /**
- * web层通用数据处理
+ * web layer dataProcess
  *
  * @author Lion Li
  */
 public class BaseController {
 
     /**
-     * 响应返回结果
      *
-     * @param rows 影响行数
-     * @return 操作结果
+     *
+     * @param rows
+     * @return operation
      */
     protected R<Void> toAjax(int rows) {
         return rows > 0 ? R.ok() : R.fail();
     }
 
     /**
-     * 响应返回结果
      *
-     * @param result 结果
-     * @return 操作结果
+     *
+     * @param result
+     * @return operation
      */
     protected R<Void> toAjax(boolean result) {
         return result ? R.ok() : R.fail();
     }
 
     /**
-     * 页面跳转
+     * page
      */
     public String redirect(String url) {
         return StringUtils.format("redirect:{}", url);
     }
 
     /**
-     * 获取用户缓存信息
+     * Get user info
      */
     public LoginUser getLoginUser() {
         return LoginHelper.getLoginUser();
     }
 
     /**
-     * 获取登录用户id
+     * Get user ID
      */
     public String getUserId() {
         return LoginHelper.getUserId();
     }
     /**
-     * 通过token获取登录用户id
+     * tokenGet user ID
      */
     public String getUserId(String token) {
         String normalizedToken = TokenHeaderResolver.normalize(token);
@@ -71,14 +71,14 @@ public class BaseController {
     }
 
     /**
-     * 获取登录部门id
+     * Get department ID
      */
     public String  getDeptId() {
         return LoginHelper.getDeptId();
     }
 
     /**
-     * 获取登录用户名
+     * Get user
      */
     public String getUsername() {
         return LoginHelper.getUsername();

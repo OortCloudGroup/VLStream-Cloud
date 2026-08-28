@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,103 +17,103 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.AnnotationInstanceVO;
 import java.util.List;
 
 /**
- * 标注实例实体类 服务类
+ * annotationinstance service
  *
  * @author Oort
  * @since 2025-12-23
  */
 public interface IVlsAnnotationInstanceService extends BaseService<AnnotationInstance> {
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsAnnotationInstance 查询参数
+	 * @param page parameter
+	 * @param vlsAnnotationInstance Query parameter
 	 * @return IPage<VlsAnnotationInstanceVO>
 	 */
 	IPage<AnnotationInstanceVO> selectVlsAnnotationInstancePage(IPage<AnnotationInstanceVO> page, AnnotationInstanceVO vlsAnnotationInstance);
 
 	/**
-	 * 导出数据
+	 * Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsAnnotationInstanceExcel>
 	 */
 	List<VlsAnnotationInstanceExcel> exportVlsAnnotationInstance(Wrapper<AnnotationInstance> queryWrapper);
 
 	/**
-	 * 根据标注项目ID和图片名称查询标注实例
+	 * annotation item ID and Query annotationinstance
 	 *
-	 * @param annotationId 标注项目ID
-	 * @param imageName 图片名称
-	 * @return 标注实例列表
+	 * @param annotationId annotation item ID
+	 * @param imageName
+	 * @return annotationinstance
 	 */
 	List<AnnotationInstance> getByAnnotationIdAndImageName(Long annotationId, String imageName);
 
 	/**
-	 * 保存标注实例
+	 * annotationinstance
 	 *
-	 * @param annotationId 标注项目ID
-	 * @param labelId 标签ID
-	 * @param imageId 图片id
-	 * @param annotationType 标注类型
-	 * @param annotationData 标注数据（JSON格式）
-	 * @return 保存的标注实例
+	 * @param annotationId annotation item ID
+	 * @param labelId ID
+	 * @param imageId id
+	 * @param annotationType annotation
+	 * @param annotationData annotationdata (JSON )
+	 * @return annotationinstance
 	 */
 	AnnotationInstance saveAnnotation(Long annotationId, Long labelId, Long imageId, AlgorithmAnnotationTypeEnum annotationType, String annotationData);
 
 	/**
-	 * 更新标注实例
+	 * new annotationinstance
 	 *
-	 * @param instanceId 实例ID
-	 * @param labelId 标签ID
-	 * @param annotationType 标注类型
-	 * @param annotationData 标注数据（JSON格式）
-	 * @return 更新后的标注实例
+	 * @param instanceId instanceID
+	 * @param labelId ID
+	 * @param annotationType annotation
+	 * @param annotationData annotationdata (JSON )
+	 * @return new after annotationinstance
 	 */
 	AnnotationInstance updateAnnotation(Long instanceId, Long labelId,
 										AlgorithmAnnotationTypeEnum annotationType, String annotationData);
 
 	/**
-	 * 删除标注实例
+	 * Delete annotationinstance
 	 *
-	 * @param instanceId 实例ID
-	 * @return 是否删除成功
+	 * @param instanceId instanceID
+	 * @return whether Delete successfully
 	 */
 	boolean deleteAnnotation(Long instanceId);
 
 	/**
-	 * 批量保存标注实例
+	 * annotationinstance
 	 *
-	 * @param annotationId 标注项目ID
-	 * @param imageId 图片ID
-	 * @param annotations 标注实例列表
-	 * @return 是否保存成功
+	 * @param annotationId annotation item ID
+	 * @param imageId ID
+	 * @param annotations annotationinstance
+	 * @return whether successfully
 	 */
 	boolean batchSaveAnnotations(Long annotationId, Long imageId, List<AnnotationInstance> annotations);
 
 	/**
-	 * 根据标注项目ID查询所有标注实例
+	 * annotation item IDQuery all annotationinstance
 	 *
-	 * @param annotationId 标注项目ID
-	 * @return 标注实例列表
+	 * @param annotationId annotation item ID
+	 * @return annotationinstance
 	 */
 	List<AnnotationInstance> getByAnnotationId(Long annotationId);
 
 	/**
-	 * 根据标签ID统计使用次数
+	 * ID
 	 *
-	 * @param labelId 标签ID
-	 * @return 使用次数
+	 * @param labelId ID
+	 * @return
 	 */
 	Integer countByLabelId(Long labelId);
 
 	/**
-	 * 删除图片及其相关的所有数据
-	 * 包括：annotation_image、annotation_instance、更新annotation_label的使用计数
+	 * Delete related all data
+	 * : annotation_image、annotation_instance、 new annotation_label
 	 *
-	 * @param annotationId 标注项目ID
-	 * @param imageId 图片ID
-	 * @return 删除结果
+	 * @param annotationId annotation item ID
+	 * @param imageId ID
+	 * @return Delete
 	 */
 	boolean deleteImageAndRelatedData(Long annotationId, Long imageId);
 

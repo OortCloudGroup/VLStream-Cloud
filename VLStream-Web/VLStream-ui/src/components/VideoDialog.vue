@@ -1,21 +1,26 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
-  <div 
+  <div
     class="video-dialog-overlay"
     :style="{ zIndex: zIndex }"
   >
-    <div 
+    <div
       class="video-dialog draggable-dialog"
       :class="{ 'fullscreen-active': isFullscreen }"
-      :style="{ 
-        left: position.x + 'px', 
+      :style="{
+        left: position.x + 'px',
         top: position.y + 'px',
         position: 'fixed',
         transform: 'none'
       }"
       @mousedown="$emit('bring-to-front')"
     >
-      <!-- 弹窗头部 -->
-      <div 
+      <!-- dialog -->
+      <div
         class="video-dialog-header draggable-handle"
         @mousedown="$emit('start-drag', $event)"
       >
@@ -38,26 +43,26 @@
           </button>
         </div>
       </div>
-      
-      <!-- 弹窗内容 -->
+
+      <!-- dialog -->
       <div class="video-dialog-content" v-show="!isMinimized">
         <div class="dialog-main-content">
-          <!-- 视频播放区域 -->
+          <!--  -->
           <div class="video-player-section">
-            <!-- 拖拽提示 -->
+            <!-- prompt / tip -->
             <div class="drag-tip" v-if="layoutCount > 1">
               <el-icon><InfoFilled /></el-icon>
               <span>直接拖拽视频窗口可交换位置</span>
             </div>
-            
+
             <div class="video-area">
-              <!-- 视频网格布局 -->
+              <!--  -->
               <div class="video-grid" :class="`layout-${getLayoutClass(layoutCount)}`">
-                <div 
-                  v-for="index in layoutCount" 
+                <div
+                  v-for="index in layoutCount"
                   :key="`window-${index}`"
                   class="video-window"
-                  :class="{ 
+                  :class="{
                     active: selectedVideoIndex === index - 1,
                     'dragging': draggingWindow === index - 1,
                     'drag-over': dragOverWindow === index - 1
@@ -73,8 +78,8 @@
                   @drop="$emit('window-drop', $event, index - 1)"
                   @dragend="$emit('window-drag-end')"
                 >
-                  <!-- 拖拽遮罩层 -->
-                  <div class="drag-overlay" 
+                  <!-- layer -->
+                  <div class="drag-overlay"
                        @click.stop="$emit('select-video-window', index - 1)"
                        @dblclick.stop="$emit('video-double-click', index - 1)"
                        @dragstart.stop="$emit('window-drag-start', $event, index - 1)"
@@ -84,12 +89,12 @@
                        @drop.stop="$emit('window-drop', $event, index - 1)"
                        @dragend.stop="$emit('window-drag-end')">
                   </div>
-                  
-                  <!-- 如果有对应的摄像头数据，显示视频内容 -->
+
+                  <!-- if data, -->
                   <template v-if="cameras[index - 1]">
-                    <!-- 优先使用iframe播放WebRTC -->
+                    <!-- iframe WebRTC -->
                     <div v-if="cameras[index - 1].deviceData && cameras[index - 1].deviceData.webrtcUrl" class="webrtc-iframe-container">
-                      <iframe 
+                      <iframe
                         :src="cameras[index - 1].deviceData.webrtcUrl"
                         width="100%"
                         height="100%"
@@ -102,10 +107,10 @@
                         <small>WebRTC播放 - {{ cameras[index - 1].name }}</small>
                       </div>
                     </div>
-                    
-                    <!-- 备用：使用RtspPlayer组件直接连接 -->
+
+                    <!-- : RtspPlayercomponent -->
                     <div v-else-if="cameras[index - 1].deviceData && cameras[index - 1].deviceData.streamUrl && cameras[index - 1].deviceData.playMode === 'direct'" class="rtsp-player-container">
-                      <RtspPlayer 
+                      <RtspPlayer
                         :rtsp-url="cameras[index - 1].deviceData.streamUrl || cameras[index - 1].deviceData.originalRtspUrl"
                         width="100%"
                         height="100%"
@@ -114,8 +119,8 @@
                         @error="$emit('rtsp-error')"
                       />
                     </div>
-                    
-                    <!-- 有设备但无视频流时显示占位符 -->
+
+                    <!-- device -->
                     <div v-else class="video-placeholder">
                       <div class="placeholder-content">
                         <div class="placeholder-icon">📹</div>
@@ -124,8 +129,8 @@
                           <div>设备: {{ cameras[index - 1].name }}</div>
                           <div>状态: 在线</div>
                         </div>
-                        
-                        <!-- 备用操作选项 -->
+
+                        <!-- operation item -->
                         <div class="placeholder-actions">
                           <button class="action-btn primary" @click="$emit('retry-webrtc-connection', cameras[index - 1])">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -149,8 +154,8 @@
                       </div>
                     </div>
                   </template>
-                  
-                  <!-- 没有对应摄像头数据时显示空白占位符 -->
+
+                  <!-- data null / empty -->
                   <template v-else>
                     <div class="video-placeholder empty-placeholder">
                       <div class="placeholder-content">
@@ -160,8 +165,8 @@
                           <div>位置: {{ index }}</div>
                           <div>状态: 待分配</div>
                         </div>
-                        
-                        <!-- 添加设备选项 -->
+
+                        <!-- device item -->
                         <div class="placeholder-actions">
                           <button class="action-btn primary" @click="$emit('add-device-to-window', index - 1)">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -176,19 +181,19 @@
                 </div>
               </div>
             </div>
-            
-            <!-- 录像控制区域 -->
+
+            <!-- recordingcontrol -->
             <div class="video-controls">
-              <button 
-                class="video-record-btn" 
+              <button
+                class="video-record-btn"
                 @click="$emit('toggle-recording')"
                 :class="{ 'recording': isRecording }"
               >
                 <span v-if="!isRecording">开始录像</span>
                 <span v-else>停止录像</span>
               </button>
-              
-              <!-- 录像状态显示 -->
+
+              <!-- recording -->
               <div v-if="isRecording" class="recording-status">
                 <div class="recording-indicator">
                   <span class="recording-dot"></span>
@@ -197,10 +202,10 @@
               </div>
             </div>
           </div>
-          
-          <!-- PTZ控制面板区域 -->
+
+          <!-- PTZcontrol -->
           <div class="ptz-control-section">
-            <PTZPanel 
+            <PTZPanel
               :show-camera-management="true"
               @ptz-control="$emit('ptz-control', $event)"
               @zoom-control="$emit('zoom-control', $event)"
@@ -305,7 +310,7 @@ const emit = defineEmits([
   'control-action'
 ])
 
-// 方法
+// method
 const getLayoutClass = (count) => {
   const layoutMap = {
     1: '1x1',
@@ -685,7 +690,7 @@ const getLayoutClass = (count) => {
   overflow-y: auto;
 }
 
-/* 全屏样式 */
+/* full */
 .video-dialog.fullscreen-active {
   width: 100vw !important;
   height: 100vh !important;
@@ -732,4 +737,4 @@ const getLayoutClass = (count) => {
   border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
   z-index: 5 !important;
 }
-</style> 
+</style>

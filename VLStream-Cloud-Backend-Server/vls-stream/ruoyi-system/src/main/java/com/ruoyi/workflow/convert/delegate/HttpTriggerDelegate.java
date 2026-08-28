@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -47,8 +48,8 @@ public class HttpTriggerDelegate implements JavaDelegate, ApplicationContextAwar
     private static final Logger log = LoggerFactory.getLogger(HttpTriggerDelegate.class);
     private FixedValue requestMethod;
     private FixedValue requestUrl;
-    private FixedValue headers; // 用于接收 headers 的 JSON 字符串
-    private FixedValue params; // 用于接收 params 的 JSON 字符串
+    private FixedValue headers; // headers JSON
+    private FixedValue params; // params JSON
     private FixedValue paramsType;
     private static ApplicationContext applicationContext;
 
@@ -62,7 +63,7 @@ public class HttpTriggerDelegate implements JavaDelegate, ApplicationContextAwar
         HistoryService historyService = applicationContext.getBean(HistoryService.class);
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
                 .getRequest();
-        // 获取流程变量
+        // Get workflow variable
         String requestMethodValue = (String) requestMethod.getValue(execution);
         String requestUrlValue = (String) requestUrl.getValue(execution);
         String headersJson = (String) headers.getValue(execution);
@@ -77,7 +78,7 @@ public class HttpTriggerDelegate implements JavaDelegate, ApplicationContextAwar
                 .processInstanceId(execution.getProcessInstanceId())
                 .includeProcessVariables()
                 .singleResult();
-        // 根据请求类型执行不同的操作
+        // Execute operation
         switch (requestMethodValue.toUpperCase()) {
             case "GET":
             case "DELETE":
@@ -94,11 +95,11 @@ public class HttpTriggerDelegate implements JavaDelegate, ApplicationContextAwar
     }
 
     /**
-     * 执行 GET 请求
+     * Execute GET
      */
     private void executeGetRequest(String requestMethodValue, String url, List<HeaderOrParams> headers,
             List<HeaderOrParams> params, HistoricProcessInstance historicProcIns) {
-        // 拼接 GET 请求的 URL 和参数
+        // GET URL and parameter
         StringBuilder fullUrl = new StringBuilder(url);
         for (HeaderOrParams header : headers) {
             processBooleanParameter(header, historicProcIns);
@@ -112,14 +113,14 @@ public class HttpTriggerDelegate implements JavaDelegate, ApplicationContextAwar
                         .append(param.getValue())
                         .append("&");
             }
-            // 去除最后一个多余的 "&"
+            // after "&"
             fullUrl.deleteCharAt(fullUrl.length() - 1);
         }
 
-        // 打印最终的 URL
+        // URL
         System.out.println("Executing GET request: " + fullUrl.toString());
 
-        // 使用 HttpClient 发送请求示例
+        // HttpClient
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpRequestBase http = requestMethodValue.equals("GET") ? new HttpGet(fullUrl.toString())
                     : new HttpDelete(fullUrl.toString());
@@ -129,7 +130,7 @@ public class HttpTriggerDelegate implements JavaDelegate, ApplicationContextAwar
 
             try (CloseableHttpResponse response = httpClient.execute(http)) {
                 System.out.println("Response Code: " + response.getStatusLine().getStatusCode());
-                // 处理响应内容...
+                // Process ...
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -137,7 +138,7 @@ public class HttpTriggerDelegate implements JavaDelegate, ApplicationContextAwar
     }
 
     /**
-     * 执行 POST 请求
+     * Execute POST
      */
     private void executePostRequest(HttpServletRequest request, String requestMethodValue, String url,
             List<HeaderOrParams> headers, List<HeaderOrParams> params, String paramsType,
@@ -149,15 +150,15 @@ public class HttpTriggerDelegate implements JavaDelegate, ApplicationContextAwar
             processBooleanParameter(param, historicProcIns);
         }
         String body = getRequestBody(params, paramsType, historicProcIns);
-        // 打印最终的请求 body
+        // body
 
         System.out.println("Executing POST request: " + url);
         System.out.println("Request Body: " + body);
-        // 使用 HttpClient 发送请求示例
+        // HttpClient
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpEntityEnclosingRequestBase http = requestMethodValue.equals("POST") ? new HttpPost(url)
                     : new HttpPut(url);
-            // 直接在请求头中添加额外的参数
+            // in in parameter
             http.addHeader("accesstoken", request.getHeader("accesstoken"));
             http.addHeader("tenantId", historicProcIns == null ? "" : historicProcIns.getTenantId());
             http.addHeader("appid", request.getHeader("appid"));
@@ -170,14 +171,14 @@ public class HttpTriggerDelegate implements JavaDelegate, ApplicationContextAwar
 
             try (CloseableHttpResponse response = httpClient.execute(http)) {
                 System.out.println("Response Code: " + response.getStatusLine().getStatusCode());
-                // 处理响应内容...
+                // Process ...
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    // 获取表单流程变量，如果是boolean类型的流程变量的值为0,1需要转换
+    // Get formworkflow variable, if is boolean workflow variable value to 0,1 need to Convert
     private void processBooleanParameter(HeaderOrParams param, HistoricProcessInstance historicProcIns) {
         if ("1".equals(param.getKeyType()) && historicProcIns != null) {
             Map<String, Object> processVariables = historicProcIns.getProcessVariables();
@@ -207,7 +208,7 @@ public class HttpTriggerDelegate implements JavaDelegate, ApplicationContextAwar
     }
 
     /**
-     * 将参数转换为 JSON 格式
+     * parameterConvert to JSON
      */
     private String convertParamsToJson(List<HeaderOrParams> params, HistoricProcessInstance historicProcIns) {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
@@ -217,10 +218,10 @@ public class HttpTriggerDelegate implements JavaDelegate, ApplicationContextAwar
         SysUser sysUser = RedisUtils.getCacheObject(accesstoken);
 
         IWfProcessService processService = applicationContext.getBean(IWfProcessService.class);
-        // 流程详情
+        // workflow
         jsonMap.put("processDetail", processService.queryProcessDetail(historicProcIns.getId(), null, sysUser, false));
         // SysUser sysUser = RedisUtils.getCacheObject(accesstoken);
-        // 从请求头中获取参数
+        // from in Get parameter
 
         jsonMap.put("procinsId", historicProcIns);
 
@@ -230,14 +231,14 @@ public class HttpTriggerDelegate implements JavaDelegate, ApplicationContextAwar
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         try {
-            return mapper.writeValueAsString(jsonMap); // 将参数列表转换为 JSON 字符串
+            return mapper.writeValueAsString(jsonMap); // parameter Convert to JSON
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
     /**
-     * 将参数转换为 x-www-form-urlencoded 格式
+     * parameterConvert to x-www-form-urlencoded
      */
     private String convertParamsToFormData(List<HeaderOrParams> params) {
         StringBuilder formData = new StringBuilder();
@@ -247,7 +248,7 @@ public class HttpTriggerDelegate implements JavaDelegate, ApplicationContextAwar
                     .append(param.getValue())
                     .append("&");
         }
-        // 去除最后一个多余的 "&"
+        // after "&"
         if (formData.length() > 0) {
             formData.deleteCharAt(formData.length() - 1);
         }

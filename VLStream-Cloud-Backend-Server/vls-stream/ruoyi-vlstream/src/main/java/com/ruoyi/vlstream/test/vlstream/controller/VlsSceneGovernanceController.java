@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -33,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 场景治理表 控制器
+ * control
  *
  * @author Oort
  * @since 2025-12-23
@@ -47,7 +48,7 @@ public class VlsSceneGovernanceController extends BladeController {
 	private final IVlsSceneGovernanceService vlsSceneGovernanceService;
 
 	/**
-	 * 场景治理表 详情
+	 *
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -58,7 +59,7 @@ public class VlsSceneGovernanceController extends BladeController {
 	}
 
 	/**
-	 * 场景治理表 分页
+	 *
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -70,7 +71,7 @@ public class VlsSceneGovernanceController extends BladeController {
 
 
 	/**
-	 * 场景治理表 自定义分页
+	 * Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -81,7 +82,7 @@ public class VlsSceneGovernanceController extends BladeController {
 	}
 
 	/**
-	 * 场景治理表 新增
+	 * Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -91,7 +92,7 @@ public class VlsSceneGovernanceController extends BladeController {
 	}
 
 	/**
-	 * 场景治理表 修改
+	 * Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -101,7 +102,7 @@ public class VlsSceneGovernanceController extends BladeController {
 	}
 
 	/**
-	 * 场景治理表 新增或修改
+	 * Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -111,7 +112,7 @@ public class VlsSceneGovernanceController extends BladeController {
 	}
 
 	/**
-	 * 场景治理表 删除
+	 * Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -121,7 +122,7 @@ public class VlsSceneGovernanceController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsSceneGovernance")
 	@ApiOperationSupport(order = 8)

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,25 +18,25 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 事件管理表 服务类
+ * event service
  *
  * @author Oort
  * @since 2025-12-23
  */
 public interface IVlsEventManagementService extends BaseService<EventManagement> {
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsEventManagement 查询参数
+	 * @param page parameter
+	 * @param vlsEventManagement Query parameter
 	 * @return IPage<VlsEventManagementVO>
 	 */
 	IPage<EventManagementVO> selectVlsEventManagementPage(IPage<EventManagementVO> page, EventManagementVO vlsEventManagement);
 
 	/**
-	 * 导出数据
+	 * Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsEventManagementExcel>
 	 */
 	List<VlsEventManagementExcel> exportVlsEventManagement(Wrapper<EventManagement> queryWrapper);

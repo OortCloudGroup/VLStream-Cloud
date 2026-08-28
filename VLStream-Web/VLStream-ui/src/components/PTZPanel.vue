@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="ptz-panel">
     <div class="ptz-header">
@@ -7,9 +12,9 @@
         {{ isConnected ? '已连接' : '未连接' }}
       </div>
     </div>
-    
+
     <div class="ptz-content">
-      <!-- 方向控制 -->
+      <!-- control -->
       <div class="control-section">
         <h4>方向控制</h4>
         <div class="direction-controls">
@@ -38,8 +43,8 @@
           </div>
         </div>
       </div>
-      
-      <!-- 缩放控制 -->
+
+      <!-- control -->
       <div class="control-section">
         <h4>缩放控制</h4>
         <div class="zoom-controls">
@@ -53,14 +58,14 @@
           </button>
         </div>
       </div>
-      
-      <!-- 预设位置 -->
+
+      <!--  -->
       <div class="control-section">
         <h4>预设位置</h4>
         <div class="preset-controls">
           <div class="preset-grid">
-            <button 
-              v-for="i in 9" 
+            <button
+              v-for="i in 9"
               :key="i"
               class="preset-btn"
               @click="$emit('control-action', { type: 'preset', value: i })"
@@ -81,8 +86,8 @@
           </div>
         </div>
       </div>
-      
-      <!-- 高级控制 -->
+
+      <!-- control -->
       <div class="control-section">
         <h4>高级控制</h4>
         <div class="advanced-controls">
@@ -94,7 +99,7 @@
               <button class="speed-btn" @click="$emit('control-action', { type: 'speed', value: 'fast' })">快速</button>
             </div>
           </div>
-          
+
           <div class="control-group">
             <label>自动巡航</label>
             <div class="cruise-controls">
@@ -108,7 +113,7 @@
               </button>
             </div>
           </div>
-          
+
           <div class="control-group">
             <label>扫描模式</label>
             <div class="scan-controls">
@@ -124,8 +129,8 @@
           </div>
         </div>
       </div>
-      
-      <!-- 状态信息 -->
+
+      <!-- info -->
       <div class="status-section">
         <h4>状态信息</h4>
         <div class="status-info">
@@ -150,10 +155,10 @@
 </template>
 
 <script setup>
-import { 
-  ArrowUp, 
-  ArrowDown, 
-  ArrowLeft, 
+import {
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
   ArrowRight,
   ZoomIn,
   ZoomOut,
@@ -262,7 +267,7 @@ const emit = defineEmits([
   padding-bottom: 8px;
 }
 
-/* 方向控制 */
+/* control */
 .direction-controls {
   display: flex;
   flex-direction: column;
@@ -336,7 +341,7 @@ const emit = defineEmits([
   color: white;
 }
 
-/* 缩放控制 */
+/* control */
 .zoom-controls {
   display: flex;
   gap: 12px;
@@ -374,7 +379,7 @@ const emit = defineEmits([
   font-weight: 500;
 }
 
-/* 预设位置 */
+/*  */
 .preset-controls {
   display: flex;
   flex-direction: column;
@@ -446,7 +451,7 @@ const emit = defineEmits([
   color: white;
 }
 
-/* 高级控制 */
+/* control */
 .advanced-controls {
   display: flex;
   flex-direction: column;
@@ -529,7 +534,7 @@ const emit = defineEmits([
   color: white;
 }
 
-/* 状态信息 */
+/* info */
 .status-section {
   margin-top: 20px;
   padding-top: 20px;
@@ -567,7 +572,7 @@ const emit = defineEmits([
   color: #67c23a;
 }
 
-/* 深色模式样式 */
+/*  */
 .map-area.dark-mode .ptz-panel {
   background: #1a1a1a;
 }
@@ -641,4 +646,4 @@ const emit = defineEmits([
 .map-area.dark-mode .status-section {
   border-top-color: #333;
 }
-</style> 
+</style>

@@ -1,15 +1,10 @@
 /*
-* @Created by: 兰舰
-* Email: gglanjian@qq.com
-* Phone: 16620805419
-* @Date: 2024-11-15 11:04:44
-* @Last Modified by:   兰舰
-* @Last Modified time: 2024-11-15 11:04:44
-* @Copyright aPaaS-front-team. All rights reserved.
-*/
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
 
-// 为了适应vue3.0的改版
-// 我们整个从实例中移除了 $on，$off 和 $once 方法，$emit 仍然是现有 API 的一部分，因为它用于触发由父组件以声明方式附加的事件处理程序
+// to vue3.0
+// from instance in $on, $off and $once method , $emit is API , to component eventProcess
 import mitt from 'mitt'
 
 const bus = {}
@@ -33,7 +28,7 @@ bus.$clear = function(types = []) {
   }
 }
 
-// 注册监听事件
+// event
 bus.$register = function(type, callback, _t, field) {
   if (_t) {
     let types = field || 'types'

@@ -1,10 +1,15 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
-// 算法模型API服务
+// algorithmmodelAPIservice
 
 /**
- * 分页查询算法模型
- * @param {Object} params 查询参数
+ * Query algorithmmodel
+ * @param {Object} params Query parameter
  */
 export function getModelPage(params) {
   return request({
@@ -15,8 +20,8 @@ export function getModelPage(params) {
 }
 
 /**
- * 根据ID查询算法模型详情
- * @param {Number} id 模型ID
+ * IDQuery algorithmmodel
+ * @param {Number} id modelID
  */
 export function getModelById(id) {
   return request({
@@ -26,8 +31,8 @@ export function getModelById(id) {
 }
 
 /**
- * 创建算法模型
- * @param {Object} data 模型数据
+ * algorithmmodel
+ * @param {Object} data modeldata
  */
 export function createModel(data) {
   return request({
@@ -38,8 +43,8 @@ export function createModel(data) {
 }
 
 /**
- * 更新算法模型
- * @param {Object} data 模型数据
+ * new algorithmmodel
+ * @param {Object} data modeldata
  */
 export function updateModel(data) {
   return request({
@@ -50,8 +55,8 @@ export function updateModel(data) {
 }
 
 /**
- * 删除算法模型
- * @param {Number} id 模型ID
+ * Delete algorithmmodel
+ * @param {Number} id modelID
  */
 export function deleteModel(id) {
   return request({
@@ -61,8 +66,8 @@ export function deleteModel(id) {
 }
 
 /**
- * 批量删除算法模型
- * @param {Array} ids 模型ID列表
+ * Batch delete algorithmmodel
+ * @param {Array} ids modelID
  */
 export function batchDeleteModel(ids) {
   return request({
@@ -73,8 +78,8 @@ export function batchDeleteModel(ids) {
 }
 
 /**
- * 根据算法ID查询模型列表
- * @param {Number} algorithmId 算法ID
+ * algorithmIDQuery model list
+ * @param {Number} algorithmId algorithmID
  */
 export function getModelsByAlgorithmId(algorithmId) {
   return request({
@@ -84,8 +89,8 @@ export function getModelsByAlgorithmId(algorithmId) {
 }
 
 /**
- * 根据训练任务ID查询模型列表
- * @param {Number} trainingId 训练任务ID
+ * trainingtaskIDQuery model list
+ * @param {Number} trainingId trainingtaskID
  */
 export function getModelsByTrainingId(trainingId) {
   return request({
@@ -95,8 +100,8 @@ export function getModelsByTrainingId(trainingId) {
 }
 
 /**
- * 根据状态查询模型列表
- * @param {String} status 状态
+ * Query model list
+ * @param {String} status
  */
 export function getModelsByStatus(status) {
   return request({
@@ -106,8 +111,8 @@ export function getModelsByStatus(status) {
 }
 
 /**
- * 发布模型
- * @param {Number} id 模型ID
+ * model
+ * @param {Number} id modelID
  */
 export function publishModel(id) {
   return request({
@@ -117,8 +122,8 @@ export function publishModel(id) {
 }
 
 /**
- * 撤销发布模型
- * @param {Number} id 模型ID
+ * model
+ * @param {Number} id modelID
  */
 export function unpublishModel(id) {
   return request({
@@ -128,8 +133,8 @@ export function unpublishModel(id) {
 }
 
 /**
- * 批量发布模型
- * @param {Array} ids 模型ID列表
+ * model
+ * @param {Array} ids modelID
  */
 export function batchPublishModel(ids) {
   return request({
@@ -140,8 +145,8 @@ export function batchPublishModel(ids) {
 }
 
 /**
- * 下载模型
- * @param {Number} id 模型ID
+ * model
+ * @param {Number} id modelID
  */
 export function downloadModel(id) {
   return request({
@@ -151,8 +156,8 @@ export function downloadModel(id) {
 }
 
 /**
- * 部署模型
- * @param {Number} id 模型ID
+ * model
+ * @param {Number} id modelID
  */
 export function deployModel(id) {
   return request({
@@ -162,7 +167,7 @@ export function deployModel(id) {
 }
 
 /**
- * 获取模型统计信息
+ * Get model info
  */
 export function getModelStatistics() {
   return request({
@@ -172,10 +177,10 @@ export function getModelStatistics() {
 }
 
 /**
- * 检查模型名称和版本是否存在
- * @param {String} modelName 模型名称
- * @param {String} version 模型版本
- * @param {Number} excludeId 排除的ID
+ * model and whether in
+ * @param {String} modelName model
+ * @param {String} version model
+ * @param {Number} excludeId ID
  */
 export function checkModelNameAndVersion(modelName, version, excludeId) {
   return request({
@@ -190,9 +195,9 @@ export function checkModelNameAndVersion(modelName, version, excludeId) {
 }
 
 /**
- * 根据算法ID和版本查询模型
- * @param {Number} algorithmId 算法ID
- * @param {String} version 版本
+ * algorithmID and Query model
+ * @param {Number} algorithmId algorithmID
+ * @param {String} version
  */
 export function getModelByAlgorithmIdAndVersion(algorithmId, version) {
   return request({
@@ -202,8 +207,8 @@ export function getModelByAlgorithmIdAndVersion(algorithmId, version) {
 }
 
 /**
- * 获取算法下最新版本的模型
- * @param {Number} algorithmId 算法ID
+ * Get algorithm new model
+ * @param {Number} algorithmId algorithmID
  */
 export function getLatestModelByAlgorithmId(algorithmId) {
   return request({
@@ -213,8 +218,8 @@ export function getLatestModelByAlgorithmId(algorithmId) {
 }
 
 /**
- * 查询热门模型
- * @param {Number} limit 限制数量
+ * Query model
+ * @param {Number} limit
  */
 export function getPopularModels(limit = 10) {
   return request({
@@ -225,8 +230,8 @@ export function getPopularModels(limit = 10) {
 }
 
 /**
- * 根据创建人查询模型数量
- * @param {Number} createdBy 创建人ID
+ * Query model
+ * @param {Number} createdBy ID
  */
 export function countModelsByCreatedBy(createdBy) {
   return request({
@@ -236,11 +241,11 @@ export function countModelsByCreatedBy(createdBy) {
 }
 
 /**
- * 获取算法模型的总大小
+ * Get algorithmmodel
  */
 export function getTotalModelSize() {
   return request({
     url: '/vlsAlgorithmModel/total-size',
     method: 'get'
   })
-} 
+}

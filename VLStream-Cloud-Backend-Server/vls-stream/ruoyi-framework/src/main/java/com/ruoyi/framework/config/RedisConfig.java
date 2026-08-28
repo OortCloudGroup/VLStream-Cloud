@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -21,7 +22,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * redis配置
+ * redisconfiguration
  *
  * @author Lion Li
  */
@@ -45,9 +46,9 @@ public class RedisConfig {
                 .setCodec(new JsonJacksonCodec(objectMapper));
             RedissonProperties.SingleServerConfig singleServerConfig = redissonProperties.getSingleServerConfig();
             if (ObjectUtil.isNotNull(singleServerConfig)) {
-                // 使用单机模式
+                //
                 config.useSingleServer()
-                    //设置redis key前缀
+                    // Set redis key before
                     .setNameMapper(new KeyPrefixHandler(redissonProperties.getKeyPrefix()))
                     .setTimeout(singleServerConfig.getTimeout())
                     .setClientName(singleServerConfig.getClientName())
@@ -56,11 +57,11 @@ public class RedisConfig {
                     .setConnectionMinimumIdleSize(singleServerConfig.getConnectionMinimumIdleSize())
                     .setConnectionPoolSize(singleServerConfig.getConnectionPoolSize());
             }
-            // 集群配置方式 参考下方注释
+            // configuration
             RedissonProperties.ClusterServersConfig clusterServersConfig = redissonProperties.getClusterServersConfig();
             if (ObjectUtil.isNotNull(clusterServersConfig)) {
                 config.useClusterServers()
-                    //设置redis key前缀
+                    // Set redis key before
                     .setNameMapper(new KeyPrefixHandler(redissonProperties.getKeyPrefix()))
                     .setTimeout(clusterServersConfig.getTimeout())
                     .setClientName(clusterServersConfig.getClientName())
@@ -78,7 +79,7 @@ public class RedisConfig {
     }
 
     /**
-     * 自定义缓存管理器 整合spring-cache
+     * Custom integrate spring-cache
      */
     @Bean
     public CacheManager cacheManager() {
@@ -86,9 +87,9 @@ public class RedisConfig {
     }
 
     /**
-     * redis集群配置 yml
+     * redis configuration yml
      *
-     * --- # redis 集群配置(单机与集群只能开启一个另一个需要注释掉)
+     * --- # redis configuration( and only can need to )
      * spring:
      *   redis:
      *     cluster:
@@ -96,39 +97,39 @@ public class RedisConfig {
      *         - 192.168.0.100:6379
      *         - 192.168.0.101:6379
      *         - 192.168.0.102:6379
-     *     # 密码
+     * #
      *     password:
-     *     # 连接超时时间
+     * #
      *     timeout: 10s
-     *     # 是否开启ssl
+     * # whether ssl
      *     ssl: false
      *
      * redisson:
-     *   # 线程池数量
+     * #
      *   threads: 16
-     *   # Netty线程池数量
+     * # Netty
      *   nettyThreads: 32
-     *   # 集群配置
+     * # configuration
      *   clusterServersConfig:
-     *     # 客户端名称
+     * #
      *     clientName: ${ruoyi.name}
-     *     # master最小空闲连接数
+     * # master null / empty
      *     masterConnectionMinimumIdleSize: 32
-     *     # master连接池大小
+     * # master
      *     masterConnectionPoolSize: 64
-     *     # slave最小空闲连接数
+     * # slave null / empty
      *     slaveConnectionMinimumIdleSize: 32
-     *     # slave连接池大小
+     * # slave
      *     slaveConnectionPoolSize: 64
-     *     # 连接空闲超时，单位：毫秒
+     * # null / empty , :
      *     idleConnectionTimeout: 10000
-     *     # 命令等待超时，单位：毫秒
+     * # etc. , :
      *     timeout: 3000
-     *     # 发布和订阅连接池大小
+     * # and
      *     subscriptionConnectionPoolSize: 50
-     *     # 读取模式
+     * #
      *     readMode: "SLAVE"
-     *     # 订阅模式
+     * #
      *     subscriptionMode: "MASTER"
      */
 

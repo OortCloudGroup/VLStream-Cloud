@@ -1,11 +1,16 @@
-// 测试layout组件中的getUserTenants调用场景
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// layoutcomponent in getUserTenants
 console.log('🔧 测试layout组件中的getUserTenants调用场景...')
 
-// 模拟layout组件中的loadTenantInfo函数
+// layoutcomponent in loadTenantInfo
 async function testLayoutLoadTenantInfo() {
   console.log('🧪 模拟layout组件中的loadTenantInfo函数...')
-  
-  // 模拟不同的URL状态
+
+  // URL
   const scenarios = [
     {
       name: 'URL中有token',
@@ -32,7 +37,7 @@ async function testLayoutLoadTenantInfo() {
       localToken: null
     }
   ]
-  
+
   const testApiConfig = {
     baseURL: 'http://oort.oortcloudsmart.com:21410/bus/apaas-sso',
     headers: {
@@ -42,27 +47,27 @@ async function testLayoutLoadTenantInfo() {
       'secretkey': '58f9eeefc65f4b318204ba21f39a8861'
     }
   }
-  
+
   for (const scenario of scenarios) {
     console.log(`\n📋 测试场景: ${scenario.name}`)
     console.log('- 模拟URL:', scenario.url)
     console.log('- sessionStorage token:', scenario.sessionToken ? scenario.sessionToken.substring(0, 8) + '...' : 'null')
     console.log('- localStorage token:', scenario.localToken ? scenario.localToken.substring(0, 8) + '...' : 'null')
-    
-    // 模拟getUserTenants的token获取逻辑
+
+    // getUserTenants tokenGet
     const urlParams = new URLSearchParams(scenario.url.split('?')[1])
     const urlToken = urlParams.get('accessToken') || urlParams.get('token')
     console.log('- 获取到的URL token:', urlToken ? urlToken.substring(0, 8) + '...' : 'null')
-    
-    // 确定使用的token
+
+    // token
     let token = urlToken || scenario.sessionToken || scenario.localToken
     console.log('- 最终使用的token:', token ? token.substring(0, 8) + '...' : 'null')
-    
+
     if (!token) {
       console.log('❌ 没有找到任何token，跳过API调用')
       continue
     }
-    
+
     try {
       console.log('\n📡 发送getUserTenants请求...')
       console.log('- URL:', `${testApiConfig.baseURL}/sso/v1/getUserTenants`)
@@ -75,7 +80,7 @@ async function testLayoutLoadTenantInfo() {
         'accesstoken': token
       })
       console.log('- Body:', {})
-      
+
       const response = await fetch(`${testApiConfig.baseURL}/sso/v1/getUserTenants`, {
         method: 'POST',
         headers: {
@@ -87,11 +92,11 @@ async function testLayoutLoadTenantInfo() {
         },
         body: JSON.stringify({})
       })
-      
+
       console.log('📥 收到响应:')
       console.log('- Status:', response.status)
       console.log('- StatusText:', response.statusText)
-      
+
       if (response.ok) {
         const result = await response.json()
         console.log('✅ getUserTenants响应成功:', result)
@@ -106,7 +111,7 @@ async function testLayoutLoadTenantInfo() {
   }
 }
 
-// 运行测试
+//
 console.log('📋 测试layout组件中的getUserTenants调用场景')
 await testLayoutLoadTenantInfo()
 
@@ -114,4 +119,4 @@ console.log('\n🎉 测试完成！')
 console.log('总结:')
 console.log('- 测试了4种不同的token状态场景')
 console.log('- 验证了getUserTenants在不同情况下的表现')
-console.log('- 帮助定位实际应用中的问题') 
+console.log('- 帮助定位实际应用中的问题')

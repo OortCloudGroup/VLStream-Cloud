@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-dialog v-model="dialogVisible" class="diaOutSet" title="事件反馈" top="5vh" width="60%" :before-close="handleClose" destroy-on-close>
     <div>
@@ -13,7 +18,7 @@
         </div>
         <div v-if="codeAct_2" class="e_addFeedback">
           <el-form ref="formRef" v-loading="formLoading" :rules="formRules" :model="formData" label-width="auto">
-            <!--    已自动关联工单，则禁用是否转工单       -->
+            <!-- already work order, whether work order -->
             <el-form-item label="是否转工单">
               <el-switch
                 v-model="formData.work_order_status"
@@ -25,16 +30,16 @@
                 :inactive-value="0"
               />
             </el-form-item>
-            <!-- 工单名称 -->
+            <!-- work order -->
             <flow-form
               v-if="formData.work_order_status===1"
               ref="flowFormRef"
               class="eventItem"
               :list-obj="props.data"
             />
-            <!--            <el-form-item label="是否通知" prop="notice">-->
+            <!-- <el-form-item label="whether notification" prop="notice"> -->
             <!--              <div>-->
-            <!--                <el-switch v-model="formData.notice" size="large" active-text="是" inactive-text="否" />-->
+            <!-- <el-switch v-model="formData.notice" size="large" active-text=" is " inactive-text=" " /> -->
             <!--                <div>-->
             <!--                  <el-checkbox-group v-model="formData.noticeList">-->
             <!--                    <el-checkbox v-for="item in noticeListDate" :key="item" :label="item.label" :value="item.value" />-->
@@ -170,7 +175,7 @@ interface FeedbackItem {
   task_event_id?: string
   uuid?: string
 }
-let codeAct_2 = ref(true) // 展开收缩
+let codeAct_2 = ref(true) //
 const props = defineProps<Props>()
 const emit = defineEmits(['update:visible', 'refresh'])
 const harvest = ref(false)
@@ -185,12 +190,12 @@ const dialogVisible = computed({
   set: (value: boolean) => emit('update:visible', value)
 })
 
-// 关闭对话框
+//
 const handleClose = () => {
   dialogVisible.value = false
 }
 const _submitForm = () => {
-  // 提交
+  //
 }
 const selectContent = (content) => {
   formData.value.describe = content
@@ -198,7 +203,7 @@ const selectContent = (content) => {
 
 const eventDetailData = ref<EventDetailData>({})
 
-// 加载事件详情；接口异常时保持空详情，避免未处理异常阻断弹窗交互。
+// Load event ; interface null / empty , not Process dialog .
 const getEventDetail = async() => {
   const params = {
     id: props.data.id,
@@ -214,7 +219,7 @@ const getEventDetail = async() => {
   }
 }
 
-// 数据初始化
+// dataInitialize
 watch([() => props.visible, () => props.data], ([newVisible, newData]) => {
   if (newVisible && newData) {
     formData.value = initFormData()
@@ -233,7 +238,7 @@ watch([() => props.visible, () => props.data], ([newVisible, newData]) => {
   }
 }, { immediate: true })
 
-// 首次展开反馈列表时再加载数据，避免打开弹窗就创建大量记录组件。
+// Load data, dialog then recordcomponent.
 watch(harvest, (expanded) => {
   if (expanded && !feedbackLoaded.value) {
     void getFeedbackList(1)
@@ -246,7 +251,7 @@ const initFormData = () => ({
   pics: [],
   point: {},
   status: 2, // 1:已完成 2:正在处理
-  // 是否转工单 1:是 0:否(默认) 工单关联的是事件,一个事件只能关联1个工单  已关联的不允许再关联
+  // whether work order 1: is 0: ( ) work order is event, eventonly can 1 work order already
   work_order_status: 0,
   work_order_data: undefined,
   workOrderId: 1,
@@ -258,23 +263,23 @@ const formRef = ref()
 const flowFormRef = ref()
 // const noticeListDate = [
 //   {
-//     label: '短信',
+// label: ' ',
 //     value: 1
 //   },
 //   {
-//     label: '邮箱',
+// label: ' ',
 //     value: 2
 //   },
 //   {
-//     label: '站内',
+// label: ' ',
 //     value: 3
 //   },
 //   {
-//     label: '企业微信',
+// label: ' ',
 //     value: 4
 //   },
 //   {
-//     label: '钉钉',
+// label: ' ',
 //     value: 5
 //   },
 //   {
@@ -282,11 +287,11 @@ const flowFormRef = ref()
 //     value: 6
 //   },
 //   {
-//     label: '微信机器人',
+// label: ' ',
 //     value: 7
 //   },
 //   {
-//     label: '微信公众号',
+// label: ' ',
 //     value: 8
 //   },
 //   {
@@ -295,24 +300,24 @@ const flowFormRef = ref()
 //   }
 // ]
 
-// 表单验证规则
+// form
 const formRules = ref({
   describe: [
     { required: true, message: '请输入反馈描述', trigger: 'blur' }
   ]
 })
 
-// 添加事件反馈
+// event
 const addFeedbackForm = async() => {
-  // 表单验证
+  // form
   if (!formRef.value) return
 
   try {
     await formRef.value.validate()
   } catch (error) {
-    return // 验证失败，不提交
+    return // failed,
   }
-  // 是否转工单 1:是 0:否(默认) 工单关联的是事件,一个事件只能关联1个工单  已关联的不允许再关联
+  // whether work order 1: is 0: ( ) work order is event, eventonly can 1 work order already
   if (formData.value.work_order_status === 1) {
     await flowFormRef.value?.addWorkorderFn()
     formData.value.work_order_data = flowFormRef.value?.form.work_order_data
@@ -331,8 +336,8 @@ const addFeedbackForm = async() => {
   }
 }
 const feedbackListData = ref<FeedbackItem[]>([])
-// 反馈列表
-// 分页加载反馈记录，限制单次 DOM 数量并保证加载状态正常复位。
+//
+// Load record, DOM Load .
 const getFeedbackList = async(page = feedbackPage.value) => {
   feedbackLoading.value = true
   feedbackPage.value = page
@@ -528,7 +533,7 @@ const getFeedbackList = async(page = feedbackPage.value) => {
   border-left: 3px solid transparent !important;
 }
 
-// 更多-展开
+// -
 .codeActBox {
   gap: 10px;
   color: var(--el-color-primary);

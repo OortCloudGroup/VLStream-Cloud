@@ -1,28 +1,33 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * Token诊断脚本
- * 找出token存储位置和用户信息来源
+ * Token
+ * token and userinfo
  */
 
 function diagnoseTokenStorage() {
     console.log('🔍 Token存储诊断');
-    
-    // 检查所有可能的token存储位置
+
+    // all can token
     console.log('=== 检查所有Token存储位置 ===');
-    
-    // 1. 检查URL参数
+
+    // 1. URLparameter
     const urlParams = new URLSearchParams(window.location.search);
     const urlToken = urlParams.get('accessToken') || urlParams.get('token');
     console.log('1. URL参数中的token:', urlToken ? urlToken.substring(0, 8) + '...' : 'null');
-    
-    // 2. 检查sessionStorage
+
+    // 2. sessionStorage
     const sessionToken = sessionStorage.getItem('accessToken');
     console.log('2. sessionStorage中的accessToken:', sessionToken ? sessionToken.substring(0, 8) + '...' : 'null');
-    
-    // 3. 检查localStorage
+
+    // 3. localStorage
     const localToken = localStorage.getItem('accessToken');
     console.log('3. localStorage中的accessToken:', localToken ? localToken.substring(0, 8) + '...' : 'null');
-    
-    // 4. 检查其他可能的token字段
+
+    // 4. can tokenfield
     const otherTokens = {
         'localStorage.token': localStorage.getItem('token'),
         'localStorage.userToken': localStorage.getItem('userToken'),
@@ -31,15 +36,15 @@ function diagnoseTokenStorage() {
         'sessionStorage.userToken': sessionStorage.getItem('userToken'),
         'sessionStorage.authToken': sessionStorage.getItem('authToken')
     };
-    
+
     console.log('4. 其他可能的token字段:');
     Object.entries(otherTokens).forEach(([key, value]) => {
         if (value) {
             console.log(`   ${key}:`, value.substring(0, 8) + '...');
         }
     });
-    
-    // 5. 检查cookie
+
+    // 5. cookie
     const cookies = document.cookie.split(';');
     const cookieTokens = {};
     cookies.forEach(cookie => {
@@ -48,7 +53,7 @@ function diagnoseTokenStorage() {
             cookieTokens[name] = value;
         }
     });
-    
+
     console.log('5. Cookie中的token:');
     if (Object.keys(cookieTokens).length > 0) {
         Object.entries(cookieTokens).forEach(([name, value]) => {
@@ -57,21 +62,21 @@ function diagnoseTokenStorage() {
     } else {
         console.log('   没有找到token相关的cookie');
     }
-    
+
     console.log('');
-    
-    // 检查用户信息存储
+
+    // userinfo
     console.log('=== 检查用户信息存储 ===');
-    
-    // 1. 检查sessionStorage中的用户信息
+
+    // 1. sessionStorage in userinfo
     const sessionUserInfo = sessionStorage.getItem('userInfo');
     console.log('1. sessionStorage中的userInfo:', sessionUserInfo ? '存在' : 'null');
-    
-    // 2. 检查localStorage中的用户信息
+
+    // 2. localStorage in userinfo
     const localUserInfo = localStorage.getItem('userInfo');
     console.log('2. localStorage中的userInfo:', localUserInfo ? '存在' : 'null');
-    
-    // 3. 解析用户信息
+
+    // 3. Parse userinfo
     if (sessionUserInfo) {
         try {
             const parsedUserInfo = JSON.parse(sessionUserInfo);
@@ -88,7 +93,7 @@ function diagnoseTokenStorage() {
             console.log('3. sessionStorage用户信息解析失败:', error.message);
         }
     }
-    
+
     if (localUserInfo) {
         try {
             const parsedUserInfo = JSON.parse(localUserInfo);
@@ -105,18 +110,18 @@ function diagnoseTokenStorage() {
             console.log('4. localStorage用户信息解析失败:', error.message);
         }
     }
-    
+
     console.log('');
-    
-    // 检查租户信息存储
+
+    // info
     console.log('=== 检查租户信息存储 ===');
-    
+
     const sessionTenantInfo = sessionStorage.getItem('tenantInfo');
     const localTenantInfo = localStorage.getItem('tenantInfo');
-    
+
     console.log('1. sessionStorage中的tenantInfo:', sessionTenantInfo ? '存在' : 'null');
     console.log('2. localStorage中的tenantInfo:', localTenantInfo ? '存在' : 'null');
-    
+
     if (sessionTenantInfo) {
         try {
             const parsedTenantInfo = JSON.parse(sessionTenantInfo);
@@ -128,7 +133,7 @@ function diagnoseTokenStorage() {
             console.log('3. sessionStorage租户信息解析失败:', error.message);
         }
     }
-    
+
     if (localTenantInfo) {
         try {
             const parsedTenantInfo = JSON.parse(localTenantInfo);
@@ -140,27 +145,27 @@ function diagnoseTokenStorage() {
             console.log('4. localStorage租户信息解析失败:', error.message);
         }
     }
-    
+
     console.log('');
-    
-    // 检查authManager状态
+
+    // authManager
     console.log('=== 检查AuthManager状态 ===');
-    
+
     if (window.authManager) {
         console.log('1. authManager已加载');
         console.log('2. 尝试调用authManager.checkLocalToken()');
-        
-        // 这里我们不能直接调用async函数，但可以检查authManager的方法
+
+        // can async , authManager method
         console.log('3. authManager方法列表:', Object.getOwnPropertyNames(window.authManager));
     } else {
         console.log('1. authManager未加载');
     }
-    
+
     console.log('');
-    
-    // 检查tokenSyncManager状态
+
+    // tokenSyncManager
     console.log('=== 检查TokenSyncManager状态 ===');
-    
+
     if (window.tokenSyncManager) {
         console.log('1. tokenSyncManager已加载');
         console.log('2. 同步器状态:', {
@@ -171,19 +176,19 @@ function diagnoseTokenStorage() {
     } else {
         console.log('1. tokenSyncManager未加载');
     }
-    
+
     console.log('');
-    
-    // 分析结果
+
+    //
     console.log('=== 分析结果 ===');
-    
+
     const allTokens = [
         { source: 'URL', token: urlToken },
         { source: 'sessionStorage.accessToken', token: sessionToken },
         { source: 'localStorage.accessToken', token: localToken },
         ...Object.entries(otherTokens).map(([key, value]) => ({ source: key, token: value }))
     ].filter(item => item.token);
-    
+
     if (allTokens.length > 0) {
         console.log('✅ 找到的token:');
         allTokens.forEach(item => {
@@ -192,7 +197,7 @@ function diagnoseTokenStorage() {
     } else {
         console.log('❌ 没有找到任何token');
     }
-    
+
     if (sessionUserInfo || localUserInfo) {
         console.log('✅ 找到用户信息');
         console.log('💡 用户信息存在但token可能存储在其他地方');
@@ -200,7 +205,7 @@ function diagnoseTokenStorage() {
     } else {
         console.log('❌ 没有找到用户信息');
     }
-    
+
     console.log('');
     console.log('🎯 建议:');
     console.log('1. 检查用户信息对象中是否包含accessToken字段');
@@ -209,5 +214,5 @@ function diagnoseTokenStorage() {
     console.log('4. 检查是否有加密或编码的token');
 }
 
-// 运行诊断
-diagnoseTokenStorage(); 
+//
+diagnoseTokenStorage();

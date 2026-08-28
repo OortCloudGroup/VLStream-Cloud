@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="serial_dialog">
     <el-button type="primary" @click="addOption">
@@ -73,7 +78,7 @@ const props = defineProps({
 })
 const options = ref([])
 
-// 如果props.modelValue 是否是个对象，是对象转换成数组成为第一个值
+// if props.modelValue whether is object, is objectConvert array to value
 if (Object.prototype.toString.call(props.modelValue) === '[object Object]') {
   options.value = [props.modelValue]
 } else {

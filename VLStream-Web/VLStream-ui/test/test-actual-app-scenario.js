@@ -1,26 +1,31 @@
-// 测试实际应用场景
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+//
 console.log('🔧 测试实际应用场景...')
 
-// 模拟实际应用中的情况
+// in
 async function testActualAppScenario() {
   console.log('🧪 模拟实际应用场景...')
-  
+
   const testToken = '848b2618754e44be9b98d7fa55996f0c'
-  
-  // 模拟URL中的token
+
+  // URL in token
   const originalSearch = window.location.search
   const mockUrl = `http://localhost:3000/workspace?accessToken=${testToken}&fromWhere=desktopHome`
-  
+
   console.log('📋 场景1: URL中有token')
   console.log('- 模拟URL:', mockUrl)
   console.log('- URL参数:', new URLSearchParams(mockUrl.split('?')[1]))
-  
-  // 模拟getUserTenants的token获取逻辑
+
+  // getUserTenants tokenGet
   const urlParams = new URLSearchParams(mockUrl.split('?')[1])
   const urlToken = urlParams.get('accessToken') || urlParams.get('token')
   console.log('- 获取到的URL token:', urlToken ? urlToken.substring(0, 8) + '...' : 'null')
-  
-  // 模拟API调用
+
+  // API
   const testApiConfig = {
     baseURL: 'http://oort.oortcloudsmart.com:21410/bus/apaas-sso',
     headers: {
@@ -30,7 +35,7 @@ async function testActualAppScenario() {
       'secretkey': '58f9eeefc65f4b318204ba21f39a8861'
     }
   }
-  
+
   try {
     console.log('\n📡 发送getUserTenants请求（模拟实际应用）...')
     console.log('- URL:', `${testApiConfig.baseURL}/sso/v1/getUserTenants`)
@@ -43,7 +48,7 @@ async function testActualAppScenario() {
       'accesstoken': urlToken
     })
     console.log('- Body:', { accessToken: urlToken })
-    
+
     const response = await fetch(`${testApiConfig.baseURL}/sso/v1/getUserTenants`, {
       method: 'POST',
       headers: {
@@ -55,11 +60,11 @@ async function testActualAppScenario() {
       },
       body: JSON.stringify({ accessToken: urlToken })
     })
-    
+
     console.log('📥 收到响应:')
     console.log('- Status:', response.status)
     console.log('- StatusText:', response.statusText)
-    
+
     if (response.ok) {
       const result = await response.json()
       console.log('✅ getUserTenants响应成功:', result)
@@ -76,21 +81,21 @@ async function testActualAppScenario() {
   }
 }
 
-// 测试URL token被清除的情况
+// URL token
 async function testUrlTokenCleared() {
   console.log('\n📋 场景2: URL中的token被清除')
   console.log('- 模拟URL:', 'http://localhost:3000/workspace?fromWhere=desktopHome')
   console.log('- URL参数:', new URLSearchParams('fromWhere=desktopHome'))
-  
-  // 模拟URL中的token被清除
+
+  // URL in token
   const urlParams = new URLSearchParams('fromWhere=desktopHome')
   const urlToken = urlParams.get('accessToken') || urlParams.get('token')
   console.log('- 获取到的URL token:', urlToken ? urlToken.substring(0, 8) + '...' : 'null')
-  
-  // 模拟从sessionStorage获取token
+
+  // from sessionStorageGet token
   const testToken = '848b2618754e44be9b98d7fa55996f0c'
   console.log('- 模拟sessionStorage token:', testToken.substring(0, 8) + '...')
-  
+
   const testApiConfig = {
     baseURL: 'http://oort.oortcloudsmart.com:21410/bus/apaas-sso',
     headers: {
@@ -100,7 +105,7 @@ async function testUrlTokenCleared() {
       'secretkey': '58f9eeefc65f4b318204ba21f39a8861'
     }
   }
-  
+
   try {
     console.log('\n📡 发送getUserTenants请求（URL token被清除）...')
     console.log('- URL:', `${testApiConfig.baseURL}/sso/v1/getUserTenants`)
@@ -113,7 +118,7 @@ async function testUrlTokenCleared() {
       'accesstoken': testToken
     })
     console.log('- Body:', { accessToken: testToken })
-    
+
     const response = await fetch(`${testApiConfig.baseURL}/sso/v1/getUserTenants`, {
       method: 'POST',
       headers: {
@@ -125,11 +130,11 @@ async function testUrlTokenCleared() {
       },
       body: JSON.stringify({ accessToken: testToken })
     })
-    
+
     console.log('📥 收到响应:')
     console.log('- Status:', response.status)
     console.log('- StatusText:', response.statusText)
-    
+
     if (response.ok) {
       const result = await response.json()
       console.log('✅ getUserTenants响应成功:', result)
@@ -146,7 +151,7 @@ async function testUrlTokenCleared() {
   }
 }
 
-// 运行测试
+//
 console.log('📋 测试1: URL中有token的场景')
 const result1 = await testActualAppScenario()
 
@@ -167,4 +172,4 @@ if (result1.success && result2.success) {
   console.log('- 需要进一步检查问题')
   console.log('- 场景1错误:', result1.error)
   console.log('- 场景2错误:', result2.error)
-} 
+}

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 代码生成 操作处理
+ * Generate operationProcess
  *
  * @author Lion Li
  */
@@ -41,7 +42,7 @@ public class GenController extends BaseController {
     private final IGenTableService genTableService;
 
     /**
-     * 查询代码生成列表
+     * Query Generate list
      */
     @SaCheckPermission("tool:gen:list")
     @GetMapping("/list")
@@ -50,9 +51,9 @@ public class GenController extends BaseController {
     }
 
     /**
-     * 修改代码生成业务
+     * Update Generate
      *
-     * @param tableId 表ID
+     * @param tableId ID
      */
     @SaCheckPermission("tool:gen:query")
     @GetMapping(value = "/{tableId}")
@@ -68,7 +69,7 @@ public class GenController extends BaseController {
     }
 
     /**
-     * 查询数据库列表
+     * Query data list
      */
     @SaCheckPermission("tool:gen:list")
     @GetMapping("/db/list")
@@ -77,9 +78,9 @@ public class GenController extends BaseController {
     }
 
     /**
-     * 查询数据表字段列表
+     * Query data field list
      *
-     * @param tableId 表ID
+     * @param tableId ID
      */
     @SaCheckPermission("tool:gen:list")
     @GetMapping(value = "/column/{tableId}")
@@ -92,23 +93,23 @@ public class GenController extends BaseController {
     }
 
     /**
-     * 导入表结构（保存）
+     * Import ( )
      *
-     * @param tables 表名串
+     * @param tables
      */
     @SaCheckPermission("tool:gen:import")
     @Log(title = "代码生成", businessType = BusinessType.IMPORT)
     @PostMapping("/importTable")
     public R<Void> importTableSave(String tables) {
         String[] tableNames = Convert.toStrArray(tables);
-        // 查询表信息
+        // Query info
         List<GenTable> tableList = genTableService.selectDbTableListByNames(tableNames);
         genTableService.importGenTable(tableList);
         return R.ok();
     }
 
     /**
-     * 修改保存代码生成业务
+     * Update Generate
      */
     @SaCheckPermission("tool:gen:edit")
     @Log(title = "代码生成", businessType = BusinessType.UPDATE)
@@ -120,9 +121,9 @@ public class GenController extends BaseController {
     }
 
     /**
-     * 删除代码生成
+     * Delete Generate
      *
-     * @param tableIds 表ID串
+     * @param tableIds ID
      */
     @SaCheckPermission("tool:gen:remove")
     @Log(title = "代码生成", businessType = BusinessType.DELETE)
@@ -133,9 +134,9 @@ public class GenController extends BaseController {
     }
 
     /**
-     * 预览代码
      *
-     * @param tableId 表ID
+     *
+     * @param tableId ID
      */
     @SaCheckPermission("tool:gen:preview")
     @GetMapping("/preview/{tableId}")
@@ -145,9 +146,9 @@ public class GenController extends BaseController {
     }
 
     /**
-     * 生成代码（下载方式）
+     * Generate ( )
      *
-     * @param tableName 表名
+     * @param tableName
      */
     @SaCheckPermission("tool:gen:code")
     @Log(title = "代码生成", businessType = BusinessType.GENCODE)
@@ -158,9 +159,9 @@ public class GenController extends BaseController {
     }
 
     /**
-     * 生成代码（自定义路径）
+     * Generate (Custom )
      *
-     * @param tableName 表名
+     * @param tableName
      */
     @SaCheckPermission("tool:gen:code")
     @Log(title = "代码生成", businessType = BusinessType.GENCODE)
@@ -171,9 +172,9 @@ public class GenController extends BaseController {
     }
 
     /**
-     * 同步数据库
+     * data
      *
-     * @param tableName 表名
+     * @param tableName
      */
     @SaCheckPermission("tool:gen:edit")
     @Log(title = "代码生成", businessType = BusinessType.UPDATE)
@@ -184,9 +185,9 @@ public class GenController extends BaseController {
     }
 
     /**
-     * 批量生成代码
+     * Generate
      *
-     * @param tables 表名串
+     * @param tables
      */
     @SaCheckPermission("tool:gen:code")
     @Log(title = "代码生成", businessType = BusinessType.GENCODE)
@@ -198,7 +199,7 @@ public class GenController extends BaseController {
     }
 
     /**
-     * 生成zip文件
+     * Generate zip
      */
     private void genCode(HttpServletResponse response, byte[] data) throws IOException {
         response.reset();

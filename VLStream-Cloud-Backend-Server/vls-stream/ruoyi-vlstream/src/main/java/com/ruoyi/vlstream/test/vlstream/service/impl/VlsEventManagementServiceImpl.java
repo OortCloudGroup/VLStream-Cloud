@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * 事件管理表 服务实现类
+ * event service
  *
  * @author Oort
  * @since 2025-12-23

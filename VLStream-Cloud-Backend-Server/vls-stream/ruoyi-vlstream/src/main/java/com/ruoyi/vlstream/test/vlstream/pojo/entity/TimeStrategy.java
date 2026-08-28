@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import org.springblade.core.mp.base.TenantEntity;
 import java.util.Map;
 
 /**
- * 时间策略表 实体类
+ *
  *
  * @author Oort
  * @since 2025-12-23
@@ -29,12 +30,12 @@ public class TimeStrategy extends TenantEntity {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 设备ID
+	 * deviceID
 	 */
 	@Schema(description = "设备ID")
 	private String deviceId;
 	/**
-	 *时间策略配置
+	 * configuration
 	 */
 	@Schema(description = "时间策略配置")
 	@TableField(typeHandler = JacksonTypeHandler.class)

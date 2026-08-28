@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -29,7 +30,7 @@ public class VlsCameraApplyController extends BladeController {
 	private final IVlsCameraApplyRecordService vlsCameraApplyRecordService;
 
 	/**
-	 * 摄像头使用申请提交
+	 *
 	 */
 	@PostMapping("/camera-apply/submit")
 	@ApiOperationSupport(order = 31)
@@ -39,7 +40,7 @@ public class VlsCameraApplyController extends BladeController {
 	}
 
 	/**
-	 * 摄像头使用申请审批通过
+	 * approval
 	 */
 	@PostMapping("/camera-apply/approve")
 	@ApiOperationSupport(order = 32)
@@ -49,7 +50,7 @@ public class VlsCameraApplyController extends BladeController {
 	}
 
 	/**
-	 * 摄像头使用申请审批驳回
+	 * approval
 	 */
 	@PostMapping("/camera-apply/reject")
 	@ApiOperationSupport(order = 33)
@@ -59,7 +60,7 @@ public class VlsCameraApplyController extends BladeController {
 	}
 
 	/**
-	 * 摄像头使用申请完结
+	 *
 	 */
 	@PostMapping("/camera-apply/complete")
 	@ApiOperationSupport(order = 34)
@@ -69,7 +70,7 @@ public class VlsCameraApplyController extends BladeController {
 	}
 
 	/**
-	 * 摄像头使用申请分页
+	 *
 	 */
 	@GetMapping("/camera-apply/page")
 	@ApiOperationSupport(order = 35)

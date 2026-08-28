@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div>
     <div class="chooose_item chooose_item_group">
@@ -26,7 +31,7 @@
     </div>
 
     <el-dialog v-model="chooseUserVis" :title="title" width="50%">
-      <!-- 如果是自定义范围 -->
+      <!-- if is Custom -->
       <address-seting-dialog
         :select-scope="options.addressSetting?options.addressSetting.selectScope:1"
         :scope-user-list="scopeUserList"
@@ -61,17 +66,17 @@ const props = defineProps({
   options: {
     type: Object,
     default: () => ({
-      selectMod: 1, // 选择模式 1, 部门和人都可以选， 2 只选部门  3 只选人
-      selectScope: 1, // 选择范围  1,全部  2 本部门 3 自定义
-      defaultValueType: 1, // 1，无， 2 固定值， 3 提交人， 4 提交部门， 5 创建人， 6 创建人部门
-      scopeValue: '', // 自定义范围
-      defaultValue: '' // 固定值
+      selectMod: 1, // 1, department and , 2 only department 3 only
+      selectScope: 1, // 1, full 2 department 3 Custom
+      defaultValueType: 1, // 1, , 2 value , 3 , 4 department, 5 , 6 department
+      scopeValue: '', // Custom
+      defaultValue: '' // value
     })
   }
 })
 
 const title = ref('选择人员')
-// 兼容老数据
+// data
 if (props.options.addressSetting) {
   title.value = props.options.addressSetting.selectMod === 3 ? '选择人员' : props.options.addressSetting.selectMod === 2 ? '选择部门' : '选择人员或者组织'
 }
@@ -160,7 +165,7 @@ onMounted(() => {
       getUserOrDept(tempUser, tempDept)
     }
   }
-  // 如果是自定义范围
+  // if is Custom
   if (props.options.addressSetting && props.options.addressSetting.selectScope === 3) {
     let tempList = props.options.addressSetting.scopeValue.split(',')
     if (tempList.length > 0) {
@@ -174,7 +179,7 @@ onMounted(() => {
       })
     }
   }
-  // TODO 自定义范围为本部门,怎么获取本部门的人员
+  // TODO Custom to department, Get department
   // if (props.options.addressSetting && props.options.addressSetting.selectScope === 2) {
   // }
 })

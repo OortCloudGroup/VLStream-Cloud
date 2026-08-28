@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
-  <el-button 
-    size="small" 
+  <el-button
+    size="small"
     class="play-button"
     @click="handleClick"
   >
@@ -13,17 +18,17 @@
 </template>
 
 <script setup>
-// 定义事件
+// event
 const emit = defineEmits(['click'])
 
-// 处理点击事件
+// Process event
 const handleClick = (event) => {
   emit('click', event)
 }
 </script>
 
 <style scoped>
-/* 播放按钮样式 */
+/* button */
 .play-button {
   background: linear-gradient(to bottom, #95B0FF 0%, #1A53FF 100%) !important;
   border: none !important;
@@ -51,4 +56,4 @@ const handleClick = (event) => {
   background: linear-gradient(to bottom, #85A0FF 0%, #0A43FF 100%) !important;
   transform: translateY(0);
 }
-</style> 
+</style>

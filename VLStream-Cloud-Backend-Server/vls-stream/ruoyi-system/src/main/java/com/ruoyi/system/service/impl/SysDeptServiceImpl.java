@@ -39,7 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 部门管理 服务实现
+ * department service
  *
  * @author Lion Li
  */
@@ -52,10 +52,10 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     private final SysUserMapper userMapper;
 
     /**
-     * 查询部门管理数据
+     * Query department data
      *
-     * @param dept 部门信息
-     * @return 部门信息集合
+     * @param dept departmentinfo
+     * @return departmentinfocollection
      */
     @Override
     public List<SysDeptView> selectDeptList(SysDeptView dept) {
@@ -71,10 +71,10 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     }
 
     /**
-     * 查询部门树结构信息
+     * Query department info
      *
-     * @param dept 部门信息
-     * @return 部门树信息集合
+     * @param dept departmentinfo
+     * @return department infocollection
      */
     @Override
     public List<Tree<String >> selectDeptTreeList(SysDeptView dept) {
@@ -83,10 +83,10 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     }
 
     /**
-     * 构建前端所需要下拉树结构
+     * Build before need to
      *
-     * @param depts 部门列表
-     * @return 下拉树结构列表
+     * @param depts department
+     * @return
      */
     @Override
     public List<Tree<String >> buildDeptTreeSelect(List<SysDeptView> depts) {
@@ -101,10 +101,10 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     }
 
     /**
-     * 根据角色ID查询部门树信息
+     * role IDQuery department info
      *
-     * @param roleId 角色ID
-     * @return 选中部门列表
+     * @param roleId role ID
+     * @return in department
      */
     @Override
     public List<Long> selectDeptListByRoleId(Long roleId) {
@@ -113,10 +113,10 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     }
 
     /**
-     * 根据部门ID查询信息
+     * department IDQuery info
      *
-     * @param deptId 部门ID
-     * @return 部门信息
+     * @param deptId department ID
+     * @return departmentinfo
      */
     @Cacheable(cacheNames = CacheNames.SYS_DEPT, key = "#deptId")
     @Override
@@ -133,10 +133,10 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     }
 
     /**
-     * 通过部门ID查询部门名称
+     * department IDQuery department name
      *
-     * @param deptIds 部门ID串逗号分隔
-     * @return 部门名称串逗号分隔
+     * @param deptIds department ID
+     * @return department name
      */
     @Override
     public String selectDeptNameByIds(String deptIds) {
@@ -151,10 +151,10 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     }
 
     /**
-     * 根据ID查询所有子部门数（正常状态）
+     * IDQuery all sub department ( )
      *
-     * @param deptId 部门ID
-     * @return 子部门数
+     * @param deptId department ID
+     * @return sub department
      */
     @Override
     public long selectNormalChildrenDeptById(String deptId) {
@@ -164,10 +164,10 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     }
 
     /**
-     * 是否存在子节点
+     * whether in sub node
      *
-     * @param deptId 部门ID
-     * @return 结果
+     * @param deptId department ID
+     * @return
      */
     @Override
     public boolean hasChildByDeptId(String deptId) {
@@ -176,10 +176,10 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     }
 
     /**
-     * 查询部门是否存在用户
+     * Query departmentwhether in user
      *
-     * @param deptId 部门ID
-     * @return 结果 true 存在 false 不存在
+     * @param deptId department ID
+     * @return true in false in
      */
     @Override
     public boolean checkDeptExistUser(String deptId) {
@@ -188,10 +188,10 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     }
 
     /**
-     * 校验部门名称是否唯一
+     * Validate department namewhether
      *
-     * @param dept 部门信息
-     * @return 结果
+     * @param dept departmentinfo
+     * @return
      */
     @Override
     public boolean checkDeptNameUnique(SysDeptView dept) {
@@ -203,9 +203,9 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     }
 
     /**
-     * 校验部门是否有数据权限
+     * Validate departmentwhether data
      *
-     * @param deptId 部门id
+     * @param deptId department ID
      */
     @Override
     public void checkDeptDataScope(String  deptId) {
@@ -220,15 +220,15 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     }
 
     /**
-     * 新增保存部门信息
+     * Add departmentinfo
      *
-     * @param dept 部门信息
-     * @return 结果
+     * @param dept departmentinfo
+     * @return
      */
     @Override
     public int insertDept(SysDeptView dept) {
         SysDeptView info = baseMapper.selectById(dept.getParentId());
-        // 如果父节点不为正常状态,则不允许新增子节点
+        // if node to , Add sub node
         if (!UserConstants.DEPT_NORMAL.equals(info.getStatus())) {
             throw new ServiceException("部门停用，不允许新增");
         }
@@ -237,10 +237,10 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     }
 
     /**
-     * 修改保存部门信息
+     * Update departmentinfo
      *
-     * @param dept 部门信息
-     * @return 结果
+     * @param dept departmentinfo
+     * @return
      */
     @CacheEvict(cacheNames = CacheNames.SYS_DEPT, key = "#dept.deptId")
     @Override
@@ -256,16 +256,16 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
         int result = baseMapper.updateById(dept);
         if (UserConstants.DEPT_NORMAL.equals(dept.getStatus()) && StringUtils.isNotEmpty(dept.getAncestors())
             && !StringUtils.equals(UserConstants.DEPT_NORMAL, dept.getAncestors())) {
-            // 如果该部门是启用状态，则启用该部门的所有上级部门
+            // if department is , department all department
             updateParentDeptStatusNormal(dept);
         }
         return result;
     }
 
     /**
-     * 修改该部门的父级部门状态
+     * Update department department
      *
-     * @param dept 当前部门
+     * @param dept current department
      */
     private void updateParentDeptStatusNormal(SysDeptView dept) {
         String ancestors = dept.getAncestors();
@@ -276,11 +276,11 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     }
 
     /**
-     * 修改子元素关系
+     * Update sub element
      *
-     * @param deptId       被修改的部门ID
-     * @param newAncestors 新的父ID集合
-     * @param oldAncestors 旧的父ID集合
+     * @param deptId Update department ID
+     * @param newAncestors new IDcollection
+     * @param oldAncestors old IDcollection
      */
     public void updateDeptChildren(String deptId, String newAncestors, String oldAncestors) {
         List<SysDeptView> children = baseMapper.selectList(new LambdaQueryWrapper<SysDeptView>()
@@ -300,10 +300,10 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     }
 
     /**
-     * 删除部门管理信息
+     * Delete department info
      *
-     * @param deptId 部门ID
-     * @return 结果
+     * @param deptId department ID
+     * @return
      */
     @CacheEvict(cacheNames = CacheNames.SYS_DEPT, key = "#deptId")
     @Override

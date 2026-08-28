@@ -1,6 +1,11 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="annotation-grid-view">
-    <!-- 顶部筛选标签 -->
+    <!--  -->
     <el-tabs
       v-model="activeFilter"
       class="tenanat-tabs"
@@ -15,7 +20,7 @@
     </el-tabs>
 
     <div class="grid-container tableTenBox flexRowAC">
-      <!-- 左侧标签面板 -->
+      <!--  -->
       <div v-yResize class="police_aside_use">
         <AnnotationLabelPanel
           :labels="annotationLabels"
@@ -27,7 +32,7 @@
         />
       </div>
 
-      <!-- 右侧主内容区域 -->
+      <!-- main -->
       <div class="tableTenItU main-content">
         <div class="depNameBox_out flexRowAC">
           <div class="depNameBox flexRowAC">
@@ -37,7 +42,7 @@
           </div>
         </div>
 
-        <!-- 图片网格区域 -->
+        <!--  -->
         <div class="images-grid-wrapper" @scroll="handleGridScroll">
           <div class="images-grid">
             <div
@@ -72,7 +77,7 @@
               </div>
             </div>
 
-            <!-- 空状态 -->
+            <!-- null / empty -->
             <div v-if="filteredImages.length === 0" class="empty-state">
               <el-icon class="empty-icon"><Picture /></el-icon>
               <p class="empty-text">暂无图片</p>
@@ -86,7 +91,7 @@
       </div>
     </div>
 
-    <!-- 标签编辑弹窗 -->
+    <!-- dialog -->
     <el-dialog
       v-model="showLabelDialog"
       :title="editingLabel ? '编辑标签' : '新增标签'"
@@ -106,7 +111,7 @@
       </template>
     </el-dialog>
 
-    <!-- 图片上传弹窗 -->
+    <!-- dialog -->
     <el-dialog
       v-model="showUploadDialog"
       title="导入图片"
@@ -114,9 +119,9 @@
       class="import-dialog"
     >
       <div class="import-dialog-content">
-        <!-- 左侧表单区域 -->
+        <!-- form -->
         <div class="import-form-section">
-          <!-- 标注状态 -->
+          <!-- annotation -->
           <div class="form-group">
             <label class="form-label">标注状态</label>
             <div class="radio-group">
@@ -129,7 +134,7 @@
             </div>
           </div>
 
-          <!-- 导入路径 -->
+          <!-- Import -->
           <div class="form-group">
             <label class="form-label">导入路径<span class="required">*</span></label>
             <div class="path-input-group">
@@ -139,7 +144,7 @@
               </el-button>
             </div>
 
-            <!-- 提示信息 -->
+            <!-- prompt / tipinfo -->
             <div class="import-tips">
               <div class="tip-item">
                 <el-icon class="tip-icon"><InfoFilled /></el-icon>
@@ -155,9 +160,9 @@
           </div>
         </div>
 
-        <!-- 右侧帮助区域 -->
+        <!--  -->
         <div class="help-section">
-          <!-- 如何设计标签 -->
+          <!--  -->
           <div class="help-item">
             <div class="help-header" @click="toggleHelpItem('labels')">
               <span class="help-title">1. 如何设计标签</span>
@@ -171,7 +176,7 @@
             </div>
           </div>
 
-          <!-- 图片内容要求 -->
+          <!-- need to -->
           <div class="help-item">
             <div class="help-header" @click="toggleHelpItem('content')">
               <span class="help-title">2. 图片内容要求</span>
@@ -186,7 +191,7 @@
             </div>
           </div>
 
-          <!-- 导入格式要求 -->
+          <!-- Import need to -->
           <div class="help-item">
             <div class="help-header" @click="toggleHelpItem('format')">
               <span class="help-title">3. 导入格式要求</span>
@@ -210,7 +215,7 @@
       </template>
     </el-dialog>
 
-    <!-- 图片预览弹窗 -->
+    <!-- dialog -->
     <el-dialog
       v-model="showPreviewDialog"
       :title="previewImage?.name || '图片预览'"
@@ -250,7 +255,7 @@ import {uploadAnnotationImages} from '@/api/annotationImage'
 import {importAnnotationData} from '@/api/algorithmAnnotation'
 import AnnotationLabelPanel from '@/components/AnnotationLabelPanel.vue'
 
-// 定义props
+// props
 const props = defineProps({
   annotationData: {
     type: Object,
@@ -258,39 +263,39 @@ const props = defineProps({
   }
 })
 
-// 定义emit
+// emit
 const emit = defineEmits(['back-to-list', 'start-annotation', 'images-imported', 'add-label', 'update-label', 'delete-label', 'batch-upload-images', 'import-annotation-zip', 'delete-image-and-data'])
 
-// 使用从父组件传递的真实标签数据
+// from component data
 const annotationLabels = computed(() => {
-  // 如果父组件传递了标注数据，使用其中的标签数据
+  // if component annotationdata, in data
   if (props.annotationData && props.annotationData.annotationLabels) {
     return props.annotationData.annotationLabels
   }
 
-  // 否则返回空数组
+  // null / empty array
   return []
 })
 
-// 使用从父组件传递的真实图片数据
+// from component data
 const uploadedImages = computed(() => {
-  // 如果父组件传递了标注数据，使用其中的图片数据
+  // if component annotationdata, in data
   if (props.annotationData && props.annotationData.uploadedImages) {
     return props.annotationData.uploadedImages
   }
 
-  // 否则返回空数组
+  // null / empty array
   return []
 })
 
-// 筛选相关
+// related
 const annotationFilters = ref([
   { key: 'all', label: '全部', count: 0 },
   { key: 'annotated', label: '有标注信息', count: 0 },
   { key: 'unannotated', label: '无标注信息', count: 0 }
 ])
 
-// 标注实例集合（支持 imageId / name 匹配）
+// annotationinstancecollection ( imageId / name )
 const buildAnnotatedSets = () => {
   const ids = new Set()
   const names = new Set()
@@ -335,13 +340,13 @@ const getImageDisplayName = (image) => {
   return image?.name || '未命名'
 }
 
-// 表单数据
+// formdata
 const labelForm = reactive({
   name: '',
   color: '#409eff'
 })
 
-// 导入表单数据
+// Import formdata
 const importForm = reactive({
   annotationStatus: 'none'
 })
@@ -349,7 +354,7 @@ const pendingUploadFiles = ref([])
 const pendingZipFile = ref(null)
 const isUploading = ref(false)
 
-// 帮助区域展开状态
+//
 const expandedHelp = reactive({
   labels: false,
   content: false,
@@ -360,10 +365,10 @@ const labelRules = {
   name: [{ required: true, message: '请输入标签名称', trigger: 'blur' }]
 }
 
-// 存储标注实例数据用于筛选
+// annotationinstancedata
 const annotationInstances = ref([])
 
-// 计算属性 - 筛选后的图片
+// property - after
 const filteredImages = computed(() => {
   const annotatedSets = buildAnnotatedSets()
   switch (activeFilter.value) {
@@ -376,7 +381,7 @@ const filteredImages = computed(() => {
   }
 })
 
-// 限制初次渲染数量，滚动时逐步追加，避免一次性渲染过多图片卡顿
+// , ,
 const INITIAL_RENDER_COUNT = 40
 const RENDER_INCREMENT = 20
 const renderCount = ref(INITIAL_RENDER_COUNT)
@@ -388,22 +393,22 @@ const resetRenderCount = () => {
   renderCount.value = Math.min(filteredImages.value.length, INITIAL_RENDER_COUNT)
 }
 
-// 更新筛选器统计数量
+// new
 const updateFilterCounts = async () => {
   const total = uploadedImages.value.length
 
   try {
-    // 获取所有标注实例数据来统计
+    // Get all annotationinstancedata
     if (props.annotationData && props.annotationData.id) {
       const response = await getAllAnnotationInstances(props.annotationData.id)
 
       if (response.code === 200) {
         const instances = response.data || []
 
-        // 更新标注实例数据用于筛选
+        // new annotationinstancedata
         annotationInstances.value = instances
 
-        // 统计有标注的图片数量（根据图片名称去重）
+        // annotation ( )
         const annotatedSets = buildAnnotatedSets()
         const annotated = uploadedImages.value.filter(image => isImageAnnotated(image, annotatedSets)).length
         const unannotated = total - annotated
@@ -414,28 +419,28 @@ const updateFilterCounts = async () => {
 
         console.log('统计结果:', { total, annotated, unannotated })
       } else {
-        // API调用失败，使用默认统计
+        // API failed,
         console.warn('获取标注实例失败，使用默认统计')
         annotationFilters.value[0].count = total
         annotationFilters.value[1].count = 0
         annotationFilters.value[2].count = total
       }
     } else {
-      // 没有标注数据，所有图片都是无标注
+      // annotationdata, all is annotation
       annotationFilters.value[0].count = total
       annotationFilters.value[1].count = 0
       annotationFilters.value[2].count = total
     }
   } catch (error) {
     console.error('更新筛选器统计失败:', error)
-    // 出错时使用默认统计
+    //
     annotationFilters.value[0].count = total
     annotationFilters.value[1].count = 0
     annotationFilters.value[2].count = total
   }
 }
 
-// 方法
+// method
 const selectLabel = (labelId) => {
   selectedLabelId.value = labelId
 }
@@ -459,17 +464,17 @@ const handleGridScroll = (event) => {
 }
 
 const handleBackToList = () => {
-  // 触发父组件的返回事件
+  // component event
   emit('back-to-list')
 }
 
 const handleAddLabel = (labelData) => {
-  // 新组件传递的是标签数据对象
+  // new component is dataobject
   if (labelData && labelData.name) {
-    // 处理新增标签
+    // Process Add
     emit('add-label', labelData)
   } else {
-    // 兼容原有调用方式
+    //
     editingLabel.value = null
     labelForm.name = ''
     labelForm.color = '#409eff'
@@ -478,12 +483,12 @@ const handleAddLabel = (labelData) => {
 }
 
 const handleEditLabel = (labelData) => {
-  // 新组件传递的是标签数据对象
+  // new component is dataobject
   if (labelData && labelData.id) {
-    // 处理编辑标签
+    // Process
     emit('edit-label', labelData)
   } else {
-    // 兼容原有调用方式
+    //
     editingLabel.value = labelData
     labelForm.name = labelData.name
     labelForm.color = labelData.color
@@ -492,14 +497,14 @@ const handleEditLabel = (labelData) => {
 }
 
 const handleDeleteLabel = (labelId) => {
-  // 直接传递给父组件处理，删除确认由公共组件处理
+  // componentProcess , Delete componentProcess
   emit('delete-label', labelId)
 }
 
 const handleSaveLabel = () => {
-  // 保存标签逻辑
+  //
   if (editingLabel.value) {
-    // 编辑标签 - 通知父组件
+    // - notification component
     emit('update-label', {
       id: editingLabel.value.id,
       name: labelForm.name,
@@ -507,7 +512,7 @@ const handleSaveLabel = () => {
     })
     ElMessage.success('标签更新成功')
   } else {
-    // 新增标签 - 通知父组件
+    // Add - notification component
     const newLabel = {
       name: labelForm.name,
       color: labelForm.color,
@@ -533,7 +538,7 @@ const handleBatchAnnotate = () => {
 
   console.log(`开始批量标注 ${selectedImages.value.length} 张图片`)
 
-  // 传递所有选中的图片到标注页面
+  // all in annotationpage
   emit('start-annotation', {
     type: 'batch',
     images: selectedImages.value.map(id =>
@@ -558,7 +563,7 @@ const handleDeleteSelected = async () => {
     type: 'warning'
   }).then(async () => {
     try {
-      // 获取要删除的图片信息，根据图片ID查找
+      // Get need to Delete info, IDfind
       const validImages = []
       for (const imageId of selectedImages.value) {
         const image = uploadedImages.value.find(img => img.id === imageId)
@@ -581,12 +586,12 @@ const handleDeleteSelected = async () => {
 
       const imageIds = validImages.map(img => img.id)
 
-      // 调用完整的删除逻辑（删除图片文件和标注数据）
+      // Delete (Delete and annotationdata)
       if (props.annotationData && props.annotationData.id) {
         await deleteImageAndRelatedData(props.annotationData.id, imageIds)
       }
 
-      // 从前端数组中删除图片（根据ID删除）
+      // from before array in Delete ( IDDelete )
       for (const imageId of selectedImages.value) {
         const index = uploadedImages.value.findIndex(img => img.id === imageId)
         if (index > -1) {
@@ -613,7 +618,7 @@ const toolbarButtonList = computed(() => [
 const deleteImageAndRelatedData = async (annotationId, imageIds) => {
   console.log('deleteImageAndRelatedData :', { annotationId, imageIds: imageIds })
 
-  // 由于这是子组件，我们通过emit通知父组件处理
+  // is sub component, emitnotification componentProcess
   return new Promise((resolve) => {
     emit('delete-image-and-data', { annotationId, imageIds: imageIds })
     setTimeout(resolve, 50)
@@ -622,7 +627,7 @@ const deleteImageAndRelatedData = async (annotationId, imageIds) => {
 
 const handleImageCardClick = (imageId, event) => {
   if (event.ctrlKey || event.metaKey) {
-    // Ctrl/Cmd + 点击：多选
+    // Ctrl/Cmd + :
     const selectedIndex = selectedImages.value.indexOf(imageId)
     if (selectedIndex > -1) {
       selectedImages.value.splice(selectedIndex, 1)
@@ -630,17 +635,17 @@ const handleImageCardClick = (imageId, event) => {
       selectedImages.value.push(imageId)
     }
   } else {
-    // 普通点击：单选
+    // :
     selectedImages.value = [imageId]
   }
 }
 
 const handleAnnotateImage = (imageId) => {
-  // 找到对应的图片
+  //
   const image = filteredImages.value.find(img => img.id === imageId)
   if (image) {
     console.log(`开始标注图片: ${image.name}`)
-    // 触发父组件切换到标注模式
+    // component annotation
     emit('start-annotation', image)
   }
 }
@@ -789,7 +794,7 @@ const handleConfirmUpload = async () => {
 }
 const handleImageError = (event) => {
   console.error('网格图片加载失败:', event.target.src)
-  // 设置默认占位图片
+  // Set
   event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjEwMCIgeT0iNzUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWbvueJh+S4jeWtmOWcqDwvdGV4dD48L3N2Zz4='
 }
 
@@ -797,12 +802,12 @@ watch(filteredImages, () => {
   resetRenderCount()
 }, { deep: true, immediate: true })
 
-// 监听图片数据变化，更新统计
+// data , new
 watch(() => uploadedImages.value, () => {
   updateFilterCounts()
 }, { deep: true })
 
-// 监听标注数据变化，更新统计
+// annotationdata , new
 watch(() => props.annotationData, () => {
   updateFilterCounts()
 }, { deep: true })
@@ -988,7 +993,7 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
-/* 导入弹窗样式 */
+/* Import dialog */
 .import-dialog-content {
   display: flex;
   gap: 40px;
@@ -1005,7 +1010,7 @@ onMounted(() => {
   max-width: 350px;
 }
 
-/* 表单样式 */
+/* form */
 .form-group {
   margin-bottom: 24px;
 }
@@ -1055,7 +1060,7 @@ onMounted(() => {
   color: #40a9ff;
 }
 
-/* 提示信息样式 */
+/* prompt / tipinfo */
 .import-tips {
   background: #fffbe6;
   border: 1px solid #ffe58f;
@@ -1101,7 +1106,7 @@ onMounted(() => {
   text-decoration: underline;
 }
 
-/* 帮助区域样式 */
+/*  */
 .help-item {
   border: 1px solid #f0f0f0;
   border-radius: 6px;
@@ -1156,14 +1161,14 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
-/* 弹窗底部按钮 */
+/* dialog button */
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
 }
 
-/* 图片预览 */
+/*  */
 .image-preview-dialog :deep(.el-dialog__body) {
   padding: 10px 20px 20px;
 }

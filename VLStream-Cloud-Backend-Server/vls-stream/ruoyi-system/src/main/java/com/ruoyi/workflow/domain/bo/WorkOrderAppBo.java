@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -10,9 +11,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 应用工单分类业务对象 workorder_app
+ * work order object workorder_app
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-04
  */
 
@@ -21,41 +22,41 @@ import lombok.EqualsAndHashCode;
 public class WorkOrderAppBo extends BaseEntity {
 
     /**
-     * 主键ID
+     * primary key ID
      */
     private String appId;
 
     /**
-     * 应用名称
+     *
      */
     private String applicationName;
 
     /**
-     * 应用ID
+     * ID
      */
     private String applicationId;
 
     /**
-     * 应用密钥
+     *
      */
     private String applicationSecret;
 
     /**
-     * 用户id
+     * user ID
      */
     private String userId;
 
     /**
-     * 0选择应用，1添加应用
+     * 0 , 1
      */
     private String appFlag;
 
     /**
-     * 图标地址
+     *
      */
     private String images;
     /**
-     * 应用包名
+     *
      */
     private String appPackage;
 }

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -18,19 +19,19 @@ import lombok.Getter;
 public enum ProcessStatus {
 
     /**
-     * 进行中（审批中）
+     * in (approval in )
      */
     RUNNING("running"),
     /**
-     * 已终止
+     * already
      */
     TERMINATED("terminated"),
     /**
-     * 已完成
+     * already
      */
     COMPLETED("completed"),
     /**
-     * 已取消
+     * already
      */
     CANCELED("canceled");
 

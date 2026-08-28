@@ -1,5 +1,4 @@
 /*
- * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -57,7 +56,7 @@ public class JobLogController {
     @RequestMapping
     public String index(HttpServletRequest request, Model model, @RequestParam(required = false, defaultValue = "0") Integer jobId) {
 
-        // 执行器列表
+        // Execute
         List<XxlJobGroup> jobGroupList_all = xxlJobGroupDao.findAll();
 
         // filter group
@@ -68,7 +67,7 @@ public class JobLogController {
 
         model.addAttribute("JobGroupList", jobGroupList);
 
-        // 任务
+        // task
         if (jobId > 0) {
             XxlJobInfo jobInfo = xxlJobInfoDao.loadById(jobId);
             if (jobInfo == null) {
@@ -99,7 +98,7 @@ public class JobLogController {
                                         int jobGroup, int jobId, int logStatus, String filterTime) {
 
         // valid permission
-        JobInfoController.validPermission(request, jobGroup);    // 仅管理员支持查询全部；普通用户仅支持查询有权限的 jobGroup
+        JobInfoController.validPermission(request, jobGroup);    // administrator Query full ; user Query jobGroup
 
         // parse param
         Date triggerTimeStart = null;
@@ -118,9 +117,9 @@ public class JobLogController {
 
         // package result
         Map<String, Object> maps = new HashMap<String, Object>();
-        maps.put("recordsTotal", list_count);        // 总记录数
-        maps.put("recordsFiltered", list_count);    // 过滤后的总记录数
-        maps.put("data", list);                    // 分页列表
+        maps.put("recordsTotal", list_count);        // record
+        maps.put("recordsFiltered", list_count);    // after record
+        maps.put("data", list);                    //
         return maps;
     }
 
@@ -209,23 +208,23 @@ public class JobLogController {
         Date clearBeforeTime = null;
         int clearBeforeNum = 0;
         if (type == 1) {
-            clearBeforeTime = DateUtil.addMonths(new Date(), -1);    // 清理一个月之前日志数据
+            clearBeforeTime = DateUtil.addMonths(new Date(), -1);    // beforelogdata
         } else if (type == 2) {
-            clearBeforeTime = DateUtil.addMonths(new Date(), -3);    // 清理三个月之前日志数据
+            clearBeforeTime = DateUtil.addMonths(new Date(), -3);    // beforelogdata
         } else if (type == 3) {
-            clearBeforeTime = DateUtil.addMonths(new Date(), -6);    // 清理六个月之前日志数据
+            clearBeforeTime = DateUtil.addMonths(new Date(), -6);    // beforelogdata
         } else if (type == 4) {
-            clearBeforeTime = DateUtil.addYears(new Date(), -1);    // 清理一年之前日志数据
+            clearBeforeTime = DateUtil.addYears(new Date(), -1);    // beforelogdata
         } else if (type == 5) {
-            clearBeforeNum = 1000;        // 清理一千条以前日志数据
+            clearBeforeNum = 1000;        // beforelogdata
         } else if (type == 6) {
-            clearBeforeNum = 10000;        // 清理一万条以前日志数据
+            clearBeforeNum = 10000;        // beforelogdata
         } else if (type == 7) {
-            clearBeforeNum = 30000;        // 清理三万条以前日志数据
+            clearBeforeNum = 30000;        // beforelogdata
         } else if (type == 8) {
-            clearBeforeNum = 100000;    // 清理十万条以前日志数据
+            clearBeforeNum = 100000;    // beforelogdata
         } else if (type == 9) {
-            clearBeforeNum = 0;            // 清理所有日志数据
+            clearBeforeNum = 0;            // all logdata
         } else {
             return new ReturnT<String>(ReturnT.FAIL_CODE, I18nUtil.getString("joblog_clean_type_unvalid"));
         }

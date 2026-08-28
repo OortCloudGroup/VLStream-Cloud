@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -12,10 +13,10 @@ import java.util.Map;
 
 @Data
 public class WFormInfo {
-    // 表单配置
+    // formconfiguration
     private WFormConf formConfig ;
     /**
-     * 表单项
+     * form item
      */
     private List<Map<String, Object>> widgetList;
 }

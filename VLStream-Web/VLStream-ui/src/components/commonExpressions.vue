@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="common_wrapper">
     <div
@@ -31,10 +36,10 @@ const props = defineProps({
   }
 })
 const listData = ref([])
-// 加载当前登录用户的常用语，身份由后端根据请求头中的本地 token 判定。
+// Load current user , after in token .
 const getCommonOpinionsList = async() => {
   const params = {
-    is_open: 0, // 0 个人 1 公开
+    is_open: 0, // 0 1
     page: 0,
     pagesize: 999
   }
@@ -43,7 +48,7 @@ const getCommonOpinionsList = async() => {
     listData.value = res.data.list
   }
 }
-// 将当前输入保存为当前登录用户的常用语。
+// current to current user .
 const addCommonOpinion = async() => {
   if (!props.content || props.content.trim() === '') {
     return
@@ -57,7 +62,7 @@ const addCommonOpinion = async() => {
     getCommonOpinionsList()
   }
 }
-// 仅删除当前登录用户拥有的常用语。
+// Delete current user .
 const delCommonOpinion = async(id) => {
   const params = {
     id: id

@@ -1,8 +1,13 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="video-square">
-    <!-- 主要内容区域 -->
+    <!-- main need to -->
     <div class="main-content">
-      <!-- 调试信息面板 -->
+      <!-- info -->
       <DebugPanel
         v-if="showDebugInfo"
         :show-debug-info="showDebugInfo"
@@ -14,10 +19,10 @@
         @close="showDebugInfo = false"
       />
 
-      <!-- 地图模式 - 与PTZ面板水平布局 -->
+      <!-- - and PTZ -->
       <div class="main-layout">
         <div class="map-area fullscreen-map">
-          <!-- 地图顶部控制栏 - 布局按钮居中，设备统计右侧 -->
+          <!-- control - button in , device -->
           <VideoLayoutControls
             :layout-mode="layoutMode"
             :show-extended-layout="showExtendedLayout"
@@ -37,8 +42,8 @@
             @open-custom-video-dialogs="openCustomVideoDialogs"
             @toggle-fullscreen="toggleFullscreen"
           />
-          
-          <!-- 设备列表面板 - 移到右侧 -->
+
+          <!-- device - -->
           <DeviceListPanel
             :is-tree-view="isTreeView"
             :selected-display-items="selectedDisplayItems"
@@ -59,12 +64,12 @@
             @tree-node-click="handleTreeNodeClick"
           />
 
-          <!-- 地图主体 -->
+          <!-- main -->
           <div class="map-container">
-            <!-- Leaflet地图容器 -->
+            <!-- Leaflet -->
             <div id="video-square-map" class="leaflet-map-container"></div>
-            
-            <!-- 地图控制工具栏 -->
+
+            <!-- control -->
             <MapControls
               :is-dark-mode="isDarkMode"
               @fit-bounds="fitBounds"
@@ -77,7 +82,7 @@
       </div>
     </div>
 
-    <!-- 单个摄像头视频播放弹窗 -->
+    <!-- dialog -->
     <VideoDialog
       v-for="dialog in videoDialogs"
       :key="dialog.id"
@@ -95,7 +100,7 @@
       @copy-stream-url="copyStreamUrl"
     />
 
-    <!-- 其他弹窗和设置界面 -->
+    <!-- dialog and Set -->
     <el-dialog
       v-model="showExtendedLayoutDialog"
       title="扩展布局选项"
@@ -124,7 +129,7 @@
       </div>
     </el-dialog>
 
-    <!-- 设置面板 -->
+    <!-- Set -->
     <el-dialog v-model="showSettings" title="设置" width="30%">
       <div class="settings-content">
         <h4>显示设置</h4>
@@ -148,7 +153,7 @@ import {getDeviceList} from '@/api/device'
 
 // Component imports
 
-// 导入拆分后的组件
+// Import after component
 import VideoLayoutControls from './components/VideoLayoutControls.vue'
 import DebugPanel from './components/DebugPanel.vue'
 import DeviceListPanel from './components/DeviceListPanel.vue'
@@ -163,7 +168,7 @@ import mode4Icon from '@/assets/mode4_default.png'
 import mode5Icon from '@/assets/mode5_default.png'
 import mode6Icon from '@/assets/mode6_default.png'
 
-// 基础状态
+//
 const loading = ref(false)
 const showDebugInfo = ref(false)
 const isDarkMode = ref(false)
@@ -174,7 +179,7 @@ const showExtendedLayoutDialog = ref(false)
 const showSettings = ref(false)
 const showOfflineDevices = ref(true)
 
-// 设备相关状态
+// devicerelated
 const deviceList = ref([])
 const realCameraStreams = ref({})
 const selectedDisplayItems = ref([])
@@ -188,18 +193,18 @@ const statusOptions = ref([
   { label: '离线', value: 'offline' }
 ])
 
-// 视频弹窗状态
+// dialog
 const videoDialogs = ref([])
 const currentStatsItem = ref(null)
 const showDeviceStatsDialog = ref(false)
 const webrtcConfig = ref({})
 
-// 地图相关
+// related
 let map = null
 let mapInitialized = false
 let isComponentMounted = false
 
-// 计算属性
+// property
 const onlineDeviceCount = computed(() => {
   return deviceList.value.filter(device => device.status === 'online').length
 })
@@ -217,14 +222,14 @@ const extendedLayouts = computed(() => [
   { mode: 6, count: 36, label: '6x6', gridStyle: 'grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(6, 1fr);' }
 ])
 
-// 方法
+// method
 const initMap = () => {
-  // 确保组件仍然挂载且地图容器存在
+  // component in
   if (!isComponentMounted || !document.getElementById('video-square-map')) {
     console.log('组件未挂载或地图容器不存在，跳过地图初始化')
     return
   }
-  
+
   if (map) {
     try {
     map.remove()
@@ -233,14 +238,14 @@ const initMap = () => {
     }
     map = null
   }
-  
+
   try {
   map = L.map('video-square-map').setView([39.9042, 116.4074], 13)
-  
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map)
-    
+
     mapInitialized = true
     console.log('地图初始化成功')
   } catch (error) {
@@ -260,57 +265,57 @@ const showExtendedLayoutDialogHandler = () => {
 }
 
 const openVideoDialogs = () => {
-  // 实现打开视频弹窗逻辑
+  // dialog
   ElMessage.info('打开视频弹窗功能')
 }
 
 const openCustomVideoDialogs = () => {
-  // 实现自定义视频弹窗逻辑
+  // Custom dialog
   ElMessage.info('自定义视频布局功能')
 }
 
 const toggleFullscreen = () => {
   console.log('切换视频播放器全屏')
-  
-  // 检查是否有打开的视频播放器
+
+  // whether
   const hasOpenDialogs = videoDialogs.value.length > 0
-  
+
   if (!hasOpenDialogs) {
     ElMessage.warning('请先打开视频播放器')
     return
   }
-  
+
   if (!isFullscreen.value) {
-    // 进入全屏模式
+    // full
     enterVideoPlayerFullscreen()
   } else {
-    // 退出全屏模式
+    // exit full
     exitVideoPlayerFullscreen()
   }
 }
 
-// 进入视频播放器全屏模式
+// full
 const enterVideoPlayerFullscreen = () => {
-  // 查找所有视频播放器弹窗
+  // find all dialog
   const videoDialogs = document.querySelectorAll('.video-dialog, .layout-dialog')
-  
+
   if (videoDialogs.length === 0) {
     ElMessage.error('未找到视频播放器')
     return
   }
-  
-  // 为每个视频播放器添加全屏样式
+
+  // to each full
   videoDialogs.forEach(dialog => {
     dialog.classList.add('fullscreen-active')
   })
-  
+
   isFullscreen.value = true
   ElMessage.success('视频播放器已进入全屏模式')
-  
-  // 添加ESC键监听
+
+  // ESC
   document.addEventListener('keydown', handleEscKey)
-  
-  // 使用浏览器全屏API
+
+  // full API
   const firstDialog = videoDialogs[0]
   if (firstDialog && firstDialog.requestFullscreen) {
     firstDialog.requestFullscreen().catch(err => {
@@ -319,23 +324,23 @@ const enterVideoPlayerFullscreen = () => {
   }
 }
 
-// 退出视频播放器全屏模式
+// exit full
 const exitVideoPlayerFullscreen = () => {
-  // 查找所有视频播放器弹窗
+  // find all dialog
   const videoDialogs = document.querySelectorAll('.video-dialog, .layout-dialog')
-  
-  // 移除全屏样式class
+
+  // full class
   videoDialogs.forEach(dialog => {
     dialog.classList.remove('fullscreen-active')
   })
-  
+
   isFullscreen.value = false
   ElMessage.info('已退出全屏模式')
-  
-  // 移除ESC键监听
+
+  // ESC
   document.removeEventListener('keydown', handleEscKey)
-  
-  // 退出浏览器全屏API（如果正在使用）
+
+  // exit full API (if in )
   if (document.exitFullscreen && document.fullscreenElement) {
     document.exitFullscreen().catch(err => {
       console.log('退出浏览器全屏失败:', err)
@@ -343,25 +348,25 @@ const exitVideoPlayerFullscreen = () => {
   }
 }
 
-// ESC键处理函数
+// ESC Process
 const handleEscKey = (event) => {
   if (event.key === 'Escape' && isFullscreen.value) {
     exitVideoPlayerFullscreen()
   }
 }
 
-// 监听全屏状态变化
+// full
 const handleFullscreenChange = () => {
-  // 检测浏览器全屏状态
+  // full
   const isCurrentlyFullscreen = !!(
     document.fullscreenElement ||
     document.webkitFullscreenElement ||
     document.mozFullScreenElement ||
     document.msFullscreenElement
   )
-  
+
   if (!isCurrentlyFullscreen && isFullscreen.value) {
-    // 用户通过浏览器的ESC键或其他方式退出全屏
+    // user ESC exit full
     const videoDialogs = document.querySelectorAll('.video-dialog, .layout-dialog')
     videoDialogs.forEach(dialog => {
       dialog.classList.remove('fullscreen-active')
@@ -417,20 +422,20 @@ const hideDeviceStatsModal = () => {
 }
 
 const handleMapSearch = () => {
-  // 实现地图搜索逻辑
+  //
 }
 
 const handleCameraClick = (camera) => {
-  // 实现摄像头点击逻辑
+  //
   ElMessage.info(`点击了摄像头: ${camera.name}`)
 }
 
 const handleTreeNodeClick = (data) => {
-  // 实现树节点点击逻辑
+  // node
   ElMessage.info(`点击了节点: ${data.name}`)
 }
 
-// 视频弹窗相关方法
+// dialogrelated method
 const closeVideoDialog = (id) => {
   const index = videoDialogs.value.findIndex(dialog => dialog.id === id)
   if (index > -1) {
@@ -446,11 +451,11 @@ const minimizeDialog = (id) => {
 }
 
 const bringToFront = (id) => {
-  // 实现置顶逻辑
+  //
 }
 
 const startDrag = ({ event, id }) => {
-  // 实现拖拽逻辑
+  //
 }
 
 const handleWebRTCIframeLoad = () => {
@@ -489,31 +494,31 @@ const copyStreamUrl = (url) => {
   }
 }
 
-// 生命周期
+//
 onMounted(async () => {
   try {
     isComponentMounted = true
     loading.value = true
-    
-    // 等待DOM完全渲染
+
+    // etc. DOM full
     await nextTick()
-    
-    // 检查组件是否仍然挂载
+
+    // componentwhether
     if (!isComponentMounted) {
       console.log('组件在初始化过程中被卸载')
       return
     }
-    
-    // 初始化地图
+
+    // Initialize
     initMap()
-    
-    // 添加全屏状态监听
+
+    // full
     document.addEventListener('fullscreenchange', handleFullscreenChange)
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
     document.addEventListener('mozfullscreenchange', handleFullscreenChange)
     document.addEventListener('MSFullscreenChange', handleFullscreenChange)
-    
-    // 加载设备列表
+
+    // Load device
     try {
     const response = await getDeviceList()
       if (response && response.data && isComponentMounted) {
@@ -539,15 +544,15 @@ onUnmounted(() => {
   console.log('VideoSquare组件开始卸载')
   isComponentMounted = false
   mapInitialized = false
-  
-  // 清理全屏状态监听
+
+  // full
   document.removeEventListener('fullscreenchange', handleFullscreenChange)
   document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
   document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
   document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
   document.removeEventListener('keydown', handleEscKey)
-  
-  // 清理地图
+
+  //
   if (map) {
     try {
     map.remove()
@@ -558,7 +563,7 @@ onUnmounted(() => {
     map = null
     }
   }
-  
+
   console.log('VideoSquare组件卸载完成')
 })
 </script>
@@ -604,7 +609,7 @@ onUnmounted(() => {
   height: 100%;
 }
 
-/* 扩展布局对话框样式 */
+/*  */
 .extended-layout-options h4 {
   margin: 0 0 20px 0;
   color: #333;
@@ -670,7 +675,7 @@ onUnmounted(() => {
   color: #1A53FF;
 }
 
-/* 设置面板样式 */
+/* Set */
 .settings-content h4 {
   margin: 0 0 16px 0;
   color: #333;
@@ -686,19 +691,19 @@ onUnmounted(() => {
   border-bottom: none;
 }
 
-/* 响应式设计 */
+/*  */
 @media (max-width: 768px) {
   .layout-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .layout-preview {
     width: 50px;
     height: 50px;
   }
 }
 
-/* 视频播放器弹窗全屏样式 */
+/* dialog full */
 .video-dialog.fullscreen-active,
 .layout-dialog.fullscreen-active {
   width: 100vw !important;
@@ -716,7 +721,7 @@ onUnmounted(() => {
   position: fixed !important;
 }
 
-/* 全屏状态下的视频播放器内容 */
+/* full */
 .video-dialog.fullscreen-active .video-dialog-content,
 .layout-dialog.fullscreen-active .layout-dialog-content {
   width: 100% !important;
@@ -725,7 +730,7 @@ onUnmounted(() => {
   background: #000 !important;
 }
 
-/* 全屏状态下的视频播放器头部 */
+/* full */
 .video-dialog.fullscreen-active .video-dialog-header,
 .layout-dialog.fullscreen-active .layout-dialog-header {
   position: absolute !important;
@@ -738,7 +743,7 @@ onUnmounted(() => {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-/* 全屏状态下的视频播放器主体 */
+/* full main */
 .video-dialog.fullscreen-active .video-dialog-body,
 .layout-dialog.fullscreen-active .layout-dialog-body {
   width: 100% !important;
@@ -747,7 +752,7 @@ onUnmounted(() => {
   background: #000 !important;
 }
 
-/* 全屏状态下的视频网格 */
+/* full */
 .video-dialog.fullscreen-active .video-grid,
 .layout-dialog.fullscreen-active .video-grid {
   width: 100% !important;
@@ -756,28 +761,28 @@ onUnmounted(() => {
   padding: 0 !important;
 }
 
-/* 全屏状态下的视频窗口 */
+/* full */
 .video-dialog.fullscreen-active .video-window,
 .layout-dialog.fullscreen-active .video-window {
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   background: #000 !important;
 }
 
-/* 全屏状态下的视频播放器 */
+/* full */
 .video-dialog.fullscreen-active .video-player-container,
 .layout-dialog.fullscreen-active .video-player-container {
   width: 100% !important;
   height: 100% !important;
 }
 
-/* 全屏状态下的视频内容 */
+/* full */
 .video-dialog.fullscreen-active .video-content,
 .layout-dialog.fullscreen-active .video-content {
   width: 100% !important;
   height: 100% !important;
 }
 
-/* 全屏状态下的iframe播放器 */
+/* full iframe */
 .video-dialog.fullscreen-active .stream-iframe,
 .layout-dialog.fullscreen-active .stream-iframe {
   width: 100% !important;
@@ -785,7 +790,7 @@ onUnmounted(() => {
   object-fit: cover !important;
 }
 
-/* 全屏状态下的HLS视频播放器 */
+/* full HLS */
 .video-dialog.fullscreen-active .hls-video,
 .layout-dialog.fullscreen-active .hls-video {
   width: 100% !important;
@@ -793,7 +798,7 @@ onUnmounted(() => {
   object-fit: cover !important;
 }
 
-/* 全屏状态下的HTTP和YouTube播放器 */
+/* full HTTP and YouTube */
 .video-dialog.fullscreen-active .http-stream-player,
 .video-dialog.fullscreen-active .youtube-stream-player,
 .video-dialog.fullscreen-active .hls-stream-player,
@@ -804,14 +809,14 @@ onUnmounted(() => {
   height: 100% !important;
 }
 
-/* 全屏状态下的RTSP流信息 */
+/* full RTSP info */
 .video-dialog.fullscreen-active .rtsp-stream-info,
 .layout-dialog.fullscreen-active .rtsp-stream-info {
   width: 100% !important;
   height: 100% !important;
 }
 
-/* 全屏状态下的PTZ面板 */
+/* full PTZ */
 .video-dialog.fullscreen-active .ptz-panel,
 .layout-dialog.fullscreen-active .ptz-panel {
   position: absolute !important;
@@ -826,11 +831,11 @@ onUnmounted(() => {
   z-index: 5 !important;
 }
 
-/* 全屏状态下的空白占位符 */
+/* full null / empty */
 .video-dialog.fullscreen-active .video-placeholder,
 .layout-dialog.fullscreen-active .video-placeholder {
   background: #1a1a1a !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   color: rgba(255, 255, 255, 0.6) !important;
 }
-</style> 
+</style>

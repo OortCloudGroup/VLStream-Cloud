@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div v-if="areaType > 3" style="width: 100%;">
     <el-form-item style="width: 100%;" label="设置定位中点">
@@ -61,7 +66,7 @@ export default {
     }
   },
   created() {
-    // 如果this.modelValue 是一个对象
+    // if this.modelValue is object
     if (typeof this.modelValue === 'object') {
       this.localModelValue = this.modelValue.address
     } else {

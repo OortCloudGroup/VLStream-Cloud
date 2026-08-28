@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,9 +11,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * 算法名称
+ * algorithm
  *
- * @author 老马
+ * @author
  * @version 4.6.0
  */
 @Getter
@@ -20,7 +21,7 @@ import lombok.Getter;
 public enum AlgorithmType {
 
     /**
-     * 默认走yml配置
+     * ymlconfiguration
      */
     DEFAULT(null),
 

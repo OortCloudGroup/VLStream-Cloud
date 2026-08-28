@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="map_body">
     <div ref="mapContainer" class="map_container" />
@@ -24,7 +29,7 @@ const props = defineProps({
     type: Number,
     default: 13
   },
-  // 是否编辑
+  // whether
   isEdit: {
     type: Boolean,
     default: true
@@ -73,7 +78,7 @@ const init = async() => {
     centerPoint.value = JSON.stringify({ lng: pt.lng, lat: pt.lat })
     geoc.getLocation(pt, (rs) => {
       let addComp = rs.addressComponents
-      // 根据选择的精度显示
+      //
       if (props.areaType === 4) {
         address.value = addComp.province + addComp.city + addComp.district + addComp.street + addComp.streetNumber
       }
@@ -81,11 +86,11 @@ const init = async() => {
         address.value = addComp.district + addComp.street + addComp.streetNumber
       }
 
-      // { label: '省', value: 1 },
-      //   { label: '省-市', value: 2 },
-      //   { label: '省-市-区', value: 3 },
-      //   { label: '省-市-区-详细地址', value: 4 },
-      //   { label: '详细地址', value: 5 }
+      // { label: ' ', value: 1 },
+      // { label: ' - ', value: 2 },
+      // { label: ' - - ', value: 3 },
+      // { label: ' - - - ', value: 4 },
+      // { label: ' ', value: 5 }
     })
   })
 }

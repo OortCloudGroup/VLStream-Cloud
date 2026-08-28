@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -38,15 +39,15 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * 消息通知节点  监听器
- * 处理 MessageNode 的消息推送和自动流转逻辑
+ * notificationnode listener
+ * Process MessageNode Push and
  */
 @Slf4j
 @Component
 public class MessageNotificationListener implements TaskListener, ApplicationContextAware {
     private static ApplicationContext applicationContext;
 
-    // 注入参数
+    // parameter
     private FixedValue priority;
     private FixedValue data;
     private FixedValue verificationInterval;
@@ -63,7 +64,7 @@ public class MessageNotificationListener implements TaskListener, ApplicationCon
             log.info("MessageNotificationListener 开始执行，taskId={}, taskName={}", delegateTask.getId(),
                     delegateTask.getName());
 
-            // 【新增】检查是否需要重置验证次数（重复通知回退场景）
+            // 【Add 】 whether need to ( notification )
             RuntimeService runtimeService = applicationContext.getBean(RuntimeService.class);
             if (delegateTask.getExecutionId() != null) {
                 Boolean shouldReset = (Boolean) runtimeService.getVariable(delegateTask.getExecutionId(),
@@ -71,11 +72,11 @@ public class MessageNotificationListener implements TaskListener, ApplicationCon
                 if (Boolean.TRUE.equals(shouldReset)) {
                     log.info("检测到重复通知回退，重置验证次数");
                     runtimeService.removeVariable(delegateTask.getExecutionId(), "messageNode_verifyCount_reset");
-                    // verifyCount 会在后续重新初始化为 0
+                    // verifyCount will in after new Initialize to 0
                 }
             }
 
-            // 1. 获取参数
+            // 1. Get parameter
             Integer priorityValue = null;
             String dataValue = null;
             Integer intervalValue = 15;
@@ -115,7 +116,7 @@ public class MessageNotificationListener implements TaskListener, ApplicationCon
                 if (val != null) {
                     try {
                         String channelTypesJson = val.toString().trim();
-                        // 使用Gson反序列化JSON数组
+                        // Gson JSONarray
                         com.google.gson.Gson gson = new com.google.gson.Gson();
                         channelTypesValue = gson.fromJson(channelTypesJson,
                                 new com.google.gson.reflect.TypeToken<List<Integer>>() {
@@ -126,36 +127,36 @@ public class MessageNotificationListener implements TaskListener, ApplicationCon
                 }
             }
 
-            // 2. 获取通知对象 (Assignee)
+            // 2. Get notificationobject (Assignee)
             String assignee = delegateTask.getAssignee();
-            // 去掉 MESSAGENODE_ 前缀获取真实 userId
+            // MESSAGENODE_ before Get userId
             if (assignee != null && assignee.startsWith("MESSAGENODE_")) {
                 assignee = assignee.substring("MESSAGENODE_".length());
             }
             if (StringUtils.isBlank(assignee)) {
                 log.warn("MessageNotificationListener: Assignee 为空，无法发送通知");
-                // 如果没有 assignee，可能无法继续，直接自动完成？
+                // if assignee, can method , ?
                 autoCompleteTask(delegateTask);
                 return;
             }
 
-            // 3. 发送通知
+            // 3. notification
             String msgNo = sendNotificationAndGetNo(delegateTask, assignee, priorityValue, dataValue,
                     channelTypesValue);
 
-            // 4. 存储任务局部变量 (Local Variable)
+            // 4. task variable (Local Variable)
             if (StringUtils.isNotBlank(msgNo)) {
                 delegateTask.setVariableLocal("messageNode_msgNo", msgNo);
                 delegateTask.setVariableLocal("messageNode_uid", assignee);
                 delegateTask.setVariableLocal("messageNode_priority", priorityValue);
                 delegateTask.setVariableLocal("messageNode_retryCount", 0);
-                delegateTask.setVariableLocal("messageNode_verifyCount", 0); // 初始化验证次数
-                // 标记该任务需要验证
+                delegateTask.setVariableLocal("messageNode_verifyCount", 0); // Initialize
+                // task need to
                 delegateTask.setVariableLocal("messageNode_needVerify", true);
             }
 
-            // 5. 判断是否自动完成
-            // 如果 priority 不是 0 或 1，或者发送失败没有 msgNo，直接自动完成
+            // 5. Check whether
+            // if priority is 0 1, failed msgNo,
             if (priorityValue == null || (priorityValue != 0 && priorityValue != 1) || StringUtils.isBlank(msgNo)) {
                 log.info("MessageNotificationListener: priority={}, msgNo={}, 标记为准备完成", priorityValue, msgNo);
                 autoCompleteTask(delegateTask);
@@ -165,18 +166,18 @@ public class MessageNotificationListener implements TaskListener, ApplicationCon
 
         } catch (Exception e) {
             log.error("MessageNotificationListener 执行失败", e);
-            // 异常情况下，为避免流程卡死，尝试自动完成？或者抛出异常让 Flowable 处理重试？
-            // 这里选择记录日志，不阻断流程（Flowable 默认行为）
+            // , to workflow , ? Flowable Process ?
+            // recordlog, workflow (Flowable to )
         }
     }
 
     private void autoCompleteTask(DelegateTask delegateTask) {
-        // 1. 设置变量作为兜底，防止事务回调失败
+        // 1. Set variable to , failed
         delegateTask.setVariableLocal("messageNode_readyToComplete", true);
 
         // final String taskId = delegateTask.getId();
         // try {
-        // // 2. 注册事务同步回调，在事务提交后立即完成任务
+        // // 2. , in after task
         // org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
         // new org.springframework.transaction.support.TransactionSynchronization() {
         // @Override
@@ -184,22 +185,22 @@ public class MessageNotificationListener implements TaskListener, ApplicationCon
         // try {
         // TaskService taskService = applicationContext.getBean(TaskService.class);
         // taskService.complete(taskId);
-        // log.info("MessageNotificationListener: 任务 {} 已通过事务回调自动完成", taskId);
+        // log.info("MessageNotificationListener: task {} already ", taskId);
         // } catch (Exception e) {
-        // log.error("MessageNotificationListener: 自动完成任务失败，将由 Scheduler 兜底。taskId={}",
+        // log.error("MessageNotificationListener: taskfailed, Scheduler . taskId={}",
         // taskId, e);
         // }
         // }
         // });
         // } catch (Exception e) {
-        // log.warn("注册事务同步回调失败，将由 Scheduler 兜底。taskId={}", taskId, e);
+        // log.warn(" failed, Scheduler . taskId={}", taskId, e);
         // }
     }
 
     private String sendNotificationAndGetNo(DelegateTask delegateTask, String assignee, Integer priorityValue,
             String dataValue, List<Integer> channelTypesValue) {
         try {
-            // 构建请求体 (复用 ApprovalNotificationListener 逻辑)
+            // Build ( ApprovalNotificationListener )
             String tenantId = delegateTask.getTenantId();
 
             ProcessEngineConfigurationImpl processEngineConfiguration = Context.getProcessEngineConfiguration();
@@ -216,7 +217,7 @@ public class MessageNotificationListener implements TaskListener, ApplicationCon
 
             WorkOrderAppServiceImpl workOrderAppService = applicationContext.getBean(WorkOrderAppServiceImpl.class);
             String applicationId = workOrderAppService.getById(category).getApplicationId();
-            // 调用 app/v1/relatesinfo 获取应用名称
+            // app/v1/relatesinfo Get
             String appName = getAppName(applicationId);
 
             Map<String, Object> requestBody = new HashMap<>();
@@ -239,14 +240,14 @@ public class MessageNotificationListener implements TaskListener, ApplicationCon
                 requestBody.put("file_source", 1);
             }
 
-            // 从流程变量获取 ex_data 参数
+            // from workflow variableGet ex_data parameter
             Map<String, Object> variables = delegateTask.getVariables();
             requestBody.put("msg_source", Integer.parseInt(String.valueOf(variables.getOrDefault("msg_source", 1))));
             Object appPackage = variables.get("app_package");
             Object jumpPath = variables.get("jump_path");
             Object jumpParams = variables.get("jump_params");
 
-            // 解析应用包名：优先从请求头 appid/appID 查表获取，查不到则用流程变量兜底
+            // Parse : from appid/appID Get , workflow variable
             String resolvedAppPackage = null;
             try {
                 HttpServletRequest req = getCurrentRequest();
@@ -265,7 +266,7 @@ public class MessageNotificationListener implements TaskListener, ApplicationCon
                 log.warn("消息通知：解析 app_package 异常，将使用流程变量兜底", e);
             }
 
-            // 构建 ex_data
+            // Build ex_data
             Map<String, Object> exDataMap = new HashMap<>();
             boolean hasExData = false;
             if (resolvedAppPackage != null) {
@@ -299,10 +300,10 @@ public class MessageNotificationListener implements TaskListener, ApplicationCon
             toList.add(toItem);
             requestBody.put("to", toList);
 
-            // 发送请求
+            //
             String responseBody = sendRequest(requestBody);
 
-            // 解析 msg_no
+            // Parse msg_no
             if (StringUtils.isNotBlank(responseBody)) {
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode root = mapper.readTree(responseBody);
@@ -320,8 +321,8 @@ public class MessageNotificationListener implements TaskListener, ApplicationCon
         return null;
     }
 
-    // ... processFormData, getCurrentRequest, sendRequest 等辅助方法 (复用代码)
-    // 为节省篇幅，这里需要完整实现这些方法
+    // ... processFormData, getCurrentRequest, sendRequest etc. method ( )
+    // to , need to method
 
     private FormDataResult processFormData(DelegateTask delegateTask, String originalData) {
         FormDataResult result = new FormDataResult(originalData);

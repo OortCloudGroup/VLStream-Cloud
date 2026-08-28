@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="deptUser_page flexRowAC">
     <div class="deptUser_item">
@@ -89,37 +94,37 @@ import OortImg from '@/components/oort_img.vue'
 const store = useUserStore()
 
 const props = defineProps({
-  // 已选的人员list
+  // already list
   userList: {
     type: Array,
     default: null
   },
-  // 已选的部门
+  // already department
   deptList: {
     type: Array,
     default: null
   },
-  // 选择模式 1, 部门和人都可以选， 2 只选  3 只选人
+  // 1, department and , 2 only 3 only
   mode: {
     type: Number,
     default: 1
   },
-  // 是否单选
+  // whether
   isSingle: {
     type: Boolean,
     default: false
   },
-  // 禁止选择的的部门
+  // department
   disalbedDeptList: {
     type: Array,
     default: null
   },
-  // 禁止选择的的用户
+  // user
   disalbedUserList: {
     type: Array,
     default: null
   },
-  // 是否登录人当前部门
+  // whether current department
   isLocalDept: {
     type: Boolean,
     default: false
@@ -132,23 +137,23 @@ let isIndeterminate = ref(false)
 let checkList = ref<any>([])
 let treeData = ref<any>([])
 let tableData = ref([])
-const currentDeptCode = ref<any>('') // 当前部门code
-const tempChooseList = ref<any>(JSON.parse(JSON.stringify(props.userList))) // 当前已经选择用户的，但当前box框没有的
-const tempDeptChooseList = ref<any>(JSON.parse(JSON.stringify(props.deptList))) // 当前已经选择部门的，但当前box框没有的
-// 配置选项
+const currentDeptCode = ref<any>('') // current departmentcode
+const tempChooseList = ref<any>(JSON.parse(JSON.stringify(props.userList))) // current already user , current box
+const tempDeptChooseList = ref<any>(JSON.parse(JSON.stringify(props.deptList))) // current already department , current box
+// configuration item
 const defaultProps = {
   children: 'son_dept',
   label: 'dept_name',
   isLeaf: (data) => { return (!!data.user_id) }
 }
 
-// 监听userList he deptList 给tempChooseList 和 tempDeptChooseList 赋值
+// userList he deptList tempChooseList and tempDeptChooseList value
 onMounted(() => {
   tempChooseList.value = JSON.parse(JSON.stringify(props.userList))
   tempDeptChooseList.value = JSON.parse(JSON.stringify(props.deptList))
 })
 
-// 部门树搜索
+// department
 const getSearchDept = () => {
   const params = {}
   params.accessToken = store.token
@@ -167,7 +172,7 @@ const getSearchDept = () => {
       treeData.value = [{ dept_name: '全部', dept_id: '', dept_code: '', son_dept: res.data.list || [] }]
       tableData.value = []
       if (props.mode === 1) {
-        // 列表模式
+        //
         tableData.value = [...(res.data.list || [])]
       }
       if (props.mode === 2) {
@@ -176,19 +181,19 @@ const getSearchDept = () => {
       if (props.mode === 3) {
         tableData.value = []
       }
-      // 默认选择的回填
+      //
       resetCheckList(tableData.value)
     }
   })
 }
 
-// 默认选择的回填
+//
 const resetCheckList = (arr: any) => {
-  // 用户
+  // user
   props.userList.forEach((itt: any) => {
     arr.forEach((idd: any) => {
       if (itt.user_id && itt.user_id === idd.user_id) {
-        // 是否checklist 有个
+        // whether checklist
         let index = checkList.value.findIndex((itd: any) => {
           return idd.user_id === itd.user_id
         })
@@ -196,11 +201,11 @@ const resetCheckList = (arr: any) => {
       }
     })
   })
-  // 部门
+  // department
   props.deptList.forEach((itt: any) => {
     arr.forEach(idd => {
       if (itt.dept_code && itt.dept_code === idd.dept_code) {
-        // 是否checklist 有个
+        // whether checklist
         let index = checkList.value.findIndex(itd => {
           return idd.dept_code === itd.dept_code
         })
@@ -208,7 +213,7 @@ const resetCheckList = (arr: any) => {
       }
     })
   })
-  // 禁止选择的人
+  //
   let tempD = props.disalbedUserList || []
   tempD.forEach((itt: any) => {
     tableData.value.forEach((idd: any) => {
@@ -217,7 +222,7 @@ const resetCheckList = (arr: any) => {
       }
     })
   })
-  // 禁止选择的部门
+  // department
   let tempDe = props.disalbedDeptList || []
   tempDe.forEach((itt: any) => {
     tableData.value.forEach((idd: any) => {
@@ -228,14 +233,14 @@ const resetCheckList = (arr: any) => {
   })
 }
 
-// 部门树选中
+// department in
 const deptClick = (data) => {
   showDeptClickData(data.son_dept || [], data.users || [])
 }
 
-// 获取当前部门子部门和用户
+// Get current department sub department and user
 const showDeptClickData = (dept, users) => {
-  // 判断模式 1 ，部门和人都可以选， 2，只可以选部门  3，只可以选人
+  // Check 1 , department and , 2, only department 3, only
   if (props.mode === 1) {
     let tempUserArr = users
     tableData.value = [...(dept || []), ...tempUserArr]
@@ -248,9 +253,9 @@ const showDeptClickData = (dept, users) => {
     tableData.value = tempUserArr
   }
   checkList.value = []
-  // 默认选择的回填
+  //
   resetCheckList(tableData.value)
-  // 设置全选按钮的状态
+  // Set full button
   if (checkList.value.length === tableData.value.length) {
     checkedAll.value = true
   }
@@ -263,11 +268,11 @@ const showDeptClickData = (dept, users) => {
   }
 }
 
-// 全选
+// full
 const handleCheckAllChange = (val) => {
   isIndeterminate.value = false
   checkList.value = val ? tableData.value : []
-  // 将用户和部门区分开来
+  // user and department
   if (val) {
     emitData2Parent(tableData.value)
   } else {
@@ -275,17 +280,17 @@ const handleCheckAllChange = (val) => {
   }
 }
 
-// 单选
+//
 const handleCheckedPersonsChange = (value) => {
   let checkedCount = value.length
   checkedAll.value = checkedCount === tableData.value.length
   isIndeterminate.value = checkedCount > 0 && checkedCount < tableData.value.length
-  // 是否单选
+  // whether
   if (props.isSingle) {
     if (checkedCount === 0) {
       tempChooseList.value = []
       tempDeptChooseList.value = []
-      // 将用户和部门区分开来
+      // user and department
       emitData2Parent([])
     } else {
       tempChooseList.value = []
@@ -309,13 +314,13 @@ const usedSetPerson = (data) => {
   usedSet(params)
 }
 
-// 将用户和部门区分开来
+// user and department
 const emitData2Parent = (value) => {
   if (value) {
     let user: any = []
     let dept: any = []
-    // 先把所有的去除，在根据选中的添加进来
-    // 第一步
+    // all , in in
+    //
     tableData.value.forEach((itm: any) => {
       if (itm.dept_code) {
         let index = tempDeptChooseList.value.findIndex(itd => {
@@ -329,7 +334,7 @@ const emitData2Parent = (value) => {
         index !== -1 && tempChooseList.value.splice(index, 1)
       }
     })
-    // 第二步
+    //
     value.forEach((item: any) => {
       if (item.user_id) {
         let index = tempChooseList.value.findIndex(itd => {

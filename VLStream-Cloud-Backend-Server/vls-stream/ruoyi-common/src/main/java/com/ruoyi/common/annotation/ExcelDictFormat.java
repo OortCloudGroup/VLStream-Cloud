@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -10,7 +11,7 @@ import com.ruoyi.common.utils.StringUtils;
 import java.lang.annotation.*;
 
 /**
- * 字典格式化
+ * dictFormat
  *
  * @author Lion Li
  */
@@ -20,17 +21,17 @@ import java.lang.annotation.*;
 public @interface ExcelDictFormat {
 
     /**
-     * 如果是字典类型，请设置字典的type值 (如: sys_user_sex)
+     * if is dict type, Set dict type value ( : sys_user_sex)
      */
     String dictType() default "";
 
     /**
-     * 读取内容转表达式 (如: 0=男,1=女,2=未知)
+     * ( : 0= ,1= ,2= not )
      */
     String readConverterExp() default "";
 
     /**
-     * 分隔符，读取字符串组内容
+     * ,
      */
     String separator() default StringUtils.SEPARATOR;
 

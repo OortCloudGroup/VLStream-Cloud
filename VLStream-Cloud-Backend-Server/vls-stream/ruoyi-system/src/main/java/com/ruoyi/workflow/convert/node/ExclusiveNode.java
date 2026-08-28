@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,7 +18,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * @description：独占分支(排他网关)
+ * @description: ( )
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -27,7 +28,7 @@ public class ExclusiveNode extends BranchNode {
     @Override
     public List<FlowElement> convert() {
         ArrayList<FlowElement> elements = new ArrayList<>();
-        // 独占分支
+        //
         ExclusiveGateway exclusiveGateway = new ExclusiveGateway();
         exclusiveGateway.setId(this.getId());
         exclusiveGateway.setName(this.getNodeName());
@@ -39,7 +40,7 @@ public class ExclusiveNode extends BranchNode {
                 .ifPresent(conditionNode -> {
                     exclusiveGateway.setDefaultFlow(conditionNode.getId());
                 });
-        // 子节点
+        // sub node
         if (!CollectionUtils.isEmpty(children)) {
             for (Node next : children) {
                 String branchId = Optional.ofNullable(this.getChildNode()).map(Node::getId).orElse(this.getBranchId());
@@ -47,7 +48,7 @@ public class ExclusiveNode extends BranchNode {
                 elements.addAll(next.convert());
             }
         }
-        // 下一个节点
+        // node
         Node child = this.getChildNode();
         if (Objects.nonNull(child)) {
             child.setBranchId(this.getBranchId());

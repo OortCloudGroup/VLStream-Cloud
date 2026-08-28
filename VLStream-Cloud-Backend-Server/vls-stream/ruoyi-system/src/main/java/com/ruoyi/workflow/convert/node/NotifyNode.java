@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -18,7 +19,7 @@
 //import java.util.Objects;
 //
 ///**
-// * 服务节点
+// * servicenode
 // */
 //@EqualsAndHashCode(callSuper = true)
 //@Data
@@ -30,7 +31,7 @@
 //    @Override
 //    public List<FlowElement> convert() {
 //        ArrayList<FlowElement> elements = new ArrayList<>();
-//        // 服务节点
+// // servicenode
 //        ServiceTask serviceTask = new ServiceTask();
 //        serviceTask.setId(this.getId());
 //        serviceTask.setName(this.getNodeName());
@@ -38,11 +39,11 @@
 //        serviceTask.setImplementationType(ImplementationType.IMPLEMENTATION_TYPE_DELEGATEEXPRESSION);
 //        serviceTask.setImplementation("${notifyDelegate}");
 //        elements.add(serviceTask);
-//        // 下一个节点的连线
+// // node
 //        Node child = this.getChildNode();
 //        SequenceFlow sequenceFlow = this.buildSequence(child);
 //        elements.add(sequenceFlow);
-//        // 下一个节点
+// // node
 //        if (Objects.nonNull(child)) {
 //            child.setBranchId(this.getBranchId());
 //            List<FlowElement> flowElements = child.convert();

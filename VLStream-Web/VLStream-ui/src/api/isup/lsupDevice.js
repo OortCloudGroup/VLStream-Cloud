@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 查询isup设备列表
+// Query isupdevice list
 export function listIsupDevice(query) {
   return request({
     url: '/isup/lsupDevice/list',
@@ -9,7 +14,7 @@ export function listIsupDevice(query) {
   })
 }
 
-// 查询isup设备列表
+// Query isupdevice list
 export function lsupDeviceList(query) {
   return request({
     url: '/isup/lsupDevice/lsupDeviceList',
@@ -19,7 +24,7 @@ export function lsupDeviceList(query) {
 }
 
 
-// 播放
+//
 export function start(id) {
   return request({
     url: '/isup/lsupDevice/start/' + id,
@@ -42,7 +47,7 @@ export function getLsupDevice(id) {
   })
 }
 
-// 新增isup设备
+// Add isupdevice
 export function addLsupDevice(data) {
   return request({
     url: '/isup/lsupDevice',
@@ -51,7 +56,7 @@ export function addLsupDevice(data) {
   })
 }
 
-// 修改isup设备
+// Update isupdevice
 export function updateLsupDevice(data) {
   return request({
     url: '/isup/lsupDevice',
@@ -60,7 +65,7 @@ export function updateLsupDevice(data) {
   })
 }
 
-// 删除isup设备
+// Delete isupdevice
 export function delLsupDevice(id) {
   return request({
     url: '/isup/lsupDevice/' + id,
@@ -68,7 +73,7 @@ export function delLsupDevice(id) {
   })
 }
 
-// 云台控制（开始）
+// control (start)
 export function ptzCtrlStart(id,direction,controSpeed) {
   return request({
     url: '/isup/lsupDevice/ptzCtrlStart/' + id,
@@ -80,7 +85,7 @@ export function ptzCtrlStart(id,direction,controSpeed) {
   })
 }
 
-// 云台控制（结束）
+// control (finish)
 export function ptzCtrlEnd(id) {
   return request({
     url: '/isup/lsupDevice/ptzCtrlEnd/' + id,
@@ -88,7 +93,7 @@ export function ptzCtrlEnd(id) {
   })
 }
 
-// 云台控制（聚焦）
+// control ( )
 export function ptzCtrlFocus(id,controSpeed) {
   return request({
     url: '/isup/lsupDevice/ptzCtrlFocus/' + id,

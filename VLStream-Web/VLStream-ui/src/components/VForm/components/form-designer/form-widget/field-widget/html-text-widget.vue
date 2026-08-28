@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <static-content-wrapper
     :designer="designer"
@@ -25,7 +30,7 @@ export default {
   componentName: 'FieldWidget',
   components: {
     StaticContentWrapper
-  }, // 必须固定为FieldWidget，用于接收父级组件的broadcast事件
+  }, // to FieldWidget, component broadcastevent
   mixins: [emitter, fieldMixin, i18n],
   props: {
     field: Object,
@@ -57,11 +62,11 @@ export default {
 
   },
   beforeCreate() {
-    /* 这里不能访问方法和属性！！ */
+    /* can method and property! ! */
   },
 
   created() {
-    /* 注意：子组件mounted在父组件created之后、父组件mounted之前触发，故子组件mounted需要用到的prop
+    /* : sub componentmounted in componentcreated after、 componentmounted before , sub componentmounted need to prop
          需要在父组件created中初始化！！ */
     this.registerToRefList()
     this.initEventHandler()
@@ -85,6 +90,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  @import "../../../../styles/global.scss"; //* static-content-wrapper已引入，还需要重复引入吗？ *//
+  @import "../../../../styles/global.scss"; // * static-content-wrapper already , need to ? *//
 
 </style>

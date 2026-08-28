@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 export default {
   methods: {
     initRefList() {
@@ -14,7 +19,7 @@ export default {
       return foundRef
     },
 
-    /* 该方法用于组件重名检查！！ */
+    /* method component ! ! */
     registerToRefList(oldRefName) {
       if ((this.refList !== null) && !!this.widget.options.name) {
         if (!!oldRefName) {

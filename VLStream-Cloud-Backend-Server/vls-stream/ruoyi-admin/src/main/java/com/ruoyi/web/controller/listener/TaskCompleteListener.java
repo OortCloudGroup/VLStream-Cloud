@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -37,27 +38,27 @@ public class TaskCompleteListener implements TaskListener, ApplicationContextAwa
         SysUserServiceImpl sysUserServiceImpl = (SysUserServiceImpl)applicationContext.getBean("sysUserServiceImpl");
         SysDeptServiceImpl sysDeptServiceImpl = (SysDeptServiceImpl)applicationContext.getBean("sysDeptServiceImpl");
         RuntimeService runtimeService = applicationContext.getBean(RuntimeService.class);
-        // 获取执行对象
+        // Get Execute object
         String executionId = delegateTask.getExecutionId();
 //        Execution execution = runtimeService.createExecutionQuery().executionId(executionId).singleResult();
 
-        // 获取流程实例 ID
+        // Get workflow instance ID
         String processInstanceId = delegateTask.getProcessInstanceId();
-        // 获取全局变量
+        // Get full variable
         String nextUserIds = (String) runtimeService.getVariable(processInstanceId, "nextUserIds");
         Environment environment = (Environment)applicationContext.getBean("environment");
-        // 获取之前设置的流程变量
+        // Get beforeSet workflow variable
         String currentAssignee = (String) delegateTask.getVariable("currentAssignee");
         String nex = (String) delegateTask.getVariable("nextUserIds");
-        // 将当前任务的候选人设置为currentAssignees
+        // current task candidate userSet to currentAssignees
         if (StringUtils.isNotBlank(currentAssignee)) {
-            // 将当前任务的候选人列表设置为候选用户
+            // current task candidate user Set to user
             List<SysUser> leaders = sysUserServiceImpl.getLeaders(currentAssignee);
             if(!CollectionUtils.isEmpty(leaders) ) {
-                if(StringUtils.isNotBlank(nextUserIds)){ // 页面选择了审批人
+                if(StringUtils.isNotBlank(nextUserIds)){ // page approver
                     List<String> leaderIds = Arrays.asList(nextUserIds.split(","));
                     delegateTask.addCandidateUsers(leaderIds);
-                }else { // 页面未选择审批人
+                }else { // page not approver
                     List<String> leaderIds = leaders.stream()
                         .map(SysUser::getUserId)
                         .collect(Collectors.toList());
@@ -67,10 +68,10 @@ public class TaskCompleteListener implements TaskListener, ApplicationContextAwa
             } else {
                 SysUser sysUser = sysUserServiceImpl.selectUserById(currentAssignee);
                 SysDeptView sysDeptView = sysDeptServiceImpl.selectDeptById(sysUser.getDeptId());
-                // 判断是不是局领导
+                // Check if it is bureau leader
                 if(!environment.getProperty("dept.excludedUdid").equals(sysDeptView.getDeptId())) {
-                    // 获取所有局领导
-                    // 先获取局领导的部门id
+                    // Get all bureau leader
+                    // Get bureau leader department ID
 //                    Long parentDeptId = sysDept.getParentId();
                     String udid = environment.getProperty("dept.excludedUdid");
                     List<SysUser> users = sysUserServiceImpl.selectUserByUdid(udid);

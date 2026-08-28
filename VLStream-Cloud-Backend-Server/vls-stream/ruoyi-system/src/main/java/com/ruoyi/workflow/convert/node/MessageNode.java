@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -24,65 +25,65 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * @description：消息通知节点
+ * @description: notificationnode
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Component
 public class MessageNode extends Node {
 
-    // 通知对象（用户ID列表）
+    // notificationobject (user ID )
     @JsonSetter(nulls = Nulls.AS_EMPTY)
     private List<String> users;
 
-    // 通知优先级
+    // notification
     private Integer priority;
 
-    // 通知数据
+    // notificationdata
     private String data;
 
-    // 通知渠道类型数组，支持多个渠道 如：[0, 1, 2]
+    // notification array, : [0, 1, 2]
     private List<Integer> channelTypes;
 
-    // 超时时间（分钟）
+    // ( )
     private Integer timeoutMinutes;
 
-    // 超时动作: 1-重复通知, 2-自动转下个节点, 3-自动驳回
+    // : 1- notification, 2- node, 3-
     private Integer timeoutAction;
 
-    // 重复通知次数（timeoutAction=1时有效）
+    // notification (timeoutAction=1 )
     private Integer repeatCount;
 
-    // 验证间隔（秒），默认15秒
+    // ( ), 15
     private Integer verificationInterval = 15;
 
     @Override
     public List<FlowElement> convert() {
         ArrayList<FlowElement> elements = new ArrayList<>();
 
-        // 1. 创建 UserTask
+        // 1. UserTask
         UserTask userTask = new UserTask();
         userTask.setId(this.getId());
         userTask.setName(this.getNodeName());
 
-        // 2. 设置 Assignee (通知对象)
+        // 2. Set Assignee (notificationobject)
         String assignee = getAssignee();
         if (StringUtils.isNotBlank(assignee)) {
-            // 添加特殊前缀，待办查询时自动过滤（taskAssignee 是等值查询）
+            // before , Query (taskAssignee is etc. value Query )
             userTask.setAssignee("MESSAGENODE_" + assignee);
         } else {
-            // 如果无法确定 assignee，可能需要在运行时处理或抛出异常
-            // 这里暂时设置为空，依赖后续逻辑或抛出异常
+            // if method assignee, can need to in Process
+            // Set is empty, after
             throw new RuntimeException("MessageNode: 无法确定通知对象，请配置 users 或确保下一个节点为审批节点且已配置审批人");
         }
 
-        // 3. 添加 CREATE 监听器：发送通知
+        // 3. CREATE listener: notification
         FlowableListener notificationListener = new FlowableListener();
         notificationListener.setEvent(TaskListener.EVENTNAME_CREATE);
         notificationListener.setImplementationType(ImplementationType.IMPLEMENTATION_TYPE_CLASS);
         notificationListener.setImplementation(MessageNotificationListener.class.getName());
 
-        // 注入参数
+        // parameter
         if (this.priority != null) {
             FieldExtension priorityField = new FieldExtension();
             priorityField.setFieldName("priority");
@@ -97,25 +98,25 @@ public class MessageNode extends Node {
             notificationListener.getFieldExtensions().add(dataField);
         }
 
-        // 注入验证间隔参数
+        // parameter
         FieldExtension intervalField = new FieldExtension();
         intervalField.setFieldName("verificationInterval");
         intervalField
                 .setStringValue(String.valueOf(this.verificationInterval != null ? this.verificationInterval : 15));
         notificationListener.getFieldExtensions().add(intervalField);
 
-        // 注入 channelTypes 参数
+        // channelTypes parameter
         if (this.channelTypes != null && !this.channelTypes.isEmpty()) {
             FieldExtension channelTypesField = new FieldExtension();
             channelTypesField.setFieldName("channelTypes");
-            // 使用Gson将List序列化为JSON字符串
+            // Gson List to JSON
             channelTypesField.setStringValue(new Gson().toJson(this.channelTypes));
             notificationListener.getFieldExtensions().add(channelTypesField);
         }
 
         userTask.getTaskListeners().add(notificationListener);
 
-        // 4. 添加 COMPLETE 监听器：清理定时器（如果有）
+        // 4. COMPLETE listener: (if )
         if (this.timeoutMinutes != null && this.timeoutMinutes > 0) {
             FlowableListener clearListener = new FlowableListener();
             clearListener.setEvent(TaskListener.EVENTNAME_COMPLETE);
@@ -123,23 +124,23 @@ public class MessageNode extends Node {
             clearListener.setImplementation(ClearTimeoutJobListener.class.getName());
             userTask.getTaskListeners().add(clearListener);
 
-            // 5. 添加 BoundaryEvent：超时处理
+            // 5. BoundaryEvent: Process
             BoundaryEvent boundaryEvent = new BoundaryEvent();
             boundaryEvent.setId(userTask.getId() + "_timeout");
             boundaryEvent.setAttachedToRef(userTask);
-            boundaryEvent.setCancelActivity(true); // 中断型，超时后取消 UserTask
+            boundaryEvent.setCancelActivity(true); // in , after UserTask
 
             TimerEventDefinition timerDef = new TimerEventDefinition();
-            timerDef.setTimeDuration("PT" + this.timeoutMinutes + "M"); // 分钟
+            timerDef.setTimeDuration("PT" + this.timeoutMinutes + "M"); //
             boundaryEvent.getEventDefinitions().add(timerDef);
 
-            // 6. 创建超时处理 ServiceTask
+            // 6. Process ServiceTask
             ServiceTask timeoutServiceTask = new ServiceTask();
             timeoutServiceTask.setId(userTask.getId() + "_timeoutHandler");
             timeoutServiceTask.setImplementationType(ImplementationType.IMPLEMENTATION_TYPE_CLASS);
             timeoutServiceTask.setImplementation(MessageTimeoutHandler.class.getName());
 
-            // 注入超时参数
+            // parameter
             if (this.timeoutAction != null) {
                 FieldExtension actionField = new FieldExtension();
                 actionField.setFieldName("timeoutAction");
@@ -152,7 +153,7 @@ public class MessageNode extends Node {
                 repeatField.setStringValue(String.valueOf(this.repeatCount));
                 timeoutServiceTask.getFieldExtensions().add(repeatField);
             }
-            // 注入通知相关参数用于重复通知
+            // notificationrelatedparameter notification
             if (this.priority != null) {
                 FieldExtension priorityField = new FieldExtension();
                 priorityField.setFieldName("priority");
@@ -165,7 +166,7 @@ public class MessageNode extends Node {
                 dataField.setStringValue(this.data);
                 timeoutServiceTask.getFieldExtensions().add(dataField);
             }
-            // 注入 channelTypes 参数
+            // channelTypes parameter
             if (this.channelTypes != null && !this.channelTypes.isEmpty()) {
                 FieldExtension channelTypesField = new FieldExtension();
                 channelTypesField.setFieldName("channelTypes");
@@ -173,23 +174,23 @@ public class MessageNode extends Node {
                 timeoutServiceTask.getFieldExtensions().add(channelTypesField);
             }
 
-            // 7. 创建连线：BoundaryEvent -> ServiceTask
+            // 7. : BoundaryEvent -> ServiceTask
             SequenceFlow timeoutFlow = new SequenceFlow(
                     boundaryEvent.getId(),
                     timeoutServiceTask.getId());
             timeoutFlow.setId(boundaryEvent.getId() + "-to-" + timeoutServiceTask.getId());
 
-            // 【新增】8. 创建 ExclusiveGateway
+            // 【Add 】8. ExclusiveGateway
             ExclusiveGateway gateway = new ExclusiveGateway();
             gateway.setId(userTask.getId() + "_gateway");
 
-            // 【新增】9. ServiceTask -> Gateway
+            // 【Add 】9. ServiceTask -> Gateway
             SequenceFlow toGateway = new SequenceFlow(
                     timeoutServiceTask.getId(),
                     gateway.getId());
             toGateway.setId(timeoutServiceTask.getId() + "-to-gateway");
 
-            // 【新增】10. Gateway -> UserTask (回退分支)
+            // 【Add 】10. Gateway -> UserTask ( )
             SequenceFlow loopBack = new SequenceFlow(
                     gateway.getId(),
                     userTask.getId());
@@ -197,7 +198,7 @@ public class MessageNode extends Node {
             loopBack.setName("重复通知");
             loopBack.setConditionExpression("${messageNode_loopBack == true}");
 
-            // 【新增】11. Gateway -> EndEvent (驳回分支)
+            // 【Add 】11. Gateway -> EndEvent ( )
             EndEvent rejectEndEvent = new EndEvent();
             rejectEndEvent.setId(userTask.getId() + "_rejectEnd");
             rejectEndEvent.setName("自动驳回");
@@ -209,14 +210,14 @@ public class MessageNode extends Node {
             rejectFlow.setName("自动驳回");
             rejectFlow.setConditionExpression("${messageNode_autoReject == true}");
 
-            // 【新增】12. Gateway -> 下一个节点 (默认分支:自动通过)
+            // 【Add 】12. Gateway -> node ( : )
             Node child = this.getChildNode();
             SequenceFlow continueFlow = buildSequence(child);
             continueFlow.setSourceRef(gateway.getId());
             continueFlow.setId("continue-" + userTask.getId());
             gateway.setDefaultFlow(continueFlow.getId());
 
-            // 13. 添加所有超时相关元素到列表
+            // 13. all relatedelement
             elements.add(boundaryEvent);
             elements.add(timeoutServiceTask);
             elements.add(timeoutFlow);
@@ -227,16 +228,16 @@ public class MessageNode extends Node {
             elements.add(rejectFlow);
             elements.add(continueFlow);
         } else {
-            // 没有超时配置，直接连接到下一个节点
+            // configuration, node
             Node child = this.getChildNode();
             SequenceFlow sequenceFlow = this.buildSequence(child);
             elements.add(sequenceFlow);
         }
 
-        // 14. 添加 UserTask 到元素列表
+        // 14. UserTask element
         elements.add(userTask);
 
-        // 15. 递归转换子节点
+        // 15. Convert sub node
         Node child = this.getChildNode();
         if (Objects.nonNull(child)) {
             child.setBranchId(this.getBranchId());
@@ -248,16 +249,16 @@ public class MessageNode extends Node {
     }
 
     /**
-     * 获取通知对象 (Assignee)
-     * 方案C：优先使用配置的 users，否则从 childNode 获取
+     * Get notificationobject (Assignee)
+     * C: configuration users, from childNode Get
      */
     private String getAssignee() {
-        // 1. 优先使用配置的 users
+        // 1. configuration users
         if (ObjectUtil.isNotEmpty(this.users)) {
             return String.join(",", this.users);
         }
 
-        // 2. 否则尝试获取下一个节点的审批人
+        // 2. Get node approver
         Node child = this.getChildNode();
         if (child instanceof ApprovalNode) {
             ApprovalNode approvalNode = (ApprovalNode) child;

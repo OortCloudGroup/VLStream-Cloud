@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-form-item label="onSubFormRowChange" label-width="150px">
     <el-button type="info" icon="el-icon-edit" plain round @click="editEventHandler('onSubFormRowChange', eventParams)">

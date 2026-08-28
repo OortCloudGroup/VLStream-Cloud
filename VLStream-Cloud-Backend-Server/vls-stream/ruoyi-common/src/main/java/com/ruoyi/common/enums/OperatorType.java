@@ -1,28 +1,29 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
 package com.ruoyi.common.enums;
 
 /**
- * 操作人类别
+ * operation
  *
  * @author ruoyi
  */
 public enum OperatorType {
     /**
-     * 其它
+     *
      */
     OTHER,
 
     /**
-     * 后台用户
+     * after user
      */
     MANAGE,
 
     /**
-     * 手机端用户
+     * user
      */
     MOBILE
 }

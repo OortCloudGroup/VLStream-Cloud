@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Component;
 import java.nio.file.Path;
 
 /**
- * 设备目标检测任务管理器：定时扫描设备配置并维护目标检测会话。
+ * device task : deviceconfiguration will .
  */
 @Slf4j
 @Component

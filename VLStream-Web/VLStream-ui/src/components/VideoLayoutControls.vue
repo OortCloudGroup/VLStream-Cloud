@@ -1,9 +1,14 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="map-top-controls">
-    <!-- 布局控制按钮组 - 居中 -->
+    <!-- controlbutton - in -->
     <div class="layout-button-group">
-      <el-button 
-        :type="layoutMode === '1x1' ? 'primary' : 'default'" 
+      <el-button
+        :type="layoutMode === '1x1' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(1)"
         title="单画面视频播放"
@@ -11,8 +16,8 @@
       >
         <img :src="mode1Icon" alt="1x1" class="layout-mode-icon" />
       </el-button>
-      <el-button 
-        :type="layoutMode === '2x2' ? 'primary' : 'default'" 
+      <el-button
+        :type="layoutMode === '2x2' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(4)"
         title="四分屏视频播放"
@@ -25,8 +30,8 @@
           <div class="grid-cell"></div>
         </div>
       </el-button>
-      <el-button 
-        :type="layoutMode === '3x3' ? 'primary' : 'default'" 
+      <el-button
+        :type="layoutMode === '3x3' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(6)"
         title="六分屏视频播放"
@@ -34,8 +39,8 @@
       >
         <img :src="mode3Icon" alt="六分屏" class="layout-mode-icon" />
       </el-button>
-      <el-button 
-        :type="layoutMode === '4x4' ? 'primary' : 'default'" 
+      <el-button
+        :type="layoutMode === '4x4' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(8)"
         title="八分屏视频播放"
@@ -43,8 +48,8 @@
       >
         <img :src="mode4Icon" alt="八分屏" class="layout-mode-icon" />
       </el-button>
-      <el-button 
-        :type="layoutMode === '5x5' ? 'primary' : 'default'" 
+      <el-button
+        :type="layoutMode === '5x5' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(9)"
         title="九分屏视频播放"
@@ -52,8 +57,8 @@
       >
         <img :src="mode5Icon" alt="九分屏" class="layout-mode-icon" />
       </el-button>
-      <el-button 
-        :type="layoutMode === '6x6' ? 'primary' : 'default'" 
+      <el-button
+        :type="layoutMode === '6x6' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(16)"
         title="十六分屏视频播放"
@@ -61,7 +66,7 @@
       >
         <img :src="mode6Icon" alt="十六分屏" class="layout-mode-icon" />
       </el-button>
-      <el-button 
+      <el-button
         size="small"
         @click="$emit('extended-layout')"
         title="扩展布局选项"
@@ -74,7 +79,7 @@
           <div class="dot"></div>
         </div>
       </el-button>
-      <el-button 
+      <el-button
         size="small"
         @click="$emit('custom-layout')"
         title="自定义视频播放"
@@ -82,7 +87,7 @@
       >
         自定义
       </el-button>
-      <el-button 
+      <el-button
         size="small"
         @click="$emit('toggle-fullscreen')"
         :title="isFullscreen ? '退出全屏' : '全屏'"
@@ -93,7 +98,7 @@
       </el-button>
     </div>
 
-    <!-- 设备统计信息 - 右侧 -->
+    <!-- device info - -->
     <div class="device-stats">
       <div class="stat-item total">
         <div class="stat-icon">
@@ -104,7 +109,7 @@
           <span class="stat-value">{{ deviceCount }}</span>
         </div>
       </div>
-      
+
       <div class="stat-item online">
         <div class="stat-icon">
           <img src="@/assets/设备-在线@3x.png" alt="在线" width="32" height="32">
@@ -114,7 +119,7 @@
           <span class="stat-value">{{ onlineCount }}</span>
         </div>
       </div>
-      
+
       <div class="stat-item offline">
         <div class="stat-icon">
           <img src="@/assets/设备-离线@3x.png" alt="离线" width="32" height="32">
@@ -131,14 +136,14 @@
 <script setup>
 import { FullScreen } from '@element-plus/icons-vue'
 
-// 导入布局模式PNG图标
+// Import PNG
 import mode1Icon from '@/assets/mode1_default.png'
 import mode3Icon from '@/assets/mode3_default.png'
 import mode4Icon from '@/assets/mode4_default.png'
 import mode5Icon from '@/assets/mode5_default.png'
 import mode6Icon from '@/assets/mode6_default.png'
 
-// 定义props
+// props
 const props = defineProps({
   layoutMode: {
     type: String,
@@ -166,7 +171,7 @@ const props = defineProps({
   }
 })
 
-// 定义emits
+// emits
 const emit = defineEmits([
   'layout-select',
   'extended-layout',
@@ -174,7 +179,7 @@ const emit = defineEmits([
   'toggle-fullscreen'
 ])
 
-// 处理布局选择
+// Process
 const handleLayoutSelect = (count) => {
   console.log('VideoLayoutControls: 布局选择按钮被点击，count:', count)
   emit('layout-select', count)
@@ -184,7 +189,7 @@ const handleLayoutSelect = (count) => {
 </script>
 
 <style scoped>
-/* 地图顶部控制栏 - 布局按钮居中，设备统计右侧 */
+/* control - button in , device */
 .map-top-controls {
   position: absolute;
   top: 20px;
@@ -205,13 +210,13 @@ const handleLayoutSelect = (count) => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  /* 绝对居中定位 */
+  /* in */
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
 }
 
-/* 深色模式下的布局按钮组 */
+/* button */
 :deep(.map-area.dark-mode) .layout-button-group,
 .map-area.dark-mode .layout-button-group {
   background: rgba(40, 44, 52, 0.95) !important;
@@ -260,7 +265,7 @@ const handleLayoutSelect = (count) => {
   border-radius: 50%;
 }
 
-/* 四宫格样式 */
+/*  */
 .four-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -276,7 +281,7 @@ const handleLayoutSelect = (count) => {
   transition: background-color 0.3s ease;
 }
 
-/* 选中状态时，四宫格变成蓝色，按钮背景变成浅蓝色 */
+/* in , , button */
 .four-grid-btn.is-primary {
   background-color: #e6f3ff !important;
   border-color: #1A53FF !important;
@@ -286,7 +291,7 @@ const handleLayoutSelect = (count) => {
   background-color: #1A53FF;
 }
 
-/* 深色模式下的四宫格 */
+/*  */
 :deep(.map-area.dark-mode) .grid-cell {
   background-color: #a0a0a0;
 }
@@ -300,7 +305,7 @@ const handleLayoutSelect = (count) => {
   background-color: #7db8ff;
 }
 
-/* 设备统计信息样式 */
+/* device info */
 .device-stats {
   display: flex;
   align-items: center;
@@ -315,7 +320,7 @@ const handleLayoutSelect = (count) => {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* 深色模式下的设备统计样式 */
+/* device */
 :deep(.map-area.dark-mode) .device-stats,
 .map-area.dark-mode .device-stats {
   background: rgba(40, 44, 52, 0.95) !important;
@@ -377,7 +382,7 @@ const handleLayoutSelect = (count) => {
   color: #e8f4fd;
 }
 
-/* 扩展布局按钮样式 */
+/* button */
 .extended-layout-btn {
   background: rgba(255, 255, 255, 0.1) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -404,10 +409,10 @@ const handleLayoutSelect = (count) => {
   background-color: #ffffff;
 }
 
-/* 深色模式下的扩展布局按钮 */
+/* button */
 :deep(.map-area.dark-mode) .extended-layout-btn {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);
   color: #ffffff;
 }
-</style> 
+</style>

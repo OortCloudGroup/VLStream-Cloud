@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-dialog v-model="dialogVisible" class="diaOutSet" title="事件详情" top="5vh" width="60%" :before-close="handleClose" destroy-on-close>
     <div class="basicTitle codeActBox flexRowAC">
@@ -139,9 +144,9 @@
                 <el-option label="选项2" value="2" />
               </el-select>
             </el-form-item>
-            <!--            <el-form-item label="是否通知" prop="notice">-->
+            <!-- <el-form-item label="whether notification" prop="notice"> -->
             <!--              <div>-->
-            <!--                <el-switch v-model="formData.notice" size="large" active-text="是" inactive-text="否" />-->
+            <!-- <el-switch v-model="formData.notice" size="large" active-text=" is " inactive-text=" " /> -->
             <!--                <div>-->
             <!--                  <el-checkbox-group v-model="formData.noticeList">-->
             <!--                    <el-checkbox v-for="item in noticeListDate" :key="item" :label="item.label" :value="item.value" />-->
@@ -268,8 +273,8 @@ interface FeedbackItem {
   task_event_id?: string
   uuid?: string
 }
-let codeAct = ref(true) // 展开收缩
-let codeAct_2 = ref(false) // 展开收缩
+let codeAct = ref(true) //
+let codeAct_2 = ref(false) //
 const props = defineProps<Props>()
 const emit = defineEmits(['update:visible'])
 const harvest = ref(false)
@@ -279,12 +284,12 @@ const dialogVisible = computed({
   set: (value: boolean) => emit('update:visible', value)
 })
 
-// 关闭对话框
+//
 const handleClose = () => {
   dialogVisible.value = false
 }
 const _submitForm = () => {
-  // 提交
+  //
 }
 const selectContent = (content) => {
   formData.value.describe = content
@@ -303,7 +308,7 @@ const getEventDetail = async() => {
   }
 }
 
-// 数据初始化
+// dataInitialize
 watch([() => props.visible, () => props.data], ([newVisible, newData]) => {
   if (newVisible && newData) {
     formData.value = initFormData()
@@ -333,23 +338,23 @@ const formData = ref(initFormData())
 const formRef = ref()
 // const noticeListDate = [
 //   {
-//     label: '短信',
+// label: ' ',
 //     value: 1
 //   },
 //   {
-//     label: '邮箱',
+// label: ' ',
 //     value: 2
 //   },
 //   {
-//     label: '站内',
+// label: ' ',
 //     value: 3
 //   },
 //   {
-//     label: '企业微信',
+// label: ' ',
 //     value: 4
 //   },
 //   {
-//     label: '钉钉',
+// label: ' ',
 //     value: 5
 //   },
 //   {
@@ -357,11 +362,11 @@ const formRef = ref()
 //     value: 6
 //   },
 //   {
-//     label: '微信机器人',
+// label: ' ',
 //     value: 7
 //   },
 //   {
-//     label: '微信公众号',
+// label: ' ',
 //     value: 8
 //   },
 //   {
@@ -370,22 +375,22 @@ const formRef = ref()
 //   }
 // ]
 
-// 表单验证规则
+// form
 const formRules = ref({
   describe: [
     { required: true, message: '请输入反馈描述', trigger: 'blur' }
   ]
 })
 
-// 添加事件反馈
+// event
 const addFeedbackForm = async() => {
-  // 表单验证
+  // form
   if (!formRef.value) return
 
   try {
     await formRef.value.validate()
   } catch (error) {
-    return // 验证失败，不提交
+    return // failed,
   }
   const res: any = await addFeedback(formData.value)
   if (res.code === 200) {
@@ -400,7 +405,7 @@ const addFeedbackForm = async() => {
   }
 }
 const feedbackListData = ref<FeedbackItem[]>([])
-// 反馈列表
+//
 const getFeedbackList = async() => {
   const params = {
     accessToken: store.token,
@@ -580,7 +585,7 @@ const getFeedbackList = async() => {
   border-left: 3px solid transparent !important;
 }
 
-// 更多-展开
+// -
 .codeActBox {
   gap: 10px;
   color: var(--el-color-primary);

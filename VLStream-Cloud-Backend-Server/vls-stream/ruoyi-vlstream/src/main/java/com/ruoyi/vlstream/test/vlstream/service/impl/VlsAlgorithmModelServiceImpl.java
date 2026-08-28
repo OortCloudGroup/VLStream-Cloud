@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -29,7 +30,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 算法模型表 服务实现类
+ * algorithmmodel service
  *
  * @author Oort
  * @since 2025-12-23
@@ -69,7 +70,7 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 	public AlgorithmModel createModel(AlgorithmModelVO createDTO) {
 		log.info("创建算法模型：{}", createDTO.getModelName());
 
-		// 验证模型名称和版本是否存在
+		// model and whether in
 		Integer version = createDTO.getVersion();
 		if (version == null || version < 1) {
 			version = 1;
@@ -79,11 +80,11 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 		}
 
 		AlgorithmTraining training = trainingMapper.selectById(createDTO.getTrainingId());
-		// 创建模型实体
+		// model
 		AlgorithmModel model = new AlgorithmModel();
 		BeanUtils.copyProperties(createDTO, model);
 		model.setVersion(version);
-		// 设置默认值
+		// Set value
 		if (model.getDownloadCount() == null) {
 			model.setDownloadCount(0);
 		}
@@ -98,7 +99,7 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 		model.setRknnModelPath(training.getRknnModelOutputPath());
 		model.setInt8RknnModelOutputPath(training.getInt8RknnModelOutputPath());
 		model.setOmModelOutputPath(training.getOmModelOutputPath());
-		// 保存到数据库
+		// data
 		boolean success = save(model);
 		if (!success) {
 			log.error("创建模型失败：{}", createDTO.getModelName());
@@ -114,18 +115,18 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 	public boolean deleteModel(Long id) {
 		log.info("删除算法模型：{}", id);
 
-		// 检查模型是否存在
+		// modelwhether in
 		AlgorithmModel existingModel = getModelById(id);
 		if (existingModel == null) {
 			throw new RuntimeException("模型不存在");
 		}
 
-		// 检查模型是否可以删除
+		// modelwhether Delete
 		if (existingModel.getStatus().equals(2)) {
 			throw new RuntimeException("已发布的模型不能删除");
 		}
 
-		// 删除模型（逻辑删除）
+		// Delete model ( Delete )
 		boolean success = removeById(id);
 		if (!success) {
 			log.error("删除模型失败：{}", id);
@@ -145,7 +146,7 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 			throw new RuntimeException("删除的模型ID列表不能为空");
 		}
 
-		// 检查所有模型是否可以删除
+		// all modelwhether Delete
 		List<AlgorithmModel> models = listByIds(ids);
 		for (AlgorithmModel model : models) {
 			if (model.getStatus().equals(2)) {
@@ -153,7 +154,7 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 			}
 		}
 
-		// 批量删除
+		// Batch delete
 		boolean success = removeByIds(ids);
 		if (!success) {
 			log.error("批量删除模型失败：{}", ids);
@@ -184,23 +185,23 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 	public boolean publishModel(Long id) {
 		log.info("发布算法模型：{}", id);
 
-		// 检查模型是否存在
+		// modelwhether in
 		AlgorithmModel existingModel = getModelById(id);
 		if (existingModel == null) {
 			throw new RuntimeException("模型不存在");
 		}
 
-		// 检查模型是否可以发布
+		// modelwhether
 		if (existingModel.getStatus().equals(2)) {
 			throw new RuntimeException("模型状态不允许发布");
 		}
 
-		// 验证模型文件是否存在
+		// model whether in
 		if (!new File(existingModel.getModelPath()).exists()) {
 			throw new RuntimeException("模型文件不存在，无法发布");
 		}
 
-		// 更新状态为已发布
+		// new to already
 		UpdateWrapper<AlgorithmModel> publishWrapper = new UpdateWrapper<>();
 		publishWrapper.eq("id", id).set("status", "published");
 		if (!update(new AlgorithmModel(), publishWrapper)) {
@@ -208,7 +209,7 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 			throw new RuntimeException("发布模型失败");
 		}
 
-		// 更新发布时间
+		// new
 		existingModel.setPublishTime(LocalDateTime.now());
 		updateById(existingModel);
 
@@ -221,18 +222,18 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 	public boolean unpublishModel(Long id) {
 		log.info("撤销发布算法模型：{}", id);
 
-		// 检查模型是否存在
+		// modelwhether in
 		AlgorithmModel existingModel = getModelById(id);
 		if (existingModel == null) {
 			throw new RuntimeException("模型不存在");
 		}
 
-		// 检查模型是否已发布
+		// modelwhether already
 		if (!"published".equals(existingModel.getStatus())) {
 			throw new RuntimeException("模型未发布，无法撤销");
 		}
 
-		// 更新状态为草稿
+		// new to
 		UpdateWrapper<AlgorithmModel> draftWrapper = new UpdateWrapper<>();
 		draftWrapper.eq("id", id).set("status", "draft");
 		if (!update(new AlgorithmModel(), draftWrapper)) {
@@ -240,7 +241,7 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 			throw new RuntimeException("撤销发布模型失败");
 		}
 
-		// 清空发布时间
+		// null / empty
 		existingModel.setPublishTime(null);
 		updateById(existingModel);
 
@@ -257,7 +258,7 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 			throw new RuntimeException("发布的模型ID列表不能为空");
 		}
 
-		// 检查所有模型是否可以发布
+		// all modelwhether
 		List<AlgorithmModel> models = listByIds(ids);
 		for (AlgorithmModel model : models) {
 			if (model.getStatus().equals(2)) {
@@ -265,7 +266,7 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 			}
 		}
 
-		// 批量更新状态
+		// new
 		UpdateWrapper<AlgorithmModel> publishWrapper = new UpdateWrapper<>();
 		publishWrapper.in("id", ids).set("status", "published");
 		if (!update(new AlgorithmModel(), publishWrapper)) {
@@ -273,7 +274,7 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 			throw new RuntimeException("批量发布模型失败");
 		}
 
-		// 更新发布时间
+		// new
 		for (AlgorithmModel model : models) {
 			model.setPublishTime(LocalDateTime.now());
 			updateById(model);
@@ -288,24 +289,24 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 	public String downloadModel(Long id) {
 		log.info("下载算法模型：{}", id);
 
-		// 检查模型是否存在
+		// modelwhether in
 		AlgorithmModel existingModel = getModelById(id);
 		if (existingModel == null) {
 			throw new RuntimeException("模型不存在");
 		}
 
-		// 检查模型是否可以下载
+		// modelwhether
 		if (existingModel.getStatus().equals(2)) {
 			throw new RuntimeException("模型未发布，无法下载");
 		}
 
-		// 验证模型文件是否存在
+		// model whether in
 		String filePath = existingModel.getModelPath();
 		if (!new File(filePath).exists()) {
 			throw new RuntimeException("模型文件不存在");
 		}
 
-		// 增加下载次数
+		//
 		UpdateWrapper<AlgorithmModel> downloadWrapper = new UpdateWrapper<>();
 		downloadWrapper.eq("id", id).setSql("download_count = download_count + 1");
 		if (!update(new AlgorithmModel(), downloadWrapper)) {
@@ -321,27 +322,27 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 	public boolean deployModel(Long id) {
 		log.info("部署算法模型：{}", id);
 
-		// 检查模型是否存在
+		// modelwhether in
 		AlgorithmModel existingModel = getModelById(id);
 		if (existingModel == null) {
 			throw new RuntimeException("模型不存在");
 		}
 
-		// 检查模型是否可以部署
+		// modelwhether
 		if (!existingModel.getStatus().equals(2)) {
 			throw new RuntimeException("模型未发布，无法部署");
 		}
 
-		// 验证模型文件是否存在
+		// model whether in
 		if (!new File(existingModel.getModelPath()).exists()) {
 			throw new RuntimeException("模型文件不存在");
 		}
 
-		// 这里应该调用实际的部署逻辑
-		// 例如：调用Docker API、Kubernetes API等
+		//
+		// : Docker API、Kubernetes API etc.
 		log.info("执行模型部署逻辑...");
 
-		// 增加部署次数
+		//
 		UpdateWrapper<AlgorithmModel> deployWrapper = new UpdateWrapper<>();
 		deployWrapper.eq("id", id).setSql("deploy_count = deploy_count + 1");
 		if (!update(new AlgorithmModel(), deployWrapper)) {

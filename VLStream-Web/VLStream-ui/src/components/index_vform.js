@@ -1,12 +1,8 @@
 /*
-* @Created by: 兰舰
-* Email: gglanjian@qq.com
-* Phone: 16620805419
-* @Date: 2024-11-28 11:56:08
- * @Last Modified by: 兰舰
- * @Last Modified time: 2025-09-12 22:01:26
-* @Copyright aPaaS-front-team. All rights reserved.
-*/
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import FlowChart from './processui/flowChart.vue'
 import ChoosePerson from './processui/flowProp/components/choosePerson.vue'
 
@@ -23,7 +19,7 @@ import { registerIcon } from '~@/utils/el-icons'
 import './VForm/styles/index.scss'
 import './VForm/iconfont/iconfont.css'
 
-// 实现按需引入
+//
 export {
   FlowChart,
   ChoosePerson,
@@ -42,7 +38,7 @@ const install = function(app) {
   components.forEach((item) => {
     app.component(item.name, item.component)
   })
-  // // 表单相关
+  // // formrelated
   registerIcon(app)
   addDirective(app)
   installI18n(app)
@@ -50,6 +46,6 @@ const install = function(app) {
   app.use(ContainerItems)
   loadExtension(app)
 }
-// 实现批量引入
+//
 export default { install }
 

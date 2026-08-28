@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -22,7 +23,7 @@ public class EndNode extends Node {
     @Override
     public List<FlowElement> convert() {
         ArrayList<FlowElement> elements = new ArrayList<>();
-        // 结束节点
+        // finishnode
         EndEvent endEvent = new EndEvent();
         endEvent.setId(this.getId());
         endEvent.setName(this.getNodeName());

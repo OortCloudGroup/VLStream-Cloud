@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 // @ts-ignore
 import Clipboard from 'clipboard'
 import { ElMessage } from 'element-plus'
@@ -8,7 +13,7 @@ const copy = {
     el.dataset.clipboardText = value
     clip.on('success', e => {
       if (!value) {
-        // 值为空
+        // value is empty
         ElMessage.warning('无复制内容')
         return
       }

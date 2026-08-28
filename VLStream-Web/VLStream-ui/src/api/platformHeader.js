@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import axios from 'axios'
 import { getPlatformAccessToken } from '@/utils/request'
 
@@ -32,7 +37,7 @@ function platformHeaders() {
   }
 }
 
-/** 获取平台侧用户信息，避免多租户顶部栏展示 VLS 影子用户账号。 */
+/* * Get userinfo, VLS sub user . */
 export async function getPlatformHeaderUser() {
   const response = await axios.post(
     platformServiceUrl('apaas-sso', 'sso/v1/getUserInfo'),
@@ -154,7 +159,7 @@ export async function logoutPlatform() {
   return response?.data
 }
 
-/** 获取 aPaaS 统一消息中心的未读消息。 */
+/* * Get aPaaS in not . */
 export async function getPlatformMessages(status = 0, page = 1, pageSize = 6) {
   const response = await axios.get(
     platformServiceUrl('apaas-unified-msg', 'msg/v1/instatmsg/list'),

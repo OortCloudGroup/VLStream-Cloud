@@ -1,23 +1,24 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
 package com.ruoyi.common.enums;
 
 /**
- * 操作状态
+ * operation
  *
  * @author ruoyi
  */
 public enum BusinessStatus {
     /**
-     * 成功
+     * successfully
      */
     SUCCESS,
 
     /**
-     * 失败
+     * failed
      */
     FAIL,
 }

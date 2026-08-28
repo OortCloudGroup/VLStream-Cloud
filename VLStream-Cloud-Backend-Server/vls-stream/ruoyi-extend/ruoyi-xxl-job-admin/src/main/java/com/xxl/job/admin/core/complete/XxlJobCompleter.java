@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -35,7 +35,7 @@ public class XxlJobCompleter {
         // finish
         finishJob(xxlJobLog);
 
-        // text最大64kb 避免长度过长
+        // text 64kb
         if (xxlJobLog.getHandleMsg().length() > 15000) {
             xxlJobLog.setHandleMsg(xxlJobLog.getHandleMsg().substring(0, 15000));
         }

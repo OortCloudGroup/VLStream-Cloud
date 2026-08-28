@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,7 +16,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.util.Date;
 
 /**
- * 用户和角色关联 sys_user_role
+ * user and role sys_user_role
  *
  * @author Lion Li
  */
@@ -25,38 +26,38 @@ import java.util.Date;
 public class SysUserRoleView {
 
     /**
-     * 用户ID
+     * user ID
      */
     private String userId;
 
     /**
-     * 角色ID
+     * role ID
      */
     @TableId(type = IdType.INPUT)
     private String  roleId;
     /**
-     * 租户ID
+     * tenant ID
      */
     private String tenantId;
 
     /**
-     * 创建时间
+     * create time
      */
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date createdAt;
     /**
-     * 修改时间
+     * Update
      */
     private String updatedAt;
 
     /**
-     * 删除时间
+     * Delete
      */
     private Long deletedAt;
 
     /**
-     * 角色名称
+     * role name
      */
     private String roleName;
 }

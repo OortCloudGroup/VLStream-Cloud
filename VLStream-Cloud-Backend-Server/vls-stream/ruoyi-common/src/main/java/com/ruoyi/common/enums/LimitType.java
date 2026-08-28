@@ -1,29 +1,30 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
 package com.ruoyi.common.enums;
 
 /**
- * 限流类型
+ *
  *
  * @author ruoyi
  */
 
 public enum LimitType {
     /**
-     * 默认策略全局限流
+     * full
      */
     DEFAULT,
 
     /**
-     * 根据请求者IP进行限流
+     * IP
      */
     IP,
 
     /**
-     * 实例限流(集群多后端实例)
+     * instance ( after instance)
      */
     CLUSTER
 }

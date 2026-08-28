@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -19,7 +20,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 /**
- * 参数配置表 sys_config
+ * parameterconfiguration sys_config
  *
  * @author Lion Li
  */
@@ -31,14 +32,14 @@ import javax.validation.constraints.Size;
 public class SysConfig extends BaseEntity {
 
     /**
-     * 参数主键
+     * parameterprimary key
      */
     @ExcelProperty(value = "参数主键")
     @TableId(value = "config_id")
     private Long configId;
 
     /**
-     * 参数名称
+     * parameter name
      */
     @ExcelProperty(value = "参数名称")
     @NotBlank(message = "参数名称不能为空")
@@ -46,7 +47,7 @@ public class SysConfig extends BaseEntity {
     private String configName;
 
     /**
-     * 参数键名
+     * parameter key
      */
     @ExcelProperty(value = "参数键名")
     @NotBlank(message = "参数键名长度不能为空")
@@ -54,7 +55,7 @@ public class SysConfig extends BaseEntity {
     private String configKey;
 
     /**
-     * 参数键值
+     * parameter value
      */
     @ExcelProperty(value = "参数键值")
     @NotBlank(message = "参数键值不能为空")
@@ -62,14 +63,14 @@ public class SysConfig extends BaseEntity {
     private String configValue;
 
     /**
-     * 系统内置（Y是 N否）
+     * (Y is N )
      */
     @ExcelProperty(value = "系统内置", converter = ExcelDictConvert.class)
     @ExcelDictFormat(dictType = "sys_yes_no")
     private String configType;
 
     /**
-     * 备注
+     * remark
      */
     private String remark;
 

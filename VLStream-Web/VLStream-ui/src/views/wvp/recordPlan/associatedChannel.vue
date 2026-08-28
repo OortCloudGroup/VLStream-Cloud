@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="tenant_Page draHeaPB">
     <el-tabs v-model="queryParams.hasLink" class="tenanat-tabs" @tab-click="handleClick">
@@ -226,7 +231,7 @@ function getList() {
   })
 }
 
-/** 搜索按钮操作 */
+/* * buttonoperation */
 function handleQuery() {
   queryParams.value.pageNum = 1;
   getList();
@@ -249,7 +254,7 @@ function deviceSearchResetFn(val) {
   getDeviceList();
 }
 
-/** 选择条数  */
+/* * */
 function handleSelectionChange(selection) {
   selectionList.value = selection
   multiple.value = !selection.length;

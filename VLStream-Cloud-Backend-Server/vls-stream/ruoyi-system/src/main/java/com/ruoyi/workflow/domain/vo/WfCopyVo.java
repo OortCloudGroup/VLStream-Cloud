@@ -14,7 +14,7 @@ import java.util.Date;
 
 
 /**
- * 流程抄送视图对象 wf_copy
+ * workflow object wf_copy
  *
  * @author ruoyi
  * @date 2022-05-19
@@ -26,80 +26,80 @@ public class WfCopyVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 抄送主键
+     * primary key
      */
     @ExcelProperty(value = "抄送主键")
     private Long copyId;
 
     /**
-     * 抄送标题
+     *
      */
     @ExcelProperty(value = "抄送标题")
     private String title;
 
     /**
-     * 流程主键
+     * workflowprimary key
      */
     @ExcelProperty(value = "流程主键")
     private String processId;
 
     /**
-     * 流程名称
+     * workflow
      */
     @ExcelProperty(value = "流程名称")
     private String processName;
 
     /**
-     * 流程分类主键
+     * workflow primary key
      */
     @ExcelProperty(value = "流程分类主键")
     private String categoryId;
 
     /**
-     * 部署主键
+     * primary key
      */
     @ExcelProperty(value = "部署主键")
     private String deploymentId;
 
     /**
-     * 流程实例主键
+     * workflow instanceprimary key
      */
     @ExcelProperty(value = "流程实例主键")
     private String instanceId;
 
     /**
-     * 任务主键
+     * taskprimary key
      */
     @ExcelProperty(value = "任务主键")
     private String taskId;
 
     /**
-     * 用户主键
+     * userprimary key
      */
     @ExcelProperty(value = "用户主键")
     private Long userId;
 
     /**
-     * 发起人Id
+     * Id
      */
     @ExcelProperty(value = "发起人主键")
     private Long originatorId;
 
     /**
-     * 发起人名称
+     *
      */
     @ExcelProperty(value = "发起人名称")
     private String originatorName;
 
     /**
-     * 抄送时间（创建时间）
+     * (create time)
      */
     @ExcelProperty(value = "抄送时间")
     private Date createTime;
 
 
     /**
-     * 流程实例创建时间
+     * workflow instancecreate time
      */
     @ExcelProperty(value = "流程实例创建时间")
     private Date proInsCreateTime;

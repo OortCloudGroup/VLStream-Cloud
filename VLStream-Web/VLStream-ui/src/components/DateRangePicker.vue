@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="date-range-picker-wrapper" :style="{ width: width }">
     <el-date-picker
@@ -22,60 +27,60 @@
 <script setup>
 import { defineProps, defineEmits } from 'vue'
 
-// 定义 props
+// props
 const props = defineProps({
-  // v-model 绑定值
+  // v-model value
   modelValue: {
     type: Array,
     default: () => []
   },
-  // 分隔符
+  //
   rangeSeparator: {
     type: String,
     default: '至'
   },
-  // 开始日期占位符
+  // start
   startPlaceholder: {
     type: String,
     default: '开始日期'
   },
-  // 结束日期占位符
+  // finish
   endPlaceholder: {
     type: String,
     default: '结束日期'
   },
-  // 值格式
+  // value
   valueFormat: {
     type: String,
     default: 'YYYY-MM-DD'
   },
-  // 显示格式
+  //
   format: {
     type: String,
     default: 'YYYY-MM-DD'
   },
-  // 宽度
+  //
   width: {
     type: String,
     default: '420px'
   },
-  // 尺寸
+  //
   size: {
     type: String,
     default: 'default',
     validator: (value) => ['large', 'default', 'small'].includes(value)
   },
-  // 是否禁用
+  // whether
   disabled: {
     type: Boolean,
     default: false
   },
-  // 是否可清空
+  // whether null / empty
   clearable: {
     type: Boolean,
     default: true
   },
-  // 快捷选项
+  // item
   shortcuts: {
     type: Array,
     default: () => [
@@ -108,23 +113,23 @@ const props = defineProps({
       }
     ]
   },
-  // 禁用日期函数
+  //
   disabledDate: {
     type: Function,
     default: null
   }
 })
 
-// 定义 emits
+// emits
 const emit = defineEmits(['update:modelValue', 'change'])
 
-// 处理值更新
+// Process value new
 const handleUpdate = (value) => {
   emit('update:modelValue', value)
   emit('change', value)
 }
 
-// 调试：打印当前宽度值
+// : current value
 // console.log('DateRangePicker width:', props.width)
 </script>
 
@@ -135,7 +140,7 @@ const handleUpdate = (value) => {
   max-width: v-bind(width);
 }
 
-/* 确保内部组件占满容器宽度 */
+/* component */
 :deep(.el-date-editor) {
   width: 100% !important;
   min-width: 100% !important;
@@ -171,4 +176,4 @@ const handleUpdate = (value) => {
   min-width: 100% !important;
   max-width: 100% !important;
 }
-</style> 
+</style>

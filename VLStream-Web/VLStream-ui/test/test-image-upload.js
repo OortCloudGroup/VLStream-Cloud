@@ -1,11 +1,16 @@
-// 测试图片上传API
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
+// API
 async function testImageUpload() {
   const currentToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token')
-  
+
   console.log('🔍 测试图片上传API')
   console.log('当前token:', currentToken)
   console.log('')
-  
+
   const testAPIs = [
     {
       name: '图片上传API（直接路径）',
@@ -29,12 +34,12 @@ async function testImageUpload() {
       method: 'GET'
     }
   ]
-  
+
   for (const api of testAPIs) {
     console.log(`\n=== 测试: ${api.name} ===`)
     console.log('URL:', api.url)
     console.log('Method:', api.method)
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'requesttype': 'app',
@@ -42,12 +47,12 @@ async function testImageUpload() {
       'secretkey': '58f9eeefc65f4b318204ba21f39a8861',
       'accesstoken': currentToken
     }
-    
+
     console.log('Headers:', headers)
-    
+
     try {
       let response
-      
+
       if (api.method === 'GET') {
         const url = new URL(api.url)
         if (api.params) {
@@ -60,15 +65,15 @@ async function testImageUpload() {
           headers: headers
         })
       } else {
-        // 对于POST请求，只测试连接，不实际上传文件
+        // POST , only ,
         response = await fetch(api.url, {
           method: 'OPTIONS',
           headers: headers
         })
       }
-      
+
       console.log(`响应状态: ${response.status}`)
-      
+
       if (response.ok) {
         console.log('✅ 请求成功！')
         if (api.method === 'GET') {
@@ -85,17 +90,17 @@ async function testImageUpload() {
           console.log('可能原因: 服务正常，但请求方法不对')
         }
       }
-      
+
     } catch (error) {
       console.log(`❌ 请求异常: ${error.message}`)
     }
   }
-  
+
   console.log('\n📝 测试总结:')
   console.log('- 如果直接路径成功，说明图片上传控制器配置正确')
   console.log('- 如果带/api前缀失败，说明前缀排除配置正确')
   console.log('- 如果都不成功，说明服务未启动或配置有问题')
 }
 
-// 运行测试
-testImageUpload().catch(console.error) 
+//
+testImageUpload().catch(console.error)

@@ -1,15 +1,20 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * Token清除修复测试脚本
- * 测试修复后的token清除逻辑
+ * Token
+ * after token
  */
 
 console.log('🔧 Token清除修复测试')
 console.log('=' * 50)
 
-// 测试token有效性检查
+// token
 function testTokenValidity() {
   console.log('\n🔍 测试Token有效性检查...')
-  
+
   const testCases = [
     { token: '3461f0e6...', expected: true, desc: '有效token' },
     { token: 'undefined', expected: false, desc: '字符串undefined' },
@@ -19,7 +24,7 @@ function testTokenValidity() {
     { token: null, expected: false, desc: 'null值' },
     { token: undefined, expected: false, desc: 'undefined值' }
   ]
-  
+
   testCases.forEach((testCase, index) => {
     const isValid = isValidToken(testCase.token)
     const result = isValid === testCase.expected ? '✅' : '❌'
@@ -27,40 +32,40 @@ function testTokenValidity() {
   })
 }
 
-// 检查token是否有效
+// tokenwhether
 function isValidToken(token) {
-  return token && 
-         token !== 'undefined' && 
-         token !== 'null' && 
+  return token &&
+         token !== 'undefined' &&
+         token !== 'null' &&
          token.trim() !== ''
 }
 
-// 测试当前token状态
+// current token
 function testCurrentTokenState() {
   console.log('\n🔍 测试当前Token状态...')
-  
+
   if (!window.autoCrossSystemSync) {
     console.log('❌ 自动同步器未找到')
     return
   }
-  
+
   const currentToken = window.autoCrossSystemSync.getCurrentSystemToken()
   console.log('📊 当前系统Token:', {
     token: currentToken ? currentToken.substring(0, 8) + '...' : 'null',
     isValid: isValidToken(currentToken),
     length: currentToken ? currentToken.length : 0
   })
-  
+
   return currentToken
 }
 
-// 测试存储中的token
+// in token
 function testStoredTokens() {
   console.log('\n💾 测试存储中的Token...')
-  
+
   const storageKeys = ['accessToken', 'token']
   const storageTypes = ['sessionStorage', 'localStorage']
-  
+
   storageTypes.forEach(type => {
     console.log(`\n📂 ${type}:`)
     storageKeys.forEach(key => {
@@ -71,15 +76,15 @@ function testStoredTokens() {
   })
 }
 
-// 测试验证缓存状态
+//
 function testValidationCache() {
   console.log('\n💾 测试验证缓存状态...')
-  
+
   if (!window.autoCrossSystemSync) {
     console.log('❌ 自动同步器未找到')
     return
   }
-  
+
   const sync = window.autoCrossSystemSync
   console.log('📊 验证缓存状态:', {
     tokenValidationCache: sync.tokenValidationCache.size,
@@ -88,15 +93,15 @@ function testValidationCache() {
     lastValidationTime: sync.lastValidationTime,
     validationCooldown: sync.validationCooldown
   })
-  
-  // 显示缓存内容
+
+  //
   if (sync.tokenValidationCache.size > 0) {
     console.log('✅ 验证缓存内容:')
     sync.tokenValidationCache.forEach((value, key) => {
       console.log(`  ${key.substring(0, 8)}... -> ${value}`)
     })
   }
-  
+
   if (sync.failedTokenCache.size > 0) {
     console.log('❌ 失败缓存内容:')
     sync.failedTokenCache.forEach(token => {
@@ -105,15 +110,15 @@ function testValidationCache() {
   }
 }
 
-// 清理验证缓存
+//
 function clearValidationCache() {
   console.log('\n🧹 清理验证缓存...')
-  
+
   if (!window.autoCrossSystemSync) {
     console.log('❌ 自动同步器未找到')
     return false
   }
-  
+
   try {
     window.autoCrossSystemSync.clearValidationCache()
     console.log('✅ 验证缓存已清理')
@@ -124,15 +129,15 @@ function clearValidationCache() {
   }
 }
 
-// 重置失败记录
+// failedrecord
 function resetFailedAttempts() {
   console.log('\n🔄 重置失败记录...')
-  
+
   if (!window.autoCrossSystemSync) {
     console.log('❌ 自动同步器未找到')
     return false
   }
-  
+
   try {
     window.autoCrossSystemSync.resetFailedAttempts()
     console.log('✅ 失败记录已重置')
@@ -143,15 +148,15 @@ function resetFailedAttempts() {
   }
 }
 
-// 测试手动同步
+//
 function testManualSync() {
   console.log('\n🔄 测试手动同步...')
-  
+
   if (!window.autoCrossSystemSync) {
     console.log('❌ 自动同步器未找到')
     return false
   }
-  
+
   try {
     window.autoCrossSystemSync.forceSync()
     console.log('✅ 手动触发同步成功')
@@ -162,68 +167,68 @@ function testManualSync() {
   }
 }
 
-// 模拟token验证失败场景
+// token failed
 function simulateTokenValidationFailure() {
   console.log('\n🧪 模拟Token验证失败场景...')
-  
+
   if (!window.autoCrossSystemSync) {
     console.log('❌ 自动同步器未找到')
     return
   }
-  
+
   const sync = window.autoCrossSystemSync
   const currentToken = sync.getCurrentSystemToken()
-  
+
   if (!currentToken) {
     console.log('⚠️ 当前没有token，无法模拟')
     return
   }
-  
+
   console.log('📊 模拟前状态:')
   console.log(`  当前token: ${currentToken.substring(0, 8)}...`)
   console.log(`  验证缓存大小: ${sync.tokenValidationCache.size}`)
   console.log(`  失败缓存大小: ${sync.failedTokenCache.size}`)
-  
-  // 模拟验证失败
+
+  // failed
   sync.failedTokenCache.add(currentToken)
   sync.failedAttempts.set(currentToken, 3)
-  
+
   console.log('📊 模拟后状态:')
   console.log(`  失败缓存大小: ${sync.failedTokenCache.size}`)
   console.log(`  失败次数: ${sync.failedAttempts.get(currentToken)}`)
-  
+
   console.log('💡 现在token应该被标记为失败，不会再次验证')
 }
 
-// 完整修复测试
+//
 async function runTokenClearFixTest() {
   console.log('🔧 开始Token清除修复测试')
   console.log('=' * 60)
-  
-  // 1. 测试token有效性检查
+
+  // 1. token
   testTokenValidity()
-  
-  // 2. 测试当前token状态
+
+  // 2. current token
   const currentToken = testCurrentTokenState()
-  
-  // 3. 测试存储中的token
+
+  // 3. in token
   testStoredTokens()
-  
-  // 4. 测试验证缓存状态
+
+  // 4.
   testValidationCache()
-  
-  // 5. 清理验证缓存
+
+  // 5.
   clearValidationCache()
-  
-  // 6. 重置失败记录
+
+  // 6. failedrecord
   resetFailedAttempts()
-  
-  // 7. 测试手动同步
+
+  // 7.
   testManualSync()
-  
-  // 8. 模拟token验证失败场景
+
+  // 8. token failed
   simulateTokenValidationFailure()
-  
+
   console.log('\n' + '=' * 60)
   console.log('🎯 Token清除修复测试完成')
   console.log('\n💡 修复内容:')
@@ -240,7 +245,7 @@ async function runTokenClearFixTest() {
   console.log('- testManualSync() - 测试手动同步')
 }
 
-// 导出测试函数
+// Export
 window.testTokenClearFix = {
   runTokenClearFixTest,
   testTokenValidity,
@@ -255,4 +260,4 @@ window.testTokenClearFix = {
 }
 
 console.log('✅ Token清除修复测试脚本已加载')
-console.log('💡 运行测试: testTokenClearFix.runTokenClearFixTest()') 
+console.log('💡 运行测试: testTokenClearFix.runTokenClearFixTest()')

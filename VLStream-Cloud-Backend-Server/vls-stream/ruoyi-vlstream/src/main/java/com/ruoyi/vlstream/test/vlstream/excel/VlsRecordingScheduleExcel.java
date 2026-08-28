@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -18,7 +19,7 @@ import java.time.LocalTime;
 
 
 /**
- * 录制计划表 Excel实体类
+ * Excel
  *
  * @author Oort
  * @since 2025-12-23
@@ -31,109 +32,109 @@ public class VlsRecordingScheduleExcel implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 设备ID
+	 * deviceID
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("设备ID")
 	private Long deviceId;
 	/**
-	 * 设备名称
+	 * device
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("设备名称")
 	private String deviceName;
 	/**
-	 * 计划名称
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("计划名称")
 	private String scheduleName;
 	/**
-	 * 是否启用：0-禁用，1-启用
+	 * whether : 0- , 1-
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("是否启用：0-禁用，1-启用")
 	private Byte isEnabled;
 	/**
-	 * 单次录制时长(秒，默认10分钟)
+	 * ( , 10 )
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("单次录制时长(秒，默认10分钟)")
 	private Integer recordDuration;
 	/**
-	 * 录制质量
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("录制质量")
 	private String recordQuality;
 	/**
-	 * 录制格式
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("录制格式")
 	private String recordFormat;
 	/**
-	 * 存储路径
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("存储路径")
 	private String storagePath;
 	/**
-	 * 保留天数(0表示永久保留)
+	 * (0 )
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("保留天数(0表示永久保留)")
 	private Integer retentionDays;
 	/**
-	 * 计划类型
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("计划类型")
 	private String scheduleType;
 	/**
-	 * 时间策略ID(当schedule_type为time_strategy时)
+	 * ID( schedule_type to time_strategy )
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("时间策略ID(当schedule_type为time_strategy时)")
 	private Long timeStrategyId;
 	/**
-	 * 开始时间(当schedule_type为time_range时)
+	 * start ( schedule_type to time_range )
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("开始时间(当schedule_type为time_range时)")
 	private LocalTime startTime;
 	/**
-	 * 结束时间(当schedule_type为time_range时)
+	 * finish ( schedule_type to time_range )
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("结束时间(当schedule_type为time_range时)")
 	private LocalTime endTime;
 	/**
-	 * 星期几录制(1-7,逗号分隔)
+	 * (1-7, )
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("星期几录制(1-7,逗号分隔)")
 	private String weekdays;
 	/**
-	 * 最后录制时间
+	 * after
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("最后录制时间")
 	private LocalDateTime lastRecordTime;
 	/**
-	 * 下次录制时间
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("下次录制时间")
 	private LocalDateTime nextRecordTime;
 	/**
-	 * 总录制次数
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("总录制次数")
 	private Integer totalRecords;
 	/**
-	 * 失败录制次数
+	 * failed
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("失败录制次数")

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -21,7 +22,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
- * 岗位表 sys_post
+ * sys_post
  *
  * @author Lion Li
  */
@@ -33,14 +34,14 @@ import javax.validation.constraints.Size;
 public class SysPost extends BaseEntity {
 
     /**
-     * 岗位序号
+     *
      */
     @ExcelProperty(value = "岗位序号")
     @TableId(value = "post_id")
     private Long postId;
 
     /**
-     * 岗位编码
+     *
      */
     @ExcelProperty(value = "岗位编码")
     @NotBlank(message = "岗位编码不能为空")
@@ -48,7 +49,7 @@ public class SysPost extends BaseEntity {
     private String postCode;
 
     /**
-     * 岗位名称
+     *
      */
     @ExcelProperty(value = "岗位名称")
     @NotBlank(message = "岗位名称不能为空")
@@ -56,26 +57,26 @@ public class SysPost extends BaseEntity {
     private String postName;
 
     /**
-     * 岗位排序
+     *
      */
     @ExcelProperty(value = "岗位排序")
     @NotNull(message = "显示顺序不能为空")
     private Integer postSort;
 
     /**
-     * 状态（0正常 1停用）
+     * Status (0 normal 1 disabled)
      */
     @ExcelProperty(value = "状态", converter = ExcelDictConvert.class)
     @ExcelDictFormat(dictType = "sys_normal_disable")
     private String status;
 
     /**
-     * 备注
+     * remark
      */
     private String remark;
 
     /**
-     * 用户是否存在此岗位标识 默认不存在
+     * userwhether in in
      */
     @TableField(exist = false)
     private boolean flag = false;

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-dialog v-model="dialogVisible" class="diaOutSet" title="事件详情" top="5vh" width="60%" :before-close="handleClose" destroy-on-close>
     <div v-if="eventDetailData">
@@ -140,7 +145,7 @@
                   </el-radio>
                 </el-radio-group>
               </el-form-item>
-              <!--    已自动关联工单，则禁用是否转工单       -->
+              <!-- already work order, whether work order -->
               <el-form-item label="是否转工单">
                 <el-switch
                   v-model="formData.work_order_status"
@@ -152,7 +157,7 @@
                   :inactive-value="0"
                 />
               </el-form-item>
-              <!-- 工单名称 -->
+              <!-- work order -->
               <flow-form
                 v-if="formData.work_order_status===1"
                 ref="flowFormRef"
@@ -236,7 +241,7 @@
         确 定
       </el-button>
     </div>
-    <!-- 视频播放弹窗 -->
+    <!-- dialog -->
     <el-dialog
       v-model="videoDialogVisible"
       title="视频播放"
@@ -306,8 +311,8 @@ interface FeedbackItem {
   task_event_id?: string
   uuid?: string
 }
-let codeAct_2 = ref(false) // 展开收缩
-let codeAct = ref(true) // 展开收缩
+let codeAct_2 = ref(false) //
+let codeAct = ref(true) //
 const props = defineProps<Props>()
 const emit = defineEmits(['update:visible', 'refresh'])
 const harvest = ref(false)
@@ -317,13 +322,13 @@ const dialogVisible = computed({
   set: (value: boolean) => emit('update:visible', value)
 })
 
-// 关闭对话框
+//
 const handleClose = () => {
   dialogVisible.value = false
   emit('refresh')
 }
 const _submitForm = () => {
-  // 提交
+  //
 }
 const selectContent = (content) => {
   formData.value.describe = content
@@ -351,7 +356,7 @@ const openVideoDialog = (data) => {
   }
 }
 
-// 数据初始化
+// dataInitialize
 watch([() => props.visible, () => props.data], async([newVisible, newData]) => {
   if (newVisible && newData) {
     formData.value = initFormData()
@@ -366,7 +371,7 @@ watch([() => props.visible, () => props.data], async([newVisible, newData]) => {
 const initFormData = () => ({
   id: eventDetailData.value?.id,
   mod_status: null,
-  // 是否转工单 1:是 0:否(默认) 工单关联的是事件,一个事件只能关联1个工单  已关联的不允许再关联
+  // whether work order 1: is 0: ( ) work order is event, eventonly can 1 work order already
   work_order_status: 0,
   work_order_data: undefined,
   describe: '',
@@ -377,7 +382,7 @@ const initFormData = () => ({
 const formData = ref(initFormData())
 const formRef = ref()
 
-// 表单验证规则
+// form
 const formRules = ref({
   describe: [
     { required: true, message: '请输入反馈描述', trigger: 'blur' }
@@ -387,21 +392,21 @@ const formRules = ref({
   ]
 })
 
-// 添加事件反馈
+// event
 const addFeedbackForm = async() => {
-  // 表单验证
+  // form
   if (!formRef.value) return
   try {
     await formRef.value.validate()
   } catch (error) {
-    return // 验证失败，不提交
+    return // failed,
   }
   const params = {
     accessToken: store.token,
     ...formData.value,
     id: eventDetailData.value?.id
   }
-  // 是否转工单 1:是 0:否(默认) 工单关联的是事件,一个事件只能关联1个工单  已关联的不允许再关联
+  // whether work order 1: is 0: ( ) work order is event, eventonly can 1 work order already
   if (formData.value.work_order_status === 1) {
     await flowFormRef.value?.addWorkorderFn()
     params.work_order_data = flowFormRef.value?.form.work_order_data
@@ -419,7 +424,7 @@ const addFeedbackForm = async() => {
   }
 }
 const feedbackListData = ref<FeedbackItem[]>([])
-// 反馈列表
+//
 const getFeedbackList = async() => {
   const params = {
     accessToken: store.token,
@@ -596,7 +601,7 @@ const handleSelect = (_key: string) => {
   border-left: 3px solid transparent !important;
 }
 
-// 更多-展开
+// -
 .codeActBox {
   gap: 10px;
   color: var(--el-color-primary);

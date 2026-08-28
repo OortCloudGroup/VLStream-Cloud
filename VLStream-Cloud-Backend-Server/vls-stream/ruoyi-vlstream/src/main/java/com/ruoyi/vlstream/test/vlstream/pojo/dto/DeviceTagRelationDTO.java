@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,7 +15,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.TagManagement;
 
 
 /**
- * 设备标签关联表 数据传输对象实体类
+ * device data object
  *
  * @author Oort
  * @since 2025-12-23
@@ -24,7 +25,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.TagManagement;
 public class DeviceTagRelationDTO extends DeviceTagRelation {
 	private static final long serialVersionUID = 1L;
 
-	// 以下为关联对象，不对应数据库字段
+	// to object, data field
 	@Schema(description = "设备信息", hidden = true)
 	private DeviceInfo deviceInfo;
 

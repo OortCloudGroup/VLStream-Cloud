@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -29,7 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 规则列表
+ *
  */
 @RestController
 @RequestMapping("/rule/list")
@@ -40,12 +41,12 @@ public class RuleListController {
 
 
     /**
-     * 分页列表查询
+     * Query
      *
      * @param ruleList
      * @return
      */
-    //@AutoLog(value = "规则列表-分页列表查询")
+    // @AutoLog(value = " - Query ")
     @SaCheckPermission("rule:list:queryPageList")
     @GetMapping(value = "/list")
     public R<IPage<RuleList>> queryPageList(RuleList ruleList, PageQuery pageQuery) {
@@ -59,7 +60,7 @@ public class RuleListController {
     }
 
     /**
-     * 添加
+     *
      *
      * @param ruleListBo
      * @return
@@ -74,7 +75,7 @@ public class RuleListController {
     }
 
     /**
-     * 编辑
+     *
      *
      * @param ruleListBo
      * @return
@@ -93,7 +94,7 @@ public class RuleListController {
     }
 
     /**
-     * 通过id删除,同时删除子表数据
+     * idDelete , Delete sub data
      *
      * @param id
      * @return
@@ -106,7 +107,7 @@ public class RuleListController {
     }
 
     /**
-     * 批量删除,同时删除子表数据
+     * Batch delete , Delete sub data
      * @param ids
      * @return
      */
@@ -118,7 +119,7 @@ public class RuleListController {
     }
 
     /**
-     * 通过id查询
+     * idQuery
      *
      * @param id
      * @return
@@ -134,7 +135,7 @@ public class RuleListController {
     }
 
     /**
-     * 导出规则列列表
+     * Export
      */
     @SaCheckPermission("rule:list:export")
     @PostMapping("/export")
@@ -148,10 +149,10 @@ public class RuleListController {
     }
 
     /**
-     * 导入规则列列表
+     * Import
      *
-     * @param file          导入文件
-     * @param updateSupport 是否更新已存在数据
+     * @param file Import
+     * @param updateSupport whether new already in data
      */
     @SaCheckPermission("rule:user:importData")
     @PostMapping(value = "/importData", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -164,7 +165,7 @@ public class RuleListController {
     }
 
     /**
-     * 导出规则列列表模版
+     * Export
      */
     @SaCheckPermission("rule:list:exportTemplate")
     @PostMapping("/exportTemplate")

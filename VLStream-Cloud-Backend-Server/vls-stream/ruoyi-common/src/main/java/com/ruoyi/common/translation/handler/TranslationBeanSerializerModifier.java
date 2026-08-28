@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -13,7 +14,7 @@ import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import java.util.List;
 
 /**
- * Bean 序列化修改器 解决 Null 被单独处理问题
+ * Bean Update Null Process
  *
  * @author Lion Li
  */
@@ -23,7 +24,7 @@ public class TranslationBeanSerializerModifier extends BeanSerializerModifier {
     public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription beanDesc,
                                                      List<BeanPropertyWriter> beanProperties) {
         for (BeanPropertyWriter writer : beanProperties) {
-            // 如果序列化器为 TranslationHandler 的话 将 Null 值也交给他处理
+            // if to TranslationHandler Null value also Process
             if (writer.getSerializer() instanceof TranslationHandler) {
                 writer.assignNullSerializer(writer.getSerializer());
             }

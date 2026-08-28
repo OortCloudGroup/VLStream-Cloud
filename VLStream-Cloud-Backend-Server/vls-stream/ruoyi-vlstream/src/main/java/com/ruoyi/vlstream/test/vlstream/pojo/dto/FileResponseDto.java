@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -12,10 +13,10 @@ import java.io.Serializable;
 
 /**
  * <p>
- * 文件存储响应类
+ *
  * </p>
  *
- * @author 刘鑫
+ * @author
  * @since 2025-04-07
  */
 @Data

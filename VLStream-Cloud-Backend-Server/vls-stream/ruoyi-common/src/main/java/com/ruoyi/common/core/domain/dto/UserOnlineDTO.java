@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -11,7 +12,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 /**
- * 当前在线会话
+ * current in will
  *
  * @author ruoyi
  */
@@ -23,42 +24,42 @@ public class UserOnlineDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 会话编号
+     * will
      */
     private String tokenId;
 
     /**
-     * 部门名称
+     * department name
      */
     private String deptName;
 
     /**
-     * 用户名称
+     * username
      */
     private String userName;
 
     /**
-     * 登录IP地址
+     * IP
      */
     private String ipaddr;
 
     /**
-     * 登录地址
+     *
      */
     private String loginLocation;
 
     /**
-     * 浏览器类型
+     *
      */
     private String browser;
 
     /**
-     * 操作系统
+     * operation
      */
     private String os;
 
     /**
-     * 登录时间
+     *
      */
     private Long loginTime;
 

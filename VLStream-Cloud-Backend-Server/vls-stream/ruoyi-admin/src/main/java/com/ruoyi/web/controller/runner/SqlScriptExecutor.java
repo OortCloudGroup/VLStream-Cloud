@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -86,12 +87,12 @@ public class SqlScriptExecutor implements ApplicationRunner {
 
     private static final List<String> necessaryTables = Arrays.asList(
         "ACT_RU_TASK", "wf_form", "sys_user","ACT_RE_DEPLOYMENT"
-        // 添加所有其他必要的表名
+        // all need to
     );
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        // 检查数据库是否已初始化
+        // data whether already Initialize
         if (!isDatabaseInitialized()) {
             executeSqlScript(INIT_SQL_FILE);
         } else {
@@ -265,10 +266,10 @@ public class SqlScriptExecutor implements ApplicationRunner {
             while ((line = bufferedReader.readLine()) != null) {
                 String trimmedLine = line.trim();
                 if (trimmedLine.isEmpty() || trimmedLine.startsWith("--")) {
-                    continue; // 跳过空行
+                    continue; // null / empty
                 }
                 try {
-                    // 跳过多行注释
+                    //
                     if (trimmedLine.startsWith("/*")) {
                         skip = true;
                         sqlAppender.setLength(0);
@@ -293,7 +294,7 @@ public class SqlScriptExecutor implements ApplicationRunner {
                         sqlAppender.setLength(0);
                     }
                 } catch (Exception e) {
-                    // 处理异常的SQL
+                    // Process SQL
                     logger.error("处理异常: " + sqlAppender.toString(), e);
                     sqlAppender.setLength(0);
                 }
@@ -315,14 +316,14 @@ public class SqlScriptExecutor implements ApplicationRunner {
         try (Connection connection = DriverManager.getConnection(url, user, password);
              Statement statement = connection.createStatement()) {
 
-            // 获取所有表名并转换为小写
+            // Get all Convert to
             List<String> lowerCaseNecessaryTables = necessaryTables.stream()
                 .map(String::toLowerCase)
                 .collect(Collectors.toList());
 
             removeExistingTables(statement, lowerCaseNecessaryTables);
 
-            // 如果必要表的列表为空，表示所有必要的表都存在
+            // if need to is empty, all need to in
             return lowerCaseNecessaryTables.isEmpty();
         } catch (Exception e) {
             logger.error("检查数据库初始化状态时发生错误", e);

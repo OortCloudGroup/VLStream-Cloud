@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -9,7 +10,7 @@ import com.ruoyi.common.utils.StringUtils;
 import org.redisson.api.NameMapper;
 
 /**
- * redis缓存key前缀处理
+ * redis key before Process
  *
  * @author ye
  * @date 2022/7/14 17:44
@@ -20,12 +21,12 @@ public class KeyPrefixHandler implements NameMapper {
     private final String keyPrefix;
 
     public KeyPrefixHandler(String keyPrefix) {
-        //前缀为空 则返回空前缀
+        // before is empty null / empty before
         this.keyPrefix = StringUtils.isBlank(keyPrefix) ? "" : keyPrefix + ":";
     }
 
     /**
-     * 增加前缀
+     * before
      */
     @Override
     public String map(String name) {
@@ -39,7 +40,7 @@ public class KeyPrefixHandler implements NameMapper {
     }
 
     /**
-     * 去除前缀
+     * before
      */
     @Override
     public String unmap(String name) {

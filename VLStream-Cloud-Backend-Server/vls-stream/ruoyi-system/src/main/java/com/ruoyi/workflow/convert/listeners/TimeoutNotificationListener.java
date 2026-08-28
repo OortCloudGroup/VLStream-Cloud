@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -39,15 +40,15 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * 超时消息通知监听器
- * 处理审批节点超时后的消息推送
+ * notificationlistener
+ * Process approvalnode after Push
  */
 @Slf4j
 @Component
 public class TimeoutNotificationListener implements JavaDelegate, ApplicationContextAware {
     private static ApplicationContext applicationContext;
 
-    // 通过 FieldExtension 注入的参数
+    // FieldExtension parameter
     private FixedValue notificationUserId;
     private FixedValue priority;
     private FixedValue data;
@@ -63,7 +64,7 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
         try {
             log.info("超时消息通知监听器开始执行，流程实例ID: {}", execution.getProcessInstanceId());
 
-            // 1. 获取当前活动的任务
+            // 1. Get current task
             TaskService taskService = applicationContext.getBean(TaskService.class);
             List<Task> tasks = taskService.createTaskQuery()
                     .processInstanceId(execution.getProcessInstanceId())
@@ -74,7 +75,7 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
                 return;
             }
 
-            // 2. 获取参数值
+            // 2. Get parameter value
             String userId = getParameterValue(notificationUserId, execution, "notificationUserId");
             Integer priorityValue = getIntParameterValue(priority, execution, "priority");
             String dataValue = getParameterValue(data, execution, "data");
@@ -90,7 +91,7 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
                 return;
             }
 
-            // 3. 构建并发送消息通知
+            // 3. Build notification
             for (Task task : tasks) {
                 sendTimeoutNotification(task, userId, priorityValue, dataValue, channelTypesValue);
             }
@@ -99,20 +100,20 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
 
         } catch (Exception e) {
             log.error("超时消息通知监听器执行失败", e);
-            // 不抛出异常，避免影响流程执行
+            // , workflowExecute
         }
     }
 
     /**
-     * 发送超时消息通知
+     * notification
      */
     private void sendTimeoutNotification(Task task, String userId, Integer priorityValue, String dataValue,
             List<Integer> channelTypesValue) {
         try {
-            // 1. 获取请求头信息
+            // 1. Get info
             String tenantId = task.getTenantId();
 
-            // 2. 获取应用ID
+            // 2. Get ID
             ProcessEngineConfigurationImpl processEngineConfiguration = Context.getProcessEngineConfiguration();
             RepositoryService repositoryService = processEngineConfiguration.getRepositoryService();
 
@@ -129,13 +130,13 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
                 log.warn("获取应用ID失败: {}", e.getMessage());
             }
 
-            // 调用 app/v1/relatesinfo 获取应用名称
+            // app/v1/relatesinfo Get
             String appName = getAppName(applicationId);
 
-            // 3. 处理表单数据
+            // 3. Process formdata
             FormDataResult formData = processFormData(task, dataValue);
 
-            // 4. 构建推送请求体
+            // 4. Build Push
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("priority", priorityValue);
             requestBody.put("enable_instatmsg", true);
@@ -146,25 +147,25 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
             requestBody.put("token", "37b74dcb91e74f51a9ecb35360a5cf19");
             requestBody.put("tenant_id", tenantId);
 
-            // 构建 data 对象
+            // Build data object
             Map<String, Object> dataMap = new HashMap<>();
             dataMap.put("msg_content", formData.getMsgContent());
             requestBody.put("data", dataMap);
 
-            // 如果有附件URL，添加到请求体
+            // if URL,
             if (!formData.getAnnexUrls().isEmpty()) {
                 requestBody.put("annex", formData.getAnnexUrls());
                 log.debug("超时消息通知：添加附件URL，数量={}", formData.getAnnexUrls().size());
             }
 
-            // 从流程变量获取 ex_data 参数
+            // from workflow variableGet ex_data parameter
             Map<String, Object> variables = task.getProcessVariables();
             requestBody.put("msg_source", Integer.parseInt(String.valueOf(variables.getOrDefault("msg_source", 1))));
             Object appPackage = variables.get("app_package");
             Object jumpPath = variables.get("jump_path");
             Object jumpParams = variables.get("jump_params");
 
-            // 解析应用包名：优先从请求头 appid/appID 查表获取，查不到则用流程变量兜底
+            // Parse : from appid/appID Get , workflow variable
             String resolvedAppPackage = null;
             try {
                 HttpServletRequest req = getCurrentRequest();
@@ -183,7 +184,7 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
                 log.warn("超时消息通知：解析 app_package 异常，将使用流程变量兜底", e);
             }
 
-            // 构建 ex_data
+            // Build ex_data
             Map<String, Object> exDataMap = new HashMap<>();
             boolean hasExData = false;
             if (resolvedAppPackage != null) {
@@ -211,14 +212,14 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
                         appPackage, jumpPath, jumpParams, appName);
             }
 
-            // 构建 to 数组（单个用户）
+            // Build to array ( user)
             List<Map<String, Object>> toList = new ArrayList<>();
             Map<String, Object> toItem = new HashMap<>();
             toItem.put("uid", userId);
             toList.add(toItem);
             requestBody.put("to", toList);
 
-            // 5. 调用第三方接口推送消息
+            // 5. interfacePush
             sendNotification(requestBody);
 
         } catch (Exception e) {
@@ -227,7 +228,7 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
     }
 
     /**
-     * 处理表单数据
+     * Process formdata
      */
     private FormDataResult processFormData(Task task, String originalData) {
         FormDataResult result = new FormDataResult(originalData);
@@ -256,7 +257,7 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
     }
 
     /**
-     * 安全地解析表单内容
+     * full Parse form
      */
     private void parseFormContentSafely(String content, Map<String, Object> variables, FormDataResult result) {
         try {
@@ -324,7 +325,7 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
     }
 
     /**
-     * 获取当前HTTP请求对象
+     * Get current HTTP object
      */
     private HttpServletRequest getCurrentRequest() {
         try {
@@ -340,7 +341,7 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
     }
 
     /**
-     * 调用第三方接口发送消息推送
+     * interface Push
      */
     private void sendNotification(Map<String, Object> requestBody) throws IOException {
         OkHttpClient client = OkHttpClientHolder.CLIENT;
@@ -360,7 +361,7 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
                 .post(body)
                 .addHeader("Content-Type", "application/json");
 
-        // 复制当前请求的请求头
+        // current
         HttpServletRequest request = getCurrentRequest();
         if (request != null) {
             Enumeration<String> headerNames = request.getHeaderNames();
@@ -397,7 +398,7 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
     }
 
     /**
-     * 获取参数值
+     * Get parameter value
      */
     private String getParameterValue(FixedValue fixedValue, DelegateExecution execution, String paramName) {
         if (fixedValue != null) {
@@ -410,7 +411,7 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
     }
 
     /**
-     * 获取整数参数值
+     * Get parameter value
      */
     private Integer getIntParameterValue(FixedValue fixedValue, DelegateExecution execution, String paramName) {
         String value = getParameterValue(fixedValue, execution, paramName);
@@ -425,13 +426,13 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
     }
 
     /**
-     * 获取List参数值
+     * Get Listparameter value
      */
     private List<Integer> getListParameterValue(FixedValue fixedValue, DelegateExecution execution, String paramName) {
         String value = getParameterValue(fixedValue, execution, paramName);
         if (value != null) {
             try {
-                // 使用Gson反序列化JSON数组
+                // Gson JSONarray
                 com.google.gson.Gson gson = new com.google.gson.Gson();
                 return gson.fromJson(value,
                         new com.google.gson.reflect.TypeToken<List<Integer>>() {
@@ -444,24 +445,24 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
     }
 
     /**
-     * 从任务获取formKey
-     * 优先从任务定义获取，如果为空则从流程定义中获取
+     * from taskGet formKey
+     * from task Get , if is empty from workflow definition in Get
      */
     private String getFormKeyFromTask(Task task) {
-        // 1. 首先尝试从任务直接获取
+        // 1. from task Get
         String formKey = task.getFormKey();
         if (StringUtils.isNotBlank(formKey)) {
             return formKey;
         }
 
-        // 2. 如果任务formKey为空，从流程定义的StartEvent获取
+        // 2. if taskformKey is empty, from workflow definition StartEventGet
         try {
             ProcessEngineConfigurationImpl processEngineConfiguration = Context.getProcessEngineConfiguration();
             RepositoryService repositoryService = processEngineConfiguration.getRepositoryService();
 
             BpmnModel bpmnModel = repositoryService.getBpmnModel(task.getProcessDefinitionId());
             if (bpmnModel != null) {
-                // 获取开始节点的formKey
+                // Get startnode formKey
                 for (org.flowable.bpmn.model.Process process : bpmnModel.getProcesses()) {
                     for (org.flowable.bpmn.model.FlowElement flowElement : process.getFlowElements()) {
                         if (flowElement instanceof org.flowable.bpmn.model.StartEvent) {
@@ -482,7 +483,7 @@ public class TimeoutNotificationListener implements JavaDelegate, ApplicationCon
     }
 
     /**
-     * 表单数据处理结果
+     * formdataProcess
      */
     @Data
     private static class FormDataResult {

@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 const OPLAYER_SCRIPT_URL = import.meta.env.DEV
   ? '/bus/vls-ui/OPlayer.min.js'
   : 'http://oort.oortcloudsmart.com:21410/bus/vls-ui/OPlayer.min.js'

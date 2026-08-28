@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -9,34 +10,34 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 对象存储常量
+ * object
  *
  * @author Lion Li
  */
 public interface OssConstant {
 
     /**
-     * 默认配置KEY
+     * configurationKEY
      */
     String DEFAULT_CONFIG_KEY = "sys_oss:default_config";
 
     /**
-     * 预览列表资源开关Key
+     * Key
      */
     String PEREVIEW_LIST_RESOURCE_KEY = "sys.oss.previewListResource";
 
     /**
-     * 系统数据ids
+     * dataids
      */
     List<Long> SYSTEM_DATA_IDS = Arrays.asList(1L, 2L, 3L, 4L);
 
     /**
-     * 云服务商
+     * service
      */
     String[] CLOUD_SERVICE = new String[] {"aliyun", "qcloud", "qiniu", "obs"};
 
     /**
-     * https 状态
+     * https
      */
     String IS_HTTPS = "Y";
 

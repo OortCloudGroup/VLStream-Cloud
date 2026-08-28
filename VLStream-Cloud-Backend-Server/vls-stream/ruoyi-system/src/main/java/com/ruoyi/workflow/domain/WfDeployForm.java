@@ -11,7 +11,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 /**
- * 流程实例关联表单对象 sys_instance_form
+ * workflow instance formobject sys_instance_form
  *
  * @author KonBAI
  * @createTime 2022/3/7 22:07
@@ -22,13 +22,13 @@ public class WfDeployForm {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 流程部署主键
+     * workflow primary key
      */
     @TableId("deploy_id")
     private String deployId;
 
     /**
-     * 表单Key
+     * formKey
      */
     private String formKey;
 
@@ -37,22 +37,22 @@ public class WfDeployForm {
     private String userId;
 
     /**
-     * 节点Key
+     * nodeKey
      */
     private String nodeKey;
 
     /**
-     * 表单名称
+     * form
      */
     private String formName;
 
     /**
-     * 节点名称
+     * node
      */
     private String nodeName;
 
     /**
-     * 表单内容
+     * form
      */
     private String content;
 }

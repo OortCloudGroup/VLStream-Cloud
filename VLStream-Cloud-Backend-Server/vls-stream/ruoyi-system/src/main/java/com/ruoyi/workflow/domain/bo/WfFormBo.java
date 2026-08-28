@@ -16,7 +16,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 /**
- * 流程表单业务对象
+ * workflowform object
  *
  * @author KonBAI
  * @createTime 2022/3/7 22:07
@@ -27,62 +27,62 @@ public class WfFormBo extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 表单主键
+     * formprimary key
      */
     @NotNull(message = "表单ID不能为空", groups = {EditGroup.class})
     private String formId;
 
     /**
-     * 表单名称
+     * form
      */
     @NotBlank(message = "表单名称不能为空", groups = {AddGroup.class, EditGroup.class})
     private String formName;
 
     /**
-     * 表单内容
+     * form
      */
     @NotBlank(message = "表单内容不能为空", groups = {AddGroup.class, EditGroup.class})
     private String content;
 
     /**
-     * 组件标志（0代表表单 1代表组件）
+     * component (0represents form 1represents component)
      */
     private String isFormComponents;
     /**
-     * 表单类型（0流式布局 1签批卡片布局）
+     * form (0 1 )
      */
     private Integer formType;
     /**
-     * 备注
+     * remark
      */
     private String remark;
     /**
-     * 表单分类id
+     * form id
      */
     @NotBlank(message = "所属分类不能为空", groups = {AddGroup.class, EditGroup.class})
     private String categoryId;
     /**
-     * 租户id
+     * id
      */
     private String tenantId;
     /**
-     * 应用表单
+     * form
      */
     private Boolean wfFormApp=false;
     /**
-     * 综合表单
+     * form
      */
     private Boolean wfFormSynthesis=false;
     /**
-     * 0流程 1工单
+     * 0workflow 1work order
      */
     private String type;
     /**
-     * 模型主键
+     * modelprimary key
      */
     private String modelId;
     /**
-     * 0选择应用，1添加应用
+     * 0 , 1
      */
     private String appFlag;
 }

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 流程表单工具类（新填充表单工具类）
+ * workflowform ( new fill form )
  *
  * @author KonBAI
  * @createTime 2022/8/7 17:09
@@ -27,29 +28,29 @@ public class WProcessFormUtils {
     private static final String MODEL = "id";
 
     /**
-     * 填充表单项内容
+     * fill form item
      *
-     * @param formInfo 表单配置信息
-     * @param data     表单内容
+     * @param formInfo formconfigurationinfo
+     * @param data form
      */
     public static void fillFormData(WFormInfo formInfo, Map<String, Object> data) {
-        // 增加空值检查
+        // null / empty value
         if (formInfo == null) {
             log.warn("WFormInfo为null，无法填充表单数据");
             return;
         }
-        
+
         if (data == null || data.isEmpty()) {
             log.debug("表单数据为空，跳过填充");
             return;
         }
-        
+
         List<Map<String, Object>> widgetList = formInfo.getWidgetList();
         if (CollUtil.isEmpty(widgetList)) {
             log.debug("widgetList为空，跳过填充");
             return;
         }
-        
+
         for (Map<String, Object> field : widgetList) {
             if (field != null) {
                 recursiveFillField(field, data);
@@ -62,12 +63,12 @@ public class WProcessFormUtils {
         if (field == null || data == null) {
             return;
         }
-        
+
         if (!field.containsKey(CONFIG)) {
             return;
         }
-        
-        // 处理嵌套的widgetList
+
+        // Process widgetList
         if (field.containsKey("widgetList")) {
             Object widgetListObj = field.get("widgetList");
             if (widgetListObj instanceof List) {
@@ -81,8 +82,8 @@ public class WProcessFormUtils {
                 }
             }
         }
-        
-        // 处理cols
+
+        // Process cols
         if (field.containsKey("cols")) {
             Object colsObj = field.get("cols");
             if (colsObj instanceof List) {
@@ -96,8 +97,8 @@ public class WProcessFormUtils {
                 }
             }
         }
-        
-        // 填充字段值
+
+        // fill field value
         String modelKey = Convert.toStr(field.get(MODEL));
         if (modelKey != null && !modelKey.isEmpty()) {
             Object value = data.get(modelKey);

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div style="width: 100%;">
     <el-form-item style="width: 100%;" label="选择模式">
@@ -64,7 +69,7 @@ const selectScopeOptions = ref([
 ])
 
 const defaultValueType = ref(props.modelValue?.defaultValueType || 1)
-// 1，无， 2 固定值， 3 提交人， 4 提交部门， 5 创建人， 6 创建人部门, 7拥有者 ，8 修改者
+// 1, , 2 value , 3 , 4 department, 5 , 6 department, 7 , 8 Update
 const defaultValueTypeOptions = ref([
   { label: '无', value: 1 },
   { label: '固定值', value: 2 },

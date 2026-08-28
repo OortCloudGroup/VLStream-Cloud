@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -19,37 +20,37 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 算法标注数据表 服务类
+ * algorithmannotationdata service
  *
  * @author Oort
  * @since 2025-12-23
  */
 public interface IVlsAlgorithmAnnotationService extends BaseService<AlgorithmAnnotation> {
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsAlgorithmAnnotation 查询参数
+	 * @param page parameter
+	 * @param vlsAlgorithmAnnotation Query parameter
 	 * @return IPage<VlsAlgorithmAnnotationVO>
 	 */
 	IPage<AlgorithmAnnotationVO> selectVlsAlgorithmAnnotationPage(IPage<AlgorithmAnnotationVO> page, AlgorithmAnnotationVO vlsAlgorithmAnnotation);
 
 	/**
-	 * 导出数据
+	 * Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsAlgorithmAnnotationExcel>
 	 */
 	List<VlsAlgorithmAnnotationExcel> exportVlsAlgorithmAnnotation(Wrapper<AlgorithmAnnotation> queryWrapper);
 
 	/**
-	 * 分页查询算法标注列表
+	 * Query algorithmannotation list
 	 *
-	 * @param page 分页参数
-	 * @param annotationName 标注名称（模糊查询）
-	 * @param annotationType 标注类型
-	 * @param annotationStatus 标注状态
-	 * @return 分页结果
+	 * @param page parameter
+	 * @param annotationName annotation ( Query )
+	 * @param annotationType annotation
+	 * @param annotationStatus annotation
+	 * @return
 	 */
 	IPage<AlgorithmAnnotation> selectAnnotationPage(Page<AlgorithmAnnotation> page,
 													String annotationName,
@@ -57,101 +58,101 @@ public interface IVlsAlgorithmAnnotationService extends BaseService<AlgorithmAnn
 													String annotationStatus);
 
 	/**
-	 * 根据标注类型查询标注列表
+	 * annotation Query annotation list
 	 *
-	 * @param annotationType 标注类型
-	 * @return 标注列表
+	 * @param annotationType annotation
+	 * @return annotation
 	 */
 	List<AlgorithmAnnotation> getByAnnotationType(String annotationType);
 
 	/**
-	 * 根据标注状态查询标注列表
+	 * annotation Query annotation list
 	 *
-	 * @param annotationStatus 标注状态
-	 * @return 标注列表
+	 * @param annotationStatus annotation
+	 * @return annotation
 	 */
 	List<AlgorithmAnnotation> getByAnnotationStatus(String annotationStatus);
 
 	/**
-	 * 创建算法标注
+	 * algorithmannotation
 	 *
-	 * @param annotation 标注信息
-	 * @return 是否成功
+	 * @param annotation annotationinfo
+	 * @return whether successfully
 	 */
 	boolean createAnnotation(AlgorithmAnnotation annotation);
 
 	/**
-	 * 更新算法标注
+	 * new algorithmannotation
 	 *
-	 * @param annotation 标注信息
-	 * @return 是否成功
+	 * @param annotation annotationinfo
+	 * @return whether successfully
 	 */
 	boolean updateAnnotation(AlgorithmAnnotation annotation);
 
 	/**
-	 * 删除算法标注
+	 * Delete algorithmannotation
 	 *
-	 * @param id 标注ID
-	 * @return 是否成功
+	 * @param id annotationID
+	 * @return whether successfully
 	 */
 	boolean deleteAnnotation(Long id);
 
 	/**
-	 * 批量删除算法标注
+	 * Batch delete algorithmannotation
 	 *
-	 * @param ids 标注ID列表
-	 * @return 是否成功
+	 * @param ids annotationID
+	 * @return whether successfully
 	 */
 	boolean batchDeleteAnnotations(List<Long> ids);
 
 	/**
-	 * 更新标注进度
+	 * new annotation
 	 *
-	 * @param id 标注ID
-	 * @param annotatedCount 已标注数量
-	 * @return 是否成功
+	 * @param id annotationID
+	 * @param annotatedCount already annotation
+	 * @return whether successfully
 	 */
 	boolean updateAnnotationProgress(Long id, Integer annotatedCount);
 
 	/**
-	 * 批量更新标注状态
+	 * new annotation
 	 *
-	 * @param ids 标注ID列表
-	 * @param annotationStatus 新标注状态
-	 * @return 是否成功
+	 * @param ids annotationID
+	 * @param annotationStatus new annotation
+	 * @return whether successfully
 	 */
 	boolean batchUpdateAnnotationStatus(List<Long> ids, String annotationStatus);
 
 	/**
-	 * 开始标注任务
+	 * startannotationtask
 	 *
-	 * @param id 标注ID
-	 * @return 是否成功
+	 * @param id annotationID
+	 * @return whether successfully
 	 */
 	boolean startAnnotationTask(Long id);
 
 	/**
-	 * 完成标注任务
+	 * annotationtask
 	 *
-	 * @param id 标注ID
-	 * @return 是否成功
+	 * @param id annotationID
+	 * @return whether successfully
 	 */
 	boolean completeAnnotationTask(Long id);
 
 	/**
-	 * 重置标注任务
+	 * annotationtask
 	 *
-	 * @param id 标注ID
-	 * @return 是否成功
+	 * @param id annotationID
+	 * @return whether successfully
 	 */
 	boolean resetAnnotationTask(Long id);
 
 	/**
-	 * 导入标注数据
+	 * Import annotationdata
 	 *
-	 * @param id 标注ID
-	 * @param dataPath 数据路径
-	 * @return 导入结果
+	 * @param id annotationID
+	 * @param dataPath data
+	 * @return Import
 	 */
 	Map<String, Object> importAnnotationData(Long id, String dataPath);
 
@@ -165,46 +166,46 @@ public interface IVlsAlgorithmAnnotationService extends BaseService<AlgorithmAnn
 	Map<String, Object> importAnnotationDatasetZip(Long annotationId, MultipartFile zipFile);
 
 	/**
-	 * 获取标注类型统计
+	 * Get annotation
 	 *
-	 * @return 标注类型统计信息
+	 * @return annotation info
 	 */
 	List<Map<String, Object>> getAnnotationTypeStatistics();
 
 	/**
-	 * 获取标注状态统计
+	 * Get annotation
 	 *
-	 * @return 标注状态统计信息
+	 * @return annotation info
 	 */
 	List<Map<String, Object>> getAnnotationStatusStatistics();
 
 	/**
-	 * 获取标注进度统计
+	 * Get annotation
 	 *
-	 * @return 标注进度统计信息
+	 * @return annotation info
 	 */
 	List<Map<String, Object>> getProgressStatistics();
 
 	/**
-	 * 获取标注工作量统计
+	 * Get annotation
 	 *
-	 * @return 标注工作量统计信息
+	 * @return annotation info
 	 */
 	Map<String, Object> getWorkloadStatistics();
 
 	/**
-	 * 验证标注数据
+	 * annotationdata
 	 *
-	 * @param id 标注ID
-	 * @return 验证结果
+	 * @param id annotationID
+	 * @return
 	 */
 	Map<String, Object> validateAnnotationData(Long id);
 
 	/**
-	 * 保存标注数据到数据集文件
+	 * annotationdata dataset
 	 *
-	 * @param annotationId 标注ID
-	 * @return 是否保存成功
+	 * @param annotationId annotationID
+	 * @return whether successfully
 	 */
 	boolean saveAnnotationToDataset(Long annotationId);
 

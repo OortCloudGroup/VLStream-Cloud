@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <!-- eslint-disable no-prototype-builtins -->
 <!--
 /**
@@ -5,7 +10,7 @@
  * email: vdpadmin@163.com
  * website: https://www.vform666.com
  * date: 2021.08.18
- * remark: 如果要分发VForm源码，需在本文件顶部保留此文件头信息！！
+ * remark: if need to VForm , in info! !
  */
 -->
 
@@ -32,7 +37,7 @@
           :index-of-parent-list="index"
           :parent-widget="null"
         >
-          <!-- 递归传递插槽！！！ -->
+          <!-- ! ! ! -->
           <template v-for="slot in Object.keys($slots)" #[slot]="scope">
             <slot :name="slot" v-bind="scope" />
           </template>
@@ -49,7 +54,7 @@
           :index-of-parent-list="index"
           :parent-widget="null"
         >
-          <!-- 递归传递插槽！！！ -->
+          <!-- ! ! ! -->
           <template v-for="slot in Object.keys($slots)" #[slot]="scope">
             <slot :name="slot" v-bind="scope" />
           </template>
@@ -60,7 +65,7 @@
 </template>
 
 <script>
-// import ElForm from 'element-ui/packages/form/src/form.vue'  /* 用于源码调试Element UI */
+// import ElForm from 'element-ui/packages/form/src/form.vue' /* Element UI */
 import emitter from '~@/utils/emitter'
 import './container-item/index'
 import FieldComponents from '~@/components/form-designer/form-widget/field-widget/index'
@@ -82,9 +87,9 @@ export default {
   provide() {
     return {
       refList: this.widgetRefList,
-      sfRefList: this.subFormRefList, // 收集SubForm引用
+      sfRefList: this.subFormRefList, // SubForm
       getFormConfig: () => this.formJsonObj.formConfig, /* 解决provide传递formConfig属性的响应式更新问题！！ */
-      getGlobalDsv: () => this.globalDsv, // 全局数据源变量
+      getGlobalDsv: () => this.globalDsv, // full data variable
       globalOptionData: this.optionData,
       getOptionData: () => this.optionData, /* 该方法用于在异步更新option-data之后重新获取到最新值 */
       globalModel: {
@@ -94,23 +99,23 @@ export default {
     }
   },
   props: {
-    formJson: { // prop传入的表单JSON配置
+    formJson: { // prop formJSONconfiguration
       type: Object,
       default: () => buildDefaultFormJson()
     },
-    formData: { // prop传入的表单数据
+    formData: { // prop formdata
       type: Object,
       default: () => ({})
     },
-    optionData: { // prop传入的选项数据
+    optionData: { // prop item data
       type: Object,
       default: () => ({})
     },
-    previewState: { // 是否表单预览状态
+    previewState: { // whether form
       type: Boolean,
       default: false
     },
-    globalDsv: { // 全局数据源变量
+    globalDsv: { // full data variable
       type: Object,
       default: () => ({})
     }
@@ -125,9 +130,9 @@ export default {
 
       widgetRefList: {},
       subFormRefList: {},
-      formId: null, // 表单唯一Id，用于区分页面上的多个v-form-render组件！！
+      formId: null, // form Id, page v-form-rendercomponent! !
 
-      externalComponents: {} // 外部组件实例集合
+      externalComponents: {} // componentinstancecollection
     }
   },
   computed: {
@@ -192,7 +197,7 @@ export default {
     },
 
     getContainerWidgetName(widget) {
-      if (widget.type === 'grid') { // grid-item跟VueGridLayout全局注册组件重名，故特殊处理！！
+      if (widget.type === 'grid') { // grid-item VueGridLayout full component , Process ! !
         return 'vf-grid-item'
       }
       return widget.type + '-item'
@@ -281,11 +286,11 @@ export default {
               this.buildDataFromWidget(childItem)
             })
           }
-        } else if (wItem.type === 'items') { // 明细组件 不递归
+        } else if (wItem.type === 'items') { // component
           // wItem.items[0].widgetList.forEach((item) => {
           //   this.buildDataFromWidget(item)
           // })
-        } else { // 自定义容器组件
+        } else { // Custom component
           if (!!wItem.widgetList && (wItem.widgetList.length > 0)) {
             wItem.widgetList.forEach((childItem) => {
               this.buildDataFromWidget(childItem)
@@ -304,7 +309,7 @@ export default {
     },
 
     addFieldChangeEventHandler() {
-      this.off$('fieldChange') // 移除原有事件监听
+      this.off$('fieldChange') // event
       this.on$('fieldChange', (fieldName, newValue, oldValue, subFormName, subFormRowIndex) => {
         this.handleFieldDataChange(fieldName, newValue, oldValue, subFormName, subFormRowIndex)
         this.$emit('formChange', fieldName, newValue, oldValue, this.formDataModel, subFormName, subFormRowIndex)
@@ -312,11 +317,11 @@ export default {
     },
 
     addFieldValidateEventHandler() {
-      this.off$('fieldValidation') // 移除原有事件监听
+      this.off$('fieldValidation') // event
       this.on$('fieldValidation', (fieldName) => {
         if (this.$refs.renderForm) {
           this.$refs.renderForm.validateField(fieldName)
-          // 调用自定义组件（明细组件的自定义校验方法）
+          // Customcomponent ( component CustomValidate method )
           this.broadcast('ItemsItem', 'selfFieldValidation', fieldName)
         }
       })
@@ -352,7 +357,7 @@ export default {
       let foundW = this.getWidgetRef(widgetName)
       if (!!foundW) {
         foundW.setDisabled(disabledFlag)
-      } else { // 没找到，可能是子表单中的组件
+      } else { // , can is sub form in component
         this.findWidgetOfSubFormAndSetDisabled(widgetName, disabledFlag)
       }
     },
@@ -370,7 +375,7 @@ export default {
       let foundW = this.getWidgetRef(widgetName)
       if (!!foundW) {
         foundW.setHidden(hiddenFlag)
-      } else { // 没找到，可能是子表单中的组件
+      } else { // , can is sub form in component
         this.findWidgetOfSubFormAndSetHidden(widgetName, hiddenFlag)
       }
     },
@@ -409,14 +414,14 @@ export default {
       return result
     },
 
-    // --------------------- 以下为组件支持外部调用的API方法 begin ------------------//
-    /* 提示：用户可自行扩充这些方法！！！ */
+    // --------------------- to component API method begin ------------------//
+    /* prompt / tip: user method ! ! ! */
 
     changeLanguage(langName) {
       changeLocale(langName)
     },
 
-    getNativeForm() { // 获取原生form引用
+    getNativeForm() { // Get form
       return this.$refs['renderForm']
     },
 
@@ -439,7 +444,7 @@ export default {
     },
 
     /**
-       * 动态加载表单JSON
+       * Load formJSON
        * @param newFormJson
        */
     setFormJson(newFormJson) {
@@ -457,9 +462,9 @@ export default {
             return
           }
 
-          /* formDataModel必须在widgetList赋值完成初始化，因为widgetList赋值意味着子组件开始创建！！！ */
-          // this.formDataModel = {}  //清空表单数据对象（有bug，会导致表单校验失败！！）
-          this.clearFormDataModel() // 上行代码有问题，会导致表单校验失败，故保留原对象引用只清空对象属性！！
+          /* formDataModel in widgetList value Initialize , to widgetList value sub componentstart ! ! ! */
+          // this.formDataModel = {} // null / empty formdataobject ( bug, will formValidate failed! ! )
+          this.clearFormDataModel() // , will formValidate failed, object only null / empty objectproperty! !
           this.buildFormModel(newFormJsonObj.widgetList)
 
           this.formJsonObj['formConfig'] = newFormJsonObj.formConfig
@@ -477,8 +482,8 @@ export default {
     },
 
     /**
-       * 重新加载选项数据
-       * @param widgetNames 指定重新加载的组件名称或组件名数组，不传则重新加载所有选项字段
+       * new Load item data
+       * @param widgetNames new Load component component array, new Load all item field
        */
     reloadOptionData(widgetNames) {
       let eventParams = []
@@ -523,7 +528,7 @@ export default {
       return promise
     },
 
-    setFormData(formData) { // 设置表单数据
+    setFormData(formData) { // Set formdata
       Object.keys(this.formDataModel).forEach(propName => {
         // eslint-disable-next-line no-prototype-builtins
         if (!!formData && formData.hasOwnProperty(propName)) {
@@ -531,19 +536,19 @@ export default {
         }
       })
 
-      // 通知SubForm组件：表单数据更新事件！！
+      // notificationSubFormcomponent: formdata new event! !
       this.broadcast('ContainerItem', 'setFormData', this.formDataModel)
-      // 通知FieldWidget组件：表单数据更新事件！！
+      // notificationFieldWidgetcomponent: formdata new event! !
       this.broadcast('FieldWidget', 'setFormData', this.formDataModel)
     },
 
-    getFieldValue(fieldName) { // 单个字段获取值
+    getFieldValue(fieldName) { // fieldGet value
       let fieldRef = this.getWidgetRef(fieldName)
       if (!!fieldRef && !!fieldRef.getValue) {
         return fieldRef.getValue()
       }
 
-      if (!fieldRef) { // 如果是子表单字段
+      if (!fieldRef) { // if is sub formfield
         let result = []
         this.findWidgetNameInSubForm(fieldName).forEach(wn => {
           let sw = this.getWidgetRef(wn)
@@ -556,13 +561,13 @@ export default {
       }
     },
 
-    setFieldValue(fieldName, fieldValue) { // 单个更新字段值
+    setFieldValue(fieldName, fieldValue) { // new field value
       let fieldRef = this.getWidgetRef(fieldName)
       if (!!fieldRef && !!fieldRef.setValue) {
         fieldRef.setValue(fieldValue)
       }
 
-      if (!fieldRef) { // 如果是子表单字段
+      if (!fieldRef) { // if is sub formfield
         this.findWidgetNameInSubForm(fieldName).forEach(wn => {
           let sw = this.getWidgetRef(wn)
           if (!!sw && !!sw.setValue) {
@@ -580,7 +585,7 @@ export default {
       return foundSFRef.getSubFormValues(needValidation)
     },
 
-    // 设置表单权限
+    // Set form
     setFormItemAuth(data) {
       data && data.forEach(item => {
         let foundW = this.getWidgetRef(item.id)
@@ -632,7 +637,7 @@ export default {
       })
     },
 
-    resetForm() { // 重置表单
+    resetForm() { // form
       let subFormNames = Object.keys(this.subFormRefList)
       subFormNames.forEach(sfName => {
         if (!!this.subFormRefList[sfName].resetSubForm) {
@@ -643,7 +648,7 @@ export default {
       let wNameList = Object.keys(this.widgetRefList)
       wNameList.forEach(wName => {
         let foundW = this.getWidgetRef(wName)
-        if (!!foundW && !foundW.subFormItemFlag && !!foundW.resetField) { // 跳过子表单字段！！
+        if (!!foundW && !foundW.subFormItemFlag && !!foundW.resetField) { // sub formfield! !
           foundW.resetField()
         }
       })
@@ -658,8 +663,8 @@ export default {
     },
 
     /**
-       * 校验表单
-       * @param callback 回调函数
+       * Validate form
+       * @param callback
        */
     validateForm(callback) {
       this.$refs['renderForm'].validate((valid) => {
@@ -720,7 +725,7 @@ export default {
     },
 
     /**
-       * 获取所有字段组件
+       * Get all fieldcomponent
        * @returns {*[]}
        */
     getFieldWidgets() {
@@ -728,7 +733,7 @@ export default {
     },
 
     /**
-       * 获取所有容器组件
+       * Get all component
        * @returns {*[]}
        */
     getContainerWidgets() {
@@ -736,17 +741,17 @@ export default {
     },
 
     /**
-       * 增加外部组件引用，可通过getEC()方法获取外部组件，以便在VForm内部调用外部组件方法
-       * @param componentName 外部组件名称
-       * @param externalComponent 外部组件实例
+       * component , getEC() method Get component, in VForm component method
+       * @param componentName component
+       * @param externalComponent componentinstance
        */
     addEC(componentName, externalComponent) {
       this.externalComponents[componentName] = externalComponent
     },
 
     /**
-       * 判断外部组件是否可获取
-       * @param componentName 外部组件名称
+       * Check componentwhether Get
+       * @param componentName component
        * @returns {boolean}
        */
     hasEC(componentName) {
@@ -755,7 +760,7 @@ export default {
     },
 
     /**
-       * 获取外部组件实例
+       * Get componentinstance
        * @param componentName
        * @returns {*}
        */
@@ -764,14 +769,14 @@ export default {
     },
 
     /**
-       * 获取globalDsv对象
+       * Get globalDsvobject
        * @returns {*}
        */
     getGlobalDsv() {
       return this.globalDsv
     }
 
-    // --------------------- 以上为组件支持外部调用的API方法 end ------------------//
+    // --------------------- to component API method end ------------------//
 
   }
 }

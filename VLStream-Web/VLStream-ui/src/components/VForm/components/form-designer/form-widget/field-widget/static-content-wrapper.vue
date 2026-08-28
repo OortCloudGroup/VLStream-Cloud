@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="field-wrapper" :class="{'design-time-bottom-margin': !!designer}" :style="{display: displayStyle, height: field.options.height + 'px'}">
     <div
@@ -94,7 +99,7 @@ export default {
     selectField(field) {
       if (!!this.designer) {
         this.designer.setSelected(field)
-        this.designer.emitEvent('field-selected', this.parentWidget) // 发送选中组件的父组件对象
+        this.designer.emitEvent('field-selected', this.parentWidget) // in component componentobject
       }
     },
 
@@ -134,7 +139,7 @@ export default {
           this.parentList.splice(this.indexOfParentList, 1)
           this.designer.setSelected(nextSelected)
 
-          this.designer.formWidget.deleteWidgetRef(fieldRefName) // 删除组件ref！！！
+          this.designer.formWidget.deleteWidgetRef(fieldRefName) // Delete componentref! ! !
           this.designer.emitHistoryChange()
         })
       }

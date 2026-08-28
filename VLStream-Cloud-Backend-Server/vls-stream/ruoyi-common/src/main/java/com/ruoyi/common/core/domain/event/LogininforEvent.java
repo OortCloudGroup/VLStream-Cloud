@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -11,7 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.Serializable;
 
 /**
- * 登录事件
+ * event
  *
  * @author Lion Li
  */
@@ -22,27 +23,27 @@ public class LogininforEvent implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 用户账号
+     * user
      */
     private String username;
 
     /**
-     * 登录状态 0成功 1失败
+     * 0successfully 1failed
      */
     private String status;
 
     /**
-     * 提示消息
+     * prompt / tip
      */
     private String message;
 
     /**
-     * 请求体
+     *
      */
     private HttpServletRequest request;
 
     /**
-     * 其他参数
+     * parameter
      */
     private Object[] args;
 

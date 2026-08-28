@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -11,58 +12,58 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 节点信息推送vo
+ * nodeinfoPush vo
  */
 @Data
 public class TaskDataPushVo {
 
     /**
-     * 任务id
+     * taskid
      */
     private String taskId;
 
     /**
-     * 任务名称
+     * task
      */
     private String taskName;
 
     /**
-     * 任务办理人
+     * taskassignee
      */
     private String assignee;
 
     /**
-     * 任务办理人是否管理员(1 部门领导   2 管理员审核)
+     * taskassigneewhether administrator(1 departmentleader 2 administrator )
      */
     private String assigneeType;
 
     /**
-     * 任务办理人身份证号
+     * taskassigneeID card number
      */
     private String assigneeIdCard;
 
     /**
-     * 流程实例id
+     * workflow instanceid
      */
     private String processInstanceId;
 
     /**
-     * 意见
+     *
      */
     private String fullMessage;
 
     /**
-     * 操作类型
+     * operation
      */
     private String operateType;
 
     /**
-     * 节点扩展属性
+     * nodeextension properties
      */
     private List<Map<String, Object>> formDataMap;
 
     /**
-     * 下一节点审批人
+     * nodeapprover
      */
     private String nextUserIds;
 }

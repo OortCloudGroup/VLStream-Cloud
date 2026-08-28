@@ -1,9 +1,14 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 
 /**
- * 获取图片的标注实例列表
- * @param {number} annotationId - 标注项目ID
- * @param {string} imageName - 图片名称
+ * Get annotationinstance
+ * @param {number} annotationId - annotation item ID
+ * @param {string} imageName -
  * @returns {Promise}
  */
 export function getAnnotationInstances(annotationId, imageName) {
@@ -15,8 +20,8 @@ export function getAnnotationInstances(annotationId, imageName) {
 }
 
 /**
- * 获取标注项目的所有标注实例列表
- * @param {number} annotationId - 标注项目ID
+ * Get annotation item all annotationinstance
+ * @param {number} annotationId - annotation item ID
  * @returns {Promise}
  */
 export function getAllAnnotationInstances(annotationId) {
@@ -27,10 +32,10 @@ export function getAllAnnotationInstances(annotationId) {
 }
 
 /**
- * 批量保存图片的标注实例
- * @param {number} annotationId - 标注项目ID
- * @param {string} imageId - 图片id
- * @param {Array<Object>} instances - 标注实例列表
+ * annotationinstance
+ * @param {number} annotationId - annotation item ID
+ * @param {string} imageId - id
+ * @param {Array<Object>} instances - annotationinstance
  * @returns {Promise}
  */
 export function batchSaveAnnotationInstances(annotationId, imageId, instances) {
@@ -42,8 +47,8 @@ export function batchSaveAnnotationInstances(annotationId, imageId, instances) {
 }
 
 /**
- * 删除标注实例
- * @param {number} instanceId - 实例ID
+ * Delete annotationinstance
+ * @param {number} instanceId - instanceID
  * @returns {Promise}
  */
 export function deleteAnnotationInstance(instanceId) {
@@ -54,8 +59,8 @@ export function deleteAnnotationInstance(instanceId) {
 }
 
 /**
- * 批量删除标注实例
- * @param {Array} instanceIds - 实例ID数组
+ * Batch delete annotationinstance
+ * @param {Array} instanceIds - instanceIDarray
  * @returns {Promise}
  */
 export function batchDeleteAnnotationInstances(instanceIds) {

@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -19,7 +20,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
- * 部门表 sys_dept
+ * department sys_dept
  *
  * @author Lion Li
  */
@@ -31,91 +32,91 @@ public class SysDeptView extends TreeEntity<SysDeptView> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 部门ID
+     * department ID
      */
     @TableId(value = "dept_id")
     private String  deptId;
 
     /**
-     * 租户ID
+     * tenant ID
      */
     private String tenantId;
 
     /**
-     * 部门code
+     * departmentcode
      */
     @TableField("oort_dcode")
     private String deptCode;
 
     /**
-     * 部门名称
+     * department name
      */
     @NotBlank(message = "部门名称不能为空")
     @Size(min = 0, max = 30, message = "部门名称长度不能超过{max}个字符")
     private String deptName;
 
     /**
-     * 显示顺序
+     *
      */
     @NotNull(message = "显示顺序不能为空")
     private Integer orderNum;
 
     /**
-     * 负责人
+     *
      */
     private String leader;
 
     /**
-     * 上级部门
+     * department
      */
     private String parentId;
 
     /**
-     * 联系电话
+     *
      */
     @Size(min = 0, max = 11, message = "联系电话长度不能超过{max}个字符")
     private String phone;
 
     /**
-     * 邮箱
+     *
      */
     @Email(message = "邮箱格式不正确")
     @Size(min = 0, max = 50, message = "邮箱长度不能超过{max}个字符")
     private String email;
 
     /**
-     * 部门状态:0正常,1停用
+     * department :0 ,1
      */
     private String status;
 
     /**
-     * 删除标志（0代表存在 2代表删除）
+     * Delete (0represents in 2represents Delete )
      */
     @TableLogic
     private String delFlag;
 
     /**
-     * 祖级列表
+     *
      */
     private String ancestors;
 
     /**
-     * 创建者
+     * creator
      */
  //   private String createBy;
 
     /**
-     * 创建时间
+     * create time
      */
    // private Date createTime;
 
     /**
-     * 更新者
+     * updater
      */
     //private String updateBy;
 
     /**
-     * 更新时间
+     * update time
      */
    // private Date updateTime;
 }

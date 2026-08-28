@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import Clipboard from 'clipboard'
 
 export function isNull(value) {
@@ -37,7 +42,7 @@ export const overwriteObj = function(obj1, obj2) { /* 浅拷贝对象属性，ob
   })
 }
 
-/* 用Function对象实现eval函数功能 */
+/* Functionobject eval can */
 export const evalFn = function(fn, DSV = null, VFR = null) {
   let f = new Function('DSV', 'VFR', 'return ' + fn)
   return f(DSV, VFR)
@@ -67,11 +72,11 @@ export const insertCustomCssToHead = function(cssCode, formId = '') {
   let head = document.getElementsByTagName('head')[0]
   let oldStyle = document.getElementById('vform-custom-css')
   if (!!oldStyle) {
-    head.removeChild(oldStyle) // 先清除后插入！！
+    head.removeChild(oldStyle) // after ! !
   }
   if (!!formId) {
     oldStyle = document.getElementById('vform-custom-css' + '-' + formId)
-    !!oldStyle && head.removeChild(oldStyle) // 先清除后插入！！
+    !!oldStyle && head.removeChild(oldStyle) // after ! !
   }
 
   let newStyle = document.createElement('style')
@@ -90,10 +95,10 @@ export const insertCustomCssToHead = function(cssCode, formId = '') {
 export const insertGlobalFunctionsToHtml = function(functionsCode, formId = '') {
   let bodyEle = document.getElementsByTagName('body')[0]
   let oldScriptEle = document.getElementById('v_form_global_functions')
-  !!oldScriptEle && bodyEle.removeChild(oldScriptEle) // 先清除后插入！！
+  !!oldScriptEle && bodyEle.removeChild(oldScriptEle) // after ! !
   if (!!formId) {
     oldScriptEle = document.getElementById('v_form_global_functions' + '-' + formId)
-    !!oldScriptEle && bodyEle.removeChild(oldScriptEle) // 先清除后插入！！
+    !!oldScriptEle && bodyEle.removeChild(oldScriptEle) // after ! !
   }
 
   let newScriptEle = document.createElement('script')
@@ -156,7 +161,7 @@ export function traverseFieldWidgets(widgetList, handler, parent = null) {
       })
     } else if (w.type === 'sub-form') {
       traverseFieldWidgets(w.widgetList, handler, w)
-    } else if (w.category === 'container') { // 自定义容器
+    } else if (w.category === 'container') { // Custom
       traverseFieldWidgets(w.widgetList, handler, w)
     }
   })
@@ -188,7 +193,7 @@ export function traverseContainerWidgets(widgetList, handler) {
       })
     } else if (w.type === 'sub-form') {
       traverseContainerWidgets(w.widgetList, handler)
-    } else if (w.category === 'container') { // 自定义容器
+    } else if (w.category === 'container') { // Custom
       traverseContainerWidgets(w.widgetList, handler)
     }
   })
@@ -220,7 +225,7 @@ export function traverseAllWidgets(widgetList, handler) {
       })
     } else if (w.type === 'sub-form') {
       traverseAllWidgets(w.widgetList, handler)
-    } else if (w.category === 'container') { // 自定义容器
+    } else if (w.category === 'container') { // Custom
       traverseAllWidgets(w.widgetList, handler)
     }
   })
@@ -235,7 +240,7 @@ function handleWidgetForTraverse(widget, handler) {
 }
 
 /**
- * 遍历容器内的字段组件
+ * fieldcomponent
  * @param con
  * @param handler
  */
@@ -264,7 +269,7 @@ export function traverseFieldWidgetsOfContainer(con, handler) {
     con.widgetList.forEach(cw => {
       handleWidgetForTraverse(cw, handler)
     })
-  } else if (con.category === 'container') { // 自定义容器
+  } else if (con.category === 'container') { // Custom
     con.widgetList.forEach(cw => {
       handleWidgetForTraverse(cw, handler)
     })
@@ -272,7 +277,7 @@ export function traverseFieldWidgetsOfContainer(con, handler) {
 }
 
 /**
- * 获取所有字段组件
+ * Get all fieldcomponent
  * @param widgetList
  * @returns {[]}
  */
@@ -295,7 +300,7 @@ export function getAllFieldWidgets(widgetList) {
 }
 
 /**
- * 获取所有容器组件
+ * Get all component
  * @param widgetList
  * @returns {[]}
  */
@@ -359,7 +364,7 @@ export function getDefaultFormConfig() {
     labelAlign: 'label-left-align',
     cssCode: '',
     customClass: [],
-    functions: '', // 全局函数
+    functions: '', // full
     layoutType: 'PC',
     jsonVersion: 3,
 

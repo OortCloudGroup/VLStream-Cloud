@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
 
 export const containers = [
   {
@@ -15,7 +19,7 @@ export const containers = [
       disabled: false,
       clearable: true,
       required: false,
-      customClass: '' // 自定义css类名
+      customClass: '' // Customcss
     }
   },
 
@@ -28,8 +32,8 @@ export const containers = [
   //     name: '',
   //     hidden: false,
   //     gutter: 12,
-  //     colHeight: null, // 栅格列统一高度属性，用于解决栅格列设置响应式布局浮动后被挂住的问题！！
-  //     customClass: '' // 自定义css类名
+  // colHeight: null, // property, Set after ! !
+  // customClass: '' // Customcss
   //   }
   // },
 
@@ -41,7 +45,7 @@ export const containers = [
   //   options: {
   //     name: '',
   //     hidden: false,
-  //     customClass: '' // 自定义css类名
+  // customClass: '' // Customcss
   //   }
   // },
 
@@ -54,7 +58,7 @@ export const containers = [
   //   options: {
   //     name: '',
   //     hidden: false,
-  //     customClass: '' // 自定义css类名
+  // customClass: '' // Customcss
   //   }
   // },
 
@@ -71,11 +75,11 @@ export const containers = [
   //     offset: 0,
   //     push: 0,
   //     pull: 0,
-  //     responsive: false, // 是否开启响应式布局
+  // responsive: false, // whether
   //     md: 12,
   //     sm: 12,
   //     xs: 12,
-  //     customClass: '' // 自定义css类名
+  // customClass: '' // Customcss
   //   }
   // },
   {
@@ -92,11 +96,11 @@ export const containers = [
       offset: 0,
       push: 0,
       pull: 0,
-      responsive: false, // 是否开启响应式布局
+      responsive: false, // whether
       md: 12,
       sm: 12,
       xs: 12,
-      customClass: '' // 自定义css类名
+      customClass: '' // Customcss
     }
   }
 
@@ -113,8 +117,8 @@ export const containers = [
   //     cellHeight: '',
   //     colspan: 1,
   //     rowspan: 1,
-  //     wordBreak: false, // 是否自动换行
-  //     customClass: '' // 自定义css类名
+  // wordBreak: false, // whether
+  // customClass: '' // Customcss
   //   }
   // },
 
@@ -130,7 +134,7 @@ export const containers = [
   //     hidden: false,
   //     active: false,
   //     disabled: false,
-  //     customClass: '' // 自定义css类名
+  // customClass: '' // Customcss
   //   }
   // }
 ]
@@ -162,7 +166,7 @@ export const basicFields = [
       validation: '',
       validationHint: '',
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null,
@@ -210,7 +214,7 @@ export const basicFields = [
       validation: '',
       validationHint: '',
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null,
@@ -250,7 +254,7 @@ export const basicFields = [
       validation: '',
       validationHint: '',
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null,
@@ -298,7 +302,7 @@ export const basicFields = [
       validation: '',
       validationHint: '',
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null
@@ -339,7 +343,7 @@ export const basicFields = [
       validation: '',
       validationHint: '',
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null
@@ -372,7 +376,7 @@ export const basicFields = [
       filterable: false,
       allowCreate: false,
       remote: false,
-      automaticDropdown: false, // 自动下拉
+      automaticDropdown: false, //
       multiple: false,
       multipleLimit: 0,
       optionItems: [
@@ -385,7 +389,7 @@ export const basicFields = [
       validation: '',
       validationHint: '',
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null,
@@ -421,13 +425,13 @@ export const basicFields = [
       hidden: false,
       clearable: true,
       editable: false,
-      format: 'HH:mm:ss', // 时间格式
+      format: 'HH:mm:ss', //
       required: false,
       requiredHint: '',
       validation: '',
       validationHint: '',
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null
@@ -447,7 +451,7 @@ export const basicFields = [
   //   formItemFlag: true,
   //   options: {
   //     name: '',
-  //     label: '时间范围',
+  // label: ' ',
   //     labelAlign: '',
   //     defaultValue: null,
   //     startPlaceholder: '',
@@ -462,13 +466,13 @@ export const basicFields = [
   //     hidden: false,
   //     clearable: true,
   //     editable: false,
-  //     format: 'HH:mm:ss', // 时间格式
+  // format: 'HH:mm:ss', //
   //     required: false,
   //     requiredHint: '',
   //     validation: '',
   //     validationHint: '',
   //     // -------------------
-  //     customClass: '', // 自定义css类名
+  // customClass: '', // Customcss
   //     labelIconClass: null,
   //     labelIconPosition: 'rear',
   //     labelTooltip: null
@@ -504,14 +508,14 @@ export const basicFields = [
       hidden: false,
       clearable: true,
       editable: false,
-      format: 'YYYY-MM-DD HH:mm:ss', // 日期显示格式
-      valueFormat: 'YYYY-MM-DD HH:mm:ss', // 日期对象格式
+      format: 'YYYY-MM-DD HH:mm:ss', //
+      valueFormat: 'YYYY-MM-DD HH:mm:ss', // object
       required: false,
       requiredHint: '',
       validation: '',
       validationHint: '',
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null
@@ -548,14 +552,14 @@ export const basicFields = [
       hidden: false,
       clearable: true,
       editable: false,
-      format: 'YYYY-MM-DD', // 日期显示格式
-      valueFormat: 'YYYY-MM-DD', // 日期对象格式
+      format: 'YYYY-MM-DD', //
+      valueFormat: 'YYYY-MM-DD', // object
       required: false,
       requiredHint: '',
       validation: '',
       validationHint: '',
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null
@@ -585,7 +589,7 @@ export const basicFields = [
       disabled: false,
       hidden: false,
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null,
@@ -622,7 +626,7 @@ export const basicFields = [
       validation: '',
       validationHint: '',
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null,
@@ -646,7 +650,7 @@ export const basicFields = [
   //   formItemFlag: true,
   //   options: {
   //     name: '',
-  //     label: '颜色选择器',
+  // label: ' ',
   //     labelAlign: '',
   //     defaultValue: null,
   //     columnWidth: '200px',
@@ -660,7 +664,7 @@ export const basicFields = [
   //     validation: '',
   //     validationHint: '',
   //     // -------------------
-  //     customClass: '', // 自定义css类名
+  // customClass: '', // Customcss
   //     labelIconClass: null,
   //     labelIconPosition: 'rear',
   //     labelTooltip: null
@@ -693,7 +697,7 @@ export const basicFields = [
       validation: '',
       validationHint: '',
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null,
@@ -725,9 +729,9 @@ export const basicFields = [
       fontSize: '13px',
       fontWeight: 'normal',
       color: '#333',
-      preWrap: false, // 是否自动换行
+      preWrap: false, // whether
       // -------------------
-      customClass: '' // 自定义css类名
+      customClass: '' // Customcss
       // // -------------------
       // onCreated: '',
       // onMounted: ''
@@ -745,7 +749,7 @@ export const basicFields = [
       hidden: false,
       htmlContent: '<b>html text</b>',
       // -------------------
-      customClass: '' // 自定义css类名
+      customClass: '' // Customcss
       // -------------------
       // onCreated: '',
       // onMounted: ''
@@ -758,7 +762,7 @@ export const basicFields = [
   //   formItemFlag: false,
   //   options: {
   //     name: '',
-  //     label: '按钮',
+  // label: 'button',
   //     columnWidth: '200px',
   //     size: '',
   //     displayStyle: 'block',
@@ -770,7 +774,7 @@ export const basicFields = [
   //     circle: false,
   //     icon: null,
   //     // -------------------
-  //     customClass: '' // 自定义css类名
+  // customClass: '' // Customcss
   //     // -------------------
   //     // onCreated: '',
   //     // onMounted: '',
@@ -791,7 +795,7 @@ export const basicFields = [
       contentPosition: 'center',
       hidden: false,
       // -------------------
-      customClass: '' // 自定义css类名
+      customClass: '' // Customcss
       // -------------------
       // onCreated: '',
       // onMounted: '
@@ -821,7 +825,7 @@ export const basicFields = [
       requiredHint: '',
       validation: '',
       validationHint: '',
-      moneyType: '￥', // 货币类型
+      moneyType: '￥', //
       decimalLength: 2,
       maxLength: 10
     }
@@ -876,7 +880,7 @@ export const basicFields = [
       maxLength: 10,
       numberOptions: {
         type: 1,
-        moneyType: '￥', // 货币类型
+        moneyType: '￥', //
         decimalLength: 2
       }
     }
@@ -910,7 +914,7 @@ export const basicFields = [
       fileTypes: ['jpg', 'jpeg', 'png'],
       // headers: [],
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null
@@ -954,7 +958,7 @@ export const basicFields = [
       fileTypes: ['doc', 'docx', 'xls', 'xlsx', 'txt'],
       // headers: [],
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null
@@ -998,8 +1002,8 @@ export const advancedFields = [
       validationHint: '',
       maxLength: 10,
       basicOptions: {
-        dataTag: '', // 数据标签
-        showType: 1 // 显示方式
+        dataTag: '', // data
+        showType: 1 //
       }
     }
   },
@@ -1023,7 +1027,7 @@ export const advancedFields = [
   //     customRule: '',
   //     customRuleHint: '',
   //     //-------------------
-  //     customClass: '',  //自定义css类名
+  // customClass: '', //Customcss
   //     labelIconClass: null,
   //     labelIconPosition: 'rear',
   //     labelTooltip: null,
@@ -1057,8 +1061,8 @@ export const advancedFields = [
       clearable: true,
       filterable: false,
       multiple: false,
-      checkStrictly: false, // 可选择任意一级选项，默认不开启
-      showAllLevels: true, // 显示完整路径
+      checkStrictly: false, // item ,
+      showAllLevels: true, //
       optionItems: [
         { label: 'select 1', value: 1, children: [{ label: 'child 1', value: 11 }] },
         { label: 'select 2', value: 2 },
@@ -1069,7 +1073,7 @@ export const advancedFields = [
       customRule: '',
       customRuleHint: '',
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null
@@ -1102,8 +1106,8 @@ export const advancedFields = [
       clearable: true,
       filterable: false,
       multiple: false,
-      checkStrictly: false, // 可选择任意一级选项，默认不开启
-      showAllLevels: true, // 显示完整路径
+      checkStrictly: false, // item ,
+      showAllLevels: true, //
       optionItems: [],
       required: false,
       requiredHint: '',
@@ -1115,7 +1119,7 @@ export const advancedFields = [
         areaType: 1
       }
       // -------------------
-      // customClass: '', // 自定义css类名
+      // customClass: '', // Customcss
       // labelIconClass: null,
       // labelIconPosition: 'rear',
       // labelTooltip: null
@@ -1150,16 +1154,16 @@ export const advancedFields = [
       fontSize: '13px',
       color: '#333',
       serialOptions: [{
-        type: 1, // 类型 1，自动计数 ，2 提交日期， 3，固定字符 ， 4，表单字段
+        type: 1, // 1, , 2 , 3, , 4, formfield
         initNumber: 0,
-        countCycle: 0, // 自定重复周期
+        countCycle: 0, //
         dateFormat: 'YYYY',
         content: '000001111',
         formFiled: ''
       }],
-      preWrap: false, // 是否自动换行
+      preWrap: false, // whether
       // -------------------
-      customClass: '' // 自定义css类名
+      customClass: '' // Customcss
       // -------------------
       // onCreated: '',
       // onMounted: ''
@@ -1188,14 +1192,14 @@ export const advancedFields = [
       customRule: '',
       customRuleHint: '',
       addressSetting: {
-        selectMod: 1, // 选择模式 1, 部门和人都可以选， 2 只选部门  3 只选人
-        selectScope: 1, // 选择范围  1,全部  2 本部门 3 自定义
-        defaultValueType: 1, // 1，无， 2 固定值， 3 提交人， 4 提交部门， 5 创建人， 6 创建人部门
-        scopeValue: '', // 自定义范围
-        defaultValue: '' // 固定值
+        selectMod: 1, // 1, department and , 2 only department 3 only
+        selectScope: 1, // 1, full 2 department 3 Custom
+        defaultValueType: 1, // 1, , 2 value , 3 , 4 department, 5 , 6 department
+        scopeValue: '', // Custom
+        defaultValue: '' // value
       }
       // -------------------
-      // customClass: '', // 自定义css类名
+      // customClass: '', // Customcss
       // -------------------
       // onCreated: '',
       // onMounted: '',
@@ -1261,7 +1265,7 @@ export const advancedFields = [
       columnWidth: '200px',
       color: '#333',
       hidden: false,
-      calcOptions: { // 计算规则
+      calcOptions: { //
         rules: ''
       }
     }
@@ -1287,8 +1291,8 @@ export const advancedFields = [
       clearable: true,
       filterable: false,
       multiple: false,
-      checkStrictly: false, // 可选择任意一级选项，默认不开启
-      showAllLevels: true, // 显示完整路径
+      checkStrictly: false, // item ,
+      showAllLevels: true, //
       optionItems: [],
       linkQuery: ''
     }
@@ -1319,7 +1323,7 @@ export const advancedFields = [
       validation: '',
       validationHint: '',
       // -------------------
-      customClass: '', // 自定义css类名
+      customClass: '', // Customcss
       labelIconClass: null,
       labelIconPosition: 'rear',
       labelTooltip: null,
@@ -1331,7 +1335,7 @@ export const advancedFields = [
       appendButton: false,
       appendButtonDisabled: false,
       buttonIcon: 'custom-search',
-      scanType: 1 // 1 二维码qr码，2，条形码,
+      scanType: 1 // 1 qr , 2, ,
     }
   }
 
@@ -1341,7 +1345,7 @@ export const advancedFields = [
   //   formItemFlag: true,
   //   options: {
   //     name: '',
-  //     label: '关联数据',
+  // label: ' data',
   //     labelAlign: '',
   //     defaultValue: '',
   //     placeholder: '',
@@ -1354,8 +1358,8 @@ export const advancedFields = [
   //     clearable: true,
   //     filterable: false,
   //     multiple: false,
-  //     checkStrictly: false, // 可选择任意一级选项，默认不开启
-  //     showAllLevels: true, // 显示完整路径
+  // checkStrictly: false, // item ,
+  // showAllLevels: true, //
   //     optionItems: [
   //     ],
   //     required: false,
@@ -1363,7 +1367,7 @@ export const advancedFields = [
   //     customRule: '',
   //     customRuleHint: '',
   //     // -------------------
-  //     customClass: '', // 自定义css类名
+  // customClass: '', // Customcss
   //     labelIconClass: null,
   //     labelIconPosition: 'rear',
   //     labelTooltip: null,

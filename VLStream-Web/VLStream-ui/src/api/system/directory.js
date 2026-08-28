@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/request'
 import { SINGLE_TENANT_ID, toRuoyiStatus } from './ruoyiCompat'
 
@@ -133,7 +139,7 @@ export function mapDirectoryRole(role = {}) {
   }
 }
 
-// 合并同一用户的并发查询，避免头像与名称组件同时挂载时重复请求。
+// user Query , and component .
 async function loadUserById(id) {
   if (!userRequestById.has(id)) {
     const pendingRequest = request({
@@ -147,7 +153,7 @@ async function loadUserById(id) {
   return userRequestById.get(id)
 }
 
-// 批量加载用户并转换成本地目录兼容结构。
+// Load user Convert .
 async function loadUsersByIds(ids) {
   const users = await Promise.all(ids.map(loadUserById))
   return users.filter(Boolean).map(mapDirectoryUser)

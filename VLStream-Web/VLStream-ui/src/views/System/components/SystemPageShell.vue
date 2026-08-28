@@ -1,16 +1,21 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="system-page">
-    <!-- 工具栏插槽，包含搜索表单、新增/编辑/批量删除按钮等 -->
+    <!-- , form、Add / /Batch delete button etc. -->
     <div v-if="$slots.toolbar" class="system-toolbar">
       <slot name="toolbar" />
     </div>
 
-    <!-- 数据主体展示区域，通常为一个 el-table 或 el-tree-table -->
+    <!-- data main , to el-table el-tree-table -->
     <div class="system-content">
       <slot />
     </div>
 
-    <!-- 底部分页插槽 -->
+    <!--  -->
     <div v-if="$slots.pagination" class="system-pagination">
       <slot name="pagination" />
     </div>
@@ -18,7 +23,7 @@
 </template>
 
 <script setup>
-// SystemPageShell 是一个简单的布局外壳组件，用来保持所有系统管理页面一致的高宽比例、背景色和边距样式。
+// SystemPageShell is component, all page 、 and .
 </script>
 
 <style scoped>

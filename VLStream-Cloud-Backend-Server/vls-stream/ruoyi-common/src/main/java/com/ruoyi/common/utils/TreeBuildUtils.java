@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -17,7 +18,7 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * 扩展 hutool TreeUtil 封装系统树构建
+ * hutool TreeUtil Build
  *
  * @author Lion Li
  */
@@ -25,7 +26,7 @@ import java.util.List;
 public class TreeBuildUtils extends TreeUtil {
 
     /**
-     * 根据前端定制差异化字段
+     * before field
      */
     public static final TreeNodeConfig DEFAULT_CONFIG = TreeNodeConfig.DEFAULT_CONFIG.setNameKey("label");
 

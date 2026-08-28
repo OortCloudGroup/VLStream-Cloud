@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -35,7 +36,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 标签管理表 控制器
+ * control
  *
  * @author Oort
  * @since 2025-12-23
@@ -50,7 +51,7 @@ public class VlsTagManagementController extends BladeController {
 	private final IVlsTagManagementService vlsTagManagementService;
 
 	/**
-	 * 标签管理表 详情
+	 *
 	 */
 	@GetMapping("/detail")
 	@ApiOperationSupport(order = 1)
@@ -61,7 +62,7 @@ public class VlsTagManagementController extends BladeController {
 	}
 
 	/**
-	 * 标签管理表 分页
+	 *
 	 */
 	@GetMapping("/list")
 	@ApiOperationSupport(order = 2)
@@ -73,7 +74,7 @@ public class VlsTagManagementController extends BladeController {
 
 
 	/**
-	 * 标签管理表 自定义分页
+	 * Custom
 	 */
 	@GetMapping("/page")
 	@ApiOperationSupport(order = 3)
@@ -84,7 +85,7 @@ public class VlsTagManagementController extends BladeController {
 	}
 
 	/**
-	 * 标签管理表 新增
+	 * Add
 	 */
 	@PostMapping("/save")
 	@ApiOperationSupport(order = 4)
@@ -94,7 +95,7 @@ public class VlsTagManagementController extends BladeController {
 	}
 
 	/**
-	 * 标签管理表 修改
+	 * Update
 	 */
 	@PostMapping("/update")
 	@ApiOperationSupport(order = 5)
@@ -104,7 +105,7 @@ public class VlsTagManagementController extends BladeController {
 	}
 
 	/**
-	 * 标签管理表 新增或修改
+	 * Add Update
 	 */
 	@PostMapping("/submit")
 	@ApiOperationSupport(order = 6)
@@ -114,7 +115,7 @@ public class VlsTagManagementController extends BladeController {
 	}
 
 	/**
-	 * 标签管理表 删除
+	 * Delete
 	 */
 	@GetMapping("/remove")
 	@ApiOperationSupport(order = 7)
@@ -124,7 +125,7 @@ public class VlsTagManagementController extends BladeController {
 	}
 
 	/**
-	 * 导出数据
+	 * Export data
 	 */
 	@GetMapping("/export-vlsTagManagement")
 	@ApiOperationSupport(order = 8)
@@ -143,14 +144,14 @@ public class VlsTagManagementController extends BladeController {
 	@Operation(description = "获取标签树形结构（用于左侧导航）")
 	public R<List<Map<String, Object>>> getTagTree() {
 		try {
-			// 获取自有标签和公共标签数据
+			// Get and data
 			List<TagManagement> ownTags = vlsTagManagementService.getTagsByCategory("own");
 			List<TagManagement> publicTags = vlsTagManagementService.getTagsByCategory("public");
 
-			// 构建返回结构
+			// Build
 			Map<String, Object> result = new HashMap<>();
 
-			// 构建自有标签树形结构
+			// Build
 			Map<String, Object> ownRoot = new HashMap<>();
 			ownRoot.put("id", "own");
 			ownRoot.put("tagName", "自有标签");
@@ -158,7 +159,7 @@ public class VlsTagManagementController extends BladeController {
 			ownRoot.put("level", 0);
 			ownRoot.put("children", buildTreeStructure(ownTags));
 
-			// 构建公共标签树形结构
+			// Build
 			Map<String, Object> publicRoot = new HashMap<>();
 			publicRoot.put("id", "public");
 			publicRoot.put("tagName", "公共标签");
@@ -178,18 +179,18 @@ public class VlsTagManagementController extends BladeController {
 	}
 
 	/**
-	 * 构建树形结构
+	 * Build
 	 */
 	private List<Map<String, Object>> buildTreeStructure(List<TagManagement> tags) {
 		List<Map<String, Object>> result = new ArrayList<>();
 
-		// 获取所有标签类型（level=1）
+		// Get all (level=1)
 		List<TagManagement> categories = tags.stream()
 			.filter(tag -> tag.getLevel() == 1)
 			.sorted(Comparator.comparing(TagManagement::getSortOrder))
 			.collect(Collectors.toList());
 
-		// 为每个标签类型构建子标签
+		// to each Build sub
 		for (TagManagement category : categories) {
 			Map<String, Object> categoryNode = new HashMap<>();
 			categoryNode.put("id", category.getId());
@@ -206,7 +207,7 @@ public class VlsTagManagementController extends BladeController {
 			categoryNode.put("createTime", category.getCreateTime());
 			categoryNode.put("updateTime", category.getUpdateTime());
 
-			// 获取该类型下的所有具体标签
+			// Get all
 			List<TagManagement> subTags = tags.stream()
 				.filter(tag -> tag.getLevel() == 2 && Objects.equals(tag.getParentId(), category.getId()))
 				.sorted(Comparator.comparing(TagManagement::getSortOrder))

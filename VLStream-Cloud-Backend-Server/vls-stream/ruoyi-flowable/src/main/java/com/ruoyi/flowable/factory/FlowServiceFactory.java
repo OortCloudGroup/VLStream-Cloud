@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 
 /**
- * flowable 引擎注入封装
+ * flowable
  * @author XuanXuan
  * @date 2021-04-03
  */

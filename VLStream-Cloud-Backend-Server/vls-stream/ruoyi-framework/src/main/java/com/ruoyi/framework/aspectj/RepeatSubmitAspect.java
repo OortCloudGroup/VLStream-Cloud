@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -35,7 +36,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * 防止重复提交(参考美团GTIS防重系统)
+ * ( GTIS )
  *
  * @author Lion Li
  */
@@ -49,7 +50,7 @@ public class RepeatSubmitAspect {
 
     @Before("@annotation(repeatSubmit)")
     public void doBefore(JoinPoint point, RepeatSubmit repeatSubmit) throws Throwable {
-        // 如果注解不为0 则使用注解数值
+        // if to 0 value
         long interval = 0;
         if (repeatSubmit.interval() > 0) {
             interval = repeatSubmit.timeUnit().toMillis(repeatSubmit.interval());
@@ -60,14 +61,14 @@ public class RepeatSubmitAspect {
         HttpServletRequest request = ServletUtils.getRequest();
         String nowParams = argsArrayToString(point.getArgs());
 
-        // 请求地址（作为存放cache的key值）
+        // ( to cache key value )
         String url = request.getRequestURI();
 
-        // 唯一值（没有消息头则使用请求地址）
+        // value ( )
         String submitKey = StringUtils.trimToEmpty(request.getHeader(SaManager.getConfig().getTokenName()));
 
         submitKey = SecureUtil.md5(submitKey + ":" + nowParams);
-        // 唯一标识（指定key + url + 消息头）
+        // ( key + url + )
         String cacheRepeatKey = CacheConstants.REPEAT_SUBMIT_KEY + url + submitKey;
         String key = RedisUtils.getCacheObject(cacheRepeatKey);
         if (key == null) {
@@ -83,16 +84,16 @@ public class RepeatSubmitAspect {
     }
 
     /**
-     * 处理完请求后执行
+     * Process afterExecute
      *
-     * @param joinPoint 切点
+     * @param joinPoint
      */
     @AfterReturning(pointcut = "@annotation(repeatSubmit)", returning = "jsonResult")
     public void doAfterReturning(JoinPoint joinPoint, RepeatSubmit repeatSubmit, Object jsonResult) {
         if (jsonResult instanceof R) {
             try {
                 R<?> r = (R<?>) jsonResult;
-                // 成功则不删除redis数据 保证在有效时间内无法重复提交
+                // successfully Delete redisdata in method
                 if (r.getCode() == R.SUCCESS) {
                     return;
                 }
@@ -104,10 +105,10 @@ public class RepeatSubmitAspect {
     }
 
     /**
-     * 拦截异常操作
+     * operation
      *
-     * @param joinPoint 切点
-     * @param e         异常
+     * @param joinPoint
+     * @param e
      */
     @AfterThrowing(value = "@annotation(repeatSubmit)", throwing = "e")
     public void doAfterThrowing(JoinPoint joinPoint, RepeatSubmit repeatSubmit, Exception e) {
@@ -116,7 +117,7 @@ public class RepeatSubmitAspect {
     }
 
     /**
-     * 参数拼装
+     * parameter
      */
     private String argsArrayToString(Object[] paramsArray) {
         StringBuilder params = new StringBuilder();
@@ -135,10 +136,10 @@ public class RepeatSubmitAspect {
     }
 
     /**
-     * 判断是否需要过滤的对象。
+     * Check whether need to object.
      *
-     * @param o 对象信息。
-     * @return 如果是需要过滤的对象，则返回true；否则返回false。
+     * @param o objectinfo.
+     * @return if is need to object, true; false.
      */
     @SuppressWarnings("rawtypes")
     public boolean isFilterObject(final Object o) {

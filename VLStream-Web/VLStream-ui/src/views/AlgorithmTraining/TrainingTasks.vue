@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="page-container tenant_Page draHeaPB">
     <div class="tenant_content">
@@ -102,10 +107,10 @@
       width="35%"
       :close-on-click-modal="false"
     >
-      <el-form 
-        ref="formRef" 
-        :model="form" 
-        :rules="rules" 
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
         label-width="120px"
       >
         <el-form-item label="任务名称" prop="taskName">
@@ -118,9 +123,9 @@
           <el-input v-model="form.baseModel" placeholder="请输入基础模型" />
         </el-form-item>
         <el-form-item label="训练参数" prop="trainParams">
-          <el-input 
-            v-model="form.trainParams" 
-            type="textarea" 
+          <el-input
+            v-model="form.trainParams"
+            type="textarea"
             :rows="4"
             placeholder="请输入训练参数（JSON格式）"
           />
@@ -134,10 +139,10 @@
       </template>
     </el-dialog>
 
-    <!-- 详情对话框 -->
-    <el-dialog 
-      v-model="detailVisible" 
-      title="训练任务详情" 
+    <!--  -->
+    <el-dialog
+      v-model="detailVisible"
+      title="训练任务详情"
       width="45%"
     >
       <el-descriptions :column="2" border>
@@ -150,8 +155,8 @@
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="进度">
-          <el-progress 
-            :percentage="detailData.progress || 0" 
+          <el-progress
+            :percentage="detailData.progress || 0"
             :status="getProgressStatus(detailData.trainStatus)"
           />
         </el-descriptions-item>
@@ -174,18 +179,18 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {Search, Refresh, Plus } from '@element-plus/icons-vue'
 import { clacPXToVW } from '@/utils/index'
-import { 
-  listTrainingTasks, 
-  getTrainingTask, 
-  addTrainingTask, 
-  updateTrainingTask, 
+import {
+  listTrainingTasks,
+  getTrainingTask,
+  addTrainingTask,
+  updateTrainingTask,
   delTrainingTask,
   startTraining,
   stopTraining,
   getTrainingProgress
 } from '@/api/algorithmTraining'
 
-// 响应式数据
+// data
 const queryForm = reactive({
   taskName: '',
   status: ''
@@ -196,7 +201,7 @@ const selectedRows = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 
-// 对话框相关
+// related
 const dialogVisible = ref(false)
 const detailVisible = ref(false)
 const dialogTitle = ref('')
@@ -210,7 +215,7 @@ const form = reactive({
 })
 const detailData = ref({})
 
-// 表单验证规则
+// form
 const rules = {
   taskName: [
     { required: true, message: '请输入任务名称', trigger: 'blur' }
@@ -223,20 +228,20 @@ const rules = {
   ]
 }
 
-// 计算属性
+// property
 const filteredData = computed(() => {
   let filtered = tableData.value
-  
+
   if (queryForm.taskName) {
-    filtered = filtered.filter(item => 
+    filtered = filtered.filter(item =>
       item.taskName.toLowerCase().includes(queryForm.taskName.toLowerCase())
     )
   }
-  
+
   if (queryForm.status) {
     filtered = filtered.filter(item => item.trainStatus === queryForm.status)
   }
-  
+
   return filtered
 })
 
@@ -246,7 +251,7 @@ const currentPageData = computed(() => {
   return filteredData.value.slice(start, end)
 })
 
-// 方法
+// method
 const loadData = async () => {
   try {
     const response = await listTrainingTasks()
@@ -285,7 +290,7 @@ const handleCurrentChange = (val) => {
   currentPage.value = val
 }
 
-// 工具栏操作
+// operation
 const handleAdd = () => {
   dialogTitle.value = '新增训练任务'
   Object.keys(form).forEach(key => {
@@ -312,17 +317,17 @@ const handleDelete = async () => {
     ElMessage.warning('请选择要删除的记录')
     return
   }
-  
+
   try {
     await ElMessageBox.confirm(
       `确定要删除选中的 ${selectedRows.value.length} 条记录吗？`,
       '确认删除',
       { type: 'warning' }
     )
-    
+
     const ids = selectedRows.value.map(row => row.id)
     const response = await delTrainingTask(ids)
-    
+
     if (response.code === 200) {
       ElMessage.success('删除成功')
       loadData()
@@ -336,7 +341,7 @@ const handleDelete = async () => {
   }
 }
 
-// 表格行操作
+// table operation
 const handleDetailRow = async (row) => {
   try {
     const response = await getTrainingTask(row.id)
@@ -365,9 +370,9 @@ const handleDeleteRow = async (row) => {
       '确认删除',
       { type: 'warning' }
     )
-    
+
     const response = await delTrainingTask([row.id])
-    
+
     if (response.code === 200) {
       ElMessage.success('删除成功')
       loadData()
@@ -383,16 +388,16 @@ const handleDeleteRow = async (row) => {
 const handleSubmit = async () => {
   try {
     await formRef.value.validate()
-    
+
     const submitData = { ...form }
     let response
-    
+
     if (form.id) {
       response = await updateTrainingTask(submitData)
     } else {
       response = await addTrainingTask(submitData)
     }
-    
+
     if (response.code === 200) {
       ElMessage.success(form.id ? '更新成功' : '创建成功')
       dialogVisible.value = false
@@ -404,7 +409,7 @@ const handleSubmit = async () => {
   }
 }
 
-// 状态相关方法
+// related method
 const getStatusType = (status) => {
   switch (status) {
     case 'pending': return 'info'
@@ -423,7 +428,7 @@ const getProgressStatus = (status) => {
   }
 }
 
-// 生命周期
+//
 onMounted(() => {
   loadData()
 })
@@ -581,4 +586,4 @@ pre {
   white-space: pre-wrap;
   word-break: break-all;
 }
-</style> 
+</style>

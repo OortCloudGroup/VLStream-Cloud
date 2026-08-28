@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-form-item v-if="(selectedWidget.type === 'static-text')" :label="i18nt('designer.setting.textAlign')">
     <!-- eslint-disable-next-line vue/no-mutating-props -->

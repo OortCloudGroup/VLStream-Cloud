@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,45 +15,45 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 综合通用流程Service接口
+ * workflowServiceinterface
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-04
  */
 public interface IWfSynthesisService extends IService<WfSynthesis> {
 
     /**
-     * 查询综合通用流程
+     * Query workflow
      */
     WfSynthesisVo queryById(String synthesisId);
 
 
     /**
-     * 查询综合通用流程列表
+     * Query workflow list
      */
     List<WfSynthesisVo> queryList(WfSynthesisBo bo);
 
     /**
-     * 查询全部综合通用流程
+     * Query full workflow
      */
     List<WfSynthesisVo> queryListAll(String categoryName);
 
     /**
-     * 新增综合通用流程
+     * Add workflow
      */
     Boolean insertByBo(WfSynthesisBo bo);
 
     /**
-     * 修改综合通用流程
+     * Update workflow
      */
     Boolean updateByBo(WfSynthesisBo bo);
 
     /**
-     * 校验并批量删除综合通用流程信息
+     * Validate Batch delete workflowinfo
      */
     Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid);
     /**
-     * 根据父id递归查询子节点
+     * id Query sub node
      */
     List<String > selectChildById(String  parentId);
 }

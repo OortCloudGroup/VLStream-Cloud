@@ -1,8 +1,13 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="video-playback tenant_Page draHeaPB">
     <div class="tenant_content">
       <div class="tableTenBox flexRowAC">
-        <!-- 左侧设备树 -->
+        <!-- device -->
         <div
           v-show="!deviceTreeCollapsed"
           v-yResize
@@ -92,7 +97,7 @@
           </el-tree>
         </div>
 
-        <!-- 右侧表格区域 -->
+        <!-- table -->
         <div class="tableTenItU">
           <div class="depNameBox_out flexRowAC">
             <div class="depNameBox flexRowAC">
@@ -177,7 +182,7 @@
       </div>
     </div>
 
-    <!-- 设备视频播放弹窗 -->
+    <!-- device dialog -->
     <el-dialog
       v-model="videoDialogVisible"
       class="video-dialog"
@@ -218,7 +223,7 @@ import CollapseToggle from '@/components/CollapseToggle.vue'
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
 import { clacPXToVW } from '@/utils/index'
 
-// API 导入
+// API Import
 import { getDeviceList, getDeviceTree } from '@/api/device'
 import { getDeviceRecords } from '@/api/videoRecord'
 import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
@@ -226,7 +231,7 @@ import { ensureOPlayer } from '@/utils/oplayer'
 import { getBaseURL } from '@/utils/request'
 import { getStreamType } from './deviceUtils.js'
 
-// 响应式数据
+// data
 const deviceTreeCollapsed = ref(false)
 const showPlayerView = ref(false)
 const selectedRow = ref(null)
@@ -237,7 +242,7 @@ const exportItem = ref({
   isDisabledExcel: false
 })
 
-// 高级搜索配置
+// configuration
 const searchData = ref([
   { label: '设备名称', value: 'keyword', type: 'text', default: '' },
   {
@@ -278,7 +283,7 @@ const selectedVideoIndex = ref(0)
 const loading = ref(false)
 const totalRecords = ref(0)
 
-// 获取当前日期
+// Get current
 const getCurrentDate = () => {
   const now = new Date()
   const year = now.getFullYear()
@@ -287,14 +292,14 @@ const getCurrentDate = () => {
   return `${year}-${month}-${day}`
 }
 
-// 搜索表单 - 默认当前日期
+// form - current
 const searchForm = reactive({
   fileName: '',
   recordType: '',
   dateRange: [getCurrentDate(), getCurrentDate()]
 })
 
-// 设备树
+// device
 const deviceTreeRef = ref(null)
 const searchTreeKeyword = ref('')
 const currentTreeNodeId = ref(null)
@@ -304,7 +309,7 @@ const treeDefaultProps = {
   label: 'label'
 }
 
-// 过滤后的设备树数据
+// after device data
 const filteredDeviceTreeData = computed(() => {
   if (!searchTreeKeyword.value) {
     return deviceTreeData.value
@@ -336,20 +341,20 @@ const filteredDeviceTreeData = computed(() => {
 
 const deviceTreeData = ref([])
 
-// 设备列表数据（主列表）
+// device data ( main )
 const deviceList = ref([])
 
-// 视频记录数据（播放时使用）
+// recorddata ( )
 const videoRecords = ref([])
 
-// 日期选择器相关数据
+// relateddata
 const selectedDate = reactive({
   year: new Date().getFullYear(),
   month: new Date().getMonth() + 1,
   day: new Date().getDate()
 })
 
-// 可选年份范围（展示近若干年，便于网格排布）
+// ( , )
 const availableYears = computed(() => {
   const currentYear = new Date().getFullYear()
   const years = []
@@ -359,18 +364,18 @@ const availableYears = computed(() => {
   return years
 })
 
-// 可选月份
+//
 const availableMonths = computed(() => {
   return Array.from({ length: 12 }, (_, i) => i + 1)
 })
 
-// 可选日期（根据选中的年月动态计算）
+// ( in )
 const availableDays = computed(() => {
   const daysInMonth = new Date(selectedDate.year, selectedDate.month, 0).getDate()
   return Array.from({ length: daysInMonth }, (_, i) => i + 1)
 })
 
-// 选中的日期字符串
+// in
 const selectedDateStr = computed(() => {
   const year = selectedDate.year
   const month = String(selectedDate.month).padStart(2, '0')
@@ -378,7 +383,7 @@ const selectedDateStr = computed(() => {
   return `${year}-${month}-${day}`
 })
 
-// 播放器右上角日期时间文案
+//
 const playerOverlayDateTime = computed(() => {
   if (!currentVideo.value) return ''
   const start = currentVideo.value.recordStartTime
@@ -400,7 +405,7 @@ const playerOverlayDateTime = computed(() => {
   return `${y}年${m}月${d}日`
 })
 
-// 过滤后的数据 - 基于设备列表
+// after data - device
 const filteredData = computed(() => {
   return deviceList.value.filter(item => {
     let match = true
@@ -420,21 +425,21 @@ const filteredData = computed(() => {
   })
 })
 
-// 当前页数据
+// current data
 const currentPageData = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
   return filteredData.value.slice(start, end)
 })
 
-// 加载设备树数据
+// Load device data
 const loadDeviceTree = async () => {
   try {
     const response = await getDeviceTree()
     if (response.data && response.data.length > 0) {
       deviceTreeData.value = response.data
     } else {
-      // 如果没有设备树数据，使用默认数据
+      // if device data, data
       deviceTreeData.value = [
         {
           id: 1,
@@ -454,16 +459,16 @@ const loadDeviceTree = async () => {
   }
 }
 
-// 加载设备列表 - 使用device/page API
+// Load device - device/page API
 const loadDeviceList = async () => {
   loading.value = true
   try {
     const params = {
       current: 1,
-      size: 1000, // 获取所有设备
+      size: 1000, // Get all device
     }
 
-    // 添加设备名称过滤
+    // device
     if (searchForm.fileName) {
       params.keyword = searchForm.fileName
     }
@@ -473,7 +478,7 @@ const loadDeviceList = async () => {
     const response = await getDeviceList(params)
 
     if (response.data && response.data.records) {
-      // 转换数据格式以适应表格显示
+      // Convert data table
       deviceList.value = response.data.records.map((device, index) => ({
         index: index + 1,
         deviceName: device.deviceName || '未知设备',
@@ -482,7 +487,7 @@ const loadDeviceList = async () => {
         streamPath: device.streamPath || device.streamUrl || '',
         status: device.status,
         lastRefreshTime: device.lastRefreshTime || device.updatedAt || new Date().toLocaleString(),
-        // 保留原始设备数据
+        // devicedata
         deviceData: device
       }))
       totalRecords.value = response.data.total || deviceList.value.length
@@ -500,13 +505,13 @@ const loadDeviceList = async () => {
   }
 }
 
-// 获取设备的视频记录
+// Get device record
 const getDeviceVideoRecords = async (deviceId, date) => {
   try {
     console.log('获取设备视频记录:', deviceId, date)
     const params = {
-      date: date, // 传递日期参数
-      pageSize: 100, // 设置页面大小
+      date: date, // parameter
+      pageSize: 100, // Set page
       currentPage: 1
     }
     const response = await getDeviceRecords(deviceId, params)
@@ -518,21 +523,21 @@ const getDeviceVideoRecords = async (deviceId, date) => {
     }
   } catch (error) {
     console.error('获取设备视频记录失败:', error)
-    // 不在这里显示错误提示，让调用方统一处理
+    // in prompt / tip, Process
     throw error
   }
 }
 
-// 仅由真实录像查询结果填充。
+// recordingQuery fill .
 const videoList = ref([])
 
-// 方法
+// method
 const toggleDeviceTree = () => {
   deviceTreeCollapsed.value = !deviceTreeCollapsed.value
 }
 
 const handleTreeSearch = () => {
-  // 本地过滤，无需额外请求
+  // ,
 }
 
 const handleSearch = () => {
@@ -540,7 +545,7 @@ const handleSearch = () => {
   loadDeviceList()
 }
 
-// 搜索 / 重置（search-height-box）
+// / (search-height-box)
 const searchResetFn = (val, reset) => {
   if (reset) currentPage.value = 1
   searchForm.fileName = val?.keyword || ''
@@ -581,7 +586,7 @@ const handleTreeDelete = async (data) => {
     )
     ElMessage.success('删除成功')
   } catch {
-    // 用户取消
+    // user
   }
 }
 
@@ -670,7 +675,7 @@ const handleDelete = async () => {
 }
 
 /**
- * 释放设备视频播放器资源。
+ * device .
  */
 const cleanupOPlayer = () => {
   activePlaybackTask = null
@@ -686,7 +691,7 @@ const cleanupOPlayer = () => {
 }
 
 /**
- * 关闭播放弹窗并释放底层连接。
+ * dialog layer .
  */
 const handlePlayerClose = () => {
   cleanupOPlayer()
@@ -694,7 +699,7 @@ const handlePlayerClose = () => {
 }
 
 /**
- * 切换播放器全屏状态。
+ * full .
  */
 const togglePlayerFullscreen = async () => {
   const playerElement = playerWrapperRef.value
@@ -713,7 +718,7 @@ const togglePlayerFullscreen = async () => {
 }
 
 /**
- * 根据流类型生成 OPlayer 播放参数。
+ * Generate OPlayer parameter.
  */
 const createPlayerOptions = async (streamUrl) => {
   const streamType = getStreamType(streamUrl)
@@ -771,7 +776,7 @@ const createPlayerOptions = async (streamUrl) => {
 }
 
 /**
- * 使用与工作台一致的播放器播放设备实时流。
+ * and device .
  */
 const handlePlay = async (row) => {
   const streamUrl = row?.streamPath
@@ -823,15 +828,15 @@ const handlePlay = async (row) => {
 const handleSizeChange = (size) => {
   pageSize.value = size
   currentPage.value = 1
-  // 客户端分页，不需要重新加载数据
+  // , need to new Load data
 }
 
 const handleCurrentChange = (page) => {
   currentPage.value = page
-  // 客户端分页，不需要重新加载数据
+  // , need to new Load data
 }
 
-// 播放器控制
+// control
 const playPause = () => {
   if (videoPlayer.value) {
     if (isPlaying.value) {
@@ -863,7 +868,7 @@ const downloadVideo = () => {
   }
 }
 
-// 辅助方法
+// method
 const formatTime = (seconds) => {
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
@@ -871,14 +876,14 @@ const formatTime = (seconds) => {
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
 
-// 选择视频
+//
 const selectVideo = (index) => {
   selectedVideoIndex.value = index
   const selectedVideoData = videoList.value[index]
   console.log('选择视频:', selectedVideoData)
 
   if (selectedVideoData && selectedVideoData.record) {
-    // 更新当前视频信息
+    // new current info
     currentVideo.value = {
       ...selectedRow.value,
       fileName: selectedVideoData.fileName,
@@ -887,27 +892,27 @@ const selectVideo = (index) => {
       filePath: selectedVideoData.filePath
     }
 
-    // 设置播放URL - 这里需要确保路径正确
+    // Set URL - need to correct
     if (selectedVideoData.filePath) {
-      // 将文件路径转换为可访问的URL
-      // 从完整路径中提取相对于recordings目录的路径
+      // Convert to URL
+      // from in recordings
       let relativePath = selectedVideoData.filePath
 
-      // 处理Windows路径格式
+      // Process Windows
       if (relativePath.includes('\\')) {
         relativePath = relativePath.replace(/\\/g, '/')
       }
 
-      // 提取recordings目录后的路径
+      // recordings after
       const recordingsIndex = relativePath.indexOf('/recordings/')
       if (recordingsIndex !== -1) {
         relativePath = relativePath.substring(recordingsIndex + '/recordings/'.length)
       }
 
-      // 对路径进行URL编码，处理中文文件名
+      // URL , Process in
       const encodedPath = relativePath.split('/').map(segment => encodeURIComponent(segment)).join('/')
 
-      // 构建完整的播放URL - 使用正确的API路径
+      // Build URL - correct API
       currentVideoUrl.value = getBaseURL() + `/video-record/file/${encodeURIComponent(relativePath)}`
       console.log('设置播放URL:', currentVideoUrl.value)
     } else {
@@ -917,17 +922,17 @@ const selectVideo = (index) => {
   }
 }
 
-// 判断是否为HTTP流
+// Check whether to HTTP
 const isHttpStream = (streamPath) => {
   return streamPath && streamPath.startsWith('http')
 }
 
-// 判断是否为RTSP流
+// Check whether to RTSP
 const isRtspStream = (streamPath) => {
   return streamPath && streamPath.startsWith('rtsp')
 }
 
-// 获取当前时间
+// Get current
 const getCurrentTime = () => {
   const now = new Date()
   const year = now.getFullYear()
@@ -939,38 +944,38 @@ const getCurrentTime = () => {
   return `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`
 }
 
-// 获取缩略图URL
+// Get URL
 const getThumbnailUrl = (thumbnailPath) => {
   if (!thumbnailPath) return null
 
-  // 处理Windows路径格式
+  // Process Windows
   let relativePath = thumbnailPath
   if (relativePath.includes('\\')) {
     relativePath = relativePath.replace(/\\/g, '/')
   }
 
-  // 提取recordings目录后的路径
+  // recordings after
   const recordingsIndex = relativePath.indexOf('/recordings/')
   if (recordingsIndex !== -1) {
     relativePath = relativePath.substring(recordingsIndex + '/recordings/'.length)
   } else {
-    // 如果没有找到/recordings/，尝试从完整路径中提取相对部分
-    // 假设recordings目录在VLStream-server下
+    // if /recordings/, from in
+    // assuming recordings in VLStream-server
     const serverIndex = relativePath.indexOf('/VLStream-server/recordings/')
     if (serverIndex !== -1) {
       relativePath = relativePath.substring(serverIndex + '/VLStream-server/recordings/'.length)
     } else {
-      // 如果还是没找到，尝试从Windows路径中提取
+      // if is , from Windows in
       const windowsRecordingsIndex = relativePath.indexOf('VLStream-server\\recordings\\')
       if (windowsRecordingsIndex !== -1) {
         relativePath = relativePath.substring(windowsRecordingsIndex + 'VLStream-server\\recordings\\'.length)
         relativePath = relativePath.replace(/\\/g, '/')
       } else {
-        // 如果路径已经是相对路径（不包含完整路径），直接使用
+        // if already is ( ),
         if (!relativePath.includes(':/') && !relativePath.includes(':\\')) {
-          // 这已经是相对路径，直接使用
+          // already is ,
         } else {
-          // 最后尝试直接提取文件名部分
+          // after
           const lastSlashIndex = relativePath.lastIndexOf('/')
           if (lastSlashIndex !== -1) {
             relativePath = relativePath.substring(lastSlashIndex + 1)
@@ -983,42 +988,42 @@ const getThumbnailUrl = (thumbnailPath) => {
   console.log('Original thumbnailPath:', thumbnailPath)
   console.log('Processed thumbnail relativePath:', relativePath)
 
-  // 使用相对路径通过代理访问，不进行URL编码
+  // , URL
   return `/api/video-record/thumbnail/${relativePath}`
 }
 
-// 获取视频文件URL
+// Get URL
 const getVideoFileUrl = (filePath) => {
   if (!filePath) return null
 
-  // 处理Windows路径格式
+  // Process Windows
   let relativePath = filePath
   if (relativePath.includes('\\')) {
     relativePath = relativePath.replace(/\\/g, '/')
   }
 
-  // 提取recordings目录后的路径
+  // recordings after
   const recordingsIndex = relativePath.indexOf('/recordings/')
   if (recordingsIndex !== -1) {
     relativePath = relativePath.substring(recordingsIndex + '/recordings/'.length)
   } else {
-    // 如果没有找到/recordings/，尝试从完整路径中提取相对部分
-    // 假设recordings目录在VLStream-server下
+    // if /recordings/, from in
+    // assuming recordings in VLStream-server
     const serverIndex = relativePath.indexOf('/VLStream-server/recordings/')
     if (serverIndex !== -1) {
       relativePath = relativePath.substring(serverIndex + '/VLStream-server/recordings/'.length)
     } else {
-      // 如果还是没找到，尝试从Windows路径中提取
+      // if is , from Windows in
       const windowsRecordingsIndex = relativePath.indexOf('VLStream-server\\recordings\\')
       if (windowsRecordingsIndex !== -1) {
         relativePath = relativePath.substring(windowsRecordingsIndex + 'VLStream-server\\recordings\\'.length)
         relativePath = relativePath.replace(/\\/g, '/')
       } else {
-        // 如果路径已经是相对路径（不包含完整路径），直接使用
+        // if already is ( ),
         if (!relativePath.includes(':/') && !relativePath.includes(':\\')) {
-          // 这已经是相对路径，直接使用
+          // already is ,
         } else {
-          // 最后尝试直接提取文件名部分
+          // after
           const lastSlashIndex = relativePath.lastIndexOf('/')
           if (lastSlashIndex !== -1) {
             relativePath = relativePath.substring(lastSlashIndex + 1)
@@ -1031,27 +1036,27 @@ const getVideoFileUrl = (filePath) => {
   console.log('Original filePath:', filePath)
   console.log('Processed relativePath:', relativePath)
 
-  // 使用相对路径通过代理访问，不进行URL编码
+  // , URL
   return `/api/video-record/file/${relativePath}`
 }
 
-// 处理缩略图加载错误
+// Process Load
 const handleThumbnailError = (event, index) => {
   console.log('缩略图加载失败:', event.target.src)
-  // 隐藏图片元素，显示占位符
+  // element,
   event.target.style.display = 'none'
   const thumbnailPlaceholder = event.target.parentElement.querySelector('.thumbnail-placeholder')
   if (thumbnailPlaceholder) {
     thumbnailPlaceholder.style.display = 'flex'
   }
 
-  // 同时在数据中标记缩略图加载失败
+  // in data in Load failed
   if (videoList.value[index]) {
     videoList.value[index].thumbnailUrl = null
   }
 }
 
-// 复制RTSP地址
+// RTSP
 const copyRtspUrl = () => {
   if (selectedRow.value && selectedRow.value.streamPath) {
     navigator.clipboard.writeText(selectedRow.value.streamPath).then(() => {
@@ -1062,7 +1067,7 @@ const copyRtspUrl = () => {
   }
 }
 
-// 在VLC中打开
+// in VLC in
 const openInVlc = () => {
   if (selectedRow.value && selectedRow.value.streamPath) {
     const vlcUrl = `vlc://${selectedRow.value.streamPath}`
@@ -1071,13 +1076,13 @@ const openInVlc = () => {
   }
 }
 
-// 刷新流
+// new
 const refreshStream = () => {
   ElMessage.info('正在刷新视频流...')
-  // 这里可以添加刷新流的逻辑
+  // new
 }
 
-// 切换全屏
+// full
 const toggleFullscreen = () => {
   const videoContainer = document.querySelector('.video-player')
   if (videoContainer) {
@@ -1089,19 +1094,19 @@ const toggleFullscreen = () => {
   }
 }
 
-// 处理录制视频加载成功
+// Process Load successfully
 const handleVideoLoaded = () => {
   console.log('录制视频加载成功')
   ElMessage.success('视频加载成功')
 }
 
-// 处理录制视频加载错误
+// Process Load
 const handleVideoError = (event) => {
   console.error('录制视频加载失败:', event)
   ElMessage.error('视频加载失败，请检查文件是否存在')
 }
 
-// 格式化录制时间
+// Format
 const formatRecordTime = (startTime, endTime) => {
   if (!startTime || !endTime) return ''
 
@@ -1110,15 +1115,15 @@ const formatRecordTime = (startTime, endTime) => {
   return `${start} - ${end}`
 }
 
-// 日期选择器方法
+// method
 const selectYear = (year) => {
   selectedDate.year = year
-  // 检查选中的日期是否在新年份的有效范围内
+  // in whether in new
   const maxDay = new Date(year, selectedDate.month, 0).getDate()
   if (selectedDate.day > maxDay) {
     selectedDate.day = maxDay
   }
-  // 重新获取视频记录
+  // new Get record
   if (selectedRow.value) {
     loadVideoRecords()
   }
@@ -1126,12 +1131,12 @@ const selectYear = (year) => {
 
 const selectMonth = (month) => {
   selectedDate.month = month
-  // 检查选中的日期是否在新月份的有效范围内
+  // in whether in new
   const maxDay = new Date(selectedDate.year, month, 0).getDate()
   if (selectedDate.day > maxDay) {
     selectedDate.day = maxDay
   }
-  // 重新获取视频记录
+  // new Get record
   if (selectedRow.value) {
     loadVideoRecords()
   }
@@ -1139,13 +1144,13 @@ const selectMonth = (month) => {
 
 const selectDay = (day) => {
   selectedDate.day = day
-  // 重新获取视频记录
+  // new Get record
   if (selectedRow.value) {
     loadVideoRecords()
   }
 }
 
-// 加载视频记录
+// Load record
 const loadVideoRecords = async () => {
   if (!selectedRow.value) return
 
@@ -1155,17 +1160,17 @@ const loadVideoRecords = async () => {
 
     if (records && records.length > 0) {
       videoRecords.value = records
-      // 转换为视频列表格式
+      // Convert to table
       videoList.value = records.map(record => ({
         timeRange: `${record.recordStartTime?.substring(11, 19) || '--:--:--'} - ${record.recordEndTime?.substring(11, 19) || '--:--:--'}`,
         filePath: record.filePath,
         fileName: record.fileName,
         id: record.id,
-        thumbnailUrl: getThumbnailUrl(record.thumbnailPath), // 生成缩略图URL
-        record: record // 保留完整的记录数据
+        thumbnailUrl: getThumbnailUrl(record.thumbnailPath), // Generate URL
+        record: record // recorddata
       }))
 
-      // 设置第一个视频为当前播放项
+      // Set to current item
       const firstRecord = records[0]
       currentVideo.value = {
         ...selectedRow.value,
@@ -1175,28 +1180,28 @@ const loadVideoRecords = async () => {
         filePath: firstRecord.filePath
       }
 
-      // 设置播放URL
+      // Set URL
       if (firstRecord.filePath) {
-        // 将文件路径转换为可访问的URL
-        // 从完整路径中提取相对于recordings目录的路径
+        // Convert to URL
+        // from in recordings
         let relativePath = firstRecord.filePath
 
-        // 处理Windows路径格式
+        // Process Windows
         if (relativePath.includes('\\')) {
           relativePath = relativePath.replace(/\\/g, '/')
         }
 
-        // 提取recordings目录后的路径
+        // recordings after
         const recordingsIndex = relativePath.indexOf('/recordings/')
         if (recordingsIndex !== -1) {
           relativePath = relativePath.substring(recordingsIndex + '/recordings/'.length)
         }
 
-        // 构建完整的播放URL - 使用新的函数
+        // Build URL - new
         currentVideoUrl.value = getVideoFileUrl(relativePath)
         console.log('初始播放URL:', currentVideoUrl.value)
 
-        // 只在有视频记录时才显示成功提示
+        // only in record successfullyprompt / tip
         if (videoRecords.value.length > 0) {
           ElMessage.success(`找到 ${records.length} 条视频记录`)
         }
@@ -1216,12 +1221,12 @@ const loadVideoRecords = async () => {
     videoList.value = []
     currentVideoUrl.value = ''
 
-    // 统一的错误处理，只显示一个友好的提示
+    // Process , only prompt / tip
     ElMessage.info(`${selectedDateStr.value} 没有视频记录`)
   }
 }
 
-// 页面初始化
+// pageInitialize
 onMounted(async () => {
   await loadDeviceTree()
   await loadDeviceList()
@@ -1502,7 +1507,7 @@ onBeforeUnmount(() => {
   }
 }
 
-/* 视频回放弹窗样式 */
+/* dialog */
 .video-playback-container {
   display: flex;
   flex-direction: column;
@@ -1511,7 +1516,7 @@ onBeforeUnmount(() => {
   min-height: 640px;
 }
 
-/* 顶部年月日选择 */
+/*  */
 .date-selector {
   display: flex;
   align-items: flex-start;
@@ -1585,7 +1590,7 @@ onBeforeUnmount(() => {
   font-weight: 500;
 }
 
-/* 底部主体区域 */
+/* main */
 .playback-body {
   display: flex;
   gap: 16px;
@@ -1593,7 +1598,7 @@ onBeforeUnmount(() => {
   min-height: 480px;
 }
 
-/* 左侧视频列表 */
+/*  */
 .video-list-section {
   width: 180px;
   flex-shrink: 0;
@@ -1705,7 +1710,7 @@ onBeforeUnmount(() => {
   color: #1890ff;
 }
 
-/* 右侧播放器 */
+/*  */
 .player-section {
   flex: 1;
   min-width: 0;
@@ -1796,7 +1801,7 @@ onBeforeUnmount(() => {
 </style>
 
 <style lang="scss">
-/* 播放弹窗挂载到 body，去除播放器外围边框与留白。 */
+/* dialog body, and . */
 .el-dialog.video-dialog {
   margin: 0 auto !important;
   padding: 0 !important;

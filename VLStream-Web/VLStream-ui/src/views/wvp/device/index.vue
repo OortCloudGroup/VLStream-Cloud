@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <DeviceClassificationLayout protocol-type="GB28181" :selected-device-keys="classificationDeviceKeys" @filter-change="handleClassificationFilter" @assigned="getList">
   <div class="device-table-panel">
@@ -126,7 +131,7 @@
       />
     </div>
 
-    <!-- 添加或修改参数配置对话框 -->
+    <!-- Update parameterconfiguration -->
     <el-dialog :title="title" v-model="open" width="30%" append-to-body>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="设备编号" prop="deviceId">
@@ -317,7 +322,7 @@ function handleToolbarDelete() {
   handleBatchDelete()
 }
 
-/** 查询列表 */
+/* * Query list */
 function getList() {
   loading.value = true;
   listDevice(queryParams.value).then(response => {
@@ -327,13 +332,13 @@ function getList() {
   });
 }
 
-/** 取消按钮 */
+/* * button */
 function cancel() {
   open.value = false;
   reset();
 }
 
-/** 表单重置 */
+/* * form */
 function reset() {
   form.value = {
     deviceId: undefined,
@@ -352,19 +357,19 @@ function reset() {
   proxy.resetForm("formRef");
 }
 
-/** 搜索按钮操作 */
+/* * buttonoperation */
 function handleQuery() {
   queryParams.value.pageNum = 1;
   getList();
 }
 
-/** 重置按钮操作 */
+/* * buttonoperation */
 function resetQuery() {
   proxy.resetForm("queryRef");
   handleQuery();
 }
 
-/** 修改按钮操作 */
+/* * Update buttonoperation */
 function handleUpdate(row) {
   reset()
   getMediaServerList()
@@ -376,7 +381,7 @@ function handleUpdate(row) {
 }
 
 /**
- * 获取流媒体服务列表
+ * Get stream mediaservice
  */
 function getMediaServerList() {
   getOnlineMediaServerList().then(response => {
@@ -384,7 +389,7 @@ function getMediaServerList() {
   })
 }
 
-/** 提交按钮 */
+/* * button */
 function submitForm() {
   proxy.$refs["formRef"].validate(valid => {
     if (valid) {
@@ -397,7 +402,7 @@ function submitForm() {
   });
 }
 
-/** 删除按钮操作 */
+/* * Delete buttonoperation */
 function handleDelete(row) {
   let msg = "确定删除此设备？"
   if (row.online !== 0) {
@@ -414,7 +419,7 @@ function handleDelete(row) {
 }
 
 /**
- * 修改传输方式
+ * Update
  *
  * @param row
  */
@@ -425,7 +430,7 @@ function transportChange(row) {
 }
 
 /**
- * 开启/关闭目录订阅
+ * /
  *
  * @param data
  * @param value
@@ -437,7 +442,7 @@ function subscribeForCatalog(data, value) {
 }
 
 /**
- * 开启/关闭移动位置订阅
+ * /
  *
  * @param data
  * @param value
@@ -449,7 +454,7 @@ function subscribeForMobilePosition(data, value) {
 }
 
 /**
- * 获取平台配置信息
+ * Get configurationinfo
  */
 function showInfo() {
   configInfo().then(response => {
@@ -459,7 +464,7 @@ function showInfo() {
 }
 
 /**
- * 刷新对应设备 percentage
+ * new device percentage
  *
  * @param itemData
  */
@@ -493,7 +498,7 @@ async function refDevice(itemData) {
 }
 
 /**
- * 设备国标编号
+ * device
  *
  * @param deviceId
  * @returns {Promise<void>}
@@ -520,7 +525,7 @@ function moreClick(command, itemData) {
 }
 
 /**
- * 修改位置
+ * Update
  *
  * @param row
  */
@@ -556,7 +561,7 @@ const updateDialogMap = (value) => {
 }
 
 /**
- * 显示通道列表
+ * channel
  *
  * @param row
  */
@@ -600,7 +605,7 @@ function syncBasicParam(row) {
   })
 }
 
-// 多选框选中数据
+// in data
 function handleSelectionChange(selection) {
   classificationDeviceKeys.value = selection.map(item => String(item.id));
   ids.value = selection.map(item => item.deviceId);

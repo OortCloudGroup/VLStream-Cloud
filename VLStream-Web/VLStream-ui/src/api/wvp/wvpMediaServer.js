@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import request from '@/utils/wvpRequest'
 
-// 查询媒体服务器列表
+// Query service list
 export function listWvpMediaServer(query) {
   return request({
     url: '/api/server/media_server/list',
@@ -9,7 +14,7 @@ export function listWvpMediaServer(query) {
   })
 }
 
-// 查询媒体服务器详细
+// Query service
 export function getWvpMediaServer(id) {
   return request({
     url: '/api/server/media_server/one/' + id,
@@ -17,7 +22,7 @@ export function getWvpMediaServer(id) {
   })
 }
 
-// 新增媒体服务器
+// Add service
 export function saveWvpMediaServer(data) {
   return request({
     url: '/api/server/media_server/save',
@@ -26,7 +31,7 @@ export function saveWvpMediaServer(data) {
   })
 }
 
-// 修改媒体服务器
+// Update service
 export function updateWvpMediaServer(data) {
   return request({
     url: '/wvp/wvpMediaServer',
@@ -35,7 +40,7 @@ export function updateWvpMediaServer(data) {
   })
 }
 
-// 删除媒体服务器
+// Delete service
 export function delWvpMediaServer(id) {
   return request({
     url: '/api/server/media_server/delete/' + id,
@@ -43,7 +48,7 @@ export function delWvpMediaServer(id) {
   })
 }
 
-// 检查流媒体服务是否可用
+// stream mediaservicewhether
 export function checkMediaServer(query) {
   return request({
     url: '/api/server/media_server/check',
@@ -52,7 +57,7 @@ export function checkMediaServer(query) {
   })
 }
 
-// 获取平台配置信息
+// Get configurationinfo
 export function configInfo() {
   return request({
     url: '/api/server/system/configInfo',
@@ -60,7 +65,7 @@ export function configInfo() {
   })
 }
 
-// 获取流媒体服务列表
+// Get stream mediaservice
 export function getOnlineMediaServerList() {
   return request({
     url: '/api/server/media_server/online/list',

@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { request } from '@/utils/service'
 
 // function commonFunc<T, K>(interfaceName: string, data: T, method = 'post') {
@@ -7,7 +12,7 @@ import { request } from '@/utils/service'
 //   })
 // }
 /**
- * 请求当前 Java 后端中的事件兼容接口，不再经过 apaas-location-service。
+ * current Java after in event interface, apaas-location-service.
  */
 function commonFuncB<T, K>(interfaceName: string, data: T, method = 'post') {
   const normalizedPath = String(interfaceName || '').replace(/^\/+/, '')
@@ -19,7 +24,7 @@ function commonFuncB<T, K>(interfaceName: string, data: T, method = 'post') {
 }
 
 /**
- * 本地任务接口统一通过请求头鉴权，不再把可能过期的 token 固化到请求体。
+ * taskinterface , can token .
  */
 function removeLegacyAccessToken<T>(data: T): T {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
@@ -29,120 +34,120 @@ function removeLegacyAccessToken<T>(data: T): T {
   return payload as T
 }
 
-// 以下为 事件管理 接口
-// 添加事件
+// to event interface
+// event
 export function addEvent(data) {
   return commonFuncB('task/v1/mytask_updata', data, 'post')
 }
 
-// 任务事件列表-事件类型过滤
+// taskevent -event
 export function event_item_list(data) {
   return commonFuncB('/task/v1/event_item_list', data, 'post')
 }
 
-// 任务事件类型删除
+// taskevent Delete
 export function event_item_del(data) {
   return commonFuncB('/task/v1/event_item_del', data, 'post')
 }
 
-// 任务事件类型保存
+// taskevent
 export function event_item_save(data) {
   return commonFuncB('/task/v1/event_item_save', data, 'post')
 }
 
-// 任务事件列表
+// taskevent
 export function eventList(data) {
   return commonFuncB('task/v1/event_list', data, 'post')
 }
-// 添加任务事件反馈
+// taskevent
 export function addFeedback(data) {
   return commonFuncB('task/v1/event_back_add', data, 'post')
 }
-// 任务事件详情
+// taskevent
 export function eventDetail(data) {
   return commonFuncB('task/v1/event_info', data, 'post')
 }
-// 任务事件反馈列表
+// taskevent
 export function feedbackList(data) {
   return commonFuncB('task/v1/event_back_list', data, 'post')
 }
-// 任务分配
+// task
 export function allocate(data) {
   return commonFuncB('task/v1/event_add_user', data, 'post')
 }
-// 删除任务事件
+// Delete taskevent
 export function delEvent(data) {
   return commonFuncB('task/v1/event_del', data, 'post')
 }
-// 我的事件列表
+// event
 export function myEventList(data) {
   return commonFuncB('task/v2/myevent_list', data, 'post')
 }
-// 我的事件列表
+// event
 export function event_group_list(data) {
   return commonFuncB('task/v2/event_group_list', data, 'post')
 }
-// 一次获取完整 V2 分组树，供管理页使用
+// Get V2 group ,
 export function event_group_tree(data) {
   return commonFuncB('task/v2/event_group_tree', data, 'post')
 }
-// 保存 V2 区域、分组或标签（视频汇聚和主动安全共用）
+// V2 、group ( and main full )
 export function event_group_save_v2(data) {
   return commonFuncB('task/v2/event_group_save', data, 'post')
 }
-// 删除 V2 区域、分组或标签（仅允许删除叶子节点）
+// Delete V2 、group ( Delete sub node)
 export function event_group_delete_v2(data) {
   return commonFuncB('task/v2/event_group_delete', data, 'post')
 }
-// 保存事件分组配置
+// eventgroupconfiguration
 export function event_group_save(data) {
   return commonFuncB('task/v1/event_group_save', data, 'post')
 }
-// 删除事件分组配置
+// Delete eventgroupconfiguration
 export function event_group_del(data) {
   return commonFuncB('/task/v1/event_group_del', data, 'post')
 }
-// 任务事件类型设置保存
+// taskevent Set
 export function event_item_setting_save(data) {
   return commonFuncB('/task/v1/event_item_setting_save', data, 'post')
 }
-// 设置事件类型状态
+// Set event
 export function event_item_status(data) {
   return commonFuncB('/task/v1/event_item_status', data, 'post')
 }
-// 获取事件分组详情
+// Get eventgroup
 export function event_group_info(data) {
   return commonFuncB('/task/v2/event_group_info', data, 'post')
 }
-// 获取区域/分组自动转工单配置
+// Get /group work orderconfiguration
 export function workflowConfigGet(data) {
   return commonFuncB('task/v1/workflowConfigGet', data, 'post')
 }
-// 保存区域/分组自动转工单配置
+// /group work orderconfiguration
 export function workflowConfigSet(data) {
   return commonFuncB('task/v1/workflowConfigSet', data, 'post')
 }
-// 保存部门用户转工单配置
+// departmentuser work orderconfiguration
 export function eventGroupDeptuserSave(data) {
   return commonFuncB('task/v1/event_group_deptuser_save', data, 'post')
 }
-// 获取部门用户设置的转工单配置
+// Get departmentuserSet work orderconfiguration
 export function eventFroupDeptuserList(data) {
   return commonFuncB('task/v1/event_group_deptuser_list', data, 'post')
 }
-// 设置部门用户转工单配置状态
+// Set departmentuser work orderconfiguration
 export function eventGroupDeptuserStatus(data) {
   return commonFuncB('task/v1/event_group_deptuser_status', data, 'post')
 }
-// 更新事件分组设置
+// new eventgroupSet
 export function event_group_setting_save(data) {
   return commonFuncB('task/v2/event_group_setting_save', data, 'post')
 }
-// 更新事件分组自动转工单状态
+// new eventgroup work order
 export function event_group_status(data) {
   return commonFuncB('task/v2/event_group_status', data, 'post')
 }
-// 事件统计概览
+// event
 export function eventStatistics(data) {
   return commonFuncB('task/v1/event_statistics', data, 'post')
 }

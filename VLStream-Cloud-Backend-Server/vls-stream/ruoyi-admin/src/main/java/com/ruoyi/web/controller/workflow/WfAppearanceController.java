@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 仪表板接口
+ * interface
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -29,7 +30,7 @@ public class WfAppearanceController extends BaseController {
     private final IWfAppearanceService appearanceService;
 
     /**
-     * 统计所有工单数量
+     * all work order
      */
     @GetMapping("/getAllCount")
     @SaCheckPermission("workflow:appearance:getAllCount")

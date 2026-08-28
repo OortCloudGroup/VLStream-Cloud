@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -11,7 +12,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 /**
- * 读取代码生成相关配置
+ * Generate relatedconfiguration
  *
  * @author ruoyi
  */
@@ -21,22 +22,22 @@ import org.springframework.stereotype.Component;
 public class GenConfig {
 
     /**
-     * 作者
+     *
      */
     public static String author;
 
     /**
-     * 生成包路径
+     * Generate
      */
     public static String packageName;
 
     /**
-     * 自动去除表前缀，默认是false
+     * before , is false
      */
     public static boolean autoRemovePre;
 
     /**
-     * 表前缀(类名不会包含表前缀)
+     * before ( will before )
      */
     public static String tablePrefix;
 

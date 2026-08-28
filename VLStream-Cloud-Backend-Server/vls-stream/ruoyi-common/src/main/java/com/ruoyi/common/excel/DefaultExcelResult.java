@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -12,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 默认excel返回对象
+ * excel object
  *
  * @author Yjoioooo
  * @author Lion Li
@@ -20,13 +21,13 @@ import java.util.List;
 public class DefaultExcelResult<T> implements ExcelResult<T> {
 
     /**
-     * 数据对象list
+     * dataobjectlist
      */
     @Setter
     private List<T> list;
 
     /**
-     * 错误信息列表
+     * info
      */
     @Setter
     private List<String> errorList;
@@ -57,9 +58,9 @@ public class DefaultExcelResult<T> implements ExcelResult<T> {
     }
 
     /**
-     * 获取导入回执
+     * Get Import
      *
-     * @return 导入回执
+     * @return Import
      */
     @Override
     public String getAnalysis() {

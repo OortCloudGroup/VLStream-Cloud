@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,9 +15,9 @@ import lombok.EqualsAndHashCode;
 import javax.validation.constraints.NotBlank;
 
 /**
- * 表单分类业务对象 wf_form_category
+ * form object wf_form_category
  *
- * @author 雷超群
+ * @author
  * @date 2024-12-25
  */
 
@@ -25,37 +26,37 @@ import javax.validation.constraints.NotBlank;
 public class WfFormSynthesisBo extends TreeEntity<WfFormSynthesisBo> {
 
     /**
-     * 表单分类id
+     * form id
      */
     private String categoryId;
 
     /**
-     * 用户id
+     * user ID
      */
     private String userId;
 
     /**
-     * 表单分类名称
+     * form
      */
     @NotBlank(message = "表单分类名称不能为空", groups = { AddGroup.class, EditGroup.class })
     private String categoryName;
 
     /**
-     * 分类编码
+     *
      */
     private String code;
 
     /**
-     * 备注
+     * remark
      */
     private String remark;
 
     /**
-     * 租户id
+     * id
      */
     private String tenantId;
     /**
-     * 0流程 1工单
+     * 0workflow 1work order
      */
     private String type;
 }

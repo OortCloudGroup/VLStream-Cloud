@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import java.io.Serializable;
 
 
 /**
- * 远程服务器配置表 Excel实体类
+ * service configuration Excel
  *
  * @author Oort
  * @since 2025-12-23
@@ -29,43 +30,43 @@ public class VlsRemoteServersExcel implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 服务器名称
+	 * service
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("服务器名称")
 	private String serverName;
 	/**
-	 * 服务器IP地址
+	 * service IP
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("服务器IP地址")
 	private String serverIp;
 	/**
-	 * SSH端口
+	 * SSH
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("SSH端口")
 	private Integer serverPort;
 	/**
-	 * 用户名
+	 * user
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("用户名")
 	private String username;
 	/**
-	 * 密码(加密)
+	 * ( )
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("密码(加密)")
 	private String password;
 	/**
-	 * Conda环境名称
+	 * Conda
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("Conda环境名称")
 	private String condaEnv;
 	/**
-	 * 工作目录
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("工作目录")

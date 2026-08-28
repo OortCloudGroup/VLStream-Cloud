@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-dialog
     :model-value="modelValue"
@@ -13,15 +18,15 @@
       </div>
 
       <el-tabs v-model="activeTab">
-        <!-- 菜单权限选项卡 -->
+        <!-- menu item -->
         <el-tab-pane label="菜单权限" name="menu">
           <el-tree ref="menuTreeRef" :data="grantTrees.menu" node-key="id" show-checkbox default-expand-all :props="treeProps" />
         </el-tab-pane>
-        <!-- 数据权限选项卡 -->
+        <!-- data item -->
         <el-tab-pane label="数据权限" name="data">
           <el-tree ref="dataScopeTreeRef" :data="grantTrees.dataScope" node-key="id" show-checkbox default-expand-all :props="treeProps" />
         </el-tab-pane>
-        <!-- 接口权限选项卡 -->
+        <!-- interface item -->
         <el-tab-pane label="接口权限" name="api">
           <el-tree ref="apiScopeTreeRef" :data="grantTrees.apiScope" node-key="id" show-checkbox default-expand-all :props="treeProps" />
         </el-tab-pane>
@@ -60,8 +65,8 @@ const treeProps = { label: 'label', children: 'children' }
 const grantTrees = reactive({ menu: [], dataScope: [], apiScope: [] })
 
 /**
- * 递归设置三类权限树的选中节点
- * @param {Object} keys 后端返回的包含 menu, dataScope, apiScope 选中 key 列表的负载对象
+ * Set in node
+ * @param {Object} keys after menu, dataScope, apiScope in key object
  */
 const setCheckedKeys = async (keys) => {
   await nextTick()
@@ -71,7 +76,7 @@ const setCheckedKeys = async (keys) => {
 }
 
 /**
- * 从后端异步加载完整的授权树和当前角色的已选中节点
+ * from after Load and current role already in node
  */
 const loadGrantData = async () => {
   if (!props.role?.id) return
@@ -96,7 +101,7 @@ const loadGrantData = async () => {
 }
 
 /**
- * 提交保存当前选择的各类权限设置
+ * current Set
  */
 const handleSubmit = async () => {
   if (!props.role?.id) return
@@ -124,7 +129,7 @@ const handleSubmit = async () => {
 }
 
 /**
- * 关闭弹窗，通知父级组件更新 v-model 状态
+ * dialog, notification component new v-model
  */
 const handleClose = () => {
   emit('update:modelValue', false)

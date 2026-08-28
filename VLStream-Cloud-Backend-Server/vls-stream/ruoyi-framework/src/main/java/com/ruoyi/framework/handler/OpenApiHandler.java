@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -36,8 +37,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * 自定义 openapi 处理器
- * 对源码功能进行修改 增强使用
+ * Custom openapi Process
+ * can Update
  */
 @SuppressWarnings("all")
 public class OpenApiHandler extends OpenAPIService {
@@ -209,7 +210,7 @@ public class OpenApiHandler extends OpenAPIService {
                 if (StringUtils.isNotBlank(description)) {
                     io.swagger.v3.oas.models.tags.Tag tag = new io.swagger.v3.oas.models.tags.Tag();
 
-                    // 自定义部分 修改使用java注释当tag名
+                    // Custom Update java tag
                     List<String> list = IoUtil.readLines(new StringReader(description), new ArrayList<>());
                     // tag.setName(tagAutoName);
                     tag.setName(list.get(0));

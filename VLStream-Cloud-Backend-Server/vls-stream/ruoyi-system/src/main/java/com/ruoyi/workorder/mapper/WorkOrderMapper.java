@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -10,9 +11,9 @@ import com.ruoyi.workorder.domain.WorkOrder;
 import com.ruoyi.workorder.domain.vo.WorkOrderVo;
 
 /**
- * 工单Mapper接口
+ * work orderMapperinterface
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-02
  */
 public interface WorkOrderMapper extends BaseMapperPlus<WorkOrderMapper, WorkOrder, WorkOrderVo> {

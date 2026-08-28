@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -42,7 +43,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 文件上传 服务层实现
+ * service layer
  *
  * @author Lion Li
  */
@@ -134,7 +135,7 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
         } catch (IOException e) {
             throw new ServiceException(e.getMessage());
         }
-        // 保存文件信息
+        // info
         SysOss oss = new SysOss();
         oss.setUrl(uploadResult.getUrl());
         oss.setFileSuffix(suffix);
@@ -150,7 +151,7 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
         if (isValid) {
-            // 做一些业务上的校验,判断是否需要校验
+            // Validate ,Check whether need to Validate
         }
         List<SysOss> list = baseMapper.selectBatchIds(ids);
         for (SysOss sysOss : list) {
@@ -161,14 +162,14 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
     }
 
     /**
-     * 匹配Url
+     * Url
      *
-     * @param oss OSS对象
-     * @return oss 匹配Url的OSS对象
+     * @param oss OSSobject
+     * @return oss Url OSSobject
      */
     private SysOssVo matchingUrl(SysOssVo oss) {
         OssClient storage = OssFactory.instance(oss.getService());
-        // 仅修改桶类型为 private 的URL，临时URL时长为120s
+        // Update to private URL, URL to 120s
         if (AccessPolicyType.PRIVATE == storage.getAccessPolicy()) {
             oss.setUrl(storage.getPrivateUrl(oss.getFileName(), 120));
         }

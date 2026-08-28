@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -18,7 +19,7 @@ import java.time.LocalDateTime;
 
 
 /**
- * 算法表 Excel实体类
+ * algorithm Excel
  *
  * @author Oort
  * @since 2025-12-23
@@ -31,109 +32,109 @@ public class VlsAlgorithmExcel implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 所属算法仓库ID
+	 * algorithm ID
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("所属算法仓库ID")
 	private Long repositoryId;
 	/**
-	 * 算法名称
+	 * algorithm
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("算法名称")
 	private String name;
 	/**
-	 * 算法分类（目标检测算法、实例分割算法、图像分类算法、关键点检测算法、旋转目标检测算法等）
+	 * algorithm ( algorithm、instance algorithm、 algorithm、 algorithm、 algorithm etc.)
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("算法分类（目标检测算法、实例分割算法、图像分类算法、关键点检测算法、旋转目标检测算法等）")
 	private String category;
 	/**
-	 * 算法描述
+	 * algorithm
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("算法描述")
 	private String description;
 	/**
-	 * 算法图片URL
+	 * algorithm URL
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("算法图片URL")
 	private String imageUrl;
 	/**
-	 * 算法版本
+	 * algorithm
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("算法版本")
 	private String version;
 	/**
-	 * 模型格式
+	 * model
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("模型格式")
 	private String modelFormat;
 	/**
-	 * 模型文件路径
+	 * model
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("模型文件路径")
 	private String modelFilePath;
 	/**
-	 * 算法配置参数（JSON格式）
+	 * algorithmconfigurationparameter (JSON )
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("算法配置参数（JSON格式）")
 	private String configParams;
 	/**
-	 * 输入格式（image、video等）
+	 * (image、video etc.)
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("输入格式（image、video等）")
 	private String inputFormat;
 	/**
-	 * 输出格式（bbox、mask、keypoint等）
+	 * (bbox、mask、keypoint etc.)
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("输出格式（bbox、mask、keypoint等）")
 	private String outputFormat;
 	/**
-	 * 准确率
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("准确率")
 	private BigDecimal accuracy;
 	/**
-	 * 处理速度（FPS）
+	 * Process (FPS)
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("处理速度（FPS）")
 	private Integer processingSpeed;
 	/**
-	 * 内存使用量（MB）
+	 * (MB)
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("内存使用量（MB）")
 	private Integer memoryUsage;
 	/**
-	 * 是否需要GPU：0-否，1-是
+	 * whether need to GPU: 0- , 1- is
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("是否需要GPU：0-否，1-是")
 	private Byte gpuRequired;
 	/**
-	 * 部署状态：ready-就绪, deploying-部署中, deployed-已部署, failed-失败
+	 * : ready- then , deploying- in , deployed- already , failed-failed
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("部署状态：ready-就绪, deploying-部署中, deployed-已部署, failed-失败")
 	private String deployStatus;
 	/**
-	 * 部署次数
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("部署次数")
 	private Integer deployCount;
 	/**
-	 * 最后部署时间
+	 * after
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("最后部署时间")

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -18,7 +19,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * 数据权限助手
+ * data
  *
  * @author Lion Li
  * @version 3.5.0
@@ -54,23 +55,23 @@ public class DataPermissionHelper {
     }
 
     /**
-     * 开启忽略数据权限(开启后需手动调用 {@link #disableIgnore()} 关闭)
+     * data ( after {@link #disableIgnore()} )
      */
     public static void enableIgnore() {
         InterceptorIgnoreHelper.handle(IgnoreStrategy.builder().dataPermission(true).build());
     }
 
     /**
-     * 关闭忽略数据权限
+     * data
      */
     public static void disableIgnore() {
         InterceptorIgnoreHelper.clearIgnoreStrategy();
     }
 
     /**
-     * 在忽略数据权限中执行
+     * in data in Execute
      *
-     * @param handle 处理执行方法
+     * @param handle Process Execute method
      */
     public static void ignore(Runnable handle) {
         enableIgnore();
@@ -82,9 +83,9 @@ public class DataPermissionHelper {
     }
 
     /**
-     * 在忽略数据权限中执行
+     * in data in Execute
      *
-     * @param handle 处理执行方法
+     * @param handle Process Execute method
      */
     public static <T> T ignore(Supplier<T> handle) {
         enableIgnore();

@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2024-11-15 11:45:51
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -73,7 +78,7 @@ const form = reactive({
   remark: '',
   formId: undefined,
   formType: 0,
-  isFormComponents: '0' // 是否是组件还是表单, 0表单  1 组件
+  isFormComponents: '0' // whether is component is form, 0form 1 component
 })
 const rules = reactive({
   formName: [
@@ -81,7 +86,7 @@ const rules = reactive({
   ]
 })
 
-// 保存
+//
 const saveCategory = async(formEl: any) => {
   if (!formEl) return
   await formEl.validate(async(valid: boolean) => {
@@ -106,7 +111,7 @@ if (props.app) {
   form.categoryName = row.applicationName
   form.formName = row.formName
   form['modelId'] = row.modelId
-  form['type'] = 1 // 工单1 流程0
+  form['type'] = 1 // work order1 workflow0
   if (props.type === 0) {
     form['type'] = props.type
   }
@@ -126,7 +131,7 @@ if (props.item) {
   width: 90%;
 }
 
-// 点对点
+//
 .messModeBox {
   gap: 12px;
 

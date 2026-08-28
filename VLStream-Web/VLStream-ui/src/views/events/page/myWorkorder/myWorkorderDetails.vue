@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div>
     <div class="basicTitle codeActBox flexRowAC">
@@ -107,7 +112,7 @@
           <oort-svg-icon v-else class="elmenuIconImg" name="open" width="14" height="14" />
         </div>
       </div>
-      <!--工单办理-->
+      <!-- work order -->
       <div v-if="harvest">
         <task-handle-detail
           v-if="harvest&&ditem"
@@ -136,13 +141,13 @@ import { useUserStore } from '@/store/modules/useraPaas'
 
 const ditem = ref<any>(null)
 const store = useUserStore()
-let codeAct = ref(true) // 展开收缩
+let codeAct = ref(true) //
 const props = defineProps(['workorder'])
 const emit = defineEmits(['close', 'handle'])
 const harvest = ref(false)
 const eventDetailData = ref<any>({})
 
-// 事件详情
+// event
 const eventDetailFn = async() => {
   const params = {
     id: props.workorder?.eventNumber,
@@ -154,7 +159,7 @@ const eventDetailFn = async() => {
   }
 }
 
-// 数据初始化
+// dataInitialize
 watch(() => props.workorder, (val) => {
   ditem.value = {
     workorderId: val.workorderId,
@@ -331,7 +336,7 @@ watch(() => props.workorder, (val) => {
   border-left: 3px solid transparent !important;
 }
 
-// 更多-展开
+// -
 .codeActBox {
   gap: 10px;
   color: var(--el-color-primary);

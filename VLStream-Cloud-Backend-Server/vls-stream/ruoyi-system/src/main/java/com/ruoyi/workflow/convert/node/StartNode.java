@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -19,11 +20,11 @@ import java.util.Objects;
 
 /**
  * @Title: StartNode
- * @Author：蔡晓峰
+ * @Author:
  * @Date：2023/11/26 14:16
  * @github：https://github.com/tsai996/lowflow-design
  * @gitee：https://gitee.com/cai_xiao_feng/lowflow-design
- * @description：启动节点
+ * @description: node
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -33,18 +34,18 @@ public class StartNode extends Node {
     @Override
     public List<FlowElement> convert() {
         ArrayList<FlowElement> elements = new ArrayList<>();
-        // 开始节点
+        // startnode
         StartEvent startEvent = new StartEvent();
         startEvent.setId(this.getId());
         startEvent.setName(this.getNodeName());
         startEvent.setFormKey("key_"+this.getFormKey());
         startEvent.setExecutionListeners(this.buidExecutionListener());
         elements.add(startEvent);
-        // 下一个节点的连线
+        // node
         Node child = this.getChildNode();
         SequenceFlow sequenceFlow = this.buildSequence(child);
         elements.add(sequenceFlow);
-        // 下一个节点
+        // node
         if (Objects.nonNull(child)) {
             List<FlowElement> flowElements = child.convert();
             elements.addAll(flowElements);

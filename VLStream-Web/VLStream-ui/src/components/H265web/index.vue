@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div ref="container" @dblclick="fullscreenSwich" style="width:100%;height:100%;background-color: #000000;margin:0 auto;">
     <div id="glplayer" style="width: 100%; height: 100%; display: flex"></div>
@@ -25,7 +30,7 @@
 <script>
 let h265webPlayer = {};
 /**
- * 从github上复制的
+ * from github
  * @see https://github.com/numberwolf/h265web.js/blob/master/example_normal/index.js
  */
 const token = "base64:QXV0aG9yOmNoYW5neWFubG9uZ3xudW1iZXJ3b2xmLEdpdGh1YjpodHRwczovL2dpdGh1Yi5jb20vbnVtYmVyd29sZixFbWFpbDpwb3JzY2hlZ3QyM0Bmb3htYWlsLmNvbSxRUTo1MzEzNjU4NzIsSG9tZVBhZ2U6aHR0cDovL3h2aWRlby52aWRlbyxEaXNjb3JkOm51bWJlcndvbGYjODY5NCx3ZWNoYXI6bnVtYmVyd29sZjExLEJlaWppbmcsV29ya0luOkJhaWR1";
@@ -44,7 +49,7 @@ export default {
       videoInfo: null,
       volume: 1,
       rotate: 0,
-      vod: true, // 点播
+      vod: true, //
       forceNoOffscreen: false,
     };
   },
@@ -94,7 +99,7 @@ export default {
       console.log("hasAudio  " + this.hasAudio)
       h265webPlayer[this._uid] = new window.new265webjs(this.videoUrl, Object.assign(
           {
-            player: "glplayer", // 播放器容器id
+            player: "glplayer", // id
             width: 960,
             height: 450,
             token : token,
@@ -114,13 +119,13 @@ export default {
         this.fullscreen = false
       }
       h265web.onReadyShowDone = () => {
-        // 准备好显示了，尝试自动播放
+        // ,
         const result = h265web.play()
         this.playing = result;
       }
       h265web.onLoadFinish = () => {
         this.loaded = true;
-        // 可以获取mediaInfo
+        // Get mediaInfo
         // @see https://github.com/numberwolf/h265web.js/blob/8b26a31ffa419bd0a0f99fbd5111590e144e36a8/example_normal/index.js#L252C9-L263C11
         // mediaInfo = playerObj.mediaInfo();
       }
@@ -183,7 +188,7 @@ export default {
 
     },
     eventcallbacK: function (type, message) {
-      // console.log("player 事件回调")
+      // console.log("player event ")
       // console.log(type)
       // console.log(message)
     },

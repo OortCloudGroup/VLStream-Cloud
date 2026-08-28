@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2024-11-15 11:45:51
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -34,7 +39,7 @@ const props = defineProps({
 })
 const srcUrl = ref<any>(defaultImage)
 
-// 根据外部图片或本地用户目录刷新头像，任何目录异常都回退到默认头像。
+// user new , .
 const init = () => {
   if (props.src) {
     srcUrl.value = props.src
@@ -44,11 +49,11 @@ const init = () => {
   void getUserInfoFn()
 }
 
-// 从本地用户目录加载头像，避免旧 APaaS 用户信息缺失时中断 Vue 更新队列。
+// from user Load , old APaaS userinfo in Vue new .
 const getUserInfoFn = async() => {
   if (!props.id) return
 
-  // 是否vuex中已经存在这个用户，避免重复请求
+  // whether vuex in already in user,
   const cachedUser = store.userListStore?.[props.id]
   if (cachedUser) {
     srcUrl.value = cachedUser.photo || defaultImage

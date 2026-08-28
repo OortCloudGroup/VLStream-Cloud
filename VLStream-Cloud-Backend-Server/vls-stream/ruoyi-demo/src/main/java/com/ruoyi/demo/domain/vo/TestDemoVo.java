@@ -14,7 +14,7 @@ import java.util.Date;
 
 
 /**
- * 测试单表视图对象 test_demo
+ * object test_demo
  *
  * @author Lion Li
  * @date 2021-07-26
@@ -26,61 +26,61 @@ public class TestDemoVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 主键
+     * primary key
      */
     @ExcelProperty(value = "主键")
     private Long id;
 
     /**
-     * 部门id
+     * department ID
      */
     @ExcelProperty(value = "部门id")
     private String deptId;
 
     /**
-     * 用户id
+     * user ID
      */
     @ExcelProperty(value = "用户id")
     private Long userId;
 
     /**
-     * 排序号
+     *
      */
     @ExcelProperty(value = "排序号")
     private Integer orderNum;
 
     /**
-     * key键
+     * key
      */
     @ExcelProperty(value = "key键")
     private String testKey;
 
     /**
-     * 值
+     * value
      */
     @ExcelProperty(value = "值")
     private String value;
 
     /**
-     * 创建时间
+     * create time
      */
     @ExcelProperty(value = "创建时间")
     private Date createTime;
 
     /**
-     * 创建人
+     *
      */
     @ExcelProperty(value = "创建人")
     private String createBy;
 
     /**
-     * 更新时间
+     * update time
      */
     @ExcelProperty(value = "更新时间")
     private Date updateTime;
 
     /**
-     * 更新人
+     * new
      */
     @ExcelProperty(value = "更新人")
     private String updateBy;

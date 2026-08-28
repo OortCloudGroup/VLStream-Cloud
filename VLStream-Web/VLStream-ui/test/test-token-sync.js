@@ -1,75 +1,80 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * 测试Token同步功能
- * 验证token的即时同步机制
+ * Token can
+ * token
  */
 
 async function testTokenSync() {
     console.log('🔍 测试Token同步功能');
-    
-    // 获取当前token状态
+
+    // Get current token
     const urlToken = getTokenFromUrl();
     const sessionToken = sessionStorage.getItem('accessToken');
     const localToken = localStorage.getItem('accessToken');
-    
+
     console.log('当前Token状态:');
     console.log('- URL Token:', urlToken ? urlToken.substring(0, 8) + '...' : 'null');
     console.log('- Session Token:', sessionToken ? sessionToken.substring(0, 8) + '...' : 'null');
     console.log('- Local Token:', localToken ? localToken.substring(0, 8) + '...' : 'null');
     console.log('');
-    
-    // 测试1: 模拟URL中有新token
+
+    // 1: URL in new token
     console.log('=== 测试1: 模拟URL中有新token ===');
     const newToken = 'test_new_token_' + Date.now();
-    
-    // 模拟在URL中添加新token
+
+    // in URL in new token
     const url = new URL(window.location.href);
     url.searchParams.set('accessToken', newToken);
     window.history.replaceState({}, document.title, url.toString());
-    
+
     console.log('✅ 已在URL中添加新token:', newToken.substring(0, 8) + '...');
     console.log('请等待5秒让同步器检测到变化...');
-    
-    // 等待同步器检测
+
+    // etc.
     setTimeout(() => {
         console.log('检查同步结果:');
         const newSessionToken = sessionStorage.getItem('accessToken');
         const newLocalToken = localStorage.getItem('accessToken');
-        
+
         console.log('- 新Session Token:', newSessionToken ? newSessionToken.substring(0, 8) + '...' : 'null');
         console.log('- 新Local Token:', newLocalToken ? newLocalToken.substring(0, 8) + '...' : 'null');
-        
+
         if (newSessionToken === newToken && newLocalToken === newToken) {
             console.log('✅ Token同步成功！');
         } else {
             console.log('❌ Token同步失败');
         }
-        
-        // 清除测试token
+
+        // token
         url.searchParams.delete('accessToken');
         window.history.replaceState({}, document.title, url.toString());
-        
+
     }, 6000);
-    
+
     console.log('');
-    
-    // 测试2: 手动触发同步
+
+    // 2:
     console.log('=== 测试2: 手动触发同步 ===');
     console.log('调用 tokenSyncManager.forceSync() 手动触发同步');
-    
-    // 检查tokenSyncManager是否可用
+
+    // tokenSyncManagerwhether
     if (window.tokenSyncManager) {
         console.log('✅ tokenSyncManager已加载');
         window.tokenSyncManager.forceSync();
     } else {
         console.log('❌ tokenSyncManager未加载');
     }
-    
+
     console.log('');
-    
-    // 测试3: 验证token有效性
+
+    // 3: token
     console.log('=== 测试3: 验证token有效性 ===');
     const currentToken = sessionToken || localToken;
-    
+
     if (currentToken) {
         try {
             const response = await fetch('http://oort.oortcloudsmart.com:21410/bus/apaas-sso/sso/v1/verifyToken', {
@@ -85,9 +90,9 @@ async function testTokenSync() {
                     accessToken: currentToken
                 })
             });
-            
+
             console.log('Token验证响应状态:', response.status);
-            
+
             if (response.ok) {
                 const result = await response.json();
                 console.log('✅ Token验证成功:', result);
@@ -101,13 +106,13 @@ async function testTokenSync() {
     } else {
         console.log('💡 没有可验证的token');
     }
-    
+
     console.log('');
-    
-    // 测试4: 检查用户信息同步
+
+    // 4: userinfo
     console.log('=== 测试4: 检查用户信息同步 ===');
-    
-    // 检查用户信息
+
+    // userinfo
     const userInfo = sessionStorage.getItem('userInfo');
     if (userInfo) {
         try {
@@ -122,14 +127,14 @@ async function testTokenSync() {
     } else {
         console.log('💡 没有找到用户信息');
     }
-    
+
     console.log('');
-    
-    // 测试5: 模拟页面可见性变化
+
+    // 5: page
     console.log('=== 测试5: 模拟页面可见性变化 ===');
     console.log('请切换到其他标签页，然后切换回来，观察控制台输出');
     console.log('应该会看到 "📱 页面重新可见，检查token同步" 的日志');
-    
+
     console.log('');
     console.log('📝 同步机制说明:');
     console.log('1. 🔄 定时检查: 每5秒检查一次token变化');
@@ -146,11 +151,11 @@ async function testTokenSync() {
     console.log('- 自动清理无效token');
 }
 
-// 辅助函数：从URL获取token
+// : from URLGet token
 function getTokenFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('accessToken') || urlParams.get('token');
 }
 
-// 运行测试
-testTokenSync().catch(console.error); 
+//
+testTokenSync().catch(console.error);

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="option-items-pane">
     <el-radio-group
@@ -306,7 +311,7 @@ export default {
       try {
         let newOptions = JSON.parse(this.cascaderOptions)
         this.optionModel.optionItems = newOptions
-        // TODO: 是否需要重置选项默认值？？
+        // TODO: whether need to item value ? ?
 
         this.showImportCascaderDialogFlag = false
       } catch (ex) {

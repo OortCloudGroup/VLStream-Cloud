@@ -32,7 +32,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Swagger 文档配置
+ * Swagger configuration
  *
  * @author Lion Li
  */
@@ -49,11 +49,11 @@ public class SwaggerConfig {
     @ConditionalOnMissingBean(OpenAPI.class)
     public OpenAPI openApi() {
         OpenAPI openApi = new OpenAPI();
-        // 文档基本信息
+        // info
         SwaggerProperties.InfoProperties infoProperties = swaggerProperties.getInfo();
         Info info = convertInfo(infoProperties);
         openApi.info(info);
-        // 扩展文档信息
+        // info
         openApi.externalDocs(swaggerProperties.getExternalDocs());
         openApi.tags(swaggerProperties.getTags());
         openApi.paths(swaggerProperties.getPaths());
@@ -78,7 +78,7 @@ public class SwaggerConfig {
     }
 
     /**
-     * 自定义 openapi 处理器
+     * Custom openapi Process
      */
     @Bean
     public OpenAPIService openApiBuilder(Optional<OpenAPI> openAPI,
@@ -90,7 +90,7 @@ public class SwaggerConfig {
     }
 
     /**
-     * 对已经生成好的 OpenApi 进行自定义操作
+     * already Generate OpenApi Customoperation
      */
     @Bean
     public OpenApiCustomiser openApiCustomiser() {
@@ -101,7 +101,7 @@ public class SwaggerConfig {
         } else {
             finalContextPath = contextPath;
         }
-        // 对所有路径增加前置上下文路径
+        // all before
         return openApi -> {
             Paths oldPaths = openApi.getPaths();
             if (oldPaths instanceof PlusPaths) {
@@ -113,7 +113,7 @@ public class SwaggerConfig {
         };
     }
     /**
-     * 单独使用一个类便于判断 解决springdoc路径拼接重复问题
+     * Check springdoc
      *
      * @author Lion Li
      */

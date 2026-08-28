@@ -30,7 +30,7 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
 /**
- * 全局异常处理器
+ * full Process
  *
  * @author Lion Li
  */
@@ -39,7 +39,7 @@ import javax.validation.ConstraintViolationException;
 public class GlobalExceptionHandler {
 
     /**
-     * 权限码异常
+     *
      */
     @ExceptionHandler(NotPermissionException.class)
     public R<Void> handleNotPermissionException(NotPermissionException e, HttpServletRequest request) {
@@ -49,7 +49,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 角色权限异常
+     * role
      */
     @ExceptionHandler(NotRoleException.class)
     public R<Void> handleNotRoleException(NotRoleException e, HttpServletRequest request) {
@@ -59,7 +59,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 认证失败
+     * failed
      */
     @ExceptionHandler(NotLoginException.class)
     public R<Void> handleNotLoginException(NotLoginException e, HttpServletRequest request) {
@@ -69,7 +69,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 请求方式不支持
+     *
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public R<Void> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException e,
@@ -80,7 +80,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 主键或UNIQUE索引，数据重复异常
+     * primary key UNIQUE , data
      */
     @ExceptionHandler(DuplicateKeyException.class)
     public R<Void> handleDuplicateKeyException(DuplicateKeyException e, HttpServletRequest request) {
@@ -90,7 +90,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Mybatis系统异常 通用处理
+     * Mybatis Process
      */
     @ExceptionHandler(MyBatisSystemException.class)
     public R<Void> handleCannotFindDataSourceException(MyBatisSystemException e, HttpServletRequest request) {
@@ -105,7 +105,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 业务异常
+     *
      */
     @ExceptionHandler(ServiceException.class)
     public R<Void> handleServiceException(ServiceException e, HttpServletRequest request) {
@@ -115,7 +115,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 拦截未知的运行时异常
+     * not
      */
     @ExceptionHandler(RuntimeException.class)
     public R<Void> handleRuntimeException(RuntimeException e, HttpServletRequest request) {
@@ -125,7 +125,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 系统异常
+     *
      */
     @ExceptionHandler(Exception.class)
     public R<Void> handleException(Exception e, HttpServletRequest request) {
@@ -135,7 +135,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 自定义验证异常
+     * Custom
      */
     @ExceptionHandler(BindException.class)
     public R<Void> handleBindException(BindException e) {
@@ -145,7 +145,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 自定义验证异常
+     * Custom
      */
     @ExceptionHandler(ConstraintViolationException.class)
     public R<Void> constraintViolationException(ConstraintViolationException e) {
@@ -155,7 +155,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 自定义验证异常
+     * Custom
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public R<Void> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
@@ -165,7 +165,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 演示模式异常
+     *
      */
     @ExceptionHandler(DemoModeException.class)
     public R<Void> handleDemoModeException(DemoModeException e) {
@@ -173,13 +173,13 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Flowable 引擎异常
+     * Flowable
      */
     @ExceptionHandler(org.flowable.common.engine.api.FlowableException.class)
     public R<Void> handleFlowableException(org.flowable.common.engine.api.FlowableException e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',流程引擎异常：'{}'", requestURI, e.getMessage());
-        // 这里返回 400，表示客户端请求在当前流程状态下无法执行
+        // 400, in current workflow method Execute
         return R.fail(HttpStatus.HTTP_BAD_REQUEST, "流程操作失败，当前流程状态不允许此操作，请检查流程是否已被挂起");
     }
 }

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -18,7 +19,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 /**
- * 获取所有Url配置
+ * Get all Urlconfiguration
  *
  * @author Lion Li
  */
@@ -36,7 +37,7 @@ public class AllUrlHandler implements InitializingBean {
         RequestMappingHandlerMapping mapping = SpringUtils.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
         Map<RequestMappingInfo, HandlerMethod> map = mapping.getHandlerMethods();
         map.keySet().forEach(info -> {
-            // 获取注解上边的 path 替代 path variable 为 *
+            // Get path path variable to *
             Objects.requireNonNull(info.getPathPatternsCondition().getPatterns())
                 .forEach(url -> set.add(ReUtil.replaceAll(url.getPatternString(), PATTERN, "*")));
         });

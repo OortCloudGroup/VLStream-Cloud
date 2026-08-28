@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -29,13 +30,13 @@ import java.text.AttributedString;
  * @date 2021/4/4 23:58
  */
 public class CustomProcessDiagramCanvas extends DefaultProcessDiagramCanvas {
-    //定义走过流程连线颜色为绿色
+    // workflow to
     protected static Color HIGHLIGHT_SequenceFlow_COLOR = Color.GREEN;
-    //设置未走过流程的连接线颜色
+    // Set not workflow
     protected static Color CONNECTION_COLOR = Color.BLACK;
-    //设置flows连接线字体颜色red
+    // Set flows red
     protected static Color LABEL_COLOR = new Color(0, 0, 0);
-    //高亮显示task框颜色
+    // task
     protected static Color HIGHLIGHT_COLOR = Color.GREEN;
     protected static Color HIGHLIGHT_COLOR1 = Color.RED;
 
@@ -45,7 +46,7 @@ public class CustomProcessDiagramCanvas extends DefaultProcessDiagramCanvas {
     }
 
     /**
-     * 重写绘制连线的方式,设置绘制颜色
+     * ,Set
      * @param xPoints
      * @param yPoints
      * @param conditional
@@ -102,7 +103,7 @@ public class CustomProcessDiagramCanvas extends DefaultProcessDiagramCanvas {
     }
 
     /**
-     * 设置字体大小图标颜色
+     * Set
      * @param imageType
      */
     @Override
@@ -120,12 +121,12 @@ public class CustomProcessDiagramCanvas extends DefaultProcessDiagramCanvas {
         }
 
         this.g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        //修改图标颜色，修改图标字体大小
+        // Update , Update
         this.g.setPaint(Color.black);
         Font font = new Font(this.activityFontName, 10, 14);
         this.g.setFont(font);
         this.fontMetrics = this.g.getFontMetrics();
-        //修改连接线字体大小
+        // Update
         LABEL_FONT = new Font(this.labelFontName, 10, 15);
         ANNOTATION_FONT = new Font(this.annotationFontName, 0, 11);
 
@@ -158,7 +159,7 @@ public class CustomProcessDiagramCanvas extends DefaultProcessDiagramCanvas {
     }
 
     /**
-     * 设置连接线字体
+     * Set
      * @param text
      * @param graphicInfo
      * @param centered
@@ -207,7 +208,7 @@ public class CustomProcessDiagramCanvas extends DefaultProcessDiagramCanvas {
     }
 
     /**
-     * 高亮显示task框完成的
+     * task
      * @param x
      * @param y
      * @param width
@@ -229,7 +230,7 @@ public class CustomProcessDiagramCanvas extends DefaultProcessDiagramCanvas {
     }
 
     /**
-     * 自定义task框当前的位置
+     * Customtask current
      * @param x
      * @param y
      * @param width
@@ -250,7 +251,7 @@ public class CustomProcessDiagramCanvas extends DefaultProcessDiagramCanvas {
     }
 
     /**
-     * 自定义结束节点
+     * Customfinishnode
      * @param x
      * @param y
      * @param width
@@ -271,7 +272,7 @@ public class CustomProcessDiagramCanvas extends DefaultProcessDiagramCanvas {
     }
 
     /**
-     * task框自定义文字
+     * task Custom
      * @param name
      * @param graphicInfo
      * @param thickBorder
@@ -323,7 +324,7 @@ public class CustomProcessDiagramCanvas extends DefaultProcessDiagramCanvas {
     protected static Color EVENT_COLOR = new Color(255, 255, 255);
 
     /**
-     * 重写开始事件
+     * startevent
      * @param graphicInfo
      * @param image
      * @param scaleFactor
@@ -349,7 +350,7 @@ public class CustomProcessDiagramCanvas extends DefaultProcessDiagramCanvas {
     }
 
     /**
-     * 重写结束事件
+     * finishevent
      * @param graphicInfo
      * @param scaleFactor
      */

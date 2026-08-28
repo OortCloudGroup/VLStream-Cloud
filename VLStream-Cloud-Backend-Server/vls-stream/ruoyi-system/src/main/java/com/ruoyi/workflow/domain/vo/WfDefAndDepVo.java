@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,13 +14,13 @@ public class WfDefAndDepVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 流程定义ID
+     * workflow definition ID
      */
     private String definitionId;
 
 
     /**
-     * 部署ID
+     * ID
      */
     private String deploymentId;
 }

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <container-item-wrapper :widget="widget">
     <div
@@ -18,7 +23,7 @@
                 :col-index="colIdx"
                 :parent-widget="widget"
               >
-                <!-- 递归传递插槽！！！ -->
+                <!-- ! ! ! -->
                 <template v-for="slot in Object.keys($slots)" #[slot]="scope">
                   <slot :name="slot" v-bind="scope" />
                 </template>

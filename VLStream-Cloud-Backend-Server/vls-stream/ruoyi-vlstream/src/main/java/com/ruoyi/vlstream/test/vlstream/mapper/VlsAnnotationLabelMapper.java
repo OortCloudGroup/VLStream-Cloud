@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -18,7 +19,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.AnnotationLabelVO;
 import java.util.List;
 
 /**
- * 标注标签实体类 Mapper 接口
+ * annotation Mapper interface
  *
  * @author Oort
  * @since 2025-12-23
@@ -26,27 +27,27 @@ import java.util.List;
 public interface VlsAnnotationLabelMapper extends BaseMapper<AnnotationLabel> {
 
 	/**
-	 * 自定义分页
+	 * Custom
 	 *
-	 * @param page 分页参数
-	 * @param vlsAnnotationLabel 查询参数
+	 * @param page parameter
+	 * @param vlsAnnotationLabel Query parameter
 	 * @return List<VlsAnnotationLabelVO>
 	 */
 	List<AnnotationLabelVO> selectVlsAnnotationLabelPage(IPage page, AnnotationLabelVO vlsAnnotationLabel);
 
 	/**
-	 * 获取导出数据
+	 * Get Export data
 	 *
-	 * @param queryWrapper 查询条件
+	 * @param queryWrapper Query
 	 * @return List<VlsAnnotationLabelExcel>
 	 */
 	List<VlsAnnotationLabelExcel> exportVlsAnnotationLabel(@Param("ew") Wrapper<AnnotationLabel> queryWrapper);
 
 	/**
-	 * 根据标注项目ID查询标签列表（包含使用次数统计）
+	 * annotation item IDQuery list ( )
 	 *
-	 * @param annotationId 标注项目ID
-	 * @return 标签列表
+	 * @param annotationId annotation item ID
+	 * @return
 	 */
 	@Select("SELECT al.*, " +
 		"COALESCE((SELECT COUNT(*) FROM vls_annotation_instance ai " +
@@ -57,11 +58,11 @@ public interface VlsAnnotationLabelMapper extends BaseMapper<AnnotationLabel> {
 	List<AnnotationLabel> selectByAnnotationIdWithUsageCount(@Param("annotationId") Long annotationId);
 
 	/**
-	 * 更新标签的使用次数
+	 * new
 	 *
-	 * @param labelId 标签ID
-	 * @param usageCount 使用次数
-	 * @return 更新行数
+	 * @param labelId ID
+	 * @param usageCount
+	 * @return new
 	 */
 	@Update("UPDATE vls_annotation_label SET usage_count = #{usageCount} WHERE id = #{labelId}")
 	int updateUsageCount(@Param("labelId") Long labelId, @Param("usageCount") Integer usageCount);

@@ -1,7 +1,12 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 /**
- * 全屏半透明水印指令
- * 用法: v-watermark 或 v-watermark="{ text: '张三 - XJ123456 - XX分局 - 2025-01-01' }"
- * 防截图泄密：使用 Canvas 绘制水印覆盖全屏，阻止删除（MutationObserver 监听）
+ * full
+ * method : v-watermark v-watermark="{ text: ' - XJ123456 - XX - 2025-01-01' }"
+ * snapshot : Canvas full , Delete (MutationObserver )
  */
 import type { Directive, DirectiveBinding } from 'vue'
 
@@ -33,7 +38,7 @@ function createWatermark(options: WatermarkOptions) {
   const ctx = canvas.getContext('2d')!
   const dpr = window.devicePixelRatio || 1
 
-  // 计算单个水印单元尺寸
+  //
   ctx.font = `${fontSize! * dpr}px Arial`
   const metrics = ctx.measureText(text)
   const textWidth = metrics.width / dpr
@@ -46,7 +51,7 @@ function createWatermark(options: WatermarkOptions) {
   canvas.height = unitH * dpr
   ctx.scale(dpr, dpr)
 
-  // 绘制水印文字
+  //
   ctx.font = `${fontSize}px Arial`
   ctx.fillStyle = color!
   ctx.globalAlpha = opacity!
@@ -63,13 +68,13 @@ function createWatermark(options: WatermarkOptions) {
 function mountWatermark(el: HTMLElement, binding: DirectiveBinding<WatermarkOptions | string>) {
   const options: WatermarkOptions = typeof binding.value === 'string' ? { text: binding.value } : { ...binding.value }
 
-  // 移除旧水印
+  // old
   removeWatermark()
 
   const bgUrl = createWatermark(options)
   if (!bgUrl) return
 
-  // 创建水印覆盖层
+  // layer
   watermarkEl = document.createElement('div')
   watermarkEl.setAttribute('data-watermark', 'true')
   Object.assign(watermarkEl.style, {
@@ -88,10 +93,10 @@ function mountWatermark(el: HTMLElement, binding: DirectiveBinding<WatermarkOpti
 
   document.body.appendChild(watermarkEl)
 
-  // MutationObserver 防止水印被删除或修改
+  // MutationObserver Delete Update
   observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
-      // 水印被删除则重新挂载
+      // Delete new
       if (mutation.type === 'childList' && mutation.removedNodes.length) {
         for (const node of mutation.removedNodes) {
           if (node === watermarkEl || (node as HTMLElement).getAttribute?.('data-watermark') === 'true') {
@@ -100,7 +105,7 @@ function mountWatermark(el: HTMLElement, binding: DirectiveBinding<WatermarkOpti
           }
         }
       }
-      // 水印属性被篡改则重新挂载
+      // property new
       if (mutation.type === 'attributes' && mutation.target === watermarkEl) {
         mountWatermark(el, binding)
         return

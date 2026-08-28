@@ -1,9 +1,14 @@
 <!--
- *@Created by: 兰舰
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
+<!--
+ * @Created by:
  * Email: gglanjian@qq.com
  * Phone: 16620805419
  * @Date: 2024-11-15 11:45:51
- * @Last Modified by:  兰舰
+ * @Last Modified by:
  * @Copyright aPaaS-front-team. All rights reserved.
 !-->
 <template>
@@ -88,26 +93,26 @@ const route = useRoute()
 const activeName = ref<any>('1')
 let processTitle = ref('')
 let dItem = ref('')
-const currentForm = ref(null) // 表单设计
-const currentModel = ref(null) // 流程设计
-let appObj = ref<any>('') // 任务管理app
+const currentForm = ref(null) // form
+const currentModel = ref(null) // workflow
+let appObj = ref<any>('') // task app
 appObj.value = getStoredWorkOrderAppContext() || {}
 
-// 当前模型
+// current model
 const getModelFn = async() => {
   let data = {
     modelId: route.query?.modelId
   }
   let res:any = await getModel(data)
   if (res.code === 200) {
-    // 当前表单
+    // current form
     if (res.data?.formId) currentForm.value = { ...res.data }
     let resData = res.data
     processTitle.value = resData.modelName
     dItem.value = resData
-    // 表单设置-工单1 流程0
+    // formSet -work order1 workflow0
     resData['formDesignType'] = 1
-    // 通知节点：工单有,流程无(workOrderAppAll:true)
+    // notificationnode: work order ,workflow (workOrderAppAll:true)
     resData['notifyNode'] = route.query?.workOrderAppAll
     resData['appId'] = resData.modelId
     resData['applicationId'] = appObj.value?.applicationId
@@ -115,9 +120,9 @@ const getModelFn = async() => {
   }
 }
 
-// 关闭即部署
+//
 const closeDrawerConfirm = (val) => {
-/*   ElMessageBox.confirm('部署该模型，将该模型设置为最新，是否继续', '部署', {
+/* ElMessageBox.confirm(' model, modelSet to new , whether ', ' ', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
@@ -138,7 +143,7 @@ const closeDrawerConfirm = (val) => {
   }
   deployModel(data).then((res: any) => {
     if (res.code === 200) {
-      // ElMessage.success('操作成功')
+      // ElMessage.success('operationsuccessfully')
       router.back()
     }
   })

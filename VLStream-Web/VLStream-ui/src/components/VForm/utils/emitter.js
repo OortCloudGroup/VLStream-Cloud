@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
 
 function _broadcast(componentName, eventName, params) {
   this.$children.forEach(function(child) {
@@ -68,17 +72,17 @@ export default {
           parent.emit$.call(parent, eventName, params)
 
           if (componentName === 'VFormRender') {
-            parent.$emit(eventName, ...params) // 执行原生$emit，以便可以用@进行声明式事件处理！！
+            parent.$emit(eventName, ...params) // Execute $emit, @ eventProcess ! !
           }
         }
       }
     },
 
     broadcast: function broadcast(componentName, eventName, params) {
-      /* Vue3移除了$children属性，_broadcast方法已不能使用！！ */
+      /* Vue3 $childrenproperty, _broadcast method already can ! ! */
       // _broadcast.call(this, componentName, eventName, params);
 
-      if (!!this.widgetRefList) { // FormRender只需遍历自身的widgetRefList属性
+      if (!!this.widgetRefList) { // FormRenderonly widgetRefListproperty
         Object.keys(this.widgetRefList).forEach(refName => {
           let cmpName = this.widgetRefList[refName].$options.componentName
           if (cmpName === componentName) {
@@ -89,7 +93,7 @@ export default {
         })
       }
 
-      if (!!this.refList) { // 其他组件遍历inject的refList属性
+      if (!!this.refList) { // component inject refListproperty
         Object.keys(this.refList).forEach(refName => {
           let cmpName = this.refList[refName].$options.componentName
           if (cmpName === componentName) {

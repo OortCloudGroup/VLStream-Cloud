@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="tenant_Page draHeaPB">
     <div class="tenant_content">
@@ -118,7 +123,7 @@ function searchResetFn(val) {
   getList();
 }
 
-/** 查询报警列表 */
+/* * Query list */
 function getList() {
   loading.value = true;
   listAlarm(queryParams.value).then(response => {

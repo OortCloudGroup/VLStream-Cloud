@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -20,18 +21,18 @@
 //public class LoopConditionDelegate implements JavaDelegate, ApplicationContextAware {
 //    private static ApplicationContext applicationContext;
 //    public LoopConditionDelegate() {
-//        // 无参构造函数
+// // No-args constructor
 //    }
 //    public void setApplicationContext(ApplicationContext arg0) throws BeansException {
 //        this.applicationContext = arg0;
 //    }
 //    @Override
 //    public void execute(DelegateExecution execution) {
-//        // 假设我们有一个部门层级的列表
+// // assuming department hierarchy
 //        List<String> departmentHierarchy = (List<String>) execution.getVariable("departmentHierarchy");
 //        Integer currentLevel = (Integer) execution.getVariable("currentLevel");
 //
-//        // 检查是否还有下一个层级
+// // whether layer
 //        if (currentLevel < departmentHierarchy.size() - 1) {
 //            currentLevel++;
 //            execution.setVariable("currentAssignee", departmentHierarchy.get(currentLevel));
@@ -39,7 +40,7 @@
 //            execution.setVariable("loopCondition", true);
 //
 //            TaskService taskService = (TaskService)applicationContext.getBean(TaskService.class);
-////            // 设置当前任务的处理人
+// // // Set current task Process
 ////            String currentTaskId = getCurrentTaskId(execution);
 ////            if (currentTaskId != null) {
 ////                taskService.setAssignee(currentTaskId, departmentHierarchy.get(currentLevel));
@@ -49,13 +50,13 @@
 //        }
 //    }
 //
-//    // 获取当前任务的 ID
+// // Get current task ID
 //    private String getCurrentTaskId(DelegateExecution execution) {
 //        TaskService taskService = applicationContext.getBean(TaskService.class);
 //        String processInstanceId = execution.getProcessInstanceId();
 //        List<Task> tasks = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
 //        if (!tasks.isEmpty()) {
-//            return tasks.get(0).getId(); // 假设当前任务列表中只有一个任务
+// return tasks.get(0).getId(); // assuming current task in only task
 //        }
 //        return null;
 //    }
@@ -92,7 +93,7 @@ public class LoopConditionDelegate implements JavaDelegate, ApplicationContextAw
     private static ApplicationContext applicationContext;
 
     public LoopConditionDelegate() {
-        // 无参构造函数
+        // No-args constructor
     }
 
     @Override
@@ -104,7 +105,7 @@ public class LoopConditionDelegate implements JavaDelegate, ApplicationContextAw
     public void execute(DelegateExecution execution) {
         SysUserServiceImpl sysUserServiceImpl = (SysUserServiceImpl) applicationContext.getBean("sysUserServiceImpl");
         SysDeptServiceImpl sysDeptServiceImpl = (SysDeptServiceImpl) applicationContext.getBean("sysDeptServiceImpl");
-        // 假设我们有一个部门层级的列表
+        // assuming department hierarchy
         String currentAssignee = (String) execution.getVariable("currentAssignee");
         List<SysUser> leaders = sysUserServiceImpl.getLeaders(currentAssignee);
 
@@ -114,17 +115,17 @@ public class LoopConditionDelegate implements JavaDelegate, ApplicationContextAw
 //        if (CollectionUtils.isEmpty(leaders)) {
 //            execution.setVariable("currentAssignee", null);
 //        }
-        // 设置上一个用户节点的实际办理人
+        // Set usernode assignee
 //        execution.setVariable("currentAssignee", getCurrentTaskId(execution));
 
-        // 如果没有领导，则审批结束
+        // if leader, approvalfinish
         if (CollectionUtils.isEmpty(leaders)) {
-            // 判断是不是局领导
+            // Check if it is bureau leader
             SysUser sysUser = sysUserServiceImpl.selectUserById(currentAssignee);
             SysDeptView sysDeptView = sysDeptServiceImpl.selectDeptById(sysUser.getDeptId());
             if (!excludedUdid.equals(sysDeptView.getDeptId())) {
-                // 获取所有局领导
-                // 先获取局领导的部门id
+                // Get all bureau leader
+                // Get bureau leader department ID
                 List<SysUser> users = sysUserServiceImpl.selectUserByUdid(excludedUdid);
                 String userIdsCommaSeparated = users.stream().map(SysUser::getUserId).collect(Collectors.joining(","));
                 System.out.println("userIdsCommaSeparated = " + userIdsCommaSeparated);
@@ -135,7 +136,7 @@ public class LoopConditionDelegate implements JavaDelegate, ApplicationContextAw
         }
     }
 
-    // 获取上个任务的 处理人
+    // Get task Process
     private String getCurrentTaskId(DelegateExecution execution) {
         TaskService taskService = applicationContext.getBean(TaskService.class);
         String processInstanceId = execution.getProcessInstanceId();
@@ -144,7 +145,7 @@ public class LoopConditionDelegate implements JavaDelegate, ApplicationContextAw
             processInstanceId(processInstanceId).
             list();
         if (!tasks.isEmpty()) {
-            return tasks.get(0).getAssignee(); // 假设当前任务列表中只有一个任务
+            return tasks.get(0).getAssignee(); // assuming current task in only task
         }
         return null;
     }

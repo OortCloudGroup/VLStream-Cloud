@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -13,9 +14,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 表单分类对象 wf_form_category
+ * form object wf_form_category
  *
- * @author 雷超群
+ * @author
  * @date 2024-12-25
  */
 @Data
@@ -26,37 +27,37 @@ public class WfFormSynthesis extends TreeEntity<WfFormSynthesis> {
     private static final long serialVersionUID=1L;
 
     /**
-     * 表单分类id
+     * form id
      */
     @TableId(value = "category_id")
     private String categoryId;
     /**
-     * 租户ID
+     * tenant ID
      */
     private String tenantId;
     /**
-     * 用户id
+     * user ID
      */
     private String userId;
     /**
-     * 表单分类名称
+     * form
      */
     private String categoryName;
     /**
-     * 分类编码
+     *
      */
     private String code;
     /**
-     * 备注
+     * remark
      */
     private String remark;
     /**
-     * 删除标志（0代表存在 1代表删除）
+     * Delete (0represents in 1represents Delete )
      */
     @TableLogic
     private String delFlag;
     /**
-     * 0流程 1工单
+     * 0workflow 1work order
      */
     private String type;
 }

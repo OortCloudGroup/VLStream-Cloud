@@ -16,28 +16,28 @@ import lombok.Data;
 public class WfMetaInfoDto {
 
     /**
-     * 创建者（username）
+     * creator (username)
      */
     private String createUser;
 
     /**
-     * 流程描述
+     * workflow
      */
     private String description;
     /**
-     * 表单类型
+     * form
      */
     private Integer formType;
     /**
-     * 表单编号
+     * form
      */
     private String formId;
     /**
-     * 图标id
+     * id
      */
     private String iconId;
     /**
-     * 手机端是否显示
+     * whether
      */
     private String showMobile = "0";
 }

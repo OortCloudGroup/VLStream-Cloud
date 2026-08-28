@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 
 
 /**
- * 事件管理表 Excel实体类
+ * event Excel
  *
  * @author Oort
  * @since 2025-12-23
@@ -30,91 +31,91 @@ public class VlsEventManagementExcel implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 事件描述
+	 * event
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("事件描述")
 	private String eventDesc;
 	/**
-	 * 事件类型
+	 * event
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("事件类型")
 	private String eventType;
 	/**
-	 * 上报位置
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("上报位置")
 	private String reportLocation;
 	/**
-	 * 上报设备
+	 * device
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("上报设备")
 	private String reportDevice;
 	/**
-	 * 上报图片
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("上报图片")
 	private String reportImg;
 	/**
-	 * 上报时间
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("上报时间")
 	private LocalDateTime reportTime;
 	/**
-	 * 事件级别：low-低,medium-中,high-高,urgent-紧急
+	 * event : low- ,medium- in ,high- ,urgent-
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("事件级别：low-低,medium-中,high-高,urgent-紧急")
 	private String eventLevel;
 	/**
-	 * 事件状态：pending-待处理,processing-处理中,completed-已完成,closed-已关闭
+	 * event : pending- Process ,processing-Process in ,completed- already ,closed- already
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("事件状态：pending-待处理,processing-处理中,completed-已完成,closed-已关闭")
 	private String eventStatus;
 	/**
-	 * 执行人
+	 * Execute
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("执行人")
 	private String executor;
 	/**
-	 * 执行人ID列表
+	 * Execute ID
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("执行人ID列表")
 	private String executorIds;
 	/**
-	 * 事件数据
+	 * eventdata
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("事件数据")
 	private String eventData;
 	/**
-	 * 处理结果
+	 * Process
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("处理结果")
 	private String handleResult;
 	/**
-	 * 反馈信息
+	 * info
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("反馈信息")
 	private String feedbackInfo;
 	/**
-	 * 反馈图片
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("反馈图片")
 	private String feedbackImg;
 	/**
-	 * 反馈状态
+	 *
 	 */
 	@ColumnWidth(20)
 	@ExcelProperty("反馈状态")

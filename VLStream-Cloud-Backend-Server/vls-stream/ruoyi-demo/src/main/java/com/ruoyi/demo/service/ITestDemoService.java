@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -15,7 +16,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 测试单表Service接口
+ * Serviceinterface
  *
  * @author Lion Li
  * @date 2021-07-26
@@ -23,54 +24,54 @@ import java.util.List;
 public interface ITestDemoService {
 
     /**
-     * 查询单个
+     * Query
      *
      * @return
      */
     TestDemoVo queryById(Long id);
 
     /**
-     * 查询列表
+     * Query list
      */
     TableDataInfo<TestDemoVo> queryPageList(TestDemoBo bo, PageQuery pageQuery);
 
     /**
-     * 自定义分页查询
+     * Custom Query
      */
     TableDataInfo<TestDemoVo> customPageList(TestDemoBo bo, PageQuery pageQuery);
 
     /**
-     * 查询列表
+     * Query list
      */
     List<TestDemoVo> queryList(TestDemoBo bo);
 
     /**
-     * 根据新增业务对象插入测试单表
+     * Add object
      *
-     * @param bo 测试单表新增业务对象
+     * @param bo Add object
      * @return
      */
     Boolean insertByBo(TestDemoBo bo);
 
     /**
-     * 根据编辑业务对象修改测试单表
+     * objectUpdate
      *
-     * @param bo 测试单表编辑业务对象
+     * @param bo object
      * @return
      */
     Boolean updateByBo(TestDemoBo bo);
 
     /**
-     * 校验并删除数据
+     * Validate Delete data
      *
-     * @param ids     主键集合
-     * @param isValid 是否校验,true-删除前校验,false-不校验
+     * @param ids primary keycollection
+     * @param isValid whether Validate ,true-Delete beforeValidate ,false- Validate
      * @return
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
 
     /**
-     * 批量保存
+     *
      */
     Boolean saveBatch(List<TestDemo> list);
 }

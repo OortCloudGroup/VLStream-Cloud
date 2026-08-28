@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -10,9 +11,9 @@ import com.ruoyi.workflow.domain.WfApp;
 import com.ruoyi.workflow.domain.vo.WfAppVo;
 
 /**
- * 应用通用流程Mapper接口
+ * workflowMapperinterface
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-04
  */
 public interface WfAppMapper extends BaseMapperPlus<WfAppMapper, WfApp, WfAppVo> {

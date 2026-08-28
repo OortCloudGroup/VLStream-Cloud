@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,27 +15,27 @@ import java.util.List;
 @Data
 public class WfLastHisTaskInfoVo {
     /**
-     * 节点id
+     * nodeid
      */
     private String taskId;
     /**
-     * 节点名称
+     * node
      */
     private String taskName;
     /**
-     * 审批人id
+     * approverid
      */
     private String assigneeId;
     /**
-     * 审批人名称
+     * approver
      */
     private String assigneeName;
     /**
-     * 评论
+     *
      */
     private String commentMsg ;
     /**
-     * 操作类型
+     * operation
      */
     private String type ;
 }

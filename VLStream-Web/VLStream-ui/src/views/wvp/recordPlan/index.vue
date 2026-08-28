@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="tenant_Page draHeaPB">
     <div class="tenant_content">
@@ -121,14 +126,14 @@ function getList() {
   })
 }
 
-/** 搜索按钮操作 */
+/* * buttonoperation */
 function searchResetFn(val) {
   queryParams.value.pageNum = 1;
   queryParams.value.query = val.query || undefined;
   getList();
 }
 
-/** 表单重置 */
+/* * form */
 function reset() {
   form.value = {
     id: undefined,
@@ -178,7 +183,7 @@ function handleLink(row){
   router.push(`/recordPlan/associatedChannel/index/${row.id}`);
 }
 
-/** 提交按钮 */
+/* * button */
 function submitForm() {
   proxy.$refs["formRef"].validate(valid => {
     if (valid) {
@@ -210,7 +215,7 @@ const byteTime2PlanList = () => {
   let planList = [];
   let week = 1;
 
-  // 把 336 长度的 list 分成 7 组，每组 48 个
+  // 336 list 7 , 48
   for (let i = 0; i < byteTime.value.length; i += DayTimes) {
     let planArray = byteTime2Plan(byteTime.value.slice(i, i + DayTimes));
     if (!planArray || planArray.length === 0) {
@@ -237,7 +242,7 @@ const byteTime2Plan = (weekItem) => {
 
   for (let i = 0; i < weekItem.length; i++) {
     let item = weekItem[i];
-    if (item === '1') { // 表示选中
+    if (item === '1') { // in
       stop = i;
       if (start === null) {
         start = i;

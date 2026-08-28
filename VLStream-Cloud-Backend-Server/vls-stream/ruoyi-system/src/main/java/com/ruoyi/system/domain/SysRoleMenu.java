@@ -12,7 +12,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 /**
- * 角色和菜单关联 sys_role_menu
+ * role and menu sys_role_menu
  *
  * @author Lion Li
  */
@@ -22,18 +22,18 @@ import lombok.Data;
 public class SysRoleMenu {
 
     /**
-     * 租户ID。
+     * tenant ID.
      */
     private String tenantId;
 
     /**
-     * 角色ID
+     * role ID
      */
     @TableId(type = IdType.INPUT)
     private String  roleId;
 
     /**
-     * 菜单ID
+     * menu ID
      */
     private Long menuId;
 

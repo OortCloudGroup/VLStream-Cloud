@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -12,7 +13,7 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 /**
- * 用户与角色关联表 数据层
+ * user and role data layer
  *
  * @author Lion Li
  */
@@ -21,11 +22,11 @@ public interface SysUserRoleViewMapper extends BaseMapperPlus<SysUserRoleViewMap
     List<String> selectUserIdsByRoleId(Long roleId);
 
     /**
-     * 通过用户ID和角色ID查询角色（支持单独或组合条件）
+     * user ID and role IDQuery role ( )
      *
-     * @param userId 用户ID（可为null）
-     * @param roleId 角色ID（可为null）
-     * @return 角色对象信息
+     * @param userId user ID ( to null)
+     * @param roleId role ID ( to null)
+     * @return roleobjectinfo
      */
     SysUserRoleView selectByCondition(@Param("userId") String userId, @Param("roleId")String roleId);
 

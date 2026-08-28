@@ -1,14 +1,19 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { verifyToken } from '@/api/auth'
 import { exchangePlatformToken, getTenantMode } from '@/api/system/localAuth'
 
-// 兼容 axios 原始响应与请求拦截器已经解包的 SpringBlade 响应。
+// axios and already SpringBlade .
 const normalizeApiResponse = (response) => {
   if (response?.code !== undefined || response?.success !== undefined) return response
   return response?.data || response
 }
 
 export class AuthManager {
-  /** 根据后端模式处理平台换票或本地 token 校验。 */
+  /* * after Process token Validate . */
   async checkExternalPlatformLogin() {
     const mode = await this.getTenantMode()
     const url = new URL(window.location.href)
@@ -19,12 +24,12 @@ export class AuthManager {
     return this.checkLocalToken()
   }
 
-  /** 兼容旧调用名，但只返回当前本地 token。 */
+  /* * old , only current token. */
   async getTokenFromExternalPlatform() {
     return this.getCurrentToken()
   }
 
-  /** 校验 URL 中的本地 token，成功后保存并移除查询参数。 */
+  /* * Validate URL in token, successfully after Query parameter. */
   async checkUrlToken() {
     const url = new URL(window.location.href)
     const token = url.searchParams.get('accessToken') || url.searchParams.get('access_token') || url.searchParams.get('token')
@@ -40,7 +45,7 @@ export class AuthManager {
     return userInfo
   }
 
-  /** 使用本项目后端用户接口验证 token 并归一化用户字段。 */
+  /* * item after userinterface token userfield. */
   async verifyToken(token) {
     if (!token) return null
     try {
@@ -62,7 +67,7 @@ export class AuthManager {
     }
   }
 
-  /** 同步保存已由本项目后端验证的用户和 token。 */
+  /* * already item after user and token. */
   async saveUserToLocal(userInfo) {
     if (!userInfo?.accessToken) return
     const serialized = JSON.stringify(userInfo)
@@ -80,7 +85,7 @@ export class AuthManager {
     }
   }
 
-  /** 移除 URL 中用于本地自动登录的 token 参数。 */
+  /* * URL in token parameter. */
   cleanUrlToken() {
     const url = new URL(window.location.href)
     url.searchParams.delete('accessToken')
@@ -91,25 +96,25 @@ export class AuthManager {
     window.history.replaceState({}, '', url.toString())
   }
 
-  /** 清除会话级认证信息。 */
+  /* * will info. */
   clearSessionTokens() {
     ;['accessToken', 'access_token', 'token', 'userCenterToken', 'userInfo', 'platformAccessToken', 'tenantId', 'tenant_id']
       .forEach((key) => sessionStorage.removeItem(key))
   }
 
-  /** 清除持久化认证信息。 */
+  /* * info. */
   clearLocalTokens() {
     ;['accessToken', 'access_token', 'token', 'userCenterToken', 'userInfo', 'platformAccessToken', 'tenantId', 'tenant_id']
       .forEach((key) => localStorage.removeItem(key))
   }
 
-  /** 清除全部本地认证信息。 */
+  /* * full info. */
   clearAllTokens() {
     this.clearSessionTokens()
     this.clearLocalTokens()
   }
 
-  /** 校验会话或持久化存储中的本地 token。 */
+  /* * Validate will in token. */
   async checkLocalToken() {
     const sessionToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token')
     if (sessionToken) {
@@ -127,13 +132,13 @@ export class AuthManager {
     return null
   }
 
-  /** 清理本地状态并回到本项目登录页。 */
+  /* * item . */
   logout() {
     this.clearAllTokens()
     window.location.href = '/bus/vls-ui/login'
   }
 
-  /** 验证并保存一个新的本地 token。 */
+  /* * new token. */
   async setNewToken(token) {
     this.clearAllTokens()
     sessionStorage.setItem('accessToken', token)
@@ -182,7 +187,7 @@ export class AuthManager {
     }
   }
 
-  /** 按 URL、会话、持久化存储顺序获取当前本地 token。 */
+  /* * URL、 will 、 Get current token. */
   getCurrentToken() {
     const url = new URL(window.location.href)
     return url.searchParams.get('accessToken')
@@ -200,7 +205,7 @@ export class AuthManager {
     return url.searchParams.get('tenantId') || url.searchParams.get('tenant_id') || undefined
   }
 
-  /** 获取缓存的本地用户信息。 */
+  /* * Get userinfo. */
   getCachedUserInfo() {
     try {
       const value = sessionStorage.getItem('userInfo') || localStorage.getItem('userInfo')

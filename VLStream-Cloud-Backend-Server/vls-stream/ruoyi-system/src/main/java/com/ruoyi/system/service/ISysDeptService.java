@@ -12,111 +12,111 @@ import com.ruoyi.common.core.domain.entity.SysDeptView;
 import java.util.List;
 
 /**
- * 部门管理 服务层
+ * department service layer
  *
  * @author Lion Li
  */
 public interface ISysDeptService {
     /**
-     * 查询部门管理数据
+     * Query department data
      *
-     * @param dept 部门信息
-     * @return 部门信息集合
+     * @param dept departmentinfo
+     * @return departmentinfocollection
      */
     List<SysDeptView> selectDeptList(SysDeptView dept);
 
     /**
-     * 查询部门树结构信息
+     * Query department info
      *
-     * @param dept 部门信息
-     * @return 部门树信息集合
+     * @param dept departmentinfo
+     * @return department infocollection
      */
     List<Tree<String >> selectDeptTreeList(SysDeptView dept);
 
     /**
-     * 构建前端所需要下拉树结构
+     * Build before need to
      *
-     * @param depts 部门列表
-     * @return 下拉树结构列表
+     * @param depts department
+     * @return
      */
     List<Tree<String >> buildDeptTreeSelect(List<SysDeptView> depts);
 
     /**
-     * 根据角色ID查询部门树信息
+     * role IDQuery department info
      *
-     * @param roleId 角色ID
-     * @return 选中部门列表
+     * @param roleId role ID
+     * @return in department
      */
     List<Long> selectDeptListByRoleId(Long roleId);
 
     /**
-     * 根据部门ID查询信息
+     * department IDQuery info
      *
-     * @param deptId 部门ID
-     * @return 部门信息
+     * @param deptId department ID
+     * @return departmentinfo
      */
     SysDeptView selectDeptById(String deptId);
 
     /**
-     * 根据ID查询所有子部门数（正常状态）
+     * IDQuery all sub department ( )
      *
-     * @param deptId 部门ID
-     * @return 子部门数
+     * @param deptId department ID
+     * @return sub department
      */
     long selectNormalChildrenDeptById(String  deptId);
 
     /**
-     * 是否存在部门子节点
+     * whether in department sub node
      *
-     * @param deptId 部门ID
-     * @return 结果
+     * @param deptId department ID
+     * @return
      */
     boolean hasChildByDeptId(String deptId);
 
     /**
-     * 查询部门是否存在用户
+     * Query departmentwhether in user
      *
-     * @param deptId 部门ID
-     * @return 结果 true 存在 false 不存在
+     * @param deptId department ID
+     * @return true in false in
      */
     boolean checkDeptExistUser(String deptId);
 
     /**
-     * 校验部门名称是否唯一
+     * Validate department namewhether
      *
-     * @param dept 部门信息
-     * @return 结果
+     * @param dept departmentinfo
+     * @return
      */
     boolean checkDeptNameUnique(SysDeptView dept);
 
     /**
-     * 校验部门是否有数据权限
+     * Validate departmentwhether data
      *
-     * @param deptId 部门id
+     * @param deptId department ID
      */
     void checkDeptDataScope(String  deptId);
 
     /**
-     * 新增保存部门信息
+     * Add departmentinfo
      *
-     * @param dept 部门信息
-     * @return 结果
+     * @param dept departmentinfo
+     * @return
      */
     int insertDept(SysDeptView dept);
 
     /**
-     * 修改保存部门信息
+     * Update departmentinfo
      *
-     * @param dept 部门信息
-     * @return 结果
+     * @param dept departmentinfo
+     * @return
      */
     int updateDept(SysDeptView dept);
 
     /**
-     * 删除部门管理信息
+     * Delete department info
      *
-     * @param deptId 部门ID
-     * @return 结果
+     * @param deptId department ID
+     * @return
      */
     int deleteDeptById(String deptId);
 }

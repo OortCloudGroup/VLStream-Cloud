@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <el-dialog
     v-model="visible"
@@ -19,11 +24,11 @@
           clearable
         />
       </el-form-item>
-      
+
       <el-form-item label="标签颜色" prop="color" required>
         <div class="color-picker-section">
-          <el-color-picker 
-            v-model="form.color" 
+          <el-color-picker
+            v-model="form.color"
             :predefine="predefineColors"
             show-alpha
           />
@@ -33,7 +38,7 @@
         </div>
       </el-form-item>
     </el-form>
-    
+
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose" class="common_btn">取消</el-button>

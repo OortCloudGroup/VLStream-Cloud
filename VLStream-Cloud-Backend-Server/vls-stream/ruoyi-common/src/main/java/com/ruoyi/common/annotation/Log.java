@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -11,7 +12,7 @@ import com.ruoyi.common.enums.OperatorType;
 import java.lang.annotation.*;
 
 /**
- * 自定义操作日志记录注解
+ * Customoperationlogrecord
  *
  * @author ruoyi
  */
@@ -20,32 +21,32 @@ import java.lang.annotation.*;
 @Documented
 public @interface Log {
     /**
-     * 模块
+     *
      */
     String title() default "";
 
     /**
-     * 功能
+     * can
      */
     BusinessType businessType() default BusinessType.OTHER;
 
     /**
-     * 操作人类别
+     * operation
      */
     OperatorType operatorType() default OperatorType.MANAGE;
 
     /**
-     * 是否保存请求的参数
+     * whether parameter
      */
     boolean isSaveRequestData() default true;
 
     /**
-     * 是否保存响应的参数
+     * whether parameter
      */
     boolean isSaveResponseData() default true;
 
     /**
-     * 排除指定的请求参数
+     * parameter
      */
     String[] excludeParamNames() default {};
 

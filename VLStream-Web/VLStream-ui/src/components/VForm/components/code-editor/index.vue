@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="codemirror-container">
     <div ref="editorContainer" class="codemirror-editor" />
@@ -32,7 +37,7 @@ export default {
       type: String,
       default: 'javascript'
     },
-    userWorker: { // 是否开启语法检查，默认开启
+    userWorker: { // whether method ,
       type: Boolean,
       default: true
     }
@@ -69,7 +74,7 @@ export default {
       }
     },
     getBasicSetup() {
-      // 手动配置 basicSetup 的功能
+      // configuration basicSetup can
       return [
         lineNumbers(),
         highlightActiveLineGutter(),
@@ -81,7 +86,7 @@ export default {
       ]
     },
     getKeymap() {
-      // 组合所有快捷键
+      // all
       return [
         ...defaultKeymap,
         ...searchKeymap,
@@ -141,8 +146,8 @@ export default {
       }
     },
     getEditorAnnotations() {
-      // CodeMirror 6 中的诊断信息通过插件获取
-      // 返回空数组保持兼容性
+      // CodeMirror 6 in info Get
+      // null / empty array
       return []
     },
     setValue(newValue) {

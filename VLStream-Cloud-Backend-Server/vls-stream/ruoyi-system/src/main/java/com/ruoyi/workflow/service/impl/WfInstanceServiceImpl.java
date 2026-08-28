@@ -40,7 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 
 /**
- * 工作流流程实例管理
+ * workflow instance
  *
  * @author KonBAI
  * @createTime 2022/3/10 00:12
@@ -56,7 +56,7 @@ public class WfInstanceServiceImpl extends FlowServiceFactory implements IWfInst
     private final ISysDeptService deptService;
 
     /**
-     * 结束流程实例
+     * finishworkflow instance
      *
      * @param vo
      */
@@ -66,47 +66,47 @@ public class WfInstanceServiceImpl extends FlowServiceFactory implements IWfInst
     }
 
     /**
-     * 激活或挂起流程实例
+     * workflow instance
      *
-     * @param state      状态
-     * @param instanceId 流程实例ID
+     * @param state
+     * @param instanceId workflow instance ID
      */
     @Override
     public void updateState(Integer state, String instanceId) {
-        // 激活
+        //
         if (state == 1) {
             runtimeService.activateProcessInstanceById(instanceId);
         }
-        // 挂起
+        //
         if (state == 2) {
             runtimeService.suspendProcessInstanceById(instanceId);
         }
     }
 
     /**
-     * 删除流程实例ID
+     * Delete workflow instance ID
      *
-     * @param instanceId   流程实例ID
-     * @param deleteReason 删除原因
+     * @param instanceId workflow instance ID
+     * @param deleteReason Delete
      * @param sysUser
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(String instanceId, String deleteReason, SysUser sysUser) {
-        // 查询历史数据
+        // Query history data
         HistoricProcessInstance historicProcessInstance = getHistoricProcessInstanceById(instanceId,sysUser);
         if (historicProcessInstance.getEndTime() != null) {
             historyService.deleteHistoricProcessInstance(historicProcessInstance.getId());
             return;
         }
-        // 删除流程实例
+        // Delete workflow instance
         runtimeService.deleteProcessInstance(instanceId, deleteReason);
-        // 删除历史流程实例
+        // Delete history workflow instance
         historyService.deleteHistoricProcessInstance(instanceId);
     }
 
     /**
-     * 根据实例ID查询历史实例数据
+     * instanceIDQuery history instancedata
      *
      * @param processInstanceId
      * @return
@@ -125,9 +125,9 @@ public class WfInstanceServiceImpl extends FlowServiceFactory implements IWfInst
 
 
     /**
-     * 流程历史流转记录
+     * workflowhistory record
      *
-     * @param procInsId 流程实例Id
+     * @param procInsId workflow instanceId
      * @return
      */
     @Override
@@ -154,7 +154,7 @@ public class WfInstanceServiceImpl extends FlowServiceFactory implements IWfInst
                     taskVo.setAssigneeId(userId);
                     taskVo.setAssigneeName(userName);
                 }
-                // 展示审批人员
+                // approver
                 List<HistoricIdentityLink> linksForTask = historyService.getHistoricIdentityLinksForTask(taskInstance.getId());
                 StringBuilder stringBuilder = new StringBuilder();
                 for (HistoricIdentityLink identityLink : linksForTask) {
@@ -183,7 +183,7 @@ public class WfInstanceServiceImpl extends FlowServiceFactory implements IWfInst
                 if (ObjectUtil.isNotNull(taskInstance.getDurationInMillis())) {
                     taskVo.setDuration(DateUtil.formatBetween(taskInstance.getDurationInMillis(), BetweenFormatter.Level.SECOND));
                 }
-                // 获取意见评论内容
+                // Get
                 if (CollUtil.isNotEmpty(commentList)) {
                     List<Comment> comments = new ArrayList<>();
                     // commentList.stream().filter(comment -> taskInstance.getId().equals(comment.getTaskId())).collect(Collectors.toList());
@@ -198,7 +198,7 @@ public class WfInstanceServiceImpl extends FlowServiceFactory implements IWfInst
                 taskVoList.add(taskVo);
             });
             map.put("flowList", taskVoList);
-//            // 查询当前任务是否完成
+// // Query current taskwhether
 //            List<Task> taskList = taskService.createTaskQuery()
 //            .taskTenantId(execution.getTenantId())
 //            .processInstanceId(procInsId).list();
@@ -208,7 +208,7 @@ public class WfInstanceServiceImpl extends FlowServiceFactory implements IWfInst
 //                map.put("finished", false);
 //            }
         }
-        // 第一次申请获取初始化表单
+        // Get Initialize form
         if (StringUtils.isNotBlank(deployId)) {
             WfFormVo formVo = deployFormService.selectDeployFormByDeployId(deployId);
             if (Objects.isNull(formVo)) {

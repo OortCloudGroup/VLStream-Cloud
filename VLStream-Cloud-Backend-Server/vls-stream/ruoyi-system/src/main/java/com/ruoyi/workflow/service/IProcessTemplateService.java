@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,7 +15,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 流程初始化模版Service接口
+ * workflowInitialize Serviceinterface
  *
  * @author lcq
  * @date 2025-01-07
@@ -22,32 +23,32 @@ import java.util.List;
 public interface IProcessTemplateService {
 
     /**
-     * 查询流程初始化模版
+     * Query workflowInitialize
      */
     ProcessTemplateVo queryById(String id);
 
     /**
-     * 查询流程初始化模版列表
+     * Query workflowInitialize list
      */
     TableDataInfo<ProcessTemplateVo> queryPageList(ProcessTemplateBo bo, PageQuery pageQuery);
 
     /**
-     * 查询流程初始化模版列表
+     * Query workflowInitialize list
      */
     List<ProcessTemplateVo> queryList(ProcessTemplateBo bo);
 
     /**
-     * 新增流程初始化模版
+     * Add workflowInitialize
      */
     Boolean insertByBo(ProcessTemplateBo bo);
 
     /**
-     * 修改流程初始化模版
+     * Update workflowInitialize
      */
     Boolean updateByBo(ProcessTemplateBo bo);
 
     /**
-     * 校验并批量删除流程初始化模版信息
+     * Validate Batch delete workflowInitialize info
      */
     Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid);
 }

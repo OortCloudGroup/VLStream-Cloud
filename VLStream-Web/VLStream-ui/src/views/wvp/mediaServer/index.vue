@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="tenant_Page draHeaPB">
     <div class="tenant_content">
@@ -139,7 +144,7 @@ function searchResetFn(val) {
   keyword.value = val?.keyword || ''
 }
 
-/** 查询媒体服务器列表 */
+/* * Query service list */
 function getList() {
   loading.value = true;
   listWvpMediaServer().then(response => {
@@ -148,23 +153,23 @@ function getList() {
   });
 }
 
-/** 搜索按钮操作 */
+/* * buttonoperation */
 function handleQuery() {
   getList();
 }
 
-/** 重置按钮操作 */
+/* * buttonoperation */
 function resetQuery() {
   proxy.resetForm("queryRef");
   handleQuery();
 }
 
-/** 新增按钮操作 */
+/* * Add buttonoperation */
 function handleAdd() {
   router.push(`/gbmanger/node/addMediaServer/index`);
 }
 
-/** 修改按钮操作 */
+/* * Update buttonoperation */
 function handleUpdate(row) {
   router.push({
     path: '/gbmanger/node/updateMediaServer/index',
@@ -172,7 +177,7 @@ function handleUpdate(row) {
   });
 }
 
-/** 删除按钮操作 */
+/* * Delete buttonoperation */
 function handleDelete(row) {
   const _ids = row.id
   proxy.$modal.confirm('确认删除此节点？').then(function () {
@@ -185,7 +190,7 @@ function handleDelete(row) {
 }
 
 /**
- * 查看按钮操作
+ * buttonoperation
  *
  * @param row
  */

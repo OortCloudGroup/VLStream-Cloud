@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="event-detail">
     <div class="content-header">
@@ -9,12 +14,12 @@
     </div>
 
     <div class="detail-container">
-      <!-- 事件详情 -->
+      <!-- event -->
       <div class="detail-section">
         <h2 class="section-title">事件详情</h2>
-        
+
         <div class="detail-content">
-          <!-- 事件描述 -->
+          <!-- event -->
           <div class="detail-row">
             <div class="detail-icon">
               <el-icon><Document /></el-icon>
@@ -28,7 +33,7 @@
             </div>
           </div>
 
-          <!-- 事件ID -->
+          <!-- eventID -->
           <div class="detail-row">
             <div class="detail-icon">
               <span class="icon-text">ID</span>
@@ -39,7 +44,7 @@
             </div>
           </div>
 
-          <!-- 上报设备 -->
+          <!-- device -->
           <div class="detail-row">
             <div class="detail-icon">
               <el-icon><Monitor /></el-icon>
@@ -50,7 +55,7 @@
             </div>
           </div>
 
-          <!-- 上报图像 -->
+          <!--  -->
           <div class="detail-row">
             <div class="detail-icon">
               <el-icon><Picture /></el-icon>
@@ -65,7 +70,7 @@
             </div>
           </div>
 
-          <!-- 上报时间 -->
+          <!--  -->
           <div class="detail-row">
             <div class="detail-icon">
               <el-icon><Clock /></el-icon>
@@ -76,7 +81,7 @@
             </div>
           </div>
 
-          <!-- 上报位置 -->
+          <!--  -->
           <div class="detail-row">
             <div class="detail-icon">
               <el-icon><Location /></el-icon>
@@ -89,12 +94,12 @@
         </div>
       </div>
 
-      <!-- 事件反馈 -->
+      <!-- event -->
       <div class="feedback-section">
         <h2 class="section-title">事件反馈</h2>
-        
+
         <div class="feedback-content">
-          <!-- 反馈描述 -->
+          <!--  -->
           <div class="feedback-row">
             <div class="detail-icon">
               <el-icon><Document /></el-icon>
@@ -111,7 +116,7 @@
             </div>
           </div>
 
-          <!-- 上传图像 -->
+          <!--  -->
           <div class="feedback-row">
             <div class="detail-icon">
               <el-icon><Picture /></el-icon>
@@ -136,7 +141,7 @@
             </div>
           </div>
 
-          <!-- 事件状态 -->
+          <!-- event -->
           <div class="feedback-row">
             <div class="detail-icon">
               <el-icon><Flag /></el-icon>
@@ -153,7 +158,7 @@
           </div>
         </div>
 
-        <!-- 操作按钮 -->
+        <!-- operationbutton -->
         <div class="action-buttons">
           <el-button type="primary" size="large" @click="handleSubmit" class="common_btn">确定</el-button>
           <el-button size="large" @click="handleCancel" class="common_btn">取消</el-button>
@@ -180,7 +185,7 @@ import {
 const route = useRoute()
 const router = useRouter()
 
-// 事件信息
+// eventinfo
 const eventInfo = ref({
   id: '2019-10-20 13:22',
   description: '装作捅有某样品质，实际上就等于承认了自己并没有这种品质。——叩一回肠一断，三春三月忆三巴',
@@ -193,17 +198,17 @@ const eventInfo = ref({
   location: '深圳市福田区松岭路56号'
 })
 
-// 反馈表单
+// form
 const feedbackForm = reactive({
   description: '',
   images: [],
   status: 'pending'
 })
 
-// 上传配置
+// configuration
 const uploadAction = ref('#')
 
-// 方法
+// method
 const goBack = () => {
   router.push('/event-management')
 }
@@ -233,10 +238,10 @@ const handleSubmit = () => {
   }
 
   ElMessage.success('事件反馈提交成功')
-  // 这里可以调用API提交反馈数据
+  // API data
   console.log('提交反馈:', feedbackForm)
-  
-  // 提交成功后返回列表页
+
+  // successfully after
   setTimeout(() => {
     router.push('/event-management')
   }, 1500)
@@ -247,10 +252,10 @@ const handleCancel = () => {
 }
 
 onMounted(() => {
-  // 从路由参数获取事件ID
+  // from parameterGet eventID
   const eventId = route.query.id
   if (eventId) {
-    // 这里可以根据eventId获取具体的事件信息
+    // eventIdGet eventinfo
     console.log('事件ID:', eventId)
   }
 })
@@ -308,7 +313,7 @@ onMounted(() => {
   overflow-y: auto;
 }
 
-/* 区域标题 */
+/*  */
 .section-title {
   font-size: 18px;
   color: #409eff;
@@ -318,7 +323,7 @@ onMounted(() => {
   background-color: #fafbfc;
 }
 
-/* 详情区域 */
+/*  */
 .detail-section {
   border-bottom: 1px solid #f0f0f0;
 }
@@ -382,7 +387,7 @@ onMounted(() => {
   margin-left: 8px;
 }
 
-/* 图像展示 */
+/*  */
 .detail-images {
   display: flex;
   gap: 12px;
@@ -403,9 +408,9 @@ onMounted(() => {
   object-fit: cover;
 }
 
-/* 反馈区域 */
+/*  */
 .feedback-section {
-  
+
 }
 
 .feedback-content {
@@ -434,7 +439,7 @@ onMounted(() => {
   max-width: 500px;
 }
 
-/* 上传区域 */
+/*  */
 .upload-area {
   width: 120px;
   height: 80px;
@@ -475,7 +480,7 @@ onMounted(() => {
   color: #409eff;
 }
 
-/* 状态选项 */
+/* item */
 .status-options {
   display: flex;
   gap: 20px;
@@ -485,7 +490,7 @@ onMounted(() => {
   margin-right: 0;
 }
 
-/* 操作按钮 */
+/* operationbutton */
 .action-buttons {
   padding: 20px 24px;
   display: flex;
@@ -500,19 +505,19 @@ onMounted(() => {
   height: 40px;
 }
 
-/* 响应式设计 */
+/*  */
 @media (max-width: 768px) {
   .detail-row,
   .feedback-row {
     flex-direction: column;
   }
-  
+
   .detail-icon {
     margin-bottom: 8px;
   }
-  
+
   .detail-images {
     justify-content: flex-start;
   }
 }
-</style> 
+</style>

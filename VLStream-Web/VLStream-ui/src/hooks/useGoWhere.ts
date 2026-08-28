@@ -1,12 +1,8 @@
 /*
-* @Created by: 兰舰
-* Email: gglanjian@qq.com
-* Phone: 16620805419
-* @Date: 2024-11-15 10:54:27
- * @Last Modified by: 兰舰
- * @Last Modified time: 2024-12-24 22:01:36
-* @Copyright aPaaS-front-team. All rights reserved.
-*/
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import config from '@/config/index'
 import { jugeIsInLocalhostEnv } from '@/utils'
 import { useRouter } from 'vue-router'
@@ -15,7 +11,7 @@ export default function() {
   const routerHook = useRouter()
   const goWhere = function() {
     if (!!config.notforcedLogin) return
-    // 是否跳转到统一的登陆页面 或者 是否在统一门户
+    // whether page whether in
     if ((config.common && !config.common.commonLoginPage) || jugeIsInLocalhostEnv()) {
       if (routerHook) {
         routerHook.push('/login')
@@ -24,7 +20,7 @@ export default function() {
         window.location.href = newUrl
       }
     } else {
-      // 统一由网关默认路径决定跳转到哪里
+      //
       window.location.replace(config.URL.slice(0, -1))
       // window.location.replace(config.URL.slice(0, -1) + config.frontURLStr + '/console_manage/index.html')
     }

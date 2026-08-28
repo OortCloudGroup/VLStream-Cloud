@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -11,7 +12,7 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
 /**
- * 短信登录对象
+ * object
  *
  * @author Lion Li
  */
@@ -20,14 +21,14 @@ import javax.validation.constraints.NotBlank;
 public class EmailLoginBody {
 
     /**
-     * 邮箱
+     *
      */
     @NotBlank(message = "{user.email.not.blank}")
     @Email(message = "{user.email.not.valid}")
     private String email;
 
     /**
-     * 邮箱code
+     * code
      */
     @NotBlank(message = "{email.code.not.blank}")
     private String emailCode;

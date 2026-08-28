@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -14,9 +15,9 @@ import lombok.EqualsAndHashCode;
 import javax.validation.constraints.NotBlank;
 
 /**
- * 表单应用分类业务对象 wf_form_app
+ * form object wf_form_app
  *
- * @author 雷超群
+ * @author
  * @date 2025-04-26
  */
 
@@ -25,58 +26,58 @@ import javax.validation.constraints.NotBlank;
 public class WfFormAppBo extends BaseEntity {
 
     /**
-     * 表单分类id
+     * form id
      */
     private String categoryId;
 
     /**
-     * 应用ID
+     * ID
      */
     @NotBlank(message = "应用ID不能为空", groups = { AddGroup.class, EditGroup.class })
     private String applicationId;
 
     /**
-     * 应用名称
+     *
      */
     @NotBlank(message = "应用名称不能为空", groups = { AddGroup.class, EditGroup.class })
     private String applicationName;
 
     /**
-     * 应用密钥
+     *
      */
     @NotBlank(message = "应用密钥不能为空", groups = { AddGroup.class, EditGroup.class })
     private String applicationSecret;
 
 
     /**
-     * 分类父id
+     * id
      */
     private String parentId;
 
     /**
-     * 表单分类名称
+     * form
      */
     private String categoryName;
 
     /**
-     * 分类编码
+     *
      */
     private String code;
 
     /**
-     * 0选择应用，1添加应用
+     * 0 , 1
      */
     private String appFlag;
     /**
-     * 备注
+     * remark
      */
     private String remark;
     /**
-     * 图标地址
+     *
      */
     private String images;
     /**
-     * 0流程 1工单
+     * 0workflow 1work order
      */
     private String type;
 }

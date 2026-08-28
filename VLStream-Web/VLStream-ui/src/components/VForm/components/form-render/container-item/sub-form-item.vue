@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <container-item-wrapper :widget="widget">
     <div
@@ -83,7 +88,7 @@
               :sub-form-row-index="sfrIdx"
               :sub-form-col-index="swIdx"
             >
-              <!-- 子表单暂不支持插槽！！！ -->
+              <!-- sub form ! ! ! -->
             </component>
           </div>
         </template>
@@ -131,7 +136,7 @@ export default {
     this.initEventHandler()
   },
   mounted() {
-    this.handleSubFormFirstRowAdd() // 默认添加首行后，主动触发相关事件！！
+    this.handleSubFormFirstRowAdd() // after, main relatedevent! !
   },
   beforeUnmount() {
     this.unregisterFromRefList()
@@ -149,7 +154,7 @@ export default {
 
     initRowIdData(initFlag) {
       if (this.widget.type === 'sub-form') {
-        this.rowIdData.splice(0, this.rowIdData.length) // 清除数组必须用splice，length=0不会响应式更新！！
+        this.rowIdData.splice(0, this.rowIdData.length) // array splice, length=0 will new ! !
         let subFormModel = this.formModel[this.widget.options.name]
         if (!!subFormModel && (subFormModel.length > 0)) {
           subFormModel.forEach(() => {
@@ -157,7 +162,7 @@ export default {
           })
 
           if (!!initFlag) {
-            // 注意：事件触发需延期执行，SumFormDataChange事件处理代码中可能存在尚未创建完成的组件！！
+            // : event Execute , SumFormDataChangeeventProcess in can in not component! !
             setTimeout(() => {
               this.handleSubFormRowChange(subFormModel)
             }, 800)
@@ -187,13 +192,13 @@ export default {
       return this.getWidgetRef(realWidgetName)
     },
 
-    initFieldSchemaData() { // 初始化fieldSchemaData！！！
+    initFieldSchemaData() { // Initialize fieldSchemaData! ! !
       if (this.widget.type !== 'sub-form') {
         return
       }
 
       let rowLength = this.rowIdData.length
-      this.fieldSchemaData.splice(0, this.fieldSchemaData.length) // 清除数组必须用splice，length=0不会响应式更新！！
+      this.fieldSchemaData.splice(0, this.fieldSchemaData.length) // array splice, length=0 will new ! !
       if (rowLength > 0) {
         for (let i = 0; i < rowLength; i++) {
           let fieldSchemas = []
@@ -238,7 +243,7 @@ export default {
         this.initFieldSchemaData()
 
         let subFormData = newFormData[this.widget.options.name] || []
-        setTimeout(() => { // 延时触发SubFormRowChange事件, 便于更新计算字段！！
+        setTimeout(() => { // SubFormRowChangeevent, new field! !
           this.handleSubFormRowChange(subFormData)
         }, 800)
       })
@@ -343,7 +348,7 @@ export default {
 <style lang="scss" scoped>
   .sub-form-container {
     margin-bottom: 8px;
-    text-align: left; //IE浏览器强制居左对齐
+    text-align: left; // IE
 
     :deep(.el-row.header-row) {
       padding-bottom: 0;
@@ -376,8 +381,8 @@ export default {
   div.field-header-column {
     display: inline-block;
     //overflow: hidden;
-    //white-space: nowrap;  //文字超出长度不自动换行
-    //text-overflow: ellipsis;  //文字超出长度显示省略号
+    // white-space: nowrap; //
+    // text-overflow: ellipsis; //
 
     span.custom-label i {
       margin: 0 3px;

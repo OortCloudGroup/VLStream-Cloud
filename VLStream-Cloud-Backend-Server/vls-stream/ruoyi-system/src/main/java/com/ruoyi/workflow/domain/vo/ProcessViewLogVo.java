@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -16,7 +17,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 流程访问日志视图对象 process_view_log
+ * workflow log object process_view_log
  *
  * @author lcq
  * @date 2025-08-15
@@ -28,69 +29,69 @@ public class ProcessViewLogVo {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 主键
+     * primary key
      */
     @ExcelProperty(value = "主键")
     private String id;
 
     /**
-     * 流程实例id（processInstanceId）
+     * workflow instanceid (processInstanceId)
      */
     @ExcelProperty(value = "流程实例id", converter = ExcelDictConvert.class)
     @ExcelDictFormat(readConverterExp = "p=rocessInstanceId")
     private String processInstanceId;
 
     /**
-     * 流程定义 key（processKey）
+     * workflow definition key (processKey)
      */
     @ExcelProperty(value = "流程定义 key", converter = ExcelDictConvert.class)
     @ExcelDictFormat(readConverterExp = "p=rocessKey")
     private String processKey;
 
     /**
-     * 访问者用户id
+     * user ID
      */
     @ExcelProperty(value = "访问者用户id")
     private String viewerUserId;
 
     /**
-     * 访问者用户名/显示名
+     * user /
      */
     @ExcelProperty(value = "访问者用户名/显示名")
     private String viewerUsername;
 
     /**
-     * 访问者部门id
+     * department ID
      */
     @ExcelProperty(value = "访问者部门id")
     private String viewerDeptId;
 
     /**
-     * 访问者部门名称
+     * department name
      */
     @ExcelProperty(value = "访问者部门名称")
     private String viewerDeptName;
 
     /**
-     * 操作类型
+     * operation
      */
     @ExcelProperty(value = "操作类型")
     private String operationType;
 
     /**
-     * 流程状态
+     * workflow
      */
     @ExcelProperty(value = "流程状态")
     private String processStatus;
 
     /**
-     * 访问时间
+     *
      */
     @ExcelProperty(value = "访问时间")
     private Date viewTime;
 
     /**
-     * 附件名称
+     *
      */
     @ExcelProperty(value = "附件名称")
     private String attachmentName;

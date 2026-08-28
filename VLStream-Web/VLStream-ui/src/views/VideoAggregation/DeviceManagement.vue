@@ -1,8 +1,13 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="device-management tenant_Page draHeaPB">
     <div class="tenant_content">
       <div class="tableTenBox flexRowAC">
-        <!-- 左侧设备树 -->
+        <!-- device -->
         <div
           v-show="!deviceTreeCollapsed"
           v-yResize
@@ -81,9 +86,9 @@
           </el-tree>
         </div>
 
-        <!-- 右侧内容区域 -->
+        <!--  -->
         <div class="tableTenItU">
-          <!-- 导航栏（树折叠或筛选时显示） -->
+          <!-- ( ) -->
           <div v-if="deviceTreeCollapsed || treeFilterText" class="content-header">
             <div class="breadcrumb">
               <CollapseToggle
@@ -98,7 +103,7 @@
             </div>
           </div>
 
-          <!-- 列表视图 -->
+          <!--  -->
           <div class="table-view">
             <div class="depNameBox_out flexRowAC">
               <div class="depNameBox flexRowAC">
@@ -206,7 +211,7 @@
       </div>
     </div>
 
-    <!-- 视频播放对话框 -->
+    <!--  -->
     <el-dialog
       v-model="videoDialogVisible"
       title="视频播放"
@@ -215,7 +220,7 @@
       @close="handleVideoClose"
     >
       <div class="video-player-container">
-        <!-- 播放控制栏 -->
+        <!-- control -->
         <div class="player-controls">
           <div class="control-left">
             <div class="play-status">
@@ -242,7 +247,7 @@
             </div>
           </div>
           <div class="control-right">
-            <!-- 录像状态显示 -->
+            <!-- recording -->
             <div v-if="recordingStatus.isRecording" class="recording-status">
               <el-tag type="danger" size="small" effect="dark">
                 <el-icon class="recording-icon"><VideoCamera /></el-icon>
@@ -263,7 +268,7 @@
               </el-tooltip>
             </div>
 
-            <!-- 录像按钮 -->
+            <!-- recordingbutton -->
             <el-button
               size="small"
               :type="recordingStatus.isRecording ? 'danger' : 'warning'"
@@ -295,21 +300,21 @@
           </div>
         </div>
 
-        <!-- 视频播放器和PTZ控制器区域 -->
+        <!-- and PTZcontrol -->
         <div class="video-player-content">
-          <!-- 视频播放器区域 -->
+          <!--  -->
           <div class="video-player-section">
             <div class="simple-video-player">
-              <!-- 调试信息 -->
+              <!-- info -->
 <!--              <div v-if="currentVideoDevice.streamUrl" -->
 <!--                   class="debug-info">-->
-<!--                <div>设备: {{ currentVideoDevice.deviceName }}</div>-->
+<!-- <div>device: {{ currentVideoDevice.deviceName }}</div> -->
 <!--                <div>URL: {{ currentVideoDevice.streamUrl }}</div>-->
-<!--                <div>类型: {{ getStreamType(currentVideoDevice.streamUrl) }}</div>-->
-<!--                <div v-if="currentVideoDevice.playMode">播放模式: {{ getPlayModeText(currentVideoDevice.playMode) }}</div>-->
+<!-- <div> : {{ getStreamType(currentVideoDevice.streamUrl) }}</div> -->
+<!-- <div v-if="currentVideoDevice.playMode"> : {{ getPlayModeText(currentVideoDevice.playMode) }}</div> -->
 <!--              </div>-->
 
-              <!-- RTSP 统一经过 ZLMediaKit 转为 WebRTC -->
+              <!-- RTSP ZLMediaKit to WebRTC -->
               <RtcPlayer
                 v-if="zlmWebrtcUrl"
                 :key="zlmWebrtcUrl"
@@ -317,7 +322,7 @@
                 class="zlm-rtc-player"
               />
 
-              <!-- 非RTSP地址继续使用 OPlayer -->
+              <!-- non-RTSP OPlayer -->
               <div
                 v-else-if="currentVideoDevice.streamUrl"
                 ref="oplayerContainer"
@@ -335,7 +340,7 @@
                 playsinline
               ></video>
 
-              <!-- HLS视频 -->
+              <!-- HLS -->
               <video
                 v-else-if="getStreamType(currentVideoDevice.streamUrl) === 'hls' || currentVideoDevice.playMode === 'hls'"
                 ref="simpleHlsPlayer"
@@ -345,7 +350,7 @@
                 muted
               ></video>
 
-              <!-- MP4等视频文件 -->
+              <!-- MP4 etc. -->
               <video
                 v-else-if="getStreamType(currentVideoDevice.streamUrl) === 'video' || getStreamType(currentVideoDevice.streamUrl) === 'http'"
                 class="video-element"
@@ -357,11 +362,11 @@
                 您的浏览器不支持视频播放
               </video>
 
-              <!-- RTSP流处理 -->
+              <!-- RTSP Process -->
               <div v-else-if="getStreamType(currentVideoDevice.originalRtspUrl || currentVideoDevice.streamUrl) === 'rtsp'"
                    class="rtsp-container">
 
-                <!-- WebRTC播放器 - 使用VLStream-server的webrtcUrl -->
+                <!-- WebRTC - VLStream-server webrtcUrl -->
                 <div v-if="currentVideoDevice.webrtcUrl" class="webrtc-player">
                   <iframe
                     :src="currentVideoDevice.webrtcUrl"
@@ -377,7 +382,7 @@
                   </div>
                 </div>
 
-                <!-- 备用：直接WebRTC连接 -->
+                <!-- : WebRTC -->
                 <RtspPlayer
                   v-else-if="webrtcConfig.available && !currentVideoDevice.webrtcUrl"
                   :rtsp-url="currentVideoDevice.originalRtspUrl || currentVideoDevice.streamUrl"
@@ -389,7 +394,7 @@
                   @error="handleRtspError"
                 />
 
-                <!-- WebRTC服务不可用时的后备方案 -->
+                <!-- WebRTCservice after -->
                 <div v-else class="rtsp-fallback-options">
                   <div class="fallback-info">
                     <div class="rtsp-icon">
@@ -429,7 +434,7 @@
                   </div>
                 </div>
 
-                <!-- HLS后备播放器 -->
+                <!-- HLS after -->
                 <video
                   v-if="currentVideoDevice.hlsUrl && !webrtcConfig.available"
                   ref="hlsPlayer"
@@ -440,7 +445,7 @@
                 ></video>
               </div>
 
-              <!-- 错误显示 -->
+              <!--  -->
               <div v-else class="video-error">
                 <div class="error-content">
                   <h3>无法播放视频</h3>
@@ -451,7 +456,7 @@
             </div>
           </div>
 
-          <!-- PTZ控制区域 -->
+          <!-- PTZcontrol -->
           <div class="ptz-control-section">
             <div class="ptz-control-wrapper">
               <PTZControl
@@ -465,7 +470,7 @@
       </div>
     </el-dialog>
 
-    <!-- 添加设备对话框 -->
+    <!-- device -->
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
@@ -489,14 +494,14 @@ import {ArrowDown, DocumentCopy, Refresh, VideoCamera, Folder, Collection, Plus 
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
 import Hls from 'hls.js'
 
-// 导入组件
+// Import component
 import PTZControl from '@/components/PTZControl.vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
 import RtspPlayer from '@/components/RtspPlayer.vue'
 import RtcPlayer from '@/components/rtcPlayer/index.vue'
 import DeviceEditForm from './DeviceEditForm.vue'
 
-// 导入API
+// Import API
 import {
   batchDeleteDevices,
   createDevice,
@@ -514,14 +519,14 @@ import {startHLSStream, stopHLSStream} from '@/api/stream'
 import {startRecording, stopRecording} from '@/api/videoRecord'
 import {ensureWebRTCBackendConfig, getWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL} from '@/api/webrtc'
 
-// 导入工具函数和常量
+// Import and
 import {formatDateTime, getStreamType, getYouTubeEmbedUrl} from './deviceUtils.js'
 import { CAMERA_RTC_SOCKET_URL, ensureOPlayer } from '@/utils/oplayer'
 import { clacPXToVW } from '@/utils/index'
 
 const router = useRouter()
 
-// 搜索表单数据
+// formdata
 const searchForm = ref({
   deviceName: '',
   deviceId: '',
@@ -529,7 +534,7 @@ const searchForm = ref({
   dateRange: []
 })
 
-// 设备树
+// device
 const deviceTreeData = ref([])
 const searchTreeKeyword = ref('')
 const currentTreeNodeId = ref(null)
@@ -555,29 +560,29 @@ const toolbarButtonList = computed(() => [
   { name: '删除', svg: 'table_del', clickFn: handleDelete }
 ])
 
-// 表格数据
+// tabledata
 const tableData = ref([])
 const loading = ref(false)
 const total = ref(0)
 
-// 计算属性：根据设备树选择过滤数据
+// property: device data
 const filteredTableData = computed(() => {
   let filtered = tableData.value
 
-  // 应用设备树过滤
+  // device
   if (selectedTreeNode.value) {
     const node = selectedTreeNode.value
 
-    // 如果选中的是设备类型节点（一级节点）
+    // if in is device node ( node)
     if (node.type === 'device_type') {
-      // 根据设备类型过滤
-      const deviceTypeLabel = node.label.split(' (')[0] // 去掉数量显示，如 "球机 (2)" -> "球机"
+      // device
+      const deviceTypeLabel = node.label.split(' (')[0] // , " (2)" -> " "
       filtered = filtered.filter(device => device.deviceType === deviceTypeLabel)
     }
 
-    // 如果选中的是具体设备节点（二级节点）
+    // if in is devicenode ( node)
     if (node.type === 'device') {
-      // 根据设备ID过滤，只显示选中的设备
+      // deviceID , only in device
       filtered = filtered.filter(device => device.id === node.deviceId)
     }
   }
@@ -585,41 +590,41 @@ const filteredTableData = computed(() => {
   return filtered
 })
 
-// 计算属性：分页数据
+// property: data
 const paginatedTableData = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
   return filteredTableData.value.slice(start, end)
 })
 
-// 计算属性：过滤后的总数
+// property: after
 const filteredTotal = computed(() => {
   return filteredTableData.value.length
 })
 
-// 分页相关
+// related
 const currentPage = ref(1)
 const pageSize = ref(10)
 
-// 表格选中行
+// table in
 const selectedRows = ref([])
 const selectedRow = ref(null)
 
-// 设备树选中节点
+// device in node
 const selectedTreeNode = ref(null)
 const treeFilterText = ref('')
 
-// 视图状态（新增弹窗仍用 editMode）
+// (Add dialog editMode)
 const editMode = ref('add') // 'add' | 'edit'
 
-// 设备树折叠状态
+// device
 const deviceTreeCollapsed = ref(false)
 
-// 对话框相关
+// related
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
 
-// 视频播放相关
+// related
 const videoDialogVisible = ref(false)
 const currentVideoDevice = ref({})
 const simpleHlsPlayer = ref(null)
@@ -633,7 +638,7 @@ const zlmWebrtcUrl = ref('')
 let activeOPlayerTask = null
 const converting = ref(false)
 
-// WebRTC相关
+// WebRTCrelated
 const webrtcConfig = ref({
   serverUrl: WEBRTC_SERVER_BASE_URL,
   available: false,
@@ -641,7 +646,7 @@ const webrtcConfig = ref({
 })
 let WEBRTC_STREAMER_BASE = WEBRTC_SERVER_BASE_URL
 
-// 每次加载时读取最新运行时地址，允许 /api/webrtc/config 覆盖默认同源路径。
+// Load new , /api/webrtc/config .
 const getWebRtcScriptUrls = () => [
   `${WEBRTC_STREAMER_BASE}/libs/adapter.min.js`,
   `${WEBRTC_STREAMER_BASE}/webrtcstreamer.js`
@@ -649,7 +654,7 @@ const getWebRtcScriptUrls = () => [
 let webrtcScriptLoader = null
 const checkingWebRTC = ref(false)
 
-// 增强播放功能相关
+// can related
 const playModeOptions = ref([
   { label: 'WebRTC播放', value: 'webrtc' },
 ])
@@ -662,7 +667,7 @@ const playStatistics = ref({
   failedAttempts: 0
 })
 
-// 播放状态监控
+//
 const playStatus = ref({
   isPlaying: false,
   isConnecting: false,
@@ -681,7 +686,7 @@ const playStatus = ref({
   }
 })
 
-// 播放监控定时器
+//
 // WebRTC script loader
 const loadScriptTag = (src) => {
   return new Promise((resolve, reject) => {
@@ -715,7 +720,7 @@ const ensureWebRtcStreamerScripts = async () => {
 
 const playMonitorTimer = ref(null)
 
-// 录像状态管理
+// recording
 const recordingStatus = ref({
   isRecording: false,
   recordId: null,
@@ -725,16 +730,16 @@ const recordingStatus = ref({
   stopping: false
 })
 
-// 录像监控定时器
+// recording
 const recordingTimer = ref(null)
 
-// 表单数据（新增弹窗）
+// formdata (Add dialog)
 const deviceForm = ref({})
 
-// 生命周期
+//
 onMounted(() => {
   try {
-    loadTagNameMap()  // 先加载标签映射表
+    loadTagNameMap()  // Load
     loadDeviceList()
     loadDeviceTree()
     // checkWebRTCService()
@@ -744,24 +749,24 @@ onMounted(() => {
   }
 })
 
-// 组件卸载时清理
+// component
 onUnmounted(() => {
-  // 清理播放监控
+  //
   stopPlayMonitoring()
 
-  // 清理录像状态和计时器
+  // recording and
   stopRecordingTimer()
 
-  // 如果正在录像，强制停止
+  // if in recording,
   if (recordingStatus.value.isRecording && recordingStatus.value.recordId) {
     console.warn('组件卸载时检测到正在录像，自动停止录像')
-    // 异步停止录像，不等待结果
+    // recording, etc.
     stopRecording(recordingStatus.value.recordId).catch(error => {
       console.error('组件卸载时停止录像失败:', error)
     })
   }
 
-  // 清理WebRTC和HLS流
+  // WebRTC and HLS
   cleanupWebRTCStream()
   cleanupHLSStream()
   cleanupCameraRTCPlayer()
@@ -770,17 +775,17 @@ onUnmounted(() => {
   console.log('设备管理组件已卸载，资源已清理')
 })
 
-// 标签ID到名称的映射表
+// ID
 const tagNameMap = ref(new Map())
 
-// 加载标签树并建立映射表
+// Load
 const loadTagNameMap = async () => {
   try {
     const response = await getTagTree()
     if (response.code === 200 && response.data) {
       const tagMap = new Map()
 
-      // 递归遍历标签树，建立ID到名称的映射
+      // , ID
       const traverseTagTree = (nodes) => {
         if (!Array.isArray(nodes)) return
 
@@ -789,7 +794,7 @@ const loadTagNameMap = async () => {
             tagMap.set(node.id, node.tagName)
           }
 
-          // 递归处理子节点
+          // Process sub node
           if (node.children && Array.isArray(node.children)) {
             traverseTagTree(node.children)
           }
@@ -805,11 +810,11 @@ const loadTagNameMap = async () => {
   }
 }
 
-// 方法
+// method
 const loadDeviceList = async () => {
   loading.value = true
   try {
-    // 先加载标签映射表
+    // Load
     if (tagNameMap.value.size === 0) {
       await loadTagNameMap()
     }
@@ -825,20 +830,20 @@ const loadDeviceList = async () => {
     const response = await getDeviceList(params)
     const devices = response.data.records || []
 
-    // 参考编辑页面的做法，使用getDeviceById获取每个设备的完整信息，包括标签
+    // page method , getDeviceByIdGet each device info,
     tableData.value = await Promise.all(
         devices.map(async (device) => {
           try {
-            // 调用getDeviceById获取设备详情，包括selectedTags
+            // getDeviceByIdGet device , selectedTags
             const detailResponse = await getDeviceById(device.id)
 
             if (detailResponse.code === 200 && detailResponse.data) {
               const deviceDetail = detailResponse.data
 
-              // 处理selectedTags字段，转换为tags数组用于显示
+              // Process selectedTagsfield, Convert to tagsarray
               let tags = []
               if (Array.isArray(deviceDetail.selectedTags) && deviceDetail.selectedTags.length > 0) {
-                // 使用映射表获取标签名称
+                // Get
                 tags = deviceDetail.selectedTags.map(tagId => {
                   const tagName = tagNameMap.value.get(tagId)
                   return tagName || `标签${tagId}`
@@ -849,11 +854,11 @@ const loadDeviceList = async () => {
                 ...device,
                 ...deviceDetail,
                 tags: tags,
-                // 不使用临时tag字段，只保留selectedTags相关的标签信息
+                // tagfield, only selectedTagsrelated info
                 displayTag: tags.length > 0 ? tags[0] : '未分类'
               }
             } else {
-              // 如果获取详情失败，使用列表中的基本信息
+              // if Get failed, in info
               return {
                 ...device,
                 tags: [],
@@ -890,7 +895,7 @@ const loadDeviceTree = async () => {
   }
 }
 
-// 高级搜索处理
+// Process
 const exportItem = ref({ isDisabledExcel: false })
 const searchData = ref([
   { label: '关键词', value: 'keyword', type: 'text', default: '' }
@@ -906,7 +911,7 @@ const searchResetFn = (val, reset) => {
 
 const handleAdvancedSearch = (searchData) => {
   console.log('高级搜索数据:', searchData)
-  // 将搜索数据合并到现有的searchForm中
+  // data searchForm in
   if (searchData.deviceName) {
     searchForm.value.deviceName = searchData.deviceName
   }
@@ -917,7 +922,7 @@ const handleAdvancedSearch = (searchData) => {
     searchForm.value.tagName = searchData.tagName
   }
   if (searchData.keyword) {
-    // 如果有关键词，可以用于模糊搜索设备名称
+    // if , device
     searchForm.value.deviceName = searchData.keyword
   }
   if (searchData.dateRange && searchData.dateRange.length === 2) {
@@ -940,32 +945,32 @@ const handleAdvancedSearchReset = () => {
   ElMessage.info('搜索条件已重置')
 }
 
-// 导出上传相关处理
+// Export relatedProcess
 const handleExport = () => {
   ElMessage.info('开始导出数据')
-  // 实际项目中这里会实现导出逻辑
+  // item in will Export
 }
 
 const handleUpload = () => {
   ElMessage.info('打开上传文件对话框')
-  // 实际项目中这里会实现上传逻辑
+  // item in will
 }
 
 const handleDownloadTemplate = () => {
   ElMessage.info('下载模板文件')
-  // 实际项目中这里会实现下载模板逻辑
+  // item in will
 }
 
 const handleBatchOperation = () => {
   ElMessage.info('打开批量操作界面')
-  // 实际项目中这里会实现批量操作逻辑
+  // item in will operation
 }
 
-// 分页处理
+// Process
 const handleSizeChange = (size) => {
   pageSize.value = size
   currentPage.value = 1
-  // 如果有树节点过滤，不重新加载数据，否则重新加载
+  // if node , new Load data, new Load
   if (!selectedTreeNode.value) {
     loadDeviceList()
   }
@@ -973,13 +978,13 @@ const handleSizeChange = (size) => {
 
 const handleCurrentChange = (page) => {
   currentPage.value = page
-  // 如果有树节点过滤，不重新加载数据，否则重新加载
+  // if node , new Load data, new Load
   if (!selectedTreeNode.value) {
     loadDeviceList()
   }
 }
 
-// 表格事件处理
+// tableeventProcess
 const handleSelectionChange = (selection) => {
   selectedRows.value = selection
 }
@@ -988,7 +993,7 @@ const handleRowClick = (row) => {
   selectedRow.value = row
 }
 
-// 设备树事件处理
+// device eventProcess
 const handleNodeClick = (node) => {
   selectedTreeNode.value = node
   currentTreeNodeId.value = node.id
@@ -1009,11 +1014,11 @@ const toggleDeviceTree = () => {
 }
 
 const handleDeviceTreeSearch = (keyword) => {
-  // 处理设备树搜索
+  // Process device
   console.log('设备树搜索:', keyword)
 }
 
-// 清除设备树过滤条件
+// device
 const clearTreeFilter = () => {
   selectedTreeNode.value = null
   treeFilterText.value = ''
@@ -1021,14 +1026,14 @@ const clearTreeFilter = () => {
   console.log('已清除设备树过滤条件')
 }
 
-// 清除树筛选并回到列表态
+//
 const showTableView = () => {
   selectedRow.value = null
   selectedTreeNode.value = null
   treeFilterText.value = ''
 }
 
-// 设备操作
+// deviceoperation
 const handleAdd = () => {
   dialogTitle.value = '添加设备'
   editMode.value = 'add'
@@ -1075,7 +1080,7 @@ const handleDelete = async () => {
 }
 
 /**
- * 清理设备管理 OPlayer 实例。
+ * device OPlayer instance.
  */
 const cleanupDeviceOPlayer = () => {
   activeOPlayerTask = null
@@ -1091,7 +1096,7 @@ const cleanupDeviceOPlayer = () => {
 }
 
 /**
- * 根据设备流类型生成 OPlayer 参数。
+ * device Generate OPlayer parameter.
  */
 const createDeviceOPlayerOptions = async (streamUrl) => {
   const streamType = getStreamType(streamUrl)
@@ -1122,7 +1127,7 @@ const createDeviceOPlayerOptions = async (streamUrl) => {
   return { playerConfig, playConfig: { type: playType, src: streamUrl } }
 }
 
-// 设备视频播放
+// device
 const handlePlay = async (row) => {
   console.log('点击播放设备:', row)
   playStatistics.value.totalAttempts++
@@ -1201,64 +1206,64 @@ const handlePlay = async (row) => {
   }
 }
 
-// 确定播放策略
+//
 const determinePlayStrategy = async (device, streamType) => {
   if (streamType === 'cameraRTC') {
     return 'cameraRTC'
   }
-  // 如果用户手动选择了播放模式
+  // if user
   if (selectedPlayMode.value !== 'auto') {
     return selectedPlayMode.value
   }
 
-  // 智能播放策略
+  // can
   const strategy = await getOptimalPlayStrategy(device, streamType)
   console.log('智能播放策略分析结果:', strategy)
 
   return strategy.mode
 }
 
-// 获取最优播放策略
+// Get
 const getOptimalPlayStrategy = async (device, streamType) => {
   const strategies = []
 
-  // 策略1：基于设备类型推荐
+  // 1: device
   const deviceTypeStrategy = getDeviceTypeStrategy(device)
   strategies.push(deviceTypeStrategy)
 
-  // 策略2：基于流类型推荐
+  // 2:
   const streamTypeStrategy = getStreamTypeStrategy(streamType)
   strategies.push(streamTypeStrategy)
 
-  // 策略3：基于网络状况推荐
+  // 3:
   const networkStrategy = await getNetworkStrategy()
   strategies.push(networkStrategy)
 
-  // 策略4：基于历史成功率推荐
+  // 4: history successfully
   const historyStrategy = getHistoryStrategy()
   strategies.push(historyStrategy)
 
-  // 策略5：基于系统可用性推荐
+  // 5:
   const availabilityStrategy = await getAvailabilityStrategy()
   strategies.push(availabilityStrategy)
 
   console.log('所有策略分析结果:', strategies)
 
-  // 计算综合评分
+  //
   const finalStrategy = calculateFinalStrategy(strategies)
   console.log('最终播放策略:', finalStrategy)
 
   return finalStrategy
 }
 
-// 基于设备类型的播放策略
+// device
 const getDeviceTypeStrategy = (device) => {
   const deviceType = device.tag || device.deviceType || 'unknown'
 
   switch (deviceType) {
     case '球机':
     case '云台':
-      // 球机和云台通常需要低延时控制
+      // and need to control
       return {
         mode: 'webrtc',
         score: 0.9,
@@ -1266,14 +1271,14 @@ const getDeviceTypeStrategy = (device) => {
       }
     case '摄像头':
     case '枪机':
-      // 普通摄像头可以使用任何模式
+      //
       return {
         mode: 'auto',
         score: 0.5,
         reason: '摄像头设备可使用任何播放模式'
       }
     case '半球':
-      // 半球摄像头通常用于监控，可以接受一定延时
+      // ,
       return {
         mode: 'hls',
         score: 0.7,
@@ -1288,7 +1293,7 @@ const getDeviceTypeStrategy = (device) => {
   }
 }
 
-// 基于流类型的播放策略
+//
 const getStreamTypeStrategy = (streamType) => {
   switch (streamType) {
     case 'cameraRTC':
@@ -1325,10 +1330,10 @@ const getStreamTypeStrategy = (streamType) => {
   }
 }
 
-// 基于网络状况的播放策略
+//
 const getNetworkStrategy = async () => {
   try {
-    // 检测网络连接类型
+    //
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection
 
     if (connection) {
@@ -1337,7 +1342,7 @@ const getNetworkStrategy = async () => {
 
       console.log('网络状况:', { effectiveType, downlink })
 
-      // 根据网络状况推荐播放策略
+      //
       if (effectiveType === '4g' || effectiveType === '3g') {
         if (downlink >= 10) {
           return {
@@ -1359,7 +1364,7 @@ const getNetworkStrategy = async () => {
           reason: '慢速网络，推荐HLS'
         }
       } else {
-        // WiFi或其他高速网络
+        // WiFi
         return {
           mode: 'webrtc',
           score: 0.9,
@@ -1368,7 +1373,7 @@ const getNetworkStrategy = async () => {
       }
     }
 
-    // 如果无法检测网络状况，使用默认策略
+    // if method ,
     return {
       mode: 'webrtc',
       score: 0.5,
@@ -1384,7 +1389,7 @@ const getNetworkStrategy = async () => {
   }
 }
 
-// 基于历史成功率的播放策略
+// history successfully
 const getHistoryStrategy = () => {
   const stats = playStatistics.value
   const total = stats.totalAttempts || 1
@@ -1415,10 +1420,10 @@ const getHistoryStrategy = () => {
   }
 }
 
-// 基于系统可用性的播放策略
+//
 const getAvailabilityStrategy = async () => {
   try {
-    // 检查WebRTC服务可用性
+    // WebRTCservice
     const webrtcAvailable = webrtcConfig.value.available && webrtcConfig.value.enabled
 
     if (webrtcAvailable) {
@@ -1444,9 +1449,9 @@ const getAvailabilityStrategy = async () => {
   }
 }
 
-// 计算最终播放策略
+//
 const calculateFinalStrategy = (strategies) => {
-  // 权重配置
+  // configuration
   const weights = {
     deviceType: 0.2,
     streamType: 0.3,
@@ -1455,7 +1460,7 @@ const calculateFinalStrategy = (strategies) => {
     availability: 0.1
   }
 
-  // 计算各模式的加权得分
+  //
   const modeScores = {}
 
   strategies.forEach((strategy, index) => {
@@ -1471,7 +1476,7 @@ const calculateFinalStrategy = (strategies) => {
     modeScores[mode].reasons.push(strategy.reason)
   })
 
-  // 找出得分最高的模式
+  //
   let bestMode = 'auto'
   let bestScore = 0
 
@@ -1482,9 +1487,9 @@ const calculateFinalStrategy = (strategies) => {
     }
   }
 
-  // 如果是auto模式，根据其他因素决定
+  // if is auto ,
   if (bestMode === 'auto') {
-    // 如果WebRTC可用，优先使用WebRTC
+    // if WebRTC , WebRTC
     if (webrtcConfig.value.available) {
       bestMode = 'webrtc'
     } else {
@@ -1500,7 +1505,7 @@ const calculateFinalStrategy = (strategies) => {
   }
 }
 
-// 执行播放策略
+// Execute
 const executePlayStrategy = async (device, strategy) => {
   console.log(`执行播放策略: ${strategy}`)
 
@@ -1522,7 +1527,7 @@ const executePlayStrategy = async (device, strategy) => {
   }
 }
 
-// 执行WebRTC播放策略
+// Execute WebRTC
 const executeWebRTCPlayStrategy = async (device) => {
   try {
     console.log('Starting WebRTC direct playback...')
@@ -1640,7 +1645,7 @@ const executeHLSPlayStrategy = async (device) => {
     const streamType = getStreamType(device.streamUrl)
 
     if (streamType === 'rtsp') {
-      // RTSP流需要先转换为HLS
+      // RTSP need to Convert to HLS
       const hlsUrl = await startHLSConversion(device)
       if (hlsUrl) {
         device.streamUrl = hlsUrl
@@ -1652,7 +1657,7 @@ const executeHLSPlayStrategy = async (device) => {
         throw new Error('RTSP转HLS失败')
       }
     } else if (streamType === 'hls') {
-      // 已经是HLS流，直接播放
+      // already is HLS ,
       device.playMode = 'hls'
       playStatistics.value.hlsSuccess++
     } else {
@@ -1667,13 +1672,13 @@ const executeHLSPlayStrategy = async (device) => {
   }
 }
 
-// 执行原生播放策略
+// Execute
 const executeNativePlayStrategy = async (device) => {
   try {
     cleanupCameraRTCPlayer()
     console.log('开始原生播放流程...')
 
-    // 对于原生支持的格式，直接播放
+    // ,
     device.playMode = 'native'
 
     console.log('原生播放流程完成')
@@ -1684,7 +1689,7 @@ const executeNativePlayStrategy = async (device) => {
   }
 }
 
-// 获取流类型文本
+// Get
 const getStreamTypeText = (streamUrl) => {
   const type = getStreamType(streamUrl)
   const typeMap = {
@@ -1709,36 +1714,36 @@ const isCameraRtcDevice = (device) => {
 
 const handleVideoClose = () => {
   zlmWebrtcUrl.value = ''
-  // 清理HLS播放器
+  // HLS
   if (simpleHlsPlayer.value && simpleHlsPlayer.value.hlsInstance) {
     simpleHlsPlayer.value.hlsInstance.destroy()
     simpleHlsPlayer.value.hlsInstance = null
   }
 
-  // 清理WebRTC播放器
+  // WebRTC
   if (webrtcVideoPlayer.value) {
     webrtcVideoPlayer.value.srcObject = null
   }
 
-  // 清理流
+  //
   cleanupHLSStream()
   cleanupWebRTCStream()
   cleanupCameraRTCPlayer()
   cleanupDeviceOPlayer()
 
-  // 停止播放监控
+  //
   stopPlayMonitoring()
 
-  // 清理录像状态（如果正在录像，提醒用户）
+  // recording (if in recording, user)
   if (recordingStatus.value.isRecording) {
     ElMessage.warning('检测到正在录像，请先停止录像')
-    return // 不关闭对话框
+    return //
   }
 
-  // 清理录像计时器
+  // recording
   stopRecordingTimer()
 
-  // 重置录像状态
+  // recording
   recordingStatus.value.isRecording = false
   recordingStatus.value.recordId = null
   recordingStatus.value.duration = 0
@@ -1750,7 +1755,7 @@ const handleVideoClose = () => {
   currentVideoDevice.value = {}
 }
 
-// 复制RTSP地址
+// RTSP
 const copyRtspUrl = async () => {
   try {
     const rtspUrl = currentVideoDevice.value.originalRtspUrl || currentVideoDevice.value.streamUrl
@@ -1762,7 +1767,7 @@ const copyRtspUrl = async () => {
   }
 }
 
-// WebRTC相关方法
+// WebRTCrelated method
 const checkWebRTCService = async () => {
   try {
     checkingWebRTC.value = true
@@ -1787,10 +1792,10 @@ const checkWebRTCService = async () => {
     } catch (apiError) {
       console.warn('WebRTC配置API调用失败，使用默认配置:', apiError)
 
-      // API失败时使用默认配置
+      // APIfailed configuration
       webrtcConfig.value = {
         serverUrl: WEBRTC_SERVER_BASE_URL,
-        available: true,  // 假设可用，让播放器尝试
+        available: true,  // assuming ,
         enabled: true
       }
       console.log('WebRTC使用默认配置 (Fallback模式)')
@@ -1816,12 +1821,12 @@ const handleRtspDisconnected = () => {
 const handleRtspError = async (error) => {
   console.error('RTSP WebRTC连接错误:', error)
 
-  // 如果WebRTC失败，自动尝试HLS转换
+  // if WebRTCfailed, HLSConvert
   if (currentVideoDevice.value.originalRtspUrl) {
     ElMessage.warning('WebRTC播放失败，正在尝试HLS播放模式...')
 
     try {
-      // 调用HLS转换API
+      // HLSConvert API
       const hlsUrl = await convertRtspToHls(currentVideoDevice.value.originalRtspUrl)
       if (hlsUrl) {
         currentVideoDevice.value.streamUrl = hlsUrl
@@ -1830,7 +1835,7 @@ const handleRtspError = async (error) => {
 
         ElMessage.success('已切换到HLS播放模式')
 
-        // 初始化HLS播放器
+        // Initialize HLS
         setTimeout(() => {
           initHLSPlayer(hlsUrl)
         }, 1000)
@@ -1844,7 +1849,7 @@ const handleRtspError = async (error) => {
 
   ElMessage.error('视频播放失败: ' + error)
 
-  // 显示故障排除建议
+  //
   showTroubleshootingTips()
 }
 
@@ -1867,7 +1872,7 @@ const showTroubleshootingTips = () => {
   })
 }
 
-// WebRTC iframe事件处理
+// WebRTC iframeeventProcess
 const handleWebRTCLoad = () => {
   console.log('WebRTC iframe加载完成')
   ElMessage.success('WebRTC播放器加载成功')
@@ -1879,11 +1884,11 @@ const handleWebRTCError = (error) => {
   ElMessage.error('WebRTC播放器加载失败')
   currentVideoDevice.value.connectionState = 'failed'
 
-  // 自动尝试HLS备用方案
+  // HLS
   handleRtspError('WebRTC iframe加载失败')
 }
 
-// 启动HLS流转换
+// HLS Convert
 const startHLSConversion = async (device) => {
   try {
     const response = await startHLSStream({
@@ -1893,7 +1898,7 @@ const startHLSConversion = async (device) => {
     })
 
     if (response.code === 200) {
-      // 更新设备的流URL为HLS地址
+      // new device URL to HLS
       device.hlsUrl = response.data
       console.log('HLS转换启动成功:', response.data)
       return response.data
@@ -1907,7 +1912,7 @@ const startHLSConversion = async (device) => {
   }
 }
 
-// 手动转换为HLS
+// Convert to HLS
 const convertToHLS = async () => {
   converting.value = true
 
@@ -1915,7 +1920,7 @@ const convertToHLS = async () => {
     const hlsUrl = await startHLSConversion(currentVideoDevice.value)
     if (hlsUrl) {
       currentVideoDevice.value.hlsUrl = hlsUrl
-      // 等待DOM更新后初始化HLS播放器
+      // etc. DOM new afterInitialize HLS
       await nextTick()
       initHLSPlayer(hlsUrl)
       ElMessage.success('视频流转换成功，开始播放')
@@ -1927,7 +1932,7 @@ const convertToHLS = async () => {
   }
 }
 
-// 初始化HLS播放器
+// Initialize HLS
 const initHLSPlayer = (hlsUrl) => {
   const video = hlsPlayer.value
   if (!video) {
@@ -1937,7 +1942,7 @@ const initHLSPlayer = (hlsUrl) => {
 
   console.log('初始化HLS播放器:', hlsUrl)
 
-  // 清理之前的实例
+  // before instance
   if (video.hlsInstance) {
     video.hlsInstance.destroy()
     video.hlsInstance = null
@@ -1982,7 +1987,7 @@ const initHLSPlayer = (hlsUrl) => {
   }
 }
 
-// 清理HLS流
+// HLS
 const cleanupHLSStream = async () => {
   if (currentVideoDevice.value.hlsUrl && currentVideoDevice.value.deviceId) {
     try {
@@ -1993,7 +1998,7 @@ const cleanupHLSStream = async () => {
     }
   }
 
-  // 清理播放器实例
+  // instance
   if (hlsPlayer.value && hlsPlayer.value.hlsInstance) {
     hlsPlayer.value.hlsInstance.destroy()
     hlsPlayer.value.hlsInstance = null
@@ -2056,7 +2061,7 @@ const getPlayModeTagType = (playMode) => {
   }
 }
 
-// 获取播放模式文本
+// Get
 const getPlayModeText = (playMode) => {
   switch (playMode) {
     case 'webrtc':
@@ -2076,7 +2081,7 @@ const getPlayModeText = (playMode) => {
   }
 }
 
-// 获取连接状态标签类型
+// Get
 const getConnectionStateTagType = (state) => {
   switch (state) {
     case 'connected':
@@ -2091,44 +2096,44 @@ const getConnectionStateTagType = (state) => {
   }
 }
 
-// 重新播放
+// new
 const handleReplay = async () => {
   if (!currentVideoDevice.value.deviceId) {
     return
   }
 
-  // 清理当前播放
+  // current
   await cleanupWebRTCStream()
   await cleanupHLSStream()
   cleanupCameraRTCPlayer()
   cleanupDeviceOPlayer()
 
-  // 重新播放
+  // new
   await handlePlay(currentVideoDevice.value)
 }
 
-// 开始播放状态监控
+// start
 const startPlayMonitoring = () => {
   console.log('开始播放状态监控...')
 
-  // 清理旧的定时器
+  // old
   if (playMonitorTimer.value) {
     clearInterval(playMonitorTimer.value)
   }
 
-  // 设置新的监控定时器
+  // Set new
   playMonitorTimer.value = setInterval(() => {
     monitorPlayStatus()
-  }, 2000) // 每2秒检查一次
+  }, 2000) // 2
 
-  // 重置状态
+  //
   playStatus.value.isConnecting = true
   playStatus.value.hasError = false
   playStatus.value.errorMessage = ''
   playStatus.value.connectionState = 'connecting'
 }
 
-// 停止播放状态监控
+//
 const stopPlayMonitoring = () => {
   console.log('停止播放状态监控...')
 
@@ -2142,7 +2147,7 @@ const stopPlayMonitoring = () => {
   playStatus.value.connectionState = 'disconnected'
 }
 
-// 监控播放状态
+//
 const monitorPlayStatus = async () => {
   try {
     const device = currentVideoDevice.value
@@ -2150,17 +2155,17 @@ const monitorPlayStatus = async () => {
       return
     }
 
-    // 检查WebRTC播放状态
+    // WebRTC
     if (device.playMode === 'webrtc' && webrtcPlayer.value) {
       await monitorWebRTCStatus(webrtcPlayer.value)
     }
 
-    // 检查HLS播放状态
+    // HLS
     if (device.playMode === 'hls' && (simpleHlsPlayer.value || hlsPlayer.value)) {
       await monitorHLSStatus(simpleHlsPlayer.value || hlsPlayer.value)
     }
 
-    // 检查播放质量
+    //
     await monitorPlayQuality()
 
   } catch (error) {
@@ -2169,7 +2174,7 @@ const monitorPlayStatus = async () => {
   }
 }
 
-// 监控WebRTC播放状态
+// WebRTC
 const monitorWebRTCStatus = async (player) => {
   try {
     const peer = player?.peerConnection || player?.pc
@@ -2221,7 +2226,7 @@ const monitorHLSStatus = async (videoElement) => {
       playStatus.value.hasError = false
       playStatus.value.retryCount = 0
 
-      // 更新质量统计
+      // new
       playStatus.value.qualityStats.resolution = `${videoElement.videoWidth}x${videoElement.videoHeight}`
       playStatus.value.qualityStats.frameRate = videoElement.mozPresentedFrames || 0
     }
@@ -2232,7 +2237,7 @@ const monitorHLSStatus = async (videoElement) => {
   }
 }
 
-// 监控播放质量
+//
 const monitorPlayQuality = async () => {
   try {
     const device = currentVideoDevice.value
@@ -2240,15 +2245,15 @@ const monitorPlayQuality = async () => {
       return
     }
 
-    // 获取网络质量信息
+    // Get info
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection
     if (connection) {
-      // 记录网络状况变化
+      // record
       if (connection.effectiveType !== playStatus.value.lastNetworkType) {
         console.log('网络状况变化:', connection.effectiveType)
         playStatus.value.lastNetworkType = connection.effectiveType
 
-        // 如果网络状况恶化，考虑切换播放模式
+        // if ,
         if (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g') {
           if (device.playMode === 'webrtc') {
             console.log('检测到网络状况恶化，考虑切换到HLS播放')
@@ -2263,7 +2268,7 @@ const monitorPlayQuality = async () => {
   }
 }
 
-// 更新质量统计
+// new
 const updateQualityStats = (stats) => {
   try {
     stats.forEach(report => {
@@ -2278,7 +2283,7 @@ const updateQualityStats = (stats) => {
   }
 }
 
-// 处理播放错误
+// Process
 const handlePlayError = async (error) => {
   console.error('播放错误:', error)
 
@@ -2288,10 +2293,10 @@ const handlePlayError = async (error) => {
   playStatus.value.isPlaying = false
   playStatus.value.isConnecting = false
 
-  // 更新失败统计
+  // new failed
   playStatistics.value.failedAttempts++
 
-  // 如果重试次数未达到上限，尝试自动重试
+  // if not ,
   if (playStatus.value.retryCount < playStatus.value.maxRetries) {
     console.log(`播放失败，将在3秒后进行第${playStatus.value.retryCount + 1}次重试...`)
     playStatus.value.retryCount++
@@ -2306,7 +2311,7 @@ const handlePlayError = async (error) => {
   }
 }
 
-// 尝试自动恢复
+//
 const attemptAutoRecovery = async () => {
   try {
     console.log('尝试自动恢复播放...')
@@ -2316,16 +2321,16 @@ const attemptAutoRecovery = async () => {
       return
     }
 
-    // 清理当前播放状态
+    // current
     await cleanupWebRTCStream()
     await cleanupHLSStream()
     cleanupCameraRTCPlayer()
 
-    // 重新选择播放策略
+    // new
     const streamType = getStreamType(device.streamUrl)
     let newStrategy = await determinePlayStrategy(device, streamType)
 
-    // 如果当前策略失败，尝试其他策略
+    // if current failed,
     if (newStrategy === device.playMode) {
       if (device.playMode === 'webrtc') {
         console.log('WebRTC失败，尝试HLS播放')
@@ -2336,7 +2341,7 @@ const attemptAutoRecovery = async () => {
       }
     }
 
-    // 执行新的播放策略
+    // Execute new
     await executePlayStrategy(device, newStrategy)
 
     console.log('自动恢复播放成功')
@@ -2348,12 +2353,12 @@ const attemptAutoRecovery = async () => {
   }
 }
 
-// 显示网络状况恶化警告
+//
 const showNetworkDegradationWarning = () => {
   ElMessage.warning('检测到网络状况恶化，建议切换到HLS播放以获得更稳定的体验')
 }
 
-// 获取播放状态文本
+// Get
 const getPlayStatusText = () => {
   if (playStatus.value.isPlaying) {
     return '播放中'
@@ -2366,7 +2371,7 @@ const getPlayStatusText = () => {
   }
 }
 
-// 获取播放状态类型
+// Get
 const getPlayStatusType = () => {
   if (playStatus.value.isPlaying) {
     return 'success'
@@ -2379,7 +2384,7 @@ const getPlayStatusType = () => {
   }
 }
 
-// 在VLC中打开RTSP流
+// in VLC in RTSP
 const openInVlc = () => {
   const rtspUrl = currentVideoDevice.value.originalRtspUrl || currentVideoDevice.value.streamUrl
   const vlcUrl = `vlc://${rtspUrl}`
@@ -2392,7 +2397,7 @@ const openInVlc = () => {
   }
 }
 
-// 初始化HLS播放器
+// Initialize HLS
 const initSimpleHLSPlayer = () => {
   if (!simpleHlsPlayer.value || !currentVideoDevice.value.streamUrl) return
 
@@ -2401,7 +2406,7 @@ const initSimpleHLSPlayer = () => {
 
   console.log('初始化简单HLS播放器，URL:', streamUrl)
 
-  // 清理之前的实例
+  // before instance
   if (video.hlsInstance) {
     video.hlsInstance.destroy()
     video.hlsInstance = null
@@ -2445,7 +2450,7 @@ const initSimpleHLSPlayer = () => {
   }
 }
 
-// 监听视频对话框状态
+//
 watch(videoDialogVisible, (newValue) => {
   if (!newValue) {
     cleanupDeviceOPlayer()
@@ -2453,7 +2458,7 @@ watch(videoDialogVisible, (newValue) => {
 })
 
 
-// 配置操作
+// configurationoperation
 const handleConfig = (row) => {
   router.push({ path: '/device-config', query: { id: row.id } })
 }
@@ -2462,7 +2467,7 @@ const handleAIEvent = (row) => {
   router.push({ path: '/device-ai-event', query: { id: row.id } })
 }
 
-// 下拉菜单操作
+// menuoperation
 const handleMoreActions = async ({ action, row }) => {
   selectedRow.value = row
 
@@ -2479,7 +2484,7 @@ const handleMoreActions = async ({ action, row }) => {
   }
 }
 
-// 编辑单个设备
+// device
 const handleEditSingle = async (row) => {
   router.push({ path: '/device-edit', query: { id: row.id } })
 }
@@ -2507,7 +2512,7 @@ const handleDeleteSingle = async (row) => {
   }
 }
 
-// 表单保存处理（新增弹窗）
+// form Process (Add dialog)
 const handleDeviceFormSave = async (formData) => {
   try {
     await createDevice(formData)
@@ -2520,7 +2525,7 @@ const handleDeviceFormSave = async (formData) => {
   }
 }
 
-// 录像控制功能
+// recordingcontrol can
 const toggleRecording = async () => {
   if (!currentVideoDevice.value || !currentVideoDevice.value.id) {
     ElMessage.warning('未选择有效的设备')
@@ -2534,14 +2539,14 @@ const toggleRecording = async () => {
   }
 }
 
-// 开始录像
+// startrecording
 const startVideoRecording = async () => {
   try {
     recordingStatus.value.starting = true
 
     const deviceId = currentVideoDevice.value.id
     const deviceName = currentVideoDevice.value.deviceName || '设备'
-    const duration = 60 // 默认60秒
+    const duration = 60 // 60
 
     console.log('开始录像:', { deviceId, deviceName, duration })
 
@@ -2553,7 +2558,7 @@ const startVideoRecording = async () => {
       recordingStatus.value.startTime = new Date()
       recordingStatus.value.duration = 0
 
-      // 开始计时器
+      // start
       startRecordingTimer()
 
       ElMessage.success('开始录像成功')
@@ -2565,7 +2570,7 @@ const startVideoRecording = async () => {
     console.error('开始录像失败:', error)
     ElMessage.error(`开始录像失败: ${error.message || '未知错误'}`)
 
-    // 重置状态
+    //
     recordingStatus.value.isRecording = false
     recordingStatus.value.recordId = null
   } finally {
@@ -2573,7 +2578,7 @@ const startVideoRecording = async () => {
   }
 }
 
-// 停止录像
+// recording
 const stopVideoRecording = async () => {
   try {
     recordingStatus.value.stopping = true
@@ -2588,10 +2593,10 @@ const stopVideoRecording = async () => {
     const response = await stopRecording(recordingStatus.value.recordId)
 
     if (response) {
-      // 停止计时器
+      //
       stopRecordingTimer()
 
-      // 重置录像状态
+      // recording
       recordingStatus.value.isRecording = false
       recordingStatus.value.recordId = null
       recordingStatus.value.duration = 0
@@ -2610,7 +2615,7 @@ const stopVideoRecording = async () => {
   }
 }
 
-// 开始录像计时器
+// startrecording
 const startRecordingTimer = () => {
   if (recordingTimer.value) {
     clearInterval(recordingTimer.value)
@@ -2624,7 +2629,7 @@ const startRecordingTimer = () => {
   }, 1000)
 }
 
-// 停止录像计时器
+// recording
 const stopRecordingTimer = () => {
   if (recordingTimer.value) {
     clearInterval(recordingTimer.value)
@@ -2632,14 +2637,14 @@ const stopRecordingTimer = () => {
   }
 }
 
-// 格式化录像时间
+// Format recording
 const formatRecordingTime = (seconds) => {
   const mins = Math.floor(seconds / 60)
   const secs = seconds % 60
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
 
-// PTZ控制
+// PTZcontrol
 const handlePTZCommand = async (command) => {
   try {
     console.log('PTZ控制命令:', command)
@@ -2651,10 +2656,10 @@ const handlePTZCommand = async (command) => {
 
     const deviceId = currentVideoDevice.value.id
 
-    // 根据命令类型调用相应的API
+    // API
     switch (command.type) {
       case 'move':
-        // 移动控制
+        // control
         await ptzMove(deviceId, {
           direction: command.direction,
           speed: command.speed || 5
@@ -2662,12 +2667,12 @@ const handlePTZCommand = async (command) => {
         break
 
       case 'stop':
-        // 停止移动
+        //
         await ptzStop(deviceId)
         break
 
       case 'zoom':
-        // 缩放控制
+        // control
         await ptzZoom(deviceId, {
           direction: command.direction, // 'in' | 'out'
           speed: command.speed || 5
@@ -2675,23 +2680,23 @@ const handlePTZCommand = async (command) => {
         break
 
       case 'preset':
-        // 预置位控制
+        // control
         if (command.action === 'set') {
           console.log(`设置预置位 ${command.presetId}`)
-          // 这里可以调用设置预置位的API
+          // Set API
         } else if (command.action === 'go') {
           console.log(`转到预置位 ${command.presetId}`)
-          // 这里可以调用转到预置位的API
+          // API
         }
         break
 
       case 'focus':
-        // 聚焦控制
+        // control
         console.log('聚焦控制:', command.direction)
         break
 
       case 'iris':
-        // 光圈控制
+        // control
         console.log('光圈控制:', command.direction)
         break
 
@@ -2708,13 +2713,13 @@ const handlePTZCommand = async (command) => {
   }
 }
 
-// 对话框关闭
+//
 const handleDialogClose = () => {
   dialogVisible.value = false
   deviceForm.value = {}
 }
 
-// 设备树相关操作
+// device relatedoperation
 const handleAddDevice = (node) => {
   console.log('添加设备到节点:', node)
   handleAdd()
@@ -2732,13 +2737,13 @@ const handleBottomDelete = () => {
   handleDelete()
 }
 
-// 错误处理
+// Process
 const handleError = (error, context) => {
   console.error(`${context}错误:`, error)
   ElMessage.error(`${context}失败，请重试`)
 }
 
-// 新增的YouTube视频加载和错误处理
+// Add YouTube Load and Process
 const handleIframeLoad = () => {
   console.log('YouTube视频加载成功')
 }
@@ -3090,7 +3095,7 @@ const handleIframeError = () => {
               flex-shrink: 0;
             }
 
-            // PlayButton组件使用自己的原始样式，不做任何覆盖
+            // PlayButtoncomponent ,
           }
 
           .table-pagination {
@@ -3123,7 +3128,7 @@ const handleIframeError = () => {
     }
   }
 
-  // 统一按钮颜色样式
+  // button
   .config-button {
     background: transparent !important;
     border: none !important;
@@ -3140,7 +3145,7 @@ const handleIframeError = () => {
     }
   }
 
-  // 更多按钮和其他操作按钮样式
+  // button and operationbutton
   .action-buttons {
     :deep(.el-button) {
       &:not(.play-button) {
@@ -3161,7 +3166,7 @@ const handleIframeError = () => {
     }
   }
 
-  // 表格工具栏按钮样式 - 排除ActionButtonGroup内的按钮
+  // table button - ActionButtonGroup button
   .table-toolbar {
     :deep(.el-button) {
       &:not(.el-button--danger):not(.add-btn-custom):not(.edit-btn-custom):not(.delete-btn-custom) {
@@ -3182,7 +3187,7 @@ const handleIframeError = () => {
     }
   }
 
-  // 搜索按钮样式
+  // button
   .search-buttons {
     :deep(.el-button) {
       &:not(.el-button--danger) {
@@ -3204,7 +3209,7 @@ const handleIframeError = () => {
   }
 }
 
-// 响应式设计
+//
 @media (max-width: 1200px) {
   .device-management {
     .main-content {
@@ -3267,7 +3272,7 @@ const handleIframeError = () => {
   }
 }
 
-// 视频播放对话框样式
+//
 .video-player-container {
   display: flex;
   flex-direction: column;
@@ -3276,7 +3281,7 @@ const handleIframeError = () => {
   max-height: 85vh;
   overflow: hidden;
 
-  // 播放控制栏样式
+  // control
   .player-controls {
     display: flex;
     justify-content: space-between;
@@ -3346,7 +3351,7 @@ const handleIframeError = () => {
     }
   }
 
-  // 视频播放器区域容器
+  //
   .video-player-content {
     display: flex;
     align-items: flex-start;
@@ -3356,7 +3361,7 @@ const handleIframeError = () => {
   }
 
   .video-player-section {
-    flex: none; // 固定尺寸，不伸缩
+    flex: none; // ,
 
     .simple-video-player {
       width: 1340px;
@@ -3365,7 +3370,7 @@ const handleIframeError = () => {
       border-radius: 8px;
       overflow: hidden;
       position: relative;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); // 添加阴影
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); //
 
       .debug-info {
         position: absolute;
@@ -3416,7 +3421,7 @@ const handleIframeError = () => {
         }
       }
 
-      // RTSP流容器样式
+      // RTSP
       .rtsp-container {
         display: flex;
         align-items: center;
@@ -3424,7 +3429,7 @@ const handleIframeError = () => {
         height: 100%;
         background: #000;
 
-        // WebRTC播放器样式
+        // WebRTC
         .webrtc-player {
           position: relative;
           width: 100%;
@@ -3541,22 +3546,22 @@ const handleIframeError = () => {
   }
 
   .ptz-control-section {
-    flex: none; // 固定宽度
-    width: 330px; // 给PTZ控制面板足够的宽度
-    max-height: 85vh; // 限制最大高度
+    flex: none; //
+    width: 330px; // PTZcontrol
+    max-height: 85vh; //
     display: flex;
     flex-direction: column;
 
     .ptz-control-wrapper {
       height: 100%;
-      overflow-y: auto; // 允许垂直滚动
-      overflow-x: hidden; // 隐藏水平滚动
-      background: transparent; // 取消背景色
-      border-radius: 0; // 取消圆角
-      padding: 0; // 取消内边距
-      // 取消阴影和边框
+      overflow-y: auto; //
+      overflow-x: hidden; //
+      background: transparent; //
+      border-radius: 0; //
+      padding: 0; //
+      // and
 
-      // 自定义滚动条样式
+      // Custom
       &::-webkit-scrollbar {
         width: 6px;
       }
@@ -3578,13 +3583,13 @@ const handleIframeError = () => {
   }
 }
 
-// 录像图标闪烁动画
+// recording
 @keyframes blink {
   0%, 50% { opacity: 1; }
   51%, 100% { opacity: 0.3; }
 }
 
-// 对于小屏幕的响应式处理
+// Process
 @media (max-height: 900px) {
   .video-player-container {
     max-height: 80vh;

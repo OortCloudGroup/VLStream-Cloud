@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -16,8 +17,8 @@ import org.lionsoul.ip2region.xdb.Searcher;
 import java.io.File;
 
 /**
- * 根据ip地址定位工具类，离线方式
- * 参考地址：<a href="https://gitee.com/lionsoul/ip2region/tree/master/binding/java">集成 ip2region 实现离线IP地址定位库</a>
+ * ip ,
+ * : <a href="https://gitee.com/lionsoul/ip2region/tree/master/binding/java"> ip2region IP </a>
  *
  * @author lishuyan
  */
@@ -39,14 +40,14 @@ public class RegionUtils {
 
         String dbPath = existFile.getPath();
 
-        // 1、从 dbPath 加载整个 xdb 到内存。
+        // 1、from dbPath Load xdb .
         byte[] cBuff;
         try {
             cBuff = Searcher.loadContentFromFile(dbPath);
         } catch (Exception e) {
             throw new ServiceException("RegionUtils初始化失败，原因：从ip2region.xdb文件加载内容失败！" + e.getMessage());
         }
-        // 2、使用上述的 cBuff 创建一个完全基于内存的查询对象。
+        // 2、 cBuff full Query object.
         try {
             SEARCHER = Searcher.newWithBuffer(cBuff);
         } catch (Exception e) {
@@ -55,12 +56,12 @@ public class RegionUtils {
     }
 
     /**
-     * 根据IP地址离线获取城市
+     * IP Get
      */
     public static String getCityInfo(String ip) {
         try {
             ip = ip.trim();
-            // 3、执行查询
+            // 3、Execute Query
             String region = SEARCHER.search(ip);
             return region.replace("0|", "").replace("|0", "");
         } catch (Exception e) {

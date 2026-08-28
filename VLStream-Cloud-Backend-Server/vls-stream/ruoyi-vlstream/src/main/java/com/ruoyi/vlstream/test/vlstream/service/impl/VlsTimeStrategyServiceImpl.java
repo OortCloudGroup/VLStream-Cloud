@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -21,7 +22,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 时间策略表 服务实现类
+ * service
  *
  * @author Oort
  * @since 2025-12-23
@@ -55,18 +56,18 @@ public class VlsTimeStrategyServiceImpl extends BaseServiceImpl<VlsTimeStrategyM
 
 	@Override
 	public boolean saveOrUpdateStrategy(TimeStrategy timeStrategy) {
-		// 检查是否已存在该设备的时间策略
+		// whether already in device
 		TimeStrategy existing = getByDeviceId(timeStrategy.getDeviceId());
 		boolean success;
 
 		if (existing != null) {
-			// 如果存在，更新
+			// if in , new
 			UpdateWrapper<TimeStrategy> updateWrapper = new UpdateWrapper<>();
 			updateWrapper.eq("device_id", timeStrategy.getDeviceId());
 			timeStrategy.setId(existing.getId());
 			success = this.update(timeStrategy, updateWrapper);
 		} else {
-			// 如果不存在，新增
+			// if in , Add
 			success = this.save(timeStrategy);
 		}
 		if (success) {

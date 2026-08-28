@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -102,9 +103,9 @@ import java.util.stream.Collectors;
 import static com.ruoyi.flowable.common.constant.ProcessConstants.PROCESS_STATUS_KEY;
 
 /**
- * 工单Service业务层处理
+ * work orderService layer Process
  *
- * @author 雷超群
+ * @author
  * @date 2025-01-02
  */
 @RequiredArgsConstructor
@@ -136,7 +137,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     private String workFlowFormsUrl;
 
     /**
-     * 查询工单
+     * Query work order
      */
     @Override
     public WorkOrderVo queryById(String id) {
@@ -144,7 +145,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 查询工单列表
+     * Query work order list
      */
     @Override
     public TableDataInfo<WorkOrderVo> queryPageList(WorkOrderBo bo, PageQuery pageQuery) {
@@ -162,15 +163,15 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             SysUser sysUser) {
         workOrderBo.setWorkOrderAppAll(processQuery.getWorkOrderAppAll());
         workOrderBo.setWorkOrderSynthesisAll(processQuery.getWorkOrderSynthesisAll());
-        // 使用PageQuery类的build()方法构建分页对象
+        // PageQuery build() method Build object
         Page<WorkOrderVo> page = pageQuery.build();
         HistoricProcessInstanceQuery historicProcessInstanceQuery = historyService.createHistoricProcessInstanceQuery()
                 .processInstanceTenantId(sysUser.getTenantId()).startedBy(sysUser.getUserId())
                 .orderByProcessInstanceStartTime().desc();
-        // 构建搜索条件
+        // Build
         ProcessUtils.buildProcessSearch(historicProcessInstanceQuery, processQuery, processEngine, sysUser);
 
-        // 添加流程状态筛选条件
+        // workflow
         if (com.ruoyi.common.utils.StringUtils.isNotBlank(processQuery.getState())) {
             historicProcessInstanceQuery.variableValueEquals(PROCESS_STATUS_KEY,
                     processQuery.getState());
@@ -215,16 +216,16 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             filteredDef = historicProcessInstanceQuery.list();
         }
 
-        // 先获取workOrderMap，用于后续筛选
+        // Get workOrderMap, after
         Map<String, WorkOrderVo> workOrderMap = getWorkOrderMap(workOrderBo);
 
-        // 筛选出同时存在于HistoricProcessInstance和workOrderMap中的数据
+        // in HistoricProcessInstance and workOrderMap in data
         List<HistoricProcessInstance> matchedList = filteredDef.stream()
                 .filter(hisIns -> workOrderMap.containsKey(hisIns.getId()))
                 .collect(Collectors.toList());
         int listSize = matchedList.size();
         int offset = (int) (page.getSize() * (page.getCurrent() - 1));
-        // 如果offset超出列表范围，返回空结果
+        // if offset , null / empty
         if (offset >= listSize) {
             page.setTotal(listSize);
             page.setRecords(new ArrayList<>());
@@ -234,16 +235,16 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
         List<HistoricProcessInstance> historicProcessInstances = matchedList.subList(offset, toIndex);
         List<WorkOrderVo> workOrderVoList = new ArrayList<>();
         for (HistoricProcessInstance hisIns : historicProcessInstances) {
-            // 通过 map 常数级查找对应工单
+            // map find work order
             WorkOrderVo workOrderVo = workOrderMap.get(hisIns.getId());
-            // 获取流程状态
+            // Get workflow
             HistoricVariableInstance processStatusVariable = historyService.createHistoricVariableInstanceQuery()
                     .processInstanceId(hisIns.getId()).variableName(PROCESS_STATUS_KEY).singleResult();
             String processStatus = null;
             if (ObjectUtil.isNotNull(processStatusVariable)) {
                 processStatus = Convert.toStr(processStatusVariable.getValue());
             }
-            // 兼容旧流程
+            // old workflow
             if (processStatus == null) {
                 processStatus = ObjectUtil.isNull(hisIns.getEndTime()) ? ProcessStatus.RUNNING.getStatus()
                         : ProcessStatus.COMPLETED.getStatus();
@@ -254,7 +255,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             workOrderVo.setProcessKey(hisIns.getProcessDefinitionKey());
             workOrderVo.setCategoryName(categoryLookupService.queryCategoryName(workOrderVo.getWorkorderId(),
                     processQuery.getCategoryType()));
-            // 当前所处流程
+            // current workflow
             List<Task> taskList = taskService.createTaskQuery().taskTenantId(sysUser.getTenantId())
                     .processInstanceId(hisIns.getId()).includeIdentityLinks().list();
             if (CollUtil.isNotEmpty(taskList)) {
@@ -282,11 +283,11 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     // TaskQuery taskQuery =
     // taskService.createTaskQuery().taskTenantId(sysUser.getTenantId()).active().includeProcessVariables()
     // .taskAssignee(String.valueOf(sysUser.getUserId())).orderByTaskCreateTime().desc();
-    // // 构建搜索条件
+    // // Build
     // ProcessUtils.buildProcessSearch(taskQuery, processQuery, processEngine,
     // sysUser);
     //
-    // // 添加流程状态筛选条件
+    // // workflow
     // if (com.ruoyi.common.utils.StringUtils.isNotBlank(processQuery.getState())) {
     // taskQuery.processVariableValueEquals(ProcessConstants.PROCESS_STATUS_KEY,
     // processQuery.getState());
@@ -305,13 +306,13 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     // Map<String, WorkOrderVo> workOrderMap = getWorkOrderMap(workOrderBo);
     // List<WorkOrderVo> workOrderVoList = new ArrayList<>();
     // for (Task task : taskList) {
-    // // 通过 map 常数级查找对应工单
+    // // map find work order
     // WorkOrderVo workOrders = workOrderMap.get(task.getProcessInstanceId());
     // if (workOrders == null) {
-    // continue; // 没有匹配则跳过
+    // continue; //
     // }
     // WorkOrderVo workOrderVo = new WorkOrderVo();
-    // // 当前流程信息
+    // // current workflowinfo
     // workOrderVo.setTaskId(task.getId());
     // workOrderVo.setWorkorderId(workOrders.getWorkorderId());
     // workOrderVo.setTitle(workOrders.getTitle());
@@ -320,7 +321,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     // workOrderVo.setId(workOrders.getId());
     // workOrderVo.setAssignId(workOrders.getAssignId());
     // workOrderVo.setCreateTime(task.getCreateTime());
-    // // 流程定义信息
+    // // workflow definitioninfo
     // ProcessDefinition pd =
     // repositoryService.createProcessDefinitionQuery().processDefinitionTenantId(sysUser.getTenantId())
     // .processDefinitionId(task.getProcessDefinitionId()).singleResult();
@@ -352,7 +353,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     // (String.valueOf(sysUser.getUserId()))
     //// .taskAssignee(TaskUtils.getUserId())
     // .orderByHistoricTaskInstanceEndTime().desc();
-    // // 构建搜索条件
+    // // Build
     // ProcessUtils.buildProcessSearch(taskInstanceQuery, processQuery,
     // processEngine, sysUser);
     // if (Boolean.TRUE.equals(processQuery.getWorkOrderAppAll())) {
@@ -364,7 +365,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     // taskInstanceQuery.processCategoryIn(appList);
     // }
     // }
-    // // 如果 processQuery 指定获取全部综合分类
+    // // if processQuery Get full
     // else if (Boolean.TRUE.equals(processQuery.getWorkOrderSynthesisAll())) {
     // List<String> wfSynthesisList = workOrderSynthesisService.list()
     // .stream()
@@ -384,10 +385,10 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     // for (HistoricTaskInstance histTask : historicTaskInstanceList) {
     // WorkOrderVo workOrders = workOrderMap.get(histTask.getProcessInstanceId());
     // if (workOrders == null) {
-    // continue; // 没有匹配则跳过
+    // continue; //
     // }
     // WorkOrderVo workOrderVo = new WorkOrderVo();
-    // // 当前流程信息
+    // // current workflowinfo
     // workOrderVo.setTaskId(histTask.getId());
     // workOrderVo.setWorkorderId(workOrders.getWorkorderId());
     // workOrderVo.setTitle(workOrders.getTitle());
@@ -396,7 +397,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     // workOrderVo.setId(workOrders.getId());
     // workOrderVo.setAssignId(workOrders.getAssignId());
     // workOrderVo.setCreateTime(histTask.getCreateTime());
-    // // 流程定义信息
+    // // workflow definitioninfo
     // ProcessDefinition pd =
     // repositoryService.createProcessDefinitionQuery().processDefinitionTenantId(sysUser.getTenantId())
     // .processDefinitionId(histTask.getProcessDefinitionId()).singleResult();
@@ -405,7 +406,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     // workOrderVo.setProcInstId(histTask.getProcessInstanceId());
     // workOrderVo.setCategoryName(categoryLookupService.queryCategoryName(workOrders.getWorkorderId(),
     // processQuery.getCategoryType()));
-    // // 流程变量
+    // // workflow variable
     // workOrderVo.setProcessStatus(String.valueOf(histTask.getProcessVariables().get(ProcessConstants
     // .PROCESS_STATUS_KEY)));
     // HistoricProcessInstance historicProcessInstance =
@@ -423,19 +424,19 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     // }
 
     /**
-     * 通用：把 Task / HistoricTaskInstance 的共有字段填充到 VO 上
+     * : Task / HistoricTaskInstance fieldfill VO
      *
-     * @param baseMap      事先通过 getWorkOrderMap(workOrderBo) 构造好的全量 Map，使得此方法不用重复调用
+     * @param baseMap getWorkOrderMap(workOrderBo) full Map, method
      *                     getWorkOrderMap
-     * @param processQuery 用于查询分类类型
-     * @param sysUser      用于查询流程定义的租户
-     * @param voKey        流程实例 ID，用来从 baseMap 拿到对应的 WorkOrderVo
-     * @param taskId       任务 ID
-     * @param taskName     任务名称
-     * @param startTime    任务开始时间（createTime）
-     * @param procDefId    流程定义 ID
-     * @param variables    流程变量 Map（用来取 PROCESS_STATUS_KEY）
-     * @return 填好公共字段的 WorkOrderVo；如果 baseMap 中没有对应 key，返回 null
+     * @param processQuery Query
+     * @param sysUser Query workflow definition
+     * @param voKey workflow instance ID, from baseMap WorkOrderVo
+     * @param taskId task ID
+     * @param taskName task
+     * @param startTime taskstart (createTime)
+     * @param procDefId workflow definition ID
+     * @param variables workflow variable Map ( PROCESS_STATUS_KEY)
+     * @return field WorkOrderVo; if baseMap in key, null
      */
     private WorkOrderVo fillCommonFields(
             Map<String, WorkOrderVo> baseMap,
@@ -451,7 +452,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
         if (w == null) {
             return null;
         }
-        // 填充共享字段
+        // fill field
         w.setTaskId(taskId);
         w.setTaskName(taskName);
         w.setCreateTime(startTime);
@@ -469,10 +470,10 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 通用分页查询模板
+     * Query
      *
-     * @param <Q> 必须是 Flowable 的 Query 类型
-     * @param <T> 查询结果的原生类型（Task 或 HistoricTaskInstance）
+     * @param <Q> is Flowable Query
+     * @param <T> Query (Task HistoricTaskInstance)
      */
     private <Q extends Query<?, ?>, T> TableDataInfo<WorkOrderVo> selectPageCommon(
             ProcessQuery processQuery,
@@ -484,18 +485,18 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             ToLongFunction<Q> countFunc,
             BiFunction<Q, Integer, List<T>> listPageFunc,
             Function<T, WorkOrderVo> converter) {
-        // 1. 准备 Bo
+        // 1. Bo
         workOrderBo.setWorkOrderAppAll(processQuery.getWorkOrderAppAll());
         workOrderBo.setWorkOrderSynthesisAll(processQuery.getWorkOrderSynthesisAll());
 
-        // 2. 构造 Query
+        // 2. Query
         Q query = querySupplier.apply(sysUser);
-        // 3. 调用 ProcessUtils，现在 Q 肯定是 Query<?,?> 的子类
+        // 3. ProcessUtils, in Q is Query<?,?> sub
         ProcessUtils.buildProcessSearch(query, processQuery, processEngine, sysUser);
-        // 4. 额外筛选
+        // 4.
         customConditionConfigurer.accept(query, processQuery);
 
-        // 5. 统计、分页、转换逻辑不变
+        // 5. 、 、Convert
         long total = countFunc.applyAsLong(query);
         if (total <= 0) {
             return TableDataInfo.build();
@@ -521,14 +522,14 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
         Map<String, WorkOrderVo> baseMap = getWorkOrderMap(workOrderBo);
         Set<String> processInstances = baseMap.keySet();
 
-        // 如果没有流程实例，直接返回空结果集
+        // if workflow instance, null / empty
         if (CollUtil.isEmpty(processInstances)) {
             return TableDataInfo.build();
         }
 
         return selectPageCommon(
                 processQuery, workOrderBo, pageQuery, sysUser,
-                // 一：如何构造待办 TaskQuery
+                // : TaskQuery
                 user -> taskService.createTaskQuery()
                         .taskTenantId(user.getTenantId())
                         .active()
@@ -536,22 +537,22 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
                         .includeProcessVariables()
                         .taskAssignee(user.getUserId())
                         .orderByTaskCreateTime().desc(),
-                // 二：针对 TaskQuery 的额外条件
+                // : TaskQuery
                 (query, pq) -> {
                     TaskQuery tq = (TaskQuery) query;
-                    // 流程状态
+                    // workflow
                     if (StringUtils.isNotBlank(pq.getState())) {
                         tq.processVariableValueEquals(PROCESS_STATUS_KEY, pq.getState());
                     }
-                    // 分类
+                    //
                     processCategoryForTaskQuery(pq, tq);
                 },
-                // 三：count 和 listPage
+                // : count and listPage
                 q -> ((TaskQuery) q).count(),
                 (q, offset) -> ((TaskQuery) q).listPage(offset, pageQuery.getPageSize()),
-                // 四：Task -> WorkOrderVo
+                // : Task -> WorkOrderVo
                 task -> {
-                    // 只剩一行「调用公共填充」
+                    // only 「 fill 」
                     return fillCommonFields(
                             baseMap,
                             processQuery,
@@ -574,24 +575,24 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     // Set<String> processInstances = baseMap.keySet();
     // return selectPageCommon(
     // processQuery, workOrderBo, pageQuery, sysUser,
-    // // 一：如何构造已办 HistoricTaskInstanceQuery
+    // // : already HistoricTaskInstanceQuery
     // user -> historyService.createHistoricTaskInstanceQuery()
     // .includeProcessVariables()
     // .finished()
     // .processInstanceIdIn(processInstances)
     // .taskAssignee(String.valueOf(user.getUserId()))
     // .orderByHistoricTaskInstanceEndTime().desc(),
-    // // 二：针对 HistoricTask 的额外条件
+    // // : HistoricTask
     // (query, pq) -> {
     // HistoricTaskInstanceQuery hq = (HistoricTaskInstanceQuery) query;
-    // // 全部应用分类
+    // // full
     // if (Boolean.TRUE.equals(pq.getWorkOrderAppAll())) {
     // List<String> appList = workOrderAppService.list()
     // .stream().map(WorkOrderApp::getAppId).collect
     // (Collectors.toList());
     // if (!appList.isEmpty()) hq.processCategoryIn(appList);
     // }
-    // // 全部综合分类
+    // // full
     // else if (Boolean.TRUE.equals(pq.getWorkOrderSynthesisAll())) {
     // List<String> synList = workOrderSynthesisService.list()
     // .stream().map
@@ -600,11 +601,11 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     // if (!synList.isEmpty()) hq.processCategoryIn(synList);
     // }
     // },
-    // // 三：count 和 listPage
+    // // : count and listPage
     // q -> ((HistoricTaskInstanceQuery) q).count(),
     // (q, offset) -> ((HistoricTaskInstanceQuery) q)
     // .listPage(offset, pageQuery.getPageSize()),
-    // // 四：HistoricTaskInstance -> WorkOrderVo
+    // // : HistoricTaskInstance -> WorkOrderVo
     // hist -> {
     // WorkOrderVo vo = fillCommonFields(
     // baseMap,
@@ -620,7 +621,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     // if (vo == null) {
     // return null;
     // }
-    // // 添加已办独有：启动人信息
+    // // already : info
     // HistoricProcessInstance pi =
     // historyService.createHistoricProcessInstanceQuery()
     // .processInstanceTenantId(sysUser.getTenantId())
@@ -640,11 +641,11 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             ProcessQuery processQuery, WorkOrderBo workOrderBo,
             PageQuery pageQuery, SysUser sysUser) {
 
-        // 1. 先构建基础的 work order map，用于后续填充
+        // 1. Build work order map, after fill
         Map<String, WorkOrderVo> baseMap = getWorkOrderMap(workOrderBo);
         Set<String> processInstances = baseMap.keySet();
 
-        // 如果没有流程实例，直接返回空分页（避免调用 processInstanceIdIn 空集合导致异常）
+        // if workflow instance, null / empty ( processInstanceIdIn null / empty collection )
         if (processInstances == null || processInstances.isEmpty()) {
             Page<WorkOrderVo> emptyPage = new Page<>(pageQuery.getPageNum(), pageQuery.getPageSize());
             emptyPage.setTotal(0);
@@ -652,17 +653,17 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             return TableDataInfo.build(emptyPage);
         }
 
-        // 2. 构造 HistoricTaskInstanceQuery （和原 selectPageCommon 中一模一样的基础查询）
+        // 2. HistoricTaskInstanceQuery ( and selectPageCommon in Query )
         HistoricTaskInstanceQuery taskQuery = historyService.createHistoricTaskInstanceQuery()
-                .includeProcessVariables() // 一并查询流程变量，后面
-                // fillCommonFields 需要用到
-                .finished() // 只查询已完成（已办）
-                .processInstanceIdIn(processInstances) // 限定在我们关心的流程实例集合中
+                .includeProcessVariables() // Query workflow variable, after
+                // fillCommonFields need to
+                .finished() // only Query already ( already )
+                .processInstanceIdIn(processInstances) // in workflow instancecollection in
                 .taskAssignee(String.valueOf(sysUser.getUserId()))
                 .orderByHistoricTaskInstanceEndTime().desc(); //
-        // 原始排序（这里主要是为了 API 一致性）
+        // ( main need to is to API )
 
-        // 3. 应用额外的查询条件（与原 lambda 中内容一致）
+        // 3. Query ( and lambda in )
         if (Boolean.TRUE.equals(processQuery.getWorkOrderAppAll())) {
             List<String> appList = workOrderAppService.list().stream()
                     .map(WorkOrderApp::getAppId)
@@ -679,15 +680,15 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             }
         }
 
-        // 4. 把所有匹配到的历史任务一次性拉回（为去重做准备）
+        // 4. all history task ( to )
         List<HistoricTaskInstance> allHistoricTasks = taskQuery.list();
 
-        // 5. 根据 processInstanceId 去重：只保留 createTime 最新的一条
+        // 5. processInstanceId : only createTime new
         Map<String, HistoricTaskInstance> latestByProcIns = new HashMap<>(allHistoricTasks.size());
         for (HistoricTaskInstance hti : allHistoricTasks) {
             String procInsId = hti.getProcessInstanceId();
             if (procInsId == null) {
-                // 没有流程实例 id 的记录跳过（按需可修改）
+                // workflow instance id record ( Update )
                 continue;
             }
             HistoricTaskInstance existing = latestByProcIns.get(procInsId);
@@ -698,24 +699,24 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
                 Date curCreate = hti.getCreateTime();
                 long existMillis = (existCreate == null) ? Long.MIN_VALUE : existCreate.getTime();
                 long curMillis = (curCreate == null) ? Long.MIN_VALUE : curCreate.getTime();
-                // 如果当前记录的 createTime 更晚，则替换
+                // if current record createTime , Replace
                 if (curMillis > existMillis) {
                     latestByProcIns.put(procInsId, hti);
                 }
             }
         }
 
-        // 6. 转为 List 并按 createTime 倒序排序（最近的在前）
+        // 6. to List createTime ( in before)
         List<HistoricTaskInstance> dedupList = new ArrayList<>(latestByProcIns.values());
         dedupList.sort((a, b) -> {
             Date da = a.getCreateTime();
             Date db = b.getCreateTime();
             long ta = (da == null) ? Long.MIN_VALUE : da.getTime();
             long tb = (db == null) ? Long.MIN_VALUE : db.getTime();
-            return Long.compare(tb, ta); // 倒序：最近的在前
+            return Long.compare(tb, ta); // : in before
         });
 
-        // 7. 内存分页（基于去重后的集合）
+        // 7. ( after collection)
         int pageSize = pageQuery.getPageSize();
         int pageNum = pageQuery.getPageNum();
         int offset = pageSize * (pageNum - 1);
@@ -728,25 +729,25 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             pageHistoricTasks = dedupList.subList(offset, toIndex);
         }
 
-        // 8. 把分页后的 HistoricTaskInstance 转成 WorkOrderVo（复用 fillCommonFields）
+        // 8. after HistoricTaskInstance WorkOrderVo ( fillCommonFields)
         List<WorkOrderVo> voList = new ArrayList<>();
         for (HistoricTaskInstance hist : pageHistoricTasks) {
             WorkOrderVo vo = fillCommonFields(
                     baseMap,
                     processQuery,
                     sysUser,
-                    hist.getProcessInstanceId(), // 流程实例 id
+                    hist.getProcessInstanceId(), // workflow instance id
                     hist.getId(), // historic task id
-                    hist.getName(), // 任务名称
-                    hist.getCreateTime(), // createTime，用于显示/排序依据
-                    hist.getProcessDefinitionId(), // 流程定义 id
-                    hist.getProcessVariables() // 流程变量
+                    hist.getName(), // task
+                    hist.getCreateTime(), // createTime, /
+                    hist.getProcessDefinitionId(), // workflow definition id
+                    hist.getProcessVariables() // workflow variable
             );
             if (vo == null) {
-                continue; // fillCommonFields 可能在找不到 baseMap 条目时返回 null
+                continue; // fillCommonFields can in baseMap null
             }
 
-            // 添加已办独有字段：启动人信息（从历史流程实例中取）
+            // already field: info (from history workflow instance in )
             HistoricProcessInstance pi = historyService.createHistoricProcessInstanceQuery()
                     .processInstanceTenantId(sysUser.getTenantId())
                     .processInstanceId(hist.getProcessInstanceId())
@@ -758,7 +759,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             voList.add(vo);
         }
 
-        // 9. 构造返回的分页对象并返回
+        // 9. object
         Page<WorkOrderVo> page = new Page<>(pageNum, pageSize);
         page.setTotal(total);
         page.setRecords(voList);
@@ -785,7 +786,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
         } catch (Exception e) {
             throw new RuntimeException("当前用户无所属组织机构");
         }
-        // 构建搜索条件
+        // Build
         ProcessUtils.buildProcessSearch(taskQuery, processQuery, processEngine, sysUser);
 
         processCategoryForTaskQuery(processQuery, taskQuery);
@@ -801,13 +802,13 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
         for (Task task : taskList) {
             WorkOrderVo workOrders = workOrderMap.get(task.getProcessInstanceId());
             if (workOrders == null) {
-                continue; // 没有匹配则跳过
+                continue; //
             }
-            // 当前流程信息
+            // current workflowinfo
             workOrders.setTaskId(task.getId());
             workOrders.setCreateTime(task.getCreateTime());
             workOrders.setTaskName(task.getName());
-            // 流程定义信息
+            // workflow definitioninfo
             ProcessDefinition pd = repositoryService.createProcessDefinitionQuery()
                     .processDefinitionTenantId(sysUser.getTenantId()).processDefinitionId(task.getProcessDefinitionId())
                     .singleResult();
@@ -815,7 +816,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             workOrders.setProcDefVersion(pd.getVersion());
             workOrders.setCategoryName(categoryLookupService.queryCategoryName(workOrders.getWorkorderId(),
                     processQuery.getCategoryType()));
-            // 流程发起人信息
+            // workflow info
             HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
                     .processInstanceTenantId(sysUser.getTenantId()).processInstanceId(task.getProcessInstanceId())
                     .singleResult();
@@ -835,21 +836,21 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     private Map<String, WorkOrderVo> getWorkOrderMap(WorkOrderBo workOrderBo) {
         List<WorkOrderVo> workOrderList = queryList(workOrderBo);
         return workOrderList.stream()
-                .filter(wo -> wo.getProcInsId() != null) // 过滤掉 null key
+                .filter(wo -> wo.getProcInsId() != null) // null key
                 .collect(Collectors.toMap(
                         WorkOrderVo::getProcInsId,
                         Function.identity(),
-                        (existing, replacement) -> existing // 若有重复，保留第一个
+                        (existing, replacement) -> existing // ,
                 ));
     }
 
     /**
-     * 根据传入的 processQuery 判断需要从哪个服务中获取分类列表，然后将结果传递给 taskQuery 进行处理。
-     * @param processQuery 包含业务条件的查询参数
-     * @param taskQuery    需要设置分类条件的查询对象
+     * processQuery Check need to from service in Get , after taskQuery Process .
+     * @param processQuery Query parameter
+     * @param taskQuery need to Set Query object
      */
     public void processCategoryForTaskQuery(ProcessQuery processQuery, TaskQuery taskQuery) {
-        // 如果 processQuery 指定获取全部APP分类
+        // if processQuery Get full APP
         if (Boolean.TRUE.equals(processQuery.getWorkOrderAppAll())) {
             List<String> appList = workOrderAppService.list()
                     .stream()
@@ -859,7 +860,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
                 taskQuery.processCategoryIn(appList);
             }
         }
-        // 如果 processQuery 指定获取全部综合分类
+        // if processQuery Get full
         else if (Boolean.TRUE.equals(processQuery.getWorkOrderSynthesisAll())) {
             List<String> wfSynthesisList = workOrderSynthesisService.list()
                     .stream()
@@ -872,7 +873,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 查询工单列表
+     * Query work order list
      */
     @Override
     public List<WorkOrderVo> queryList(WorkOrderBo bo) {
@@ -926,7 +927,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 新增工单
+     * Add work order
      */
     @Override
     public WorkOrder insertByBo(WorkOrderBo bo, SysUser sysUser) {
@@ -942,8 +943,8 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             add.setWorkorderStatus(WorkOrderStatus.PENDING_DISPATCH.getStatus());
 
         }
-        long nanoTime = System.nanoTime(); // 获取当前纳秒时间戳
-        int random = new Random().nextInt(9999); // 随机数，确保唯一性
+        long nanoTime = System.nanoTime(); // Get current
+        int random = new Random().nextInt(9999); // ,
         String id = Long.toHexString(nanoTime) + Integer.toHexString(random);
         add.setWorkorderNumber(id.substring(0, Math.min(10, id.length())));
         validEntityBeforeSave(add);
@@ -955,7 +956,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 修改工单
+     * Update work order
      */
     @Override
     public Boolean updateByBo(WorkOrderBo bo) {
@@ -965,32 +966,32 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 保存前的数据校验
+     * before dataValidate
      */
     private void validEntityBeforeSave(WorkOrder entity) {
-        // TODO 做一些数据校验,如唯一约束
+        // TODO dataValidate ,
     }
 
     /**
-     * 批量删除工单
+     * Batch delete work order
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid) {
         if (isValid) {
-            // TODO 做一些业务上的校验,判断是否需要校验
+            // TODO Validate ,Check whether need to Validate
         }
         return workOrderMapper.deleteBatchIds(ids) > 0;
     }
 
     /**
-     * 工单结束更新状态
+     * work orderfinish new
      *
      * @param processInstanceId
-     * @return 是否更新成功
-     * @throws IllegalArgumentException 参数校验失败时抛出
+     * @return whether new successfully
+     * @throws IllegalArgumentException parameterValidate failed
      */
     public boolean updateWorkOrderToPending(String processInstanceId, String status, String assignId) {
-        // 查询工单
+        // Query work order
         LambdaQueryWrapper<WorkOrder> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(WorkOrder::getProcInsId, processInstanceId);
         WorkOrder existingOrder = getOne(queryWrapper);
@@ -999,26 +1000,26 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             return false;
         }
 
-        // 使用 LambdaUpdateWrapper 显式设置 null（updateById 默认忽略 null 值）
+        // LambdaUpdateWrapper Set null (updateById null value )
         LambdaUpdateWrapper<WorkOrder> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(WorkOrder::getId, existingOrder.getId())
                 .set(WorkOrder::getWorkorderStatus, status)
-                .set(WorkOrder::getTaskId, null); // 显式设置为 null
+                .set(WorkOrder::getTaskId, null); // Set to null
 
-        // 执行更新并返回结果
+        // Execute new
         return update(updateWrapper);
     }
 
     /**
-     * 更新工单状态
+     * new work order
      *
-     * @param task 任务列表（需确保非空且至少包含一个任务）
-     * @return 是否更新成功
-     * @throws IllegalArgumentException 参数校验失败时抛出
+     * @param task task ( non- null / empty to task)
+     * @return whether new successfully
+     * @throws IllegalArgumentException parameterValidate failed
      *
      */
     public boolean updateWorkOrderToPending(Task task, String status, String assignId) {
-        // 查询工单
+        // Query work order
         LambdaQueryWrapper<WorkOrder> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(WorkOrder::getProcInsId, task.getProcessInstanceId());
         WorkOrder existingOrder = getOne(queryWrapper);
@@ -1027,23 +1028,23 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             return false;
         }
         WorkOrderBo workOrderBo = new WorkOrderBo();
-        // 设置指派人
+        // Set
         if (StringUtils.isNotBlank(assignId)) {
             workOrderBo.setAssignId(assignId);
         }
-        // 更新工单状态和ID
+        // new work order and ID
         workOrderBo.setWorkorderStatus(status);
         if (ObjectUtil.isNotNull(task)) {
             workOrderBo.setTaskId(task.getId());
         }
         workOrderBo.setId(existingOrder.getId());
 
-        // 执行更新并返回结果
+        // Execute new
         return updateByBo(workOrderBo);
     }
 
     /**
-     * 查询即时工单分页列表
+     * Query work order list
      */
     @Override
     public TableDataInfo<WorkOrderVo> queryImmediatePageList(WorkOrderBo bo, PageQuery pageQuery) {
@@ -1053,7 +1054,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 查询即时工单列表
+     * Query work order list
      */
     @Override
     public List<WorkOrderVo> queryImmediateList(WorkOrderBo bo) {
@@ -1064,7 +1065,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     @Override
     public TableDataInfo<Object> queryLoopPageList(WorkOrderBo bo, PageQuery pageQuery, SysUser sysUser) {
         Page<WorkOrderVo> page = pageQuery.build();
-        // 使用PageQuery类的build()方法构建分页对象
+        // PageQuery build() method Build object
         List<String> fieldCodes = JSON.parseArray(wfUserInterfaceFieldService.getFieldCodes(sysUser.getUserId(),
                 bo.getApiPath()), String.class);
         int offset = (pageQuery.getPageNum() - 1) * pageQuery.getPageSize();
@@ -1076,7 +1077,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
                 .collect(Collectors.toMap(
                         SysUser::getUserId,
                         Function.identity(),
-                        (existing, replacement) -> existing // 若有重复，保留第一个
+                        (existing, replacement) -> existing // ,
                 ));
         Optional<Set<String>> processInstances = Optional.ofNullable(workOrderMap.keySet());
         HistoricProcessInstanceQuery historicProcessInstanceQuery = historyService.createHistoricProcessInstanceQuery()
@@ -1122,7 +1123,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
                             String deptName = node.get("dept_name").asText();
                             deptNames.add(deptName);
                         }
-                        // 使用逗号拼接部门名称
+                        // department name
                         workOrders.setDeptName(String.join(",", deptNames));
                     }
                 }
@@ -1141,18 +1142,18 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             }
             workOrderVoList.add(workOrders);
         }
-        // 根据用户配置动态返回字段
+        // userconfiguration field
         List<Object> result;
         if (fieldCodes == null || fieldCodes.isEmpty()) {
-            // 未配置字段，返回完整的 WfTaskVo 对象
+            // not configurationfield, WfTaskVo object
             result = new ArrayList<>(workOrderVoList);
         } else {
-            // 根据配置的字段码过滤返回字段
+            // configuration field field
             result = workOrderVoList.stream().map(vo -> {
-                // 将 WfTaskVo 转换为 Map
+                // WfTaskVo Convert to Map
                 Map<String, Object> fieldAll = BeanUtil.beanToMap(vo, false, true);
 
-                // 只保留配置的字段
+                // only configuration field
                 Map<String, Object> filteredFields = new LinkedHashMap<>();
                 for (String code : fieldCodes) {
                     if (fieldAll.containsKey(code)) {
@@ -1162,7 +1163,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
                 return filteredFields;
             }).collect(Collectors.toList());
         }
-        // 构建分页结果
+        // Build
         Page<Object> resultPage = new Page<>();
         resultPage.setCurrent(page.getCurrent());
         resultPage.setSize(page.getSize());
@@ -1178,11 +1179,11 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 生成包含多个工单的PDF文件流
+     * Generate work order PDF
      *
-     * @param wordOrderIds 工单ID列表
-     * @return PDF文件流
-     * @throws IOException IO异常
+     * @param wordOrderIds work orderID
+     * @return PDF
+     * @throws IOException IO
      */
     public ByteArrayOutputStream generatePdf(List<String> wordOrderIds, SysUser sysUser) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -1190,64 +1191,64 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
         PdfDocument pdfDoc = new PdfDocument(writer);
         Document document = new Document(pdfDoc);
 
-        // 初始化中文字体（使用标准宋体）
+        // Initialize in ( )
         PdfFont font = PdfFontFactory.createFont(
                 "STSongStd-Light", "UniGB-UCS2-H", PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
         PdfFont boldFont = PdfFontFactory.createFont(
                 "STSongStd-Light", "UniGB-UCS2-H", PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
-        DeviceRgb headerColor = new DeviceRgb(220, 220, 220); // 表头背景色
+        DeviceRgb headerColor = new DeviceRgb(220, 220, 220); //
 
-        // 查询工单数据（MyBatis Plus查询）
+        // Query work orderdata (MyBatis PlusQuery )
         LambdaQueryWrapper<WorkOrder> lqw = new LambdaQueryWrapper<>();
         lqw.in(WorkOrder::getId, wordOrderIds);
         List<WorkOrder> workOrderList = workOrderMapper.selectList(lqw);
 
-        // 遍历每个工单生成PDF内容
+        // each work orderGenerate PDF
         for (WorkOrder workOrder : workOrderList) {
-            // 创建工单容器
+            // work order
             Div workOrderDiv = new Div();
             workOrderDiv.setWidth(UnitValue.createPercentValue(100));
 
-            // 1. 添加标题
+            // 1.
             Paragraph title = new Paragraph(workOrder.getTitle())
                     .setFont(boldFont)
                     .setFontSize(18)
                     .setTextAlignment(TextAlignment.CENTER)
                     .setMarginBottom(10);
 
-            // 2. 创建表头表格（工单编号 + 打印时间）
+            // 2. table (work order + )
             Table headerTable = createHeaderTable(font, workOrder.getWorkorderNumber());
 
-            // 3. 创建主内容表格
+            // 3. main table
             Table mainTable = createMainTable(font, boldFont, headerColor, workOrder);
 
-            // 将元素添加到工单容器
+            // element work order
             workOrderDiv.add(title).add(headerTable).add(mainTable);
 
-            // 计算工单内容所需高度
+            // work order
             LayoutResult layoutResult = workOrderDiv
                     .createRendererSubTree()
                     .setParent(document.getRenderer())
                     .layout(new LayoutContext(new LayoutArea(0, PageSize.A4)));
             float requiredHeight = layoutResult.getOccupiedArea().getBBox().getHeight();
 
-            // 动态获取当前页面剩余空间（安全获取方式）
+            // Get current page null / empty ( full Get )
             int totalPages = pdfDoc.getNumberOfPages();
             Rectangle currentPageSize = totalPages > 0 ? pdfDoc.getPage(totalPages).getPageSize() : PageSize.A4; //
-            // 默认使用A4尺寸
+            // A4
             float currentY = totalPages > 0
                     ? document.getRenderer().getCurrentArea().getBBox().getY()
-                    : PageSize.A4.getTop(); // 初始位置设为页面顶部
+                    : PageSize.A4.getTop(); // to page
 
             float remainingSpace = currentY - (currentPageSize.getBottom() + document.getBottomMargin() + 20);
 
-            // 剩余空间不足时插入分页符（添加安全判断）
+            // null / empty ( full Check )
             if (remainingSpace < requiredHeight && totalPages > 0) {
                 document.add(new AreaBreak());
             }
-            // 添加工单内容到文档
+            // work order
             document.add(workOrderDiv);
-            // 流程访问日志
+            // workflow log
             ProcessViewLogBo processViewLog = new ProcessViewLogBo();
             processViewLog.setProcessInstanceId(workOrder.getProcInsId());
             processViewLog.setProcessKey(workOrder.getProcessKey());
@@ -1263,18 +1264,18 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 创建表头信息表格（工单编号+打印时间）
+     * infotable (work order + )
      *
-     * @param font            字体
-     * @param workorderNumber 工单编号
-     * @return 表格对象
+     * @param font
+     * @param workorderNumber work order
+     * @return tableobject
      */
     private Table createHeaderTable(PdfFont font, String workorderNumber) {
-        Table headerTable = new Table(new float[] { 1, 3 }) // 左右列比例1:3
+        Table headerTable = new Table(new float[] { 1, 3 }) // 1:3
                 .useAllAvailableWidth()
                 .setMarginBottom(10);
 
-        // 工单编号单元格（左对齐）
+        // work order ( )
         Paragraph orderPara = new Paragraph("工单编号：" + workorderNumber);
         orderPara.setFont(font);
         Cell orderCell = new Cell()
@@ -1283,7 +1284,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
                 .setPadding(5)
                 .setBorder(Border.NO_BORDER);
 
-        // 打印时间单元格（右对齐）
+        // ( )
         Paragraph timePara = new Paragraph("打印时间：" + DateFormatUtils.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
         timePara.setFont(font);
         Cell timeCell = new Cell()
@@ -1298,20 +1299,20 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 创建主内容表格
+     * main table
      *
-     * @param font        普通字体
-     * @param boldFont    加粗字体
-     * @param headerColor 表头背景色
-     * @param workOrder   工单数据
-     * @return 表格对象
+     * @param font
+     * @param boldFont
+     * @param headerColor
+     * @param workOrder work orderdata
+     * @return tableobject
      */
     private Table createMainTable(
             PdfFont font, PdfFont boldFont, DeviceRgb headerColor, WorkOrder workOrder) {
-        float[] columnWidths = { 150f, 150f, 150f, 150f }; // 四列等宽
+        float[] columnWidths = { 150f, 150f, 150f, 150f }; // etc.
         Table table = new Table(columnWidths).useAllAvailableWidth();
 
-        // 添加各部分数据
+        // data
         addBasicInfo(table, boldFont, font, headerColor, workOrder);
         addEventDescription(table, boldFont, font, headerColor,
                 Optional.ofNullable(workOrder.getDescription()).orElse("-"));
@@ -1323,13 +1324,13 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 添加基础信息部分（所属系统/项目名称/工单类型等）
+     * info ( / item /work order etc.)
      *
-     * @param table       主表格
-     * @param boldFont    加粗字体
-     * @param font        普通字体
-     * @param headerColor 表头颜色
-     * @param workOrder   工单数据
+     * @param table main table
+     * @param boldFont
+     * @param font
+     * @param headerColor
+     * @param workOrder work orderdata
      */
     private String resolveLocalProjectName(String projectId) {
         if (projectId == null || projectId.trim().isEmpty()) {
@@ -1349,19 +1350,19 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
 
     private void addBasicInfo(
             Table table, PdfFont boldFont, PdfFont font, DeviceRgb headerColor, WorkOrder workOrder) {
-        // 所属系统
+        //
         table.addCell(createHeaderCell("所属系统", boldFont, headerColor));
         table.addCell(createValueCell(Optional.ofNullable(workOrder.getSystemId()).orElse("-"), font));
 
-        // 项目名称
+        // item
         table.addCell(createHeaderCell("项目名称", boldFont, headerColor));
         table.addCell(createValueCell(resolveLocalProjectName(workOrder.getProjectId()), font));
 
-        // 工单类型（需要调用外部API）
+        // work order ( need to API)
         table.addCell(createHeaderCell("工单类型", boldFont, headerColor));
         String[] split = Optional.ofNullable(workOrder.getWorkorderIdExtend()).orElse("-").split(",");
 
-        // 构建API请求URL
+        // Build API URL
         String workUrl = split[0].equals("1")
                 ? String.format("%s/WorkOrder/app/list", workFlowFormsUrl)
                 : String.format("%s/workorder/synthesis/list", workFlowFormsUrl);
@@ -1377,7 +1378,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
                     false);
 
-            // 正确指定泛型类型
+            // correct
             ApiResponse<List<ApiResponse.DataItem>> apiResponse = objectMapper.readValue(
                     response.body().string(),
                     new TypeReference<ApiResponse<List<ApiResponse.DataItem>>>() {
@@ -1407,16 +1408,16 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             table.addCell(createValueCell("获取失败", font));
         }
 
-        // 流程名称（固定值）
+        // workflow ( value )
         table.addCell(createHeaderCell("流程名称", boldFont, headerColor));
         table.addCell(createValueCell("工程维修", font));
     }
 
     /**
-     * 解析附件数量
+     * Parse
      *
-     * @param attachmentUrls JSON格式的附件地址
-     * @return 附件数量
+     * @param attachmentUrls JSON
+     * @return
      */
     private int parseAttachmentCount(String attachmentUrls) {
         try {
@@ -1427,13 +1428,13 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 添加表单信息（部门/申请人/客户信息等）
+     * forminfo (department/ / info etc.)
      *
-     * @param table       主表格
-     * @param boldFont    加粗字体
-     * @param font        普通字体
-     * @param headerColor 表头颜色
-     * @param workOrder   工单数据
+     * @param table main table
+     * @param boldFont
+     * @param font
+     * @param headerColor
+     * @param workOrder work orderdata
      */
     private void addFormInfo(
             Table table, PdfFont boldFont, PdfFont font, DeviceRgb headerColor, WorkOrder workOrder) {
@@ -1452,20 +1453,20 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
 
             List<Map<String, Object>> widgetList = apiResponse.getWidgetList();
 
-            // 核心修改：动态处理列合并
+            // Update : Process
             if (widgetList.size() == 1) {
                 Map<String, Object> stringObjectMap = widgetList.get(0);
                 Map<String, Object> options = (Map<String, Object>) stringObjectMap.get("options");
                 if (options != null) {
-                    // 创建合并3列的单元格
+                    // 3
                     Cell combinedCell = new Cell(1, 2)
                             .add(new Paragraph(String.valueOf(options.get("label"))).setFont(font).setFontSize(10))
                             .setTextAlignment(TextAlignment.LEFT)
                             .setPadding(5);
                     table.addCell(combinedCell);
-                    // 使用转换方法处理 defaultValue
+                    // Convert method Process defaultValue
                     String displayValue = convertDefaultValue(options);
-                    // 补充空单元格保持表格结构
+                    // null / empty table
                     table.addCell(
                             new Cell(1, 2)
                                     .add(new Paragraph(displayValue).setFont(font).setFontSize(10))
@@ -1493,19 +1494,19 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 转换 defaultValue，如果是数组则转换为对应 optionItems 中 value 对应的 label 值，否则直接返回字符串
+     * Convert defaultValue, if is array Convert to optionItems in value label value ,
      */
     private String convertDefaultValue(Map<String, Object> options) {
         Object defaultValue = options.get("defaultValue");
         if (defaultValue instanceof List) {
             List<?> list = (List<?>) defaultValue;
-            // 尝试使用 areaOptionItems 中的 optionItems
+            // areaOptionItems in optionItems
             Map<String, Object> stringObjectMap = (Map<String, Object>) options.get("areaOptionItems");
             List<Map<String, Object>> optionItems = (List<Map<String, Object>>) stringObjectMap.get("optionItems");
             if (ObjectUtils.isNotEmpty(options)
                     && ObjectUtils.isNotEmpty(optionItems)) {
                 return list.stream()
-                        // 针对每个 item 在 optionItems 中查找匹配的 label
+                        // each item in optionItems in find label
                         .map(
                                 item -> optionItems.stream()
                                         .filter(optionItem -> optionItem.get("value").toString().equals(item))
@@ -1515,7 +1516,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
                         .filter(label -> !label.isEmpty())
                         .collect(Collectors.joining(","));
             }
-            // 如果没有 areaOptionItems，则判断是否存在 options.getOptionItems()（注意：此处类型为
+            // if areaOptionItems, Check whether in options.getOptionItems() ( : to
             // ApiResponse.OptionItems）
             if (ObjectUtils.isNotEmpty(optionItems)) {
                 return list.stream()
@@ -1529,18 +1530,18 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
                         .collect(Collectors.joining(","));
             }
         }
-        // 如果 defaultValue 不是 List，则直接返回字符串形式
+        // if defaultValue is List,
         return defaultValue != null ? defaultValue.toString() : "";
     }
 
     /**
-     * 添加事件描述
+     * event
      *
-     * @param table       主表格
-     * @param boldFont    加粗字体
-     * @param font        普通字体
-     * @param headerColor 表头颜色
-     * @param description 事件描述内容
+     * @param table main table
+     * @param boldFont
+     * @param font
+     * @param headerColor
+     * @param description event
      */
     private void addEventDescription(
             Table table, PdfFont boldFont, PdfFont font, DeviceRgb headerColor, String description) {
@@ -1551,13 +1552,13 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 添加附件信息
+     * info
      *
-     * @param table          主表格
-     * @param boldFont       加粗字体
-     * @param font           普通字体
-     * @param headerColor    表头颜色
-     * @param attachmentUrls 附件地址JSON
+     * @param table main table
+     * @param boldFont
+     * @param font
+     * @param headerColor
+     * @param attachmentUrls JSON
      */
     private void addAttachments(
             Table table, PdfFont boldFont, PdfFont font, DeviceRgb headerColor, String attachmentUrls) {
@@ -1569,11 +1570,11 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 添加审批记录（示例数据）
+     * approvalrecord ( data)
      *
-     * @param table       主表格
-     * @param font        字体
-     * @param headerColor 表头颜色
+     * @param table main table
+     * @param font
+     * @param headerColor
      */
     private void addApprovalRecords(
             Table table, PdfFont font, DeviceRgb headerColor, WorkOrder workOrder) {
@@ -1593,7 +1594,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
                     false);
 
-            // 修正泛型类型为 List
+            // to List
             ApiResponse<List<ApiResponse.HistoryProcNodeList>> apiResponse = objectMapper.readValue(
                     response.body().string(),
                     new TypeReference<ApiResponse<List<ApiResponse.HistoryProcNodeList>>>() {
@@ -1601,29 +1602,29 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
 
             List<ApiResponse.HistoryProcNodeList> historyProcNodeList = apiResponse.getData();
 
-            // 创建逆序列表（仅用于基础信息）
+            // ( info)
             List<ApiResponse.HistoryProcNodeList> reversedNodeList = new ArrayList<>(historyProcNodeList);
             Collections.reverse(reversedNodeList);
 
-            // 遍历逆序后的节点列表（处理基础信息）
+            // after node (Process info)
             for (ApiResponse.HistoryProcNodeList node : reversedNodeList) {
-                // 处理基础信息（从最后一个节点开始）
+                // Process info (from after nodestart)
                 Paragraph record1 = new Paragraph(
                         String.format(
                                 "%s/%s/%s",
                                 node.getAssigneeName(), node.getActivityName(), node.getEndTime()))
                         .setFont(font);
                 table.addCell(new Cell(1, 2).add(record1));
-                // 遍历原始节点列表（处理评论，保持原有顺序）
+                // node (Process , )
                 List<ApiResponse.CommentList> commentList = node.getCommentList();
                 if (ObjectUtil.isNotEmpty(commentList)) {
                     if (commentList.size() > 1) {
-                        // 处理最后一条评论
+                        // Process after
                         ApiResponse.CommentList lastComment = commentList.get(commentList.size() - 1);
                         Paragraph record2 = new Paragraph(lastComment.getFullMessage()).setFont(font);
                         table.addCell(new Cell(1, 2).add(record2));
 
-                        // 处理其他评论（保持原有顺序）
+                        // Process ( )
                         List<ApiResponse.CommentList> subList = commentList.subList(0, commentList.size() - 1);
                         for (ApiResponse.CommentList comment : subList) {
                             Paragraph record3 = new Paragraph(
@@ -1636,7 +1637,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
                             table.addCell(new Cell(1, 2).add(record4));
                         }
                     } else {
-                        // 单条评论
+                        //
                         ApiResponse.CommentList comment = commentList.get(0);
                         Paragraph record2 = new Paragraph(comment.getFullMessage()).setFont(font);
                         table.addCell(new Cell(1, 2).add(record2));
@@ -1652,12 +1653,12 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 创建表头单元格
      *
-     * @param text    文本内容
-     * @param font    字体
-     * @param bgColor 背景颜色
-     * @return 单元格对象
+     *
+     * @param text
+     * @param font
+     * @param bgColor
+     * @return object
      */
     private Cell createHeaderCell(String text, PdfFont font, DeviceRgb bgColor) {
         Paragraph p = new Paragraph(text).setFont(font);
@@ -1669,11 +1670,11 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     /**
-     * 创建普通内容单元格
      *
-     * @param text 文本内容
-     * @param font 字体
-     * @return 单元格对象
+     *
+     * @param text
+     * @param font
+     * @return object
      */
     private Cell createValueCell(String text, PdfFont font) {
         return new Cell()

@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="app-container">
     <el-form ref="wvpMediaServerFormRef" :model="form" :rules="rules" label-width="150px">
@@ -141,7 +146,7 @@ const rtpPortRange2 = ref(30500)
 const sendRtpPortRange1 = ref(50000)
 const sendRtpPortRange2 = ref(60000)
 
-const isValidIp = (rule, value, callback) => { // 校验IP是否符合规则
+const isValidIp = (rule, value, callback) => { // Validate IPwhether
   var reg = /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/
   if (!reg.test(value)) {
     return callback(new Error('请输入有效的IP地址'))
@@ -150,7 +155,7 @@ const isValidIp = (rule, value, callback) => { // 校验IP是否符合规则
   }
   return true
 }
-const isValidPort = (rule, value, callback) => { // 校验IP是否符合规则
+const isValidPort = (rule, value, callback) => { // Validate IPwhether
   var reg = /^(([0-9]|[1-9]\d{1,3}|[1-5]\d{4}|6[0-5]{2}[0-3][0-5]))$/
   if (!reg.test(value)) {
     return callback(new Error('请输入有效的端口号'))
@@ -182,13 +187,13 @@ const data = reactive({
 
 const {form, rules} = toRefs(data);
 
-// 取消按钮
+// button
 function cancel() {
   reset();
   proxy.$tab.closeOpenPage({path: "/gbmanger/node"});
 }
 
-// 表单重置
+// form
 function reset() {
   form.value = {
     id: null,

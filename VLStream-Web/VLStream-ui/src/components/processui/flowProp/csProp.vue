@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+  SPDX-License-Identifier: MIT
+-->
+
 <template>
   <div class="prop_body">
     <div class="prop_body_tab">
@@ -50,7 +55,7 @@
       </el-tabs>
     </div>
     <div class="prop_body_bottom button_group">
-      <!-- 两个按钮 一个取消 ，一个确定 -->
+      <!-- button , -->
       <el-button @click="cancel" class="common_btn">
         取消
       </el-button>
@@ -77,22 +82,22 @@ const props = defineProps({
     default: () => ({})
   }
 })
-// 模型-列表数据
+// model- data
 const flowDesignerPage = inject('flowDesignerPage')
-// 0 流程 1 工单
+// 0 workflow 1 work order
 let formDesignType = ref(undefined)
-// 默认应用
+//
 let classifyType = ref(true)
 formDesignType.value = flowDesignerPage.formDesignType
 if (flowDesignerPage?.synthesisId) classifyType.value = false
 
 const activeName = ref('first')
-// 初始化时从节点级别的状态管理器获取表单字段，而不是从全局Store
+// Initialize from node Get formfield, is from full Store
 const nodeFormState = getOrCreateNodeFormState(props.nodeConfig.id)
 const activeChooseData = ref({
-  user: [], // 用户列表
-  canSelectCS: false, // 允许发起人添加抄送人
-  formProperties: nodeFormState.formFiledList.value || [], // 从节点级别状态获取，而不是全局Store
+  user: [], // user
+  canSelectCS: false, //
+  formProperties: nodeFormState.formFiledList.value || [], // from node Get , is full Store
   formKey: ''
 })
 
@@ -108,7 +113,7 @@ function cancel() {
 
 const nodeName = ref(props.nodeConfig.nodeName)
 function confirm() {
-  // 属性单词
+  // property
   // props.nodeConfig.property = activeChooseData.value
   const nodeConfig = { ...props.nodeConfig, ...activeChooseData.value }
   nodeConfig.nodeName = nodeName.value
@@ -148,7 +153,7 @@ const cascaderProps = {
     // if (level === 0) {
     //   resolve([{
     //     value: '',
-    //     label: '全部',
+    // label: ' full ',
     //     leaf: false
     //   }])
     //   return
@@ -215,15 +220,15 @@ const setNodeFormFieldProp = async(formKey) => {
   let res = await getForm(params)
   if (res.code === 200) {
     try {
-      // 使用统一的字段提取函数
+      // field
       const jsonList = JSON.parse(res.data.content)
       const formFields = extractFormFields(jsonList)
       currentNodeFormProp.value = JSON.parse(JSON.stringify(formFields))
-      // 切换表单强制将权限修改为当前切换的
+      // form Update to current
       activeChooseData.value.formProperties = currentNodeFormProp.value || []
-      // 更新节点级别的表单字段状态，确保数据隔离性
+      // new node formfield , data
       updateNodeFormFields(props.nodeConfig.id, activeChooseData.value.formProperties)
-      // store保存当前表单信息
+      // store current forminfo
     } catch (error) {
       console.log(error)
     }
@@ -232,7 +237,7 @@ const setNodeFormFieldProp = async(formKey) => {
 
 onMounted(() => {
   activeChooseData.value = { ...activeChooseData.value, ...props.nodeConfig }
-  // 如果nodeConfig中有formProperties，需要同步到节点级别的状态管理器
+  // if nodeConfig in formProperties, need to node
   if (props.nodeConfig.formProperties && props.nodeConfig.formProperties.length > 0) {
     updateNodeFormFields(props.nodeConfig.id, props.nodeConfig.formProperties)
     activeChooseData.value.formProperties = props.nodeConfig.formProperties

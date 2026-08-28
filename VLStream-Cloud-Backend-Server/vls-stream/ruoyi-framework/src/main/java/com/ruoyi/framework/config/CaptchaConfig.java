@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -16,7 +17,7 @@ import org.springframework.context.annotation.Lazy;
 import java.awt.*;
 
 /**
- * 验证码配置
+ * configuration
  *
  * @author Lion Li
  */
@@ -29,7 +30,7 @@ public class CaptchaConfig {
     private static final Font FONT = new Font("Arial", Font.BOLD, 48);
 
     /**
-     * 圆圈干扰验证码
+     *
      */
     @Lazy
     @Bean
@@ -41,7 +42,7 @@ public class CaptchaConfig {
     }
 
     /**
-     * 线段干扰的验证码
+     *
      */
     @Lazy
     @Bean
@@ -53,7 +54,7 @@ public class CaptchaConfig {
     }
 
     /**
-     * 扭曲干扰验证码
+     *
      */
     @Lazy
     @Bean

@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 部门信息
+ * departmentinfo
  *
  * @author Lion Li
  */
@@ -36,7 +36,7 @@ public class SysDeptController extends BaseController {
     private final ISysDeptService deptService;
 
     /**
-     * 获取部门列表
+     * Get department
      */
     @SaCheckPermission("system:dept:list")
     @GetMapping("/list")
@@ -46,8 +46,8 @@ public class SysDeptController extends BaseController {
     }
 
     /**
-     * 查询部门列表（排除节点）
-     * @param deptId 部门ID
+     * Query department list ( node)
+     * @param deptId department ID
      */
     @SaCheckPermission("system:dept:list")
     @GetMapping("/list/exclude/{deptId}")
@@ -59,9 +59,9 @@ public class SysDeptController extends BaseController {
     }
 
     /**
-     * 根据部门编号获取详细信息
+     * department Get info
      *
-     * @param deptId 部门ID
+     * @param deptId department ID
      */
     @SaCheckPermission("system:dept:query")
     @GetMapping(value = "/{deptId}")
@@ -71,7 +71,7 @@ public class SysDeptController extends BaseController {
     }
 
     /**
-     * 新增部门
+     * Add department
      */
     @SaCheckPermission("system:dept:add")
     @Log(title = "部门管理", businessType = BusinessType.INSERT)
@@ -84,7 +84,7 @@ public class SysDeptController extends BaseController {
     }
 
     /**
-     * 修改部门
+     * Update department
      */
     @SaCheckPermission("system:dept:edit")
     @Log(title = "部门管理", businessType = BusinessType.UPDATE)
@@ -104,9 +104,9 @@ public class SysDeptController extends BaseController {
     }
 
     /**
-     * 删除部门
+     * Delete department
      *
-     * @param deptId 部门ID
+     * @param deptId department ID
      */
     @SaCheckPermission("system:dept:remove")
     @Log(title = "部门管理", businessType = BusinessType.DELETE)

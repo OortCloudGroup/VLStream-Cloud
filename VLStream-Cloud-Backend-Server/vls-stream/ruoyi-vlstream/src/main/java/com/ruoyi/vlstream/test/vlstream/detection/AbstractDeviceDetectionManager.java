@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
@@ -30,7 +31,7 @@ import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 
 /**
- * 设备检测任务管理器基类：按设备配置动态创建/更新/停止检测会话，并在系统关闭时统一清理。
+ * device task : deviceconfiguration / new / will , in .
  */
 public abstract class AbstractDeviceDetectionManager<S extends DeviceDetectionSession> {
 
@@ -48,7 +49,7 @@ public abstract class AbstractDeviceDetectionManager<S extends DeviceDetectionSe
     @Resource
     protected IVlsAlgorithmModelService algorithmModelService;
 
-    // Flowable 也声明了名为 eventManagementService 的 Bean，必须按 VLStream 接口类型注入。
+    // Flowable also to eventManagementService Bean, VLStream interface .
     @Autowired
     protected IVlsEventManagementService eventManagementService;
 
@@ -63,14 +64,14 @@ public abstract class AbstractDeviceDetectionManager<S extends DeviceDetectionSe
     private final AtomicBoolean externalControlEnabled = new AtomicBoolean(false);
 
     /**
-     * 启用/关闭外部控制模式：启用后，定时刷新入口将不再自动维护会话，由外部（如 PowerJob）触发刷新。
+     * / control : after, new will , ( PowerJob) new .
      */
     public void setExternalControlEnabled(boolean enabled) {
         externalControlEnabled.set(enabled);
     }
 
     /**
-     * 供 @Scheduled 调用的刷新入口：外部控制模式启用时跳过。
+     * @Scheduled new : control .
      */
     protected void scheduledRefreshSessionsInternal() {
         if (externalControlEnabled.get()) {
@@ -84,14 +85,14 @@ public abstract class AbstractDeviceDetectionManager<S extends DeviceDetectionSe
     }
 
     /**
-     * 立即按指定设备集合刷新会话（仅保留这些设备对应的检测会话）。
+     * devicecollection new will ( device will ).
      */
     public void refreshNowForDeviceIds(List<Long> deviceIds) {
         refreshSessionsForDeviceIdsInternal(deviceIds);
     }
 
     /**
-     * 立即停止指定设备集合对应的检测会话。
+     * devicecollection will .
      */
     public void stopNowForDeviceIds(List<Long> deviceIds, String reason) {
         if (deviceIds == null || deviceIds.isEmpty()) {
@@ -103,7 +104,7 @@ public abstract class AbstractDeviceDetectionManager<S extends DeviceDetectionSe
     }
 
     /**
-     * 立即停止全部检测会话。
+     * full will .
      */
     public void stopAllNow(String reason) {
         stopAllSessions(reason);

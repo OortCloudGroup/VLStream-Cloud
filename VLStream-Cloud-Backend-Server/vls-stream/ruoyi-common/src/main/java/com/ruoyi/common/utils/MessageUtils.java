@@ -15,7 +15,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import java.util.Locale;
 
 /**
- * 获取i18n资源文件
+ * Get i18n
  *
  * @author Lion Li
  */
@@ -25,23 +25,23 @@ public class MessageUtils {
     private static final MessageSource MESSAGE_SOURCE = SpringUtils.getBean(MessageSource.class);
 
     /**
-     * 根据消息键和参数 获取消息 委托给spring messageSource
+     * and parameter Get spring messageSource
      *
-     * @param code 消息键
-     * @param args 参数
-     * @return 获取国际化翻译值
+     * @param code
+     * @param args parameter
+     * @return Get value
      */
     public static String message(String code, Object... args) {
-        // LocaleContextHolder.getLocale() 获取当前国际化的语言的标识 , 如 zh_CN
+        // LocaleContextHolder.getLocale() Get current , zh_CN
         return MESSAGE_SOURCE.getMessage(code, args, LocaleContextHolder.getLocale());
     }
 
     /**
-     * @param code 消息键
-     * @param language 语言
-     * @param country 国家
-     * @param args 参数
-     * @return 获取国际化翻译值
+     * @param code
+     * @param language
+     * @param country
+     * @param args parameter
+     * @return Get value
      */
     public static String message(String code, String language, String country,Object... args) {
         return MESSAGE_SOURCE.getMessage(code, args, new Locale(language, country));

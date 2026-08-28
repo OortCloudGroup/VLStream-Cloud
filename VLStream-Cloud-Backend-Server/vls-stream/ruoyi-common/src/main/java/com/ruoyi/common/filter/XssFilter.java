@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 RuoYi-Flowable-Plus
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
  */
 
@@ -16,13 +17,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 防止XSS攻击的过滤器
+ * XSS
  *
  * @author ruoyi
  */
 public class XssFilter implements Filter {
     /**
-     * 排除链接
+     *
      */
     public List<String> excludes = new ArrayList<>();
 
@@ -53,7 +54,7 @@ public class XssFilter implements Filter {
     private boolean handleExcludeURL(HttpServletRequest request, HttpServletResponse response) {
         String url = request.getServletPath();
         String method = request.getMethod();
-        // GET DELETE 不过滤
+        // GET DELETE
         if (method == null || HttpMethod.GET.matches(method) || HttpMethod.DELETE.matches(method)) {
             return true;
         }

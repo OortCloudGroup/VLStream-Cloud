@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
+ * SPDX-License-Identifier: MIT
+ */
+
 import { traverseFieldWidgetsOfContainer } from '~@/utils/util'
 
 export default {
@@ -20,27 +25,27 @@ export default {
   },
 
   methods: {
-    unregisterFromRefList() { // 销毁容器组件时注销组件ref
+    unregisterFromRefList() { // component componentref
       if ((this.refList !== null) && !!this.widget.options.name) {
         let oldRefName = this.widget.options.name
         delete this.refList[oldRefName]
       }
     },
 
-    /* 主动触发setHidden()方法，以清空被隐藏容器内字段组件的校验规则！！ */
+    /* main setHidden() method , null / empty fieldcomponent Validate ! ! */
     callSetHidden() {
       if (this.widget.options.hidden === true) {
         this.setHidden(true)
       }
     },
 
-    // --------------------- 以下为组件支持外部调用的API方法 begin ------------------//
-    /* 提示：用户可自行扩充这些方法！！！ */
+    // --------------------- to component API method begin ------------------//
+    /* prompt / tip: user method ! ! ! */
 
     setHidden(flag) {
       this.widget.options.hidden = flag
 
-      /* 容器被隐藏后，需要同步清除容器内部字段组件的校验规则 */
+      /* after, need to fieldcomponent Validate */
       let clearRulesFn = (fieldWidget) => {
         let fwName = fieldWidget.options.name
         let fwRef = this.getWidgetRef(fwName)
@@ -56,7 +61,7 @@ export default {
       traverseFieldWidgetsOfContainer(this.widget, clearRulesFn)
     },
 
-    activeTab(tabIndex) { // tabIndex从0计数
+    activeTab(tabIndex) { // tabIndexfrom 0
       if ((tabIndex >= 0) && (tabIndex < this.widget.tabs.length)) {
         this.widget.tabs.forEach((tp, idx) => {
           tp.options.active = idx === tabIndex
@@ -91,7 +96,7 @@ export default {
       }
     },
 
-    setWidgetOption(optionName, optionValue) { // 通用组件选项修改API
+    setWidgetOption(optionName, optionValue) { // component item Update API
       // eslint-disable-next-line no-prototype-builtins
       if (this.widget.options.hasOwnProperty(optionName)) {
         this.widget.options[optionName] = optionValue
@@ -99,7 +104,7 @@ export default {
     },
 
     /**
-     * 获取子表单的行数
+     * Get sub form
      */
     getSubFormRowCount() {
       return !this.rowIdData ? 0 : this.rowIdData.length
@@ -132,7 +137,7 @@ export default {
         })
       }
 
-      // 禁用3个操作按钮
+      // 3 operationbutton
       this.actionDisabled = true
     },
 
@@ -143,11 +148,11 @@ export default {
         })
       }
 
-      // 启用3个操作按钮
+      // 3 operationbutton
       this.actionDisabled = false
     },
 
-    resetSubForm() { // 重置subForm数据为空
+    resetSubForm() { // subFormdata is empty
       if (this.widget.type === 'sub-form') {
         let subFormModel = this.formModel[this.widget.options.name]
         if (!!subFormModel) {
@@ -163,23 +168,23 @@ export default {
 
     getSubFormValues() {
       if (this.widget.type === 'sub-form') {
-        // TODO: 逐行校验子表单！！
+        // TODO: Validate sub form! !
         return this.formModel[this.widget.options.name]
       } else {
         this.$message.error(this.i18nt('render.hint.nonSubFormType'))
       }
     },
 
-    // validateField(fieldName) { //逐行校验子表单字段
+    // validateField(fieldName) { // Validate sub formfield
     //   //TODO:
     // },
     //
-    // validateSubForm() { //逐行校验子表单全部字段
+    // validateSubForm() { // Validate sub form full field
     //   //TODO:
     // },
 
     /**
-     * 动态增加自定义css样式
+     * Customcss
      * @param className
      */
     addCssClass(className) {
@@ -191,7 +196,7 @@ export default {
     },
 
     /**
-     * 动态移除自定义css样式
+     * Customcss
      * @param className
      */
     removeCssClass(className) {
@@ -210,7 +215,7 @@ export default {
       }
     }
 
-    // --------------------- 以上为组件支持外部调用的API方法 end ------------------//
+    // --------------------- to component API method end ------------------//
 
   }
 
