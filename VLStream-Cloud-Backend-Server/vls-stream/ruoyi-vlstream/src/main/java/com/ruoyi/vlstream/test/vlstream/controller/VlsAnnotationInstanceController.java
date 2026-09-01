@@ -27,13 +27,10 @@ import org.springblade.core.secure.BladeUser;
 import org.springblade.core.tool.api.R;
 import org.springblade.core.tool.utils.DateUtil;
 import org.springblade.core.tool.utils.Func;
-import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmAnnotationStatusEnum;
 import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmAnnotationTypeEnum;
 import com.ruoyi.vlstream.test.vlstream.excel.VlsAnnotationInstanceExcel;
-import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmAnnotation;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AnnotationInstance;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.AnnotationInstanceVO;
-import com.ruoyi.vlstream.test.vlstream.service.IVlsAlgorithmAnnotationService;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsAnnotationInstanceService;
 import com.ruoyi.vlstream.test.vlstream.wrapper.VlsAnnotationInstanceWrapper;
 import org.springframework.web.bind.annotation.*;
@@ -57,7 +54,6 @@ import java.util.stream.Collectors;
 public class VlsAnnotationInstanceController extends BladeController {
 
 	private final IVlsAnnotationInstanceService vlsAnnotationInstanceService;
-	private final IVlsAlgorithmAnnotationService algorithmAnnotationService;
 
 	/**
 	 * annotationinstance
@@ -273,27 +269,6 @@ public class VlsAnnotationInstanceController extends BladeController {
 
 			boolean success = vlsAnnotationInstanceService.batchSaveAnnotations(annotationId, imageId, instances);
 
-			// new annotation info
-			try {
-				int annotatedCount = Math.toIntExact(vlsAnnotationInstanceService.count(new QueryWrapper<AnnotationInstance>()
-					.eq("annotation_id", annotationId)
-					.eq("is_deleted", 1)));
-
-				AlgorithmAnnotation annotation = algorithmAnnotationService.getById(annotationId);
-				if (annotation != null) {
-					int totalCount = annotation.getTotalCount() == null ? annotatedCount : annotation.getTotalCount();
-					int progress = calculateProgress(annotatedCount, totalCount);
-
-					annotation.setAnnotatedCount(annotatedCount);
-					annotation.setTotalCount(totalCount);
-					annotation.setProgress(progress);
-					annotation.setAnnotationStatus(AlgorithmAnnotationStatusEnum.of(calculateAnnotationStatus(progress)));
-					algorithmAnnotationService.updateById(annotation);
-				}
-			} catch (Exception statEx) {
-				log.warn("批量保存后更新统计信息失败: annotationId={}, error={}", annotationId, statEx.getMessage());
-			}
-
 			return R.data(success);
 		} catch (Exception e) {
 			log.error("批量保存标注实例失败", e);
@@ -418,32 +393,6 @@ public class VlsAnnotationInstanceController extends BladeController {
 			return R.fail(errorMsg);
 		}
 		return R.fail(errorMsg + "; others deleted");
-	}
-
-	/**
-	 * annotation (0-100)
-	 */
-	private int calculateProgress(Integer annotatedCount, Integer totalCount) {
-		if (totalCount == null || totalCount == 0) {
-			return 0;
-		}
-		if (annotatedCount == null) {
-			return 0;
-		}
-		return Math.min(100, (annotatedCount * 100) / totalCount);
-	}
-
-	/**
-	 * annotation
-	 */
-	private String calculateAnnotationStatus(int progress) {
-		if (progress == 0) {
-			return "none";
-		} else if (progress < 100) {
-			return "partial";
-		} else {
-			return "completed";
-		}
 	}
 
 	private Long parseLong(Object value) {

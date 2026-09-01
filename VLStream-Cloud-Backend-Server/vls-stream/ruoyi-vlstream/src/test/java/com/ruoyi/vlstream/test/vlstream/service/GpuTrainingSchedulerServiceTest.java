@@ -13,10 +13,16 @@ import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.vlstream.test.vlstream.config.VlsSshProperties;
 import com.ruoyi.vlstream.test.vlstream.config.VlsTrainingContainerProperties;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsContainerInstanceMapper;
+import com.ruoyi.vlstream.test.vlstream.mapper.VlsRemoteServersMapper;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.ContainerInstance;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.RemoteServers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -112,6 +118,43 @@ class GpuTrainingSchedulerServiceTest {
 		verify(mapper, never()).selectNextQueuedTrainingForScheduler();
 	}
 
+	@Test
+	void publishesConversionEventOnlyAfterPtModelIsReady() throws Exception {
+		IVlsContainerInstanceService containerService = mock(IVlsContainerInstanceService.class);
+		IVlsAlgorithmTrainingService trainingService = mock(IVlsAlgorithmTrainingService.class);
+		VlsRemoteServersMapper remoteServersMapper = mock(VlsRemoteServersMapper.class);
+		RemoteTrainingService remoteTrainingService = mock(RemoteTrainingService.class);
+		ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
+
+		ContainerInstance instance = new ContainerInstance();
+		instance.setId(20L);
+		instance.setTrainingTaskId(30L);
+		instance.setContainerId("container-30");
+		AlgorithmTraining training = new AlgorithmTraining();
+		training.setId(30L);
+		training.setTaskName("water-detection");
+		RemoteServers server = new RemoteServers();
+		when(trainingService.getById(30L)).thenReturn(training);
+		when(remoteServersMapper.selectActiveServer()).thenReturn(server);
+		when(remoteTrainingService.processTrainingResult(30L, server, "detect", "water-detection"))
+			.thenReturn("/data/runs/detect/train/weights/water-detection.pt");
+
+		GpuTrainingSchedulerService scheduler = new GpuTrainingSchedulerService();
+		setField(scheduler, "containerInstanceService", containerService);
+		setField(scheduler, "algorithmTrainingService", trainingService);
+		setField(scheduler, "remoteServersMapper", remoteServersMapper);
+		setField(scheduler, "remoteTrainingService", remoteTrainingService);
+		setField(scheduler, "applicationEventPublisher", eventPublisher);
+
+		invokeComplete(scheduler, instance);
+
+		ArgumentCaptor<TrainingModelReadyEvent> eventCaptor = ArgumentCaptor.forClass(TrainingModelReadyEvent.class);
+		verify(eventPublisher).publishEvent(eventCaptor.capture());
+		Assertions.assertEquals(30L, eventCaptor.getValue().getTrainingId());
+		Assertions.assertEquals("/data/runs/detect/train/weights/water-detection.pt",
+			eventCaptor.getValue().getModelPath());
+	}
+
 	private SSHService.SSHExecutionResult sshResult(String output) {
 		SSHService.SSHExecutionResult result = new SSHService.SSHExecutionResult();
 		result.setSuccess(true);
@@ -131,6 +174,12 @@ class GpuTrainingSchedulerServiceTest {
 		Method method = GpuTrainingSchedulerService.class.getDeclaredMethod("scheduleSafely");
 		method.setAccessible(true);
 		method.invoke(scheduler);
+	}
+
+	private void invokeComplete(GpuTrainingSchedulerService scheduler, ContainerInstance instance) throws Exception {
+		Method method = GpuTrainingSchedulerService.class.getDeclaredMethod("complete", ContainerInstance.class);
+		method.setAccessible(true);
+		method.invoke(scheduler, instance);
 	}
 
 	private void setField(Object target, String name, Object value) throws Exception {

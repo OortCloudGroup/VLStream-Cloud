@@ -40,16 +40,13 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO;
 import com.ruoyi.vlstream.test.vlstream.service.*;
 import com.ruoyi.vlstream.test.vlstream.wrapper.VlsAlgorithmTrainingWrapper;
+import org.springframework.context.event.EventListener;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
  * algorithmtrainingtask control
@@ -371,6 +368,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 
 			AlgorithmTraining queueUpdate = new AlgorithmTraining();
 			queueUpdate.setId(id);
+			queueUpdate.setDatasetId(datasetId);
 			queueUpdate.setTrainStatus(AlgorithmTrainingStatusEnum.pending);
 			queueUpdate.setEpochTotal(finalEpochs);
 			queueUpdate.setProgress(0);
@@ -414,7 +412,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	@PostMapping("/{id}/convert-model")
 	@ApiOperationSupport(order = 9)
 	@Operation(summary = "转换模型", description = "把pt模型转换为onnx、rknn、int8-rknn和Hi3519DV500 OM")
-	public R<String> convertModel(
+	public synchronized R<String> convertModel(
 		@Parameter(description = "模型训练ID", example = "1") @PathVariable @NotNull Long id) {
 
 		log.info("模型训练: id={}", id);
@@ -447,14 +445,12 @@ public class VlsAlgorithmTrainingController extends BladeController {
 
 		log.info("数据集路径：{}", datasetPathSnapshot);
 		Thread convertThread = new Thread(() -> {
-			ExecutorService executor = Executors.newFixedThreadPool(3);
 			try {
-				Future<String> onnxFuture = executor.submit(() -> convertOnnxAndRecord(id, ptModelPath));
-				Future<String> rknnFuture = executor.submit(() -> remoteTrainingService.exportModel(ptModelPath, "rknn"));
-				Future<String> omFuture = executor.submit(() -> convertOmAndRecord(id, ptModelPath, datasetPathSnapshot));
-				String onnxPath = getConvertResult(onnxFuture, id, "onnx");
-				String rknnPath = getConvertResult(rknnFuture, id, "rknn");
-				String omPath = getConvertResult(omFuture, id, "om");
+				// Ultralytics derives intermediate files from the PT basename. Running these exports in
+				// parallel can make one conversion read or replace another conversion's partial ONNX file.
+				String onnxPath = convertOnnxAndRecord(id, ptModelPath);
+				String omPath = convertOmAndRecord(id, ptModelPath, datasetPathSnapshot);
+				String rknnPath = convertRknnSafely(id, ptModelPath);
 				String synsetDatasetPath = datasetPathSnapshot;
 				if (synsetDatasetPath == null || synsetDatasetPath.trim().isEmpty()) {
 					synsetDatasetPath = resolveDatasetPath(trainingSnapshot);
@@ -513,13 +509,21 @@ public class VlsAlgorithmTrainingController extends BladeController {
 				}
 			} catch (Exception exception) {
 				log.error("模型转换异常: id={}, error={}", id, exception.getMessage(), exception);
-			} finally {
-				executor.shutdown();
 			}
 		});
 		convertThread.setName("model-convert-" + id);
 		convertThread.start();
 		return R.success("模型转换任务已提交");
+	}
+
+	@EventListener
+	public void convertModelWhenTrainingArtifactReady(TrainingModelReadyEvent event) {
+		if (event == null || event.getTrainingId() == null) {
+			return;
+		}
+		log.info("训练模型已就绪，自动提交格式转换: id={}, modelPath={}",
+			event.getTrainingId(), event.getModelPath());
+		convertModel(event.getTrainingId());
 	}
 
 	private String convertOnnxAndRecord(Long trainingId, String ptModelPath) {
@@ -716,6 +720,10 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		if (training.getTrainStatus() == AlgorithmTrainingStatusEnum.completed
 			|| training.getTrainStatus() == AlgorithmTrainingStatusEnum.failed
 			|| training.getTrainStatus() == AlgorithmTrainingStatusEnum.stop) {
+			if (training.getTrainStatus() == AlgorithmTrainingStatusEnum.completed
+				&& StringUtils.isBlank(training.getModelOutputPath())) {
+				return R.data(modelFinalizingProgress(id));
+			}
 			RemoteTrainingService.TrainingProgress persistedProgress = new RemoteTrainingService.TrainingProgress();
 			persistedProgress.setTaskId(id);
 			persistedProgress.setStatus(training.getTrainStatus().getCode());
@@ -733,6 +741,8 @@ public class VlsAlgorithmTrainingController extends BladeController {
 				? AlgorithmTrainingStatusEnum.training.getCode()
 				: training.getTrainStatus().getCode());
 			progress.setMessage("暂未读取到训练进度");
+		} else if (progress.isCompleted() && StringUtils.isBlank(training.getModelOutputPath())) {
+			progress = modelFinalizingProgress(id);
 		} else if (progress.isCompleted()) {
 			AlgorithmTraining update = new AlgorithmTraining();
 			update.setId(id);
@@ -751,20 +761,24 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		return R.data(progress);
 	}
 
-	private String getConvertResult(Future<String> convertFuture, Long trainingId, String format) {
-		if (convertFuture == null) {
-			return null;
-		}
+	private String convertRknnSafely(Long trainingId, String ptModelPath) {
 		try {
-			return convertFuture.get();
-		} catch (InterruptedException interruptedException) {
-			Thread.currentThread().interrupt();
-			log.warn("模型转换异常: id={}, format={}", trainingId, format);
-			return null;
-		} catch (ExecutionException executionException) {
-			log.warn("模型转换异常: id={}, format={}, error={}", trainingId, format, executionException.getMessage());
+			return remoteTrainingService.exportModel(ptModelPath, "rknn");
+		} catch (Exception exception) {
+			log.error("RKNN模型转换失败: id={}, error={}", trainingId,
+				extractConversionError(exception), exception);
 			return null;
 		}
+	}
+
+	private RemoteTrainingService.TrainingProgress modelFinalizingProgress(Long id) {
+		RemoteTrainingService.TrainingProgress progress = new RemoteTrainingService.TrainingProgress();
+		progress.setTaskId(id);
+		progress.setStatus(AlgorithmTrainingStatusEnum.training.getCode());
+		progress.setPercentage(99);
+		progress.setCompleted(false);
+		progress.setMessage("训练完成，正在整理PT模型文件");
+		return progress;
 	}
 
 	private String resolveDatasetDirectory(String datasetPath) {

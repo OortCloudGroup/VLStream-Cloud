@@ -9,8 +9,9 @@
 package com.ruoyi.vlstream.test.vlstream.service.impl;
 
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
+import com.ruoyi.oss.core.OssClient;
+import com.ruoyi.oss.factory.OssFactory;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -55,6 +56,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -517,12 +519,21 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 			return null;
 		}
 		File downloadedFile = FileUtil.createTempFile();
-		String downloadPath = rawPath.replaceAll("http://183.62.103.20:21410/bus/wj1", "http://go-fastdfs-management.p-lvgemgroup:8080");
-		log.info("Image download path: imageName={}, path={}", imageName, downloadPath);
 		try {
-			HttpUtil.downloadFile(downloadPath, downloadedFile);
+			OssClient storage = OssFactory.instance();
+			String objectKey = AnnotationImageObjectKey.normalize(rawPath, storage.getBucketName());
+			if (objectKey == null || objectKey.trim().isEmpty()) {
+				throw new IOException("标注图片对象键为空");
+			}
+			log.info("Download annotation image from internal object storage: imageName={}, objectKey={}", imageName, objectKey);
+			try (InputStream objectContent = storage.getObjectContent(objectKey)) {
+				Files.copy(objectContent, downloadedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			}
 		} catch (Exception downloadException) {
-			log.warn("Image download failed: imageName={}, path={}, error={}", imageName, downloadPath, downloadException.getMessage());
+			log.warn("Image download from object storage failed: imageName={}, error={}", imageName, downloadException.getMessage());
+			if (downloadedFile.exists() && !downloadedFile.delete()) {
+				log.debug("Failed to clean incomplete temporary image: {}", downloadedFile.getAbsolutePath());
+			}
 			return null;
 		}
 		return new ImageLocalInfo(downloadedFile.getAbsolutePath(), downloadedFile);
@@ -1497,7 +1508,7 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 		annotationImage.setAnnotationId(annotationId);
 		annotationImage.setImageName(imageName);
 		annotationImage.setOriginalName(sanitizeFileName(imagePath.getFileName().toString()));
-		annotationImage.setLocalPath(fileResponse.getUrl());
+		annotationImage.setLocalPath(fileResponse.getPath());
 		annotationImage.setFileSize(Files.size(imagePath));
 		annotationImage.setIsImported(1);
 		annotationImage.setImportTime(new Date());

@@ -118,6 +118,13 @@ public interface VlsAnnotationImageMapper extends BaseMapper<AnnotationImage> {
 	int countByDatasetId(Long datasetId);
 
 	/**
+	 * Count active images in an annotation project.
+	 */
+	@Select("SELECT COUNT(*) FROM vls_annotation_image " +
+		"WHERE annotation_id = #{annotationId} AND is_deleted = 0")
+	int countActiveImages(@Param("annotationId") Long annotationId);
+
+	/**
 	 * ( old interface, annotation_id)
 	 */
 	@Select("SELECT COUNT(*) FROM vls_annotation_image WHERE annotation_id = #{datasetId} AND status = #{status}")

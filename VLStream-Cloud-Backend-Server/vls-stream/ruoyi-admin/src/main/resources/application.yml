@@ -134,6 +134,13 @@ sa-token:
   jwt-secret-key: abcdefghijklmnopqrstuvwxyz
 
 vlstream:
+
+  # Browser-facing, same-origin endpoint used only when signing private annotation images.
+  # The configured OSS endpoint remains the internal Docker route used by service uploads.
+  annotation-media:
+    public-endpoint: ${VLSTREAM_ANNOTATION_MEDIA_PUBLIC_ENDPOINT:}
+    signed-url-ttl-seconds: ${VLSTREAM_ANNOTATION_MEDIA_SIGNED_URL_TTL_SECONDS:600}
+
   # 多租户事件先本地落库，再通过可靠 Outbox 匿名上报第三方
   event-report:
     enabled: ${VLSTREAM_EVENT_REPORT_ENABLED:true}

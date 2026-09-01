@@ -22,6 +22,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.ContainerInstance;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.RemoteServers;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -67,6 +68,8 @@ public class GpuTrainingSchedulerService {
 	private VlsTrainingContainerProperties properties;
 	@Resource
 	private RemoteTrainingService remoteTrainingService;
+	@Resource
+	private ApplicationEventPublisher applicationEventPublisher;
 	@Resource
 	private ObjectMapper objectMapper;
 
@@ -315,7 +318,10 @@ public class GpuTrainingSchedulerService {
 			instance.getTrainingTaskId(), server, trainType, taskName);
 		if (modelPath == null) {
 			fail(instance, "训练完成，但未找到best.pt模型文件");
+			return;
 		}
+		applicationEventPublisher.publishEvent(
+			new TrainingModelReadyEvent(instance.getTrainingTaskId(), modelPath));
 	}
 
 	private void fail(ContainerInstance instance, String message) {

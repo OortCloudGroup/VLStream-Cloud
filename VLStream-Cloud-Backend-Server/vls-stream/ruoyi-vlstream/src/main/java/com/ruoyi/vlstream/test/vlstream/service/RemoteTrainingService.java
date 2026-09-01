@@ -346,22 +346,7 @@ public class RemoteTrainingService {
 			throw new IllegalArgumentException("无法生成" + normalizedFormat.toUpperCase() + "模型输出路径");
 		}
 
-		String condaEnv = server.getCondaEnv();
-		StringBuilder commandBuilder = new StringBuilder();
-		commandBuilder.append("source ~/.bashrc && ");
-		commandBuilder.append("source /data/work/anaconda3/etc/profile.d/conda.sh && ");
-		commandBuilder.append("cd ").append(server.getWorkDir()).append(" && ");
-		if (condaEnv != null && !condaEnv.isEmpty()) {
-			commandBuilder.append("conda activate ").append(condaEnv).append(" && ");
-		}
-		commandBuilder.append("yolo export model=").append(modelPath);
-		commandBuilder.append(" format=").append(normalizedFormat);
-		commandBuilder.append(" && ");
-		commandBuilder.append("if [ -f ").append(exportPath);
-		commandBuilder.append(" ]; then echo 'Model exported: ").append(exportPath);
-		commandBuilder.append("'; else echo 'Model export failed'; exit 1; fi");
-
-		String wrappedCommand = wrapWithBash(commandBuilder.toString());
+		String wrappedCommand = buildExportCommand(server, modelPath, normalizedFormat, exportPath);
 		SSHService.SSHExecutionResult exportResult = executeWithFallback(server, wrappedCommand);
 		if (exportResult != null && exportResult.isSuccess()) {
 			return exportPath;
@@ -369,6 +354,25 @@ public class RemoteTrainingService {
 		String error = buildExportError(exportResult);
 		log.warn("Model export failed: format={}, error={}", normalizedFormat, error);
 		throw new IllegalStateException(error);
+	}
+
+	String buildExportCommand(RemoteServers server, String modelPath, String normalizedFormat, String exportPath) {
+		String condaEnv = server.getCondaEnv();
+		StringBuilder commandBuilder = new StringBuilder();
+		commandBuilder.append("source ~/.bashrc && ");
+		commandBuilder.append("source /data/work/anaconda3/etc/profile.d/conda.sh && ");
+		commandBuilder.append("cd ").append(quoteShellArgument(server.getWorkDir())).append(" && ");
+		if (condaEnv != null && !condaEnv.isEmpty()) {
+			commandBuilder.append("conda activate ").append(quoteShellArgument(condaEnv)).append(" && ");
+		}
+		commandBuilder.append("yolo export model=").append(quoteShellArgument(modelPath));
+		commandBuilder.append(" format=").append(quoteShellArgument(normalizedFormat));
+		commandBuilder.append(" && ");
+		commandBuilder.append("if [ -s ").append(quoteShellArgument(exportPath));
+		commandBuilder.append(" ]; then printf '%s\\n' ")
+			.append(quoteShellArgument("Model exported: " + exportPath));
+		commandBuilder.append("; else echo 'Model export failed'; exit 1; fi");
+		return wrapWithSingleQuotedBash(commandBuilder.toString());
 	}
 
 	private String resolveExportPath(String modelPath, String format) {

@@ -67,6 +67,16 @@ public interface VlsAnnotationInstanceMapper extends BaseMapper<AnnotationInstan
 	Integer countByLabelId(@Param("labelId") Long labelId);
 
 	/**
+	 * Count images that currently contain at least one active annotation.
+	 *
+	 * @param annotationId annotation project ID
+	 * @return number of distinct annotated images
+	 */
+	@Select("SELECT COUNT(DISTINCT image_id) FROM vls_annotation_instance " +
+		"WHERE annotation_id = #{annotationId} AND is_deleted = 0")
+	Integer countDistinctAnnotatedImages(@Param("annotationId") Long annotationId);
+
+	/**
 	 * annotation item IDQuery all annotationinstance
 	 *
 	 * @param annotationId annotation item ID

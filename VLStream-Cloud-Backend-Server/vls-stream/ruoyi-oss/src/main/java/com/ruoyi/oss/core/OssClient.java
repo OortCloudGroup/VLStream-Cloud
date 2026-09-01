@@ -171,6 +171,14 @@ public class OssClient {
     }
 
     /**
+     * Returns the bucket used by this client so callers can retain an object key
+     * without persisting a volatile pre-signed URL.
+     */
+    public String getBucketName() {
+        return properties.getBucketName();
+    }
+
+    /**
      * Get URL
      *
      * @param objectKey objectKEY

@@ -15,8 +15,12 @@ import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springblade.core.mp.base.BaseServiceImpl;
 import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmAnnotationTypeEnum;
+import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmAnnotationStatusEnum;
 import com.ruoyi.vlstream.test.vlstream.excel.VlsAnnotationInstanceExcel;
+import com.ruoyi.vlstream.test.vlstream.mapper.VlsAlgorithmAnnotationMapper;
+import com.ruoyi.vlstream.test.vlstream.mapper.VlsAnnotationImageMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsAnnotationInstanceMapper;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmAnnotation;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AnnotationImage;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AnnotationInstance;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.AnnotationInstanceVO;
@@ -47,6 +51,12 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 
 	@Resource
 	private IVlsAnnotationImageService annotationImageService;
+
+	@Resource
+	private VlsAlgorithmAnnotationMapper algorithmAnnotationMapper;
+
+	@Resource
+	private VlsAnnotationImageMapper annotationImageMapper;
 
 	@Override
 	public IPage<AnnotationInstanceVO> selectVlsAnnotationInstancePage(IPage<AnnotationInstanceVO> page, AnnotationInstanceVO vlsAnnotationInstance) {
@@ -86,6 +96,7 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 
 		// new
 		annotationLabelService.updateUsageCount(labelId);
+		refreshAnnotationProgress(annotationId);
 
 		log.info("标注实例保存成功，ID: {}", instance.getId());
 		return instance;
@@ -137,6 +148,10 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 		// new
 		annotationLabelService.updateUsageCount(labelId);
 
+		if (result > 0) {
+			refreshAnnotationProgress(instance.getAnnotationId());
+		}
+
 		log.info("标注实例删除成功");
 		return result > 0;
 	}
@@ -168,6 +183,8 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 			// new
 			annotationLabelService.updateUsageCount(annotation.getLabelId());
 		}
+
+		refreshAnnotationProgress(annotationId);
 
 		log.info("批量保存标注实例成功");
 		return true;
@@ -251,12 +268,37 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 				log.info("更新标签 {} 的使用计数", labelId);
 			}
 
+			refreshAnnotationProgress(annotationId);
+
 			log.info("成功删除图片及相关数据：imageId={}", imageId);
 			return true;
 
 		} catch (Exception e) {
 			log.error("删除图片及相关数据失败：imageId={}", imageId, e);
 			throw new RuntimeException("删除图片及相关数据失败：" + e.getMessage());
+		}
+	}
+
+	private void refreshAnnotationProgress(Long annotationId) {
+		AlgorithmAnnotation annotation = algorithmAnnotationMapper.selectById(annotationId);
+		if (annotation == null) {
+			throw new IllegalStateException("标注项目不存在: " + annotationId);
+		}
+
+		Integer countedImages = baseMapper.countDistinctAnnotatedImages(annotationId);
+		int annotatedCount = countedImages == null ? 0 : countedImages;
+		int totalCount = annotationImageMapper.countActiveImages(annotationId);
+		int progress = totalCount == 0 ? 0 : Math.min(100, (annotatedCount * 100) / totalCount);
+
+		annotation.setAnnotatedCount(annotatedCount);
+		annotation.setTotalCount(totalCount);
+		annotation.setProgress(progress);
+		annotation.setAnnotationStatus(progress == 0
+			? AlgorithmAnnotationStatusEnum.none
+			: progress < 100 ? AlgorithmAnnotationStatusEnum.partial : AlgorithmAnnotationStatusEnum.completed);
+
+		if (algorithmAnnotationMapper.updateById(annotation) <= 0) {
+			throw new IllegalStateException("更新标注进度失败: " + annotationId);
 		}
 	}
 

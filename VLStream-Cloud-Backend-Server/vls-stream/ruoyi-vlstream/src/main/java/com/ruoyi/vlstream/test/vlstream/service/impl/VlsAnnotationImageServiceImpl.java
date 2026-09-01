@@ -22,7 +22,10 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmAnnotation;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AnnotationImage;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.AnnotationImageVO;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsAnnotationImageService;
+import com.ruoyi.oss.core.OssClient;
+import com.ruoyi.oss.factory.OssFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -47,6 +50,12 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 
 	@Resource
 	private VlsAlgorithmAnnotationMapper algorithmAnnotationMapper;
+
+	@Value("${vlstream.annotation-media.public-endpoint:}")
+	private String annotationMediaPublicEndpoint;
+
+	@Value("${vlstream.annotation-media.signed-url-ttl-seconds:600}")
+	private Integer annotationMediaSignedUrlTtlSeconds;
 
 	@Override
 	public IPage<AnnotationImageVO> selectVlsAnnotationImagePage(IPage<AnnotationImageVO> page, AnnotationImageVO vlsAnnotationImage) {
@@ -85,13 +94,13 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 				annotationImage.setAnnotationId(annotationId);
 				annotationImage.setImageName(originalName);
 				annotationImage.setOriginalName(originalName);
-				annotationImage.setLocalPath(fileResponse.getUrl());
+				annotationImage.setLocalPath(fileResponse.getPath());
 				annotationImage.setFileSize(fileSize);
 				annotationImage.setIsImported(1);
 				annotationImage.setImportTime(new Date());
 
 				annotationImageMapper.insert(annotationImage);
-				uploadedImages.add(annotationImage);
+				uploadedImages.add(withFreshBrowserUrl(annotationImage));
 				addedCount++;
 
 			} catch (Exception e) {
@@ -119,18 +128,18 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 
 	@Override
 	public List<AnnotationImage> getImagesByDataset(Long annotationId) {
-		return annotationImageMapper.selectByDatasetId(annotationId);
+		return withFreshBrowserUrls(annotationImageMapper.selectByDatasetId(annotationId));
 	}
 
 	@Override
 	public AnnotationImage getImageById(Long id) {
-		return annotationImageMapper.selectById(id);
+		return withFreshBrowserUrl(annotationImageMapper.selectById(id));
 	}
 
 	@Override
 	public AnnotationImage updateImage(AnnotationImage image) {
 		updateById(image);
-		return annotationImageMapper.selectById(image.getId());
+		return withFreshBrowserUrl(annotationImageMapper.selectById(image.getId()));
 	}
 
 	@Override
@@ -214,7 +223,32 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 
 	@Override
 	public List<AnnotationImage> getImagesByAnnotationId(Long annotationId) {
-		return annotationImageMapper.selectByAnnotationId(annotationId);
+		return withFreshBrowserUrls(annotationImageMapper.selectByAnnotationId(annotationId));
+	}
+
+	private List<AnnotationImage> withFreshBrowserUrls(List<AnnotationImage> images) {
+		if (images == null || images.isEmpty()) {
+			return images;
+		}
+		images.forEach(this::withFreshBrowserUrl);
+		return images;
+	}
+
+	private AnnotationImage withFreshBrowserUrl(AnnotationImage image) {
+		if (image == null || image.getLocalPath() == null || image.getLocalPath().trim().isEmpty()) {
+			return image;
+		}
+		try {
+			OssClient storage = OssFactory.instance();
+			String objectKey = AnnotationImageObjectKey.normalize(image.getLocalPath(), storage.getBucketName());
+			if (objectKey == null || objectKey.isEmpty()) {
+				return image;
+			}
+			image.setLocalPath(storage.getPrivateUrl(objectKey, annotationMediaSignedUrlTtlSeconds, annotationMediaPublicEndpoint));
+		} catch (RuntimeException exception) {
+			log.warn("Failed to create annotation image access URL: imageId={}, error={}", image.getId(), exception.getMessage());
+		}
+		return image;
 	}
 
 }
