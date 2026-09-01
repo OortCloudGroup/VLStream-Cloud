@@ -93,6 +93,7 @@ export default defineConfig(async ({ mode }) => {
     }
   })()
   const webRtcTarget = env.VITE_WEBRTC_PROXY_TARGET || 'http://127.0.0.1:8000'
+  const cameraRtcTarget = env.VITE_CAMERA_RTC_PROXY_TARGET || 'http://146.56.220.167:8082'
   const wvpTarget = env.VITE_WVP_PROXY_TARGET || 'http://127.0.0.1:9080'
 
   const backendProxy = {
@@ -169,6 +170,13 @@ export default defineConfig(async ({ mode }) => {
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/bus\/webrtc-streamer-server/, '')
+        },
+        '/bus/camera-rtc': {
+          target: cameraRtcTarget,
+          changeOrigin: true,
+          secure: false,
+          ws: true,
+          rewrite: (path) => path.replace(/^\/bus\/camera-rtc/, '')
         },
         '/sso': {
           target: ssoTarget,

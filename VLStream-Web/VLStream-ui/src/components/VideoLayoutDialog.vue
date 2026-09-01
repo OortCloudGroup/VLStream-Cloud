@@ -178,7 +178,7 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import PTZControl from './PTZControl.vue'
 import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
-import { ensureOPlayer } from '@/utils/oplayer'
+import { ensureOPlayer, parseCameraRtcConfig } from '@/utils/oplayer'
 import { getStreamType } from '@/views/VideoAggregation/deviceUtils.js'
 
 // Props
@@ -334,22 +334,6 @@ const cleanupAllOPlayers = () => {
     ...oplayerContainers.value.keys()
   ])
   windowIndexes.forEach(cleanupOPlayer)
-}
-
-/**
- * from CameraRTC in Parse service and ID.
- */
-const parseCameraRtcConfig = (streamUrl) => {
-  const url = new URL(streamUrl)
-  const cameraId = url.pathname.split('/').filter(Boolean).pop()
-  if (!cameraId) {
-    throw new Error('CameraRTC 地址中缺少摄像头ID')
-  }
-
-  return {
-    cameraId,
-    socketUrl: url.origin.replace(/^http/, 'ws')
-  }
 }
 
 /**

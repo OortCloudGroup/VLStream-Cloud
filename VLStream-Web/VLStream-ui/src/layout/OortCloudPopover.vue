@@ -150,7 +150,8 @@
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { Coin, CopyDocument, DataAnalysis, Hide, Key, Link, SwitchButton, TrendCharts, View, Wallet } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { getModelHubUserInfo, logoutModelHubUser } from '@/api/modelHubUser'
+import { getModelHubUserInfo, logoutModelHubSession } from '@/api/modelHubUser'
+import { getPlatformAccessToken } from '@/utils/request'
 import {
   getOortCloudAccountStats,
   getOortCloudQuotaConfig,
@@ -167,6 +168,7 @@ import {
 
 const popoverVisible = ref(false)
 const authToken = ref(getModelHubAccessToken())
+const authVerified = ref(false)
 const loading = ref(false)
 const loadError = ref('')
 const selectedToken = ref(null)
@@ -199,7 +201,7 @@ const tokenUsage = reactive({
   unlimitedQuota: false
 })
 
-const isLoggedIn = computed(() => !!authToken.value)
+const isLoggedIn = computed(() => authVerified.value)
 
 const normalizeNumber = (value) => {
   const number = Number(value)
@@ -289,6 +291,11 @@ const parseConnection = (user) => {
 }
 
 const applyUserInfo = (response) => {
+  if (response?.code !== 200 || !response?.data) {
+    const error = new Error(response?.msg || response?.message || 'OortCloud 登录校验失败')
+    error.authenticationCode = response?.code
+    throw error
+  }
   const outer = response?.data || {}
   const user = outer.userInfo || outer.user || outer
   account.userId = user.userId || user.user_id || user.oort_uuid || user.id || ''
@@ -315,6 +322,7 @@ const applyTokenUsage = (data) => {
 }
 
 const resetAccountState = () => {
+  authVerified.value = false
   account.userId = ''
   account.userName = ''
   account.photo = ''
@@ -329,6 +337,18 @@ const resetAccountState = () => {
   applyTokenUsage({})
 }
 
+const isAuthenticationFailure = (error) => {
+  const status = Number(error?.response?.status)
+  const code = Number(error?.authenticationCode ?? error?.response?.data?.code)
+  const message = String(
+    error?.response?.data?.message ||
+    error?.response?.data?.msg ||
+    error?.message ||
+    ''
+  )
+  return status === 401 || status === 403 || [401, 403, 4004].includes(code) || /access\s*token.*(?:无效|失效)|无效的\s*access\s*token|校验不通过/i.test(message)
+}
+
 const loadAccount = async () => {
   authToken.value = getModelHubAccessToken()
   if (!authToken.value || loading.value) return
@@ -337,11 +357,10 @@ const loadAccount = async () => {
   loadError.value = ''
   connected.value = false
   try {
-    const [userResponse, tokens] = await Promise.all([
-      getModelHubUserInfo({ accessToken: authToken.value, desensitize: true }),
-      getOortCloudTokenList()
-    ])
+    const userResponse = await getModelHubUserInfo({ accessToken: authToken.value, desensitize: true })
     const user = applyUserInfo(userResponse)
+    const tokens = await getOortCloudTokenList()
+    authVerified.value = true
     if (!tokens.length) throw new Error('当前用户暂无可用令牌')
 
     const selectedStorageKey = `oortcloud.newApiTokenId.${account.userId || 'current'}`
@@ -356,6 +375,11 @@ const loadAccount = async () => {
       getOortCloudQuotaConfig(),
       getOortCloudTokenUsage(fullApiKey.value, modelBaseUrl)
     ])
+    const accountAuthError = results
+      .slice(0, 2)
+      .find((result) => result.status === 'rejected' && isAuthenticationFailure(result.reason))
+    if (accountAuthError) throw accountAuthError.reason
+
     const errors = []
     if (results[0].status === 'fulfilled') {
       const stats = results[0].value
@@ -378,7 +402,15 @@ const loadAccount = async () => {
     }
     loadError.value = errors.join('，')
   } catch (error) {
-    loadError.value = error?.response?.data?.message || error?.response?.data?.msg || error?.message || 'OortCloud 账户加载失败'
+    if (isAuthenticationFailure(error)) {
+      clearModelHubAuth()
+      stopRefreshTimer()
+      resetAccountState()
+      authToken.value = ''
+      ElMessage.warning('OortCloud 登录已失效，请重新登录')
+    } else {
+      loadError.value = error?.response?.data?.message || error?.response?.data?.msg || error?.message || 'OortCloud 账户加载失败'
+    }
   } finally {
     loading.value = false
   }
@@ -400,13 +432,14 @@ const startRefreshTimer = () => {
 
 const handlePopoverShow = async () => {
   authToken.value = getModelHubAccessToken()
-  if (isLoggedIn.value) await loadAccount()
+  if (authToken.value) await loadAccount()
   startRefreshTimer()
 }
 
-const handleAuthChanged = () => {
+const handleAuthChanged = async () => {
   authToken.value = getModelHubAccessToken()
-  if (!authToken.value) resetAccountState()
+  resetAccountState()
+  if (authToken.value) await loadAccount()
 }
 
 const copyApiKey = async () => {
@@ -420,19 +453,18 @@ const copyApiKey = async () => {
 }
 
 const handleVisitOortCloud = () => {
-  openOortCloudModelHub()
+  openOortCloudModelHub(getPlatformAccessToken())
 }
 
 const handleLogout = async () => {
   try {
-    await logoutModelHubUser()
+    await logoutModelHubSession()
   } catch {
     ElMessage.warning('OortCloud 远端退出失败，已清理本地登录状态')
   }
   if (account.userId) {
     localStorage.removeItem(`oortcloud.newApiTokenId.${account.userId}`)
   }
-  clearModelHubAuth()
   stopRefreshTimer()
   resetAccountState()
   authToken.value = ''
@@ -449,7 +481,11 @@ const handleLogin = async () => {
   startModelHubLogin(null, { returnToCurrent: true })
 }
 
-onMounted(() => window.addEventListener('modelHubAuthChanged', handleAuthChanged))
+onMounted(async () => {
+  window.addEventListener('modelHubAuthChanged', handleAuthChanged)
+  authToken.value = getModelHubAccessToken()
+  if (authToken.value) await loadAccount()
+})
 onBeforeUnmount(() => {
   stopRefreshTimer()
   window.removeEventListener('modelHubAuthChanged', handleAuthChanged)

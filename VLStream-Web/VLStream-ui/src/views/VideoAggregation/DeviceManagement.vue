@@ -523,7 +523,7 @@ import {ensureWebRTCBackendConfig, getWebRTCBackendConfig, WEBRTC_SERVER_BASE_UR
 
 // Import and
 import {formatDateTime, getStreamType, getYouTubeEmbedUrl} from './deviceUtils.js'
-import { CAMERA_RTC_SOCKET_URL, ensureOPlayer } from '@/utils/oplayer'
+import { CAMERA_RTC_SOCKET_URL, ensureOPlayer, parseCameraRtcConfig } from '@/utils/oplayer'
 import { clacPXToVW } from '@/utils/index'
 
 const router = useRouter()
@@ -1110,11 +1110,8 @@ const createDeviceOPlayerOptions = async (streamUrl) => {
   }
 
   if (streamType === 'cameraRTC') {
-    const url = new URL(streamUrl)
-    const cameraId = url.pathname.split('/').filter(Boolean).pop()
-    if (!cameraId) throw new Error('CameraRTC 地址中缺少摄像头ID')
-
-    playerConfig.webRTCSocketURL = url.origin.replace(/^http/, 'ws')
+    const { cameraId, socketUrl } = parseCameraRtcConfig(streamUrl)
+    playerConfig.webRTCSocketURL = socketUrl
     return { playerConfig, playConfig: { type: 'cameraRTC', src: cameraId } }
   }
 

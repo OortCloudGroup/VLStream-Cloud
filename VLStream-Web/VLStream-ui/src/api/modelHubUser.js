@@ -6,7 +6,7 @@
  */
 
 import axios from 'axios'
-import { getModelHubAccessToken } from '@/utils/modelHubAuth'
+import { clearModelHubAuth, getModelHubAccessToken } from '@/utils/modelHubAuth'
 
 /**
  * Model Hub SSO
@@ -66,6 +66,14 @@ export function logoutModelHubUser() {
   const accessToken = getModelHubAccessToken()
   const request = createModelHubRequest(accessToken)
   return request.post('/sso/v1/logout', { accessToken })
+}
+
+export async function logoutModelHubSession() {
+  try {
+    await logoutModelHubUser()
+  } finally {
+    clearModelHubAuth()
+  }
 }
 
 /* * userinfo */

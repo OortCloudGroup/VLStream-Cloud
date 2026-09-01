@@ -111,6 +111,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { AuthManager } from '@/utils/auth'
 import { getUserInfo, logoutUser } from '@/api/auth'
+import { logoutModelHubSession } from '@/api/modelHubUser'
 import { getTenantMode, getUserTenants, switchTenant as switchTenantApi } from '@/api/system/localAuth'
 import {
   User,
@@ -426,10 +427,15 @@ const handleLogout = async () => {
     return
   }
 
-  try {
-    await logoutUser()
-  } catch (error) {
-    console.warn('后端登出接口调用失败，继续清理本地登录状态:', error)
+  const [oortCloudLogout, vlstreamLogout] = await Promise.allSettled([
+    logoutModelHubSession(),
+    logoutUser()
+  ])
+  if (oortCloudLogout.status === 'rejected') {
+    console.warn('OortCloud 远端登出接口调用失败，已清理本地登录状态:', oortCloudLogout.reason)
+  }
+  if (vlstreamLogout.status === 'rejected') {
+    console.warn('VLStream 后端登出接口调用失败，继续清理本地登录状态:', vlstreamLogout.reason)
   }
 
   authManager.clearAllTokens()

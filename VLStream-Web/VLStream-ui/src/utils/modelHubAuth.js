@@ -14,7 +14,7 @@
 
 const PLATFORM_BASE_URL = 'https://workup-dev.myoumuamua.com:6433'
 const PLATFORM_LOGIN_URL = import.meta.env.VITE_PLATFORM_LOGIN_URL || `${PLATFORM_BASE_URL}/bus/apaas-web/loginPage/index.html`
-const OORTCLOUD_MODEL_HUB_URL = import.meta.env.VITE_OORTCLOUD_MODEL_HUB_URL || 'https://vls.oortcloudsmart.com/zh/ModelHub/ModelHub'
+const OORTCLOUD_MODEL_HUB_URL = import.meta.env.VITE_OORTCLOUD_MODEL_HUB_URL || 'https://vls.oortcloudsmart.com/zh/dashboard'
 const APP_NAME = import.meta.env.VITE_PLATFORM_APP_NAME || 'VLStream'
 /**
  * need to ?query:
@@ -249,10 +249,10 @@ export function clearPendingModelHubPublish() {
   sessionStorage.removeItem(PENDING_PUBLISH_KEY)
 }
 
-/* * Model Hub. Token, accessToken query. */
-export function openOortCloudModelHub() {
+/* * Model Hub. Prefer the caller-provided platform token, then Model Hub auth. */
+export function openOortCloudModelHub(platformAccessToken = '') {
   const targetUrl = new URL(OORTCLOUD_MODEL_HUB_URL)
-  const accessToken = getModelHubAccessToken()
+  const accessToken = platformAccessToken || getModelHubAccessToken()
   if (accessToken) {
     targetUrl.searchParams.set('accessToken', accessToken)
   }

@@ -5,6 +5,8 @@
  * Updated by: ChaoQun Lei
  */
 
+import { parseCameraRtcConfig } from './oplayer'
+
 const OPLAYER_SCRIPT_URL = `${import.meta.env.BASE_URL}OPlayer.min.js`
 
 let oplayerScriptLoader
@@ -58,10 +60,8 @@ export function createOPlayerOptions(streamUrl) {
   const playerConfig = { debuggerMode: false, autoSize: true, backgroundColor: '#000000', showHeader: true }
 
   if (streamType === 'cameraRTC') {
-    const url = new URL(streamUrl)
-    const cameraId = url.pathname.split('/').filter(Boolean).pop()
-    if (!cameraId) throw new Error('CameraRTC 地址中缺少摄像头 ID')
-    playerConfig.webRTCSocketURL = url.origin.replace(/^http/, 'ws')
+    const { cameraId, socketUrl } = parseCameraRtcConfig(streamUrl)
+    playerConfig.webRTCSocketURL = socketUrl
     return { playerConfig, playConfig: { type: 'cameraRTC', src: cameraId } }
   }
 

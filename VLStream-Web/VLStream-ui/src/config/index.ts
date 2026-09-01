@@ -53,8 +53,9 @@ if (env === 'lt') {
   config.gateWay = 'bus/'
 }
 
-// webSocket
-config.webRTCSocketURL = 'ws://146.56.220.167:8082'
+// CameraRTC WebSocket signaling follows the current page origin and is
+// forwarded by the frontend reverse proxy.
+config.webRTCSocketURL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/bus/camera-rtc`
 
 //
 // config.URL = 'http://192.168.88.52:32610'

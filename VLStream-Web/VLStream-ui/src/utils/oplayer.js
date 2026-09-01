@@ -5,11 +5,10 @@
  * Updated by: ChaoQun Lei
  */
 
-const OPLAYER_SCRIPT_URL = import.meta.env.DEV
-  ? '/bus/vls-ui/OPlayer.min.js'
-  : 'http://oort.oortcloudsmart.com:21410/bus/vls-ui/OPlayer.min.js'
+const OPLAYER_SCRIPT_URL = `${import.meta.env.BASE_URL}OPlayer.min.js`
 
-export const CAMERA_RTC_SOCKET_URL = 'ws://146.56.220.167:8082'
+const cameraRtcSocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+export const CAMERA_RTC_SOCKET_URL = `${cameraRtcSocketProtocol}//${window.location.host}/bus/camera-rtc`
 
 let oplayerScriptLoader = null
 
@@ -76,7 +75,7 @@ export const parseCameraRtcConfig = (streamUrl) => {
   if (!cameraId) throw new Error('CameraRTC URL is missing camera ID')
   return {
     cameraId: decodeURIComponent(cameraId),
-    socketUrl: url.origin.replace(/^http/, 'ws')
+    socketUrl: CAMERA_RTC_SOCKET_URL
   }
 }
 

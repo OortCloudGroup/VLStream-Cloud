@@ -229,7 +229,7 @@ import { clacPXToVW } from '@/utils/index'
 import { getDeviceList, getDeviceTree } from '@/api/device'
 import { getDeviceRecords } from '@/api/videoRecord'
 import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
-import { ensureOPlayer } from '@/utils/oplayer'
+import { ensureOPlayer, parseCameraRtcConfig } from '@/utils/oplayer'
 import { getBaseURL } from '@/utils/request'
 import { getStreamType } from './deviceUtils.js'
 
@@ -732,13 +732,8 @@ const createPlayerOptions = async (streamUrl) => {
   }
 
   if (streamType === 'cameraRTC') {
-    const url = new URL(streamUrl)
-    const cameraId = url.pathname.split('/').filter(Boolean).pop()
-    if (!cameraId) {
-      throw new Error('CameraRTC 地址中缺少摄像头ID')
-    }
-
-    playerConfig.webRTCSocketURL = url.origin.replace(/^http/, 'ws')
+    const { cameraId, socketUrl } = parseCameraRtcConfig(streamUrl)
+    playerConfig.webRTCSocketURL = socketUrl
     return {
       playerConfig,
       playConfig: { type: 'cameraRTC', src: cameraId }
