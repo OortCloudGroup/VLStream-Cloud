@@ -501,7 +501,8 @@ const menuRoutesMap = {
       path: 'event-management-menu',
       meta: { title: '事件管理', icon: '事件' },
       children: [
-        { path: '/event-management', meta: { title: '主动安全', icon: '监控告警' } }
+        { path: '/event-management', meta: { title: '主动安全', icon: '监控告警' } },
+        { path: '/llm-review-tasks', meta: { title: '大模型复核', icon: '智能分析结果' } }
       ]
     },
     {
@@ -541,6 +542,7 @@ const menuRoutesMap = {
   ],
   'algorithm-warehouse': [
     { path: '/algorithm-management', meta: { title: '算法管理', icon: '算法管理' } },
+    { path: '/llm-provider-management', meta: { title: '大模型管理', icon: '算法管理' } },
     {
       path: '/algorithm-training-platform',
       meta: { title: '算法训练平台', icon: '算法训练平台' },
@@ -583,6 +585,7 @@ const getMenuRoutes = (menuKey) => {
 
   return [
     { path: '/event-management', meta: { title: '事件管理', icon: '事件' } },
+    { path: '/llm-review-tasks', meta: { title: '大模型复核', icon: '智能分析结果' } },
     ...routes.filter(item => item.path !== 'event-management-menu'
       && item.path !== '/active-safety/work-orders'
       && item.path !== '/active-safety/settings')

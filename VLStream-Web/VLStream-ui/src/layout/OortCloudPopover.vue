@@ -10,136 +10,90 @@
     v-model:visible="popoverVisible"
     placement="bottom-end"
     trigger="hover"
-    :width="380"
+    :width="560"
     :offset="10"
     popper-class="oortcloud-welcome-popper"
     @show="handlePopoverShow"
     @hide="stopRefreshTimer"
   >
     <template #reference>
-      <button
-        class="oortcloud-entry"
-        :class="{ 'is-logged-in': isLoggedIn }"
-        type="button"
-        aria-label="打开 OortCloud"
-      >
+      <button class="oortcloud-entry" :class="{ 'is-logged-in': isLoggedIn }" type="button" aria-label="打开 OortCloud">
         <img class="entry-logo" src="@/assets/img/OortCloud@3x.png" alt="" aria-hidden="true" />
         <span>OortCloud</span>
       </button>
     </template>
 
-    <div
-      v-loading="loading"
-      class="oortcloud-card"
-      :class="{ 'account-view': isLoggedIn }"
-    >
+    <div v-loading="loading" class="oortcloud-card" :class="{ 'account-view': isLoggedIn }">
       <div class="brand">
         <img class="brand-logo" src="@/assets/img/OortCloud@3x.png" alt="" aria-hidden="true" />
         <div class="brand-copy">
           <div class="brand-name">OortCloud</div>
-          <div class="brand-slogan">安全 合规AI能力</div>
+          <div class="brand-slogan">安全、合规AI能力</div>
         </div>
       </div>
 
-      <h2>欢迎使用 OortCloud！</h2>
-
       <template v-if="!isLoggedIn">
-        <p class="description">
-          订阅 OortCloud Token Plan，20元/月起，Qwen，DeepSeek，Kimi，GLM等顶级模型尝鲜，更有OortCodex和DSH For OortCloud Work以及VLStream数据分析生态共享额度，高效开启AI生产力。
-        </p>
-
-        <p class="prompt">
-          开始使用，登录你的 OortCloud 账户。获得强大模型、高质量的工程、成本分析等。
-        </p>
-
-        <el-button class="login-button" type="primary" round @click="handleLogin">
-          登录 OortCloud
-        </el-button>
+        <h2>欢迎使用 OortCloud！</h2>
+        <p class="description">订阅 OortCloud Token Plan，20元/月起，Qwen，DeepSeek，Kimi，GLM等顶级模型尝鲜，更有OortCodex和DSH For OortCloud Work以及VLStream数据分析生态共享额度，高效开启AI生产力。</p>
+        <p class="prompt">开始使用，登录你的 OortCloud 账户。获得强大模型、高质量的工程、成本分析等。</p>
+        <el-button class="login-button" type="primary" round @click="handleLogin">登录 OortCloud</el-button>
       </template>
 
       <template v-else>
-        <div class="account-profile">
-          <el-avatar :size="38" :src="account.photo">
-            {{ account.userName.slice(0, 1) || 'O' }}
-          </el-avatar>
-          <span>{{ account.userName || 'OortCloud 用户' }}</span>
+        <div class="welcome-row">
+          <strong>欢迎</strong>
+          <el-avatar :size="36" :src="account.photo">{{ accountInitial }}</el-avatar>
+          <strong class="user-name">{{ account.userName || 'OortCloud 用户' }}</strong>
+          <span v-if="accountBadge" class="plan-badge">{{ accountBadge }}</span>
         </div>
 
-        <el-alert
-          v-if="loadError"
-          class="account-error"
-          :title="loadError"
-          type="warning"
-          :closable="false"
-          show-icon
-        />
+        <el-alert v-if="loadError" class="account-error" :title="loadError" type="warning" :closable="false" show-icon />
 
-        <section class="info-panel statistics-panel">
-          <div class="panel-title orange-title">账户统计</div>
-          <div class="statistics-grid">
-            <div class="stat-item">
-              <span class="stat-icon"><el-icon><Wallet /></el-icon></span>
-              <div><strong>{{ formattedAccountQuota }}</strong><span>当前余额</span></div>
-            </div>
-            <div class="stat-item">
-              <span class="stat-icon"><el-icon><TrendCharts /></el-icon></span>
-              <div><strong>{{ formattedAccountUsed }}</strong><span>历史消耗</span></div>
-            </div>
-            <div class="stat-item">
-              <span class="stat-icon"><el-icon><DataAnalysis /></el-icon></span>
-              <div><strong>{{ formattedRequestCount }}</strong><span>请求次数</span></div>
-            </div>
+        <section class="content-section">
+          <h3>用量明细</h3>
+          <div class="resource-list">
+            <article v-for="resource in resources" :key="resource.id" class="content-panel resource-card">
+              <div class="resource-heading">{{ resource.title }}</div>
+              <p class="resource-description">{{ resource.description }}</p>
+              <div class="resource-usage">
+                <span><strong>{{ formatCredits(resource.usedCredits) }}</strong> / {{ resource.unlimited ? '无限' : formatCredits(resource.totalCredits) }}<template v-if="!resource.unlimited">（已使用{{ resource.percentage }}%）</template></span>
+                <span v-if="!resource.unlimited">剩余 <strong>{{ formatCredits(resource.remainingCredits) }}</strong></span>
+              </div>
+              <el-progress v-if="!resource.unlimited" :percentage="resource.percentage" :show-text="false" :stroke-width="5" />
+              <div v-else class="unlimited-line">当前订阅为无限额度</div>
+            </article>
+
+            <article class="content-panel upgrade-card">
+              <div class="resource-heading">获取更多Credits</div>
+              <p class="resource-description">你可以随时通过升级订阅计划或购买资源包，获取更多Credits</p>
+              <el-button type="primary" class="upgrade-button" @click="handleUpgrade">升级至企业版</el-button>
+            </article>
           </div>
         </section>
 
-        <section class="info-panel token-panel">
-          <div class="panel-title token-title">
-            <el-icon><Coin /></el-icon>
-            <span>令牌信息</span>
-          </div>
-          <div class="token-summary">
-            <div>令牌名称: {{ tokenUsage.name || selectedToken?.name || '--' }}</div>
-            <div>密钥金额: {{ formattedTokenUsed }} / {{ formattedTokenQuota }}</div>
-            <div>额度: {{ formattedRawUsed }} / {{ formattedRawQuota }}</div>
-            <div>剩余额度: {{ formattedTokenAvailable }}（{{ formattedRawAvailable }}）</div>
-            <div v-if="tokenUsage.group || selectedToken?.group">
-              分组: {{ tokenUsage.group || selectedToken?.group }}
+        <section class="content-section records-section">
+          <h3>Credits记录</h3>
+          <div class="content-panel records-panel">
+            <div class="records-toolbar">
+              <el-button type="primary" :loading="recordsLoading" @click="loadUsageRecords"><el-icon><Refresh /></el-icon>刷新</el-button>
+              <el-date-picker v-model="dateRange" type="daterange" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :clearable="false" @change="loadUsageRecords" />
             </div>
-          </div>
+            <p class="records-note">当前您已享受到模型的优惠价格。下方明细为按对话合并计费后的汇总数据，具体消耗以此为准。</p>
 
-          <div class="token-divider"></div>
-
-          <div class="panel-title current-token-title">
-            <el-icon><Key /></el-icon>
-            <span>当前令牌</span>
-          </div>
-          <div class="current-token-card">
-            <span class="current-token-icon"><el-icon><Key /></el-icon></span>
-            <div class="current-token-copy">
-              <strong>{{ selectedToken?.name || '--' }}</strong>
-              <span>{{ selectedToken?.group || 'default' }} · {{ displayedApiKey }}</span>
-            </div>
-            <div class="connection-state" :class="{ disconnected: !connected }">
-              <i></i>{{ connected ? '已连接' : '未连接' }}
-            </div>
-            <el-button class="icon-button" circle :disabled="!fullApiKey" @click="showFullKey = !showFullKey">
-              <el-icon><Hide v-if="showFullKey" /><View v-else /></el-icon>
-            </el-button>
-            <el-button class="icon-button" circle :disabled="!fullApiKey" @click="copyApiKey">
-              <el-icon><CopyDocument /></el-icon>
-            </el-button>
+            <el-table v-if="usageRecords.length" :data="usageRecords" class="records-table" size="small">
+              <el-table-column label="时间" min-width="112"><template #default="scope">{{ formatRecordTime(scope.row.created_at) }}</template></el-table-column>
+              <el-table-column label="来源" min-width="115" show-overflow-tooltip><template #default="scope">{{ scope.row.content || scope.row.group || '--' }}</template></el-table-column>
+              <el-table-column label="模型分级" min-width="90" show-overflow-tooltip><template #default="scope">{{ scope.row.model_name || '--' }}</template></el-table-column>
+              <el-table-column label="Credits" min-width="78"><template #default="scope">{{ formatCredits(scope.row.credits) }}</template></el-table-column>
+              <el-table-column label="参考费用" min-width="78"><template #default="scope">{{ formatReferenceCost(scope.row) }}</template></el-table-column>
+            </el-table>
+            <el-empty v-else :image-size="54" description="当前时间范围内暂无 Credits 记录" />
           </div>
         </section>
 
         <div class="account-actions">
-          <el-button class="account-action visit-button" type="primary" round @click="handleVisitOortCloud">
-            <el-icon><Link /></el-icon>
-            访问 OortCloud
-          </el-button>
-          <el-button class="account-action logout-button" round @click="handleLogout">
-            <el-icon><SwitchButton /></el-icon>
-            退出登录
-          </el-button>
+          <el-button class="account-action visit-button" type="primary" round @click="handleVisitOortCloud"><el-icon><Link /></el-icon>访问 OortCloud</el-button>
+          <el-button class="account-action logout-button" round @click="handleLogout"><el-icon><SwitchButton /></el-icon>退出登录</el-button>
         </div>
       </template>
     </div>
@@ -147,148 +101,88 @@
 </template>
 
 <script setup>
-import { computed, defineComponent, h, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import { Coin, CopyDocument, DataAnalysis, Hide, Key, Link, SwitchButton, TrendCharts, View, Wallet } from '@element-plus/icons-vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { Link, Refresh, SwitchButton } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getModelHubUserInfo, logoutModelHubSession } from '@/api/modelHubUser'
 import { getPlatformAccessToken } from '@/utils/request'
-import {
-  getOortCloudAccountStats,
-  getOortCloudQuotaConfig,
-  getOortCloudTokenKey,
-  getOortCloudTokenList,
-  getOortCloudTokenUsage
-} from '@/api/oortCloudAccount'
-import {
-  clearModelHubAuth,
-  getModelHubAccessToken,
-  openOortCloudModelHub,
-  startModelHubLogin
-} from '@/utils/modelHubAuth'
+import { getOortCloudAccountStats, getOortCloudQuotaConfig, getOortCloudSubscriptionPlans, getOortCloudSubscriptions, getOortCloudUsageLogs } from '@/api/oortCloudAccount'
+import { clearModelHubAuth, getModelHubAccessToken, openOortCloudModelHub, openOortCodexPricing, startModelHubLogin } from '@/utils/modelHubAuth'
 
 const popoverVisible = ref(false)
 const authToken = ref(getModelHubAccessToken())
 const authVerified = ref(false)
 const loading = ref(false)
+const recordsLoading = ref(false)
 const loadError = ref('')
-const selectedToken = ref(null)
-const fullApiKey = ref('')
-const showFullKey = ref(false)
-const connected = ref(false)
+const subscriptions = ref([])
+const plans = ref([])
+const usageRecords = ref([])
+const creditsPerCny = ref(25)
 let refreshTimer = null
 
-const account = reactive({
-  userId: '',
-  userName: '',
-  photo: '',
-  quota: null,
-  usedQuota: null,
-  requestCount: null
-})
-const quotaConfig = reactive({
-  quotaPerUnit: 0,
-  displayType: 'USD',
-  usdExchangeRate: 1,
-  customSymbol: '¤',
-  customExchangeRate: 1
-})
-const tokenUsage = reactive({
-  name: '',
-  group: '',
-  quota: null,
-  usedQuota: null,
-  availableQuota: null,
-  unlimitedQuota: false
-})
+const today = new Date()
+const sevenDaysAgo = new Date(today)
+sevenDaysAgo.setDate(today.getDate() - 6)
+sevenDaysAgo.setHours(0, 0, 0, 0)
+const dateRange = ref([sevenDaysAgo, today])
 
+const account = reactive({ userId: '', userName: '', photo: '', totalCredits: 0, usedCredits: 0, remainingCredits: 0 })
 const isLoggedIn = computed(() => authVerified.value)
+const accountInitial = computed(() => (account.userName || 'O').slice(0, 1))
+const planMap = computed(() => new Map(plans.value.map((plan) => [Number(plan.id), plan])))
+const accountBadge = computed(() => {
+  if (subscriptions.value.length > 1) return '多订阅'
+  if (subscriptions.value.length === 1) return planMap.value.get(Number(subscriptions.value[0].plan_id))?.title || '订阅版'
+  return '按量版'
+})
 
-const normalizeNumber = (value) => {
+const normalizeNumber = (value, fallback = 0) => {
   const number = Number(value)
-  return Number.isFinite(number) ? number : null
+  return Number.isFinite(number) ? number : fallback
 }
 
-const formatRawQuota = (value) => {
-  const number = normalizeNumber(value)
-  return number === null ? '--' : Math.round(number).toLocaleString('zh-CN')
+const normalizePercentage = (used, total) => {
+  const denominator = normalizeNumber(total)
+  if (denominator <= 0) return 0
+  return Math.min(100, Math.max(0, Math.round(normalizeNumber(used) / denominator * 100)))
 }
 
-const formatQuota = (value) => {
-  const number = normalizeNumber(value)
-  if (number === null) return '--'
-  const perUnit = quotaConfig.quotaPerUnit
-  if (!perUnit) return formatRawQuota(number)
-  const usd = number / perUnit
-  switch (quotaConfig.displayType) {
-    case 'CNY':
-      return `¥${(usd * quotaConfig.usdExchangeRate).toFixed(2)}`
-    case 'TOKENS':
-      return formatRawQuota(number)
-    case 'CUSTOM':
-      return `${quotaConfig.customSymbol}${(usd * quotaConfig.customExchangeRate).toFixed(2)}`
-    default:
-      return `$${usd.toFixed(2)}`
+const resources = computed(() => {
+  if (!subscriptions.value.length) {
+    return [{ id: 'wallet', title: '按量付费资源', description: '当前账户公共 Credits 钱包', totalCredits: account.totalCredits, usedCredits: account.usedCredits, remainingCredits: account.remainingCredits, unlimited: false, percentage: normalizePercentage(account.usedCredits, account.totalCredits) }]
   }
-}
-
-const formattedAccountQuota = computed(() => formatQuota(account.quota))
-const formattedAccountUsed = computed(() => formatQuota(account.usedQuota))
-const formattedRequestCount = computed(() => {
-  const value = normalizeNumber(account.requestCount)
-  return value === null ? '--' : Math.round(value).toLocaleString('zh-CN')
-})
-const formattedTokenQuota = computed(() => tokenUsage.unlimitedQuota ? '∞' : formatQuota(tokenUsage.quota))
-const formattedTokenUsed = computed(() => formatQuota(tokenUsage.usedQuota))
-const formattedTokenAvailable = computed(() => tokenUsage.unlimitedQuota ? '∞' : formatQuota(tokenUsage.availableQuota))
-const formattedRawQuota = computed(() => tokenUsage.unlimitedQuota ? '∞' : formatRawQuota(tokenUsage.quota))
-const formattedRawUsed = computed(() => formatRawQuota(tokenUsage.usedQuota))
-const formattedRawAvailable = computed(() => tokenUsage.unlimitedQuota ? '∞' : formatRawQuota(tokenUsage.availableQuota))
-const displayedApiKey = computed(() => {
-  if (!fullApiKey.value) return selectedToken.value?.maskedKey || '--'
-  if (showFullKey.value) return fullApiKey.value
-  return selectedToken.value?.maskedKey || `${fullApiKey.value.slice(0, 7)}********${fullApiKey.value.slice(-4)}`
-})
-
-const OortCloudLogo = defineComponent({
-  name: 'OortCloudLogo',
-  render() {
-    return h(
-      'svg',
-      {
-        viewBox: '0 0 80 80',
-        fill: 'none',
-        xmlns: 'http://www.w3.org/2000/svg',
-        'aria-hidden': 'true'
-      },
-      [
-        h('path', {
-          d: 'M22 32C9.85 32 0 40.95 0 52s9.85 20 22 20c8.27 0 14.22-4.08 18-9.49C43.78 67.92 49.73 72 58 72c12.15 0 22-8.95 22-20s-9.85-20-22-20c-8.27 0-14.22 4.08-18 9.49C36.22 36.08 30.27 32 22 32Zm0 11c6.25 0 9.23 3.74 12.05 9C31.23 57.26 28.25 61 22 61c-5.52 0-10-4.03-10-9s4.48-9 10-9Zm36 0c5.52 0 10 4.03 10 9s-4.48 9-10 9c-6.25 0-9.23-3.74-12.05-9C48.77 46.74 51.75 43 58 43Z',
-          fill: 'currentColor'
-        }),
-        h('path', {
-          d: 'M63 2c.76 7.7 4.3 11.24 12 12-7.7.76-11.24 4.3-12 12-.76-7.7-4.3-11.24-12-12 7.7-.76 11.24-4.3 12-12Z',
-          fill: 'currentColor'
-        }),
-        h('path', {
-          d: 'M75 22c.38 4.62 2.38 6.62 7 7-4.62.38-6.62 2.38-7 7-.38-4.62-2.38-6.62-7-7 4.62-.38 6.62-2.38 7-7Z',
-          fill: 'currentColor'
-        })
-      ]
-    )
-  }
-})
-
-const parseConnection = (user) => {
-  let connection = user?.newapi_channel_conn || user?.newApiConnection || user?.new_api
-  if (typeof connection === 'string') {
-    try {
-      connection = JSON.parse(connection)
-    } catch {
-      connection = null
+  return subscriptions.value.map((subscription) => {
+    const plan = planMap.value.get(Number(subscription.plan_id))
+    const unlimited = normalizeNumber(subscription.amount_total) === 0
+    return {
+      id: subscription.id,
+      title: subscriptions.value.length > 1 ? `${plan?.title || '订阅资源'} · 订阅 #${subscription.id}` : (plan?.title || '订阅版本的资源'),
+      description: `当前计划的月度配额与使用情况（有效期：${formatDate(subscription.start_time)} - ${formatDate(subscription.end_time)}）。`,
+      totalCredits: subscription.total_credits,
+      usedCredits: subscription.used_credits,
+      remainingCredits: subscription.remaining_credits,
+      unlimited,
+      percentage: unlimited ? 0 : normalizePercentage(subscription.used_credits, subscription.total_credits)
     }
-  }
-  return connection && typeof connection === 'object' ? connection : {}
+  })
+})
+
+const formatCredits = (value) => normalizeNumber(value).toLocaleString('zh-CN', { maximumFractionDigits: 6 })
+const formatDate = (timestamp) => {
+  const value = normalizeNumber(timestamp)
+  return value ? new Date(value * 1000).toLocaleDateString('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric' }) : '--'
 }
+const formatRecordTime = (timestamp) => {
+  const value = normalizeNumber(timestamp)
+  return value ? new Date(value * 1000).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : '--'
+}
+const formatReferenceCost = (record) => {
+  const directAmount = normalizeNumber(record?.amount_cny, NaN)
+  const amount = Number.isFinite(directAmount) ? directAmount : normalizeNumber(record?.credits) / Math.max(creditsPerCny.value, 1)
+  return `¥${amount.toFixed(2)}`
+}
+const normalizeSubscriptions = (data) => (Array.isArray(data?.subscriptions) ? data.subscriptions : []).map((item) => item?.subscription || item).filter((item) => item && item.id !== undefined)
 
 const applyUserInfo = (response) => {
   if (response?.code !== 200 || !response?.data) {
@@ -296,111 +190,73 @@ const applyUserInfo = (response) => {
     error.authenticationCode = response?.code
     throw error
   }
-  const outer = response?.data || {}
+  const outer = response.data
   const user = outer.userInfo || outer.user || outer
   account.userId = user.userId || user.user_id || user.oort_uuid || user.id || ''
   account.userName = user.userName || user.user_name || user.oort_name || user.realName || user.name || ''
   account.photo = user.photo || user.oort_photo || user.picture || user.avatar || ''
-  return user
-}
-
-const applyQuotaConfig = (data) => {
-  quotaConfig.quotaPerUnit = normalizeNumber(data?.quota_per_unit) || 0
-  quotaConfig.displayType = String(data?.quota_display_type || 'USD').toUpperCase()
-  quotaConfig.usdExchangeRate = normalizeNumber(data?.usd_exchange_rate) || 1
-  quotaConfig.customSymbol = data?.custom_currency_symbol || '¤'
-  quotaConfig.customExchangeRate = normalizeNumber(data?.custom_currency_exchange_rate) || 1
-}
-
-const applyTokenUsage = (data) => {
-  tokenUsage.name = data?.name || ''
-  tokenUsage.group = data?.group || data?.group_name || ''
-  tokenUsage.quota = data?.quota ?? data?.total_quota ?? data?.total_granted ?? null
-  tokenUsage.usedQuota = data?.used_quota ?? data?.usedQuota ?? data?.total_used ?? null
-  tokenUsage.availableQuota = data?.available_quota ?? data?.total_available ?? null
-  tokenUsage.unlimitedQuota = data?.unlimited_quota === true
-}
-
-const resetAccountState = () => {
-  authVerified.value = false
-  account.userId = ''
-  account.userName = ''
-  account.photo = ''
-  account.quota = null
-  account.usedQuota = null
-  account.requestCount = null
-  selectedToken.value = null
-  fullApiKey.value = ''
-  showFullKey.value = false
-  connected.value = false
-  loadError.value = ''
-  applyTokenUsage({})
 }
 
 const isAuthenticationFailure = (error) => {
   const status = Number(error?.response?.status)
   const code = Number(error?.authenticationCode ?? error?.response?.data?.code)
-  const message = String(
-    error?.response?.data?.message ||
-    error?.response?.data?.msg ||
-    error?.message ||
-    ''
-  )
+  const message = String(error?.response?.data?.message || error?.response?.data?.msg || error?.message || '')
   return status === 401 || status === 403 || [401, 403, 4004].includes(code) || /access\s*token.*(?:无效|失效)|无效的\s*access\s*token|校验不通过/i.test(message)
+}
+
+const resetAccountState = () => {
+  authVerified.value = false
+  Object.assign(account, { userId: '', userName: '', photo: '', totalCredits: 0, usedCredits: 0, remainingCredits: 0 })
+  subscriptions.value = []
+  plans.value = []
+  usageRecords.value = []
+  loadError.value = ''
+}
+
+const loadUsageRecords = async () => {
+  if (!authVerified.value || recordsLoading.value || !dateRange.value?.length) return
+  recordsLoading.value = true
+  try {
+    const start = new Date(dateRange.value[0])
+    const end = new Date(dateRange.value[1])
+    start.setHours(0, 0, 0, 0)
+    end.setHours(23, 59, 59, 999)
+    const data = await getOortCloudUsageLogs({ p: 1, page_size: 20, type: 2, start_timestamp: Math.floor(start.getTime() / 1000), end_timestamp: Math.floor(end.getTime() / 1000) })
+    usageRecords.value = Array.isArray(data?.items) ? data.items : []
+  } catch (error) {
+    loadError.value = error?.response?.data?.message || error?.message || 'Credits 记录加载失败'
+  } finally {
+    recordsLoading.value = false
+  }
 }
 
 const loadAccount = async () => {
   authToken.value = getModelHubAccessToken()
   if (!authToken.value || loading.value) return
-
   loading.value = true
   loadError.value = ''
-  connected.value = false
   try {
     const userResponse = await getModelHubUserInfo({ accessToken: authToken.value, desensitize: true })
-    const user = applyUserInfo(userResponse)
-    const tokens = await getOortCloudTokenList()
+    applyUserInfo(userResponse)
     authVerified.value = true
-    if (!tokens.length) throw new Error('当前用户暂无可用令牌')
-
-    const selectedStorageKey = `oortcloud.newApiTokenId.${account.userId || 'current'}`
-    const savedId = Number(localStorage.getItem(selectedStorageKey))
-    selectedToken.value = tokens.find((token) => token.id === savedId) || tokens[0]
-    localStorage.setItem(selectedStorageKey, String(selectedToken.value.id))
-    fullApiKey.value = await getOortCloudTokenKey(selectedToken.value.id)
-
-    const modelBaseUrl = parseConnection(user).url
-    const results = await Promise.allSettled([
-      getOortCloudAccountStats(),
-      getOortCloudQuotaConfig(),
-      getOortCloudTokenUsage(fullApiKey.value, modelBaseUrl)
-    ])
-    const accountAuthError = results
-      .slice(0, 2)
-      .find((result) => result.status === 'rejected' && isAuthenticationFailure(result.reason))
-    if (accountAuthError) throw accountAuthError.reason
-
+    const results = await Promise.allSettled([getOortCloudAccountStats(), getOortCloudSubscriptions(), getOortCloudSubscriptionPlans(), getOortCloudQuotaConfig()])
+    const authError = results.find((result) => result.status === 'rejected' && isAuthenticationFailure(result.reason))
+    if (authError) throw authError.reason
     const errors = []
     if (results[0].status === 'fulfilled') {
       const stats = results[0].value
-      account.quota = stats?.quota ?? null
-      account.usedQuota = stats?.used_quota ?? null
-      account.requestCount = stats?.request_count ?? null
-    } else {
-      errors.push('账户统计加载失败')
-    }
-    if (results[1].status === 'fulfilled') {
-      applyQuotaConfig(results[1].value)
-    } else {
-      errors.push('额度配置加载失败')
-    }
-    if (results[2].status === 'fulfilled') {
-      applyTokenUsage(results[2].value)
-      connected.value = true
-    } else {
-      errors.push('令牌用量加载失败')
-    }
+      account.totalCredits = stats?.total_credits ?? stats?.quota ?? 0
+      account.usedCredits = stats?.used_credits ?? stats?.used_quota ?? 0
+      account.remainingCredits = stats?.remaining_credits ?? Math.max(0, normalizeNumber(account.totalCredits) - normalizeNumber(account.usedCredits))
+    } else errors.push('账户资源加载失败')
+    if (results[1].status === 'fulfilled') subscriptions.value = normalizeSubscriptions(results[1].value)
+    else errors.push('订阅资源加载失败')
+    if (results[2].status === 'fulfilled') plans.value = results[2].value
+    else errors.push('套餐信息加载失败')
+    if (results[3].status === 'fulfilled') creditsPerCny.value = normalizeNumber(results[3].value?.credits_per_cny, 25)
+    else errors.push('Credits 配置加载失败')
     loadError.value = errors.join('，')
+    await loadUsageRecords()
   } catch (error) {
     if (isAuthenticationFailure(error)) {
       clearModelHubAuth()
@@ -408,76 +264,44 @@ const loadAccount = async () => {
       resetAccountState()
       authToken.value = ''
       ElMessage.warning('OortCloud 登录已失效，请重新登录')
-    } else {
-      loadError.value = error?.response?.data?.message || error?.response?.data?.msg || error?.message || 'OortCloud 账户加载失败'
-    }
+    } else loadError.value = error?.response?.data?.message || error?.response?.data?.msg || error?.message || 'OortCloud 账户加载失败'
   } finally {
     loading.value = false
   }
 }
 
 const stopRefreshTimer = () => {
-  if (refreshTimer) {
-    window.clearInterval(refreshTimer)
-    refreshTimer = null
-  }
+  if (refreshTimer) { window.clearInterval(refreshTimer); refreshTimer = null }
 }
-
 const startRefreshTimer = () => {
   stopRefreshTimer()
-  if (isLoggedIn.value) {
-    refreshTimer = window.setInterval(loadAccount, 60 * 1000)
-  }
+  if (isLoggedIn.value) refreshTimer = window.setInterval(loadAccount, 60 * 1000)
 }
-
 const handlePopoverShow = async () => {
   authToken.value = getModelHubAccessToken()
   if (authToken.value) await loadAccount()
   startRefreshTimer()
 }
-
 const handleAuthChanged = async () => {
   authToken.value = getModelHubAccessToken()
   resetAccountState()
   if (authToken.value) await loadAccount()
 }
-
-const copyApiKey = async () => {
-  if (!fullApiKey.value) return
-  try {
-    await navigator.clipboard.writeText(fullApiKey.value)
-    ElMessage.success('令牌已复制')
-  } catch {
-    ElMessage.error('复制失败，请重试')
-  }
-}
-
-const handleVisitOortCloud = () => {
-  openOortCloudModelHub(getPlatformAccessToken())
-}
-
+const handleVisitOortCloud = () => openOortCloudModelHub(getPlatformAccessToken())
+const handleUpgrade = () => openOortCodexPricing(getPlatformAccessToken())
 const handleLogout = async () => {
-  try {
-    await logoutModelHubSession()
-  } catch {
-    ElMessage.warning('OortCloud 远端退出失败，已清理本地登录状态')
-  }
-  if (account.userId) {
-    localStorage.removeItem(`oortcloud.newApiTokenId.${account.userId}`)
-  }
+  try { await logoutModelHubSession() } catch { ElMessage.warning('OortCloud 远端退出失败，已清理本地登录状态') }
   stopRefreshTimer()
   resetAccountState()
   authToken.value = ''
   ElMessage.success('已退出 OortCloud')
 }
-
 const handleLogin = async () => {
   if (getModelHubAccessToken()) {
     authToken.value = getModelHubAccessToken()
     await loadAccount()
     return
   }
-
   startModelHubLogin(null, { returnToCurrent: true })
 }
 
@@ -493,375 +317,60 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.oortcloud-entry {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
-  border: 0;
-  border-radius: 6px;
-  color: #8a94a6;
-  background: transparent;
-  font: inherit;
-  font-size: 14px;
-  cursor: pointer;
-  transition: color 0.2s ease, background-color 0.2s ease;
-}
-
-.oortcloud-entry.is-logged-in {
-  color: #287cff;
-}
-
-.oortcloud-entry:hover,
-.oortcloud-entry:focus-visible {
-  background: rgba(138, 148, 166, 0.1);
-  outline: none;
-}
-
-.oortcloud-entry.is-logged-in:hover,
-.oortcloud-entry.is-logged-in:focus-visible {
-  background: rgba(40, 124, 255, 0.08);
-}
-
-.entry-logo {
-  width: 24px;
-  height: 24px;
-  flex: none;
-  filter: grayscale(1);
-  opacity: 0.62;
-  transition: filter 0.2s ease, opacity 0.2s ease;
-}
-
-.oortcloud-entry.is-logged-in .entry-logo {
-  filter: none;
-  opacity: 1;
-}
-
-.oortcloud-card {
-  box-sizing: border-box;
-  max-height: calc(100vh - 82px);
-  overflow-y: auto;
-  padding: 18px 18px 16px;
-  color: #3a3a3a;
-  background: #f1f7ff;
-  border-radius: 10px;
-}
-
-.oortcloud-card.account-view {
-  padding: 14px;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.brand-logo {
-  width: 38px;
-  height: 38px;
-  flex: none;
-  color: #287cff;
-}
-
-.brand-copy {
-  line-height: 1.15;
-}
-
-.brand-name {
-  margin-bottom: 3px;
-  font-size: 18px;
-  font-weight: 500;
-}
-
-.brand-slogan {
-  font-size: 12px;
-}
-
-h2 {
-  margin: 36px 0 20px;
-  font-size: 20px;
-  line-height: 1.35;
-  font-weight: 700;
-}
-
-.account-view h2 {
-  margin: 16px 0 10px;
-  font-size: 18px;
-}
-
-p {
-  margin: 0;
-}
-
-.description {
-  color: #6b6b6b;
-  font-size: 12px;
-  line-height: 1.65;
-}
-
-.prompt {
-  margin-top: 20px;
-  font-size: 12px;
-  line-height: 1.65;
-  font-weight: 700;
-}
-
-.login-button {
-  min-width: 146px;
-  height: 36px;
-  margin-top: 22px;
-  padding: 0 22px;
-  border: none;
-  background: #287cff;
-  font-size: 14px;
-}
-
-.account-profile {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin-bottom: 12px;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.account-profile :deep(.el-avatar) {
-  border: 2px solid #f9cc27;
-  background: #e9f1fb;
-  color: #287cff;
-}
-
-.account-error {
-  margin-bottom: 10px;
-}
-
-.info-panel {
-  padding: 11px;
-  border: 1px solid #e2ecf8;
-  border-radius: 10px;
-  background: #ffffff;
-  box-shadow: 0 3px 10px rgba(47, 93, 145, 0.05);
-}
-
-.statistics-panel {
-  margin-bottom: 9px;
-}
-
-.panel-title {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-bottom: 9px;
-  color: #4a4a4a;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.orange-title {
-  padding-left: 7px;
-  border-left: 3px solid #ff6a24;
-}
-
-.statistics-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  padding: 8px 6px;
-  border-radius: 9px;
-  background: #eef5fb;
-}
-
-.stat-item .stat-icon,
-.current-token-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin-right: 6px;
-  flex: none;
-  border-radius: 50%;
-  background: #e3ebf3;
-  font-size: 15px;
-}
-
-.stat-item div {
-  min-width: 0;
-}
-
-.stat-item strong,
-.stat-item span {
-  display: block;
-}
-
-.stat-item strong {
-  overflow: hidden;
-  margin-bottom: 3px;
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.stat-item div > span {
-  color: #747474;
-  font-size: 10px;
-  white-space: nowrap;
-}
-
-.token-panel {
-  margin-bottom: 10px;
-}
-
-.token-title,
-.current-token-title {
-  color: #666666;
-}
-
-.token-summary {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 3px 10px;
-  color: #777777;
-  font-size: 11px;
-  line-height: 1.45;
-}
-
-.token-summary div {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.token-divider {
-  height: 1px;
-  margin: 10px 0;
-  border-top: 1px dashed #c8cdd3;
-}
-
-.current-token-card {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  padding: 8px;
-  border-radius: 9px;
-  background: #eef8ff;
-}
-
-.current-token-icon {
-  border-radius: 7px;
-}
-
-.current-token-copy {
-  min-width: 0;
-  flex: 1;
-}
-
-.current-token-copy strong,
-.current-token-copy span {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.current-token-copy strong {
-  margin-bottom: 2px;
-  font-size: 12px;
-}
-
-.current-token-copy span {
-  color: #777777;
-  font-size: 11px;
-}
-
-.connection-state {
-  display: flex;
-  align-items: center;
-  margin: 0 5px;
-  flex: none;
-  color: #777777;
-  font-size: 11px;
-}
-
-.connection-state i {
-  width: 8px;
-  height: 8px;
-  margin-right: 5px;
-  border-radius: 50%;
-  background: #0fc764;
-}
-
-.connection-state.disconnected i {
-  background: #a8abb2;
-}
-
-.icon-button {
-  width: 24px;
-  min-width: 24px;
-  height: 24px;
-  margin-left: 4px !important;
-  padding: 4px;
-  flex: none;
-  border-color: #cdd3da;
-  background: transparent;
-  font-size: 12px;
-}
-
-.account-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.account-action {
-  width: 100%;
-  height: 34px;
-  margin: 0 !important;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.visit-button {
-  border: none;
-  background: #287cff;
-}
-
-.logout-button {
-  border: none;
-  color: #3f3f3f;
-  background: #e4e4e4;
-}
-
-.logout-button:hover {
-  color: #287cff;
-  background: #dce8f7;
-}
-
-@media (max-width: 900px) {
-  .oortcloud-entry span {
-    display: none;
-  }
-}
+/* Logged-in account dashboard popover. */
+.oortcloud-entry { display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px; border: 0; border-radius: 6px; color: #8a94a6; background: transparent; font: inherit; font-size: 14px; cursor: pointer; transition: color 0.2s ease, background-color 0.2s ease; }
+.oortcloud-entry.is-logged-in { color: #287cff; }
+.oortcloud-entry:hover, .oortcloud-entry:focus-visible { background: rgba(138, 148, 166, 0.1); outline: none; }
+.oortcloud-entry.is-logged-in:hover, .oortcloud-entry.is-logged-in:focus-visible { background: rgba(40, 124, 255, 0.08); }
+.entry-logo { width: 24px; height: 24px; flex: none; filter: grayscale(1); opacity: 0.62; }
+.oortcloud-entry.is-logged-in .entry-logo { filter: none; opacity: 1; }
+.oortcloud-card { box-sizing: border-box; max-height: calc(100vh - 82px); overflow-y: auto; padding: 22px 24px; color: #30343b; background: #eef6fd; border-radius: 14px; }
+.brand { display: flex; align-items: center; gap: 9px; }
+.brand-logo { width: 40px; height: 40px; flex: none; }
+.brand-copy { line-height: 1.15; }
+.brand-name { margin-bottom: 3px; font-size: 18px; font-weight: 500; }
+.brand-slogan { font-size: 12px; }
+h2 { margin: 36px 0 20px; font-size: 20px; }
+p { margin: 0; }
+.description { color: #6b6b6b; font-size: 12px; line-height: 1.65; }
+.prompt { margin-top: 20px; font-size: 12px; line-height: 1.65; font-weight: 700; }
+.login-button { min-width: 146px; height: 36px; margin-top: 22px; background: #287cff; }
+.welcome-row { display: flex; align-items: center; gap: 9px; margin: 26px 0 22px; font-size: 22px; }
+.welcome-row :deep(.el-avatar) { border: 2px solid #f9cc27; background: #e9f1fb; color: #287cff; }
+.user-name { max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plan-badge { padding: 4px 10px; border-radius: 5px; color: #287cff; background: #ddecff; font-size: 12px; font-weight: 500; }
+.account-error { margin-bottom: 14px; }
+.content-section { margin-top: 20px; }
+.content-section h3 { margin: 0 0 12px; padding-left: 9px; border-left: 3px solid #287cff; font-size: 17px; line-height: 1; }
+.resource-list { display: grid; gap: 12px; }
+.content-panel { padding: 17px; border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgba(62, 91, 126, 0.04); }
+.resource-heading { font-size: 16px; font-weight: 500; }
+.resource-description { margin-top: 6px; color: #999; font-size: 12px; line-height: 1.5; }
+.resource-usage { display: flex; justify-content: space-between; margin: 16px 0 8px; color: #666; font-size: 14px; }
+.resource-usage strong { color: #30343b; font-size: 16px; font-weight: 500; }
+.resource-card :deep(.el-progress-bar__outer) { background: #f1f2f4; }
+.resource-card :deep(.el-progress-bar__inner) { background: #287cff; }
+.unlimited-line { margin-top: 14px; color: #287cff; font-size: 13px; }
+.upgrade-card { padding-bottom: 16px; }
+.upgrade-button { margin-top: 14px; background: #287cff; }
+.records-section { margin-top: 24px; }
+.records-panel { padding: 16px; }
+.records-toolbar { display: flex; align-items: center; gap: 10px; }
+.records-toolbar :deep(.el-date-editor) { width: 300px; }
+.records-note { margin: 10px 0 12px; color: #aaa; font-size: 12px; line-height: 1.5; }
+.records-table { width: 100%; --el-table-border-color: #e7e9ed; --el-table-header-bg-color: #fff; }
+.records-table :deep(th.el-table__cell) { color: #68707d; font-weight: 500; }
+.records-table :deep(.el-table__inner-wrapper::before) { display: none; }
+.records-panel :deep(.el-empty) { padding: 12px 0 2px; }
+.account-actions { display: grid; grid-template-columns: 1fr; gap: 12px; width: 360px; margin: 20px auto 0; }
+.account-action { width: 100%; height: 40px; margin: 0 !important; font-weight: 600; }
+.visit-button { border: none; background: #287cff; }
+.logout-button { border: none; color: #3f3f3f; background: #e4e4e4; }
+.logout-button:hover { color: #287cff; background: #dce8f7; }
+@media (max-width: 900px) { .oortcloud-entry span { display: none; } }
 </style>
 
 <style>
-.el-popper.el-popover.oortcloud-welcome-popper {
-  padding: 0 !important;
-  overflow: hidden;
-  border: 1px solid #dce8f7 !important;
-  border-radius: 10px !important;
-  background: #f1f7ff !important;
-  box-shadow: 0 8px 24px rgba(43, 83, 125, 0.18) !important;
-}
-
-.el-popper.oortcloud-welcome-popper .el-popper__arrow::before {
-  border-color: #dce8f7;
-  background: #f1f7ff;
-}
+.el-popper.el-popover.oortcloud-welcome-popper { padding: 0 !important; overflow: hidden; border: 1px solid #287cff !important; border-radius: 14px !important; background: #eef6fd !important; box-shadow: 0 10px 26px rgba(43, 83, 125, 0.2) !important; }
+.el-popper.oortcloud-welcome-popper .el-popper__arrow::before { border-color: #287cff; background: #eef6fd; }
 </style>

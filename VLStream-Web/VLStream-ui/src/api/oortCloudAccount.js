@@ -98,6 +98,22 @@ export async function getOortCloudQuotaConfig() {
   return unwrapData(await request.get('/api/status')) || {}
 }
 
+export async function getOortCloudSubscriptions() {
+  const request = createRequest(NEW_API_BASE, getPlatformHeaders())
+  return unwrapData(await request.get('/api/subscription/self')) || {}
+}
+
+export async function getOortCloudSubscriptionPlans() {
+  const request = createRequest(NEW_API_BASE, getPlatformHeaders())
+  const data = unwrapData(await request.get('/api/subscription/plans'))
+  return Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : [])
+}
+
+export async function getOortCloudUsageLogs(params = {}) {
+  const request = createRequest(NEW_API_BASE, getPlatformHeaders())
+  return unwrapData(await request.get('/api/log/self', { params })) || {}
+}
+
 export async function getOortCloudTokenUsage(apiKey, modelBaseUrl) {
   const request = createRequest(normalizeModelBaseUrl(modelBaseUrl), {
     Authorization: `Bearer ${apiKey}`,

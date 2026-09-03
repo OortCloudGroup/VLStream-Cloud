@@ -427,6 +427,39 @@
               resize="none"
           />
         </el-form-item>
+        <el-divider content-position="left">大模型复核（可选）</el-divider>
+        <el-form-item label="开启复核" label-width="100px">
+          <el-switch v-model="llmReviewForm.enabled" />
+          <span class="llm-review-tip">关闭时保持原有 YOLO 事件流程</span>
+        </el-form-item>
+        <template v-if="llmReviewForm.enabled">
+          <el-form-item label="视觉大模型" label-width="100px" required>
+            <el-select v-model="llmReviewForm.providerId" placeholder="请选择大模型" style="width: 100%">
+              <el-option v-for="provider in llmProviders" :key="provider.id"
+                         :label="`${provider.name} / ${provider.modelName}`" :value="provider.id"
+                         :disabled="!provider.enabled" />
+            </el-select>
+            <el-button link type="primary" @click="router.push('/llm-provider-management')">管理大模型</el-button>
+          </el-form-item>
+          <el-form-item label="提示词" label-width="100px" required>
+            <el-input v-model="llmReviewForm.promptTemplate" type="textarea" :rows="5" />
+          </el-form-item>
+          <el-form-item label="确认阈值" label-width="100px">
+            <el-input-number v-model="llmReviewForm.decisionThreshold" :min="0" :max="1" :step="0.05" :precision="2" />
+            <span class="llm-review-tip">模型结论为 confirmed 且置信度达到阈值才进入正式事件流程</span>
+          </el-form-item>
+          <el-form-item label="失败重试" label-width="100px">
+            <el-input-number v-model="llmReviewForm.maxRetries" :min="0" :max="5" />
+          </el-form-item>
+          <el-form-item label="图片范围" label-width="100px">
+            <el-radio-group v-model="llmReviewForm.imageMode">
+              <el-radio value="FULL_AND_CROP">完整图 + 目标框</el-radio>
+              <el-radio value="FULL">仅完整图</el-radio>
+              <el-radio value="CROP">仅目标框</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-alert title="调用超时或重试耗尽后进入人工复核，不会直接生成主动安全事件。" type="info" :closable="false" />
+        </template>
       </el-form>
 
       <template #footer>
@@ -556,6 +589,11 @@ import {
 } from '@/api/algorithmManagement'
 import {dispatchAlgorithmToDevices} from '@/api/device'
 import {getMqttDevicePage} from '@/api/vlstreamMqttDevice'
+import {
+  getAlgorithmLlmReviewConfig,
+  getLlmProviders,
+  saveAlgorithmLlmReviewConfig
+} from '@/api/llmReview'
 
 const router = useRouter()
 
@@ -655,6 +693,17 @@ const algorithmEditForm = ref({
   isSystem: 'YES',
   imageUrl: ''
 })
+const llmProviders = ref([])
+const defaultLlmReviewForm = () => ({
+  enabled: false,
+  providerId: null,
+  promptTemplate: '',
+  decisionThreshold: 0.8,
+  maxRetries: 2,
+  failureStrategy: 'MANUAL_REVIEW',
+  imageMode: 'FULL_AND_CROP'
+})
+const llmReviewForm = ref(defaultLlmReviewForm())
 
 // form
 const addFormRules = ref({
@@ -996,7 +1045,7 @@ const addAlgorithm = () => {
   showAlgorithmAddDialog.value = true
 }
 
-const editAlgorithm = (algorithm) => {
+const editAlgorithm = async (algorithm) => {
   // Set algorithm
   editingAlgorithm.value = algorithm
 
@@ -1011,6 +1060,18 @@ const editAlgorithm = (algorithm) => {
     imageUrl: algorithm.imageUrl || '',
     description: algorithm.description || '',
     repositoryId: algorithm.repositoryId || currentRepositoryId.value
+  }
+
+  llmReviewForm.value = defaultLlmReviewForm()
+  try {
+    const [configResponse, providersResponse] = await Promise.all([
+      getAlgorithmLlmReviewConfig(algorithm.id),
+      getLlmProviders()
+    ])
+    llmReviewForm.value = { ...defaultLlmReviewForm(), ...(configResponse.data || {}) }
+    llmProviders.value = providersResponse.data || []
+  } catch (error) {
+    ElMessage.warning('大模型复核配置加载失败，可稍后重试')
   }
 
   // dialog
@@ -1479,6 +1540,7 @@ const handleAlgorithmAddCancel = () => {
 
 // algorithm dialogProcess method
 const handleAlgorithmEditConfirm = async () => {
+  let algorithmSaved = false
   try {
     // form
     await algorithmEditFormRef.value.validate()
@@ -1503,7 +1565,18 @@ const handleAlgorithmEditConfirm = async () => {
     const response = await updateAlgorithm(editingAlgorithm.value.id, updateData)
 
     if (response.code === 200) {
-      ElMessage.success('算法更新成功')
+      algorithmSaved = true
+      if (llmReviewForm.value.enabled && !llmReviewForm.value.providerId) {
+        throw new Error('开启大模型复核时必须选择视觉大模型')
+      }
+      const reviewResponse = await saveAlgorithmLlmReviewConfig(
+        editingAlgorithm.value.id,
+        llmReviewForm.value
+      )
+      if (reviewResponse.code !== 200) {
+        throw new Error(reviewResponse.message || '大模型复核配置保存失败')
+      }
+      ElMessage.success('算法及大模型复核配置更新成功')
       showAlgorithmEditDialog.value = false
 
       // new Load current algorithm algorithm
@@ -1517,7 +1590,7 @@ const handleAlgorithmEditConfirm = async () => {
   } catch (error) {
     if (error.message) {
       console.error('算法更新失败:', error)
-      ElMessage.error('算法更新失败')
+      ElMessage.error(algorithmSaved ? `算法已保存，但${error.message}` : error.message)
     }
   } finally {
     submitting.value = false
@@ -1536,6 +1609,7 @@ const handleAlgorithmEditCancel = () => {
     repositoryId: null,
     imageUrl: ''
   }
+  llmReviewForm.value = defaultLlmReviewForm()
   if (algorithmEditFormRef.value) {
     algorithmEditFormRef.value.resetFields()
   }
@@ -1550,6 +1624,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.llm-review-tip {
+  margin-left: 10px;
+  color: #8c8c8c;
+  font-size: 12px;
+}
 .algorithm-management {
   height: 100%;
   margin: 0;

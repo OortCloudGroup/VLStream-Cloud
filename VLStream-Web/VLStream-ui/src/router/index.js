@@ -222,6 +222,18 @@ const routes = [
         component: () => import('@/views/AlgorithmWarehouse/AlgorithmManagement.vue'),
         meta: { title: '算法管理', icon: '算法管理' }
       },
+      {
+        path: '/llm-provider-management',
+        name: 'LlmProviderManagement',
+        component: () => import('@/views/AlgorithmWarehouse/LlmProviderManagement.vue'),
+        meta: { title: '大模型管理', icon: '算法管理' }
+      },
+      {
+        path: '/llm-review-tasks',
+        name: 'LlmReviewTasks',
+        component: () => import('@/views/DecisionAI/LlmReviewTasks.vue'),
+        meta: { title: '大模型复核', icon: '智能分析结果' }
+      },
 
       {
         path: '/scene-governance',

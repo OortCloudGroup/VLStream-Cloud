@@ -5,7 +5,6 @@
       <div class="page-header">
         <div>
           <h2>大模型管理</h2>
-          <p>维护 OpenAI 兼容视觉接口。API Key 加密保存，页面不会回显。</p>
         </div>
         <el-button type="primary" @click="openEditor()">新增大模型</el-button>
       </div>
@@ -105,7 +104,7 @@ const editorVisible = ref(false)
 const formRef = ref(null)
 const emptyForm = () => ({
   id: null, name: '', baseUrl: '', modelName: '', apiKey: '',
-  timeoutSeconds: 30, enabled: true
+  timeoutSeconds: 120, enabled: true
 })
 const form = reactive(emptyForm())
 const rules = {
@@ -121,11 +120,23 @@ const testingProvider = ref(null)
 const testResult = ref(null)
 const testForm = reactive({ prompt: '', imageBase64: '' })
 
+function responseMessage(response, fallback) {
+  return response?.msg || response?.message || fallback
+}
+
+function errorMessage(error, fallback) {
+  return error?.response?.data?.msg || error?.data?.msg || error?.message || fallback
+}
+
 async function load() {
   loading.value = true
   try {
     const response = await getLlmProviders()
+    if (response.code !== 200) throw new Error(responseMessage(response, '加载大模型配置失败'))
     providers.value = response.data || []
+  } catch (error) {
+    providers.value = []
+    ElMessage.error(errorMessage(error, '加载大模型配置失败'))
   } finally {
     loading.value = false
   }
@@ -145,12 +156,12 @@ async function save() {
     const response = data.id
       ? await updateLlmProvider(data.id, data)
       : await createLlmProvider(data)
-    if (response.code !== 200) throw new Error(response.message || '保存失败')
+    if (response.code !== 200) throw new Error(responseMessage(response, '保存失败'))
     ElMessage.success('保存成功')
     editorVisible.value = false
     await load()
   } catch (error) {
-    ElMessage.error(error.message || '保存失败')
+    ElMessage.error(errorMessage(error, '保存失败'))
   } finally {
     saving.value = false
   }
@@ -159,7 +170,7 @@ async function save() {
 async function remove(row) {
   await ElMessageBox.confirm(`确认删除大模型“${row.name}”吗？`, '提示', { type: 'warning' })
   const response = await deleteLlmProvider(row.id)
-  if (response.code !== 200) throw new Error(response.message || '删除失败')
+  if (response.code !== 200) throw new Error(responseMessage(response, '删除失败'))
   ElMessage.success('删除成功')
   await load()
 }
@@ -183,11 +194,11 @@ async function runTest() {
   testing.value = true
   try {
     const response = await testLlmProvider(testingProvider.value.id, testForm)
-    if (response.code !== 200) throw new Error(response.message || '测试失败')
+    if (response.code !== 200) throw new Error(responseMessage(response, '测试失败'))
     testResult.value = response.data
     ElMessage.success('模型调用成功')
   } catch (error) {
-    ElMessage.error(error.message || '测试失败')
+    ElMessage.error(errorMessage(error, '测试失败'))
   } finally {
     testing.value = false
   }
