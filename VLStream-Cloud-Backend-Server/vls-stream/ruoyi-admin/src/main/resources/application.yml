@@ -153,6 +153,17 @@ vlstream:
     max-retry-millis: ${VLSTREAM_EVENT_REPORT_MAX_RETRY_MILLIS:1800000}
     stale-lock-millis: ${VLSTREAM_EVENT_REPORT_STALE_LOCK_MILLIS:60000}
     media-url-ttl-seconds: ${VLSTREAM_EVENT_REPORT_MEDIA_URL_TTL_SECONDS:3600}
+  # YOLO 结构化事件的大模型二次复核总开关；算法级开关在算法管理中配置
+  llm-review:
+    enabled: ${VLSTREAM_LLM_REVIEW_ENABLED:true}
+    # API Key 数据库加密密钥，普通用户无需填写；生产环境建议通过环境变量覆盖且部署后不要更换。
+    encryption-key: VLStream-Llm-Key-2026-Default-01
+    scan-interval-millis: ${VLSTREAM_LLM_REVIEW_SCAN_INTERVAL_MILLIS:3000}
+    batch-size: ${VLSTREAM_LLM_REVIEW_BATCH_SIZE:10}
+    stale-lock-millis: ${VLSTREAM_LLM_REVIEW_STALE_LOCK_MILLIS:120000}
+    first-retry-millis: ${VLSTREAM_LLM_REVIEW_FIRST_RETRY_MILLIS:10000}
+    max-retry-millis: ${VLSTREAM_LLM_REVIEW_MAX_RETRY_MILLIS:60000}
+    max-image-bytes: ${VLSTREAM_LLM_REVIEW_MAX_IMAGE_BYTES:10485760}
   # VLStream 原生 MQTT 设备（独立于旧 vls_device_info 自定义协议设备）
   native-device:
     # 无预绑定关系的设备首次上报时归属的默认租户

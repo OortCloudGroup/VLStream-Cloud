@@ -48,6 +48,9 @@ public class DeviceEventMqttHandler {
 	@Resource
 	private VlsEventReportApplicationService eventReportApplicationService;
 
+	@Resource
+	private LlmReviewTaskService llmReviewTaskService;
+
 	@Transactional(rollbackFor = Exception.class)
 	public JSONObject handle(JSONObject envelope) {
 		String sourceMessageId = envelope.getStr("messageId");
@@ -100,6 +103,11 @@ public class DeviceEventMqttHandler {
 			String description = StringUtils.defaultIfBlank(payload.getStr("eventDesc"),
 				defaultDescription(subBizType, payload));
 			Date eventTime = parseEventTime(envelope, payload);
+			if (!platformFaceEvent && llmReviewTaskService != null
+				&& llmReviewTaskService.enqueueIfRequired(envelope, device, upload,
+					eventId, eventType, description, eventTime)) {
+				return buildReply(envelope, eventId, mediaId, true, "事件已接收，等待大模型复核");
+			}
 			if (platformFaceEvent) {
 				EventManagement event = new EventManagement();
 				event.setMqttMessageId(sourceMessageId);

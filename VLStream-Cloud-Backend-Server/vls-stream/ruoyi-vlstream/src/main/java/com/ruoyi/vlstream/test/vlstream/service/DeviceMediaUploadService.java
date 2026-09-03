@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
 import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -169,6 +170,37 @@ public class DeviceMediaUploadService {
 		int safeSeconds = Math.max(60, Math.min(seconds, 3600));
 		return OssFactory.instance(upload.getOssConfigKey())
 			.getPrivateUrl(upload.getObjectKey(), safeSeconds);
+	}
+
+	/** Read one validated private event image for server-side vision inference. */
+	public byte[] readBoundImage(String mediaId, int maxBytes) {
+		DeviceMediaUpload upload = getByMediaId(mediaId);
+		if (upload == null || !STATUS_BOUND.equals(upload.getUploadStatus())) {
+			throw new ServiceException("事件图片不存在或尚未绑定");
+		}
+		int safeMax = Math.max(1024, maxBytes);
+		try (InputStream input = OssFactory.instance(upload.getOssConfigKey())
+			.getObjectContent(upload.getObjectKey());
+			 ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+			byte[] buffer = new byte[8192];
+			int total = 0;
+			int length;
+			while ((length = input.read(buffer)) >= 0) {
+				if (length == 0) {
+					continue;
+				}
+				total += length;
+				if (total > safeMax) {
+					throw new ServiceException("事件图片超过大模型复核大小限制");
+				}
+				output.write(buffer, 0, length);
+			}
+			return output.toByteArray();
+		} catch (ServiceException exception) {
+			throw exception;
+		} catch (Exception exception) {
+			throw new ServiceException("读取事件图片失败：" + exception.getMessage());
+		}
 	}
 
 	private void validateRequest(DeviceMediaUploadRequest request) {

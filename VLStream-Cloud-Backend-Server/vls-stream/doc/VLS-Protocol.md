@@ -1253,6 +1253,7 @@ algorithmId、fileName、sha256、modelType
 | --- | --- | --- |
 | **字段** | **类型** | **释义** |
 | eventId | string | 设备生成的事件唯一 ID，同一事件重试时保持不变 |
+| algorithmId | string | 产生该事件的平台算法 ID；算法开启大模型复核时必填 |
 | eventType | string | 平台事件类型，例如 person_detected |
 | eventDesc | string | 可选事件描述 |
 | eventTime | string | UTC ISO-8601 事件时间 |
@@ -1286,6 +1287,7 @@ algorithmId、fileName、sha256、modelType
 "subBizType": "struct",  
 "payload": {  
 "eventId": "struct-event-20260724-0001",  
+"algorithmId": "1900000000000000001",
 "eventType": "person_detected",  
 "eventDesc": "检测到人员",  
 "eventTime": "2026-07-24T09:42:00Z",  

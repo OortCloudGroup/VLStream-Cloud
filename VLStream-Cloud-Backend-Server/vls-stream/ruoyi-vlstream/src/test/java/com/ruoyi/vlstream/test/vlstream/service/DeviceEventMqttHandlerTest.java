@@ -39,6 +39,7 @@ class DeviceEventMqttHandlerTest {
 	private ActiveSafetyEventReportService activeSafetyEventReportService;
 	private WvpVlStreamDeviceResolver wvpDeviceResolver;
 	private VlsEventReportApplicationService eventReportApplicationService;
+	private LlmReviewTaskService llmReviewTaskService;
 	private DeviceEventMqttHandler handler;
 
 	@BeforeEach
@@ -47,11 +48,13 @@ class DeviceEventMqttHandlerTest {
 		activeSafetyEventReportService = mock(ActiveSafetyEventReportService.class);
 		wvpDeviceResolver = mock(WvpVlStreamDeviceResolver.class);
 		eventReportApplicationService = mock(VlsEventReportApplicationService.class);
+		llmReviewTaskService = mock(LlmReviewTaskService.class);
 		handler = new DeviceEventMqttHandler();
 		setField(handler, "mediaUploadService", mediaUploadService);
 		setField(handler, "activeSafetyEventReportService", activeSafetyEventReportService);
 		setField(handler, "wvpDeviceResolver", wvpDeviceResolver);
 		setField(handler, "eventReportApplicationService", eventReportApplicationService);
+		setField(handler, "llmReviewTaskService", llmReviewTaskService);
 	}
 
 	@Test
@@ -121,6 +124,29 @@ class DeviceEventMqttHandlerTest {
 		assertEquals("重点区域", stored.getDeviceTag());
 		assertEquals("测试位置", stored.getAddress());
 		assertTrue(stored.getEventTime().getTime() > 0L);
+	}
+
+	@Test
+	void queuesStructEventWhenAlgorithmReviewIsEnabled() {
+		DeviceInfo device = new DeviceInfo();
+		device.setDeviceId("CAM-1");
+		device.setDeviceName("测试摄像头");
+		device.setTenantId("000000");
+		DeviceMediaUpload upload = new DeviceMediaUpload();
+		upload.setMediaId("media-1");
+		upload.setObjectKey("events/CAM-1/2026/07/29/media-1.jpg");
+		when(wvpDeviceResolver.resolve("CAM-1")).thenReturn(device);
+		when(mediaUploadService.validateAndBind(
+			"media-1", "CAM-1", upload.getObjectKey(), sha256(), "event-message-1"))
+			.thenReturn(upload);
+		when(llmReviewTaskService.enqueueIfRequired(any(), any(), any(), any(), any(), any(), any()))
+			.thenReturn(true);
+
+		JSONObject reply = handler.handle(eventMessage());
+
+		assertEquals("SUCCESS", reply.getByPath("payload.bizData.status"));
+		assertEquals("事件已接收，等待大模型复核", reply.getByPath("payload.msg"));
+		verify(activeSafetyEventReportService, never()).report(any());
 	}
 
 	@Test
