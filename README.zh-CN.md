@@ -307,8 +307,8 @@ sequenceDiagram
 
 | 名称 | 用途 | 版本号 | 授权协议 |
 | --- | --- | --- | --- |
-| VLStream Server（VLS） | 设备注册、用户绑定、事件、模型任务和平台 API | Maven `0.8.3`；Spring Boot `2.7.11`；发布镜像 `1.1.2` | [MIT](./LICENSE) |
-| WVP Server | 必选的统一视频设备中心；负责 VLStream、GB28181/SIP、ONVIF、RTSP、预览、回放、云台和视频控制 | `3.8.9`；Spring Boot `2.7.18` | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE) |
+| VLStream Server（VLS） | 设备注册、用户绑定、事件、模型任务和平台 API | Maven `1.2.3`；Spring Boot `2.7.11`；发布镜像 `1.2.3` | [MIT](./LICENSE) |
+| WVP Server | 必选的统一视频设备中心；负责 VLStream、GB28181/SIP、ONVIF、RTSP、预览、回放、云台和视频控制 | VLStream WVP Lite `1.0.4`；Spring Boot `2.7.18` | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE) |
 | ZLMediaKit | RTP 收流、媒体管理、REST/Hook 和播放输出 | WVP/VLStream 仓库中**未固定** | [MIT](https://docs.zlmediakit.com/zh/more/license.html) |
 | MQTT Broker / EMQX | 设备消息、心跳、事件、指令和模型回执 | `5.4`；发布 Compose 作为外部服务接入 | [Apache-2.0](https://github.com/emqx/emqx-docker/blob/main/LICENSE) |
 | MySQL | 业务数据库 | `8.4.10-oraclelinux9` | [GPLv2 或商业许可](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |

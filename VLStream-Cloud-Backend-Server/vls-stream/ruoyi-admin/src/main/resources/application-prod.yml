@@ -16,7 +16,9 @@ xxl.job:
   # 执行器开关
   enabled: false
   # 调度中心地址：如调度中心集群部署存在多个地址则用逗号分隔。
-  admin-addresses: http://localhost:9100/xxl-job-admin
+  admin-addresses: ${XXL_JOB_ADMIN_ADDRESSES:http://host.docker.internal:9100/xxl-job-admin}
+  admin:
+    addresses: ${XXL_JOB_ADMIN_ADDRESSES:http://host.docker.internal:9100/xxl-job-admin}
   # 执行器通讯TOKEN：非空时启用
   access-token: xxl-job
   executor:
@@ -32,6 +34,10 @@ xxl.job:
     logpath: ./logs/xxl-job
     # 执行器日志文件保存天数：大于3生效
     logretentiondays: 30
+
+auth:
+  report:
+    excludeClasses: ${AUTH_REPORT_EXCLUDE_CLASSES:ReModeJsonController,ProcessTemplateController,WfTXController}
 
 --- # 数据源配置
 spring:
