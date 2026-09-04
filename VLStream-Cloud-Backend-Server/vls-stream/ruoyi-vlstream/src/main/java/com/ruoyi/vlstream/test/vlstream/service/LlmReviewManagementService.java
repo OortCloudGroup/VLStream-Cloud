@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 /** CRUD and validation boundary for provider and algorithm review settings. */
 @Service
@@ -30,13 +32,17 @@ public class LlmReviewManagementService {
 	private final AlgorithmLlmReviewConfigMapper configMapper;
 	private final VlsAlgorithmMapper algorithmMapper;
 	private final LlmApiKeyCipher apiKeyCipher;
+	private final LlmSystemProviderService systemProviderService;
 
 	public List<LlmProvider> listProviders() {
+		systemProviderService.getOrCreate();
 		List<LlmProvider> providers = providerMapper.selectList(new LambdaQueryWrapper<LlmProvider>()
 			.orderByDesc(LlmProvider::getCreateTime));
 		for (LlmProvider provider : providers) {
 			mask(provider);
 		}
+		providers.sort((left, right) -> Boolean.compare(Boolean.TRUE.equals(right.getSystemProvider()),
+			Boolean.TRUE.equals(left.getSystemProvider())));
 		return providers;
 	}
 
@@ -52,6 +58,9 @@ public class LlmReviewManagementService {
 	public LlmProvider saveProvider(LlmProvider input) {
 		validateProvider(input);
 		if (input.getId() == null) {
+			if (LlmSystemProviderService.SYSTEM_PROVIDER_NAME.equalsIgnoreCase(input.getName())) {
+				throw new ServiceException("OortCloud 是系统内置大模型名称，请使用其他名称");
+			}
 			if (StringUtils.isBlank(input.getApiKey())) {
 				throw new ServiceException("API Key 不能为空");
 			}
@@ -61,6 +70,9 @@ public class LlmReviewManagementService {
 			providerMapper.insert(input);
 		} else {
 			LlmProvider existing = getProvider(input.getId());
+			if (systemProviderService.isSystemProvider(existing)) {
+				throw new ServiceException("内置 OortCloud 大模型不能编辑");
+			}
 			existing.setName(input.getName());
 			existing.setBaseUrl(input.getBaseUrl());
 			existing.setModelName(input.getModelName());
@@ -78,7 +90,10 @@ public class LlmReviewManagementService {
 
 	@Transactional(rollbackFor = Exception.class)
 	public void deleteProvider(Long id) {
-		getProvider(id);
+		LlmProvider provider = getProvider(id);
+		if (systemProviderService.isSystemProvider(provider)) {
+			throw new ServiceException("内置 OortCloud 大模型不能删除");
+		}
 		Long references = configMapper.selectCount(new LambdaQueryWrapper<AlgorithmLlmReviewConfig>()
 			.eq(AlgorithmLlmReviewConfig::getProviderId, id)
 			.eq(AlgorithmLlmReviewConfig::getEnabled, true));
@@ -86,6 +101,16 @@ public class LlmReviewManagementService {
 			throw new ServiceException("该大模型仍被已启用的算法复核配置引用");
 		}
 		providerMapper.deleteById(id);
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	public Map<String, Object> authorizeOortCloud(String platformUserId, String platformUserName,
+										 String apiKey) {
+		return authorizationStatus(systemProviderService.authorize(platformUserId, platformUserName, apiKey));
+	}
+
+	public Map<String, Object> getOortCloudAuthorization() {
+		return authorizationStatus(systemProviderService.getOrCreate());
 	}
 
 	public AlgorithmLlmReviewConfig getAlgorithmConfig(Long algorithmId) {
@@ -98,6 +123,7 @@ public class LlmReviewManagementService {
 		}
 		AlgorithmLlmReviewConfig defaults = new AlgorithmLlmReviewConfig();
 		defaults.setAlgorithmId(algorithmId);
+		defaults.setProviderId(systemProviderService.getOrCreate().getId());
 		defaults.setEnabled(false);
 		defaults.setPromptTemplate(DEFAULT_PROMPT);
 		defaults.setDecisionThreshold(new BigDecimal("0.8000"));
@@ -137,6 +163,16 @@ public class LlmReviewManagementService {
 		return existing;
 	}
 
+	private void applyConfigDefaults(AlgorithmLlmReviewConfig config) {
+		config.setEnabled(Boolean.TRUE.equals(config.getEnabled()));
+		config.setPromptTemplate(StringUtils.defaultIfBlank(config.getPromptTemplate(), DEFAULT_PROMPT));
+		config.setDecisionThreshold(config.getDecisionThreshold() == null
+			? new BigDecimal("0.8000") : config.getDecisionThreshold());
+		config.setMaxRetries(clamp(config.getMaxRetries(), 0, 5, 2));
+		config.setFailureStrategy(StringUtils.defaultIfBlank(config.getFailureStrategy(), "MANUAL_REVIEW"));
+		config.setImageMode(StringUtils.defaultIfBlank(config.getImageMode(), "FULL_AND_CROP"));
+	}
+
 	private void validateProvider(LlmProvider provider) {
 		if (provider == null || StringUtils.isAnyBlank(provider.getName(), provider.getBaseUrl(), provider.getModelName())) {
 			throw new ServiceException("名称、API 地址和模型名称不能为空");
@@ -146,16 +182,6 @@ public class LlmReviewManagementService {
 		}
 		provider.setTimeoutSeconds(clamp(provider.getTimeoutSeconds(), 5, 600, 120));
 		provider.setEnabled(provider.getEnabled() == null || provider.getEnabled());
-	}
-
-	private void applyConfigDefaults(AlgorithmLlmReviewConfig config) {
-		config.setEnabled(Boolean.TRUE.equals(config.getEnabled()));
-		config.setPromptTemplate(StringUtils.defaultIfBlank(config.getPromptTemplate(), DEFAULT_PROMPT));
-		config.setDecisionThreshold(config.getDecisionThreshold() == null
-			? new BigDecimal("0.8000") : config.getDecisionThreshold());
-		config.setMaxRetries(clamp(config.getMaxRetries(), 0, 5, 2));
-		config.setFailureStrategy(StringUtils.defaultIfBlank(config.getFailureStrategy(), "MANUAL_REVIEW"));
-		config.setImageMode(StringUtils.defaultIfBlank(config.getImageMode(), "FULL_AND_CROP"));
 	}
 
 	private void validateAlgorithmConfig(AlgorithmLlmReviewConfig config) {
@@ -178,12 +204,31 @@ public class LlmReviewManagementService {
 			if (!Boolean.TRUE.equals(provider.getEnabled())) {
 				throw new ServiceException("选择的大模型已禁用");
 			}
+			if (StringUtils.isBlank(provider.getApiKeyCiphertext())) {
+				throw new ServiceException("选择的大模型 API Key 未配置");
+			}
+			if (systemProviderService.isSystemProvider(provider)
+				&& !systemProviderService.isAuthorized(provider)) {
+				throw new ServiceException("请先点击页面顶部“登录 OortCloud”完成授权");
+			}
 		}
 	}
 
 	private void mask(LlmProvider provider) {
 		provider.setApiKey(null);
 		provider.setApiKeyConfigured(StringUtils.isNotBlank(provider.getApiKeyCiphertext()));
+		provider.setSystemProvider(systemProviderService.isSystemProvider(provider));
+		provider.setAuthorized(systemProviderService.isSystemProvider(provider)
+			? systemProviderService.isAuthorized(provider) : null);
+	}
+
+	private Map<String, Object> authorizationStatus(LlmProvider provider) {
+		Map<String, Object> result = new LinkedHashMap<String, Object>();
+		result.put("authorized", systemProviderService.isAuthorized(provider));
+		result.put("platformUserName", provider.getPlatformUserName());
+		result.put("authorizedAt", provider.getAuthorizedAt());
+		result.put("apiKeyConfigured", StringUtils.isNotBlank(provider.getApiKeyCiphertext()));
+		return result;
 	}
 
 	private int clamp(Integer value, int min, int max, int fallback) {

@@ -9,6 +9,7 @@
 package com.ruoyi.web.controller.compat.tenant;
 
 import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.framework.config.properties.TokenProperties;
 import com.ruoyi.system.service.SysLoginService;
 import com.ruoyi.web.controller.compat.BladeTokenSessionService;
 import com.ruoyi.web.controller.compat.BladeTokenUserStore;
@@ -22,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -82,13 +84,43 @@ class MultiTenantAuthServiceTest {
             new MockHttpServletRequest()));
     }
 
+    @Test
+    void singleTenantExchangeMapsPlatformUserToFixedLocalTenant() {
+        PlatformTenantClient client = mock(PlatformTenantClient.class);
+        MultiTenantShadowUserService shadowUserService = mock(MultiTenantShadowUserService.class);
+        PlatformTenantSessionStore sessionStore = mock(PlatformTenantSessionStore.class);
+        BladeTokenUserStore tokenUserStore = mock(BladeTokenUserStore.class);
+        SysLoginService loginService = mock(SysLoginService.class);
+        PlatformGatewayHeaders headers = new PlatformGatewayHeaders("app", "app-id", "secret");
+        PlatformIdentity identity = identity("user-1", "platform-tenant");
+        SysUser user = new SysUser();
+        user.setUserName("platform-user");
+        user.setTenantId("000000");
+        MockHttpServletRequest request = new MockHttpServletRequest();
+
+        when(client.resolveGatewayHeaders(request)).thenReturn(headers);
+        when(client.verifyToken("platform-token", headers)).thenReturn(identity);
+        when(client.loadDisplayName("platform-token", "user-1", headers)).thenReturn("Platform User");
+        when(shadowUserService.loadOrCreate(eq(identity), any())).thenReturn(user);
+        when(loginService.loginPlatformUser(user)).thenReturn("local-token");
+
+        MultiTenantAuthService service = service(client, shadowUserService, sessionStore,
+            tokenUserStore, loginService);
+        Map<String, Object> result = service.exchangeForSingleTenant("platform-token", request);
+
+        assertEquals("000000", result.get("tenantId"));
+        verify(client, never()).getUserTenants(any(), any());
+    }
+
     private static MultiTenantAuthService service(PlatformTenantClient client,
                                                    MultiTenantShadowUserService shadowUserService,
                                                    PlatformTenantSessionStore sessionStore,
                                                    BladeTokenUserStore tokenUserStore,
                                                    SysLoginService loginService) {
+        TokenProperties properties = new TokenProperties();
+        properties.setSingleTenantId("000000");
         return new MultiTenantAuthService(client, shadowUserService, sessionStore, tokenUserStore,
-            mock(BladeTokenSessionService.class), loginService, 3600L);
+            mock(BladeTokenSessionService.class), loginService, properties, 3600L);
     }
 
     private static PlatformIdentity identity(String userId, String tenantId) {

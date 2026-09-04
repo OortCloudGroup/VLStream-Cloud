@@ -156,7 +156,11 @@ vlstream:
   # YOLO 结构化事件的大模型二次复核总开关；算法级开关在算法管理中配置
   llm-review:
     enabled: ${VLSTREAM_LLM_REVIEW_ENABLED:true}
-    # API Key 数据库加密密钥，普通用户无需填写；生产环境建议通过环境变量覆盖且部署后不要更换。
+    # 内置 OortCloud 的固定入口和默认模型；API Key 由登录后的 NewAPI 管理接口获取并加密入库。
+    base-url: https://workup.oortcloudsmart.com:2443/bus/apaas-newapi/v1/chat/completions
+    model-name: qwen3.6-flash
+    timeout-seconds: ${VLSTREAM_LLM_REVIEW_TIMEOUT_SECONDS:120}
+    # 用于加密内置 OortCloud 与外部提供商的 API Key。
     encryption-key: VLStream-Llm-Key-2026-Default-01
     scan-interval-millis: ${VLSTREAM_LLM_REVIEW_SCAN_INTERVAL_MILLIS:3000}
     batch-size: ${VLSTREAM_LLM_REVIEW_BATCH_SIZE:10}
@@ -282,6 +286,9 @@ vlstream:
   device-media:
     # 对应 sys_oss_config.config_key；为空时复用当前默认 OSS 配置
     oss-config-key: ${VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY:}
+    # 设备可访问的 MinIO HTTPS API 根地址；必须在签名阶段使用，不能在签名后由代理改写
+    # 例如 https://vlstream.example.com:2443，不带 bucket 或对象路径
+    public-endpoint: ${VLSTREAM_DEVICE_MEDIA_PUBLIC_ENDPOINT:}
     # 预签名上传地址有效期（秒）
     upload-url-ttl-seconds: ${VLSTREAM_DEVICE_MEDIA_UPLOAD_TTL_SECONDS:6000}
     # 单张事件图片最大字节数，默认 10 MiB

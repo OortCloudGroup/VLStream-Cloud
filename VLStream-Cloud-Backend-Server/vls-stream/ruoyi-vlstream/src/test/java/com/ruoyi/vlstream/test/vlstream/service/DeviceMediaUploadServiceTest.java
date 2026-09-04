@@ -9,6 +9,7 @@
 package com.ruoyi.vlstream.test.vlstream.service;
 
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.oss.core.OssClient;
 import com.ruoyi.vlstream.test.vlstream.config.VlsDeviceMediaProperties;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.DeviceMediaUploadRequest;
 import org.junit.jupiter.api.Tag;
@@ -24,6 +25,29 @@ import static org.mockito.Mockito.when;
 
 @Tag("dev")
 class DeviceMediaUploadServiceTest {
+
+	@Test
+	void signsUploadAndViewUrlsWithConfiguredPublicEndpoint() throws Exception {
+		VlsDeviceMediaProperties properties = new VlsDeviceMediaProperties();
+		properties.setPublicEndpoint("https://vlstream.example.com:2443");
+		OssClient client = mock(OssClient.class);
+		when(client.getPresignedPutUrl("events/device/image.jpg", "image/jpeg", 600,
+			"https://vlstream.example.com:2443")).thenReturn("https://upload.example");
+		when(client.getPrivateUrl("events/device/image.jpg", 300,
+			"https://vlstream.example.com:2443")).thenReturn("https://view.example");
+
+		DeviceMediaUploadService service = new DeviceMediaUploadService();
+		setField(service, "properties", properties);
+
+		assertEquals("https://upload.example",
+			service.generateUploadUrl(client, "events/device/image.jpg", "image/jpeg", 600));
+		assertEquals("https://view.example",
+			service.generatePrivateViewUrl(client, "events/device/image.jpg", 300));
+		verify(client).getPresignedPutUrl("events/device/image.jpg", "image/jpeg", 600,
+			"https://vlstream.example.com:2443");
+		verify(client).getPrivateUrl("events/device/image.jpg", 300,
+			"https://vlstream.example.com:2443");
+	}
 
 	@Test
 	void rejectsUploadWhenDeviceIsMissingFromWvp() throws Exception {

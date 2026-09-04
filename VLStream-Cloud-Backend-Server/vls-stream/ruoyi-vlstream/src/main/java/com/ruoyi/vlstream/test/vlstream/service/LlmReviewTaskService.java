@@ -48,6 +48,7 @@ public class LlmReviewTaskService {
 	private final VlsLlmReviewProperties properties;
 	private final AlgorithmLlmReviewConfigMapper configMapper;
 	private final LlmProviderMapper providerMapper;
+	private final LlmSystemProviderService systemProviderService;
 	private final LlmReviewTaskMapper taskMapper;
 	private final DeviceMediaUploadService mediaUploadService;
 	private final OpenAiVisionClient visionClient;
@@ -76,8 +77,11 @@ public class LlmReviewTaskService {
 		if (config == null) {
 			return false;
 		}
-		if (config.getProviderId() == null) {
-			throw new ServiceException("算法已开启大模型复核但未绑定大模型");
+		LlmProvider provider = providerForUse(config.getProviderId(), false);
+		if (provider == null) {
+			log.warn("算法选择的大模型当前不可用，事件保持原安全事件链路: tenantId={}, algorithmId={}, providerId={}, messageId={}",
+				device.getTenantId(), algorithmId, config.getProviderId(), envelope.getStr("messageId"));
+			return false;
 		}
 
 		JSONObject event = new JSONObject();
@@ -110,7 +114,7 @@ public class LlmReviewTaskService {
 		task.setDeviceEventId(eventId);
 		task.setDeviceId(device.getDeviceId());
 		task.setAlgorithmId(algorithmId);
-		task.setProviderId(config.getProviderId());
+		task.setProviderId(provider.getId());
 		task.setMediaId(upload.getMediaId());
 		task.setEventPayloadJson(event.toString());
 		task.setConfigSnapshotJson(snapshot.toString());
@@ -140,13 +144,10 @@ public class LlmReviewTaskService {
 	}
 
 	public OpenAiVisionClient.VisionDecision testProvider(Long providerId, String prompt, byte[] image) {
-		LlmProvider provider = providerMapper.selectById(providerId);
-		if (provider == null) {
-			throw new ServiceException("大模型配置不存在");
-		}
+		LlmProvider provider = providerForUse(providerId, true);
 		List<byte[]> images = new ArrayList<byte[]>();
 		images.add(image);
-		return visionClient.review(provider, StringUtils.defaultIfBlank(prompt,
+		return visionClient.test(provider, StringUtils.defaultIfBlank(prompt,
 			PROVIDER_TEST_PROMPT), images);
 	}
 
@@ -154,7 +155,7 @@ public class LlmReviewTaskService {
 		int attempt = defaultInt(task.getAttemptCount(), 0) + 1;
 		Date now = new Date();
 		try {
-			LlmProvider provider = providerMapper.selectById(task.getProviderId());
+			LlmProvider provider = providerForUse(task.getProviderId(), true);
 			JSONObject event = JSONUtil.parseObj(task.getEventPayloadJson());
 			JSONObject config = JSONUtil.parseObj(task.getConfigSnapshotJson());
 			byte[] fullImage = mediaUploadService.readBoundImage(task.getMediaId(),
@@ -316,6 +317,25 @@ public class LlmReviewTaskService {
 		} catch (NumberFormatException ignored) {
 			return null;
 		}
+	}
+
+	private LlmProvider providerForUse(Long providerId, boolean failWhenUnavailable) {
+		LlmProvider provider = providerId == null ? null : providerMapper.selectById(providerId);
+		String reason = null;
+		if (provider == null) {
+			reason = "大模型配置不存在";
+		} else if (!Boolean.TRUE.equals(provider.getEnabled())) {
+			reason = "大模型配置已禁用";
+		} else if (StringUtils.isBlank(provider.getApiKeyCiphertext())) {
+			reason = "大模型 API Key 未配置";
+		} else if (systemProviderService.isSystemProvider(provider)
+			&& !systemProviderService.isAuthorized(provider)) {
+			reason = "请先点击页面顶部“登录 OortCloud”完成授权";
+		}
+		if (reason != null && failWhenUnavailable) {
+			throw new ServiceException(reason);
+		}
+		return reason == null ? provider : null;
 	}
 
 	private int defaultInt(Integer value, int fallback) {

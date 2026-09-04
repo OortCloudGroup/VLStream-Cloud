@@ -10,6 +10,7 @@ package com.ruoyi.web.controller.compat.tenant;
 
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.framework.config.properties.TokenProperties;
 import com.ruoyi.system.service.SysLoginService;
 import com.ruoyi.web.controller.compat.BladeTokenSessionService;
 import com.ruoyi.web.controller.compat.BladeTokenUserStore;
@@ -37,6 +38,7 @@ public class MultiTenantAuthService {
     private final BladeTokenUserStore tokenUserStore;
     private final BladeTokenSessionService tokenSessionService;
     private final SysLoginService loginService;
+    private final TokenProperties tokenProperties;
     private final long tokenTimeout;
     private final ConcurrentHashMap<String, Object> exchangeLocks = new ConcurrentHashMap<String, Object>();
 
@@ -46,6 +48,7 @@ public class MultiTenantAuthService {
                                   BladeTokenUserStore tokenUserStore,
                                   BladeTokenSessionService tokenSessionService,
                                   SysLoginService loginService,
+                                  TokenProperties tokenProperties,
                                   @Value("${sa-token.timeout:86400}") long tokenTimeout) {
         this.platformClient = platformClient;
         this.shadowUserService = shadowUserService;
@@ -53,6 +56,7 @@ public class MultiTenantAuthService {
         this.tokenUserStore = tokenUserStore;
         this.tokenSessionService = tokenSessionService;
         this.loginService = loginService;
+        this.tokenProperties = tokenProperties;
         this.tokenTimeout = tokenTimeout;
     }
 
@@ -74,6 +78,19 @@ public class MultiTenantAuthService {
         }
         validateIdentity(identity, requestedTenantId, tenants);
         return createLocalSession(identity, selectedPlatformToken, gatewayHeaders, tenants);
+    }
+
+    /**
+     * Single-tenant deployments still accept platform-account SSO. The platform tenant
+     * identifies the caller only; all VLStream business data belongs to the fixed local tenant.
+     */
+    public Map<String, Object> exchangeForSingleTenant(String platformToken, HttpServletRequest request) {
+        PlatformGatewayHeaders gatewayHeaders = platformClient.resolveGatewayHeaders(request);
+        PlatformIdentity identity = platformClient.verifyToken(platformToken, gatewayHeaders);
+        identity.setTenantId(tokenProperties.getSingleTenantId());
+        List<PlatformTenant> tenants = new ArrayList<PlatformTenant>();
+        tenants.add(toTenant(identity));
+        return createLocalSession(identity, platformToken, gatewayHeaders, tenants);
     }
 
     /**

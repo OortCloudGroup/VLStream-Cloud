@@ -45,6 +45,14 @@ public class OpenAiVisionClient {
 		return parseDecision(response);
 	}
 
+	/** Connectivity tests may use a free-form prompt, while formal reviews stay strict JSON. */
+	public VisionDecision test(LlmProvider provider, String prompt, List<byte[]> images) {
+		if (provider == null || !Boolean.TRUE.equals(provider.getEnabled())) {
+			throw new ServiceException("大模型配置不存在或已禁用");
+		}
+		return parseTestResponse(post(provider, prompt, images));
+	}
+
 	private String post(LlmProvider provider, String prompt, List<byte[]> images) {
 		HttpURLConnection connection = null;
 		int timeoutSeconds = Math.max(5, Math.min(defaultInt(provider.getTimeoutSeconds(), 120), 600));
@@ -56,10 +64,11 @@ public class OpenAiVisionClient {
 			connection.setRequestMethod("POST");
 			connection.setDoOutput(true);
 			connection.setRequestProperty("Content-Type", "application/json");
-			String apiKey = apiKeyCipher.decrypt(provider.getApiKeyCiphertext());
-			if (StringUtils.isNotBlank(apiKey)) {
-				connection.setRequestProperty("Authorization", "Bearer " + apiKey);
+			String apiKey = resolveApiKey(provider);
+			if (StringUtils.isBlank(apiKey)) {
+				throw new ServiceException("大模型 API Key 未配置");
 			}
+			connection.setRequestProperty("Authorization", "Bearer " + apiKey);
 			byte[] body = requestBody(provider.getModelName(), prompt, images)
 				.getBytes(StandardCharsets.UTF_8);
 			try (OutputStream output = connection.getOutputStream()) {
@@ -94,6 +103,11 @@ public class OpenAiVisionClient {
 		}
 	}
 
+	String resolveApiKey(LlmProvider provider) {
+		return StringUtils.isBlank(provider.getApiKeyCiphertext())
+			? null : apiKeyCipher.decrypt(provider.getApiKeyCiphertext());
+	}
+
 	String requestBody(String model, String prompt, List<byte[]> images) {
 		JSONArray content = new JSONArray();
 		JSONObject text = new JSONObject();
@@ -117,6 +131,7 @@ public class OpenAiVisionClient {
 		JSONObject body = new JSONObject();
 		body.set("model", model);
 		body.set("temperature", 0);
+		body.set("stream", false);
 		JSONArray messages = new JSONArray();
 		messages.add(message);
 		body.set("messages", messages);
@@ -147,6 +162,18 @@ public class OpenAiVisionClient {
 			throw exception;
 		} catch (Exception exception) {
 			throw new ServiceException("大模型未返回合法 JSON：" + exception.getMessage());
+		}
+	}
+
+	VisionDecision parseTestResponse(String raw) {
+		try {
+			return parseDecision(raw);
+		} catch (ServiceException ignored) {
+			VisionDecision result = new VisionDecision();
+			result.setDecision("CONNECTED");
+			result.setReason(abbreviate(raw, 1000));
+			result.setRawResponse(abbreviate(raw, 60000));
+			return result;
 		}
 	}
 

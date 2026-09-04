@@ -20,10 +20,11 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class LlmSystemProviderService {
 
-	private static final String SYSTEM_PROVIDER_NAME = "OortCloud";
+	public static final String SYSTEM_PROVIDER_NAME = "OortCloud";
 
 	private final LlmProviderMapper providerMapper;
 	private final VlsLlmReviewProperties properties;
+	private final LlmApiKeyCipher apiKeyCipher;
 
 	@Transactional(rollbackFor = Exception.class)
 	public LlmProvider getOrCreate() {
@@ -47,16 +48,22 @@ public class LlmSystemProviderService {
 	}
 
 	@Transactional(rollbackFor = Exception.class)
-	public LlmProvider authorize(String platformUserId, String platformUserName) {
+	public LlmProvider authorize(String platformUserId, String platformUserName, String apiKey) {
 		if (StringUtils.isBlank(platformUserId)) {
 			throw new ServiceException("OortCloud 用户标识不能为空");
+		}
+		String normalizedApiKey = StringUtils.trimToEmpty(apiKey);
+		if (StringUtils.isBlank(normalizedApiKey)) {
+			throw new ServiceException("OortCloud 可用令牌不能为空");
+		}
+		if (!StringUtils.startsWith(normalizedApiKey, "sk-")) {
+			normalizedApiKey = "sk-" + normalizedApiKey;
 		}
 		LlmProvider provider = getOrCreate();
 		provider.setPlatformUserId(StringUtils.abbreviate(StringUtils.trim(platformUserId), 128));
 		provider.setPlatformUserName(StringUtils.abbreviate(StringUtils.trimToEmpty(platformUserName), 200));
-		if (provider.getAuthorizedAt() == null) {
-			provider.setAuthorizedAt(new Date());
-		}
+		provider.setApiKeyCiphertext(apiKeyCipher.encrypt(normalizedApiKey));
+		provider.setAuthorizedAt(new Date());
 		providerMapper.updateById(provider);
 		return provider;
 	}
@@ -71,13 +78,19 @@ public class LlmSystemProviderService {
 
 	public boolean isAuthorized(LlmProvider provider) {
 		return provider != null && StringUtils.isNotBlank(provider.getPlatformUserId())
-			&& provider.getAuthorizedAt() != null;
+			&& provider.getAuthorizedAt() != null
+			&& StringUtils.isNotBlank(provider.getApiKeyCiphertext());
+	}
+
+	public boolean isSystemProvider(LlmProvider provider) {
+		return provider != null && SYSTEM_PROVIDER_NAME.equals(provider.getName());
 	}
 
 	public LlmProvider mask(LlmProvider provider) {
 		provider.setApiKey(null);
-		provider.setApiKeyConfigured(false);
+		provider.setApiKeyConfigured(StringUtils.isNotBlank(provider.getApiKeyCiphertext()));
 		provider.setAuthorized(isAuthorized(provider));
+		provider.setSystemProvider(true);
 		return provider;
 	}
 
@@ -89,10 +102,6 @@ public class LlmSystemProviderService {
 			provider::setTimeoutSeconds);
 		if (!Boolean.TRUE.equals(provider.getEnabled())) {
 			provider.setEnabled(true);
-			changed = true;
-		}
-		if (StringUtils.isNotEmpty(provider.getApiKeyCiphertext())) {
-			provider.setApiKeyCiphertext("");
 			changed = true;
 		}
 		return changed;

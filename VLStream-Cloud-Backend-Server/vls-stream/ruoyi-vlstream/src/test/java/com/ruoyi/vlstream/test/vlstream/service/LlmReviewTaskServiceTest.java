@@ -73,27 +73,49 @@ class LlmReviewTaskServiceTest {
 	@Test
 	void usesSingleImagePromptForProviderConnectivityTest() {
 		Fixture fixture = new Fixture(true);
-		LlmProvider provider = new LlmProvider();
-		provider.setId(22L);
-		when(fixture.providerMapper.selectById(22L)).thenReturn(provider);
 
 		fixture.service.testProvider(22L, "", new byte[]{1, 2, 3});
 
-		verify(fixture.visionClient).review(eq(provider),
+		verify(fixture.visionClient).test(eq(fixture.systemProvider),
 			eq(LlmReviewTaskService.PROVIDER_TEST_PROMPT), anyList());
+	}
+
+	@Test
+	void keepsExistingFlowWhenTenantHasNotAuthorizedOortCloud() {
+		Fixture fixture = new Fixture(true);
+		AlgorithmLlmReviewConfig config = new AlgorithmLlmReviewConfig();
+		config.setProviderId(22L);
+		config.setEnabled(true);
+		when(fixture.configMapper.selectOne(any())).thenReturn(config);
+		when(fixture.systemProviderService.isAuthorized(fixture.systemProvider)).thenReturn(false);
+
+		boolean queued = fixture.service.enqueueIfRequired(fixture.envelope(), fixture.device(),
+			fixture.upload(), "event-1", "person_detected", "检测到人员", new Date());
+
+		assertFalse(queued);
+		verify(fixture.taskMapper, never()).insertIgnore(any());
 	}
 
 	private static class Fixture {
 		private final AlgorithmLlmReviewConfigMapper configMapper = mock(AlgorithmLlmReviewConfigMapper.class);
 		private final LlmReviewTaskMapper taskMapper = mock(LlmReviewTaskMapper.class);
 		private final LlmProviderMapper providerMapper = mock(LlmProviderMapper.class);
+		private final LlmSystemProviderService systemProviderService = mock(LlmSystemProviderService.class);
 		private final OpenAiVisionClient visionClient = mock(OpenAiVisionClient.class);
+		private final LlmProvider systemProvider = new LlmProvider();
 		private final LlmReviewTaskService service;
 
 		Fixture(boolean enabled) {
 			VlsLlmReviewProperties properties = new VlsLlmReviewProperties();
 			properties.setEnabled(enabled);
-			service = new LlmReviewTaskService(properties, configMapper, providerMapper,
+			systemProvider.setId(22L);
+			systemProvider.setName(LlmSystemProviderService.SYSTEM_PROVIDER_NAME);
+			systemProvider.setEnabled(true);
+			systemProvider.setApiKeyCiphertext("ciphertext");
+			when(providerMapper.selectById(22L)).thenReturn(systemProvider);
+			when(systemProviderService.isSystemProvider(systemProvider)).thenReturn(true);
+			when(systemProviderService.isAuthorized(systemProvider)).thenReturn(true);
+			service = new LlmReviewTaskService(properties, configMapper, providerMapper, systemProviderService,
 				taskMapper, mock(DeviceMediaUploadService.class), visionClient,
 				mock(ActiveSafetyEventReportService.class));
 		}

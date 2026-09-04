@@ -25,7 +25,9 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Tag("dev")
@@ -104,6 +106,28 @@ class SsoCompatControllerTest {
         assertEquals("sa-token", result.getData().get("refreshToken"));
         assertEquals("tenant-a", result.getData().get("tenantId"));
         assertEquals("workflow-admin", result.getData().get("userName"));
+    }
+
+    @Test
+    void exchangeTokenAllowsPlatformLoginInSingleTenantMode() {
+        BladeTokenUserStore tokenUserStore = mock(BladeTokenUserStore.class);
+        MultiTenantAuthService platformAuthService = mock(MultiTenantAuthService.class);
+        TokenProperties properties = new TokenProperties();
+        properties.setTenantType("single");
+        properties.setSingleTenantId("000000");
+        SsoCompatController controller = new SsoCompatController(tokenUserStore, properties, platformAuthService);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("accesstoken", "platform-token");
+        Map<String, Object> session = Collections.<String, Object>singletonMap("accessToken", "local-token");
+
+        when(platformAuthService.exchangeForSingleTenant(eq("platform-token"), eq(request)))
+            .thenReturn(session);
+
+        BladeResult<Map<String, Object>> result = controller.exchangeToken(request, Collections.<String, Object>emptyMap());
+
+        assertEquals(200, result.getCode());
+        assertEquals("local-token", result.getData().get("accessToken"));
+        verify(platformAuthService).exchangeForSingleTenant(eq("platform-token"), eq(request));
     }
 
     @Test

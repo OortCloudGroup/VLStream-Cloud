@@ -44,22 +44,35 @@ public class VlsLlmReviewController {
 		return R.data(managementService.listProviders());
 	}
 
+	@GetMapping("/oortcloud-authorization")
+	@Operation(summary = "查询当前租户的 OortCloud 大模型授权状态")
+	public R<Map<String, Object>> oortCloudAuthorization() {
+		return R.data(managementService.getOortCloudAuthorization());
+	}
+
+	@PostMapping("/oortcloud-authorization")
+	@Operation(summary = "在平台登录校验成功后授权当前租户使用 OortCloud 大模型")
+	public R<Map<String, Object>> authorizeOortCloud(@RequestBody Map<String, String> body) {
+		return R.data(managementService.authorizeOortCloud(body.get("platformUserId"),
+			body.get("platformUserName"), body.get("apiKey")));
+	}
+
 	@PostMapping("/providers")
-	@Operation(summary = "新增大模型配置")
+	@Operation(summary = "新增外部大模型配置")
 	public R<LlmProvider> createProvider(@RequestBody LlmProvider provider) {
 		provider.setId(null);
 		return R.data(managementService.saveProvider(provider));
 	}
 
 	@PutMapping("/providers/{id}")
-	@Operation(summary = "修改大模型配置")
+	@Operation(summary = "编辑外部大模型配置")
 	public R<LlmProvider> updateProvider(@PathVariable Long id, @RequestBody LlmProvider provider) {
 		provider.setId(id);
 		return R.data(managementService.saveProvider(provider));
 	}
 
 	@DeleteMapping("/providers/{id}")
-	@Operation(summary = "删除大模型配置")
+	@Operation(summary = "删除外部大模型配置")
 	public R<String> deleteProvider(@PathVariable Long id) {
 		managementService.deleteProvider(id);
 		return R.success("删除成功");

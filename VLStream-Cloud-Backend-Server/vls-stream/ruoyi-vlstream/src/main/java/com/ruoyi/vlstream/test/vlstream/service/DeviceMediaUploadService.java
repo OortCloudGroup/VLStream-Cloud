@@ -88,7 +88,7 @@ public class DeviceMediaUploadService {
 			return DeviceMediaUploadResponse.builder()
 				.mediaId(mediaId)
 				.objectKey(objectKey)
-				.uploadUrl(ossClient.getPresignedPutUrl(objectKey, request.getContentType(), ttlSeconds))
+				.uploadUrl(generateUploadUrl(ossClient, objectKey, request.getContentType(), ttlSeconds))
 				.expiresAt(Instant.ofEpochMilli(expiresAt.getTime()).toString())
 				.requiredContentType(request.getContentType())
 				.build();
@@ -168,8 +168,16 @@ public class DeviceMediaUploadService {
 			throw new ServiceException("事件图片不存在或尚未绑定");
 		}
 		int safeSeconds = Math.max(60, Math.min(seconds, 3600));
-		return OssFactory.instance(upload.getOssConfigKey())
-			.getPrivateUrl(upload.getObjectKey(), safeSeconds);
+		return generatePrivateViewUrl(OssFactory.instance(upload.getOssConfigKey()),
+			upload.getObjectKey(), safeSeconds);
+	}
+
+	String generateUploadUrl(OssClient client, String objectKey, String contentType, int ttlSeconds) {
+		return client.getPresignedPutUrl(objectKey, contentType, ttlSeconds, properties.getPublicEndpoint());
+	}
+
+	String generatePrivateViewUrl(OssClient client, String objectKey, int ttlSeconds) {
+		return client.getPrivateUrl(objectKey, ttlSeconds, properties.getPublicEndpoint());
 	}
 
 	/** Read one validated private event image for server-side vision inference. */

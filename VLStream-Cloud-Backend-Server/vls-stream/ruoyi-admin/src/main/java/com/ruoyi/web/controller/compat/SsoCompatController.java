@@ -54,16 +54,16 @@ public class SsoCompatController {
     @PostMapping("/exchangeToken")
     public BladeResult<Map<String, Object>> exchangeToken(HttpServletRequest request,
                                                            @RequestBody(required = false) Map<String, Object> body) {
-        if (!isMultiTenant()) {
-            return BladeResult.fail("当前为单租户模式，不支持平台换票");
-        }
         String platformToken = firstNonBlank(TokenHeaderResolver.resolve(request), bodyValue(body, "accessToken"));
         if (platformToken == null) {
             return BladeResult.fail("缺少平台访问令牌");
         }
         try {
             String tenantId = firstNonBlank(bodyValue(body, "tenantId"), bodyValue(body, "tenant_id"));
-            return BladeResult.success(multiTenantAuthService.exchange(platformToken, tenantId, request));
+            Map<String, Object> session = isMultiTenant()
+                ? multiTenantAuthService.exchange(platformToken, tenantId, request)
+                : multiTenantAuthService.exchangeForSingleTenant(platformToken, request);
+            return BladeResult.success(session);
         } catch (Exception exception) {
             return BladeResult.fail(firstNonBlank(exception.getMessage(), "平台换票失败"));
         }

@@ -21,6 +21,9 @@ public class VlsLlmReviewProperties {
 
 	private Boolean enabled = Boolean.FALSE;
 	private String encryptionKey = DEFAULT_ENCRYPTION_KEY;
+	private String baseUrl = "https://workup.oortcloudsmart.com:2443/bus/apaas-newapi/v1/chat/completions";
+	private String modelName = "qwen3.6-flash";
+	private Integer timeoutSeconds = 120;
 	private Integer scanIntervalMillis = 3000;
 	private Integer batchSize = 10;
 	private Long staleLockMillis = 120000L;

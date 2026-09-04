@@ -44,6 +44,8 @@ import java.util.Date;
  */
 public class OssClient {
 
+    static final String DEFAULT_S3_REGION = "us-east-1";
+
     private final String configKey;
 
     private final OssProperties properties;
@@ -277,7 +279,7 @@ public class OssClient {
 
     private AmazonS3 buildClient(String endpoint) {
         AwsClientBuilder.EndpointConfiguration endpointConfig =
-            new AwsClientBuilder.EndpointConfiguration(endpoint, properties.getRegion());
+            new AwsClientBuilder.EndpointConfiguration(endpoint, resolveRegion(properties.getRegion()));
         AWSCredentials credentials = new BasicAWSCredentials(properties.getAccessKey(), properties.getSecretKey());
         AWSCredentialsProvider credentialsProvider = new AWSStaticCredentialsProvider(credentials);
         ClientConfiguration clientConfig = new ClientConfiguration();
@@ -297,6 +299,10 @@ public class OssClient {
             build.enablePathStyleAccess();
         }
         return build.build();
+    }
+
+    static String resolveRegion(String region) {
+        return StringUtils.isBlank(region) ? DEFAULT_S3_REGION : region.trim();
     }
 
     private static String getPolicy(String bucketName, PolicyType policyType) {

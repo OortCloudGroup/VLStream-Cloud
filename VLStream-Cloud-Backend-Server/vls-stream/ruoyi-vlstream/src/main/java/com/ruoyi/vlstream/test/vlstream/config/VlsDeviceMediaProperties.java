@@ -26,6 +26,12 @@ public class VlsDeviceMediaProperties {
 	private String ossConfigKey;
 
 	/**
+	 * Browser/device-accessible S3 API endpoint used while calculating the signature.
+	 * It must not be replaced by a reverse proxy after the URL has been signed.
+	 */
+	private String publicEndpoint;
+
+	/**
 	 * PUT URL validity in seconds.
 	 */
 	private Integer uploadUrlTtlSeconds = 600;

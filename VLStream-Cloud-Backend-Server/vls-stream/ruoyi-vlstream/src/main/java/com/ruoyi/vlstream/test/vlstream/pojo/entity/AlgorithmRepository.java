@@ -31,6 +31,12 @@ import com.ruoyi.vlstream.test.vlstream.deserialize.AlgorithmRepositoryStatusDes
 public class AlgorithmRepository extends TenantEntity {
 	private static final long serialVersionUID = 1L;
 
+	@com.fasterxml.jackson.databind.annotation.JsonSerialize(using = com.fasterxml.jackson.databind.ser.std.ToStringSerializer.class)
+	private Long parentId;
+	private Integer sortOrder;
+	/** JSON array of child category IDs displayed in this category's flat row. */
+	private String flatCategoryIds;
+
 	/**
 	 * algorithm
 	 */
