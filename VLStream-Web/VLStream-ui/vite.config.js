@@ -89,7 +89,7 @@ export default defineConfig(async ({ mode }) => {
     try {
       return new URL(env.VITE_PLATFORM_LOGIN_URL).origin
     } catch (error) {
-      return 'https://workup-dev.myoumuamua.com:6433'
+      return 'https://workup.oortcloudsmart.com:2443'
     }
   })()
   const webRtcTarget = env.VITE_WEBRTC_PROXY_TARGET || 'http://127.0.0.1:8000'
@@ -207,19 +207,19 @@ export default defineConfig(async ({ mode }) => {
         },
         // OortCloud New API 、 and interface
         '/bus/apaas-newapi': {
-          target: 'https://workup-dev.myoumuamua.com:6433',
+          target: 'https://workup.oortcloudsmart.com:2443',
           changeOrigin: true,
           secure: false
         },
         // Model Hub fastdfs
         '/bus/apaas-fastdfsservice': {
-          target: 'https://workup-dev.myoumuamua.com:6433',
+          target: 'https://workup.oortcloudsmart.com:2443',
           changeOrigin: true,
           secure: false
         },
         // AI model ( model)
         '/bus/apaas-deployment-service': {
-          target: 'https://workup-dev.myoumuamua.com:6433',
+          target: 'https://workup.oortcloudsmart.com:2443',
           changeOrigin: true,
           secure: false
         },

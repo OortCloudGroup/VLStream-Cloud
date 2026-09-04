@@ -105,8 +105,9 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { Link, Refresh, SwitchButton } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getModelHubUserInfo, logoutModelHubSession } from '@/api/modelHubUser'
+import { authorizeOortCloudLlm } from '@/api/llmReview'
 import { getPlatformAccessToken } from '@/utils/request'
-import { getOortCloudAccountStats, getOortCloudQuotaConfig, getOortCloudSubscriptionPlans, getOortCloudSubscriptions, getOortCloudUsageLogs } from '@/api/oortCloudAccount'
+import { getOortCloudAccountStats, getOortCloudQuotaConfig, getOortCloudSubscriptionPlans, getOortCloudSubscriptions, getOortCloudTokenKey, getOortCloudTokenList, getOortCloudUsageLogs } from '@/api/oortCloudAccount'
 import { clearModelHubAuth, getModelHubAccessToken, openOortCloudModelHub, openOortCodexPricing, startModelHubLogin } from '@/utils/modelHubAuth'
 
 const popoverVisible = ref(false)
@@ -115,6 +116,7 @@ const authVerified = ref(false)
 const loading = ref(false)
 const recordsLoading = ref(false)
 const loadError = ref('')
+const llmAuthorizationSynced = ref(false)
 const subscriptions = ref([])
 const plans = ref([])
 const usageRecords = ref([])
@@ -206,6 +208,7 @@ const isAuthenticationFailure = (error) => {
 
 const resetAccountState = () => {
   authVerified.value = false
+  llmAuthorizationSynced.value = false
   Object.assign(account, { userId: '', userName: '', photo: '', totalCredits: 0, usedCredits: 0, remainingCredits: 0 })
   subscriptions.value = []
   plans.value = []
@@ -239,10 +242,26 @@ const loadAccount = async () => {
     const userResponse = await getModelHubUserInfo({ accessToken: authToken.value, desensitize: true })
     applyUserInfo(userResponse)
     authVerified.value = true
+    const errors = []
+    if (!llmAuthorizationSynced.value) {
+      try {
+        const tokens = await getOortCloudTokenList()
+        const selectedToken = tokens.find((token) => token.status === 1)
+        if (!selectedToken) throw new Error('OortCloud 账户没有启用的 API 令牌')
+        const apiKey = await getOortCloudTokenKey(selectedToken.id)
+        await authorizeOortCloudLlm({
+          platformUserId: account.userId,
+          platformUserName: account.userName,
+          apiKey
+        })
+        llmAuthorizationSynced.value = true
+      } catch (error) {
+        errors.push(error?.response?.data?.msg || error?.message || '大模型使用资格同步失败')
+      }
+    }
     const results = await Promise.allSettled([getOortCloudAccountStats(), getOortCloudSubscriptions(), getOortCloudSubscriptionPlans(), getOortCloudQuotaConfig()])
     const authError = results.find((result) => result.status === 'rejected' && isAuthenticationFailure(result.reason))
     if (authError) throw authError.reason
-    const errors = []
     if (results[0].status === 'fulfilled') {
       const stats = results[0].value
       account.totalCredits = stats?.total_credits ?? stats?.quota ?? 0

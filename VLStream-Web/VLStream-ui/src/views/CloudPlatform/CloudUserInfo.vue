@@ -323,7 +323,7 @@ import femaleIcon from '@/assets/img/personInfo/female_icon.png'
 /* * fastdfs */
 const PLATFORM_ORIGIN = import.meta.env.DEV
   ? ''
-  : 'https://workup-dev.myoumuamua.com:6433'
+  : 'https://workup.oortcloudsmart.com:2443'
 const uploadURL = `${PLATFORM_ORIGIN}/bus/apaas-fastdfsservice/fastdfs/v1/uploadFile`
 
 const uploadHeaders = computed(() => {

@@ -5,6 +5,14 @@ export function getLlmProviders() {
   return request({ url: '/vlsLlmReview/providers', method: 'get' })
 }
 
+export function getOortCloudLlmAuthorization() {
+  return request({ url: '/vlsLlmReview/oortcloud-authorization', method: 'get' })
+}
+
+export function authorizeOortCloudLlm(data) {
+  return request({ url: '/vlsLlmReview/oortcloud-authorization', method: 'post', data })
+}
+
 export function createLlmProvider(data) {
   return request({ url: '/vlsLlmReview/providers', method: 'post', data })
 }

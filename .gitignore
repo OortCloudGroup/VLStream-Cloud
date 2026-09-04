@@ -2,7 +2,6 @@
 node_modules/
 smartjavaai_cache/
 /codex
-/docs
 # Build output
 dist/
 build/

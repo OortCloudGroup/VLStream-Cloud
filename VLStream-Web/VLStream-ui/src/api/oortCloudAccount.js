@@ -9,7 +9,7 @@ import axios from 'axios'
 import { getModelHubAccessToken } from '@/utils/modelHubAuth'
 import { MODEL_HUB_HEADERS } from '@/api/modelHubUser'
 
-const PLATFORM_ORIGIN = 'https://workup-dev.myoumuamua.com:6433'
+const PLATFORM_ORIGIN = 'https://workup.oortcloudsmart.com:2443'
 const NEW_API_BASE = import.meta.env.DEV
   ? '/bus/apaas-newapi'
   : `${PLATFORM_ORIGIN}/bus/apaas-newapi`

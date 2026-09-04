@@ -17,18 +17,17 @@ const normalizeApiResponse = (response) => {
 export class AuthManager {
   /* * after Process token Validate . */
   async checkExternalPlatformLogin() {
-    const mode = await this.getTenantMode()
     const url = new URL(window.location.href)
     const urlToken = url.searchParams.get('accessToken') || url.searchParams.get('access_token') || url.searchParams.get('token')
-    if (mode === 'multi' && urlToken) {
-      return this.exchangePlatformToken(urlToken, this.getUrlTenantId(url))
+    if (urlToken) {
+      return this.checkUrlToken()
     }
     return this.checkLocalToken()
   }
 
   /* * old , only current token. */
   async getTokenFromExternalPlatform() {
-    return this.getCurrentToken()
+    return this.getPlatformToken()
   }
 
   /* * Validate URL in token, successfully after Query parameter. */
@@ -37,10 +36,9 @@ export class AuthManager {
     const token = url.searchParams.get('accessToken') || url.searchParams.get('access_token') || url.searchParams.get('token')
     if (!token) return null
 
-    const mode = await this.getTenantMode()
-    const userInfo = mode === 'multi'
-      ? await this.exchangePlatformToken(token, this.getUrlTenantId(url))
-      : await this.verifyToken(token)
+    // URL 传入的是统一平台令牌；无论单租户还是多租户，都必须先换取 VLS 本地会话。
+    // single 仅禁止租户切换，不应禁止平台账号授权登录。
+    const userInfo = await this.exchangePlatformToken(token, this.getUrlTenantId(url))
     if (!userInfo) return null
     await this.saveUserToLocal(userInfo)
     this.cleanUrlToken()
@@ -106,7 +104,7 @@ export class AuthManager {
 
   /* * info. */
   clearLocalTokens() {
-    ;['accessToken', 'access_token', 'token', 'userCenterToken', 'userInfo', 'platformAccessToken', 'tenantId', 'tenant_id']
+    ;['accessToken', 'access_token', 'token', 'userCenterToken', 'userInfo', 'platformAccessToken', 'apaas_token', 'tenantId', 'tenant_id']
       .forEach((key) => localStorage.removeItem(key))
   }
 
@@ -189,18 +187,23 @@ export class AuthManager {
     }
   }
 
-  /* * URL、 will 、 Get current token. */
+  /* * Get current VLS local session token. Platform tokens must never authenticate VLS APIs. */
   getCurrentToken() {
+    return sessionStorage.getItem('accessToken')
+      || sessionStorage.getItem('token')
+      || localStorage.getItem('accessToken')
+      || localStorage.getItem('token')
+      || localStorage.getItem('apaas_token')
+  }
+
+  /* * Get the OortCloud platform token used only for platform APIs and token exchange. */
+  getPlatformToken() {
     const url = new URL(window.location.href)
     return url.searchParams.get('accessToken')
       || url.searchParams.get('access_token')
       || url.searchParams.get('token')
       || sessionStorage.getItem('platformAccessToken')
       || localStorage.getItem('platformAccessToken')
-      || sessionStorage.getItem('accessToken')
-      || sessionStorage.getItem('token')
-      || localStorage.getItem('accessToken')
-      || localStorage.getItem('token')
   }
 
   getUrlTenantId(url = new URL(window.location.href)) {

@@ -7,6 +7,16 @@
 
 import request from '@/utils/request'
 
+export const getAlgorithmCatalogCategories = () => request({ url: '/vlsAlgorithmCatalog/categories', method: 'get' })
+export const saveAlgorithmCatalogCategory = (data) => request({
+  url: data.id ? `/vlsAlgorithmCatalog/categories/${data.id}` : '/vlsAlgorithmCatalog/categories',
+  method: data.id ? 'put' : 'post', data
+})
+export const deleteAlgorithmCatalogCategories = (ids) => request({ url: '/vlsAlgorithmCatalog/categories', method: 'delete', data: ids })
+export const getAlgorithmCatalogPage = (params) => request({ url: '/vlsAlgorithmCatalog/algorithms', method: 'get', params })
+export const getAlgorithmCatalogSettings = () => request({ url: '/vlsAlgorithmCatalog/settings', method: 'get' })
+export const saveAlgorithmCatalogSettings = (data) => request({ url: '/vlsAlgorithmCatalog/settings', method: 'put', data })
+
 // ========== algorithm API ==========
 
 /**

@@ -7,8 +7,16 @@
 
 <template>
   <div class="algorithm-management tenant_Page draHeaPB">
+    <AlgorithmCatalogView
+      ref="catalogRef"
+      @add="openCatalogAlgorithmAdd"
+      @edit="editAlgorithm"
+      @evaluate="evaluateAlgorithm"
+      @deploy="deployAlgorithm"
+      @publish="publishToModelHub"
+    />
     <!-- Tab + ModelHub -->
-    <div class="top-tabs-header" v-loading="repositoriesLoading">
+    <div v-if="false" class="top-tabs-header" v-loading="repositoriesLoading">
       <el-tabs
         v-model="activeTopMenu"
         class="tenanat-tabs"
@@ -31,7 +39,7 @@
       </a>
     </div>
 
-    <div class="tenant_content">
+    <div v-if="false" class="tenant_content">
       <!-- : tab (tenanat-tabs_act) -->
       <div
         v-if="showAddButton && typeOptions.length > 0"
@@ -429,17 +437,17 @@
         </el-form-item>
         <el-divider content-position="left">大模型复核（可选）</el-divider>
         <el-form-item label="开启复核" label-width="100px">
-          <el-switch v-model="llmReviewForm.enabled" />
+          <el-switch v-model="llmReviewForm.enabled" @change="handleLlmReviewToggle" />
           <span class="llm-review-tip">关闭时保持原有 YOLO 事件流程</span>
         </el-form-item>
         <template v-if="llmReviewForm.enabled">
-          <el-form-item label="视觉大模型" label-width="100px" required>
-            <el-select v-model="llmReviewForm.providerId" placeholder="请选择大模型" style="width: 100%">
-              <el-option v-for="provider in llmProviders" :key="provider.id"
-                         :label="`${provider.name} / ${provider.modelName}`" :value="provider.id"
-                         :disabled="!provider.enabled" />
+          <el-form-item label="视觉大模型" label-width="100px">
+            <el-select v-model="llmReviewForm.providerId" placeholder="请选择视觉大模型" style="width: 100%">
+              <el-option v-for="provider in availableLlmProviders" :key="provider.id" :label="providerOptionLabel(provider)" :value="provider.id" />
             </el-select>
-            <el-button link type="primary" @click="router.push('/llm-provider-management')">管理大模型</el-button>
+            <el-alert v-if="selectedLlmProvider?.systemProvider && !llmAuthorized" title="内置 OortCloud 需先点击页面顶部“登录 OortCloud”完成授权" type="warning" :closable="false" show-icon />
+            <span v-else-if="selectedLlmProvider?.systemProvider" class="llm-review-tip">内置 OortCloud 无需手工填写地址、模型或 API Key</span>
+            <span v-else class="llm-review-tip">外部中转站使用“大模型管理”中保存的配置</span>
           </el-form-item>
           <el-form-item label="提示词" label-width="100px" required>
             <el-input v-model="llmReviewForm.promptTemplate" type="textarea" :rows="5" />
@@ -562,12 +570,13 @@
 </template>
 
 <script setup>
-import {computed, onMounted, ref} from 'vue'
+import {computed, ref} from 'vue'
 import { useRouter } from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {DataAnalysis, Delete, Download, Edit, MoreFilled, Plus, Upload} from '@element-plus/icons-vue'
 import { clacPXToVW } from '@/utils/index'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
+import AlgorithmCatalogView from './components/AlgorithmCatalogView.vue'
 import Config from '@/config'
 import {
   getCloudPlatformUserPath,
@@ -592,10 +601,12 @@ import {getMqttDevicePage} from '@/api/vlstreamMqttDevice'
 import {
   getAlgorithmLlmReviewConfig,
   getLlmProviders,
+  getOortCloudLlmAuthorization,
   saveAlgorithmLlmReviewConfig
 } from '@/api/llmReview'
 
 const router = useRouter()
+const catalogRef = ref(null)
 
 // Load
 const repositoriesLoading = ref(false)
@@ -694,6 +705,9 @@ const algorithmEditForm = ref({
   imageUrl: ''
 })
 const llmProviders = ref([])
+const llmAuthorized = ref(false)
+const builtInLlmProvider = computed(() => llmProviders.value.find((provider) => provider.systemProvider) || null)
+const availableLlmProviders = computed(() => llmProviders.value.filter((provider) => provider.enabled && provider.apiKeyConfigured))
 const defaultLlmReviewForm = () => ({
   enabled: false,
   providerId: null,
@@ -704,6 +718,21 @@ const defaultLlmReviewForm = () => ({
   imageMode: 'FULL_AND_CROP'
 })
 const llmReviewForm = ref(defaultLlmReviewForm())
+const selectedLlmProvider = computed(() => llmProviders.value.find((provider) => String(provider.id) === String(llmReviewForm.value.providerId)) || null)
+
+const handleLlmReviewToggle = (enabled) => {
+  if (!enabled) return
+  if (!llmReviewForm.value.providerId && builtInLlmProvider.value) llmReviewForm.value.providerId = builtInLlmProvider.value.id
+  if (!selectedLlmProvider.value) {
+    llmReviewForm.value.enabled = false
+    ElMessage.warning('请先选择一个已启用且已配置 API Key 的视觉大模型')
+  } else if (selectedLlmProvider.value.systemProvider && !llmAuthorized.value) {
+    llmReviewForm.value.enabled = false
+    ElMessage.warning('请先点击页面顶部“登录 OortCloud”完成授权')
+  }
+}
+
+const providerOptionLabel = (provider) => `${provider.systemProvider ? '内置 · ' : ''}${provider.name} / ${provider.modelName}`
 
 // form
 const addFormRules = ref({
@@ -1064,18 +1093,30 @@ const editAlgorithm = async (algorithm) => {
 
   llmReviewForm.value = defaultLlmReviewForm()
   try {
-    const [configResponse, providersResponse] = await Promise.all([
+    const [configResponse, providersResponse, authorizationResponse] = await Promise.all([
       getAlgorithmLlmReviewConfig(algorithm.id),
-      getLlmProviders()
+      getLlmProviders(),
+      getOortCloudLlmAuthorization()
     ])
     llmReviewForm.value = { ...defaultLlmReviewForm(), ...(configResponse.data || {}) }
     llmProviders.value = providersResponse.data || []
+    llmAuthorized.value = Boolean(authorizationResponse.data?.authorized)
   } catch (error) {
     ElMessage.warning('大模型复核配置加载失败，可稍后重试')
   }
 
   // dialog
   showAlgorithmEditDialog.value = true
+}
+
+const openCatalogAlgorithmAdd = (repositoryId) => {
+  const normalizedRepositoryId = normalizeRepositoryId(repositoryId)
+  if (!normalizedRepositoryId) {
+    ElMessage.warning('请先选择具体分类')
+    return
+  }
+  activeTopMenu.value = normalizedRepositoryId
+  addAlgorithm()
 }
 
 const evaluateAlgorithm = async (algorithm) => {
@@ -1490,9 +1531,9 @@ const handleAlgorithmAddConfirm = async () => {
       name: algorithmAddForm.value.name,
       category: algorithmAddForm.value.category,
       description: algorithmAddForm.value.description,
-      ptModelFilePath: algorithmEditForm.value.ptModelFilePath,
-      onnxModelFilePath: algorithmEditForm.value.onnxModelFilePath,
-      isSystem: algorithmEditForm.value.isSystem,
+      ptModelFilePath: algorithmAddForm.value.ptModelFilePath,
+      onnxModelFilePath: algorithmAddForm.value.onnxModelFilePath,
+      isSystem: algorithmAddForm.value.isSystem || 'NO',
       inputFormat: 'image',
       outputFormat: 'json',
       gpuRequired: 0,
@@ -1510,6 +1551,7 @@ const handleAlgorithmAddConfirm = async () => {
       if (algorithmAddForm.value.repositoryId) {
         await loadAlgorithmsByRepository(algorithmAddForm.value.repositoryId)
       }
+      await catalogRef.value?.refreshAll()
     } else {
       ElMessage.error(response.message || '算法添加失败')
     }
@@ -1549,6 +1591,7 @@ const handleAlgorithmEditConfirm = async () => {
 
     // new data
     const updateData = {
+      repositoryId: algorithmEditForm.value.repositoryId,
       name: algorithmEditForm.value.name,
       category: algorithmEditForm.value.category,
       ptModelFilePath: algorithmEditForm.value.ptModelFilePath,
@@ -1566,9 +1609,6 @@ const handleAlgorithmEditConfirm = async () => {
 
     if (response.code === 200) {
       algorithmSaved = true
-      if (llmReviewForm.value.enabled && !llmReviewForm.value.providerId) {
-        throw new Error('开启大模型复核时必须选择视觉大模型')
-      }
       const reviewResponse = await saveAlgorithmLlmReviewConfig(
         editingAlgorithm.value.id,
         llmReviewForm.value
@@ -1583,6 +1623,7 @@ const handleAlgorithmEditConfirm = async () => {
       if (algorithmEditForm.value.repositoryId) {
         await loadAlgorithmsByRepository(algorithmEditForm.value.repositoryId)
       }
+      await catalogRef.value?.refreshAll()
     } else {
       ElMessage.error(response.message || '算法更新失败')
     }
@@ -1617,10 +1658,6 @@ const handleAlgorithmEditCancel = () => {
 
 
 
-// pageInitialize
-onMounted(() => {
-  initData()
-})
 </script>
 
 <style scoped>
@@ -1628,6 +1665,16 @@ onMounted(() => {
   margin-left: 10px;
   color: #8c8c8c;
   font-size: 12px;
+}
+.llm-system-provider {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+.llm-system-provider + :deep(.el-alert) {
+  margin-top: 8px;
 }
 .algorithm-management {
   height: 100%;

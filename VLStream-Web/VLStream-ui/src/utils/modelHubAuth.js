@@ -12,7 +12,7 @@
  * 3. accessToken, after getUserInfo userinfo
  */
 
-const PLATFORM_BASE_URL = 'https://workup-dev.myoumuamua.com:6433'
+const PLATFORM_BASE_URL = 'https://workup.oortcloudsmart.com:2443'
 const PLATFORM_LOGIN_URL = import.meta.env.VITE_PLATFORM_LOGIN_URL || `${PLATFORM_BASE_URL}/bus/apaas-web/loginPage/index.html`
 const OORTCLOUD_MODEL_HUB_URL = import.meta.env.VITE_OORTCLOUD_MODEL_HUB_URL || 'https://vls.oortcloudsmart.com/zh/dashboard'
 const OORTCODEX_PRICING_URL = import.meta.env.VITE_OORTCODEX_PRICING_URL || 'https://oortcodex.oortcloudsmart.com/pricing.html'

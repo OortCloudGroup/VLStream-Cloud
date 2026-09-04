@@ -14,7 +14,7 @@ import { clearModelHubAuth, getModelHubAccessToken } from '@/utils/modelHubAuth'
  */
 const PLATFORM_SSO_BASE = import.meta.env.DEV
   ? '/bus/apaas-sso'
-  : 'https://workup-dev.myoumuamua.com:6433/bus/apaas-sso'
+  : 'https://workup.oortcloudsmart.com:2443/bus/apaas-sso'
 
 export const MODEL_HUB_HEADERS = {
   'Content-Type': 'application/json',

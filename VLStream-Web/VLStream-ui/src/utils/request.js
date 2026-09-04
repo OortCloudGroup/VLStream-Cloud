@@ -64,7 +64,7 @@ export const applyPlatformGatewayHeaders = (config) => {
 export const applyAuthHeaders = (config) => {
   const localToken = config.localAuthToken || getLocalSessionToken()
   const platformToken = getPlatformAccessToken()
-  const authToken = localToken || platformToken
+  const authToken = localToken
   const gatewayToken = platformToken || localToken
 
   if (authToken) {
