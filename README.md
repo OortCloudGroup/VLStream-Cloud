@@ -35,8 +35,6 @@
 > [!IMPORTANT]
 > **Online environment:** [https://vlstream.oortcloudsmart.com:2443/bus/vls-ui/login](https://vlstream.oortcloudsmart.com:2443/bus/vls-ui/login)
 > **Default account:** `admin` / `Codex@123456`
-> This is the current online environment. Change the default password immediately after the first sign-in.
-
 ---
 
 ## 📖 Project Description
@@ -46,6 +44,8 @@ management, intelligent video analysis, algorithm lifecycle management,
 monitoring, and alerting. It combines a Vue-based management console with a
 Spring Boot multi-module backend and provides workflow, permission, scheduling,
 object storage, and operational support for enterprise video applications.
+
+Extended introduction: [VLStream Visual AI Platform](https://juejin.cn/post/7633353634894364713)
 
 > [!IMPORTANT]
 > Connect only devices and video streams that you are authorized to access. Make
@@ -75,7 +75,7 @@ Algorithm training supports an exclusive single-GPU queue on one physical GPU
 server. A Docker container is created when a training job starts. Jobs wait
 automatically while the GPU is busy, and the container is removed when training
 finishes while job records, logs, and model artifacts are retained. See
-[Single-Node GPU Training Scheduler](./VLStream-Cloud-Backend-Server/vls-stream/doc/gpu-training-scheduler.md).
+[Single-Node GPU Training Scheduler](./docs/gpu-training-scheduler.md).
 
 ---
 
@@ -84,7 +84,7 @@ finishes while job records, logs, and model artifacts are retained. See
 VLStream delivers trained models to devices through MQTT. Hardware connection,
 model delivery, event reporting, media upload, status receipts, and integration
 acceptance follow the
-[VLS Platform and Camera Unified Communication Protocol](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.md).
+[VLS Platform and Camera Unified Communication Protocol](./docs/VLS-Protocol.md).
 
 Configure these environment variables:
 
@@ -109,31 +109,31 @@ for each environment; never commit the real secret to Git.
 <table>
   <tr>
     <td align="center" width="50%">
-      <a href="./assets/screenshots/01-active-safety-events.png"><img src="./assets/screenshots/01-active-safety-events.png" alt="Active safety event management" width="100%"></a><br>
+      <a href="./docs/assets/screenshots/01-active-safety-events.png"><img src="./docs/assets/screenshots/01-active-safety-events.png" alt="Active safety event management" width="100%"></a><br>
       <strong>Active Safety Event Management</strong>
     </td>
     <td align="center" width="50%">
-      <a href="./assets/screenshots/02-event-feedback-workflow.png"><img src="./assets/screenshots/02-event-feedback-workflow.png" alt="Event feedback and workflow" width="100%"></a><br>
+      <a href="./docs/assets/screenshots/02-event-feedback-workflow.png"><img src="./docs/assets/screenshots/02-event-feedback-workflow.png" alt="Event feedback and workflow" width="100%"></a><br>
       <strong>Event Feedback &amp; Workflow</strong>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <a href="./assets/screenshots/03-work-order-management.png"><img src="./assets/screenshots/03-work-order-management.png" alt="Work order management" width="100%"></a><br>
+      <a href="./docs/assets/screenshots/03-work-order-management.png"><img src="./docs/assets/screenshots/03-work-order-management.png" alt="Work order management" width="100%"></a><br>
       <strong>Work Order Management</strong>
     </td>
     <td align="center" width="50%">
-      <a href="./assets/screenshots/04-workflow-designer.png"><img src="./assets/screenshots/04-workflow-designer.png" alt="Visual workflow designer" width="100%"></a><br>
+      <a href="./docs/assets/screenshots/04-workflow-designer.png"><img src="./docs/assets/screenshots/04-workflow-designer.png" alt="Visual workflow designer" width="100%"></a><br>
       <strong>Visual Workflow Designer</strong>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <a href="./assets/screenshots/05-algorithm-training-management.png"><img src="./assets/screenshots/05-algorithm-training-management.png" alt="Algorithm training management" width="100%"></a><br>
+      <a href="./docs/assets/screenshots/05-algorithm-training-management.png"><img src="./docs/assets/screenshots/05-algorithm-training-management.png" alt="Algorithm training management" width="100%"></a><br>
       <strong>Algorithm Training Management</strong>
     </td>
     <td align="center" width="50%">
-      <a href="./assets/screenshots/06-algorithm-training-console.png"><img src="./assets/screenshots/06-algorithm-training-console.png" alt="Algorithm training console" width="100%"></a><br>
+      <a href="./docs/assets/screenshots/06-algorithm-training-console.png"><img src="./docs/assets/screenshots/06-algorithm-training-console.png" alt="Algorithm training console" width="100%"></a><br>
       <strong>Algorithm Training Console</strong>
     </td>
   </tr>
@@ -148,43 +148,43 @@ for each environment; never commit the real secret to Git.
 <table>
   <tr>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/01-chemical-production-safety.jpg" alt="Chemical production safety" width="100%"><br>
+      <img src="./docs/assets/use-cases/01-chemical-production-safety.jpg" alt="Chemical production safety" width="100%"><br>
       <strong>Chemical Production Safety</strong>
     </td>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/02-smart-water-conservancy.jpg" alt="Smart water conservancy" width="100%"><br>
+      <img src="./docs/assets/use-cases/02-smart-water-conservancy.jpg" alt="Smart water conservancy" width="100%"><br>
       <strong>Smart Water Conservancy</strong>
     </td>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/03-wastewater-treatment.jpg" alt="Wastewater treatment" width="100%"><br>
+      <img src="./docs/assets/use-cases/03-wastewater-treatment.jpg" alt="Wastewater treatment" width="100%"><br>
       <strong>Wastewater Treatment</strong>
     </td>
   </tr>
   <tr>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/04-smart-construction-site.jpg" alt="Smart construction site" width="100%"><br>
+      <img src="./docs/assets/use-cases/04-smart-construction-site.jpg" alt="Smart construction site" width="100%"><br>
       <strong>Smart Construction Site</strong>
     </td>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/05-smart-community.jpg" alt="Smart community" width="100%"><br>
+      <img src="./docs/assets/use-cases/05-smart-community.jpg" alt="Smart community" width="100%"><br>
       <strong>Smart Community</strong>
     </td>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/06-gas-station-safety.jpg" alt="Gas station safety supervision" width="100%"><br>
+      <img src="./docs/assets/use-cases/06-gas-station-safety.jpg" alt="Gas station safety supervision" width="100%"><br>
       <strong>Gas Station Safety</strong>
     </td>
   </tr>
   <tr>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/07-smart-kitchen.jpg" alt="Smart kitchen" width="100%"><br>
+      <img src="./docs/assets/use-cases/07-smart-kitchen.jpg" alt="Smart kitchen" width="100%"><br>
       <strong>Smart Kitchen</strong>
     </td>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/08-smart-campus.jpg" alt="Smart campus" width="100%"><br>
+      <img src="./docs/assets/use-cases/08-smart-campus.jpg" alt="Smart campus" width="100%"><br>
       <strong>Smart Campus</strong>
     </td>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/09-smart-city-management.jpg" alt="Smart city management" width="100%"><br>
+      <img src="./docs/assets/use-cases/09-smart-city-management.jpg" alt="Smart city management" width="100%"><br>
       <strong>Smart City Management</strong>
     </td>
   </tr>
@@ -230,7 +230,7 @@ VLStream Cloud's core business architecture is organized into three categories:
 - **Client:** VLStream-ui provides platform operations, while the WVP UI provides video preview, playback, PTZ, and channel management.
 
 The complete lifecycle sequence diagram and dependency inventory are maintained in
-[Core Business and Technical Architecture](./architecture/vlstream-core-business-technical-architecture.md).
+[Core Business and Technical Architecture](./docs/architecture/vlstream-core-business-technical-architecture.md).
 
 ```mermaid
 sequenceDiagram
@@ -355,8 +355,9 @@ VLStream-Cloud/
 │   └── VLStream-ui/                 # Vue 3 management console
 ├── sdk/                             # Hi3519DV500 native camera business SDK
 ├── deploy/                          # Repository-level deployment assets
-├── docs/                            # Repository-level documentation
-├── assets/                          # Screenshots and application imagery
+├── docs/                            # Repository-level documentation and application assets
+│   ├── assets/                      # Screenshots and application imagery
+│   └── architecture/                # Core business and technical architecture
 ├── tools/                           # Development and validation tools
 ├── LICENSE
 ├── README.md                        # English documentation (default)
@@ -535,7 +536,7 @@ exists only to roll back to the legacy VLS device-management implementation.
 Each backend instance must use a unique
 `VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID`. MQTT topics, ACL rules, and hardware
 behavior are defined by
-[`VLS-Protocol.md`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.md).
+[`VLS-Protocol.md`](./docs/VLS-Protocol.md).
 
 #### MinIO and Algorithm Annotation
 
@@ -669,13 +670,12 @@ docker compose down
 | Frontend Guide | [`VLStream-Web/README.md`](./VLStream-Web/README.md) |
 | Frontend Guide (Chinese) | [`VLStream-Web/README-cn.md`](./VLStream-Web/README-cn.md) |
 | Device SDK Guide | [`sdk/README.md`](./sdk/README.md) |
-| Core Business and Technical Architecture | [`architecture/vlstream-core-business-technical-architecture.md`](./architecture/vlstream-core-business-technical-architecture.md) |
+| Core Business and Technical Architecture | [`vlstream-core-business-technical-architecture.md`](./docs/architecture/vlstream-core-business-technical-architecture.md) |
 | Backend Environment Variables | [`ENVIRONMENT_VARIABLES.md`](./VLStream-Cloud-Backend-Server/vls-stream/ENVIRONMENT_VARIABLES.md) |
 | Deployment Guide | [`deploy/release/README.md`](./deploy/release/README.md) |
 | Database Migrations | [`DATABASE_MIGRATIONS.md`](./VLStream-Cloud-Backend-Server/vls-stream/DATABASE_MIGRATIONS.md) |
-| VLS Device Protocol | [`VLS-Protocol.md`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.md) |
-| VLS Protocol Specification (English) | [`VLS-Protocol-EN.docx`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol-EN.docx) |
-| VLS Protocol Specification (Chinese) | [`VLS-Protocol.docx`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.docx) |
+| VLS Protocol Specification (English) | [`VLS-Protocol-EN.docx`](./docs/VLS-Protocol-EN.docx) |
+| VLS Protocol Specification (Chinese) | [`VLS-Protocol.docx`](./docs/VLS-Protocol.docx) |
 | API Documentation | Start the backend and open Knife4j or Swagger UI |
 
 ---

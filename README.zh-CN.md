@@ -35,13 +35,14 @@
 > [!IMPORTANT]
 > **线上环境地址：** [https://vlstream.oortcloudsmart.com:2443/bus/vls-ui/login](https://vlstream.oortcloudsmart.com:2443/bus/vls-ui/login)
 > **默认账号：** `admin` / `Codex@123456`
-> 这是当前线上环境地址。首次登录后请立即修改默认密码。
 
 ---
 
 ## 📖 项目介绍
 
 VLStream Cloud 是面向设备与视频流管理、智能视频分析、算法全生命周期、监控和告警场景的开源视频物联网平台。项目由 Vue 管理控制台和 Spring Boot 多模块后端组成，并提供工作流、权限、任务调度、对象存储等企业级视频应用所需的平台能力。
+
+扩展介绍：[奥尔特云 VLStream 视觉 AI 平台采用 MIT 协议开源，贯通标注、训练、部署全流程，集成视频物联核心能力](https://juejin.cn/post/7633353634894364713)
 
 > [!IMPORTANT]
 > 请仅接入已获得合法授权的设备和视频流，并确保部署方式以及智能分析功能的使用符合适用的隐私、安全和数据保护要求。
@@ -68,7 +69,7 @@ VLStream Cloud 是面向设备与视频流管理、智能视频分析、算法�
 算法训练支持一台物理 GPU 服务器上的单卡独占队列。训练开始时按需创建 Docker
 容器，GPU 忙时任务自动排队，训练结束后删除容器并保留任务记录、日志和模型产物。
 部署和环境变量说明见
-[单节点 GPU 训练调度](./VLStream-Cloud-Backend-Server/vls-stream/doc/gpu-training-scheduler.md)。
+[单节点 GPU 训练调度](./docs/gpu-training-scheduler.md)。
 
 ---
 
@@ -76,7 +77,7 @@ VLStream Cloud 是面向设备与视频流管理、智能视频分析、算法�
 
 平台支持通过 MQTT 向硬件下发训练模型。硬件连接、模型下发、事件上报、媒体上传、
 状态回执和联调验收统一以
-[VLS 平台与摄像头统一通信协议](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.md)
+[VLS 平台与摄像头统一通信协议](./docs/VLS-Protocol.md)
 为准。
 
 部署时需要配置以下环境变量：
@@ -111,31 +112,31 @@ $bytes = New-Object byte[] 32
 <table>
   <tr>
     <td align="center" width="50%">
-      <a href="./assets/screenshots/01-active-safety-events.png"><img src="./assets/screenshots/01-active-safety-events.png" alt="主动安全事件管理" width="100%"></a><br>
+      <a href="./docs/assets/screenshots/01-active-safety-events.png"><img src="./docs/assets/screenshots/01-active-safety-events.png" alt="主动安全事件管理" width="100%"></a><br>
       <strong>主动安全事件管理</strong>
     </td>
     <td align="center" width="50%">
-      <a href="./assets/screenshots/02-event-feedback-workflow.png"><img src="./assets/screenshots/02-event-feedback-workflow.png" alt="事件反馈与流程处理" width="100%"></a><br>
+      <a href="./docs/assets/screenshots/02-event-feedback-workflow.png"><img src="./docs/assets/screenshots/02-event-feedback-workflow.png" alt="事件反馈与流程处理" width="100%"></a><br>
       <strong>事件反馈与流程处理</strong>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <a href="./assets/screenshots/03-work-order-management.png"><img src="./assets/screenshots/03-work-order-management.png" alt="工单管理" width="100%"></a><br>
+      <a href="./docs/assets/screenshots/03-work-order-management.png"><img src="./docs/assets/screenshots/03-work-order-management.png" alt="工单管理" width="100%"></a><br>
       <strong>工单管理</strong>
     </td>
     <td align="center" width="50%">
-      <a href="./assets/screenshots/04-workflow-designer.png"><img src="./assets/screenshots/04-workflow-designer.png" alt="可视化流程设计" width="100%"></a><br>
+      <a href="./docs/assets/screenshots/04-workflow-designer.png"><img src="./docs/assets/screenshots/04-workflow-designer.png" alt="可视化流程设计" width="100%"></a><br>
       <strong>可视化流程设计</strong>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <a href="./assets/screenshots/05-algorithm-training-management.png"><img src="./assets/screenshots/05-algorithm-training-management.png" alt="算法训练管理" width="100%"></a><br>
+      <a href="./docs/assets/screenshots/05-algorithm-training-management.png"><img src="./docs/assets/screenshots/05-algorithm-training-management.png" alt="算法训练管理" width="100%"></a><br>
       <strong>算法训练管理</strong>
     </td>
     <td align="center" width="50%">
-      <a href="./assets/screenshots/06-algorithm-training-console.png"><img src="./assets/screenshots/06-algorithm-training-console.png" alt="算法训练控制台" width="100%"></a><br>
+      <a href="./docs/assets/screenshots/06-algorithm-training-console.png"><img src="./docs/assets/screenshots/06-algorithm-training-console.png" alt="算法训练控制台" width="100%"></a><br>
       <strong>算法训练控制台</strong>
     </td>
   </tr>
@@ -150,43 +151,43 @@ $bytes = New-Object byte[] 32
 <table>
   <tr>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/01-chemical-production-safety.jpg" alt="Chemical production safety" width="100%"><br>
+      <img src="./docs/assets/use-cases/01-chemical-production-safety.jpg" alt="Chemical production safety" width="100%"><br>
       <strong>化工生产安全</strong>
     </td>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/02-smart-water-conservancy.jpg" alt="Smart water conservancy" width="100%"><br>
+      <img src="./docs/assets/use-cases/02-smart-water-conservancy.jpg" alt="Smart water conservancy" width="100%"><br>
       <strong>智慧水利</strong>
     </td>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/03-wastewater-treatment.jpg" alt="Wastewater treatment" width="100%"><br>
+      <img src="./docs/assets/use-cases/03-wastewater-treatment.jpg" alt="Wastewater treatment" width="100%"><br>
       <strong>污水处理</strong>
     </td>
   </tr>
   <tr>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/04-smart-construction-site.jpg" alt="Smart construction site" width="100%"><br>
+      <img src="./docs/assets/use-cases/04-smart-construction-site.jpg" alt="Smart construction site" width="100%"><br>
       <strong>智慧工地</strong>
     </td>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/05-smart-community.jpg" alt="Smart community" width="100%"><br>
+      <img src="./docs/assets/use-cases/05-smart-community.jpg" alt="Smart community" width="100%"><br>
       <strong>智慧社区</strong>
     </td>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/06-gas-station-safety.jpg" alt="Gas station safety" width="100%"><br>
+      <img src="./docs/assets/use-cases/06-gas-station-safety.jpg" alt="Gas station safety" width="100%"><br>
       <strong>加油站安全监管</strong>
     </td>
   </tr>
   <tr>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/07-smart-kitchen.jpg" alt="Smart kitchen" width="100%"><br>
+      <img src="./docs/assets/use-cases/07-smart-kitchen.jpg" alt="Smart kitchen" width="100%"><br>
       <strong>智慧后厨</strong>
     </td>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/08-smart-campus.jpg" alt="Smart campus" width="100%"><br>
+      <img src="./docs/assets/use-cases/08-smart-campus.jpg" alt="Smart campus" width="100%"><br>
       <strong>智慧校园</strong>
     </td>
     <td align="center" width="33%">
-      <img src="./assets/use-cases/09-smart-city-management.jpg" alt="Smart city management" width="100%"><br>
+      <img src="./docs/assets/use-cases/09-smart-city-management.jpg" alt="Smart city management" width="100%"><br>
       <strong>智慧城管</strong>
     </td>
   </tr>
@@ -232,7 +233,7 @@ VLStream Cloud 的核心业务架构分为三大类：
 - **客户端：** VLStream-ui 承载平台运营功能，WVP UI 承载视频预览、回放、云台和通道管理。
 
 完整的生命周期时序图和依赖清单见
-[核心业务技术架构文档](./architecture/vlstream-core-business-technical-architecture.md)。
+[核心业务技术架构文档](./docs/architecture/vlstream-core-business-technical-architecture.md)。
 
 ```mermaid
 sequenceDiagram
@@ -355,8 +356,9 @@ VLStream-Cloud/
 │   └── VLStream-ui/                 # Vue 3 管理控制台
 ├── sdk/                             # Hi3519DV500 原生摄像机业务 SDK
 ├── deploy/                          # 仓库级部署资源
-├── docs/                            # 仓库级文档
-├── assets/                          # 截图和应用场景图片
+├── docs/                            # 仓库级文档和应用资料
+│   ├── assets/                      # 截图和应用场景图片
+│   └── architecture/                # 核心业务与技术架构
 ├── tools/                           # 开发与校验工具
 ├── LICENSE
 ├── README.md                        # 英文文档（默认）
@@ -529,7 +531,7 @@ VLS；不要启用 `VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED`，该开关只用于�
 VLS-Protocol 2.2 的设备 bus Topic
 `vlstream/v2.2/dev/{deviceId}/bus` 是固定协议，不再通过环境变量修改。Topic、ACL 和
 硬件行为统一查看
-[VLS 平台与摄像头统一通信协议](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.md)。
+[VLS 平台与摄像头统一通信协议](./docs/VLS-Protocol.md)。
 
 #### EMQX 5.4 本地测试环境
 
@@ -748,12 +750,12 @@ docker compose down
 | 前端指南 | [`VLStream-Web/README.md`](./VLStream-Web/README.md) |
 | 前端中文指南 | [`VLStream-Web/README-cn.md`](./VLStream-Web/README-cn.md) |
 | 设备 SDK 指南 | [`sdk/README.md`](./sdk/README.md) |
-| 核心业务技术架构 | [`architecture/vlstream-core-business-technical-architecture.md`](./architecture/vlstream-core-business-technical-architecture.md) |
+| 核心业务技术架构 | [`vlstream-core-business-technical-architecture.md`](./docs/architecture/vlstream-core-business-technical-architecture.md) |
 | 后端环境变量 | [`ENVIRONMENT_VARIABLES.md`](./VLStream-Cloud-Backend-Server/vls-stream/ENVIRONMENT_VARIABLES.md) |
 | 部署指南 | [`deploy/release/README.zh-CN.md`](./deploy/release/README.zh-CN.md) |
 | 数据库迁移 | [`DATABASE_MIGRATIONS.md`](./VLStream-Cloud-Backend-Server/vls-stream/DATABASE_MIGRATIONS.md) |
-| VLS 协议规范（中文） | [`VLS-Protocol.docx`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol.docx) |
-| VLS 协议规范（英文） | [`VLS-Protocol-EN.docx`](./VLStream-Cloud-Backend-Server/vls-stream/doc/VLS-Protocol-EN.docx) |
+| VLS 协议规范（中文） | [`VLS-Protocol.docx`](./docs/VLS-Protocol.docx) |
+| VLS 协议规范（英文） | [`VLS-Protocol-EN.docx`](./docs/VLS-Protocol-EN.docx) |
 | API 文档 | 启动后端后访问 Knife4j 或 Swagger UI |
 
 ---
