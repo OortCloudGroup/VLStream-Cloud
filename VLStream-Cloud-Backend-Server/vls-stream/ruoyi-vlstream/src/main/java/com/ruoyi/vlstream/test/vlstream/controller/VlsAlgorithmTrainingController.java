@@ -349,7 +349,12 @@ public class VlsAlgorithmTrainingController extends BladeController {
 				return R.fail("数据集不存在");
 			}
 			if (annotation.getDatasetPath() == null || annotation.getDatasetPath().trim().isEmpty()) {
-				return R.fail("未配置有效的数据集路径");
+				return R.fail("数据集尚未生成或已失效，请先到算法标注页面生成数据集");
+			}
+			String datasetPath = annotation.getDatasetPath().trim();
+			String datasetError = validateRemoteTrainingDataset(datasetPath);
+			if (datasetError != null) {
+				return R.fail(datasetError);
 			}
 
 			Algorithm algorithm = training.getAlgorithmId() != null ? algorithmService.getById(training.getAlgorithmId()) : null;
@@ -380,7 +385,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			RemoteTrainingService.StartResult startResult = gpuTrainingSchedulerService.enqueue(
 				algorithm.getCategory().getCode(),
 				id,
-				annotation.getDatasetPath(),
+				datasetPath,
 				baseModel,
 				finalEpochs,
 				finalBatch,
@@ -714,7 +719,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			queuedProgress.setTaskId(id);
 			queuedProgress.setStatus(AlgorithmTrainingStatusEnum.pending.getCode());
 			queuedProgress.setPercentage(0);
-			queuedProgress.setMessage("等待GPU资源");
+			queuedProgress.setMessage("等待GPU资源：当前采用整卡独占，需等待前序任务完成且GPU无其他计算进程");
 			return R.data(queuedProgress);
 		}
 		if (training.getTrainStatus() == AlgorithmTrainingStatusEnum.completed
@@ -812,6 +817,36 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		String baseName = dotIndex > 0 ? fileName.substring(0, dotIndex) : fileName;
 		String targetName = baseName + "-rk3588-int8.rknn";
 		return dir.isEmpty() ? targetName : dir + "/" + targetName;
+	}
+
+	// Run before persisting queue state; a failed preflight must not create a GPU job.
+	private String validateRemoteTrainingDataset(String datasetPath) {
+		if (!datasetPath.startsWith("/") || !datasetPath.endsWith("/dataset.yaml")) {
+			return "数据集路径无效，请重新生成数据集";
+		}
+		String quotedPath = "'" + datasetPath.replace("'", "'\"'\"'") + "'";
+		String command = "if [ ! -f " + quotedPath + " ]; then echo MISSING; "
+			+ "elif [ ! -r " + quotedPath + " ]; then echo UNREADABLE; "
+			+ "elif [ ! -s " + quotedPath + " ]; then echo EMPTY; else echo READY; fi";
+		try {
+			SSHService.SSHExecutionResult result = sshService.executeCommand(
+				sshProperties.getHost(), sshProperties.getPort(), sshProperties.getUsername(),
+				sshProperties.getPassword(), command);
+			if (result == null || !result.isSuccess()) {
+				return "无法验证训练服务器的数据集文件，请检查训练服务器连接后重试";
+			}
+			String output = result.getOutput() == null ? "" : result.getOutput().trim();
+			switch (output) {
+				case "READY": return null;
+				case "MISSING": return "训练服务器上的 dataset.yaml 不存在，请重新生成数据集";
+				case "EMPTY": return "训练服务器上的 dataset.yaml 为空，请重新生成数据集";
+				case "UNREADABLE": return "训练服务器上的 dataset.yaml 不可读，请检查文件权限";
+				default: return "无法确认训练服务器的数据集文件状态，请检查后重试";
+			}
+		} catch (Exception e) {
+			log.warn("Training dataset preflight failed: {}", e.getClass().getSimpleName());
+			return "无法验证训练服务器的数据集文件，请检查训练服务器连接后重试";
+		}
 	}
 
 	private boolean checkRemoteFileExists(String remotePath) {

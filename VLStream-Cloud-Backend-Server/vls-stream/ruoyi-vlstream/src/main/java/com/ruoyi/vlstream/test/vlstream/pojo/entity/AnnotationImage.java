@@ -80,4 +80,18 @@ public class AnnotationImage extends TenantEntity {
 	@JsonFormat(pattern = DateUtil.PATTERN_DATETIME)
 	private Date importTime;
 
+	private String mediaType;
+	private String sampleSource;
+	private String sampleTags;
+	private String qualityStatus;
+	private String qualityNote;
+	private String qualityIssues;
+	private Date qualityCheckedAt;
+	private String qualityReviewedBy;
+	private Integer mediaWidth;
+	private Integer mediaHeight;
+	private Double focusScore;
+	private String contentSha256;
+	private String datasetSplit;
+
 }

@@ -75,4 +75,7 @@ public class AlgorithmAnnotation extends TenantEntity {
 	@Schema(description = "备注")
 	private String remark;
 
+	private String projectCode;
+	private String projectType;
+
 }

@@ -51,6 +51,9 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 	@Resource
 	private VlsAlgorithmAnnotationMapper algorithmAnnotationMapper;
 
+	@Resource
+	private com.ruoyi.vlstream.test.vlstream.data.DataManagementService dataManagementService;
+
 	@Value("${vlstream.annotation-media.public-endpoint:}")
 	private String annotationMediaPublicEndpoint;
 
@@ -73,6 +76,7 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 
 	@Override
 	public List<AnnotationImage> uploadImages(MultipartFile[] files, Long annotationId) {
+		dataManagementService.beginAnnotationEdit(annotationId);
 		List<AnnotationImage> uploadedImages = new ArrayList<>();
 		int addedCount = 0;
 
@@ -123,6 +127,7 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 			log.warn("上传图片后更新标注总数失败: annotationId={}, error={}", annotationId, e.getMessage());
 		}
 
+		dataManagementService.beginAnnotationEdit(annotationId);
 		return uploadedImages;
 	}
 
@@ -138,7 +143,12 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 
 	@Override
 	public AnnotationImage updateImage(AnnotationImage image) {
+		AnnotationImage existing = annotationImageMapper.selectById(image.getId());
+		if (existing == null) throw new com.ruoyi.common.exception.ServiceException("样本不存在");
+		dataManagementService.beginAnnotationEdit(existing.getAnnotationId());
+		image.setAnnotationId(existing.getAnnotationId());
 		updateById(image);
+		dataManagementService.beginAnnotationEdit(existing.getAnnotationId());
 		return withFreshBrowserUrl(annotationImageMapper.selectById(image.getId()));
 	}
 
@@ -146,11 +156,10 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 	public void deleteImage(Long id) {
 		AnnotationImage image = annotationImageMapper.selectById(id);
 		if (image != null) {
-			File file = new File(image.getLocalPath());
-			if (file.exists()) {
-				file.delete();
-			}
+			dataManagementService.beginAnnotationEdit(image.getAnnotationId());
+			// Keep the underlying object so historical dataset versions remain recoverable.
 			annotationImageMapper.deleteById(id);
+			dataManagementService.beginAnnotationEdit(image.getAnnotationId());
 		}
 	}
 
@@ -181,6 +190,7 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 
 	@Override
 	public boolean saveImage(AnnotationImage annotationImage) {
+		dataManagementService.beginAnnotationEdit(annotationImage.getAnnotationId());
 		try {
 			if (annotationImage.getImageName() == null || annotationImage.getImageName().trim().isEmpty()) {
 				throw new IllegalArgumentException("文件名不能为空");
@@ -197,6 +207,7 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 				annotationImage.getAnnotationId(), annotationImage.getImageName());
 
 			annotationImageMapper.insert(annotationImage);
+			dataManagementService.beginAnnotationEdit(annotationImage.getAnnotationId());
 			return true;
 		} catch (Exception e) {
 			log.error("Failed to save annotation image: datasetId={}, fileName={}",
@@ -209,10 +220,12 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 	public boolean batchSaveImages(List<AnnotationImage> annotationImages) {
 		try {
 			for (AnnotationImage image : annotationImages) {
+				dataManagementService.beginAnnotationEdit(image.getAnnotationId());
 				if (image.getIsImported() == null) {
 					image.setIsImported(1);
 				}
 				save(image);
+				dataManagementService.beginAnnotationEdit(image.getAnnotationId());
 			}
 
 			return true;

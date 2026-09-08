@@ -84,6 +84,8 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 	private final IVlsAnnotationLabelService annotationLabelService;
 	private final IFileUploadService fileUploadService;
 	private final VlsSshProperties sshProperties;
+	private final com.ruoyi.vlstream.test.vlstream.data.DataTrainingPublisher dataTrainingPublisher;
+	private final com.ruoyi.vlstream.test.vlstream.data.DataManagementService dataManagementService;
 
 	@Override
 	public IPage<AlgorithmAnnotationVO> selectVlsAlgorithmAnnotationPage(IPage<AlgorithmAnnotationVO> page, AlgorithmAnnotationVO vlsAlgorithmAnnotation) {
@@ -145,6 +147,10 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 		}
 
 		// Set value
+		if (annotation.getProjectCode() == null || annotation.getProjectCode().trim().isEmpty()) {
+			annotation.setProjectCode("PRJ-" + com.baomidou.mybatisplus.core.toolkit.IdWorker.getIdStr());
+		}
+		if (annotation.getProjectType() == null) annotation.setProjectType("general");
 		if (annotation.getTotalCount() == null) {
 			annotation.setTotalCount(0);
 		}
@@ -176,233 +182,8 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 	 * @param annotationId annotationID
 	 * @return whether successfully
 	 */
-	@Transactional(rollbackFor = Exception.class)
 	public boolean saveAnnotationToDataset(Long annotationId) {
-		Session session = null;
-		ChannelSftp sftp = null;
-		try {
-			AlgorithmAnnotation annotation = getById(annotationId);
-			if (annotation == null) {
-				log.warn("标注不存在：ID={}", annotationId);
-				return false;
-			}
-
-			List<AnnotationImage> images = annotationImageService.getImagesByAnnotationId(annotationId);
-			if (images == null || images.isEmpty()) {
-				log.warn("未找到标注图片，无法生成数据集：annotationId={}", annotationId);
-				return false;
-			}
-
-			List<AnnotationInstance> imageInstances = annotationInstanceService.getByAnnotationId(annotationId);
-			Map<Long, List<AnnotationInstance>> instancesByImageId = new HashMap<>();
-			Map<String, List<AnnotationInstance>> instancesByImageName = new HashMap<>();
-			Map<Long, String> labelIdNameMap = new HashMap<>();
-
-			// Load current annotation full , labelId -> name
-			List<AnnotationLabel> allLabels = annotationLabelService.getByAnnotationIdWithUsageCount(annotationId);
-			if (allLabels != null) {
-				for (AnnotationLabel label : allLabels) {
-					labelIdNameMap.put(label.getId(), label.getName());
-				}
-			}
-
-			// imageId / imageName instance,
-			if (imageInstances != null) {
-				for (AnnotationInstance instance : imageInstances) {
-					if (instance.getImageId() != null) {
-						instancesByImageId.computeIfAbsent(instance.getImageId(), k -> new ArrayList<>()).add(instance);
-					}
-					String name = extractImageNameFromInstance(instance);
-					if (name != null) {
-						instancesByImageName.computeIfAbsent(name, k -> new ArrayList<>()).add(instance);
-					}
-					if (!labelIdNameMap.containsKey(instance.getLabelId())) {
-						AnnotationLabel lbl = annotationLabelService.getById(instance.getLabelId());
-						if (lbl != null && lbl.getName() != null) {
-							labelIdNameMap.put(instance.getLabelId(), lbl.getName());
-						}
-					}
-				}
-			}
-
-			String datasetsRoot = CommonConstant.BASE_DATASETS_PATH + "vls";
-			String datasetPath = datasetsRoot + "/annotation_" + annotationId;
-
-			// SFTP
-			JSch jsch = new JSch();
-			session = jsch.getSession(sshProperties.getUsername(), sshProperties.getHost(), sshProperties.getPort());
-			session.setPassword(sshProperties.getPassword());
-			session.setConfig("StrictHostKeyChecking", "no");
-			session.connect(30000);
-
-			Channel channel = session.openChannel("sftp");
-			channel.connect(30000);
-			sftp = (ChannelSftp) channel;
-
-			// dataset
-			createCompleteDatasetStructure(sftp, datasetPath);
-
-			Set<String> labelNames = new LinkedHashSet<>();
-			if (allLabels != null) {
-				allLabels.forEach(label -> {
-					if (label.getName() != null) {
-						labelNames.add(label.getName());
-					}
-				});
-			} else {
-				labelNames.addAll(labelIdNameMap.values());
-			}
-			Map<String, Integer> labelIndexMap = new LinkedHashMap<>();
-			int labelIdxSeed = 0;
-			for (String name : labelNames) {
-				labelIndexMap.putIfAbsent(name, labelIdxSeed++);
-			}
-
-			Map<Long, ImageLocalInfo> localImageInfoMap = new HashMap<>();
-			List<String> uploadedImageNames = new ArrayList<>();
-			ExecutorService downloadExecutor = null;
-			try {
-				int downloadThreadCount = Math.max(1, Math.min(images.size(),
-					Math.max(2, Runtime.getRuntime().availableProcessors())));
-				downloadExecutor = Executors.newFixedThreadPool(downloadThreadCount);
-				Map<Long, Future<ImageLocalInfo>> downloadFutures = new LinkedHashMap<>();
-				for (AnnotationImage image : images) {
-					Long imageId = image.getId();
-					if (imageId == null) {
-						log.warn("Image id is null, skip download: annotationId={}, imageName={}", annotationId, image.getImageName());
-						continue;
-					}
-					downloadFutures.put(imageId, downloadExecutor.submit(() -> downloadImageFile(image)));
-				}
-				for (Map.Entry<Long, Future<ImageLocalInfo>> downloadEntry : downloadFutures.entrySet()) {
-					ImageLocalInfo imageInfo = getDownloadResult(downloadEntry.getValue(), downloadEntry.getKey());
-					if (imageInfo != null) {
-						localImageInfoMap.put(downloadEntry.getKey(), imageInfo);
-					}
-				}
-			} finally {
-				if (downloadExecutor != null) {
-					downloadExecutor.shutdown();
-					try {
-						if (!downloadExecutor.awaitTermination(60, TimeUnit.SECONDS)) {
-							downloadExecutor.shutdownNow();
-						}
-					} catch (InterruptedException interruptedException) {
-						downloadExecutor.shutdownNow();
-						Thread.currentThread().interrupt();
-					}
-				}
-			}
-
-			for (AnnotationImage image : images) {
-				String imageName = image.getImageName();
-
-				// Upload image to train/val using local temp file
-				Long imageId = image.getId();
-				ImageLocalInfo localImageInfo = imageId != null ? localImageInfoMap.get(imageId) : null;
-				if (localImageInfo == null) {
-					log.warn("Image download missing, skip process: annotationId={}, imageId={}, imageName={}", annotationId, imageId, imageName);
-					continue;
-				}
-				ImageLocalInfo imageInfo = uploadImageFile(sftp, datasetPath, image, localImageInfo);
-				if (imageInfo == null) {
-					log.warn("Image upload failed, skip process: annotationId={}, imageId={}, imageName={}", annotationId, imageId, imageName);
-					continue;
-				}
-				uploadedImageNames.add(imageName);
-
-				int[] dims = readImageSize(imageInfo.localPath);
-				double imageWidth = dims[0] > 0 ? dims[0] : -1;
-				double imageHeight = dims[1] > 0 ? dims[1] : -1;
-
-				// Process annotation
-				List<Map<String, Object>> annotationMaps = new ArrayList<>();
-				List<AnnotationInstance> perImageInstances = new ArrayList<>();
-				if (instancesByImageId.containsKey(image.getId())) {
-					perImageInstances.addAll(instancesByImageId.get(image.getId()));
-				}
-				if (perImageInstances.isEmpty()) {
-					perImageInstances.addAll(instancesByImageName.getOrDefault(imageName, new ArrayList<>()));
-				}
-				if (perImageInstances.isEmpty()) {
-					// : annotationId + imageName new Query
-					perImageInstances.addAll(annotationInstanceService.getByAnnotationIdAndImageName(annotationId, imageName));
-				}
-
-				for (AnnotationInstance instance : perImageInstances) {
-					Map<String, Object> parsed = parseAnnotationData(instance.getAnnotationData());
-					if (parsed.isEmpty()) {
-						continue;
-					}
-					String labelName = labelIdNameMap.get(instance.getLabelId());
-					if (labelName != null) {
-						parsed.put("labelName", labelName);
-						labelNames.add(labelName);
-						labelIndexMap.putIfAbsent(labelName, labelIndexMap.size());
-					}
-					annotationMaps.add(parsed);
-				}
-
-				if (!labelNames.isEmpty()) {
-					int idx = 0;
-					for (String name : labelNames) {
-						labelIndexMap.putIfAbsent(name, idx++);
-					}
-				}
-
-				if (!annotationMaps.isEmpty()) {
-					uploadLabelFile(sftp, datasetPath, imageName, annotationMaps, labelIndexMap, imageWidth, imageHeight);
-				}
-
-				// Delete
-				if (imageInfo.tempFile != null && imageInfo.tempFile.exists() && !imageInfo.tempFile.delete()) {
-					log.debug("临时图片删除失败：{}", imageInfo.tempFile.getAbsolutePath());
-				}
-			}
-
-			// loop in not , annotation fill
-			if (labelNames.isEmpty() && allLabels != null) {
-				for (AnnotationLabel label : allLabels) {
-					if (label.getName() != null) {
-						labelNames.add(label.getName());
-						labelIndexMap.putIfAbsent(label.getName(), labelIndexMap.size());
-					}
-				}
-			}
-
-			// Generate dataset YAML
-			String datasetYamlContent = buildDatasetYaml(annotation, labelNames);
-			uploadDatasetYaml(sftp, datasetPath, datasetYamlContent);
-			List<String> cocoSubsetPaths = uploadedImageNames.stream()
-				.filter(Objects::nonNull)
-				.map(String::trim)
-				.filter(name -> !name.isEmpty())
-				.distinct()
-				.limit(20)
-				.map(name -> datasetPath + "/images/train/" + name)
-				.collect(Collectors.toList());
-			uploadCocoSubsetFile(sftp, datasetPath, cocoSubsetPaths);
-
-			UpdateWrapper<AlgorithmAnnotation> updateWrapper = new UpdateWrapper<>();
-			updateWrapper.eq("id", annotationId).set("dataset_path", datasetPath + "/dataset.yaml");
-			boolean updateResult = update(new AlgorithmAnnotation(), updateWrapper);
-			if (!updateResult) {
-				log.warn("更新数据集路径失败：annotationId={}", annotationId);
-			}
-
-			return true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			log.error("保存标注数据到数据集失败：annotationId={}, error={}", annotationId, e.getMessage());
-			return false;
-		} finally {
-			if (sftp != null && sftp.isConnected()) {
-				sftp.disconnect();
-			}
-			if (session != null && session.isConnected()) {
-				session.disconnect();
-			}
-		}
+		return dataTrainingPublisher.publish(annotationId);
 	}
 
 	/**
@@ -901,6 +682,7 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public boolean updateAnnotation(AlgorithmAnnotation annotation) {
+		dataManagementService.beginAnnotationEdit(annotation.getId());
 		log.info("更新算法标注：ID={}, Name={}", annotation.getId(), annotation.getAnnotationName());
 
 		// Get annotationinfo
@@ -1067,6 +849,7 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public Map<String, Object> importAnnotationDatasetZip(Long annotationId, MultipartFile zipFile) {
+		dataManagementService.beginAnnotationEdit(annotationId);
 		String originalFileName = zipFile == null ? null : zipFile.getOriginalFilename();
 		log.info("Import annotation dataset zip: annotationId={}, fileName={}", annotationId, originalFileName);
 

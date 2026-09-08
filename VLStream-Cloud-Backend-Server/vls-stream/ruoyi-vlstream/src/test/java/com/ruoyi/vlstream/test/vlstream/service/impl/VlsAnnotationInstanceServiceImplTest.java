@@ -46,6 +46,7 @@ class VlsAnnotationInstanceServiceImplTest {
         ReflectionTestUtils.setField(service, "annotationImageMapper", imageMapper);
         ReflectionTestUtils.setField(service, "annotationLabelService", mock(IVlsAnnotationLabelService.class));
         ReflectionTestUtils.setField(service, "annotationImageService", mock(IVlsAnnotationImageService.class));
+        ReflectionTestUtils.setField(service, "dataManagementService", mock(com.ruoyi.vlstream.test.vlstream.data.DataManagementService.class));
 
         AlgorithmAnnotation annotation = new AlgorithmAnnotation();
         annotation.setId(ANNOTATION_ID);

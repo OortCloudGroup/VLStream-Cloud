@@ -13,12 +13,12 @@ import java.nio.charset.StandardCharsets;
 /**
  * Converts the legacy persisted OSS URL into the durable object key.
  */
-final class AnnotationImageObjectKey {
+public final class AnnotationImageObjectKey {
 
     private AnnotationImageObjectKey() {
     }
 
-    static String normalize(String storedPath, String bucketName) {
+    public static String normalize(String storedPath, String bucketName) {
         if (storedPath == null || storedPath.trim().isEmpty()) {
             return null;
         }

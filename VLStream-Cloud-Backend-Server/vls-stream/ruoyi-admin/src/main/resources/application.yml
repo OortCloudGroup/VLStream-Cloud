@@ -77,9 +77,9 @@ spring:
   servlet:
     multipart:
       # 单个文件大小
-      max-file-size: 10MB
+      max-file-size: ${VLS_UPLOAD_MAX_FILE_SIZE:500MB}
       # 设置总上传的文件大小
-      max-request-size: 20MB
+      max-request-size: ${VLS_UPLOAD_MAX_REQUEST_SIZE:512MB}
   # 服务模块
   devtools:
     restart:

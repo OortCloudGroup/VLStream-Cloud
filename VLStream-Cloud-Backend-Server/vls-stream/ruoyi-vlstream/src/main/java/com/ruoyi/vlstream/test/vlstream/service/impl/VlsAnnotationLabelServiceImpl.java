@@ -36,6 +36,9 @@ import java.util.List;
 @Service
 public class VlsAnnotationLabelServiceImpl extends BaseServiceImpl<VlsAnnotationLabelMapper, AnnotationLabel> implements IVlsAnnotationLabelService {
 
+	@javax.annotation.Resource
+	private com.ruoyi.vlstream.test.vlstream.data.DataManagementService dataManagementService;
+
 	@Resource
 	private VlsAnnotationInstanceMapper annotationInstanceMapper;
 
@@ -62,6 +65,7 @@ public class VlsAnnotationLabelServiceImpl extends BaseServiceImpl<VlsAnnotation
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public AnnotationLabel createLabel(Long annotationId, String name, String color, String description) {
+		dataManagementService.beginAnnotationEdit(annotationId);
 		log.info("创建标签: annotationId={}, name={}, color={}", annotationId, name, color);
 
 		// annotation item whether in
@@ -104,6 +108,7 @@ public class VlsAnnotationLabelServiceImpl extends BaseServiceImpl<VlsAnnotation
 		if (label == null) {
 			throw new RuntimeException("标签不存在");
 		}
+		dataManagementService.beginAnnotationEdit(label.getAnnotationId());
 
 		// annotation item whether in
 		LambdaQueryWrapper<AnnotationLabel> wrapper = new LambdaQueryWrapper<>();
@@ -136,6 +141,7 @@ public class VlsAnnotationLabelServiceImpl extends BaseServiceImpl<VlsAnnotation
 		}
 
 		// whether annotationinstance
+		dataManagementService.beginAnnotationEdit(label.getAnnotationId());
 		Integer usageCount = annotationInstanceMapper.countByLabelId(labelId);
 		if (usageCount > 0) {
 			throw new RuntimeException("该标签已被使用，无法删除");

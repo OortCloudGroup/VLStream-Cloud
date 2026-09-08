@@ -60,55 +60,43 @@ public interface VlsAnnotationImageMapper extends BaseMapper<AnnotationImage> {
 		@Result(property = "updateTime", column = "update_time"),
 		@Result(property = "isDeleted", column = "is_deleted")
 	})
-	@Select("SELECT * FROM vls_annotation_image WHERE id = #{id}")
+	@Select("SELECT * FROM vls_annotation_image WHERE id = #{id} AND is_deleted = 0")
 	AnnotationImage selectById(Long id);
 
 	/**
 	 * record
 	 */
-	@Insert("INSERT INTO vls_annotation_image (annotation_id, image_name, original_name, local_path, " +
-		"file_size, is_imported, import_time, create_time, update_time) " +
-		"VALUES (#{annotationId}, #{imageName}, #{originalName}, #{localPath}, " +
-		"#{fileSize}, 1, NOW(), NOW(), NOW())")
-	@Options(useGeneratedKeys = true, keyProperty = "id")
-	int insert(AnnotationImage image);
+	// Use BaseMapper.insert so trusted tenant and audit fields are filled for legacy uploads too.
 
 	/**
 	 * datasetIDQuery list ( old interface, annotation_id)
 	 */
 	@ResultMap("AnnotationImageResultMap")
-	@Select("SELECT * FROM vls_annotation_image WHERE annotation_id = #{annotationId} ORDER BY create_time DESC")
+	@Select("SELECT * FROM vls_annotation_image WHERE annotation_id = #{annotationId} AND is_deleted = 0 AND media_type = 'image' AND quality_status != 'excluded' ORDER BY create_time DESC")
 	List<AnnotationImage> selectByDatasetId(Long annotationId);
 
 	/**
 	 * annotation item IDQuery list
 	 */
 	@ResultMap("AnnotationImageResultMap")
-	@Select("SELECT * FROM vls_annotation_image WHERE annotation_id = #{annotationId} AND is_deleted = 0 ORDER BY create_time DESC")
+	@Select("SELECT * FROM vls_annotation_image WHERE annotation_id = #{annotationId} AND is_deleted = 0 AND media_type = 'image' AND quality_status != 'excluded' ORDER BY create_time DESC")
 	List<AnnotationImage> selectByAnnotationId(@Param("annotationId") Long annotationId);
 
 	/**
 	 * new info
 	 */
-	@Update("UPDATE vls_annotation_image SET " +
-		"image_name = #{imageName}, original_name = #{originalName}, local_path = #{localPath}, " +
-		"file_url = #{fileUrl}, file_size = #{fileSize}, mime_type = #{mimeType}, " +
-		"width = #{width}, height = #{height}, category = #{category}, " +
-		"annotation_data = #{annotationData}, status = #{status}, tags = #{tags}, " +
-		"update_time = #{updateTime}, update_by = #{updateBy} " +
-		"WHERE id = #{id}")
-	int updateById(AnnotationImage image);
+	// Generated updateById uses the actual entity columns and preserves null metadata.
 
 	/**
 	 * Delete record
 	 */
-	@Delete("DELETE FROM vls_annotation_image WHERE id = #{id}")
+	@Update("UPDATE vls_annotation_image SET is_deleted = 1 WHERE id = #{id}")
 	int deleteById(Long id);
 
 	/**
 	 * datasetIDDelete all ( old interface, annotation_id)
 	 */
-	@Delete("DELETE FROM vls_annotation_image WHERE annotation_id = #{datasetId}")
+	@Update("UPDATE vls_annotation_image SET is_deleted = 1 WHERE annotation_id = #{datasetId}")
 	int deleteByDatasetId(Long datasetId);
 
 	/**
@@ -121,7 +109,7 @@ public interface VlsAnnotationImageMapper extends BaseMapper<AnnotationImage> {
 	 * Count active images in an annotation project.
 	 */
 	@Select("SELECT COUNT(*) FROM vls_annotation_image " +
-		"WHERE annotation_id = #{annotationId} AND is_deleted = 0")
+		"WHERE annotation_id = #{annotationId} AND is_deleted = 0 AND media_type = 'image' AND quality_status != 'excluded'")
 	int countActiveImages(@Param("annotationId") Long annotationId);
 
 	/**

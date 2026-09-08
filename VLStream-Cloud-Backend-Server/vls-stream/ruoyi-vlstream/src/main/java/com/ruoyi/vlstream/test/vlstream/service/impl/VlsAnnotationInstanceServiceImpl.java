@@ -58,6 +58,9 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 	@Resource
 	private VlsAnnotationImageMapper annotationImageMapper;
 
+	@Resource
+	private com.ruoyi.vlstream.test.vlstream.data.DataManagementService dataManagementService;
+
 	@Override
 	public IPage<AnnotationInstanceVO> selectVlsAnnotationInstancePage(IPage<AnnotationInstanceVO> page, AnnotationInstanceVO vlsAnnotationInstance) {
 		return page.setRecords(baseMapper.selectVlsAnnotationInstancePage(page, vlsAnnotationInstance));
@@ -81,6 +84,8 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public AnnotationInstance saveAnnotation(Long annotationId, Long labelId, Long imageId, AlgorithmAnnotationTypeEnum annotationType, String annotationData) {
+		dataManagementService.beginAnnotationEdit(annotationId);
+		dataManagementService.validateAnnotationOwner(annotationId, imageId, java.util.Collections.singletonList(labelId));
 		log.info("保存标注实例: annotationId={}, labelId={}, imageId={}", annotationId, labelId, imageId);
 
 		AnnotationInstance instance = new AnnotationInstance();
@@ -114,6 +119,8 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 		}
 
 		Long oldLabelId = instance.getLabelId();
+		dataManagementService.beginAnnotationEdit(instance.getAnnotationId());
+		dataManagementService.validateAnnotationOwner(instance.getAnnotationId(), instance.getImageId(), java.util.Collections.singletonList(labelId));
 
 		instance.setLabelId(labelId);
 		instance.setAnnotationType(annotationType);
@@ -142,6 +149,7 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 		}
 
 		Long labelId = instance.getLabelId();
+		dataManagementService.beginAnnotationEdit(instance.getAnnotationId());
 
 		int result = baseMapper.deleteById(instanceId);
 
@@ -159,6 +167,8 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public boolean batchSaveAnnotations(Long annotationId, Long imageId, List<AnnotationInstance> annotations) {
+		dataManagementService.beginAnnotationEdit(annotationId);
+		dataManagementService.validateAnnotationOwner(annotationId, imageId, annotations.stream().map(AnnotationInstance::getLabelId).collect(Collectors.toList()));
 		log.info("批量保存标注实例: annotationId={}, imageName={}, count={}", annotationId, imageId, annotations.size());
 
 		// Delete all annotation
@@ -205,6 +215,7 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public boolean deleteImageAndRelatedData(Long annotationId, Long imageId) {
+		dataManagementService.beginAnnotationEdit(annotationId);
 		log.info("开始删除图片及相关数据：annotationId={}, imageName={}", annotationId, imageId);
 
 		try {
@@ -280,6 +291,7 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 	}
 
 	private void refreshAnnotationProgress(Long annotationId) {
+		dataManagementService.beginAnnotationEdit(annotationId);
 		AlgorithmAnnotation annotation = algorithmAnnotationMapper.selectById(annotationId);
 		if (annotation == null) {
 			throw new IllegalStateException("标注项目不存在: " + annotationId);

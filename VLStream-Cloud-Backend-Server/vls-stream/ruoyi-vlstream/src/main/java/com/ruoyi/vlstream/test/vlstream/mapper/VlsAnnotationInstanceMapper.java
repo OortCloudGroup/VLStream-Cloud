@@ -72,8 +72,10 @@ public interface VlsAnnotationInstanceMapper extends BaseMapper<AnnotationInstan
 	 * @param annotationId annotation project ID
 	 * @return number of distinct annotated images
 	 */
-	@Select("SELECT COUNT(DISTINCT image_id) FROM vls_annotation_instance " +
-		"WHERE annotation_id = #{annotationId} AND is_deleted = 0")
+	@Select("SELECT COUNT(DISTINCT ai.image_id) FROM vls_annotation_instance ai " +
+		"JOIN vls_annotation_image i ON i.id = ai.image_id AND i.annotation_id = ai.annotation_id " +
+		"WHERE ai.annotation_id = #{annotationId} AND ai.is_deleted = 0 AND i.is_deleted = 0 " +
+		"AND i.media_type = 'image' AND i.quality_status != 'excluded'")
 	Integer countDistinctAnnotatedImages(@Param("annotationId") Long annotationId);
 
 	/**

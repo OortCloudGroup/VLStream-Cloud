@@ -15,6 +15,11 @@ import com.ruoyi.vlstream.test.vlstream.service.IVlsAlgorithmAnnotationService;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsAlgorithmService;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsAlgorithmTrainingService;
 import com.ruoyi.vlstream.test.vlstream.service.RemoteTrainingService;
+import com.ruoyi.vlstream.test.vlstream.service.SSHService;
+import com.ruoyi.vlstream.test.vlstream.config.VlsSshProperties;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springblade.core.tool.api.R;
@@ -95,6 +100,7 @@ class VlsAlgorithmTrainingControllerTest {
 
 	@Test
 	void startPersistsTheExactSelectedDatasetIdBeforeEnqueueing() throws Exception {
+		Long datasetId = 2096777217777467393L;
 		IVlsAlgorithmTrainingService trainingService = mock(IVlsAlgorithmTrainingService.class);
 		IVlsAlgorithmAnnotationService annotationService = mock(IVlsAlgorithmAnnotationService.class);
 		IVlsAlgorithmService algorithmService = mock(IVlsAlgorithmService.class);
@@ -113,7 +119,7 @@ class VlsAlgorithmTrainingControllerTest {
 
 		when(trainingService.selectAlgorithmTrainingById(40L)).thenReturn(training);
 		when(trainingService.updateAlgorithmTraining(org.mockito.ArgumentMatchers.any())).thenReturn(1);
-		when(annotationService.getById(60L)).thenReturn(annotation);
+		when(annotationService.getById(datasetId)).thenReturn(annotation);
 		when(algorithmService.getById(50L)).thenReturn(algorithm);
 		when(schedulerService.enqueue(anyString(), org.mockito.ArgumentMatchers.eq(40L), anyString(),
 			anyString(), org.mockito.ArgumentMatchers.eq(10), org.mockito.ArgumentMatchers.eq(16),
@@ -124,12 +130,79 @@ class VlsAlgorithmTrainingControllerTest {
 		setField(controller, "algorithmAnnotationService", annotationService);
 		setField(controller, "algorithmService", algorithmService);
 		setField(controller, "gpuTrainingSchedulerService", schedulerService);
+		mockDatasetProbe(controller, "READY", true);
 
-		controller.startTraining(40L, 10, 60L, 16, 640, null);
+		R<RemoteTrainingService.StartResult> response = controller.startTraining(40L, 10, datasetId, 16, 640, null);
+		assertTrue(response.isSuccess());
 
 		ArgumentCaptor<AlgorithmTraining> updates = ArgumentCaptor.forClass(AlgorithmTraining.class);
 		verify(trainingService, org.mockito.Mockito.times(2)).updateAlgorithmTraining(updates.capture());
-		assertEquals(60L, updates.getAllValues().get(0).getDatasetId());
+		assertEquals(datasetId, updates.getAllValues().get(0).getDatasetId());
+		verify(schedulerService).enqueue("detect", 40L, annotation.getDatasetPath(),
+			"/data/models/yolov8m.pt", 10, 16, 640);
+	}
+
+	@ParameterizedTest
+	@NullAndEmptySource
+	@ValueSource(strings = {"   ", "relative/dataset.yaml", "/data/image.jpg"})
+	void rejectsMissingOrInvalidDatasetPathWithoutQueueing(String path) throws Exception {
+		assertDatasetRejected(path, "READY", true, null);
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"MISSING", "EMPTY", "UNREADABLE", "unexpected"})
+	void rejectsUnavailableRemoteDatasetWithoutQueueing(String output) throws Exception {
+		assertDatasetRejected("/data/dataset.yaml", output, true, null);
+	}
+
+	@Test
+	void sshFailureDoesNotChangeTaskStateOrQueue() throws Exception {
+		assertDatasetRejected("/data/dataset.yaml", "", false, "连接");
+	}
+
+	@Test
+	void remoteDatasetPathIsShellQuoted() throws Exception {
+		SSHService ssh = assertDatasetRejected("/data/a'$(touch bad)/dataset.yaml", "MISSING", true, "不存在");
+		ArgumentCaptor<String> command = ArgumentCaptor.forClass(String.class);
+		verify(ssh).executeCommand(anyString(), org.mockito.ArgumentMatchers.anyInt(), anyString(), anyString(), command.capture());
+		assertTrue(command.getValue().contains("'/data/a'\"'\"'$(touch bad)/dataset.yaml'"));
+	}
+
+	private SSHService assertDatasetRejected(String path, String output, boolean success, String message) throws Exception {
+		IVlsAlgorithmTrainingService trainingService = mock(IVlsAlgorithmTrainingService.class);
+		IVlsAlgorithmAnnotationService annotationService = mock(IVlsAlgorithmAnnotationService.class);
+		GpuTrainingSchedulerService scheduler = mock(GpuTrainingSchedulerService.class);
+		AlgorithmTraining training = new AlgorithmTraining();
+		training.setId(40L);
+		AlgorithmAnnotation annotation = new AlgorithmAnnotation();
+		annotation.setDatasetPath(path);
+		when(trainingService.selectAlgorithmTrainingById(40L)).thenReturn(training);
+		when(annotationService.getById(2096777217777467393L)).thenReturn(annotation);
+		VlsAlgorithmTrainingController controller = new VlsAlgorithmTrainingController();
+		setField(controller, "vlsAlgorithmTrainingService", trainingService);
+		setField(controller, "algorithmAnnotationService", annotationService);
+		setField(controller, "gpuTrainingSchedulerService", scheduler);
+		SSHService ssh = mockDatasetProbe(controller, output, success);
+		R<RemoteTrainingService.StartResult> response = controller.startTraining(40L, 10, 2096777217777467393L, 16, 640, null);
+		assertFalse(response.isSuccess());
+		if (message != null) assertTrue(response.getMsg().contains(message));
+		verify(trainingService, never()).updateAlgorithmTraining(org.mockito.ArgumentMatchers.any());
+		org.mockito.Mockito.verifyNoInteractions(scheduler);
+		if (path == null || path.trim().isEmpty() || !path.startsWith("/") || !path.endsWith("/dataset.yaml")) {
+			org.mockito.Mockito.verifyNoInteractions(ssh);
+		}
+		return ssh;
+	}
+
+	private SSHService mockDatasetProbe(VlsAlgorithmTrainingController controller, String output, boolean success) throws Exception {
+		SSHService ssh = mock(SSHService.class);
+		SSHService.SSHExecutionResult result = new SSHService.SSHExecutionResult();
+		result.setSuccess(success);
+		result.setOutput(output);
+		when(ssh.executeCommand(anyString(), org.mockito.ArgumentMatchers.anyInt(), anyString(), anyString(), anyString())).thenReturn(result);
+		setField(controller, "sshService", ssh);
+		setField(controller, "sshProperties", new VlsSshProperties());
+		return ssh;
 	}
 
 	@Test
