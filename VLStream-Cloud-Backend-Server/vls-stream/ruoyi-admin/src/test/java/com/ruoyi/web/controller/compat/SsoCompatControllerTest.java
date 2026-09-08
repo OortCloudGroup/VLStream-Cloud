@@ -154,6 +154,33 @@ class SsoCompatControllerTest {
         assertArrayEquals(new String[] {"/refreshToken"}, refreshToken.getAnnotation(PostMapping.class).value());
     }
 
+    @Test
+    void validatePlatformSessionUsesLocalTokenInMultiMode() {
+        BladeTokenUserStore tokenUserStore = mock(BladeTokenUserStore.class);
+        MultiTenantAuthService platformAuthService = mock(MultiTenantAuthService.class);
+        TokenProperties properties = new TokenProperties();
+        properties.setTenantType("multi");
+        SsoCompatController controller = new SsoCompatController(tokenUserStore, properties, platformAuthService);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer local-token");
+        Map<String, Object> validation = Collections.<String, Object>singletonMap("valid", true);
+        when(platformAuthService.validatePlatformSession("local-token")).thenReturn(validation);
+
+        BladeResult<Map<String, Object>> result = controller.validatePlatformSession(request);
+
+        assertEquals(200, result.getCode());
+        assertEquals(true, result.getData().get("valid"));
+        verify(platformAuthService).validatePlatformSession("local-token");
+    }
+
+    @Test
+    void exposesValidatePlatformSessionRoute() throws Exception {
+        Method method = SsoCompatController.class.getDeclaredMethod(
+            "validatePlatformSession", javax.servlet.http.HttpServletRequest.class);
+
+        assertArrayEquals(new String[] {"/validatePlatformSession"}, method.getAnnotation(PostMapping.class).value());
+    }
+
     private SsoCompatController createController(BladeTokenUserStore tokenUserStore) {
         TokenProperties properties = new TokenProperties();
         properties.setTenantType("single");

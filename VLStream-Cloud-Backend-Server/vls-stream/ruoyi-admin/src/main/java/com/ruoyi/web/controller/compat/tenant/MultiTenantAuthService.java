@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -151,6 +152,24 @@ public class MultiTenantAuthService {
             throw new IllegalStateException("多租户平台会话不存在或已过期");
         }
         return session;
+    }
+
+    /**
+     * Revalidate the platform token bound to a local VLS session. This prevents an
+     * unlimited local token from masking an expired or missing platform session.
+     */
+    public Map<String, Object> validatePlatformSession(String localToken) {
+        PlatformTenantSession session = requireSession(localToken);
+        PlatformIdentity identity = platformClient.verifyToken(
+            session.getPlatformAccessToken(), session.getGatewayHeaders());
+        if (!Objects.equals(session.getPlatformUserId(), identity.getUserId())
+            || !Objects.equals(session.getTenantId(), identity.getTenantId())) {
+            throw new IllegalStateException("平台会话身份已变更，请重新登录");
+        }
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("valid", true);
+        result.put("tenantId", session.getTenantId());
+        return result;
     }
 
     public void removeSession(String localToken) {

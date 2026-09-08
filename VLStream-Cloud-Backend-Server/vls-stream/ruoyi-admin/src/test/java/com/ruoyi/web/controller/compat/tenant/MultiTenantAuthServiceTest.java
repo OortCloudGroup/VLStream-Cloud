@@ -20,6 +20,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -110,6 +111,50 @@ class MultiTenantAuthServiceTest {
 
         assertEquals("000000", result.get("tenantId"));
         verify(client, never()).getUserTenants(any(), any());
+    }
+
+    @Test
+    void validatePlatformSessionRevalidatesBoundPlatformToken() {
+        PlatformTenantClient client = mock(PlatformTenantClient.class);
+        PlatformTenantSessionStore sessionStore = mock(PlatformTenantSessionStore.class);
+        PlatformGatewayHeaders headers = new PlatformGatewayHeaders("app", "app-id", "secret");
+        PlatformTenantSession session = new PlatformTenantSession();
+        session.setPlatformAccessToken("platform-token");
+        session.setPlatformUserId("user-1");
+        session.setTenantId("tenant-a");
+        session.setGatewayHeaders(headers);
+        when(sessionStore.get("local-token")).thenReturn(session);
+        when(client.verifyToken("platform-token", headers)).thenReturn(identity("user-1", "tenant-a"));
+
+        MultiTenantAuthService service = service(client, mock(MultiTenantShadowUserService.class), sessionStore,
+            mock(BladeTokenUserStore.class), mock(SysLoginService.class));
+
+        Map<String, Object> result = service.validatePlatformSession("local-token");
+
+        assertEquals(true, result.get("valid"));
+        assertEquals("tenant-a", result.get("tenantId"));
+        verify(client).verifyToken("platform-token", headers);
+    }
+
+    @Test
+    void validatePlatformSessionRejectsChangedIdentity() {
+        PlatformTenantClient client = mock(PlatformTenantClient.class);
+        PlatformTenantSessionStore sessionStore = mock(PlatformTenantSessionStore.class);
+        PlatformGatewayHeaders headers = new PlatformGatewayHeaders("app", "app-id", "secret");
+        PlatformTenantSession session = new PlatformTenantSession();
+        session.setPlatformAccessToken("platform-token");
+        session.setPlatformUserId("user-1");
+        session.setTenantId("tenant-a");
+        session.setGatewayHeaders(headers);
+        when(sessionStore.get("local-token")).thenReturn(session);
+        when(client.verifyToken("platform-token", headers)).thenReturn(identity("user-2", "tenant-a"));
+
+        MultiTenantAuthService service = service(client, mock(MultiTenantShadowUserService.class), sessionStore,
+            mock(BladeTokenUserStore.class), mock(SysLoginService.class));
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+            () -> service.validatePlatformSession("local-token"));
+        assertEquals("平台会话身份已变更，请重新登录", exception.getMessage());
     }
 
     private static MultiTenantAuthService service(PlatformTenantClient client,

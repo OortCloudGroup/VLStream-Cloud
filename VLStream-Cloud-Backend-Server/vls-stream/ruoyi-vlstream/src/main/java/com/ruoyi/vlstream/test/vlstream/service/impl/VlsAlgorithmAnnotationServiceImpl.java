@@ -910,6 +910,7 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 			Set<String> usedImageNames = new HashSet<>();
 			int totalImages = 0;
 			int totalInstances = 0;
+			int annotatedImages = 0;
 
 			for (Path imagePath : imageFiles) {
 				String imageName = resolveImageName(imagesRoot, imagePath, usedImageNames);
@@ -921,6 +922,8 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 				if (labelRecords.isEmpty()) {
 					continue;
 				}
+				// One image contributes once to progress, regardless of its box count.
+				annotatedImages++;
 
 				int[] imageSize = readImageSize(imagePath.toString());
 				int imageWidth = imageSize[0];
@@ -953,13 +956,13 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 
 			labelIdByIndex.values().forEach(annotationLabelService::updateUsageCount);
 
-			int progress = calculateProgress(totalInstances, totalImages);
+			int progress = calculateProgress(annotatedImages, totalImages);
 			AlgorithmAnnotationStatusEnum statusEnum = AlgorithmAnnotationStatusEnum.of(calculateAnnotationStatus(progress));
 
 			UpdateWrapper<AlgorithmAnnotation> updateWrapper = new UpdateWrapper<>();
 			updateWrapper.eq("id", annotationId)
 				.set("total_count", totalImages)
-				.set("annotated_count", totalInstances)
+				.set("annotated_count", annotatedImages)
 				.set("progress", progress)
 				.set("annotation_status", statusEnum);
 			update(new AlgorithmAnnotation(), updateWrapper);

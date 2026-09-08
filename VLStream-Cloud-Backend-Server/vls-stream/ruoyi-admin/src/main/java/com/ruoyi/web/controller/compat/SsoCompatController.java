@@ -135,6 +135,22 @@ public class SsoCompatController {
         return BladeResult.success(data);
     }
 
+    @PostMapping("/validatePlatformSession")
+    public BladeResult<Map<String, Object>> validatePlatformSession(HttpServletRequest request) {
+        if (!isMultiTenant()) {
+            return BladeResult.fail("当前不是多租户模式");
+        }
+        String localToken = TokenHeaderResolver.resolve(request);
+        if (localToken == null) {
+            return BladeResult.fail("缺少本地访问令牌");
+        }
+        try {
+            return BladeResult.success(multiTenantAuthService.validatePlatformSession(localToken));
+        } catch (Exception exception) {
+            return BladeResult.fail("平台会话已失效，请重新登录");
+        }
+    }
+
     /**
      * Return cached user information in the legacy SSO envelope expected by VLStream UI.
      */

@@ -116,8 +116,8 @@ sa-token:
   is-get-extra-enabled: true
   # token名称 (同时也是cookie名称)
   token-name: Authorization
-  # token 登录后固定有效两小时，单位：秒
-  timeout: 7200
+  # token 有效期，-1 表示永不过期；退出登录、主动注销或管理员踢出仍会失效
+  timeout: ${SA_TOKEN_TIMEOUT:-1}
   # 关闭独立的闲置过期，避免普通接口与工作流接口产生不同登录状态
   activity-timeout: -1
   # 是否允许同一账号并发登录 (为true时允许一起登录, 为false时新登录挤掉旧登录)
