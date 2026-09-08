@@ -7,9 +7,27 @@
 
 import axios from 'axios'
 import { getPlatformAccessToken } from '@/utils/request'
+import {
+  isMultiTenantMode,
+  isPlatformTokenFailure,
+  redirectToPlatformLogin
+} from '@/utils/platformSession'
 
 const PLATFORM_APP_ID = import.meta.env.VITE_PLATFORM_APP_ID || ''
 const PLATFORM_SECRET_KEY = import.meta.env.VITE_PLATFORM_SECRET_KEY || ''
+
+const platformRequest = axios.create()
+platformRequest.interceptors.response.use(response => {
+  if (isMultiTenantMode() && (!getPlatformAccessToken() || isPlatformTokenFailure(response?.data))) {
+    redirectToPlatformLogin()
+  }
+  return response
+}, error => {
+  if (isMultiTenantMode() && (!getPlatformAccessToken() || isPlatformTokenFailure(error?.response?.data))) {
+    redirectToPlatformLogin()
+  }
+  return Promise.reject(error)
+})
 
 function platformServiceUrl(service, path = '') {
   const base = String(import.meta.env.VITE_PLATFORM_API_BASE || '').replace(/\/$/, '')
@@ -41,7 +59,7 @@ function platformHeaders() {
 
 /* * Get userinfo, VLS sub user . */
 export async function getPlatformHeaderUser() {
-  const response = await axios.post(
+  const response = await platformRequest.post(
     platformServiceUrl('apaas-sso', 'sso/v1/getUserInfo'),
     { accessToken: getPlatformAccessToken() },
     { headers: platformHeaders(), timeout: 10000 }
@@ -52,7 +70,7 @@ export async function getPlatformHeaderUser() {
 
 export async function getPlatformApps(userId = '') {
   const accessToken = getPlatformAccessToken()
-  const response = await axios.post(
+  const response = await platformRequest.post(
     platformServiceUrl('apaas-admin-platform', 'client/module/mypclist'),
     { accessToken, uuid: userId, pageNum: 1, pageSize: 999 },
     { headers: platformHeaders(), timeout: 10000 }
@@ -62,7 +80,7 @@ export async function getPlatformApps(userId = '') {
 }
 
 export async function getPlatformAccounts(isMoreAccount = 0) {
-  const response = await axios.post(
+  const response = await platformRequest.post(
     platformServiceUrl('apaas-sso', 'sso/v1/userAccountCenter'),
     { accessToken: getPlatformAccessToken(), is_more_account: isMoreAccount },
     { headers: platformHeaders(), timeout: 10000 }
@@ -71,7 +89,7 @@ export async function getPlatformAccounts(isMoreAccount = 0) {
 }
 
 export async function switchPlatformAccount(account) {
-  const response = await axios.post(
+  const response = await platformRequest.post(
     platformServiceUrl('apaas-sso', 'sso/v1/login'),
     {
       accessToken: getPlatformAccessToken(),
@@ -86,7 +104,7 @@ export async function switchPlatformAccount(account) {
 
 export async function getPlatformTenant() {
   const tenantId = sessionStorage.getItem('tenantId') || localStorage.getItem('tenantId') || ''
-  const response = await axios.post(
+  const response = await platformRequest.post(
     platformServiceUrl('apaas-sso', 'sso/v1/getTenant'),
     { accessToken: getPlatformAccessToken(), tenant_id: tenantId },
     { headers: platformHeaders(), timeout: 10000 }
@@ -95,7 +113,7 @@ export async function getPlatformTenant() {
 }
 
 export async function getPlatformUserTenants() {
-  const response = await axios.post(
+  const response = await platformRequest.post(
     platformServiceUrl('apaas-sso', 'sso/v1/getUserTenants'),
     { accessToken: getPlatformAccessToken(), isUniqueId: 1 },
     { headers: platformHeaders(), timeout: 10000 }
@@ -105,7 +123,7 @@ export async function getPlatformUserTenants() {
 }
 
 export async function getPlatformTenantDetail(tenantId) {
-  const response = await axios.post(
+  const response = await platformRequest.post(
     platformServiceUrl('apaas-user', 'tenant/v1/info'),
     { accessToken: getPlatformAccessToken(), tenant_id: tenantId },
     { headers: platformHeaders(), timeout: 10000 }
@@ -114,7 +132,7 @@ export async function getPlatformTenantDetail(tenantId) {
 }
 
 export async function verifyPlatformToken() {
-  const response = await axios.post(
+  const response = await platformRequest.post(
     platformServiceUrl('apaas-sso', 'sso/v1/verifyToken'),
     { accessToken: getPlatformAccessToken() },
     { headers: platformHeaders(), timeout: 10000 }
@@ -123,7 +141,7 @@ export async function verifyPlatformToken() {
 }
 
 export async function markPlatformMessagesRead() {
-  const response = await axios.post(
+  const response = await platformRequest.post(
     platformServiceUrl('apaas-unified-msg', 'msg/v1/instatmsg/batchstatus'),
     { accessToken: getPlatformAccessToken(), status: 1 },
     { headers: platformHeaders(), timeout: 10000 }
@@ -132,7 +150,7 @@ export async function markPlatformMessagesRead() {
 }
 
 export async function getPlatformMessageInfo(messageId) {
-  const response = await axios.get(
+  const response = await platformRequest.get(
     platformServiceUrl('apaas-unified-msg', 'msg/v1/instatmsg/info'),
     {
       params: { accessToken: getPlatformAccessToken(), req_id: messageId },
@@ -144,7 +162,7 @@ export async function getPlatformMessageInfo(messageId) {
 }
 
 export async function markPlatformMessageRead(messageId) {
-  const response = await axios.post(
+  const response = await platformRequest.post(
     platformServiceUrl('apaas-unified-msg', 'msg/v1/instatmsg/status'),
     { accessToken: getPlatformAccessToken(), req_id: Number(messageId), status: 1 },
     { headers: platformHeaders(), timeout: 10000 }
@@ -153,7 +171,7 @@ export async function markPlatformMessageRead(messageId) {
 }
 
 export async function logoutPlatform() {
-  const response = await axios.post(
+  const response = await platformRequest.post(
     platformServiceUrl('apaas-sso', 'sso/v1/logout'),
     { accessToken: getPlatformAccessToken() },
     { headers: platformHeaders(), timeout: 10000 }
@@ -163,7 +181,7 @@ export async function logoutPlatform() {
 
 /* * Get aPaaS in not . */
 export async function getPlatformMessages(status = 0, page = 1, pageSize = 6) {
-  const response = await axios.get(
+  const response = await platformRequest.get(
     platformServiceUrl('apaas-unified-msg', 'msg/v1/instatmsg/list'),
     {
       params: { accessToken: getPlatformAccessToken(), status, page, pageSize },
@@ -185,7 +203,7 @@ export async function getPlatformMessages(status = 0, page = 1, pageSize = 6) {
 }
 
 export async function getPlatformCurrentIndustry(userId, tenantId) {
-  const response = await axios.post(
+  const response = await platformRequest.post(
     platformServiceUrl('apaas-sso', 'userSceneManage/v1/getLastIndustry'),
     { accessToken: getPlatformAccessToken(), tenant_id: tenantId, entity_id: userId },
     { headers: platformHeaders(), timeout: 10000 }
@@ -194,7 +212,7 @@ export async function getPlatformCurrentIndustry(userId, tenantId) {
 }
 
 export async function getPlatformIndustryList(tenantId) {
-  const response = await axios.post(
+  const response = await platformRequest.post(
     platformServiceUrl('apaas-sso', 'userSceneManage/v1/getMyIndustryList'),
     { accessToken: getPlatformAccessToken(), tenant_id: tenantId },
     { headers: platformHeaders(), timeout: 10000 }
@@ -204,7 +222,7 @@ export async function getPlatformIndustryList(tenantId) {
 }
 
 export async function savePlatformIndustry(item, type, tenantId) {
-  const response = await axios.post(
+  const response = await platformRequest.post(
     platformServiceUrl('apaas-sso', 'userSceneManage/v1/saveLastIndustry'),
     {
       accessToken: getPlatformAccessToken(),

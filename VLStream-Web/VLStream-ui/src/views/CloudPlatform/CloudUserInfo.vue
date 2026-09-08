@@ -306,7 +306,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Edit } from '@element-plus/icons-vue'
 import { getModelHubUserInfo, editModelHubUser } from '@/api/modelHubUser'
-import { getModelHubAccessToken } from '@/utils/modelHubAuth'
+import { getModelHubAccessToken, getPlatformOrigin } from '@/utils/modelHubAuth'
 import { provenceCityAreaRe } from '@/assets/json/proviceCityArea'
 
 import userNameIcon from '@/assets/img/personInfo/userName_icon.png'
@@ -323,7 +323,7 @@ import femaleIcon from '@/assets/img/personInfo/female_icon.png'
 /* * fastdfs */
 const PLATFORM_ORIGIN = import.meta.env.DEV
   ? ''
-  : 'https://workup.oortcloudsmart.com:2443'
+  : getPlatformOrigin()
 const uploadURL = `${PLATFORM_ORIGIN}/bus/apaas-fastdfsservice/fastdfs/v1/uploadFile`
 
 const uploadHeaders = computed(() => {

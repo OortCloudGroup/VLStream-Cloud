@@ -6,7 +6,8 @@
  */
 
 import axios from 'axios'
-import { clearModelHubAuth, getModelHubAccessToken } from '@/utils/modelHubAuth'
+import { clearModelHubAuth, getModelHubAccessToken, getPlatformOrigin } from '@/utils/modelHubAuth'
+import { applyPlatformGatewayHeaders } from '@/utils/request'
 
 /**
  * Model Hub SSO
@@ -14,7 +15,7 @@ import { clearModelHubAuth, getModelHubAccessToken } from '@/utils/modelHubAuth'
  */
 const PLATFORM_SSO_BASE = import.meta.env.DEV
   ? '/bus/apaas-sso'
-  : 'https://workup.oortcloudsmart.com:2443/bus/apaas-sso'
+  : `${getPlatformOrigin()}/bus/apaas-sso`
 
 export const MODEL_HUB_HEADERS = {
   'Content-Type': 'application/json',
@@ -24,19 +25,22 @@ export const MODEL_HUB_HEADERS = {
   secretkey: '32e3ca224aa741fbb1362d33070bca2f'
 }
 
-function createModelHubRequest(accessToken) {
-  const token = accessToken || getModelHubAccessToken()
-  const tenantId =
-    sessionStorage.getItem('modelHubTenantId') ||
-    localStorage.getItem('modelHubTenantId') ||
-    ''
-
+export function getModelHubRequestHeaders(session) {
+  const token = session ? session.accessToken : getModelHubAccessToken()
+  const tenantId = session ? session.tenantId : (
+    sessionStorage.getItem('modelHubTenantId') || localStorage.getItem('modelHubTenantId') || '')
   const headers = {
-    ...MODEL_HUB_HEADERS,
+    ...(session?.usesPlatformSession ? { 'Content-Type': 'application/json', accept: MODEL_HUB_HEADERS.accept } : MODEL_HUB_HEADERS),
     ...(token ? { accesstoken: token } : {}),
     ...(tenantId ? { tenantid: tenantId } : {})
   }
+  if (session?.usesPlatformSession) applyPlatformGatewayHeaders({ headers })
+  return headers
+}
 
+function createModelHubRequest(accessToken, session) {
+  const headers = getModelHubRequestHeaders(session)
+  if (accessToken) headers.accesstoken = accessToken
   const instance = axios.create({
     baseURL: PLATFORM_SSO_BASE,
     timeout: 15000,
@@ -52,9 +56,9 @@ function createModelHubRequest(accessToken) {
 }
 
 /* * Get userinfo */
-export function getModelHubUserInfo(data = {}) {
-  const accessToken = data.accessToken || getModelHubAccessToken()
-  const request = createModelHubRequest(accessToken)
+export function getModelHubUserInfo(data = {}, session) {
+  const accessToken = session ? session.accessToken : (data.accessToken || getModelHubAccessToken())
+  const request = createModelHubRequest(accessToken, session)
   return request.post('/sso/v1/getUserInfo', {
     accessToken,
     desensitize: data.desensitize !== undefined ? data.desensitize : true

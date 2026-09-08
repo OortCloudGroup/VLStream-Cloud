@@ -70,7 +70,7 @@
             </div>
           </div>
           <TableSelf
-            class="new_table"
+            class="new_table vertically-centered-actions"
             header-cell-class-name="header_tenant_cell"
             stripe
             :row-class-name="tableRowClassName"
@@ -508,6 +508,32 @@ onMounted(() => {
 })
 </script>
 <style>
+.vertically-centered-actions .el-table__body tr.hover-row > td:last-child,
+.vertically-centered-actions .el-table__body tr.current-row > td:last-child {
+  display: table-cell;
+  vertical-align: middle;
+}
+.vertically-centered-actions .el-table__body tr.hover-row > td:last-child > .cell,
+.vertically-centered-actions .el-table__body tr.current-row > td:last-child > .cell {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  width: max-content;
+  padding-left: 28px;
+  background-color: var(--el-table-tr-bg-color, #fff);
+}
+.vertically-centered-actions .el-table__body tr.el-table__row--striped > td:last-child > .cell {
+  background-color: var(--el-fill-color-lighter);
+}
+.vertically-centered-actions .el-table__body tr.hover-row:hover:not(.current-row) > td:last-child > .cell {
+  background-color: var(--el-color-primary-hb);
+}
+.vertically-centered-actions .el-table__body tr.current-row > td:last-child > .cell {
+  background-color: var(--el-color-primary-hb2);
+}
 .blueFont .el-table__cell .cell{
   color: blue !important;
 }

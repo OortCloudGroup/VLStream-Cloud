@@ -64,6 +64,9 @@
         <h3>请从应用平台进入</h3>
         <p>当前服务已启用多租户模式，请从应用平台点击 VLStream 进入。</p>
         <p v-if="platformLoginError" class="platform-login-error">{{ platformLoginError }}</p>
+        <el-button type="primary" size="large" class="login-button" @click="handlePlatformLogin">
+          前往应用平台
+        </el-button>
       </div>
       <div v-else class="platform-login-tip">正在读取登录模式...</div>
 
@@ -122,6 +125,10 @@ const loginRules = {
 // after configuration SM2 .
 const encryptPassword = (password) => {
   return sm2.doEncrypt(password, BLADE_AUTH_PUBLIC_KEY, 0)
+}
+
+const handlePlatformLogin = () => {
+  authManager.redirectToPlatformLogin(route.query.redirect || '/')
 }
 
 // Process

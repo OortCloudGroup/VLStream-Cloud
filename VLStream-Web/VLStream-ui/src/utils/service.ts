@@ -23,6 +23,11 @@ import useGoWhere  from '@/hooks/useGoWhere'
 import { ElMessageBox } from 'element-plus'
 import { refreshToken } from '@/api/system/localAuth'
 import { applyAuthHeaders, applyPlatformGatewayHeaders, getStoredToken } from '@/utils/request'
+import {
+  isMultiTenantMode,
+  isPlatformTokenFailure,
+  redirectToPlatformLogin
+} from '@/utils/platformSession'
 
 
 import { useUserStoreHook } from '@/store/modules/useraPaas'
@@ -176,6 +181,24 @@ function isLocalTaskApi(url = '') {
   return /^\/?task\//.test(url)
 }
 
+function isDirectPlatformApi(url = '') {
+  try {
+    const parsed = new URL(String(url), window.location.origin)
+    return parsed.pathname.startsWith('/bus/apaas-')
+      && !parsed.pathname.startsWith('/bus/apaas-vls-server')
+  } catch (error) {
+    return false
+  }
+}
+
+function rejectExpiredPlatformSession(originalResponse: any) {
+  redirectToPlatformLogin()
+  return Promise.reject({
+    isInterceptorDetour: true,
+    message: originalResponse?.data?.msg || originalResponse?.response?.data?.msg || '平台登录信息已过期'
+  })
+}
+
 /**
  * finish will , old SSO new interface .
  */
@@ -242,11 +265,7 @@ function createService() {
           });
         }
       }
-      const token = applyAuthHeaders(config)
-      if (token && headers) {
-        delete headers.AccessToken
-        headers.accesstoken = token
-      }
+      applyAuthHeaders(config)
       if (String(config.url || '').includes('/bus/apaas-vls-server')) {
         applyPlatformGatewayHeaders(config)
       }
@@ -270,6 +289,10 @@ function createService() {
       // and after interface respone
       if (response.status === 200) {
         if (response.data.code !== 200) {
+          if (isMultiTenantMode() && isDirectPlatformApi(response.config?.url || '')
+            && isPlatformTokenFailure(response.data)) {
+            return rejectExpiredPlatformSession(response)
+          }
           // Check response.data.code === 4004 then new token
           if (response.data.code === 4004) {
             if (isLocalTaskApi(response.config?.url || '')) {
@@ -315,6 +338,10 @@ function createService() {
       let errMessage = error.message
       const errorBody = error.response?.data
       if(errorBody && errorBody.code ) {
+        if (isMultiTenantMode() && isDirectPlatformApi(error.config?.url || '')
+          && isPlatformTokenFailure(errorBody)) {
+          return rejectExpiredPlatformSession(error)
+        }
         // whether need to new token
         if (errorBody.code === 4004) {
           if (isLocalTaskApi(error.config?.url || '')) {
@@ -372,11 +399,7 @@ function createRequestFunction(service: AxiosInstance) {
       ...configDefault.headers,
       ...(config.headers as Record<string, any> || {})
     }
-    const token = applyAuthHeaders(mergedConfig)
-    if (token) {
-      delete mergedConfig.headers.AccessToken
-      mergedConfig.headers.accesstoken = token
-    }
+    applyAuthHeaders(mergedConfig)
     if (String(mergedConfig.url || '').includes('/bus/apaas-vls-server')) {
       applyPlatformGatewayHeaders(mergedConfig)
     }

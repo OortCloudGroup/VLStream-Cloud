@@ -5,7 +5,7 @@
         <el-tab-pane label="算法库" name="library" />
         <el-tab-pane label="算法分类" name="categories" />
       </el-tabs>
-      <a class="model-hub" href="https://vls.oortcloudsmart.com/zh/ModelHub/ModelHub" target="_blank" rel="noopener noreferrer">
+      <a class="model-hub" href="https://vls.oortcloudsmart.com/zh/ModelHub/ModelHub" target="_blank" rel="noopener noreferrer" @click.prevent="visitModelHub">
         <el-icon><TopRight /></el-icon> Model Hub
       </a>
     </header>
@@ -140,6 +140,8 @@
 import { computed, h, onMounted, reactive, ref, watch } from 'vue'
 import { ArrowDown, Delete, Edit, Folder, MoreFilled, Plus, Search, Setting, TopRight, Upload } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { getPlatformAccessToken } from '@/utils/request'
+import { openOortCloudModelHub } from '@/utils/modelHubAuth'
 import {
   deleteAlgorithm, deleteAlgorithmCatalogCategories, getAlgorithmCatalogCategories, getAlgorithmCatalogPage,
   getAlgorithmCatalogSettings, saveAlgorithmCatalogCategory, saveAlgorithmCatalogSettings
@@ -147,6 +149,10 @@ import {
 
 const emit = defineEmits(['add', 'edit', 'evaluate', 'deploy', 'publish'])
 const ROOT_ID = 'root'
+const visitModelHub = () => openOortCloudModelHub(
+  getPlatformAccessToken(),
+  'https://vls.oortcloudsmart.com/zh/ModelHub/ModelHub'
+)
 const section = ref('library')
 const rows = ref([])
 const algorithms = ref([])

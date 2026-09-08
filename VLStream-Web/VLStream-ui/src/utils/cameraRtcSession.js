@@ -9,7 +9,7 @@ const DEFAULT_DISCONNECT_GRACE_MS = 8000
 const DEFAULT_CALL_TIMEOUT_MS = 25000
 const DEFAULT_RETRY_DELAY_MS = 1000
 const DEFAULT_MAX_RETRY_DELAY_MS = 8000
-const DEFAULT_MAX_RETRIES = 5
+const DEFAULT_MAX_RETRIES = -1
 const DEFAULT_HEARTBEAT_INTERVAL_MS = 20000
 
 const toUrlList = (urls) => {
@@ -257,7 +257,7 @@ export class CameraRtcSession {
       return
     }
     this.iceStrategies = buildCameraRtcIceStrategies(data, this.extraTurnUrls)
-    const strategyIndex = Math.min(Math.max(0, this.retryCount - 1), this.iceStrategies.length - 1)
+    const strategyIndex = this.retryCount <= 1 ? 0 : (this.retryCount - 1) % this.iceStrategies.length
     this.iceConfiguration = this.iceStrategies[strategyIndex]
     this.emitDiagnostic('ice-strategy', {
       strategyIndex,
@@ -443,16 +443,19 @@ export class CameraRtcSession {
     this.sendDisconnect()
     this.cleanupPeerConnection()
 
-    if (this.retryCount >= this.maxRetries) {
+    if (this.maxRetries >= 0 && this.retryCount >= this.maxRetries) {
       this.setStatus('failed', `${reason}，自动重连已达上限`)
       return
     }
 
     const attempt = ++this.retryCount
-    const delay = Math.min(this.retryDelayMs * 2 ** (attempt - 1), this.maxRetryDelayMs)
+    const maxExponent = Math.max(0, Math.ceil(Math.log2(this.maxRetryDelayMs / this.retryDelayMs)))
+    const exponent = Math.min(attempt - 1, maxExponent)
+    const delay = Math.min(this.retryDelayMs * 2 ** exponent, this.maxRetryDelayMs)
+    const attemptLabel = this.maxRetries >= 0 ? `${attempt}/${this.maxRetries}` : `第 ${attempt} 次`
     this.setStatus(
       'retrying',
-      `${reason}，${Math.max(1, Math.ceil(delay / 1000))} 秒后重连（${attempt}/${this.maxRetries}）`,
+      `${reason}，${Math.max(1, Math.ceil(delay / 1000))} 秒后重连（${attemptLabel}）`,
     )
     this.retryTimer = this.runtime.setTimeout(() => {
       this.retryTimer = null

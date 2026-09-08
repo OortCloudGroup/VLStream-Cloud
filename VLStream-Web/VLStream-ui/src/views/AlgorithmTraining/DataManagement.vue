@@ -16,6 +16,8 @@
       </div>
     </header>
 
+    <DataWorkflowGuide :has-project="Boolean(project)" :disabled="busy" @navigate="navigateWorkflow" />
+
     <template v-if="!project">
       <div class="filters"><el-input v-model="projectQuery.keyword" clearable placeholder="项目名称或编号" @keyup.enter="loadProjects" @clear="loadProjects" /><el-button @click="loadProjects">搜索</el-button></div>
       <el-table :data="projects" stripe empty-text="暂无项目，点击右上角新建项目开始导入数据">
@@ -34,7 +36,7 @@
       <div class="stat-grid">
         <div v-for="item in summaryCards" :key="item.label" class="stat-card"><span>{{ item.label }}</span><strong>{{ item.value }}</strong></div>
       </div>
-      <el-tabs v-model="tab">
+      <el-tabs ref="workspaceTabs" v-model="tab">
         <el-tab-pane label="样本管理" name="samples">
           <div class="filters sample-filters">
             <el-input v-model="query.keyword" clearable placeholder="样本名称" @keyup.enter="search" />
@@ -94,6 +96,21 @@
       </el-tabs>
     </template>
 
+    <el-dialog v-model="workflowProjectDialog" :title="`选择项目 · ${workflowActionNames[workflowAction] || ''}`" width="700px" :close-on-click-modal="false">
+      <p class="hint">选择要操作的项目，随后直接进入{{ workflowActionNames[workflowAction] }}。</p>
+      <div class="filters">
+        <el-input v-model="workflowProjectQuery.keyword" clearable placeholder="搜索项目名称或编号" @keyup.enter="searchWorkflowProjects" @clear="searchWorkflowProjects" />
+        <el-button :disabled="busy" @click="searchWorkflowProjects">搜索项目</el-button>
+      </div>
+      <el-table :data="workflowProjects" v-loading="busy" empty-text="暂无匹配项目，请调整搜索或先新建项目">
+        <el-table-column prop="annotationName" label="项目名称" min-width="180" />
+        <el-table-column prop="projectCode" label="项目编号" min-width="210" show-overflow-tooltip />
+        <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" :disabled="busy" @click="selectWorkflowProject(row)">选择并进入</el-button></template></el-table-column>
+      </el-table>
+      <el-pagination v-model:current-page="workflowProjectQuery.page" :page-size="20" :total="workflowProjectTotal" layout="total, prev, pager, next" @current-change="run(loadWorkflowProjects)" />
+      <template #footer><el-button @click="workflowProjectDialog = false">取消</el-button></template>
+    </el-dialog>
+
     <el-dialog v-model="projectDialog" :title="projectForm.id ? '编辑项目' : '新建项目'" width="620px" :close-on-click-modal="false">
       <el-form label-width="100px" @submit.prevent>
         <el-form-item label="项目名称" required><el-input v-model="projectForm.annotationName" maxlength="100" /></el-form-item>
@@ -149,7 +166,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import DataWorkflowGuide from './components/DataWorkflowGuide.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as api from '@/api/dataManagement'
@@ -177,6 +195,51 @@ const back = async () => { project.value = null; await router.replace({ query: {
 const search = () => run(async () => { query.page = 1; await loadSamples() })
 const resetSearch = () => { Object.assign(query, emptyQuery()); search() }
 const annotate = () => router.push({ path: '/algorithm-standard', query: { annotationId: project.value.id } })
+
+const workspaceTabs = ref(null)
+const workflowProjectDialog = ref(false), workflowAction = ref(''), workflowProjects = ref([]), workflowProjectTotal = ref(0)
+const workflowProjectQuery = reactive({ keyword: '', page: 1 })
+const workflowActionNames = { import: '导入数据', quality: '质量筛选', annotation: '数据标注', versions: '数据集与版本' }
+const loadWorkflowProjects = async () => {
+  const result = await api.listDataProjects(workflowProjectQuery)
+  workflowProjects.value = result.records
+  workflowProjectTotal.value = result.total
+}
+const searchWorkflowProjects = () => run(async () => { workflowProjectQuery.page = 1; await loadWorkflowProjects() })
+const executeWorkflow = async action => {
+  if (action === 'project') { openProject(project.value || undefined); return }
+  if (action === 'import') { openImport(); return }
+  if (action === 'annotation') { await annotate(); return }
+  if (action === 'quality') {
+    Object.assign(query, emptyQuery(), { qualityStatus: 'pending' })
+    tab.value = 'samples'
+    await loadSamples()
+  } else if (action === 'versions') {
+    tab.value = 'versions'
+  }
+  await nextTick()
+  workspaceTabs.value?.$el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+const navigateWorkflow = index => run(async () => {
+  const action = ['project', 'import', 'quality', 'annotation', 'versions'][index]
+  if (!action) return
+  if (action === 'project' || project.value) { await executeWorkflow(action); return }
+  workflowAction.value = action
+  workflowProjects.value = []
+  workflowProjectTotal.value = 0
+  Object.assign(workflowProjectQuery, { keyword: '', page: 1 })
+  workflowProjectDialog.value = true
+  await loadWorkflowProjects()
+})
+const selectWorkflowProject = row => run(async () => {
+  const action = workflowAction.value
+  project.value = await api.getDataProject(row.id)
+  Object.assign(query, emptyQuery())
+  await refresh()
+  await router.replace({ query: { project: row.id } })
+  workflowProjectDialog.value = false
+  await executeWorkflow(action)
+})
 
 const projectDialog = ref(false), projectForm = reactive({})
 const openProject = (row = {}) => { Object.keys(projectForm).forEach(key => delete projectForm[key]); Object.assign(projectForm, { annotationName: '', projectCode: `PRJ-${Date.now()}`, projectType: 'general', annotationType: 'object_detection', remark: '', annotationRules: '' }, row); projectDialog.value = true }

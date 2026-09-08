@@ -12,7 +12,26 @@
  * 3. accessToken, after getUserInfo userinfo
  */
 
-const PLATFORM_BASE_URL = 'https://workup.oortcloudsmart.com:2443'
+/**
+ * 获取统一平台的基础 Origin（例如生产环境 https://workup.oortcloudsmart.com:2443 或测试环境 https://workup-dev.myoumuamua.com:6433）
+ * 优先从环境变量 VITE_PLATFORM_LOGIN_URL 中提取 origin，解析异常或未配置时回退到 fallback
+ *
+ * @param {string} [fallback='https://workup.oortcloudsmart.com:2443'] 默认兜底平台基地址
+ * @returns {string} 统一平台的基础 Origin 地址（不带末尾斜杠）
+ */
+export function getPlatformOrigin(fallback = 'https://workup.oortcloudsmart.com:2443') {
+  const loginUrl = import.meta.env.VITE_PLATFORM_LOGIN_URL
+  if (loginUrl) {
+    try {
+      return new URL(loginUrl, window.location.origin).origin
+    } catch {
+      // 忽略无效 URL 异常，回退至 fallback
+    }
+  }
+  return fallback
+}
+
+const PLATFORM_BASE_URL = getPlatformOrigin()
 const PLATFORM_LOGIN_URL = import.meta.env.VITE_PLATFORM_LOGIN_URL || `${PLATFORM_BASE_URL}/bus/apaas-web/loginPage/index.html`
 const OORTCLOUD_MODEL_HUB_URL = import.meta.env.VITE_OORTCLOUD_MODEL_HUB_URL || 'https://vls.oortcloudsmart.com/zh/dashboard'
 const OORTCODEX_PRICING_URL = import.meta.env.VITE_OORTCODEX_PRICING_URL || 'https://oortcodex.oortcloudsmart.com/pricing.html'
@@ -251,8 +270,8 @@ export function clearPendingModelHubPublish() {
 }
 
 /* * Model Hub. Prefer the caller-provided platform token, then Model Hub auth. */
-export function openOortCloudModelHub(platformAccessToken = '') {
-  const targetUrl = new URL(OORTCLOUD_MODEL_HUB_URL)
+export function openOortCloudModelHub(platformAccessToken = '', destination = OORTCLOUD_MODEL_HUB_URL) {
+  const targetUrl = new URL(destination)
   const accessToken = platformAccessToken || getModelHubAccessToken()
   if (accessToken) {
     targetUrl.searchParams.set('accessToken', accessToken)

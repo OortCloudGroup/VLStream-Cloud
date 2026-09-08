@@ -3012,6 +3012,35 @@ const openDatasetSelector = async () => {
 </script>
 
 <style scoped lang="scss">
+:deep(.new_table .el-table__body tr.hover-row > td:last-child),
+:deep(.new_table .el-table__body tr.current-row > td:last-child) {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+:deep(.new_table .el-table__body tr.hover-row > td:last-child > .cell),
+:deep(.new_table .el-table__body tr.current-row > td:last-child > .cell) {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  width: max-content;
+  background-color: var(--el-table-tr-bg-color, #fff);
+}
+
+:deep(.new_table .el-table__body tr.el-table__row--striped > td:last-child > .cell) {
+  background-color: var(--el-fill-color-lighter);
+}
+
+:deep(.new_table .el-table__body tr.hover-row:hover:not(.current-row) > td:last-child > .cell) {
+  background-color: var(--el-color-primary-hb);
+}
+
+:deep(.new_table .el-table__body tr.current-row > td:last-child > .cell) {
+  background-color: var(--el-color-primary-hb2);
+}
 
 .tenant_Page {
   height: 100%;

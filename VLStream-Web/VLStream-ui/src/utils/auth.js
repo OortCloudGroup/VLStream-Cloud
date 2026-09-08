@@ -6,7 +6,13 @@
  */
 
 import { verifyToken } from '@/api/auth'
-import { exchangePlatformToken, getTenantMode } from '@/api/system/localAuth'
+import { exchangePlatformToken, getTenantMode, validatePlatformSession } from '@/api/system/localAuth'
+import {
+  clearPlatformAccessToken,
+  clearPlatformLoginPending,
+  redirectToPlatformLogin,
+  saveTenantMode
+} from '@/utils/platformSession'
 
 // axios and already SpringBlade .
 const normalizeApiResponse = (response) => {
@@ -15,6 +21,10 @@ const normalizeApiResponse = (response) => {
 }
 
 export class AuthManager {
+  constructor() {
+    this.validatedPlatformToken = ''
+  }
+
   /* * after Process token Validate . */
   async checkExternalPlatformLogin() {
     const url = new URL(window.location.href)
@@ -22,7 +32,26 @@ export class AuthManager {
     if (urlToken) {
       return this.checkUrlToken()
     }
-    return this.checkLocalToken()
+    const userInfo = await this.checkLocalToken()
+    if (!userInfo) return null
+
+    const tenantMode = await this.getTenantMode()
+    if (tenantMode !== 'multi') return userInfo
+
+    const platformToken = this.getPlatformToken()
+    if (!platformToken) return null
+    if (this.validatedPlatformToken === platformToken) return userInfo
+
+    try {
+      const response = normalizeApiResponse(await validatePlatformSession())
+      if (response?.code !== 200 && response?.success !== true) return null
+      this.validatedPlatformToken = platformToken
+      clearPlatformLoginPending()
+      return userInfo
+    } catch (error) {
+      console.warn('多租户平台会话校验失败:', error?.response?.data?.msg || error?.message)
+      return null
+    }
   }
 
   /* * old , only current token. */
@@ -155,10 +184,10 @@ export class AuthManager {
   async getTenantMode() {
     try {
       const response = normalizeApiResponse(await getTenantMode())
-      return response?.data?.tenantType === 'multi' ? 'multi' : 'single'
+      return saveTenantMode(response?.data?.tenantType === 'multi' ? 'multi' : 'single')
     } catch (error) {
       console.warn('获取租户模式失败，按单租户处理:', error?.message)
-      return 'single'
+      return saveTenantMode('single')
     }
   }
 
@@ -179,10 +208,15 @@ export class AuthManager {
       }
       this.clearAllTokens()
       await this.saveUserToLocal(userInfo)
+      this.validatedPlatformToken = platformToken
+      clearPlatformLoginPending()
       this.cleanUrlToken()
       return userInfo
     } catch (error) {
       console.warn('平台 token 换票失败:', error?.response?.data?.msg || error?.message)
+      this.validatedPlatformToken = ''
+      clearPlatformAccessToken()
+      clearPlatformLoginPending()
       return null
     }
   }
@@ -208,6 +242,14 @@ export class AuthManager {
 
   getUrlTenantId(url = new URL(window.location.href)) {
     return url.searchParams.get('tenantId') || url.searchParams.get('tenant_id') || undefined
+  }
+
+  hasPlatformCallbackToken(url = new URL(window.location.href)) {
+    return Boolean(url.searchParams.get('accessToken') || url.searchParams.get('access_token') || url.searchParams.get('token'))
+  }
+
+  redirectToPlatformLogin(returnPath) {
+    return redirectToPlatformLogin(returnPath)
   }
 
   /* * Get userinfo. */

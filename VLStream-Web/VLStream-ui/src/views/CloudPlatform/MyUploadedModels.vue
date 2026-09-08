@@ -183,7 +183,7 @@ import {
   editAiModel,
   getAiModelList
 } from '@/api/aiModel'
-import { getModelHubAccessToken } from '@/utils/modelHubAuth'
+import { getModelHubAccessToken, getPlatformOrigin } from '@/utils/modelHubAuth'
 import ModelDetail from './ModelDetail.vue'
 import iconEdit from '@/assets/img/uploadedModels/edit.png'
 import iconDelete from '@/assets/img/uploadedModels/delete.png'
@@ -193,7 +193,7 @@ import iconStar from '@/assets/img/uploadedModels/star.png'
 
 const PLATFORM_ORIGIN = import.meta.env.DEV
   ? ''
-  : 'https://workup.oortcloudsmart.com:2443'
+  : getPlatformOrigin()
 const uploadURL = `${PLATFORM_ORIGIN}/bus/apaas-fastdfsservice/fastdfs/v1/uploadFile`
 
 const uploadHeaders = computed(() => {

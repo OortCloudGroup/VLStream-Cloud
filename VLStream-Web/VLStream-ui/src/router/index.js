@@ -470,6 +470,7 @@ router.beforeEach(async (to, from, next) => {
 
   // whether need to
   if (to.meta.requiresAuth) {
+    const hasPlatformCallbackToken = authManager.hasPlatformCallbackToken()
     const userInfo = await authManager.checkExternalPlatformLogin()
     if (userInfo) {
       console.log('登录验证成功，用户:', userInfo.userName || userInfo.loginId)
@@ -477,10 +478,23 @@ router.beforeEach(async (to, from, next) => {
       return
     }
 
+    // multi 模式必须同时具备有效的 VLS 本地会话和平台会话。
+    // 本地 Token 仍有效但平台 Token 缺失/失效时，回统一平台重新授权并返回原页面。
+    const tenantMode = await authManager.getTenantMode()
+    if (tenantMode === 'multi' && !hasPlatformCallbackToken) {
+      next(false)
+      authManager.redirectToPlatformLogin(to.fullPath)
+      return
+    }
+
+    if (hasPlatformCallbackToken) {
+      authManager.cleanUrlToken()
+    }
+
     // ; only prompt / tip, .
     next({
       path: '/login',
-      query: { redirect: to.fullPath }
+      query: { redirect: to.path }
     })
   } else {
     next()

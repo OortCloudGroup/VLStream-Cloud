@@ -207,19 +207,19 @@ export default defineConfig(async ({ mode }) => {
         },
         // OortCloud New API 、 and interface
         '/bus/apaas-newapi': {
-          target: 'https://workup.oortcloudsmart.com:2443',
+          target: platformTarget,
           changeOrigin: true,
           secure: false
         },
         // Model Hub fastdfs
         '/bus/apaas-fastdfsservice': {
-          target: 'https://workup.oortcloudsmart.com:2443',
+          target: platformTarget,
           changeOrigin: true,
           secure: false
         },
         // AI model ( model)
         '/bus/apaas-deployment-service': {
-          target: 'https://workup.oortcloudsmart.com:2443',
+          target: platformTarget,
           changeOrigin: true,
           secure: false
         },

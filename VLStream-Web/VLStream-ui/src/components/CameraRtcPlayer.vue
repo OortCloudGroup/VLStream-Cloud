@@ -24,7 +24,7 @@ const props = defineProps({
   deviceId: { type: String, required: true },
   socketUrl: { type: String, required: true },
   disconnectGraceMs: { type: Number, default: 8000 },
-  maxRetries: { type: Number, default: 5 },
+  maxRetries: { type: Number, default: -1 },
 })
 
 const emit = defineEmits(['status-change', 'diagnostic'])

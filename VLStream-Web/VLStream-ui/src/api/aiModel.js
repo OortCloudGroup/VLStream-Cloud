@@ -6,7 +6,7 @@
  */
 
 import axios from 'axios'
-import { getModelHubAccessToken } from '@/utils/modelHubAuth'
+import { getModelHubAccessToken, getPlatformOrigin } from '@/utils/modelHubAuth'
 
 /**
  * AI modelinterface (apaas-deployment-service)
@@ -14,7 +14,7 @@ import { getModelHubAccessToken } from '@/utils/modelHubAuth'
  */
 const DEPLOYMENT_BASE = import.meta.env.DEV
   ? '/bus/apaas-deployment-service'
-  : 'https://workup.oortcloudsmart.com:2443/bus/apaas-deployment-service'
+  : `${getPlatformOrigin()}/bus/apaas-deployment-service`
 
 const MODEL_HUB_HEADERS = {
   'Content-Type': 'application/json',

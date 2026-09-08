@@ -42,7 +42,7 @@
         </div>
 
         <div class="header-right">
-          <OortCloudPopover v-if="isSuperAdmin" />
+          <OortCloudPopover v-if="tenantMode === 'multi' || isSuperAdmin" :tenant-mode="tenantMode" />
 
           <PlatformHeaderRight
             v-if="tenantMode === 'multi'"

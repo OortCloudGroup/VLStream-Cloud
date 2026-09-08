@@ -48,7 +48,15 @@
           </el-table-column>
           <el-table-column prop="ipAddr" label="IP" min-width="120" />
           <el-table-column prop="firmwareVersion" label="RootFS 版本" min-width="110" />
-          <el-table-column prop="lastHeartbeatTime" label="最后心跳" min-width="170" />
+          <el-table-column label="设备能力" min-width="180" show-overflow-tooltip>
+            <template #default="{ row }">{{ capabilityText(row.capabilitiesJson) }}</template>
+          </el-table-column>
+          <el-table-column label="最近上线" min-width="180">
+            <template #default="{ row }">{{ formatDeviceTime(row.lastOnlineTime) }}</template>
+          </el-table-column>
+          <el-table-column label="最后心跳" min-width="180">
+            <template #default="{ row }">{{ formatDeviceTime(row.lastHeartbeatTime) }}</template>
+          </el-table-column>
           <el-table-column label="操作" width="150" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" @click="openDetail(row)">详情</el-button>
@@ -89,9 +97,35 @@
           <el-descriptions-item label="在线状态">{{ detailDevice.online ? '在线' : '离线' }}</el-descriptions-item>
           <el-descriptions-item label="IP 地址">{{ detailDevice.ipAddr || '-' }}</el-descriptions-item>
           <el-descriptions-item label="RootFS 版本">{{ detailDevice.firmwareVersion || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="最后心跳" :span="2">{{ detailDevice.lastHeartbeatTime || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="最近上线">{{ formatDeviceTime(detailDevice.lastOnlineTime) }}</el-descriptions-item>
+          <el-descriptions-item label="最后心跳">{{ formatDeviceTime(detailDevice.lastHeartbeatTime) }}</el-descriptions-item>
+          <el-descriptions-item label="设备能力" :span="2">{{ capabilityText(detailDevice.capabilitiesJson) }}</el-descriptions-item>
         </el-descriptions>
 
+        <div class="model-heading">
+          <h4>设备上报模型</h4>
+          <el-button type="primary" plain @click="firmwareVisible = true">固件升级</el-button>
+        </div>
+        <el-table :data="reportedModels" border :empty-text="detailDevice?.modelsJson == null ? '设备尚未上报模型信息' : '设备上报的模型列表为空'">
+          <el-table-column prop="modelId" label="模型 ID" min-width="140" show-overflow-tooltip />
+          <el-table-column prop="modelName" label="模型名称" min-width="140" show-overflow-tooltip />
+          <el-table-column prop="version" label="版本" min-width="100" />
+          <el-table-column prop="format" label="格式" width="90" />
+          <el-table-column label="状态" width="100"><template #default="{ row }">{{ modelStatusText(row.status) }}</template></el-table-column>
+        </el-table>
+        <p class="snapshot-note">模型和能力为设备最近一次上报的信息，离线时保留供查看。</p>
+
+        <h4>视频源</h4>
+        <el-table :data="detailStreams" border empty-text="设备没有上报视频源">
+          <el-table-column prop="channelId" label="通道" min-width="120" />
+          <el-table-column prop="streamType" label="码流类型" width="110" />
+          <el-table-column prop="protocol" label="协议" width="90" />
+          <el-table-column label="默认流" width="90"><template #default="{ row }">{{ row.defaultStream ? '是' : '否' }}</template></el-table-column>
+          <el-table-column prop="url" label="视频源地址" min-width="220" show-overflow-tooltip />
+        </el-table>
+        </div>
+      </el-dialog>
+      <el-dialog v-model="firmwareVisible" title="固件升级" width="820px" destroy-on-close>
         <el-alert v-if="firmwareDetail?.upgradeBlockedReason" :title="firmwareDetail.upgradeBlockedReason"
           type="info" :closable="false" show-icon class="firmware-alert" />
 
@@ -126,15 +160,6 @@
           </el-descriptions>
         </template>
 
-        <h4>视频源</h4>
-        <el-table :data="detailStreams" border empty-text="设备没有上报视频源">
-          <el-table-column prop="channelId" label="通道" min-width="120" />
-          <el-table-column prop="streamType" label="码流类型" width="110" />
-          <el-table-column prop="protocol" label="协议" width="90" />
-          <el-table-column label="默认流" width="90"><template #default="{ row }">{{ row.defaultStream ? '是' : '否' }}</template></el-table-column>
-          <el-table-column prop="url" label="视频源地址" min-width="220" show-overflow-tooltip />
-        </el-table>
-        </div>
       </el-dialog>
     </div>
   </DeviceClassificationLayout>
@@ -146,6 +171,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import CameraRtcPlayer from '@/components/CameraRtcPlayer.vue'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import RtcPlayer from '@/components/rtcPlayer/index.vue'
+import { capabilityText, formatDeviceTime, modelStatusText, parseSnapshot } from '@/utils/deviceStateDisplay'
 import { parseCameraRtcConfig } from '@/utils/oplayer'
 import {
   cancelMqttDeviceFirmwareTask,
@@ -170,6 +196,7 @@ const streams = ref([])
 const selectedStreamId = ref(null)
 const webrtcUrl = ref('')
 const cameraRtcConfig = ref(null)
+const firmwareVisible = ref(false)
 const detailVisible = ref(false)
 const detailLoading = ref(false)
 const detailStreams = ref([])
@@ -178,6 +205,8 @@ const deployingFirmware = ref(false)
 const cancellingTask = ref(false)
 const query = reactive({ pageNum: 1, pageSize: 10, keyword: '', online: undefined })
 const detailDevice = computed(() => firmwareDetail.value?.device || currentDevice.value)
+
+const reportedModels = computed(() => parseSnapshot(detailDevice.value?.modelsJson) || [])
 
 function errorMessage(error, fallback) { return error?.response?.data?.msg || error?.message || fallback }
 
@@ -210,6 +239,9 @@ function handleClassificationFilter(filter) { Object.assign(query, filter, { pag
 
 async function openDetail(device) {
   currentDevice.value = device
+  firmwareDetail.value = null
+  detailStreams.value = []
+  firmwareVisible.value = false
   detailVisible.value = true
   detailLoading.value = true
   try {
@@ -332,6 +364,8 @@ onBeforeUnmount(releasePreview)
 .player { min-height: 480px; background: #000; display: flex; align-items: center; justify-content: center; }
 .player :deep(#webRtcPlayerBox), .player :deep(#rtcPlayer) { width: 100%; max-height: 520px; }
 .camera-rtc-player { width: 100%; height: 480px; }
+.model-heading { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
+.snapshot-note { color: #909399; font-size: 12px; }
 h4 { margin: 18px 0 10px; }
 @media (max-width: 1200px) { .header { align-items: flex-start; flex-direction: column; } }
 </style>

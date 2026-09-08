@@ -31,6 +31,8 @@
         </div>
       </div>
 
+      <el-alert v-if="loadError" class="account-error" :title="loadError" type="warning" :closable="false" show-icon />
+
       <template v-if="!isLoggedIn">
         <h2>欢迎使用 OortCloud！</h2>
         <p class="description">订阅 OortCloud Token Plan，20元/月起，Qwen，DeepSeek，Kimi，GLM等顶级模型尝鲜，更有OortCodex和DSH For OortCloud Work以及VLStream数据分析生态共享额度，高效开启AI生产力。</p>
@@ -45,8 +47,6 @@
           <strong class="user-name">{{ account.userName || 'OortCloud 用户' }}</strong>
           <span v-if="accountBadge" class="plan-badge">{{ accountBadge }}</span>
         </div>
-
-        <el-alert v-if="loadError" class="account-error" :title="loadError" type="warning" :closable="false" show-icon />
 
         <section class="content-section">
           <h3>用量明细</h3>
@@ -92,15 +92,16 @@
 
         <div class="account-actions">
           <el-button class="account-action visit-button" type="primary" round @click="handleVisitOortCloud"><el-icon><Link /></el-icon>访问 OortCloud</el-button>
-          <el-button class="account-action logout-button" round @click="handleLogout"><el-icon><SwitchButton /></el-icon>退出登录</el-button>
+          <el-button v-if="!usesPlatformSession" class="account-action logout-button" round @click="handleLogout"><el-icon><SwitchButton /></el-icon>退出登录</el-button>
         </div>
+        <p v-if="usesPlatformSession" class="records-note">使用当前平台账号，切换或退出请使用右上角账号菜单。</p>
       </template>
     </div>
   </el-popover>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { Link, Refresh, SwitchButton } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getModelHubUserInfo, logoutModelHubSession } from '@/api/modelHubUser'
@@ -108,9 +109,20 @@ import { authorizeOortCloudLlm } from '@/api/llmReview'
 import { getPlatformAccessToken } from '@/utils/request'
 import { getOortCloudAccountStats, getOortCloudQuotaConfig, getOortCloudSubscriptionPlans, getOortCloudSubscriptions, getOortCloudTokenKey, getOortCloudTokenList, getOortCloudUsageLogs } from '@/api/oortCloudAccount'
 import { clearModelHubAuth, getModelHubAccessToken, openOortCloudModelHub, openOortCodexPricing, startModelHubLogin } from '@/utils/modelHubAuth'
+import { getOortCloudSession } from '@/utils/oortCloudSession'
+import { redirectToPlatformLogin } from '@/utils/platformSession'
 
+const props = defineProps({ tenantMode: { type: String, default: 'single' } })
+const usesPlatformSession = computed(() => props.tenantMode === 'multi')
+const currentSession = () => getOortCloudSession(props.tenantMode)
+const isCurrentSession = session => {
+  const current = currentSession()
+  return current.accessToken === session.accessToken && current.tenantId === session.tenantId
+    && current.usesPlatformSession === session.usesPlatformSession
+}
+let loadedSession = null
 const popoverVisible = ref(false)
-const authToken = ref(getModelHubAccessToken())
+const authToken = ref('')
 const authVerified = ref(false)
 const loading = ref(false)
 const recordsLoading = ref(false)
@@ -216,15 +228,19 @@ const resetAccountState = () => {
 
 const loadUsageRecords = async () => {
   if (!authVerified.value || recordsLoading.value || !dateRange.value?.length) return
+  const session = currentSession()
+  if (!loadedSession || !isCurrentSession(loadedSession)) return
   recordsLoading.value = true
   try {
     const start = new Date(dateRange.value[0])
     const end = new Date(dateRange.value[1])
     start.setHours(0, 0, 0, 0)
     end.setHours(23, 59, 59, 999)
-    const data = await getOortCloudUsageLogs({ p: 1, page_size: 20, type: 2, start_timestamp: Math.floor(start.getTime() / 1000), end_timestamp: Math.floor(end.getTime() / 1000) })
+    const data = await getOortCloudUsageLogs({ p: 1, page_size: 20, type: 2, start_timestamp: Math.floor(start.getTime() / 1000), end_timestamp: Math.floor(end.getTime() / 1000) }, session)
+    if (!isCurrentSession(session)) return
     usageRecords.value = Array.isArray(data?.items) ? data.items : []
   } catch (error) {
+    if (!isCurrentSession(session)) return
     loadError.value = error?.response?.data?.message || error?.message || 'Credits 记录加载失败'
   } finally {
     recordsLoading.value = false
@@ -232,21 +248,29 @@ const loadUsageRecords = async () => {
 }
 
 const loadAccount = async () => {
-  authToken.value = getModelHubAccessToken()
-  if (!authToken.value || loading.value) return
+  const session = currentSession()
+  if (loading.value) return
+  if (!loadedSession || !isCurrentSession(loadedSession)) resetAccountState()
+  loadedSession = session
+  authToken.value = session.accessToken
+  if (!authToken.value) return
   loading.value = true
   loadError.value = ''
   try {
-    const userResponse = await getModelHubUserInfo({ accessToken: authToken.value, desensitize: true })
+    const userResponse = await getModelHubUserInfo({ desensitize: true }, session)
+    if (!isCurrentSession(session)) return
     applyUserInfo(userResponse)
     authVerified.value = true
     const errors = []
-    if (!llmAuthorizationSynced.value) {
+    // Viewing a shared platform account must not replace the tenant's LLM API key.
+    if (!session.usesPlatformSession && !llmAuthorizationSynced.value) {
       try {
-        const tokens = await getOortCloudTokenList()
+        const tokens = await getOortCloudTokenList(session)
+        if (!isCurrentSession(session)) return
         const selectedToken = tokens.find((token) => token.status === 1)
         if (!selectedToken) throw new Error('OortCloud 账户没有启用的 API 令牌')
-        const apiKey = await getOortCloudTokenKey(selectedToken.id)
+        const apiKey = await getOortCloudTokenKey(selectedToken.id, session)
+        if (!isCurrentSession(session)) return
         await authorizeOortCloudLlm({
           platformUserId: account.userId,
           platformUserName: account.userName,
@@ -257,9 +281,10 @@ const loadAccount = async () => {
         errors.push(error?.response?.data?.msg || error?.message || '大模型使用资格同步失败')
       }
     }
-    const results = await Promise.allSettled([getOortCloudAccountStats(), getOortCloudSubscriptions(), getOortCloudSubscriptionPlans(), getOortCloudQuotaConfig()])
+    const results = await Promise.allSettled([getOortCloudAccountStats(session), getOortCloudSubscriptions(session), getOortCloudSubscriptionPlans(session), getOortCloudQuotaConfig(session)])
+    if (!isCurrentSession(session)) return
     const authError = results.find((result) => result.status === 'rejected' && isAuthenticationFailure(result.reason))
-    if (authError) throw authError.reason
+    if (authError && !session.usesPlatformSession) throw authError.reason
     if (results[0].status === 'fulfilled') {
       const stats = results[0].value
       account.totalCredits = stats?.total_credits ?? stats?.quota ?? 0
@@ -275,25 +300,29 @@ const loadAccount = async () => {
     loadError.value = errors.join('，')
     await loadUsageRecords()
   } catch (error) {
+    if (!isCurrentSession(session)) return
     if (isAuthenticationFailure(error)) {
-      clearModelHubAuth()
       resetAccountState()
       authToken.value = ''
-      ElMessage.warning('OortCloud 登录已失效，请重新登录')
+      if (session.usesPlatformSession) {
+        redirectToPlatformLogin()
+      } else {
+        clearModelHubAuth()
+        ElMessage.warning('OortCloud 登录已失效，请重新登录')
+      }
     } else loadError.value = error?.response?.data?.message || error?.response?.data?.msg || error?.message || 'OortCloud 账户加载失败'
   } finally {
     loading.value = false
+    if (!isCurrentSession(session)) await loadAccount()
   }
 }
 
 const handlePopoverShow = async () => {
-  authToken.value = getModelHubAccessToken()
-  if (authToken.value) await loadAccount()
+  await loadAccount()
 }
 const handleAuthChanged = async () => {
-  authToken.value = getModelHubAccessToken()
   resetAccountState()
-  if (authToken.value) await loadAccount()
+  await loadAccount()
 }
 const handleVisitOortCloud = () => openOortCloudModelHub(getPlatformAccessToken())
 const handleUpgrade = () => openOortCodexPricing(getPlatformAccessToken())
@@ -304,6 +333,11 @@ const handleLogout = async () => {
   ElMessage.success('已退出 OortCloud')
 }
 const handleLogin = async () => {
+  if (usesPlatformSession.value) {
+    if (currentSession().accessToken) await loadAccount()
+    else redirectToPlatformLogin()
+    return
+  }
   if (getModelHubAccessToken()) {
     authToken.value = getModelHubAccessToken()
     await loadAccount()
@@ -314,9 +348,9 @@ const handleLogin = async () => {
 
 onMounted(async () => {
   window.addEventListener('modelHubAuthChanged', handleAuthChanged)
-  authToken.value = getModelHubAccessToken()
-  if (authToken.value) await loadAccount()
+  await loadAccount()
 })
+watch(() => props.tenantMode, handleAuthChanged)
 onBeforeUnmount(() => window.removeEventListener('modelHubAuthChanged', handleAuthChanged))
 </script>
 

@@ -72,6 +72,11 @@ export function getUserTenants() {
   return authRequest.post('/sso/v1/getUserTenants', {})
 }
 
+/* * multi 模式下校验本地会话绑定的平台会话是否仍然有效。 */
+export function validatePlatformSession() {
+  return authRequest.post('/sso/v1/validatePlatformSession', {})
+}
+
 /* * Validate after , new token. */
 export function switchTenant(tenantId: string) {
   return authRequest.post('/sso/v1/switchTenant', { tenantId })
