@@ -207,14 +207,14 @@
         </div>
       </template>
       <div ref="playerWrapperRef" class="live-player">
-        <div ref="oplayerContainerRef" class="oplayer-container" />
+        <VlsDevicePlayer v-if="videoDialogVisible && selectedRow" :device="selectedRow.deviceData" />
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, nextTick, onBeforeUnmount, onMounted, shallowRef } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import {
   VideoCamera,
   Folder,
@@ -222,16 +222,14 @@ import {
   FullScreen,
 } from '@element-plus/icons-vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { clacPXToVW } from '@/utils/index'
 
 // API Import
-import { getDeviceList, getDeviceTree } from '@/api/device'
+import { getVlsDeviceCatalog, createVlsDeviceTree } from '@/api/vlsDeviceCatalog'
+import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
 import { getDeviceRecords } from '@/api/videoRecord'
-import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
-import { ensureOPlayer, parseCameraRtcConfig } from '@/utils/oplayer'
 import { getBaseURL } from '@/utils/request'
-import { getStreamType } from './deviceUtils.js'
 
 // data
 const deviceTreeCollapsed = ref(false)
@@ -278,9 +276,6 @@ const videoPlayer = ref(null)
 const recordedVideoPlayer = ref(null)
 const videoDialogVisible = ref(false)
 const playerWrapperRef = ref(null)
-const oplayerContainerRef = ref(null)
-const oplayerInstance = shallowRef(null)
-let activePlaybackTask = null
 const selectedVideoIndex = ref(0)
 const loading = ref(false)
 const totalRecords = ref(0)
@@ -415,7 +410,7 @@ const filteredData = computed(() => {
     if (searchForm.fileName) {
       match = match && (
         item.deviceName.toLowerCase().includes(searchForm.fileName.toLowerCase()) ||
-        (item.id && item.id.toString().includes(searchForm.fileName))
+        String(item.deviceId || '').toLowerCase().includes(searchForm.fileName.toLowerCase())
       )
     }
 
@@ -435,72 +430,30 @@ const currentPageData = computed(() => {
 })
 
 // Load device data
-const loadDeviceTree = async () => {
-  try {
-    const response = await getDeviceTree()
-    if (response.data && response.data.length > 0) {
-      deviceTreeData.value = response.data
-    } else {
-      // if device data, data
-      deviceTreeData.value = [
-        {
-          id: 1,
-          label: '前门区域',
-          type: 'group',
-          children: [
-            { id: 11, label: '前门摄像头01', type: 'device', status: 'online' },
-            { id: 12, label: '海康云台', type: 'device', status: 'online' },
-            { id: 13, label: '门禁监控', type: 'device', status: 'online' }
-          ]
-        }
-      ]
-    }
-  } catch (error) {
-    console.error('加载设备树失败:', error)
-    ElMessage.error('加载设备树失败')
-  }
-}
 
 // Load device - device/page API
 const loadDeviceList = async () => {
   loading.value = true
   try {
-    const params = {
-      current: 1,
-      size: 1000, // Get all device
-    }
-
-    // device
-    if (searchForm.fileName) {
-      params.keyword = searchForm.fileName
-    }
-
-    console.log('加载设备列表，API调用参数:', params)
-
-    const response = await getDeviceList(params)
-
-    if (response.data && response.data.records) {
-      // Convert data table
-      deviceList.value = response.data.records.map((device, index) => ({
-        index: index + 1,
-        deviceName: device.deviceName || '未知设备',
-        tag: device.tag || '监控设备',
-        deviceId: device.id || '',
-        streamPath: device.streamPath || device.streamUrl || '',
-        status: device.status,
-        lastRefreshTime: device.lastRefreshTime || device.updatedAt || new Date().toLocaleString(),
-        // devicedata
-        deviceData: device
-      }))
-      totalRecords.value = response.data.total || deviceList.value.length
-    } else {
-      deviceList.value = []
-      totalRecords.value = 0
-    }
+    const devices = await getVlsDeviceCatalog()
+    deviceTreeData.value = createVlsDeviceTree(devices)
+    deviceList.value = devices.map((device, index) => ({
+      index: index + 1,
+      id: device.id,
+      deviceName: device.deviceName,
+      tag: device.tag,
+      deviceId: device.deviceId,
+      streamPath: device.streamUrl || '—',
+      status: device.status,
+      lastRefreshTime: device.lastRecordTime || '—',
+      deviceData: device,
+    }))
+    totalRecords.value = deviceList.value.length
   } catch (error) {
     console.error('加载设备列表失败:', error)
     ElMessage.error('加载设备列表失败: ' + (error.message || '网络错误'))
     deviceList.value = []
+    deviceTreeData.value = []
     totalRecords.value = 0
   } finally {
     loading.value = false
@@ -565,7 +518,7 @@ const handleExport = (type) => {
 const handleNodeClick = (data) => {
   currentTreeNodeId.value = data.id
   if (data.type === 'device') {
-    searchForm.fileName = data.label
+    searchForm.fileName = data.deviceId || data.label
     currentPage.value = 1
     loadDeviceList()
   }
@@ -679,24 +632,12 @@ const handleDelete = async () => {
 /**
  * device .
  */
-const cleanupOPlayer = () => {
-  activePlaybackTask = null
 
-  if (oplayerInstance.value?.compInstance?.$destroy) {
-    oplayerInstance.value.compInstance.$destroy()
-  }
-  oplayerInstance.value = null
-
-  if (oplayerContainerRef.value) {
-    oplayerContainerRef.value.innerHTML = ''
-  }
-}
 
 /**
  * dialog layer .
  */
 const handlePlayerClose = () => {
-  cleanupOPlayer()
   videoDialogVisible.value = false
 }
 
@@ -722,104 +663,9 @@ const togglePlayerFullscreen = async () => {
 /**
  * Generate OPlayer parameter.
  */
-const createPlayerOptions = async (streamUrl) => {
-  const streamType = getStreamType(streamUrl)
-  const playerConfig = {
-    debuggerMode: false,
-    autoSize: true,
-    backgroundColor: '#000000',
-    showHeader: false
-  }
-
-  if (streamType === 'cameraRTC') {
-    const { cameraId, socketUrl } = parseCameraRtcConfig(streamUrl)
-    playerConfig.webRTCSocketURL = socketUrl
-    return {
-      playerConfig,
-      playConfig: { type: 'cameraRTC', src: cameraId }
-    }
-  }
-
-  if (streamType === 'rtsp') {
-    await ensureWebRTCBackendConfig()
-    playerConfig.rtspServerURL = WEBRTC_SERVER_BASE_URL
-    return {
-      playerConfig,
-      playConfig: {
-        type: 'rtsp',
-        src: streamUrl,
-        transport: 'tcp',
-        timeout: 60,
-        preferredMime: 'video/H264'
-      }
-    }
-  }
-
-  const playTypeMap = {
-    flv: 'flv',
-    hls: 'm3u8',
-    video: 'mp4',
-    http: 'mp4'
-  }
-  const playType = playTypeMap[streamType]
-  if (!playType) {
-    throw new Error(`暂不支持该视频流类型：${streamType}`)
-  }
-
-  return {
-    playerConfig,
-    playConfig: { type: playType, src: streamUrl }
-  }
-}
-
-/**
- * and device .
- */
-const handlePlay = async (row) => {
-  const streamUrl = row?.streamPath
-    || row?.streamUrl
-    || row?.originalRtspUrl
-    || row?.rtspUrl
-    || row?.url
-  if (!streamUrl) {
-    ElMessage.warning('暂无可用流地址')
-    return
-  }
-
-  cleanupOPlayer()
-  const playbackTask = Symbol('video-playback-oplayer')
-  activePlaybackTask = playbackTask
+const handlePlay = (row) => {
   selectedRow.value = row
   videoDialogVisible.value = true
-
-  const loadingInstance = ElLoading.service({
-    lock: true,
-    text: '正在启动视频播放...',
-    background: 'rgba(0, 0, 0, 0.7)'
-  })
-
-  try {
-    await Promise.all([ensureOPlayer(), nextTick()])
-    const { playerConfig, playConfig } = await createPlayerOptions(streamUrl)
-    const container = oplayerContainerRef.value
-    if (activePlaybackTask !== playbackTask) return
-    if (!container) throw new Error('播放器容器未准备好')
-
-    const player = new window.OToolBox.OPlayer(container, playerConfig)
-    oplayerInstance.value = player
-    player.play({
-      ...playConfig,
-      name: row?.deviceName || row?.name || ''
-    })
-  } catch (error) {
-    if (activePlaybackTask !== playbackTask) return
-    console.error('播放失败:', error)
-    ElMessage.error(`播放失败: ${error.message || error}`)
-    cleanupOPlayer()
-    videoDialogVisible.value = false
-  } finally {
-    loadingInstance.close()
-  }
 }
 
 const handleSizeChange = (size) => {
@@ -1150,6 +996,13 @@ const selectDay = (day) => {
 // Load record
 const loadVideoRecords = async () => {
   if (!selectedRow.value) return
+  if (selectedRow.value.deviceData?.catalogSource === 'VLSTREAM') {
+    videoRecords.value = []
+    videoList.value = []
+    currentVideoUrl.value = ''
+    ElMessage.info('该设备尚未关联历史录像')
+    return
+  }
 
   try {
     const deviceId = selectedRow.value.deviceData?.id || selectedRow.value.deviceId
@@ -1225,13 +1078,9 @@ const loadVideoRecords = async () => {
 
 // pageInitialize
 onMounted(async () => {
-  await loadDeviceTree()
   await loadDeviceList()
 })
 
-onBeforeUnmount(() => {
-  cleanupOPlayer()
-})
 </script>
 
 <style scoped lang="scss">

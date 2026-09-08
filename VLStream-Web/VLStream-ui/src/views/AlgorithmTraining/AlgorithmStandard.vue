@@ -268,7 +268,7 @@
                   <el-icon><ArrowRight /></el-icon>
                 </div>
 
-                <div class="image-canvas"
+                <div class="image-canvas" ref="editorCanvasRef"
                 :data-tool="selectedTool"
                 @click="handleCanvasClick"
                 @contextmenu.prevent="handleCanvasRightClick"
@@ -278,7 +278,7 @@
               >
                 <!--  -->
                 <div v-if="currentImage" class="image-container"
-                  :style="{ transform: `rotate(${imageRotation}deg)` }"
+                  :style="{ ...fittedImageStyle, transform: `rotate(${imageRotation}deg)` }"
                 >
                   <img
                     :src="currentImage.url"
@@ -297,7 +297,8 @@
                     preserveAspectRatio="xMidYMid meet"
                   >
                     <!-- already annotation -->
-                    <g v-for="annotation in imageAnnotations" :key="annotation.id" class="annotation-group">
+                    <g v-for="annotation in imageAnnotations" :key="annotation.id" class="annotation-group"
+                      @mousedown.stop @click.stop="selectAnnotation(annotation.id)">
                       <rect
                         v-if="annotation.type === 'rect'"
                         :x="annotation.x"
@@ -308,7 +309,6 @@
                         :stroke="annotation.labelColor"
                         stroke-width="2"
                         :class="{ selected: selectedAnnotation === annotation.id }"
-                        @click="selectAnnotation(annotation.id)"
                       />
 
                       <circle
@@ -320,7 +320,6 @@
                         :stroke="annotation.labelColor"
                         stroke-width="2"
                         :class="{ selected: selectedAnnotation === annotation.id }"
-                        @click="selectAnnotation(annotation.id)"
                       />
 
                       <!--  -->
@@ -420,8 +419,10 @@
     </div>
 
     <!-- menu -->
+    <Teleport to="body">
     <div
       v-if="showContextMenu"
+      ref="contextMenuRef"
       class="context-menu"
       :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }"
       @click.stop
@@ -442,6 +443,7 @@
         暂无标签，请先添加标签
       </div>
     </div>
+    </Teleport>
 
 
 
@@ -687,7 +689,7 @@
 </template>
 
 <script setup>
-import {computed, onMounted, onUnmounted, ref, watch} from 'vue'
+import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue'
 import { clacPXToVW } from '@/utils/index'
 import AnnotationGridView from './AnnotationGridView.vue'
 import AnnotationLabelPanel from '@/components/AnnotationLabelPanel.vue'
@@ -722,6 +724,7 @@ import {
   exportAnnotationData,
   importAnnotationData,
   getAlgorithmAnnotationPage,
+  getAlgorithmAnnotationById,
   getProgressPercentage,
   getStatusTagType,
   updateAlgorithmAnnotation
@@ -851,6 +854,31 @@ const imageHeight = ref(0)
 const imageNaturalWidth = ref(0)
 const imageNaturalHeight = ref(0)
 const imageRotation = ref(0) // , 90
+const editorCanvasRef = ref(null)
+const editorCanvasSize = ref({ width: 0, height: 0 })
+let editorResizeObserver
+watch(editorCanvasRef, (canvas) => {
+  editorResizeObserver?.disconnect()
+  if (!canvas) return
+  editorResizeObserver = new ResizeObserver(([entry]) => {
+    editorCanvasSize.value = { width: entry.contentRect.width, height: entry.contentRect.height }
+  })
+  editorResizeObserver.observe(canvas)
+})
+onUnmounted(() => editorResizeObserver?.disconnect())
+
+const fittedImageStyle = computed(() => {
+  const width = imageNaturalWidth.value
+  const height = imageNaturalHeight.value
+  if (!width || !height) return { width: '0px', height: '0px' }
+  const rotated = Math.abs(imageRotation.value % 180) === 90
+  const scale = Math.min(
+    editorCanvasSize.value.width / (rotated ? height : width),
+    editorCanvasSize.value.height / (rotated ? width : height),
+    1
+  )
+  return { width: `${width * scale}px`, height: `${height * scale}px` }
+})
 
 // property - current
 const currentImage = computed(() => {
@@ -887,6 +915,7 @@ const annotationViewBox = computed(() => {
 
 
 const selectedAnnotation = ref(null)
+const isSavingAnnotations = ref(false)
 
 // related
 const isDrawing = ref(false)
@@ -894,10 +923,30 @@ const currentDrawing = ref(null)
 
 // menu
 const showContextMenu = ref(false)
+const contextMenuRef = ref(null)
 const contextMenuX = ref(0)
 const contextMenuY = ref(0)
 const pendingAnnotation = ref(null)
 const justFinishedDrawing = ref(false) // after clickevent
+
+const positionContextMenu = () => {
+  const menu = contextMenuRef.value
+  if (!menu) return
+  const margin = 8
+  const { width, height } = menu.getBoundingClientRect()
+  const viewportWidth = document.documentElement.clientWidth
+  const viewportHeight = document.documentElement.clientHeight
+  contextMenuX.value = Math.max(margin, Math.min(contextMenuX.value, viewportWidth - width - margin))
+  contextMenuY.value = Math.max(margin, Math.min(contextMenuY.value, viewportHeight - height - margin))
+}
+
+const openContextMenu = async (event) => {
+  contextMenuX.value = event.clientX
+  contextMenuY.value = event.clientY
+  showContextMenu.value = true
+  await nextTick()
+  positionContextMenu()
+}
 
 // property - ( service countdata)
 const filteredAnnotationLabels = computed(() => {
@@ -2168,7 +2217,35 @@ const loadAllAnnotationData = async () => {
 }
 
 // annotationinstance
+const reloadSavedImageAnnotations = async (image, annotationId) => {
+  const response = await getAllAnnotationInstances(annotationId)
+  if (response.code !== 200 || !Array.isArray(response.data)) {
+    throw new Error('同步已保存标注失败，请重试')
+  }
+  image.annotations = response.data
+    .filter(instance => String(instance.imageId) === String(image.id))
+    .map(instance => {
+      const label = annotationLabels.value.find(item => item.id === instance.labelId)
+      return {
+        ...JSON.parse(instance.annotationData),
+        id: instance.id,
+        type: instance.annotationType,
+        labelId: instance.labelId,
+        labelName: label?.name || `标签${instance.labelId}`,
+        labelColor: label?.color || '#999999'
+      }
+    })
+  image.annotationIdsStale = false
+  if (currentImage.value === image) {
+    imageAnnotations.value = [...image.annotations]
+    selectedAnnotation.value = null
+  }
+}
+
 const saveImageAnnotations = async (imageId, annotations) => {
+  if (isSavingAnnotations.value) return false
+  const image = uploadedImages.value.find(item => item.id === imageId)
+  isSavingAnnotations.value = true
   try {
     const annotationId = getCurrentAnnotationId()
     console.log('=== 保存图片标注 ===')
@@ -2198,7 +2275,10 @@ const saveImageAnnotations = async (imageId, annotations) => {
     const response = await batchSaveAnnotationInstances(annotationId, imageId, instances)
     console.log('保存响应:', response)
 
-    if (response.code === 200) {
+    if (response.code === 200 && response.data !== false) {
+      // 批量保存会重建实例 ID；只同步当前图片，保留其他图片的草稿。
+      image.annotationIdsStale = true
+      await reloadSavedImageAnnotations(image, annotationId)
       ElMessage.success('标注保存成功')
       // new Load new
       await loadAnnotationLabels(labelSearchKeyword.value)
@@ -2209,8 +2289,10 @@ const saveImageAnnotations = async (imageId, annotations) => {
     }
   } catch (error) {
     console.error('保存标注失败:', error)
-    ElMessage.error('保存标注失败')
+    ElMessage.error(image?.annotationIdsStale ? '标注已保存，但同步失败，请重试保存或删除以同步' : '保存标注失败')
     return false
+  } finally {
+    isSavingAnnotations.value = false
   }
 }
 
@@ -2728,13 +2810,12 @@ const handleCanvasClick = (event) => {
 
 const handleCanvasRightClick = (event) => {
   if (pendingAnnotation.value) {
-    contextMenuX.value = event.clientX
-    contextMenuY.value = event.clientY
-    showContextMenu.value = true
+    openContextMenu(event)
   }
 }
 
 const handleMouseDown = (event) => {
+  if (event.button !== 0 || isSavingAnnotations.value || currentImage.value?.annotationIdsStale) return
   if (selectedTool.value === 'brush' || selectedTool.value === 'rect' || selectedTool.value === 'circle') {
     // Get element and
     const imageEl = document.querySelector('.main-image')
@@ -2794,6 +2875,7 @@ const handleMouseUp = (event) => {
     if (selectedTool.value === 'rect') {
       newAnnotation = {
         id: Date.now(),
+        isDraft: true,
         type: 'rect',
         x: Math.min(drawing.startX, drawing.endX),
         y: Math.min(drawing.startY, drawing.endY),
@@ -2807,6 +2889,7 @@ const handleMouseUp = (event) => {
       const radius = Math.sqrt(Math.pow(drawing.endX - drawing.startX, 2) + Math.pow(drawing.endY - drawing.startY, 2))
       newAnnotation = {
         id: Date.now(),
+        isDraft: true,
         type: 'circle',
         cx: drawing.startX,
         cy: drawing.startY,
@@ -2834,9 +2917,7 @@ const handleMouseUp = (event) => {
       // menu, and clickevent
       setTimeout(() => {
         // menu - page
-        contextMenuX.value = event.clientX
-        contextMenuY.value = event.clientY
-        showContextMenu.value = true
+        openContextMenu(event)
         console.log('延迟显示右键菜单')
         console.log('右键菜单位置:', { x: contextMenuX.value, y: contextMenuY.value })
         console.log('右键菜单显示状态:', showContextMenu.value)
@@ -2859,8 +2940,19 @@ const selectAnnotation = (annotationId) => {
 
 // Delete in annotation
 const handleDeleteAnnotation = async () => {
+  if (isSavingAnnotations.value) return
   if (!currentImage.value) {
     ElMessage.warning('没有可删除的图片')
+    return
+  }
+
+  if (currentImage.value.annotationIdsStale) {
+    try {
+      await reloadSavedImageAnnotations(currentImage.value, getCurrentAnnotationId())
+      ElMessage.info('标注已同步，请重新选择要删除的标注')
+    } catch (error) {
+      ElMessage.error('同步已保存标注失败，请重试')
+    }
     return
   }
 
@@ -2885,10 +2977,18 @@ const handleDeleteAnnotation = async () => {
     }
 
     if (annotationToDelete) {
+      // 新画的标注尚未入库，临时 ID 不能发送给后端删除接口。
+      if (annotationToDelete.isDraft) {
+        currentImage.value.annotations.splice(annotationIndex, 1)
+        imageAnnotations.value = [...currentImage.value.annotations]
+        selectedAnnotation.value = null
+        ElMessage.success('未保存标注已删除')
+        return
+      }
       try {
         // Delete annotation
         await ElMessageBox.confirm(
-          `确定要删除这个标注吗？\n注意：删除后将同时删除标注数据和相关图片文件！`,
+          '确定要删除这个标注吗？图片文件会保留。',
           '提示',
           {
             confirmButtonText: '确定',
@@ -2898,7 +2998,10 @@ const handleDeleteAnnotation = async () => {
         )
 
         // after APIDelete annotationinstance
-        await deleteAnnotationInstance(annotationToDelete.id)
+        const response = await deleteAnnotationInstance(annotationToDelete.id)
+        if (response.code !== 200 || response.data === false) {
+          throw new Error('删除标注失败')
+        }
 
         // from current annotationarray in Delete
         currentImage.value.annotations.splice(annotationIndex, 1)
@@ -3025,6 +3128,7 @@ const selectLabelForAnnotation = (label) => {
 
     // annotation current annotationsarray in
     currentImage.value.annotations.push(pendingAnnotation.value)
+    selectedAnnotation.value = pendingAnnotation.value.id
     console.log('标注已添加到图片:', currentImage.value.annotations.length)
 
     // new current annotation - new from current Load
@@ -3250,18 +3354,28 @@ const handleKeyDown = (event) => {
 }
 
 // component Load data
-onMounted(() => {
-  loadData()
+onMounted(async () => {
+  await loadData()
+  const linkedId = new URLSearchParams(window.location.search).get('annotationId')
+  if (linkedId && /^\d+$/.test(linkedId)) {
+    try {
+      const response = await getAlgorithmAnnotationById(linkedId)
+      if (response.code !== 200 || !response.data) throw new Error(response.msg || '项目加载失败')
+      await handleView({ ...response.data, name: response.data.annotationName, type: ANNOTATION_TYPE_LABELS[response.data.annotationType] })
+    } catch (error) { ElMessage.error(error.message || '项目加载失败') }
+  }
   // full listener
   document.addEventListener('click', handleGlobalClick)
   // eventlistener
   document.addEventListener('keydown', handleKeyDown)
+  window.addEventListener('resize', positionContextMenu)
 })
 
 // component eventlistener
 onUnmounted(() => {
   document.removeEventListener('click', handleGlobalClick)
   document.removeEventListener('keydown', handleKeyDown)
+  window.removeEventListener('resize', positionContextMenu)
 })
 
 // component eventlistener
@@ -4110,6 +4224,10 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 /* menu */
 .context-menu {
   position: fixed;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  max-height: calc(100vh - 16px);
   background: white;
   border: 1px solid #e8e8e8;
   border-radius: 8px;
@@ -4130,6 +4248,7 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 }
 
 .context-menu-items {
+  min-height: 0;
   max-height: 200px;
   overflow-y: auto;
 }
@@ -4962,4 +5081,88 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   font-size: 12px;
   font-style: italic;
 }
+/* 编辑器按可用空间布局，导航占用独立列，图片与 SVG 共用等比尺寸。 */
+.image-annotation-area {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+}
+.image-edit-main {
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+}
+.annotation-toolbar-left {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+.image-content-area {
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+}
+.image-canvas-wrapper {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
+  grid-template-rows: minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 12px 8px;
+  background: #f5f7fa;
+}
+.image-nav-button {
+  position: static;
+  transform: none;
+  width: 36px;
+  height: 36px;
+  justify-self: center;
+  background: #fff;
+  border: 1px solid #dcdfe6;
+  color: #606266;
+}
+.image-nav-button:hover {
+  transform: none;
+  background: #ecf5ff;
+  color: #409eff;
+}
+.image-nav-button.disabled,
+.image-nav-button.disabled:hover {
+  transform: none;
+  background: #f5f7fa;
+  color: #c0c4cc;
+}
+.image-nav-left { grid-column: 1; grid-row: 1; }
+.image-nav-right { grid-column: 3; grid-row: 1; }
+.image-annotation-area .image-canvas {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.image-annotation-area .image-container {
+  flex-shrink: 0;
+  max-width: none;
+  max-height: none;
+}
+.image-annotation-area .main-image {
+  width: 100%;
+  height: 100%;
+}
+.thumbnail-navigation {
+  width: 100%;
+  height: 100px;
+  box-sizing: border-box;
+  padding: 8px 0;
+}
+.thumbnail-item { width: 72px; height: 64px; }
 </style>

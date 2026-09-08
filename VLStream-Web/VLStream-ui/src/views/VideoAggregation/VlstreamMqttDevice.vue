@@ -52,7 +52,7 @@
           <el-table-column label="操作" width="150" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" @click="openDetail(row)">详情</el-button>
-              <el-button link type="primary" @click="openPreview(row)">预览</el-button>
+              <el-button link type="primary" @click="openPreview(row)">播放</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -74,7 +74,8 @@
         </div>
         <div v-loading="previewLoading" class="player">
           <rtc-player v-if="webrtcUrl" :video-url="webrtcUrl" :hasaudio="true" />
-          <div v-else-if="cameraRtcUrl" ref="cameraRtcContainer" class="camera-rtc-player" />
+          <camera-rtc-player v-else-if="cameraRtcConfig" :device-id="cameraRtcConfig.cameraId"
+            :socket-url="cameraRtcConfig.socketUrl" />
           <el-empty v-else description="请选择可用视频流" />
         </div>
       </el-dialog>
@@ -140,11 +141,12 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import CameraRtcPlayer from '@/components/CameraRtcPlayer.vue'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import RtcPlayer from '@/components/rtcPlayer/index.vue'
-import { ensureOPlayer, parseCameraRtcConfig } from '@/utils/oplayer'
+import { parseCameraRtcConfig } from '@/utils/oplayer'
 import {
   cancelMqttDeviceFirmwareTask,
   createMqttDevicePreview,
@@ -167,9 +169,7 @@ const currentDevice = ref(null)
 const streams = ref([])
 const selectedStreamId = ref(null)
 const webrtcUrl = ref('')
-const cameraRtcUrl = ref('')
-const cameraRtcContainer = ref(null)
-let cameraRtcPlayer = null
+const cameraRtcConfig = ref(null)
 const detailVisible = ref(false)
 const detailLoading = ref(false)
 const detailStreams = ref([])
@@ -299,18 +299,7 @@ async function startPreview(streamId) {
   try {
     const stream = (await createMqttDevicePreview(currentDevice.value.id, streamId))?.data || {}
     if (stream.playMode === 'cameraRTC' && stream.url) {
-      cameraRtcUrl.value = stream.url
-      await Promise.all([ensureOPlayer(), nextTick()])
-      const { cameraId, socketUrl } = parseCameraRtcConfig(stream.url)
-      if (!cameraRtcContainer.value) throw new Error('CameraRTC 播放容器初始化失败')
-      cameraRtcPlayer = new window.OToolBox.OPlayer(cameraRtcContainer.value, {
-        debuggerMode: false,
-        autoSize: true,
-        backgroundColor: '#000000',
-        showHeader: true,
-        webRTCSocketURL: socketUrl
-      })
-      cameraRtcPlayer.play({ type: 'cameraRTC', src: cameraId, name: currentDevice.value.deviceName || '' })
+      cameraRtcConfig.value = parseCameraRtcConfig(stream.url)
       return
     }
     webrtcUrl.value = location.protocol === 'https:' ? (stream.rtcs || stream.webrtcUrl) : (stream.rtc || stream.webrtcUrl)
@@ -320,10 +309,7 @@ async function startPreview(streamId) {
 }
 
 function releasePreview() {
-  if (cameraRtcPlayer?.compInstance?.$destroy) cameraRtcPlayer.compInstance.$destroy()
-  cameraRtcPlayer = null
-  if (cameraRtcContainer.value) cameraRtcContainer.value.innerHTML = ''
-  cameraRtcUrl.value = ''
+  cameraRtcConfig.value = null
   webrtcUrl.value = ''
 }
 

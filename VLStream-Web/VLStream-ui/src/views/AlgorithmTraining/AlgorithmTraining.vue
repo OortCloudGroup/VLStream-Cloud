@@ -599,7 +599,7 @@
                   class="dataset-row">
                   <span>{{ dataset.annotationName }}</span>
                   <span>{{ dataset.typeLabel }}</span>
-                  <span>{{ dataset.progress }}%</span>
+                  <span>{{ dataset.progress }}% · {{ isDatasetReady(dataset) ? '已生成' : '尚未生成' }}</span>
                   <el-button
                     type="text"
                     class="remove-btn"
@@ -680,7 +680,7 @@
               type="primary"
               @click="handleStartTraining"
               class="start-training-btn"
-              :disabled="selectedDatasets.length === 0"
+              :disabled="selectedDatasets.length !== 1 || !isDatasetReady(selectedDatasets[0])"
               :loading="isTraining"
             >
               {{ isTraining ? '训练中...' : '开始训练' }}
@@ -844,12 +844,13 @@
             :key="dataset.value"
             :label="dataset.label"
             :value="dataset.value"
+            :disabled="!isDatasetReady(dataset)"
           >
             <div class="dataset-option">
               <div class="dataset-name">{{ dataset.annotationName }}</div>
               <div class="dataset-info">
                 <el-tag size="small" :type="getStatusTagType(dataset.status)">
-                  {{ dataset.statusLabel }}
+                  {{ isDatasetReady(dataset) ? '已生成' : '尚未生成' }}
                 </el-tag>
                 <span class="dataset-type">{{ dataset.typeLabel }}</span>
                 <span class="dataset-progress">{{ dataset.progress }}%</span>
@@ -857,6 +858,7 @@
             </div>
           </el-option>
         </el-select>
+        <el-button type="text" @click="goToGenerateDataset">去生成数据集</el-button>
       </el-form-item>
 
       <el-form-item label="训练轮数" prop="epochTotal" required>
@@ -962,12 +964,13 @@
             :key="dataset.value"
             :label="dataset.label"
             :value="dataset.value"
+            :disabled="!isDatasetReady(dataset)"
           >
             <div class="dataset-option">
               <div class="dataset-name">{{ dataset.annotationName }}</div>
               <div class="dataset-info">
                 <el-tag size="small" :type="getStatusTagType(dataset.status)">
-                  {{ dataset.statusLabel }}
+                  {{ isDatasetReady(dataset) ? '已生成' : '尚未生成' }}
                 </el-tag>
                 <span class="dataset-type">{{ dataset.typeLabel }}</span>
                 <span class="dataset-progress">{{ dataset.progress }}%</span>
@@ -1026,6 +1029,7 @@
     :before-close="handleCloseDatasetSelector"
   >
     <div class="dataset-selector-content">
+      <p>仅可选择已生成的数据集。请先完成标注，再到算法标注页面点击“生成”。</p>
       <!--  -->
       <div class="dataset-search">
         <el-input
@@ -1043,12 +1047,14 @@
           v-for="dataset in filteredDatasetOptions"
           :key="dataset.value"
           class="dataset-item"
-          :class="{ selected: selectedDatasetIds.includes(dataset.value) }"
+          :class="{ selected: selectedDatasetIds.includes(dataset.value), disabled: !isDatasetReady(dataset) }"
           @click="toggleDatasetSelection(dataset)"
         >
           <div class="dataset-checkbox">
             <el-checkbox
               :model-value="selectedDatasetIds.includes(dataset.value)"
+              :disabled="!isDatasetReady(dataset)"
+              @click.stop
               @change="toggleDatasetSelection(dataset)"
             />
           </div>
@@ -1056,13 +1062,16 @@
             <div class="dataset-header">
               <h4 class="dataset-name">{{ dataset.annotationName }}</h4>
               <el-tag size="small" :type="getStatusTagType(dataset.status)">
-                {{ dataset.statusLabel }}
+                {{ isDatasetReady(dataset) ? '已生成' : '尚未生成' }}
               </el-tag>
             </div>
             <div class="dataset-details">
               <span class="dataset-type">{{ dataset.typeLabel }}</span>
               <span class="dataset-progress">进度: {{ dataset.progress }}%</span>
               <span class="dataset-count">{{ dataset.annotatedCount }}/{{ dataset.totalCount }}</span>
+              <el-button v-if="!isDatasetReady(dataset)" type="text" @click.stop="goToGenerateDataset">
+                去生成
+              </el-button>
             </div>
           </div>
         </div>
@@ -1089,6 +1098,7 @@
 
 <script setup>
 import {computed, h, nextTick, onMounted, onUnmounted, ref} from 'vue'
+import {useRouter} from 'vue-router'
 import {ElMessage, ElMessageBox, ElRadio, ElRadioGroup} from 'element-plus'
 import {Plus, QuestionFilled, Search} from '@element-plus/icons-vue'
 import { clacPXToVW } from '@/utils/index'
@@ -1106,7 +1116,7 @@ import {
   updateTraining
 } from '@/api/algorithmTraining.js'
 import {createModel, getModelPage} from '@/api/algorithmModel.js'
-import {getAlgorithmAnnotationPage} from '@/api/algorithmAnnotation.js'
+import {getAlgorithmAnnotationPage, getAlgorithmAnnotationById} from '@/api/algorithmAnnotation.js'
 import {getAlgorithmPage} from '@/api/algorithmManagement.js'
 import CollapseToggle from '@/components/CollapseToggle.vue'
 
@@ -1118,6 +1128,10 @@ import publishModelIcon from '@/assets/publish-model@3x.png'
 import request, {getBaseURL} from "@/utils/request";
 
 // form
+const router = useRouter()
+const isDatasetReady = dataset => typeof dataset?.datasetPath === 'string' && !!dataset.datasetPath.trim()
+const goToGenerateDataset = () => router.push('/algorithm-standard')
+
 const searchForm = ref({
   trainName: '',
   dateRange: []
@@ -1374,8 +1388,8 @@ const handleConfirmAdd = async () => {
 
     const formData = {
       taskName: addForm.value.taskName,
-      algorithmId: Number(addForm.value.algorithmId),
-      datasetId: addForm.value.datasetId ? Number(addForm.value.datasetId) : null,
+      algorithmId: String(addForm.value.algorithmId),
+      datasetId: addForm.value.datasetId ? String(addForm.value.datasetId) : null,
       epochTotal: addForm.value.epochTotal,
       configParams: parsedConfig,
       description: addForm.value.description
@@ -1490,8 +1504,8 @@ const buildTrainingPayload = async () => {
   if (!currentTrainingItem.value) {
     throw new Error('请先选择训练任务')
   }
-  if (!selectedDatasets.value.length) {
-    throw new Error('请至少选择一个数据集')
+  if (selectedDatasets.value.length !== 1) {
+    throw new Error('请选择一个已生成的数据集')
   }
   const dataset = selectedDatasets.value[0]
   const trainingData = currentTrainingItem.value.originalData || currentTrainingItem.value
@@ -1499,8 +1513,17 @@ const buildTrainingPayload = async () => {
   if (!taskId) {
     throw new Error('无法获取训练任务 ID')
   }
-  if (!dataset.datasetPath) {
-    throw new Error('当前数据集缺少路径配置，请检查后端数据')
+  if (!isDatasetReady(dataset)) {
+    throw new Error('数据集尚未生成，请先到算法标注页面点击“生成”')
+  }
+  // Annotation changes invalidate the generated path; do not start from a stale selection.
+  const latestDataset = await getAlgorithmAnnotationById(dataset.value)
+  if (latestDataset.code !== 200 || !latestDataset.data) {
+    throw new Error('无法核对数据集状态，请刷新后重试')
+  }
+  dataset.datasetPath = latestDataset.data.datasetPath
+  if (!isDatasetReady(dataset)) {
+    throw new Error('数据集尚未生成或已失效，请先到算法标注页面重新生成')
   }
 
   if (!algorithmOptions.value.length) {
@@ -1525,7 +1548,7 @@ const buildTrainingPayload = async () => {
       trainType,
       datasetPath: dataset.datasetPath,
       data: dataset.datasetPath,
-      datasetId: dataset.value,
+      datasetId: String(dataset.value),
       modelFilePath: modelFilePath || '',
       model: modelFilePath || '',
       epochs,
@@ -1569,7 +1592,7 @@ const handleStartTraining = async () => {
 
     await startTrainingWithParams(taskId, params)
 
-    appendLogLines('[INFO] 训练命令已下发，开始监听日志与状态...')
+    appendLogLines('[INFO] 训练请求已入队，等待GPU调度；开始监听日志与状态...')
     startPollingForTask(taskId, false)
     await loadTrainingData()
   } catch (error) {
@@ -1954,8 +1977,8 @@ const restoreTrainingConfig = async (originalData) => {
       }
 
       // find dataset
-      const dataset = datasetOptions.value.find(d => d.value === originalData.datasetId)
-      if (dataset) {
+      const dataset = datasetOptions.value.find(d => d.value === String(originalData.datasetId))
+      if (isDatasetReady(dataset)) {
         selectedDatasets.value = [dataset]
         selectedDatasetIds.value = [dataset.value]
         console.log('已恢复数据集选择:', dataset.label)
@@ -2464,6 +2487,7 @@ const startLogPolling = (taskId) => {
 
 const startStatusPolling = (taskId) => {
   stopStatusPolling()
+  let lastStatusMessage = ''
   statusPollingTimer.value = setInterval(async () => {
     try {
       const res = await getTrainingStatus(taskId)
@@ -2473,6 +2497,11 @@ const startStatusPolling = (taskId) => {
         statusValue = 'completed'
       }
       if (!statusValue) return
+      const statusMessage = payload?.message || ''
+      if (statusMessage && statusMessage !== lastStatusMessage) {
+        appendTerminalInfo(statusMessage)
+        lastStatusMessage = statusMessage
+      }
 
       const displayStatus = getTrainStatusText(statusValue)
       const tableItem = tableData.value.find(item => item.id === taskId)
@@ -2545,8 +2574,8 @@ const handleConfirmEdit = async () => {
     const formData = {
       id: editingTrainingItem.value.originalData.id,
       taskName: editForm.value.taskName,
-      algorithmId: Number(editForm.value.algorithmId),
-      datasetId: editForm.value.datasetId ? Number(editForm.value.datasetId) : null,
+      algorithmId: String(editForm.value.algorithmId),
+      datasetId: editForm.value.datasetId ? String(editForm.value.datasetId) : null,
       epochTotal: editForm.value.epochTotal,
       configParams: editForm.value.configParams ? JSON.parse(editForm.value.configParams) : null,
       description: editForm.value.description
@@ -2865,8 +2894,8 @@ const loadDatasetOptions = async () => {
     const response = await getAlgorithmAnnotationPage(params)
     if (response.code === 200) {
       datasetOptions.value = response.data.records.map(item => ({
-        value: item.id,
-        label: `${item.annotationName} (${item.annotatedCount}/${item.totalCount})`,
+        value: String(item.id),
+        label: `${item.annotationName} (${item.annotatedCount}/${item.totalCount}) · ${isDatasetReady(item) ? '已生成' : '尚未生成'}`,
         annotationName: item.annotationName,
         annotationType: item.annotationType,
         typeLabel: ANNOTATION_TYPE_LABELS[item.annotationType],
@@ -2917,6 +2946,7 @@ const handleDatasetSearch = () => {
 }
 
 const toggleDatasetSelection = (dataset) => {
+  if (!isDatasetReady(dataset)) return
   const index = selectedDatasetIds.value.indexOf(dataset.value)
   if (index > -1) {
     selectedDatasetIds.value.splice(index, 1)
@@ -2925,8 +2955,8 @@ const toggleDatasetSelection = (dataset) => {
       selectedDatasets.value.splice(datasetIndex, 1)
     }
   } else {
-    selectedDatasetIds.value.push(dataset.value)
-    selectedDatasets.value.push(dataset)
+    selectedDatasetIds.value = [dataset.value]
+    selectedDatasets.value = [dataset]
   }
 }
 
@@ -2973,9 +3003,11 @@ const removeDataset = (datasetId) => {
 // dataset Load data
 const openDatasetSelector = async () => {
   showDatasetSelector.value = true
-  if (datasetOptions.value.length === 0) {
-    await loadDatasetOptions()
-  }
+  await loadDatasetOptions()
+  selectedDatasets.value = datasetOptions.value.filter(dataset =>
+    selectedDatasetIds.value.includes(dataset.value) && isDatasetReady(dataset)
+  ).slice(0, 1)
+  selectedDatasetIds.value = selectedDatasets.value.map(dataset => dataset.value)
 }
 </script>
 
@@ -4664,6 +4696,12 @@ const openDatasetSelector = async () => {
 .dataset-item.selected {
   background-color: #ecf5ff;
   border-color: #409eff;
+}
+
+.dataset-item.disabled {
+  cursor: not-allowed;
+  background-color: #f5f7fa;
+  color: #909399;
 }
 
 .dataset-item:last-child {

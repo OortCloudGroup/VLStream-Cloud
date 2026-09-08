@@ -14,7 +14,6 @@
     :offset="10"
     popper-class="oortcloud-welcome-popper"
     @show="handlePopoverShow"
-    @hide="stopRefreshTimer"
   >
     <template #reference>
       <button class="oortcloud-entry" :class="{ 'is-logged-in': isLoggedIn }" type="button" aria-label="打开 OortCloud">
@@ -76,7 +75,7 @@
           <div class="content-panel records-panel">
             <div class="records-toolbar">
               <el-button type="primary" :loading="recordsLoading" @click="loadUsageRecords"><el-icon><Refresh /></el-icon>刷新</el-button>
-              <el-date-picker v-model="dateRange" type="daterange" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :clearable="false" @change="loadUsageRecords" />
+              <el-date-picker v-model="dateRange" type="daterange" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :clearable="false" :teleported="false" @change="loadUsageRecords" />
             </div>
             <p class="records-note">当前您已享受到模型的优惠价格。下方明细为按对话合并计费后的汇总数据，具体消耗以此为准。</p>
 
@@ -121,7 +120,6 @@ const subscriptions = ref([])
 const plans = ref([])
 const usageRecords = ref([])
 const creditsPerCny = ref(25)
-let refreshTimer = null
 
 const today = new Date()
 const sevenDaysAgo = new Date(today)
@@ -279,7 +277,6 @@ const loadAccount = async () => {
   } catch (error) {
     if (isAuthenticationFailure(error)) {
       clearModelHubAuth()
-      stopRefreshTimer()
       resetAccountState()
       authToken.value = ''
       ElMessage.warning('OortCloud 登录已失效，请重新登录')
@@ -289,17 +286,9 @@ const loadAccount = async () => {
   }
 }
 
-const stopRefreshTimer = () => {
-  if (refreshTimer) { window.clearInterval(refreshTimer); refreshTimer = null }
-}
-const startRefreshTimer = () => {
-  stopRefreshTimer()
-  if (isLoggedIn.value) refreshTimer = window.setInterval(loadAccount, 60 * 1000)
-}
 const handlePopoverShow = async () => {
   authToken.value = getModelHubAccessToken()
   if (authToken.value) await loadAccount()
-  startRefreshTimer()
 }
 const handleAuthChanged = async () => {
   authToken.value = getModelHubAccessToken()
@@ -310,7 +299,6 @@ const handleVisitOortCloud = () => openOortCloudModelHub(getPlatformAccessToken(
 const handleUpgrade = () => openOortCodexPricing(getPlatformAccessToken())
 const handleLogout = async () => {
   try { await logoutModelHubSession() } catch { ElMessage.warning('OortCloud 远端退出失败，已清理本地登录状态') }
-  stopRefreshTimer()
   resetAccountState()
   authToken.value = ''
   ElMessage.success('已退出 OortCloud')
@@ -329,10 +317,7 @@ onMounted(async () => {
   authToken.value = getModelHubAccessToken()
   if (authToken.value) await loadAccount()
 })
-onBeforeUnmount(() => {
-  stopRefreshTimer()
-  window.removeEventListener('modelHubAuthChanged', handleAuthChanged)
-})
+onBeforeUnmount(() => window.removeEventListener('modelHubAuthChanged', handleAuthChanged))
 </script>
 
 <style scoped>

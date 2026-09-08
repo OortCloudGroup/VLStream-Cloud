@@ -90,6 +90,12 @@
             </div>
           </div>
         </div>
+        <div class="grid-load-status" aria-live="polite">
+          已显示 {{ displayedImages.length }} / {{ filteredImages.length }} 张
+          <el-button v-if="displayedImages.length < filteredImages.length" type="text" @click="loadMoreImages">
+            加载更多
+          </el-button>
+        </div>
       </div>
     </div>
 
@@ -456,8 +462,12 @@ const handleGridScroll = (event) => {
   const target = event?.target
   if (!target) return
 
-  const isNearBottom = target.scrollTop + target.clientHeight >= target.scrollHeight
-  if (isNearBottom && renderCount.value < filteredImages.value.length) {
+  const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight <= 2
+  if (isNearBottom) loadMoreImages()
+}
+
+const loadMoreImages = () => {
+  if (renderCount.value < filteredImages.value.length) {
     renderCount.value = Math.min(
       filteredImages.value.length,
       renderCount.value + RENDER_INCREMENT

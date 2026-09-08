@@ -136,11 +136,11 @@
               </svg>
             </div>
             <div class="device-info">
-              <div class="device-name">{{ device.deviceName }}</div>
+              <div class="device-name">{{ device.deviceName }}<small class="vls-device-id">{{ device.deviceId }}</small></div>
               <div class="device-details">
                 <span class="device-type-tag">{{ device.deviceType }}</span>
                 <span class="device-status" :class="getDeviceStatusClass(device.status)">
-                  {{ device.status }}
+                  {{ device.status === 1 || device.status === '在线' ? '在线' : '离线' }}
                 </span>
                 <span class="device-ip">{{ device.ipAddress }}</span>
               </div>
@@ -151,7 +151,7 @@
         <!--  -->
         <template v-else>
           <div class="tree-view">
-            <template v-for="group in treeData" :key="group.id">
+            <template v-for="group in filteredTreeData" :key="group.id">
               <div class="tree-group" @click="handleTreeNodeClick(group)">
                 <div class="tree-group-header">
                   <svg class="tree-expand-icon" :class="{ 'expanded': group.expanded }" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -176,10 +176,10 @@
                     <path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/>
                   </svg>
                   <div class="tree-device-info">
-                    <div class="tree-device-name">{{ device.deviceName }}</div>
+                    <div class="tree-device-name">{{ device.deviceName }}<small class="vls-device-id">{{ device.deviceId }}</small></div>
                     <div class="tree-device-details">
                       <span class="device-type-tag">{{ device.deviceType }}</span>
-                      <span class="device-status" :class="getDeviceStatusClass(device.status)">{{ device.status }}</span>
+                      <span class="device-status" :class="getDeviceStatusClass(device.status)">{{ device.status === 1 || device.status === '在线' ? '在线' : '离线' }}</span>
             </div>
           </div>
         </div>
@@ -297,11 +297,21 @@ const filteredDevices = computed(() => {
   //
   if (searchKeyword.value.trim()) {
     devices = devices.filter(device =>
-      device.deviceName.toLowerCase().includes(searchKeyword.value.toLowerCase())
+      [device.deviceName, device.deviceId].some(value => String(value || '').toLowerCase().includes(searchKeyword.value.toLowerCase()))
     )
   }
 
   return devices
+})
+
+const collapsedGroups = ref(new Set())
+const filteredTreeData = computed(() => {
+  const ids = new Set(filteredDevices.value.map(device => device.id))
+  return props.treeData.map(group => ({
+    ...group,
+    expanded: !collapsedGroups.value.has(group.id),
+    children: (group.children || []).filter(device => ids.has(device.id)),
+  })).filter(group => group.children.length)
 })
 
 // device Check device
@@ -551,13 +561,14 @@ const getDeviceCount = (deviceTypeId) => {
 
 const getDeviceStatusClass = (status) => {
   return {
-    'online': status === '在线',
-    'offline': status === '离线'
+    'online': status === 1 || status === '在线',
+    'offline': status === 0 || status === '离线'
   }
 }
 
 const handleTreeNodeClick = (group) => {
-  group.expanded = !group.expanded
+  if (collapsedGroups.value.has(group.id)) collapsedGroups.value.delete(group.id)
+  else collapsedGroups.value.add(group.id)
 }
 
 const handleGlobalClick = (event) => {
@@ -715,6 +726,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.vls-device-id { display: block; font-size: 11px; color: #909399; overflow: hidden; text-overflow: ellipsis; }
 .device-list-panel {
   position: fixed;
   top: 130px;

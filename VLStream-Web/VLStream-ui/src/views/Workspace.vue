@@ -92,14 +92,15 @@
 
         <div class="devices-panel">
           <div class="panel-header">
-            <h3>热门设备</h3>
+            <h3>VLS 设备列表</h3>
             <el-link type="primary" class="more-link" @click="gotoMoreDevice">更多</el-link>
           </div>
           <div class="devices-list">
+            <el-empty v-if="!hotDevices.length" description="暂无 VLS 设备" :image-size="40" />
             <div v-for="device in hotDevices" :key="device.id" class="device-item">
               <div class="device-info">
                 <img class="device-cam" src="@/assets/img/workbench/device_cam.png" alt="device" />
-                <span class="device-name">{{ device.deviceName }}</span>
+                <span class="device-name" :title="device.deviceId">{{ device.deviceName }}<small class="vls-device-id">{{ device.deviceId }}</small></span>
               </div>
               <button class="play-btn" type="button" @click="handlePlay(device)">
                 <img class="play-icon" src="@/assets/img/workbench/play_btn.png" alt="play" />
@@ -180,21 +181,19 @@
       </div>
     </template>
     <div ref="workspacePlayerRef" class="workspace-player">
-      <div ref="oplayerContainer" class="oplayer-container" />
+      <VlsDevicePlayer v-if="showPlayer && currentPlayDevice" :device="currentPlayDevice" />
     </div>
   </el-dialog>
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { FullScreen } from '@element-plus/icons-vue'
-import { getDeviceList } from '@/api/device'
-import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
-import { ElLoading, ElMessage } from 'element-plus'
+import { getVlsDeviceCatalog } from '@/api/vlsDeviceCatalog'
+import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
+import { ElMessage } from 'element-plus'
 import { clacPXToVW } from '@/utils/index'
-import { ensureOPlayer, parseCameraRtcConfig } from '@/utils/oplayer'
-import { getStreamType } from '@/views/VideoAggregation/deviceUtils.js'
 
 import iconVideoPlaza from '@/assets/img/workbench/video_plaza.png'
 import iconSceneGovernance from '@/assets/img/workbench/scene_governance.png'
@@ -209,8 +208,6 @@ import iconAlgoOrchestration from '@/assets/img/workbench/algo_orchestration.png
 
 const router = useRouter()
 
-const currentPage = ref(1)
-const pageSize = ref(10)
 const userName = ref('用户')
 const now = ref(new Date())
 const weatherTemp = ref('--\u00b0C')
@@ -310,11 +307,8 @@ const startWeatherRefresh = () => {
 }
 
 const showPlayer = ref(false)
-const oplayerContainer = ref(null)
-const oplayerInstance = shallowRef(null)
 const currentPlayDevice = ref(null)
 const workspacePlayerRef = ref(null)
-let activePlaybackTask = null
 
 const hotDevices = ref([])
 
@@ -342,18 +336,7 @@ const toggleFullscreen = async () => {
 /**
  * .
  */
-const cleanupOPlayer = () => {
-  activePlaybackTask = null
-
-  if (oplayerInstance.value?.compInstance?.$destroy) {
-    oplayerInstance.value.compInstance.$destroy()
-  }
-  oplayerInstance.value = null
-
-  if (oplayerContainer.value) {
-    oplayerContainer.value.innerHTML = ''
-  }
-}
+const cleanupOPlayer = () => { currentPlayDevice.value = null }
 
 const handlePlayerClose = () => {
   cleanupOPlayer()
@@ -361,106 +344,15 @@ const handlePlayerClose = () => {
 }
 
 const gotoMoreDevice = async () => {
-  await router.push('/device-management')
+  await router.push('/vlstream/device')
 }
 
 /**
  * Generate OPlayer parameter.
  */
-const createWorkspacePlayerOptions = async (streamUrl) => {
-  const streamType = getStreamType(streamUrl)
-  const playerConfig = {
-    debuggerMode: false,
-    autoSize: true,
-    backgroundColor: '#000000',
-    showHeader: false
-  }
-
-  if (streamType === 'cameraRTC') {
-    const { cameraId, socketUrl } = parseCameraRtcConfig(streamUrl)
-    playerConfig.webRTCSocketURL = socketUrl
-    return {
-      playerConfig,
-      playConfig: { type: 'cameraRTC', src: cameraId }
-    }
-  }
-
-  if (streamType === 'rtsp') {
-    await ensureWebRTCBackendConfig()
-    playerConfig.rtspServerURL = WEBRTC_SERVER_BASE_URL
-    return {
-      playerConfig,
-      playConfig: {
-        type: 'rtsp',
-        src: streamUrl,
-        transport: 'tcp',
-        timeout: 60,
-        preferredMime: 'video/H264'
-      }
-    }
-  }
-
-  const playTypeMap = {
-    flv: 'flv',
-    hls: 'm3u8',
-    video: 'mp4',
-    http: 'mp4'
-  }
-  const playType = playTypeMap[streamType]
-  if (!playType) {
-    throw new Error(`暂不支持该视频流类型：${streamType}`)
-  }
-
-  return {
-    playerConfig,
-    playConfig: { type: playType, src: streamUrl }
-  }
-}
-
-/**
- * device .
- */
-const handlePlay = async (device) => {
-  const streamUrl = device?.streamUrl || device?.originalRtspUrl || device?.rtspUrl || device?.url
-  if (!streamUrl) {
-    ElMessage.warning('暂无可用流地址')
-    return
-  }
-
-  cleanupOPlayer()
-  const playbackTask = Symbol('workspace-oplayer')
-  activePlaybackTask = playbackTask
+const handlePlay = (device) => {
   currentPlayDevice.value = device
   showPlayer.value = true
-
-  const loading = ElLoading.service({
-    lock: true,
-    text: '正在启动视频播放...',
-    background: 'rgba(0, 0, 0, 0.7)'
-  })
-
-  try {
-    await Promise.all([ensureOPlayer(), nextTick()])
-    const { playerConfig, playConfig } = await createWorkspacePlayerOptions(streamUrl)
-    const container = oplayerContainer.value
-    if (activePlaybackTask !== playbackTask) return
-    if (!container) throw new Error('播放器容器未准备好')
-
-    const player = new window.OToolBox.OPlayer(container, playerConfig)
-    oplayerInstance.value = player
-    player.play({
-      ...playConfig,
-      name: device?.deviceName || device?.name || ''
-    })
-  } catch (error) {
-    if (activePlaybackTask !== playbackTask) return
-    console.error('播放失败:', error)
-    ElMessage.error(`播放失败: ${error.message || error}`)
-    cleanupOPlayer()
-    showPlayer.value = false
-  } finally {
-    loading.close()
-  }
 }
 
 const navigateTo = (path) => {
@@ -495,13 +387,13 @@ onMounted(async () => {
       userName.value = info.userName || info.username || userName.value
     }
 
-    const response = await getDeviceList({
-      page: currentPage.value,
-      size: pageSize.value
-    })
-    hotDevices.value = (response.data.records || []).slice(0, 5)
+  } catch {
+    console.warn('读取用户信息失败，使用默认名称')
+  }
+  try {
+    hotDevices.value = await getVlsDeviceCatalog({ limit: 5 })
   } catch (e) {
-    console.warn('读取用户信息失败，使用默认名称', e)
+    ElMessage.error('加载 VLS 设备列表失败')
   }
 })
 
@@ -519,6 +411,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.vls-device-id { display: block; font-size: 11px; color: #909399; overflow: hidden; text-overflow: ellipsis; }
 .workspace-player {
   width: 100%;
   aspect-ratio: 16 / 9;

@@ -260,6 +260,12 @@ const routes = [
         meta: { title: '算法训练平台', icon: '算法训练平台' }
       },
       {
+        path: '/data-management',
+        name: 'DataManagement',
+        component: () => import('@/views/AlgorithmTraining/DataManagement.vue'),
+        meta: { title: '数据和样本管理', icon: '算法标注', parentMenu: 'algorithm-warehouse' }
+      },
+      {
         path: '/algorithm-standard',
         name: 'AlgorithmStandard',
         component: () => import('@/views/AlgorithmTraining/AlgorithmStandard.vue'),

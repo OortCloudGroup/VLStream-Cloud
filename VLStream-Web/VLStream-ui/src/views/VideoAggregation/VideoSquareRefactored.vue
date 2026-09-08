@@ -114,8 +114,8 @@
 
                 <!-- device - in -->
           <DeviceListPanel
-            :devices="realCameraStreams"
-            :tree-data="[]"
+            :devices="deviceList"
+            :tree-data="createVlsDeviceTree(deviceList)"
             :display-settings="displaySettings"
             @settings="handleSettings"
             @device-click="handleCameraClick"
@@ -163,9 +163,9 @@
           <div class="video-player">
             <!--  -->
             <div class="video-placeholder-player">
-              <!-- OPlayer -->
+              <VlsDevicePlayer v-if="dialog.camera.deviceData?.catalogSource === 'VLSTREAM'" :device="dialog.camera.deviceData" />
               <div
-                v-if="dialog.camera.deviceData && dialog.camera.deviceData.streamUrl"
+                v-else-if="dialog.camera.deviceData && dialog.camera.deviceData.streamUrl"
                 :ref="element => setDialogOPlayerContainer(dialog.id, element)"
                 class="oplayer-container"
               />
@@ -351,7 +351,8 @@ import VideoLayoutDialog from '@/components/VideoLayoutDialog.vue'
 // Import PTZcontrolcomponent
 // Import device component
 import DeviceListPanel from '@/components/DeviceListPanel.vue'
-import {getDeviceList} from "@/api/device";
+import { getVlsDeviceCatalog, createVlsDeviceTree } from '@/api/vlsDeviceCatalog';
+import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
 import {ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL} from "@/api/webrtc";
 import { ensureOPlayer, isCameraRtcStream, parseCameraRtcConfig } from '@/utils/oplayer'
 import { getStreamType } from './deviceUtils.js'
@@ -481,6 +482,7 @@ const createDialogOPlayerOptions = async (streamUrl) => {
  */
 const playDialogOPlayer = async (dialog) => {
   const deviceData = dialog?.camera?.deviceData
+  if (deviceData?.catalogSource === 'VLSTREAM') return
   if (!deviceData?.streamUrl) {
     ElMessage.warning('缺少流地址')
     return
@@ -574,7 +576,7 @@ const deviceMapMarkers = computed(() => {
       return
     }
 
-    const hasStream = !!(device.streamUrl || device.originalRtspUrl || device.rtspUrl)
+    const hasStream = device.catalogSource === 'VLSTREAM' || !!(device.streamUrl || device.originalRtspUrl || device.rtspUrl)
 
     markers.push({
       id: device.id,
@@ -874,23 +876,8 @@ const updateMapMarkers = () => {
 const loadDeviceList = async () => {
   loading.value = true
   try {
-    console.log('视频广场：使用固定的真实设备数据...')
-
-    // devicedata
-    const params = {
-      page: currentPage.value,
-      size: pageSize.value
-    }
-
-    const response = await getDeviceList(params)
-    deviceList.value = response.data.records || []
-
-    // in device
-    realCameraStreams.value = deviceList.value.filter(device => {
-      return device.streamUrl || device.originalRtspUrl || device.rtspUrl
-    })
-
-    console.log('视频广场：有效设备数量:', realCameraStreams.value.length)
+    deviceList.value = await getVlsDeviceCatalog()
+    realCameraStreams.value = deviceList.value
 
     // new (if already Initialize )
     if (mapInstance && mapInitialized) {
@@ -908,6 +895,9 @@ const loadDeviceList = async () => {
     // ElMessage.success(` already Load ${realCameraStreams.value.length} device, full `)
 
   } catch (error) {
+    deviceList.value = []
+    realCameraStreams.value = []
+    if (mapInstance && mapInitialized) updateMapMarkers()
     console.error('视频广场：加载设备列表失败:', error)
     ElMessage.error('加载设备列表失败')
   } finally {
@@ -1403,11 +1393,11 @@ const handleCameraClick = async (deviceData) => {
   let processedCameraData = { ...cameraData }
 
   // if streamUrl, from fieldGet
-  if (!processedCameraData.streamUrl) {
+  if (processedCameraData.catalogSource !== 'VLSTREAM' && !processedCameraData.streamUrl) {
     processedCameraData.streamUrl = processedCameraData.rtspUrl ||
                                    processedCameraData.originalRtspUrl ||
                                    processedCameraData.url ||
-                                   'rtsp://admin:password@192.168.1.100/stream'  // 默认测试流
+                                   ''
   }
 
   processedCameraData.playMode = 'oplayer'
