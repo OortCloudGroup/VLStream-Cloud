@@ -92,7 +92,7 @@ class AnnotationZipProgressTest {
 
     private Object value(String sql, Map<String, Object> params, String column) {
         java.util.regex.Matcher matcher = java.util.regex.Pattern.compile(
-            "(?:^|,)" + column + "=.#\\{ew.paramNameValuePairs\\.([^}]+)}".replace("=.#", "=#")).matcher(sql);
+            "(?:^|,)" + column + "=#\\{ew.paramNameValuePairs\\.([^}]+)}").matcher(sql);
         if (!matcher.find()) throw new AssertionError(sql);
         return params.get(matcher.group(1));
     }
