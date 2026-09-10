@@ -114,6 +114,53 @@ public class OssClient {
         }
     }
 
+    /** File-based transfers never materialize the complete object in the Java heap. */
+    public String beginMultipart(String key, String contentType) {
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType(contentType);
+        return client.initiateMultipartUpload(new com.amazonaws.services.s3.model.InitiateMultipartUploadRequest(properties.getBucketName(), key)
+            .withObjectMetadata(metadata)).getUploadId();
+    }
+
+    public String uploadPart(String key, String uploadId, int partNumber, java.io.File file) {
+        return client.uploadPart(new com.amazonaws.services.s3.model.UploadPartRequest()
+            .withBucketName(properties.getBucketName()).withKey(key).withUploadId(uploadId)
+            .withPartNumber(partNumber).withFile(file).withPartSize(file.length())).getETag();
+    }
+
+    public void completeMultipart(String key, String uploadId, java.util.List<com.amazonaws.services.s3.model.PartETag> parts) {
+        client.completeMultipartUpload(new com.amazonaws.services.s3.model.CompleteMultipartUploadRequest(properties.getBucketName(), key, uploadId, parts));
+    }
+
+    public void abortMultipart(String key, String uploadId) {
+        client.abortMultipartUpload(new com.amazonaws.services.s3.model.AbortMultipartUploadRequest(properties.getBucketName(), key, uploadId));
+    }
+
+    public UploadResult uploadFile(java.io.File file, String key, String contentType) {
+        ObjectMetadata metadata = new ObjectMetadata(); metadata.setContentType(contentType);
+        if (file.length() < 16L * 1024 * 1024) {
+            client.putObject(new PutObjectRequest(properties.getBucketName(), key, file).withMetadata(metadata));
+        } else {
+            String uploadId = beginMultipart(key, contentType);
+            java.util.List<com.amazonaws.services.s3.model.PartETag> parts = new java.util.ArrayList<>();
+            try {
+                long partSize = Math.max(16L * 1024 * 1024, (file.length() + 9998) / 9999);
+                for (long offset = 0; offset < file.length(); offset += partSize) {
+                    int partNumber = parts.size() + 1;
+                    String etag = client.uploadPart(new com.amazonaws.services.s3.model.UploadPartRequest()
+                        .withBucketName(properties.getBucketName()).withKey(key).withUploadId(uploadId).withPartNumber(partNumber)
+                        .withFile(file).withFileOffset(offset).withPartSize(Math.min(partSize, file.length() - offset))).getETag();
+                    parts.add(new com.amazonaws.services.s3.model.PartETag(partNumber, etag));
+                }
+                completeMultipart(key, uploadId, parts);
+            } catch (RuntimeException failure) {
+                try { abortMultipart(key, uploadId); } catch (RuntimeException ignored) { /* Original error is authoritative. */ }
+                throw failure;
+            }
+        }
+        return UploadResult.builder().url(getUrl() + "/" + key).filename(key).build();
+    }
+
     public UploadResult uploadSuffix(byte[] data, String suffix, String contentType) {
         return upload(data, getPath(properties.getPrefix(), suffix), contentType);
     }

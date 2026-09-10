@@ -283,6 +283,12 @@ vlstream:
     # MQTT 客户端标识
     mqtt-client-id: ${VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID:vls-model-dispatch-backend}
   # 硬件识别事件图片（预签名 PUT 直传 MinIO）
+  # 数据集导入：沿用当前默认 OSS/MinIO；单文件 4 GiB 内验收，更大文件按资源尽力导入。
+  data-management:
+    max-file-bytes: ${VLS_DATASET_MAX_FILE_BYTES:17179869184}
+    max-unpacked-bytes: ${VLS_DATASET_MAX_UNPACKED_BYTES:34359738368}
+    allow-private-s3: ${VLS_DATASET_ALLOW_PRIVATE_S3:false}
+    scan-interval-ms: ${VLS_DATASET_IMPORT_SCAN_MS:3000}
   device-media:
     # 对应 sys_oss_config.config_key；为空时复用当前默认 OSS 配置
     oss-config-key: ${VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY:}

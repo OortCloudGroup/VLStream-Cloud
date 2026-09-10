@@ -46,13 +46,13 @@ public class DataManagementService {
 
     public AlgorithmAnnotation project(Long id) {
         AlgorithmAnnotation project = projects.selectOne(new QueryWrapper<AlgorithmAnnotation>().eq("id", id).eq("tenant_id", tenant()));
-        if (project == null) throw new ServiceException("项目不存在或无权访问");
+        if (project == null) throw new ServiceException("数据集不存在或无权访问");
         return project;
     }
 
     private AlgorithmAnnotation lock(Long id) {
         AlgorithmAnnotation project = versions.lockProject(id, tenant());
-        if (project == null) throw new ServiceException("项目不存在或无权访问");
+        if (project == null) throw new ServiceException("数据集不存在或无权访问");
         return project;
     }
 
@@ -62,11 +62,16 @@ public class DataManagementService {
         invalidate(projectId);
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public void lockDatasetForTask(Long datasetId) {
+        lock(datasetId);
+    }
+
     public void validateAnnotationOwner(Long projectId, Long sampleId, Collection<Long> labelIds) {
         sample(projectId, sampleId);
         Set<Long> unique = new HashSet<>(labelIds);
         if (unique.contains(null) || (!unique.isEmpty() && labels.selectCount(this.<AnnotationLabel>scope(projectId).in("id", unique)) != unique.size()))
-            throw new ServiceException("标注类别不属于当前项目");
+            throw new ServiceException("标注类别不属于当前数据集");
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -76,9 +81,9 @@ public class DataManagementService {
         AlgorithmAnnotation project = id == null ? new AlgorithmAnnotation() : lock(id);
         QueryWrapper<AlgorithmAnnotation> duplicate = new QueryWrapper<AlgorithmAnnotation>().eq("tenant_id", tenant())
             .eq("project_code", request.getProjectCode().trim()).ne(id != null, "id", id);
-        if (projects.selectCount(duplicate) > 0) throw new ServiceException("项目编号已存在");
+        if (projects.selectCount(duplicate) > 0) throw new ServiceException("数据集编号已存在");
         if (id != null && !Objects.equals(project.getAnnotationType(), request.getAnnotationType())
-            && instances.selectCount(scope(id)) > 0) throw new ServiceException("已有标注的项目不能直接更换标注类型");
+            && instances.selectCount(scope(id)) > 0) throw new ServiceException("已有标注的数据集不能直接更换标注类型");
         project.setAnnotationName(request.getAnnotationName().trim());
         project.setProjectCode(request.getProjectCode().trim());
         project.setProjectType(request.getProjectType().trim());
@@ -130,7 +135,7 @@ public class DataManagementService {
     public AnnotationImage sample(Long projectId, Long id) {
         project(projectId);
         AnnotationImage sample = samples.selectOne(this.<AnnotationImage>scope(projectId).eq("id", id));
-        if (sample == null) throw new ServiceException("样本不存在或不属于当前项目");
+        if (sample == null) throw new ServiceException("样本不存在或不属于当前数据集");
         return sample;
     }
 
@@ -175,7 +180,14 @@ public class DataManagementService {
         lock(projectId);
         List<AnnotationImage> duplicate = samples.selectList(this.<AnnotationImage>scope(projectId).eq("content_sha256", inspection.getSha256()).last("LIMIT 1"));
         if (!duplicate.isEmpty()) return map("id", String.valueOf(duplicate.get(0).getId()), "duplicate", true);
-        if (samples.selectCount(scope(projectId)) >= MAX_SNAPSHOT_SAMPLES) throw new ServiceException("单项目最多支持 10000 个样本，请另建项目");
+        if (samples.selectCount(scope(projectId)) >= MAX_SNAPSHOT_SAMPLES) throw new ServiceException("单数据集最多支持 10000 个样本，请另建数据集");
+        AnnotationImage sample = newImportedSample(projectId, filename, key, size, source, inspection);
+        samples.insert(sample);
+        invalidate(projectId); refreshProgress(projectId);
+        return map("id", String.valueOf(sample.getId()), "duplicate", false);
+    }
+
+    private AnnotationImage newImportedSample(Long projectId, String filename, String key, long size, String source, SampleMediaInspector.Inspection inspection) {
         AnnotationImage sample = new AnnotationImage();
         sample.setTenantId(tenant()); sample.setAnnotationId(projectId); sample.setImageName(filename); sample.setOriginalName(filename);
         sample.setLocalPath(key); sample.setFileSize(size); sample.setIsImported(1); sample.setImportTime(new Date());
@@ -184,9 +196,7 @@ public class DataManagementService {
         sample.setQualityNote(""); sample.setQualityReviewedBy(""); sample.setDatasetSplit("unassigned");
         applyInspection(sample, inspection);
         sample.setIsDeleted(0); sample.setStatus(1);
-        samples.insert(sample);
-        invalidate(projectId); refreshProgress(projectId);
-        return map("id", String.valueOf(sample.getId()), "duplicate", false);
+        return sample;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -213,16 +223,34 @@ public class DataManagementService {
         if (ids == null || ids.isEmpty() || ids.size() > 500) throw new ServiceException("每次请选择 1 至 500 个样本");
         Set<Long> unique = new HashSet<>(ids);
         List<AnnotationImage> selected = samples.selectList(this.<AnnotationImage>scope(projectId).in("id", unique));
-        if (selected.size() != unique.size()) throw new ServiceException("所选样本包含不存在或不属于当前项目的记录");
+        if (selected.size() != unique.size()) throw new ServiceException("所选样本包含不存在或不属于当前数据集的记录");
         return selected;
     }
 
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> registerArchive(Long projectId, List<PendingSampleImport> files, DatasetSnapshot manifest) {
+        return registerArchiveFromSource(projectId, files, manifest, "archive");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> registerArchiveFromSource(Long projectId, List<PendingSampleImport> files, DatasetSnapshot manifest, String sourceName) {
         lock(projectId);
         Map<String, Map<String, Object>> imported = new LinkedHashMap<>();
+        List<AnnotationImage> existing = samples.selectList(this.<AnnotationImage>scope(projectId).select("id", "content_sha256"));
+        Map<String, Long> byHash = new HashMap<>();
+        existing.forEach(sample -> { if (hasText(sample.getContentSha256())) byHash.put(sample.getContentSha256(), sample.getId()); });
+        int sampleCount = existing.size();
         for (PendingSampleImport file : files) {
-            Map<String, Object> result = register(projectId, file.getFilename(), file.getObjectKey(), file.getSize(), "archive", file.getInspection());
+            String hash = file.getInspection().getSha256();
+            Long duplicateId = byHash.get(hash);
+            Map<String, Object> result;
+            if (duplicateId != null) result = map("id", String.valueOf(duplicateId), "duplicate", true);
+            else {
+                if (++sampleCount > MAX_SNAPSHOT_SAMPLES) throw new ServiceException("单数据集最多支持 10000 个样本，请拆分数据集");
+                AnnotationImage sample = newImportedSample(projectId, file.getFilename(), file.getObjectKey(), file.getSize(), sourceName, file.getInspection());
+                samples.insert(sample); byHash.put(hash, sample.getId());
+                result = map("id", String.valueOf(sample.getId()), "duplicate", false);
+            }
             result.put("filename", file.getFilename()); result.put("success", true);
             imported.put(file.getArchivePath(), result);
         }
@@ -233,7 +261,7 @@ public class DataManagementService {
                 if (!Boolean.TRUE.equals(result.get("duplicate"))) ids.put(sample.getId(), Long.valueOf(result.get("id").toString()));
             }
             importMetadata(projectId, manifest, ids);
-        }
+        } else { invalidate(projectId); refreshProgress(projectId); }
         return map("results", new ArrayList<>(imported.values()), "successCount", imported.size());
     }
 
@@ -392,7 +420,7 @@ public class DataManagementService {
     public DatasetVersion version(Long projectId, Long versionId) {
         project(projectId);
         DatasetVersion version = versions.selectOne(this.<DatasetVersion>scope(projectId).eq("id", versionId));
-        if (version == null) throw new ServiceException("数据集版本不存在或不属于当前项目");
+        if (version == null) throw new ServiceException("数据集版本不存在或不属于当前数据集");
         return version;
     }
 
@@ -496,7 +524,7 @@ public class DataManagementService {
     public DatasetSnapshot snapshot(Long projectId) {
         AlgorithmAnnotation project = project(projectId);
         List<AnnotationImage> members = samples.selectList(this.<AnnotationImage>scope(projectId).orderByAsc("id").last("LIMIT " + (MAX_SNAPSHOT_SAMPLES + 1)));
-        if (members.size() > MAX_SNAPSHOT_SAMPLES) throw new ServiceException("单项目版本最多支持 10000 个样本，请按业务拆分项目");
+        if (members.size() > MAX_SNAPSHOT_SAMPLES) throw new ServiceException("单数据集版本最多支持 10000 个样本，请按业务拆分数据集");
         DatasetSnapshot snapshot = new DatasetSnapshot();
         snapshot.setAnnotationType(project.getAnnotationType()); snapshot.setAnnotationRules(project.getAnnotationRules()); snapshot.setSamples(members);
         snapshot.setLabels(labels.selectList(this.<AnnotationLabel>scope(projectId).orderByAsc("id")));

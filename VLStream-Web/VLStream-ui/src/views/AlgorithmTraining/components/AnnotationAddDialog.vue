@@ -9,7 +9,7 @@
   <el-dialog
     v-model="visible"
     title="新增标注"
-    width="35%"
+    width="min(960px, 94vw)"
     :before-close="handleClose"
   >
     <el-form
@@ -39,20 +39,7 @@
       </el-form-item>
 
       <el-form-item label="标注类型" prop="type" required>
-        <div class="annotation-type-grid">
-          <div
-            v-for="typeOption in annotationTypes"
-            :key="typeOption.value"
-            class="type-option"
-            :class="{ active: form.type === typeOption.value }"
-            @click="selectType(typeOption.value)"
-          >
-            <div class="type-icon">
-              <div :class="typeOption.iconClass"></div>
-            </div>
-            <div class="type-label">{{ typeOption.label }}</div>
-          </div>
-        </div>
+        <AnnotationTypePicker v-model="form.type" />
       </el-form-item>
 
       <el-form-item label="数据集路径" prop="datasetPath" label-width="90">
@@ -73,6 +60,7 @@
 
 <script setup>
 import {computed, ref, watch} from 'vue'
+import AnnotationTypePicker from '@/components/AnnotationTypePicker.vue'
 
 const props = defineProps({
   modelValue: {

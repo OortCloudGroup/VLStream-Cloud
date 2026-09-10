@@ -138,7 +138,8 @@
     </div>
 
     <!-- annotationpage ( layer ) - annotation -->
-    <div v-if="showDetailAnnotation" class="annotation-view-grid">
+    <Teleport to="body" :disabled="!isEditorFullscreen">
+    <div v-if="showDetailAnnotation" class="annotation-view-grid" :class="{ 'editor-fullscreen': isEditorFullscreen }">
       <div class="grid-container">
         <!--  -->
         <div class="left-sidebar">
@@ -160,6 +161,7 @@
               <el-button
                 type="primary"
                 @click="handleSaveAnnotation"
+                :loading="isSavingAnnotations"
                 class="save-annotation-btn"
               >
                 <el-icon><Download /></el-icon>
@@ -167,7 +169,8 @@
               </el-button>
             </div>
             <div class="save-buttons-right">
-              <el-button @click="handleBackToGrid" type="primary" plain>
+              <el-button v-if="isEditorFullscreen" @click="isEditorFullscreen = false" plain>退出全屏</el-button>
+              <el-button @click="handleBackToGrid" type="primary" plain :disabled="isSavingAnnotations">
                 <el-icon><ArrowLeft /></el-icon>
                 返回网格
               </el-button>
@@ -175,7 +178,7 @@
                 type="warning"
                 @click="handleClearAllImages"
                 class="clear-all-btn"
-                :disabled="uploadedImages.length === 0"
+                :disabled="uploadedImages.length === 0 || isSavingAnnotations"
               >
                 <el-icon><Delete /></el-icon>
                 清空所有图片
@@ -184,7 +187,7 @@
           </div>
 
           <!-- main need to -->
-          <div class="image-edit-main">
+          <div class="image-edit-main" :inert="isSavingAnnotations ? '' : undefined">
             <!--  -->
             <div class="annotation-toolbar-left">
               <div class="tool-group-vertical">
@@ -242,7 +245,7 @@
                 <el-button
                   class="tool-btn-left"
                   @click="handleFullScreenPreview"
-                  title="全屏预览"
+                  :title="isEditorFullscreen ? '退出全屏' : '全屏标注'"
                 >
                   <el-icon><FullScreen /></el-icon>
                 </el-button>
@@ -418,6 +421,7 @@
       </div>
     </div>
 
+    </Teleport>
     <!-- menu -->
     <Teleport to="body">
     <div
@@ -428,6 +432,11 @@
       @click.stop
     >
       <div class="context-menu-header">选择标签</div>
+      <div class="context-menu-add-label">
+        <el-button type="primary" size="small" :icon="Plus" @click.stop="handleAddLabelFromContextMenu">
+          添加标签
+        </el-button>
+      </div>
       <div class="context-menu-items">
         <div
           v-for="label in annotationLabels"
@@ -643,10 +652,10 @@
           <div class="form-item">
             <label class="form-label">标注状态</label>
             <div class="radio-group">
-              <el-radio v-model="importForm.annotationStatus" label="none">
+              <el-radio v-model="importForm.annotationStatus" label="none" :disabled="importingImages">
                 无标注信息
               </el-radio>
-              <el-radio v-model="importForm.annotationStatus" label="exist">
+              <el-radio v-model="importForm.annotationStatus" label="exist" :disabled="importingImages">
                 有标注信息
               </el-radio>
             </div>
@@ -655,7 +664,7 @@
           <div class="form-item">
             <label class="form-label">导入路径 <span class="required">*</span></label>
             <div class="path-selector">
-              <el-button @click="handleSelectDirectory" class="select-btn">
+              <el-button @click="handleSelectDirectory" class="select-btn" :disabled="importingImages">
                 <el-icon><Folder /></el-icon>
                 选择目录
               </el-button>
@@ -678,9 +687,17 @@
       </div>
 
       <template #footer>
+        <div v-if="importProgress.total > 0" class="import-progress" role="status" aria-live="polite">
+          <div class="import-progress-summary">
+            <span>{{ importingImages ? '正在导入图片' : importProgress.error ? '导入失败' : '导入完成' }}</span>
+            <span>已导入 {{ importProgress.completed }} / {{ importProgress.total }} 张</span>
+          </div>
+          <el-progress :percentage="importProgressPercentage" :status="importProgress.error ? 'exception' : importingImages ? undefined : 'success'" :stroke-width="10" />
+          <p v-if="importProgress.error" class="import-progress-error">{{ importProgress.error }}（已成功导入的图片会保留）</p>
+        </div>
         <div class="dialog-footer">
-          <el-button @click="handleCloseImportDialog" class="common_btn">取消</el-button>
-          <el-button type="primary" @click="handleConfirmImport" class="common_btn">确定</el-button>
+          <el-button @click="handleCloseImportDialog" class="common_btn" :disabled="importingImages">取消</el-button>
+          <el-button type="primary" @click="handleConfirmImport" class="common_btn" :disabled="importingImages">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -781,6 +798,16 @@ const importForm = ref({
 })
 const importTargetId = ref(null)
 const pendingImportZipFile = ref(null)
+const importingImages = ref(false)
+const importProgress = ref({ total: 0, completed: 0, error: '' })
+const importProgressPercentage = computed(() => importProgress.value.total
+  ? Math.floor(importProgress.value.completed / importProgress.value.total * 100) : 0)
+watch(showImportDialog, (visible) => {
+  if (visible) importProgress.value = { total: 0, completed: 0, error: '' }
+})
+watch(() => importForm.value.annotationStatus, () => {
+  importProgress.value = { total: 0, completed: 0, error: '' }
+})
 
 
 //
@@ -856,6 +883,10 @@ const imageNaturalHeight = ref(0)
 const imageRotation = ref(0) // , 90
 const editorCanvasRef = ref(null)
 const editorCanvasSize = ref({ width: 0, height: 0 })
+const isEditorFullscreen = ref(false)
+watch(showDetailAnnotation, (visible) => {
+  if (!visible) isEditorFullscreen.value = false
+})
 let editorResizeObserver
 watch(editorCanvasRef, (canvas) => {
   editorResizeObserver?.disconnect()
@@ -875,7 +906,7 @@ const fittedImageStyle = computed(() => {
   const scale = Math.min(
     editorCanvasSize.value.width / (rotated ? height : width),
     editorCanvasSize.value.height / (rotated ? width : height),
-    1
+    isEditorFullscreen.value ? Infinity : 1
   )
   return { width: `${width * scale}px`, height: `${height * scale}px` }
 })
@@ -927,6 +958,23 @@ const contextMenuRef = ref(null)
 const contextMenuX = ref(0)
 const contextMenuY = ref(0)
 const pendingAnnotation = ref(null)
+const resumeLabelMenu = ref(false)
+
+const handleAddLabelFromContextMenu = () => {
+  // 暂时隐藏菜单，保留当前待选标签的图形。
+  resumeLabelMenu.value = true
+  showContextMenu.value = false
+  handleAddAnnotationLabel()
+}
+
+watch(showLabelDialog, async (visible) => {
+  if (visible || !resumeLabelMenu.value) return
+  resumeLabelMenu.value = false
+  if (!pendingAnnotation.value || !showDetailAnnotation.value) return
+  showContextMenu.value = true
+  await nextTick()
+  positionContextMenu()
+})
 const justFinishedDrawing = ref(false) // after clickevent
 
 const positionContextMenu = () => {
@@ -1424,6 +1472,7 @@ const handleCurrentChange = (val) => {
 
 // Import dialogrelated method
 const handleSelectDirectory = () => {
+  if (importingImages.value) return
   const isZipImport = importForm.value.annotationStatus === 'exist'
   const input = document.createElement('input')
   input.type = 'file'
@@ -1467,8 +1516,6 @@ const handleSelectDirectory = () => {
       importForm.value.directoryPath = folderPath || firstFile.name.split('/')[0]
     }
 
-    ElMessage.info(`找到 ${imageFiles.length} 个图片文件，已选择目录：${importForm.value.directoryPath}`)
-
     const annotationId = importTargetId.value || currentAnnotationData.value?.id
     if (!annotationId) {
       ElMessage.warning('Please select a target annotation first.')
@@ -1480,6 +1527,9 @@ const handleSelectDirectory = () => {
   input.click()
 }
 const batchUploadImages = async (files, annotationId) => {
+  if (importingImages.value) return
+  importingImages.value = true
+  importProgress.value = { total: files.length, completed: 0, error: '' }
   try {
     if (!annotationId) {
       ElMessage.warning('Please select a target annotation first.')
@@ -1487,8 +1537,7 @@ const batchUploadImages = async (files, annotationId) => {
     }
     console.log('批量上传图片到标注项目:', annotationId, '文件数量:', files.length)
 
-    const uploadedImagesList = []
-    const batchSize = 15 // send 5 files per request
+    const batchSize = 15
 
     for (let i = 0; i < files.length; i += batchSize) {
       const batch = files.slice(i, i + batchSize)
@@ -1497,7 +1546,7 @@ const batchUploadImages = async (files, annotationId) => {
       const uploadResponse = await uploadAnnotationImages(batch, annotationId)
 
       if (!uploadResponse?.success && uploadResponse?.code !== 200) {
-        throw new Error(uploadResponse.message || '图片上传失败')
+        throw new Error(uploadResponse?.message || '图片上传失败')
       }
 
       const respList = Array.isArray(uploadResponse?.data) ? uploadResponse.data : []
@@ -1520,13 +1569,9 @@ const batchUploadImages = async (files, annotationId) => {
         }
       })
 
-      uploadedImagesList.push(...mapped)
-      ElMessage.info(`已处理 ${Math.min(i + batchSize, files.length)}/${files.length} 个文件`)
+      uploadedImages.value.push(...mapped)
+      importProgress.value.completed += mapped.length
     }
-
-    uploadedImages.value.push(...uploadedImagesList)
-
-    ElMessage.success(`批量导入完成！成功导入 ${uploadedImagesList.length} 张图片`)
 
     // if current in , in
     if (currentImageIndex.value === -1 && uploadedImages.value.length > 0) {
@@ -1535,7 +1580,9 @@ const batchUploadImages = async (files, annotationId) => {
 
   } catch (error) {
     console.error('批量上传图片失败:', error)
-    ElMessage.error(`批量导入失败: ${error.message}`)
+    importProgress.value.error = error.message || '图片上传失败，请稍后重试'
+  } finally {
+    importingImages.value = false
   }
 }
 
@@ -1544,11 +1591,13 @@ const toggleHelpSection = (section) => {
 }
 
 const handleCloseImportDialog = () => {
+  if (importingImages.value) return
   showImportDialog.value = false
   importTargetId.value = null
   pendingImportZipFile.value = null
 }
 const handleConfirmImport = async () => {
+  if (importingImages.value) return
   try {
     if (importForm.value.annotationStatus === 'exist') {
       if (!pendingImportZipFile.value) {
@@ -1579,7 +1628,6 @@ const handleConfirmImport = async () => {
     }
 
     // in already interface , operation data .
-    ElMessage.success('导入成功')
 
     showImportDialog.value = false
     importTargetId.value = null
@@ -2583,6 +2631,11 @@ const handleImageUpload = async (uploadFile) => {
 }
 
 const switchImage = async (index) => {
+  if (isSavingAnnotations.value || index === currentImageIndex.value) return
+  if (pendingAnnotation.value || isDrawing.value) {
+    ElMessage.warning('请先为当前图形选择标签，再切换图片')
+    return
+  }
   console.log('=== 切换图片（优化版本） ===')
   console.log('切换到索引:', index)
   console.log('原索引:', currentImageIndex.value)
@@ -2598,6 +2651,12 @@ const switchImage = async (index) => {
   if (!isValidImage(targetImage)) {
     console.warn('目标图片无效:', targetImage)
     return
+  }
+
+  // 未标注图片无需保存；后端批量保存接口不接受空实例列表。
+  if (currentImage.value?.annotations?.length > 0 && showDetailAnnotation.value) {
+    const saved = await saveImageAnnotations(currentImage.value.id, currentImage.value.annotations || [])
+    if (!saved) return
   }
 
   currentImageIndex.value = index
@@ -2710,7 +2769,7 @@ const handleFullScreenPreview = () => {
     return
   }
 
-  showFullScreenPreview.value = true
+  isEditorFullscreen.value = !isEditorFullscreen.value
 }
 
 // full
@@ -3308,6 +3367,12 @@ watch(currentImage, async (newImage, oldImage) => {
 
 // eventProcess
 const handleKeyDown = (event) => {
+  if (event.key === 'Escape' && isEditorFullscreen.value && !showLabelDialog.value) {
+    isEditorFullscreen.value = false
+    event.preventDefault()
+    return
+  }
+  if (event.target?.closest?.('input, textarea, [contenteditable="true"], [role="dialog"]') || showLabelDialog.value || isSavingAnnotations.value) return
   // full in event
   if (showFullScreenPreview.value) {
     switch (event.key) {
@@ -3628,6 +3693,26 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 .import-dialog-content {
   display: flex;
   gap: 24px;
+}
+
+.import-progress {
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.import-progress-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: var(--el-text-color-regular);
+  font-size: 14px;
+}
+
+.import-progress-error {
+  margin: 8px 0 0;
+  color: var(--el-color-danger);
+  overflow-wrap: anywhere;
 }
 
 .import-form {
@@ -4245,6 +4330,15 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   font-size: 13px;
   font-weight: 600;
   color: #666;
+}
+
+.context-menu-add-label {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--el-border-color-light);
+
+  .el-button {
+    width: 100%;
+  }
 }
 
 .context-menu-items {
@@ -5082,6 +5176,23 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
   font-style: italic;
 }
 /* 编辑器按可用空间布局，导航占用独立列，图片与 SVG 共用等比尺寸。 */
+.annotation-view-grid.editor-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  width: 100vw;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  overflow: hidden;
+
+  > .grid-container {
+    height: 100%;
+    min-height: 0;
+  }
+}
+
 .image-annotation-area {
   flex: 1;
   width: auto;

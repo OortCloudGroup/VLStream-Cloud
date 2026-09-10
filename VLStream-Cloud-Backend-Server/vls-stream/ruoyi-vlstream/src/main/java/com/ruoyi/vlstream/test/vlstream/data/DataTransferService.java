@@ -206,7 +206,7 @@ public class DataTransferService {
         }
     }
 
-    private void validateManifest(Long projectId, DatasetSnapshot manifest, Map<String, Path> entries) {
+    void validateManifest(Long projectId, DatasetSnapshot manifest, Map<String, Path> entries) {
         if (!Objects.equals(data.project(projectId).getAnnotationType(), manifest.getAnnotationType())) throw new ServiceException("归档标注类型与当前项目不一致");
         if (manifest.getSamples().size() != entries.size() || manifest.getLabels().size() > 1000 || manifest.getInstances().size() > 100000)
             throw new ServiceException("样本清单数量不匹配或标注数量超限");

@@ -16,6 +16,10 @@ public class DataMediaStorage {
         OssFactory.instance().upload(bytes, key, contentType);
     }
 
+    public void putFile(String key, java.nio.file.Path file, String contentType) {
+        OssFactory.instance().uploadFile(file.toFile(), key, contentType);
+    }
+
     public InputStream read(String key) {
         OssClient client = OssFactory.instance();
         return client.getObjectContent(AnnotationImageObjectKey.normalize(key, client.getBucketName()));

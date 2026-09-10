@@ -83,6 +83,72 @@ public class SampleMediaInspector {
         }
     }
 
+    /** Large files are inspected through seekable streams, without int offsets or whole-file byte arrays. */
+    public Inspection inspectFile(String filename, java.nio.file.Path path) throws IOException {
+        if (java.nio.file.Files.size(path) == 0) throw new ServiceException("文件不能为空");
+        String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+        Inspection result = new Inspection();
+        result.setSha256(DatasetFileIO.sha256(path));
+        if (Arrays.asList("mp4", "mov").contains(extension)) {
+            try (java.io.RandomAccessFile file = new java.io.RandomAccessFile(path.toFile(), "r")) {
+                boolean[] flags = new boolean[3]; scanBoxes(file, 0, file.length(), 0, flags);
+                if (!flags[0] || !flags[1] || !flags[2]) throw new ServiceException("视频缺少文件标识、媒体内容或视频轨道");
+            }
+            result.setMediaType("video"); result.setContentType("mp4".equals(extension) ? "video/mp4" : "video/quicktime");
+            result.setIssues("视频容器结构检查通过，内容可播放抽检"); return result;
+        }
+        if (!Arrays.asList("jpg", "jpeg", "png", "bmp").contains(extension)) throw new ServiceException("仅支持 JPG、PNG、BMP、MP4、MOV 和 ZIP");
+        try (java.io.RandomAccessFile file = new java.io.RandomAccessFile(path.toFile(), "r")) {
+            if (Arrays.asList("jpg", "jpeg").contains(extension)) {
+                if (file.length() < 4) throw new ServiceException("JPEG 文件不完整");
+                file.seek(file.length() - 2); if (file.readUnsignedShort() != 0xffd9) throw new ServiceException("JPEG 缺少结束标记");
+            }
+            if ("png".equals(extension)) {
+                if (file.length() < 12) throw new ServiceException("PNG 文件不完整");
+                file.seek(file.length() - 8); if (file.readInt() != 0x49454e44) throw new ServiceException("PNG 缺少结束块");
+            }
+        }
+        try (ImageInputStream input = ImageIO.createImageInputStream(path.toFile())) {
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+            if (!readers.hasNext()) throw new ServiceException("图片无法解码");
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(input, true, true);
+                String format = reader.getFormatName().toLowerCase(Locale.ROOT);
+                if (!("jpg".equals(extension) ? "jpeg" : extension).equals(format)) throw new ServiceException("文件格式与扩展名不符");
+                int width = reader.getWidth(0), height = reader.getHeight(0);
+                if ((long) width * height > 40000000L) throw new ServiceException("图片像素超过 4000 万，请缩小分辨率后导入");
+                List<String> warnings = new ArrayList<>(); reader.addIIOReadWarningListener((source, warning) -> warnings.add(warning));
+                BufferedImage image = reader.read(0);
+                if (image == null || !warnings.isEmpty()) throw new ServiceException("图片内容损坏或不完整");
+                result.setMediaType("image"); result.setContentType("image/" + format); result.setWidth(width); result.setHeight(height);
+                result.setFocusScore(focus(image));
+                // Import checks format/integrity only; no automatic data-cleaning policy in this flow.
+                return result;
+            } finally { reader.dispose(); }
+        }
+    }
+
+    private void scanBoxes(java.io.RandomAccessFile file, long start, long end, int depth, boolean[] flags) throws IOException {
+        if (depth > 8) throw new ServiceException("视频索引嵌套过深");
+        long position = start;
+        while (position < end) {
+            if (end - position < 8) throw new ServiceException("视频块头不完整");
+            file.seek(position); long size = Integer.toUnsignedLong(file.readInt()); byte[] typeBytes = new byte[4]; file.readFully(typeBytes);
+            String type = new String(typeBytes, StandardCharsets.US_ASCII); int header = 8;
+            if (size == 1) { if (end - position < 16) throw new ServiceException("视频块头不完整"); size = file.readLong(); header = 16; }
+            else if (size == 0) size = end - position;
+            if (size < header || size > end - position) throw new ServiceException("视频数据截断或块长度无效");
+            if (depth == 0 && "ftyp".equals(type)) flags[0] = size >= header + 8;
+            if (depth == 0 && "mdat".equals(type)) flags[1] |= size > header;
+            if ("hdlr".equals(type) && size >= header + 12) {
+                file.seek(position + header + 8); file.readFully(typeBytes); flags[2] |= "vide".equals(new String(typeBytes, StandardCharsets.US_ASCII));
+            }
+            if (Arrays.asList("moov", "trak", "mdia", "minf", "stbl").contains(type)) scanBoxes(file, position + header, position + size, depth + 1, flags);
+            position += size;
+        }
+    }
+
     private void inspectVideo(byte[] bytes) {
         boolean fileType = false, mediaData = false, videoTrack = false;
         long offset = 0;
