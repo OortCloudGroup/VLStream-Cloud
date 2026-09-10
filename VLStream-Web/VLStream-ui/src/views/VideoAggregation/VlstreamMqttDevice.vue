@@ -106,7 +106,9 @@
               <el-button v-if="firmwareDetail?.availableUpgrades?.length > 0" type="primary" link @click="firmwareVisible = true">固件升级</el-button>
             </div>
           </el-descriptions-item>
-          <el-descriptions-item label="开机时间">{{ deviceBootTimeText(detailDevice) }}</el-descriptions-item>
+          <el-descriptions-item label="开机时间">
+            {{ deviceBootTimeText(detailDevice) }}
+          </el-descriptions-item>
           <el-descriptions-item label="在线时长">{{ deviceOnlineDurationText(detailDevice, detailClock) }}</el-descriptions-item>
           <el-descriptions-item label="最后心跳" :span="2">{{ formatDeviceTime(detailDevice.lastHeartbeatTime) }}</el-descriptions-item>
           <el-descriptions-item label="设备能力" :span="2">{{ capabilityText(detailDevice.capabilitiesJson) }}</el-descriptions-item>

@@ -29,10 +29,22 @@ export function deviceBootTimeText(device) {
   try {
     const telemetry = typeof device?.telemetryJson === 'string' ? JSON.parse(device.telemetryJson) : device?.telemetryJson
     const bootTime = telemetry?.bootTime
-    if (typeof bootTime !== 'number' || !Number.isFinite(bootTime) || bootTime <= 0 || bootTime > Date.now()) return '未上报'
-    const text = formatDeviceTime(bootTime)
-    return text === '-' ? '未上报' : text
-  } catch { return '未上报' }
+    if (typeof bootTime === 'number' && Number.isFinite(bootTime) && bootTime > 0 && bootTime <= Date.now()) {
+      const text = formatDeviceTime(bootTime)
+      if (text !== '-') return text
+    }
+  } catch { /* 无有效启动时间时，尝试使用心跳快照估算。 */ }
+  const rawIndex = device?.heartbeatIndex
+  const index = typeof rawIndex === 'number' || typeof rawIndex === 'string' ? Number(rawIndex) : NaN
+  const reportedAt = device?.lastReportedAt
+  if (!Number.isSafeInteger(index) || index < 1 || reportedAt == null || reportedAt === '') return '未上报'
+  const timestamp = new Date(typeof reportedAt === 'string' ? reportedAt.replace(' ', 'T') : reportedAt).getTime()
+  if (!Number.isFinite(timestamp) || timestamp <= 0 || timestamp > Date.now()) return '未上报'
+  // 当前设备实测心跳约 60 秒一次；此结果不是固件提供的真实启动时间。
+  const estimated = timestamp - (index - 1) * 60000
+  if (!Number.isFinite(estimated) || estimated <= 0) return '未上报'
+  const text = formatDeviceTime(estimated)
+  return text === '-' ? '未上报' : text.slice(0, 16)
 }
 
 export function deviceOnlineDurationText(device, now = Date.now()) {
