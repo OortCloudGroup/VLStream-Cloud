@@ -66,6 +66,7 @@
               <div class="resource-heading">获取更多Credits</div>
               <p class="resource-description">你可以随时通过升级订阅计划或购买资源包，获取更多Credits</p>
               <el-button type="primary" class="upgrade-button" @click="handleUpgrade">升级至企业版</el-button>
+              <el-button type="primary" plain class="resource-pack-button" :loading="resourcePackLoading" @click="handleBuyResourcePack">购买资源包</el-button>
             </article>
           </div>
         </section>
@@ -74,8 +75,8 @@
           <h3>Credits记录</h3>
           <div class="content-panel records-panel">
             <div class="records-toolbar">
-              <el-button type="primary" :loading="recordsLoading" @click="loadUsageRecords"><el-icon><Refresh /></el-icon>刷新</el-button>
-              <el-date-picker v-model="dateRange" type="daterange" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :clearable="false" :teleported="false" @change="loadUsageRecords" />
+              <el-button type="primary" :loading="recordsLoading" @click="loadUsageRecords()"><el-icon><Refresh /></el-icon>刷新</el-button>
+              <el-date-picker v-model="dateRange" type="daterange" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :clearable="false" :teleported="false" @change="loadUsageRecords()" />
             </div>
             <p class="records-note">当前您已享受到模型的优惠价格。下方明细为按对话合并计费后的汇总数据，具体消耗以此为准。</p>
 
@@ -87,6 +88,18 @@
               <el-table-column label="参考费用" min-width="78"><template #default="scope">{{ formatReferenceCost(scope.row) }}</template></el-table-column>
             </el-table>
             <el-empty v-else :image-size="54" description="当前时间范围内暂无 Credits 记录" />
+            <el-pagination
+              v-if="recordsTotal > 0"
+              class="records-pagination"
+              small
+              :current-page="recordsPage"
+              :page-size="recordsPageSize"
+              :total="recordsTotal"
+              :pager-count="5"
+              :disabled="recordsLoading"
+              layout="total, prev, pager, next"
+              @current-change="loadUsageRecords"
+            />
           </div>
         </section>
 
@@ -111,6 +124,7 @@ import { getOortCloudAccountStats, getOortCloudQuotaConfig, getOortCloudSubscrip
 import { clearModelHubAuth, getModelHubAccessToken, openOortCloudModelHub, openOortCodexPricing, startModelHubLogin } from '@/utils/modelHubAuth'
 import { getOortCloudSession } from '@/utils/oortCloudSession'
 import { redirectToPlatformLogin } from '@/utils/platformSession'
+import { getOortCloudTopupInfo, PLATFORM_ORIGIN } from '@/api/oortCloudAccount'
 
 const props = defineProps({ tenantMode: { type: String, default: 'single' } })
 const usesPlatformSession = computed(() => props.tenantMode === 'multi')
@@ -126,11 +140,16 @@ const authToken = ref('')
 const authVerified = ref(false)
 const loading = ref(false)
 const recordsLoading = ref(false)
+const resourcePackLoading = ref(false)
 const loadError = ref('')
 const llmAuthorizationSynced = ref(false)
 const subscriptions = ref([])
 const plans = ref([])
 const usageRecords = ref([])
+const recordsPageSize = 5
+const recordsPage = ref(1)
+const recordsTotal = ref(0)
+let recordsRequestId = 0
 const creditsPerCny = ref(25)
 
 const today = new Date()
@@ -223,27 +242,34 @@ const resetAccountState = () => {
   subscriptions.value = []
   plans.value = []
   usageRecords.value = []
+  recordsPage.value = 1
+  recordsTotal.value = 0
+  recordsRequestId++
+  recordsLoading.value = false
   loadError.value = ''
 }
 
-const loadUsageRecords = async () => {
-  if (!authVerified.value || recordsLoading.value || !dateRange.value?.length) return
+const loadUsageRecords = async (page = 1) => {
+  if (!authVerified.value || !dateRange.value?.length) return
   const session = currentSession()
   if (!loadedSession || !isCurrentSession(loadedSession)) return
+  const requestId = ++recordsRequestId
   recordsLoading.value = true
   try {
     const start = new Date(dateRange.value[0])
     const end = new Date(dateRange.value[1])
     start.setHours(0, 0, 0, 0)
     end.setHours(23, 59, 59, 999)
-    const data = await getOortCloudUsageLogs({ p: 1, page_size: 20, type: 2, start_timestamp: Math.floor(start.getTime() / 1000), end_timestamp: Math.floor(end.getTime() / 1000) }, session)
-    if (!isCurrentSession(session)) return
+    const data = await getOortCloudUsageLogs({ p: page, page_size: recordsPageSize, type: 2, start_timestamp: Math.floor(start.getTime() / 1000), end_timestamp: Math.floor(end.getTime() / 1000) }, session)
+    if (requestId !== recordsRequestId || !isCurrentSession(session)) return
     usageRecords.value = Array.isArray(data?.items) ? data.items : []
+    recordsPage.value = page
+    recordsTotal.value = Math.max(0, normalizeNumber(data?.total))
   } catch (error) {
-    if (!isCurrentSession(session)) return
+    if (requestId !== recordsRequestId || !isCurrentSession(session)) return
     loadError.value = error?.response?.data?.message || error?.message || 'Credits 记录加载失败'
   } finally {
-    recordsLoading.value = false
+    if (requestId === recordsRequestId) recordsLoading.value = false
   }
 }
 
@@ -326,6 +352,30 @@ const handleAuthChanged = async () => {
 }
 const handleVisitOortCloud = () => openOortCloudModelHub(getPlatformAccessToken())
 const handleUpgrade = () => openOortCodexPricing(getPlatformAccessToken())
+const handleBuyResourcePack = async () => {
+  if (resourcePackLoading.value) return
+  const session = currentSession()
+  resourcePackLoading.value = true
+  try {
+    const info = await getOortCloudTopupInfo(session)
+    if (!isCurrentSession(session)) return
+    const configured = String(info.resource_pack_redirect_url || '').trim()
+    const consoleBase = `${PLATFORM_ORIGIN}/bus/apaas-newapi/`
+    const target = new URL(configured || 'console/topup', consoleBase)
+    // NewAPI console routes belong to its gateway mount, not the VLS router.
+    if (configured.startsWith('/console/')) target.pathname = `/bus/apaas-newapi${target.pathname}`
+    if (!['http:', 'https:'].includes(target.protocol)) throw new Error('资源包购买地址无效')
+    // Only hand the platform session to the same platform origin.
+    if (target.origin === PLATFORM_ORIGIN && session.accessToken) {
+      target.searchParams.set('accessToken', session.accessToken)
+    }
+    window.location.assign(target.toString())
+  } catch (error) {
+    if (isCurrentSession(session)) ElMessage.error(error?.message || '资源包购买入口加载失败，请重试')
+  } finally {
+    resourcePackLoading.value = false
+  }
+}
 const handleLogout = async () => {
   try { await logoutModelHubSession() } catch { ElMessage.warning('OortCloud 远端退出失败，已清理本地登录状态') }
   resetAccountState()
@@ -391,12 +441,14 @@ p { margin: 0; }
 .unlimited-line { margin-top: 14px; color: #287cff; font-size: 13px; }
 .upgrade-card { padding-bottom: 16px; }
 .upgrade-button { margin-top: 14px; background: #287cff; }
+.resource-pack-button { margin-top: 14px; }
 .records-section { margin-top: 24px; }
 .records-panel { padding: 16px; }
 .records-toolbar { display: flex; align-items: center; gap: 10px; }
 .records-toolbar :deep(.el-date-editor) { width: 300px; }
 .records-note { margin: 10px 0 12px; color: #aaa; font-size: 12px; line-height: 1.5; }
 .records-table { width: 100%; --el-table-border-color: #e7e9ed; --el-table-header-bg-color: #fff; }
+.records-pagination { justify-content: flex-end; margin-top: 14px; }
 .records-table :deep(th.el-table__cell) { color: #68707d; font-weight: 500; }
 .records-table :deep(.el-table__inner-wrapper::before) { display: none; }
 .records-panel :deep(.el-empty) { padding: 12px 0 2px; }
@@ -409,6 +461,6 @@ p { margin: 0; }
 </style>
 
 <style>
-.el-popper.el-popover.oortcloud-welcome-popper { padding: 0 !important; overflow: hidden; border: 1px solid #287cff !important; border-radius: 14px !important; background: #eef6fd !important; box-shadow: 0 10px 26px rgba(43, 83, 125, 0.2) !important; }
-.el-popper.oortcloud-welcome-popper .el-popper__arrow::before { border-color: #287cff; background: #eef6fd; }
+.el-popper.el-popover.oortcloud-welcome-popper { padding: 0 !important; overflow: hidden; border: none !important; border-radius: 14px !important; background: #eef6fd !important; box-shadow: 0 10px 26px rgba(43, 83, 125, 0.2) !important; }
+.el-popper.oortcloud-welcome-popper .el-popper__arrow::before { border: none; background: #eef6fd; }
 </style>

@@ -109,32 +109,42 @@ for each environment; never commit the real secret to Git.
 <table>
   <tr>
     <td align="center" width="50%">
-      <a href="./docs/assets/screenshots/01-active-safety-events.png"><img src="./docs/assets/screenshots/01-active-safety-events.png" alt="Active safety event management" width="100%"></a><br>
-      <strong>Active Safety Event Management</strong>
+      <a href="./docs/assets/screenshots/01-video-convergence-vlstream.png"><img src="./docs/assets/screenshots/01-video-convergence-vlstream.png" alt="VLStream protocol device management" width="100%"></a><br>
+      <strong>Video Ingestion &bull; VLStream Protocol Devices</strong>
     </td>
     <td align="center" width="50%">
-      <a href="./docs/assets/screenshots/02-event-feedback-workflow.png"><img src="./docs/assets/screenshots/02-event-feedback-workflow.png" alt="Event feedback and workflow" width="100%"></a><br>
-      <strong>Event Feedback &amp; Workflow</strong>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <a href="./docs/assets/screenshots/03-work-order-management.png"><img src="./docs/assets/screenshots/03-work-order-management.png" alt="Work order management" width="100%"></a><br>
-      <strong>Work Order Management</strong>
-    </td>
-    <td align="center" width="50%">
-      <a href="./docs/assets/screenshots/04-workflow-designer.png"><img src="./docs/assets/screenshots/04-workflow-designer.png" alt="Visual workflow designer" width="100%"></a><br>
-      <strong>Visual Workflow Designer</strong>
+      <a href="./docs/assets/screenshots/02-video-convergence-rtsp.png"><img src="./docs/assets/screenshots/02-video-convergence-rtsp.png" alt="RTSP protocol camera management" width="100%"></a><br>
+      <strong>Video Ingestion &bull; RTSP Protocol Cameras</strong>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <a href="./docs/assets/screenshots/05-algorithm-training-management.png"><img src="./docs/assets/screenshots/05-algorithm-training-management.png" alt="Algorithm training management" width="100%"></a><br>
-      <strong>Algorithm Training Management</strong>
+      <a href="./docs/assets/screenshots/03-video-convergence-gb28181.png"><img src="./docs/assets/screenshots/03-video-convergence-gb28181.png" alt="GB28181 national standard protocol devices" width="100%"></a><br>
+      <strong>Video Ingestion &bull; GB28181 Protocol Devices</strong>
     </td>
     <td align="center" width="50%">
-      <a href="./docs/assets/screenshots/06-algorithm-training-console.png"><img src="./docs/assets/screenshots/06-algorithm-training-console.png" alt="Algorithm training console" width="100%"></a><br>
-      <strong>Algorithm Training Console</strong>
+      <a href="./docs/assets/screenshots/04-decision-ai-active-safety.png"><img src="./docs/assets/screenshots/04-decision-ai-active-safety.png" alt="Decision AI and active safety event center" width="100%"></a><br>
+      <strong>Decision AI &bull; Active Safety Event Center</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <a href="./docs/assets/screenshots/05-algorithm-preset-library.png"><img src="./docs/assets/screenshots/05-algorithm-preset-library.png" alt="Algorithm warehouse preset model library" width="100%"></a><br>
+      <strong>Algorithm Warehouse &bull; Preset Model Library</strong>
+    </td>
+    <td align="center" width="50%">
+      <a href="./docs/assets/screenshots/06-algorithm-data-sample-management.png"><img src="./docs/assets/screenshots/06-algorithm-data-sample-management.png" alt="Dataset and sample management workflow" width="100%"></a><br>
+      <strong>Algorithm Training &bull; Dataset &amp; Sample Management</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <a href="./docs/assets/screenshots/07-algorithm-annotation-management.png"><img src="./docs/assets/screenshots/07-algorithm-annotation-management.png" alt="Data annotation and task management" width="100%"></a><br>
+      <strong>Algorithm Training &bull; Data Annotation Management</strong>
+    </td>
+    <td align="center" width="50%">
+      <a href="./docs/assets/screenshots/08-algorithm-training-console.png"><img src="./docs/assets/screenshots/08-algorithm-training-console.png" alt="No-code algorithm training console" width="100%"></a><br>
+      <strong>Algorithm Training &bull; No-Code Training Console</strong>
     </td>
   </tr>
 </table>

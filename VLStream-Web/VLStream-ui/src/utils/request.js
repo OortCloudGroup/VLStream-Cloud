@@ -203,7 +203,9 @@ request.interceptors.response.use(
     return handleBusinessError(data, response)
   },
   error => {
-    console.error('响应错误:', error)
+    if (axios.isCancel(error)) return Promise.reject(error)
+    if (error.config?.sensitiveData) console.error('数据来源请求失败', error.response?.status || 'network')
+    else console.error('响应错误:', error)
 
     // video-recordrelated API, prompt / tip, Process
     if (error.config && error.config.url && error.config.url.includes('/video-record/')) {

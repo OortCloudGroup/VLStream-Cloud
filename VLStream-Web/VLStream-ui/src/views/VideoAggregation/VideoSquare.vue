@@ -742,7 +742,7 @@ onUnmounted(() => {
   z-index: 10 !important;
   background: rgba(0, 0, 0, 0.8) !important;
   backdrop-filter: blur(10px) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-bottom: none !important;
 }
 
 /* full main */

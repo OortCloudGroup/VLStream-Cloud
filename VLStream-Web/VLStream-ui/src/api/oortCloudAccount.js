@@ -89,6 +89,11 @@ export async function getOortCloudQuotaConfig(session) {
   return unwrapData(await request.get('/api/status')) || {}
 }
 
+export async function getOortCloudTopupInfo(session) {
+  const request = createRequest(NEW_API_BASE, getPlatformHeaders(session))
+  return unwrapData(await request.get('/api/user/topup/info')) || {}
+}
+
 export async function getOortCloudSubscriptions(session) {
   const request = createRequest(NEW_API_BASE, getPlatformHeaders(session))
   return unwrapData(await request.get('/api/subscription/self')) || {}

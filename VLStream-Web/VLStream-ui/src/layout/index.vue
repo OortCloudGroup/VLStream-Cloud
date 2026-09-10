@@ -547,7 +547,7 @@ const menuRoutesMap = {
       path: '/algorithm-training-platform',
       meta: { title: '算法训练平台', icon: '算法训练平台' },
       children: [
-        { path: '/data-management', meta: { title: '数据和样本管理', icon: '算法标注' } },
+        { path: '/data-management', meta: { title: '数据集管理', icon: '算法标注' } },
         { path: '/algorithm-standard', meta: { title: '算法标注', icon: '算法标注' } },
         { path: '/algorithm-training', meta: { title: '算法训练', icon: '算法训练' } },
         { path: '/algorithm-model', meta: { title: '算法模型', icon: '算法模型' } }

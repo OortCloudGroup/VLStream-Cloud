@@ -10,6 +10,7 @@ VLS-Protocol
 | 1.2/雷超群/2026-08-05 | 优化数据格式 |
 | 1.3/雷超群/2026-08-12 | 设备心跳增加多码流上报与平台接收回执 |
 | 1.3/雷超群/2026-08-17 | 4.8 设备OTA固件升级 |
+| 1.6/2026-09-09 | 心跳新增 WGS84 位置坐标，补充校验、清空和设备详情展示规则 |
 | 1.5/2026-09-08 | 心跳增加设备能力与当前模型快照，补充平台上线时间和详情展示规则 |
 | 1.4/2026-09-07 | 补充通用设备控制规格 1：能力查询、停止、镜头与高级控制、时效和回执；设备端尚未支持，待开发联调 |
 
@@ -1147,6 +1148,8 @@ streams 是视频源描述对象数组，不是视频文件、视频帧，也不
 
 平台设备详情展示设备能力和当前上报模型；离线时保留最近上报信息。固件升级通过“固件升级”按钮打开，升级仍按现有兼容性、在线状态和任务锁规则执行。
 
+位置坐标使用固定 WGS84 坐标系，只在设备详情展示，不接入地图。设备在 online=true 的 state 心跳中上报 location；省略字段保留最近位置，location:null 清空后显示“未上报”。online=false 的离线遗嘱不覆盖位置，重复或过期消息不改变位置。经纬度必须同时提供且为范围内数值，字符串、缺失一项或越界返回 code=400，不登记该消息，可修正后重传。经纬度为 0 是有效值，设备未定位时不要用 0 作为占位。
+
 ### 上报 payload 字段
 
 | **字段** | **类型** | **必填** | **释义** |
@@ -1161,6 +1164,7 @@ streams 是视频源描述对象数组，不是视频文件、视频帧，也不
 | ipAddr | string | 否   | 局域网 IP |
 | mac | string | 否   | MAC 地址 |
 | telemetry | object | 否   | 硬件资源 |
+| telemetry.bootTime | long | 否 | 设备本次真实开机时间，Unix 毫秒时间戳；断网重连不改变，设备重启后更新。设备时钟未同步时省略，不以 MQTT 连接时间代替。 |
 | telemetry.cpu | int | 否   | CPU 占用 % |
 | telemetry.mem | int | 否   | 内存占用 % |
 | telemetry.diskUsed | int | 否   | 磁盘使用率 % |
@@ -1187,6 +1191,9 @@ streams 是视频源描述对象数组，不是视频文件、视频帧，也不
 | models[].version | string | 否 | 设备实际模型版本。 |
 | models[].format | string | 否 | 模型格式，如 OM、RKNN、ONNX。 |
 | models[].status | string | 否 | loaded 已加载、running 运行中、stopped 已停止、failed 异常；扩展状态原样显示。 |
+| location | object/null | 否 | WGS84 位置坐标，单位为十进制度；包含 longitude 和 latitude 两个数值。省略保留上次位置，null 明确清空；不得以 0 代替未定位。 |
+| location.longitude | float | 条件必填 | 经度，范围 -180～180，东经为正、西经为负；location 非 null 时必填，平台四舍五入保留最多 8 位小数。 |
+| location.latitude | float | 条件必填 | 纬度，范围 -90～90，北纬为正、南纬为负；location 非 null 时必填，平台四舍五入保留最多 8 位小数。 |
 
 正常心跳上报完整示例
 
@@ -1222,7 +1229,8 @@ streams 是视频源描述对象数组，不是视频文件、视频帧，也不
             **"gb28181"**:false,  
             **"aiInfer"**:true  
         },  
-        **"capabilities"**:["video","aiInfer","ota"],  
+        **"location"**:{"longitude":113.12345678,"latitude":22.12345678},
+        **"capabilities"**:["video","aiInfer","ota"],
         **"models"**:[{"modelId":"2096927699258966018","modelName":"安全帽检测","version":"1.0.0","format":"OM","status":"running"}],  
         **"streams"**:\[  
             {  

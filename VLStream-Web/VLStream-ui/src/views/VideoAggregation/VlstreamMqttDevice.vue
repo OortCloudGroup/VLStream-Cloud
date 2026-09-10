@@ -37,15 +37,19 @@
         <el-alert v-if="serviceError" :title="serviceError" type="error" :closable="false" show-icon class="service-alert" />
 
         <el-table v-loading="loading" :data="devices" stripe @selection-change="handleSelectionChange">
-          <el-table-column type="selection" width="48" />
-          <el-table-column type="index" label="序号" width="70" />
+          <el-table-column type="selection" width="42" fixed="left" />
+          <el-table-column type="index" label="序号" width="56" fixed="left" />
+          <el-table-column label="在线状态" width="100" fixed="left" align="center">
+            <template #default="{ row }">
+              <el-tag :type="row.online ? 'success' : 'info'" effect="light" class="online-status">
+                <span class="status-dot" aria-hidden="true" />{{ row.online ? '在线' : '离线' }}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column prop="deviceName" label="设备名称" min-width="150" show-overflow-tooltip />
           <el-table-column prop="deviceId" label="设备 ID" min-width="190" show-overflow-tooltip />
           <el-table-column prop="deviceModel" label="设备型号" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="deviceSerial" label="序列号" min-width="140" show-overflow-tooltip />
-          <el-table-column label="状态" width="90">
-            <template #default="{ row }"><el-tag :type="row.online ? 'success' : 'info'">{{ row.online ? '在线' : '离线' }}</el-tag></template>
-          </el-table-column>
+          <el-table-column v-if="hasDeviceSerial" prop="deviceSerial" label="序列号" min-width="140" show-overflow-tooltip />
           <el-table-column prop="ipAddr" label="IP" min-width="120" />
           <el-table-column prop="firmwareVersion" label="RootFS 版本" min-width="110" />
           <el-table-column label="设备能力" min-width="180" show-overflow-tooltip>
@@ -96,15 +100,21 @@
           <el-descriptions-item label="设备型号">{{ detailDevice.deviceModel || '-' }}</el-descriptions-item>
           <el-descriptions-item label="在线状态">{{ detailDevice.online ? '在线' : '离线' }}</el-descriptions-item>
           <el-descriptions-item label="IP 地址">{{ detailDevice.ipAddr || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="RootFS 版本">{{ detailDevice.firmwareVersion || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="最近上线">{{ formatDeviceTime(detailDevice.lastOnlineTime) }}</el-descriptions-item>
-          <el-descriptions-item label="最后心跳">{{ formatDeviceTime(detailDevice.lastHeartbeatTime) }}</el-descriptions-item>
+          <el-descriptions-item label="RootFS 版本">
+            <div class="firmware-version-actions">
+              <span>{{ detailDevice.firmwareVersion || '-' }}</span>
+              <el-button v-if="firmwareDetail?.availableUpgrades?.length > 0" type="primary" link @click="firmwareVisible = true">固件升级</el-button>
+            </div>
+          </el-descriptions-item>
+          <el-descriptions-item label="开机时间">{{ deviceBootTimeText(detailDevice) }}</el-descriptions-item>
+          <el-descriptions-item label="在线时长">{{ deviceOnlineDurationText(detailDevice, detailClock) }}</el-descriptions-item>
+          <el-descriptions-item label="最后心跳" :span="2">{{ formatDeviceTime(detailDevice.lastHeartbeatTime) }}</el-descriptions-item>
           <el-descriptions-item label="设备能力" :span="2">{{ capabilityText(detailDevice.capabilitiesJson) }}</el-descriptions-item>
+          <el-descriptions-item label="位置坐标" :span="2">{{ deviceLocationText(detailDevice) }}</el-descriptions-item>
         </el-descriptions>
 
         <div class="model-heading">
-          <h4>设备上报模型</h4>
-          <el-button type="primary" plain @click="firmwareVisible = true">固件升级</el-button>
+          <h4>设备运行模型</h4>
         </div>
         <el-table :data="reportedModels" border :empty-text="detailDevice?.modelsJson == null ? '设备尚未上报模型信息' : '设备上报的模型列表为空'">
           <el-table-column prop="modelId" label="模型 ID" min-width="140" show-overflow-tooltip />
@@ -121,7 +131,9 @@
           <el-table-column prop="streamType" label="码流类型" width="110" />
           <el-table-column prop="protocol" label="协议" width="90" />
           <el-table-column label="默认流" width="90"><template #default="{ row }">{{ row.defaultStream ? '是' : '否' }}</template></el-table-column>
-          <el-table-column prop="url" label="视频源地址" min-width="220" show-overflow-tooltip />
+          <el-table-column label="视频源地址" min-width="220" show-overflow-tooltip>
+            <template #default="{ row }">{{ row.sourceUrl || row.url || '未上报' }}</template>
+          </el-table-column>
         </el-table>
         </div>
       </el-dialog>
@@ -166,12 +178,12 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import CameraRtcPlayer from '@/components/CameraRtcPlayer.vue'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import RtcPlayer from '@/components/rtcPlayer/index.vue'
-import { capabilityText, formatDeviceTime, modelStatusText, parseSnapshot } from '@/utils/deviceStateDisplay'
+import { capabilityText, deviceBootTimeText, deviceOnlineDurationText, deviceLocationText, formatDeviceTime, modelStatusText, parseSnapshot } from '@/utils/deviceStateDisplay'
 import { parseCameraRtcConfig } from '@/utils/oplayer'
 import {
   cancelMqttDeviceFirmwareTask,
@@ -185,6 +197,7 @@ import {
 
 const loading = ref(false)
 const devices = ref([])
+const hasDeviceSerial = computed(() => devices.value.some(device => String(device.deviceSerial ?? '').trim().length > 0))
 const total = ref(0)
 const mediaAvailable = ref(false)
 const serviceError = ref('')
@@ -198,6 +211,16 @@ const webrtcUrl = ref('')
 const cameraRtcConfig = ref(null)
 const firmwareVisible = ref(false)
 const detailVisible = ref(false)
+const detailClock = ref(Date.now())
+let detailClockTimer
+watch(detailVisible, (visible) => {
+  clearInterval(detailClockTimer)
+  if (visible) {
+    detailClock.value = Date.now()
+    detailClockTimer = setInterval(() => { detailClock.value = Date.now() }, 1000)
+  }
+})
+onBeforeUnmount(() => clearInterval(detailClockTimer))
 const detailLoading = ref(false)
 const detailStreams = ref([])
 const firmwareDetail = ref(null)
@@ -357,6 +380,8 @@ onBeforeUnmount(releasePreview)
 .filters .el-input { width: 240px; }
 .filters .el-select { width: 120px; }
 .service-alert { margin-bottom: 14px; }
+.online-status { font-weight: 600; }
+.status-dot { display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: currentColor; }
 .firmware-alert { margin-top: 14px; }
 .pagination { display: flex; justify-content: center; padding-top: 20px; }
 .stream-bar { justify-content: flex-start; margin-bottom: 12px; }
@@ -365,6 +390,7 @@ onBeforeUnmount(releasePreview)
 .player :deep(#webRtcPlayerBox), .player :deep(#rtcPlayer) { width: 100%; max-height: 520px; }
 .camera-rtc-player { width: 100%; height: 480px; }
 .model-heading { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
+.firmware-version-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .snapshot-note { color: #909399; font-size: 12px; }
 h4 { margin: 18px 0 10px; }
 @media (max-width: 1200px) { .header { align-items: flex-start; flex-direction: column; } }

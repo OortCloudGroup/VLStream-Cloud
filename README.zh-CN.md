@@ -112,32 +112,42 @@ $bytes = New-Object byte[] 32
 <table>
   <tr>
     <td align="center" width="50%">
-      <a href="./docs/assets/screenshots/01-active-safety-events.png"><img src="./docs/assets/screenshots/01-active-safety-events.png" alt="主动安全事件管理" width="100%"></a><br>
-      <strong>主动安全事件管理</strong>
+      <a href="./docs/assets/screenshots/01-video-convergence-vlstream.png"><img src="./docs/assets/screenshots/01-video-convergence-vlstream.png" alt="VLStream协议设备管理" width="100%"></a><br>
+      <strong>视频汇聚 · VLStream协议设备</strong>
     </td>
     <td align="center" width="50%">
-      <a href="./docs/assets/screenshots/02-event-feedback-workflow.png"><img src="./docs/assets/screenshots/02-event-feedback-workflow.png" alt="事件反馈与流程处理" width="100%"></a><br>
-      <strong>事件反馈与流程处理</strong>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <a href="./docs/assets/screenshots/03-work-order-management.png"><img src="./docs/assets/screenshots/03-work-order-management.png" alt="工单管理" width="100%"></a><br>
-      <strong>工单管理</strong>
-    </td>
-    <td align="center" width="50%">
-      <a href="./docs/assets/screenshots/04-workflow-designer.png"><img src="./docs/assets/screenshots/04-workflow-designer.png" alt="可视化流程设计" width="100%"></a><br>
-      <strong>可视化流程设计</strong>
+      <a href="./docs/assets/screenshots/02-video-convergence-rtsp.png"><img src="./docs/assets/screenshots/02-video-convergence-rtsp.png" alt="RTSP协议摄像头管理" width="100%"></a><br>
+      <strong>视频汇聚 · RTSP协议管理</strong>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <a href="./docs/assets/screenshots/05-algorithm-training-management.png"><img src="./docs/assets/screenshots/05-algorithm-training-management.png" alt="算法训练管理" width="100%"></a><br>
-      <strong>算法训练管理</strong>
+      <a href="./docs/assets/screenshots/03-video-convergence-gb28181.png"><img src="./docs/assets/screenshots/03-video-convergence-gb28181.png" alt="国标GB28181协议设备管理" width="100%"></a><br>
+      <strong>视频汇聚 · 国标GB28181协议管理</strong>
     </td>
     <td align="center" width="50%">
-      <a href="./docs/assets/screenshots/06-algorithm-training-console.png"><img src="./docs/assets/screenshots/06-algorithm-training-console.png" alt="算法训练控制台" width="100%"></a><br>
-      <strong>算法训练控制台</strong>
+      <a href="./docs/assets/screenshots/04-decision-ai-active-safety.png"><img src="./docs/assets/screenshots/04-decision-ai-active-safety.png" alt="决策式AI主动安全事件管理" width="100%"></a><br>
+      <strong>决策式AI · 主动安全事件管理</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <a href="./docs/assets/screenshots/05-algorithm-preset-library.png"><img src="./docs/assets/screenshots/05-algorithm-preset-library.png" alt="算法仓库预设算法库" width="100%"></a><br>
+      <strong>算法仓库 · 行业预设算法库</strong>
+    </td>
+    <td align="center" width="50%">
+      <a href="./docs/assets/screenshots/06-algorithm-data-sample-management.png"><img src="./docs/assets/screenshots/06-algorithm-data-sample-management.png" alt="数据和样本管理流程" width="100%"></a><br>
+      <strong>算法平台 · 数据与样本管理</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <a href="./docs/assets/screenshots/07-algorithm-annotation-management.png"><img src="./docs/assets/screenshots/07-algorithm-annotation-management.png" alt="算法数据标注管理" width="100%"></a><br>
+      <strong>算法平台 · 算法数据标注</strong>
+    </td>
+    <td align="center" width="50%">
+      <a href="./docs/assets/screenshots/08-algorithm-training-console.png"><img src="./docs/assets/screenshots/08-algorithm-training-console.png" alt="零代码算法训练控制台" width="100%"></a><br>
+      <strong>算法平台 · 零代码算法训练</strong>
     </td>
   </tr>
 </table>

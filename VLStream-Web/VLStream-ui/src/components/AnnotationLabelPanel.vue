@@ -9,9 +9,9 @@
   <div class="annotation-label-panel">
     <div class="treeTitle">
       标签栏
-      <el-icon class="add-label-icon" @click="handleAddLabel">
-        <Plus />
-      </el-icon>
+      <el-button type="primary" size="small" :icon="Plus" class="add-label-button" @click="handleAddLabel">
+        添加标签
+      </el-button>
     </div>
 
     <div class="tree_search_content flexRowAC">
@@ -203,17 +203,10 @@ const handleSaveLabel = async () => {
   }
 }
 
-.add-label-icon {
+.add-label-button {
   margin-left: auto;
-  cursor: pointer;
-  color: var(--el-color-primary);
-  font-size: 16px;
-  padding: 4px;
-  border-radius: 4px;
-
-  &:hover {
-    background: var(--el-color-primary-hb, #ecf5ff);
-  }
+  margin-right: 8px;
+  flex-shrink: 0;
 }
 
 .tree_search_content {

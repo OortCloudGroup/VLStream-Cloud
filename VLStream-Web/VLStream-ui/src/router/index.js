@@ -263,7 +263,7 @@ const routes = [
         path: '/data-management',
         name: 'DataManagement',
         component: () => import('@/views/AlgorithmTraining/DataManagement.vue'),
-        meta: { title: '数据和样本管理', icon: '算法标注', parentMenu: 'algorithm-warehouse' }
+        meta: { title: '数据集管理', icon: '算法标注', parentMenu: 'algorithm-warehouse' }
       },
       {
         path: '/algorithm-standard',
