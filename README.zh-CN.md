@@ -11,6 +11,9 @@
   </p>
 
   <p>
+    <a href="https://github.com/OortCloudGroup/VLStream-Cloud"><img src="https://img.shields.io/badge/GitHub-OortCloudGroup%2FVLStream--Cloud-181717?style=flat-square&amp;logo=github&amp;logoColor=white" alt="GitHub 仓库"></a>
+    <a href="https://gitcode.com/qq_74020751/VLStream-Cloud"><img src="https://img.shields.io/badge/GitCode-qq_74020751%2FVLStream--Cloud--Lite-1e80ff?style=flat-square" alt="GitCode 仓库"></a>
+    <a href="https://gitee.com/lcqssaa/VLStream-Cloud"><img src="https://img.shields.io/badge/Gitee-lcqssaa%2FVLStream--Cloud--Lite-c71d23?style=flat-square" alt="Gitee 仓库"></a>
     <a href="https://github.com/OortCloudGroup/VLStream-Cloud/stargazers"><img src="https://img.shields.io/github/stars/OortCloudGroup/VLStream-Cloud?style=flat-square" alt="GitHub Stars"></a>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="MIT License"></a>
     <img src="https://img.shields.io/badge/Java-8-orange.svg?style=flat-square" alt="Java 8">
@@ -767,6 +770,8 @@ docker compose down
 | VLS 协议规范（中文） | [`VLS-Protocol.docx`](./docs/VLS-Protocol.docx) |
 | VLS 协议规范（英文） | [`VLS-Protocol-EN.docx`](./docs/VLS-Protocol-EN.docx) |
 | API 文档 | 启动后端后访问 Knife4j 或 Swagger UI |
+| GitCode 仓库 | [https://gitcode.com/qq_74020751/VLStream-Cloud-Lite](https://gitcode.com/qq_74020751/VLStream-Cloud) |
+| Gitee 仓库 | [https://gitee.com/lcqssaa/VLStream-Cloud-Lite](https://gitee.com/lcqssaa/VLStream-Cloud) |
 
 ---
 

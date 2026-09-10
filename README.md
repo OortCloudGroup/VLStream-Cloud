@@ -11,6 +11,9 @@
   </p>
 
   <p>
+    <a href="https://github.com/OortCloudGroup/VLStream-Cloud"><img src="https://img.shields.io/badge/GitHub-OortCloudGroup%2FVLStream--Cloud-181717?style=flat-square&amp;logo=github&amp;logoColor=white" alt="GitHub Repository"></a>
+    <a href="https://gitcode.com/qq_74020751/VLStream-Cloud"><img src="https://img.shields.io/badge/GitCode-qq_74020751%2FVLStream--Cloud--Lite-1e80ff?style=flat-square" alt="GitCode Repository"></a>
+    <a href="https://gitee.com/lcqssaa/VLStream-Cloud"><img src="https://img.shields.io/badge/Gitee-lcqssaa%2FVLStream--Cloud--Lite-c71d23?style=flat-square" alt="Gitee Repository"></a>
     <a href="https://github.com/OortCloudGroup/VLStream-Cloud/stargazers"><img src="https://img.shields.io/github/stars/OortCloudGroup/VLStream-Cloud?style=flat-square" alt="GitHub Stars"></a>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="MIT License"></a>
     <img src="https://img.shields.io/badge/Java-8-orange.svg?style=flat-square" alt="Java 8">
@@ -687,6 +690,8 @@ docker compose down
 | VLS Protocol Specification (English) | [`VLS-Protocol-EN.docx`](./docs/VLS-Protocol-EN.docx) |
 | VLS Protocol Specification (Chinese) | [`VLS-Protocol.docx`](./docs/VLS-Protocol.docx) |
 | API Documentation | Start the backend and open Knife4j or Swagger UI |
+| GitCode Repository | [https://gitcode.com/qq_74020751/VLStream-Cloud-Lite](https://gitcode.com/qq_74020751/VLStream-Cloud) |
+| Gitee Repository | [https://gitee.com/lcqssaa/VLStream-Cloud-Lite](https://gitee.com/lcqssaa/VLStream-Cloud) |
 
 ---
 
