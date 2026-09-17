@@ -68,7 +68,7 @@ public class DatasetUploadService {
     }
 
     public DatasetImportJob createJob(Long datasetId, String type, String name, String format, String source) {
-        data.project(datasetId);
+        data.lockDatasetForTask(datasetId);
         DatasetImportJob job = new DatasetImportJob(); job.setDatasetId(datasetId); job.setTenantId(data.tenant()); job.setImportType(type);
         job.setFilename(name); job.setAnnotationFormat(format); job.setSourceName(source); job.setFileSize(0L); job.setExpectedSha256("");
         job.setChunkSize(CHUNK_SIZE); job.setTransferredBytes(0L); job.setTotalFiles(0); job.setImportedFiles(0); job.setSkippedFiles(0); job.setFailedFiles(0);
@@ -144,8 +144,10 @@ public class DatasetUploadService {
         }
         job.setJobState("CANCELLED"); jobs.updateById(job); jobs.clearParts(id);
     }
+    @Transactional(rollbackFor=Exception.class)
     public void retry(Long id) {
         DatasetImportJob job=get(id);
+        data.lockDatasetForTask(job.getDatasetId());
         if (!Arrays.asList("FAILED","PARTIAL").contains(job.getJobState())) throw new ServiceException("仅失败或部分成功的任务可重试");
         if (job.getExpiresAt().before(new Date())) throw new ServiceException("任务已过期，请重新创建导入");
         jobs.update(null,new UpdateWrapper<DatasetImportJob>().eq("id",id).eq("tenant_id",data.tenant()).in("job_state","FAILED","PARTIAL")

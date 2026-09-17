@@ -45,14 +45,16 @@ public class DataManagementService {
     }
 
     public AlgorithmAnnotation project(Long id) {
-        AlgorithmAnnotation project = projects.selectOne(new QueryWrapper<AlgorithmAnnotation>().eq("id", id).eq("tenant_id", tenant()));
-        if (project == null) throw new ServiceException("数据集不存在或无权访问");
+        AlgorithmAnnotation project = projects.selectOne(new QueryWrapper<AlgorithmAnnotation>().eq("id", id).eq("tenant_id", tenant())
+            .apply("NOT EXISTS (SELECT 1 FROM vls_dataset_cleanup c WHERE c.annotation_id = {0} AND c.tenant_id = {1})", id, tenant()));
+        if (project == null) throw new ServiceException("数据集不存在、正在删除或无权访问");
         return project;
     }
 
     private AlgorithmAnnotation lock(Long id) {
         AlgorithmAnnotation project = versions.lockProject(id, tenant());
-        if (project == null) throw new ServiceException("数据集不存在或无权访问");
+        if (project == null) throw new ServiceException("数据集不存在、正在删除或无权访问");
+        if (versions.cleanupState(id, tenant()) != null) throw new ServiceException("数据集正在清理或清理失败，请重试删除，不能继续编辑或训练");
         return project;
     }
 

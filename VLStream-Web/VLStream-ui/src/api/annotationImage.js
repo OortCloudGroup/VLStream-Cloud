@@ -15,6 +15,7 @@ import request from '@/utils/request'
 export function getAnnotationImages(annotationId) {
   return request({
     url: `/vlsAnnotationImage/dataset/${annotationId}`,
+    timeout: 20000,
     method: 'get'
   })
 }

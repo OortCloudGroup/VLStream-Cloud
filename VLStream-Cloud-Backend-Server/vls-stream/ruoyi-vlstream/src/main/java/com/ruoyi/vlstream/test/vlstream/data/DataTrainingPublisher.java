@@ -28,7 +28,9 @@ public class DataTrainingPublisher {
     private final SampleMediaInspector inspector;
     private final VlsSshProperties ssh;
 
+    @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
     public boolean publish(Long projectId) {
+        data.lockDatasetForTask(projectId);
         DatasetSnapshot current = data.snapshot(projectId);
         if (!"object_detection".equals(current.getAnnotationType())) throw new ServiceException("当前 GPU 训练链路仅支持物体检测；其他项目可导出版本归档");
         if (current.getSamples().stream().noneMatch(s -> Arrays.asList("train", "val").contains(s.getDatasetSplit()))) {

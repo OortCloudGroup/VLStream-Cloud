@@ -227,6 +227,11 @@ public class OssClient {
         return properties.getBucketName();
     }
 
+    /** Non-secret identity used to prevent cleanup retries against a reconfigured storage target. */
+    public String getStorageIdentity() {
+        return properties.getEndpoint() + "|" + properties.getIsHttps() + "|" + properties.getBucketName();
+    }
+
     /**
      * Get URL
      *

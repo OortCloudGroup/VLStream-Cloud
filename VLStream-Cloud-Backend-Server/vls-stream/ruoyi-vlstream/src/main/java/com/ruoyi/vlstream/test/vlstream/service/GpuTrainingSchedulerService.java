@@ -117,10 +117,21 @@ public class GpuTrainingSchedulerService {
 		}
 		RemoteServers server = requireServer();
 		String workDir = server.getWorkDir();
-		String logPath = workDir + "/logs/training_" + taskId + ".log";
+		String runName = "task_" + taskId + "_" + java.util.UUID.randomUUID().toString().replace("-", "");
+		String runDirectory = workDir + "/runs/vls/" + runName;
+		AlgorithmTraining task = algorithmTrainingService.getById(taskId);
+		if (task == null) throw new IllegalStateException("训练任务不存在");
+		try {
+			Map<String,Object> config = isBlank(task.getConfigParams()) ? new LinkedHashMap<>()
+				: objectMapper.readValue(task.getConfigParams(), new com.fasterxml.jackson.core.type.TypeReference<Map<String,Object>>() {});
+			config.put("runDirectory", runDirectory);
+			AlgorithmTraining run = new AlgorithmTraining(); run.setId(taskId); run.setConfigParams(objectMapper.writeValueAsString(config));
+			if (algorithmTrainingService.updateAlgorithmTraining(run) <= 0) throw new IllegalStateException("保存本轮训练目录失败");
+		} catch (java.io.IOException e) { throw new IllegalStateException("训练配置无法解析", e); }
+		String logPath = workDir + "/logs/" + runName + ".log";
 		String containerName = "vls-training-" + taskId;
 		String command = buildDockerRunCommand(server, containerName, logPath, taskType,
-			datasetPath, baseModel, epochs, batchSize, imgSize);
+			datasetPath, baseModel, epochs, batchSize, imgSize, runName);
 
 		ContainerInstance instance = new ContainerInstance();
 		instance.setInstanceName(containerName);
@@ -386,7 +397,7 @@ public class GpuTrainingSchedulerService {
 										 String baseModel,
 										 Integer epochs,
 										 Integer batchSize,
-										 Integer imgSize) {
+									 Integer imgSize, String runName) {
 		String trainType = isBlank(taskType) ? "detect" : taskType.trim();
 		String yolo = "/data/work/anaconda3/envs/" + server.getCondaEnv() + "/bin/yolo";
 		StringBuilder train = new StringBuilder();
@@ -396,6 +407,8 @@ public class GpuTrainingSchedulerService {
 		if (epochs != null) train.append(" epochs=").append(epochs);
 		if (batchSize != null) train.append(" batch=").append(batchSize);
 		if (imgSize != null) train.append(" imgsz=").append(imgSize);
+		train.append(" project=").append(shellQuote(server.getWorkDir() + "/runs/vls"));
+		train.append(" name=").append(shellQuote(runName)).append(" exist_ok=False");
 		if (properties.getWorkers() != null) train.append(" workers=").append(properties.getWorkers());
 		train.append("; rc=$?; if [ $rc -eq 0 ]; then echo 'Training complete'; ")
 			.append("else echo 'Training failed'; fi; exit $rc");

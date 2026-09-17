@@ -80,6 +80,17 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	private IVlsAlgorithmAnnotationService algorithmAnnotationService;
 
 	@Resource
+	private com.ruoyi.vlstream.test.vlstream.data.DataManagementService dataManagementService;
+
+	@Resource
+	private com.ruoyi.vlstream.test.vlstream.data.DatasetConversionGuard datasetConversionGuard;
+
+	@Resource
+	private com.ruoyi.vlstream.test.vlstream.service.TrainingDatasetPreflight trainingDatasetPreflight;
+	@Resource
+	private com.ruoyi.vlstream.test.vlstream.service.TrainingPublicationService trainingPublicationService;
+
+	@Resource
 	private IVlsAlgorithmService algorithmService;
 
 	@Resource
@@ -129,7 +140,13 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	public R<IPage<AlgorithmTrainingVO>> page(AlgorithmTrainingVO vlsAlgorithmTraining, Query query) {
 		IPage<AlgorithmTrainingVO> pages = vlsAlgorithmTrainingService.selectVlsAlgorithmTrainingPage(Condition.getPage(query), vlsAlgorithmTraining);
 		for (AlgorithmTrainingVO training : pages.getRecords()) {
-			Algorithm algorithm = algorithmService.getById(training.getAlgorithmId());
+			Algorithm algorithm = training.getAlgorithmId() == null ? null : algorithmService.getById(training.getAlgorithmId());
+			if (algorithm == null) {
+				training.setAlgorithmName("关联算法不存在");
+				training.setTrainType(null);
+				training.setTargetModel(null);
+				continue;
+			}
 			training.setAlgorithmName(algorithm.getName());
 			training.setTrainType(algorithm.getCategory());
 			training.setTargetModel(algorithm.getPtModelFilePath());
@@ -327,6 +344,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	 * starttrainingtask
 	 */
 	@PostMapping("/{id}/start")
+	@org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
 	@Operation(summary = "开始训练任务", description = "开始指定的训练任务")
 	public R<RemoteTrainingService.StartResult> startTraining(
 		@Parameter(description = "训练任务ID", example = "1") @PathVariable @NotNull Long id,
@@ -338,6 +356,11 @@ public class VlsAlgorithmTrainingController extends BladeController {
 
 		log.info("=== 开始训练任务 ===");
 		log.info("训练任务ID: {}", id);
+		// Share the project lock with deletion; a rejected start must not rewrite training history.
+		dataManagementService.lockDatasetForTask(datasetId);
+		trainingPublicationService.lockForStart(id);
+		com.ruoyi.vlstream.test.vlstream.service.TrainingOptions options =
+			new com.ruoyi.vlstream.test.vlstream.service.TrainingOptions(epochs, batchSize, imgSize, extraParams);
 
 		try {
 			AlgorithmTraining training = vlsAlgorithmTrainingService.selectAlgorithmTrainingById(id);
@@ -365,17 +388,20 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			if (StringUtils.isBlank(baseModel)) {
 				return R.fail("算法基础模型路径为空");
 			}
+			if (!"object_detection".equals(annotation.getAnnotationType()) || algorithm.getCategory() == null
+				|| !"detect".equals(algorithm.getCategory().getCode())) return R.fail("当前训练仅支持物体检测算法与物体检测数据集");
+			trainingDatasetPreflight.validate(datasetPath, baseModel);
 
-			Map<String, Object> config = parseConfigParams(training.getConfigParams());
-			Integer finalEpochs = epochs != null ? epochs : getIntFromConfig(config, "epochs", training.getEpochTotal(), 100);
-			Integer finalBatch = batchSize != null ? batchSize : getIntFromConfig(config, "batchSize", null, 16);
-			Integer finalImgSize = imgSize != null ? imgSize : getIntFromConfig(config, "imgsz", getIntFromConfig(config, "resolution", null, null), 640);
+			Integer finalEpochs = options.getEpochs();
+			Integer finalBatch = options.getBatchSize();
+			Integer finalImgSize = options.getImgSize();
 
 			AlgorithmTraining queueUpdate = new AlgorithmTraining();
 			queueUpdate.setId(id);
 			queueUpdate.setDatasetId(datasetId);
 			queueUpdate.setTrainStatus(AlgorithmTrainingStatusEnum.pending);
 			queueUpdate.setEpochTotal(finalEpochs);
+			queueUpdate.setConfigParams(options.toJson());
 			queueUpdate.setProgress(0);
 			queueUpdate.setErrorMessage(null);
 			if (vlsAlgorithmTrainingService.updateAlgorithmTraining(queueUpdate) <= 0) {
@@ -396,25 +422,33 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			update.setId(id);
 			update.setLogPath(startResult.getLogPath());
 			vlsAlgorithmTrainingService.updateAlgorithmTraining(update);
+			trainingPublicationService.configure(id, options.isAutoPublish());
 
 			log.info("训练任务{}已进入GPU队列，日志路径: {}", id, startResult.getLogPath());
 			return R.data(startResult);
 		} catch (Exception e) {
 			log.error("触发训练任务失败: {}", e.getMessage(), e);
-			AlgorithmTraining failedUpdate = new AlgorithmTraining();
-			failedUpdate.setId(id);
-			failedUpdate.setTrainStatus(AlgorithmTrainingStatusEnum.failed);
-			failedUpdate.setErrorMessage(e.getMessage());
-			failedUpdate.setEndTime(new Date());
-			vlsAlgorithmTrainingService.updateAlgorithmTraining(failedUpdate);
-			return R.fail("触发训练任务失败: " + e.getMessage());
+			// Roll back queue/config mutations and preserve any previous successful run.
+			throw new com.ruoyi.common.exception.ServiceException("训练未启动：" + e.getMessage());
 		}
+	}
+
+	@GetMapping("/{id}/publication")
+	public R<Map<String,Object>> publicationStatus(@PathVariable Long id) {
+		return R.data(trainingPublicationService.status(id));
+	}
+
+	@PostMapping("/{id}/publication/retry")
+	public R<String> retryPublication(@PathVariable Long id) {
+		trainingPublicationService.retry(id);
+		return R.success("已提交发布重试");
 	}
 
 	/**
 	 * Convert model
 	 */
 	@PostMapping("/{id}/convert-model")
+	@org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
 	@ApiOperationSupport(order = 9)
 	@Operation(summary = "转换模型", description = "把pt模型转换为onnx、rknn、int8-rknn和Hi3519DV500 OM")
 	public synchronized R<String> convertModel(
@@ -425,6 +459,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		if (training == null) {
 			return R.fail("找不到模型训练");
 		}
+		dataManagementService.lockDatasetForTask(training.getDatasetId());
 		String ptModelPath = training.getModelOutputPath();
 		if (ptModelPath == null || ptModelPath.isEmpty()) {
 			return R.fail("模型路径不能为空");
@@ -434,6 +469,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			return R.success("模型正在转换中");
 		}
 		AlgorithmTraining convertingUpdate = new AlgorithmTraining();
+		datasetConversionGuard.start(training);
 		convertingUpdate.setId(id);
 		convertingUpdate.setOnnxModelOutputPath("");
 		convertingUpdate.setOnnxConversionStatus(CONVERSION_CONVERTING);
@@ -442,6 +478,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		convertingUpdate.setOmConversionStatus(CONVERSION_CONVERTING);
 		convertingUpdate.setOmConversionError("");
 		if (vlsAlgorithmTrainingService.updateAlgorithmTraining(convertingUpdate) <= 0) {
+			datasetConversionGuard.finish(training);
 			return R.fail("初始化模型转换状态失败");
 		}
 		String datasetPath = resolveDatasetPath(training);
@@ -514,14 +551,21 @@ public class VlsAlgorithmTrainingController extends BladeController {
 				}
 			} catch (Exception exception) {
 				log.error("模型转换异常: id={}, error={}", id, exception.getMessage(), exception);
+			} finally {
+				datasetConversionGuard.finish(trainingSnapshot);
 			}
 		});
 		convertThread.setName("model-convert-" + id);
-		convertThread.start();
+		if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+			org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+				@Override public void afterCommit() { convertThread.start(); }
+			});
+		} else convertThread.start();
 		return R.success("模型转换任务已提交");
 	}
 
 	@EventListener
+	@org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
 	public void convertModelWhenTrainingArtifactReady(TrainingModelReadyEvent event) {
 		if (event == null || event.getTrainingId() == null) {
 			return;

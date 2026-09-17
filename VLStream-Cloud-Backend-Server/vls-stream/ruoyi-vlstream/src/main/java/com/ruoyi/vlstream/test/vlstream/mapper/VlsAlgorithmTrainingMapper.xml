@@ -310,15 +310,21 @@
 
     <!-- 删除算法训练任务 -->
     <delete id="deleteAlgorithmTrainingById" parameterType="Long">
-        UPDATE vls_algorithm_training SET deleted = 1, update_time = NOW() WHERE id = #{id}
+        UPDATE vls_algorithm_training SET is_deleted = 1, update_time = NOW() WHERE id = #{id} AND is_deleted = 0
     </delete>
 
     <!-- 批量删除算法训练任务 -->
     <delete id="deleteAlgorithmTrainingByIds" parameterType="Long[]">
-        UPDATE vls_algorithm_training SET deleted = 1, update_time = NOW() WHERE id IN
-        <foreach item="id" collection="array" open="(" separator="," close=")">
+        UPDATE vls_algorithm_training SET is_deleted = 1, update_time = NOW() WHERE is_deleted = 0 AND
+        <choose>
+        <when test="ids != null and ids.length > 0">
+        id IN
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
             #{id}
         </foreach>
+        </when>
+        <otherwise>1 = 0</otherwise>
+        </choose>
     </delete>
 
 </mapper>

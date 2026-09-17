@@ -177,7 +177,7 @@ public interface VlsContainerInstanceMapper extends BaseMapper<ContainerInstance
 	 * @return Delete
 	 */
 	@Update("<script>" +
-		"UPDATE vls_container_instance SET deleted = 1, update_time = NOW() WHERE id IN " +
+		"UPDATE vls_container_instance SET is_deleted = 1, update_time = NOW() WHERE id IN " +
 		"<foreach collection='ids' item='id' open='(' separator=',' close=')'>" +
 		"#{id}" +
 		"</foreach>" +

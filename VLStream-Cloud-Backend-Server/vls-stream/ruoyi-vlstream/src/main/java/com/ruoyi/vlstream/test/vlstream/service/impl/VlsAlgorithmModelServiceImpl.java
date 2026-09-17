@@ -82,9 +82,14 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 		}
 
 		AlgorithmTraining training = trainingMapper.selectById(createDTO.getTrainingId());
+		if (training == null || training.getModelOutputPath() == null || training.getModelOutputPath().trim().isEmpty()) {
+			throw new com.ruoyi.common.exception.ServiceException("训练模型尚未就绪，不能保存模型");
+		}
 		// model
 		AlgorithmModel model = new AlgorithmModel();
 		BeanUtils.copyProperties(createDTO, model);
+		model.setTenantId(training.getTenantId());
+		model.setAlgorithmId(training.getAlgorithmId());
 		model.setVersion(version);
 		// Set value
 		if (model.getDownloadCount() == null) {

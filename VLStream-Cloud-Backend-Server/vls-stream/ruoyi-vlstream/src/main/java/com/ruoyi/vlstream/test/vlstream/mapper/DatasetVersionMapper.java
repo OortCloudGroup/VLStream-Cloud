@@ -12,6 +12,9 @@ public interface DatasetVersionMapper extends BaseMapper<DatasetVersion> {
         "AND is_deleted = 0 FOR UPDATE")
     AlgorithmAnnotation lockProject(@Param("id") Long id, @Param("tenant") String tenant);
 
+    @Select("SELECT cleanup_state FROM vls_dataset_cleanup WHERE annotation_id=#{id} AND tenant_id=#{tenant} FOR UPDATE")
+    String cleanupState(@Param("id") Long id, @Param("tenant") String tenant);
+
     @Update("UPDATE vls_annotation_label SET is_deleted = 0 WHERE id = #{id} " +
         "AND annotation_id = #{projectId} AND tenant_id = #{tenant}")
     int reviveLabel(@Param("id") Long id, @Param("projectId") Long projectId, @Param("tenant") String tenant);

@@ -60,7 +60,8 @@ class AnnotationZipProgressTest {
         VlsAlgorithmAnnotationServiceImpl service = spy(new VlsAlgorithmAnnotationServiceImpl(
             mock(VlsAlgorithmAnnotationMapper.class), mock(IVlsAnnotationImageService.class),
             mock(IVlsAnnotationInstanceService.class), labels, uploads, new VlsSshProperties(),
-            mock(DataTrainingPublisher.class), mock(DataManagementService.class)));
+            mock(DataTrainingPublisher.class), mock(DataManagementService.class),
+            mock(com.ruoyi.vlstream.test.vlstream.data.DatasetCleanupService.class)));
         AlgorithmAnnotation project = new AlgorithmAnnotation();
         project.setId(1L);
         doReturn(project).when(service).getById(1L);

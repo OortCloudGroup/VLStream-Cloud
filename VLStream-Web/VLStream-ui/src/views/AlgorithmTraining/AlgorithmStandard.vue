@@ -118,8 +118,14 @@
 
     <!-- ( layer ) -->
     <div v-if="showAnnotationView && !showDetailAnnotation" class="annotation-view-container">
+      <div v-if="annotationDataLoading" role="status">正在加载图片和标注数据，请稍候…</div>
+      <el-alert v-else-if="annotationLoadError" type="error" :closable="false" :title="annotationLoadError">
+        <el-button @click="loadAllAnnotationData">重新加载</el-button>
+        <el-button @click="handleBackToList">返回列表</el-button>
+      </el-alert>
       <!-- component -->
       <AnnotationGridView
+        v-else
         :annotation-data="{
           ...currentAnnotationData,
           uploadedImages: uploadedImages,
@@ -767,6 +773,9 @@ import {batchSaveAnnotationImages, getAnnotationImages, uploadAnnotationImages} 
 // control
 const showAnnotationView = ref(false)
 const currentAnnotationData = ref(null)
+const annotationDataLoading = ref(false)
+const annotationLoadError = ref('')
+let annotationLoadSequence = 0
 const showDetailAnnotation = ref(false) // whether annotationpage
 const currentAnnotationImage = ref(null) // current annotation
 
@@ -1215,7 +1224,7 @@ const handleDelete = async () => {
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的${selectedRows.value.length}个标注吗？\n注意：删除后将同时删除标注数据和相关图片文件！`,
+      `确定要删除选中的${selectedRows.value.length}个标注吗？\n将清理项目图片、标注、版本和独占的数据集文件，保留训练历史及模型。活动训练或导入任务会阻止删除。清理失败时可重试。`,
       '提示',
       {
         confirmButtonText: '确定',
@@ -1237,7 +1246,8 @@ const handleDelete = async () => {
   } catch (error) {
   if (error !== 'cancel') {
       console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(error?.message || '删除未完成，请刷新列表后重试')
+      await loadData()
     }
   }
 }
@@ -1350,7 +1360,7 @@ const handleExportData = async (row) => {
 const handleDeleteItem = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除标注"${row.name}"吗？\n注意：删除后将同时删除标注数据和相关图片文件！`,
+      `确定要删除标注"${row.name}"吗？\n将清理项目图片、标注、版本和独占的数据集文件，保留训练历史及模型。活动训练或导入任务会阻止删除。清理失败时可重试。`,
       '提示',
       {
         confirmButtonText: '确定',
@@ -1365,7 +1375,8 @@ const handleDeleteItem = async (row) => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(error?.message || '删除未完成，请刷新列表后重试')
+      await loadData()
     }
   }
 }
@@ -1688,6 +1699,8 @@ const showTableView = () => {
 }
 
 const handleBackToList = () => {
+  annotationLoadSequence++
+  annotationDataLoading.value = false
   showAnnotationView.value = false
   showDetailAnnotation.value = false
   currentAnnotationData.value = null
@@ -2028,6 +2041,9 @@ const deleteLabelAPI = async (labelId) => {
 
 // : Get info and annotationdata
 const loadAllAnnotationData = async () => {
+  const sequence = ++annotationLoadSequence
+  annotationDataLoading.value = true
+  annotationLoadError.value = ''
   try {
     const annotationId = getCurrentAnnotationId()
     console.log('=== 加载所有标注数据（带真实标签名称） ===')
@@ -2039,6 +2055,13 @@ const loadAllAnnotationData = async () => {
       getAnnotationImages(annotationId),
       getAllAnnotationInstances(annotationId)
     ])
+    if (sequence !== annotationLoadSequence) return
+    if (!imagesResponse?.success || !Array.isArray(imagesResponse.data)) {
+      throw new Error('图片列表加载失败，请检查对象存储连接后重试')
+    }
+    if (labelsResponse?.code !== 200 || instancesResponse?.code !== 200) {
+      throw new Error('标注数据加载失败，请重试')
+    }
     // record info, imageId /URL
     const imageMetaMap = new Map()
 
@@ -2253,7 +2276,8 @@ const loadAllAnnotationData = async () => {
     console.log('- 当前图片索引:', currentImageIndex.value)
     console.log('- 图片列表详情:', uploadedImages.value.map(img => ({ name: img.name, url: img.url, isFromDatabase: img.isFromDatabase })))
   } catch (error) {
-    console.error('加载所有标注数据失败:', error)
+    if (sequence !== annotationLoadSequence) return
+    annotationLoadError.value = '图片或标注数据加载失败，请检查服务及对象存储连接后重试。'
     // if Load failed, to Load
     try {
       await loadAnnotationLabels()
@@ -2261,6 +2285,8 @@ const loadAllAnnotationData = async () => {
       console.error('单独加载标签也失败:', labelError)
       ElMessage.error('加载标签失败')
     }
+  } finally {
+    if (sequence === annotationLoadSequence) annotationDataLoading.value = false
   }
 }
 
@@ -3319,7 +3345,7 @@ const handleBatchOperation = async () => {
 
   try {
     await ElMessageBox.confirm(
-      `确认批量删除选中的 ${ids.length} 条标注吗？\n删除后不可恢复，关联的数据也会被移除！`,
+      `确认批量删除选中的 ${ids.length} 条标注吗？\n逐个清理项目图片、标注、版本和独占的数据集文件，保留训练历史及模型。活动任务会阻止删除；部分成功后可重试剩余项目。`,
       '批量删除',
       {
         confirmButtonText: '确认',
@@ -3340,7 +3366,8 @@ const handleBatchOperation = async () => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除失败:', error)
-      ElMessage.error('批量删除失败')
+      ElMessage.error(error?.message || '部分项目可能已删除，请刷新列表后重试剩余项目')
+      await loadData()
     }
   }
 }

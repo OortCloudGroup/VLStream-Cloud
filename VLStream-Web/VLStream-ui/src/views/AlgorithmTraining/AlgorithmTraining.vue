@@ -22,7 +22,7 @@
 
         <div v-show="isIntroExpanded" class="intro-content">
           <p class="intro-text">
-            面向应用开发者提供AutoDL训练练模式及高阶训练模式，AutoDL训练模式自动化程度高，高级训练模式支持训练参数灵活性高，两种训练模式可以灵活选择。对训练完成的任务可通过完整评估报告、校验来验证效果，满足业务应用需求的任务可发布为模型进行后续部署操作。
+            选择已生成的数据集，使用默认配置或自定义训练轮数、批大小和输入尺寸。启动前检查图片、标注及训练/验证集独立性；训练完成后可自动保存到算法模型，实际效果仍需独立样本验证。
           </p>
 
           <!-- workflow -->
@@ -41,7 +41,7 @@
                 <img :src="selectDatasetIcon" alt="选择标注集" class="step-img" />
               </div>
               <h3>2.选择标注集</h3>
-              <p>选择算法标注集，自动或手动配置智能脑训练策略</p>
+              <p>选择已生成并独立划分训练集和验证集的数据集</p>
               <el-icon class="arrow-icon"><ArrowRight /></el-icon>
             </div>
 
@@ -484,16 +484,16 @@
               <div
                 class="mode-tab"
                 :class="{ active: trainingMode === 'auto' }"
-                @click="trainingMode = 'auto'"
+                @click="selectTrainingMode('auto')"
               >
-                AutoDL模式
+                默认配置
               </div>
               <div
                 class="mode-tab"
                 :class="{ active: trainingMode === 'advanced' }"
-                @click="trainingMode = 'advanced'"
+                @click="selectTrainingMode('advanced')"
               >
-                高级调参模式
+                自定义参数
               </div>
             </div>
           </div>
@@ -540,39 +540,39 @@
 <!--              </div>-->
 <!--            </div>-->
 
-            <!-- trainingconfiguration -->
+            <div class="config-tip">默认使用任务轮数、批大小 16、输入尺寸 640；自定义参数可调整实际训练配置。</div>
             <div class="config-item">
-              <div class="switch-item">
-                <span class="switch-label">高级训练配置</span>
-
-              </div>
-              <el-switch v-model="advancedConfig" />
-              <div class="config-tip">
-                以下高级配置最佳设置一般情况下不需要修改，如以需要任何类型调整，请根据实际情况调整
-              </div>
+              <label class="config-label">训练轮数</label>
+              <el-input-number v-model="epochTotal" :min="1" :max="10000" :step="1" :disabled="trainingMode === 'auto' || isTraining" />
             </div>
-
-            <!--  -->
             <div class="config-item">
-              <label class="config-label">备入调分辨率
-                <el-icon class="help-icon"><QuestionFilled /></el-icon>
-              </label>
-              <el-select v-model="resolution" class="config-select">
-                <el-option label="Auto" value="auto" />
+              <label class="config-label">批大小</label>
+              <el-input-number v-model="batchSize" :min="1" :max="256" :step="1" :disabled="trainingMode === 'auto' || isTraining" />
+            </div>
+            <div class="config-item">
+              <label class="config-label">输入尺寸</label>
+              <el-select v-model="trainImgSize" :disabled="trainingMode === 'auto' || isTraining" class="config-select">
+                <el-option v-for="size in [320, 416, 512, 640, 768, 960, 1280]" :key="size" :label="String(size)" :value="size" />
               </el-select>
             </div>
 
             <!-- training after to model -->
             <div class="config-item">
-              <label class="config-label">训练完成后同步发布为模型
+              <label class="config-label">训练完成后保存到算法模型
                 <el-icon class="help-icon"><QuestionFilled /></el-icon>
               </label>
               <div class="publish-options">
-                <el-radio v-model="autoPublish" label="yes">是</el-radio>
-                <el-radio v-model="autoPublish" label="no">否</el-radio>
+                <el-radio v-model="autoPublish" label="yes" :disabled="isTraining">是</el-radio>
+                <el-radio v-model="autoPublish" label="no" :disabled="isTraining">否</el-radio>
               </div>
             </div>
           </div>
+
+          <div v-if="publicationState" class="config-section">
+            <div role="status">模型保存状态：{{ publicationLabels[publicationState] || publicationState }}</div>
+            <el-button v-if="publicationState === 'FAILED'" @click="retryAutoPublication">重试保存模型</el-button>
+          </div>
+          <el-alert v-if="!trainingBackendReady" type="warning" :closable="false" title="训练服务尚未就绪，请完成后端更新后重新打开配置页面。" />
 
           <!-- dataset -->
           <div class="config-section">
@@ -680,7 +680,7 @@
               type="primary"
               @click="handleStartTraining"
               class="start-training-btn"
-              :disabled="selectedDatasets.length !== 1 || !isDatasetReady(selectedDatasets[0])"
+              :disabled="!trainingBackendReady || selectedDatasets.length !== 1 || !isDatasetReady(selectedDatasets[0])"
               :loading="isTraining"
             >
               {{ isTraining ? '训练中...' : '开始训练' }}
@@ -1099,6 +1099,7 @@
 <script setup>
 import {computed, h, nextTick, onMounted, onUnmounted, ref} from 'vue'
 import {useRouter} from 'vue-router'
+import { buildTrainingOptions } from '@/utils/trainingOptions'
 import {ElMessage, ElMessageBox, ElRadio, ElRadioGroup} from 'element-plus'
 import {Plus, QuestionFilled, Search} from '@element-plus/icons-vue'
 import { clacPXToVW } from '@/utils/index'
@@ -1291,11 +1292,33 @@ const repositoryOptions = ref([
 
 // trainingconfigurationrelateddata
 const trainingMode = ref('auto')
-const advancedConfig = ref(true)
+const publicationState = ref('')
+const trainingBackendReady = ref(false)
+let publicationTimer = null
+const publicationLabels = { PENDING: '等待训练和转换完成，后台自动保存', COMPLETED: '已保存', FAILED: '保存失败，可重试', DISABLED: '未启用' }
 const resolution = ref('auto')
 const epochMode = ref('auto')
 const autoPublish = ref('yes')
-const autoPublishTriggered = ref(new Set())
+const refreshPublication = async (taskId) => {
+  const response = await request({ url: `/vlsAlgorithmTraining/${taskId}/publication`, method: 'get' })
+  if (String(currentTrainingItem.value?.originalData?.id ?? currentTrainingItem.value?.id) === String(taskId)) {
+    trainingBackendReady.value = true
+    publicationState.value = response.data?.publication_state || 'DISABLED'
+    if (publicationState.value !== 'PENDING') {
+      clearTimeout(publicationTimer)
+      publicationTimer = null
+    } else {
+      clearTimeout(publicationTimer)
+      publicationTimer = setTimeout(() => refreshPublication(taskId).catch(() => {}), 10000)
+    }
+  }
+}
+const retryAutoPublication = async () => {
+  const taskId = currentTrainingItem.value?.originalData?.id ?? currentTrainingItem.value?.id
+  await request({ url: `/vlsAlgorithmTraining/${taskId}/publication/retry`, method: 'post' })
+  await refreshPublication(taskId)
+  ElMessage.success('已提交后台重试')
+}
 const customValidation = ref(true)
 const dataStrategy = ref('default')
 
@@ -1374,8 +1397,9 @@ const handleAdd = async () => {
 
 const handleConfirmAdd = async () => {
   if (!addFormRef.value) return
+  const valid = await addFormRef.value.validate().catch(() => false)
+  if (!valid) return
   try {
-    await addFormRef.value.validate()
     let parsedConfig = null
     if (addForm.value.configParams) {
       try {
@@ -1453,7 +1477,9 @@ const handleRowClick = (row) => {
   selectedRow.value = row
 }
 
-const handleTrain = (row) => {
+const handleTrain = async (row) => {
+  publicationState.value = ''
+  trainingMode.value = 'auto'
   currentTrainingItem.value = row
   stopAllPolling()
   lastLogCount.value = 0
@@ -1477,6 +1503,8 @@ const handleTrain = (row) => {
   trainImgSize.value = row?.originalData?.imgSize || 640
 
   showTrainingConfig.value = true
+  await restoreTrainingConfig(row.originalData || row)
+  await refreshPublication(row.originalData?.id || row.id).catch(() => {})
 
   // already in training in task, startlog/
   const taskId = row.originalData?.id || row.id
@@ -1535,9 +1563,7 @@ const buildTrainingPayload = async () => {
   )
   const modelFilePath = resolveBaseModelPath(algorithm, trainingData)
   const trainType = trainingData.trainType || algorithm?.type || 'detect'
-  const epochs = Number(trainingData.epochTotal)
-  const imgsz = Number(trainImgSize.value || 640)
-  const batch = Number(batchSize.value || 16)
+  const options = buildTrainingOptions({ mode: trainingMode.value, epochs: epochTotal.value, batchSize: batchSize.value, imgSize: trainImgSize.value, autoPublish: autoPublish.value })
 
   return {
     taskId,
@@ -1545,29 +1571,27 @@ const buildTrainingPayload = async () => {
     modelFilePath,
     trainType,
     params: {
-      trainType,
-      datasetPath: dataset.datasetPath,
-      data: dataset.datasetPath,
       datasetId: String(dataset.value),
-      modelFilePath: modelFilePath || '',
-      model: modelFilePath || '',
-      epochs,
-      imgsz,
-      batchSize: batch,
-      batch
+      ...options
     }
   }
 }
 
 // starttraining
 const handleStartTraining = async () => {
+  if (isTraining.value) return
+  if (!trainingBackendReady.value) { ElMessage.warning('训练服务尚未就绪，请更新后端后重试'); return }
   try {
+    const original = currentTrainingItem.value?.originalData
+    if (original?.modelOutputPath) {
+      await ElMessageBox.confirm('该任务已有训练结果。重新训练会更新任务状态和产物路径，已保存到算法模型的记录保留。确认重新训练？', '重新训练', { type: 'warning' })
+    }
     stopAllPolling()
     lastModelPath.value = ''
     lastLogPath.value = ''
     isTraining.value = true
-    const { taskId, trainType, modelFilePath, params } = await buildTrainingPayload()
-    autoPublishTriggered.value.delete(taskId)
+    const { taskId, dataset, trainType, modelFilePath, params } = await buildTrainingPayload()
+
 
     if (!modelFilePath) {
       isTraining.value = false
@@ -1578,10 +1602,10 @@ const handleStartTraining = async () => {
 
     const commandText = buildTrainCommand({
       task: trainType,
-      datasetPath: params.datasetPath,
+      datasetPath: dataset.datasetPath,
       modelPath: modelFilePath,
       epochs: params.epochs,
-      imgsz: params.imgsz,
+      imgsz: params.imgSize,
       batchSize: params.batchSize
     })
 
@@ -1591,11 +1615,13 @@ const handleStartTraining = async () => {
     appendLogLines('[INFO] 正在向后端提交训练请求...')
 
     await startTrainingWithParams(taskId, params)
+    await refreshPublication(taskId).catch(() => {})
 
     appendLogLines('[INFO] 训练请求已入队，等待GPU调度；开始监听日志与状态...')
     startPollingForTask(taskId, false)
     await loadTrainingData()
   } catch (error) {
+    if (error === 'cancel' || error === 'close') return
     console.error('启动训练失败:', error)
     appendLogLines(`[ERROR] 训练启动失败: ${error?.message || error}`)
     ElMessage.error('训练启动失败：' + (error?.message || '未知错误'))
@@ -1938,6 +1964,7 @@ const handleRetrainModel = async (row) => {
 
     // trainingconfiguration
     await restoreTrainingConfig(originalData)
+    await refreshPublication(originalData.id).catch(() => {})
 
     // trainingconfigurationpage
     showTrainingConfig.value = true
@@ -1966,6 +1993,12 @@ const handleRetrainModel = async (row) => {
 
 // trainingconfiguration
 const restoreTrainingConfig = async (originalData) => {
+  trainingBackendReady.value = false
+  epochTotal.value = Number(originalData.epochTotal || 10)
+  batchSize.value = 16
+  trainImgSize.value = 640
+  trainingMode.value = 'auto'
+  publicationState.value = ''
   try {
     console.log('恢复训练配置:', originalData)
 
@@ -2003,12 +2036,14 @@ const restoreTrainingConfig = async (originalData) => {
 
         // configurationparameter
         if (config.dataStrategy) dataStrategy.value = config.dataStrategy
-        if (config.resolution) resolution.value = config.resolution
+        trainingMode.value = config.mode === 'advanced' ? 'advanced' : 'auto'
+        trainImgSize.value = Number(config.imgSize || config.imgsz || (config.resolution !== 'auto' && config.resolution) || 640)
         if (config.epochMode) epochMode.value = config.epochMode
-        if (config.autoPublish !== undefined) autoPublish.value = config.autoPublish
+        if (config.autoPublish !== undefined) autoPublish.value = config.autoPublish === true || config.autoPublish === 'yes' ? 'yes' : 'no'
         if (config.customValidation !== undefined) customValidation.value = config.customValidation
-        if (config.epochs) epochTotal.value = config.epochs
-        if (config.batchSize) batchSize.value = config.batchSize
+        if (config.epochs && trainingMode.value === 'advanced') epochTotal.value = config.epochs
+        if (config.batchSize && trainingMode.value === 'advanced') batchSize.value = config.batchSize
+        if (trainingMode.value === 'auto') trainImgSize.value = 640
 
       } catch (parseError) {
         console.error('解析训练配置失败:', parseError)
@@ -2030,6 +2065,9 @@ const restoreTrainingConfig = async (originalData) => {
 
 // to configuration
 const resetToDefaultConfig = () => {
+  trainingMode.value = 'auto'
+  batchSize.value = 16
+  trainImgSize.value = 640
   dataStrategy.value = 'default'
   resolution.value = 'auto'
   epochMode.value = 'auto'
@@ -2038,58 +2076,13 @@ const resetToDefaultConfig = () => {
 }
 
 // trainingconfiguration data
-const saveTrainingConfig = async (dataset) => {
-  try {
-    if (!currentTrainingItem.value) {
-      console.warn('没有当前训练项目，跳过配置保存')
-      return
-    }
-
-    // Build trainingconfigurationobject
-    const trainingConfig = {
-      datasetId: dataset ? dataset.value : null,
-      datasetName: dataset ? dataset.annotationName : null,
-      dataStrategy: dataStrategy.value,
-      resolution: resolution.value,
-      epochMode: epochMode.value,
-      autoPublish: autoPublish.value,
-      customValidation: customValidation.value,
-      epochs: epochTotal.value,
-      batchSize: batchSize.value,
-      savedAt: new Date().toISOString()
-    }
-
-    console.log('保存训练配置:', trainingConfig)
-
-    // after API configuration
-    const response = await fetch(getBaseURL() + `/vlsAlgorithmTraining/${currentTrainingItem.value.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        datasetId: trainingConfig.datasetId,
-        configParams: JSON.stringify(trainingConfig)
-      })
-    })
-
-    if (response.ok) {
-      console.log('训练配置已保存到数据库')
-
-      // in SSH info
-      if (sshConnected.value) {
-        terminalOutput.value += `<div class="terminal-line"><span class="terminal-success">[SUCCESS]</span> 💾 训练配置已保存到数据库</div>`
-        terminalOutput.value += `<div class="terminal-line"><span class="terminal-info">[INFO]</span> 📊 数据集: ${trainingConfig.datasetName || '未选择'}</div>`
-        terminalOutput.value += `<div class="terminal-line"><span class="terminal-info">[INFO]</span> 🔧 配置参数已记录，可用于重新训练</div>`
-        scrollToBottom()
-      }
-    } else {
-      console.error('保存训练配置失败:', response.statusText)
-    }
-
-  } catch (error) {
-    console.error('保存训练配置失败:', error)
-    ElMessage.warning('保存训练配置失败，但训练将继续进行')
+const selectTrainingMode = (mode) => {
+  if (isTraining.value) return
+  trainingMode.value = mode
+  if (mode === 'auto') {
+    epochTotal.value = currentTrainingItem.value?.originalData?.epochTotal || 10
+    batchSize.value = 16
+    trainImgSize.value = 640
   }
 }
 
@@ -2284,28 +2277,6 @@ const resolveAutoPublishItem = (taskId) => {
   return null
 }
 
-const triggerAutoPublish = async (taskId, statusValue, displayStatus) => {
-  if (autoPublish.value !== 'yes') return
-  if (!isCompletedStatus(statusValue) && !isCompletedStatus(displayStatus)) return
-  if (autoPublishTriggered.value.has(taskId)) return
-
-  const item = resolveAutoPublishItem(taskId)
-  if (!item?.originalData) return
-
-  const trainingData = item.originalData
-  if (!trainingData.modelOutputPath) {
-    appendTerminalInfo('Auto publish skipped: model path missing.')
-    return
-  }
-
-  autoPublishTriggered.value.add(taskId)
-  currentDeployItem.value = item
-  deployForm.value.modelName = item.algorithmName || trainingData.taskName || deployForm.value.modelName || 'model'
-  deployForm.value.modelVersion = trainingData.version || deployForm.value.modelVersion
-  await handleDeployModel()
-}
-
-
 // traininglog and
 const appendLogLines = (logData) => {
   if (logData === undefined || logData === null) return
@@ -2356,6 +2327,8 @@ const stopConversionPolling = () => {
 }
 
 const stopAllPolling = () => {
+  clearTimeout(publicationTimer)
+  publicationTimer = null
   stopLogPolling()
   stopStatusPolling()
   stopConversionPolling()
@@ -2398,7 +2371,7 @@ const startConversionPolling = (taskId, trainingStatus, displayStatus) => {
       } else {
         appendLogLines(`[ERROR] OM转换失败: ${data.omConversionError || '未返回失败原因'}`)
       }
-      await triggerAutoPublish(taskId, trainingStatus, displayStatus)
+      await refreshPublication(taskId)
     } catch (error) {
       console.error('查询模型转换状态失败:', error)
       if (attempts >= MODEL_CONVERSION_MAX_POLLS) {
@@ -2567,9 +2540,10 @@ const handleCloseEditDialog = () => {
 
 const handleConfirmEdit = async () => {
   if (!editFormRef.value) return
+  const valid = await editFormRef.value.validate().catch(() => false)
+  if (!valid) return
 
   try {
-    await editFormRef.value.validate()
 
     const formData = {
       id: editingTrainingItem.value.originalData.id,
@@ -3575,8 +3549,11 @@ const openDatasetSelector = async () => {
   display: flex;
   gap: 20px;
   flex: 1;
+  min-height: 0;
   padding: 0 20px 40px 0;
   align-items: flex-start;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 /* configuration */

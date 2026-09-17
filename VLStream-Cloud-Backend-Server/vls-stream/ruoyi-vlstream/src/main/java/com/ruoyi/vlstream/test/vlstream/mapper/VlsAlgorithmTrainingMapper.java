@@ -161,10 +161,11 @@ public interface VlsAlgorithmTrainingMapper extends BaseMapper<AlgorithmTraining
 	 * @return Delete
 	 */
 	@Update("<script>" +
-		"UPDATE vls_algorithm_training SET deleted = 1, update_time = NOW() WHERE id IN " +
+		"UPDATE vls_algorithm_training SET is_deleted = 1, update_time = NOW() WHERE is_deleted = 0 AND " +
+		"<choose><when test='ids != null and ids.size() > 0'>id IN " +
 		"<foreach collection='ids' item='id' open='(' separator=',' close=')'>" +
 		"#{id}" +
-		"</foreach>" +
+		"</foreach></when><otherwise>1 = 0</otherwise></choose>" +
 		"</script>")
 	int deleteBatch(@Param("ids") List<Long> ids);
 

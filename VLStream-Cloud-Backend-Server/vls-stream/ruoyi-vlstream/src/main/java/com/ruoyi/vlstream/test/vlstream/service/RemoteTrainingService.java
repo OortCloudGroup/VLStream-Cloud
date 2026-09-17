@@ -198,57 +198,24 @@ public class RemoteTrainingService {
 	 */
 	public String processTrainingResult(Long taskId, RemoteServers server, String trainType, String taskName) {
 		try {
-			String taskFolder = (trainType == null || trainType.isEmpty()) ? "detect" : trainType;
-			String findResultCommand = String.format(
-				"source ~/.bashrc && source /data/work/anaconda3/etc/profile.d/conda.sh && " +
-					"cd %s && find runs/%s -name 'train*' -type d | sort -V | tail -1",
-				server.getWorkDir(),
-				taskFolder
-			);
-
-			SSHService.SSHExecutionResult findResult = executeWithFallback(server, findResultCommand);
-
-			if (findResult.isSuccess() && findResult.getOutput() != null && !findResult.getOutput().trim().isEmpty()) {
-				String resultDir = findResult.getOutput().trim();
-				log.info("找到最新训练结果目录: {}", resultDir);
-
-				String finalTaskName = (taskName != null && !taskName.isEmpty()) ? taskName : ("training_" + taskId);
-
-				String processModelCommand = String.format(
-					"cd %s && " +
-						"if [ -f %s/weights/best.pt ]; then " +
-						"cp %s/weights/best.pt %s/weights/%s.pt && " +
-						"echo 'Model saved: %s/weights/%s.pt'; " +
-						"else echo 'Model file not found in %s/weights/'; fi",
-					server.getWorkDir(),
-					resultDir,
-					resultDir, resultDir, finalTaskName,
-					resultDir, finalTaskName,
-					resultDir
-				);
-
-				SSHService.SSHExecutionResult processResult = executeWithFallback(server, processModelCommand);
-
-				if (processResult.isSuccess()) {
-					String modelPath = CommonConstant.BASE_DATASETS_PATH + resultDir + "/weights/" + finalTaskName + ".pt";
-					AlgorithmTraining updateTraining = new AlgorithmTraining();
-					updateTraining.setId(taskId);
-					updateTraining.setModelOutputPath(modelPath);
-					updateTraining.setTrainStatus(AlgorithmTrainingStatusEnum.completed);
-					updateTraining.setProgress(100);
-					updateTraining.setEndTime(new Date());
-					algorithmTrainingService.updateAlgorithmTraining(updateTraining);
-					log.info("模型已就绪，路径: {}", modelPath);
-					return modelPath;
-				} else {
-					log.error("模型处理失败: {}", processResult.getErrorMsg());
-					return null;
+			AlgorithmTraining current = algorithmTrainingService.getById(taskId);
+			if (current != null && current.getConfigParams() != null) {
+				com.fasterxml.jackson.databind.JsonNode config = new com.fasterxml.jackson.databind.ObjectMapper().readTree(current.getConfigParams());
+				if (config.hasNonNull("runDirectory")) {
+					String directory = config.get("runDirectory").asText();
+					String prefix = server.getWorkDir() + "/runs/vls/task_" + taskId + "_";
+					if (!directory.startsWith(prefix) || !directory.substring(prefix.length()).matches("[a-f0-9]{32}")) throw new IllegalStateException("本轮训练目录无效");
+					String modelPath = directory + "/weights/best.pt";
+					SSHService.SSHExecutionResult probe = executeWithFallback(server, "test -s " + quoteShellArgument(modelPath) + " && echo MODEL_READY");
+					if (!probe.isSuccess() || !"MODEL_READY".equals(probe.getOutput().trim())) return null;
+					AlgorithmTraining update = new AlgorithmTraining(); update.setId(taskId); update.setModelOutputPath(modelPath);
+					update.setTrainStatus(AlgorithmTrainingStatusEnum.completed); update.setProgress(100); update.setEndTime(new Date());
+					return algorithmTrainingService.updateAlgorithmTraining(update) > 0 ? modelPath : null;
 				}
-
-			} else {
-				log.warn("未找到训练输出目录");
-				return null;
 			}
+			// Historical tasks may use their already recorded artifact; never guess another run's output.
+			if (current != null && current.getModelOutputPath() != null && !current.getModelOutputPath().trim().isEmpty()) return current.getModelOutputPath();
+			return null;
 
 		} catch (Exception e) {
 			log.error("处理训练结果失败: {}", e.getMessage(), e);
@@ -288,16 +255,11 @@ public class RemoteTrainingService {
 				if (logResult.isCompleted()) {
 					String modelPath = processTrainingResult(taskId, server, trainType, taskName);
 					logResult.setModelPath(modelPath);
-					AlgorithmTraining update = new AlgorithmTraining();
-					update.setId(taskId);
-					update.setTrainStatus(AlgorithmTrainingStatusEnum.completed);
-					update.setProgress(100);
-					update.setEndTime(new Date());
-					if (modelPath != null) {
-						update.setModelOutputPath(modelPath);
-					}
-					algorithmTrainingService.updateAlgorithmTraining(update);
-					logResult.setStatus(AlgorithmTrainingStatusEnum.completed.getCode());
+					if (modelPath == null) {
+						logResult.setCompleted(false); logResult.setProgress(99);
+						logResult.setStatus(AlgorithmTrainingStatusEnum.training.getCode());
+						logResult.setMessage("训练日志已结束，正在核对本轮模型文件");
+					} else logResult.setStatus(AlgorithmTrainingStatusEnum.completed.getCode());
 				} else if (progress.isFailed()) {
 					AlgorithmTraining update = new AlgorithmTraining();
 					update.setId(taskId);

@@ -45,6 +45,51 @@ import static org.mockito.Mockito.when;
 
 @Tag("dev")
 class VlsAlgorithmTrainingControllerTest {
+	@Test
+	void deletingDatasetRejectsStartWithoutChangingHistoricalTask() throws Exception {
+		VlsAlgorithmTrainingController controller = new VlsAlgorithmTrainingController();
+        setField(controller, "trainingPublicationService", mock(com.ruoyi.vlstream.test.vlstream.service.TrainingPublicationService.class));
+        setField(controller, "trainingDatasetPreflight", mock(com.ruoyi.vlstream.test.vlstream.service.TrainingDatasetPreflight.class));
+		com.ruoyi.vlstream.test.vlstream.data.DataManagementService data = mock(com.ruoyi.vlstream.test.vlstream.data.DataManagementService.class);
+		IVlsAlgorithmTrainingService training = mock(IVlsAlgorithmTrainingService.class);
+		setField(controller, "dataManagementService", data);
+		setField(controller, "vlsAlgorithmTrainingService", training);
+		org.mockito.Mockito.doThrow(new com.ruoyi.common.exception.ServiceException("数据集正在删除")).when(data).lockDatasetForTask(10L);
+		org.junit.jupiter.api.Assertions.assertThrows(com.ruoyi.common.exception.ServiceException.class,
+			() -> controller.startTraining(1L, 10, 10L, 16, 640, null));
+		org.mockito.Mockito.verifyNoInteractions(training);
+	}
+
+	@Test
+	void pagePreservesTasksWhenRelatedAlgorithmIsMissing() throws Exception {
+		IVlsAlgorithmTrainingService service = mock(IVlsAlgorithmTrainingService.class);
+		IVlsAlgorithmService algorithms = mock(IVlsAlgorithmService.class);
+		com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO missing = new com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO();
+		missing.setAlgorithmId(2098276259682451500L);
+		com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO empty = new com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO();
+		com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO valid = new com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO();
+		valid.setAlgorithmId(50L);
+		Algorithm algorithm = new Algorithm();
+		algorithm.setName("安全绳");
+		algorithm.setCategory(AlgorithmCategoryEnum.detect);
+		algorithm.setPtModelFilePath("/models/yolov8m.pt");
+		when(algorithms.getById(50L)).thenReturn(algorithm);
+		com.baomidou.mybatisplus.extension.plugins.pagination.Page<com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO> page = new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(1, 5, 3);
+		page.setRecords(Arrays.asList(missing, empty, valid));
+		when(service.selectVlsAlgorithmTrainingPage(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).thenReturn(page);
+		VlsAlgorithmTrainingController controller = new VlsAlgorithmTrainingController();
+        setField(controller, "trainingPublicationService", mock(com.ruoyi.vlstream.test.vlstream.service.TrainingPublicationService.class));
+        setField(controller, "trainingDatasetPreflight", mock(com.ruoyi.vlstream.test.vlstream.service.TrainingDatasetPreflight.class));
+		setField(controller, "vlsAlgorithmTrainingService", service);
+		setField(controller, "algorithmService", algorithms);
+		R<com.baomidou.mybatisplus.core.metadata.IPage<com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO>> response = controller.page(new com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO(), new org.springblade.core.mp.support.Query());
+		assertTrue(response.isSuccess());
+		assertEquals(3, response.getData().getTotal());
+		assertEquals("关联算法不存在", missing.getAlgorithmName());
+		assertEquals("关联算法不存在", empty.getAlgorithmName());
+		assertEquals("安全绳", valid.getAlgorithmName());
+		assertEquals("/models/yolov8m.pt", valid.getTargetModel());
+	}
 
 	@Test
 	void completedStatusWaitsUntilPtPathHasBeenPersisted() throws Exception {
@@ -57,6 +102,8 @@ class VlsAlgorithmTrainingControllerTest {
 		when(trainingService.selectAlgorithmTrainingById(30L)).thenReturn(training);
 
 		VlsAlgorithmTrainingController controller = new VlsAlgorithmTrainingController();
+        setField(controller, "trainingPublicationService", mock(com.ruoyi.vlstream.test.vlstream.service.TrainingPublicationService.class));
+        setField(controller, "trainingDatasetPreflight", mock(com.ruoyi.vlstream.test.vlstream.service.TrainingDatasetPreflight.class));
 		setField(controller, "vlsAlgorithmTrainingService", trainingService);
 		setField(controller, "remoteTrainingService", remoteTrainingService);
 
@@ -86,6 +133,8 @@ class VlsAlgorithmTrainingControllerTest {
 		when(remoteTrainingService.getProgress(31L, null)).thenReturn(detected);
 
 		VlsAlgorithmTrainingController controller = new VlsAlgorithmTrainingController();
+        setField(controller, "trainingPublicationService", mock(com.ruoyi.vlstream.test.vlstream.service.TrainingPublicationService.class));
+        setField(controller, "trainingDatasetPreflight", mock(com.ruoyi.vlstream.test.vlstream.service.TrainingDatasetPreflight.class));
 		setField(controller, "vlsAlgorithmTrainingService", trainingService);
 		setField(controller, "remoteTrainingService", remoteTrainingService);
 
@@ -110,6 +159,7 @@ class VlsAlgorithmTrainingControllerTest {
 		training.setId(40L);
 		training.setAlgorithmId(50L);
 		AlgorithmAnnotation annotation = new AlgorithmAnnotation();
+        annotation.setAnnotationType("object_detection");
 		annotation.setDatasetPath("/data/datasets/annotation-60/dataset.yaml");
 		Algorithm algorithm = new Algorithm();
 		algorithm.setCategory(AlgorithmCategoryEnum.detect);
@@ -126,8 +176,11 @@ class VlsAlgorithmTrainingControllerTest {
 			org.mockito.ArgumentMatchers.eq(640))).thenReturn(startResult);
 
 		VlsAlgorithmTrainingController controller = new VlsAlgorithmTrainingController();
+        setField(controller, "trainingPublicationService", mock(com.ruoyi.vlstream.test.vlstream.service.TrainingPublicationService.class));
+        setField(controller, "trainingDatasetPreflight", mock(com.ruoyi.vlstream.test.vlstream.service.TrainingDatasetPreflight.class));
 		setField(controller, "vlsAlgorithmTrainingService", trainingService);
 		setField(controller, "algorithmAnnotationService", annotationService);
+		setField(controller, "dataManagementService", mock(com.ruoyi.vlstream.test.vlstream.data.DataManagementService.class));
 		setField(controller, "algorithmService", algorithmService);
 		setField(controller, "gpuTrainingSchedulerService", schedulerService);
 		mockDatasetProbe(controller, "READY", true);
@@ -175,12 +228,16 @@ class VlsAlgorithmTrainingControllerTest {
 		AlgorithmTraining training = new AlgorithmTraining();
 		training.setId(40L);
 		AlgorithmAnnotation annotation = new AlgorithmAnnotation();
+        annotation.setAnnotationType("object_detection");
 		annotation.setDatasetPath(path);
 		when(trainingService.selectAlgorithmTrainingById(40L)).thenReturn(training);
 		when(annotationService.getById(2096777217777467393L)).thenReturn(annotation);
 		VlsAlgorithmTrainingController controller = new VlsAlgorithmTrainingController();
+        setField(controller, "trainingPublicationService", mock(com.ruoyi.vlstream.test.vlstream.service.TrainingPublicationService.class));
+        setField(controller, "trainingDatasetPreflight", mock(com.ruoyi.vlstream.test.vlstream.service.TrainingDatasetPreflight.class));
 		setField(controller, "vlsAlgorithmTrainingService", trainingService);
 		setField(controller, "algorithmAnnotationService", annotationService);
+		setField(controller, "dataManagementService", mock(com.ruoyi.vlstream.test.vlstream.data.DataManagementService.class));
 		setField(controller, "gpuTrainingSchedulerService", scheduler);
 		SSHService ssh = mockDatasetProbe(controller, output, success);
 		R<RemoteTrainingService.StartResult> response = controller.startTraining(40L, 10, 2096777217777467393L, 16, 640, null);
@@ -215,6 +272,7 @@ class VlsAlgorithmTrainingControllerTest {
 		training.setDatasetId(71L);
 		training.setModelOutputPath("/data/weights/测试.pt");
 		AlgorithmAnnotation annotation = new AlgorithmAnnotation();
+        annotation.setAnnotationType("object_detection");
 		annotation.setDatasetPath("/data/datasets/annotation-71/dataset.yaml");
 		List<String> calls = new CopyOnWriteArrayList<>();
 		CountDownLatch completed = new CountDownLatch(1);
@@ -238,10 +296,14 @@ class VlsAlgorithmTrainingControllerTest {
 		});
 
 		VlsAlgorithmTrainingController controller = new VlsAlgorithmTrainingController();
+        setField(controller, "trainingPublicationService", mock(com.ruoyi.vlstream.test.vlstream.service.TrainingPublicationService.class));
+        setField(controller, "trainingDatasetPreflight", mock(com.ruoyi.vlstream.test.vlstream.service.TrainingDatasetPreflight.class));
 		setField(controller, "vlsAlgorithmTrainingService", trainingService);
 		setField(controller, "algorithmAnnotationService", annotationService);
+		setField(controller, "dataManagementService", mock(com.ruoyi.vlstream.test.vlstream.data.DataManagementService.class));
 		setField(controller, "remoteTrainingService", remoteTrainingService);
 
+		setField(controller, "datasetConversionGuard", mock(com.ruoyi.vlstream.test.vlstream.data.DatasetConversionGuard.class));
 		controller.convertModel(70L);
 
 		assertTrue(completed.await(2, TimeUnit.SECONDS));

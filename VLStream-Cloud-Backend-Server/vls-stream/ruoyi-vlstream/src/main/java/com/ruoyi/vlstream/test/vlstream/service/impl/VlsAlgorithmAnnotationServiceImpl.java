@@ -86,6 +86,7 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 	private final VlsSshProperties sshProperties;
 	private final com.ruoyi.vlstream.test.vlstream.data.DataTrainingPublisher dataTrainingPublisher;
 	private final com.ruoyi.vlstream.test.vlstream.data.DataManagementService dataManagementService;
+	private final com.ruoyi.vlstream.test.vlstream.data.DatasetCleanupService datasetCleanupService;
 
 	@Override
 	public IPage<AlgorithmAnnotationVO> selectVlsAlgorithmAnnotationPage(IPage<AlgorithmAnnotationVO> page, AlgorithmAnnotationVO vlsAlgorithmAnnotation) {
@@ -702,46 +703,15 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 	}
 
 	@Override
-	@Transactional(rollbackFor = Exception.class)
 	public boolean deleteAnnotation(Long id) {
-		log.info("删除算法标注：ID={}", id);
-
-		AlgorithmAnnotation annotation = getById(id);
-		if (annotation == null) {
-			log.warn("标注不存在：ID={}", id);
-			return false;
-		}
-
-		// Delete related
-		try {
-			deleteAnnotationImages(annotation);
-		} catch (Exception e) {
-			log.error("删除标注图片文件失败：ID={}, Error={}", id, e.getMessage());
-			// Delete operation, only record
-		}
-
-		return removeById(id);
+		return datasetCleanupService.delete(id);
 	}
 
 	@Override
-	@Transactional(rollbackFor = Exception.class)
 	public boolean batchDeleteAnnotations(List<Long> ids) {
-		log.info("批量删除算法标注：IDs={}", ids);
-
-		// Get all need to Delete annotationinfo
-		List<AlgorithmAnnotation> annotations = listByIds(ids);
-
-		// Delete related
-		for (AlgorithmAnnotation annotation : annotations) {
-			try {
-				deleteAnnotationImages(annotation);
-			} catch (Exception e) {
-				log.error("删除标注图片文件失败：ID={}, Error={}", annotation.getId(), e.getMessage());
-				// Delete operation, only record
-			}
-		}
-
-		return removeByIds(ids);
+		if (ids == null || ids.isEmpty()) return false;
+		for (Long id : new LinkedHashSet<>(ids)) datasetCleanupService.delete(id);
+		return true;
 	}
 
 	@Override

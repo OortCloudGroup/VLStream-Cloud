@@ -103,6 +103,11 @@ public class DataTestConfiguration {
         Path backend = root().resolve("VLStream-Cloud-Backend-Server/vls-stream");
         String baseline = new String(Files.readAllBytes(backend.resolve("doc/sql/vls_stream.sql")), StandardCharsets.UTF_8);
         try (Connection connection = source.getConnection(); Statement statement = connection.createStatement()) {
+            statement.execute("DROP TABLE IF EXISTS vls_dataset_cleanup");
+            statement.execute("DROP TABLE IF EXISTS vls_model_class_snapshot");
+            statement.execute("DROP TABLE IF EXISTS vls_dataset_conversion_guard");
+            String cleanup = new String(Files.readAllBytes(backend.resolve("ruoyi-admin/src/main/resources/db/migration/V1_2_0_017__dataset_cleanup_and_model_classes.sql")), StandardCharsets.UTF_8).replaceAll("(?m)^--.*$", "");
+            for (String sql : cleanup.split(";")) if (!sql.trim().isEmpty()) statement.execute(sql);
             for (String table : new String[]{"vls_dataset_version", "vls_annotation_instance", "vls_annotation_label", "vls_annotation_image", "vls_algorithm_annotation"}) statement.execute("DROP TABLE IF EXISTS " + table);
             for (String table : new String[]{"vls_algorithm_annotation", "vls_annotation_image", "vls_annotation_label", "vls_annotation_instance"}) {
                 Matcher matcher = Pattern.compile("CREATE TABLE `" + table + "`[\\s\\S]*?;", Pattern.MULTILINE).matcher(baseline);

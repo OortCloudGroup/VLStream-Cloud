@@ -54,6 +54,9 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 	@Resource
 	private com.ruoyi.vlstream.test.vlstream.data.DataManagementService dataManagementService;
 
+	@Resource
+	private com.ruoyi.vlstream.test.vlstream.data.DatasetStorageProvider storageProvider;
+
 	@Value("${vlstream.annotation-media.public-endpoint:}")
 	private String annotationMediaPublicEndpoint;
 
@@ -75,6 +78,7 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 	}
 
 	@Override
+	@org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
 	public List<AnnotationImage> uploadImages(MultipartFile[] files, Long annotationId) {
 		dataManagementService.beginAnnotationEdit(annotationId);
 		List<AnnotationImage> uploadedImages = new ArrayList<>();
@@ -142,6 +146,7 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 	}
 
 	@Override
+	@org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
 	public AnnotationImage updateImage(AnnotationImage image) {
 		AnnotationImage existing = annotationImageMapper.selectById(image.getId());
 		if (existing == null) throw new com.ruoyi.common.exception.ServiceException("样本不存在");
@@ -153,6 +158,7 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 	}
 
 	@Override
+	@org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
 	public void deleteImage(Long id) {
 		AnnotationImage image = annotationImageMapper.selectById(id);
 		if (image != null) {
@@ -164,6 +170,7 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 	}
 
 	@Override
+	@org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
 	public void batchDeleteImages(List<Long> ids) {
 		for (Long id : ids) {
 			deleteImage(id);
@@ -189,6 +196,7 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 	}
 
 	@Override
+	@org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
 	public boolean saveImage(AnnotationImage annotationImage) {
 		dataManagementService.beginAnnotationEdit(annotationImage.getAnnotationId());
 		try {
@@ -217,6 +225,7 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 	}
 
 	@Override
+	@org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
 	public boolean batchSaveImages(List<AnnotationImage> annotationImages) {
 		try {
 			for (AnnotationImage image : annotationImages) {
@@ -243,23 +252,28 @@ public class VlsAnnotationImageServiceImpl extends BaseServiceImpl<VlsAnnotation
 		if (images == null || images.isEmpty()) {
 			return images;
 		}
-		images.forEach(this::withFreshBrowserUrl);
+		// Resolve once: an unavailable bucket must fail the request once, not retry per image.
+		OssClient storage = storageProvider.current();
+		images.forEach(image -> withFreshBrowserUrl(image, storage));
 		return images;
 	}
 
 	private AnnotationImage withFreshBrowserUrl(AnnotationImage image) {
+		return image == null ? null : withFreshBrowserUrl(image, storageProvider.current());
+	}
+
+	private AnnotationImage withFreshBrowserUrl(AnnotationImage image, OssClient storage) {
 		if (image == null || image.getLocalPath() == null || image.getLocalPath().trim().isEmpty()) {
 			return image;
 		}
 		try {
-			OssClient storage = OssFactory.instance();
 			String objectKey = AnnotationImageObjectKey.normalize(image.getLocalPath(), storage.getBucketName());
 			if (objectKey == null || objectKey.isEmpty()) {
 				return image;
 			}
 			image.setLocalPath(storage.getPrivateUrl(objectKey, annotationMediaSignedUrlTtlSeconds, annotationMediaPublicEndpoint));
 		} catch (RuntimeException exception) {
-			log.warn("Failed to create annotation image access URL: imageId={}, error={}", image.getId(), exception.getMessage());
+			throw new com.ruoyi.common.exception.ServiceException("图片访问地址生成失败，请检查对象存储连接后重试");
 		}
 		return image;
 	}
