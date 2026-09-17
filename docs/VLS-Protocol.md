@@ -10,6 +10,8 @@ VLS-Protocol
 | 1.2/雷超群/2026-08-05 | 优化数据格式 |
 | 1.3/雷超群/2026-08-12 | 设备心跳增加多码流上报与平台接收回执 |
 | 1.3/雷超群/2026-08-17 | 4.8 设备OTA固件升级 |
+| 1.8/2026-09-16 | 4.2 补充设备模型全量查询；新增 4.9 模型删除及回执，设备端待适配联调 |
+| 1.7/2026-09-14 | 4.1 增加类别 YAML 下载字段、双文件校验、成对切换和类别哈希回执；设备端待适配联调 |
 | 1.6/2026-09-09 | 心跳新增 WGS84 位置坐标，补充校验、清空和设备详情展示规则 |
 | 1.5/2026-09-08 | 心跳增加设备能力与当前模型快照，补充平台上线时间和详情展示规则 |
 | 1.4/2026-09-07 | 补充通用设备控制规格 1：能力查询、停止、镜头与高级控制、时效和回执；设备端尚未支持，待开发联调 |
@@ -60,7 +62,7 @@ VLS-Protocol
 
 [4.1 AI 模型下发部署 35](#_Toc237638650)
 
-[4.2 查询当前加载模型 37](#_Toc237638651)
+[4.2 查询设备模型](#42-查询设备模型)
 
 [4.3 模型手动回滚 37](#_Toc237638652)
 
@@ -73,6 +75,8 @@ VLS-Protocol
 [4.7 结构化人车 / 车牌 / 非机动车识别 43](#_Toc237638656)
 
 [4.8 设备OTA固件升级 45](#_Toc237638657)
+
+[4.9 删除设备模型](#49-删除设备模型)
 
 [五、IoT Center 类 48](#_Toc237638658)
 
@@ -1604,7 +1608,17 @@ streams 是视频源描述对象数组，不是视频文件、视频帧，也不
 
 ### 业务说明
 
-AI 推理模型下载、校验、切换推理实例。
+平台将模型与其训练使用的类别 YAML 作为同一部署任务下发。类别文件在生成数据集时创建，使用 names 记录类别编号和名称，nc（存在时）必须等于类别数。不得用后来修改的数据集类别替换该模型的类别表。
+
+平台通过模型训练目录的 args.yaml 中 data 路径定位原始数据集 YAML，保留文件原始 UTF-8 字节并保存下发快照；不按当前可编辑数据集路径推断。原始训练目录或 YAML 缺失、不可读、超过 1 MiB、names 为空或非法时拒绝下发。历史目录如曾被覆盖，必须先核对并恢复与模型一致的原文件。
+
+names 支持从 0 开始的列表或连续整数编号映射；映射按编号解释，不能按字段出现顺序、字母顺序排序，也不能跳过空名称重新编号。设备只读取类别定义，不执行 YAML 标签、脚本、download 字段或访问 path/train/val 指定的训练路径。
+
+设备收到任务后，分别下载模型和类别文件到临时位置，按各自的大小及 SHA-256 校验，再检查类别数量、编号与模型输出是否匹配。两者均通过后，成对切换推理实例及类别映射；任一失败保留旧组合。rollbackEnable=true 时切换失败应将模型与类别文件一起回滚。
+
+下载顺序不限，两个链接使用相同 expiresAt，过期后由平台重新创建下发任务。DOWNLOADED/VERIFYING/DEPLOYING 的设备回执表示处理整个组合；SUCCESS 必须表示模型和类别映射均已生效，并同时返回 fileSha256 与 classFileSha256。平台仅完成模型 HTTP 传输时的 DOWNLOADED 记录不代表设备部署成功。
+
+本次扩展保持 protocolVersion=2.2、mainBizType=aiBiz、subBizType=modelDeploy 不变。新任务必须携带四个 classFile 字段；固件应显式实现这些字段，不能忽略后继续沿用旧类别表。旧平台历史任务未携带类别字段时沿用旧约定；新任务的 SUCCESS 若缺少或不匹配类别哈希，平台记为 FAILED。以下为协议示例，设备端双文件切换仍需固件适配及实机联调。
 
 ### 下发 payload 完整字段
 
@@ -1612,20 +1626,53 @@ AI 推理模型下载、校验、切换推理实例。
 | --- | --- | --- | --- |
 | **字段** | **类型** | **必填** | **释义** |
 | requestId | string | 是   | 模型任务唯一 ID |
-| algorithmId | int | 是   | 算法业务编号 |
+| algorithmId | string | 是   | 算法业务编号 |
 | trainingId | string | 否   | 训练任务 ID |
-| modelType | string | 是   | om/tensorrt |
+| modelType | string | 是   | om/pt/onnx/rknn/int8-rknn，须与设备运行时匹配 |
 | modelUrl | string | 是   | 短期签名 HTTP 下载地址 |
 | fileName | string | 是   | 模型文件名 |
 | fileSize | number | 是   | 文件字节大小 |
 | sha256 | string | 是   | 文件哈希校验码 |
-| expiresAt | string | 是   | 下载链接过期 UTC 时间 |
-| rollbackEnable | bool | 是   | 失败自动回滚旧模型 |
+| classFileUrl | string | 是 | 与本模型配套的 UTF-8 YAML 短期签名下载地址；与 modelUrl 独立签名，共用 expiresAt |
+| classFileName | string | 是 | 类别文件名，例如 dataset.yaml 或 emgitemsv6.yaml；不是服务器绝对路径 |
+| classFileSize | number | 是 | 类别文件原始字节数，1～1048576 字节 |
+| classFileSha256 | string | 是 | 类别文件原始字节的 SHA-256，64 位十六进制；下载后解析前校验 |
+| expiresAt | string | 是   | 模型及类别下载链接共同的过期 UTC 时间 |
+| rollbackEnable | bool | 是   | 失败时模型与类别映射一起回滚 |
 | modelConfig | object | 否   | 推理参数阈值 |
-| modelConfig.confThreshold | float | 置信度阈值 |     |
-| modelConfig.nmsThreshold | float | NMS 抑制阈值 |     |
+| modelConfig.confThreshold | float | 否 | 置信度阈值 |
+| modelConfig.nmsThreshold | float | 否 | NMS 抑制阈值 |
 
 下发完整示例：
+
+```json
+{
+  "protocolVersion": "2.2",
+  "messageId": "77886655-1234-4678-abcd-12345678abcd",
+  "deviceId": "CAM-20260001",
+  "sentAt": "2026-09-14T06:00:00Z",
+  "msgDir": "platform2dev",
+  "mainBizType": "aiBiz",
+  "subBizType": "modelDeploy",
+  "payload": {
+    "requestId": "MODEL-TASK-20260914-001",
+    "algorithmId": "2079813710632751106",
+    "trainingId": "2096927699258966018",
+    "modelType": "om",
+    "modelUrl": "http://download.example.com/model?signature=MODEL_SIGNATURE",
+    "fileName": "emgitemsv6.om",
+    "fileSize": 53617351,
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "classFileUrl": "http://download.example.com/classes?signature=CLASS_SIGNATURE",
+    "classFileName": "emgitemsv6.yaml",
+    "classFileSize": 128,
+    "classFileSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "expiresAt": "2026-09-14T06:30:00Z",
+    "rollbackEnable": true
+  },
+  "extend": {}
+}
+```
 
 ### 模型回执 bizData 字段
 
@@ -1634,44 +1681,46 @@ AI 推理模型下载、校验、切换推理实例。
 | **字段** | **类型** | **释义** |
 | requestId | string | 对应下发任务 ID |
 | status | string | RECEIVED/DOWNLOADING/DOWNLOADED/VERIFYING/DEPLOYING/SUCCESS/FAILED |
-| fileSha256 | string | 本地校验哈希 |
+| fileSha256 | string | 本地模型校验哈希 |
+| classFileSha256 | string | 新任务 SUCCESS 必填，设备实际生效类别文件的 SHA-256，须与下发值一致 |
 | costMs | number | 部署耗时毫秒 |
 
 回执完整示例：
 
+```json
 {
-
-&nbsp;  **"protocolVersion"**:"2.2",  
-    **"messageId"**:"11223344-5566-4788-9900-abcdef123456",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:33:45Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"aiBiz",  
-    **"subBizType"**:"modelDeploy",  
-    **"payload"**:{  
-        **"sourceMsgId"**:"77886655-1234-4678-abcd-12345678abcd",  
-        **"code"**:200,  
-        **"msg"**:"模型校验通过，部署完成",  
-        **"errCode"**:0,  
-        **"errDetail"**:"",  
-        **"bizData"**:{  
-            **"requestId"**:"MODEL-TASK-20260724-001",  
-            **"status"**:"SUCCESS",  
-            **"fileSha256"**:"3f2c9d11e88a77b665443211abcdef00987654321",  
-            **"costMs"**:1200  
-        }  
-    },  
-    **"extend"**:{  
-<br/>    }  
+  "protocolVersion": "2.2",
+  "messageId": "11223344-5566-4788-9900-abcdef123456",
+  "deviceId": "CAM-20260001",
+  "sentAt": "2026-09-14T06:00:45Z",
+  "msgDir": "dev2platform",
+  "mainBizType": "aiBiz",
+  "subBizType": "modelDeploy",
+  "payload": {
+    "sourceMsgId": "77886655-1234-4678-abcd-12345678abcd",
+    "code": 200,
+    "msg": "模型及类别文件校验通过，部署完成",
+    "errCode": 0,
+    "errDetail": "",
+    "bizData": {
+      "requestId": "MODEL-TASK-20260914-001",
+      "status": "SUCCESS",
+      "fileSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "classFileSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "costMs": 1200
+    }
+  },
+  "extend": {}
 }
+```
 
-## 4.2 查询当前加载模型
+## 4.2 查询设备模型
 
 **子业务类型：**subBizType=modelQuery
 
 ### 业务说明
 
-查询设备当前生效 AI 模型，下发 payload 为空对象{} 下发示例：
+查询设备当前模型全量列表，下发 payload 为空对象 {}。回执通过 sourceMsgId 关联下发 messageId；code=200、errCode=0 表示查询成功。 下发示例：
 
 {  
     **"protocolVersion"**:"2.2",  
@@ -1689,7 +1738,37 @@ AI 推理模型下载、校验、切换推理实例。
 
 ### 查询回执 bizData 字段
 
-algorithmId、fileName、sha256、modelType
+| 字段 | 类型 | 释义 |
+| --- | --- | --- |
+| models | array | 当前模型全量列表；[] 表示无模型。字段与 state 心跳 models 一致。 |
+| models[].modelId | string | 设备内模型唯一标识，删除时原样传回；不得用文件路径代替。 |
+| models[].modelName / version / format | string | 模型名称、版本和格式，如 OM。 |
+| models[].status | string | loaded / running / stopped / failed。 |
+
+兼容旧回执 algorithmId、fileName、sha256、modelType（单个生效模型）；未返回 modelId 时仅可查看，不支持删除。查询失败不能用空列表代替。
+
+查询回执 payload 示例：
+
+```json
+{
+  "sourceMsgId": "cmd-model-query-11112222-33334444-55556666",
+  "code": 200,
+  "msg": "查询成功",
+  "errCode": 0,
+  "errDetail": "",
+  "bizData": {
+    "models": [
+      {
+        "modelId": "2096927699258966018",
+        "modelName": "安全帽检测",
+        "version": "1.0.0",
+        "format": "OM",
+        "status": "running"
+      }
+    ]
+  }
+}
+```
 
 ## 4.3 模型手动回滚
 
@@ -2173,6 +2252,54 @@ RootFS 包写入非活动 A/B 槽位，必须启用回滚并在升级后重启�
 平台以 requestId 关联任务，并同时校验 sourceMsgId、deviceId、target、version。SUCCESS 回执还必须校验 fileSha256；任一字段不匹配时不得把任务标记为成功。终态 SUCCESS/FAILED 不允许被后续乱序进度回执覆盖。
 
 同一设备同时只允许一个非终态 RootFS OTA 任务。packageUrl 不要求平台登录令牌，其安全性由不可预测的 requestId 与 messageId 共同保证。平台下载接口必须校验两者与任务记录一致、任务未过期且固件为 READY，并在返回前核对对象大小与 SHA-256；校验通过后才从私有对象存储流式返回 OTA 包。设备应在 urlExpiresAt 前开始下载，不得记录或转发完整 URL。失败后由管理员重新发起新任务，不复用过期地址或旧 requestId。
+
+
+## 4.9 删除设备模型
+
+**子业务类型：**subBizType=modelDelete
+
+### 业务说明
+
+卸载设备上的指定模型及其配套类别文件，不删除平台模型库。运行中先停止推理再卸载；停止或卸载失败返回失败，不得误删其他模型。设备按 messageId 去重；目标已不存在时幂等返回 SUCCESS。
+
+### 下发 payload 字段
+
+| 字段 | 类型 | 必填 | 释义 |
+| --- | --- | --- | --- |
+| modelId | string | 是 | modelQuery 或 state 心跳返回的模型唯一标识。 |
+
+下发 payload 示例（messageId=cmd-model-delete-001）：
+
+```json
+{
+  "modelId": "2096927699258966018"
+}
+```
+
+### 删除回执 bizData 字段
+
+| 字段 | 类型 | 释义 |
+| --- | --- | --- |
+| modelId | string | 原样返回目标模型 ID。 |
+| status | string | SUCCESS / FAILED；SUCCESS 表示已停止并卸载完成。 |
+
+删除回执 payload 示例：
+
+```json
+{
+  "sourceMsgId": "cmd-model-delete-001",
+  "code": 200,
+  "msg": "删除成功",
+  "errCode": 0,
+  "errDetail": "",
+  "bizData": {
+    "modelId": "2096927699258966018",
+    "status": "SUCCESS"
+  }
+}
+```
+
+使用 aiBiz 公共信封，msgDir 下发为 platform2dev、回执为 dev2platform，subBizType 均为 modelDelete。失败返回非 200 code、非 0 errCode 和具体原因；15 秒未收到回执，平台提示结果未确认，需查询核实，不自动重发删除。成功后后续 state.models 应反映删除结果。
 
 # 五、IoT Center 类
 

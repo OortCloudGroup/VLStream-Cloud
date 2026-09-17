@@ -19,6 +19,7 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -83,14 +84,14 @@ class VlsMqttInboundDispatcherTest {
 			+ "\"fileSha256\":\"abc\"}}";
 		String reply = envelope("aiBiz", "modelDeploy", replyPayload, "dev2platform");
 		when(taskService.applyHardwareReply(
-			"mqtt-1", "request-1", "CAM-1", "SUCCESS", "abc", "deployed", reply))
+			"mqtt-1", "request-1", "CAM-1", "SUCCESS", "abc", null, "deployed", reply))
 			.thenReturn(true);
 
 		JSONObject result = dispatcher.dispatch("vlstream/v2.2/dev/CAM-1/bus", reply);
 
 		verify(taskService).applyHardwareReply(
 			eq("mqtt-1"), eq("request-1"), eq("CAM-1"), eq("SUCCESS"),
-			eq("abc"), eq("deployed"), eq(reply));
+			eq("abc"), isNull(), eq("deployed"), eq(reply));
 		org.junit.jupiter.api.Assertions.assertNull(result);
 	}
 

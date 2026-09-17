@@ -53,13 +53,25 @@ public class WvpVlStreamDeviceResolver {
 	}
 
 	public DeviceInfo resolve(String deviceId) {
+		return resolve(deviceId, false);
+	}
+
+	public DeviceInfo resolveOnline(String deviceId) {
+		return resolve(deviceId, true);
+	}
+
+	private DeviceInfo resolve(String deviceId, boolean requireOnline) {
 		if (StringUtils.isBlank(deviceId)) {
 			throw new ServiceException("设备编号不能为空");
 		}
 		URI uri = deviceUri(deviceId);
 		try {
 			ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
-			return mapResponse(deviceId, response.getBody());
+			DeviceInfo device = mapResponse(deviceId, response.getBody());
+			if (requireOnline && !Boolean.TRUE.equals(JSONUtil.parseObj(response.getBody()).getJSONObject("data").getBool("online"))) {
+				throw new ServiceException("设备离线，无法操作模型");
+			}
+			return device;
 		} catch (RestClientException exception) {
 			throw new ServiceException("WVP设备服务不可用，无法校验VLStream设备："
 				+ StringUtils.defaultIfBlank(exception.getMessage(), "连接失败"));

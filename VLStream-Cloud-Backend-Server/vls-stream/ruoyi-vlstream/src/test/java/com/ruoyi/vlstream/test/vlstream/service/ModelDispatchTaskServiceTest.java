@@ -82,6 +82,28 @@ class ModelDispatchTaskServiceTest {
 		assertTrue(updateCaptor.getValue().getParamNameValuePairs().containsValue("FAILED"));
 	}
 
+	@Test
+	void requiresClassHashForNewTasksButKeepsLegacyRepliesCompatible() {
+		when(taskMapper.update(isNull(), any(LambdaUpdateWrapper.class))).thenReturn(1);
+		task.setClassFileSha256("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+		for (String hash : new String[]{null, "wrong", task.getClassFileSha256()}) {
+			org.mockito.Mockito.clearInvocations(taskMapper);
+			assertTrue(taskService.applyHardwareReply("mqtt-1", "request-1", "CAM-1", "SUCCESS",
+				task.getSha256(), hash, "done", "{}"));
+			ArgumentCaptor<LambdaUpdateWrapper<ModelDispatchTask>> captor = ArgumentCaptor.forClass(LambdaUpdateWrapper.class);
+			verify(taskMapper).update(isNull(), captor.capture());
+			assertTrue(captor.getValue().getParamNameValuePairs().containsValue(
+				task.getClassFileSha256().equals(hash) ? "SUCCESS" : "FAILED"));
+		}
+		task.setClassFileSha256(null);
+		org.mockito.Mockito.clearInvocations(taskMapper);
+		assertTrue(taskService.applyHardwareReply("mqtt-1", "request-1", "CAM-1", "SUCCESS",
+			task.getSha256(), "done", "{}"));
+		ArgumentCaptor<LambdaUpdateWrapper<ModelDispatchTask>> captor = ArgumentCaptor.forClass(LambdaUpdateWrapper.class);
+		verify(taskMapper).update(isNull(), captor.capture());
+		assertTrue(captor.getValue().getParamNameValuePairs().containsValue("SUCCESS"));
+	}
+
 	private void setField(Object target, String name, Object value) throws Exception {
 		Field field = target.getClass().getDeclaredField(name);
 		field.setAccessible(true);

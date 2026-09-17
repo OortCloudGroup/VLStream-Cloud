@@ -37,6 +37,7 @@ public class ModelDeployReplyMqttMessageHandler implements VlsMqttMessageHandler
 		String deviceId = envelope.getStr("deviceId");
 		String status = bizData == null ? null : bizData.getStr("status");
 		String fileSha256 = bizData == null ? null : bizData.getStr("fileSha256");
+		String classFileSha256 = bizData == null ? null : bizData.getStr("classFileSha256");
 		String message = reply == null ? null : reply.getStr("msg");
 		String errDetail = reply == null ? null : reply.getStr("errDetail");
 		if (StringUtils.isNotBlank(errDetail) && !StringUtils.equals(message, errDetail)) {
@@ -47,7 +48,7 @@ public class ModelDeployReplyMqttMessageHandler implements VlsMqttMessageHandler
 			return null;
 		}
 		if (!taskService.applyHardwareReply(
-			sourceMsgId, requestId, deviceId, status, fileSha256, message, rawPayload)) {
+			sourceMsgId, requestId, deviceId, status, fileSha256, classFileSha256, message, rawPayload)) {
 			log.warn("Ignoring unmatched model dispatch reply: sourceMsgId={}, requestId={}, deviceId={}",
 				sourceMsgId, requestId, deviceId);
 		}

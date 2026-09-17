@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -107,6 +108,44 @@ public class VlsModelDispatchController extends BladeController {
 			if (!response.isCommitted()) {
 				writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Model download failed");
 			}
+		}
+	}
+
+	@SaIgnore
+	@GetMapping("/public/{requestId}/classes")
+	@Operation(summary = "硬件下载模型对应的类别 YAML")
+	public void downloadClasses(@PathVariable String requestId,
+		@RequestParam long expires, @RequestParam String signature,
+		HttpServletResponse response) {
+		ModelDispatchTask task = taskService.getByRequestId(requestId);
+		if (task == null) {
+			writeError(response, HttpServletResponse.SC_NOT_FOUND, "Dispatch task not found");
+			return;
+		}
+		if (task.getDownloadExpiresAt() == null || task.getDownloadExpiresAt() != expires
+			|| !signatureService.verify(requestId + ":classes", expires, signature)) {
+			writeError(response, HttpServletResponse.SC_FORBIDDEN, "Download link is invalid or expired");
+			return;
+		}
+		if (StringUtils.isBlank(task.getClassFileContent())) {
+			writeError(response, HttpServletResponse.SC_NOT_FOUND, "Class file not available for this task");
+			return;
+		}
+		try {
+			byte[] bytes = task.getClassFileContent().getBytes(StandardCharsets.UTF_8);
+			String name = URLEncoder.encode(task.getClassFileName(), "UTF-8").replace("+", "%20");
+			response.setStatus(HttpServletResponse.SC_OK);
+			response.setContentType("application/yaml;charset=UTF-8");
+			response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + name);
+			response.setContentLengthLong(bytes.length);
+			response.setHeader("ETag", "\"" + task.getClassFileSha256() + "\"");
+			response.setHeader("X-Class-File-SHA256", task.getClassFileSha256());
+			response.setHeader("Cache-Control", "private, no-store");
+			response.getOutputStream().write(bytes);
+		} catch (Exception ex) {
+			log.error("Hardware class file download failed: requestId={}", requestId, ex);
+			// A transport retry must not turn an already deployed task into a failure.
+			writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Class file download failed");
 		}
 	}
 

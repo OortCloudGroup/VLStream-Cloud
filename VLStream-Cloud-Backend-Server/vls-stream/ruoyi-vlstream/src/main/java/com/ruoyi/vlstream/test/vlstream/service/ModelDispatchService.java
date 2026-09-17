@@ -46,6 +46,9 @@ public class ModelDispatchService {
 	private RemoteModelArtifactService artifactService;
 
 	@Resource
+	private ModelClassFileService classFileService;
+
+	@Resource
 	private ModelDispatchTaskService taskService;
 
 	@Resource
@@ -71,6 +74,12 @@ public class ModelDispatchService {
 		}
 		preparedArtifact = prepareLatestArtifact(algorithmId, normalizedType);
 		validateConfiguration();
+		ModelClassFileService.ClassFile classFile;
+		try {
+			classFile = classFileService.prepare(preparedArtifact.training);
+		} catch (Exception ex) {
+			throw new ServiceException("模型对应的类别文件不可用：" + rootMessage(ex));
+		}
 
 		boolean allSucceeded = true;
 		int publishedCount = 0;
@@ -83,7 +92,7 @@ public class ModelDispatchService {
 				String deviceId = deviceIdText.trim();
 				DeviceInfo device = wvpDeviceResolver.resolve(deviceId);
 				dispatchToDevice(algorithmId, preparedArtifact.training, normalizedType,
-					preparedArtifact.remotePath, preparedArtifact.metadata, device);
+					preparedArtifact.remotePath, preparedArtifact.metadata, classFile, device);
 				publishedCount++;
 			} catch (Exception ex) {
 				allSucceeded = false;
@@ -104,6 +113,7 @@ public class ModelDispatchService {
 	private void dispatchToDevice(Long algorithmId, AlgorithmTraining training, String modelType,
 								  String remotePath,
 								  RemoteModelArtifactService.ArtifactMetadata metadata,
+								  ModelClassFileService.ClassFile classFile,
 								  DeviceInfo device) {
 		String requestId = UUID.randomUUID().toString();
 		String mqttMessageId = UUID.randomUUID().toString();
@@ -126,6 +136,10 @@ public class ModelDispatchService {
 		task.setFileName(metadata.getFileName());
 		task.setFileSize(metadata.getFileSize());
 		task.setSha256(metadata.getSha256());
+		task.setClassFileName(classFile.getFileName());
+		task.setClassFileContent(classFile.getContent());
+		task.setClassFileSize(classFile.getFileSize());
+		task.setClassFileSha256(classFile.getSha256());
 		task.setDispatchStatus("CREATED");
 		task.setMqttTopic(topic);
 		task.setDownloadExpiresAt(expiresAt);
@@ -140,6 +154,11 @@ public class ModelDispatchService {
 		modelPayload.put("fileName", metadata.getFileName());
 		modelPayload.put("fileSize", metadata.getFileSize());
 		modelPayload.put("sha256", metadata.getSha256());
+		String classSignature = signatureService.sign(requestId + ":classes", expiresAt);
+		modelPayload.put("classFileUrl", buildDownloadUrl(requestId, expiresAt, classSignature, "/classes"));
+		modelPayload.put("classFileName", classFile.getFileName());
+		modelPayload.put("classFileSize", classFile.getFileSize());
+		modelPayload.put("classFileSha256", classFile.getSha256());
 		modelPayload.put("expiresAt",
 			DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochSecond(expiresAt)));
 		modelPayload.put("rollbackEnable", Boolean.TRUE);
@@ -224,11 +243,15 @@ public class ModelDispatchService {
 	}
 
 	private String buildDownloadUrl(String requestId, long expiresAt, String signature) {
+		return buildDownloadUrl(requestId, expiresAt, signature, "/download");
+	}
+
+	private String buildDownloadUrl(String requestId, long expiresAt, String signature, String resource) {
 		String baseUrl = StringUtils.stripEnd(dispatchProperties.getPublicBaseUrl().trim(), "/");
 		return UriComponentsBuilder.fromHttpUrl(baseUrl)
 			.path("/vlsModelDispatch/public/")
 			.path(requestId)
-			.path("/download")
+			.path(resource)
 			.queryParam("expires", expiresAt)
 			.queryParam("signature", signature)
 			.build()

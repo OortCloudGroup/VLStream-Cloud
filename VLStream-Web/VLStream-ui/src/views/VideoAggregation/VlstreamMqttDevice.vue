@@ -117,15 +117,26 @@
 
         <div class="model-heading">
           <h4>设备运行模型</h4>
+          <div>
+            <el-button size="small" type="primary" :disabled="!detailDevice?.online || Boolean(modelBusy)" @click="openModelDeploy">模型下发</el-button>
+            <el-button size="small" :loading="modelBusy === 'query'" :disabled="!detailDevice?.online || Boolean(modelBusy)" @click="refreshModels">刷新</el-button>
+          </div>
         </div>
-        <el-table :data="reportedModels" border :empty-text="detailDevice?.modelsJson == null ? '设备尚未上报模型信息' : '设备上报的模型列表为空'">
+        <el-alert v-if="modelError" :title="modelError" type="warning" :closable="false" show-icon />
+        <el-table :data="reportedModels" border :empty-text="liveModels !== null ? '设备当前无模型' : detailDevice?.modelsJson == null ? '设备尚未上报模型信息' : '设备上报的模型列表为空'">
           <el-table-column prop="modelId" label="模型 ID" min-width="140" show-overflow-tooltip />
           <el-table-column prop="modelName" label="模型名称" min-width="140" show-overflow-tooltip />
           <el-table-column prop="version" label="版本" min-width="100" />
           <el-table-column prop="format" label="格式" width="90" />
           <el-table-column label="状态" width="100"><template #default="{ row }">{{ modelStatusText(row.status) }}</template></el-table-column>
+          <el-table-column label="操作" width="85" fixed="right">
+            <template #default="{ row }">
+              <el-button link type="danger" :loading="modelBusy === `delete:${row.modelId}`"
+                :disabled="!detailDevice?.online || !row.modelId || Boolean(modelBusy)" @click="removeModel(row)">删除</el-button>
+            </template>
+          </el-table-column>
         </el-table>
-        <p class="snapshot-note">模型和能力为设备最近一次上报的信息，离线时保留供查看。</p>
+        <p class="snapshot-note">{{ liveModels === null ? '当前显示设备最近一次上报的模型，点击刷新查询设备。' : '当前显示本次设备查询结果。' }}离线时仅供查看。</p>
 
         <h4>视频源</h4>
         <el-table :data="detailStreams" border empty-text="设备没有上报视频源">
@@ -138,6 +149,22 @@
           </el-table-column>
         </el-table>
         </div>
+      </el-dialog>
+      <el-dialog v-model="modelDeployVisible" title="模型下发" width="480px" append-to-body :close-on-click-modal="false">
+        <el-form label-width="80px">
+          <el-form-item label="设备">{{ detailDevice?.deviceName || detailDevice?.deviceId }}</el-form-item>
+          <el-form-item label="算法">
+            <el-select v-model="deployAlgorithmId" filterable remote :remote-method="searchDeployAlgorithms" :loading="algorithmLoading" placeholder="输入算法名称搜索" style="width: 100%">
+              <el-option v-for="item in deployAlgorithms" :key="item.id" :label="item.name" :value="String(item.id)" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="模型格式">OM</el-form-item>
+        </el-form>
+        <p class="snapshot-note">下发该算法最近完成训练中的可用 OM 模型及配套类别文件。</p>
+        <template #footer>
+          <el-button :disabled="modelBusy === 'deploy'" @click="modelDeployVisible = false">取消</el-button>
+          <el-button type="primary" :loading="modelBusy === 'deploy'" :disabled="!deployAlgorithmId || !detailDevice?.online" @click="submitModelDeploy">下发</el-button>
+        </template>
       </el-dialog>
       <el-dialog v-model="firmwareVisible" title="固件升级" width="820px" destroy-on-close>
         <el-alert v-if="firmwareDetail?.upgradeBlockedReason" :title="firmwareDetail.upgradeBlockedReason"
@@ -187,6 +214,9 @@ import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/
 import RtcPlayer from '@/components/rtcPlayer/index.vue'
 import { capabilityText, deviceBootTimeText, deviceOnlineDurationText, deviceLocationText, formatDeviceTime, modelStatusText, parseSnapshot } from '@/utils/deviceStateDisplay'
 import { parseCameraRtcConfig } from '@/utils/oplayer'
+import { queryDeviceModels, deleteDeviceModel } from '@/api/deviceModels'
+import { dispatchAlgorithmToDevices } from '@/api/device'
+import { getAlgorithmPage } from '@/api/algorithmManagement'
 import {
   cancelMqttDeviceFirmwareTask,
   createMqttDevicePreview,
@@ -231,9 +261,95 @@ const cancellingTask = ref(false)
 const query = reactive({ pageNum: 1, pageSize: 10, keyword: '', online: undefined })
 const detailDevice = computed(() => firmwareDetail.value?.device || currentDevice.value)
 
-const reportedModels = computed(() => parseSnapshot(detailDevice.value?.modelsJson) || [])
+const liveModels = ref(null)
+const modelBusy = ref('')
+const modelError = ref('')
+const modelDeployVisible = ref(false)
+const deployAlgorithmId = ref('')
+const deployAlgorithms = ref([])
+const algorithmLoading = ref(false)
+let modelSession = 0
+let algorithmSearch = 0
+const reportedModels = computed(() => liveModels.value ?? parseSnapshot(detailDevice.value?.modelsJson) ?? [])
+
+watch(detailVisible, visible => {
+  if (!visible) { modelSession++; modelDeployVisible.value = false }
+})
+
+async function refreshModels() {
+  if (modelBusy.value || !detailDevice.value?.online) return
+  const session = modelSession
+  const deviceId = detailDevice.value.deviceId
+  modelBusy.value = 'query'
+  modelError.value = ''
+  try {
+    const result = await queryDeviceModels(deviceId)
+    if (session !== modelSession) return
+    if (!Array.isArray(result?.data)) throw new Error('设备未返回有效模型列表')
+    liveModels.value = result.data
+  } catch (error) {
+    if (session === modelSession) modelError.value = modelErrorMessage(error, '查询设备模型失败')
+  } finally { if (session === modelSession) modelBusy.value = '' }
+}
+
+async function removeModel(model) {
+  const session = modelSession
+  const deviceId = detailDevice.value?.deviceId
+  if (modelBusy.value || !detailDevice.value?.online || !model.modelId) return
+  try {
+    await ElMessageBox.confirm(`确认从当前设备删除“${model.modelName || model.modelId}”？运行中的模型将先停止再卸载，平台模型库文件保留。`, '删除设备模型', { type: 'warning' })
+  } catch { return }
+  if (session !== modelSession || modelBusy.value) return
+  modelBusy.value = `delete:${model.modelId}`
+  modelError.value = ''
+  try {
+    await deleteDeviceModel(deviceId, model.modelId)
+    if (session !== modelSession) return
+    liveModels.value = reportedModels.value.filter(item => item.modelId !== model.modelId)
+    ElMessage.success('设备已确认模型删除成功')
+  } catch (error) {
+    if (session === modelSession) modelError.value = modelErrorMessage(error, '删除结果未确认，请刷新列表核实')
+  } finally { if (session === modelSession) modelBusy.value = '' }
+}
+
+async function searchDeployAlgorithms(name = '') {
+  const sequence = ++algorithmSearch
+  algorithmLoading.value = true
+  try {
+    const result = await getAlgorithmPage({ current: 1, size: 50, name })
+    if (sequence === algorithmSearch) deployAlgorithms.value = result?.data?.records || []
+  } catch (error) {
+    if (sequence === algorithmSearch) ElMessage.error(errorMessage(error, '加载算法失败'))
+  } finally { if (sequence === algorithmSearch) algorithmLoading.value = false }
+}
+
+function openModelDeploy() {
+  deployAlgorithmId.value = ''
+  deployAlgorithms.value = []
+  modelDeployVisible.value = true
+  searchDeployAlgorithms()
+}
+
+async function submitModelDeploy() {
+  if (modelBusy.value || !deployAlgorithmId.value || !detailDevice.value?.online) return
+  const session = modelSession
+  modelBusy.value = 'deploy'
+  try {
+    await dispatchAlgorithmToDevices(deployAlgorithmId.value, detailDevice.value.deviceId, 'om')
+    if (session !== modelSession) return
+    modelDeployVisible.value = false
+    ElMessage.success('模型下发任务已提交，设备部署完成后请刷新列表')
+  } catch (error) {
+    if (session === modelSession) ElMessage.error(errorMessage(error, '模型下发失败'))
+  } finally { if (session === modelSession) modelBusy.value = '' }
+}
 
 function errorMessage(error, fallback) { return error?.response?.data?.msg || error?.message || fallback }
+function modelErrorMessage(error, fallback) {
+  return error?.response?.status === 404
+    ? '当前后端尚未提供设备模型管理接口，请更新并重启 VLS 后端后重试'
+    : errorMessage(error, fallback)
+}
 
 async function loadDevices() {
   loading.value = true
@@ -263,6 +379,11 @@ function handleSelectionChange(selection) { classificationDeviceKeys.value = sel
 function handleClassificationFilter(filter) { Object.assign(query, filter, { pageNum: 1 }); loadDevices() }
 
 async function openDetail(device) {
+  const session = ++modelSession
+  liveModels.value = null
+  modelError.value = ''
+  modelBusy.value = ''
+  modelDeployVisible.value = false
   currentDevice.value = device
   firmwareDetail.value = null
   detailStreams.value = []
@@ -274,20 +395,24 @@ async function openDetail(device) {
       getMqttDeviceStreams(device.id),
       getMqttDeviceDetail(device.id)
     ])
+    if (session !== modelSession) return
     detailStreams.value = streamsResult?.data || []
     firmwareDetail.value = detailResult?.data || null
   }
   catch (error) {
+    if (session !== modelSession) return
     detailStreams.value = []
     firmwareDetail.value = null
     ElMessage.error(errorMessage(error, '加载设备详情失败'))
   }
-  finally { detailLoading.value = false }
+  finally { if (session === modelSession) detailLoading.value = false }
 }
 
 async function reloadFirmwareDetail() {
   if (!currentDevice.value) return
-  firmwareDetail.value = (await getMqttDeviceDetail(currentDevice.value.id))?.data || null
+  const session = modelSession
+  const result = await getMqttDeviceDetail(currentDevice.value.id)
+  if (session === modelSession) firmwareDetail.value = result?.data || null
 }
 
 async function deployFirmware(candidate) {

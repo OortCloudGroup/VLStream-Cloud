@@ -41,6 +41,7 @@ class ModelDispatchServiceTest {
 	private VlsMqttBusService mqttService;
 	private ModelDownloadSignatureService signatureService;
 	private ModelDispatchService service;
+	private ModelClassFileService classFileService;
 
 	@BeforeEach
 	void setUp() throws Exception {
@@ -54,6 +55,10 @@ class ModelDispatchServiceTest {
 		properties.setPublicBaseUrl("http://192.168.88.31:8080");
 
 		service = new ModelDispatchService();
+		classFileService = mock(ModelClassFileService.class);
+		setField(service, "classFileService", classFileService);
+		when(classFileService.prepare(any())).thenReturn(new ModelClassFileService.ClassFile(
+			"dataset.yaml", "names: [person]\n", 16L, repeat("b", 64)));
 		setField(service, "trainingService", trainingService);
 		setField(service, "artifactService", artifactService);
 		setField(service, "wvpDeviceResolver", wvpDeviceResolver);
@@ -116,6 +121,30 @@ class ModelDispatchServiceTest {
 		verify(mqttService).publish(eq("vlstream/v2.2/dev/CAM-B/bus"), any());
 		verify(taskService, org.mockito.Mockito.times(2)).create(any(ModelDispatchTask.class));
 		verifyNoMoreInteractions(wvpDeviceResolver);
+		org.mockito.ArgumentCaptor<java.util.Map> envelope = org.mockito.ArgumentCaptor.forClass(java.util.Map.class);
+		verify(mqttService).publish(eq("vlstream/v2.2/dev/CAM-A/bus"), envelope.capture());
+		java.util.Map payload = (java.util.Map) envelope.getValue().get("payload");
+		assertEquals("dataset.yaml", payload.get("classFileName"));
+		assertEquals(repeat("b", 64), payload.get("classFileSha256"));
+		org.junit.jupiter.api.Assertions.assertTrue(payload.get("classFileUrl").toString().contains("/classes?"));
+		org.mockito.ArgumentCaptor<ModelDispatchTask> tasks = org.mockito.ArgumentCaptor.forClass(ModelDispatchTask.class);
+		verify(taskService, org.mockito.Mockito.times(2)).create(tasks.capture());
+		assertEquals("names: [person]\n", tasks.getAllValues().get(0).getClassFileContent());
+	}
+
+	@Test
+	void missingClassFileDoesNotPublishOrFallBackToAnotherModel() throws Exception {
+		AlgorithmTraining training = new AlgorithmTraining();
+		training.setId(10L);
+		when(trainingService.list(any())).thenReturn(Collections.singletonList(training));
+		when(artifactService.resolvePath(training, "om")).thenReturn("/data/work/model.om");
+		when(artifactService.inspect("/data/work/model.om"))
+			.thenReturn(new RemoteModelArtifactService.ArtifactMetadata("model.om", 10L, repeat("a", 64)));
+		properties.setSigningSecret("test-signing-secret");
+		when(classFileService.prepare(training)).thenThrow(new java.io.IOException("类别 YAML 缺失"));
+		ServiceException ex = assertThrows(ServiceException.class, () -> service.dispatch(1L, "CAM-A", "om"));
+		assertEquals("模型对应的类别文件不可用：类别 YAML 缺失", ex.getMessage());
+		org.mockito.Mockito.verifyNoInteractions(mqttService, taskService, wvpDeviceResolver);
 	}
 
 	private DeviceInfo wvpDevice(Long id, String deviceId) {

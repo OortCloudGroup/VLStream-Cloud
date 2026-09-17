@@ -38,6 +38,11 @@ public class ModelDispatchTask extends TenantEntity {
 	private String fileName;
 	private Long fileSize;
 	private String sha256;
+	private String classFileName;
+	private Long classFileSize;
+	private String classFileSha256;
+	@JsonIgnore
+	private String classFileContent;
 	private String dispatchStatus;
 	private String mqttTopic;
 	private Long downloadExpiresAt;

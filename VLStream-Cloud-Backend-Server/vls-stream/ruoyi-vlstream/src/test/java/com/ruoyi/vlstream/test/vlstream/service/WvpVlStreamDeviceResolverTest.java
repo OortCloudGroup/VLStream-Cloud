@@ -96,4 +96,20 @@ class WvpVlStreamDeviceResolverTest {
 		properties.setBaseUrl("http://127.0.0.1:9080");
 		return properties;
 	}
+
+	@Test
+	void onlineModelOperationsRejectOfflineOrUnknownOnlineState() {
+		for (String online : new String[]{",\"online\":false", ""}) {
+			RestTemplate rest = new RestTemplate();
+			MockRestServiceServer server = MockRestServiceServer.createServer(rest);
+			server.expect(requestTo("http://127.0.0.1:9080/internal/vlstream/device/CAM-1"))
+				.andRespond(withSuccess("{\"code\":200,\"data\":{\"id\":101,\"deviceId\":\"CAM-1\"" + online + "}}", MediaType.APPLICATION_JSON));
+			VlsNativeDeviceProperties nativeProps = new VlsNativeDeviceProperties();
+			nativeProps.setDefaultTenantId("000000");
+			WvpVlStreamDeviceResolver resolver = new WvpVlStreamDeviceResolver(properties(), nativeProps,
+				mock(VlsEventReportApplicationService.class), rest);
+			assertThrows(ServiceException.class, () -> resolver.resolveOnline("CAM-1"));
+			server.verify();
+		}
+	}
 }
