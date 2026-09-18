@@ -87,7 +87,7 @@ services:
       VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY: ${VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY:-minio-device-media}
       VLSTREAM_P6SPY_ENABLED: ${VLSTREAM_P6SPY_ENABLED:-false}
       VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID: ${VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID:-vls-model-dispatch-backend}
-      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-oortcloud_workflowforms_vls}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-oortcloud_workflowforms_vls}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&tinyInt1isBit=false
       SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_USERNAME: ${MYSQL_USER:-vlstream}
       SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_PASSWORD: ${MYSQL_PASSWORD}
       SPRING_REDIS_HOST: redis

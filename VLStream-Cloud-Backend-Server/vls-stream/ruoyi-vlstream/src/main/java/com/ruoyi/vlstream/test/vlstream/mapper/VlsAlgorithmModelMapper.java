@@ -26,6 +26,10 @@ import java.util.List;
  */
 public interface VlsAlgorithmModelMapper extends BaseMapper<AlgorithmModel> {
 
+    IPage<com.ruoyi.vlstream.test.vlstream.pojo.vo.DeviceModelCandidate> selectDeviceCandidates(
+        IPage<com.ruoyi.vlstream.test.vlstream.pojo.vo.DeviceModelCandidate> page,
+        @Param("keyword") String keyword, @Param("category") String category);
+
 	/**
 	 * Custom
 	 *

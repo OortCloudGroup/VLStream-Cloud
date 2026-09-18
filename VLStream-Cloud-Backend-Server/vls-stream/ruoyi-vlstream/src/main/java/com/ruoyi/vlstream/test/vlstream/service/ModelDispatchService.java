@@ -13,6 +13,7 @@ import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.config.VlsModelDispatchProperties;
 import com.ruoyi.vlstream.test.vlstream.enums.AlgorithmTrainingStatusEnum;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmModel;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.ModelDispatchTask;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,36 @@ public class ModelDispatchService {
 
 	@Resource
 	private IVlsAlgorithmTrainingService trainingService;
+
+    @Resource
+    private IVlsAlgorithmModelService modelService;
+
+    /** Deploy precisely the saved model version, even if its training task was rerun. */
+    public String dispatchModel(Long modelId, String deviceId) {
+        AlgorithmModel model = modelService.getById(modelId);
+        if (model == null || model.getTrainingId() == null || model.getAlgorithmId() == null) {
+            throw new ServiceException("自主训练模型不存在或缺少训练来源");
+        }
+        if (StringUtils.isBlank(model.getModelPath()) || StringUtils.isBlank(model.getOmModelOutputPath())) {
+            throw new ServiceException("该模型尚无可下发的 OM 产物或原始 PT 信息");
+        }
+        DeviceInfo device = wvpDeviceResolver.resolveOnline(deviceId);
+        validateConfiguration();
+        AlgorithmTraining snapshot = new AlgorithmTraining();
+        snapshot.setId(model.getTrainingId());
+        snapshot.setTenantId(model.getTenantId());
+        snapshot.setAlgorithmId(model.getAlgorithmId());
+        snapshot.setModelOutputPath(model.getModelPath());
+        snapshot.setOmModelOutputPath(model.getOmModelOutputPath());
+        try {
+            String path = artifactService.resolvePath(snapshot, "om");
+            RemoteModelArtifactService.ArtifactMetadata metadata = artifactService.inspect(path);
+            ModelClassFileService.ClassFile classes = classFileService.prepare(snapshot);
+            return dispatchToDevice(model.getAlgorithmId(), snapshot, "om", path, metadata, classes, device);
+        } catch (Exception ex) {
+            throw new ServiceException("模型下发失败：" + rootMessage(ex));
+        }
+    }
 
 	@Resource
 	private WvpVlStreamDeviceResolver wvpDeviceResolver;
@@ -110,7 +141,7 @@ public class ModelDispatchService {
 		return allSucceeded && publishedCount > 0;
 	}
 
-	private void dispatchToDevice(Long algorithmId, AlgorithmTraining training, String modelType,
+	private String dispatchToDevice(Long algorithmId, AlgorithmTraining training, String modelType,
 								  String remotePath,
 								  RemoteModelArtifactService.ArtifactMetadata metadata,
 								  ModelClassFileService.ClassFile classFile,
@@ -177,6 +208,7 @@ public class ModelDispatchService {
 		try {
 			mqttService.publish(topic, envelope);
 			taskService.markPublished(requestId, topic);
+			return requestId;
 		} catch (RuntimeException ex) {
 			taskService.markFailed(requestId, ex.getMessage());
 			throw ex;

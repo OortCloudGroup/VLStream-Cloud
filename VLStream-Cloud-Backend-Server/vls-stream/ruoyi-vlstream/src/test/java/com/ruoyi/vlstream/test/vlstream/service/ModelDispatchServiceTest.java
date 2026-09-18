@@ -11,6 +11,7 @@ package com.ruoyi.vlstream.test.vlstream.service;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.config.VlsModelDispatchProperties;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmModel;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.ModelDispatchTask;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +43,7 @@ class ModelDispatchServiceTest {
 	private ModelDownloadSignatureService signatureService;
 	private ModelDispatchService service;
 	private ModelClassFileService classFileService;
+    private IVlsAlgorithmModelService modelService;
 
 	@BeforeEach
 	void setUp() throws Exception {
@@ -55,6 +57,8 @@ class ModelDispatchServiceTest {
 		properties.setPublicBaseUrl("http://192.168.88.31:8080");
 
 		service = new ModelDispatchService();
+        modelService = mock(IVlsAlgorithmModelService.class);
+        setField(service, "modelService", modelService);
 		classFileService = mock(ModelClassFileService.class);
 		setField(service, "classFileService", classFileService);
 		when(classFileService.prepare(any())).thenReturn(new ModelClassFileService.ClassFile(
@@ -154,6 +158,44 @@ class ModelDispatchServiceTest {
 		device.setDeviceName(deviceId);
 		return device;
 	}
+
+    @Test
+    void selectedVersionUsesSavedPathsWithoutLookingUpLatestTraining() throws Exception {
+        AlgorithmModel model = new AlgorithmModel();
+        model.setId(9001L); model.setAlgorithmId(1L); model.setTrainingId(10L); model.setTenantId("000000");
+        model.setModelPath("/old/weights/best.pt"); model.setOmModelOutputPath("/old/weights/best.om");
+        when(modelService.getById(9001L)).thenReturn(model);
+        properties.setSigningSecret("test-signing-secret");
+        when(wvpDeviceResolver.resolveOnline("CAM-A")).thenReturn(wvpDevice(101L, "CAM-A"));
+        when(artifactService.resolvePath(any(AlgorithmTraining.class), eq("om"))).thenAnswer(call ->
+            ((AlgorithmTraining) call.getArgument(0)).getOmModelOutputPath());
+        when(artifactService.inspect("/old/weights/best.om")).thenReturn(
+            new RemoteModelArtifactService.ArtifactMetadata("best.om", 10L, repeat("a", 64)));
+        when(signatureService.sign(any(), anyLong())).thenReturn("signature");
+
+        String requestId = service.dispatchModel(9001L, "CAM-A");
+
+        org.junit.jupiter.api.Assertions.assertNotNull(requestId);
+        org.mockito.Mockito.verifyNoInteractions(trainingService);
+        org.mockito.ArgumentCaptor<AlgorithmTraining> snapshot = org.mockito.ArgumentCaptor.forClass(AlgorithmTraining.class);
+        verify(classFileService).prepare(snapshot.capture());
+        assertEquals("/old/weights/best.pt", snapshot.getValue().getModelOutputPath());
+        assertEquals("000000", snapshot.getValue().getTenantId());
+        org.mockito.ArgumentCaptor<ModelDispatchTask> task = org.mockito.ArgumentCaptor.forClass(ModelDispatchTask.class);
+        verify(taskService).create(task.capture());
+        assertEquals("/old/weights/best.om", task.getValue().getRemotePath());
+        assertEquals(requestId, task.getValue().getRequestId());
+    }
+
+    @Test
+    void missingSelectedModelOrOmNeverFallsBackOrPublishes() {
+        assertThrows(ServiceException.class, () -> service.dispatchModel(9001L, "CAM-A"));
+        AlgorithmModel model = new AlgorithmModel();
+        model.setTrainingId(10L); model.setAlgorithmId(1L); model.setModelPath("/old/weights/best.pt");
+        when(modelService.getById(9001L)).thenReturn(model);
+        assertThrows(ServiceException.class, () -> service.dispatchModel(9001L, "CAM-A"));
+        org.mockito.Mockito.verifyNoInteractions(trainingService, mqttService, wvpDeviceResolver);
+    }
 
 	private String repeat(String value, int count) {
 		StringBuilder builder = new StringBuilder();

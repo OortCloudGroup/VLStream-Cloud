@@ -372,6 +372,11 @@ vlstream:
     vls-record-event-strategy-topic: ${VLSTREAM_MQTT_TOPIC_RECORD_EVENT:oortcloud/vlsRecordEventStrategy}
 
 vls:
+  model-hub:
+    base-url: ${VLS_MODEL_HUB_BASE_URL:}
+    guest-token: ${VLS_MODEL_HUB_GUEST_TOKEN:}
+    app-id: ${VLS_MODEL_HUB_APP_ID:}
+    secret-key: ${VLS_MODEL_HUB_SECRET_KEY:}
   tenant:
     id: ${VLS_SINGLE_TENANT_ID:${SINGLE_TENANT_ID:000000}}
   data-initialization:

@@ -6,6 +6,26 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ruoyi.vlstream.test.vlstream.mapper.VlsAlgorithmModelMapper">
 
+    <select id="selectDeviceCandidates" resultType="com.ruoyi.vlstream.test.vlstream.pojo.vo.DeviceModelCandidate">
+        SELECT m.id, m.model_name, m.version, a.name AS algorithm_name,
+               a.category, a.image_url,
+               COALESCE(NULLIF(m.description, '') COLLATE utf8mb4_unicode_ci,
+                        a.description COLLATE utf8mb4_unicode_ci) AS description,
+               (NULLIF(TRIM(m.om_model_output_path), '') IS NOT NULL
+                AND NULLIF(TRIM(m.model_path), '') IS NOT NULL AND m.algorithm_id IS NOT NULL) AS deployable
+        FROM vls_algorithm_model m
+        LEFT JOIN vls_algorithm a ON a.id = m.algorithm_id AND a.is_deleted = 0
+            AND a.tenant_id COLLATE utf8mb4_unicode_ci = m.tenant_id COLLATE utf8mb4_unicode_ci
+        WHERE m.is_deleted = 0 AND m.training_id IS NOT NULL
+        <if test="keyword != null and keyword != ''">
+            AND (m.model_name LIKE CONCAT('%', #{keyword}, '%') OR a.name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="category != null and category != ''">
+            AND a.category = #{category}
+        </if>
+        ORDER BY m.create_time DESC, m.id DESC
+    </select>
+
     <!-- 通用查询映射结果 -->
     <resultMap id="vlsAlgorithmModelResultMap" type="com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmModel">
         <result column="model_name" property="modelName"/>

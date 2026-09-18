@@ -10,87 +10,87 @@ VLS-Protocol
 | 1.2/雷超群/2026-08-05 | 优化数据格式 |
 | 1.3/雷超群/2026-08-12 | 设备心跳增加多码流上报与平台接收回执 |
 | 1.3/雷超群/2026-08-17 | 4.8 设备OTA固件升级 |
+| 1.4/雷超群/2026-09-07 | 补充通用设备控制规格 1：能力查询、停止、镜头与高级控制、时效和回执；设备端尚未支持，待开发联调 |
+| 1.5/雷超群/2026-09-08 | 心跳增加设备能力与当前模型快照，补充平台上线时间和详情展示规则 |
+| 1.6/雷超群/2026-09-09 | 心跳新增 WGS84 位置坐标，补充校验、清空和设备详情展示规则 |
+| 1.7/雷超群/2026-09-14 | 4.1 模型下发增加类别 YAML 下载字段、双文件校验和成对切换规则；新增类别哈希回执，设备端待适配联调 |
 | 1.8/2026-09-16 | 4.2 补充设备模型全量查询；新增 4.9 模型删除及回执，设备端待适配联调 |
-| 1.7/2026-09-14 | 4.1 增加类别 YAML 下载字段、双文件校验、成对切换和类别哈希回执；设备端待适配联调 |
-| 1.6/2026-09-09 | 心跳新增 WGS84 位置坐标，补充校验、清空和设备详情展示规则 |
-| 1.5/2026-09-08 | 心跳增加设备能力与当前模型快照，补充平台上线时间和详情展示规则 |
-| 1.4/2026-09-07 | 补充通用设备控制规格 1：能力查询、停止、镜头与高级控制、时效和回执；设备端尚未支持，待开发联调 |
 
 目录
 
-[一、协议总览 2](#_Toc237638629)
+[一、协议总览 2](#_Toc240477893)
 
-[1.1 设计目标 2](#_Toc237638630)
+[1.1 设计目标 2](#_Toc240477894)
 
-[1.2 基础通信约束 2](#_Toc237638631)
+[1.2 基础通信约束 3](#_Toc240477895)
 
-[1.3生命周期时序图 3](#_Toc237638632)
+[1.3生命周期时序图 4](#_Toc240477896)
 
-[二、基础通用规范 4](#_Toc237638633)
+[二、基础通用规范 4](#_Toc240477897)
 
-[2.1 唯一总线 Topic 4](#_Toc237638634)
+[2.1 唯一总线 Topic 4](#_Toc240477898)
 
-[2.2 全局公共消息头 4](#_Toc237638635)
+[2.2 全局公共消息头 4](#_Toc240477899)
 
-[2.3 通用统一回执模板 4](#_Toc237638636)
+[2.3 通用统一回执模板 5](#_Toc240477900)
 
-[三、设备类 5](#_Toc237638637)
+[三、设备类 6](#_Toc240477901)
 
-[3.1 设备全量配置 5](#_Toc237638638)
+[3.1 设备全量配置 6](#_Toc240477902)
 
-[3.2 通用设备控制 7](#_Toc237638639)
+[3.2 通用设备控制 7](#_Toc240477903)
 
-[3.3 远程抓图 22](#_Toc237638640)
+[3.3 远程抓图 24](#_Toc240477904)
 
-[3.4 设备校时 23](#_Toc237638641)
+[3.4 设备校时 25](#_Toc240477905)
 
-[3.5 媒体上传交互 24](#_Toc237638642)
+[3.5 媒体上传交互 26](#_Toc240477906)
 
-[3.6 设备心跳 & 硬件遥测 26](#_Toc237638643)
+[3.6 设备心跳 & 硬件遥测 28](#_Toc240477907)
 
-[3.8 二维码识别上报 30](#_Toc237638644)
+[3.8 二维码识别上报 34](#_Toc240477908)
 
-[3.10 本地录像查询 31](#_Toc237638645)
+[3.10 本地录像查询 34](#_Toc240477909)
 
-[3.11 录像上传任务下发 32](#_Toc237638646)
+[3.11 录像上传任务下发 36](#_Toc240477910)
 
-[3.13 硬件信息查询 33](#_Toc237638647)
+[3.13 硬件信息查询 37](#_Toc240477911)
 
-[3.14 设备日志分页上报 34](#_Toc237638648)
+[3.14 设备日志分页上报 38](#_Toc240477912)
 
-[四、AI 业务类 35](#_Toc237638649)
+[四、AI 业务类 39](#_Toc240477913)
 
-[4.1 AI 模型下发部署 35](#_Toc237638650)
+[4.1 AI 模型下发部署 40](#_Toc240477914)
 
-[4.2 查询设备模型](#42-查询设备模型)
+[4.2 查询设备模型 43](#_Toc240477915)
 
-[4.3 模型手动回滚 37](#_Toc237638652)
+[4.3 模型手动回滚 44](#_Toc240477916)
 
-[4.4 人脸库人员管理 37](#_Toc237638653)
+[4.4 人脸库人员管理 44](#_Toc240477917)
 
-[4.5 人脸通行 / 陌生人抓拍上报 39](#_Toc237638654)
+[4.5 人脸通行 / 陌生人抓拍上报 45](#_Toc240477918)
 
-[4.6上报文件上传 40](#_Toc237638655)
+[4.6上报文件上传 47](#_Toc240477919)
 
-[4.7 结构化人车 / 车牌 / 非机动车识别 43](#_Toc237638656)
+[4.7 结构化人车 / 车牌 / 非机动车识别 50](#_Toc240477920)
 
-[4.8 设备OTA固件升级 45](#_Toc237638657)
+[4.8 设备OTA固件升级 51](#_Toc240477921)
 
-[4.9 删除设备模型](#49-删除设备模型)
+[4.9 删除设备模型 55](#_Toc240477922)
 
-[五、IoT Center 类 48](#_Toc237638658)
+[五、IoT Center 类 55](#_Toc240477923)
 
-[5.1 RSGet 48](#_Toc237638659)
+[5.1 RSGet 55](#_Toc240477924)
 
-[5.2 RSSave 49](#_Toc237638660)
+[5.2 RSSave 57](#_Toc240477925)
 
-[5.3 电梯梯控 51](#_Toc237638661)
+[5.3 电梯梯控 58](#_Toc240477926)
 
-[5.4 液晶屏广告管理 52](#_Toc237638662)
+[5.4 液晶屏广告管理 59](#_Toc240477927)
 
-[5.5 MP3 音频播放配置 53](#_Toc237638663)
+[5.5 MP3 音频播放配置 60](#_Toc240477928)
 
-[六、全局可靠性 & 安全通用规范 54](#_Toc237638664)
+[六、全局可靠性 & 安全通用规范 61](#_Toc240477929)
 
 # 一、协议总览
 
@@ -118,7 +118,7 @@ VLS-Protocol
 | 幂等规则 | messageId UUID 全局唯一，重试不变 |
 | 二进制策略 | MQTT 仅传 URL / 元数据，图片 / 模型 / 录像走 HTTP/MinIO 上传，不 Base64 大包 |
 
-## 1.3生命周期时序图  
+## 1.3生命周期时序图
 
 # 二、基础通用规范
 
@@ -134,18 +134,18 @@ ACL 权限：设备仅允许读写自身deviceId 对应的总线 Topic，禁止�
 
 ## 2.2 全局公共消息头
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"UUID-v4 全局唯一",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:30:00Z",  
-    **"msgDir"**:"platform2dev/dev2platform",  
-    **"mainBizType"**:"device/aiBiz",  
-    **"subBizType"**:"细分业务标识",  
-    **"payload"**:{  
-<br/>    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"UUID-v4 全局唯一",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:30:00Z",
+    **"msgDir"**:"platform2dev/dev2platform",
+    **"mainBizType"**:"device/aiBiz",
+    **"subBizType"**:"细分业务标识",
+    **"payload"**:{
+<br/>    },
+    **"extend"**:{
+<br/>    }
 }
 
 ### 公共头字段说明
@@ -167,23 +167,23 @@ ACL 权限：设备仅允许读写自身deviceId 对应的总线 Topic，禁止�
 
 回执subBizType 与原请求保持一致，通过sourceMsgId 绑定原始消息实现请求匹配
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:" 回 执 独 立 UUID",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:30:01Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"config",  
-    **"payload"**:{  
-        **"sourceMsgId"**:"原始请求messageId",  
-        **"code"**:200,  
-        **"msg"**:"业务执行描述",  
-        **"errCode"**:0,  
-        **"errDetail"**:"",  
-        **"bizData"**:Object{...}  
-    },  
-    **"extend"**:Object{...}  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:" 回 执 独 立 UUID",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:30:01Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"config",
+    **"payload"**:{
+        **"sourceMsgId"**:"原始请求messageId",
+        **"code"**:200,
+        **"msg"**:"业务执行描述",
+        **"errCode"**:0,
+        **"errDetail"**:"",
+        **"bizData"**:Object{...}
+    },
+    **"extend"**:Object{...}
 }
 
 ### 回执 payload 通用字段
@@ -223,55 +223,55 @@ platform2dev
 
 平台下发 JSON 示例
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"cmd-config-00112233-4455-6677-8899-aabbccddeeff",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:32:00Z",  
-    **"msgDir"**:"platform2dev",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"config",  
-    **"payload"**:{  
-        **"operate"**:"set",  
-        **"configGroup"**:"video",  
-        **"configData"**:{  
-            **"code_stream_type"**:"主码流",  
-            **"resolution"**:"1920\*1080",  
-            **"video_coding"**:"H.265",  
-            **"frame_rate"**:25,  
-            **"StreamMode"**:"VBR",  
-            **"MaxStreams"**:2048,  
-            **"EncodeAudio"**:1,  
-            **"AudioMode"**:"G711A",  
-            **"AuidoInputVolume"**:70,  
-            **"AudioOutputVolume"**:70  
-        }  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"cmd-config-00112233-4455-6677-8899-aabbccddeeff",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:32:00Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"config",
+    **"payload"**:{
+        **"operate"**:"set",
+        **"configGroup"**:"video",
+        **"configData"**:{
+            **"code_stream_type"**:"主码流",
+            **"resolution"**:"1920\*1080",
+            **"video_coding"**:"H.265",
+            **"frame_rate"**:25,
+            **"StreamMode"**:"VBR",
+            **"MaxStreams"**:2048,
+            **"EncodeAudio"**:1,
+            **"AudioMode"**:"G711A",
+            **"AuidoInputVolume"**:70,
+            **"AudioOutputVolume"**:70
+        }
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 配置回执 JSON 示例
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"ack-config-00aabbcc-1122-3344-5566-77889900aabb",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:32:02Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"config",  
-    **"payload"**:{  
-        **"sourceMsgId"**:"cmd-config-00112233-4455-6677-8899-aabbccddeeff",  
-        **"code"**:200,  
-        **"msg"**:"视频码流配置保存成功",  
-        **"errCode"**:0,  
-        **"errDetail"**:"",  
-        **"bizData"**:{  
-<br/>        }  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"ack-config-00aabbcc-1122-3344-5566-77889900aabb",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:32:02Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"config",
+    **"payload"**:{
+        **"sourceMsgId"**:"cmd-config-00112233-4455-6677-8899-aabbccddeeff",
+        **"code"**:200,
+        **"msg"**:"视频码流配置保存成功",
+        **"errCode"**:0,
+        **"errDetail"**:"",
+        **"bizData"**:{
+<br/>        }
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 ## 3.2 通用设备控制
@@ -292,18 +292,18 @@ platform2dev
 
 沿用第 2 章公共消息头、设备总线 Topic、QoS 1 和 sourceMsgId 回执关联规则。请求和回执的 subBizType 均为 ctrl，mainBizType 均为 device，Retain=false。本文档修订版本与协议头 protocolVersion=2.2 分开管理，本次不更改外层版本号。
 
-| payload 字段 | 类型 | 约束 |
+| **payload 字段** | **类型** | **约束** |
 | --- | --- | --- |
 | ctrlAction | string | 原有通用动作，或下表新增的能力查询、状态查询、预置位列表、巡航组列表；操作设备使用 ptzCmd。 |
 | controlVersion | int | 本节新控制规格固定为 1；不改变本节外其他业务消息。 |
 | param | object | 根据 ctrlAction 提交参数；能力查询传空对象。 |
 
-| ctrlAction | param | 用途 |
+| **ctrlAction** | **param** | **用途** |
 | --- | --- | --- |
-| getControlCapabilities | {} | 返回当前设备全部通道的控制能力和原厂管理地址。 |
+| getControlCapabilities | {}  | 返回当前设备全部通道的控制能力和原厂管理地址。 |
 | getControlState | 对象，含 channelId:string | 查询指定通道运行模式、运动状态和当前请求。 |
-| getPresetList | 对象，含 channelId:string | 返回 [{presetId,name}]；仅设备支持预置位时提供。 |
-| getCruiseList | 对象，含 channelId:string | 返回 [{cruiseId,name}]；仅设备支持巡航时提供。 |
+| getPresetList | 对象，含 channelId:string | 返回 \[{presetId,name}\]；仅设备支持预置位时提供。 |
+| getCruiseList | 对象，含 channelId:string | 返回 \[{cruiseId,name}\]；仅设备支持巡航时提供。 |
 | ptzCmd | 见后续参数表 | 执行云台、镜头、灯光、菜单、跟踪、定位、巡航及守望操作。 |
 
 查询超时为 5 秒。未收到能力回执、回执版本不支持或缺少通道时，平台记录“能力未知”，禁用该通道控制入口，不把超时解释为支持。设备明确返回不支持时显示“不支持”。播放能力与控制能力分别判断。
@@ -312,19 +312,19 @@ platform2dev
 
 getControlCapabilities 成功回执的 payload.bizData 使用下列字段。设备只声明固件已经实现、硬件实际具备且当前可执行的能力；未实现的动作不得列入 supportedCommands。未来固件仅支持部分控制时，可返回部分命令。
 
-| bizData 字段 | 类型 | 约束 |
+| **bizData 字段** | **类型** | **约束** |
 | --- | --- | --- |
 | controlVersion | int | 固定为 1。 |
 | capabilityRevision | string | 能力内容变化时更新的版本标识。 |
 | firmwareVersion | string | 当前固件版本，供平台区分实现差异。 |
 | deviceInstanceId | string | 设备每次启动生成新的 UUID；本次运行周期内稳定，用于拒绝重启前遗留控制。 |
 | channels | array | 全量通道能力快照；无控制能力时为空数组。 |
-| channels[].channelId | string | 与设备视频源的 channelId 一致；主、辅码流共享同一通道控制。 |
-| channels[].supportedCommands | string[] | 取值限于本节 ptzCmd 枚举；未出现即不支持。 |
-| channels[].speedMin / speedMax | int | 支持调速时必填，1 ≤ speedMin ≤ speedMax ≤ 36。 |
-| channels[].maxHoldMs | int | 支持连续运动时必填，范围 100～1000 毫秒。 |
-| channels[].presetIdMin / presetIdMax | int | 支持预置位时必填，范围在 1～36 内。 |
-| channels[].menuActions | string[] | 支持 osd_menu 时必填，仅包含设备实际支持的菜单动作。 |
+| channels\[\].channelId | string | 与设备视频源的 channelId 一致；主、辅码流共享同一通道控制。 |
+| channels\[\].supportedCommands | string\[\] | 取值限于本节 ptzCmd 枚举；未出现即不支持。 |
+| channels\[\].speedMin / speedMax | int | 支持调速时必填，1 ≤ speedMin ≤ speedMax ≤ 36。 |
+| channels\[\].maxHoldMs | int | 支持连续运动时必填，范围 100～1000 毫秒。 |
+| channels\[\].presetIdMin / presetIdMax | int | 支持预置位时必填，范围在 1～36 内。 |
+| channels\[\].menuActions | string\[\] | 支持 osd_menu 时必填，仅包含设备实际支持的菜单动作。 |
 | managementUrl | string 或 null | 原厂 Web 后台完整 HTTP/HTTPS 地址；没有地址时为 null。 |
 
 声明任一云台或镜头运动、跟踪、定位、巡航、守望能力时，必须同时实现 ptz_stop。能力按通道判定，不能由同型号、同协议或“视频已出画”推断。平台在首次打开控制区、设备重连或固件版本变化后重新查询，离线时使缓存失效。旧设备不支持查询时保留视频播放，控制能力维持未知。
@@ -335,7 +335,7 @@ managementUrl 只描述原厂后台入口，不携带用户名、密码、平台
 
 下表字段位于 ctrlAction=ptzCmd 的 payload.param 中。查询类请求不需要 deviceInstanceId、sequence、expiresAt 或 ptzCmd。
 
-| param 字段 | 类型 | 约束 |
+| **param 字段** | **类型** | **约束** |
 | --- | --- | --- |
 | channelId | string | 必填，精确指定设备上报的通道。 |
 | deviceInstanceId | string | 必填，与最近一次能力查询结果一致。 |
@@ -352,7 +352,7 @@ deviceInstanceId 不符、通道不存在、能力不支持、时间无效、参
 
 ### 3.2.5 云台与镜头命令
 
-| ptzCmd | 操作 | 专用参数和行为 |
+| **ptzCmd** | **操作** | **专用参数和行为** |
 | --- | --- | --- |
 | ptz_up / ptz_down | 向上 / 向下 | speed、holdMs；按正常方向视频观察时控制对应方向。 |
 | ptz_left / ptz_right | 向左 / 向右 | speed、holdMs。 |
@@ -373,17 +373,17 @@ deviceInstanceId 不符、通道不存在、能力不支持、时间无效、参
 
 ### 3.2.6 高级命令与参数
 
-| ptzCmd | 专用参数 | 行为 |
+| **ptzCmd** | **专用参数** | **行为** |
 | --- | --- | --- |
 | light_set | enabled:bool | 明确开灯或关灯；重复请求不能切换为相反状态。厂商灯光或辅助开关编号由设备适配，不由界面猜测。 |
 | focus_auto | timeoutMs | 执行一次辅助自动聚焦，完成后回报终态。 |
 | lens_init | timeoutMs | 执行镜头初始化；是镜头动作，不是重启或恢复出厂。 |
 | osd_menu | menuAction:string | open、up、down、left、right、confirm、back、close；必须在 menuActions 中。菜单打开时，菜单方向操作与云台运动分开处理。 |
 | manual_track_start | target:object、durationMs:int | 以目标框启动设备侧跟踪；durationMs 为 1000～60000 毫秒，到期自动停止。 |
-| manual_track_stop | 无 | 停止跟踪，不删除设备算法或录像配置。 |
+| manual_track_stop | 无   | 停止跟踪，不删除设备算法或录像配置。 |
 | position_3d | target:object、timeoutMs | 对所选画面区域执行一次云台定位及变倍；目标框不是地图地理坐标。 |
 | cruise_start | cruiseId:int、durationMs:int | cruiseId 为 getCruiseList 返回的编号；durationMs 为 1000～60000 毫秒，到期自动停止。 |
-| cruise_stop | 无 | 停止当前巡航。 |
+| cruise_stop | 无   | 停止当前巡航。 |
 | guard_set | enabled:bool | false 关闭守望；true 时另传 idleSeconds:int（5～3600）、guardAction（preset 或 cruise）及对应编号。 |
 
 守望 guardAction=preset 时必填 presetId，且设备同时支持 call_preset；guardAction=cruise 时必填 cruiseId 和 durationMs，且设备同时支持 cruise_start。仅在通道无人工操作、无其他运动任务，连续空闲达到 idleSeconds 后触发一次。再次人工操作重置计时；守望动作结束后保持等待，不在无人操作时无限重触发。再次明确启用或下一轮人工操作结束后，开始新的空闲周期。重启、MQTT 断线或 ptz_stop 后守望暂停，平台不得自动恢复，需操作者重新启用。
@@ -412,7 +412,7 @@ expiresAt 是最晚接收时间，不是允许无限执行的期限。到期的�
 
 回执沿用 payload.sourceMsgId、code、msg、errCode、errDetail、bizData。新增字段放在 bizData 中：controlVersion、deviceInstanceId、channelId、ptzCmd、sequence、status、eventSeq、stopReason 和 state。查询回执按查询结果返回，不需要 ptzCmd 或操作序号。
 
-| 字段或状态 | 约束 |
+| **字段或状态** | **约束** |
 | --- | --- |
 | status=accepted / running | 非终态，code=202、errCode=0；只表示已受理或正在执行。 |
 | status=succeeded | 终态，code=200、errCode=0；指令要求的动作已完成。停止请求必须已确认停止。 |
@@ -422,11 +422,11 @@ expiresAt 是最晚接收时间，不是允许无限执行的期限。到期的�
 | stopReason | 可选：user、hold_expired、duration_expired、disconnected、limit、timeout、superseded。 |
 | state | 当前设备可确认状态；未知字段用 null，不能用 false 代替未知。 |
 
-getControlState 成功结果包括 controlVersion、deviceInstanceId、channelId、lastSequence 和 state。state 至少包含 mode（idle、manual、positioning、tracking、cruise、guard、calibrating 或 unknown）、moving（bool 或 null）、activeRequestIds（string[]）、lightOn（bool 或 null）、guardEnabled（bool 或 null）。supportedCommands 中未提供灯光或守望时，相应状态可为 null。
+getControlState 成功结果包括 controlVersion、deviceInstanceId、channelId、lastSequence 和 state。state 至少包含 mode（idle、manual、positioning、tracking、cruise、guard、calibrating 或 unknown）、moving（bool 或 null）、activeRequestIds（string\[\]）、lightOn（bool 或 null）、guardEnabled（bool 或 null）。supportedCommands 中未提供灯光或守望时，相应状态可为 null。
 
 连续运动启动后可返回 running；holdMs 正常到期后返回 succeeded、stopReason=hold_expired；被新的同向续发请求接替时，旧请求返回 canceled、stopReason=superseded，当前状态仍可 moving=true。平台将同向续发导致的 superseded 视为正常接替，不反复弹出故障提示。停止是独立请求：先终结被中断请求，再针对停止请求返回 succeeded 和 moving=false。自然完成的定位、聚焦、初始化、巡航或跟踪，只有动作实际结束才返回 succeeded。
 
-| code | errCode | 含义 |
+| **code** | **errCode** | **含义** |
 | --- | --- | --- |
 | 400 | 3101 | 参数缺失、类型错误或超出范围。 |
 | 404 | 3102 | 通道、预置位或巡航组不存在。 |
@@ -448,269 +448,262 @@ getControlState 成功结果包括 controlVersion、deviceInstanceId、channelId
 
 **能力查询请求**
 
-```json
 {
-  "protocolVersion": "2.2",
-  "messageId": "19272022-b59b-4a74-8e87-000000000001",
-  "deviceId": "CAM-20260001",
-  "sentAt": "2026-09-07T08:00:00.000Z",
-  "msgDir": "platform2dev",
-  "mainBizType": "device",
-  "subBizType": "ctrl",
-  "payload": {
-    "ctrlAction": "getControlCapabilities",
-    "controlVersion": 1,
-    "param": {}
-  },
-  "extend": {}
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"19272022-b59b-4a74-8e87-000000000001",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-09-07T08:00:00.000Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"ctrl",
+    **"payload"**:{
+        **"ctrlAction"**:"getControlCapabilities",
+        **"controlVersion"**:1,
+        **"param"**:{
+<br/>        }
+    },
+    **"extend"**:{
+<br/>    }
 }
-```
 
 **未来固件能力查询成功示例**
 
-```json
 {
-  "protocolVersion": "2.2",
-  "messageId": "19272022-b59b-4a74-8e87-000000000002",
-  "deviceId": "CAM-20260001",
-  "sentAt": "2026-09-07T08:00:00.000Z",
-  "msgDir": "dev2platform",
-  "mainBizType": "device",
-  "subBizType": "ctrl",
-  "payload": {
-    "sourceMsgId": "19272022-b59b-4a74-8e87-000000000001",
-    "code": 200,
-    "msg": "控制能力查询成功",
-    "errCode": 0,
-    "errDetail": "",
-    "bizData": {
-      "controlVersion": 1,
-      "capabilityRevision": "ctrl-1-r1",
-      "firmwareVersion": "future-control-build",
-      "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-      "channels": [
-        {
-          "channelId": "CH-1",
-          "supportedCommands": [
-            "ptz_up",
-            "ptz_down",
-            "ptz_left",
-            "ptz_right",
-            "ptz_stop",
-            "zoom_in",
-            "zoom_out",
-            "zoom_stop"
-          ],
-          "speedMin": 1,
-          "speedMax": 36,
-          "maxHoldMs": 500
-        }
-      ],
-      "managementUrl": "http://192.0.2.10/"
-    }
-  },
-  "extend": {}
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"19272022-b59b-4a74-8e87-000000000002",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-09-07T08:00:00.000Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"ctrl",
+    **"payload"**:{
+        **"sourceMsgId"**:"19272022-b59b-4a74-8e87-000000000001",
+        **"code"**:200,
+        **"msg"**:"控制能力查询成功",
+        **"errCode"**:0,
+        **"errDetail"**:"",
+        **"bizData"**:{
+            **"controlVersion"**:1,
+            **"capabilityRevision"**:"ctrl-1-r1",
+            **"firmwareVersion"**:"future-control-build",
+            **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+            **"channels"**:\[
+                {
+                    **"channelId"**:"CH-1",
+                    **"supportedCommands"**:\[
+                        "ptz_up",
+                        "ptz_down",
+                        "ptz_left",
+                        "ptz_right",
+                        "ptz_stop",
+                        "zoom_in",
+                        "zoom_out",
+                        "zoom_stop"
+                    \],
+                    **"speedMin"**:1,
+                    **"speedMax"**:36,
+                    **"maxHoldMs"**:500
+                }
+            \],
+            **"managementUrl"**:"http://192.0.2.10/"
+        }
+    },
+    **"extend"**:{
+<br/>    }
 }
-```
-
 **按下向左按钮**
 
-```json
 {
-  "protocolVersion": "2.2",
-  "messageId": "19272022-b59b-4a74-8e87-000000000003",
-  "deviceId": "CAM-20260001",
-  "sentAt": "2026-09-07T08:00:00.000Z",
-  "msgDir": "platform2dev",
-  "mainBizType": "device",
-  "subBizType": "ctrl",
-  "payload": {
-    "ctrlAction": "ptzCmd",
-    "controlVersion": 1,
-    "param": {
-      "channelId": "CH-1",
-      "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-      "ptzCmd": "ptz_left",
-      "sequence": 101,
-      "expiresAt": "2026-09-07T08:00:01.000Z",
-      "speed": 10,
-      "holdMs": 500
-    }
-  },
-  "extend": {}
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"19272022-b59b-4a74-8e87-000000000003",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-09-07T08:00:00.000Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"ctrl",
+    **"payload"**:{
+        **"ctrlAction"**:"ptzCmd",
+        **"controlVersion"**:1,
+        **"param"**:{
+            **"channelId"**:"CH-1",
+            **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+            **"ptzCmd"**:"ptz_left",
+            **"sequence"**:101,
+            **"expiresAt"**:"2026-09-07T08:00:01.000Z",
+            **"speed"**:10,
+            **"holdMs"**:500
+        }
+    },
+    **"extend"**:{
+<br/>    }
 }
-```
 
 **设备开始运动的非终态回执**
 
-```json
 {
-  "protocolVersion": "2.2",
-  "messageId": "19272022-b59b-4a74-8e87-000000000004",
-  "deviceId": "CAM-20260001",
-  "sentAt": "2026-09-07T08:00:00.050Z",
-  "msgDir": "dev2platform",
-  "mainBizType": "device",
-  "subBizType": "ctrl",
-  "payload": {
-    "sourceMsgId": "19272022-b59b-4a74-8e87-000000000003",
-    "code": 202,
-    "msg": "云台正在向左运动",
-    "errCode": 0,
-    "errDetail": "",
-    "bizData": {
-      "controlVersion": 1,
-      "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-      "channelId": "CH-1",
-      "ptzCmd": "ptz_left",
-      "sequence": 101,
-      "status": "running",
-      "eventSeq": 1,
-      "state": {
-        "mode": "manual",
-        "moving": true,
-        "activeRequestIds": [
-          "19272022-b59b-4a74-8e87-000000000003"
-        ],
-        "lightOn": null,
-        "guardEnabled": false
-      }
-    }
-  },
-  "extend": {}
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"19272022-b59b-4a74-8e87-000000000004",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-09-07T08:00:00.050Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"ctrl",
+    **"payload"**:{
+        **"sourceMsgId"**:"19272022-b59b-4a74-8e87-000000000003",
+        **"code"**:202,
+        **"msg"**:"云台正在向左运动",
+        **"errCode"**:0,
+        **"errDetail"**:"",
+        **"bizData"**:{
+            **"controlVersion"**:1,
+            **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+            **"channelId"**:"CH-1",
+            **"ptzCmd"**:"ptz_left",
+            **"sequence"**:101,
+            **"status"**:"running",
+            **"eventSeq"**:1,
+            **"state"**:{
+                **"mode"**:"manual",
+                **"moving"**:true,
+                **"activeRequestIds"**:\[
+                    "19272022-b59b-4a74-8e87-000000000003"
+                \],
+                **"lightOn"**:_null_,
+                **"guardEnabled"**:false
+            }
+        }
+    },
+    **"extend"**:{
+<br/>    }
 }
-```
+<br/>**松开按钮或点击中央停止**
 
-**松开按钮或点击中央停止**
-
-```json
 {
-  "protocolVersion": "2.2",
-  "messageId": "19272022-b59b-4a74-8e87-000000000005",
-  "deviceId": "CAM-20260001",
-  "sentAt": "2026-09-07T08:00:00.150Z",
-  "msgDir": "platform2dev",
-  "mainBizType": "device",
-  "subBizType": "ctrl",
-  "payload": {
-    "ctrlAction": "ptzCmd",
-    "controlVersion": 1,
-    "param": {
-      "channelId": "CH-1",
-      "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-      "ptzCmd": "ptz_stop",
-      "sequence": 102,
-      "expiresAt": "2026-09-07T08:00:01.150Z"
-    }
-  },
-  "extend": {}
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"19272022-b59b-4a74-8e87-000000000005",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-09-07T08:00:00.150Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"ctrl",
+    **"payload"**:{
+        **"ctrlAction"**:"ptzCmd",
+        **"controlVersion"**:1,
+        **"param"**:{
+            **"channelId"**:"CH-1",
+            **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+            **"ptzCmd"**:"ptz_stop",
+            **"sequence"**:102,
+            **"expiresAt"**:"2026-09-07T08:00:01.150Z"
+        }
+    },
+    **"extend"**:{
+<br/>    }
 }
-```
 
 **被停止打断的原运动请求回执**
 
-```json
 {
-  "protocolVersion": "2.2",
-  "messageId": "19272022-b59b-4a74-8e87-000000000006",
-  "deviceId": "CAM-20260001",
-  "sentAt": "2026-09-07T08:00:00.200Z",
-  "msgDir": "dev2platform",
-  "mainBizType": "device",
-  "subBizType": "ctrl",
-  "payload": {
-    "sourceMsgId": "19272022-b59b-4a74-8e87-000000000003",
-    "code": 409,
-    "msg": "运动已被停止请求中断",
-    "errCode": 3108,
-    "errDetail": "",
-    "bizData": {
-      "controlVersion": 1,
-      "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-      "channelId": "CH-1",
-      "ptzCmd": "ptz_left",
-      "sequence": 101,
-      "status": "canceled",
-      "eventSeq": 2,
-      "state": {
-        "mode": "idle",
-        "moving": false,
-        "activeRequestIds": [],
-        "lightOn": null,
-        "guardEnabled": false
-      },
-      "stopReason": "user"
-    }
-  },
-  "extend": {}
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"19272022-b59b-4a74-8e87-000000000006",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-09-07T08:00:00.200Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"ctrl",
+    **"payload"**:{
+        **"sourceMsgId"**:"19272022-b59b-4a74-8e87-000000000003",
+        **"code"**:409,
+        **"msg"**:"运动已被停止请求中断",
+        **"errCode"**:3108,
+        **"errDetail"**:"",
+        **"bizData"**:{
+            **"controlVersion"**:1,
+            **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+            **"channelId"**:"CH-1",
+            **"ptzCmd"**:"ptz_left",
+            **"sequence"**:101,
+            **"status"**:"canceled",
+            **"eventSeq"**:2,
+            **"state"**:{
+                **"mode"**:"idle",
+                **"moving"**:false,
+                **"activeRequestIds"**:\[
+<br/>                \],
+                **"lightOn"**:_null_,
+                **"guardEnabled"**:false
+            },
+            **"stopReason"**:"user"
+        }
+    },
+    **"extend"**:{
+<br/>    }
 }
-```
 
 **停止请求成功回执**
 
-```json
 {
-  "protocolVersion": "2.2",
-  "messageId": "19272022-b59b-4a74-8e87-000000000007",
-  "deviceId": "CAM-20260001",
-  "sentAt": "2026-09-07T08:00:00.210Z",
-  "msgDir": "dev2platform",
-  "mainBizType": "device",
-  "subBizType": "ctrl",
-  "payload": {
-    "sourceMsgId": "19272022-b59b-4a74-8e87-000000000005",
-    "code": 200,
-    "msg": "本通道已停止",
-    "errCode": 0,
-    "errDetail": "",
-    "bizData": {
-      "controlVersion": 1,
-      "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-      "channelId": "CH-1",
-      "ptzCmd": "ptz_stop",
-      "sequence": 102,
-      "status": "succeeded",
-      "eventSeq": 1,
-      "state": {
-        "mode": "idle",
-        "moving": false,
-        "activeRequestIds": [],
-        "lightOn": null,
-        "guardEnabled": false
-      },
-      "stopReason": "user"
-    }
-  },
-  "extend": {}
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"19272022-b59b-4a74-8e87-000000000007",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-09-07T08:00:00.210Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"ctrl",
+    **"payload"**:{
+        **"sourceMsgId"**:"19272022-b59b-4a74-8e87-000000000005",
+        **"code"**:200,
+        **"msg"**:"本通道已停止",
+        **"errCode"**:0,
+        **"errDetail"**:"",
+        **"bizData"**:{
+            **"controlVersion"**:1,
+            **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+            **"channelId"**:"CH-1",
+            **"ptzCmd"**:"ptz_stop",
+            **"sequence"**:102,
+            **"status"**:"succeeded",
+            **"eventSeq"**:1,
+            **"state"**:{
+                **"mode"**:"idle",
+                **"moving"**:false,
+                **"activeRequestIds"**:\[
+<br/>                \],
+                **"lightOn"**:_null_,
+                **"guardEnabled"**:false
+            },
+            **"stopReason"**:"user"
+        }
+    },
+    **"extend"**:{
+<br/>    }
 }
-```
 
 **尚不支持新控制规格的明确失败回执**
 
-```json
 {
-  "protocolVersion": "2.2",
-  "messageId": "19272022-b59b-4a74-8e87-000000000008",
-  "deviceId": "CAM-20260001",
-  "sentAt": "2026-09-07T08:00:00.000Z",
-  "msgDir": "dev2platform",
-  "mainBizType": "device",
-  "subBizType": "ctrl",
-  "payload": {
-    "sourceMsgId": "19272022-b59b-4a74-8e87-000000000001",
-    "code": 501,
-    "msg": "当前固件尚未实现控制规格 1",
-    "errCode": 3103,
-    "errDetail": "控制按钮应禁用，视频播放不受影响",
-    "bizData": {
-      "controlVersion": 1,
-      "status": "failed",
-      "eventSeq": 1
-    }
-  },
-  "extend": {}
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"19272022-b59b-4a74-8e87-000000000008",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-09-07T08:00:00.000Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"ctrl",
+    **"payload"**:{
+        **"sourceMsgId"**:"19272022-b59b-4a74-8e87-000000000001",
+        **"code"**:501,
+        **"msg"**:"当前固件尚未实现控制规格 1",
+        **"errCode"**:3103,
+        **"errDetail"**:"控制按钮应禁用，视频播放不受影响",
+        **"bizData"**:{
+            **"controlVersion"**:1,
+            **"status"**:"failed",
+            **"eventSeq"**:1
+        }
+    },
+    **"extend"**:{
+<br/>    }
 }
-```
 
 **镜头与高级动作的 param 示例**
 
@@ -718,178 +711,154 @@ getControlState 成功结果包括 controlVersion、deviceInstanceId、channelId
 
 **光学变倍**
 
-```json
 {
-  "channelId": "CH-1",
-  "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-  "ptzCmd": "zoom_in",
-  "sequence": 103,
-  "expiresAt": "2026-09-07T08:00:01.000Z",
-  "speed": 10,
-  "holdMs": 500
+    **"channelId"**:"CH-1",
+    **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+    **"ptzCmd"**:"zoom_in",
+    **"sequence"**:103,
+    **"expiresAt"**:"2026-09-07T08:00:01.000Z",
+    **"speed"**:10,
+    **"holdMs"**:500
 }
-```
 
 **聚焦**
 
-```json
 {
-  "channelId": "CH-1",
-  "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-  "ptzCmd": "focus_near",
-  "sequence": 104,
-  "expiresAt": "2026-09-07T08:00:01.000Z",
-  "speed": 8,
-  "holdMs": 500
+    **"channelId"**:"CH-1",
+    **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+    **"ptzCmd"**:"focus_near",
+    **"sequence"**:104,
+    **"expiresAt"**:"2026-09-07T08:00:01.000Z",
+    **"speed"**:8,
+    **"holdMs"**:500
 }
-```
 
 **光圈**
 
-```json
 {
-  "channelId": "CH-1",
-  "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-  "ptzCmd": "iris_open",
-  "sequence": 105,
-  "expiresAt": "2026-09-07T08:00:01.000Z",
-  "speed": 8,
-  "holdMs": 500
+    **"channelId"**:"CH-1",
+    **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+    **"ptzCmd"**:"iris_open",
+    **"sequence"**:105,
+    **"expiresAt"**:"2026-09-07T08:00:01.000Z",
+    **"speed"**:8,
+    **"holdMs"**:500
 }
-```
 
 **灯光**
 
-```json
 {
-  "channelId": "CH-1",
-  "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-  "ptzCmd": "light_set",
-  "sequence": 106,
-  "expiresAt": "2026-09-07T08:00:01.000Z",
-  "enabled": true
+    **"channelId"**:"CH-1",
+    **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+    **"ptzCmd"**:"light_set",
+    **"sequence"**:106,
+    **"expiresAt"**:"2026-09-07T08:00:01.000Z",
+    **"enabled"**:true
 }
-```
 
 **辅助聚焦**
 
-```json
 {
-  "channelId": "CH-1",
-  "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-  "ptzCmd": "focus_auto",
-  "sequence": 107,
-  "expiresAt": "2026-09-07T08:00:01.000Z",
-  "timeoutMs": 10000
+    **"channelId"**:"CH-1",
+    **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+    **"ptzCmd"**:"focus_auto",
+    **"sequence"**:107,
+    **"expiresAt"**:"2026-09-07T08:00:01.000Z",
+    **"timeoutMs"**:10000
 }
-```
 
 **镜头初始化**
 
-```json
 {
-  "channelId": "CH-1",
-  "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-  "ptzCmd": "lens_init",
-  "sequence": 108,
-  "expiresAt": "2026-09-07T08:00:01.000Z",
-  "timeoutMs": 30000
+    **"channelId"**:"CH-1",
+    **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+    **"ptzCmd"**:"lens_init",
+    **"sequence"**:108,
+    **"expiresAt"**:"2026-09-07T08:00:01.000Z",
+    **"timeoutMs"**:30000
 }
-```
 
 **打开设备菜单**
 
-```json
 {
-  "channelId": "CH-1",
-  "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-  "ptzCmd": "osd_menu",
-  "sequence": 109,
-  "expiresAt": "2026-09-07T08:00:01.000Z",
-  "menuAction": "open"
+    **"channelId"**:"CH-1",
+    **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+    **"ptzCmd"**:"osd_menu",
+    **"sequence"**:109,
+    **"expiresAt"**:"2026-09-07T08:00:01.000Z",
+    **"menuAction"**:"open"
 }
-```
 
 **手动跟踪**
 
-```json
 {
-  "channelId": "CH-1",
-  "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-  "ptzCmd": "manual_track_start",
-  "sequence": 110,
-  "expiresAt": "2026-09-07T08:00:01.000Z",
-  "target": {
-    "x": 2000,
-    "y": 2500,
-    "width": 3000,
-    "height": 4000
-  },
-  "durationMs": 30000
+    **"channelId"**:"CH-1",
+    **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+    **"ptzCmd"**:"manual_track_start",
+    **"sequence"**:110,
+    **"expiresAt"**:"2026-09-07T08:00:01.000Z",
+    **"target"**:{
+        **"x"**:2000,
+        **"y"**:2500,
+        **"width"**:3000,
+        **"height"**:4000
+    },
+    **"durationMs"**:30000
 }
-```
 
 **3D 定位**
 
-```json
 {
-  "channelId": "CH-1",
-  "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-  "ptzCmd": "position_3d",
-  "sequence": 111,
-  "expiresAt": "2026-09-07T08:00:01.000Z",
-  "target": {
-    "x": 2000,
-    "y": 2500,
-    "width": 3000,
-    "height": 4000
-  },
-  "timeoutMs": 10000
+    **"channelId"**:"CH-1",
+    **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+    **"ptzCmd"**:"position_3d",
+    **"sequence"**:111,
+    **"expiresAt"**:"2026-09-07T08:00:01.000Z",
+    **"target"**:{
+        **"x"**:2000,
+        **"y"**:2500,
+        **"width"**:3000,
+        **"height"**:4000
+    },
+    **"timeoutMs"**:10000
 }
-```
 
 **巡航**
 
-```json
 {
-  "channelId": "CH-1",
-  "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-  "ptzCmd": "cruise_start",
-  "sequence": 112,
-  "expiresAt": "2026-09-07T08:00:01.000Z",
-  "cruiseId": 2,
-  "durationMs": 30000
+    **"channelId"**:"CH-1",
+    **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+    **"ptzCmd"**:"cruise_start",
+    **"sequence"**:112,
+    **"expiresAt"**:"2026-09-07T08:00:01.000Z",
+    **"cruiseId"**:2,
+    **"durationMs"**:30000
 }
-```
 
 **启用预置位守望**
 
-```json
 {
-  "channelId": "CH-1",
-  "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-  "ptzCmd": "guard_set",
-  "sequence": 113,
-  "expiresAt": "2026-09-07T08:00:01.000Z",
-  "enabled": true,
-  "idleSeconds": 60,
-  "guardAction": "preset",
-  "presetId": 3
+    **"channelId"**:"CH-1",
+    **"deviceInstanceId"**:"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+    **"ptzCmd"**:"guard_set",
+    **"sequence"**:113,
+    **"expiresAt"**:"2026-09-07T08:00:01.000Z",
+    **"enabled"**:true,
+    **"idleSeconds"**:60,
+    **"guardAction"**:"preset",
+    **"presetId"**:3
 }
-```
 
 **关闭守望**
 
-```json
 {
-  "channelId": "CH-1",
-  "deviceInstanceId": "9351f7ce-80d6-4f34-bacc-966351e88ad6",
-  "ptzCmd": "guard_set",
-  "sequence": 114,
-  "expiresAt": "2026-09-07T08:00:01.000Z",
-  "enabled": false
+    "channelId":"CH-1",
+    "deviceInstanceId":"9351f7ce-80d6-4f34-bacc-966351e88ad6",
+    "ptzCmd":"guard_set",
+    "sequence":114,
+    "expiresAt":"2026-09-07T08:00:01.000Z",
+    "enabled":false
 }
-```
 
 ### 3.2.10 联调与启用条件
 
@@ -917,21 +886,21 @@ getControlState 成功结果包括 controlVersion、deviceInstanceId、channelId
 
 下发示例
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"cmd-snap-1234abcd-5678ef90-112233445566",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:35:00Z",  
-    **"msgDir"**:"platform2dev",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"snapshot",  
-    **"payload"**:{  
-        **"ctrlAction"**:"SnapShot",  
-        **"type"**:"Directly",  
-        **"snapChannel"**:1  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"cmd-snap-1234abcd-5678ef90-112233445566",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:35:00Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"snapshot",
+    **"payload"**:{
+        **"ctrlAction"**:"SnapShot",
+        **"type"**:"Directly",
+        **"snapChannel"**:1
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 ### 抓图回执 bizData 字段
@@ -945,28 +914,28 @@ getControlState 成功结果包括 controlVersion、deviceInstanceId、channelId
 
 回执完整示例
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"ack-snap-9876dcba-4321fe09-667788990011",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:35:01Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"snapshot",  
-    **"payload"**:{  
-        **"sourceMsgId"**:"cmd-snap-1234abcd-5678ef90-112233445566",  
-        **"code"**:200,  
-        **"msg"**:"抓拍完成",  
-        **"errCode"**:0,  
-        **"errDetail"**:"",  
-        **"bizData"**:{  
-            **"result"**:"ok",  
-            **"snapChannel"**:1,  
-            **"image"**:"data:image/jpg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAEBAQEBAQEBAQEB..."  
-        }  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"ack-snap-9876dcba-4321fe09-667788990011",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:35:01Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"snapshot",
+    **"payload"**:{
+        **"sourceMsgId"**:"cmd-snap-1234abcd-5678ef90-112233445566",
+        **"code"**:200,
+        **"msg"**:"抓拍完成",
+        **"errCode"**:0,
+        **"errDetail"**:"",
+        **"bizData"**:{
+            **"result"**:"ok",
+            **"snapChannel"**:1,
+            **"image"**:"data:image/jpg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAEBAQEBAQEBAQEB..."
+        }
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 ## 3.4 设备校时
@@ -986,42 +955,42 @@ getControlState 成功结果包括 controlVersion、deviceInstanceId、channelId
 
 下发示例
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"cmd-time-22334455-66778899-00112233abcd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:36:00Z",  
-    **"msgDir"**:"platform2dev",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"time",  
-    **"payload"**:{  
-        **"time"**:"2026-07-24 09:36:00"  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"cmd-time-22334455-66778899-00112233abcd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:36:00Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"time",
+    **"payload"**:{
+        **"time"**:"2026-07-24 09:36:00"
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 校时回执示例
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"ack-time-33445566-77889900-11223344dcba",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:36:00Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"time",  
-    **"payload"**:{  
-        **"sourceMsgId"**:"cmd-time-22334455-66778899-00112233abcd",  
-        **"code"**:200,  
-        **"msg"**:"设备时间同步完成",  
-        **"errCode"**:0,  
-        **"errDetail"**:"",  
-        **"bizData"**:{  
-<br/>        }  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"ack-time-33445566-77889900-11223344dcba",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:36:00Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"time",
+    **"payload"**:{
+        **"sourceMsgId"**:"cmd-time-22334455-66778899-00112233abcd",
+        **"code"**:200,
+        **"msg"**:"设备时间同步完成",
+        **"errCode"**:0,
+        **"errDetail"**:"",
+        **"bizData"**:{
+<br/>        }
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 ## 3.5 媒体上传交互
@@ -1044,22 +1013,22 @@ getControlState 成功结果包括 controlVersion、deviceInstanceId、channelId
 
 下发示例：
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"cmd-media-upload-00112233-44556677-8899aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:37:00Z",  
-    **"msgDir"**:"platform2dev",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"mediaUpload",  
-    **"payload"**:{  
-        **"mediaId"**:"MEDIA-UUID-0001",  
-        **"mediaType"**:"image/jpeg",  
-        **"fileSize"**:102400,  
-        **"sha256"**:"abcdef1234567890abcdef1234567890"  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"cmd-media-upload-00112233-44556677-8899aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:37:00Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"mediaUpload",
+    **"payload"**:{
+        **"mediaId"**:"MEDIA-UUID-0001",
+        **"mediaType"**:"image/jpeg",
+        **"fileSize"**:102400,
+        **"sha256"**:"abcdef1234567890abcdef1234567890"
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 ### 2）平台返回上传地址回执
@@ -1074,29 +1043,29 @@ getControlState 成功结果包括 controlVersion、deviceInstanceId、channelId
 
 回执示例：bizData 字段
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"ack-media-url-11223344-55667788-9900aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:37:01Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"mediaUpload",  
-    **"payload"**:{  
-        **"sourceMsgId"**:"cmd-media-upload-00112233-44556677-8899aabbccdd",  
-        **"code"**:200,  
-        **"msg"**:"上传地址已生成",  
-        **"errCode"**:0,  
-        **"errDetail"**:"",  
-        **"bizData"**:{  
-            **"mediaId"**:"MEDIA-UUID-0001",  
-            **"uploadUrl"**:"https://minio.test.com/upload/xxx",  
-            **"objectUrl"**:"https://minio.test.com/res/xxx",  
-            **"expiresAt"**:"2026-07-24T10:37:00Z"  
-        }  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"ack-media-url-11223344-55667788-9900aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:37:01Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"mediaUpload",
+    **"payload"**:{
+        **"sourceMsgId"**:"cmd-media-upload-00112233-44556677-8899aabbccdd",
+        **"code"**:200,
+        **"msg"**:"上传地址已生成",
+        **"errCode"**:0,
+        **"errDetail"**:"",
+        **"bizData"**:{
+            **"mediaId"**:"MEDIA-UUID-0001",
+            **"uploadUrl"**:"https://minio.test.com/upload/xxx",
+            **"objectUrl"**:"https://minio.test.com/res/xxx",
+            **"expiresAt"**:"2026-07-24T10:37:00Z"
+        }
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 ### 3）设备上传完成上报
@@ -1112,22 +1081,22 @@ getControlState 成功结果包括 controlVersion、deviceInstanceId、channelId
 
 上报完整示例：
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"cmd-media-upload-00112233-44556677-8899aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:37:00Z",  
-    **"msgDir"**:"platform2dev",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"mediaUpload",  
-    **"payload"**:{  
-        **"mediaId"**:"MEDIA-UUID-0001",  
-        **"mediaType"**:"image/jpeg",  
-        **"fileSize"**:102400,  
-        **"sha256"**:"abcdef1234567890abcdef1234567890"  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"cmd-media-upload-00112233-44556677-8899aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:37:00Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"mediaUpload",
+    **"payload"**:{
+        **"mediaId"**:"MEDIA-UUID-0001",
+        **"mediaType"**:"image/jpeg",
+        **"fileSize"**:102400,
+        **"sha256"**:"abcdef1234567890abcdef1234567890"
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 ## 3.6 设备心跳 & 硬件遥测
@@ -1138,12 +1107,12 @@ getControlState 成功结果包括 controlVersion、deviceInstanceId、channelId
 
 设备定时上报在线状态、硬件资源、版本以及平台可拉取的视频源。消息 Retain=true，断网自动下发遗嘱离线消息。平台以首次收到的合法 deviceBiz/state 自动登记未知设备。设备只负责提供源流，不直接调用 ZLMediaKit，也不生成浏览器 WebRTC 地址。 state 上报使用 mainBizType=deviceBiz；平台在过渡期兼容旧值 device，并在回执中原样返回上报消息使用的 mainBizType。
 
-streams 是视频源描述对象数组，不是视频文件、视频帧，也不是要求设备向平台推流。每个数组元素描述一路平台后端可以主动拉取的 RTSP/RTMP 视频源。硬件端填写规则：  
-1\. 每次 deviceBiz/state 都上报当前全部已配置视频流，不得只传新增或变化的流。  
-2\. 同一摄像头通道有主码流和子码流时，传两个对象：channelId 相同，streamType 分别为 main 和 sub。  
-3\. 已配置但暂时无法拉取的流仍保留在数组中，并传 available=false；流被永久删除后才从数组移除。  
-4\. 设备没有视频能力或尚未配置拉流地址时传 streams: \[\]。  
-5\. channelId + streamType 是一路流的稳定标识，设备重启或拉流地址变化后不得随意改变；url 必须能被平台后端访问。  
+streams 是视频源描述对象数组，不是视频文件、视频帧，也不是要求设备向平台推流。每个数组元素描述一路平台后端可以主动拉取的 RTSP/RTMP 视频源。硬件端填写规则：
+1\. 每次 deviceBiz/state 都上报当前全部已配置视频流，不得只传新增或变化的流。
+2\. 同一摄像头通道有主码流和子码流时，传两个对象：channelId 相同，streamType 分别为 main 和 sub。
+3\. 已配置但暂时无法拉取的流仍保留在数组中，并传 available=false；流被永久删除后才从数组移除。
+4\. 设备没有视频能力或尚未配置拉流地址时传 streams: \[\]。
+5\. channelId + streamType 是一路流的稳定标识，设备重启或拉流地址变化后不得随意改变；url 必须能被平台后端访问。
 平台收到新心跳后，会把未出现在本次数组中的旧流标记为不可用。url 属于敏感信息，只允许通过受控 MQTT/TLS 上报，不得写入日志。平台仅在用户预览时按需拉流并转换为 WebRTC，无人观看后自动释放。
 
 设备能力和模型清单由 online=true 的 state 心跳更新：字段省略时保留最近快照，首次未上报显示“未上报”；传空数组明确清空。online=false 为离线状态或遗嘱，不覆盖能力和模型快照。字段类型错误返回 code=400，不登记该消息，可修正后重传。能力清单仅用于展示，不代替 3.2 节控制能力查询。
@@ -1168,7 +1137,6 @@ streams 是视频源描述对象数组，不是视频文件、视频帧，也不
 | ipAddr | string | 否   | 局域网 IP |
 | mac | string | 否   | MAC 地址 |
 | telemetry | object | 否   | 硬件资源 |
-| telemetry.bootTime | long | 否 | 设备本次真实开机时间，Unix 毫秒时间戳；断网重连不改变，设备重启后更新。设备时钟未同步时省略，不以 MQTT 连接时间代替。 |
 | telemetry.cpu | int | 否   | CPU 占用 % |
 | telemetry.mem | int | 否   | 内存占用 % |
 | telemetry.diskUsed | int | 否   | 磁盘使用率 % |
@@ -1188,129 +1156,138 @@ streams 是视频源描述对象数组，不是视频文件、视频帧，也不
 | streams\[\].url | string | 条件必填 | streams 非空时必填；平台后端可访问的完整拉流地址，可包含认证信息 |
 | streams\[\].default | bool | 否   | 是否为默认预览流；默认 false，全设备最多一个 true |
 | streams\[\].available | bool | 否   | 当前源流是否可用，默认 true |
-| capabilities | array | 否 | 设备能力全量快照；video 视频、audio 音频、ptz 云台、aiInfer AI推理、face 人脸识别、recording 录像、ota 固件升级。可扩展非空能力编码；[] 表示无能力。 |
-| models | array | 否 | 设备当前模型全量快照；[] 表示当前无模型。只上报实际存在的模型，不使用平台下发记录代替。 |
-| models[].modelId | string | 是 | 模型唯一标识；必须使用字符串，避免长整数精度丢失。 |
-| models[].modelName | string | 否 | 模型名称。 |
-| models[].version | string | 否 | 设备实际模型版本。 |
-| models[].format | string | 否 | 模型格式，如 OM、RKNN、ONNX。 |
-| models[].status | string | 否 | loaded 已加载、running 运行中、stopped 已停止、failed 异常；扩展状态原样显示。 |
-| location | object/null | 否 | WGS84 位置坐标，单位为十进制度；包含 longitude 和 latitude 两个数值。省略保留上次位置，null 明确清空；不得以 0 代替未定位。 |
+| capabilities | array | 否   | 设备能力全量快照；video 视频、audio 音频、ptz 云台、aiInfer AI推理、face 人脸识别、recording 录像、ota 固件升级。可扩展非空能力编码；\[\] 表示无能力。 |
+| models | array | 否   | 设备当前模型全量快照；\[\] 表示当前无模型。只上报实际存在的模型，不使用平台下发记录代替。 |
+| models\[\].modelId | string | 是   | 模型唯一标识；必须使用字符串，避免长整数精度丢失。 |
+| models\[\].modelName | string | 否   | 模型名称。 |
+| models\[\].version | string | 否   | 设备实际模型版本。 |
+| models\[\].format | string | 否   | 模型格式，如 OM、RKNN、ONNX。 |
+| models\[\].status | string | 否   | loaded 已加载、running 运行中、stopped 已停止、failed 异常；扩展状态原样显示。 |
+| location | object/null | 否   | WGS84 位置坐标，单位为十进制度；包含 longitude 和 latitude 两个数值。省略保留上次位置，null 明确清空；不得以 0 代替未定位。 |
 | location.longitude | float | 条件必填 | 经度，范围 -180～180，东经为正、西经为负；location 非 null 时必填，平台四舍五入保留最多 8 位小数。 |
 | location.latitude | float | 条件必填 | 纬度，范围 -90～90，北纬为正、南纬为负；location 非 null 时必填，平台四舍五入保留最多 8 位小数。 |
 
 正常心跳上报完整示例
 
-{  
-**"protocolVersion"**:"2.2",  
-    **"messageId"**:"up-heartbeat-33445566-77889900-1122aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:38:00Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"deviceBiz",  
-    **"subBizType"**:"state",  
-    **"payload"**:{  
-        **"online"**:true,  
-        **"reason"**:"normal",  
-        **"heartbeatIndex"**:120,  
-        **"deviceName"**:"园区东门人脸机",  
-        **"deviceSerial"**:"3161w316156d33x966",  
-        **"version"**:"v1.1.02",  
-        **"deviceFaceVer"**:"1021_v2",  
-        **"ipAddr"**:"192.168.1.100",  
-        **"mac"**:"00:11:22:33:44:55",  
-        **"telemetry"**:{  
-            **"cpu"**:32,  
-            **"mem"**:45,  
-            **"diskUsed"**:68,  
-            **"diskTotalMB"**:136,  
-            **"temp"**:48,  
-            **"netUpMbps"**:8.2,  
-            **"netDownMbps"**:12.5  
-        },  
-        **"serviceStatus"**:{  
-            **"rtsp"**:true,  
-            **"gb28181"**:false,  
-            **"aiInfer"**:true  
-        },  
-        **"location"**:{"longitude":113.12345678,"latitude":22.12345678},
-        **"capabilities"**:["video","aiInfer","ota"],
-        **"models"**:[{"modelId":"2096927699258966018","modelName":"安全帽检测","version":"1.0.0","format":"OM","status":"running"}],  
-        **"streams"**:\[  
-            {  
-                **"channelId"**:"CH-1",  
-                **"name"**:"东门主码流",  
-                **"streamType"**:"main",  
-                **"protocol"**:"rtsp",  
-                **"url"**:"rtsp://user:password@192.168.1.100:554/Streaming/Channels/101",  
-                **"default"**:true,  
-                **"available"**:true  
-            },  
-            {  
-                **"channelId"**:"CH-1",  
-                **"name"**:"东门子码流",  
-                **"streamType"**:"sub",  
-                **"protocol"**:"rtsp",  
-                **"url"**:"rtsp://user:password@192.168.1.100:554/Streaming/Channels/102",  
-                **"default"**:false,  
-                **"available"**:true  
-            }  
-        \]  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+**"protocolVersion"**:"2.2",
+    **"messageId"**:"up-heartbeat-33445566-77889900-1122aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:38:00Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"deviceBiz",
+    **"subBizType"**:"state",
+    **"payload"**:{
+        **"online"**:true,
+        **"reason"**:"normal",
+        **"heartbeatIndex"**:120,
+        **"deviceName"**:"园区东门人脸机",
+        **"deviceSerial"**:"3161w316156d33x966",
+        **"version"**:"v1.1.02",
+        **"deviceFaceVer"**:"1021_v2",
+        **"ipAddr"**:"192.168.1.100",
+        **"mac"**:"00:11:22:33:44:55",
+        **"telemetry"**:{
+            **"cpu"**:32,
+            **"mem"**:45,
+            **"diskUsed"**:68,
+            **"diskTotalMB"**:136,
+            **"temp"**:48,
+            **"netUpMbps"**:8.2,
+            **"netDownMbps"**:12.5
+        },
+        **"serviceStatus"**:{
+            **"rtsp"**:true,
+            **"gb28181"**:false,
+            **"aiInfer"**:true
+        },
+        **"location"**:{
+**"longitude"**:113.12345678,
+**"latitude"**:22.12345678
+},
+**"capabilities"**:\["video","aiInfer","ota"\],
+**"models"**:\[{
+**"modelId"**:"2096927699258966018",
+**"modelName"**:"安全帽检测",
+**"version"**:"1.0.0",
+**"format"**:"OM",
+**"status"**:"running"
+}\],
+**"streams"**:\[
+            {
+                **"channelId"**:"CH-1",
+                **"name"**:"东门主码流",
+                **"streamType"**:"main",
+                **"protocol"**:"rtsp",
+                **"url"**:"rtsp://user:password@192.168.1.100:554/Streaming/Channels/101",
+                **"default"**:true,
+                **"available"**:true
+            },
+            {
+                **"channelId"**:"CH-1",
+                **"name"**:"东门子码流",
+                **"streamType"**:"sub",
+                **"protocol"**:"rtsp",
+                **"url"**:"rtsp://user:password@192.168.1.100:554/Streaming/Channels/102",
+                **"default"**:false,
+                **"available"**:true
+            }
+        \]
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 平台接收成功回执示例
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"ack-heartbeat-33445566-77889900-1122aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:38:01Z",  
-    **"msgDir"**:"platform2dev",  
-    **"mainBizType"**:"deviceBiz",  
-    **"subBizType"**:"state",  
-    **"payload"**:{  
-        **"sourceMsgId"**:"up-heartbeat-33445566-77889900-1122aabbccdd",  
-        **"code"**:200,  
-        **"msg"**:"状态已接收",  
-        **"errCode"**:0,  
-        **"errDetail"**:"",  
-        **"bizData"**:{  
-<br/>        }  
-    },  
-    **"extend"**:{  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"ack-heartbeat-33445566-77889900-1122aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:38:01Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"deviceBiz",
+    **"subBizType"**:"state",
+    **"payload"**:{
+        **"sourceMsgId"**:"up-heartbeat-33445566-77889900-1122aabbccdd",
+        **"code"**:200,
+        **"msg"**:"状态已接收",
+        **"errCode"**:0,
+        **"errDetail"**:"",
+        **"bizData"**:{
+<br/>        }
+    },
+    **"extend"**:{
 <br/>    }}
 
 离线遗嘱消息示例
 
-{  
- **"protocolVersion"**:"2.2",  
-    **"messageId"**:"up-will-offline-44556677-88990011-2233aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:38:50Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"deviceBiz",  
-    **"subBizType"**:"state",  
-    **"payload"**:{  
-        **"online"**:false,  
-        **"reason"**:"mqtt_connection_lost",  
-        **"heartbeatIndex"**:120,  
-        **"deviceName"**:"园区东门人脸机",  
-        **"deviceSerial"**:"3161w316156d33x966",  
-        **"version"**:"v1.1.02",  
-        **"ipAddr"**:"192.168.1.100",  
-        **"mac"**:"00:11:22:33:44:55",  
-        **"telemetry"**:{  
-<br/>        },  
-        **"serviceStatus"**:{  
-<br/>        },  
-        **"streams"**:\[  
-<br/>        \]  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+ **"protocolVersion"**:"2.2",
+    **"messageId"**:"up-will-offline-44556677-88990011-2233aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:38:50Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"deviceBiz",
+    **"subBizType"**:"state",
+    **"payload"**:{
+        **"online"**:false,
+        **"reason"**:"mqtt_connection_lost",
+        **"heartbeatIndex"**:120,
+        **"deviceName"**:"园区东门人脸机",
+        **"deviceSerial"**:"3161w316156d33x966",
+        **"version"**:"v1.1.02",
+        **"ipAddr"**:"192.168.1.100",
+        **"mac"**:"00:11:22:33:44:55",
+        **"telemetry"**:{
+<br/>        },
+        **"serviceStatus"**:{
+<br/>        },
+        **"streams"**:\[
+<br/>        \]
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 ## 3.8 二维码识别上报
@@ -1333,24 +1310,24 @@ streams 是视频源描述对象数组，不是视频文件、视频帧，也不
 
 上报完整示例：
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"up-qrcode-scan-33445566-77889900-1122aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:44:00Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"qrcode",  
-    **"payload"**:{  
-        **"operator"**:"QRCodePush",  
-        **"info"**:{  
-            **"facesluiceId"**:"CAM-20260001",  
-            **"time"**:"2026-07-24 09:44:00",  
-            **"QRCodeInfo"**:"https://test.company.com/user/10001"  
-        }  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"up-qrcode-scan-33445566-77889900-1122aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:44:00Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"qrcode",
+    **"payload"**:{
+        **"operator"**:"QRCodePush",
+        **"info"**:{
+            **"facesluiceId"**:"CAM-20260001",
+            **"time"**:"2026-07-24 09:44:00",
+            **"QRCodeInfo"**:"https://test.company.com/user/10001"
+        }
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 ## 3.10 本地录像查询
@@ -1371,20 +1348,20 @@ streams 是视频源描述对象数组，不是视频文件、视频帧，也不
 
 下发示例：
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"cmd-record-search-44556677-88990011-2233aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:45:00Z",  
-    **"msgDir"**:"platform2dev",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"recordSearch",  
-    **"payload"**:{  
-        **"startTime"**:"2026-07-24 08:00:00",  
-        **"endTime"**:"2026-07-24 09:00:00"  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"cmd-record-search-44556677-88990011-2233aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:45:00Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"recordSearch",
+    **"payload"**:{
+        **"startTime"**:"2026-07-24 08:00:00",
+        **"endTime"**:"2026-07-24 09:00:00"
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 ### 查询回执 bizData 字段
@@ -1402,35 +1379,35 @@ streams 是视频源描述对象数组，不是视频文件、视频帧，也不
 
 回执完整示例：
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"ack-record-search-55667788-99001122-3344aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:45:01Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"recordSearch",  
-    **"payload"**:{  
-        **"sourceMsgId"**:"cmd-record-search-44556677-88990011-2233aabbccdd",  
-        **"code"**:200,  
-        **"msg"**:"录像文件查询完成",  
-        **"errCode"**:0,  
-        **"errDetail"**:"",  
-        **"bizData"**:{  
-            **"filelist"**:\[  
-                {  
-                    **"filename"**:"/sdcard/20260724/N165617.mp4",  
-                    **"type"**:1,  
-                    **"start_time"**:1784966400,  
-                    **"end_time"**:1784969400  
-                }  
-            \],  
-            **"facesluiceId"**:"CAM-20260001",  
-            **"result"**:"ok"  
-        }  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"ack-record-search-55667788-99001122-3344aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:45:01Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"recordSearch",
+    **"payload"**:{
+        **"sourceMsgId"**:"cmd-record-search-44556677-88990011-2233aabbccdd",
+        **"code"**:200,
+        **"msg"**:"录像文件查询完成",
+        **"errCode"**:0,
+        **"errDetail"**:"",
+        **"bizData"**:{
+            **"filelist"**:\[
+                {
+                    **"filename"**:"/sdcard/20260724/N165617.mp4",
+                    **"type"**:1,
+                    **"start_time"**:1784966400,
+                    **"end_time"**:1784969400
+                }
+            \],
+            **"facesluiceId"**:"CAM-20260001",
+            **"result"**:"ok"
+        }
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 ## 3.11 录像上传任务下发
@@ -1454,23 +1431,23 @@ streams 是视频源描述对象数组，不是视频文件、视频帧，也不
 
 下发示例：
 
-{  
-  **"protocolVersion"**:"2.2",  
-    **"messageId"**:"cmd-record-upload-66778899-00112233-4455aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:45:30Z",  
-    **"msgDir"**:"platform2dev",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"recordUpload",  
-    **"payload"**:{  
-        **"startTime"**:"2026-07-24 08:00:00",  
-        **"endTime"**:"2026-07-24 09:00:00",  
-        **"filename"**:"/sdcard/20260724/N165617.mp4",  
-        **"uploadurl"**:"",  
-        **"videoId"**:"VID-0001"  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+  **"protocolVersion"**:"2.2",
+    **"messageId"**:"cmd-record-upload-66778899-00112233-4455aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:45:30Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"recordUpload",
+    **"payload"**:{
+        **"startTime"**:"2026-07-24 08:00:00",
+        **"endTime"**:"2026-07-24 09:00:00",
+        **"filename"**:"/sdcard/20260724/N165617.mp4",
+        **"uploadurl"**:"",
+        **"videoId"**:"VID-0001"
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 ## 3.13 硬件信息查询
@@ -1490,18 +1467,18 @@ streams 是视频源描述对象数组，不是视频文件、视频帧，也不
 
 下发示例（查询 SD 卡）：
 
-{  
- **"protocolVersion"**:"2.2",  
-    **"messageId"**:"cmd-system-sd-77889900-11223344-5566aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:47:00Z",  
-    **"msgDir"**:"platform2dev",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"systemInfo",  
-    **"payload"**:{  
-        **"queryType"**:"GetSdCardInfo"  
-    },  
-    **"extend"**:{  
+{
+ **"protocolVersion"**:"2.2",
+    **"messageId"**:"cmd-system-sd-77889900-11223344-5566aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:47:00Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"systemInfo",
+    **"payload"**:{
+        **"queryType"**:"GetSdCardInfo"
+    },
+    **"extend"**:{
 <br/>    }}
 
 ### SD 卡查询回执 bizData 字段
@@ -1517,31 +1494,31 @@ streams 是视频源描述对象数组，不是视频文件、视频帧，也不
 
 回执完整示例：
 
-{  
- **"protocolVersion"**:"2.2",  
-    **"messageId"**:"ack-system-sd-88990011-22334455-6677aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:47:00Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"systemInfo",  
-    **"payload"**:{  
-        **"sourceMsgId"**:"cmd-system-sd-77889900-11223344-5566aabbccdd",  
-        **"code"**:200,  
-        **"msg"**:"SD卡信息读取成功",  
-        **"errCode"**:0,  
-        **"errDetail"**:"",  
-        **"bizData"**:{  
-            **"sd_info"**:{  
-                **"status"**:3,  
-                **"total_size"**:8192,  
-                **"free_size"**:1024,  
-                **"record_mode"**:2,  
-                **"record_filelen"**:5  
-            }  
-        }  
-    },  
-    **"extend"**:{  
+{
+ **"protocolVersion"**:"2.2",
+    **"messageId"**:"ack-system-sd-88990011-22334455-6677aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:47:00Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"systemInfo",
+    **"payload"**:{
+        **"sourceMsgId"**:"cmd-system-sd-77889900-11223344-5566aabbccdd",
+        **"code"**:200,
+        **"msg"**:"SD卡信息读取成功",
+        **"errCode"**:0,
+        **"errDetail"**:"",
+        **"bizData"**:{
+            **"sd_info"**:{
+                **"status"**:3,
+                **"total_size"**:8192,
+                **"free_size"**:1024,
+                **"record_mode"**:2,
+                **"record_filelen"**:5
+            }
+        }
+    },
+    **"extend"**:{
 <br/>    }}
 
 ## 3.14 设备日志分页上报
@@ -1571,31 +1548,31 @@ streams 是视频源描述对象数组，不是视频文件、视频帧，也不
 
 上报完整示例：
 
-{  
-  **"protocolVersion"**:"2.2",  
-    **"messageId"**:"up-log-page-66778899-00112233-4455aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:46:00Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"log",  
-    **"payload"**:{  
-        **"page"**:1,  
-        **"limit"**:10,  
-        **"total"**:120,  
-        **"logList"**:\[  
-            {  
-                **"serial"**:2,  
-                **"time"**:"2026/07/24 09:45:00",  
-                **"mainType"**:"异常",  
-                **"subType"**:"音频输入异常",  
-                **"channel"**:1,  
-                **"user"**:"admin",  
-                **"remoteIp"**:"192.168.1.100"  
-            }  
-        \]  
-    },  
-    **"extend"**:{  
+{
+  **"protocolVersion"**:"2.2",
+    **"messageId"**:"up-log-page-66778899-00112233-4455aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:46:00Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"log",
+    **"payload"**:{
+        **"page"**:1,
+        **"limit"**:10,
+        **"total"**:120,
+        **"logList"**:\[
+            {
+                **"serial"**:2,
+                **"time"**:"2026/07/24 09:45:00",
+                **"mainType"**:"异常",
+                **"subType"**:"音频输入异常",
+                **"channel"**:1,
+                **"user"**:"admin",
+                **"remoteIp"**:"192.168.1.100"
+            }
+        \]
+    },
+    **"extend"**:{
 <br/>    }}
 
 # 四、AI 业务类
@@ -1607,6 +1584,8 @@ streams 是视频源描述对象数组，不是视频文件、视频帧，也不
 **子业务类型：**subBizType=modelDeploy
 
 ### 业务说明
+
+AI 推理模型及配套类别文件下载、校验，并一起切换推理实例与类别映射。
 
 平台将模型与其训练使用的类别 YAML 作为同一部署任务下发。类别文件在生成数据集时创建，使用 names 记录类别编号和名称，nc（存在时）必须等于类别数。不得用后来修改的数据集类别替换该模型的类别表。
 
@@ -1622,9 +1601,8 @@ names 支持从 0 开始的列表或连续整数编号映射；映射按编号�
 
 ### 下发 payload 完整字段
 
-|     |     |     |     |
-| --- | --- | --- | --- |
 | **字段** | **类型** | **必填** | **释义** |
+| --- | --- | --- | --- |
 | requestId | string | 是   | 模型任务唯一 ID |
 | algorithmId | string | 是   | 算法业务编号 |
 | trainingId | string | 否   | 训练任务 ID |
@@ -1633,86 +1611,83 @@ names 支持从 0 开始的列表或连续整数编号映射；映射按编号�
 | fileName | string | 是   | 模型文件名 |
 | fileSize | number | 是   | 文件字节大小 |
 | sha256 | string | 是   | 文件哈希校验码 |
-| classFileUrl | string | 是 | 与本模型配套的 UTF-8 YAML 短期签名下载地址；与 modelUrl 独立签名，共用 expiresAt |
-| classFileName | string | 是 | 类别文件名，例如 dataset.yaml 或 emgitemsv6.yaml；不是服务器绝对路径 |
-| classFileSize | number | 是 | 类别文件原始字节数，1～1048576 字节 |
-| classFileSha256 | string | 是 | 类别文件原始字节的 SHA-256，64 位十六进制；下载后解析前校验 |
+| classFileUrl | string | 是   | 与本模型配套的 UTF-8 YAML 短期签名下载地址；与 modelUrl 独立签名，共用 expiresAt |
+| classFileName | string | 是   | 类别文件名，例如 dataset.yaml 或 emgitemsv6.yaml；不是服务器绝对路径 |
+| classFileSize | number | 是   | 类别文件原始字节数，1～1048576 字节 |
+| classFileSha256 | string | 是   | 类别文件原始字节的 SHA-256，64 位十六进制；下载后解析前校验 |
 | expiresAt | string | 是   | 模型及类别下载链接共同的过期 UTC 时间 |
-| rollbackEnable | bool | 是   | 失败时模型与类别映射一起回滚 |
+| rollbackEnable | bool | 是   | 失败时将模型及类别映射一起回滚 |
 | modelConfig | object | 否   | 推理参数阈值 |
-| modelConfig.confThreshold | float | 否 | 置信度阈值 |
-| modelConfig.nmsThreshold | float | 否 | NMS 抑制阈值 |
+| modelConfig.confThreshold | float | 否   | 置信度阈值 |
+| modelConfig.nmsThreshold | float | 否   | NMS 抑制阈值 |
 
 下发完整示例：
 
-```json
 {
-  "protocolVersion": "2.2",
-  "messageId": "77886655-1234-4678-abcd-12345678abcd",
-  "deviceId": "CAM-20260001",
-  "sentAt": "2026-09-14T06:00:00Z",
-  "msgDir": "platform2dev",
-  "mainBizType": "aiBiz",
-  "subBizType": "modelDeploy",
-  "payload": {
-    "requestId": "MODEL-TASK-20260914-001",
-    "algorithmId": "2079813710632751106",
-    "trainingId": "2096927699258966018",
-    "modelType": "om",
-    "modelUrl": "http://download.example.com/model?signature=MODEL_SIGNATURE",
-    "fileName": "emgitemsv6.om",
-    "fileSize": 53617351,
-    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "classFileUrl": "http://download.example.com/classes?signature=CLASS_SIGNATURE",
-    "classFileName": "emgitemsv6.yaml",
-    "classFileSize": 128,
-    "classFileSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-    "expiresAt": "2026-09-14T06:30:00Z",
-    "rollbackEnable": true
-  },
-  "extend": {}
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"77886655-1234-4678-abcd-12345678abcd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-09-14T06:00:00Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"aiBiz",
+    **"subBizType"**:"modelDeploy",
+    **"payload"**:{
+        **"requestId"**:"MODEL-TASK-20260914-001",
+        **"algorithmId"**:"2079813710632751106",
+        **"trainingId"**:"2096927699258966018",
+        **"modelType"**:"om",
+        **"modelUrl"**:"http://download.example.com/model?signature=MODEL_SIGNATURE",
+        **"fileName"**:"emgitemsv6.om",
+        **"fileSize"**:53617351,
+        **"sha256"**:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        **"classFileUrl"**:"http://download.example.com/classes?signature=CLASS_SIGNATURE",
+        **"classFileName"**:"emgitemsv6.yaml",
+        **"classFileSize"**:128,
+        **"classFileSha256"**:"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        **"expiresAt"**:"2026-09-14T06:30:00Z",
+        **"rollbackEnable"**:true
+    },
+    **"extend"**:{
+<br/>    }
 }
-```
 
 ### 模型回执 bizData 字段
 
-|     |     |     |
-| --- | --- | --- |
 | **字段** | **类型** | **释义** |
+| --- | --- | --- |
 | requestId | string | 对应下发任务 ID |
 | status | string | RECEIVED/DOWNLOADING/DOWNLOADED/VERIFYING/DEPLOYING/SUCCESS/FAILED |
-| fileSha256 | string | 本地模型校验哈希 |
+| fileSha256 | string | 本地校验哈希 |
 | classFileSha256 | string | 新任务 SUCCESS 必填，设备实际生效类别文件的 SHA-256，须与下发值一致 |
 | costMs | number | 部署耗时毫秒 |
 
 回执完整示例：
 
-```json
 {
-  "protocolVersion": "2.2",
-  "messageId": "11223344-5566-4788-9900-abcdef123456",
-  "deviceId": "CAM-20260001",
-  "sentAt": "2026-09-14T06:00:45Z",
-  "msgDir": "dev2platform",
-  "mainBizType": "aiBiz",
-  "subBizType": "modelDeploy",
-  "payload": {
-    "sourceMsgId": "77886655-1234-4678-abcd-12345678abcd",
-    "code": 200,
-    "msg": "模型及类别文件校验通过，部署完成",
-    "errCode": 0,
-    "errDetail": "",
-    "bizData": {
-      "requestId": "MODEL-TASK-20260914-001",
-      "status": "SUCCESS",
-      "fileSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "classFileSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-      "costMs": 1200
-    }
-  },
-  "extend": {}
+    "protocolVersion":"2.2",
+    "messageId":"11223344-5566-4788-9900-abcdef123456",
+    "deviceId":"CAM-20260001",
+    "sentAt":"2026-09-14T06:00:45Z",
+    "msgDir":"dev2platform",
+    "mainBizType":"aiBiz",
+    "subBizType":"modelDeploy",
+    "payload":{
+        "sourceMsgId":"77886655-1234-4678-abcd-12345678abcd",
+        "code":200,
+        "msg":"模型及类别文件校验通过，部署完成",
+        "errCode":0,
+        "errDetail":"",
+        "bizData":{
+            "requestId":"MODEL-TASK-20260914-001",
+            "status":"SUCCESS",
+            "fileSha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "classFileSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "costMs":1200
+        }
+    },
+    "extend":{
+<br/>    }
 }
-```
 
 ## 4.2 查询设备模型
 
@@ -1722,53 +1697,42 @@ names 支持从 0 开始的列表或连续整数编号映射；映射按编号�
 
 查询设备当前模型全量列表，下发 payload 为空对象 {}。回执通过 sourceMsgId 关联下发 messageId；code=200、errCode=0 表示查询成功。 下发示例：
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"cmd-model-query-11112222-33334444-55556666",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T10:00:00Z",  
-    **"msgDir"**:"platform2dev",  
-    **"mainBizType"**:"aiBiz",  
-    **"subBizType"**:"modelQuery",  
-    **"payload"**:{  
-<br/>    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"cmd-model-query-11112222-33334444-55556666",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T10:00:00Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"aiBiz",
+    **"subBizType"**:"modelQuery",
+    **"payload"**:{
+<br/>    },
+    **"extend"**:{
+<br/>    }
 }
 
 ### 查询回执 bizData 字段
 
-| 字段 | 类型 | 释义 |
+|     |     |     |
 | --- | --- | --- |
-| models | array | 当前模型全量列表；[] 表示无模型。字段与 state 心跳 models 一致。 |
-| models[].modelId | string | 设备内模型唯一标识，删除时原样传回；不得用文件路径代替。 |
-| models[].modelName / version / format | string | 模型名称、版本和格式，如 OM。 |
-| models[].status | string | loaded / running / stopped / failed。 |
+| **字段** | **类型** | **释义** |
+| models | array | 当前模型全量列表；\[\] 表示无模型。字段与 state 心跳 models 一致。 |
+| models\[\].modelId | string | 设备内模型唯一标识，删除时原样传回；不得用文件路径代替。 |
+| models\[\].modelName / version / format | string | 模型名称、版本和格式，如 OM。 |
+| models\[\].status | string | loaded / running / stopped / failed。 |
 
 兼容旧回执 algorithmId、fileName、sha256、modelType（单个生效模型）；未返回 modelId 时仅可查看，不支持删除。查询失败不能用空列表代替。
 
 查询回执 payload 示例：
 
-```json
 {
-  "sourceMsgId": "cmd-model-query-11112222-33334444-55556666",
-  "code": 200,
-  "msg": "查询成功",
-  "errCode": 0,
-  "errDetail": "",
-  "bizData": {
-    "models": [
-      {
-        "modelId": "2096927699258966018",
-        "modelName": "安全帽检测",
-        "version": "1.0.0",
-        "format": "OM",
-        "status": "running"
-      }
-    ]
-  }
+"sourceMsgId": "cmd-model-query-11112222-33334444-55556666",
+"code": 200, "msg": "查询成功", "errCode": 0, "errDetail": "",
+"bizData": {"models": \[{
+"modelId": "2096927699258966018", "modelName": "安全帽检测",
+"version": "1.0.0", "format": "OM", "status": "running"
+}\]}
 }
-```
 
 ## 4.3 模型手动回滚
 
@@ -1812,58 +1776,58 @@ names 支持从 0 开始的列表或连续整数编号映射；映射按编号�
 
 新增人员下发完整示例
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"cmd-face-lib-add-77889900-11223344-5566aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:40:00Z",  
-    **"msgDir"**:"platform2dev",  
-    **"mainBizType"**:"aiBiz",  
-    **"subBizType"**:"faceLib",  
-    **"payload"**:{  
-        **"libOperate"**:"EditPerson",  
-        **"customId"**:"713BCEF6393955E0DC8822354D0D61E1",  
-        **"name"**:" 张 三 ",  
-        **"telnum1"**:"13800138000",  
-        **"age"**:30,  
-        **"gender"**:0,  
-        **"idCard"**:"400400199912120001",  
-        **"valid_time_type"**:0,  
-        **"start_time"**:0,  
-        **"expire_time"**:86399,  
-        **"department_name"**:"行政部",  
-        **"personType"**:0,  
-        **"notes"**:"园区内部员工",  
-        **"op_face_ver"**:"1021_v2",  
-        **"pic"**:"data:image/jpg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD..."  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"cmd-face-lib-add-77889900-11223344-5566aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:40:00Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"aiBiz",
+    **"subBizType"**:"faceLib",
+    **"payload"**:{
+        **"libOperate"**:"EditPerson",
+        **"customId"**:"713BCEF6393955E0DC8822354D0D61E1",
+        **"name"**:" 张 三 ",
+        **"telnum1"**:"13800138000",
+        **"age"**:30,
+        **"gender"**:0,
+        **"idCard"**:"400400199912120001",
+        **"valid_time_type"**:0,
+        **"start_time"**:0,
+        **"expire_time"**:86399,
+        **"department_name"**:"行政部",
+        **"personType"**:0,
+        **"notes"**:"园区内部员工",
+        **"op_face_ver"**:"1021_v2",
+        **"pic"**:"data:image/jpg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD..."
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 人脸库操作回执示例
 
-{  
-**"protocolVersion"**:"2.2",  
-    **"messageId"**:"ack-face-lib-add-88990011-22334455-6677aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:40:02Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"aiBiz",  
-    **"subBizType"**:"faceLib",  
-    **"payload"**:{  
-        **"sourceMsgId"**:"cmd-face-lib-add-77889900-11223344-5566aabbccdd",  
-        **"code"**:200,  
-        **"msg"**:"人员新增成功",  
-        **"errCode"**:0,  
-        **"errDetail"**:"",  
-        **"bizData"**:{  
-            **"customId"**:"713BCEF6393955E0DC8822354D0D61E1",  
-            **"personId"**:1,  
-            **"result"**:"ok"  
-        }  
-    },  
-    **"extend"**:{  
+{
+**"protocolVersion"**:"2.2",
+    **"messageId"**:"ack-face-lib-add-88990011-22334455-6677aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:40:02Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"aiBiz",
+    **"subBizType"**:"faceLib",
+    **"payload"**:{
+        **"sourceMsgId"**:"cmd-face-lib-add-77889900-11223344-5566aabbccdd",
+        **"code"**:200,
+        **"msg"**:"人员新增成功",
+        **"errCode"**:0,
+        **"errDetail"**:"",
+        **"bizData"**:{
+            **"customId"**:"713BCEF6393955E0DC8822354D0D61E1",
+            **"personId"**:1,
+            **"result"**:"ok"
+        }
+    },
+    **"extend"**:{
 <br/>    }}
 
 ## 4.5 人脸通行 / 陌生人抓拍上报
@@ -1896,38 +1860,38 @@ names 支持从 0 开始的列表或连续整数编号映射；映射按编号�
 
 上报完整示例：
 
-{  
-  **"protocolVersion"**:"2.2",  
-    **"messageId"**:"up-face-pass-99001122-33445566-7788aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:41:00Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"aiBiz",  
-    **"subBizType"**:"faceEvent",  
-    **"payload"**:{  
-        **"operator"**:"entr",  
-        **"info"**:{  
-            **"customId"**:"713BCEF6393955E0DC8822354D0D61E1",  
-            **"personid"**:1,  
-            **"persionName"**:"张三",  
-            **"facesluiceId"**:"CAM-20260001",  
-            **"time"**:"2026-07-24 09:41:00",  
-            **"pic"**:"data:image/jpg;base64,xxx",  
-            **"sample_pic"**:"data:image/jpg;base64,xxx",  
-            **"score_dect"**:92,  
-            **"rect"**:\[  
-                100,  
-                120,  
-                220,  
-                260  
-            \],  
-            **"gender"**:"M",  
-            **"glasses"**:1,  
-            **"mask"**:1,  
-            **"hat"**:1  
-        }  
-    },  
-    **"extend"**:{  
+{
+  **"protocolVersion"**:"2.2",
+    **"messageId"**:"up-face-pass-99001122-33445566-7788aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:41:00Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"aiBiz",
+    **"subBizType"**:"faceEvent",
+    **"payload"**:{
+        **"operator"**:"entr",
+        **"info"**:{
+            **"customId"**:"713BCEF6393955E0DC8822354D0D61E1",
+            **"personid"**:1,
+            **"persionName"**:"张三",
+            **"facesluiceId"**:"CAM-20260001",
+            **"time"**:"2026-07-24 09:41:00",
+            **"pic"**:"data:image/jpg;base64,xxx",
+            **"sample_pic"**:"data:image/jpg;base64,xxx",
+            **"score_dect"**:92,
+            **"rect"**:\[
+                100,
+                120,
+                220,
+                260
+            \],
+            **"gender"**:"M",
+            **"glasses"**:1,
+            **"mask"**:1,
+            **"hat"**:1
+        }
+    },
+    **"extend"**:{
 <br/>    }}
 
 ## 4.6上报文件上传
@@ -1994,15 +1958,15 @@ curl --request POST 'http://192.168.88.31:8080/vlsDeviceMedia/public/upload-url'
 
 {
 
-&nbsp;   **"code"**:200,  
-    **"success"**:true,  
-    **"data"**:{  
-        **"mediaId"**:"155e3e5b-da17-42bb-b6c9-86cedeba0f14",  
-        **"objectKey"**:"events/AETY-00-NJN2-WJUB-00000100/2026/08/04/155e3e5b-da17-42bb-b6c9-86cedeba0f14.png",  
-        **"uploadUrl"**:"http://192.168.88.31:9000/ruoyi/events/...png?X-Amz-Algorithm=AWS4-HMAC-SHA256&...",  
-        **"expiresAt"**:"2026-08-04T02:22:10.535Z",  
-        **"requiredContentType"**:"image/png"  
-    },  
+&nbsp;   **"code"**:200,
+    **"success"**:true,
+    **"data"**:{
+        **"mediaId"**:"155e3e5b-da17-42bb-b6c9-86cedeba0f14",
+        **"objectKey"**:"events/AETY-00-NJN2-WJUB-00000100/2026/08/04/155e3e5b-da17-42bb-b6c9-86cedeba0f14.png",
+        **"uploadUrl"**:"http://192.168.88.31:9000/ruoyi/events/...png?X-Amz-Algorithm=AWS4-HMAC-SHA256&...",
+        **"expiresAt"**:"2026-08-04T02:22:10.535Z",
+        **"requiredContentType"**:"image/png"
+    },
     **"msg"**:"操作成功"
 
 }
@@ -2066,42 +2030,42 @@ curl --request PUT '&lt;将这里替换为完整的 uploadUrl&gt;' \\
 
 人形结构化完整上报示例
 
-{  
-  **"protocolVersion"**:"2.2",  
-    **"messageId"**:"up-struct-human-00112233-44556677-8899aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:42:00Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"aiBiz",  
-    **"subBizType"**:"struct",  
-    **"payload"**:{  
-        **"operator"**:"struct_attr",  
-        **"facesluiceId"**:"CAM-20260001",  
-        **"track_id"**:4,  
-        **"type"**:"human",  
-        **"keep_time"**:2022,  
+{
+  **"protocolVersion"**:"2.2",
+    **"messageId"**:"up-struct-human-00112233-44556677-8899aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:42:00Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"aiBiz",
+    **"subBizType"**:"struct",
+    **"payload"**:{
+        **"operator"**:"struct_attr",
+        **"facesluiceId"**:"CAM-20260001",
+        **"track_id"**:4,
+        **"type"**:"human",
+        **"keep_time"**:2022,
         **"left"**:783,
 
-&nbsp; **"algorithmId"**:”2077000000000001001”,  
-        **"top"**:443,  
-        **"right"**:1272,  
-        **"bottom"**:983,  
-        **"worth"**:0.853293,  
-        **"datetime"**:"2026-07-24 09:42:00",  
-        **"bind"**:\[  
-<br/>        \],  
-        **"info"**:{  
-            **"clothes_color"**:4,  
-            **"safety_helmet"**:1,  
-            **"action_watch_phone"**:1,  
-            **"bags"**:1  
-        },  
-        **"object_image"**:"data:image/jpeg;base64,xxx",  
-        **"bg_image"**:"data:image/jpeg;base64,xxx",  
-        **"mac"**:"00:11:22:33:44:55",  
-        **"ipaddr"**:"192.168.1.100"  
-    },  
-    **"extend"**:{  
+&nbsp; **"algorithmId"**:”2077000000000001001”,
+        **"top"**:443,
+        **"right"**:1272,
+        **"bottom"**:983,
+        **"worth"**:0.853293,
+        **"datetime"**:"2026-07-24 09:42:00",
+        **"bind"**:\[
+<br/>        \],
+        **"info"**:{
+            **"clothes_color"**:4,
+            **"safety_helmet"**:1,
+            **"action_watch_phone"**:1,
+            **"bags"**:1
+        },
+        **"object_image"**:"data:image/jpeg;base64,xxx",
+        **"bg_image"**:"data:image/jpeg;base64,xxx",
+        **"mac"**:"00:11:22:33:44:55",
+        **"ipaddr"**:"192.168.1.100"
+    },
+    **"extend"**:{
 <br/>    }}
 
 ## 4.8 设备OTA固件升级
@@ -2157,29 +2121,29 @@ RootFS 包写入非活动 A/B 槽位，必须启用回滚并在升级后重启�
 
 ### 完整下发示例
 
-{  
-    "protocolVersion":"2.2",  
-    "messageId":"fw-550e8400-e29b-41d4-a716-446655440000",  
-    "deviceId":"AETY-00-NJN2-WJUB-00000100",  
-    "sentAt":"2026-08-17T10:30:00Z",  
-    "msgDir":"platform2dev",  
-    "mainBizType":"device",  
-    "subBizType":"firmwareDeploy",  
-    "payload":{  
-        "requestId":"4f88e9a4-b20d-46cc-a866-d1b6d2d1e55a",  
-        "deviceModel":"OORT-6600-2.5",  
-        "target":"rootfs",  
-        "version":"1.0.1.15",  
-        "packageUrl":"http://192.168.88.31:8080/vlsDeviceFirmware/ota/4f88e9a4-b20d-46cc-a866-d1b6d2d1e55a/fw-550e8400-e29b-41d4-a716-446655440000",  
-        "urlExpiresAt":"2026-08-17T12:30:00Z",  
-        "fileName":"rootfs-1.0.1.15.ota",  
-        "fileSize":22020396,  
-        "sha256":"aaaaaaaaaaaaaaaaaaaa",  
-        "rollbackEnable":true,  
-        "rebootAfter":true  
-    },  
-    "extend":{  
-<br/>    }  
+{
+    "protocolVersion":"2.2",
+    "messageId":"fw-550e8400-e29b-41d4-a716-446655440000",
+    "deviceId":"AETY-00-NJN2-WJUB-00000100",
+    "sentAt":"2026-08-17T10:30:00Z",
+    "msgDir":"platform2dev",
+    "mainBizType":"device",
+    "subBizType":"firmwareDeploy",
+    "payload":{
+        "requestId":"4f88e9a4-b20d-46cc-a866-d1b6d2d1e55a",
+        "deviceModel":"OORT-6600-2.5",
+        "target":"rootfs",
+        "version":"1.0.1.15",
+        "packageUrl":"http://192.168.88.31:8080/vlsDeviceFirmware/ota/4f88e9a4-b20d-46cc-a866-d1b6d2d1e55a/fw-550e8400-e29b-41d4-a716-446655440000",
+        "urlExpiresAt":"2026-08-17T12:30:00Z",
+        "fileName":"rootfs-1.0.1.15.ota",
+        "fileSize":22020396,
+        "sha256":"aaaaaaaaaaaaaaaaaaaa",
+        "rollbackEnable":true,
+        "rebootAfter":true
+    },
+    "extend":{
+<br/>    }
 }
 
 ### 设备回执 payload 字段
@@ -2219,32 +2183,32 @@ RootFS 包写入非活动 A/B 槽位，必须启用回滚并在升级后重启�
 
 ### 升级成功回执示例
 
-{  
-    **"protocolVersion"**:"2.2",  
-    **"messageId"**:"up-fw-resp-1786963200-1",  
-    **"deviceId"**:"AETY-00-NJN2-WJUB-00000100",  
-    **"sentAt"**:"2026-08-17T10:42:00Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"firmwareDeploy",  
-    **"payload"**:{  
-        **"sourceMsgId"**:"fw-550e8400-e29b-41d4-a716-446655440000",  
-        **"code"**:200,  
-        **"msg"**:"固件升级完成并通过启动健康检查",  
-        **"errCode"**:0,  
-        **"errDetail"**:"",  
-        **"bizData"**:{  
-            **"requestId"**:"4f88e9a4-b20d-46cc-a866-d1b6d2d1e55a",  
-            **"status"**:"SUCCESS",  
-            **"deviceModel"**:"OORT-6600-2.5",  
-            **"target"**:"rootfs",  
-            **"version"**:"1.0.1.15",  
-            **"fileSha256"**:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",  
-            **"costMs"**:46412  
-        }  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+    **"protocolVersion"**:"2.2",
+    **"messageId"**:"up-fw-resp-1786963200-1",
+    **"deviceId"**:"AETY-00-NJN2-WJUB-00000100",
+    **"sentAt"**:"2026-08-17T10:42:00Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"firmwareDeploy",
+    **"payload"**:{
+        **"sourceMsgId"**:"fw-550e8400-e29b-41d4-a716-446655440000",
+        **"code"**:200,
+        **"msg"**:"固件升级完成并通过启动健康检查",
+        **"errCode"**:0,
+        **"errDetail"**:"",
+        **"bizData"**:{
+            **"requestId"**:"4f88e9a4-b20d-46cc-a866-d1b6d2d1e55a",
+            **"status"**:"SUCCESS",
+            **"deviceModel"**:"OORT-6600-2.5",
+            **"target"**:"rootfs",
+            **"version"**:"1.0.1.15",
+            **"fileSha256"**:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            **"costMs"**:46412
+        }
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 ### 一致性与安全要求
@@ -2253,10 +2217,9 @@ RootFS 包写入非活动 A/B 槽位，必须启用回滚并在升级后重启�
 
 同一设备同时只允许一个非终态 RootFS OTA 任务。packageUrl 不要求平台登录令牌，其安全性由不可预测的 requestId 与 messageId 共同保证。平台下载接口必须校验两者与任务记录一致、任务未过期且固件为 READY，并在返回前核对对象大小与 SHA-256；校验通过后才从私有对象存储流式返回 OTA 包。设备应在 urlExpiresAt 前开始下载，不得记录或转发完整 URL。失败后由管理员重新发起新任务，不复用过期地址或旧 requestId。
 
-
 ## 4.9 删除设备模型
 
-**子业务类型：**subBizType=modelDelete
+子业务类型：subBizType=modelDelete
 
 ### 业务说明
 
@@ -2264,40 +2227,32 @@ RootFS 包写入非活动 A/B 槽位，必须启用回滚并在升级后重启�
 
 ### 下发 payload 字段
 
-| 字段 | 类型 | 必填 | 释义 |
+|     |     |     |     |
 | --- | --- | --- | --- |
-| modelId | string | 是 | modelQuery 或 state 心跳返回的模型唯一标识。 |
+| **字段** | **类型** | **必填** | **释义** |
+| modelId | string | 是   | modelQuery 或 state 心跳返回的模型唯一标识。 |
 
 下发 payload 示例（messageId=cmd-model-delete-001）：
 
-```json
 {
-  "modelId": "2096927699258966018"
+"modelId": "2096927699258966018"
 }
-```
 
 ### 删除回执 bizData 字段
 
-| 字段 | 类型 | 释义 |
+|     |     |     |
 | --- | --- | --- |
+| **字段** | **类型** | **释义** |
 | modelId | string | 原样返回目标模型 ID。 |
 | status | string | SUCCESS / FAILED；SUCCESS 表示已停止并卸载完成。 |
 
 删除回执 payload 示例：
 
-```json
 {
-  "sourceMsgId": "cmd-model-delete-001",
-  "code": 200,
-  "msg": "删除成功",
-  "errCode": 0,
-  "errDetail": "",
-  "bizData": {
-    "modelId": "2096927699258966018",
-    "status": "SUCCESS"
-  }
+"sourceMsgId": "cmd-model-delete-001",
+"code": 200, "msg": "删除成功", "errCode": 0, "errDetail": "",
+"bizData": {"modelId": "2096927699258966018", "status": "SUCCESS"}
 }
-```
 
 使用 aiBiz 公共信封，msgDir 下发为 platform2dev、回执为 dev2platform，subBizType 均为 modelDelete。失败返回非 200 code、非 0 errCode 和具体原因；15 秒未收到回执，平台提示结果未确认，需查询核实，不自动重发删除。成功后后续 state.models 应反映删除结果。
 
@@ -2324,18 +2279,18 @@ GET 获取RS-485配置
 
 200 Response
 
-{  
-    **"code"**:200,  
-    **"message"**:"成功",  
-    **"data"**:{  
-        **"baud_rate"**:115200,  
-        **"data_bit"**:16,  
-        **"stop_bit"**:1,  
-        **"check"**:"无",  
-        **"flow_contrl"**:"无",  
-        **"decoder_type"**:"PWMC-AE",  
-        **"decoder_addr"**:"127.0.0.1"  
-    }  
+{
+    **"code"**:200,
+    **"message"**:"成功",
+    **"data"**:{
+        **"baud_rate"**:115200,
+        **"data_bit"**:16,
+        **"stop_bit"**:1,
+        **"check"**:"无",
+        **"flow_contrl"**:"无",
+        **"decoder_type"**:"PWMC-AE",
+        **"decoder_addr"**:"127.0.0.1"
+    }
 }
 
 **返回结果**
@@ -2373,14 +2328,14 @@ POST 保存RS-485配置
 
 ### 请求参数
 
-{  
-    **"baud_rate"**:115200,  
-    **"data_bit"**:16,  
-    **"stop_bit"**:1,  
-    **"check"**:"无",  
-    **"flow_contrl"**:"无",  
-    **"decoder_type"**:"PWMC-AE",  
-    **"decoder_addr"**:"127.0.0.1"  
+{
+    **"baud_rate"**:115200,
+    **"data_bit"**:16,
+    **"stop_bit"**:1,
+    **"check"**:"无",
+    **"flow_contrl"**:"无",
+    **"decoder_type"**:"PWMC-AE",
+    **"decoder_addr"**:"127.0.0.1"
 }
 
 **请求参数**
@@ -2395,9 +2350,9 @@ POST 保存RS-485配置
 
 200 Response
 
-{  
-    **"code"**:200,  
-    **"message"**:"成功"  
+{
+    **"code"**:200,
+    **"message"**:"成功"
 }
 
 **返回结果**
@@ -2435,45 +2390,45 @@ POST 保存RS-485配置
 
 下发示例：
 
-{  
- **"protocolVersion"**:"2.2",  
-    **"messageId"**:"cmd-tk-ctrl-11223344-55667788-9900aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:43:00Z",  
-    **"msgDir"**:"platform2dev",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"tkControl",  
-    **"payload"**:{  
-        **"operator"**:"TKControl",  
-        **"info"**:{  
-            **"value"**:"FF010000000000000000"  
-        }  
-    },  
-    **"extend"**:{  
-<br/>    }  
+{
+ **"protocolVersion"**:"2.2",
+    **"messageId"**:"cmd-tk-ctrl-11223344-55667788-9900aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:43:00Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"tkControl",
+    **"payload"**:{
+        **"operator"**:"TKControl",
+        **"info"**:{
+            **"value"**:"FF010000000000000000"
+        }
+    },
+    **"extend"**:{
+<br/>    }
 }
 
 梯控回执示例
 
-{  
-  **"protocolVersion"**:"2.2",  
-    **"messageId"**:"ack-tk-ctrl-22334455-66778899-0011aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:43:01Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"tkControl",  
-    **"payload"**:{  
-        **"sourceMsgId"**:"cmd-tk-ctrl-11223344-55667788-9900aabbccdd",  
-        **"code"**:200,  
-        **"msg"**:"梯控指令下发成功",  
-        **"errCode"**:0,  
-        **"errDetail"**:"",  
-        **"bizData"**:{  
-            **"result"**:"ok"  
-        }  
-    },  
-    **"extend"**:{  
+{
+  **"protocolVersion"**:"2.2",
+    **"messageId"**:"ack-tk-ctrl-22334455-66778899-0011aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:43:01Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"tkControl",
+    **"payload"**:{
+        **"sourceMsgId"**:"cmd-tk-ctrl-11223344-55667788-9900aabbccdd",
+        **"code"**:200,
+        **"msg"**:"梯控指令下发成功",
+        **"errCode"**:0,
+        **"errDetail"**:"",
+        **"bizData"**:{
+            **"result"**:"ok"
+        }
+    },
+    **"extend"**:{
 <br/>    }}
 
 ## 5.4 液晶屏广告管理
@@ -2496,47 +2451,47 @@ POST 保存RS-485配置
 
 下发示例（新增广告）：
 
-{  
- **"protocolVersion"**:"2.2",  
-    **"messageId"**:"cmd-ad-add-44556677-88990011-2233aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:44:30Z",  
-    **"msgDir"**:"platform2dev",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"ad",  
-    **"payload"**:{  
-        **"libOperate"**:"EditAD",  
-        **"info"**:{  
-            **"adslot"**:0,  
-            **"path"**:"https://minio.test.com/ad/ad01.jpg",  
-            **"polltime"**:10  
-        }  
-    },  
-    **"extend"**:{  
+{
+ **"protocolVersion"**:"2.2",
+    **"messageId"**:"cmd-ad-add-44556677-88990011-2233aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:44:30Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"ad",
+    **"payload"**:{
+        **"libOperate"**:"EditAD",
+        **"info"**:{
+            **"adslot"**:0,
+            **"path"**:"https://minio.test.com/ad/ad01.jpg",
+            **"polltime"**:10
+        }
+    },
+    **"extend"**:{
 <br/>    }}
 
 广告操作回执示例
 
-{  
-   **"protocolVersion"**:"2.2",  
-    **"messageId"**:"ack-ad-add-55667788-99001122-3344aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:44:31Z",  
-    **"msgDir"**:"dev2platform",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"ad",  
-    **"payload"**:{  
-        **"sourceMsgId"**:"cmd-ad-add-44556677-88990011-2233aabbccdd",  
-        **"code"**:200,  
-        **"msg"**:"广告配置更新成功",  
-        **"errCode"**:0,  
-        **"errDetail"**:"",  
-        **"bizData"**:{  
-            **"adslot"**:0,  
-            **"result"**:"ok"  
-        }  
-    },  
-    **"extend"**:{  
+{
+   **"protocolVersion"**:"2.2",
+    **"messageId"**:"ack-ad-add-55667788-99001122-3344aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:44:31Z",
+    **"msgDir"**:"dev2platform",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"ad",
+    **"payload"**:{
+        **"sourceMsgId"**:"cmd-ad-add-44556677-88990011-2233aabbccdd",
+        **"code"**:200,
+        **"msg"**:"广告配置更新成功",
+        **"errCode"**:0,
+        **"errDetail"**:"",
+        **"bizData"**:{
+            **"adslot"**:0,
+            **"result"**:"ok"
+        }
+    },
+    **"extend"**:{
 <br/>    }
 
 }
@@ -2564,31 +2519,31 @@ POST 保存RS-485配置
 
 {
 
-&nbsp; **"protocolVersion"**:"2.2",  
-    **"messageId"**:"cmd-mp3-set-77889900-11223344-5566aabbccdd",  
-    **"deviceId"**:"CAM-20260001",  
-    **"sentAt"**:"2026-07-24T09:46:00Z",  
-    **"msgDir"**:"platform2dev",  
-    **"mainBizType"**:"device",  
-    **"subBizType"**:"mp3Play",  
-    **"payload"**:{  
-        **"operate"**:"Set",  
-        **"config"**:{  
-            **"enable"**:1,  
-            **"mode"**:0,  
-            **"mp3file"**:\[  
-                {  
-                    **"name"**:"欢迎语音.mp3",  
-                    **"select"**:1  
-                },  
-                {  
-                    **"name"**:"警报提示.mp3",  
-                    **"select"**:0  
-                }  
-            \]  
-        }  
-    },  
-    **"extend"**:{  
+&nbsp; **"protocolVersion"**:"2.2",
+    **"messageId"**:"cmd-mp3-set-77889900-11223344-5566aabbccdd",
+    **"deviceId"**:"CAM-20260001",
+    **"sentAt"**:"2026-07-24T09:46:00Z",
+    **"msgDir"**:"platform2dev",
+    **"mainBizType"**:"device",
+    **"subBizType"**:"mp3Play",
+    **"payload"**:{
+        **"operate"**:"Set",
+        **"config"**:{
+            **"enable"**:1,
+            **"mode"**:0,
+            **"mp3file"**:\[
+                {
+                    **"name"**:"欢迎语音.mp3",
+                    **"select"**:1
+                },
+                {
+                    **"name"**:"警报提示.mp3",
+                    **"select"**:0
+                }
+            \]
+        }
+    },
+    **"extend"**:{
 <br/>    }
 
 }

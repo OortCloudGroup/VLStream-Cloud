@@ -20,6 +20,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.springblade.core.boot.ctrl.BladeController;
 import org.springblade.core.tool.api.R;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ruoyi.vlstream.test.vlstream.mapper.VlsAlgorithmModelMapper;
+import com.ruoyi.vlstream.test.vlstream.pojo.vo.DeviceModelCandidate;
+import com.ruoyi.vlstream.test.vlstream.service.ModelDispatchService;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -39,6 +45,29 @@ import java.util.List;
 @RequestMapping("/vlsModelDispatch")
 @Tag(name = "模型下发任务", description = "模型下发状态与硬件下载接口")
 public class VlsModelDispatchController extends BladeController {
+
+    @Resource
+    private VlsAlgorithmModelMapper modelMapper;
+
+    @Resource
+    private ModelDispatchService dispatchService;
+
+    @GetMapping("/models")
+    @Operation(summary = "查询自主训练模型下发候选")
+    public R<IPage<DeviceModelCandidate>> models(
+        @RequestParam(defaultValue = "1") long current,
+        @RequestParam(defaultValue = "12") long size,
+        @RequestParam(defaultValue = "") String keyword,
+        @RequestParam(defaultValue = "") String category) {
+        return R.data(modelMapper.selectDeviceCandidates(new Page<>(Math.max(1, current), Math.max(1, Math.min(48, size))),
+            StringUtils.trimToEmpty(keyword), StringUtils.trimToEmpty(category)));
+    }
+
+    @PostMapping("/models/{modelId}/dispatch")
+    @Operation(summary = "向当前设备下发选定自主训练模型版本")
+    public R<String> dispatchModel(@PathVariable Long modelId, @RequestParam String deviceId) {
+        return R.data(dispatchService.dispatchModel(modelId, deviceId));
+    }
 
 	@Resource
 	private ModelDispatchTaskService taskService;

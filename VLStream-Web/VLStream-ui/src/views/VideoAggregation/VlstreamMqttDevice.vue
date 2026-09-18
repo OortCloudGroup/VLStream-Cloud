@@ -118,7 +118,7 @@
         <div class="model-heading">
           <h4>设备运行模型</h4>
           <div>
-            <el-button size="small" type="primary" :disabled="!detailDevice?.online || Boolean(modelBusy)" @click="openModelDeploy">模型下发</el-button>
+            <el-button size="small" type="primary" :disabled="Boolean(modelBusy)" @click="openModelDeploy">{{ detailDevice?.online ? '模型下发' : '查看模型' }}</el-button>
             <el-button size="small" :loading="modelBusy === 'query'" :disabled="!detailDevice?.online || Boolean(modelBusy)" @click="refreshModels">刷新</el-button>
           </div>
         </div>
@@ -126,7 +126,6 @@
         <el-table :data="reportedModels" border :empty-text="liveModels !== null ? '设备当前无模型' : detailDevice?.modelsJson == null ? '设备尚未上报模型信息' : '设备上报的模型列表为空'">
           <el-table-column prop="modelId" label="模型 ID" min-width="140" show-overflow-tooltip />
           <el-table-column prop="modelName" label="模型名称" min-width="140" show-overflow-tooltip />
-          <el-table-column prop="version" label="版本" min-width="100" />
           <el-table-column prop="format" label="格式" width="90" />
           <el-table-column label="状态" width="100"><template #default="{ row }">{{ modelStatusText(row.status) }}</template></el-table-column>
           <el-table-column label="操作" width="85" fixed="right">
@@ -150,22 +149,8 @@
         </el-table>
         </div>
       </el-dialog>
-      <el-dialog v-model="modelDeployVisible" title="模型下发" width="480px" append-to-body :close-on-click-modal="false">
-        <el-form label-width="80px">
-          <el-form-item label="设备">{{ detailDevice?.deviceName || detailDevice?.deviceId }}</el-form-item>
-          <el-form-item label="算法">
-            <el-select v-model="deployAlgorithmId" filterable remote :remote-method="searchDeployAlgorithms" :loading="algorithmLoading" placeholder="输入算法名称搜索" style="width: 100%">
-              <el-option v-for="item in deployAlgorithms" :key="item.id" :label="item.name" :value="String(item.id)" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="模型格式">OM</el-form-item>
-        </el-form>
-        <p class="snapshot-note">下发该算法最近完成训练中的可用 OM 模型及配套类别文件。</p>
-        <template #footer>
-          <el-button :disabled="modelBusy === 'deploy'" @click="modelDeployVisible = false">取消</el-button>
-          <el-button type="primary" :loading="modelBusy === 'deploy'" :disabled="!deployAlgorithmId || !detailDevice?.online" @click="submitModelDeploy">下发</el-button>
-        </template>
-      </el-dialog>
+      <DeviceModelDrawer v-model="modelDeployVisible" :device="detailDevice"
+        @busy="modelBusy = $event ? 'deploy' : ''" />
       <el-dialog v-model="firmwareVisible" title="固件升级" width="820px" destroy-on-close>
         <el-alert v-if="firmwareDetail?.upgradeBlockedReason" :title="firmwareDetail.upgradeBlockedReason"
           type="info" :closable="false" show-icon class="firmware-alert" />
@@ -215,8 +200,7 @@ import RtcPlayer from '@/components/rtcPlayer/index.vue'
 import { capabilityText, deviceBootTimeText, deviceOnlineDurationText, deviceLocationText, formatDeviceTime, modelStatusText, parseSnapshot } from '@/utils/deviceStateDisplay'
 import { parseCameraRtcConfig } from '@/utils/oplayer'
 import { queryDeviceModels, deleteDeviceModel } from '@/api/deviceModels'
-import { dispatchAlgorithmToDevices } from '@/api/device'
-import { getAlgorithmPage } from '@/api/algorithmManagement'
+import DeviceModelDrawer from './components/DeviceModelDrawer.vue'
 import {
   cancelMqttDeviceFirmwareTask,
   createMqttDevicePreview,
@@ -265,11 +249,7 @@ const liveModels = ref(null)
 const modelBusy = ref('')
 const modelError = ref('')
 const modelDeployVisible = ref(false)
-const deployAlgorithmId = ref('')
-const deployAlgorithms = ref([])
-const algorithmLoading = ref(false)
 let modelSession = 0
-let algorithmSearch = 0
 const reportedModels = computed(() => liveModels.value ?? parseSnapshot(detailDevice.value?.modelsJson) ?? [])
 
 watch(detailVisible, visible => {
@@ -312,36 +292,9 @@ async function removeModel(model) {
   } finally { if (session === modelSession) modelBusy.value = '' }
 }
 
-async function searchDeployAlgorithms(name = '') {
-  const sequence = ++algorithmSearch
-  algorithmLoading.value = true
-  try {
-    const result = await getAlgorithmPage({ current: 1, size: 50, name })
-    if (sequence === algorithmSearch) deployAlgorithms.value = result?.data?.records || []
-  } catch (error) {
-    if (sequence === algorithmSearch) ElMessage.error(errorMessage(error, '加载算法失败'))
-  } finally { if (sequence === algorithmSearch) algorithmLoading.value = false }
-}
-
 function openModelDeploy() {
-  deployAlgorithmId.value = ''
-  deployAlgorithms.value = []
+  if (modelBusy.value || !detailDevice.value) return
   modelDeployVisible.value = true
-  searchDeployAlgorithms()
-}
-
-async function submitModelDeploy() {
-  if (modelBusy.value || !deployAlgorithmId.value || !detailDevice.value?.online) return
-  const session = modelSession
-  modelBusy.value = 'deploy'
-  try {
-    await dispatchAlgorithmToDevices(deployAlgorithmId.value, detailDevice.value.deviceId, 'om')
-    if (session !== modelSession) return
-    modelDeployVisible.value = false
-    ElMessage.success('模型下发任务已提交，设备部署完成后请刷新列表')
-  } catch (error) {
-    if (session === modelSession) ElMessage.error(errorMessage(error, '模型下发失败'))
-  } finally { if (session === modelSession) modelBusy.value = '' }
 }
 
 function errorMessage(error, fallback) { return error?.response?.data?.msg || error?.message || fallback }
