@@ -164,6 +164,7 @@ WVP 是 VLStream 设备、心跳、视频流和固件任务的唯一数据源。
 | 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |
 |--------|------|--------|----------|----------|----------|
 | `VLSTREAM_WVP_INTERNAL_BASE_URL` | VLS 访问 WVP 内部接口的根地址 | `http://127.0.0.1:9080` | 是 | VLS 进程可访问的 HTTP/HTTPS URL | `http://wvp-server:9080` |
+| `VLSTREAM_WVP_DEVICE_BASE_URL` | VLS 通过 WVP 查询 VLStream 设备的根地址 | `http://127.0.0.1:9080` | 是 | VLS 进程可访问的 HTTP/HTTPS URL | `http://wvp-server:9080` |
 | `VLSTREAM_WVP_CONNECT_TIMEOUT_MILLIS` | VLS 连接 WVP 的超时时间 | `3000` | 否 | 大于等于 500 的毫秒数 | `3000` |
 | `VLSTREAM_WVP_READ_TIMEOUT_MILLIS` | VLS 等待 WVP 响应的超时时间 | `5000` | 否 | 大于等于 500 的毫秒数 | `5000` |
 | `VLSTREAM_NATIVE_DEVICE_DEFAULT_TENANT_ID` | 单租户模式下 WVP 设备映射到的 VLS 默认租户 | `000000` | 是 | VLS 中存在的租户 ID | `000000` |

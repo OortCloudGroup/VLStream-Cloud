@@ -176,6 +176,11 @@ vlstream:
     offline-timeout-seconds: ${VLSTREAM_NATIVE_DEVICE_OFFLINE_TIMEOUT_SECONDS:180}
     # QoS 1 幂等消息记录保留时长
     message-retention-hours: ${VLSTREAM_NATIVE_DEVICE_MESSAGE_RETENTION_HOURS:24}
+  # WVP 服务间设备查询配置；该路径与通用 WVP 调用路径保持独立。
+  wvp-device:
+    base-url: ${VLSTREAM_WVP_DEVICE_BASE_URL:http://127.0.0.1:9080}
+    connect-timeout-millis: ${VLSTREAM_WVP_CONNECT_TIMEOUT_MILLIS:3000}
+    read-timeout-millis: ${VLSTREAM_WVP_READ_TIMEOUT_MILLIS:5000}
   # ZLMediaKit 按需拉流与 WebRTC 播放配置
   zlm:
     enabled: ${VLSTREAM_ZLM_ENABLED:true}
@@ -184,7 +189,7 @@ vlstream:
     # 浏览器可访问的 ZLM HTTP(S) 地址；部署环境通过环境变量覆盖
     public-base-url: ${VLSTREAM_ZLM_PUBLIC_URL:http://127.0.0.1:8090}
     # ZLM API 密钥不写入任何环境配置文件，统一通过环境变量注入
-    secret: ${ZLMEDIAKIT_SECRET:su6TiedN2rVAmBbIDX0aa0QTiBJLBdcf}
+    secret: ${ZLMEDIAKIT_SECRET:}
     app: ${VLSTREAM_ZLM_APP:vlstream}
     connect-timeout-millis: ${VLSTREAM_ZLM_CONNECT_TIMEOUT_MILLIS:3000}
     read-timeout-millis: ${VLSTREAM_ZLM_READ_TIMEOUT_MILLIS:10000}
@@ -275,7 +280,7 @@ vlstream:
   # 模型下发配置（通过 MQTT 将模型文件推送到边缘设备）
   model-dispatch:
     # 模型文件下载服务的公共地址
-    public-base-url: ${VLSTREAM_MODEL_PUBLIC_BASE_URL:http://192.168.88.31:8080}
+    public-base-url: ${VLSTREAM_MODEL_PUBLIC_BASE_URL:}
     # 下载 URL 的 HMAC-SHA256 签名密钥（必填；由部署方随机生成，仅保存在后端）
     signing-secret: ${VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET:}
     # 下载链接有效期（秒）
@@ -309,7 +314,7 @@ vlstream:
     # 例如 https://minio.example.com，不能填写仅容器内可解析的 minio:9000
     public-endpoint: ${VLSTREAM_FIRMWARE_PUBLIC_ENDPOINT:}
     # 摄像头访问的平台短链接根地址；平台校验任务后从私有 MinIO 流式返回固件
-    platform-base-url: ${VLSTREAM_FIRMWARE_PLATFORM_BASE_URL:http://192.168.88.31:8080}
+    platform-base-url: ${VLSTREAM_FIRMWARE_PLATFORM_BASE_URL:}
     upload-url-ttl-seconds: ${VLSTREAM_FIRMWARE_UPLOAD_TTL_SECONDS:600}
     download-url-ttl-seconds: ${VLSTREAM_FIRMWARE_DOWNLOAD_TTL_SECONDS:1800}
     # OTA 指令中的地址需要覆盖排队、下载和校验启动时间，默认 2 小时
@@ -339,13 +344,13 @@ vlstream:
 #    # MQTT Broker 端口
 #    port: ${VLSTREAM_MQTT_PORT:1883}
     # MQTT Broker 地址
-    host: ${VLSTREAM_MQTT_HOST:192.168.60.79}
+    host: ${VLSTREAM_MQTT_HOST:}
     # MQTT Broker 端口
-    port: ${VLSTREAM_MQTT_PORT:32570}
+    port: ${VLSTREAM_MQTT_PORT:1883}
     # MQTT 认证用户名（为空则匿名连接）
-    username: ${VLSTREAM_MQTT_USERNAME:VLStream}
+    username: ${VLSTREAM_MQTT_USERNAME:}
     # MQTT 认证密码
-    password: ${VLSTREAM_MQTT_PASSWORD:oort@123}
+    password: ${VLSTREAM_MQTT_PASSWORD:}
     # 主题前缀（所有自定义主题的公共前缀）
     topic-prefix: ${VLSTREAM_MQTT_TOPIC_PREFIX:oortcloud}
     # MQTT 客户端 ID 前缀（实际 ID 会追加随机后缀避免冲突）
