@@ -13,7 +13,8 @@ import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { createPinia } from 'pinia'
 import './style.css'
-import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import { i18n } from '@/i18n'
+import { installLegacyDomI18n } from '@/i18n/legacyDom'
 
 import Avue from '@smallwei/avue';
 import '@smallwei/avue/lib/index.css';
@@ -79,14 +80,13 @@ app.component('DictTag', DictTag)
 app.component('SvgIcon', SvgIcon)
 installWvpCompat(app)
 
-app.use(ElementPlus, {
-  locale: zhCn,
-})
 app.use(ElementPlus)
 app.use(createPinia())
+app.use(i18n)
 app.use(router)
 app.use(Avue, {
   axios,
   calcHeight: 10,
 });
 app.mount('#app')
+installLegacyDomI18n()

@@ -276,3 +276,73 @@ body {
   background: #f0f9ff;
   color: #67c23a;
 }
+/* Global locale typography. These stacks deliberately select script-specific
+   system fonts before generic fallbacks to avoid missing glyphs. */
+:root {
+  --vls-locale-font: "Noto Sans SC", "Microsoft YaHei UI", "PingFang SC", sans-serif;
+}
+
+html[data-locale="en-US"],
+html[data-locale="es-MX"],
+html[data-locale="de-DE"],
+html[data-locale="fr-FR"],
+html[data-locale="pt-BR"],
+html[data-locale="tr-TR"] {
+  --vls-locale-font: "Noto Sans", "Segoe UI", Arial, sans-serif;
+}
+
+html[data-locale="ar"] {
+  --vls-locale-font: "Noto Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+}
+
+html[data-locale="ru-RU"] {
+  --vls-locale-font: "Noto Sans", "Segoe UI", Arial, sans-serif;
+}
+
+html[data-locale="ja-JP"] {
+  --vls-locale-font: "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+}
+
+html[data-locale="ko-KR"] {
+  --vls-locale-font: "Noto Sans KR", "Malgun Gothic", sans-serif;
+}
+
+html[data-locale="id-ID"] {
+  --vls-locale-font: "Noto Sans", "Segoe UI", Arial, sans-serif;
+}
+
+html,
+body,
+#app,
+button,
+input,
+select,
+textarea,
+.el-popper {
+  font-family: var(--vls-locale-font);
+}
+
+html[dir="rtl"] body {
+  direction: rtl;
+}
+
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] .el-input__inner,
+html[dir="rtl"] .el-textarea__inner {
+  text-align: right;
+}
+
+html[dir="rtl"] .el-icon,
+html[dir="rtl"] .el-button .el-icon {
+  margin-left: var(--el-button-gap, 6px);
+  margin-right: 0;
+}
+
+html[data-locale="es-MX"] .el-button,
+html[data-locale="de-DE"] .el-button,
+html[data-locale="fr-FR"] .el-button,
+html[data-locale="pt-BR"] .el-button,
+html[data-locale="ru-RU"] .el-button {
+  min-inline-size: max-content;
+}

@@ -13,7 +13,7 @@
         <div class="greeting-stats-card">
           <div class="greeting-weather">
             <div class="user-greeting">
-              <h1>{{ userName }}，{{ greetingText }}！</h1>
+              <h1>{{ greetingLine }}</h1>
             </div>
             <div class="weather-section">
               <img class="weather-icon" src="@/assets/img/workbench/weather.png" alt="weather" />
@@ -29,29 +29,29 @@
 
           <div class="stats-section">
             <div class="stat-card">
-              <div class="stat-label">待审批</div>
+              <div class="stat-label">{{ tp('待审批') }}</div>
               <div class="stat-value-row">
                 <span class="stat-number">12</span>
                 <span class="stat-change">
-                  相较昨日 <em class="up">▲ 8</em>
+                  {{ tp('相较昨日') }} <em class="up">▲ 8</em>
                 </span>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">已审批</div>
+              <div class="stat-label">{{ tp('已审批') }}</div>
               <div class="stat-value-row">
                 <span class="stat-number">4</span>
                 <span class="stat-change">
-                  相较昨日 <em class="down">▼ 2</em>
+                  {{ tp('相较昨日') }} <em class="down">▼ 2</em>
                 </span>
               </div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">所有申请</div>
+              <div class="stat-label">{{ tp('所有申请') }}</div>
               <div class="stat-value-row">
                 <span class="stat-number">76</span>
                 <span class="stat-change">
-                  相较昨日 <em class="down">▼ 10</em>
+                  {{ tp('相较昨日') }} <em class="down">▼ 10</em>
                 </span>
               </div>
             </div>
@@ -63,7 +63,7 @@
             <div class="card-text">
               <h3>VLStream Cloud</h3>
               <el-button type="primary" size="small" class="guide-btn" @click="openGuide">
-                查看引导手册
+                {{ tp('查看引导手册') }}
               </el-button>
             </div>
             <img class="guide-illustration" src="@/assets/img/workbench/guide_illustration.png" alt="guide" />
@@ -75,7 +75,7 @@
       <div class="content-section">
         <div class="functions-panel">
           <div class="panel-header">
-            <h3>常用功能</h3>
+            <h3>{{ tp('常用功能') }}</h3>
           </div>
           <div class="functions-grid">
             <div
@@ -92,11 +92,11 @@
 
         <div class="devices-panel">
           <div class="panel-header">
-            <h3>VLS 设备列表</h3>
-            <el-link type="primary" class="more-link" @click="gotoMoreDevice">更多</el-link>
+            <h3>{{ tp('VLS 设备列表') }}</h3>
+            <el-link type="primary" class="more-link" @click="gotoMoreDevice">{{ tp('更多') }}</el-link>
           </div>
           <div class="devices-list">
-            <el-empty v-if="!hotDevices.length" description="暂无 VLS 设备" :image-size="40" />
+            <el-empty v-if="!hotDevices.length" :description="tp('暂无 VLS 设备')" :image-size="40" />
             <div v-for="device in hotDevices" :key="device.id" class="device-item">
               <div class="device-info">
                 <img class="device-cam" src="@/assets/img/workbench/device_cam.png" alt="device" />
@@ -104,7 +104,7 @@
               </div>
               <button class="play-btn" type="button" @click="handlePlay(device)">
                 <img class="play-icon" src="@/assets/img/workbench/play_btn.png" alt="play" />
-                <span>播放</span>
+                <span>{{ tp('播放') }}</span>
               </button>
             </div>
           </div>
@@ -114,8 +114,8 @@
       <!--  -->
       <div class="approval-panel">
         <div class="panel-header">
-          <h3>我的待审核</h3>
-          <el-link type="primary" class="more-link">更多</el-link>
+          <h3>{{ tp('我的待审核') }}</h3>
+          <el-link type="primary" class="more-link">{{ tp('更多') }}</el-link>
         </div>
         <div class="table-container">
           <TableSelf
@@ -124,31 +124,31 @@
             :data="approvalData"
             current-row-key="deviceId"
           >
-            <el-table-column prop="deviceName" label="设备名称" :width="clacPXToVW(140)" />
-            <el-table-column prop="tag" label="标签" :width="clacPXToVW(120)">
+            <el-table-column prop="deviceName" :label="tp('设备名称')" :width="clacPXToVW(140)" />
+            <el-table-column prop="tag" :label="tp('标签')" :width="clacPXToVW(120)">
               <template #default="scope">
                 <span class="tag-pill">{{ scope.row.tag }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="deviceId" label="设备ID" :width="clacPXToVW(140)" />
-            <el-table-column prop="deviceType" label="设备类型" :width="clacPXToVW(120)" />
-            <el-table-column prop="position" label="设备位置" :width="clacPXToVW(160)" />
-            <el-table-column prop="algorithm" label="拥有算法" show-overflow-tooltip />
-            <el-table-column prop="applicant" label="申请人" />
-            <el-table-column label="操作" fixed="right" align="right" :width="clacPXToVW(220)">
+            <el-table-column prop="deviceId" :label="tp('设备ID')" :width="clacPXToVW(140)" />
+            <el-table-column prop="deviceType" :label="tp('设备类型')" :width="clacPXToVW(120)" />
+            <el-table-column prop="position" :label="tp('设备位置')" :width="clacPXToVW(160)" />
+            <el-table-column prop="algorithm" :label="tp('拥有算法')" show-overflow-tooltip />
+            <el-table-column prop="applicant" :label="tp('申请人')" />
+            <el-table-column :label="tp('操作')" fixed="right" align="right" :width="clacPXToVW(220)">
               <template #default="scope">
                 <div class="operate-box flexRowAC">
                   <div class="new_table_svg_group" @click="handleDetail(scope.row)">
                     <oort-svg-icon width="14" height="14" name="detail_icon" class="new_table_svg_group_svg" />
-                    <span>详情</span>
+                    <span>{{ tp('详情') }}</span>
                   </div>
                   <div class="new_table_svg_group" @click="handleEdit(scope.row)">
                     <oort-svg-icon width="14" height="14" name="edit_icon" class="new_table_svg_group_svg" />
-                    <span>编辑</span>
+                    <span>{{ tp('编辑') }}</span>
                   </div>
                   <div class="new_table_svg_group" @click="handleDelete(scope.row)">
                     <oort-svg-icon color="red" width="14" height="14" name="delete_icon" class="new_table_svg_group_svg" />
-                    <span>删除</span>
+                    <span>{{ tp('删除') }}</span>
                   </div>
                 </div>
               </template>
@@ -166,16 +166,16 @@
     top="10vh"
     width="900px"
     draggable
-    :title="currentPlayDevice?.deviceName ? `${currentPlayDevice.deviceName} - 摄像头预览` : '摄像头预览'"
+    :title="playerDialogTitle"
     append-to-body
     @close="handlePlayerClose"
   >
     <template #header="{ titleId, titleClass }">
       <div class="workspace-player-header">
         <span :id="titleId" :class="titleClass">
-          {{ currentPlayDevice?.deviceName ? `${currentPlayDevice.deviceName} - 摄像头预览` : '摄像头预览' }}
+          {{ playerDialogTitle }}
         </span>
-        <el-icon class="workspace-fullscreen-button" title="全屏" @click="toggleFullscreen">
+        <el-icon class="workspace-fullscreen-button" :title="tp('全屏')" @click="toggleFullscreen">
           <FullScreen />
         </el-icon>
       </div>
@@ -194,6 +194,7 @@ import { getVlsDeviceCatalog } from '@/api/vlsDeviceCatalog'
 import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
 import { ElMessage } from 'element-plus'
 import { clacPXToVW } from '@/utils/index'
+import { currentLocale, translatePhrase } from '@/i18n'
 
 import iconVideoPlaza from '@/assets/img/workbench/video_plaza.png'
 import iconSceneGovernance from '@/assets/img/workbench/scene_governance.png'
@@ -207,6 +208,7 @@ import iconAlgoTraining from '@/assets/img/workbench/algo_training.png'
 import iconAlgoOrchestration from '@/assets/img/workbench/algo_orchestration.png'
 
 const router = useRouter()
+const tp = source => translatePhrase(source)
 
 const userName = ref('用户')
 const now = ref(new Date())
@@ -214,32 +216,29 @@ const weatherTemp = ref('--\u00b0C')
 let clockTimer = null
 let weatherTimer = null
 
-const weekLabels = [
-  '\u661f\u671f\u65e5',
-  '\u661f\u671f\u4e00',
-  '\u661f\u671f\u4e8c',
-  '\u661f\u671f\u4e09',
-  '\u661f\u671f\u56db',
-  '\u661f\u671f\u4e94',
-  '\u661f\u671f\u516d'
-]
-const pad2 = (value) => String(value).padStart(2, '0')
 const currentDate = computed(() => {
-  const date = now.value
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
+  return new Intl.DateTimeFormat(currentLocale.value, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(now.value)
 })
-const currentDay = computed(() => weekLabels[now.value.getDay()])
+const currentDay = computed(() => new Intl.DateTimeFormat(currentLocale.value, { weekday: 'long' }).format(now.value))
 
 const greetingText = computed(() => {
   const hour = now.value.getHours()
-  if (hour >= 5 && hour < 12) return '早上好'
-  if (hour >= 12 && hour < 14) return '中午好'
-  if (hour >= 14 && hour < 18) return '下午好'
-  if (hour >= 18 && hour < 23) return '晚上好'
-  return '夜深了'
+  if (hour >= 5 && hour < 12) return tp('早上好')
+  if (hour >= 12 && hour < 14) return tp('中午好')
+  if (hour >= 14 && hour < 18) return tp('下午好')
+  if (hour >= 18 && hour < 23) return tp('晚上好')
+  return tp('夜深了')
 })
 
-const functionList = [
+const greetingLine = computed(() => currentLocale.value === 'zh-CN'
+  ? `${userName.value}，${greetingText.value}！`
+  : `${greetingText.value}, ${userName.value}!`)
+
+const functionListSource = [
   { key: 'video-plaza', label: '视频广场', path: 'video-square', icon: iconVideoPlaza },
   { key: 'scene-governance', label: '场景治理', path: 'scene-governance', icon: iconSceneGovernance },
   { key: 'event-management', label: '事件管理', path: 'event-management', icon: iconEventManagement },
@@ -251,6 +250,12 @@ const functionList = [
   { key: 'algo-training', label: '算法自主训练', path: 'algorithm-training', icon: iconAlgoTraining },
   { key: 'algo-orchestration', label: '算法编排', path: 'algorithm-orchestration', icon: iconAlgoOrchestration }
 ]
+const functionList = computed(() => functionListSource.map(item => ({ ...item, label: tp(item.label) })))
+
+const playerDialogTitle = computed(() => {
+  const preview = tp('摄像头预览')
+  return currentPlayDevice.value?.deviceName ? `${currentPlayDevice.value.deviceName} - ${preview}` : preview
+})
 
 const updateNow = () => {
   now.value = new Date()
@@ -329,7 +334,7 @@ const toggleFullscreen = async () => {
     }
   } catch (error) {
     console.error('切换播放器全屏失败:', error)
-    ElMessage.error('切换全屏失败')
+    ElMessage.error(tp('切换全屏失败'))
   }
 }
 
@@ -366,15 +371,15 @@ const openGuide = () => {
 }
 
 const handleDetail = () => {
-  ElMessage.info('详情功能开发中')
+  ElMessage.info(tp('详情功能开发中'))
 }
 
 const handleEdit = () => {
-  ElMessage.info('编辑功能开发中')
+  ElMessage.info(tp('编辑功能开发中'))
 }
 
 const handleDelete = () => {
-  ElMessage.info('删除功能开发中')
+  ElMessage.info(tp('删除功能开发中'))
 }
 
 onMounted(async () => {
@@ -393,7 +398,7 @@ onMounted(async () => {
   try {
     hotDevices.value = await getVlsDeviceCatalog({ limit: 5 })
   } catch (e) {
-    ElMessage.error('加载 VLS 设备列表失败')
+    ElMessage.error(tp('加载 VLS 设备列表失败'))
   }
 })
 

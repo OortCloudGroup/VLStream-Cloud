@@ -6,13 +6,15 @@
 -->
 
 <template>
-  <div id="app">
-    <router-view />
-  </div>
+  <el-config-provider :locale="elementLocale">
+    <div id="app">
+      <router-view />
+    </div>
+  </el-config-provider>
 </template>
 
 <script setup>
-// main component
+import { elementLocale } from '@/i18n'
 </script>
 
 <style scoped>

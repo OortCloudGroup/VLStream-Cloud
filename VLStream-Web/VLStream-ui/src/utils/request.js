@@ -7,6 +7,7 @@
 
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import { currentLocale } from '@/i18n'
 
 export const BLADE_CLIENT_AUTH_HEADER = import.meta.env.VITE_BLADE_CLIENT_AUTH_HEADER || 'Basic c2FiZXI6c2FiZXJfc2VjcmV0'
 const PLATFORM_APP_ID = import.meta.env.VITE_PLATFORM_APP_ID || ''
@@ -55,6 +56,8 @@ export const applyPlatformGatewayHeaders = (config) => {
   delete config.headers.appID
   delete config.headers.secretKey
   config.headers.requesttype = PLATFORM_REQUEST_TYPE
+  config.headers['Accept-Language'] = currentLocale.value
+  config.headers['Content-Language'] = currentLocale.value.replace('-', '_')
   if (PLATFORM_APP_ID) config.headers.appid = PLATFORM_APP_ID
   if (PLATFORM_SECRET_KEY) config.headers.secretkey = PLATFORM_SECRET_KEY
 }

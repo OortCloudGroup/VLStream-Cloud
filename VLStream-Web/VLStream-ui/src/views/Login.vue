@@ -7,6 +7,14 @@
 
 <template>
   <div class="login-container">
+    <label class="login-locale-switcher">
+      <span>{{ $t('app.language') }}</span>
+      <select :value="currentLocale" @change="setLocale($event.target.value)">
+        <option v-for="option in localeOptions" :key="option.code" :value="option.code">
+          {{ option.name }}
+        </option>
+      </select>
+    </label>
     <div class="login-card">
       <!--  -->
       <div class="login-header">
@@ -89,6 +97,7 @@ import smCrypto from 'sm-crypto'
 import { AuthManager } from '@/utils/auth'
 import { loginUser } from '@/api/auth'
 import loginLogo from '@/assets/img/img.png'
+import { currentLocale, localeOptions, setLocale } from '@/i18n'
 
 const router = useRouter()
 const route = useRoute()
@@ -238,6 +247,27 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.login-locale-switcher {
+  position: fixed;
+  inset-block-start: 24px;
+  inset-inline-end: 28px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #475569;
+  font-size: 14px;
+}
+
+.login-locale-switcher select {
+  min-width: 180px;
+  padding: 8px 32px 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #1e293b;
+  background: rgba(255, 255, 255, 0.94);
+}
+
 .login-container {
   min-height: 100vh;
   display: flex;

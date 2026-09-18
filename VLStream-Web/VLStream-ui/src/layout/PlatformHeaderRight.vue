@@ -21,18 +21,6 @@
       </el-tooltip>
     </el-badge>
 
-    <el-dropdown class="lang-switch" trigger="hover" @command="switchLocale">
-      <button type="button" class="right_info_nine platform-header-icon">
-        <img :src="langIcon" alt="">
-      </button>
-      <template #dropdown>
-        <el-dropdown-menu>
-          <el-dropdown-item command="zh" :disabled="locale === 'zh'">中文</el-dropdown-item>
-          <el-dropdown-item command="en" :disabled="locale === 'en'">English</el-dropdown-item>
-        </el-dropdown-menu>
-      </template>
-    </el-dropdown>
-
     <span class="right_info_tips">{{ text.welcome }}</span>
     <div class="right_info_imgOut">
       <img class="right_info_img" :src="platformImageUrl(userPhoto) || defaultUserIcon" alt="" @error="useDefaultUserIcon">
@@ -217,12 +205,12 @@ import PlatformIndustryDialog from './platform-header/PlatformIndustryDialog.vue
 import fullscreenIcon from '@/assets/img/svg/platform-fullscreen.svg'
 import exitFullscreenIcon from '@/assets/img/svg/platform-exit-fullscreen.svg'
 import noticeIcon from '@/assets/img/svg/platform-notice.svg'
-import langIcon from '@/assets/img/svg/platform-lang.svg'
 import nineIcon from '@/assets/img/svg/platform-nine.svg'
 import nineMoreIcon from '@/assets/img/svg/platform-nine-more.svg'
 import upArrowIcon from '@/assets/img/login/up_arrow.png'
 import downArrowIcon from '@/assets/img/login/down_arrow.png'
 import defaultUserIcon from '@/assets/img/login/icon_user.png'
+import { formatDateTime, translatePhrase } from '@/i18n'
 
 const props = defineProps({
   fallbackUser: { type: Object, default: () => ({}) },
@@ -230,7 +218,6 @@ const props = defineProps({
 })
 const emit = defineEmits(['admin-status-change', 'switch-tenant'])
 const DEFAULT_PERSONAL_TENANT_ID = '0e391fd7-1033-4f09-88c0-187582fee462'
-const locale = ref(localStorage.getItem('language') || 'zh')
 const headerUser = ref({})
 const accountGroups = ref([])
 const notices = ref([])
@@ -262,7 +249,10 @@ const messages = {
   }
 }
 
-const text = computed(() => messages[locale.value] || messages.zh)
+const text = computed(() => {
+  const chineseMessages = messages.zh
+  return Object.fromEntries(Object.entries(chineseMessages).map(([key, value]) => [key, translatePhrase(value)]))
+})
 const userName = computed(() => headerUser.value.oort_name || headerUser.value.user_name || headerUser.value.userName || props.fallbackUser?.userName || props.fallbackUser?.user_name || '')
 const userInitial = computed(() => String(userName.value || '用').slice(0, 1))
 const userPhoto = computed(() => headerUser.value.oort_photo || headerUser.value.photo || props.fallbackUser?.photo || '')
@@ -309,11 +299,6 @@ const toggleFullscreen = async() => {
     else await document.documentElement.requestFullscreen()
   } catch (error) { console.warn('全屏切换失败', error) }
 }
-const switchLocale = value => {
-  locale.value = value === 'en' ? 'en' : 'zh'
-  localStorage.setItem('language', locale.value)
-  document.documentElement.lang = locale.value === 'en' ? 'en' : 'zh-CN'
-}
 const formatMessageTime = value => {
   if (!value) return ''
   const numericValue = Number(value)
@@ -322,8 +307,7 @@ const formatMessageTime = value => {
     : value
   const date = new Date(normalizedValue)
   if (Number.isNaN(date.getTime())) return value
-  const pad = number => String(number).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+  return formatDateTime(date)
 }
 const loadNotices = async() => {
   try {
@@ -464,7 +448,6 @@ const logout = async() => {
 
 onMounted(async() => {
   document.addEventListener('fullscreenchange', syncFullscreenState)
-  document.documentElement.lang = locale.value === 'en' ? 'en' : 'zh-CN'
   applyTheme(themeColor.value)
   try {
     headerUser.value = await getPlatformHeaderUser()
@@ -505,7 +488,6 @@ onBeforeUnmount(() => document.removeEventListener('fullscreenchange', syncFulls
   &:hover { border-radius: 4px; }
 }
 .platform-notice-badge { margin: 0 2px; display: inline-flex; align-items: center; .platform-notice-icon { margin: 0; } }
-.lang-switch { margin: 0 2px; }
 .arrow_icon { width: 12px; height: 12px; img { width: 12px; display: block; } }
 .account-panel { width: 100%; padding-top: 20px; border-radius: 8px; background: #edf3f9; }
 .account-panel-header { display: flex; align-items: center; padding: 0 24px 10px; }

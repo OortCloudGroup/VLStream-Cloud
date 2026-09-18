@@ -61,6 +61,12 @@ const routes = [
         meta: { title: 'ISUP 设备', parentMenu: 'video-aggregation' }
       },
       {
+        path: '/ehome/device',
+        name: 'WvpEhomeDevice',
+        component: () => import('@/views/ehome/device/index.vue'),
+        meta: { title: 'EHome 设备', parentMenu: 'video-aggregation' }
+      },
+      {
         path: '/rtsp/rtspDevice',
         name: 'WvpRtspDevice',
         component: () => import('@/views/rtsp/RtspDevice/index.vue'),

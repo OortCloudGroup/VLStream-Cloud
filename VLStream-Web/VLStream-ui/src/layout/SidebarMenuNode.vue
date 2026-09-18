@@ -25,7 +25,7 @@
             <component :is="getMenuIcon(item.meta?.icon)" />
           </el-icon>
         </div>
-        <span class="menu-title-text">{{ item.meta?.title }}</span>
+        <span class="menu-title-text">{{ translatePhrase(item.meta?.title) }}</span>
       </template>
       <SidebarMenuNode
         :items="item.children"
@@ -45,7 +45,7 @@
         </el-icon>
       </div>
       <template #title>
-        <span class="menu-title-text">{{ item.meta?.title }}</span>
+        <span class="menu-title-text">{{ translatePhrase(item.meta?.title) }}</span>
       </template>
     </el-menu-item>
   </template>
@@ -53,6 +53,7 @@
 
 <script setup>
 import { CaretBottom, CaretRight } from '@element-plus/icons-vue'
+import { translatePhrase } from '@/i18n'
 
 defineProps({
   items: {

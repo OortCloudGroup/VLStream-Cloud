@@ -42,6 +42,7 @@
         </div>
 
         <div class="header-right">
+          <LocaleSwitcher />
           <OortCloudPopover v-if="tenantMode === 'multi' || isSuperAdmin" :tenant-mode="tenantMode" />
 
           <PlatformHeaderRight
@@ -61,8 +62,8 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item @click="$router.push('/user-profile')">个人设置</el-dropdown-item>
-                <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
+                <el-dropdown-item @click="$router.push('/user-profile')">{{ tp('个人设置') }}</el-dropdown-item>
+                <el-dropdown-item divided @click="handleLogout">{{ tp('退出登录') }}</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -141,9 +142,12 @@ import CollapseToggle from '@/components/CollapseToggle.vue'
 import SidebarMenuNode from './SidebarMenuNode.vue'
 import OortCloudPopover from './OortCloudPopover.vue'
 import PlatformHeaderRight from './PlatformHeaderRight.vue'
+import LocaleSwitcher from './LocaleSwitcher.vue'
+import { translatePhrase } from '@/i18n'
 import deviceManagementIcon from '@/assets/img/svg/device-management.svg'
 import vlstreamIcon from '@/assets/img/svg/vlstream.svg'
 import isupIcon from '@/assets/img/svg/isup.svg'
+import ehomeIcon from '@/assets/img/svg/ehome.svg'
 import rtspIcon from '@/assets/img/svg/rtsp.svg'
 import onvifIcon from '@/assets/img/svg/onvif.svg'
 import gbIcon from '@/assets/img/svg/gb.svg'
@@ -454,9 +458,11 @@ const allTopMenus = [
 ]
 
 const topMenus = computed(() => tenantMode.value === 'single'
-  ? allTopMenus
-  : allTopMenus.filter(menu => menu.key !== 'system-management')
+  ? allTopMenus.map(menu => ({ ...menu, title: translatePhrase(menu.title) }))
+  : allTopMenus.filter(menu => menu.key !== 'system-management').map(menu => ({ ...menu, title: translatePhrase(menu.title) }))
 )
+
+const tp = source => translatePhrase(source)
 
 // menu
 const menuRoutesMap = {
@@ -472,6 +478,7 @@ const menuRoutesMap = {
       children: [
         { path: '/vlstream/device', meta: { title: 'VLStream协议', icon: 'wvp-vls' } },
         { path: '/isup/isupDevice', meta: { title: 'ISUP协议', icon: 'wvp-haikang' } },
+        { path: '/ehome/device', meta: { title: 'EHome协议', icon: 'wvp-ehome' } },
         { path: '/rtsp/rtspDevice', meta: { title: 'RTSP协议', icon: 'wvp-rtsp' } },
         { path: '/onvif/cameraManage', meta: { title: 'ONVIF协议', icon: 'wvp-onvif' } },
         {
@@ -973,6 +980,7 @@ const getMenuIcon = (iconName) => {
     '接口权限': Lock,
     '固件管理': UploadFilled,
     'wvp-haikang': isupIcon,
+    'wvp-ehome': ehomeIcon,
     'wvp-rtsp': rtspIcon,
     'wvp-onvif': onvifIcon,
     'wvp-gb': gbIcon,
