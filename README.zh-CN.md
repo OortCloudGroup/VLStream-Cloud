@@ -318,15 +318,15 @@ sequenceDiagram
 以下版本优先取当前发布 Compose 或项目配置。标记为“未固定”的组件，
 正式发布前需要在部署清单中锁定版本。
 
-| 名称 | 用途 | 版本号 | 授权协议 |
-| --- | --- | --- | --- |
-| VLStream Server（VLS） | 设备注册、用户绑定、事件、模型任务和平台 API | Maven `0.8.3`；Spring Boot `2.7.11`；发布镜像 `1.1.2` | [MIT](./LICENSE) |
-| WVP Server | 必选的统一视频设备中心；负责 VLStream、GB28181/SIP、ONVIF、RTSP、预览、回放、云台和视频控制 | `3.8.9`；Spring Boot `2.7.18` | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE) |
-| ZLMediaKit | RTP 收流、媒体管理、REST/Hook 和播放输出 | WVP/VLStream 仓库中**未固定** | [MIT](https://docs.zlmediakit.com/zh/more/license.html) |
-| MQTT Broker / EMQX | 设备消息、心跳、事件、指令和模型回执 | `5.4`；发布 Compose 作为外部服务接入 | [Apache-2.0](https://github.com/emqx/emqx-docker/blob/main/LICENSE) |
-| MySQL | 业务数据库 | `8.4.10-oraclelinux9` | [GPLv2 或商业许可](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |
-| Redis | 缓存、会话、在线状态和运行态数据 | `7.4.9-alpine` | [RSALv2 或 SSPLv1](https://redis.io/legal/licenses/) |
-| MinIO / S3 | 事件媒体、模型文件和对象存储 | `RELEASE.2025-09-07T16-13-09Z` | [AGPLv3 或商业许可](https://min.io/compliance) |
+| 名称 | 用途 | 版本号 | 仓库地址 | 授权协议 |
+| --- | --- | --- | --- | --- |
+| VLStream Server（VLS） | 设备注册、用户绑定、事件、模型任务和平台 API | Maven `0.8.3`；Spring Boot `2.7.11`；发布镜像 `1.1.2` | [GitHub 仓库](https://github.com/OortCloudGroup/VLStream-Cloud) | [MIT](./LICENSE) |
+| VLStream Cloud Lite（WVP Server） | 必选的统一视频设备中心；负责 VLStream、GB28181/SIP、ONVIF、RTSP、预览、回放、云台和视频控制 | `3.8.9`；Spring Boot `2.7.18` | [GitHub 仓库](https://github.com/OortCloudGroup/VLStream-Cloud-Lite) | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE) |
+| ZLMediaKit | RTP 收流、媒体管理、REST/Hook 和播放输出 | WVP/VLStream 仓库中**未固定** | [GitHub 仓库](https://github.com/ZLMediaKit/ZLMediaKit) | [MIT](https://docs.zlmediakit.com/zh/more/license.html) |
+| MQTT Broker / EMQX | 设备消息、心跳、事件、指令和模型回执 | `5.4`；发布 Compose 作为外部服务接入 | [GitHub 仓库](https://github.com/emqx/emqx) | [Apache-2.0](https://github.com/emqx/emqx-docker/blob/main/LICENSE) |
+| MySQL | 业务数据库 | `8.4.10-oraclelinux9` | [GitHub 仓库](https://github.com/mysql/mysql-server) | [GPLv2 或商业许可](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |
+| Redis | 缓存、会话、在线状态和运行态数据 | `7.4.9-alpine` | [GitHub 仓库](https://github.com/redis/redis) | [RSALv2 或 SSPLv1](https://redis.io/legal/licenses/) |
+| MinIO / S3 | 事件媒体、模型文件和对象存储 | `RELEASE.2025-09-07T16-13-09Z` | [GitHub 仓库](https://github.com/minio/minio) | [AGPLv3 或商业许可](https://min.io/compliance) |
 
 前端部署通常还需要 Nginx 或等价网关，用于静态文件和反向代理。WebRTC
 Streamer `v0.8.16` 仅用于 VLS 直连 RTSP 转 WebRTC 的可选链路；FFmpeg 是

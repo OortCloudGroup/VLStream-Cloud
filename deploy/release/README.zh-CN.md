@@ -47,3 +47,38 @@ docker compose up -d
 docker compose ps
 docker compose logs -f backend frontend
 ```
+
+## 可选的 IPC 远程管理
+
+`tunnel-runtime` profile 将固定版本的 rathole Server 与受限的
+HTTP/WebSocket 网关放在同一容器中，默认不启用。
+
+启用前必须：
+
+1. 为独立域名配置通配 DNS 和 TLS 证书，例如 `*.ipc.example.com`。
+2. 构建运行时并生成 rathole Noise 密钥对：
+
+   ```powershell
+   docker build -t vlstream/tunnel-runtime:local .\tunnel-runtime
+   docker run --rm --entrypoint /usr/local/bin/rathole vlstream/tunnel-runtime:local --genkey
+   ```
+
+3. 分别生成不少于 32 字节的服务签名密钥、控制器 Token 和网关 Token；
+   三者不能复用，不能提交到仓库。
+4. 配置 `.env` 中全部 `VLSTREAM_TUNNEL_*` 变量，其中网关地址应类似
+   `https://{sessionId}.ipc.example.com`。
+5. 参考 `VLStream-Web/VLStream-ui/nginx.conf.example` 配置通配域名 TLS，
+   保留 Host 和 WebSocket Upgrade 头并转发到宿主机回环端口 8088。
+6. 启动：
+
+   ```powershell
+   docker compose --profile tunnel up -d --build
+   docker compose --profile tunnel ps
+   ```
+
+公网只开放 rathole 控制端口（默认 2333）。网关仅发布到
+`127.0.0.1`，61000-61999 的设备映射端口只存在于运行时容器内，严禁发布。
+控制面连续两分钟不可达时运行时会停止 rathole，按失败关闭处理。
+
+容器健康不代表真实 IPC 已可访问；仍需验证激活、Agent 心跳、路由
+`APPLIED`、浏览器登录及设备重启/断网恢复。

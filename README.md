@@ -316,15 +316,15 @@ The following versions are taken from the current release Compose or project
 configuration. A version marked **not pinned** must be fixed in the formal
 deployment manifest before production release.
 
-| Name | Purpose | Version | License |
-| --- | --- | --- | --- |
-| VLStream Server (VLS) | Device registration, user binding, events, model tasks, and platform APIs | Maven `0.8.3`; Spring Boot `2.7.11`; release image `1.1.2` | [MIT](./LICENSE) |
-| WVP Server | Required unified video-device center for VLStream, GB28181/SIP, ONVIF, RTSP, preview, playback, PTZ, and video control | `3.8.9`; Spring Boot `2.7.18` | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE) |
-| ZLMediaKit | RTP ingest, media management, REST/Hook, and playback output | **Not pinned** in WVP/VLStream repositories | [MIT](https://docs.zlmediakit.com/zh/more/license.html) |
-| MQTT Broker / EMQX | Device messaging, heartbeat, events, commands, and model receipts | `5.4`; external service in release Compose | [Apache-2.0](https://github.com/emqx/emqx-docker/blob/main/LICENSE) |
-| MySQL | Business database | `8.4.10-oraclelinux9` | [GPLv2 or commercial license](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |
-| Redis | Cache, sessions, online state, and runtime state | `7.4.9-alpine` | [RSALv2 or SSPLv1](https://redis.io/legal/licenses/) |
-| MinIO / S3 | Event media, model files, and object storage | `RELEASE.2025-09-07T16-13-09Z` | [AGPLv3 or commercial license](https://min.io/compliance) |
+| Name | Purpose | Version | Repository | License |
+| --- | --- | --- | --- | --- |
+| VLStream Server (VLS) | Device registration, user binding, events, model tasks, and platform APIs | Maven `0.8.3`; Spring Boot `2.7.11`; release image `1.1.2` | [GitHub Repository](https://github.com/OortCloudGroup/VLStream-Cloud) | [MIT](./LICENSE) |
+| VLStream Cloud Lite (WVP Server) | Required unified video-device center for VLStream, GB28181/SIP, ONVIF, RTSP, preview, playback, PTZ, and video control | `3.8.9`; Spring Boot `2.7.18` | [GitHub Repository](https://github.com/OortCloudGroup/VLStream-Cloud-Lite) | [MIT](https://gitee.com/xiaochemgzi/RuoYi-Wvp/blob/master/LICENSE) |
+| ZLMediaKit | RTP ingest, media management, REST/Hook, and playback output | **Not pinned** in WVP/VLStream repositories | [GitHub Repository](https://github.com/ZLMediaKit/ZLMediaKit) | [MIT](https://docs.zlmediakit.com/zh/more/license.html) |
+| MQTT Broker / EMQX | Device messaging, heartbeat, events, commands, and model receipts | `5.4`; external service in release Compose | [GitHub Repository](https://github.com/emqx/emqx) | [Apache-2.0](https://github.com/emqx/emqx-docker/blob/main/LICENSE) |
+| MySQL | Business database | `8.4.10-oraclelinux9` | [GitHub Repository](https://github.com/mysql/mysql-server) | [GPLv2 or commercial license](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |
+| Redis | Cache, sessions, online state, and runtime state | `7.4.9-alpine` | [GitHub Repository](https://github.com/redis/redis) | [RSALv2 or SSPLv1](https://redis.io/legal/licenses/) |
+| MinIO / S3 | Event media, model files, and object storage | `RELEASE.2025-09-07T16-13-09Z` | [GitHub Repository](https://github.com/minio/minio) | [AGPLv3 or commercial license](https://min.io/compliance) |
 
 Nginx or an equivalent gateway is normally required for frontend static files
 and reverse proxying. WebRTC Streamer `v0.8.16` is optional for the VLS direct

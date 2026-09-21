@@ -44,6 +44,13 @@ public class PlusWebInvokeTimeInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         if (!prodProfile.equals(SpringUtils.getActiveProfile())) {
             String url = request.getMethod() + " " + request.getRequestURI();
+            if (isSensitiveRequest(request)) {
+                log.debug("[PLUS]开始请求 => URL[{}],敏感参数已省略", url);
+                StopWatch stopWatch = new StopWatch();
+                invokeTimeTL.set(stopWatch);
+                stopWatch.start();
+                return true;
+            }
 
             // parameter
             if (isJsonRequest(request)) {
@@ -68,6 +75,13 @@ public class PlusWebInvokeTimeInterceptor implements HandlerInterceptor {
             stopWatch.start();
         }
         return true;
+    }
+
+    private boolean isSensitiveRequest(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return "/blade-auth/token".equals(uri)
+            || "/vlsTunnel/agent/register".equals(uri)
+            || "/vlsTunnel/internal/access-sessions/resolve".equals(uri);
     }
 
     @Override

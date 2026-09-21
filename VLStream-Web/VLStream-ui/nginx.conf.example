@@ -127,3 +127,36 @@ server {
         proxy_send_timeout 300s;
     }
 }
+
+# IPC remote-management wildcard gateway. Put this block in the same nginx
+# http context as the VLS server above. Replace the example domain and
+# certificate paths, and create wildcard DNS for *.ipc.example.com.
+map $http_upgrade $ipc_connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+server {
+    listen 443 ssl;
+    server_name *.ipc.example.com;
+
+    ssl_certificate /etc/nginx/tls/ipc.example.com.fullchain.pem;
+    ssl_certificate_key /etc/nginx/tls/ipc.example.com.key;
+
+    # Bootstrap URLs contain short-lived bearer material.
+    access_log off;
+
+    location / {
+        proxy_pass http://127.0.0.1:8088;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $ipc_connection_upgrade;
+        proxy_buffering off;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+}

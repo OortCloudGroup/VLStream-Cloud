@@ -50,13 +50,28 @@ public class BladePasswordDecoder {
             return "";
         }
 
-        String encrypted = startsWithIgnoreCase(password, ENCRYPT_PREFIX) ? password : ENCRYPT_PREFIX + password;
         SM2 sm2 = SmUtil.sm2(privateKey, publicKey);
         sm2.setMode(SM2Engine.Mode.C1C2C3);
-        String decoded = sm2.decryptStr(encrypted, KeyType.PrivateKey, StandardCharsets.UTF_8);
-        byte[] decodedBytes = decoded.getBytes(StandardCharsets.UTF_8);
-        byte[] signature = sm2.sign(decodedBytes);
-        return sm2.verify(decodedBytes, signature) ? decoded : "";
+        String decoded = tryDecrypt(sm2, startsWithIgnoreCase(password, ENCRYPT_PREFIX)
+            ? password : ENCRYPT_PREFIX + password);
+        if (decoded == null && startsWithIgnoreCase(password, ENCRYPT_PREFIX)) {
+            // sm-crypto mode 0 omits the uncompressed-point marker. Its random
+            // first coordinate can naturally begin with 04, so retry with the
+            // marker instead of treating those two ciphertext digits as it.
+            decoded = tryDecrypt(sm2, ENCRYPT_PREFIX + password);
+        }
+        return decoded == null ? "" : decoded;
+    }
+
+    private String tryDecrypt(SM2 sm2, String encrypted) {
+        try {
+            String decoded = sm2.decryptStr(encrypted, KeyType.PrivateKey, StandardCharsets.UTF_8);
+            byte[] decodedBytes = decoded.getBytes(StandardCharsets.UTF_8);
+            byte[] signature = sm2.sign(decodedBytes);
+            return sm2.verify(decodedBytes, signature) ? decoded : null;
+        } catch (RuntimeException exception) {
+            return null;
+        }
     }
 
     private static String trimToNull(String value) {

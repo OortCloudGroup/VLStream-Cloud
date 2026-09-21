@@ -54,3 +54,43 @@ Check status and logs with:
 docker compose ps
 docker compose logs -f backend frontend
 ```
+
+## Optional IPC Remote Management
+
+The `tunnel-runtime` profile combines a pinned rathole Server with a
+host-isolated HTTP/WebSocket gateway. It is disabled by default.
+
+Before enabling it:
+
+1. Create wildcard DNS and a wildcard TLS certificate for a dedicated suffix,
+   for example `*.ipc.example.com`.
+2. Build the runtime and generate the rathole Noise key pair:
+
+   ```powershell
+   docker build -t vlstream/tunnel-runtime:local .\tunnel-runtime
+   docker run --rm --entrypoint /usr/local/bin/rathole vlstream/tunnel-runtime:local --genkey
+   ```
+
+3. Generate three different random values of at least 32 bytes: the service
+   signing secret, control API token, and gateway API token. Never reuse or
+   commit them.
+4. Set every `VLSTREAM_TUNNEL_*` variable in `.env`, including
+   `VLSTREAM_TUNNEL_GATEWAY_BASE_URL=https://{sessionId}.ipc.example.com`.
+5. Configure the wildcard TLS proxy using
+   `VLStream-Web/VLStream-ui/nginx.conf.example`. Preserve the Host header and
+   WebSocket Upgrade headers while proxying to host loopback port 8088.
+6. Start the optional profile:
+
+   ```powershell
+   docker compose --profile tunnel up -d --build
+   docker compose --profile tunnel ps
+   ```
+
+Only the rathole control port (default 2333) is public. The gateway port is
+published on `127.0.0.1`, and per-device service ports 61000-61999 stay inside
+the tunnel-runtime container. Never publish that service range.
+
+The runtime stops rathole when it cannot refresh desired route state for two
+minutes. A healthy container does not prove an IPC is reachable; enrollment,
+Agent heartbeat, route `APPLIED`, browser login, and real device reconnect
+still require end-to-end verification.

@@ -23,11 +23,20 @@ class BladePasswordDecoderTest {
         "7204a0e7dd3f23783fb04a82b7ae211441b12a8cb42694f9997e02babc4bf65b";
     private static final String SM_CRYPTO_MODE_0_CIPHER =
         "a5512f4520453fe24c34ee2cc6689ea647681d9bb702856f0c2227bfe5fd60db011a34ad12a7d92b8d1f754d1d13108b3f8faa3e186d1d8f89089440723530f8ea4eddf2781dc22452e5bb87262b29e88fa6129a1b58ea57e7da731ffbb8732dabecfe4b91b9a2517271f6";
+    private static final String SM_CRYPTO_MODE_0_CIPHER_STARTING_WITH_04 =
+        "04384217d8904d8e110dc1a6d6e57f4159ab8b6feb2d770905872aa78426a51fa3fb4b166af7529c983616d3bdf1557269131a7dac61ed0f0064b0be116289689150ccc5ef8ed61f4f00cecc31559effab033054f5ea21bfe7dd31197c7c36106becc7e9b64d75c50241652f";
 
     @Test
     void decryptsSmCryptoPasswordWithoutPrefix() {
         BladePasswordDecoder decoder = new BladePasswordDecoder(PUBLIC_KEY, PRIVATE_KEY);
 
         assertEquals("Password123", decoder.decode(SM_CRYPTO_MODE_0_CIPHER));
+    }
+
+    @Test
+    void decryptsUnprefixedCipherWhoseCoordinateStartsWith04() {
+        BladePasswordDecoder decoder = new BladePasswordDecoder(PUBLIC_KEY, PRIVATE_KEY);
+
+        assertEquals("Codex@123456", decoder.decode(SM_CRYPTO_MODE_0_CIPHER_STARTING_WITH_04));
     }
 }

@@ -176,6 +176,29 @@ vlstream:
     offline-timeout-seconds: ${VLSTREAM_NATIVE_DEVICE_OFFLINE_TIMEOUT_SECONDS:180}
     # QoS 1 幂等消息记录保留时长
     message-retention-hours: ${VLSTREAM_NATIVE_DEVICE_MESSAGE_RETENTION_HOURS:24}
+  # IPC 本机 Agent + rathole 远程 Web 管理控制面。默认关闭并对所有内部接口保持失败关闭。
+  tunnel:
+    enabled: ${VLSTREAM_TUNNEL_ENABLED:false}
+    # WVP 原生设备尚未建立可靠的多租户所有权字段，MVP 无条件禁止多租户签发激活码。
+    # 设备主动连接的 rathole Server 控制地址，例如 tunnel.example.com:2333。
+    remote-address: ${VLSTREAM_TUNNEL_REMOTE_ADDRESS:}
+    transport: ${VLSTREAM_TUNNEL_TRANSPORT:noise}
+    noise-remote-public-key: ${VLSTREAM_TUNNEL_NOISE_REMOTE_PUBLIC_KEY:}
+    # 至少 32 字节，仅通过部署环境注入；用于按端点和配置版本派生 rathole service token。
+    service-signing-secret: ${VLSTREAM_TUNNEL_SERVICE_SIGNING_SECRET:}
+    # rathole 配置控制器和 HTTPS 网关调用内部接口时使用的独立凭据。
+    control-api-token: ${VLSTREAM_TUNNEL_CONTROL_API_TOKEN:}
+    gateway-api-token: ${VLSTREAM_TUNNEL_GATEWAY_API_TOKEN:}
+    # 必须使用HTTPS并包含{sessionId}，例如 https://{sessionId}.ipc.example.com。
+    gateway-base-url: ${VLSTREAM_TUNNEL_GATEWAY_BASE_URL:}
+    # MVP 要求映射端口只监听与 HTTPS 网关同一网络命名空间内的回环地址。
+    server-bind-host: ${VLSTREAM_TUNNEL_SERVER_BIND_HOST:127.0.0.1}
+    server-port-start: ${VLSTREAM_TUNNEL_SERVER_PORT_START:61000}
+    server-port-end: ${VLSTREAM_TUNNEL_SERVER_PORT_END:61999}
+    enrollment-ttl-seconds: ${VLSTREAM_TUNNEL_ENROLLMENT_TTL_SECONDS:600}
+    access-session-ttl-seconds: ${VLSTREAM_TUNNEL_ACCESS_SESSION_TTL_SECONDS:300}
+    heartbeat-interval-seconds: ${VLSTREAM_TUNNEL_HEARTBEAT_INTERVAL_SECONDS:30}
+    heartbeat-timeout-seconds: ${VLSTREAM_TUNNEL_HEARTBEAT_TIMEOUT_SECONDS:90}
   # ZLMediaKit 按需拉流与 WebRTC 播放配置
   zlm:
     enabled: ${VLSTREAM_ZLM_ENABLED:true}
