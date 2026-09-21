@@ -7,6 +7,7 @@
 
 import { verifyToken } from '@/api/auth'
 import { exchangePlatformToken, getTenantMode, validatePlatformSession } from '@/api/system/localAuth'
+import { extractAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
 import {
   clearPlatformAccessToken,
   clearPlatformLoginPending,
@@ -27,8 +28,7 @@ export class AuthManager {
 
   /* * after Process token Validate . */
   async checkExternalPlatformLogin() {
-    const url = new URL(window.location.href)
-    const urlToken = url.searchParams.get('accessToken') || url.searchParams.get('access_token') || url.searchParams.get('token')
+    const { accessToken: urlToken } = extractAuthCallbackParams(window.location.href)
     if (urlToken) {
       return this.checkUrlToken()
     }
@@ -62,12 +62,12 @@ export class AuthManager {
   /* * Validate URL in token, successfully after Query parameter. */
   async checkUrlToken() {
     const url = new URL(window.location.href)
-    const token = url.searchParams.get('accessToken') || url.searchParams.get('access_token') || url.searchParams.get('token')
+    const { accessToken: token, tenantId } = extractAuthCallbackParams(url.toString())
     if (!token) return null
 
     // URL 传入的是统一平台令牌；无论单租户还是多租户，都必须先换取 VLS 本地会话。
     // single 仅禁止租户切换，不应禁止平台账号授权登录。
-    const userInfo = await this.exchangePlatformToken(token, this.getUrlTenantId(url))
+    const userInfo = await this.exchangePlatformToken(token, tenantId || undefined)
     if (!userInfo) return null
     await this.saveUserToLocal(userInfo)
     this.cleanUrlToken()
@@ -232,20 +232,18 @@ export class AuthManager {
 
   /* * Get the OortCloud platform token used only for platform APIs and token exchange. */
   getPlatformToken() {
-    const url = new URL(window.location.href)
-    return url.searchParams.get('accessToken')
-      || url.searchParams.get('access_token')
-      || url.searchParams.get('token')
+    const { accessToken } = extractAuthCallbackParams(window.location.href)
+    return accessToken
       || sessionStorage.getItem('platformAccessToken')
       || localStorage.getItem('platformAccessToken')
   }
 
   getUrlTenantId(url = new URL(window.location.href)) {
-    return url.searchParams.get('tenantId') || url.searchParams.get('tenant_id') || undefined
+    return extractAuthCallbackParams(url.toString()).tenantId || undefined
   }
 
   hasPlatformCallbackToken(url = new URL(window.location.href)) {
-    return Boolean(url.searchParams.get('accessToken') || url.searchParams.get('access_token') || url.searchParams.get('token'))
+    return Boolean(extractAuthCallbackParams(url.toString()).accessToken)
   }
 
   redirectToPlatformLogin(returnPath) {

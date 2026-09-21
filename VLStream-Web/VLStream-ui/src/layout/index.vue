@@ -11,14 +11,22 @@
     <el-header class="layout-header" height="60px">
       <div class="header-content">
         <div class="logo">
-          <!-- VLStream Logo -->
-          <div class="logo-icon">
+          <img
+            v-if="platformLogo?.logoUrl && !customLogoFailed"
+            class="custom-brand-logo"
+            :src="platformLogo.logoUrl"
+            :alt="platformLogo.description || 'VLStream Cloud'"
+            @error="customLogoFailed = true"
+          >
+          <template v-else>
+            <div class="logo-icon">
             <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="20" cy="20" r="18" fill="white" stroke="#1A53FF" stroke-width="2"/>
               <text x="20" y="25" text-anchor="middle" fill="#1A53FF" font-family="Arial, sans-serif" font-size="14" font-weight="bold">VLS</text>
             </svg>
-          </div>
-          <h2>VLStream Cloud</h2>
+            </div>
+            <h2>VLStream Cloud</h2>
+          </template>
           <!--  -->
           <CollapseToggle
             v-if="showSidebar"
@@ -114,6 +122,7 @@ import { AuthManager } from '@/utils/auth'
 import { getUserInfo, logoutUser } from '@/api/auth'
 import { logoutModelHubSession } from '@/api/modelHubUser'
 import { getTenantMode, getUserTenants, switchTenant as switchTenantApi } from '@/api/system/localAuth'
+import { getCurrentPlatformLogo } from '@/api/platformLogo'
 import {
   User,
   ArrowDown,
@@ -176,6 +185,8 @@ const resolveAdminFlag = userInfo => Boolean(
   userInfo?.user?.admin
 )
 const platformSuperAdmin = ref(false)
+const platformLogo = ref(null)
+const customLogoFailed = ref(false)
 const isSuperAdmin = computed(() => tenantMode.value === 'multi'
   ? platformSuperAdmin.value
   : Boolean(currentUser.value.isAdmin || currentUser.value.is_admin))
@@ -572,7 +583,8 @@ const menuRoutesMap = {
     { path: '/system/posts', meta: { title: '岗位管理', icon: '岗位管理' } },
     { path: '/system/data-scopes', meta: { title: '数据权限', icon: '数据权限' } },
     { path: '/system/api-scopes', meta: { title: '接口权限', icon: '接口权限' } },
-    { path: '/system/device-firmwares', meta: { title: 'VLS协议设备固件管理', icon: '固件管理' } }
+    { path: '/system/device-firmwares', meta: { title: 'VLS协议设备固件管理', icon: '固件管理' } },
+    { path: '/system/platform-logo', meta: { title: '平台设置', icon: '平台设置' } }
   ]
 }
 
@@ -876,6 +888,17 @@ const handleAutoCrossSystemTokenInvalid = () => {
   // if getUserTenants API failed, page will value
 }
 
+const loadPlatformLogo = async () => {
+  customLogoFailed.value = false
+  try {
+    const response = await getCurrentPlatformLogo()
+    platformLogo.value = response?.data?.systemDefault ? null : response?.data
+  } catch (error) {
+    platformLogo.value = null
+    console.warn('加载平台标识失败，使用系统默认标识:', error?.message)
+  }
+}
+
 // component Set menu and Load userinfo
 onMounted(async () => {
   console.log('🎬 组件开始挂载...')
@@ -895,6 +918,7 @@ onMounted(async () => {
     // getUserTenants API new
     console.log('🔄 开始强制调用getUserTenants API...')
     await forceLoadUserAndTenantInfo()
+    await loadPlatformLogo()
     console.log('✅ 强制加载用户和租户信息完成')
   } catch (error) {
     console.error('❌ onMounted中发生错误:', error)
@@ -923,6 +947,7 @@ onMounted(async () => {
 
   // usertoken new event
   window.addEventListener('userTokenUpdated', handleUserTokenUpdated)
+  window.addEventListener('platform-logo-changed', loadPlatformLogo)
 
   console.log('🎬 组件挂载完成')
 
@@ -944,6 +969,7 @@ onUnmounted(() => {
 
   // event
   window.removeEventListener('userTokenUpdated', handleUserTokenUpdated)
+  window.removeEventListener('platform-logo-changed', loadPlatformLogo)
 })
 
 // component
@@ -979,6 +1005,7 @@ const getMenuIcon = (iconName) => {
     '数据权限': Key,
     '接口权限': Lock,
     '固件管理': UploadFilled,
+    '平台设置': Monitor,
     'wvp-haikang': isupIcon,
     'wvp-ehome': ehomeIcon,
     'wvp-rtsp': rtspIcon,
@@ -1063,6 +1090,16 @@ const handleUserTokenUpdated = async (event) => {
 
 .logo-icon:hover svg {
   transform: scale(1.05);
+}
+
+.custom-brand-logo {
+  display: block;
+  width: auto;
+  max-width: 188px;
+  height: 40px;
+  object-fit: contain;
+  object-position: left center;
+  flex-shrink: 0;
 }
 
 /*  */
@@ -1197,6 +1234,10 @@ const handleUserTokenUpdated = async (event) => {
 
   .logo {
     min-width: 76px;
+  }
+
+  .custom-brand-logo {
+    max-width: 40px;
   }
 
   .menu-item {

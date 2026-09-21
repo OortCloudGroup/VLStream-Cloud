@@ -8,6 +8,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Layout from '@/layout/index.vue'
 import { AuthManager } from '@/utils/auth'
+import { consumeCapturedModelHubCallback } from '@/utils/modelHubAuth'
 
 const authManager = new AuthManager()
 
@@ -397,6 +398,12 @@ const routes = [
         component: () => import('@/views/System/DeviceFirmwareManagement.vue'),
         meta: { title: 'VLS协议设备固件管理', icon: '固件管理' }
       },
+      {
+        path: '/system/platform-logo',
+        name: 'SystemPlatformLogoSettings',
+        component: () => import('@/views/System/PlatformLogoSettings.vue'),
+        meta: { title: '平台设置', icon: '平台设置' }
+      },
       // === main full configuration ===
       {
         path: '/active-safety/events/secure',
@@ -476,6 +483,18 @@ router.beforeEach(async (to, from, next) => {
 
   // whether need to
   if (to.meta.requiresAuth) {
+    const consumedOortCloudCallback = consumeCapturedModelHubCallback()
+    if (consumedOortCloudCallback) {
+      authManager.cleanUrlToken()
+      const cleanQuery = { ...to.query }
+      delete cleanQuery.accessToken
+      delete cleanQuery.access_token
+      delete cleanQuery.token
+      delete cleanQuery.tenantId
+      delete cleanQuery.tenant_id
+      next({ path: to.path, query: cleanQuery, hash: to.hash, replace: true })
+      return
+    }
     const hasPlatformCallbackToken = authManager.hasPlatformCallbackToken()
     const userInfo = await authManager.checkExternalPlatformLogin()
     if (userInfo) {

@@ -19,6 +19,8 @@
  * @param {string} [fallback='https://workup.oortcloudsmart.com:2443'] 默认兜底平台基地址
  * @returns {string} 统一平台的基础 Origin 地址（不带末尾斜杠）
  */
+
+import { extractAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
 export function getPlatformOrigin(fallback = 'https://workup.oortcloudsmart.com:2443') {
   const loginUrl = import.meta.env.VITE_PLATFORM_LOGIN_URL
   if (loginUrl) {
@@ -48,7 +50,9 @@ const PENDING_PUBLISH_KEY = 'pendingPublishToModelHub'
 const AUTH_PENDING_KEY = 'modelHubAuthPendingAt'
 const RETURN_LOCATION_KEY = 'modelHubReturnLocation'
 const AUTH_CALLBACK_PATH_KEY = 'modelHubAuthCallbackPath'
+const AUTH_CALLBACK_CONSUMED_AT_KEY = 'modelHubAuthCallbackConsumedAt'
 const AUTH_PENDING_MAX_AGE = 30 * 60 * 1000
+const AUTH_CALLBACK_CONSUMED_MAX_AGE = 60 * 1000
 
 /* * Build */
 export function buildModelHubLoginUrl(redirectUri) {
@@ -93,48 +97,6 @@ export function startModelHubLogin(pendingPayload, options = {}) {
 /* * userinfo ( ) */
 export function getCloudPlatformUserPath() {
   return { path: '/cloud-platform', query: { tab: 'user' } }
-}
-
-/**
- * URL:
- * - : ?access_token=xxx&tenant_id=yyy
- * - : ?tab=user?access_token=xxx&tenant_id=yyy ( )
- */
-function extractCallbackParams(href) {
-  const result = {
-    accessToken: '',
-    tenantId: ''
-  }
-
-  try {
-    const url = new URL(href)
-    result.accessToken =
-      url.searchParams.get('accessToken') ||
-      url.searchParams.get('access_token') ||
-      ''
-    result.tenantId =
-      url.searchParams.get('tenantId') ||
-      url.searchParams.get('tenant_id') ||
-      ''
-  } catch {
-    // ignore
-  }
-
-  if (result.accessToken) {
-    return result
-  }
-
-  // : from href token ( ?)
-  const tokenMatch = href.match(/[?&#](?:accessToken|access_token)=([^&#]+)/i)
-  if (tokenMatch?.[1]) {
-    result.accessToken = decodeURIComponent(tokenMatch[1])
-  }
-  const tenantMatch = href.match(/[?&#](?:tenantId|tenant_id)=([^&#]+)/i)
-  if (tenantMatch?.[1]) {
-    result.tenantId = decodeURIComponent(tenantMatch[1])
-  }
-
-  return result
 }
 
 function clearPendingModelHubAuth() {
@@ -189,7 +151,7 @@ export function capturePendingModelHubCallback() {
     return null
   }
 
-  const { accessToken, tenantId } = extractCallbackParams(window.location.href)
+  const { accessToken, tenantId } = extractAuthCallbackParams(window.location.href)
   if (!accessToken) {
     return null
   }
@@ -200,6 +162,7 @@ export function capturePendingModelHubCallback() {
     sessionStorage.setItem('modelHubTenantId', tenantId)
     localStorage.setItem('modelHubTenantId', tenantId)
   }
+  sessionStorage.setItem(AUTH_CALLBACK_CONSUMED_AT_KEY, String(Date.now()))
   clearPendingModelHubAuth()
 
   // before , Token.
@@ -207,10 +170,22 @@ export function capturePendingModelHubCallback() {
   return accessToken
 }
 
+/**
+ * Vue Router is imported before main.js runs and may restore the original URL
+ * after the OortCloud callback has already been removed with replaceState.
+ * Consume a short-lived marker so the guard cleans that restored callback
+ * instead of exchanging it into a new VLS local session.
+ */
+export function consumeCapturedModelHubCallback() {
+  const capturedAt = Number(sessionStorage.getItem(AUTH_CALLBACK_CONSUMED_AT_KEY))
+  sessionStorage.removeItem(AUTH_CALLBACK_CONSUMED_AT_KEY)
+  return Boolean(capturedAt && Date.now() - capturedAt <= AUTH_CALLBACK_CONSUMED_MAX_AGE)
+}
+
 /* * from URL in Parse accessToken */
 export function captureModelHubTokenFromUrl() {
   const href = window.location.href
-  const { accessToken, tenantId } = extractCallbackParams(href)
+  const { accessToken, tenantId } = extractAuthCallbackParams(href)
 
   if (!accessToken) {
     return null
