@@ -39,11 +39,11 @@
     >
       <el-table-column type="selection" :width="clacPXToVW(55)" />
       <el-table-column label="ip" prop="ip" show-overflow-tooltip />
-      <el-table-column label="设备名称" prop="name" show-overflow-tooltip />
-      <el-table-column label="地址" prop="addressMap" show-overflow-tooltip />
-      <el-table-column label="端口" prop="port" :width="clacPXToVW(90)" />
-      <el-table-column label="用户名" prop="userName" show-overflow-tooltip />
-      <el-table-column label="密码" prop="password">
+      <el-table-column :label="$tp('设备名称')" prop="name" show-overflow-tooltip />
+      <el-table-column :label="$tp('地址')" prop="addressMap" show-overflow-tooltip />
+      <el-table-column :label="$tp('端口')" prop="port" :width="clacPXToVW(90)" />
+      <el-table-column :label="$tp('用户名')" prop="userName" show-overflow-tooltip />
+      <el-table-column :label="$tp('密码')" prop="password">
         <template #default="scope">
           <div class="password-container">
             <span v-if="!passwordVisibility[scope.row.id]">******</span>
@@ -54,14 +54,14 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="播放类型" prop="playType" :width="clacPXToVW(100)">
+      <el-table-column :label="$tp('播放类型')" prop="playType" :width="clacPXToVW(100)">
         <template #default="scope">
           <dict-tag :options="play_type" :value="scope.row.playType"/>
         </template>
       </el-table-column>
-      <el-table-column key="streamId" label="流id" prop="streamId" min-width="150" show-overflow-tooltip />
-      <el-table-column label="备注" prop="remark" show-overflow-tooltip />
-      <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(260)">
+      <el-table-column key="streamId" :label="$tp('流id')" prop="streamId" min-width="150" show-overflow-tooltip />
+      <el-table-column :label="$tp('备注')" prop="remark" show-overflow-tooltip />
+      <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(260)">
         <template #default="scope">
           <div class="operateAppBox flexRowAC" @click.stop>
             <div class="new_table_svg_group" @click="handleStartPlay(scope.row)" v-hasPermi="['dahua:device:start']">
@@ -188,8 +188,8 @@
       <el-table v-loading="registerDeviceLoading" :data="registerDeviceList" border height="500px" @selection-change="handleRegisterDeviceSelectionChange">
         <el-table-column type="selection" width="55" align="center"/>
         <el-table-column label="ip" align="center" prop="ip"/>
-        <el-table-column label="设备id" align="center" prop="deviceId"/>
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <el-table-column :label="$tp('设备id')" align="center" prop="deviceId"/>
+        <el-table-column :label="$tp('操作')" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
             <el-button link type="primary" icon="Plus" v-hasPermi="['dahua:device:add']" @click="handleDeviceAdd(scope.row)">新增</el-button>
             <el-button link type="primary" icon="Delete" v-hasPermi="['dahua:device:remove']" @click="handleDeviceDelete(scope.row)">删除</el-button>
@@ -454,13 +454,13 @@
       </el-row>
 
       <el-table :data="screenshotList" border>
-        <el-table-column label="抓图路径" align="center" prop="image">
+        <el-table-column :label="$tp('抓图路径')" align="center" prop="image">
           <template #default="scope">
             <image-preview :src="scope.row.image" :width="50" :height="50"/>
           </template>
         </el-table-column>
-        <el-table-column label="抓图时间" align="center" prop="createTime"/>
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <el-table-column :label="$tp('抓图时间')" align="center" prop="createTime"/>
+        <el-table-column :label="$tp('操作')" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
             <el-button link type="primary" icon="Delete" @click="handleRemoveScreenshot(scope.row)"
                        v-hasPermi="['dahua:device:removeScreenshot']">删除

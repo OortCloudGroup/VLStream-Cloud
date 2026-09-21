@@ -81,11 +81,11 @@
             <p class="records-note">当前您已享受到模型的优惠价格。下方明细为按对话合并计费后的汇总数据，具体消耗以此为准。</p>
 
             <el-table v-if="usageRecords.length" :data="usageRecords" class="records-table" size="small">
-              <el-table-column label="时间" min-width="112"><template #default="scope">{{ formatRecordTime(scope.row.created_at) }}</template></el-table-column>
-              <el-table-column label="来源" min-width="115" show-overflow-tooltip><template #default="scope">{{ scope.row.content || scope.row.group || '--' }}</template></el-table-column>
-              <el-table-column label="模型分级" min-width="90" show-overflow-tooltip><template #default="scope">{{ scope.row.model_name || '--' }}</template></el-table-column>
+              <el-table-column :label="$tp('时间')" min-width="112"><template #default="scope">{{ formatRecordTime(scope.row.created_at) }}</template></el-table-column>
+              <el-table-column :label="$tp('来源')" min-width="115" show-overflow-tooltip><template #default="scope">{{ scope.row.content || scope.row.group || '--' }}</template></el-table-column>
+              <el-table-column :label="$tp('模型分级')" min-width="90" show-overflow-tooltip><template #default="scope">{{ scope.row.model_name || '--' }}</template></el-table-column>
               <el-table-column label="Credits" min-width="78"><template #default="scope">{{ formatCredits(scope.row.credits) }}</template></el-table-column>
-              <el-table-column label="参考费用" min-width="78"><template #default="scope">{{ formatReferenceCost(scope.row) }}</template></el-table-column>
+              <el-table-column :label="$tp('参考费用')" min-width="78"><template #default="scope">{{ formatReferenceCost(scope.row) }}</template></el-table-column>
             </el-table>
             <el-empty v-else :image-size="54" description="当前时间范围内暂无 Credits 记录" />
             <el-pagination

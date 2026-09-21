@@ -8,6 +8,9 @@
     "build:test": "vite build --mode test",
     "build:prod": "vite build --mode production",
     "preview": "vite preview",
+    "lint:i18n": "node ../../codex/i18n-normalize-table-labels.mjs && node ../../codex/i18n-catalog-check.mjs && node ../../codex/i18n-shell-coverage-check.mjs",
+    "audit:i18n": "node ../../codex/i18n-audit-raw-ui.mjs",
+    "audit:i18n:strict": "node ../../codex/i18n-audit-raw-ui.mjs --strict",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {

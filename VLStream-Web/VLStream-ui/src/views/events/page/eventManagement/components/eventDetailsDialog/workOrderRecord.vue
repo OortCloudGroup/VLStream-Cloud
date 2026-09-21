@@ -113,12 +113,12 @@
                   >
                     <el-table-column
                       prop="activityName"
-                      label="节点名称"
+                      :label="$tp('节点名称')"
                       align="center"
                     />
                     <el-table-column
                       prop="approver"
-                      label="处理人"
+                      :label="$tp('处理人')"
                       align="center"
                     >
                       <template #default="scope">
@@ -127,7 +127,7 @@
                     </el-table-column>
                     <el-table-column
                       prop="result"
-                      label="状态"
+                      :label="$tp('状态')"
                       align="center"
                     >
                       <template #default="scope">
@@ -145,7 +145,7 @@
                       </template>
                     </el-table-column>
                     <el-table-column
-                      label="意见/反馈"
+                      :label="$tp('意见/反馈')"
                       align="center"
                       width="200"
                     >
@@ -163,7 +163,7 @@
                     </el-table-column>
                     <el-table-column
                       prop="createTime"
-                      label="处理时间"
+                      :label="$tp('处理时间')"
                       align="center"
                     />
                   </el-table>

@@ -41,10 +41,10 @@
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" :width="clacPXToVW(55)" />
-            <el-table-column prop="sequence" label="序号" :width="clacPXToVW(80)" align="center" />
-            <el-table-column prop="analysisName" label="分析名称" />
-            <el-table-column prop="analysisType" label="分析类型" />
-            <el-table-column prop="videoThumbnail" label="抓拍截图" align="center">
+            <el-table-column prop="sequence" :label="$tp('序号')" :width="clacPXToVW(80)" align="center" />
+            <el-table-column prop="analysisName" :label="$tp('分析名称')" />
+            <el-table-column prop="analysisType" :label="$tp('分析类型')" />
+            <el-table-column prop="videoThumbnail" :label="$tp('抓拍截图')" align="center">
               <template #default="scope">
                 <div class="thumbnail-container">
                   <img :src="scope.row.videoThumbnail" :alt="scope.row.analysisName" class="video-thumbnail" />
@@ -52,9 +52,9 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="region" label="区域" />
-            <el-table-column prop="cameras" label="摄像头" min-width="200" />
-            <el-table-column prop="analysisStatus" label="分析状态" align="center">
+            <el-table-column prop="region" :label="$tp('区域')" />
+            <el-table-column prop="cameras" :label="$tp('摄像头')" min-width="200" />
+            <el-table-column prop="analysisStatus" :label="$tp('分析状态')" align="center">
               <template #default="scope">
                 <el-tag
                   :type="getStatusTagType(scope.row.analysisStatus)"
@@ -64,8 +64,8 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="analysisTime" label="分析时间" />
-            <el-table-column label="操作" :width="clacPXToVW(100)" fixed="right" align="right">
+            <el-table-column prop="analysisTime" :label="$tp('分析时间')" />
+            <el-table-column :label="$tp('操作')" :width="clacPXToVW(100)" fixed="right" align="right">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handlePlay(scope.row)">

@@ -37,11 +37,11 @@
         <div class="table_cc">
           <el-table ref="ruleTableRef" header-cell-class-name="header_cell" stripe :data="tableData">
             <el-table-column type="selection" />
-            <el-table-column label="序号" type="index" width="60" align="center" />
-            <el-table-column label="规则名称" align="center" prop="name" />
+            <el-table-column :label="$tp('序号')" type="index" width="60" align="center" />
+            <el-table-column :label="$tp('规则名称')" align="center" prop="name" />
             <!-- <el-table-column label=" data " align="center" prop="processName" :show-overflow-tooltip="true" /> -->
-            <el-table-column label="规则说明" align="center" prop="description" />
-            <el-table-column label="状态" align="center">
+            <el-table-column :label="$tp('规则说明')" align="center" prop="description" />
+            <el-table-column :label="$tp('状态')" align="center">
               <template #default="scope">
                 <el-tag v-if="scope.row.status === '1'" type="success">
                   启用
@@ -51,7 +51,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="创建时间" align="center" prop="createTime" />
+            <el-table-column :label="$tp('创建时间')" align="center" prop="createTime" />
           </el-table>
         </div>
         <div class="paginationBox flexRowAC">

@@ -36,32 +36,32 @@
 
         <el-alert v-if="serviceError" :title="serviceError" type="error" :closable="false" show-icon class="service-alert" />
 
-        <el-table v-loading="loading" :data="devices" stripe @selection-change="handleSelectionChange">
+        <el-table v-loading="loading" :data="devices" stripe scrollbar-always-on @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="42" fixed="left" />
-          <el-table-column type="index" label="序号" width="56" fixed="left" />
-          <el-table-column label="在线状态" width="100" fixed="left" align="center">
+          <el-table-column type="index" :label="$tp('序号')" width="56" fixed="left" />
+          <el-table-column :label="$tp('在线状态')" width="100" fixed="left" align="center">
             <template #default="{ row }">
               <el-tag :type="row.online ? 'success' : 'info'" effect="light" class="online-status">
                 <span class="status-dot" aria-hidden="true" />{{ row.online ? '在线' : '离线' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="deviceName" label="设备名称" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="deviceId" label="设备 ID" min-width="190" show-overflow-tooltip />
-          <el-table-column prop="deviceModel" label="设备型号" min-width="150" show-overflow-tooltip />
-          <el-table-column v-if="hasDeviceSerial" prop="deviceSerial" label="序列号" min-width="140" show-overflow-tooltip />
+          <el-table-column prop="deviceName" :label="$tp('设备名称')" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="deviceId" :label="$tp('设备 ID')" min-width="190" show-overflow-tooltip />
+          <el-table-column prop="deviceModel" :label="$tp('设备型号')" min-width="150" show-overflow-tooltip />
+          <el-table-column v-if="hasDeviceSerial" prop="deviceSerial" :label="$tp('序列号')" min-width="140" show-overflow-tooltip />
           <el-table-column prop="ipAddr" label="IP" min-width="120" />
-          <el-table-column prop="firmwareVersion" label="RootFS 版本" min-width="110" />
-          <el-table-column label="设备能力" min-width="180" show-overflow-tooltip>
+          <el-table-column prop="firmwareVersion" :label="$tp('RootFS 版本')" min-width="110" />
+          <el-table-column :label="$tp('设备能力')" min-width="180" show-overflow-tooltip>
             <template #default="{ row }">{{ capabilityText(row.capabilitiesJson) }}</template>
           </el-table-column>
-          <el-table-column label="最近上线" min-width="180">
+          <el-table-column :label="$tp('最近上线')" min-width="180">
             <template #default="{ row }">{{ formatDeviceTime(row.lastOnlineTime) }}</template>
           </el-table-column>
-          <el-table-column label="最后心跳" min-width="180">
+          <el-table-column :label="$tp('最后心跳')" min-width="180">
             <template #default="{ row }">{{ formatDeviceTime(row.lastHeartbeatTime) }}</template>
           </el-table-column>
-          <el-table-column label="操作" width="150" fixed="right">
+          <el-table-column :label="$tp('操作')" width="150" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" @click="openDetail(row)">详情</el-button>
               <el-button link type="primary" @click="openPreview(row)">播放</el-button>
@@ -75,8 +75,8 @@
         </div>
       </el-card>
 
-      <el-dialog v-model="previewVisible" :title="`${currentDevice?.deviceName || currentDevice?.deviceId || ''} 实时预览`"
-        width="900px" destroy-on-close @closed="releasePreview">
+      <el-dialog v-model="previewVisible" class="locale-dialog locale-dialog--wide" :title="previewDialogTitle"
+        destroy-on-close @closed="releasePreview">
         <div class="stream-bar">
           <span>视频流</span>
           <el-select v-model="selectedStreamId" placeholder="请选择视频流" @change="startPreview">
@@ -92,7 +92,7 @@
         </div>
       </el-dialog>
 
-      <el-dialog v-model="detailVisible" title="设备详情" width="820px" destroy-on-close>
+      <el-dialog v-model="detailVisible" class="locale-dialog locale-dialog--wide" title="设备详情" destroy-on-close>
         <div v-loading="detailLoading">
         <el-descriptions v-if="detailDevice" :column="2" border>
           <el-descriptions-item label="设备名称">{{ detailDevice.deviceName || '-' }}</el-descriptions-item>
@@ -113,6 +113,38 @@
           <el-descriptions-item label="最后心跳" :span="2">{{ formatDeviceTime(detailDevice.lastHeartbeatTime) }}</el-descriptions-item>
           <el-descriptions-item label="设备能力" :span="2">{{ capabilityText(detailDevice.capabilitiesJson) }}</el-descriptions-item>
           <el-descriptions-item label="位置坐标" :span="2">{{ deviceLocationText(detailDevice) }}</el-descriptions-item>
+          <el-descriptions-item label="设备管理后台" :span="2">
+            <div class="remote-management-entry">
+              <template v-if="remoteManagementVisible">
+                <el-tag v-if="!remoteManagementStatus?.featureEnabled" type="info">功能未启用</el-tag>
+                <el-tag v-else-if="remoteManagementStatus?.configured"
+                  :type="remoteManagementReady ? 'success' : 'warning'">
+                  {{ remoteManagementReady ? '远程管理可用' : remoteManagementBlockReason }}
+                </el-tag>
+                <el-tag v-else type="info">尚未激活</el-tag>
+              </template>
+              <el-button v-if="remoteManagementStatus?.featureEnabled" type="primary"
+                :loading="remoteManagementOpening" :disabled="!remoteManagementReady"
+                @click="openRemoteManagement">
+                打开管理后台
+              </el-button>
+              <el-button v-if="remoteManagementStatus?.featureEnabled" :loading="remoteManagementActionBusy"
+                @click="issueRemoteManagementEnrollment">
+                {{ remoteManagementStatus?.configured ? '重新生成激活码' : '生成激活码' }}
+              </el-button>
+              <el-button v-if="remoteManagementStatus?.configured && remoteManagementStatus?.desiredState !== 'REVOKED'"
+                :loading="remoteManagementActionBusy"
+                @click="changeRemoteManagementState(remoteManagementStatus?.desiredState === 'DISABLED' ? 'ENABLED' : 'DISABLED')">
+                {{ remoteManagementStatus?.desiredState === 'DISABLED' ? '启用' : '停用' }}
+              </el-button>
+              <el-button v-if="remoteManagementStatus?.configured && remoteManagementStatus?.desiredState !== 'REVOKED'"
+                type="danger" plain :loading="remoteManagementActionBusy"
+                @click="changeRemoteManagementState('REVOKED')">
+                吊销
+              </el-button>
+              <span class="snapshot-note">通过短期安全会话访问，登录仍使用 IPC 自身账号。</span>
+            </div>
+          </el-descriptions-item>
         </el-descriptions>
 
         <div class="model-heading">
@@ -123,12 +155,12 @@
           </div>
         </div>
         <el-alert v-if="modelError" :title="modelError" type="warning" :closable="false" show-icon />
-        <el-table :data="reportedModels" border :empty-text="liveModels !== null ? '设备当前无模型' : detailDevice?.modelsJson == null ? '设备尚未上报模型信息' : '设备上报的模型列表为空'">
-          <el-table-column prop="modelId" label="模型 ID" min-width="140" show-overflow-tooltip />
-          <el-table-column prop="modelName" label="模型名称" min-width="140" show-overflow-tooltip />
-          <el-table-column prop="format" label="格式" width="90" />
-          <el-table-column label="状态" width="100"><template #default="{ row }">{{ modelStatusText(row.status) }}</template></el-table-column>
-          <el-table-column label="操作" width="85" fixed="right">
+        <el-table :data="reportedModels" border scrollbar-always-on :empty-text="liveModels !== null ? '设备当前无模型' : detailDevice?.modelsJson == null ? '设备尚未上报模型信息' : '设备上报的模型列表为空'">
+          <el-table-column prop="modelId" :label="$tp('模型 ID')" min-width="140" show-overflow-tooltip />
+          <el-table-column prop="modelName" :label="$tp('模型名称')" min-width="140" show-overflow-tooltip />
+          <el-table-column prop="format" :label="$tp('格式')" width="90" />
+          <el-table-column :label="$tp('状态')" width="100"><template #default="{ row }">{{ modelStatusText(row.status) }}</template></el-table-column>
+          <el-table-column :label="$tp('操作')" width="85" fixed="right">
             <template #default="{ row }">
               <el-button link type="danger" :loading="modelBusy === `delete:${row.modelId}`"
                 :disabled="!detailDevice?.online || !row.modelId || Boolean(modelBusy)" @click="removeModel(row)">删除</el-button>
@@ -138,12 +170,12 @@
         <p class="snapshot-note">{{ liveModels === null ? '当前显示设备最近一次上报的模型，点击刷新查询设备。' : '当前显示本次设备查询结果。' }}离线时仅供查看。</p>
 
         <h4>视频源</h4>
-        <el-table :data="detailStreams" border empty-text="设备没有上报视频源">
-          <el-table-column prop="channelId" label="通道" min-width="120" />
-          <el-table-column prop="streamType" label="码流类型" width="110" />
-          <el-table-column prop="protocol" label="协议" width="90" />
-          <el-table-column label="默认流" width="90"><template #default="{ row }">{{ row.defaultStream ? '是' : '否' }}</template></el-table-column>
-          <el-table-column label="视频源地址" min-width="220" show-overflow-tooltip>
+        <el-table :data="detailStreams" border scrollbar-always-on empty-text="设备没有上报视频源">
+          <el-table-column prop="channelId" :label="$tp('通道')" min-width="120" />
+          <el-table-column prop="streamType" :label="$tp('码流类型')" width="110" />
+          <el-table-column prop="protocol" :label="$tp('协议')" width="90" />
+          <el-table-column :label="$tp('默认流')" width="90"><template #default="{ row }">{{ row.defaultStream ? '是' : '否' }}</template></el-table-column>
+          <el-table-column :label="$tp('视频源地址')" min-width="220" show-overflow-tooltip>
             <template #default="{ row }">{{ row.sourceUrl || row.url || '未上报' }}</template>
           </el-table-column>
         </el-table>
@@ -151,17 +183,29 @@
       </el-dialog>
       <DeviceModelDrawer v-model="modelDeployVisible" :device="detailDevice"
         @busy="modelBusy = $event ? 'deploy' : ''" />
-      <el-dialog v-model="firmwareVisible" title="固件升级" width="820px" destroy-on-close>
+      <el-dialog v-model="enrollmentVisible" class="locale-dialog" title="IPC Agent 激活信息"
+        destroy-on-close>
+        <el-alert title="激活码只在本次显示。请通过安全渠道交给设备端，设备注册成功后立即失效。"
+          type="warning" :closable="false" show-icon />
+        <el-descriptions v-if="enrollmentView" :column="1" border class="enrollment-details">
+          <el-descriptions-item label="设备 ID">{{ enrollmentView.deviceId }}</el-descriptions-item>
+          <el-descriptions-item label="一次性激活码">
+            <el-input :model-value="enrollmentView.enrollmentCode" readonly />
+          </el-descriptions-item>
+          <el-descriptions-item label="过期时间">{{ formatDeviceTime(enrollmentView.expiresAt) }}</el-descriptions-item>
+        </el-descriptions>
+      </el-dialog>
+      <el-dialog v-model="firmwareVisible" class="locale-dialog locale-dialog--wide" title="固件升级" destroy-on-close>
         <el-alert v-if="firmwareDetail?.upgradeBlockedReason" :title="firmwareDetail.upgradeBlockedReason"
           type="info" :closable="false" show-icon class="firmware-alert" />
 
         <h4>可用固件升级</h4>
-        <el-table :data="firmwareDetail?.availableUpgrades || []" border empty-text="没有更高版本的兼容固件">
-          <el-table-column label="目标" width="90"><template #default>RootFS</template></el-table-column>
-          <el-table-column prop="currentVersion" label="当前版本" width="120" />
-          <el-table-column prop="latestVersion" label="最新版本" width="120" />
-          <el-table-column prop="fileName" label="固件包" min-width="220" show-overflow-tooltip />
-          <el-table-column label="操作" width="110" align="center">
+        <el-table :data="firmwareDetail?.availableUpgrades || []" border scrollbar-always-on empty-text="没有更高版本的兼容固件">
+          <el-table-column :label="$tp('目标')" width="90"><template #default>RootFS</template></el-table-column>
+          <el-table-column prop="currentVersion" :label="$tp('当前版本')" width="120" />
+          <el-table-column prop="latestVersion" :label="$tp('最新版本')" width="120" />
+          <el-table-column prop="fileName" :label="$tp('固件包')" min-width="220" show-overflow-tooltip />
+          <el-table-column :label="$tp('操作')" width="110" align="center">
             <template #default="{ row }">
               <el-button type="primary" size="small" :loading="deployingFirmware"
                 :disabled="!firmwareDetail?.canUpgrade" @click="deployFirmware(row)">固件升级</el-button>
@@ -200,7 +244,14 @@ import RtcPlayer from '@/components/rtcPlayer/index.vue'
 import { capabilityText, deviceBootTimeText, deviceOnlineDurationText, deviceLocationText, formatDeviceTime, modelStatusText, parseSnapshot } from '@/utils/deviceStateDisplay'
 import { parseCameraRtcConfig } from '@/utils/oplayer'
 import { queryDeviceModels, deleteDeviceModel } from '@/api/deviceModels'
+import {
+  changeIpcTunnelDesiredState,
+  createIpcTunnelAccessSession,
+  getIpcTunnelStatus,
+  issueIpcTunnelEnrollment
+} from '@/api/ipcTunnel'
 import DeviceModelDrawer from './components/DeviceModelDrawer.vue'
+import { translatePhrase } from '@/i18n'
 import {
   cancelMqttDeviceFirmwareTask,
   createMqttDevicePreview,
@@ -221,6 +272,11 @@ const classificationDeviceKeys = ref([])
 const previewVisible = ref(false)
 const previewLoading = ref(false)
 const currentDevice = ref(null)
+const previewDialogTitle = computed(() => {
+  const name = currentDevice.value?.deviceName || currentDevice.value?.deviceId || ''
+  const title = translatePhrase('实时预览')
+  return name ? `${name} - ${title}` : title
+})
 const streams = ref([])
 const selectedStreamId = ref(null)
 const webrtcUrl = ref('')
@@ -242,6 +298,12 @@ const detailStreams = ref([])
 const firmwareDetail = ref(null)
 const deployingFirmware = ref(false)
 const cancellingTask = ref(false)
+const remoteManagementOpening = ref(false)
+const remoteManagementActionBusy = ref(false)
+const remoteManagementVisible = ref(false)
+const remoteManagementStatus = ref(null)
+const enrollmentVisible = ref(false)
+const enrollmentView = ref(null)
 const query = reactive({ pageNum: 1, pageSize: 10, keyword: '', online: undefined })
 const detailDevice = computed(() => firmwareDetail.value?.device || currentDevice.value)
 
@@ -251,6 +313,28 @@ const modelError = ref('')
 const modelDeployVisible = ref(false)
 let modelSession = 0
 const reportedModels = computed(() => liveModels.value ?? parseSnapshot(detailDevice.value?.modelsJson) ?? [])
+const remoteManagementReady = computed(() => {
+  const status = remoteManagementStatus.value
+  return Boolean(status?.configured
+    && status.featureEnabled
+    && status.desiredState === 'ENABLED'
+    && status.agentOnline
+    && status.tunnelStatus === 'ONLINE'
+    && status.localWebStatus === 'AVAILABLE'
+    && status.routeStatus === 'APPLIED')
+})
+const remoteManagementBlockReason = computed(() => {
+  const status = remoteManagementStatus.value
+  if (!status?.featureEnabled) return '功能未启用'
+  if (!status?.configured) return '尚未激活'
+  if (status.desiredState === 'REVOKED') return '已吊销'
+  if (status.desiredState === 'DISABLED') return '已停用'
+  if (!status.agentOnline) return 'Agent 离线'
+  if (status.routeStatus !== 'APPLIED') return status.routeStatus === 'FAILED' ? '路由应用失败' : '路由待生效'
+  if (status.tunnelStatus !== 'ONLINE') return '隧道未连接'
+  if (status.localWebStatus !== 'AVAILABLE') return 'IPC 后台不可用'
+  return '暂不可用'
+})
 
 watch(detailVisible, visible => {
   if (!visible) { modelSession++; modelDeployVisible.value = false }
@@ -338,6 +422,8 @@ async function openDetail(device) {
   modelBusy.value = ''
   modelDeployVisible.value = false
   currentDevice.value = device
+  remoteManagementVisible.value = false
+  remoteManagementStatus.value = null
   firmwareDetail.value = null
   detailStreams.value = []
   firmwareVisible.value = false
@@ -351,6 +437,7 @@ async function openDetail(device) {
     if (session !== modelSession) return
     detailStreams.value = streamsResult?.data || []
     firmwareDetail.value = detailResult?.data || null
+    await loadRemoteManagementStatus(device.deviceId)
   }
   catch (error) {
     if (session !== modelSession) return
@@ -361,11 +448,93 @@ async function openDetail(device) {
   finally { if (session === modelSession) detailLoading.value = false }
 }
 
+async function loadRemoteManagementStatus(deviceId = detailDevice.value?.deviceId) {
+  if (!deviceId) return
+  try {
+    const result = await getIpcTunnelStatus(deviceId)
+    remoteManagementStatus.value = result?.data || { configured: false, deviceId }
+    remoteManagementVisible.value = true
+  } catch (error) {
+    remoteManagementStatus.value = null
+    remoteManagementVisible.value = false
+  }
+}
+
+async function issueRemoteManagementEnrollment() {
+  const deviceId = detailDevice.value?.deviceId
+  if (!deviceId || remoteManagementActionBusy.value) return
+  if (remoteManagementStatus.value?.configured) {
+    try {
+      await ElMessageBox.confirm(
+        '重新生成激活码会立即撤销当前 Agent Token 和未过期的浏览器会话。确认继续？',
+        '重新激活远程管理', { type: 'warning' }
+      )
+    } catch { return }
+  }
+  remoteManagementActionBusy.value = true
+  try {
+    const result = await issueIpcTunnelEnrollment(deviceId)
+    enrollmentView.value = result?.data || null
+    enrollmentVisible.value = Boolean(enrollmentView.value?.enrollmentCode)
+    await loadRemoteManagementStatus(deviceId)
+  } catch (error) {
+    if (!error?.response) ElMessage.error(errorMessage(error, '生成Agent激活码失败'))
+  } finally {
+    remoteManagementActionBusy.value = false
+  }
+}
+
+async function changeRemoteManagementState(state) {
+  const deviceId = detailDevice.value?.deviceId
+  if (!deviceId || remoteManagementActionBusy.value) return
+  if (state === 'REVOKED') {
+    try {
+      await ElMessageBox.confirm(
+        '吊销后当前 Agent Token、隧道和浏览器会话都将失效，恢复时必须重新激活。确认继续？',
+        '吊销远程管理', { type: 'warning' }
+      )
+    } catch { return }
+  }
+  remoteManagementActionBusy.value = true
+  try {
+    await changeIpcTunnelDesiredState(deviceId, state)
+    await loadRemoteManagementStatus(deviceId)
+    ElMessage.success(state === 'ENABLED' ? '远程管理已启用' : state === 'DISABLED' ? '远程管理已停用' : '远程管理已吊销')
+  } finally {
+    remoteManagementActionBusy.value = false
+  }
+}
+
 async function reloadFirmwareDetail() {
   if (!currentDevice.value) return
   const session = modelSession
   const result = await getMqttDeviceDetail(currentDevice.value.id)
   if (session === modelSession) firmwareDetail.value = result?.data || null
+}
+
+async function openRemoteManagement() {
+  const deviceId = detailDevice.value?.deviceId
+  if (!deviceId || remoteManagementOpening.value) return
+  const targetWindow = window.open('about:blank', '_blank')
+  if (!targetWindow) {
+    ElMessage.warning('浏览器已拦截新窗口，请允许本站打开弹窗后重试')
+    return
+  }
+  targetWindow.opener = null
+  targetWindow.document.title = '正在建立安全连接'
+  targetWindow.document.body.textContent = '正在建立 IPC 远程管理安全连接…'
+  remoteManagementOpening.value = true
+  try {
+    const result = await createIpcTunnelAccessSession(deviceId)
+    const accessUrl = result?.data?.accessUrl
+    if (!accessUrl) throw new Error('平台未返回远程管理访问地址')
+    targetWindow.location.replace(accessUrl)
+  } catch (error) {
+    targetWindow.close()
+    if (!error?.response) ElMessage.error(errorMessage(error, '创建远程管理会话失败'))
+  } finally {
+    remoteManagementOpening.value = false
+  }
 }
 
 async function deployFirmware(candidate) {
@@ -471,6 +640,8 @@ onBeforeUnmount(releasePreview)
 .camera-rtc-player { width: 100%; height: 480px; }
 .model-heading { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
 .firmware-version-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.remote-management-entry { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.enrollment-details { margin-top: 16px; }
 .snapshot-note { color: #909399; font-size: 12px; }
 h4 { margin: 18px 0 10px; }
 @media (max-width: 1200px) { .header { align-items: flex-start; flex-direction: column; } }

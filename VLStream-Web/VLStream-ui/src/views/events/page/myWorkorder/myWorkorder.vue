@@ -31,20 +31,20 @@
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" :width="clacPXToVW(55)" />
-          <el-table-column label="序号" type="index" :width="clacPXToVW(60)" align="center">
+          <el-table-column :label="$tp('序号')" type="index" :width="clacPXToVW(60)" align="center">
             <template #default="scope">
               {{ scope.$index + 1 + (page_num - 1) * page_size }}
             </template>
           </el-table-column>
-          <el-table-column label="工单编号" align="center" prop="workorderNumber" :width="clacPXToVW(140)" />
+          <el-table-column :label="$tp('工单编号')" align="center" prop="workorderNumber" :width="clacPXToVW(140)" />
           <el-table-column
-            label="工单标题"
+            :label="$tp('工单标题')"
             align="center"
             prop="title"
             :show-overflow-tooltip="true"
             :width="clacPXToVW(180)"
           />
-          <el-table-column label="工单来源" align="center" prop="source">
+          <el-table-column :label="$tp('工单来源')" align="center" prop="source">
             <template #default="scope">
               <div v-if="scope.row.source">
                 {{ scope.row.source }}
@@ -52,15 +52,15 @@
               <span v-else>-</span>
             </template>
           </el-table-column>
-          <el-table-column label="流程版本" align="center" :width="clacPXToVW(100)">
+          <el-table-column :label="$tp('流程版本')" align="center" :width="clacPXToVW(100)">
             <template #default="scope">
               <el-tag>
                 v{{ scope.row.procDefVersion }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="发起人" align="center" prop="createBy" />
-          <el-table-column label="工单状态" align="center">
+          <el-table-column :label="$tp('发起人')" align="center" prop="createBy" />
+          <el-table-column :label="$tp('工单状态')" align="center">
             <template #default="scope">
               <div v-if="scope.row.workorderStatus" class="workorderStatus">
                 <span v-if="scope.row.workorderStatus==='pendingDispatch'" class="LKL">待派单</span>
@@ -75,8 +75,8 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="提交时间" align="center" prop="createTime" :width="clacPXToVW(180)" />
-          <el-table-column align="right" fixed="right" label="操作" :width="clacPXToVW(120)">
+          <el-table-column :label="$tp('提交时间')" align="center" prop="createTime" :width="clacPXToVW(180)" />
+          <el-table-column align="right" fixed="right" :label="$tp('操作')" :width="clacPXToVW(120)">
             <template #default="scope">
               <div class="operateBox flexRowAC">
                 <template v-if="store?.userInfo?.userId===(scope.row?.userId || scope.row?.assignId)">

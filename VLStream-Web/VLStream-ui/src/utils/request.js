@@ -207,7 +207,7 @@ request.interceptors.response.use(
   },
   error => {
     if (axios.isCancel(error)) return Promise.reject(error)
-    if (error.config?.sensitiveData) console.error('数据来源请求失败', error.response?.status || 'network')
+    if (error.config?.sensitiveData) console.error('敏感请求失败', error.response?.status || 'network')
     else console.error('响应错误:', error)
 
     // video-recordrelated API, prompt / tip, Process
@@ -254,7 +254,7 @@ request.interceptors.response.use(
       message = error.message || '请求失败'
     }
 
-    ElMessage.error(message)
+    if (!error.config?.silentError) ElMessage.error(message)
     return Promise.reject(error)
   }
 )

@@ -36,11 +36,11 @@
       :data="recordList"
       current-row-key="id"
     >
-      <el-table-column prop="name" label="名称" align="center" show-overflow-tooltip/>
-      <el-table-column prop="channelCount" label="关联通道" align="center"/>
-      <el-table-column prop="updateTime" label="更新时间" align="center"/>
-      <el-table-column prop="createTime" label="创建时间" align="center"/>
-      <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(220)">
+      <el-table-column prop="name" :label="$tp('名称')" align="center" show-overflow-tooltip/>
+      <el-table-column prop="channelCount" :label="$tp('关联通道')" align="center"/>
+      <el-table-column prop="updateTime" :label="$tp('更新时间')" align="center"/>
+      <el-table-column prop="createTime" :label="$tp('创建时间')" align="center"/>
+      <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(220)">
         <template #default="scope">
           <div class="operateAppBox flexRowAC" style="justify-content: flex-end;">
             <div class="new_table_svg_group" @click.stop="handleLink(scope.row)" v-hasPermi="['wvp:record:channelList']">

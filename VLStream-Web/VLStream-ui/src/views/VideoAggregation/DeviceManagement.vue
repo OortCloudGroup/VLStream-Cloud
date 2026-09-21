@@ -141,14 +141,14 @@
               @row-click="handleRowClick"
             >
               <el-table-column type="selection" :width="clacPXToVW(55)" />
-              <el-table-column label="序号" :width="clacPXToVW(65)">
+              <el-table-column :label="$tp('序号')" :width="clacPXToVW(65)">
                 <template #default="scope">
                   {{ scope.$index + (currentPage - 1) * pageSize + 1 }}
                 </template>
               </el-table-column>
-              <el-table-column prop="deviceName" label="设备名称" show-overflow-tooltip />
-              <el-table-column prop="deviceId" label="设备ID" show-overflow-tooltip />
-              <el-table-column prop="tags" label="标签名称">
+              <el-table-column prop="deviceName" :label="$tp('设备名称')" show-overflow-tooltip />
+              <el-table-column prop="deviceId" :label="$tp('设备ID')" show-overflow-tooltip />
+              <el-table-column prop="tags" :label="$tp('标签名称')">
                 <template #default="scope">
                   <template v-if="scope.row.tags && scope.row.tags.length > 0">
                     <el-tag
@@ -164,9 +164,9 @@
                   <el-tag v-else size="small" type="info">未分类</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="streamUrl" label="视频流路径" show-overflow-tooltip />
-              <el-table-column prop="createTime" label="创建时间" :formatter="formatDateTime" />
-              <el-table-column fixed="right" align="right" label="操作" :width="clacPXToVW(280)">
+              <el-table-column prop="streamUrl" :label="$tp('视频流路径')" show-overflow-tooltip />
+              <el-table-column prop="createTime" :label="$tp('创建时间')" :formatter="formatDateTime" />
+              <el-table-column fixed="right" align="right" :label="$tp('操作')" :width="clacPXToVW(280)">
                 <template #default="scope">
                   <div class="operateAppBox flexRowAC" @click.stop>
                     <div class="new_table_svg_group" @click="handlePlay(scope.row)">

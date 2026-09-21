@@ -11,7 +11,7 @@
       <div class="tableTenBox flexRowAC">
         <div v-yResize class="police_aside_use">
           <el-tabs v-model="activeType" class="left-tabs" @tab-change="handleTabChange">
-            <el-tab-pane v-for="tab in tabs" :key="tab.value" :label="tab.label" :name="tab.value" />
+            <el-tab-pane v-for="tab in tabs" :key="tab.value" :label="tp(tab.label)" :name="tab.value" />
           </el-tabs>
           <div class="treeTitle">{{ activeLabel }}</div>
           <div class="tree_search_content flexRowAC">
@@ -96,7 +96,7 @@
       </div>
     </div>
 
-    <el-dialog v-model="categoryDialog.visible" :title="categoryDialog.mode === 'add' ? `新增${activeLabel}` : `修改${activeLabel}`" width="30%" append-to-body>
+    <el-dialog v-model="categoryDialog.visible" class="locale-dialog classification-dialog" :title="categoryDialogTitle" append-to-body>
       <el-form ref="categoryFormRef" :model="categoryForm" :rules="categoryRules" label-width="90px">
         <el-form-item label="上级节点" prop="parentId">
           <el-tree-select
@@ -122,7 +122,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-if="showAssignment" v-model="assignmentDialog.visible" title="设置设备分类" width="30%" append-to-body>
+    <el-dialog v-if="showAssignment" v-model="assignmentDialog.visible" class="locale-dialog classification-dialog" title="设置设备分类" append-to-body>
       <el-alert
         v-if="normalizedDeviceKeys.length > 1"
         title="批量设置会用本次选择覆盖这些设备原有的区域、分组和标签"
@@ -154,6 +154,7 @@
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { Folder } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { currentLocale, translatePhrase } from '@/i18n'
 import {
   addClassificationCategory,
   deleteClassificationCategory,
@@ -170,6 +171,7 @@ const props = defineProps({
   readonly: { type: Boolean, default: false }
 })
 const emit = defineEmits(['filter-change', 'assigned'])
+const tp = source => translatePhrase(source)
 
 const tabs = [
   { label: '区域', value: 'REGION' },
@@ -189,7 +191,7 @@ const treeCache = reactive({
 })
 
 const normalizedDeviceKeys = computed(() => props.selectedDeviceKeys.filter(key => key !== null && key !== undefined && key !== '').map(key => String(key)))
-const activeLabel = computed(() => tabs.find(tab => tab.value === activeType.value)?.label || '')
+const activeLabel = computed(() => tp(tabs.find(tab => tab.value === activeType.value)?.label || ''))
 const displayTree = computed(() => treeCache[activeType.value].tree)
 
 watch(treeSearchKeyword, val => {
@@ -228,6 +230,10 @@ function handleNodeClick(node) {
 }
 
 const categoryDialog = reactive({ visible: false, mode: 'add', saving: false })
+const categoryDialogTitle = computed(() => {
+  const action = tp(categoryDialog.mode === 'add' ? '新增' : '修改')
+  return currentLocale.value === 'zh-CN' ? `${action}${activeLabel.value}` : `${action} ${activeLabel.value}`
+})
 const categoryFormRef = ref()
 const categoryForm = reactive({ id: undefined, categoryType: 'REGION', parentId: '0', categoryName: '', sortNum: 0 })
 const categoryRules = { categoryName: [{ required: true, message: '请输入分类名称', trigger: 'blur' }] }
@@ -293,7 +299,7 @@ async function submitCategory() {
 }
 
 async function removeCategory() {
-  await ElMessageBox.confirm(`确认删除“${selectedCategory.value.categoryName}”吗？`, '提示', { type: 'warning' })
+  await ElMessageBox.confirm(tp('确认删除所选分类吗？'), tp('提示'), { type: 'warning' })
   await deleteClassificationCategory(String(selectedCategory.value.id))
   ElMessage.success('删除成功')
   selectedCategory.value = null
@@ -350,8 +356,8 @@ onMounted(async () => {
 }
 
 .police_aside_use {
-  width: 300px;
-  padding-right: 20px;
+  width: clamp(240px, 18vw, 300px);
+  padding-inline-end: clamp(12px, 1.2vw, 20px);
   flex-shrink: 0;
   height: 100%;
   overflow: hidden;
@@ -397,7 +403,7 @@ onMounted(async () => {
     .custom-tree-node {
       width: 100%;
       justify-content: space-between;
-      padding-right: 4px;
+      padding-inline-end: 4px;
     }
   }
 
@@ -471,7 +477,7 @@ onMounted(async () => {
   .tree-node-actions {
     flex-shrink: 0;
     gap: 8px;
-    margin-left: 8px;
+    margin-inline-start: 8px;
   }
 
   .tree-action-icon {
@@ -523,6 +529,12 @@ onMounted(async () => {
   overflow: auto;
   display: flex;
   flex-direction: column;
+}
+
+@media (max-width: 1400px) {
+  .police_aside_use {
+    width: 240px;
+  }
 }
 
 .assignment-alert {

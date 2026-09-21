@@ -51,7 +51,7 @@
                 </div>
               </div>
             </div>
-            <div class="tabs-btn" style="position: absolute;right:25%;">
+            <div class="tabs-btn">
               <el-radio-group v-model="tabActive" size="default" @change="tabsAChange">
                 <el-radio-button value="0">
                   全部
@@ -71,6 +71,7 @@
           </div>
           <TableSelf
             class="new_table vertically-centered-actions"
+            scrollbar-always-on
             header-cell-class-name="header_tenant_cell"
             stripe
             :row-class-name="tableRowClassName"
@@ -78,31 +79,31 @@
             current-row-key="user_id"
             @selection-change="handleSelectionChange"
           >
-            <el-table-column type="selection" :width="clacPXToVW(55)" />
-            <el-table-column label="序号" :width="clacPXToVW(60)">
+            <el-table-column type="selection" width="48" />
+            <el-table-column :label="$tp('序号')" min-width="64">
               <template #default="scope">
                 {{ scope.$index + (page - 1) * pagesize + 1 }}
               </template>
             </el-table-column>
-            <el-table-column prop="completionTime" label="事件时间" :width="clacPXToVW(160)">
+            <el-table-column prop="completionTime" :label="$tp('事件时间')" min-width="150">
               <template #default="scope">
                 {{ scope.row.created_at }}
               </template>
             </el-table-column>
-            <el-table-column prop="status" label="状态" :width="clacPXToVW(120)">
+            <el-table-column prop="status" :label="$tp('状态')" min-width="120">
               <template #default="scope">
                 <el-tag :type="getStatusType(scope.row.status)">
                   {{ getStatusText(scope.row.status) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="position" label="事件位置" :width="clacPXToVW(160)">
+            <el-table-column prop="position" :label="$tp('事件位置')" min-width="140" show-overflow-tooltip>
               <template #default="scope">
                 {{ scope.row.point?.address }}
               </template>
             </el-table-column>
-            <el-table-column prop="item" label="事件类型" :width="clacPXToVW(120)" :show-overflow-tooltip="true" />
-            <el-table-column prop="pics" label="抓拍照片" :width="clacPXToVW(120)">
+            <el-table-column prop="item" :label="$tp('事件类型')" min-width="130" :show-overflow-tooltip="true" />
+            <el-table-column prop="pics" :label="$tp('抓拍照片')" min-width="120">
               <template #default="scope">
                 <!-- <div v-if="scope.row.pics.length > 0">
                   <img :src="scope.row.pics[0]" alt="抓拍照片" class="eventImg" />
@@ -122,7 +123,7 @@
                 <span v-else>暂无图片</span>
               </template>
             </el-table-column>
-            <el-table-column prop="fileUrl" label="录制视频" :width="clacPXToVW(120)">
+            <el-table-column prop="fileUrl" :label="$tp('录制视频')" min-width="130">
               <template #default="scope">
                 <div v-if="scope.row.videoUrl" class="video-container" @click="openVideoDialog(scope.row)">
                 </div>
@@ -131,19 +132,19 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="device_name" label="设备名称" :width="clacPXToVW(160)" :show-overflow-tooltip="true" />
-            <el-table-column prop="device_id" label="设备编号" />
-            <el-table-column prop="describe" label="事件描述" :width="clacPXToVW(120)" :show-overflow-tooltip="true" />
-            <el-table-column prop="device_tag" label="标签" :width="clacPXToVW(160)" :show-overflow-tooltip="true" />
-            <el-table-column v-if="false" prop="status" label="告警状态" :width="clacPXToVW(140)">
+            <el-table-column prop="device_name" :label="$tp('设备名称')" min-width="150" :show-overflow-tooltip="true" />
+            <el-table-column prop="device_id" :label="$tp('设备编号')" min-width="190" show-overflow-tooltip />
+            <el-table-column prop="describe" :label="$tp('事件描述')" min-width="160" :show-overflow-tooltip="true" />
+            <el-table-column prop="device_tag" :label="$tp('标签')" min-width="130" :show-overflow-tooltip="true" />
+            <el-table-column v-if="false" prop="status" :label="$tp('告警状态')" :width="clacPXToVW(140)">
               <template #default="scope">
                 <el-tag :type="getStatusType2(scope.row.mod_status)">
                   {{ getStatusText2(scope.row.mod_status) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="finish_at" label="完成时间" :width="clacPXToVW(160)" />
-            <el-table-column fixed="right" align="right" label="操作" :width="clacPXToVW(180)">
+            <el-table-column prop="finish_at" :label="$tp('完成时间')" min-width="150" />
+            <el-table-column fixed="right" align="right" :label="$tp('操作')" width="120">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC">
                   <div v-if="scope.row.status !== 1 && scope.row.mod_status === 0&&false" class="new_table_svg_group" @click="confirmAlert(scope.row, 'confirm')">
@@ -214,8 +215,8 @@
     <!-- dialog -->
     <el-dialog
       v-model="videoDialogVisible"
+      class="locale-dialog locale-dialog--wide"
       title="视频播放"
-      width="80%"
       :before-close="closeVideoDialog"
     >
       <div class="video-dialog-container">
@@ -248,6 +249,7 @@ import EventPhoneFBack from '@/pages/events/views/page/eventManagement/eventPhon
 import EventPhoneConfirm from '@/pages/events/views/page/eventManagement/eventPhoneConfirm.vue'
 import { covertCurrentLocationURL } from '@/utils/converGatewayPath'
 import dayjs from 'dayjs'
+import { translatePhrase } from '@/i18n'
 
 const store = useUserStore()
 const getAccessToken = () => store.userInfo?.accessToken || store.token || sessionStorage.getItem('token') || sessionStorage.getItem('accessToken') || localStorage.getItem('apaas_token') || localStorage.getItem('accessToken') || ''
@@ -409,8 +411,8 @@ const deleteTask = async() => {
 
   // Delete
   await ElMessageBox.confirm(
-    `确定要删除选中的 ${selectedRows.value.length} 个事件吗？`,
-    '删除确认',
+    translatePhrase('确定删除所选事件吗？'),
+    translatePhrase('删除确认'),
     {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
@@ -556,6 +558,11 @@ onMounted(() => {
 
 :deep(.depNameBox_out) {
   padding: 0 20px;
+  min-height: 52px;
+  display: flex !important;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
 
   .el-tabs__item {
     color: #999999;
@@ -590,8 +597,11 @@ onMounted(() => {
 }
 
 .tabs-btn {
-  position: absolute;
-  right: 50%;
+  position: static;
+  flex: 1 1 300px;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
 }
 
 :deep(.tableTenBox) {
@@ -640,7 +650,7 @@ onMounted(() => {
 }
 
 .paginationBox {
-  justify-content: right;
+  justify-content: flex-end;
   height: 100px;
 }
 
@@ -689,7 +699,36 @@ onMounted(() => {
 }
 
 .searchHeight_out {
-  gap: 20px;
+  gap: 12px;
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-inline-start: auto;
+}
+
+:deep(.el-table .cell) {
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+:deep(.el-table th .cell) {
+  min-height: 40px;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+:deep(.el-table td .cell) {
+  white-space: nowrap;
+}
+
+@media (max-width: 1400px) {
+  :deep(.depNameBox_out) {
+    padding-inline: 12px;
+  }
+
+  .tabs-btn {
+    order: 3;
+    flex-basis: 100%;
+  }
 }
 
 .oort_button_group {

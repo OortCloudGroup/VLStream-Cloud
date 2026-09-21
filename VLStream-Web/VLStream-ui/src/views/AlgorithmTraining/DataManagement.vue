@@ -26,12 +26,12 @@
     <template v-if="!project">
       <div class="filters"><el-input v-model="projectQuery.keyword" clearable placeholder="数据集名称或编号" @keyup.enter="loadProjects" @clear="loadProjects" /><el-button @click="loadProjects">搜索</el-button></div>
       <el-table :data="projects" stripe empty-text="暂无数据集，点击右上角新建数据集开始导入数据">
-        <el-table-column prop="annotationName" label="数据集名称" min-width="180"><template #default="{ row }"><el-link type="primary" @click="enter(row)">{{ row.annotationName }}</el-link></template></el-table-column>
-        <el-table-column prop="projectCode" label="数据集编号" min-width="150" />
-        <el-table-column label="标注配置" width="160"><template #default="{ row }">{{ typeName(row.annotationType) }}</template></el-table-column>
-        <el-table-column prop="remark" label="数据集说明" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="createTime" label="创建时间" width="170" />
-        <el-table-column label="操作" width="160"><template #default="{ row }"><el-button link type="primary" @click="enter(row)">管理数据</el-button><el-button link @click="openProject(row)">编辑</el-button></template></el-table-column>
+        <el-table-column prop="annotationName" :label="$tp('数据集名称')" min-width="180"><template #default="{ row }"><el-link type="primary" @click="enter(row)">{{ row.annotationName }}</el-link></template></el-table-column>
+        <el-table-column prop="projectCode" :label="$tp('数据集编号')" min-width="150" />
+        <el-table-column :label="$tp('标注配置')" width="160"><template #default="{ row }">{{ typeName(row.annotationType) }}</template></el-table-column>
+        <el-table-column prop="remark" :label="$tp('数据集说明')" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="createTime" :label="$tp('创建时间')" width="170" />
+        <el-table-column :label="$tp('操作')" width="160"><template #default="{ row }"><el-button link type="primary" @click="enter(row)">管理数据</el-button><el-button link @click="openProject(row)">编辑</el-button></template></el-table-column>
       </el-table>
       <el-pagination v-model:current-page="projectQuery.page" :page-size="20" :total="projectTotal" layout="total, prev, pager, next" @current-change="loadProjects" />
     </template>
@@ -58,16 +58,16 @@
           </div>
           <el-table :data="samples" row-key="id" stripe @selection-change="selected = $event" empty-text="暂无匹配样本，可调整筛选条件或导入图片、视频">
             <el-table-column type="selection" width="45" />
-            <el-table-column label="样本" min-width="230"><template #default="{ row }"><div class="sample-name">
+            <el-table-column :label="$tp('样本')" min-width="230"><template #default="{ row }"><div class="sample-name">
               <el-image v-if="row.mediaType === 'image' && row.previewUrl" :src="row.previewUrl" fit="cover" @click="showSample(row)"><template #error><span class="media-icon">图片</span></template></el-image>
               <span v-else class="media-icon">{{ row.mediaType === 'video' ? '视频' : '图片' }}</span>
               <div><el-link type="primary" @click="showSample(row)">{{ row.imageName }}</el-link><small>{{ fileSize(row.fileSize) }} <template v-if="row.mediaWidth"> · {{ row.mediaWidth }}×{{ row.mediaHeight }}</template></small></div>
             </div></template></el-table-column>
-            <el-table-column prop="sampleSource" label="来源" width="110" show-overflow-tooltip />
-            <el-table-column label="标签 / 类别" min-width="160"><template #default="{ row }"><el-tag v-for="label in [...new Set([...(row.tags || []), ...(row.labels || [])])]" :key="label" size="small" class="tag">{{ label }}</el-tag><span v-if="!row.tags?.length && !row.labels?.length">—</span></template></el-table-column>
-            <el-table-column label="标注" width="100"><template #default="{ row }">{{ row.annotationCount ? `${row.annotationCount} 个标注` : '未标注' }}</template></el-table-column>
-            <el-table-column label="数据集" width="100"><template #default="{ row }">{{ splitNames[row.datasetSplit] || '未划分' }}</template></el-table-column>
-            <el-table-column label="操作" width="195" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="showSample(row)">查看 / 编辑</el-button><el-button v-if="row.mediaType === 'video'" link type="primary" :disabled="busy" @click="openVideoFrames(row)">视频切图</el-button></template></el-table-column>
+            <el-table-column prop="sampleSource" :label="$tp('来源')" width="110" show-overflow-tooltip />
+            <el-table-column :label="$tp('标签 / 类别')" min-width="160"><template #default="{ row }"><el-tag v-for="label in [...new Set([...(row.tags || []), ...(row.labels || [])])]" :key="label" size="small" class="tag">{{ label }}</el-tag><span v-if="!row.tags?.length && !row.labels?.length">—</span></template></el-table-column>
+            <el-table-column :label="$tp('标注')" width="100"><template #default="{ row }">{{ row.annotationCount ? `${row.annotationCount} 个标注` : '未标注' }}</template></el-table-column>
+            <el-table-column :label="$tp('数据集')" width="100"><template #default="{ row }">{{ splitNames[row.datasetSplit] || '未划分' }}</template></el-table-column>
+            <el-table-column :label="$tp('操作')" width="195" fixed="right"><template #default="{ row }"><el-button link type="primary" @click="showSample(row)">查看 / 编辑</el-button><el-button v-if="row.mediaType === 'video'" link type="primary" :disabled="busy" @click="openVideoFrames(row)">视频切图</el-button></template></el-table-column>
           </el-table>
           <el-pagination v-model:current-page="query.page" v-model:page-size="query.size" :page-sizes="[20, 50, 100]" :total="sampleTotal" layout="total, sizes, prev, pager, next" @current-change="run(loadSamples)" @size-change="search" />
         </el-tab-pane>
@@ -77,16 +77,16 @@
             <el-button v-if="project.annotationType === 'object_detection'" :disabled="busy" @click="publish">生成训练目录</el-button>
           </div></div>
           <el-table :data="stats.distribution || []" empty-text="尚无标注类别，请先在标注页面维护标签和标注">
-            <el-table-column prop="name" label="类别" /><el-table-column prop="total" label="样本数" /><el-table-column prop="train" label="训练集" /><el-table-column prop="val" label="验证集" />
+            <el-table-column prop="name" :label="$tp('类别')" /><el-table-column prop="total" :label="$tp('样本数')" /><el-table-column prop="train" :label="$tp('训练集')" /><el-table-column prop="val" :label="$tp('验证集')" />
           </el-table>
           <p class="hint">多类别图片会在对应类别分别计数；分层划分按首个类别分组，小类别的实际比例可能有取整差异。</p>
           <h3>版本记录</h3>
           <el-table :data="versions" stripe empty-text="暂无版本，可保存当前状态或划分数据集自动生成版本">
-            <el-table-column label="版本" width="80"><template #default="{ row }">V{{ row.versionNumber }}</template></el-table-column>
-            <el-table-column prop="versionName" label="名称" min-width="160" /><el-table-column prop="sampleCount" label="样本" width="80" />
-            <el-table-column prop="trainCount" label="训练" width="80" /><el-table-column prop="validationCount" label="验证" width="80" />
-            <el-table-column prop="createTime" label="创建时间" width="170" /><el-table-column prop="description" label="说明" min-width="150" show-overflow-tooltip />
-            <el-table-column label="操作" width="245"><template #default="{ row }"><el-button link type="primary" @click="viewVersion(row)">查看</el-button><el-button link @click="openCompare(row)">对比</el-button><el-button link @click="downloadVersion(row)">导出</el-button><el-button link type="warning" :disabled="busy" @click="restore(row)">回退</el-button></template></el-table-column>
+            <el-table-column :label="$tp('版本')" width="80"><template #default="{ row }">V{{ row.versionNumber }}</template></el-table-column>
+            <el-table-column prop="versionName" :label="$tp('名称')" min-width="160" /><el-table-column prop="sampleCount" :label="$tp('样本')" width="80" />
+            <el-table-column prop="trainCount" :label="$tp('训练')" width="80" /><el-table-column prop="validationCount" :label="$tp('验证')" width="80" />
+            <el-table-column prop="createTime" :label="$tp('创建时间')" width="170" /><el-table-column prop="description" :label="$tp('说明')" min-width="150" show-overflow-tooltip />
+            <el-table-column :label="$tp('操作')" width="245"><template #default="{ row }"><el-button link type="primary" @click="viewVersion(row)">查看</el-button><el-button link @click="openCompare(row)">对比</el-button><el-button link @click="downloadVersion(row)">导出</el-button><el-button link type="warning" :disabled="busy" @click="restore(row)">回退</el-button></template></el-table-column>
           </el-table>
         </el-tab-pane>
       </el-tabs>
@@ -102,9 +102,9 @@
         <el-button :disabled="busy" @click="searchWorkflowProjects">搜索数据集</el-button>
       </div>
       <el-table :data="workflowProjects" v-loading="busy" empty-text="暂无匹配数据集，请调整搜索或先新建数据集">
-        <el-table-column prop="annotationName" label="数据集名称" min-width="180" />
-        <el-table-column prop="projectCode" label="数据集编号" min-width="210" show-overflow-tooltip />
-        <el-table-column label="操作" width="100"><template #default="{ row }"><el-button v-if="workflowAction !== 'annotation' || row.annotationType === 'object_detection'" link type="primary" :disabled="busy" @click="selectWorkflowProject(row)">选择并进入</el-button></template></el-table-column>
+        <el-table-column prop="annotationName" :label="$tp('数据集名称')" min-width="180" />
+        <el-table-column prop="projectCode" :label="$tp('数据集编号')" min-width="210" show-overflow-tooltip />
+        <el-table-column :label="$tp('操作')" width="100"><template #default="{ row }"><el-button v-if="workflowAction !== 'annotation' || row.annotationType === 'object_detection'" link type="primary" :disabled="busy" @click="selectWorkflowProject(row)">选择并进入</el-button></template></el-table-column>
       </el-table>
       <el-pagination v-model:current-page="workflowProjectQuery.page" :page-size="20" :total="workflowProjectTotal" layout="total, prev, pager, next" @current-change="run(loadWorkflowProjects)" />
       <template #footer><el-button @click="workflowProjectDialog = false">取消</el-button></template>
@@ -152,8 +152,8 @@
       </el-form><template #footer><el-button @click="splitDialog = false">取消</el-button><el-button type="primary" :loading="busy" @click="saveSplit">保存划分</el-button></template>
     </el-dialog>
     <el-dialog v-model="versionDialog" title="保存数据集版本" width="520px"><el-form label-width="85px"><el-form-item label="版本名称"><el-input v-model="versionForm.name" maxlength="100" /></el-form-item><el-form-item label="说明"><el-input v-model="versionForm.description" type="textarea" maxlength="1000" /></el-form-item></el-form><p class="hint">保留当前样本、标签、标注与训练/验证划分。</p><template #footer><el-button type="primary" :loading="busy" @click="saveVersion">保存版本</el-button></template></el-dialog>
-    <el-dialog v-model="versionDetailDialog" title="版本详情" width="850px"><template v-if="versionDetail"><h3>V{{ versionDetail.version.versionNumber }} · {{ versionDetail.version.versionName }}</h3><p>{{ versionDetail.version.description }}</p><p>样本 {{ versionDetail.version.sampleCount }} · 训练 {{ versionDetail.version.trainCount }} · 验证 {{ versionDetail.version.validationCount }}</p><el-table :data="versionDetail.statistics.distribution"><el-table-column prop="name" label="类别" /><el-table-column prop="total" label="样本" /><el-table-column prop="train" label="训练" /><el-table-column prop="val" label="验证" /></el-table><el-table :data="versionDetail.samples" max-height="350"><el-table-column prop="id" label="样本 ID" min-width="190" /><el-table-column prop="name" label="名称" /><el-table-column label="划分"><template #default="{ row }">{{ splitNames[row.split] }}</template></el-table-column></el-table></template></el-dialog>
-    <el-dialog v-model="compareDialog" title="版本对比" width="860px"><div class="actions"><span>V{{ compareFrom?.versionNumber }} →</span><el-select v-model="compareTo" @change="run(loadComparison)"><el-option label="当前工作数据" value="current" /><el-option v-for="item in versions.filter(item => item.id !== compareFrom?.id)" :key="item.id" :value="item.id" :label="`V${item.versionNumber} · ${item.versionName}`" /></el-select></div><template v-if="comparison"><p>新增 {{ comparison.added.length }} · 移除 {{ comparison.removed.length }} · 修改 {{ visibleChanges.length }} · 标注规则{{ comparison.configurationChanged ? '已变化' : '未变化' }} · 类别配置{{ comparison.labelsChanged ? '已变化' : '未变化' }}</p><el-table :data="comparisonRows" max-height="450" empty-text="样本和标注内容一致"><el-table-column prop="kind" label="变化" width="80" /><el-table-column prop="name" label="样本" /><el-table-column prop="id" label="ID" min-width="180" /><el-table-column label="变化内容"><template #default="{ row }">{{ row.fields?.join('、') || '样本成员变化' }}</template></el-table-column></el-table></template></el-dialog>
+    <el-dialog v-model="versionDetailDialog" title="版本详情" width="850px"><template v-if="versionDetail"><h3>V{{ versionDetail.version.versionNumber }} · {{ versionDetail.version.versionName }}</h3><p>{{ versionDetail.version.description }}</p><p>样本 {{ versionDetail.version.sampleCount }} · 训练 {{ versionDetail.version.trainCount }} · 验证 {{ versionDetail.version.validationCount }}</p><el-table :data="versionDetail.statistics.distribution"><el-table-column prop="name" :label="$tp('类别')" /><el-table-column prop="total" :label="$tp('样本')" /><el-table-column prop="train" :label="$tp('训练')" /><el-table-column prop="val" :label="$tp('验证')" /></el-table><el-table :data="versionDetail.samples" max-height="350"><el-table-column prop="id" :label="$tp('样本 ID')" min-width="190" /><el-table-column prop="name" :label="$tp('名称')" /><el-table-column :label="$tp('划分')"><template #default="{ row }">{{ splitNames[row.split] }}</template></el-table-column></el-table></template></el-dialog>
+    <el-dialog v-model="compareDialog" title="版本对比" width="860px"><div class="actions"><span>V{{ compareFrom?.versionNumber }} →</span><el-select v-model="compareTo" @change="run(loadComparison)"><el-option label="当前工作数据" value="current" /><el-option v-for="item in versions.filter(item => item.id !== compareFrom?.id)" :key="item.id" :value="item.id" :label="`V${item.versionNumber} · ${item.versionName}`" /></el-select></div><template v-if="comparison"><p>新增 {{ comparison.added.length }} · 移除 {{ comparison.removed.length }} · 修改 {{ visibleChanges.length }} · 标注规则{{ comparison.configurationChanged ? '已变化' : '未变化' }} · 类别配置{{ comparison.labelsChanged ? '已变化' : '未变化' }}</p><el-table :data="comparisonRows" max-height="450" empty-text="样本和标注内容一致"><el-table-column prop="kind" :label="$tp('变化')" width="80" /><el-table-column prop="name" :label="$tp('样本')" /><el-table-column prop="id" label="ID" min-width="180" /><el-table-column :label="$tp('变化内容')"><template #default="{ row }">{{ row.fields?.join('、') || '样本成员变化' }}</template></el-table-column></el-table></template></el-dialog>
   </div>
 </template>
 

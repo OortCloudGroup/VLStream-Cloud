@@ -39,12 +39,12 @@
       >
         <el-table-column
           prop="activityName"
-          label="节点名称"
+          :label="$tp('节点名称')"
           align="center"
         />
         <el-table-column
           prop="approver"
-          label="审批人"
+          :label="$tp('审批人')"
           align="center"
         >
           <template #default="scope">
@@ -53,7 +53,7 @@
         </el-table-column>
         <el-table-column
           prop="result"
-          label="审批结果"
+          :label="$tp('审批结果')"
           align="center"
         >
           <template #default="scope">
@@ -71,7 +71,7 @@
           </template>
         </el-table-column>
         <el-table-column
-          label="审批意见"
+          :label="$tp('审批意见')"
           align="center"
           width="200"
         >
@@ -89,7 +89,7 @@
         </el-table-column>
         <el-table-column
           prop="createTime"
-          label="审批时间"
+          :label="$tp('审批时间')"
           align="center"
         />
       </el-table>

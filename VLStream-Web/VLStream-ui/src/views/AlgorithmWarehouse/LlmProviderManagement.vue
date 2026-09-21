@@ -13,13 +13,13 @@
         </template>
       </el-alert>
       <el-table v-loading="loading" :data="providers" border>
-        <el-table-column label="名称" min-width="170"><template #default="scope"><span>{{ scope.row.name }}</span><el-tag v-if="scope.row.systemProvider" class="provider-tag" type="primary" size="small">内置</el-tag></template></el-table-column>
-        <el-table-column prop="baseUrl" label="接口地址" min-width="260" show-overflow-tooltip />
-        <el-table-column prop="modelName" label="模型" min-width="160" />
+        <el-table-column :label="$tp('名称')" min-width="170"><template #default="scope"><span>{{ scope.row.name }}</span><el-tag v-if="scope.row.systemProvider" class="provider-tag" type="primary" size="small">内置</el-tag></template></el-table-column>
+        <el-table-column prop="baseUrl" :label="$tp('接口地址')" min-width="260" show-overflow-tooltip />
+        <el-table-column prop="modelName" :label="$tp('模型')" min-width="160" />
         <el-table-column label="API Key" width="110"><template #default="scope"><el-tag :type="scope.row.apiKeyConfigured ? 'success' : 'danger'">{{ scope.row.apiKeyConfigured ? '已配置' : '未配置' }}</el-tag></template></el-table-column>
-        <el-table-column prop="timeoutSeconds" label="超时（秒）" width="110" />
-        <el-table-column label="状态" width="90"><template #default="scope"><el-tag :type="scope.row.enabled ? 'success' : 'info'">{{ scope.row.enabled ? '启用' : '停用' }}</el-tag></template></el-table-column>
-        <el-table-column label="操作" width="210" fixed="right">
+        <el-table-column prop="timeoutSeconds" :label="$tp('超时（秒）')" width="110" />
+        <el-table-column :label="$tp('状态')" width="90"><template #default="scope"><el-tag :type="scope.row.enabled ? 'success' : 'info'">{{ scope.row.enabled ? '启用' : '停用' }}</el-tag></template></el-table-column>
+        <el-table-column :label="$tp('操作')" width="210" fixed="right">
           <template #default="scope">
             <template v-if="scope.row.systemProvider">
               <el-button link type="primary" disabled>编辑</el-button>

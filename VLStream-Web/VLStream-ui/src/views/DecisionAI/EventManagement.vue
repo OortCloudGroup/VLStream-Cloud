@@ -250,16 +250,16 @@
               @selection-change="handleSelectionChange"
             >
               <el-table-column type="selection" :width="clacPXToVW(55)" />
-              <el-table-column label="序号" :width="clacPXToVW(65)">
+              <el-table-column :label="$tp('序号')" :width="clacPXToVW(65)">
                 <template #default="scope">
                   {{ scope.$index + (pagination.currentPage - 1) * pagination.pageSize + 1 }}
                 </template>
               </el-table-column>
-              <el-table-column prop="eventDesc" label="事件描述" show-overflow-tooltip />
-              <el-table-column prop="reportLocation" label="上报位置" show-overflow-tooltip />
-              <el-table-column prop="reportDevice" label="上报设备" show-overflow-tooltip />
-              <el-table-column prop="reportTime" label="上报时间" />
-              <el-table-column prop="reportImg" label="上报图片">
+              <el-table-column prop="eventDesc" :label="$tp('事件描述')" show-overflow-tooltip />
+              <el-table-column prop="reportLocation" :label="$tp('上报位置')" show-overflow-tooltip />
+              <el-table-column prop="reportDevice" :label="$tp('上报设备')" show-overflow-tooltip />
+              <el-table-column prop="reportTime" :label="$tp('上报时间')" />
+              <el-table-column prop="reportImg" :label="$tp('上报图片')">
                 <template #default="scope">
                   <el-image
                     v-if="scope.row.reportImg"
@@ -274,7 +274,7 @@
                   <span v-else class="no-image">--</span>
                 </template>
               </el-table-column>
-              <el-table-column prop="status" label="执行状态">
+              <el-table-column prop="status" :label="$tp('执行状态')">
                 <template #default="scope">
                   <el-tag
                     :type="getStatusType(scope.row.status)"
@@ -284,7 +284,7 @@
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="executor" label="执行人" show-overflow-tooltip>
+              <el-table-column prop="executor" :label="$tp('执行人')" show-overflow-tooltip>
                 <template #default="scope">
                   <div v-if="scope.row.executor" class="executor-info">
                     <div class="executor-avatars">
@@ -301,7 +301,7 @@
                   <span v-else class="no-executor">暂无执行人</span>
                 </template>
               </el-table-column>
-              <el-table-column fixed="right" align="right" label="操作" :width="clacPXToVW(200)">
+              <el-table-column fixed="right" align="right" :label="$tp('操作')" :width="clacPXToVW(200)">
                 <template #default="scope">
                   <div class="operateAppBox flexRowAC" @click.stop>
                     <div class="new_table_svg_group" @click="handleAssignExecutor(scope.row)">

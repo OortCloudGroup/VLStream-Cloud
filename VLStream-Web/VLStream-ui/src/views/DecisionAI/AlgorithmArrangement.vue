@@ -76,13 +76,13 @@
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" :width="clacPXToVW(55)" />
-            <el-table-column label="序号" :width="clacPXToVW(80)" align="center">
+            <el-table-column :label="$tp('序号')" :width="clacPXToVW(80)" align="center">
               <template #default="scope">
                 {{ scope.$index + (pagination.currentPage - 1) * pagination.pageSize + 1 }}
               </template>
             </el-table-column>
-            <el-table-column prop="deviceName" label="设备名称" show-overflow-tooltip />
-            <el-table-column prop="tags" label="标签">
+            <el-table-column prop="deviceName" :label="$tp('设备名称')" show-overflow-tooltip />
+            <el-table-column prop="tags" :label="$tp('标签')">
               <template #default="scope">
                 <el-tag
                   v-for="tag in scope.row.tags"
@@ -94,11 +94,11 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="deviceId" label="设备ID" show-overflow-tooltip />
-            <el-table-column prop="deviceType" label="设备类型" />
-            <el-table-column prop="deviceLocation" label="设备位置" show-overflow-tooltip />
-            <el-table-column prop="algorithms" label="拥有算法" show-overflow-tooltip />
-            <el-table-column label="操作" :width="clacPXToVW(200)" fixed="right" align="right">
+            <el-table-column prop="deviceId" :label="$tp('设备ID')" show-overflow-tooltip />
+            <el-table-column prop="deviceType" :label="$tp('设备类型')" />
+            <el-table-column prop="deviceLocation" :label="$tp('设备位置')" show-overflow-tooltip />
+            <el-table-column prop="algorithms" :label="$tp('拥有算法')" show-overflow-tooltip />
+            <el-table-column :label="$tp('操作')" :width="clacPXToVW(200)" fixed="right" align="right">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div

@@ -41,12 +41,12 @@
 
       <el-table v-loading="loading" :data="rows" class="device-table" row-key="id" @selection-change="selection => selectedKeys = selection.map(row => String(row.id))">
         <el-table-column type="selection" width="42" />
-        <el-table-column label="设备" min-width="180"><template #default="{ row }"><div class="device-name">{{ row.name || row.deviceId }}</div><div class="device-id">{{ row.deviceId }}</div></template></el-table-column>
-        <el-table-column label="状态" width="85"><template #default="{ row }"><span class="device-status" :class="{ online: row.status === 'ON' }"><i />{{ row.status === 'ON' ? '在线' : '离线' }}</span></template></el-table-column>
-        <el-table-column label="协议版本" width="115"><template #default="{ row }"><span class="version-label">{{ row.devProtocolVersion ? `EHome ${row.devProtocolVersion}` : '未识别' }}</span></template></el-table-column>
-        <el-table-column label="设备 IP" prop="ipAddress" min-width="130" show-overflow-tooltip />
-        <el-table-column label="最近更新" prop="updateTime" min-width="160" />
-        <el-table-column label="操作" fixed="right" width="160"><template #default="{ row }"><el-button link type="primary" @click="openPreview(row)">通道 / 预览</el-button><el-button link type="primary" @click="openEdit(row)">编辑</el-button></template></el-table-column>
+        <el-table-column :label="$tp('设备')" min-width="180"><template #default="{ row }"><div class="device-name">{{ row.name || row.deviceId }}</div><div class="device-id">{{ row.deviceId }}</div></template></el-table-column>
+        <el-table-column :label="$tp('状态')" width="85"><template #default="{ row }"><span class="device-status" :class="{ online: row.status === 'ON' }"><i />{{ row.status === 'ON' ? '在线' : '离线' }}</span></template></el-table-column>
+        <el-table-column :label="$tp('协议版本')" width="115"><template #default="{ row }"><span class="version-label">{{ row.devProtocolVersion ? `EHome ${row.devProtocolVersion}` : '未识别' }}</span></template></el-table-column>
+        <el-table-column :label="$tp('设备 IP')" prop="ipAddress" min-width="130" show-overflow-tooltip />
+        <el-table-column :label="$tp('最近更新')" prop="updateTime" min-width="160" />
+        <el-table-column :label="$tp('操作')" fixed="right" width="160"><template #default="{ row }"><el-button link type="primary" @click="openPreview(row)">通道 / 预览</el-button><el-button link type="primary" @click="openEdit(row)">编辑</el-button></template></el-table-column>
         <template #empty><span /></template>
       </el-table>
 

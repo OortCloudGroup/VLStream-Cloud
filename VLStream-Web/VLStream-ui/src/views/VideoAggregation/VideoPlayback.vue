@@ -133,29 +133,29 @@
             @row-click="handleRowClick"
           >
             <el-table-column type="selection" :width="clacPXToVW(55)" />
-            <el-table-column label="序号" :width="clacPXToVW(65)">
+            <el-table-column :label="$tp('序号')" :width="clacPXToVW(65)">
               <template #default="scope">
                 {{ scope.$index + (currentPage - 1) * pageSize + 1 }}
               </template>
             </el-table-column>
-            <el-table-column prop="deviceName" label="设备名称" :width="clacPXToVW(140)" show-overflow-tooltip />
-            <el-table-column prop="tag" label="标签" :width="clacPXToVW(120)">
+            <el-table-column prop="deviceName" :label="$tp('设备名称')" :width="clacPXToVW(140)" show-overflow-tooltip />
+            <el-table-column prop="tag" :label="$tp('标签')" :width="clacPXToVW(120)">
               <template #default="scope">
                 <el-tag size="small" type="primary" class="tag_pill">
                   {{ scope.row.tag }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="deviceId" label="设备ID" :width="clacPXToVW(140)" show-overflow-tooltip />
-            <el-table-column prop="streamPath" label="视频流路径" show-overflow-tooltip />
-            <el-table-column prop="status" label="状态" :width="clacPXToVW(100)">
+            <el-table-column prop="deviceId" :label="$tp('设备ID')" :width="clacPXToVW(140)" show-overflow-tooltip />
+            <el-table-column prop="streamPath" :label="$tp('视频流路径')" show-overflow-tooltip />
+            <el-table-column prop="status" :label="$tp('状态')" :width="clacPXToVW(100)">
               <template #default="scope">
                 <span v-if="scope.row.status === 1" class="staBtns WX">在线</span>
                 <span v-else class="staBtns">离线</span>
               </template>
             </el-table-column>
-            <el-table-column prop="lastRefreshTime" label="最近一次录制时间" :width="clacPXToVW(180)" />
-            <el-table-column fixed="right" align="right" label="操作" :width="clacPXToVW(120)">
+            <el-table-column prop="lastRefreshTime" :label="$tp('最近一次录制时间')" :width="clacPXToVW(180)" />
+            <el-table-column fixed="right" align="right" :label="$tp('操作')" :width="clacPXToVW(120)">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handlePlay(scope.row)">

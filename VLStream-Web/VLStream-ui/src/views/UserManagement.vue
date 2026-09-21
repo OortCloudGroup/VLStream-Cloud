@@ -51,42 +51,42 @@
 
     <!-- user -->
     <el-table :data="filteredUsers" style="width: 100%" stripe>
-      <el-table-column prop="avatar" label="头像" width="80">
+      <el-table-column prop="avatar" :label="$tp('头像')" width="80">
         <template #default="{ row }">
           <el-avatar :src="row.avatar" :size="40">
             <el-icon><User /></el-icon>
           </el-avatar>
         </template>
       </el-table-column>
-      <el-table-column prop="username" label="用户名" width="150" />
-      <el-table-column prop="realName" label="真实姓名" width="120" />
-      <el-table-column prop="email" label="邮箱" width="200" />
-      <el-table-column prop="phone" label="电话" width="130" />
-      <el-table-column prop="role" label="角色" width="100">
+      <el-table-column prop="username" :label="$tp('用户名')" width="150" />
+      <el-table-column prop="realName" :label="$tp('真实姓名')" width="120" />
+      <el-table-column prop="email" :label="$tp('邮箱')" width="200" />
+      <el-table-column prop="phone" :label="$tp('电话')" width="130" />
+      <el-table-column prop="role" :label="$tp('角色')" width="100">
         <template #default="{ row }">
           <el-tag :type="getRoleType(row.role)">
             {{ getRoleText(row.role) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="状态" width="100">
+      <el-table-column prop="status" :label="$tp('状态')" width="100">
         <template #default="{ row }">
           <el-tag :type="getStatusType(row.status)">
             {{ getStatusText(row.status) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="lastLogin" label="最后登录" width="180">
+      <el-table-column prop="lastLogin" :label="$tp('最后登录')" width="180">
         <template #default="{ row }">
           {{ formatDate(row.lastLogin) }}
         </template>
       </el-table-column>
-      <el-table-column prop="createTime" label="创建时间" width="180">
+      <el-table-column prop="createTime" :label="$tp('创建时间')" width="180">
         <template #default="{ row }">
           {{ formatDate(row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right">
+      <el-table-column :label="$tp('操作')" width="200" fixed="right">
         <template #default="{ row }">
           <el-button
             type="primary"

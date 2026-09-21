@@ -7,7 +7,7 @@
 
 <template>
   <div>
-    <el-dialog v-model="dialogVisible" class="diaOutSet" title="任务分配" top="5vh" width="40%" :before-close="handleClose" destroy-on-close>
+    <el-dialog v-model="dialogVisible" class="diaOutSet locale-dialog locale-dialog--medium" title="任务分配" top="5vh" :before-close="handleClose" destroy-on-close>
       <div class="details_container">
         <div class="basicTitle codeActBox flexRowAC">
           基本属性
@@ -162,14 +162,14 @@
         </template>
         <div class="d_h_maintainBtns">
           <el-button @click="handleCancel" class="common_btn">
-            取 消
+            取消
           </el-button>
           <el-button type="primary" :disabled="formLoading" @click="submitForm" class="common_btn">
-            确 定
+            确定
           </el-button>
         </div>
       </div>
-      <el-dialog v-model="chooseDeptVis" title="选择执行人员" width="50%">
+      <el-dialog v-model="chooseDeptVis" class="locale-dialog locale-dialog--wide" title="选择执行人员">
         <address-seting-dialog
           :active-tab="type==1?1:3"
           :mode="type"

@@ -32,26 +32,26 @@
       :data="recordList"
       current-row-key="id"
     >
-      <el-table-column prop="app" label="应用名" align="center" show-overflow-tooltip/>
-      <el-table-column prop="stream" label="流ID" align="center" show-overflow-tooltip/>
-      <el-table-column label="开始时间" align="center" show-overflow-tooltip>
+      <el-table-column prop="app" :label="$tp('应用名')" align="center" show-overflow-tooltip/>
+      <el-table-column prop="stream" :label="$tp('流ID')" align="center" show-overflow-tooltip/>
+      <el-table-column :label="$tp('开始时间')" align="center" show-overflow-tooltip>
         <template #default="scope">
           {{ formatTimeStamp(scope.row.startTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="结束时间" align="center" show-overflow-tooltip>
+      <el-table-column :label="$tp('结束时间')" align="center" show-overflow-tooltip>
         <template #default="scope">
           {{ formatTimeStamp(scope.row.endTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="时长" align="center">
+      <el-table-column :label="$tp('时长')" align="center">
         <template #default="scope">
           <el-tag v-if="scope.row.timeLen">{{ formatTime(scope.row.timeLen) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="fileName" label="文件名称" align="center" show-overflow-tooltip/>
-      <el-table-column prop="mediaServerId" label="流媒体" align="center" show-overflow-tooltip/>
-      <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(180)">
+      <el-table-column prop="fileName" :label="$tp('文件名称')" align="center" show-overflow-tooltip/>
+      <el-table-column prop="mediaServerId" :label="$tp('流媒体')" align="center" show-overflow-tooltip/>
+      <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(180)">
         <template #default="scope">
           <div class="operateAppBox flexRowAC" style="justify-content: flex-end;">
             <div

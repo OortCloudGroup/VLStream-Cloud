@@ -1,6 +1,6 @@
 <template>
-  <el-drawer :model-value="modelValue" title="选择算法模型" direction="rtl" size="min(1440px, 94vw)"
-    append-to-body class="device-model-drawer" :before-close="closeDrawer" :show-close="!submitting"
+  <el-drawer :model-value="modelValue" class="device-model-drawer locale-drawer model-selection-drawer" title="选择算法模型" direction="rtl" size="min(1440px, 94vw)"
+    append-to-body :before-close="closeDrawer" :show-close="!submitting"
     :close-on-click-modal="false" :close-on-press-escape="!submitting" @update:model-value="emit('update:modelValue', $event)">
     <div class="picker-shell">
       <el-tabs v-model="source" class="source-tabs">

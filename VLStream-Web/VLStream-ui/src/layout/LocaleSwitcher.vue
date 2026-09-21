@@ -60,4 +60,21 @@ import { currentLocale, currentLocaleOption, localeOptions, setLocale, translate
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+@media (max-width: 1500px) {
+  .locale-trigger {
+    padding-inline: 6px;
+  }
+
+  .locale-trigger span {
+    max-width: 88px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .locale-trigger span {
+    display: none;
+  }
+}
 </style>

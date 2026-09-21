@@ -31,11 +31,11 @@
           :data="tableData"
           @current-change="handleSelectChoose"
         >
-          <el-table-column type="index" label="序号" />
-          <el-table-column prop="name" label="类型名称" />
-          <el-table-column prop="dict_tag" label="类型标记" />
-          <el-table-column prop="description" label="描述" />
-          <el-table-column prop="sort" label="排序" />
+          <el-table-column type="index" :label="$tp('序号')" />
+          <el-table-column prop="name" :label="$tp('类型名称')" />
+          <el-table-column prop="dict_tag" :label="$tp('类型标记')" />
+          <el-table-column prop="description" :label="$tp('描述')" />
+          <el-table-column prop="sort" :label="$tp('排序')" />
         </el-table>
         <div class="paginationBox flexRowAC">
           <el-pagination

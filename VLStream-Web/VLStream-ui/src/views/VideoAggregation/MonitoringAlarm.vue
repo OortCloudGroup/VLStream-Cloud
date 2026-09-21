@@ -33,22 +33,22 @@
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" :width="clacPXToVW(55)" />
-            <el-table-column label="序号" :width="clacPXToVW(65)">
+            <el-table-column :label="$tp('序号')" :width="clacPXToVW(65)">
               <template #default="scope">
                 {{ scope.$index + (currentPage - 1) * pageSize + 1 }}
               </template>
             </el-table-column>
-            <el-table-column prop="deviceName" label="设备名称" show-overflow-tooltip />
-            <el-table-column prop="tags" label="标签">
+            <el-table-column prop="deviceName" :label="$tp('设备名称')" show-overflow-tooltip />
+            <el-table-column prop="tags" :label="$tp('标签')">
               <template #default="scope">
                 <el-tag size="small" type="primary">{{ scope.row.tags }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="deviceId" label="设备ID" show-overflow-tooltip />
-            <el-table-column prop="alarmType" label="告警类型" />
-            <el-table-column prop="alarmLocation" label="告警位置" show-overflow-tooltip />
-            <el-table-column prop="alarmTime" label="告警时间" />
-            <el-table-column fixed="right" align="right" label="操作" :width="clacPXToVW(120)">
+            <el-table-column prop="deviceId" :label="$tp('设备ID')" show-overflow-tooltip />
+            <el-table-column prop="alarmType" :label="$tp('告警类型')" />
+            <el-table-column prop="alarmLocation" :label="$tp('告警位置')" show-overflow-tooltip />
+            <el-table-column prop="alarmTime" :label="$tp('告警时间')" />
+            <el-table-column fixed="right" align="right" :label="$tp('操作')" :width="clacPXToVW(120)">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handlePlay(scope.row)">

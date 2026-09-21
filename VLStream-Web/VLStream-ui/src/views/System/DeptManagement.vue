@@ -43,10 +43,10 @@
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" :width="clacPXToVW(55)" />
-            <el-table-column prop="deptName" label="部门名称" min-width="180" />
-            <el-table-column prop="fullName" label="部门全称" min-width="200" />
-            <el-table-column prop="sort" label="排序" :width="clacPXToVW(80)" align="center" />
-            <el-table-column label="操作" :width="clacPXToVW(180)" fixed="right" align="right">
+            <el-table-column prop="deptName" :label="$tp('部门名称')" min-width="180" />
+            <el-table-column prop="fullName" :label="$tp('部门全称')" min-width="200" />
+            <el-table-column prop="sort" :label="$tp('排序')" :width="clacPXToVW(80)" align="center" />
+            <el-table-column :label="$tp('操作')" :width="clacPXToVW(180)" fixed="right" align="right">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handleEdit(scope.row)">

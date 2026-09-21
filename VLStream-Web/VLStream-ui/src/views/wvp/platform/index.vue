@@ -36,9 +36,9 @@
       :data="platformList"
       current-row-key="id"
     >
-      <el-table-column prop="name" label="名称" align="center" show-overflow-tooltip></el-table-column>
-      <el-table-column prop="serverGBId" label="平台编号" align="center" show-overflow-tooltip></el-table-column>
-      <el-table-column label="是否启用" align="center">
+      <el-table-column prop="name" :label="$tp('名称')" align="center" show-overflow-tooltip></el-table-column>
+      <el-table-column prop="serverGBId" :label="$tp('平台编号')" align="center" show-overflow-tooltip></el-table-column>
+      <el-table-column :label="$tp('是否启用')" align="center">
         <template #default="scope">
           <div slot="reference" class="name-wrapper">
             <el-tag v-if="scope.row.enable">已启用</el-tag>
@@ -46,7 +46,7 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="状态" align="center">
+      <el-table-column :label="$tp('状态')" align="center">
         <template #default="scope">
           <div slot="reference" class="name-wrapper">
             <el-tag v-if="scope.row.status">在线</el-tag>
@@ -54,17 +54,17 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="地址" align="center" show-overflow-tooltip>
+      <el-table-column :label="$tp('地址')" align="center" show-overflow-tooltip>
         <template #default="scope">
           <div slot="reference" class="name-wrapper">
             <el-tag>{{ scope.row.serverIp }}:{{ scope.row.serverPort }}</el-tag>
           </div>
         </template>
       </el-table-column>
-      <el-table-column prop="deviceGBId" label="设备国标编号" align="center" show-overflow-tooltip></el-table-column>
-      <el-table-column prop="transport" label="信令传输模式" align="center"></el-table-column>
-      <el-table-column prop="channelCount" label="通道数" align="center"></el-table-column>
-      <el-table-column label="订阅信息" :width="clacPXToVW(120)" align="center">
+      <el-table-column prop="deviceGBId" :label="$tp('设备国标编号')" align="center" show-overflow-tooltip></el-table-column>
+      <el-table-column prop="transport" :label="$tp('信令传输模式')" align="center"></el-table-column>
+      <el-table-column prop="channelCount" :label="$tp('通道数')" align="center"></el-table-column>
+      <el-table-column :label="$tp('订阅信息')" :width="clacPXToVW(120)" align="center">
         <template #default="scope">
           <i v-if="scope.row.alarmSubscribe" style="font-size: 20px" title="报警订阅"
              class="iconfont icon-gbaojings subscribe-on "></i>
@@ -78,7 +78,7 @@
              class="iconfont icon-gxunjians subscribe-off"></i>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(220)">
+      <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(220)">
         <template #default="scope">
           <div class="operateAppBox flexRowAC" style="justify-content: flex-end;">
             <div class="new_table_svg_group" @click.stop="handleEdit(scope.row)" v-hasPermi="['wvp:platform:edit']">

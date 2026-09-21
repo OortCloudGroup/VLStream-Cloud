@@ -25,7 +25,7 @@
             <component :is="getMenuIcon(item.meta?.icon)" />
           </el-icon>
         </div>
-        <span class="menu-title-text">{{ translatePhrase(item.meta?.title) }}</span>
+        <span class="menu-title-text" :title="translatePhrase(item.meta?.title)">{{ translatePhrase(item.meta?.title) }}</span>
       </template>
       <SidebarMenuNode
         :items="item.children"
@@ -45,7 +45,7 @@
         </el-icon>
       </div>
       <template #title>
-        <span class="menu-title-text">{{ translatePhrase(item.meta?.title) }}</span>
+        <span class="menu-title-text" :title="translatePhrase(item.meta?.title)">{{ translatePhrase(item.meta?.title) }}</span>
       </template>
     </el-menu-item>
   </template>

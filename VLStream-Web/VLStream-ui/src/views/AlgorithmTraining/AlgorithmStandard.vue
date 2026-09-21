@@ -53,17 +53,17 @@
           @row-click="handleRowClick"
         >
           <el-table-column type="selection" :width="clacPXToVW(55)" />
-          <el-table-column prop="name" label="标注名称" show-overflow-tooltip />
-          <el-table-column prop="remark" label="备注" show-overflow-tooltip />
-          <el-table-column prop="type" label="标注类型" align="center" />
-          <el-table-column prop="status" label="标注状态" align="center">
+          <el-table-column prop="name" :label="$tp('标注名称')" show-overflow-tooltip />
+          <el-table-column prop="remark" :label="$tp('备注')" show-overflow-tooltip />
+          <el-table-column prop="type" :label="$tp('标注类型')" align="center" />
+          <el-table-column prop="status" :label="$tp('标注状态')" align="center">
             <template #default="scope">
               <el-tag :type="getStatusTagType(scope.row.annotationStatus)" size="small">
                 {{ scope.row.status }} ({{ scope.row.progress }})
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="datasetPath" label="数据集路径" show-overflow-tooltip>
+          <el-table-column prop="datasetPath" :label="$tp('数据集路径')" show-overflow-tooltip>
             <template #default="scope">
               <span v-if="scope.row.datasetPath" class="dataset-path clickable" :title="scope.row.datasetPath">
                 {{ scope.row.datasetPath }}
@@ -71,8 +71,8 @@
               <span v-else class="no-dataset">未设置</span>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" :width="clacPXToVW(180)" />
-          <el-table-column label="操作" :width="clacPXToVW(380)" align="right" fixed="right">
+          <el-table-column prop="createTime" :label="$tp('创建时间')" :width="clacPXToVW(180)" />
+          <el-table-column :label="$tp('操作')" :width="clacPXToVW(380)" align="right" fixed="right">
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="handleView(scope.row)">

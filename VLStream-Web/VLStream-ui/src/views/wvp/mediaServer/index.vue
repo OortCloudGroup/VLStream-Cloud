@@ -30,8 +30,8 @@
           v-loading="loading"
           :data="filteredServerList"
         >
-          <el-table-column label="节点ID" prop="id" show-overflow-tooltip />
-          <el-table-column label="类型" :width="clacPXToVW(140)">
+          <el-table-column :label="$tp('节点ID')" prop="id" show-overflow-tooltip />
+          <el-table-column :label="$tp('类型')" :width="clacPXToVW(140)">
             <template #default="scope">
               <el-tag v-if="scope.row.type === 'zlm'">ZLMediaKit</el-tag>
               <el-tag v-else-if="scope.row.type === 'abl'">ABLMediaServer</el-tag>
@@ -39,13 +39,13 @@
             </template>
           </el-table-column>
           <el-table-column label="IP" prop="ip" show-overflow-tooltip />
-          <el-table-column label="默认节点" :width="clacPXToVW(110)">
+          <el-table-column :label="$tp('默认节点')" :width="clacPXToVW(110)">
             <template #default="scope">
               <el-tag v-if="scope.row.defaultServer" type="success">默认</el-tag>
               <el-tag v-else type="info">否</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(200)">
+          <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(200)">
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="handleView(scope.row)" v-hasPermi="['wvp:server:view']">

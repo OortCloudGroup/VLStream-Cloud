@@ -59,7 +59,7 @@ const scheduleTranslation = () => {
   scheduled = true
   requestAnimationFrame(() => {
     scheduled = false
-    translateTree(document.getElementById('app'))
+    translateTree(document.body)
   })
 }
 
@@ -71,7 +71,7 @@ export const installLegacyDomI18n = () => {
       record.addedNodes.forEach(translateTree)
     })
   })
-  const root = document.getElementById('app')
+  const root = document.body
   if (root) observer.observe(root, { childList: true, subtree: true, characterData: true })
   window.addEventListener('vlstream:locale-changed', scheduleTranslation)
 }

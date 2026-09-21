@@ -44,12 +44,12 @@
           @row-click="handleRowClick"
         >
           <el-table-column type="selection" :width="clacPXToVW(55)" align="center" />
-          <el-table-column prop="name" label="模型名称" show-overflow-tooltip />
-          <el-table-column prop="source" label="模型来源" align="center" />
-          <el-table-column prop="version" label="版本" align="center" />
-          <el-table-column prop="downloadCount" label="下载次数" align="center" />
-          <el-table-column prop="createTime" label="创建时间" />
-          <el-table-column label="操作" :min-width="clacPXToVW(260)" :width="clacPXToVW(260)" align="right" fixed="right">
+          <el-table-column prop="name" :label="$tp('模型名称')" show-overflow-tooltip />
+          <el-table-column prop="source" :label="$tp('模型来源')" align="center" />
+          <el-table-column prop="version" :label="$tp('版本')" align="center" />
+          <el-table-column prop="downloadCount" :label="$tp('下载次数')" align="center" />
+          <el-table-column prop="createTime" :label="$tp('创建时间')" />
+          <el-table-column :label="$tp('操作')" :min-width="clacPXToVW(260)" :width="clacPXToVW(260)" align="right" fixed="right">
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="handleView(scope.row)">
@@ -122,12 +122,12 @@
       <div class="version-section">
         <div class="version-table">
           <el-table :data="versionData" stripe style="width: 100%">
-            <el-table-column prop="version" label="版本" align="center" />
-            <el-table-column prop="taskName" label="对应训练任务名" min-width="200" />
-            <el-table-column prop="trainMethod" label="训练方式" min-width="120" align="center" />
-            <el-table-column prop="description" label="描述" min-width="100" align="center" />
-            <el-table-column prop="createTime" label="创建时间" />
-            <el-table-column label="操作" width="150" align="right">
+            <el-table-column prop="version" :label="$tp('版本')" align="center" />
+            <el-table-column prop="taskName" :label="$tp('对应训练任务名')" min-width="200" />
+            <el-table-column prop="trainMethod" :label="$tp('训练方式')" min-width="120" align="center" />
+            <el-table-column prop="description" :label="$tp('描述')" min-width="100" align="center" />
+            <el-table-column prop="createTime" :label="$tp('创建时间')" />
+            <el-table-column :label="$tp('操作')" width="150" align="right">
               <template #default="scope">
                 <el-button
                   type="primary"

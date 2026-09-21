@@ -35,12 +35,12 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" :width="clacPXToVW(55)" />
-      <el-table-column label="设备ID" prop="deviceId" show-overflow-tooltip />
-      <el-table-column label="设备名称" prop="name" show-overflow-tooltip />
-      <el-table-column label="地址" prop="addressMap" show-overflow-tooltip />
-      <el-table-column label="IP地址" prop="ipAddress" show-overflow-tooltip />
-      <el-table-column label="用户名" prop="userName" show-overflow-tooltip />
-      <el-table-column label="密码" prop="password">
+      <el-table-column :label="$tp('设备ID')" prop="deviceId" show-overflow-tooltip />
+      <el-table-column :label="$tp('设备名称')" prop="name" show-overflow-tooltip />
+      <el-table-column :label="$tp('地址')" prop="addressMap" show-overflow-tooltip />
+      <el-table-column :label="$tp('IP地址')" prop="ipAddress" show-overflow-tooltip />
+      <el-table-column :label="$tp('用户名')" prop="userName" show-overflow-tooltip />
+      <el-table-column :label="$tp('密码')" prop="password">
         <template #default="scope">
           <div class="password-container">
             <span v-if="!passwordVisibility[scope.row.id]">******</span>
@@ -51,20 +51,20 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="状态" prop="status" :width="clacPXToVW(90)">
+      <el-table-column :label="$tp('状态')" prop="status" :width="clacPXToVW(90)">
         <template #default="scope">
           <el-tag v-if="scope.row.status === 'ON'" type="success">在线</el-tag>
           <el-tag v-if="scope.row.status === 'OFFLINE'" type="danger">离线</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="播放类型" prop="playType" :width="clacPXToVW(100)">
+      <el-table-column :label="$tp('播放类型')" prop="playType" :width="clacPXToVW(100)">
         <template #default="scope">
           <dict-tag :options="play_type" :value="scope.row.playType"/>
         </template>
       </el-table-column>
-      <el-table-column key="streamId" label="流id" prop="streamId" min-width="150" show-overflow-tooltip />
-      <el-table-column label="备注" prop="remark" show-overflow-tooltip />
-      <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(280)">
+      <el-table-column key="streamId" :label="$tp('流id')" prop="streamId" min-width="150" show-overflow-tooltip />
+      <el-table-column :label="$tp('备注')" prop="remark" show-overflow-tooltip />
+      <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(280)">
         <template #default="scope">
           <div class="operateAppBox flexRowAC" @click.stop>
             <div class="new_table_svg_group" @click="handleSDKPlay(scope.row)" v-hasPermi="['isup:lsupDevice:start']">

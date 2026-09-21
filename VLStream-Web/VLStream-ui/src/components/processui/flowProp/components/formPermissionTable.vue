@@ -7,7 +7,7 @@
 
 <template>
   <el-table :data="filedList">
-    <el-table-column prop="name" label="字段" />
+    <el-table-column prop="name" :label="$tp('字段')" />
     <el-table-column v-if="showReadonly" prop="readonly">
       <template #header>
         <el-checkbox v-model="allReadonly" label="只读" />

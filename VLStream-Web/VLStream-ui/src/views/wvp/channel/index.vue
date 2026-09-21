@@ -36,39 +36,39 @@
           :data="channelList"
           ref="channelListTable"
         >
-          <el-table-column prop="name" label="名称" show-overflow-tooltip />
-          <el-table-column prop="deviceId" label="编号" show-overflow-tooltip />
-          <el-table-column label="快照" :width="clacPXToVW(100)">
+          <el-table-column prop="name" :label="$tp('名称')" show-overflow-tooltip />
+          <el-table-column prop="deviceId" :label="$tp('编号')" show-overflow-tooltip />
+          <el-table-column :label="$tp('快照')" :width="clacPXToVW(100)">
             <template #default="scope">
               <ImagePreview :src="getSnap(scope.row)"></ImagePreview>
             </template>
           </el-table-column>
-          <el-table-column prop="subCount" label="子节点数" :width="clacPXToVW(100)" />
-          <el-table-column prop="channelType" label="通道类型" :width="clacPXToVW(110)">
+          <el-table-column prop="subCount" :label="$tp('子节点数')" :width="clacPXToVW(100)" />
+          <el-table-column prop="channelType" :label="$tp('通道类型')" :width="clacPXToVW(110)">
             <template #default="scope">
               <el-tag v-if="scope.row.channelType === 0">国标设备</el-tag>
               <el-tag v-if="scope.row.channelType === 1">推流设备</el-tag>
               <el-tag v-if="scope.row.channelType === 2">拉流代理</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="manufacturer" label="厂家" show-overflow-tooltip />
-          <el-table-column label="位置信息" show-overflow-tooltip>
+          <el-table-column prop="manufacturer" :label="$tp('厂家')" show-overflow-tooltip />
+          <el-table-column :label="$tp('位置信息')" show-overflow-tooltip>
             <template #default="scope">
               <span v-if="scope.row.longitude && scope.row.latitude">{{ scope.row.longitude }} / {{ scope.row.latitude }}</span>
               <span v-else>无</span>
             </template>
           </el-table-column>
-          <el-table-column prop="ptzType" label="云台类型" :width="clacPXToVW(100)">
+          <el-table-column prop="ptzType" :label="$tp('云台类型')" :width="clacPXToVW(100)">
             <template #default="scope">
               <div>{{ scope.row.ptzTypeText }}</div>
             </template>
           </el-table-column>
-          <el-table-column label="开启音频" :width="clacPXToVW(100)">
+          <el-table-column :label="$tp('开启音频')" :width="clacPXToVW(100)">
             <template #default="scope">
               <el-switch @change="updateChannel(scope.row)" v-model="scope.row.hasAudio" active-color="#409EFF" />
             </template>
           </el-table-column>
-          <el-table-column label="码流类型" :width="clacPXToVW(200)">
+          <el-table-column :label="$tp('码流类型')" :width="clacPXToVW(200)">
             <template #default="scope">
               <div v-if="checkPermi(['wvp:device:channelStreamIdentification'])">
                 <el-select
@@ -99,13 +99,13 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="状态" :width="clacPXToVW(90)">
+          <el-table-column :label="$tp('状态')" :width="clacPXToVW(90)">
             <template #default="scope">
               <el-tag v-if="scope.row.status === 'ON'">在线</el-tag>
               <el-tag type="info" v-else>离线</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(220)">
+          <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(220)">
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div

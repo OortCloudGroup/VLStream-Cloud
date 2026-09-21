@@ -39,13 +39,13 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" :width="clacPXToVW(55)" />
-      <el-table-column label="名称" prop="name" show-overflow-tooltip />
+      <el-table-column :label="$tp('名称')" prop="name" show-overflow-tooltip />
       <el-table-column label="ip" prop="ip" show-overflow-tooltip />
-      <el-table-column label="地址" prop="addressMap" show-overflow-tooltip />
-      <el-table-column label="设备厂商" prop="firm" show-overflow-tooltip />
-      <el-table-column label="设备型号" prop="model" show-overflow-tooltip />
-      <el-table-column label="用户名" prop="userName" :width="clacPXToVW(100)" show-overflow-tooltip />
-      <el-table-column label="密码" prop="password" :width="clacPXToVW(150)">
+      <el-table-column :label="$tp('地址')" prop="addressMap" show-overflow-tooltip />
+      <el-table-column :label="$tp('设备厂商')" prop="firm" show-overflow-tooltip />
+      <el-table-column :label="$tp('设备型号')" prop="model" show-overflow-tooltip />
+      <el-table-column :label="$tp('用户名')" prop="userName" :width="clacPXToVW(100)" show-overflow-tooltip />
+      <el-table-column :label="$tp('密码')" prop="password" :width="clacPXToVW(150)">
         <template #default="scope">
           <div class="password-container">
             <span v-if="!passwordVisibility[scope.row.id]">******</span>
@@ -56,15 +56,15 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="播放类型" prop="playType" :width="clacPXToVW(100)">
+      <el-table-column :label="$tp('播放类型')" prop="playType" :width="clacPXToVW(100)">
         <template #default="scope">
           <el-tag type="primary" v-if="scope.row.playType === '1'">本地</el-tag>
           <el-tag type="primary" v-if="scope.row.playType === '2'">推流</el-tag>
           <el-tag type="primary" v-if="scope.row.playType === '3'">EasyNTS</el-tag>
         </template>
       </el-table-column>
-      <el-table-column key="streamId" label="流id" prop="streamId" min-width="150" show-overflow-tooltip />
-      <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(260)">
+      <el-table-column key="streamId" :label="$tp('流id')" prop="streamId" min-width="150" show-overflow-tooltip />
+      <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(260)">
         <template #default="scope">
           <div class="operateAppBox flexRowAC" @click.stop>
             <div class="new_table_svg_group" @click="handleView(scope.row)" v-hasPermi="['onvif:device:play']">
@@ -486,18 +486,18 @@
       </el-steps>
       <el-table :data="listWS" border v-if="stepsName === 0">
         <el-table-column label="ip" align="center" prop="ip" show-overflow-tooltip/>
-        <el-table-column label="访问地址" align="center" prop="hostName" show-overflow-tooltip />
-        <el-table-column label="用户名" align="center">
+        <el-table-column :label="$tp('访问地址')" align="center" prop="hostName" show-overflow-tooltip />
+        <el-table-column :label="$tp('用户名')" align="center">
           <template #default="{ row }">
             <el-input v-model="row.username" placeholder="请输入用户名"></el-input>
           </template>
         </el-table-column>
-        <el-table-column label="密码" align="center">
+        <el-table-column :label="$tp('密码')" align="center">
           <template #default="{ row }">
             <el-input v-model="row.password" placeholder="请输入密码" show-password></el-input>
           </template>
         </el-table-column>
-        <el-table-column label="认证方式" align="center">
+        <el-table-column :label="$tp('认证方式')" align="center">
           <template #default="{ row }">
             <el-radio-group v-model="row.auth">
               <el-radio value="1" size="large">WS-Usemame token</el-radio>
@@ -505,7 +505,7 @@
             </el-radio-group>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="180">
+        <el-table-column :label="$tp('操作')" align="center" class-name="small-padding fixed-width" fixed="right" width="180">
           <template #default="scope">
             <div style="display:flex; align-items: center;justify-content: center">
               <el-button link type="primary" icon="Check" @click="handleAuth(scope.row)"

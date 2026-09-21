@@ -23,17 +23,17 @@
       </el-form>
 
       <el-table v-loading="loading" :data="rows" border>
-        <el-table-column prop="deviceEventId" label="设备事件 ID" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="deviceId" label="设备 ID" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="algorithmId" label="算法 ID" min-width="130" />
-        <el-table-column label="状态" width="110">
+        <el-table-column prop="deviceEventId" :label="$tp('设备事件 ID')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="deviceId" :label="$tp('设备 ID')" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="algorithmId" :label="$tp('算法 ID')" min-width="130" />
+        <el-table-column :label="$tp('状态')" width="110">
           <template #default="scope"><el-tag :type="statusType(scope.row.reviewStatus)">{{ statusLabel(scope.row.reviewStatus) }}</el-tag></template>
         </el-table-column>
-        <el-table-column prop="confidence" label="置信度" width="100" />
-        <el-table-column prop="attemptCount" label="调用次数" width="100" />
-        <el-table-column prop="reason" label="判断原因" min-width="220" show-overflow-tooltip />
-        <el-table-column prop="createTime" label="接收时间" min-width="170" />
-        <el-table-column label="操作" width="90" fixed="right">
+        <el-table-column prop="confidence" :label="$tp('置信度')" width="100" />
+        <el-table-column prop="attemptCount" :label="$tp('调用次数')" width="100" />
+        <el-table-column prop="reason" :label="$tp('判断原因')" min-width="220" show-overflow-tooltip />
+        <el-table-column prop="createTime" :label="$tp('接收时间')" min-width="170" />
+        <el-table-column :label="$tp('操作')" width="90" fixed="right">
           <template #default="scope"><el-button link type="primary" @click="openDetail(scope.row)">详情</el-button></template>
         </el-table-column>
       </el-table>

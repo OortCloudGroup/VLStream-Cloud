@@ -39,19 +39,19 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" :width="clacPXToVW(55)" />
-      <el-table-column type="index" label="编号" :width="clacPXToVW(70)" />
-      <el-table-column prop="name" label="名称" show-overflow-tooltip />
-      <el-table-column prop="deviceId" label="设备编号" show-overflow-tooltip />
-      <el-table-column label="地址" prop="addressMap" show-overflow-tooltip />
-      <el-table-column label="IP地址" :width="clacPXToVW(160)">
+      <el-table-column type="index" :label="$tp('编号')" :width="clacPXToVW(70)" />
+      <el-table-column prop="name" :label="$tp('名称')" show-overflow-tooltip />
+      <el-table-column prop="deviceId" :label="$tp('设备编号')" show-overflow-tooltip />
+      <el-table-column :label="$tp('地址')" prop="addressMap" show-overflow-tooltip />
+      <el-table-column :label="$tp('IP地址')" :width="clacPXToVW(160)">
         <template #default="scope">
           <el-tag v-if="scope.row.hostAddress">{{ scope.row.hostAddress }}</el-tag>
           <el-tag v-else>未知</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="manufacturer" label="厂家" :width="clacPXToVW(90)" show-overflow-tooltip />
-      <el-table-column prop="transport" label="信令传输模式" :width="clacPXToVW(120)" />
-      <el-table-column label="流传输模式" :width="clacPXToVW(160)">
+      <el-table-column prop="manufacturer" :label="$tp('厂家')" :width="clacPXToVW(90)" show-overflow-tooltip />
+      <el-table-column prop="transport" :label="$tp('信令传输模式')" :width="clacPXToVW(120)" />
+      <el-table-column :label="$tp('流传输模式')" :width="clacPXToVW(160)">
         <template #default="scope">
           <el-select @change="transportChange(scope.row)" v-model="scope.row.streamMode"
                      placeholder="请选择" style="width: 120px" v-if="checkPermi(['wvp:device:updateTransport'])">
@@ -66,18 +66,18 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="通道数" :width="clacPXToVW(80)">
+      <el-table-column :label="$tp('通道数')" :width="clacPXToVW(80)">
         <template #default="scope">
           {{ scope.row.channelCount }}
         </template>
       </el-table-column>
-      <el-table-column label="状态" :width="clacPXToVW(80)">
+      <el-table-column :label="$tp('状态')" :width="clacPXToVW(80)">
         <template #default="scope">
           <el-tag v-if="scope.row.onLine">在线</el-tag>
           <el-tag type="info" v-else>离线</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="订阅" min-width="220">
+      <el-table-column :label="$tp('订阅')" min-width="220">
         <template #default="scope">
           <el-checkbox v-if="checkPermi(['wvp:device:subscribeCatalog'])" label="目录"
                        :checked="scope.row.subscribeCycleForCatalog > 0"
@@ -90,9 +90,9 @@
           <el-checkbox label="报警" disabled :checked="scope.row.subscribeCycleForAlarm > 0"></el-checkbox>
         </template>
       </el-table-column>
-      <el-table-column prop="keepaliveTime" label="最近心跳" :width="clacPXToVW(160)" />
-      <el-table-column prop="registerTime" label="最近注册" :width="clacPXToVW(160)" />
-      <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(240)">
+      <el-table-column prop="keepaliveTime" :label="$tp('最近心跳')" :width="clacPXToVW(160)" />
+      <el-table-column prop="registerTime" :label="$tp('最近注册')" :width="clacPXToVW(160)" />
+      <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(240)">
         <template #default="scope">
           <div class="operateAppBox flexRowAC" @click.stop>
             <div class="new_table_svg_group" :class="{ 'is-disabled': scope.row.online===0 }" v-hasPermi="['wvp:device:sync']" @click="scope.row.online!==0 && refDevice(scope.row)">

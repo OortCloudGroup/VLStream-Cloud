@@ -27,31 +27,31 @@
           </div>
 
           <el-table v-loading="loading" :data="records" stripe header-cell-class-name="header_tenant_cell">
-            <el-table-column label="序号" width="70">
+            <el-table-column :label="$tp('序号')" width="70">
               <template #default="scope">
                 {{ scope.$index + (pagination.current - 1) * pagination.size + 1 }}
               </template>
             </el-table-column>
-            <el-table-column prop="cameraModel" label="摄像头型号" min-width="150" show-overflow-tooltip />
-            <el-table-column prop="firmwareVersion" label="固件版本号" min-width="120" />
-            <el-table-column prop="originalFileName" label="固件包" min-width="220" show-overflow-tooltip />
-            <el-table-column label="文件大小" width="120">
+            <el-table-column prop="cameraModel" :label="$tp('摄像头型号')" min-width="150" show-overflow-tooltip />
+            <el-table-column prop="firmwareVersion" :label="$tp('固件版本号')" min-width="120" />
+            <el-table-column prop="originalFileName" :label="$tp('固件包')" min-width="220" show-overflow-tooltip />
+            <el-table-column :label="$tp('文件大小')" width="120">
               <template #default="{ row }">{{ formatFileSize(row.fileSize) }}</template>
             </el-table-column>
             <el-table-column label="SHA-256" min-width="210" show-overflow-tooltip>
               <template #default="{ row }">{{ row.sha256 || '-' }}</template>
             </el-table-column>
-            <el-table-column label="状态" width="110">
+            <el-table-column :label="$tp('状态')" width="110">
               <template #default="{ row }">
                 <el-tag :type="row.uploadStatus === 'READY' ? 'success' : 'warning'">
                   {{ row.uploadStatus === 'READY' ? '可用' : '待完成' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="上传时间" width="180">
+            <el-table-column :label="$tp('上传时间')" width="180">
               <template #default="{ row }">{{ formatDateTime(row.createTime) }}</template>
             </el-table-column>
-            <el-table-column label="操作" width="150" fixed="right" align="right">
+            <el-table-column :label="$tp('操作')" width="150" fixed="right" align="right">
               <template #default="{ row }">
                 <el-button link type="primary" :disabled="row.uploadStatus !== 'READY'" @click="download(row)">下载</el-button>
                 <el-button link type="danger" @click="remove(row)">删除</el-button>

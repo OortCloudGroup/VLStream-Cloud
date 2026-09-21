@@ -39,10 +39,10 @@
     >
       <el-table-column type="selection" :width="clacPXToVW(55)" />
       <el-table-column label="ip" prop="ip" show-overflow-tooltip />
-      <el-table-column label="摄像头名称" prop="name" show-overflow-tooltip />
-      <el-table-column label="地址" prop="addressMap" show-overflow-tooltip />
-      <el-table-column label="用户名" prop="userName" show-overflow-tooltip />
-      <el-table-column label="密码" prop="password">
+      <el-table-column :label="$tp('摄像头名称')" prop="name" show-overflow-tooltip />
+      <el-table-column :label="$tp('地址')" prop="addressMap" show-overflow-tooltip />
+      <el-table-column :label="$tp('用户名')" prop="userName" show-overflow-tooltip />
+      <el-table-column :label="$tp('密码')" prop="password">
         <template #default="scope">
           <div class="password-container">
             <span v-if="!passwordVisibility[scope.row.id]">******</span>
@@ -53,22 +53,22 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="通道号" prop="channel" :width="clacPXToVW(90)" />
-      <el-table-column label="设备厂商" prop="firm" :width="clacPXToVW(120)">
+      <el-table-column :label="$tp('通道号')" prop="channel" :width="clacPXToVW(90)" />
+      <el-table-column :label="$tp('设备厂商')" prop="firm" :width="clacPXToVW(120)">
         <template #default="scope">
           <dict-tag :options="rtsp_manufacturer" :value="scope.row.firm"/>
         </template>
       </el-table-column>
-      <el-table-column label="播放类型" prop="playType" :width="clacPXToVW(100)">
+      <el-table-column :label="$tp('播放类型')" prop="playType" :width="clacPXToVW(100)">
         <template #default="scope">
           <el-tag type="primary" v-if="scope.row.playType === '1'">本地</el-tag>
           <el-tag type="primary" v-if="scope.row.playType === '2'">推流</el-tag>
           <el-tag type="primary" v-if="scope.row.playType === '3'">EasyNTS</el-tag>
         </template>
       </el-table-column>
-      <el-table-column key="streamId" label="流id" prop="streamId" min-width="150" show-overflow-tooltip />
-      <el-table-column key="remark" label="备注" prop="remark" min-width="150" show-overflow-tooltip />
-      <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(260)">
+      <el-table-column key="streamId" :label="$tp('流id')" prop="streamId" min-width="150" show-overflow-tooltip />
+      <el-table-column key="remark" :label="$tp('备注')" prop="remark" min-width="150" show-overflow-tooltip />
+      <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(260)">
         <template #default="scope">
           <div class="operateAppBox flexRowAC" @click.stop>
             <div class="new_table_svg_group" @click="handleView(scope.row)" v-hasPermi="['rtsp:RtspDevice:view']">

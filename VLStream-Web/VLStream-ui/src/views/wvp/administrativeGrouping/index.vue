@@ -97,15 +97,15 @@
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" :width="clacPXToVW(55)" />
-            <el-table-column label="序号" :width="clacPXToVW(65)">
+            <el-table-column :label="$tp('序号')" :width="clacPXToVW(65)">
               <template #default="scope">
                 {{ scope.$index + 1 }}
               </template>
             </el-table-column>
-            <el-table-column prop="name" label="名称" show-overflow-tooltip />
-            <el-table-column prop="deviceId" label="设备编号" show-overflow-tooltip />
-            <el-table-column prop="createTime" label="创建时间" show-overflow-tooltip />
-            <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(220)">
+            <el-table-column prop="name" :label="$tp('名称')" show-overflow-tooltip />
+            <el-table-column prop="deviceId" :label="$tp('设备编号')" show-overflow-tooltip />
+            <el-table-column prop="createTime" :label="$tp('创建时间')" show-overflow-tooltip />
+            <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(220)">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div v-if="scope.row.id && checkEditPermi" class="new_table_svg_group" @click="handleRowUpdate(scope.row)">

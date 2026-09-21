@@ -48,13 +48,13 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" />
-      <el-table-column prop="tenantId" label="租户ID" min-width="120" />
-      <el-table-column prop="tenantName" label="租户名称" min-width="150" />
-      <el-table-column prop="domain" label="域名地址" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="linkman" label="联系人" min-width="120" />
-      <el-table-column prop="contactNumber" label="联系电话" min-width="120" />
-      <el-table-column prop="address" label="联系地址" min-width="200" show-overflow-tooltip />
-      <el-table-column label="操作" width="180" fixed="right" align="right">
+      <el-table-column prop="tenantId" :label="$tp('租户ID')" min-width="120" />
+      <el-table-column prop="tenantName" :label="$tp('租户名称')" min-width="150" />
+      <el-table-column prop="domain" :label="$tp('域名地址')" min-width="150" show-overflow-tooltip />
+      <el-table-column prop="linkman" :label="$tp('联系人')" min-width="120" />
+      <el-table-column prop="contactNumber" :label="$tp('联系电话')" min-width="120" />
+      <el-table-column prop="address" :label="$tp('联系地址')" min-width="200" show-overflow-tooltip />
+      <el-table-column :label="$tp('操作')" width="180" fixed="right" align="right">
         <template #default="scope">
           <div class="operation-buttons">
             <el-button class="operation-btn edit-btn" @click="handleEdit(scope.row)">

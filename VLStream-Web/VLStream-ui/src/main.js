@@ -13,7 +13,7 @@ import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { createPinia } from 'pinia'
 import './style.css'
-import { i18n } from '@/i18n'
+import { i18n, translatePhrase } from '@/i18n'
 import { installLegacyDomI18n } from '@/i18n/legacyDom'
 
 import Avue from '@smallwei/avue';
@@ -43,6 +43,7 @@ if (vlsAccessToken) {
 }
 
 const app = createApp(App)
+app.config.globalProperties.$tp = translatePhrase
 
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)

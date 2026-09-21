@@ -100,10 +100,10 @@
         @row-click="handleRowClick"
       >
         <el-table-column type="selection" :width="clacPXToVW(55)" align="center" />
-        <el-table-column prop="modelId" label="模型ID" align="center" />
-        <el-table-column prop="algorithmName" label="算法名称" show-overflow-tooltip />
-        <el-table-column prop="trainAlgorithm" label="训练算法" show-overflow-tooltip />
-        <el-table-column prop="trainStatus" label="训练状态" align="center">
+        <el-table-column prop="modelId" :label="$tp('模型ID')" align="center" />
+        <el-table-column prop="algorithmName" :label="$tp('算法名称')" show-overflow-tooltip />
+        <el-table-column prop="trainAlgorithm" :label="$tp('训练算法')" show-overflow-tooltip />
+        <el-table-column prop="trainStatus" :label="$tp('训练状态')" align="center">
           <template #default="scope">
             <el-tag
               :type="getStatusType(scope.row.trainStatus)"
@@ -114,7 +114,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="modelEffect" label="模型效果" align="center">
+        <el-table-column prop="modelEffect" :label="$tp('模型效果')" align="center">
           <template #default="scope">
             <div v-if="scope.row.trainStatus === '训练完成'" class="model-metrics">
               <div class="metric-item">
@@ -137,13 +137,13 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="targetModel" label="对应模型" align="center">
+        <el-table-column prop="targetModel" :label="$tp('对应模型')" align="center">
           <template #default="scope">
             <span v-if="scope.row.targetModel">{{ scope.row.targetModel }}</span>
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" :min-width="clacPXToVW(420)" fixed="right" align="right">
+        <el-table-column :label="$tp('操作')" :min-width="clacPXToVW(420)" fixed="right" align="right">
           <template #default="scope">
             <div class="operate" @click.stop>
               <!-- null / empty : training and -->
@@ -328,16 +328,16 @@
               v-loading="modelHistoryLoading"
               class="history-table"
             >
-              <el-table-column type="index" label="序号" width="70" />
-              <el-table-column prop="modelName" label="模型名称" min-width="140" />
-              <el-table-column prop="version" label="版本" width="80" />
-              <el-table-column prop="modelFormatDesc" label="格式" width="90" />
-              <el-table-column prop="statusDesc" label="状态" width="90" />
+              <el-table-column type="index" :label="$tp('序号')" width="70" />
+              <el-table-column prop="modelName" :label="$tp('模型名称')" min-width="140" />
+              <el-table-column prop="version" :label="$tp('版本')" width="80" />
+              <el-table-column prop="modelFormatDesc" :label="$tp('格式')" width="90" />
+              <el-table-column prop="statusDesc" :label="$tp('状态')" width="90" />
               <el-table-column prop="formattedAccuracy" label="Accuracy" width="110" />
-              <el-table-column prop="modelPath" label="模型路径" min-width="220" show-overflow-tooltip />
-              <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
-              <el-table-column prop="downloadCount" label="下载次数" width="110" />
-              <el-table-column prop="createTime" label="创建时间" width="170" />
+              <el-table-column prop="modelPath" :label="$tp('模型路径')" min-width="220" show-overflow-tooltip />
+              <el-table-column prop="description" :label="$tp('描述')" min-width="200" show-overflow-tooltip />
+              <el-table-column prop="downloadCount" :label="$tp('下载次数')" width="110" />
+              <el-table-column prop="createTime" :label="$tp('创建时间')" width="170" />
             </el-table>
 
             <div class="history-pagination">

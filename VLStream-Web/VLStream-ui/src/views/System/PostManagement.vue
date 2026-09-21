@@ -40,21 +40,21 @@
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" :width="clacPXToVW(55)" />
-            <el-table-column label="序号" :width="clacPXToVW(65)">
+            <el-table-column :label="$tp('序号')" :width="clacPXToVW(65)">
               <template #default="scope">
                 {{ scope.$index + (pagination.current - 1) * pagination.size + 1 }}
               </template>
             </el-table-column>
-            <el-table-column prop="postCode" label="岗位编码" min-width="120" />
-            <el-table-column prop="postName" label="岗位名称" min-width="150" />
-            <el-table-column prop="category" label="岗位分类" min-width="100" align="center">
+            <el-table-column prop="postCode" :label="$tp('岗位编码')" min-width="120" />
+            <el-table-column prop="postName" :label="$tp('岗位名称')" min-width="150" />
+            <el-table-column prop="category" :label="$tp('岗位分类')" min-width="100" align="center">
               <template #default="scope">
                 <span>{{ scope.row.category === 1 ? '高管' : scope.row.category === 2 ? '经理' : '员工' }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="sort" label="排序" :width="clacPXToVW(80)" align="center" />
-            <el-table-column prop="remark" label="备注" min-width="200" show-overflow-tooltip />
-            <el-table-column label="操作" :width="clacPXToVW(180)" fixed="right" align="right">
+            <el-table-column prop="sort" :label="$tp('排序')" :width="clacPXToVW(80)" align="center" />
+            <el-table-column prop="remark" :label="$tp('备注')" min-width="200" show-overflow-tooltip />
+            <el-table-column :label="$tp('操作')" :width="clacPXToVW(180)" fixed="right" align="right">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handleEdit(scope.row)">

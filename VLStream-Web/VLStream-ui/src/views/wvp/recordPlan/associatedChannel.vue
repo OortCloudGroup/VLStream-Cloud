@@ -47,10 +47,10 @@
 
       <table-self v-loading="loading" :data="channelList" @selection-change="handleSelectionChange" class="new_table" header-cell-class-name="header_tenant_cell" stripe>
         <el-table-column type="selection" :width="clacPXToVW(55)" align="center"/>
-        <el-table-column prop="gbName" label="名称" :min-width="clacPXToVW(180)" align="center"/>
-        <el-table-column prop="gbDeviceId" label="编号" :min-width="clacPXToVW(180)" align="center"/>
-        <el-table-column prop="gbManufacturer" label="厂家" :min-width="clacPXToVW(100)" align="center"/>
-        <el-table-column label="类型" :min-width="clacPXToVW(100)" align="center">
+        <el-table-column prop="gbName" :label="$tp('名称')" :min-width="clacPXToVW(180)" align="center"/>
+        <el-table-column prop="gbDeviceId" :label="$tp('编号')" :min-width="clacPXToVW(180)" align="center"/>
+        <el-table-column prop="gbManufacturer" :label="$tp('厂家')" :min-width="clacPXToVW(100)" align="center"/>
+        <el-table-column :label="$tp('类型')" :min-width="clacPXToVW(100)" align="center">
           <template #default="scope">
             <div slot="reference" class="name-wrapper">
               <el-tag effect="plain" v-if="scope.row.dataType === 1">国标设备</el-tag>
@@ -59,7 +59,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="状态" :min-width="clacPXToVW(100)" align="center">
+        <el-table-column :label="$tp('状态')" :min-width="clacPXToVW(100)" align="center">
           <template #default="scope">
             <div slot="reference" class="name-wrapper">
               <el-tag v-if="scope.row.gbStatus === 'ON'">在线</el-tag>
@@ -90,11 +90,11 @@
 
         <table-self v-loading="loading" :data="deviceList" @selection-change="handleSelectionDeviceChange" class="new_table" header-cell-class-name="header_tenant_cell" stripe>
           <el-table-column type="selection" :width="clacPXToVW(55)" align="center"/>
-          <el-table-column prop="name" label="名称" align="center"/>
-          <el-table-column prop="deviceId" label="设备编号" align="center"/>
-          <el-table-column prop="channelCount" label="通道数" align="center"/>
-          <el-table-column prop="manufacturer" label="厂家" align="center"/>
-          <el-table-column label="地址" align="center">
+          <el-table-column prop="name" :label="$tp('名称')" align="center"/>
+          <el-table-column prop="deviceId" :label="$tp('设备编号')" align="center"/>
+          <el-table-column prop="channelCount" :label="$tp('通道数')" align="center"/>
+          <el-table-column prop="manufacturer" :label="$tp('厂家')" align="center"/>
+          <el-table-column :label="$tp('地址')" align="center">
             <template #default="scope">
               <div slot="reference" class="name-wrapper">
                 <el-tag v-if="scope.row.hostAddress" size="medium">{{ scope.row.hostAddress }}</el-tag>
@@ -102,7 +102,7 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="状态" align="center">
+          <el-table-column :label="$tp('状态')" align="center">
             <template #default="scope">
               <div slot="reference" class="name-wrapper">
                 <el-tag v-if="scope.row.onLine">在线</el-tag>

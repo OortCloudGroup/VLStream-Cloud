@@ -3,9 +3,9 @@
     <div class="source-heading"><div><h3>数据来源</h3><p>配置外部 S3 对象存储或公开文件下载地址，导入的数据统一保存到当前存储中。</p></div><el-button type="primary" @click="edit()">添加数据来源</el-button></div>
     <div class="source-search"><el-input v-model="query.keyword" clearable placeholder="搜索来源名称" @keyup.enter="search" @clear="search" /><el-button @click="search">搜索</el-button></div>
     <el-table :data="rows" empty-text="暂无数据来源，可添加外部 S3 或公开数据集链接">
-      <el-table-column prop="name" label="来源名称" min-width="150" /><el-table-column label="类型" width="140"><template #default="{ row }">{{ row.sourceType === 's3' ? 'S3 对象存储' : '公开文件链接' }}</template></el-table-column>
-      <el-table-column prop="endpoint" label="地址" min-width="230" show-overflow-tooltip /><el-table-column prop="bucketName" label="Bucket" width="130" /><el-table-column prop="keyPrefix" label="Prefix" width="140" show-overflow-tooltip />
-      <el-table-column label="操作" width="225"><template #default="{ row }"><el-button link type="primary" @click="emit('use-source', row)">导入</el-button><el-button v-if="row.sourceType === 's3'" link @click="check(row)">测试连接</el-button><el-button link @click="edit(row)">编辑</el-button><el-button link type="danger" @click="remove(row)">删除</el-button></template></el-table-column>
+      <el-table-column prop="name" :label="$tp('来源名称')" min-width="150" /><el-table-column :label="$tp('类型')" width="140"><template #default="{ row }">{{ row.sourceType === 's3' ? 'S3 对象存储' : '公开文件链接' }}</template></el-table-column>
+      <el-table-column prop="endpoint" :label="$tp('地址')" min-width="230" show-overflow-tooltip /><el-table-column prop="bucketName" label="Bucket" width="130" /><el-table-column prop="keyPrefix" label="Prefix" width="140" show-overflow-tooltip />
+      <el-table-column :label="$tp('操作')" width="225"><template #default="{ row }"><el-button link type="primary" @click="emit('use-source', row)">导入</el-button><el-button v-if="row.sourceType === 's3'" link @click="check(row)">测试连接</el-button><el-button link @click="edit(row)">编辑</el-button><el-button link type="danger" @click="remove(row)">删除</el-button></template></el-table-column>
     </el-table>
     <el-pagination v-model:current-page="query.page" :page-size="20" :total="total" layout="total, prev, pager, next" @current-change="load" />
     <DatasetImportHistory />

@@ -19,15 +19,15 @@
         </div>
         <TableSelf current-row-key="taskId" class="new_table" header-cell-class-name="header_cell" stripe :data="tableData">
           <el-table-column type="selection" :width="clacPXToVW(55)" />
-          <el-table-column label="序号" type="index" :width="clacPXToVW(60)" align="center">
+          <el-table-column :label="$tp('序号')" type="index" :width="clacPXToVW(60)" align="center">
             <template #default="scope">
               {{ scope.$index + 1 + (queryParams.pageNum - 1) * queryParams.pageSize }}
             </template>
           </el-table-column>
-          <el-table-column label="工单编号" align="center" prop="workorderNumber" :show-overflow-tooltip="true" :width="clacPXToVW(140)" />
-          <el-table-column label="工单标题" align="center" prop="title" :show-overflow-tooltip="true" :width="clacPXToVW(180)" />
-          <el-table-column label="所属分类" align="center" prop="categoryName" :width="clacPXToVW(140)" />
-          <el-table-column label="工单来源" align="center" prop="source">
+          <el-table-column :label="$tp('工单编号')" align="center" prop="workorderNumber" :show-overflow-tooltip="true" :width="clacPXToVW(140)" />
+          <el-table-column :label="$tp('工单标题')" align="center" prop="title" :show-overflow-tooltip="true" :width="clacPXToVW(180)" />
+          <el-table-column :label="$tp('所属分类')" align="center" prop="categoryName" :width="clacPXToVW(140)" />
+          <el-table-column :label="$tp('工单来源')" align="center" prop="source">
             <template #default="scope">
               <div v-if="scope.row.source">
                 {{ scope.row.source }}
@@ -35,19 +35,19 @@
               <span v-else>-</span>
             </template>
           </el-table-column>
-          <el-table-column label="流程版本" align="center" :width="clacPXToVW(100)">
+          <el-table-column :label="$tp('流程版本')" align="center" :width="clacPXToVW(100)">
             <template #default="scope">
               <el-tag>
                 v{{ scope.row.procDefVersion }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="发起人" align="center">
+          <el-table-column :label="$tp('发起人')" align="center">
             <template #default="scope">
               <label>{{ scope.row.createBy }}</label>
             </template>
           </el-table-column>
-          <el-table-column label="工单状态" align="center">
+          <el-table-column :label="$tp('工单状态')" align="center">
             <template #default="scope">
               <div v-if="scope.row.workorderStatus" class="workorderStatus">
                 <span v-if="scope.row.workorderStatus==='pendingDispatch'" class="LKL">待派单</span>
@@ -62,10 +62,10 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="接收时间" align="center" prop="createTime" :width="clacPXToVW(180)" />
-          <el-table-column v-if="false" label="审批时间" align="center" prop="endTime" :width="clacPXToVW(180)" />
-          <el-table-column v-if="false" label="耗时" align="center" prop="processingTime" :width="clacPXToVW(180)" />
-          <el-table-column align="right" label="操作" fixed="right" :width="clacPXToVW(240)">
+          <el-table-column :label="$tp('接收时间')" align="center" prop="createTime" :width="clacPXToVW(180)" />
+          <el-table-column v-if="false" :label="$tp('审批时间')" align="center" prop="endTime" :width="clacPXToVW(180)" />
+          <el-table-column v-if="false" :label="$tp('耗时')" align="center" prop="processingTime" :width="clacPXToVW(180)" />
+          <el-table-column align="right" :label="$tp('操作')" fixed="right" :width="clacPXToVW(240)">
             <template #default="scope">
               <div class="operateBox flexRowAC">
                 <div class="new_table_svg_group" @click="handleDetail(scope.row)">

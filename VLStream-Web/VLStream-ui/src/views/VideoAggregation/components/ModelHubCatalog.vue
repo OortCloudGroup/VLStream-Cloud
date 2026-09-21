@@ -27,13 +27,13 @@
       </div>
     </div>
     <el-pagination v-if="total > 12" v-model:current-page="page" :page-size="12" :total="total" :disabled="loading" layout="total, prev, pager, next" background @current-change="load" />
-    <el-dialog v-model="filesVisible" :title="`${activeModel?.name || '模型'} · 文件`" width="720px" append-to-body :close-on-click-modal="false" :before-close="closeFiles">
+    <el-dialog v-model="filesVisible" class="locale-dialog locale-dialog--wide" :title="`${activeModel?.name || '模型'} · 文件`" append-to-body :close-on-click-modal="false" :before-close="closeFiles">
       <div class="file-toolbar"><el-button :disabled="!filePath || fileLoading || downloading" @click="parentDirectory">上一级</el-button><span>{{ filePath || '/' }}</span></div>
       <div v-if="fileError" class="hub-error"><el-alert :title="fileError" type="error" :closable="false" /><el-button v-if="/登录|身份|401|4004/.test(fileError)" @click="login">重新登录</el-button></div>
-      <el-table v-loading="fileLoading" :data="files" empty-text="当前目录没有文件">
-        <el-table-column prop="name" label="名称" min-width="240" show-overflow-tooltip />
-        <el-table-column label="大小" width="110"><template #default="{ row }">{{ row.type === 'dir' ? '目录' : formatSize(row.size) }}</template></el-table-column>
-        <el-table-column label="操作" width="100"><template #default="{ row }"><el-button link type="primary" :disabled="downloading || fileLoading" @click="row.type === 'dir' ? loadFiles(row.path) : download(row)">{{ row.type === 'dir' ? '打开' : '下载' }}</el-button></template></el-table-column>
+      <el-table v-loading="fileLoading" :data="files" scrollbar-always-on empty-text="当前目录没有文件">
+        <el-table-column prop="name" :label="$tp('名称')" min-width="240" show-overflow-tooltip />
+        <el-table-column :label="$tp('大小')" width="110"><template #default="{ row }">{{ row.type === 'dir' ? '目录' : formatSize(row.size) }}</template></el-table-column>
+        <el-table-column :label="$tp('操作')" width="100"><template #default="{ row }"><el-button link type="primary" :disabled="downloading || fileLoading" @click="row.type === 'dir' ? loadFiles(row.path) : download(row)">{{ row.type === 'dir' ? '打开' : '下载' }}</el-button></template></el-table-column>
       </el-table>
       <template #footer><el-button :disabled="downloading" @click="filesVisible = false">关闭</el-button></template>
     </el-dialog>

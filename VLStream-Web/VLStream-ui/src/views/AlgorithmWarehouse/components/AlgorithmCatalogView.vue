@@ -91,12 +91,12 @@
         <el-table v-else v-loading="loading" :data="visibleRows" row-key="id" highlight-current-row
                   @selection-change="selectedRows = $event" @row-click="row => activeCategoryId = row.id">
           <el-table-column type="selection" width="52" />
-          <el-table-column type="index" label="序号" width="72" />
-          <el-table-column prop="name" label="名称" min-width="180" />
-          <el-table-column label="上级分类" min-width="180"><template #default="{ row }">{{ categoryName(row.parentId) }}</template></el-table-column>
-          <el-table-column label="拥有下级" width="150"><template #default="{ row }">{{ childCount(row.id) }}</template></el-table-column>
-          <el-table-column prop="createTime" label="创建时间" min-width="170" />
-          <el-table-column label="操作" width="110" align="right"><template #default="{ row }">
+          <el-table-column type="index" :label="$tp('序号')" width="72" />
+          <el-table-column prop="name" :label="$tp('名称')" min-width="180" />
+          <el-table-column :label="$tp('上级分类')" min-width="180"><template #default="{ row }">{{ categoryName(row.parentId) }}</template></el-table-column>
+          <el-table-column :label="$tp('拥有下级')" width="150"><template #default="{ row }">{{ childCount(row.id) }}</template></el-table-column>
+          <el-table-column prop="createTime" :label="$tp('创建时间')" min-width="170" />
+          <el-table-column :label="$tp('操作')" width="110" align="right"><template #default="{ row }">
             <el-button link type="primary" :icon="Edit" @click.stop="openEdit(row)" />
             <el-button link type="danger" :icon="Delete" @click.stop="removeCategories([row.id])" />
           </template></el-table-column>

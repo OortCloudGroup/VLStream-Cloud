@@ -84,24 +84,24 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" :width="clacPXToVW(55)" />
-        <el-table-column prop="gbName" label="名称" show-overflow-tooltip />
-        <el-table-column prop="gbDeviceId" label="编号" show-overflow-tooltip />
-        <el-table-column prop="gbManufacturer" label="厂家" show-overflow-tooltip />
-        <el-table-column prop="gbAddress" label="位置" show-overflow-tooltip />
-        <el-table-column label="类型" :width="clacPXToVW(120)">
+        <el-table-column prop="gbName" :label="$tp('名称')" show-overflow-tooltip />
+        <el-table-column prop="gbDeviceId" :label="$tp('编号')" show-overflow-tooltip />
+        <el-table-column prop="gbManufacturer" :label="$tp('厂家')" show-overflow-tooltip />
+        <el-table-column prop="gbAddress" :label="$tp('位置')" show-overflow-tooltip />
+        <el-table-column :label="$tp('类型')" :width="clacPXToVW(120)">
           <template #default="scope">
             <el-tag effect="plain" v-if="scope.row.dataType === 1">国标设备</el-tag>
             <el-tag effect="plain" type="success" v-else-if="scope.row.dataType === 2">推流设备</el-tag>
             <el-tag effect="plain" type="warning" v-else-if="scope.row.dataType === 3">拉流代理</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="状态" :width="clacPXToVW(90)">
+        <el-table-column :label="$tp('状态')" :width="clacPXToVW(90)">
           <template #default="scope">
             <el-tag v-if="scope.row.gbStatus === 'ON'">在线</el-tag>
             <el-tag type="info" v-else>离线</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(140)">
+        <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(140)">
           <template #default="scope">
             <div class="operateAppBox flexRowAC" @click.stop>
               <div class="new_table_svg_group" @click="onMap(scope.row)">
@@ -155,17 +155,17 @@
 
         <el-table v-loading="loadingSelect" :data="channelSelectList" @selection-change="handleSelectionSelectChange">
           <el-table-column type="selection" width="55" align="center" />
-          <el-table-column prop="gbName" label="名称" align="center" />
-          <el-table-column prop="gbDeviceId" label="编号" align="center" />
-          <el-table-column prop="gbManufacturer" label="厂家" align="center" />
-          <el-table-column label="类型" align="center">
+          <el-table-column prop="gbName" :label="$tp('名称')" align="center" />
+          <el-table-column prop="gbDeviceId" :label="$tp('编号')" align="center" />
+          <el-table-column prop="gbManufacturer" :label="$tp('厂家')" align="center" />
+          <el-table-column :label="$tp('类型')" align="center">
             <template #default="scope">
               <el-tag effect="plain" v-if="scope.row.dataType === 1">国标设备</el-tag>
               <el-tag effect="plain" type="success" v-else-if="scope.row.dataType === 2">推流设备</el-tag>
               <el-tag effect="plain" type="warning" v-else-if="scope.row.dataType === 3">拉流代理</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="状态" align="center">
+          <el-table-column :label="$tp('状态')" align="center">
             <template #default="scope">
               <el-tag v-if="scope.row.gbStatus === 'ON'">在线</el-tag>
               <el-tag type="info" v-else>离线</el-tag>

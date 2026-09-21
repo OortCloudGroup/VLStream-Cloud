@@ -31,13 +31,13 @@
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" :width="clacPXToVW(55)" />
-          <el-table-column label="编号" prop="id" :width="clacPXToVW(80)" />
-          <el-table-column label="设备编号" prop="deviceId" show-overflow-tooltip />
-          <el-table-column label="通道编号" prop="channelId" show-overflow-tooltip />
-          <el-table-column label="报警等级" prop="alarmPriority" :width="clacPXToVW(110)" />
-          <el-table-column label="报警方式" prop="alarmMethodDescription" show-overflow-tooltip />
-          <el-table-column label="报警时间" prop="alarmTime" show-overflow-tooltip />
-          <el-table-column label="报警类型" prop="alarmTypeDescription" show-overflow-tooltip />
+          <el-table-column :label="$tp('编号')" prop="id" :width="clacPXToVW(80)" />
+          <el-table-column :label="$tp('设备编号')" prop="deviceId" show-overflow-tooltip />
+          <el-table-column :label="$tp('通道编号')" prop="channelId" show-overflow-tooltip />
+          <el-table-column :label="$tp('报警等级')" prop="alarmPriority" :width="clacPXToVW(110)" />
+          <el-table-column :label="$tp('报警方式')" prop="alarmMethodDescription" show-overflow-tooltip />
+          <el-table-column :label="$tp('报警时间')" prop="alarmTime" show-overflow-tooltip />
+          <el-table-column :label="$tp('报警类型')" prop="alarmTypeDescription" show-overflow-tooltip />
         </TableSelf>
 
         <div class="paginationBox flexRowAC">

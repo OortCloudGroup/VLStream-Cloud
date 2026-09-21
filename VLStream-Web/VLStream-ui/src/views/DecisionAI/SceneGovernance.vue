@@ -43,17 +43,17 @@
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" :width="clacPXToVW(55)" />
-          <el-table-column label="序号" :width="clacPXToVW(80)" align="center">
+          <el-table-column :label="$tp('序号')" :width="clacPXToVW(80)" align="center">
             <template #default="scope">
               {{ scope.$index + (currentPage - 1) * pageSize + 1 }}
             </template>
           </el-table-column>
-          <el-table-column prop="name" label="场景名称" show-overflow-tooltip />
-          <el-table-column prop="description" label="场景描述" show-overflow-tooltip />
+          <el-table-column prop="name" :label="$tp('场景名称')" show-overflow-tooltip />
+          <el-table-column prop="description" :label="$tp('场景描述')" show-overflow-tooltip />
 <!-- <el-table-column prop="algorithmName" label=" algorithm" /> -->
-          <el-table-column prop="camerasName" label="关联设备" show-overflow-tooltip />
+          <el-table-column prop="camerasName" :label="$tp('关联设备')" show-overflow-tooltip />
 <!-- <el-table-column prop="rules" label=" " /> -->
-          <el-table-column prop="status" label="状态" align="center">
+          <el-table-column prop="status" :label="$tp('状态')" align="center">
             <template #default="scope">
               <el-tag
                 :type="scope.row.status === 1 ? 'success' : 'danger'"
@@ -63,8 +63,8 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" />
-          <el-table-column label="操作" :width="clacPXToVW(160)" fixed="right" align="right">
+          <el-table-column prop="createTime" :label="$tp('创建时间')" />
+          <el-table-column :label="$tp('操作')" :width="clacPXToVW(160)" fixed="right" align="right">
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="handleEditRow(scope.row)">

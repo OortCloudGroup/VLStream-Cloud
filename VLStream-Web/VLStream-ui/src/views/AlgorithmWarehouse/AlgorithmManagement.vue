@@ -149,22 +149,22 @@
             @selection-change="handleLibrarySelectionChange"
         >
           <el-table-column type="selection" :width="clacPXToVW(55)" />
-          <el-table-column label="序号" :width="clacPXToVW(80)" align="center">
+          <el-table-column :label="$tp('序号')" :width="clacPXToVW(80)" align="center">
             <template #default="scope">
               {{ scope.$index + (repositoryCurrentPage - 1) * repositoryPageSize + 1 }}
             </template>
           </el-table-column>
-          <el-table-column prop="name" label="名称" show-overflow-tooltip />
-          <el-table-column prop="remark" label="备注" show-overflow-tooltip />
-          <el-table-column prop="algorithmCount" label="拥有算法" :width="clacPXToVW(120)" align="center" />
-          <el-table-column prop="repositoryType" label="类型" :width="clacPXToVW(120)" align="center">
+          <el-table-column prop="name" :label="$tp('名称')" show-overflow-tooltip />
+          <el-table-column prop="remark" :label="$tp('备注')" show-overflow-tooltip />
+          <el-table-column prop="algorithmCount" :label="$tp('拥有算法')" :width="clacPXToVW(120)" align="center" />
+          <el-table-column prop="repositoryType" :label="$tp('类型')" :width="clacPXToVW(120)" align="center">
             <template #default="scope">
               <el-tag :type="getRepositoryTypeTagType(scope.row.repositoryType)">
                 {{ getRepositoryTypeText(scope.row.repositoryType) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="状态" :width="clacPXToVW(100)" align="center">
+          <el-table-column prop="status" :label="$tp('状态')" :width="clacPXToVW(100)" align="center">
             <template #default="scope">
               <el-tag
                   :type="scope.row.status === 1 ? 'success' : 'danger'"
@@ -174,8 +174,8 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" :width="clacPXToVW(180)" />
-          <el-table-column label="操作" :width="clacPXToVW(220)" fixed="right" align="right">
+          <el-table-column prop="createTime" :label="$tp('创建时间')" :width="clacPXToVW(180)" />
+          <el-table-column :label="$tp('操作')" :width="clacPXToVW(220)" fixed="right" align="right">
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="editLibraryItem(scope.row)">
@@ -529,16 +529,16 @@
               @selection-change="handleDeviceSelectionChange"
           >
             <el-table-column type="selection" :width="clacPXToVW(55)" />
-            <el-table-column label="序号" :width="clacPXToVW(65)" align="center">
+            <el-table-column :label="$tp('序号')" :width="clacPXToVW(65)" align="center">
               <template #default="scope">
                 {{ scope.row.index || (scope.$index + (currentPage - 1) * pageSize + 1) }}
               </template>
             </el-table-column>
-            <el-table-column prop="deviceName" label="设备名称" show-overflow-tooltip />
-            <el-table-column prop="deviceId" label="设备ID" show-overflow-tooltip />
-            <el-table-column prop="deviceModel" label="设备型号" show-overflow-tooltip />
-            <el-table-column prop="deviceSerial" label="序列号" show-overflow-tooltip />
-            <el-table-column label="状态" :width="clacPXToVW(90)">
+            <el-table-column prop="deviceName" :label="$tp('设备名称')" show-overflow-tooltip />
+            <el-table-column prop="deviceId" :label="$tp('设备ID')" show-overflow-tooltip />
+            <el-table-column prop="deviceModel" :label="$tp('设备型号')" show-overflow-tooltip />
+            <el-table-column prop="deviceSerial" :label="$tp('序列号')" show-overflow-tooltip />
+            <el-table-column :label="$tp('状态')" :width="clacPXToVW(90)">
               <template #default="scope">
                 <el-tag :type="scope.row.online ? 'success' : 'info'">
                   {{ scope.row.online ? '在线' : '离线' }}
@@ -546,8 +546,8 @@
               </template>
             </el-table-column>
             <el-table-column prop="ipAddr" label="IP" show-overflow-tooltip />
-            <el-table-column prop="firmwareVersion" label="RootFS版本" show-overflow-tooltip />
-            <el-table-column prop="lastHeartbeatTime" label="最后心跳" show-overflow-tooltip />
+            <el-table-column prop="firmwareVersion" :label="$tp('RootFS版本')" show-overflow-tooltip />
+            <el-table-column prop="lastHeartbeatTime" :label="$tp('最后心跳')" show-overflow-tooltip />
           </TableSelf>
 
           <div class="paginationBox flexRowAC">

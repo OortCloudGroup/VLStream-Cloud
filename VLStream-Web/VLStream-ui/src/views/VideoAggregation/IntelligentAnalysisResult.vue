@@ -33,14 +33,14 @@
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" :width="clacPXToVW(55)" />
-            <el-table-column label="序号" :width="clacPXToVW(65)">
+            <el-table-column :label="$tp('序号')" :width="clacPXToVW(65)">
               <template #default="scope">
                 {{ scope.$index + (currentPage - 1) * pageSize + 1 }}
               </template>
             </el-table-column>
-            <el-table-column prop="analysisName" label="分析名称" show-overflow-tooltip />
-            <el-table-column prop="analysisType" label="分析类型" />
-            <el-table-column prop="screenshot" label="抓拍截图" align="center">
+            <el-table-column prop="analysisName" :label="$tp('分析名称')" show-overflow-tooltip />
+            <el-table-column prop="analysisType" :label="$tp('分析类型')" />
+            <el-table-column prop="screenshot" :label="$tp('抓拍截图')" align="center">
               <template #default="scope">
                 <div class="screenshot-container">
                   <img :src="scope.row.screenshot" alt="截图" class="screenshot-image" />
@@ -48,10 +48,10 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="area" label="区域" />
-            <el-table-column prop="camera" label="摄像头" show-overflow-tooltip />
-            <el-table-column prop="analysisTime" label="分析时间" />
-            <el-table-column fixed="right" align="right" label="操作" :width="clacPXToVW(120)">
+            <el-table-column prop="area" :label="$tp('区域')" />
+            <el-table-column prop="camera" :label="$tp('摄像头')" show-overflow-tooltip />
+            <el-table-column prop="analysisTime" :label="$tp('分析时间')" />
+            <el-table-column fixed="right" align="right" :label="$tp('操作')" :width="clacPXToVW(120)">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handlePlay(scope.row)">

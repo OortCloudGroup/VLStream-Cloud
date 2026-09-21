@@ -40,21 +40,21 @@
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" :width="clacPXToVW(55)" />
-            <el-table-column label="序号" :width="clacPXToVW(65)">
+            <el-table-column :label="$tp('序号')" :width="clacPXToVW(65)">
               <template #default="scope">
                 {{ scope.$index + (pagination.current - 1) * pagination.size + 1 }}
               </template>
             </el-table-column>
-            <el-table-column prop="scopeName" label="范围名称" min-width="120" />
-            <el-table-column prop="resourceCode" label="资源编号" min-width="120" />
-            <el-table-column prop="scopePath" label="接口路径" min-width="180" show-overflow-tooltip />
-            <el-table-column prop="scopeType" label="规则类型" :width="clacPXToVW(120)" align="center">
+            <el-table-column prop="scopeName" :label="$tp('范围名称')" min-width="120" />
+            <el-table-column prop="resourceCode" :label="$tp('资源编号')" min-width="120" />
+            <el-table-column prop="scopePath" :label="$tp('接口路径')" min-width="180" show-overflow-tooltip />
+            <el-table-column prop="scopeType" :label="$tp('规则类型')" :width="clacPXToVW(120)" align="center">
               <template #default="scope">
                 <span>{{ getScopeTypeName(scope.row.scopeType) }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
-            <el-table-column label="操作" :width="clacPXToVW(180)" fixed="right" align="right">
+            <el-table-column prop="remark" :label="$tp('备注')" min-width="150" show-overflow-tooltip />
+            <el-table-column :label="$tp('操作')" :width="clacPXToVW(180)" fixed="right" align="right">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handleEdit(scope.row)">

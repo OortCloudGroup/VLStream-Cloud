@@ -445,7 +445,7 @@
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" :width="clacPXToVW(55)" />
-          <el-table-column label="实例名称/ID">
+          <el-table-column :label="$tp('实例名称/ID')">
             <template #default="{ row }">
               <div class="instance-info">
                 <div class="instance-name">{{ row.instanceName }}</div>
@@ -453,7 +453,7 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="instanceStatus" label="状态">
+          <el-table-column prop="instanceStatus" :label="$tp('状态')">
             <template #default="{ row }">
               <el-tag :type="getStatusTagType(row.instanceStatus)" size="small">
                 <el-icon class="status-icon">
@@ -463,7 +463,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="计算配置">
+          <el-table-column :label="$tp('计算配置')">
             <template #default="{ row }">
               <div class="compute-config">
                 <div class="config-item">CPU: {{ row.cpuLimit || '未设置' }}</div>
@@ -472,32 +472,32 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="镜像信息">
+          <el-table-column :label="$tp('镜像信息')">
             <template #default="{ row }">
               <div class="image-info">
                 <div class="image-name">{{ row.imageName || '未设置' }}</div>
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="训练任务">
+          <el-table-column :label="$tp('训练任务')">
             <template #default="{ row }">
               <div class="port-info">任务ID：{{ row.trainingTaskId || '-' }}</div>
               <div class="port-info">GPU：{{ row.gpuIndex ?? '-' }}</div>
             </template>
           </el-table-column>
-          <el-table-column label="创建时间">
+          <el-table-column :label="$tp('创建时间')">
             <template #default="{ row }">
               {{ row.createTime || '-' }}
             </template>
           </el-table-column>
-          <el-table-column label="快捷访问">
+          <el-table-column :label="$tp('快捷访问')">
             <template #default="{ row }">
               <div class="quick-access">
                 <span>{{ row.serverIp || '-' }}</span>
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="操作" :width="clacPXToVW(300)" fixed="right">
+          <el-table-column :label="$tp('操作')" :width="clacPXToVW(300)" fixed="right">
             <template #default="{ row }">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="viewDetails(row)">

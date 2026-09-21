@@ -6,7 +6,7 @@
 -->
 
 <template>
-  <el-dialog v-model="dialogVisible" class="diaOutSet" title="事件反馈" top="5vh" width="60%" :before-close="handleClose" destroy-on-close>
+  <el-dialog v-model="dialogVisible" class="diaOutSet locale-dialog locale-dialog--wide" title="事件反馈" top="5vh" :before-close="handleClose" destroy-on-close>
     <div>
       <div class="details_container">
         <div class="basicTitle codeActBox flexRowAC">
@@ -112,10 +112,10 @@
       </div>
       <div class="d_h_maintainBtns">
         <el-button @click="handleClose" class="common_btn">
-          取 消
+          取消
         </el-button>
         <el-button type="primary" :disabled="formLoading" @click="addFeedbackForm" class="common_btn">
-          确 定
+          确定
         </el-button>
       </div>
     </div>

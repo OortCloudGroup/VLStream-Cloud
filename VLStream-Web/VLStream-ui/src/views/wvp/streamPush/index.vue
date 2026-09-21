@@ -36,29 +36,29 @@
           :data="pushList"
           :row-key="(row) => row.app + row.stream"
         >
-          <el-table-column prop="gbName" label="名称" show-overflow-tooltip />
-          <el-table-column prop="app" label="应用名" show-overflow-tooltip />
-          <el-table-column prop="stream" label="流ID" show-overflow-tooltip />
-          <el-table-column label="推流状态" :width="clacPXToVW(110)">
+          <el-table-column prop="gbName" :label="$tp('名称')" show-overflow-tooltip />
+          <el-table-column prop="app" :label="$tp('应用名')" show-overflow-tooltip />
+          <el-table-column prop="stream" :label="$tp('流ID')" show-overflow-tooltip />
+          <el-table-column :label="$tp('推流状态')" :width="clacPXToVW(110)">
             <template #default="scope">
               <el-tag v-if="scope.row.pushing">推流中</el-tag>
               <el-tag type="info" v-else>已停止</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="gbDeviceId" label="国标编码" show-overflow-tooltip />
-          <el-table-column label="位置信息" show-overflow-tooltip>
+          <el-table-column prop="gbDeviceId" :label="$tp('国标编码')" show-overflow-tooltip />
+          <el-table-column :label="$tp('位置信息')" show-overflow-tooltip>
             <template #default="scope">
               <span v-if="scope.row.gbLongitude && scope.row.gbLatitude">{{ scope.row.gbLongitude }} / {{ scope.row.gbLatitude }}</span>
               <span v-else>无</span>
             </template>
           </el-table-column>
-          <el-table-column prop="mediaServerId" label="流媒体" show-overflow-tooltip />
-          <el-table-column label="开始时间" show-overflow-tooltip>
+          <el-table-column prop="mediaServerId" :label="$tp('流媒体')" show-overflow-tooltip />
+          <el-table-column :label="$tp('开始时间')" show-overflow-tooltip>
             <template #default="scope">
               {{ scope.row.pushTime == null ? "-" : scope.row.pushTime }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(280)">
+          <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(280)">
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="playPush(scope.row)" v-hasPermi="['wvp:push:play']">

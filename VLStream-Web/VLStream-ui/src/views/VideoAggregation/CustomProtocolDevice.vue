@@ -38,22 +38,22 @@
 
         <el-table v-loading="loading" :data="devices" stripe @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="48" />
-          <el-table-column type="index" label="序号" width="70" />
-          <el-table-column prop="deviceName" label="设备名称" min-width="140" show-overflow-tooltip />
-          <el-table-column prop="deviceCode" label="设备 ID" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="deviceType" label="设备类型" width="110" />
-          <el-table-column label="区域" min-width="100"><template #default="{ row }">{{ row.regionName || '未设置' }}</template></el-table-column>
-          <el-table-column label="分组" min-width="100"><template #default="{ row }">{{ row.groupName || '未设置' }}</template></el-table-column>
-          <el-table-column label="标签" min-width="150">
+          <el-table-column type="index" :label="$tp('序号')" width="70" />
+          <el-table-column prop="deviceName" :label="$tp('设备名称')" min-width="140" show-overflow-tooltip />
+          <el-table-column prop="deviceCode" :label="$tp('设备 ID')" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="deviceType" :label="$tp('设备类型')" width="110" />
+          <el-table-column :label="$tp('区域')" min-width="100"><template #default="{ row }">{{ row.regionName || '未设置' }}</template></el-table-column>
+          <el-table-column :label="$tp('分组')" min-width="100"><template #default="{ row }">{{ row.groupName || '未设置' }}</template></el-table-column>
+          <el-table-column :label="$tp('标签')" min-width="150">
             <template #default="{ row }">
               <template v-if="row.tagNames"><el-tag v-for="tag in row.tagNames.split(',')" :key="tag" size="small" class="tag-item">{{ tag }}</el-tag></template>
               <span v-else>未设置</span>
             </template>
           </el-table-column>
-          <el-table-column prop="streamUrl" label="视频流路径" min-width="220" show-overflow-tooltip />
-          <el-table-column label="状态" width="85"><template #default="{ row }"><el-tag :type="statusType(row.status)">{{ statusText(row.status) }}</el-tag></template></el-table-column>
-          <el-table-column prop="createTime" label="创建时间" width="165" />
-          <el-table-column label="操作" width="220" fixed="right">
+          <el-table-column prop="streamUrl" :label="$tp('视频流路径')" min-width="220" show-overflow-tooltip />
+          <el-table-column :label="$tp('状态')" width="85"><template #default="{ row }"><el-tag :type="statusType(row.status)">{{ statusText(row.status) }}</el-tag></template></el-table-column>
+          <el-table-column prop="createTime" :label="$tp('创建时间')" width="165" />
+          <el-table-column :label="$tp('操作')" width="220" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" @click="preview(row)">预览</el-button>
               <el-button link type="primary" @click="openRecord(row)">录像</el-button>

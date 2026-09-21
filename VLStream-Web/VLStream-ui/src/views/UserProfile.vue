@@ -242,14 +242,14 @@
         <h3>登录历史</h3>
       </div>
       <el-table :data="loginHistory" stripe>
-        <el-table-column prop="loginTime" label="登录时间" width="180">
+        <el-table-column prop="loginTime" :label="$tp('登录时间')" width="180">
           <template #default="scope">
             {{ formatDateTime(scope.row.loginTime) }}
           </template>
         </el-table-column>
-        <el-table-column prop="loginIp" label="登录IP" width="150" />
-        <el-table-column prop="client" label="客户端" width="120" />
-        <el-table-column prop="location" label="登录地点" />
+        <el-table-column prop="loginIp" :label="$tp('登录IP')" width="150" />
+        <el-table-column prop="client" :label="$tp('客户端')" width="120" />
+        <el-table-column prop="location" :label="$tp('登录地点')" />
       </el-table>
     </div>
   </div>

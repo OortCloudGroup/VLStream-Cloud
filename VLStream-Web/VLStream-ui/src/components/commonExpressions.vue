@@ -87,7 +87,9 @@ const clickContent = (content) => {
     width: 100%;
 
 .add_common_btn {
-    width: 120px;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 28px;
     display: flex;
     align-items: center;
     font-family: MicrosoftYaHei;
@@ -100,11 +102,13 @@ const clickContent = (content) => {
     padding: 0 10px;
     margin-top: 10px;
     cursor: pointer;
+    line-height: 1.3;
+    white-space: normal;
 
     .add_common_btn_icon {
         font-size: 16px;
         font-weight: 700;
-        margin-right: 5px;
+        margin-inline-end: 5px;
     }
 
     &:hover {

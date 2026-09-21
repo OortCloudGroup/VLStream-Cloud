@@ -203,33 +203,33 @@
           <!-- model -->
           <div class="model-table">
             <el-table :data="filteredModels" style="width: 100%">
-              <el-table-column prop="name" label="模型名称" width="200" />
-              <el-table-column prop="algorithmType" label="算法类型" width="120">
+              <el-table-column prop="name" :label="$tp('模型名称')" width="200" />
+              <el-table-column prop="algorithmType" :label="$tp('算法类型')" width="120">
                 <template #default="{ row }">
                   <el-tag :type="getAlgorithmTagType(row.algorithmType)" size="small">
                     {{ row.algorithmType }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="version" label="版本" width="100" />
-              <el-table-column prop="accuracy" label="准确率" width="100">
+              <el-table-column prop="version" :label="$tp('版本')" width="100" />
+              <el-table-column prop="accuracy" :label="$tp('准确率')" width="100">
                 <template #default="{ row }">
                   <span class="accuracy-value">{{ row.accuracy }}%</span>
                 </template>
               </el-table-column>
-              <el-table-column prop="size" label="模型大小" width="100" />
-              <el-table-column prop="format" label="格式" width="100" />
-              <el-table-column prop="downloadCount" label="下载量" width="100" />
-              <el-table-column prop="deployCount" label="部署量" width="100" />
-              <el-table-column prop="status" label="状态" width="100">
+              <el-table-column prop="size" :label="$tp('模型大小')" width="100" />
+              <el-table-column prop="format" :label="$tp('格式')" width="100" />
+              <el-table-column prop="downloadCount" :label="$tp('下载量')" width="100" />
+              <el-table-column prop="deployCount" :label="$tp('部署量')" width="100" />
+              <el-table-column prop="status" :label="$tp('状态')" width="100">
                 <template #default="{ row }">
                   <el-tag :type="getModelStatusType(row.status)" size="small">
                     {{ getModelStatusText(row.status) }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="createTime" label="创建时间" width="160" />
-              <el-table-column label="操作" width="200" fixed="right">
+              <el-table-column prop="createTime" :label="$tp('创建时间')" width="160" />
+              <el-table-column :label="$tp('操作')" width="200" fixed="right">
                 <template #default="{ row }">
                   <el-button size="small" type="primary" text @click="downloadModel(row)">下载</el-button>
                   <el-button size="small" type="success" text @click="deployModel(row)">部署</el-button>

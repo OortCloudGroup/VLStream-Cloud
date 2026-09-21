@@ -42,25 +42,25 @@
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" :width="clacPXToVW(55)" />
-            <el-table-column label="序号" :width="clacPXToVW(65)">
+            <el-table-column :label="$tp('序号')" :width="clacPXToVW(65)">
               <template #default="scope">
                 {{ scope.$index + (pagination.current - 1) * pagination.size + 1 }}
               </template>
             </el-table-column>
-            <el-table-column prop="account" label="账号" show-overflow-tooltip />
-            <el-table-column prop="name" label="昵称" show-overflow-tooltip />
-            <el-table-column prop="realName" label="姓名" show-overflow-tooltip />
-            <el-table-column prop="email" label="邮箱" show-overflow-tooltip />
-            <el-table-column prop="phone" label="手机" show-overflow-tooltip />
-            <el-table-column prop="sexName" label="性别" :width="clacPXToVW(80)" align="center">
+            <el-table-column prop="account" :label="$tp('账号')" show-overflow-tooltip />
+            <el-table-column prop="name" :label="$tp('昵称')" show-overflow-tooltip />
+            <el-table-column prop="realName" :label="$tp('姓名')" show-overflow-tooltip />
+            <el-table-column prop="email" :label="$tp('邮箱')" show-overflow-tooltip />
+            <el-table-column prop="phone" :label="$tp('手机')" show-overflow-tooltip />
+            <el-table-column prop="sexName" :label="$tp('性别')" :width="clacPXToVW(80)" align="center">
               <template #default="scope">
                 <span>{{ scope.row.sex === 1 ? '男' : scope.row.sex === 2 ? '女' : '未知' }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="roleName" label="角色" show-overflow-tooltip />
-            <el-table-column prop="deptName" label="部门" show-overflow-tooltip />
-            <el-table-column prop="postName" label="岗位" show-overflow-tooltip />
-            <el-table-column label="操作" :width="clacPXToVW(220)" fixed="right" align="right">
+            <el-table-column prop="roleName" :label="$tp('角色')" show-overflow-tooltip />
+            <el-table-column prop="deptName" :label="$tp('部门')" show-overflow-tooltip />
+            <el-table-column prop="postName" :label="$tp('岗位')" show-overflow-tooltip />
+            <el-table-column :label="$tp('操作')" :width="clacPXToVW(220)" fixed="right" align="right">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handleEdit(scope.row)">

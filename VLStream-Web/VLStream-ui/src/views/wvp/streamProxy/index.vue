@@ -36,15 +36,15 @@
       :data="streamProxyList"
       current-row-key="id"
     >
-      <el-table-column prop="app" label="流应用名" show-overflow-tooltip align="center" fixed/>
-      <el-table-column prop="stream" label="流ID" show-overflow-tooltip align="center" fixed/>
-      <el-table-column label="流地址" align="center" show-overflow-tooltip>
+      <el-table-column prop="app" :label="$tp('流应用名')" show-overflow-tooltip align="center" fixed/>
+      <el-table-column prop="stream" :label="$tp('流ID')" show-overflow-tooltip align="center" fixed/>
+      <el-table-column :label="$tp('流地址')" align="center" show-overflow-tooltip>
         <template #default="scope">
           {{ scope.row.srcUrl }}
         </template>
       </el-table-column>
-      <el-table-column prop="mediaServerId" label="流媒体" align="center" show-overflow-tooltip/>
-      <el-table-column label="代理方式" align="center">
+      <el-table-column prop="mediaServerId" :label="$tp('流媒体')" align="center" show-overflow-tooltip/>
+      <el-table-column :label="$tp('代理方式')" align="center">
         <template #default="scope">
           <div slot="reference" class="name-wrapper">
             {{ scope.row.type === "default" ? "默认" : "FFMPEG代理" }}
@@ -52,8 +52,8 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="gbDeviceId" label="国标编码" show-overflow-tooltip align="center"/>
-      <el-table-column label="拉流状态" align="center">
+      <el-table-column prop="gbDeviceId" :label="$tp('国标编码')" show-overflow-tooltip align="center"/>
+      <el-table-column :label="$tp('拉流状态')" align="center">
         <template #default="scope">
           <div slot="reference" class="name-wrapper">
             <el-tag v-if="scope.row.pulling">正在拉流</el-tag>
@@ -61,7 +61,7 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="启用" align="center">
+      <el-table-column :label="$tp('启用')" align="center">
         <template #default="scope">
           <div slot="reference" class="name-wrapper">
             <el-tag v-if="scope.row.enable">已启用</el-tag>
@@ -69,8 +69,8 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column prop="createTime" label="创建时间" show-overflow-tooltip align="center"/>
-      <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(220)">
+      <el-table-column prop="createTime" :label="$tp('创建时间')" show-overflow-tooltip align="center"/>
+      <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(220)">
         <template #default="scope">
           <div class="operateAppBox flexRowAC" style="justify-content: flex-end;">
             <div

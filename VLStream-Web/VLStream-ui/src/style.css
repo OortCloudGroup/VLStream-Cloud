@@ -339,6 +339,129 @@ html[dir="rtl"] .el-button .el-icon {
   margin-right: 0;
 }
 
+html[dir="rtl"] .el-pagination,
+html[dir="rtl"] .el-dialog,
+html[dir="rtl"] .el-drawer,
+html[dir="rtl"] .el-message-box {
+  direction: rtl;
+}
+
+html[dir="rtl"] .el-dialog__header,
+html[dir="rtl"] .el-drawer__header,
+html[dir="rtl"] .el-message-box__header,
+html[dir="rtl"] .el-form-item__label {
+  text-align: right;
+}
+
+html[dir="rtl"] .el-dialog__headerbtn,
+html[dir="rtl"] .el-message-box__headerbtn {
+  inset-inline-start: 0;
+  inset-inline-end: auto;
+}
+
+html[dir="rtl"] .el-table .cell {
+  text-align: right;
+}
+
+html[dir="rtl"] .el-pagination {
+  justify-content: flex-start;
+}
+
+html:not([data-locale="zh-CN"]) .el-dialog,
+html:not([data-locale="zh-CN"]) .el-message-box,
+html:not([data-locale="zh-CN"]) .el-drawer {
+  --el-dialog-width: min(92vw, 720px);
+}
+
+html:not([data-locale="zh-CN"]) .el-dialog__body,
+html:not([data-locale="zh-CN"]) .el-message-box__content {
+  overflow-wrap: anywhere;
+}
+
+.el-dialog.locale-dialog.classification-dialog {
+  width: min(92vw, 680px);
+}
+
+.el-dialog.locale-dialog--medium {
+  width: min(92vw, 860px);
+}
+
+.el-dialog.locale-dialog--wide {
+  width: min(94vw, 1080px);
+}
+
+.locale-dialog .el-dialog__header {
+  padding-inline-end: 48px;
+}
+
+.locale-dialog .el-dialog__body {
+  max-height: calc(90vh - 130px);
+  overflow: auto;
+}
+
+.locale-dialog .el-descriptions__label,
+.locale-dialog .el-descriptions__content {
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+html:not([data-locale="zh-CN"]) .locale-dialog .el-descriptions__label {
+  min-width: 150px;
+}
+
+.locale-dialog .el-table {
+  max-width: 100%;
+}
+
+.locale-drawer .el-drawer__header {
+  min-height: 56px;
+  padding-inline: 20px;
+}
+
+.locale-drawer .el-drawer__body {
+  min-width: 0;
+  overflow: auto;
+}
+
+html[dir="rtl"] .locale-drawer .el-drawer__header {
+  direction: rtl;
+}
+
+html:not([data-locale="zh-CN"]) .locale-dialog .el-form-item {
+  align-items: flex-start;
+}
+
+html:not([data-locale="zh-CN"]) .locale-dialog .el-form-item__label {
+  width: 180px !important;
+  min-width: 180px;
+  max-width: 180px;
+  flex: 0 0 180px;
+  height: auto;
+  min-height: 32px;
+  padding-inline-end: 12px;
+  line-height: 1.3;
+  white-space: normal;
+}
+
+html:not([data-locale="zh-CN"]) .locale-dialog .el-form-item__content {
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  html:not([data-locale="zh-CN"]) .locale-dialog .el-form-item {
+    display: block;
+  }
+
+  html:not([data-locale="zh-CN"]) .locale-dialog .el-form-item__label {
+    width: 100% !important;
+    min-width: 0;
+    max-width: 100%;
+    flex-basis: auto;
+    padding-bottom: 6px;
+  }
+}
+
 html[data-locale="es-MX"] .el-button,
 html[data-locale="de-DE"] .el-button,
 html[data-locale="fr-FR"] .el-button,

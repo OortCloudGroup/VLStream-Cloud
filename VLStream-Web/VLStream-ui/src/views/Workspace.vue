@@ -440,32 +440,36 @@ onBeforeUnmount(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  width: 1320px;
+  width: min(1320px, 100%);
+  max-width: 100%;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .top-greeting {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 32%);
   gap: 20px;
   margin-bottom: 20px;
-  height: 160px;
+  min-height: 160px;
 }
 
 .greeting-stats-card {
-  flex: 1;
+  min-width: 0;
+  overflow: hidden;
   background: #fff;
   border-radius: 10px;
   padding: 24px;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(190px, .85fr) minmax(0, 2fr);
   align-items: center;
   justify-content: space-between;
-  gap: 76px;
+  gap: clamp(18px, 2vw, 32px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .greeting-weather {
-  flex-shrink: 0;
-  min-width: 240px;
+  min-width: 0;
 }
 
 .user-greeting h1 {
@@ -520,15 +524,15 @@ onBeforeUnmount(() => {
 }
 
 .stats-section {
-  flex: 1;
-  display: flex;
-  justify-content: space-around;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: center;
-  gap: 24px;
+  gap: clamp(12px, 1.5vw, 24px);
+  min-width: 0;
 }
 
 .stat-card {
-  flex: 1;
+  min-width: 0;
   text-align: left;
 }
 
@@ -541,9 +545,10 @@ onBeforeUnmount(() => {
 }
 
 .stat-value-row {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: auto;
+  align-items: start;
+  gap: 2px;
 }
 
 .stat-number {
@@ -560,7 +565,8 @@ onBeforeUnmount(() => {
   letter-spacing: 0.75px;
   color: #969799;
   font-style: normal;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .stat-change em {
@@ -578,7 +584,8 @@ onBeforeUnmount(() => {
 }
 
 .vlstream-card {
-  width: 428px;
+  width: auto;
+  min-width: 0;
   border-radius: 10px;
   position: relative;
   overflow: hidden;
@@ -597,7 +604,8 @@ onBeforeUnmount(() => {
 }
 
 .card-text{
-  margin-left: 24px;
+  min-width: 0;
+  margin-inline-start: 24px;
 }
 
 .card-text h3 {
@@ -631,8 +639,37 @@ onBeforeUnmount(() => {
   object-fit: contain;
   flex-shrink: 0;
   mix-blend-mode: multiply;
-  margin-right: 14px;
+  margin-inline-end: 14px;
   margin-bottom: -6px;
+}
+
+@media (max-width: 1180px) {
+  .top-greeting {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 30%);
+  }
+
+  .guide-illustration {
+    width: 130px;
+  }
+
+  .greeting-stats-card {
+    grid-template-columns: minmax(170px, .75fr) minmax(0, 2fr);
+    padding: 20px;
+  }
+}
+
+@media (max-width: 960px) {
+  .top-greeting {
+    grid-template-columns: 1fr;
+  }
+
+  .vlstream-card {
+    min-height: 150px;
+  }
+
+  .greeting-stats-card {
+    grid-template-columns: 1fr;
+  }
 }
 
 .content-section {

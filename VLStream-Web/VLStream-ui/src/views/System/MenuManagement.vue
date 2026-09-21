@@ -42,20 +42,20 @@
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" :width="clacPXToVW(55)" />
-            <el-table-column prop="name" label="菜单名称" min-width="180" />
-            <el-table-column prop="code" label="路由编号" min-width="120" />
-            <el-table-column prop="alias" label="菜单别名" min-width="120" />
-            <el-table-column prop="path" label="路由地址" min-width="150" show-overflow-tooltip />
-            <el-table-column prop="categoryName" label="类型" :width="clacPXToVW(100)" align="center">
+            <el-table-column prop="name" :label="$tp('菜单名称')" min-width="180" />
+            <el-table-column prop="code" :label="$tp('路由编号')" min-width="120" />
+            <el-table-column prop="alias" :label="$tp('菜单别名')" min-width="120" />
+            <el-table-column prop="path" :label="$tp('路由地址')" min-width="150" show-overflow-tooltip />
+            <el-table-column prop="categoryName" :label="$tp('类型')" :width="clacPXToVW(100)" align="center">
               <template #default="scope">
                 <el-tag :type="scope.row.category === 1 ? 'primary' : 'success'">
                   {{ scope.row.category === 1 ? '菜单' : scope.row.category === 2 ? '按钮' : '未知' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="sort" label="排序" :width="clacPXToVW(80)" align="center" />
-            <el-table-column prop="action" label="权限标识" min-width="150" show-overflow-tooltip />
-            <el-table-column label="操作" :width="clacPXToVW(180)" fixed="right" align="right">
+            <el-table-column prop="sort" :label="$tp('排序')" :width="clacPXToVW(80)" align="center" />
+            <el-table-column prop="action" :label="$tp('权限标识')" min-width="150" show-overflow-tooltip />
+            <el-table-column :label="$tp('操作')" :width="clacPXToVW(180)" fixed="right" align="right">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handleEdit(scope.row)">

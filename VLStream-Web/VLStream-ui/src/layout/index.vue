@@ -1022,10 +1022,12 @@ const handleUserTokenUpdated = async (event) => {
 
 .header-content {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   height: 100%;
   padding: 0 20px;
+  gap: 12px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .logo {
@@ -1033,7 +1035,7 @@ const handleUserTokenUpdated = async (event) => {
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
-  min-width: 280px;
+  min-width: 240px;
 }
 
 .logo h2 {
@@ -1065,7 +1067,7 @@ const handleUserTokenUpdated = async (event) => {
 
 /*  */
 .sidebar-toggle {
-  margin-left: 24px;
+  margin-inline-start: 12px;
   flex-shrink: 0;
 }
 
@@ -1077,16 +1079,28 @@ const handleUserTokenUpdated = async (event) => {
 .top-menu {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .menu-item {
-  padding: 0 24px;
+  padding: 0 clamp(8px, 1vw, 18px);
   height: 60px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 0;
   cursor: pointer;
-  font-size: 18px;
+  font-size: clamp(13px, 0.85vw, 16px);
+  line-height: 1.15;
+  text-align: center;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: auto;
   font-weight: 400;
   color: #33333360;
   position: relative;
@@ -1140,6 +1154,54 @@ const handleUserTokenUpdated = async (event) => {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+@media (max-width: 1500px) {
+  .header-content {
+    gap: 8px;
+    padding-inline: 14px;
+  }
+
+  .logo {
+    min-width: 214px;
+    gap: 8px;
+  }
+
+  .logo h2 {
+    min-width: 0;
+    font-size: 18px;
+  }
+
+  .sidebar-toggle {
+    margin-inline-start: 4px;
+  }
+
+  .menu-item {
+    padding-inline: 6px;
+    font-size: 14px;
+  }
+
+  .header-right {
+    gap: 4px;
+  }
+
+  .user-info {
+    padding-inline: 6px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .logo h2 {
+    display: none;
+  }
+
+  .logo {
+    min-width: 76px;
+  }
+
+  .menu-item {
+    font-size: 13px;
+  }
 }
 
 /* menu item */

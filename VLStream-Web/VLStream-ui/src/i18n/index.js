@@ -13,6 +13,7 @@ import ko from 'element-plus/es/locale/lang/ko'
 import id from 'element-plus/es/locale/lang/id'
 import tr from 'element-plus/es/locale/lang/tr'
 import { localeOptions, messages, phraseCatalog } from './catalog'
+import { tableHeaderEnglish } from './tableHeaders'
 
 export const DEFAULT_LOCALE = 'zh-CN'
 export const STORAGE_KEY = 'language'
@@ -65,7 +66,10 @@ export const currentLocaleOption = computed(() => localeOptions.find(item => ite
 
 export const translatePhrase = (source, locale = currentLocale.value) => {
   if (typeof source !== 'string' || !source) return source
-  return phraseCatalog[normalizeLocale(locale)]?.[source] || source
+  const normalizedLocale = normalizeLocale(locale)
+  return phraseCatalog[normalizedLocale]?.[source]
+    || (normalizedLocale !== DEFAULT_LOCALE ? tableHeaderEnglish[source] : undefined)
+    || source
 }
 
 export const formatDateTime = (value, options = {}) => {

@@ -24,23 +24,23 @@
       </div>
     </div>
     <table-self :data="detailFiles" height="600" class="new_table" header-cell-class-name="header_tenant_cell" stripe>
-      <el-table-column label="设备ID" align="center" prop="deviceId" />
-      <el-table-column label="位置" align="center" prop="address">
+      <el-table-column :label="$tp('设备ID')" align="center" prop="deviceId" />
+      <el-table-column :label="$tp('位置')" align="center" prop="address">
         <template #default="scope">
           <span v-if="scope.row.address">{{scope.row.address}}</span>
           <span v-else>无</span>
         </template>
       </el-table-column>
-      <el-table-column label="开始时间" align="center" prop="startTime" />
-      <el-table-column label="结束时间" align="center" prop="endTime" />
-      <el-table-column label="类型" align="center" prop="type">
+      <el-table-column :label="$tp('开始时间')" align="center" prop="startTime" />
+      <el-table-column :label="$tp('结束时间')" align="center" prop="endTime" />
+      <el-table-column :label="$tp('类型')" align="center" prop="type">
         <template #default="scope">
           <el-tag v-for="item in getMatchingType(scope.row.type)" :key="item.value">
             {{ item.label }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="right" fixed="right" :width="clacPXToVW(180)">
+      <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(180)">
         <template #default="scope">
           <div class="operateAppBox flexRowAC" style="justify-content: flex-end;">
             <div class="new_table_svg_group" @click.stop="playRecord(scope.row)" v-hasPermi="['gb:playback:start']">
