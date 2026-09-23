@@ -30,6 +30,8 @@ func (transport headerStrippingTransport) RoundTrip(request *http.Request) (*htt
 	request.Header.Del("X-Real-IP")
 	request.Header.Del("X-Tunnel-Control-Token")
 	request.Header.Del("X-Tunnel-Gateway-Token")
+	request.Header.Del("X-Tunnel-Access-Token")
+	request.Header.Del("X-Tunnel-Session-Id")
 	return transport.base.RoundTrip(request)
 }
 
@@ -118,6 +120,13 @@ func (gateway *tunnelGateway) bootstrap(response http.ResponseWriter, request *h
 	gateway.sessions[cookieToken] = cachedGatewaySession{route: route}
 	gateway.mu.Unlock()
 
+	gateway.setSessionCookie(response, cookieToken, route.ExpiresAt)
+	response.Header().Set("Cache-Control", "no-store")
+	response.Header().Set("Pragma", "no-cache")
+	http.Redirect(response, request, "/", http.StatusSeeOther)
+}
+
+func (gateway *tunnelGateway) setSessionCookie(response http.ResponseWriter, cookieToken string, expiresAt time.Time) {
 	http.SetCookie(response, &http.Cookie{
 		Name:     gatewayCookieName,
 		Value:    cookieToken,
@@ -125,12 +134,9 @@ func (gateway *tunnelGateway) bootstrap(response http.ResponseWriter, request *h
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
-		Expires:  route.ExpiresAt,
-		MaxAge:   maxAgeSeconds(gateway.now(), route.ExpiresAt),
+		Expires:  expiresAt,
+		MaxAge:   maxAgeSeconds(gateway.now(), expiresAt),
 	})
-	response.Header().Set("Cache-Control", "no-store")
-	response.Header().Set("Pragma", "no-cache")
-	http.Redirect(response, request, "/", http.StatusSeeOther)
 }
 
 func (gateway *tunnelGateway) proxy(response http.ResponseWriter, request *http.Request,
@@ -154,6 +160,39 @@ func (gateway *tunnelGateway) proxy(response http.ResponseWriter, request *http.
 		return
 	}
 
+	// Renew only after validating the browser's host-bound cookie. The backend
+	// checks expiry, revocation, ownership and device readiness on every request.
+	ctx, cancel := context.WithTimeout(request.Context(), 10*time.Second)
+	route, err := gateway.backend.renewSession(ctx, sessionID)
+	cancel()
+	if err != nil {
+		gateway.removeSession(cookie.Value)
+		http.Error(response, "remote-management session cannot be renewed", http.StatusUnauthorized)
+		return
+	}
+	if route.SessionID != cached.route.SessionID || route.EndpointID != cached.route.EndpointID ||
+		route.UpstreamHost != cached.route.UpstreamHost || route.UpstreamPort != cached.route.UpstreamPort {
+		gateway.removeSession(cookie.Value)
+		http.Error(response, "remote-management route changed", http.StatusUnauthorized)
+		return
+	}
+	gateway.mu.Lock()
+	current, stillValid := gateway.sessions[cookie.Value]
+	if stillValid {
+		if route.ExpiresAt.After(current.route.ExpiresAt) {
+			current.route = route
+			gateway.sessions[cookie.Value] = current
+		}
+		cached = current
+	}
+	gateway.mu.Unlock()
+	if !stillValid {
+		http.Error(response, "remote-management session was invalidated", http.StatusUnauthorized)
+		return
+	}
+	gateway.setSessionCookie(response, cookie.Value, cached.route.ExpiresAt)
+	response.Header().Set("Cache-Control", "no-store")
+
 	target := &url.URL{
 		Scheme: "http",
 		Host: net.JoinHostPort(netIP(cached.route.UpstreamHost),
@@ -172,6 +211,15 @@ func (gateway *tunnelGateway) proxy(response http.ResponseWriter, request *http.
 		upstreamRequest.Header.Del("X-Forwarded-For")
 		upstreamRequest.Header.Del("X-Tunnel-Control-Token")
 		upstreamRequest.Header.Del("X-Tunnel-Gateway-Token")
+		upstreamRequest.Header.Del("X-Tunnel-Access-Token")
+		upstreamRequest.Header.Del("X-Tunnel-Session-Id")
+		cookies := upstreamRequest.Cookies()
+		upstreamRequest.Header.Del("Cookie")
+		for _, cookie := range cookies {
+			if cookie.Name != gatewayCookieName {
+				upstreamRequest.AddCookie(cookie)
+			}
+		}
 	}
 	proxy.ErrorHandler = func(writer http.ResponseWriter, _ *http.Request, proxyError error) {
 		log.Printf("IPC management upstream failed for endpoint %s: %v",
@@ -183,6 +231,7 @@ func (gateway *tunnelGateway) proxy(response http.ResponseWriter, request *http.
 		rewriteCookies(upstreamResponse, true)
 		upstreamResponse.Header.Set("Referrer-Policy", "no-referrer")
 		upstreamResponse.Header.Set("X-Content-Type-Options", "nosniff")
+		upstreamResponse.Header.Set("Cache-Control", "no-store")
 		return nil
 	}
 	proxy.ServeHTTP(response, request)

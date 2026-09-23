@@ -15,6 +15,7 @@ VLS-Protocol
 | 1.6/雷超群/2026-09-09 | 心跳新增 WGS84 位置坐标，补充校验、清空和设备详情展示规则 |
 | 1.7/雷超群/2026-09-14 | 4.1 模型下发增加类别 YAML 下载字段、双文件校验和成对切换规则；新增类别哈希回执，设备端待适配联调 |
 | 1.8/2026-09-16 | 4.2 补充设备模型全量查询；新增 4.9 模型删除及回执，设备端待适配联调 |
+| 1.9/2026-09-22 | 增加初始化租户归属及绑定凭据；缺省保留默认租户，禁止心跳改租户；板端显式多租户接入待适配 |
 
 目录
 
@@ -156,12 +157,36 @@ ACL 权限：设备仅允许读写自身deviceId 对应的总线 Topic，禁止�
 | protocolVersion | string | 是   | 协议版本 2.2，主版本变更代表不兼容 |
 | messageId | string | 是   | UUID v4 幂等 ID，重传 / 重试必须复用同一值 |
 | deviceId | string | 是   | 设备全局唯一编号，Topic / 消息体 / 平台设备库三统一 |
+| tenantId | string | 否 | 初始化时配置的设备所属租户，最长 64 字符，仅字母、数字、下划线、连字符；state 上报携带时须同时携带 tenantBindingProof。首次缺省归平台配置的默认租户，已有设备缺省保留已有归属。 |
+| tenantBindingProof | string | 条件必填 | 显式上报 tenantId 时必填；受信初始化工具签发的设备/租户绑定凭据。禁止写日志、普通调试输出或共享固件。 |
 | sentAt | string | 是   | UTC 标准时间 yyyy-MM-ddTHH:mm:ssZ |
 | msgDir | string | 是   | platform2dev 平台下发； dev2platform 设备上报 |
 | mainBizType | string | 是   | 仅二选一： device 设备硬件类 / aiBiz AI 全业务类 |
 | subBizType | string | 是   | 细分业务标识，区分同大类下不同功能 |
 | payload | object | 是   | 独立业务载荷，不同 subBizType 字段完全隔离 |
 | extend | object | 否   | 厂商私有硬件 / 调试扩展，不污染标准字段 |
+
+### 2.2.1 初始化租户归属（2026-09-22）
+
+VLS 标准版和 WVP Lite 共用 WVP 设备目录。设备初始化时写入 `tenantId` 及与该 `deviceId` 对应的
+`tenantBindingProof`，首次上线由 WVP 自动登记归属，不需要平台管理员再次分配。
+它们放在消息公共头，与 `deviceId` 同级；不放在 `extend` 或 `payload` 中。
+
+- 新设备没有 `tenantId`（空字符串或 null 同样视为缺省）：归 WVP 配置的默认租户。
+- 已有设备后续漏报 `tenantId`：保持已有租户，不降回默认租户。
+- 显式租户须提供有效绑定凭据；伪造、挪用到另一设备/租户或试图改变已有租户返回 403。
+- 未配置平台校验密钥时，显式租户上报返回 503；无租户旧固件仍按默认租户接入。
+- 初始化信息应在首次 MQTT 上线前写入；已经归属默认租户的设备不能靠改下一条心跳转移租户，迁移需另行受控流程。
+- 此凭据证明租户配置来源；MQTT 仍必须使用每设备认证和自身 Topic ACL，避免冒用别的设备 ID。
+
+受信初始化工具使用独立的 `VLSTREAM_DEVICE_TENANT_BINDING_SECRET` 签发凭据，主密钥只保留在
+WVP 与初始化环境中，设备只取得自己的凭据。算法为 HMAC-SHA256，签名输入按 UTF-8 编码：
+`v1` + LF + `deviceId` + LF + `tenantId`（末尾无 LF）；凭据为 `v1.` 加不带 padding 的 Base64URL 签名。
+WVP 提供 `tools/create-device-tenant-binding.mjs` 生成设备专属初始化 JSON，拒绝覆盖既有文件。
+
+VLS 与 WVP 的默认设备租户配置必须保持一致。升级前先执行 WVP 的 Flyway `V1_2_9`；历史记录的
+空归属按已配置默认租户解释，不根据当前操作人的登录租户回填。列表、详情、预览、固件与分类关联
+按经服务器校验的登录租户过滤，普通租户不可通过自行传入 `tenantId` 绕过范围限制。
 
 ## 2.3 通用统一回执模板
 

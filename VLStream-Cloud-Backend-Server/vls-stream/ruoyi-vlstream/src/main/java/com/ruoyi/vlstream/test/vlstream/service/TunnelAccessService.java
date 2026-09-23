@@ -16,12 +16,14 @@ import com.ruoyi.vlstream.test.vlstream.pojo.dto.TunnelDtos;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.TunnelAccessSession;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.TunnelEndpoint;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Date;
 import java.util.UUID;
+import java.time.Clock;
 
 @Service
 public class TunnelAccessService {
@@ -29,15 +31,25 @@ public class TunnelAccessService {
     private final TunnelAccessSessionMapper sessionMapper;
     private final TunnelTokenService tokenService;
     private final VlsTunnelProperties properties;
+    private final Clock clock;
 
+    @Autowired
     public TunnelAccessService(TunnelEndpointMapper endpointMapper,
                                TunnelAccessSessionMapper sessionMapper,
                                TunnelTokenService tokenService,
                                VlsTunnelProperties properties) {
+        this(endpointMapper, sessionMapper, tokenService, properties, Clock.systemUTC());
+    }
+
+    TunnelAccessService(TunnelEndpointMapper endpointMapper,
+                        TunnelAccessSessionMapper sessionMapper,
+                        TunnelTokenService tokenService,
+                        VlsTunnelProperties properties, Clock clock) {
         this.endpointMapper = endpointMapper;
         this.sessionMapper = sessionMapper;
         this.tokenService = tokenService;
         this.properties = properties;
+        this.clock = clock;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -56,7 +68,7 @@ public class TunnelAccessService {
         }
         requireAvailable(endpoint);
 
-        Date now = new Date();
+        Date now = Date.from(clock.instant());
         String rawToken = tokenService.randomToken(32);
         TunnelAccessSession session = new TunnelAccessSession();
         session.setId(IdWorker.getId());
@@ -84,7 +96,7 @@ public class TunnelAccessService {
             throw new TunnelApiException(401, "缺少远程访问令牌");
         }
         TunnelAccessSession session = sessionMapper.selectByTokenHash(tokenService.hash(rawAccessToken));
-        Date now = new Date();
+        Date now = Date.from(clock.instant());
         if (session == null || session.getRevokedAt() != null || session.getExpiresAt() == null
             || !session.getExpiresAt().after(now)) {
             throw new TunnelApiException(401, "远程访问会话无效或已过期");
@@ -102,6 +114,7 @@ public class TunnelAccessService {
             throw new TunnelApiException(503, exception.getMessage());
         }
         session.setOpenedAt(now);
+        session.setExpiresAt(new Date(now.getTime() + normalizedSessionTtl() * 1000L));
         session.setUpdateTime(now);
         TunnelTenantScope.run(session.getTenantId(), new Runnable() {
             @Override
@@ -110,6 +123,37 @@ public class TunnelAccessService {
             }
         });
 
+        return toRoute(session, endpoint);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public TunnelDtos.SessionRouteView renewSession(String sessionId) {
+        if (StringUtils.isBlank(sessionId) || sessionId.length() > 64) {
+            throw new TunnelApiException(401, "缺少或无效的远程访问会话标识");
+        }
+        TunnelAccessSession session = sessionMapper.selectBySessionId(sessionId);
+        Date now = Date.from(clock.instant());
+        if (session == null || session.getOpenedAt() == null || session.getRevokedAt() != null
+            || session.getExpiresAt() == null || !session.getExpiresAt().after(now)) {
+            throw new TunnelApiException(401, "远程访问会话未打开、已吊销或已过期");
+        }
+        TunnelEndpoint endpoint = endpointMapper.selectByIdGlobal(session.getEndpointId());
+        if (endpoint == null || !StringUtils.equals(session.getTenantId(), endpoint.getTenantId())
+            || !StringUtils.equals(session.getDeviceId(), endpoint.getDeviceId())) {
+            throw new TunnelApiException(401, "远程访问会话的设备归属已失效");
+        }
+        try {
+            requireAvailable(endpoint);
+        } catch (ServiceException exception) {
+            throw new TunnelApiException(503, exception.getMessage());
+        }
+        session.setExpiresAt(new Date(now.getTime() + normalizedSessionTtl() * 1000L));
+        session.setUpdateTime(now);
+        TunnelTenantScope.run(session.getTenantId(), () -> sessionMapper.updateById(session));
+        return toRoute(session, endpoint);
+    }
+
+    private TunnelDtos.SessionRouteView toRoute(TunnelAccessSession session, TunnelEndpoint endpoint) {
         TunnelDtos.SessionRouteView view = new TunnelDtos.SessionRouteView();
         view.setSessionId(session.getSessionId());
         view.setEndpointId(String.valueOf(endpoint.getId()));
@@ -137,6 +181,9 @@ public class TunnelAccessService {
     }
 
     private void requireAvailable(TunnelEndpoint endpoint) {
+        if (!properties.isEnabled()) {
+            throw new ServiceException("IPC远程管理功能未启用");
+        }
         if (!"ENABLED".equals(endpoint.getDesiredState())) {
             throw new ServiceException("设备远程管理当前未启用");
         }
@@ -144,7 +191,7 @@ public class TunnelAccessService {
             || !endpoint.getConfigGeneration().equals(endpoint.getRouteAppliedGeneration())) {
             throw new ServiceException("设备隧道路由尚未生效");
         }
-        long heartbeatCutoff = System.currentTimeMillis()
+        long heartbeatCutoff = clock.millis()
             - Math.max(30, properties.getHeartbeatTimeoutSeconds()) * 1000L;
         if (endpoint.getLastHeartbeatAt() == null
             || endpoint.getLastHeartbeatAt().getTime() < heartbeatCutoff) {
@@ -159,7 +206,7 @@ public class TunnelAccessService {
     }
 
     private int normalizedSessionTtl() {
-        return Math.max(60, Math.min(900, properties.getAccessSessionTtlSeconds()));
+        return Math.max(60, Math.min(10 * 60 * 60, properties.getAccessSessionTtlSeconds()));
     }
 
     private void requireGatewayBaseUrl() {

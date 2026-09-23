@@ -91,6 +91,20 @@ func (client *backendClient) reportRouteStatus(ctx context.Context, route desire
 }
 
 func (client *backendClient) resolveSession(ctx context.Context, token string) (sessionRoute, error) {
+	return client.requestSession(ctx, "/vlsTunnel/internal/access-sessions/resolve", map[string]string{
+		"X-Tunnel-Gateway-Token": client.gatewayToken,
+		"X-Tunnel-Access-Token":  token,
+	})
+}
+
+func (client *backendClient) renewSession(ctx context.Context, sessionID string) (sessionRoute, error) {
+	return client.requestSession(ctx, "/vlsTunnel/internal/access-sessions/renew", map[string]string{
+		"X-Tunnel-Gateway-Token": client.gatewayToken,
+		"X-Tunnel-Session-Id":    sessionID,
+	})
+}
+
+func (client *backendClient) requestSession(ctx context.Context, path string, headers map[string]string) (sessionRoute, error) {
 	var response struct {
 		Code int    `json:"code"`
 		Msg  string `json:"msg"`
@@ -102,11 +116,7 @@ func (client *backendClient) resolveSession(ctx context.Context, token string) (
 			ExpiresAt    json.RawMessage `json:"expiresAt"`
 		} `json:"data"`
 	}
-	if err := client.doJSON(ctx, http.MethodPost, "/vlsTunnel/internal/access-sessions/resolve",
-		map[string]string{
-			"X-Tunnel-Gateway-Token": client.gatewayToken,
-			"X-Tunnel-Access-Token":  token,
-		}, nil, &response); err != nil {
+	if err := client.doJSON(ctx, http.MethodPost, path, headers, nil, &response); err != nil {
 		return sessionRoute{}, err
 	}
 	if response.Code != http.StatusOK {

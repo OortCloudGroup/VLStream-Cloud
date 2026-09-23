@@ -106,7 +106,7 @@ public class WvpVlStreamDeviceResolver {
 		device.setId(deviceRowId);
 		device.setDeviceId(returnedDeviceId);
 		device.setDeviceName(StringUtils.defaultIfBlank(data.getStr("deviceName"), returnedDeviceId));
-		device.setTenantId(resolveTenantId());
+		device.setTenantId(StringUtils.defaultIfBlank(data.getStr("tenantId"), resolveTenantId()));
 		return device;
 	}
 

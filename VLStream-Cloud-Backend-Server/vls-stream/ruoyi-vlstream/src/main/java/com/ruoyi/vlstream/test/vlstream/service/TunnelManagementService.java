@@ -22,7 +22,6 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.TunnelAccessSession;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.TunnelEndpoint;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.TunnelEnrollment;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,9 +36,6 @@ public class TunnelManagementService {
     private final WvpVlStreamDeviceResolver deviceResolver;
     private final TunnelTokenService tokenService;
     private final VlsTunnelProperties properties;
-
-    @Value("${token.tenant-type:single}")
-    private String tenantType;
 
     public TunnelManagementService(TunnelEndpointMapper endpointMapper,
                                    TunnelEnrollmentMapper enrollmentMapper,
@@ -58,9 +54,6 @@ public class TunnelManagementService {
     @Transactional(rollbackFor = Exception.class)
     public synchronized TunnelDtos.EnrollmentView issueEnrollment(String rawDeviceId) {
         requireEnabled();
-        if ("multi".equalsIgnoreCase(StringUtils.trimToEmpty(tenantType))) {
-            throw new ServiceException("多租户设备归属尚未建立，当前禁止签发远程管理激活码");
-        }
         String deviceId = StringUtils.trimToEmpty(rawDeviceId);
         if (deviceId.isEmpty() || deviceId.length() > 100) {
             throw new ServiceException("设备业务ID不能为空且长度不能超过100");

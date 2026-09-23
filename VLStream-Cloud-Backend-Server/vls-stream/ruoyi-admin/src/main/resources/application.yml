@@ -196,7 +196,8 @@ vlstream:
     server-port-start: ${VLSTREAM_TUNNEL_SERVER_PORT_START:61000}
     server-port-end: ${VLSTREAM_TUNNEL_SERVER_PORT_END:61999}
     enrollment-ttl-seconds: ${VLSTREAM_TUNNEL_ENROLLMENT_TTL_SECONDS:600}
-    access-session-ttl-seconds: ${VLSTREAM_TUNNEL_ACCESS_SESSION_TTL_SECONDS:300}
+    # 浏览器每次请求校验后续期，默认空闲 10 小时过期；入口令牌仍只允许兑换一次。
+    access-session-ttl-seconds: ${VLSTREAM_TUNNEL_ACCESS_SESSION_TTL_SECONDS:36000}
     heartbeat-interval-seconds: ${VLSTREAM_TUNNEL_HEARTBEAT_INTERVAL_SECONDS:30}
     heartbeat-timeout-seconds: ${VLSTREAM_TUNNEL_HEARTBEAT_TIMEOUT_SECONDS:90}
   # ZLMediaKit 按需拉流与 WebRTC 播放配置

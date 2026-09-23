@@ -6,6 +6,7 @@
 package com.ruoyi.vlstream.test.vlstream.pojo.dto;
 
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -165,6 +166,7 @@ public final class TunnelDtos {
         private String endpointId;
         private String upstreamHost;
         private Integer upstreamPort;
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone = "UTC")
         private Date expiresAt;
     }
 

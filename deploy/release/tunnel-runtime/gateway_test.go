@@ -16,12 +16,17 @@ func TestGatewayBootstrapsHostBoundSessionAndProxiesToLoopback(t *testing.T) {
 	const sessionID = "8f4f33db-1707-470d-9f68-b35c1fa06ca5"
 	const accessToken = "one-time-access-token"
 	const gatewayToken = "gateway-token-0123456789-0123456789"
+	issuedAt := time.Now().UTC().Truncate(time.Second)
+	expiresAt := issuedAt.Add(10 * time.Hour)
+	now := issuedAt
 
 	var upstreamHost string
 	var upstreamForwardedFor string
+	var upstreamCookie string
 	upstream := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		upstreamHost = request.Host
 		upstreamForwardedFor = request.Header.Get("X-Forwarded-For")
+		upstreamCookie = request.Header.Get("Cookie")
 		http.SetCookie(response, &http.Cookie{
 			Name:   "ipc-login",
 			Value:  "session",
@@ -42,8 +47,20 @@ func TestGatewayBootstrapsHostBoundSessionAndProxiesToLoopback(t *testing.T) {
 			http.Error(response, "missing gateway token", http.StatusUnauthorized)
 			return
 		}
-		if request.Header.Get("X-Tunnel-Access-Token") != accessToken {
-			http.Error(response, "wrong access token", http.StatusUnauthorized)
+		switch request.URL.Path {
+		case "/vlsTunnel/internal/access-sessions/resolve":
+			if request.Header.Get("X-Tunnel-Access-Token") != accessToken {
+				http.Error(response, "wrong access token", http.StatusUnauthorized)
+				return
+			}
+		case "/vlsTunnel/internal/access-sessions/renew":
+			if request.Header.Get("X-Tunnel-Session-Id") != sessionID || request.Header.Get("X-Tunnel-Access-Token") != "" {
+				http.Error(response, "renewal must use session identity, not the one-time token", http.StatusUnauthorized)
+				return
+			}
+			expiresAt = now.Add(10 * time.Hour)
+		default:
+			http.NotFound(response, request)
 			return
 		}
 		_ = json.NewEncoder(response).Encode(map[string]any{
@@ -53,7 +70,7 @@ func TestGatewayBootstrapsHostBoundSessionAndProxiesToLoopback(t *testing.T) {
 				"endpointId":   "1",
 				"upstreamHost": "127.0.0.1",
 				"upstreamPort": upstreamPort,
-				"expiresAt":    time.Now().Add(time.Minute).UTC().Format(time.RFC3339),
+				"expiresAt":    expiresAt.Format(time.RFC3339),
 			},
 		})
 	}))
@@ -67,6 +84,7 @@ func TestGatewayBootstrapsHostBoundSessionAndProxiesToLoopback(t *testing.T) {
 		PublicHTTPS:       true,
 	}
 	gateway := newTunnelGateway(cfg, newBackendClient(cfg))
+	gateway.now = func() time.Time { return now }
 
 	bootstrap := httptest.NewRequest(http.MethodGet,
 		"https://"+sessionID+".ipc.test/s/"+accessToken, nil)
@@ -83,14 +101,19 @@ func TestGatewayBootstrapsHostBoundSessionAndProxiesToLoopback(t *testing.T) {
 	if !cookies[0].Secure || !cookies[0].HttpOnly {
 		t.Fatal("gateway browser cookie must be Secure and HttpOnly")
 	}
+	if cookies[0].MaxAge != 36000 || !cookies[0].Expires.Equal(expiresAt) {
+		t.Fatal("gateway cookie must preserve the ten-hour backend session expiry")
+	}
 	if gateway.cachedSessionCount() != 1 {
 		t.Fatal("gateway did not cache the resolved route")
 	}
 
+	now = issuedAt.Add(9 * time.Hour)
 	proxyRequest := httptest.NewRequest(http.MethodGet,
 		"https://"+sessionID+".ipc.test/assets/app.js", nil)
 	proxyRequest.Host = sessionID + ".ipc.test"
 	proxyRequest.AddCookie(cookies[0])
+	proxyRequest.AddCookie(&http.Cookie{Name: "ipc-login", Value: "vendor-session"})
 	proxyResponse := httptest.NewRecorder()
 	gateway.ServeHTTP(proxyResponse, proxyRequest)
 	if proxyResponse.Code != http.StatusOK {
@@ -106,9 +129,87 @@ func TestGatewayBootstrapsHostBoundSessionAndProxiesToLoopback(t *testing.T) {
 	if upstreamForwardedFor != "" {
 		t.Fatalf("browser IP forwarding header leaked to IPC: %s", upstreamForwardedFor)
 	}
+	if strings.Contains(upstreamCookie, gatewayCookieName) || !strings.Contains(upstreamCookie, "ipc-login=vendor-session") {
+		t.Fatalf("only the IPC login cookie may be forwarded: %s", upstreamCookie)
+	}
+	var renewedCookie *http.Cookie
+	for _, cookie := range proxyResponse.Result().Cookies() {
+		if cookie.Name == gatewayCookieName {
+			renewedCookie = cookie
+		}
+	}
+	if renewedCookie == nil || renewedCookie.MaxAge != 36000 ||
+		!renewedCookie.Expires.Equal(issuedAt.Add(19*time.Hour)) {
+		t.Fatal("activity at hour nine must renew the browser cookie until hour nineteen")
+	}
+	if proxyResponse.Header().Get("Cache-Control") != "no-store" {
+		t.Fatal("proxy responses must reach the gateway again to renew activity")
+	}
 	setCookie := proxyResponse.Header().Get("Set-Cookie")
 	if strings.Contains(strings.ToLower(setCookie), "domain=") {
 		t.Fatalf("private IPC cookie domain leaked to browser: %s", setCookie)
+	}
+
+	now = issuedAt.Add(10 * time.Hour)
+	continuedRequest := httptest.NewRequest(http.MethodGet,
+		"https://"+sessionID+".ipc.test/", nil)
+	continuedRequest.AddCookie(renewedCookie)
+	continuedResponse := httptest.NewRecorder()
+	gateway.ServeHTTP(continuedResponse, continuedRequest)
+	if continuedResponse.Code != http.StatusOK {
+		t.Fatal("renewed session must remain valid past its original expiry")
+	}
+
+	now = expiresAt
+	expiredRequest := httptest.NewRequest(http.MethodGet,
+		"https://"+sessionID+".ipc.test/assets/app.js", nil)
+	expiredRequest.AddCookie(cookies[0])
+	expiredResponse := httptest.NewRecorder()
+	gateway.ServeHTTP(expiredResponse, expiredRequest)
+	if expiredResponse.Code != http.StatusUnauthorized || gateway.cachedSessionCount() != 0 {
+		t.Fatal("gateway must reject and evict the session after ten hours without requests")
+	}
+}
+
+func TestGatewayCannotRenewRevokedOrUnavailableSession(t *testing.T) {
+	for _, status := range []int{http.StatusUnauthorized, http.StatusServiceUnavailable} {
+		t.Run(strconv.Itoa(status), func(t *testing.T) {
+			backend := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+				if request.URL.Path != "/vlsTunnel/internal/access-sessions/renew" {
+					t.Errorf("unexpected backend path: %s", request.URL.Path)
+				}
+				http.Error(response, "unavailable", status)
+			}))
+			defer backend.Close()
+			cfg := runtimeConfig{BackendBaseURL: backend.URL, GatewayHostSuffix: ".ipc.test"}
+			gateway := newTunnelGateway(cfg, newBackendClient(cfg))
+			gateway.sessions["browser-cookie"] = cachedGatewaySession{route: sessionRoute{
+				SessionID: "session-1", EndpointID: "1", UpstreamHost: "127.0.0.1",
+				UpstreamPort: 61000, ExpiresAt: time.Now().Add(time.Hour),
+			}}
+			request := httptest.NewRequest(http.MethodGet, "https://session-1.ipc.test/", nil)
+			request.AddCookie(&http.Cookie{Name: gatewayCookieName, Value: "browser-cookie"})
+			response := httptest.NewRecorder()
+			gateway.ServeHTTP(response, request)
+			if response.Code != http.StatusUnauthorized || gateway.cachedSessionCount() != 0 || len(response.Result().Cookies()) != 0 {
+				t.Fatal("failed renewal must not extend or keep a browser session")
+			}
+		})
+	}
+}
+
+func TestGatewayRejectsCookieOnDifferentSessionHostBeforeRenewing(t *testing.T) {
+	gateway := newTunnelGateway(runtimeConfig{GatewayHostSuffix: ".ipc.test"}, nil)
+	gateway.sessions["cookie-a"] = cachedGatewaySession{route: sessionRoute{
+		SessionID: "session-a", EndpointID: "1", UpstreamHost: "127.0.0.1",
+		UpstreamPort: 61000, ExpiresAt: time.Now().Add(time.Hour),
+	}}
+	request := httptest.NewRequest(http.MethodGet, "https://session-b.ipc.test/", nil)
+	request.AddCookie(&http.Cookie{Name: gatewayCookieName, Value: "cookie-a"})
+	response := httptest.NewRecorder()
+	gateway.ServeHTTP(response, request)
+	if response.Code != http.StatusUnauthorized {
+		t.Fatal("a cookie from another host must not reach the renewal API")
 	}
 }
 

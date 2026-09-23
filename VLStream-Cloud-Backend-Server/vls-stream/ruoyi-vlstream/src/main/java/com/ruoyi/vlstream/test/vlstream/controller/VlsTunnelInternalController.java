@@ -85,4 +85,20 @@ public class VlsTunnelInternalController {
                     exception.getStatus(), exception.getMessage()));
         }
     }
+
+    @SaIgnore
+    @PostMapping("/access-sessions/renew")
+    @Operation(summary = "HTTPS网关校验已打开的会话并续期")
+    public ResponseEntity<TunnelDtos.ApiResponse<TunnelDtos.SessionRouteView>> renewSession(
+        @RequestHeader(value = "X-Tunnel-Gateway-Token", required = false) String token,
+        @RequestHeader(value = "X-Tunnel-Session-Id", required = false) String sessionId) {
+        try {
+            accessService.verifyGatewayToken(token);
+            return ResponseEntity.ok(TunnelDtos.ApiResponse.success(accessService.renewSession(sessionId)));
+        } catch (TunnelApiException exception) {
+            return ResponseEntity.status(exception.getStatus())
+                .body(TunnelDtos.ApiResponse.<TunnelDtos.SessionRouteView>error(
+                    exception.getStatus(), exception.getMessage()));
+        }
+    }
 }

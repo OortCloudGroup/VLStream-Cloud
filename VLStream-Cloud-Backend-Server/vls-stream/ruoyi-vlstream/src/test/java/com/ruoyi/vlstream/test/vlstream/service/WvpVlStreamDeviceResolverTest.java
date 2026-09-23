@@ -98,6 +98,34 @@ class WvpVlStreamDeviceResolverTest {
 	}
 
 	@Test
+	void usesWvpOwnershipInsteadOfDefaultInMultiTenantMode() {
+		RestTemplate rest = new RestTemplate();
+		MockRestServiceServer server = MockRestServiceServer.createServer(rest);
+		server.expect(requestTo("http://127.0.0.1:9080/internal/vlstream/device/CAM-1"))
+			.andRespond(withSuccess("{\"code\":200,\"data\":{\"id\":101,\"deviceId\":\"CAM-1\",\"tenantId\":\"tenant-a\"}}", MediaType.APPLICATION_JSON));
+		VlsEventReportApplicationService app = mock(VlsEventReportApplicationService.class);
+		when(app.isMultiTenant()).thenReturn(true);
+		VlsNativeDeviceProperties props = new VlsNativeDeviceProperties();
+		props.setMultiTenantDefaultTenantId("default-tenant");
+		assertEquals("tenant-a", new WvpVlStreamDeviceResolver(properties(), props, app, rest).resolve("CAM-1").getTenantId());
+		server.verify();
+	}
+
+	@Test
+	void legacyWvpWithoutTenantKeepsConfiguredDefault() {
+		RestTemplate rest = new RestTemplate();
+		MockRestServiceServer server = MockRestServiceServer.createServer(rest);
+		server.expect(requestTo("http://127.0.0.1:9080/internal/vlstream/device/CAM-1"))
+			.andRespond(withSuccess("{\"code\":200,\"data\":{\"id\":101,\"deviceId\":\"CAM-1\"}}", MediaType.APPLICATION_JSON));
+		VlsEventReportApplicationService app = mock(VlsEventReportApplicationService.class);
+		when(app.isMultiTenant()).thenReturn(true);
+		VlsNativeDeviceProperties props = new VlsNativeDeviceProperties();
+		props.setMultiTenantDefaultTenantId("default-tenant");
+		assertEquals("default-tenant", new WvpVlStreamDeviceResolver(properties(), props, app, rest).resolve("CAM-1").getTenantId());
+		server.verify();
+	}
+
+	@Test
 	void onlineModelOperationsRejectOfflineOrUnknownOnlineState() {
 		for (String online : new String[]{",\"online\":false", ""}) {
 			RestTemplate rest = new RestTemplate();

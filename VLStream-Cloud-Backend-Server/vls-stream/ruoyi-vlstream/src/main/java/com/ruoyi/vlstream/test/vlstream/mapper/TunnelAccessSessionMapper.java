@@ -15,4 +15,8 @@ public interface TunnelAccessSessionMapper extends BaseMapper<TunnelAccessSessio
     @InterceptorIgnore(tenantLine = "true")
     @Select("SELECT * FROM vls_tunnel_access_session WHERE access_token_hash = #{tokenHash} LIMIT 1 FOR UPDATE")
     TunnelAccessSession selectByTokenHash(@Param("tokenHash") String tokenHash);
+
+    @InterceptorIgnore(tenantLine = "true")
+    @Select("SELECT * FROM vls_tunnel_access_session WHERE session_id = #{sessionId} LIMIT 1 FOR UPDATE")
+    TunnelAccessSession selectBySessionId(@Param("sessionId") String sessionId);
 }

@@ -94,3 +94,12 @@ The runtime stops rathole when it cannot refresh desired route state for two
 minutes. A healthy container does not prove an IPC is reachable; enrollment,
 Agent heartbeat, route `APPLIED`, browser login, and real device reconnect
 still require end-to-end verification.
+
+Browser access sessions expire after 10 hours without HTTP requests by default.
+Initial bootstrap and subsequent HTTP requests renew the session after backend
+validation, and refresh the gateway cookie. The bootstrap token remains single-use.
+Revoked, expired or unavailable sessions cannot renew. Background HTTP polling
+counts as activity; WebSocket upgrade renews once, subsequent frames do not.
+`VLSTREAM_TUNNEL_ACCESS_SESSION_TTL_SECONDS=36000` accepts values from 60 to 36000
+seconds. This does not change enrollment-code or IPC-login lifetimes. New
+sessions use the updated value after the backend and gateway are updated together.

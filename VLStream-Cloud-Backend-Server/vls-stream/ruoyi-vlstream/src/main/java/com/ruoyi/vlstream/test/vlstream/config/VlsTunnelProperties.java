@@ -25,7 +25,7 @@ public class VlsTunnelProperties {
     private int serverPortStart = 61000;
     private int serverPortEnd = 61999;
     private int enrollmentTtlSeconds = 600;
-    private int accessSessionTtlSeconds = 300;
+    private int accessSessionTtlSeconds = 10 * 60 * 60;
     private int heartbeatIntervalSeconds = 30;
     private int heartbeatTimeoutSeconds = 90;
 }
