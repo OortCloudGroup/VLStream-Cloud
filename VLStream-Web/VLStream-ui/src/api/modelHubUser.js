@@ -21,8 +21,8 @@ export const MODEL_HUB_HEADERS = {
   'Content-Type': 'application/json',
   accept: 'application/json, text/plain, */*',
   requesttype: 'app',
-  appid: '08e3168bd56a4e75ae3d5dee63db0657',
-  secretkey: '32e3ca224aa741fbb1362d33070bca2f'
+  appid: import.meta.env.VITE_PLATFORM_APP_ID || '',
+  secretkey: import.meta.env.VITE_PLATFORM_SECRET_KEY || ''
 }
 
 export function getModelHubRequestHeaders(session) {
