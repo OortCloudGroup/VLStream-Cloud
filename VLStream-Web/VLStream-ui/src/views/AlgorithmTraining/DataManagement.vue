@@ -14,14 +14,15 @@
       <div class="actions">
         <template v-if="project">
           <el-button @click="openProject(project)">数据集设置</el-button>
-          <el-button v-if="project.annotationType === 'object_detection'" @click="annotate">进入标注</el-button>
+          <el-button @click="annotate">进入标注</el-button>
+          <el-button @click="router.push({ path: '/smart-annotation', query: { dataset: project.id } })">智能标注</el-button>
           <el-button type="primary" @click="openImport">导入样本</el-button>
         </template>
         <el-button v-else type="primary" @click="openProject()">新建数据集</el-button>
       </div>
     </header>
 
-    <DataWorkflowGuide :can-annotate="!project || project.annotationType === 'object_detection'" :has-project="Boolean(project)" :disabled="busy" @navigate="navigateWorkflow" />
+    <DataWorkflowGuide :can-annotate="true" :has-project="Boolean(project)" :disabled="busy" @navigate="navigateWorkflow" />
 
     <template v-if="!project">
       <div class="filters"><el-input v-model="projectQuery.keyword" clearable placeholder="数据集名称或编号" @keyup.enter="loadProjects" @clear="loadProjects" /><el-button @click="loadProjects">搜索</el-button></div>
@@ -74,7 +75,7 @@
         <el-tab-pane label="数据集划分与版本" name="versions">
           <div class="dataset-intro"><div><h3>训练集与验证集</h3><p>仅划分满足条件且已有标注的图片。视频保留为原始素材；相同文件内容不会分入两个集合。</p></div><div class="actions">
             <el-button type="primary" :disabled="busy" @click="openSplit">划分数据集</el-button><el-button :disabled="busy" @click="versionDialog = true">保存当前版本</el-button>
-            <el-button v-if="project.annotationType === 'object_detection'" :disabled="busy" @click="publish">生成训练目录</el-button>
+            <el-button :disabled="busy" @click="publish">生成训练目录</el-button>
           </div></div>
           <el-table :data="stats.distribution || []" empty-text="尚无标注类别，请先在标注页面维护标签和标注">
             <el-table-column prop="name" :label="$tp('类别')" /><el-table-column prop="total" :label="$tp('样本数')" /><el-table-column prop="train" :label="$tp('训练集')" /><el-table-column prop="val" :label="$tp('验证集')" />
@@ -104,7 +105,7 @@
       <el-table :data="workflowProjects" v-loading="busy" empty-text="暂无匹配数据集，请调整搜索或先新建数据集">
         <el-table-column prop="annotationName" :label="$tp('数据集名称')" min-width="180" />
         <el-table-column prop="projectCode" :label="$tp('数据集编号')" min-width="210" show-overflow-tooltip />
-        <el-table-column :label="$tp('操作')" width="100"><template #default="{ row }"><el-button v-if="workflowAction !== 'annotation' || row.annotationType === 'object_detection'" link type="primary" :disabled="busy" @click="selectWorkflowProject(row)">选择并进入</el-button></template></el-table-column>
+        <el-table-column :label="$tp('操作')" width="100"><template #default="{ row }"><el-button link type="primary" :disabled="busy" @click="selectWorkflowProject(row)">选择并进入</el-button></template></el-table-column>
       </el-table>
       <el-pagination v-model:current-page="workflowProjectQuery.page" :page-size="20" :total="workflowProjectTotal" layout="total, prev, pager, next" @current-change="run(loadWorkflowProjects)" />
       <template #footer><el-button @click="workflowProjectDialog = false">取消</el-button></template>
@@ -114,7 +115,7 @@
       <el-form label-width="100px" @submit.prevent>
         <el-form-item label="数据集名称" required><el-input v-model="projectForm.annotationName" maxlength="100" /></el-form-item>
         <el-form-item label="数据集编号" required><el-input v-model="projectForm.projectCode" maxlength="64" placeholder="字母、数字、下划线或短横线，租户内唯一" /></el-form-item>
-        <el-form-item label="标注类型" required><span v-if="projectForm.id && projectForm.annotationType !== 'object_detection'">{{ typeName(projectForm.annotationType) }}</span><el-select v-else v-model="projectForm.annotationType"><el-option label="物体检测" value="object_detection" /></el-select></el-form-item>
+        <el-form-item label="标注类型" required><span v-if="projectForm.id">{{ typeName(projectForm.annotationType) }}</span><el-select v-else v-model="projectForm.annotationType"><el-option v-for="(label, value) in annotationTypes" :key="value" :label="label" :value="value" /></el-select></el-form-item>
         <el-form-item v-if="projectForm.createTime" label="创建时间">{{ projectForm.createTime }}</el-form-item>
         <el-form-item label="数据集说明"><el-input v-model="projectForm.remark" type="textarea" :rows="3" maxlength="1000" show-word-limit /></el-form-item>
         <el-form-item label="标注规则"><el-input v-model="projectForm.annotationRules" type="textarea" :rows="3" maxlength="4000" placeholder="说明应标注的对象、边界和排除规则" /></el-form-item>
@@ -140,7 +141,7 @@
       <el-button v-if="activeSample.mediaType === 'video'" type="primary" plain @click="openVideoFrames(activeSample)">视频切图</el-button>
       </div></div>
       <el-collapse v-if="activeSample.instances?.length"><el-collapse-item title="查看标注内容"><pre>{{ JSON.stringify(activeSample.instances.map(item => ({ labelId: item.labelId, type: item.annotationType, data: item.annotationData })), null, 2) }}</pre></el-collapse-item></el-collapse>
-      </template><template #footer><el-button v-if="activeSample?.mediaType === 'image' && project.annotationType === 'object_detection'" @click="annotate">编辑标注</el-button><el-button :loading="busy" type="primary" @click="saveSample">保存信息</el-button></template>
+      </template><template #footer><el-button v-if="activeSample?.mediaType === 'image'" @click="annotate">编辑标注</el-button><el-button :loading="busy" type="primary" @click="saveSample">保存信息</el-button></template>
     </el-dialog>
 
     <el-dialog v-model="splitDialog" title="划分训练集和验证集" width="620px" :close-on-click-modal="false">
@@ -189,7 +190,7 @@ const enter = row => run(async () => { project.value = row; Object.assign(query,
 const back = async () => { project.value = null; await router.replace({ query: {} }); await loadProjects() }
 const search = () => run(async () => { query.page = 1; await loadSamples() })
 const resetSearch = () => { Object.assign(query, emptyQuery()); search() }
-const annotate = () => project.value?.annotationType === 'object_detection' && router.push({ path: '/algorithm-standard', query: { annotationId: project.value.id } })
+const annotate = () => project.value && router.push(project.value.annotationType === 'object_detection' ? { path: '/algorithm-standard', query: { annotationId: project.value.id } } : { path: '/dataset-annotation', query: { dataset: project.value.id } })
 
 const workspaceTabs = ref(null)
 const workflowProjectDialog = ref(false), workflowAction = ref(''), workflowProjects = ref([]), workflowProjectTotal = ref(0)

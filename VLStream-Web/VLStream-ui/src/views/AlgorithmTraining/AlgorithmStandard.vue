@@ -769,6 +769,8 @@ import {
 } from '@/api/annotationInstances'
 import request, {getBaseURL} from '@/utils/request'
 import {batchSaveAnnotationImages, getAnnotationImages, uploadAnnotationImages} from '@/api/annotationImage'
+import { useRouter } from 'vue-router'
+const router = useRouter()
 
 // control
 const showAnnotationView = ref(false)
@@ -1261,6 +1263,10 @@ const handleRowClick = (row) => {
 }
 
 const handleView = async (row) => {
+  if (row.annotationType && row.annotationType !== 'object_detection') {
+    await router.push({ path: '/dataset-annotation', query: { dataset: String(row.id) } })
+    return
+  }
   console.log('查看与标注', row)
 
   // before data

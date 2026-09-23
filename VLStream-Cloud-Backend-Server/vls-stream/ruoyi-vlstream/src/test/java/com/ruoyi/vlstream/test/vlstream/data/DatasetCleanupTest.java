@@ -31,6 +31,8 @@ class DatasetCleanupTest {
         jdbc = new JdbcTemplate(source);
         jdbc.execute("DROP TABLE IF EXISTS vls_dataset_conversion_guard");
         jdbc.execute("DROP TABLE IF EXISTS sys_oss");
+        jdbc.execute("DROP TABLE IF EXISTS vls_smart_annotation_task");
+        jdbc.execute("CREATE TABLE vls_smart_annotation_task(id BIGINT,tenant_id VARCHAR(64),dataset_id BIGINT,is_deleted INT DEFAULT 0,task_state VARCHAR(20))");
         jdbc.execute("CREATE TABLE sys_oss(service VARCHAR(64),file_name TEXT)");
         // Only this disposable, loopback-only schema is accepted by the test annotation.
         for (String table : Arrays.asList("vls_model_class_snapshot","vls_dataset_cleanup","vls_algorithm_annotation","vls_algorithm_training","vls_container_instance","vls_annotation_image","vls_annotation_label","vls_annotation_instance","vls_dataset_version","vls_dataset_import_job","vls_dataset_upload_part","vls_dataset_frame_origin")) jdbc.execute("DROP TABLE IF EXISTS " + table);
@@ -52,6 +54,7 @@ class DatasetCleanupTest {
     @BeforeEach void setup() {
         jdbc.update("DELETE FROM vls_dataset_conversion_guard");
         jdbc.update("DELETE FROM sys_oss");
+        jdbc.update("DELETE FROM vls_smart_annotation_task");
         for (String table : Arrays.asList("vls_model_class_snapshot","vls_dataset_cleanup","vls_algorithm_annotation","vls_algorithm_training","vls_container_instance","vls_annotation_image","vls_annotation_label","vls_annotation_instance","vls_dataset_version","vls_dataset_import_job","vls_dataset_upload_part","vls_dataset_frame_origin")) jdbc.update("DELETE FROM " + table);
         TenantContextHolder.setTenantId("tenant-a");
         storage=mock(DatasetStorageProvider.class); remote=mock(DatasetRemoteCleanup.class); classes=mock(ModelClassFileService.class); client=mock(OssClient.class);

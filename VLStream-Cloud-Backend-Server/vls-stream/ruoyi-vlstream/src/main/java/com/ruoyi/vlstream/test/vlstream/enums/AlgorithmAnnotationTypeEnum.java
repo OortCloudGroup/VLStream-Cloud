@@ -21,7 +21,9 @@ public enum AlgorithmAnnotationTypeEnum {
 
 	rect("rect", "矩形"),
 	circle("circle", "圆形"),
-	polygon("polygon", "多边形");
+	polygon("polygon", "多边形"),
+	classification("classification", "整图分类"),
+	mask("mask", "像素掩膜");
 
 	@EnumValue
 	private final String code;

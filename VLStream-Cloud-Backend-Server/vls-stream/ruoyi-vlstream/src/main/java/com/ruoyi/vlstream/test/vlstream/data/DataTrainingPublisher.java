@@ -32,9 +32,11 @@ public class DataTrainingPublisher {
     public boolean publish(Long projectId) {
         data.lockDatasetForTask(projectId);
         DatasetSnapshot current = data.snapshot(projectId);
-        if (!"object_detection".equals(current.getAnnotationType())) throw new ServiceException("当前 GPU 训练链路仅支持物体检测；其他项目可导出版本归档");
+        AnnotationTaskType taskType = AnnotationTaskType.of(current.getAnnotationType());
         if (current.getSamples().stream().noneMatch(s -> Arrays.asList("train", "val").contains(s.getDatasetSplit()))) {
-            data.split(projectId, new DataRequests.Split());
+            DataRequests.Split split = new DataRequests.Split();
+            if (taskType == AnnotationTaskType.CLASSIFICATION) split.setMode("stratified");
+            data.split(projectId, split);
         }
         DataRequests.Version request = new DataRequests.Version(); request.setName("训练生成快照"); request.setDescription("用于生成独立训练目录");
         DatasetVersion version = data.saveVersion(projectId, request);
@@ -53,17 +55,15 @@ public class DataTrainingPublisher {
                 if (previous != null && !previous.equals(member.getDatasetSplit())) throw new ServiceException("相同文件内容出现在两个集合中，请重新划分");
             }
         }
-        Map<Long, Integer> classes = new LinkedHashMap<>(); List<String> names = new ArrayList<>();
-        snapshot.getLabels().stream().sorted(Comparator.comparing(AnnotationLabel::getId)).forEach(label -> {
-            classes.put(label.getId(), classes.size()); names.add(label.getName());
-        });
+        TrainingDatasetLayout layout = new TrainingDatasetLayout(snapshot.getAnnotationType(), snapshot.getLabels());
+        List<Map<String, Object>> manifestSamples = new ArrayList<>();
         String directory = CommonConstant.BASE_DATASETS_PATH + "vls/annotation_" + projectId + "/version_" + version.getVersionNumber() + "_" + UUID.randomUUID().toString().substring(0, 8);
         Session session = null; ChannelSftp sftp = null;
         try {
             session = new JSch().getSession(ssh.getUsername(), ssh.getHost(), ssh.getPort());
             session.setPassword(ssh.getPassword()); session.setConfig("StrictHostKeyChecking", "no"); session.connect(30000);
             sftp = (ChannelSftp) session.openChannel("sftp"); sftp.connect(30000);
-            for (String folder : Arrays.asList("images/train", "images/val", "labels/train", "labels/val")) mkdir(sftp, directory + "/" + folder);
+            for (String folder : layout.directories()) mkdir(sftp, directory + "/" + folder);
             List<String> calibration = new ArrayList<>();
             for (AnnotationImage sample : members) {
                 Path temp = transfer.tempFile("training-", ".image");
@@ -78,15 +78,21 @@ public class DataTrainingPublisher {
                         throw new ServiceException("训练图片内容与版本校验和不一致：" + sample.getImageName());
                     String previousSplit = hashes.putIfAbsent(inspection.getSha256(), sample.getDatasetSplit());
                     if (previousSplit != null && !previousSplit.equals(sample.getDatasetSplit())) throw new ServiceException("图片内容在训练集和验证集中重复，请先检查质量并重新划分");
-                    String filename = sample.getId() + "." + sample.getOriginalName().substring(sample.getOriginalName().lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+                    String extension = sample.getOriginalName().substring(sample.getOriginalName().lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
                     String split = sample.getDatasetSplit();
-                    String content = writer.labels(byImage.get(sample.getId()), classes, inspection.getWidth(), inspection.getHeight());
-                    sftp.put(temp.toString(), directory + "/images/" + split + "/" + filename);
-                    putText(sftp, directory + "/labels/" + split + "/" + sample.getId() + ".txt", content);
-                    if ("train".equals(split) && calibration.size() < 20) calibration.add(directory + "/images/train/" + filename);
+                    String relativeImage = layout.imagePath(sample.getId(), extension, split, byImage.get(sample.getId()));
+                    Map<String, byte[]> annotationFiles = layout.annotations(sample.getId(), split, byImage.get(sample.getId()), inspection.getWidth(), inspection.getHeight());
+                    sftp.put(temp.toString(), directory + "/" + relativeImage);
+                    for (Map.Entry<String, byte[]> file : annotationFiles.entrySet()) sftp.put(new ByteArrayInputStream(file.getValue()), directory + "/" + file.getKey());
+                    manifestSamples.add(layout.sample(sample.getId(), relativeImage, split, inspection.getWidth(), inspection.getHeight(), inspection.getSha256()));
+                    if ("train".equals(split) && calibration.size() < 20) calibration.add(directory + "/" + relativeImage);
                 } finally { Files.deleteIfExists(temp); }
             }
-            putText(sftp, directory + "/dataset.yaml", "path: " + data.writeJson(directory) + "\ntrain: images/train\nval: images/val\nnc: " + names.size() + "\nnames: " + data.writeJson(names) + "\n");
+            putText(sftp, directory + "/dataset.yaml", layout.yaml(directory));
+            putText(sftp, directory + "/vls-dataset.json", layout.manifest(projectId, data.tenant(), manifestSamples));
+            for (String resource : Arrays.asList("four_task_runtime.py", "run_training.py")) {
+                try (InputStream input = new org.springframework.core.io.ClassPathResource("training/" + resource).getInputStream()) { sftp.put(input, directory + "/" + resource); }
+            }
             putText(sftp, directory + "/coco_subset_20.txt", String.join("\n", calibration));
             putText(sftp, directory + "/version.json", data.writeJson(DataManagementService.map("versionId", String.valueOf(version.getId()), "versionNumber", version.getVersionNumber(), "train", version.getTrainCount(), "val", version.getValidationCount())));
             data.recordPublishedDataset(projectId, version.getId(), directory + "/dataset.yaml");

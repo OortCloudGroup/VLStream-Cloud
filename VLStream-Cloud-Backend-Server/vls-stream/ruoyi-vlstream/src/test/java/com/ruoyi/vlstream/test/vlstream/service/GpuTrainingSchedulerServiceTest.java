@@ -155,6 +155,38 @@ class GpuTrainingSchedulerServiceTest {
 			eventCaptor.getValue().getModelPath());
 	}
 
+	@Test
+	void smartCompletionDoesNotPublishOrModifyFormalTraining() throws Exception {
+		GpuTrainingSchedulerService scheduler = new GpuTrainingSchedulerService();
+		com.ruoyi.vlstream.test.vlstream.data.SmartAnnotationWorker worker = mock(com.ruoyi.vlstream.test.vlstream.data.SmartAnnotationWorker.class);
+		IVlsContainerInstanceService containers = mock(IVlsContainerInstanceService.class);
+		IVlsAlgorithmTrainingService training = mock(IVlsAlgorithmTrainingService.class);
+		ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
+		setField(scheduler, "smartAnnotationWorker", worker); setField(scheduler, "containerInstanceService", containers);
+		setField(scheduler, "algorithmTrainingService", training); setField(scheduler, "applicationEventPublisher", events);
+		ContainerInstance instance = new ContainerInstance(); instance.setId(9L); instance.setInstanceType("smart_annotation");
+		invokeComplete(scheduler, instance);
+		verify(worker).complete(instance);
+		org.mockito.Mockito.verifyNoInteractions(training, events);
+		assertEquals("completed", instance.getInstanceStatus());
+	}
+
+	@Test
+	void queuedSmartCancellationDoesNotWaitForGpuOrTouchOtherContainers() throws Exception {
+		GpuTrainingSchedulerService scheduler = new GpuTrainingSchedulerService();
+		com.ruoyi.vlstream.test.vlstream.data.SmartAnnotationWorker worker = mock(com.ruoyi.vlstream.test.vlstream.data.SmartAnnotationWorker.class);
+		VlsContainerInstanceMapper mapper = mock(VlsContainerInstanceMapper.class);
+		IVlsContainerInstanceService containers = mock(IVlsContainerInstanceService.class);
+		SSHService ssh = mock(SSHService.class);
+		ContainerInstance instance = new ContainerInstance(); instance.setId(8L); instance.setTenantId("tenant-a"); instance.setInstanceType("smart_annotation"); instance.setInstanceStatus("queued");
+		when(mapper.selectActiveTrainingForScheduler()).thenReturn(Collections.emptyList()); when(mapper.selectNextQueuedTrainingForScheduler()).thenReturn(instance);
+		when(worker.cancelRequested(instance)).thenReturn(true);
+		setField(scheduler, "smartAnnotationWorker", worker); setField(scheduler, "containerInstanceMapper", mapper); setField(scheduler, "containerInstanceService", containers); setField(scheduler, "sshService", ssh);
+		invokeSchedule(scheduler);
+		verify(worker).cancelled(instance); org.mockito.Mockito.verifyNoInteractions(ssh);
+		assertEquals("cancelled", instance.getInstanceStatus());
+	}
+
 	private SSHService.SSHExecutionResult sshResult(String output) {
 		SSHService.SSHExecutionResult result = new SSHService.SSHExecutionResult();
 		result.setSuccess(true);

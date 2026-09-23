@@ -60,6 +60,12 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 
 	@Resource
 	private com.ruoyi.vlstream.test.vlstream.data.DataManagementService dataManagementService;
+	@Resource
+	private com.ruoyi.vlstream.test.vlstream.data.DataMediaStorage dataMediaStorage;
+	@Resource
+	private com.ruoyi.vlstream.test.vlstream.data.SampleMediaInspector sampleMediaInspector;
+	@Resource
+	private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
 	@Override
 	public IPage<AnnotationInstanceVO> selectVlsAnnotationInstancePage(IPage<AnnotationInstanceVO> page, AnnotationInstanceVO vlsAnnotationInstance) {
@@ -96,6 +102,9 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 		instance.setAnnotationData(annotationData);
 		instance.setConfidence(new BigDecimal("1.0000"));
 		instance.setVerified(0);
+		java.util.List<AnnotationInstance> proposed = imageInstances(annotationId, imageId);
+		proposed.add(instance);
+		validateTypedAnnotations(annotationId, imageId, proposed);
 
 		save(instance);
 
@@ -126,6 +135,9 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 		instance.setAnnotationType(annotationType);
 		instance.setAnnotationData(annotationData);
 
+		java.util.List<AnnotationInstance> proposed = imageInstances(instance.getAnnotationId(), instance.getImageId());
+		proposed.removeIf(existing -> existing.getId().equals(instanceId)); proposed.add(instance);
+		validateTypedAnnotations(instance.getAnnotationId(), instance.getImageId(), proposed);
 		updateById(instance);
 
 		// new
@@ -150,6 +162,9 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 
 		Long labelId = instance.getLabelId();
 		dataManagementService.beginAnnotationEdit(instance.getAnnotationId());
+		java.util.List<AnnotationInstance> remaining = imageInstances(instance.getAnnotationId(), instance.getImageId());
+		remaining.removeIf(existing -> existing.getId().equals(instanceId));
+		validateTypedAnnotations(instance.getAnnotationId(), instance.getImageId(), remaining);
 
 		int result = baseMapper.deleteById(instanceId);
 
@@ -169,6 +184,7 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 	public boolean batchSaveAnnotations(Long annotationId, Long imageId, List<AnnotationInstance> annotations) {
 		dataManagementService.beginAnnotationEdit(annotationId);
 		dataManagementService.validateAnnotationOwner(annotationId, imageId, annotations.stream().map(AnnotationInstance::getLabelId).collect(Collectors.toList()));
+		validateTypedAnnotations(annotationId, imageId, annotations);
 		log.info("批量保存标注实例: annotationId={}, imageName={}, count={}", annotationId, imageId, annotations.size());
 
 		// Delete all annotation
@@ -188,6 +204,10 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 
 		// new annotation
 		for (AnnotationInstance annotation : annotations) {
+			annotation.setId(null);
+			annotation.setAnnotationId(annotationId);
+			annotation.setImageId(imageId);
+			annotation.setTenantId(dataManagementService.tenant());
 			save(annotation);
 
 			// new
@@ -288,6 +308,29 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 			log.error("删除图片及相关数据失败：imageId={}", imageId, e);
 			throw new RuntimeException("删除图片及相关数据失败：" + e.getMessage());
 		}
+	}
+
+	private java.util.List<AnnotationInstance> imageInstances(Long annotationId, Long imageId) {
+		return new java.util.ArrayList<>(baseMapper.selectList(new LambdaQueryWrapper<AnnotationInstance>()
+			.eq(AnnotationInstance::getAnnotationId, annotationId).eq(AnnotationInstance::getImageId, imageId)));
+	}
+
+	private void validateTypedAnnotations(Long annotationId, Long imageId, java.util.List<AnnotationInstance> values) {
+		AlgorithmAnnotation project = dataManagementService.project(annotationId);
+		if (project == null || project.getAnnotationType() == null || "object_detection".equals(project.getAnnotationType()) || values.isEmpty()) return;
+		AnnotationImage image = dataManagementService.sample(annotationId, imageId);
+		if ("video".equals(image.getMediaType())) throw new com.ruoyi.common.exception.ServiceException("视频需先切图后再标注");
+		Integer width = image.getMediaWidth(), height = image.getMediaHeight();
+		if (width == null || height == null || width <= 0 || height <= 0) {
+			try (java.io.InputStream input = dataMediaStorage.read(image.getLocalPath()); java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream()) {
+				byte[] buffer = new byte[32768]; int count;
+				while ((count = input.read(buffer)) != -1) { if (output.size() + count > 25 * 1024 * 1024) throw new java.io.IOException("图片过大"); output.write(buffer, 0, count); }
+				com.ruoyi.vlstream.test.vlstream.data.SampleMediaInspector.Inspection inspected = sampleMediaInspector.inspect(image.getOriginalName(), output.toByteArray());
+				width = inspected.getWidth(); height = inspected.getHeight();
+			} catch (Exception ex) { throw new com.ruoyi.common.exception.ServiceException("无法校验图片尺寸"); }
+		}
+		com.ruoyi.vlstream.test.vlstream.data.AnnotationPayloads.validate(project.getAnnotationType(),
+			com.ruoyi.vlstream.test.vlstream.data.AnnotationPayloads.read(project.getAnnotationType(), values, objectMapper), width, height);
 	}
 
 	private void refreshAnnotationProgress(Long annotationId) {

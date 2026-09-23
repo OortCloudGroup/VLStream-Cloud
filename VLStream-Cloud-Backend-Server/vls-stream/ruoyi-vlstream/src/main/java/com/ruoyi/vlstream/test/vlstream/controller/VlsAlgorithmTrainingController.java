@@ -384,13 +384,11 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			if (algorithm == null) {
 				return R.fail("算法不存在");
 			}
+			com.ruoyi.vlstream.test.vlstream.data.AnnotationTaskType annotationTask = com.ruoyi.vlstream.test.vlstream.data.AnnotationTaskType.of(annotation.getAnnotationType());
+			if (algorithm.getCategory() == null || !annotationTask.getModelTask().equals(algorithm.getCategory().getCode())) return R.fail("算法模型类型与数据集标注类型不匹配");
 			String baseModel = algorithm.getPtModelFilePath();
-			if (StringUtils.isBlank(baseModel)) {
-				return R.fail("算法基础模型路径为空");
-			}
-			if (!"object_detection".equals(annotation.getAnnotationType()) || algorithm.getCategory() == null
-				|| !"detect".equals(algorithm.getCategory().getCode())) return R.fail("当前训练仅支持物体检测算法与物体检测数据集");
-			trainingDatasetPreflight.validate(datasetPath, baseModel);
+			if (StringUtils.isBlank(baseModel)) baseModel = "@preset/" + annotationTask.getModelTask();
+			trainingDatasetPreflight.validate(datasetPath, baseModel, annotation.getAnnotationType(), annotation.getId());
 
 			Integer finalEpochs = options.getEpochs();
 			Integer finalBatch = options.getBatchSize();
@@ -463,6 +461,16 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		String ptModelPath = training.getModelOutputPath();
 		if (ptModelPath == null || ptModelPath.isEmpty()) {
 			return R.fail("模型路径不能为空");
+		}
+		String completedType = "detect";
+		try {
+			if (StringUtils.isNotBlank(training.getConfigParams())) completedType = new com.fasterxml.jackson.databind.ObjectMapper().readTree(training.getConfigParams()).path("trainType").asText("detect");
+		} catch (java.io.IOException ignored) { /* Historical runs may not have structured type metadata. */ }
+		if (!"detect".equals(completedType)) {
+			AlgorithmTraining ready = new AlgorithmTraining(); ready.setId(id);
+			ready.setOnnxConversionStatus("not_required"); ready.setOmConversionStatus("not_required"); ready.setOnnxConversionError(""); ready.setOmConversionError("");
+			vlsAlgorithmTrainingService.updateAlgorithmTraining(ready);
+			return R.success("PT模型已就绪，可保存模型或用于智能标注");
 		}
 		if (CONVERSION_CONVERTING.equals(training.getOnnxConversionStatus())
 			|| CONVERSION_CONVERTING.equals(training.getOmConversionStatus())) {
@@ -570,7 +578,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		if (event == null || event.getTrainingId() == null) {
 			return;
 		}
-		log.info("训练模型已就绪，自动提交格式转换: id={}, modelPath={}",
+		log.info("训练模型已就绪，处理本轮产物: id={}, modelPath={}",
 			event.getTrainingId(), event.getModelPath());
 		convertModel(event.getTrainingId());
 	}

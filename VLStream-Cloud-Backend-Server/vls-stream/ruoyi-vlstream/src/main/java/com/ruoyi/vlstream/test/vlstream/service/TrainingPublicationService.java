@@ -70,8 +70,8 @@ public class TrainingPublicationService {
                 if(states.isEmpty() || !"PENDING".equals(states.get(0))) return null;
                 AlgorithmTraining training=trainings.selectById(id);
                 if(training==null || training.getTrainStatus()==null || !"completed".equals(training.getTrainStatus().getCode()) || training.getModelOutputPath()==null || training.getModelOutputPath().trim().isEmpty()) return null;
-                if (!Arrays.asList("completed","failed").contains(training.getOnnxConversionStatus())
-                    || !Arrays.asList("completed","failed").contains(training.getOmConversionStatus())) return null;
+                if (!Arrays.asList("completed","failed","not_required").contains(training.getOnnxConversionStatus())
+                    || !Arrays.asList("completed","failed","not_required").contains(training.getOmConversionStatus())) return null;
                 // Wait for the entire conversion chain, so the model row receives all successful formats.
                 if(jdbc.queryForObject("SELECT COUNT(*) FROM vls_dataset_conversion_guard WHERE tenant_id=? AND training_id=?",Integer.class,tenant,id)>0
                     || "converting".equals(training.getOnnxConversionStatus()) || "converting".equals(training.getOmConversionStatus())) return null;

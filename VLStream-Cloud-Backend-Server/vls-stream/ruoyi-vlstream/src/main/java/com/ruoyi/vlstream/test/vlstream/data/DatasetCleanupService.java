@@ -80,6 +80,7 @@ public class DatasetCleanupService {
         if (count("SELECT COUNT(*) FROM vls_dataset_cleanup WHERE tenant_id=? AND annotation_id=?", tenant, id) > 0) return;
         if (((Number) projects.get(0).get("is_deleted")).intValue() != 0) throw new ServiceException("数据集已删除");
         if (count("SELECT COUNT(*) FROM vls_dataset_conversion_guard WHERE tenant_id=? AND dataset_id=?", tenant, id) > 0) throw new ServiceException("模型转换仍在使用数据集，请等待转换结束后再删除");
+        if (count("SELECT COUNT(*) FROM vls_smart_annotation_task WHERE tenant_id=? AND dataset_id=? AND is_deleted=0 AND task_state IN ('QUEUED','PREPARING','RUNNING','REVIEW','CONFIRMING','CANCEL_REQUESTED')", tenant, id) > 0) throw new ServiceException("存在未结束的智能标注任务，请先完成或取消任务再删除数据集");
         if (count("SELECT COUNT(*) FROM vls_algorithm_training WHERE tenant_id=? AND dataset_id=? AND (train_status IS NULL OR train_status NOT IN ('pending','completed','failed','cancelled','canceled','stopped') OR onnx_conversion_status='converting' OR om_conversion_status='converting')", tenant, id) > 0
             || count("SELECT COUNT(*) FROM vls_container_instance c JOIN vls_algorithm_training t ON c.training_task_id=t.id AND c.tenant_id=t.tenant_id WHERE t.tenant_id=? AND t.dataset_id=? AND c.instance_status IN ('queued','pending','starting','running','creating','stopping')", tenant, id) > 0) {
             throw new ServiceException("存在排队、运行或转换中的训练任务，请等待任务结束后再删除数据集");

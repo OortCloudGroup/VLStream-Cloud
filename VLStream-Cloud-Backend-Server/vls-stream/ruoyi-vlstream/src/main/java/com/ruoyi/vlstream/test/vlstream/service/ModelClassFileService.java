@@ -49,7 +49,7 @@ public class ModelClassFileService {
             throw new IOException("无法定位模型训练目录，不能确认类别文件来源");
         }
         Map<?, ?> args = parse(read(ptPath.substring(0, weights) + "/args.yaml"));
-        Object data = args.get("data");
+        Object data = args.containsKey("vls_dataset_yaml") ? args.get("vls_dataset_yaml") : args.get("data");
         if (!(data instanceof String) || !((String) data).startsWith("/")
             || !((String) data).matches("(?s).+\\.ya?ml")) {
             throw new IOException("训练 args.yaml 缺少绝对路径的 data YAML，不能确认类别文件来源");

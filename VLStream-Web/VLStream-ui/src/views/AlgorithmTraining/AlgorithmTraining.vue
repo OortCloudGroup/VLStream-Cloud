@@ -1327,6 +1327,7 @@ const TRAIN_TYPE_OPTIONS = [
   { label: '目标检测算法', value: 'detect' },
   { label: '实例分割算法', value: 'segment' },
   { label: '图像分类算法', value: 'classify' },
+  { label: '语义分割算法', value: 'semanticSeg' },
   { label: '关键点检测算法', value: 'pose' },
   { label: '旋转目标检测算法', value: 'obb' }
 ]
@@ -1335,6 +1336,7 @@ const TRAIN_TYPE_LABELS = {
   detect: '目标检测算法',
   segment: '实例分割算法',
   classify: '图像分类算法',
+  semanticSeg: '语义分割算法',
   pose: '关键点检测算法',
   obb: '旋转目标检测算法'
 }
@@ -1839,7 +1841,7 @@ const promptDownloadModelType = async (row) => {
             modelValue: localType.value,
             'onUpdate:modelValue': updateType
           },
-          () => modelTypes.map(item => h(
+          () => modelTypes.filter(item => item.path || item.status !== 'not_required').map(item => h(
             ElRadio,
             { label: item.type, disabled: !item.path },
             () => {
@@ -2334,7 +2336,7 @@ const stopAllPolling = () => {
   stopConversionPolling()
 }
 
-const isConversionTerminal = (status) => ['completed', 'failed'].includes(status)
+const isConversionTerminal = (status) => ['completed', 'failed', 'not_required'].includes(status)
 
 const startConversionPolling = (taskId, trainingStatus, displayStatus) => {
   stopConversionPolling()
@@ -2361,6 +2363,11 @@ const startConversionPolling = (taskId, trainingStatus, displayStatus) => {
 
       stopConversionPolling()
       await loadTrainingData()
+      if (onnxStatus === 'not_required' && omStatus === 'not_required') {
+        appendTerminalInfo('PT模型已就绪，可保存模型或用于智能标注。')
+        await refreshPublication(taskId)
+        return
+      }
       if (onnxStatus === 'completed') {
         appendTerminalInfo(`ONNX转换完成: ${data.onnxModelOutputPath}`)
       } else {
@@ -2402,8 +2409,8 @@ const handleTrainingFinished = async (taskId, statusValue) => {
   }
 
   try {
-    await convertModel(taskId)
-    appendTerminalInfo('训练完成，已提交ONNX和OM转换，正在查询转换状态...')
+    const conversion = await convertModel(taskId)
+    appendTerminalInfo(conversion?.msg || '训练完成，正在查询模型产物处理状态...')
     startConversionPolling(taskId, statusValue, displayStatus)
   } catch (error) {
     appendLogLines(`[ERROR] 提交模型转换失败: ${error?.message || error}`)

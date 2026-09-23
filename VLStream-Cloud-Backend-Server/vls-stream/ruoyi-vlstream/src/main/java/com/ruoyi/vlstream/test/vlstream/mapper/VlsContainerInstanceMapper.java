@@ -36,7 +36,7 @@ public interface VlsContainerInstanceMapper extends BaseMapper<ContainerInstance
 	 */
 	@InterceptorIgnore(tenantLine = "true")
 	@Select("SELECT * FROM vls_container_instance WHERE is_deleted = 0 "
-		+ "AND instance_type = 'training' AND instance_status IN ('starting', 'running') ORDER BY id")
+		+ "AND instance_type IN ('training', 'smart_annotation') AND instance_status IN ('starting', 'running') ORDER BY id")
 	List<ContainerInstance> selectActiveTrainingForScheduler();
 
 	/**
@@ -44,7 +44,7 @@ public interface VlsContainerInstanceMapper extends BaseMapper<ContainerInstance
 	 */
 	@InterceptorIgnore(tenantLine = "true")
 	@Select("SELECT * FROM vls_container_instance WHERE is_deleted = 0 "
-		+ "AND instance_type = 'training' AND instance_status = 'queued' "
+		+ "AND instance_type IN ('training', 'smart_annotation') AND instance_status = 'queued' "
 		+ "ORDER BY queue_time ASC, id ASC LIMIT 1")
 	ContainerInstance selectNextQueuedTrainingForScheduler();
 

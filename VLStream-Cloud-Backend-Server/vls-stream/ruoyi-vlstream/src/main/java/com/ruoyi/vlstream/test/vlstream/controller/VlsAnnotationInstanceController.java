@@ -96,7 +96,8 @@ public class VlsAnnotationInstanceController extends BladeController {
 	@ApiOperationSupport(order = 4)
 	@Operation(summary = "新增", description = "传入vlsAnnotationInstance")
 	public R save(@Valid @RequestBody AnnotationInstance vlsAnnotationInstance) {
-		return R.status(vlsAnnotationInstanceService.save(vlsAnnotationInstance));
+		return R.status(vlsAnnotationInstanceService.saveAnnotation(vlsAnnotationInstance.getAnnotationId(), vlsAnnotationInstance.getLabelId(),
+			vlsAnnotationInstance.getImageId(), vlsAnnotationInstance.getAnnotationType(), vlsAnnotationInstance.getAnnotationData()) != null);
 	}
 
 	/**
@@ -106,7 +107,11 @@ public class VlsAnnotationInstanceController extends BladeController {
 	@ApiOperationSupport(order = 5)
 	@Operation(summary = "修改", description = "传入vlsAnnotationInstance")
 	public R update(@Valid @RequestBody AnnotationInstance vlsAnnotationInstance) {
-		return R.status(vlsAnnotationInstanceService.updateById(vlsAnnotationInstance));
+		AnnotationInstance existing = vlsAnnotationInstance.getId() == null ? null : vlsAnnotationInstanceService.getById(vlsAnnotationInstance.getId());
+		if (existing == null) return R.fail("标注不存在或无权访问");
+		return R.status(vlsAnnotationInstanceService.updateAnnotation(existing.getId(), vlsAnnotationInstance.getLabelId() == null ? existing.getLabelId() : vlsAnnotationInstance.getLabelId(),
+			vlsAnnotationInstance.getAnnotationType() == null ? existing.getAnnotationType() : vlsAnnotationInstance.getAnnotationType(),
+			vlsAnnotationInstance.getAnnotationData() == null ? existing.getAnnotationData() : vlsAnnotationInstance.getAnnotationData()) != null);
 	}
 
 	/**
@@ -116,17 +121,19 @@ public class VlsAnnotationInstanceController extends BladeController {
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description = "传入vlsAnnotationInstance")
 	public R submit(@Valid @RequestBody AnnotationInstance vlsAnnotationInstance) {
-		return R.status(vlsAnnotationInstanceService.saveOrUpdate(vlsAnnotationInstance));
+		return vlsAnnotationInstance.getId() == null ? save(vlsAnnotationInstance) : update(vlsAnnotationInstance);
 	}
 
 	/**
 	 * annotationinstance Delete
 	 */
 	@GetMapping("/remove")
+	@org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
 	@ApiOperationSupport(order = 7)
 	@Operation(summary = "逻辑删除", description = "传入ids")
 	public R remove(@Parameter(description = "主键集合", required = true) @RequestParam String ids) {
-		return R.status(vlsAnnotationInstanceService.deleteLogic(Func.toLongList(ids)));
+		for (Long id : Func.toLongList(ids)) vlsAnnotationInstanceService.deleteAnnotation(id);
+		return R.status(true);
 	}
 
 	/**

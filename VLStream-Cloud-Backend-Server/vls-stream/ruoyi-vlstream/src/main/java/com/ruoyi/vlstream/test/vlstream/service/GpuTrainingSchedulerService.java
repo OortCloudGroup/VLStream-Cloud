@@ -72,6 +72,10 @@ public class GpuTrainingSchedulerService {
 	private ApplicationEventPublisher applicationEventPublisher;
 	@Resource
 	private ObjectMapper objectMapper;
+	@Resource
+	@org.springframework.context.annotation.Lazy
+	private com.ruoyi.vlstream.test.vlstream.data.SmartAnnotationWorker smartAnnotationWorker;
+	private static final String TYPE_SMART_ANNOTATION = "smart_annotation";
 
 	private ScheduledExecutorService executor;
 
@@ -125,6 +129,7 @@ public class GpuTrainingSchedulerService {
 			Map<String,Object> config = isBlank(task.getConfigParams()) ? new LinkedHashMap<>()
 				: objectMapper.readValue(task.getConfigParams(), new com.fasterxml.jackson.core.type.TypeReference<Map<String,Object>>() {});
 			config.put("runDirectory", runDirectory);
+			config.put("trainType", isBlank(taskType) ? "detect" : taskType.trim());
 			AlgorithmTraining run = new AlgorithmTraining(); run.setId(taskId); run.setConfigParams(objectMapper.writeValueAsString(config));
 			if (algorithmTrainingService.updateAlgorithmTraining(run) <= 0) throw new IllegalStateException("保存本轮训练目录失败");
 		} catch (java.io.IOException e) { throw new IllegalStateException("训练配置无法解析", e); }
@@ -170,6 +175,23 @@ public class GpuTrainingSchedulerService {
 		result.setTrainType(taskType);
 		result.setMessage("训练任务已进入GPU队列");
 		return result;
+	}
+
+	/** Shares the durable FIFO and exclusive GPU with formal training. No caller-supplied command. */
+	public void enqueueSmartAnnotation(Long roundId) {
+		if (containerInstanceService.count(new LambdaQueryWrapper<ContainerInstance>()
+			.eq(ContainerInstance::getTrainingTaskId, roundId).eq(ContainerInstance::getInstanceType, TYPE_SMART_ANNOTATION)
+			.in(ContainerInstance::getInstanceStatus, STATUS_QUEUED, STATUS_STARTING, STATUS_RUNNING)) > 0) return;
+		RemoteServers server = requireServer();
+		ContainerInstance instance = new ContainerInstance();
+		instance.setTenantId(TenantContextHolder.getTenantId());
+		instance.setInstanceName("vls-annotation-" + roundId + "-" + java.util.UUID.randomUUID().toString().substring(0, 8));
+		instance.setInstanceType(TYPE_SMART_ANNOTATION); instance.setImageType(TYPE_SMART_ANNOTATION);
+		instance.setImageName(properties.getImage()); instance.setImageTag(properties.getImage()); instance.setInstanceCount(1);
+		instance.setTrainingTaskId(roundId); instance.setServerId(server.getId()); instance.setServerIp(server.getServerIp());
+		instance.setGpuIndex(properties.getGpuIndex()); instance.setGpuUuid(properties.getGpuUuid()); instance.setGpuLimit("GPU " + properties.getGpuIndex() + " (exclusive)");
+		instance.setInstanceStatus(STATUS_QUEUED); instance.setHealthStatus("unknown"); instance.setQueueTime(new Date()); instance.setRestartCount(0);
+		if (!containerInstanceService.save(instance)) throw new IllegalStateException("智能标注任务入队失败");
 	}
 
 	public Map<String, Object> getResourceSnapshot() {
@@ -235,11 +257,27 @@ public class GpuTrainingSchedulerService {
 
 	private synchronized void dispatchNext() {
 		ContainerInstance instance = containerInstanceMapper.selectNextQueuedTrainingForScheduler();
-		if (instance == null || !isGpuIdle()) {
+		if (instance == null) return;
+		if (TYPE_SMART_ANNOTATION.equals(instance.getInstanceType()) && withTenant(instance, () -> smartAnnotationWorker.cancelRequested(instance))) {
+			withTenant(instance, () -> { smartAnnotationWorker.cancelled(instance); updateStatus(instance, "cancelled", null, null); });
+			return;
+		}
+		if (!isGpuIdle()) {
 			return;
 		}
 		withTenant(instance, () -> {
 			updateStatus(instance, STATUS_STARTING, null, null);
+			if (TYPE_SMART_ANNOTATION.equals(instance.getInstanceType())) {
+				try {
+					String command = smartAnnotationWorker.prepare(instance);
+					if (smartAnnotationWorker.cancelRequested(instance)) { smartAnnotationWorker.cancelled(instance); updateStatus(instance, "cancelled", null, null); return; }
+					SSHService.SSHExecutionResult start = execute(command);
+					if (!start.isSuccess() || isBlank(start.getOutput())) throw new IllegalStateException("智能标注容器启动失败");
+					updateStatus(instance, STATUS_RUNNING, start.getOutput().trim(), null);
+					smartAnnotationWorker.started(instance);
+				} catch (Exception ex) { fail(instance, ex.getMessage() == null ? "智能标注准备失败" : ex.getMessage()); }
+				return;
+			}
 			String launchCommand = readJsonText(instance.getEnvConfig(), "launchCommand");
 			if (isBlank(launchCommand)) {
 				fail(instance, "训练容器启动命令不存在");
@@ -272,22 +310,36 @@ public class GpuTrainingSchedulerService {
 		String inspect = "docker inspect -f '{{.State.Status}}|{{.State.ExitCode}}|{{.Id}}' "
 			+ shellQuote(instance.getInstanceName()) + " 2>/dev/null || echo missing";
 		SSHService.SSHExecutionResult stateResult = execute(inspect);
+		if (!stateResult.isSuccess()) return true; // A connection failure is not evidence of a missing process.
 		String state = stateResult.getOutput() == null ? "" : stateResult.getOutput().trim();
+		if (TYPE_SMART_ANNOTATION.equals(instance.getInstanceType()) && smartAnnotationWorker.cancelRequested(instance)) {
+			if (state.startsWith("running|") && !execute("docker stop -t 10 " + shellQuote(instance.getInstanceName())).isSuccess()) return true;
+			if (!state.startsWith("running|") && !state.startsWith("exited|") && !state.startsWith("dead|") && !"missing".equals(state)) return true;
+			smartAnnotationWorker.cancelled(instance); updateStatus(instance, "cancelled", instance.getContainerId(), null);
+			execute("docker rm " + shellQuote(instance.getInstanceName()) + " >/dev/null 2>&1 || true");
+			return false;
+		}
 		if (state.startsWith("running|")) {
 			String[] fields = state.split("\\|");
 			updateStatus(instance, STATUS_RUNNING, fields.length > 2 ? fields[2] : instance.getContainerId(), null);
 			updateGpuUsage(instance);
+			if (TYPE_SMART_ANNOTATION.equals(instance.getInstanceType())) smartAnnotationWorker.refreshProgress(instance);
 			return true;
 		}
 		if (state.startsWith("exited|") || state.startsWith("dead|")) {
 			String[] fields = state.split("\\|");
 			int exitCode = fields.length > 1 ? Integer.parseInt(fields[1]) : 1;
-			execute("docker rm -f " + shellQuote(instance.getInstanceName()) + " >/dev/null 2>&1 || true");
-			if (exitCode == 0) {
-				complete(instance);
-			} else {
-				fail(instance, "训练容器退出，exitCode=" + exitCode);
+			try {
+				if (exitCode == 0) complete(instance);
+				else fail(instance, "计算任务容器退出，exitCode=" + exitCode + "，请查看本轮日志");
+			} catch (Exception ex) {
+				if (!TYPE_SMART_ANNOTATION.equals(instance.getInstanceType())) throw ex;
+				fail(instance, ex.getMessage() == null ? "智能标注结果处理失败" : ex.getMessage());
 			}
+			execute("docker rm -f " + shellQuote(instance.getInstanceName()) + " >/dev/null 2>&1 || true");
+		} else if ("missing".equals(state) && STATUS_STARTING.equals(instance.getInstanceStatus()) && TYPE_SMART_ANNOTATION.equals(instance.getInstanceType())) {
+			fail(instance, "智能标注准备被中断，请重试任务");
+			return false;
 		} else if ("missing".equals(state) && STATUS_RUNNING.equals(instance.getInstanceStatus())) {
 			fail(instance, "训练容器不存在，可能被外部删除");
 			return false;
@@ -320,6 +372,11 @@ public class GpuTrainingSchedulerService {
 	}
 
 	private void complete(ContainerInstance instance) {
+		if (TYPE_SMART_ANNOTATION.equals(instance.getInstanceType())) {
+			smartAnnotationWorker.complete(instance);
+			updateStatus(instance, STATUS_COMPLETED, instance.getContainerId(), null);
+			return;
+		}
 		updateStatus(instance, STATUS_COMPLETED, instance.getContainerId(), null);
 		AlgorithmTraining task = algorithmTrainingService.getById(instance.getTrainingTaskId());
 		RemoteServers server = requireServer();
@@ -337,6 +394,10 @@ public class GpuTrainingSchedulerService {
 
 	private void fail(ContainerInstance instance, String message) {
 		updateStatus(instance, STATUS_ERROR, instance.getContainerId(), message);
+		if (TYPE_SMART_ANNOTATION.equals(instance.getInstanceType())) {
+			smartAnnotationWorker.failed(instance, message);
+			return;
+		}
 		AlgorithmTraining training = new AlgorithmTraining();
 		training.setId(instance.getTrainingTaskId());
 		training.setTrainStatus(AlgorithmTrainingStatusEnum.failed);
@@ -385,7 +446,7 @@ public class GpuTrainingSchedulerService {
 
 	private long countByStatus(String status) {
 		return containerInstanceService.count(new LambdaQueryWrapper<ContainerInstance>()
-			.eq(ContainerInstance::getInstanceType, TYPE_TRAINING)
+			.in(ContainerInstance::getInstanceType, TYPE_TRAINING, TYPE_SMART_ANNOTATION)
 			.eq(ContainerInstance::getInstanceStatus, status));
 	}
 
@@ -403,13 +464,23 @@ public class GpuTrainingSchedulerService {
 		StringBuilder train = new StringBuilder();
 		train.append(yolo).append(" ").append(shellToken(trainType)).append(" train");
 		train.append(" data=").append(shellQuote(datasetPath));
-		train.append(" model=").append(shellQuote(baseModel));
+		train.append(" model=").append(shellQuote("@preset/detect".equals(baseModel) ? "yolov8m.pt" : baseModel));
 		if (epochs != null) train.append(" epochs=").append(epochs);
 		if (batchSize != null) train.append(" batch=").append(batchSize);
 		if (imgSize != null) train.append(" imgsz=").append(imgSize);
 		train.append(" project=").append(shellQuote(server.getWorkDir() + "/runs/vls"));
 		train.append(" name=").append(shellQuote(runName)).append(" exist_ok=False");
 		if (properties.getWorkers() != null) train.append(" workers=").append(properties.getWorkers());
+		String directory = datasetPath.substring(0, datasetPath.lastIndexOf('/'));
+		String python = "/data/work/anaconda3/envs/" + server.getCondaEnv() + "/bin/python";
+		String typed = shellQuote(python) + " " + shellQuote(directory + "/run_training.py")
+			+ " --dataset " + shellQuote(datasetPath) + " --model " + shellQuote(baseModel)
+			+ " --output " + shellQuote(server.getWorkDir() + "/runs/vls/" + runName)
+			+ " --epochs " + (epochs == null ? 10 : epochs) + " --batch " + (batchSize == null ? 4 : batchSize)
+			+ " --size " + (imgSize == null ? 640 : imgSize) + " --workers " + (properties.getWorkers() == null ? 2 : properties.getWorkers());
+		String legacy = train.toString(); train.setLength(0);
+		if ("detect".equals(trainType)) train.append("if [ -f ").append(shellQuote(directory + "/run_training.py")).append(" ]; then ").append(typed).append("; else ").append(legacy).append("; fi");
+		else train.append(typed);
 		train.append("; rc=$?; if [ $rc -eq 0 ]; then echo 'Training complete'; ")
 			.append("else echo 'Training failed'; fi; exit $rc");
 		String loggedTraining = "{ " + train + "; } >> " + shellQuote(logPath) + " 2>&1";
@@ -425,6 +496,7 @@ public class GpuTrainingSchedulerService {
 			+ " --shm-size " + shellToken(properties.getShmSize())
 			+ " --user $(id -u):$(id -g)"
 			+ " -e HOME=/tmp -e YOLO_CONFIG_DIR=" + shellQuote(properties.getUltralyticsConfigDir())
+			+ " -e VLS_MODEL_CACHE=" + shellQuote(properties.getHostDataDir() + "/vls-model-cache")
 			+ " -v " + shellQuote(properties.getHostDataDir() + ":" + properties.getHostDataDir())
 			+ " -w " + shellQuote(server.getWorkDir())
 			+ " " + shellQuote(properties.getImage())

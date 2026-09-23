@@ -12,7 +12,7 @@ from PIL import Image
 def validate(dataset, model):
     yaml_path = Path(dataset).resolve(strict=True)
     model_path = Path(model)
-    if not model_path.is_absolute() or not model_path.is_file() or model_path.stat().st_size == 0:
+    if model != '@preset/detect' and (not model_path.is_absolute() or not model_path.is_file() or model_path.stat().st_size == 0):
         raise ValueError('基础模型文件不存在、为空或不是绝对路径')
     config = yaml.safe_load(yaml_path.read_text(encoding='utf-8'))
     if not isinstance(config, dict):
