@@ -273,6 +273,18 @@ const routes = [
         meta: { title: '数据集管理', icon: '算法标注', parentMenu: 'algorithm-warehouse' }
       },
       {
+        path: '/dataset-annotation',
+        name: 'DatasetAnnotation',
+        component: () => import('@/views/AlgorithmTraining/DatasetAnnotation.vue'),
+        meta: { title: '数据标注', icon: '算法标注', parentMenu: 'algorithm-warehouse' }
+      },
+      {
+        path: '/smart-annotation',
+        name: 'SmartAnnotation',
+        component: () => import('@/views/AlgorithmTraining/SmartAnnotation.vue'),
+        meta: { title: '智能标注', icon: '算法标注', parentMenu: 'algorithm-warehouse' }
+      },
+      {
         path: '/algorithm-standard',
         name: 'AlgorithmStandard',
         component: () => import('@/views/AlgorithmTraining/AlgorithmStandard.vue'),
