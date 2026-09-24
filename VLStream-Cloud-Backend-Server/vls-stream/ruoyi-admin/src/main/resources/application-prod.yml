@@ -4,21 +4,23 @@ spring.servlet.multipart.location: /ruoyi/server/temp
 --- # 监控中心配置
 spring.boot.admin.client:
   # 增加客户端开关
-  enabled: true
-  url: http://localhost:9090/admin
+  enabled: ${SPRING_BOOT_ADMIN_CLIENT_ENABLED:false}
+  url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://host.docker.internal:9090/admin}
   instance:
     service-host-type: IP
-  username: ruoyi
-  password: 123456
+  username: ${SPRING_BOOT_ADMIN_CLIENT_USERNAME:}
+  password: ${SPRING_BOOT_ADMIN_CLIENT_PASSWORD:}
 
 --- # xxl-job 配置
 xxl.job:
   # 执行器开关
   enabled: false
   # 调度中心地址：如调度中心集群部署存在多个地址则用逗号分隔。
-  admin-addresses: http://localhost:9100/xxl-job-admin
+  admin-addresses: ${XXL_JOB_ADMIN_ADDRESSES:http://host.docker.internal:9100/xxl-job-admin}
+  admin:
+    addresses: ${XXL_JOB_ADMIN_ADDRESSES:http://host.docker.internal:9100/xxl-job-admin}
   # 执行器通讯TOKEN：非空时启用
-  access-token: xxl-job
+  access-token: ${XXL_JOB_ACCESS_TOKEN:}
   executor:
     # 执行器AppName：执行器心跳注册分组依据；为空则关闭自动注册
     appname: xxl-job-executor
@@ -32,6 +34,10 @@ xxl.job:
     logpath: ./logs/xxl-job
     # 执行器日志文件保存天数：大于3生效
     logretentiondays: 30
+
+auth:
+  report:
+    excludeClasses: ${AUTH_REPORT_EXCLUDE_CLASSES:ReModeJsonController,ProcessTemplateController,WfTXController}
 
 --- # 数据源配置
 spring:
@@ -52,17 +58,17 @@ spring:
           driverClassName: com.mysql.cj.jdbc.Driver
           # jdbc 所有参数配置参考 https://lionli.blog.csdn.net/article/details/122018562
           # rewriteBatchedStatements=true 批处理优化 大幅提升批量插入更新删除性能(对数据库有性能损耗 使用批量操作应考虑性能问题)
-          url: jdbc:mysql://localhost:3306/ry-vue?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&tinyInt1isBit=false
-          username: root
-          password: root
+          url: ${SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_URL:jdbc:mysql://127.0.0.1:3306/oortcloud_workflowforms_vls?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+          username: ${SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_USERNAME:}
+          password: ${SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_PASSWORD:}
         # 从库数据源
         slave:
           lazy: true
           type: ${spring.datasource.type}
           driverClassName: com.mysql.cj.jdbc.Driver
-          url: jdbc:mysql://localhost:3306/ry-vue?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&autoReconnect=true&rewriteBatchedStatements=true&tinyInt1isBit=false
-          username:
-          password:
+          url: ${SPRING_DATASOURCE_DYNAMIC_DATASOURCE_SLAVE_URL:jdbc:mysql://127.0.0.1:3306/oortcloud_workflowforms_vls?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+          username: ${SPRING_DATASOURCE_DYNAMIC_DATASOURCE_SLAVE_USERNAME:}
+          password: ${SPRING_DATASOURCE_DYNAMIC_DATASOURCE_SLAVE_PASSWORD:}
 #        oracle:
 #          type: ${spring.datasource.type}
 #          driverClassName: oracle.jdbc.OracleDriver

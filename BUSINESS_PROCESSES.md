@@ -306,7 +306,7 @@ HTTP 请求（包括刷新及后台轮询）均由网关调用内部续期接口
 - HTTP 接口或构建成功不代表公网网关、rathole、浏览器资源和真实 IPC 已联通。
 
 `[已完成源码和本地运行联调]` VLS 已新增 Flyway
-`V1_2_0_019__ipc_remote_management_control_plane.sql`、控制面配置、Agent 注册/配置/心跳、
+`V1_2_0_020__ipc_remote_management_control_plane.sql`、控制面配置、Agent 注册/配置/心跳、
 内部路由契约、短期访问会话和权限点；新增非 root Go sidecar，包含 rathole v0.5.0
 配置同步、控制面失联失败关闭和按通配子域隔离的 HTTP/WebSocket 网关；设备详情补齐激活、
 状态、启停、吊销和安全打开入口。Java 8 下 `ruoyi-vlstream` 完整 200 项测试通过、4 项环境依赖测试跳过，
@@ -609,7 +609,7 @@ YOLO实例分割采用直接加载像素掩膜的Dataset，不以外接框代替
 难例处理后并至少新增一张确认图片才能进入下一轮；下一轮只使用正式标注，不把待确认预测当作训练标签。
 完成时保存结果版本，未确认结果不会自动转为正式标注。活动任务会阻止数据集删除，需先结束或取消。
 
-新增迁移 `V1_2_0_021__smart_annotation.sql`。Java 8单元及隔离MySQL回归验证确认入库、进度、版本、
+新增迁移 `V1_2_0_022__smart_annotation.sql`。Java 8单元及隔离MySQL回归验证确认入库、进度、版本、
 训练路径失效、跨租户拒绝、批量回滚和下一轮输入；前端生产构建与定向lint通过。浏览器及执行脚本的验证
 记录见 `codex/smart-annotation/`；合成预测不代表真实GPU模型效果。未更新正式服务或执行业务库迁移。
 具体流程、资源目录、配置及环境依赖见 `docs/dataset-import/SMART_ANNOTATION.md`。

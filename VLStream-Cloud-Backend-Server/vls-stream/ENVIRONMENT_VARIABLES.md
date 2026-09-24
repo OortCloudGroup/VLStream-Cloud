@@ -164,6 +164,7 @@ WVP 是 VLStream 设备、心跳、视频流和固件任务的唯一数据源。
 | 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |
 |--------|------|--------|----------|----------|----------|
 | `VLSTREAM_WVP_INTERNAL_BASE_URL` | VLS 访问 WVP 内部接口的根地址 | `http://127.0.0.1:9080` | 是 | VLS 进程可访问的 HTTP/HTTPS URL | `http://wvp-server:9080` |
+| `VLSTREAM_WVP_DEVICE_BASE_URL` | VLS 通过 WVP 查询 VLStream 设备的根地址 | `http://127.0.0.1:9080` | 是 | VLS 进程可访问的 HTTP/HTTPS URL | `http://wvp-server:9080` |
 | `VLSTREAM_WVP_CONNECT_TIMEOUT_MILLIS` | VLS 连接 WVP 的超时时间 | `3000` | 否 | 大于等于 500 的毫秒数 | `3000` |
 | `VLSTREAM_WVP_READ_TIMEOUT_MILLIS` | VLS 等待 WVP 响应的超时时间 | `5000` | 否 | 大于等于 500 的毫秒数 | `5000` |
 | `VLSTREAM_NATIVE_DEVICE_DEFAULT_TENANT_ID` | 单租户模式下 WVP 设备映射到的 VLS 默认租户 | `000000` | 是 | VLS 中存在的租户 ID | `000000` |
@@ -174,6 +175,21 @@ WVP 是 VLStream 设备、心跳、视频流和固件任务的唯一数据源。
 > 部署时应仅允许 VLS 后端通过服务网络访问。VLS 查询到设备已登记即可继续，不要求设备
 > 当时在线。正常部署不要启用 `VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED`，否则 VLS
 > 与 WVP 会同时消费心跳和固件回执，产生重复状态和重复业务回执。
+
+### 8.7 IPC Tunnel 远程管理
+
+`tunnel-runtime` Compose profile 默认关闭。启用前必须配置 wildcard DNS/TLS、Noise 密钥和相互
+独立的控制面/网关/服务签名凭据；不要把真实值写入 `.env.example` 或 Git。
+
+| 变量名 | 含义 | 默认值 | 是否必填 | 配置示例 |
+|--------|------|--------|----------|----------|
+| `VLSTREAM_TUNNEL_ENABLED` | 是否启用 VLS IPC Tunnel 控制面 | `false` | 否 | `false` |
+| `VLSTREAM_TUNNEL_REMOTE_ADDRESS` | rathole Server 控制地址 | 空 | Tunnel 必填 | `tunnel.example.com:2333` |
+| `VLSTREAM_TUNNEL_GATEWAY_BASE_URL` | 短期访问会话的 HTTPS 网关模板 | 空 | Tunnel 必填 | `https://{sessionId}.ipc.example.com` |
+| `VLSTREAM_TUNNEL_SERVICE_SIGNING_SECRET` | 端点/配置版本派生服务凭据的密钥 | 空 | Tunnel 必填 | 通过 Secret 注入 |
+| `VLSTREAM_TUNNEL_CONTROL_API_TOKEN` | Tunnel 控制 API 凭据 | 空 | Tunnel 必填 | 通过 Secret 注入 |
+| `VLSTREAM_TUNNEL_GATEWAY_API_TOKEN` | Tunnel 网关 API 凭据 | 空 | Tunnel 必填 | 通过 Secret 注入 |
+| `VLSTREAM_TUNNEL_ACCESS_SESSION_TTL_SECONDS` | 远程访问会话空闲期限 | `36000` | 否 | `36000` |
 
 ## 九、Swagger文档配置
 

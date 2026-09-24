@@ -1,4 +1,4 @@
-# VLStream Cloud Deployment Guide
+# VLStream Cloud v1.2.5 Deployment Guide
 
 This directory is the source template for the deployment package published with
 each GitHub Release. For a one-command installation, download the release
@@ -20,11 +20,32 @@ Change every password in `.env` before startup and change the application
 password immediately after the first sign-in.
 
 WVP is a required dependency and the sole video-device center. This package
-does not bundle a second WVP copy; deploy `apaas-wvp-server` first and set
-`VLSTREAM_WVP_INTERNAL_BASE_URL` to an address reachable from the backend
-container, such as `http://host.docker.internal:9080` for a separate service on
-the same host. The read-only device lookup uses no additional shared secret;
-keep the internal path reachable only through the backend service network.
+does not bundle a second WVP copy. Download and start
+[VLStream WVP Lite v1.0.6](https://github.com/OortCloudGroup/VLStream-Cloud-Lite/releases/tag/v1.0.6)
+first. Its published image is
+`ghcr.io/oortcloudgroup/vlstream-cloud-lite:1.0.6`. When both products run on the
+same host, set `WVP_HTTP_PORT=9080` in the
+WVP `.env` to avoid the VLStream backend port, and set `ZLM_SECRET` to the same
+value as VLStream's `ZLMEDIAKIT_SECRET`.
+
+`VLSTREAM_WVP_INTERNAL_BASE_URL` and `VLSTREAM_WVP_DEVICE_BASE_URL` are separate
+backend contracts: the first is for general WVP calls, while the second resolves
+VLS devices through `/internal/vlstream/device/{deviceId}`. `WVP_UPSTREAM` is
+the browser-facing WVP proxy. `VLSTREAM_ZLM_INTERNAL_URL` and `ZLM_UPSTREAM`
+must point to the ZLMediaKit HTTP service started by WVP. The provided same-host
+defaults use `host.docker.internal:9080` and `host.docker.internal:8081`.
+
+Set `UNIFIEDMESSAGINGSEND_URL` when workflow notifications must call the platform
+message service; leave it blank only when that integration is not deployed.
+`XXL_JOB_ADMIN_ADDRESSES` must remain a valid URL even while XXL-Job is disabled.
+
+For device event-media uploads, keep
+`VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED=false` in production and point
+`VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY` to an enabled `sys_oss_config` record.
+The release migration creates `minio-device-media` as an enabled placeholder
+without credentials. Replace its endpoint and credentials before use; the
+endpoint must be reachable by the device, and a container-only `minio:9000`
+address is not sufficient for a pre-signed upload URL.
 
 The default Compose file starts MySQL, Redis, MinIO, WebRTC-streamer, the
 backend, and the frontend. To use existing MySQL and Redis services, provide
@@ -57,49 +78,23 @@ docker compose logs -f backend frontend
 
 ## Optional IPC Remote Management
 
-The `tunnel-runtime` profile combines a pinned rathole Server with a
-host-isolated HTTP/WebSocket gateway. It is disabled by default.
+The `tunnel-runtime` profile is disabled by default. It combines the VLS tunnel
+gateway with a pinned rathole runtime and keeps the gateway bound to host loopback.
+The release archive includes its source under `tunnel-runtime/`.
 
 Before enabling it:
 
-1. Create wildcard DNS and a wildcard TLS certificate for a dedicated suffix,
-   for example `*.ipc.example.com`.
-2. Build the runtime and generate the rathole Noise key pair:
+1. Configure wildcard DNS and TLS for a dedicated suffix such as
+   `*.ipc.example.com`.
+2. Generate the rathole Noise key pair and set the three independent tunnel
+   secrets plus every `VLSTREAM_TUNNEL_*` value in `.env`.
+3. Preserve Host and WebSocket Upgrade headers in the wildcard TLS proxy, then run:
 
-   ```powershell
-   docker build -t vlstream/tunnel-runtime:local .\tunnel-runtime
-   docker run --rm --entrypoint /usr/local/bin/rathole vlstream/tunnel-runtime:local --genkey
-   ```
+```powershell
+docker compose --profile tunnel config --quiet
+docker compose --profile tunnel up -d --build
+```
 
-3. Generate three different random values of at least 32 bytes: the service
-   signing secret, control API token, and gateway API token. Never reuse or
-   commit them.
-4. Set every `VLSTREAM_TUNNEL_*` variable in `.env`, including
-   `VLSTREAM_TUNNEL_GATEWAY_BASE_URL=https://{sessionId}.ipc.example.com`.
-5. Configure the wildcard TLS proxy using
-   `VLStream-Web/VLStream-ui/nginx.conf.example`. Preserve the Host header and
-   WebSocket Upgrade headers while proxying to host loopback port 8088.
-6. Start the optional profile:
-
-   ```powershell
-   docker compose --profile tunnel up -d --build
-   docker compose --profile tunnel ps
-   ```
-
-Only the rathole control port (default 2333) is public. The gateway port is
-published on `127.0.0.1`, and per-device service ports 61000-61999 stay inside
-the tunnel-runtime container. Never publish that service range.
-
-The runtime stops rathole when it cannot refresh desired route state for two
-minutes. A healthy container does not prove an IPC is reachable; enrollment,
-Agent heartbeat, route `APPLIED`, browser login, and real device reconnect
-still require end-to-end verification.
-
-Browser access sessions expire after 10 hours without HTTP requests by default.
-Initial bootstrap and subsequent HTTP requests renew the session after backend
-validation, and refresh the gateway cookie. The bootstrap token remains single-use.
-Revoked, expired or unavailable sessions cannot renew. Background HTTP polling
-counts as activity; WebSocket upgrade renews once, subsequent frames do not.
-`VLSTREAM_TUNNEL_ACCESS_SESSION_TTL_SECONDS=36000` accepts values from 60 to 36000
-seconds. This does not change enrollment-code or IPC-login lifetimes. New
-sessions use the updated value after the backend and gateway are updated together.
+The tunnel profile is optional and does not replace the separately deployed WVP
+or its ZLMediaKit service. A healthy gateway container does not prove device
+enrollment, route application, browser login, or real-device reconnect.

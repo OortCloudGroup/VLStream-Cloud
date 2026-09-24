@@ -95,7 +95,7 @@
 
 ## 4. 当前实现文件
 
-- 数据库：`V1_2_0_019__ipc_remote_management_control_plane.sql`
+- 数据库：`V1_2_0_020__ipc_remote_management_control_plane.sql`
 - 配置：`VlsTunnelProperties`、`application.yml`
 - 控制器：`VlsTunnelManagementController`、`VlsTunnelAgentController`、
   `VlsTunnelInternalController`

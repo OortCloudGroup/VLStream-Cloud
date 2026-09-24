@@ -179,27 +179,25 @@ vlstream:
   # IPC 本机 Agent + rathole 远程 Web 管理控制面。默认关闭并对所有内部接口保持失败关闭。
   tunnel:
     enabled: ${VLSTREAM_TUNNEL_ENABLED:false}
-    # WVP 原生设备尚未建立可靠的多租户所有权字段，MVP 无条件禁止多租户签发激活码。
-    # 设备主动连接的 rathole Server 控制地址，例如 tunnel.example.com:2333。
     remote-address: ${VLSTREAM_TUNNEL_REMOTE_ADDRESS:}
     transport: ${VLSTREAM_TUNNEL_TRANSPORT:noise}
     noise-remote-public-key: ${VLSTREAM_TUNNEL_NOISE_REMOTE_PUBLIC_KEY:}
-    # 至少 32 字节，仅通过部署环境注入；用于按端点和配置版本派生 rathole service token。
     service-signing-secret: ${VLSTREAM_TUNNEL_SERVICE_SIGNING_SECRET:}
-    # rathole 配置控制器和 HTTPS 网关调用内部接口时使用的独立凭据。
     control-api-token: ${VLSTREAM_TUNNEL_CONTROL_API_TOKEN:}
     gateway-api-token: ${VLSTREAM_TUNNEL_GATEWAY_API_TOKEN:}
-    # 必须使用HTTPS并包含{sessionId}，例如 https://{sessionId}.ipc.example.com。
     gateway-base-url: ${VLSTREAM_TUNNEL_GATEWAY_BASE_URL:}
-    # MVP 要求映射端口只监听与 HTTPS 网关同一网络命名空间内的回环地址。
     server-bind-host: ${VLSTREAM_TUNNEL_SERVER_BIND_HOST:127.0.0.1}
     server-port-start: ${VLSTREAM_TUNNEL_SERVER_PORT_START:61000}
     server-port-end: ${VLSTREAM_TUNNEL_SERVER_PORT_END:61999}
     enrollment-ttl-seconds: ${VLSTREAM_TUNNEL_ENROLLMENT_TTL_SECONDS:600}
-    # 浏览器每次请求校验后续期，默认空闲 10 小时过期；入口令牌仍只允许兑换一次。
     access-session-ttl-seconds: ${VLSTREAM_TUNNEL_ACCESS_SESSION_TTL_SECONDS:36000}
     heartbeat-interval-seconds: ${VLSTREAM_TUNNEL_HEARTBEAT_INTERVAL_SECONDS:30}
     heartbeat-timeout-seconds: ${VLSTREAM_TUNNEL_HEARTBEAT_TIMEOUT_SECONDS:90}
+  # WVP 服务间设备查询配置；该路径与通用 WVP 调用路径保持独立。
+  wvp-device:
+    base-url: ${VLSTREAM_WVP_DEVICE_BASE_URL:http://127.0.0.1:9080}
+    connect-timeout-millis: ${VLSTREAM_WVP_CONNECT_TIMEOUT_MILLIS:3000}
+    read-timeout-millis: ${VLSTREAM_WVP_READ_TIMEOUT_MILLIS:5000}
   # ZLMediaKit 按需拉流与 WebRTC 播放配置
   zlm:
     enabled: ${VLSTREAM_ZLM_ENABLED:true}
@@ -208,7 +206,7 @@ vlstream:
     # 浏览器可访问的 ZLM HTTP(S) 地址；部署环境通过环境变量覆盖
     public-base-url: ${VLSTREAM_ZLM_PUBLIC_URL:http://127.0.0.1:8090}
     # ZLM API 密钥不写入任何环境配置文件，统一通过环境变量注入
-    secret: ${ZLMEDIAKIT_SECRET:su6TiedN2rVAmBbIDX0aa0QTiBJLBdcf}
+    secret: ${ZLMEDIAKIT_SECRET:}
     app: ${VLSTREAM_ZLM_APP:vlstream}
     connect-timeout-millis: ${VLSTREAM_ZLM_CONNECT_TIMEOUT_MILLIS:3000}
     read-timeout-millis: ${VLSTREAM_ZLM_READ_TIMEOUT_MILLIS:10000}
@@ -299,7 +297,7 @@ vlstream:
   # 模型下发配置（通过 MQTT 将模型文件推送到边缘设备）
   model-dispatch:
     # 模型文件下载服务的公共地址
-    public-base-url: ${VLSTREAM_MODEL_PUBLIC_BASE_URL:http://192.168.88.31:8080}
+    public-base-url: ${VLSTREAM_MODEL_PUBLIC_BASE_URL:}
     # 下载 URL 的 HMAC-SHA256 签名密钥（必填；由部署方随机生成，仅保存在后端）
     signing-secret: ${VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET:}
     # 下载链接有效期（秒）
@@ -333,7 +331,7 @@ vlstream:
     # 例如 https://minio.example.com，不能填写仅容器内可解析的 minio:9000
     public-endpoint: ${VLSTREAM_FIRMWARE_PUBLIC_ENDPOINT:}
     # 摄像头访问的平台短链接根地址；平台校验任务后从私有 MinIO 流式返回固件
-    platform-base-url: ${VLSTREAM_FIRMWARE_PLATFORM_BASE_URL:http://192.168.88.31:8080}
+    platform-base-url: ${VLSTREAM_FIRMWARE_PLATFORM_BASE_URL:}
     upload-url-ttl-seconds: ${VLSTREAM_FIRMWARE_UPLOAD_TTL_SECONDS:600}
     download-url-ttl-seconds: ${VLSTREAM_FIRMWARE_DOWNLOAD_TTL_SECONDS:1800}
     # OTA 指令中的地址需要覆盖排队、下载和校验启动时间，默认 2 小时
@@ -363,13 +361,13 @@ vlstream:
 #    # MQTT Broker 端口
 #    port: ${VLSTREAM_MQTT_PORT:1883}
     # MQTT Broker 地址
-    host: ${VLSTREAM_MQTT_HOST:192.168.60.79}
+    host: ${VLSTREAM_MQTT_HOST:}
     # MQTT Broker 端口
-    port: ${VLSTREAM_MQTT_PORT:32570}
+    port: ${VLSTREAM_MQTT_PORT:1883}
     # MQTT 认证用户名（为空则匿名连接）
-    username: ${VLSTREAM_MQTT_USERNAME:VLStream}
+    username: ${VLSTREAM_MQTT_USERNAME:}
     # MQTT 认证密码
-    password: ${VLSTREAM_MQTT_PASSWORD:oort@123}
+    password: ${VLSTREAM_MQTT_PASSWORD:}
     # 主题前缀（所有自定义主题的公共前缀）
     topic-prefix: ${VLSTREAM_MQTT_TOPIC_PREFIX:oortcloud}
     # MQTT 客户端 ID 前缀（实际 ID 会追加随机后缀避免冲突）

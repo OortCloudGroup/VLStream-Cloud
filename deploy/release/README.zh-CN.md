@@ -1,4 +1,4 @@
-# VLStream Cloud 部署指南
+# VLStream Cloud v1.2.5 部署指南
 
 此目录是每个 GitHub Release 部署包的源模板。一键安装时请下载 Release 压缩包，
 因为压缩包中还包含完整的数据库初始化 SQL。
@@ -17,10 +17,27 @@ docker compose up -d
 
 启动前请修改 `.env` 中的所有密码，首次登录后请立即修改系统默认密码。
 
-WVP 是 VLStream 的必选依赖和唯一视频设备中心。本部署包当前不重复打包 WVP；请先部署
-`apaas-wvp-server`。`VLSTREAM_WVP_INTERNAL_BASE_URL` 必须是 backend 容器可访问的 WVP
-地址，例如同机独立部署时使用 `http://host.docker.internal:9080`。VLS 调用的设备查询接口
-不使用额外共享密钥，应仅通过后端服务网络访问，不要单独暴露该内部路径。
+WVP 是 VLStream 的必选依赖和唯一视频设备中心，本部署包不重复打包 WVP。请先下载并启动
+[VLStream WVP Lite v1.0.6](https://github.com/OortCloudGroup/VLStream-Cloud-Lite/releases/tag/v1.0.6)。
+其公开镜像为 `ghcr.io/oortcloudgroup/vlstream-cloud-lite:1.0.6`。两套服务在同一台主机运行时，
+请在 WVP 的 `.env` 中设置 `WVP_HTTP_PORT=9080`，避免与
+VLStream 后端的 8080 端口冲突；WVP 的 `ZLM_SECRET` 必须与 VLStream 的
+`ZLMEDIAKIT_SECRET` 保持一致。
+
+`VLSTREAM_WVP_INTERNAL_BASE_URL` 与 `VLSTREAM_WVP_DEVICE_BASE_URL` 是两个后端契约：
+前者用于通用 WVP 调用，后者用于通过 `/internal/vlstream/device/{deviceId}` 查询 VLS
+设备；`WVP_UPSTREAM` 是浏览器侧 WVP 代理。`VLSTREAM_ZLM_INTERNAL_URL` 与
+`ZLM_UPSTREAM` 指向 WVP 启动的 ZLMediaKit。发布包提供的同机默认地址分别为
+`host.docker.internal:9080` 和 `host.docker.internal:8081`。
+
+工作流通知需要调用平台消息服务时，请设置 `UNIFIEDMESSAGINGSEND_URL`；未部署该集成时可留空。
+即使 XXL-Job 已禁用，`XXL_JOB_ADMIN_ADDRESSES` 也必须保留一个有效 URL。
+
+硬件事件图片上传时，生产环境必须保持
+`VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED=false`，并将
+`VLSTREAM_DEVICE_MEDIA_OSS_CONFIG_KEY` 指向已启用的 `sys_oss_config` 记录。该配置的
+发布迁移会创建启用但不含凭据的 `minio-device-media` 占位记录，使用前必须替换 endpoint
+和凭据。endpoint 必须可由设备访问，不能只填写容器内部的 `minio:9000`。
 
 默认 Compose 会启动 MySQL、Redis、MinIO、WebRTC-streamer、后端和前端。如果使用
 已有的 MySQL 与 Redis，请填写外部服务连接变量后执行：
@@ -48,43 +65,22 @@ docker compose ps
 docker compose logs -f backend frontend
 ```
 
-## 可选的 IPC 远程管理
+## 可选 IPC 远程管理
 
-`tunnel-runtime` profile 将固定版本的 rathole Server 与受限的
-HTTP/WebSocket 网关放在同一容器中，默认不启用。
+`tunnel-runtime` profile 默认关闭。它组合 VLS 隧道网关和固定版本的 rathole
+运行时，并将网关端口限制在主机 loopback；发布包会在 `tunnel-runtime/` 中附带源码。
 
-启用前必须：
+启用前请完成以下配置：
 
-1. 为独立域名配置通配 DNS 和 TLS 证书，例如 `*.ipc.example.com`。
-2. 构建运行时并生成 rathole Noise 密钥对：
+1. 为独立后缀配置通配符 DNS 和 TLS，例如 `*.ipc.example.com`。
+2. 生成 rathole Noise 密钥对，配置三个相互独立的隧道密钥以及所有
+   `VLSTREAM_TUNNEL_*` 变量。
+3. 通配符 TLS 代理必须保留 Host 和 WebSocket Upgrade 请求头，然后执行：
 
-   ```powershell
-   docker build -t vlstream/tunnel-runtime:local .\tunnel-runtime
-   docker run --rm --entrypoint /usr/local/bin/rathole vlstream/tunnel-runtime:local --genkey
-   ```
+```powershell
+docker compose --profile tunnel config --quiet
+docker compose --profile tunnel up -d --build
+```
 
-3. 分别生成不少于 32 字节的服务签名密钥、控制器 Token 和网关 Token；
-   三者不能复用，不能提交到仓库。
-4. 配置 `.env` 中全部 `VLSTREAM_TUNNEL_*` 变量，其中网关地址应类似
-   `https://{sessionId}.ipc.example.com`。
-5. 参考 `VLStream-Web/VLStream-ui/nginx.conf.example` 配置通配域名 TLS，
-   保留 Host 和 WebSocket Upgrade 头并转发到宿主机回环端口 8088。
-6. 启动：
-
-   ```powershell
-   docker compose --profile tunnel up -d --build
-   docker compose --profile tunnel ps
-   ```
-
-公网只开放 rathole 控制端口（默认 2333）。网关仅发布到
-`127.0.0.1`，61000-61999 的设备映射端口只存在于运行时容器内，严禁发布。
-控制面连续两分钟不可达时运行时会停止 rathole，按失败关闭处理。
-
-浏览器访问会话默认空闲 10 小时过期；首次打开及后续 HTTP 请求经后端校验后续期 10 小时，并刷新 Cookie。
-入口令牌仍只允许兑换一次；已过期、吊销或设备不可用时不续期。仅保持页面打开不会自行续期，页面后台
-HTTP 轮询会计入访问；WebSocket 在 Upgrade 请求时续期，后续帧不单独延长会话。
-`VLSTREAM_TUNNEL_ACCESS_SESSION_TTL_SECONDS=36000` 可覆盖为 60～36000 秒。
-此配置不改变激活码或 IPC 自身登录的有效期；后端与网关需同步更新以支持续期接口。
-
-容器健康不代表真实 IPC 已可访问；仍需验证激活、Agent 心跳、路由
-`APPLIED`、浏览器登录及设备重启/断网恢复。
+该 profile 是可选能力，不替代独立部署的 WVP 和其自有 ZLMediaKit。网关容器健康
+不等于设备注册、路由应用、浏览器登录或真实设备重连已完成。

@@ -17,7 +17,7 @@
 
 系统基础模型为YOLOv8检测/分类/实例分割及Torchvision DeepLabV3语义分割。首次使用需下载官方权重或预置缓存。语义分割自有PT须为平台生成的DeepLabV3检查点，不能任意替换。代码参考Ultralytics 8.3.240、PyTorch 2.5.1和Torchvision 0.20.1；正式GPU容器依赖需现场核对。
 
-四类共用现有GPU队列。非检测正式模型只完成PT并进入模型保存链路，不自动套用检测专用的ONNX/OM/RKNN转换；设备适配不在本次范围。新迁移`V1_2_0_022__four_type_annotation_payloads.sql`接续021，扩展任务类型、掩膜容量、进度和后台确认字段。
+四类共用现有GPU队列。非检测正式模型只完成PT并进入模型保存链路，不自动套用检测专用的ONNX/OM/RKNN转换；设备适配不在本次范围。新迁移`V1_2_0_023__four_type_annotation_payloads.sql`接续022，扩展任务类型、掩膜容量、进度和后台确认字段。
 
 单掩膜最多8MiB、单图载荷最多24MiB、最多4000万像素。单轮远端结果文件目前限制64MiB，超限任务明确失败，应拆分数据集；不把无效或过大结果计为成功。
 
@@ -64,7 +64,7 @@ vlstream:
 
 执行文件位于 `${vlstream.training-container.host-data-dir}/vls-smart-annotation/<taskId>/<roundId>_<attempt>/`，包含冻结图片、训练标签、脚本、日志、模型与结果。模型必须位于现有容器数据挂载目录内。路径不使用用户提交的任意命令；取消仅针对该轮容器名。源 PT 权重复制到本轮独立目录后才加载。
 
-上线需要应用 Flyway `V1_2_0_021__smart_annotation.sql`，更新后端并重启对应 JVM，同时更新前端。容器需具备现有 Conda Python、Ultralytics、PyTorch 和 CUDA 环境；主动学习使用的基础权重必须存在。当前单实例调度架构保持不变，不新增跨 JVM 分布式 GPU 调度能力。
+上线需要应用 Flyway `V1_2_0_022__smart_annotation.sql`，更新后端并重启对应 JVM，同时更新前端。容器需具备现有 Conda Python、Ultralytics、PyTorch 和 CUDA 环境；主动学习使用的基础权重必须存在。当前单实例调度架构保持不变，不新增跨 JVM 分布式 GPU 调度能力。
 
 接口前缀 `/vlsData/smart-annotation`，提供任务列表、创建、详情、候选模型/标签、预测分页、单图确认、批量确认、下一轮、完成、重试、取消和日志。客户端 ID 一律按字符串处理。
 
