@@ -61,3 +61,16 @@ func TestRenderRatholeConfigRejectsPublicServiceBinding(t *testing.T) {
 		t.Fatal("public service binding must be rejected")
 	}
 }
+
+func TestRenderRatholeConfigKeepsRequiredServicesTableWithoutActiveRoutes(t *testing.T) {
+	cfg := runtimeConfig{RatholeListenAddress: "127.0.0.1:2333", NoisePrivateKey: "test-key"}
+	for _, routes := range [][]desiredRoute{nil, {{ServiceName: "disabled", DesiredState: "DISABLED"}}} {
+		config, err := renderRatholeConfig(cfg, routes)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(string(config), "[server.services]\n") || strings.Contains(string(config), "[server.services.") {
+			t.Fatal("rathole requires an explicit empty services table before any device is enrolled")
+		}
+	}
+}

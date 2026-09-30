@@ -201,6 +201,7 @@ func renderRatholeConfig(cfg runtimeConfig, routes []desiredRoute) ([]byte, erro
 	fmt.Fprintf(&output, "[server]\n")
 	fmt.Fprintf(&output, "bind_addr = %s\n", tomlString(cfg.RatholeListenAddress))
 	fmt.Fprintf(&output, "heartbeat_interval = 30\n\n")
+	fmt.Fprintf(&output, "[server.services]\n\n")
 	fmt.Fprintf(&output, "[server.transport]\n")
 	fmt.Fprintf(&output, "type = \"noise\"\n\n")
 	fmt.Fprintf(&output, "[server.transport.noise]\n")

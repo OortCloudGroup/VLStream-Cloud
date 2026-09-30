@@ -271,7 +271,7 @@ public class TunnelManagementService {
     }
 
     private int normalizedEnrollmentTtl() {
-        return Math.max(60, Math.min(3600, properties.getEnrollmentTtlSeconds()));
+        return Math.max(60, Math.min(10 * 60 * 60, properties.getEnrollmentTtlSeconds()));
     }
 
     private long nextGeneration(Long current) {

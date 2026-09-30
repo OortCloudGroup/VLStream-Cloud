@@ -63,6 +63,9 @@ class TunnelManagementServiceTest {
         device.setTenantId("tenant-a");
         assertEquals("CAM-1", service.issueEnrollment("CAM-1").getDeviceId());
         verify(endpoints).insert(any());
-        verify(enrollments).insert(any());
+        org.mockito.ArgumentCaptor<com.ruoyi.vlstream.test.vlstream.pojo.entity.TunnelEnrollment> saved =
+            org.mockito.ArgumentCaptor.forClass(com.ruoyi.vlstream.test.vlstream.pojo.entity.TunnelEnrollment.class);
+        verify(enrollments).insert(saved.capture());
+        assertEquals(36000_000L, saved.getValue().getExpiresAt().getTime() - saved.getValue().getCreateTime().getTime());
     }
 }
