@@ -17,6 +17,7 @@ import com.ruoyi.vlstream.test.vlstream.excel.VlsAlgorithmModelExcel;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmModel;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmModelVO;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsAlgorithmModelService;
+import com.ruoyi.vlstream.test.vlstream.service.ImportedAlgorithmModelService;
 import com.ruoyi.vlstream.test.vlstream.service.ModelFileDownloadService;
 import com.ruoyi.vlstream.test.vlstream.wrapper.VlsAlgorithmModelWrapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,6 +33,7 @@ import org.springblade.core.secure.BladeUser;
 import org.springblade.core.tool.utils.DateUtil;
 import org.springblade.core.tool.utils.Func;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -53,6 +55,7 @@ public class VlsAlgorithmModelController extends BladeController {
 
 	private final IVlsAlgorithmModelService vlsAlgorithmModelService;
 	private final ModelFileDownloadService modelFileDownloadService;
+	private final ImportedAlgorithmModelService importedAlgorithmModelService;
 
 	/**
 	 * algorithmmodel
@@ -168,6 +171,36 @@ public class VlsAlgorithmModelController extends BladeController {
 		} catch (Exception e) {
 			log.error("创建算法模型失败", e);
 			return R.fail("创建算法模型失败：" + e.getMessage());
+		}
+	}
+
+	@Operation(summary = "导入分类、检测或分割 PT 模型")
+	@PostMapping(value = "/import", consumes = "multipart/form-data")
+	public R<AlgorithmModel> importModel(@RequestParam Long algorithmId,
+		@RequestParam String annotationType, @RequestParam String modelName, @RequestParam Integer version,
+		@RequestParam(required = false) String description,
+		@RequestPart("file") MultipartFile file,
+		@RequestPart("dataYaml") MultipartFile dataYaml) {
+		try {
+			return R.data(importedAlgorithmModelService.importModel(
+				algorithmId, annotationType, modelName, version, description, file, dataYaml));
+		} catch (Exception e) {
+			log.error("导入算法模型失败", e);
+			return R.fail("导入算法模型失败：" + e.getMessage());
+		}
+	}
+
+	@Operation(summary = "从 ZIP 导入分类、检测或分割 PT 模型")
+	@PostMapping(value = "/import-zip", consumes = "multipart/form-data")
+	public R<AlgorithmModel> importModelZip(@RequestParam Long algorithmId,
+		@RequestParam String annotationType, @RequestParam String modelName, @RequestParam Integer version,
+		@RequestParam(required = false) String description, @RequestPart("archive") MultipartFile archive) {
+		try {
+			return R.data(importedAlgorithmModelService.importArchive(
+				algorithmId, annotationType, modelName, version, description, archive));
+		} catch (Exception e) {
+			log.error("从 ZIP 导入算法模型失败", e);
+			return R.fail("导入算法模型失败：" + e.getMessage());
 		}
 	}
 

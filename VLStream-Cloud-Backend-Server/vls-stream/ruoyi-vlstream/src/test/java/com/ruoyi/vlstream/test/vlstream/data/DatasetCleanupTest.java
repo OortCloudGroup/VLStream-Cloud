@@ -22,6 +22,7 @@ class DatasetCleanupTest {
     static DriverManagerDataSource source;
     DatasetStorageProvider storage;
     DatasetRemoteCleanup remote;
+    TrainingDatasetArtifactService artifacts;
     ModelClassFileService classes;
     OssClient client;
     DatasetCleanupService service;
@@ -35,9 +36,9 @@ class DatasetCleanupTest {
         jdbc.execute("CREATE TABLE vls_smart_annotation_task(id BIGINT,tenant_id VARCHAR(64),dataset_id BIGINT,is_deleted INT DEFAULT 0,task_state VARCHAR(20))");
         jdbc.execute("CREATE TABLE sys_oss(service VARCHAR(64),file_name TEXT)");
         // Only this disposable, loopback-only schema is accepted by the test annotation.
-        for (String table : Arrays.asList("vls_model_class_snapshot","vls_dataset_cleanup","vls_algorithm_annotation","vls_algorithm_training","vls_container_instance","vls_annotation_image","vls_annotation_label","vls_annotation_instance","vls_dataset_version","vls_dataset_import_job","vls_dataset_upload_part","vls_dataset_frame_origin")) jdbc.execute("DROP TABLE IF EXISTS " + table);
+        for (String table : Arrays.asList("vls_training_dataset_artifact","vls_training_dataset_remote_usage","vls_model_class_snapshot","vls_dataset_cleanup","vls_algorithm_annotation","vls_algorithm_training","vls_container_instance","vls_annotation_image","vls_annotation_label","vls_annotation_instance","vls_dataset_version","vls_dataset_import_job","vls_dataset_upload_part","vls_dataset_frame_origin")) jdbc.execute("DROP TABLE IF EXISTS " + table);
         jdbc.execute("CREATE TABLE vls_algorithm_annotation(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),dataset_path TEXT,is_deleted INT DEFAULT 0,total_count INT,annotated_count INT,progress INT)");
-        jdbc.execute("CREATE TABLE vls_algorithm_training(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),dataset_id BIGINT,train_status VARCHAR(20),onnx_conversion_status VARCHAR(20),om_conversion_status VARCHAR(20),model_output_path TEXT,onnx_model_output_path TEXT,om_model_output_path TEXT,rknn_model_output_path TEXT)");
+        jdbc.execute("CREATE TABLE vls_algorithm_training(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),dataset_id BIGINT,config_params TEXT,train_status VARCHAR(20),onnx_conversion_status VARCHAR(20),om_conversion_status VARCHAR(20),model_output_path TEXT,onnx_model_output_path TEXT,om_model_output_path TEXT,rknn_model_output_path TEXT)");
         jdbc.execute("ALTER TABLE vls_algorithm_training ADD COLUMN int8_rknn_model_output_path TEXT");
         jdbc.execute("CREATE TABLE vls_container_instance(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),training_task_id BIGINT,instance_status VARCHAR(20),env_config TEXT)");
         for (String table : Arrays.asList("vls_annotation_image","vls_annotation_label","vls_annotation_instance")) jdbc.execute("CREATE TABLE " + table + "(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),annotation_id BIGINT,local_path TEXT)");
@@ -45,6 +46,8 @@ class DatasetCleanupTest {
         jdbc.execute("CREATE TABLE vls_dataset_import_job(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),dataset_id BIGINT,job_state VARCHAR(20),storage_config VARCHAR(64),storage_bucket VARCHAR(64),object_key TEXT,multipart_id TEXT)");
         jdbc.execute("CREATE TABLE vls_dataset_upload_part(job_id BIGINT)");
         jdbc.execute("CREATE TABLE vls_dataset_frame_origin(tenant_id VARCHAR(64),dataset_id BIGINT)");
+        jdbc.execute("CREATE TABLE vls_training_dataset_artifact(tenant_id VARCHAR(64),dataset_id BIGINT,storage_config VARCHAR(64),storage_bucket VARCHAR(64),object_key TEXT,storage_state VARCHAR(20))");
+        jdbc.execute("CREATE TABLE vls_training_dataset_remote_usage(tenant_id VARCHAR(64),dataset_id BIGINT,remote_identity VARCHAR(1000))");
         Path root=Paths.get(System.getProperty("user.dir")).toAbsolutePath();
         while (!Files.exists(root.resolve("BUSINESS_PROCESSES.md"))) root=root.getParent();
         String migration=new String(Files.readAllBytes(root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_017__dataset_cleanup_and_model_classes.sql")),StandardCharsets.UTF_8).replaceAll("(?m)^--.*$","");
@@ -55,12 +58,13 @@ class DatasetCleanupTest {
         jdbc.update("DELETE FROM vls_dataset_conversion_guard");
         jdbc.update("DELETE FROM sys_oss");
         jdbc.update("DELETE FROM vls_smart_annotation_task");
-        for (String table : Arrays.asList("vls_model_class_snapshot","vls_dataset_cleanup","vls_algorithm_annotation","vls_algorithm_training","vls_container_instance","vls_annotation_image","vls_annotation_label","vls_annotation_instance","vls_dataset_version","vls_dataset_import_job","vls_dataset_upload_part","vls_dataset_frame_origin")) jdbc.update("DELETE FROM " + table);
+        for (String table : Arrays.asList("vls_training_dataset_artifact","vls_training_dataset_remote_usage","vls_model_class_snapshot","vls_dataset_cleanup","vls_algorithm_annotation","vls_algorithm_training","vls_container_instance","vls_annotation_image","vls_annotation_label","vls_annotation_instance","vls_dataset_version","vls_dataset_import_job","vls_dataset_upload_part","vls_dataset_frame_origin")) jdbc.update("DELETE FROM " + table);
         TenantContextHolder.setTenantId("tenant-a");
         storage=mock(DatasetStorageProvider.class); remote=mock(DatasetRemoteCleanup.class); classes=mock(ModelClassFileService.class); client=mock(OssClient.class);
+        artifacts=mock(TrainingDatasetArtifactService.class);
         when(storage.current()).thenReturn(client); when(storage.get("test")).thenReturn(client);
         when(client.getBucketName()).thenReturn("images"); when(client.getConfigKey()).thenReturn("test"); when(client.getStorageIdentity()).thenReturn("http://test/images");
-        service=new DatasetCleanupService(jdbc,new DataSourceTransactionManager(source),storage,remote,classes,new ModelClassSnapshotStore(jdbc),new ObjectMapper());
+        service=new DatasetCleanupService(jdbc,new DataSourceTransactionManager(source),storage,remote,artifacts,classes,new ModelClassSnapshotStore(jdbc),new ObjectMapper());
         jdbc.update("INSERT INTO vls_algorithm_annotation(id,tenant_id) VALUES(1,'tenant-a'),(2,'tenant-b')");
         jdbc.update("INSERT INTO vls_annotation_image(id,tenant_id,annotation_id,local_path) VALUES(10,'tenant-a',1,'own.png'),(11,'tenant-a',1,'shared.png'),(12,'tenant-b',2,'shared.png')");
         jdbc.update("INSERT INTO sys_oss VALUES('test','own.png'),('test','shared.png')");
@@ -68,6 +72,7 @@ class DatasetCleanupTest {
     @AfterEach void clearTenant() { TenantContextHolder.clear(); }
 
     @Test void deletesOwnedDataPreservingSharedObjectsTrainingAndModelPaths() throws Exception {
+        jdbc.update("INSERT INTO vls_training_dataset_remote_usage(tenant_id,dataset_id) VALUES('tenant-a',1)");
         jdbc.update("INSERT INTO vls_algorithm_training(id,tenant_id,dataset_id,train_status,model_output_path,om_model_output_path) VALUES(50,'tenant-a',1,'completed','/runs/train/weights/best.pt','/runs/train/weights/best.om')");
         String yaml="nc: 1\nnames: [helmet]\n";
         when(classes.prepare(any())).thenReturn(new ModelClassFileService.ClassFile("dataset.yaml",yaml,yaml.length(),org.apache.commons.codec.digest.DigestUtils.sha256Hex(yaml)));

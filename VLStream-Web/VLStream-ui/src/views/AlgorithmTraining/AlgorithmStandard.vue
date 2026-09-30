@@ -63,9 +63,12 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="datasetPath" :label="$tp('数据集路径')" show-overflow-tooltip>
+          <el-table-column prop="datasetPath" :label="$tp('数据集存储')" show-overflow-tooltip>
             <template #default="scope">
-              <span v-if="scope.row.datasetPath" class="dataset-path clickable" :title="scope.row.datasetPath">
+              <span v-if="isMinioDatasetPath(scope.row.datasetPath)" class="dataset-path clickable" :title="scope.row.datasetPath" @click.stop="handleViewDataset(scope.row)">
+                {{ $tp('MinIO 训练数据包') }}
+              </span>
+              <span v-else-if="scope.row.datasetPath" class="dataset-path clickable" :title="scope.row.datasetPath">
                 {{ scope.row.datasetPath }}
               </span>
               <span v-else class="no-dataset">未设置</span>
@@ -79,8 +82,15 @@
                   <oort-svg-icon width="14" height="14" name="detail_icon" class="new_table_svg_group_svg" />
                   <span>标注</span>
                 </div>
-                <div class="new_table_svg_group" @click="handleSaveDataset(scope.row)">
-                  <oort-svg-icon width="14" height="14" name="export" class="new_table_svg_group_svg" />
+                <div
+                  class="new_table_svg_group"
+                  :class="{ 'dataset-generating': generatingDatasetIds.has(String(scope.row.id)) }"
+                  :aria-busy="generatingDatasetIds.has(String(scope.row.id))"
+                  :aria-disabled="generatingDatasetIds.has(String(scope.row.id))"
+                  @click="handleSaveDataset(scope.row)"
+                >
+                  <el-icon v-if="generatingDatasetIds.has(String(scope.row.id))" class="is-loading"><Loading /></el-icon>
+                  <oort-svg-icon v-else width="14" height="14" name="export" class="new_table_svg_group_svg" />
                   <span>生成</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleImportData(scope.row)">
@@ -477,7 +487,7 @@
     <!-- dataset Validate dialog -->
     <el-dialog
       v-model="showDatasetDialog"
-      title="数据集文件校验"
+      :title="currentDatasetInMinio ? $tp('数据集存储详情') : $tp('数据集文件校验')"
       width="35%"
       :before-close="handleDatasetDialogClose"
       class="dataset-validation-dialog"
@@ -488,18 +498,25 @@
           <h4>{{ currentAnnotationRow?.name || '未选择' }}</h4>
           <div class="path-info">
             <div class="path-item">
-              <span class="label">完整路径：</span>
-              <span class="path-value">{{ currentAnnotationRow?.datasetPath || '未设置' }}</span>
+              <span class="label">{{ currentDatasetInMinio ? $tp('存储位置：') : $tp('完整路径：') }}</span>
+              <span class="path-value" :title="currentAnnotationRow?.datasetPath">{{ currentDatasetInMinio ? 'MinIO' : currentAnnotationRow?.datasetPath || '未设置' }}</span>
             </div>
             <div class="path-item">
               <span class="label">文件名：</span>
-              <span class="file-name">{{ extractDatasetFileName(currentAnnotationRow?.datasetPath) }}</span>
+              <span class="file-name">{{ currentDatasetInMinio ? $tp('训练数据包.zip') : extractDatasetFileName(currentAnnotationRow?.datasetPath) }}</span>
             </div>
           </div>
         </div>
 
         <!-- Validate -->
-        <div class="validation-section">
+        <el-alert
+          v-if="currentDatasetInMinio"
+          :title="$tp('训练数据包在生成和下载时自动校验，本页不执行单独校验。')"
+          type="info"
+          :closable="false"
+          show-icon
+        />
+        <div v-else class="validation-section">
           <div class="validation-status" v-if="pathValidationResult">
             <div v-if="pathValidationResult.valid" class="status-success">
               <el-icon><CircleCheck /></el-icon>
@@ -519,7 +536,7 @@
         </div>
 
         <!--  -->
-        <div class="path-validation-section" v-if="pathValidationResult">
+        <div class="path-validation-section" v-if="!currentDatasetInMinio && pathValidationResult">
           <div class="section-header">
             <h3>路径验证结果</h3>
             <el-tag :type="pathValidationResult.valid ? 'success' : 'danger'">
@@ -1099,7 +1116,7 @@ const convertToRgba = (rgbColor, alpha = 0.2) => {
 }
 
 // dataLoad
-const loadData = async () => {
+const loadData = async (shouldUpdate = () => true) => {
   loading.value = true
   try {
     const params = {
@@ -1112,6 +1129,7 @@ const loadData = async () => {
     }
 
     const response = await getAlgorithmAnnotationPage(params)
+    if (!shouldUpdate()) return
     console.log('API响应:', response)
     if (response.code === 200) {
       tableData.value = response.data.records.map(item => ({
@@ -1131,10 +1149,11 @@ const loadData = async () => {
       total.value = response.data.total
     }
   } catch (error) {
+    if (!shouldUpdate()) return
     console.error('加载数据失败:', error)
     ElMessage.error('加载数据失败')
   } finally {
-    loading.value = false
+    if (shouldUpdate()) loading.value = false
   }
 }
 
@@ -1200,6 +1219,11 @@ const handleExport = async () => {
     ElMessage.warning('请选择要导出的数据')
     return
   }
+  const missingDataset = selectedRows.value.find(row => !row.datasetPath?.trim())
+  if (missingDataset) {
+    ElMessage.warning(`“${missingDataset.name}”尚未生成训练数据集，请先点击该行“生成”`)
+    return
+  }
 
   try {
     for (const row of selectedRows.value) {
@@ -1214,7 +1238,7 @@ const handleExport = async () => {
     ElMessage.success('导出成功')
   } catch (error) {
     console.error('导出失败:', error)
-    ElMessage.error('导出失败')
+    ElMessage.error(error.message || '导出失败')
   }
 }
 
@@ -1310,30 +1334,44 @@ const handleView = async (row) => {
 }
 
 // Generate dataset
+const generatingDatasetIds = ref(new Set())
+let datasetPageDisposed = false
+onUnmounted(() => {
+  datasetPageDisposed = true
+  generatingDatasetIds.value.clear()
+})
+
 const handleSaveDataset = async (row) => {
+  if (datasetPageDisposed) return
   const target = row || currentAnnotationData.value
   if (!target?.id) {
     ElMessage.warning('缺少标注任务ID，无法生成数据集')
     return
   }
 
+  const targetId = String(target.id)
+  if (generatingDatasetIds.value.has(targetId)) return
+  generatingDatasetIds.value.add(targetId)
+
   try {
-    const response = await request.post(`/vlsAlgorithmAnnotation/${target.id}/save-dataset`, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+    const response = await request.post(`/vlsAlgorithmAnnotation/${target.id}/save-dataset`)
+    if (datasetPageDisposed) return
 
     if (response.code === 200) {
-      ElMessage.success('标注数据已保存到数据集文件')
+      await loadData(() => !datasetPageDisposed)
+      if (datasetPageDisposed) return
+      ElMessage.success('训练数据集已生成，现在可以导出 YOLO ZIP')
       console.log('数据集文件创建成功')
     } else {
-      ElMessage.error('保存到数据集文件失败')
-      console.error('保存到数据集文件失败:', response.message)
+      ElMessage.error(response.msg || response.message || '生成数据集失败')
+      console.error('保存到数据集文件失败:', response.msg || response.message)
     }
   } catch (error) {
+    if (datasetPageDisposed) return
     console.error('生成数据集失败:', error)
-    ElMessage.error('生成数据集失败')
+    ElMessage.error(error.message || '生成数据集失败')
+  } finally {
+    generatingDatasetIds.value.delete(targetId)
   }
 }
 
@@ -1348,6 +1386,10 @@ const handleImportData = (row) => {
   pendingImportZipFile.value = null
 }
 const handleExportData = async (row) => {
+  if (!row.datasetPath?.trim()) {
+    ElMessage.warning('请先点击该行“生成”，成功后再导出 YOLO ZIP')
+    return
+  }
   try {
     const blob = await exportAnnotationData(row.id)
     const url = window.URL.createObjectURL(blob)
@@ -1359,7 +1401,7 @@ const handleExportData = async (row) => {
     ElMessage.success('导出成功')
   } catch (error) {
     console.error('导出失败:', error)
-    ElMessage.error('导出失败')
+    ElMessage.error(error.message || '导出失败')
   }
 }
 
@@ -1388,8 +1430,11 @@ const handleDeleteItem = async (row) => {
 }
 
 // dataset method
+const isMinioDatasetPath = datasetPath => typeof datasetPath === 'string' && datasetPath.startsWith('vls-dataset://')
+const currentDatasetInMinio = computed(() => isMinioDatasetPath(currentAnnotationRow.value?.datasetPath))
 const extractDatasetFileName = (datasetPath) => {
   if (!datasetPath) return '未设置'
+  if (isMinioDatasetPath(datasetPath)) return '训练数据包.zip'
 
   // , : //192.168.88.173/data/work/ultralytics_yolov8-main/datasets/vls/1756697884961.yaml
   // : 1756697884961.yaml
@@ -1412,7 +1457,7 @@ const handleViewDataset = async (row) => {
   showDatasetDialog.value = true
 
   // startValidate
-  await handleValidateDatasetPath()
+  if (!currentDatasetInMinio.value) await handleValidateDatasetPath()
 }
 
 // dataset
@@ -1443,6 +1488,10 @@ const handleBrowseDatasetPath = () => {
 
 // Validate dataset whether in
 const handleValidateDatasetPath = async () => {
+  if (currentDatasetInMinio.value) {
+    pathValidationResult.value = null
+    return
+  }
   if (!currentAnnotationRow.value?.datasetPath) {
     ElMessage.warning('当前项目没有设置数据集路径')
     return
@@ -2131,7 +2180,7 @@ const loadAllAnnotationData = async () => {
 
         // whether already in
         const existingImageIndex = uploadedImages.value.findIndex(
-          img => img.id === dbImage.id || img.name === dbImage.imageName || img.originalName === dbImage.imageName
+          img => dbImage.id != null && String(img.id) === String(dbImage.id)
         )
 
         if (existingImageIndex === -1) {
@@ -2191,27 +2240,31 @@ const loadAllAnnotationData = async () => {
           return
         }
 
-        if (!imageGroups[instanceImageName]) {
-          imageGroups[instanceImageName] = []
+        const imageKey = instance.imageId != null ? `id:${instance.imageId}` : `name:${instanceImageName}`
+        if (!imageGroups[imageKey]) {
+          imageGroups[imageKey] = []
         }
-        imageGroups[instanceImageName].push(instance)
+        imageGroups[imageKey].push(instance)
       })
 
       console.log('按图片分组的标注数据:', imageGroups)
 
       // 3. to each object
-      Object.keys(imageGroups).forEach(imageName => {
+      Object.keys(imageGroups).forEach(imageKey => {
+        const imageInstances = imageGroups[imageKey]
+        const imageId = imageInstances[0]?.imageId
+        const metaForImage = imageMetaMap.get(imageId) || {}
+        const imageName = metaForImage.name || imageInstances[0]?.imageName || imageInstances[0]?.originalName
         // whether
         if (!imageName || typeof imageName !== 'string') {
           console.warn('跳过无效的图片名称:', imageName)
           return
         }
 
-        const imageInstances = imageGroups[imageName]
-
         // whether already in ( originalName data)
         const existingImageIndex = uploadedImages.value.findIndex(
-          img => img.id === imageInstances?.[0]?.imageId || img.name === imageName || img.originalName === imageName
+          img => imageId != null ? String(img.id) === String(imageId)
+            : img.name === imageName || img.originalName === imageName
         )
 
         // Convert annotationdata
@@ -2385,18 +2438,14 @@ const handleAnnotationDialogSubmit = async (formData) => {
       annotationName: formData.name,
       annotationType: formData.type,
       remark: formData.remark || null,
-      totalCount: 0,
-      annotatedCount: 0,
-      annotationStatus: ANNOTATION_STATUS.NONE,
-      progress: 0,
-      annotationRules: null,
-      createdBy: 1
+      annotationRules: formData.annotationRules
     }
 
     if (formData.id) {
       await updateAlgorithmAnnotation(formData.id, data)
       ElMessage.success('编辑标注成功')
     } else {
+      Object.assign(data, { totalCount: 0, annotatedCount: 0, annotationStatus: ANNOTATION_STATUS.NONE, progress: 0 })
       await createAlgorithmAnnotation(data)
       ElMessage.success('新增标注成功')
     }
@@ -3564,6 +3613,12 @@ window.deleteAnnotationInstancesByImage = testDeleteImageAndRelatedData
 </script>
 
 <style scoped lang="scss">
+.dataset-generating {
+  pointer-events: none;
+  cursor: wait;
+  opacity: 0.65;
+}
+
 
 .tenant_Page {
   height: 100%;

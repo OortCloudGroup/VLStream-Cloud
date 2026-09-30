@@ -22,7 +22,7 @@
 
         <div v-show="isIntroExpanded" class="intro-content">
           <p class="intro-text">
-            选择已生成的数据集，使用默认配置或自定义训练轮数、批大小和输入尺寸。启动前检查图片、标注及训练/验证集独立性；训练完成后可自动保存到算法模型，实际效果仍需独立样本验证。
+            选择训练算力和已完成标注、划分的数据集。平台默认 GPU 需先生成数据集，AutoDL 实例由平台自动上传。可调整训练轮数、批大小和输入尺寸；完成后可自动保存模型，实际效果仍需独立样本验证。
           </p>
 
           <!-- workflow -->
@@ -41,7 +41,7 @@
                 <img :src="selectDatasetIcon" alt="选择标注集" class="step-img" />
               </div>
               <h3>2.选择标注集</h3>
-              <p>选择已生成并独立划分训练集和验证集的数据集</p>
+              <p>选择已标注且独立划分训练集和验证集的数据集</p>
               <el-icon class="arrow-icon"><ArrowRight /></el-icon>
             </div>
 
@@ -148,6 +148,9 @@
             <div class="operate" @click.stop>
               <!-- null / empty : training and -->
               <template v-if="!scope.row.trainStatus || scope.row.trainStatus === '等待'">
+                <div v-if="isCloudTrainingRow(scope.row)" class="new_table_svg_group" @click="handleStopTraining(scope.row)">
+                  <span>取消排队</span>
+                </div>
                 <div class="new_table_svg_group" @click="handleTrain(scope.row)">
                   <span>训练</span>
                 </div>
@@ -477,6 +480,22 @@
       <div class="training-config-container">
         <!-- configuration -->
         <div class="config-sidebar">
+          <div class="config-section">
+            <h3 class="section-title">训练算力</h3>
+            <el-select v-model="computeNodeId" placeholder="平台默认 GPU 服务器" :disabled="isTraining" class="config-select" @visible-change="visible => visible && loadComputeNodes()">
+              <el-option label="平台默认 GPU 服务器" value="" />
+              <el-option v-for="node in computeNodes" :key="node.id" :value="String(node.id)" :label="`AutoDL · ${node.name}`" :disabled="!node.enabled || node.probeState !== 'READY'" />
+            </el-select>
+            <div v-if="computeNodeId" class="config-tip">使用已标注并划分的数据集，自动上传到所选实例；本期输出 PT 和类别文件。</div>
+            <template v-if="computeNodeId">
+              <p>起始模型</p>
+              <el-select v-model="cloudModelSource" :disabled="isTraining" class="config-select">
+                <el-option label="系统基础模型（新实例已预下载）" value="preset" />
+                <el-option label="算法指定模型（必须已存入 MinIO）" value="algorithm" />
+              </el-select>
+            </template>
+            <el-button link type="primary" @click="router.push({ path: '/container-instances', query: { tab: 'cloud' } })">管理线上算力</el-button>
+          </div>
           <!-- training -->
           <div class="config-section">
             <h3 class="section-title">训练方式</h3>
@@ -599,7 +618,7 @@
                   class="dataset-row">
                   <span>{{ dataset.annotationName }}</span>
                   <span>{{ dataset.typeLabel }}</span>
-                  <span>{{ dataset.progress }}% · {{ isDatasetReady(dataset) ? '已生成' : '尚未生成' }}</span>
+                  <span>{{ dataset.progress }}% · {{ computeNodeId ? '已标注' : datasetStateLabel(dataset) }}</span>
                   <el-button
                     type="text"
                     class="remove-btn"
@@ -658,7 +677,7 @@
           </div>
 
           <!-- training -->
-          <div class="config-section">
+          <div v-if="!computeNodeId" class="config-section">
             <h3 class="section-title">训练环境</h3>
             <el-button type="text" class="detail-link">了解详情</el-button>
 
@@ -685,6 +704,7 @@
             >
               {{ isTraining ? '训练中...' : '开始训练' }}
             </el-button>
+            <el-button v-if="computeNodeId && isTraining" @click="handleStopTraining(currentTrainingItem)">请求停止</el-button>
             <div v-if="selectedDatasets.length === 0" class="training-hint">
               <el-text type="warning" size="small">请先选择数据集</el-text>
             </div>
@@ -850,7 +870,7 @@
               <div class="dataset-name">{{ dataset.annotationName }}</div>
               <div class="dataset-info">
                 <el-tag size="small" :type="getStatusTagType(dataset.status)">
-                  {{ isDatasetReady(dataset) ? '已生成' : '尚未生成' }}
+                  {{ datasetStateLabel(dataset) }}
                 </el-tag>
                 <span class="dataset-type">{{ dataset.typeLabel }}</span>
                 <span class="dataset-progress">{{ dataset.progress }}%</span>
@@ -970,7 +990,7 @@
               <div class="dataset-name">{{ dataset.annotationName }}</div>
               <div class="dataset-info">
                 <el-tag size="small" :type="getStatusTagType(dataset.status)">
-                  {{ isDatasetReady(dataset) ? '已生成' : '尚未生成' }}
+                  {{ datasetStateLabel(dataset) }}
                 </el-tag>
                 <span class="dataset-type">{{ dataset.typeLabel }}</span>
                 <span class="dataset-progress">{{ dataset.progress }}%</span>
@@ -1029,7 +1049,7 @@
     :before-close="handleCloseDatasetSelector"
   >
     <div class="dataset-selector-content">
-      <p>仅可选择已生成的数据集。请先完成标注，再到算法标注页面点击“生成”。</p>
+      <p>{{ computeNodeId ? '选择已标注并完成训练/验证划分的数据集，平台会上传固定版本到所选实例。' : '平台 GPU 训练需要已生成的数据集，请先完成标注并生成。' }}</p>
       <!--  -->
       <div class="dataset-search">
         <el-input
@@ -1062,7 +1082,7 @@
             <div class="dataset-header">
               <h4 class="dataset-name">{{ dataset.annotationName }}</h4>
               <el-tag size="small" :type="getStatusTagType(dataset.status)">
-                {{ isDatasetReady(dataset) ? '已生成' : '尚未生成' }}
+                {{ datasetStateLabel(dataset) }}
               </el-tag>
             </div>
             <div class="dataset-details">
@@ -1120,6 +1140,7 @@ import {createModel, getModelPage} from '@/api/algorithmModel.js'
 import {getAlgorithmAnnotationPage, getAlgorithmAnnotationById} from '@/api/algorithmAnnotation.js'
 import {getAlgorithmPage} from '@/api/algorithmManagement.js'
 import CollapseToggle from '@/components/CollapseToggle.vue'
+import { listComputeNodes, startCloudTraining } from '@/api/compute'
 
 // Import
 import trainIcon from '@/assets/start-training@3x.png'
@@ -1130,7 +1151,22 @@ import request, {getBaseURL} from "@/utils/request";
 
 // form
 const router = useRouter()
-const isDatasetReady = dataset => typeof dataset?.datasetPath === 'string' && !!dataset.datasetPath.trim()
+const computeNodeId = ref('')
+const cloudModelSource = ref('preset')
+const computeNodes = ref([])
+const isCloudTrainingRow = row => {
+  try {
+    const value = row?.originalData?.configParams
+    return !!(typeof value === 'string' ? JSON.parse(value) : value)?.cloudJobId
+  } catch { return false }
+}
+const loadComputeNodes = async () => {
+  try { computeNodes.value = (await listComputeNodes()).data || [] } catch { computeNodes.value = [] }
+}
+const hasGeneratedDataset = dataset => typeof dataset?.datasetPath === 'string' && !!dataset.datasetPath.trim()
+const isDatasetReady = dataset => (computeNodeId.value || showAddDialog.value || showEditDialog.value)
+  ? Number(dataset?.annotatedCount || 0) > 0 : hasGeneratedDataset(dataset)
+const datasetStateLabel = dataset => hasGeneratedDataset(dataset) ? '已生成' : Number(dataset?.annotatedCount || 0) > 0 ? '可线上训练，平台训练需生成' : '尚未标注'
 const goToGenerateDataset = () => router.push('/algorithm-standard')
 
 const searchForm = ref({
@@ -1295,7 +1331,7 @@ const trainingMode = ref('auto')
 const publicationState = ref('')
 const trainingBackendReady = ref(false)
 let publicationTimer = null
-const publicationLabels = { PENDING: '等待训练和转换完成，后台自动保存', COMPLETED: '已保存', FAILED: '保存失败，可重试', DISABLED: '未启用' }
+const publicationLabels = { PENDING: '等待训练产物就绪，后台自动保存', COMPLETED: '已保存', FAILED: '保存失败，可重试', DISABLED: '未启用' }
 const resolution = ref('auto')
 const epochMode = ref('auto')
 const autoPublish = ref('yes')
@@ -1552,6 +1588,7 @@ const buildTrainingPayload = async () => {
     throw new Error('无法核对数据集状态，请刷新后重试')
   }
   dataset.datasetPath = latestDataset.data.datasetPath
+  dataset.annotatedCount = latestDataset.data.annotatedCount
   if (!isDatasetReady(dataset)) {
     throw new Error('数据集尚未生成或已失效，请先到算法标注页面重新生成')
   }
@@ -1595,7 +1632,7 @@ const handleStartTraining = async () => {
     const { taskId, dataset, trainType, modelFilePath, params } = await buildTrainingPayload()
 
 
-    if (!modelFilePath) {
+    if (!modelFilePath && !computeNodeId.value) {
       isTraining.value = false
       ElMessage.error('未找到基础模型路径，请先在算法配置中设置模型文件')
       appendLogLines('[WARN] 未找到模型文件路径，无法启动训练')
@@ -1613,10 +1650,15 @@ const handleStartTraining = async () => {
 
     appendLogLines(`[INFO] 准备启动训练任务 #${taskId}`)
     // appendLogLines(`[INFO] dataset: ${dataset.annotationName || dataset.label || params.datasetPath}`)
-    appendLogLines(`[CMD] ${commandText}`)
+    if (computeNodeId.value) appendLogLines('[INFO] 将固定本轮数据集版本并上传到所选 AutoDL 实例')
+    else appendLogLines(`[CMD] ${commandText}`)
     appendLogLines('[INFO] 正在向后端提交训练请求...')
 
-    await startTrainingWithParams(taskId, params)
+    if (computeNodeId.value) {
+      await startCloudTraining(taskId, { ...params, nodeId: computeNodeId.value, modelSource: cloudModelSource.value })
+    } else {
+      await startTrainingWithParams(taskId, params)
+    }
     await refreshPublication(taskId).catch(() => {})
 
     appendLogLines('[INFO] 训练请求已入队，等待GPU调度；开始监听日志与状态...')
@@ -1649,7 +1691,13 @@ const handleStopTraining = async (row) => {
       type: 'warning'
     })
 
-    await stopTraining(row.originalData.id)
+    const result = await stopTraining(row.originalData.id)
+    if (result.data === 'stop_requested') {
+      ElMessage.info('停止请求已提交，等待实例确认')
+      appendLogLines('[INFO] 等待实例确认停止，当前任务状态将由后台更新')
+      await loadTrainingData()
+      return
+    }
     ElMessage.success('训练任务已终止')
     appendLogLines('[INFO] 训练已停止')
     stopAllPolling()
@@ -1803,6 +1851,7 @@ const promptDownloadModelType = async (row) => {
   const modelData = row?.originalData || row || {}
   const modelTypes = [
     { type: 'pt', path: modelData.modelOutputPath },
+    ...(String(modelData.modelOutputPath || '').startsWith('cloud-training/') ? [{ type: 'classes', label: '类别 YAML', path: modelData.modelOutputPath }] : []),
     {
       type: 'onnx',
       path: modelData.onnxModelOutputPath,
@@ -1845,7 +1894,7 @@ const promptDownloadModelType = async (row) => {
             ElRadio,
             { label: item.type, disabled: !item.path },
             () => {
-              if (item.path) return item.type
+              if (item.path) return item.label || item.type
               if (item.status === 'converting') return `${item.type}（转换中）`
               if (item.status === 'failed') {
                 const error = item.error ? String(item.error).slice(0, 120) : '未返回失败原因'
@@ -1888,7 +1937,7 @@ const handleDownloadModel = async (row) => {
     }
 
     const taskName = row?.originalData?.taskName || row?.algorithmName || 'model'
-    const modelFileName = `${taskName}.${downloadType}`
+    const modelFileName = `${taskName}.${downloadType === 'classes' ? 'classes.yaml' : downloadType}`
 
     const blob = await request({
       url: `/vlsAlgorithmTraining/${trainingId}/download-model`,
@@ -1995,6 +2044,14 @@ const handleRetrainModel = async (row) => {
 
 // trainingconfiguration
 const restoreTrainingConfig = async (originalData) => {
+  computeNodeId.value = ''
+  cloudModelSource.value = 'preset'
+  try {
+    const saved = typeof originalData.configParams === 'string' ? JSON.parse(originalData.configParams) : originalData.configParams
+    computeNodeId.value = saved?.computeNodeId ? String(saved.computeNodeId) : ''
+    cloudModelSource.value = saved?.modelSource === 'algorithm' ? 'algorithm' : 'preset'
+  } catch { /* Historical configuration can be empty. */ }
+  await loadComputeNodes()
   trainingBackendReady.value = false
   epochTotal.value = Number(originalData.epochTotal || 10)
   batchSize.value = 16
@@ -2440,7 +2497,7 @@ const startLogPolling = (taskId) => {
       if (completedFlag === true) {
         resolvedStatus = 'completed'
       }
-      if (detectedStatus && (!resolvedStatus || !isFinishedStatus(resolvedStatus))) {
+      if (!data?.serverManaged && detectedStatus && (!resolvedStatus || !isFinishedStatus(resolvedStatus))) {
         resolvedStatus = detectedStatus
       }
 
@@ -2709,6 +2766,7 @@ const handleBatchOperation = () => {
 onMounted(() => {
   loadTrainingData()
   loadAlgorithmOptions()
+  loadComputeNodes()
 })
 
 onUnmounted(() => {
@@ -2876,7 +2934,7 @@ const loadDatasetOptions = async () => {
     if (response.code === 200) {
       datasetOptions.value = response.data.records.map(item => ({
         value: String(item.id),
-        label: `${item.annotationName} (${item.annotatedCount}/${item.totalCount}) · ${isDatasetReady(item) ? '已生成' : '尚未生成'}`,
+        label: `${item.annotationName} (${item.annotatedCount}/${item.totalCount}) · ${datasetStateLabel(item)}`,
         annotationName: item.annotationName,
         annotationType: item.annotationType,
         typeLabel: ANNOTATION_TYPE_LABELS[item.annotationType],

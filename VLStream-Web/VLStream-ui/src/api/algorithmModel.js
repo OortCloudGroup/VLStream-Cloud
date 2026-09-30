@@ -44,6 +44,28 @@ export function createModel(data) {
   })
 }
 
+/** Import an externally trained YOLOv8 PT and its matching data.yaml. */
+export function importModelFiles(formData, onUploadProgress) {
+  return request({
+    url: '/vlsAlgorithmModel/import',
+    method: 'post',
+    data: formData,
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress
+  })
+}
+
+/** Import one PT and its class YAML from a ZIP archive. */
+export function importModelArchive(formData, onUploadProgress) {
+  return request({
+    url: '/vlsAlgorithmModel/import-zip',
+    method: 'post',
+    data: formData,
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress
+  })
+}
+
 /**
  * new algorithmmodel
  * @param {Object} data modeldata

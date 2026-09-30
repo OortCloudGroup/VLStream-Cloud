@@ -129,7 +129,7 @@ public class VlsModelDispatchController extends BladeController {
 			response.setHeader("ETag", "\"" + task.getSha256() + "\"");
 			response.setHeader("X-Model-SHA256", task.getSha256());
 			response.setHeader("Cache-Control", "private, no-store");
-			artifactService.stream(task.getRemotePath(), response.getOutputStream());
+			artifactService.streamForTenant(task.getTenantId(), task.getRemotePath(), task.getSha256(), response.getOutputStream());
 			taskService.markDownloadCompleted(requestId);
 		} catch (Exception ex) {
 			log.error("Hardware model download failed: requestId={}", requestId, ex);

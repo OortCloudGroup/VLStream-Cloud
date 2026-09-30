@@ -25,6 +25,7 @@ public class DatasetCleanupService {
     private final PlatformTransactionManager transactions;
     private final DatasetStorageProvider storage;
     private final DatasetRemoteCleanup remote;
+    private final TrainingDatasetArtifactService artifacts;
     private final ModelClassFileService classes;
     private final ModelClassSnapshotStore snapshots;
     private final ObjectMapper json;
@@ -79,6 +80,7 @@ public class DatasetCleanupService {
         if (projects.isEmpty()) throw new ServiceException("数据集不存在或无权访问");
         if (count("SELECT COUNT(*) FROM vls_dataset_cleanup WHERE tenant_id=? AND annotation_id=?", tenant, id) > 0) return;
         if (((Number) projects.get(0).get("is_deleted")).intValue() != 0) throw new ServiceException("数据集已删除");
+        if (count("SELECT COUNT(*) FROM vls_training_dataset_artifact WHERE tenant_id=? AND dataset_id=? AND storage_state IN ('PENDING','BUILDING')", tenant, id) > 0) throw new ServiceException("训练数据包正在生成，请等待生成结束后再删除数据集");
         if (count("SELECT COUNT(*) FROM vls_dataset_conversion_guard WHERE tenant_id=? AND dataset_id=?", tenant, id) > 0) throw new ServiceException("模型转换仍在使用数据集，请等待转换结束后再删除");
         if (count("SELECT COUNT(*) FROM vls_smart_annotation_task WHERE tenant_id=? AND dataset_id=? AND is_deleted=0 AND task_state IN ('QUEUED','PREPARING','RUNNING','REVIEW','CONFIRMING','CANCEL_REQUESTED')", tenant, id) > 0) throw new ServiceException("存在未结束的智能标注任务，请先完成或取消任务再删除数据集");
         if (count("SELECT COUNT(*) FROM vls_algorithm_training WHERE tenant_id=? AND dataset_id=? AND (train_status IS NULL OR train_status NOT IN ('pending','completed','failed','cancelled','canceled','stopped') OR onnx_conversion_status='converting' OR om_conversion_status='converting')", tenant, id) > 0
@@ -90,10 +92,13 @@ public class DatasetCleanupService {
         if (count("SELECT COUNT(*) FROM vls_container_instance WHERE env_config LIKE ? AND instance_status IN ('queued','pending','starting','running','creating','stopping')", "%" + root + "/%") > 0) throw new ServiceException("有活动容器引用此训练目录，不能删除");
         if (count("SELECT COUNT(*) FROM vls_algorithm_annotation WHERE NOT (tenant_id=? AND id=?) AND (dataset_path=? OR dataset_path LIKE ?)", tenant, id, root, root + "/%") > 0) throw new ServiceException("训练目录被其他项目引用，不能删除");
         Object path = projects.get(0).get("dataset_path");
-        if (path != null && !path.toString().trim().isEmpty() && !path.toString().startsWith(root + "/")) throw new ServiceException("数据集路径不属于当前项目的生成目录，需先核对归属");
+        String datasetPath = path == null ? null : path.toString().trim();
+        boolean objectDataset = TrainingDatasetArtifactService.isReference(datasetPath);
+        if (objectDataset) artifacts.require(id, datasetPath);
+        else if (text(datasetPath) && !datasetPath.startsWith(root + "/")) throw new ServiceException("数据集路径不属于当前项目的生成目录，需先核对归属");
 
-        List<AlgorithmTraining> models = jdbc.query("SELECT id,tenant_id,model_output_path,onnx_model_output_path,om_model_output_path,rknn_model_output_path,int8_rknn_model_output_path FROM vls_algorithm_training WHERE tenant_id=? AND dataset_id=?",
-            (rs, n) -> { AlgorithmTraining t = new AlgorithmTraining(); t.setId(rs.getLong(1)); t.setTenantId(rs.getString(2)); t.setModelOutputPath(rs.getString(3)); t.setOnnxModelOutputPath(rs.getString(4)); t.setOmModelOutputPath(rs.getString(5)); t.setRknnModelOutputPath(rs.getString(6)); t.setInt8RknnModelOutputPath(rs.getString(7)); return t; }, tenant, id);
+        List<AlgorithmTraining> models = jdbc.query("SELECT id,tenant_id,model_output_path,onnx_model_output_path,om_model_output_path,rknn_model_output_path,int8_rknn_model_output_path,dataset_id,config_params FROM vls_algorithm_training WHERE tenant_id=? AND dataset_id=?",
+            (rs, n) -> { AlgorithmTraining t = new AlgorithmTraining(); t.setId(rs.getLong(1)); t.setTenantId(rs.getString(2)); t.setModelOutputPath(rs.getString(3)); t.setOnnxModelOutputPath(rs.getString(4)); t.setOmModelOutputPath(rs.getString(5)); t.setRknnModelOutputPath(rs.getString(6)); t.setInt8RknnModelOutputPath(rs.getString(7)); t.setDatasetId(rs.getLong("dataset_id")); t.setConfigParams(rs.getString("config_params")); return t; }, tenant, id);
         for (AlgorithmTraining training : models) {
             if (text(training.getModelOutputPath()) || text(training.getOnnxModelOutputPath()) || text(training.getOmModelOutputPath()) || text(training.getRknnModelOutputPath()) || text(training.getInt8RknnModelOutputPath())) {
                 try { snapshots.save(training, classes.prepare(training)); }
@@ -101,7 +106,12 @@ public class DatasetCleanupService {
             }
         }
         Manifest plan = new Manifest();
-        List<String> paths = jdbc.queryForList("SELECT local_path FROM vls_annotation_image WHERE tenant_id=? AND annotation_id=?", String.class, tenant, id);
+        for (TrainingDatasetArtifact artifact : artifacts.listForDataset(id)) {
+            OssClient client = storage.get(artifact.getStorageConfig());
+            if (!Objects.equals(client.getBucketName(), artifact.getStorageBucket())) throw new ServiceException("训练数据集的存储桶已变更，已停止删除");
+            add(plan, client, artifact.getObjectKey());
+        }
+        List<String> paths = new ArrayList<>(jdbc.queryForList("SELECT local_path FROM vls_annotation_image WHERE tenant_id=? AND annotation_id=?", String.class, tenant, id));
         List<String> versions = jdbc.queryForList("SELECT snapshot_json FROM vls_dataset_version WHERE tenant_id=? AND annotation_id=?", String.class, tenant, id);
         for (String version : versions) paths.addAll(snapshotPaths(version));
         if (paths.stream().anyMatch(DatasetCleanupService::text)) {
@@ -124,9 +134,15 @@ public class DatasetCleanupService {
                 upload.setUploadId((String) job.get("multipart_id")); plan.getMultiparts().add(upload);
             }
         }
-        // Also inspect the canonical root when dataset_path was invalidated or a publication failed.
-        plan.setRemote(true);
-        plan.setRemoteIdentity(remote.identity());
+        // Usage survives invalidation, failed publication and switching a legacy dataset to MinIO.
+        // New object-only datasets must not depend on an unrelated GPU host to be deleted.
+        List<String> remoteIdentities = jdbc.queryForList("SELECT remote_identity FROM vls_training_dataset_remote_usage WHERE tenant_id=? AND dataset_id=?", String.class, tenant, id);
+        if ((!objectDataset && text(datasetPath)) || !remoteIdentities.isEmpty()) {
+            String identity = remote.identity();
+            for (String recorded : remoteIdentities) if (text(recorded) && !Objects.equals(recorded, identity)) throw new ServiceException("训练服务器配置已变更，已停止清理");
+            plan.setRemote(true);
+            plan.setRemoteIdentity(identity);
+        }
         try { jdbc.update("INSERT INTO vls_dataset_cleanup(tenant_id,annotation_id,cleanup_state,manifest_json) VALUES(?,?,'PENDING',?)", tenant, id, json.writeValueAsString(plan)); }
         catch (java.io.IOException e) { throw new ServiceException("无法保存清理清单"); }
     }
@@ -149,9 +165,10 @@ public class DatasetCleanupService {
 
     private Set<String> otherReferences(Long id, String tenant, String bucket) {
         Set<String> references = new HashSet<>();
-        List<String> paths = jdbc.queryForList("SELECT local_path FROM vls_annotation_image WHERE tenant_id IS NULL OR annotation_id IS NULL OR NOT (tenant_id=? AND annotation_id=?)", String.class, tenant, id);
+        List<String> paths = new ArrayList<>(jdbc.queryForList("SELECT local_path FROM vls_annotation_image WHERE tenant_id IS NULL OR annotation_id IS NULL OR NOT (tenant_id=? AND annotation_id=?)", String.class, tenant, id));
         for (String version : jdbc.queryForList("SELECT snapshot_json FROM vls_dataset_version WHERE tenant_id IS NULL OR annotation_id IS NULL OR NOT (tenant_id=? AND annotation_id=?)", String.class, tenant, id)) paths.addAll(snapshotPaths(version));
         paths.addAll(jdbc.queryForList("SELECT object_key FROM vls_dataset_import_job WHERE NOT (tenant_id=? AND dataset_id=?)", String.class, tenant, id));
+        paths.addAll(jdbc.queryForList("SELECT object_key FROM vls_training_dataset_artifact WHERE storage_bucket=? AND (tenant_id IS NULL OR dataset_id IS NULL OR NOT (tenant_id=? AND dataset_id=?))", String.class, bucket, tenant, id));
         for (String path : paths) if (text(path)) references.add(AnnotationImageObjectKey.normalize(path, bucket));
         return references;
     }
@@ -167,6 +184,7 @@ public class DatasetCleanupService {
         jdbc.update("DELETE p FROM vls_dataset_upload_part p JOIN vls_dataset_import_job j ON p.job_id=j.id WHERE j.tenant_id=? AND j.dataset_id=?", tenant, id);
         for (String table : Arrays.asList("vls_annotation_instance", "vls_annotation_label", "vls_annotation_image", "vls_dataset_version")) jdbc.update("DELETE FROM " + table + " WHERE tenant_id=? AND annotation_id=?", tenant, id);
         for (String table : Arrays.asList("vls_dataset_frame_origin", "vls_dataset_import_job")) jdbc.update("DELETE FROM " + table + " WHERE tenant_id=? AND dataset_id=?", tenant, id);
+        for (String table : Arrays.asList("vls_training_dataset_artifact", "vls_training_dataset_remote_usage")) jdbc.update("DELETE FROM " + table + " WHERE tenant_id=? AND dataset_id=?", tenant, id);
         jdbc.update("UPDATE vls_algorithm_annotation SET is_deleted=1,dataset_path=NULL,total_count=0,annotated_count=0,progress=0 WHERE tenant_id=? AND id=?", tenant, id);
         jdbc.update("UPDATE vls_dataset_cleanup SET cleanup_state='COMPLETED',error_message=NULL,update_time=NOW() WHERE tenant_id=? AND annotation_id=?", tenant, id);
     }

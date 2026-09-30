@@ -4,8 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @Tag("dev")
 class DatasetCleanupSafetyTest {
     @Test void neverTreatsModelsAsDatasetFiles() {
-        for(String name:new String[]{"best.pt","best.onnx","best.om","best.rknn","model.bin","unknown"}) assertFalse(DatasetRemoteCleanup.datasetFile(name));
+        for(String name:new String[]{"best.pt","best.onnx","best.om","best.rknn","model.bin","unknown","custom.py","RUN_TRAINING.py"}) assertFalse(DatasetRemoteCleanup.datasetFile(name));
         assertTrue(DatasetRemoteCleanup.datasetFile("image.png")); assertTrue(DatasetRemoteCleanup.datasetFile("dataset.yaml"));
+        assertTrue(DatasetRemoteCleanup.datasetFile("run_training.py")); assertTrue(DatasetRemoteCleanup.datasetFile("four_task_runtime.py"));
     }
     @Test void requiresExactPositiveProjectRoot() {
         assertThrows(IllegalArgumentException.class,()->DatasetRemoteCleanup.root(null));

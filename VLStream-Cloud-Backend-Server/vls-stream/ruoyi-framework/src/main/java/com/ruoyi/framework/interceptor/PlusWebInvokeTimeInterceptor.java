@@ -80,6 +80,7 @@ public class PlusWebInvokeTimeInterceptor implements HandlerInterceptor {
     private boolean isSensitiveRequest(HttpServletRequest request) {
         String uri = request.getRequestURI();
         return "/blade-auth/token".equals(uri)
+            || uri.startsWith("/vlsCompute/")
             || "/vlsTunnel/agent/register".equals(uri)
             || "/vlsTunnel/internal/access-sessions/resolve".equals(uri);
     }

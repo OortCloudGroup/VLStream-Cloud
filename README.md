@@ -312,6 +312,10 @@ sequenceDiagram
 
 ### Runtime Server Dependencies
 
+Before connecting a newly rented AutoDL GPU, follow the [new GPU onboarding guide](./docs/NEW_GPU_ONBOARDING.md)
+and run [`bootstrap-autodl.sh`](./tools/compute/bootstrap-autodl.sh) to install the fixed core versions and cache preset weights.
+The platform checks the environment and weights. The project team's P100 is a development/test machine, not a deployment dependency.
+
 The following versions are taken from the current release Compose or project
 configuration. A version marked **not pinned** must be fixed in the formal
 deployment manifest before production release.
@@ -325,11 +329,36 @@ deployment manifest before production release.
 | MySQL | Business database | `8.4.10-oraclelinux9` | [GitHub Repository](https://github.com/mysql/mysql-server) | [GPLv2 or commercial license](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |
 | Redis | Cache, sessions, online state, and runtime state | `7.4.9-alpine` | [GitHub Repository](https://github.com/redis/redis) | [RSALv2 or SSPLv1](https://redis.io/legal/licenses/) |
 | MinIO / S3 | Event media, model files, and object storage | `RELEASE.2025-09-07T16-13-09Z` | [GitHub Repository](https://github.com/minio/minio) | [AGPLv3 or commercial license](https://min.io/compliance) |
+| HiSilicon OM conversion worker / tool environment **(optional)** | Required only when generating `.om` models for Hi3519DV500; not a prerequisite for starting VLS or using PT models | Target-compatible SVP/ATC SDK, supplied separately | [Conversion configuration](./VLStream-Cloud-Backend-Server/vls-stream/ruoyi-vlstream/src/main/java/com/ruoyi/vlstream/test/vlstream/config/VlsModelConversionProperties.java) | Subject to the vendor SDK license; not bundled with VLS |
 
 Nginx or an equivalent gateway is normally required for frontend static files
 and reverse proxying. WebRTC Streamer `v0.8.16` is optional for the VLS direct
 RTSP-to-WebRTC path; FFmpeg is an optional WVP/ZLMediaKit pull and conversion
 helper, not another standalone media platform.
+
+**Optional model conversion dependencies:** VLS coordinates conversion tasks,
+but the Java application does not include the Python or vendor conversion tools.
+The existing ONNX/RKNN path invokes tools on a configured remote host over SSH;
+a standalone platform-side conversion service has not yet been implemented.
+The current AutoDL training flow produces PT models and class files only and
+does not invoke ONNX/OM/RKNN conversion.
+
+Deploy the OM conversion environment only if HiSilicon OM output is needed. It
+requires an SDK/toolchain matching the target chip, the HiSilicon YOLO exporter,
+the SVP/ATC environment, AIPP configuration, and calibration images. Configure
+`VLSTREAM_HISILICON_EXPORTER_SCRIPT`, `VLSTREAM_ATC_ENV_SCRIPT`,
+`VLSTREAM_ATC_INSERT_OP_CONFIG`, `VLSTREAM_ATC_SOC_VERSION`, and
+`VLSTREAM_ATC_CALIBRATION_IMAGE_COUNT` for that environment. These paths refer to
+the host executing conversion, not automatically to the VLS application host.
+
+The intended standalone deployment is an optional conversion worker that reads
+the model and calibration data from MinIO and writes the converted artifacts
+back to MinIO. This worker is not currently provided as a ready-to-run service or
+Compose component. The existing default-host detection conversion chain still
+attempts OM conversion and has no separate OM enable/disable switch: missing
+tools result in an OM conversion failure, while the PT model and other
+successfully generated formats remain available. Marking this dependency as
+optional does not mean that chain already skips OM automatically.
 
 ### Repository layers
 
@@ -412,7 +441,7 @@ paths, excluded vendor binaries, and board-side build instructions, see the
 | Cache | Redis |
 | Object Storage | MinIO or another S3-compatible service; required for complete annotation support |
 | Messaging | MQTT broker; required for device control and model delivery |
-| Training Node | Linux GPU server with SSH/SFTP; required for algorithm training |
+| Training Node | A user-owned AutoDL instance initialized through the [onboarding guide](./docs/NEW_GPU_ONBOARDING.md), or an explicitly configured default Linux GPU node; the team's development P100 is not required |
 | AI Service | `apaas-ai` routed through an APaaS gateway; required for AI text/image features |
 | Frontend | Node.js and npm |
 
@@ -493,7 +522,8 @@ deployment. Configure at least the following services before startup:
 | Redis | Sessions, cache, and distributed state | `application-dev.yml` / `application-prod.yml` |
 | WVP Server | Required unified video-device center and VLStream device validation | `VLSTREAM_WVP_INTERNAL_BASE_URL` |
 | MinIO | Annotation images, datasets, and file uploads | Database table `sys_oss_config` |
-| GPU training server | Training, conversion, and model artifacts | `VLSTREAM_SSH_*`, `VLSTREAM_TRAINING_*` |
+| Default GPU node | Existing default-node training/conversion compatibility; configure your own host if using this path | `VLSTREAM_SSH_*`, `VLSTREAM_TRAINING_*` |
+| AutoDL tenant instance | User-owned instance for cloud training; managed per tenant instead of using global SSH settings | AI Compute Scheduling → Cloud Compute; [initialization guide](./docs/NEW_GPU_ONBOARDING.md) |
 | MQTT broker | Device control, model delivery, and receipts | `VLSTREAM_MQTT_*` |
 | Model download entry | Device-side HTTP model download | `VLSTREAM_MODEL_*` |
 | GPT/AI service | AI text and image generation | Frontend APaaS gateway and a separate `apaas-ai` service |

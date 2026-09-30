@@ -93,12 +93,44 @@ export function updateAnnotationProgress(id, annotatedCount) {
 }
 
 // Export annotationdata
-export function exportAnnotationData(id) {
-  return request({
-    url: `/vlsAlgorithmAnnotation/${id}/export`,
-    method: 'post',
-    responseType: 'blob'
-  })
+async function readExportError(blob) {
+  const body = await blob.text()
+  try {
+    const error = JSON.parse(body)
+    return error.msg || error.message || '导出失败'
+  } catch (_) {
+    return body || '导出失败'
+  }
+}
+
+export async function exportAnnotationData(id) {
+  let blob
+  try {
+    blob = await request({
+      url: `/vlsAlgorithmAnnotation/${id}/export`,
+      method: 'post',
+      responseType: 'blob',
+      silentError: true
+    })
+  } catch (error) {
+    if (error.response?.data instanceof Blob) {
+      throw new Error(await readExportError(error.response.data))
+    }
+    throw error
+  }
+
+  if (!(blob instanceof Blob)) {
+    throw new Error(blob?.msg || blob?.message || '导出接口未返回 ZIP 文件')
+  }
+  if (blob.type.includes('json') || blob.type.startsWith('text/')) {
+    throw new Error(await readExportError(blob))
+  }
+  const signature = new Uint8Array(await blob.slice(0, 4).arrayBuffer())
+  if (signature.length < 4 || signature[0] !== 0x50 || signature[1] !== 0x4b ||
+      signature[2] !== 0x03 || signature[3] !== 0x04) {
+    throw new Error('导出接口未返回有效的 ZIP 文件')
+  }
+  return blob
 }
 
 // Import annotationdata

@@ -315,6 +315,9 @@ sequenceDiagram
 
 ### Server 运行依赖
 
+用户接入自己购买的 AutoDL GPU 前，请按[新 GPU 接入指南](./docs/NEW_GPU_ONBOARDING.md)选择固定核心版本并执行
+[`bootstrap-autodl.sh`](./tools/compute/bootstrap-autodl.sh)。平台提供环境检查及基础模型缓存检查；项目团队的 P100 仅用于开发测试，不是用户部署依赖。
+
 以下版本优先取当前发布 Compose 或项目配置。标记为“未固定”的组件，
 正式发布前需要在部署清单中锁定版本。
 
@@ -327,10 +330,26 @@ sequenceDiagram
 | MySQL | 业务数据库 | `8.4.10-oraclelinux9` | [GitHub 仓库](https://github.com/mysql/mysql-server) | [GPLv2 或商业许可](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |
 | Redis | 缓存、会话、在线状态和运行态数据 | `7.4.9-alpine` | [GitHub 仓库](https://github.com/redis/redis) | [RSALv2 或 SSPLv1](https://redis.io/legal/licenses/) |
 | MinIO / S3 | 事件媒体、模型文件和对象存储 | `RELEASE.2025-09-07T16-13-09Z` | [GitHub 仓库](https://github.com/minio/minio) | [AGPLv3 或商业许可](https://min.io/compliance) |
+| 海思 OM 转换工作进程 / 工具环境 **（可选）** | 仅生成 Hi3519DV500 的 `.om` 模型时需要；不是 VLS 启动或使用 PT 模型的前提 | 与目标芯片匹配的 SVP/ATC SDK，单独提供 | [转换配置](./VLStream-Cloud-Backend-Server/vls-stream/ruoyi-vlstream/src/main/java/com/ruoyi/vlstream/test/vlstream/config/VlsModelConversionProperties.java) | 遵循厂商 SDK 授权协议，VLS 不随包分发 |
 
 前端部署通常还需要 Nginx 或等价网关，用于静态文件和反向代理。WebRTC
 Streamer `v0.8.16` 仅用于 VLS 直连 RTSP 转 WebRTC 的可选链路；FFmpeg 是
 WVP/ZLMediaKit 的按需拉流和格式转换辅助程序，不是另一套独立流媒体平台。
+
+**可选模型转换依赖：** VLS 负责转换任务的编排，Java 应用本身不包含 Python 或厂商转换工具。
+现有 ONNX/RKNN 链路通过 SSH 调用已配置远端主机上的工具；平台侧独立转换服务尚未实现。
+当前 AutoDL 训练流程只输出 PT 模型和类别文件，不调用 ONNX/OM/RKNN 转换。
+
+只有需要生成海思 OM 时，才需要部署对应转换环境。依赖包括与目标芯片匹配的 SDK/工具链、海思 YOLO
+导出脚本、SVP/ATC 环境、AIPP 配置和校准图片。请按该环境设置
+`VLSTREAM_HISILICON_EXPORTER_SCRIPT`、`VLSTREAM_ATC_ENV_SCRIPT`、`VLSTREAM_ATC_INSERT_OP_CONFIG`、
+`VLSTREAM_ATC_SOC_VERSION` 和 `VLSTREAM_ATC_CALIBRATION_IMAGE_COUNT`。这些路径属于实际执行转换的主机，
+不会自动指向 VLS 应用服务器。
+
+独立部署的目标方案是可选的转换工作进程：从 MinIO 读取模型和校准数据，完成后把转换产物回存 MinIO。
+目前尚未提供开箱即用的独立服务或 Compose 组件。现有默认主机的检测模型转换链仍会尝试 OM 转换，
+尚无单独的 OM 启停开关；缺少工具时会记录 OM 转换失败，PT 和其他已成功生成的格式仍保留可用。
+因此，依赖标为“可选”不代表当前转换链已经会自动跳过 OM。
 
 ### 仓库分层
 
@@ -410,7 +429,7 @@ SDK 与服务端构建相互独立：根目录 Maven 和前端命令不会编译
 | 缓存 | Redis |
 | 对象存储 | MinIO 或其他 S3 兼容服务；完整算法标注功能必需 |
 | 消息服务 | MQTT Broker；设备控制和模型下发必需 |
-| 训练节点 | 支持 SSH/SFTP 的 Linux GPU 服务器；算法训练功能必需 |
+| 训练节点 | 按[接入指南](./docs/NEW_GPU_ONBOARDING.md)初始化的用户自购 AutoDL 实例，或显式配置的默认 Linux GPU 节点；不依赖团队开发用 P100 |
 | GPT 服务 | 能由 APaaS 网关路由的 `apaas-ai` 服务；AI 文本/图片功能必需 |
 | 前端 | Node.js 与 npm |
 
@@ -484,7 +503,8 @@ mysql -u root -p vlstream --execute="source script/sql/mysql/mysql_ry_v0.8.X.sql
 | Redis | 登录状态、缓存和分布式状态 | `application-dev.yml` / `application-prod.yml` |
 | WVP Server | 必选的统一视频设备中心和 VLStream 设备校验 | `VLSTREAM_WVP_INTERNAL_BASE_URL` |
 | MinIO | 算法标注图片、数据集和普通文件上传 | 数据库表 `sys_oss_config` |
-| GPU 训练服务器 | 训练、格式转换、模型产物保存 | `VLSTREAM_SSH_*`、`VLSTREAM_TRAINING_*` |
+| 默认 GPU 节点 | 既有默认节点训练/转换兼容链路，使用时应配置自己的主机 | `VLSTREAM_SSH_*`、`VLSTREAM_TRAINING_*` |
+| AutoDL 租户实例 | 用户自购的云训练实例，按租户管理，不使用全局 SSH 设置 | AI 算力调度 → 线上算力；[初始化指南](./docs/NEW_GPU_ONBOARDING.md) |
 | MQTT Broker | 设备控制、模型任务发布和硬件回执 | `VLSTREAM_MQTT_*` |
 | 模型下载入口 | 现场设备通过 HTTP 拉取模型 | `VLSTREAM_MODEL_*` |
 | GPT/AI 服务 | AI 文本生成和文生图 | 前端 APaaS 网关配置及独立 `apaas-ai` 服务 |
@@ -508,7 +528,7 @@ REDIS_PASSWORD=replace-me
 VLSTREAM_WVP_INTERNAL_BASE_URL=http://wvp-server:9080
 VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED=false
 
-# GPU 训练服务器；模型产物实际保存在该服务器的 /data/work
+# 默认 GPU 兼容链路示例；AutoDL 租户实例在页面配置，不使用以下全局 SSH 设置
 VLSTREAM_SSH_HOST=gpu.example.internal
 VLSTREAM_SSH_PORT=22
 VLSTREAM_SSH_USERNAME=vlstream

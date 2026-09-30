@@ -7,7 +7,8 @@
 
 本轮验收使用 **当前本地平台 `http://localhost:3000` + 用户购买的 AutoDL 实例**，实际探测报告为 RTX 4080 SUPER（计算能力8.9）。
 平台不限定3090或其他单一型号；按GPU代际、驱动和所需显存选择合适环境，再通过检查及实际训练确认。型号示例不是白名单。
-这条链路尚待真实 AutoDL 实例验收，下面是要实际执行并逐项确认的步骤，不是已经全部通过的记录。
+2026-09-30已在本地平台与用户的AutoDL vGPU-32GB实例完成本期四类训练、PT/类别回存下载、指定PT再训练及停止验收。
+这不代表所有显卡已实测，也不包含线上智能标注、模型转换、设备部署或完整精度评估。
 
 | 步骤 | 在哪里操作 | 做什么 | 完成标志 |
 | --- | --- | --- | --- |
@@ -104,7 +105,7 @@ DeepLabV3 ResNet50。用户自有模型必须能被对应运行时加载并与�
 
 ```bash
 cd /root/autodl-tmp
-python -m zipfile -e vlstream-autodl-setup.zip .
+/root/miniconda3/bin/python -m zipfile -e vlstream-autodl-setup.zip .
 cd vlstream-autodl-setup
 bash tools/compute/bootstrap-autodl.sh --profile standard
 ```
@@ -131,6 +132,10 @@ bash tools/compute/bootstrap-autodl.sh --profile blackwell
 应排查报错后使用新的工作目录，脚本不会为恢复而删除未知目录。
 核心版本固定，依赖解析出的完整版本保存在 `requirements-resolved-standard.txt` 或对应 blackwell 文件；该文件用于留档复现，
 不要声称跨时间安装的所有间接依赖都由此脚本预先锁死。
+
+首次安装会下载数GB软件包；PyTorch专用CUDA轮子从官方源获取，其余依赖使用实例配置的软件源。
+网络较慢时，可由管理员提供与所选配置一致的Linux离线依赖包，校验SHA-256后安装，再重复运行初始化脚本。
+不要把Windows依赖包直接放入Linux实例。首次训练还可能下载Ultralytics绘图字体，实例需能访问对应资源。
 
 脚本会安装依赖、预下载并加载四类基础模型、记录 SHA-256 清单，然后检查 GPU 前后向运算和 Torchvision NMS。
 检测到 GPU 正在计算时不停止别人的任务，需空闲后再执行。通过后输出供平台填写的路径，例如：
@@ -161,3 +166,8 @@ Python: /root/autodl-tmp/vlstream/envs/vls-standard/bin/python
 本期 AutoDL 提供四类正式训练。线上智能标注、自动租用/开关机以及 ONNX/OM/RKNN 转换仍不在此初始化范围；
 不能因为依赖安装成功就宣称这些功能已接通。旧默认 GPU、旧模型归档和转换兼容路径依然存在，服务于原部署，
 不是公共接入流程的必需条件。
+
+2026-09-30验收：驱动识别RTX4080SUPER，Python3.10.21、Torch2.5.1+cu124、Torchvision0.20.1+cu124、Ultralytics8.3.240。
+四类各1轮及指定检测PT再次训练均完成；PT/类别从训练与模型入口下载哈希一致，四类PT可重新加载；排队取消和运行中停止通过。
+详细图文和日志位于本地`codex/autodl-acceptance/AutoDL闭环测试图文记录.md`。训练列表详细评估指标尚未接通本轮云训练回写，
+合成小样本不证明业务精度；不把本次结果扩展为所有GPU/模型/故障场景都已验收。

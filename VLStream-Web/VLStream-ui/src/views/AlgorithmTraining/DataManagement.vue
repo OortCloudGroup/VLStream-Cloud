@@ -75,7 +75,7 @@
         <el-tab-pane label="数据集划分与版本" name="versions">
           <div class="dataset-intro"><div><h3>训练集与验证集</h3><p>仅划分满足条件且已有标注的图片。视频保留为原始素材；相同文件内容不会分入两个集合。</p></div><div class="actions">
             <el-button type="primary" :disabled="busy" @click="openSplit">划分数据集</el-button><el-button :disabled="busy" @click="versionDialog = true">保存当前版本</el-button>
-            <el-button :disabled="busy" @click="publish">生成训练目录</el-button>
+            <el-button :disabled="busy" @click="publish">生成训练包</el-button>
           </div></div>
           <el-table :data="stats.distribution || []" empty-text="尚无标注类别，请先在标注页面维护标签和标注">
             <el-table-column prop="name" :label="$tp('类别')" /><el-table-column prop="total" :label="$tp('样本数')" /><el-table-column prop="train" :label="$tp('训练集')" /><el-table-column prop="val" :label="$tp('验证集')" />
@@ -273,7 +273,7 @@ const openSplit = () => { splitDialog.value = true }
 const saveSplit = () => run(async () => { if (!splitForm.versionName.trim()) return warn('填写版本名称'); const ids = manualIds.value.split(/[\s,，]+/).filter(Boolean); if (splitForm.mode === 'manual' && (!ids.length || ids.some(id => !/^\d+$/.test(id)))) return warn('请填写有效的验证样本 ID'); await api.splitDataSamples(project.value.id, { ...splitForm, validationIds: ids }); splitDialog.value = false; await refresh(); ElMessage.success('已保存划分并生成版本') })
 const versionDialog = ref(false), versionForm = reactive({ name: '', description: '' })
 const saveVersion = () => run(async () => { if (!versionForm.name.trim()) return warn('填写版本名称'); await api.saveDataVersion(project.value.id, versionForm); versionDialog.value = false; await refresh(); ElMessage.success('版本已保存') })
-const publish = () => run(async () => { await ElMessageBox.confirm('将当前划分生成独立的训练目录。需要对象存储和 GPU 服务器可用，未划分时会默认按 80%/20% 划分。', '生成训练数据集', { confirmButtonText: '生成', cancelButtonText: '取消' }); const result = await api.publishDataTraining(project.value.id); if (result.code !== 200 || result.success === false) throw new Error(result.msg || '生成失败'); await refresh(); ElMessage.success('训练目录已生成，可在算法训练中选择此数据集') })
+const publish = () => run(async () => { await ElMessageBox.confirm('将当前划分生成包含图片、标注和类别的训练包并保存到 MinIO。此步骤无需 GPU 在线；训练时再传到所选算力实例。未划分时会默认按 80%/20% 划分。', '生成训练包', { confirmButtonText: '生成', cancelButtonText: '取消' }); const result = await api.publishDataTraining(project.value.id); if (result.code !== 200 || result.success === false) throw new Error(result.msg || '生成失败'); await refresh(); ElMessage.success('训练包已保存，可在算法训练中选择此数据集') })
 const restore = row => run(async () => { await ElMessageBox.confirm(`将恢复 V${row.versionNumber} 的样本、标注和划分。当前状态会先自动保存为新版本，已有训练任务不会修改。`, '回退数据集', { type: 'warning', confirmButtonText: '备份并回退', cancelButtonText: '取消' }); await api.restoreDataVersion(project.value.id, row.id); await refresh(); ElMessage.success('已恢复，并保留回退前的版本') })
 const versionDetailDialog = ref(false), versionDetail = ref(null)
 const viewVersion = row => run(async () => { versionDetail.value = await api.getDataVersion(project.value.id, row.id); versionDetailDialog.value = true })

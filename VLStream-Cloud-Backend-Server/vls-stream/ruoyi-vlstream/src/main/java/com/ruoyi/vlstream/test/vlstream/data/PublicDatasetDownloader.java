@@ -30,7 +30,7 @@ public class PublicDatasetDownloader {
             return uri;
         } catch (RuntimeException e) { throw new ServiceException("请提供有效的 HTTP(S) 文件下载地址"); }
     }
-    static InetAddress[] publicAddresses(String host) throws UnknownHostException {
+    public static InetAddress[] publicAddresses(String host) throws UnknownHostException {
         InetAddress[] addresses=InetAddress.getAllByName(host);
         for(InetAddress address:addresses) {
             byte[] raw=address.getAddress();

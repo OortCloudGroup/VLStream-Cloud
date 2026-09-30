@@ -9,7 +9,6 @@
 package com.ruoyi.vlstream.test.vlstream.service;
 
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.ruoyi.vlstream.test.vlstream.config.VlsSshProperties;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmModel;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +20,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.util.Base64;
 import java.util.Locale;
 
 /**
@@ -38,10 +36,7 @@ public class ModelFileDownloadService {
 	private IVlsAlgorithmModelService algorithmModelService;
 
 	@Resource
-	private SSHService sshService;
-
-	@Resource
-	private VlsSshProperties sshProperties;
+	private RemoteModelArtifactService artifactService;
 
 	/**
 	 * trainingtask ID task Generate model .
@@ -77,7 +72,7 @@ public class ModelFileDownloadService {
 		String normalizedType = StringUtils.defaultIfBlank(type, "pt").trim().toLowerCase(Locale.ROOT);
 		if (!"pt".equals(normalizedType) && !"onnx".equals(normalizedType)
 			&& !"rknn".equals(normalizedType) && !"int8-rknn".equals(normalizedType)
-			&& !"om".equals(normalizedType)) {
+			&& !"om".equals(normalizedType) && !"classes".equals(normalizedType)) {
 			throw new IllegalArgumentException("Unsupported model type: " + type);
 		}
 		return normalizedType;
@@ -89,6 +84,9 @@ public class ModelFileDownloadService {
 	private String resolveTrainingPath(AlgorithmTraining training, String type) throws FileNotFoundException {
 		String downloadPath;
 		switch (type) {
+			case "classes":
+				downloadPath = ModelClassFileService.storagePath(requirePath(training.getModelOutputPath(), "pt"));
+				break;
 			case "onnx":
 				downloadPath = training.getOnnxModelOutputPath();
 				break;
@@ -115,6 +113,9 @@ public class ModelFileDownloadService {
 	private String resolveModelPath(AlgorithmModel model, String type) throws FileNotFoundException {
 		String downloadPath;
 		switch (type) {
+			case "classes":
+				downloadPath = ModelClassFileService.storagePath(requirePath(model.getModelPath(), "pt"));
+				break;
 			case "onnx":
 				downloadPath = model.getOnnxModelPath();
 				break;
@@ -148,42 +149,16 @@ public class ModelFileDownloadService {
 	/**
 	 * SSH HTTP .
 	 */
-	private void writeRemoteFile(String downloadPath, HttpServletResponse response) throws IOException {
-		SSHService.SSHExecutionResult result = sshService.executeCommand(
-			sshProperties.getHost(),
-			sshProperties.getPort(),
-			sshProperties.getUsername(),
-			sshProperties.getPassword(),
-			"base64 -- " + quoteShellArgument(downloadPath)
-		);
-
-		if (!result.isSuccess() || StringUtils.isBlank(result.getOutput())) {
-			throw new FileNotFoundException("Model file not found: " + downloadPath);
-		}
-
-		byte[] fileContent;
-		try {
-			fileContent = Base64.getDecoder().decode(result.getOutput().replaceAll("\\s+", ""));
-		} catch (IllegalArgumentException ex) {
-			throw new IOException("Remote model file content is invalid", ex);
-		}
-
-		String fileName = downloadPath.substring(downloadPath.lastIndexOf('/') + 1);
-		String encodedFileName = URLEncoder.encode(fileName, "UTF-8").replace("+", "%20");
-		response.setContentType("application/octet-stream");
-		response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
-		response.setContentLength(fileContent.length);
-		response.getOutputStream().write(fileContent);
-		response.getOutputStream().flush();
-		log.info("模型文件下载成功: {}", fileName);
-	}
-
-	/**
-	 * Shell parameter , in null / empty .
-	 */
-	private String quoteShellArgument(String value) {
-		return "'" + value.replace("'", "'\\\"'\\\"'") + "'";
-	}
+    private void writeRemoteFile(String downloadPath, HttpServletResponse response) throws IOException {
+        RemoteModelArtifactService.ArtifactMetadata metadata = artifactService.inspect(downloadPath);
+        String encodedFileName = URLEncoder.encode(metadata.getFileName(), "UTF-8").replace("+", "%20");
+        response.setContentType("application/octet-stream");
+        response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
+        response.setContentLengthLong(metadata.getFileSize());
+        response.setHeader("X-Model-SHA256", metadata.getSha256());
+        artifactService.stream(downloadPath, response.getOutputStream());
+        response.getOutputStream().flush();
+    }
 
 	/**
 	 * in successfully after model .

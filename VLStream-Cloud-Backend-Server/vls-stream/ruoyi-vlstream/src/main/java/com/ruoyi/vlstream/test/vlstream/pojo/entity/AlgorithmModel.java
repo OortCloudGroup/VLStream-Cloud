@@ -59,6 +59,9 @@ public class AlgorithmModel extends TenantEntity {
 	 */
 	@Schema(description = "模型格式：ONNX,PyTorch,TensorFlow")
 	private String modelFormat;
+
+	@Schema(description = "模型任务类型：图像分类、物体检测、实例分割或语义分割")
+	private String annotationType;
 	/**
 	 * model
 	 */

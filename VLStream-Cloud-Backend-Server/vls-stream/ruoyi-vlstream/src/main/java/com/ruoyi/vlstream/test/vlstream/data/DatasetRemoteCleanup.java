@@ -55,7 +55,8 @@ public class DatasetRemoteCleanup {
     }
 
     static boolean datasetFile(String name) {
-        return name.matches("(?i).+\\.(jpg|jpeg|png|bmp|gif|webp|txt|yaml|yml|json|cache|npy)");
+        return "run_training.py".equals(name) || "four_task_runtime.py".equals(name)
+            || name.matches("(?i).+\\.(jpg|jpeg|png|bmp|gif|webp|txt|yaml|yml|json|cache|npy)");
     }
 
     private void collect(ChannelSftp sftp, String directory, List<String> files, List<String> directories) throws SftpException {

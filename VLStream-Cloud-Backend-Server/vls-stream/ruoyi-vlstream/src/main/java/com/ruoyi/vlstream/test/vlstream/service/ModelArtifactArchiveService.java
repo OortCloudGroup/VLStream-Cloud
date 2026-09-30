@@ -52,10 +52,11 @@ public class ModelArtifactArchiveService {
     public void scan() {
         // Include saved versions whose training task has since been rerun or soft-deleted.
         List<Map<String, Object>> rows = jdbc.queryForList(
-            "SELECT t.tenant_id,t.id training_id,t.model_output_path pt,t.onnx_model_output_path onnx,t.om_model_output_path om,t.rknn_model_output_path rknn,t.int8_rknn_model_output_path int8_rknn FROM vls_algorithm_training t "
+            "SELECT t.tenant_id,t.id training_id,t.dataset_id,t.config_params,t.model_output_path pt,t.onnx_model_output_path onnx,t.om_model_output_path om,t.rknn_model_output_path rknn,t.int8_rknn_model_output_path int8_rknn FROM vls_algorithm_training t "
             + "WHERE t.is_deleted=0 AND t.train_status='completed' AND COALESCE(t.onnx_conversion_status,'')<>'converting' AND COALESCE(t.om_conversion_status,'')<>'converting' "
             + "AND NOT EXISTS(SELECT 1 FROM vls_dataset_conversion_guard g WHERE g.tenant_id=t.tenant_id AND g.training_id=t.id) "
-            + "UNION ALL SELECT m.tenant_id,m.training_id,m.model_path,m.onnx_model_path,m.om_model_output_path,m.rknn_model_path,m.int8_rknn_model_output_path FROM vls_algorithm_model m "
+            + "UNION ALL SELECT m.tenant_id,m.training_id,t.dataset_id,t.config_params,m.model_path,m.onnx_model_path,m.om_model_output_path,m.rknn_model_path,m.int8_rknn_model_output_path FROM vls_algorithm_model m "
+            + "LEFT JOIN vls_algorithm_training t ON t.tenant_id=m.tenant_id AND t.id=m.training_id AND BINARY t.model_output_path=BINARY m.model_path "
             + "WHERE m.is_deleted=0 AND NOT EXISTS(SELECT 1 FROM vls_dataset_conversion_guard g WHERE g.tenant_id=m.tenant_id AND g.training_id=m.training_id)");
         for (Map<String, Object> row : rows) archiveRow(row);
     }
@@ -87,6 +88,8 @@ public class ModelArtifactArchiveService {
                 training.setId(((Number) row.get("training_id")).longValue());
                 training.setTenantId(tenant);
                 training.setModelOutputPath(pt);
+                training.setDatasetId(row.get("dataset_id") == null ? null : ((Number) row.get("dataset_id")).longValue());
+                training.setConfigParams(string(row, "config_params"));
                 try {
                     store.archive(ModelClassFileService.storagePath(pt), "classes.yaml", local -> {
                         ModelClassFileService.ClassFile file = classes.prepare(training);

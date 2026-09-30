@@ -423,6 +423,7 @@ LOGO 预览	Logo preview	Logo preview	Logo preview	Logo preview	Logo preview	Log
 LOGO 仅支持 PNG、JPG、JPEG 格式	Only PNG, JPG, and JPEG logos are supported	Only PNG, JPG, and JPEG logos are supported	Only PNG, JPG, and JPEG logos are supported	Only PNG, JPG, and JPEG logos are supported	Only PNG, JPG, and JPEG logos are supported	Only PNG, JPG, and JPEG logos are supported	Only PNG, JPG, and JPEG logos are supported	Only PNG, JPG, and JPEG logos are supported	Only PNG, JPG, and JPEG logos are supported	Only PNG, JPG, and JPEG logos are supported	Only PNG, JPG, and JPEG logos are supported
 LOGO 图片不能超过 2 MiB	Logo images cannot exceed 2 MiB	Logo images cannot exceed 2 MiB	Logo images cannot exceed 2 MiB	Logo images cannot exceed 2 MiB	Logo images cannot exceed 2 MiB	Logo images cannot exceed 2 MiB	Logo images cannot exceed 2 MiB	Logo images cannot exceed 2 MiB	Logo images cannot exceed 2 MiB	Logo images cannot exceed 2 MiB	Logo images cannot exceed 2 MiB
 请上传 LOGO 图片	Upload a logo image	Upload a logo image	Upload a logo image	Upload a logo image	Upload a logo image	Upload a logo image	Upload a logo image	Upload a logo image	Upload a logo image	Upload a logo image	Upload a logo image
+导入模型	Import model	Import model	Import model	Import model	Import model	Import model	Import model	Import model	Import model	Import model	Import model
 `
 
 export const phraseCatalog = Object.fromEntries(localeColumns.map(code => [code, {}]))

@@ -36,6 +36,7 @@ import com.ruoyi.vlstream.test.vlstream.service.IVlsAnnotationImageService;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsAnnotationInstanceService;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsAnnotationLabelService;
 import com.ruoyi.vlstream.test.vlstream.config.VlsSshProperties;
+import com.ruoyi.vlstream.test.vlstream.data.PortableDatasetZipWriter;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -87,6 +88,8 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 	private final com.ruoyi.vlstream.test.vlstream.data.DataTrainingPublisher dataTrainingPublisher;
 	private final com.ruoyi.vlstream.test.vlstream.data.DataManagementService dataManagementService;
 	private final com.ruoyi.vlstream.test.vlstream.data.DatasetCleanupService datasetCleanupService;
+	@javax.annotation.Resource
+	private com.ruoyi.vlstream.test.vlstream.data.TrainingDatasetArtifactService trainingDatasetArtifacts;
 
 	@Override
 	public IPage<AlgorithmAnnotationVO> selectVlsAlgorithmAnnotationPage(IPage<AlgorithmAnnotationVO> page, AlgorithmAnnotationVO vlsAlgorithmAnnotation) {
@@ -694,10 +697,13 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 		}
 
 		// new
-		annotation.setProgress(calculateProgress(annotation.getAnnotatedCount(), annotation.getTotalCount()));
+		// Project metadata edits cannot overwrite statistics owned by the image/instance workflow.
+		annotation.setTotalCount(existing.getTotalCount());
+		annotation.setAnnotatedCount(existing.getAnnotatedCount());
+		annotation.setProgress(existing.getProgress());
 
 		// new annotation
-		annotation.setAnnotationStatus(AlgorithmAnnotationStatusEnum.of(calculateAnnotationStatus(annotation.getProgress())));
+		annotation.setAnnotationStatus(existing.getAnnotationStatus());
 
 		return updateById(annotation);
 	}
@@ -1552,6 +1558,8 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 		Session session = null;
 		ChannelSftp sftp = null;
 		ChannelExec execChannel = null;
+		Path portableZip = null;
+		String remoteZipPath = null;
 
 		try {
 			AlgorithmAnnotation annotation = getById(id);
@@ -1568,6 +1576,18 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 				return;
 			}
 
+			if (com.ruoyi.vlstream.test.vlstream.data.TrainingDatasetArtifactService.isReference(datasetPath)) {
+				com.ruoyi.vlstream.test.vlstream.data.TrainingDatasetArtifact artifact = trainingDatasetArtifacts.require(id, datasetPath);
+				portableZip = trainingDatasetArtifacts.download(artifact);
+				response.setContentType("application/zip");
+				response.setHeader("Content-Disposition", "attachment; filename=training-dataset-" + id + "-" + artifact.getVersionId() + ".zip");
+				response.setContentLengthLong(Files.size(portableZip));
+				response.setHeader("X-Dataset-SHA256", artifact.getSha256());
+				Files.copy(portableZip, response.getOutputStream());
+				response.getOutputStream().flush();
+				return;
+			}
+
 			DatasetZipTarget zipTarget = resolveDatasetZipTarget(datasetPath);
 			if (zipTarget == null) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -1576,7 +1596,7 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 			}
 
 			String zipFileName = zipTarget.getDatasetDirName() + ".zip";
-			String remoteZipPath = "/tmp/" + zipTarget.getDatasetDirName() + "_" + System.currentTimeMillis() + ".zip";
+			remoteZipPath = "/tmp/" + zipTarget.getDatasetDirName() + "_" + System.currentTimeMillis() + ".zip";
 
 			JSch jsch = new JSch();
 			session = jsch.getSession(sshProperties.getUsername(), sshProperties.getHost(), sshProperties.getPort());
@@ -1610,25 +1630,20 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 			Channel sftpChannel = session.openChannel("sftp");
 			sftpChannel.connect(30000);
 			sftp = (ChannelSftp) sftpChannel;
+			portableZip = Files.createTempFile("vls-dataset-export-", ".zip");
+			try (InputStream inputStream = sftp.get(remoteZipPath);
+				 OutputStream outputStream = Files.newOutputStream(portableZip)) {
+				PortableDatasetZipWriter.write(inputStream, outputStream);
+			}
 
 			response.setContentType("application/zip");
 			String encodedFileName = URLEncoder.encode(zipFileName, StandardCharsets.UTF_8.name()).replace("+", "%20");
 			response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
+			response.setContentLengthLong(Files.size(portableZip));
 
-			try (InputStream inputStream = sftp.get(remoteZipPath);
-				 OutputStream outputStream = response.getOutputStream()) {
-				byte[] buffer = new byte[8192];
-				int len;
-				while ((len = inputStream.read(buffer)) != -1) {
-					outputStream.write(buffer, 0, len);
-				}
+			try (OutputStream outputStream = response.getOutputStream()) {
+				Files.copy(portableZip, outputStream);
 				outputStream.flush();
-			}
-
-			try {
-				sftp.rm(remoteZipPath);
-			} catch (SftpException cleanupEx) {
-				log.warn("Failed to delete remote zip file: {}", cleanupEx.getMessage());
 			}
 
 			log.info("Dataset zip download completed, id={}, file={}", id, zipFileName);
@@ -1647,11 +1662,25 @@ public class VlsAlgorithmAnnotationServiceImpl extends BaseServiceImpl<VlsAlgori
 			if (execChannel != null) {
 				execChannel.disconnect();
 			}
+			if (sftp != null && sftp.isConnected() && remoteZipPath != null) {
+				try {
+					sftp.rm(remoteZipPath);
+				} catch (SftpException cleanupEx) {
+					log.warn("Failed to delete remote zip file: {}", cleanupEx.getMessage());
+				}
+			}
 			if (sftp != null && sftp.isConnected()) {
 				sftp.disconnect();
 			}
 			if (session != null && session.isConnected()) {
 				session.disconnect();
+			}
+			if (portableZip != null) {
+				try {
+					Files.deleteIfExists(portableZip);
+				} catch (IOException cleanupEx) {
+					log.warn("Failed to delete local export file: {}", portableZip, cleanupEx);
+				}
 			}
 		}
 	}

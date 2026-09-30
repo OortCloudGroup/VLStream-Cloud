@@ -70,6 +70,13 @@ public class VlsContainerInstanceController extends BladeController {
 		return R.data(gpuTrainingSchedulerService.getContainerLogs(id, lines));
 	}
 
+	private void guardCloudRecord(ContainerInstance input) {
+		ContainerInstance existing = input.getId() == null ? null : vlsContainerInstanceService.getById(input.getId());
+		if ("cloud_training".equals(input.getInstanceType()) || (existing != null && "cloud_training".equals(existing.getInstanceType()))) {
+			throw new com.ruoyi.common.exception.ServiceException("线上训练记录由后台维护，请从算法训练页面管理任务");
+		}
+	}
+
 	/**
 	 * instance
 	 */
@@ -111,6 +118,7 @@ public class VlsContainerInstanceController extends BladeController {
 	@ApiOperationSupport(order = 4)
 	@Operation(summary = "新增", description  = "传入vlsContainerInstance")
 	public R save(@Valid @RequestBody ContainerInstance vlsContainerInstance) {
+		guardCloudRecord(vlsContainerInstance);
 		return R.status(vlsContainerInstanceService.save(vlsContainerInstance));
 	}
 
@@ -121,6 +129,7 @@ public class VlsContainerInstanceController extends BladeController {
 	@ApiOperationSupport(order = 5)
 	@Operation(summary = "修改", description  = "传入vlsContainerInstance")
 	public R update(@Valid @RequestBody ContainerInstance vlsContainerInstance) {
+		guardCloudRecord(vlsContainerInstance);
 		return R.status(vlsContainerInstanceService.updateById(vlsContainerInstance));
 	}
 
@@ -131,6 +140,7 @@ public class VlsContainerInstanceController extends BladeController {
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description  = "传入vlsContainerInstance")
 	public R submit(@Valid @RequestBody ContainerInstance vlsContainerInstance) {
+		guardCloudRecord(vlsContainerInstance);
 		return R.status(vlsContainerInstanceService.saveOrUpdate(vlsContainerInstance));
 	}
 
@@ -141,6 +151,9 @@ public class VlsContainerInstanceController extends BladeController {
 	@ApiOperationSupport(order = 7)
 	@Operation(summary = "逻辑删除", description  = "传入ids")
 	public R remove(@Parameter(description = "主键集合", required = true) @RequestParam String ids) {
+		for (Long id : Func.toLongList(ids)) {
+			ContainerInstance record = new ContainerInstance(); record.setId(id); guardCloudRecord(record);
+		}
 		return R.status(vlsContainerInstanceService.deleteLogic(Func.toLongList(ids)));
 	}
 

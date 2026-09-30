@@ -89,6 +89,14 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 		AlgorithmModel model = new AlgorithmModel();
 		BeanUtils.copyProperties(createDTO, model);
 		model.setTenantId(training.getTenantId());
+		if (com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService.isCloud(training)) {
+			try {
+				String type = new com.fasterxml.jackson.databind.ObjectMapper().readTree(training.getConfigParams()).path("annotationType").asText();
+				model.setAnnotationType(com.ruoyi.vlstream.test.vlstream.data.AnnotationTaskType.of(type).getCode());
+			} catch (java.io.IOException e) {
+				throw new com.ruoyi.common.exception.ServiceException("线上模型任务类型无法读取");
+			}
+		}
 		model.setAlgorithmId(training.getAlgorithmId());
 		model.setVersion(version);
 		// Set value

@@ -526,6 +526,21 @@ public class RemoteTrainingService {
 		return trimmed.substring(0, lastSlash + 1) + CommonConstant.SYNSET_TXT;
 	}
 
+	public String originalDatasetPath(AlgorithmTraining training) {
+		String model = training == null ? null : training.getModelOutputPath();
+		int weights = model == null ? -1 : model.lastIndexOf("/weights/");
+		if (weights < 1 || !model.startsWith("/")) throw new com.ruoyi.common.exception.ServiceException("历史训练未记录原始数据集，不能改用当前 MinIO 版本");
+		String content = readRemoteFile(remoteServerMapper.selectActiveServer(), model.substring(0, weights) + "/args.yaml");
+		if (content == null || content.trim().isEmpty()) throw new com.ruoyi.common.exception.ServiceException("无法读取历史训练的 args.yaml，请确认原始训练目录仍可访问");
+		Object parsed = new Yaml(new org.yaml.snakeyaml.constructor.SafeConstructor(new org.yaml.snakeyaml.LoaderOptions())).load(content);
+		if (parsed instanceof Map) {
+			Map<?, ?> values = (Map<?, ?>) parsed;
+			Object original = values.containsKey("vls_dataset_yaml") ? values.get("vls_dataset_yaml") : values.get("data");
+			if (original instanceof String && ((String) original).startsWith("/") && ((String) original).matches("(?s).+\\.ya?ml")) return (String) original;
+		}
+		throw new com.ruoyi.common.exception.ServiceException("无法确认历史训练的原始数据集，已停止使用当前版本替代");
+	}
+
 	private String readRemoteFile(RemoteServers server, String filePath) {
 		String command = wrapWithBash(String.format("if [ -f '%s' ]; then cat '%s'; fi", filePath, filePath));
 		SSHService.SSHExecutionResult result = executeWithFallback(server, command);
@@ -842,6 +857,7 @@ public class RemoteTrainingService {
 	 */
 	@Data
 	public static class LogResult {
+		private boolean serverManaged;
 		private String logPath;
 		private String logContent;
 		private Integer currentEpoch;

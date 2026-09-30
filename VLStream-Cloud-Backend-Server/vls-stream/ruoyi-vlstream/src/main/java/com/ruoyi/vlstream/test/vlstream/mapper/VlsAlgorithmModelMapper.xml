@@ -33,6 +33,7 @@
         <result column="training_id" property="trainingId"/>
         <result column="version" property="version"/>
         <result column="model_format" property="modelFormat"/>
+        <result column="annotation_type" property="annotationType"/>
         <result column="model_size" property="modelSize"/>
         <result column="model_path" property="modelPath"/>
         <result column="onnx_model_path" property="onnxModelPath"/>
@@ -52,6 +53,7 @@
         <result column="training_id" property="trainingId"/>
         <result column="version" property="version"/>
         <result column="model_format" property="modelFormat"/>
+        <result column="annotation_type" property="annotationType"/>
         <result column="model_size" property="modelSize"/>
         <result column="model_path" property="modelPath"/>
         <result column="onnx_model_path" property="onnxModelPath"/>
@@ -78,7 +80,7 @@
     <!-- 基础字段列表 -->
     <sql id="Base_Column_List">
         id
-        , model_name, algorithm_id, training_id, version, model_format, model_size,
+        , model_name, algorithm_id, training_id, version, model_format, annotation_type, model_size,
         model_path, onnx_model_path, rknn_model_path, accuracy, status, description, download_count, deploy_count,
         publish_time, create_user, create_time, update_time, is_deleted
     </sql>

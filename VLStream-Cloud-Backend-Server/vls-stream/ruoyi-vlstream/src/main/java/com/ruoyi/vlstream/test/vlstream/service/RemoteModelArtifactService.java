@@ -31,6 +31,9 @@ import java.util.Locale;
 @Service
 public class RemoteModelArtifactService {
 
+    @Resource
+    private ModelArtifactObjectStore objectStore;
+
 	@Resource
 	private SSHService sshService;
 
@@ -78,6 +81,13 @@ public class RemoteModelArtifactService {
 	}
 
 	public ArtifactMetadata inspect(String remotePath) throws IOException {
+        ModelArtifactObjectStore.StoredArtifact stored = objectStore == null ? null : objectStore.find(remotePath);
+        if (stored != null) return new ArtifactMetadata(stored.getFileName(), stored.getFileSize(), stored.getSha256());
+        return inspectRemote(remotePath);
+    }
+
+    public ArtifactMetadata inspectRemote(String remotePath) throws IOException {
+        if (remotePath != null && remotePath.startsWith("cloud-training/")) throw new FileNotFoundException("线上模型尚未完成平台归档，不能从默认 GPU 主机读取");
 		String command = "if [ ! -f " + quote(remotePath) + " ]; then exit 44; fi; "
 			+ "stat -c '%s' -- " + quote(remotePath) + "; "
 			+ "sha256sum -- " + quote(remotePath) + " | awk '{print $1}'";
@@ -111,6 +121,28 @@ public class RemoteModelArtifactService {
 	 * Streams the remote file through SFTP without buffering the complete model in JVM memory.
 	 */
 	public void stream(String remotePath, OutputStream outputStream) throws IOException {
+        ModelArtifactObjectStore.StoredArtifact stored = objectStore == null ? null : objectStore.find(remotePath);
+        if (stored != null) {
+            objectStore.stream(stored, outputStream);
+            return;
+        }
+        streamRemote(remotePath, outputStream);
+    }
+
+    public void streamForTenant(String tenant, String remotePath, String expectedSha256, OutputStream output) throws IOException {
+        ModelArtifactObjectStore.StoredArtifact stored = objectStore == null ? null : objectStore.find(tenant, remotePath);
+        if (stored != null) {
+            if (!stored.getSha256().equals(expectedSha256)) throw new IOException("模型归档与下发任务哈希不一致");
+            objectStore.stream(stored, output);
+        } else {
+            ArtifactMetadata metadata = inspectRemote(remotePath);
+            if (!metadata.getSha256().equals(expectedSha256)) throw new IOException("远端模型与下发任务哈希不一致");
+            streamRemote(remotePath, output);
+        }
+    }
+
+    public void streamRemote(String remotePath, OutputStream outputStream) throws IOException {
+        if (remotePath != null && remotePath.startsWith("cloud-training/")) throw new FileNotFoundException("线上模型尚未完成平台归档，不能从默认 GPU 主机读取");
 		Session session = null;
 		Channel channel = null;
 		try {

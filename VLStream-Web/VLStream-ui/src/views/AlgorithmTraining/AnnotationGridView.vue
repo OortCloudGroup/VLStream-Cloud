@@ -304,14 +304,17 @@ const annotationFilters = ref([
 ])
 
 // annotationinstancecollection ( imageId / name )
-const buildAnnotatedSets = () => {
+const buildAnnotatedSets = (labelId = null) => {
   const ids = new Set()
   const names = new Set()
 
   annotationInstances.value.forEach(instance => {
-    if (instance.imageId != null) ids.add(instance.imageId)
-    if (instance.imageName) names.add(instance.imageName)
-    if (instance.originalName) names.add(instance.originalName)
+    if (labelId != null && String(instance.labelId) !== String(labelId)) return
+    if (instance.imageId != null) ids.add(String(instance.imageId))
+    else {
+      if (instance.imageName) names.add(instance.imageName)
+      if (instance.originalName) names.add(instance.originalName)
+    }
   })
 
   return { ids, names }
@@ -319,11 +322,11 @@ const buildAnnotatedSets = () => {
 
 const isImageAnnotated = (image, annotatedSets) => {
   const { ids, names } = annotatedSets
-  const hitById = image?.id != null && ids.has(image.id)
+  if (image?.id != null) return ids.has(String(image.id))
   const hitByName =
     (image?.name && names.has(image.name)) ||
     (image?.originalName && names.has(image.originalName))
-  return hitById || hitByName
+  return !!hitByName
 }
 
 const activeFilter = ref('all')
@@ -337,8 +340,8 @@ const showPreviewDialog = ref(false)
 const previewImage = ref(null)
 
 const getImageDisplayName = (image) => {
-  if (selectedLabelId.value) {
-    const label = annotationLabels.value.find(item => item.id === selectedLabelId.value)
+  if (selectedLabelId.value != null) {
+    const label = annotationLabels.value.find(item => String(item.id) === String(selectedLabelId.value))
     if (label?.name) return label.name
   }
   const annotations = image?.annotations || []
@@ -379,14 +382,14 @@ const annotationInstances = ref([])
 // property - after
 const filteredImages = computed(() => {
   const annotatedSets = buildAnnotatedSets()
-  switch (activeFilter.value) {
-    case 'annotated':
-      return uploadedImages.value.filter(image => isImageAnnotated(image, annotatedSets))
-    case 'unannotated':
-      return uploadedImages.value.filter(image => !isImageAnnotated(image, annotatedSets))
-    default:
-      return uploadedImages.value
-  }
+  const labelSets = selectedLabelId.value != null ? buildAnnotatedSets(selectedLabelId.value) : null
+  return uploadedImages.value.filter(image => {
+    if (labelSets && !isImageAnnotated(image, labelSets)) return false
+    const annotated = isImageAnnotated(image, annotatedSets)
+    if (activeFilter.value === 'annotated') return annotated
+    if (activeFilter.value === 'unannotated') return !annotated
+    return true
+  })
 })
 
 // , ,
@@ -450,7 +453,8 @@ const updateFilterCounts = async () => {
 
 // method
 const selectLabel = (labelId) => {
-  selectedLabelId.value = labelId
+  selectedLabelId.value = selectedLabelId.value != null && String(selectedLabelId.value) === String(labelId)
+    ? null : labelId
 }
 
 const handleFilterChange = (filterKey) => {
@@ -812,7 +816,15 @@ const handleImageError = (event) => {
 
 watch(filteredImages, () => {
   resetRenderCount()
+  const visibleIds = new Set(filteredImages.value.map(image => String(image.id)))
+  selectedImages.value = selectedImages.value.filter(id => visibleIds.has(String(id)))
 }, { deep: true, immediate: true })
+
+watch(annotationLabels, (labels) => {
+  if (selectedLabelId.value != null && !labels.some(label => String(label.id) === String(selectedLabelId.value))) {
+    selectedLabelId.value = null
+  }
+}, { deep: true })
 
 // data , new
 watch(() => uploadedImages.value, () => {

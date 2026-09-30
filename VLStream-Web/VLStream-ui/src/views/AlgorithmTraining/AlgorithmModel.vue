@@ -14,11 +14,11 @@
         <div class="depNameBox_out flexRowAC">
           <div class="depNameBox flexRowAC">
             <div class="exportBtnBox flexRowAC">
-                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
+                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleImportOpen">
                   <el-icon class="BtnImg">
                     <Plus />
                   </el-icon>
-                  新增
+                  {{ $tp('导入模型') }}
                 </button>
                 <button-group :button-list="toolbarButtonList" />
               </div>
@@ -46,6 +46,7 @@
           <el-table-column type="selection" :width="clacPXToVW(55)" align="center" />
           <el-table-column prop="name" :label="$tp('模型名称')" show-overflow-tooltip />
           <el-table-column prop="source" :label="$tp('模型来源')" align="center" />
+          <el-table-column prop="annotationTypeLabel" :label="$tp('模型类型')" align="center" />
           <el-table-column prop="version" :label="$tp('版本')" align="center" />
           <el-table-column prop="downloadCount" :label="$tp('下载次数')" align="center" />
           <el-table-column prop="createTime" :label="$tp('创建时间')" />
@@ -144,6 +145,55 @@
       </div>
     </div>
 
+    <el-dialog v-model="showImportDialog" title="导入算法模型" width="min(520px, 94vw)"
+               :close-on-click-modal="false" :close-on-press-escape="!importing" :show-close="!importing">
+      <el-form label-width="110px" label-position="left" v-loading="importing">
+        <el-form-item label="模型类型" required>
+          <el-select v-model="importForm.annotationType" placeholder="请选择模型类型" style="width: 100%" @change="handleImportTypeChange">
+            <el-option v-for="item in importTaskTypes" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="所属算法" required>
+          <el-select v-model="importForm.algorithmId" filterable remote :remote-method="searchImportAlgorithms"
+                     :loading="importAlgorithmsLoading" :disabled="!importForm.annotationType"
+                     placeholder="先选择模型类型，再搜索算法" style="width: 100%">
+            <el-option v-for="item in importAlgorithmOptions" :key="item.id" :label="item.name" :value="String(item.id)" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="模型名称" required>
+          <el-input v-model="importForm.modelName" maxlength="100" placeholder="请输入模型名称" />
+        </el-form-item>
+        <el-form-item label="模型版本" required>
+          <el-input v-model="importForm.version" placeholder="正整数，例如 1" />
+        </el-form-item>
+        <el-form-item label="导入方式" required>
+          <el-radio-group v-model="importForm.mode" @change="handleImportModeChange">
+            <el-radio value="zip">ZIP 压缩包</el-radio>
+            <el-radio value="files">分别选择文件</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item v-if="importForm.mode === 'zip'" label="ZIP 文件" required>
+          <input :key="importFileInputKey" type="file" accept=".zip" @change="selectImportArchive" />
+        </el-form-item>
+        <el-form-item v-else label="PT 文件" required>
+          <input :key="importFileInputKey" type="file" accept=".pt" @change="selectImportFile" />
+        </el-form-item>
+        <el-form-item v-if="importForm.mode === 'files'" label="类别配置" required>
+          <input :key="importFileInputKey" type="file" accept=".yaml,.yml" @change="selectImportYaml" />
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input v-model="importForm.description" type="textarea" :rows="2" maxlength="200" />
+        </el-form-item>
+        <el-alert type="info" :closable="false"
+                  title="ZIP 中放一份 .pt 和一份类别 YAML；也可分别选择两个文件。类别编号和顺序须与模型一致。导入后可下载 PT，转换需另行发起。" />
+        <el-progress v-if="importing" :percentage="importProgress" style="margin-top: 16px" />
+      </el-form>
+      <template #footer>
+        <el-button :disabled="importing" @click="showImportDialog = false">取消</el-button>
+        <el-button type="primary" :loading="importing" @click="handleImportSubmit">导入</el-button>
+      </template>
+    </el-dialog>
+
     <!-- Add / modeldialog -->
     <el-dialog
       v-model="showModelDialog"
@@ -240,8 +290,11 @@ import {
   deleteModel,
   getModelById,
   getModelPage,
+  importModelArchive,
+  importModelFiles,
   updateModel
 } from '@/api/algorithmModel'
+import { getAlgorithmPage } from '@/api/algorithmManagement'
 import request from "@/utils/request";
 
 // form
@@ -276,6 +329,112 @@ const currentModel = ref(null)
 
 // data
 const versionData = ref([])
+
+const showImportDialog = ref(false)
+const importing = ref(false)
+const importProgress = ref(0)
+const importAlgorithmsLoading = ref(false)
+const importAlgorithmOptions = ref([])
+const importFileInputKey = ref(0)
+const importTaskTypes = [
+  { value: 'image_classification', label: '图像分类', categories: ['classify'] },
+  { value: 'object_detection', label: '物体检测', categories: ['detect', 'personDetect'] },
+  { value: 'instance_segmentation', label: '实例分割', categories: ['segment'] },
+  { value: 'semantic_segmentation', label: '语义分割', categories: ['semanticSeg'] }
+]
+const newImportForm = () => ({ annotationType: '', algorithmId: '', modelName: '', version: '1',
+  description: '', mode: 'zip', file: null, dataYaml: null, archive: null })
+const importForm = ref(newImportForm())
+
+const searchImportAlgorithms = async (query = '') => {
+  const selectedType = importTaskTypes.find(item => item.value === importForm.value.annotationType)
+  if (!selectedType) { importAlgorithmOptions.value = []; return }
+  importAlgorithmsLoading.value = true
+  try {
+    const responses = await Promise.all(selectedType.categories.map(category =>
+      getAlgorithmPage({ current: 1, size: 100, name: query, category })))
+    const records = responses.flatMap(response => response?.data?.records || [])
+    if (importForm.value.annotationType === selectedType.value) {
+      importAlgorithmOptions.value = records.filter(item => selectedType.categories.includes(item.category))
+    }
+  } catch (error) {
+    ElMessage.error('加载算法失败：' + error.message)
+  } finally {
+    importAlgorithmsLoading.value = false
+  }
+}
+
+const handleImportOpen = () => {
+  importForm.value = newImportForm()
+  importAlgorithmOptions.value = []
+  importProgress.value = 0
+  importFileInputKey.value += 1
+  showImportDialog.value = true
+}
+
+const handleImportTypeChange = () => {
+  importForm.value.algorithmId = ''
+  importAlgorithmOptions.value = []
+  searchImportAlgorithms()
+}
+const handleImportModeChange = () => {
+  importForm.value.file = null
+  importForm.value.dataYaml = null
+  importForm.value.archive = null
+  importFileInputKey.value += 1
+}
+const selectImportFile = (event) => { importForm.value.file = event.target.files?.[0] || null }
+const selectImportYaml = (event) => { importForm.value.dataYaml = event.target.files?.[0] || null }
+const selectImportArchive = (event) => { importForm.value.archive = event.target.files?.[0] || null }
+
+const handleImportSubmit = async () => {
+  const form = importForm.value
+  if (!form.annotationType || !form.algorithmId || !form.modelName.trim() || !/^[1-9]\d*$/.test(String(form.version))) {
+    ElMessage.warning('请填写模型类型、所属算法、名称和正整数版本')
+    return
+  }
+  if (form.mode === 'zip' && (!form.archive || !form.archive.name.toLowerCase().endsWith('.zip'))) {
+    ElMessage.warning('请选择包含一份 PT 和一份类别 YAML 的 ZIP 压缩包')
+    return
+  }
+  if (form.mode === 'files' && (!form.file || !form.dataYaml || !form.file.name.toLowerCase().endsWith('.pt')
+    || !/\.ya?ml$/i.test(form.dataYaml.name))) {
+    ElMessage.warning('请选择 .pt 模型和 .yaml/.yml 类别配置')
+    return
+  }
+  const modelFile = form.mode === 'zip' ? form.archive : form.file
+  if (modelFile.size > 500 * 1024 * 1024 || (form.mode === 'files' && form.dataYaml.size > 1024 * 1024)) {
+    ElMessage.warning('模型或 ZIP 不能超过 500 MiB，类别 YAML 不能超过 1 MiB')
+    return
+  }
+  const payload = new FormData()
+  payload.append('algorithmId', form.algorithmId)
+  payload.append('annotationType', form.annotationType)
+  payload.append('modelName', form.modelName.trim())
+  payload.append('version', form.version)
+  payload.append('description', form.description)
+  if (form.mode === 'zip') payload.append('archive', form.archive)
+  else {
+    payload.append('file', form.file)
+    payload.append('dataYaml', form.dataYaml)
+  }
+  importing.value = true
+  try {
+    const send = form.mode === 'zip' ? importModelArchive : importModelFiles
+    await send(payload, event => {
+      if (event.total) importProgress.value = Math.min(99, Math.round(event.loaded * 100 / event.total))
+    })
+    importProgress.value = 100
+    showImportDialog.value = false
+    ElMessage.success('模型与类别配置已导入')
+    currentPage.value = 1
+    await loadModelData()
+  } catch (error) {
+    ElMessage.error('导入失败：' + (error?.message || '请稍后重试'))
+  } finally {
+    importing.value = false
+  }
+}
 
 // modelAdd /
 const showModelDialog = ref(false)
@@ -411,6 +570,7 @@ const loadModelData = async () => {
         id: item.id,
         name: item.modelName,
         source: getModelSource(item.trainingId),
+        annotationTypeLabel: importTaskTypes.find(type => type.value === item.annotationType)?.label || '—',
         version: item.version,
         downloadCount: item.downloadCount,
         createTime: item.createTime,
@@ -445,12 +605,6 @@ const handleReset = () => {
   }
   currentPage.value = 1
   loadModelData()
-}
-
-const handleAdd = () => {
-  isEditingModel.value = false
-  resetModelForm()
-  showModelDialog.value = true
 }
 
 const handleEdit = async () => {
@@ -566,6 +720,7 @@ const promptDownloadModelType = async (modelRow) => {
   const modelData = modelRow?.originalData || modelRow || {}
   const modelTypes = [
     { type: 'pt', path: modelData.modelPath },
+    ...(String(modelData.modelPath || '').startsWith('cloud-training/') ? [{ type: 'classes', label: '类别 YAML', path: modelData.modelPath }] : []),
     { type: 'onnx', path: modelData.onnxModelPath },
     { type: 'rknn', path: modelData.rknnModelPath },
     { type: 'int8-rknn', path: modelData.int8RknnModelOutputPath },
@@ -597,7 +752,7 @@ const promptDownloadModelType = async (modelRow) => {
           () => modelTypes.map(item => h(
             ElRadio,
             { label: item.type, disabled: !item.path },
-            () => item.path ? item.type : `${item.type}（未生成）`
+            () => item.path ? (item.label || item.type) : `${item.type}（未生成）`
           ))
         )
       ])
@@ -641,7 +796,7 @@ const downloadModelFile = async (modelRow) => {
     }
 
     const fallbackName = modelRow?.name || originalData?.modelName || 'model'
-    const fileName = `${fallbackName}.${downloadType}`
+    const fileName = `${fallbackName}.${downloadType === 'classes' ? 'classes.yaml' : downloadType}`
 
     const blob = await request({
       url: `/vlsAlgorithmModel/${modelId}/download-file`,

@@ -1,5 +1,9 @@
 package com.ruoyi.vlstream.test.vlstream.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ruoyi.vlstream.test.vlstream.data.TrainingDatasetArtifact;
+import com.ruoyi.vlstream.test.vlstream.data.TrainingDatasetArtifactService;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,6 +29,7 @@ import java.util.TreeMap;
 @Service
 public class ModelClassFileService {
     private static final int MAX_BYTES = 1024 * 1024;
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     @Resource
     private RemoteModelArtifactService artifactService;
@@ -32,8 +37,27 @@ public class ModelClassFileService {
     @Resource
     private ModelClassSnapshotStore snapshotStore;
 
+    @Resource
+    private ModelArtifactObjectStore objectStore;
+
+    @Resource
+    private TrainingDatasetArtifactService trainingDatasetArtifactService;
+
+    public static String storagePath(String ptPath) {
+        return ptPath + ".vls-classes.yaml";
+    }
+
     public ClassFile prepare(AlgorithmTraining training) throws IOException {
         String ptPath = artifactService.resolvePath(training, "pt");
+        ModelArtifactObjectStore.StoredArtifact stored = objectStore == null ? null : objectStore.find(storagePath(ptPath));
+        if (stored != null) {
+            if (stored.getFileSize() > MAX_BYTES) throw new IOException("类别元数据文件超过 1 MiB");
+            String content = read(storagePath(ptPath));
+            validate(content);
+            byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+            if (!sha256(bytes).equals(stored.getSha256())) throw new IOException("MinIO 类别文件校验失败");
+            return new ClassFile(stored.getFileName(), content, bytes.length, stored.getSha256());
+        }
         if (snapshotStore != null) {
             ClassFile snapshot = snapshotStore.find(training, ptPath);
             if (snapshot != null) {
@@ -44,6 +68,8 @@ public class ModelClassFileService {
                 return snapshot;
             }
         }
+        ClassFile datasetSnapshot = prepareDatasetArtifact(training);
+        if (datasetSnapshot != null) return datasetSnapshot;
         int weights = ptPath.lastIndexOf("/weights/");
         if (weights < 1) {
             throw new IOException("无法定位模型训练目录，不能确认类别文件来源");
@@ -60,6 +86,30 @@ public class ModelClassFileService {
         byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
         return new ClassFile(path.substring(path.lastIndexOf('/') + 1), content,
             bytes.length, sha256(bytes));
+    }
+
+    private ClassFile prepareDatasetArtifact(AlgorithmTraining training) throws IOException {
+        String configParams = training.getConfigParams();
+        if (configParams == null || configParams.trim().isEmpty()) return null;
+        JsonNode config = JSON.readTree(configParams);
+        if (config == null || !config.isObject()) {
+            throw new IOException("训练配置无效，不能确认类别快照来源");
+        }
+        if (!config.has("datasetArtifactRef")) return null;
+        JsonNode reference = config.get("datasetArtifactRef");
+        if (!reference.isTextual() || !TrainingDatasetArtifactService.isReference(reference.asText())) {
+            throw new IOException("训练数据集快照引用无效，不能确认类别文件来源");
+        }
+        if (training.getDatasetId() == null) throw new IOException("训练任务缺少数据集归属，不能读取类别快照");
+        if (trainingDatasetArtifactService == null) throw new IOException("训练数据集快照服务不可用");
+        TrainingDatasetArtifact artifact = trainingDatasetArtifactService.require(training.getDatasetId(), reference.asText());
+        if (artifact == null) throw new IOException("训练数据集快照不存在或未就绪");
+        String content = artifact.getDatasetYaml();
+        if (content == null) throw new IOException("训练数据集快照缺少类别 YAML");
+        byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+        if (bytes.length > MAX_BYTES) throw new IOException("类别元数据文件超过 1 MiB");
+        validate(content);
+        return new ClassFile("data.yaml", content, bytes.length, sha256(bytes));
     }
 
     private String read(String path) throws IOException {
@@ -107,6 +157,13 @@ public class ModelClassFileService {
         Object nc = yaml.get("nc");
         if (nc != null && !String.valueOf(count).equals(String.valueOf(nc))) {
             throw new IOException("类别 YAML 的 nc 与 names 数量不一致");
+        }
+    }
+
+    static void validateAnnotationType(String content, String expectedType) throws IOException {
+        Object declared = parse(content).get("annotation_type");
+        if (declared != null && !expectedType.equals(declared)) {
+            throw new IOException("类别 YAML 的 annotation_type 与所选模型类型不一致");
         }
     }
 

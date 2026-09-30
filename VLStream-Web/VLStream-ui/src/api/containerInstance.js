@@ -149,10 +149,12 @@ export function getContainerInstanceStatistics() {
   })
 }
 
-export function getGpuResourceSnapshot() {
+  export function getGpuResourceSnapshot(options = {}) {
   return request({
     url: '/vlsContainerInstance/resources',
-    method: 'get'
+      method: 'get',
+      signal: options.signal,
+      silentError: options.silentError
   })
 }
 

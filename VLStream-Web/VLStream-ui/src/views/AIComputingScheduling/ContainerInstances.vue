@@ -8,6 +8,15 @@
 <template>
   <div class="container-instances tenant_Page draHeaPB">
     <div class="tenant_content">
+    <div style="padding: 16px 20px 0">
+      <el-radio-group v-model="computeTab">
+        <el-radio-button label="tasks">训练任务</el-radio-button>
+        <el-radio-button label="cloud">线上算力</el-radio-button>
+      </el-radio-group>
+    </div>
+    <AutoDlNodes v-if="computeTab === 'cloud'" />
+    <template v-else>
+    <el-alert v-if="defaultGpuError" :title="defaultGpuError" type="warning" :closable="false" show-icon style="margin-top: 12px" />
     <!-- page -->
     <!-- instancepage -->
     <div v-if="showCreateView" class="create-view">
@@ -634,12 +643,19 @@
         </div>
       </div>
     </el-dialog>
+    </template>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import AutoDlNodes from './AutoDlNodes.vue'
+import { useRoute, useRouter } from 'vue-router'
+import { createDefaultGpuResourceRequest } from '@/utils/defaultGpuResourceRequest'
+const route = useRoute()
+const router = useRouter()
+const computeTab = ref(route.query.tab === 'cloud' ? 'cloud' : 'tasks')
 import { clacPXToVW } from '@/utils/index'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -673,6 +689,7 @@ const showCreateView = ref(false)
 const showDetailsView = ref(false)
 const activeTimeFilter = ref('实时')
 const gpuResource = ref(null)
+const defaultGpuError = ref('')
 let refreshTimer = null
 
 // item
@@ -856,18 +873,25 @@ const resetFilter = () => {
 }
 
 const refreshInstances = () => {
+  if (computeTab.value !== 'tasks') return
   loadContainerInstances()
   loadGpuResource()
 }
 
-const loadGpuResource = async () => {
-  try {
-    const response = await getGpuResourceSnapshot()
-    if (response.code === 200) gpuResource.value = response.data
-  } catch (error) {
-    console.error('加载GPU资源失败:', error)
+const defaultGpuRequest = createDefaultGpuResourceRequest({
+  active: () => computeTab.value === 'tasks',
+  fetchSnapshot: getGpuResourceSnapshot,
+  onSnapshot: response => {
+    if (response.code === 200) {
+      gpuResource.value = response.data
+      defaultGpuError.value = ''
+    }
+  },
+  onError: error => {
+    defaultGpuError.value = `平台默认 GPU 暂不可用，不影响线上算力：${error.message || '读取资源失败'}`
   }
-}
+})
+const loadGpuResource = defaultGpuRequest.refresh
 
 const handleSelectionChange = (selection) => {
   selectedRows.value = selection
@@ -1195,13 +1219,20 @@ const handleBatchOperation = () => {
   ElMessage.success('批量操作')
 }
 
+watch(computeTab, value => {
+  if (value === 'tasks') refreshInstances()
+  else defaultGpuRequest.cancel()
+  if (route.query.tab !== value) router.replace({ query: { ...route.query, tab: value } })
+})
+watch(() => route.query.tab, value => { computeTab.value = value === 'cloud' ? 'cloud' : 'tasks' })
+
 onMounted(() => {
-  loadContainerInstances()
-  loadGpuResource()
+  refreshInstances()
   refreshTimer = window.setInterval(refreshInstances, 5000)
 })
 
 onUnmounted(() => {
+  defaultGpuRequest.cancel()
   if (refreshTimer) window.clearInterval(refreshTimer)
 })
 </script>

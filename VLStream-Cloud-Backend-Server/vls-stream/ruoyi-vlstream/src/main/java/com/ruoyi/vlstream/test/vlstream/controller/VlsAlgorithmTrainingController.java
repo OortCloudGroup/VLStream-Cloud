@@ -77,6 +77,11 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	private GpuTrainingSchedulerService gpuTrainingSchedulerService;
 
 	@Resource
+	private com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService cloudTrainingService;
+	@Resource
+	private com.ruoyi.vlstream.test.vlstream.data.TrainingDatasetRuntimeService trainingDatasetRuntime;
+
+	@Resource
 	private IVlsAlgorithmAnnotationService algorithmAnnotationService;
 
 	@Resource
@@ -171,6 +176,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	@ApiOperationSupport(order = 5)
 	@Operation(summary = "修改", description = "传入vlsAlgorithmTraining")
 	public R update(@Valid @RequestBody AlgorithmTraining vlsAlgorithmTraining) {
+		guardCloudUpdate(vlsAlgorithmTraining);
 		return R.status(vlsAlgorithmTrainingService.updateById(vlsAlgorithmTraining));
 	}
 
@@ -181,6 +187,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description = "传入vlsAlgorithmTraining")
 	public R submit(@Valid @RequestBody AlgorithmTraining vlsAlgorithmTraining) {
+		guardCloudUpdate(vlsAlgorithmTraining);
 		return R.status(vlsAlgorithmTrainingService.saveOrUpdate(vlsAlgorithmTraining));
 	}
 
@@ -191,6 +198,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	@ApiOperationSupport(order = 7)
 	@Operation(summary = "逻辑删除", description = "传入ids")
 	public R remove(@Parameter(description = "主键集合", required = true) @RequestParam String ids) {
+		Func.toLongList(ids).forEach(this::guardCloudMutation);
 		return R.status(vlsAlgorithmTrainingService.deleteLogic(Func.toLongList(ids)));
 	}
 
@@ -258,6 +266,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		log.info("更新训练任务：ID={}, 数据={}", id, training);
 
 		training.setId(id);
+		guardCloudUpdate(training);
 		int result = vlsAlgorithmTrainingService.updateAlgorithmTraining(training);
 		if (result > 0) {
 			return R.success("更新成功");
@@ -311,6 +320,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 
 		log.info("删除训练任务：ID={}", id);
 
+		guardCloudMutation(id);
 		int result = vlsAlgorithmTrainingService.deleteAlgorithmTrainingById(id);
 		if (result > 0) {
 			return R.success("删除成功");
@@ -332,6 +342,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			return R.fail("请选择要删除的训练任务");
 		}
 
+		ids.forEach(this::guardCloudMutation);
 		int result = vlsAlgorithmTrainingService.deleteAlgorithmTrainingByIds(ids.toArray(new Long[0]));
 		if (result > 0) {
 			return R.success("批量删除成功");
@@ -375,9 +386,10 @@ public class VlsAlgorithmTrainingController extends BladeController {
 				return R.fail("数据集尚未生成或已失效，请先到算法标注页面生成数据集");
 			}
 			String datasetPath = annotation.getDatasetPath().trim();
-			String datasetError = validateRemoteTrainingDataset(datasetPath);
-			if (datasetError != null) {
-				return R.fail(datasetError);
+			String datasetArtifactRef = com.ruoyi.vlstream.test.vlstream.data.TrainingDatasetArtifactService.isReference(datasetPath) ? datasetPath : null;
+			if (datasetArtifactRef == null) {
+				String datasetError = validateRemoteTrainingDataset(datasetPath);
+				if (datasetError != null) return R.fail(datasetError);
 			}
 
 			Algorithm algorithm = training.getAlgorithmId() != null ? algorithmService.getById(training.getAlgorithmId()) : null;
@@ -388,6 +400,11 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			if (algorithm.getCategory() == null || !annotationTask.getModelTask().equals(algorithm.getCategory().getCode())) return R.fail("算法模型类型与数据集标注类型不匹配");
 			String baseModel = algorithm.getPtModelFilePath();
 			if (StringUtils.isBlank(baseModel)) baseModel = "@preset/" + annotationTask.getModelTask();
+			if (datasetArtifactRef != null) {
+				datasetPath = trainingDatasetRuntime.prepareDefault(datasetId, datasetArtifactRef);
+				String datasetError = validateRemoteTrainingDataset(datasetPath);
+				if (datasetError != null) return R.fail(datasetError);
+			}
 			trainingDatasetPreflight.validate(datasetPath, baseModel, annotation.getAnnotationType(), annotation.getId());
 
 			Integer finalEpochs = options.getEpochs();
@@ -399,7 +416,10 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			queueUpdate.setDatasetId(datasetId);
 			queueUpdate.setTrainStatus(AlgorithmTrainingStatusEnum.pending);
 			queueUpdate.setEpochTotal(finalEpochs);
-			queueUpdate.setConfigParams(options.toJson());
+			com.fasterxml.jackson.databind.node.ObjectNode fixedConfig = (com.fasterxml.jackson.databind.node.ObjectNode) objectMapper.readTree(options.toJson());
+			fixedConfig.put("runtimeDatasetPath", datasetPath);
+			if (datasetArtifactRef != null) fixedConfig.put("datasetArtifactRef", datasetArtifactRef);
+			queueUpdate.setConfigParams(fixedConfig.toString());
 			queueUpdate.setProgress(0);
 			queueUpdate.setErrorMessage(null);
 			if (vlsAlgorithmTrainingService.updateAlgorithmTraining(queueUpdate) <= 0) {
@@ -456,6 +476,9 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		AlgorithmTraining training = vlsAlgorithmTrainingService.selectAlgorithmTrainingById(id);
 		if (training == null) {
 			return R.fail("找不到模型训练");
+		}
+		if (com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService.isCloud(training)) {
+			return R.success("线上训练仅输出 PT 和类别文件，本期不执行格式转换");
 		}
 		dataManagementService.lockDatasetForTask(training.getDatasetId());
 		String ptModelPath = training.getModelOutputPath();
@@ -711,6 +734,10 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			return R.fail("找不到训练任务");
 		}
 
+		if (com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService.isCloud(training)) {
+			cloudTrainingService.stop(training);
+			return R.data("stop_requested");
+		}
 		boolean stopped = remoteTrainingService.stopTraining(id, training.getLogPath());
 		if (stopped) {
 			AlgorithmTraining update = new AlgorithmTraining();
@@ -737,6 +764,9 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		AlgorithmTraining training = vlsAlgorithmTrainingService.selectAlgorithmTrainingById(id);
 		if (training == null) {
 			return R.fail("找不到训练任务");
+		}
+		if (com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService.isCloud(training)) {
+			return R.data(cloudTrainingService.logs(training));
 		}
 		Algorithm algorithm = training.getAlgorithmId() != null ? algorithmService.getById(training.getAlgorithmId()) : null;
 		String trainType = algorithm != null && algorithm.getCategory() != null
@@ -765,6 +795,9 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		AlgorithmTraining training = vlsAlgorithmTrainingService.selectAlgorithmTrainingById(id);
 		if (training == null) {
 			return R.fail("找不到训练任务");
+		}
+		if (com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService.isCloud(training)) {
+			return R.data(cloudTrainingService.progress(training));
 		}
 		if (training.getTrainStatus() == AlgorithmTrainingStatusEnum.pending) {
 			RemoteTrainingService.TrainingProgress queuedProgress = new RemoteTrainingService.TrainingProgress();
@@ -816,6 +849,47 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			vlsAlgorithmTrainingService.updateAlgorithmTraining(update);
 		}
 		return R.data(progress);
+	}
+
+	private void guardCloudUpdate(AlgorithmTraining update) {
+		if (update.getId() == null) return;
+		AlgorithmTraining existing = vlsAlgorithmTrainingService.selectAlgorithmTrainingById(update.getId());
+		if (com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService.isCloud(existing)) {
+			protectDatasetRelation(existing, update);
+			cloudTrainingService.preserveExecutionConfig(existing, update);
+		} else if (hasFrozenDataset(existing)) {
+			trainingPublicationService.lockForStart(existing.getId());
+			protectDatasetRelation(existing, update);
+			try {
+				com.fasterxml.jackson.databind.node.ObjectNode original = (com.fasterxml.jackson.databind.node.ObjectNode) objectMapper.readTree(existing.getConfigParams());
+				com.fasterxml.jackson.databind.node.ObjectNode merged = original.deepCopy();
+				if (StringUtils.isNotBlank(update.getConfigParams())) merged.setAll((com.fasterxml.jackson.databind.node.ObjectNode) objectMapper.readTree(update.getConfigParams()));
+				for (String key : new String[]{"datasetArtifactRef", "runtimeDatasetPath", "runDirectory", "trainType", "annotationType"}) {
+					if (original.has(key)) merged.set(key, original.get(key)); else merged.remove(key);
+				}
+				update.setConfigParams(merged.toString());
+			} catch (java.io.IOException | ClassCastException e) { throw new com.ruoyi.common.exception.ServiceException("训练配置格式无效"); }
+		}
+	}
+
+	private boolean hasFrozenDataset(AlgorithmTraining training) {
+		if (training == null || StringUtils.isBlank(training.getConfigParams())) return false;
+		try {
+			com.fasterxml.jackson.databind.JsonNode config = objectMapper.readTree(training.getConfigParams());
+			return config.has("datasetArtifactRef") || config.has("runtimeDatasetPath");
+		} catch (java.io.IOException e) { throw new com.ruoyi.common.exception.ServiceException("训练配置无法读取"); }
+	}
+
+	private void protectDatasetRelation(AlgorithmTraining original, AlgorithmTraining update) {
+		if (update.getDatasetId() != null && !java.util.Objects.equals(original.getDatasetId(), update.getDatasetId()))
+			throw new com.ruoyi.common.exception.ServiceException("已有训练记录的数据集关系不能直接修改，请在重新训练时选择新的数据集");
+	}
+
+	private void guardCloudMutation(Long id) {
+		if (id == null) return;
+		AlgorithmTraining existing = vlsAlgorithmTrainingService.selectAlgorithmTrainingById(id);
+		if (com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService.isCloud(existing)) cloudTrainingService.assertInactive(existing);
+		else if (hasFrozenDataset(existing)) trainingPublicationService.lockForStart(id);
 	}
 
 	private String convertRknnSafely(Long trainingId, String ptModelPath) {
@@ -976,6 +1050,19 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		if (training == null || training.getDatasetId() == null) {
 			return null;
 		}
+		try {
+			if (StringUtils.isNotBlank(training.getConfigParams())) {
+				com.fasterxml.jackson.databind.JsonNode config = objectMapper.readTree(training.getConfigParams());
+				if (config.has("datasetArtifactRef")) {
+					return trainingDatasetRuntime.restoreDefault(training.getDatasetId(), config.path("datasetArtifactRef").asText(), config.path("runtimeDatasetPath").asText());
+				}
+				if (config.hasNonNull("runtimeDatasetPath")) {
+					String frozen = config.path("runtimeDatasetPath").asText();
+					if (!frozen.startsWith("/") || !frozen.endsWith("/dataset.yaml")) throw new java.io.IOException("训练数据目录无效");
+					return frozen;
+				}
+			}
+		} catch (java.io.IOException e) { throw new com.ruoyi.common.exception.ServiceException("本轮冻结数据集无法恢复：" + e.getMessage()); }
 		AlgorithmAnnotation annotation = algorithmAnnotationService.getById(training.getDatasetId());
 		if (annotation == null) {
 			return null;
@@ -983,6 +1070,10 @@ public class VlsAlgorithmTrainingController extends BladeController {
 		String datasetPath = annotation.getDatasetPath();
 		if (datasetPath == null || datasetPath.trim().isEmpty()) {
 			return null;
+		}
+		if (com.ruoyi.vlstream.test.vlstream.data.TrainingDatasetArtifactService.isReference(datasetPath)) {
+			// An older training run must not borrow the dataset's newly published version.
+			return remoteTrainingService.originalDatasetPath(training);
 		}
 		return datasetPath.trim();
 	}

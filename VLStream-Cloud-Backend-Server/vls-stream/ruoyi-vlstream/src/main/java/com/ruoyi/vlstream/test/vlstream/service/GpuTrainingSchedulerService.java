@@ -73,6 +73,8 @@ public class GpuTrainingSchedulerService {
 	@Resource
 	private ObjectMapper objectMapper;
 	@Resource
+	private com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService cloudTrainingService;
+	@Resource
 	@org.springframework.context.annotation.Lazy
 	private com.ruoyi.vlstream.test.vlstream.data.SmartAnnotationWorker smartAnnotationWorker;
 	private static final String TYPE_SMART_ANNOTATION = "smart_annotation";
@@ -235,6 +237,9 @@ public class GpuTrainingSchedulerService {
 		ContainerInstance instance = containerInstanceService.getById(id);
 		if (instance == null || isBlank(instance.getLogsPath())) {
 			throw new IllegalArgumentException("容器任务或日志路径不存在");
+		}
+		if ("cloud_training".equals(instance.getInstanceType())) {
+			return cloudTrainingService.containerLogs(instance.getId());
 		}
 		int safeLines = Math.max(1, Math.min(lines, 2000));
 		SSHService.SSHExecutionResult result = execute(

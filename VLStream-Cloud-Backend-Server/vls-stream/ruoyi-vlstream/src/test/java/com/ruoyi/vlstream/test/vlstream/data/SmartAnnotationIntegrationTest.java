@@ -48,6 +48,8 @@ class SmartAnnotationIntegrationTest {
     @BeforeEach void setup() throws Exception {
         DataTestConfiguration.initialize(context.getBean(DataSource.class));
         jdbc = new JdbcTemplate(context.getBean(DataSource.class));
+        jdbc.execute("DROP TABLE IF EXISTS vls_training_dataset_artifact");
+        jdbc.execute("CREATE TABLE vls_training_dataset_artifact(tenant_id VARCHAR(64),dataset_id BIGINT,storage_state VARCHAR(20))");
         for (String table : Arrays.asList("vls_smart_annotation_candidate", "vls_smart_annotation_round", "vls_smart_annotation_task")) jdbc.execute("DROP TABLE IF EXISTS " + table);
         String migration = new String(Files.readAllBytes(DataTestConfiguration.root().resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_021__smart_annotation.sql")), StandardCharsets.UTF_8);
         for (String statement : migration.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
@@ -123,7 +125,7 @@ class SmartAnnotationIntegrationTest {
         DatasetStorageProvider storage = mock(DatasetStorageProvider.class); DatasetRemoteCleanup remote = mock(DatasetRemoteCleanup.class);
         ModelClassFileService classes = mock(ModelClassFileService.class); ModelClassSnapshotStore snapshots = mock(ModelClassSnapshotStore.class);
         DatasetCleanupService cleanup = new DatasetCleanupService(jdbc, context.getBean(org.springframework.transaction.PlatformTransactionManager.class),
-            storage, remote, classes, snapshots, context.getBean(ObjectMapper.class));
+            storage, remote, mock(TrainingDatasetArtifactService.class), classes, snapshots, context.getBean(ObjectMapper.class));
         ServiceException rejected = assertThrows(ServiceException.class, () -> cleanup.delete(dataset));
         assertTrue(rejected.getMessage().contains("智能标注")); verifyNoInteractions(storage, remote, classes, snapshots);
         assertNotNull(data.project(dataset));

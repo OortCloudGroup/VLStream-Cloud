@@ -39,4 +39,11 @@ class DatasetRemoteCleanupTest {
         when(sftp.lstat(root)).thenThrow(new SftpException(ChannelSftp.SSH_FX_NO_SUCH_FILE,"gone"));
         cleanup.removeDirectory(sftp,1L); verify(sftp,never()).rm(anyString()); verify(sftp,never()).rmdir(anyString());
     }
+    @Test void removesKnownRuntimeScriptsButRejectsAnyOtherPythonBeforeDeletion() throws Exception {
+        Vector<ChannelSftp.LsEntry> list=new Vector<>(); list.add(file("run_training.py")); list.add(file("four_task_runtime.py")); when(sftp.ls(root)).thenReturn(list);
+        cleanup.removeDirectory(sftp,1L); verify(sftp).rm(root+"/run_training.py"); verify(sftp).rm(root+"/four_task_runtime.py");
+        clearInvocations(sftp);
+        list.add(file("private_conversion.py"));
+        assertThrows(IllegalStateException.class,()->cleanup.removeDirectory(sftp,1L)); verify(sftp,never()).rm(anyString()); verify(sftp,never()).rmdir(anyString());
+    }
 }
