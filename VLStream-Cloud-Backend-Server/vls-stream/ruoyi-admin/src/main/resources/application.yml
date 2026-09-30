@@ -240,6 +240,10 @@ vlstream:
     read-timeout-millis: ${VLSTREAM_WEBRTC_READ_TIMEOUT_MILLIS:1500}
     # 健康检查结果缓存时间（毫秒），避免频繁探测
     health-cache-millis: ${VLSTREAM_WEBRTC_HEALTH_CACHE_MILLIS:5000}
+  # 最终模型产物使用当前默认 OSS/MinIO；SSH 路径保留为训练/转换输入及历史回退。
+  model-storage:
+    scan-delay-ms: ${VLSTREAM_MODEL_STORAGE_SCAN_DELAY_MS:60000}
+    temp-dir: ${VLSTREAM_MODEL_STORAGE_TEMP_DIR:${java.io.tmpdir}/vls-model-storage}
   # SSH 远程连接配置（用于远程执行训练/转换等命令）
   ssh:
     # SSH 服务器地址
