@@ -106,7 +106,8 @@ export const getResponseMessage = (data, fallback) => {
 
 // Process HTTP 200 failed SpringBlade .
 export const handleBusinessError = (data, response, fallback = '请求失败', showMessage = true) => {
-  if (data?.success === false) {
+  const code = Number(data?.code)
+  if (data?.success === false || (Number.isFinite(code) && code >= 400)) {
     const message = getResponseMessage(data, fallback)
     const businessError = new Error(message)
     businessError.response = response
@@ -180,7 +181,8 @@ request.interceptors.request.use(
     return config
   },
   error => {
-    console.error('请求错误:', error)
+    if (error.config?.sensitiveData) console.error('敏感请求未能发送')
+    else console.error('请求错误:', error)
     return Promise.reject(error)
   }
 )
@@ -203,7 +205,7 @@ request.interceptors.response.use(
   response => {
     const { data } = response
 
-    return handleBusinessError(data, response)
+    return handleBusinessError(data, response, '请求失败', !response.config?.silentError)
   },
   error => {
     if (axios.isCancel(error)) return Promise.reject(error)
