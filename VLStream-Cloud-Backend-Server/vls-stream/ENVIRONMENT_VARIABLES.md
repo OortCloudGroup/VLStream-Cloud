@@ -118,7 +118,7 @@
 
 | 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |
 |--------|------|--------|----------|----------|----------|
-| `UNIFIEDMESSAGINGSEND_URL` | 统一消息发送服务地址 | `http://183.62.103.20:21410/bus/apaas-unified-msg/` | 是 | HTTP/HTTPS URL | `http://msg.example.com/` |
+| `UNIFIEDMESSAGINGSEND_URL` | 可选的统一消息发送服务地址 | 空（不发送外部消息） | 使用流程消息通知时必填 | HTTP/HTTPS URL | `http://msg.example.com/` |
 
 ### 8.3 TX回调配置
 
@@ -130,7 +130,7 @@
 
 | 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |
 |--------|------|--------|----------|----------|----------|
-| `VLSTREAM_MODEL_PUBLIC_BASE_URL` | 硬件设备可访问的后端模型下载根地址 | `http://192.168.88.31:8080` | 是 | HTTP/HTTPS URL，不含末尾业务路径 | `https://vlstream.example.com` |
+| `VLSTREAM_MODEL_PUBLIC_BASE_URL` | 硬件设备可访问的后端模型下载根地址 | 空 | 使用设备模型下载时必填 | HTTP/HTTPS URL，不含末尾业务路径 | `https://vlstream.example.com` |
 | `VLSTREAM_MODEL_DOWNLOAD_SIGNING_SECRET` | 模型下载短期 URL 的 HMAC-SHA256 签名密钥 | 无 | 是 | 部署方生成的高强度随机字符串，建议至少 32 字节 | 通过 Secret 注入，不写入配置文件 |
 | `VLSTREAM_MODEL_DOWNLOAD_URL_TTL_SECONDS` | 签名下载 URL 有效期 | `1800` | 否 | 大于等于 60 的秒数 | `1800` |
 | `VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID` | 后端模型下发 MQTT 客户端 ID | `vls-model-dispatch-backend` | 是 | 同一 Broker 内唯一 | `vls-model-dispatch-backend-01` |
@@ -164,8 +164,12 @@ WVP 是 VLStream 设备、心跳、视频流和固件任务的唯一数据源。
 | 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |
 |--------|------|--------|----------|----------|----------|
 | `VLSTREAM_WVP_INTERNAL_BASE_URL` | VLS 访问 WVP 内部接口的根地址 | `http://127.0.0.1:9080` | 是 | VLS 进程可访问的 HTTP/HTTPS URL | `http://wvp-server:9080` |
+| `VLSTREAM_WVP_DEVICE_BASE_URL` | VLS 设备解析专用 WVP 根地址 | `http://127.0.0.1:9080` | 是 | 后端容器可访问的 WVP HTTP(S) URL | `http://host.docker.internal:9080` |
 | `VLSTREAM_WVP_CONNECT_TIMEOUT_MILLIS` | VLS 连接 WVP 的超时时间 | `3000` | 否 | 大于等于 500 的毫秒数 | `3000` |
 | `VLSTREAM_WVP_READ_TIMEOUT_MILLIS` | VLS 等待 WVP 响应的超时时间 | `5000` | 否 | 大于等于 500 的毫秒数 | `5000` |
+| `VLSTREAM_ZLM_INTERNAL_URL` | 后端访问 WVP 所属 ZLMediaKit 的地址 | `http://127.0.0.1:8090` | 是 | 后端容器可访问的 URL | `http://host.docker.internal:8081` |
+| `VLSTREAM_ZLM_PUBLIC_URL` | 浏览器访问 ZLMediaKit 的同源路径或公开 URL | `/bus/zlm-server` | 是 | 浏览器可访问的 URL/path | `/bus/zlm-server` |
+| `ZLMEDIAKIT_SECRET` | VLS 调用 ZLMediaKit 的密钥 | 空 | 使用 ZLMediaKit 时必填 | 必须与 WVP/ZLMediaKit 的密钥完全一致 | 通过部署 Secret 注入 |
 | `VLSTREAM_NATIVE_DEVICE_DEFAULT_TENANT_ID` | 单租户模式下 WVP 设备映射到的 VLS 默认租户 | `000000` | 是 | VLS 中存在的租户 ID | `000000` |
 | `VLSTREAM_NATIVE_DEVICE_MULTI_TENANT_DEFAULT_TENANT_ID` | 多租户模式下 WVP 设备映射到的 VLS 默认租户 | 由项目配置提供 | 多租户必填 | VLS 中存在的租户 ID | `0e391fd7-1033-4f09-88c0-187582fee462` |
 | `VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED` | 是否恢复 VLS 旧设备/心跳/固件管理实现 | `false` | 否 | `true/false` | 正常部署保持 `false` |
@@ -174,6 +178,26 @@ WVP 是 VLStream 设备、心跳、视频流和固件任务的唯一数据源。
 > 部署时应仅允许 VLS 后端通过服务网络访问。VLS 查询到设备已登记即可继续，不要求设备
 > 当时在线。正常部署不要启用 `VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED`，否则 VLS
 > 与 WVP 会同时消费心跳和固件回执，产生重复状态和重复业务回执。
+
+### 8.7 IPC 远程管理隧道
+
+控制面默认启用；发布 Compose 不默认启动 tunnel-runtime sidecar。只有配置独立域名、Noise 密钥和独立 API 凭据后，才使用 `--profile tunnel` 启动 sidecar。
+
+| 变量名 | 含义 | 默认值 | 是否必填 | 取值范围 | 配置示例 |
+|--------|------|--------|----------|----------|----------|
+| `VLSTREAM_TUNNEL_ENABLED` | 是否启用后端隧道控制面 | `true` | 否 | `true/false` | 不使用时设为 `false` |
+| `VLSTREAM_TUNNEL_REMOTE_ADDRESS` | 设备连接的 rathole Server 地址 | 空 | 启用 sidecar 时必填 | `host:port` | `tunnel.example.com:2333` |
+| `VLSTREAM_TUNNEL_NOISE_REMOTE_PUBLIC_KEY` | rathole Server Noise 公钥 | 空 | 启用 sidecar 时必填 | rathole 生成的公钥 | 由 `rathole --genkey` 生成 |
+| `VLSTREAM_TUNNEL_NOISE_PRIVATE_KEY` | rathole Server Noise 私钥 | 空 | 启用 sidecar 时必填 | rathole 生成的私钥 | 由 `rathole --genkey` 生成 |
+| `VLSTREAM_TUNNEL_SERVICE_SIGNING_SECRET` | 按服务派生隧道令牌的签名密钥 | 空 | 启用 sidecar 时必填 | 独立随机值，至少 32 字节 | 通过 Secret 注入 |
+| `VLSTREAM_TUNNEL_CONTROL_API_TOKEN` | sidecar 调用控制 API 的令牌 | 空 | 启用 sidecar 时必填 | 独立随机值，至少 32 字节 | 通过 Secret 注入 |
+| `VLSTREAM_TUNNEL_GATEWAY_API_TOKEN` | 网关调用会话 API 的令牌 | 空 | 启用 sidecar 时必填 | 独立随机值，至少 32 字节 | 通过 Secret 注入 |
+| `VLSTREAM_TUNNEL_GATEWAY_BASE_URL` | 浏览器访问会话的 HTTPS 通配域名模板 | 空 | 启用 sidecar 时必填 | HTTPS URL，必须含 `{sessionId}` | `https://{sessionId}.ipc.example.com` |
+| `VLSTREAM_TUNNEL_ACCESS_SESSION_TTL_SECONDS` | 浏览器会话无操作过期时间 | `36000` | 否 | 60–36000 秒 | `36000` |
+
+### 8.8 默认 GPU/SSH 与模型存储
+
+生产镜像不包含开发 SSH 主机或密码默认值。需要使用遗留默认 GPU 时，通过部署环境注入 `VLSTREAM_SSH_HOST`、`VLSTREAM_SSH_PORT`、`VLSTREAM_SSH_USERNAME` 和 `VLSTREAM_SSH_PASSWORD`；线上算力用户使用租户管理的 AutoDL 连接信息。模型产物临时目录和扫描间隔可通过 `VLSTREAM_MODEL_STORAGE_TEMP_DIR` 与 `VLSTREAM_MODEL_STORAGE_SCAN_DELAY_MS` 调整。
 
 ## 九、Swagger文档配置
 

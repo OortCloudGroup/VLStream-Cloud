@@ -1,0 +1,71 @@
+-- Native VLStream MQTT devices are intentionally separate from vls_device_info,
+-- which belongs to the legacy/custom protocol device model.
+
+CREATE TABLE IF NOT EXISTS `vls_mqtt_device` (
+    `id` bigint NOT NULL COMMENT 'Primary key',
+    `tenant_id` varchar(64) NOT NULL DEFAULT '000000' COMMENT 'Owning tenant',
+    `device_id` varchar(100) NOT NULL COMMENT 'Hardware device identifier',
+    `device_name` varchar(255) NULL COMMENT 'Device display name',
+    `device_serial` varchar(128) NULL COMMENT 'Manufacturer serial number',
+    `firmware_version` varchar(64) NULL COMMENT 'Firmware version',
+    `face_version` varchar(64) NULL COMMENT 'Face algorithm version',
+    `ip_addr` varchar(64) NULL COMMENT 'Reported IP address',
+    `mac` varchar(32) NULL COMMENT 'Reported MAC address',
+    `online` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Reported online state',
+    `online_reason` varchar(64) NULL COMMENT 'Online state reason',
+    `heartbeat_index` bigint NULL COMMENT 'Hardware heartbeat sequence',
+    `last_message_id` varchar(64) NULL COMMENT 'Latest accepted MQTT message ID',
+    `last_reported_at` datetime NULL COMMENT 'Latest accepted device sentAt',
+    `last_heartbeat_time` datetime NULL COMMENT 'Platform receive time',
+    `telemetry_json` text NULL COMMENT 'Latest telemetry snapshot',
+    `service_status_json` text NULL COMMENT 'Latest service status snapshot',
+    `create_user` varchar(64) NULL,
+    `create_dept` varchar(64) NULL,
+    `create_time` datetime NULL,
+    `update_user` varchar(64) NULL,
+    `update_time` datetime NULL,
+    `status` int NOT NULL DEFAULT 1,
+    `is_deleted` int NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_vls_mqtt_device_tenant_device` (`tenant_id`, `device_id`),
+    KEY `idx_vls_mqtt_device_online_heartbeat` (`online`, `last_heartbeat_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='VLStream native MQTT device';
+
+CREATE TABLE IF NOT EXISTS `vls_mqtt_device_stream` (
+    `id` bigint NOT NULL COMMENT 'Primary key',
+    `tenant_id` varchar(64) NOT NULL DEFAULT '000000' COMMENT 'Owning tenant',
+    `device_row_id` bigint NOT NULL COMMENT 'vls_mqtt_device.id',
+    `channel_id` varchar(64) NOT NULL COMMENT 'Hardware channel identifier',
+    `stream_name` varchar(255) NULL COMMENT 'Stream display name',
+    `stream_type` varchar(32) NOT NULL COMMENT 'main/sub/custom',
+    `protocol` varchar(16) NOT NULL COMMENT 'rtsp/rtmp',
+    `source_url` varchar(2048) NOT NULL COMMENT 'Source URL; backend only',
+    `is_default` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Default preview stream',
+    `available` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Present in latest full snapshot',
+    `zlm_app` varchar(64) NULL COMMENT 'ZLM application',
+    `zlm_stream` varchar(128) NULL COMMENT 'ZLM stream identifier',
+    `zlm_proxy_key` varchar(255) NULL COMMENT 'Active ZLM proxy key',
+    `last_report_time` datetime NULL COMMENT 'Latest snapshot receive time',
+    `create_user` varchar(64) NULL,
+    `create_dept` varchar(64) NULL,
+    `create_time` datetime NULL,
+    `update_user` varchar(64) NULL,
+    `update_time` datetime NULL,
+    `status` int NOT NULL DEFAULT 1,
+    `is_deleted` int NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_vls_mqtt_stream_device_channel_type` (`device_row_id`, `channel_id`, `stream_type`),
+    KEY `idx_vls_mqtt_stream_device_available` (`device_row_id`, `available`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='VLStream native MQTT device stream';
+
+CREATE TABLE IF NOT EXISTS `vls_mqtt_device_message` (
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
+    `tenant_id` varchar(64) NOT NULL DEFAULT '000000' COMMENT 'Owning tenant',
+    `device_id` varchar(100) NOT NULL COMMENT 'Hardware device identifier',
+    `message_id` varchar(64) NOT NULL COMMENT 'MQTT message UUID',
+    `reported_at` datetime NULL COMMENT 'Device sentAt',
+    `received_at` datetime NOT NULL COMMENT 'Platform receive time',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_vls_mqtt_message_tenant_device_message` (`tenant_id`, `device_id`, `message_id`),
+    KEY `idx_vls_mqtt_message_received_at` (`received_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='VLStream MQTT QoS idempotency record';

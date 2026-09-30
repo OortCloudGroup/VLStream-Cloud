@@ -48,7 +48,7 @@ class CloudComputeIntegrationTest {
         jdbc.execute("CREATE TABLE vls_container_instance(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),training_task_id BIGINT,instance_status VARCHAR(20),error_message TEXT,stop_time DATETIME)");
         jdbc.execute("CREATE TABLE vls_dataset_conversion_guard(tenant_id VARCHAR(64),training_id BIGINT)");
         for (String file : Arrays.asList("V1_2_0_018__training_auto_publish.sql", "V1_2_0_025__autodl_ssh_compute.sql")) {
-            String sql = new String(Files.readAllBytes(root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/" + file)), StandardCharsets.UTF_8);
+            String sql = new String(Files.readAllBytes(root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/" + file)), StandardCharsets.UTF_8);
             for (String statement : sql.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
         }
     }

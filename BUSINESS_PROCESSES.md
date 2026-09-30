@@ -973,6 +973,8 @@ VLS/MySQL 保存下发快照；`GET /vlsModelDispatch/public/{requestId}/classes
 数据库保存的是稳定媒体记录和对象键，不应持久化已经签名的完整临时 URL。
 生成预签名地址时，客户端 Region 必须与对象存储一致；MinIO 未显式配置 Region 时按
 `us-east-1` 处理。Region 或其他签名参数修改后必须重新申请地址，旧签名地址不可复用。
+v1.2.6 发布 Compose 将 `VLSTREAM_DEVICE_MEDIA_ALLOW_UNAUTHENTICATED` 默认设为 `false`；
+不要为公网部署开启无认证上传地址申请，设备接入需符合当前设备身份校验配置。
 公网设备使用的 HTTPS API 根地址必须在签名阶段直接参与计算，反向代理不得在签名生成后
 改写协议、主机名、端口、bucket 或对象路径；上传 PUT 和页面预览 GET 使用同一个公网根地址规则。
 2026-09-04 验证：Java 8 定向回归测试通过；虚拟机公网重新申请地址后，53,572 字节测试文件

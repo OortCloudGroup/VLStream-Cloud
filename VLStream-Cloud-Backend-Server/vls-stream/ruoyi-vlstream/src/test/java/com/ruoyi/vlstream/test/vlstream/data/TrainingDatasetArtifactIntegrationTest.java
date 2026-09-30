@@ -71,7 +71,7 @@ class TrainingDatasetArtifactIntegrationTest {
         // Exercise both historical seed branches before applying the actual migration.
         jdbc.update("INSERT INTO vls_algorithm_annotation(id,tenant_id,dataset_path) VALUES(901,'legacy-a','/data/datasets/version/dataset.yaml'),(902,'legacy-a',NULL),(903,'new-tenant',NULL)");
         jdbc.update("INSERT INTO vls_dataset_version(id,tenant_id,annotation_id,version_number,version_name,snapshot_json) VALUES(999,'legacy-a',902,1,'训练生成快照','{}')");
-        Path migration = workspace.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_026__training_dataset_object_storage.sql");
+        Path migration = workspace.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_026__training_dataset_object_storage.sql");
         try (Connection connection = database.getConnection()) {
             ScriptUtils.executeSqlScript(connection, new EncodedResource(new FileSystemResource(migration.toFile()), StandardCharsets.UTF_8));
             ScriptUtils.executeSqlScript(connection, new EncodedResource(new FileSystemResource(migration.toFile()), StandardCharsets.UTF_8));

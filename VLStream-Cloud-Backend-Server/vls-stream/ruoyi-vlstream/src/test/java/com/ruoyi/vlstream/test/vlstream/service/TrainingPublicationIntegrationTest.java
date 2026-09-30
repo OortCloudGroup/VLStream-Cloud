@@ -27,7 +27,7 @@ class TrainingPublicationIntegrationTest {
         jdbc.execute("CREATE TABLE vls_dataset_conversion_guard(tenant_id VARCHAR(64),training_id BIGINT)");
         jdbc.execute("CREATE TABLE test_models(id BIGINT PRIMARY KEY,model_path TEXT)");
         Path root=Paths.get(System.getProperty("user.dir")).toAbsolutePath();while(!Files.exists(root.resolve("BUSINESS_PROCESSES.md")))root=root.getParent();
-        String sql=new String(Files.readAllBytes(root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/V1_2_0_018__training_auto_publish.sql")),StandardCharsets.UTF_8);
+        String sql=new String(Files.readAllBytes(root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/mainline/V1_2_0_018__training_auto_publish.sql")),StandardCharsets.UTF_8);
         jdbc.execute(sql);
     }
     @BeforeEach void setup() {
