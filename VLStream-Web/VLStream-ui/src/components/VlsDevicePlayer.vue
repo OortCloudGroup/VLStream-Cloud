@@ -10,7 +10,8 @@
 import { onBeforeUnmount, ref, watch } from 'vue'
 import CameraRtcPlayer from '@/components/CameraRtcPlayer.vue'
 import RtcPlayer from '@/components/rtcPlayer/index.vue'
-import { getMqttDeviceStreams, createMqttDevicePreview } from '@/api/vlstreamMqttDevice'
+import { getMqttDeviceStreams, getMqttDeviceDetail, createMqttDevicePreview } from '@/api/vlstreamMqttDevice'
+import { monitorDevicePreview } from '@/utils/devicePreviewGuard'
 import { parseCameraRtcConfig } from '@/utils/oplayer'
 
 const props = defineProps({ device: { type: Object, required: true } })
@@ -19,13 +20,32 @@ const error = ref('')
 const cameraConfig = ref(null)
 const rtcUrl = ref('')
 let generation = 0
-watch(() => props.device.id, async id => {
+let stopMonitor = () => {}
+watch(() => [props.device.id, props.device.online], async ([id, online]) => {
+  stopMonitor()
   const current = ++generation
   cameraConfig.value = null
   rtcUrl.value = ''
   error.value = ''
   loading.value = true
   try {
+    if (online !== true) {
+      error.value = '设备离线，不允许播放'
+      return
+    }
+    const device = (await getMqttDeviceDetail(id))?.data?.device
+    if (current !== generation) return
+    if (device?.online !== true) {
+      error.value = '设备离线，不允许播放'
+      return
+    }
+    stopMonitor = monitorDevicePreview(async () => (await getMqttDeviceDetail(id))?.data?.device, () => {
+      generation += 1
+      cameraConfig.value = null
+      rtcUrl.value = ''
+      loading.value = false
+      error.value = '设备离线或状态无法确认，已停止播放'
+    })
     const streams = (await getMqttDeviceStreams(id))?.data || []
     if (current !== generation) return
     const preferred = streams.find(stream => stream.defaultStream) || streams[0]
@@ -44,7 +64,7 @@ watch(() => props.device.id, async id => {
     if (current === generation) loading.value = false
   }
 }, { immediate: true })
-onBeforeUnmount(() => { generation += 1 })
+onBeforeUnmount(() => { generation += 1; stopMonitor() })
 </script>
 
 <style scoped>
