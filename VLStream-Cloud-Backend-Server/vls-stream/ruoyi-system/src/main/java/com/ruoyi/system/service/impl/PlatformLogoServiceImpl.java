@@ -7,6 +7,9 @@ package com.ruoyi.system.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.oss.core.OssClient;
+import com.ruoyi.oss.enumd.AccessPolicyType;
+import com.ruoyi.oss.factory.OssFactory;
 import com.ruoyi.system.domain.SysPlatformLogo;
 import com.ruoyi.system.domain.vo.PlatformLogoVo;
 import com.ruoyi.system.domain.vo.SysOssVo;
@@ -16,6 +19,7 @@ import com.ruoyi.system.service.ISysOssService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,6 +36,9 @@ public class PlatformLogoServiceImpl implements IPlatformLogoService {
 
     private final SysPlatformLogoMapper platformLogoMapper;
     private final ISysOssService ossService;
+
+    @Value("${VLSTREAM_PLATFORM_LOGO_PUBLIC_ENDPOINT:${VLSTREAM_ANNOTATION_MEDIA_PUBLIC_ENDPOINT:}}")
+    private String publicEndpoint;
 
     @Override
     public List<PlatformLogoVo> list() {
@@ -152,8 +159,17 @@ public class PlatformLogoServiceImpl implements IPlatformLogoService {
         vo.setCreateTime(entity.getCreateTime());
         vo.setUpdateTime(entity.getUpdateTime());
         SysOssVo oss = entity.getOssId() == null ? null : ossService.getById(entity.getOssId());
-        vo.setLogoUrl(oss == null ? null : oss.getUrl());
+        if (oss != null) {
+            OssClient storage = logoStorage(oss.getService());
+            // Sign the object key with the browser-facing authority. Do not mutate cached OSS metadata.
+            vo.setLogoUrl(storage.getAccessPolicy() == AccessPolicyType.PRIVATE
+                ? storage.getPrivateUrl(oss.getFileName(), 3600, publicEndpoint) : oss.getUrl());
+        }
         return vo;
+    }
+
+    protected OssClient logoStorage(String configKey) {
+        return OssFactory.instance(configKey);
     }
 
     private PlatformLogoVo defaultLogo(boolean active) {

@@ -11,6 +11,8 @@ import com.ruoyi.system.domain.vo.PlatformLogoVo;
 import com.ruoyi.system.domain.vo.SysOssVo;
 import com.ruoyi.system.mapper.SysPlatformLogoMapper;
 import com.ruoyi.system.service.impl.PlatformLogoServiceImpl;
+import com.ruoyi.oss.core.OssClient;
+import com.ruoyi.oss.enumd.AccessPolicyType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -36,12 +38,16 @@ class PlatformLogoServiceImplTest {
     private SysPlatformLogoMapper mapper;
     private ISysOssService ossService;
     private PlatformLogoServiceImpl service;
+    private OssClient storage;
 
     @BeforeEach
     void setUp() {
         mapper = mock(SysPlatformLogoMapper.class);
         ossService = mock(ISysOssService.class);
-        service = new PlatformLogoServiceImpl(mapper, ossService);
+        storage = mock(OssClient.class);
+        service = new PlatformLogoServiceImpl(mapper, ossService) {
+            @Override protected OssClient logoStorage(String configKey) { return storage; }
+        };
     }
 
     @Test
@@ -101,5 +107,32 @@ class PlatformLogoServiceImplTest {
         assertThrows(ServiceException.class, () -> service.remove(null));
         verify(mapper, never()).updateById(any(SysPlatformLogo.class));
         verify(mapper, never()).deleteById(any());
+    }
+
+    @Test
+    void privateLogoSignsObjectKeyWithPublicEndpointWithoutCachingSignature() throws Exception {
+        java.lang.reflect.Field endpoint = PlatformLogoServiceImpl.class.getDeclaredField("publicEndpoint");
+        endpoint.setAccessible(true);
+        endpoint.set(service, "https://public.example:2443");
+        SysPlatformLogo entity = new SysPlatformLogo();
+        entity.setId(10L); entity.setOssId(20L); entity.setActive(true);
+        when(mapper.selectOne(any())).thenReturn(entity);
+        SysOssVo oss = new SysOssVo();
+        oss.setFileName("2026/09/logo.png"); oss.setUrl("http://frontend/bucket/2026/09/logo.png");
+        when(ossService.getById(20L)).thenReturn(oss);
+        when(storage.getAccessPolicy()).thenReturn(AccessPolicyType.PRIVATE);
+        when(storage.getPrivateUrl("2026/09/logo.png", 3600, "https://public.example:2443"))
+            .thenReturn("https://public.example:2443/signed-first", "https://public.example:2443/signed-second");
+        assertEquals("https://public.example:2443/signed-first", service.current().getLogoUrl());
+        assertEquals("https://public.example:2443/signed-second", service.current().getLogoUrl());
+        assertEquals("http://frontend/bucket/2026/09/logo.png", oss.getUrl());
+    }
+
+    @Test
+    void missingOssMetadataLeavesFallbackAvailable() {
+        SysPlatformLogo entity = new SysPlatformLogo();entity.setOssId(20L);
+        when(mapper.selectOne(any())).thenReturn(entity);
+        assertNull(service.current().getLogoUrl());
+        org.mockito.Mockito.verifyNoInteractions(storage);
     }
 }
