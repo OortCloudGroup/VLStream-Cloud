@@ -1310,3 +1310,8 @@ WVP `/vlstream/device/{id}/preview` 在返回 CameraRTC 地址或创建 ZLM 拉�
 此规则约束平台实时预览入口，不撤销已经取得的原厂 CameraRTC 地址，也不改变历史录像访问规则。
 验证：Java 8 控制器 3 项测试通过；状态监视器覆盖在线继续、离线停止、查询失败、取消后的过期响应与未知状态。
 VLS/WVP 前端构建通过，浏览器确认离线 AI_BOX 播放按钮已禁用。后端生效需要重新部署 WVP；真实在线转离线联调待验证。
+
+### 2026-09-30：IPC 隧道控制面默认配置
+
+VLS 配置中的 `vlstream.tunnel.enabled` 默认值调整为启用，并可通过 `VLSTREAM_TUNNEL_ENABLED=false` 关闭。
+该开关只控制 VLS 隧道控制面接口，不会安装或启动 `tunnel-runtime` sidecar；已部署环境的远程管理能力仍以实际环境覆盖和 sidecar 状态为准。

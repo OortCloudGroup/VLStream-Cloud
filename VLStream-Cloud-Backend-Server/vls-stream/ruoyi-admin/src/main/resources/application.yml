@@ -176,9 +176,9 @@ vlstream:
     offline-timeout-seconds: ${VLSTREAM_NATIVE_DEVICE_OFFLINE_TIMEOUT_SECONDS:180}
     # QoS 1 幂等消息记录保留时长
     message-retention-hours: ${VLSTREAM_NATIVE_DEVICE_MESSAGE_RETENTION_HOURS:24}
-  # IPC 本机 Agent + rathole 远程 Web 管理控制面。默认关闭并对所有内部接口保持失败关闭。
+  # IPC 本机 Agent + rathole 远程 Web 管理控制面。默认启用，可通过环境变量关闭；内部接口继续校验权限和会话状态。
   tunnel:
-    enabled: ${VLSTREAM_TUNNEL_ENABLED:false}
+    enabled: ${VLSTREAM_TUNNEL_ENABLED:true}
     # WVP 原生设备尚未建立可靠的多租户所有权字段，MVP 无条件禁止多租户签发激活码。
     # 设备主动连接的 rathole Server 控制地址，例如 tunnel.example.com:2333。
     remote-address: ${VLSTREAM_TUNNEL_REMOTE_ADDRESS:}
