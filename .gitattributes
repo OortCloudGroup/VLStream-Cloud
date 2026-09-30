@@ -1,0 +1,2 @@
+tools/compute/*.sh text eol=lf
+tools/compute/*.py text eol=lf

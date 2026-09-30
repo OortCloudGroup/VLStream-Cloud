@@ -1,0 +1,21 @@
+{
+  "settings_version": "0.0.6",
+  "datasets_dir": "D:\\work\\ide\\WorkSpace\\datasets",
+  "weights_dir": "D:\\work\\ide\\WorkSpace\\VLStream-Cloud\\weights",
+  "runs_dir": "D:\\work\\ide\\WorkSpace\\VLStream-Cloud\\runs",
+  "uuid": "866433068391623a76bcb0d69d97f706b4f69fdd5b2c7692b324c34d90df48fe",
+  "sync": true,
+  "api_key": "",
+  "openai_api_key": "",
+  "clearml": true,
+  "comet": true,
+  "dvc": true,
+  "hub": true,
+  "mlflow": true,
+  "neptune": true,
+  "raytune": true,
+  "tensorboard": false,
+  "wandb": false,
+  "vscode_msg": true,
+  "openvino_msg": true
+}

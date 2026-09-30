@@ -29,6 +29,13 @@ __pycache__/
 Thumbs.db
 /VLStream-Cloud-Backend-Server/vls-stream/doc/gpu-training-scheduler.md
 D:\work\ide\WorkSpace\VLStream-Cloud\VLStream-Cloud-Backend-Server\vls-stream\doc
-/tools
+/tools/*
+!/tools/compute/
+/tools/compute/*
+!/tools/compute/bootstrap-autodl.sh
+!/tools/compute/prepare-presets.py
 /AGENTS.md
 /Antigravity
+.playwright-cli
+.playwright-mcp
+/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test
