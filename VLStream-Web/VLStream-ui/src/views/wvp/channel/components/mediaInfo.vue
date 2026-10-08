@@ -17,34 +17,36 @@
     ></el-button>
 
     <!-- info -->
-    <el-descriptions size="mini" :column="3" title="概况">
-      <el-descriptions-item label="观看人数">{{ info.readerCount }}</el-descriptions-item>
-      <el-descriptions-item label="网络">{{ formatByteSpeed() }}</el-descriptions-item>
-      <el-descriptions-item label="持续时间">{{ formatAliveSecond() }}</el-descriptions-item>
+    <el-descriptions size="mini" :column="3" :title="$tp('概况')">
+      <el-descriptions-item :label="$tp('观看人数')">{{ info.readerCount }}</el-descriptions-item>
+      <el-descriptions-item :label="$tp('网络')">{{ formatByteSpeed() }}</el-descriptions-item>
+      <el-descriptions-item :label="$tp('持续时间')">{{ formatAliveSecond() }}</el-descriptions-item>
     </el-descriptions>
 
     <!-- and info -->
     <div style="display: grid; grid-template-columns: 1fr 1fr">
       <!-- info -->
-      <el-descriptions size="mini" v-if="info.videoCodec" :column="2" title="视频信息">
-        <el-descriptions-item label="编码">{{ info.videoCodec }}</el-descriptions-item>
-        <el-descriptions-item label="分辨率">
+      <el-descriptions size="mini" v-if="info.videoCodec" :column="2" :title="$tp('视频信息')">
+        <el-descriptions-item :label="$tp('编码')">{{ info.videoCodec }}</el-descriptions-item>
+        <el-descriptions-item :label="$tp('分辨率')">
           {{ info.width }}x{{ info.height }}
         </el-descriptions-item>
         <el-descriptions-item label="FPS">{{ info.fps }}</el-descriptions-item>
-        <el-descriptions-item label="丢包率">{{ info.loss }}</el-descriptions-item>
+        <el-descriptions-item :label="$tp('丢包率')">{{ info.loss }}</el-descriptions-item>
       </el-descriptions>
 
       <!-- info -->
-      <el-descriptions size="mini" v-if="info.audioCodec" :column="2" title="音频信息">
-        <el-descriptions-item label="编码">{{ info.audioCodec }}</el-descriptions-item>
-        <el-descriptions-item label="采样率">{{ info.audioSampleRate }}</el-descriptions-item>
+      <el-descriptions size="mini" v-if="info.audioCodec" :column="2" :title="$tp('音频信息')">
+        <el-descriptions-item :label="$tp('编码')">{{ info.audioCodec }}</el-descriptions-item>
+        <el-descriptions-item :label="$tp('采样率')">{{ info.audioSampleRate }}</el-descriptions-item>
       </el-descriptions>
     </div>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, onMounted, onUnmounted } from 'vue';
 import {getServerMediaInfo} from "@/api/wvp/channel.js";
 
@@ -102,7 +104,7 @@ const formatAliveSecond = () => {
   const minutes = minute < 10 ? `0${minute}` : `${minute}`;
   const seconds = second < 10 ? `0${second}` : `${second}`;
 
-  return `${hours}${minutes}分${seconds}秒`;
+  return uiText('{value0}{value1}分{value2}秒', { value0: hours, value1: minutes, value2: seconds });
 };
 
 // task

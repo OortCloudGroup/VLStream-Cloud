@@ -18,20 +18,18 @@
     <span v-if="!selfDefine" class="tips">{{ statusText }}</span>
     <div v-else class="user_input">
       <el-form ref="ruleFormRef" class="user_input_form" :model="form" label-width="auto" :rules="rules">
-        <el-form-item label="关键词" prop="keyword">
-          <el-input v-model="form.keyword" placeholder="请输入关键词" />
+        <el-form-item :label="$tp('关键词')" prop="keyword">
+          <el-input v-model="form.keyword" :placeholder="$tp('请输入关键词')" />
         </el-form-item>
-        <el-form-item label="类型描述" prop="mod">
-          <el-input v-model="form.mod" placeholder="请输入关键词" />
+        <el-form-item :label="$tp('类型描述')" prop="mod">
+          <el-input v-model="form.mod" :placeholder="$tp('请输入关键词')" />
         </el-form-item>
-        <el-form-item label="字数限制" prop="number">
-          <el-input v-model.number="form.number" type="number" placeholder="请输入关键词" />
+        <el-form-item :label="$tp('字数限制')" prop="number">
+          <el-input v-model.number="form.number" type="number" :placeholder="$tp('请输入关键词')" />
         </el-form-item>
         <el-form-item>
           <div class="ai_button_group">
-            <el-button type="primary" @click="submitForm(ruleFormRef)">
-              生成
-            </el-button>
+            <el-button type="primary" @click="submitForm(ruleFormRef)"> {{ $tp('生成') }} </el-button>
           </div>
         </el-form-item>
       </el-form>

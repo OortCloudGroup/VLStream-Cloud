@@ -1,6 +1,6 @@
 <template>
-  <div v-if="origins.length" class="origins"><p v-for="origin in origins" :key="origin.id">来源视频：{{ origin.videoName }}<br />视频时间：{{ (Number(origin.timestampMs) / 1000).toFixed(3) }} 秒</p></div>
-  <p v-else-if="error" class="origins">来源信息暂时无法加载</p>
+  <div v-if="origins.length" class="origins"><p v-for="origin in origins" :key="origin.id">{{ $tp('来源视频：') }}{{ origin.videoName }}<br />{{ $tp('视频时间：') }}{{ (Number(origin.timestampMs) / 1000).toFixed(3) }} {{ $tp('秒') }}</p></div>
+  <p v-else-if="error" class="origins">{{ $tp('来源信息暂时无法加载') }}</p>
 </template>
 <script setup>
 import { ref, watch } from 'vue'

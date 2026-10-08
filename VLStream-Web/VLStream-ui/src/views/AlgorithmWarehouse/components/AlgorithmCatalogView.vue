@@ -2,8 +2,8 @@
   <section class="catalog-shell">
     <header class="catalog-header">
       <el-tabs v-model="section" class="catalog-tabs">
-        <el-tab-pane label="算法库" name="library" />
-        <el-tab-pane label="算法分类" name="categories" />
+        <el-tab-pane :label="$tp('算法库')" name="library" />
+        <el-tab-pane :label="$tp('算法分类')" name="categories" />
       </el-tabs>
       <a class="model-hub" href="https://vls.oortcloudsmart.com/zh/ModelHub/ModelHub" target="_blank" rel="noopener noreferrer" @click.prevent="visitModelHub">
         <el-icon><TopRight /></el-icon> Model Hub
@@ -12,8 +12,8 @@
 
     <div class="catalog-body" :class="{ 'flat-layout': section === 'library' && viewMode === 'flat' }">
       <aside v-if="section !== 'library' || viewMode !== 'flat'" class="category-aside">
-        <h3>所有分类</h3>
-        <el-input v-model="treeKeyword" clearable placeholder="搜索分类" :prefix-icon="Search" />
+        <h3>{{ $tp('所有分类') }}</h3>
+        <el-input v-model="treeKeyword" clearable :placeholder="$tp('搜索分类')" :prefix-icon="Search" />
         <el-tree ref="treeRef" :data="treeData" node-key="id" default-expand-all highlight-current
                  :expand-on-click-node="false" :filter-node-method="filterTree" @node-click="selectCategory">
           <template #default="{ data }">
@@ -24,9 +24,9 @@
                 <el-dropdown trigger="click" @command="command => handleNodeCommand(command, data)">
                   <el-button link :icon="MoreFilled" />
                   <template #dropdown><el-dropdown-menu>
-                    <el-dropdown-item command="edit"><el-icon><Edit /></el-icon>编辑</el-dropdown-item>
-                    <el-dropdown-item command="settings"><el-icon><Setting /></el-icon>设置</el-dropdown-item>
-                    <el-dropdown-item command="delete" class="danger-item"><el-icon><Delete /></el-icon>删除</el-dropdown-item>
+                    <el-dropdown-item command="edit"><el-icon><Edit /></el-icon>{{ $tp('编辑') }}</el-dropdown-item>
+                    <el-dropdown-item command="settings"><el-icon><Setting /></el-icon>{{ $tp('设置') }}</el-dropdown-item>
+                    <el-dropdown-item command="delete" class="danger-item"><el-icon><Delete /></el-icon>{{ $tp('删除') }}</el-dropdown-item>
                   </el-dropdown-menu></template>
                 </el-dropdown>
               </span>
@@ -45,17 +45,17 @@
 
         <div class="toolbar">
           <div class="toolbar-primary">
-            <el-button v-if="section === 'library'" type="primary" round :icon="Plus" @click="emit('add', activeCategoryId)">新增算法</el-button>
+            <el-button v-if="section === 'library'" type="primary" round :icon="Plus" @click="emit('add', activeCategoryId)">{{ $tp('新增算法') }}</el-button>
             <template v-else>
-              <el-button type="primary" round :icon="Plus" @click="openCreate(activeCategoryId)">添加分类</el-button>
-              <el-button round :icon="Delete" :disabled="!selectedRows.length" @click="removeCategories(selectedRows.map(row => row.id))">删除</el-button>
+              <el-button type="primary" round :icon="Plus" @click="openCreate(activeCategoryId)">{{ $tp('添加分类') }}</el-button>
+              <el-button round :icon="Delete" :disabled="!selectedRows.length" @click="removeCategories(selectedRows.map(row => row.id))">{{ $tp('删除') }}</el-button>
             </template>
           </div>
           <div class="toolbar-search">
-            <el-input v-model="keyword" clearable placeholder="搜索" :prefix-icon="Search" />
-            <el-button link :icon="Upload" title="导入功能待定义文件格式" @click="ElMessage.info('请先定义算法导入文件格式')" />
+            <el-input v-model="keyword" clearable :placeholder="$tp('搜索')" :prefix-icon="Search" />
+            <el-button link :icon="Upload" :title="$tp('导入功能待定义文件格式')" @click="ElMessage.info('请先定义算法导入文件格式')" />
             <el-dropdown><el-button link :icon="ArrowDown" /><template #dropdown><el-dropdown-menu>
-              <el-dropdown-item @click="refreshAll">刷新</el-dropdown-item>
+              <el-dropdown-item @click="refreshAll">{{ $tp('刷新') }}</el-dropdown-item>
             </el-dropdown-menu></template></el-dropdown>
           </div>
         </div>
@@ -68,20 +68,20 @@
                 <el-dropdown class="card-actions" trigger="click" @command="command => handleAlgorithmCommand(command, algorithm)">
                   <button type="button"><el-icon><MoreFilled /></el-icon></button>
                   <template #dropdown><el-dropdown-menu>
-                    <el-dropdown-item command="edit">编辑</el-dropdown-item>
-                    <el-dropdown-item command="evaluate">算法评估</el-dropdown-item>
-                    <el-dropdown-item command="deploy">下发到摄像机</el-dropdown-item>
-                    <el-dropdown-item command="publish">发布到 Model Hub</el-dropdown-item>
-                    <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
+                    <el-dropdown-item command="edit">{{ $tp('编辑') }}</el-dropdown-item>
+                    <el-dropdown-item command="evaluate">{{ $tp('算法评估') }}</el-dropdown-item>
+                    <el-dropdown-item command="deploy">{{ $tp('下发到摄像机') }}</el-dropdown-item>
+                    <el-dropdown-item command="publish">{{ $tp('发布到 Model Hub') }}</el-dropdown-item>
+                    <el-dropdown-item command="delete" divided>{{ $tp('删除') }}</el-dropdown-item>
                   </el-dropdown-menu></template>
                 </el-dropdown>
               </div>
               <div class="algorithm-copy" @click="emit('edit', algorithm)">
                 <h4>{{ algorithm.name }} <small>- {{ typeName(algorithm.category) }}</small></h4>
-                <p>{{ algorithm.description || '暂无算法描述' }}</p>
+                <p>{{ algorithm.description || $tp('暂无算法描述') }}</p>
               </div>
             </article>
-            <el-empty v-if="!loading && !algorithms.length" description="暂无算法" />
+            <el-empty v-if="!loading && !algorithms.length" :description="$tp('暂无算法')" />
           </div>
           <el-pagination v-if="algorithmTotal > algorithmPageSize" v-model:current-page="algorithmCurrent"
                          :page-size="algorithmPageSize" :total="algorithmTotal" layout="prev, pager, next"
@@ -104,39 +104,41 @@
       </main>
     </div>
 
-    <el-dialog v-model="editorOpen" :title="editor.id ? '编辑分类' : '添加分类'" width="480px" append-to-body>
+    <el-dialog v-model="editorOpen" :title="editor.id ? $tp('编辑分类') : $tp('添加分类')" width="480px" append-to-body>
       <el-form ref="formRef" :model="editor" :rules="rules" label-width="90px">
-        <el-form-item label="分类名称" prop="name"><el-input v-model="editor.name" maxlength="50" show-word-limit /></el-form-item>
-        <el-form-item label="上级分类"><el-tree-select v-model="editor.parentId" :data="parentOptions" node-key="id"
+        <el-form-item :label="$tp('分类名称')" prop="name"><el-input v-model="editor.name" maxlength="50" show-word-limit /></el-form-item>
+        <el-form-item :label="$tp('上级分类')"><el-tree-select v-model="editor.parentId" :data="parentOptions" node-key="id"
           :props="{ label: 'name', children: 'children' }" check-strictly default-expand-all style="width:100%" /></el-form-item>
-        <el-form-item label="排序"><el-input-number v-model="editor.sortOrder" :min="0" :max="9999" /></el-form-item>
-        <el-form-item label="备注"><el-input v-model="editor.remark" type="textarea" maxlength="500" show-word-limit /></el-form-item>
+        <el-form-item :label="$tp('排序')"><el-input-number v-model="editor.sortOrder" :min="0" :max="9999" /></el-form-item>
+        <el-form-item :label="$tp('备注')"><el-input v-model="editor.remark" type="textarea" maxlength="500" show-word-limit /></el-form-item>
       </el-form>
-      <template #footer><el-button @click="editorOpen=false">取消</el-button><el-button type="primary" :loading="saving" @click="saveCategory">确定</el-button></template>
+      <template #footer><el-button @click="editorOpen=false">{{ $tp('取消') }}</el-button><el-button type="primary" :loading="saving" @click="saveCategory">{{ $tp('确定') }}</el-button></template>
     </el-dialog>
 
-    <el-dialog v-model="settingsOpen" title="设置" width="620px" append-to-body>
-      <div class="view-toggle"><span :class="{active:viewDraft==='tree'}">树状视图</span><el-switch v-model="viewDraft" active-value="flat" inactive-value="tree" /><span :class="{active:viewDraft==='flat'}">平铺分类视图</span></div>
-      <p class="settings-hint">树状展示和平铺分类展示示意</p>
+    <el-dialog v-model="settingsOpen" :title="$tp('设置')" width="620px" append-to-body>
+      <div class="view-toggle"><span :class="{active:viewDraft==='tree'}">{{ $tp('树状视图') }}</span><el-switch v-model="viewDraft" active-value="flat" inactive-value="tree" /><span :class="{active:viewDraft==='flat'}">{{ $tp('平铺分类视图') }}</span></div>
+      <p class="settings-hint">{{ $tp('树状展示和平铺分类展示示意') }}</p>
       <div class="view-previews">
         <button type="button" :class="{active:viewDraft==='tree'}" @click="viewDraft='tree'"><TreePreview /></button>
         <button type="button" :class="{active:viewDraft==='flat'}" @click="viewDraft='flat'"><FlatPreview /></button>
       </div>
       <template v-if="viewDraft === 'flat' && settingsTarget">
         <el-form label-width="90px" class="flat-settings">
-          <el-form-item label="上级分类"><el-input :model-value="settingsTarget.name" disabled /></el-form-item>
-          <el-form-item label="同级展示"><el-select v-model="peerDraft" multiple filterable allow-create default-first-option
-            placeholder="选择分类，或输入名称后按回车创建" style="width:100%">
+          <el-form-item :label="$tp('上级分类')"><el-input :model-value="settingsTarget.name" disabled /></el-form-item>
+          <el-form-item :label="$tp('同级展示')"><el-select v-model="peerDraft" multiple filterable allow-create default-first-option
+            :placeholder="$tp('选择分类，或输入名称后按回车创建')" style="width:100%">
             <el-option v-for="child in directChildren(settingsTarget.id)" :key="child.id" :label="child.name" :value="String(child.id)" />
-          </el-select><p class="field-hint">没有可选分类时，可直接输入名称并按 Enter 创建；新分类将作为当前上级分类的下级。</p></el-form-item>
+          </el-select><p class="field-hint">{{ $tp('没有可选分类时，可直接输入名称并按 Enter 创建；新分类将作为当前上级分类的下级。') }}</p></el-form-item>
         </el-form>
       </template>
-      <template #footer><el-button @click="settingsOpen=false">取消</el-button><el-button type="primary" :loading="saving" @click="saveSettings">确定</el-button></template>
+      <template #footer><el-button @click="settingsOpen=false">{{ $tp('取消') }}</el-button><el-button type="primary" :loading="saving" @click="saveSettings">{{ $tp('确定') }}</el-button></template>
     </el-dialog>
   </section>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, h, onMounted, reactive, ref, watch } from 'vue'
 import { ArrowDown, Delete, Edit, Folder, MoreFilled, Plus, Search, Setting, TopRight, Upload } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -205,7 +207,7 @@ watch(section, value => {
 })
 
 const filterTree = (value, data) => !value || data.name.toLowerCase().includes(value.toLowerCase())
-const categoryName = id => String(id || '0') === '0' ? '所有算法' : normalizedRows.value.find(row => row.id === String(id))?.name || '-'
+const categoryName = id => String(id || '0') === '0' ? uiText('所有算法') : normalizedRows.value.find(row => row.id === String(id))?.name || '-'
 const childCount = id => directChildren(id).length
 const descendants = id => {
   const ids = new Set([String(id)])
@@ -220,7 +222,7 @@ const flatChildren = group => {
 }
 const parseIds = value => { try { return Array.isArray(value) ? value.map(String) : JSON.parse(value || '[]').map(String) } catch { return [] } }
 const fallbackColor = id => colors[Number(String(id).slice(-2)) % colors.length]
-const typeName = value => algorithmTypes.find(item => item.value === value)?.label || '算法'
+const typeName = value => algorithmTypes.find(item => item.value === value)?.label || uiText('算法')
 
 async function refreshAll() {
   loading.value = true
@@ -250,13 +252,13 @@ function openCreate(parentId) { resetEditor(parentId === ROOT_ID ? '0' : parentI
 function openEdit(row) { Object.assign(editor, { id: String(row.id), name: row.name, parentId: String(row.parentId || '0'), sortOrder: row.sortOrder || 0, remark: row.remark || '' }); editorOpen.value = true }
 async function saveCategory() {
   await formRef.value.validate(); saving.value = true
-  try { await saveAlgorithmCatalogCategory({ ...editor }); editorOpen.value = false; ElMessage.success('分类已保存'); await refreshAll() }
+  try { await saveAlgorithmCatalogCategory({ ...editor }); editorOpen.value = false; ElMessage.success(uiText('分类已保存')); await refreshAll() }
   finally { saving.value = false }
 }
 async function removeCategories(ids) {
-  try { await ElMessageBox.confirm('删除后不可恢复，确定删除所选分类吗？', '删除分类', { type: 'warning' }) }
+  try { await ElMessageBox.confirm(uiText('删除后不可恢复，确定删除所选分类吗？'), uiText('删除分类'), { type: 'warning' }) }
   catch { return }
-  await deleteAlgorithmCatalogCategories(ids); activeCategoryId.value = '0'; ElMessage.success('分类已删除'); await refreshAll()
+  await deleteAlgorithmCatalogCategories(ids); activeCategoryId.value = '0'; ElMessage.success(uiText('分类已删除')); await refreshAll()
 }
 function openSettings(row) { settingsTarget.value = row; viewDraft.value = viewMode.value; peerDraft.value = parseIds(row.flatCategoryIds); settingsOpen.value = true }
 async function saveSettings() {
@@ -284,7 +286,7 @@ async function saveSettings() {
     await saveAlgorithmCatalogSettings({ viewMode: viewDraft.value, repositoryId: targetId, peerIds: resolvedPeerIds })
     viewMode.value = viewDraft.value
     settingsOpen.value = false
-    ElMessage.success('设置已保存')
+    ElMessage.success(uiText('设置已保存'))
     await refreshAll()
   }
   finally { saving.value = false }
@@ -296,9 +298,9 @@ async function handleAlgorithmCommand(command, algorithm) {
   if (command === 'deploy') emit('deploy', algorithm)
   if (command === 'publish') emit('publish', algorithm)
   if (command === 'delete') {
-    try { await ElMessageBox.confirm(`确定删除算法“${algorithm.name}”吗？`, '删除算法', { type: 'warning' }) }
+    try { await ElMessageBox.confirm(uiText('确定删除算法“{value0}”吗？', { value0: algorithm.name }), uiText('删除算法'), { type: 'warning' }) }
     catch { return }
-    await deleteAlgorithm(algorithm.id); ElMessage.success('算法已删除'); await loadAlgorithms()
+    await deleteAlgorithm(algorithm.id); ElMessage.success(uiText('算法已删除')); await loadAlgorithms()
   }
 }
 const TreePreview = { render: () => h('div', { class: 'mini tree-mini' }, ['▾  所有算法', h('br'), '　▾  基础算法', h('br'), '　　　回归分析', h('br'), '　　　居正运算']) }

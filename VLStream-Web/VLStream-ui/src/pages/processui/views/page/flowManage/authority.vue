@@ -10,9 +10,7 @@
     <div class="au_authority_content">
       <!--  -->
       <div class="au_authority_row">
-        <div class="au_authority_label">
-          可阅读者
-        </div>
+        <div class="au_authority_label"> {{ $tp('可阅读者') }} </div>
         <div class="au_authority_setting">
           <div
             v-if="!isReadingEditable"
@@ -33,9 +31,7 @@
                 >
                   {{ user['user_name'] }}
                 </el-tag>
-                <div v-if="tempReadingUserList.length === 0" class="au_placeholder">
-                  为空则只有作者和相关人可见
-                </div>
+                <div v-if="tempReadingUserList.length === 0" class="au_placeholder"> {{ $tp('为空则只有作者和相关人可见') }} </div>
               </div>
             </div>
           </div>
@@ -44,9 +40,7 @@
 
       <!--  -->
       <div class="au_authority_row">
-        <div class="au_authority_label">
-          可编辑者
-        </div>
+        <div class="au_authority_label"> {{ $tp('可编辑者') }} </div>
         <div class="au_authority_setting">
           <div
             v-if="!isEditingEditable"
@@ -67,9 +61,7 @@
                 >
                   {{ user['user_name'] }}
                 </el-tag>
-                <div v-if="tempEditingUserList.length === 0" class="au_placeholder">
-                  为空则只有管理员可编辑
-                </div>
+                <div v-if="tempEditingUserList.length === 0" class="au_placeholder"> {{ $tp('为空则只有管理员可编辑') }} </div>
               </div>
             </div>
           </div>
@@ -78,60 +70,36 @@
 
       <!--  -->
       <div class="au_authority_row">
-        <div class="au_authority_label">
-          附件可下载者
-        </div>
+        <div class="au_authority_label"> {{ $tp('附件可下载者') }} </div>
         <div class="au_authority_setting">
           <el-radio-group v-model="downloadPermission" class="au_radio_group">
-            <el-radio label="all" class="au_radio_item">
-              所有人可下载
-            </el-radio>
-            <el-radio label="none" class="au_radio_item">
-              所有人不可下载
-            </el-radio>
-            <el-radio label="specified" class="au_radio_item">
-              指定人可下载
-            </el-radio>
+            <el-radio label="all" class="au_radio_item"> {{ $tp('所有人可下载') }} </el-radio>
+            <el-radio label="none" class="au_radio_item"> {{ $tp('所有人不可下载') }} </el-radio>
+            <el-radio label="specified" class="au_radio_item"> {{ $tp('指定人可下载') }} </el-radio>
           </el-radio-group>
         </div>
       </div>
 
       <!--  -->
       <div class="au_authority_row">
-        <div class="au_authority_label">
-          附件可打印者
-        </div>
+        <div class="au_authority_label"> {{ $tp('附件可打印者') }} </div>
         <div class="au_authority_setting">
           <el-radio-group v-model="printPermission" class="au_radio_group">
-            <el-radio label="all" class="au_radio_item">
-              所有人可打印
-            </el-radio>
-            <el-radio label="none" class="au_radio_item">
-              所有人不可打印
-            </el-radio>
-            <el-radio label="specified" class="au_radio_item">
-              指定人可打印
-            </el-radio>
+            <el-radio label="all" class="au_radio_item"> {{ $tp('所有人可打印') }} </el-radio>
+            <el-radio label="none" class="au_radio_item"> {{ $tp('所有人不可打印') }} </el-radio>
+            <el-radio label="specified" class="au_radio_item"> {{ $tp('指定人可打印') }} </el-radio>
           </el-radio-group>
         </div>
       </div>
 
       <!--  -->
       <div class="au_authority_row">
-        <div class="au_authority_label">
-          附件可拷贝者
-        </div>
+        <div class="au_authority_label"> {{ $tp('附件可拷贝者') }} </div>
         <div class="au_authority_setting">
           <el-radio-group v-model="copyPermission" class="au_radio_group">
-            <el-radio label="all" class="au_radio_item">
-              所有人可拷贝
-            </el-radio>
-            <el-radio label="none" class="au_radio_item">
-              所有人不可拷贝
-            </el-radio>
-            <el-radio label="specified" class="au_radio_item">
-              指定人可拷贝
-            </el-radio>
+            <el-radio label="all" class="au_radio_item"> {{ $tp('所有人可拷贝') }} </el-radio>
+            <el-radio label="none" class="au_radio_item"> {{ $tp('所有人不可拷贝') }} </el-radio>
+            <el-radio label="specified" class="au_radio_item"> {{ $tp('指定人可拷贝') }} </el-radio>
           </el-radio-group>
         </div>
       </div>
@@ -139,12 +107,8 @@
 
     <!-- operationbutton -->
     <div v-if="props.submit" style="text-align: right;">
-      <el-button class="bigBtn common_btn" @click="emits('close')">
-        取消
-      </el-button>
-      <el-button v-preReClick class="bigBtn" type="primary">
-        保存
-      </el-button>
+      <el-button class="bigBtn common_btn" @click="emits('close')"> {{ $tp('取消') }} </el-button>
+      <el-button v-preReClick class="bigBtn" type="primary"> {{ $tp('保存') }} </el-button>
     </div>
 
     <!--  -->

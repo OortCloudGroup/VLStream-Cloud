@@ -8,36 +8,36 @@
 <template>
   <div class="change-tenant-content">
     <div v-if="currentTenant" class="current-org-box">
-      <div class="org-title"><div class="line" /><span>当前组织</span></div>
+      <div class="org-title"><div class="line" /><span>{{ $tp('当前组织') }}</span></div>
       <div class="current-org-main">
         <img v-if="currentTenant.company_logo" class="org-logo" :src="platformImageUrl(currentTenant.company_logo)" alt="">
         <oort-svg-icon v-else class="org-logo" name="tenant" />
         <div class="org-info">
           <div class="org-name">{{ currentTenant.tenant_name }}</div>
           <div class="org-tags">
-            <div v-if="currentTenant.certified" class="certifi"><img :src="certifiedIcon"><span>已认证</span></div>
-            <div v-else class="getCertifi" @click="ElMessage.warning('请前往统一用户平台认证')"><img :src="getCertifiIcon"><span>去认证</span></div>
+            <div v-if="currentTenant.certified" class="certifi"><img :src="certifiedIcon"><span>{{ $tp('已认证') }}</span></div>
+            <div v-else class="getCertifi" @click="ElMessage.warning('请前往统一用户平台认证')"><img :src="getCertifiIcon"><span>{{ $tp('去认证') }}</span></div>
           </div>
         </div>
       </div>
       <div class="cert-box">
         <el-descriptions :column="2" class="cert-info">
-          <el-descriptions-item><template #label><img :src="legalIcon" class="info-icon">法定代表人</template>{{ currentTenant.legal_name }}</el-descriptions-item>
-          <el-descriptions-item><template #label><img :src="phoneIcon" class="info-icon">联系电话</template>{{ currentTenant.phone }}</el-descriptions-item>
-          <el-descriptions-item><template #label><img :src="codeIcon" class="info-icon">组织机构代码</template>{{ currentTenant.organization_code }}</el-descriptions-item>
-          <el-descriptions-item><template #label><img :src="addressIcon" class="info-icon">地址</template>{{ currentTenant.ex_data.address }}</el-descriptions-item>
-          <el-descriptions-item><template #label><img :src="dateIcon" class="info-icon">开通时间</template>{{ currentTenant.start_day }}</el-descriptions-item>
-          <el-descriptions-item><template #label><img :src="dateIcon" class="info-icon">到期时间</template>{{ currentTenant.end_day }}</el-descriptions-item>
+          <el-descriptions-item><template #label><img :src="legalIcon" class="info-icon">{{ $tp('法定代表人') }}</template>{{ currentTenant.legal_name }}</el-descriptions-item>
+          <el-descriptions-item><template #label><img :src="phoneIcon" class="info-icon">{{ $tp('联系电话') }}</template>{{ currentTenant.phone }}</el-descriptions-item>
+          <el-descriptions-item><template #label><img :src="codeIcon" class="info-icon">{{ $tp('组织机构代码') }}</template>{{ currentTenant.organization_code }}</el-descriptions-item>
+          <el-descriptions-item><template #label><img :src="addressIcon" class="info-icon">{{ $tp('地址') }}</template>{{ currentTenant.ex_data.address }}</el-descriptions-item>
+          <el-descriptions-item><template #label><img :src="dateIcon" class="info-icon">{{ $tp('开通时间') }}</template>{{ currentTenant.start_day }}</el-descriptions-item>
+          <el-descriptions-item><template #label><img :src="dateIcon" class="info-icon">{{ $tp('到期时间') }}</template>{{ currentTenant.end_day }}</el-descriptions-item>
           <el-descriptions-item>
-            <template #label><img :src="remarkIcon" class="info-icon">备注</template>
+            <template #label><img :src="remarkIcon" class="info-icon">{{ $tp('备注') }}</template>
             <span>{{ showExpand ? shortRemark : fullRemark }}</span>
-            <span v-if="fullRemark" class="expand-btn" @click="showExpand = !showExpand">{{ showExpand ? '展开' : '收起' }}</span>
+            <span v-if="fullRemark" class="expand-btn" @click="showExpand = !showExpand">{{ showExpand ? $tp('展开') : $tp('收起') }}</span>
           </el-descriptions-item>
         </el-descriptions>
       </div>
     </div>
     <div class="change-org-box">
-      <div class="org-title"><div class="line" /><span>切换组织</span></div>
+      <div class="org-title"><div class="line" /><span>{{ $tp('切换组织') }}</span></div>
       <div class="change-org-list">
         <div v-for="org in tenantList" :key="org.tenant_id" class="org-card" @click="emit('switch-tenant', { id: org.tenant_id, name: org.tenant_name })">
           <img v-if="org.company_logo" class="org-card-logo" :src="platformImageUrl(org.company_logo)" alt="">
@@ -45,7 +45,7 @@
           <div class="org-card-info"><div class="org-card-name">{{ org.tenant_name }}</div><div class="org-card-desc">{{ org.remark || org.tenant_name }}</div></div>
         </div>
       </div>
-      <div v-if="!loading && tenantList.length === 0" class="no-data">暂无可切换的组织</div>
+      <div v-if="!loading && tenantList.length === 0" class="no-data">{{ $tp('暂无可切换的组织') }}</div>
     </div>
   </div>
 </template>

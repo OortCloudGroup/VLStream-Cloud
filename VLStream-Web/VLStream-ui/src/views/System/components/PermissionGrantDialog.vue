@@ -8,41 +8,43 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    title="权限配置"
+    :title="$tp('权限配置')"
     width="50%"
     @open="loadGrantData"
     @close="handleClose"
   >
     <div class="grant-dialog" v-loading="loading">
       <div class="grant-title">
-        <span>{{ role?.roleName || '未选择角色' }}</span>
+        <span>{{ role?.roleName || $tp('未选择角色') }}</span>
         <small>{{ role?.roleAlias || '' }}</small>
       </div>
 
       <el-tabs v-model="activeTab">
         <!-- menu item -->
-        <el-tab-pane label="菜单权限" name="menu">
+        <el-tab-pane :label="$tp('菜单权限')" name="menu">
           <el-tree ref="menuTreeRef" :data="grantTrees.menu" node-key="id" show-checkbox default-expand-all :props="treeProps" />
         </el-tab-pane>
         <!-- data item -->
-        <el-tab-pane label="数据权限" name="data">
+        <el-tab-pane :label="$tp('数据权限')" name="data">
           <el-tree ref="dataScopeTreeRef" :data="grantTrees.dataScope" node-key="id" show-checkbox default-expand-all :props="treeProps" />
         </el-tab-pane>
         <!-- interface item -->
-        <el-tab-pane label="接口权限" name="api">
+        <el-tab-pane :label="$tp('接口权限')" name="api">
           <el-tree ref="apiScopeTreeRef" :data="grantTrees.apiScope" node-key="id" show-checkbox default-expand-all :props="treeProps" />
         </el-tab-pane>
       </el-tabs>
     </div>
 
     <template #footer>
-      <el-button @click="handleClose" class="common_btn">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSubmit" class="common_btn">保存</el-button>
+      <el-button @click="handleClose" class="common_btn">{{ $tp('取消') }}</el-button>
+      <el-button type="primary" :loading="saving" @click="handleSubmit" class="common_btn">{{ $tp('保存') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { nextTick, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getGrantTree, getRoleTreeKeys } from '@/api/system/menu'
@@ -96,7 +98,7 @@ const loadGrantData = async () => {
     await setCheckedKeys(checkedPayload)
   } catch (error) {
     console.error('加载权限数据失败:', error)
-    ElMessage.error('加载权限数据失败')
+    ElMessage.error(uiText('加载权限数据失败'))
   } finally {
     loading.value = false
   }
@@ -116,15 +118,15 @@ const handleSubmit = async () => {
       apiScopeIds: apiScopeTreeRef.value?.getCheckedKeys(false).join(',') || ''
     })
     if (isSuccess(response)) {
-      ElMessage.success('权限配置已保存')
+      ElMessage.success(uiText('权限配置已保存'))
       emit('success')
       handleClose()
     } else {
-      ElMessage.error(response?.msg || '保存失败')
+      ElMessage.error(response?.msg || uiText('保存失败'))
     }
   } catch (error) {
     console.error('保存权限配置失败:', error)
-    ElMessage.error('保存权限配置失败')
+    ElMessage.error(uiText('保存权限配置失败'))
   } finally {
     saving.value = false
   }

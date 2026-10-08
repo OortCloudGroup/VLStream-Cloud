@@ -10,7 +10,7 @@
     class="collapse-toggle"
     role="button"
     tabindex="0"
-    :title="isExpanded ? '收起侧边栏' : '展开侧边栏'"
+    :title="isExpanded ? $tp('收起侧边栏') : $tp('展开侧边栏')"
     @click="handleToggle"
     @keydown.enter="handleToggle"
     @keydown.space.prevent="handleToggle"

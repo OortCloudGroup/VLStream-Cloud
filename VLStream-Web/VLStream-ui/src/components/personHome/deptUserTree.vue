@@ -11,7 +11,7 @@
       <div class="tree_search_content">
         <el-input
           v-model="keyWord"
-          placeholder="请输入关键字"
+          :placeholder="$tp('请输入关键字')"
           suffix-icon="Search"
           @change="getSearchDept"
         />
@@ -46,9 +46,7 @@
           v-model="checkedAll"
           :indeterminate="isIndeterminate"
           @change="handleCheckAllChange"
-        >
-          全选
-        </el-checkbox>
+        > {{ $tp('全选') }} </el-checkbox>
       </div>
       <div class="person_list">
         <el-checkbox-group

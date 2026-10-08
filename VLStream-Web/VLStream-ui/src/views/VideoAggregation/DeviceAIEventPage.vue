@@ -9,9 +9,9 @@
   <div class="device-sub-page tenant_Page draHeaPB">
     <div class="page-header">
       <div class="breadcrumb">
-        <span class="breadcrumb-item" @click="goBack">设备列表</span>
+        <span class="breadcrumb-item" @click="goBack">{{ $tp('设备列表') }}</span>
         <span class="breadcrumb-separator">></span>
-        <span class="breadcrumb-item active">{{ showModelMarket ? '模型超市' : 'AI事件配置' }}</span>
+        <span class="breadcrumb-item active">{{ showModelMarket ? $tp('模型超市') : $tp('AI事件配置') }}</span>
       </div>
     </div>
     <div v-loading="loading" class="page-body">
@@ -33,6 +33,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -53,7 +55,7 @@ const goBack = () => {
 const loadDevice = async () => {
   const id = route.query.id
   if (!id) {
-    ElMessage.error('缺少设备ID')
+    ElMessage.error(uiText('缺少设备ID'))
     goBack()
     return
   }
@@ -75,12 +77,12 @@ const loadDevice = async () => {
 
 const handleSave = async (aiEventData) => {
   console.log('保存AI事件配置:', aiEventData)
-  ElMessage.success('AI事件配置保存成功')
+  ElMessage.success(uiText('AI事件配置保存成功'))
 }
 
 const handleModelMarketSave = async (modelData) => {
   console.log('安装模型:', modelData)
-  ElMessage.success('模型安装成功')
+  ElMessage.success(uiText('模型安装成功'))
   showModelMarket.value = false
 }
 

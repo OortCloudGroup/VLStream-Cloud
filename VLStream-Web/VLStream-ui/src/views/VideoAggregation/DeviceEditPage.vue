@@ -9,9 +9,9 @@
   <div class="device-sub-page tenant_Page draHeaPB">
     <div class="page-header">
       <div class="breadcrumb">
-        <span class="breadcrumb-item" @click="goBack">设备列表</span>
+        <span class="breadcrumb-item" @click="goBack">{{ $tp('设备列表') }}</span>
         <span class="breadcrumb-separator">></span>
-        <span class="breadcrumb-item active">编辑设备</span>
+        <span class="breadcrumb-item active">{{ $tp('编辑设备') }}</span>
       </div>
     </div>
     <div v-loading="loading" class="page-body">
@@ -27,6 +27,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -45,7 +47,7 @@ const goBack = () => {
 const loadDevice = async () => {
   const id = route.query.id
   if (!id) {
-    ElMessage.error('缺少设备ID')
+    ElMessage.error(uiText('缺少设备ID'))
     goBack()
     return
   }
@@ -55,12 +57,12 @@ const loadDevice = async () => {
     if (response.code === 200) {
       editForm.value = { ...response.data }
     } else {
-      ElMessage.error(response.message || '获取设备详情失败')
+      ElMessage.error(response.message || uiText('获取设备详情失败'))
       goBack()
     }
   } catch (error) {
     console.error('获取设备详情失败:', error)
-    ElMessage.error('获取设备详情失败')
+    ElMessage.error(uiText('获取设备详情失败'))
     goBack()
   } finally {
     loading.value = false
@@ -70,11 +72,11 @@ const loadDevice = async () => {
 const handleSave = async (formData) => {
   try {
     await updateDevice(route.query.id, formData)
-    ElMessage.success('更新成功')
+    ElMessage.success(uiText('更新成功'))
     goBack()
   } catch (error) {
     console.error('保存设备失败:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(uiText('保存失败'))
   }
 }
 

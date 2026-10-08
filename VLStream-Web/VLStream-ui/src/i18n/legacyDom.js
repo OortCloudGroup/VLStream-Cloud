@@ -8,11 +8,19 @@ let observer
 let scheduled = false
 
 const translateTextNode = node => {
+  if (node.parentElement?.closest('[data-i18n-ignore], script, style, textarea, pre, code')) return
   if (!originalText.has(node) || (appliedText.has(node) && appliedText.get(node) !== node.nodeValue)) {
+    // Vue has already localized this node. Do not cache the translated output
+    // as source text, or a later locale change would restore stale English.
+    if (!/[\u3400-\u9fff]/.test(node.nodeValue)) {
+      originalText.delete(node)
+      appliedText.delete(node)
+      return
+    }
     originalText.set(node, node.nodeValue)
   }
   const source = originalText.get(node)
-  const trimmed = source.trim()
+  const trimmed = source.trim().replace(/\s+/g, ' ')
   if (!trimmed) return
   const translated = translatePhrase(trimmed)
   if (translated === trimmed && currentLocale.value !== 'zh-CN') return
@@ -32,8 +40,17 @@ const translateElement = element => {
   }
   translatedAttributes.forEach(name => {
     if (!element.hasAttribute(name)) return
-    if (!(name in attributes)) attributes[name] = element.getAttribute(name)
-    element.setAttribute(name, translatePhrase(attributes[name]))
+    const value = element.getAttribute(name)
+    if (!(name in attributes) || attributes[name].applied !== value) {
+      if (!/[\u3400-\u9fff]/.test(value)) {
+        delete attributes[name]
+        return
+      }
+      attributes[name] = { source: value, applied: value }
+    }
+    const translated = translatePhrase(attributes[name].source)
+    attributes[name].applied = translated
+    if (value !== translated) element.setAttribute(name, translated)
   })
 }
 
@@ -44,7 +61,10 @@ const translateTree = root => {
     return
   }
   if (root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) return
-  if (root.nodeType === Node.ELEMENT_NODE) translateElement(root)
+  if (root.nodeType === Node.ELEMENT_NODE) {
+    if (root.closest('[data-i18n-ignore], script, style, textarea, pre, code')) return
+    translateElement(root)
+  }
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT)
   let node = walker.nextNode()
   while (node) {

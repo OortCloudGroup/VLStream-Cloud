@@ -9,12 +9,12 @@
 <template>
   <el-form-item :label="i18nt('designer.setting.displayType')">
     <el-select v-model="optionModel.datetype">
-      <el-option label="日期时间" value="datetime" />
-      <el-option label="日期" value="date" />
+      <el-option :label="$tp('日期时间')" value="datetime" />
+      <el-option :label="$tp('日期')" value="date" />
       <!-- <el-option label="dates" value="dates" /> -->
-      <el-option label="年" value="year" />
-      <el-option label="月" value="month" />
-      <el-option label="周" value="week" />
+      <el-option :label="$tp('年')" value="year" />
+      <el-option :label="$tp('月')" value="month" />
+      <el-option :label="$tp('周')" value="week" />
     </el-select>
   </el-form-item>
 </template>

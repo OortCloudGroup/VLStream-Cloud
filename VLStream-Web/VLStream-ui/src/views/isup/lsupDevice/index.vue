@@ -17,7 +17,7 @@
       <div class="searchHeight_out flexRowAC">
         <search-height-box
           keyword="name"
-          placeholder="搜索设备名称"
+          :placeholder="$tp('搜索设备名称')"
           :data="searchData"
           @handle="searchResetFn"
         />
@@ -53,8 +53,8 @@
       </el-table-column>
       <el-table-column :label="$tp('状态')" prop="status" :width="clacPXToVW(90)">
         <template #default="scope">
-          <el-tag v-if="scope.row.status === 'ON'" type="success">在线</el-tag>
-          <el-tag v-if="scope.row.status === 'OFFLINE'" type="danger">离线</el-tag>
+          <el-tag v-if="scope.row.status === 'ON'" type="success">{{ $tp('在线') }}</el-tag>
+          <el-tag v-if="scope.row.status === 'OFFLINE'" type="danger">{{ $tp('离线') }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column :label="$tp('播放类型')" prop="playType" :width="clacPXToVW(100)">
@@ -68,22 +68,22 @@
         <template #default="scope">
           <div class="operateAppBox flexRowAC" @click.stop>
             <div class="new_table_svg_group" @click="handleSDKPlay(scope.row)" v-hasPermi="['isup:lsupDevice:start']">
-              <span>SDK播放</span>
+              <span>{{ $tp('SDK播放') }}</span>
             </div>
             <div class="new_table_svg_group" @click="handleStartPlay(scope.row)" v-hasPermi="['isup:lsupDevice:start']">
-              <span>播放</span>
+              <span>{{ $tp('播放') }}</span>
             </div>
             <div class="new_table_svg_group" @click="handleUpdate(scope.row)" v-hasPermi="['isup:lsupDevice:edit']">
-              <span>修改</span>
+              <span>{{ $tp('修改') }}</span>
             </div>
             <el-dropdown @command="(command)=>{moreClick(command, scope.row)}" v-if="checkPermi(['isup:lsupDevice:edit'])">
               <div class="new_table_svg_group">
-                <span>更多</span>
+                <span>{{ $tp('更多') }}</span>
               </div>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="handleMap" v-if="checkPermi(['isup:lsupDevice:edit'])">修改位置</el-dropdown-item>
-                  <el-dropdown-item command="handleDelete" v-if="checkPermi(['isup:lsupDevice:remove'])">删除</el-dropdown-item>
+                  <el-dropdown-item command="handleMap" v-if="checkPermi(['isup:lsupDevice:edit'])">{{ $tp('修改位置') }}</el-dropdown-item>
+                  <el-dropdown-item command="handleDelete" v-if="checkPermi(['isup:lsupDevice:remove'])">{{ $tp('删除') }}</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -105,16 +105,16 @@
     <!-- Update isupdevice -->
     <el-dialog :title="title" v-model="open" width="30%" append-to-body>
       <el-form ref="lsupDeviceRef" :model="form" :rules="rules" label-width="120px">
-        <el-form-item label="设备ID" prop="deviceId">
-          <el-input v-model="form.deviceId" disabled placeholder="请输入设备ID"/>
+        <el-form-item :label="$tp('设备ID')" prop="deviceId">
+          <el-input v-model="form.deviceId" disabled :placeholder="$tp('请输入设备ID')"/>
         </el-form-item>
-        <el-form-item label="IP地址" prop="ipAddress">
-          <el-input v-model="form.ipAddress" disabled placeholder="请输入设备的 IP 地址"/>
+        <el-form-item :label="$tp('IP地址')" prop="ipAddress">
+          <el-input v-model="form.ipAddress" disabled :placeholder="$tp('请输入设备的 IP 地址')"/>
         </el-form-item>
-        <el-form-item label="设备名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入设备名称"/>
+        <el-form-item :label="$tp('设备名称')" prop="name">
+          <el-input v-model="form.name" :placeholder="$tp('请输入设备名称')"/>
         </el-form-item>
-        <el-form-item label="播放类型" prop="playType">
+        <el-form-item :label="$tp('播放类型')" prop="playType">
           <el-radio-group v-model="form.playType">
             <el-radio
                 v-for="dict in play_type"
@@ -125,51 +125,49 @@
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="流id" prop="streamId" v-if="form.playType === '2'">
-          <el-input v-model="form.streamId" placeholder="请输入流id" maxlength="100" show-word-limit/>
+        <el-form-item :label="$tp('流id')" prop="streamId" v-if="form.playType === '2'">
+          <el-input v-model="form.streamId" :placeholder="$tp('请输入流id')" maxlength="100" show-word-limit/>
         </el-form-item>
-        <el-form-item label="EasyNTS地址" prop="easyNTSUrl" v-if="form.playType === '3'">
-          <el-input v-model="form.easyNTSUrl" type="textarea" placeholder="请输入EasyNTS地址" maxlength="200"
+        <el-form-item :label="$tp('EasyNTS地址')" prop="easyNTSUrl" v-if="form.playType === '3'">
+          <el-input v-model="form.easyNTSUrl" type="textarea" :placeholder="$tp('请输入EasyNTS地址')" maxlength="200"
                     show-word-limit/>
         </el-form-item>
 
         <div v-if="form.playType === '1'">
-          <el-form-item label="用户名" prop="userName">
-            <el-input v-model="form.userName" placeholder="请输入用户名"/>
+          <el-form-item :label="$tp('用户名')" prop="userName">
+            <el-input v-model="form.userName" :placeholder="$tp('请输入用户名')"/>
           </el-form-item>
-          <el-form-item label="密码" prop="password">
-            <el-input v-model="form.password" placeholder="请输入密码" show-password/>
+          <el-form-item :label="$tp('密码')" prop="password">
+            <el-input v-model="form.password" :placeholder="$tp('请输入密码')" show-password/>
           </el-form-item>
-          <el-form-item label="通道" prop="channel">
+          <el-form-item :label="$tp('通道')" prop="channel">
             <template #label>
               <span>
-                 <el-tooltip content="海康isup不支持获取通道" placement="top">
+                 <el-tooltip :content="$tp('海康isup不支持获取通道')" placement="top">
                     <el-icon><question-filled /></el-icon>
-                 </el-tooltip>
-                 通道
-              </span>
+                 </el-tooltip> {{ $tp('通道') }} </span>
             </template>
-            <el-input v-model="form.channel" placeholder="请输入通道"/>
+            <el-input v-model="form.channel" :placeholder="$tp('请输入通道')"/>
           </el-form-item>
         </div>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"/>
+        <el-form-item :label="$tp('备注')" prop="remark">
+          <el-input v-model="form.remark" type="textarea" :placeholder="$tp('请输入内容')"/>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm" class="common_btn">确 定</el-button>
-          <el-button @click="cancel" class="common_btn">取 消</el-button>
+          <el-button type="primary" @click="submitForm" class="common_btn">{{ $tp('确 定') }}</el-button>
+          <el-button @click="cancel" class="common_btn">{{ $tp('取 消') }}</el-button>
         </div>
       </template>
     </el-dialog>
 
-    <el-dialog title="播放视频" v-model="openPlay" width="45%" append-to-body>
+    <el-dialog :title="$tp('播放视频')" v-model="openPlay" width="45%" append-to-body>
       <div>
         <Hikvision :rtsp="videoUrl" v-if="openPlay && (playType === '1' || playType === '3' || playType === '4') "/>
 
         <el-row :gutter="10" style="margin-top: 20px" v-if="openPlay && (playType === '1' || playType === '3' || playType === '4') ">
-          <el-col :span="4"><span style="width: 100px; line-height: 40px; text-align: right;">播放地址：</span></el-col>
+          <el-col :span="4"><span style="width: 100px; line-height: 40px; text-align: right;">{{ $tp('播放地址：') }}</span></el-col>
           <el-col :span="20">
             <el-input v-model="videoUrl" :disabled="true">
               <template #append>
@@ -219,9 +217,7 @@
 
               <!-- 、 、 control -->
               <div>
-                <div style="margin-left: 20px;width: 300px;">
-                  聚焦
-                  <el-slider v-model="controSpeedFocus" :max="100" :min="-100" :show-input="true"
+                <div style="margin-left: 20px;width: 300px;"> {{ $tp('聚焦') }} <el-slider v-model="controSpeedFocus" :max="100" :min="-100" :show-input="true"
                              @change="focusCamera"/>
                 </div>
               </div>
@@ -231,7 +227,7 @@
 
       <div v-if="playType === '2'">
         <el-tabs v-model="activeName" type="card" :stretch="true">
-          <el-tab-pane label="flv播放" name="flv">
+          <el-tab-pane :label="$tp('flv播放')" name="flv">
             <el-row>
               <el-col :span="24">
                 <div class="player" v-if="activeName === 'flv'">
@@ -254,25 +250,25 @@
         </el-tabs>
 
         <el-tabs v-model="tabActiveName" type="card" :stretch="true" style="margin-top: 10px;">
-          <el-tab-pane label="实时视频" name="media">
+          <el-tab-pane :label="$tp('实时视频')" name="media">
             <el-row :gutter="10">
-              <el-col :span="2"><span style="width: 80px; line-height: 40px; text-align: right;">播放地址：</span>
+              <el-col :span="2"><span style="width: 80px; line-height: 40px; text-align: right;">{{ $tp('播放地址：') }}</span>
               </el-col>
               <el-col :span="18">
                 <el-input v-model="flvUrl" :disabled="true" v-show="activeName === 'flv'">
-                  <template #prepend>flv地址</template>
+                  <template #prepend>{{ $tp('flv地址') }}</template>
                   <template #append>
                     <el-button type="primary" :icon="DocumentCopy" @click="copyToClipboard(flvUrl)"/>
                   </template>
                 </el-input>
                 <el-input v-model="rtcUrl" :disabled="true" v-show="activeName === 'webRtc'">
-                  <template #prepend>rtcUrl地址</template>
+                  <template #prepend>{{ $tp('rtcUrl地址') }}</template>
                   <template #append>
                     <el-button type="primary" :icon="DocumentCopy" @click="copyToClipboard(rtcUrl)"/>
                   </template>
                 </el-input>
                 <el-input v-model="wsUrl" :disabled="true" v-show="activeName === 'H265'">
-                  <template #prepend>wsUrl地址</template>
+                  <template #prepend>{{ $tp('wsUrl地址') }}</template>
                   <template #append>
                     <el-button type="primary" :icon="DocumentCopy" @click="copyToClipboard(wsUrl)"/>
                   </template>
@@ -284,12 +280,12 @@
             </el-row>
           </el-tab-pane>
 
-          <el-tab-pane label="编码信息" name="codec">
+          <el-tab-pane :label="$tp('编码信息')" name="codec">
             <MediaInfo v-if="tabActiveName === 'codec'" ref="mediaInfo" :app="streamInfo.app"
                        :stream="streamInfo.stream" :mediaServerId="streamInfo.mediaServerId"></MediaInfo>
           </el-tab-pane>
 
-          <el-tab-pane v-if="checkPermi(['isup:lsupDevice:ptzCtrl'])" label="云台控制" name="control">
+          <el-tab-pane v-if="checkPermi(['isup:lsupDevice:ptzCtrl'])" :label="$tp('云台控制')" name="control">
             <div style="display: grid; height: 180px; overflow: auto">
               <!-- control -->
               <div style="display: grid; grid-template-columns: 100px auto;">
@@ -330,9 +326,7 @@
 
                 <!-- 、 、 control -->
                 <div>
-                  <div style="margin-left: 20px;width: 300px;">
-                    聚焦
-                    <el-slider v-model="controSpeedFocus" :max="100" :min="-100" :show-input="true"
+                  <div style="margin-left: 20px;width: 300px;"> {{ $tp('聚焦') }} <el-slider v-model="controSpeedFocus" :max="100" :min="-100" :show-input="true"
                                @change="focusCamera"/>
                   </div>
                 </div>
@@ -343,11 +337,11 @@
       </div>
     </el-dialog>
 
-    <el-dialog title="修改地址" v-model="showMap" width="45%" append-to-body>
+    <el-dialog :title="$tp('修改地址')" v-model="showMap" width="45%" append-to-body>
       <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
     </el-dialog>
 
-    <el-dialog title="SDK播放" v-model="openPlaySDK" width="45%" append-to-body @close="closeSDK">
+    <el-dialog :title="$tp('SDK播放')" v-model="openPlaySDK" width="45%" append-to-body @close="closeSDK">
       <div>
         <Hikvision :rtsp="videoUrl"/>
       </div>
@@ -357,6 +351,8 @@
 </template>
 
 <script setup name="LsupDevice">
+import { translatePhrase as uiText } from '@/i18n'
+
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import {checkPermi} from "@/utils/wvpPermission";
 import {delLsupDevice, getLsupDevice, start as startSDK, stopRealPlay, updateLsupDevice} from "@/api/isup/lsupDevice";
@@ -502,13 +498,13 @@ const videoError = (e) => {
 
 const copyToClipboard = async (text) => {
   if (!text) {
-    ElMessage.error('内容为空，无法复制');
+    ElMessage.error(uiText('内容为空，无法复制'));
     return;
   }
 
   try {
     await toClipboard(text)
-    ElMessage.success('成功拷贝到粘贴板');
+    ElMessage.success(uiText('成功拷贝到粘贴板'));
   } catch (e) {
     console.error(e)
   }

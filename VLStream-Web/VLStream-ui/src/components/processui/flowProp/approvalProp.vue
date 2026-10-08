@@ -9,62 +9,50 @@
   <div class="prop_body">
     <div class="prop_body_tab">
       <el-tabs v-model="activeName" class="demo-tabs">
-        <el-tab-pane :label="flowDesignerPage?.notifyNode? '设置处置人' : '设置审批人'" name="first">
+        <el-tab-pane :label="flowDesignerPage?.notifyNode? $tp('设置处置人') : $tp('设置审批人')" name="first">
           <div class="prop_title">
-            <span>节点名称</span>
+            <span>{{ $tp('节点名称') }}</span>
           </div>
           <div class="prop_item">
             <el-input
               v-model="nodeName"
-              placeholder="请输入节点名称"
+              :placeholder="$tp('请输入节点名称')"
             />
           </div>
           <!-- Set approvalobject -->
           <choose-person-panel ref="choosePersonPanelRef" v-model:active-choose-data="activeChooseData" />
           <div class="prop_title">
-            <span>多人{{ flowDesignerPage?.notifyNode ? '处置' : '审批' }}方式</span>
+            <span>{{ $tp('多人') }}{{ flowDesignerPage?.notifyNode ? $tp('处置') : $tp('审批') }}{{ $tp('方式') }}</span>
           </div>
           <div class="prop_item prop_item_group">
             <el-radio-group v-model="activeChooseData.multi">
               <el-col>
-                <el-radio v-if="flowDesignerPage?.notifyNode" value="sequential">
-                  依次处置（按顺序处置）
-                </el-radio>
-                <el-radio v-else value="sequential">
-                  依次审批（按顺序审批）
-                </el-radio>
+                <el-radio v-if="flowDesignerPage?.notifyNode" value="sequential"> {{ $tp('依次处置（按顺序处置）') }} </el-radio>
+                <el-radio v-else value="sequential"> {{ $tp('依次审批（按顺序审批）') }} </el-radio>
               </el-col>
               <el-col>
                 <el-radio value="joint">
-                  <div class="flexRowAC">
-                    会签（需要所有{{ flowDesignerPage?.notifyNode ? '处置' : '审批' }}人都通过）
-                    <div>
-                      需要
-                      <el-input-number v-model="activeChooseData.multiPercent" :min="1" :max="100" />
-                      %人员通过
-                    </div>
+                  <div class="flexRowAC"> {{ $tp('会签（需要所有') }}{{ flowDesignerPage?.notifyNode ? $tp('处置') : $tp('审批') }}{{ $tp('人都通过）') }} <div> {{ $tp('需要') }} <el-input-number v-model="activeChooseData.multiPercent" :min="1" :max="100" /> {{ $tp('%人员通过') }} </div>
                   </div>
                 </el-radio>
               </el-col>
               <el-col>
-                <el-radio value="single">
-                  或签（其中一名{{ flowDesignerPage?.notifyNode ? '处置' : '审批' }}人通过即可）
-                </el-radio>
+                <el-radio value="single"> {{ $tp('或签（其中一名') }}{{ flowDesignerPage?.notifyNode ? $tp('处置') : $tp('审批') }}{{ $tp('人通过即可）') }} </el-radio>
               </el-col>
             </el-radio-group>
           </div>
           <div class="prop_title">
-            <span>{{ flowDesignerPage?.notifyNode ? '处置' : '审批' }}人为空时</span>
+            <span>{{ flowDesignerPage?.notifyNode ? $tp('处置') : $tp('审批') }}{{ $tp('人为空时') }}</span>
           </div>
           <choose-empty-appro-panel v-model:active-choose-data="activeChooseData" />
           <div class="prop_title">
-            <span>{{ flowDesignerPage?.notifyNode ? '处置' : '审批' }}人同意时是否需要签字</span>
+            <span>{{ flowDesignerPage?.notifyNode ? $tp('处置') : $tp('审批') }}{{ $tp('人同意时是否需要签字') }}</span>
           </div>
           <div class="prop_item prop_item_group">
             <el-switch v-model="activeChooseData.shouldSign" />
           </div>
           <div class="prop_title">
-            <span>{{ flowDesignerPage?.notifyNode ? '处置' : '审批' }}期限（为0则不生效）</span>
+            <span>{{ flowDesignerPage?.notifyNode ? $tp('处置') : $tp('审批') }}{{ $tp('期限（为0则不生效）') }}</span>
           </div>
           <div class="prop_item prop_item_group">
             <el-input
@@ -74,44 +62,37 @@
             >
               <template #append>
                 <el-select v-model="activeChooseData.approDueTimeUnit" style="width: 80px">
-                  <el-option label="天" :value="1" />
-                  <el-option label="小时" :value="2" />
-                  <el-option label="分钟" :value="3" />
+                  <el-option :label="$tp('天')" :value="1" />
+                  <el-option :label="$tp('小时')" :value="2" />
+                  <el-option :label="$tp('分钟')" :value="3" />
                 </el-select>
               </template>
             </el-input>
             <!-- user approval after, user Process is is -->
             &nbsp;   &nbsp;   &nbsp;   &nbsp;
             <el-radio-group v-model="activeChooseData.approTimeoutProcessing">
-              <el-radio value="1">
-                驳回
-              </el-radio>
-              <el-radio value="2">
-                退回
-              </el-radio>
+              <el-radio value="1"> {{ $tp('驳回') }} </el-radio>
+              <el-radio value="2"> {{ $tp('退回') }} </el-radio>
             </el-radio-group>
           </div>
           <div class="prop_title">
-            <span>如果{{ flowDesignerPage?.notifyNode ? '处置' : '审批' }}被驳回</span>
+            <span>{{ $tp('如果') }}{{ flowDesignerPage?.notifyNode ? $tp('处置') : $tp('审批') }}{{ $tp('被驳回') }}</span>
           </div>
           <div class="prop_item prop_item_group">
-            <el-switch v-model="activeChooseData.disAgreenEnd" />直接结束流程
-          </div>
+            <el-switch v-model="activeChooseData.disAgreenEnd" />{{ $tp('直接结束流程') }} </div>
         </el-tab-pane>
-        <el-tab-pane label="表单权限" name="second">
+        <el-tab-pane :label="$tp('表单权限')" name="second">
           <FormPermissionTable v-if="activeChooseData.formProperties" v-model:filed-list="activeChooseData.formProperties" />
           <div v-else class="empty_div">
-            <span>请在发起人节点设置表单</span>
+            <span>{{ $tp('请在发起人节点设置表单') }}</span>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="操作权限" name="third">
+        <el-tab-pane :label="$tp('操作权限')" name="third">
           <operations-panel v-model:active-choose-data="activeChooseData" />
         </el-tab-pane>
-        <el-tab-pane label="监听器" name="fourth">
+        <el-tab-pane :label="$tp('监听器')" name="fourth">
           <div class="add_listener">
-            <el-button type="primary" @click="addTaskListener">
-              添加监听器
-            </el-button>
+            <el-button type="primary" @click="addTaskListener"> {{ $tp('添加监听器') }} </el-button>
           </div>
           <div v-for="(item, index) in activeChooseData.taskListeners" :key="index" class="task_item">
             <listener-panel v-model:item="activeChooseData.taskListeners[index]" :data="item" :node-id="props.nodeConfig.id" />
@@ -120,19 +101,18 @@
             </el-icon>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="节点表单" name="fivth">
+        <el-tab-pane :label="$tp('节点表单')" name="fivth">
           <div class="prop_title">
-            <span>设置节点表单</span>
+            <span>{{ $tp('设置节点表单') }}</span>
           </div>
           <div class="prop_item" style="flex-direction: column;">
             <div v-if="currentForm" class="current_form">
-              <span>
-                当前表单： {{ currentForm.formName }}
+              <span> {{ $tp('当前表单：') }} {{ currentForm.formName }}
               </span>
             </div>
             <el-cascader
               :props="cascaderProps"
-              placeholder="请选择表单"
+              :placeholder="$tp('请选择表单')"
               style="width: 100%"
               @change="setFormKey"
             />
@@ -150,9 +130,9 @@
             </el-select> -->
           </div>
         </el-tab-pane>
-        <el-tab-pane label="通知方式" name="sixth">
+        <el-tab-pane :label="$tp('通知方式')" name="sixth">
           <div class="prop_title">
-            <span>通知优先级</span>
+            <span>{{ $tp('通知优先级') }}</span>
           </div>
           <div class="prop_item">
             <div class="priority-options">
@@ -169,9 +149,7 @@
                     <div v-if="activeChooseData.priority === option.priorityId" class="priority-radio_span flexRowAC">
                       <el-icon>
                         <WarningFilled />
-                      </el-icon>
-                      &nbsp;已选择此通知方式。若此方式发送失败，系统将自动按优先级[逐步降级]尝试，直到通知成功为止
-                    </div>
+                      </el-icon>  {{ $tp('已选择此通知方式。若此方式发送失败，系统将自动按优先级[逐步降级]尝试，直到通知成功为止') }} </div>
                   </div>
                   <el-icon v-if="activeChooseData.priority === option.priorityId" class="arrow-icon">
                     <Check />
@@ -198,13 +176,11 @@
           </div>
           <div class="prop_item interBox">
             <div class="">
-              <span>站内消息推送</span>
+              <span>{{ $tp('站内消息推送') }}</span>
               <div v-if="!activeChooseData.noNotifyAllSteps" class="priority-radio_span flexRowAC">
                 <el-icon>
                   <WarningFilled />
-                </el-icon>
-                &nbsp;[此通知独立于上方优先级选择]。勾选后，无论主通知方式是否成功，都会额外发送一条站内消息用于留存记录和后续查阅
-              </div>
+                </el-icon>  {{ $tp('[此通知独立于上方优先级选择]。勾选后，无论主通知方式是否成功，都会额外发送一条站内消息用于留存记录和后续查阅') }} </div>
             </div>
             <div class="prop_item prop_item_group">
               <el-switch
@@ -215,21 +191,21 @@
             </div>
           </div>
           <div class="prop_title">
-            <span>通知说明文字</span>
+            <span>{{ $tp('通知说明文字') }}</span>
           </div>
           <div class="prop_item">
             <el-input
               v-model="activeChooseData.data"
-              placeholder="请输入"
+              :placeholder="$tp('请输入')"
             />
           </div>
           <div class="prop_title">
-            <span>处置节点</span>
+            <span>{{ $tp('处置节点') }}</span>
           </div>
           <div v-for="(itt, index) in activeChooseData.timeoutHandlers" :key="index">
             <div class="prop_item">
               <div class="prop_title">
-                <span>超时</span>
+                <span>{{ $tp('超时') }}</span>
               </div>
               <div class="prop_item prop_item_group">
                 <el-input
@@ -239,19 +215,19 @@
                 >
                   <template #append>
                     <el-select v-model="itt.triggerTimeUnit" style="width: 80px">
-                      <el-option label="天" :value="1" />
-                      <el-option label="小时" :value="2" />
-                      <el-option label="分钟" :value="3" />
+                      <el-option :label="$tp('天')" :value="1" />
+                      <el-option :label="$tp('小时')" :value="2" />
+                      <el-option :label="$tp('分钟')" :value="3" />
                     </el-select>
                   </template>
                 </el-input>
                 &nbsp; &nbsp; &nbsp; &nbsp;<div class="prop_title">
-                  <span>触发事件</span>
+                  <span>{{ $tp('触发事件') }}</span>
                 </div>
                 <div class="prop_item">
                   <el-select v-model="itt.triggerType" style="width: 120px">
-                    <el-option label="通知" :value="1" />
-                    <el-option label="转下一节点" :value="2" />
+                    <el-option :label="$tp('通知')" :value="1" />
+                    <el-option :label="$tp('转下一节点')" :value="2" />
                   </el-select>
                 </div>
               </div>
@@ -294,14 +270,10 @@
     </div>
     <div class="prop_body_bottom button_group">
       <!-- button , -->
-      <el-button @click="cancel" class="common_btn">
-        取消
-      </el-button>
-      <el-button type="primary" @click="confirm" class="common_btn">
-        确定
-      </el-button>
+      <el-button @click="cancel" class="common_btn"> {{ $tp('取消') }} </el-button>
+      <el-button type="primary" @click="confirm" class="common_btn"> {{ $tp('确定') }} </el-button>
     </div>
-    <el-dialog v-model="chooseUserVis" title="选择人员" width="50%">
+    <el-dialog v-model="chooseUserVis" :title="$tp('选择人员')" width="50%">
       <address-seting-dialog
         :user-list="activeChooseData.timeoutHandlers[addTimeoutRuleIndex].notificationUserIds"
         :mode="3"

@@ -7,11 +7,11 @@
 
 <template>
   <div class="test-page">
-    <h2>高级搜索组件测试</h2>
+    <h2>{{ $tp('高级搜索组件测试') }}</h2>
 
     <div class="test-container">
       <div class="test-section">
-        <h3>组件展示</h3>
+        <h3>{{ $tp('组件展示') }}</h3>
         <div class="component-wrapper">
           <AdvancedSearch
             @search="handleSearch"
@@ -21,7 +21,7 @@
       </div>
 
       <div class="test-section">
-        <h3>搜索结果</h3>
+        <h3>{{ $tp('搜索结果') }}</h3>
         <div class="search-results">
           <pre>{{ JSON.stringify(searchResults, null, 2) }}</pre>
         </div>

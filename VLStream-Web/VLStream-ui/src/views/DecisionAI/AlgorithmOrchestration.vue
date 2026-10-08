@@ -10,14 +10,12 @@
     <!-- page -->
     <div class="page-header">
       <div class="header-left">
-        <h1>算法编排</h1>
-        <p>配置和管理AI算法的组合编排</p>
+        <h1>{{ $tp('算法编排') }}</h1>
+        <p>{{ $tp('配置和管理AI算法的组合编排') }}</p>
       </div>
       <div class="header-right">
         <el-button type="primary" @click="createOrchestration">
-          <el-icon><Plus /></el-icon>
-          新建编排
-        </el-button>
+          <el-icon><Plus /></el-icon> {{ $tp('新建编排') }} </el-button>
       </div>
     </div>
 
@@ -40,14 +38,11 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item @click="editOrchestration(orchestration)">
-                    <el-icon><Edit /></el-icon>编辑
-                  </el-dropdown-item>
+                    <el-icon><Edit /></el-icon>{{ $tp('编辑') }} </el-dropdown-item>
                   <el-dropdown-item @click="duplicateOrchestration(orchestration)">
-                    <el-icon><CopyDocument /></el-icon>复制
-                  </el-dropdown-item>
+                    <el-icon><CopyDocument /></el-icon>{{ $tp('复制') }} </el-dropdown-item>
                   <el-dropdown-item @click="deleteOrchestration(orchestration)" divided>
-                    <el-icon><Delete /></el-icon>删除
-                  </el-dropdown-item>
+                    <el-icon><Delete /></el-icon>{{ $tp('删除') }} </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -75,15 +70,15 @@
           <!-- info -->
           <div class="card-stats">
             <div class="stat-item">
-              <span class="stat-label">算法数量</span>
+              <span class="stat-label">{{ $tp('算法数量') }}</span>
               <span class="stat-value">{{ orchestration.algorithmCount }}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">关联设备</span>
+              <span class="stat-label">{{ $tp('关联设备') }}</span>
               <span class="stat-value">{{ orchestration.deviceCount }}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">运行次数</span>
+              <span class="stat-label">{{ $tp('运行次数') }}</span>
               <span class="stat-value">{{ orchestration.runCount }}</span>
             </div>
           </div>
@@ -92,11 +87,11 @@
         <div class="card-footer">
           <div class="orchestration-status">
             <el-tag :type="orchestration.status === 'active' ? 'success' : 'info'" size="small">
-              {{ orchestration.status === 'active' ? '运行中' : '已停止' }}
+              {{ orchestration.status === 'active' ? $tp('运行中') : $tp('已停止') }}
             </el-tag>
           </div>
           <div class="orchestration-time">
-            <span>更新时间：{{ orchestration.updateTime }}</span>
+            <span>{{ $tp('更新时间：') }}{{ orchestration.updateTime }}</span>
           </div>
         </div>
       </div>
@@ -105,8 +100,8 @@
       <div class="orchestration-card create-card" @click="createOrchestration">
         <div class="create-content">
           <el-icon size="48" color="#c0c4cc"><Plus /></el-icon>
-          <h3>新建算法编排</h3>
-          <p>创建新的算法组合流程</p>
+          <h3>{{ $tp('新建算法编排') }}</h3>
+          <p>{{ $tp('创建新的算法组合流程') }}</p>
         </div>
       </div>
     </div>
@@ -114,7 +109,7 @@
     <!--  -->
     <el-dialog
       v-model="showEditor"
-      title="算法编排编辑器"
+      :title="$tp('算法编排编辑器')"
       width="90%"
       :before-close="handleEditorClose"
       class="orchestration-editor-dialog"
@@ -122,11 +117,11 @@
       <div class="editor-container">
         <!-- algorithm -->
         <div class="algorithm-library">
-          <h4>算法库</h4>
+          <h4>{{ $tp('算法库') }}</h4>
           <div class="library-search">
             <el-input
               v-model="algorithmSearch"
-              placeholder="搜索算法"
+              :placeholder="$tp('搜索算法')"
               size="small"
             >
               <template #prefix>
@@ -156,10 +151,10 @@
         <!-- in -->
         <div class="orchestration-canvas">
           <div class="canvas-header">
-            <h4>编排画布</h4>
+            <h4>{{ $tp('编排画布') }}</h4>
             <div class="canvas-tools">
-              <el-button size="small" @click="clearCanvas">清空</el-button>
-              <el-button size="small" type="primary" @click="saveOrchestration">保存</el-button>
+              <el-button size="small" @click="clearCanvas">{{ $tp('清空') }}</el-button>
+              <el-button size="small" type="primary" @click="saveOrchestration">{{ $tp('保存') }}</el-button>
             </div>
           </div>
           <div
@@ -170,7 +165,7 @@
           >
             <div v-if="currentSteps.length === 0" class="empty-canvas">
               <el-icon size="64" color="#c0c4cc"><Connection /></el-icon>
-              <p>从左侧拖拽算法到此处开始编排</p>
+              <p>{{ $tp('从左侧拖拽算法到此处开始编排') }}</p>
             </div>
 
             <div v-else class="canvas-flow">
@@ -194,7 +189,7 @@
                     </el-button>
                   </div>
                   <div class="step-config">
-                    <el-button size="small" @click="configureStep(step, index)">配置参数</el-button>
+                    <el-button size="small" @click="configureStep(step, index)">{{ $tp('配置参数') }}</el-button>
                   </div>
                 </div>
                 <div v-if="index < currentSteps.length - 1" class="canvas-arrow">
@@ -207,30 +202,30 @@
 
         <!-- property -->
         <div class="property-panel">
-          <h4>编排配置</h4>
+          <h4>{{ $tp('编排配置') }}</h4>
           <el-form :model="orchestrationForm" label-width="80px" size="small">
-            <el-form-item label="编排名称">
-              <el-input v-model="orchestrationForm.name" placeholder="请输入编排名称" />
+            <el-form-item :label="$tp('编排名称')">
+              <el-input v-model="orchestrationForm.name" :placeholder="$tp('请输入编排名称')" />
             </el-form-item>
-            <el-form-item label="描述">
+            <el-form-item :label="$tp('描述')">
               <el-input
                 v-model="orchestrationForm.description"
                 type="textarea"
                 :rows="3"
-                placeholder="请输入编排描述"
+                :placeholder="$tp('请输入编排描述')"
               />
             </el-form-item>
-            <el-form-item label="触发条件">
-              <el-select v-model="orchestrationForm.trigger" placeholder="选择触发条件">
-                <el-option label="实时触发" value="realtime" />
-                <el-option label="定时触发" value="scheduled" />
-                <el-option label="事件触发" value="event" />
+            <el-form-item :label="$tp('触发条件')">
+              <el-select v-model="orchestrationForm.trigger" :placeholder="$tp('选择触发条件')">
+                <el-option :label="$tp('实时触发')" value="realtime" />
+                <el-option :label="$tp('定时触发')" value="scheduled" />
+                <el-option :label="$tp('事件触发')" value="event" />
               </el-select>
             </el-form-item>
-            <el-form-item label="执行模式">
+            <el-form-item :label="$tp('执行模式')">
               <el-radio-group v-model="orchestrationForm.mode">
-                <el-radio label="serial">串行</el-radio>
-                <el-radio label="parallel">并行</el-radio>
+                <el-radio label="serial">{{ $tp('串行') }}</el-radio>
+                <el-radio label="parallel">{{ $tp('并行') }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-form>
@@ -241,6 +236,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -351,27 +348,27 @@ const duplicateOrchestration = async (orchestration) => {
       orchestrationStatus: 'inactive'
     })
     await loadOrchestrations()
-    ElMessage.success('编排副本已真实入库')
+    ElMessage.success(uiText('编排副本已真实入库'))
   } catch (error) {
-    ElMessage.error(`编排复制失败：${error.message || error}`)
+    ElMessage.error(uiText('编排复制失败：{value0}', { value0: error.message || error }))
   }
 }
 
 const deleteOrchestration = (orchestration) => {
   ElMessageBox.confirm(
-    `确定要删除编排"${orchestration.name}"吗？`,
-    '确认删除',
+    uiText('确定要删除编排"{value0}"吗？', { value0: orchestration.name }),
+    uiText('确认删除'),
     {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: uiText('确定'),
+      cancelButtonText: uiText('取消'),
       type: 'warning'
     }
   ).then(async () => {
     await removeOrchestrationRecord(orchestration.id)
     await loadOrchestrations()
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText('删除成功'))
   }).catch((error) => {
-    if (error !== 'cancel' && error !== 'close') ElMessage.error(`删除编排失败：${error.message || error}`)
+    if (error !== 'cancel' && error !== 'close') ElMessage.error(uiText('删除编排失败：{value0}', { value0: error.message || error }))
   })
 }
 
@@ -398,7 +395,7 @@ const removeStep = (index) => {
 }
 
 const configureStep = (step, index) => {
-  ElMessage.error(`步骤参数编辑器尚未接入，未修改“${step.name}”`)
+  ElMessage.error(uiText('步骤参数编辑器尚未接入，未修改“{value0}”', { value0: step.name }))
 }
 
 const clearCanvas = () => {
@@ -407,12 +404,12 @@ const clearCanvas = () => {
 
 const saveOrchestration = async () => {
   if (!orchestrationForm.value.name) {
-    ElMessage.warning('请输入编排名称')
+    ElMessage.warning(uiText('请输入编排名称'))
     return
   }
 
   if (currentSteps.value.length === 0) {
-    ElMessage.warning('请至少添加一个算法步骤')
+    ElMessage.warning(uiText('请至少添加一个算法步骤'))
     return
   }
 
@@ -432,14 +429,14 @@ const saveOrchestration = async () => {
     else await saveOrchestrationRecord(orchestrationData)
     await loadOrchestrations()
     showEditor.value = false
-    ElMessage.success(editingOrchestration.value ? '编排更新成功' : '编排创建成功')
+    ElMessage.success(editingOrchestration.value ? uiText('编排更新成功') : uiText('编排创建成功'))
   } catch (error) {
-    ElMessage.error(`保存编排失败：${error.message || error}`)
+    ElMessage.error(uiText('保存编排失败：{value0}', { value0: error.message || error }))
   }
 }
 
 const handleEditorClose = (done) => {
-  ElMessageBox.confirm('确定要关闭编辑器吗？未保存的更改将丢失。')
+  ElMessageBox.confirm(uiText('确定要关闭编辑器吗？未保存的更改将丢失。'))
     .then(() => {
       done()
     })
@@ -469,7 +466,7 @@ const loadOrchestrations = async () => {
     })
   } catch (error) {
     orchestrations.value = []
-    ElMessage.error(`加载编排失败：${error.message || error}`)
+    ElMessage.error(uiText('加载编排失败：{value0}', { value0: error.message || error }))
   }
 }
 
@@ -479,7 +476,7 @@ const loadAlgorithms = async () => {
     algorithms.value = (response?.data?.records || []).map(item => ({ id: item.id, name: item.name, type: item.categoryName || item.category }))
   } catch (error) {
     algorithms.value = []
-    ElMessage.error(`加载算法列表失败：${error.message || error}`)
+    ElMessage.error(uiText('加载算法列表失败：{value0}', { value0: error.message || error }))
   }
 }
 

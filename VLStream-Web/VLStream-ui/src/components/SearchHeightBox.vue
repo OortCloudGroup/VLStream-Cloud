@@ -72,13 +72,13 @@
               v-model="form[item.value]"
               :type="item.type"
               class="wh-input"
-              placeholder="请输入"
+              :placeholder="$tp('请输入')"
             />
             <el-select
               v-else-if="item.type==='select'"
               v-model="form[item.value]"
               :teleported="false"
-              placeholder="请选择"
+              :placeholder="$tp('请选择')"
             >
               <el-option v-for="(dd,tt) in item.option" :key="tt" :label="dd.label" :value="dd.value" />
             </el-select>
@@ -119,13 +119,11 @@
         </el-form-item>
         <div class="serchItem serBtn">
           <el-button type="primary" class="newBtn" @click="searchFn">
-            <img class="searchImg" src="@/assets/img/search.png" alt="" />搜索
-          </el-button>
+            <img class="searchImg" src="@/assets/img/search.png" alt="" />{{ $tp('搜索') }} </el-button>
           <el-button class="newBtn" @click="resetFn">
             <el-icon class="searchImg">
               <RefreshRight />
-            </el-icon>重置
-          </el-button>
+            </el-icon>{{ $tp('重置') }} </el-button>
         </div>
       </el-form>
     </el-popover>

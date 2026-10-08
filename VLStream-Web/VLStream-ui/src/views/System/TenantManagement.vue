@@ -11,19 +11,17 @@
     <template #toolbar>
       <div class="toolbar-left">
         <el-form :inline="true" :model="queryParams" size="default">
-          <el-form-item label="租户ID">
-            <el-input v-model="queryParams.tenantId" placeholder="请输入租户ID" clearable @keyup.enter="handleSearch" />
+          <el-form-item :label="$tp('租户ID')">
+            <el-input v-model="queryParams.tenantId" :placeholder="$tp('请输入租户ID')" clearable @keyup.enter="handleSearch" />
           </el-form-item>
-          <el-form-item label="租户名称">
-            <el-input v-model="queryParams.tenantName" placeholder="请输入租户名称" clearable @keyup.enter="handleSearch" />
+          <el-form-item :label="$tp('租户名称')">
+            <el-input v-model="queryParams.tenantName" :placeholder="$tp('请输入租户名称')" clearable @keyup.enter="handleSearch" />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="handleSearch">
-              <el-icon><Search /></el-icon> 查询
-            </el-button>
+              <el-icon><Search /></el-icon> {{ $tp('查询') }} </el-button>
             <el-button @click="handleReset">
-              <el-icon><Refresh /></el-icon> 重置
-            </el-button>
+              <el-icon><Refresh /></el-icon> {{ $tp('重置') }} </el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -57,12 +55,8 @@
       <el-table-column :label="$tp('操作')" width="180" fixed="right" align="right">
         <template #default="scope">
           <div class="operation-buttons">
-            <el-button class="operation-btn edit-btn" @click="handleEdit(scope.row)">
-              编辑
-            </el-button>
-            <el-button class="operation-btn delete-btn" @click="handleSingleRemove(scope.row)">
-              删除
-            </el-button>
+            <el-button class="operation-btn edit-btn" @click="handleEdit(scope.row)"> {{ $tp('编辑') }} </el-button>
+            <el-button class="operation-btn delete-btn" @click="handleSingleRemove(scope.row)"> {{ $tp('删除') }} </el-button>
           </div>
         </template>
       </el-table-column>
@@ -96,38 +90,40 @@
       label-width="100px"
       style="padding: 10px 20px"
     >
-      <el-form-item label="租户ID" prop="tenantId">
-        <el-input v-model="form.tenantId" placeholder="请输入六位租户ID" :disabled="form.id !== undefined" />
+      <el-form-item :label="$tp('租户ID')" prop="tenantId">
+        <el-input v-model="form.tenantId" :placeholder="$tp('请输入六位租户ID')" :disabled="form.id !== undefined" />
       </el-form-item>
 
-      <el-form-item label="租户名称" prop="tenantName">
-        <el-input v-model="form.tenantName" placeholder="请输入租户名称" />
+      <el-form-item :label="$tp('租户名称')" prop="tenantName">
+        <el-input v-model="form.tenantName" :placeholder="$tp('请输入租户名称')" />
       </el-form-item>
 
-      <el-form-item label="绑定域名" prop="domain">
-        <el-input v-model="form.domain" placeholder="请输入域名地址" />
+      <el-form-item :label="$tp('绑定域名')" prop="domain">
+        <el-input v-model="form.domain" :placeholder="$tp('请输入域名地址')" />
       </el-form-item>
 
-      <el-form-item label="联系人" prop="linkman">
-        <el-input v-model="form.linkman" placeholder="请输入联系人姓名" />
+      <el-form-item :label="$tp('联系人')" prop="linkman">
+        <el-input v-model="form.linkman" :placeholder="$tp('请输入联系人姓名')" />
       </el-form-item>
 
-      <el-form-item label="联系电话" prop="contactNumber">
-        <el-input v-model="form.contactNumber" placeholder="请输入联系电话" />
+      <el-form-item :label="$tp('联系电话')" prop="contactNumber">
+        <el-input v-model="form.contactNumber" :placeholder="$tp('请输入联系电话')" />
       </el-form-item>
 
-      <el-form-item label="联系地址" prop="address">
-        <el-input v-model="form.address" type="textarea" placeholder="请输入联系地址" :rows="2" />
+      <el-form-item :label="$tp('联系地址')" prop="address">
+        <el-input v-model="form.address" type="textarea" :placeholder="$tp('请输入联系地址')" :rows="2" />
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="dialogVisible = false" class="common_btn">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">确定</el-button>
+      <el-button @click="dialogVisible = false" class="common_btn">{{ $tp('取消') }}</el-button>
+      <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">{{ $tp('确定') }}</el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
@@ -192,7 +188,7 @@ async function loadData() {
     pagination.total = getTotal(res)
   } catch (error) {
     console.error('加载租户列表数据失败:', error)
-    ElMessage.error('加载租户列表失败')
+    ElMessage.error(uiText('加载租户列表失败'))
   } finally {
     loading.value = false
   }
@@ -282,15 +278,15 @@ async function handleSaveSubmit() {
       try {
         const res = await submitTenant(form.value)
         if (isSuccess(res)) {
-          ElMessage.success('保存成功')
+          ElMessage.success(uiText('保存成功'))
           dialogVisible.value = false
           loadData()
         } else {
-          ElMessage.error(res?.msg || '保存失败')
+          ElMessage.error(res?.msg || uiText('保存失败'))
         }
       } catch (error) {
         console.error('提交租户信息失败:', error)
-        ElMessage.error('保存租户数据发生异常')
+        ElMessage.error(uiText('保存租户数据发生异常'))
       } finally {
         saving.value = false
       }
@@ -304,22 +300,22 @@ async function handleSaveSubmit() {
  * @param {String} msg prompt / tip
  */
 function executeRemove(ids, msg) {
-  ElMessageBox.confirm(msg, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(msg, uiText('提示'), {
+    confirmButtonText: uiText('确定'),
+    cancelButtonText: uiText('取消'),
     type: 'warning'
   }).then(async () => {
     try {
       const res = await removeTenants(ids)
       if (isSuccess(res)) {
-        ElMessage.success('删除成功')
+        ElMessage.success(uiText('删除成功'))
         loadData()
       } else {
-        ElMessage.error(res?.msg || '删除失败')
+        ElMessage.error(res?.msg || uiText('删除失败'))
       }
     } catch (error) {
       console.error('删除租户失败:', error)
-      ElMessage.error('删除租户操作发生异常')
+      ElMessage.error(uiText('删除租户操作发生异常'))
     }
   }).catch(() => {})
 }

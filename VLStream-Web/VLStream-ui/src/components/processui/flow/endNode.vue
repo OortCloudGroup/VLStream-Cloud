@@ -7,7 +7,7 @@
 
 <template>
   <div class="end_node" :class="{'node_inactive': !!isFinished}">
-    <span>完成</span>
+    <span>{{ $tp('完成') }}</span>
     <oort-svg-icon
       class="end_node_img"
       name="finish_node"

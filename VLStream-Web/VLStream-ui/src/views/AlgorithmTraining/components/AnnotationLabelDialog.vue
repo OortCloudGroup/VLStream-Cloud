@@ -8,7 +8,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="form.id ? '编辑标签' : '新增标签'"
+    :title="form.id ? $tp('编辑标签') : $tp('新增标签')"
     width="25%"
     :before-close="handleClose"
   >
@@ -19,15 +19,15 @@
       label-width="80px"
       label-position="left"
     >
-      <el-form-item label="标签名称" prop="name" required>
+      <el-form-item :label="$tp('标签名称')" prop="name" required>
         <el-input
           v-model="form.name"
-          placeholder="请输入标签名称"
+          :placeholder="$tp('请输入标签名称')"
           clearable
         />
       </el-form-item>
 
-      <el-form-item label="标签颜色" prop="color" required>
+      <el-form-item :label="$tp('标签颜色')" prop="color" required>
         <div class="color-picker-section">
           <el-color-picker
             v-model="form.color"
@@ -35,7 +35,7 @@
             show-alpha
           />
           <div class="color-preview" :style="{ backgroundColor: form.color }">
-            <span class="preview-text">{{ form.name || '标签预览' }}</span>
+            <span class="preview-text">{{ form.name || $tp('标签预览') }}</span>
           </div>
         </div>
       </el-form-item>
@@ -43,8 +43,8 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose" class="common_btn">取消</el-button>
-        <el-button type="primary" @click="handleConfirm" class="common_btn">确定</el-button>
+        <el-button @click="handleClose" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" @click="handleConfirm" class="common_btn">{{ $tp('确定') }}</el-button>
       </div>
     </template>
   </el-dialog>

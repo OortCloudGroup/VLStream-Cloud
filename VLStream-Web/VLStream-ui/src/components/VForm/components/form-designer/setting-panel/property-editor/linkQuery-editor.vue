@@ -7,7 +7,7 @@
 
 <template>
   <div>
-    <el-form-item style="width: 100%;" label="关联查询">
+    <el-form-item style="width: 100%;" :label="$tp('关联查询')">
       <link-search-setting v-model="optionModel.linkQuery" :designer="designer" />
     </el-form-item>
   </div>

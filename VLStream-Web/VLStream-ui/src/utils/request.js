@@ -7,7 +7,7 @@
 
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
-import { currentLocale } from '@/i18n'
+import { currentLocale, translateUiMessage } from '@/i18n'
 
 export const BLADE_CLIENT_AUTH_HEADER = import.meta.env.VITE_BLADE_CLIENT_AUTH_HEADER || 'Basic c2FiZXI6c2FiZXJfc2VjcmV0'
 const PLATFORM_APP_ID = import.meta.env.VITE_PLATFORM_APP_ID || ''
@@ -114,7 +114,7 @@ export const handleBusinessError = (data, response, fallback = '请求失败', s
     businessError.data = data
 
     if (showMessage) {
-      ElMessage.error(message)
+      ElMessage.error(translateUiMessage(message))
     }
 
     return Promise.reject(businessError)
@@ -256,7 +256,7 @@ request.interceptors.response.use(
       message = error.message || '请求失败'
     }
 
-    if (!error.config?.silentError) ElMessage.error(message)
+    if (!error.config?.silentError) ElMessage.error(translateUiMessage(message))
     return Promise.reject(error)
   }
 )
@@ -305,7 +305,7 @@ imageUploadRequest.interceptors.response.use(
       message = error.message || '图片上传失败'
     }
 
-    ElMessage.error(message)
+    ElMessage.error(translateUiMessage(message))
     return Promise.reject(error)
   }
 )
@@ -362,7 +362,7 @@ authRequest.interceptors.response.use(
       message = error.message || '认证请求失败'
     }
 
-    ElMessage.error(message)
+    ElMessage.error(translateUiMessage(message))
     return Promise.reject(error)
   }
 )

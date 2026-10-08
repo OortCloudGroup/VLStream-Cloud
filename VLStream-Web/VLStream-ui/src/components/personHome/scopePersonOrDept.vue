@@ -14,9 +14,7 @@
           v-model="checkedAll"
           :indeterminate="isIndeterminate"
           @change="handleCheckAllChange"
-        >
-          全选
-        </el-checkbox>
+        > {{ $tp('全选') }} </el-checkbox>
       </div>
     </div>
     <div class="w-full person_list box-border px-5">
@@ -53,7 +51,7 @@
         </el-checkbox>
       </el-checkbox-group>
       <div v-if="tableData.length ===0" class="w-full h-full flex items-center justify-center">
-        <span style="font-size: 16px;color: #999">暂无数据</span>
+        <span style="font-size: 16px;color: #999">{{ $tp('暂无数据') }}</span>
       </div>
     </div>
   </div>

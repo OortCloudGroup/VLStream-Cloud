@@ -8,11 +8,11 @@
 <template>
   <div id="ptzCruising">
     <div style="display: grid; grid-template-columns: 80px auto; line-height: 28px">
-      <span>巡航组号: </span>
+      <span>{{ $tp('巡航组号:') }} </span>
       <el-input
           min="1"
           max="255"
-          placeholder="巡航组号"
+          :placeholder="$tp('巡航组号')"
           addonBefore="巡航组号"
           addonAfter="(1-255)"
           v-model="cruiseId"
@@ -34,7 +34,7 @@
 
     <el-form size="mini" :inline="true" v-if="selectPresetVisible">
       <el-form-item>
-        <el-select v-model="selectPreset" placeholder="请选择预置点">
+        <el-select v-model="selectPreset" :placeholder="$tp('请选择预置点')">
           <el-option
               v-for="item in allPresetList"
               :key="item.presetId"
@@ -45,18 +45,18 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="addCruisePoint">保存</el-button>
-        <el-button type="primary" @click="cancelAddCruisePoint">取消</el-button>
+        <el-button type="primary" @click="addCruisePoint">{{ $tp('保存') }}</el-button>
+        <el-button type="primary" @click="cancelAddCruisePoint">{{ $tp('取消') }}</el-button>
       </el-form-item>
     </el-form>
-    <el-button size="mini" v-else @click="selectPresetVisible = true">添加巡航点</el-button>
+    <el-button size="mini" v-else @click="selectPresetVisible = true">{{ $tp('添加巡航点') }}</el-button>
 
     <el-form size="mini" :inline="true" v-if="setSpeedVisible">
       <el-form-item>
         <el-input
             min="1"
             max="4095"
-            placeholder="巡航速度"
+            :placeholder="$tp('巡航速度')"
             addonBefore="巡航速度"
             addonAfter="(1-4095)"
             v-model="cruiseSpeed"
@@ -65,18 +65,18 @@
         </el-input>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="setCruiseSpeed">保存</el-button>
-        <el-button @click="cancelSetCruiseSpeed">取消</el-button>
+        <el-button type="primary" @click="setCruiseSpeed">{{ $tp('保存') }}</el-button>
+        <el-button @click="cancelSetCruiseSpeed">{{ $tp('取消') }}</el-button>
       </el-form-item>
     </el-form>
-    <el-button v-else size="mini" @click="setSpeedVisible = true">设置巡航速度</el-button>
+    <el-button v-else size="mini" @click="setSpeedVisible = true">{{ $tp('设置巡航速度') }}</el-button>
 
     <el-form size="mini" :inline="true" v-if="setTimeVisible">
       <el-form-item>
         <el-input
             min="1"
             max="4095"
-            placeholder="巡航停留时间(秒)"
+            :placeholder="$tp('巡航停留时间(秒)')"
             addonBefore="巡航停留时间(秒)"
             addonAfter="(1-4095)"
             style="width: 100%;"
@@ -85,18 +85,20 @@
         </el-input>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="setCruiseTime">保存</el-button>
-        <el-button @click="cancelSetCruiseTime">取消</el-button>
+        <el-button type="primary" @click="setCruiseTime">{{ $tp('保存') }}</el-button>
+        <el-button @click="cancelSetCruiseTime">{{ $tp('取消') }}</el-button>
       </el-form-item>
     </el-form>
-    <el-button v-else size="mini" @click="setTimeVisible = true">设置巡航时间</el-button>
-    <el-button size="mini" @click="startCruise">开始巡航</el-button>
-    <el-button size="mini" @click="stopCruise">停止巡航</el-button>
-    <el-button size="mini" type="danger" @click="deleteCruise">删除巡航</el-button>
+    <el-button v-else size="mini" @click="setTimeVisible = true">{{ $tp('设置巡航时间') }}</el-button>
+    <el-button size="mini" @click="startCruise">{{ $tp('开始巡航') }}</el-button>
+    <el-button size="mini" @click="stopCruise">{{ $tp('停止巡航') }}</el-button>
+    <el-button size="mini" type="danger" @click="deleteCruise">{{ $tp('删除巡航') }}</el-button>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import {ref, onMounted} from 'vue';
 import {ElMessage, ElMessageBox, ElLoading} from 'element-plus';
 import {GetAddCruisePoint, GetDeleteCruisePoint, gotoPresetList} from "@/api/wvp/channel.js";
@@ -177,10 +179,10 @@ const delPreset = async (preset, index) => {
 
 const deleteCruise = async () => {
   try {
-    await ElMessageBox.confirm("确定删除此巡航组", "提示", {
+    await ElMessageBox.confirm(uiText('确定删除此巡航组'), uiText('提示'), {
       dangerouslyUseHTMLString: true,
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
+      confirmButtonText: uiText('确定'),
+      cancelButtonText: uiText('取消'),
       type: "warning",
     });
     const loading = ElLoading.service({

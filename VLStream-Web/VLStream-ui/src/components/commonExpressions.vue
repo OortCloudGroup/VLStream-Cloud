@@ -14,8 +14,7 @@
     >
       <el-icon class="add_common_btn_icon">
         <Plus />
-      </el-icon>添加为常用语
-    </div>
+      </el-icon>{{ $tp('添加为常用语') }} </div>
     <div class="common_btn_list">
       <div v-for="(item,index) in listData" :key="index" class="common_content">
         <div @click="clickContent(item.content)">

@@ -27,11 +27,9 @@
               icon="el-icon-download"
               v-if="downloadFile"
               size="mini"
-              title="点击下载"
+              :title="$tp('点击下载')"
               @click="downloadFileClientEvent()"
-          >
-            下载
-          </el-button>
+          > {{ $tp('下载') }} </el-button>
         </el-col>
       </el-row>
     </el-dialog>

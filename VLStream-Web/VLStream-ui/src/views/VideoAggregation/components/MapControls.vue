@@ -7,23 +7,23 @@
 
 <template>
   <div class="map-controls">
-    <button class="map-control-btn" @click="fitBounds" title="显示全部摄像头">
+    <button class="map-control-btn" @click="fitBounds" :title="$tp('显示全部摄像头')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81l5-4.5M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>
       </svg>
     </button>
-    <button class="map-control-btn" @click="toggleMapView" title="切换地图视图">
+    <button class="map-control-btn" @click="toggleMapView" :title="$tp('切换地图视图')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
       </svg>
     </button>
-    <button class="map-control-btn" @click="refreshCameraLocations" title="刷新摄像头位置">
+    <button class="map-control-btn" @click="refreshCameraLocations" :title="$tp('刷新摄像头位置')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
         <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
       </svg>
     </button>
     <!-- / -->
-    <button class="map-control-btn theme-toggle" @click="toggleDarkMode" :title="isDarkMode ? '切换到白天模式' : '切换到黑夜模式'">
+    <button class="map-control-btn theme-toggle" @click="toggleDarkMode" :title="isDarkMode ? $tp('切换到白天模式') : $tp('切换到黑夜模式')">
       <svg v-if="!isDarkMode" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
         <!--  -->
         <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>

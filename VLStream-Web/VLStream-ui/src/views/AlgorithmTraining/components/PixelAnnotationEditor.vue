@@ -1,23 +1,23 @@
 <template>
   <div v-if="kind === 'image_classification'" class="classification-editor">
-    <img :src="imageUrl" alt="待分类图片" />
-    <aside><h3>整图类别</h3><p>为这张图片选择一个类别。</p><el-select v-model="classification" :disabled="disabled" placeholder="选择类别" @change="changed = true; emit('change')"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select><p v-if="regions[0]?.className">模型建议：{{ regions[0].className }} · {{ Math.round((regions[0].confidence || 0) * 100) }}%</p></aside>
+    <img :src="imageUrl" :alt="$tp('待分类图片')" />
+    <aside><h3>{{ $tp('整图类别') }}</h3><p>{{ $tp('为这张图片选择一个类别。') }}</p><el-select v-model="classification" :disabled="disabled" :placeholder="$tp('选择类别')" @change="changed = true; emit('change')"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select><p v-if="regions[0]?.className">{{ $tp('模型建议：') }}{{ regions[0].className }} · {{ Math.round((regions[0].confidence || 0) * 100) }}%</p></aside>
   </div>
   <div v-else class="pixel-editor" v-loading="loading">
     <div class="pixel-main">
-      <div class="pixel-toolbar"><el-radio-group v-model="tool" size="small"><el-radio-button value="brush">画笔</el-radio-button><el-radio-button value="erase">橡皮</el-radio-button></el-radio-group><span>画笔</span><el-input-number v-model="brush" :min="1" :max="160" :disabled="disabled" size="small" /><el-button size="small" :disabled="!history.length || disabled" @click="undo">撤销绘制</el-button><span>透明度</span><el-input-number v-model="opacity" :min="0" :max="90" :step="10" size="small" @change="draw" /></div>
-      <el-alert v-if="error" :title="error" type="error" :closable="false" />
-      <div class="pixel-stage"><canvas ref="canvas" :width="width" :height="height" aria-label="像素标注画布" @pointerdown="begin" @pointermove="paint" @pointerup="end" @pointercancel="end" /></div>
-      <p class="pixel-hint">{{ semantic ? `每个像素只能有一个类别；还有 ${unassigned.toLocaleString()} 个像素未归类。` : '每个实例独立保存，可涂抹修正轮廓或用橡皮去除多余像素。' }}</p>
+      <div class="pixel-toolbar"><el-radio-group v-model="tool" size="small"><el-radio-button value="brush">{{ $tp('画笔') }}</el-radio-button><el-radio-button value="erase">{{ $tp('橡皮') }}</el-radio-button></el-radio-group><span>{{ $tp('画笔') }}</span><el-input-number v-model="brush" :min="1" :max="160" :disabled="disabled" size="small" /><el-button size="small" :disabled="!history.length || disabled" @click="undo">{{ $tp('撤销绘制') }}</el-button><span>{{ $tp('透明度') }}</span><el-input-number v-model="opacity" :min="0" :max="90" :step="10" size="small" @change="draw" /></div>
+      <el-alert v-if="error" :title="$tp(error)" type="error" :closable="false" />
+      <div class="pixel-stage"><canvas ref="canvas" :width="width" :height="height" :aria-label="$tp('像素标注画布')" @pointerdown="begin" @pointermove="paint" @pointerup="end" @pointercancel="end" /></div>
+      <p class="pixel-hint">{{ semantic ? $tp('每个像素只能有一个类别；还有 {value0} 个像素未归类。', { value0: unassigned.toLocaleString() }) : $tp('每个实例独立保存，可涂抹修正轮廓或用橡皮去除多余像素。') }}</p>
     </div>
     <aside class="pixel-sidebar">
-      <el-select v-model="newLabel" :disabled="disabled" placeholder="新区域的类别" style="width:100%"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
-      <el-button :disabled="disabled || loading || Boolean(error) || !newLabel" @click="add">{{ semantic ? '添加类别区域' : '新增实例' }}</el-button>
-      <el-button v-if="semantic" :disabled="disabled || loading || Boolean(error) || selected < 0 || !unassigned" @click="fillRemaining">填充未归类区域</el-button>
+      <el-select v-model="newLabel" :disabled="disabled" :placeholder="$tp('新区域的类别')" style="width:100%"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
+      <el-button :disabled="disabled || loading || Boolean(error) || !newLabel" @click="add">{{ semantic ? $tp('添加类别区域') : $tp('新增实例') }}</el-button>
+      <el-button v-if="semantic" :disabled="disabled || loading || Boolean(error) || selected < 0 || !unassigned" @click="fillRemaining">{{ $tp('填充未归类区域') }}</el-button>
       <div v-for="(entry, index) in entries" :key="entry.key" class="pixel-entry" :class="{ selected: selected === index }" @click="selected = index; draw()">
-        <div class="pixel-entry-title"><strong>{{ semantic ? '区域' : '实例' }} {{ index + 1 }}</strong><el-button link type="danger" :disabled="disabled" @click.stop="remove(index)">删除</el-button></div>
-        <el-select v-model="entry.labelId" :disabled="disabled" placeholder="匹配标签" style="width:100%" @change="entry.edited = true; emit('change'); draw()"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
-        <small v-if="entry.className">模型类别：{{ entry.className }}</small>
+        <div class="pixel-entry-title"><strong>{{ semantic ? $tp('区域') : $tp('实例') }} {{ index + 1 }}</strong><el-button link type="danger" :disabled="disabled" @click.stop="remove(index)">{{ $tp('删除') }}</el-button></div>
+        <el-select v-model="entry.labelId" :disabled="disabled" :placeholder="$tp('匹配标签')" style="width:100%" @change="entry.edited = true; emit('change'); draw()"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
+        <small v-if="entry.className">{{ $tp('模型类别：') }}{{ entry.className }}</small>
       </div>
     </aside>
   </div>

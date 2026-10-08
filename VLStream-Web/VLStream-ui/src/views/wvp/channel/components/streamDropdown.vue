@@ -7,9 +7,7 @@
 
 <template>
   <el-dropdown v-if="streamInfo" trigger="click" @command="copyUrl">
-    <el-button :icon="ArrowDownBold">
-      更多地址
-    </el-button>
+    <el-button :icon="ArrowDownBold"> {{ $tp('更多地址') }} </el-button>
     <template #dropdown>
       <el-dropdown-menu>
         <!-- FLV -->
@@ -119,6 +117,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { defineProps } from 'vue';
 import { ElMessage } from 'element-plus';
 import { ArrowDownBold } from '@element-plus/icons-vue'
@@ -135,17 +135,17 @@ const props = defineProps({
 // URL method
 const copyUrl = (url) => {
   if (!url) {
-    ElMessage.error('内容为空，无法复制');
+    ElMessage.error(uiText('内容为空，无法复制'));
     return;
   }
 
   // Clipboard API
   navigator.clipboard.writeText(url).then(
       () => {
-        ElMessage.success('成功拷贝到粘贴板');
+        ElMessage.success(uiText('成功拷贝到粘贴板'));
       },
       () => {
-        ElMessage.error('复制失败，请重试');
+        ElMessage.error(uiText('复制失败，请重试'));
       }
   );
 };

@@ -18,8 +18,8 @@
         <div class="details_list">
           <div class="detailsBox">
             <div class="details_row_box">
-              <img src="@/assets/img/maintenance/staff.png" alt="养护详情" />
-              <div>反馈人员</div>
+              <img src="@/assets/img/maintenance/staff.png" :alt="$tp('养护详情')" />
+              <div>{{ $tp('反馈人员') }}</div>
             </div>
             <div class="details_row_content">
               <i-d2-head-pic
@@ -37,8 +37,8 @@
           </div>
           <div class="detailsBox">
             <div class="details_row_box">
-              <img src="@/assets/img/maintenance/address.png" alt="养护详情" />
-              <div>反馈位置</div>
+              <img src="@/assets/img/maintenance/address.png" :alt="$tp('养护详情')" />
+              <div>{{ $tp('反馈位置') }}</div>
             </div>
             <div class="d_r_content">
               {{ item.point?.address }}
@@ -46,8 +46,8 @@
           </div>
           <div class="detailsBox">
             <div class="details_row_box">
-              <img src="@/assets/img/maintenance/popup.png" alt="养护详情" />
-              <div>事件描述</div>
+              <img src="@/assets/img/maintenance/popup.png" :alt="$tp('养护详情')" />
+              <div>{{ $tp('事件描述') }}</div>
             </div>
             <div class="d_r_content">
               {{ item.describe }}
@@ -55,8 +55,8 @@
           </div>
           <div class="detailsBox">
             <div class="details_row_box">
-              <img src="@/assets/img/maintenance/img.png" alt="养护详情" />
-              <div>图片/视频</div>
+              <img src="@/assets/img/maintenance/img.png" :alt="$tp('养护详情')" />
+              <div>{{ $tp('图片/视频') }}</div>
             </div>
             <div class="d_r_content">
               <el-image

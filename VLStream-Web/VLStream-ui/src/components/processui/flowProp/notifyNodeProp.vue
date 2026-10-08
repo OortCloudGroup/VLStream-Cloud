@@ -9,18 +9,18 @@
   <div class="prop_body">
     <div class="prop_body_tab">
       <el-tabs v-model="activeName" class="demo-tabs">
-        <el-tab-pane label="通知节点" name="first">
+        <el-tab-pane :label="$tp('通知节点')" name="first">
           <div class="prop_title">
-            <span>节点名称</span>
+            <span>{{ $tp('节点名称') }}</span>
           </div>
           <div class="prop_item">
             <el-input
               v-model="nodeName"
-              placeholder="请输入节点名称"
+              :placeholder="$tp('请输入节点名称')"
             />
           </div>
           <div class="prop_title">
-            <span>通知优先级</span>
+            <span>{{ $tp('通知优先级') }}</span>
           </div>
           <div class="prop_item">
             <div class="priority-options">
@@ -37,9 +37,7 @@
                     <div v-if="activeChooseData.priority === option.priorityId" class="priority-radio_span flexRowAC">
                       <el-icon>
                         <WarningFilled />
-                      </el-icon>
-                      &nbsp;已选择此通知方式。若此方式发送失败，系统将自动按优先级[逐步降级]尝试，直到通知成功为止
-                    </div>
+                      </el-icon>  {{ $tp('已选择此通知方式。若此方式发送失败，系统将自动按优先级[逐步降级]尝试，直到通知成功为止') }} </div>
                   </div>
                   <el-icon v-if="activeChooseData.priority === option.priorityId" class="arrow-icon">
                     <Check />
@@ -65,18 +63,18 @@
             </div>
           </div>
           <div class="prop_title">
-            <span>通知说明文字</span>
+            <span>{{ $tp('通知说明文字') }}</span>
           </div>
           <div class="prop_item">
             <el-input
               v-model="activeChooseData.data"
-              placeholder="请输入"
+              :placeholder="$tp('请输入')"
             />
           </div>
           <!-- Set notificationobject -->
           <choose-person-panel-notify-node ref="choosePersonPanelRef" v-model:active-choose-data="activeChooseData" />
           <div class="prop_title">
-            <span>通知期限（为0则不生效）</span>
+            <span>{{ $tp('通知期限（为0则不生效）') }}</span>
           </div>
           <div class="prop_item prop_item_group">
             <el-input
@@ -85,27 +83,19 @@
               placeholder="0"
               style="max-width: 200px"
             >
-              <template #append>
-                分钟
-              </template>
+              <template #append> {{ $tp('分钟') }} </template>
             </el-input>
             <!-- user notification after, user Process is is -->
             &nbsp;   &nbsp;   &nbsp; &nbsp;
             <el-radio-group v-model="activeChooseData.timeoutAction">
-              <el-radio :value="1">
-                重复通知
-              </el-radio>
-              <el-radio :value="2">
-                转下个节点
-              </el-radio>
-              <el-radio :value="3">
-                自动驳回
-              </el-radio>
+              <el-radio :value="1"> {{ $tp('重复通知') }} </el-radio>
+              <el-radio :value="2"> {{ $tp('转下个节点') }} </el-radio>
+              <el-radio :value="3"> {{ $tp('自动驳回') }} </el-radio>
             </el-radio-group>
           </div>
           <template v-if="activeChooseData.timeoutAction===1">
             <div class="prop_title">
-              <span>重复通知</span>
+              <span>{{ $tp('重复通知') }}</span>
             </div>
             <div class="prop_item prop_item_group">
               <el-input
@@ -114,9 +104,7 @@
                 placeholder="0"
                 style="max-width: 200px"
               >
-                <template #append>
-                  次数
-                </template>
+                <template #append> {{ $tp('次数') }} </template>
               </el-input>
             </div>
           </template>
@@ -125,14 +113,10 @@
     </div>
     <div class="prop_body_bottom button_group">
       <!-- button , -->
-      <el-button @click="cancel" class="common_btn">
-        取消
-      </el-button>
-      <el-button type="primary" @click="confirm" class="common_btn">
-        确定
-      </el-button>
+      <el-button @click="cancel" class="common_btn"> {{ $tp('取消') }} </el-button>
+      <el-button type="primary" @click="confirm" class="common_btn"> {{ $tp('确定') }} </el-button>
     </div>
-    <el-dialog v-model="chooseUserVis" title="选择人员" width="50%">
+    <el-dialog v-model="chooseUserVis" :title="$tp('选择人员')" width="50%">
       <address-seting-dialog
         :user-list="activeChooseData.timeoutHandlers[addTimeoutRuleIndex].notificationUserIds"
         :mode="3"
@@ -145,6 +129,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, onMounted, inject } from 'vue'
 import ChoosePersonPanelNotifyNode from './components/choosePersonPanelNotifyNode.vue'
 import {
@@ -328,12 +314,12 @@ function confirm() {
   // Set notification
   if (!activeChooseData.value.users || !activeChooseData.value.users?.length) {
     activeChooseData.value.repeatCount = undefined
-    return ElMessage.warning('请设置通知对象')
+    return ElMessage.warning(uiText('请设置通知对象'))
   }
   // ,
   if (activeChooseData.value.priority === 0 || activeChooseData.value.priority === 1) {
     if (!activeChooseData.value.timeoutMinutes) {
-      return ElMessage.warning('通知期限不能为0')
+      return ElMessage.warning(uiText('通知期限不能为0'))
     }
   }
   // /* item -end */

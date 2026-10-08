@@ -192,6 +192,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight, Check, Close } from '@element-plus/icons-vue'
@@ -340,7 +342,7 @@ const markRead = async() => {
     if (Number(result?.code ?? 200) !== 200) throw new Error(result?.msg || result?.message || '操作失败')
     await loadNotices()
     ElMessage.success(text.value.operationSuccess)
-  } catch (error) { ElMessage.error(error?.message || '操作失败') }
+  } catch (error) { ElMessage.error(error?.message || uiText('操作失败')) }
 }
 const ensurePlatformSession = async() => {
   try {
@@ -370,7 +372,7 @@ const openAppMarket = async() => {
 const accountTenantName = account => {
   const tenant = account?.user?.tenant || {}
   if (account?.user?.is_tenant_admin) return tenant.tenant_name || text.value.tenant
-  return tenant.tenant_id === DEFAULT_PERSONAL_TENANT_ID ? '平台个人用户' : (tenant.tenant_name || text.value.tenant)
+  return tenant.tenant_id === DEFAULT_PERSONAL_TENANT_ID ? uiText('平台个人用户') : (tenant.tenant_name || text.value.tenant)
 }
 const replacePlatformToken = token => {
   sessionStorage.setItem('platformAccessToken', token)
@@ -391,7 +393,7 @@ const changeAccount = async account => {
     replacePlatformToken(nextToken)
   } catch (error) {
     if (error === 'cancel' || error === 'close') return
-    ElMessage.error(error?.message || '切换账号失败')
+    ElMessage.error(error?.message || uiText('切换账号失败'))
   }
 }
 const openTenantSwitch = () => { moreVisible.value = false; tenantDialogVisible.value = true }
@@ -436,7 +438,7 @@ const logout = async() => {
     if (Number(result?.code ?? 200) !== 200) throw new Error(result?.msg || result?.message || '退出失败')
   } catch (error) {
     if (error === 'cancel' || error === 'close') return
-    ElMessage.error(error?.message || '退出失败')
+    ElMessage.error(error?.message || uiText('退出失败'))
     return
   }
   ;['platformAccessToken', 'platformUserInfo', 'accessToken', 'userInfo', 'tenantId'].forEach(key => {

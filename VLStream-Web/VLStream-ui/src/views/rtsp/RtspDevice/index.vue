@@ -12,15 +12,14 @@
       <div class="depNameBox flexRowAC">
         <div class="exportBtnBox flexRowAC">
           <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd" v-hasPermi="['rtsp:RtspDevice:add']">
-            <el-icon class="BtnImg"><Plus /></el-icon>新增
-          </button>
+            <el-icon class="BtnImg"><Plus /></el-icon>{{ $tp('新增') }} </button>
           <button-group :button-list="toolbarButtonList" />
         </div>
       </div>
       <div class="searchHeight_out flexRowAC">
         <search-height-box
           keyword="name"
-          placeholder="搜索摄像头名称"
+          :placeholder="$tp('搜索摄像头名称')"
           :data="searchData"
           @handle="searchResetFn"
         />
@@ -61,8 +60,8 @@
       </el-table-column>
       <el-table-column :label="$tp('播放类型')" prop="playType" :width="clacPXToVW(100)">
         <template #default="scope">
-          <el-tag type="primary" v-if="scope.row.playType === '1'">本地</el-tag>
-          <el-tag type="primary" v-if="scope.row.playType === '2'">推流</el-tag>
+          <el-tag type="primary" v-if="scope.row.playType === '1'">{{ $tp('本地') }}</el-tag>
+          <el-tag type="primary" v-if="scope.row.playType === '2'">{{ $tp('推流') }}</el-tag>
           <el-tag type="primary" v-if="scope.row.playType === '3'">EasyNTS</el-tag>
         </template>
       </el-table-column>
@@ -72,24 +71,24 @@
         <template #default="scope">
           <div class="operateAppBox flexRowAC" @click.stop>
             <div class="new_table_svg_group" @click="handleView(scope.row)" v-hasPermi="['rtsp:RtspDevice:view']">
-              <span>播放</span>
+              <span>{{ $tp('播放') }}</span>
             </div>
             <div class="new_table_svg_group" @click="handleUpdate(scope.row)" v-hasPermi="['rtsp:RtspDevice:edit']">
-              <span>修改</span>
+              <span>{{ $tp('修改') }}</span>
             </div>
             <div class="new_table_svg_group" @click="handleDelete(scope.row)" v-hasPermi="['rtsp:RtspDevice:remove']">
-              <span>删除</span>
+              <span>{{ $tp('删除') }}</span>
             </div>
             <el-dropdown @command="(command)=>{moreClick(command, scope.row)}"
                          v-if="checkPermi(['rtsp:RtspDevice:edit', 'rtsp:RtspDevice:Avatar', 'rtsp:RtspDevice:AlarmClock'])">
               <div class="new_table_svg_group">
-                <span>更多</span>
+                <span>{{ $tp('更多') }}</span>
               </div>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="handleMap" v-if="checkPermi(['rtsp:RtspDevice:edit'])">修改位置</el-dropdown-item>
-                  <el-dropdown-item command="handleAI" v-if="checkPermi(['rtsp:RtspDevice:Avatar'])">AI播放</el-dropdown-item>
-                  <el-dropdown-item command="handleAlarmClock" v-if="checkPermi(['rtsp:RtspDevice:AlarmClock'])">历史播放</el-dropdown-item>
+                  <el-dropdown-item command="handleMap" v-if="checkPermi(['rtsp:RtspDevice:edit'])">{{ $tp('修改位置') }}</el-dropdown-item>
+                  <el-dropdown-item command="handleAI" v-if="checkPermi(['rtsp:RtspDevice:Avatar'])">{{ $tp('AI播放') }}</el-dropdown-item>
+                  <el-dropdown-item command="handleAlarmClock" v-if="checkPermi(['rtsp:RtspDevice:AlarmClock'])">{{ $tp('历史播放') }}</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -112,13 +111,13 @@
     <el-dialog :title="title" v-model="open" width="30%" append-to-body>
       <el-form ref="RtspDeviceRef" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="ip" prop="ip">
-          <el-input v-model="form.ip" placeholder="请输入ip" maxlength="50" show-word-limit/>
+          <el-input v-model="form.ip" :placeholder="$tp('请输入ip')" maxlength="50" show-word-limit/>
         </el-form-item>
-        <el-form-item label="摄像头名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入摄像头名称" maxlength="30" show-word-limit/>
+        <el-form-item :label="$tp('摄像头名称')" prop="name">
+          <el-input v-model="form.name" :placeholder="$tp('请输入摄像头名称')" maxlength="30" show-word-limit/>
         </el-form-item>
-        <el-form-item label="设备厂商" prop="firm">
-          <el-select v-model="form.firm" placeholder="请选择设备厂商">
+        <el-form-item :label="$tp('设备厂商')" prop="firm">
+          <el-select v-model="form.firm" :placeholder="$tp('请选择设备厂商')">
             <el-option
                 v-for="dict in rtsp_manufacturer"
                 :key="dict.value"
@@ -127,39 +126,39 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="播放类型" prop="playType">
+        <el-form-item :label="$tp('播放类型')" prop="playType">
           <el-radio-group v-model="form.playType">
-            <el-radio value="1">本地</el-radio>
-            <el-radio value="2">推流</el-radio>
+            <el-radio value="1">{{ $tp('本地') }}</el-radio>
+            <el-radio value="2">{{ $tp('推流') }}</el-radio>
             <el-radio value="3">EasyNTS</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="流id" prop="streamId" v-if="form.playType === '2'">
-          <el-input v-model="form.streamId" placeholder="请输入流id" maxlength="100" show-word-limit/>
+        <el-form-item :label="$tp('流id')" prop="streamId" v-if="form.playType === '2'">
+          <el-input v-model="form.streamId" :placeholder="$tp('请输入流id')" maxlength="100" show-word-limit/>
         </el-form-item>
-        <el-form-item label="EasyNTS地址" prop="easyNTSUrl" v-if="form.playType === '3'">
-          <el-input v-model="form.easyNTSUrl" type="textarea" placeholder="请输入EasyNTS地址" maxlength="200"
+        <el-form-item :label="$tp('EasyNTS地址')" prop="easyNTSUrl" v-if="form.playType === '3'">
+          <el-input v-model="form.easyNTSUrl" type="textarea" :placeholder="$tp('请输入EasyNTS地址')" maxlength="200"
                     show-word-limit/>
         </el-form-item>
         <div v-if="form.playType === '1'">
-          <el-form-item label="用户名" prop="userName">
-            <el-input v-model="form.userName" placeholder="请输入用户名" maxlength="20" show-word-limit/>
+          <el-form-item :label="$tp('用户名')" prop="userName">
+            <el-input v-model="form.userName" :placeholder="$tp('请输入用户名')" maxlength="20" show-word-limit/>
           </el-form-item>
-          <el-form-item label="密码" prop="password">
-            <el-input v-model="form.password" placeholder="请输入密码" maxlength="50"/>
+          <el-form-item :label="$tp('密码')" prop="password">
+            <el-input v-model="form.password" :placeholder="$tp('请输入密码')" maxlength="50"/>
           </el-form-item>
-          <el-form-item label="通道号" prop="channel">
-            <el-input v-model="form.channel" placeholder="请输入通道号" maxlength="10" show-word-limit/>
+          <el-form-item :label="$tp('通道号')" prop="channel">
+            <el-input v-model="form.channel" :placeholder="$tp('请输入通道号')" maxlength="10" show-word-limit/>
           </el-form-item>
         </div>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" maxlength="255" show-word-limit/>
+        <el-form-item :label="$tp('备注')" prop="remark">
+          <el-input v-model="form.remark" type="textarea" :placeholder="$tp('请输入内容')" maxlength="255" show-word-limit/>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm" class="common_btn">确 定</el-button>
-          <el-button @click="cancel" class="common_btn">取 消</el-button>
+          <el-button type="primary" @click="submitForm" class="common_btn">{{ $tp('确 定') }}</el-button>
+          <el-button @click="cancel" class="common_btn">{{ $tp('取 消') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -170,7 +169,7 @@
         <Hikvision :rtsp="rtspURL" v-if="showPaly && (playType === '1' || playType === '3') "/>
 
         <el-row :gutter="10" style="margin-top: 20px" v-if="showPaly && (playType === '1' || playType === '3') ">
-          <el-col :span="4"><span style="width: 100px; line-height: 40px; text-align: right;">播放地址：</span></el-col>
+          <el-col :span="4"><span style="width: 100px; line-height: 40px; text-align: right;">{{ $tp('播放地址：') }}</span></el-col>
           <el-col :span="20">
             <el-input v-model="rtspURL" :disabled="true">
               <template #append>
@@ -182,7 +181,7 @@
 
         <div v-if="playType === '2'">
           <el-tabs v-model="activeName" type="card" :stretch="true">
-            <el-tab-pane label="flv播放" name="flv">
+            <el-tab-pane :label="$tp('flv播放')" name="flv">
               <el-row>
                 <el-col :span="24">
                   <div class="player" v-if="activeName === 'flv'">
@@ -205,25 +204,25 @@
           </el-tabs>
 
           <el-tabs v-model="tabActiveName" type="card" :stretch="true" style="margin-top: 10px;">
-            <el-tab-pane label="实时视频" name="media">
+            <el-tab-pane :label="$tp('实时视频')" name="media">
               <el-row :gutter="10">
-                <el-col :span="2"><span style="width: 80px; line-height: 40px; text-align: right;">播放地址：</span>
+                <el-col :span="2"><span style="width: 80px; line-height: 40px; text-align: right;">{{ $tp('播放地址：') }}</span>
                 </el-col>
                 <el-col :span="18">
                   <el-input v-model="flvUrl" :disabled="true" v-show="activeName === 'flv'">
-                    <template #prepend>flv地址</template>
+                    <template #prepend>{{ $tp('flv地址') }}</template>
                     <template #append>
                       <el-button type="primary" :icon="DocumentCopy" @click="copyToClipboard(flvUrl)"/>
                     </template>
                   </el-input>
                   <el-input v-model="rtcUrl" :disabled="true" v-show="activeName === 'webRtc'">
-                    <template #prepend>rtcUrl地址</template>
+                    <template #prepend>{{ $tp('rtcUrl地址') }}</template>
                     <template #append>
                       <el-button type="primary" :icon="DocumentCopy" @click="copyToClipboard(rtcUrl)"/>
                     </template>
                   </el-input>
                   <el-input v-model="wsUrl" :disabled="true" v-show="activeName === 'H265'">
-                    <template #prepend>wsUrl地址</template>
+                    <template #prepend>{{ $tp('wsUrl地址') }}</template>
                     <template #append>
                       <el-button type="primary" :icon="DocumentCopy" @click="copyToClipboard(wsUrl)"/>
                     </template>
@@ -235,7 +234,7 @@
               </el-row>
             </el-tab-pane>
 
-            <el-tab-pane label="编码信息" name="codec">
+            <el-tab-pane :label="$tp('编码信息')" name="codec">
               <MediaInfo v-if="tabActiveName === 'codec'" ref="mediaInfo" :app="streamInfo.app"
                          :stream="streamInfo.stream" :mediaServerId="streamInfo.mediaServerId"></MediaInfo>
             </el-tab-pane>
@@ -244,44 +243,44 @@
       </div>
     </el-dialog>
 
-    <el-dialog title="选择时间" v-model="showAlarmClock" width="30%" append-to-body>
+    <el-dialog :title="$tp('选择时间')" v-model="showAlarmClock" width="30%" append-to-body>
       <el-form :model="alarmClockOptions" :rules="rulesAlarm" ref="alarmClockFormRef" label-width="100px">
-        <el-form-item label="开始时间" prop="startTime">
+        <el-form-item :label="$tp('开始时间')" prop="startTime">
           <el-date-picker
               v-model="alarmClockOptions.startTime"
               type="datetime"
               value-format="YYYY-MM-DD HH:mm:ss"
-              placeholder="选择日期时间">
+              :placeholder="$tp('选择日期时间')">
           </el-date-picker>
         </el-form-item>
 
-        <el-form-item label="结束时间" prop="endTime">
+        <el-form-item :label="$tp('结束时间')" prop="endTime">
           <el-date-picker
               v-model="alarmClockOptions.endTime"
               type="datetime"
               value-format="YYYY-MM-DD HH:mm:ss"
-              placeholder="选择日期时间">
+              :placeholder="$tp('选择日期时间')">
           </el-date-picker>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitFormAlarmClock" class="common_btn">确 定</el-button>
-          <el-button @click="showAlarmClock = false" class="common_btn">取 消</el-button>
+          <el-button type="primary" @click="submitFormAlarmClock" class="common_btn">{{ $tp('确 定') }}</el-button>
+          <el-button @click="showAlarmClock = false" class="common_btn">{{ $tp('取 消') }}</el-button>
         </div>
       </template>
     </el-dialog>
 
-    <el-dialog title="选择ai模式" v-model="showAI" width="30%">
+    <el-dialog :title="$tp('选择ai模式')" v-model="showAI" width="30%">
       <div>
-        <el-button type="primary" style="width: 100%;" @click="handlDetection('detection')">目标检测</el-button>
+        <el-button type="primary" style="width: 100%;" @click="handlDetection('detection')">{{ $tp('目标检测') }}</el-button>
       </div>
       <div style="margin-top: 10px;">
-        <el-button type="primary" style="width: 100%;">车牌检测</el-button>
+        <el-button type="primary" style="width: 100%;">{{ $tp('车牌检测') }}</el-button>
       </div>
     </el-dialog>
 
-    <el-dialog title="目标检测算法" v-model="showAIPaly" width="45%" @close="closeAI">
+    <el-dialog :title="$tp('目标检测算法')" v-model="showAIPaly" width="45%" @close="closeAI">
       <div style="width: 800px; height: 600px;">
         <el-row>
           <el-col :span="24">
@@ -293,7 +292,7 @@
       </div>
     </el-dialog>
 
-    <el-dialog title="修改地址" v-model="showMap" width="45%" append-to-body>
+    <el-dialog :title="$tp('修改地址')" v-model="showMap" width="45%" append-to-body>
       <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
     </el-dialog>
 
@@ -302,6 +301,8 @@
 </template>
 
 <script setup name="RtspDevice">
+import { translatePhrase as uiText } from '@/i18n'
+
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import {
   addDetection,
@@ -445,13 +446,13 @@ const videoError = (e) => {
 
 const copyToClipboard = async (text) => {
   if (!text) {
-    ElMessage.error('内容为空，无法复制');
+    ElMessage.error(uiText('内容为空，无法复制'));
     return;
   }
 
   try {
     await toClipboard(text)
-    ElMessage.success('成功拷贝到粘贴板');
+    ElMessage.success(uiText('成功拷贝到粘贴板'));
   } catch (e) {
     console.error(e)
   }

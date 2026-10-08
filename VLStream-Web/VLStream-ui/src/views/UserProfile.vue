@@ -9,8 +9,8 @@
   <div class="user-profile-container">
     <!-- page -->
     <div class="page-header">
-      <h2 class="page-title">个人设置</h2>
-      <p class="page-subtitle">查看和管理您的个人信息</p>
+      <h2 class="page-title">{{ $tp('个人设置') }}</h2>
+      <p class="page-subtitle">{{ $tp('查看和管理您的个人信息') }}</p>
     </div>
 
     <!-- userinfo -->
@@ -27,24 +27,24 @@
         </div>
         <div class="user-basic-info">
           <div class="user-name-row">
-            <h3 class="user-name">{{ userInfo.userName || '未登录' }}</h3>
+            <h3 class="user-name">{{ userInfo.userName || $tp('未登录') }}</h3>
             <el-button
               v-if="!isEditing"
               class="edit-profile-button"
               type="primary"
               link
               :icon="Edit"
-              aria-label="编辑用户信息"
+              :aria-label="$tp('编辑用户信息')"
               @click="startEdit"
             />
           </div>
-          <p class="user-id">用户ID: {{ userInfo.userId || '未知' }}</p>
+          <p class="user-id">{{ $tp('用户ID:') }} {{ userInfo.userId || $tp('未知') }}</p>
           <p class="user-status">
             <el-tag
               :type="userInfo.status === 1 ? 'success' : 'danger'"
               size="small"
             >
-              {{ userInfo.status === 1 ? '正常' : '禁用' }}
+              {{ userInfo.status === 1 ? $tp('正常') : $tp('禁用') }}
             </el-tag>
           </p>
         </div>
@@ -77,19 +77,19 @@
       >
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="登录账号">
+            <el-form-item :label="$tp('登录账号')">
               <el-input
                 v-model="userInfo.loginId"
-                placeholder="登录账号"
+                :placeholder="$tp('登录账号')"
                 readonly
               />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="用户姓名">
+            <el-form-item :label="$tp('用户姓名')">
               <el-input
                 v-model="userInfo.userName"
-                placeholder="用户姓名"
+                :placeholder="$tp('用户姓名')"
                 :readonly="!isEditing"
               />
             </el-form-item>
@@ -98,26 +98,26 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="租户ID">
+            <el-form-item :label="$tp('租户ID')">
               <el-input
                 v-model="userInfo.tenantId"
-                placeholder="租户ID"
+                :placeholder="$tp('租户ID')"
                 readonly
               />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="用户来源">
+            <el-form-item :label="$tp('用户来源')">
               <el-select
                 v-model="userInfo.form"
-                placeholder="用户来源"
+                :placeholder="$tp('用户来源')"
                 :disabled="!isEditing"
                 style="width: 100%"
               >
-                <el-option label="系统创建" :value="1" />
-                <el-option label="组织创建" :value="2" />
-                <el-option label="用户池创建" :value="3" />
-                <el-option label="统一用户中心" :value="4" />
+                <el-option :label="$tp('系统创建')" :value="1" />
+                <el-option :label="$tp('组织创建')" :value="2" />
+                <el-option :label="$tp('用户池创建')" :value="3" />
+                <el-option :label="$tp('统一用户中心')" :value="4" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -125,23 +125,23 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="登录类型">
+            <el-form-item :label="$tp('登录类型')">
               <el-select
                 v-model="userInfo.loginType"
-                placeholder="登录类型"
+                :placeholder="$tp('登录类型')"
                 :disabled="!isEditing"
                 style="width: 100%"
               >
-                <el-option label="B/E端用户" :value="1" />
-                <el-option label="C端用户" :value="2" />
+                <el-option :label="$tp('B/E端用户')" :value="1" />
+                <el-option :label="$tp('C端用户')" :value="2" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="客户端类型">
+            <el-form-item :label="$tp('客户端类型')">
               <el-input
                 v-model="userInfo.client"
-                placeholder="客户端类型"
+                :placeholder="$tp('客户端类型')"
                 :readonly="!isEditing"
               />
             </el-form-item>
@@ -150,19 +150,19 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="最后登录时间">
+            <el-form-item :label="$tp('最后登录时间')">
               <el-input
                 :value="formatDateTime(userInfo.loginTime)"
-                placeholder="最后登录时间"
+                :placeholder="$tp('最后登录时间')"
                 readonly
               />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="最后登录IP">
+            <el-form-item :label="$tp('最后登录IP')">
               <el-input
                 v-model="userInfo.loginIp"
-                placeholder="最后登录IP"
+                :placeholder="$tp('最后登录IP')"
                 readonly
               />
             </el-form-item>
@@ -171,19 +171,19 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="令牌过期时间">
+            <el-form-item :label="$tp('令牌过期时间')">
               <el-input
                 :value="formatDateTime(userInfo.tokenExpireTime)"
-                placeholder="令牌过期时间"
+                :placeholder="$tp('令牌过期时间')"
                 readonly
               />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="创建时间">
+            <el-form-item :label="$tp('创建时间')">
               <el-input
                 :value="formatDateTime(userInfo.createdAt)"
-                placeholder="创建时间"
+                :placeholder="$tp('创建时间')"
                 readonly
               />
             </el-form-item>
@@ -192,19 +192,19 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="更新时间">
+            <el-form-item :label="$tp('更新时间')">
               <el-input
                 :value="formatDateTime(userInfo.updatedAt)"
-                placeholder="更新时间"
+                :placeholder="$tp('更新时间')"
                 readonly
               />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="访问令牌">
+            <el-form-item :label="$tp('访问令牌')">
               <el-input
                 :value="maskToken(userInfo.accessToken)"
-                placeholder="访问令牌"
+                :placeholder="$tp('访问令牌')"
                 readonly
                 show-password
               />
@@ -221,16 +221,12 @@
               :icon="Check"
               :loading="saving"
               class="common_btn"
-            >
-              保存
-            </el-button>
+            > {{ $tp('保存') }} </el-button>
             <el-button
               @click="cancelEdit"
               :icon="Close"
               class="common_btn"
-            >
-              取消
-            </el-button>
+            > {{ $tp('取消') }} </el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -239,7 +235,7 @@
     <!-- history -->
     <div class="login-history-card">
       <div class="card-header">
-        <h3>登录历史</h3>
+        <h3>{{ $tp('登录历史') }}</h3>
       </div>
       <el-table :data="loginHistory" stripe>
         <el-table-column prop="loginTime" :label="$tp('登录时间')" width="180">
@@ -256,6 +252,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, onMounted, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -283,23 +281,23 @@ const saving = ref(false)
 const loginHistory = ref([])
 
 const getUserSourceLabel = (value) => ({
-  1: '系统创建',
-  2: '组织创建',
-  3: '用户池创建',
-  4: '统一用户中心'
-}[value] || '未知')
+  1: uiText('系统创建'),
+  2: uiText('组织创建'),
+  3: uiText('用户池创建'),
+  4: uiText('统一用户中心')
+}[value] || uiText('未知'))
 
 const getLoginTypeLabel = (value) => ({
-  1: 'B/E端用户',
-  2: 'C端用户'
-}[value] || '未知')
+  1: uiText('B/E端用户'),
+  2: uiText('C端用户')
+}[value] || uiText('未知'))
 
 //
 const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjVGNUY1Ii8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjgwIiByPSIzMCIgZmlsbD0iI0NDQ0NDQyIvPgo8cGF0aCBkPSJNNDAgMTYwQzQwIDEyMCA4MCAxMDAgMTAwIDEwMEMxMjAgMTAwIDE2MCAxMjAgMTYwIDE2MEg0MFoiIGZpbGw9IiNDQ0NDQ0MiLz4KPC9zdmc+'
 
 // Format
 const formatDateTime = (dateTime) => {
-  if (!dateTime) return '未知'
+  if (!dateTime) return uiText('未知')
   const date = new Date(dateTime)
   return date.toLocaleString('zh-CN', {
     year: 'numeric',
@@ -346,14 +344,14 @@ const saveChanges = async () => {
     // only localStorage, to API can new
     localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
 
-      ElMessage.success('用户信息更新成功')
+      ElMessage.success(uiText('用户信息更新成功'))
       isEditing.value = false
 
     console.log('✅ 用户信息已保存到localStorage')
 
   } catch (error) {
     console.error('❌ 保存用户信息失败:', error)
-    ElMessage.error('保存失败，请重试')
+    ElMessage.error(uiText('保存失败，请重试'))
   } finally {
     saving.value = false
   }
@@ -361,9 +359,9 @@ const saveChanges = async () => {
 
 //
 const cancelEdit = async () => {
-  await ElMessageBox.confirm('确定要取消编辑吗？未保存的更改将丢失。', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  await ElMessageBox.confirm(uiText('确定要取消编辑吗？未保存的更改将丢失。'), uiText('提示'), {
+    confirmButtonText: uiText('确定'),
+    cancelButtonText: uiText('取消'),
     type: 'warning'
   })
 
@@ -386,7 +384,7 @@ const loadUserInfo = async () => {
 
     if (!token) {
       console.log('❌ 没有找到有效的token')
-      ElMessage.warning('未找到用户信息，请先登录')
+      ElMessage.warning(uiText('未找到用户信息，请先登录'))
       return
     }
 
@@ -449,11 +447,11 @@ const loadUserInfo = async () => {
 
     } else {
       console.warn('getUserInfo API返回数据格式不正确:', response)
-      ElMessage.warning('获取用户信息失败')
+      ElMessage.warning(uiText('获取用户信息失败'))
     }
   } catch (error) {
     console.error('❌ 加载用户信息失败:', error)
-    ElMessage.error('加载用户信息失败')
+    ElMessage.error(uiText('加载用户信息失败'))
   }
 }
 

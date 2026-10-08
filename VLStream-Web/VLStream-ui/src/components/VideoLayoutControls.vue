@@ -13,7 +13,7 @@
         :type="layoutMode === '1x1' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(1)"
-        title="单画面视频播放"
+        :title="$tp('单画面视频播放')"
         class="layout-btn"
       >
         <img :src="mode1Icon" alt="1x1" class="layout-mode-icon" />
@@ -22,7 +22,7 @@
         :type="layoutMode === '2x2' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(4)"
-        title="四分屏视频播放"
+        :title="$tp('四分屏视频播放')"
         class="layout-btn four-grid-btn"
       >
         <div class="four-grid">
@@ -36,42 +36,42 @@
         :type="layoutMode === '3x3' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(6)"
-        title="六分屏视频播放"
+        :title="$tp('六分屏视频播放')"
         class="layout-btn"
       >
-        <img :src="mode3Icon" alt="六分屏" class="layout-mode-icon" />
+        <img :src="mode3Icon" :alt="$tp('六分屏')" class="layout-mode-icon" />
       </el-button>
       <el-button
         :type="layoutMode === '4x4' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(8)"
-        title="八分屏视频播放"
+        :title="$tp('八分屏视频播放')"
         class="layout-btn"
       >
-        <img :src="mode4Icon" alt="八分屏" class="layout-mode-icon" />
+        <img :src="mode4Icon" :alt="$tp('八分屏')" class="layout-mode-icon" />
       </el-button>
       <el-button
         :type="layoutMode === '5x5' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(9)"
-        title="九分屏视频播放"
+        :title="$tp('九分屏视频播放')"
         class="layout-btn"
       >
-        <img :src="mode5Icon" alt="九分屏" class="layout-mode-icon" />
+        <img :src="mode5Icon" :alt="$tp('九分屏')" class="layout-mode-icon" />
       </el-button>
       <el-button
         :type="layoutMode === '6x6' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(16)"
-        title="十六分屏视频播放"
+        :title="$tp('十六分屏视频播放')"
         class="layout-btn"
       >
-        <img :src="mode6Icon" alt="十六分屏" class="layout-mode-icon" />
+        <img :src="mode6Icon" :alt="$tp('十六分屏')" class="layout-mode-icon" />
       </el-button>
       <el-button
         size="small"
         @click="$emit('extended-layout')"
-        title="扩展布局选项"
+        :title="$tp('扩展布局选项')"
         class="layout-btn extended-layout-btn"
         :class="{ active: showExtendedLayout }"
       >
@@ -84,15 +84,13 @@
       <el-button
         size="small"
         @click="$emit('custom-layout')"
-        title="自定义视频播放"
+        :title="$tp('自定义视频播放')"
         class="layout-btn"
-      >
-        自定义
-      </el-button>
+      > {{ $tp('自定义') }} </el-button>
       <el-button
         size="small"
         @click="$emit('toggle-fullscreen')"
-        :title="isFullscreen ? '退出全屏' : '全屏'"
+        :title="isFullscreen ? $tp('退出全屏') : $tp('全屏')"
         :type="isFullscreen ? 'primary' : 'default'"
         class="layout-btn"
       >
@@ -104,30 +102,30 @@
     <div class="device-stats">
       <div class="stat-item total">
         <div class="stat-icon">
-          <img src="@/assets/设备-总设备@3x.png" alt="总设备" width="32" height="32">
+          <img src="@/assets/设备-总设备@3x.png" :alt="$tp('总设备')" width="32" height="32">
         </div>
         <div class="stat-content">
-          <span class="stat-label">总设备：</span>
+          <span class="stat-label">{{ $tp('总设备：') }}</span>
           <span class="stat-value">{{ deviceCount }}</span>
         </div>
       </div>
 
       <div class="stat-item online">
         <div class="stat-icon">
-          <img src="@/assets/设备-在线@3x.png" alt="在线" width="32" height="32">
+          <img src="@/assets/设备-在线@3x.png" :alt="$tp('在线')" width="32" height="32">
         </div>
         <div class="stat-content">
-          <span class="stat-label">在线：</span>
+          <span class="stat-label">{{ $tp('在线：') }}</span>
           <span class="stat-value">{{ onlineCount }}</span>
         </div>
       </div>
 
       <div class="stat-item offline">
         <div class="stat-icon">
-          <img src="@/assets/设备-离线@3x.png" alt="离线" width="32" height="32">
+          <img src="@/assets/设备-离线@3x.png" :alt="$tp('离线')" width="32" height="32">
         </div>
         <div class="stat-content">
-          <span class="stat-label">离线：</span>
+          <span class="stat-label">{{ $tp('离线：') }}</span>
           <span class="stat-value">{{ offlineCount }}</span>
         </div>
       </div>

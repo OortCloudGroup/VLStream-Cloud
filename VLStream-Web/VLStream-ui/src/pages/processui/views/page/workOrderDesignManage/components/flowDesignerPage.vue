@@ -18,28 +18,22 @@
     <FlowChart ref="flowChartRef" v-model:node-config="nodeConfig" />
     <div class="bottom">
       <div class="button_group">
-        <el-button v-preReClick @click="dialogVisible=true">
-          其他设置
-        </el-button>
+        <el-button v-preReClick @click="dialogVisible=true"> {{ $tp('其他设置') }} </el-button>
       </div>
       <div class="button_group">
-        <el-button @click="cancel" class="common_btn">
-          取消
-        </el-button>
-        <el-button v-preReClick type="primary" @click="saveFlow">
-          保存
-        </el-button>
+        <el-button @click="cancel" class="common_btn"> {{ $tp('取消') }} </el-button>
+        <el-button v-preReClick type="primary" @click="saveFlow"> {{ $tp('保存') }} </el-button>
       </div>
     </div>
     <el-dialog
       v-model="dialogVisible"
-      title="其他设置"
+      :title="$tp('其他设置')"
       align-center
       width="40%"
       :close-on-click-modal="false"
     >
       <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="120">
-        <el-form-item label="站内消息推送">
+        <el-form-item :label="$tp('站内消息推送')">
           <el-switch
             v-model="form.notifyAllSteps"
             active-color="#13ce66"
@@ -51,12 +45,8 @@
       </el-form>
       <template #footer>
         <div style="text-align: right;">
-          <el-button @click="dialogVisible = false" class="common_btn">
-            取消
-          </el-button>
-          <el-button v-preReClick type="primary" @click="dialogVisible = false" class="common_btn">
-            确定
-          </el-button>
+          <el-button @click="dialogVisible = false" class="common_btn"> {{ $tp('取消') }} </el-button>
+          <el-button v-preReClick type="primary" @click="dialogVisible = false" class="common_btn"> {{ $tp('确定') }} </el-button>
         </div>
       </template>
     </el-dialog>
@@ -64,6 +54,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { useRoute } from 'vue-router'
 import { ref, onMounted, provide, reactive } from 'vue'
 import { getJSONModel, saveModel } from '@/api/processui/index.ts'
@@ -147,7 +139,7 @@ async function confirmSave(isNewVersion) {
   params.notifyAllSteps = form.notifyAllSteps
   let res = props.processuiTs ? await saveModel(params) : await saveModel_a(params)
   if (res.code === 200) {
-    if (props.confirmTip) ElMessage.success('保存成功')
+    if (props.confirmTip) ElMessage.success(uiText('保存成功'))
     emits('closeDrawer', res.msg)
   }
 }
@@ -165,12 +157,12 @@ function saveFlow() {
     confirmSave(true)
   } else {
     ElMessageBox.confirm(
-      '是否将此模型保存为新版本？',
-      '提示',
+      uiText('是否将此模型保存为新版本？'),
+      uiText('提示'),
       {
         distinguishCancelAndClose: true,
-        confirmButtonText: '保存为新版本',
-        cancelButtonText: '仅保存',
+        confirmButtonText: uiText('保存为新版本'),
+        cancelButtonText: uiText('仅保存'),
         type: 'warning'
       }
     ).then(() => {

@@ -10,30 +10,28 @@
     <div class="ai-event-container">
       <!-- deviceinfo -->
       <div class="device-info-header">
-        <h2 class="device-title">{{ deviceInfo?.deviceName || 'XXX摄像机' }}</h2>
+        <h2 class="device-title">{{ deviceInfo?.deviceName || $tp('XXX摄像机') }}</h2>
         <div class="device-details">
           <div class="detail-item">
-            <span class="detail-label">设备型号</span>
+            <span class="detail-label">{{ $tp('设备型号') }}</span>
             <span class="detail-value">{{ deviceInfo?.deviceId || 'N931' }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">设备ID</span>
+            <span class="detail-label">{{ $tp('设备ID') }}</span>
             <span class="detail-value">{{ deviceInfo?.deviceId || '616891' }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">设备类型</span>
-            <span class="detail-value">{{ deviceInfo?.tag || '97球机' }}</span>
+            <span class="detail-label">{{ $tp('设备类型') }}</span>
+            <span class="detail-value">{{ deviceInfo?.tag || $tp('97球机') }}</span>
           </div>
         </div>
       </div>
 
       <!-- model button -->
       <div class="model-section">
-        <h3 class="section-title">本地模型</h3>
+        <h3 class="section-title">{{ $tp('本地模型') }}</h3>
         <el-button type="primary" class="model-call-btn" @click="openModelMarket">
-          <el-icon><ShoppingBag /></el-icon>
-          模型超市
-        </el-button>
+          <el-icon><ShoppingBag /></el-icon> {{ $tp('模型超市') }} </el-button>
       </div>
 
       <!-- AI configuration -->
@@ -62,9 +60,7 @@
               @click="showAddDetection"
               class="add-detection-btn"
             >
-              <el-icon><Plus /></el-icon>
-              添加检测项目
-            </el-button>
+              <el-icon><Plus /></el-icon> {{ $tp('添加检测项目') }} </el-button>
           </div>
         </div>
 
@@ -73,26 +69,22 @@
           <div class="config-tabs">
             <el-tabs v-model="activeTab" class="tenanat-tabs">
               <!--  -->
-              <el-tab-pane label="异常检测" name="detection">
+              <el-tab-pane :label="$tp('异常检测')" name="detection">
                 <div class="detection-config">
                   <!--  -->
                   <div class="config-item">
-                    <el-checkbox v-model="aiConfig.audioInput" class="config-checkbox">
-                      音频输入异常
-                    </el-checkbox>
+                    <el-checkbox v-model="aiConfig.audioInput" class="config-checkbox"> {{ $tp('音频输入异常') }} </el-checkbox>
                   </div>
 
                   <!--  -->
                   <div class="config-item">
-                    <el-checkbox v-model="aiConfig.soundEnhancement" class="config-checkbox">
-                      声强增升
-                    </el-checkbox>
+                    <el-checkbox v-model="aiConfig.soundEnhancement" class="config-checkbox"> {{ $tp('声强增升') }} </el-checkbox>
                   </div>
 
                   <!-- 1 -->
                   <div class="config-item">
                     <div class="slider-container">
-                      <label class="slider-label">灵敏度</label>
+                      <label class="slider-label">{{ $tp('灵敏度') }}</label>
                       <div class="slider-wrapper">
                         <el-slider
                           v-model="aiConfig.sensitivity1"
@@ -108,7 +100,7 @@
                   <!-- value -->
                   <div class="config-item">
                     <div class="slider-container">
-                      <label class="slider-label">声音强度阈值</label>
+                      <label class="slider-label">{{ $tp('声音强度阈值') }}</label>
                       <div class="slider-wrapper">
                         <el-slider
                           v-model="aiConfig.soundThreshold"
@@ -123,15 +115,13 @@
 
                   <!--  -->
                   <div class="config-item">
-                    <el-checkbox v-model="aiConfig.soundDecrease" class="config-checkbox">
-                      声强降降
-                    </el-checkbox>
+                    <el-checkbox v-model="aiConfig.soundDecrease" class="config-checkbox"> {{ $tp('声强降降') }} </el-checkbox>
                   </div>
 
                   <!-- 2 -->
                   <div class="config-item">
                     <div class="slider-container">
-                      <label class="slider-label">灵敏度</label>
+                      <label class="slider-label">{{ $tp('灵敏度') }}</label>
                       <div class="slider-wrapper">
                         <el-slider
                           v-model="aiConfig.sensitivity2"
@@ -147,7 +137,7 @@
                   <!--  -->
                   <div class="config-item">
                     <div class="realtime-audio">
-                      <label class="audio-label">实时音量</label>
+                      <label class="audio-label">{{ $tp('实时音量') }}</label>
                       <div class="audio-waveform">
                         <canvas ref="waveformCanvas" class="waveform-canvas"></canvas>
                       </div>
@@ -157,15 +147,15 @@
               </el-tab-pane>
 
               <!--  -->
-              <el-tab-pane label="布防时间" name="schedule">
+              <el-tab-pane :label="$tp('布防时间')" name="schedule">
                 <div class="schedule-config">
                   <!--  -->
                   <div class="schedule-mode">
                     <div class="mode-item">
                       <el-radio-group v-model="scheduleConfig.mode" class="mode-options">
-                        <el-radio label="always">全天布防</el-radio>
-                        <el-radio label="custom">自定义时间</el-radio>
-                        <el-radio label="disable">关闭布防</el-radio>
+                        <el-radio label="always">{{ $tp('全天布防') }}</el-radio>
+                        <el-radio label="custom">{{ $tp('自定义时间') }}</el-radio>
+                        <el-radio label="disable">{{ $tp('关闭布防') }}</el-radio>
                       </el-radio-group>
                     </div>
                   </div>
@@ -174,7 +164,7 @@
                   <div v-if="scheduleConfig.mode === 'custom'" class="custom-schedule">
                     <!--  -->
                     <div class="week-selector">
-                      <label class="schedule-label">布防日期</label>
+                      <label class="schedule-label">{{ $tp('布防日期') }}</label>
                       <div class="week-options">
                         <el-checkbox-group v-model="scheduleConfig.selectedDays" class="day-checkboxes">
                           <el-checkbox
@@ -191,7 +181,7 @@
 
                     <!-- Set -->
                     <div class="time-periods">
-                      <label class="schedule-label">布防时间段</label>
+                      <label class="schedule-label">{{ $tp('布防时间段') }}</label>
                       <div class="time-period-list">
                         <div
                           v-for="(period, index) in scheduleConfig.timePeriods"
@@ -201,15 +191,15 @@
                           <div class="time-inputs">
                             <el-time-picker
                               v-model="period.startTime"
-                              placeholder="开始时间"
+                              :placeholder="$tp('开始时间')"
                               format="HH:mm"
                               value-format="HH:mm"
                               class="time-input"
                             />
-                            <span class="time-separator">至</span>
+                            <span class="time-separator">{{ $tp('至') }}</span>
                             <el-time-picker
                               v-model="period.endTime"
-                              placeholder="结束时间"
+                              :placeholder="$tp('结束时间')"
                               format="HH:mm"
                               value-format="HH:mm"
                               class="time-input"
@@ -221,9 +211,7 @@
                             size="small"
                             @click="removeTimePeriod(index)"
                             v-if="scheduleConfig.timePeriods.length > 1"
-                          >
-                            删除
-                          </el-button>
+                          > {{ $tp('删除') }} </el-button>
                         </div>
                       </div>
 
@@ -236,18 +224,14 @@
                           @click="addTimePeriod"
                           :disabled="scheduleConfig.timePeriods.length >= 4"
                         >
-                          <el-icon><Plus /></el-icon>
-                          添加时间段
-                        </el-button>
-                        <span class="period-hint" v-if="scheduleConfig.timePeriods.length >= 4">
-                          最多可添加4个时间段
-                        </span>
+                          <el-icon><Plus /></el-icon> {{ $tp('添加时间段') }} </el-button>
+                        <span class="period-hint" v-if="scheduleConfig.timePeriods.length >= 4"> {{ $tp('最多可添加4个时间段') }} </span>
                       </div>
                     </div>
 
                     <!--  -->
                     <div class="time-visualization">
-                      <label class="schedule-label">时间段预览</label>
+                      <label class="schedule-label">{{ $tp('时间段预览') }}</label>
                       <div class="time-timeline">
                         <div class="timeline-hours">
                           <div
@@ -291,21 +275,21 @@
               </el-tab-pane>
 
               <!--  -->
-              <el-tab-pane label="联动方式" name="linkage">
+              <el-tab-pane :label="$tp('联动方式')" name="linkage">
                 <div class="linkage-config">
                   <!--  -->
                   <div class="linkage-group">
-                    <h5 class="group-title">常规联动</h5>
+                    <h5 class="group-title">{{ $tp('常规联动') }}</h5>
                     <el-checkbox-group v-model="linkageConfig.normal" class="linkage-options">
-                      <el-checkbox label="general">常规</el-checkbox>
-                      <el-checkbox label="mail">邮件</el-checkbox>
-                      <el-checkbox label="upload">上传</el-checkbox>
+                      <el-checkbox label="general">{{ $tp('常规') }}</el-checkbox>
+                      <el-checkbox label="mail">{{ $tp('邮件') }}</el-checkbox>
+                      <el-checkbox label="upload">{{ $tp('上传') }}</el-checkbox>
                     </el-checkbox-group>
                   </div>
 
                   <!--  -->
                   <div class="linkage-group">
-                    <h5 class="group-title">报警输出</h5>
+                    <h5 class="group-title">{{ $tp('报警输出') }}</h5>
                     <div class="channel-config">
                       <el-tag
                         v-for="channel in linkageConfig.alarmOutput.channels"
@@ -327,7 +311,7 @@
 
                   <!-- recording -->
                   <div class="linkage-group">
-                    <h5 class="group-title">录像联动</h5>
+                    <h5 class="group-title">{{ $tp('录像联动') }}</h5>
                     <div class="channel-config">
                       <el-tag
                         v-for="channel in linkageConfig.recordLinkage.channels"
@@ -355,49 +339,51 @@
 
       <!-- operationbutton -->
       <div class="ai-footer">
-        <el-button type="primary" @click="saveAIConfig" class="save-btn">保存</el-button>
+        <el-button type="primary" @click="saveAIConfig" class="save-btn">{{ $tp('保存') }}</el-button>
       </div>
     </div>
 
     <!-- item -->
     <el-dialog
       v-model="addDetectionDialogVisible"
-      title="添加检测项目"
+      :title="$tp('添加检测项目')"
       width="30%"
     >
       <div class="add-detection-content">
         <el-form :model="newDetectionForm" label-width="100px">
-          <el-form-item label="检测类型">
-            <el-select v-model="newDetectionForm.type" placeholder="请选择检测类型">
-              <el-option label="区域入侵侦测" value="区域入侵侦测" />
-              <el-option label="越界侦测" value="越界侦测" />
-              <el-option label="离开区域侦测" value="离开区域侦测" />
-              <el-option label="物品遗留侦测" value="物品遗留侦测" />
-              <el-option label="物品拿取侦测" value="物品拿取侦测" />
-              <el-option label="人脸识别" value="人脸识别" />
-              <el-option label="车牌识别" value="车牌识别" />
+          <el-form-item :label="$tp('检测类型')">
+            <el-select v-model="newDetectionForm.type" :placeholder="$tp('请选择检测类型')">
+              <el-option :label="$tp('区域入侵侦测')" value="区域入侵侦测" />
+              <el-option :label="$tp('越界侦测')" value="越界侦测" />
+              <el-option :label="$tp('离开区域侦测')" value="离开区域侦测" />
+              <el-option :label="$tp('物品遗留侦测')" value="物品遗留侦测" />
+              <el-option :label="$tp('物品拿取侦测')" value="物品拿取侦测" />
+              <el-option :label="$tp('人脸识别')" value="人脸识别" />
+              <el-option :label="$tp('车牌识别')" value="车牌识别" />
             </el-select>
           </el-form-item>
 
-          <el-form-item label="检测名称">
-            <el-input v-model="newDetectionForm.name" placeholder="请输入检测名称" />
+          <el-form-item :label="$tp('检测名称')">
+            <el-input v-model="newDetectionForm.name" :placeholder="$tp('请输入检测名称')" />
           </el-form-item>
 
-          <el-form-item label="灵敏度">
+          <el-form-item :label="$tp('灵敏度')">
             <el-slider v-model="newDetectionForm.sensitivity" :min="1" :max="10" />
           </el-form-item>
         </el-form>
       </div>
 
       <template #footer>
-        <el-button @click="addDetectionDialogVisible = false" class="common_btn">取消</el-button>
-        <el-button type="primary" @click="confirmAddDetection" class="common_btn">确定</el-button>
+        <el-button @click="addDetectionDialogVisible = false" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" @click="confirmAddDetection" class="common_btn">{{ $tp('确定') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ShoppingBag, Close, Plus, Check, Clock } from '@element-plus/icons-vue'
@@ -485,7 +471,7 @@ const newDetectionForm = reactive({
 // method
 const removeDetection = (index) => {
   detectionItems.value.splice(index, 1)
-  ElMessage.success('检测项目已删除')
+  ElMessage.success(uiText('检测项目已删除'))
 }
 
 // related method
@@ -527,18 +513,18 @@ const isHourInPeriods = (hour) => {
 const getScheduleStatusText = () => {
   switch (scheduleConfig.mode) {
     case 'always':
-      return '全天24小时布防'
+      return uiText('全天24小时布防')
     case 'custom':
       if (scheduleConfig.timePeriods.length === 0) {
-        return '未设置布防时间'
+        return uiText('未设置布防时间')
       }
       const dayCount = scheduleConfig.selectedDays.length
       const periodCount = scheduleConfig.timePeriods.length
-      return `${dayCount}天/周，${periodCount}个时间段布防`
+      return uiText('{value0}天/周，{value1}个时间段布防', { value0: dayCount, value1: periodCount })
     case 'disable':
-      return '布防已关闭'
+      return uiText('布防已关闭')
     default:
-      return '未知状态'
+      return uiText('未知状态')
   }
 }
 
@@ -582,7 +568,7 @@ const showAddDetection = () => {
 
 const confirmAddDetection = () => {
   if (!newDetectionForm.type) {
-    ElMessage.warning('请选择检测类型')
+    ElMessage.warning(uiText('请选择检测类型'))
     return
   }
 
@@ -591,7 +577,7 @@ const confirmAddDetection = () => {
   // whether already in
   const exists = detectionItems.value.some(item => item.name === name)
   if (exists) {
-    ElMessage.warning('该检测项目已存在')
+    ElMessage.warning(uiText('该检测项目已存在'))
     return
   }
 
@@ -602,7 +588,7 @@ const confirmAddDetection = () => {
   })
 
   addDetectionDialogVisible.value = false
-  ElMessage.success('检测项目添加成功')
+  ElMessage.success(uiText('检测项目添加成功'))
 }
 
 const openModelMarket = () => {
@@ -619,7 +605,7 @@ const saveAIConfig = () => {
   }
 
   emit('save', configData)
-  ElMessage.success('AI配置保存成功')
+  ElMessage.success(uiText('AI配置保存成功'))
 }
 
 const handleCancel = () => {

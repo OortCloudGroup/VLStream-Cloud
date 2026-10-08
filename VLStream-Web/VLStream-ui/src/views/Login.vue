@@ -35,7 +35,7 @@
           <el-form-item prop="loginId">
             <el-input
               v-model="loginForm.loginId"
-              placeholder="请输入用户名"
+              :placeholder="$tp('请输入用户名')"
               prefix-icon="el-icon-user"
               size="large"
             />
@@ -46,7 +46,7 @@
             <el-input
               v-model="loginForm.password"
               type="password"
-              placeholder="请输入密码"
+              :placeholder="$tp('请输入密码')"
               prefix-icon="el-icon-lock"
               size="large"
               show-password
@@ -63,20 +63,18 @@
               class="login-button"
               @click="handleLogin"
             >
-              {{ loginLoading ? '登录中...' : '登录' }}
+              {{ loginLoading ? $tp('登录中...') : $tp('登录') }}
             </el-button>
           </el-form-item>
         </el-form>
       </div>
       <div v-else-if="tenantMode === 'multi'" class="platform-login-tip">
-        <h3>请从应用平台进入</h3>
-        <p>当前服务已启用多租户模式，请从应用平台点击 VLStream 进入。</p>
+        <h3>{{ $tp('请从应用平台进入') }}</h3>
+        <p>{{ $tp('当前服务已启用多租户模式，请从应用平台点击 VLStream 进入。') }}</p>
         <p v-if="platformLoginError" class="platform-login-error">{{ platformLoginError }}</p>
-        <el-button type="primary" size="large" class="login-button" @click="handlePlatformLogin">
-          前往应用平台
-        </el-button>
+        <el-button type="primary" size="large" class="login-button" @click="handlePlatformLogin"> {{ $tp('前往应用平台') }} </el-button>
       </div>
-      <div v-else class="platform-login-tip">正在读取登录模式...</div>
+      <div v-else class="platform-login-tip">{{ $tp('正在读取登录模式...') }}</div>
 
     </div>
 
@@ -90,6 +88,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -180,13 +180,13 @@ const handleLogin = async () => {
       // userinfo data
       await authManager.saveUserToLocal(userData)
 
-      ElMessage.success('登录成功')
+      ElMessage.success(uiText('登录成功'))
 
       // successfully after , redirect .
       await router.replace(route.query.redirect || '/')
 
     } else {
-      ElMessage.error(response.msg || '登录失败')
+      ElMessage.error(response.msg || uiText('登录失败'))
     }
 
   } catch (error) {
@@ -194,7 +194,7 @@ const handleLogin = async () => {
     // will failed in error.data in ; , to .
     const errorData = error.response?.data || error.data
     const errorMsg = errorData?.msg || errorData?.message || (typeof errorData === 'string' && errorData) || error.message || '网络错误'
-    ElMessage.error('登录失败: ' + errorMsg)
+    ElMessage.error(uiText('登录失败: ') + errorMsg)
   } finally {
     loginLoading.value = false
   }
@@ -211,7 +211,7 @@ onMounted(async () => {
     try {
       const userInfo = await authManager.checkUrlToken()
       if (userInfo) {
-        ElMessage.success('自动登录成功')
+        ElMessage.success(uiText('自动登录成功'))
         const redirect = route.query.redirect || '/workspace'
         await router.replace(redirect)
         return
@@ -235,7 +235,7 @@ onMounted(async () => {
     try {
       const userInfo = await authManager.checkLocalToken()
       if (userInfo) {
-        ElMessage.success('自动登录成功')
+        ElMessage.success(uiText('自动登录成功'))
         router.push('/')
         return
       }

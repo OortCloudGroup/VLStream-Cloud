@@ -8,50 +8,34 @@
 <template>
   <div class="choosePerBox">
     <div class="prop_title he">
-      <span>设置{{ flowDesignerPage?.notifyNode ? '处置' : '审批' }}对象</span>
+      <span>{{ $tp('设置') }}{{ flowDesignerPage?.notifyNode ? $tp('处置') : $tp('审批') }}{{ $tp('对象') }}</span>
     </div>
     <div class="prop_item">
       <el-radio-group v-model="copyActiveChooseData.approvalType" @change="changeApprovalType">
         <el-row>
           <el-col :span="8">
-            <el-radio :value="1">
-              指定人员
-            </el-radio>
+            <el-radio :value="1"> {{ $tp('指定人员') }} </el-radio>
           </el-col>
           <el-col :span="8">
-            <el-radio :value="2">
-              指定部门
-            </el-radio>
+            <el-radio :value="2"> {{ $tp('指定部门') }} </el-radio>
           </el-col>
           <el-col :span="8">
-            <el-radio :value="3">
-              发起人自己
-            </el-radio>
+            <el-radio :value="3"> {{ $tp('发起人自己') }} </el-radio>
           </el-col>
           <el-col :span="8">
-            <el-radio :value="4">
-              指定角色
-            </el-radio>
+            <el-radio :value="4"> {{ $tp('指定角色') }} </el-radio>
           </el-col>
           <el-col :span="8">
-            <el-radio :value="5">
-              发起人自选
-            </el-radio>
+            <el-radio :value="5"> {{ $tp('发起人自选') }} </el-radio>
           </el-col>
           <el-col :span="8">
-            <el-radio :value="6">
-              上级
-            </el-radio>
+            <el-radio :value="6"> {{ $tp('上级') }} </el-radio>
           </el-col>
           <el-col :span="8">
-            <el-radio :value="9">
-              系统自动拒绝
-            </el-radio>
+            <el-radio :value="9"> {{ $tp('系统自动拒绝') }} </el-radio>
           </el-col>
           <el-col :span="8">
-            <el-radio :value="10">
-              前节点指定
-            </el-radio>
+            <el-radio :value="10"> {{ $tp('前节点指定') }} </el-radio>
           </el-col>
           <slot />
         </el-row>
@@ -91,7 +75,7 @@
       <el-select
         v-model="copyActiveChooseData.roles"
         multiple
-        placeholder="请选择角色"
+        :placeholder="$tp('请选择角色')"
         style="width: 100%"
       >
         <el-option
@@ -106,13 +90,13 @@
     <div v-if="copyActiveChooseData.approvalType === 6" class="prop_item bo">
       <el-radio-group v-model="jobPost" class="prop_item jobPostBox">
         <el-radio value="0" class="flexRowAC">
-          <span class="prop_item_sp">提交人的岗位：</span>
-          <el-select v-model="jobMod" placeholder="请选择岗位">
+          <span class="prop_item_sp">{{ $tp('提交人的岗位：') }}</span>
+          <el-select v-model="jobMod" :placeholder="$tp('请选择岗位')">
             <div class="flexRowAC universeBox">
-              <span class="sp">{{ JJ ? '从最高上级向下选择' : '从直属上级向上选择' }}</span>
+              <span class="sp">{{ JJ ? $tp('从最高上级向下选择') : $tp('从直属上级向上选择') }}</span>
               <el-button class="flexRowAC universeItem" @click="JJ=!JJ">
                 <oort-svg-icon width="14" height="14" name="universe" />
-                {{ JJ ? '切为直属上级向上' : '切为最高上级向下' }}
+                {{ JJ ? $tp('切为直属上级向上') : $tp('切为最高上级向下') }}
               </el-button>
             </div>
             <div v-if="JJ" class="optBox">
@@ -121,9 +105,9 @@
                 :key="i"
                 :value="parseInt(21-item) + ''"
                 class="flexRowAC optitem"
-                :label="item !== 1 ? '最高上级减' + i + '级' : '最高上级'"
+                :label="item !== 1 ? $tp('最高上级减') + i + $tp('级') : $tp('最高上级')"
               >
-                {{ item !== 1 ? '最高上级减' + i + '级' : '最高上级' }}
+                {{ item !== 1 ? $tp('最高上级减') + i + $tp('级') : $tp('最高上级') }}
                 <oort-svg-icon class="optsvg" width="14" height="14" name="consent" />
               </el-option>
             </div>
@@ -133,22 +117,22 @@
                 :key="i"
                 :value="item + ''"
                 class="flexRowAC optitem"
-                :label="item !== 1 ? '直属上级加' + i + '级' : '直属上级'"
+                :label="item !== 1 ? $tp('直属上级加') + i + $tp('级') : $tp('直属上级')"
               >
-                {{ item !== 1 ? '直属上级加' + i + '级' : '直属上级' }}
+                {{ item !== 1 ? $tp('直属上级加') + i + $tp('级') : $tp('直属上级') }}
                 <oort-svg-icon class="optsvg" width="14" height="14" name="consent" />
               </el-option>
             </div>
           </el-select>
         </el-radio>
         <el-radio value="1">
-          <span class="prop_item_sp">提交人的职位：</span>
-          <el-select v-model="postMod" placeholder="请选择职位">
+          <span class="prop_item_sp">{{ $tp('提交人的职位：') }}</span>
+          <el-select v-model="postMod" :placeholder="$tp('请选择职位')">
             <div class="flexRowAC universeBox">
-              <span class="sp">{{ JP ? '从最高上级向下选择' : '从直属上级向上选择' }}</span>
+              <span class="sp">{{ JP ? $tp('从最高上级向下选择') : $tp('从直属上级向上选择') }}</span>
               <el-button class="flexRowAC universeItem" @click="JP=!JP">
                 <oort-svg-icon width="14" height="14" name="universe" />
-                {{ JP ? '切为直属上级向上' : '切为最高上级向下' }}
+                {{ JP ? $tp('切为直属上级向上') : $tp('切为最高上级向下') }}
               </el-button>
             </div>
             <div v-if="JP" class="optBox">
@@ -157,9 +141,9 @@
                 :key="i"
                 :value="parseInt(21-item) + ''"
                 class="flexRowAC optitem"
-                :label="item !== 1 ? `最高上级减${i}级` : '最高上级'"
+                :label="item !== 1 ? $tp('最高上级减{value0}级', { value0: i }) : $tp('最高上级')"
               >
-                {{ item !== 1 ? `最高上级减${i}级` : '最高上级' }}
+                {{ item !== 1 ? $tp('最高上级减{value0}级', { value0: i }) : $tp('最高上级') }}
                 <oort-svg-icon class="optsvg" width="14" height="14" name="consent" />
               </el-option>
             </div>
@@ -169,9 +153,9 @@
                 :key="i"
                 :value="item + ''"
                 class="flexRowAC optitem"
-                :label="item !== 1 ? `直属上级加${i}级` : '直属上级'"
+                :label="item !== 1 ? $tp('直属上级加{value0}级', { value0: i }) : $tp('直属上级')"
               >
-                {{ item !== 1 ? `直属上级加${i}级` : '直属上级' }}
+                {{ item !== 1 ? $tp('直属上级加{value0}级', { value0: i }) : $tp('直属上级') }}
                 <oort-svg-icon class="optsvg" width="14" height="14" name="consent" />
               </el-option>
             </div>
@@ -180,7 +164,7 @@
       </el-radio-group>
     </div>
     <!-- and -end -->
-    <el-dialog v-model="chooseUserVis" title="选择人员" width="50%">
+    <el-dialog v-model="chooseUserVis" :title="$tp('选择人员')" width="50%">
       <address-seting-dialog
         v-if="chooseUserVis"
         :user-list="copyActiveChooseData.users"
@@ -190,7 +174,7 @@
         @close="closeAddressDialog"
       />
     </el-dialog>
-    <el-dialog v-model="chooseDeptVis" title="选择部门" width="50%">
+    <el-dialog v-model="chooseDeptVis" :title="$tp('选择部门')" width="50%">
       <address-seting-dialog
         v-if="chooseDeptVis"
         :dept-list="copyActiveChooseData.dept"

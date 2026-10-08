@@ -21,14 +21,12 @@
           <div class="exportBtn newBtn flexRowAC" @click="newEditClick('')">
             <el-icon class="BtnImg">
               <Plus />
-            </el-icon>
-            新建
-          </div>
+            </el-icon> {{ $tp('新建') }} </div>
         </div>
       </div>
       <!--  -->
       <div class="searchHeight_out flexRowAC">
-        <search-height-box keyword="modelName" placeholder="流程名称" :data="searchData" @handle="searchResetFn" />
+        <search-height-box keyword="modelName" :placeholder="$tp('流程名称')" :data="searchData" @handle="searchResetFn" />
         <export-excel-pdf />
       </div>
     </div>
@@ -48,38 +46,38 @@
           <el-dropdown>
             <div class="new_table_svg_group " @click.stop>
               <oort-svg-icon width="14" height="14" name="table_more" class="new_table_svg_group_svg" />
-              <span>更多</span>
+              <span>{{ $tp('更多') }}</span>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item>
                   <div class="new_table_svg_group" @click.stop="formClick(item,'1')">
                     <oort-svg-icon width="14" height="14" name="table_detail" class="new_table_svg_group_svg" />
-                    <span>详情</span>
+                    <span>{{ $tp('详情') }}</span>
                   </div>
                 </el-dropdown-item>
                 <el-dropdown-item>
                   <div class="new_table_svg_group" @click.stop="formClick(item,'1')">
                     <oort-svg-icon width="14" height="14" name="table_edit" class="new_table_svg_group_svg" />
-                    <span>编辑</span>
+                    <span>{{ $tp('编辑') }}</span>
                   </div>
                 </el-dropdown-item>
                 <el-dropdown-item>
                   <div class="new_table_svg_group" @click.stop="formClick(item,'2')">
                     <oort-svg-icon width="14" height="14" name="table_design" class="new_table_svg_group_svg" />
-                    <span>表单设计</span>
+                    <span>{{ $tp('表单设计') }}</span>
                   </div>
                 </el-dropdown-item>
                 <el-dropdown-item>
                   <div class="new_table_svg_group" @click.stop="formClick(item, '3')">
                     <oort-svg-icon width="14" height="14" name="taskCenter_btn_design" class="new_table_svg_group_svg" />
-                    <span>流程设计</span>
+                    <span>{{ $tp('流程设计') }}</span>
                   </div>
                 </el-dropdown-item>
                 <el-dropdown-item>
                   <div class="new_table_svg_group" @click.stop="delClick(item)">
                     <oort-svg-icon width="14" height="14" name="table_del" class="new_table_svg_group_svg" />
-                    <span>删除</span>
+                    <span>{{ $tp('删除') }}</span>
                   </div>
                 </el-dropdown-item>
               </el-dropdown-menu>
@@ -90,7 +88,7 @@
     </div>
     <el-dialog
       v-model="dVisi"
-      :title="dItem?.modelId?'编辑模型':'新建模型'"
+      :title="dItem?.modelId?$tp('编辑模型'):$tp('新建模型')"
       width="46%"
       :close-on-click-modal="false"
     >
@@ -99,7 +97,7 @@
     </el-dialog>
     <el-dialog
       v-model="fVisi"
-      :title="fVisi?.formId?'编辑表单':'新建表单'"
+      :title="fVisi?.formId?$tp('编辑表单'):$tp('新建表单')"
       width="46%"
       :close-on-click-modal="false"
     >
@@ -109,6 +107,8 @@
 </template>
 
 <script setup lang="ts">
+import { translatePhrase as uiText } from '@/i18n'
+
 import { onMounted, reactive, ref } from 'vue'
 import { useUserStore } from '@/store/modules/useraPaas'
 import ExportExcelPdf from '@/components/exportExcelPdf.vue'
@@ -163,7 +163,7 @@ const startClick = (item, index) => {
 // new
 function newEditClick(row) {
   if (!appObj.value?.appId) {
-    ElMessage.warning('工单应用分类未初始化，暂不能新建模型')
+    ElMessage.warning(uiText('工单应用分类未初始化，暂不能新建模型'))
     return
   }
   dVisi.value = true
@@ -192,9 +192,9 @@ const formClick = (item, step) => {
 
 // Delete
 function delClick(row) {
-  ElMessageBox.confirm('是否确定删除该模型?', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(uiText('是否确定删除该模型?'), uiText('提示'), {
+    confirmButtonText: uiText('确定'),
+    cancelButtonText: uiText('取消'),
     type: 'warning'
   }).then(async() => {
     const data = {
@@ -204,7 +204,7 @@ function delClick(row) {
     if (res.code === 200) {
       // new
       getListFn()
-      ElMessage.success('模型删除成功')
+      ElMessage.success(uiText('模型删除成功'))
     } else {
       ElMessage.error(res.msg)
     }
@@ -233,7 +233,7 @@ function getListFn() {
 onMounted(async() => {
   appObj.value = props?.app?.appId ? props.app : await resolveWorkOrderAppContext()
   if (!appObj.value?.appId) {
-    ElMessage.warning('未找到工单应用分类，请先初始化工单应用')
+    ElMessage.warning(uiText('未找到工单应用分类，请先初始化工单应用'))
   }
   getListFn()
 })

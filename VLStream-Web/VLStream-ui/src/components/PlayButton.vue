@@ -14,9 +14,7 @@
     <svg class="play-icon" viewBox="0 0 24 24" width="16" height="16">
       <circle cx="12" cy="12" r="10" fill="white"/>
       <polygon points="10,8 16,12 10,16" fill="#1A53FF"/>
-    </svg>
-    播放
-  </el-button>
+    </svg> {{ $tp('播放') }} </el-button>
 </template>
 
 <script setup>

@@ -18,16 +18,18 @@
             </div>
             <div class="card-title">{{ item.industryName || item.industry_name || item.name }}</div>
             <div class="card-description">{{ item.remarks }}</div>
-            <div v-if="item.industry_id === selectedId" class="selected-badge"><img :src="selectedIcon" alt=""><span>当前选择</span></div>
+            <div v-if="item.industry_id === selectedId" class="selected-badge"><img :src="selectedIcon" alt=""><span>{{ $tp('当前选择') }}</span></div>
           </div>
         </div>
       </template>
     </template>
-    <div v-if="!loading && !groups.some(group => group.items.length)" class="no-config-tip">当前为租户未配置相关配置</div>
+    <div v-if="!loading && !groups.some(group => group.items.length)" class="no-config-tip">{{ $tp('当前为租户未配置相关配置') }}</div>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getPlatformCurrentIndustry, getPlatformIndustryList, savePlatformIndustry } from '@/api/platformHeader'
@@ -72,7 +74,7 @@ const selectIndustry = async(item, type) => {
       else openApaasWebPage(homepage, platformQuery(), '_self')
     }
   } catch (error) {
-    ElMessage.error(error?.message || '切换失败')
+    ElMessage.error(error?.message || uiText('切换失败'))
   }
 }
 

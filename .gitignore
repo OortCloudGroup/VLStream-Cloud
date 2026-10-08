@@ -30,6 +30,8 @@ Thumbs.db
 /VLStream-Cloud-Backend-Server/vls-stream/doc/gpu-training-scheduler.md
 D:\work\ide\WorkSpace\VLStream-Cloud\VLStream-Cloud-Backend-Server\vls-stream\doc
 /tools/*
+!/tools/i18n/
+!/tools/i18n/audit-ui.mjs
 !/tools/compute/
 /tools/compute/*
 !/tools/compute/bootstrap-autodl.sh
@@ -39,4 +41,5 @@ D:\work\ide\WorkSpace\VLStream-Cloud\VLStream-Cloud-Backend-Server\vls-stream\do
 .playwright-cli
 .playwright-mcp
 /Ultralytics/
+**/data/security/
 /VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test

@@ -17,12 +17,12 @@
       </div>
       <div v-if="appList.length === 0" class="no_data">
         <img :src="noAppImage" alt="">
-        <span>暂无应用</span>
+        <span>{{ $tp('暂无应用') }}</span>
       </div>
     </div>
     <div class="more_apps">
       <div class="more_apps_tips" @click="emit('more-apps')">
-        <span>更多应用</span>
+        <span>{{ $tp('更多应用') }}</span>
       </div>
     </div>
   </div>

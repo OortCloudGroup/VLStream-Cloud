@@ -24,14 +24,14 @@
         class="video-dialog-header draggable-handle"
         @mousedown="startDrag($event, dialog.id)"
       >
-        <span class="video-dialog-title">{{ dialog.camera.name }} - 视频播放</span>
+        <span class="video-dialog-title"><span data-i18n-ignore>{{ dialog.camera.name }}</span> - {{ $tp('视频播放') }}</span>
         <div class="dialog-controls">
-          <button class="dialog-control-btn minimize-btn" @click="minimizeDialog(dialog.id)" title="最小化">
+          <button class="dialog-control-btn minimize-btn" @click="minimizeDialog(dialog.id)" :title="$tp('最小化')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 13H5v-2h14v2z"/>
             </svg>
           </button>
-          <button class="dialog-control-btn close-btn" @click="closeVideoDialog(dialog.id)" title="关闭">
+          <button class="dialog-control-btn close-btn" @click="closeVideoDialog(dialog.id)" :title="$tp('关闭')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
             </svg>
@@ -55,7 +55,7 @@
                 @error="handleWebRTCIframeError"
               ></iframe>
               <div class="webrtc-info">
-                <small>WebRTC播放 - {{ dialog.camera.name }}</small>
+                <small>{{ $tp('WebRTC播放 -') }} {{ dialog.camera.name }}</small>
               </div>
             </div>
 
@@ -75,10 +75,10 @@
             <div v-else class="video-placeholder">
               <div class="placeholder-content">
                 <div class="placeholder-icon">📹</div>
-                <div class="placeholder-text">暂无视频流</div>
+                <div class="placeholder-text">{{ $tp('暂无视频流') }}</div>
                 <div class="placeholder-details">
-                  <div>设备: {{ dialog.camera.name }}</div>
-                  <div>状态: 在线</div>
+                  <div>{{ $tp('设备:') }} {{ dialog.camera.name }}</div>
+                  <div>{{ $tp('状态: 在线') }}</div>
                 </div>
 
                 <!-- operation item -->
@@ -86,15 +86,11 @@
                   <button class="action-btn primary" @click="retryWebRTCConnection(dialog.camera)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-                    </svg>
-                    重试连接
-                  </button>
+                    </svg> {{ $tp('重试连接') }} </button>
                   <button class="action-btn secondary" @click="copyStreamUrl(dialog.camera.deviceData?.streamUrl)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                    </svg>
-                    复制流地址
-                  </button>
+                    </svg> {{ $tp('复制流地址') }} </button>
                 </div>
               </div>
             </div>
@@ -106,6 +102,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import RtspPlayer from '@/components/RtspPlayer.vue'
@@ -181,12 +179,12 @@ const retryWebRTCConnection = (camera) => {
 const copyStreamUrl = (url) => {
   if (url) {
     navigator.clipboard.writeText(url).then(() => {
-      ElMessage.success('流地址已复制到剪贴板')
+      ElMessage.success(uiText('流地址已复制到剪贴板'))
     }).catch(() => {
-      ElMessage.error('复制失败')
+      ElMessage.error(uiText('复制失败'))
     })
   } else {
-    ElMessage.warning('暂无流地址')
+    ElMessage.warning(uiText('暂无流地址'))
   }
 }
 </script>

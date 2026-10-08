@@ -11,7 +11,7 @@
       <el-input
         v-model="keyWord"
         class="rup_input"
-        placeholder="请输入关键字"
+        :placeholder="$tp('请输入关键字')"
         suffix-icon="Search"
         @input="searchDebounce"
         @change="searchDebounce"
@@ -23,10 +23,8 @@
         v-model="checkedAll"
         :indeterminate="isIndeterminate"
         @change="handleCheckAllChange"
-      >
-        全选
-      </el-checkbox>
-      <span class="txColor" @click="clearContact">清空联系人</span>
+      > {{ $tp('全选') }} </el-checkbox>
+      <span class="txColor" @click="clearContact">{{ $tp('清空联系人') }}</span>
     </div>
     <div class="rup_useLBox person_list">
       <el-checkbox-group
@@ -51,14 +49,14 @@
           </div>
         </el-checkbox>
       </el-checkbox-group>
-      <div v-if="usedList.length ===0" class="selPer flexRowAC">
-        暂未选择
-      </div>
+      <div v-if="usedList.length ===0" class="selPer flexRowAC"> {{ $tp('暂未选择') }} </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { translatePhrase as uiText } from '@/i18n'
+
 import { onMounted, ref } from 'vue'
 import { debounce } from 'lodash-es'
 import { usedDel, usedGet } from '@/api/system/directory'
@@ -95,9 +93,9 @@ let searchDebounce = ref<any>(null)
 
 // null / empty
 const clearContact = () => {
-  ElMessageBox.confirm('确认清空最近使用', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(uiText('确认清空最近使用'), uiText('提示'), {
+    confirmButtonText: uiText('确定'),
+    cancelButtonText: uiText('取消'),
     type: 'warning'
   }).then(() => {
     const params = {
@@ -105,7 +103,7 @@ const clearContact = () => {
     }
     usedDel(params).then((res: any) => {
       if (res.code === 200) {
-        ElMessage.success('操作成功')
+        ElMessage.success(uiText('操作成功'))
         usedList.value = []
       }
     })

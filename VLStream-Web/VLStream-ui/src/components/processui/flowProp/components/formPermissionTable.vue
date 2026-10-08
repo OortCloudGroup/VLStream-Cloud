@@ -10,7 +10,7 @@
     <el-table-column prop="name" :label="$tp('字段')" />
     <el-table-column v-if="showReadonly" prop="readonly">
       <template #header>
-        <el-checkbox v-model="allReadonly" label="只读" />
+        <el-checkbox v-model="allReadonly" value="只读" :label="$tp('只读')" />
       </template>
       <template #default="scope">
         <el-checkbox v-model="scope.row.readonly" @change="changeReadonly(scope.row)" />
@@ -18,7 +18,7 @@
     </el-table-column>
     <el-table-column v-if="showRequired" prop="required">
       <template #header>
-        <el-checkbox v-model="allRequired" label="必填" />
+        <el-checkbox v-model="allRequired" value="必填" :label="$tp('必填')" />
       </template>
       <template #default="scope">
         <el-checkbox v-model="scope.row.required" @change="changeRequired(scope.row)" />
@@ -26,7 +26,7 @@
     </el-table-column>
     <el-table-column v-if="showHidden" prop="hidden">
       <template #header>
-        <el-checkbox v-model="allHidden" label="隐藏" />
+        <el-checkbox v-model="allHidden" value="隐藏" :label="$tp('隐藏')" />
       </template>
       <template #default="scope">
         <el-checkbox v-model="scope.row.hidden" @change="changeHidden(scope.row)" />

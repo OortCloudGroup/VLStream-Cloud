@@ -10,9 +10,9 @@
     <!-- - page deviceInfo -->
     <div v-if="!props.deviceInfo" class="content-header">
       <div class="breadcrumb">
-        <span class="breadcrumb-item" @click="goBack">设备列表</span>
+        <span class="breadcrumb-item" @click="goBack">{{ $tp('设备列表') }}</span>
         <span class="breadcrumb-separator">></span>
-        <span class="breadcrumb-item active">设置摄像机</span>
+        <span class="breadcrumb-item active">{{ $tp('设置摄像机') }}</span>
       </div>
     </div>
 
@@ -22,17 +22,17 @@
         <!-- Set -->
         <div class="settings-tabs">
           <el-tabs v-model="activeTab" class="tenanat-tabs">
-            <el-tab-pane label="显示设置" name="display" />
-            <el-tab-pane label="OSD设置" name="osd" />
+            <el-tab-pane :label="$tp('显示设置')" name="display" />
+            <el-tab-pane :label="$tp('OSD设置')" name="osd" />
           </el-tabs>
 
           <!--  -->
           <div v-if="activeTab === 'display'" class="scene-selector">
-            <div class="scene-label">场景</div>
+            <div class="scene-label">{{ $tp('场景') }}</div>
             <div class="scene-select-container">
               <el-select
                 v-model="selectedScene"
-                placeholder="请选择场景"
+                :placeholder="$tp('请选择场景')"
                 class="scene-select"
                 @change="handleSceneChange"
               >
@@ -51,7 +51,7 @@
         <div class="video-display">
           <div class="video-container">
             <div class="video-content">
-              <div class="video-timestamp">2021年04月15日</div>
+              <div class="video-timestamp">{{ $tp('2021年04月15日') }}</div>
               <!--  -->
               <div class="video-placeholder">
                 <div class="placeholder-content">
@@ -67,11 +67,11 @@
           <!-- Set -->
           <div v-if="activeTab === 'display'" class="all-settings">
             <el-collapse v-model="activeCollapse">
-              <el-collapse-item name="image-controls" title="图像调节">
+              <el-collapse-item name="image-controls" :title="$tp('图像调节')">
                 <div class="adjustment-controls">
                   <!--  -->
                   <div class="control-item">
-                    <span class="control-label">亮度</span>
+                    <span class="control-label">{{ $tp('亮度') }}</span>
                     <div class="slider-container">
                       <el-slider
                         v-model="imageSettings.brightness"
@@ -85,7 +85,7 @@
 
                   <!--  -->
                   <div class="control-item">
-                    <span class="control-label">对比度</span>
+                    <span class="control-label">{{ $tp('对比度') }}</span>
                     <div class="slider-container">
                       <el-slider
                         v-model="imageSettings.contrast"
@@ -99,7 +99,7 @@
 
                   <!-- and -->
                   <div class="control-item">
-                    <span class="control-label">饱和度</span>
+                    <span class="control-label">{{ $tp('饱和度') }}</span>
                     <div class="slider-container">
                       <el-slider
                         v-model="imageSettings.saturation"
@@ -113,7 +113,7 @@
 
                   <!--  -->
                   <div class="control-item">
-                    <span class="control-label">锐度</span>
+                    <span class="control-label">{{ $tp('锐度') }}</span>
                     <div class="slider-container">
                       <el-slider
                         v-model="imageSettings.sharpness"
@@ -127,22 +127,22 @@
                 </div>
               </el-collapse-item>
 
-              <el-collapse-item name="lighting" title="曝光">
+              <el-collapse-item name="lighting" :title="$tp('曝光')">
                 <div class="setting-content">
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">曝光模式</label>
+                    <label class="setting-label">{{ $tp('曝光模式') }}</label>
                     <el-select v-model="exposureSettings.mode" class="setting-select">
-                      <el-option label="自动" value="auto" />
-                      <el-option label="手动" value="manual" />
-                      <el-option label="快门优先" value="shutter-priority" />
-                      <el-option label="光圈优先" value="aperture-priority" />
+                      <el-option :label="$tp('自动')" value="auto" />
+                      <el-option :label="$tp('手动')" value="manual" />
+                      <el-option :label="$tp('快门优先')" value="shutter-priority" />
+                      <el-option :label="$tp('光圈优先')" value="aperture-priority" />
                     </el-select>
                   </div>
 
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">最大快门限制</label>
+                    <label class="setting-label">{{ $tp('最大快门限制') }}</label>
                     <el-select v-model="exposureSettings.maxShutter" class="setting-select">
                       <el-option label="1/25" value="1/25" />
                       <el-option label="1/30" value="1/30" />
@@ -155,7 +155,7 @@
 
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">最小快门限制</label>
+                    <label class="setting-label">{{ $tp('最小快门限制') }}</label>
                     <el-select v-model="exposureSettings.minShutter" class="setting-select">
                       <el-option label="1/1000" value="1/1000" />
                       <el-option label="1/2000" value="1/2000" />
@@ -168,7 +168,7 @@
 
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">增益限制</label>
+                    <label class="setting-label">{{ $tp('增益限制') }}</label>
                     <div class="slider-container">
                       <el-slider
                         v-model="exposureSettings.gainLimit"
@@ -182,31 +182,31 @@
 
                   <!-- sub -->
                   <div class="setting-item">
-                    <label class="setting-label">低照度电子快门</label>
+                    <label class="setting-label">{{ $tp('低照度电子快门') }}</label>
                     <el-select v-model="exposureSettings.lowLightShutter" class="setting-select">
-                      <el-option label="关闭" value="off" />
-                      <el-option label="开启" value="on" />
-                      <el-option label="自动" value="auto" />
+                      <el-option :label="$tp('关闭')" value="off" />
+                      <el-option :label="$tp('开启')" value="on" />
+                      <el-option :label="$tp('自动')" value="auto" />
                     </el-select>
                   </div>
                 </div>
               </el-collapse-item>
 
-              <el-collapse-item name="focus" title="聚焦">
+              <el-collapse-item name="focus" :title="$tp('聚焦')">
                 <div class="setting-content">
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">聚焦模式</label>
+                    <label class="setting-label">{{ $tp('聚焦模式') }}</label>
                     <el-select v-model="focusSettings.mode" class="setting-select">
-                      <el-option label="自动" value="auto" />
-                      <el-option label="半自动" value="semi-auto" />
-                      <el-option label="手动" value="manual" />
+                      <el-option :label="$tp('自动')" value="auto" />
+                      <el-option :label="$tp('半自动')" value="semi-auto" />
+                      <el-option :label="$tp('手动')" value="manual" />
                     </el-select>
                   </div>
 
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">最小聚焦距离</label>
+                    <label class="setting-label">{{ $tp('最小聚焦距离') }}</label>
                     <el-select v-model="focusSettings.minDistance" class="setting-select">
                       <el-option label="0.5m" value="0.5m" />
                       <el-option label="1.0m" value="1.0m" />
@@ -214,28 +214,28 @@
                       <el-option label="2.0m" value="2.0m" />
                       <el-option label="3.0m" value="3.0m" />
                       <el-option label="5.0m" value="5.0m" />
-                      <el-option label="无限远" value="infinity" />
+                      <el-option :label="$tp('无限远')" value="infinity" />
                     </el-select>
                   </div>
                 </div>
               </el-collapse-item>
 
-              <el-collapse-item name="day-night" title="日夜转换">
+              <el-collapse-item name="day-night" :title="$tp('日夜转换')">
                 <div class="setting-content">
                   <!-- Convert -->
                   <div class="setting-item">
-                    <label class="setting-label">日夜转换</label>
+                    <label class="setting-label">{{ $tp('日夜转换') }}</label>
                     <el-select v-model="dayNightSettings.mode" class="setting-select">
-                      <el-option label="自动" value="auto" />
-                      <el-option label="白天" value="day" />
-                      <el-option label="夜间" value="night" />
-                      <el-option label="定时" value="scheduled" />
+                      <el-option :label="$tp('自动')" value="auto" />
+                      <el-option :label="$tp('白天')" value="day" />
+                      <el-option :label="$tp('夜间')" value="night" />
+                      <el-option :label="$tp('定时')" value="scheduled" />
                     </el-select>
                   </div>
 
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">灵敏度</label>
+                    <label class="setting-label">{{ $tp('灵敏度') }}</label>
                     <el-select v-model="dayNightSettings.sensitivity" class="setting-select">
                       <el-option label="1" value="1" />
                       <el-option label="2" value="2" />
@@ -247,27 +247,27 @@
 
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">防补光过曝</label>
+                    <label class="setting-label">{{ $tp('防补光过曝') }}</label>
                     <el-select v-model="dayNightSettings.antiOverexposure" class="setting-select">
-                      <el-option label="关闭" value="off" />
-                      <el-option label="开启" value="on" />
+                      <el-option :label="$tp('关闭')" value="off" />
+                      <el-option :label="$tp('开启')" value="on" />
                     </el-select>
                   </div>
 
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">红外灯模式</label>
+                    <label class="setting-label">{{ $tp('红外灯模式') }}</label>
                     <el-select v-model="dayNightSettings.infraredMode" class="setting-select">
-                      <el-option label="自动" value="auto" />
-                      <el-option label="开启" value="on" />
-                      <el-option label="关闭" value="off" />
-                      <el-option label="智能" value="smart" />
+                      <el-option :label="$tp('自动')" value="auto" />
+                      <el-option :label="$tp('开启')" value="on" />
+                      <el-option :label="$tp('关闭')" value="off" />
+                      <el-option :label="$tp('智能')" value="smart" />
                     </el-select>
                   </div>
 
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">亮度限制</label>
+                    <label class="setting-label">{{ $tp('亮度限制') }}</label>
                     <div class="slider-container">
                       <el-slider
                         v-model="dayNightSettings.brightnessLimit"
@@ -281,74 +281,74 @@
                 </div>
               </el-collapse-item>
 
-              <el-collapse-item name="backlight" title="背光">
+              <el-collapse-item name="backlight" :title="$tp('背光')">
                 <div class="setting-content">
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">背光补偿</label>
+                    <label class="setting-label">{{ $tp('背光补偿') }}</label>
                     <el-select v-model="backlightSettings.compensation" class="setting-select">
-                      <el-option label="关闭" value="off" />
-                      <el-option label="开启" value="on" />
-                      <el-option label="自动" value="auto" />
+                      <el-option :label="$tp('关闭')" value="off" />
+                      <el-option :label="$tp('开启')" value="on" />
+                      <el-option :label="$tp('自动')" value="auto" />
                     </el-select>
                   </div>
 
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">宽动态</label>
+                    <label class="setting-label">{{ $tp('宽动态') }}</label>
                     <el-select v-model="backlightSettings.wideDynamic" class="setting-select">
-                      <el-option label="关闭" value="off" />
-                      <el-option label="开启" value="on" />
-                      <el-option label="自动" value="auto" />
+                      <el-option :label="$tp('关闭')" value="off" />
+                      <el-option :label="$tp('开启')" value="on" />
+                      <el-option :label="$tp('自动')" value="auto" />
                     </el-select>
                   </div>
 
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">强光抑制</label>
+                    <label class="setting-label">{{ $tp('强光抑制') }}</label>
                     <el-select v-model="backlightSettings.strongLightSuppression" class="setting-select">
-                      <el-option label="关闭" value="off" />
-                      <el-option label="开启" value="on" />
-                      <el-option label="自动" value="auto" />
+                      <el-option :label="$tp('关闭')" value="off" />
+                      <el-option :label="$tp('开启')" value="on" />
+                      <el-option :label="$tp('自动')" value="auto" />
                     </el-select>
                   </div>
                 </div>
               </el-collapse-item>
 
-              <el-collapse-item name="white-balance" title="白平衡">
+              <el-collapse-item name="white-balance" :title="$tp('白平衡')">
                 <div class="setting-content">
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">白平衡</label>
+                    <label class="setting-label">{{ $tp('白平衡') }}</label>
                     <el-select v-model="whiteBalanceSettings.mode" class="setting-select">
-                      <el-option label="自动白平衡" value="auto" />
-                      <el-option label="手动白平衡" value="manual" />
-                      <el-option label="白炽灯" value="incandescent" />
-                      <el-option label="荧光灯" value="fluorescent" />
-                      <el-option label="日光" value="daylight" />
-                      <el-option label="阴天" value="cloudy" />
-                      <el-option label="一次白平衡" value="one-push" />
+                      <el-option :label="$tp('自动白平衡')" value="auto" />
+                      <el-option :label="$tp('手动白平衡')" value="manual" />
+                      <el-option :label="$tp('白炽灯')" value="incandescent" />
+                      <el-option :label="$tp('荧光灯')" value="fluorescent" />
+                      <el-option :label="$tp('日光')" value="daylight" />
+                      <el-option :label="$tp('阴天')" value="cloudy" />
+                      <el-option :label="$tp('一次白平衡')" value="one-push" />
                     </el-select>
                   </div>
                 </div>
               </el-collapse-item>
 
-              <el-collapse-item name="image-enhancement" title="图像增强">
+              <el-collapse-item name="image-enhancement" :title="$tp('图像增强')">
                 <div class="setting-content">
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">数字降噪</label>
+                    <label class="setting-label">{{ $tp('数字降噪') }}</label>
                     <el-select v-model="imageEnhancementSettings.digitalNoiseReduction" class="setting-select">
-                      <el-option label="关闭" value="off" />
-                      <el-option label="普通模式" value="normal" />
-                      <el-option label="高级模式" value="advanced" />
-                      <el-option label="自动" value="auto" />
+                      <el-option :label="$tp('关闭')" value="off" />
+                      <el-option :label="$tp('普通模式')" value="normal" />
+                      <el-option :label="$tp('高级模式')" value="advanced" />
+                      <el-option :label="$tp('自动')" value="auto" />
                     </el-select>
                   </div>
 
                   <!-- etc. -->
                   <div class="setting-item">
-                    <label class="setting-label">降噪等级</label>
+                    <label class="setting-label">{{ $tp('降噪等级') }}</label>
                     <div class="slider-container">
                       <el-slider
                         v-model="imageEnhancementSettings.noiseReductionLevel"
@@ -362,42 +362,42 @@
 
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">透雾模式</label>
+                    <label class="setting-label">{{ $tp('透雾模式') }}</label>
                     <el-select v-model="imageEnhancementSettings.defogging" class="setting-select">
-                      <el-option label="关闭" value="off" />
-                      <el-option label="开启" value="on" />
-                      <el-option label="自动" value="auto" />
+                      <el-option :label="$tp('关闭')" value="off" />
+                      <el-option :label="$tp('开启')" value="on" />
+                      <el-option :label="$tp('自动')" value="auto" />
                     </el-select>
                   </div>
 
                   <!-- sub -->
                   <div class="setting-item">
-                    <label class="setting-label">电子防抖</label>
+                    <label class="setting-label">{{ $tp('电子防抖') }}</label>
                     <el-select v-model="imageEnhancementSettings.electronicStabilization" class="setting-select">
-                      <el-option label="关闭" value="off" />
-                      <el-option label="开启" value="on" />
-                      <el-option label="自动" value="auto" />
+                      <el-option :label="$tp('关闭')" value="off" />
+                      <el-option :label="$tp('开启')" value="on" />
+                      <el-option :label="$tp('自动')" value="auto" />
                     </el-select>
                   </div>
                 </div>
               </el-collapse-item>
 
-              <el-collapse-item name="video-adjustment" title="视频调整">
+              <el-collapse-item name="video-adjustment" :title="$tp('视频调整')">
                 <div class="setting-content">
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">镜像</label>
+                    <label class="setting-label">{{ $tp('镜像') }}</label>
                     <el-select v-model="videoAdjustmentSettings.mirror" class="setting-select">
-                      <el-option label="关闭" value="off" />
-                      <el-option label="水平镜像" value="horizontal" />
-                      <el-option label="垂直镜像" value="vertical" />
-                      <el-option label="水平垂直镜像" value="both" />
+                      <el-option :label="$tp('关闭')" value="off" />
+                      <el-option :label="$tp('水平镜像')" value="horizontal" />
+                      <el-option :label="$tp('垂直镜像')" value="vertical" />
+                      <el-option :label="$tp('水平垂直镜像')" value="both" />
                     </el-select>
                   </div>
 
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">视频制式</label>
+                    <label class="setting-label">{{ $tp('视频制式') }}</label>
                     <el-select v-model="videoAdjustmentSettings.videoStandard" class="setting-select">
                       <el-option label="PAL (50HZ)" value="PAL_50HZ" />
                       <el-option label="NTSC (60HZ)" value="NTSC_60HZ" />
@@ -407,21 +407,21 @@
                 </div>
               </el-collapse-item>
 
-              <el-collapse-item name="other" title="其他">
+              <el-collapse-item name="other" :title="$tp('其他')">
                 <div class="setting-content">
                   <!-- Initialize -->
                   <div class="setting-item">
-                    <label class="setting-label">镜头初始化</label>
+                    <label class="setting-label">{{ $tp('镜头初始化') }}</label>
                     <el-select v-model="otherSettings.lensInitialization" class="setting-select">
-                      <el-option label="关闭" value="off" />
-                      <el-option label="开启" value="on" />
-                      <el-option label="自动" value="auto" />
+                      <el-option :label="$tp('关闭')" value="off" />
+                      <el-option :label="$tp('开启')" value="on" />
+                      <el-option :label="$tp('自动')" value="auto" />
                     </el-select>
                   </div>
 
                   <!--  -->
                   <div class="setting-item">
-                    <label class="setting-label">变倍限制</label>
+                    <label class="setting-label">{{ $tp('变倍限制') }}</label>
                     <el-select v-model="otherSettings.zoomLimit" class="setting-select">
                       <el-option label="1" value="1" />
                       <el-option label="2" value="2" />
@@ -430,7 +430,7 @@
                       <el-option label="5" value="5" />
                       <el-option label="10" value="10" />
                       <el-option label="20" value="20" />
-                      <el-option label="无限制" value="unlimited" />
+                      <el-option :label="$tp('无限制')" value="unlimited" />
                     </el-select>
                   </div>
                 </div>
@@ -443,58 +443,56 @@
             <!-- OSDpropertySet -->
             <div class="osd-config-section">
               <div class="osd-config-item">
-                <label class="osd-label">OSD属性</label>
+                <label class="osd-label">{{ $tp('OSD属性') }}</label>
                 <el-select v-model="osdSettings.attributes" class="osd-select">
-                  <el-option label="不透明，不闪烁" value="opaque-stable" />
-                  <el-option label="透明，不闪烁" value="transparent-stable" />
-                  <el-option label="不透明，闪烁" value="opaque-flashing" />
-                  <el-option label="透明，闪烁" value="transparent-flashing" />
+                  <el-option :label="$tp('不透明，不闪烁')" value="opaque-stable" />
+                  <el-option :label="$tp('透明，不闪烁')" value="transparent-stable" />
+                  <el-option :label="$tp('不透明，闪烁')" value="opaque-flashing" />
+                  <el-option :label="$tp('透明，闪烁')" value="transparent-flashing" />
                 </el-select>
               </div>
 
               <div class="osd-config-item">
-                <label class="osd-label">OSD字体</label>
+                <label class="osd-label">{{ $tp('OSD字体') }}</label>
                 <el-select v-model="osdSettings.font" class="osd-select">
-                  <el-option label="自适应" value="adaptive" />
-                  <el-option label="小号" value="small" />
-                  <el-option label="中号" value="medium" />
-                  <el-option label="大号" value="large" />
+                  <el-option :label="$tp('自适应')" value="adaptive" />
+                  <el-option :label="$tp('小号')" value="small" />
+                  <el-option :label="$tp('中号')" value="medium" />
+                  <el-option :label="$tp('大号')" value="large" />
                 </el-select>
               </div>
 
               <div class="osd-config-item">
-                <label class="osd-label">OSD颜色</label>
+                <label class="osd-label">{{ $tp('OSD颜色') }}</label>
                 <el-select v-model="osdSettings.color" class="osd-select">
-                  <el-option label="黑白自动" value="auto-bw" />
-                  <el-option label="白色" value="white" />
-                  <el-option label="黑色" value="black" />
-                  <el-option label="红色" value="red" />
-                  <el-option label="绿色" value="green" />
-                  <el-option label="蓝色" value="blue" />
+                  <el-option :label="$tp('黑白自动')" value="auto-bw" />
+                  <el-option :label="$tp('白色')" value="white" />
+                  <el-option :label="$tp('黑色')" value="black" />
+                  <el-option :label="$tp('红色')" value="red" />
+                  <el-option :label="$tp('绿色')" value="green" />
+                  <el-option :label="$tp('蓝色')" value="blue" />
                 </el-select>
               </div>
 
               <div class="osd-config-item">
-                <label class="osd-label">对齐方式</label>
+                <label class="osd-label">{{ $tp('对齐方式') }}</label>
                 <el-select v-model="osdSettings.alignment" class="osd-select">
-                  <el-option label="自适应" value="adaptive" />
-                  <el-option label="左对齐" value="left" />
-                  <el-option label="居中" value="center" />
-                  <el-option label="右对齐" value="right" />
+                  <el-option :label="$tp('自适应')" value="adaptive" />
+                  <el-option :label="$tp('左对齐')" value="left" />
+                  <el-option :label="$tp('居中')" value="center" />
+                  <el-option :label="$tp('右对齐')" value="right" />
                 </el-select>
               </div>
 
               <div class="osd-save-section">
-                <el-button type="primary" @click="saveOSDSettings" class="save-btn">
-                  保存
-                </el-button>
+                <el-button type="primary" @click="saveOSDSettings" class="save-btn"> {{ $tp('保存') }} </el-button>
               </div>
             </div>
           </div>
 
           <!-- Set button -->
           <div v-if="activeTab === 'display'" class="reset-container">
-            <el-button @click="resetToDefault" class="reset-btn">恢复默认设置</el-button>
+            <el-button @click="resetToDefault" class="reset-btn">{{ $tp('恢复默认设置') }}</el-button>
           </div>
         </div>
       </div>
@@ -524,6 +522,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -686,7 +686,7 @@ const goBack = () => {
 // Process
 const handleSceneChange = (value) => {
   console.log('切换场景:', value)
-  ElMessage.success(`切换到场景: ${sceneOptions.value.find(s => s.value === value)?.label}`)
+  ElMessage.success(uiText('切换到场景: {value0}', { value0: sceneOptions.value.find(s => s.value === value)?.label }))
 
   // parameter
   switch (value) {
@@ -711,19 +711,19 @@ const handleSceneChange = (value) => {
 // PTZcontroleventProcess
 const handlePTZControl = (direction) => {
   console.log('PTZ控制:', direction)
-  ElMessage.success(`PTZ ${direction} 控制`)
+  ElMessage.success(uiText('PTZ {value0} 控制', { value0: direction }))
 }
 
 // controleventProcess
 const handleZoomControl = (action) => {
   console.log('变倍控制:', action)
-  ElMessage.success(`变倍 ${action}`)
+  ElMessage.success(uiText('变倍 {value0}', { value0: action }))
 }
 
 // can controleventProcess
 const handleControlAction = (action) => {
   console.log('控制操作:', action)
-  ElMessage.success(`执行操作: ${action}`)
+  ElMessage.success(uiText('执行操作: {value0}', { value0: action }))
 }
 
 // Set
@@ -783,25 +783,25 @@ const resetToDefault = () => {
     zoomLimit: '2'
   }
 
-  ElMessage.success('已恢复默认设置')
+  ElMessage.success(uiText('已恢复默认设置'))
 }
 
 // Process
 const handlePresetClick = (preset) => {
   console.log('点击预制点:', preset)
-  ElMessage.success(`跳转到${preset.name}`)
+  ElMessage.success(uiText('跳转到{value0}', { value0: preset.name }))
 }
 
 // OSDSet ( main page)
 const saveOSDSettings = () => {
   console.log('保存OSD设置:', osdSettings.value)
-  ElMessage.success('OSD设置已保存')
+  ElMessage.success(uiText('OSD设置已保存'))
 }
 
 // Process OSDSet (PresetPanelcomponent)
 const handleOSDSettingsSave = (settings) => {
   console.log('保存预置点OSD设置:', settings)
-  ElMessage.success('预置点OSD设置已保存')
+  ElMessage.success(uiText('预置点OSD设置已保存'))
 }
 </script>
 

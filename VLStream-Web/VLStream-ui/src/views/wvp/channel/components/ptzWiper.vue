@@ -7,8 +7,8 @@
 
 <template>
   <div id="ptzWiper">
-    <el-button size="mini" @click="() => open('on')">开启</el-button>
-    <el-button size="mini" @click="() => open('off')">关闭</el-button>
+    <el-button size="mini" @click="() => open('on')">{{ $tp('开启') }}</el-button>
+    <el-button size="mini" @click="() => open('off')">{{ $tp('关闭') }}</el-button>
   </div>
 </template>
 

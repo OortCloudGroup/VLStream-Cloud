@@ -14,7 +14,7 @@
         <div class="collapse-btn" @click="toggleExpanded">
           <img
             :src="collapseIcon"
-            alt="折叠按钮"
+            :alt="$tp('折叠按钮')"
             class="collapse-icon"
           />
         </div>
@@ -23,7 +23,7 @@
         <div class="search-box">
           <el-input
             v-model="searchValue"
-            placeholder="高级搜索"
+            :placeholder="$tp('高级搜索')"
             class="search-input"
             @keyup.enter="handleSearch"
           />
@@ -56,9 +56,9 @@
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="upload">上传</el-dropdown-item>
-                <el-dropdown-item command="template">下载模板</el-dropdown-item>
-                <el-dropdown-item command="batch">批量操作</el-dropdown-item>
+                <el-dropdown-item command="upload">{{ $tp('上传') }}</el-dropdown-item>
+                <el-dropdown-item command="template">{{ $tp('下载模板') }}</el-dropdown-item>
+                <el-dropdown-item command="batch">{{ $tp('批量操作') }}</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -71,10 +71,10 @@
       <div class="form-content">
         <div class="form-row">
           <div class="form-item">
-            <label>设备名称：</label>
+            <label>{{ $tp('设备名称：') }}</label>
             <el-input
               v-model="searchForm.deviceName"
-              placeholder="请输入设备名称"
+              :placeholder="$tp('请输入设备名称')"
               clearable
             />
           </div>
@@ -82,10 +82,10 @@
 
         <div class="form-row">
           <div class="form-item">
-            <label>设备ID：</label>
+            <label>{{ $tp('设备ID：') }}</label>
             <el-input
               v-model="searchForm.deviceId"
-              placeholder="请输入设备ID"
+              :placeholder="$tp('请输入设备ID')"
               clearable
             />
           </div>
@@ -93,10 +93,10 @@
 
         <div class="form-row">
           <div class="form-item">
-            <label>标签名称：</label>
+            <label>{{ $tp('标签名称：') }}</label>
             <TagSelector
               v-model="searchForm.selectedTags"
-              placeholder="请选择标签"
+              :placeholder="$tp('请选择标签')"
               @change="handleTagChange"
             />
           </div>
@@ -104,7 +104,7 @@
 
         <div class="form-row">
           <div class="form-item">
-            <label>日期：</label>
+            <label>{{ $tp('日期：') }}</label>
             <DateRangePicker
               v-model="searchForm.dateRange"
               width="408px"

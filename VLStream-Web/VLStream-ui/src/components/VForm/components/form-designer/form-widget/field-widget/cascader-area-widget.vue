@@ -40,12 +40,10 @@
           <span class="address_span">{{ address }} </span>
           <span class="address_span_jw">({{ showJWD }})</span>
         </div>
-        <el-button :disabled="field.options.disabled" :icon="Plus" @click="showBDMAP">
-          地图选点
-        </el-button>
+        <el-button :disabled="field.options.disabled" :icon="Plus" @click="showBDMAP"> {{ $tp('地图选点') }} </el-button>
       </template>
     </div>
-    <el-dialog v-model="bMapVisible" title="选择详细地址" width="70%">
+    <el-dialog v-model="bMapVisible" :title="$tp('选择详细地址')" width="70%">
       <BaidumapSelectAddress :center="field.options.mapCenter" :area-type="field.options.areaOptionItems?.areaType" :is-edit="false" @change="changeAddress" />
     </el-dialog>
   </form-item-wrapper>

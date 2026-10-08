@@ -7,7 +7,7 @@
 
 <template>
   <div v-if="areaType > 3" style="width: 100%;">
-    <el-form-item style="width: 100%;" label="设置定位中点">
+    <el-form-item style="width: 100%;" :label="$tp('设置定位中点')">
       <span class="localCenter">{{ localModelValue }}</span>
       <!-- <el-input v-model="localModelValue" placeholder="请输入定位中点" type="text">
         <template #append>
@@ -16,7 +16,7 @@
       </el-input> -->
       <el-button :icon="Plus" @click="showBDMAP" />
     </el-form-item>
-    <el-dialog v-model="bMapVisible" title="选择定位中点" width="70%">
+    <el-dialog v-model="bMapVisible" :title="$tp('选择定位中点')" width="70%">
       <BaidumapSelectAddress :center="localCenter" :area-type="areaType" @change="changeLocationCenter" />
     </el-dialog>
   </div>

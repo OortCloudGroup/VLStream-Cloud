@@ -4,22 +4,22 @@
     <div class="page-card">
       <div class="page-header">
         <div>
-          <h2>大模型复核</h2>
-          <p>查看 YOLO 事件的二次判断、失败原因与人工复核记录。</p>
+          <h2>{{ $tp('大模型复核') }}</h2>
+          <p>{{ $tp('查看 YOLO 事件的二次判断、失败原因与人工复核记录。') }}</p>
         </div>
-        <el-button @click="load">刷新</el-button>
+        <el-button @click="load">{{ $tp('刷新') }}</el-button>
       </div>
 
       <el-form :inline="true" class="filters">
-        <el-form-item label="复核状态">
-          <el-select v-model="query.status" clearable placeholder="全部" style="width: 160px">
+        <el-form-item :label="$tp('复核状态')">
+          <el-select v-model="query.status" clearable :placeholder="$tp('全部')" style="width: 160px">
             <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="算法 ID">
-          <el-input v-model="query.algorithmId" clearable placeholder="请输入算法 ID" />
+        <el-form-item :label="$tp('算法 ID')">
+          <el-input v-model="query.algorithmId" clearable :placeholder="$tp('请输入算法 ID')" />
         </el-form-item>
-        <el-form-item><el-button type="primary" @click="search">查询</el-button></el-form-item>
+        <el-form-item><el-button type="primary" @click="search">{{ $tp('查询') }}</el-button></el-form-item>
       </el-form>
 
       <el-table v-loading="loading" :data="rows" border>
@@ -34,7 +34,7 @@
         <el-table-column prop="reason" :label="$tp('判断原因')" min-width="220" show-overflow-tooltip />
         <el-table-column prop="createTime" :label="$tp('接收时间')" min-width="170" />
         <el-table-column :label="$tp('操作')" width="90" fixed="right">
-          <template #default="scope"><el-button link type="primary" @click="openDetail(scope.row)">详情</el-button></template>
+          <template #default="scope"><el-button link type="primary" @click="openDetail(scope.row)">{{ $tp('详情') }}</el-button></template>
         </el-table-column>
       </el-table>
 
@@ -45,21 +45,21 @@
       </div>
     </div>
 
-    <el-drawer v-model="detailVisible" title="复核详情" size="560px">
+    <el-drawer v-model="detailVisible" :title="$tp('复核详情')" size="560px">
       <div v-loading="detailLoading" class="detail-content">
         <el-image v-if="mediaUrl" :src="mediaUrl" fit="contain" class="event-image" :preview-src-list="[mediaUrl]" />
         <el-descriptions v-if="detail" :column="1" border>
-          <el-descriptions-item label="复核状态">{{ statusLabel(detail.reviewStatus) }}</el-descriptions-item>
-          <el-descriptions-item label="模型结论">{{ detail.decision || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="置信度">{{ detail.confidence ?? '-' }}</el-descriptions-item>
-          <el-descriptions-item label="判断原因">{{ detail.reason || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="错误信息">{{ detail.lastError || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="正式事件 ID">{{ detail.formalEventId || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="原始响应"><pre>{{ detail.rawResponse || '-' }}</pre></el-descriptions-item>
+          <el-descriptions-item :label="$tp('复核状态')">{{ statusLabel(detail.reviewStatus) }}</el-descriptions-item>
+          <el-descriptions-item :label="$tp('模型结论')">{{ detail.decision || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$tp('置信度')">{{ detail.confidence ?? '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$tp('判断原因')">{{ detail.reason || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$tp('错误信息')">{{ detail.lastError || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$tp('正式事件 ID')">{{ detail.formalEventId || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$tp('原始响应')"><pre>{{ detail.rawResponse || '-' }}</pre></el-descriptions-item>
         </el-descriptions>
         <div v-if="detail && canManualReview(detail.reviewStatus)" class="manual-actions">
-          <el-button type="danger" @click="manual('REJECTED')">确认误报</el-button>
-          <el-button type="success" @click="manual('CONFIRMED')">确认事件</el-button>
+          <el-button type="danger" @click="manual('REJECTED')">{{ $tp('确认误报') }}</el-button>
+          <el-button type="success" @click="manual('CONFIRMED')">{{ $tp('确认事件') }}</el-button>
         </div>
       </div>
     </el-drawer>
@@ -67,6 +67,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -136,11 +138,11 @@ async function openDetail(row) {
 
 async function manual(decision) {
   const text = decision === 'CONFIRMED' ? '确认该事件并进入主动安全流程' : '确认该事件为误报'
-  await ElMessageBox.confirm(`确定${text}吗？`, '人工复核', { type: 'warning' })
+  await ElMessageBox.confirm(uiText('确定{value0}吗？', { value0: text }), uiText('人工复核'), { type: 'warning' })
   const response = await submitLlmManualDecision(detail.value.id, decision)
   if (response.code !== 200) throw new Error(response.message || '人工复核失败')
   detail.value = response.data
-  ElMessage.success('人工复核已提交')
+  ElMessage.success(uiText('人工复核已提交'))
   await load()
 }
 

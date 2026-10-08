@@ -7,8 +7,8 @@
 
 <template>
   <div style="width: 100%;">
-    <el-form-item style="width: 100%;" label="选择模式">
-      <el-select v-model="selectMod" placeholder="请选择模式" @change="updateData">
+    <el-form-item style="width: 100%;" :label="$tp('选择模式')">
+      <el-select v-model="selectMod" :placeholder="$tp('请选择模式')" @change="updateData">
         <el-option
           v-for="item in selectModOptions"
           :key="item.value"
@@ -17,8 +17,8 @@
         />
       </el-select>
     </el-form-item>
-    <el-form-item label="选择范围">
-      <el-select v-model="selectScope" placeholder="请选择范围" @change="updateData">
+    <el-form-item :label="$tp('选择范围')">
+      <el-select v-model="selectScope" :placeholder="$tp('请选择范围')" @change="updateData">
         <el-option
           v-for="item in selectScopeOptions"
           :key="item.value"
@@ -27,11 +27,11 @@
         />
       </el-select>
     </el-form-item>
-    <el-form-item v-if="selectScope === 3" label="自定义人员或部门" style="flex-direction: column;">
+    <el-form-item v-if="selectScope === 3" :label="$tp('自定义人员或部门')" style="flex-direction: column;">
       <address-setting-selectScope v-model="scopeValue" :select-mod="selectMod" :is-multi="multiple" @change="updateData" />
     </el-form-item>
-    <el-form-item label="默认值类型">
-      <el-select v-model="defaultValueType" placeholder="请选择默认值类型" @change="updateData">
+    <el-form-item :label="$tp('默认值类型')">
+      <el-select v-model="defaultValueType" :placeholder="$tp('请选择默认值类型')" @change="updateData">
         <el-option
           v-for="item in defaultValueTypeOptions"
           :key="item.value"
@@ -40,7 +40,7 @@
         />
       </el-select>
     </el-form-item>
-    <el-form-item v-if="defaultValueType === 2" label="选择固定值" style="flex-direction: column;">
+    <el-form-item v-if="defaultValueType === 2" :label="$tp('选择固定值')" style="flex-direction: column;">
       <address-setting-selectScope v-model="defaultValue" :select-mod="selectMod" :is-multi="false" @change="updateData" />
     </el-form-item>
   </div>

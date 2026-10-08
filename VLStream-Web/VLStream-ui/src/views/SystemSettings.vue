@@ -9,105 +9,105 @@
   <div class="system-settings">
     <!-- page -->
     <div class="page-header">
-      <h1 class="page-title">系统设置</h1>
-      <p>系统配置与参数管理</p>
+      <h1 class="page-title">{{ $tp('系统设置') }}</h1>
+      <p>{{ $tp('系统配置与参数管理') }}</p>
     </div>
 
     <!-- Set item -->
     <el-tabs v-model="activeTab" class="tenanat-tabs settings-tabs">
       <!-- Set -->
-      <el-tab-pane label="基础设置" name="basic">
+      <el-tab-pane :label="$tp('基础设置')" name="basic">
         <el-card class="setting-card">
           <template #header>
             <div class="card-header">
-              <span>系统基础配置</span>
+              <span>{{ $tp('系统基础配置') }}</span>
             </div>
           </template>
           <el-form :model="basicSettings" label-width="120px">
-            <el-form-item label="系统名称:">
+            <el-form-item :label="$tp('系统名称:')">
               <el-input v-model="basicSettings.systemName" style="width: 300px" />
             </el-form-item>
-            <el-form-item label="系统版本:">
+            <el-form-item :label="$tp('系统版本:')">
               <el-input v-model="basicSettings.systemVersion" disabled style="width: 300px" />
             </el-form-item>
-            <el-form-item label="时区设置:">
+            <el-form-item :label="$tp('时区设置:')">
               <el-select v-model="basicSettings.timezone" style="width: 300px">
-                <el-option label="北京时间 (UTC+8)" value="Asia/Shanghai" />
-                <el-option label="东京时间 (UTC+9)" value="Asia/Tokyo" />
-                <el-option label="纽约时间 (UTC-5)" value="America/New_York" />
-                <el-option label="伦敦时间 (UTC+0)" value="Europe/London" />
+                <el-option :label="$tp('北京时间 (UTC+8)')" value="Asia/Shanghai" />
+                <el-option :label="$tp('东京时间 (UTC+9)')" value="Asia/Tokyo" />
+                <el-option :label="$tp('纽约时间 (UTC-5)')" value="America/New_York" />
+                <el-option :label="$tp('伦敦时间 (UTC+0)')" value="Europe/London" />
               </el-select>
             </el-form-item>
-            <el-form-item label="语言设置:">
+            <el-form-item :label="$tp('语言设置:')">
               <el-select v-model="basicSettings.language" style="width: 300px">
-                <el-option label="简体中文" value="zh-CN" />
+                <el-option :label="$tp('简体中文')" value="zh-CN" />
                 <el-option label="English" value="en-US" />
-                <el-option label="日本語" value="ja-JP" />
+                <el-option :label="$tp('日本語')" value="ja-JP" />
               </el-select>
             </el-form-item>
-            <el-form-item label="主题模式:">
+            <el-form-item :label="$tp('主题模式:')">
               <el-radio-group v-model="basicSettings.theme">
-                <el-radio label="light">浅色模式</el-radio>
-                <el-radio label="dark">深色模式</el-radio>
-                <el-radio label="auto">跟随系统</el-radio>
+                <el-radio label="light">{{ $tp('浅色模式') }}</el-radio>
+                <el-radio label="dark">{{ $tp('深色模式') }}</el-radio>
+                <el-radio label="auto">{{ $tp('跟随系统') }}</el-radio>
               </el-radio-group>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="saveBasicSettings">保存设置</el-button>
-              <el-button @click="resetBasicSettings">重置</el-button>
+              <el-button type="primary" @click="saveBasicSettings">{{ $tp('保存设置') }}</el-button>
+              <el-button @click="resetBasicSettings">{{ $tp('重置') }}</el-button>
             </el-form-item>
           </el-form>
         </el-card>
       </el-tab-pane>
 
       <!-- Set -->
-      <el-tab-pane label="存储设置" name="storage">
+      <el-tab-pane :label="$tp('存储设置')" name="storage">
         <el-card class="setting-card">
           <template #header>
             <div class="card-header">
-              <span>存储配置</span>
+              <span>{{ $tp('存储配置') }}</span>
             </div>
           </template>
           <el-form :model="storageSettings" label-width="120px">
-            <el-form-item label="录像存储路径:">
+            <el-form-item :label="$tp('录像存储路径:')">
               <el-input v-model="storageSettings.videoPath" style="width: 400px">
                 <template #append>
-                  <el-button @click="selectPath('video')">浏览</el-button>
+                  <el-button @click="selectPath('video')">{{ $tp('浏览') }}</el-button>
                 </template>
               </el-input>
             </el-form-item>
-            <el-form-item label="图片存储路径:">
+            <el-form-item :label="$tp('图片存储路径:')">
               <el-input v-model="storageSettings.imagePath" style="width: 400px">
                 <template #append>
-                  <el-button @click="selectPath('image')">浏览</el-button>
+                  <el-button @click="selectPath('image')">{{ $tp('浏览') }}</el-button>
                 </template>
               </el-input>
             </el-form-item>
-            <el-form-item label="日志存储路径:">
+            <el-form-item :label="$tp('日志存储路径:')">
               <el-input v-model="storageSettings.logPath" style="width: 400px">
                 <template #append>
-                  <el-button @click="selectPath('log')">浏览</el-button>
+                  <el-button @click="selectPath('log')">{{ $tp('浏览') }}</el-button>
                 </template>
               </el-input>
             </el-form-item>
-            <el-form-item label="存储空间监控:">
+            <el-form-item :label="$tp('存储空间监控:')">
               <el-switch v-model="storageSettings.spaceMonitoring" />
             </el-form-item>
-            <el-form-item label="自动清理:">
+            <el-form-item :label="$tp('自动清理:')">
               <el-switch v-model="storageSettings.autoCleanup" />
             </el-form-item>
-            <el-form-item label="保留天数:" v-if="storageSettings.autoCleanup">
+            <el-form-item :label="$tp('保留天数:')" v-if="storageSettings.autoCleanup">
               <el-input-number
                 v-model="storageSettings.retentionDays"
                 :min="1"
                 :max="365"
                 style="width: 200px"
               />
-              <span style="margin-left: 10px; color: #909399;">天</span>
+              <span style="margin-left: 10px; color: #909399;">{{ $tp('天') }}</span>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="saveStorageSettings">保存设置</el-button>
-              <el-button @click="resetStorageSettings">重置</el-button>
+              <el-button type="primary" @click="saveStorageSettings">{{ $tp('保存设置') }}</el-button>
+              <el-button @click="resetStorageSettings">{{ $tp('重置') }}</el-button>
             </el-form-item>
           </el-form>
         </el-card>
@@ -116,21 +116,21 @@
         <el-card class="setting-card" style="margin-top: 20px;">
           <template #header>
             <div class="card-header">
-              <span>存储状态</span>
-              <el-button size="small" @click="refreshStorageInfo">刷新</el-button>
+              <span>{{ $tp('存储状态') }}</span>
+              <el-button size="small" @click="refreshStorageInfo">{{ $tp('刷新') }}</el-button>
             </div>
           </template>
           <div class="storage-info">
             <div class="storage-item">
-              <div class="storage-label">总容量:</div>
+              <div class="storage-label">{{ $tp('总容量:') }}</div>
               <div class="storage-value">{{ storageInfo.totalSpace }}</div>
             </div>
             <div class="storage-item">
-              <div class="storage-label">已使用:</div>
+              <div class="storage-label">{{ $tp('已使用:') }}</div>
               <div class="storage-value">{{ storageInfo.usedSpace }}</div>
             </div>
             <div class="storage-item">
-              <div class="storage-label">可用空间:</div>
+              <div class="storage-label">{{ $tp('可用空间:') }}</div>
               <div class="storage-value">{{ storageInfo.freeSpace }}</div>
             </div>
             <div class="storage-progress">
@@ -146,18 +146,18 @@
       </el-tab-pane>
 
       <!-- Set -->
-      <el-tab-pane label="网络设置" name="network">
+      <el-tab-pane :label="$tp('网络设置')" name="network">
         <el-card class="setting-card">
           <template #header>
             <div class="card-header">
-              <span>网络配置</span>
+              <span>{{ $tp('网络配置') }}</span>
             </div>
           </template>
           <el-form :model="networkSettings" label-width="120px">
-            <el-form-item label="服务器地址:">
+            <el-form-item :label="$tp('服务器地址:')">
               <el-input v-model="networkSettings.serverHost" style="width: 300px" />
             </el-form-item>
-            <el-form-item label="服务器端口:">
+            <el-form-item :label="$tp('服务器端口:')">
               <el-input-number
                 v-model="networkSettings.serverPort"
                 :min="1"
@@ -165,7 +165,7 @@
                 style="width: 200px"
               />
             </el-form-item>
-            <el-form-item label="RTSP端口:">
+            <el-form-item :label="$tp('RTSP端口:')">
               <el-input-number
                 v-model="networkSettings.rtspPort"
                 :min="1"
@@ -173,7 +173,7 @@
                 style="width: 200px"
               />
             </el-form-item>
-            <el-form-item label="HTTP端口:">
+            <el-form-item :label="$tp('HTTP端口:')">
               <el-input-number
                 v-model="networkSettings.httpPort"
                 :min="1"
@@ -181,43 +181,43 @@
                 style="width: 200px"
               />
             </el-form-item>
-            <el-form-item label="连接超时:">
+            <el-form-item :label="$tp('连接超时:')">
               <el-input-number
                 v-model="networkSettings.timeout"
                 :min="1"
                 :max="300"
                 style="width: 200px"
               />
-              <span style="margin-left: 10px; color: #909399;">秒</span>
+              <span style="margin-left: 10px; color: #909399;">{{ $tp('秒') }}</span>
             </el-form-item>
-            <el-form-item label="启用HTTPS:">
+            <el-form-item :label="$tp('启用HTTPS:')">
               <el-switch v-model="networkSettings.enableHttps" />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="saveNetworkSettings">保存设置</el-button>
-              <el-button @click="testConnection">测试连接</el-button>
-              <el-button @click="resetNetworkSettings">重置</el-button>
+              <el-button type="primary" @click="saveNetworkSettings">{{ $tp('保存设置') }}</el-button>
+              <el-button @click="testConnection">{{ $tp('测试连接') }}</el-button>
+              <el-button @click="resetNetworkSettings">{{ $tp('重置') }}</el-button>
             </el-form-item>
           </el-form>
         </el-card>
       </el-tab-pane>
 
       <!-- full Set -->
-      <el-tab-pane label="安全设置" name="security">
+      <el-tab-pane :label="$tp('安全设置')" name="security">
         <el-card class="setting-card">
           <template #header>
             <div class="card-header">
-              <span>安全配置</span>
+              <span>{{ $tp('安全配置') }}</span>
             </div>
           </template>
           <el-form :model="securitySettings" label-width="140px">
-            <el-form-item label="密码复杂度要求:">
+            <el-form-item :label="$tp('密码复杂度要求:')">
               <el-switch v-model="securitySettings.passwordComplexity" />
             </el-form-item>
-            <el-form-item label="登录失败锁定:">
+            <el-form-item :label="$tp('登录失败锁定:')">
               <el-switch v-model="securitySettings.loginLockout" />
             </el-form-item>
-            <el-form-item label="最大失败次数:" v-if="securitySettings.loginLockout">
+            <el-form-item :label="$tp('最大失败次数:')" v-if="securitySettings.loginLockout">
               <el-input-number
                 v-model="securitySettings.maxFailAttempts"
                 :min="3"
@@ -225,57 +225,57 @@
                 style="width: 200px"
               />
             </el-form-item>
-            <el-form-item label="锁定时间:" v-if="securitySettings.loginLockout">
+            <el-form-item :label="$tp('锁定时间:')" v-if="securitySettings.loginLockout">
               <el-input-number
                 v-model="securitySettings.lockoutDuration"
                 :min="5"
                 :max="60"
                 style="width: 200px"
               />
-              <span style="margin-left: 10px; color: #909399;">分钟</span>
+              <span style="margin-left: 10px; color: #909399;">{{ $tp('分钟') }}</span>
             </el-form-item>
-            <el-form-item label="会话超时:">
+            <el-form-item :label="$tp('会话超时:')">
               <el-input-number
                 v-model="securitySettings.sessionTimeout"
                 :min="30"
                 :max="480"
                 style="width: 200px"
               />
-              <span style="margin-left: 10px; color: #909399;">分钟</span>
+              <span style="margin-left: 10px; color: #909399;">{{ $tp('分钟') }}</span>
             </el-form-item>
-            <el-form-item label="启用双因子认证:">
+            <el-form-item :label="$tp('启用双因子认证:')">
               <el-switch v-model="securitySettings.twoFactorAuth" />
             </el-form-item>
-            <el-form-item label="IP白名单:">
+            <el-form-item :label="$tp('IP白名单:')">
               <el-switch v-model="securitySettings.ipWhitelist" />
             </el-form-item>
-            <el-form-item label="允许的IP地址:" v-if="securitySettings.ipWhitelist">
+            <el-form-item :label="$tp('允许的IP地址:')" v-if="securitySettings.ipWhitelist">
               <el-input
                 v-model="securitySettings.allowedIPs"
                 type="textarea"
                 :rows="3"
-                placeholder="每行一个IP地址或IP段，例如：192.168.1.100 或 192.168.1.0/24"
+                :placeholder="$tp('每行一个IP地址或IP段，例如：192.168.1.100 或 192.168.1.0/24')"
                 style="width: 400px"
               />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="saveSecuritySettings">保存设置</el-button>
-              <el-button @click="resetSecuritySettings">重置</el-button>
+              <el-button type="primary" @click="saveSecuritySettings">{{ $tp('保存设置') }}</el-button>
+              <el-button @click="resetSecuritySettings">{{ $tp('重置') }}</el-button>
             </el-form-item>
           </el-form>
         </el-card>
       </el-tab-pane>
 
       <!-- logSet -->
-      <el-tab-pane label="日志设置" name="logs">
+      <el-tab-pane :label="$tp('日志设置')" name="logs">
         <el-card class="setting-card">
           <template #header>
             <div class="card-header">
-              <span>日志配置</span>
+              <span>{{ $tp('日志配置') }}</span>
             </div>
           </template>
           <el-form :model="logSettings" label-width="120px">
-            <el-form-item label="日志级别:">
+            <el-form-item :label="$tp('日志级别:')">
               <el-select v-model="logSettings.level" style="width: 200px">
                 <el-option label="DEBUG" value="debug" />
                 <el-option label="INFO" value="info" />
@@ -283,19 +283,19 @@
                 <el-option label="ERROR" value="error" />
               </el-select>
             </el-form-item>
-            <el-form-item label="启用系统日志:">
+            <el-form-item :label="$tp('启用系统日志:')">
               <el-switch v-model="logSettings.enableSystemLog" />
             </el-form-item>
-            <el-form-item label="启用操作日志:">
+            <el-form-item :label="$tp('启用操作日志:')">
               <el-switch v-model="logSettings.enableOperationLog" />
             </el-form-item>
-            <el-form-item label="启用错误日志:">
+            <el-form-item :label="$tp('启用错误日志:')">
               <el-switch v-model="logSettings.enableErrorLog" />
             </el-form-item>
-            <el-form-item label="日志轮转:">
+            <el-form-item :label="$tp('日志轮转:')">
               <el-switch v-model="logSettings.logRotation" />
             </el-form-item>
-            <el-form-item label="单文件大小限制:" v-if="logSettings.logRotation">
+            <el-form-item :label="$tp('单文件大小限制:')" v-if="logSettings.logRotation">
               <el-input-number
                 v-model="logSettings.maxFileSize"
                 :min="1"
@@ -304,7 +304,7 @@
               />
               <span style="margin-left: 10px; color: #909399;">MB</span>
             </el-form-item>
-            <el-form-item label="保留文件数量:" v-if="logSettings.logRotation">
+            <el-form-item :label="$tp('保留文件数量:')" v-if="logSettings.logRotation">
               <el-input-number
                 v-model="logSettings.maxFiles"
                 :min="1"
@@ -313,9 +313,9 @@
               />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="saveLogSettings">保存设置</el-button>
-              <el-button @click="clearLogs">清空日志</el-button>
-              <el-button @click="resetLogSettings">重置</el-button>
+              <el-button type="primary" @click="saveLogSettings">{{ $tp('保存设置') }}</el-button>
+              <el-button @click="clearLogs">{{ $tp('清空日志') }}</el-button>
+              <el-button @click="resetLogSettings">{{ $tp('重置') }}</el-button>
             </el-form-item>
           </el-form>
         </el-card>
@@ -325,6 +325,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -393,7 +395,7 @@ const logSettings = ref({
 
 // method
 const saveBasicSettings = () => {
-  ElMessage.success('基础设置保存成功')
+  ElMessage.success(uiText('基础设置保存成功'))
 }
 
 const resetBasicSettings = () => {
@@ -404,11 +406,11 @@ const resetBasicSettings = () => {
     language: 'zh-CN',
     theme: 'light'
   }
-  ElMessage.info('基础设置已重置')
+  ElMessage.info(uiText('基础设置已重置'))
 }
 
 const saveStorageSettings = () => {
-  ElMessage.success('存储设置保存成功')
+  ElMessage.success(uiText('存储设置保存成功'))
 }
 
 const resetStorageSettings = () => {
@@ -420,11 +422,11 @@ const resetStorageSettings = () => {
     autoCleanup: true,
     retentionDays: 30
   }
-  ElMessage.info('存储设置已重置')
+  ElMessage.info(uiText('存储设置已重置'))
 }
 
 const selectPath = (type) => {
-  ElMessage.info(`选择${type === 'video' ? '录像' : type === 'image' ? '图片' : '日志'}存储路径`)
+  ElMessage.info(uiText('选择{value0}存储路径', { value0: type === 'video' ? uiText('录像') : type === 'image' ? uiText('图片') : uiText('日志') }))
 }
 
 const refreshStorageInfo = () => {
@@ -435,7 +437,7 @@ const refreshStorageInfo = () => {
     freeSpace: Math.floor(Math.random() * 800 + 500) + ' GB',
     usagePercentage: Math.floor(Math.random() * 50 + 20)
   }
-  ElMessage.success('存储信息已刷新')
+  ElMessage.success(uiText('存储信息已刷新'))
 }
 
 const getProgressColor = (percentage) => {
@@ -445,13 +447,13 @@ const getProgressColor = (percentage) => {
 }
 
 const saveNetworkSettings = () => {
-  ElMessage.success('网络设置保存成功')
+  ElMessage.success(uiText('网络设置保存成功'))
 }
 
 const testConnection = () => {
-  ElMessage.info('正在测试网络连接...')
+  ElMessage.info(uiText('正在测试网络连接...'))
   setTimeout(() => {
-    ElMessage.success('网络连接测试成功')
+    ElMessage.success(uiText('网络连接测试成功'))
   }, 2000)
 }
 
@@ -464,11 +466,11 @@ const resetNetworkSettings = () => {
     timeout: 30,
     enableHttps: false
   }
-  ElMessage.info('网络设置已重置')
+  ElMessage.info(uiText('网络设置已重置'))
 }
 
 const saveSecuritySettings = () => {
-  ElMessage.success('安全设置保存成功')
+  ElMessage.success(uiText('安全设置保存成功'))
 }
 
 const resetSecuritySettings = () => {
@@ -482,27 +484,27 @@ const resetSecuritySettings = () => {
     ipWhitelist: false,
     allowedIPs: ''
   }
-  ElMessage.info('安全设置已重置')
+  ElMessage.info(uiText('安全设置已重置'))
 }
 
 const saveLogSettings = () => {
-  ElMessage.success('日志设置保存成功')
+  ElMessage.success(uiText('日志设置保存成功'))
 }
 
 const clearLogs = async () => {
   try {
     await ElMessageBox.confirm(
-      '确定要清空所有日志吗？此操作不可恢复。',
-      '确认清空',
+      uiText('确定要清空所有日志吗？此操作不可恢复。'),
+      uiText('确认清空'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: uiText('确定'),
+        cancelButtonText: uiText('取消'),
         type: 'warning'
       }
     )
-    ElMessage.success('日志清空成功')
+    ElMessage.success(uiText('日志清空成功'))
   } catch {
-    ElMessage.info('已取消清空')
+    ElMessage.info(uiText('已取消清空'))
   }
 }
 
@@ -516,7 +518,7 @@ const resetLogSettings = () => {
     maxFileSize: 100,
     maxFiles: 10
   }
-  ElMessage.info('日志设置已重置')
+  ElMessage.info(uiText('日志设置已重置'))
 }
 
 //

@@ -22,9 +22,9 @@
     </div>
     <div v-if="!isEdit" class="finished_tips">
       <span />
-      <span>未完成</span>
+      <span>{{ $tp('未完成') }}</span>
       <span />
-      <span>已完成</span>
+      <span>{{ $tp('已完成') }}</span>
     </div>
   </div>
 </template>

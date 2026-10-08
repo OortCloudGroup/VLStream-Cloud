@@ -8,8 +8,8 @@
 <template>
   <div class="tenant_Page draHeaPB">
     <el-tabs v-model="queryParams.hasLink" class="tenanat-tabs" @tab-click="handleClick">
-      <el-tab-pane label="未关联" name="false"/>
-      <el-tab-pane label="已关联" name="true"/>
+      <el-tab-pane :label="$tp('未关联')" name="false"/>
+      <el-tab-pane :label="$tp('已关联')" name="true"/>
     </el-tabs>
     <div class="tenant_content">
       <div class="tableTenBox">
@@ -24,8 +24,7 @@
             @click="handleAdd"
             v-hasPermi="['wvp:record:channelAdd']"
           >
-            <el-icon class="BtnImg"><Plus /></el-icon>新增
-          </button>
+            <el-icon class="BtnImg"><Plus /></el-icon>{{ $tp('新增') }} </button>
           <button
             v-else
             type="button"
@@ -34,13 +33,12 @@
             @click="handleDelete"
             v-hasPermi="['wvp:record:channelDelete']"
           >
-            <el-icon class="BtnImg"><Delete /></el-icon>删除
-          </button>
+            <el-icon class="BtnImg"><Delete /></el-icon>{{ $tp('删除') }} </button>
           <button-group :button-list="toolbarButtons" />
           </div>
         </div>
         <div class="searchHeight_out flexRowAC">
-          <search-height-box keyword="query" placeholder="请输入关键字" :data="searchData" @handle="searchResetFn" />
+          <search-height-box keyword="query" :placeholder="$tp('请输入关键字')" :data="searchData" @handle="searchResetFn" />
           <export-excel-pdf />
         </div>
       </div>
@@ -53,17 +51,17 @@
         <el-table-column :label="$tp('类型')" :min-width="clacPXToVW(100)" align="center">
           <template #default="scope">
             <div slot="reference" class="name-wrapper">
-              <el-tag effect="plain" v-if="scope.row.dataType === 1">国标设备</el-tag>
-              <el-tag effect="plain" type="success" v-else-if="scope.row.dataType === 2">推流设备</el-tag>
-              <el-tag effect="plain" type="warning" v-else-if="scope.row.dataType === 3">拉流代理</el-tag>
+              <el-tag effect="plain" v-if="scope.row.dataType === 1">{{ $tp('国标设备') }}</el-tag>
+              <el-tag effect="plain" type="success" v-else-if="scope.row.dataType === 2">{{ $tp('推流设备') }}</el-tag>
+              <el-tag effect="plain" type="warning" v-else-if="scope.row.dataType === 3">{{ $tp('拉流代理') }}</el-tag>
             </div>
           </template>
         </el-table-column>
         <el-table-column :label="$tp('状态')" :min-width="clacPXToVW(100)" align="center">
           <template #default="scope">
             <div slot="reference" class="name-wrapper">
-              <el-tag v-if="scope.row.gbStatus === 'ON'">在线</el-tag>
-              <el-tag type="info" v-if="scope.row.gbStatus !== 'ON'">离线</el-tag>
+              <el-tag v-if="scope.row.gbStatus === 'ON'">{{ $tp('在线') }}</el-tag>
+              <el-tag type="info" v-if="scope.row.gbStatus !== 'ON'">{{ $tp('离线') }}</el-tag>
             </div>
           </template>
         </el-table-column>
@@ -79,12 +77,12 @@
 
       <el-dialog :title="title" v-model="open" width="800px" append-to-body>
         <div class="searchHeight_out flexRowAC" style="margin-bottom: 12px; justify-content: flex-end;">
-          <search-height-box keyword="name" placeholder="请输入设备名称等关键词" :data="deviceSearchData" @handle="deviceSearchResetFn" />
+          <search-height-box keyword="name" :placeholder="$tp('请输入设备名称等关键词')" :data="deviceSearchData" @handle="deviceSearchResetFn" />
           <export-excel-pdf />
         </div>
         <el-row :gutter="10" class="mb8">
           <el-col :span="1.5">
-            <el-button type="primary" plain :disabled="multipleDevice" @click="handleSure">确定</el-button>
+            <el-button type="primary" plain :disabled="multipleDevice" @click="handleSure">{{ $tp('确定') }}</el-button>
           </el-col>
         </el-row>
 
@@ -98,15 +96,15 @@
             <template #default="scope">
               <div slot="reference" class="name-wrapper">
                 <el-tag v-if="scope.row.hostAddress" size="medium">{{ scope.row.hostAddress }}</el-tag>
-                <el-tag v-if="!scope.row.hostAddress" size="medium">未知</el-tag>
+                <el-tag v-if="!scope.row.hostAddress" size="medium">{{ $tp('未知') }}</el-tag>
               </div>
             </template>
           </el-table-column>
           <el-table-column :label="$tp('状态')" align="center">
             <template #default="scope">
               <div slot="reference" class="name-wrapper">
-                <el-tag v-if="scope.row.onLine">在线</el-tag>
-                <el-tag type="info" v-if="!scope.row.onLine">离线</el-tag>
+                <el-tag v-if="scope.row.onLine">{{ $tp('在线') }}</el-tag>
+                <el-tag type="info" v-if="!scope.row.onLine">{{ $tp('离线') }}</el-tag>
               </div>
             </template>
           </el-table-column>

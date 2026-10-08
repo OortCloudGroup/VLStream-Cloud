@@ -15,13 +15,11 @@
           v-yResize
           class="police_aside_use"
         >
-          <div class="treeTitle">
-            设备树
-          </div>
+          <div class="treeTitle"> {{ $tp('设备树') }} </div>
           <div class="tree_search_content flexRowAC">
             <el-input
               v-model="searchTreeKeyword"
-              placeholder="搜索"
+              :placeholder="$tp('搜索')"
               debounce="300"
               prefix-icon="Search"
               clearable
@@ -113,7 +111,7 @@
             <div class="searchHeight_out flexRowAC">
               <search-height-box
                 keyword="keyword"
-                placeholder="搜索"
+                :placeholder="$tp('搜索')"
                 :data="searchData"
                 @handle="searchResetFn"
               />
@@ -150,8 +148,8 @@
             <el-table-column prop="streamPath" :label="$tp('视频流路径')" show-overflow-tooltip />
             <el-table-column prop="status" :label="$tp('状态')" :width="clacPXToVW(100)">
               <template #default="scope">
-                <span v-if="scope.row.status === 1" class="staBtns WX">在线</span>
-                <span v-else class="staBtns">离线</span>
+                <span v-if="scope.row.status === 1" class="staBtns WX">{{ $tp('在线') }}</span>
+                <span v-else class="staBtns">{{ $tp('离线') }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="lastRefreshTime" :label="$tp('最近一次录制时间')" :width="clacPXToVW(180)" />
@@ -160,7 +158,7 @@
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handlePlay(scope.row)">
                     <oort-svg-icon width="14" height="14" name="play" class="new_table_svg_group_svg" />
-                    <span>播放</span>
+                    <span>{{ $tp('播放') }}</span>
                   </div>
                 </div>
               </template>
@@ -191,7 +189,7 @@
       top="10vh"
       width="900px"
       draggable
-      :title="selectedRow?.deviceName ? `${selectedRow.deviceName} - 摄像头预览` : '摄像头预览'"
+      :title="selectedRow?.deviceName ? $tp('{value0} - 摄像头预览', { value0: selectedRow.deviceName }) : $tp('摄像头预览')"
       :close-on-click-modal="false"
       append-to-body
       @close="handlePlayerClose"
@@ -199,9 +197,9 @@
       <template #header="{ titleId, titleClass }">
         <div class="video-player-header">
           <span :id="titleId" :class="titleClass">
-            {{ selectedRow?.deviceName ? `${selectedRow.deviceName} - 摄像头预览` : '摄像头预览' }}
+            {{ selectedRow?.deviceName ? $tp('{value0} - 摄像头预览', { value0: selectedRow.deviceName }) : $tp('摄像头预览') }}
           </span>
-          <el-icon class="video-fullscreen-button" title="全屏" @click="togglePlayerFullscreen">
+          <el-icon class="video-fullscreen-button" :title="$tp('全屏')" @click="togglePlayerFullscreen">
             <FullScreen />
           </el-icon>
         </div>
@@ -214,6 +212,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, reactive, computed, onMounted } from 'vue'
 import {
   VideoCamera,
@@ -393,13 +393,13 @@ const playerOverlayDateTime = computed(() => {
       const hh = String(date.getHours()).padStart(2, '0')
       const mm = String(date.getMinutes()).padStart(2, '0')
       const ss = String(date.getSeconds()).padStart(2, '0')
-      return `${y}年${m}月${d}日 ${hh}:${mm}:${ss}`
+      return uiText('{value0}年{value1}月{value2}日 {value3}:{value4}:{value5}', { value0: y, value1: m, value2: d, value3: hh, value4: mm, value5: ss })
     }
   }
   const y = selectedDate.year
   const m = String(selectedDate.month).padStart(2, '0')
   const d = String(selectedDate.day).padStart(2, '0')
-  return `${y}年${m}月${d}日`
+  return uiText('{value0}年{value1}月{value2}日', { value0: y, value1: m, value2: d })
 })
 
 // after data - device
@@ -451,7 +451,7 @@ const loadDeviceList = async () => {
     totalRecords.value = deviceList.value.length
   } catch (error) {
     console.error('加载设备列表失败:', error)
-    ElMessage.error('加载设备列表失败: ' + (error.message || '网络错误'))
+    ElMessage.error(uiText('加载设备列表失败: ') + (error.message || uiText('网络错误')))
     deviceList.value = []
     deviceTreeData.value = []
     totalRecords.value = 0
@@ -512,7 +512,7 @@ const searchResetFn = (val, reset) => {
 }
 
 const handleExport = (type) => {
-  ElMessage.error(`当前未接入录像导出接口，未导出${type || ''}数据`)
+  ElMessage.error(uiText('当前未接入录像导出接口，未导出{value0}数据', { value0: type || '' }))
 }
 
 const handleNodeClick = (data) => {
@@ -525,21 +525,21 @@ const handleNodeClick = (data) => {
 }
 
 const handleTreeAdd = (data) => {
-  ElMessage.info(`新增节点：${data.label}`)
+  ElMessage.info(uiText('新增节点：{value0}', { value0: data.label }))
 }
 
 const handleTreeDelete = async (data) => {
   try {
     await ElMessageBox.confirm(
-      `确定删除「${data.label}」吗？`,
-      '确认删除',
+      uiText('确定删除「{value0}」吗？', { value0: data.label }),
+      uiText('确认删除'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: uiText('确定'),
+        cancelButtonText: uiText('取消'),
         type: 'warning'
       }
     )
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText('删除成功'))
   } catch {
     // user
   }
@@ -560,14 +560,14 @@ const handleRowClick = (row) => {
 
 const handleDownload = (row) => {
   console.log('下载视频:', row.name)
-  ElMessage.success(`开始下载: ${row.name}`)
+  ElMessage.success(uiText('开始下载: {value0}', { value0: row.name }))
 }
 
 const handleShare = () => {
   if (selectedRow.value) {
-    ElMessage.success('分享链接已复制到剪贴板')
+    ElMessage.success(uiText('分享链接已复制到剪贴板'))
   } else if (selectedRows.value.length > 0) {
-    ElMessage.success('分享链接已复制到剪贴板')
+    ElMessage.success(uiText('分享链接已复制到剪贴板'))
   }
 }
 
@@ -580,29 +580,29 @@ const handlePlayVideo = (video) => {
 
 const handleDownloadVideo = (video) => {
   console.log('下载视频:', video)
-  ElMessage.success(`开始下载 ${video.name}`)
+  ElMessage.success(uiText('开始下载 {value0}', { value0: video.name }))
 }
 
 const handleAdd = () => {
-  ElMessage.info('新增设备')
+  ElMessage.info(uiText('新增设备'))
 }
 
 const handleEdit = () => {
   const targetRow = selectedRow.value || (selectedRows.value.length > 0 ? selectedRows.value[0] : null)
 
   if (!targetRow) {
-    ElMessage.warning('请先选择要编辑的设备')
+    ElMessage.warning(uiText('请先选择要编辑的设备'))
     return
   }
 
-  ElMessage.info(`编辑设备: ${targetRow.name}`)
+  ElMessage.info(uiText('编辑设备: {value0}', { value0: targetRow.name }))
 }
 
 const handleDelete = async () => {
   const targetRows = selectedRow.value ? [selectedRow.value] : selectedRows.value
 
   if (!targetRows || targetRows.length === 0) {
-    ElMessage.warning('请先选择要删除的设备')
+    ElMessage.warning(uiText('请先选择要删除的设备'))
     return
   }
 
@@ -613,19 +613,19 @@ const handleDelete = async () => {
 
     await ElMessageBox.confirm(
       message,
-      '确认删除',
+      uiText('确认删除'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: uiText('确定'),
+        cancelButtonText: uiText('取消'),
         type: 'warning'
       }
     )
 
-    ElMessage.success(`删除成功，共删除 ${targetRows.length} 个设备`)
+    ElMessage.success(uiText('删除成功，共删除 {value0} 个设备', { value0: targetRows.length }))
     selectedRow.value = null
     selectedRows.value = []
   } catch {
-    ElMessage.info('已取消删除')
+    ElMessage.info(uiText('已取消删除'))
   }
 }
 
@@ -656,7 +656,7 @@ const togglePlayerFullscreen = async () => {
     }
   } catch (error) {
     console.error('切换播放器全屏失败:', error)
-    ElMessage.error('切换全屏失败')
+    ElMessage.error(uiText('切换全屏失败'))
   }
 }
 
@@ -707,7 +707,7 @@ const seekVideo = (value) => {
 
 const downloadVideo = () => {
   if (currentVideo.value) {
-    ElMessage.success(`开始下载 ${currentVideo.value.deviceName} 的视频流`)
+    ElMessage.success(uiText('开始下载 {value0} 的视频流', { value0: currentVideo.value.deviceName }))
   }
 }
 
@@ -760,7 +760,7 @@ const selectVideo = (index) => {
       console.log('设置播放URL:', currentVideoUrl.value)
     } else {
       currentVideoUrl.value = ''
-      ElMessage.warning('视频文件路径不存在')
+      ElMessage.warning(uiText('视频文件路径不存在'))
     }
   }
 }
@@ -784,7 +784,7 @@ const getCurrentTime = () => {
   const hours = String(now.getHours()).padStart(2, '0')
   const minutes = String(now.getMinutes()).padStart(2, '0')
   const seconds = String(now.getSeconds()).padStart(2, '0')
-  return `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`
+  return uiText('{value0}年{value1}月{value2}日 {value3}:{value4}:{value5}', { value0: year, value1: month, value2: day, value3: hours, value4: minutes, value5: seconds })
 }
 
 // Get URL
@@ -903,9 +903,9 @@ const handleThumbnailError = (event, index) => {
 const copyRtspUrl = () => {
   if (selectedRow.value && selectedRow.value.streamPath) {
     navigator.clipboard.writeText(selectedRow.value.streamPath).then(() => {
-      ElMessage.success('RTSP地址已复制到剪贴板')
+      ElMessage.success(uiText('RTSP地址已复制到剪贴板'))
     }).catch(() => {
-      ElMessage.error('复制失败，请手动复制')
+      ElMessage.error(uiText('复制失败，请手动复制'))
     })
   }
 }
@@ -915,13 +915,13 @@ const openInVlc = () => {
   if (selectedRow.value && selectedRow.value.streamPath) {
     const vlcUrl = `vlc://${selectedRow.value.streamPath}`
     window.open(vlcUrl, '_blank')
-    ElMessage.info('正在尝试在VLC中打开，请确保已安装VLC播放器')
+    ElMessage.info(uiText('正在尝试在VLC中打开，请确保已安装VLC播放器'))
   }
 }
 
 // new
 const refreshStream = () => {
-  ElMessage.info('正在刷新视频流...')
+  ElMessage.info(uiText('正在刷新视频流...'))
   // new
 }
 
@@ -940,13 +940,13 @@ const toggleFullscreen = () => {
 // Process Load successfully
 const handleVideoLoaded = () => {
   console.log('录制视频加载成功')
-  ElMessage.success('视频加载成功')
+  ElMessage.success(uiText('视频加载成功'))
 }
 
 // Process Load
 const handleVideoError = (event) => {
   console.error('录制视频加载失败:', event)
-  ElMessage.error('视频加载失败，请检查文件是否存在')
+  ElMessage.error(uiText('视频加载失败，请检查文件是否存在'))
 }
 
 // Format
@@ -1000,7 +1000,7 @@ const loadVideoRecords = async () => {
     videoRecords.value = []
     videoList.value = []
     currentVideoUrl.value = ''
-    ElMessage.info('该设备尚未关联历史录像')
+    ElMessage.info(uiText('该设备尚未关联历史录像'))
     return
   }
 
@@ -1053,17 +1053,17 @@ const loadVideoRecords = async () => {
 
         // only in record successfullyprompt / tip
         if (videoRecords.value.length > 0) {
-          ElMessage.success(`找到 ${records.length} 条视频记录`)
+          ElMessage.success(uiText('找到 {value0} 条视频记录', { value0: records.length }))
         }
       } else {
         currentVideoUrl.value = ''
-        ElMessage.warning('视频文件路径不存在')
+        ElMessage.warning(uiText('视频文件路径不存在'))
       }
     } else {
       videoRecords.value = []
       videoList.value = []
       currentVideoUrl.value = ''
-      ElMessage.info(`${selectedDateStr.value} 没有视频记录`)
+      ElMessage.info(uiText('{value0} 没有视频记录', { value0: selectedDateStr.value }))
     }
   } catch (error) {
     console.error('加载视频记录失败:', error)
@@ -1072,7 +1072,7 @@ const loadVideoRecords = async () => {
     currentVideoUrl.value = ''
 
     // Process , only prompt / tip
-    ElMessage.info(`${selectedDateStr.value} 没有视频记录`)
+    ElMessage.info(uiText('{value0} 没有视频记录', { value0: selectedDateStr.value }))
   }
 }
 

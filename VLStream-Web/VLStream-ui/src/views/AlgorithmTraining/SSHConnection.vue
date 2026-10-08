@@ -8,8 +8,8 @@
 <template>
   <div class="ssh-connection-page">
     <div class="page-header">
-      <h2>SSH远程连接</h2>
-      <p>配置SSH连接信息，连接到远程服务器进行算法训练</p>
+      <h2>{{ $tp('SSH远程连接') }}</h2>
+      <p>{{ $tp('配置SSH连接信息，连接到远程服务器进行算法训练') }}</p>
     </div>
 
     <el-row :gutter="20">
@@ -27,7 +27,7 @@
               :connection="connectionConfig"
             />
             <div v-else class="no-connection">
-              <el-empty description="请先配置SSH连接信息" />
+              <el-empty :description="$tp('请先配置SSH连接信息')" />
             </div>
           </div>
         </el-card>
@@ -40,17 +40,17 @@
         <el-card header="快捷命令">
           <div class="quick-commands">
             <el-button-group>
-              <el-button @click="executeQuickCommand('ls -la')">列出文件</el-button>
-              <el-button @click="executeQuickCommand('pwd')">当前目录</el-button>
-              <el-button @click="executeQuickCommand('df -h')">磁盘使用</el-button>
-              <el-button @click="executeQuickCommand('free -h')">内存使用</el-button>
-              <el-button @click="executeQuickCommand('nvidia-smi')">GPU状态</el-button>
+              <el-button @click="executeQuickCommand('ls -la')">{{ $tp('列出文件') }}</el-button>
+              <el-button @click="executeQuickCommand('pwd')">{{ $tp('当前目录') }}</el-button>
+              <el-button @click="executeQuickCommand('df -h')">{{ $tp('磁盘使用') }}</el-button>
+              <el-button @click="executeQuickCommand('free -h')">{{ $tp('内存使用') }}</el-button>
+              <el-button @click="executeQuickCommand('nvidia-smi')">{{ $tp('GPU状态') }}</el-button>
             </el-button-group>
 
             <div class="custom-command">
               <el-input
                 v-model="customCommand"
-                placeholder="输入自定义命令"
+                :placeholder="$tp('输入自定义命令')"
                 @keyup.enter="executeQuickCommand(customCommand)"
                 style="width: 300px; margin-left: 20px;"
               />
@@ -59,9 +59,7 @@
                 @click="executeQuickCommand(customCommand)"
                 :disabled="!customCommand.trim()"
                 style="margin-left: 10px;"
-              >
-                执行
-              </el-button>
+              > {{ $tp('执行') }} </el-button>
             </div>
           </div>
         </el-card>

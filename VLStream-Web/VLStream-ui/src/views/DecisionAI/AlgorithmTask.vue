@@ -16,9 +16,7 @@
                 <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
                   <el-icon class="BtnImg">
                     <Plus />
-                  </el-icon>
-                  新增
-                </button>
+                  </el-icon> {{ $tp('新增') }} </button>
                 <button-group :button-list="toolbarButtonList" />
               </div>
             </div>
@@ -26,7 +24,7 @@
             <div class="searchHeight_out flexRowAC">
               <search-height-box
                 keyword="jobName"
-                placeholder="任务名称"
+                :placeholder="$tp('任务名称')"
                 :data="searchData"
                 @handle="searchResetFn"
               />
@@ -60,17 +58,15 @@
                 text
                 icon="el-icon-video-play"
                 @click="handleRun(scope.row)"
-              >
-                运 行
-              </el-button>
+              > {{ $tp('运 行') }} </el-button>
             </template>
             <template #enable="{ row }">
               <el-switch
                 v-model="row.enable"
                 inline-prompt
                 @change="slotChange(row)"
-                active-text="启用"
-                inactive-text="暂停"
+                :active-text="$tp('启用')"
+                :inactive-text="$tp('暂停')"
                 :active-value="1"
                 :inactive-value="0"
               />

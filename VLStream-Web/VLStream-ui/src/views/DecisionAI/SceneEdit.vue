@@ -9,42 +9,42 @@
   <div class="scene-edit">
     <div class="content-header">
       <div class="breadcrumb">
-        <span class="breadcrumb-item" @click="goBack">场景列表</span>
+        <span class="breadcrumb-item" @click="goBack">{{ $tp('场景列表') }}</span>
         <span class="breadcrumb-separator">></span>
-        <span class="breadcrumb-item active">编辑场景</span>
+        <span class="breadcrumb-item active">{{ $tp('编辑场景') }}</span>
       </div>
     </div>
 
     <div class="edit-container">
       <el-form :model="sceneForm" :rules="sceneRules" ref="sceneFormRef" label-width="120px">
         <!--  -->
-        <el-form-item label="场景名称" prop="sceneName">
+        <el-form-item :label="$tp('场景名称')" prop="sceneName">
           <el-input
             v-model="sceneForm.sceneName"
-            placeholder="请输入场景名称"
+            :placeholder="$tp('请输入场景名称')"
             style="width: 400px;"
           />
         </el-form-item>
 
         <!--  -->
-        <el-form-item label="分析类型" prop="analysisType">
+        <el-form-item :label="$tp('分析类型')" prop="analysisType">
           <el-select
             v-model="sceneForm.analysisType"
-            placeholder="请选择分析类型"
+            :placeholder="$tp('请选择分析类型')"
             style="width: 400px;"
           >
             <template #suffix>
               <el-icon><ArrowRight /></el-icon>
             </template>
-            <el-option label="人员" value="person" />
-            <el-option label="车辆" value="vehicle" />
-            <el-option label="物体" value="object" />
-            <el-option label="行为" value="behavior" />
+            <el-option :label="$tp('人员')" value="person" />
+            <el-option :label="$tp('车辆')" value="vehicle" />
+            <el-option :label="$tp('物体')" value="object" />
+            <el-option :label="$tp('行为')" value="behavior" />
           </el-select>
         </el-form-item>
 
         <!-- snapshot -->
-        <el-form-item label="抓拍截图上传" prop="screenshots">
+        <el-form-item :label="$tp('抓拍截图上传')" prop="screenshots">
           <div class="upload-section">
             <div class="upload-info">
               <span class="upload-count">({{ uploadedFiles.length }}/5)</span>
@@ -87,7 +87,7 @@
         </el-form-item>
 
         <!--  -->
-        <el-form-item label="选择区域" prop="selectedRegions">
+        <el-form-item :label="$tp('选择区域')" prop="selectedRegions">
           <div class="region-section">
             <div class="region-tags">
               <el-tag
@@ -111,7 +111,7 @@
         </el-form-item>
 
         <!--  -->
-        <el-form-item label="选择摄像头" prop="selectedCameras">
+        <el-form-item :label="$tp('选择摄像头')" prop="selectedCameras">
           <div class="camera-section">
             <div class="camera-tags">
               <el-tag
@@ -135,7 +135,7 @@
         </el-form-item>
 
         <!--  -->
-        <el-form-item label="选择时间段" prop="timeRange">
+        <el-form-item :label="$tp('选择时间段')" prop="timeRange">
           <div class="time-range-section">
             <DateRangePicker
               v-model="sceneForm.timeRange"
@@ -154,8 +154,8 @@
         <!-- operationbutton -->
         <el-form-item>
           <div class="form-actions">
-            <el-button type="primary" @click="handleSubmit" :loading="saving" class="common_btn">申请</el-button>
-            <el-button @click="handleCancel" class="common_btn">取消</el-button>
+            <el-button type="primary" @click="handleSubmit" :loading="saving" class="common_btn">{{ $tp('申请') }}</el-button>
+            <el-button @click="handleCancel" class="common_btn">{{ $tp('取消') }}</el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -164,7 +164,7 @@
     <!--  -->
     <el-dialog
       v-model="showRegionDialog"
-      title="选择区域"
+      :title="$tp('选择区域')"
       width="30%"
     >
       <div class="dialog-content">
@@ -183,8 +183,8 @@
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showRegionDialog = false" class="common_btn">取消</el-button>
-          <el-button type="primary" @click="confirmRegionSelection" class="common_btn">确定</el-button>
+          <el-button @click="showRegionDialog = false" class="common_btn">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" @click="confirmRegionSelection" class="common_btn">{{ $tp('确定') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -192,7 +192,7 @@
     <!--  -->
     <el-dialog
       v-model="showCameraDialog"
-      title="选择摄像头"
+      :title="$tp('选择摄像头')"
       width="30%"
     >
       <div class="dialog-content">
@@ -211,8 +211,8 @@
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showCameraDialog = false" class="common_btn">取消</el-button>
-          <el-button type="primary" @click="confirmCameraSelection" class="common_btn">确定</el-button>
+          <el-button @click="showCameraDialog = false" class="common_btn">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" @click="confirmCameraSelection" class="common_btn">{{ $tp('确定') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -220,6 +220,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -346,12 +348,12 @@ const handleSubmit = async () => {
 
     setTimeout(() => {
       saving.value = false
-      ElMessage.success('申请提交成功')
+      ElMessage.success(uiText('申请提交成功'))
       goBack()
     }, 1000)
 
   } catch (error) {
-    ElMessage.error('请完善表单信息')
+    ElMessage.error(uiText('请完善表单信息'))
   }
 }
 

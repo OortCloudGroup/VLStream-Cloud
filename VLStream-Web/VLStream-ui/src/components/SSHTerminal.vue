@@ -13,8 +13,8 @@
         <span>{{ connectionInfo }}</span>
       </div>
       <div class="terminal-actions">
-        <el-button size="small" @click="clearTerminal">清空</el-button>
-        <el-button size="small" @click="disconnect" v-if="isConnected">断开连接</el-button>
+        <el-button size="small" @click="clearTerminal">{{ $tp('清空') }}</el-button>
+        <el-button size="small" @click="disconnect" v-if="isConnected">{{ $tp('断开连接') }}</el-button>
       </div>
     </div>
     <div class="terminal-container" ref="terminalContainer">
@@ -32,7 +32,7 @@
           @keyup.up="previousCommand"
           @keyup.down="nextCommand"
           class="command-input"
-          placeholder="输入命令..."
+          :placeholder="$tp('输入命令...')"
         />
       </div>
     </div>
@@ -40,6 +40,8 @@
 </template>
 
 <script>
+import { translatePhrase as uiText } from '@/i18n'
+
 export default {
   name: 'SSHTerminal',
   props: {
@@ -64,7 +66,7 @@ export default {
       if (this.isConnected && this.connection.host) {
         return `${this.connection.username}@${this.connection.host}:${this.connection.port || 22}`
       }
-      return '未连接'
+      return uiText('未连接')
     }
   },
   mounted() {

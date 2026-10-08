@@ -7,8 +7,8 @@
 
 <template>
   <div>
-    <el-form-item style="width: 100%;" label="扫码类型">
-      <el-select v-model="optionModel.scanType" class="item_width" placeholder="请选择扫码类型">
+    <el-form-item style="width: 100%;" :label="$tp('扫码类型')">
+      <el-select v-model="optionModel.scanType" class="item_width" :placeholder="$tp('请选择扫码类型')">
         <el-option
           v-for="item in sacnTypeOptions"
           :key="item.value"

@@ -16,23 +16,21 @@
                 <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
                   <el-icon class="BtnImg">
                     <Plus />
-                  </el-icon>
-                  新建
-                </button>
+                  </el-icon> {{ $tp('新建') }} </button>
                 <button-group :button-list="toolbarButtonList" />
               </div>
             </div>
             <div class="searchHeight_out flexRowAC">
-              <el-input v-model="queryForm.taskName" placeholder="请输入任务名称" clearable style="width: 200px; margin-right: 8px;" />
-              <el-select v-model="queryForm.status" placeholder="请选择状态" clearable style="width: 140px; margin-right: 8px;">
-                <el-option label="全部" value="" />
-                <el-option label="等待中" value="pending" />
-                <el-option label="训练中" value="training" />
-                <el-option label="已完成" value="completed" />
-                <el-option label="失败" value="failed" />
+              <el-input v-model="queryForm.taskName" :placeholder="$tp('请输入任务名称')" clearable style="width: 200px; margin-right: 8px;" />
+              <el-select v-model="queryForm.status" :placeholder="$tp('请选择状态')" clearable style="width: 140px; margin-right: 8px;">
+                <el-option :label="$tp('全部')" value="" />
+                <el-option :label="$tp('等待中')" value="pending" />
+                <el-option :label="$tp('训练中')" value="training" />
+                <el-option :label="$tp('已完成')" value="completed" />
+                <el-option :label="$tp('失败')" value="failed" />
               </el-select>
-              <el-button type="primary" @click="handleSearch">搜索</el-button>
-              <el-button @click="handleReset">重置</el-button>
+              <el-button type="primary" @click="handleSearch">{{ $tp('搜索') }}</el-button>
+              <el-button @click="handleReset">{{ $tp('重置') }}</el-button>
             </div>
           </div>
 
@@ -72,15 +70,15 @@
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handleDetailRow(scope.row)">
                     <oort-svg-icon width="14" height="14" name="detail_icon" class="new_table_svg_group_svg" />
-                    <span>详情</span>
+                    <span>{{ $tp('详情') }}</span>
                   </div>
                   <div class="new_table_svg_group" @click="handleEditRow(scope.row)">
                     <oort-svg-icon width="14" height="14" name="edit_icon" class="new_table_svg_group_svg" />
-                    <span>编辑</span>
+                    <span>{{ $tp('编辑') }}</span>
                   </div>
                   <div class="new_table_svg_group" @click="handleDeleteRow(scope.row)">
                     <oort-svg-icon color="red" width="14" height="14" name="delete_icon" class="new_table_svg_group_svg" />
-                    <span>删除</span>
+                    <span>{{ $tp('删除') }}</span>
                   </div>
                 </div>
               </template>
@@ -115,28 +113,28 @@
         :rules="rules"
         label-width="120px"
       >
-        <el-form-item label="任务名称" prop="taskName">
-          <el-input v-model="form.taskName" placeholder="请输入任务名称" />
+        <el-form-item :label="$tp('任务名称')" prop="taskName">
+          <el-input v-model="form.taskName" :placeholder="$tp('请输入任务名称')" />
         </el-form-item>
-        <el-form-item label="数据集" prop="datasetName">
-          <el-input v-model="form.datasetName" placeholder="请输入数据集名称" />
+        <el-form-item :label="$tp('数据集')" prop="datasetName">
+          <el-input v-model="form.datasetName" :placeholder="$tp('请输入数据集名称')" />
         </el-form-item>
-        <el-form-item label="基础模型" prop="baseModel">
-          <el-input v-model="form.baseModel" placeholder="请输入基础模型" />
+        <el-form-item :label="$tp('基础模型')" prop="baseModel">
+          <el-input v-model="form.baseModel" :placeholder="$tp('请输入基础模型')" />
         </el-form-item>
-        <el-form-item label="训练参数" prop="trainParams">
+        <el-form-item :label="$tp('训练参数')" prop="trainParams">
           <el-input
             v-model="form.trainParams"
             type="textarea"
             :rows="4"
-            placeholder="请输入训练参数（JSON格式）"
+            :placeholder="$tp('请输入训练参数（JSON格式）')"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false" class="common_btn">取消</el-button>
-          <el-button type="primary" @click="handleSubmit" class="common_btn">确定</el-button>
+          <el-button @click="dialogVisible = false" class="common_btn">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" @click="handleSubmit" class="common_btn">{{ $tp('确定') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -144,31 +142,31 @@
     <!--  -->
     <el-dialog
       v-model="detailVisible"
-      title="训练任务详情"
+      :title="$tp('训练任务详情')"
       width="45%"
     >
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="任务名称">{{ detailData.taskName }}</el-descriptions-item>
-        <el-descriptions-item label="数据集">{{ detailData.datasetName }}</el-descriptions-item>
-        <el-descriptions-item label="基础模型">{{ detailData.baseModel }}</el-descriptions-item>
-        <el-descriptions-item label="状态">
+        <el-descriptions-item :label="$tp('任务名称')">{{ detailData.taskName }}</el-descriptions-item>
+        <el-descriptions-item :label="$tp('数据集')">{{ detailData.datasetName }}</el-descriptions-item>
+        <el-descriptions-item :label="$tp('基础模型')">{{ detailData.baseModel }}</el-descriptions-item>
+        <el-descriptions-item :label="$tp('状态')">
           <el-tag :type="getStatusType(detailData.trainStatus)">
             {{ detailData.trainStatusDesc }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="进度">
+        <el-descriptions-item :label="$tp('进度')">
           <el-progress
             :percentage="detailData.progress || 0"
             :status="getProgressStatus(detailData.trainStatus)"
           />
         </el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ detailData.createTime }}</el-descriptions-item>
-        <el-descriptions-item label="开始时间">{{ detailData.startTime || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="结束时间">{{ detailData.endTime || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="训练时长" :span="2">
-          {{ detailData.durationMinutes ? detailData.durationMinutes + '分钟' : '-' }}
+        <el-descriptions-item :label="$tp('创建时间')">{{ detailData.createTime }}</el-descriptions-item>
+        <el-descriptions-item :label="$tp('开始时间')">{{ detailData.startTime || '-' }}</el-descriptions-item>
+        <el-descriptions-item :label="$tp('结束时间')">{{ detailData.endTime || '-' }}</el-descriptions-item>
+        <el-descriptions-item :label="$tp('训练时长')" :span="2">
+          {{ detailData.durationMinutes ? detailData.durationMinutes + $tp('分钟') : '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="训练参数" :span="2">
+        <el-descriptions-item :label="$tp('训练参数')" :span="2">
           <pre>{{ detailData.trainParams || '-' }}</pre>
         </el-descriptions-item>
       </el-descriptions>
@@ -177,6 +175,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {Search, Refresh, Plus } from '@element-plus/icons-vue'
@@ -262,13 +262,13 @@ const loadData = async () => {
     }
   } catch (error) {
     console.error('加载数据失败:', error)
-    ElMessage.error('加载数据失败')
+    ElMessage.error(uiText('加载数据失败'))
   }
 }
 
 const handleSearch = () => {
   currentPage.value = 1
-  ElMessage.success('搜索完成')
+  ElMessage.success(uiText('搜索完成'))
 }
 
 const handleReset = () => {
@@ -276,7 +276,7 @@ const handleReset = () => {
     queryForm[key] = ''
   })
   currentPage.value = 1
-  ElMessage.info('搜索条件已重置')
+  ElMessage.info(uiText('搜索条件已重置'))
 }
 
 const handleSelectionChange = (selection) => {
@@ -303,7 +303,7 @@ const handleAdd = () => {
 
 const handleEdit = () => {
   if (selectedRows.value.length !== 1) {
-    ElMessage.warning('请选择一条记录进行编辑')
+    ElMessage.warning(uiText('请选择一条记录进行编辑'))
     return
   }
   handleEditRow(selectedRows.value[0])
@@ -316,14 +316,14 @@ const toolbarButtonList = computed(() => [
 
 const handleDelete = async () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请选择要删除的记录')
+    ElMessage.warning(uiText('请选择要删除的记录'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedRows.value.length} 条记录吗？`,
-      '确认删除',
+      uiText('确定要删除选中的 {value0} 条记录吗？', { value0: selectedRows.value.length }),
+      uiText('确认删除'),
       { type: 'warning' }
     )
 
@@ -331,14 +331,14 @@ const handleDelete = async () => {
     const response = await delTrainingTask(ids)
 
     if (response.code === 200) {
-      ElMessage.success('删除成功')
+      ElMessage.success(uiText('删除成功'))
       loadData()
       selectedRows.value = []
     }
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(uiText('删除失败'))
     }
   }
 }
@@ -353,7 +353,7 @@ const handleDetailRow = async (row) => {
     }
   } catch (error) {
     console.error('获取详情失败:', error)
-    ElMessage.error('获取详情失败')
+    ElMessage.error(uiText('获取详情失败'))
   }
 }
 
@@ -368,21 +368,21 @@ const handleEditRow = (row) => {
 const handleDeleteRow = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除任务"${row.taskName}"吗？`,
-      '确认删除',
+      uiText('确定要删除任务"{value0}"吗？', { value0: row.taskName }),
+      uiText('确认删除'),
       { type: 'warning' }
     )
 
     const response = await delTrainingTask([row.id])
 
     if (response.code === 200) {
-      ElMessage.success('删除成功')
+      ElMessage.success(uiText('删除成功'))
       loadData()
     }
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(uiText('删除失败'))
     }
   }
 }
@@ -401,13 +401,13 @@ const handleSubmit = async () => {
     }
 
     if (response.code === 200) {
-      ElMessage.success(form.id ? '更新成功' : '创建成功')
+      ElMessage.success(form.id ? uiText('更新成功') : uiText('创建成功'))
       dialogVisible.value = false
       loadData()
     }
   } catch (error) {
     console.error('提交失败:', error)
-    ElMessage.error('提交失败')
+    ElMessage.error(uiText('提交失败'))
   }
 }
 

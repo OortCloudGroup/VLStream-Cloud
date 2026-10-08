@@ -44,7 +44,7 @@
       v-if="!widget.widgetList || widget.widgetList.length === 0"
       class="empty-items-placeholder"
     >
-      <span> <i class="el-icon-rank" /> 拖拽控件至此处 </span>
+      <span> <i class="el-icon-rank" /> {{ $tp('拖拽控件至此处') }} </span>
     </div>
 
     <div v-if="designer.selectedId === widget.id && widget.type === 'items-item'" class="grid-col-action">

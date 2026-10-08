@@ -7,9 +7,7 @@
 
 <template>
   <div>
-    <el-divider class="custom-divider-margin-top">
-      基础数据
-    </el-divider>
+    <el-divider class="custom-divider-margin-top"> {{ $tp('基础数据') }} </el-divider>
     <DictTagSetting v-model="optionModel.basicOptions" />
   </div>
 </template>

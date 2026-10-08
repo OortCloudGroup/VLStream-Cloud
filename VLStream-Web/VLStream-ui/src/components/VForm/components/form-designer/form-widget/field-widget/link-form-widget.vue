@@ -43,9 +43,7 @@
           :global-dsv="{}"
         />
         <div class="form-render-footer">
-          <el-button type="primary" @click="confirmLinkForm" class="common_btn">
-            确定
-          </el-button>
+          <el-button type="primary" @click="confirmLinkForm" class="common_btn"> {{ $tp('确定') }} </el-button>
         </div>
       </div>
     </el-dialog>

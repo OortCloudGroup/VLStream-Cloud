@@ -18,35 +18,35 @@
     <div class="flexRowAC headerStep">
       <div class="tabs flexRowAC">
         <el-tabs v-model="activeName" class="tenanat-tabs">
-          <el-tab-pane label="基础信息" name="1">
+          <el-tab-pane :label="$tp('基础信息')" name="1">
             <template #label>
               <span class="flexRowAC">
                 <oort-svg-icon name="1" width="14" height="14" />
-                <span>&nbsp;基础信息</span>
+                <span> {{ $tp('基础信息') }}</span>
               </span>
             </template>
           </el-tab-pane>
-          <el-tab-pane label="表单设计" name="2">
+          <el-tab-pane :label="$tp('表单设计')" name="2">
             <template #label>
               <span class="flexRowAC">
                 <oort-svg-icon name="2" width="14" height="14" />
-                <span>&nbsp;表单设计</span>
+                <span> {{ $tp('表单设计') }}</span>
               </span>
             </template>
           </el-tab-pane>
-          <el-tab-pane label="流程设计" name="3">
+          <el-tab-pane :label="$tp('流程设计')" name="3">
             <template #label>
               <span class="flexRowAC">
                 <oort-svg-icon name="3" width="14" height="14" />
-                <span>&nbsp;流程设计</span>
+                <span> {{ $tp('流程设计') }}</span>
               </span>
             </template>
           </el-tab-pane>
-          <el-tab-pane label="权限" name="4">
+          <el-tab-pane :label="$tp('权限')" name="4">
             <template #label>
               <span class="flexRowAC">
                 <oort-svg-icon name="4" width="14" height="14" />
-                <span>&nbsp;权限</span>
+                <span> {{ $tp('权限') }}</span>
               </span>
             </template>
           </el-tab-pane>
@@ -56,9 +56,7 @@
     <div class="step_contentOut flexRowAC">
       <div class="step_content">
         <div v-if="processTitle" class="process_t flexRowAC">
-          <router-link to="" class="nav_title" @click="router.back()">
-            返回
-          </router-link>
+          <router-link to="" class="nav_title" @click="router.back()"> {{ $tp('返回') }} </router-link>
           <div class="nav_title lth">
             /&nbsp;&nbsp;
             <span>{{ processTitle }}</span>

@@ -15,13 +15,11 @@
           v-yResize
           class="police_aside_use"
         >
-          <div class="treeTitle">
-            设备树
-          </div>
+          <div class="treeTitle"> {{ $tp('设备树') }} </div>
           <div class="tree_search_content flexRowAC">
             <el-input
               v-model="searchTreeKeyword"
-              placeholder="搜索"
+              :placeholder="$tp('搜索')"
               debounce="300"
               prefix-icon="Search"
               clearable
@@ -99,7 +97,7 @@
                 :is-expanded="false"
                 @toggle="toggleDeviceTree"
               />
-              <span class="breadcrumb-item" @click="clearTreeFilter">设备列表</span>
+              <span class="breadcrumb-item" @click="clearTreeFilter">{{ $tp('设备列表') }}</span>
               <span v-if="treeFilterText" class="breadcrumb-separator">></span>
               <span v-if="treeFilterText" class="breadcrumb-item filter-text" @click="clearTreeFilter">{{ treeFilterText }}</span>
             </div>
@@ -113,16 +111,14 @@
                 <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
                   <el-icon class="BtnImg">
                     <Plus />
-                  </el-icon>
-                  新建
-                </button>
+                  </el-icon> {{ $tp('新建') }} </button>
                 <button-group :button-list="toolbarButtonList" />
               </div>
               </div>
               <div class="searchHeight_out flexRowAC">
                 <search-height-box
                   keyword="keyword"
-                  placeholder="搜索"
+                  :placeholder="$tp('搜索')"
                   :data="searchData"
                   @handle="searchResetFn"
                 />
@@ -161,7 +157,7 @@
                       {{ tag }}
                     </el-tag>
                   </template>
-                  <el-tag v-else size="small" type="info">未分类</el-tag>
+                  <el-tag v-else size="small" type="info">{{ $tp('未分类') }}</el-tag>
                 </template>
               </el-table-column>
               <el-table-column prop="streamUrl" :label="$tp('视频流路径')" show-overflow-tooltip />
@@ -171,22 +167,22 @@
                   <div class="operateAppBox flexRowAC" @click.stop>
                     <div class="new_table_svg_group" @click="handlePlay(scope.row)">
                       <oort-svg-icon width="14" height="14" name="play" class="new_table_svg_group_svg" />
-                      <span>播放</span>
+                      <span>{{ $tp('播放') }}</span>
                     </div>
                     <div class="new_table_svg_group" @click="handleConfig(scope.row)">
                       <oort-svg-icon width="14" height="14" name="setting" class="new_table_svg_group_svg" />
-                      <span>配置录像</span>
+                      <span>{{ $tp('配置录像') }}</span>
                     </div>
                     <el-dropdown @command="handleMoreActions" trigger="click">
                       <div class="new_table_svg_group">
                         <oort-svg-icon width="14" height="14" name="table_more" class="new_table_svg_group_svg" />
-                        <span>更多</span>
+                        <span>{{ $tp('更多') }}</span>
                       </div>
                       <template #dropdown>
                         <el-dropdown-menu>
-                          <el-dropdown-item :command="{action: 'edit', row: scope.row}">编辑</el-dropdown-item>
-                          <el-dropdown-item :command="{action: 'camera-settings', row: scope.row}">设置摄像机</el-dropdown-item>
-                          <el-dropdown-item :command="{action: 'delete', row: scope.row}" class="delete-dropdown-item" divided>删除</el-dropdown-item>
+                          <el-dropdown-item :command="{action: 'edit', row: scope.row}">{{ $tp('编辑') }}</el-dropdown-item>
+                          <el-dropdown-item :command="{action: 'camera-settings', row: scope.row}">{{ $tp('设置摄像机') }}</el-dropdown-item>
+                          <el-dropdown-item :command="{action: 'delete', row: scope.row}" class="delete-dropdown-item" divided>{{ $tp('删除') }}</el-dropdown-item>
                         </el-dropdown-menu>
                       </template>
                     </el-dropdown>
@@ -216,7 +212,7 @@
     <!--  -->
     <el-dialog
       v-model="videoDialogVisible"
-      title="视频播放"
+      :title="$tp('视频播放')"
       width="90%"
       top="5vh"
       @close="handleVideoClose"
@@ -243,8 +239,7 @@
                 v-if="playStatus.retryCount > 0"
                 type="warning"
                 size="small"
-              >
-                重试 {{ playStatus.retryCount }}/{{ playStatus.maxRetries }}
+              > {{ $tp('重试') }} {{ playStatus.retryCount }}/{{ playStatus.maxRetries }}
               </el-tag>
             </div>
           </div>
@@ -252,13 +247,12 @@
             <!-- recording -->
             <div v-if="recordingStatus.isRecording" class="recording-status">
               <el-tag type="danger" size="small" effect="dark">
-                <el-icon class="recording-icon"><VideoCamera /></el-icon>
-                录制中 {{ formatRecordingTime(recordingStatus.duration) }}
+                <el-icon class="recording-icon"><VideoCamera /></el-icon> {{ $tp('录制中') }} {{ formatRecordingTime(recordingStatus.duration) }}
               </el-tag>
             </div>
 
             <div class="quality-stats">
-              <el-tooltip content="播放质量统计" placement="top">
+              <el-tooltip :content="$tp('播放质量统计')" placement="top">
                 <div class="stats-info">
                   <span v-if="playStatus.qualityStats.resolution">
                     {{ playStatus.qualityStats.resolution }}
@@ -279,7 +273,7 @@
               :disabled="!currentVideoDevice.id"
             >
               <el-icon><VideoCamera /></el-icon>
-              {{ recordingStatus.isRecording ? '停止录像' : '开始录像' }}
+              {{ recordingStatus.isRecording ? $tp('停止录像') : $tp('开始录像') }}
             </el-button>
 
             <el-button
@@ -288,17 +282,13 @@
               @click="handleReplay"
               :loading="loading"
             >
-              <el-icon><Refresh /></el-icon>
-              重新播放
-            </el-button>
+              <el-icon><Refresh /></el-icon> {{ $tp('重新播放') }} </el-button>
             <el-button
               v-if="currentVideoDevice.originalRtspUrl"
               size="small"
               @click="copyRtspUrl"
             >
-              <el-icon><DocumentCopy /></el-icon>
-              复制RTSP
-            </el-button>
+              <el-icon><DocumentCopy /></el-icon> {{ $tp('复制RTSP') }} </el-button>
           </div>
         </div>
 
@@ -360,9 +350,7 @@
                 autoplay
                 muted
               >
-                <source :src="currentVideoDevice.streamUrl" type="video/mp4">
-                您的浏览器不支持视频播放
-              </video>
+                <source :src="currentVideoDevice.streamUrl" type="video/mp4"> {{ $tp('您的浏览器不支持视频播放') }} </video>
 
               <!-- RTSP Process -->
               <div v-else-if="getStreamType(currentVideoDevice.originalRtspUrl || currentVideoDevice.streamUrl) === 'rtsp'"
@@ -380,7 +368,7 @@
                     @error="handleWebRTCError"
                   ></iframe>
                   <div class="webrtc-info">
-                    <small>WebRTC播放 - {{ currentVideoDevice.deviceName }}</small>
+                    <small>{{ $tp('WebRTC播放 -') }} {{ currentVideoDevice.deviceName }}</small>
                   </div>
                 </div>
 
@@ -402,35 +390,29 @@
                     <div class="rtsp-icon">
                       <el-icon size="48" color="#f56c6c"><VideoCamera /></el-icon>
                     </div>
-                    <div class="rtsp-title">WebRTC服务不可用</div>
+                    <div class="rtsp-title">{{ $tp('WebRTC服务不可用') }}</div>
                     <div class="rtsp-url">{{ currentVideoDevice.originalRtspUrl || currentVideoDevice.streamUrl }}</div>
 
                     <div class="fallback-note">
-                      <p>WebRTC-streamer服务未启动或不可用。</p>
-                      <p>您可以尝试以下选项：</p>
+                      <p>{{ $tp('WebRTC-streamer服务未启动或不可用。') }}</p>
+                      <p>{{ $tp('您可以尝试以下选项：') }}</p>
                     </div>
 
                     <div class="fallback-actions">
                       <el-button type="primary" @click="checkWebRTCService" :loading="checkingWebRTC">
-                        <el-icon><Refresh /></el-icon>
-                        重新检查WebRTC服务
-                      </el-button>
+                        <el-icon><Refresh /></el-icon> {{ $tp('重新检查WebRTC服务') }} </el-button>
                       <el-button type="warning" @click="convertToHLS" :loading="converting">
-                        <el-icon><VideoCamera /></el-icon>
-                        转换为HLS播放（备用方案）
-                      </el-button>
+                        <el-icon><VideoCamera /></el-icon> {{ $tp('转换为HLS播放（备用方案）') }} </el-button>
                       <el-button @click="copyRtspUrl">
-                        <el-icon><DocumentCopy /></el-icon>
-                        复制RTSP地址
-                      </el-button>
+                        <el-icon><DocumentCopy /></el-icon> {{ $tp('复制RTSP地址') }} </el-button>
                     </div>
 
                     <div class="fallback-tips">
-                      <p><strong>提示：</strong></p>
+                      <p><strong>{{ $tp('提示：') }}</strong></p>
                       <ul>
-                        <li>WebRTC播放延时更低（< 1秒）</li>
-                        <li>请启动WebRTC-streamer服务以获得最佳体验</li>
-                        <li>备用HLS方案延时较高（2-6秒）</li>
+                        <li>{{ $tp('WebRTC播放延时更低（< 1秒）') }}</li>
+                        <li>{{ $tp('请启动WebRTC-streamer服务以获得最佳体验') }}</li>
+                        <li>{{ $tp('备用HLS方案延时较高（2-6秒）') }}</li>
                       </ul>
                     </div>
                   </div>
@@ -450,9 +432,9 @@
               <!--  -->
               <div v-else class="video-error">
                 <div class="error-content">
-                  <h3>无法播放视频</h3>
-                  <p>URL: {{ currentVideoDevice.streamUrl || '未设置' }}</p>
-                  <p>类型: {{ getStreamType(currentVideoDevice.streamUrl) }}</p>
+                  <h3>{{ $tp('无法播放视频') }}</h3>
+                  <p>URL: {{ currentVideoDevice.streamUrl || $tp('未设置') }}</p>
+                  <p>{{ $tp('类型:') }} {{ getStreamType(currentVideoDevice.streamUrl) }}</p>
                 </div>
               </div>
             </div>
@@ -490,6 +472,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import {computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch} from 'vue'
 import {useRouter} from 'vue-router'
 import {ArrowDown, DocumentCopy, Refresh, VideoCamera, Folder, Collection, Plus } from '@element-plus/icons-vue'
@@ -747,7 +731,7 @@ onMounted(() => {
     // checkWebRTCService()
   } catch (error) {
     console.error('设备管理页面初始化失败:', error)
-    ElMessage.error('页面初始化失败，请刷新重试')
+    ElMessage.error(uiText('页面初始化失败，请刷新重试'))
   }
 })
 
@@ -848,7 +832,7 @@ const loadDeviceList = async () => {
                 // Get
                 tags = deviceDetail.selectedTags.map(tagId => {
                   const tagName = tagNameMap.value.get(tagId)
-                  return tagName || `标签${tagId}`
+                  return tagName || uiText('标签{value0}', { value0: tagId })
                 })
               }
 
@@ -880,7 +864,7 @@ const loadDeviceList = async () => {
     total.value = response.data.total || 0
   } catch (error) {
     console.error('加载设备列表失败:', error)
-    ElMessage.error('加载设备列表失败')
+    ElMessage.error(uiText('加载设备列表失败'))
   } finally {
     loading.value = false
   }
@@ -932,7 +916,7 @@ const handleAdvancedSearch = (searchData) => {
   }
   currentPage.value = 1
   loadDeviceList()
-  ElMessage.success('搜索完成')
+  ElMessage.success(uiText('搜索完成'))
 }
 
 const handleAdvancedSearchReset = () => {
@@ -944,27 +928,27 @@ const handleAdvancedSearchReset = () => {
   }
   currentPage.value = 1
   loadDeviceList()
-  ElMessage.info('搜索条件已重置')
+  ElMessage.info(uiText('搜索条件已重置'))
 }
 
 // Export relatedProcess
 const handleExport = () => {
-  ElMessage.info('开始导出数据')
+  ElMessage.info(uiText('开始导出数据'))
   // item in will Export
 }
 
 const handleUpload = () => {
-  ElMessage.info('打开上传文件对话框')
+  ElMessage.info(uiText('打开上传文件对话框'))
   // item in will
 }
 
 const handleDownloadTemplate = () => {
-  ElMessage.info('下载模板文件')
+  ElMessage.info(uiText('下载模板文件'))
   // item in will
 }
 
 const handleBatchOperation = () => {
-  ElMessage.info('打开批量操作界面')
+  ElMessage.info(uiText('打开批量操作界面'))
   // item in will operation
 }
 
@@ -1045,7 +1029,7 @@ const handleAdd = () => {
 
 const handleEdit = async () => {
   if (selectedRows.value.length !== 1) {
-    ElMessage.warning('请选择一个设备进行编辑')
+    ElMessage.warning(uiText('请选择一个设备进行编辑'))
     return
   }
   router.push({ path: '/device-edit', query: { id: selectedRows.value[0].id } })
@@ -1053,17 +1037,17 @@ const handleEdit = async () => {
 
 const handleDelete = async () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请选择要删除的设备')
+    ElMessage.warning(uiText('请选择要删除的设备'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确认删除选中的 ${selectedRows.value.length} 个设备吗？`,
-      '删除确认',
+      uiText('确认删除选中的 {value0} 个设备吗？', { value0: selectedRows.value.length }),
+      uiText('删除确认'),
       {
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
+        confirmButtonText: uiText('确认'),
+        cancelButtonText: uiText('取消'),
         type: 'warning'
       }
     )
@@ -1071,12 +1055,12 @@ const handleDelete = async () => {
     const deviceIds = selectedRows.value.map(row => row.id)
     await batchDeleteDevices(deviceIds)
 
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText('删除成功'))
     await loadDeviceList()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除设备失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(uiText('删除失败'))
     }
   }
 }
@@ -1133,7 +1117,7 @@ const handlePlay = async (row) => {
   const deviceForPlay = { ...row }
 
   if (!deviceForPlay.streamUrl || deviceForPlay.streamUrl.trim() === '') {
-    ElMessage.warning('设备未配置视频流地址')
+    ElMessage.warning(uiText('设备未配置视频流地址'))
     return
   }
 
@@ -1191,7 +1175,7 @@ const handlePlay = async (row) => {
   } catch (error) {
     if (activeOPlayerTask !== playbackTask) return
     console.error('播放失败:', error)
-    ElMessage.error(`播放失败: ${error.message}`)
+    ElMessage.error(uiText('播放失败: {value0}', { value0: error.message }))
     playStatistics.value.failedAttempts++
     playStatus.value.isConnecting = false
     playStatus.value.isPlaying = false
@@ -1700,7 +1684,7 @@ const getStreamTypeText = (streamUrl) => {
     'cameraRTC': 'CameraRTC',
     'unknown': '未知格式'
   }
-  return typeMap[type] || '未知格式'
+  return typeMap[type] || uiText('未知格式')
 }
 
 
@@ -1735,7 +1719,7 @@ const handleVideoClose = () => {
 
   // recording (if in recording, user)
   if (recordingStatus.value.isRecording) {
-    ElMessage.warning('检测到正在录像，请先停止录像')
+    ElMessage.warning(uiText('检测到正在录像，请先停止录像'))
     return //
   }
 
@@ -1759,10 +1743,10 @@ const copyRtspUrl = async () => {
   try {
     const rtspUrl = currentVideoDevice.value.originalRtspUrl || currentVideoDevice.value.streamUrl
     await navigator.clipboard.writeText(rtspUrl)
-    ElMessage.success('RTSP地址已复制到剪贴板')
+    ElMessage.success(uiText('RTSP地址已复制到剪贴板'))
   } catch (error) {
     console.error('复制失败:', error)
-    ElMessage.error('复制失败，请手动复制')
+    ElMessage.error(uiText('复制失败，请手动复制'))
   }
 }
 
@@ -1809,12 +1793,12 @@ const checkWebRTCService = async () => {
 
 const handleRtspConnected = () => {
   console.log('RTSP WebRTC连接成功')
-  ElMessage.success('视频流连接成功')
+  ElMessage.success(uiText('视频流连接成功'))
 }
 
 const handleRtspDisconnected = () => {
   console.log('RTSP WebRTC连接断开')
-  ElMessage.info('视频流连接断开')
+  ElMessage.info(uiText('视频流连接断开'))
 }
 
 const handleRtspError = async (error) => {
@@ -1822,7 +1806,7 @@ const handleRtspError = async (error) => {
 
   // if WebRTCfailed, HLSConvert
   if (currentVideoDevice.value.originalRtspUrl) {
-    ElMessage.warning('WebRTC播放失败，正在尝试HLS播放模式...')
+    ElMessage.warning(uiText('WebRTC播放失败，正在尝试HLS播放模式...'))
 
     try {
       // HLSConvert API
@@ -1832,7 +1816,7 @@ const handleRtspError = async (error) => {
         currentVideoDevice.value.hlsUrl = hlsUrl
         currentVideoDevice.value.playMode = 'hls'
 
-        ElMessage.success('已切换到HLS播放模式')
+        ElMessage.success(uiText('已切换到HLS播放模式'))
 
         // Initialize HLS
         setTimeout(() => {
@@ -1846,41 +1830,29 @@ const handleRtspError = async (error) => {
     }
   }
 
-  ElMessage.error('视频播放失败: ' + error)
+  ElMessage.error(uiText('视频播放失败: ') + error)
 
   //
   showTroubleshootingTips()
 }
 
 const showTroubleshootingTips = () => {
-  ElMessageBox.alert(`
-    <div style="text-align: left;">
-      <h4>播放失败故障排除：</h4>
-      <ol>
-        <li><strong>检查网络连接</strong>：确认能ping通摄像头IP</li>
-        <li><strong>验证RTSP地址</strong>：用VLC播放器测试RTSP URL</li>
-        <li><strong>检查认证信息</strong>：确认用户名密码正确</li>
-        <li><strong>重启WebRTC服务</strong>：运行修复脚本重启webrtc-streamer</li>
-        <li><strong>防火墙设置</strong>：确认554端口（RTSP）未被阻止</li>
-      </ol>
-      <p><strong>RTSP地址</strong>: ${currentVideoDevice.value.originalRtspUrl || currentVideoDevice.value.streamUrl}</p>
-    </div>
-  `, '播放故障排除', {
+  ElMessageBox.alert(uiText('\n    <div style="text-align: left;">\n      <h4>播放失败故障排除：</h4>\n      <ol>\n        <li><strong>检查网络连接</strong>：确认能ping通摄像头IP</li>\n        <li><strong>验证RTSP地址</strong>：用VLC播放器测试RTSP URL</li>\n        <li><strong>检查认证信息</strong>：确认用户名密码正确</li>\n        <li><strong>重启WebRTC服务</strong>：运行修复脚本重启webrtc-streamer</li>\n        <li><strong>防火墙设置</strong>：确认554端口（RTSP）未被阻止</li>\n      </ol>\n      <p><strong>RTSP地址</strong>: {value0}</p>\n    </div>\n  ', { value0: currentVideoDevice.value.originalRtspUrl || currentVideoDevice.value.streamUrl }), uiText('播放故障排除'), {
     dangerouslyUseHTMLString: true,
-    confirmButtonText: '知道了'
+    confirmButtonText: uiText('知道了')
   })
 }
 
 // WebRTC iframeeventProcess
 const handleWebRTCLoad = () => {
   console.log('WebRTC iframe加载完成')
-  ElMessage.success('WebRTC播放器加载成功')
+  ElMessage.success(uiText('WebRTC播放器加载成功'))
   currentVideoDevice.value.connectionState = 'connected'
 }
 
 const handleWebRTCError = (error) => {
   console.error('WebRTC iframe加载失败:', error)
-  ElMessage.error('WebRTC播放器加载失败')
+  ElMessage.error(uiText('WebRTC播放器加载失败'))
   currentVideoDevice.value.connectionState = 'failed'
 
   // HLS
@@ -1906,7 +1878,7 @@ const startHLSConversion = async (device) => {
     }
   } catch (error) {
     console.error('启动HLS转换失败:', error)
-    ElMessage.error('启动HLS转换失败: ' + error.message)
+    ElMessage.error(uiText('启动HLS转换失败: ') + error.message)
     return null
   }
 }
@@ -1922,10 +1894,10 @@ const convertToHLS = async () => {
       // etc. DOM new afterInitialize HLS
       await nextTick()
       initHLSPlayer(hlsUrl)
-      ElMessage.success('视频流转换成功，开始播放')
+      ElMessage.success(uiText('视频流转换成功，开始播放'))
     }
   } catch (error) {
-    ElMessage.error('转换失败，请重试')
+    ElMessage.error(uiText('转换失败，请重试'))
   } finally {
     converting.value = false
   }
@@ -1963,14 +1935,14 @@ const initHLSPlayer = (hlsUrl) => {
       console.log('HLS manifest 解析成功')
       video.play().catch(error => {
         console.error('HLS 自动播放失败:', error)
-        ElMessage.warning('视频自动播放失败，请手动点击播放')
+        ElMessage.warning(uiText('视频自动播放失败，请手动点击播放'))
       })
     })
 
     hls.on(Hls.Events.ERROR, (event, data) => {
       console.error('HLS 播放错误:', data)
       if (data.fatal) {
-        ElMessage.error('HLS播放失败: ' + data.details)
+        ElMessage.error(uiText('HLS播放失败: ') + data.details)
       }
     })
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -1978,11 +1950,11 @@ const initHLSPlayer = (hlsUrl) => {
     video.src = hlsUrl
     video.play().catch(error => {
       console.error('原生HLS播放失败:', error)
-      ElMessage.warning('视频自动播放失败，请手动点击播放')
+      ElMessage.warning(uiText('视频自动播放失败，请手动点击播放'))
     })
   } else {
     console.error('浏览器不支持HLS播放')
-    ElMessage.error('浏览器不支持HLS播放')
+    ElMessage.error(uiText('浏览器不支持HLS播放'))
   }
 }
 
@@ -2070,13 +2042,13 @@ const getPlayModeText = (playMode) => {
     case 'hls':
       return 'HLS'
     case 'native':
-      return '原生'
+      return uiText('原生')
     case 'cameraRTC':
       return 'CameraRTC'
     case 'rtsp':
       return 'RTSP'
     default:
-      return '未知'
+      return uiText('未知')
   }
 }
 
@@ -2305,7 +2277,7 @@ const handlePlayError = async (error) => {
     }, 3000)
   } else {
     console.log('已达到最大重试次数，停止自动重试')
-    ElMessage.error(`播放失败: ${error.message}`)
+    ElMessage.error(uiText('播放失败: {value0}', { value0: error.message }))
     stopPlayMonitoring()
   }
 }
@@ -2344,7 +2316,7 @@ const attemptAutoRecovery = async () => {
     await executePlayStrategy(device, newStrategy)
 
     console.log('自动恢复播放成功')
-    ElMessage.success('播放已自动恢复')
+    ElMessage.success(uiText('播放已自动恢复'))
 
   } catch (error) {
     console.error('自动恢复失败:', error)
@@ -2354,19 +2326,19 @@ const attemptAutoRecovery = async () => {
 
 //
 const showNetworkDegradationWarning = () => {
-  ElMessage.warning('检测到网络状况恶化，建议切换到HLS播放以获得更稳定的体验')
+  ElMessage.warning(uiText('检测到网络状况恶化，建议切换到HLS播放以获得更稳定的体验'))
 }
 
 // Get
 const getPlayStatusText = () => {
   if (playStatus.value.isPlaying) {
-    return '播放中'
+    return uiText('播放中')
   } else if (playStatus.value.isConnecting) {
-    return '连接中'
+    return uiText('连接中')
   } else if (playStatus.value.hasError) {
-    return '播放错误'
+    return uiText('播放错误')
   } else {
-    return '已停止'
+    return uiText('已停止')
   }
 }
 
@@ -2389,10 +2361,10 @@ const openInVlc = () => {
   const vlcUrl = `vlc://${rtspUrl}`
   try {
     window.open(vlcUrl, '_blank')
-    ElMessage.info('已尝试在VLC中打开RTSP流')
+    ElMessage.info(uiText('已尝试在VLC中打开RTSP流'))
   } catch (error) {
     console.error('打开VLC失败:', error)
-    ElMessage.warning('无法自动打开VLC，请手动在VLC中打开RTSP地址')
+    ElMessage.warning(uiText('无法自动打开VLC，请手动在VLC中打开RTSP地址'))
   }
 }
 
@@ -2426,14 +2398,14 @@ const initSimpleHLSPlayer = () => {
       console.log('HLS manifest 解析成功')
       video.play().catch(error => {
         console.error('HLS 自动播放失败:', error)
-        ElMessage.warning('视频自动播放失败，请手动点击播放')
+        ElMessage.warning(uiText('视频自动播放失败，请手动点击播放'))
       })
     })
 
     hls.on(window.Hls.Events.ERROR, (event, data) => {
       console.error('HLS 播放错误:', data)
       if (data.fatal) {
-        ElMessage.error('HLS播放失败: ' + data.details)
+        ElMessage.error(uiText('HLS播放失败: ') + data.details)
       }
     })
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -2441,11 +2413,11 @@ const initSimpleHLSPlayer = () => {
     video.src = streamUrl
     video.play().catch(error => {
       console.error('原生HLS播放失败:', error)
-      ElMessage.warning('视频自动播放失败，请手动点击播放')
+      ElMessage.warning(uiText('视频自动播放失败，请手动点击播放'))
     })
   } else {
     console.error('浏览器不支持HLS播放')
-    ElMessage.error('浏览器不支持HLS播放')
+    ElMessage.error(uiText('浏览器不支持HLS播放'))
   }
 }
 
@@ -2491,22 +2463,22 @@ const handleEditSingle = async (row) => {
 const handleDeleteSingle = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确认删除设备 "${row.deviceName}" 吗？`,
-      '删除确认',
+      uiText('确认删除设备 "{value0}" 吗？', { value0: row.deviceName }),
+      uiText('删除确认'),
       {
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
+        confirmButtonText: uiText('确认'),
+        cancelButtonText: uiText('取消'),
         type: 'warning'
       }
     )
 
     await deleteDevice(row.id)
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText('删除成功'))
     loadDeviceList()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除设备失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(uiText('删除失败'))
     }
   }
 }
@@ -2515,19 +2487,19 @@ const handleDeleteSingle = async (row) => {
 const handleDeviceFormSave = async (formData) => {
   try {
     await createDevice(formData)
-    ElMessage.success('添加成功')
+    ElMessage.success(uiText('添加成功'))
     dialogVisible.value = false
     loadDeviceList()
   } catch (error) {
     console.error('保存设备失败:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(uiText('保存失败'))
   }
 }
 
 // recordingcontrol can
 const toggleRecording = async () => {
   if (!currentVideoDevice.value || !currentVideoDevice.value.id) {
-    ElMessage.warning('未选择有效的设备')
+    ElMessage.warning(uiText('未选择有效的设备'))
     return
   }
 
@@ -2560,14 +2532,14 @@ const startVideoRecording = async () => {
       // start
       startRecordingTimer()
 
-      ElMessage.success('开始录像成功')
+      ElMessage.success(uiText('开始录像成功'))
       console.log('录像已开始，记录ID:', recordingStatus.value.recordId)
     } else {
       throw new Error('录像启动失败：响应数据异常')
     }
   } catch (error) {
     console.error('开始录像失败:', error)
-    ElMessage.error(`开始录像失败: ${error.message || '未知错误'}`)
+    ElMessage.error(uiText('开始录像失败: {value0}', { value0: error.message || uiText('未知错误') }))
 
     //
     recordingStatus.value.isRecording = false
@@ -2583,7 +2555,7 @@ const stopVideoRecording = async () => {
     recordingStatus.value.stopping = true
 
     if (!recordingStatus.value.recordId) {
-      ElMessage.warning('未找到录像记录ID')
+      ElMessage.warning(uiText('未找到录像记录ID'))
       return
     }
 
@@ -2601,14 +2573,14 @@ const stopVideoRecording = async () => {
       recordingStatus.value.duration = 0
       recordingStatus.value.startTime = null
 
-      ElMessage.success('录像已停止')
+      ElMessage.success(uiText('录像已停止'))
       console.log('录像已停止')
     } else {
       throw new Error('录像停止失败：响应异常')
     }
   } catch (error) {
     console.error('停止录像失败:', error)
-    ElMessage.error(`停止录像失败: ${error.message || '未知错误'}`)
+    ElMessage.error(uiText('停止录像失败: {value0}', { value0: error.message || uiText('未知错误') }))
   } finally {
     recordingStatus.value.stopping = false
   }
@@ -2649,7 +2621,7 @@ const handlePTZCommand = async (command) => {
     console.log('PTZ控制命令:', command)
 
     if (!currentVideoDevice.value || !currentVideoDevice.value.id) {
-      ElMessage.warning('未选择有效的设备')
+      ElMessage.warning(uiText('未选择有效的设备'))
       return
     }
 
@@ -2701,14 +2673,14 @@ const handlePTZCommand = async (command) => {
 
       default:
         console.warn('未知的PTZ控制命令:', command.type)
-        ElMessage.warning('未知的PTZ控制命令')
+        ElMessage.warning(uiText('未知的PTZ控制命令'))
         return
     }
 
-    ElMessage.success(`PTZ ${command.type} 控制成功`)
+    ElMessage.success(uiText('PTZ {value0} 控制成功', { value0: command.type }))
   } catch (error) {
     console.error('PTZ控制失败:', error)
-    ElMessage.error(`PTZ控制失败: ${error.message || '未知错误'}`)
+    ElMessage.error(uiText('PTZ控制失败: {value0}', { value0: error.message || uiText('未知错误') }))
   }
 }
 
@@ -2739,7 +2711,7 @@ const handleBottomDelete = () => {
 // Process
 const handleError = (error, context) => {
   console.error(`${context}错误:`, error)
-  ElMessage.error(`${context}失败，请重试`)
+  ElMessage.error(uiText('{value0}失败，请重试', { value0: context }))
 }
 
 // Add YouTube Load and Process
@@ -2749,7 +2721,7 @@ const handleIframeLoad = () => {
 
 const handleIframeError = () => {
   console.error('YouTube视频加载失败')
-  ElMessage.error('YouTube视频加载失败')
+  ElMessage.error(uiText('YouTube视频加载失败'))
 }
 </script>
 

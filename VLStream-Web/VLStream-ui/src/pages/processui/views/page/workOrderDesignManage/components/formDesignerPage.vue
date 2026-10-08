@@ -18,27 +18,23 @@
     <VFormDesigner ref="vfDesignerRef" :global-dsv="globalDsv" @saveForm="saveForm" @saveForComponent="openSaveComponent" @close="closeDesigner" />
     <el-dialog
       v-model="dialogVisible"
-      title="新增自定义组件"
+      :title="$tp('新增自定义组件')"
       align-center
       width="46%"
       :close-on-click-modal="false"
     >
       <el-form ref="ruleFormRef" :model="formComponents" :rules="rules" label-width="80px">
-        <el-form-item label="组件名称" prop="formName">
-          <el-input v-model="formComponents.formName" placeholder="请输入组件名称" />
+        <el-form-item :label="$tp('组件名称')" prop="formName">
+          <el-input v-model="formComponents.formName" :placeholder="$tp('请输入组件名称')" />
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="formComponents.remark" type="textarea" placeholder="请输入备注" />
+        <el-form-item :label="$tp('备注')" prop="remark">
+          <el-input v-model="formComponents.remark" type="textarea" :placeholder="$tp('请输入备注')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div style="text-align: right;">
-          <el-button @click="dialogVisible = false" class="common_btn">
-            取消
-          </el-button>
-          <el-button type="primary" @click="saveForComponent">
-            保存
-          </el-button>
+          <el-button @click="dialogVisible = false" class="common_btn"> {{ $tp('取消') }} </el-button>
+          <el-button type="primary" @click="saveForComponent"> {{ $tp('保存') }} </el-button>
         </div>
       </template>
     </el-dialog>

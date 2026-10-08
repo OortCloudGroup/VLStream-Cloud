@@ -105,11 +105,11 @@
     <!-- dialog and Set -->
     <el-dialog
       v-model="showExtendedLayoutDialog"
-      title="扩展布局选项"
+      :title="$tp('扩展布局选项')"
       width="35%"
     >
       <div class="extended-layout-options">
-        <h4>选择布局模式</h4>
+        <h4>{{ $tp('选择布局模式') }}</h4>
         <div class="layout-grid">
           <button
             v-for="layout in extendedLayouts"
@@ -132,13 +132,11 @@
     </el-dialog>
 
     <!-- Set -->
-    <el-dialog v-model="showSettings" title="设置" width="30%">
+    <el-dialog v-model="showSettings" :title="$tp('设置')" width="30%">
       <div class="settings-content">
-        <h4>显示设置</h4>
+        <h4>{{ $tp('显示设置') }}</h4>
         <div class="setting-group">
-          <el-checkbox v-model="showOfflineDevices">
-            显示离线设备
-          </el-checkbox>
+          <el-checkbox v-model="showOfflineDevices"> {{ $tp('显示离线设备') }} </el-checkbox>
         </div>
       </div>
     </el-dialog>
@@ -146,6 +144,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import {computed, nextTick, onMounted, onUnmounted, ref} from 'vue'
 import {ElMessage} from 'element-plus'
 import L from 'leaflet'
@@ -259,7 +259,7 @@ const initMap = () => {
 const selectLayout = (mode) => {
   layoutMode.value = mode
   showExtendedLayoutDialog.value = false
-  ElMessage.success(`已切换到${extendedLayouts.value.find(l => l.mode === mode)?.label}布局`)
+  ElMessage.success(uiText('已切换到{value0}布局', { value0: extendedLayouts.value.find(l => l.mode === mode)?.label }))
 }
 
 const showExtendedLayoutDialogHandler = () => {
@@ -268,12 +268,12 @@ const showExtendedLayoutDialogHandler = () => {
 
 const openVideoDialogs = () => {
   // dialog
-  ElMessage.info('打开视频弹窗功能')
+  ElMessage.info(uiText('打开视频弹窗功能'))
 }
 
 const openCustomVideoDialogs = () => {
   // Custom dialog
-  ElMessage.info('自定义视频布局功能')
+  ElMessage.info(uiText('自定义视频布局功能'))
 }
 
 const toggleFullscreen = () => {
@@ -283,7 +283,7 @@ const toggleFullscreen = () => {
   const hasOpenDialogs = videoDialogs.value.length > 0
 
   if (!hasOpenDialogs) {
-    ElMessage.warning('请先打开视频播放器')
+    ElMessage.warning(uiText('请先打开视频播放器'))
     return
   }
 
@@ -302,7 +302,7 @@ const enterVideoPlayerFullscreen = () => {
   const videoDialogs = document.querySelectorAll('.video-dialog, .layout-dialog')
 
   if (videoDialogs.length === 0) {
-    ElMessage.error('未找到视频播放器')
+    ElMessage.error(uiText('未找到视频播放器'))
     return
   }
 
@@ -312,7 +312,7 @@ const enterVideoPlayerFullscreen = () => {
   })
 
   isFullscreen.value = true
-  ElMessage.success('视频播放器已进入全屏模式')
+  ElMessage.success(uiText('视频播放器已进入全屏模式'))
 
   // ESC
   document.addEventListener('keydown', handleEscKey)
@@ -337,7 +337,7 @@ const exitVideoPlayerFullscreen = () => {
   })
 
   isFullscreen.value = false
-  ElMessage.info('已退出全屏模式')
+  ElMessage.info(uiText('已退出全屏模式'))
 
   // ESC
   document.removeEventListener('keydown', handleEscKey)
@@ -382,20 +382,20 @@ const fitBounds = () => {
   if (map) {
     map.setView([39.9042, 116.4074], 13)
   }
-  ElMessage.success('已重置地图视图')
+  ElMessage.success(uiText('已重置地图视图'))
 }
 
 const toggleMapView = () => {
-  ElMessage.info('切换地图视图')
+  ElMessage.info(uiText('切换地图视图'))
 }
 
 const refreshCameraLocations = () => {
-  ElMessage.success('已刷新摄像头位置')
+  ElMessage.success(uiText('已刷新摄像头位置'))
 }
 
 const toggleDarkMode = () => {
   isDarkMode.value = !isDarkMode.value
-  ElMessage.info(isDarkMode.value ? '已切换到夜间模式' : '已切换到白天模式')
+  ElMessage.info(isDarkMode.value ? uiText('已切换到夜间模式') : uiText('已切换到白天模式'))
 }
 
 const handleSettings = () => {
@@ -429,12 +429,12 @@ const handleMapSearch = () => {
 
 const handleCameraClick = (camera) => {
   //
-  ElMessage.info(`点击了摄像头: ${camera.name}`)
+  ElMessage.info(uiText('点击了摄像头: {value0}', { value0: camera.name }))
 }
 
 const handleTreeNodeClick = (data) => {
   // node
-  ElMessage.info(`点击了节点: ${data.name}`)
+  ElMessage.info(uiText('点击了节点: {value0}', { value0: data.name }))
 }
 
 // dialogrelated method
@@ -461,38 +461,38 @@ const startDrag = ({ event, id }) => {
 }
 
 const handleWebRTCIframeLoad = () => {
-  ElMessage.success('WebRTC流加载成功')
+  ElMessage.success(uiText('WebRTC流加载成功'))
 }
 
 const handleWebRTCIframeError = () => {
-  ElMessage.error('WebRTC流加载失败')
+  ElMessage.error(uiText('WebRTC流加载失败'))
 }
 
 const handleDialogRtspConnected = () => {
-  ElMessage.success('RTSP连接成功')
+  ElMessage.success(uiText('RTSP连接成功'))
 }
 
 const handleDialogRtspDisconnected = () => {
-  ElMessage.warning('RTSP连接断开')
+  ElMessage.warning(uiText('RTSP连接断开'))
 }
 
 const handleDialogRtspError = (error) => {
-  ElMessage.error(`RTSP连接错误: ${error}`)
+  ElMessage.error(uiText('RTSP连接错误: {value0}', { value0: error }))
 }
 
 const retryWebRTCConnection = (camera) => {
-  ElMessage.info(`重试连接摄像头: ${camera.name}`)
+  ElMessage.info(uiText('重试连接摄像头: {value0}', { value0: camera.name }))
 }
 
 const copyStreamUrl = (url) => {
   if (url) {
     navigator.clipboard.writeText(url).then(() => {
-      ElMessage.success('流地址已复制到剪贴板')
+      ElMessage.success(uiText('流地址已复制到剪贴板'))
     }).catch(() => {
-      ElMessage.error('复制失败')
+      ElMessage.error(uiText('复制失败'))
     })
   } else {
-    ElMessage.warning('暂无流地址')
+    ElMessage.warning(uiText('暂无流地址'))
   }
 }
 
@@ -533,7 +533,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('初始化失败:', error)
     if (isComponentMounted) {
-    ElMessage.error('初始化失败')
+    ElMessage.error(uiText('初始化失败'))
     }
   } finally {
     if (isComponentMounted) {

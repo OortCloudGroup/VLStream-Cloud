@@ -11,7 +11,7 @@
       <div class="searchBox">
         <div class="search_group flexRowAC">
           <div class="serchItem">
-            <el-input v-model="queryParams.name" class="wh-input" placeholder="规则名称" />
+            <el-input v-model="queryParams.name" class="wh-input" :placeholder="$tp('规则名称')" />
           </div>
           <!-- <div class="serchItem">
             <el-select v-model="queryParams.status" clearable placeholder="状态">
@@ -22,13 +22,11 @@
           </div> -->
           <div class="serchItem">
             <el-button type="primary" @click="getList">
-              <el-icon><Search /></el-icon>搜索
-            </el-button>
+              <el-icon><Search /></el-icon>{{ $tp('搜索') }} </el-button>
             <el-button @click="resetQuery">
               <el-icon class="searchImg">
                 <RefreshRight />
-              </el-icon>重置
-            </el-button>
+              </el-icon>{{ $tp('重置') }} </el-button>
           </div>
         </div>
       </div>
@@ -43,12 +41,8 @@
             <el-table-column :label="$tp('规则说明')" align="center" prop="description" />
             <el-table-column :label="$tp('状态')" align="center">
               <template #default="scope">
-                <el-tag v-if="scope.row.status === '1'" type="success">
-                  启用
-                </el-tag>
-                <el-tag v-if="scope.row.status === '0'" type="danger">
-                  禁用
-                </el-tag>
+                <el-tag v-if="scope.row.status === '1'" type="success"> {{ $tp('启用') }} </el-tag>
+                <el-tag v-if="scope.row.status === '0'" type="danger"> {{ $tp('禁用') }} </el-tag>
               </template>
             </el-table-column>
             <el-table-column :label="$tp('创建时间')" align="center" prop="createTime" />
@@ -68,12 +62,8 @@
       </div>
     </div>
     <div class="button_bottom flexRowAC">
-      <el-button @click="confirmChoose" class="common_btn">
-        取消
-      </el-button>
-      <el-button v-preReClick type="primary" @click="confirmChoose" class="common_btn">
-        确定
-      </el-button>
+      <el-button @click="confirmChoose" class="common_btn"> {{ $tp('取消') }} </el-button>
+      <el-button v-preReClick type="primary" @click="confirmChoose" class="common_btn"> {{ $tp('确定') }} </el-button>
     </div>
   </div>
 </template>

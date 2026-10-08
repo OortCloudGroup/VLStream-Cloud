@@ -13,8 +13,8 @@
       :rules="formRules"
       label-width="auto"
     >
-      <el-form-item label="选择工单" prop="processKey">
-        <el-select v-model="form.processKey" placeholder="请选择工单" @change="workConfirm">
+      <el-form-item :label="$tp('选择工单')" prop="processKey">
+        <el-select v-model="form.processKey" :placeholder="$tp('请选择工单')" @change="workConfirm">
           <el-option
             v-for="item in options"
             :key="item.value"
@@ -29,6 +29,8 @@
 </template>
 
 <script setup lang="ts">
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, reactive, onMounted } from 'vue'
 // import { getProcessForm } from '@/api/processui/approval'
 import { listModel, startProcess } from '@/api/processui'
@@ -98,7 +100,7 @@ const closeWorkorderFn = async() => {
   }
   let res: any = await stopProcess(data)
   if (res.code === 200) {
-    ElMessage.success('关闭工单成功')
+    ElMessage.success(uiText('关闭工单成功'))
   }
 }
 
@@ -115,11 +117,11 @@ async function addWorkorderFn() {
     if (oldOrder.processStatus !== 'canceled' && !oldOrder.finishTime) {
       try {
         await ElMessageBox.confirm(
-          '选择的工单跟历史工单不一致，是否继续取消旧的工单',
-          '提示',
+          uiText('选择的工单跟历史工单不一致，是否继续取消旧的工单'),
+          uiText('提示'),
           {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
+            confirmButtonText: uiText('确定'),
+            cancelButtonText: uiText('取消'),
             type: 'warning'
           }
         )
@@ -136,7 +138,7 @@ async function addWorkorderFn() {
   // 3️⃣ parameterBuild
   const processDefId = selectedOptions.value?.definitionId
   if (!form.processKey && !processDefId) {
-    ElMessage.warning('请选择工单')
+    ElMessage.warning(uiText('请选择工单'))
     return
   }
   const data = {

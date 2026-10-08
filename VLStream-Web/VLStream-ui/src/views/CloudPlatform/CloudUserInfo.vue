@@ -14,9 +14,9 @@
           {{ form.realName?.charAt(0) || 'U' }}
         </el-avatar>
         <div class="name-row">
-          <span class="real-name">{{ form.realName || '未设置姓名' }}</span>
-          <img v-if="form.sex === '男'" class="sex-icon" :src="maleIcon" alt="男" />
-          <img v-else-if="form.sex === '女'" class="sex-icon" :src="femaleIcon" alt="女" />
+          <span class="real-name">{{ form.realName || $tp('未设置姓名') }}</span>
+          <img v-if="form.sex === '男'" class="sex-icon" :src="maleIcon" :alt="$tp('男')" />
+          <img v-else-if="form.sex === '女'" class="sex-icon" :src="femaleIcon" :alt="$tp('女')" />
           <el-icon class="edit-icon" @click="toggleEdit"><Edit /></el-icon>
         </div>
       </div>
@@ -25,9 +25,7 @@
         <el-descriptions-item>
           <template #label>
             <span class="info-label">
-              <img :src="userNameIcon" class="info-icon" alt="" />
-              用户名
-            </span>
+              <img :src="userNameIcon" class="info-icon" alt="" /> {{ $tp('用户名') }} </span>
           </template>
           {{ form.userName || '-' }}
         </el-descriptions-item>
@@ -43,54 +41,42 @@
         <el-descriptions-item>
           <template #label>
             <span class="info-label">
-              <img :src="phoneIcon" class="info-icon" alt="" />
-              手机号
-            </span>
+              <img :src="phoneIcon" class="info-icon" alt="" /> {{ $tp('手机号') }} </span>
           </template>
           {{ form.phone || '-' }}
         </el-descriptions-item>
         <el-descriptions-item>
           <template #label>
             <span class="info-label">
-              <img :src="positionIcon" class="info-icon" alt="" />
-              岗位
-            </span>
+              <img :src="positionIcon" class="info-icon" alt="" /> {{ $tp('岗位') }} </span>
           </template>
           {{ getPositionLabel(form.positionId) || '-' }}
         </el-descriptions-item>
         <el-descriptions-item>
           <template #label>
             <span class="info-label">
-              <img :src="deptIcon" class="info-icon" alt="" />
-              部门
-            </span>
+              <img :src="deptIcon" class="info-icon" alt="" /> {{ $tp('部门') }} </span>
           </template>
           {{ getDeptLabel(form.deptId) || '-' }}
         </el-descriptions-item>
         <el-descriptions-item>
           <template #label>
             <span class="info-label">
-              <img :src="postCodeIcon" class="info-icon" alt="" />
-              邮政编码
-            </span>
+              <img :src="postCodeIcon" class="info-icon" alt="" /> {{ $tp('邮政编码') }} </span>
           </template>
           {{ form.postCode || '-' }}
         </el-descriptions-item>
         <el-descriptions-item :span="2">
           <template #label>
             <span class="info-label">
-              <img :src="addressIcon" class="info-icon" alt="" />
-              地址
-            </span>
+              <img :src="addressIcon" class="info-icon" alt="" /> {{ $tp('地址') }} </span>
           </template>
           {{ fullAddress || '-' }}
         </el-descriptions-item>
         <el-descriptions-item :span="2">
           <template #label>
             <span class="info-label">
-              <img :src="markIcon" class="info-icon" alt="" />
-              简介
-            </span>
+              <img :src="markIcon" class="info-icon" alt="" /> {{ $tp('简介') }} </span>
           </template>
           {{ form.mark || '-' }}
         </el-descriptions-item>
@@ -104,7 +90,7 @@
           {{ form.realName?.charAt(0) || 'U' }}
         </el-avatar>
         <div class="avatar-actions">
-          <div class="avatar-tip">只支持JPG、JPEG或PNG格式的图片文件</div>
+          <div class="avatar-tip">{{ $tp('只支持JPG、JPEG或PNG格式的图片文件') }}</div>
           <div class="avatar-btns">
             <el-upload
               :headers="uploadHeaders"
@@ -115,9 +101,9 @@
               :on-success="handleAvatarSuccess"
               :on-error="handleAvatarError"
             >
-              <el-button type="primary">更改头像</el-button>
+              <el-button type="primary">{{ $tp('更改头像') }}</el-button>
             </el-upload>
-            <el-button link type="primary" @click="handleDeleteAvatar">删除图像</el-button>
+            <el-button link type="primary" @click="handleDeleteAvatar">{{ $tp('删除图像') }}</el-button>
           </div>
         </div>
       </div>
@@ -125,34 +111,34 @@
       <el-form class="edit-form" label-position="top">
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="姓名">
-              <el-input v-model="form.realName" placeholder="请输入" />
+            <el-form-item :label="$tp('姓名')">
+              <el-input v-model="form.realName" :placeholder="$tp('请输入')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="用户名">
-              <el-input v-model="form.userName" placeholder="请输入" />
+            <el-form-item :label="$tp('用户名')">
+              <el-input v-model="form.userName" :placeholder="$tp('请输入')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="性别">
-              <el-select v-model="form.sex" placeholder="请选择" style="width: 100%">
-                <el-option label="男" value="男" />
-                <el-option label="女" value="女" />
-                <el-option label="未知" value="" />
+            <el-form-item :label="$tp('性别')">
+              <el-select v-model="form.sex" :placeholder="$tp('请选择')" style="width: 100%">
+                <el-option :label="$tp('男')" value="男" />
+                <el-option :label="$tp('女')" value="女" />
+                <el-option :label="$tp('未知')" value="" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="简介">
-              <el-input v-model="form.mark" placeholder="请输入" />
+            <el-form-item :label="$tp('简介')">
+              <el-input v-model="form.mark" :placeholder="$tp('请输入')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="部门">
+            <el-form-item :label="$tp('部门')">
               <el-select
                 v-model="form.deptId"
-                placeholder="请选择部门"
+                :placeholder="$tp('请选择部门')"
                 style="width: 100%"
                 @change="handleDeptChange"
               >
@@ -166,10 +152,10 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="岗位">
+            <el-form-item :label="$tp('岗位')">
               <el-select
                 v-model="form.positionId"
-                placeholder="请选择岗位"
+                :placeholder="$tp('请选择岗位')"
                 style="width: 100%"
                 :disabled="!form.deptId"
               >
@@ -184,21 +170,21 @@
           </el-col>
         </el-row>
 
-        <div class="section-title">地址</div>
+        <div class="section-title">{{ $tp('地址') }}</div>
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="国家">
+            <el-form-item :label="$tp('国家')">
               <el-select v-model="form.country" style="width: 100%">
-                <el-option label="中国" value="中国" />
+                <el-option :label="$tp('中国')" value="中国" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="行政区域">
+            <el-form-item :label="$tp('行政区域')">
               <el-cascader
                 v-model="form.cityArea"
                 :options="regionOptions"
-                placeholder="请选择行政区域"
+                :placeholder="$tp('请选择行政区域')"
                 style="width: 100%"
                 :props="{ expandTrigger: 'hover', value: 'label', label: 'label', children: 'children' }"
                 @change="handleRegionChange"
@@ -206,20 +192,20 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="详细地址">
-              <el-input v-model="form.address" placeholder="请输入" />
+            <el-form-item :label="$tp('详细地址')">
+              <el-input v-model="form.address" :placeholder="$tp('请输入')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="邮政编码">
-              <el-input v-model="form.postCode" placeholder="请输入" />
+            <el-form-item :label="$tp('邮政编码')">
+              <el-input v-model="form.postCode" :placeholder="$tp('请输入')" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <!-- Custominfo -->
         <template v-if="sortedCustomFields.length > 0">
-          <div class="section-title">自定义信息</div>
+          <div class="section-title">{{ $tp('自定义信息') }}</div>
           <el-row :gutter="24">
             <el-col
               v-for="field in sortedCustomFields"
@@ -230,7 +216,7 @@
                 <el-input
                   v-if="field.data_type === 'string'"
                   v-model="form.customFields[field.field_key]"
-                  placeholder="请输入"
+                  :placeholder="$tp('请输入')"
                 />
                 <el-input-number
                   v-else-if="field.data_type === 'integer'"
@@ -256,7 +242,7 @@
                   v-else-if="field.data_type === 'date'"
                   v-model="form.customFields[field.field_key]"
                   type="date"
-                  placeholder="请选择日期"
+                  :placeholder="$tp('请选择日期')"
                   value-format="YYYY-MM-DD"
                   style="width: 100%"
                 />
@@ -264,14 +250,14 @@
                   v-else-if="field.data_type === 'datetime'"
                   v-model="form.customFields[field.field_key]"
                   type="datetime"
-                  placeholder="请选择日期时间"
+                  :placeholder="$tp('请选择日期时间')"
                   value-format="YYYY-MM-DD HH:mm:ss"
                   style="width: 100%"
                 />
                 <el-select
                   v-else-if="field.data_type === 'enum'"
                   v-model="form.customFields[field.field_key]"
-                  :placeholder="`请选择${field.label}`"
+                  :placeholder="$tp('请选择{value0}', { value0: field.label })"
                   :multiple="field.enum_type === true"
                   style="width: 100%"
                 >
@@ -285,7 +271,7 @@
                 <el-input
                   v-else
                   v-model="form.customFields[field.field_key]"
-                  placeholder="请输入"
+                  :placeholder="$tp('请输入')"
                 />
               </el-form-item>
             </el-col>
@@ -293,8 +279,8 @@
         </template>
 
         <div class="form-footer">
-          <el-button @click="cancelEdit">取消</el-button>
-          <el-button type="primary" :loading="saving" @click="submitForm">保存修改</el-button>
+          <el-button @click="cancelEdit">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" :loading="saving" @click="submitForm">{{ $tp('保存修改') }}</el-button>
         </div>
       </el-form>
     </div>
@@ -302,6 +288,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Edit } from '@element-plus/icons-vue'
@@ -488,7 +476,7 @@ const mapUserInfo = (data) => {
 const fetchUserInfo = async () => {
   const accessToken = getModelHubAccessToken()
   if (!accessToken) {
-    ElMessage.warning('未登录，无法获取用户信息')
+    ElMessage.warning(uiText('未登录，无法获取用户信息'))
     return
   }
 
@@ -501,11 +489,11 @@ const fetchUserInfo = async () => {
     if (res?.code === 200 && res.data) {
       mapUserInfo(res.data)
     } else {
-      ElMessage.error(res?.msg || '获取用户信息失败')
+      ElMessage.error(res?.msg || uiText('获取用户信息失败'))
     }
   } catch (error) {
     console.error('getUserInfo failed:', error)
-    ElMessage.error(error?.response?.data?.msg || error?.message || '获取用户信息失败')
+    ElMessage.error(error?.response?.data?.msg || error?.message || uiText('获取用户信息失败'))
   } finally {
     loading.value = false
   }
@@ -521,11 +509,11 @@ const beforeAvatarUpload = (file) => {
   const isImage = ['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)
   const isLt2M = file.size / 1024 / 1024 < 2
   if (!isImage) {
-    ElMessage.error('只能上传 JPG/JPEG/PNG 格式图片')
+    ElMessage.error(uiText('只能上传 JPG/JPEG/PNG 格式图片'))
     return false
   }
   if (!isLt2M) {
-    ElMessage.error('图片大小不能超过 2MB')
+    ElMessage.error(uiText('图片大小不能超过 2MB'))
     return false
   }
   return true
@@ -535,19 +523,19 @@ const beforeAvatarUpload = (file) => {
 const handleAvatarSuccess = (res) => {
   if (res?.code === 200 && res?.data?.url) {
     photo.value = `${res.data.url}?t=${Date.now()}`
-    ElMessage.success('头像上传成功，请点击保存修改')
+    ElMessage.success(uiText('头像上传成功，请点击保存修改'))
   } else {
-    ElMessage.error(res?.msg || '上传失败')
+    ElMessage.error(res?.msg || uiText('上传失败'))
   }
 }
 
 const handleAvatarError = () => {
-  ElMessage.error('头像上传失败')
+  ElMessage.error(uiText('头像上传失败'))
 }
 
 const handleDeleteAvatar = () => {
   photo.value = ''
-  ElMessage.success('已删除头像，请点击保存修改')
+  ElMessage.success(uiText('已删除头像，请点击保存修改'))
 }
 
 const cancelEdit = async () => {
@@ -581,7 +569,7 @@ const handleRegionChange = (value) => {
 const submitForm = async () => {
   const accessToken = getModelHubAccessToken()
   if (!accessToken) {
-    ElMessage.warning('登录已失效，请重新登录')
+    ElMessage.warning(uiText('登录已失效，请重新登录'))
     return
   }
 
@@ -643,15 +631,15 @@ const submitForm = async () => {
     })
 
     if (res?.code === 200) {
-      ElMessage.success('个人信息更新成功')
+      ElMessage.success(uiText('个人信息更新成功'))
       isEditing.value = false
       await fetchUserInfo()
     } else {
-      ElMessage.error(res?.msg || '保存失败')
+      ElMessage.error(res?.msg || uiText('保存失败'))
     }
   } catch (error) {
     console.error('userEdit failed:', error)
-    ElMessage.error(error?.response?.data?.msg || error?.message || '保存失败')
+    ElMessage.error(error?.response?.data?.msg || error?.message || uiText('保存失败'))
   } finally {
     saving.value = false
   }

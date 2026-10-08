@@ -66,10 +66,43 @@ export const currentLocaleOption = computed(() => localeOptions.find(item => ite
 
 export const translatePhrase = (source, locale = currentLocale.value) => {
   if (typeof source !== 'string' || !source) return source
-  const normalizedLocale = normalizeLocale(locale)
-  return phraseCatalog[normalizedLocale]?.[source]
-    || (normalizedLocale !== DEFAULT_LOCALE ? tableHeaderEnglish[source] : undefined)
+  const params = typeof locale === 'object' && locale !== null ? locale : null
+  const normalizedLocale = normalizeLocale(params ? currentLocale.value : locale)
+  const translated = phraseCatalog[normalizedLocale]?.[source]
+    || (normalizedLocale !== DEFAULT_LOCALE ? phraseCatalog['en-US'][source] || tableHeaderEnglish[source] : undefined)
     || source
+  return params ? translated.replace(/\{(\w+)\}/g, (placeholder, key) =>
+    Object.prototype.hasOwnProperty.call(params, key) ? String(params[key]) : placeholder) : translated
+}
+
+// Match complete, catalogued UI messages. Never translate fragments of device
+// names or other business data, and retain unknown diagnostic messages verbatim.
+const messageTemplates = Object.keys(phraseCatalog['en-US']).filter(source => /\{\w+\}/.test(source)).map(source => {
+  const keys = []
+  let pattern = ''
+  let offset = 0
+  const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  for (const match of source.matchAll(/\{(\w+)\}/g)) {
+    pattern += escape(source.slice(offset, match.index)) + '([\\s\\S]*?)'
+    keys.push(match[1])
+    offset = match.index + match[0].length
+  }
+  pattern += escape(source.slice(offset))
+  return { source, keys, pattern: new RegExp(`^${pattern}$`) }
+}).sort((left, right) => right.source.replace(/\{\w+\}/g, '').length - left.source.replace(/\{\w+\}/g, '').length)
+
+export const translateUiMessage = (source, depth = 0) => {
+  if (typeof source !== 'string' || currentLocale.value === DEFAULT_LOCALE) return source
+  const exact = translatePhrase(source)
+  if (exact !== source || depth >= 3) return exact
+  for (const template of messageTemplates) {
+    const match = source.match(template.pattern)
+    if (match) {
+      const params = Object.fromEntries(template.keys.map((key, index) => [key, translateUiMessage(match[index + 1], depth + 1)]))
+      return translatePhrase(template.source, params)
+    }
+  }
+  return source
 }
 
 export const formatDateTime = (value, options = {}) => {
@@ -93,6 +126,7 @@ const applyDocumentLocale = locale => {
   document.documentElement.lang = option.code
   document.documentElement.dir = option.dir
   document.documentElement.dataset.locale = option.code
+  document.title = `VLStream Cloud - ${translatePhrase('视频流管理系统', locale)}`
   document.body?.classList.toggle('is-rtl', option.dir === 'rtl')
 }
 

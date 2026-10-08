@@ -15,15 +15,11 @@
 !-->
 <template>
   <div>
-    <el-button :icon="Plus" @click="configRuls">
-      设置
-    </el-button>
-    <el-dialog v-model="dialogVisible" title="查询类型" width="60%" @opened="openedDiloag">
+    <el-button :icon="Plus" @click="configRuls"> {{ $tp('设置') }} </el-button>
+    <el-dialog v-model="dialogVisible" :title="$tp('查询类型')" width="60%" @opened="openedDiloag">
       <div v-if="dialogVisible" class="calc_body">
         <div class="calc_body_right">
-          <div class="calc_body_right_title">
-            查询添加源码
-          </div>
+          <div class="calc_body_right_title"> {{ $tp('查询添加源码') }} </div>
           <div class="calc_editor">
             <div ref="codeMirror" class="codemirror_code" />
           </div>
@@ -31,9 +27,9 @@
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button size="large" @click="mockRun">模拟运行</el-button>
-          <el-button size="large" type="primary" @click="saveCalcConfig">保 存</el-button>
-          <el-button size="large" @click="dialogVisible = false" class="common_btn">取 消</el-button>
+          <el-button size="large" @click="mockRun">{{ $tp('模拟运行') }}</el-button>
+          <el-button size="large" type="primary" @click="saveCalcConfig">{{ $tp('保 存') }}</el-button>
+          <el-button size="large" @click="dialogVisible = false" class="common_btn">{{ $tp('取 消') }}</el-button>
         </span>
       </template>
     </el-dialog>

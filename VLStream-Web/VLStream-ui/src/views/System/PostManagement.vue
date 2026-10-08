@@ -14,16 +14,14 @@
             <div class="depNameBox flexRowAC">
               <div class="exportBtnBox flexRowAC">
                 <button type="button" class="exportBtn newBtn flexRowAC" @click="handleCreate">
-                  <el-icon class="BtnImg"><Plus /></el-icon>
-                  新建
-                </button>
+                  <el-icon class="BtnImg"><Plus /></el-icon> {{ $tp('新建') }} </button>
                 <button-group :button-list="toolbarButtonList" />
               </div>
             </div>
             <div class="searchHeight_out flexRowAC">
               <search-height-box
                 keyword="keyword"
-                placeholder="搜索"
+                :placeholder="$tp('搜索')"
                 :data="searchData"
                 @handle="searchResetFn"
               />
@@ -49,7 +47,7 @@
             <el-table-column prop="postName" :label="$tp('岗位名称')" min-width="150" />
             <el-table-column prop="category" :label="$tp('岗位分类')" min-width="100" align="center">
               <template #default="scope">
-                <span>{{ scope.row.category === 1 ? '高管' : scope.row.category === 2 ? '经理' : '员工' }}</span>
+                <span>{{ scope.row.category === 1 ? $tp('高管') : scope.row.category === 2 ? $tp('经理') : $tp('员工') }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="sort" :label="$tp('排序')" :width="clacPXToVW(80)" align="center" />
@@ -59,11 +57,11 @@
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handleEdit(scope.row)">
                     <oort-svg-icon width="14" height="14" name="edit_icon" class="new_table_svg_group_svg" />
-                    <span>编辑</span>
+                    <span>{{ $tp('编辑') }}</span>
                   </div>
                   <div class="new_table_svg_group" @click="handleSingleRemove(scope.row)">
                     <oort-svg-icon color="red" width="14" height="14" name="delete_icon" class="new_table_svg_group_svg" />
-                    <span>删除</span>
+                    <span>{{ $tp('删除') }}</span>
                   </div>
                 </div>
               </template>
@@ -101,39 +99,41 @@
         label-width="100px"
         style="padding: 10px 20px"
       >
-        <el-form-item label="岗位类型" prop="category">
-          <el-select v-model="form.category" placeholder="请选择岗位类型" style="width: 100%">
-            <el-option :value="1" label="高管" />
-            <el-option :value="2" label="经理" />
-            <el-option :value="3" label="员工" />
+        <el-form-item :label="$tp('岗位类型')" prop="category">
+          <el-select v-model="form.category" :placeholder="$tp('请选择岗位类型')" style="width: 100%">
+            <el-option :value="1" :label="$tp('高管')" />
+            <el-option :value="2" :label="$tp('经理')" />
+            <el-option :value="3" :label="$tp('员工')" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="岗位编码" prop="postCode">
-          <el-input v-model="form.postCode" placeholder="请输入岗位编码" />
+        <el-form-item :label="$tp('岗位编码')" prop="postCode">
+          <el-input v-model="form.postCode" :placeholder="$tp('请输入岗位编码')" />
         </el-form-item>
 
-        <el-form-item label="岗位名称" prop="postName">
-          <el-input v-model="form.postName" placeholder="请输入岗位名称" />
+        <el-form-item :label="$tp('岗位名称')" prop="postName">
+          <el-input v-model="form.postName" :placeholder="$tp('请输入岗位名称')" />
         </el-form-item>
 
-        <el-form-item label="岗位排序" prop="sort">
+        <el-form-item :label="$tp('岗位排序')" prop="sort">
           <el-input-number v-model="form.sort" :min="1" style="width: 100%" />
         </el-form-item>
 
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :rows="2" />
+        <el-form-item :label="$tp('备注')" prop="remark">
+          <el-input v-model="form.remark" type="textarea" :placeholder="$tp('请输入备注')" :rows="2" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false" class="common_btn">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">确定</el-button>
+        <el-button @click="dialogVisible = false" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">{{ $tp('确定') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
@@ -197,7 +197,7 @@ async function loadData() {
     pagination.total = getTotal(res)
   } catch (error) {
     console.error('加载岗位列表失败:', error)
-    ElMessage.error('加载岗位列表失败')
+    ElMessage.error(uiText('加载岗位列表失败'))
   } finally {
     loading.value = false
   }
@@ -226,12 +226,12 @@ const searchResetFn = (val, reset) => {
 }
 
 const handleExport = () => {
-  ElMessage.success('导出数据')
+  ElMessage.success(uiText('导出数据'))
 }
 
 function handleToolbarEdit() {
   if (selectedRows.value.length !== 1) {
-    ElMessage.warning('请选择一条记录进行编辑')
+    ElMessage.warning(uiText('请选择一条记录进行编辑'))
     return
   }
   handleEdit(selectedRows.value[0])
@@ -280,15 +280,15 @@ async function handleSaveSubmit() {
       try {
         const res = await submitPost(form.value)
         if (isSuccess(res)) {
-          ElMessage.success('保存成功')
+          ElMessage.success(uiText('保存成功'))
           dialogVisible.value = false
           loadData()
         } else {
-          ElMessage.error(res?.msg || '保存失败')
+          ElMessage.error(res?.msg || uiText('保存失败'))
         }
       } catch (error) {
         console.error('提交岗位信息失败:', error)
-        ElMessage.error('提交岗位信息发生异常')
+        ElMessage.error(uiText('提交岗位信息发生异常'))
       } finally {
         saving.value = false
       }
@@ -297,22 +297,22 @@ async function handleSaveSubmit() {
 }
 
 function executeRemove(ids, msg) {
-  ElMessageBox.confirm(msg, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(msg, uiText('提示'), {
+    confirmButtonText: uiText('确定'),
+    cancelButtonText: uiText('取消'),
     type: 'warning'
   }).then(async () => {
     try {
       const res = await removePosts(ids)
       if (isSuccess(res)) {
-        ElMessage.success('删除成功')
+        ElMessage.success(uiText('删除成功'))
         loadData()
       } else {
-        ElMessage.error(res?.msg || '删除失败')
+        ElMessage.error(res?.msg || uiText('删除失败'))
       }
     } catch (error) {
       console.error('删除岗位失败:', error)
-      ElMessage.error('删除岗位操作异常')
+      ElMessage.error(uiText('删除岗位操作异常'))
     }
   }).catch(() => {})
 }

@@ -6,13 +6,11 @@
 -->
 
 <template>
-  <el-dialog v-model="dialogVisible" class="diaOutSet locale-dialog locale-dialog--wide" title="确认事件" top="5vh" :before-close="handleClose" destroy-on-close>
+  <el-dialog v-model="dialogVisible" class="diaOutSet locale-dialog locale-dialog--wide" :title="$tp('确认事件')" top="5vh" :before-close="handleClose" destroy-on-close>
     <div v-if="eventDetailData">
-      <div class="basicTitle codeActBox flexRowAC">
-        基本属性
-        <div class="line" />
+      <div class="basicTitle codeActBox flexRowAC"> {{ $tp('基本属性') }} <div class="line" />
         <div class="lineT flexRowAC" @click="codeAct=!codeAct">
-          {{ codeAct === true ? '收起' : '展开' }}
+          {{ codeAct === true ? $tp('收起') : $tp('展开') }}
           <oort-svg-icon v-if="codeAct" class="elmenuIconImg" name="shrink" width="14" height="14" color="#999" />
           <oort-svg-icon v-else class="elmenuIconImg" name="open" width="14" height="14" />
         </div>
@@ -20,20 +18,20 @@
       <template v-if="codeAct">
         <div class="detailsBox">
           <div class="details_row_box">
-            <img src="@/assets/img/maintenance/typeIcon.png" alt="养护详情" />
-            <div>事件类型</div>
+            <img src="@/assets/img/maintenance/typeIcon.png" :alt="$tp('养护详情')" />
+            <div>{{ $tp('事件类型') }}</div>
           </div>
           <div class="d_r_content">
             {{ eventDetailData.name }}
             <el-tag :type="eventDetailData.status === 1 ? 'primary' : 'success'">
-              {{ eventDetailData.status === 1 ? '已完成' : '正在处理' }}
+              {{ eventDetailData.status === 1 ? $tp('已完成') : $tp('正在处理') }}
             </el-tag>
           </div>
         </div>
         <div class="detailsBox">
           <div class="details_row_box">
-            <img src="@/assets/img/maintenance/img.png" alt="养护详情" />
-            <div>抓拍照片</div>
+            <img src="@/assets/img/maintenance/img.png" :alt="$tp('养护详情')" />
+            <div>{{ $tp('抓拍照片') }}</div>
           </div>
           <div class="d_r_content">
             <div v-if="eventDetailData.pics?.length > 0">
@@ -47,19 +45,19 @@
               />
               <span class="eventImgText">+{{ eventDetailData.pics.length }}</span>
             </div>
-            <span v-else>暂无图片</span>
+            <span v-else>{{ $tp('暂无图片') }}</span>
           </div>
         </div>
         <div class="detailsBox">
           <div class="details_row_box">
-            <img src="@/assets/img/maintenance/vidio.png" alt="养护详情" />
-            <div>录制视频</div>
+            <img src="@/assets/img/maintenance/vidio.png" :alt="$tp('养护详情')" />
+            <div>{{ $tp('录制视频') }}</div>
           </div>
           <div class="d_r_content">
             <div v-if="eventDetailData.videoUrl" class="video-container" @click="openVideoDialog(eventDetailData)">
             </div>
             <div v-else class="no-video">
-              <span>暂无视频</span>
+              <span>{{ $tp('暂无视频') }}</span>
             </div>
           </div>
         </div>
@@ -74,8 +72,8 @@
       </div> -->
         <div class="detailsBox">
           <div class="details_row_box">
-            <img src="@/assets/img/maintenance/address.png" alt="养护详情" />
-            <div>事件位置</div>
+            <img src="@/assets/img/maintenance/address.png" :alt="$tp('养护详情')" />
+            <div>{{ $tp('事件位置') }}</div>
           </div>
           <div class="d_r_content">
             {{ eventDetailData.point?.address }}
@@ -83,8 +81,8 @@
         </div>
         <div class="detailsBox">
           <div class="details_row_box">
-            <img src="@/assets/img/maintenance/time.png" alt="养护详情" />
-            <div>设备名称</div>
+            <img src="@/assets/img/maintenance/time.png" :alt="$tp('养护详情')" />
+            <div>{{ $tp('设备名称') }}</div>
           </div>
           <div class="d_r_content">
             {{ eventDetailData.device_name }}
@@ -96,7 +94,7 @@
         <div class="detailsBox">
           <div class="details_row_box">
             <img src="@/assets/img/maintenance/id.png" alt="" />
-            <div>设备ID</div>
+            <div>{{ $tp('设备ID') }}</div>
           </div>
           <div class="d_r_content">
             {{ eventDetailData.device_id }}
@@ -105,7 +103,7 @@
         <div class="detailsBox">
           <div class="details_row_box">
             <img src="@/assets/img/maintenance/time.png" alt="" />
-            <div>告警时间</div>
+            <div>{{ $tp('告警时间') }}</div>
           </div>
           <div class="d_r_content">
             {{ eventDetailData.created_at }}
@@ -115,11 +113,9 @@
     </div>
     <div v-if="eventDetailData.status !== 1 && eventDetailData.mod_status === 0">
       <div class="details_container">
-        <div class="basicTitle codeActBox flexRowAC">
-          事件确认
-          <div class="line" />
+        <div class="basicTitle codeActBox flexRowAC"> {{ $tp('事件确认') }} <div class="line" />
           <div class="lineT flexRowAC" @click="codeAct_2=!codeAct_2">
-            {{ codeAct_2 === true ? '收起' : '展开' }}
+            {{ codeAct_2 === true ? $tp('收起') : $tp('展开') }}
             <oort-svg-icon v-if="codeAct_2" class="elmenuIconImg" name="shrink" width="14" height="14" color="#999" />
             <oort-svg-icon v-else class="elmenuIconImg" name="open" width="14" height="14" />
           </div>
@@ -133,30 +129,26 @@
               :rules="formRules"
               label-width="auto"
             >
-              <el-form-item label="告警确认" prop="mod_status">
+              <el-form-item :label="$tp('告警确认')" prop="mod_status">
                 <el-radio-group v-model="formData.mod_status">
-                  <el-radio :value="1" size="large">
-                    真实告警
-                  </el-radio>
+                  <el-radio :value="1" size="large"> {{ $tp('真实告警') }} </el-radio>
                   <!--                <el-radio :value="2" size="large">
                                   维保
                                 </el-radio>-->
-                  <el-radio :value="3" size="large">
-                    误报
-                  </el-radio>
+                  <el-radio :value="3" size="large"> {{ $tp('误报') }} </el-radio>
                 </el-radio-group>
               </el-form-item>
-              <el-form-item label="是否转工单" prop="name">
+              <el-form-item :label="$tp('是否转工单')" prop="name">
                 <el-switch
                   v-model="formData.work_order_status"
                   :active-value="1"
                   :inactive-value="0"
-                  active-text="是"
-                  inactive-text="否"
+                  :active-text="$tp('是')"
+                  :inactive-text="$tp('否')"
                 />
               </el-form-item>
-              <el-form-item v-if="formData.work_order_status" label="选择工单" prop="workOrderId">
-                <el-select v-model="formData.workOrderId" placeholder="请选择工单">
+              <el-form-item v-if="formData.work_order_status" :label="$tp('选择工单')" prop="workOrderId">
+                <el-select v-model="formData.workOrderId" :placeholder="$tp('请选择工单')">
                   <el-option
                     v-for="item in options"
                     :key="item.value"
@@ -165,18 +157,18 @@
                   />
                 </el-select>
               </el-form-item>
-              <el-form-item v-if="formData.work_order_status!==1" label="图片" prop="fileUrls">
+              <el-form-item v-if="formData.work_order_status!==1" :label="$tp('图片')" prop="fileUrls">
                 <div class="avatarBox">
-                  <MultiImageUpload v-model="formData.pics" :size-limit="2" :accept="'image/*'" tip="上传图片" :max-count="5" />
+                  <MultiImageUpload v-model="formData.pics" :size-limit="2" :accept="'image/*'" :tip="$tp('上传图片')" :max-count="5" />
                 </div>
               </el-form-item>
-              <el-form-item v-if="formData.work_order_status!==1" label="描述">
+              <el-form-item v-if="formData.work_order_status!==1" :label="$tp('描述')">
                 <div style="width: 100%;">
                   <el-input
                     v-model="formData.describe"
                     type="textarea"
                     :rows="5"
-                    placeholder="请输入描述"
+                    :placeholder="$tp('请输入描述')"
                     maxlength="200"
                     show-word-limit
                   />
@@ -185,19 +177,19 @@
                     :number="256"
                     mod="描述"
                     :keyword="formData.describe"
-                    keyword-empty-tips="请先输入任务名称"
+                    :keyword-empty-tips="$tp('请先输入任务名称')"
                   />
                 </div>
                 <CommonExpressions :content="formData.describe" @selectContent="selectContent" />
               </el-form-item>
-              <el-form-item v-if="formData.work_order_status!==1" label="是否完成" prop="status">
+              <el-form-item v-if="formData.work_order_status!==1" :label="$tp('是否完成')" prop="status">
                 <el-switch
                   v-model="formData.status"
                   size="large"
                   :active-value="1"
                   :inactive-value="2"
-                  active-text="已完成"
-                  inactive-text="未完成"
+                  :active-text="$tp('已完成')"
+                  :inactive-text="$tp('未完成')"
                 />
               </el-form-item>
             </el-form>
@@ -206,17 +198,13 @@
       </div>
     </div>
     <div class="d_h_maintainBtns">
-      <el-button @click="handleClose" class="common_btn">
-        取消
-      </el-button>
-      <el-button v-preReClick type="primary" :disabled="formLoading" @click="addFeedbackForm" class="common_btn">
-        确定
-      </el-button>
+      <el-button @click="handleClose" class="common_btn"> {{ $tp('取消') }} </el-button>
+      <el-button v-preReClick type="primary" :disabled="formLoading" @click="addFeedbackForm" class="common_btn"> {{ $tp('确定') }} </el-button>
     </div>
     <!-- dialog -->
     <el-dialog
       v-model="videoDialogVisible"
-      title="视频播放"
+      :title="$tp('视频播放')"
       width="80%"
     >
       <div class="video-dialog-container">
@@ -226,6 +214,8 @@
   </el-dialog>
 </template>
 <script setup lang="ts">
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, computed, watch, onMounted } from 'vue'
 import MultiImageUpload from './components/multiImageUpload.vue'
 import CommonExpressions from '@/components/commonExpressions.vue'
@@ -407,11 +397,11 @@ const addFeedbackForm = async() => {
   }
   // to , ( 1: already 2: Process )
   if (eventDetailData.value.status === 2 && !params.mod_status) {
-    return ElMessage.warning('请选择告警确认')
+    return ElMessage.warning(uiText('请选择告警确认'))
   }
   const res: any = await addFeedback(params)
   if (res.code === 200) {
-    ElMessage.success('反馈成功')
+    ElMessage.success(uiText('反馈成功'))
     const currentId = formData.value.id
     const currentPoint = formData.value.point
     formData.value = initFormData()

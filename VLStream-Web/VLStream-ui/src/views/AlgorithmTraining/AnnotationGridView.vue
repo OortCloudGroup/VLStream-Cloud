@@ -69,10 +69,10 @@
               <div class="image-info flexRowAC">
                 <div class="image-name">{{ getImageDisplayName(image) }}</div>
                 <div class="image-card-actions flexRowAC">
-                  <el-icon class="card-action-icon" title="标注" @click.stop="handleAnnotateImage(image.id)">
+                  <el-icon class="card-action-icon" :title="$tp('标注')" @click.stop="handleAnnotateImage(image.id)">
                     <Crop />
                   </el-icon>
-                  <el-icon class="card-action-icon" title="预览" @click.stop="handlePreviewImage(image)">
+                  <el-icon class="card-action-icon" :title="$tp('预览')" @click.stop="handlePreviewImage(image)">
                     <FullScreen />
                   </el-icon>
                 </div>
@@ -82,19 +82,13 @@
             <!-- null / empty -->
             <div v-if="filteredImages.length === 0" class="empty-state">
               <el-icon class="empty-icon"><Picture /></el-icon>
-              <p class="empty-text">暂无图片</p>
+              <p class="empty-text">{{ $tp('暂无图片') }}</p>
               <button type="button" class="exportBtn newBtn flexRowAC" @click="handleImportImages">
-                <el-icon class="BtnImg"><Upload /></el-icon>
-                导入图片
-              </button>
+                <el-icon class="BtnImg"><Upload /></el-icon> {{ $tp('导入图片') }} </button>
             </div>
           </div>
         </div>
-        <div class="grid-load-status" aria-live="polite">
-          已显示 {{ displayedImages.length }} / {{ filteredImages.length }} 张
-          <el-button v-if="displayedImages.length < filteredImages.length" type="text" @click="loadMoreImages">
-            加载更多
-          </el-button>
+        <div class="grid-load-status" aria-live="polite"> {{ $tp('已显示') }} {{ displayedImages.length }} / {{ filteredImages.length }} {{ $tp('张') }} <el-button v-if="displayedImages.length < filteredImages.length" type="text" @click="loadMoreImages"> {{ $tp('加载更多') }} </el-button>
         </div>
       </div>
     </div>
@@ -102,27 +96,27 @@
     <!-- dialog -->
     <el-dialog
       v-model="showLabelDialog"
-      :title="editingLabel ? '编辑标签' : '新增标签'"
+      :title="editingLabel ? $tp('编辑标签') : $tp('新增标签')"
       width="25%"
     >
       <el-form :model="labelForm" :rules="labelRules" ref="labelFormRef" label-width="80px">
-        <el-form-item label="标签名" prop="name">
-          <el-input v-model="labelForm.name" placeholder="请输入标签名称" />
+        <el-form-item :label="$tp('标签名')" prop="name">
+          <el-input v-model="labelForm.name" :placeholder="$tp('请输入标签名称')" />
         </el-form-item>
-        <el-form-item label="颜色" prop="color">
+        <el-form-item :label="$tp('颜色')" prop="color">
           <el-color-picker v-model="labelForm.color" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showLabelDialog = false" class="common_btn">取消</el-button>
-        <el-button type="primary" @click="handleSaveLabel" class="common_btn">保存</el-button>
+        <el-button @click="showLabelDialog = false" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" @click="handleSaveLabel" class="common_btn">{{ $tp('保存') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- dialog -->
     <el-dialog
       v-model="showUploadDialog"
-      title="导入图片"
+      :title="$tp('导入图片')"
       width="45%"
       class="import-dialog"
     >
@@ -131,25 +125,19 @@
         <div class="import-form-section">
           <!-- annotation -->
           <div class="form-group">
-            <label class="form-label">标注状态</label>
+            <label class="form-label">{{ $tp('标注状态') }}</label>
             <div class="radio-group">
-              <el-radio v-model="importForm.annotationStatus" label="none" class="custom-radio">
-                无标注信息
-              </el-radio>
-              <el-radio v-model="importForm.annotationStatus" label="exist" class="custom-radio">
-                有标注信息
-              </el-radio>
+              <el-radio v-model="importForm.annotationStatus" label="none" class="custom-radio"> {{ $tp('无标注信息') }} </el-radio>
+              <el-radio v-model="importForm.annotationStatus" label="exist" class="custom-radio"> {{ $tp('有标注信息') }} </el-radio>
             </div>
           </div>
 
           <!-- Import -->
           <div class="form-group">
-            <label class="form-label">导入路径<span class="required">*</span></label>
+            <label class="form-label">{{ $tp('导入路径') }}<span class="required">*</span></label>
             <div class="path-input-group">
               <el-button @click="handleSelectDirectory" class="select-directory-btn">
-                <el-icon><Folder /></el-icon>
-                选择目录
-              </el-button>
+                <el-icon><Folder /></el-icon> {{ $tp('选择目录') }} </el-button>
             </div>
 
             <!-- prompt / tipinfo -->
@@ -157,10 +145,10 @@
               <div class="tip-item">
                 <el-icon class="tip-icon"><InfoFilled /></el-icon>
                 <div class="tip-content">
-                  <p><strong>提示：</strong>1.导入后请避免改动本地路径数据，以免影响数据标注、训练功能正常使用</p>
-                  <p>2.每次导入仅支持选择同一目录，如您想选择体验一站式功能，可联网下载已标注训练数据样例</p>
+                  <p><strong>{{ $tp('提示：') }}</strong>{{ $tp('1.导入后请避免改动本地路径数据，以免影响数据标注、训练功能正常使用') }}</p>
+                  <p>{{ $tp('2.每次导入仅支持选择同一目录，如您想选择体验一站式功能，可联网下载已标注训练数据样例') }}</p>
                   <div class="link-wrapper">
-                    <a href="#" class="help-link">实例分享训练数据集（coco格式）</a>
+                    <a href="#" class="help-link">{{ $tp('实例分享训练数据集（coco格式）') }}</a>
                   </div>
                 </div>
               </div>
@@ -173,43 +161,43 @@
           <!--  -->
           <div class="help-item">
             <div class="help-header" @click="toggleHelpItem('labels')">
-              <span class="help-title">1. 如何设计标签</span>
+              <span class="help-title">{{ $tp('1. 如何设计标签') }}</span>
               <el-icon class="toggle-icon" :class="{ expanded: expandedHelp.labels }">
                 <ArrowDown />
               </el-icon>
             </div>
             <div v-show="expandedHelp.labels" class="help-content">
-              <p>每种需要识别的目标都需要一个标签，一张图片中可以有多种目标出现。</p>
-              <p>标签的上限为1000种，标签名由数字、中英文、中/下划线组成，长度上限256字符。</p>
+              <p>{{ $tp('每种需要识别的目标都需要一个标签，一张图片中可以有多种目标出现。') }}</p>
+              <p>{{ $tp('标签的上限为1000种，标签名由数字、中英文、中/下划线组成，长度上限256字符。') }}</p>
             </div>
           </div>
 
           <!-- need to -->
           <div class="help-item">
             <div class="help-header" @click="toggleHelpItem('content')">
-              <span class="help-title">2. 图片内容要求</span>
+              <span class="help-title">{{ $tp('2. 图片内容要求') }}</span>
               <el-icon class="toggle-icon" :class="{ expanded: expandedHelp.content }">
                 <ArrowDown />
               </el-icon>
             </div>
             <div v-show="expandedHelp.content" class="help-content">
-              <p>训练图片和实际场景要尽可能的相似图片拍摄环境一致，尽量如实采集标记场景的同期图片是能够头绪的图像做好准备，训练图片数量不低于同期标记日标正确图片。</p>
-              <p>每个标签的图片需要覆盖实际场景里面的可能性，如拍摄角度、光线明暗的变化，训练集要涵盖的场景越多，模型的泛化能力越强。</p>
-              <p>每个模型训练图片量不得低于4张，每个标签建议标注50个框以上。</p>
+              <p>{{ $tp('训练图片和实际场景要尽可能的相似图片拍摄环境一致，尽量如实采集标记场景的同期图片是能够头绪的图像做好准备，训练图片数量不低于同期标记日标正确图片。') }}</p>
+              <p>{{ $tp('每个标签的图片需要覆盖实际场景里面的可能性，如拍摄角度、光线明暗的变化，训练集要涵盖的场景越多，模型的泛化能力越强。') }}</p>
+              <p>{{ $tp('每个模型训练图片量不得低于4张，每个标签建议标注50个框以上。') }}</p>
             </div>
           </div>
 
           <!-- Import need to -->
           <div class="help-item">
             <div class="help-header" @click="toggleHelpItem('format')">
-              <span class="help-title">3. 导入格式要求</span>
+              <span class="help-title">{{ $tp('3. 导入格式要求') }}</span>
               <el-icon class="toggle-icon" :class="{ expanded: expandedHelp.format }">
                 <ArrowDown />
               </el-icon>
             </div>
             <div v-show="expandedHelp.format" class="help-content">
-              <p>支持导入常见图片格式：jpg、png、jpeg、bmp等。</p>
-              <p>如有标注信息，请确保标注文件格式正确。</p>
+              <p>{{ $tp('支持导入常见图片格式：jpg、png、jpeg、bmp等。') }}</p>
+              <p>{{ $tp('如有标注信息，请确保标注文件格式正确。') }}</p>
             </div>
           </div>
         </div>
@@ -217,8 +205,8 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showUploadDialog = false" class="cancel-btn common_btn">取消</el-button>
-          <el-button type="primary" @click="handleConfirmUpload" class="confirm-btn common_btn">确认</el-button>
+          <el-button @click="showUploadDialog = false" class="cancel-btn common_btn">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" @click="handleConfirmUpload" class="confirm-btn common_btn">{{ $tp('确认') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -226,7 +214,7 @@
     <!-- dialog -->
     <el-dialog
       v-model="showPreviewDialog"
-      :title="previewImage?.name || '图片预览'"
+      :title="previewImage?.name || $tp('图片预览')"
       width="70%"
       class="image-preview-dialog"
       @close="handleClosePreview"
@@ -239,22 +227,24 @@
           @error="handleImageError"
         />
         <div class="preview-meta">
-          <div class="meta-name" v-if="previewImage.name">文件名：{{ previewImage.name }}</div>
-          <div class="meta-remark" v-if="previewImage.originalName">原始名：{{ previewImage.originalName }}</div>
+          <div class="meta-name" v-if="previewImage.name">{{ $tp('文件名：') }}{{ previewImage.name }}</div>
+          <div class="meta-remark" v-if="previewImage.originalName">{{ $tp('原始名：') }}{{ previewImage.originalName }}</div>
         </div>
       </div>
       <div v-else class="preview-placeholder">
         <el-icon class="preview-placeholder-icon"><Picture /></el-icon>
-        <p>无法加载图片</p>
+        <p>{{ $tp('无法加载图片') }}</p>
       </div>
       <template #footer>
-        <el-button @click="handleClosePreview" class="common_btn">关闭</el-button>
+        <el-button @click="handleClosePreview" class="common_btn">{{ $tp('关闭') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import {computed, onMounted, reactive, ref, watch} from 'vue'
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus'
 import {ArrowDown, Crop, Delete, Edit, Folder, FullScreen, InfoFilled, Picture, Upload} from '@element-plus/icons-vue'
@@ -348,7 +338,7 @@ const getImageDisplayName = (image) => {
   if (annotations.length > 0 && annotations[0].labelName) {
     return annotations[0].labelName
   }
-  return image?.name || '未命名'
+  return image?.name || uiText('未命名')
 }
 
 // formdata
@@ -526,7 +516,7 @@ const handleSaveLabel = () => {
       name: labelForm.name,
       color: labelForm.color
     })
-    ElMessage.success('标签更新成功')
+    ElMessage.success(uiText('标签更新成功'))
   } else {
     // Add - notification component
     const newLabel = {
@@ -535,7 +525,7 @@ const handleSaveLabel = () => {
       usageCount: 0
     }
     emit('add-label', newLabel)
-    ElMessage.success('标签添加成功')
+    ElMessage.success(uiText('标签添加成功'))
   }
   showLabelDialog.value = false
 }
@@ -548,7 +538,7 @@ const handleImportImages = () => {
 
 const handleBatchAnnotate = () => {
   if (selectedImages.value.length === 0) {
-    ElMessage.warning('请先选择要标注的图片')
+    ElMessage.warning(uiText('请先选择要标注的图片'))
     return
   }
 
@@ -565,7 +555,7 @@ const handleBatchAnnotate = () => {
 
 const handleDeleteSelected = async () => {
   if (selectedImages.value.length === 0) {
-    ElMessage.warning('请先选择要删除的图片')
+    ElMessage.warning(uiText('请先选择要删除的图片'))
     return
   }
 
@@ -573,9 +563,9 @@ const handleDeleteSelected = async () => {
   console.log('选中的图片ID:', selectedImages.value)
   console.log('uploadedImages数组:', uploadedImages.value)
 
-  ElMessageBox.confirm(`确定要删除选中的 ${selectedImages.value.length} 张图片吗？这将同时删除图片文件和相关的标注数据。`, '确认删除', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(uiText('确定要删除选中的 {value0} 张图片吗？这将同时删除图片文件和相关的标注数据。', { value0: selectedImages.value.length }), uiText('确认删除'), {
+    confirmButtonText: uiText('确定'),
+    cancelButtonText: uiText('取消'),
     type: 'warning'
   }).then(async () => {
     try {
@@ -596,7 +586,7 @@ const handleDeleteSelected = async () => {
 
       if (validImages.length === 0) {
         console.warn('没有找到有效的图片进行删除')
-        ElMessage.warning('没有找到有效的图片进行删除')
+        ElMessage.warning(uiText('没有找到有效的图片进行删除'))
         return
       }
 
@@ -617,10 +607,10 @@ const handleDeleteSelected = async () => {
       selectedImages.value = []
 
       console.log('=== 图片删除流程完成 ===')
-      ElMessage.success('图片及相关标注数据删除成功')
+      ElMessage.success(uiText('图片及相关标注数据删除成功'))
     } catch (error) {
       console.error('删除图片失败:', error)
-      ElMessage.error('删除图片失败: ' + error.message)
+      ElMessage.error(uiText('删除图片失败: ') + error.message)
     }
   })
 }
@@ -668,7 +658,7 @@ const handleAnnotateImage = (imageId) => {
 
 const handlePreviewImage = (image) => {
   if (!image || !image.url) {
-    ElMessage.warning('未找到图片资源，无法预览')
+    ElMessage.warning(uiText('未找到图片资源，无法预览'))
     return
   }
   previewImage.value = image
@@ -698,20 +688,20 @@ const handleSelectDirectory = () => {
       const zipFile = files[0]
       if (!zipFile) return
       if (!zipFile.name.toLowerCase().endsWith('.zip')) {
-        ElMessage.warning('请选择zip文件')
+        ElMessage.warning(uiText('请选择zip文件'))
         pendingZipFile.value = null
         return
       }
       pendingZipFile.value = zipFile
       pendingUploadFiles.value = []
-      ElMessage.success(`选择zip文件: ${zipFile.name}`)
+      ElMessage.success(uiText('选择zip文件: {value0}', { value0: zipFile.name }))
       return
     }
 
     const imageFiles = files.filter(file => file.type.startsWith('image/'))
 
     if (imageFiles.length === 0) {
-      ElMessage.warning('所选文件夹中没有找到图片文件')
+      ElMessage.warning(uiText('所选文件夹中没有找到图片文件'))
       return
     }
 
@@ -723,7 +713,7 @@ const handleSelectDirectory = () => {
       const fullPath = firstFile.webkitRelativePath
       const folderPath = fullPath.substring(0, fullPath.lastIndexOf('/'))
 
-      ElMessage.success(`已选择文件夹：${folderPath}，找到 ${imageFiles.length} 个图片文件`)
+      ElMessage.success(uiText('已选择文件夹：{value0}，找到 {value1} 个图片文件', { value0: folderPath, value1: imageFiles.length }))
     }
 
   }
@@ -794,9 +784,9 @@ const handleConfirmUpload = async () => {
     }
 
     if (importForm.annotationStatus === 'none') {
-      ElMessage.success('导入无标注图片成功')
+      ElMessage.success(uiText('导入无标注图片成功'))
     } else {
-      ElMessage.success('导入有标注图片成功')
+      ElMessage.success(uiText('导入有标注图片成功'))
     }
 
     showUploadDialog.value = false

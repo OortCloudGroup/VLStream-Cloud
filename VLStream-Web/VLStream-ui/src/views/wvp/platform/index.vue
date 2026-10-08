@@ -13,14 +13,13 @@
       <div class="depNameBox flexRowAC">
         <div class="exportBtnBox flexRowAC">
           <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd" v-hasPermi="['wvp:platform:add']">
-            <el-icon class="BtnImg"><Plus /></el-icon>新增
-          </button>
+            <el-icon class="BtnImg"><Plus /></el-icon>{{ $tp('新增') }} </button>
         </div>
       </div>
       <div class="searchHeight_out flexRowAC">
         <search-height-box
           keyword="query"
-          placeholder="请输入关键字"
+          :placeholder="$tp('请输入关键字')"
           :data="searchData"
           @handle="searchResetFn"
         />
@@ -41,16 +40,16 @@
       <el-table-column :label="$tp('是否启用')" align="center">
         <template #default="scope">
           <div slot="reference" class="name-wrapper">
-            <el-tag v-if="scope.row.enable">已启用</el-tag>
-            <el-tag type="info" v-if="!scope.row.enable">未启用</el-tag>
+            <el-tag v-if="scope.row.enable">{{ $tp('已启用') }}</el-tag>
+            <el-tag type="info" v-if="!scope.row.enable">{{ $tp('未启用') }}</el-tag>
           </div>
         </template>
       </el-table-column>
       <el-table-column :label="$tp('状态')" align="center">
         <template #default="scope">
           <div slot="reference" class="name-wrapper">
-            <el-tag v-if="scope.row.status">在线</el-tag>
-            <el-tag type="info" v-if="!scope.row.status">离线</el-tag>
+            <el-tag v-if="scope.row.status">{{ $tp('在线') }}</el-tag>
+            <el-tag type="info" v-if="!scope.row.status">{{ $tp('离线') }}</el-tag>
           </div>
         </template>
       </el-table-column>
@@ -66,15 +65,15 @@
       <el-table-column prop="channelCount" :label="$tp('通道数')" align="center"></el-table-column>
       <el-table-column :label="$tp('订阅信息')" :width="clacPXToVW(120)" align="center">
         <template #default="scope">
-          <i v-if="scope.row.alarmSubscribe" style="font-size: 20px" title="报警订阅"
+          <i v-if="scope.row.alarmSubscribe" style="font-size: 20px" :title="$tp('报警订阅')"
              class="iconfont icon-gbaojings subscribe-on "></i>
-          <i v-if="!scope.row.alarmSubscribe" style="font-size: 20px" title="报警订阅"
+          <i v-if="!scope.row.alarmSubscribe" style="font-size: 20px" :title="$tp('报警订阅')"
              class="iconfont icon-gbaojings subscribe-off "></i>
-          <i v-if="scope.row.catalogSubscribe" title="目录订阅" class="iconfont icon-gjichus subscribe-on"></i>
-          <i v-if="!scope.row.catalogSubscribe" title="目录订阅" class="iconfont icon-gjichus subscribe-off"></i>
-          <i v-if="scope.row.mobilePositionSubscribe" title="位置订阅"
+          <i v-if="scope.row.catalogSubscribe" :title="$tp('目录订阅')" class="iconfont icon-gjichus subscribe-on"></i>
+          <i v-if="!scope.row.catalogSubscribe" :title="$tp('目录订阅')" class="iconfont icon-gjichus subscribe-off"></i>
+          <i v-if="scope.row.mobilePositionSubscribe" :title="$tp('位置订阅')"
              class="iconfont icon-gxunjians subscribe-on"></i>
-          <i v-if="!scope.row.mobilePositionSubscribe" title="位置订阅"
+          <i v-if="!scope.row.mobilePositionSubscribe" :title="$tp('位置订阅')"
              class="iconfont icon-gxunjians subscribe-off"></i>
         </template>
       </el-table-column>
@@ -83,21 +82,21 @@
           <div class="operateAppBox flexRowAC" style="justify-content: flex-end;">
             <div class="new_table_svg_group" @click.stop="handleEdit(scope.row)" v-hasPermi="['wvp:platform:edit']">
               <el-icon><Edit /></el-icon>
-              <span>编辑</span>
+              <span>{{ $tp('编辑') }}</span>
             </div>
             <el-dropdown
               @command="(command)=>{moreClick(command, scope.row)}"
               v-if="checkPermi(['wvp:platform:channelList', 'wvp:platform:push', 'wvp:platform:delete'])"
             >
               <div class="new_table_svg_group" @click.stop>
-                <span>更多</span>
+                <span>{{ $tp('更多') }}</span>
                 <el-icon><ArrowDown /></el-icon>
               </div>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="chooseChannel" v-if="checkPermi(['wvp:platform:channelList'])">通道共享</el-dropdown-item>
-                  <el-dropdown-item command="pushChannelFun" v-if="checkPermi(['wvp:platform:push'])">推送通道</el-dropdown-item>
-                  <el-dropdown-item command="handleDelete" v-if="checkPermi(['wvp:platform:delete'])">删除</el-dropdown-item>
+                  <el-dropdown-item command="chooseChannel" v-if="checkPermi(['wvp:platform:channelList'])">{{ $tp('通道共享') }}</el-dropdown-item>
+                  <el-dropdown-item command="pushChannelFun" v-if="checkPermi(['wvp:platform:push'])">{{ $tp('推送通道') }}</el-dropdown-item>
+                  <el-dropdown-item command="handleDelete" v-if="checkPermi(['wvp:platform:delete'])">{{ $tp('删除') }}</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -115,15 +114,21 @@
     />
 
     <el-dialog :title="title" v-model="open" width="60%" append-to-body>
+      <template #header>
+        <div class="gb-dialog-heading">
+          <span>{{ $tp(title) }}</span>
+          <el-button link type="primary" @click="showHelp = true"><el-icon class="gb-help-icon"><QuestionFilled /></el-icon>{{ $tp('帮助说明与示例') }}</el-button>
+        </div>
+      </template>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="130px">
         <el-row>
           <el-col :span="12">
-            <el-form-item label="名称" prop="name">
+            <el-form-item :label="$tp('名称')" prop="name">
               <el-input v-model="form.name"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="SIP服务国标编码" prop="serverGBId">
+            <el-form-item :label="$tp('SIP服务国标编码')" prop="serverGBId">
               <el-input v-model="form.serverGBId" clearable @input="serverGBIdChange"></el-input>
             </el-form-item>
           </el-col>
@@ -131,12 +136,12 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="SIP服务国标域" prop="serverGBDomain">
+            <el-form-item :label="$tp('SIP服务国标域')" prop="serverGBDomain">
               <el-input v-model="form.serverGBDomain" clearable></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="SIP服务IP" prop="serverIp">
+            <el-form-item :label="$tp('SIP服务IP')" prop="serverIp">
               <el-input v-model="form.serverIp" clearable></el-input>
             </el-form-item>
           </el-col>
@@ -144,12 +149,12 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="SIP服务端口" prop="serverPort">
+            <el-form-item :label="$tp('SIP服务端口')" prop="serverPort">
               <el-input v-model="form.serverPort" clearable type="number"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="设备国标编号" prop="deviceGBId">
+            <el-form-item :label="$tp('设备国标编号')" prop="deviceGBId">
               <el-input v-model="form.deviceGBId" clearable @input="deviceGBIdChange"></el-input>
             </el-form-item>
           </el-col>
@@ -157,8 +162,8 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="本地IP" prop="deviceIp">
-              <el-select v-model="form.deviceIp" placeholder="请选择与上级相通的网卡" style="width: 100%">
+            <el-form-item :label="$tp('本地IP')" prop="deviceIp">
+              <el-select v-model="form.deviceIp" :placeholder="$tp('请选择与上级相通的网卡')" style="width: 100%">
                 <el-option
                     v-for="ip in deviceIps"
                     :key="ip"
@@ -169,7 +174,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="本地端口" prop="devicePort">
+            <el-form-item :label="$tp('本地端口')" prop="devicePort">
               <el-input v-model="form.devicePort" :disabled="true" type="number"></el-input>
             </el-form-item>
           </el-col>
@@ -177,12 +182,12 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="SIP认证用户名" prop="username">
+            <el-form-item :label="$tp('SIP认证用户名')" prop="username">
               <el-input v-model="form.username"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="SIP认证密码" prop="password">
+            <el-form-item :label="$tp('SIP认证密码')" prop="password">
               <el-input v-model="form.password"></el-input>
             </el-form-item>
           </el-col>
@@ -190,12 +195,12 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="注册周期(秒)" prop="expires">
+            <el-form-item :label="$tp('注册周期(秒)')" prop="expires">
               <el-input v-model="form.expires"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="心跳周期(秒)" prop="keepTimeout">
+            <el-form-item :label="$tp('心跳周期(秒)')" prop="keepTimeout">
               <el-input v-model="form.keepTimeout"></el-input>
             </el-form-item>
           </el-col>
@@ -203,16 +208,16 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="SDP发流IP" prop="sendStreamIp">
+            <el-form-item :label="$tp('SDP发流IP')" prop="sendStreamIp">
               <el-input v-model="form.sendStreamIp"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="信令传输" prop="transport">
+            <el-form-item :label="$tp('信令传输')" prop="transport">
               <el-select
                   v-model="form.transport"
                   style="width: 100%"
-                  placeholder="请选择信令传输方式"
+                  :placeholder="$tp('请选择信令传输方式')"
               >
                 <el-option label="UDP" value="UDP"></el-option>
                 <el-option label="TCP" value="TCP"></el-option>
@@ -223,19 +228,19 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="保密属性">
-              <el-select v-model="form.secrecy" style="width: 100%" placeholder="请选择保密属性">
-                <el-option label="不涉密" :value="0"></el-option>
-                <el-option label="涉密" :value="1"></el-option>
+            <el-form-item :label="$tp('保密属性')">
+              <el-select v-model="form.secrecy" style="width: 100%" :placeholder="$tp('请选择保密属性')">
+                <el-option :label="$tp('不涉密')" :value="0"></el-option>
+                <el-option :label="$tp('涉密')" :value="1"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="目录分组" prop="catalogGroup">
+            <el-form-item :label="$tp('目录分组')" prop="catalogGroup">
               <el-select
                   v-model="form.catalogGroup"
                   style="width: 100%"
-                  placeholder="请选择目录分组"
+                  :placeholder="$tp('请选择目录分组')"
               >
                 <el-option label="1" value="1"></el-option>
                 <el-option label="2" value="2"></el-option>
@@ -248,11 +253,11 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="字符集" prop="characterSet">
+            <el-form-item :label="$tp('字符集')" prop="characterSet">
               <el-select
                   v-model="form.characterSet"
                   style="width: 100%"
-                  placeholder="请选择字符集"
+                  :placeholder="$tp('请选择字符集')"
               >
                 <el-option label="GB2312" value="GB2312"></el-option>
                 <el-option label="UTF-8" value="UTF-8"></el-option>
@@ -260,7 +265,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="行政区划" prop="civilCode">
+            <el-form-item :label="$tp('行政区划')" prop="civilCode">
               <el-input v-model="form.civilCode" clearable></el-input>
             </el-form-item>
           </el-col>
@@ -268,12 +273,12 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="平台厂商" prop="manufacturer">
+            <el-form-item :label="$tp('平台厂商')" prop="manufacturer">
               <el-input v-model="form.manufacturer" clearable></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="平台型号" prop="model">
+            <el-form-item :label="$tp('平台型号')" prop="model">
               <el-input v-model="form.model" clearable></el-input>
             </el-form-item>
           </el-col>
@@ -281,23 +286,23 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="平台安装地址" prop="address">
+            <el-form-item :label="$tp('平台安装地址')" prop="address">
               <el-input v-model="form.address" clearable></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="其他选项">
+            <el-form-item :label="$tp('其他选项')">
               <div>
-                <el-checkbox label="启用" v-model="form.enable" @change="checkExpires"></el-checkbox>
-                <el-checkbox label="云台控制" v-model="form.ptz"></el-checkbox>
-                <el-checkbox label="RTCP保活" v-model="form.rtcp" @change="rtcpCheckBoxChange"></el-checkbox>
-                <el-checkbox label="消息通道" v-model="form.asMessageChannel"></el-checkbox>
-                <el-checkbox label="主动推送通道" v-model="form.autoPushChannel"></el-checkbox>
-                <el-checkbox label="推送平台信息" :true-label="1" :false-label="0"
+                <el-checkbox value="启用" :label="$tp('启用')" v-model="form.enable" @change="checkExpires"></el-checkbox>
+                <el-checkbox value="云台控制" :label="$tp('云台控制')" v-model="form.ptz"></el-checkbox>
+                <el-checkbox value="RTCP保活" :label="$tp('RTCP保活')" v-model="form.rtcp" @change="rtcpCheckBoxChange"></el-checkbox>
+                <el-checkbox value="消息通道" :label="$tp('消息通道')" v-model="form.asMessageChannel"></el-checkbox>
+                <el-checkbox value="主动推送通道" :label="$tp('主动推送通道')" v-model="form.autoPushChannel"></el-checkbox>
+                <el-checkbox value="推送平台信息" :label="$tp('推送平台信息')" :true-label="1" :false-label="0"
                              v-model="form.catalogWithPlatform"></el-checkbox>
-                <el-checkbox label="推送分组信息" :true-label="1" :false-label="0"
+                <el-checkbox value="推送分组信息" :label="$tp('推送分组信息')" :true-label="1" :false-label="0"
                              v-model="form.catalogWithGroup"></el-checkbox>
-                <el-checkbox label="推送行政区划" :true-label="1" :false-label="0"
+                <el-checkbox value="推送行政区划" :label="$tp('推送行政区划')" :true-label="1" :false-label="0"
                              v-model="form.catalogWithRegion"></el-checkbox>
               </div>
 
@@ -309,17 +314,20 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm" class="common_btn">确 定</el-button>
-          <el-button @click="cancel" class="common_btn">取 消</el-button>
+          <el-button type="primary" @click="submitForm" class="common_btn">{{ $tp('确 定') }}</el-button>
+          <el-button @click="cancel" class="common_btn">{{ $tp('取 消') }}</el-button>
         </div>
       </template>
     </el-dialog>
+    <GbHelpDialog v-model="showHelp" mode="platform" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup name="Platform">
+import GbHelpDialog from '@/components/GbHelpDialog.vue'
+import { QuestionFilled } from '@element-plus/icons-vue'
 import {
   addPlatform,
   delPlatform,
@@ -333,6 +341,7 @@ import router from "@/router";
 import { checkPermi } from "@/utils/wvpPermission";
 import { clacPXToVW } from "@/utils/wvpCompat";
 
+const showHelp = ref(false);
 const {proxy} = getCurrentInstance();
 
 const platformList = ref([]);
@@ -552,5 +561,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.gb-dialog-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-right: 28px; }
+.gb-help-icon { margin-right: 4px; font-size: 14px; }
+
 
 </style>

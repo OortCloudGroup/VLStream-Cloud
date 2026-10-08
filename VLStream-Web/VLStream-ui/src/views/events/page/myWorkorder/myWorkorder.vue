@@ -15,7 +15,7 @@
           <div class="searchHeight_out flexRowAC">
             <search-height-box
               keyword="title"
-              placeholder="工单标题"
+              :placeholder="$tp('工单标题')"
               :data="searchData"
               @handle="searchResetFn"
             />
@@ -63,15 +63,15 @@
           <el-table-column :label="$tp('工单状态')" align="center">
             <template #default="scope">
               <div v-if="scope.row.workorderStatus" class="workorderStatus">
-                <span v-if="scope.row.workorderStatus==='pendingDispatch'" class="LKL">待派单</span>
-                <span v-if="scope.row.workorderStatus==='pendingOrders'" class="pink">待接单</span>
-                <span v-if="scope.row.workorderStatus==='processing'" class="red">处理中</span>
-                <span v-if="scope.row.workorderStatus==='referred'" class="LKL">已转办</span>
-                <span v-if="scope.row.workorderStatus==='Returned'" class="LKL">已退回</span>
-                <span v-if="scope.row.workorderStatus==='return'" class="ZFB">待回访</span>
-                <span v-if="scope.row.workorderStatus==='completed'" class="WX">已完成</span>
-                <span v-if="scope.row.workorderStatus==='closed'" class="gray">已关闭</span>
-                <span v-if="scope.row.workorderStatus==='toBeEvaluated'" class="blue">待评价</span>
+                <span v-if="scope.row.workorderStatus==='pendingDispatch'" class="LKL">{{ $tp('待派单') }}</span>
+                <span v-if="scope.row.workorderStatus==='pendingOrders'" class="pink">{{ $tp('待接单') }}</span>
+                <span v-if="scope.row.workorderStatus==='processing'" class="red">{{ $tp('处理中') }}</span>
+                <span v-if="scope.row.workorderStatus==='referred'" class="LKL">{{ $tp('已转办') }}</span>
+                <span v-if="scope.row.workorderStatus==='Returned'" class="LKL">{{ $tp('已退回') }}</span>
+                <span v-if="scope.row.workorderStatus==='return'" class="ZFB">{{ $tp('待回访') }}</span>
+                <span v-if="scope.row.workorderStatus==='completed'" class="WX">{{ $tp('已完成') }}</span>
+                <span v-if="scope.row.workorderStatus==='closed'" class="gray">{{ $tp('已关闭') }}</span>
+                <span v-if="scope.row.workorderStatus==='toBeEvaluated'" class="blue">{{ $tp('待评价') }}</span>
               </div>
             </template>
           </el-table-column>
@@ -86,7 +86,7 @@
                     @click="newEditClick(scope.row,2)"
                   >
                     <oort-svg-icon width="14" height="14" name="table_paidan" class="new_table_svg_group_svg" />
-                    <span>派单</span>
+                    <span>{{ $tp('派单') }}</span>
                   </div>
                   <div
                     v-if="scope.row.workorderStatus==='processing'"
@@ -94,11 +94,11 @@
                     @click="newEditClick(scope.row,3)"
                   >
                     <oort-svg-icon width="14" height="14" name="table_chuli" class="new_table_svg_group_svg" />
-                    <span>处理</span>
+                    <span>{{ $tp('处理') }}</span>
                   </div>
                 </template>
                 <el-tooltip
-                  content="详情"
+                  :content="$tp('详情')"
                   effect="light"
                   placement="top"
                 >
@@ -108,7 +108,7 @@
                 </el-tooltip>
                 <el-tooltip
                   v-if="scope.row.finishTime||scope.row.workorderStatus==='closed'"
-                  content="删除"
+                  :content="$tp('删除')"
                   effect="light"
                   placement="top"
                 >
@@ -122,7 +122,7 @@
                   @click="handleCancel(scope.row)"
                 >
                   <oort-svg-icon width="14" height="14" name="table_positiveclose" class="new_table_svg_group_svg" />
-                  <span>强制关闭</span>
+                  <span>{{ $tp('强制关闭') }}</span>
                 </div>
               </div>
             </template>
@@ -143,7 +143,7 @@
     </div>
     <el-dialog
       v-model="woVisi"
-      title="工单详情"
+      :title="$tp('工单详情')"
       width="60%"
       top="5vh"
       :direction="direction"
@@ -165,6 +165,8 @@
 </template>
 
 <script setup lang="ts">
+import { translatePhrase as uiText } from '@/i18n'
+
 import { reactive, ref, onMounted } from 'vue'
 import { clacPXToVW } from '@/utils/index'
 import { useUserStore } from '@/store/modules/useraPaas'
@@ -260,18 +262,18 @@ const handleSelectionChange = (val: any) => {
 // Delete work order
 function handleDelete(row) {
   ElMessageBox.confirm(
-    '删除该流程，是否继续',
-    '提示',
+    uiText('删除该流程，是否继续'),
+    uiText('提示'),
     {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: uiText('确定'),
+      cancelButtonText: uiText('取消'),
       type: 'warning'
     }
   ).then(() => {
     deleteProcess({ procInsId: row.procInsId }).then((res: any) => {
       if (res.code === 200) {
         // Delete work order
-        ElMessage.success('流程删除成功')
+        ElMessage.success(uiText('流程删除成功'))
         myWorkorderFn()
       }
     })
@@ -282,17 +284,17 @@ function handleDelete(row) {
 //
 function handleCancel(row) {
   ElMessageBox.confirm(
-    '取消该流程，是否继续',
-    '提示',
+    uiText('取消该流程，是否继续'),
+    uiText('提示'),
     {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: uiText('确定'),
+      cancelButtonText: uiText('取消'),
       type: 'warning'
     }
   ).then(() => {
     stopProcess({ procInsId: row.procInsId }).then((res: any) => {
       if (res.code === 200) {
-        ElMessage.success('流程取消成功')
+        ElMessage.success(uiText('流程取消成功'))
         myWorkorderFn()
       }
     })

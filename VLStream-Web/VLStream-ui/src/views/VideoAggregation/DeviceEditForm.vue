@@ -10,7 +10,7 @@
     <div class="edit-content">
       <!-- info -->
       <div class="section">
-        <h3 class="section-title">基本信息</h3>
+        <h3 class="section-title">{{ $tp('基本信息') }}</h3>
 
         <el-form
           :model="formData"
@@ -19,25 +19,25 @@
           label-width="100px"
           class="edit-form"
         >
-          <el-form-item label="视频流路径" prop="streamUrl" class="required-field">
+          <el-form-item :label="$tp('视频流路径')" prop="streamUrl" class="required-field">
             <el-input
               v-model="formData.streamUrl"
-              placeholder="请输入视频流路径"
+              :placeholder="$tp('请输入视频流路径')"
               style="width: 100%"
             />
           </el-form-item>
 
-          <el-form-item label="设备名称" prop="deviceName">
+          <el-form-item :label="$tp('设备名称')" prop="deviceName">
             <el-input
               v-model="formData.deviceName"
-              placeholder="自动生成名称"
+              :placeholder="$tp('自动生成名称')"
             />
           </el-form-item>
 
-          <el-form-item label="设备标签" prop="selectedTags">
+          <el-form-item :label="$tp('设备标签')" prop="selectedTags">
             <TagSelector
               v-model="formData.selectedTags"
-              placeholder="请选择设备标签"
+              :placeholder="$tp('请选择设备标签')"
               @change="handleTagChange"
             />
           </el-form-item>
@@ -46,93 +46,91 @@
 
       <!-- info -->
       <div class="section">
-        <h3 class="section-title">更多信息</h3>
+        <h3 class="section-title">{{ $tp('更多信息') }}</h3>
 
         <el-form
           :model="formData"
           label-width="100px"
           class="edit-form"
         >
-          <el-form-item label="设备ID">
+          <el-form-item :label="$tp('设备ID')">
             <el-input
               v-model="formData.deviceId"
-              placeholder="输入设备ID"
+              :placeholder="$tp('输入设备ID')"
             />
           </el-form-item>
 
-          <el-form-item label="类型">
+          <el-form-item :label="$tp('类型')">
             <el-select
               v-model="formData.deviceType"
-              placeholder="选择设备类型"
+              :placeholder="$tp('选择设备类型')"
               style="width: 100%"
             >
-              <el-option label="摄像头" value="摄像头" />
-              <el-option label="云台" value="云台" />
-              <el-option label="球机" value="球机" />
-              <el-option label="枪机" value="枪机" />
-              <el-option label="半球" value="半球" />
+              <el-option :label="$tp('摄像头')" value="摄像头" />
+              <el-option :label="$tp('云台')" value="云台" />
+              <el-option :label="$tp('球机')" value="球机" />
+              <el-option :label="$tp('枪机')" value="枪机" />
+              <el-option :label="$tp('半球')" value="半球" />
             </el-select>
           </el-form-item>
 
-          <el-form-item label="图片路径">
+          <el-form-item :label="$tp('图片路径')">
             <el-input
               v-model="formData.imagePath"
-              placeholder="输入图片路径"
+              :placeholder="$tp('输入图片路径')"
             />
           </el-form-item>
 
-          <el-form-item label="经纬度坐标">
+          <el-form-item :label="$tp('经纬度坐标')">
             <div class="coordinate-input">
               <el-input
                 v-model="formData.longitude"
-                placeholder="经度: 116.39139 或 116°23′29″E"
+                :placeholder="$tp('经度: 116.39139 或 116°23′29″E')"
                 class="coordinate-item"
               />
               <el-input
                 v-model="formData.latitude"
-                placeholder="纬度: 39.90917 或 39°54′26″N"
+                :placeholder="$tp('纬度: 39.90917 或 39°54′26″N')"
                 class="coordinate-item"
               />
-              <el-button type="primary" class="locate-btn" @click="openMapSelector">
-                地图选点
-              </el-button>
+              <el-button type="primary" class="locate-btn" @click="openMapSelector"> {{ $tp('地图选点') }} </el-button>
             </div>
           </el-form-item>
 
-          <el-form-item label="高度位置">
+          <el-form-item :label="$tp('高度位置')">
             <div class="height-options">
               <el-radio-group v-model="formData.heightPosition">
-                <el-radio label="高空">高空</el-radio>
-                <el-radio label="地面">地面</el-radio>
-                <el-radio label="地下">地下</el-radio>
-                <el-radio label="其他">其他</el-radio>
+                <el-radio value="高空" :label="$tp('高空')">{{ $tp('高空') }}</el-radio>
+                <el-radio value="地面" :label="$tp('地面')">{{ $tp('地面') }}</el-radio>
+                <el-radio value="地下" :label="$tp('地下')">{{ $tp('地下') }}</el-radio>
+                <el-radio value="其他" :label="$tp('其他')">{{ $tp('其他') }}</el-radio>
               </el-radio-group>
             </div>
           </el-form-item>
 
-          <el-form-item label="详细地址">
+          <el-form-item :label="$tp('详细地址')">
             <el-input
               v-model="formData.address"
-              placeholder="输入详细地址：省/市/区（县）/街道（村）"
+              :placeholder="$tp('输入详细地址：省/市/区（县）/街道（村）')"
             />
           </el-form-item>
 
-          <el-form-item label="区划选择">
+          <el-form-item :label="$tp('区划选择')">
             <el-cascader
               v-model="formData.region"
               :options="regionOptions"
-              placeholder="选择区划"
+              :placeholder="$tp('选择区划')"
               style="width: 100%"
               clearable
             />
           </el-form-item>
 
-          <el-form-item label="备注">
+          <el-form-item :label="$tp('备注')">
             <el-input
               v-model="formData.remark"
               type="textarea"
               :rows="3"
-              placeholder="请输入备注信息"
+              :placeholder="$tp('请输入备注信息')"
             />
           </el-form-item>
         </el-form>
@@ -140,15 +138,15 @@
 
       <!-- button -->
       <div class="edit-footer">
-        <el-button @click="handleCancel" class="cancel-btn common_btn">取消</el-button>
-        <el-button type="primary" @click="handleSave" class="save-btn common_btn">保存</el-button>
+        <el-button @click="handleCancel" class="cancel-btn common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" @click="handleSave" class="save-btn common_btn">{{ $tp('保存') }}</el-button>
       </div>
     </div>
 
     <!--  -->
     <el-dialog
       v-model="mapDialogVisible"
-      title="地图选点"
+      :title="$tp('地图选点')"
       width="45%"
     >
       <div class="map-container">
@@ -160,28 +158,30 @@
             :loading="locating"
             size="small"
           >
-            {{ locating ? '定位中...' : '定位到当前位置' }}
+            {{ locating ? $tp('定位中...') : $tp('定位到当前位置') }}
           </el-button>
           <div class="location-tip">
             <el-icon><InfoFilled /></el-icon>
-            <span>点击地图任意位置选择坐标，或使用GPS定位到当前位置</span>
+            <span>{{ $tp('点击地图任意位置选择坐标，或使用GPS定位到当前位置') }}</span>
           </div>
         </div>
         <div id="map-selector" class="map-area"></div>
         <div class="coordinate-display">
-          <span>经度: {{ selectedCoordinate.longitude }}</span>
-          <span>纬度: {{ selectedCoordinate.latitude }}</span>
+          <span>{{ $tp('经度:') }} {{ selectedCoordinate.longitude }}</span>
+          <span>{{ $tp('纬度:') }} {{ selectedCoordinate.latitude }}</span>
         </div>
       </div>
       <template #footer>
-        <el-button @click="mapDialogVisible = false" class="common_btn">取消</el-button>
-        <el-button type="primary" @click="confirmCoordinate" class="common_btn">确定</el-button>
+        <el-button @click="mapDialogVisible = false" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" @click="confirmCoordinate" class="common_btn">{{ $tp('确定') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Location, InfoFilled } from '@element-plus/icons-vue'
@@ -432,7 +432,7 @@ const initMapSelector = () => {
 // GPS can
 const getCurrentLocation = () => {
   if (!navigator.geolocation) {
-    ElMessage.error('您的浏览器不支持地理位置服务')
+    ElMessage.error(uiText('您的浏览器不支持地理位置服务'))
     return
   }
 
@@ -504,7 +504,7 @@ const getCurrentLocation = () => {
       }
 
       locating.value = false
-      ElMessage.success('定位成功！精度约 ' + Math.round(accuracy) + ' 米')
+      ElMessage.success(uiText('定位成功！精度约 ') + Math.round(accuracy) + uiText(' 米'))
     },
     (error) => {
       locating.value = false
@@ -537,9 +537,9 @@ const confirmCoordinate = () => {
     formData.value.longitude = selectedCoordinate.value.longitude
     formData.value.latitude = selectedCoordinate.value.latitude
     mapDialogVisible.value = false
-    ElMessage.success('坐标已设置')
+    ElMessage.success(uiText('坐标已设置'))
   } else {
-    ElMessage.error('请选择有效的坐标点')
+    ElMessage.error(uiText('请选择有效的坐标点'))
   }
 }
 
@@ -550,7 +550,7 @@ const handleSave = async () => {
       //
       if (formData.value.longitude && formData.value.latitude) {
         if (!validateCoordinates(formData.value.longitude, formData.value.latitude)) {
-          ElMessage.error('请输入有效的经纬度坐标')
+          ElMessage.error(uiText('请输入有效的经纬度坐标'))
           return
         }
       }

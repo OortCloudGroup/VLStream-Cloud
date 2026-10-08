@@ -8,51 +8,47 @@
 <template>
   <div class="ssh-connection-config">
     <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
-      <el-form-item label="服务器地址" prop="host">
-        <el-input v-model="form.host" placeholder="请输入服务器IP或域名" />
+      <el-form-item :label="$tp('服务器地址')" prop="host">
+        <el-input v-model="form.host" :placeholder="$tp('请输入服务器IP或域名')" />
       </el-form-item>
 
-      <el-form-item label="端口" prop="port">
+      <el-form-item :label="$tp('端口')" prop="port">
         <el-input-number v-model="form.port" :min="1" :max="65535" />
       </el-form-item>
 
-      <el-form-item label="用户名" prop="username">
-        <el-input v-model="form.username" placeholder="请输入用户名" />
+      <el-form-item :label="$tp('用户名')" prop="username">
+        <el-input v-model="form.username" :placeholder="$tp('请输入用户名')" />
       </el-form-item>
 
-      <el-form-item label="认证方式" prop="authType">
+      <el-form-item :label="$tp('认证方式')" prop="authType">
         <el-radio-group v-model="form.authType">
-          <el-radio label="password">密码认证</el-radio>
-          <el-radio label="key">密钥认证</el-radio>
+          <el-radio label="password">{{ $tp('密码认证') }}</el-radio>
+          <el-radio label="key">{{ $tp('密钥认证') }}</el-radio>
         </el-radio-group>
       </el-form-item>
 
-      <el-form-item v-if="form.authType === 'password'" label="密码" prop="password">
+      <el-form-item v-if="form.authType === 'password'" :label="$tp('密码')" prop="password">
         <el-input
           v-model="form.password"
           type="password"
-          placeholder="请输入密码"
+          :placeholder="$tp('请输入密码')"
           show-password
         />
       </el-form-item>
 
-      <el-form-item v-if="form.authType === 'key'" label="私钥文件" prop="privateKey">
+      <el-form-item v-if="form.authType === 'key'" :label="$tp('私钥文件')" prop="privateKey">
         <el-input
           v-model="form.privateKey"
           type="textarea"
           :rows="4"
-          placeholder="请粘贴私钥内容或选择私钥文件"
+          :placeholder="$tp('请粘贴私钥内容或选择私钥文件')"
         />
       </el-form-item>
 
       <el-form-item>
-        <el-button type="primary" @click="testConnection" :loading="testing">
-          测试连接
-        </el-button>
-        <el-button @click="saveConnection" :disabled="!connectionValid">
-          保存配置
-        </el-button>
-        <el-button @click="resetForm">重置</el-button>
+        <el-button type="primary" @click="testConnection" :loading="testing"> {{ $tp('测试连接') }} </el-button>
+        <el-button @click="saveConnection" :disabled="!connectionValid"> {{ $tp('保存配置') }} </el-button>
+        <el-button @click="resetForm">{{ $tp('重置') }}</el-button>
       </el-form-item>
     </el-form>
 

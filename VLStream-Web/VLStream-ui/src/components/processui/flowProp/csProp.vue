@@ -9,46 +9,45 @@
   <div class="prop_body">
     <div class="prop_body_tab">
       <el-tabs v-model="activeName" class="demo-tabs" @tab-click="handleClick">
-        <el-tab-pane label="设置抄送人" name="first">
+        <el-tab-pane :label="$tp('设置抄送人')" name="first">
           <div class="prop_title">
-            <span>节点名称</span>
+            <span>{{ $tp('节点名称') }}</span>
           </div>
           <div class="prop_item">
             <el-input
               v-model="nodeName"
-              placeholder="请输入节点名称"
+              :placeholder="$tp('请输入节点名称')"
             />
           </div>
           <div class="prop_title">
-            <span>选择抄送人</span>
+            <span>{{ $tp('选择抄送人') }}</span>
           </div>
           <choose-empty-user v-model:active-choose-data="activeChooseData" />
           <div class="prop_title">
-            <span>允许发起人添加抄送人</span>
+            <span>{{ $tp('允许发起人添加抄送人') }}</span>
           </div>
           <div class="prop_item prop_item_group">
             <el-switch v-model="activeChooseData.canSelectCS" />
           </div>
         </el-tab-pane>
-        <el-tab-pane label="表单权限设置" name="second">
+        <el-tab-pane :label="$tp('表单权限设置')" name="second">
           <FormPermissionTable v-if="activeChooseData.formProperties" v-model:filed-list="activeChooseData.formProperties" />
           <div v-else>
-            <span>请在发起人节点设置表单</span>
+            <span>{{ $tp('请在发起人节点设置表单') }}</span>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="节点表单" name="fivth">
+        <el-tab-pane :label="$tp('节点表单')" name="fivth">
           <div class="prop_title">
-            <span>设置节点表单</span>
+            <span>{{ $tp('设置节点表单') }}</span>
           </div>
           <div class="prop_item" style="flex-direction: column;">
             <div v-if="currentForm" class="current_form">
-              <span>
-                当前表单： {{ currentForm.formName }}
+              <span> {{ $tp('当前表单：') }} {{ currentForm.formName }}
               </span>
             </div>
             <el-cascader
               :props="cascaderProps"
-              placeholder="请选择表单"
+              :placeholder="$tp('请选择表单')"
               style="width: 100%"
               @change="setFormKey"
             />
@@ -58,12 +57,8 @@
     </div>
     <div class="prop_body_bottom button_group">
       <!-- button , -->
-      <el-button @click="cancel" class="common_btn">
-        取消
-      </el-button>
-      <el-button type="primary" @click="confirm" class="common_btn">
-        确定
-      </el-button>
+      <el-button @click="cancel" class="common_btn"> {{ $tp('取消') }} </el-button>
+      <el-button type="primary" @click="confirm" class="common_btn"> {{ $tp('确定') }} </el-button>
     </div>
   </div>
 </template>

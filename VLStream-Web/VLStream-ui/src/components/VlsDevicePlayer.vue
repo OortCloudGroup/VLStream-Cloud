@@ -2,7 +2,7 @@
   <div v-loading="loading" class="vls-device-player">
     <CameraRtcPlayer v-if="cameraConfig" :device-id="cameraConfig.cameraId" :socket-url="cameraConfig.socketUrl" />
     <RtcPlayer v-else-if="rtcUrl" :video-url="rtcUrl" />
-    <el-empty v-else-if="!loading" :description="error || '设备没有上报可用视频流'" />
+    <el-empty v-else-if="!loading" :description="error || $tp('设备没有上报可用视频流')" />
   </div>
 </template>
 

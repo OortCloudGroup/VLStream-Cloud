@@ -25,7 +25,7 @@
     <el-input
         v-if="inputVisible"
         v-model="ptzPresetId"
-        placeholder="预置位编号"
+        :placeholder="$tp('预置位编号')"
         addon-before="预置位编号"
         addon-after="(1-255)"
         style="width: 500px; vertical-align: bottom;"
@@ -33,18 +33,20 @@
         size="small"
     >
       <template #append>
-        <el-button @click="addPreset" style="width: 100px;">保存</el-button>
+        <el-button @click="addPreset" style="width: 100px;">{{ $tp('保存') }}</el-button>
         |
-        <el-button @click="cancel" style="width: 100px;">取消</el-button>
+        <el-button @click="cancel" style="width: 100px;">{{ $tp('取消') }}</el-button>
       </template>
     </el-input>
 
     <!-- button -->
-    <el-button v-else size="small" @click="showInput">+ 添加</el-button>
+    <el-button v-else size="small" @click="showInput">{{ $tp('+ 添加') }}</el-button>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import {ref, onMounted} from 'vue';
 import axios from 'axios';
 import {ElMessage, ElLoading, ElMessageBox} from 'element-plus';
@@ -168,9 +170,9 @@ const gotoPreset = async (preset) => {
 
 // Delete
 const delPreset = (preset) => {
-  ElMessageBox.confirm('确定删除此预置位？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(uiText('确定删除此预置位？'), uiText('提示'), {
+    confirmButtonText: uiText('确定'),
+    cancelButtonText: uiText('取消'),
     type: 'warning'
   })
       .then(async () => {

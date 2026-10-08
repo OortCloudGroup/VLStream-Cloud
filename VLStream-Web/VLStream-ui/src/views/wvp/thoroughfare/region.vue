@@ -8,11 +8,11 @@
 <template>
   <div class="channel-panel tableTenBox flexRowAC">
     <div v-show="!treeCollapsed" v-yResize class="police_aside_use">
-      <div class="treeTitle">行政区划</div>
+      <div class="treeTitle">{{ $tp('行政区划') }}</div>
       <div class="tree_search_content flexRowAC">
         <el-input
           v-model="regionName"
-          placeholder="搜索"
+          :placeholder="$tp('搜索')"
           clearable
           prefix-icon="Search"
         />
@@ -59,15 +59,14 @@
               :disabled="addDisabled"
               @click="handleAdd"
             >
-              <el-icon class="BtnImg"><Plus /></el-icon>新建
-            </button>
+              <el-icon class="BtnImg"><Plus /></el-icon>{{ $tp('新建') }} </button>
             <button-group :button-list="toolbarButtonList" />
           </div>
         </div>
         <div class="searchHeight_out flexRowAC">
           <search-height-box
             keyword="query"
-            placeholder="搜索"
+            :placeholder="$tp('搜索')"
             :data="searchData"
             @handle="searchResetFn"
           />
@@ -90,22 +89,22 @@
         <el-table-column prop="gbAddress" :label="$tp('位置')" show-overflow-tooltip />
         <el-table-column :label="$tp('类型')" :width="clacPXToVW(120)">
           <template #default="scope">
-            <el-tag effect="plain" v-if="scope.row.dataType === 1">国标设备</el-tag>
-            <el-tag effect="plain" type="success" v-else-if="scope.row.dataType === 2">推流设备</el-tag>
-            <el-tag effect="plain" type="warning" v-else-if="scope.row.dataType === 3">拉流代理</el-tag>
+            <el-tag effect="plain" v-if="scope.row.dataType === 1">{{ $tp('国标设备') }}</el-tag>
+            <el-tag effect="plain" type="success" v-else-if="scope.row.dataType === 2">{{ $tp('推流设备') }}</el-tag>
+            <el-tag effect="plain" type="warning" v-else-if="scope.row.dataType === 3">{{ $tp('拉流代理') }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column :label="$tp('状态')" :width="clacPXToVW(90)">
           <template #default="scope">
-            <el-tag v-if="scope.row.gbStatus === 'ON'">在线</el-tag>
-            <el-tag type="info" v-else>离线</el-tag>
+            <el-tag v-if="scope.row.gbStatus === 'ON'">{{ $tp('在线') }}</el-tag>
+            <el-tag type="info" v-else>{{ $tp('离线') }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(140)">
           <template #default="scope">
             <div class="operateAppBox flexRowAC" @click.stop>
               <div class="new_table_svg_group" @click="onMap(scope.row)">
-                <span>设置位置</span>
+                <span>{{ $tp('设置位置') }}</span>
               </div>
             </div>
           </template>
@@ -124,31 +123,31 @@
 
       <el-dialog :title="title" v-model="open" width="60%" append-to-body>
         <el-form :model="queryParamsSelect" ref="querySelectRef" :inline="true" v-show="showSearchSelect" label-width="68px">
-          <el-form-item label="关键字" prop="query">
-            <el-input v-model="queryParamsSelect.query" placeholder="请输入关键字" clearable style="width: 240px" @keyup.enter="handleSelectQuery" />
+          <el-form-item :label="$tp('关键字')" prop="query">
+            <el-input v-model="queryParamsSelect.query" :placeholder="$tp('请输入关键字')" clearable style="width: 240px" @keyup.enter="handleSelectQuery" />
           </el-form-item>
-          <el-form-item label="类型" prop="channelType">
-            <el-select v-model="queryParamsSelect.channelType" placeholder="请选择类型" style="width: 250px;" default-first-option>
-              <el-option label="国标设备" :value="1"></el-option>
-              <el-option label="推流设备" :value="2"></el-option>
-              <el-option label="拉流代理" :value="3"></el-option>
+          <el-form-item :label="$tp('类型')" prop="channelType">
+            <el-select v-model="queryParamsSelect.channelType" :placeholder="$tp('请选择类型')" style="width: 250px;" default-first-option>
+              <el-option :label="$tp('国标设备')" :value="1"></el-option>
+              <el-option :label="$tp('推流设备')" :value="2"></el-option>
+              <el-option :label="$tp('拉流代理')" :value="3"></el-option>
             </el-select>
           </el-form-item>
-          <el-form-item label="在线状态" prop="online">
-            <el-select v-model="queryParamsSelect.online" placeholder="请选择在线状态" style="width: 250px;" default-first-option>
-              <el-option label="在线" value="true"></el-option>
-              <el-option label="离线" value="false"></el-option>
+          <el-form-item :label="$tp('在线状态')" prop="online">
+            <el-select v-model="queryParamsSelect.online" :placeholder="$tp('请选择在线状态')" style="width: 250px;" default-first-option>
+              <el-option :label="$tp('在线')" value="true"></el-option>
+              <el-option :label="$tp('离线')" value="false"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleSelectQuery">搜索</el-button>
-            <el-button icon="Refresh" @click="resetSelectQuery">重置</el-button>
+            <el-button type="primary" icon="Search" @click="handleSelectQuery">{{ $tp('搜索') }}</el-button>
+            <el-button icon="Refresh" @click="resetSelectQuery">{{ $tp('重置') }}</el-button>
           </el-form-item>
         </el-form>
 
         <el-row :gutter="10" class="mb8">
           <el-col :span="1.5">
-            <el-button type="primary" plain icon="Select" :disabled="multipleSelect" @click="handleSelect">选择</el-button>
+            <el-button type="primary" plain icon="Select" :disabled="multipleSelect" @click="handleSelect">{{ $tp('选择') }}</el-button>
           </el-col>
           <right-toolbar v-model:showSearch="showSearchSelect" @queryTable="getChannelList"></right-toolbar>
         </el-row>
@@ -160,15 +159,15 @@
           <el-table-column prop="gbManufacturer" :label="$tp('厂家')" align="center" />
           <el-table-column :label="$tp('类型')" align="center">
             <template #default="scope">
-              <el-tag effect="plain" v-if="scope.row.dataType === 1">国标设备</el-tag>
-              <el-tag effect="plain" type="success" v-else-if="scope.row.dataType === 2">推流设备</el-tag>
-              <el-tag effect="plain" type="warning" v-else-if="scope.row.dataType === 3">拉流代理</el-tag>
+              <el-tag effect="plain" v-if="scope.row.dataType === 1">{{ $tp('国标设备') }}</el-tag>
+              <el-tag effect="plain" type="success" v-else-if="scope.row.dataType === 2">{{ $tp('推流设备') }}</el-tag>
+              <el-tag effect="plain" type="warning" v-else-if="scope.row.dataType === 3">{{ $tp('拉流代理') }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column :label="$tp('状态')" align="center">
             <template #default="scope">
-              <el-tag v-if="scope.row.gbStatus === 'ON'">在线</el-tag>
-              <el-tag type="info" v-else>离线</el-tag>
+              <el-tag v-if="scope.row.gbStatus === 'ON'">{{ $tp('在线') }}</el-tag>
+              <el-tag type="info" v-else>{{ $tp('离线') }}</el-tag>
             </template>
           </el-table-column>
         </el-table>
@@ -183,7 +182,7 @@
       </el-dialog>
     </div>
 
-    <el-dialog title="修改地址" v-model="showMap" width="45%" append-to-body>
+    <el-dialog :title="$tp('修改地址')" v-model="showMap" width="45%" append-to-body>
       <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="formMap.gbAddress" />
     </el-dialog>
   </div>

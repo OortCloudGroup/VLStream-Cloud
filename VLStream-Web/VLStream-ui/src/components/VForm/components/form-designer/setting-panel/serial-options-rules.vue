@@ -7,34 +7,32 @@
 
 <template>
   <div class="serial_dialog">
-    <el-button type="primary" @click="addOption">
-      添加规则
-    </el-button>
+    <el-button type="primary" @click="addOption"> {{ $tp('添加规则') }} </el-button>
     <div v-for="(item,index) in options" :key="index" class="rule_item">
-      <el-form-item style="width: 100%;" label="规则类型">
-        <el-select v-model="item.type" placeholder="请选择规则类型" style="width: 100%;">
-          <el-option label=" 自动计数" :value="1" />
-          <el-option label=" 提交日期" :value="2" />
-          <el-option label=" 固定字符" :value="3" />
-          <el-option label=" 表单字段" :value="4" />
+      <el-form-item style="width: 100%;" :label="$tp('规则类型')">
+        <el-select v-model="item.type" :placeholder="$tp('请选择规则类型')" style="width: 100%;">
+          <el-option :label="$tp('自动计数')" :value="1" />
+          <el-option :label="$tp('提交日期')" :value="2" />
+          <el-option :label="$tp('固定字符')" :value="3" />
+          <el-option :label="$tp('表单字段')" :value="4" />
         </el-select>
       </el-form-item>
       <template v-if="item.type === 1">
-        <el-form-item style="width: 100%;" label="重置周期">
+        <el-form-item style="width: 100%;" :label="$tp('重置周期')">
           <el-select v-model="item.countCycle" style="width:120px">
-            <el-option label="不自动周期重置" :value="0" />
-            <el-option label="每日重置" :value="1" />
-            <el-option label="每周重置" :value="2" />
-            <el-option label="每月重置" :value="3" />
-            <el-option label="每年重置" :value="4" />
+            <el-option :label="$tp('不自动周期重置')" :value="0" />
+            <el-option :label="$tp('每日重置')" :value="1" />
+            <el-option :label="$tp('每周重置')" :value="2" />
+            <el-option :label="$tp('每月重置')" :value="3" />
+            <el-option :label="$tp('每年重置')" :value="4" />
           </el-select>
         </el-form-item>
-        <el-form-item label="初始数值">
+        <el-form-item :label="$tp('初始数值')">
           <el-input-number v-model="item.initNumber" style="width:120px" />
         </el-form-item>
       </template>
       <template v-if="item.type === 2">
-        <el-form-item style="width: 100%;" label="提交日期格式">
+        <el-form-item style="width: 100%;" :label="$tp('提交日期格式')">
           <el-select v-model="item.dateFormat" style="width:120px">
             <el-option label="2025" value="YYYY" />
             <el-option label="202501" value="YYYYMM" />
@@ -47,12 +45,12 @@
         </el-form-item>
       </template>
       <template v-if="item.type === 3">
-        <el-form-item label="固定字符">
+        <el-form-item :label="$tp('固定字符')">
           <el-input v-model="item.content" style="width:120px" />
         </el-form-item>
       </template>
       <template v-if="item.type === 4">
-        <el-form-item style="width: 100%;" label="表单字段">
+        <el-form-item style="width: 100%;" :label="$tp('表单字段')">
           <el-select v-model="item.formFiled" style="width:120px">
             <el-option v-for="(itd, inds) in widgetList" :key="inds" :label="itd.label" :value="itd.id" />
           </el-select>
@@ -63,8 +61,8 @@
       </el-icon>
     </div>
     <span class="dialog-footer">
-      <el-button size="large" @click="cancelSave" class="common_btn">取 消</el-button>
-      <el-button size="large" type="primary" @click="confirmSave" class="common_btn">确 定</el-button>
+      <el-button size="large" @click="cancelSave" class="common_btn">{{ $tp('取 消') }}</el-button>
+      <el-button size="large" type="primary" @click="confirmSave" class="common_btn">{{ $tp('确 定') }}</el-button>
     </span>
   </div>
 </template>

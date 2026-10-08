@@ -14,16 +14,14 @@
             <div class="depNameBox flexRowAC">
               <div class="exportBtnBox flexRowAC">
                 <button type="button" class="exportBtn newBtn flexRowAC" @click="handleCreate">
-                  <el-icon class="BtnImg"><Plus /></el-icon>
-                  新建
-                </button>
+                  <el-icon class="BtnImg"><Plus /></el-icon> {{ $tp('新建') }} </button>
                 <button-group :button-list="toolbarButtonList" />
               </div>
             </div>
             <div class="searchHeight_out flexRowAC">
               <search-height-box
                 keyword="keyword"
-                placeholder="搜索"
+                :placeholder="$tp('搜索')"
                 :data="searchData"
                 @handle="searchResetFn"
               />
@@ -49,7 +47,7 @@
             <el-table-column prop="categoryName" :label="$tp('类型')" :width="clacPXToVW(100)" align="center">
               <template #default="scope">
                 <el-tag :type="scope.row.category === 1 ? 'primary' : 'success'">
-                  {{ scope.row.category === 1 ? '菜单' : scope.row.category === 2 ? '按钮' : '未知' }}
+                  {{ scope.row.category === 1 ? $tp('菜单') : scope.row.category === 2 ? $tp('按钮') : $tp('未知') }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -60,11 +58,11 @@
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handleEdit(scope.row)">
                     <oort-svg-icon width="14" height="14" name="edit_icon" class="new_table_svg_group_svg" />
-                    <span>编辑</span>
+                    <span>{{ $tp('编辑') }}</span>
                   </div>
                   <div class="new_table_svg_group" @click="handleSingleRemove(scope.row)">
                     <oort-svg-icon color="red" width="14" height="14" name="delete_icon" class="new_table_svg_group_svg" />
-                    <span>删除</span>
+                    <span>{{ $tp('删除') }}</span>
                   </div>
                 </div>
               </template>
@@ -88,83 +86,85 @@
         label-width="100px"
         style="padding: 10px 20px"
       >
-        <el-form-item label="上级菜单" prop="parentId">
+        <el-form-item :label="$tp('上级菜单')" prop="parentId">
           <el-tree-select
             v-model="form.parentId"
             :data="menuTreeOptions"
             node-key="id"
             :props="{ label: 'label', children: 'children' }"
-            placeholder="请选择上级菜单 (不选则为根节点)"
+            :placeholder="$tp('请选择上级菜单 (不选则为根节点)')"
             check-strictly
             style="width: 100%"
             clearable
           />
         </el-form-item>
 
-        <el-form-item label="菜单名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入菜单名称" />
+        <el-form-item :label="$tp('菜单名称')" prop="name">
+          <el-input v-model="form.name" :placeholder="$tp('请输入菜单名称')" />
         </el-form-item>
 
-        <el-form-item label="路由编号" prop="code">
-          <el-input v-model="form.code" placeholder="请输入路由编号" />
+        <el-form-item :label="$tp('路由编号')" prop="code">
+          <el-input v-model="form.code" :placeholder="$tp('请输入路由编号')" />
         </el-form-item>
 
-        <el-form-item label="菜单别名" prop="alias">
-          <el-input v-model="form.alias" placeholder="请输入菜单别名" />
+        <el-form-item :label="$tp('菜单别名')" prop="alias">
+          <el-input v-model="form.alias" :placeholder="$tp('请输入菜单别名')" />
         </el-form-item>
 
-        <el-form-item label="菜单类型" prop="category">
+        <el-form-item :label="$tp('菜单类型')" prop="category">
           <el-radio-group v-model="form.category">
-            <el-radio :label="1">菜单</el-radio>
-            <el-radio :label="2">按钮</el-radio>
+            <el-radio :label="1">{{ $tp('菜单') }}</el-radio>
+            <el-radio :label="2">{{ $tp('按钮') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item v-if="form.category === 1" label="路由地址" prop="path">
-          <el-input v-model="form.path" placeholder="请输入路由 path (如 /system/users)" />
+        <el-form-item v-if="form.category === 1" :label="$tp('路由地址')" prop="path">
+          <el-input v-model="form.path" :placeholder="$tp('请输入路由 path (如 /system/users)')" />
         </el-form-item>
 
-        <el-form-item label="权限标识" prop="action">
-          <el-input v-model="form.action" placeholder="请输入权限标识 (如 system_user_list)" />
+        <el-form-item :label="$tp('权限标识')" prop="action">
+          <el-input v-model="form.action" :placeholder="$tp('请输入权限标识 (如 system_user_list)')" />
         </el-form-item>
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="菜单排序" prop="sort">
+            <el-form-item :label="$tp('菜单排序')" prop="sort">
               <el-input-number v-model="form.sort" :min="1" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="是否新窗口" prop="isOpen">
+            <el-form-item :label="$tp('是否新窗口')" prop="isOpen">
               <el-switch
                 v-model="form.isOpen"
                 :active-value="1"
                 :inactive-value="2"
-                active-text="是"
-                inactive-text="否"
+                :active-text="$tp('是')"
+                :inactive-text="$tp('否')"
                 inline-prompt
               />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-form-item label="菜单图标" prop="source">
-          <el-input v-model="form.source" placeholder="请输入图标名称" />
+        <el-form-item :label="$tp('菜单图标')" prop="source">
+          <el-input v-model="form.source" :placeholder="$tp('请输入图标名称')" />
         </el-form-item>
 
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :rows="2" />
+        <el-form-item :label="$tp('备注')" prop="remark">
+          <el-input v-model="form.remark" type="textarea" :placeholder="$tp('请输入备注')" :rows="2" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false" class="common_btn">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">确定</el-button>
+        <el-button @click="dialogVisible = false" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">{{ $tp('确定') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
@@ -232,7 +232,7 @@ async function loadData() {
     menuTreeOptions.value = normalizeTree(tree)
   } catch (error) {
     console.error('加载菜单列表失败:', error)
-    ElMessage.error('加载菜单列表失败')
+    ElMessage.error(uiText('加载菜单列表失败'))
   } finally {
     loading.value = false
   }
@@ -259,12 +259,12 @@ const searchResetFn = (val, reset) => {
 }
 
 const handleExport = () => {
-  ElMessage.success('导出数据')
+  ElMessage.success(uiText('导出数据'))
 }
 
 function handleToolbarEdit() {
   if (selectedRows.value.length !== 1) {
-    ElMessage.warning('请选择一条记录进行编辑')
+    ElMessage.warning(uiText('请选择一条记录进行编辑'))
     return
   }
   handleEdit(selectedRows.value[0])
@@ -308,15 +308,15 @@ async function handleSaveSubmit() {
       try {
         const res = await submitMenu(form.value)
         if (isSuccess(res)) {
-          ElMessage.success('保存菜单成功')
+          ElMessage.success(uiText('保存菜单成功'))
           dialogVisible.value = false
           loadData()
         } else {
-          ElMessage.error(res?.msg || '保存失败')
+          ElMessage.error(res?.msg || uiText('保存失败'))
         }
       } catch (error) {
         console.error('提交菜单表单异常:', error)
-        ElMessage.error('提交菜单表单异常')
+        ElMessage.error(uiText('提交菜单表单异常'))
       } finally {
         saving.value = false
       }
@@ -325,22 +325,22 @@ async function handleSaveSubmit() {
 }
 
 function executeRemove(ids, msg) {
-  ElMessageBox.confirm(msg, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(msg, uiText('提示'), {
+    confirmButtonText: uiText('确定'),
+    cancelButtonText: uiText('取消'),
     type: 'warning'
   }).then(async () => {
     try {
       const res = await removeMenus(ids)
       if (isSuccess(res)) {
-        ElMessage.success('删除菜单成功')
+        ElMessage.success(uiText('删除菜单成功'))
         loadData()
       } else {
-        ElMessage.error(res?.msg || '删除失败')
+        ElMessage.error(res?.msg || uiText('删除失败'))
       }
     } catch (error) {
       console.error('删除菜单异常:', error)
-      ElMessage.error('删除菜单异常')
+      ElMessage.error(uiText('删除菜单异常'))
     }
   }).catch(() => {})
 }

@@ -8,11 +8,11 @@
 <template>
   <div id="ptzScan">
     <div style="display: grid; grid-template-columns: 80px auto; line-height: 28px; margin-bottom: 10px;">
-      <span>扫描组号: </span>
+      <span>{{ $tp('扫描组号:') }} </span>
       <el-input
           min="1"
           max="255"
-          placeholder="扫描组号"
+          :placeholder="$tp('扫描组号')"
           addonBefore="扫描组号"
           addonAfter="(1-255)"
           v-model="scanId"
@@ -21,15 +21,15 @@
       </el-input>
     </div>
 
-    <el-button size="mini" @click="setScanLeft">设置左边界</el-button>
-    <el-button size="mini" @click="setScanRight">设置右边界</el-button>
+    <el-button size="mini" @click="setScanLeft">{{ $tp('设置左边界') }}</el-button>
+    <el-button size="mini" @click="setScanRight">{{ $tp('设置右边界') }}</el-button>
 
     <el-form size="mini" :inline="true" v-if="setSpeedVisible" style="margin-top: 5px">
       <el-form-item>
         <el-input
             min="1"
             max="4095"
-            placeholder="巡航速度"
+            :placeholder="$tp('巡航速度')"
             addonBefore="巡航速度"
             addonAfter="(1-4095)"
             v-if="setSpeedVisible"
@@ -39,13 +39,13 @@
         </el-input>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="setSpeed">保存</el-button>
-        <el-button @click="cancelSetSpeed">取消</el-button>
+        <el-button type="primary" @click="setSpeed">{{ $tp('保存') }}</el-button>
+        <el-button @click="cancelSetSpeed">{{ $tp('取消') }}</el-button>
       </el-form-item>
     </el-form>
-    <el-button v-else size="mini" @click="setSpeedVisible = true">设置扫描速度</el-button>
-    <el-button size="mini" @click="startScan">开始自动扫描</el-button>
-    <el-button size="mini" @click="stopScan">停止自动扫描</el-button>
+    <el-button v-else size="mini" @click="setSpeedVisible = true">{{ $tp('设置扫描速度') }}</el-button>
+    <el-button size="mini" @click="startScan">{{ $tp('开始自动扫描') }}</el-button>
+    <el-button size="mini" @click="stopScan">{{ $tp('停止自动扫描') }}</el-button>
   </div>
 </template>
 

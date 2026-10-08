@@ -8,38 +8,38 @@
 <template>
   <div class="ptz-panel">
     <div class="ptz-header">
-      <h3>PTZ控制</h3>
+      <h3>{{ $tp('PTZ控制') }}</h3>
       <div class="ptz-status">
         <span class="status-dot" :class="{ online: isConnected }"></span>
-        {{ isConnected ? '已连接' : '未连接' }}
+        {{ isConnected ? $tp('已连接') : $tp('未连接') }}
       </div>
     </div>
 
     <div class="ptz-content">
       <!-- control -->
       <div class="control-section">
-        <h4>方向控制</h4>
+        <h4>{{ $tp('方向控制') }}</h4>
         <div class="direction-controls">
           <div class="direction-row">
-            <button class="direction-btn" @click="$emit('ptz-control', 'up')" title="向上">
+            <button class="direction-btn" @click="$emit('ptz-control', 'up')" :title="$tp('向上')">
               <el-icon><ArrowUp /></el-icon>
             </button>
           </div>
           <div class="direction-row">
-            <button class="direction-btn" @click="$emit('ptz-control', 'left')" title="向左">
+            <button class="direction-btn" @click="$emit('ptz-control', 'left')" :title="$tp('向左')">
               <el-icon><ArrowLeft /></el-icon>
             </button>
             <div class="center-area">
-              <button class="center-btn" @click="$emit('ptz-control', 'home')" title="回中">
+              <button class="center-btn" @click="$emit('ptz-control', 'home')" :title="$tp('回中')">
                 <el-icon><Aim /></el-icon>
               </button>
             </div>
-            <button class="direction-btn" @click="$emit('ptz-control', 'right')" title="向右">
+            <button class="direction-btn" @click="$emit('ptz-control', 'right')" :title="$tp('向右')">
               <el-icon><ArrowRight /></el-icon>
             </button>
           </div>
           <div class="direction-row">
-            <button class="direction-btn" @click="$emit('ptz-control', 'down')" title="向下">
+            <button class="direction-btn" @click="$emit('ptz-control', 'down')" :title="$tp('向下')">
               <el-icon><ArrowDown /></el-icon>
             </button>
           </div>
@@ -48,22 +48,22 @@
 
       <!-- control -->
       <div class="control-section">
-        <h4>缩放控制</h4>
+        <h4>{{ $tp('缩放控制') }}</h4>
         <div class="zoom-controls">
-          <button class="zoom-btn" @click="$emit('zoom-control', 'in')" title="放大">
+          <button class="zoom-btn" @click="$emit('zoom-control', 'in')" :title="$tp('放大')">
             <el-icon><ZoomIn /></el-icon>
-            <span>放大</span>
+            <span>{{ $tp('放大') }}</span>
           </button>
-          <button class="zoom-btn" @click="$emit('zoom-control', 'out')" title="缩小">
+          <button class="zoom-btn" @click="$emit('zoom-control', 'out')" :title="$tp('缩小')">
             <el-icon><ZoomOut /></el-icon>
-            <span>缩小</span>
+            <span>{{ $tp('缩小') }}</span>
           </button>
         </div>
       </div>
 
       <!--  -->
       <div class="control-section">
-        <h4>预设位置</h4>
+        <h4>{{ $tp('预设位置') }}</h4>
         <div class="preset-controls">
           <div class="preset-grid">
             <button
@@ -71,62 +71,50 @@
               :key="i"
               class="preset-btn"
               @click="$emit('control-action', { type: 'preset', value: i })"
-              :title="`预设位置 ${i}`"
+              :title="$tp('预设位置 {value0}', { value0: i })"
             >
               {{ i }}
             </button>
           </div>
           <div class="preset-actions">
             <button class="preset-action-btn" @click="$emit('control-action', { type: 'set-preset', value: currentPreset })">
-              <el-icon><Star /></el-icon>
-              设置预设
-            </button>
+              <el-icon><Star /></el-icon> {{ $tp('设置预设') }} </button>
             <button class="preset-action-btn" @click="$emit('control-action', { type: 'clear-preset', value: currentPreset })">
-              <el-icon><Delete /></el-icon>
-              清除预设
-            </button>
+              <el-icon><Delete /></el-icon> {{ $tp('清除预设') }} </button>
           </div>
         </div>
       </div>
 
       <!-- control -->
       <div class="control-section">
-        <h4>高级控制</h4>
+        <h4>{{ $tp('高级控制') }}</h4>
         <div class="advanced-controls">
           <div class="control-group">
-            <label>速度控制</label>
+            <label>{{ $tp('速度控制') }}</label>
             <div class="speed-controls">
-              <button class="speed-btn" @click="$emit('control-action', { type: 'speed', value: 'slow' })">慢速</button>
-              <button class="speed-btn active" @click="$emit('control-action', { type: 'speed', value: 'normal' })">正常</button>
-              <button class="speed-btn" @click="$emit('control-action', { type: 'speed', value: 'fast' })">快速</button>
+              <button class="speed-btn" @click="$emit('control-action', { type: 'speed', value: 'slow' })">{{ $tp('慢速') }}</button>
+              <button class="speed-btn active" @click="$emit('control-action', { type: 'speed', value: 'normal' })">{{ $tp('正常') }}</button>
+              <button class="speed-btn" @click="$emit('control-action', { type: 'speed', value: 'fast' })">{{ $tp('快速') }}</button>
             </div>
           </div>
 
           <div class="control-group">
-            <label>自动巡航</label>
+            <label>{{ $tp('自动巡航') }}</label>
             <div class="cruise-controls">
               <button class="cruise-btn" @click="$emit('control-action', { type: 'cruise', value: 'start' })">
-                <el-icon><VideoPlay /></el-icon>
-                开始巡航
-              </button>
+                <el-icon><VideoPlay /></el-icon> {{ $tp('开始巡航') }} </button>
               <button class="cruise-btn" @click="$emit('control-action', { type: 'cruise', value: 'stop' })">
-                <el-icon><VideoPause /></el-icon>
-                停止巡航
-              </button>
+                <el-icon><VideoPause /></el-icon> {{ $tp('停止巡航') }} </button>
             </div>
           </div>
 
           <div class="control-group">
-            <label>扫描模式</label>
+            <label>{{ $tp('扫描模式') }}</label>
             <div class="scan-controls">
               <button class="scan-btn" @click="$emit('control-action', { type: 'scan', value: 'start' })">
-                <el-icon><Refresh /></el-icon>
-                开始扫描
-              </button>
+                <el-icon><Refresh /></el-icon> {{ $tp('开始扫描') }} </button>
               <button class="scan-btn" @click="$emit('control-action', { type: 'scan', value: 'stop' })">
-                <el-icon><Close /></el-icon>
-                停止扫描
-              </button>
+                <el-icon><Close /></el-icon> {{ $tp('停止扫描') }} </button>
             </div>
           </div>
         </div>
@@ -134,20 +122,20 @@
 
       <!-- info -->
       <div class="status-section">
-        <h4>状态信息</h4>
+        <h4>{{ $tp('状态信息') }}</h4>
         <div class="status-info">
           <div class="status-item">
-            <span class="status-label">当前预设:</span>
-            <span class="status-value">{{ currentPreset || '无' }}</span>
+            <span class="status-label">{{ $tp('当前预设:') }}</span>
+            <span class="status-value">{{ currentPreset || $tp('无') }}</span>
           </div>
           <div class="status-item">
-            <span class="status-label">连接状态:</span>
+            <span class="status-label">{{ $tp('连接状态:') }}</span>
             <span class="status-value" :class="{ online: isConnected }">
-              {{ isConnected ? '已连接' : '未连接' }}
+              {{ isConnected ? $tp('已连接') : $tp('未连接') }}
             </span>
           </div>
           <div class="status-item">
-            <span class="status-label">控制模式:</span>
+            <span class="status-label">{{ $tp('控制模式:') }}</span>
             <span class="status-value">{{ controlMode }}</span>
           </div>
         </div>

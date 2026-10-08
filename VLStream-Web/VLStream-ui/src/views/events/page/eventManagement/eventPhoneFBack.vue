@@ -6,14 +6,12 @@
 -->
 
 <template>
-  <el-dialog v-model="dialogVisible" class="diaOutSet locale-dialog locale-dialog--wide" title="事件反馈" top="5vh" :before-close="handleClose" destroy-on-close>
+  <el-dialog v-model="dialogVisible" class="diaOutSet locale-dialog locale-dialog--wide" :title="$tp('事件反馈')" top="5vh" :before-close="handleClose" destroy-on-close>
     <div>
       <div class="details_container">
-        <div class="basicTitle codeActBox flexRowAC">
-          事件反馈
-          <div class="line" />
+        <div class="basicTitle codeActBox flexRowAC"> {{ $tp('事件反馈') }} <div class="line" />
           <div class="lineT flexRowAC" @click="codeAct_2=!codeAct_2">
-            {{ codeAct_2 === true ? '收起' : '展开' }}
+            {{ codeAct_2 === true ? $tp('收起') : $tp('展开') }}
             <oort-svg-icon v-if="codeAct_2" class="elmenuIconImg" name="shrink" width="14" height="14" color="#999" />
             <oort-svg-icon v-else class="elmenuIconImg" name="open" width="14" height="14" />
           </div>
@@ -21,13 +19,13 @@
         <div v-if="codeAct_2" class="e_addFeedback">
           <el-form ref="formRef" v-loading="formLoading" :rules="formRules" :model="formData" label-width="auto">
             <!-- already work order, whether work order -->
-            <el-form-item label="是否转工单">
+            <el-form-item :label="$tp('是否转工单')">
               <el-switch
                 v-model="formData.work_order_status"
                 :disabled="props.data?.work_order_status===1"
                 size="large"
-                active-text="是"
-                inactive-text="否"
+                :active-text="$tp('是')"
+                :inactive-text="$tp('否')"
                 :active-value="1"
                 :inactive-value="0"
               />
@@ -49,18 +47,18 @@
             <!--                </div>-->
             <!--              </div>-->
             <!--            </el-form-item>-->
-            <el-form-item v-if="formData.work_order_status!==1" label="反馈图片" prop="fileUrls">
+            <el-form-item v-if="formData.work_order_status!==1" :label="$tp('反馈图片')" prop="fileUrls">
               <div class="avatarBox">
-                <multi-image-upload v-model="formData.pics" :size-limit="2" :accept="'image/*'" tip="上传图片" :max-count="5" />
+                <multi-image-upload v-model="formData.pics" :size-limit="2" :accept="'image/*'" :tip="$tp('上传图片')" :max-count="5" />
               </div>
             </el-form-item>
-            <el-form-item v-if="formData.work_order_status!==1" label="反馈描述" prop="describe">
+            <el-form-item v-if="formData.work_order_status!==1" :label="$tp('反馈描述')" prop="describe">
               <div style="width: 100%;">
                 <el-input
                   v-model="formData.describe"
                   type="textarea"
                   :rows="5"
-                  placeholder="请输入描述"
+                  :placeholder="$tp('请输入描述')"
                   maxlength="200"
                   show-word-limit
                 />
@@ -69,32 +67,30 @@
                   :number="256"
                   mod="描述"
                   :keyword="formData.describe"
-                  keyword-empty-tips="请先输入描述"
+                  :keyword-empty-tips="$tp('请先输入描述')"
                 />
               </div>
               <CommonExpressions :content="formData.describe" @selectContent="selectContent" />
             </el-form-item>
           </el-form>
-          <el-form-item v-if="formData.work_order_status!==1" label="是否完成" prop="status">
-            <el-switch v-model="formData.status" size="large" :active-value="1" :inactive-value="2" active-text="已完成" inactive-text="未完成" />
+          <el-form-item v-if="formData.work_order_status!==1" :label="$tp('是否完成')" prop="status">
+            <el-switch v-model="formData.status" size="large" :active-value="1" :inactive-value="2" :active-text="$tp('已完成')" :inactive-text="$tp('未完成')" />
           </el-form-item>
         </div>
       </div>
     </div>
     <div class="details_container">
-      <div class="basicTitle codeActBox flexRowAC">
-        反馈列表
-        <div class="line" />
+      <div class="basicTitle codeActBox flexRowAC"> {{ $tp('反馈列表') }} <div class="line" />
         <div class="lineT flexRowAC" @click="harvest=!harvest">
-          {{ harvest === true ? '收起' : '展开' }}
+          {{ harvest === true ? $tp('收起') : $tp('展开') }}
           <oort-svg-icon v-if="harvest" class="elmenuIconImg" name="shrink" width="14" height="14" color="#999" />
           <oort-svg-icon v-else class="elmenuIconImg" name="open" width="14" height="14" />
         </div>
       </div>
       <div v-if="harvest" v-loading="feedbackLoading">
         <el-tabs v-model="activeIndex" class="left-tabs">
-          <el-tab-pane label="反馈记录" name="1" />
-          <el-tab-pane label="工单记录" name="2" />
+          <el-tab-pane :label="$tp('反馈记录')" name="1" />
+          <el-tab-pane :label="$tp('工单记录')" name="2" />
         </el-tabs>
         <div class="feedbacklist">
           <FeedbackRecord v-if="activeIndex === '1'" :feedback-list-data="feedbackListData" />
@@ -111,17 +107,15 @@
         />
       </div>
       <div class="d_h_maintainBtns">
-        <el-button @click="handleClose" class="common_btn">
-          取消
-        </el-button>
-        <el-button type="primary" :disabled="formLoading" @click="addFeedbackForm" class="common_btn">
-          确定
-        </el-button>
+        <el-button @click="handleClose" class="common_btn"> {{ $tp('取消') }} </el-button>
+        <el-button type="primary" :disabled="formLoading" @click="addFeedbackForm" class="common_btn"> {{ $tp('确定') }} </el-button>
       </div>
     </div>
   </el-dialog>
 </template>
 <script setup lang="ts">
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, computed, watch } from 'vue'
 import MultiImageUpload from './components/multiImageUpload.vue'
 import CommonExpressions from '@/components/commonExpressions.vue'
@@ -326,7 +320,7 @@ const addFeedbackForm = async() => {
   }
   const res: any = await addFeedback(formData.value)
   if (res.code === 200) {
-    ElMessage.success('反馈成功')
+    ElMessage.success(uiText('反馈成功'))
     const currentId = formData.value.id
     const currentPoint = formData.value.point
     formData.value = initFormData()

@@ -13,7 +13,7 @@
       <!--  -->
       <div class="intro-section">
         <div class="intro-header">
-          <h2 class="intro-title">零代码训练介绍</h2>
+          <h2 class="intro-title">{{ $tp('零代码训练介绍') }}</h2>
           <CollapseToggle
             :is-expanded="isIntroExpanded"
             @toggle="handleIntroToggle"
@@ -21,45 +21,43 @@
         </div>
 
         <div v-show="isIntroExpanded" class="intro-content">
-          <p class="intro-text">
-            选择训练算力和已完成标注、划分的数据集。平台默认 GPU 需先生成数据集，AutoDL 实例由平台自动上传。可调整训练轮数、批大小和输入尺寸；完成后可自动保存模型，实际效果仍需独立样本验证。
-          </p>
+          <p class="intro-text"> {{ $tp('所有训练任务均由平台创建和管理，所选算力实例负责执行。请准备好标注及训练/验证集划分，再配置训练参数；完成后可自动保存模型，实际效果仍需独立样本验证。') }} </p>
 
           <!-- workflow -->
           <div class="process-steps">
             <div class="step-item">
               <div class="step-icon step-1">
-                <img :src="trainIcon" alt="发起训练" class="step-img" />
+                <img :src="trainIcon" :alt="$tp('发起训练')" class="step-img" />
               </div>
-              <h3>1.发起训练</h3>
-              <p>选择训练方式并发起成功训练参数配置</p>
+              <h3>{{ $tp('1.发起训练') }}</h3>
+              <p>{{ $tp('选择训练方式并发起成功训练参数配置') }}</p>
               <el-icon class="arrow-icon"><ArrowRight /></el-icon>
             </div>
 
             <div class="step-item">
               <div class="step-icon step-2">
-                <img :src="selectDatasetIcon" alt="选择标注集" class="step-img" />
+                <img :src="selectDatasetIcon" :alt="$tp('选择标注集')" class="step-img" />
               </div>
-              <h3>2.选择标注集</h3>
-              <p>选择已标注且独立划分训练集和验证集的数据集</p>
+              <h3>{{ $tp('2.选择标注集') }}</h3>
+              <p>{{ $tp('选择已标注且独立划分训练集和验证集的数据集') }}</p>
               <el-icon class="arrow-icon"><ArrowRight /></el-icon>
             </div>
 
             <div class="step-item">
               <div class="step-icon step-3">
-                <img :src="evaluateIcon" alt="评估校验" class="step-img" />
+                <img :src="evaluateIcon" :alt="$tp('评估校验')" class="step-img" />
               </div>
-              <h3>3.评估校验</h3>
-              <p>算法训练完成后，通过评估报告，校验验证性能效果</p>
+              <h3>{{ $tp('3.评估校验') }}</h3>
+              <p>{{ $tp('算法训练完成后，通过评估报告，校验验证性能效果') }}</p>
               <el-icon class="arrow-icon"><ArrowRight /></el-icon>
             </div>
 
             <div class="step-item">
               <div class="step-icon step-4">
-                <img :src="publishModelIcon" alt="发布为模型" class="step-img" />
+                <img :src="publishModelIcon" :alt="$tp('发布为模型')" class="step-img" />
               </div>
-              <h3>4.发布为模型</h3>
-              <p>效果满足业务需求的任务可发布为模型，进行部署操作</p>
+              <h3>{{ $tp('4.发布为模型') }}</h3>
+              <p>{{ $tp('效果满足业务需求的任务可发布为模型，进行部署操作') }}</p>
             </div>
           </div>
         </div>
@@ -73,16 +71,14 @@
                 <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
                   <el-icon class="BtnImg">
                     <Plus />
-                  </el-icon>
-                  新建
-                </button>
+                  </el-icon> {{ $tp('新建') }} </button>
                 <button-group :button-list="toolbarButtonList" />
               </div>
           </div>
           <div class="searchHeight_out flexRowAC">
             <search-height-box
               keyword="keyword"
-              placeholder="搜索"
+              :placeholder="$tp('搜索')"
               :data="searchData"
               @handle="searchResetFn"
             />
@@ -110,8 +106,11 @@
               size="small"
               class="status-tag">
               <span class="status-dot" :class="getStatusClass(scope.row.trainStatus)"></span>
-              {{ getTrainStatusText(scope.row.trainStatus) }}
+              {{ executionStatusText(scope.row) }}
             </el-tag>
+            <div v-if="scope.row.originalData.executionMessage || scope.row.originalData.errorMessage" class="training-status-message">
+              {{ scope.row.originalData.executionMessage || scope.row.originalData.errorMessage }}
+            </div>
           </template>
         </el-table-column>
         <el-table-column prop="modelEffect" :label="$tp('模型效果')" align="center">
@@ -123,16 +122,16 @@
                 <el-icon class="info-icon"><QuestionFilled /></el-icon>
               </div>
               <div class="metric-item">
-                <span class="metric-label">精确度:</span>
+                <span class="metric-label">{{ $tp('精确度:') }}</span>
                 <span class="metric-value">{{ scope.row.precision }}</span>
                 <el-icon class="info-icon"><QuestionFilled /></el-icon>
               </div>
               <div class="metric-item">
-                <span class="metric-label">召回率:</span>
+                <span class="metric-label">{{ $tp('召回率:') }}</span>
                 <span class="metric-value">{{ scope.row.recall }}</span>
                 <el-icon class="info-icon"><QuestionFilled /></el-icon>
               </div>
-              <el-button type="text" size="small" class="detail-link">完整评估结果</el-button>
+              <el-button type="text" size="small" class="detail-link">{{ $tp('完整评估结果') }}</el-button>
             </div>
             <span v-else>-</span>
           </template>
@@ -149,22 +148,22 @@
               <!-- null / empty : training and -->
               <template v-if="!scope.row.trainStatus || scope.row.trainStatus === '等待'">
                 <div v-if="isCloudTrainingRow(scope.row)" class="new_table_svg_group" @click="handleStopTraining(scope.row)">
-                  <span>取消排队</span>
+                  <span>{{ $tp('取消排队') }}</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleTrain(scope.row)">
-                  <span>训练</span>
+                  <span>{{ $tp('训练') }}</span>
                 </div>
                 <el-dropdown @command="(command) => handleMoreAction(command, scope.row)">
                   <div class="new_table_svg_group">
                     <oort-svg-icon width="14" height="14" name="table_more" class="new_table_svg_group_svg" />
-                    <span>更多</span>
+                    <span>{{ $tp('更多') }}</span>
                   </div>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item command="version">查看版本配置</el-dropdown-item>
-                      <el-dropdown-item command="history">历史版本</el-dropdown-item>
+                      <el-dropdown-item command="version">{{ $tp('查看版本配置') }}</el-dropdown-item>
+                      <el-dropdown-item command="history">{{ $tp('历史版本') }}</el-dropdown-item>
                       <el-dropdown-item command="delete" divided>
-                        <span style="color: #F62E2E;">删除</span>
+                        <span style="color: #F62E2E;">{{ $tp('删除') }}</span>
                       </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
@@ -174,19 +173,19 @@
               <!-- training in : training and -->
               <template v-else-if="scope.row.trainStatus === '训练中'">
                 <div class="new_table_svg_group" @click="handleStopTraining(scope.row)">
-                  <span style="color: #F62E2E;">终止训练</span>
+                  <span style="color: #F62E2E;">{{ $tp('终止训练') }}</span>
                 </div>
                 <el-dropdown @command="(command) => handleMoreAction(command, scope.row)">
                   <div class="new_table_svg_group">
                     <oort-svg-icon width="14" height="14" name="table_more" class="new_table_svg_group_svg" />
-                    <span>更多</span>
+                    <span>{{ $tp('更多') }}</span>
                   </div>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item command="version">查看版本配置</el-dropdown-item>
-                      <el-dropdown-item command="history">历史版本</el-dropdown-item>
+                      <el-dropdown-item command="version">{{ $tp('查看版本配置') }}</el-dropdown-item>
+                      <el-dropdown-item command="history">{{ $tp('历史版本') }}</el-dropdown-item>
                       <el-dropdown-item command="delete" divided>
-                        <span style="color: #F62E2E;">删除</span>
+                        <span style="color: #F62E2E;">{{ $tp('删除') }}</span>
                       </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
@@ -196,28 +195,28 @@
               <!-- training : model、 new training、 to model、Validate and -->
               <template v-else-if="scope.row.trainStatus === '训练完成'">
                 <div class="new_table_svg_group" @click="handleDownloadModel(scope.row)">
-                  <span>下载模型</span>
+                  <span>{{ $tp('下载模型') }}</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleRetrainModel(scope.row)">
-                  <span>重新训练</span>
+                  <span>{{ $tp('重新训练') }}</span>
                 </div>
                 <div class="new_table_svg_group" @click="handlePublishModel(scope.row)">
-                  <span>发布为模型</span>
+                  <span>{{ $tp('发布为模型') }}</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleValidateModel(scope.row)">
-                  <span>校验</span>
+                  <span>{{ $tp('校验') }}</span>
                 </div>
                 <el-dropdown @command="(command) => handleMoreAction(command, scope.row)">
                   <div class="new_table_svg_group">
                     <oort-svg-icon width="14" height="14" name="table_more" class="new_table_svg_group_svg" />
-                    <span>更多</span>
+                    <span>{{ $tp('更多') }}</span>
                   </div>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item command="version">查看版本配置</el-dropdown-item>
-                      <el-dropdown-item command="history">历史版本</el-dropdown-item>
+                      <el-dropdown-item command="version">{{ $tp('查看版本配置') }}</el-dropdown-item>
+                      <el-dropdown-item command="history">{{ $tp('历史版本') }}</el-dropdown-item>
                       <el-dropdown-item command="delete" divided>
-                        <span style="color: #F62E2E;">删除</span>
+                        <span style="color: #F62E2E;">{{ $tp('删除') }}</span>
                       </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
@@ -227,19 +226,19 @@
               <!-- trainingfailed : new training and -->
               <template v-else-if="scope.row.trainStatus === '训练失败'">
                 <div class="new_table_svg_group" @click="handleTrain(scope.row)">
-                  <span>重新训练</span>
+                  <span>{{ $tp('重新训练') }}</span>
                 </div>
                 <el-dropdown @command="(command) => handleMoreAction(command, scope.row)">
                   <div class="new_table_svg_group">
                     <oort-svg-icon width="14" height="14" name="table_more" class="new_table_svg_group_svg" />
-                    <span>更多</span>
+                    <span>{{ $tp('更多') }}</span>
                   </div>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item command="version">查看版本配置</el-dropdown-item>
-                      <el-dropdown-item command="history">历史版本</el-dropdown-item>
+                      <el-dropdown-item command="version">{{ $tp('查看版本配置') }}</el-dropdown-item>
+                      <el-dropdown-item command="history">{{ $tp('历史版本') }}</el-dropdown-item>
                       <el-dropdown-item command="delete" divided>
-                        <span style="color: #F62E2E;">删除</span>
+                        <span style="color: #F62E2E;">{{ $tp('删除') }}</span>
                       </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
@@ -251,14 +250,14 @@
                 <el-dropdown @command="(command) => handleMoreAction(command, scope.row)">
                   <div class="new_table_svg_group">
                     <oort-svg-icon width="14" height="14" name="table_more" class="new_table_svg_group_svg" />
-                    <span>更多</span>
+                    <span>{{ $tp('更多') }}</span>
                   </div>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item command="version">查看版本配置</el-dropdown-item>
-                      <el-dropdown-item command="history">历史版本</el-dropdown-item>
+                      <el-dropdown-item command="version">{{ $tp('查看版本配置') }}</el-dropdown-item>
+                      <el-dropdown-item command="history">{{ $tp('历史版本') }}</el-dropdown-item>
                       <el-dropdown-item command="delete" divided>
-                        <span style="color: #F62E2E;">删除</span>
+                        <span style="color: #F62E2E;">{{ $tp('删除') }}</span>
                       </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
@@ -291,9 +290,9 @@
       <!--  -->
       <div class="content-header">
         <div class="breadcrumb">
-          <span class="breadcrumb-item" @click="handleBackFromVersion">算法训练</span>
+          <span class="breadcrumb-item" @click="handleBackFromVersion">{{ $tp('算法训练') }}</span>
           <span class="breadcrumb-separator">></span>
-          <span class="breadcrumb-item active">查看版本配置</span>
+          <span class="breadcrumb-item active">{{ $tp('查看版本配置') }}</span>
         </div>
       </div>
 
@@ -302,21 +301,21 @@
           <!-- info -->
                     <!-- Basic Info -->
           <div class="basic-info-section">
-            <h3 class="section-title">基础信息</h3>
+            <h3 class="section-title">{{ $tp('基础信息') }}</h3>
             <div class="info-grid">
               <div class="info-row">
                 <div class="info-item">
-                  <span class="info-label">训练名称：</span>
+                  <span class="info-label">{{ $tp('训练名称：') }}</span>
                   <span class="info-value">{{ currentVersionItem?.algorithmName || currentVersionItem?.originalData?.taskName || '-' }}</span>
                 </div>
               </div>
               <div class="info-row">
                 <div class="info-item">
-                  <span class="info-label">训练算法：</span>
+                  <span class="info-label">{{ $tp('训练算法：') }}</span>
                   <span class="info-value">{{ currentVersionItem?.originalData?.algorithmName || currentVersionItem?.trainAlgorithm || '-' }}</span>
                 </div>
                 <div class="info-item">
-                  <span class="info-label">训练状态：</span>
+                  <span class="info-label">{{ $tp('训练状态：') }}</span>
                   <span class="info-value">{{ getTrainStatusText(currentVersionItem?.trainStatus)}}</span>
                 </div>
               </div>
@@ -325,7 +324,7 @@
 
           <!-- History Models -->
           <div class="data-details-section">
-            <h3 class="section-title">历史版本</h3>
+            <h3 class="section-title">{{ $tp('历史版本') }}</h3>
             <el-table
               :data="modelHistoryList"
               v-loading="modelHistoryLoading"
@@ -364,9 +363,9 @@
       <!--  -->
       <div class="content-header">
         <div class="breadcrumb">
-          <span class="breadcrumb-item" @click="handleBackFromValidation">算法训练</span>
+          <span class="breadcrumb-item" @click="handleBackFromValidation">{{ $tp('算法训练') }}</span>
           <span class="breadcrumb-separator">></span>
-          <span class="breadcrumb-item active">校验模型</span>
+          <span class="breadcrumb-item active">{{ $tp('校验模型') }}</span>
         </div>
       </div>
 
@@ -378,7 +377,7 @@
               <el-select
                 v-model="validationModelName"
                 class="model-name-select"
-                placeholder="选择模型"
+                :placeholder="$tp('选择模型')"
               >
                 <el-option
                   v-for="item in modelNameOptions"
@@ -390,7 +389,7 @@
               <el-select
                 v-model="validationVersion"
                 class="model-version-select"
-                placeholder="选择版本"
+                :placeholder="$tp('选择版本')"
               >
                 <el-option
                   v-for="item in versionOptions"
@@ -420,12 +419,10 @@
                     <path d="M40 44L32 36L24 44H40Z" stroke="#d9d9d9" stroke-width="2"/>
                   </svg>
                 </div>
-                <el-button type="primary" class="upload-btn">
-                  点击添加图片
-                </el-button>
+                <el-button type="primary" class="upload-btn"> {{ $tp('点击添加图片') }} </el-button>
                 <div class="upload-tips">
-                  <p class="drag-tip">或拖拽图片至此处</p>
-                  <p class="format-tip">图片类型为jpg、png、bmp、jpeg，图片大小限制在4M内</p>
+                  <p class="drag-tip">{{ $tp('或拖拽图片至此处') }}</p>
+                  <p class="format-tip">{{ $tp('图片类型为jpg、png、bmp、jpeg，图片大小限制在4M内') }}</p>
                 </div>
               </div>
             </div>
@@ -434,7 +431,7 @@
             <div class="threshold-config-area">
               <div class="threshold-section">
                 <div class="threshold-header">
-                  <span class="threshold-label">调整阈值</span>
+                  <span class="threshold-label">{{ $tp('调整阈值') }}</span>
                   <span class="threshold-value">{{ confidenceThreshold }}</span>
                 </div>
                 <div class="threshold-slider">
@@ -448,17 +445,16 @@
                 </div>
                 <div class="threshold-info">
                   <div class="threshold-tag">
-                    <span class="tag-label">预测标签</span>
+                    <span class="tag-label">{{ $tp('预测标签') }}</span>
                   </div>
-                  <div class="confidence-display">
-                    置信度>{{ confidenceThreshold }}.00%
+                  <div class="confidence-display"> {{ $tp('置信度>') }}{{ confidenceThreshold }}.00%
                   </div>
                 </div>
               </div>
 
               <!--  -->
               <div class="prediction-result">
-                <span class="no-result-text">没有满足检测的目标结果</span>
+                <span class="no-result-text">{{ $tp('没有满足检测的目标结果') }}</span>
               </div>
             </div>
           </div>
@@ -471,9 +467,9 @@
       <!--  -->
       <div class="content-header">
         <div class="breadcrumb">
-          <span class="breadcrumb-item" @click="handleBackToList">算法训练</span>
+          <span class="breadcrumb-item" @click="handleBackToList">{{ $tp('算法训练') }}</span>
           <span class="breadcrumb-separator">></span>
-          <span class="breadcrumb-item active">训练</span>
+          <span class="breadcrumb-item active">{{ $tp('训练') }}</span>
         </div>
       </div>
 
@@ -481,45 +477,41 @@
         <!-- configuration -->
         <div class="config-sidebar">
           <div class="config-section">
-            <h3 class="section-title">训练算力</h3>
-            <el-select v-model="computeNodeId" placeholder="平台默认 GPU 服务器" :disabled="isTraining" class="config-select" @visible-change="visible => visible && loadComputeNodes()">
-              <el-option label="平台默认 GPU 服务器" value="" />
+            <h3 class="section-title">{{ $tp('训练算力') }}</h3>
+            <el-select v-model="computeNodeId" :placeholder="$tp('平台默认 GPU 服务器')" :disabled="isTraining" class="config-select" @visible-change="visible => visible && loadComputeNodes()">
+              <el-option :label="$tp('平台默认 GPU 服务器')" value="" />
               <el-option v-for="node in computeNodes" :key="node.id" :value="String(node.id)" :label="`AutoDL · ${node.name}`" :disabled="!node.enabled || node.probeState !== 'READY'" />
             </el-select>
-            <div v-if="computeNodeId" class="config-tip">使用已标注并划分的数据集，自动上传到所选实例；本期输出 PT 和类别文件。</div>
+            <div v-if="computeNodeId" class="config-tip">{{ $tp('使用已标注并划分的数据集，自动上传到所选实例；本期输出 PT 和类别文件。') }}</div>
             <template v-if="computeNodeId">
-              <p>起始模型</p>
+              <p>{{ $tp('起始模型') }}</p>
               <el-select v-model="cloudModelSource" :disabled="isTraining" class="config-select">
-                <el-option label="系统基础模型（新实例已预下载）" value="preset" />
-                <el-option label="算法指定模型（必须已存入 MinIO）" value="algorithm" />
+                <el-option :label="$tp('系统基础模型（新实例已预下载）')" value="preset" />
+                <el-option :label="$tp('算法指定模型（必须已存入 MinIO）')" value="algorithm" />
               </el-select>
             </template>
-            <el-button link type="primary" @click="router.push({ path: '/container-instances', query: { tab: 'cloud' } })">管理线上算力</el-button>
+            <el-button link type="primary" @click="router.push({ path: '/container-instances', query: { tab: 'cloud' } })">{{ $tp('管理线上算力') }}</el-button>
           </div>
           <!-- training -->
           <div class="config-section">
-            <h3 class="section-title">训练方式</h3>
+            <h3 class="section-title">{{ $tp('训练方式') }}</h3>
             <div class="training-mode-tabs">
               <div
                 class="mode-tab"
                 :class="{ active: trainingMode === 'auto' }"
                 @click="selectTrainingMode('auto')"
-              >
-                默认配置
-              </div>
+              > {{ $tp('默认配置') }} </div>
               <div
                 class="mode-tab"
                 :class="{ active: trainingMode === 'advanced' }"
                 @click="selectTrainingMode('advanced')"
-              >
-                自定义参数
-              </div>
+              > {{ $tp('自定义参数') }} </div>
             </div>
           </div>
 
           <!-- trainingconfiguration -->
           <div class="config-section">
-            <h3 class="section-title">训练配置</h3>
+            <h3 class="section-title">{{ $tp('训练配置') }}</h3>
 
             <!-- Export -->
 <!--            <div class="config-item">-->
@@ -559,17 +551,17 @@
 <!--              </div>-->
 <!--            </div>-->
 
-            <div class="config-tip">默认使用任务轮数、批大小 16、输入尺寸 640；自定义参数可调整实际训练配置。</div>
+            <div class="config-tip">{{ $tp('默认使用任务轮数、批大小 16、输入尺寸 640；自定义参数可调整实际训练配置。') }}</div>
             <div class="config-item">
-              <label class="config-label">训练轮数</label>
+              <label class="config-label">{{ $tp('训练轮数') }}</label>
               <el-input-number v-model="epochTotal" :min="1" :max="10000" :step="1" :disabled="trainingMode === 'auto' || isTraining" />
             </div>
             <div class="config-item">
-              <label class="config-label">批大小</label>
+              <label class="config-label">{{ $tp('批大小') }}</label>
               <el-input-number v-model="batchSize" :min="1" :max="256" :step="1" :disabled="trainingMode === 'auto' || isTraining" />
             </div>
             <div class="config-item">
-              <label class="config-label">输入尺寸</label>
+              <label class="config-label">{{ $tp('输入尺寸') }}</label>
               <el-select v-model="trainImgSize" :disabled="trainingMode === 'auto' || isTraining" class="config-select">
                 <el-option v-for="size in [320, 416, 512, 640, 768, 960, 1280]" :key="size" :label="String(size)" :value="size" />
               </el-select>
@@ -577,40 +569,37 @@
 
             <!-- training after to model -->
             <div class="config-item">
-              <label class="config-label">训练完成后保存到算法模型
-                <el-icon class="help-icon"><QuestionFilled /></el-icon>
+              <label class="config-label">{{ $tp('训练完成后保存到算法模型') }} <el-icon class="help-icon"><QuestionFilled /></el-icon>
               </label>
               <div class="publish-options">
-                <el-radio v-model="autoPublish" label="yes" :disabled="isTraining">是</el-radio>
-                <el-radio v-model="autoPublish" label="no" :disabled="isTraining">否</el-radio>
+                <el-radio v-model="autoPublish" label="yes" :disabled="isTraining">{{ $tp('是') }}</el-radio>
+                <el-radio v-model="autoPublish" label="no" :disabled="isTraining">{{ $tp('否') }}</el-radio>
               </div>
             </div>
           </div>
 
           <div v-if="publicationState" class="config-section">
-            <div role="status">模型保存状态：{{ publicationLabels[publicationState] || publicationState }}</div>
-            <el-button v-if="publicationState === 'FAILED'" @click="retryAutoPublication">重试保存模型</el-button>
+            <div role="status">{{ $tp('模型保存状态：') }}{{ $tp(publicationLabels[publicationState]) || publicationState }}</div>
+            <el-button v-if="publicationState === 'FAILED'" @click="retryAutoPublication">{{ $tp('重试保存模型') }}</el-button>
           </div>
-          <el-alert v-if="!trainingBackendReady" type="warning" :closable="false" title="训练服务尚未就绪，请完成后端更新后重新打开配置页面。" />
+          <el-alert v-if="!trainingBackendReady" type="warning" :closable="false" :title="$tp('训练服务尚未就绪，请完成后端更新后重新打开配置页面。')" />
 
           <!-- dataset -->
           <div class="config-section">
-            <h3 class="section-title">添加数据集</h3>
+            <h3 class="section-title">{{ $tp('添加数据集') }}</h3>
 
             <div class="config-item">
 <!-- <label class="config-label"> annotation *</label> -->
               <el-button type="text" class="add-dataset-btn" @click="openDatasetSelector">
-                <el-icon><Plus /></el-icon>
-                请选择
-              </el-button>
+                <el-icon><Plus /></el-icon> {{ $tp('请选择') }} </el-button>
 
               <!-- dataset -->
               <div class="dataset-table" v-if="selectedDatasets.length > 0">
                 <div class="dataset-header">
-                  <span>数据集</span>
-                  <span>类型</span>
-                  <span>进度</span>
-                  <span>操作</span>
+                  <span>{{ $tp('数据集') }}</span>
+                  <span>{{ $tp('类型') }}</span>
+                  <span>{{ $tp('进度') }}</span>
+                  <span>{{ $tp('操作') }}</span>
                 </div>
                 <div
                   v-for="dataset in selectedDatasets"
@@ -618,19 +607,17 @@
                   class="dataset-row">
                   <span>{{ dataset.annotationName }}</span>
                   <span>{{ dataset.typeLabel }}</span>
-                  <span>{{ dataset.progress }}% · {{ computeNodeId ? '已标注' : datasetStateLabel(dataset) }}</span>
+                  <span>{{ dataset.progress }}% · {{ datasetStateLabel(dataset) }}</span>
                   <el-button
                     type="text"
                     class="remove-btn"
-                    @click="removeDataset(dataset.value)">
-                    移除
-                  </el-button>
+                    @click="removeDataset(dataset.value)"> {{ $tp('移除') }} </el-button>
                 </div>
               </div>
 
               <!-- null / empty prompt / tip -->
               <div v-else class="empty-dataset-hint">
-                <el-text type="info">请点击上方"请选择"按钮添加数据集</el-text>
+                <el-text type="info">{{ $tp('请点击上方"请选择"按钮添加数据集') }}</el-text>
               </div>
             </div>
 
@@ -678,13 +665,13 @@
 
           <!-- training -->
           <div v-if="!computeNodeId" class="config-section">
-            <h3 class="section-title">训练环境</h3>
-            <el-button type="text" class="detail-link">了解详情</el-button>
+            <h3 class="section-title">{{ $tp('训练环境') }}</h3>
+            <el-button type="text" class="detail-link">{{ $tp('了解详情') }}</el-button>
 
             <div class="environment-info">
               <div class="env-item">
-                <span class="env-label">名称</span>
-                <span class="env-value">规格</span>
+                <span class="env-label">{{ $tp('名称') }}</span>
+                <span class="env-value">{{ $tp('规格') }}</span>
               </div>
               <div class="env-item">
                 <span class="env-label">CPU</span>
@@ -702,11 +689,11 @@
               :disabled="!trainingBackendReady || selectedDatasets.length !== 1 || !isDatasetReady(selectedDatasets[0])"
               :loading="isTraining"
             >
-              {{ isTraining ? '训练中...' : '开始训练' }}
+              {{ isTraining ? $tp('训练中...') : $tp('开始训练') }}
             </el-button>
-            <el-button v-if="computeNodeId && isTraining" @click="handleStopTraining(currentTrainingItem)">请求停止</el-button>
+            <el-button v-if="computeNodeId && isTraining" @click="handleStopTraining(currentTrainingItem)">{{ $tp('请求停止') }}</el-button>
             <div v-if="selectedDatasets.length === 0" class="training-hint">
-              <el-text type="warning" size="small">请先选择数据集</el-text>
+              <el-text type="warning" size="small">{{ $tp('请先选择数据集') }}</el-text>
             </div>
           </div>
         </div>
@@ -714,16 +701,16 @@
         <!-- SSH -->
         <div class="ssh-terminal-container">
           <div class="terminal-header">
-            <h3 class="terminal-title">训练日志</h3>
+            <h3 class="terminal-title">{{ $tp('训练日志') }}</h3>
             <div class="terminal-controls">
-              <el-button size="small" @click="clearTerminal">清空</el-button>
+              <el-button size="small" @click="clearTerminal">{{ $tp('清空') }}</el-button>
             </div>
           </div>
           <div class="terminal-content" ref="terminalRef">
             <div class="terminal-output" v-html="terminalOutput"></div>
             <div class="terminal-input-line">
-              <span class="terminal-prompt">提示</span>
-              <div class="terminal-input disabled-hint">终端仅展示后台日志，命令输入已关闭</div>
+              <span class="terminal-prompt">{{ $tp('提示') }}</span>
+              <div class="terminal-input disabled-hint">{{ $tp('终端仅展示后台日志，命令输入已关闭') }}</div>
             </div>
           </div>
         </div>
@@ -733,22 +720,22 @@
   <!-- to modeldialog -->
   <el-dialog
     v-model="showDeployDialog"
-    title="发布至模型仓库"
+    :title="$tp('发布至模型仓库')"
     width="35%"
     :before-close="handleDeployCancel"
   >
     <el-form :model="deployForm" label-width="100px" style="max-width: 500px">
       <!-- model -->
-      <el-form-item label="模型名称" required>
+      <el-form-item :label="$tp('模型名称')" required>
         <el-input
           v-model="deployForm.modelName"
-          placeholder="请输入"
+          :placeholder="$tp('请输入')"
           style="width: 100%"
         />
       </el-form-item>
 
       <!-- model -->
-      <el-form-item label="模型类型">
+      <el-form-item :label="$tp('模型类型')">
         <el-input
           v-model="deployForm.modelType"
           disabled
@@ -757,10 +744,10 @@
       </el-form-item>
 
       <!--  -->
-      <el-form-item label="发布仓库" required>
+      <el-form-item :label="$tp('发布仓库')" required>
         <el-select
           v-model="deployForm.repository"
-          placeholder="选择仓库"
+          :placeholder="$tp('选择仓库')"
           style="width: 100%"
           suffix-icon="ArrowRight"
         >
@@ -774,7 +761,7 @@
       </el-form-item>
 
       <!-- model -->
-      <el-form-item label="模型版本">
+      <el-form-item :label="$tp('模型版本')">
         <el-input
           v-model="deployForm.modelVersion"
           style="width: 100%"
@@ -782,12 +769,12 @@
       </el-form-item>
 
       <!--  -->
-      <el-form-item label="版本描述">
+      <el-form-item :label="$tp('版本描述')">
         <el-input
           v-model="deployForm.versionDescription"
           type="textarea"
           :rows="4"
-          placeholder="请输入..."
+          :placeholder="$tp('请输入...')"
           style="width: 100%"
         />
       </el-form-item>
@@ -795,8 +782,8 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleDeployCancel" class="common_btn">取消</el-button>
-        <el-button type="primary" @click="handleDeployConfirm" class="common_btn">确认</el-button>
+        <el-button @click="handleDeployCancel" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" @click="handleDeployConfirm" class="common_btn">{{ $tp('确认') }}</el-button>
       </div>
     </template>
   </el-dialog>
@@ -806,7 +793,7 @@
   <!-- Add trainingtaskdialog -->
   <el-dialog
     v-model="showAddDialog"
-    title="新增训练任务"
+    :title="$tp('新增训练任务')"
     width="35%"
     :before-close="handleCloseDialog"
   >
@@ -817,18 +804,18 @@
       label-width="100px"
       label-position="left"
     >
-      <el-form-item label="任务名称" prop="taskName" required>
+      <el-form-item :label="$tp('任务名称')" prop="taskName" required>
         <el-input
           v-model="addForm.taskName"
-          placeholder="请输入任务名称"
+          :placeholder="$tp('请输入任务名称')"
           clearable
         />
       </el-form-item>
 
-      <el-form-item label="选择算法" prop="algorithmId" required>
+      <el-form-item :label="$tp('选择算法')" prop="algorithmId" required>
         <el-select
           v-model="addForm.algorithmId"
-          placeholder="请选择算法"
+          :placeholder="$tp('请选择算法')"
           style="width: 100%"
           :loading="algorithmLoading"
           filterable
@@ -842,18 +829,18 @@
             <div class="algorithm-option">
               <div class="algorithm-name">{{ algorithm.name }}</div>
               <div class="algorithm-meta">
-                <span class="algorithm-version">版本：{{ algorithm.version || '-' }}</span>
-                <span class="algorithm-type">{{ algorithm.type || '算法' }}</span>
+                <span class="algorithm-version">{{ $tp('版本：') }}{{ algorithm.version || '-' }}</span>
+                <span class="algorithm-type">{{ algorithm.type || $tp('算法') }}</span>
               </div>
             </div>
           </el-option>
         </el-select>
       </el-form-item>
 
-      <el-form-item label="选择数据集" prop="datasetId" required>
+      <el-form-item :label="$tp('选择数据集')" prop="datasetId" required>
         <el-select
           v-model="addForm.datasetId"
-          placeholder="请选择数据集"
+          :placeholder="$tp('请选择数据集')"
           style="width: 100%"
           :loading="datasetLoading"
           filterable
@@ -878,36 +865,36 @@
             </div>
           </el-option>
         </el-select>
-        <el-button type="text" @click="goToGenerateDataset">去生成数据集</el-button>
+        <el-button type="text" @click="goToGenerateDataset">{{ $tp('去生成数据集') }}</el-button>
       </el-form-item>
 
-      <el-form-item label="训练轮数" prop="epochTotal" required>
+      <el-form-item :label="$tp('训练轮数')" prop="epochTotal" required>
         <el-input-number
           v-model="addForm.epochTotal"
           :min="1"
           :max="1000"
-          placeholder="请输入训练轮数"
+          :placeholder="$tp('请输入训练轮数')"
           style="width: 100%"
         />
       </el-form-item>
 
-      <el-form-item label="配置参数" prop="configParams">
+      <el-form-item :label="$tp('配置参数')" prop="configParams">
         <el-input
           v-model="addForm.configParams"
           type="textarea"
           :rows="4"
-          placeholder="请输入JSON格式的配置参数（可选）"
+          :placeholder="$tp('请输入JSON格式的配置参数（可选）')"
           maxlength="500"
           show-word-limit
         />
       </el-form-item>
 
-      <el-form-item label="任务描述" prop="description">
+      <el-form-item :label="$tp('任务描述')" prop="description">
         <el-input
           v-model="addForm.description"
           type="textarea"
           :rows="3"
-          placeholder="请输入任务描述（可选）"
+          :placeholder="$tp('请输入任务描述（可选）')"
           maxlength="200"
           show-word-limit
         />
@@ -916,8 +903,8 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleCloseDialog" class="common_btn">取消</el-button>
-        <el-button type="primary" @click="handleConfirmAdd" class="common_btn">确定</el-button>
+        <el-button @click="handleCloseDialog" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" @click="handleConfirmAdd" class="common_btn">{{ $tp('确定') }}</el-button>
       </div>
     </template>
   </el-dialog>
@@ -925,7 +912,7 @@
   <!-- trainingtaskdialog -->
   <el-dialog
     v-model="showEditDialog"
-    title="编辑训练任务"
+    :title="$tp('编辑训练任务')"
     width="35%"
     :before-close="handleCloseEditDialog"
   >
@@ -936,18 +923,18 @@
       label-width="100px"
       label-position="left"
     >
-      <el-form-item label="任务名称" prop="taskName" required>
+      <el-form-item :label="$tp('任务名称')" prop="taskName" required>
         <el-input
           v-model="editForm.taskName"
-          placeholder="请输入任务名称"
+          :placeholder="$tp('请输入任务名称')"
           clearable
         />
       </el-form-item>
 
-      <el-form-item label="选择算法" prop="algorithmId" required>
+      <el-form-item :label="$tp('选择算法')" prop="algorithmId" required>
         <el-select
           v-model="editForm.algorithmId"
-          placeholder="请选择算法"
+          :placeholder="$tp('请选择算法')"
           style="width: 100%"
           :loading="algorithmLoading"
           filterable
@@ -962,18 +949,18 @@
             <div class="algorithm-option">
               <div class="algorithm-name">{{ algorithm.name }}</div>
               <div class="algorithm-meta">
-                <span class="algorithm-version">版本：{{ algorithm.version || '-' }}</span>
-                <span class="algorithm-type">{{ algorithm.type || '算法' }}</span>
+                <span class="algorithm-version">{{ $tp('版本：') }}{{ algorithm.version || '-' }}</span>
+                <span class="algorithm-type">{{ algorithm.type || $tp('算法') }}</span>
               </div>
             </div>
           </el-option>
         </el-select>
       </el-form-item>
 
-      <el-form-item label="选择数据集" prop="datasetId" required>
+      <el-form-item :label="$tp('选择数据集')" prop="datasetId" required>
         <el-select
           v-model="editForm.datasetId"
-          placeholder="请选择数据集"
+          :placeholder="$tp('请选择数据集')"
           style="width: 100%"
           :loading="datasetLoading"
           filterable
@@ -1000,33 +987,33 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="训练轮数" prop="epochTotal" required>
+      <el-form-item :label="$tp('训练轮数')" prop="epochTotal" required>
         <el-input-number
           v-model="editForm.epochTotal"
           :min="1"
           :max="1000"
-          placeholder="请输入训练轮数"
+          :placeholder="$tp('请输入训练轮数')"
           style="width: 100%"
         />
       </el-form-item>
 
-      <el-form-item label="配置参数" prop="configParams">
+      <el-form-item :label="$tp('配置参数')" prop="configParams">
         <el-input
           v-model="editForm.configParams"
           type="textarea"
           :rows="4"
-          placeholder="请输入JSON格式的配置参数（可选）"
+          :placeholder="$tp('请输入JSON格式的配置参数（可选）')"
           maxlength="500"
           show-word-limit
         />
       </el-form-item>
 
-      <el-form-item label="任务描述" prop="description">
+      <el-form-item :label="$tp('任务描述')" prop="description">
         <el-input
           v-model="editForm.description"
           type="textarea"
           :rows="3"
-          placeholder="请输入任务描述（可选）"
+          :placeholder="$tp('请输入任务描述（可选）')"
           maxlength="200"
           show-word-limit
         />
@@ -1035,8 +1022,8 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleCloseEditDialog" class="common_btn">取消</el-button>
-        <el-button type="primary" @click="handleConfirmEdit" class="common_btn">确定</el-button>
+        <el-button @click="handleCloseEditDialog" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" @click="handleConfirmEdit" class="common_btn">{{ $tp('确定') }}</el-button>
       </div>
     </template>
   </el-dialog>
@@ -1044,17 +1031,17 @@
   <!-- dataset dialog -->
   <el-dialog
     v-model="showDatasetSelector"
-    title="选择数据集"
+    :title="$tp('选择数据集')"
     width="45%"
     :before-close="handleCloseDatasetSelector"
   >
     <div class="dataset-selector-content">
-      <p>{{ computeNodeId ? '选择已标注并完成训练/验证划分的数据集，平台会上传固定版本到所选实例。' : '平台 GPU 训练需要已生成的数据集，请先完成标注并生成。' }}</p>
+      <p>{{ showAddDialog || showEditDialog ? $tp('请选择与算法类型一致的数据集，训练前需准备好标注和训练/验证集划分。') : computeNodeId ? $tp('请选择已标注并划分训练集、验证集的数据集。开始训练时，平台会自动生成训练数据包并传到所选算力实例，无需提前手动生成。') : $tp('当前选择默认 GPU，需要先生成训练数据包。请在算法标注页面点击“生成”，将已有图片、标注、类别和训练/验证划分打包，不是新建数据集。') }}</p>
       <!--  -->
       <div class="dataset-search">
         <el-input
           v-model="datasetSearchKeyword"
-          placeholder="搜索数据集名称..."
+          :placeholder="$tp('搜索数据集名称...')"
           :prefix-icon="Search"
           clearable
           @input="handleDatasetSearch"
@@ -1087,27 +1074,24 @@
             </div>
             <div class="dataset-details">
               <span class="dataset-type">{{ dataset.typeLabel }}</span>
-              <span class="dataset-progress">进度: {{ dataset.progress }}%</span>
+              <span class="dataset-progress">{{ $tp('进度:') }} {{ dataset.progress }}%</span>
               <span class="dataset-count">{{ dataset.annotatedCount }}/{{ dataset.totalCount }}</span>
-              <el-button v-if="!isDatasetReady(dataset)" type="text" @click.stop="goToGenerateDataset">
-                去生成
-              </el-button>
+              <el-button v-if="!isDatasetReady(dataset)" type="text" @click.stop="goToGenerateDataset"> {{ $tp('去准备训练数据') }} </el-button>
             </div>
           </div>
         </div>
 
         <!-- null / empty -->
         <div v-if="filteredDatasetOptions.length === 0 && !datasetLoading" class="empty-state">
-          <el-empty description="暂无数据集" />
+          <el-empty :description="$tp('暂无数据集')" />
         </div>
       </div>
     </div>
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleCloseDatasetSelector" class="common_btn">取消</el-button>
-        <el-button type="primary" @click="handleConfirmDatasetSelection" class="common_btn">
-          确定 ({{ selectedDatasetIds.length }})
+        <el-button @click="handleCloseDatasetSelector" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" @click="handleConfirmDatasetSelection" class="common_btn"> {{ $tp('确定 (') }}{{ selectedDatasetIds.length }})
         </el-button>
       </div>
     </template>
@@ -1117,6 +1101,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import {computed, h, nextTick, onMounted, onUnmounted, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import { buildTrainingOptions } from '@/utils/trainingOptions'
@@ -1166,7 +1152,7 @@ const loadComputeNodes = async () => {
 const hasGeneratedDataset = dataset => typeof dataset?.datasetPath === 'string' && !!dataset.datasetPath.trim()
 const isDatasetReady = dataset => (computeNodeId.value || showAddDialog.value || showEditDialog.value)
   ? Number(dataset?.annotatedCount || 0) > 0 : hasGeneratedDataset(dataset)
-const datasetStateLabel = dataset => hasGeneratedDataset(dataset) ? '已生成' : Number(dataset?.annotatedCount || 0) > 0 ? '可线上训练，平台训练需生成' : '尚未标注'
+const datasetStateLabel = dataset => hasGeneratedDataset(dataset) ? uiText('训练数据已生成') : Number(dataset?.annotatedCount || 0) > 0 ? uiText('已有标注') : uiText('尚未标注')
 const goToGenerateDataset = () => router.push('/algorithm-standard')
 
 const searchForm = ref({
@@ -1353,7 +1339,7 @@ const retryAutoPublication = async () => {
   const taskId = currentTrainingItem.value?.originalData?.id ?? currentTrainingItem.value?.id
   await request({ url: `/vlsAlgorithmTraining/${taskId}/publication/retry`, method: 'post' })
   await refreshPublication(taskId)
-  ElMessage.success('已提交后台重试')
+  ElMessage.success(uiText('已提交后台重试'))
 }
 const customValidation = ref(true)
 const dataStrategy = ref('default')
@@ -1443,7 +1429,7 @@ const handleConfirmAdd = async () => {
       try {
         parsedConfig = JSON.parse(addForm.value.configParams)
       } catch (e) {
-        ElMessage.error('配置参数需为合法的 JSON 格式')
+        ElMessage.error(uiText('配置参数需为合法的 JSON 格式'))
         return
       }
     }
@@ -1458,14 +1444,14 @@ const handleConfirmAdd = async () => {
     }
 
     await createTraining(formData)
-    ElMessage.success('训练任务创建成功')
+    ElMessage.success(uiText('训练任务创建成功'))
     showAddDialog.value = false
     selectedRows.value = []
     addFormRef.value.resetFields()
     loadTrainingData()
   } catch (error) {
     console.error('新增训练任务失败:', error)
-    ElMessage.error('新增训练任务失败：' + (error?.message || '未知错误'))
+    ElMessage.error(uiText('新增训练任务失败：') + (error?.message || uiText('未知错误')))
   }
 }
 
@@ -1478,31 +1464,31 @@ const handleEdit = () => {
 
 const handleDelete = async () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请选择要删除的训练任务')
+    ElMessage.warning(uiText('请选择要删除的训练任务'))
     return
   }
 
   try {
     if (selectedRows.value.length === 1) {
-      await ElMessageBox.confirm(`确认要删除训练任务"${selectedRows.value[0].algorithmName}"吗？`, '确认删除', {
+      await ElMessageBox.confirm(uiText('确认要删除训练任务"{value0}"吗？', { value0: selectedRows.value[0].algorithmName }), uiText('确认删除'), {
         type: 'warning'
       })
       await deleteTraining(selectedRows.value[0].originalData.id)
-      ElMessage.success('删除成功')
+      ElMessage.success(uiText('删除成功'))
     } else {
-      await ElMessageBox.confirm(`确认要批量删除${selectedRows.value.length}个训练任务吗？`, '确认批量删除', {
+      await ElMessageBox.confirm(uiText('确认要批量删除{value0}个训练任务吗？', { value0: selectedRows.value.length }), uiText('确认批量删除'), {
         type: 'warning'
       })
       const ids = selectedRows.value.map(row => row.originalData.id)
       await batchDeleteTraining(ids)
-      ElMessage.success(`批量删除${selectedRows.value.length}个任务成功`)
+      ElMessage.success(uiText('批量删除{value0}个任务成功', { value0: selectedRows.value.length }))
     }
 
     selectedRows.value = []
     loadTrainingData()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败：' + error.message)
+      ElMessage.error(uiText('删除失败：') + error.message)
     }
   }
 }
@@ -1571,7 +1557,7 @@ const buildTrainingPayload = async () => {
     throw new Error('请先选择训练任务')
   }
   if (selectedDatasets.value.length !== 1) {
-    throw new Error('请选择一个已生成的数据集')
+    throw new Error(uiText('请选择一个数据集'))
   }
   const dataset = selectedDatasets.value[0]
   const trainingData = currentTrainingItem.value.originalData || currentTrainingItem.value
@@ -1580,7 +1566,7 @@ const buildTrainingPayload = async () => {
     throw new Error('无法获取训练任务 ID')
   }
   if (!isDatasetReady(dataset)) {
-    throw new Error('数据集尚未生成，请先到算法标注页面点击“生成”')
+    throw new Error(computeNodeId.value ? uiText('请先准备好数据标注和训练/验证集划分') : uiText('训练数据尚未生成，请先到算法标注页面点击“生成”'))
   }
   // Annotation changes invalidate the generated path; do not start from a stale selection.
   const latestDataset = await getAlgorithmAnnotationById(dataset.value)
@@ -1590,7 +1576,7 @@ const buildTrainingPayload = async () => {
   dataset.datasetPath = latestDataset.data.datasetPath
   dataset.annotatedCount = latestDataset.data.annotatedCount
   if (!isDatasetReady(dataset)) {
-    throw new Error('数据集尚未生成或已失效，请先到算法标注页面重新生成')
+    throw new Error(computeNodeId.value ? uiText('数据集标注状态已变化，请核对标注和训练/验证集划分') : uiText('训练数据尚未生成或已失效，请先到算法标注页面重新生成'))
   }
 
   if (!algorithmOptions.value.length) {
@@ -1619,11 +1605,11 @@ const buildTrainingPayload = async () => {
 // starttraining
 const handleStartTraining = async () => {
   if (isTraining.value) return
-  if (!trainingBackendReady.value) { ElMessage.warning('训练服务尚未就绪，请更新后端后重试'); return }
+  if (!trainingBackendReady.value) { ElMessage.warning(uiText('训练服务尚未就绪，请更新后端后重试')); return }
   try {
     const original = currentTrainingItem.value?.originalData
     if (original?.modelOutputPath) {
-      await ElMessageBox.confirm('该任务已有训练结果。重新训练会更新任务状态和产物路径，已保存到算法模型的记录保留。确认重新训练？', '重新训练', { type: 'warning' })
+      await ElMessageBox.confirm(uiText('该任务已有训练结果。重新训练会更新任务状态和产物路径，已保存到算法模型的记录保留。确认重新训练？'), uiText('重新训练'), { type: 'warning' })
     }
     stopAllPolling()
     lastModelPath.value = ''
@@ -1634,7 +1620,7 @@ const handleStartTraining = async () => {
 
     if (!modelFilePath && !computeNodeId.value) {
       isTraining.value = false
-      ElMessage.error('未找到基础模型路径，请先在算法配置中设置模型文件')
+      ElMessage.error(uiText('未找到基础模型路径，请先在算法配置中设置模型文件'))
       appendLogLines('[WARN] 未找到模型文件路径，无法启动训练')
       return
     }
@@ -1668,7 +1654,7 @@ const handleStartTraining = async () => {
     if (error === 'cancel' || error === 'close') return
     console.error('启动训练失败:', error)
     appendLogLines(`[ERROR] 训练启动失败: ${error?.message || error}`)
-    ElMessage.error('训练启动失败：' + (error?.message || '未知错误'))
+    ElMessage.error(uiText('训练启动失败：') + (error?.message || uiText('未知错误')))
     isTraining.value = false
   }
 }
@@ -1687,25 +1673,25 @@ const handleBackToList = () => {
 
 const handleStopTraining = async (row) => {
   try {
-    await ElMessageBox.confirm(`确认要终止训练任务"${row.algorithmName}"吗？`, '确认终止', {
+    await ElMessageBox.confirm(uiText('确认要终止训练任务"{value0}"吗？', { value0: row.algorithmName }), uiText('确认终止'), {
       type: 'warning'
     })
 
     const result = await stopTraining(row.originalData.id)
     if (result.data === 'stop_requested') {
-      ElMessage.info('停止请求已提交，等待实例确认')
+      ElMessage.info(uiText('停止请求已提交，等待实例确认'))
       appendLogLines('[INFO] 等待实例确认停止，当前任务状态将由后台更新')
       await loadTrainingData()
       return
     }
-    ElMessage.success('训练任务已终止')
+    ElMessage.success(uiText('训练任务已终止'))
     appendLogLines('[INFO] 训练已停止')
     stopAllPolling()
     isTraining.value = false
     await loadTrainingData()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('终止训练失败：' + error.message)
+      ElMessage.error(uiText('终止训练失败：') + error.message)
     }
   }
 }
@@ -1728,16 +1714,16 @@ const handleEditRow = async (row) => {
 
 const handleDeleteRow = async (row) => {
   try {
-    await ElMessageBox.confirm(`确认要删除训练任务"${row.algorithmName}"吗？`, '确认删除', {
+    await ElMessageBox.confirm(uiText('确认要删除训练任务"{value0}"吗？', { value0: row.algorithmName }), uiText('确认删除'), {
       type: 'warning'
     })
 
     await deleteTraining(row.originalData.id)
-    ElMessage.success('训练任务已删除')
+    ElMessage.success(uiText('训练任务已删除'))
     loadTrainingData()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除训练任务失败：' + error.message)
+      ElMessage.error(uiText('删除训练任务失败：') + error.message)
     }
   }
 }
@@ -1869,7 +1855,7 @@ const promptDownloadModelType = async (row) => {
   ]
   const firstAvailableType = modelTypes.find(item => item.path)?.type
   if (!firstAvailableType) {
-    ElMessage.warning('当前训练任务还没有可下载的模型文件')
+    ElMessage.warning(uiText('当前训练任务还没有可下载的模型文件'))
     return null
   }
   let chosenType = firstAvailableType
@@ -1895,12 +1881,12 @@ const promptDownloadModelType = async (row) => {
             { label: item.type, disabled: !item.path },
             () => {
               if (item.path) return item.label || item.type
-              if (item.status === 'converting') return `${item.type}（转换中）`
+              if (item.status === 'converting') return uiText('{value0}（转换中）', { value0: item.type })
               if (item.status === 'failed') {
                 const error = item.error ? String(item.error).slice(0, 120) : '未返回失败原因'
-                return `${item.type}（失败：${error}）`
+                return uiText('{value0}（失败：{value1}）', { value0: item.type, value1: error })
               }
-              return `${item.type}（未生成）`
+              return uiText('{value0}（未生成）', { value0: item.type })
             }
           ))
         )
@@ -1927,7 +1913,7 @@ const handleDownloadModel = async (row) => {
   try {
     const trainingId = row?.originalData?.id ?? row?.id
     if (!trainingId) {
-      ElMessage.warning('训练ID')
+      ElMessage.warning(uiText('训练ID'))
       return
     }
 
@@ -1968,7 +1954,7 @@ const handleDownloadModel = async (row) => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(blobUrl)
 
-    ElMessage.success(`下载模型成功: ${modelFileName}`)
+    ElMessage.success(uiText('下载模型成功: {value0}', { value0: modelFileName }))
 
     if (sshConnected.value) {
       terminalOutput.value += `<div class="terminal-line"><span class="terminal-success">Downloading model: ${modelFileName}</span></div>`
@@ -1978,7 +1964,7 @@ const handleDownloadModel = async (row) => {
     }
   } catch (error) {
     console.error('模型下载错误:', error)
-    ElMessage.error('模型下载错误：' + error.message)
+    ElMessage.error(uiText('模型下载错误：') + error.message)
   }
 }
 
@@ -1989,18 +1975,18 @@ const handleRetrainModel = async (row) => {
     // Get trainingconfiguration
     const originalData = row.originalData
     if (!originalData) {
-      ElMessage.error('无法获取原始训练配置')
+      ElMessage.error(uiText('无法获取原始训练配置'))
       return
     }
 
     // new training
     await ElMessageBox.confirm(
-      `确认要重新训练任务"${originalData.taskName}"吗？这将打开训练配置页面，您可以查看和修改配置后再开始训练。`,
-      '重新训练',
+      uiText('确认要重新训练任务"{value0}"吗？这将打开训练配置页面，您可以查看和修改配置后再开始训练。', { value0: originalData.taskName }),
+      uiText('重新训练'),
       {
         type: 'info',
-        confirmButtonText: '打开训练配置',
-        cancelButtonText: '取消'
+        confirmButtonText: uiText('打开训练配置'),
+        cancelButtonText: uiText('取消')
       }
     )
 
@@ -2021,7 +2007,7 @@ const handleRetrainModel = async (row) => {
     showTrainingConfig.value = true
 
     // new traininginfo
-    ElMessage.success(`已打开训练配置页面，基于任务"${originalData.taskName}"的原有配置`)
+    ElMessage.success(uiText('已打开训练配置页面，基于任务"{value0}"的原有配置', { value0: originalData.taskName }))
 
     // in SSH new traininginfo
     if (sshConnected.value) {
@@ -2037,7 +2023,7 @@ const handleRetrainModel = async (row) => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('重新训练失败:', error)
-      ElMessage.error('重新训练失败：' + error.message)
+      ElMessage.error(uiText('重新训练失败：') + error.message)
     }
   }
 }
@@ -2116,7 +2102,7 @@ const restoreTrainingConfig = async (originalData) => {
 
   } catch (error) {
     console.error('恢复训练配置失败:', error)
-    ElMessage.error('恢复训练配置失败：' + error.message)
+    ElMessage.error(uiText('恢复训练配置失败：') + error.message)
     // configuration
     resetToDefaultConfig()
   }
@@ -2148,7 +2134,7 @@ const selectTrainingMode = (mode) => {
 // to model
 const handlePublishModel = async (row) => {
   try {
-    await ElMessageBox.confirm(`确认要将训练任务"${row.algorithmName}"发布为模型吗？`, '确认发布', {
+    await ElMessageBox.confirm(uiText('确认要将训练任务"{value0}"发布为模型吗？', { value0: row.algorithmName }), uiText('确认发布'), {
       type: 'warning'
     })
 
@@ -2162,11 +2148,11 @@ const handlePublishModel = async (row) => {
     }
 
     await createModel(modelData)
-    ElMessage.success('模型发布成功')
+    ElMessage.success(uiText('模型发布成功'))
     await loadTrainingData()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('发布模型失败：' + error.message)
+      ElMessage.error(uiText('发布模型失败：') + error.message)
     }
   }
 }
@@ -2177,25 +2163,25 @@ const handleValidateModel = (row) => {
     // Set current Validate item
     currentValidationItem.value = row
     showValidationView.value = true
-    ElMessage.info('进入模型校验页面')
+    ElMessage.info(uiText('进入模型校验页面'))
   } catch (error) {
-    ElMessage.error('进入校验页面失败：' + error.message)
+    ElMessage.error(uiText('进入校验页面失败：') + error.message)
   }
 }
 
 // Delete trainingtask
 const handleDeleteTraining = async (row) => {
   try {
-    await ElMessageBox.confirm(`确认要删除训练任务"${row.algorithmName}"吗？`, '确认删除', {
+    await ElMessageBox.confirm(uiText('确认要删除训练任务"{value0}"吗？', { value0: row.algorithmName }), uiText('确认删除'), {
       type: 'warning'
     })
 
     await deleteTraining(row.originalData.id)
-    ElMessage.success('训练任务已删除')
+    ElMessage.success(uiText('训练任务已删除'))
     await loadTrainingData()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除训练任务失败：' + error.message)
+      ElMessage.error(uiText('删除训练任务失败：') + error.message)
     }
   }
 }
@@ -2246,7 +2232,7 @@ const loadTrainingData = async () => {
       total.value = response.data.total
     }
   } catch (error) {
-    ElMessage.error('加载训练数据失败：' + error.message)
+    ElMessage.error(uiText('加载训练数据失败：') + error.message)
   } finally {
     loading.value = false
   }
@@ -2262,6 +2248,13 @@ const getTrainStatusText = (status) => {
     'stop': '停止'
   }
   return statusMap[status] || status
+}
+
+const executionStatusText = row => {
+  const stages = { QUEUED: '排队中', PREPARING: '准备训练数据', RUNNING: '训练中', ARCHIVING: '回存训练产物', COMPLETED: '训练完成', FAILED: '训练失败', CANCELLED: '已取消' }
+  const stage = row.originalData?.executionStage
+  if (stages[stage]) return uiText(stages[stage])
+  return uiText(row.trainStatus === '等待' && !isCloudTrainingRow(row) ? '待启动' : getTrainStatusText(row.trainStatus))
 }
 
 // Generate training ( )
@@ -2620,7 +2613,7 @@ const handleConfirmEdit = async () => {
     }
 
     await updateTraining(formData)
-    ElMessage.success('训练任务更新成功')
+    ElMessage.success(uiText('训练任务更新成功'))
 
     showEditDialog.value = false
     editingTrainingItem.value = null
@@ -2628,7 +2621,7 @@ const handleConfirmEdit = async () => {
     loadTrainingData()
   } catch (error) {
     console.error('更新失败:', error)
-    ElMessage.error('更新失败：' + error.message)
+    ElMessage.error(uiText('更新失败：') + error.message)
   }
 }
 
@@ -2670,7 +2663,7 @@ const scrollToBottom = () => {
 const handleDeployModel = async () => {
   try {
     if (!deployForm.value.modelName) {
-      ElMessage.error('请输入模型名称')
+      ElMessage.error(uiText('请输入模型名称'))
       return
     }
 
@@ -2685,7 +2678,7 @@ const handleDeployModel = async () => {
     }
 
     await createModel(modelData)
-    ElMessage.success('模型发布成功')
+    ElMessage.success(uiText('模型发布成功'))
     showDeployDialog.value = false
 
     // form
@@ -2696,7 +2689,7 @@ const handleDeployModel = async () => {
       versionDescription: ''
     }
   } catch (error) {
-    ElMessage.error('发布模型失败：' + error.message)
+    ElMessage.error(uiText('发布模型失败：') + error.message)
   }
 }
 
@@ -2744,22 +2737,22 @@ const handleAdvancedSearchReset = () => {
 
 const handleExport = () => {
   console.log('导出数据')
-  ElMessage.success('导出数据')
+  ElMessage.success(uiText('导出数据'))
 }
 
 const handleUpload = () => {
   console.log('上传文件')
-  ElMessage.success('上传功能')
+  ElMessage.success(uiText('上传功能'))
 }
 
 const handleDownloadTemplate = () => {
   console.log('下载模板')
-  ElMessage.success('下载模板')
+  ElMessage.success(uiText('下载模板'))
 }
 
 const handleBatchOperation = () => {
   console.log('批量操作')
-  ElMessage.success('批量操作')
+  ElMessage.success(uiText('批量操作'))
 }
 
 // page Load data
@@ -2794,7 +2787,7 @@ const handleBackFromValidation = () => {
 
 // related method
 const handleImageUpload = () => {
-  ElMessage.info('点击选择图片')
+  ElMessage.info(uiText('点击选择图片'))
 }
 
 const handleImageDrop = (event) => {
@@ -2804,7 +2797,7 @@ const handleImageDrop = (event) => {
     const file = files[0]
     if (validateImageFile(file)) {
       uploadedImage.value = file
-      ElMessage.success('图片上传成功')
+      ElMessage.success(uiText('图片上传成功'))
     }
   }
 }
@@ -2814,12 +2807,12 @@ const validateImageFile = (file) => {
   const maxSize = 4 * 1024 * 1024 // 4MB
 
   if (!validTypes.includes(file.type)) {
-    ElMessage.error('图片格式不支持，请上传jpg、png、bmp、jpeg格式的图片')
+    ElMessage.error(uiText('图片格式不支持，请上传jpg、png、bmp、jpeg格式的图片'))
     return false
   }
 
   if (file.size > maxSize) {
-    ElMessage.error('图片大小不能超过4M')
+    ElMessage.error(uiText('图片大小不能超过4M'))
     return false
   }
 
@@ -2948,7 +2941,7 @@ const loadDatasetOptions = async () => {
     }
   } catch (error) {
     console.error('加载数据集失败:', error)
-    ElMessage.error('加载数据集失败')
+    ElMessage.error(uiText('加载数据集失败'))
   } finally {
     datasetLoading.value = false
   }
@@ -2973,7 +2966,7 @@ const loadAlgorithmOptions = async () => {
     }))
   } catch (error) {
     console.error('加载算法列表失败:', error)
-    ElMessage.error('加载算法列表失败')
+    ElMessage.error(uiText('加载算法列表失败'))
   } finally {
     algorithmLoading.value = false
   }
@@ -3007,7 +3000,7 @@ const handleCloseDatasetSelector = () => {
 
 const handleConfirmDatasetSelection = () => {
   if (selectedDatasetIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个数据集')
+    ElMessage.warning(uiText('请至少选择一个数据集'))
     return
   }
 
@@ -3018,7 +3011,7 @@ const handleConfirmDatasetSelection = () => {
   showDatasetSelector.value = false
   datasetSearchKeyword.value = ''
 
-  ElMessage.success(`已选择 ${selectedDatasetIds.value.length} 个数据集`)
+  ElMessage.success(uiText('已选择 {value0} 个数据集', { value0: selectedDatasetIds.value.length }))
 }
 
 const updateDatasetTable = () => {
@@ -3035,7 +3028,7 @@ const removeDataset = (datasetId) => {
   const datasetIndex = selectedDatasets.value.findIndex(d => d.value === datasetId)
   if (datasetIndex > -1) {
     const removedDataset = selectedDatasets.value.splice(datasetIndex, 1)[0]
-    ElMessage.success(`已移除数据集: ${removedDataset.annotationName}`)
+    ElMessage.success(uiText('已移除数据集: {value0}', { value0: removedDataset.annotationName }))
   }
 }
 
@@ -3051,6 +3044,13 @@ const openDatasetSelector = async () => {
 </script>
 
 <style scoped lang="scss">
+.training-status-message {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  color: var(--el-text-color-secondary);
+}
 :deep(.new_table .el-table__body tr.hover-row > td:last-child),
 :deep(.new_table .el-table__body tr.current-row > td:last-child) {
   display: table-cell;

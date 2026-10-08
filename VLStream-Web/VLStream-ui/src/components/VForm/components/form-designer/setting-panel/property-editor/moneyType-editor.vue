@@ -6,7 +6,7 @@
 -->
 
 <template>
-  <el-form-item label="货币类型">
+  <el-form-item :label="$tp('货币类型')">
     <el-select v-model="optionModel.moneyType">
       <el-option
         v-for="item in moneyTypeOptions"

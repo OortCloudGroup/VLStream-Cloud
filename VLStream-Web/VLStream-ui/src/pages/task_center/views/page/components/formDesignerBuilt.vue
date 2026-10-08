@@ -16,30 +16,26 @@
 <template>
   <div>
     <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="120">
-      <el-form-item label="表单名称" prop="formName">
-        <el-input v-model="form.formName" placeholder="请输入表单名称" />
+      <el-form-item :label="$tp('表单名称')" prop="formName">
+        <el-input v-model="form.formName" :placeholder="$tp('请输入表单名称')" />
       </el-form-item>
-      <el-form-item label="表单类型" prop="formType" class="">
+      <el-form-item :label="$tp('表单类型')" prop="formType" class="">
         <div class="messModeBox flexRowAC">
           <div class="messModeItem flexRowAC" :class="{act:form.formType ===0}" @click="form.formType=0">
             <oort-svg-icon class="messModeItem_img" name="select" width="14" height="14" />
-            <img class="messModeItem_dot" src="@/assets/img/processui/formType1.png" />
-            流式布局
-          </div>
+            <img class="messModeItem_dot" src="@/assets/img/processui/formType1.png" /> {{ $tp('流式布局') }} </div>
           <div class="messModeItem flexRowAC" :class="{act:form.formType===1}" @click="form.formType=1">
             <oort-svg-icon class="messModeItem_img" name="select" width="14" height="14" />
-            <img class="messModeItem_dot" src="@/assets/img/processui/formType2.png" />
-            签批卡片式布局
-          </div>
+            <img class="messModeItem_dot" src="@/assets/img/processui/formType2.png" /> {{ $tp('签批卡片式布局') }} </div>
         </div>
       </el-form-item>
-      <el-form-item label="备注" prop="remark">
+      <el-form-item :label="$tp('备注')" prop="remark">
         <div class="flexRowAC" style="position: relative;width: 100%;">
           <el-input
             v-model="form.remark"
             style="flex: 1"
             type="textarea"
-            placeholder="请输入备注"
+            :placeholder="$tp('请输入备注')"
             :rows="4"
             show-word-limit
             maxlength="256"
@@ -49,22 +45,20 @@
             :number="256"
             mod="备注"
             :keyword="form.formName"
-            keyword-empty-tips="请先输入表单名称"
+            :keyword-empty-tips="$tp('请先输入表单名称')"
           />
         </div>
       </el-form-item>
     </el-form>
     <div style="text-align: right;">
-      <el-button @click="emits('close')" class="common_btn">
-        取消
-      </el-button>
-      <el-button v-preReClick type="primary" @click="saveCategory(ruleFormRef)">
-        保存
-      </el-button>
+      <el-button @click="emits('close')" class="common_btn"> {{ $tp('取消') }} </el-button>
+      <el-button v-preReClick type="primary" @click="saveCategory(ruleFormRef)"> {{ $tp('保存') }} </el-button>
     </div>
   </div>
 </template>
 <script setup lang="ts">
+import { translatePhrase as uiText } from '@/i18n'
+
 import { addForm, updateForm } from '@/api/processui'
 import { ElMessage } from 'element-plus'
 import { reactive, ref } from 'vue'
@@ -95,7 +89,7 @@ const saveCategory = async(formEl: any) => {
     if (valid) {
       let res: any = form.formId ? await updateForm(form) : await addForm(form)
       if (res.code === 200) {
-        form.formId ? ElMessage.success('表单编辑成功') : ElMessage.success('表单新增成功')
+        form.formId ? ElMessage.success(uiText('表单编辑成功')) : ElMessage.success(uiText('表单新增成功'))
         emits('close')
         emits('handle')
       } else {

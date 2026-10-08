@@ -13,13 +13,13 @@
       </template>
       <div class="node_list">
         <div class="node_list_header">
-          <span>添加流程节点</span>
+          <span>{{ $tp('添加流程节点') }}</span>
         </div>
         <div class="node_group">
           <div class="node_item" @click="addNode(1)">
             <img src="@/assets/img/processui/flownode/xzspr.png" />
-            <span v-if="flowDesignerPage?.notifyNode">处置节点</span>
-            <span v-else>审批节点</span>
+            <span v-if="flowDesignerPage?.notifyNode">{{ $tp('处置节点') }}</span>
+            <span v-else>{{ $tp('审批节点') }}</span>
           </div>
           <div
             v-if="flowDesignerPage?.notifyNode"
@@ -27,23 +27,23 @@
             @click="addNode(5)"
           >
             <img src="@/assets/img/processui/flownode/tzjd.png" />
-            <span>通知节点</span>
+            <span>{{ $tp('通知节点') }}</span>
           </div>
           <div class="node_item" @click="addNode(2)">
             <img src="@/assets/img/processui/flownode/xzcsr.png" />
-            <span>抄送节点</span>
+            <span>{{ $tp('抄送节点') }}</span>
           </div>
           <div class="node_item" @click="addNode(3)">
             <img src="@/assets/img/processui/flownode/yscl.png" />
-            <span>延时处理</span>
+            <span>{{ $tp('延时处理') }}</span>
           </div>
           <div class="node_item" @click="addNode(4)">
             <img src="@/assets/img/processui/flownode/cfq.png" />
-            <span>触发器</span>
+            <span>{{ $tp('触发器') }}</span>
           </div>
           <div class="node_item" @click="addNode(100)">
             <img src="@/assets/img/processui/flownode/tjfz.png" />
-            <span>条件分支</span>
+            <span>{{ $tp('条件分支') }}</span>
           </div>
         </div>
       </div>

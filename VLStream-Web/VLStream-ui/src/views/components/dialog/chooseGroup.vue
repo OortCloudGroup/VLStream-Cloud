@@ -8,7 +8,7 @@
 <template>
   <div>
     <el-dialog
-        title="选择虚拟组织"
+        :title="$tp('选择虚拟组织')"
         width="30%"
         top="5rem"
         :close-on-click-modal="false"
@@ -20,8 +20,8 @@
       <el-form style="margin-top: 20px">
         <el-form-item>
           <div style="text-align: right">
-            <el-button type="primary" @click="onSubmit">保存</el-button>
-            <el-button @click="close">取消</el-button>
+            <el-button type="primary" @click="onSubmit">{{ $tp('保存') }}</el-button>
+            <el-button @click="close">{{ $tp('取消') }}</el-button>
           </div>
         </el-form-item>
       </el-form>

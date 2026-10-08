@@ -17,7 +17,7 @@
           <div class="tree_search_content flexRowAC">
             <el-input
               v-model="treeSearchKeyword"
-              placeholder="搜索"
+              :placeholder="$tp('搜索')"
               clearable
               prefix-icon="Search"
             />
@@ -36,7 +36,7 @@
           >
             <template #empty>
               <div class="tree-empty" :class="{ readonly }" @click="openRootAdd">
-                {{ readonly ? '暂无数据' : '暂无数据，点击新增' }}
+                {{ readonly ? $tp('暂无数据') : $tp('暂无数据，点击新增') }}
               </div>
             </template>
             <template #default="{ node, data }">
@@ -83,10 +83,9 @@
             </template>
           </el-tree>
           <template v-if="showAssignment">
-            <el-button class="assign-button" type="primary" plain :disabled="normalizedDeviceKeys.length === 0" @click="openAssignment">
-              设置分类<span v-if="normalizedDeviceKeys.length">（{{ normalizedDeviceKeys.length }}）</span>
+            <el-button class="assign-button" type="primary" plain :disabled="normalizedDeviceKeys.length === 0" @click="openAssignment"> {{ $tp('设置分类') }}<span v-if="normalizedDeviceKeys.length">（{{ normalizedDeviceKeys.length }}）</span>
             </el-button>
-            <div class="selection-hint">勾选一台可单独设置，勾选多台可批量设置</div>
+            <div class="selection-hint">{{ $tp('勾选一台可单独设置，勾选多台可批量设置') }}</div>
           </template>
         </div>
 
@@ -98,7 +97,7 @@
 
     <el-dialog v-model="categoryDialog.visible" class="locale-dialog classification-dialog" :title="categoryDialogTitle" append-to-body>
       <el-form ref="categoryFormRef" :model="categoryForm" :rules="categoryRules" label-width="90px">
-        <el-form-item label="上级节点" prop="parentId">
+        <el-form-item :label="$tp('上级节点')" prop="parentId">
           <el-tree-select
             v-model="categoryForm.parentId"
             :data="parentOptions"
@@ -109,48 +108,50 @@
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="分类名称" prop="categoryName">
+        <el-form-item :label="$tp('分类名称')" prop="categoryName">
           <el-input v-model="categoryForm.categoryName" maxlength="100" show-word-limit />
         </el-form-item>
-        <el-form-item label="显示顺序" prop="sortNum">
+        <el-form-item :label="$tp('显示顺序')" prop="sortNum">
           <el-input-number v-model="categoryForm.sortNum" :min="0" :max="9999" controls-position="right" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="categoryDialog.visible = false" class="common_btn">取消</el-button>
-        <el-button type="primary" :loading="categoryDialog.saving" @click="submitCategory" class="common_btn">确定</el-button>
+        <el-button @click="categoryDialog.visible = false" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" :loading="categoryDialog.saving" @click="submitCategory" class="common_btn">{{ $tp('确定') }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-if="showAssignment" v-model="assignmentDialog.visible" class="locale-dialog classification-dialog" title="设置设备分类" append-to-body>
+    <el-dialog v-if="showAssignment" v-model="assignmentDialog.visible" class="locale-dialog classification-dialog" :title="$tp('设置设备分类')" append-to-body>
       <el-alert
         v-if="normalizedDeviceKeys.length > 1"
-        title="批量设置会用本次选择覆盖这些设备原有的区域、分组和标签"
+        :title="$tp('批量设置会用本次选择覆盖这些设备原有的区域、分组和标签')"
         type="warning"
         :closable="false"
         show-icon
         class="assignment-alert"
       />
       <el-form label-width="80px">
-        <el-form-item label="区域">
+        <el-form-item :label="$tp('区域')">
           <el-tree-select v-model="assignmentForm.regionId" :data="treeCache.REGION.tree" node-key="id" check-strictly clearable default-expand-all :props="treeProps" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="分组">
+        <el-form-item :label="$tp('分组')">
           <el-tree-select v-model="assignmentForm.groupId" :data="treeCache.GROUP.tree" node-key="id" check-strictly clearable default-expand-all :props="treeProps" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="标签">
+        <el-form-item :label="$tp('标签')">
           <el-tree-select v-model="assignmentForm.tagIds" :data="treeCache.TAG.tree" node-key="id" multiple show-checkbox check-strictly clearable default-expand-all :props="treeProps" style="width: 100%" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="assignmentDialog.visible = false" class="common_btn">取消</el-button>
-        <el-button type="primary" :loading="assignmentDialog.saving" @click="submitAssignment" class="common_btn">保存</el-button>
+        <el-button @click="assignmentDialog.visible = false" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" :loading="assignmentDialog.saving" @click="submitAssignment" class="common_btn">{{ $tp('保存') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { Folder } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -289,7 +290,7 @@ async function submitCategory() {
     const payload = { ...categoryForm }
     if (categoryDialog.mode === 'add') await addClassificationCategory(payload)
     else await updateClassificationCategory(payload)
-    ElMessage.success('保存成功')
+    ElMessage.success(uiText('保存成功'))
     categoryDialog.visible = false
     selectedCategory.value = null
     await loadTree(activeType.value)
@@ -301,7 +302,7 @@ async function submitCategory() {
 async function removeCategory() {
   await ElMessageBox.confirm(tp('确认删除所选分类吗？'), tp('提示'), { type: 'warning' })
   await deleteClassificationCategory(String(selectedCategory.value.id))
-  ElMessage.success('删除成功')
+  ElMessage.success(uiText('删除成功'))
   selectedCategory.value = null
   await loadTree(activeType.value)
 }
@@ -335,7 +336,7 @@ async function submitAssignment() {
       groupId: assignmentForm.groupId,
       tagIds: assignmentForm.tagIds
     })
-    ElMessage.success('分类设置成功')
+    ElMessage.success(uiText('分类设置成功'))
     assignmentDialog.visible = false
     await loadAllTrees()
     emit('assigned')

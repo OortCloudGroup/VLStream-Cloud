@@ -9,48 +9,42 @@
   <div class="prop_body">
     <div class="prop_body_tab">
       <el-tabs v-model="activeName" class="demo-tabs">
-        <el-tab-pane label="节点设置" name="zero">
+        <el-tab-pane :label="$tp('节点设置')" name="zero">
           <div class="prop_title">
-            <span>节点名称</span>
+            <span>{{ $tp('节点名称') }}</span>
           </div>
           <div class="prop_item">
             <el-input
               v-model="nodeName"
-              placeholder="请输入节点名称"
+              :placeholder="$tp('请输入节点名称')"
             />
           </div>
           <div class="prop_title">
-            <span>延时方式</span>
+            <span>{{ $tp('延时方式') }}</span>
           </div>
           <div class="prop_item">
             <el-radio-group v-model="activeChooseData.waitType" size="large">
-              <el-radio-button label="固定时长" value="duration" />
-              <el-radio-button label="自动计算(日期)" value="date" />
+              <el-radio-button :label="$tp('固定时长')" value="duration" />
+              <el-radio-button :label="$tp('自动计算(日期)')" value="date" />
             </el-radio-group>
           </div>
           <div v-if="activeChooseData.waitType === 'duration'" class="prop_item">
-            <el-input v-model.number="activeChooseData.delayDuration" style="width: 160px" placeholder="请输入时长">
-              <template #append>
-                小时
-              </template>
+            <el-input v-model.number="activeChooseData.delayDuration" style="width: 160px" :placeholder="$tp('请输入时长')">
+              <template #append> {{ $tp('小时') }} </template>
             </el-input>
-            <span> 后， 进入下一步</span>
+            <span> {{ $tp('后， 进入下一步') }}</span>
           </div>
           <div v-if="activeChooseData.waitType === 'date'" class="prop_item">
-            <el-date-picker v-model="activeChooseData.timeDate" value-format="YYYY-MM-DD" style="width: 160px" placeholder="请输入延时时间" />
-            <span> 后，进入下一步</span>
+            <el-date-picker v-model="activeChooseData.timeDate" value-format="YYYY-MM-DD" style="width: 160px" :placeholder="$tp('请输入延时时间')" />
+            <span> {{ $tp('后，进入下一步') }}</span>
           </div>
         </el-tab-pane>
       </el-tabs>
     </div>
     <div class="prop_body_bottom button_group">
       <!-- button , -->
-      <el-button @click="cancel" class="common_btn">
-        取消
-      </el-button>
-      <el-button type="primary" @click="confirm" class="common_btn">
-        确定
-      </el-button>
+      <el-button @click="cancel" class="common_btn"> {{ $tp('取消') }} </el-button>
+      <el-button type="primary" @click="confirm" class="common_btn"> {{ $tp('确定') }} </el-button>
     </div>
   </div>
 </template>

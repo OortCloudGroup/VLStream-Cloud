@@ -11,10 +11,11 @@
     <!-- (annotation ) -->
     <div v-if="showAnnotationView" class="content-header">
       <div class="breadcrumb">
-        <span class="breadcrumb-item" @click="showTableView">算法标注</span>
+        <span class="breadcrumb-item" @click="showTableView">{{ $tp('算法标注') }}</span>
         <span class="breadcrumb-separator">></span>
-        <span class="breadcrumb-item active">查看与标注</span>
+        <span class="breadcrumb-item active">{{ $tp('查看与标注') }}</span>
       </div>
+      <el-button link type="primary" :loading="reviewingGenerationReport" @click="handleReviewGenerationReport(currentAnnotationData)">{{ $tp('查看生成检查') }}</el-button>
     </div>
 
     <!--  -->
@@ -26,16 +27,14 @@
               <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
                 <el-icon class="BtnImg">
                   <Plus />
-                </el-icon>
-                新建
-              </button>
+                </el-icon> {{ $tp('新建') }} </button>
               <button-group :button-list="toolbarButtonList" />
             </div>
           </div>
           <div class="searchHeight_out flexRowAC">
             <search-height-box
               keyword="keyword"
-              placeholder="搜索"
+              :placeholder="$tp('搜索')"
               :data="searchData"
               @handle="searchResetFn"
             />
@@ -71,7 +70,7 @@
               <span v-else-if="scope.row.datasetPath" class="dataset-path clickable" :title="scope.row.datasetPath">
                 {{ scope.row.datasetPath }}
               </span>
-              <span v-else class="no-dataset">未设置</span>
+              <span v-else class="no-dataset">{{ $tp('未设置') }}</span>
             </template>
           </el-table-column>
           <el-table-column prop="createTime" :label="$tp('创建时间')" :width="clacPXToVW(180)" />
@@ -80,7 +79,7 @@
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="handleView(scope.row)">
                   <oort-svg-icon width="14" height="14" name="detail_icon" class="new_table_svg_group_svg" />
-                  <span>标注</span>
+                  <span>{{ $tp('标注') }}</span>
                 </div>
                 <div
                   class="new_table_svg_group"
@@ -91,19 +90,22 @@
                 >
                   <el-icon v-if="generatingDatasetIds.has(String(scope.row.id))" class="is-loading"><Loading /></el-icon>
                   <oort-svg-icon v-else width="14" height="14" name="export" class="new_table_svg_group_svg" />
-                  <span>生成</span>
+                  <span>{{ $tp('生成') }}</span>
+                </div>
+                <div class="new_table_svg_group" @click.stop="handleReviewGenerationReport(scope.row)">
+                  <span>{{ $tp('查看生成检查') }}</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleImportData(scope.row)">
                   <oort-svg-icon width="14" height="14" name="table_incoming" class="new_table_svg_group_svg" />
-                  <span>导入</span>
+                  <span>{{ $tp('导入') }}</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleExportData(scope.row)">
                   <oort-svg-icon width="14" height="14" name="export" class="new_table_svg_group_svg" />
-                  <span>导出</span>
+                  <span>{{ $tp('导出') }}</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleDeleteItem(scope.row)">
                   <oort-svg-icon color="red" width="14" height="14" name="delete_icon" class="new_table_svg_group_svg" />
-                  <span>删除</span>
+                  <span>{{ $tp('删除') }}</span>
                 </div>
               </div>
             </template>
@@ -128,10 +130,10 @@
 
     <!-- ( layer ) -->
     <div v-if="showAnnotationView && !showDetailAnnotation" class="annotation-view-container">
-      <div v-if="annotationDataLoading" role="status">正在加载图片和标注数据，请稍候…</div>
+      <div v-if="annotationDataLoading" role="status">{{ $tp('正在加载图片和标注数据，请稍候…') }}</div>
       <el-alert v-else-if="annotationLoadError" type="error" :closable="false" :title="annotationLoadError">
-        <el-button @click="loadAllAnnotationData">重新加载</el-button>
-        <el-button @click="handleBackToList">返回列表</el-button>
+        <el-button @click="loadAllAnnotationData">{{ $tp('重新加载') }}</el-button>
+        <el-button @click="handleBackToList">{{ $tp('返回列表') }}</el-button>
       </el-alert>
       <!-- component -->
       <AnnotationGridView
@@ -180,25 +182,20 @@
                 :loading="isSavingAnnotations"
                 class="save-annotation-btn"
               >
-                <el-icon><Download /></el-icon>
-                保存当前标注
-              </el-button>
+                <el-icon><Download /></el-icon> {{ $tp('保存当前标注') }} </el-button>
             </div>
             <div class="save-buttons-right">
-              <el-button v-if="isEditorFullscreen" @click="isEditorFullscreen = false" plain>退出全屏</el-button>
+              <el-button v-if="isEditorFullscreen" @click="isEditorFullscreen = false" plain>{{ $tp('退出全屏') }}</el-button>
               <el-button @click="handleBackToGrid" type="primary" plain :disabled="isSavingAnnotations">
-                <el-icon><ArrowLeft /></el-icon>
-                返回网格
-              </el-button>
+                <el-icon><ArrowLeft /></el-icon> {{ $tp('返回网格') }} </el-button>
+              <el-button :loading="reviewingGenerationReport" @click="handleReviewGenerationReport(currentAnnotationData)">{{ $tp('返回检查清单') }}</el-button>
               <el-button
                 type="warning"
                 @click="handleClearAllImages"
                 class="clear-all-btn"
                 :disabled="uploadedImages.length === 0 || isSavingAnnotations"
               >
-                <el-icon><Delete /></el-icon>
-                清空所有图片
-              </el-button>
+                <el-icon><Delete /></el-icon> {{ $tp('清空所有图片') }} </el-button>
             </div>
           </div>
 
@@ -211,7 +208,7 @@
                   class="tool-btn-left"
                   :class="{ active: selectedTool === 'rect' }"
                   @click="selectTool('rect')"
-                  title="矩形标注"
+                  :title="$tp('矩形标注')"
                 >
                   <el-icon><Crop /></el-icon>
                 </el-button>
@@ -219,49 +216,49 @@
                   class="tool-btn-left"
                   :class="{ active: selectedTool === 'circle' }"
                   @click="selectTool('circle')"
-                  title="圆形标注"
+                  :title="$tp('圆形标注')"
                 >
                   <el-icon><CirclePlus /></el-icon>
                 </el-button>
                 <el-button
                   class="tool-btn-left"
                   @click="handleZoomIn"
-                  title="放大"
+                  :title="$tp('放大')"
                 >
                   <el-icon><ZoomIn /></el-icon>
                 </el-button>
                 <el-button
                   class="tool-btn-left"
                   @click="handleZoomOut"
-                  title="缩小"
+                  :title="$tp('缩小')"
                 >
                   <el-icon><ZoomOut /></el-icon>
                 </el-button>
                 <el-button
                   class="tool-btn-left"
                   @click="handleRotateLeft"
-                  title="逆时针旋转90°"
+                  :title="$tp('逆时针旋转90°')"
                 >
                   <el-icon><RefreshLeft /></el-icon>
                 </el-button>
                 <el-button
                   class="tool-btn-left"
                   @click="handleRotateRight"
-                  title="顺时针旋转90°"
+                  :title="$tp('顺时针旋转90°')"
                 >
                   <el-icon><RefreshRight /></el-icon>
                 </el-button>
                 <el-button
                   class="tool-btn-left"
                   @click="handleDeleteAnnotation"
-                  title="删除标注"
+                  :title="$tp('删除标注')"
                 >
                   <el-icon><Delete /></el-icon>
                 </el-button>
                 <el-button
                   class="tool-btn-left"
                   @click="handleFullScreenPreview"
-                  :title="isEditorFullscreen ? '退出全屏' : '全屏标注'"
+                  :title="isEditorFullscreen ? $tp('退出全屏') : $tp('全屏标注')"
                 >
                   <el-icon><FullScreen /></el-icon>
                 </el-button>
@@ -390,7 +387,7 @@
                 <!--  -->
                 <div v-else class="no-image-placeholder">
                   <el-icon class="placeholder-icon"><Picture /></el-icon>
-                  <p class="placeholder-text">请上传图片开始标注</p>
+                  <p class="placeholder-text">{{ $tp('请上传图片开始标注') }}</p>
                   <el-upload
                     :show-file-list="false"
                     :on-change="handleImageUpload"
@@ -399,9 +396,7 @@
                     multiple
                   >
                     <el-button type="primary">
-                      <el-icon><Upload /></el-icon>
-                      上传图片
-                    </el-button>
+                      <el-icon><Upload /></el-icon> {{ $tp('上传图片') }} </el-button>
                   </el-upload>
                 </div>
               </div>
@@ -447,11 +442,9 @@
       :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }"
       @click.stop
     >
-      <div class="context-menu-header">选择标签</div>
+      <div class="context-menu-header">{{ $tp('选择标签') }}</div>
       <div class="context-menu-add-label">
-        <el-button type="primary" size="small" :icon="Plus" @click.stop="handleAddLabelFromContextMenu">
-          添加标签
-        </el-button>
+        <el-button type="primary" size="small" :icon="Plus" @click.stop="handleAddLabelFromContextMenu"> {{ $tp('添加标签') }} </el-button>
       </div>
       <div class="context-menu-items">
         <div
@@ -464,9 +457,7 @@
           <span class="label-name">{{ label.name }}</span>
         </div>
       </div>
-      <div v-if="annotationLabels.length === 0" class="context-menu-empty">
-        暂无标签，请先添加标签
-      </div>
+      <div v-if="annotationLabels.length === 0" class="context-menu-empty"> {{ $tp('暂无标签，请先添加标签') }} </div>
     </div>
     </Teleport>
 
@@ -495,14 +486,14 @@
       <div class="dataset-validation-content">
         <!-- current annotation item info -->
         <div class="annotation-info">
-          <h4>{{ currentAnnotationRow?.name || '未选择' }}</h4>
+          <h4>{{ currentAnnotationRow?.name || $tp('未选择') }}</h4>
           <div class="path-info">
             <div class="path-item">
               <span class="label">{{ currentDatasetInMinio ? $tp('存储位置：') : $tp('完整路径：') }}</span>
-              <span class="path-value" :title="currentAnnotationRow?.datasetPath">{{ currentDatasetInMinio ? 'MinIO' : currentAnnotationRow?.datasetPath || '未设置' }}</span>
+              <span class="path-value" :title="currentAnnotationRow?.datasetPath">{{ currentDatasetInMinio ? 'MinIO' : currentAnnotationRow?.datasetPath || $tp('未设置') }}</span>
             </div>
             <div class="path-item">
-              <span class="label">文件名：</span>
+              <span class="label">{{ $tp('文件名：') }}</span>
               <span class="file-name">{{ currentDatasetInMinio ? $tp('训练数据包.zip') : extractDatasetFileName(currentAnnotationRow?.datasetPath) }}</span>
             </div>
           </div>
@@ -520,40 +511,40 @@
           <div class="validation-status" v-if="pathValidationResult">
             <div v-if="pathValidationResult.valid" class="status-success">
               <el-icon><CircleCheck /></el-icon>
-              <span>数据集文件存在</span>
+              <span>{{ $tp('数据集文件存在') }}</span>
             </div>
             <div v-else class="status-error">
               <el-icon><CircleClose /></el-icon>
-              <span>数据集文件不存在</span>
+              <span>{{ $tp('数据集文件不存在') }}</span>
             </div>
             <p class="validation-message">{{ pathValidationResult.message }}</p>
           </div>
 
           <div v-if="validatingPath" class="validation-loading">
             <el-icon class="is-loading"><Loading /></el-icon>
-            <p>正在校验数据集文件...</p>
+            <p>{{ $tp('正在校验数据集文件...') }}</p>
           </div>
         </div>
 
         <!--  -->
         <div class="path-validation-section" v-if="!currentDatasetInMinio && pathValidationResult">
           <div class="section-header">
-            <h3>路径验证结果</h3>
+            <h3>{{ $tp('路径验证结果') }}</h3>
             <el-tag :type="pathValidationResult.valid ? 'success' : 'danger'">
-              {{ pathValidationResult.valid ? '路径有效' : '路径无效' }}
+              {{ pathValidationResult.valid ? $tp('路径有效') : $tp('路径无效') }}
             </el-tag>
           </div>
           <div class="validation-details">
             <div class="validation-item">
-              <span class="label">检测到的图片数量：</span>
+              <span class="label">{{ $tp('检测到的图片数量：') }}</span>
               <span class="value">{{ pathValidationResult.imageCount || 0 }}</span>
             </div>
             <div class="validation-item">
-              <span class="label">支持的格式：</span>
+              <span class="label">{{ $tp('支持的格式：') }}</span>
               <span class="value">{{ pathValidationResult.supportedFormats?.join(', ') || 'jpg, png, jpeg, bmp' }}</span>
             </div>
             <div class="validation-item" v-if="pathValidationResult.message">
-              <span class="label">验证信息：</span>
+              <span class="label">{{ $tp('验证信息：') }}</span>
               <span class="value">{{ pathValidationResult.message }}</span>
             </div>
           </div>
@@ -562,7 +553,7 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="handleDatasetDialogClose" class="common_btn">关闭</el-button>
+          <el-button type="primary" @click="handleDatasetDialogClose" class="common_btn">{{ $tp('关闭') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -570,7 +561,7 @@
     <!-- full dialog -->
     <el-dialog
       v-model="showFullScreenPreview"
-      title="图片全屏预览"
+      :title="$tp('图片全屏预览')"
       width="95%"
       :before-close="handleCloseFullScreenPreview"
       class="fullscreen-preview-dialog"
@@ -591,7 +582,7 @@
               size="small"
               @click="previousImageInPreview"
               :disabled="currentImageIndex <= 0"
-              title="上一张 (←)"
+              :title="$tp('上一张 (←)')"
             >
               <el-icon><ArrowLeft /></el-icon>
             </el-button>
@@ -599,17 +590,15 @@
               size="small"
               @click="nextImageInPreview"
               :disabled="currentImageIndex >= uploadedImages.length - 1"
-              title="下一张 (→)"
+              :title="$tp('下一张 (→)')"
             >
               <el-icon><ArrowRight /></el-icon>
             </el-button>
             <el-button
               size="small"
               @click="handleCloseFullScreenPreview"
-              title="关闭 (ESC)"
-             class="common_btn">
-              关闭
-            </el-button>
+              :title="$tp('关闭 (ESC)')"
+             class="common_btn"> {{ $tp('关闭') }} </el-button>
           </div>
         </div>
 
@@ -656,8 +645,8 @@
         <div class="preview-controls">
           <el-switch
             v-model="showAnnotationsInPreview"
-            active-text="显示标注"
-            inactive-text="隐藏标注"
+            :active-text="$tp('显示标注')"
+            :inactive-text="$tp('隐藏标注')"
           />
         </div>
       </div>
@@ -666,42 +655,35 @@
     <!-- Import dialog -->
     <el-dialog
       v-model="showImportDialog"
-      title="导入图片"
+      :title="$tp('导入图片')"
       width="45%"
       :before-close="handleCloseImportDialog"
     >
       <div class="import-dialog-content">
         <div class="import-form">
           <div class="form-item">
-            <label class="form-label">标注状态</label>
+            <label class="form-label">{{ $tp('标注状态') }}</label>
             <div class="radio-group">
-              <el-radio v-model="importForm.annotationStatus" label="none" :disabled="importingImages">
-                无标注信息
-              </el-radio>
-              <el-radio v-model="importForm.annotationStatus" label="exist" :disabled="importingImages">
-                有标注信息
-              </el-radio>
+              <el-radio v-model="importForm.annotationStatus" label="none" :disabled="importingImages"> {{ $tp('无标注信息') }} </el-radio>
+              <el-radio v-model="importForm.annotationStatus" label="exist" :disabled="importingImages"> {{ $tp('有标注信息') }} </el-radio>
             </div>
           </div>
 
           <div class="form-item">
-            <label class="form-label">导入路径 <span class="required">*</span></label>
+            <label class="form-label">{{ $tp('导入路径') }} <span class="required">*</span></label>
             <div class="path-selector">
               <el-button @click="handleSelectDirectory" class="select-btn" :disabled="importingImages">
-                <el-icon><Folder /></el-icon>
-                选择目录
-              </el-button>
-              <span v-if="importForm.directoryPath" class="selected-path">
-                已选择：{{ importForm.directoryPath }}
+                <el-icon><Folder /></el-icon> {{ $tp('选择目录') }} </el-button>
+              <span v-if="importForm.directoryPath" class="selected-path"> {{ $tp('已选择：') }}{{ importForm.directoryPath }}
               </span>
             </div>
             <div class="import-tips">
               <el-icon class="tip-icon"><InfoFilled /></el-icon>
               <div class="tip-content">
-                <p>提示：1.导入的图像及文件夹标签数据，以免影响图像标记工作，重复出现功能已单独设置；</p>
-                <p>2.每次导入符合允许检测的同一目录，如果组织标记会自动分发功能，可能影响下层已经选则的函数检测时间。</p>
+                <p>{{ $tp('提示：1.导入的图像及文件夹标签数据，以免影响图像标记工作，重复出现功能已单独设置；') }}</p>
+                <p>{{ $tp('2.每次导入符合允许检测的同一目录，如果组织标记会自动分发功能，可能影响下层已经选则的函数检测时间。') }}</p>
                 <div class="link-wrapper">
-                  <a href="#" class="help-link">实例分享训练数据集（coco格式）</a>
+                  <a href="#" class="help-link">{{ $tp('实例分享训练数据集（coco格式）') }}</a>
                 </div>
               </div>
             </div>
@@ -712,29 +694,35 @@
       <template #footer>
         <div v-if="importProgress.total > 0" class="import-progress" role="status" aria-live="polite">
           <div class="import-progress-summary">
-            <span>{{ importingImages ? '正在导入图片' : importProgress.error ? '导入失败' : '导入完成' }}</span>
-            <span>已导入 {{ importProgress.completed }} / {{ importProgress.total }} 张</span>
+            <span>{{ importingImages ? $tp('正在导入图片') : importProgress.error ? $tp('导入失败') : $tp('导入完成') }}</span>
+            <span>{{ $tp('已导入') }} {{ importProgress.completed }} / {{ importProgress.total }} {{ $tp('张') }}</span>
           </div>
           <el-progress :percentage="importProgressPercentage" :status="importProgress.error ? 'exception' : importingImages ? undefined : 'success'" :stroke-width="10" />
-          <p v-if="importProgress.error" class="import-progress-error">{{ importProgress.error }}（已成功导入的图片会保留）</p>
+          <p v-if="importProgress.error" class="import-progress-error">{{ importProgress.error }}{{ $tp('（已成功导入的图片会保留）') }}</p>
         </div>
         <div class="dialog-footer">
-          <el-button @click="handleCloseImportDialog" class="common_btn" :disabled="importingImages">取消</el-button>
-          <el-button type="primary" @click="handleConfirmImport" class="common_btn" :disabled="importingImages">确定</el-button>
+          <el-button @click="handleCloseImportDialog" class="common_btn" :disabled="importingImages">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" @click="handleConfirmImport" class="common_btn" :disabled="importingImages">{{ $tp('确定') }}</el-button>
         </div>
       </template>
     </el-dialog>
     </div>
+    <DatasetGenerationDialog :visible="showGenerationReport" :report="generationReport" @close="showGenerationReport = false" @repair="repairGenerationImage" />
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue'
 import { clacPXToVW } from '@/utils/index'
 import AnnotationGridView from './AnnotationGridView.vue'
 import AnnotationLabelPanel from '@/components/AnnotationLabelPanel.vue'
 import AnnotationAddDialog from './components/AnnotationAddDialog.vue'
 import AnnotationLabelDialog from './components/AnnotationLabelDialog.vue'
+import DatasetGenerationDialog from './components/DatasetGenerationDialog.vue'
+import { constrainAnnotation } from '@/utils/annotationBounds'
+import { generateTrainingDataset, viewTrainingDatasetReport } from '@/utils/datasetGeneration'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {ArrowLeft,
   ArrowRight,
@@ -1151,7 +1139,7 @@ const loadData = async (shouldUpdate = () => true) => {
   } catch (error) {
     if (!shouldUpdate()) return
     console.error('加载数据失败:', error)
-    ElMessage.error('加载数据失败')
+    ElMessage.error(uiText('加载数据失败'))
   } finally {
     if (shouldUpdate()) loading.value = false
   }
@@ -1197,13 +1185,13 @@ const handleEdit = async () => {
     }
     showAddDialog.value = true
   } else {
-    ElMessage.warning('请选择一行数据进行编辑')
+    ElMessage.warning(uiText('请选择一行数据进行编辑'))
   }
 }
 
 const handleImport = () => {
   if (selectedRows.value.length !== 1) {
-    ElMessage.warning('请选择一条标注任务进行导入')
+    ElMessage.warning(uiText('请选择一条标注任务进行导入'))
     return
   }
   importTargetId.value = selectedRows.value[0].id
@@ -1216,12 +1204,12 @@ const handleImport = () => {
 }
 const handleExport = async () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请选择要导出的数据')
+    ElMessage.warning(uiText('请选择要导出的数据'))
     return
   }
   const missingDataset = selectedRows.value.find(row => !row.datasetPath?.trim())
   if (missingDataset) {
-    ElMessage.warning(`“${missingDataset.name}”尚未生成训练数据集，请先点击该行“生成”`)
+    ElMessage.warning(uiText('“{value0}”尚未生成训练数据集，请先点击该行“生成”', { value0: missingDataset.name }))
     return
   }
 
@@ -1235,26 +1223,26 @@ const handleExport = async () => {
       a.click()
       window.URL.revokeObjectURL(url)
     }
-    ElMessage.success('导出成功')
+    ElMessage.success(uiText('导出成功'))
   } catch (error) {
     console.error('导出失败:', error)
-    ElMessage.error(error.message || '导出失败')
+    ElMessage.error(error.message || uiText('导出失败'))
   }
 }
 
 const handleDelete = async () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请选择要删除的数据')
+    ElMessage.warning(uiText('请选择要删除的数据'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的${selectedRows.value.length}个标注吗？\n将清理项目图片、标注、版本和独占的数据集文件，保留训练历史及模型。活动训练或导入任务会阻止删除。清理失败时可重试。`,
-      '提示',
+      uiText('确定要删除选中的{value0}个标注吗？\n将清理项目图片、标注、版本和独占的数据集文件，保留训练历史及模型。活动训练或导入任务会阻止删除。清理失败时可重试。', { value0: selectedRows.value.length }),
+      uiText('提示'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: uiText('确定'),
+        cancelButtonText: uiText('取消'),
         type: 'warning'
       }
     )
@@ -1266,13 +1254,13 @@ const handleDelete = async () => {
       await batchDeleteAlgorithmAnnotation(ids)
     }
 
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText('删除成功'))
     selectedRows.value = []
     await loadData()
   } catch (error) {
   if (error !== 'cancel') {
       console.error('删除失败:', error)
-      ElMessage.error(error?.message || '删除未完成，请刷新列表后重试')
+      ElMessage.error(error?.message || uiText('删除未完成，请刷新列表后重试'))
       await loadData()
     }
   }
@@ -1328,7 +1316,7 @@ const handleView = async (row) => {
       await loadAnnotationLabels()
     } catch (labelError) {
       console.error('单独加载标签也失败:', labelError)
-      ElMessage.error('加载标签失败，请刷新页面重试')
+      ElMessage.error(uiText('加载标签失败，请刷新页面重试'))
     }
   }
 }
@@ -1341,11 +1329,43 @@ onUnmounted(() => {
   generatingDatasetIds.value.clear()
 })
 
+const showGenerationReport = ref(false)
+const generationReport = ref({})
+const generationTarget = ref(null)
+const reviewingGenerationReport = ref(false)
+const handleReviewGenerationReport = async (row) => {
+  if (!row?.id || reviewingGenerationReport.value || datasetPageDisposed) return
+  reviewingGenerationReport.value = true
+  try {
+    const response = await viewTrainingDatasetReport(String(row.id), () => datasetPageDisposed)
+    if (datasetPageDisposed) return
+    generationReport.value = response.data
+    generationTarget.value = row
+    showGenerationReport.value = true
+  } catch (error) { if (!datasetPageDisposed) ElMessage.error(error.message || uiText('检查清单读取失败')) }
+  finally { reviewingGenerationReport.value = false }
+}
+const repairGenerationImage = async (imageId) => {
+  if (isDrawing.value || pendingAnnotation.value || isSavingAnnotations.value) {
+    ElMessage.warning(uiText('请先完成当前标注操作，再查看另一张图片'))
+    return
+  }
+  showGenerationReport.value = false
+  if (generationTarget.value.annotationType !== 'object_detection') {
+    await router.push({ path: '/dataset-annotation', query: { dataset: String(generationTarget.value.id), image: String(imageId) } })
+    return
+  }
+  if (String(currentAnnotationData.value?.id) !== String(generationTarget.value.id)) await handleView(generationTarget.value)
+  const image = uploadedImages.value.find(item => String(item.id) === String(imageId))
+  if (image) { selectedAnnotation.value = null; handleStartAnnotation(image) }
+  else ElMessage.warning(uiText('图片已变更或删除，请刷新后重试'))
+}
+
 const handleSaveDataset = async (row) => {
   if (datasetPageDisposed) return
   const target = row || currentAnnotationData.value
   if (!target?.id) {
-    ElMessage.warning('缺少标注任务ID，无法生成数据集')
+    ElMessage.warning(uiText('缺少标注任务ID，无法生成数据集'))
     return
   }
 
@@ -1354,22 +1374,35 @@ const handleSaveDataset = async (row) => {
   generatingDatasetIds.value.add(targetId)
 
   try {
-    const response = await request.post(`/vlsAlgorithmAnnotation/${target.id}/save-dataset`)
+    const response = await generateTrainingDataset(target.id, () => datasetPageDisposed)
     if (datasetPageDisposed) return
 
     if (response.code === 200) {
+      if (response.data?.status) {
+        generationReport.value = response.data
+        generationTarget.value = target
+        showGenerationReport.value = true
+        if (response.data.status === 'BLOCKED') return
+      }
       await loadData(() => !datasetPageDisposed)
       if (datasetPageDisposed) return
-      ElMessage.success('训练数据集已生成，现在可以导出 YOLO ZIP')
+      ElMessage.success(uiText('训练数据集已生成，现在可以导出 YOLO ZIP'))
       console.log('数据集文件创建成功')
     } else {
-      ElMessage.error(response.msg || response.message || '生成数据集失败')
+      ElMessage.error(response.msg || response.message || uiText('生成数据集失败'))
       console.error('保存到数据集文件失败:', response.msg || response.message)
     }
   } catch (error) {
     if (datasetPageDisposed) return
+    const report = error.data?.data || error.response?.data?.data
+    if (report?.status === 'BLOCKED') {
+      generationReport.value = report
+      generationTarget.value = target
+      showGenerationReport.value = true
+      return
+    }
     console.error('生成数据集失败:', error)
-    ElMessage.error(error.message || '生成数据集失败')
+    ElMessage.error(error.message || uiText('生成数据集失败'))
   } finally {
     generatingDatasetIds.value.delete(targetId)
   }
@@ -1387,7 +1420,7 @@ const handleImportData = (row) => {
 }
 const handleExportData = async (row) => {
   if (!row.datasetPath?.trim()) {
-    ElMessage.warning('请先点击该行“生成”，成功后再导出 YOLO ZIP')
+    ElMessage.warning(uiText('请先点击该行“生成”，成功后再导出 YOLO ZIP'))
     return
   }
   try {
@@ -1398,32 +1431,32 @@ const handleExportData = async (row) => {
     a.download = `${row.name}_annotation.zip`
     a.click()
     window.URL.revokeObjectURL(url)
-    ElMessage.success('导出成功')
+    ElMessage.success(uiText('导出成功'))
   } catch (error) {
     console.error('导出失败:', error)
-    ElMessage.error(error.message || '导出失败')
+    ElMessage.error(error.message || uiText('导出失败'))
   }
 }
 
 const handleDeleteItem = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除标注"${row.name}"吗？\n将清理项目图片、标注、版本和独占的数据集文件，保留训练历史及模型。活动训练或导入任务会阻止删除。清理失败时可重试。`,
-      '提示',
+      uiText('确定要删除标注"{value0}"吗？\n将清理项目图片、标注、版本和独占的数据集文件，保留训练历史及模型。活动训练或导入任务会阻止删除。清理失败时可重试。', { value0: row.name }),
+      uiText('提示'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: uiText('确定'),
+        cancelButtonText: uiText('取消'),
         type: 'warning'
       }
     )
 
     await deleteAlgorithmAnnotation(row.id)
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText('删除成功'))
     await loadData()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
-      ElMessage.error(error?.message || '删除未完成，请刷新列表后重试')
+      ElMessage.error(error?.message || uiText('删除未完成，请刷新列表后重试'))
       await loadData()
     }
   }
@@ -1433,13 +1466,13 @@ const handleDeleteItem = async (row) => {
 const isMinioDatasetPath = datasetPath => typeof datasetPath === 'string' && datasetPath.startsWith('vls-dataset://')
 const currentDatasetInMinio = computed(() => isMinioDatasetPath(currentAnnotationRow.value?.datasetPath))
 const extractDatasetFileName = (datasetPath) => {
-  if (!datasetPath) return '未设置'
-  if (isMinioDatasetPath(datasetPath)) return '训练数据包.zip'
+  if (!datasetPath) return uiText('未设置')
+  if (isMinioDatasetPath(datasetPath)) return uiText('训练数据包.zip')
 
   // , : //192.168.88.173/data/work/ultralytics_yolov8-main/datasets/vls/1756697884961.yaml
   // : 1756697884961.yaml
   const parts = datasetPath.split('/')
-  return parts[parts.length - 1] || '未知文件'
+  return parts[parts.length - 1] || uiText('未知文件')
 }
 
 // dataset Validate related method
@@ -1479,7 +1512,7 @@ const handleBrowseDatasetPath = () => {
       // Set dataset
       datasetPathForm.value.datasetPath = folderPath || firstFile.name.split('/')[0]
 
-      ElMessage.success(`已选择文件夹：${datasetPathForm.value.datasetPath}`)
+      ElMessage.success(uiText('已选择文件夹：{value0}', { value0: datasetPathForm.value.datasetPath }))
     }
   }
 
@@ -1493,7 +1526,7 @@ const handleValidateDatasetPath = async () => {
     return
   }
   if (!currentAnnotationRow.value?.datasetPath) {
-    ElMessage.warning('当前项目没有设置数据集路径')
+    ElMessage.warning(uiText('当前项目没有设置数据集路径'))
     return
   }
 
@@ -1509,7 +1542,7 @@ const handleValidateDatasetPath = async () => {
     ElMessage.error(pathValidationResult.value.message)
   } catch (error) {
     console.error('校验文件失败:', error)
-    ElMessage.error('校验文件失败: ' + error.message)
+    ElMessage.error(uiText('校验文件失败: ') + error.message)
     pathValidationResult.value = {
       valid: false,
       message: '校验过程中发生错误'
@@ -1556,20 +1589,20 @@ const handleSelectDirectory = () => {
       const zipFile = files[0]
       if (!zipFile) return
       if (!zipFile.name.toLowerCase().endsWith('.zip')) {
-        ElMessage.warning('请选择zip文件.')
+        ElMessage.warning(uiText('请选择zip文件.'))
         pendingImportZipFile.value = null
         return
       }
       pendingImportZipFile.value = zipFile
       importForm.value.directoryPath = zipFile.name
-      ElMessage.info(`选择zip文件: ${zipFile.name}`)
+      ElMessage.info(uiText('选择zip文件: {value0}', { value0: zipFile.name }))
       return
     }
 
     const imageFiles = files.filter(file => file.type.startsWith('image/'))
 
     if (imageFiles.length === 0) {
-      ElMessage.warning('所选文件夹中没有找到图片文件')
+      ElMessage.warning(uiText('所选文件夹中没有找到图片文件'))
       return
     }
 
@@ -1777,7 +1810,7 @@ const handleStartAnnotation = (data) => {
       currentAnnotationImage.value = data.images[0]
     }
 
-    ElMessage.success(`已加载 ${data.images.length} 张图片，可以开始批量标注`)
+    ElMessage.success(uiText('已加载 {value0} 张图片，可以开始批量标注', { value0: data.images.length }))
   } else {
     // annotation
     console.log('开始标注图片:', data)
@@ -1805,7 +1838,7 @@ const handleImagesImported = (importedImages) => {
     currentImageIndex.value = uploadedImages.value.length - importedImages.length
   }
 
-  ElMessage.success(`成功导入 ${importedImages.length} 张图片到标注项目`)
+  ElMessage.success(uiText('成功导入 {value0} 张图片到标注项目', { value0: importedImages.length }))
 }
 
 // Process from
@@ -1856,7 +1889,7 @@ const handleDeleteImageAndDataFromGrid = async ({ annotationId, imageIds }) => {
     }
   } catch (error) {
     console.error('从网格视图删除图片及相关数据失败:', error)
-    ElMessage.error('删除图片及相关数据失败: ' + error.message)
+    ElMessage.error(uiText('删除图片及相关数据失败: ') + error.message)
     throw error
   }
 }
@@ -1904,13 +1937,13 @@ const handleAutoSaveToDatabase = async () => {
       const savedCount = await saveImagesToDatabase(imagesToSave, annotationId)
       console.log('自动保存完成，成功保存数量:', savedCount)
 
-      ElMessage.success(`自动保存完成！已保存 ${savedCount} 张图片信息到数据库`)
+      ElMessage.success(uiText('自动保存完成！已保存 {value0} 张图片信息到数据库', { value0: savedCount }))
     } else {
       console.log('没有需要自动保存到数据库的图片')
     }
   } catch (error) {
     console.error('自动保存到数据库失败:', error)
-    ElMessage.error(`自动保存失败: ${error.message}`)
+    ElMessage.error(uiText('自动保存失败: {value0}', { value0: error.message }))
   }
 }
 
@@ -1991,11 +2024,11 @@ const loadAnnotationLabels = async (keyword = '') => {
         selectedAnnotationLabel.value = annotationLabels.value[0].id
       }
     } else {
-      ElMessage.error('加载标签失败: ' + response.message)
+      ElMessage.error(uiText('加载标签失败: ') + response.message)
     }
   } catch (error) {
     console.error('加载标签失败:', error)
-    ElMessage.error('加载标签失败')
+    ElMessage.error(uiText('加载标签失败'))
   } finally {
     labelsLoading.value = false
   }
@@ -2008,17 +2041,17 @@ const createLabelAPI = async (labelData) => {
     const response = await createAnnotationLabel(annotationId, labelData)
 
     if (response.code === 200) {
-      ElMessage.success('标签创建成功')
+      ElMessage.success(uiText('标签创建成功'))
       // new Load
       await loadAnnotationLabels(labelSearchKeyword.value)
       return response.data
     } else {
-      ElMessage.error('创建标签失败: ' + response.message)
+      ElMessage.error(uiText('创建标签失败: ') + response.message)
       throw new Error(response.message)
     }
   } catch (error) {
     console.error('创建标签失败:', error)
-    ElMessage.error('创建标签失败')
+    ElMessage.error(uiText('创建标签失败'))
     throw error
   }
 }
@@ -2026,7 +2059,7 @@ const createLabelAPI = async (labelData) => {
 // Add ( createAnnotationLabel API)
 const addAnnotationLabel = async (labelData) => {
   if (!labelData?.name) {
-    ElMessage.warning('标签名称不能为空')
+    ElMessage.warning(uiText('标签名称不能为空'))
     return null
   }
 
@@ -2040,14 +2073,14 @@ const addAnnotationLabel = async (labelData) => {
       if (created?.id) {
         selectedAnnotationLabel.value = created.id
       }
-      ElMessage.success('新增标签成功')
+      ElMessage.success(uiText('新增标签成功'))
       return created
     }
 
     throw new Error(response?.message || '新增标签失败')
   } catch (error) {
     console.error('新增标签失败:', error)
-    ElMessage.error('新增标签失败')
+    ElMessage.error(uiText('新增标签失败'))
     return null
   }
 }
@@ -2058,17 +2091,17 @@ const updateLabelAPI = async (labelId, labelData) => {
     const response = await updateAnnotationLabel(labelId, labelData)
 
     if (response.code === 200) {
-      ElMessage.success('标签更新成功')
+      ElMessage.success(uiText('标签更新成功'))
       // new Load
       await loadAnnotationLabels(labelSearchKeyword.value)
       return response.data
     } else {
-      ElMessage.error('更新标签失败: ' + response.message)
+      ElMessage.error(uiText('更新标签失败: ') + response.message)
       throw new Error(response.message)
     }
   } catch (error) {
     console.error('更新标签失败:', error)
-    ElMessage.error('更新标签失败')
+    ElMessage.error(uiText('更新标签失败'))
     throw error
   }
 }
@@ -2079,17 +2112,17 @@ const deleteLabelAPI = async (labelId) => {
     const response = await deleteAnnotationLabel(labelId)
 
     if (response.code === 200) {
-      ElMessage.success('标签删除成功')
+      ElMessage.success(uiText('标签删除成功'))
       // new Load
       await loadAnnotationLabels(labelSearchKeyword.value)
       return true
     } else {
-      ElMessage.error('删除标签失败: ' + response.message)
+      ElMessage.error(uiText('删除标签失败: ') + response.message)
       throw new Error(response.message)
     }
   } catch (error) {
     console.error('删除标签失败:', error)
-    ElMessage.error('删除标签失败')
+    ElMessage.error(uiText('删除标签失败'))
     throw error
   }
 }
@@ -2155,7 +2188,7 @@ const loadAllAnnotationData = async () => {
       }
     } else {
       console.error('加载标签失败:', labelsResponse.message)
-      ElMessage.error('加载标签失败: ' + labelsResponse.message)
+      ElMessage.error(uiText('加载标签失败: ') + labelsResponse.message)
     }
 
     // Process data (from annotation_image )
@@ -2342,7 +2375,7 @@ const loadAllAnnotationData = async () => {
       await loadAnnotationLabels()
     } catch (labelError) {
       console.error('单独加载标签也失败:', labelError)
-      ElMessage.error('加载标签失败')
+      ElMessage.error(uiText('加载标签失败'))
     }
   } finally {
     if (sequence === annotationLoadSequence) annotationDataLoading.value = false
@@ -2388,7 +2421,9 @@ const saveImageAnnotations = async (imageId, annotations) => {
     console.log('标注详情:', annotations)
 
     // Convert annotationdata
-    const instances = annotations.map(annotation => ({
+    const instances = annotations.map(original => {
+      const annotation = constrainAnnotation(original, image.pixelWidth, image.pixelHeight)
+      return ({
       labelId: annotation.labelId,
       imageId: imageId,
       annotationType: annotation.type,
@@ -2401,7 +2436,8 @@ const saveImageAnnotations = async (imageId, annotations) => {
         cy: annotation.cy,
         r: annotation.r
       })
-    }))
+      })
+    })
 
     console.log('转换后的实例数据:', instances)
 
@@ -2412,17 +2448,17 @@ const saveImageAnnotations = async (imageId, annotations) => {
       // 批量保存会重建实例 ID；只同步当前图片，保留其他图片的草稿。
       image.annotationIdsStale = true
       await reloadSavedImageAnnotations(image, annotationId)
-      ElMessage.success('标注保存成功')
+      ElMessage.success(uiText('标注保存成功'))
       // new Load new
       await loadAnnotationLabels(labelSearchKeyword.value)
       return true
     } else {
-      ElMessage.error('保存标注失败: ' + response.message)
+      ElMessage.error(uiText('保存标注失败: ') + response.message)
       return false
     }
   } catch (error) {
     console.error('保存标注失败:', error)
-    ElMessage.error(image?.annotationIdsStale ? '标注已保存，但同步失败，请重试保存或删除以同步' : '保存标注失败')
+    ElMessage.error(image?.annotationIdsStale ? uiText('标注已保存，但同步失败，请重试保存或删除以同步') : uiText('保存标注失败'))
     return false
   } finally {
     isSavingAnnotations.value = false
@@ -2443,11 +2479,11 @@ const handleAnnotationDialogSubmit = async (formData) => {
 
     if (formData.id) {
       await updateAlgorithmAnnotation(formData.id, data)
-      ElMessage.success('编辑标注成功')
+      ElMessage.success(uiText('编辑标注成功'))
     } else {
       Object.assign(data, { totalCount: 0, annotatedCount: 0, annotationStatus: ANNOTATION_STATUS.NONE, progress: 0 })
       await createAlgorithmAnnotation(data)
-      ElMessage.success('新增标注成功')
+      ElMessage.success(uiText('新增标注成功'))
     }
 
     showAddDialog.value = false
@@ -2455,7 +2491,7 @@ const handleAnnotationDialogSubmit = async (formData) => {
     await loadData()
   } catch (error) {
     console.error('操作失败:', error)
-    ElMessage.error('操作失败')
+    ElMessage.error(uiText('操作失败'))
   }
 }
 
@@ -2466,12 +2502,12 @@ const selectTool = (tool) => {
 
 const handleSaveAnnotation = async () => {
   if (!currentImage.value) {
-    ElMessage.warning('请先选择图片')
+    ElMessage.warning(uiText('请先选择图片'))
     return
   }
 
   if (!currentAnnotationData.value || !currentAnnotationData.value.id) {
-    ElMessage.warning('请先选择标注项目')
+    ElMessage.warning(uiText('请先选择标注项目'))
     return
   }
 
@@ -2479,18 +2515,18 @@ const handleSaveAnnotation = async () => {
 }
 
 const handleZoomIn = () => {
-  ElMessage.info('放大图像')
+  ElMessage.info(uiText('放大图像'))
 }
 
 const handleZoomOut = () => {
-  ElMessage.info('缩小图像')
+  ElMessage.info(uiText('缩小图像'))
 }
 
 const handleResetZoom = () => {
   //
   imageRotation.value = 0
   console.log('重置缩放和旋转')
-  ElMessage.success('已重置缩放和旋转')
+  ElMessage.success(uiText('已重置缩放和旋转'))
 }
 
 const handleRotateLeft = () => {
@@ -2503,7 +2539,7 @@ const handleRotateLeft = () => {
   }
 
   console.log('逆时针旋转90°，当前角度:', imageRotation.value)
-  ElMessage.success('逆时针旋转90°')
+  ElMessage.success(uiText('逆时针旋转90°'))
 }
 
 const handleRotateRight = () => {
@@ -2516,7 +2552,7 @@ const handleRotateRight = () => {
   }
 
   console.log('顺时针旋转90°，当前角度:', imageRotation.value)
-  ElMessage.success('顺时针旋转90°')
+  ElMessage.success(uiText('顺时针旋转90°'))
 }
 
 // annotation
@@ -2649,20 +2685,20 @@ const handleImageUpload = async (uploadFile) => {
   const file = uploadFile.raw || uploadFile
 
   if (!file) {
-    ElMessage.error('文件上传失败，请重试')
+    ElMessage.error(uiText('文件上传失败，请重试'))
     return
   }
 
   //
   if (!file.type.startsWith('image/')) {
-    ElMessage.error('请选择图片文件')
+    ElMessage.error(uiText('请选择图片文件'))
     return
   }
 
   // (10MB )
   const maxSize = 10 * 1024 * 1024
   if (file.size > maxSize) {
-    ElMessage.error('图片大小不能超过10MB')
+    ElMessage.error(uiText('图片大小不能超过10MB'))
     return
   }
 
@@ -2699,22 +2735,22 @@ const handleImageUpload = async (uploadFile) => {
       console.log('当前图片列表长度:', uploadedImages.value.length)
       console.log('当前选中图片:', currentImage.value)
       console.log('图片本地路径:', uploadedImage.localPath)
-      ElMessage.success('图片上传并保存成功')
+      ElMessage.success(uiText('图片上传并保存成功'))
     }
     reader.onerror = () => {
-      ElMessage.error('图片读取失败')
+      ElMessage.error(uiText('图片读取失败'))
     }
     reader.readAsDataURL(file)
   } catch (error) {
     console.error('图片上传失败:', error)
-    ElMessage.error('图片上传失败，请重试')
+    ElMessage.error(uiText('图片上传失败，请重试'))
   }
 }
 
 const switchImage = async (index) => {
   if (isSavingAnnotations.value || index === currentImageIndex.value) return
   if (pendingAnnotation.value || isDrawing.value) {
-    ElMessage.warning('请先为当前图形选择标签，再切换图片')
+    ElMessage.warning(uiText('请先为当前图形选择标签，再切换图片'))
     return
   }
   console.log('=== 切换图片（优化版本） ===')
@@ -2788,12 +2824,12 @@ const nextImage = () => {
 // all annotation
 const handleSaveAllAnnotations = async () => {
   if (uploadedImages.value.length === 0) {
-    ElMessage.warning('没有图片需要保存')
+    ElMessage.warning(uiText('没有图片需要保存'))
     return
   }
 
   try {
-    ElMessage.info('开始保存所有标注...')
+    ElMessage.info(uiText('开始保存所有标注...'))
     let savedCount = 0
     let errorCount = 0
 
@@ -2812,24 +2848,24 @@ const handleSaveAllAnnotations = async () => {
     }
 
     if (errorCount === 0) {
-      ElMessage.success(`成功保存 ${savedCount} 个图片的标注`)
+      ElMessage.success(uiText('成功保存 {value0} 个图片的标注', { value0: savedCount }))
     } else {
-      ElMessage.warning(`保存完成：成功 ${savedCount} 个，失败 ${errorCount} 个`)
+      ElMessage.warning(uiText('保存完成：成功 {value0} 个，失败 {value1} 个', { value0: savedCount, value1: errorCount }))
     }
   } catch (error) {
     console.error('批量保存标注失败:', error)
-    ElMessage.error('批量保存失败: ' + error.message)
+    ElMessage.error(uiText('批量保存失败: ') + error.message)
   }
 }
 
 // null / empty all
 const handleClearAllImages = () => {
   ElMessageBox.confirm(
-    '确定要清空所有图片吗？此操作不可恢复！',
-    '确认清空',
+    uiText('确定要清空所有图片吗？此操作不可恢复！'),
+    uiText('确认清空'),
     {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: uiText('确定'),
+      cancelButtonText: uiText('取消'),
       type: 'warning',
     }
   ).then(() => {
@@ -2837,7 +2873,7 @@ const handleClearAllImages = () => {
     currentImageIndex.value = -1
     imageAnnotations.value = []
     selectedAnnotation.value = null
-    ElMessage.success('已清空所有图片')
+    ElMessage.success(uiText('已清空所有图片'))
   }).catch(() => {
     // user operation
   })
@@ -2846,7 +2882,7 @@ const handleClearAllImages = () => {
 // full can
 const handleFullScreenPreview = () => {
   if (!currentImage.value) {
-    ElMessage.warning('请先选择要预览的图片')
+    ElMessage.warning(uiText('请先选择要预览的图片'))
     return
   }
 
@@ -2899,6 +2935,10 @@ const handleImageLoad = (event) => {
   imageHeight.value = img.clientHeight
   imageNaturalWidth.value = img.naturalWidth
   imageNaturalHeight.value = img.naturalHeight
+  if (currentImage.value) {
+    currentImage.value.pixelWidth = img.naturalWidth
+    currentImage.value.pixelHeight = img.naturalHeight
+  }
   console.log('图片显示尺寸:', imageWidth.value, imageHeight.value)
   console.log('图片原始尺寸:', img.naturalWidth, img.naturalHeight)
 }
@@ -2909,7 +2949,7 @@ const handleImageError = (event) => {
   console.error('图片加载失败:', failedImage?.url)
 
   if (failedImage) {
-    ElMessage.error(`图片加载失败: ${failedImage.name}`)
+    ElMessage.error(uiText('图片加载失败: {value0}', { value0: failedImage.name }))
 
     // current to
     failedImage.url = ''
@@ -2927,7 +2967,7 @@ const handleImageError = (event) => {
       // if , null / empty
       currentImageIndex.value = -1
       imageAnnotations.value = []
-      ElMessage.warning('没有可用的图片')
+      ElMessage.warning(uiText('没有可用的图片'))
     }
   }
 }
@@ -3000,8 +3040,8 @@ const handleMouseMove = (event) => {
     const x = xDisplay * scaleX
     const y = yDisplay * scaleY
 
-    currentDrawing.value.endX = x
-    currentDrawing.value.endY = y
+    currentDrawing.value.endX = Math.max(0, Math.min(width, x))
+    currentDrawing.value.endY = Math.max(0, Math.min(height, y))
     // console.log(' in :', currentDrawing.value)
   }
 }
@@ -3026,7 +3066,8 @@ const handleMouseUp = (event) => {
         labelColor: '#409EFF'
       }
     } else if (selectedTool.value === 'circle') {
-      const radius = Math.sqrt(Math.pow(drawing.endX - drawing.startX, 2) + Math.pow(drawing.endY - drawing.startY, 2))
+      const { width, height } = getAnnotationCanvasSize()
+      const radius = Math.min(Math.sqrt(Math.pow(drawing.endX - drawing.startX, 2) + Math.pow(drawing.endY - drawing.startY, 2)), drawing.startX, drawing.startY, width - drawing.startX, height - drawing.startY)
       newAnnotation = {
         id: Date.now(),
         isDraft: true,
@@ -3082,16 +3123,16 @@ const selectAnnotation = (annotationId) => {
 const handleDeleteAnnotation = async () => {
   if (isSavingAnnotations.value) return
   if (!currentImage.value) {
-    ElMessage.warning('没有可删除的图片')
+    ElMessage.warning(uiText('没有可删除的图片'))
     return
   }
 
   if (currentImage.value.annotationIdsStale) {
     try {
       await reloadSavedImageAnnotations(currentImage.value, getCurrentAnnotationId())
-      ElMessage.info('标注已同步，请重新选择要删除的标注')
+      ElMessage.info(uiText('标注已同步，请重新选择要删除的标注'))
     } catch (error) {
-      ElMessage.error('同步已保存标注失败，请重试')
+      ElMessage.error(uiText('同步已保存标注失败，请重试'))
     }
     return
   }
@@ -3122,17 +3163,17 @@ const handleDeleteAnnotation = async () => {
         currentImage.value.annotations.splice(annotationIndex, 1)
         imageAnnotations.value = [...currentImage.value.annotations]
         selectedAnnotation.value = null
-        ElMessage.success('未保存标注已删除')
+        ElMessage.success(uiText('未保存标注已删除'))
         return
       }
       try {
         // Delete annotation
         await ElMessageBox.confirm(
-          '确定要删除这个标注吗？图片文件会保留。',
-          '提示',
+          uiText('确定要删除这个标注吗？图片文件会保留。'),
+          uiText('提示'),
           {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
+            confirmButtonText: uiText('确定'),
+            cancelButtonText: uiText('取消'),
             type: 'warning'
           }
         )
@@ -3154,26 +3195,26 @@ const handleDeleteAnnotation = async () => {
           selectedAnnotation.value = null
         }
 
-        ElMessage.success('标注已删除')
+        ElMessage.success(uiText('标注已删除'))
       } catch (error) {
         if (error !== 'cancel') {
           console.error('删除标注失败:', error)
-          ElMessage.error('删除标注失败')
+          ElMessage.error(uiText('删除标注失败'))
         }
       }
     } else {
-      ElMessage.warning('未找到要删除的标注')
+      ElMessage.warning(uiText('未找到要删除的标注'))
     }
   } else {
     // Delete
     try {
       // Delete
       await ElMessageBox.confirm(
-        `确定要删除这张图片吗？\n注意：删除后将同时删除图片文件和所有相关数据！`,
-        '提示',
+        uiText('确定要删除这张图片吗？\n注意：删除后将同时删除图片文件和所有相关数据！', {  }),
+        uiText('提示'),
         {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
+          confirmButtonText: uiText('确定'),
+          cancelButtonText: uiText('取消'),
           type: 'warning'
         }
       )
@@ -3234,14 +3275,14 @@ const handleDeleteAnnotation = async () => {
         }
 
         selectedAnnotation.value = null
-        ElMessage.success('图片已删除')
+        ElMessage.success(uiText('图片已删除'))
       } else {
-        ElMessage.warning('未找到要删除的图片')
+        ElMessage.warning(uiText('未找到要删除的图片'))
       }
     } catch (error) {
       if (error !== 'cancel') {
         console.error('删除图片失败:', error)
-        ElMessage.error('删除图片失败')
+        ElMessage.error(uiText('删除图片失败'))
       }
     }
   }
@@ -3279,7 +3320,7 @@ const selectLabelForAnnotation = (label) => {
     pendingAnnotation.value = null
     console.log('=== 标签选择完成 ===')
 
-    ElMessage.success(`已添加${label.name}标注`)
+    ElMessage.success(uiText('已添加{value0}标注', { value0: label.name }))
   } else {
     console.log('标注保存失败 - 缺少必要条件')
     if (!pendingAnnotation.value) console.log('缺少pendingAnnotation')
@@ -3387,12 +3428,12 @@ const handleAdvancedSearchReset = () => {
 
 const handleDownloadTemplate = () => {
   console.log('下载模板')
-  ElMessage.success('下载模板')
+  ElMessage.success(uiText('下载模板'))
 }
 
 const handleBatchOperation = async () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要删除的标注')
+    ElMessage.warning(uiText('请先选择要删除的标注'))
     return
   }
 
@@ -3400,11 +3441,11 @@ const handleBatchOperation = async () => {
 
   try {
     await ElMessageBox.confirm(
-      `确认批量删除选中的 ${ids.length} 条标注吗？\n逐个清理项目图片、标注、版本和独占的数据集文件，保留训练历史及模型。活动任务会阻止删除；部分成功后可重试剩余项目。`,
-      '批量删除',
+      uiText('确认批量删除选中的 {value0} 条标注吗？\n逐个清理项目图片、标注、版本和独占的数据集文件，保留训练历史及模型。活动任务会阻止删除；部分成功后可重试剩余项目。', { value0: ids.length }),
+      uiText('批量删除'),
       {
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
+        confirmButtonText: uiText('确认'),
+        cancelButtonText: uiText('取消'),
         type: 'warning'
       }
     )
@@ -3415,13 +3456,13 @@ const handleBatchOperation = async () => {
       await batchDeleteAlgorithmAnnotation(ids)
     }
 
-    ElMessage.success('批量删除成功')
+    ElMessage.success(uiText('批量删除成功'))
     selectedRows.value = []
     await loadData()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除失败:', error)
-      ElMessage.error(error?.message || '部分项目可能已删除，请刷新列表后重试剩余项目')
+      ElMessage.error(error?.message || uiText('部分项目可能已删除，请刷新列表后重试剩余项目'))
       await loadData()
     }
   }
@@ -3434,7 +3475,7 @@ watch(currentImage, async (newImage, oldImage) => {
     console.log('currentImage变化，从缓存加载标注数据:', newImage.name)
 
     // whether is , Process
-    if (oldImage && newImage.name === oldImage.name) {
+    if (oldImage && String(newImage.id) === String(oldImage.id)) {
       console.log('同一张图片，跳过处理')
       return
     }
@@ -3509,7 +3550,10 @@ onMounted(async () => {
       const response = await getAlgorithmAnnotationById(linkedId)
       if (response.code !== 200 || !response.data) throw new Error(response.msg || '项目加载失败')
       await handleView({ ...response.data, name: response.data.annotationName, type: ANNOTATION_TYPE_LABELS[response.data.annotationType] })
-    } catch (error) { ElMessage.error(error.message || '项目加载失败') }
+      const imageId = new URLSearchParams(window.location.search).get('image')
+      const image = uploadedImages.value.find(item => String(item.id) === imageId)
+      if (image) handleStartAnnotation(image)
+    } catch (error) { ElMessage.error(error.message || uiText('项目加载失败')) }
   }
   // full listener
   document.addEventListener('click', handleGlobalClick)
@@ -3540,17 +3584,17 @@ const handleCopyLabel = (label) => {
   }
   annotationLabels.value.push(newLabel)
   console.log('复制标签:', newLabel)
-  ElMessage.success(`已复制标签: ${label.name}`)
+  ElMessage.success(uiText('已复制标签: {value0}', { value0: label.name }))
 }
 
 const handleMoreActions = (label) => {
   // operation can ( menu etc.)
   ElMessageBox.confirm(
-    `确定要删除标签 "${label.name}" 吗？此操作不可恢复。`,
-    '删除标签',
+    uiText('确定要删除标签 "{value0}" 吗？此操作不可恢复。', { value0: label.name }),
+    uiText('删除标签'),
     {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: uiText('确定'),
+      cancelButtonText: uiText('取消'),
       type: 'warning',
     }
   ).then(async () => {
@@ -3567,13 +3611,13 @@ const handleMoreActions = (label) => {
       // new Load data
       await loadAnnotationLabels()
 
-      ElMessage.success('标签已删除')
+      ElMessage.success(uiText('标签已删除'))
     } catch (error) {
       console.error('删除标签失败:', error)
-      ElMessage.error('删除标签失败')
+      ElMessage.error(uiText('删除标签失败'))
     }
   }).catch(() => {
-    ElMessage.info('已取消删除')
+    ElMessage.info(uiText('已取消删除'))
   })
 }
 
@@ -3583,11 +3627,11 @@ const testDeleteAnnotationInstance = async (instanceId) => {
     console.log('开始删除标注实例:', instanceId)
     const response = await deleteAnnotationInstance(instanceId)
     console.log('删除响应:', response)
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText('删除成功'))
     return response
   } catch (error) {
     console.error('删除失败:', error)
-    ElMessage.error('删除失败: ' + error.message)
+    ElMessage.error(uiText('删除失败: ') + error.message)
     return null
   }
 }
@@ -3598,11 +3642,11 @@ const testDeleteImageAndRelatedData = async (annotationId, imageName) => {
     console.log('开始删除图片及相关数据:', annotationId, imageName)
     const response = await deleteAnnotationInstancesByImage(annotationId, [imageName])
     console.log('删除响应:', response)
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText('删除成功'))
     return response
   } catch (error) {
     console.error('删除失败:', error)
-    ElMessage.error('删除失败: ' + error.message)
+    ElMessage.error(uiText('删除失败: ') + error.message)
     return null
   }
 }

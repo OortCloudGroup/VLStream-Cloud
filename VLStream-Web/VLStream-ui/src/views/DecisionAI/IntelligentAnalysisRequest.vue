@@ -16,16 +16,14 @@
                 <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
                   <el-icon class="BtnImg">
                     <Plus />
-                  </el-icon>
-                  申请
-                </button>
+                  </el-icon> {{ $tp('申请') }} </button>
                 <button-group :button-list="toolbarButtonList" />
               </div>
             </div>
             <div class="searchHeight_out flexRowAC">
               <search-height-box
                 keyword="keyword"
-                placeholder="搜索"
+                :placeholder="$tp('搜索')"
                 :data="searchData"
                 @handle="searchResetFn"
               />
@@ -70,7 +68,7 @@
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handlePlay(scope.row)">
                     <oort-svg-icon width="14" height="14" name="play" class="new_table_svg_group_svg" />
-                    <span>播放</span>
+                    <span>{{ $tp('播放') }}</span>
                   </div>
                 </div>
               </template>
@@ -97,7 +95,7 @@
     <div v-if="showEditView" class="edit-view">
       <!--  -->
       <div class="breadcrumb-nav">
-        <span class="breadcrumb-item" @click="showListView">场景列表</span>
+        <span class="breadcrumb-item" @click="showListView">{{ $tp('场景列表') }}</span>
         <span class="breadcrumb-separator">></span>
         <span class="breadcrumb-item active">{{ editTitle }}</span>
       </div>
@@ -105,22 +103,22 @@
       <!--  -->
       <div class="edit-content">
         <el-form :model="form" class="analysis-form" label-width="120px">
-          <el-form-item label="场景名称" prop="sceneName">
+          <el-form-item :label="$tp('场景名称')" prop="sceneName">
             <el-input
               v-model="form.sceneName"
-              placeholder="请输入场景名称"
+              :placeholder="$tp('请输入场景名称')"
               style="width: 480px"
             />
           </el-form-item>
 
-          <el-form-item label="分析类型" prop="analysisType">
+          <el-form-item :label="$tp('分析类型')" prop="analysisType">
             <div class="selector-item" @click="openAnalysisTypeSelector" style="width: 480px">
-              <span class="selector-text">{{ form.analysisType || '请选择' }}</span>
+              <span class="selector-text">{{ form.analysisType || $tp('请选择') }}</span>
               <el-icon class="selector-arrow"><ArrowRight /></el-icon>
             </div>
           </el-form-item>
 
-          <el-form-item label="抓拍截图上传" prop="screenshots">
+          <el-form-item :label="$tp('抓拍截图上传')" prop="screenshots">
             <div class="upload-section" style="width: 480px">
               <div class="upload-header">
                 <span class="upload-count">({{ uploadedFiles.length }}/5)</span>
@@ -149,7 +147,7 @@
             </div>
           </el-form-item>
 
-          <el-form-item label="选择区域" prop="selectedRegions">
+          <el-form-item :label="$tp('选择区域')" prop="selectedRegions">
             <div class="selector-container" style="width: 480px">
               <div class="tag-list">
                 <el-tag
@@ -166,7 +164,7 @@
             </div>
           </el-form-item>
 
-          <el-form-item label="选择摄像头" prop="selectedCameras">
+          <el-form-item :label="$tp('选择摄像头')" prop="selectedCameras">
             <div class="selector-container" style="width: 480px">
               <div class="tag-list">
                 <el-tag
@@ -183,7 +181,7 @@
             </div>
           </el-form-item>
 
-          <el-form-item label="选择时间段" prop="timeRange">
+          <el-form-item :label="$tp('选择时间段')" prop="timeRange">
             <div class="time-range-container" style="width: 480px">
               <DateRangePicker
                 v-model="form.timeRange"
@@ -199,63 +197,63 @@
 
           <!-- operationbutton -->
           <div class="form-actions">
-            <el-button type="primary" @click="handleSubmit" class="common_btn">申请</el-button>
-            <el-button @click="showListView" class="common_btn">取消</el-button>
+            <el-button type="primary" @click="handleSubmit" class="common_btn">{{ $tp('申请') }}</el-button>
+            <el-button @click="showListView" class="common_btn">{{ $tp('取消') }}</el-button>
           </div>
         </el-form>
 
         <!--  -->
-        <el-dialog v-model="showAnalysisTypeSelector" title="选择分析类型" width="25%">
+        <el-dialog v-model="showAnalysisTypeSelector" :title="$tp('选择分析类型')" width="25%">
           <el-radio-group v-model="tempAnalysisType" direction="vertical">
-            <el-radio value="人员">人员</el-radio>
-            <el-radio value="车辆">车辆</el-radio>
-            <el-radio value="物体">物体</el-radio>
-            <el-radio value="行为">行为</el-radio>
+            <el-radio value="人员">{{ $tp('人员') }}</el-radio>
+            <el-radio value="车辆">{{ $tp('车辆') }}</el-radio>
+            <el-radio value="物体">{{ $tp('物体') }}</el-radio>
+            <el-radio value="行为">{{ $tp('行为') }}</el-radio>
           </el-radio-group>
           <template #footer>
             <div class="dialog-footer">
-              <el-button @click="showAnalysisTypeSelector = false" class="common_btn">取消</el-button>
-              <el-button type="primary" @click="confirmAnalysisType" class="common_btn">确定</el-button>
+              <el-button @click="showAnalysisTypeSelector = false" class="common_btn">{{ $tp('取消') }}</el-button>
+              <el-button type="primary" @click="confirmAnalysisType" class="common_btn">{{ $tp('确定') }}</el-button>
             </div>
           </template>
         </el-dialog>
 
         <!--  -->
-        <el-dialog v-model="showRegionSelector" title="选择区域" width="25%">
+        <el-dialog v-model="showRegionSelector" :title="$tp('选择区域')" width="25%">
           <el-checkbox-group v-model="tempSelectedRegions">
             <div class="checkbox-grid">
-              <el-checkbox value="水产大厦">水产大厦</el-checkbox>
-              <el-checkbox value="洪湖大厦">洪湖大厦</el-checkbox>
-              <el-checkbox value="教学楼A">教学楼A</el-checkbox>
-              <el-checkbox value="教学楼B">教学楼B</el-checkbox>
-              <el-checkbox value="图书馆">图书馆</el-checkbox>
-              <el-checkbox value="体育馆">体育馆</el-checkbox>
+              <el-checkbox value="水产大厦">{{ $tp('水产大厦') }}</el-checkbox>
+              <el-checkbox value="洪湖大厦">{{ $tp('洪湖大厦') }}</el-checkbox>
+              <el-checkbox value="教学楼A">{{ $tp('教学楼A') }}</el-checkbox>
+              <el-checkbox value="教学楼B">{{ $tp('教学楼B') }}</el-checkbox>
+              <el-checkbox value="图书馆">{{ $tp('图书馆') }}</el-checkbox>
+              <el-checkbox value="体育馆">{{ $tp('体育馆') }}</el-checkbox>
             </div>
           </el-checkbox-group>
           <template #footer>
             <div class="dialog-footer">
-              <el-button @click="showRegionSelector = false" class="common_btn">取消</el-button>
-              <el-button type="primary" @click="confirmRegionSelection" class="common_btn">确定</el-button>
+              <el-button @click="showRegionSelector = false" class="common_btn">{{ $tp('取消') }}</el-button>
+              <el-button type="primary" @click="confirmRegionSelection" class="common_btn">{{ $tp('确定') }}</el-button>
             </div>
           </template>
         </el-dialog>
 
         <!--  -->
-        <el-dialog v-model="showCameraSelector" title="选择摄像头" width="25%">
+        <el-dialog v-model="showCameraSelector" :title="$tp('选择摄像头')" width="25%">
           <el-checkbox-group v-model="tempSelectedCameras">
             <div class="checkbox-grid">
-              <el-checkbox value="摄像头1">摄像头1</el-checkbox>
-              <el-checkbox value="摄像头2">摄像头2</el-checkbox>
-              <el-checkbox value="摄像头3">摄像头3</el-checkbox>
-              <el-checkbox value="摄像头4">摄像头4</el-checkbox>
-              <el-checkbox value="摄像头5">摄像头5</el-checkbox>
-              <el-checkbox value="摄像头6">摄像头6</el-checkbox>
+              <el-checkbox value="摄像头1">{{ $tp('摄像头1') }}</el-checkbox>
+              <el-checkbox value="摄像头2">{{ $tp('摄像头2') }}</el-checkbox>
+              <el-checkbox value="摄像头3">{{ $tp('摄像头3') }}</el-checkbox>
+              <el-checkbox value="摄像头4">{{ $tp('摄像头4') }}</el-checkbox>
+              <el-checkbox value="摄像头5">{{ $tp('摄像头5') }}</el-checkbox>
+              <el-checkbox value="摄像头6">{{ $tp('摄像头6') }}</el-checkbox>
             </div>
           </el-checkbox-group>
           <template #footer>
             <div class="dialog-footer">
-              <el-button @click="showCameraSelector = false" class="common_btn">取消</el-button>
-              <el-button type="primary" @click="confirmCameraSelection" class="common_btn">确定</el-button>
+              <el-button @click="showCameraSelector = false" class="common_btn">{{ $tp('取消') }}</el-button>
+              <el-button type="primary" @click="confirmCameraSelection" class="common_btn">{{ $tp('确定') }}</el-button>
             </div>
           </template>
         </el-dialog>
@@ -266,6 +264,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -368,7 +368,7 @@ const handleAdd = () => {
 
 const handleEdit = () => {
   if (!selectedRows.value.length) {
-    ElMessage.warning('请选择要编辑的记录')
+    ElMessage.warning(uiText('请选择要编辑的记录'))
     return
   }
 
@@ -387,22 +387,22 @@ const handleEdit = () => {
 
 const handleDelete = async () => {
   if (!selectedRows.value.length) {
-    ElMessage.warning('请选择要删除的记录')
+    ElMessage.warning(uiText('请选择要删除的记录'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedRows.value.length} 条记录吗？`,
-      '确认删除',
+      uiText('确定要删除选中的 {value0} 条记录吗？', { value0: selectedRows.value.length }),
+      uiText('确认删除'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: uiText('确定'),
+        cancelButtonText: uiText('取消'),
         type: 'warning'
       }
     )
 
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText('删除成功'))
 
   } catch {
     // user Delete
@@ -416,7 +416,7 @@ const toolbarButtonList = [
 
 const handlePlay = (row) => {
   console.log('播放分析视频:', row.analysisName)
-  ElMessage.success(`开始播放 ${row.analysisName} 的分析视频`)
+  ElMessage.success(uiText('开始播放 {value0} 的分析视频', { value0: row.analysisName }))
 }
 
 const getStatusTagType = (status) => {
@@ -469,14 +469,14 @@ const loadAnalysisRequests = async () => {
   } catch (error) {
     tableData.value = []
     pagination.total = 0
-    ElMessage.error(`加载分析请求失败：${error.message || error}`)
+    ElMessage.error(uiText('加载分析请求失败：{value0}', { value0: error.message || error }))
   }
 }
 
 // form
 const handleSubmit = async () => {
   if (!form.value.sceneName.trim()) {
-    ElMessage.warning('请输入场景名称')
+    ElMessage.warning(uiText('请输入场景名称'))
     return
   }
 
@@ -498,9 +498,9 @@ const handleSubmit = async () => {
     await loadAnalysisRequests()
     showEditView.value = false
     selectedRows.value = []
-    ElMessage.success(editingItem.value ? '更新成功' : '申请已真实入库')
+    ElMessage.success(editingItem.value ? uiText('更新成功') : uiText('申请已真实入库'))
   } catch (error) {
-    ElMessage.error(`分析请求提交失败：${error.message || error}`)
+    ElMessage.error(uiText('分析请求提交失败：{value0}', { value0: error.message || error }))
   }
 }
 
@@ -613,7 +613,7 @@ const handleAdvancedSearch = (searchData) => {
     searchForm.createDateRange = searchData.dateRange
   }
 
-  ElMessage.success('高级搜索完成')
+  ElMessage.success(uiText('高级搜索完成'))
 }
 
 const handleAdvancedSearchReset = () => {
@@ -622,27 +622,27 @@ const handleAdvancedSearchReset = () => {
   searchForm.analysisType = ''
   searchForm.analysisStep = ''
   searchForm.createDateRange = []
-  ElMessage.info('已重置高级搜索条件')
+  ElMessage.info(uiText('已重置高级搜索条件'))
 }
 
 const handleExport = () => {
   console.log('导出数据')
-  ElMessage.success('导出数据')
+  ElMessage.success(uiText('导出数据'))
 }
 
 const handleUpload = () => {
   console.log('上传文件')
-  ElMessage.success('上传功能')
+  ElMessage.success(uiText('上传功能'))
 }
 
 const handleDownloadTemplate = () => {
   console.log('下载模板')
-  ElMessage.success('下载模板')
+  ElMessage.success(uiText('下载模板'))
 }
 
 const handleBatchOperation = () => {
   console.log('批量操作')
-  ElMessage.success('批量操作')
+  ElMessage.success(uiText('批量操作'))
 }
 
 

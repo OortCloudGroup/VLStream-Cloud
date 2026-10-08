@@ -13,14 +13,13 @@
       <div class="depNameBox flexRowAC">
         <div class="exportBtnBox flexRowAC">
           <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd" v-hasPermi="['wvp:record:add']">
-            <el-icon class="BtnImg"><Plus /></el-icon>新增
-          </button>
+            <el-icon class="BtnImg"><Plus /></el-icon>{{ $tp('新增') }} </button>
         </div>
       </div>
       <div class="searchHeight_out flexRowAC">
         <search-height-box
           keyword="query"
-          placeholder="请输入关键字"
+          :placeholder="$tp('请输入关键字')"
           :data="searchData"
           @handle="searchResetFn"
         />
@@ -44,15 +43,15 @@
         <template #default="scope">
           <div class="operateAppBox flexRowAC" style="justify-content: flex-end;">
             <div class="new_table_svg_group" @click.stop="handleLink(scope.row)" v-hasPermi="['wvp:record:channelList']">
-              <span>关联通道</span>
+              <span>{{ $tp('关联通道') }}</span>
             </div>
             <div class="new_table_svg_group" @click.stop="handleEdit(scope.row)" v-hasPermi="['wvp:record:edit']">
               <el-icon><Edit /></el-icon>
-              <span>编辑</span>
+              <span>{{ $tp('编辑') }}</span>
             </div>
             <div class="new_table_svg_group" @click.stop="handleDelete(scope.row)" v-hasPermi="['wvp:record:delete']">
               <el-icon><Delete /></el-icon>
-              <span>删除</span>
+              <span>{{ $tp('删除') }}</span>
             </div>
           </div>
         </template>
@@ -69,8 +68,8 @@
 
     <el-dialog :title="title" v-model="open" width="800px" append-to-body>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="50px">
-        <el-form-item label="名称" prop="name">
-          <el-input type="text" v-model="form.name" placeholder="请输入名称"></el-input>
+        <el-form-item :label="$tp('名称')" prop="name">
+          <el-input type="text" v-model="form.name" :placeholder="$tp('请输入名称')"></el-input>
         </el-form-item>
         <el-form-item>
           <ByteWeekTimePicker v-if="open" v-model="byteTime" name="name"/>
@@ -78,8 +77,8 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button type="primary" @click="submitForm">{{ $tp('确 定') }}</el-button>
+          <el-button @click="cancel">{{ $tp('取 消') }}</el-button>
         </div>
       </template>
     </el-dialog>

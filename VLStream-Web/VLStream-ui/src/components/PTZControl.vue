@@ -20,7 +20,7 @@
               <div class="ptz-inner-circle">
                 <!-- in -->
                 <div class="ptz-center-icon">
-                  <img :src="rotateIcon" alt="旋转" class="ptz-center-rotate-icon" />
+                  <img :src="rotateIcon" :alt="$tp('旋转')" class="ptz-center-rotate-icon" />
                 </div>
               </div>
 
@@ -28,22 +28,22 @@
               <div class="ptz-direction-arrows">
                 <!--  -->
                 <div class="ptz-arrow ptz-arrow-up" @click="ptzControl('up')">
-                  <img :src="directionUpIcon" alt="上" class="ptz-direction-icon" />
+                  <img :src="directionUpIcon" :alt="$tp('上')" class="ptz-direction-icon" />
                 </div>
 
                 <!--  -->
                 <div class="ptz-arrow ptz-arrow-right" @click="ptzControl('right')">
-                  <img :src="directionUpIcon" alt="右" class="ptz-direction-icon ptz-rotate-90" />
+                  <img :src="directionUpIcon" :alt="$tp('右')" class="ptz-direction-icon ptz-rotate-90" />
                 </div>
 
                 <!--  -->
                 <div class="ptz-arrow ptz-arrow-down" @click="ptzControl('down')">
-                  <img :src="directionUpIcon" alt="下" class="ptz-direction-icon ptz-rotate-180" />
+                  <img :src="directionUpIcon" :alt="$tp('下')" class="ptz-direction-icon ptz-rotate-180" />
                 </div>
 
                 <!--  -->
                 <div class="ptz-arrow ptz-arrow-left" @click="ptzControl('left')">
-                  <img :src="directionUpIcon" alt="左" class="ptz-direction-icon ptz-rotate-270" />
+                  <img :src="directionUpIcon" :alt="$tp('左')" class="ptz-direction-icon ptz-rotate-270" />
                 </div>
               </div>
             </div>
@@ -54,20 +54,20 @@
 
     <!-- control -->
     <div class="zoom-section">
-      <h4 class="section-title">光学变倍控制</h4>
+      <h4 class="section-title">{{ $tp('光学变倍控制') }}</h4>
       <div class="zoom-wrapper">
         <div class="zoom-control-area">
           <div class="zoom-background-container">
             <div class="zoom-control-bar">
-              <button class="zoom-control-btn zoom-out" @click="zoomControl('out')" title="缩小">
+              <button class="zoom-control-btn zoom-out" @click="zoomControl('out')" :title="$tp('缩小')">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 13H5v-2h14v2z"/>
                 </svg>
               </button>
               <div class="zoom-indicator">
-                <span>变倍</span>
+                <span>{{ $tp('变倍') }}</span>
               </div>
-              <button class="zoom-control-btn zoom-in" @click="zoomControl('in')" title="放大">
+              <button class="zoom-control-btn zoom-in" @click="zoomControl('in')" :title="$tp('放大')">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
                 </svg>
@@ -83,31 +83,31 @@
       <div class="control-layout">
         <!-- control -->
         <div class="focus-control-group">
-          <button class="focus-btn" @click="controlAction('focus-plus')" title="调焦+">
-            <img :src="focusPlusIcon" alt="调焦+" class="function-icon" />
+          <button class="focus-btn" @click="controlAction('focus-plus')" :title="$tp('调焦+')">
+            <img :src="focusPlusIcon" :alt="$tp('调焦+')" class="function-icon" />
           </button>
-          <button class="focus-btn" @click="controlAction('focus-minus')" title="调焦-">
-            <img :src="focusMinusIcon" alt="调焦-" class="function-icon" />
+          <button class="focus-btn" @click="controlAction('focus-minus')" :title="$tp('调焦-')">
+            <img :src="focusMinusIcon" :alt="$tp('调焦-')" class="function-icon" />
           </button>
         </div>
 
         <!-- control -->
         <div class="zoom-control-group">
-          <button class="zoom-btn" @click="controlAction('zoom-plus')" title="聚集+">
-            <img :src="zoomPlusIcon" alt="聚集+" class="function-icon" />
+          <button class="zoom-btn" @click="controlAction('zoom-plus')" :title="$tp('聚集+')">
+            <img :src="zoomPlusIcon" :alt="$tp('聚集+')" class="function-icon" />
           </button>
-          <button class="zoom-btn" @click="controlAction('zoom-minus')" title="聚集-">
-            <img :src="zoomMinusIcon" alt="聚集-" class="function-icon" />
+          <button class="zoom-btn" @click="controlAction('zoom-minus')" :title="$tp('聚集-')">
+            <img :src="zoomMinusIcon" :alt="$tp('聚集-')" class="function-icon" />
           </button>
         </div>
 
         <!-- control -->
         <div class="iris-control-group">
-          <button class="iris-btn" @click="controlAction('iris-plus')" title="光圈+">
-            <img :src="irisPlusIcon" alt="光圈+" class="function-icon" />
+          <button class="iris-btn" @click="controlAction('iris-plus')" :title="$tp('光圈+')">
+            <img :src="irisPlusIcon" :alt="$tp('光圈+')" class="function-icon" />
           </button>
-          <button class="iris-btn" @click="controlAction('iris-minus')" title="光圈-">
-            <img :src="irisMinusIcon" alt="光圈-" class="function-icon" />
+          <button class="iris-btn" @click="controlAction('iris-minus')" :title="$tp('光圈-')">
+            <img :src="irisMinusIcon" :alt="$tp('光圈-')" class="function-icon" />
           </button>
         </div>
       </div>
@@ -117,42 +117,42 @@
         <div class="function-buttons-container">
           <!-- : 、 、 Initialize 、menu -->
           <div class="function-row four-cols">
-            <button class="function-btn" @click="controlAction('light')" title="灯光">
-              <img :src="lightIcon" alt="灯光" class="function-icon" />
+            <button class="function-btn" @click="controlAction('light')" :title="$tp('灯光')">
+              <img :src="lightIcon" :alt="$tp('灯光')" class="function-icon" />
             </button>
-            <button class="function-btn" @click="controlAction('assist-focus')" title="辅助聚集">
-              <img :src="assistFocusIcon" alt="辅助聚集" class="function-icon" />
+            <button class="function-btn" @click="controlAction('assist-focus')" :title="$tp('辅助聚集')">
+              <img :src="assistFocusIcon" :alt="$tp('辅助聚集')" class="function-icon" />
             </button>
-            <button class="function-btn" @click="controlAction('lens-init')" title="镜头初始化">
-              <img :src="lensInitIcon" alt="镜头初始化" class="function-icon" />
+            <button class="function-btn" @click="controlAction('lens-init')" :title="$tp('镜头初始化')">
+              <img :src="lensInitIcon" :alt="$tp('镜头初始化')" class="function-icon" />
             </button>
-            <button class="function-btn" @click="controlAction('menu')" title="菜单">
-              <img :src="menuIcon" alt="菜单" class="function-icon" />
+            <button class="function-btn" @click="controlAction('menu')" :title="$tp('菜单')">
+              <img :src="menuIcon" :alt="$tp('菜单')" class="function-icon" />
             </button>
           </div>
 
           <!-- : 、 3D 、 、 -->
           <div class="function-row four-cols">
-            <button class="function-btn" @click="controlAction('manual-track')" title="开启手动跟踪">
-              <img :src="manualTrackIcon" alt="开启手动跟踪" class="function-icon" />
+            <button class="function-btn" @click="controlAction('manual-track')" :title="$tp('开启手动跟踪')">
+              <img :src="manualTrackIcon" :alt="$tp('开启手动跟踪')" class="function-icon" />
             </button>
-            <button class="function-btn" @click="controlAction('3d-position')" title="开启3D定位">
-              <img :src="position3dIcon" alt="开启3D定位" class="function-icon" />
+            <button class="function-btn" @click="controlAction('3d-position')" :title="$tp('开启3D定位')">
+              <img :src="position3dIcon" :alt="$tp('开启3D定位')" class="function-icon" />
             </button>
-            <button class="function-btn" @click="controlAction('auto-cruise')" title="一键巡航">
-              <img :src="autoCruiseIcon" alt="一键巡航" class="function-icon" />
+            <button class="function-btn" @click="controlAction('auto-cruise')" :title="$tp('一键巡航')">
+              <img :src="autoCruiseIcon" :alt="$tp('一键巡航')" class="function-icon" />
             </button>
-            <button class="function-btn" @click="controlAction('auto-watch')" title="一键守望">
-              <img :src="autoWatchIcon" alt="一键守望" class="function-icon" />
+            <button class="function-btn" @click="controlAction('auto-watch')" :title="$tp('一键守望')">
+              <img :src="autoWatchIcon" :alt="$tp('一键守望')" class="function-icon" />
             </button>
           </div>
         </div>
 
         <!-- : after button -->
         <div class="function-row camera-management-row" v-if="showCameraManagement">
-          <button class="function-btn camera-management" @click="controlAction('camera-management')" title="摄像机管理后台">
-            <img :src="cameraManagementIcon" alt="摄像机管理后台" class="function-icon" />
-            <span class="camera-text">摄像机管理后台</span>
+          <button class="function-btn camera-management" @click="controlAction('camera-management')" :title="$tp('摄像机管理后台')">
+            <img :src="cameraManagementIcon" :alt="$tp('摄像机管理后台')" class="function-icon" />
+            <span class="camera-text">{{ $tp('摄像机管理后台') }}</span>
           </button>
         </div>
       </div>

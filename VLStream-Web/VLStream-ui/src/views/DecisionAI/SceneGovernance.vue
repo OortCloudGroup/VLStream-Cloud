@@ -17,16 +17,14 @@
                 <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd">
                   <el-icon class="BtnImg">
                     <Plus />
-                  </el-icon>
-                  新建
-                </button>
+                  </el-icon> {{ $tp('新建') }} </button>
                 <button-group :button-list="toolbarButtonList" />
               </div>
           </div>
           <div class="searchHeight_out flexRowAC">
             <search-height-box
               keyword="keyword"
-              placeholder="搜索"
+              :placeholder="$tp('搜索')"
               :data="searchData"
               @handle="searchResetFn"
             />
@@ -59,7 +57,7 @@
                 :type="scope.row.status === 1 ? 'success' : 'danger'"
                 size="small"
               >
-                {{ scope.row.status === 1 ? '启用' : '禁用' }}
+                {{ scope.row.status === 1 ? $tp('启用') : $tp('禁用') }}
               </el-tag>
             </template>
           </el-table-column>
@@ -69,11 +67,11 @@
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="handleEditRow(scope.row)">
                   <oort-svg-icon width="14" height="14" name="edit_icon" class="new_table_svg_group_svg" />
-                  <span>编辑</span>
+                  <span>{{ $tp('编辑') }}</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleDeleteRow(scope.row)">
                   <oort-svg-icon color="red" width="14" height="14" name="delete_icon" class="new_table_svg_group_svg" />
-                  <span>删除</span>
+                  <span>{{ $tp('删除') }}</span>
                 </div>
               </div>
             </template>
@@ -100,7 +98,7 @@
     <div v-if="showEditView" class="edit-view">
       <!--  -->
       <div class="breadcrumb-nav">
-        <span class="breadcrumb-item" @click="showListView">场景列表</span>
+        <span class="breadcrumb-item" @click="showListView">{{ $tp('场景列表') }}</span>
         <span class="breadcrumb-separator">></span>
         <span class="breadcrumb-item active">{{ editTitle }}</span>
       </div>
@@ -113,15 +111,15 @@
           :rules="rules"
           label-width="80px"
           class="scene-form">
-          <el-form-item label="场景名称" prop="name">
+          <el-form-item :label="$tp('场景名称')" prop="name">
             <el-input
               v-model="form.name"
-              placeholder="请输入场景名称"
+              :placeholder="$tp('请输入场景名称')"
               style="width: 480px"
             />
           </el-form-item>
 
-          <el-form-item label="Cron表达式" prop="cronExpression" label-width="120">
+          <el-form-item :label="$tp('Cron表达式')" prop="cronExpression" label-width="120">
             <CronExpressionBuilder v-model="form.cronExpression" />
           </el-form-item>
 
@@ -132,24 +130,24 @@
 <!--            </div>-->
 <!--          </el-form-item>-->
 
-          <el-form-item label="区划地点" prop="location">
+          <el-form-item :label="$tp('区划地点')" prop="location">
             <div class="selector-item" @click="showLocationSelector = true" style="width: 480px">
-              <span class="selector-text">{{ form.location || '请选择' }}</span>
+              <span class="selector-text">{{ form.location || $tp('请选择') }}</span>
               <el-icon class="selector-arrow"><ArrowRight /></el-icon>
             </div>
           </el-form-item>
 
-          <el-form-item label="摄像头" prop="cameras">
+          <el-form-item :label="$tp('摄像头')" prop="cameras">
             <div class="selector-item" @click="showCameraSelector = true" style="width: 480px">
-              <span class="selector-text">{{ form.cameras || '请选择' }}</span>
+              <span class="selector-text">{{ form.cameras || $tp('请选择') }}</span>
               <el-icon class="selector-arrow"><ArrowRight /></el-icon>
             </div>
           </el-form-item>
 
           <!-- operationbutton -->
           <div class="form-actions">
-            <el-button @click="showListView" class="common_btn">取消</el-button>
-            <el-button type="primary" @click="handleSubmit" class="common_btn">保存</el-button>
+            <el-button @click="showListView" class="common_btn">{{ $tp('取消') }}</el-button>
+            <el-button type="primary" @click="handleSubmit" class="common_btn">{{ $tp('保存') }}</el-button>
           </div>
         </el-form>
       </div>
@@ -159,7 +157,7 @@
     <!-- Add dialog -->
     <el-dialog
       v-model="showAddDialog"
-      title="新增场景"
+      :title="$tp('新增场景')"
       width="45%"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
@@ -168,17 +166,17 @@
     >
       <el-form :model="addForm" label-width="100px" class="scene-dialog-form">
         <!--  -->
-        <el-form-item label="场景名称" required>
+        <el-form-item :label="$tp('场景名称')" required>
           <el-input
             v-model="addForm.name"
-            placeholder="告警场景"
+            :placeholder="$tp('告警场景')"
             clearable
             style="width: 100%"
           />
         </el-form-item>
 
         <!-- Cron -->
-        <el-form-item label="Cron表达式" required>
+        <el-form-item :label="$tp('Cron表达式')" required>
           <CronExpressionBuilder v-model="addForm.cronExpression" />
         </el-form-item>
 
@@ -191,17 +189,17 @@
 <!--        </el-form-item>-->
 
         <!--  -->
-        <el-form-item label="区划地点">
+        <el-form-item :label="$tp('区划地点')">
           <div class="selector-item" @click="showLocationDialog = true">
-            <span class="selector-text">{{ addForm.location || '请选择' }}</span>
+            <span class="selector-text">{{ addForm.location || $tp('请选择') }}</span>
             <el-icon class="selector-arrow"><ArrowRight /></el-icon>
           </div>
         </el-form-item>
 
         <!--  -->
-        <el-form-item label="摄像头">
+        <el-form-item :label="$tp('摄像头')">
           <div class="selector-item" @click="showCameraDialog = true">
-            <span class="selector-text">{{ addForm.cameras || '请选择' }}</span>
+            <span class="selector-text">{{ addForm.cameras || $tp('请选择') }}</span>
             <el-icon class="selector-arrow"><ArrowRight /></el-icon>
           </div>
         </el-form-item>
@@ -209,8 +207,8 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleCancelAdd" size="large" class="common_btn">取消</el-button>
-          <el-button type="primary" @click="handleConfirmAdd" size="large" class="common_btn">确定</el-button>
+          <el-button @click="handleCancelAdd" size="large" class="common_btn">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" @click="handleConfirmAdd" size="large" class="common_btn">{{ $tp('确定') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -253,14 +251,14 @@
 
     <el-dialog
       v-model="showCameraSelector"
-      title="选择摄像头"
+      :title="$tp('选择摄像头')"
       width="30%"
       class="selector-dialog"
     >
       <div class="dialog-content">
         <el-input
           v-model="cameraSearch"
-          placeholder="搜索摄像头"
+          :placeholder="$tp('搜索摄像头')"
           clearable
           class="dialog-search"
         />
@@ -281,8 +279,8 @@
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showCameraSelector = false" class="common_btn">取消</el-button>
-          <el-button type="primary" @click="confirmCameraSelector" class="common_btn">确定</el-button>
+          <el-button @click="showCameraSelector = false" class="common_btn">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" @click="confirmCameraSelector" class="common_btn">{{ $tp('确定') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -325,14 +323,14 @@
 
     <el-dialog
       v-model="showCameraDialog"
-      title="选择摄像头"
+      :title="$tp('选择摄像头')"
       width="30%"
       class="selector-dialog"
     >
       <div class="dialog-content">
         <el-input
           v-model="cameraSearch"
-          placeholder="搜索摄像头"
+          :placeholder="$tp('搜索摄像头')"
           clearable
           class="dialog-search"
         />
@@ -353,8 +351,8 @@
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showCameraDialog = false" class="common_btn">取消</el-button>
-          <el-button type="primary" @click="confirmCameraDialog" class="common_btn">确定</el-button>
+          <el-button @click="showCameraDialog = false" class="common_btn">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" @click="confirmCameraDialog" class="common_btn">{{ $tp('确定') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -363,6 +361,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -497,7 +497,7 @@ const isValidCronExpression = (value) => {
 
 const formatCronDescription = (cronExpression) => {
   const text = String(cronExpression || '').trim()
-  return text ? `Cron表达式: ${text}` : '-'
+  return text ? uiText('Cron表达式: {value0}', { value0: text }) : '-'
 }
 
 const normalizeAlgorithmOption = (algorithm) => {
@@ -574,12 +574,12 @@ const loadAlgorithmOptions = async () => {
       algorithmOptions.value = records.map(normalizeAlgorithmOption).filter(Boolean)
     } else {
       algorithmOptions.value = []
-      ElMessage.error(response?.message || '加载算法列表失败')
+      ElMessage.error(response?.message || uiText('加载算法列表失败'))
     }
   } catch (error) {
     console.error('加载算法列表失败:', error)
     algorithmOptions.value = []
-    ElMessage.error('加载算法列表失败')
+    ElMessage.error(uiText('加载算法列表失败'))
   } finally {
     algorithmLoading.value = false
   }
@@ -600,7 +600,7 @@ const loadCameraOptions = async () => {
   } catch (error) {
     console.error('加载摄像头列表失败:', error)
     cameraOptions.value = []
-    ElMessage.error('加载摄像头列表失败')
+    ElMessage.error(uiText('加载摄像头列表失败'))
   } finally {
     cameraLoading.value = false
   }
@@ -805,11 +805,11 @@ const loadSceneGovernanceList = async () => {
         item.description = item.description || generateDescriptionText(item)
       })
     } else {
-      ElMessage.error(response.message || '加载数据失败')
+      ElMessage.error(response.message || uiText('加载数据失败'))
     }
   } catch (error) {
     console.error('加载场景治理列表失败:', error)
-    ElMessage.error('加载数据失败，请重试')
+    ElMessage.error(uiText('加载数据失败，请重试'))
   } finally {
     tableLoading.value = false
   }
@@ -857,7 +857,7 @@ const handleSelectionChange = (selection) => {
 const handleSearch = async () => {
   currentPage.value = 1 //
   await loadSceneGovernanceList()
-  ElMessage.success('搜索完成')
+  ElMessage.success(uiText('搜索完成'))
 }
 
 const handleReset = async () => {
@@ -865,7 +865,7 @@ const handleReset = async () => {
   queryForm.dateRange = null
   currentPage.value = 1 //
   await loadSceneGovernanceList()
-  ElMessage.info('搜索条件已重置')
+  ElMessage.info(uiText('搜索条件已重置'))
 }
 
 const handleAdd = () => {
@@ -885,17 +885,17 @@ const handleAdd = () => {
 // Add
 const handleConfirmAdd = async () => {
   if (!addForm.value.name.trim()) {
-    ElMessage.warning('请输入场景名称')
+    ElMessage.warning(uiText('请输入场景名称'))
     return
   }
 
   const cronExpression = String(addForm.value.cronExpression || '').trim()
   if (!cronExpression) {
-    ElMessage.warning('请配置Cron表达式')
+    ElMessage.warning(uiText('请配置Cron表达式'))
     return
   }
   if (!isValidCronExpression(cronExpression)) {
-    ElMessage.warning('Cron表达式格式不正确')
+    ElMessage.warning(uiText('Cron表达式格式不正确'))
     return
   }
 
@@ -944,15 +944,15 @@ const handleConfirmAdd = async () => {
 
     if (response.code === 200) {
       showAddDialog.value = false
-      ElMessage.success('新增场景成功')
+      ElMessage.success(uiText('新增场景成功'))
       // new Load data
       await loadSceneGovernanceList()
     } else {
-      ElMessage.error(response.message || '新增失败')
+      ElMessage.error(response.message || uiText('新增失败'))
     }
   } catch (error) {
     console.error('新增场景失败:', error)
-    ElMessage.error('新增失败，请重试')
+    ElMessage.error(uiText('新增失败，请重试'))
   } finally {
     loading.value = false
   }
@@ -977,7 +977,7 @@ const handleCancelAdd = () => {
 
 const handleEdit = () => {
   if (selectedRows.value.length !== 1) {
-    ElMessage.warning('请选择一条记录进行编辑')
+    ElMessage.warning(uiText('请选择一条记录进行编辑'))
     return
   }
 
@@ -1004,17 +1004,17 @@ const handleEdit = () => {
 
 const handleDelete = async () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请选择要删除的记录')
+    ElMessage.warning(uiText('请选择要删除的记录'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedRows.value.length} 条记录吗？`,
-      '提示',
+      uiText('确定要删除选中的 {value0} 条记录吗？', { value0: selectedRows.value.length }),
+      uiText('提示'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: uiText('确定'),
+        cancelButtonText: uiText('取消'),
         type: 'warning',
       }
     )
@@ -1027,18 +1027,18 @@ const handleDelete = async () => {
 
     if (response.code === 200) {
       selectedRows.value = []
-      ElMessage.success('删除成功')
+      ElMessage.success(uiText('删除成功'))
       // new Load data
       await loadSceneGovernanceList()
     } else {
-      ElMessage.error(response.message || '删除失败')
+      ElMessage.error(response.message || uiText('删除失败'))
     }
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除失败:', error)
-      ElMessage.error('删除失败，请重试')
+      ElMessage.error(uiText('删除失败，请重试'))
     } else {
-      ElMessage.info('已取消删除')
+      ElMessage.info(uiText('已取消删除'))
     }
   } finally {
     loading.value = false
@@ -1051,7 +1051,7 @@ const toolbarButtonList = [
 ]
 
 const handleDetailRow = (row) => {
-  ElMessage.info(`查看场景详情: ${row.name}`)
+  ElMessage.info(uiText('查看场景详情: {value0}', { value0: row.name }))
   // item in will page dialog
 }
 
@@ -1081,11 +1081,11 @@ const handleEditRow = (row) => {
 const handleDeleteRow = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除场景"${row.name}"吗？`,
-      '提示',
+      uiText('确定要删除场景"{value0}"吗？', { value0: row.name }),
+      uiText('提示'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: uiText('确定'),
+        cancelButtonText: uiText('取消'),
         type: 'warning',
       }
     )
@@ -1095,18 +1095,18 @@ const handleDeleteRow = async (row) => {
     const response = await remove(formatIdsParam([row.id]))
 
     if (response.code === 200) {
-      ElMessage.success('删除成功')
+      ElMessage.success(uiText('删除成功'))
       // new Load data
       await loadSceneGovernanceList()
     } else {
-      ElMessage.error(response.message || '删除失败')
+      ElMessage.error(response.message || uiText('删除失败'))
     }
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除场景失败:', error)
-      ElMessage.error('删除失败，请重试')
+      ElMessage.error(uiText('删除失败，请重试'))
     } else {
-      ElMessage.info('已取消删除')
+      ElMessage.info(uiText('已取消删除'))
     }
   } finally {
     loading.value = false
@@ -1115,7 +1115,7 @@ const handleDeleteRow = async (row) => {
 
 const handleStatusChange = (row) => {
   const status = row.status === 'enabled' ? '启用' : '禁用'
-  ElMessage.success(`场景"${row.name}"已${status}`)
+  ElMessage.success(uiText('场景"{value0}"已{value1}', { value0: row.name, value1: status }))
 }
 
 const resetForm = () => {
@@ -1132,17 +1132,17 @@ const resetForm = () => {
 
 const handleSubmit = async () => {
   if (!form.value.name.trim()) {
-    ElMessage.warning('请输入场景名称')
+    ElMessage.warning(uiText('请输入场景名称'))
     return
   }
 
   const cronExpression = String(form.value.cronExpression || '').trim()
   if (!cronExpression) {
-    ElMessage.warning('请配置Cron表达式')
+    ElMessage.warning(uiText('请配置Cron表达式'))
     return
   }
   if (!isValidCronExpression(cronExpression)) {
-    ElMessage.warning('Cron表达式格式不正确')
+    ElMessage.warning(uiText('Cron表达式格式不正确'))
     return
   }
 
@@ -1190,30 +1190,30 @@ const handleSubmit = async () => {
       const response = await update({ ...sceneData, id: editingScene.value.id })
 
       if (response.code === 200) {
-        ElMessage.success('更新成功')
+        ElMessage.success(uiText('更新成功'))
         showEditView.value = false
         selectedRows.value = []
         // new Load data
         await loadSceneGovernanceList()
       } else {
-        ElMessage.error(response.message || '更新失败')
+        ElMessage.error(response.message || uiText('更新失败'))
       }
     } else {
       const response = await add(sceneData)
 
       if (response.code === 200) {
-        ElMessage.success('创建成功')
+        ElMessage.success(uiText('创建成功'))
         showEditView.value = false
         selectedRows.value = []
         // new Load data
         await loadSceneGovernanceList()
       } else {
-        ElMessage.error(response.message || '创建失败')
+        ElMessage.error(response.message || uiText('创建失败'))
       }
     }
   } catch (error) {
     console.error('提交失败:', error)
-    ElMessage.error('操作失败，请重试')
+    ElMessage.error(uiText('操作失败，请重试'))
   } finally {
     loading.value = false
   }
@@ -1280,22 +1280,22 @@ const handleAdvancedSearchReset = () => {
 
 const handleExport = () => {
   console.log('导出数据')
-  ElMessage.success('导出数据')
+  ElMessage.success(uiText('导出数据'))
 }
 
 const handleUpload = () => {
   console.log('上传文件')
-  ElMessage.success('上传功能')
+  ElMessage.success(uiText('上传功能'))
 }
 
 const handleDownloadTemplate = () => {
   console.log('下载模板')
-  ElMessage.success('下载模板')
+  ElMessage.success(uiText('下载模板'))
 }
 
 const handleBatchOperation = () => {
   console.log('批量操作')
-  ElMessage.success('批量操作')
+  ElMessage.success(uiText('批量操作'))
 }
 
 // Initialize Load data

@@ -17,7 +17,7 @@
             <div class="searchHeight_out flexRowAC">
               <search-height-box
                 keyword="keyword"
-                placeholder="搜索"
+                :placeholder="$tp('搜索')"
                 :data="searchData"
                 @handle="searchResetFn"
               />
@@ -53,7 +53,7 @@
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handlePlay(scope.row)">
                     <oort-svg-icon width="14" height="14" name="play" class="new_table_svg_group_svg" />
-                    <span>播放</span>
+                    <span>{{ $tp('播放') }}</span>
                   </div>
                 </div>
               </template>
@@ -80,7 +80,7 @@
     <!-- dialog -->
     <el-dialog
       v-model="videoDialogVisible"
-      title="视频播放"
+      :title="$tp('视频播放')"
       width="70%"
       :close-on-click-modal="false"
       class="video-dialog"
@@ -93,8 +93,8 @@
               <!--  -->
               <div class="video-placeholder">
                 <div class="video-info">
-                  <div class="device-name">{{ selectedRow?.deviceName || '奥尔特云前台' }}</div>
-                  <div class="video-time">2021年04月15日 11:18:27</div>
+                  <div class="device-name">{{ selectedRow?.deviceName || $tp('奥尔特云前台') }}</div>
+                  <div class="video-time">{{ $tp('2021年04月15日 11:18:27') }}</div>
                 </div>
               </div>
 
@@ -129,6 +129,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, reactive, computed } from 'vue'
 import {
   Search,
@@ -192,7 +194,7 @@ const toolbarButtonList = computed(() => [
 // method
 const handleSearch = () => {
   console.log('搜索:', searchForm)
-  ElMessage.success('搜索完成')
+  ElMessage.success(uiText('搜索完成'))
 }
 
 const handleReset = () => {
@@ -201,7 +203,7 @@ const handleReset = () => {
     alarmType: '',
     dateRange: []
   })
-  ElMessage.info('已重置搜索条件')
+  ElMessage.info(uiText('已重置搜索条件'))
 }
 
 const handleSelectionChange = (selection) => {
@@ -210,41 +212,41 @@ const handleSelectionChange = (selection) => {
 
 const handleExport = async () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请选择要导出的记录')
+    ElMessage.warning(uiText('请选择要导出的记录'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确定要导出选中的 ${selectedRows.value.length} 条记录吗？`,
-      '确认导出',
+      uiText('确定要导出选中的 {value0} 条记录吗？', { value0: selectedRows.value.length }),
+      uiText('确认导出'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: uiText('确定'),
+        cancelButtonText: uiText('取消'),
         type: 'info'
       }
     )
 
-    ElMessage.success(`导出 ${selectedRows.value.length} 条记录成功`)
+    ElMessage.success(uiText('导出 {value0} 条记录成功', { value0: selectedRows.value.length }))
     // Export
   } catch {
-    ElMessage.info('已取消导出')
+    ElMessage.info(uiText('已取消导出'))
   }
 }
 
 const handleDelete = async () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请选择要删除的记录')
+    ElMessage.warning(uiText('请选择要删除的记录'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedRows.value.length} 条记录吗？`,
-      '确认删除',
+      uiText('确定要删除选中的 {value0} 条记录吗？', { value0: selectedRows.value.length }),
+      uiText('确认删除'),
     {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: uiText('确定'),
+      cancelButtonText: uiText('取消'),
       type: 'warning'
     }
     )
@@ -258,9 +260,9 @@ const handleDelete = async () => {
     })
 
     selectedRows.value = []
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText('删除成功'))
   } catch {
-    ElMessage.info('已取消删除')
+    ElMessage.info(uiText('已取消删除'))
   }
 }
 
@@ -268,7 +270,7 @@ const handlePlay = (row) => {
   console.log('播放告警视频:', row.deviceName)
   selectedRow.value = row
   videoDialogVisible.value = true
-  ElMessage.success(`开始播放设备 ${row.deviceName} 的告警视频`)
+  ElMessage.success(uiText('开始播放设备 {value0} 的告警视频', { value0: row.deviceName }))
 }
 
 const handleSizeChange = (val) => {
@@ -327,17 +329,17 @@ const handleAdvancedSearchReset = () => {
 
 const handleUpload = () => {
   console.log('上传文件')
-  ElMessage.success('上传功能')
+  ElMessage.success(uiText('上传功能'))
 }
 
 const handleDownloadTemplate = () => {
   console.log('下载模板')
-  ElMessage.success('下载模板')
+  ElMessage.success(uiText('下载模板'))
 }
 
 const handleBatchOperation = () => {
   console.log('批量操作')
-  ElMessage.success('批量操作')
+  ElMessage.success(uiText('批量操作'))
 }
 
 // related method

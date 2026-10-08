@@ -115,6 +115,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -411,9 +413,9 @@ const loadTenantInfo = async () => {
 const switchTenant = async (tenant) => {
   if (!tenant?.id || tenant.id === currentTenant.value.id) return
   try {
-    await ElMessageBox.confirm(`确认切换到租户“${tenant.name}”吗？`, '切换租户', {
-      confirmButtonText: '切换',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(uiText('确认切换到租户“{value0}”吗？', { value0: tenant.name }), uiText('切换租户'), {
+      confirmButtonText: uiText('切换'),
+      cancelButtonText: uiText('取消'),
       type: 'warning'
     })
     const response = await switchTenantApi(tenant.id)
@@ -421,11 +423,11 @@ const switchTenant = async (tenant) => {
     if (response?.code !== 200 || !newToken || !(await authManager.setNewToken(newToken))) {
       throw new Error(response?.msg || '新租户会话校验失败')
     }
-    ElMessage.success('租户切换成功')
+    ElMessage.success(uiText('租户切换成功'))
     window.location.reload()
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
-      ElMessage.error(error?.response?.data?.msg || error?.message || '租户切换失败')
+      ElMessage.error(error?.response?.data?.msg || error?.message || uiText('租户切换失败'))
     }
   }
 }
@@ -433,9 +435,9 @@ const switchTenant = async (tenant) => {
 // exit notification after , .
 const handleLogout = async () => {
   try {
-    await ElMessageBox.confirm('确认退出当前账号吗？', '退出登录', {
-      confirmButtonText: '退出',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(uiText('确认退出当前账号吗？'), uiText('退出登录'), {
+      confirmButtonText: uiText('退出'),
+      cancelButtonText: uiText('取消'),
       type: 'warning'
     })
   } catch (error) {
@@ -454,7 +456,7 @@ const handleLogout = async () => {
   }
 
   authManager.clearAllTokens()
-  ElMessage.success('已退出登录')
+  ElMessage.success(uiText('已退出登录'))
   await router.replace('/login')
 }
 

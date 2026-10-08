@@ -9,16 +9,16 @@
   <div class="event-detail">
     <div class="content-header">
       <div class="breadcrumb">
-        <span class="breadcrumb-item" @click="goBack">事件列表</span>
+        <span class="breadcrumb-item" @click="goBack">{{ $tp('事件列表') }}</span>
         <span class="breadcrumb-separator">></span>
-        <span class="breadcrumb-item active">事件详情</span>
+        <span class="breadcrumb-item active">{{ $tp('事件详情') }}</span>
       </div>
     </div>
 
     <div class="detail-container">
       <!-- event -->
       <div class="detail-section">
-        <h2 class="section-title">事件详情</h2>
+        <h2 class="section-title">{{ $tp('事件详情') }}</h2>
 
         <div class="detail-content">
           <!-- event -->
@@ -27,10 +27,10 @@
               <el-icon><Document /></el-icon>
             </div>
             <div class="detail-info">
-              <span class="detail-label">事件描述</span>
+              <span class="detail-label">{{ $tp('事件描述') }}</span>
               <div class="detail-value">
                 <span>{{ eventInfo.description }}</span>
-                <el-tag type="warning" size="small" class="status-tag">待处理</el-tag>
+                <el-tag type="warning" size="small" class="status-tag">{{ $tp('待处理') }}</el-tag>
               </div>
             </div>
           </div>
@@ -41,7 +41,7 @@
               <span class="icon-text">ID</span>
             </div>
             <div class="detail-info">
-              <span class="detail-label">事件ID</span>
+              <span class="detail-label">{{ $tp('事件ID') }}</span>
               <span class="detail-value">{{ eventInfo.id }}</span>
             </div>
           </div>
@@ -52,7 +52,7 @@
               <el-icon><Monitor /></el-icon>
             </div>
             <div class="detail-info">
-              <span class="detail-label">上报设备</span>
+              <span class="detail-label">{{ $tp('上报设备') }}</span>
               <span class="detail-value">{{ eventInfo.device }}</span>
             </div>
           </div>
@@ -63,10 +63,10 @@
               <el-icon><Picture /></el-icon>
             </div>
             <div class="detail-info">
-              <span class="detail-label">上报图像</span>
+              <span class="detail-label">{{ $tp('上报图像') }}</span>
               <div class="detail-images">
                 <div class="image-item" v-for="(image, index) in eventInfo.images" :key="index">
-                  <img :src="image" :alt="`上报图像${index + 1}`" />
+                  <img :src="image" :alt="$tp('上报图像{value0}', { value0: index + 1 })" />
                 </div>
               </div>
             </div>
@@ -78,7 +78,7 @@
               <el-icon><Clock /></el-icon>
             </div>
             <div class="detail-info">
-              <span class="detail-label">上报时间</span>
+              <span class="detail-label">{{ $tp('上报时间') }}</span>
               <span class="detail-value">{{ eventInfo.reportTime }}</span>
             </div>
           </div>
@@ -89,7 +89,7 @@
               <el-icon><Location /></el-icon>
             </div>
             <div class="detail-info">
-              <span class="detail-label">上报位置</span>
+              <span class="detail-label">{{ $tp('上报位置') }}</span>
               <span class="detail-value">{{ eventInfo.location }}</span>
             </div>
           </div>
@@ -98,7 +98,7 @@
 
       <!-- event -->
       <div class="feedback-section">
-        <h2 class="section-title">事件反馈</h2>
+        <h2 class="section-title">{{ $tp('事件反馈') }}</h2>
 
         <div class="feedback-content">
           <!--  -->
@@ -107,12 +107,12 @@
               <el-icon><Document /></el-icon>
             </div>
             <div class="feedback-info">
-              <span class="detail-label">反馈描述</span>
+              <span class="detail-label">{{ $tp('反馈描述') }}</span>
               <el-input
                 v-model="feedbackForm.description"
                 type="textarea"
                 :rows="4"
-                placeholder="请输入"
+                :placeholder="$tp('请输入')"
                 class="feedback-textarea"
               />
             </div>
@@ -124,7 +124,7 @@
               <el-icon><Picture /></el-icon>
             </div>
             <div class="feedback-info">
-              <span class="detail-label">上传图像</span>
+              <span class="detail-label">{{ $tp('上传图像') }}</span>
               <div class="upload-area">
                 <el-upload
                   class="upload-demo"
@@ -149,11 +149,11 @@
               <el-icon><Flag /></el-icon>
             </div>
             <div class="feedback-info">
-              <span class="detail-label">事件状态</span>
+              <span class="detail-label">{{ $tp('事件状态') }}</span>
               <div class="status-options">
                 <el-radio-group v-model="feedbackForm.status">
-                  <el-radio label="pending">未完成</el-radio>
-                  <el-radio label="completed">已完成</el-radio>
+                  <el-radio label="pending">{{ $tp('未完成') }}</el-radio>
+                  <el-radio label="completed">{{ $tp('已完成') }}</el-radio>
                 </el-radio-group>
               </div>
             </div>
@@ -162,8 +162,8 @@
 
         <!-- operationbutton -->
         <div class="action-buttons">
-          <el-button type="primary" size="large" @click="handleSubmit" class="common_btn">确定</el-button>
-          <el-button size="large" @click="handleCancel" class="common_btn">取消</el-button>
+          <el-button type="primary" size="large" @click="handleSubmit" class="common_btn">{{ $tp('确定') }}</el-button>
+          <el-button size="large" @click="handleCancel" class="common_btn">{{ $tp('取消') }}</el-button>
         </div>
       </div>
     </div>
@@ -171,6 +171,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -220,26 +222,26 @@ const beforeUpload = (file) => {
   const isLt2M = file.size / 1024 / 1024 < 2
 
   if (!isJPG) {
-    ElMessage.error('上传图片只能是 JPG/PNG 格式!')
+    ElMessage.error(uiText('上传图片只能是 JPG/PNG 格式!'))
   }
   if (!isLt2M) {
-    ElMessage.error('上传图片大小不能超过 2MB!')
+    ElMessage.error(uiText('上传图片大小不能超过 2MB!'))
   }
   return isJPG && isLt2M
 }
 
 const handleUploadSuccess = (response, file) => {
-  ElMessage.success('图片上传成功')
+  ElMessage.success(uiText('图片上传成功'))
   feedbackForm.images.push(file)
 }
 
 const handleSubmit = () => {
   if (!feedbackForm.description.trim()) {
-    ElMessage.warning('请输入反馈描述')
+    ElMessage.warning(uiText('请输入反馈描述'))
     return
   }
 
-  ElMessage.success('事件反馈提交成功')
+  ElMessage.success(uiText('事件反馈提交成功'))
   // API data
   console.log('提交反馈:', feedbackForm)
 

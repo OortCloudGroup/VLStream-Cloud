@@ -6,8 +6,8 @@
 -->
 
 <template>
-  <el-form-item label="地区精度" style="width: 100%;">
-    <el-select v-model="type" class="item_width" placeholder="请选择" @change="changeAreaType">
+  <el-form-item :label="$tp('地区精度')" style="width: 100%;">
+    <el-select v-model="type" class="item_width" :placeholder="$tp('请选择')" @change="changeAreaType">
       <el-option
         v-for="item in areaTypeList"
         :key="item.value"

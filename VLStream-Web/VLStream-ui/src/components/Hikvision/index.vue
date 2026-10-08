@@ -12,7 +12,7 @@
     :width="numericWidth"
     :height="numericHeight"
   />
-  <el-empty v-else description="暂无可播放地址" />
+  <el-empty v-else :description="$tp('暂无可播放地址')" />
 </template>
 
 <script setup>

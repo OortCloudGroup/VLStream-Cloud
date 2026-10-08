@@ -23,7 +23,7 @@
       </div>
     </div>
 
-    <el-dialog v-model="chooseUserVis" title="选择人员" width="50%">
+    <el-dialog v-model="chooseUserVis" :title="$tp('选择人员')" width="50%">
       <address-seting-dialog
         :user-list="user"
         :mode="3"

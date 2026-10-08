@@ -7,17 +7,13 @@
 
 <template>
   <div class="annotation-label-panel">
-    <div class="treeTitle">
-      标签栏
-      <el-button type="primary" size="small" :icon="Plus" class="add-label-button" @click="handleAddLabel">
-        添加标签
-      </el-button>
+    <div class="treeTitle"> {{ $tp('标签栏') }} <el-button type="primary" size="small" :icon="Plus" class="add-label-button" @click="handleAddLabel"> {{ $tp('添加标签') }} </el-button>
     </div>
 
     <div class="tree_search_content flexRowAC">
       <el-input
         v-model="searchKeyword"
-        placeholder="搜索"
+        :placeholder="$tp('搜索')"
         debounce="300"
         prefix-icon="Search"
         clearable
@@ -25,8 +21,8 @@
     </div>
 
     <div class="labels-header">
-      <div class="header-cell label-name-col">标签名</div>
-      <div class="header-cell label-count-col">标注框数</div>
+      <div class="header-cell label-name-col">{{ $tp('标签名') }}</div>
+      <div class="header-cell label-count-col">{{ $tp('标注框数') }}</div>
     </div>
 
     <div class="labels-container">
@@ -44,10 +40,10 @@
         <div class="label-stats">
           <span class="label-count">{{ label.usageCount || 0 }}</span>
           <div class="label-actions">
-            <el-icon class="action-icon" title="编辑" @click.stop="handleEditLabel(label)">
+            <el-icon class="action-icon" :title="$tp('编辑')" @click.stop="handleEditLabel(label)">
               <Edit />
             </el-icon>
-            <el-icon class="action-icon" title="删除" @click.stop="handleDeleteLabel(label.id)">
+            <el-icon class="action-icon" :title="$tp('删除')" @click.stop="handleDeleteLabel(label.id)">
               <Delete />
             </el-icon>
           </div>
@@ -57,26 +53,28 @@
 
     <el-dialog
       v-model="showLabelDialog"
-      :title="editingLabel ? '编辑标签' : '新增标签'"
+      :title="editingLabel ? $tp('编辑标签') : $tp('新增标签')"
       width="25%"
     >
       <el-form :model="labelForm" :rules="labelRules" ref="labelFormRef" label-width="80px">
-        <el-form-item label="标签名" prop="name">
-          <el-input v-model="labelForm.name" placeholder="请输入标签名称" />
+        <el-form-item :label="$tp('标签名')" prop="name">
+          <el-input v-model="labelForm.name" :placeholder="$tp('请输入标签名称')" />
         </el-form-item>
-        <el-form-item label="颜色" prop="color">
+        <el-form-item :label="$tp('颜色')" prop="color">
           <el-color-picker v-model="labelForm.color" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showLabelDialog = false" class="common_btn">取消</el-button>
-        <el-button type="primary" @click="handleSaveLabel" class="common_btn">保存</el-button>
+        <el-button @click="showLabelDialog = false" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" @click="handleSaveLabel" class="common_btn">{{ $tp('保存') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, computed, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
@@ -136,13 +134,13 @@ const handleEditLabel = (label) => {
 }
 
 const handleDeleteLabel = (labelId) => {
-  ElMessageBox.confirm('确定要删除这个标签吗？', '确认删除', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(uiText('确定要删除这个标签吗？'), uiText('确认删除'), {
+    confirmButtonText: uiText('确定'),
+    cancelButtonText: uiText('取消'),
     type: 'warning'
   }).then(() => {
     emit('delete-label', labelId)
-    ElMessage.success('标签删除成功')
+    ElMessage.success(uiText('标签删除成功'))
   })
 }
 
@@ -158,14 +156,14 @@ const handleSaveLabel = async () => {
         name: labelForm.name,
         color: labelForm.color
       })
-      ElMessage.success('标签更新成功')
+      ElMessage.success(uiText('标签更新成功'))
     } else {
       emit('add-label', {
         name: labelForm.name,
         color: labelForm.color,
         usageCount: 0
       })
-      ElMessage.success('标签添加成功')
+      ElMessage.success(uiText('标签添加成功'))
     }
 
     showLabelDialog.value = false

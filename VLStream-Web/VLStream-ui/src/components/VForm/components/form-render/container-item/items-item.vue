@@ -27,7 +27,7 @@
     >
       <template v-for="(colWidget, colIdx) in widget.items" :key="colIdx">
         <div class="detail-item">
-          <span>明细{{ colIdx + 1 }}
+          <span>{{ $tp('明细') }}{{ colIdx + 1 }}
             <span v-if="errorTipsArr[colIdx]" style="color: red;">{{ errorTipsArr[colIdx] }}</span></span>
         </div>
         <ItemC
@@ -42,7 +42,7 @@
       </template>
       <template v-for="(colWidget, colIdx) in copyItems" :key="colIdx">
         <div class="detail-item">
-          <span>明细{{ colIdx + 2 }}
+          <span>{{ $tp('明细') }}{{ colIdx + 2 }}
             <span v-if="errorTipsArr[colIdx + 1]" style="color: red;">{{ errorTipsArr[colIdx + 1] }}</span></span>
           <el-button v-if="!widget.options.disabled" type="text" icon="el-icon-delete" @click="deleteDetail(colIdx)" />
         </div>
@@ -57,7 +57,7 @@
         />
       </template>
       <el-button v-if="!widget.options.disabled" :disabled="widget.options.disabled" type="text" class="add-detail-btn" icon="el-icon-plus" @click="addDetail">
-        <span>添加明细</span>
+        <span>{{ $tp('添加明细') }}</span>
       </el-button>
     </div>
   </container-item-wrapper>

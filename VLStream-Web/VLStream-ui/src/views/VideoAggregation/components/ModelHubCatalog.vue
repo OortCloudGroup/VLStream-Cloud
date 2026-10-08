@@ -1,46 +1,48 @@
 <template>
   <section class="hub-catalog">
     <div class="hub-toolbar">
-      <el-input v-model="keyword" placeholder="搜索 Model Hub 模型" clearable :prefix-icon="Search" @input="scheduleSearch" @keyup.enter="search" />
+      <el-input v-model="keyword" :placeholder="$tp('搜索 Model Hub 模型')" clearable :prefix-icon="Search" @input="scheduleSearch" @keyup.enter="search" />
     </div>
-    <el-select v-if="categories.length" v-model="category" clearable placeholder="全部分类" class="hub-categories" @change="search">
+    <el-select v-if="categories.length" v-model="category" clearable :placeholder="$tp('全部分类')" class="hub-categories" @change="search">
       <el-option v-for="item in categories" :key="item.category" :value="item.category" :label="`${item.category} (${item.count})`" />
     </el-select>
-    <p class="hub-note">浏览模型和文件目录无需登录，下载、下发时需登录 OortCloud。</p>
+    <p class="hub-note">{{ $tp('浏览模型和文件目录无需登录，下载、下发时需登录 OortCloud。') }}</p>
     <el-alert v-if="categoryError" :title="categoryError" type="warning" :closable="false" show-icon />
-    <div v-if="error" class="hub-error"><el-alert :title="error" type="error" :closable="false" show-icon /><el-button @click="load">重试</el-button></div>
+    <div v-if="error" class="hub-error"><el-alert :title="error" type="error" :closable="false" show-icon /><el-button @click="load">{{ $tp('重试') }}</el-button></div>
     <div v-loading="loading" class="hub-list">
-      <el-empty v-if="!loading && !error && !models.length" :description="keyword ? '没有匹配的 Model Hub 模型' : '暂无公开模型'" />
+      <el-empty v-if="!loading && !error && !models.length" :description="keyword ? $tp('没有匹配的 Model Hub 模型') : $tp('暂无公开模型')" />
       <div class="hub-grid">
         <article v-for="model in models" :key="model.uid" class="hub-card">
           <div class="hub-cover"><el-icon><Box /></el-icon><span>{{ model.framework || model.model_type || 'Model Hub' }}</span></div>
           <div class="hub-card-body">
             <h3>{{ model.name || model.alias }}</h3>
-            <p class="hub-meta">{{ model.category || '未分类' }}<span v-if="model.author_name"> · {{ model.author_name }}</span></p>
-            <p class="hub-description">{{ model.description || '暂无模型描述' }}</p>
+            <p class="hub-meta">{{ model.category || $tp('未分类') }}<span v-if="model.author_name"> · {{ model.author_name }}</span></p>
+            <p class="hub-description">{{ model.description || $tp('暂无模型描述') }}</p>
             <p class="hub-file-type">{{ fileType(model.file_path) }}<span v-if="model.file_size"> · {{ formatSize(model.file_size) }}</span></p>
-            <p v-if="!model.repo_owner || !model.repo_name" class="hub-meta">尚未建立模型文件空间</p>
-            <div class="hub-actions"><el-button type="primary" plain size="small" @click="openFiles(model)">查看文件</el-button>
-              <el-tooltip content="尚缺少设备兼容格式、类别文件及校验信息"><el-button size="small" disabled>下发</el-button></el-tooltip></div>
+            <p v-if="!model.repo_owner || !model.repo_name" class="hub-meta">{{ $tp('尚未建立模型文件空间') }}</p>
+            <div class="hub-actions"><el-button type="primary" plain size="small" @click="openFiles(model)">{{ $tp('查看文件') }}</el-button>
+              <el-tooltip :content="$tp('尚缺少设备兼容格式、类别文件及校验信息')"><el-button size="small" disabled>{{ $tp('下发') }}</el-button></el-tooltip></div>
           </div>
         </article>
       </div>
     </div>
     <el-pagination v-if="total > 12" v-model:current-page="page" :page-size="12" :total="total" :disabled="loading" layout="total, prev, pager, next" background @current-change="load" />
-    <el-dialog v-model="filesVisible" class="locale-dialog locale-dialog--wide" :title="`${activeModel?.name || '模型'} · 文件`" append-to-body :close-on-click-modal="false" :before-close="closeFiles">
-      <div class="file-toolbar"><el-button :disabled="!filePath || fileLoading || downloading" @click="parentDirectory">上一级</el-button><span>{{ filePath || '/' }}</span></div>
-      <div v-if="fileError" class="hub-error"><el-alert :title="fileError" type="error" :closable="false" /><el-button v-if="/登录|身份|401|4004/.test(fileError)" @click="login">重新登录</el-button></div>
-      <el-table v-loading="fileLoading" :data="files" scrollbar-always-on empty-text="当前目录没有文件">
+    <el-dialog v-model="filesVisible" class="locale-dialog locale-dialog--wide" :title="$tp('{value0} · 文件', { value0: activeModel?.name || $tp('模型') })" append-to-body :close-on-click-modal="false" :before-close="closeFiles">
+      <div class="file-toolbar"><el-button :disabled="!filePath || fileLoading || downloading" @click="parentDirectory">{{ $tp('上一级') }}</el-button><span>{{ filePath || '/' }}</span></div>
+      <div v-if="fileError" class="hub-error"><el-alert :title="fileError" type="error" :closable="false" /><el-button v-if="/登录|身份|401|4004/.test(fileError)" @click="login">{{ $tp('重新登录') }}</el-button></div>
+      <el-table v-loading="fileLoading" :data="files" scrollbar-always-on :empty-text="$tp('当前目录没有文件')">
         <el-table-column prop="name" :label="$tp('名称')" min-width="240" show-overflow-tooltip />
-        <el-table-column :label="$tp('大小')" width="110"><template #default="{ row }">{{ row.type === 'dir' ? '目录' : formatSize(row.size) }}</template></el-table-column>
-        <el-table-column :label="$tp('操作')" width="100"><template #default="{ row }"><el-button link type="primary" :disabled="downloading || fileLoading" @click="row.type === 'dir' ? loadFiles(row.path) : download(row)">{{ row.type === 'dir' ? '打开' : '下载' }}</el-button></template></el-table-column>
+        <el-table-column :label="$tp('大小')" width="110"><template #default="{ row }">{{ row.type === 'dir' ? $tp('目录') : formatSize(row.size) }}</template></el-table-column>
+        <el-table-column :label="$tp('操作')" width="100"><template #default="{ row }"><el-button link type="primary" :disabled="downloading || fileLoading" @click="row.type === 'dir' ? loadFiles(row.path) : download(row)">{{ row.type === 'dir' ? $tp('打开') : $tp('下载') }}</el-button></template></el-table-column>
       </el-table>
-      <template #footer><el-button :disabled="downloading" @click="filesVisible = false">关闭</el-button></template>
+      <template #footer><el-button :disabled="downloading" @click="filesVisible = false">{{ $tp('关闭') }}</el-button></template>
     </el-dialog>
   </section>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Box, Search } from '@element-plus/icons-vue'
@@ -59,8 +61,8 @@ let sequence = 0, fileSequence = 0, timer
 const formatSize = size => !size ? '-' : size < 1048576 ? `${(size / 1024).toFixed(1)} KB` : `${(size / 1048576).toFixed(1)} MB`
 function fileType(path) {
   const ext = String(path || '').split('?')[0].split('.').pop()?.toLowerCase()
-  if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext)) return '图片文件，不能部署到设备'
-  return ext && ext.length < 12 ? `${ext.toUpperCase()} 文件` : '文件类型待确认'
+  if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext)) return uiText('图片文件，不能部署到设备')
+  return ext && ext.length < 12 ? uiText('{value0} 文件', { value0: ext.toUpperCase() }) : uiText('文件类型待确认')
 }
 function login() {
   if (isMultiTenantMode()) redirectToPlatformLogin()
@@ -112,7 +114,7 @@ async function download(file) {
     const url = URL.createObjectURL(blob), a = document.createElement('a')
     a.href = url; a.download = String(file.name || 'model-file.bin').replace(/[\\/:*?"<>|]/g, '_'); a.click()
     setTimeout(() => URL.revokeObjectURL(url), 60000)
-    ElMessage.success('文件已下载')
+    ElMessage.success(uiText('文件已下载'))
   } catch (e) { fileError.value = e.message || '下载失败，请重试' }
   finally { downloading.value = false; emit('busy', false) }
 }

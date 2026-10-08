@@ -18,10 +18,10 @@
     <div class="infoBoxOut" />
     <div class="content_dis">
       <el-tabs v-model="activeName" class="tenanat-tabs" @tabClick="tabsFn">
-        <el-tab-pane label="处置记录" name="record" />
-        <el-tab-pane label="流程图" name="flow" />
-        <el-tab-pane label="基本信息" name="form" />
-        <el-tab-pane label="权限" name="auth" />
+        <el-tab-pane :label="$tp('处置记录')" name="record" />
+        <el-tab-pane :label="$tp('流程图')" name="flow" />
+        <el-tab-pane :label="$tp('基本信息')" name="form" />
+        <el-tab-pane :label="$tp('权限')" name="auth" />
       </el-tabs>
       <el-row>
         <el-col v-if="activeName==='record'">
@@ -180,7 +180,7 @@
                         :now-val="80"
                       />
                       <div v-else class="empty_flow">
-                        <span>流程图加载失败</span>
+                        <span>{{ $tp('流程图加载失败') }}</span>
                       </div>
                     </el-col>
                   </el-card>
@@ -204,15 +204,13 @@
                                   </p>
                                   <div class="flexRowAC">
                                     {{ item['activityName'] }}
-                                    <span v-if="item['activityType'] === 'userTask'">
-                                      （候选办理:{{ item.candidate || '-' }}）
+                                    <span v-if="item['activityType'] === 'userTask'"> {{ $tp('（候选办理:') }}{{ item.candidate || '-' }}）
                                     </span>
                                   </div>
                                 </div>
                               </div>
                               <div class="avatarTime flexRowAC">
-                                <div>{{ item['createTime'] }}</div>
-                                耗时{{ item.duration || '-' }}
+                                <div>{{ item['createTime'] }}</div> {{ $tp('耗时') }}{{ item.duration || '-' }}
                               </div>
                             </div>
                             <!-- node -->
@@ -233,13 +231,12 @@
                               </div>
                             </div>
                             <el-card v-if="item['activityType'] === 'endEvent'" class="box-card" shadow="hover">
-                              {{ item['createTime'] }} 结束流程
-                            </el-card>
+                              {{ item['createTime'] }} {{ $tp('结束流程') }} </el-card>
                           </el-timeline-item>
                         </el-timeline>
                       </div>
                       <div v-else class="empty_flow">
-                        <span>暂无数据</span>
+                        <span>{{ $tp('暂无数据') }}</span>
                       </div>
                     </el-col>
                   </el-card>
@@ -253,6 +250,8 @@
   </div>
 </template>
 <script setup lang="ts">
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, watch, nextTick } from 'vue'
 import ID2HeadPic from '@/components/ID2HeadPic.vue'
 import { detailProcess } from '@/api/processui'
@@ -278,19 +277,19 @@ const currentView = ref('list')//
 const commentType = val => {
   switch (val) {
     case '1':
-      return '通过'
+      return uiText('通过')
     case '2':
-      return '退回'
+      return uiText('退回')
     case '3':
-      return '驳回'
+      return uiText('驳回')
     case '4':
-      return '委派'
+      return uiText('委派')
     case '5':
-      return '转办'
+      return uiText('转办')
     case '6':
-      return '终止'
+      return uiText('终止')
     case '7':
-      return '撤回'
+      return uiText('撤回')
   }
 }
 

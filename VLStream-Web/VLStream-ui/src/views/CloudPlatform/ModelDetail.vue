@@ -8,88 +8,76 @@
 <template>
   <div class="model-detail" v-loading="loading">
     <div class="detail-breadcrumb">
-      <span class="crumb-link" @click="$emit('back')">服务目录</span>
+      <span class="crumb-link" @click="$emit('back')">{{ $tp('服务目录') }}</span>
       <span class="crumb-sep">></span>
-      <span class="crumb-current">模型详情</span>
+      <span class="crumb-current">{{ $tp('模型详情') }}</span>
     </div>
 
     <template v-if="detail">
-      <h1 class="detail-title">{{ detail.name || detail.alias || '未命名模型' }}</h1>
-      <div class="detail-alias">模型别名：{{ detail.alias || '-' }}</div>
-      <div class="detail-desc">{{ detail.description || '暂无描述' }}</div>
+      <h1 class="detail-title">{{ detail.name || detail.alias || $tp('未命名模型') }}</h1>
+      <div class="detail-alias">{{ $tp('模型别名：') }}{{ detail.alias || '-' }}</div>
+      <div class="detail-desc">{{ detail.description || $tp('暂无描述') }}</div>
 
       <el-descriptions :column="2" class="detail-descriptions">
         <el-descriptions-item>
           <template #label>
             <span class="info-label">
-              <el-icon><Share /></el-icon>
-              模型类型
-            </span>
+              <el-icon><Share /></el-icon> {{ $tp('模型类型') }} </span>
           </template>
           {{ detail.model_type || '-' }}
         </el-descriptions-item>
         <el-descriptions-item>
           <template #label>
             <span class="info-label">
-              <el-icon><Paperclip /></el-icon>
-              模型文件
-            </span>
+              <el-icon><Paperclip /></el-icon> {{ $tp('模型文件') }} </span>
           </template>
           {{ fileName }}
         </el-descriptions-item>
         <el-descriptions-item>
           <template #label>
             <span class="info-label">
-              <el-icon><Share /></el-icon>
-              状态
-            </span>
+              <el-icon><Share /></el-icon> {{ $tp('状态') }} </span>
           </template>
           {{ statusLabel }}
         </el-descriptions-item>
         <el-descriptions-item>
           <template #label>
             <span class="info-label">
-              <el-icon><Clock /></el-icon>
-              创建时间
-            </span>
+              <el-icon><Clock /></el-icon> {{ $tp('创建时间') }} </span>
           </template>
           {{ detail.created_at || '-' }}
         </el-descriptions-item>
         <el-descriptions-item>
           <template #label>
             <span class="info-label">
-              <el-icon><Grid /></el-icon>
-              审核时间
-            </span>
+              <el-icon><Grid /></el-icon> {{ $tp('审核时间') }} </span>
           </template>
           {{ approveTimeText }}
         </el-descriptions-item>
         <el-descriptions-item>
           <template #label>
             <span class="info-label">
-              <el-icon><Clock /></el-icon>
-              更新时间
-            </span>
+              <el-icon><Clock /></el-icon> {{ $tp('更新时间') }} </span>
           </template>
           {{ detail.updated_at || '-' }}
         </el-descriptions-item>
         <el-descriptions-item :span="2">
           <template #label>
             <span class="info-label">
-              <el-icon><ChatDotRound /></el-icon>
-              审核意见
-            </span>
+              <el-icon><ChatDotRound /></el-icon> {{ $tp('审核意见') }} </span>
           </template>
           {{ detail.approver_opinion || '-' }}
         </el-descriptions-item>
       </el-descriptions>
     </template>
 
-    <el-empty v-else-if="!loading" description="未找到模型详情" />
+    <el-empty v-else-if="!loading" :description="$tp('未找到模型详情')" />
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ChatDotRound, Clock, Grid, Paperclip, Share } from '@element-plus/icons-vue'
@@ -148,12 +136,12 @@ const fetchDetail = async () => {
       detail.value = res.data
     } else {
       detail.value = null
-      ElMessage.error(res?.msg || '获取模型详情失败')
+      ElMessage.error(res?.msg || uiText('获取模型详情失败'))
     }
   } catch (error) {
     console.error('getAiModelDetail failed:', error)
     detail.value = null
-    ElMessage.error(error?.response?.data?.msg || error?.message || '获取模型详情失败')
+    ElMessage.error(error?.response?.data?.msg || error?.message || uiText('获取模型详情失败'))
   } finally {
     loading.value = false
   }

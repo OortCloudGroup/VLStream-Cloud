@@ -7,13 +7,11 @@
 
 <template>
   <div>
-    <el-dialog v-model="dialogVisible" class="diaOutSet locale-dialog locale-dialog--medium" title="任务分配" top="5vh" :before-close="handleClose" destroy-on-close>
+    <el-dialog v-model="dialogVisible" class="diaOutSet locale-dialog locale-dialog--medium" :title="$tp('任务分配')" top="5vh" :before-close="handleClose" destroy-on-close>
       <div class="details_container">
-        <div class="basicTitle codeActBox flexRowAC">
-          基本属性
-          <div class="line" />
+        <div class="basicTitle codeActBox flexRowAC"> {{ $tp('基本属性') }} <div class="line" />
           <div class="lineT flexRowAC" @click="codeAct=!codeAct">
-            {{ codeAct === true ? '收起' : '展开' }}
+            {{ codeAct === true ? $tp('收起') : $tp('展开') }}
             <oort-svg-icon v-if="codeAct" class="elmenuIconImg" name="shrink" width="14" height="14" color="#999" />
             <oort-svg-icon v-else class="elmenuIconImg" name="open" width="14" height="14" />
           </div>
@@ -21,8 +19,8 @@
         <template v-if="codeAct">
           <div class="detailsBox">
             <div class="details_row_box">
-              <img src="@/assets/img/maintenance/task.png" alt="巡查详情" />
-              <div>事件名称</div>
+              <img src="@/assets/img/maintenance/task.png" :alt="$tp('巡查详情')" />
+              <div>{{ $tp('事件名称') }}</div>
             </div>
             <div class="d_r_content">
               <span>{{ currentItem.name }}</span>
@@ -33,8 +31,8 @@
           </div>
           <div class="detailsBox">
             <div class="details_row_box">
-              <img src="@/assets/img/maintenance/popup.png" alt="巡查详情" />
-              <div>事件描述</div>
+              <img src="@/assets/img/maintenance/popup.png" :alt="$tp('巡查详情')" />
+              <div>{{ $tp('事件描述') }}</div>
             </div>
             <div class="d_r_content">
               {{ currentItem.describe }}
@@ -42,8 +40,8 @@
           </div>
           <div class="detailsBox">
             <div class="details_row_box">
-              <img src="@/assets/img/maintenance/address.png" alt="巡查详情" />
-              <div>事件位置</div>
+              <img src="@/assets/img/maintenance/address.png" :alt="$tp('巡查详情')" />
+              <div>{{ $tp('事件位置') }}</div>
             </div>
             <div class="d_r_content">
               {{ currentItem.point.address }}
@@ -51,8 +49,8 @@
           </div>
           <div class="detailsBox">
             <div class="details_row_box">
-              <img src="@/assets/img/maintenance/img.png" alt="养护详情" />
-              <div>拍传</div>
+              <img src="@/assets/img/maintenance/img.png" :alt="$tp('养护详情')" />
+              <div>{{ $tp('拍传') }}</div>
             </div>
             <div class="d_r_content">
               <el-image
@@ -65,13 +63,13 @@
                 fit="cover"
                 :preview-teleported="true"
               />
-              <span v-if="currentItem.pics.length === 0">无</span>
+              <span v-if="currentItem.pics.length === 0">{{ $tp('无') }}</span>
             </div>
           </div>
           <div v-if="currentItem.uuids && currentItem.uuids.length > 0" class="detailsBox">
             <div class="details_row_box">
-              <img src="@/assets/img/maintenance/staff.png" alt="巡查详情" />
-              <div>上报人员</div>
+              <img src="@/assets/img/maintenance/staff.png" :alt="$tp('巡查详情')" />
+              <div>{{ $tp('上报人员') }}</div>
             </div>
             <div class="details_row_content">
               <!-- <i-d2-head-pic id="1a3d2666-e0fe-459f-81da-c3c21ef3628c" style="width: 4rem;height: 4rem;margin: 0 0.25rem" />
@@ -93,8 +91,8 @@
           </div>
           <div class="detailsBox">
             <div class="details_row_box">
-              <img src="@/assets/img/maintenance/time.png" alt="巡查详情" />
-              <div>上报时间</div>
+              <img src="@/assets/img/maintenance/time.png" :alt="$tp('巡查详情')" />
+              <div>{{ $tp('上报时间') }}</div>
             </div>
             <div class="date-text">
               {{ currentItem.created_at }}
@@ -103,11 +101,9 @@
         </template>
       </div>
       <div class="details_container">
-        <div class="basicTitle codeActBox flexRowAC">
-          分配人员
-          <div class="line" />
+        <div class="basicTitle codeActBox flexRowAC"> {{ $tp('分配人员') }} <div class="line" />
           <div class="lineT flexRowAC" @click="codeAct_1=!codeAct_1">
-            {{ codeAct_1 === true ? '收起' : '展开' }}
+            {{ codeAct_1 === true ? $tp('收起') : $tp('展开') }}
             <oort-svg-icon v-if="codeAct_1" class="elmenuIconImg" name="shrink" width="14" height="14" color="#999" />
             <oort-svg-icon v-else class="elmenuIconImg" name="open" width="14" height="14" />
           </div>
@@ -120,14 +116,14 @@
               :rules="formRules"
               label-width="auto"
             >
-              <el-form-item label="执行人员" prop="userName">
+              <el-form-item :label="$tp('执行人员')" prop="userName">
                 <div class="staff-input-wrapper" @click="openStartDeptSelect(1)">
-                  <el-input v-model="formData.userName" placeholder="请选择执行人员" />
-                  <img :src="staffIcon" class="staff-icon" alt="选择人员" />
+                  <el-input v-model="formData.userName" :placeholder="$tp('请选择执行人员')" />
+                  <img :src="staffIcon" class="staff-icon" :alt="$tp('选择人员')" />
                 </div>
               </el-form-item>
-              <el-form-item label="执行人单位" prop="dept_name">
-                <el-input v-model="formData.dept_name" placeholder="请选择执行人单位" clearable @click="openStartDeptSelect(2)" />
+              <el-form-item :label="$tp('执行人单位')" prop="dept_name">
+                <el-input v-model="formData.dept_name" :placeholder="$tp('请选择执行人单位')" clearable @click="openStartDeptSelect(2)" />
               </el-form-item>
 
               <!-- <el-form-item label="车辆" prop="carName">
@@ -137,13 +133,13 @@
               </div>
             </el-form-item> -->
               <!--  -->
-              <el-form-item label="描述">
+              <el-form-item :label="$tp('描述')">
                 <div style="width: 100%;">
                   <el-input
                     v-model="formData.describe"
                     type="textarea"
                     :rows="5"
-                    placeholder="请输入描述"
+                    :placeholder="$tp('请输入描述')"
                     maxlength="200"
                     show-word-limit
                   />
@@ -152,7 +148,7 @@
                     :number="256"
                     mod="描述"
                     :keyword="formData.describe"
-                    keyword-empty-tips="请先输入描述单词"
+                    :keyword-empty-tips="$tp('请先输入描述单词')"
                   />
                 </div>
                 <CommonExpressions :content="formData.describe" @selectContent="selectContent" />
@@ -161,15 +157,11 @@
           </div>
         </template>
         <div class="d_h_maintainBtns">
-          <el-button @click="handleCancel" class="common_btn">
-            取消
-          </el-button>
-          <el-button type="primary" :disabled="formLoading" @click="submitForm" class="common_btn">
-            确定
-          </el-button>
+          <el-button @click="handleCancel" class="common_btn"> {{ $tp('取消') }} </el-button>
+          <el-button type="primary" :disabled="formLoading" @click="submitForm" class="common_btn"> {{ $tp('确定') }} </el-button>
         </div>
       </div>
-      <el-dialog v-model="chooseDeptVis" class="locale-dialog locale-dialog--wide" title="选择执行人员">
+      <el-dialog v-model="chooseDeptVis" class="locale-dialog locale-dialog--wide" :title="$tp('选择执行人员')">
         <address-seting-dialog
           :active-tab="type==1?1:3"
           :mode="type"
@@ -184,6 +176,8 @@
 </template>
 
 <script setup lang="ts">
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, computed } from 'vue'
 import aiIconRemark from '@/components/aiIconRemark.vue'
 import AddressSetingDialog from '@/components/personHome/addressSetingDialog.vue'
@@ -254,12 +248,12 @@ const submitForm = async() => {
     formData.value.id = props.currentItem.id
     const res = await allocate(formData.value)
     if (res.code === 200) {
-      ElMessage.success('提交成功')
+      ElMessage.success(uiText('提交成功'))
       dialogVisible.value = false
       emit('refresh')
     }
   } catch (error) {
-    ElMessage.error('提交失败')
+    ElMessage.error(uiText('提交失败'))
   } finally {
     formLoading.value = false
   }

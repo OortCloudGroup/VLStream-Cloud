@@ -14,30 +14,22 @@
           class="category-tab"
           :class="{ active: activeCategory === 'all' }"
           @click="setActiveCategory('all')"
-        >
-          全部
-        </div>
+        > {{ $tp('全部') }} </div>
         <div
           class="category-tab"
           :class="{ active: activeCategory === 'person' }"
           @click="setActiveCategory('person')"
-        >
-          人员检测类
-        </div>
+        > {{ $tp('人员检测类') }} </div>
         <div
           class="category-tab"
           :class="{ active: activeCategory === 'video' }"
           @click="setActiveCategory('video')"
-        >
-          视频分析类
-        </div>
+        > {{ $tp('视频分析类') }} </div>
         <div
           class="category-tab"
           :class="{ active: activeCategory === 'face' }"
           @click="setActiveCategory('face')"
-        >
-          人脸识别类
-        </div>
+        > {{ $tp('人脸识别类') }} </div>
       </div>
 
       <!-- main need to -->
@@ -69,7 +61,7 @@
         <!-- already model -->
         <div class="selected-section">
           <div class="selected-header">
-            <h3>已选取模型</h3>
+            <h3>{{ $tp('已选取模型') }}</h3>
             <div class="selected-count">{{ selectedModels.length }}</div>
           </div>
 
@@ -91,7 +83,7 @@
         </div>
 
             <div v-if="selectedModels.length === 0" class="empty-selected">
-              <p>暂无选择模型</p>
+              <p>{{ $tp('暂无选择模型') }}</p>
             </div>
           </div>
         </div>
@@ -99,20 +91,20 @@
 
       <!-- operationbutton -->
         <div class="footer-actions">
-          <el-button @click="handleCancel" class="common_btn">取消</el-button>
+          <el-button @click="handleCancel" class="common_btn">{{ $tp('取消') }}</el-button>
           <el-button
             type="primary"
           @click="handleConfirm"
             :disabled="selectedModels.length === 0"
-           class="common_btn">
-          确定
-          </el-button>
+           class="common_btn"> {{ $tp('确定') }} </el-button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, computed, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Check, Close } from '@element-plus/icons-vue'
@@ -148,7 +140,7 @@ const loadModels = async () => {
     }))
   } catch (error) {
     modelList.value = []
-    ElMessage.error(`加载模型列表失败：${error.message || error}`)
+    ElMessage.error(uiText('加载模型列表失败：{value0}', { value0: error.message || error }))
   }
 }
 
@@ -179,20 +171,20 @@ const toggleModelSelection = (model) => {
   model.selected = !model.selected
 
   if (model.selected) {
-    ElMessage.success(`已选择 "${model.name}"`)
+    ElMessage.success(uiText('已选择 "{value0}"', { value0: model.name }))
   } else {
-    ElMessage.info(`已取消选择 "${model.name}"`)
+    ElMessage.info(uiText('已取消选择 "{value0}"', { value0: model.name }))
   }
 }
 
 const removeModelSelection = (model) => {
   model.selected = false
-  ElMessage.info(`已移除 "${model.name}"`)
+  ElMessage.info(uiText('已移除 "{value0}"', { value0: model.name }))
 }
 
 const handleConfirm = () => {
   if (selectedModels.value.length === 0) {
-    ElMessage.warning('请至少选择一个模型')
+    ElMessage.warning(uiText('请至少选择一个模型'))
     return
   }
 
@@ -204,7 +196,7 @@ const handleConfirm = () => {
   }))
 
   emit('save', modelData)
-  ElMessage.success(`已选择 ${selectedModels.value.length} 个模型`)
+  ElMessage.success(uiText('已选择 {value0} 个模型', { value0: selectedModels.value.length }))
 }
 
 const handleCancel = () => {

@@ -6,7 +6,7 @@
 -->
 
 <template>
-  <el-form-item label="字体粗细">
+  <el-form-item :label="$tp('字体粗细')">
     <el-select v-model="optionModel.fontWeight">
       <el-option
         v-for="item in fontWeightSize"

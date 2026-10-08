@@ -13,14 +13,13 @@
       <div class="depNameBox flexRowAC">
         <div class="exportBtnBox flexRowAC">
           <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd" v-hasPermi="['wvp:proxy:add']">
-            <el-icon class="BtnImg"><Plus /></el-icon>新增
-          </button>
+            <el-icon class="BtnImg"><Plus /></el-icon>{{ $tp('新增') }} </button>
         </div>
       </div>
       <div class="searchHeight_out flexRowAC">
         <search-height-box
           keyword="query"
-          placeholder="请输入关键字"
+          :placeholder="$tp('请输入关键字')"
           :data="searchData"
           @handle="searchResetFn"
         />
@@ -47,7 +46,7 @@
       <el-table-column :label="$tp('代理方式')" align="center">
         <template #default="scope">
           <div slot="reference" class="name-wrapper">
-            {{ scope.row.type === "default" ? "默认" : "FFMPEG代理" }}
+            {{ scope.row.type === "default" ? $tp('默认') : $tp('FFMPEG代理') }}
           </div>
         </template>
       </el-table-column>
@@ -56,16 +55,16 @@
       <el-table-column :label="$tp('拉流状态')" align="center">
         <template #default="scope">
           <div slot="reference" class="name-wrapper">
-            <el-tag v-if="scope.row.pulling">正在拉流</el-tag>
-            <el-tag type="info" v-if="!scope.row.pulling">尚未拉流</el-tag>
+            <el-tag v-if="scope.row.pulling">{{ $tp('正在拉流') }}</el-tag>
+            <el-tag type="info" v-if="!scope.row.pulling">{{ $tp('尚未拉流') }}</el-tag>
           </div>
         </template>
       </el-table-column>
       <el-table-column :label="$tp('启用')" align="center">
         <template #default="scope">
           <div slot="reference" class="name-wrapper">
-            <el-tag v-if="scope.row.enable">已启用</el-tag>
-            <el-tag type="info" v-if="!scope.row.enable">未启用</el-tag>
+            <el-tag v-if="scope.row.enable">{{ $tp('已启用') }}</el-tag>
+            <el-tag type="info" v-if="!scope.row.enable">{{ $tp('未启用') }}</el-tag>
           </div>
         </template>
       </el-table-column>
@@ -80,7 +79,7 @@
               v-hasPermi="['wvp:proxy:play']"
             >
               <el-icon><View /></el-icon>
-              <span>播放</span>
+              <span>{{ $tp('播放') }}</span>
             </div>
             <div
               v-if="scope.row.pulling"
@@ -88,30 +87,22 @@
               @click.stop="onStopPlay(scope.row)"
               v-hasPermi="['wvp:proxy:stop']"
             >
-              <span>停止</span>
+              <span>{{ $tp('停止') }}</span>
             </div>
             <el-dropdown
               @command="(command)=>{moreClick(command, scope.row)}"
               v-if="checkPermi(['wvp:channel:edit', 'wvp:proxy:edit', 'wvp:proxy:delete', 'wvp:record:list'])"
             >
               <div class="new_table_svg_group" @click.stop>
-                <span>更多</span>
+                <span>{{ $tp('更多') }}</span>
                 <el-icon><ArrowDown /></el-icon>
               </div>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="handleChannelConfiguration" v-if="checkPermi(['wvp:channel:edit'])">
-                    通道配置
-                  </el-dropdown-item>
-                  <el-dropdown-item command="handleEdit" v-if="checkPermi(['wvp:proxy:edit'])">
-                    编辑
-                  </el-dropdown-item>
-                  <el-dropdown-item command="handleDelete" style="color: #f56c6c" v-if="checkPermi(['wvp:proxy:delete'])">
-                    删除
-                  </el-dropdown-item>
-                  <el-dropdown-item command="queryCloudRecords" v-if="checkPermi(['wvp:record:list'])">
-                    云端录像
-                  </el-dropdown-item>
+                  <el-dropdown-item command="handleChannelConfiguration" v-if="checkPermi(['wvp:channel:edit'])"> {{ $tp('通道配置') }} </el-dropdown-item>
+                  <el-dropdown-item command="handleEdit" v-if="checkPermi(['wvp:proxy:edit'])"> {{ $tp('编辑') }} </el-dropdown-item>
+                  <el-dropdown-item command="handleDelete" style="color: #f56c6c" v-if="checkPermi(['wvp:proxy:delete'])"> {{ $tp('删除') }} </el-dropdown-item>
+                  <el-dropdown-item command="queryCloudRecords" v-if="checkPermi(['wvp:record:list'])"> {{ $tp('云端录像') }} </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -130,35 +121,35 @@
 
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
-        <el-form-item label="类型" prop="type">
+        <el-form-item :label="$tp('类型')" prop="type">
           <el-select
               v-model="form.type"
-              placeholder="请选择代理类型"
+              :placeholder="$tp('请选择代理类型')"
           >
-            <el-option key="默认" label="默认" value="default"></el-option>
+            <el-option key="默认" :label="$tp('默认')" value="default"></el-option>
             <el-option key="FFmpeg" label="FFmpeg" value="ffmpeg"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="应用名" prop="app">
-          <el-input v-model="form.app" clearable placeholder="请选择应用名"></el-input>
+        <el-form-item :label="$tp('应用名')" prop="app">
+          <el-input v-model="form.app" clearable :placeholder="$tp('请选择应用名')"></el-input>
         </el-form-item>
-        <el-form-item label="流ID" prop="stream">
-          <el-input v-model="form.stream" clearable placeholder="请选择流ID"></el-input>
+        <el-form-item :label="$tp('流ID')" prop="stream">
+          <el-input v-model="form.stream" clearable :placeholder="$tp('请选择流ID')"></el-input>
         </el-form-item>
-        <el-form-item label="拉流地址" prop="url">
-          <el-input v-model="form.srcUrl" clearable placeholder="请选择拉流地址"></el-input>
+        <el-form-item :label="$tp('拉流地址')" prop="url">
+          <el-input v-model="form.srcUrl" clearable :placeholder="$tp('请选择拉流地址')"></el-input>
         </el-form-item>
-        <el-form-item label="超时时间(秒)" prop="timeoutMs">
-          <el-input v-model="form.timeout" clearable placeholder="请选择超时时间(秒)"></el-input>
+        <el-form-item :label="$tp('超时时间(秒)')" prop="timeoutMs">
+          <el-input v-model="form.timeout" clearable :placeholder="$tp('请选择超时时间(秒)')"></el-input>
         </el-form-item>
-        <el-form-item label="节点选择" prop="rtpType">
+        <el-form-item :label="$tp('节点选择')" prop="rtpType">
           <el-select
               v-model="form.relatesMediaServerId"
               @change="mediaServerIdChange"
               style="width: 100%"
-              placeholder="请选择拉流节点"
+              :placeholder="$tp('请选择拉流节点')"
           >
-            <el-option key="auto" label="自动选择" value="auto"></el-option>
+            <el-option key="auto" :label="$tp('自动选择')" value="auto"></el-option>
             <el-option
                 v-for="item in mediaServerList"
                 :key="item.id"
@@ -167,11 +158,11 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="FFmpeg命令模板" prop="ffmpegCmdKey" v-if="form.type=='ffmpeg'">
+        <el-form-item :label="$tp('FFmpeg命令模板')" prop="ffmpegCmdKey" v-if="form.type=='ffmpeg'">
           <el-select
               v-model="form.ffmpegCmdKey"
               style="width: 100%"
-              placeholder="请选择FFmpeg命令模板"
+              :placeholder="$tp('请选择FFmpeg命令模板')"
           >
             <el-option
                 v-for="item in Object.keys(ffmpegCmdList)"
@@ -181,56 +172,56 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="拉流方式(RTSP)" prop="rtspType">
+        <el-form-item :label="$tp('拉流方式(RTSP)')" prop="rtspType">
           <el-select
               v-model="form.rtspType"
               style="width: 100%"
-              placeholder="请选择拉流方式"
+              :placeholder="$tp('请选择拉流方式')"
           >
             <el-option label="TCP" value="0"></el-option>
             <el-option label="UDP" value="1"></el-option>
-            <el-option label="组播" value="2"></el-option>
+            <el-option :label="$tp('组播')" value="2"></el-option>
           </el-select>
         </el-form-item>
 
-        <el-form-item label="无人观看" prop="noneReader">
+        <el-form-item :label="$tp('无人观看')" prop="noneReader">
           <el-radio-group v-model="form.noneReader">
-            <el-radio :label="0">不做处理</el-radio>
-            <el-radio :label="1">停用</el-radio>
-            <el-radio :label="2">移除</el-radio>
+            <el-radio :label="0">{{ $tp('不做处理') }}</el-radio>
+            <el-radio :label="1">{{ $tp('停用') }}</el-radio>
+            <el-radio :label="2">{{ $tp('移除') }}</el-radio>
           </el-radio-group>
 
         </el-form-item>
-        <el-form-item label="其他选项">
+        <el-form-item :label="$tp('其他选项')">
           <div style="float: left;">
-            <el-checkbox label="启用" v-model="form.enable"></el-checkbox>
-            <el-checkbox label="开启音频" v-model="form.enableAudio"></el-checkbox>
-            <el-checkbox label="录制" v-model="form.enableMp4"></el-checkbox>
+            <el-checkbox value="启用" :label="$tp('启用')" v-model="form.enable"></el-checkbox>
+            <el-checkbox value="开启音频" :label="$tp('开启音频')" v-model="form.enableAudio"></el-checkbox>
+            <el-checkbox value="录制" :label="$tp('录制')" v-model="form.enableMp4"></el-checkbox>
           </div>
 
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button type="primary" @click="submitForm">{{ $tp('确 定') }}</el-button>
+          <el-button @click="cancel">{{ $tp('取 消') }}</el-button>
         </div>
       </template>
     </el-dialog>
 
-    <el-dialog title="编辑通道" v-model="openChannel" width="1000px" append-to-body>
+    <el-dialog :title="$tp('编辑通道')" v-model="openChannel" width="1000px" append-to-body>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
         <el-row>
           <el-col :span="12">
-            <el-form-item label="名称">
-              <el-input v-model="form.gbName" placeholder="请输入通道名称"></el-input>
+            <el-form-item :label="$tp('名称')">
+              <el-input v-model="form.gbName" :placeholder="$tp('请输入通道名称')"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="编码">
-              <el-input v-model="form.gbDeviceId" placeholder="请输入通道编码">
+            <el-form-item :label="$tp('编码')">
+              <el-input v-model="form.gbDeviceId" :placeholder="$tp('请输入通道编码')">
                 <template v-slot:append>
-                  <el-button @click="buildDeviceIdCode(form.gbDeviceId)">生成</el-button>
+                  <el-button @click="buildDeviceIdCode(form.gbDeviceId)">{{ $tp('生成') }}</el-button>
                 </template>
               </el-input>
             </el-form-item>
@@ -239,48 +230,48 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="设备厂商">
-              <el-input v-model="form.gbManufacturer" placeholder="请输入设备厂商"></el-input>
+            <el-form-item :label="$tp('设备厂商')">
+              <el-input v-model="form.gbManufacturer" :placeholder="$tp('请输入设备厂商')"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="设备型号">
-              <el-input v-model="form.gbModel" placeholder="请输入设备型号"></el-input>
+            <el-form-item :label="$tp('设备型号')">
+              <el-input v-model="form.gbModel" :placeholder="$tp('请输入设备型号')"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="行政区域">
-              <el-input v-model="form.gbCivilCode" placeholder="请输入行政区域">
+            <el-form-item :label="$tp('行政区域')">
+              <el-input v-model="form.gbCivilCode" :placeholder="$tp('请输入行政区域')">
                 <template v-slot:append>
-                  <el-button @click="chooseCivilCodeFun()">选择</el-button>
+                  <el-button @click="chooseCivilCodeFun()">{{ $tp('选择') }}</el-button>
                 </template>
               </el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="安装地址">
-              <el-input v-model="form.gbAddress" placeholder="请输入安装地址"></el-input>
+            <el-form-item :label="$tp('安装地址')">
+              <el-input v-model="form.gbAddress" :placeholder="$tp('请输入安装地址')"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="子设备">
-              <el-select v-model="form.gbParental" style="width: 100%" placeholder="请选择是否有子设备">
-                <el-option label="有" :value="1"></el-option>
-                <el-option label="无" :value="0"></el-option>
+            <el-form-item :label="$tp('子设备')">
+              <el-select v-model="form.gbParental" style="width: 100%" :placeholder="$tp('请选择是否有子设备')">
+                <el-option :label="$tp('有')" :value="1"></el-option>
+                <el-option :label="$tp('无')" :value="0"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="父节点编码">
-              <el-input v-model="form.gbParentId" placeholder="请输入父节点编码或选择所属虚拟组织">
+            <el-form-item :label="$tp('父节点编码')">
+              <el-input v-model="form.gbParentId" :placeholder="$tp('请输入父节点编码或选择所属虚拟组织')">
                 <template v-slot:append>
-                  <el-button @click="chooseGroupFun()">选择</el-button>
+                  <el-button @click="chooseGroupFun()">{{ $tp('选择') }}</el-button>
                 </template>
               </el-input>
             </el-form-item>
@@ -289,71 +280,36 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="设备状态">
-              <el-select v-model="form.gbStatus" style="width: 100%" placeholder="请选择设备状态">
-                <el-option label="在线" value="ON"></el-option>
-                <el-option label="离线" value="OFF"></el-option>
+            <el-form-item :label="$tp('设备状态')">
+              <el-select v-model="form.gbStatus" style="width: 100%" :placeholder="$tp('请选择设备状态')">
+                <el-option :label="$tp('在线')" value="ON"></el-option>
+                <el-option :label="$tp('离线')" value="OFF"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="经度">
-              <el-input v-model="form.gbLongitude" placeholder="请输入经度"></el-input>
+            <el-form-item :label="$tp('经度')">
+              <el-input v-model="form.gbLongitude" :placeholder="$tp('请输入经度')"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="纬度">
-              <el-input v-model="form.gbLatitude" placeholder="请输入纬度"></el-input>
+            <el-form-item :label="$tp('纬度')">
+              <el-input v-model="form.gbLatitude" :placeholder="$tp('请输入纬度')"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="云台类型">
-              <el-select v-model="form.gbPtzType" style="width: 100%" placeholder="请选择云台类型">
-                <el-option label="球机" :value="1"></el-option>
-                <el-option label="半球" :value="2"></el-option>
-                <el-option label="固定枪机" :value="3"></el-option>
-                <el-option label="遥控枪机" :value="4"></el-option>
-                <el-option label="遥控半球" :value="5"></el-option>
-                <el-option label="多目设备的全景/拼接通道" :value="6"></el-option>
-                <el-option label="多目设备的分割通道" :value="7"></el-option>
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="警区">
-              <el-input v-model="form.gbBlock" placeholder="请输入警区"></el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="设备归属">
-              <el-input v-model="form.gbOwner" placeholder="请输入设备归属"></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="信令安全模式">
-              <el-select v-model="form.gbSafetyWay" style="width: 100%" placeholder="请选择信令安全模式">
-                <el-option label="不采用" :value="0"></el-option>
-                <el-option label="S/MIME签名" :value="2"></el-option>
-                <el-option label="S/MIME加密签名同时采用" :value="3"></el-option>
-                <el-option label="数字摘要" :value="4"></el-option>
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="注册方式">
-              <el-select v-model="form.gbRegisterWay" style="width: 100%" placeholder="请选择注册方式">
-                <el-option label="IETFRFC3261标准" :value="1"></el-option>
-                <el-option label="基于口令的双向认证" :value="2"></el-option>
-                <el-option label="基于数字证书的双向认证注册" :value="3"></el-option>
+            <el-form-item :label="$tp('云台类型')">
+              <el-select v-model="form.gbPtzType" style="width: 100%" :placeholder="$tp('请选择云台类型')">
+                <el-option :label="$tp('球机')" :value="1"></el-option>
+                <el-option :label="$tp('半球')" :value="2"></el-option>
+                <el-option :label="$tp('固定枪机')" :value="3"></el-option>
+                <el-option :label="$tp('遥控枪机')" :value="4"></el-option>
+                <el-option :label="$tp('遥控半球')" :value="5"></el-option>
+                <el-option :label="$tp('多目设备的全景/拼接通道')" :value="6"></el-option>
+                <el-option :label="$tp('多目设备的分割通道')" :value="7"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -361,15 +317,34 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="证书序列号">
-              <el-input type="number" v-model="form.gbCertNum" placeholder="请输入证书序列号"></el-input>
+            <el-form-item :label="$tp('警区')">
+              <el-input v-model="form.gbBlock" :placeholder="$tp('请输入警区')"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="证书有效标识">
-              <el-select v-model="form.gbCertifiable" style="width: 100%" placeholder="请选择证书有效标识">
-                <el-option label="有效" :value="1"></el-option>
-                <el-option label="无效" :value="0"></el-option>
+            <el-form-item :label="$tp('设备归属')">
+              <el-input v-model="form.gbOwner" :placeholder="$tp('请输入设备归属')"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row>
+          <el-col :span="12">
+            <el-form-item :label="$tp('信令安全模式')">
+              <el-select v-model="form.gbSafetyWay" style="width: 100%" :placeholder="$tp('请选择信令安全模式')">
+                <el-option :label="$tp('不采用')" :value="0"></el-option>
+                <el-option :label="$tp('S/MIME签名')" :value="2"></el-option>
+                <el-option :label="$tp('S/MIME加密签名同时采用')" :value="3"></el-option>
+                <el-option :label="$tp('数字摘要')" :value="4"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item :label="$tp('注册方式')">
+              <el-select v-model="form.gbRegisterWay" style="width: 100%" :placeholder="$tp('请选择注册方式')">
+                <el-option :label="$tp('IETFRFC3261标准')" :value="1"></el-option>
+                <el-option :label="$tp('基于口令的双向认证')" :value="2"></el-option>
+                <el-option :label="$tp('基于数字证书的双向认证注册')" :value="3"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -377,16 +352,32 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="无效原因码">
-              <el-input type="errCode" v-model="form.gbCertNum" placeholder="请输入无效原因码"></el-input>
+            <el-form-item :label="$tp('证书序列号')">
+              <el-input type="number" v-model="form.gbCertNum" :placeholder="$tp('请输入证书序列号')"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="证书终止有效期">
+            <el-form-item :label="$tp('证书有效标识')">
+              <el-select v-model="form.gbCertifiable" style="width: 100%" :placeholder="$tp('请选择证书有效标识')">
+                <el-option :label="$tp('有效')" :value="1"></el-option>
+                <el-option :label="$tp('无效')" :value="0"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row>
+          <el-col :span="12">
+            <el-form-item :label="$tp('无效原因码')">
+              <el-input type="errCode" v-model="form.gbCertNum" :placeholder="$tp('请输入无效原因码')"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item :label="$tp('证书终止有效期')">
               <el-date-picker
                   v-model="form.gbEndTime"
                   type="datetime"
-                  placeholder="选择日期时间"
+                  :placeholder="$tp('选择日期时间')"
                   style="width: 100%">
               </el-date-picker>
             </el-form-item>
@@ -395,72 +386,52 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="保密属性">
-              <el-select v-model="form.gbSecrecy" style="width: 100%" placeholder="请选择保密属性">
-                <el-option label="不涉密" :value="0"></el-option>
-                <el-option label="涉密" :value="1"></el-option>
+            <el-form-item :label="$tp('保密属性')">
+              <el-select v-model="form.gbSecrecy" style="width: 100%" :placeholder="$tp('请选择保密属性')">
+                <el-option :label="$tp('不涉密')" :value="0"></el-option>
+                <el-option :label="$tp('涉密')" :value="1"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="IP地址">
-              <el-input v-model="form.gbIpAddress" placeholder="请输入IP地址"></el-input>
+            <el-form-item :label="$tp('IP地址')">
+              <el-input v-model="form.gbIpAddress" :placeholder="$tp('请输入IP地址')"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="端口">
-              <el-input type="number" v-model="form.gbPort" placeholder="请输入端口"></el-input>
+            <el-form-item :label="$tp('端口')">
+              <el-input type="number" v-model="form.gbPort" :placeholder="$tp('请输入端口')"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="设备口令">
-              <el-input v-model="form.gbPassword" placeholder="请输入设备口令"></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="业务分组编号">
-              <el-input v-model="form.gbBusinessGroupId" placeholder="请输入业务分组编号"></el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="位置类型">
-              <el-select v-model="form.gbPositionType" style="width: 100%" placeholder="请选择位置类型">
-                <el-option label="省际检查站" :value="1"></el-option>
-                <el-option label="党政机关" :value="2"></el-option>
-                <el-option label="车站码头" :value="3"></el-option>
-                <el-option label="中心广场" :value="4"></el-option>
-                <el-option label="体育场馆" :value="5"></el-option>
-                <el-option label="商业中心" :value="6"></el-option>
-                <el-option label="宗教场所" :value="7"></el-option>
-                <el-option label="校园周边" :value="8"></el-option>
-                <el-option label="治安复杂区域" :value="9"></el-option>
-                <el-option label="交通干线" :value="10"></el-option>
-              </el-select>
+            <el-form-item :label="$tp('设备口令')">
+              <el-input v-model="form.gbPassword" :placeholder="$tp('请输入设备口令')"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="室外/室内">
-              <el-select v-model="form.gbRoomType" style="width: 100%" placeholder="请选择位置类型">
-                <el-option label="室外" :value="1"></el-option>
-                <el-option label="室内" :value="2"></el-option>
-              </el-select>
+            <el-form-item :label="$tp('业务分组编号')">
+              <el-input v-model="form.gbBusinessGroupId" :placeholder="$tp('请输入业务分组编号')"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="用途">
-              <el-select v-model="form.gbUseType" style="width: 100%" placeholder="请选择位置类型">
-                <el-option label="治安" :value="1"></el-option>
-                <el-option label="交通" :value="2"></el-option>
-                <el-option label="重点" :value="3"></el-option>
+            <el-form-item :label="$tp('位置类型')">
+              <el-select v-model="form.gbPositionType" style="width: 100%" :placeholder="$tp('请选择位置类型')">
+                <el-option :label="$tp('省际检查站')" :value="1"></el-option>
+                <el-option :label="$tp('党政机关')" :value="2"></el-option>
+                <el-option :label="$tp('车站码头')" :value="3"></el-option>
+                <el-option :label="$tp('中心广场')" :value="4"></el-option>
+                <el-option :label="$tp('体育场馆')" :value="5"></el-option>
+                <el-option :label="$tp('商业中心')" :value="6"></el-option>
+                <el-option :label="$tp('宗教场所')" :value="7"></el-option>
+                <el-option :label="$tp('校园周边')" :value="8"></el-option>
+                <el-option :label="$tp('治安复杂区域')" :value="9"></el-option>
+                <el-option :label="$tp('交通干线')" :value="10"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -468,27 +439,19 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="补光">
-              <el-select v-model="form.gbSupplyLightType" style="width: 100%" placeholder="请选择位置类型">
-                <el-option label="无补光" :value="1"></el-option>
-                <el-option label="红外补光" :value="2"></el-option>
-                <el-option label="白光补光" :value="3"></el-option>
-                <el-option label="激光补光" :value="4"></el-option>
-                <el-option label="其他" :value="9"></el-option>
+            <el-form-item :label="$tp('室外/室内')">
+              <el-select v-model="form.gbRoomType" style="width: 100%" :placeholder="$tp('请选择位置类型')">
+                <el-option :label="$tp('室外')" :value="1"></el-option>
+                <el-option :label="$tp('室内')" :value="2"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="监视方位">
-              <el-select v-model="form.gbDirectionType" style="width: 100%" placeholder="请选择位置类型">
-                <el-option label="东(西向东)" :value="1"></el-option>
-                <el-option label="西(东向西)" :value="2"></el-option>
-                <el-option label="南(北向南)" :value="3"></el-option>
-                <el-option label="北(南向北)" :value="4"></el-option>
-                <el-option label="东南(西北到东南)" :value="5"></el-option>
-                <el-option label="东北(西南到东北)" :value="6"></el-option>
-                <el-option label="西南(东北到西南)" :value="7"></el-option>
-                <el-option label="西北(东南到西北)" :value="8"></el-option>
+            <el-form-item :label="$tp('用途')">
+              <el-select v-model="form.gbUseType" style="width: 100%" :placeholder="$tp('请选择位置类型')">
+                <el-option :label="$tp('治安')" :value="1"></el-option>
+                <el-option :label="$tp('交通')" :value="2"></el-option>
+                <el-option :label="$tp('重点')" :value="3"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -496,18 +459,27 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="分辨率">
-              <el-input v-model="form.gbResolution" placeholder="请输入分辨率"></el-input>
+            <el-form-item :label="$tp('补光')">
+              <el-select v-model="form.gbSupplyLightType" style="width: 100%" :placeholder="$tp('请选择位置类型')">
+                <el-option :label="$tp('无补光')" :value="1"></el-option>
+                <el-option :label="$tp('红外补光')" :value="2"></el-option>
+                <el-option :label="$tp('白光补光')" :value="3"></el-option>
+                <el-option :label="$tp('激光补光')" :value="4"></el-option>
+                <el-option :label="$tp('其他')" :value="9"></el-option>
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="下载倍速">
-              <el-select v-model="form.gbDownloadSpeedArray" multiple style="width: 100%" placeholder="请选择位置类型">
-                <el-option label="1倍速" value="1"></el-option>
-                <el-option label="2倍速" value="2"></el-option>
-                <el-option label="4倍速" value="4"></el-option>
-                <el-option label="8倍速" value="8"></el-option>
-                <el-option label="16倍速" value="16"></el-option>
+            <el-form-item :label="$tp('监视方位')">
+              <el-select v-model="form.gbDirectionType" style="width: 100%" :placeholder="$tp('请选择位置类型')">
+                <el-option :label="$tp('东(西向东)')" :value="1"></el-option>
+                <el-option :label="$tp('西(东向西)')" :value="2"></el-option>
+                <el-option :label="$tp('南(北向南)')" :value="3"></el-option>
+                <el-option :label="$tp('北(南向北)')" :value="4"></el-option>
+                <el-option :label="$tp('东南(西北到东南)')" :value="5"></el-option>
+                <el-option :label="$tp('东北(西南到东北)')" :value="6"></el-option>
+                <el-option :label="$tp('西南(东北到西南)')" :value="7"></el-option>
+                <el-option :label="$tp('西北(东南到西北)')" :value="8"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -515,20 +487,39 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="空域编码能力">
-              <el-select v-model="form.gbSvcSpaceSupportMod" style="width: 100%" placeholder="请选择空域编码能力">
-                <el-option label="1级增强" value="1"></el-option>
-                <el-option label="2级增强" value="2"></el-option>
-                <el-option label="3级增强" value="3"></el-option>
+            <el-form-item :label="$tp('分辨率')">
+              <el-input v-model="form.gbResolution" :placeholder="$tp('请输入分辨率')"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item :label="$tp('下载倍速')">
+              <el-select v-model="form.gbDownloadSpeedArray" multiple style="width: 100%" :placeholder="$tp('请选择位置类型')">
+                <el-option :label="$tp('1倍速')" value="1"></el-option>
+                <el-option :label="$tp('2倍速')" value="2"></el-option>
+                <el-option :label="$tp('4倍速')" value="4"></el-option>
+                <el-option :label="$tp('8倍速')" value="8"></el-option>
+                <el-option :label="$tp('16倍速')" value="16"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row>
+          <el-col :span="12">
+            <el-form-item :label="$tp('空域编码能力')">
+              <el-select v-model="form.gbSvcSpaceSupportMod" style="width: 100%" :placeholder="$tp('请选择空域编码能力')">
+                <el-option :label="$tp('1级增强')" value="1"></el-option>
+                <el-option :label="$tp('2级增强')" value="2"></el-option>
+                <el-option :label="$tp('3级增强')" value="3"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="时域编码能力">
-              <el-select v-model="form.gbSvcTimeSupportMode" style="width: 100%" placeholder="请选择空域编码能力">
-                <el-option label="1级增强" value="1"></el-option>
-                <el-option label="2级增强" value="2"></el-option>
-                <el-option label="3级增强" value="3"></el-option>
+            <el-form-item :label="$tp('时域编码能力')">
+              <el-select v-model="form.gbSvcTimeSupportMode" style="width: 100%" :placeholder="$tp('请选择空域编码能力')">
+                <el-option :label="$tp('1级增强')" value="1"></el-option>
+                <el-option :label="$tp('2级增强')" value="2"></el-option>
+                <el-option :label="$tp('3级增强')" value="3"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -536,8 +527,8 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitFormChannel">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button type="primary" @click="submitFormChannel">{{ $tp('确 定') }}</el-button>
+          <el-button @click="cancel">{{ $tp('取 消') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -550,7 +541,7 @@
 
     <el-dialog :title="title" v-model="openView" width="1000px" append-to-body>
       <el-tabs v-model="activeName" type="card" :stretch="true">
-        <el-tab-pane label="flv播放" name="flv">
+        <el-tab-pane :label="$tp('flv播放')" name="flv">
           <el-row>
             <el-col :span="24">
               <div class="player" v-if="activeName === 'flv'">
@@ -573,9 +564,9 @@
       </el-tabs>
 
       <el-tabs v-model="tabActiveName" type="card" :stretch="true" style="margin-top: 10px;">
-        <el-tab-pane label="实时视频" name="media">
+        <el-tab-pane :label="$tp('实时视频')" name="media">
           <el-row :gutter="10">
-            <el-col :span="2"><span style="width: 80px; line-height: 40px; text-align: right;">播放地址：</span></el-col>
+            <el-col :span="2"><span style="width: 80px; line-height: 40px; text-align: right;">{{ $tp('播放地址：') }}</span></el-col>
             <el-col :span="18">
               <el-input v-model="streamInfoData.flv" :disabled="true">
                 <template #append>
@@ -587,7 +578,7 @@
           </el-row>
         </el-tab-pane>
 
-        <el-tab-pane label="编码信息" name="codec">
+        <el-tab-pane :label="$tp('编码信息')" name="codec">
           <MediaInfo v-if="tabActiveName === 'codec'" ref="mediaInfo" :app="streamInfoData.app" :stream="streamInfoData.stream" :mediaServerId="streamInfoData.mediaServerId"></MediaInfo>
         </el-tab-pane>
       </el-tabs>
@@ -598,6 +589,8 @@
 </template>
 
 <script setup name="StreamProxy">
+import { translatePhrase as uiText } from '@/i18n'
+
 import ChannelCode from "../../components/common/channelCode.vue"
 import ChooseCivilCode from "../../components/common/chooseCivilCode.vue"
 import ChooseGroup from "../../components/dialog/chooseGroup.vue"
@@ -687,17 +680,17 @@ const videoError = (e) => {
 
 const copyToClipboard = (text) => {
   if (!text) {
-    ElMessage.error('内容为空，无法复制');
+    ElMessage.error(uiText('内容为空，无法复制'));
     return;
   }
 
   // Clipboard API
   navigator.clipboard.writeText(text).then(
       () => {
-        ElMessage.success('成功拷贝到粘贴板');
+        ElMessage.success(uiText('成功拷贝到粘贴板'));
       },
       () => {
-        ElMessage.error('复制失败，请重试');
+        ElMessage.error(uiText('复制失败，请重试'));
       }
   );
 };

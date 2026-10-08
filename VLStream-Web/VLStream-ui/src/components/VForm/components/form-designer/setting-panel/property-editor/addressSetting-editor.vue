@@ -7,9 +7,7 @@
 
 <template>
   <el-form-item label-width="0">
-    <el-divider class="custom-divider-margin-top">
-      地址本设置
-    </el-divider>
+    <el-divider class="custom-divider-margin-top"> {{ $tp('地址本设置') }} </el-divider>
     <address-setting v-model="optionModel.addressSetting" :multiple="optionModel.multiple" />
   </el-form-item>
 </template>

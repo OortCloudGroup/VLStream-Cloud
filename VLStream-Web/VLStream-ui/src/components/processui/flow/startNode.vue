@@ -16,7 +16,7 @@
         :color="isFinished?'var(--node-main-color)':'var(--el-color-primary)'"
       />
       <!-- <img src="@/assets/img/processui/flownode/start.png" /> -->
-      <span>开始</span>
+      <span>{{ $tp('开始') }}</span>
     </div>
     <div class="arrowBox">
       <span class="arrowBox_line" />

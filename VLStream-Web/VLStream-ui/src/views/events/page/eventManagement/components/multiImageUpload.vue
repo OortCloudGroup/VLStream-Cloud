@@ -57,13 +57,15 @@
     </el-upload>
 
     <!--  -->
-    <el-dialog v-model="previewVisible" title="图片预览" width="50%">
+    <el-dialog v-model="previewVisible" :title="$tp('图片预览')" width="50%">
       <img v-if="previewImage" :src="previewImage" style="width: 100%;" />
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, CircleCloseFilled, Download, View } from '@element-plus/icons-vue'
@@ -108,7 +110,7 @@ const handleSuccess = (res: any, _file: any) => {
 
     // whether
     if (currentUrls.length >= props.maxCount) {
-      ElMessage.warning(`最多只能上传${props.maxCount}张图片`)
+      ElMessage.warning(uiText('最多只能上传{value0}张图片', { value0: props.maxCount }))
       return
     }
 
@@ -116,9 +118,9 @@ const handleSuccess = (res: any, _file: any) => {
     currentUrls.push(newUrl)
     emit('update:modelValue', currentUrls)
 
-    ElMessage.success('上传成功')
+    ElMessage.success(uiText('上传成功'))
   } else {
-    ElMessage.error('上传失败')
+    ElMessage.error(uiText('上传失败'))
   }
 }
 
@@ -126,7 +128,7 @@ const handleSuccess = (res: any, _file: any) => {
 const beforeUpload = (file: File) => {
   const isLimit = file.size / 1024 / 1024 < props.sizeLimit
   if (!isLimit) {
-    ElMessage.error(`图片大小不能超过${props.sizeLimit}MB!`)
+    ElMessage.error(uiText('图片大小不能超过{value0}MB!', { value0: props.sizeLimit }))
   }
   return isLimit
 }
@@ -136,7 +138,7 @@ const handleRemove = (index: number) => {
   const currentUrls = [...props.modelValue]
   currentUrls.splice(index, 1)
   emit('update:modelValue', currentUrls)
-  ElMessage.success('删除成功')
+  ElMessage.success(uiText('删除成功'))
 }
 
 //
@@ -147,7 +149,7 @@ const handleDownload = (url: string) => {
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
-  ElMessage.success('下载成功')
+  ElMessage.success(uiText('下载成功'))
 }
 
 //
@@ -158,7 +160,7 @@ const handlePreview = (url: string) => {
 
 // Load Process
 const handleImageError = (index: number) => {
-  ElMessage.error(`图片加载失败: ${props.modelValue[index]}`)
+  ElMessage.error(uiText('图片加载失败: {value0}', { value0: props.modelValue[index] }))
 }
 </script>
 

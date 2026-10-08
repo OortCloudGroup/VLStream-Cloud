@@ -17,7 +17,7 @@
               value-format="YYYY-MM-DD"
               @change="dateChange()"
               :clearable="false"
-              placeholder="日期">
+              :placeholder="$tp('日期')">
           </el-date-picker>
         </div>
 
@@ -45,7 +45,7 @@
             </div>
           </InfiniteList>
 
-          <el-empty v-if="detailFiles.length === 0" :image-size="50" description="暂无数据"/>
+          <el-empty v-if="detailFiles.length === 0" :image-size="50" :description="$tp('暂无数据')"/>
         </div>
       </el-col>
 

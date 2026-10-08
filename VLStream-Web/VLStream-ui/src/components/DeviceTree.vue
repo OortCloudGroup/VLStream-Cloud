@@ -11,7 +11,7 @@
     <div v-if="showSearch" class="search-section">
       <SearchInput
         v-model="searchKeyword"
-        placeholder="搜索设备"
+        :placeholder="$tp('搜索设备')"
         button-text="查询"
         size="small"
         width="200px"
@@ -85,8 +85,8 @@
                 </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item command="sibling">新增同级</el-dropdown-item>
-                    <el-dropdown-item command="child" v-if="data.type === 'tag'">新增下级</el-dropdown-item>
+                    <el-dropdown-item command="sibling">{{ $tp('新增同级') }}</el-dropdown-item>
+                    <el-dropdown-item command="child" v-if="data.type === 'tag'">{{ $tp('新增下级') }}</el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
@@ -117,13 +117,11 @@
           class="add-dropdown-bottom"
         >
           <el-button type="primary" size="small" class="bottom-add-btn">
-            <el-icon><Plus /></el-icon>
-            新增
-          </el-button>
+            <el-icon><Plus /></el-icon> {{ $tp('新增') }} </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="group">新增分组</el-dropdown-item>
-              <el-dropdown-item command="device">新增设备</el-dropdown-item>
+              <el-dropdown-item command="group">{{ $tp('新增分组') }}</el-dropdown-item>
+              <el-dropdown-item command="device">{{ $tp('新增设备') }}</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -136,9 +134,7 @@
           @click="handleBottomDeleteCommand"
           :disabled="!selectedNode"
         >
-          <el-icon><Delete /></el-icon>
-          删除
-        </el-button>
+          <el-icon><Delete /></el-icon> {{ $tp('删除') }} </el-button>
       </div>
     </div>
   </div>

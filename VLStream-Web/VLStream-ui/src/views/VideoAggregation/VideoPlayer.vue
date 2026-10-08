@@ -9,7 +9,7 @@
   <div class="video-player-dialog">
     <el-dialog
       v-model="visible"
-      title="视频播放"
+      :title="$tp('视频播放')"
       width="80%"
       :before-close="handleClose"
       @close="handleClose"
@@ -18,11 +18,11 @@
         <!-- info -->
         <div v-if="process.env.NODE_ENV === 'development'" class="debug-info"
              style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 4px; font-size: 12px; z-index: 999;">
-          <div>设备信息: {{ JSON.stringify(deviceInfo, null, 2) }}</div>
-          <div>流类型: {{ streamType }}</div>
-          <div>流URL: {{ deviceInfo.streamUrl }}</div>
-          <div>对话框可见: {{ visible }}</div>
-          <div>错误信息: {{ videoError }}</div>
+          <div>{{ $tp('设备信息:') }} {{ JSON.stringify(deviceInfo, null, 2) }}</div>
+          <div>{{ $tp('流类型:') }} {{ streamType }}</div>
+          <div>{{ $tp('流URL:') }} {{ deviceInfo.streamUrl }}</div>
+          <div>{{ $tp('对话框可见:') }} {{ visible }}</div>
+          <div>{{ $tp('错误信息:') }} {{ videoError }}</div>
         </div>
 
         <!--  -->
@@ -66,15 +66,15 @@
 
 <div v-else-if="streamType === 'rtsp'" class="rtsp-info">
             <div class="rtsp-content">
-              <h3>RTSP流播放</h3>
-              <p>RTSP流需要专用播放器打开</p>
+              <h3>{{ $tp('RTSP流播放') }}</h3>
+              <p>{{ $tp('RTSP流需要专用播放器打开') }}</p>
               <div class="rtsp-url">
-                <span>流地址：</span>
+                <span>{{ $tp('流地址：') }}</span>
                 <span class="url-text">{{ deviceInfo.streamUrl }}</span>
               </div>
               <div class="rtsp-actions">
-                <el-button type="primary" @click="copyStreamUrl">复制地址</el-button>
-                <el-button type="success" @click="openInVlc">使用VLC播放</el-button>
+                <el-button type="primary" @click="copyStreamUrl">{{ $tp('复制地址') }}</el-button>
+                <el-button type="success" @click="openInVlc">{{ $tp('使用VLC播放') }}</el-button>
               </div>
             </div>
           </div>
@@ -88,18 +88,16 @@
             autoplay
             muted
           >
-            <source :src="deviceInfo.streamUrl" type="video/mp4">
-            您的浏览器不支持视频播放
-          </video>
+            <source :src="deviceInfo.streamUrl" type="video/mp4"> {{ $tp('您的浏览器不支持视频播放') }} </video>
 
           <!-- not -->
           <div v-else class="video-error">
             <div class="error-content">
-              <h3>无法播放视频</h3>
-              <p>不支持的视频格式或地址无效</p>
+              <h3>{{ $tp('无法播放视频') }}</h3>
+              <p>{{ $tp('不支持的视频格式或地址无效') }}</p>
               <div class="error-url">
-                <span>流地址：</span>
-                <span class="url-text">{{ deviceInfo.streamUrl || '未设置' }}</span>
+                <span>{{ $tp('流地址：') }}</span>
+                <span class="url-text">{{ deviceInfo.streamUrl || $tp('未设置') }}</span>
               </div>
             </div>
           </div>
@@ -117,7 +115,7 @@
                   :type="isRecording ? 'danger' : 'primary'"
                   @click="toggleRecording"
                 >
-                  {{ isRecording ? '停止录制' : '开始录制' }}
+                  {{ isRecording ? $tp('停止录制') : $tp('开始录制') }}
                 </el-button>
                 <span class="current-time">{{ currentTime }}</span>
               </div>
@@ -138,6 +136,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import PTZControl from '@/components/PTZControl.vue'
@@ -202,7 +202,7 @@ const streamTypeText = computed(() => {
     'cameraRTC': 'CameraRTC',
     'unknown': '未知格式'
   }
-  return typeMap[streamType.value] || '未知格式'
+  return typeMap[streamType.value] || uiText('未知格式')
 })
 
 //
@@ -256,10 +256,10 @@ const toggleRecording = () => {
   isRecording.value = !isRecording.value
 
   if (isRecording.value) {
-    ElMessage.success('开始录制')
+    ElMessage.success(uiText('开始录制'))
     startTimeTimer()
   } else {
-    ElMessage.info('停止录制')
+    ElMessage.info(uiText('停止录制'))
     stopTimeTimer()
   }
 }
@@ -307,7 +307,7 @@ const initHLSPlayer = () => {
         console.log('HLS manifest 解析成功')
         video.play().catch(error => {
           console.error('HLS自动播放失败:', error)
-          ElMessage.warning('视频自动播放失败，请手动点击播放')
+          ElMessage.warning(uiText('视频自动播放失败，请手动点击播放'))
         })
       })
 
@@ -327,7 +327,7 @@ const initHLSPlayer = () => {
               console.log('无法恢复的错误，销毁播放器')
               hls.destroy()
               videoError.value = '视频播放失败: ' + data.details
-              ElMessage.error('视频播放失败')
+              ElMessage.error(uiText('视频播放失败'))
               break
           }
         }
@@ -344,19 +344,19 @@ const initHLSPlayer = () => {
         console.log('视频元数据加载完成')
         video.play().catch(error => {
           console.error('原生HLS自动播放失败:', error)
-          ElMessage.warning('视频自动播放失败，请手动点击播放')
+          ElMessage.warning(uiText('视频自动播放失败，请手动点击播放'))
         })
       })
 
       video.addEventListener('error', (e) => {
         console.error('原生视频播放错误:', e)
         videoError.value = '视频播放失败'
-        ElMessage.error('视频播放失败')
+        ElMessage.error(uiText('视频播放失败'))
       })
     } else {
       console.error('浏览器不支持HLS播放')
       videoError.value = '浏览器不支持HLS播放，请使用Chrome、Firefox或Safari浏览器'
-      ElMessage.error('浏览器不支持HLS播放')
+      ElMessage.error(uiText('浏览器不支持HLS播放'))
     }
   }
 }
@@ -375,7 +375,7 @@ const initVideoPlayer = () => {
     video.addEventListener('error', (e) => {
       console.error('视频播放错误:', e)
       videoError.value = '视频播放失败'
-      ElMessage.error('视频播放失败')
+      ElMessage.error(uiText('视频播放失败'))
     })
 
     video.addEventListener('canplay', () => {

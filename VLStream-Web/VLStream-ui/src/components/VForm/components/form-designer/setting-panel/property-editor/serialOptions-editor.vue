@@ -7,21 +7,17 @@
 
 <template>
   <el-form-item label-width="0">
-    <el-divider class="custom-divider-margin-top">
-      规则设置
-    </el-divider>
-    <el-button type="primary" @click="showSerialDialog">
-      添加/编辑规则
-    </el-button>
+    <el-divider class="custom-divider-margin-top"> {{ $tp('规则设置') }} </el-divider>
+    <el-button type="primary" @click="showSerialDialog"> {{ $tp('添加/编辑规则') }} </el-button>
     <br />
     <div v-for="(item,index) in serOptions" :key="index" class="rule_item" @click="showSerialDialog">
-      <span>规则{{ index + 1 }}：</span>
-      <span v-if="item.type ===1">自动计数</span>
-      <span v-if="item.type ===2">日期</span>
-      <span v-if="item.type ===3">固定字符</span>
-      <span v-if="item.type ===4">表单字段</span>
+      <span>{{ $tp('规则') }}{{ index + 1 }}：</span>
+      <span v-if="item.type ===1">{{ $tp('自动计数') }}</span>
+      <span v-if="item.type ===2">{{ $tp('日期') }}</span>
+      <span v-if="item.type ===3">{{ $tp('固定字符') }}</span>
+      <span v-if="item.type ===4">{{ $tp('表单字段') }}</span>
     </div>
-    <el-dialog v-model="dialogVisible" title="序列号规则" width="45%">
+    <el-dialog v-model="dialogVisible" :title="$tp('序列号规则')" width="45%">
       <SerialOptionsRules v-model="optionModel.serialOptions" :designer="designer" @cancelSave="dialogVisible = false" />
     </el-dialog>
   </el-form-item>

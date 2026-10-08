@@ -14,16 +14,14 @@
             <div class="depNameBox flexRowAC">
               <div class="exportBtnBox flexRowAC">
                 <button type="button" class="exportBtn newBtn flexRowAC" @click="handleCreate">
-                  <el-icon class="BtnImg"><Plus /></el-icon>
-                  新建
-                </button>
+                  <el-icon class="BtnImg"><Plus /></el-icon> {{ $tp('新建') }} </button>
                 <button-group :button-list="toolbarButtonList" />
               </div>
             </div>
             <div class="searchHeight_out flexRowAC">
               <search-height-box
                 keyword="keyword"
-                placeholder="搜索"
+                :placeholder="$tp('搜索')"
                 :data="searchData"
                 @handle="searchResetFn"
               />
@@ -51,15 +49,15 @@
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handleEdit(scope.row)">
                     <oort-svg-icon width="14" height="14" name="edit_icon" class="new_table_svg_group_svg" />
-                    <span>编辑</span>
+                    <span>{{ $tp('编辑') }}</span>
                   </div>
                   <div class="new_table_svg_group" @click="handleSingleRemove(scope.row)">
                     <oort-svg-icon color="red" width="14" height="14" name="delete_icon" class="new_table_svg_group_svg" />
-                    <span>删除</span>
+                    <span>{{ $tp('删除') }}</span>
                   </div>
                   <div class="new_table_svg_group" @click="handleOpenGrant(scope.row)">
                     <oort-svg-icon width="14" height="14" name="more" class="new_table_svg_group_svg" />
-                    <span>授权</span>
+                    <span>{{ $tp('授权') }}</span>
                   </div>
                 </div>
               </template>
@@ -83,34 +81,34 @@
         label-width="100px"
         style="padding: 10px 20px"
       >
-        <el-form-item label="上级角色" prop="parentId">
+        <el-form-item :label="$tp('上级角色')" prop="parentId">
           <el-tree-select
             v-model="form.parentId"
             :data="roleTreeOptions"
             node-key="id"
             :props="{ label: 'label', children: 'children' }"
-            placeholder="请选择上级角色"
+            :placeholder="$tp('请选择上级角色')"
             check-strictly
             style="width: 100%"
             clearable
           />
         </el-form-item>
 
-        <el-form-item label="角色名称" prop="roleName">
-          <el-input v-model="form.roleName" placeholder="请输入角色名称" />
+        <el-form-item :label="$tp('角色名称')" prop="roleName">
+          <el-input v-model="form.roleName" :placeholder="$tp('请输入角色名称')" />
         </el-form-item>
 
-        <el-form-item label="角色别名" prop="roleAlias">
-          <el-input v-model="form.roleAlias" placeholder="请输入角色别名" />
+        <el-form-item :label="$tp('角色别名')" prop="roleAlias">
+          <el-input v-model="form.roleAlias" :placeholder="$tp('请输入角色别名')" />
         </el-form-item>
 
-        <el-form-item label="角色排序" prop="sort">
+        <el-form-item :label="$tp('角色排序')" prop="sort">
           <el-input-number v-model="form.sort" :min="1" style="width: 100%" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false" class="common_btn">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">确定</el-button>
+        <el-button @click="dialogVisible = false" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">{{ $tp('确定') }}</el-button>
       </template>
     </el-dialog>
 
@@ -124,6 +122,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
@@ -196,7 +196,7 @@ async function loadData() {
     roleTreeOptions.value = normalizeTree(tree)
   } catch (error) {
     console.error('获取角色列表失败:', error)
-    ElMessage.error('获取角色列表数据失败')
+    ElMessage.error(uiText('获取角色列表数据失败'))
   } finally {
     loading.value = false
   }
@@ -223,12 +223,12 @@ const searchResetFn = (val, reset) => {
 }
 
 const handleExport = () => {
-  ElMessage.success('导出数据')
+  ElMessage.success(uiText('导出数据'))
 }
 
 function handleToolbarEdit() {
   if (selectedRows.value.length !== 1) {
-    ElMessage.warning('请选择一条记录进行编辑')
+    ElMessage.warning(uiText('请选择一条记录进行编辑'))
     return
   }
   handleEdit(selectedRows.value[0])
@@ -236,7 +236,7 @@ function handleToolbarEdit() {
 
 function handleToolbarGrant() {
   if (selectedRows.value.length !== 1) {
-    ElMessage.warning('请选择一条记录进行权限配置')
+    ElMessage.warning(uiText('请选择一条记录进行权限配置'))
     return
   }
   handleOpenGrant(selectedRows.value[0])
@@ -274,15 +274,15 @@ async function handleSaveSubmit() {
       try {
         const res = await submitRole(form.value)
         if (isSuccess(res)) {
-          ElMessage.success('保存角色成功')
+          ElMessage.success(uiText('保存角色成功'))
           dialogVisible.value = false
           loadData()
         } else {
-          ElMessage.error(res?.msg || '保存失败')
+          ElMessage.error(res?.msg || uiText('保存失败'))
         }
       } catch (error) {
         console.error('提交角色信息异常:', error)
-        ElMessage.error('提交角色信息异常')
+        ElMessage.error(uiText('提交角色信息异常'))
       } finally {
         saving.value = false
       }
@@ -291,22 +291,22 @@ async function handleSaveSubmit() {
 }
 
 function executeRemove(ids, msg) {
-  ElMessageBox.confirm(msg, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(msg, uiText('提示'), {
+    confirmButtonText: uiText('确定'),
+    cancelButtonText: uiText('取消'),
     type: 'warning'
   }).then(async () => {
     try {
       const res = await removeRoles(ids)
       if (isSuccess(res)) {
-        ElMessage.success('删除成功')
+        ElMessage.success(uiText('删除成功'))
         loadData()
       } else {
-        ElMessage.error(res?.msg || '删除失败')
+        ElMessage.error(res?.msg || uiText('删除失败'))
       }
     } catch (error) {
       console.error('删除角色异常:', error)
-      ElMessage.error('删除角色异常')
+      ElMessage.error(uiText('删除角色异常'))
     }
   }).catch(() => {})
 }

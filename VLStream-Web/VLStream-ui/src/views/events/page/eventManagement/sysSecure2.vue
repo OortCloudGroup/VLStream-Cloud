@@ -16,15 +16,15 @@
           <div class="left-menu-header">
             <div class="custom-tabs">
               <div class="custom-tab-item" :class="leftTabActive==='region'?'active':''" @click="handleTabClick('region')">
-                <span>区域</span>
+                <span>{{ $tp('区域') }}</span>
                 <div class="header-actions">
                   <div class="auto-dispatch-switch">
                     <el-switch
                         v-model="regionAutoDispatch"
                         size="small"
                         inline-prompt
-                        active-text="自动派单"
-                        inactive-text="自动派单"
+                        :active-text="$tp('自动派单')"
+                        :inactive-text="$tp('自动派单')"
                         @change="handleRegionAutoDispatchChange"
                     />
                   </div>
@@ -38,15 +38,15 @@
                 </div>
               </div>
               <div class="custom-tab-item" :class="leftTabActive==='group'?'active':''" @click="handleTabClick('group')">
-                <span>分组</span>
+                <span>{{ $tp('分组') }}</span>
                 <div class="header-actions">
                   <div class="auto-dispatch-switch">
                     <el-switch
                         v-model="groupAutoDispatch"
                         size="small"
                         inline-prompt
-                        active-text="自动派单"
-                        inactive-text="自动派单"
+                        :active-text="$tp('自动派单')"
+                        :inactive-text="$tp('自动派单')"
                         @change="handleGroupAutoDispatchChange"
                     />
                   </div>
@@ -60,15 +60,15 @@
                 </div>
               </div>
               <div class="custom-tab-item" :class="{active:leftTabActive==='tag'}" @click="handleTabClick('tag')">
-                <span>标签</span>
+                <span>{{ $tp('标签') }}</span>
                 <div class="header-actions">
                   <div class="auto-dispatch-switch">
                     <el-switch
                       v-model="groupAutoDispatch"
                       size="small"
                       inline-prompt
-                      active-text="自动派单"
-                      inactive-text="自动派单"
+                      :active-text="$tp('自动派单')"
+                      :inactive-text="$tp('自动派单')"
                       @change="handleGroupAutoDispatchChange"
                     />
                   </div>
@@ -111,8 +111,8 @@
                           v-model="data.autoDispatch"
                           size="small"
                           inline-prompt
-                          active-text="自动派单"
-                          inactive-text="自动派单"
+                          :active-text="$tp('自动派单')"
+                          :inactive-text="$tp('自动派单')"
                           @change="handleAutoDispatchChange(data)"
                           @click.stop
                       />
@@ -142,6 +142,8 @@
 </template>
 
 <script setup lang="ts">
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, nextTick, computed, onMounted } from 'vue'
 import { ElTree, ElMessage } from 'element-plus'
 import type Node from 'element-plus/es/components/tree/src/model/node'
@@ -292,7 +294,7 @@ const dialogContext = ref({
 
 const dialogInfoText = computed(() => {
   const { regionName, nodeLabel } = dialogContext.value
-  return `AI主动安全告警事件触发后，系统自动派单。区域为 ${regionName} 的 ${nodeLabel}，自动派单设置为`
+  return uiText('AI主动安全告警事件触发后，系统自动派单。区域为 {value0} 的 {value1}，自动派单设置为', { value0: regionName, value1: nodeLabel })
 })
 
 const handleTabClick = (tabName: string) => {
@@ -318,7 +320,7 @@ const handleAutoDispatchChange = async(data: any) => {
   try {
     const res = await event_group_status(params) as any
     if (res?.code === 200) {
-      ElMessage.success('自动派单状态更新成功')
+      ElMessage.success(uiText('自动派单状态更新成功'))
     } else {
       data.autoDispatch = !nextVal
     }
@@ -351,7 +353,7 @@ const handleRegionAutoDispatchChange = async(val: boolean) => {
     }
     const res = await workflowConfigSet(params) as any
     if (res?.code === 200) {
-      ElMessage.success('区域自动派单设置保存成功')
+      ElMessage.success(uiText('区域自动派单设置保存成功'))
     } else {
       regionAutoDispatch.value = !val
     }
@@ -371,7 +373,7 @@ const handleGroupAutoDispatchChange = async(val: boolean) => {
     }
     const res = await workflowConfigSet(params) as any
     if (res?.code === 200) {
-      ElMessage.success('分组自动派单设置保存成功')
+      ElMessage.success(uiText('分组自动派单设置保存成功'))
     } else {
       groupAutoDispatch.value = !val
     }
@@ -443,7 +445,7 @@ const handleSettingConfirm = async(value: any) => {
     }) as any
   }
   if (res?.code === 200) {
-    ElMessage.success('工单配置保存成功')
+    ElMessage.success(uiText('工单配置保存成功'))
     currentProcessId.value = definitionId
   }
 }

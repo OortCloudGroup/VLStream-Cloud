@@ -8,17 +8,17 @@
 <template>
   <div class="group-management tenant_Page draHeaPB">
     <el-tabs v-model="activeName" class="tenanat-tabs" @tab-change="handleClick">
-      <el-tab-pane label="行政区划" name="region" />
-      <el-tab-pane label="业务分组" name="group" />
+      <el-tab-pane :label="$tp('行政区划')" name="region" />
+      <el-tab-pane :label="$tp('业务分组')" name="group" />
     </el-tabs>
     <div class="tenant_content">
       <div class="tableTenBox flexRowAC">
         <div v-show="!treeCollapsed" v-yResize class="police_aside_use">
-          <div class="treeTitle">{{ activeName === 'region' ? '行政区划' : '业务分组' }}</div>
+          <div class="treeTitle">{{ activeName === 'region' ? $tp('行政区划') : $tp('业务分组') }}</div>
           <div class="tree_search_content flexRowAC">
             <el-input
               v-model="treeSearchKeyword"
-              placeholder="搜索"
+              :placeholder="$tp('搜索')"
               clearable
               prefix-icon="Search"
             />
@@ -71,15 +71,14 @@
               />
               <div class="exportBtnBox flexRowAC">
                 <button type="button" class="exportBtn newBtn flexRowAC" @click="handleToolbarAdd()">
-                  <el-icon class="BtnImg"><Plus /></el-icon>新建
-                </button>
+                  <el-icon class="BtnImg"><Plus /></el-icon>{{ $tp('新建') }} </button>
                 <button-group :button-list="toolbarButtonList" />
               </div>
             </div>
             <div class="searchHeight_out flexRowAC">
               <search-height-box
                 keyword="keyword"
-                placeholder="搜索"
+                :placeholder="$tp('搜索')"
                 :data="searchData"
                 @handle="searchResetFn"
               />
@@ -109,13 +108,13 @@
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div v-if="scope.row.id && checkEditPermi" class="new_table_svg_group" @click="handleRowUpdate(scope.row)">
-                    <span>修改</span>
+                    <span>{{ $tp('修改') }}</span>
                   </div>
                   <div v-if="checkAddPermi" class="new_table_svg_group" @click="handleToolbarAdd(scope.row)">
-                    <span>新增</span>
+                    <span>{{ $tp('新增') }}</span>
                   </div>
                   <div v-if="scope.row.id && checkDeletePermi" class="new_table_svg_group" @click="handleToolbarDelete(scope.row)">
-                    <span>删除</span>
+                    <span>{{ $tp('删除') }}</span>
                   </div>
                 </div>
               </template>
@@ -143,9 +142,7 @@
                 <div style="text-align: center">{{ allValRegion[1].meaning }}</div>
               </template>
               <el-radio :key="-1" v-model="allValRegion[1].val" @change="deviceChange" label=""
-                        style="line-height: 2rem">
-                不添加
-              </el-radio>
+                        style="line-height: 2rem"> {{ $tp('不添加') }} </el-radio>
               <el-radio v-for="item in regionList" v-model="allValRegion[1].val" @change="deviceChange(item)"
                         :key="item.deviceId" :label="item.deviceId.substring(2)" style="line-height: 2rem">
                 {{ item.name }} - {{ item.deviceId.substring(2) }}
@@ -157,9 +154,7 @@
                 <div style="text-align: center">{{ allValRegion[2].meaning }}</div>
               </template>
               <el-radio :key="-1" label="" v-model="allValRegion[2].val" style="line-height: 2rem"
-                        @change="deviceChange">
-                不添加
-              </el-radio>
+                        @change="deviceChange"> {{ $tp('不添加') }} </el-radio>
               <el-radio v-for="item in regionList" v-model="allValRegion[2].val" @change="deviceChange(item)"
                         :key="item.deviceId" :label="item.deviceId.substring(4)" style="line-height: 2rem">
                 {{ item.name }} - {{ item.deviceId.substring(4) }}
@@ -174,7 +169,7 @@
               <el-input
                   style="width: 400px"
                   type="text"
-                  placeholder="请手动输入基层接入单位编码,两位数字"
+                  :placeholder="$tp('请手动输入基层接入单位编码,两位数字')"
                   v-model="allValRegion[3].val"
                   maxlength="2"
                   :disabled="allValRegion[3].lock"
@@ -188,12 +183,12 @@
           <el-form ref="formRegionRef" :model="formRegion" :rules="rulesRegion" label-width="80px">
             <el-row>
               <el-col :span="12">
-                <el-form-item label="名称" prop="name">
-                  <el-input v-model="formRegion.name" autocomplete="off" placeholder="请输入名称"></el-input>
+                <el-form-item :label="$tp('名称')" prop="name">
+                  <el-input v-model="formRegion.name" autocomplete="off" :placeholder="$tp('请输入名称')"></el-input>
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="编号" prop="deviceId">
+                <el-form-item :label="$tp('编号')" prop="deviceId">
                   <el-input v-model="formRegion.deviceId" disabled autocomplete="off"></el-input>
                 </el-form-item>
               </el-col>
@@ -202,36 +197,36 @@
 
           <template #footer>
             <div class="dialog-footer">
-              <el-button type="primary" @click="submitFormRegion" class="common_btn">确 定</el-button>
-              <el-button @click="cancel" class="common_btn">取 消</el-button>
+              <el-button type="primary" @click="submitFormRegion" class="common_btn">{{ $tp('确 定') }}</el-button>
+              <el-button @click="cancel" class="common_btn">{{ $tp('取 消') }}</el-button>
             </div>
           </template>
         </el-dialog>
 
         <el-dialog :title="title" v-model="openGroup" width="60%" append-to-body>
           <el-form ref="formGroupRef" :model="formGroup" :rules="rulesGroup" label-width="80px">
-            <el-form-item label="节点编号" prop="deviceId">
-              <el-input v-model="formGroup.deviceId" placeholder="请输入编码">
+            <el-form-item :label="$tp('节点编号')" prop="deviceId">
+              <el-input v-model="formGroup.deviceId" :placeholder="$tp('请输入编码')">
                 <template #append>
-                  <el-button @click="buildDeviceIdCode(formGroup.deviceId)">生成</el-button>
+                  <el-button @click="buildDeviceIdCode(formGroup.deviceId)">{{ $tp('生成') }}</el-button>
                 </template>
               </el-input>
             </el-form-item>
-            <el-form-item label="节点名称" prop="name">
+            <el-form-item :label="$tp('节点名称')" prop="name">
               <el-input v-model="formGroup.name" clearable></el-input>
             </el-form-item>
-            <el-form-item label="行政区划" prop="civilCode">
+            <el-form-item :label="$tp('行政区划')" prop="civilCode">
               <el-input v-model="formGroup.civilCode">
                 <template #append>
-                  <el-button @click="chooseCivilCodeFun(formGroup.civilCode)">选择</el-button>
+                  <el-button @click="chooseCivilCodeFun(formGroup.civilCode)">{{ $tp('选择') }}</el-button>
                 </template>
               </el-input>
             </el-form-item>
           </el-form>
           <template #footer>
             <div class="dialog-footer">
-              <el-button type="primary" @click="submitFormGroup" class="common_btn">确 定</el-button>
-              <el-button @click="cancel" class="common_btn">取 消</el-button>
+              <el-button type="primary" @click="submitFormGroup" class="common_btn">{{ $tp('确 定') }}</el-button>
+              <el-button @click="cancel" class="common_btn">{{ $tp('取 消') }}</el-button>
             </div>
           </template>
         </el-dialog>

@@ -16,13 +16,13 @@
 <template>
   <div>
     <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="120">
-      <el-form-item label="模型标识" prop="modelKey">
-        <el-input v-model="form.modelKey" disabled placeholder="请输入模型标识" />
+      <el-form-item :label="$tp('模型标识')" prop="modelKey">
+        <el-input v-model="form.modelKey" disabled :placeholder="$tp('请输入模型标识')" />
       </el-form-item>
-      <el-form-item label="模型名称" prop="modelName">
-        <el-input v-model="form.modelName" placeholder="请输入模型名称" />
+      <el-form-item :label="$tp('模型名称')" prop="modelName">
+        <el-input v-model="form.modelName" :placeholder="$tp('请输入模型名称')" />
       </el-form-item>
-      <el-form-item label="模型图标" prop="code">
+      <el-form-item :label="$tp('模型图标')" prop="code">
         <div class="licenseBox">
           <el-upload
             class="avatar-uploader"
@@ -41,14 +41,14 @@
           </el-upload>
         </div>
       </el-form-item>
-      <el-form-item label="描述" prop="description">
+      <el-form-item :label="$tp('描述')" prop="description">
         <div class="flexRowAC" style="position: relative;width: 100%;">
           <el-input
             v-model="form.description"
             type="textarea"
             rows="4"
             style="flex: 1"
-            placeholder="请输入描述"
+            :placeholder="$tp('请输入描述')"
             maxlength="200"
             show-word-limit
           />
@@ -57,11 +57,11 @@
             :number="200"
             mod="描述"
             :keyword="form.modelName"
-            keyword-empty-tips="请先输入模型名称"
+            :keyword-empty-tips="$tp('请先输入模型名称')"
           />
         </div>
       </el-form-item>
-      <el-form-item label="移动端显示">
+      <el-form-item :label="$tp('移动端显示')">
         <el-switch
           v-model="form.showMobile"
           active-color="#13ce66"
@@ -72,16 +72,14 @@
       </el-form-item>
     </el-form>
     <div style="text-align: right;">
-      <el-button class="bigBtn common_btn" @click="emits('close')">
-        取消
-      </el-button>
-      <el-button v-preReClick class="bigBtn" type="primary" @click="saveCategory(ruleFormRef)">
-        保存
-      </el-button>
+      <el-button class="bigBtn common_btn" @click="emits('close')"> {{ $tp('取消') }} </el-button>
+      <el-button v-preReClick class="bigBtn" type="primary" @click="saveCategory(ruleFormRef)"> {{ $tp('保存') }} </el-button>
     </div>
   </div>
 </template>
 <script setup lang="ts">
+import { translatePhrase as uiText } from '@/i18n'
+
 import { addModel, copyModel, updateModel } from '@/api/processui'
 import { ElMessage } from 'element-plus'
 import { reactive, ref } from 'vue'
@@ -121,7 +119,7 @@ function handleAvatarSuccess(res) {
   if (res.code === 200) {
     iconId.value = res.data.url
   } else {
-    ElMessage.error(res.msg + '，上传失败')
+    ElMessage.error(res.msg + uiText('，上传失败'))
   }
 }
 
@@ -129,7 +127,7 @@ function handleAvatarSuccess(res) {
 const beforeAvatarUpload = (file: any) => {
   let isLt2M = file.size / 1024 / 1024 < 5
   if (!isLt2M) {
-    ElMessage.error('图片大小不能超过 5MB!')
+    ElMessage.error(uiText('图片大小不能超过 5MB!'))
   }
   return isLt2M
 }
@@ -140,7 +138,7 @@ const saveCategory = async(formEl: any) => {
   await formEl.validate(async(valid: boolean) => {
     if (valid) {
       if (!form.category) {
-        ElMessage.error('工单应用分类未初始化，无法保存模型')
+        ElMessage.error(uiText('工单应用分类未初始化，无法保存模型'))
         return
       }
       // form- work order is workflow-form
@@ -167,9 +165,9 @@ const saveCategory = async(formEl: any) => {
         res = await addModel(form)
       }
       if (res.code === 200) {
-        if (addModelType.value === 0) ElMessage.success('新增模型成功')
-        if (addModelType.value === 1) ElMessage.success('复制模型成功')
-        if (addModelType.value === 2) ElMessage.success('编辑模型成功')
+        if (addModelType.value === 0) ElMessage.success(uiText('新增模型成功'))
+        if (addModelType.value === 1) ElMessage.success(uiText('复制模型成功'))
+        if (addModelType.value === 2) ElMessage.success(uiText('编辑模型成功'))
         emits('close')
         emits('handle')
       } else {

@@ -9,8 +9,8 @@
   <div class="user-management">
     <!-- page -->
     <div class="page-header">
-      <h1 class="page-title">用户管理</h1>
-      <p>系统用户账户管理与权限配置</p>
+      <h1 class="page-title">{{ $tp('用户管理') }}</h1>
+      <p>{{ $tp('系统用户账户管理与权限配置') }}</p>
     </div>
 
     <!--  -->
@@ -18,7 +18,7 @@
       <div class="toolbar-left">
         <el-input
           v-model="searchKeyword"
-          placeholder="搜索用户名或邮箱"
+          :placeholder="$tp('搜索用户名或邮箱')"
           style="width: 300px"
           clearable
         >
@@ -26,26 +26,22 @@
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
-        <el-select v-model="statusFilter" placeholder="用户状态" style="width: 120px">
-          <el-option label="全部" value="" />
-          <el-option label="正常" value="active" />
-          <el-option label="禁用" value="disabled" />
-          <el-option label="锁定" value="locked" />
+        <el-select v-model="statusFilter" :placeholder="$tp('用户状态')" style="width: 120px">
+          <el-option :label="$tp('全部')" value="" />
+          <el-option :label="$tp('正常')" value="active" />
+          <el-option :label="$tp('禁用')" value="disabled" />
+          <el-option :label="$tp('锁定')" value="locked" />
         </el-select>
-        <el-select v-model="roleFilter" placeholder="用户角色" style="width: 120px">
-          <el-option label="全部" value="" />
-          <el-option label="管理员" value="admin" />
-          <el-option label="操作员" value="operator" />
-          <el-option label="观察员" value="viewer" />
+        <el-select v-model="roleFilter" :placeholder="$tp('用户角色')" style="width: 120px">
+          <el-option :label="$tp('全部')" value="" />
+          <el-option :label="$tp('管理员')" value="admin" />
+          <el-option :label="$tp('操作员')" value="operator" />
+          <el-option :label="$tp('观察员')" value="viewer" />
         </el-select>
       </div>
       <div class="toolbar-right">
-        <el-button type="primary" :icon="Plus" @click="showAddDialog = true">
-          添加用户
-        </el-button>
-        <el-button :icon="Refresh" @click="refreshUsers">
-          刷新
-        </el-button>
+        <el-button type="primary" :icon="Plus" @click="showAddDialog = true"> {{ $tp('添加用户') }} </el-button>
+        <el-button :icon="Refresh" @click="refreshUsers"> {{ $tp('刷新') }} </el-button>
       </div>
     </div>
 
@@ -92,32 +88,24 @@
             type="primary"
             size="small"
             @click="editUser(row)"
-          >
-            编辑
-          </el-button>
+          > {{ $tp('编辑') }} </el-button>
           <el-button
             v-if="row.status === 'active'"
             type="warning"
             size="small"
             @click="disableUser(row)"
-          >
-            禁用
-          </el-button>
+          > {{ $tp('禁用') }} </el-button>
           <el-button
             v-if="row.status === 'disabled'"
             type="success"
             size="small"
             @click="enableUser(row)"
-          >
-            启用
-          </el-button>
+          > {{ $tp('启用') }} </el-button>
           <el-button
             type="danger"
             size="small"
             @click="deleteUser(row)"
-          >
-            删除
-          </el-button>
+          > {{ $tp('删除') }} </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -136,7 +124,7 @@
     <!-- / user -->
     <el-dialog
       v-model="showAddDialog"
-      :title="isEdit ? '编辑用户' : '添加用户'"
+      :title="isEdit ? $tp('编辑用户') : $tp('添加用户')"
       width="35%"
     >
       <el-form
@@ -145,82 +133,82 @@
         ref="userFormRef"
         label-width="100px"
       >
-        <el-form-item label="用户名" prop="username">
+        <el-form-item :label="$tp('用户名')" prop="username">
           <el-input
             v-model="userForm.username"
-            placeholder="请输入用户名"
+            :placeholder="$tp('请输入用户名')"
             :disabled="isEdit"
           />
         </el-form-item>
-        <el-form-item label="真实姓名" prop="realName">
-          <el-input v-model="userForm.realName" placeholder="请输入真实姓名" />
+        <el-form-item :label="$tp('真实姓名')" prop="realName">
+          <el-input v-model="userForm.realName" :placeholder="$tp('请输入真实姓名')" />
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="userForm.email" placeholder="请输入邮箱地址" />
+        <el-form-item :label="$tp('邮箱')" prop="email">
+          <el-input v-model="userForm.email" :placeholder="$tp('请输入邮箱地址')" />
         </el-form-item>
-        <el-form-item label="电话" prop="phone">
-          <el-input v-model="userForm.phone" placeholder="请输入电话号码" />
+        <el-form-item :label="$tp('电话')" prop="phone">
+          <el-input v-model="userForm.phone" :placeholder="$tp('请输入电话号码')" />
         </el-form-item>
-        <el-form-item label="角色" prop="role">
-          <el-select v-model="userForm.role" placeholder="请选择角色" style="width: 100%">
-            <el-option label="管理员" value="admin" />
-            <el-option label="操作员" value="operator" />
-            <el-option label="观察员" value="viewer" />
+        <el-form-item :label="$tp('角色')" prop="role">
+          <el-select v-model="userForm.role" :placeholder="$tp('请选择角色')" style="width: 100%">
+            <el-option :label="$tp('管理员')" value="admin" />
+            <el-option :label="$tp('操作员')" value="operator" />
+            <el-option :label="$tp('观察员')" value="viewer" />
           </el-select>
         </el-form-item>
-        <el-form-item v-if="!isEdit" label="密码" prop="password">
+        <el-form-item v-if="!isEdit" :label="$tp('密码')" prop="password">
           <el-input
             v-model="userForm.password"
             type="password"
-            placeholder="请输入密码"
+            :placeholder="$tp('请输入密码')"
             show-password
           />
         </el-form-item>
-        <el-form-item v-if="!isEdit" label="确认密码" prop="confirmPassword">
+        <el-form-item v-if="!isEdit" :label="$tp('确认密码')" prop="confirmPassword">
           <el-input
             v-model="userForm.confirmPassword"
             type="password"
-            placeholder="请再次输入密码"
+            :placeholder="$tp('请再次输入密码')"
             show-password
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item :label="$tp('状态')" prop="status">
           <el-radio-group v-model="userForm.status">
-            <el-radio label="active">正常</el-radio>
-            <el-radio label="disabled">禁用</el-radio>
+            <el-radio label="active">{{ $tp('正常') }}</el-radio>
+            <el-radio label="disabled">{{ $tp('禁用') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="备注">
+        <el-form-item :label="$tp('备注')">
           <el-input
             v-model="userForm.remark"
             type="textarea"
             :rows="3"
-            placeholder="请输入备注信息"
+            :placeholder="$tp('请输入备注信息')"
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showAddDialog = false" class="common_btn">取消</el-button>
-        <el-button type="primary" @click="saveUser" class="common_btn">保存</el-button>
+        <el-button @click="showAddDialog = false" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" @click="saveUser" class="common_btn">{{ $tp('保存') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- configuration -->
-    <el-dialog v-model="showPermissionDialog" title="权限配置" width="45%">
+    <el-dialog v-model="showPermissionDialog" :title="$tp('权限配置')" width="45%">
       <div v-if="selectedUser" class="permission-content">
-        <h3>{{ selectedUser.realName }} ({{ selectedUser.username }}) 的权限配置</h3>
+        <h3>{{ selectedUser.realName }} ({{ selectedUser.username }}{{ $tp(') 的权限配置') }}</h3>
         <el-divider />
 
         <div class="permission-section">
-          <h4>功能模块权限</h4>
+          <h4>{{ $tp('功能模块权限') }}</h4>
           <el-checkbox-group v-model="permissions.modules">
             <div class="permission-grid">
-              <el-checkbox label="video_square">视频广场</el-checkbox>
-              <el-checkbox label="device_management">设备管理</el-checkbox>
-              <el-checkbox label="event_management">事件管理</el-checkbox>
-              <el-checkbox label="algorithm_management">算法管理</el-checkbox>
-              <el-checkbox label="user_management">用户管理</el-checkbox>
-              <el-checkbox label="system_settings">系统设置</el-checkbox>
+              <el-checkbox label="video_square">{{ $tp('视频广场') }}</el-checkbox>
+              <el-checkbox label="device_management">{{ $tp('设备管理') }}</el-checkbox>
+              <el-checkbox label="event_management">{{ $tp('事件管理') }}</el-checkbox>
+              <el-checkbox label="algorithm_management">{{ $tp('算法管理') }}</el-checkbox>
+              <el-checkbox label="user_management">{{ $tp('用户管理') }}</el-checkbox>
+              <el-checkbox label="system_settings">{{ $tp('系统设置') }}</el-checkbox>
             </div>
           </el-checkbox-group>
         </div>
@@ -228,15 +216,15 @@
         <el-divider />
 
         <div class="permission-section">
-          <h4>操作权限</h4>
+          <h4>{{ $tp('操作权限') }}</h4>
           <el-checkbox-group v-model="permissions.operations">
             <div class="permission-grid">
-              <el-checkbox label="view">查看</el-checkbox>
-              <el-checkbox label="add">添加</el-checkbox>
-              <el-checkbox label="edit">编辑</el-checkbox>
-              <el-checkbox label="delete">删除</el-checkbox>
-              <el-checkbox label="export">导出</el-checkbox>
-              <el-checkbox label="import">导入</el-checkbox>
+              <el-checkbox label="view">{{ $tp('查看') }}</el-checkbox>
+              <el-checkbox label="add">{{ $tp('添加') }}</el-checkbox>
+              <el-checkbox label="edit">{{ $tp('编辑') }}</el-checkbox>
+              <el-checkbox label="delete">{{ $tp('删除') }}</el-checkbox>
+              <el-checkbox label="export">{{ $tp('导出') }}</el-checkbox>
+              <el-checkbox label="import">{{ $tp('导入') }}</el-checkbox>
             </div>
           </el-checkbox-group>
         </div>
@@ -244,26 +232,28 @@
         <el-divider />
 
         <div class="permission-section">
-          <h4>设备权限</h4>
+          <h4>{{ $tp('设备权限') }}</h4>
           <el-checkbox-group v-model="permissions.devices">
             <div class="permission-grid">
-              <el-checkbox label="camera_control">摄像头控制</el-checkbox>
-              <el-checkbox label="recording">录像功能</el-checkbox>
-              <el-checkbox label="snapshot">抓图功能</el-checkbox>
-              <el-checkbox label="playback">回放功能</el-checkbox>
+              <el-checkbox label="camera_control">{{ $tp('摄像头控制') }}</el-checkbox>
+              <el-checkbox label="recording">{{ $tp('录像功能') }}</el-checkbox>
+              <el-checkbox label="snapshot">{{ $tp('抓图功能') }}</el-checkbox>
+              <el-checkbox label="playback">{{ $tp('回放功能') }}</el-checkbox>
             </div>
           </el-checkbox-group>
         </div>
       </div>
       <template #footer>
-        <el-button @click="showPermissionDialog = false" class="common_btn">取消</el-button>
-        <el-button type="primary" @click="savePermissions" class="common_btn">保存权限</el-button>
+        <el-button @click="showPermissionDialog = false" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" @click="savePermissions" class="common_btn">{{ $tp('保存权限') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, computed, onMounted } from 'vue'
 import {
   Search,
@@ -404,7 +394,7 @@ const refreshUsers = () => {
     }
   ]
   totalUsers.value = users.value.length
-  ElMessage.success('用户列表已刷新')
+  ElMessage.success(uiText('用户列表已刷新'))
 }
 
 const editUser = (user) => {
@@ -432,7 +422,7 @@ const saveUser = async () => {
           ...userForm.value,
           updateTime: new Date().toISOString()
         }
-        ElMessage.success('用户信息更新成功')
+        ElMessage.success(uiText('用户信息更新成功'))
       }
     } else {
       // user
@@ -445,7 +435,7 @@ const saveUser = async () => {
       }
       users.value.push(newUser)
       totalUsers.value++
-      ElMessage.success('用户添加成功')
+      ElMessage.success(uiText('用户添加成功'))
     }
 
     showAddDialog.value = false
@@ -459,7 +449,7 @@ const disableUser = (user) => {
   const index = users.value.findIndex(u => u.id === user.id)
   if (index !== -1) {
     users.value[index].status = 'disabled'
-    ElMessage.success(`用户 "${user.username}" 已禁用`)
+    ElMessage.success(uiText('用户 "{value0}" 已禁用', { value0: user.username }))
   }
 }
 
@@ -467,18 +457,18 @@ const enableUser = (user) => {
   const index = users.value.findIndex(u => u.id === user.id)
   if (index !== -1) {
     users.value[index].status = 'active'
-    ElMessage.success(`用户 "${user.username}" 已启用`)
+    ElMessage.success(uiText('用户 "{value0}" 已启用', { value0: user.username }))
   }
 }
 
 const deleteUser = async (user) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除用户 "${user.username}" 吗？`,
-      '确认删除',
+      uiText('确定要删除用户 "{value0}" 吗？', { value0: user.username }),
+      uiText('确认删除'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: uiText('确定'),
+        cancelButtonText: uiText('取消'),
         type: 'warning'
       }
     )
@@ -487,15 +477,15 @@ const deleteUser = async (user) => {
     if (index !== -1) {
       users.value.splice(index, 1)
       totalUsers.value--
-      ElMessage.success('用户删除成功')
+      ElMessage.success(uiText('用户删除成功'))
     }
   } catch {
-    ElMessage.info('已取消删除')
+    ElMessage.info(uiText('已取消删除'))
   }
 }
 
 const savePermissions = () => {
-  ElMessage.success('权限配置保存成功')
+  ElMessage.success(uiText('权限配置保存成功'))
   showPermissionDialog.value = false
 }
 

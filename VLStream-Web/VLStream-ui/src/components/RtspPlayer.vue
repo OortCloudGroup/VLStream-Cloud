@@ -39,14 +39,14 @@
       <!-- Load -->
       <div v-if="isConnecting && !isYouTubeStream" class="loading-overlay">
         <div class="loading-spinner"></div>
-        <div class="loading-text">正在连接 RTSP 流...</div>
+        <div class="loading-text">{{ $tp('正在连接 RTSP 流...') }}</div>
       </div>
 
       <!--  -->
       <div v-if="hasError && !isYouTubeStream" class="error-overlay">
         <div class="error-icon">⚠</div>
         <div class="error-text">{{ errorMessage }}</div>
-        <button class="retry-button" @click="reconnect">重新连接</button>
+        <button class="retry-button" @click="reconnect">{{ $tp('重新连接') }}</button>
       </div>
 
       <!-- control -->
@@ -92,6 +92,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 
 // Props
@@ -210,14 +212,14 @@ const statusClass = computed(() => {
 
 const statusText = computed(() => {
   if (isYouTubeStream.value) {
-    return 'YouTube直播'
+    return uiText('YouTube直播')
   }
 
   switch (connectionState.value) {
-    case 'connected': return '已连接'
-    case 'connecting': return '连接中'
-    case 'failed': return '连接失败'
-    default: return '未连接'
+    case 'connected': return uiText('已连接')
+    case 'connecting': return uiText('连接中')
+    case 'failed': return uiText('连接失败')
+    default: return uiText('未连接')
   }
 })
 

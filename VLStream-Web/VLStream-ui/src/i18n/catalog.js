@@ -1,3 +1,6 @@
+import { uiEnglish } from './uiEnglish.js'
+import { gbHelpEnglish } from './gbHelpPhrases.js'
+
 const localeColumns = ['zh-CN', 'en-US', 'es-MX', 'ar', 'de-DE', 'fr-FR', 'ja-JP', 'pt-BR', 'ru-RU', 'ko-KR', 'id-ID', 'tr-TR']
 
 export const localeOptions = [
@@ -438,6 +441,23 @@ catalogTsv.trim().split('\n').forEach((line, lineIndex) => {
     phraseCatalog[code][source] = columns[index]
   })
 })
+
+// Preserve reviewed locale entries; untranslated UI phrases fall back to English.
+Object.entries({ ...uiEnglish, ...gbHelpEnglish }).forEach(([source, english]) => {
+  localeColumns.forEach(code => {
+    phraseCatalog[code][source] ||= code === 'zh-CN' ? source : english
+  })
+})
+
+const conciseEnglishNavigation = {
+  '系统管理': 'System', '设备管理': 'Devices', '通道管理': 'Channels',
+  '报警管理': 'Alarms', '节点管理': 'Nodes', '事件管理': 'Events',
+  '算法管理': 'Algorithms', '大模型管理': 'LLMs', '数据集管理': 'Datasets',
+  '用户管理': 'Users', '角色管理': 'Roles', '菜单管理': 'Menus',
+  '部门管理': 'Departments', '岗位管理': 'Positions', '固件管理': 'Firmware',
+  '工单管理': 'Work orders', 'VLS协议设备固件管理': 'VLS firmware'
+}
+Object.assign(phraseCatalog['en-US'], conciseEnglishNavigation)
 
 export const messages = Object.fromEntries(localeColumns.map(code => [code, {
   app: {

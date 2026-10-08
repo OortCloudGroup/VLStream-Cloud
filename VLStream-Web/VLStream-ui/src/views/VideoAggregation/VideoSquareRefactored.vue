@@ -12,31 +12,31 @@
       <!-- info -->
       <div v-if="showDebugInfo" class="debug-panel">
         <div class="debug-header">
-          <h4>调试信息</h4>
+          <h4>{{ $tp('调试信息') }}</h4>
           <el-button size="small" text @click="showDebugInfo = false">
             <el-icon><Close /></el-icon>
           </el-button>
         </div>
         <div class="debug-content">
           <div class="debug-item">
-            <strong>API状态:</strong>
+            <strong>{{ $tp('API状态:') }}</strong>
             <span :class="{ 'status-success': !loading, 'status-loading': loading }">
-              {{ loading ? '加载中...' : '已完成' }}
+              {{ loading ? $tp('加载中...') : $tp('已完成') }}
             </span>
           </div>
           <div class="debug-item">
-            <strong>原始设备数量:</strong> {{ deviceList.length }}
+            <strong>{{ $tp('原始设备数量:') }}</strong> {{ deviceList.length }}
           </div>
           <div class="debug-item">
-            <strong>有效设备数量:</strong> {{ realCameraStreams.length }}
+            <strong>{{ $tp('有效设备数量:') }}</strong> {{ realCameraStreams.length }}
           </div>
           <div class="debug-item">
-            <strong>当前布局:</strong> {{ layoutMode }}
+            <strong>{{ $tp('当前布局:') }}</strong> {{ layoutMode }}
           </div>
           <div class="debug-item">
-            <strong>WebRTC状态:</strong>
+            <strong>{{ $tp('WebRTC状态:') }}</strong>
             <span :class="{ 'status-success': webrtcConfig.available, 'status-error': !webrtcConfig.available }">
-              {{ webrtcConfig.available ? '可用' : '不可用' }}
+              {{ webrtcConfig.available ? $tp('可用') : $tp('不可用') }}
             </span>
           </div>
         </div>
@@ -67,23 +67,23 @@
 
             <!-- control -->
             <div class="map-controls">
-              <button class="map-control-btn" @click="fitBounds" title="显示全部摄像头">
+              <button class="map-control-btn" @click="fitBounds" :title="$tp('显示全部摄像头')">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81l5-4.5M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>
                 </svg>
               </button>
-              <button class="map-control-btn" @click="toggleMapView" title="切换地图视图">
+              <button class="map-control-btn" @click="toggleMapView" :title="$tp('切换地图视图')">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
               </button>
-              <button class="map-control-btn" @click="refreshCameraLocations" title="刷新摄像头位置">
+              <button class="map-control-btn" @click="refreshCameraLocations" :title="$tp('刷新摄像头位置')">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
                 </svg>
               </button>
               <!-- / -->
-              <button class="map-control-btn theme-toggle" @click="toggleDarkMode" :title="isDarkMode ? '切换到白天模式' : '切换到黑夜模式'">
+              <button class="map-control-btn theme-toggle" @click="toggleDarkMode" :title="isDarkMode ? $tp('切换到白天模式') : $tp('切换到黑夜模式')">
                 <svg v-if="!isDarkMode" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <!--  -->
                   <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>
@@ -97,12 +97,12 @@
 
             <!-- controlbutton -->
             <div class="zoom-controls">
-              <button class="zoom-btn" @click="zoomIn" title="放大">
+              <button class="zoom-btn" @click="zoomIn" :title="$tp('放大')">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
                 </svg>
               </button>
-              <button class="zoom-btn" @click="zoomOut" title="缩小">
+              <button class="zoom-btn" @click="zoomOut" :title="$tp('缩小')">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 13H5v-2h14v2z"/>
                 </svg>
@@ -144,14 +144,14 @@
           class="video-dialog-header draggable-handle"
           @mousedown="startDrag($event, dialog.id)"
         >
-          <span class="video-dialog-title">{{ dialog.camera.name }} - 视频播放</span>
+          <span class="video-dialog-title"><span data-i18n-ignore>{{ dialog.camera.name }}</span> - {{ $tp('视频播放') }}</span>
           <div class="dialog-controls">
-            <button class="dialog-control-btn minimize-btn" @click="minimizeDialog(dialog.id)" title="最小化">
+            <button class="dialog-control-btn minimize-btn" @click="minimizeDialog(dialog.id)" :title="$tp('最小化')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19 13H5v-2h14v2z"/>
               </svg>
             </button>
-            <button class="dialog-control-btn close-btn" @click="closeVideoDialog(dialog.id)" title="关闭">
+            <button class="dialog-control-btn close-btn" @click="closeVideoDialog(dialog.id)" :title="$tp('关闭')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
               </svg>
@@ -174,10 +174,10 @@
               <div v-else class="video-placeholder">
                 <div class="placeholder-content">
                   <div class="placeholder-icon">📹</div>
-                  <div class="placeholder-text">暂无视频流</div>
+                  <div class="placeholder-text">{{ $tp('暂无视频流') }}</div>
                   <div class="placeholder-details">
-                    <div>设备: {{ dialog.camera.name }}</div>
-                    <div>状态: 在线</div>
+                    <div>{{ $tp('设备:') }} {{ dialog.camera.name }}</div>
+                    <div>{{ $tp('状态: 在线') }}</div>
                   </div>
 
                   <!-- operation item -->
@@ -185,15 +185,11 @@
                     <button class="action-btn primary" @click="retryWebRTCConnection(dialog.camera)">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-                      </svg>
-                      重试连接
-                    </button>
+                      </svg> {{ $tp('重试连接') }} </button>
                     <button class="action-btn secondary" @click="copyStreamUrl(dialog.camera.deviceData?.streamUrl)">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                      </svg>
-                      复制地址
-                    </button>
+                      </svg> {{ $tp('复制地址') }} </button>
                   </div>
                 </div>
               </div>
@@ -232,7 +228,7 @@
     <!-- device Set dialog -->
     <el-dialog
       v-model="showSettingsDialog"
-      title="显示设置"
+      :title="$tp('显示设置')"
       width="25%"
       center
       :close-on-click-modal="true"
@@ -241,7 +237,7 @@
     >
       <div class="settings-content">
         <div class="setting-group">
-          <h4>设备类型</h4>
+          <h4>{{ $tp('设备类型') }}</h4>
           <div class="setting-items">
             <el-checkbox-group v-model="displaySettings.deviceTypes">
               <el-checkbox
@@ -256,8 +252,8 @@
         </div>
 
         <div class="setting-actions">
-          <el-button @click="cancelSettings" class="common_btn">取消</el-button>
-          <el-button type="primary" @click="confirmSettings" class="common_btn">确定</el-button>
+          <el-button @click="cancelSettings" class="common_btn">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" @click="confirmSettings" class="common_btn">{{ $tp('确定') }}</el-button>
         </div>
       </div>
     </el-dialog>
@@ -288,7 +284,7 @@
               <rect x="20" y="20" width="2" height="4" rx="1"/>
             </svg>
         </div>
-          <span class="layout-option-text">二十二画面</span>
+          <span class="layout-option-text">{{ $tp('二十二画面') }}</span>
       </div>
         <div class="extended-layout-option" @click="handleExtendedLayoutSelect(24)">
           <div class="layout-option-icon">
@@ -304,7 +300,7 @@
               <rect x="18" y="18" width="4" height="4" rx="1"/>
             </svg>
           </div>
-          <span class="layout-option-text">二十四画面</span>
+          <span class="layout-option-text">{{ $tp('二十四画面') }}</span>
         </div>
         <div class="extended-layout-option" @click="handleExtendedLayoutSelect(25)">
           <div class="layout-option-icon">
@@ -328,7 +324,7 @@
               <rect x="26" y="2" width="2" height="22" rx="1"/>
             </svg>
           </div>
-          <span class="layout-option-text">二十五画面</span>
+          <span class="layout-option-text">{{ $tp('二十五画面') }}</span>
         </div>
       </div>
     </div>
@@ -336,6 +332,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import {computed, nextTick, onMounted, onUnmounted, ref} from 'vue'
 import {ElMessage} from 'element-plus'
 import {Close} from '@element-plus/icons-vue'
@@ -484,7 +482,7 @@ const playDialogOPlayer = async (dialog) => {
   const deviceData = dialog?.camera?.deviceData
   if (deviceData?.catalogSource === 'VLSTREAM') return
   if (!deviceData?.streamUrl) {
-    ElMessage.warning('缺少流地址')
+    ElMessage.warning(uiText('缺少流地址'))
     return
   }
 
@@ -509,7 +507,7 @@ const playDialogOPlayer = async (dialog) => {
     if (dialogOPlayerTasks.value.get(dialog.id) !== taskId) return
     cleanupDialogOPlayer(dialog.id)
     console.error('OPlayer 播放失败:', error)
-    ElMessage.error(`播放失败: ${error.message || error}`)
+    ElMessage.error(uiText('播放失败: {value0}', { value0: error.message || error }))
   }
 }
 
@@ -551,7 +549,7 @@ const isDeviceOnline = (status) => {
   if (typeof status === 'number') return status === 1
   const normalized = String(status).trim().toLowerCase()
   if (!normalized) return false
-  return normalized === '在线' || normalized === 'online' || normalized === '1' || normalized === 'true'
+  return normalized === uiText('在线') || normalized === 'online' || normalized === '1' || normalized === 'true'
 }
 
 // property
@@ -899,7 +897,7 @@ const loadDeviceList = async () => {
     realCameraStreams.value = []
     if (mapInstance && mapInitialized) updateMapMarkers()
     console.error('视频广场：加载设备列表失败:', error)
-    ElMessage.error('加载设备列表失败')
+    ElMessage.error(uiText('加载设备列表失败'))
   } finally {
     loading.value = false
   }
@@ -913,7 +911,7 @@ const openVideoDialogs = async (count) => {
   const availableDevices = realCameraStreams.value.slice(0, count)
 
   if (availableDevices.length === 0) {
-    ElMessage.warning('暂无可用设备')
+    ElMessage.warning(uiText('暂无可用设备'))
     return
   }
 
@@ -998,17 +996,17 @@ const openVideoDialogs = async (count) => {
     layoutMode.value = count === 1 ? '1x1' : count === 4 ? '2x2' : count === 6 ? '3x3' : count === 8 ? '4x4' : count === 9 ? '5x5' : '6x6'
 
     loading.close()
-    ElMessage.success(`已打开${count}画面视频播放`)
+    ElMessage.success(uiText('已打开{value0}画面视频播放', { value0: count }))
 
   } catch (error) {
     console.error('创建布局弹窗失败:', error)
     loading.close()
-    ElMessage.error('创建视频播放窗口失败')
+    ElMessage.error(uiText('创建视频播放窗口失败'))
   }
 }
 
 const openCustomVideoDialogs = () => {
-  ElMessage.info('自定义视频播放功能')
+  ElMessage.info(uiText('自定义视频播放功能'))
 }
 
 const showExtendedLayoutDialog = () => {
@@ -1208,11 +1206,11 @@ const handleVideoWindowDoubleClick = (dialogId, windowIndex) => {
     openVideoDialogs(1)
 
     // operationprompt / tip
-    ElMessage.success(`${clickedCamera.name} 已切换到单画面播放`)
+    ElMessage.success(uiText('{value0} 已切换到单画面播放', { value0: clickedCamera.name }))
   } else {
     // null / empty
     console.log(`双击空白窗口: ${windowIndex}`)
-    ElMessage.info('空白窗口，请先添加设备')
+    ElMessage.info(uiText('空白窗口，请先添加设备'))
   }
 }
 
@@ -1242,7 +1240,7 @@ const handleVideoWindowSwap = (sourceDialogId, sourceIndex, targetDialogId, targ
     target: { dialogId: targetDialogId, windowIndex: targetIndex, camera: targetCamera?.name }
   })
 
-  ElMessage.success('视频窗口位置已交换')
+  ElMessage.success(uiText('视频窗口位置已交换'))
 }
 
 
@@ -1254,7 +1252,7 @@ const toggleFullscreen = () => {
   const hasOpenDialogs = videoDialogs.value.length > 0 || layoutDialogs.value.length > 0
 
   if (!hasOpenDialogs) {
-    ElMessage.warning('请先打开视频播放器')
+    ElMessage.warning(uiText('请先打开视频播放器'))
     return
   }
 
@@ -1273,7 +1271,7 @@ const enterVideoPlayerFullscreen = () => {
   const videoDialogs = document.querySelectorAll('.video-dialog, .layout-dialog')
 
   if (videoDialogs.length === 0) {
-    ElMessage.error('未找到视频播放器')
+    ElMessage.error(uiText('未找到视频播放器'))
     return
   }
 
@@ -1283,7 +1281,7 @@ const enterVideoPlayerFullscreen = () => {
   })
 
   isFullscreen.value = true
-  ElMessage.success('视频播放器已进入全屏模式')
+  ElMessage.success(uiText('视频播放器已进入全屏模式'))
 
   // ESC
   document.addEventListener('keydown', handleEscKey)
@@ -1308,7 +1306,7 @@ const exitVideoPlayerFullscreen = () => {
   })
 
   isFullscreen.value = false
-  ElMessage.info('已退出全屏模式')
+  ElMessage.info(uiText('已退出全屏模式'))
 
   // ESC
   document.removeEventListener('keydown', handleEscKey)
@@ -1352,17 +1350,17 @@ const handleFullscreenChange = () => {
 //
 const handlePTZControl = (action, camera) => {
   console.log('PTZ控制:', action, camera)
-  ElMessage.info(`PTZ控制: ${action}`)
+  ElMessage.info(uiText('PTZ控制: {value0}', { value0: action }))
 }
 
 const handleZoomControl = (action, camera) => {
   console.log('缩放控制:', action, camera)
-  ElMessage.info(`缩放控制: ${action}`)
+  ElMessage.info(uiText('缩放控制: {value0}', { value0: action }))
 }
 
 const handleControlAction = (action, camera) => {
   console.log('控制动作:', action, camera)
-  ElMessage.info(`控制动作: ${action}`)
+  ElMessage.info(uiText('控制动作: {value0}', { value0: action }))
 }
 
 const handleSettings = () => {
@@ -1374,9 +1372,9 @@ const handleMapSearch = () => {
   updateMapMarkers()
 
   if (filteredCameraMarkers.value.length === 0) {
-    ElMessage.warning('未找到匹配的设备')
+    ElMessage.warning(uiText('未找到匹配的设备'))
   } else {
-    ElMessage.success(`找到 ${filteredCameraMarkers.value.length} 个匹配的设备`)
+    ElMessage.success(uiText('找到 {value0} 个匹配的设备', { value0: filteredCameraMarkers.value.length }))
   }
 }
 
@@ -1417,7 +1415,7 @@ const handleCameraClick = async (deviceData) => {
   videoDialogs.value.push(dialog)
   await nextTick()
   await playDialogOPlayer(dialog)
-  ElMessage.success(`正在播放: ${deviceName}`)
+  ElMessage.success(uiText('正在播放: {value0}', { value0: deviceName }))
 }
 
 const handleTreeNodeClick = (node) => {
@@ -1439,12 +1437,12 @@ const handleTreeNodeClick = (node) => {
         }
 
         handleCameraClick(cameraMarker)
-        ElMessage.success(`正在播放设备: ${node.label}`)
+        ElMessage.success(uiText('正在播放设备: {value0}', { value0: node.label }))
         return
       }
     }
 
-    ElMessage.info(`选择演示设备: ${node.label}`)
+    ElMessage.info(uiText('选择演示设备: {value0}', { value0: node.label }))
   } else if (node.type === 'group') {
     node.expanded = !node.expanded
   }
@@ -1455,7 +1453,7 @@ const getDeviceStatusClass = (status) => {
 }
 
 const getDeviceStatusText = (status) => {
-  return isDeviceOnline(status) ? '在线' : '离线'
+  return isDeviceOnline(status) ? uiText('在线') : uiText('离线')
 }
 
 const fitBounds = () => {
@@ -1465,7 +1463,7 @@ const fitBounds = () => {
         // device ,
         mapInstance.setView([35.8617, 104.1954], 6) // in in
         console.log('没有摄像头标记，显示默认地图视图')
-        ElMessage.info('已重置地图视图')
+        ElMessage.info(uiText('已重置地图视图'))
       } else {
         // device , all
         const group = new L.featureGroup(mapMarkers)
@@ -1489,7 +1487,7 @@ const fitBounds = () => {
       }
     } catch (error) {
       console.error('调整地图视图失败:', error)
-      ElMessage.error('调整地图视图失败')
+      ElMessage.error(uiText('调整地图视图失败'))
       // failed
       try {
         mapInstance.setView([35.8617, 104.1954], 6) // in
@@ -1499,14 +1497,14 @@ const fitBounds = () => {
     }
   } else {
     console.warn('地图未初始化或组件未挂载')
-    ElMessage.warning('地图未初始化')
+    ElMessage.warning(uiText('地图未初始化'))
   }
 }
 
 const toggleMapView = () => {
   mapViewMode.value = mapViewMode.value === 'normal' ? 'satellite' : 'normal'
   updateMapLayer()
-  ElMessage.success(`已切换到${mapViewMode.value === 'normal' ? '标准' : '卫星'}地图`)
+  ElMessage.success(uiText('已切换到{value0}地图', { value0: mapViewMode.value === 'normal' ? uiText('标准') : uiText('卫星') }))
 }
 
 const refreshCameraLocations = () => {
@@ -1942,7 +1940,7 @@ const toggleDarkMode = () => {
     }
   }, 100)
 
-  ElMessage.success(`已切换到${isDarkMode.value ? '夜晚' : '白天'}模式`)
+  ElMessage.success(uiText('已切换到{value0}模式', { value0: isDarkMode.value ? uiText('夜晚') : uiText('白天') }))
 }
 
 // layer
@@ -2004,13 +2002,13 @@ const zoomIn = () => {
   if (mapInstance && mapInitialized && isComponentMounted) {
     try {
       mapInstance.zoomIn()
-      ElMessage.success('地图已放大')
+      ElMessage.success(uiText('地图已放大'))
     } catch (error) {
       console.error('地图放大失败:', error)
-      ElMessage.error('地图放大失败')
+      ElMessage.error(uiText('地图放大失败'))
     }
   } else {
-    ElMessage.warning('地图未初始化')
+    ElMessage.warning(uiText('地图未初始化'))
   }
 }
 
@@ -2018,13 +2016,13 @@ const zoomOut = () => {
   if (mapInstance && mapInitialized && isComponentMounted) {
     try {
       mapInstance.zoomOut()
-      ElMessage.success('地图已缩小')
+      ElMessage.success(uiText('地图已缩小'))
     } catch (error) {
       console.error('地图缩小失败:', error)
-      ElMessage.error('地图缩小失败')
+      ElMessage.error(uiText('地图缩小失败'))
     }
   } else {
-    ElMessage.warning('地图未初始化')
+    ElMessage.warning(uiText('地图未初始化'))
   }
 }
 
@@ -2034,7 +2032,7 @@ const cancelSettings = () => {
 
 const confirmSettings = () => {
   showSettingsDialog.value = false
-  ElMessage.success('设置已保存')
+  ElMessage.success(uiText('设置已保存'))
 }
 
 // dialogrelated method
@@ -2101,28 +2099,28 @@ const exitAnyFullscreen = () => {
 
 const handleWebRTCSuccess = () => {
   exitAnyFullscreen()
-  ElMessage.success('WebRTC直连成功')
+  ElMessage.success(uiText('WebRTC直连成功'))
 }
 
 const handleWebRTCError = () => {
-  ElMessage.error('WebRTC直连失败')
+  ElMessage.error(uiText('WebRTC直连失败'))
 }
 
 const handleDialogRtspConnected = () => {
-  ElMessage.success('RTSP连接成功')
+  ElMessage.success(uiText('RTSP连接成功'))
 }
 
 const handleDialogRtspDisconnected = () => {
-  ElMessage.warning('RTSP连接断开')
+  ElMessage.warning(uiText('RTSP连接断开'))
 }
 
 const handleDialogRtspError = (error) => {
-  ElMessage.error(`RTSP连接错误: ${error}`)
+  ElMessage.error(uiText('RTSP连接错误: {value0}', { value0: error }))
 }
 
 const retryWebRTCConnection = async (camera) => {
   if (!camera?.deviceData?.streamUrl) {
-    ElMessage.warning('缺少流地址，无法重试WebRTC')
+    ElMessage.warning(uiText('缺少流地址，无法重试WebRTC'))
     return
   }
 
@@ -2130,32 +2128,32 @@ const retryWebRTCConnection = async (camera) => {
   if (dialog) {
     await playDialogOPlayer(dialog)
   } else {
-    ElMessage.info(`重试连接摄像头: ${camera.name}`)
+    ElMessage.info(uiText('重试连接摄像头: {value0}', { value0: camera.name }))
   }
 }
 
 const copyStreamUrl = (url) => {
   if (url) {
     navigator.clipboard.writeText(url).then(() => {
-      ElMessage.success('流地址已复制到剪贴板')
+      ElMessage.success(uiText('流地址已复制到剪贴板'))
     }).catch(() => {
-      ElMessage.error('复制失败')
+      ElMessage.error(uiText('复制失败'))
     })
   } else {
-    ElMessage.warning('暂无流地址')
+    ElMessage.warning(uiText('暂无流地址'))
   }
 }
 
 const openInVlc = (url) => {
   if (url) {
     window.open(`vlc://${url}`)
-    ElMessage.info('尝试在VLC中打开')
+    ElMessage.info(uiText('尝试在VLC中打开'))
   }
 }
 
 const addDeviceToWindow = (dialogId, windowIndex) => {
   console.log('添加设备到窗口:', dialogId, windowIndex)
-  ElMessage.info('添加设备功能')
+  ElMessage.info(uiText('添加设备功能'))
 }
 
 //
@@ -2200,7 +2198,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('初始化失败:', error)
     if (isComponentMounted) {
-    ElMessage.error('初始化失败')
+    ElMessage.error(uiText('初始化失败'))
     }
   } finally {
     if (isComponentMounted) {

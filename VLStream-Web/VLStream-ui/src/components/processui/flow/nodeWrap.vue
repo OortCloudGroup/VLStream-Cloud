@@ -37,9 +37,7 @@
       <div class="node_branch_wrap">
         <div v-if="isEdit" class="branch_arrow" />
         <div ref="wrapBox" class="node_branch_wrap_box">
-          <button v-if="isEdit" class="add_branch" @click="addTerm">
-            添加条件
-          </button>
+          <button v-if="isEdit" class="add_branch" @click="addTerm"> {{ $tp('添加条件') }} </button>
           <div v-for="(item,index) in copyNodeConfig.conditionNodes" :key="index" class="node_branch_item" :class="{'node_inactive': isTJFinish(item.id), 'right_boder': !isTJAllFinish(copyNodeConfig.id)}">
             <div class="branch_arrow" />
             <div class="node" @click="showPropDialog(item, index)">

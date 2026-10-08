@@ -9,18 +9,18 @@
   <div class="device-list-panel">
     <!-- device -->
     <div class="device-list-header">
-      <span class="device-list-title">设备列表</span>
+      <span class="device-list-title">{{ $tp('设备列表') }}</span>
       <div class="device-list-actions">
-        <button class="device-action-btn" @click="$emit('settings')" title="设置">
+        <button class="device-action-btn" @click="$emit('settings')" :title="$tp('设置')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
             <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
           </svg>
         </button>
-        <button class="device-action-btn" @click="toggleTreeView" :class="{ active: isTreeView }" title="树形结构">
-          <img src="@/assets/组织-选中@2x.png" alt="树形结构" width="16" height="16">
+        <button class="device-action-btn" @click="toggleTreeView" :class="{ active: isTreeView }" :title="$tp('树形结构')">
+          <img src="@/assets/组织-选中@2x.png" :alt="$tp('树形结构')" width="16" height="16">
         </button>
-        <button class="device-action-btn" @click="toggleListView" :class="{ active: !isTreeView }" title="列表结构">
-          <img src="@/assets/人员列表-未选中@2x.png" alt="列表结构" width="16" height="16">
+        <button class="device-action-btn" @click="toggleListView" :class="{ active: !isTreeView }" :title="$tp('列表结构')">
+          <img src="@/assets/人员列表-未选中@2x.png" :alt="$tp('列表结构')" width="16" height="16">
         </button>
       </div>
       </div>
@@ -54,7 +54,7 @@
         <button
                   class="tag-stats-btn"
                   @click="toggleDeviceStatsModal(item)"
-                  title="展开/收起设备统计详情"
+                  :title="$tp('展开/收起设备统计详情')"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" :class="{ 'rotated': currentStatsItem?.id === item.id && showDeviceStatsDialog }">
                     <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
@@ -75,7 +75,7 @@
     </div>
 
                   <div class="total-count">
-                    <span class="count-label">总数</span>
+                    <span class="count-label">{{ $tp('总数') }}</span>
                     <span class="count-number">{{ getDeviceCount(item.id) }}</span>
                   </div>
 
@@ -108,7 +108,7 @@
           <input
             v-model="searchKeyword"
             type="text"
-            placeholder="搜索摄像机"
+            :placeholder="$tp('搜索摄像机')"
             class="device-search-input"
             @keyup.enter="handleSearch"
           />
@@ -140,7 +140,7 @@
               <div class="device-details">
                 <span class="device-type-tag">{{ device.deviceType }}</span>
                 <span class="device-status" :class="getDeviceStatusClass(device.status)">
-                  {{ device.status === 1 || device.status === '在线' ? '在线' : '离线' }}
+                  {{ device.status === 1 || device.status === $tp('在线') ? $tp('在线') : $tp('离线') }}
                 </span>
                 <span class="device-ip">{{ device.ipAddress }}</span>
               </div>
@@ -179,7 +179,7 @@
                     <div class="tree-device-name">{{ device.deviceName }}<small class="vls-device-id">{{ device.deviceId }}</small></div>
                     <div class="tree-device-details">
                       <span class="device-type-tag">{{ device.deviceType }}</span>
-                      <span class="device-status" :class="getDeviceStatusClass(device.status)">{{ device.status === 1 || device.status === '在线' ? '在线' : '离线' }}</span>
+                      <span class="device-status" :class="getDeviceStatusClass(device.status)">{{ device.status === 1 || device.status === $tp('在线') ? $tp('在线') : $tp('离线') }}</span>
             </div>
           </div>
         </div>
@@ -193,6 +193,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 
@@ -323,13 +325,13 @@ const getDeviceTypeFromName = (deviceName, device) => {
   // device Check
   const name = deviceName.toLowerCase()
   if (name.includes('枪机') || name.includes('摄像头') || name.includes('camera')) {
-    return '枪机'
+    return uiText('枪机')
   } else if (name.includes('球机') || name.includes('球形') || name.includes('dome')) {
-    return '球机'
+    return uiText('球机')
   }
 
   //
-  return '枪机'
+  return uiText('枪机')
 }
 
 // method
@@ -342,12 +344,12 @@ const updateItemChecked = (item, checked) => {
 
 const toggleTreeView = () => {
   isTreeView.value = true
-  ElMessage.success('已切换到树形结构')
+  ElMessage.success(uiText('已切换到树形结构'))
 }
 
 const toggleListView = () => {
   isTreeView.value = false
-  ElMessage.success('已切换到列表结构')
+  ElMessage.success(uiText('已切换到列表结构'))
 }
 
 const handleSearch = () => {
@@ -355,9 +357,9 @@ const handleSearch = () => {
   emit('search', searchKeyword.value)
 
   if (filteredDevices.value.length === 0) {
-    ElMessage.warning('未找到匹配的设备')
+    ElMessage.warning(uiText('未找到匹配的设备'))
   } else {
-    ElMessage.success(`找到 ${filteredDevices.value.length} 个匹配的设备`)
+    ElMessage.success(uiText('找到 {value0} 个匹配的设备', { value0: filteredDevices.value.length }))
   }
 }
 
@@ -552,7 +554,7 @@ const hideDeviceStatsModal = () => {
 
 const getDeviceCount = (deviceTypeId) => {
   if (deviceTypeId === 'bulletCamera') {
-    return props.devices.filter(device => device.deviceType === '摄像头' || device.deviceType === '枪机').length
+    return props.devices.filter(device => device.deviceType === uiText('摄像头') || device.deviceType === uiText('枪机')).length
   } else if (deviceTypeId === 'ballCamera') {
     return props.devices.filter(device => device.deviceType === '球机').length
   }

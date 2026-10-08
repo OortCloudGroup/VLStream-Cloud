@@ -8,20 +8,20 @@
 <template>
   <div class="cloud-platform">
     <div class="page-header">
-      <h2 class="page-title">云平台</h2>
-      <p class="page-subtitle">查看和管理你的云平台信息</p>
+      <h2 class="page-title">{{ $tp('云平台') }}</h2>
+      <p class="page-subtitle">{{ $tp('查看和管理你的云平台信息') }}</p>
     </div>
 
     <div class="content-card">
       <el-tabs v-model="activeTab" class="cloud-tabs" lazy>
-        <el-tab-pane label="用户信息" name="user">
+        <el-tab-pane :label="$tp('用户信息')" name="user">
           <!-- current tab , model userinfo -->
           <CloudUserInfo v-if="hasToken && activeTab === 'user'" />
-          <div v-else-if="activeTab === 'user'" class="placeholder-panel">正在准备登录...</div>
+          <div v-else-if="activeTab === 'user'" class="placeholder-panel">{{ $tp('正在准备登录...') }}</div>
         </el-tab-pane>
-        <el-tab-pane label="我上传的模型" name="models">
+        <el-tab-pane :label="$tp('我上传的模型')" name="models">
           <MyUploadedModels v-if="hasToken && activeTab === 'models'" />
-          <div v-else-if="activeTab === 'models'" class="placeholder-panel">请先登录后查看已上传模型</div>
+          <div v-else-if="activeTab === 'models'" class="placeholder-panel">{{ $tp('请先登录后查看已上传模型') }}</div>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -29,6 +29,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import CloudUserInfo from './CloudUserInfo.vue'
@@ -74,14 +76,14 @@ onMounted(() => {
   }
 
   if (tokenFromUrl) {
-    ElMessage.success('登录成功')
+    ElMessage.success(uiText('登录成功'))
     activeTab.value = 'user'
     hasToken.value = true
     syncTabToUrl('user')
     return
   }
   if (!hasToken.value && (activeTab.value === 'user' || activeTab.value === 'models')) {
-    ElMessage.info('请先登录后继续')
+    ElMessage.info(uiText('请先登录后继续'))
     startModelHubLogin({ from: 'cloud-platform' })
   }
 })
@@ -89,7 +91,7 @@ onMounted(() => {
 watch(activeTab, (tab) => {
   syncTabToUrl(tab)
   if (!hasToken.value && (tab === 'user' || tab === 'models')) {
-    ElMessage.info('请先登录后继续')
+    ElMessage.info(uiText('请先登录后继续'))
     startModelHubLogin({ from: 'cloud-platform' })
   }
 })

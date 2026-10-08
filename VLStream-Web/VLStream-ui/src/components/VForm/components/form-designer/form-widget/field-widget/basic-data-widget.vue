@@ -19,7 +19,7 @@
     :sub-form-row-id="subFormRowId"
   >
     <div v-if="optionList.length === 0" class="option_no_data">
-      <span>请选择基础数据或者基础数据为空</span>
+      <span>{{ $tp('请选择基础数据或者基础数据为空') }}</span>
     </div>
     <template v-else>
       <template v-if="field.options.basicOptions.showType === 1">

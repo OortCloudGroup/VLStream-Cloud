@@ -14,11 +14,11 @@
           v-yResize
           class="police_aside_use"
         >
-          <div class="treeTitle">设备树</div>
+          <div class="treeTitle">{{ $tp('设备树') }}</div>
           <div class="tree_search_content flexRowAC">
             <el-input
               v-model="searchTreeKeyword"
-              placeholder="搜索"
+              :placeholder="$tp('搜索')"
               debounce="300"
               prefix-icon="Search"
               clearable
@@ -50,7 +50,7 @@
                 :is-expanded="false"
                 @toggle="toggleDeviceTree"
               />
-              <span class="breadcrumb-item">算法编排</span>
+              <span class="breadcrumb-item">{{ $tp('算法编排') }}</span>
             </div>
           </div>
 
@@ -59,7 +59,7 @@
             <div class="searchHeight_out flexRowAC">
               <search-height-box
                 keyword="keyword"
-                placeholder="搜索"
+                :placeholder="$tp('搜索')"
                 :data="searchData"
                 @handle="searchResetFn"
               />
@@ -107,11 +107,11 @@
                     @click="getDeviceStreamUrl(scope.row) && handlePlay(scope.row)"
                   >
                     <oort-svg-icon width="14" height="14" name="play" class="new_table_svg_group_svg" />
-                    <span>播放</span>
+                    <span>{{ $tp('播放') }}</span>
                   </div>
                   <div class="new_table_svg_group" @click="configureAlgorithm(scope.row)">
                     <oort-svg-icon width="14" height="14" name="setting" class="new_table_svg_group_svg" />
-                    <span>配置</span>
+                    <span>{{ $tp('配置') }}</span>
                   </div>
                 </div>
               </template>
@@ -140,13 +140,13 @@
 
     <el-dialog
       v-model="videoDialogVisible"
-      title="视频播放"
+      :title="$tp('视频播放')"
       width="65%"
       top="5vh"
       @close="handleVideoClose"
     >
       <div class="video-dialog-content">
-        <div v-if="!currentStreamUrl" class="video-empty">未配置视频流地址</div>
+        <div v-if="!currentStreamUrl" class="video-empty">{{ $tp('未配置视频流地址') }}</div>
 
         <iframe
           v-else-if="currentStreamType === 'youtube'"
@@ -199,18 +199,18 @@
 
     <el-dialog
       v-model="showConfigDialog"
-      title="配置AI算法"
+      :title="$tp('配置AI算法')"
       width="30%"
       @close="resetConfigForm"
     >
       <div class="config-dialog-content">
         <div class="config-item">
-          <label class="config-label">设备名称</label>
-          <div class="device-name">{{ currentDevice?.deviceName || '海康云台' }}</div>
+          <label class="config-label">{{ $tp('设备名称') }}</label>
+          <div class="device-name">{{ currentDevice?.deviceName || $tp('海康云台') }}</div>
         </div>
 
         <div class="config-item">
-          <label class="config-label">AI算法</label>
+          <label class="config-label">{{ $tp('AI算法') }}</label>
           <div class="algorithm-selection">
             <div class="selected-algorithms">
               <el-tag
@@ -228,18 +228,16 @@
             <el-button
               class="select-algorithm-btn"
               @click="showAlgorithmPanel = true"
-            >
-              选择算法
-            </el-button>
+            > {{ $tp('选择算法') }} </el-button>
           </div>
         </div>
         <div class="config-item">
-          <label class="config-label">模型格式</label>
+          <label class="config-label">{{ $tp('模型格式') }}</label>
           <el-select v-model="dispatchModelType" style="width: 100%">
-            <el-option label="OM（昇腾/海思）" value="om" />
-            <el-option label="RKNN（瑞芯微）" value="rknn" />
+            <el-option :label="$tp('OM（昇腾/海思）')" value="om" />
+            <el-option :label="$tp('RKNN（瑞芯微）')" value="rknn" />
             <el-option label="INT8 RKNN" value="int8-rknn" />
-            <el-option label="ONNX（通用）" value="onnx" />
+            <el-option :label="$tp('ONNX（通用）')" value="onnx" />
             <el-option label="PT（PyTorch）" value="pt" />
           </el-select>
         </div>
@@ -247,8 +245,8 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showConfigDialog = false" class="common_btn">取消</el-button>
-          <el-button type="primary" @click="saveConfiguration" class="common_btn">确认</el-button>
+          <el-button @click="showConfigDialog = false" class="common_btn">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" @click="saveConfiguration" class="common_btn">{{ $tp('确认') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -258,7 +256,7 @@
       <div v-if="showAlgorithmPanel" class="algorithm-panel-overlay" @click="closeAlgorithmPanel">
         <div class="algorithm-panel" @click.stop>
           <div class="panel-header">
-            <h3 class="panel-title">选择AI算法</h3>
+            <h3 class="panel-title">{{ $tp('选择AI算法') }}</h3>
             <el-button
               type="text"
               class="close-btn"
@@ -325,6 +323,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import {ref, reactive, computed, onMounted, onUnmounted, nextTick, watch, shallowRef} from 'vue'
 import { ElMessage } from 'element-plus'
 import { Close, Check } from '@element-plus/icons-vue'
@@ -579,7 +579,7 @@ const handlePlay = async (row) => {
   const deviceForPlay = { ...(row || {}) }
   const streamUrl = getDeviceStreamUrl(deviceForPlay)
   if (!streamUrl || !String(streamUrl).trim()) {
-    ElMessage.warning('未配置视频流地址')
+    ElMessage.warning(uiText('未配置视频流地址'))
     return
   }
 
@@ -622,7 +622,7 @@ const handlePlay = async (row) => {
     await playNative()
   } catch (error) {
     console.error('Play failed:', error)
-    ElMessage.error(`播放失败: ${error.message || error}`)
+    ElMessage.error(uiText('播放失败: {value0}', { value0: error.message || error }))
   }
 }
 
@@ -787,7 +787,7 @@ const normalizeDeviceRow = (device, deviceDetail) => {
 
   let tags = []
   if (Array.isArray(merged.selectedTags) && merged.selectedTags.length > 0) {
-    tags = merged.selectedTags.map((tagId) => tagNameMap.value.get(tagId) || `标签_${tagId}`)
+    tags = merged.selectedTags.map((tagId) => tagNameMap.value.get(tagId) || uiText('标签_{value0}', { value0: tagId }))
   } else if (Array.isArray(merged.tags) && merged.tags.length > 0) {
     tags = merged.tags
   }
@@ -865,7 +865,7 @@ const loadDeviceList = async () => {
     pagination.total = response?.data?.total ?? deviceListWithTags.length
   } catch (error) {
     console.error('加载设备列表失败:', error)
-    ElMessage.error('加载设备列表失败')
+    ElMessage.error(uiText('加载设备列表失败'))
   } finally {
     loading.value = false
   }
@@ -956,27 +956,27 @@ const handleAdvancedSearchReset = () => {
   selectedTreeNode.value = null
   pagination.currentPage = 1
   loadDeviceList()
-  ElMessage.info('已重置高级搜索条件')
+  ElMessage.info(uiText('已重置高级搜索条件'))
 }
 
 const handleExport = () => {
   console.log('导出数据')
-  ElMessage.success('导出数据')
+  ElMessage.success(uiText('导出数据'))
 }
 
 const handleUpload = () => {
   console.log('上传文件')
-  ElMessage.success('上传功能')
+  ElMessage.success(uiText('上传功能'))
 }
 
 const handleDownloadTemplate = () => {
   console.log('下载模板')
-  ElMessage.success('下载模板')
+  ElMessage.success(uiText('下载模板'))
 }
 
 const handleBatchOperation = () => {
   console.log('批量操作')
-  ElMessage.success('批量操作')
+  ElMessage.success(uiText('批量操作'))
 }
 
 const handleTreeNodeClick = async (data) => {
@@ -1165,13 +1165,13 @@ const resetConfigForm = () => {
 
 const saveConfiguration = async () => {
   if (!currentDevice.value) {
-    ElMessage.warning('\u8bf7\u9009\u62e9\u8bbe\u5907')
+    ElMessage.warning(uiText('请选择设备'))
     return
   }
 
   const deviceId = currentDevice.value.id
   if (!deviceId) {
-    ElMessage.warning('\u8bbe\u5907ID\u7f3a\u5931')
+    ElMessage.warning(uiText('设备ID缺失'))
     return
   }
 
@@ -1179,7 +1179,7 @@ const saveConfiguration = async () => {
     new Set(selectedAlgorithms.value.map(item => item.id).filter(id => id !== undefined && id !== null))
   )
   if (algorithmIds.length === 0) {
-    ElMessage.warning('\u8bf7\u9009\u62e9\u7b97\u6cd5')
+    ElMessage.warning(uiText('请选择算法'))
     return
   }
 
@@ -1191,7 +1191,7 @@ const saveConfiguration = async () => {
         dispatchModelType.value
       )
       if (response?.code !== 200) {
-        ElMessage.error(response?.message || '\u7b97\u6cd5\u914d\u7f6e\u5931\u8d25')
+        ElMessage.error(response?.message || uiText('算法配置失败'))
         return
       }
     }
@@ -1211,7 +1211,7 @@ const saveConfiguration = async () => {
       matchRow.algorithmIds = algorithmIds
     }
 
-    ElMessage.success('\u914d\u7f6e\u6210\u529f')
+    ElMessage.success(uiText('配置成功'))
     showConfigDialog.value = false
     showAlgorithmPanel.value = false
   } catch (error) {

@@ -41,7 +41,7 @@
         />
       </template>
       <el-button type="text" style="margin: 0 auto" icon="el-icon-plus">
-        <span>添加明细</span>
+        <span>{{ $tp('添加明细') }}</span>
       </el-button>
     </div>
   </container-wrapper>

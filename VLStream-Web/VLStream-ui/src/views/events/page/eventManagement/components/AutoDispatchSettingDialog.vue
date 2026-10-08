@@ -8,7 +8,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    title="设置"
+    :title="$tp('设置')"
     width="35%"
     class="auto-dispatch-dialog"
     append-to-body
@@ -22,10 +22,8 @@
     </div>
 
     <div class="form-row">
-      <div class="label">
-        选择工单
-      </div>
-      <el-select v-model="localValue" class="workorder-select" placeholder="请选择工单">
+      <div class="label"> {{ $tp('选择工单') }} </div>
+      <el-select v-model="localValue" class="workorder-select" :placeholder="$tp('请选择工单')">
         <el-option
           v-for="item in options"
           :key="item.value"
@@ -34,26 +32,17 @@
         />
       </el-select>
     </div>
-    <div class="workorder-content">
-      更多自动派单
-      <router-link to="/sysWork" class="workorder-content-item">
-        <span>工单设置</span>
+    <div class="workorder-content"> {{ $tp('更多自动派单') }} <router-link to="/sysWork" class="workorder-content-item">
+        <span>{{ $tp('工单设置') }}</span>
         <oort-svg-icon class="app-card-logo" name="forward" width="14" height="14" />
-      </router-link>
-      ,
-      或联系管理员在
-      <div class="workorder-content-item" @click="processuiRouterLinkFn">
-        <span>统一工单中台配置</span>
+      </router-link> {{ $tp(', 或联系管理员在') }} <div class="workorder-content-item" @click="processuiRouterLinkFn">
+        <span>{{ $tp('统一工单中台配置') }}</span>
         <oort-svg-icon class="app-card-logo" name="forward" width="14" height="14" />
       </div>
     </div>
     <div class="dialog-footer">
-      <el-button @click="handleCancel" class="common_btn">
-        取消
-      </el-button>
-      <el-button type="primary" @click="handleConfirm" class="common_btn">
-        确定
-      </el-button>
+      <el-button @click="handleCancel" class="common_btn"> {{ $tp('取消') }} </el-button>
+      <el-button type="primary" @click="handleConfirm" class="common_btn"> {{ $tp('确定') }} </el-button>
     </div>
   </el-dialog>
 </template>

@@ -10,30 +10,26 @@
     <div class="config-container">
       <!--  -->
       <el-tabs v-model="activeTab" class="tenanat-tabs">
-        <el-tab-pane label="时间策略" name="time" />
-        <el-tab-pane label="事件策略" name="event" />
+        <el-tab-pane :label="$tp('时间策略')" name="time" />
+        <el-tab-pane :label="$tp('事件策略')" name="event" />
       </el-tabs>
 
       <!--  -->
       <div v-if="activeTab === 'time'" class="config-tab-content">
         <!-- Set -->
         <div class="config-section">
-          <h3 class="config-title">录制设置</h3>
+          <h3 class="config-title">{{ $tp('录制设置') }}</h3>
           <div class="config-buttons">
             <el-button
               :type="configForm.deleteAll ? 'danger' : ''"
               :plain="!configForm.deleteAll"
               @click="toggleDeleteAll"
-            >
-              删除
-            </el-button>
+            > {{ $tp('删除') }} </el-button>
             <el-button
               :type="configForm.deleteAllTime ? 'danger' : ''"
               :plain="!configForm.deleteAllTime"
               @click="toggleDeleteAllTime"
-            >
-              删除全部
-            </el-button>
+            > {{ $tp('删除全部') }} </el-button>
           </div>
         </div>
 
@@ -44,30 +40,22 @@
               :type="configForm.recordSettings.everyday ? 'primary' : ''"
               :plain="!configForm.recordSettings.everyday"
               @click="setRecordType('everyday')"
-            >
-              每天
-            </el-button>
+            > {{ $tp('每天') }} </el-button>
             <el-button
               :type="configForm.recordSettings.weekly ? 'primary' : ''"
               :plain="!configForm.recordSettings.weekly"
               @click="setRecordType('weekly')"
-            >
-              每周
-            </el-button>
+            > {{ $tp('每周') }} </el-button>
             <el-button
               :type="configForm.recordSettings.monthly ? 'primary' : ''"
               :plain="!configForm.recordSettings.monthly"
               @click="setRecordType('monthly')"
-            >
-              每月
-            </el-button>
+            > {{ $tp('每月') }} </el-button>
             <el-button
               :type="configForm.recordSettings.custom ? 'primary' : ''"
               :plain="!configForm.recordSettings.custom"
               @click="setRecordType('custom')"
-            >
-              自定义
-            </el-button>
+            > {{ $tp('自定义') }} </el-button>
           </div>
         </div>
 
@@ -76,7 +64,7 @@
           <div class="schedule-container">
             <!--  -->
             <div v-if="configForm.recordSettings.everyday" class="daily-schedule">
-              <h4 class="schedule-title">每天录制时间</h4>
+              <h4 class="schedule-title">{{ $tp('每天录制时间') }}</h4>
               <!--  -->
               <div class="time-axis-daily">
                 <div class="time-labels-daily">
@@ -107,7 +95,7 @@
 
             <!--  -->
             <div v-if="configForm.recordSettings.weekly" class="weekly-schedule">
-              <h4 class="schedule-title">每周录制时间</h4>
+              <h4 class="schedule-title">{{ $tp('每周录制时间') }}</h4>
               <!--  -->
               <div class="week-rows">
                 <div
@@ -159,12 +147,12 @@
               <!--  -->
               <el-dialog
                 v-model="copyDialogVisible"
-                title="复制时间设置"
+                :title="$tp('复制时间设置')"
                 width="25%"
                 :show-close="true"
               >
                 <div class="copy-dialog-content">
-                  <p>将 {{ sourceDay }} 的时间设置复制到：</p>
+                  <p>{{ $tp('将') }} {{ sourceDay }} {{ $tp('的时间设置复制到：') }}</p>
                   <div class="copy-day-options">
                     <el-checkbox-group v-model="copyTargetDays">
                       <el-checkbox
@@ -185,8 +173,8 @@
                 </div>
                 <template #footer>
                   <div class="copy-dialog-footer">
-                    <el-button @click="cancelCopy" class="common_btn">取消</el-button>
-                    <el-button type="primary" @click="confirmCopy" class="common_btn">确定</el-button>
+                    <el-button @click="cancelCopy" class="common_btn">{{ $tp('取消') }}</el-button>
+                    <el-button type="primary" @click="confirmCopy" class="common_btn">{{ $tp('确定') }}</el-button>
                   </div>
                 </template>
               </el-dialog>
@@ -194,7 +182,7 @@
 
             <!--  -->
             <div v-if="configForm.recordSettings.monthly" class="monthly-schedule">
-              <h4 class="schedule-title">每月录制时间</h4>
+              <h4 class="schedule-title">{{ $tp('每月录制时间') }}</h4>
               <div class="month-rows">
                 <div
                   v-for="day in monthDays"
@@ -233,22 +221,22 @@
 
             <!-- Custom -->
             <div v-if="configForm.recordSettings.custom" class="custom-schedule">
-              <h4 class="schedule-title">自定义录制时间</h4>
+              <h4 class="schedule-title">{{ $tp('自定义录制时间') }}</h4>
               <div class="custom-actions">
                 <el-date-picker
                   v-model="customDateValue"
                   type="date"
                   format="YYYY-MM-DD"
                   value-format="YYYY-MM-DD"
-                  placeholder="选择时间"
+                  :placeholder="$tp('选择时间')"
                   class="custom-date-picker"
                 />
                 <div class="custom-actions-buttons">
-                  <el-button type="primary" @click="addCustomDate">添加时间</el-button>
-                  <el-button @click="clearCustomDates">清除</el-button>
+                  <el-button type="primary" @click="addCustomDate">{{ $tp('添加时间') }}</el-button>
+                  <el-button @click="clearCustomDates">{{ $tp('清除') }}</el-button>
                 </div>
               </div>
-              <div v-if="!customDateList.length" class="custom-empty">没有添加自定义录制时间</div>
+              <div v-if="!customDateList.length" class="custom-empty">{{ $tp('没有添加自定义录制时间') }}</div>
               <div v-else class="custom-rows">
                 <div
                   v-for="dateKey in customDateList"
@@ -282,7 +270,7 @@
                     </div>
                   </div>
                   <div class="custom-action">
-                    <el-button size="small" text @click="removeCustomDate(dateKey)">删除</el-button>
+                    <el-button size="small" text @click="removeCustomDate(dateKey)">{{ $tp('删除') }}</el-button>
                   </div>
                 </div>
               </div>
@@ -295,49 +283,49 @@
       <div v-if="activeTab === 'event'" class="config-tab-content">
         <!-- event -->
         <div class="event-tabs">
-          <div class="event-tab-item active">移动侦测</div>
-          <div class="event-tab-item">遮挡报警</div>
+          <div class="event-tab-item active">{{ $tp('移动侦测') }}</div>
+          <div class="event-tab-item">{{ $tp('遮挡报警') }}</div>
         </div>
 
         <!-- event item -->
         <div class="config-section">
           <div class="event-options">
-            <el-checkbox v-model="eventForm.motionDetection" label="启用移动侦测" />
-            <el-checkbox v-model="eventForm.ptzUpload" label="启用PTZ运动报警上报" />
-            <el-checkbox v-model="eventForm.autoAnalysis" label="启用动态分析" />
+            <el-checkbox v-model="eventForm.motionDetection" value="启用移动侦测" :label="$tp('启用移动侦测')" />
+            <el-checkbox v-model="eventForm.ptzUpload" value="启用PTZ运动报警上报" :label="$tp('启用PTZ运动报警上报')" />
+            <el-checkbox v-model="eventForm.autoAnalysis" value="启用动态分析" :label="$tp('启用动态分析')" />
           </div>
         </div>
 
         <!--  -->
         <div class="config-section">
-          <h3 class="config-title">触发报警时</h3>
+          <h3 class="config-title">{{ $tp('触发报警时') }}</h3>
           <div class="alert-options">
             <el-radio-group v-model="eventForm.alertType">
-              <el-radio label="video">录像</el-radio>
-              <el-radio label="image">抓图</el-radio>
+              <el-radio label="video">{{ $tp('录像') }}</el-radio>
+              <el-radio label="image">{{ $tp('抓图') }}</el-radio>
             </el-radio-group>
           </div>
         </div>
 
         <!-- before after -->
         <div class="config-section">
-          <h3 class="config-title">触发报警前后录制时间</h3>
+          <h3 class="config-title">{{ $tp('触发报警前后录制时间') }}</h3>
           <div class="time-inputs">
             <div class="time-input-group">
-              <span class="time-label">前</span>
+              <span class="time-label">{{ $tp('前') }}</span>
               <el-input
                 v-model="eventForm.preRecordTime"
-                placeholder="请输入"
+                :placeholder="$tp('请输入')"
                 style="width: 120px"
               />
-              <span class="time-unit">秒</span>
-              <span class="time-label" style="margin-left: 20px">后</span>
+              <span class="time-unit">{{ $tp('秒') }}</span>
+              <span class="time-label" style="margin-left: 20px">{{ $tp('后') }}</span>
               <el-input
                 v-model="eventForm.postRecordTime"
-                placeholder="请输入"
+                :placeholder="$tp('请输入')"
                 style="width: 120px"
               />
-              <span class="time-unit">秒</span>
+              <span class="time-unit">{{ $tp('秒') }}</span>
             </div>
           </div>
         </div>
@@ -349,15 +337,15 @@
           type="primary"
           class="save-config-btn"
           @click="saveTimeStrategy"
-        >
-          保存
-        </el-button>
+        > {{ $tp('保存') }} </el-button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { DocumentCopy } from '@element-plus/icons-vue'
@@ -693,7 +681,7 @@ const cancelCopy = () => {
 
 const confirmCopy = () => {
   if (copyTargetDays.value.length === 0) {
-    ElMessage.warning('请选择要复制到的日期')
+    ElMessage.warning(uiText('请选择要复制到的日期'))
     return
   }
 
@@ -703,7 +691,7 @@ const confirmCopy = () => {
     timeStrategyData.weeklyTimes[targetDay] = [...sourceConfig]
   })
 
-  ElMessage.success(`已复制到 ${copyTargetDays.value.length} 个日期`)
+  ElMessage.success(uiText('已复制到 {value0} 个日期', { value0: copyTargetDays.value.length }))
   cancelCopy()
 }
 

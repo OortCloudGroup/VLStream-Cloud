@@ -28,17 +28,17 @@
       >
         <span class="video-dialog-title">{{ title }}</span>
         <div class="dialog-controls">
-          <button class="dialog-control-btn minimize-btn" @click="$emit('minimize')" title="最小化">
+          <button class="dialog-control-btn minimize-btn" @click="$emit('minimize')" :title="$tp('最小化')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 13H5v-2h14v2z"/>
             </svg>
           </button>
-          <button class="dialog-control-btn fullscreen-btn" @click="$emit('toggle-fullscreen')" :title="isFullscreen ? '退出全屏' : '全屏'">
+          <button class="dialog-control-btn fullscreen-btn" @click="$emit('toggle-fullscreen')" :title="isFullscreen ? $tp('退出全屏') : $tp('全屏')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
             </svg>
           </button>
-          <button class="dialog-control-btn close-btn" @click="$emit('close')" title="关闭">
+          <button class="dialog-control-btn close-btn" @click="$emit('close')" :title="$tp('关闭')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
             </svg>
@@ -54,7 +54,7 @@
             <!-- prompt / tip -->
             <div class="drag-tip" v-if="layoutCount > 1">
               <el-icon><InfoFilled /></el-icon>
-              <span>直接拖拽视频窗口可交换位置</span>
+              <span>{{ $tp('直接拖拽视频窗口可交换位置') }}</span>
             </div>
 
             <div class="video-area">
@@ -106,7 +106,7 @@
                         @error="$emit('webrtc-iframe-error')"
                       ></iframe>
                       <div class="webrtc-info">
-                        <small>WebRTC播放 - {{ cameras[index - 1].name }}</small>
+                        <small>{{ $tp('WebRTC播放 -') }} {{ cameras[index - 1].name }}</small>
                       </div>
                     </div>
 
@@ -126,10 +126,10 @@
                     <div v-else class="video-placeholder">
                       <div class="placeholder-content">
                         <div class="placeholder-icon">📹</div>
-                        <div class="placeholder-text">暂无视频流</div>
+                        <div class="placeholder-text">{{ $tp('暂无视频流') }}</div>
                         <div class="placeholder-details">
-                          <div>设备: {{ cameras[index - 1].name }}</div>
-                          <div>状态: 在线</div>
+                          <div>{{ $tp('设备:') }} {{ cameras[index - 1].name }}</div>
+                          <div>{{ $tp('状态: 在线') }}</div>
                         </div>
 
                         <!-- operation item -->
@@ -137,21 +137,15 @@
                           <button class="action-btn primary" @click="$emit('retry-webrtc-connection', cameras[index - 1])">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-                            </svg>
-                            重试连接
-                          </button>
+                            </svg> {{ $tp('重试连接') }} </button>
                           <button class="action-btn secondary" @click="$emit('copy-stream-url', cameras[index - 1].deviceData?.streamUrl)">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                            </svg>
-                            复制地址
-                          </button>
+                            </svg> {{ $tp('复制地址') }} </button>
                           <button class="action-btn secondary" @click="$emit('open-in-vlc', cameras[index - 1].deviceData?.streamUrl)">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
-                            </svg>
-                            VLC播放
-                          </button>
+                            </svg> {{ $tp('VLC播放') }} </button>
                         </div>
                       </div>
                     </div>
@@ -162,10 +156,10 @@
                     <div class="video-placeholder empty-placeholder">
                       <div class="placeholder-content">
                         <div class="placeholder-icon">📺</div>
-                        <div class="placeholder-text">空白窗口</div>
+                        <div class="placeholder-text">{{ $tp('空白窗口') }}</div>
                         <div class="placeholder-details">
-                          <div>位置: {{ index }}</div>
-                          <div>状态: 待分配</div>
+                          <div>{{ $tp('位置:') }} {{ index }}</div>
+                          <div>{{ $tp('状态: 待分配') }}</div>
                         </div>
 
                         <!-- device item -->
@@ -173,9 +167,7 @@
                           <button class="action-btn primary" @click="$emit('add-device-to-window', index - 1)">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                            </svg>
-                            添加设备
-                          </button>
+                            </svg> {{ $tp('添加设备') }} </button>
                         </div>
                       </div>
                     </div>
@@ -191,15 +183,14 @@
                 @click="$emit('toggle-recording')"
                 :class="{ 'recording': isRecording }"
               >
-                <span v-if="!isRecording">开始录像</span>
-                <span v-else>停止录像</span>
+                <span v-if="!isRecording">{{ $tp('开始录像') }}</span>
+                <span v-else>{{ $tp('停止录像') }}</span>
               </button>
 
               <!-- recording -->
               <div v-if="isRecording" class="recording-status">
                 <div class="recording-indicator">
-                  <span class="recording-dot"></span>
-                  录制中 {{ recordingTime }}
+                  <span class="recording-dot"></span> {{ $tp('录制中') }} {{ recordingTime }}
                 </div>
               </div>
             </div>

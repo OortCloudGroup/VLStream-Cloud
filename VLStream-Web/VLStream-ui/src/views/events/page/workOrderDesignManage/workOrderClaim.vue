@@ -13,7 +13,7 @@
           <div class="depNameBox flexRowAC" />
           <!--  -->
           <div class="searchHeight_out flexRowAC">
-            <search-height-box keyword="processName" placeholder="流程名称" :data="searchData" @handle="searchResetFn" />
+            <search-height-box keyword="processName" :placeholder="$tp('流程名称')" :data="searchData" @handle="searchResetFn" />
             <export-excel-pdf />
           </div>
         </div>
@@ -53,7 +53,7 @@
               <div class="operateBox flexRowAC">
                 <div class="new_table_svg_group" @click="handleDetail(scope.row)">
                   <oort-svg-icon width="14" height="14" name="table_jiedan" class="new_table_svg_group_svg" />
-                  <span>接单</span>
+                  <span>{{ $tp('接单') }}</span>
                 </div>
               </div>
             </template>
@@ -74,7 +74,7 @@
     </div>
     <el-drawer
       v-model="dVisi"
-      title="可接工单"
+      :title="$tp('可接工单')"
       size="80%"
       direction="rtl"
       :destroy-on-close="true"

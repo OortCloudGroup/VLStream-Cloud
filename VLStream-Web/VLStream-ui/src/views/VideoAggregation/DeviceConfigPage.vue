@@ -9,9 +9,9 @@
   <div class="device-sub-page tenant_Page draHeaPB">
     <div class="page-header">
       <div class="breadcrumb">
-        <span class="breadcrumb-item" @click="goBack">设备列表</span>
+        <span class="breadcrumb-item" @click="goBack">{{ $tp('设备列表') }}</span>
         <span class="breadcrumb-separator">></span>
-        <span class="breadcrumb-item active">配置参数</span>
+        <span class="breadcrumb-item active">{{ $tp('配置参数') }}</span>
       </div>
     </div>
     <div v-loading="loading" class="page-body">
@@ -26,6 +26,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -45,7 +47,7 @@ const goBack = () => {
 const loadDevice = async () => {
   const id = route.query.id
   if (!id) {
-    ElMessage.error('缺少设备ID')
+    ElMessage.error(uiText('缺少设备ID'))
     goBack()
     return
   }
@@ -68,10 +70,10 @@ const loadDevice = async () => {
 const handleSave = async (strategyData) => {
   try {
     await saveTimeStrategyAPI(strategyData)
-    ElMessage.success('时间策略保存成功')
+    ElMessage.success(uiText('时间策略保存成功'))
   } catch (error) {
     console.error('保存时间策略失败:', error)
-    ElMessage.error('保存失败')
+    ElMessage.error(uiText('保存失败'))
   }
 }
 

@@ -16,7 +16,7 @@
     @show="handlePopoverShow"
   >
     <template #reference>
-      <button class="oortcloud-entry" :class="{ 'is-logged-in': isLoggedIn }" type="button" aria-label="打开 OortCloud">
+      <button class="oortcloud-entry" :class="{ 'is-logged-in': isLoggedIn }" type="button" :aria-label="$tp('打开 OortCloud')">
         <img class="entry-logo" src="@/assets/img/OortCloud@3x.png" alt="" aria-hidden="true" />
         <span>OortCloud</span>
       </button>
@@ -27,58 +27,58 @@
         <img class="brand-logo" src="@/assets/img/OortCloud@3x.png" alt="" aria-hidden="true" />
         <div class="brand-copy">
           <div class="brand-name">OortCloud</div>
-          <div class="brand-slogan">安全、合规AI能力</div>
+          <div class="brand-slogan">{{ $tp('安全、合规AI能力') }}</div>
         </div>
       </div>
 
       <el-alert v-if="loadError" class="account-error" :title="loadError" type="warning" :closable="false" show-icon />
 
       <template v-if="!isLoggedIn">
-        <h2>欢迎使用 OortCloud！</h2>
-        <p class="description">订阅 OortCloud Token Plan，20元/月起，Qwen，DeepSeek，Kimi，GLM等顶级模型尝鲜，更有OortCodex和DSH For OortCloud Work以及VLStream数据分析生态共享额度，高效开启AI生产力。</p>
-        <p class="prompt">开始使用，登录你的 OortCloud 账户。获得强大模型、高质量的工程、成本分析等。</p>
-        <el-button class="login-button" type="primary" round @click="handleLogin">登录 OortCloud</el-button>
+        <h2>{{ $tp('欢迎使用 OortCloud！') }}</h2>
+        <p class="description">{{ $tp('订阅 OortCloud Token Plan，20元/月起，Qwen，DeepSeek，Kimi，GLM等顶级模型尝鲜，更有OortCodex和DSH For OortCloud Work以及VLStream数据分析生态共享额度，高效开启AI生产力。') }}</p>
+        <p class="prompt">{{ $tp('开始使用，登录你的 OortCloud 账户。获得强大模型、高质量的工程、成本分析等。') }}</p>
+        <el-button class="login-button" type="primary" round @click="handleLogin">{{ $tp('登录 OortCloud') }}</el-button>
       </template>
 
       <template v-else>
         <div class="welcome-row">
-          <strong>欢迎</strong>
+          <strong>{{ $tp('欢迎') }}</strong>
           <el-avatar :size="36" :src="account.photo">{{ accountInitial }}</el-avatar>
-          <strong class="user-name">{{ account.userName || 'OortCloud 用户' }}</strong>
+          <strong class="user-name">{{ account.userName || $tp('OortCloud 用户') }}</strong>
           <span v-if="accountBadge" class="plan-badge">{{ accountBadge }}</span>
         </div>
 
         <section class="content-section">
-          <h3>用量明细</h3>
+          <h3>{{ $tp('用量明细') }}</h3>
           <div class="resource-list">
             <article v-for="resource in resources" :key="resource.id" class="content-panel resource-card">
               <div class="resource-heading">{{ resource.title }}</div>
               <p class="resource-description">{{ resource.description }}</p>
               <div class="resource-usage">
-                <span><strong>{{ formatCredits(resource.usedCredits) }}</strong> / {{ resource.unlimited ? '无限' : formatCredits(resource.totalCredits) }}<template v-if="!resource.unlimited">（已使用{{ resource.percentage }}%）</template></span>
-                <span v-if="!resource.unlimited">剩余 <strong>{{ formatCredits(resource.remainingCredits) }}</strong></span>
+                <span><strong>{{ formatCredits(resource.usedCredits) }}</strong> / {{ resource.unlimited ? $tp('无限') : formatCredits(resource.totalCredits) }}<template v-if="!resource.unlimited">{{ $tp('（已使用') }}{{ resource.percentage }}%）</template></span>
+                <span v-if="!resource.unlimited">{{ $tp('剩余') }} <strong>{{ formatCredits(resource.remainingCredits) }}</strong></span>
               </div>
               <el-progress v-if="!resource.unlimited" :percentage="resource.percentage" :show-text="false" :stroke-width="5" />
-              <div v-else class="unlimited-line">当前订阅为无限额度</div>
+              <div v-else class="unlimited-line">{{ $tp('当前订阅为无限额度') }}</div>
             </article>
 
             <article class="content-panel upgrade-card">
-              <div class="resource-heading">获取更多Credits</div>
-              <p class="resource-description">你可以随时通过升级订阅计划或购买资源包，获取更多Credits</p>
-              <el-button type="primary" class="upgrade-button" @click="handleUpgrade">升级至企业版</el-button>
-              <el-button type="primary" plain class="resource-pack-button" :loading="resourcePackLoading" @click="handleBuyResourcePack">购买资源包</el-button>
+              <div class="resource-heading">{{ $tp('获取更多Credits') }}</div>
+              <p class="resource-description">{{ $tp('你可以随时通过升级订阅计划或购买资源包，获取更多Credits') }}</p>
+              <el-button type="primary" class="upgrade-button" @click="handleUpgrade">{{ $tp('升级至企业版') }}</el-button>
+              <el-button type="primary" plain class="resource-pack-button" :loading="resourcePackLoading" @click="handleBuyResourcePack">{{ $tp('购买资源包') }}</el-button>
             </article>
           </div>
         </section>
 
         <section class="content-section records-section">
-          <h3>Credits记录</h3>
+          <h3>{{ $tp('Credits记录') }}</h3>
           <div class="content-panel records-panel">
             <div class="records-toolbar">
-              <el-button type="primary" :loading="recordsLoading" @click="loadUsageRecords()"><el-icon><Refresh /></el-icon>刷新</el-button>
+              <el-button type="primary" :loading="recordsLoading" @click="loadUsageRecords()"><el-icon><Refresh /></el-icon>{{ $tp('刷新') }}</el-button>
               <el-date-picker v-model="dateRange" type="daterange" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :clearable="false" :teleported="false" @change="loadUsageRecords()" />
             </div>
-            <p class="records-note">当前您已享受到模型的优惠价格。下方明细为按对话合并计费后的汇总数据，具体消耗以此为准。</p>
+            <p class="records-note">{{ $tp('当前您已享受到模型的优惠价格。下方明细为按对话合并计费后的汇总数据，具体消耗以此为准。') }}</p>
 
             <el-table v-if="usageRecords.length" :data="usageRecords" class="records-table" size="small">
               <el-table-column :label="$tp('时间')" min-width="112"><template #default="scope">{{ formatRecordTime(scope.row.created_at) }}</template></el-table-column>
@@ -87,7 +87,7 @@
               <el-table-column label="Credits" min-width="78"><template #default="scope">{{ formatCredits(scope.row.credits) }}</template></el-table-column>
               <el-table-column :label="$tp('参考费用')" min-width="78"><template #default="scope">{{ formatReferenceCost(scope.row) }}</template></el-table-column>
             </el-table>
-            <el-empty v-else :image-size="54" description="当前时间范围内暂无 Credits 记录" />
+            <el-empty v-else :image-size="54" :description="$tp('当前时间范围内暂无 Credits 记录')" />
             <el-pagination
               v-if="recordsTotal > 0"
               class="records-pagination"
@@ -104,16 +104,18 @@
         </section>
 
         <div class="account-actions">
-          <el-button class="account-action visit-button" type="primary" round @click="handleVisitOortCloud"><el-icon><Link /></el-icon>访问 OortCloud</el-button>
-          <el-button v-if="!usesPlatformSession" class="account-action logout-button" round @click="handleLogout"><el-icon><SwitchButton /></el-icon>退出登录</el-button>
+          <el-button class="account-action visit-button" type="primary" round @click="handleVisitOortCloud"><el-icon><Link /></el-icon>{{ $tp('访问 OortCloud') }}</el-button>
+          <el-button v-if="!usesPlatformSession" class="account-action logout-button" round @click="handleLogout"><el-icon><SwitchButton /></el-icon>{{ $tp('退出登录') }}</el-button>
         </div>
-        <p v-if="usesPlatformSession" class="records-note">使用当前平台账号，切换或退出请使用右上角账号菜单。</p>
+        <p v-if="usesPlatformSession" class="records-note">{{ $tp('使用当前平台账号，切换或退出请使用右上角账号菜单。') }}</p>
       </template>
     </div>
   </el-popover>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { Link, Refresh, SwitchButton } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -163,9 +165,9 @@ const isLoggedIn = computed(() => authVerified.value)
 const accountInitial = computed(() => (account.userName || 'O').slice(0, 1))
 const planMap = computed(() => new Map(plans.value.map((plan) => [Number(plan.id), plan])))
 const accountBadge = computed(() => {
-  if (subscriptions.value.length > 1) return '多订阅'
-  if (subscriptions.value.length === 1) return planMap.value.get(Number(subscriptions.value[0].plan_id))?.title || '订阅版'
-  return '按量版'
+  if (subscriptions.value.length > 1) return uiText('多订阅')
+  if (subscriptions.value.length === 1) return planMap.value.get(Number(subscriptions.value[0].plan_id))?.title || uiText('订阅版')
+  return uiText('按量版')
 })
 
 const normalizeNumber = (value, fallback = 0) => {
@@ -334,7 +336,7 @@ const loadAccount = async () => {
         redirectToPlatformLogin()
       } else {
         clearModelHubAuth()
-        ElMessage.warning('OortCloud 登录已失效，请重新登录')
+        ElMessage.warning(uiText('OortCloud 登录已失效，请重新登录'))
       }
     } else loadError.value = error?.response?.data?.message || error?.response?.data?.msg || error?.message || 'OortCloud 账户加载失败'
   } finally {
@@ -371,16 +373,16 @@ const handleBuyResourcePack = async () => {
     }
     window.location.assign(target.toString())
   } catch (error) {
-    if (isCurrentSession(session)) ElMessage.error(error?.message || '资源包购买入口加载失败，请重试')
+    if (isCurrentSession(session)) ElMessage.error(error?.message || uiText('资源包购买入口加载失败，请重试'))
   } finally {
     resourcePackLoading.value = false
   }
 }
 const handleLogout = async () => {
-  try { await logoutModelHubSession() } catch { ElMessage.warning('OortCloud 远端退出失败，已清理本地登录状态') }
+  try { await logoutModelHubSession() } catch { ElMessage.warning(uiText('OortCloud 远端退出失败，已清理本地登录状态')) }
   resetAccountState()
   authToken.value = ''
-  ElMessage.success('已退出 OortCloud')
+  ElMessage.success(uiText('已退出 OortCloud'))
 }
 const handleLogin = async () => {
   if (usesPlatformSession.value) {

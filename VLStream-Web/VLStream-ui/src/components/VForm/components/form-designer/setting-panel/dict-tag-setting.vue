@@ -7,22 +7,22 @@
 
 <template>
   <div>
-    <el-form-item style="width: 100%;" label="数据类标识">
-      <el-input v-model="dataTag" placeholder="请输入数据类标识" type="text">
+    <el-form-item style="width: 100%;" :label="$tp('数据类标识')">
+      <el-input v-model="dataTag" :placeholder="$tp('请输入数据类标识')" type="text">
         <template #append>
           <el-button :icon="Plus" @click="addDictTag" />
         </template>
       </el-input>
     </el-form-item>
-    <el-form-item style="width: 100%;" label="显示方式">
-      <el-select v-model="showType" placeholder="请选择显示方式" type="text" @change="showTypeChange">
-        <el-option label="单选" :value="1" />
-        <el-option label="多选" :value="2" />
-        <el-option label="下拉单选" :value="3" />
-        <el-option label="下拉多选" :value="4" />
+    <el-form-item style="width: 100%;" :label="$tp('显示方式')">
+      <el-select v-model="showType" :placeholder="$tp('请选择显示方式')" type="text" @change="showTypeChange">
+        <el-option :label="$tp('单选')" :value="1" />
+        <el-option :label="$tp('多选')" :value="2" />
+        <el-option :label="$tp('下拉单选')" :value="3" />
+        <el-option :label="$tp('下拉多选')" :value="4" />
       </el-select>
     </el-form-item>
-    <el-dialog v-model="dialogVisible" title="选择数据类标识" width="30%">
+    <el-dialog v-model="dialogVisible" :title="$tp('选择数据类标识')" width="30%">
       <div class="dict-tag-table">
         <el-table
           header-cell-class-name="header_tenant_cell"
@@ -52,8 +52,8 @@
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false" class="common_btn">取 消</el-button>
-          <el-button type="primary" @click="saveDataTag" class="common_btn">确 定</el-button>
+          <el-button @click="dialogVisible = false" class="common_btn">{{ $tp('取 消') }}</el-button>
+          <el-button type="primary" @click="saveDataTag" class="common_btn">{{ $tp('确 定') }}</el-button>
         </span>
       </template>
     </el-dialog>

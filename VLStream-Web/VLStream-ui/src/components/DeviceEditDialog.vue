@@ -8,7 +8,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="设备列表 > 编辑设备"
+    :title="$tp('设备列表 > 编辑设备')"
     width="800px"
     :close-on-click-modal="false"
     class="device-edit-dialog"
@@ -17,7 +17,7 @@
     <div class="edit-content">
       <!-- info -->
       <div class="section">
-        <h3 class="section-title">基本信息</h3>
+        <h3 class="section-title">{{ $tp('基本信息') }}</h3>
 
         <el-form
           :model="deviceForm"
@@ -26,21 +26,21 @@
           label-width="100px"
           class="edit-form"
         >
-          <el-form-item label="视频流路径" prop="streamPath" class="required-field">
+          <el-form-item :label="$tp('视频流路径')" prop="streamPath" class="required-field">
             <el-input
               v-model="deviceForm.streamPath"
               placeholder="rtsp://192.168.88.58:524/stream/aaa"
             />
           </el-form-item>
 
-          <el-form-item label="设备名称" prop="name">
+          <el-form-item :label="$tp('设备名称')" prop="name">
             <el-input
               v-model="deviceForm.name"
-              placeholder="自动生成名称"
+              :placeholder="$tp('自动生成名称')"
             />
           </el-form-item>
 
-          <el-form-item label="设备标签" prop="tags">
+          <el-form-item :label="$tp('设备标签')" prop="tags">
             <div class="tags-container">
               <el-tag
                 v-for="tag in deviceForm.tags"
@@ -51,9 +51,7 @@
               >
                 {{ tag }}
               </el-tag>
-              <el-button class="add-tag-btn" size="small" @click="showTagInput">
-                + 添加标签
-              </el-button>
+              <el-button class="add-tag-btn" size="small" @click="showTagInput"> {{ $tp('+ 添加标签') }} </el-button>
             </div>
           </el-form-item>
         </el-form>
@@ -61,84 +59,84 @@
 
       <!-- info -->
       <div class="section">
-        <h3 class="section-title">更多信息</h3>
+        <h3 class="section-title">{{ $tp('更多信息') }}</h3>
 
         <el-form
           :model="deviceForm"
           label-width="100px"
           class="edit-form"
         >
-          <el-form-item label="设备ID">
+          <el-form-item :label="$tp('设备ID')">
             <el-input
               v-model="deviceForm.deviceId"
-              placeholder="输入设备ID"
+              :placeholder="$tp('输入设备ID')"
             />
           </el-form-item>
 
-          <el-form-item label="类型">
+          <el-form-item :label="$tp('类型')">
             <el-input
               v-model="deviceForm.type"
-              placeholder="输入类型：枪机、球机"
+              :placeholder="$tp('输入类型：枪机、球机')"
             />
           </el-form-item>
 
-          <el-form-item label="图片路径">
+          <el-form-item :label="$tp('图片路径')">
             <el-input
               v-model="deviceForm.imagePath"
-              placeholder="输入图片路径"
+              :placeholder="$tp('输入图片路径')"
             />
           </el-form-item>
 
-          <el-form-item label="经纬度坐标">
+          <el-form-item :label="$tp('经纬度坐标')">
             <div class="coordinate-input">
               <el-input
                 v-model="deviceForm.longitude"
-                placeholder="输入经度"
+                :placeholder="$tp('输入经度')"
                 class="coordinate-item"
               />
               <el-input
                 v-model="deviceForm.latitude"
-                placeholder="输入纬度"
+                :placeholder="$tp('输入纬度')"
                 class="coordinate-item"
               />
-              <el-button type="primary" class="locate-btn">地图选点</el-button>
+              <el-button type="primary" class="locate-btn">{{ $tp('地图选点') }}</el-button>
             </div>
           </el-form-item>
 
-          <el-form-item label="高度位置">
+          <el-form-item :label="$tp('高度位置')">
             <div class="height-options">
               <el-radio-group v-model="deviceForm.heightPosition">
-                <el-radio label="高空">高空</el-radio>
-                <el-radio label="地面">地面</el-radio>
-                <el-radio label="地下">地下</el-radio>
-                <el-radio label="其他">其他</el-radio>
+                <el-radio value="高空" :label="$tp('高空')">{{ $tp('高空') }}</el-radio>
+                <el-radio value="地面" :label="$tp('地面')">{{ $tp('地面') }}</el-radio>
+                <el-radio value="地下" :label="$tp('地下')">{{ $tp('地下') }}</el-radio>
+                <el-radio value="其他" :label="$tp('其他')">{{ $tp('其他') }}</el-radio>
               </el-radio-group>
             </div>
           </el-form-item>
 
-          <el-form-item label="详细地址">
+          <el-form-item :label="$tp('详细地址')">
             <el-input
               v-model="deviceForm.address"
-              placeholder="输入详细地址：省/市/区（县）/街道（村）"
+              :placeholder="$tp('输入详细地址：省/市/区（县）/街道（村）')"
             />
           </el-form-item>
 
-          <el-form-item label="区划选择">
+          <el-form-item :label="$tp('区划选择')">
             <el-select
               v-model="deviceForm.region"
-              placeholder="选择区划"
+              :placeholder="$tp('选择区划')"
               style="width: 100%"
             >
-              <el-option label="选择区划" value="" />
+              <el-option :label="$tp('选择区划')" value="" />
             </el-select>
           </el-form-item>
 
-          <el-form-item label="备注">
+          <el-form-item :label="$tp('备注')">
             <el-input
               v-model="deviceForm.remark"
               type="textarea"
               :rows="3"
-              placeholder="请输入备注信息"
+              :placeholder="$tp('请输入备注信息')"
             />
           </el-form-item>
         </el-form>
@@ -147,13 +145,15 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button type="primary" @click="handleSave" class="save-btn common_btn">保存</el-button>
+        <el-button type="primary" @click="handleSave" class="save-btn common_btn">{{ $tp('保存') }}</el-button>
       </div>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 
@@ -226,7 +226,7 @@ const removeTag = (tag) => {
 }
 
 const showTagInput = () => {
-  ElMessage.info('添加标签功能')
+  ElMessage.info(uiText('添加标签功能'))
 }
 
 const handleClose = () => {
@@ -240,7 +240,7 @@ const handleSave = async () => {
     await deviceFormRef.value.validate()
     emit('save', deviceForm.value)
     visible.value = false
-    ElMessage.success('保存成功')
+    ElMessage.success(uiText('保存成功'))
   } catch (error) {
     console.error('表单验证失败:', error)
   }

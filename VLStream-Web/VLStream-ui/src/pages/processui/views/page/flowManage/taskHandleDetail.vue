@@ -25,13 +25,11 @@
     <!--      </div>-->
     <!--    </div>-->
     <div v-if="taskInfo?.workorderId==='true'" class="infoBoxOut">
-      <div class="infoBox_t">
-        工单信息
-      </div>
+      <div class="infoBox_t"> {{ $tp('工单信息') }} </div>
       <div class="infoBox">
         <div class="flexRowAC infoItem" :class="{img:taskInfo?.type}">
           <div class="infoItem_t flexRowAC">
-            <span class="infoItem_label">所属项目</span>
+            <span class="infoItem_label">{{ $tp('所属项目') }}</span>
             {{ infoTemp?.['dept_name'] || '-' }}
             <img v-if="taskInfo?.type==='1'" class="pro_djd" src="@/assets/img/processui/pro_djd.png" alt="" />
             <img v-if="taskInfo?.type==='6'" class="pro_djd" src="@/assets/img/processui/pro_dpj.png" alt="" />
@@ -40,41 +38,41 @@
             <img v-if="taskInfo?.type==='4'||taskInfo?.type==='5'" class="pro_djd" src="@/assets/img/processui/pro_dsh.png" alt="" />
           </div>
           <div class="infoItem_t flexRowAC">
-            <span class="infoItem_label">工单编号</span>
+            <span class="infoItem_label">{{ $tp('工单编号') }}</span>
             {{ infoTemp?.['workorderNumber'] || '-' }}
           </div>
         </div>
         <div class="flexRowAC infoItem">
           <div class="infoItem_t flexRowAC">
-            <span class="infoItem_label">建单人</span>
+            <span class="infoItem_label">{{ $tp('建单人') }}</span>
             {{ infoTemp?.['createBy'] || '-' }}
           </div>
           <div class="infoItem_t flexRowAC">
-            <span class="infoItem_label">联系电话</span>
+            <span class="infoItem_label">{{ $tp('联系电话') }}</span>
             {{ infoTemp?.['createTime1'] || '-' }}
           </div>
         </div>
         <div class="flexRowAC infoItem">
           <div class="infoItem_t flexRowAC">
-            <span class="infoItem_label">工单类型</span>
+            <span class="infoItem_label">{{ $tp('工单类型') }}</span>
             {{ infoTemp?.['workorderName']|| workorderIdFormat(infoTemp?.['workorderId']) || infoTemp?.['workorderId'] || '-' }}
           </div>
           <div class="infoItem_t flexRowAC">
-            <span class="infoItem_label">报单时间</span>
+            <span class="infoItem_label">{{ $tp('报单时间') }}</span>
             {{ infoTemp?.['createTime'] || '-' }}
           </div>
         </div>
         <div class="flexRowAC infoItem">
           <div class="infoItem_t flexRowAC">
-            <span class="infoItem_label">详细地址</span>
+            <span class="infoItem_label">{{ $tp('详细地址') }}</span>
             {{ infoTemp?.['addr'] || '-' }}
           </div>
           <div class="infoItem_t flexRowAC">
-            <span class="infoItem_label">紧急程度</span>
+            <span class="infoItem_label">{{ $tp('紧急程度') }}</span>
             <template v-if="infoTemp?.priority">
-              <span v-if="infoTemp.priority==='normal'">一般</span>
-              <span v-if="infoTemp.priority==='urgent'">紧急</span>
-              <span v-if="infoTemp.priority==='critical'">严重</span>
+              <span v-if="infoTemp.priority==='normal'">{{ $tp('一般') }}</span>
+              <span v-if="infoTemp.priority==='urgent'">{{ $tp('紧急') }}</span>
+              <span v-if="infoTemp.priority==='critical'">{{ $tp('严重') }}</span>
             </template>
             <span v-else>-</span>
           </div>
@@ -83,12 +81,12 @@
     </div>
     <div class="content_dis">
       <el-tabs v-model="activeName" class="tenanat-tabs">
-        <el-tab-pane v-if="showTaskTab" label="任务办理" name="task" />
-        <el-tab-pane v-if="taskInfo?.workorderId" label="处置记录" name="record" />
-        <el-tab-pane v-else label="审批记录" name="record" />
-        <el-tab-pane label="流程图" name="flow" />
-        <el-tab-pane label="基本信息" name="form" />
-        <el-tab-pane label="权限" name="auth" />
+        <el-tab-pane v-if="showTaskTab" :label="$tp('任务办理')" name="task" />
+        <el-tab-pane v-if="taskInfo?.workorderId" :label="$tp('处置记录')" name="record" />
+        <el-tab-pane v-else :label="$tp('审批记录')" name="record" />
+        <el-tab-pane :label="$tp('流程图')" name="flow" />
+        <el-tab-pane :label="$tp('基本信息')" name="form" />
+        <el-tab-pane :label="$tp('权限')" name="auth" />
       </el-tabs>
       <!-- approvalrecord -->
       <div v-if="activeName === 'record'" class="flow_designer_page">
@@ -110,7 +108,7 @@
           :un-finished="unFinishedTaskNode"
         />
         <div v-else class="empty_flow">
-          <span>流程图加载失败</span>
+          <span>{{ $tp('流程图加载失败') }}</span>
         </div>
       </div>
       <div v-if="activeName==='form'" class="preview_form">
@@ -146,13 +144,11 @@
         <div class="infoBox">
           <div class="flexRowAC infoItem">
             <div class="infoItem_t flexRowAC" style="width: 100%;">
-              <span class="infoItem_label">{{ taskInfo?.workorderId ? '处置人' : '审批人' }}</span>
+              <span class="infoItem_label">{{ taskInfo?.workorderId ? $tp('处置人') : $tp('审批人') }}</span>
               <div class="infoItem_add flexRowAC" @click="userVisi=true">
                 <el-icon>
                   <Plus />
-                </el-icon>
-                添加人员
-              </div>
+                </el-icon> {{ $tp('添加人员') }} </div>
               <div v-for="(item,i) in userRangeList" :key="i" class="elIconPerBox flexRowAC">
                 <el-icon v-if="taskInfo?.type==='2'" @click="removeClick(i)">
                   <CircleCloseFilled />
@@ -178,13 +174,13 @@
           </div>
           <div class="flexRowAC infoItem">
             <div class="infoItem_t flexRowAC">
-              <span class="infoItem_label">{{ taskInfo?.workorderId ? '处置意见' : '审批意见' }}</span>
+              <span class="infoItem_label">{{ taskInfo?.workorderId ? $tp('处置意见') : $tp('审批意见') }}</span>
               <el-input v-model="form.comment" type="textarea" rows="3" />
             </div>
           </div>
           <div class="flexRowAC infoItem">
             <div class="infoItem_t flexRowAC" style="width: 100%;">
-              <span class="infoItem_label">退回节点</span>
+              <span class="infoItem_label">{{ $tp('退回节点') }}</span>
               <el-radio-group v-model="targetKey">
                 <el-radio-button
                   v-for="item in returnTaskList"
@@ -194,26 +190,26 @@
                   {{ item.name }}
                 </el-radio-button>
               </el-radio-group>
-              <span class="infoItem_t_span">退回操作时必选</span>
+              <span class="infoItem_t_span">{{ $tp('退回操作时必选') }}</span>
             </div>
           </div>
           <div class="flexRowAC infoItem" style="padding-bottom: 0;">
             <div class="infoItem_t flexRowAC" style="width: 100%;">
-              <span class="infoItem_label">抄送人</span>
+              <span class="infoItem_label">{{ $tp('抄送人') }}</span>
               <ChoosePerson v-model="copyUserIds" is-multi />
             </div>
           </div>
           <div class="flexRowAC infoItem" style="padding-bottom: 0;">
             <div class="infoItem_t flexRowAC" style="width: 100%;">
-              <span class="infoItem_label">{{ taskInfo?.workorderId ? '指定处置人' : '指定审批人' }}</span>
+              <span class="infoItem_label">{{ taskInfo?.workorderId ? $tp('指定处置人') : $tp('指定审批人') }}</span>
               <ChoosePerson v-model="nextUserIds" is-multi />
             </div>
           </div>
           <div class="flexRowAC infoItem">
             <div class="infoItem_t flexRowAC" style="width: 100%;">
-              <span class="infoItem_label">委派人或<br />转办人</span>
+              <span class="infoItem_label">{{ $tp('委派人或') }}<br />{{ $tp('转办人') }}</span>
               <ChoosePerson v-model="userId" is-multi />
-              <span class="infoItem_t_span">委派操作或者转办操作时必填</span>
+              <span class="infoItem_t_span">{{ $tp('委派操作或者转办操作时必填') }}</span>
             </div>
           </div>
         </div>
@@ -236,7 +232,7 @@
     </div>
     <el-dialog
       v-model="userVisi"
-      title="人员选择"
+      :title="$tp('人员选择')"
       width="53%"
       destroy-on-close
       append-to-body
@@ -253,6 +249,8 @@
   </div>
 </template>
 <script setup lang="ts">
+import { translatePhrase as uiText } from '@/i18n'
+
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import {
@@ -389,7 +387,7 @@ function approveTypeBtn(val) {
 const submitTask = async(flag) => {
   await startFlow()
   // flag 0 , 1 , 2 , 3 , 4 7
-  if (flag === '5' && !userRangeList.value.length && !deptRangeList.value.length && !infoTemp.value?.assignId) return ElMessage.warning('请选择处理人或者部门')
+  if (flag === '5' && !userRangeList.value.length && !deptRangeList.value.length && !infoTemp.value?.assignId) return ElMessage.warning(uiText('请选择处理人或者部门'))
   const params:any = {
     taskId: taskInfo.value.taskId,
     procInsId: taskInfo.value.procInsId,
@@ -406,7 +404,7 @@ const submitTask = async(flag) => {
         return item
       }, {})
     } else {
-      return ElMessage.warning('表单信息')
+      return ElMessage.warning(uiText('表单信息'))
     }
   }
   let res: any = null
@@ -414,18 +412,18 @@ const submitTask = async(flag) => {
     res = await completeTask(params)
   }
   if (flag === '1') {
-    if (!userId.value) return ElMessage.warning('请选择委派人或者转办人')
+    if (!userId.value) return ElMessage.warning(uiText('请选择委派人或者转办人'))
     params['userId'] = userId.value
     res = await delegateTask(params)
   }
   if (flag === '2') {
-    if (!userId.value) return ElMessage.warning('请选择委派人或者转办人')
+    if (!userId.value) return ElMessage.warning(uiText('请选择委派人或者转办人'))
     params['userId'] = userId.value
 
     res = await transferTask(params)
   }
   if (flag === '3') {
-    if (!targetKey.value) return ElMessage.warning('请选择可退回的节点')
+    if (!targetKey.value) return ElMessage.warning(uiText('请选择可退回的节点'))
     params['targetKey'] = targetKey.value
     res = await returnTask(params)
   }
@@ -448,7 +446,7 @@ const submitTask = async(flag) => {
     res = await unClaimTask(params)
   }
   if (res.code === 200) {
-    ElMessage.success('操作成功')
+    ElMessage.success(uiText('操作成功'))
     // router.back()
     emits('handle')
     emits('close')

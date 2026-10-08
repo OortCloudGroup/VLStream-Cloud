@@ -6,12 +6,18 @@
 -->
 
 <template>
-  <div class="camera-rtc-player">
-    <video ref="videoElement" class="camera-rtc-video" autoplay muted playsinline controls />
+  <div ref="playerElement" class="camera-rtc-player">
+    <video ref="videoElement" class="camera-rtc-video" autoplay muted playsinline @play="updateControls" @pause="updateControls" @volumechange="updateControls" />
     <div v-if="status.state !== 'playing'" class="camera-rtc-status" :class="`is-${status.state}`">
       <span v-if="isPending" class="camera-rtc-spinner" />
-      <span class="camera-rtc-message">{{ status.message }}</span>
-      <el-button v-if="status.state === 'failed'" type="primary" size="small" @click="retryNow"> 重新连接 </el-button>
+      <span class="camera-rtc-message">{{ translateUiMessage(status.message) }}</span>
+      <el-button v-if="status.state === 'failed'" type="primary" size="small" @click="retryNow"> {{ $tp('重新连接') }} </el-button>
+    </div>
+    <div v-if="status.state === 'playing'" class="camera-rtc-controls" role="group" :aria-label="$tp('播放控制')">
+      <el-button size="small" @click="togglePlayback">{{ $tp(paused ? '播放' : '暂停') }}</el-button>
+      <el-button size="small" @click="toggleMute">{{ $tp(muted ? '取消静音' : '静音') }}</el-button>
+      <input class="camera-rtc-volume" type="range" min="0" max="1" step="0.05" :value="volume" :aria-label="$tp('音量')" @input="setVolume" />
+      <el-button size="small" @click="toggleFullscreen">{{ $tp(fullscreen ? '退出全屏' : '全屏') }}</el-button>
     </div>
   </div>
 </template>
@@ -19,6 +25,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { CameraRtcSession, parseCameraRtcTurnUrls } from '@/utils/cameraRtcSession'
+import { translateUiMessage } from '@/i18n'
 
 const props = defineProps({
   deviceId: { type: String, required: true },
@@ -29,6 +36,11 @@ const props = defineProps({
 
 const emit = defineEmits(['status-change', 'diagnostic'])
 const videoElement = ref(null)
+const playerElement = ref(null)
+const paused = ref(true)
+const muted = ref(true)
+const volume = ref(1)
+const fullscreen = ref(false)
 const status = reactive({
   state: 'connecting',
   message: '正在初始化播放器…',
@@ -37,6 +49,43 @@ const status = reactive({
 const isPending = computed(() => ['connecting', 'negotiating', 'recovering', 'retrying'].includes(status.state))
 const extraTurnUrls = parseCameraRtcTurnUrls(import.meta.env.VITE_CAMERA_RTC_TURN_URLS)
 let session = null
+
+function updateControls() {
+  if (!videoElement.value) return
+  paused.value = videoElement.value.paused
+  muted.value = videoElement.value.muted
+  volume.value = videoElement.value.volume
+}
+
+async function togglePlayback() {
+  if (!videoElement.value) return
+  if (!videoElement.value.paused) videoElement.value.pause()
+  else {
+    try { await videoElement.value.play() }
+    catch (error) { emit('diagnostic', { event: 'playback-control-error', error: error.message }) }
+  }
+}
+
+function toggleMute() {
+  if (videoElement.value) videoElement.value.muted = !videoElement.value.muted
+}
+
+function setVolume(event) {
+  if (!videoElement.value) return
+  videoElement.value.volume = Number(event.target.value)
+  videoElement.value.muted = videoElement.value.volume === 0
+}
+
+function updateFullscreen() {
+  fullscreen.value = document.fullscreenElement === playerElement.value
+}
+
+async function toggleFullscreen() {
+  try {
+    if (document.fullscreenElement === playerElement.value) await document.exitFullscreen()
+    else await playerElement.value?.requestFullscreen()
+  } catch (error) { emit('diagnostic', { event: 'fullscreen-control-error', error: error.message }) }
+}
 
 function createSession() {
   session?.stop()
@@ -64,8 +113,12 @@ function retryNow() {
 }
 
 watch(() => [props.deviceId, props.socketUrl], createSession)
-onMounted(createSession)
+onMounted(() => {
+  document.addEventListener('fullscreenchange', updateFullscreen)
+  createSession()
+})
 onBeforeUnmount(() => {
+  document.removeEventListener('fullscreenchange', updateFullscreen)
   session?.stop()
   session = null
 })
@@ -98,6 +151,22 @@ onBeforeUnmount(() => {
   gap: 14px;
   color: #fff;
   background: rgba(0, 0, 0, 0.72);
+}
+
+.camera-rtc-controls {
+  position: absolute;
+  bottom: 0;
+  inset-inline: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.camera-rtc-volume {
+  width: 90px;
+  margin-inline-end: auto;
 }
 
 .camera-rtc-message {

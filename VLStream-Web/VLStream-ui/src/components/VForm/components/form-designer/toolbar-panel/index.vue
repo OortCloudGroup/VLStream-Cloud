@@ -80,7 +80,7 @@
       </div>
       <div class="right-toolbar">
         <el-tooltip
-          content="保存"
+          :content="$tp('保存')"
           effect="light"
           placement="top"
         >
@@ -89,7 +89,7 @@
           </div>
         </el-tooltip>
         <el-tooltip
-          content="预览"
+          :content="$tp('预览')"
           effect="light"
           placement="top"
         >
@@ -98,7 +98,7 @@
           </div>
         </el-tooltip>
         <el-tooltip
-          content="清空"
+          :content="$tp('清空')"
           effect="light"
           placement="top"
         >
@@ -109,32 +109,32 @@
         <el-dropdown :teleported="false">
           <div class="new_table_svg_group">
             <oort-svg-icon width="14" height="14" name="comp_more" class="new_table_svg_group_svg" />
-            <span>更多</span>
+            <span>{{ $tp('更多') }}</span>
           </div>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item @click="saveForm(1)">
                 <div class="new_table_svg_group">
                   <oort-svg-icon width="14" height="14" name="comp_save" class="new_table_svg_group_svg" />
-                  <span>保存为组件</span>
+                  <span>{{ $tp('保存为组件') }}</span>
                 </div>
               </el-dropdown-item>
               <el-dropdown-item @click="exportJson">
                 <div class="new_table_svg_group">
                   <oort-svg-icon width="14" height="14" name="comp_preview" class="new_table_svg_group_svg" />
-                  <span>查看json</span>
+                  <span>{{ $tp('查看json') }}</span>
                 </div>
               </el-dropdown-item>
               <el-dropdown-item @click="generateSFC">
                 <div class="new_table_svg_group">
                   <oort-svg-icon width="14" height="14" name="comp_export_vue" class="new_table_svg_group_svg" />
-                  <span>导出Vue文件</span>
+                  <span>{{ $tp('导出Vue文件') }}</span>
                 </div>
               </el-dropdown-item>
               <el-dropdown-item @click="exportCode">
                 <div class="new_table_svg_group">
                   <oort-svg-icon width="14" height="14" name="comp_copy" class="new_table_svg_group_svg" />
-                  <span>复制代码</span>
+                  <span>{{ $tp('复制代码') }}</span>
                 </div>
               </el-dropdown-item>
             </el-dropdown-menu>

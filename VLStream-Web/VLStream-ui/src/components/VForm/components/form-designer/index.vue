@@ -36,9 +36,7 @@
         </el-main>
       </el-container>
       <el-aside class="form-widget-aside">
-        <el-button v-if="showClose" class="close_button common_btn" type="danger" @click="closeDesigner">
-          关闭
-        </el-button>
+        <el-button v-if="showClose" class="close_button common_btn" type="danger" @click="closeDesigner"> {{ $tp('关闭') }} </el-button>
         <setting-panel
           :designer="designer"
           :selected-widget="designer.selectedWidget"

@@ -10,7 +10,7 @@
       v-model="showVideoDialog"
       width="1200px"
       append-to-body
-      title="生成国标编码"
+      :title="$tp('生成国标编码')"
       top="2rem"
       center
       :append-to-body="true"
@@ -54,15 +54,13 @@
           </el-radio>
         </el-radio-group>
       </el-tab-pane>
-      <el-tab-pane name="3">
-        请手动输入基层接入单位编码,两位数字
-        <template #label>
+      <el-tab-pane name="3"> {{ $tp('请手动输入基层接入单位编码,两位数字') }} <template #label>
           <div class="show-code-item">{{ allVal[3].val }}</div>
           <div style="text-align: center">{{ allVal[3].meaning }}</div>
         </template>
         <el-input
             type="text"
-            placeholder="请输入内容"
+            :placeholder="$tp('请输入内容')"
             v-model="allVal[3].val"
             maxlength="2"
             :disabled="allVal[3].lock"
@@ -104,16 +102,14 @@
           </el-radio>
         </el-radio-group>
       </el-tab-pane>
-      <el-tab-pane name="7">
-        请手动输入设备/用户序号, 六位数字
-        <template #label>
+      <el-tab-pane name="7"> {{ $tp('请手动输入设备/用户序号, 六位数字') }} <template #label>
           <div class="show-code-item">{{ allVal[7].val }}</div>
           <div style="text-align: center">{{ allVal[7].meaning }}</div>
         </template>
 
         <el-input
             type="text"
-            placeholder="请输入内容"
+            :placeholder="$tp('请输入内容')"
             v-model="allVal[7].val"
             maxlength="6"
             :disabled="allVal[7].lock"
@@ -125,8 +121,8 @@
     <el-form style="">
       <el-form-item style="margin-top: 22px; margin-bottom: 0;">
         <div style="float:right;">
-          <el-button type="primary" @click="handleOk">保存</el-button>
-          <el-button @click="closeModel">取消</el-button>
+          <el-button type="primary" @click="handleOk">{{ $tp('保存') }}</el-button>
+          <el-button @click="closeModel">{{ $tp('取消') }}</el-button>
         </div>
       </el-form-item>
     </el-form>
@@ -134,6 +130,8 @@
 </template>
 
 <script setup name="ChannelCode">
+import { translatePhrase as uiText } from '@/i18n'
+
 import {ElMessage} from 'element-plus'
 import {getAllChild} from "../../../api/wvp/region.js";
 import {getDeviceTypeList, getIndustryCodeList, getNetworkIdentificationTypeList} from "../../../api/wvp/channel.js";
@@ -243,7 +241,7 @@ function getRegionList() {
         parent = allVal.value[0].val + allVal.value[1].val
       }
       if (activeKey.value !== '0' && parent === '') {
-        ElMessage.error('请先选择上级行政区划')
+        ElMessage.error(uiText('请先选择上级行政区划'))
       }
       queryChildList(parent);
     } else if (activeKey.value === '4') {

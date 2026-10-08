@@ -6,7 +6,7 @@
 -->
 
 <template>
-  <el-form-item label="选择表单">
+  <el-form-item :label="$tp('选择表单')">
     <el-select v-model="optionModel.linkFormID">
       <el-option
         v-for="item in formList"

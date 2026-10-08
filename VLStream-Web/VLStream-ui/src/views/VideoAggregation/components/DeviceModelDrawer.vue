@@ -1,35 +1,35 @@
 <template>
-  <el-drawer :model-value="modelValue" class="device-model-drawer locale-drawer model-selection-drawer" title="选择算法模型" direction="rtl" size="min(1440px, 94vw)"
+  <el-drawer :model-value="modelValue" class="device-model-drawer locale-drawer model-selection-drawer" :title="$tp('选择算法模型')" direction="rtl" size="min(1440px, 94vw)"
     append-to-body :before-close="closeDrawer" :show-close="!submitting"
     :close-on-click-modal="false" :close-on-press-escape="!submitting" @update:model-value="emit('update:modelValue', $event)">
     <div class="picker-shell">
       <el-tabs v-model="source" class="source-tabs">
-        <el-tab-pane :disabled="submitting" :label="`自主训练的模型${sourceTotal === null ? '' : ` (${sourceTotal})`}`" name="local" />
+        <el-tab-pane :disabled="submitting" :label="$tp('自主训练的模型{value0}', { value0: sourceTotal === null ? '' : ` (${sourceTotal})` })" name="local" />
         <el-tab-pane :label="`Model Hub${hubTotal === null ? '' : ` (${hubTotal})`}`" name="hub" :disabled="submitting" />
       </el-tabs>
       <ModelHubCatalog v-if="source === 'hub' && modelValue" @count="hubTotal = $event" @busy="submitting = $event; emit('busy', $event)" />
       <template v-if="source === 'local'">
       <div class="picker-toolbar">
-        <el-input v-model="keyword" placeholder="搜索模型或算法名称" :prefix-icon="Search" clearable
+        <el-input v-model="keyword" :placeholder="$tp('搜索模型或算法名称')" :prefix-icon="Search" clearable
           :disabled="submitting" @input="scheduleSearch" @keyup.enter="searchNow" />
-        <span class="target-device">下发至 {{ device?.deviceName || device?.deviceId }} · OM</span>
+        <span class="target-device">{{ $tp('下发至') }} {{ device?.deviceName || device?.deviceId }} · OM</span>
       </div>
-      <div class="category-tabs" role="tablist" aria-label="模型分类">
+      <div class="category-tabs" role="tablist" :aria-label="$tp('模型分类')">
         <button v-for="item in categories" :key="item.value" role="tab" :aria-selected="category === item.value"
           :class="{ active: category === item.value }" :disabled="submitting" @click="selectCategory(item.value)">{{ item.label }}</button>
       </div>
       <div class="picker-columns">
-        <section class="model-catalog" aria-label="自主训练模型列表">
+        <section class="model-catalog" :aria-label="$tp('自主训练模型列表')">
           <div v-if="loadError" class="catalog-error">
             <el-alert :title="loadError" type="error" :closable="false" show-icon />
-            <el-button @click="loadModels">重新加载</el-button>
+            <el-button @click="loadModels">{{ $tp('重新加载') }}</el-button>
           </div>
           <div v-loading="loading" class="catalog-content">
-            <el-empty v-if="!loading && !loadError && !models.length" :description="keyword || category ? '没有匹配的模型' : '暂无自主训练模型，请先完成训练并保存到算法模型'" />
+            <el-empty v-if="!loading && !loadError && !models.length" :description="keyword || category ? $tp('没有匹配的模型') : $tp('暂无自主训练模型，请先完成训练并保存到算法模型')" />
             <div v-else class="model-grid">
               <button v-for="model in models" :key="model.id" type="button" class="model-card"
                 :class="{ selected: isSelected(model.id), unavailable: !model.deployable }"
-                :aria-label="`${model.modelName}，版本 ${model.version ?? '-'}${model.deployable ? '' : '，暂无可用 OM'}`"
+                :aria-label="$tp('{value0}，版本 {value1}{value2}', { value0: model.modelName, value1: model.version ?? '-', value2: model.deployable ? '' : $tp('，暂无可用 OM') })"
                 :aria-pressed="isSelected(model.id)" :disabled="submitting || !model.deployable || Boolean(results[model.id])"
                 @click="toggleModel(model)">
                 <div class="model-cover">
@@ -38,13 +38,13 @@
                   </el-image>
                   <div v-else class="cover-placeholder"><el-icon><Picture /></el-icon><span>{{ categoryLabel(model.category) }}</span></div>
                   <span class="selection-dot"><el-icon v-if="isSelected(model.id)"><Check /></el-icon></span>
-                  <span class="version-label">{{ model.version == null ? '未标版本' : `V${model.version}` }}</span>
+                  <span class="version-label">{{ model.version == null ? $tp('未标版本') : `V${model.version}` }}</span>
                 </div>
                 <div class="model-card-body">
-                  <h3 :title="model.modelName">{{ model.modelName || '未命名模型' }}</h3>
+                  <h3 :title="model.modelName">{{ model.modelName || $tp('未命名模型') }}</h3>
                   <p class="model-category">{{ categoryLabel(model.category) }}<span v-if="model.algorithmName"> · {{ model.algorithmName }}</span></p>
-                  <p class="model-description">{{ model.description || '暂无模型描述' }}</p>
-                  <span class="model-availability" :class="{ warning: !model.deployable }">{{ model.deployable ? 'OM 模型' : '暂无可用 OM 产物' }}</span>
+                  <p class="model-description">{{ model.description || $tp('暂无模型描述') }}</p>
+                  <span class="model-availability" :class="{ warning: !model.deployable }">{{ model.deployable ? $tp('OM 模型') : $tp('暂无可用 OM 产物') }}</span>
                 </div>
               </button>
             </div>
@@ -52,34 +52,36 @@
           <el-pagination v-if="total > pageSize" v-model:current-page="page" :page-size="pageSize" :total="total"
             :disabled="submitting || loading" layout="total, prev, pager, next" background @current-change="loadModels" />
         </section>
-        <aside class="selection-panel" aria-label="已选取模型">
-          <div class="selection-heading"><h3>已选取模型 <span>{{ selected.length }}</span></h3>
-            <el-button v-if="selected.length && !hasResults" link :disabled="submitting" @click="selected = []">清空</el-button>
+        <aside class="selection-panel" :aria-label="$tp('已选取模型')">
+          <div class="selection-heading"><h3>{{ $tp('已选取模型') }} <span>{{ selected.length }}</span></h3>
+            <el-button v-if="selected.length && !hasResults" link :disabled="submitting" @click="selected = []">{{ $tp('清空') }}</el-button>
           </div>
-          <p v-if="!selected.length" class="selection-empty">点击左侧模型卡片进行选择</p>
+          <p v-if="!selected.length" class="selection-empty">{{ $tp('点击左侧模型卡片进行选择') }}</p>
           <div v-for="model in selected" :key="model.id" class="selected-model">
             <div class="selected-title"><strong>{{ model.modelName }}</strong>
-              <el-button v-if="!results[model.id]" link :icon="Close" :disabled="submitting" :aria-label="`移除 ${model.modelName}`" @click="toggleModel(model)" />
+              <el-button v-if="!results[model.id]" link :icon="Close" :disabled="submitting" :aria-label="$tp('移除 {value0}', { value0: model.modelName })" @click="toggleModel(model)" />
             </div>
-            <span class="selected-version">{{ model.version == null ? '未标版本' : `V${model.version}` }} · OM</span>
+            <span class="selected-version">{{ model.version == null ? $tp('未标版本') : `V${model.version}` }} · OM</span>
             <p v-if="results[model.id]" class="submission-result" :class="results[model.id].state">{{ results[model.id].message }}</p>
           </div>
-          <p v-if="hasResults" class="result-note">任务提交后由设备下载并部署，最终结果以设备回执为准。结果未确认的项目请先核实下发任务，避免重复提交。</p>
+          <p v-if="hasResults" class="result-note">{{ $tp('任务提交后由设备下载并部署，最终结果以设备回执为准。结果未确认的项目请先核实下发任务，避免重复提交。') }}</p>
         </aside>
       </div>
       </template>
     </div>
     <template #footer>
       <div class="drawer-footer">
-        <span>{{ source === 'hub' ? 'Model Hub · 公开模型' : submitting ? `正在提交 ${submittedIndex} / ${batchSize}` : `已选择 ${selected.length} 个模型` }}</span>
-        <div><el-button :disabled="submitting" @click="closeDrawer()">{{ hasResults ? '关闭' : '取消' }}</el-button>
-          <el-button v-if="source === 'local'" type="primary" :loading="submitting" :disabled="!pendingModels.length || !device?.online" @click="submitSelection">确定{{ pendingModels.length ? ` (${pendingModels.length})` : '' }}</el-button></div>
+        <span>{{ source === 'hub' ? $tp('Model Hub · 公开模型') : submitting ? $tp('正在提交 {value0} / {value1}', { value0: submittedIndex, value1: batchSize }) : $tp('已选择 {value0} 个模型', { value0: selected.length }) }}</span>
+        <div><el-button :disabled="submitting" @click="closeDrawer()">{{ hasResults ? $tp('关闭') : $tp('取消') }}</el-button>
+          <el-button v-if="source === 'local'" type="primary" :loading="submitting" :disabled="!pendingModels.length || !device?.online" @click="submitSelection">{{ $tp('确定') }}{{ pendingModels.length ? ` (${pendingModels.length})` : '' }}</el-button></div>
       </div>
     </template>
   </el-drawer>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Check, Close, Picture, Search } from '@element-plus/icons-vue'
@@ -96,7 +98,7 @@ const categories = [
   { value: 'semanticSeg', label: '语义分割' }, { value: 'classify', label: '图像分类' },
   { value: 'pose', label: '关键点检测' }, { value: 'obb', label: '旋转目标检测' }, { value: 'faceDetect', label: '人脸识别' }
 ]
-const categoryLabel = value => categories.find(item => item.value === value && value)?.label || '其他模型'
+const categoryLabel = value => categories.find(item => item.value === value && value)?.label || uiText('其他模型')
 const keyword = ref('')
 const category = ref('')
 const page = ref(1)
@@ -183,7 +185,7 @@ async function submitSelection() {
         results.value[model.id] = { state: 'uncertain', message: error?.response?.data?.msg || error?.message || '提交结果未确认，请核实任务' }
       }
     }
-    if (submitted) { ElMessage.success(`已提交 ${submitted} 个模型下发任务`); emit('submitted') }
+    if (submitted) { ElMessage.success(uiText('已提交 {value0} 个模型下发任务', { value0: submitted })); emit('submitted') }
   } finally { submitting.value = false; emit('busy', false) }
 }
 

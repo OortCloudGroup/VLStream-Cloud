@@ -8,8 +8,8 @@
 <template>
   <div class="thoroughfare-page tenant_Page draHeaPB">
     <el-tabs v-model="activeName" class="tenanat-tabs">
-      <el-tab-pane label="行政区划" name="region" />
-      <el-tab-pane label="业务分组" name="group" />
+      <el-tab-pane :label="$tp('行政区划')" name="region" />
+      <el-tab-pane :label="$tp('业务分组')" name="group" />
     </el-tabs>
     <div class="tenant_content">
       <Region v-if="activeName === 'region'" />

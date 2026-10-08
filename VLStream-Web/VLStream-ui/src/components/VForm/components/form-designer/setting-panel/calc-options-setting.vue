@@ -15,10 +15,8 @@
 !-->
 <template>
   <div>
-    <el-button :icon="Plus" @click="configRuls">
-      公式配置
-    </el-button>
-    <el-dialog v-model="dialogVisible" title="公式配置" width="60%" @opened="openedDiloag">
+    <el-button :icon="Plus" @click="configRuls"> {{ $tp('公式配置') }} </el-button>
+    <el-dialog v-model="dialogVisible" :title="$tp('公式配置')" width="60%" @opened="openedDiloag">
       <div v-if="dialogVisible" class="calc_body">
         <div class="calc_body_left">
           <div class="top_tree">
@@ -48,22 +46,20 @@
           </div>
         </div>
         <div class="calc_body_right">
-          <div class="calc_body_right_title">
-            设置组件的值
-          </div>
+          <div class="calc_body_right_title"> {{ $tp('设置组件的值') }} </div>
           <div class="calc_editor">
             <div ref="codeMirror" class="codemirror_code" />
           </div>
           <div v-if="showTipsVis" class="calc_body_right_desc">
-            <span>函数说明：{{ desc }} </span>
-            <span>函数示例：{{ demo }}</span>
+            <span>{{ $tp('函数说明：') }}{{ desc }} </span>
+            <span>{{ $tp('函数示例：') }}{{ demo }}</span>
           </div>
         </div>
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button size="large" @click="dialogVisible = false" class="common_btn">取 消</el-button>
-          <el-button size="large" type="primary" @click="saveCalcConfig" class="common_btn">确 定</el-button>
+          <el-button size="large" @click="dialogVisible = false" class="common_btn">{{ $tp('取 消') }}</el-button>
+          <el-button size="large" type="primary" @click="saveCalcConfig" class="common_btn">{{ $tp('确 定') }}</el-button>
         </span>
       </template>
     </el-dialog>

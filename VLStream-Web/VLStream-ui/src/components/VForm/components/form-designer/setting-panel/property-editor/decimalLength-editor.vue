@@ -6,7 +6,7 @@
 -->
 
 <template>
-  <el-form-item label="小数位数">
+  <el-form-item :label="$tp('小数位数')">
     <el-input
       v-model="optionModel.decimalLength"
       type="number"

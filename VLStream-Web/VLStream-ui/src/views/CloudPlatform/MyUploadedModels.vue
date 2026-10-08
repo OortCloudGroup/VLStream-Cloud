@@ -20,14 +20,12 @@
         <div class="exportBtn newBtn flexRowAC" @click="openCreateDialog">
           <el-icon class="BtnImg">
             <el-icon><Plus /></el-icon>
-          </el-icon>
-          上传模型
-        </div>
+          </el-icon> {{ $tp('上传模型') }} </div>
       </div>
       <div class="searchHeight_out flexRowAC">
         <search-height-box
           keyword="keyword"
-          placeholder="搜索"
+          :placeholder="$tp('搜索')"
           :data="searchData"
           @handle="searchResetFn"
         />
@@ -35,7 +33,7 @@
       </div>
     </div>
 
-    <el-empty v-if="!loading && models.length === 0" description="暂无上传的模型" />
+    <el-empty v-if="!loading && models.length === 0" :description="$tp('暂无上传的模型')" />
 
     <div v-else class="model-grid">
       <div
@@ -47,9 +45,9 @@
       >
         <div class="card-top">
           <div class="card-title-block">
-            <div class="card-title" :title="item.name">{{ item.name || item.alias || '未命名模型' }}</div>
+            <div class="card-title" :title="item.name">{{ item.name || item.alias || $tp('未命名模型') }}</div>
             <div class="card-desc" :title="item.description">
-              {{ item.description || '暂无描述' }}
+              {{ item.description || $tp('暂无描述') }}
             </div>
           </div>
           <el-dropdown trigger="click" @command="(cmd) => handleCardCommand(cmd, item)">
@@ -59,13 +57,9 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="edit">
-                  <img :src="iconEdit" class="menu-icon" alt="edit" />
-                  编辑模型
-                </el-dropdown-item>
+                  <img :src="iconEdit" class="menu-icon" alt="edit" /> {{ $tp('编辑模型') }} </el-dropdown-item>
                 <el-dropdown-item command="delete" divided>
-                  <img :src="iconDelete" class="menu-icon" alt="delete" />
-                  删除
-                </el-dropdown-item>
+                  <img :src="iconDelete" class="menu-icon" alt="delete" /> {{ $tp('删除') }} </el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -106,7 +100,7 @@
     <!-- / dialog -->
     <el-dialog
       v-model="dialogVisible"
-      :title="editingUid ? '编辑模型' : '创建模型'"
+      :title="editingUid ? $tp('编辑模型') : $tp('创建模型')"
       width="35%"
       destroy-on-close
       class="model-form-dialog"
@@ -120,16 +114,16 @@
         label-position="right"
         require-asterisk-position="left"
       >
-        <el-form-item label="模型名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入模型名称" />
+        <el-form-item :label="$tp('模型名称')" prop="name">
+          <el-input v-model="form.name" :placeholder="$tp('请输入模型名称')" />
         </el-form-item>
-        <el-form-item label="模型别名" prop="alias">
-          <el-input v-model="form.alias" placeholder="请输入模型别名" />
+        <el-form-item :label="$tp('模型别名')" prop="alias">
+          <el-input v-model="form.alias" :placeholder="$tp('请输入模型别名')" />
         </el-form-item>
-        <el-form-item label="模型类型" prop="model_type">
-          <el-input v-model="form.model_type" placeholder="请输入模型类型" />
+        <el-form-item :label="$tp('模型类型')" prop="model_type">
+          <el-input v-model="form.model_type" :placeholder="$tp('请输入模型类型')" />
         </el-form-item>
-        <el-form-item label="模型文件" prop="file_path">
+        <el-form-item :label="$tp('模型文件')" prop="file_path">
           <el-upload
             class="model-file-upload"
             drag
@@ -147,26 +141,26 @@
                 <el-icon class="upload-doc"><Document /></el-icon>
                 <el-icon class="upload-plus"><Plus /></el-icon>
               </div>
-              <div class="upload-text">选择模型文件</div>
+              <div class="upload-text">{{ $tp('选择模型文件') }}</div>
               <div v-if="form.file_path" class="upload-path">{{ form.file_path }}</div>
             </div>
           </el-upload>
         </el-form-item>
-        <el-form-item label="模型描述" prop="description">
+        <el-form-item :label="$tp('模型描述')" prop="description">
           <el-input
             v-model="form.description"
             type="textarea"
             :rows="4"
             maxlength="500"
             show-word-limit
-            placeholder="请输入模型描述"
+            :placeholder="$tp('请输入模型描述')"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="submitting" @click="submitForm">确定</el-button>
+          <el-button @click="dialogVisible = false">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" :loading="submitting" @click="submitForm">{{ $tp('确定') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -174,6 +168,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Document } from '@element-plus/icons-vue'
@@ -290,7 +286,7 @@ const openDetail = (item) => {
 const loadModels = async () => {
   const accessToken = getModelHubAccessToken()
   if (!accessToken) {
-    ElMessage.warning('未登录，无法获取模型列表')
+    ElMessage.warning(uiText('未登录，无法获取模型列表'))
     return
   }
 
@@ -322,11 +318,11 @@ const loadModels = async () => {
         activeUid.value = models.value[0].uid
       }
     } else {
-      ElMessage.error(res?.msg || '获取模型列表失败')
+      ElMessage.error(res?.msg || uiText('获取模型列表失败'))
     }
   } catch (error) {
     console.error('getAiModelList failed:', error)
-    ElMessage.error(error?.response?.data?.msg || error?.message || '获取模型列表失败')
+    ElMessage.error(error?.response?.data?.msg || error?.message || uiText('获取模型列表失败'))
   } finally {
     loading.value = false
   }
@@ -396,7 +392,7 @@ const handleCardCommand = (command, item) => {
 const beforeFileUpload = (file) => {
   const isLt500M = file.size / 1024 / 1024 < 500
   if (!isLt500M) {
-    ElMessage.error('模型文件不能超过 500MB')
+    ElMessage.error(uiText('模型文件不能超过 500MB'))
     return false
   }
   return true
@@ -408,9 +404,9 @@ const handleFileSuccess = (res) => {
   if (res?.code === 200 && path) {
     form.file_path = res.data.path || path
     formRef.value?.clearValidate?.('file_path')
-    ElMessage.success('文件上传成功')
+    ElMessage.success(uiText('文件上传成功'))
   } else {
-    ElMessage.error(res?.msg || '文件上传失败')
+    ElMessage.error(res?.msg || uiText('文件上传失败'))
   }
 }
 
@@ -419,7 +415,7 @@ const handleFileRemove = () => {
 }
 
 const handleFileError = () => {
-  ElMessage.error('文件上传失败')
+  ElMessage.error(uiText('文件上传失败'))
 }
 
 const submitForm = async () => {
@@ -428,7 +424,7 @@ const submitForm = async () => {
   if (!valid) return
 
   if (!form.file_path) {
-    ElMessage.warning('请先上传模型文件')
+    ElMessage.warning(uiText('请先上传模型文件'))
     return
   }
 
@@ -447,15 +443,15 @@ const submitForm = async () => {
       : await addAiModel(payload)
 
     if (res?.code === 200) {
-      ElMessage.success(editingUid.value ? '编辑成功' : '上传成功')
+      ElMessage.success(editingUid.value ? uiText('编辑成功') : uiText('上传成功'))
       dialogVisible.value = false
       await loadModels()
     } else {
-      ElMessage.error(res?.msg || '操作失败')
+      ElMessage.error(res?.msg || uiText('操作失败'))
     }
   } catch (error) {
     console.error('submit model failed:', error)
-    ElMessage.error(error?.response?.data?.msg || error?.message || '操作失败')
+    ElMessage.error(error?.response?.data?.msg || error?.message || uiText('操作失败'))
   } finally {
     submitting.value = false
   }
@@ -463,10 +459,10 @@ const submitForm = async () => {
 
 const handleDelete = async (item) => {
   try {
-    await ElMessageBox.confirm(`确定删除模型「${item.name || item.alias}」吗？`, '删除确认', {
+    await ElMessageBox.confirm(uiText('确定删除模型「{value0}」吗？', { value0: item.name || item.alias }), uiText('删除确认'), {
       type: 'warning',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消'
+      confirmButtonText: uiText('删除'),
+      cancelButtonText: uiText('取消')
     })
   } catch {
     return
@@ -475,15 +471,15 @@ const handleDelete = async (item) => {
   try {
     const res = await deleteAiModel({ uid: item.uid })
     if (res?.code === 200) {
-      ElMessage.success('删除成功')
+      ElMessage.success(uiText('删除成功'))
       if (activeUid.value === item.uid) activeUid.value = ''
       await loadModels()
     } else {
-      ElMessage.error(res?.msg || '删除失败')
+      ElMessage.error(res?.msg || uiText('删除失败'))
     }
   } catch (error) {
     console.error('deleteAiModel failed:', error)
-    ElMessage.error(error?.response?.data?.msg || error?.message || '删除失败')
+    ElMessage.error(error?.response?.data?.msg || error?.message || uiText('删除失败'))
   }
 }
 

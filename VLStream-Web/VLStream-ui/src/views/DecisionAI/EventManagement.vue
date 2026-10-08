@@ -11,16 +11,16 @@
     <div v-if="showDetailView" class="detail-view">
       <div class="detail-header">
         <div class="breadcrumb-nav">
-          <span class="breadcrumb-item" @click="showDetailView = false">事件列表</span>
+          <span class="breadcrumb-item" @click="showDetailView = false">{{ $tp('事件列表') }}</span>
           <span class="breadcrumb-separator">></span>
-          <span class="breadcrumb-item active">事件详情</span>
+          <span class="breadcrumb-item active">{{ $tp('事件详情') }}</span>
         </div>
       </div>
 
       <div class="detail-content">
         <!-- event -->
         <div class="detail-section">
-          <h2 class="section-title">事件详情</h2>
+          <h2 class="section-title">{{ $tp('事件详情') }}</h2>
 
           <!-- event -->
           <div class="detail-item">
@@ -30,10 +30,10 @@
               </el-icon>
             </div>
             <div class="detail-content-wrapper">
-              <span class="detail-label">事件描述</span>
+              <span class="detail-label">{{ $tp('事件描述') }}</span>
               <div class="detail-value">
                 <p class="event-description">
-                  {{ selectedEvent?.eventDesc || '暂无事件描述' }}
+                  {{ selectedEvent?.eventDesc || $tp('暂无事件描述') }}
                 </p>
                 <el-tag :type="getStatusType(selectedEvent?.status)" size="small" class="status-tag">
                   {{ selectedEvent?.status }}
@@ -47,7 +47,7 @@
               <span class="icon-text">ID</span>
             </div>
             <div class="detail-content-wrapper">
-              <span class="detail-label">事件ID</span>
+              <span class="detail-label">{{ $tp('事件ID') }}</span>
               <span class="detail-value">{{ selectedEvent?.id || '--' }}</span>
             </div>
           </div>
@@ -60,7 +60,7 @@
               </el-icon>
             </div>
             <div class="detail-content-wrapper">
-              <span class="detail-label">上报设备</span>
+              <span class="detail-label">{{ $tp('上报设备') }}</span>
               <span class="detail-value">{{ selectedEvent?.reportDevice || '--' }}</span>
             </div>
           </div>
@@ -72,7 +72,7 @@
               </el-icon>
             </div>
             <div class="detail-content-wrapper">
-              <span class="detail-label">上报图片</span>
+              <span class="detail-label">{{ $tp('上报图片') }}</span>
               <div class="detail-value">
                 <div class="report-images">
                   <div v-if="selectedEvent?.reportImg" class="image-item">
@@ -86,7 +86,7 @@
                       lazy
                     />
                   </div>
-                  <span v-else class="no-image">暂无图片</span>
+                  <span v-else class="no-image">{{ $tp('暂无图片') }}</span>
                 </div>
               </div>
             </div>
@@ -100,7 +100,7 @@
               </el-icon>
             </div>
             <div class="detail-content-wrapper">
-              <span class="detail-label">上报时间</span>
+              <span class="detail-label">{{ $tp('上报时间') }}</span>
               <span class="detail-value">{{ selectedEvent?.reportTime || '--' }}</span>
             </div>
           </div>
@@ -112,7 +112,7 @@
               </el-icon>
             </div>
             <div class="detail-content-wrapper">
-              <span class="detail-label">上报位置</span>
+              <span class="detail-label">{{ $tp('上报位置') }}</span>
               <span class="detail-value">{{ selectedEvent?.reportLocation || '--' }}</span>
             </div>
           </div>
@@ -124,7 +124,7 @@
               </el-icon>
             </div>
             <div class="detail-content-wrapper">
-              <span class="detail-label">事件数据</span>
+              <span class="detail-label">{{ $tp('事件数据') }}</span>
               <div class="detail-value event-data-block">
                 <pre v-if="selectedEvent?.eventData" class="event-data">{{ selectedEvent.eventData }}</pre>
                 <span v-else>--</span>
@@ -135,7 +135,7 @@
 
         <!-- event -->
         <div class="feedback-section">
-          <h2 class="section-title">事件反馈</h2>
+          <h2 class="section-title">{{ $tp('事件反馈') }}</h2>
 
           <!--  -->
           <div class="detail-item">
@@ -145,12 +145,12 @@
               </el-icon>
             </div>
             <div class="detail-content-wrapper">
-              <span class="detail-label">反馈描述</span>
+              <span class="detail-label">{{ $tp('反馈描述') }}</span>
               <div class="detail-value">
                 <el-input
                     v-model="feedbackForm.description"
                     type="textarea"
-                    placeholder="请输入"
+                    :placeholder="$tp('请输入')"
                     :rows="4"
                     maxlength="500"
                     show-word-limit
@@ -169,7 +169,7 @@
               </el-icon>
             </div>
             <div class="detail-content-wrapper">
-              <span class="detail-label">上传图像</span>
+              <span class="detail-label">{{ $tp('上传图像') }}</span>
               <div class="detail-value">
                 <div class="upload-area">
                   <el-upload
@@ -199,11 +199,11 @@
               </el-icon>
             </div>
             <div class="detail-content-wrapper">
-              <span class="detail-label">事件状态</span>
+              <span class="detail-label">{{ $tp('事件状态') }}</span>
               <div class="detail-value">
                 <el-radio-group v-model="feedbackForm.status" class="status-radio-group">
-                  <el-radio label="未完成">未完成</el-radio>
-                  <el-radio label="已完成">已完成</el-radio>
+                  <el-radio value="未完成" :label="$tp('未完成')">{{ $tp('未完成') }}</el-radio>
+                  <el-radio value="已完成" :label="$tp('已完成')">{{ $tp('已完成') }}</el-radio>
                 </el-radio-group>
               </div>
             </div>
@@ -212,12 +212,8 @@
 
         <!-- operationbutton -->
         <div class="action-buttons">
-          <el-button type="primary" size="large" @click="handleSubmitFeedback" class="common_btn">
-            确定
-          </el-button>
-          <el-button size="large" @click="showDetailView = false" class="common_btn">
-            取消
-          </el-button>
+          <el-button type="primary" size="large" @click="handleSubmitFeedback" class="common_btn"> {{ $tp('确定') }} </el-button>
+          <el-button size="large" @click="showDetailView = false" class="common_btn"> {{ $tp('取消') }} </el-button>
         </div>
       </div>
     </div>
@@ -234,7 +230,7 @@
               <div class="searchHeight_out flexRowAC">
                 <search-height-box
                   keyword="keyword"
-                  placeholder="搜索"
+                  :placeholder="$tp('搜索')"
                   :data="searchData"
                   @handle="searchResetFn"
                 />
@@ -298,7 +294,7 @@
                     </div>
                     <span class="executor-names">{{ scope.row.executor }}</span>
                   </div>
-                  <span v-else class="no-executor">暂无执行人</span>
+                  <span v-else class="no-executor">{{ $tp('暂无执行人') }}</span>
                 </template>
               </el-table-column>
               <el-table-column fixed="right" align="right" :label="$tp('操作')" :width="clacPXToVW(200)">
@@ -306,11 +302,11 @@
                   <div class="operateAppBox flexRowAC" @click.stop>
                     <div class="new_table_svg_group" @click="handleAssignExecutor(scope.row)">
                       <oort-svg-icon width="14" height="14" name="allocation" class="new_table_svg_group_svg" />
-                      <span>选择执行人</span>
+                      <span>{{ $tp('选择执行人') }}</span>
                     </div>
                     <div class="new_table_svg_group" @click="handleDetail(scope.row)">
                       <oort-svg-icon width="14" height="14" name="detail_icon" class="new_table_svg_group_svg" />
-                      <span>详情</span>
+                      <span>{{ $tp('详情') }}</span>
                     </div>
                   </div>
                 </template>
@@ -338,6 +334,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import {computed, onMounted, reactive, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
@@ -453,7 +451,7 @@ const loadEvents = async () => {
 
     const res = await getEventPage(params)
     if (!isRequestSuccess(res)) {
-      ElMessage.error(res?.message || '加载事件列表失败')
+      ElMessage.error(res?.message || uiText('加载事件列表失败'))
       return
     }
 
@@ -464,7 +462,7 @@ const loadEvents = async () => {
     pagination.pageSize = pageData.size || pagination.pageSize
   } catch (error) {
     console.error('加载事件列表失败', error)
-    ElMessage.error('加载事件列表失败')
+    ElMessage.error(uiText('加载事件列表失败'))
   } finally {
     loading.value = false
   }
@@ -488,13 +486,13 @@ const handleReset = () => {
 }
 
 const handleExportEvents = () => {
-  ElMessage.success('正在导出事件列表...')
+  ElMessage.success(uiText('正在导出事件列表...'))
   // need to after Export interface
 }
 
 const handleDelete = async () => {
   if (!selectedRows.value || selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要删除的事件')
+    ElMessage.warning(uiText('请先选择要删除的事件'))
     return
   }
 
@@ -505,10 +503,10 @@ const handleDelete = async () => {
 
     await ElMessageBox.confirm(
         message,
-        '确认删除',
+        uiText('确认删除'),
         {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
+          confirmButtonText: uiText('确定'),
+          cancelButtonText: uiText('取消'),
           type: 'warning'
         }
     )
@@ -516,25 +514,25 @@ const handleDelete = async () => {
     if (selectedRows.value.length === 1) {
       const res = await deleteEvent(selectedRows.value[0].id)
       if (!isRequestSuccess(res)) {
-        ElMessage.error('删除失败')
+        ElMessage.error(uiText('删除失败'))
         return
       }
     } else {
       const ids = selectedRows.value.map((row) => row.id)
       const res = await batchDeleteEvents(ids)
       if (!isRequestSuccess(res)) {
-        ElMessage.error('批量删除失败')
+        ElMessage.error(uiText('批量删除失败'))
         return
       }
     }
 
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText('删除成功'))
     selectedRows.value = []
     loadEvents()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除失败', error)
-      ElMessage.info('已取消删除')
+      ElMessage.info(uiText('已取消删除'))
     }
   }
 }
@@ -574,20 +572,20 @@ const handleDetail = async (row) => {
 }
 
 const handleAssignExecutor = (row) => {
-  ElMessage.info(`选择执行人: ${row.eventDesc}`)
+  ElMessage.info(uiText('选择执行人: {value0}', { value0: row.eventDesc }))
   // item in will Execute dialog
 }
 
 const handleTagMaintenance = () => {
   activeTab.value = 'maintenance'
-  ElMessage.info('切换到标签维护')
+  ElMessage.info(uiText('切换到标签维护'))
   // item in will page
   // router.push('/tag-management')
 }
 
 const handleTagDevice = () => {
   activeTab.value = 'device'
-  ElMessage.info('切换到标签设备')
+  ElMessage.info(uiText('切换到标签设备'))
   // item in will devicepage
 }
 
@@ -619,28 +617,28 @@ const beforeUpload = (file) => {
   const isLt2M = file.size / 1024 / 1024 < 2
 
   if (!isJPG) {
-    ElMessage.error('上传图片只能是 JPG/PNG 格式!')
+    ElMessage.error(uiText('上传图片只能是 JPG/PNG 格式!'))
   }
   if (!isLt2M) {
-    ElMessage.error('上传图片大小不能超过 2MB!')
+    ElMessage.error(uiText('上传图片大小不能超过 2MB!'))
   }
   return isJPG && isLt2M
 }
 
 const handleUploadSuccess = (response, file) => {
   feedbackForm.value.uploadImage = URL.createObjectURL(file.raw)
-  ElMessage.success('图片上传成功')
+  ElMessage.success(uiText('图片上传成功'))
 }
 
 // -> new interface
 const handleSubmitFeedback = async () => {
   if (!feedbackForm.value.description.trim()) {
-    ElMessage.warning('请输入反馈描述')
+    ElMessage.warning(uiText('请输入反馈描述'))
     return
   }
 
   if (!selectedEvent.value?.id) {
-    ElMessage.error('未获取到事件ID')
+    ElMessage.error(uiText('未获取到事件ID'))
     return
   }
 
@@ -653,15 +651,15 @@ const handleSubmitFeedback = async () => {
       handleResult: feedbackForm.value.description
     })
     if (isRequestSuccess(res)) {
-      ElMessage.success('事件反馈提交成功')
+      ElMessage.success(uiText('事件反馈提交成功'))
       showDetailView.value = false
       loadEvents()
     } else {
-      ElMessage.error('提交失败')
+      ElMessage.error(uiText('提交失败'))
     }
   } catch (error) {
     console.error('提交反馈失败', error)
-    ElMessage.error('提交失败')
+    ElMessage.error(uiText('提交失败'))
   }
 }
 
@@ -701,15 +699,15 @@ const handleAdvancedSearchReset = () => {
 }
 
 const handleUpload = () => {
-  ElMessage.success('上传功能')
+  ElMessage.success(uiText('上传功能'))
 }
 
 const handleDownloadTemplate = () => {
-  ElMessage.success('下载模板')
+  ElMessage.success(uiText('下载模板'))
 }
 
 const handleBatchOperation = () => {
-  ElMessage.success('批量操作')
+  ElMessage.success(uiText('批量操作'))
 }
 
 onMounted(() => {

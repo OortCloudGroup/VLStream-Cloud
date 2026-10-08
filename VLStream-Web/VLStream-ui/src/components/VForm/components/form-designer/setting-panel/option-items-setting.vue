@@ -70,7 +70,7 @@
       </draggable>
     </el-checkbox-group>
     <div v-else-if="(selectedWidget.type === 'cascader')" class="full-width-input">
-      <span>级联选择</span>
+      <span>{{ $tp('级联选择') }}</span>
       <el-cascader
         v-model="optionModel.defaultValue"
         :options="optionModel.optionItems"
@@ -139,12 +139,8 @@
         <template #footer>
           <div class="dialog-footer">
             <div class="dialog-footer_item">
-              <el-button size="large" type="primary" @click="importProviceCity">
-                导入省市
-              </el-button>
-              <el-button size="large" type="primary" @click="importProviceCityArea">
-                导入省市区
-              </el-button>
+              <el-button size="large" type="primary" @click="importProviceCity"> {{ $tp('导入省市') }} </el-button>
+              <el-button size="large" type="primary" @click="importProviceCityArea"> {{ $tp('导入省市区') }} </el-button>
             </div>
             <div class="dialog-footer_item">
               <el-button size="large" type="primary" @click="saveCascaderOptions">

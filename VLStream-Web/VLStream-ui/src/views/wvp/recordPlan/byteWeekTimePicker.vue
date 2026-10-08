@@ -9,7 +9,7 @@
   <div class="weektime">
     <div class="weektime-main">
       <div class="weektime-hd">
-        <div class="weektime-hd-title">星期\时间</div>
+        <div class="weektime-hd-title">{{ $tp('星期\\时间') }}</div>
         <div class="weektime-hd-con">
           <div class="weektime-hd-con-top">
             <div class="weektime-date-range">00:00 - 12:00</div>
@@ -50,11 +50,11 @@
       <div class="weektime-help-tx">
         <div class="weektime-help-bd">
           <span class="color-box"></span>
-          <span class="text-box">未选</span>
+          <span class="text-box">{{ $tp('未选') }}</span>
           <span class="color-box color-active"></span>
-          <span class="text-box">已选</span>
+          <span class="text-box">{{ $tp('已选') }}</span>
         </div>
-        <div class="weektime-help-ft" @click="initList()">清空选择</div>
+        <div class="weektime-help-ft" @click="initList()">{{ $tp('清空选择') }}</div>
       </div>
       <div class="weektime-help-select">
         <div v-for="(week, key) in weekDays" :key="key">

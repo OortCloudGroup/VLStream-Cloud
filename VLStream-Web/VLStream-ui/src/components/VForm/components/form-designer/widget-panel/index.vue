@@ -125,6 +125,8 @@
 </template>
 
 <script>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { containers as CONS, basicFields as BFS, advancedFields as AFS, customTemplate } from './widgetsConfig'
 // import { formTemplates } from './templatesConfig'
 import { addWindowResizeHandler, generateId } from '~@/utils/util'
@@ -304,12 +306,12 @@ export default {
 
     removeComp(row, index) {
       ElMessageBox.confirm(
-        '确定删除该自定义组件?',
-        '提示',
+        uiText('确定删除该自定义组件?'),
+        uiText('提示'),
         {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: '提示'
+          confirmButtonText: uiText('确定'),
+          cancelButtonText: uiText('取消'),
+          type: uiText('提示')
         }
       ).then(() => {
         deleteForm({ formId: row.formId }).then((res) => {

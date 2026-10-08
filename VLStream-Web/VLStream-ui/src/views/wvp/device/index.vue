@@ -12,16 +12,14 @@
       <div class="depNameBox flexRowAC">
         <div class="exportBtnBox flexRowAC">
           <button type="button" class="exportBtn newBtn flexRowAC" @click="showInfo" v-hasPermi="['wvp:server:configInfo']">
-            <oort-svg-icon class="BtnImg" name="platform_info" width="14" height="14" color="#fff" />
-            平台信息
-          </button>
+            <oort-svg-icon class="BtnImg" name="platform_info" width="14" height="14" color="#fff" /> {{ $tp('平台信息') }} </button>
           <button-group :button-list="toolbarButtonList" />
         </div>
       </div>
       <div class="searchHeight_out flexRowAC">
         <search-height-box
           keyword="name"
-          placeholder="搜索设备名称"
+          :placeholder="$tp('搜索设备名称')"
           :data="searchData"
           @handle="searchResetFn"
         />
@@ -46,7 +44,7 @@
       <el-table-column :label="$tp('IP地址')" :width="clacPXToVW(160)">
         <template #default="scope">
           <el-tag v-if="scope.row.hostAddress">{{ scope.row.hostAddress }}</el-tag>
-          <el-tag v-else>未知</el-tag>
+          <el-tag v-else>{{ $tp('未知') }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="manufacturer" :label="$tp('厂家')" :width="clacPXToVW(90)" show-overflow-tooltip />
@@ -54,15 +52,15 @@
       <el-table-column :label="$tp('流传输模式')" :width="clacPXToVW(160)">
         <template #default="scope">
           <el-select @change="transportChange(scope.row)" v-model="scope.row.streamMode"
-                     placeholder="请选择" style="width: 120px" v-if="checkPermi(['wvp:device:updateTransport'])">
+                     :placeholder="$tp('请选择')" style="width: 120px" v-if="checkPermi(['wvp:device:updateTransport'])">
             <el-option key="UDP" label="UDP" value="UDP"></el-option>
-            <el-option key="TCP-ACTIVE" label="TCP主动模式" value="TCP-ACTIVE"></el-option>
-            <el-option key="TCP-PASSIVE" label="TCP被动模式" value="TCP-PASSIVE"></el-option>
+            <el-option key="TCP-ACTIVE" :label="$tp('TCP主动模式')" value="TCP-ACTIVE"></el-option>
+            <el-option key="TCP-PASSIVE" :label="$tp('TCP被动模式')" value="TCP-PASSIVE"></el-option>
           </el-select>
           <div v-else>
             <el-tag v-if="scope.row.streamMode === 'UDP'">UDP</el-tag>
-            <el-tag v-if="scope.row.streamMode === 'TCP-ACTIVE'">TCP主动模式</el-tag>
-            <el-tag v-if="scope.row.streamMode === 'TCP-PASSIVE'">TCP被动模式</el-tag>
+            <el-tag v-if="scope.row.streamMode === 'TCP-ACTIVE'">{{ $tp('TCP主动模式') }}</el-tag>
+            <el-tag v-if="scope.row.streamMode === 'TCP-PASSIVE'">{{ $tp('TCP被动模式') }}</el-tag>
           </div>
         </template>
       </el-table-column>
@@ -73,21 +71,21 @@
       </el-table-column>
       <el-table-column :label="$tp('状态')" :width="clacPXToVW(80)">
         <template #default="scope">
-          <el-tag v-if="scope.row.onLine">在线</el-tag>
-          <el-tag type="info" v-else>离线</el-tag>
+          <el-tag v-if="scope.row.onLine">{{ $tp('在线') }}</el-tag>
+          <el-tag type="info" v-else>{{ $tp('离线') }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column :label="$tp('订阅')" min-width="220">
         <template #default="scope">
-          <el-checkbox v-if="checkPermi(['wvp:device:subscribeCatalog'])" label="目录"
+          <el-checkbox v-if="checkPermi(['wvp:device:subscribeCatalog'])" value="目录" :label="$tp('目录')"
                        :checked="scope.row.subscribeCycleForCatalog > 0"
                        @change="(e)=>subscribeForCatalog(scope.row.id, e)"></el-checkbox>
-          <el-checkbox v-else label="目录" :checked="scope.row.subscribeCycleForCatalog > 0" disabled></el-checkbox>
-          <el-checkbox v-if="checkPermi(['wvp:device:subscribeMobilePosition'])" label="位置"
+          <el-checkbox v-else value="目录" :label="$tp('目录')" :checked="scope.row.subscribeCycleForCatalog > 0" disabled></el-checkbox>
+          <el-checkbox v-if="checkPermi(['wvp:device:subscribeMobilePosition'])" value="位置" :label="$tp('位置')"
                        :checked="scope.row.subscribeCycleForMobilePosition > 0"
                        @change="(e)=>subscribeForMobilePosition(scope.row.id, e)"></el-checkbox>
-          <el-checkbox v-else label="位置" disabled :checked="scope.row.subscribeCycleForMobilePosition > 0"></el-checkbox>
-          <el-checkbox label="报警" disabled :checked="scope.row.subscribeCycleForAlarm > 0"></el-checkbox>
+          <el-checkbox v-else value="位置" :label="$tp('位置')" disabled :checked="scope.row.subscribeCycleForMobilePosition > 0"></el-checkbox>
+          <el-checkbox value="报警" :label="$tp('报警')" disabled :checked="scope.row.subscribeCycleForAlarm > 0"></el-checkbox>
         </template>
       </el-table-column>
       <el-table-column prop="keepaliveTime" :label="$tp('最近心跳')" :width="clacPXToVW(160)" />
@@ -96,25 +94,25 @@
         <template #default="scope">
           <div class="operateAppBox flexRowAC" @click.stop>
             <div class="new_table_svg_group" :class="{ 'is-disabled': scope.row.online===0 }" v-hasPermi="['wvp:device:sync']" @click="scope.row.online!==0 && refDevice(scope.row)">
-              <span>刷新</span>
+              <span>{{ $tp('刷新') }}</span>
             </div>
             <div class="new_table_svg_group" v-if="checkPermi(['wvp:device:channels'])" @click="showChannelList(scope.row)">
-              <span>通道</span>
+              <span>{{ $tp('通道') }}</span>
             </div>
             <div class="new_table_svg_group" v-if="checkPermi(['wvp:device:edit'])" @click="handleUpdate(scope.row)">
-              <span>修改</span>
+              <span>{{ $tp('修改') }}</span>
             </div>
             <el-dropdown @command="(command)=>{moreClick(command, scope.row)}" v-if="checkPermi(['wvp:device:remove','wvp:control:guardApi','wvp:config:cdownloadApi','wvp:device:edit'])">
               <div class="new_table_svg_group">
-                <span>更多</span>
+                <span>{{ $tp('更多') }}</span>
               </div>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="handleMap" v-if="checkPermi(['wvp:device:edit'])">修改位置</el-dropdown-item>
-                  <el-dropdown-item command="delete" style="color: #f56c6c" v-if="checkPermi(['wvp:device:remove'])">删除</el-dropdown-item>
-                  <el-dropdown-item command="setGuard" v-bind:disabled="!scope.row.onLine" v-if="checkPermi(['wvp:control:guardApi'])">布防</el-dropdown-item>
-                  <el-dropdown-item command="resetGuard" v-bind:disabled="!scope.row.onLine" v-if="checkPermi(['wvp:control:guardApi'])">撤防</el-dropdown-item>
-                  <el-dropdown-item command="syncBasicParam" v-bind:disabled="!scope.row.onLine" v-if="checkPermi(['wvp:config:cdownloadApi'])">基础配置同步</el-dropdown-item>
+                  <el-dropdown-item command="handleMap" v-if="checkPermi(['wvp:device:edit'])">{{ $tp('修改位置') }}</el-dropdown-item>
+                  <el-dropdown-item command="delete" style="color: #f56c6c" v-if="checkPermi(['wvp:device:remove'])">{{ $tp('删除') }}</el-dropdown-item>
+                  <el-dropdown-item command="setGuard" v-bind:disabled="!scope.row.onLine" v-if="checkPermi(['wvp:control:guardApi'])">{{ $tp('布防') }}</el-dropdown-item>
+                  <el-dropdown-item command="resetGuard" v-bind:disabled="!scope.row.onLine" v-if="checkPermi(['wvp:control:guardApi'])">{{ $tp('撤防') }}</el-dropdown-item>
+                  <el-dropdown-item command="syncBasicParam" v-bind:disabled="!scope.row.onLine" v-if="checkPermi(['wvp:config:cdownloadApi'])">{{ $tp('基础配置同步') }}</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -136,24 +134,24 @@
     <!-- Update parameterconfiguration -->
     <el-dialog :title="title" v-model="open" width="30%" append-to-body>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="设备编号" prop="deviceId">
+        <el-form-item :label="$tp('设备编号')" prop="deviceId">
           <el-input v-model="form.deviceId" disabled></el-input>
         </el-form-item>
-        <el-form-item label="设备名称" prop="name">
+        <el-form-item :label="$tp('设备名称')" prop="name">
           <el-input v-model="form.name" clearable></el-input>
         </el-form-item>
-        <el-form-item label="密码" prop="password">
+        <el-form-item :label="$tp('密码')" prop="password">
           <el-input v-model="form.password" clearable></el-input>
         </el-form-item>
-        <el-form-item label="收流IP" prop="sdpIp">
+        <el-form-item :label="$tp('收流IP')" prop="sdpIp">
           <el-input v-model="form.sdpIp" clearable></el-input>
         </el-form-item>
-        <el-form-item label="厂家" prop="manufacturer">
+        <el-form-item :label="$tp('厂家')" prop="manufacturer">
           <el-input v-model="form.manufacturer" clearable></el-input>
         </el-form-item>
-        <el-form-item label="流媒体ID" prop="mediaServerId">
+        <el-form-item :label="$tp('流媒体ID')" prop="mediaServerId">
           <el-select v-model="form.mediaServerId" style="float: left; width: 100%">
-            <el-option key="auto" label="自动负载最小" value="auto"></el-option>
+            <el-option key="auto" :label="$tp('自动负载最小')" value="auto"></el-option>
             <el-option
                 v-for="item in mediaServerList"
                 :key="item.id"
@@ -163,39 +161,45 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="字符集" prop="charset">
+        <el-form-item :label="$tp('字符集')" prop="charset">
           <el-select v-model="form.charset" style="float: left; width: 100%">
             <el-option key="GB2312" label="GB2312" value="gb2312"></el-option>
             <el-option key="UTF-8" label="UTF-8" value="utf-8"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="其他选项">
-          <el-checkbox label="SSRC校验" v-model="form.ssrcCheck" style="float: left"></el-checkbox>
-          <el-checkbox label="作为消息通道" v-model="form.asMessageChannel" style="float: left"></el-checkbox>
-          <el-checkbox label="收到ACK后发流" v-model="form.broadcastPushAfterAck" style="float: left"></el-checkbox>
+        <el-form-item :label="$tp('其他选项')">
+          <el-checkbox value="SSRC校验" :label="$tp('SSRC校验')" v-model="form.ssrcCheck" style="float: left"></el-checkbox>
+          <el-checkbox value="作为消息通道" :label="$tp('作为消息通道')" v-model="form.asMessageChannel" style="float: left"></el-checkbox>
+          <el-checkbox value="收到ACK后发流" :label="$tp('收到ACK后发流')" v-model="form.broadcastPushAfterAck" style="float: left"></el-checkbox>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm" class="common_btn">确 定</el-button>
-          <el-button @click="cancel" class="common_btn">取 消</el-button>
+          <el-button type="primary" @click="submitForm" class="common_btn">{{ $tp('确 定') }}</el-button>
+          <el-button @click="cancel" class="common_btn">{{ $tp('取 消') }}</el-button>
         </div>
       </template>
     </el-dialog>
 
     <el-dialog
-        title="国标服务信息"
+        :title="$tp('国标服务信息')"
         width="60%"
         v-model="showDialog"
         append-to-body
     >
+<template #header>
+        <div class="gb-dialog-heading">
+          <span>{{ $tp('国标服务信息') }}</span>
+          <el-button link type="primary" @click="showHelp = true"><el-icon class="gb-help-icon"><QuestionFilled /></el-icon>{{ $tp('帮助说明') }}</el-button>
+        </div>
+      </template>
       <div id="shared" style="margin-top: 1rem;margin-right: 100px;">
         <el-descriptions v-if="configInfoData.sip" :span="2" border>
-          <el-descriptions-item label="编号">{{ configInfoData.sip.id }}</el-descriptions-item>
-          <el-descriptions-item label="域">{{ configInfoData.sip.domain }}</el-descriptions-item>
+          <el-descriptions-item :label="$tp('编号')">{{ configInfoData.sip.id }}</el-descriptions-item>
+          <el-descriptions-item :label="$tp('域')">{{ configInfoData.sip.domain }}</el-descriptions-item>
           <el-descriptions-item label="IP">{{ configInfoData.sip.showIp }}</el-descriptions-item>
-          <el-descriptions-item label="端口">{{ configInfoData.sip.port }}</el-descriptions-item>
-          <el-descriptions-item label="密码">
+          <el-descriptions-item :label="$tp('端口')">{{ configInfoData.sip.port }}</el-descriptions-item>
+          <el-descriptions-item :label="$tp('密码')">
             <el-tag size="small">{{ configInfoData.sip.password }}</el-tag>
           </el-descriptions-item>
         </el-descriptions>
@@ -203,7 +207,7 @@
     </el-dialog>
 
     <el-dialog
-        title="刷新设备"
+        :title="$tp('刷新设备')"
         width="15%"
         v-model="showProgress"
         append-to-body
@@ -217,14 +221,17 @@
     </el-dialog>
 
 
-    <el-dialog title="修改地址" v-model="showMap" width="45%" append-to-body>
+    <el-dialog :title="$tp('修改地址')" v-model="showMap" width="45%" append-to-body>
       <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
     </el-dialog>
+    <GbHelpDialog v-model="showHelp" mode="service" />
   </div>
 </DeviceClassificationLayout>
 </template>
 
 <script setup name="Device">
+import GbHelpDialog from '@/components/GbHelpDialog.vue'
+import { QuestionFilled } from '@element-plus/icons-vue'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import {checkPermi} from "@/utils/wvpPermission";
 import MapGaoDe from "@/components/MapGaoDe/index.vue";
@@ -247,6 +254,7 @@ import {ElMessage} from 'element-plus'
 import {configDownloadApi} from "../../../api/wvp/config.js";
 import { clacPXToVW } from "@/utils/wvpCompat";
 
+const showHelp = ref(false);
 const {proxy} = getCurrentInstance();
 
 const deviceList = ref([]);
@@ -629,6 +637,9 @@ getList();
 </script>
 
 <style scoped>
+.gb-dialog-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-right: 28px; }
+.gb-help-icon { margin-right: 4px; font-size: 14px; }
+
 .example-showcase .el-dropdown-link {
   cursor: pointer;
   color: var(--el-color-primary);

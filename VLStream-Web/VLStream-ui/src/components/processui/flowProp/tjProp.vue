@@ -9,38 +9,35 @@
   <div class="prop_body">
     <div class="prop_body_tab">
       <el-tabs v-model="activeName" class="demo-tabs">
-        <el-tab-pane label="节点设置" name="zero">
+        <el-tab-pane :label="$tp('节点设置')" name="zero">
           <div class="prop_title">
-            <span>节点名称</span>
+            <span>{{ $tp('节点名称') }}</span>
           </div>
           <div class="prop_item">
             <el-input
               v-model="nodeName"
-              placeholder="请输入节点名称"
+              :placeholder="$tp('请输入节点名称')"
             />
           </div>
-          <div class="prop_title">
-            优先级
-          </div>
+          <div class="prop_title"> {{ $tp('优先级') }} </div>
           <div class="prop_item flexRowAC">
             <el-popover placement="right" :width="400" height="auto" trigger="click">
               <template #reference>
-                <el-button :icon="Sort">
-                  优先级{{ currentPriorityIndex + 1 }}
+                <el-button :icon="Sort"> {{ $tp('优先级') }}{{ currentPriorityIndex + 1 }}
                 </el-button>
               </template>
               <div class="prop_item flexColumn">
                 <div v-for="(item, ind) in conditionList" :key="ind + item.nodeName" class="prop_item_span">
-                  <span class="prop_item_span_span">{{ item.nodeName }} <span v-if="index === ind" class="current_btn">当前</span></span>
+                  <span class="prop_item_span_span">{{ item.nodeName }} <span v-if="index === ind" class="current_btn">{{ $tp('当前') }}</span></span>
                   <div class="prop_item_span_btns">
-                    <span>优先级{{ ind+1 }}</span>
+                    <span>{{ $tp('优先级') }}{{ ind+1 }}</span>
                     <el-icon v-if="ind !== conditionList.length - 1" color="var(--el-color-primary)" size="22" @click="downCondition(ind)">
-                      <el-tooltip content="下移" placement="bottom" effect="light">
+                      <el-tooltip :content="$tp('下移')" placement="bottom" effect="light">
                         <SortDown />
                       </el-tooltip>
                     </el-icon>
                     <el-icon v-if="ind!==0" color="var(--el-color-primary)" size="22" @click="upCondition(ind)">
-                      <el-tooltip content="下移" placement="bottom" effect="light">
+                      <el-tooltip :content="$tp('下移')" placement="bottom" effect="light">
                         <SortUp />
                       </el-tooltip>
                     </el-icon>
@@ -50,48 +47,42 @@
             </el-popover>
           </div>
           <template v-if="!currentCondition.def">
-            <div class="prop_title">
-              条件组
-            </div>
+            <div class="prop_title"> {{ $tp('条件组') }} </div>
             <div class="prop_item" style=" justify-content: space-between;">
               <div>
-                <el-button :icon="CirclePlus" size="large" @click="addConditionGroup">
-                  添加条件组
-                </el-button>
-                <el-button :icon="Link" size="large" @click="linkRuleClick">
-                  引用规则
-                </el-button>
+                <el-button :icon="CirclePlus" size="large" @click="addConditionGroup"> {{ $tp('添加条件组') }} </el-button>
+                <el-button :icon="Link" size="large" @click="linkRuleClick"> {{ $tp('引用规则') }} </el-button>
               </div>
-              <span class="prop_item_other">条件组关系 </span>
+              <span class="prop_item_other">{{ $tp('条件组关系') }} </span>
               <el-switch
                 v-model="activeChooseData.operator"
                 size="large"
                 active-value="||"
                 inactive-value="&&"
-                active-text="或"
-                inactive-text="且"
+                :active-text="$tp('或')"
+                :inactive-text="$tp('且')"
               />
             </div>
             <div v-for="(item, ind) in activeChooseData.group" :key="ind" class="prop_item">
               <div class="condition_group">
                 <div class="condition_group_header">
-                  <span class="prop_item_other">条件{{ letter[ind] }}</span>
-                  <span class="prop_item_other">条件组关系</span>
+                  <span class="prop_item_other">{{ $tp('条件') }}{{ letter[ind] }}</span>
+                  <span class="prop_item_other">{{ $tp('条件组关系') }}</span>
                   <el-switch
                     v-model="item.operator"
                     size="large"
                     active-value="||"
                     inactive-value="&&"
-                    active-text="或"
-                    inactive-text="且"
+                    :active-text="$tp('或')"
+                    :inactive-text="$tp('且')"
                   />
                   <el-icon color="var(--el-color-primary)" size="20" @click="addCondition(ind)">
-                    <el-tooltip content="添加条件" placement="bottom" effect="light">
+                    <el-tooltip :content="$tp('添加条件')" placement="bottom" effect="light">
                       <Plus />
                     </el-tooltip>
                   </el-icon>
                   <el-icon color="var(--el-color-primary)" size="20" @click="deleteConditionGroup(ind)">
-                    <el-tooltip content="删除条件组" placement="bottom" effect="light">
+                    <el-tooltip :content="$tp('删除条件组')" placement="bottom" effect="light">
                       <Delete />
                     </el-tooltip>
                   </el-icon>
@@ -100,7 +91,7 @@
                   <div class="condition_content_item">
                     <el-select
                       v-model="ite.field"
-                      placeholder="选择表单字段"
+                      :placeholder="$tp('选择表单字段')"
                       style="width: 100%"
                     >
                       <el-option
@@ -114,7 +105,7 @@
                   <div class="condition_content_item">
                     <el-select
                       v-model="ite.operator"
-                      placeholder="条件"
+                      :placeholder="$tp('条件')"
                       style="width: 100%"
                     >
                       <el-option
@@ -127,26 +118,26 @@
                   </div>
                   <div class="condition_content_item">
                     <ChoosePerson v-if="ite.field === 'initiator'" v-model="ite.value" />
-                    <el-input v-else v-model="ite.value" style="width: 100%" placeholder="条件值" />
+                    <el-input v-else v-model="ite.value" style="width: 100%" :placeholder="$tp('条件值')" />
                   </div>
                   <el-icon color="var(--el-color-primary)" size="20" @click="deleteCondition(ind,i)">
-                    <el-tooltip content="删除条件" placement="bottom" effect="light">
+                    <el-tooltip :content="$tp('删除条件')" placement="bottom" effect="light">
                       <Delete />
                     </el-tooltip>
                   </el-icon>
                 </div>
                 <div v-if="item.conditions.length === 0" class="condition_content">
-                  <span style="margin:0 auto">点击右上角 + 为本条件组添加条件</span>
+                  <span style="margin:0 auto">{{ $tp('点击右上角 + 为本条件组添加条件') }}</span>
                 </div>
               </div>
             </div>
             <div v-if="activeChooseData.group.length === 0" class="condition_content empty_content">
-              <span style="margin:0 auto">点击左上角 + 添加条件组</span>
+              <span style="margin:0 auto">{{ $tp('点击左上角 + 添加条件组') }}</span>
             </div>
           </template>
           <template v-else>
             <div class="condition_content empty_content">
-              <span style="margin:0 auto">当前为默认条件，不设置条件规则</span>
+              <span style="margin:0 auto">{{ $tp('当前为默认条件，不设置条件规则') }}</span>
             </div>
           </template>
         </el-tab-pane>
@@ -154,14 +145,10 @@
     </div>
     <div class="prop_body_bottom button_group">
       <!-- button , -->
-      <el-button @click="cancel" class="common_btn">
-        取消
-      </el-button>
-      <el-button type="primary" @click="confirm" class="common_btn">
-        确定
-      </el-button>
+      <el-button @click="cancel" class="common_btn"> {{ $tp('取消') }} </el-button>
+      <el-button type="primary" @click="confirm" class="common_btn"> {{ $tp('确定') }} </el-button>
     </div>
-    <el-dialog v-model="linkVis" title="选择规则" width="50%">
+    <el-dialog v-model="linkVis" :title="$tp('选择规则')" width="50%">
       <link-rules-tables @confirm="confirmLinkRules" />
     </el-dialog>
   </div>

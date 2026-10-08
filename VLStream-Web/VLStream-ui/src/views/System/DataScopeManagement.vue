@@ -14,16 +14,14 @@
             <div class="depNameBox flexRowAC">
               <div class="exportBtnBox flexRowAC">
                 <button type="button" class="exportBtn newBtn flexRowAC" @click="handleCreate">
-                  <el-icon class="BtnImg"><Plus /></el-icon>
-                  新建
-                </button>
+                  <el-icon class="BtnImg"><Plus /></el-icon> {{ $tp('新建') }} </button>
                 <button-group :button-list="toolbarButtonList" />
               </div>
             </div>
             <div class="searchHeight_out flexRowAC">
               <search-height-box
                 keyword="keyword"
-                placeholder="搜索"
+                :placeholder="$tp('搜索')"
                 :data="searchData"
                 @handle="searchResetFn"
               />
@@ -60,11 +58,11 @@
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handleEdit(scope.row)">
                     <oort-svg-icon width="14" height="14" name="edit_icon" class="new_table_svg_group_svg" />
-                    <span>编辑</span>
+                    <span>{{ $tp('编辑') }}</span>
                   </div>
                   <div class="new_table_svg_group" @click="handleSingleRemove(scope.row)">
                     <oort-svg-icon color="red" width="14" height="14" name="delete_icon" class="new_table_svg_group_svg" />
-                    <span>删除</span>
+                    <span>{{ $tp('删除') }}</span>
                   </div>
                 </div>
               </template>
@@ -102,13 +100,13 @@
         label-width="100px"
         style="padding: 10px 20px"
       >
-        <el-form-item label="所属菜单" prop="menuId">
+        <el-form-item :label="$tp('所属菜单')" prop="menuId">
           <el-tree-select
             v-model="form.menuId"
             :data="menuOptions"
             node-key="id"
             :props="{ label: 'label', children: 'children' }"
-            placeholder="请选择关联菜单"
+            :placeholder="$tp('请选择关联菜单')"
             check-strictly
             style="width: 100%"
             clearable
@@ -117,66 +115,68 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="资源编号" prop="resourceCode">
-              <el-input v-model="form.resourceCode" placeholder="请输入资源编号" />
+            <el-form-item :label="$tp('资源编号')" prop="resourceCode">
+              <el-input v-model="form.resourceCode" :placeholder="$tp('请输入资源编号')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="范围名称" prop="scopeName">
-              <el-input v-model="form.scopeName" placeholder="请输入范围名称" />
+            <el-form-item :label="$tp('范围名称')" prop="scopeName">
+              <el-input v-model="form.scopeName" :placeholder="$tp('请输入范围名称')" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="物理字段" prop="scopeField">
-              <el-input v-model="form.scopeField" placeholder="如 id" />
+            <el-form-item :label="$tp('物理字段')" prop="scopeField">
+              <el-input v-model="form.scopeField" :placeholder="$tp('如 id')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="SQL列" prop="scopeColumn">
-              <el-input v-model="form.scopeColumn" placeholder="如 user_id" />
+            <el-form-item :label="$tp('SQL列')" prop="scopeColumn">
+              <el-input v-model="form.scopeColumn" :placeholder="$tp('如 user_id')" />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-form-item label="权限类名" prop="scopeClass">
-          <el-input v-model="form.scopeClass" placeholder="请输入完整类路径" />
+        <el-form-item :label="$tp('权限类名')" prop="scopeClass">
+          <el-input v-model="form.scopeClass" :placeholder="$tp('请输入完整类路径')" />
         </el-form-item>
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="规则类型" prop="scopeType">
-              <el-select v-model="form.scopeType" placeholder="请选择类型" style="width: 100%">
-                <el-option :value="1" label="全部可见" />
-                <el-option :value="2" label="本人可见" />
-                <el-option :value="3" label="本部门可见" />
-                <el-option :value="4" label="本部门及子部门可见" />
-                <el-option :value="5" label="自定义可见" />
+            <el-form-item :label="$tp('规则类型')" prop="scopeType">
+              <el-select v-model="form.scopeType" :placeholder="$tp('请选择类型')" style="width: 100%">
+                <el-option :value="1" :label="$tp('全部可见')" />
+                <el-option :value="2" :label="$tp('本人可见')" />
+                <el-option :value="3" :label="$tp('本部门可见')" />
+                <el-option :value="4" :label="$tp('本部门及子部门可见')" />
+                <el-option :value="5" :label="$tp('自定义可见')" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="规则值" prop="scopeValue">
-              <el-input v-model="form.scopeValue" placeholder="条件规则值" />
+            <el-form-item :label="$tp('规则值')" prop="scopeValue">
+              <el-input v-model="form.scopeValue" :placeholder="$tp('条件规则值')" />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :rows="2" />
+        <el-form-item :label="$tp('备注')" prop="remark">
+          <el-input v-model="form.remark" type="textarea" :placeholder="$tp('请输入备注')" :rows="2" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false" class="common_btn">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">确定</el-button>
+        <el-button @click="dialogVisible = false" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">{{ $tp('确定') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
@@ -243,7 +243,7 @@ function getScopeTypeName(type) {
     4: '本部门及子部门可见',
     5: '自定义可见'
   }
-  return map[type] || '未分配'
+  return map[type] || uiText('未分配')
 }
 
 async function loadMenus() {
@@ -270,7 +270,7 @@ async function loadData() {
     pagination.total = getTotal(res)
   } catch (error) {
     console.error('加载数据权限列表异常:', error)
-    ElMessage.error('加载数据权限列表失败')
+    ElMessage.error(uiText('加载数据权限列表失败'))
   } finally {
     loading.value = false
   }
@@ -299,12 +299,12 @@ const searchResetFn = (val, reset) => {
 }
 
 const handleExport = () => {
-  ElMessage.success('导出数据')
+  ElMessage.success(uiText('导出数据'))
 }
 
 function handleToolbarEdit() {
   if (selectedRows.value.length !== 1) {
-    ElMessage.warning('请选择一条记录进行编辑')
+    ElMessage.warning(uiText('请选择一条记录进行编辑'))
     return
   }
   handleEdit(selectedRows.value[0])
@@ -370,15 +370,15 @@ async function handleSaveSubmit() {
       try {
         const res = await submitDataScope(form.value)
         if (isSuccess(res)) {
-          ElMessage.success('保存成功')
+          ElMessage.success(uiText('保存成功'))
           dialogVisible.value = false
           loadData()
         } else {
-          ElMessage.error(res?.msg || '保存失败')
+          ElMessage.error(res?.msg || uiText('保存失败'))
         }
       } catch (error) {
         console.error('提交数据权限规则失败:', error)
-        ElMessage.error('网络原因，保存数据权限失败')
+        ElMessage.error(uiText('网络原因，保存数据权限失败'))
       } finally {
         saving.value = false
       }
@@ -387,22 +387,22 @@ async function handleSaveSubmit() {
 }
 
 function executeRemove(ids, msg) {
-  ElMessageBox.confirm(msg, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(msg, uiText('提示'), {
+    confirmButtonText: uiText('确定'),
+    cancelButtonText: uiText('取消'),
     type: 'warning'
   }).then(async () => {
     try {
       const res = await removeDataScopes(ids)
       if (isSuccess(res)) {
-        ElMessage.success('删除成功')
+        ElMessage.success(uiText('删除成功'))
         loadData()
       } else {
-        ElMessage.error(res?.msg || '删除失败')
+        ElMessage.error(res?.msg || uiText('删除失败'))
       }
     } catch (error) {
       console.error('删除数据权限规则失败:', error)
-      ElMessage.error('删除数据权限操作发生异常')
+      ElMessage.error(uiText('删除数据权限操作发生异常'))
     }
   }).catch(() => {})
 }

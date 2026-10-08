@@ -9,34 +9,28 @@
   <div class="prop_body">
     <div class="prop_body_tab">
       <div class="prop_tip">
-        <span>触发器支持模板变量替换语法 ${变量名}， 变量名支持所有的【表单字段ID】及
-          【扩展变量】 扩展变量如下：[formName 审批表单名] [instanceId 审批实例ID] [owner_id 发起人ID]
-          [owner_name 发起人名] [owner_deptId 发起人部门ID] [owner_deptName 发起人部门名]</span>
+        <span>{{ $tp('触发器支持模板变量替换语法 ${变量名}， 变量名支持所有的【表单字段ID】及 【扩展变量】 扩展变量如下：[formName 审批表单名] [instanceId 审批实例ID] [owner_id 发起人ID] [owner_name 发起人名] [owner_deptId 发起人部门ID] [owner_deptName 发起人部门名]') }}</span>
       </div>
       <div class="prop_title">
-        <span>节点名称</span>
+        <span>{{ $tp('节点名称') }}</span>
       </div>
       <div class="prop_item">
         <el-input
           v-model="nodeName"
-          placeholder="请输入节点名称"
+          :placeholder="$tp('请输入节点名称')"
         />
       </div>
       <div class="prop_title">
-        <span>选择触发器动作</span>
+        <span>{{ $tp('选择触发器动作') }}</span>
       </div>
       <div class="prop_item">
         <el-radio-group v-model="activeChooseData.triggerType" style="width: 100%;">
           <el-row style="width:100%">
             <el-col :span="8">
-              <el-radio :value="1">
-                发送网络请求
-              </el-radio>
+              <el-radio :value="1"> {{ $tp('发送网络请求') }} </el-radio>
             </el-col>
             <el-col :span="8">
-              <el-radio :value="2">
-                发送消息
-              </el-radio>
+              <el-radio :value="2"> {{ $tp('发送消息') }} </el-radio>
             </el-col>
           </el-row>
         </el-radio-group>
@@ -46,7 +40,7 @@
           <el-input
             v-model="activeChooseData.url"
             style="max-width: 600px"
-            placeholder="请输入URL地址"
+            :placeholder="$tp('请输入URL地址')"
           >
             <template #prepend>
               <el-select v-model="activeChooseData.method" style="width: 115px">
@@ -61,36 +55,32 @@
           </el-input>
         </div>
         <div class="prop_title">
-          <span>Header请求头</span>
-          <span @click="addHeader">+添加</span>
+          <span>{{ $tp('Header请求头') }}</span>
+          <span @click="addHeader">{{ $tp('+添加') }}</span>
         </div>
         <div v-for="(item, index) in activeChooseData.headers" :key="index" class="prop_item">
           <el-row style="width:100%">
             <el-col :span="6">
               <el-input
                 v-model="item.key"
-                placeholder="参数名"
+                :placeholder="$tp('参数名')"
               />
             </el-col>
             <el-col :span="6">
               <el-radio-group v-model="item.keyType">
-                <el-radio-button :value="1">
-                  表单
-                </el-radio-button>
-                <el-radio-button :value="2">
-                  固定
-                </el-radio-button>
+                <el-radio-button :value="1"> {{ $tp('表单') }} </el-radio-button>
+                <el-radio-button :value="2"> {{ $tp('固定') }} </el-radio-button>
               </el-radio-group>
             </el-col>
             <el-col :span="10">
-              <el-select v-if="item.keyType === 1" v-model="item.value" placeholder="请选择表单字段项">
+              <el-select v-if="item.keyType === 1" v-model="item.value" :placeholder="$tp('请选择表单字段项')">
                 <el-option v-for="(itd, inx) in options" :key="inx" :label="itd.name" :value="itd.id" />
               </el-select>
               <el-input
                 v-if="item.keyType === 2"
                 v-model="item.value"
                 style="max-width: 600px"
-                placeholder="参数值"
+                :placeholder="$tp('参数值')"
               />
             </el-col>
             <el-col :span="2" style="display: flex;align-items: center;justify-content: center;">
@@ -102,11 +92,11 @@
         </div>
         <div class="prop_title">
           <el-col :span="12">
-            <span>请求参数</span>
-            <span @click="addParams">+添加</span>
+            <span>{{ $tp('请求参数') }}</span>
+            <span @click="addParams">{{ $tp('+添加') }}</span>
           </el-col>
           <el-col :span="12" class="params_type">
-            <span>参数类型</span>
+            <span>{{ $tp('参数类型') }}</span>
             <el-radio-group v-model="activeChooseData.paramsType">
               <el-radio-button :value="1">
                 json
@@ -122,28 +112,24 @@
             <el-col :span="6">
               <el-input
                 v-model="item.key"
-                placeholder="参数名"
+                :placeholder="$tp('参数名')"
               />
             </el-col>
             <el-col :span="6">
               <el-radio-group v-model="item.keyType">
-                <el-radio-button :value="1">
-                  表单
-                </el-radio-button>
-                <el-radio-button :value="2">
-                  固定
-                </el-radio-button>
+                <el-radio-button :value="1"> {{ $tp('表单') }} </el-radio-button>
+                <el-radio-button :value="2"> {{ $tp('固定') }} </el-radio-button>
               </el-radio-group>
             </el-col>
             <el-col :span="10">
-              <el-select v-if="item.keyType === 1" v-model="item.value" placeholder="请选择表单字段项">
+              <el-select v-if="item.keyType === 1" v-model="item.value" :placeholder="$tp('请选择表单字段项')">
                 <el-option v-for="(itd, inx) in options" :key="inx" :label="itd.name" :value="itd.id" />
               </el-select>
               <el-input
                 v-if="item.keyType === 2"
                 v-model="item.value"
                 style="max-width: 600px"
-                placeholder="参数值"
+                :placeholder="$tp('参数值')"
               />
             </el-col>
             <el-col :span="2" style="display: flex;align-items: center;justify-content: center;">
@@ -154,23 +140,21 @@
           </el-row>
         </div>
         <div class="prop_item">
-          <span>无论请求结果如何，均通过</span>
+          <span>{{ $tp('无论请求结果如何，均通过') }}</span>
         </div>
       </template>
     </div>
     <div class="prop_body_bottom button_group">
       <!-- button , -->
-      <el-button @click="cancel" class="common_btn">
-        取消
-      </el-button>
-      <el-button type="primary" @click="confirm" class="common_btn">
-        确定
-      </el-button>
+      <el-button @click="cancel" class="common_btn"> {{ $tp('取消') }} </el-button>
+      <el-button type="primary" @click="confirm" class="common_btn"> {{ $tp('确定') }} </el-button>
     </div>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 
 import { ref, onMounted } from 'vue'
 import { useFlowStore } from '@/store/modules/flow'
@@ -224,7 +208,7 @@ function addHeader() {
   let len = activeChooseData.value.headers.length
   if (len > 0) {
     if (!activeChooseData.value.headers[len - 1].value) {
-      ElMessage.warning('请完善之前项后在添加')
+      ElMessage.warning(uiText('请完善之前项后在添加'))
       return
     }
   }
@@ -241,7 +225,7 @@ function addParams() {
   let len = activeChooseData.value.params.length
   if (len > 0) {
     if (!activeChooseData.value.params[len - 1].value) {
-      ElMessage.warning('请完善之前项后在添加')
+      ElMessage.warning(uiText('请完善之前项后在添加'))
       return
     }
   }

@@ -1,14 +1,14 @@
 <template>
   <section class="workflow-guide" aria-labelledby="data-workflow-title">
     <div class="workflow-heading">
-      <h3 id="data-workflow-title">使用流程</h3>
+      <h3 id="data-workflow-title">{{ $tp('使用流程') }}</h3>
       <el-button link type="primary" :aria-expanded="expanded" aria-controls="data-workflow-content" @click="expanded = !expanded">
-        {{ expanded ? '收起流程介绍' : '展开流程介绍' }}
+        {{ expanded ? $tp('收起流程介绍') : $tp('展开流程介绍') }}
         <el-icon><ArrowUp v-if="expanded" /><ArrowDown v-else /></el-icon>
       </el-button>
     </div>
     <div v-if="expanded" id="data-workflow-content">
-      <p class="workflow-description">从原始素材到可用数据集，在数据集中完成数据导入和标注，再划分训练集与验证集，通过版本记录保留每次调整。</p>
+      <p class="workflow-description">{{ $tp('从原始素材到可用数据集，在数据集中完成数据导入和标注，再划分训练集与验证集，通过版本记录保留每次调整。') }}</p>
       <ol class="workflow-steps">
         <li v-for="step in visibleSteps" :key="step.title" class="workflow-step">
           <div class="step-visual">
@@ -21,7 +21,7 @@
           <button type="button" class="step-result" :disabled="disabled" @click="emit('navigate', steps.indexOf(step))">{{ step.result }} <el-icon><ArrowRight /></el-icon></button>
         </li>
       </ol>
-      <div class="workflow-tip"><el-icon><InfoFilled /></el-icon><span>{{ hasProject ? '在「样本管理」中导入和查看素材，在「数据集划分与版本」中管理数据集版本。' : '开始使用：新建数据集，或点击下方数据集的「管理数据」，按流程完成数据准备。' }}</span></div>
+      <div class="workflow-tip"><el-icon><InfoFilled /></el-icon><span>{{ hasProject ? $tp('在「样本管理」中导入和查看素材，在「数据集划分与版本」中管理数据集版本。') : $tp('开始使用：新建数据集，或点击下方数据集的「管理数据」，按流程完成数据准备。') }}</span></div>
     </div>
   </section>
 </template>

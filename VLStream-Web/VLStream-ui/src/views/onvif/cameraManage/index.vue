@@ -8,20 +8,19 @@
 <template>
   <DeviceClassificationLayout protocol-type="ONVIF" :selected-device-keys="classificationDeviceKeys" @filter-change="handleClassificationFilter" @assigned="getList">
   <div class="device-table-panel">
-    <el-alert title="ONVIF协议 16的设备可以使用Digest/WS,2.20版本使用WS" type="success" style="margin-bottom: 10px;" />
+    <el-alert :title="$tp('ONVIF协议 16的设备可以使用Digest/WS,2.20版本使用WS')" type="success" style="margin-bottom: 10px;" />
     <div class="depNameBox_out flexRowAC">
       <div class="depNameBox flexRowAC">
         <div class="exportBtnBox flexRowAC">
           <button type="button" class="exportBtn newBtn flexRowAC" @click="handleWSDiscovery" v-hasPermi="['onvif:device:WSDiscovery']">
-            <el-icon class="BtnImg"><Search /></el-icon>发现设备
-          </button>
+            <el-icon class="BtnImg"><Search /></el-icon>{{ $tp('发现设备') }} </button>
           <button-group :button-list="toolbarButtonList" />
         </div>
       </div>
       <div class="searchHeight_out flexRowAC">
         <search-height-box
           keyword="name"
-          placeholder="搜索名称"
+          :placeholder="$tp('搜索名称')"
           :data="searchData"
           @handle="searchResetFn"
         />
@@ -58,8 +57,8 @@
       </el-table-column>
       <el-table-column :label="$tp('播放类型')" prop="playType" :width="clacPXToVW(100)">
         <template #default="scope">
-          <el-tag type="primary" v-if="scope.row.playType === '1'">本地</el-tag>
-          <el-tag type="primary" v-if="scope.row.playType === '2'">推流</el-tag>
+          <el-tag type="primary" v-if="scope.row.playType === '1'">{{ $tp('本地') }}</el-tag>
+          <el-tag type="primary" v-if="scope.row.playType === '2'">{{ $tp('推流') }}</el-tag>
           <el-tag type="primary" v-if="scope.row.playType === '3'">EasyNTS</el-tag>
         </template>
       </el-table-column>
@@ -68,22 +67,22 @@
         <template #default="scope">
           <div class="operateAppBox flexRowAC" @click.stop>
             <div class="new_table_svg_group" @click="handleView(scope.row)" v-hasPermi="['onvif:device:play']">
-              <span>播放</span>
+              <span>{{ $tp('播放') }}</span>
             </div>
             <div class="new_table_svg_group" @click="handleUpdate(scope.row)" v-hasPermi="['onvif:device:edit']">
-              <span>修改</span>
+              <span>{{ $tp('修改') }}</span>
             </div>
             <div class="new_table_svg_group" @click="handleDelete(scope.row)" v-hasPermi="['onvif:device:remove']">
-              <span>删除</span>
+              <span>{{ $tp('删除') }}</span>
             </div>
             <el-dropdown @command="(command)=>{moreClick(command, scope.row)}" v-if="checkPermi(['onvif:device:edit'])">
               <div class="new_table_svg_group">
-                <span>更多</span>
+                <span>{{ $tp('更多') }}</span>
               </div>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="viewUrls">全部地址</el-dropdown-item>
-                  <el-dropdown-item command="handleMap" v-if="checkPermi(['onvif:device:edit'])">修改位置</el-dropdown-item>
+                  <el-dropdown-item command="viewUrls">{{ $tp('全部地址') }}</el-dropdown-item>
+                  <el-dropdown-item command="handleMap" v-if="checkPermi(['onvif:device:edit'])">{{ $tp('修改位置') }}</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -110,8 +109,8 @@
           <el-col :span="12">
           </el-col>
           <el-col :span="12">
-            <el-form-item label="设备名称" prop="userName">
-              <el-input v-model="form.name" placeholder="请输入设备名称"/>
+            <el-form-item :label="$tp('设备名称')" prop="userName">
+              <el-input v-model="form.name" :placeholder="$tp('请输入设备名称')"/>
             </el-form-item>
           </el-col>
         </el-row>
@@ -119,68 +118,68 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="ip" prop="ip">
-              <el-input v-model="form.ip" placeholder="请输入ip"/>
+              <el-input v-model="form.ip" :placeholder="$tp('请输入ip')"/>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="用户名" prop="userName">
-              <el-input v-model="form.userName" placeholder="请输入用户名"/>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="密码" prop="password">
-              <el-input v-model="form.password" placeholder="请输入密码"/>
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="12">
-            <el-form-item label="固件版本" prop="firmwareVersion">
-              <el-input v-model="form.firmwareVersion" placeholder="请输入固件版本" disabled/>
-            </el-form-item>
-          </el-col>
-
-        </el-row>
-
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="设备厂商" prop="firm">
-              <el-input v-model="form.firm" placeholder="请输入设备厂商" disabled/>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="设备型号" prop="model">
-              <el-input v-model="form.model" placeholder="请输入设备型号" disabled/>
+            <el-form-item :label="$tp('用户名')" prop="userName">
+              <el-input v-model="form.userName" :placeholder="$tp('请输入用户名')"/>
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="播放类型" prop="playType">
+            <el-form-item :label="$tp('密码')" prop="password">
+              <el-input v-model="form.password" :placeholder="$tp('请输入密码')"/>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item :label="$tp('固件版本')" prop="firmwareVersion">
+              <el-input v-model="form.firmwareVersion" :placeholder="$tp('请输入固件版本')" disabled/>
+            </el-form-item>
+          </el-col>
+
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item :label="$tp('设备厂商')" prop="firm">
+              <el-input v-model="form.firm" :placeholder="$tp('请输入设备厂商')" disabled/>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item :label="$tp('设备型号')" prop="model">
+              <el-input v-model="form.model" :placeholder="$tp('请输入设备型号')" disabled/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item :label="$tp('播放类型')" prop="playType">
               <el-radio-group v-model="form.playType">
-                <el-radio value="1">本地</el-radio>
-                <el-radio value="2">推流</el-radio>
+                <el-radio value="1">{{ $tp('本地') }}</el-radio>
+                <el-radio value="2">{{ $tp('推流') }}</el-radio>
                 <el-radio value="3">EasyNTS</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
 
           <el-col :span="12">
-            <el-form-item label="流id" prop="streamId" v-if="form.playType === '2'">
-              <el-input v-model="form.streamId" placeholder="请输入流id" maxlength="100" show-word-limit/>
+            <el-form-item :label="$tp('流id')" prop="streamId" v-if="form.playType === '2'">
+              <el-input v-model="form.streamId" :placeholder="$tp('请输入流id')" maxlength="100" show-word-limit/>
             </el-form-item>
-            <el-form-item label="EasyNTS地址" prop="easyNTSUrl" v-if="form.playType === '3'">
-              <el-input v-model="form.easyNTSUrl" type="textarea" placeholder="请输入EasyNTS地址" maxlength="200"
+            <el-form-item :label="$tp('EasyNTS地址')" prop="easyNTSUrl" v-if="form.playType === '3'">
+              <el-input v-model="form.easyNTSUrl" type="textarea" :placeholder="$tp('请输入EasyNTS地址')" maxlength="200"
                         show-word-limit/>
             </el-form-item>
-            <el-form-item label="默认播放地址" prop="url" v-if="form.playType === '1'">
+            <el-form-item :label="$tp('默认播放地址')" prop="url" v-if="form.playType === '1'">
               <el-select
                   v-model="form.url"
                   class="m-2"
-                  placeholder="请选择直播流地址"
+                  :placeholder="$tp('请选择直播流地址')"
                   size="large"
               >
                 <el-option
@@ -196,11 +195,11 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="通道" prop="channel">
+            <el-form-item :label="$tp('通道')" prop="channel">
               <el-select
                   v-model="form.channel"
                   class="m-2"
-                  placeholder="请选择通道"
+                  :placeholder="$tp('请选择通道')"
                   size="large"
               >
                 <el-option
@@ -216,15 +215,15 @@
         </el-row>
 
         <el-col :span="24">
-          <el-form-item label="备注" prop="remark">
-            <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"/>
+          <el-form-item :label="$tp('备注')" prop="remark">
+            <el-input v-model="form.remark" type="textarea" :placeholder="$tp('请输入内容')"/>
           </el-form-item>
         </el-col>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm" class="common_btn">确 定</el-button>
-          <el-button @click="cancel" class="common_btn">取 消</el-button>
+          <el-button type="primary" @click="submitForm" class="common_btn">{{ $tp('确 定') }}</el-button>
+          <el-button @click="cancel" class="common_btn">{{ $tp('取 消') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -243,7 +242,7 @@
       </div>
       <div>
         <el-tabs v-if="playType === '2'" v-model="activeName" type="card" :stretch="true">
-          <el-tab-pane label="flv播放" name="flv">
+          <el-tab-pane :label="$tp('flv播放')" name="flv">
             <el-row>
               <el-col :span="24">
                 <div class="player" v-if="activeName === 'flv'">
@@ -267,9 +266,9 @@
 
         <el-tabs v-model="tabActiveName" type="card" :stretch="true" style="margin-top: 10px;">
 
-          <el-tab-pane label="WS控制台" name="control">
+          <el-tab-pane :label="$tp('WS控制台')" name="control">
             <el-tabs v-model="playTabsName" style="width: 100%;" @tab-click="handleplayTabsClick">
-              <el-tab-pane label="云台" name="absolute">
+              <el-tab-pane :label="$tp('云台')" name="absolute">
                 <div style="display: grid; height: 180px; overflow: auto">
                   <!-- control -->
                   <div style="display: grid; grid-template-columns: 100px auto;">
@@ -314,11 +313,11 @@
                   </div>
                 </div>
               </el-tab-pane>
-              <el-tab-pane label="预置点" name="presets">
+              <el-tab-pane :label="$tp('预置点')" name="presets">
                 <div style="display: flex; align-items: center;">
                   <el-input style="width: 300px; margin-right: 10px;" v-model="presetName"
-                            placeholder="请输入预置点名称"/>
-                  <el-button type="primary" @click="presetAdd">添 加</el-button>
+                            :placeholder="$tp('请输入预置点名称')"/>
+                  <el-button type="primary" @click="presetAdd">{{ $tp('添 加') }}</el-button>
                 </div>
                 <div style="margin-top: 10px;">
                   <el-tag v-loading="showPresets" closable @close="closePresets(item)" @click="gotoPresets(item)"
@@ -331,7 +330,7 @@
             </el-tabs>
           </el-tab-pane>
 
-          <el-tab-pane label="onvif-java控制台" name="onvifJava">
+          <el-tab-pane :label="$tp('onvif-java控制台')" name="onvifJava">
             <div style="display: grid; height: 180px; overflow: auto">
               <!-- control -->
               <div style="display: grid; grid-template-columns: 100px auto;">
@@ -384,40 +383,39 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form ref="probeRef" :model="probeForm" :rules="rules" label-width="120px">
-            <el-form-item label="设备名称" prop="name">
-              <el-input v-model="probeForm.name" placeholder="请输入设备名称"/>
+            <el-form-item :label="$tp('设备名称')" prop="name">
+              <el-input v-model="probeForm.name" :placeholder="$tp('请输入设备名称')"/>
             </el-form-item>
             <el-form-item label="ONVIF IP" prop="ip">
-              <el-input v-model="probeForm.ip" placeholder="请输入ONVIF IP"/>
+              <el-input v-model="probeForm.ip" :placeholder="$tp('请输入ONVIF IP')"/>
             </el-form-item>
-            <el-form-item label="ONVIF用户名" prop="username">
-              <el-input v-model="probeForm.username" placeholder="请输入ONVIF用户名"/>
+            <el-form-item :label="$tp('ONVIF用户名')" prop="username">
+              <el-input v-model="probeForm.username" :placeholder="$tp('请输入ONVIF用户名')"/>
             </el-form-item>
-            <el-form-item label="ONVIF密码" prop="password">
-              <el-input v-model="probeForm.password" placeholder="请输入ONVIF密码"/>
+            <el-form-item :label="$tp('ONVIF密码')" prop="password">
+              <el-input v-model="probeForm.password" :placeholder="$tp('请输入ONVIF密码')"/>
             </el-form-item>
           </el-form>
           <div style="display: flex; justify-content: space-around;">
-            <el-button type="primary" @click="submitDetectionForm" v-hasPermi="['onvif:service:getInfo']">探 测
-            </el-button>
+            <el-button type="primary" @click="submitDetectionForm" v-hasPermi="['onvif:service:getInfo']">{{ $tp('探 测') }} </el-button>
           </div>
         </el-col>
         <el-col :span="12">
           <el-form ref="resultRef" :model="resultForm" :rules="rulesResult" label-width="120px">
-            <el-form-item label="厂商" prop="firm">
-              <el-input v-model="resultForm.firm" placeholder="请输入厂商" disabled/>
+            <el-form-item :label="$tp('厂商')" prop="firm">
+              <el-input v-model="resultForm.firm" :placeholder="$tp('请输入厂商')" disabled/>
             </el-form-item>
-            <el-form-item label="型号" prop="model">
-              <el-input v-model="resultForm.model" placeholder="请输入型号" disabled/>
+            <el-form-item :label="$tp('型号')" prop="model">
+              <el-input v-model="resultForm.model" :placeholder="$tp('请输入型号')" disabled/>
             </el-form-item>
-            <el-form-item label="固件版本" prop="firmwareVersion">
-              <el-input v-model="resultForm.firmwareVersion" placeholder="请输入固件版本" disabled/>
+            <el-form-item :label="$tp('固件版本')" prop="firmwareVersion">
+              <el-input v-model="resultForm.firmwareVersion" :placeholder="$tp('请输入固件版本')" disabled/>
             </el-form-item>
-            <el-form-item label="通道" prop="channel">
+            <el-form-item :label="$tp('通道')" prop="channel">
               <el-select
                   v-model="resultForm.channel"
                   class="m-2"
-                  placeholder="请选择通道"
+                  :placeholder="$tp('请选择通道')"
                   size="large"
                   :disabled="disabledAdd"
               >
@@ -430,25 +428,25 @@
                 </el-option>
               </el-select>
             </el-form-item>
-            <el-form-item label="播放类型" prop="playType">
+            <el-form-item :label="$tp('播放类型')" prop="playType">
               <el-radio-group v-model="resultForm.playType">
-                <el-radio value="1">本地</el-radio>
-                <el-radio value="2">推流</el-radio>
+                <el-radio value="1">{{ $tp('本地') }}</el-radio>
+                <el-radio value="2">{{ $tp('推流') }}</el-radio>
                 <el-radio value="3">EasyNTS</el-radio>
               </el-radio-group>
             </el-form-item>
-            <el-form-item label="流id" prop="streamId" v-if="resultForm.playType === '2'">
-              <el-input v-model="resultForm.streamId" placeholder="请输入流id" maxlength="100" show-word-limit/>
+            <el-form-item :label="$tp('流id')" prop="streamId" v-if="resultForm.playType === '2'">
+              <el-input v-model="resultForm.streamId" :placeholder="$tp('请输入流id')" maxlength="100" show-word-limit/>
             </el-form-item>
-            <el-form-item label="EasyNTS地址" prop="easyNTSUrl" v-if="resultForm.playType === '3'">
-              <el-input v-model="resultForm.easyNTSUrl" type="textarea" placeholder="请输入EasyNTS地址" maxlength="200"
+            <el-form-item :label="$tp('EasyNTS地址')" prop="easyNTSUrl" v-if="resultForm.playType === '3'">
+              <el-input v-model="resultForm.easyNTSUrl" type="textarea" :placeholder="$tp('请输入EasyNTS地址')" maxlength="200"
                         show-word-limit/>
             </el-form-item>
-            <el-form-item label="直播流地址" prop="url" v-if="resultForm.playType === '1'">
+            <el-form-item :label="$tp('直播流地址')" prop="url" v-if="resultForm.playType === '1'">
               <el-select
                   v-model="resultForm.url"
                   class="m-2"
-                  placeholder="请选择直播流地址"
+                  :placeholder="$tp('请选择直播流地址')"
                   size="large"
                   :disabled="disabledAdd"
               >
@@ -463,38 +461,36 @@
             </el-form-item>
             <div style="display: flex;justify-content: center">
               <el-button type="primary" @click="getChannel" :disabled="disabledAdd"
-                         v-hasPermi="['onvif:service:getChannelToken']">获取通道
-              </el-button>
+                         v-hasPermi="['onvif:service:getChannelToken']">{{ $tp('获取通道') }} </el-button>
               <el-button type="primary" @click="submitResultForm" :disabled="disabledAdd"
-                         v-hasPermi="['onvif:device:add']">添 加
-              </el-button>
+                         v-hasPermi="['onvif:device:add']">{{ $tp('添 加') }} </el-button>
             </div>
           </el-form>
         </el-col>
       </el-row>
     </el-dialog>
 
-    <el-dialog title="修改地址" v-model="showMap" width="45%" append-to-body>
+    <el-dialog :title="$tp('修改地址')" v-model="showMap" width="45%" append-to-body>
       <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
     </el-dialog>
 
     <!-- device -->
     <el-dialog title="WSDiscovery" v-model="showWS" width="60%" append-to-body>
       <el-steps :active="stepsName" finish-status="success" align-center>
-        <el-step title="设备认证" />
-        <el-step title="添加设备" />
+        <el-step :title="$tp('设备认证')" />
+        <el-step :title="$tp('添加设备')" />
       </el-steps>
       <el-table :data="listWS" border v-if="stepsName === 0">
         <el-table-column label="ip" align="center" prop="ip" show-overflow-tooltip/>
         <el-table-column :label="$tp('访问地址')" align="center" prop="hostName" show-overflow-tooltip />
         <el-table-column :label="$tp('用户名')" align="center">
           <template #default="{ row }">
-            <el-input v-model="row.username" placeholder="请输入用户名"></el-input>
+            <el-input v-model="row.username" :placeholder="$tp('请输入用户名')"></el-input>
           </template>
         </el-table-column>
         <el-table-column :label="$tp('密码')" align="center">
           <template #default="{ row }">
-            <el-input v-model="row.password" placeholder="请输入密码" show-password></el-input>
+            <el-input v-model="row.password" :placeholder="$tp('请输入密码')" show-password></el-input>
           </template>
         </el-table-column>
         <el-table-column :label="$tp('认证方式')" align="center">
@@ -509,8 +505,7 @@
           <template #default="scope">
             <div style="display:flex; align-items: center;justify-content: center">
               <el-button link type="primary" icon="Check" @click="handleAuth(scope.row)"
-                         v-hasPermi="['onvif:device:auth']">认证
-              </el-button>
+                         v-hasPermi="['onvif:device:auth']">{{ $tp('认证') }} </el-button>
             </div>
           </template>
         </el-table-column>
@@ -522,34 +517,34 @@
             <el-form ref="resultRef" :model="resultForm" :rules="rulesResult2" label-width="120px">
               <el-row :gutter="20">
                 <el-col :span="12">
-                  <el-form-item label="设备名称" prop="name">
-                    <el-input v-model="resultForm.name" placeholder="请输入设备名称"/>
+                  <el-form-item :label="$tp('设备名称')" prop="name">
+                    <el-input v-model="resultForm.name" :placeholder="$tp('请输入设备名称')"/>
                   </el-form-item>
                   <el-form-item label="ONVIF IP" prop="ip">
-                    <el-input v-model="resultForm.ip" placeholder="请输入ONVIF IP"/>
+                    <el-input v-model="resultForm.ip" :placeholder="$tp('请输入ONVIF IP')"/>
                   </el-form-item>
-                  <el-form-item label="ONVIF用户名" prop="username">
-                    <el-input v-model="resultForm.username" placeholder="请输入ONVIF用户名"/>
+                  <el-form-item :label="$tp('ONVIF用户名')" prop="username">
+                    <el-input v-model="resultForm.username" :placeholder="$tp('请输入ONVIF用户名')"/>
                   </el-form-item>
-                  <el-form-item label="ONVIF密码" prop="password">
-                    <el-input v-model="resultForm.password" placeholder="请输入ONVIF密码"/>
+                  <el-form-item :label="$tp('ONVIF密码')" prop="password">
+                    <el-input v-model="resultForm.password" :placeholder="$tp('请输入ONVIF密码')"/>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="厂商" prop="firm">
-                    <el-input v-model="resultForm.firm" placeholder="请输入厂商" disabled/>
+                  <el-form-item :label="$tp('厂商')" prop="firm">
+                    <el-input v-model="resultForm.firm" :placeholder="$tp('请输入厂商')" disabled/>
                   </el-form-item>
-                  <el-form-item label="型号" prop="model">
-                    <el-input v-model="resultForm.model" placeholder="请输入型号" disabled/>
+                  <el-form-item :label="$tp('型号')" prop="model">
+                    <el-input v-model="resultForm.model" :placeholder="$tp('请输入型号')" disabled/>
                   </el-form-item>
-                  <el-form-item label="固件版本" prop="firmwareVersion">
-                    <el-input v-model="resultForm.firmwareVersion" placeholder="请输入固件版本" disabled/>
+                  <el-form-item :label="$tp('固件版本')" prop="firmwareVersion">
+                    <el-input v-model="resultForm.firmwareVersion" :placeholder="$tp('请输入固件版本')" disabled/>
                   </el-form-item>
-                  <el-form-item label="通道" prop="channel">
+                  <el-form-item :label="$tp('通道')" prop="channel">
                     <el-select
                         v-model="resultForm.channel"
                         class="m-2"
-                        placeholder="请选择通道"
+                        :placeholder="$tp('请选择通道')"
                         size="large"
                     >
                       <el-option
@@ -561,25 +556,25 @@
                       </el-option>
                     </el-select>
                   </el-form-item>
-                  <el-form-item label="播放类型" prop="playType">
+                  <el-form-item :label="$tp('播放类型')" prop="playType">
                     <el-radio-group v-model="resultForm.playType">
-                      <el-radio value="1">本地</el-radio>
-                      <el-radio value="2">推流</el-radio>
+                      <el-radio value="1">{{ $tp('本地') }}</el-radio>
+                      <el-radio value="2">{{ $tp('推流') }}</el-radio>
                       <el-radio value="3">EasyNTS</el-radio>
                     </el-radio-group>
                   </el-form-item>
-                  <el-form-item label="流id" prop="streamId" v-if="resultForm.playType === '2'">
-                    <el-input v-model="resultForm.streamId" placeholder="请输入流id" maxlength="100" show-word-limit/>
+                  <el-form-item :label="$tp('流id')" prop="streamId" v-if="resultForm.playType === '2'">
+                    <el-input v-model="resultForm.streamId" :placeholder="$tp('请输入流id')" maxlength="100" show-word-limit/>
                   </el-form-item>
-                  <el-form-item label="EasyNTS地址" prop="easyNTSUrl" v-if="resultForm.playType === '3'">
-                    <el-input v-model="resultForm.easyNTSUrl" type="textarea" placeholder="请输入EasyNTS地址" maxlength="200"
+                  <el-form-item :label="$tp('EasyNTS地址')" prop="easyNTSUrl" v-if="resultForm.playType === '3'">
+                    <el-input v-model="resultForm.easyNTSUrl" type="textarea" :placeholder="$tp('请输入EasyNTS地址')" maxlength="200"
                               show-word-limit/>
                   </el-form-item>
-                  <el-form-item label="直播流地址" prop="url" v-if="resultForm.playType === '1'">
+                  <el-form-item :label="$tp('直播流地址')" prop="url" v-if="resultForm.playType === '1'">
                     <el-select
                         v-model="resultForm.url"
                         class="m-2"
-                        placeholder="请选择直播流地址"
+                        :placeholder="$tp('请选择直播流地址')"
                         size="large"
                     >
                       <el-option
@@ -595,8 +590,7 @@
               </el-row>
 
               <div style="display: flex;justify-content: center">
-                <el-button type="primary" @click="submitResultForm2" v-hasPermi="['onvif:device:add']">添 加
-                </el-button>
+                <el-button type="primary" @click="submitResultForm2" v-hasPermi="['onvif:device:add']">{{ $tp('添 加') }} </el-button>
               </div>
             </el-form>
           </el-col>

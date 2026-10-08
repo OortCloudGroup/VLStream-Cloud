@@ -6,7 +6,7 @@
 -->
 
 <template>
-  <el-form-item label="按钮文字">
+  <el-form-item :label="$tp('按钮文字')">
     <el-input v-model="optionModel.buttonText" type="text" />
   </el-form-item>
 </template>

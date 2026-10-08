@@ -13,7 +13,7 @@
           <div class="depNameBox flexRowAC" />
           <!--  -->
           <div class="searchHeight_out flexRowAC">
-            <search-height-box keyword="processName" placeholder="流程名称" :data="searchData" @handle="searchResetFn" />
+            <search-height-box keyword="processName" :placeholder="$tp('流程名称')" :data="searchData" @handle="searchResetFn" />
             <export-excel-pdf />
           </div>
         </div>
@@ -50,15 +50,15 @@
           <el-table-column :label="$tp('工单状态')" align="center">
             <template #default="scope">
               <div v-if="scope.row.workorderStatus" class="workorderStatus">
-                <span v-if="scope.row.workorderStatus==='pendingDispatch'" class="LKL">待派单</span>
-                <span v-if="scope.row.workorderStatus==='pendingOrders'" class="pink">待接单</span>
-                <span v-if="scope.row.workorderStatus==='processing'" class="red">处理中</span>
-                <span v-if="scope.row.workorderStatus==='referred'" class="LKL">已转办</span>
-                <span v-if="scope.row.workorderStatus==='Returned'" class="LKL">已退回</span>
-                <span v-if="scope.row.workorderStatus==='return'" class="ZFB">待回访</span>
-                <span v-if="scope.row.workorderStatus==='completed'" class="WX">已完成</span>
-                <span v-if="scope.row.workorderStatus==='closed'" class="gray">已关闭</span>
-                <span v-if="scope.row.workorderStatus==='toBeEvaluated'" class="blue">待评价</span>
+                <span v-if="scope.row.workorderStatus==='pendingDispatch'" class="LKL">{{ $tp('待派单') }}</span>
+                <span v-if="scope.row.workorderStatus==='pendingOrders'" class="pink">{{ $tp('待接单') }}</span>
+                <span v-if="scope.row.workorderStatus==='processing'" class="red">{{ $tp('处理中') }}</span>
+                <span v-if="scope.row.workorderStatus==='referred'" class="LKL">{{ $tp('已转办') }}</span>
+                <span v-if="scope.row.workorderStatus==='Returned'" class="LKL">{{ $tp('已退回') }}</span>
+                <span v-if="scope.row.workorderStatus==='return'" class="ZFB">{{ $tp('待回访') }}</span>
+                <span v-if="scope.row.workorderStatus==='completed'" class="WX">{{ $tp('已完成') }}</span>
+                <span v-if="scope.row.workorderStatus==='closed'" class="gray">{{ $tp('已关闭') }}</span>
+                <span v-if="scope.row.workorderStatus==='toBeEvaluated'" class="blue">{{ $tp('待评价') }}</span>
               </div>
             </template>
           </el-table-column>
@@ -70,11 +70,11 @@
               <div class="operateBox flexRowAC">
                 <div class="new_table_svg_group" @click="handleDetail(scope.row)">
                   <oort-svg-icon width="14" height="14" name="table_record" class="new_table_svg_group_svg" />
-                  <span>流转记录</span>
+                  <span>{{ $tp('流转记录') }}</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleCallBack(scope.row)">
                   <oort-svg-icon width="14" height="14" name="table_withdraw" class="new_table_svg_group_svg" />
-                  <span>撤回</span>
+                  <span>{{ $tp('撤回') }}</span>
                 </div>
               </div>
             </template>
@@ -95,7 +95,7 @@
     </div>
     <el-drawer
       v-model="dVisi"
-      title="流程详情"
+      :title="$tp('流程详情')"
       size="80%"
       direction="rtl"
       :destroy-on-close="true"

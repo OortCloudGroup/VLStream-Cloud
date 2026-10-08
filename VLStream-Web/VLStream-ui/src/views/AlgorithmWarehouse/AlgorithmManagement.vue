@@ -65,9 +65,7 @@
           <button type="button" class="exportBtn newBtn flexRowAC" @click="addAlgorithm">
             <el-icon class="BtnImg">
               <Plus />
-            </el-icon>
-            添加
-          </button>
+            </el-icon> {{ $tp('添加') }} </button>
         </div>
       </div>
 
@@ -92,25 +90,15 @@
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item @click="editAlgorithm(algorithm)">
-                      <el-icon><Edit /></el-icon>
-                      编辑
-                    </el-dropdown-item>
+                      <el-icon><Edit /></el-icon> {{ $tp('编辑') }} </el-dropdown-item>
                     <el-dropdown-item @click="evaluateAlgorithm(algorithm)">
-                      <el-icon><DataAnalysis /></el-icon>
-                      算法评估
-                    </el-dropdown-item>
+                      <el-icon><DataAnalysis /></el-icon> {{ $tp('算法评估') }} </el-dropdown-item>
                     <el-dropdown-item @click="deployAlgorithm(algorithm)">
-                      <el-icon><Download /></el-icon>
-                      下发到摄像机
-                    </el-dropdown-item>
+                      <el-icon><Download /></el-icon> {{ $tp('下发到摄像机') }} </el-dropdown-item>
                     <el-dropdown-item @click="publishToModelHub(algorithm)">
-                      <el-icon><Upload /></el-icon>
-                      发布到 Model Hub
-                    </el-dropdown-item>
+                      <el-icon><Upload /></el-icon> {{ $tp('发布到 Model Hub') }} </el-dropdown-item>
                     <el-dropdown-item divided @click="handleDeleteAlgorithm(algorithm)">
-                      <el-icon><Delete /></el-icon>
-                      删除
-                    </el-dropdown-item>
+                      <el-icon><Delete /></el-icon> {{ $tp('删除') }} </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
@@ -132,9 +120,7 @@
               <button type="button" class="exportBtn newBtn flexRowAC" @click="addAlgorithmLibrary">
                 <el-icon class="BtnImg">
                   <Plus />
-                </el-icon>
-                新增
-              </button>
+                </el-icon> {{ $tp('新增') }} </button>
               <button-group :button-list="managementToolbarButtonList" />
             </div>
           </div>
@@ -170,7 +156,7 @@
                   :type="scope.row.status === 1 ? 'success' : 'danger'"
                   size="small"
               >
-                {{ scope.row.status === 1 ? '启用' : '禁用' }}
+                {{ scope.row.status === 1 ? $tp('启用') : $tp('禁用') }}
               </el-tag>
             </template>
           </el-table-column>
@@ -180,11 +166,11 @@
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="editLibraryItem(scope.row)">
                   <oort-svg-icon width="14" height="14" name="edit_icon" class="new_table_svg_group_svg" />
-                  <span>编辑</span>
+                  <span>{{ $tp('编辑') }}</span>
                 </div>
                 <div class="new_table_svg_group" @click="toggleRepositoryStatus(scope.row)">
                   <oort-svg-icon width="14" height="14" name="enable" class="new_table_svg_group_svg" />
-                  <span>{{ scope.row.status === 1 ? '禁用' : '启用' }}</span>
+                  <span>{{ scope.row.status === 1 ? $tp('禁用') : $tp('启用') }}</span>
                 </div>
                 <div
                     class="new_table_svg_group"
@@ -198,7 +184,7 @@
                       name="delete_icon"
                       class="new_table_svg_group_svg"
                   />
-                  <span>删除</span>
+                  <span>{{ $tp('删除') }}</span>
                 </div>
               </div>
             </template>
@@ -224,45 +210,45 @@
     <!-- Add / algorithm -->
     <el-dialog
         v-model="showAddDialog"
-        :title="editingRepository ? '编辑算法库' : '新增算法库'"
+        :title="editingRepository ? $tp('编辑算法库') : $tp('新增算法库')"
         width="30%"
         :close-on-click-modal="false"
     >
       <el-form :model="addForm" :rules="addFormRules" ref="addFormRef" label-width="80px" class="add-form">
-        <el-form-item label="名称" prop="name" required>
+        <el-form-item :label="$tp('名称')" prop="name" required>
           <el-input
               v-model="addForm.name"
-              placeholder="请输入算法库名称"
+              :placeholder="$tp('请输入算法库名称')"
               clearable
           />
         </el-form-item>
-        <el-form-item label="类型" prop="repositoryType" required>
+        <el-form-item :label="$tp('类型')" prop="repositoryType" required>
           <el-select
               v-model="addForm.repositoryType"
-              placeholder="请选择仓库类型"
+              :placeholder="$tp('请选择仓库类型')"
               style="width: 100%"
               :disabled="editingRepository && editingRepository.repositoryType === 'basic'"
           >
-            <el-option label="基础算法库" value="basic" />
-            <el-option label="扩展算法库" value="extended" />
-            <el-option label="测试算法库" value="test" />
+            <el-option :label="$tp('基础算法库')" value="basic" />
+            <el-option :label="$tp('扩展算法库')" value="extended" />
+            <el-option :label="$tp('测试算法库')" value="test" />
           </el-select>
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item :label="$tp('状态')" prop="status">
           <el-select
               v-model="addForm.status"
-              placeholder="请选择状态"
+              :placeholder="$tp('请选择状态')"
               style="width: 100%"
           >
-            <el-option label="启用" :value="1" />
-            <el-option label="禁用" :value="0" />
+            <el-option :label="$tp('启用')" :value="1" />
+            <el-option :label="$tp('禁用')" :value="0" />
           </el-select>
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
+        <el-form-item :label="$tp('备注')" prop="remark">
           <el-input
               v-model="addForm.remark"
               type="textarea"
-              placeholder="请输入备注"
+              :placeholder="$tp('请输入备注')"
               :rows="4"
               resize="none"
           />
@@ -271,9 +257,9 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleAddCancel" class="common_btn">取消</el-button>
+          <el-button @click="handleAddCancel" class="common_btn">{{ $tp('取消') }}</el-button>
           <el-button type="primary" @click="handleAddConfirm" :loading="submitting" class="common_btn">
-            {{ editingRepository ? '更新' : '创建' }}
+            {{ editingRepository ? $tp('更新') : $tp('创建') }}
           </el-button>
         </div>
       </template>
@@ -282,53 +268,53 @@
     <!-- algorithm -->
     <el-dialog
         v-model="showAlgorithmAddDialog"
-        title="添加算法"
+        :title="$tp('添加算法')"
         width="40%"
         :close-on-click-modal="false"
     >
       <el-form :model="algorithmAddForm" :rules="algorithmAddFormRules" ref="algorithmAddFormRef" label-width="80px" class="add-form">
-        <el-form-item label="算法名称" prop="name" required>
+        <el-form-item :label="$tp('算法名称')" prop="name" required>
           <el-input
               v-model="algorithmAddForm.name"
-              placeholder="请输入算法名称"
+              :placeholder="$tp('请输入算法名称')"
               clearable
           />
         </el-form-item>
-        <el-form-item label="算法类型" prop="category" required>
+        <el-form-item :label="$tp('算法类型')" prop="category" required>
           <el-select
               v-model="algorithmAddForm.category"
-              placeholder="请选择算法类型"
+              :placeholder="$tp('请选择算法类型')"
               style="width: 100%">
-            <el-option label="目标检测算法" value="detect" />
-            <el-option label="实例分割算法" value="segment" />
-            <el-option label="图像分类算法" value="classify" />
-            <el-option label="关键点检测算法" value="pose" />
-            <el-option label="旋转目标检测算法" value="obb" />
+            <el-option :label="$tp('目标检测算法')" value="detect" />
+            <el-option :label="$tp('实例分割算法')" value="segment" />
+            <el-option :label="$tp('图像分类算法')" value="classify" />
+            <el-option :label="$tp('关键点检测算法')" value="pose" />
+            <el-option :label="$tp('旋转目标检测算法')" value="obb" />
           </el-select>
         </el-form-item>
-        <el-form-item label="pt算法模型" prop="ptModelFilePath" label-width="100px">
+        <el-form-item :label="$tp('pt算法模型')" prop="ptModelFilePath" label-width="100px">
           <el-input
               v-model="algorithmAddForm.ptModelFilePath"
-              placeholder="请输入pt算法模型"
+              :placeholder="$tp('请输入pt算法模型')"
               clearable/>
         </el-form-item>
-        <el-form-item label="onnx算法模型" prop="onnxModelFilePath" label-width="110px">
+        <el-form-item :label="$tp('onnx算法模型')" prop="onnxModelFilePath" label-width="110px">
           <el-input
               v-model="algorithmAddForm.onnxModelFilePath"
-              placeholder="请输入onnx算法模型"
+              :placeholder="$tp('请输入onnx算法模型')"
               clearable/>
         </el-form-item>
-        <el-form-item label="是否为系统预置算法" label-width="140px">
+        <el-form-item :label="$tp('是否为系统预置算法')" label-width="140px">
           <el-radio-group v-model="algorithmAddForm.isSystem">
-            <el-radio value="YES">是</el-radio>
-            <el-radio value="NO">否</el-radio>
+            <el-radio value="YES">{{ $tp('是') }}</el-radio>
+            <el-radio value="NO">{{ $tp('否') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="算法描述" prop="description">
+        <el-form-item :label="$tp('算法描述')" prop="description">
           <el-input
               v-model="algorithmAddForm.description"
               type="textarea"
-              placeholder="请输入算法描述"
+              :placeholder="$tp('请输入算法描述')"
               :rows="4"
               resize="none"
           />
@@ -337,10 +323,8 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleAlgorithmAddCancel" class="common_btn">取消</el-button>
-          <el-button type="primary" @click="handleAlgorithmAddConfirm" :loading="submitting" class="common_btn">
-            添加
-          </el-button>
+          <el-button @click="handleAlgorithmAddCancel" class="common_btn">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" @click="handleAlgorithmAddConfirm" :loading="submitting" class="common_btn"> {{ $tp('添加') }} </el-button>
         </div>
       </template>
     </el-dialog>
@@ -348,49 +332,49 @@
     <!-- algorithm -->
     <el-dialog
         v-model="showAlgorithmEditDialog"
-        title="编辑算法"
+        :title="$tp('编辑算法')"
         width="40%"
         :close-on-click-modal="false"
     >
       <el-form :model="algorithmEditForm" :rules="algorithmEditFormRules" ref="algorithmEditFormRef" label-width="80px" class="add-form">
-        <el-form-item label="算法名称" prop="name" required>
+        <el-form-item :label="$tp('算法名称')" prop="name" required>
           <el-input
               v-model="algorithmEditForm.name"
-              placeholder="请输入算法名称"
+              :placeholder="$tp('请输入算法名称')"
               clearable
           />
         </el-form-item>
-        <el-form-item label="算法分类" prop="category" required>
+        <el-form-item :label="$tp('算法分类')" prop="category" required>
           <el-select
               v-model="algorithmEditForm.category"
-              placeholder="请选择算法类型"
+              :placeholder="$tp('请选择算法类型')"
               style="width: 100%">
-            <el-option label="目标检测算法" value="detect" />
-            <el-option label="实例分割算法" value="segment" />
-            <el-option label="图像分类算法" value="classify" />
-            <el-option label="关键点检测算法" value="pose" />
-            <el-option label="旋转目标检测算法" value="obb" />
+            <el-option :label="$tp('目标检测算法')" value="detect" />
+            <el-option :label="$tp('实例分割算法')" value="segment" />
+            <el-option :label="$tp('图像分类算法')" value="classify" />
+            <el-option :label="$tp('关键点检测算法')" value="pose" />
+            <el-option :label="$tp('旋转目标检测算法')" value="obb" />
           </el-select>
         </el-form-item>
-        <el-form-item label="pt算法模型" prop="ptModelFilePath" label-width="100px">
+        <el-form-item :label="$tp('pt算法模型')" prop="ptModelFilePath" label-width="100px">
           <el-input
               v-model="algorithmEditForm.ptModelFilePath"
-              placeholder="请输入算法模型"
+              :placeholder="$tp('请输入算法模型')"
               clearable/>
         </el-form-item>
-        <el-form-item label="onnx算法模型" prop="onnxModelFilePath" label-width="110px">
+        <el-form-item :label="$tp('onnx算法模型')" prop="onnxModelFilePath" label-width="110px">
           <el-input
               v-model="algorithmEditForm.onnxModelFilePath"
-              placeholder="请输入onnx算法模型"
+              :placeholder="$tp('请输入onnx算法模型')"
               clearable/>
         </el-form-item>
-        <el-form-item label="是否为系统预置算法" label-width="140px">
+        <el-form-item :label="$tp('是否为系统预置算法')" label-width="140px">
           <el-radio-group v-model="algorithmEditForm.isSystem">
-            <el-radio value="YES">是</el-radio>
-            <el-radio value="NO">否</el-radio>
+            <el-radio value="YES">{{ $tp('是') }}</el-radio>
+            <el-radio value="NO">{{ $tp('否') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="算法图片">
+        <el-form-item :label="$tp('算法图片')">
           <div class="algorithm-image-editor">
             <el-upload
                 class="algorithm-image-uploader"
@@ -407,10 +391,10 @@
               <div class="algorithm-image-preview">
                 <img
                     :src="algorithmEditForm.imageUrl || getAlgorithmCardBackground(editingAlgorithm || {}, algorithmEditForm.repositoryId || currentRepositoryId)"
-                    alt="算法图片"
+                    :alt="$tp('算法图片')"
                 />
                 <div class="algorithm-image-overlay">
-                  {{ imageUploading ? '上传中...' : '点击更换图片' }}
+                  {{ imageUploading ? $tp('上传中...') : $tp('点击更换图片') }}
                 </div>
               </div>
             </el-upload>
@@ -420,62 +404,58 @@
                 link
                 size="small"
                 @click="clearAlgorithmImage"
-            >
-              清除图片
-            </el-button>
-            <span class="algorithm-image-tip">支持 JPG、PNG、WEBP，大小不超过 5MB</span>
+            > {{ $tp('清除图片') }} </el-button>
+            <span class="algorithm-image-tip">{{ $tp('支持 JPG、PNG、WEBP，大小不超过 5MB') }}</span>
           </div>
         </el-form-item>
-        <el-form-item label="算法描述" prop="description">
+        <el-form-item :label="$tp('算法描述')" prop="description">
           <el-input
               v-model="algorithmEditForm.description"
               type="textarea"
-              placeholder="请输入算法描述"
+              :placeholder="$tp('请输入算法描述')"
               :rows="4"
               resize="none"
           />
         </el-form-item>
-        <el-divider content-position="left">大模型复核（可选）</el-divider>
-        <el-form-item label="开启复核" label-width="100px">
+        <el-divider content-position="left">{{ $tp('大模型复核（可选）') }}</el-divider>
+        <el-form-item :label="$tp('开启复核')" label-width="100px">
           <el-switch v-model="llmReviewForm.enabled" @change="handleLlmReviewToggle" />
-          <span class="llm-review-tip">关闭时保持原有 YOLO 事件流程</span>
+          <span class="llm-review-tip">{{ $tp('关闭时保持原有 YOLO 事件流程') }}</span>
         </el-form-item>
         <template v-if="llmReviewForm.enabled">
-          <el-form-item label="视觉大模型" label-width="100px">
-            <el-select v-model="llmReviewForm.providerId" placeholder="请选择视觉大模型" style="width: 100%">
+          <el-form-item :label="$tp('视觉大模型')" label-width="100px">
+            <el-select v-model="llmReviewForm.providerId" :placeholder="$tp('请选择视觉大模型')" style="width: 100%">
               <el-option v-for="provider in availableLlmProviders" :key="provider.id" :label="providerOptionLabel(provider)" :value="provider.id" />
             </el-select>
-            <el-alert v-if="selectedLlmProvider?.systemProvider && !llmAuthorized" title="内置 OortCloud 需先点击页面顶部“登录 OortCloud”完成授权" type="warning" :closable="false" show-icon />
-            <span v-else-if="selectedLlmProvider?.systemProvider" class="llm-review-tip">内置 OortCloud 无需手工填写地址、模型或 API Key</span>
-            <span v-else class="llm-review-tip">外部中转站使用“大模型管理”中保存的配置</span>
+            <el-alert v-if="selectedLlmProvider?.systemProvider && !llmAuthorized" :title="$tp('内置 OortCloud 需先点击页面顶部“登录 OortCloud”完成授权')" type="warning" :closable="false" show-icon />
+            <span v-else-if="selectedLlmProvider?.systemProvider" class="llm-review-tip">{{ $tp('内置 OortCloud 无需手工填写地址、模型或 API Key') }}</span>
+            <span v-else class="llm-review-tip">{{ $tp('外部中转站使用“大模型管理”中保存的配置') }}</span>
           </el-form-item>
-          <el-form-item label="提示词" label-width="100px" required>
+          <el-form-item :label="$tp('提示词')" label-width="100px" required>
             <el-input v-model="llmReviewForm.promptTemplate" type="textarea" :rows="5" />
           </el-form-item>
-          <el-form-item label="确认阈值" label-width="100px">
+          <el-form-item :label="$tp('确认阈值')" label-width="100px">
             <el-input-number v-model="llmReviewForm.decisionThreshold" :min="0" :max="1" :step="0.05" :precision="2" />
-            <span class="llm-review-tip">模型结论为 confirmed 且置信度达到阈值才进入正式事件流程</span>
+            <span class="llm-review-tip">{{ $tp('模型结论为 confirmed 且置信度达到阈值才进入正式事件流程') }}</span>
           </el-form-item>
-          <el-form-item label="失败重试" label-width="100px">
+          <el-form-item :label="$tp('失败重试')" label-width="100px">
             <el-input-number v-model="llmReviewForm.maxRetries" :min="0" :max="5" />
           </el-form-item>
-          <el-form-item label="图片范围" label-width="100px">
+          <el-form-item :label="$tp('图片范围')" label-width="100px">
             <el-radio-group v-model="llmReviewForm.imageMode">
-              <el-radio value="FULL_AND_CROP">完整图 + 目标框</el-radio>
-              <el-radio value="FULL">仅完整图</el-radio>
-              <el-radio value="CROP">仅目标框</el-radio>
+              <el-radio value="FULL_AND_CROP">{{ $tp('完整图 + 目标框') }}</el-radio>
+              <el-radio value="FULL">{{ $tp('仅完整图') }}</el-radio>
+              <el-radio value="CROP">{{ $tp('仅目标框') }}</el-radio>
             </el-radio-group>
           </el-form-item>
-          <el-alert title="调用超时或重试耗尽后进入人工复核，不会直接生成主动安全事件。" type="info" :closable="false" />
+          <el-alert :title="$tp('调用超时或重试耗尽后进入人工复核，不会直接生成主动安全事件。')" type="info" :closable="false" />
         </template>
       </el-form>
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleAlgorithmEditCancel" class="common_btn">取消</el-button>
-          <el-button type="primary" @click="handleAlgorithmEditConfirm" :loading="submitting" class="common_btn">
-            更新
-          </el-button>
+          <el-button @click="handleAlgorithmEditCancel" class="common_btn">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" @click="handleAlgorithmEditConfirm" :loading="submitting" class="common_btn"> {{ $tp('更新') }} </el-button>
         </div>
       </template>
     </el-dialog>
@@ -483,7 +463,7 @@
     <!--  -->
     <el-drawer
         v-model="showDeviceDrawer"
-        title="下发到摄像机"
+        :title="$tp('下发到摄像机')"
         direction="rtl"
         size="55%"
         destroy-on-close
@@ -501,7 +481,7 @@
           <div class="depNameBox_out flexRowAC">
             <div class="depNameBox flexRowAC">
               <div class="exportBtnBox flexRowAC">
-                <el-select v-model="dispatchModelType" style="width: 170px" placeholder="选择模型格式">
+                <el-select v-model="dispatchModelType" style="width: 170px" :placeholder="$tp('选择模型格式')">
                   <el-option
                       v-for="item in modelTypeOptions"
                       :key="item.value"
@@ -512,9 +492,7 @@
                 <button type="button" class="exportBtn newBtn flexRowAC" @click="handleDeployToDevice">
                   <el-icon class="BtnImg">
                     <Plus />
-                  </el-icon>
-                  下发
-                </button>
+                  </el-icon> {{ $tp('下发') }} </button>
               </div>
             </div>
           </div>
@@ -541,7 +519,7 @@
             <el-table-column :label="$tp('状态')" :width="clacPXToVW(90)">
               <template #default="scope">
                 <el-tag :type="scope.row.online ? 'success' : 'info'">
-                  {{ scope.row.online ? '在线' : '离线' }}
+                  {{ scope.row.online ? $tp('在线') : $tp('离线') }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -570,6 +548,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import {computed, ref} from 'vue'
 import { useRouter } from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
@@ -725,14 +705,14 @@ const handleLlmReviewToggle = (enabled) => {
   if (!llmReviewForm.value.providerId && builtInLlmProvider.value) llmReviewForm.value.providerId = builtInLlmProvider.value.id
   if (!selectedLlmProvider.value) {
     llmReviewForm.value.enabled = false
-    ElMessage.warning('请先选择一个已启用且已配置 API Key 的视觉大模型')
+    ElMessage.warning(uiText('请先选择一个已启用且已配置 API Key 的视觉大模型'))
   } else if (selectedLlmProvider.value.systemProvider && !llmAuthorized.value) {
     llmReviewForm.value.enabled = false
-    ElMessage.warning('请先点击页面顶部“登录 OortCloud”完成授权')
+    ElMessage.warning(uiText('请先点击页面顶部“登录 OortCloud”完成授权'))
   }
 }
 
-const providerOptionLabel = (provider) => `${provider.systemProvider ? '内置 · ' : ''}${provider.name} / ${provider.modelName}`
+const providerOptionLabel = (provider) => `${provider.systemProvider ? uiText('内置 · ') : ''}${provider.name} / ${provider.modelName}`
 
 // form
 const addFormRules = ref({
@@ -939,11 +919,11 @@ const loadAlgorithmRepositories = async () => {
         repo.createTime = formatDateTime(repo.createTime)
       })
     } else {
-      ElMessage.error(response.message || '加载算法仓库失败')
+      ElMessage.error(response.message || uiText('加载算法仓库失败'))
     }
   } catch (error) {
     console.error('加载算法仓库失败:', error)
-    ElMessage.error('加载算法仓库失败')
+    ElMessage.error(uiText('加载算法仓库失败'))
   } finally {
     repositoriesLoading.value = false
   }
@@ -983,11 +963,11 @@ const loadAlgorithmsByRepository = async (repositoryId) => {
       algorithms.value = response.data.records || []
       algorithmTotal.value = response.data.total || 0
     } else {
-      ElMessage.error(response.message || '加载算法列表失败')
+      ElMessage.error(response.message || uiText('加载算法列表失败'))
     }
   } catch (error) {
     console.error('加载算法列表失败:', error)
-    ElMessage.error('加载算法列表失败')
+    ElMessage.error(uiText('加载算法列表失败'))
   } finally {
     if (requestId === algorithmRequestId.value) {
       algorithmsLoading.value = false
@@ -1012,7 +992,7 @@ const loadDeviceList = async () => {
     totalDevices.value = Number(response?.total || 0)
   } catch (error) {
     console.error('load device list failed:', error)
-    ElMessage.error('加载设备列表失败')
+    ElMessage.error(uiText('加载设备列表失败'))
   } finally {
     deviceLoading.value = false
   }
@@ -1056,7 +1036,7 @@ const addAlgorithm = () => {
   // Get current algorithm ID
   const repositoryId = normalizeRepositoryId(activeTopMenu.value)
   if (!repositoryId) {
-    ElMessage.error('无法获取算法库信息')
+    ElMessage.error(uiText('无法获取算法库信息'))
     return
   }
 
@@ -1102,7 +1082,7 @@ const editAlgorithm = async (algorithm) => {
     llmProviders.value = providersResponse.data || []
     llmAuthorized.value = Boolean(authorizationResponse.data?.authorized)
   } catch (error) {
-    ElMessage.warning('大模型复核配置加载失败，可稍后重试')
+    ElMessage.warning(uiText('大模型复核配置加载失败，可稍后重试'))
   }
 
   // dialog
@@ -1112,7 +1092,7 @@ const editAlgorithm = async (algorithm) => {
 const openCatalogAlgorithmAdd = (repositoryId) => {
   const normalizedRepositoryId = normalizeRepositoryId(repositoryId)
   if (!normalizedRepositoryId) {
-    ElMessage.warning('请先选择具体分类')
+    ElMessage.warning(uiText('请先选择具体分类'))
     return
   }
   activeTopMenu.value = normalizedRepositoryId
@@ -1121,18 +1101,18 @@ const openCatalogAlgorithmAdd = (repositoryId) => {
 
 const evaluateAlgorithm = async (algorithm) => {
   try {
-    ElMessage.info('正在进行算法评估...')
+    ElMessage.info(uiText('正在进行算法评估...'))
     const response = await apiEvaluateAlgorithm(algorithm.id)
 
     if (response.code === 200) {
-      ElMessage.success('算法评估完成')
+      ElMessage.success(uiText('算法评估完成'))
       console.log('评估结果:', response.data)
     } else {
-      ElMessage.error(response.message || '算法评估失败')
+      ElMessage.error(response.message || uiText('算法评估失败'))
     }
   } catch (error) {
     console.error('算法评估失败:', error)
-    ElMessage.error('算法评估失败')
+    ElMessage.error(uiText('算法评估失败'))
   }
 }
 
@@ -1142,10 +1122,10 @@ const beforeAlgorithmImageUpload = (file) => {
   const isWithinLimit = file.size / 1024 / 1024 <= 5
 
   if (!isImage) {
-    ElMessage.error('图片格式仅支持 JPG、PNG 或 WEBP')
+    ElMessage.error(uiText('图片格式仅支持 JPG、PNG 或 WEBP'))
   }
   if (!isWithinLimit) {
-    ElMessage.error('图片大小不能超过 5MB')
+    ElMessage.error(uiText('图片大小不能超过 5MB'))
   }
 
   if (isImage && isWithinLimit) {
@@ -1159,15 +1139,15 @@ const handleAlgorithmImageUploadSuccess = (response) => {
   const imageUrl = response?.data?.url
   if (response?.code === 200 && imageUrl) {
     algorithmEditForm.value.imageUrl = imageUrl
-    ElMessage.success('图片上传成功')
+    ElMessage.success(uiText('图片上传成功'))
   } else {
-    ElMessage.error(response?.message || response?.msg || '图片上传失败')
+    ElMessage.error(response?.message || response?.msg || uiText('图片上传失败'))
   }
 }
 
 const handleAlgorithmImageUploadError = () => {
   imageUploading.value = false
-  ElMessage.error('图片上传失败')
+  ElMessage.error(uiText('图片上传失败'))
 }
 
 const clearAlgorithmImage = () => {
@@ -1194,7 +1174,7 @@ const publishToModelHub = (algorithm) => {
       : { from: 'algorithm-management' }
 
   if (!getModelHubAccessToken()) {
-    ElMessage.info('请先登录后继续发布到 Model Hub')
+    ElMessage.info(uiText('请先登录后继续发布到 Model Hub'))
     startModelHubLogin(pending)
     return
   }
@@ -1205,29 +1185,29 @@ const publishToModelHub = (algorithm) => {
 const handleDeleteAlgorithm = async (algorithm) => {
   try {
     await ElMessageBox.confirm(
-        `确定要删除算法"${algorithm.name}"吗？`,
-        '确认删除',
+        uiText('确定要删除算法"{value0}"吗？', { value0: algorithm.name }),
+        uiText('确认删除'),
         {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
+          confirmButtonText: uiText('确定'),
+          cancelButtonText: uiText('取消'),
           type: 'warning'
         }
     )
 
     const response = await deleteAlgorithm(algorithm.id)
     if (response.code === 200) {
-      ElMessage.success('删除成功')
+      ElMessage.success(uiText('删除成功'))
       // new Load current algorithm
       if (currentRepositoryId.value) {
         await loadAlgorithmsByRepository(currentRepositoryId.value)
       }
     } else {
-      ElMessage.error(response.message || '删除失败')
+      ElMessage.error(response.message || uiText('删除失败'))
     }
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除算法失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(uiText('删除失败'))
     }
   }
 }
@@ -1250,7 +1230,7 @@ const handleDeviceSelectionChange = (selection) => {
 
 const handleDeployToDevice = async () => {
   if (!selectedAlgorithm.value) {
-    ElMessage.warning('请先选择要下发的算法')
+    ElMessage.warning(uiText('请先选择要下发的算法'))
     return
   }
 
@@ -1259,7 +1239,7 @@ const handleDeployToDevice = async () => {
       .filter(Boolean)
 
   if (deviceIds.length === 0) {
-    ElMessage.warning('请选择要下发的设备')
+    ElMessage.warning(uiText('请选择要下发的设备'))
     return
   }
 
@@ -1272,10 +1252,10 @@ const handleDeployToDevice = async () => {
         dispatchModelType.value
     )
     if (response.code === 200) {
-      ElMessage.success('下发成功')
+      ElMessage.success(uiText('下发成功'))
       showDeviceDrawer.value = false
     } else {
-      ElMessage.error(response.msg || response.message || '下发失败')
+      ElMessage.error(response.msg || response.message || uiText('下发失败'))
     }
   } catch (error) {
     console.error('下发失败:', error)
@@ -1327,7 +1307,7 @@ const addAlgorithmLibrary = () => {
 
 const editAlgorithmLibrary = () => {
   if (selectedRepositories.value.length === 0) {
-    ElMessage.warning('请先选择要编辑的算法库')
+    ElMessage.warning(uiText('请先选择要编辑的算法库'))
     return
   }
 
@@ -1344,23 +1324,23 @@ const editAlgorithmLibrary = () => {
 
 const batchDeleteAlgorithmLibrary = async () => {
   if (selectedRepositories.value.length === 0) {
-    ElMessage.warning('请先选择要删除的算法库')
+    ElMessage.warning(uiText('请先选择要删除的算法库'))
     return
   }
 
   try {
     const basicRepos = selectedRepositories.value.filter(repo => repo.repositoryType === 'basic')
     if (basicRepos.length > 0) {
-      ElMessage.warning('基础算法库不能删除')
+      ElMessage.warning(uiText('基础算法库不能删除'))
       return
     }
 
     await ElMessageBox.confirm(
-        `确定要删除选中的 ${selectedRepositories.value.length} 个算法库吗？`,
-        '确认删除',
+        uiText('确定要删除选中的 {value0} 个算法库吗？', { value0: selectedRepositories.value.length }),
+        uiText('确认删除'),
         {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
+          confirmButtonText: uiText('确定'),
+          cancelButtonText: uiText('取消'),
           type: 'warning'
         }
     )
@@ -1369,16 +1349,16 @@ const batchDeleteAlgorithmLibrary = async () => {
     const response = await batchDeleteAlgorithmRepositories(ids)
 
     if (response.code === 200) {
-      ElMessage.success('删除成功')
+      ElMessage.success(uiText('删除成功'))
       selectedRepositories.value = []
       await loadAlgorithmRepositories()
     } else {
-      ElMessage.error(response.message || '删除失败')
+      ElMessage.error(response.message || uiText('删除失败'))
     }
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(uiText('删除失败'))
     }
   }
 }
@@ -1401,32 +1381,32 @@ const editLibraryItem = (row) => {
 
 const deleteLibraryItem = async (row) => {
   if (row.repositoryType === 'basic') {
-    ElMessage.warning('基础算法库不能删除')
+    ElMessage.warning(uiText('基础算法库不能删除'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-        `确定要删除算法库"${row.name}"吗？`,
-        '确认删除',
+        uiText('确定要删除算法库"{value0}"吗？', { value0: row.name }),
+        uiText('确认删除'),
         {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
+          confirmButtonText: uiText('确定'),
+          cancelButtonText: uiText('取消'),
           type: 'warning'
         }
     )
 
     const response = await deleteAlgorithmRepository(row.id)
     if (response.code === 200) {
-      ElMessage.success('删除成功')
+      ElMessage.success(uiText('删除成功'))
       await loadAlgorithmRepositories()
     } else {
-      ElMessage.error(response.message || '删除失败')
+      ElMessage.error(response.message || uiText('删除失败'))
     }
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(uiText('删除失败'))
     }
   }
 }
@@ -1437,14 +1417,14 @@ const toggleRepositoryStatus = async (row) => {
     const response = await updateAlgorithmRepositoryStatus(row.id, newStatus)
 
     if (response.code === 200) {
-      ElMessage.success(`${newStatus === 1 ? '启用' : '禁用'}成功`)
+      ElMessage.success(uiText('{value0}成功', { value0: newStatus === 1 ? uiText('启用') : uiText('禁用') }))
       await loadAlgorithmRepositories()
     } else {
-      ElMessage.error(response.message || '状态更新失败')
+      ElMessage.error(response.message || uiText('状态更新失败'))
     }
   } catch (error) {
     console.error('状态更新失败:', error)
-    ElMessage.error('状态更新失败')
+    ElMessage.error(uiText('状态更新失败'))
   }
 }
 
@@ -1472,7 +1452,7 @@ const handleAddConfirm = async () => {
     }
 
     if (response.code === 200) {
-      ElMessage.success(`${editingRepository.value ? '更新' : '创建'}成功`)
+      ElMessage.success(uiText('{value0}成功', { value0: editingRepository.value ? uiText('更新') : uiText('创建') }))
       showAddDialog.value = false
       await loadAlgorithmRepositories()
 
@@ -1485,7 +1465,7 @@ const handleAddConfirm = async () => {
       }
       editingRepository.value = null
     } else {
-      ElMessage.error(response.message || `${editingRepository.value ? '更新' : '创建'}失败`)
+      ElMessage.error(response.message || uiText('{value0}失败', { value0: editingRepository.value ? uiText('更新') : uiText('创建') }))
     }
   } catch (error) {
     if (typeof error === 'object' && error.message) {
@@ -1493,7 +1473,7 @@ const handleAddConfirm = async () => {
       return
     }
     console.error('操作失败:', error)
-    ElMessage.error('操作失败')
+    ElMessage.error(uiText('操作失败'))
   } finally {
     submitting.value = false
   }
@@ -1544,7 +1524,7 @@ const handleAlgorithmAddConfirm = async () => {
     const response = await createAlgorithm(algorithmData)
 
     if (response.code === 200) {
-      ElMessage.success('算法添加成功')
+      ElMessage.success(uiText('算法添加成功'))
       showAlgorithmAddDialog.value = false
 
       // new Load current algorithm algorithm
@@ -1553,13 +1533,13 @@ const handleAlgorithmAddConfirm = async () => {
       }
       await catalogRef.value?.refreshAll()
     } else {
-      ElMessage.error(response.message || '算法添加失败')
+      ElMessage.error(response.message || uiText('算法添加失败'))
     }
 
   } catch (error) {
     if (error.message) {
       console.error('算法添加失败:', error)
-      ElMessage.error('算法添加失败')
+      ElMessage.error(uiText('算法添加失败'))
     }
   } finally {
     submitting.value = false
@@ -1616,7 +1596,7 @@ const handleAlgorithmEditConfirm = async () => {
       if (reviewResponse.code !== 200) {
         throw new Error(reviewResponse.message || '大模型复核配置保存失败')
       }
-      ElMessage.success('算法及大模型复核配置更新成功')
+      ElMessage.success(uiText('算法及大模型复核配置更新成功'))
       showAlgorithmEditDialog.value = false
 
       // new Load current algorithm algorithm
@@ -1625,13 +1605,13 @@ const handleAlgorithmEditConfirm = async () => {
       }
       await catalogRef.value?.refreshAll()
     } else {
-      ElMessage.error(response.message || '算法更新失败')
+      ElMessage.error(response.message || uiText('算法更新失败'))
     }
 
   } catch (error) {
     if (error.message) {
       console.error('算法更新失败:', error)
-      ElMessage.error(algorithmSaved ? `算法已保存，但${error.message}` : error.message)
+      ElMessage.error(algorithmSaved ? uiText('算法已保存，但{value0}', { value0: error.message }) : error.message)
     }
   } finally {
     submitting.value = false

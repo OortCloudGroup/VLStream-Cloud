@@ -16,16 +16,14 @@
                 <button type="button" class="exportBtn newBtn flexRowAC" @click="handleCreate">
                   <el-icon class="BtnImg">
                     <Plus />
-                  </el-icon>
-                  新建
-                </button>
+                  </el-icon> {{ $tp('新建') }} </button>
                 <button-group :button-list="toolbarButtonList" />
               </div>
             </div>
             <div class="searchHeight_out flexRowAC">
               <search-height-box
                 keyword="keyword"
-                placeholder="搜索"
+                :placeholder="$tp('搜索')"
                 :data="searchData"
                 @handle="searchResetFn"
               />
@@ -54,7 +52,7 @@
             <el-table-column prop="phone" :label="$tp('手机')" show-overflow-tooltip />
             <el-table-column prop="sexName" :label="$tp('性别')" :width="clacPXToVW(80)" align="center">
               <template #default="scope">
-                <span>{{ scope.row.sex === 1 ? '男' : scope.row.sex === 2 ? '女' : '未知' }}</span>
+                <span>{{ scope.row.sex === 1 ? $tp('男') : scope.row.sex === 2 ? $tp('女') : $tp('未知') }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="roleName" :label="$tp('角色')" show-overflow-tooltip />
@@ -65,22 +63,22 @@
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handleEdit(scope.row)">
                     <oort-svg-icon width="14" height="14" name="edit_icon" class="new_table_svg_group_svg" />
-                    <span>编辑</span>
+                    <span>{{ $tp('编辑') }}</span>
                   </div>
                   <div class="new_table_svg_group" @click="handleSingleRemove(scope.row)">
                     <oort-svg-icon color="red" width="14" height="14" name="delete_icon" class="new_table_svg_group_svg" />
-                    <span>删除</span>
+                    <span>{{ $tp('删除') }}</span>
                   </div>
                   <el-dropdown trigger="click">
                     <div class="new_table_svg_group">
                       <oort-svg-icon width="14" height="14" name="more" class="new_table_svg_group_svg" />
-                      <span>更多</span>
+                      <span>{{ $tp('更多') }}</span>
                     </div>
                     <template #dropdown>
                       <el-dropdown-menu>
-                        <el-dropdown-item @click="handleResetPassword(scope.row)">重置密码</el-dropdown-item>
-                        <el-dropdown-item @click="handleUnlock(scope.row)">解锁账号</el-dropdown-item>
-                        <el-dropdown-item @click="handleOpenGrant(scope.row)">分配角色</el-dropdown-item>
+                        <el-dropdown-item @click="handleResetPassword(scope.row)">{{ $tp('重置密码') }}</el-dropdown-item>
+                        <el-dropdown-item @click="handleUnlock(scope.row)">{{ $tp('解锁账号') }}</el-dropdown-item>
+                        <el-dropdown-item @click="handleOpenGrant(scope.row)">{{ $tp('分配角色') }}</el-dropdown-item>
                       </el-dropdown-menu>
                     </template>
                   </el-dropdown>
@@ -122,41 +120,41 @@
     >
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="用户账号" prop="account">
-            <el-input v-model="form.account" placeholder="请输入账号" :disabled="form.id !== undefined" />
+          <el-form-item :label="$tp('用户账号')" prop="account">
+            <el-input v-model="form.account" :placeholder="$tp('请输入账号')" :disabled="form.id !== undefined" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="真实姓名" prop="realName">
-            <el-input v-model="form.realName" placeholder="请输入姓名" />
-          </el-form-item>
-        </el-col>
-      </el-row>
-
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item label="用户昵称" prop="name">
-            <el-input v-model="form.name" placeholder="请输入昵称" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="用户邮箱" prop="email">
-            <el-input v-model="form.email" placeholder="请输入邮箱" />
+          <el-form-item :label="$tp('真实姓名')" prop="realName">
+            <el-input v-model="form.realName" :placeholder="$tp('请输入姓名')" />
           </el-form-item>
         </el-col>
       </el-row>
 
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="手机号码" prop="phone">
-            <el-input v-model="form.phone" placeholder="请输入手机" />
+          <el-form-item :label="$tp('用户昵称')" prop="name">
+            <el-input v-model="form.name" :placeholder="$tp('请输入昵称')" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="用户性别" prop="sex">
-            <el-select v-model="form.sex" placeholder="请选择性别" style="width: 100%">
-              <el-option :value="1" label="男" />
-              <el-option :value="2" label="女" />
+          <el-form-item :label="$tp('用户邮箱')" prop="email">
+            <el-input v-model="form.email" :placeholder="$tp('请输入邮箱')" />
+          </el-form-item>
+        </el-col>
+      </el-row>
+
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item :label="$tp('手机号码')" prop="phone">
+            <el-input v-model="form.phone" :placeholder="$tp('请输入手机')" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item :label="$tp('用户性别')" prop="sex">
+            <el-select v-model="form.sex" :placeholder="$tp('请选择性别')" style="width: 100%">
+              <el-option :value="1" :label="$tp('男')" />
+              <el-option :value="2" :label="$tp('女')" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -164,11 +162,11 @@
 
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="出生日期" prop="birthday">
+          <el-form-item :label="$tp('出生日期')" prop="birthday">
             <el-date-picker
               v-model="form.birthday"
               type="date"
-              placeholder="选择日期"
+              :placeholder="$tp('选择日期')"
               value-format="YYYY-MM-DD"
               style="width: 100%"
             />
@@ -178,13 +176,13 @@
 
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="所属部门" prop="deptId">
+          <el-form-item :label="$tp('所属部门')" prop="deptId">
             <el-tree-select
               v-model="form.deptId"
               :data="options.depts"
               node-key="id"
               :props="{ label: 'label', children: 'children' }"
-              placeholder="请选择部门"
+              :placeholder="$tp('请选择部门')"
               check-strictly
               style="width: 100%"
               clearable
@@ -192,8 +190,8 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="所属岗位" prop="postId">
-            <el-select v-model="form.postId" placeholder="请选择岗位" style="width: 100%" clearable>
+          <el-form-item :label="$tp('所属岗位')" prop="postId">
+            <el-select v-model="form.postId" :placeholder="$tp('请选择岗位')" style="width: 100%" clearable>
               <el-option
                 v-for="item in options.posts"
                 :key="item.id"
@@ -207,13 +205,13 @@
 
       <el-row :gutter="20">
         <el-col :span="24">
-          <el-form-item label="分配角色" prop="roleId">
+          <el-form-item :label="$tp('分配角色')" prop="roleId">
             <el-tree-select
               v-model="form.roleId"
               :data="options.roles"
               node-key="id"
               :props="{ label: 'label', children: 'children' }"
-              placeholder="请选择角色"
+              :placeholder="$tp('请选择角色')"
               check-strictly
               style="width: 100%"
               clearable
@@ -224,31 +222,31 @@
     </el-form>
 
     <template #footer>
-      <el-button @click="dialogVisible = false" class="common_btn">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">确定</el-button>
+      <el-button @click="dialogVisible = false" class="common_btn">{{ $tp('取消') }}</el-button>
+      <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">{{ $tp('确定') }}</el-button>
     </template>
   </el-dialog>
 
   <!-- role -->
   <el-dialog
     v-model="grantVisible"
-    title="分配角色"
+    :title="$tp('分配角色')"
     width="30%"
     destroy-on-close
   >
     <div style="padding: 10px 20px" v-loading="grantLoading">
       <div style="margin-bottom: 15px">
-        <span>当前用户：</span>
+        <span>{{ $tp('当前用户：') }}</span>
         <strong>{{ activeUser?.realName || activeUser?.account }}</strong>
       </div>
       <el-form label-width="80px">
-        <el-form-item label="选择角色">
+        <el-form-item :label="$tp('选择角色')">
           <el-tree-select
             v-model="grantForm.roleIds"
             :data="options.roles"
             node-key="id"
             :props="{ label: 'label', children: 'children' }"
-            placeholder="请选择角色"
+            :placeholder="$tp('请选择角色')"
             check-strictly
             style="width: 100%"
             multiple
@@ -258,14 +256,16 @@
       </el-form>
     </div>
     <template #footer>
-      <el-button @click="grantVisible = false" class="common_btn">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleGrantSubmit" class="common_btn">确定</el-button>
+      <el-button @click="grantVisible = false" class="common_btn">{{ $tp('取消') }}</el-button>
+      <el-button type="primary" :loading="saving" @click="handleGrantSubmit" class="common_btn">{{ $tp('确定') }}</el-button>
     </template>
   </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
@@ -389,7 +389,7 @@ async function loadData() {
     pagination.total = getTotal(res)
   } catch (error) {
     console.error('获取用户列表失败:', error)
-    ElMessage.error('获取用户数据失败')
+    ElMessage.error(uiText('获取用户数据失败'))
   } finally {
     loading.value = false
   }
@@ -424,12 +424,12 @@ const searchResetFn = (val, reset) => {
 }
 
 const handleExport = () => {
-  ElMessage.success('导出数据')
+  ElMessage.success(uiText('导出数据'))
 }
 
 function handleToolbarEdit() {
   if (selectedRows.value.length !== 1) {
-    ElMessage.warning('请选择一条记录进行编辑')
+    ElMessage.warning(uiText('请选择一条记录进行编辑'))
     return
   }
   handleEdit(selectedRows.value[0])
@@ -437,7 +437,7 @@ function handleToolbarEdit() {
 
 function handleToolbarGrant() {
   if (selectedRows.value.length !== 1) {
-    ElMessage.warning('请选择一条记录分配角色')
+    ElMessage.warning(uiText('请选择一条记录分配角色'))
     return
   }
   handleOpenGrant(selectedRows.value[0])
@@ -532,15 +532,15 @@ async function handleSaveSubmit() {
           res = await submitUser(form.value)
         }
         if (isSuccess(res)) {
-          ElMessage.success('保存成功')
+          ElMessage.success(uiText('保存成功'))
           dialogVisible.value = false
           loadData()
         } else {
-          ElMessage.error(res?.msg || '保存失败')
+          ElMessage.error(res?.msg || uiText('保存失败'))
         }
       } catch (error) {
         console.error('提交用户信息失败:', error)
-        ElMessage.error('网络或服务器异常，提交失败')
+        ElMessage.error(uiText('网络或服务器异常，提交失败'))
       } finally {
         saving.value = false
       }
@@ -554,22 +554,22 @@ async function handleSaveSubmit() {
  * @param {String} msg prompt / tip
  */
 function executeRemove(ids, msg) {
-  ElMessageBox.confirm(msg, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(msg, uiText('提示'), {
+    confirmButtonText: uiText('确定'),
+    cancelButtonText: uiText('取消'),
     type: 'warning'
   }).then(async () => {
     try {
       const res = await removeUsers(ids)
       if (isSuccess(res)) {
-        ElMessage.success('删除成功')
+        ElMessage.success(uiText('删除成功'))
         loadData()
       } else {
-        ElMessage.error(res?.msg || '删除失败')
+        ElMessage.error(res?.msg || uiText('删除失败'))
       }
     } catch (error) {
       console.error('删除用户失败:', error)
-      ElMessage.error('删除用户操作失败')
+      ElMessage.error(uiText('删除用户操作失败'))
     }
   }).catch(() => {})
 }
@@ -587,7 +587,7 @@ function handleSingleRemove(row) {
  */
 function handleBatchRemove() {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请选择要删除的记录')
+    ElMessage.warning(uiText('请选择要删除的记录'))
     return
   }
   const ids = joinIds(selectedRows.value)
@@ -615,15 +615,15 @@ async function handleGrantSubmit() {
     const roleIds = grantForm.roleIds.join(',')
     const res = await grantUserRoles(userIds, roleIds)
     if (isSuccess(res)) {
-      ElMessage.success('分配角色成功')
+      ElMessage.success(uiText('分配角色成功'))
       grantVisible.value = false
       loadData()
     } else {
-      ElMessage.error(res?.msg || '分配角色失败')
+      ElMessage.error(res?.msg || uiText('分配角色失败'))
     }
   } catch (error) {
     console.error('分配角色失败:', error)
-    ElMessage.error('分配角色失败')
+    ElMessage.error(uiText('分配角色失败'))
   } finally {
     saving.value = false
   }
@@ -634,21 +634,21 @@ async function handleGrantSubmit() {
  * @param {Object} row userdata
  */
 function handleResetPassword(row) {
-  ElMessageBox.confirm(`确定重置用户 [${row.realName || row.account}] 的密码为默认密码吗？`, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(uiText('确定重置用户 [{value0}] 的密码为默认密码吗？', { value0: row.realName || row.account }), uiText('提示'), {
+    confirmButtonText: uiText('确定'),
+    cancelButtonText: uiText('取消'),
     type: 'warning'
   }).then(async () => {
     try {
       const res = await resetUserPassword(String(row.id))
       if (isSuccess(res)) {
-        ElMessage.success('重置密码成功')
+        ElMessage.success(uiText('重置密码成功'))
       } else {
-        ElMessage.error(res?.msg || '重置密码失败')
+        ElMessage.error(res?.msg || uiText('重置密码失败'))
       }
     } catch (error) {
       console.error('重置密码操作异常:', error)
-      ElMessage.error('重置密码操作异常')
+      ElMessage.error(uiText('重置密码操作异常'))
     }
   }).catch(() => {})
 }
@@ -658,21 +658,21 @@ function handleResetPassword(row) {
  * @param {Object} row userdata
  */
 function handleUnlock(row) {
-  ElMessageBox.confirm(`确定解锁用户 [${row.realName || row.account}] 吗？`, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(uiText('确定解锁用户 [{value0}] 吗？', { value0: row.realName || row.account }), uiText('提示'), {
+    confirmButtonText: uiText('确定'),
+    cancelButtonText: uiText('取消'),
     type: 'warning'
   }).then(async () => {
     try {
       const res = await unlockUsers(String(row.id))
       if (isSuccess(res)) {
-        ElMessage.success('解锁成功')
+        ElMessage.success(uiText('解锁成功'))
       } else {
-        ElMessage.error(res?.msg || '解锁失败')
+        ElMessage.error(res?.msg || uiText('解锁失败'))
       }
     } catch (error) {
       console.error('解锁账号操作异常:', error)
-      ElMessage.error('解锁账号操作异常')
+      ElMessage.error(uiText('解锁账号操作异常'))
     }
   }).catch(() => {})
 }

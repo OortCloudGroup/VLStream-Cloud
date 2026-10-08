@@ -16,7 +16,7 @@
       <div class="searchHeight_out flexRowAC">
         <search-height-box
           keyword="query"
-          placeholder="请输入关键字"
+          :placeholder="$tp('请输入关键字')"
           :data="searchData"
           @handle="searchResetFn"
         />
@@ -60,7 +60,7 @@
               v-hasPermi="['wvp:record:play']"
             >
               <el-icon><View /></el-icon>
-              <span>播放</span>
+              <span>{{ $tp('播放') }}</span>
             </div>
             <div
               class="new_table_svg_group"
@@ -68,7 +68,7 @@
               v-hasPermi="['wvp:record:download']"
             >
               <el-icon><Download /></el-icon>
-              <span>下载</span>
+              <span>{{ $tp('下载') }}</span>
             </div>
           </div>
         </template>
@@ -83,7 +83,7 @@
         @pagination="getRecordList"
     />
 
-    <el-dialog title="播放视频" v-model="openPlay" width="1000px" append-to-body>
+    <el-dialog :title="$tp('播放视频')" v-model="openPlay" width="1000px" append-to-body>
       <div class="player">
         <easy-player class="player" :video-url="videoUrl" autoplay :live="true"></easy-player>
       </div>

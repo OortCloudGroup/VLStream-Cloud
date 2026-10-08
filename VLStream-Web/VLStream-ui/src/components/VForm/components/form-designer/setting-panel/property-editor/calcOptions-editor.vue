@@ -7,7 +7,7 @@
 
 <template>
   <div>
-    <el-form-item style="width: 100%;" label="计算公式">
+    <el-form-item style="width: 100%;" :label="$tp('计算公式')">
       <CalcOptionsSetting v-model="optionModel.calcOptions.rules" :designer="designer" />
     </el-form-item>
   </div>

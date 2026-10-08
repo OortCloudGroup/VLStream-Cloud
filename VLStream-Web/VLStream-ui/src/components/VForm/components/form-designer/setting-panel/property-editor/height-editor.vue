@@ -6,7 +6,7 @@
 -->
 
 <template>
-  <el-form-item label="组件高度">
+  <el-form-item :label="$tp('组件高度')">
     <el-input
       v-model="compHeight"
       type="number"

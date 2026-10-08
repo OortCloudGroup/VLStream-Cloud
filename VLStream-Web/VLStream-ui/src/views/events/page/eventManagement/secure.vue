@@ -21,19 +21,17 @@
                 <div v-if="editShow" class="exportBtn newBtn flexRowAC">
                   <el-icon class="BtnImg">
                     <Plus />
-                  </el-icon>新增事件
-                </div>
+                  </el-icon>{{ $tp('新增事件') }} </div>
                 <div v-if="showMoreDelete" class="exportBtn newBtn flexRowAC">
                   <el-icon class="BtnImg">
                     <UploadFilled />
-                  </el-icon>导出
-                </div>
+                  </el-icon>{{ $tp('导出') }} </div>
                 <div class="oort_button_group">
                   <div v-if="editShow" class="oort_button_group_item">
                     <el-icon>
                       <Edit />
                     </el-icon>
-                    <span>编辑</span>
+                    <span>{{ $tp('编辑') }}</span>
                   </div>
                   <div v-if="editShow" class="oort_button_group_line" />
                   <!--                  <div class="oort_button_group_item" @click="deleteTask">-->
@@ -53,19 +51,13 @@
             </div>
             <div class="tabs-btn">
               <el-radio-group v-model="tabActive" size="default" @change="tabsAChange">
-                <el-radio-button value="0">
-                  全部
-                </el-radio-button>
-                <el-radio-button value="2">
-                  正在处理
-                </el-radio-button>
-                <el-radio-button value="1">
-                  已完成
-                </el-radio-button>
+                <el-radio-button value="0"> {{ $tp('全部') }} </el-radio-button>
+                <el-radio-button value="2"> {{ $tp('正在处理') }} </el-radio-button>
+                <el-radio-button value="1"> {{ $tp('已完成') }} </el-radio-button>
               </el-radio-group>
             </div>
             <div class="searchHeight_out flexRowAC">
-              <search-height-box keyword="keyword" placeholder="搜索" :data="searchData" @handle="searchResetFn" />
+              <search-height-box keyword="keyword" :placeholder="$tp('搜索')" :data="searchData" @handle="searchResetFn" />
               <export-excel-pdf />
             </div>
           </div>
@@ -120,7 +112,7 @@
                   />
                   <span class="eventImgText">+{{ scope.row.pics.length }}</span>
                 </div>
-                <span v-else>暂无图片</span>
+                <span v-else>{{ $tp('暂无图片') }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="fileUrl" :label="$tp('录制视频')" min-width="130">
@@ -128,7 +120,7 @@
                 <div v-if="scope.row.videoUrl" class="video-container" @click="openVideoDialog(scope.row)">
                 </div>
                 <div v-else class="no-video">
-                  <span>暂无视频</span>
+                  <span>{{ $tp('暂无视频') }}</span>
                 </div>
               </template>
             </el-table-column>
@@ -154,12 +146,12 @@
                       name="enable"
                       class="new_table_svg_group_svg"
                     />
-                    <span>确认事件</span>
+                    <span>{{ $tp('确认事件') }}</span>
                   </div>
                   <template v-else>
                     <div class="new_table_svg_group" @click="phoneFBackFn(scope.row)">
                       <oort-svg-icon width="14" height="14" name="table_incoming" class="new_table_svg_group_svg" />
-                      <span>反馈</span>
+                      <span>{{ $tp('反馈') }}</span>
                     </div>
                     <div class="new_table_svg_group" @click="confirmAlert(scope.row, 'ignore')">
                       <oort-svg-icon
@@ -177,7 +169,7 @@
                       name="allocation"
                       class="new_table_svg_group_svg"
                     />
-                    <span>任务分配</span>
+                    <span>{{ $tp('任务分配') }}</span>
                   </div>
                 </div>
               </template>
@@ -216,7 +208,7 @@
     <el-dialog
       v-model="videoDialogVisible"
       class="locale-dialog locale-dialog--wide"
-      title="视频播放"
+      :title="$tp('视频播放')"
       :before-close="closeVideoDialog"
     >
       <div class="video-dialog-container">
@@ -233,6 +225,8 @@
 </template>
 
 <script setup lang="ts">
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, onMounted, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 // import { Delete } from '@element-plus/icons-vue'
@@ -299,7 +293,7 @@ const getStatusText = (status) => {
     '1': '已完成',
     '2': '正在处理'
   }
-  return statusTextMap[String(status)] || '未知状态'
+  return statusTextMap[String(status)] || uiText('未知状态')
 }
 const getStatusType2 = (status: string | number) => {
   const statusMap = {
@@ -317,7 +311,7 @@ const getStatusText2 = (status: string | number) => {
     '2': '维保',
     '3': '误报'
   }
-  return statusTextMap[String(status)] || '未知状态'
+  return statusTextMap[String(status)] || uiText('未知状态')
 }
 
 const confirmAlertVis = ref(false)
@@ -357,7 +351,7 @@ const handleClassificationFilter = async(filter: { categoryType?: string, catego
     classificationFilter.deviceIds = (response.data || []).map((id: any) => String(id))
     await getList()
   } catch (error: any) {
-    ElMessage.error(error.message || '获取分类设备失败')
+    ElMessage.error(error.message || uiText('获取分类设备失败'))
   }
 }
 
@@ -379,7 +373,7 @@ const getList = async() => {
       count.value = res.data.count
     }
   } catch (error: any) {
-    ElMessage.error(error.message || '获取数据失败')
+    ElMessage.error(error.message || uiText('获取数据失败'))
   }
 }
 const handleSizeChange = (val: number) => {
@@ -405,7 +399,7 @@ const handleSelectionChange = (selection: any[]) => {
 
 const deleteTask = async() => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请选择要删除的事件')
+    ElMessage.warning(uiText('请选择要删除的事件'))
     return
   }
 
@@ -414,8 +408,8 @@ const deleteTask = async() => {
     translatePhrase('确定删除所选事件吗？'),
     translatePhrase('删除确认'),
     {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: uiText('确定'),
+      cancelButtonText: uiText('取消'),
       type: 'warning'
     }
   )
@@ -431,7 +425,7 @@ const deleteTask = async() => {
 
   await Promise.all(deletePromises)
 
-  ElMessage.success('删除成功')
+  ElMessage.success(uiText('删除成功'))
   // new Get
   getList()
 }

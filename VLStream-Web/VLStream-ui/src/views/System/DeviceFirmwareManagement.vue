@@ -11,17 +11,17 @@
       <div class="tableTenBox">
         <div class="table-content">
           <div class="toolbar">
-            <el-button type="primary" :icon="Plus" @click="openUploadDialog">上传固件</el-button>
+            <el-button type="primary" :icon="Plus" @click="openUploadDialog">{{ $tp('上传固件') }}</el-button>
             <el-form :inline="true" :model="query" class="search-form" @submit.prevent>
-              <el-form-item label="摄像头型号">
-                <el-input v-model.trim="query.cameraModel" clearable placeholder="输入型号编码" @keyup.enter="search" />
+              <el-form-item :label="$tp('摄像头型号')">
+                <el-input v-model.trim="query.cameraModel" clearable :placeholder="$tp('输入型号编码')" @keyup.enter="search" />
               </el-form-item>
-              <el-form-item label="固件版本">
-                <el-input v-model.trim="query.firmwareVersion" clearable placeholder="例如 1.0.1.14" @keyup.enter="search" />
+              <el-form-item :label="$tp('固件版本')">
+                <el-input v-model.trim="query.firmwareVersion" clearable :placeholder="$tp('例如 1.0.1.14')" @keyup.enter="search" />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" @click="search">搜索</el-button>
-                <el-button @click="resetSearch">重置</el-button>
+                <el-button type="primary" @click="search">{{ $tp('搜索') }}</el-button>
+                <el-button @click="resetSearch">{{ $tp('重置') }}</el-button>
               </el-form-item>
             </el-form>
           </div>
@@ -44,7 +44,7 @@
             <el-table-column :label="$tp('状态')" width="110">
               <template #default="{ row }">
                 <el-tag :type="row.uploadStatus === 'READY' ? 'success' : 'warning'">
-                  {{ row.uploadStatus === 'READY' ? '可用' : '待完成' }}
+                  {{ row.uploadStatus === 'READY' ? $tp('可用') : $tp('待完成') }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -53,8 +53,8 @@
             </el-table-column>
             <el-table-column :label="$tp('操作')" width="150" fixed="right" align="right">
               <template #default="{ row }">
-                <el-button link type="primary" :disabled="row.uploadStatus !== 'READY'" @click="download(row)">下载</el-button>
-                <el-button link type="danger" @click="remove(row)">删除</el-button>
+                <el-button link type="primary" :disabled="row.uploadStatus !== 'READY'" @click="download(row)">{{ $tp('下载') }}</el-button>
+                <el-button link type="danger" @click="remove(row)">{{ $tp('删除') }}</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -75,27 +75,27 @@
       </div>
     </div>
 
-    <el-dialog v-model="dialogVisible" title="上传 VLS 设备固件" width="520px" destroy-on-close>
+    <el-dialog v-model="dialogVisible" :title="$tp('上传 VLS 设备固件')" width="520px" destroy-on-close>
       <el-alert
-        title="固件包将通过短期签名地址直接上传到 MinIO，平台不会向浏览器暴露存储凭据。"
+        :title="$tp('固件包将通过短期签名地址直接上传到 MinIO，平台不会向浏览器暴露存储凭据。')"
         type="info"
         :closable="false"
         show-icon
         class="upload-alert"
       />
       <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
-        <el-form-item label="摄像头型号" prop="cameraModel">
-          <el-input v-model.trim="form.cameraModel" maxlength="128" placeholder="例如 IPC-A100" />
-          <div class="form-tip">设备上报时必须使用完全相同的型号编码。</div>
+        <el-form-item :label="$tp('摄像头型号')" prop="cameraModel">
+          <el-input v-model.trim="form.cameraModel" maxlength="128" :placeholder="$tp('例如 IPC-A100')" />
+          <div class="form-tip">{{ $tp('设备上报时必须使用完全相同的型号编码。') }}</div>
         </el-form-item>
-        <el-form-item label="固件版本号" prop="firmwareVersion">
-          <el-input v-model.trim="form.firmwareVersion" placeholder="例如 1.0.1.14" />
+        <el-form-item :label="$tp('固件版本号')" prop="firmwareVersion">
+          <el-input v-model.trim="form.firmwareVersion" :placeholder="$tp('例如 1.0.1.14')" />
         </el-form-item>
-        <el-form-item label="升级目标">
+        <el-form-item :label="$tp('升级目标')">
           <el-input model-value="RootFS" disabled />
-          <div class="form-tip">VLS 固件固定升级 RootFS，并强制开启回滚及升级后重启。</div>
+          <div class="form-tip">{{ $tp('VLS 固件固定升级 RootFS，并强制开启回滚及升级后重启。') }}</div>
         </el-form-item>
-        <el-form-item label="固件包" prop="file">
+        <el-form-item :label="$tp('固件包')" prop="file">
           <el-upload
             ref="uploadRef"
             :auto-upload="false"
@@ -104,25 +104,27 @@
             :on-change="handleFileChange"
             :on-remove="handleFileRemove"
           >
-            <el-button type="primary" plain>选择文件</el-button>
+            <el-button type="primary" plain>{{ $tp('选择文件') }}</el-button>
             <template #tip>
-              <div class="el-upload__tip">仅支持包含 manifest 的 .ota 固件包，最大 160 MiB</div>
+              <div class="el-upload__tip">{{ $tp('仅支持包含 manifest 的 .ota 固件包，最大 160 MiB') }}</div>
             </template>
           </el-upload>
         </el-form-item>
-        <el-form-item v-if="uploading" label="上传进度">
+        <el-form-item v-if="uploading" :label="$tp('上传进度')">
           <el-progress :percentage="uploadProgress" style="width: 100%" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button :disabled="uploading" @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="uploading" @click="submitUpload">上传并保存</el-button>
+        <el-button :disabled="uploading" @click="dialogVisible = false">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" :loading="uploading" @click="submitUpload">{{ $tp('上传并保存') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
@@ -152,7 +154,7 @@ const form = reactive({ cameraModel: '', firmwareVersion: '', file: null })
 const rules = {
   cameraModel: [
     { required: true, message: '请输入摄像头型号', trigger: 'blur' },
-    { validator: (_rule, value, callback) => value?.length <= 128 && !/[\\/]/.test(value) ? callback() : callback(new Error('型号不能超过 128 个字符或包含路径分隔符')), trigger: 'blur' }
+    { validator: (_rule, value, callback) => value?.length <= 128 && !/[\\/]/.test(value) ? callback() : callback(new Error(uiText('型号不能超过 128 个字符或包含路径分隔符'))), trigger: 'blur' }
   ],
   firmwareVersion: [
     { required: true, message: '请输入固件版本号', trigger: 'blur' },
@@ -205,13 +207,13 @@ function handleFileChange(uploadFile) {
   if (!file) return
   const lowerName = file.name.toLowerCase()
   if (!ALLOWED_SUFFIXES.some(suffix => lowerName.endsWith(suffix))) {
-    ElMessage.error('仅支持包含 manifest 的 .ota 固件包')
+    ElMessage.error(uiText('仅支持包含 manifest 的 .ota 固件包'))
     uploadRef.value?.clearFiles()
     form.file = null
     return
   }
   if (file.size <= 0 || file.size > MAX_PACKAGE_BYTES) {
-    ElMessage.error('固件包必须大于 0 且不能超过 160 MiB')
+    ElMessage.error(uiText('固件包必须大于 0 且不能超过 160 MiB'))
     uploadRef.value?.clearFiles()
     form.file = null
     return
@@ -253,7 +255,7 @@ async function submitUpload() {
     )
     await completeFirmwareUpload(firmwareId)
     uploadProgress.value = 100
-    ElMessage.success('固件上传并校验成功')
+    ElMessage.success(uiText('固件上传并校验成功'))
     dialogVisible.value = false
     await loadData()
   } catch (error) {
@@ -263,7 +265,7 @@ async function submitUpload() {
         console.warn('清理未完成固件记录失败:', cleanupError)
       })
     }
-    ElMessage.error(error?.response?.data?.msg || error?.message || '固件上传失败')
+    ElMessage.error(error?.response?.data?.msg || error?.message || uiText('固件上传失败'))
   } finally {
     uploading.value = false
   }
@@ -283,12 +285,12 @@ async function download(row) {
 async function remove(row) {
   try {
     await ElMessageBox.confirm(
-      `确定删除 ${row.cameraModel} / RootFS / ${row.firmwareVersion} 及其 MinIO 固件包吗？`,
-      '删除固件',
-      { type: 'warning', confirmButtonText: '确定删除', cancelButtonText: '取消' }
+      uiText('确定删除 {value0} / RootFS / {value1} 及其 MinIO 固件包吗？', { value0: row.cameraModel, value1: row.firmwareVersion }),
+      uiText('删除固件'),
+      { type: 'warning', confirmButtonText: uiText('确定删除'), cancelButtonText: uiText('取消') }
     )
     await removeDeviceFirmware(row.id)
-    ElMessage.success('固件已删除')
+    ElMessage.success(uiText('固件已删除'))
     await loadData()
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {

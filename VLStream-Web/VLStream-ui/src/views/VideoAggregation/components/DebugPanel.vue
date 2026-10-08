@@ -10,18 +10,18 @@
     <!--  -->
     <div class="debug-header">
       <div class="header-title">
-        <h3>调试信息面板</h3>
+        <h3>{{ $tp('调试信息面板') }}</h3>
         <span class="debug-status" :class="{ loading: loading }">
-          {{ loading ? '加载中...' : '运行中' }}
+          {{ loading ? $tp('加载中...') : $tp('运行中') }}
         </span>
       </div>
       <div class="header-controls">
-        <button class="control-btn" @click="refreshDebugInfo" title="刷新">
+        <button class="control-btn" @click="refreshDebugInfo" :title="$tp('刷新')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
           </svg>
         </button>
-        <button class="control-btn close-btn" @click="closePanel" title="关闭">
+        <button class="control-btn close-btn" @click="closePanel" :title="$tp('关闭')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
           </svg>
@@ -33,24 +33,24 @@
     <div class="debug-content">
       <!--  -->
       <div class="debug-section">
-        <h4>系统状态</h4>
+        <h4>{{ $tp('系统状态') }}</h4>
         <div class="status-grid">
           <div class="status-item">
-            <label>加载状态:</label>
+            <label>{{ $tp('加载状态:') }}</label>
             <span :class="loading ? 'loading' : 'ready'">
-              {{ loading ? '加载中' : '就绪' }}
+              {{ loading ? $tp('加载中') : $tp('就绪') }}
             </span>
           </div>
           <div class="status-item">
-            <label>布局模式:</label>
+            <label>{{ $tp('布局模式:') }}</label>
             <span>{{ layoutModeText }}</span>
           </div>
           <div class="status-item">
-            <label>设备总数:</label>
+            <label>{{ $tp('设备总数:') }}</label>
             <span>{{ deviceList.length }}</span>
           </div>
           <div class="status-item">
-            <label>活动流:</label>
+            <label>{{ $tp('活动流:') }}</label>
             <span>{{ activeStreamCount }}</span>
           </div>
         </div>
@@ -58,7 +58,7 @@
 
       <!-- device -->
       <div class="debug-section">
-        <h4>设备列表 ({{ deviceList.length }})</h4>
+        <h4>{{ $tp('设备列表 (') }}{{ deviceList.length }})</h4>
         <div class="device-debug-list">
           <div
             v-for="device in deviceList"
@@ -73,9 +73,9 @@
             </div>
             <div class="device-technical-info">
               <div class="info-row">
-                <label>状态:</label>
+                <label>{{ $tp('状态:') }}</label>
                 <span class="status-badge" :class="device.status">
-                  {{ device.status === 'online' ? '在线' : '离线' }}
+                  {{ device.status === 'online' ? $tp('在线') : $tp('离线') }}
                 </span>
               </div>
               <div class="info-row">
@@ -83,11 +83,11 @@
                 <span>{{ device.ip || 'N/A' }}</span>
               </div>
               <div class="info-row">
-                <label>端口:</label>
+                <label>{{ $tp('端口:') }}</label>
                 <span>{{ device.port || 'N/A' }}</span>
               </div>
               <div class="info-row">
-                <label>协议:</label>
+                <label>{{ $tp('协议:') }}</label>
                 <span>{{ device.protocol || 'RTSP' }}</span>
               </div>
             </div>
@@ -97,7 +97,7 @@
 
       <!--  -->
       <div class="debug-section">
-        <h4>实时流状态 ({{ activeStreamCount }})</h4>
+        <h4>{{ $tp('实时流状态 (') }}{{ activeStreamCount }})</h4>
         <div class="stream-debug-list">
           <div
             v-for="(stream, cameraId) in realCameraStreams"
@@ -105,26 +105,21 @@
             class="stream-debug-item"
           >
             <div class="stream-info">
-              <div class="stream-id">摄像头 ID: {{ cameraId }}</div>
-              <div class="stream-url">流地址: {{ stream.url || 'N/A' }}</div>
-              <div class="stream-status">
-                状态:
-                <span class="status-badge active">活动</span>
+              <div class="stream-id">{{ $tp('摄像头 ID:') }} {{ cameraId }}</div>
+              <div class="stream-url">{{ $tp('流地址:') }} {{ stream.url || 'N/A' }}</div>
+              <div class="stream-status"> {{ $tp('状态:') }} <span class="status-badge active">{{ $tp('活动') }}</span>
               </div>
-              <div class="stream-quality">
-                质量: {{ stream.quality || '标清' }}
+              <div class="stream-quality"> {{ $tp('质量:') }} {{ stream.quality || $tp('标清') }}
               </div>
             </div>
           </div>
-          <div v-if="activeStreamCount === 0" class="no-streams">
-            暂无活动流
-          </div>
+          <div v-if="activeStreamCount === 0" class="no-streams"> {{ $tp('暂无活动流') }} </div>
         </div>
       </div>
 
       <!-- WebRTCconfiguration -->
       <div class="debug-section">
-        <h4>WebRTC 配置</h4>
+        <h4>{{ $tp('WebRTC 配置') }}</h4>
         <div class="config-content">
           <pre class="config-json">{{ formattedWebRTCConfig }}</pre>
         </div>
@@ -132,22 +127,22 @@
 
       <!-- can -->
       <div class="debug-section">
-        <h4>性能监控</h4>
+        <h4>{{ $tp('性能监控') }}</h4>
         <div class="performance-grid">
           <div class="perf-item">
-            <label>内存使用:</label>
+            <label>{{ $tp('内存使用:') }}</label>
             <span>{{ memoryUsage }}MB</span>
           </div>
           <div class="perf-item">
-            <label>CPU使用:</label>
+            <label>{{ $tp('CPU使用:') }}</label>
             <span>{{ cpuUsage }}%</span>
           </div>
           <div class="perf-item">
-            <label>网络延迟:</label>
+            <label>{{ $tp('网络延迟:') }}</label>
             <span>{{ networkLatency }}ms</span>
           </div>
           <div class="perf-item">
-            <label>帧率:</label>
+            <label>{{ $tp('帧率:') }}</label>
             <span>{{ frameRate }}fps</span>
           </div>
         </div>
@@ -155,7 +150,7 @@
 
       <!-- operationlog -->
       <div class="debug-section">
-        <h4>操作日志</h4>
+        <h4>{{ $tp('操作日志') }}</h4>
         <div class="log-container">
           <div
             v-for="(log, index) in logs"
@@ -173,6 +168,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 // Props
@@ -227,7 +224,7 @@ const layoutModeText = computed(() => {
     5: '5x5模式',
     6: '6x6模式'
   }
-  return modes[props.layoutMode] || '未知模式'
+  return modes[props.layoutMode] || uiText('未知模式')
 })
 
 const formattedWebRTCConfig = computed(() => {

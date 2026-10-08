@@ -6,12 +6,10 @@
 -->
 
 <template>
-  <el-dialog v-model="dialogVisible" class="diaOutSet locale-dialog locale-dialog--wide" title="事件详情" top="5vh" :before-close="handleClose" destroy-on-close>
-    <div class="basicTitle codeActBox flexRowAC">
-      基本属性
-      <div class="line" />
+  <el-dialog v-model="dialogVisible" class="diaOutSet locale-dialog locale-dialog--wide" :title="$tp('事件详情')" top="5vh" :before-close="handleClose" destroy-on-close>
+    <div class="basicTitle codeActBox flexRowAC"> {{ $tp('基本属性') }} <div class="line" />
       <div class="lineT flexRowAC" @click="codeAct=!codeAct">
-        {{ codeAct === true ? '收起' : '展开' }}
+        {{ codeAct === true ? $tp('收起') : $tp('展开') }}
         <oort-svg-icon v-if="codeAct" class="elmenuIconImg" name="shrink" width="14" height="14" color="#999" />
         <oort-svg-icon v-else class="elmenuIconImg" name="open" width="14" height="14" />
       </div>
@@ -19,20 +17,20 @@
     <div v-if="codeAct">
       <div class="detailsBox">
         <div class="details_row_box">
-          <img src="@/assets/img/maintenance/task.png" alt="养护详情" />
-          <div>事件名称</div>
+          <img src="@/assets/img/maintenance/task.png" :alt="$tp('养护详情')" />
+          <div>{{ $tp('事件名称') }}</div>
         </div>
         <div class="d_r_content">
           {{ eventDetailData.name }}
           <el-tag :type="eventDetailData.status === 1 ? 'primary' : 'success'">
-            {{ eventDetailData.status === 1 ? '已完成' : '正在处理' }}
+            {{ eventDetailData.status === 1 ? $tp('已完成') : $tp('正在处理') }}
           </el-tag>
         </div>
       </div>
       <div class="detailsBox">
         <div class="details_row_box">
-          <img src="@/assets/img/maintenance/popup.png" alt="养护详情" />
-          <div>事件描述</div>
+          <img src="@/assets/img/maintenance/popup.png" :alt="$tp('养护详情')" />
+          <div>{{ $tp('事件描述') }}</div>
         </div>
         <div class="d_r_content">
           {{ eventDetailData.describe }}
@@ -40,8 +38,8 @@
       </div>
       <div class="detailsBox">
         <div class="details_row_box">
-          <img src="@/assets/img/maintenance/address.png" alt="养护详情" />
-          <div>事件位置</div>
+          <img src="@/assets/img/maintenance/address.png" :alt="$tp('养护详情')" />
+          <div>{{ $tp('事件位置') }}</div>
         </div>
         <div class="d_r_content">
           {{ eventDetailData.point?.address }}
@@ -49,8 +47,8 @@
       </div>
       <div class="detailsBox">
         <div class="details_row_box">
-          <img src="@/assets/img/maintenance/img.png" alt="养护详情" />
-          <div>拍传</div>
+          <img src="@/assets/img/maintenance/img.png" :alt="$tp('养护详情')" />
+          <div>{{ $tp('拍传') }}</div>
         </div>
         <div class="d_r_content">
           <el-image
@@ -67,8 +65,8 @@
       </div>
       <div class="detailsBox">
         <div class="details_row_box">
-          <img src="@/assets/img/maintenance/staff.png" alt="巡查详情" />
-          <div>上报人员</div>
+          <img src="@/assets/img/maintenance/staff.png" :alt="$tp('巡查详情')" />
+          <div>{{ $tp('上报人员') }}</div>
         </div>
         <div class="details_row_content">
           <PersonInfoCard :uuid="eventDetailData.uuid" />
@@ -76,8 +74,8 @@
       </div>
       <div class="detailsBox">
         <div class="details_row_box">
-          <img src="@/assets/img/maintenance/staff2.png" alt="巡查详情" />
-          <div>执行人员</div>
+          <img src="@/assets/img/maintenance/staff2.png" :alt="$tp('巡查详情')" />
+          <div>{{ $tp('执行人员') }}</div>
         </div>
         <div class="details_row_content">
           <div v-if="eventDetailData.uuids && eventDetailData.uuids.length > 0" class="details_row_content_persons">
@@ -107,8 +105,8 @@
       </div> -->
       <div class="detailsBox">
         <div class="details_row_box">
-          <img src="@/assets/img/maintenance/time.png" alt="养护详情" />
-          <div>上报时间</div>
+          <img src="@/assets/img/maintenance/time.png" :alt="$tp('养护详情')" />
+          <div>{{ $tp('上报时间') }}</div>
         </div>
         <div class="d_r_content">
           {{ eventDetailData.created_at }}
@@ -116,8 +114,8 @@
       </div>
       <div class="detailsBox">
         <div class="details_row_box">
-          <img src="@/assets/img/maintenance/time.png" alt="养护详情" />
-          <div>完成时间</div>
+          <img src="@/assets/img/maintenance/time.png" :alt="$tp('养护详情')" />
+          <div>{{ $tp('完成时间') }}</div>
         </div>
         <div class="d_r_content">
           {{ eventDetailData.finish_at }}
@@ -126,24 +124,22 @@
     </div>
     <div v-if="false&&eventDetailData.status === 2">
       <div class="details_container">
-        <div class="basicTitle codeActBox flexRowAC">
-          事件反馈
-          <div class="line" />
+        <div class="basicTitle codeActBox flexRowAC"> {{ $tp('事件反馈') }} <div class="line" />
           <div class="lineT flexRowAC" @click="codeAct_2=!codeAct_2">
-            {{ codeAct_2 === true ? '收起' : '展开' }}
+            {{ codeAct_2 === true ? $tp('收起') : $tp('展开') }}
             <oort-svg-icon v-if="codeAct_2" class="elmenuIconImg" name="shrink" width="14" height="14" color="#999" />
             <oort-svg-icon v-else class="elmenuIconImg" name="open" width="14" height="14" />
           </div>
         </div>
         <div v-if="codeAct_2" class="e_addFeedback">
           <el-form ref="formRef" v-loading="formLoading" :rules="formRules" :model="formData" label-width="auto">
-            <el-form-item label="是否转工单" prop="workOrder">
-              <el-switch v-model="formData.workOrder" size="large" active-text="是" inactive-text="否" />
+            <el-form-item :label="$tp('是否转工单')" prop="workOrder">
+              <el-switch v-model="formData.workOrder" size="large" :active-text="$tp('是')" :inactive-text="$tp('否')" />
             </el-form-item>
-            <el-form-item v-if="formData.workOrder" label="选择工单" prop="workOrderId">
-              <el-select v-model="formData.workOrderId" placeholder="请选择工单">
-                <el-option label="选项1" value="1" />
-                <el-option label="选项2" value="2" />
+            <el-form-item v-if="formData.workOrder" :label="$tp('选择工单')" prop="workOrderId">
+              <el-select v-model="formData.workOrderId" :placeholder="$tp('请选择工单')">
+                <el-option :label="$tp('选项1')" value="1" />
+                <el-option :label="$tp('选项2')" value="2" />
               </el-select>
             </el-form-item>
             <!-- <el-form-item label="whether notification" prop="notice"> -->
@@ -156,18 +152,18 @@
             <!--                </div>-->
             <!--              </div>-->
             <!--            </el-form-item>-->
-            <el-form-item label="反馈图片" prop="fileUrls">
+            <el-form-item :label="$tp('反馈图片')" prop="fileUrls">
               <div class="avatarBox">
-                <multi-image-upload v-model="formData.pics" :size-limit="2" :accept="'image/*'" tip="上传图片" :max-count="5" />
+                <multi-image-upload v-model="formData.pics" :size-limit="2" :accept="'image/*'" :tip="$tp('上传图片')" :max-count="5" />
               </div>
             </el-form-item>
-            <el-form-item label="反馈描述" prop="describe">
+            <el-form-item :label="$tp('反馈描述')" prop="describe">
               <div style="width: 100%;">
                 <el-input
                   v-model="formData.describe"
                   type="textarea"
                   :rows="5"
-                  placeholder="请输入描述"
+                  :placeholder="$tp('请输入描述')"
                   maxlength="200"
                   show-word-limit
                 />
@@ -176,32 +172,30 @@
                   :number="256"
                   mod="描述"
                   :keyword="formData.describe"
-                  keyword-empty-tips="请先输入描述"
+                  :keyword-empty-tips="$tp('请先输入描述')"
                 />
               </div>
               <CommonExpressions :content="formData.describe" @selectContent="selectContent" />
             </el-form-item>
           </el-form>
-          <el-form-item label="是否完成" prop="status">
-            <el-switch v-model="formData.status" size="large" :active-value="1" :inactive-value="2" active-text="已完成" inactive-text="未完成" />
+          <el-form-item :label="$tp('是否完成')" prop="status">
+            <el-switch v-model="formData.status" size="large" :active-value="1" :inactive-value="2" :active-text="$tp('已完成')" :inactive-text="$tp('未完成')" />
           </el-form-item>
         </div>
       </div>
     </div>
     <div class="details_container">
-      <div class="basicTitle codeActBox flexRowAC">
-        反馈列表
-        <div class="line" />
+      <div class="basicTitle codeActBox flexRowAC"> {{ $tp('反馈列表') }} <div class="line" />
         <div class="lineT flexRowAC" @click="harvest=!harvest">
-          {{ harvest === true ? '收起' : '展开' }}
+          {{ harvest === true ? $tp('收起') : $tp('展开') }}
           <oort-svg-icon v-if="harvest" class="elmenuIconImg" name="shrink" width="14" height="14" color="#999" />
           <oort-svg-icon v-else class="elmenuIconImg" name="open" width="14" height="14" />
         </div>
       </div>
       <div v-if="harvest">
         <el-tabs v-model="activeIndex" class="left-tabs">
-          <el-tab-pane label="反馈记录" name="1" />
-          <el-tab-pane label="工单记录" name="2" />
+          <el-tab-pane :label="$tp('反馈记录')" name="1" />
+          <el-tab-pane :label="$tp('工单记录')" name="2" />
         </el-tabs>
         <div class="feedbacklist">
           <FeedbackRecord v-if="activeIndex === '1'" :feedback-list-data="feedbackListData" />
@@ -209,17 +203,15 @@
         </div>
       </div>
       <div class="d_h_maintainBtns">
-        <el-button @click="handleClose" class="common_btn">
-          取消
-        </el-button>
-        <el-button v-if="false&&eventDetailData.status === 2" type="primary" :disabled="formLoading" @click="addFeedbackForm" class="common_btn">
-          确定
-        </el-button>
+        <el-button @click="handleClose" class="common_btn"> {{ $tp('取消') }} </el-button>
+        <el-button v-if="false&&eventDetailData.status === 2" type="primary" :disabled="formLoading" @click="addFeedbackForm" class="common_btn"> {{ $tp('确定') }} </el-button>
       </div>
     </div>
   </el-dialog>
 </template>
 <script setup lang="ts">
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, computed, watch } from 'vue'
 import MultiImageUpload from '../multiImageUpload.vue'
 import CommonExpressions from '@/components/commonExpressions.vue'
@@ -396,7 +388,7 @@ const addFeedbackForm = async() => {
   }
   const res: any = await addFeedback(formData.value)
   if (res.code === 200) {
-    ElMessage.success('反馈成功')
+    ElMessage.success(uiText('反馈成功'))
     const currentId = formData.value.id
     const currentPoint = formData.value.point
     formData.value = initFormData()

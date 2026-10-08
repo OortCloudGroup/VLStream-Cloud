@@ -10,12 +10,12 @@
     <div class="tenant_content">
       <div class="tableTenBox flexRowAC">
         <div class="police_aside_use">
-          <div class="treeTitle">通道列表</div>
+          <div class="treeTitle">{{ $tp('通道列表') }}</div>
           <div class="live-switch-row flexRowAC">
             <el-switch
               v-model="activeValue"
-              active-text="行政区划"
-              inactive-text="业务分组"
+              :active-text="$tp('行政区划')"
+              :inactive-text="$tp('业务分组')"
               @change="onSwitch"
             />
           </div>
@@ -48,7 +48,7 @@
         <div class="tableTenItU live-right">
           <div class="depNameBox_out flexRowAC">
             <div class="depNameBox flexRowAC">
-              <span class="live-toolbar-label">分屏</span>
+              <span class="live-toolbar-label">{{ $tp('分屏') }}</span>
               <div class="live-split-btns flexRowAC">
                 <svg-icon
                   :class="['flex-icon', { active: splitShow === 1 }]"

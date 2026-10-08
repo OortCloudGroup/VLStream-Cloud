@@ -18,13 +18,9 @@
         color: 'white'
       }"
     >
-      <el-icon><Search /></el-icon>
-      搜索
-    </el-button>
+      <el-icon><Search /></el-icon> {{ $tp('搜索') }} </el-button>
     <el-button @click="handleReset">
-      <el-icon><Refresh /></el-icon>
-      重置
-    </el-button>
+      <el-icon><Refresh /></el-icon> {{ $tp('重置') }} </el-button>
   </div>
 </template>
 

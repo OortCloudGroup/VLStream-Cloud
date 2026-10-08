@@ -13,10 +13,10 @@
         style="margin: 4px auto;cursor: pointer"
       >
         <div class="w-20 h-8 flex justify-center items-center rounded-3xl" :class="{'bg-oortBlue':publicP === 1}" @click="changeTagStatus(1)">
-          <span class="text-base" :class="{'text-white':publicP===1}">公开</span>
+          <span class="text-base" :class="{'text-white':publicP===1}">{{ $tp('公开') }}</span>
         </div>
         <div class="w-20 h-8 flex justify-center items-center rounded-3xl" :class="{'bg-oortBlue':publicP === 2}" @click="changeTagStatus(2)">
-          <span class="text-base" :class="{'text-white':publicP===2}">个人</span>
+          <span class="text-base" :class="{'text-white':publicP===2}">{{ $tp('个人') }}</span>
         </div>
       </div>
       <div class="w-full flex flex-col dept_list">
@@ -24,7 +24,7 @@
           <span class="text-base text-color333 ml-2">{{ item.name }}</span>
         </div>
         <div v-if="tagList.length ===0" class="w-full h-full flex items-center justify-center">
-          <span style="font-size: 16px;color: #999">暂无数据</span>
+          <span style="font-size: 16px;color: #999">{{ $tp('暂无数据') }}</span>
         </div>
       </div>
     </div>
@@ -45,9 +45,7 @@
           v-model="checkedAll"
           :indeterminate="isIndeterminate"
           @change="handleCheckAllChange"
-        >
-          全选
-        </el-checkbox>
+        > {{ $tp('全选') }} </el-checkbox>
       </div>
       <div class="person_list">
         <el-checkbox-group
@@ -73,7 +71,7 @@
           </el-checkbox>
         </el-checkbox-group>
         <div v-if="personList.length ===0" class="w-full h-full flex items-center justify-center">
-          <span style="font-size: 16px;color: #999">暂无数据</span>
+          <span style="font-size: 16px;color: #999">{{ $tp('暂无数据') }}</span>
         </div>
       </div>
     </div>

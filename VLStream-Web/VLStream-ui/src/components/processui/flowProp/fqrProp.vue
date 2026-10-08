@@ -9,30 +9,29 @@
   <div class="prop_body">
     <div class="prop_body_tab">
       <el-tabs v-model="activeName" class="demo-tabs" @tab-change="tabChange">
-        <el-tab-pane label="节点设置" name="zero">
+        <el-tab-pane :label="$tp('节点设置')" name="zero">
           <div class="prop_title">
-            <span>节点名称</span>
+            <span>{{ $tp('节点名称') }}</span>
           </div>
           <div class="prop_item">
             <el-input
               v-model="nodeName"
-              placeholder="请输入节点名称"
+              :placeholder="$tp('请输入节点名称')"
             />
           </div>
         </el-tab-pane>
-        <el-tab-pane label="表单设置" name="first">
+        <el-tab-pane :label="$tp('表单设置')" name="first">
           <div class="prop_title">
-            <span>设置流程表单</span>
+            <span>{{ $tp('设置流程表单') }}</span>
           </div>
           <div class="prop_item" style="flex-direction: column;">
             <div v-if="currentForm" class="current_form">
-              <span>
-                当前表单： {{ currentForm.formName }}
+              <span> {{ $tp('当前表单：') }} {{ currentForm.formName }}
               </span>
             </div>
             <el-cascader
               :props="cascaderProps"
-              placeholder="请选择表单"
+              :placeholder="$tp('请选择表单')"
               style="width: 100%"
               @change="setFormKey"
             />
@@ -51,24 +50,22 @@
             </el-select> -->
           </div>
         </el-tab-pane>
-        <el-tab-pane label="表单权限" name="second">
+        <el-tab-pane :label="$tp('表单权限')" name="second">
           <FormPermissionTable v-model:filed-list="activeChooseData.formProperties" />
         </el-tab-pane>
       </el-tabs>
     </div>
     <div class="prop_body_bottom button_group">
       <!-- button , -->
-      <el-button @click="cancel" class="common_btn">
-        取消
-      </el-button>
-      <el-button type="primary" @click="confirm" class="common_btn">
-        确定
-      </el-button>
+      <el-button @click="cancel" class="common_btn"> {{ $tp('取消') }} </el-button>
+      <el-button type="primary" @click="confirm" class="common_btn"> {{ $tp('确定') }} </el-button>
     </div>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 
 import { ref, onMounted, inject } from 'vue'
 import { formAppList, formSynthesisList, getForm } from '@/api/processui'
@@ -81,7 +78,7 @@ import { getOrCreateNodeFormState, updateNodeFormFields } from './utils/nodeForm
 const activeName = ref('zero')
 function tabChange() {
   if (!activeChooseData.value.formKey && activeName.value === 'second') {
-    ElMessage.warning('请先选择表单')
+    ElMessage.warning(uiText('请先选择表单'))
     activeName.value = 'first'
     return
   }

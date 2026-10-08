@@ -8,15 +8,15 @@
 <template>
   <div class="app-container">
     <div style="margin-bottom: 10px;">
-      <el-alert style="margin-bottom: 10px;" title="日期和时间不要选择太大要不然会很卡，解决方法：自行搭配el-table-v2" type="error" />
-      <el-alert title="关于分页问题自行查看国标文件9.7，能否分页取决于厂家是否支持分页功能" type="error" />
+      <el-alert style="margin-bottom: 10px;" :title="$tp('日期和时间不要选择太大要不然会很卡，解决方法：自行搭配el-table-v2')" type="error" />
+      <el-alert :title="$tp('关于分页问题自行查看国标文件9.7，能否分页取决于厂家是否支持分页功能')" type="error" />
     </div>
     <div class="toolbar-with-search">
       <div class="toolbar-left" />
       <div class="searchHeight_out flexRowAC">
         <search-height-box
           keyword="query"
-          placeholder="请通过高级筛选选择时间与类型"
+          :placeholder="$tp('请通过高级筛选选择时间与类型')"
           :data="searchData"
           @handle="searchResetFn"
         />
@@ -28,7 +28,7 @@
       <el-table-column :label="$tp('位置')" align="center" prop="address">
         <template #default="scope">
           <span v-if="scope.row.address">{{scope.row.address}}</span>
-          <span v-else>无</span>
+          <span v-else>{{ $tp('无') }}</span>
         </template>
       </el-table-column>
       <el-table-column :label="$tp('开始时间')" align="center" prop="startTime" />
@@ -45,19 +45,19 @@
           <div class="operateAppBox flexRowAC" style="justify-content: flex-end;">
             <div class="new_table_svg_group" @click.stop="playRecord(scope.row)" v-hasPermi="['gb:playback:start']">
               <el-icon><View /></el-icon>
-              <span>播放</span>
+              <span>{{ $tp('播放') }}</span>
             </div>
             <div class="new_table_svg_group" @click.stop="downloadFun(scope.row)" v-hasPermi="['gb:record:download']">
               <el-icon><Download /></el-icon>
-              <span>下载</span>
+              <span>{{ $tp('下载') }}</span>
             </div>
           </div>
         </template>
       </el-table-column>
     </table-self>
-    <div style="margin-top: 20px; display: flex; justify-content: flex-end;">总条数： {{detailFiles.length}}</div>
+    <div style="margin-top: 20px; display: flex; justify-content: flex-end;">{{ $tp('总条数：') }} {{detailFiles.length}}</div>
 
-    <el-dialog title="播放视频" v-model="openPlay" width="1000px" append-to-body>
+    <el-dialog :title="$tp('播放视频')" v-model="openPlay" width="1000px" append-to-body>
       <div class="player">
         <easy-player class="player" :video-url="videoUrl" autoplay :live="true"></easy-player>
       </div>

@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import { generateTrainingDataset } from '@/utils/datasetGeneration'
 
 const base = '/vlsData/projects'
 const call = async (url, method = 'get', data, params) => {
@@ -32,4 +33,4 @@ export const importDataSamples = async (id, files, source, archive) => {
   return result.data
 }
 export const exportDataSamples = (id, params, versionId) => request({ url: `${base}/${id}/${versionId ? `versions/${versionId}/export` : 'samples/export'}`, method: 'get', params, responseType: 'blob' })
-export const publishDataTraining = id => request({ url: `/vlsAlgorithmAnnotation/${id}/save-dataset`, method: 'post' })
+export const publishDataTraining = id => generateTrainingDataset(id)

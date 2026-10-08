@@ -10,8 +10,8 @@
     <div class="tenant_content">
     <div style="padding: 16px 20px 0">
       <el-radio-group v-model="computeTab">
-        <el-radio-button label="tasks">训练任务</el-radio-button>
-        <el-radio-button label="cloud">线上算力</el-radio-button>
+        <el-radio-button label="tasks">{{ $tp('训练任务') }}</el-radio-button>
+        <el-radio-button label="cloud">{{ $tp('线上算力') }}</el-radio-button>
       </el-radio-group>
     </div>
     <AutoDlNodes v-if="computeTab === 'cloud'" />
@@ -23,8 +23,8 @@
       <!--  -->
       <div class="breadcrumb-section">
         <el-breadcrumb separator=">">
-          <el-breadcrumb-item @click="backToList" class="breadcrumb-link">容器实例</el-breadcrumb-item>
-          <el-breadcrumb-item>新增容器实例</el-breadcrumb-item>
+          <el-breadcrumb-item @click="backToList" class="breadcrumb-link">{{ $tp('容器实例') }}</el-breadcrumb-item>
+          <el-breadcrumb-item>{{ $tp('新增容器实例') }}</el-breadcrumb-item>
         </el-breadcrumb>
       </div>
 
@@ -32,17 +32,17 @@
       <div class="create-content">
         <!-- instance -->
         <div class="form-section">
-          <div class="form-label">实例名称</div>
+          <div class="form-label">{{ $tp('实例名称') }}</div>
           <el-input
             v-model="createInstanceForm.name"
-            placeholder="请输入"
+            :placeholder="$tp('请输入')"
             class="form-input"
           />
         </div>
 
         <!--  -->
         <div class="form-section">
-          <div class="form-label">资源类型 <span class="required">*</span></div>
+          <div class="form-label">{{ $tp('资源类型') }} <span class="required">*</span></div>
           <div class="resource-types">
             <!--  -->
             <div class="resource-header-row">
@@ -50,16 +50,16 @@
               <div class="radio-space"></div>
               <div class="spec-columns">
                 <div class="spec-column">
-                  <div class="spec-header">资源类型</div>
+                  <div class="spec-header">{{ $tp('资源类型') }}</div>
                 </div>
                 <div class="spec-column">
-                  <div class="spec-header">计算资源</div>
+                  <div class="spec-header">{{ $tp('计算资源') }}</div>
                 </div>
                 <div class="spec-column">
                   <div class="spec-header">GPU</div>
                 </div>
                 <div class="spec-column">
-                  <div class="spec-header">磁盘配置</div>
+                  <div class="spec-header">{{ $tp('磁盘配置') }}</div>
                 </div>
       </div>
     </div>
@@ -70,18 +70,18 @@
                 <el-radio v-model="createInstanceForm.resourceType" :value="`aerte${index + 1}`">
                   <div class="spec-columns">
                     <div class="spec-column">
-                      <div class="spec-value">奥尔特云</div>
+                      <div class="spec-value">{{ $tp('奥尔特云') }}</div>
         </div>
                     <div class="spec-column">
-                      <div class="spec-value">Intel 4核 | 40G</div>
+                      <div class="spec-value">{{ $tp('Intel 4核 | 40G') }}</div>
                     </div>
                     <div class="spec-column">
-                      <div class="spec-value">奥尔特云 64G*1</div>
+                      <div class="spec-value">{{ $tp('奥尔特云 64G*1') }}</div>
                     </div>
                     <div class="spec-column">
                       <div class="spec-configs">
-                        <div>系统盘：40GB</div>
-                        <div>数据盘：——</div>
+                        <div>{{ $tp('系统盘：40GB') }}</div>
+                        <div>{{ $tp('数据盘：——') }}</div>
                       </div>
                     </div>
                   </div>
@@ -93,23 +93,23 @@
 
         <!-- table -->
         <div class="form-section">
-          <div class="form-label">资源规格：</div>
+          <div class="form-label">{{ $tp('资源规格：') }}</div>
           <div class="spec-table">
             <table>
               <thead>
                 <tr>
-                  <th>CPU型号</th>
+                  <th>{{ $tp('CPU型号') }}</th>
                   <th>vCPU</th>
-                  <th>内存</th>
+                  <th>{{ $tp('内存') }}</th>
                   <th>GPU</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>Intel</td>
-                  <td>4核</td>
+                  <td>{{ $tp('4核') }}</td>
                   <td>40G</td>
-                  <td>奥尔特云 64G*1</td>
+                  <td>{{ $tp('奥尔特云 64G*1') }}</td>
                 </tr>
               </tbody>
             </table>
@@ -118,7 +118,7 @@
 
         <!-- instance -->
         <div class="form-section">
-          <div class="form-label">实例数量 <span class="required">*</span></div>
+          <div class="form-label">{{ $tp('实例数量') }} <span class="required">*</span></div>
           <div class="quantity-control">
             <el-button @click="decreaseQuantity" class="quantity-btn">-</el-button>
             <span class="quantity-value">{{ createInstanceForm.quantity }}</span>
@@ -128,39 +128,31 @@
 
                 <!--  -->
         <div class="form-section">
-          <div class="form-label">镜像 <span class="required">*</span></div>
+          <div class="form-label">{{ $tp('镜像') }} <span class="required">*</span></div>
           <div class="image-types">
             <div class="image-options">
               <div class="image-option">
-                <el-radio v-model="createInstanceForm.imageType" value="basic">
-                  基础镜像
-                </el-radio>
+                <el-radio v-model="createInstanceForm.imageType" value="basic"> {{ $tp('基础镜像') }} </el-radio>
               </div>
               <div class="image-option">
-                <el-radio v-model="createInstanceForm.imageType" value="app">
-                  应用镜像
-                </el-radio>
+                <el-radio v-model="createInstanceForm.imageType" value="app"> {{ $tp('应用镜像') }} </el-radio>
               </div>
               <div class="image-option">
-                <el-radio v-model="createInstanceForm.imageType" value="custom">
-                  自定义镜像
-                </el-radio>
+                <el-radio v-model="createInstanceForm.imageType" value="custom"> {{ $tp('自定义镜像') }} </el-radio>
               </div>
               <div class="image-option">
-                <el-radio v-model="createInstanceForm.imageType" value="address">
-                  镜像地址
-                </el-radio>
+                <el-radio v-model="createInstanceForm.imageType" value="address"> {{ $tp('镜像地址') }} </el-radio>
               </div>
             </div>
             <div class="image-content">
               <div class="image-selectors">
-                <el-select v-model="createInstanceForm.selectedImage" placeholder="请选择" class="image-select">
+                <el-select v-model="createInstanceForm.selectedImage" :placeholder="$tp('请选择')" class="image-select">
                   <el-option label="ubuntu 20.04" value="ubuntu:20.04"></el-option>
                   <el-option label="centos 7" value="centos:7"></el-option>
                   <el-option label="pytorch 1.8" value="pytorch:1.8"></el-option>
                 </el-select>
                 <div class="arrow-icon">></div>
-                <el-select v-model="createInstanceForm.selectedVersion" placeholder="请选择" class="image-select">
+                <el-select v-model="createInstanceForm.selectedVersion" :placeholder="$tp('请选择')" class="image-select">
                   <el-option label="latest" value="latest"></el-option>
                   <el-option label="v1.0" value="v1.0"></el-option>
                   <el-option label="v2.0" value="v2.0"></el-option>
@@ -172,8 +164,8 @@
 
         <!-- operationbutton -->
         <div class="form-actions">
-          <el-button type="primary" @click="confirmCreate" class="confirm-btn common_btn">确定</el-button>
-          <el-button @click="cancelCreate" class="cancel-btn common_btn">取消</el-button>
+          <el-button type="primary" @click="confirmCreate" class="confirm-btn common_btn">{{ $tp('确定') }}</el-button>
+          <el-button @click="cancelCreate" class="cancel-btn common_btn">{{ $tp('取消') }}</el-button>
         </div>
         </div>
       </div>
@@ -183,8 +175,8 @@
       <!--  -->
       <div class="breadcrumb-section">
         <el-breadcrumb separator=">">
-          <el-breadcrumb-item @click="backToList" class="breadcrumb-link">容器实例</el-breadcrumb-item>
-          <el-breadcrumb-item>监控</el-breadcrumb-item>
+          <el-breadcrumb-item @click="backToList" class="breadcrumb-link">{{ $tp('容器实例') }}</el-breadcrumb-item>
+          <el-breadcrumb-item>{{ $tp('监控') }}</el-breadcrumb-item>
         </el-breadcrumb>
     </div>
 
@@ -194,7 +186,7 @@
         <div class="disk-usage-section">
           <div class="usage-card">
             <div class="usage-header">
-              <h3>数据盘</h3>
+              <h3>{{ $tp('数据盘') }}</h3>
               <span class="usage-percentage">32%</span>
             </div>
             <div class="usage-details">138G/500G</div>
@@ -209,11 +201,9 @@
             <!-- GPU -->
             <div class="gpu-title-row">
               <div class="title-left">
-                <h3>GPU用量</h3>
+                <h3>{{ $tp('GPU用量') }}</h3>
                 <el-button type="primary" text>
-                  <i class="el-icon-download"></i>
-                  导出
-                </el-button>
+                  <i class="el-icon-download"></i> {{ $tp('导出') }} </el-button>
               </div>
               <div class="title-right">
                 <div class="time-filters">
@@ -296,9 +286,9 @@
                 <thead>
                   <tr>
                     <th>GPU</th>
-                    <th>最大</th>
-                    <th>平均</th>
-                    <th>当前</th>
+                    <th>{{ $tp('最大') }}</th>
+                    <th>{{ $tp('平均') }}</th>
+                    <th>{{ $tp('当前') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -324,7 +314,7 @@
       <!--  -->
       <div class="breadcrumb-section">
         <el-breadcrumb separator=">">
-          <el-breadcrumb-item @click="backToList" class="breadcrumb-link">容器实例</el-breadcrumb-item>
+          <el-breadcrumb-item @click="backToList" class="breadcrumb-link">{{ $tp('容器实例') }}</el-breadcrumb-item>
           <el-breadcrumb-item>{{ detailsTitle }}</el-breadcrumb-item>
         </el-breadcrumb>
       </div>
@@ -333,17 +323,17 @@
       <div class="details-content">
         <!-- info -->
         <div class="form-section">
-          <div class="form-label">实例名称</div>
+          <div class="form-label">{{ $tp('实例名称') }}</div>
           <div class="form-value">{{ detailsForm.instanceName || '--' }}</div>
         </div>
 
         <div class="form-section">
-          <div class="form-label">实例ID</div>
+          <div class="form-label">{{ $tp('实例ID') }}</div>
           <div class="form-value">{{ detailsForm.id || '--' }}</div>
         </div>
 
         <div class="form-section">
-          <div class="form-label">状态</div>
+          <div class="form-label">{{ $tp('状态') }}</div>
           <div class="form-value">
             <el-tag :type="getStatusTagType(detailsForm.instanceStatus)" size="small">
               <el-icon class="status-icon">
@@ -356,40 +346,40 @@
 
         <!-- info -->
         <div class="form-section">
-          <div class="form-label">镜像地址</div>
+          <div class="form-label">{{ $tp('镜像地址') }}</div>
           <div class="form-value">{{ detailsForm.imageName || '--' }}</div>
         </div>
 
         <div class="form-section">
-          <div class="form-label">算法名称</div>
+          <div class="form-label">{{ $tp('算法名称') }}</div>
           <div class="form-value">{{ detailsForm.algorithmName || '--' }}</div>
         </div>
 
         <!-- configuration -->
         <div class="form-section">
-          <div class="form-label">CPU限制</div>
+          <div class="form-label">{{ $tp('CPU限制') }}</div>
           <div class="form-value">{{ detailsForm.cpuLimit || '--' }}</div>
         </div>
 
         <div class="form-section">
-          <div class="form-label">内存限制</div>
+          <div class="form-label">{{ $tp('内存限制') }}</div>
           <div class="form-value">{{ detailsForm.memoryLimit || '--' }}</div>
         </div>
 
         <div class="form-section">
-          <div class="form-label">GPU限制</div>
+          <div class="form-label">{{ $tp('GPU限制') }}</div>
           <div class="form-value">{{ detailsForm.gpuLimit || '--' }}</div>
         </div>
 
         <!-- configuration -->
         <div class="form-section">
-          <div class="form-label">训练任务ID</div>
+          <div class="form-label">{{ $tp('训练任务ID') }}</div>
           <div class="form-value">{{ detailsForm.trainingTaskId || '--' }}</div>
         </div>
 
         <!-- configuration -->
         <div class="form-section">
-          <div class="form-label">错误信息</div>
+          <div class="form-label">{{ $tp('错误信息') }}</div>
           <div class="form-value">
             <pre>{{ detailsForm.errorMessage || '--' }}</pre>
           </div>
@@ -397,25 +387,25 @@
 
         <!-- info -->
         <div class="form-section">
-          <div class="form-label">创建时间</div>
+          <div class="form-label">{{ $tp('创建时间') }}</div>
           <div class="form-value">{{ detailsForm.createTime || '--' }}</div>
         </div>
 
         <div class="form-section">
-          <div class="form-label">更新时间</div>
+          <div class="form-label">{{ $tp('更新时间') }}</div>
           <div class="form-value">{{ detailsForm.updateTime || '--' }}</div>
         </div>
 
         <!-- info -->
         <div class="form-section">
-          <div class="form-label">描述</div>
+          <div class="form-label">{{ $tp('描述') }}</div>
           <div class="form-value">{{ detailsForm.description || '--' }}</div>
         </div>
 
         <!-- operationbutton -->
         <div class="form-actions">
-          <el-button @click="backToList">返回列表</el-button>
-          <el-button type="primary" @click="editContainer(detailsForm)">编辑实例</el-button>
+          <el-button @click="backToList">{{ $tp('返回列表') }}</el-button>
+          <el-button type="primary" @click="editContainer(detailsForm)">{{ $tp('编辑实例') }}</el-button>
         </div>
       </div>
     </div>
@@ -437,7 +427,7 @@
           <div class="searchHeight_out flexRowAC">
             <search-height-box
               keyword="keyword"
-              placeholder="搜索"
+              :placeholder="$tp('搜索')"
               :data="searchData"
               @handle="searchResetFn"
             />
@@ -475,22 +465,22 @@
           <el-table-column :label="$tp('计算配置')">
             <template #default="{ row }">
               <div class="compute-config">
-                <div class="config-item">CPU: {{ row.cpuLimit || '未设置' }}</div>
-                <div class="config-item">内存: {{ row.memoryLimit || '未设置' }}</div>
-                <div class="config-item">GPU: {{ row.gpuLimit || '未设置' }}</div>
+                <div class="config-item">CPU: {{ row.cpuLimit || $tp('未设置') }}</div>
+                <div class="config-item">{{ $tp('内存:') }} {{ row.memoryLimit || $tp('未设置') }}</div>
+                <div class="config-item">GPU: {{ row.gpuLimit || $tp('未设置') }}</div>
               </div>
             </template>
           </el-table-column>
           <el-table-column :label="$tp('镜像信息')">
             <template #default="{ row }">
               <div class="image-info">
-                <div class="image-name">{{ row.imageName || '未设置' }}</div>
+                <div class="image-name">{{ row.imageName || $tp('未设置') }}</div>
               </div>
             </template>
           </el-table-column>
           <el-table-column :label="$tp('训练任务')">
             <template #default="{ row }">
-              <div class="port-info">任务ID：{{ row.trainingTaskId || '-' }}</div>
+              <div class="port-info">{{ $tp('任务ID：') }}{{ row.trainingTaskId || '-' }}</div>
               <div class="port-info">GPU：{{ row.gpuIndex ?? '-' }}</div>
             </template>
           </el-table-column>
@@ -511,16 +501,16 @@
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="viewDetails(row)">
                   <oort-svg-icon width="14" height="14" name="detail_icon" class="new_table_svg_group_svg" />
-                  <span>详情</span>
+                  <span>{{ $tp('详情') }}</span>
                 </div>
                 <el-dropdown trigger="click">
                   <div class="new_table_svg_group">
                     <oort-svg-icon width="14" height="14" name="table_more" class="new_table_svg_group_svg" />
-                    <span>更多</span>
+                    <span>{{ $tp('更多') }}</span>
                   </div>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item @click="viewLogs(row)">查看日志</el-dropdown-item>
+                      <el-dropdown-item @click="viewLogs(row)">{{ $tp('查看日志') }}</el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -548,17 +538,17 @@
     <!--  -->
     <el-dialog
       v-model="showCreateDialog"
-      title="创建容器实例"
+      :title="$tp('创建容器实例')"
       width="35%"
       @close="resetCreateForm"
     >
       <el-form :model="createForm" :rules="createRules" ref="createFormRef" label-width="120px">
-        <el-form-item label="容器名称" prop="name">
-          <el-input v-model="createForm.name" placeholder="请输入容器名称" />
+        <el-form-item :label="$tp('容器名称')" prop="name">
+          <el-input v-model="createForm.name" :placeholder="$tp('请输入容器名称')" />
         </el-form-item>
 
-        <el-form-item label="算法镜像" prop="image">
-          <el-select v-model="createForm.image" placeholder="请选择算法镜像" style="width: 100%">
+        <el-form-item :label="$tp('算法镜像')" prop="image">
+          <el-select v-model="createForm.image" :placeholder="$tp('请选择算法镜像')" style="width: 100%">
             <el-option label="vlstream/face-recognition:v2.1.0" value="vlstream/face-recognition:v2.1.0" />
             <el-option label="vlstream/license-plate:v1.8.3" value="vlstream/license-plate:v1.8.3" />
             <el-option label="vlstream/behavior-analysis:v1.5.2" value="vlstream/behavior-analysis:v1.5.2" />
@@ -566,17 +556,17 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="CPU配置" prop="cpu">
-          <el-select v-model="createForm.cpu" placeholder="请选择CPU配置" style="width: 100%">
-            <el-option label="1 核心" value="1 core" />
-            <el-option label="2 核心" value="2 cores" />
-            <el-option label="4 核心" value="4 cores" />
-            <el-option label="8 核心" value="8 cores" />
+        <el-form-item :label="$tp('CPU配置')" prop="cpu">
+          <el-select v-model="createForm.cpu" :placeholder="$tp('请选择CPU配置')" style="width: 100%">
+            <el-option :label="$tp('1 核心')" value="1 core" />
+            <el-option :label="$tp('2 核心')" value="2 cores" />
+            <el-option :label="$tp('4 核心')" value="4 cores" />
+            <el-option :label="$tp('8 核心')" value="8 cores" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="内存配置" prop="memory">
-          <el-select v-model="createForm.memory" placeholder="请选择内存配置" style="width: 100%">
+        <el-form-item :label="$tp('内存配置')" prop="memory">
+          <el-select v-model="createForm.memory" :placeholder="$tp('请选择内存配置')" style="width: 100%">
             <el-option label="2GB" value="2GB" />
             <el-option label="4GB" value="4GB" />
             <el-option label="8GB" value="8GB" />
@@ -584,50 +574,46 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="GPU配置" prop="gpu">
-          <el-select v-model="createForm.gpu" placeholder="请选择GPU配置" style="width: 100%">
+        <el-form-item :label="$tp('GPU配置')" prop="gpu">
+          <el-select v-model="createForm.gpu" :placeholder="$tp('请选择GPU配置')" style="width: 100%">
             <el-option label="NVIDIA GTX 1660" value="NVIDIA GTX 1660" />
             <el-option label="NVIDIA RTX 3080" value="NVIDIA RTX 3080" />
             <el-option label="NVIDIA RTX 4090" value="NVIDIA RTX 4090" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="端口映射" prop="port">
-          <el-input v-model="createForm.port" placeholder="请输入端口号，如8080" />
+        <el-form-item :label="$tp('端口映射')" prop="port">
+          <el-input v-model="createForm.port" :placeholder="$tp('请输入端口号，如8080')" />
         </el-form-item>
 
-        <el-form-item label="环境变量">
+        <el-form-item :label="$tp('环境变量')">
           <el-input
             v-model="createForm.envVars"
             type="textarea"
             :rows="3"
-            placeholder="请输入环境变量，格式：KEY1=VALUE1&#10;KEY2=VALUE2"
+            :placeholder="$tp('请输入环境变量，格式：KEY1=VALUE1 KEY2=VALUE2')"
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="showCreateDialog = false" class="common_btn">取消</el-button>
-        <el-button type="primary" @click="createContainer" class="common_btn">创建</el-button>
+        <el-button @click="showCreateDialog = false" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" @click="createContainer" class="common_btn">{{ $tp('创建') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- log -->
     <el-dialog
       v-model="showLogsDialog"
-      :title="`${currentContainer?.instanceName} - 运行日志`"
+      :title="$tp('{value0} - 运行日志', { value0: currentContainer?.instanceName })"
       width="80%"
     >
       <div class="logs-container">
         <div class="logs-header">
           <el-button size="small" @click="refreshLogs">
-            <el-icon><Refresh /></el-icon>
-            刷新日志
-          </el-button>
+            <el-icon><Refresh /></el-icon> {{ $tp('刷新日志') }} </el-button>
           <el-button size="small" @click="clearLogs">
-            <el-icon><Delete /></el-icon>
-            清空显示
-          </el-button>
+            <el-icon><Delete /></el-icon> {{ $tp('清空显示') }} </el-button>
         </div>
         <div class="logs-content">
           <div
@@ -649,6 +635,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import AutoDlNodes from './AutoDlNodes.vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -716,7 +704,7 @@ const resourceStats = ref({
 })
 
 const resourceSummary = computed(() => {
-  if (!gpuResource.value) return '刷新GPU资源'
+  if (!gpuResource.value) return uiText('刷新GPU资源')
   const resource = gpuResource.value
   const state = resource.busy ? `忙碌，排队 ${resource.queueLength || 0}` : '空闲'
   return `${resource.gpuName || 'GPU'} ${Math.round((resource.gpuMemoryTotalMb || 0) / 1024)}GB · ${state}`
@@ -801,11 +789,11 @@ const loadContainerInstances = async () => {
       containers.value = response.data.records || []
       totalInstances.value = response.data.total || 0
     } else {
-      ElMessage.error(response.message || '获取容器实例列表失败')
+      ElMessage.error(response.message || uiText('获取容器实例列表失败'))
     }
   } catch (error) {
     console.error('加载容器实例失败:', error)
-    ElMessage.error('获取容器实例列表失败')
+    ElMessage.error(uiText('获取容器实例列表失败'))
   } finally {
     loading.value = false
   }
@@ -912,33 +900,33 @@ const startContainer = async (container) => {
   try {
     const response = await startContainerInstance(container.id)
     if (response.code === 200) {
-      ElMessage.success(`容器 ${container.name} 启动成功`)
+      ElMessage.success(uiText('容器 {value0} 启动成功', { value0: container.name }))
       await loadContainerInstances() // new
     } else {
-      ElMessage.error(response.message || '启动容器失败')
+      ElMessage.error(response.message || uiText('启动容器失败'))
     }
   } catch (error) {
     console.error('启动容器失败:', error)
-    ElMessage.error('启动容器失败')
+    ElMessage.error(uiText('启动容器失败'))
   }
 }
 
 const stopContainer = async (container) => {
   try {
-    await ElMessageBox.confirm('确定要停止此容器吗？', '确认操作')
+    await ElMessageBox.confirm(uiText('确定要停止此容器吗？'), uiText('确认操作'))
     const response = await stopContainerInstance(container.id)
     if (response.code === 200) {
-      ElMessage.success(`容器 ${container.name} 已停止`)
+      ElMessage.success(uiText('容器 {value0} 已停止', { value0: container.name }))
       await loadContainerInstances() // new
     } else {
-      ElMessage.error(response.message || '停止容器失败')
+      ElMessage.error(response.message || uiText('停止容器失败'))
     }
   } catch (error) {
     if (error === 'cancel') {
-      ElMessage.info('操作已取消')
+      ElMessage.info(uiText('操作已取消'))
     } else {
       console.error('停止容器失败:', error)
-      ElMessage.error('停止容器失败')
+      ElMessage.error(uiText('停止容器失败'))
     }
   }
 }
@@ -947,14 +935,14 @@ const restartContainer = async (container) => {
   try {
     const response = await restartContainerInstance(container.id)
     if (response.code === 200) {
-      ElMessage.success(`容器 ${container.name} 重启成功`)
+      ElMessage.success(uiText('容器 {value0} 重启成功', { value0: container.name }))
       await loadContainerInstances() // new
     } else {
-      ElMessage.error(response.message || '重启容器失败')
+      ElMessage.error(response.message || uiText('重启容器失败'))
     }
   } catch (error) {
     console.error('重启容器失败:', error)
-    ElMessage.error('重启容器失败')
+    ElMessage.error(uiText('重启容器失败'))
   }
 }
 
@@ -969,7 +957,7 @@ const viewLogs = async (container) => {
     }))
   } catch (error) {
     displayLogs.value = []
-    ElMessage.error('读取训练日志失败')
+    ElMessage.error(uiText('读取训练日志失败'))
   }
   showLogsDialog.value = true
 }
@@ -982,16 +970,16 @@ const viewDetails = async (container) => {
       detailsTitle.value = `容器详情 - ${container.instanceName}`
       showDetailsView.value = true
     } else {
-      ElMessage.error(response.message || '获取容器详情失败')
+      ElMessage.error(response.message || uiText('获取容器详情失败'))
     }
   } catch (error) {
     console.error('获取容器详情失败:', error)
-    ElMessage.error('获取容器详情失败')
+    ElMessage.error(uiText('获取容器详情失败'))
   }
 }
 
 const saveImage = (container) => {
-  ElMessage.info(`保存镜像: ${container.name}`)
+  ElMessage.info(uiText('保存镜像: {value0}', { value0: container.name }))
   //
 }
 
@@ -1022,7 +1010,7 @@ const confirmCreate = async () => {
   try {
     // form
     if (!createInstanceForm.value.name.trim()) {
-      ElMessage.warning('请输入实例名称')
+      ElMessage.warning(uiText('请输入实例名称'))
       return
     }
 
@@ -1039,16 +1027,16 @@ const confirmCreate = async () => {
 
     const response = await createContainerInstance(createData)
     if (response.code === 200) {
-      ElMessage.success('容器实例创建成功')
+      ElMessage.success(uiText('容器实例创建成功'))
       showCreateView.value = false
       resetCreateInstanceForm()
       await loadContainerInstances() // new
     } else {
-      ElMessage.error(response.message || '创建容器实例失败')
+      ElMessage.error(response.message || uiText('创建容器实例失败'))
     }
   } catch (error) {
     console.error('创建容器实例失败:', error)
-    ElMessage.error('创建容器实例失败')
+    ElMessage.error(uiText('创建容器实例失败'))
   }
 }
 
@@ -1070,20 +1058,20 @@ const resetCreateInstanceForm = () => {
 
 const deleteContainer = async (container) => {
   try {
-    await ElMessageBox.confirm('确定要删除此容器吗？此操作不可恢复。', '确认删除')
+    await ElMessageBox.confirm(uiText('确定要删除此容器吗？此操作不可恢复。'), uiText('确认删除'))
     const response = await deleteContainerInstance(container.id)
     if (response.code === 200) {
-      ElMessage.success('删除成功')
+      ElMessage.success(uiText('删除成功'))
       await loadContainerInstances() // new
     } else {
-      ElMessage.error(response.message || '删除失败')
+      ElMessage.error(response.message || uiText('删除失败'))
     }
   } catch (error) {
     if (error === 'cancel') {
-      ElMessage.info('已取消删除')
+      ElMessage.info(uiText('已取消删除'))
     } else {
       console.error('删除容器失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(uiText('删除失败'))
     }
   }
 }
@@ -1116,27 +1104,27 @@ const createContainer = async () => {
   try {
     // form
     if (!createForm.value.name.trim()) {
-      ElMessage.warning('请输入容器名称')
+      ElMessage.warning(uiText('请输入容器名称'))
       return
     }
 
     const response = await createContainerInstance(createForm.value)
     if (response.code === 200) {
-      ElMessage.success('容器实例创建成功')
+      ElMessage.success(uiText('容器实例创建成功'))
       showCreateDialog.value = false
       resetCreateForm()
       await loadContainerInstances() // new
     } else {
-      ElMessage.error(response.message || '创建容器实例失败')
+      ElMessage.error(response.message || uiText('创建容器实例失败'))
     }
   } catch (error) {
     console.error('创建容器实例失败:', error)
-    ElMessage.error('创建容器实例失败')
+    ElMessage.error(uiText('创建容器实例失败'))
   }
 }
 
 const editContainer = (container) => {
-  ElMessage.info(`编辑容器实例: ${container.name}`)
+  ElMessage.info(uiText('编辑容器实例: {value0}', { value0: container.name }))
   //
   // , current detailsFormSet to container,
   Object.assign(createForm.value, container)
@@ -1144,17 +1132,17 @@ const editContainer = (container) => {
 }
 
 const openJupyter = (container) => {
-  ElMessage.info(`打开Jupyter: ${container.name}`)
+  ElMessage.info(uiText('打开Jupyter: {value0}', { value0: container.name }))
   // Jupyter
 }
 
 const openWebConnection = (container) => {
-  ElMessage.info(`打开Web连接: ${container.name}`)
+  ElMessage.info(uiText('打开Web连接: {value0}', { value0: container.name }))
   // Web
 }
 
 const openTensorBoard = (container) => {
-  ElMessage.info(`打开TensorBoard: ${container.name}`)
+  ElMessage.info(uiText('打开TensorBoard: {value0}', { value0: container.name }))
   // TensorBoard
 }
 
@@ -1201,22 +1189,22 @@ const handleAdvancedSearchReset = () => {
 
 const handleExport = () => {
   console.log('导出数据')
-  ElMessage.success('导出数据')
+  ElMessage.success(uiText('导出数据'))
 }
 
 const handleUpload = () => {
   console.log('上传文件')
-  ElMessage.success('上传功能')
+  ElMessage.success(uiText('上传功能'))
 }
 
 const handleDownloadTemplate = () => {
   console.log('下载模板')
-  ElMessage.success('下载模板')
+  ElMessage.success(uiText('下载模板'))
 }
 
 const handleBatchOperation = () => {
   console.log('批量操作')
-  ElMessage.success('批量操作')
+  ElMessage.success(uiText('批量操作'))
 }
 
 watch(computeTab, value => {

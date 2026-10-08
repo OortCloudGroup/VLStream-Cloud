@@ -8,7 +8,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="新增标注"
+    :title="$tp('新增标注')"
     width="min(960px, 94vw)"
     :before-close="handleClose"
   >
@@ -19,40 +19,40 @@
       label-width="80px"
       label-position="left"
     >
-      <el-form-item label="名称" prop="name" required>
+      <el-form-item :label="$tp('名称')" prop="name" required>
         <el-input
           v-model="form.name"
-          placeholder="请输入标注名称"
+          :placeholder="$tp('请输入标注名称')"
           clearable
         />
       </el-form-item>
 
-      <el-form-item label="备注" prop="remark">
+      <el-form-item :label="$tp('备注')" prop="remark">
         <el-input
           v-model="form.remark"
           type="textarea"
           :rows="4"
-          placeholder="请输入备注信息"
+          :placeholder="$tp('请输入备注信息')"
           maxlength="200"
           show-word-limit
         />
       </el-form-item>
 
-      <el-form-item label="标注类型" prop="type" required>
+      <el-form-item :label="$tp('标注类型')" prop="type" required>
         <AnnotationTypePicker v-model="form.type" />
       </el-form-item>
 
-      <el-form-item label="数据集路径" prop="datasetPath" label-width="90">
+      <el-form-item :label="$tp('数据集路径')" prop="datasetPath" label-width="90">
         <el-input
             v-model="form.datasetPath"
-            placeholder="请输入数据集路径"/>
+            :placeholder="$tp('请输入数据集路径')"/>
       </el-form-item>
     </el-form>
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleClose" class="common_btn">取消</el-button>
-        <el-button type="primary" @click="handleConfirm" class="common_btn">确定</el-button>
+        <el-button @click="handleClose" class="common_btn">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" @click="handleConfirm" class="common_btn">{{ $tp('确定') }}</el-button>
       </div>
     </template>
   </el-dialog>

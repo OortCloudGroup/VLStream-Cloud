@@ -40,36 +40,36 @@
         <!-- item -->
         <div class="display-options">
           <div class="option-row">
-            <el-checkbox v-model="osdSettings.showName">显示名称</el-checkbox>
-            <el-checkbox v-model="osdSettings.showDate">显示日期</el-checkbox>
-            <el-checkbox v-model="osdSettings.showWeek">显示星期</el-checkbox>
+            <el-checkbox v-model="osdSettings.showName">{{ $tp('显示名称') }}</el-checkbox>
+            <el-checkbox v-model="osdSettings.showDate">{{ $tp('显示日期') }}</el-checkbox>
+            <el-checkbox v-model="osdSettings.showWeek">{{ $tp('显示星期') }}</el-checkbox>
           </div>
         </div>
 
         <!-- channel -->
         <div class="channel-name-section">
-          <label class="channel-label">通道名称</label>
+          <label class="channel-label">{{ $tp('通道名称') }}</label>
           <el-input
             v-model="osdSettings.channelName"
-            placeholder="请输入通道名称"
+            :placeholder="$tp('请输入通道名称')"
             class="channel-input"
           />
         </div>
 
         <!--  -->
         <div class="time-format-section">
-          <label class="format-label">时间格式</label>
+          <label class="format-label">{{ $tp('时间格式') }}</label>
           <el-select v-model="osdSettings.timeFormat" class="format-select">
-            <el-option label="24小时制" value="24h" />
-            <el-option label="12小时制" value="12h" />
+            <el-option :label="$tp('24小时制')" value="24h" />
+            <el-option :label="$tp('12小时制')" value="12h" />
           </el-select>
         </div>
 
         <!--  -->
         <div class="date-format-section">
-          <label class="format-label">日期格式</label>
+          <label class="format-label">{{ $tp('日期格式') }}</label>
           <el-select v-model="osdSettings.dateFormat" class="format-select">
-            <el-option label="XXXX年XX月XX日" value="yyyy-mm-dd" />
+            <el-option :label="$tp('XXXX年XX月XX日')" value="yyyy-mm-dd" />
             <el-option label="XX/XX/XXXX" value="mm-dd-yyyy" />
             <el-option label="XXXX-XX-XX" value="yyyy-mm-dd-dash" />
           </el-select>
@@ -77,13 +77,13 @@
 
         <!--  -->
         <div class="text-overlay-section">
-          <label class="overlay-label">字符叠加</label>
+          <label class="overlay-label">{{ $tp('字符叠加') }}</label>
           <div class="overlay-inputs">
             <div class="overlay-row">
               <el-checkbox :value="true">1</el-checkbox>
               <el-input
                 v-model="osdSettings.textOverlay1"
-                placeholder="请输入"
+                :placeholder="$tp('请输入')"
                 class="overlay-input"
               />
             </div>
@@ -91,7 +91,7 @@
               <el-checkbox :value="true">2</el-checkbox>
               <el-input
                 v-model="osdSettings.textOverlay2"
-                placeholder="请输入"
+                :placeholder="$tp('请输入')"
                 class="overlay-input"
               />
             </div>
@@ -99,7 +99,7 @@
               <el-checkbox :value="true">3</el-checkbox>
               <el-input
                 v-model="osdSettings.textOverlay3"
-                placeholder="请输入"
+                :placeholder="$tp('请输入')"
                 class="overlay-input"
               />
             </div>
@@ -108,9 +108,7 @@
 
         <!-- button -->
         <div class="osd-save-section">
-          <el-button type="primary" @click="saveOSDSettings" class="save-btn">
-            保存OSD设置
-          </el-button>
+          <el-button type="primary" @click="saveOSDSettings" class="save-btn"> {{ $tp('保存OSD设置') }} </el-button>
         </div>
       </div>
     </div>
@@ -118,6 +116,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, toRefs } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Setting } from '@element-plus/icons-vue'
@@ -181,7 +181,7 @@ const toggleOSDSettings = (preset) => {
 // OSDSet
 const saveOSDSettings = () => {
   console.log('保存OSD设置:', osdSettings.value)
-  ElMessage.success('OSD设置已保存')
+  ElMessage.success(uiText('OSD设置已保存'))
   emit('osd-settings-save', osdSettings.value)
 }
 </script>

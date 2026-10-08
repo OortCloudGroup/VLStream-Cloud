@@ -1,36 +1,38 @@
 <template>
-  <el-dialog :model-value="Boolean(item)" :title="title" width="94vw" top="4vh" :close-on-click-modal="false" :before-close="close">
+  <el-dialog :model-value="Boolean(item)" :title="$tp(title)" width="94vw" top="4vh" :close-on-click-modal="false" :before-close="close">
     <template v-if="item">
-      <div class="review-heading"><span>{{ item.imageName }}</span><span>{{ item.width }} × {{ item.height }} · {{ typeNames[annotationType] }}</span></div>
+      <div class="review-heading"><span>{{ item.imageName }}</span><span>{{ item.width }} × {{ item.height }} · {{ $tp(typeNames[annotationType]) }}</span></div>
       <PixelAnnotationEditor v-if="annotationType !== 'object_detection'" ref="pixelEditor" :kind="annotationType" :image-url="item.previewUrl" :width="item.width" :height="item.height" :regions="boxes" :labels="labels" :disabled="saving" @change="dirty = true" />
       <div v-else class="review-workspace">
         <div class="review-canvas">
-          <p>拖动空白处新增框；点击框选择，可拖动移动，也可在右侧调整坐标和大小。</p>
-          <svg ref="surface" :viewBox="`0 0 ${item.width} ${item.height}`" aria-label="智能标注画布" @pointerdown="start" @pointermove="move" @pointerup="end" @pointercancel="end">
+          <p>{{ $tp('拖动空白处新增框；点击框选择，可拖动移动，也可在右侧调整坐标和大小。') }}</p>
+          <svg ref="surface" :viewBox="`0 0 ${item.width} ${item.height}`" :aria-label="$tp('智能标注画布')" @pointerdown="start" @pointermove="move" @pointerup="end" @pointercancel="end">
             <image :href="item.previewUrl" :width="item.width" :height="item.height" />
             <g v-for="(box, index) in boxes" :key="index">
               <rect :x="box.x" :y="box.y" :width="box.width" :height="box.height" :stroke="selected === index ? '#ffbe50' : '#3daeff'" fill="#208bdb18" :stroke-width="stroke" @pointerdown.stop="startMove($event, index)" />
               <text :x="box.x + 3" :y="Math.max(fontSize, box.y)" :font-size="fontSize" fill="#fff" stroke="#183047" :stroke-width="stroke / 3" paint-order="stroke" pointer-events="none">{{ index + 1 }} · {{ labelName(box) }}</text>
             </g>
           </svg>
-          <el-alert v-if="!boxes.length" title="未发现目标。可手动画框；确认无目标时选择跳过。" type="info" :closable="false" />
+          <el-alert v-if="!boxes.length" :title="$tp('未发现目标。可手动画框；确认无目标时选择跳过。')" type="info" :closable="false" />
         </div>
         <aside class="review-boxes">
-          <el-select v-model="newLabel" :disabled="saving" placeholder="新画框使用的标签" style="width:100%"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
+          <el-select v-model="newLabel" :disabled="saving" :placeholder="$tp('新画框使用的标签')" style="width:100%"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
           <div v-for="(box, index) in boxes" :key="index" class="box-form" :class="{ selected: selected === index }" @click="selected = index">
-            <div class="box-heading"><strong>目标 {{ index + 1 }}</strong><span>{{ box.confidence == null ? '手工新增' : `${Math.round(box.confidence * 100)}%` }}</span><el-button link type="danger" :disabled="saving" @click.stop="remove(index)">删除</el-button></div>
-            <p v-if="box.className" class="model-label">模型类别：{{ box.className }}</p>
-            <el-select v-model="box.labelId" :disabled="saving" placeholder="请选择对应标签" style="width:100%"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
+            <div class="box-heading"><strong>{{ $tp('目标') }} {{ index + 1 }}</strong><span>{{ box.confidence == null ? $tp('手工新增') : `${Math.round(box.confidence * 100)}%` }}</span><el-button link type="danger" :disabled="saving" @click.stop="remove(index)">{{ $tp('删除') }}</el-button></div>
+            <p v-if="box.className" class="model-label">{{ $tp('模型类别：') }}{{ box.className }}</p>
+            <el-select v-model="box.labelId" :disabled="saving" :placeholder="$tp('请选择对应标签')" style="width:100%"><el-option v-for="label in labels" :key="label.id" :label="label.name" :value="String(label.id)" /></el-select>
             <div class="coordinates"><label v-for="field in fields" :key="field.key">{{ field.name }}<el-input-number v-model="box[field.key]" :disabled="saving" :min="field.min" :max="field.key === 'x' || field.key === 'width' ? item.width : item.height" :precision="1" :controls="false" /></label></div>
           </div>
         </aside>
       </div>
     </template>
-    <template #footer><el-button :disabled="saving" @click="close">返回</el-button><el-button v-if="allowSkip" :disabled="saving" @click="submit(true)">跳过本图</el-button><el-button type="primary" :loading="saving" :disabled="annotationType === 'object_detection' && !boxes.length" @click="submit(false)">确认并保存标注</el-button></template>
+    <template #footer><el-button :disabled="saving" @click="close">{{ $tp('返回') }}</el-button><el-button v-if="allowSkip" :disabled="saving" @click="submit(true)">{{ $tp('跳过本图') }}</el-button><el-button type="primary" :loading="saving" :disabled="annotationType === 'object_detection' && !boxes.length" @click="submit(false)">{{ $tp('确认并保存标注') }}</el-button></template>
   </el-dialog>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import PixelAnnotationEditor from './PixelAnnotationEditor.vue'
@@ -56,7 +58,7 @@ watch(() => props.item, item => {
   dirty.value = false
 })
 watch(boxes, () => { dirty.value = true }, { deep: true, flush: 'sync' })
-const labelName = box => props.labels.find(label => String(label.id) === box.labelId)?.name || box.className || '未选择标签'
+const labelName = box => props.labels.find(label => String(label.id) === box.labelId)?.name || box.className || uiText('未选择标签')
 const point = event => {
   const p = surface.value.createSVGPoint()
   p.x = event.clientX; p.y = event.clientY
@@ -95,7 +97,7 @@ const end = () => {
 const remove = index => { boxes.value.splice(index, 1); selected.value = -1 }
 const close = async () => {
   if (props.saving) return
-  if (dirty.value) { try { await ElMessageBox.confirm('本图修改尚未保存，确认返回？', '返回', { type: 'warning' }) } catch { return } }
+  if (dirty.value) { try { await ElMessageBox.confirm(uiText('本图修改尚未保存，确认返回？'), uiText('返回'), { type: 'warning' }) } catch { return } }
   emit('close')
 }
 const submit = skip => {
@@ -108,7 +110,7 @@ const submit = skip => {
     return
   }
   if (!skip && boxes.value.some(box => !box.labelId || ![box.x, box.y, box.width, box.height].every(Number.isFinite) || box.width <= 0 || box.height <= 0 || box.x < 0 || box.y < 0 || box.x + box.width > props.item.width + 0.01 || box.y + box.height > props.item.height + 0.01)) {
-    ElMessage.warning('请为每个目标框选择标签，并确保框位于图片内')
+    ElMessage.warning(uiText('请为每个目标框选择标签，并确保框位于图片内'))
     return
   }
   emit('save', { skip, boxes: skip ? [] : boxes.value.map(box => ({ ...box })) })

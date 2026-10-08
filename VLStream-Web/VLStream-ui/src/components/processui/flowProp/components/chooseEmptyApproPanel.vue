@@ -11,24 +11,16 @@
       <el-radio-group v-model="copyActiveChooseData.emptyApproType">
         <el-row>
           <el-col :span="8">
-            <el-radio :value="1">
-              自动通过
-            </el-radio>
+            <el-radio :value="1"> {{ $tp('自动通过') }} </el-radio>
           </el-col>
           <el-col :span="8">
-            <el-radio :value="2">
-              自动驳回
-            </el-radio>
+            <el-radio :value="2"> {{ $tp('自动驳回') }} </el-radio>
           </el-col>
           <el-col :span="8">
-            <el-radio :value="3">
-              转交{{ flowDesignerPage?.notifyNode ? '处置' : '审批' }}管理员
-            </el-radio>
+            <el-radio :value="3"> {{ $tp('转交') }}{{ flowDesignerPage?.notifyNode ? $tp('处置') : $tp('审批') }}{{ $tp('管理员') }} </el-radio>
           </el-col>
           <el-col :span="8">
-            <el-radio :value="4">
-              转交指定人员
-            </el-radio>
+            <el-radio :value="4"> {{ $tp('转交指定人员') }} </el-radio>
           </el-col>
           <slot />
         </el-row>
@@ -49,7 +41,7 @@
       </div>
     </div>
 
-    <el-dialog v-model="chooseUserVis" title="选择人员" width="50%">
+    <el-dialog v-model="chooseUserVis" :title="$tp('选择人员')" width="50%">
       <address-seting-dialog
         :user-list="copyActiveChooseData.users"
         :mode="3"

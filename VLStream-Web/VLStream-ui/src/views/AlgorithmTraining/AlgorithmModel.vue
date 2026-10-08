@@ -26,7 +26,7 @@
           <div class="searchHeight_out flexRowAC">
             <search-height-box
               keyword="keyword"
-              placeholder="搜索"
+              :placeholder="$tp('搜索')"
               :data="searchData"
               @handle="searchResetFn"
             />
@@ -55,15 +55,15 @@
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="handleView(scope.row)">
                   <oort-svg-icon width="14" height="14" name="detail_icon" class="new_table_svg_group_svg" />
-                  <span>查看</span>
+                  <span>{{ $tp('查看') }}</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleDownloadModel(scope.row)">
                   <oort-svg-icon width="14" height="14" name="export" class="new_table_svg_group_svg" />
-                  <span>下载</span>
+                  <span>{{ $tp('下载') }}</span>
                 </div>
                 <div class="new_table_svg_group" @click="handleDeleteItem(scope.row)">
                   <oort-svg-icon color="red" width="14" height="14" name="delete_icon" class="new_table_svg_group_svg" />
-                  <span>删除</span>
+                  <span>{{ $tp('删除') }}</span>
                 </div>
               </div>
             </template>
@@ -91,9 +91,9 @@
       <!--  -->
       <div class="breadcrumb-section">
         <div class="breadcrumb">
-          <span class="breadcrumb-item" @click="handleBackToList">算法模型</span>
+          <span class="breadcrumb-item" @click="handleBackToList">{{ $tp('算法模型') }}</span>
           <span class="breadcrumb-separator">></span>
-          <span class="breadcrumb-item active">详情</span>
+          <span class="breadcrumb-item active">{{ $tp('详情') }}</span>
         </div>
       </div>
 
@@ -101,20 +101,20 @@
       <div class="detail-info-section">
         <div class="info-grid">
           <div class="info-item">
-            <span class="info-label">模型名称：</span>
-            <span class="info-value">{{ currentModel?.name || '螺丝螺母识别' }}</span>
+            <span class="info-label">{{ $tp('模型名称：') }}</span>
+            <span class="info-value">{{ currentModel?.name || $tp('螺丝螺母识别') }}</span>
           </div>
           <div class="info-item">
-            <span class="info-label">模型ID：</span>
+            <span class="info-label">{{ $tp('模型ID：') }}</span>
             <span class="info-value">{{ currentModel?.id || '1' }}</span>
           </div>
           <div class="info-item">
-            <span class="info-label">模型类型：</span>
-            <span class="info-value">{{ currentModel?.type || '物体检测' }}</span>
+            <span class="info-label">{{ $tp('模型类型：') }}</span>
+            <span class="info-value">{{ currentModel?.type || $tp('物体检测') }}</span>
           </div>
           <div class="info-item">
-            <span class="info-label">模型来源：</span>
-            <span class="info-value">{{ currentModel?.source || '零代码训练' }}</span>
+            <span class="info-label">{{ $tp('模型来源：') }}</span>
+            <span class="info-value">{{ currentModel?.source || $tp('零代码训练') }}</span>
           </div>
         </div>
       </div>
@@ -135,8 +135,7 @@
                   link
                   size="small"
                   @click="handleExportModel(scope.row)"
-                >
-                  下载 {{ scope.row.modelName || '模型文件' }}
+                > {{ $tp('下载') }} {{ scope.row.modelName || $tp('模型文件') }}
                 </el-button>
               </template>
             </el-table-column>
@@ -145,59 +144,59 @@
       </div>
     </div>
 
-    <el-dialog v-model="showImportDialog" title="导入算法模型" width="min(520px, 94vw)"
+    <el-dialog v-model="showImportDialog" :title="$tp('导入算法模型')" width="min(520px, 94vw)"
                :close-on-click-modal="false" :close-on-press-escape="!importing" :show-close="!importing">
       <el-form label-width="110px" label-position="left" v-loading="importing">
-        <el-form-item label="模型类型" required>
-          <el-select v-model="importForm.annotationType" placeholder="请选择模型类型" style="width: 100%" @change="handleImportTypeChange">
+        <el-form-item :label="$tp('模型类型')" required>
+          <el-select v-model="importForm.annotationType" :placeholder="$tp('请选择模型类型')" style="width: 100%" @change="handleImportTypeChange">
             <el-option v-for="item in importTaskTypes" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="所属算法" required>
+        <el-form-item :label="$tp('所属算法')" required>
           <el-select v-model="importForm.algorithmId" filterable remote :remote-method="searchImportAlgorithms"
                      :loading="importAlgorithmsLoading" :disabled="!importForm.annotationType"
-                     placeholder="先选择模型类型，再搜索算法" style="width: 100%">
+                     :placeholder="$tp('先选择模型类型，再搜索算法')" style="width: 100%">
             <el-option v-for="item in importAlgorithmOptions" :key="item.id" :label="item.name" :value="String(item.id)" />
           </el-select>
         </el-form-item>
-        <el-form-item label="模型名称" required>
-          <el-input v-model="importForm.modelName" maxlength="100" placeholder="请输入模型名称" />
+        <el-form-item :label="$tp('模型名称')" required>
+          <el-input v-model="importForm.modelName" maxlength="100" :placeholder="$tp('请输入模型名称')" />
         </el-form-item>
-        <el-form-item label="模型版本" required>
-          <el-input v-model="importForm.version" placeholder="正整数，例如 1" />
+        <el-form-item :label="$tp('模型版本')" required>
+          <el-input v-model="importForm.version" :placeholder="$tp('正整数，例如 1')" />
         </el-form-item>
-        <el-form-item label="导入方式" required>
+        <el-form-item :label="$tp('导入方式')" required>
           <el-radio-group v-model="importForm.mode" @change="handleImportModeChange">
-            <el-radio value="zip">ZIP 压缩包</el-radio>
-            <el-radio value="files">分别选择文件</el-radio>
+            <el-radio value="zip">{{ $tp('ZIP 压缩包') }}</el-radio>
+            <el-radio value="files">{{ $tp('分别选择文件') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item v-if="importForm.mode === 'zip'" label="ZIP 文件" required>
+        <el-form-item v-if="importForm.mode === 'zip'" :label="$tp('ZIP 文件')" required>
           <input :key="importFileInputKey" type="file" accept=".zip" @change="selectImportArchive" />
         </el-form-item>
-        <el-form-item v-else label="PT 文件" required>
+        <el-form-item v-else :label="$tp('PT 文件')" required>
           <input :key="importFileInputKey" type="file" accept=".pt" @change="selectImportFile" />
         </el-form-item>
-        <el-form-item v-if="importForm.mode === 'files'" label="类别配置" required>
+        <el-form-item v-if="importForm.mode === 'files'" :label="$tp('类别配置')" required>
           <input :key="importFileInputKey" type="file" accept=".yaml,.yml" @change="selectImportYaml" />
         </el-form-item>
-        <el-form-item label="描述">
+        <el-form-item :label="$tp('描述')">
           <el-input v-model="importForm.description" type="textarea" :rows="2" maxlength="200" />
         </el-form-item>
         <el-alert type="info" :closable="false"
-                  title="ZIP 中放一份 .pt 和一份类别 YAML；也可分别选择两个文件。类别编号和顺序须与模型一致。导入后可下载 PT，转换需另行发起。" />
+                  :title="$tp('ZIP 中放一份 .pt 和一份类别 YAML；也可分别选择两个文件。类别编号和顺序须与模型一致。导入后可下载 PT，转换需另行发起。')" />
         <el-progress v-if="importing" :percentage="importProgress" style="margin-top: 16px" />
       </el-form>
       <template #footer>
-        <el-button :disabled="importing" @click="showImportDialog = false">取消</el-button>
-        <el-button type="primary" :loading="importing" @click="handleImportSubmit">导入</el-button>
+        <el-button :disabled="importing" @click="showImportDialog = false">{{ $tp('取消') }}</el-button>
+        <el-button type="primary" :loading="importing" @click="handleImportSubmit">{{ $tp('导入') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- Add / modeldialog -->
     <el-dialog
       v-model="showModelDialog"
-      :title="isEditingModel ? '编辑算法模型' : '新增算法模型'"
+      :title="isEditingModel ? $tp('编辑算法模型') : $tp('新增算法模型')"
       width="35%"
       :close-on-click-modal="false"
       @close="handleModelDialogClose"
@@ -210,16 +209,16 @@
         label-position="left"
         v-loading="modelDialogLoading"
       >
-        <el-form-item label="模型名称" prop="modelName">
-          <el-input v-model="modelForm.modelName" placeholder="请输入模型名称" clearable />
+        <el-form-item :label="$tp('模型名称')" prop="modelName">
+          <el-input v-model="modelForm.modelName" :placeholder="$tp('请输入模型名称')" clearable />
         </el-form-item>
 
-        <el-form-item label="模型版本" prop="version">
-          <el-input v-model="modelForm.version" placeholder="例如1" clearable />
+        <el-form-item :label="$tp('模型版本')" prop="version">
+          <el-input v-model="modelForm.version" :placeholder="$tp('例如1')" clearable />
         </el-form-item>
 
-        <el-form-item label="模型格式" prop="modelFormat">
-          <el-select v-model="modelForm.modelFormat" placeholder="请选择模型格式" style="width: 100%">
+        <el-form-item :label="$tp('模型格式')" prop="modelFormat">
+          <el-select v-model="modelForm.modelFormat" :placeholder="$tp('请选择模型格式')" style="width: 100%">
             <el-option
               v-for="item in modelFormatOptions"
               :key="item.value"
@@ -229,20 +228,20 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="模型路径" prop="modelPath">
-          <el-input v-model="modelForm.modelPath" placeholder="请输入模型文件存储路径" clearable />
+        <el-form-item :label="$tp('模型路径')" prop="modelPath">
+          <el-input v-model="modelForm.modelPath" :placeholder="$tp('请输入模型文件存储路径')" clearable />
         </el-form-item>
 
-        <el-form-item label="算法ID">
-          <el-input v-model="modelForm.algorithmId" placeholder="可选，关联算法ID" clearable />
+        <el-form-item :label="$tp('算法ID')">
+          <el-input v-model="modelForm.algorithmId" :placeholder="$tp('可选，关联算法ID')" clearable />
         </el-form-item>
 
-        <el-form-item label="训练任务ID">
-          <el-input v-model="modelForm.trainingId" placeholder="可选，关联训练任务ID" clearable />
+        <el-form-item :label="$tp('训练任务ID')">
+          <el-input v-model="modelForm.trainingId" :placeholder="$tp('可选，关联训练任务ID')" clearable />
         </el-form-item>
 
-        <el-form-item label="模型状态" prop="status">
-          <el-select v-model="modelForm.status" placeholder="请选择模型状态" style="width: 100%">
+        <el-form-item :label="$tp('模型状态')" prop="status">
+          <el-select v-model="modelForm.status" :placeholder="$tp('请选择模型状态')" style="width: 100%">
             <el-option
               v-for="item in modelStatusOptions"
               :key="item.value"
@@ -252,16 +251,16 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="精度(%)" prop="accuracy">
-          <el-input v-model="modelForm.accuracy" placeholder="可选，0-100" clearable />
+        <el-form-item :label="$tp('精度(%)')" prop="accuracy">
+          <el-input v-model="modelForm.accuracy" :placeholder="$tp('可选，0-100')" clearable />
         </el-form-item>
 
-        <el-form-item label="模型描述">
+        <el-form-item :label="$tp('模型描述')">
           <el-input
             v-model="modelForm.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入模型描述"
+            :placeholder="$tp('请输入模型描述')"
             maxlength="200"
             show-word-limit
           />
@@ -270,8 +269,8 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="handleModelDialogClose" class="common_btn">取消</el-button>
-          <el-button type="primary" @click="handleSubmitModel" class="common_btn">保存</el-button>
+          <el-button @click="handleModelDialogClose" class="common_btn">{{ $tp('取消') }}</el-button>
+          <el-button type="primary" @click="handleSubmitModel" class="common_btn">{{ $tp('保存') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -280,6 +279,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import {computed, h, onMounted, ref} from 'vue'
 import { clacPXToVW } from '@/utils/index'
 import {Delete, Edit, Plus} from '@element-plus/icons-vue'
@@ -358,7 +359,7 @@ const searchImportAlgorithms = async (query = '') => {
       importAlgorithmOptions.value = records.filter(item => selectedType.categories.includes(item.category))
     }
   } catch (error) {
-    ElMessage.error('加载算法失败：' + error.message)
+    ElMessage.error(uiText('加载算法失败：') + error.message)
   } finally {
     importAlgorithmsLoading.value = false
   }
@@ -390,21 +391,21 @@ const selectImportArchive = (event) => { importForm.value.archive = event.target
 const handleImportSubmit = async () => {
   const form = importForm.value
   if (!form.annotationType || !form.algorithmId || !form.modelName.trim() || !/^[1-9]\d*$/.test(String(form.version))) {
-    ElMessage.warning('请填写模型类型、所属算法、名称和正整数版本')
+    ElMessage.warning(uiText('请填写模型类型、所属算法、名称和正整数版本'))
     return
   }
   if (form.mode === 'zip' && (!form.archive || !form.archive.name.toLowerCase().endsWith('.zip'))) {
-    ElMessage.warning('请选择包含一份 PT 和一份类别 YAML 的 ZIP 压缩包')
+    ElMessage.warning(uiText('请选择包含一份 PT 和一份类别 YAML 的 ZIP 压缩包'))
     return
   }
   if (form.mode === 'files' && (!form.file || !form.dataYaml || !form.file.name.toLowerCase().endsWith('.pt')
     || !/\.ya?ml$/i.test(form.dataYaml.name))) {
-    ElMessage.warning('请选择 .pt 模型和 .yaml/.yml 类别配置')
+    ElMessage.warning(uiText('请选择 .pt 模型和 .yaml/.yml 类别配置'))
     return
   }
   const modelFile = form.mode === 'zip' ? form.archive : form.file
   if (modelFile.size > 500 * 1024 * 1024 || (form.mode === 'files' && form.dataYaml.size > 1024 * 1024)) {
-    ElMessage.warning('模型或 ZIP 不能超过 500 MiB，类别 YAML 不能超过 1 MiB')
+    ElMessage.warning(uiText('模型或 ZIP 不能超过 500 MiB，类别 YAML 不能超过 1 MiB'))
     return
   }
   const payload = new FormData()
@@ -426,11 +427,11 @@ const handleImportSubmit = async () => {
     })
     importProgress.value = 100
     showImportDialog.value = false
-    ElMessage.success('模型与类别配置已导入')
+    ElMessage.success(uiText('模型与类别配置已导入'))
     currentPage.value = 1
     await loadModelData()
   } catch (error) {
-    ElMessage.error('导入失败：' + (error?.message || '请稍后重试'))
+    ElMessage.error(uiText('导入失败：') + (error?.message || uiText('请稍后重试')))
   } finally {
     importing.value = false
   }
@@ -579,7 +580,7 @@ const loadModelData = async () => {
       total.value = response.data.total
     }
   } catch (error) {
-    ElMessage.error('加载模型数据失败：' + error.message)
+    ElMessage.error(uiText('加载模型数据失败：') + error.message)
   } finally {
     loading.value = false
   }
@@ -587,7 +588,7 @@ const loadModelData = async () => {
 
 // model
 const getModelSource = (trainingId) => {
-  return trainingId ? '零代码训练' : '导入模型'
+  return trainingId ? uiText('零代码训练') : uiText('导入模型')
 }
 
 // eventProcess
@@ -609,7 +610,7 @@ const handleReset = () => {
 
 const handleEdit = async () => {
   if (selectedRows.value.length !== 1) {
-    ElMessage.warning('请选择一条模型进行编辑')
+    ElMessage.warning(uiText('请选择一条模型进行编辑'))
     return
   }
 
@@ -623,7 +624,7 @@ const handleEdit = async () => {
     const response = await getModelById(row.originalData.id)
     fillModelForm(response.data || row.originalData)
   } catch (error) {
-    ElMessage.error('加载模型信息失败：' + error.message)
+    ElMessage.error(uiText('加载模型信息失败：') + error.message)
     showModelDialog.value = false
   } finally {
     modelDialogLoading.value = false
@@ -632,7 +633,7 @@ const handleEdit = async () => {
 
 const handleDelete = async () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请选择要删除的模型')
+    ElMessage.warning(uiText('请选择要删除的模型'))
     return
   }
 
@@ -641,7 +642,7 @@ const handleDelete = async () => {
       ? `确认要删除模型"${selectedRows.value[0].name}"吗？`
       : `确认要删除选中的${selectedRows.value.length}个模型吗？`
 
-    await ElMessageBox.confirm(message, '确认删除', {
+    await ElMessageBox.confirm(message, uiText('确认删除'), {
       type: 'warning'
     })
 
@@ -652,12 +653,12 @@ const handleDelete = async () => {
       await batchDeleteModel(ids)
     }
 
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText('删除成功'))
     selectedRows.value = []
     await loadModelData()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败：' + error.message)
+      ElMessage.error(uiText('删除失败：') + error.message)
     }
   }
 }
@@ -689,22 +690,22 @@ const handleDownloadModel = async (row) => {
 
   } catch (error) {
     console.error('下载模型失败:', error)
-    ElMessage.error('下载模型失败：' + error.message)
+    ElMessage.error(uiText('下载模型失败：') + error.message)
   }
 }
 
 const handleDeleteItem = async (row) => {
   try {
-    await ElMessageBox.confirm(`确认要删除模型"${row.name}"吗？`, '确认删除', {
+    await ElMessageBox.confirm(uiText('确认要删除模型"{value0}"吗？', { value0: row.name }), uiText('确认删除'), {
       type: 'warning'
     })
 
     await deleteModel(row.originalData.id)
-    ElMessage.success('删除成功')
+    ElMessage.success(uiText('删除成功'))
     await loadModelData()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败：' + error.message)
+      ElMessage.error(uiText('删除失败：') + error.message)
     }
   }
 }
@@ -728,7 +729,7 @@ const promptDownloadModelType = async (modelRow) => {
   ]
   const firstAvailableType = modelTypes.find(item => item.path)?.type
   if (!firstAvailableType) {
-    ElMessage.warning('当前模型还没有可下载的文件')
+    ElMessage.warning(uiText('当前模型还没有可下载的文件'))
     return null
   }
   let chosenType = firstAvailableType
@@ -752,7 +753,7 @@ const promptDownloadModelType = async (modelRow) => {
           () => modelTypes.map(item => h(
             ElRadio,
             { label: item.type, disabled: !item.path },
-            () => item.path ? (item.label || item.type) : `${item.type}（未生成）`
+            () => item.path ? (item.label || item.type) : uiText('{value0}（未生成）', { value0: item.type })
           ))
         )
       ])
@@ -780,13 +781,13 @@ const downloadModelFile = async (modelRow) => {
 
     const originalData = modelRow?.originalData || modelRow
     if (!originalData) {
-      ElMessage.error('无法获取模型数据')
+      ElMessage.error(uiText('无法获取模型数据'))
       return
     }
 
     const modelId = originalData.id ?? modelRow?.id
     if (!modelId) {
-      ElMessage.error('没有模型ID')
+      ElMessage.error(uiText('没有模型ID'))
       return
     }
 
@@ -831,7 +832,7 @@ const downloadModelFile = async (modelRow) => {
 
   } catch (error) {
     console.error('下载模型文件失败：', error)
-    ElMessage.error('下载模型文件失败：' + error.message)
+    ElMessage.error(uiText('下载模型文件失败：') + error.message)
   }
 }
 
@@ -843,7 +844,7 @@ const handleExportModel = async (version) => {
     await downloadModelFile(currentModel.value)
 
   } catch (error) {
-    ElMessage.error('导出模型文件失败：' + error.message)
+    ElMessage.error(uiText('导出模型文件失败：') + error.message)
   }
 }
 
@@ -910,22 +911,22 @@ const handleAdvancedSearchReset = () => {
 
 const handleExport = () => {
   console.log('导出数据')
-  ElMessage.success('导出数据')
+  ElMessage.success(uiText('导出数据'))
 }
 
 const handleUpload = () => {
   console.log('上传文件')
-  ElMessage.success('上传功能')
+  ElMessage.success(uiText('上传功能'))
 }
 
 const handleDownloadTemplate = () => {
   console.log('下载模板')
-  ElMessage.success('下载模板')
+  ElMessage.success(uiText('下载模板'))
 }
 
 const handleBatchOperation = () => {
   console.log('批量操作')
-  ElMessage.success('批量操作')
+  ElMessage.success(uiText('批量操作'))
 }
 
 const handleModelDialogClose = () => {
@@ -950,10 +951,10 @@ const handleSubmitModel = async () => {
     }
     if (isEditingModel.value) {
       await updateModel(payload)
-      ElMessage.success('编辑算法模型成功')
+      ElMessage.success(uiText('编辑算法模型成功'))
     } else {
       await createModel(payload)
-      ElMessage.success('新增算法模型成功')
+      ElMessage.success(uiText('新增算法模型成功'))
     }
     handleModelDialogClose()
     selectedRows.value = []

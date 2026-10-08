@@ -33,7 +33,7 @@
             collapse-tags-tooltip
             filterable
             :disabled="disabled"
-            placeholder="请选择"
+            :placeholder="$tp('请选择')"
           >
             <el-option
               v-for="option in getOptions(def)"
@@ -83,14 +83,16 @@
       </div>
     </div>
     <div class="cron-preview">
-      <span class="preview-label">Cron表达式</span>
+      <span class="preview-label">{{ $tp('Cron表达式') }}</span>
       <el-input :model-value="previewExpression" readonly class="preview-input" />
     </div>
-    <div class="cron-note">提示：日与周只能指定其中一个，另一个会自动设置为“?”。</div>
+    <div class="cron-note">{{ $tp('提示：日与周只能指定其中一个，另一个会自动设置为“?”。') }}</div>
   </div>
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { computed, reactive, ref, watch, nextTick } from 'vue'
 
 const props = defineProps({
@@ -314,8 +316,8 @@ const getOptions = (def) => {
 const getModeOptions = (def) => (def.supportsNone ? [...modeOptions, noneOption] : modeOptions)
 
 const getModeHint = (def, mode) => {
-  if (mode === 'every') return `每${def.label}`
-  if (mode === 'none') return '不指定'
+  if (mode === 'every') return uiText('每{value0}', { value0: def.label })
+  if (mode === 'none') return uiText('不指定')
   return ''
 }
 

@@ -12,7 +12,7 @@
         <el-input
             min="1"
             max="4095"
-            placeholder="开关编号"
+            :placeholder="$tp('开关编号')"
             addonBefore="开关编号"
             addonAfter="(2-255)"
             v-model="switchId"
@@ -21,8 +21,8 @@
         </el-input>
       </el-form-item>
       <el-form-item>
-        <el-button size="mini" @click="() => open('on')">开启</el-button>
-        <el-button size="mini" @click="() => open('off')">关闭</el-button>
+        <el-button size="mini" @click="() => open('on')">{{ $tp('开启') }}</el-button>
+        <el-button size="mini" @click="() => open('off')">{{ $tp('关闭') }}</el-button>
       </el-form-item>
     </el-form>
   </div>

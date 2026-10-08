@@ -12,7 +12,7 @@
       multiple
       filterable
       clearable
-      placeholder="请选择标签"
+      :placeholder="$tp('请选择标签')"
       style="width: 100%"
       @change="handleChange"
       @clear="handleClear"
@@ -85,6 +85,8 @@
 </template>
 
 <script setup>
+import { translatePhrase as uiText } from '@/i18n'
+
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getTagTree } from '@/api/eventGroupTagManagement'
@@ -168,12 +170,12 @@ const loadTagTree = async () => {
       console.log('加载标签树数据:', response.data)
     } else {
       tagTreeData.value = []
-      ElMessage.error(response.msg || response.message || '加载标签树失败')
+      ElMessage.error(response.msg || response.message || uiText('加载标签树失败'))
     }
   } catch (error) {
     console.error('加载标签树失败:', error)
     tagTreeData.value = []
-    ElMessage.error(`加载标签树失败：${error.message || error}`)
+    ElMessage.error(uiText('加载标签树失败：{value0}', { value0: error.message || error }))
   } finally {
     loading.value = false
   }

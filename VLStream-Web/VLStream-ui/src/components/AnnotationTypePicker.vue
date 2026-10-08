@@ -1,16 +1,16 @@
 <template>
   <div class="annotation-picker">
-    <div class="type-grid" role="group" aria-label="标注类型">
+    <div class="type-grid" role="group" :aria-label="$tp('标注类型')">
       <button v-for="item in types" :key="item.value" type="button" class="type-card"
         :class="{ selected: modelValue === item.value }" :aria-pressed="modelValue === item.value"
         @click="$emit('update:modelValue', item.value)">
         <span v-if="modelValue === item.value" class="selected-mark" aria-hidden="true">✓</span>
         <strong>{{ item.label }}</strong>
-        <img :src="item.image" :alt="item.label + '真实图像示例'" referrerpolicy="no-referrer" />
+        <img :src="item.image" :alt="item.label + $tp('真实图像示例')" referrerpolicy="no-referrer" />
       </button>
     </div>
-    <div class="type-description" aria-live="polite"><span aria-hidden="true">ⓘ</span><p>{{ selected?.description || '请选择标注类型，查看任务说明。' }}</p></div>
-    <p class="example-source">真实图像示例来自 <a :href="`https://docs.ultralytics.com/tasks/${selected?.task || 'classify'}/`" target="_blank" rel="noopener noreferrer">Ultralytics 官方文档</a>，仅用于说明任务区别。</p>
+    <div class="type-description" aria-live="polite"><span aria-hidden="true">ⓘ</span><p>{{ selected?.description || $tp('请选择标注类型，查看任务说明。') }}</p></div>
+    <p class="example-source">{{ $tp('真实图像示例来自') }} <a :href="`https://docs.ultralytics.com/tasks/${selected?.task || 'classify'}/`" target="_blank" rel="noopener noreferrer">{{ $tp('Ultralytics 官方文档') }}</a>{{ $tp('，仅用于说明任务区别。') }}</p>
   </div>
 </template>
 

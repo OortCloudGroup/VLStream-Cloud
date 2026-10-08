@@ -14,7 +14,7 @@
           <div class="searchHeight_out flexRowAC">
             <search-height-box
               keyword="deviceId"
-              placeholder="搜索设备编号"
+              :placeholder="$tp('搜索设备编号')"
               :data="searchData"
               @handle="searchResetFn"
             />

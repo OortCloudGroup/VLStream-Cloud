@@ -13,12 +13,11 @@
           <div class="depNameBox flexRowAC">
             <div class="exportBtnBox flexRowAC">
               <button type="button" class="exportBtn newBtn flexRowAC" @click="handleAdd" v-hasPermi="['wvp:server:add']">
-                <el-icon class="BtnImg"><Plus /></el-icon>新增
-              </button>
+                <el-icon class="BtnImg"><Plus /></el-icon>{{ $tp('新增') }} </button>
             </div>
           </div>
           <div class="searchHeight_out flexRowAC">
-            <search-height-box keyword="keyword" placeholder="搜索节点" :data="searchData" @handle="searchResetFn" />
+            <search-height-box keyword="keyword" :placeholder="$tp('搜索节点')" :data="searchData" @handle="searchResetFn" />
             <export-excel-pdf />
           </div>
         </div>
@@ -41,78 +40,78 @@
           <el-table-column label="IP" prop="ip" show-overflow-tooltip />
           <el-table-column :label="$tp('默认节点')" :width="clacPXToVW(110)">
             <template #default="scope">
-              <el-tag v-if="scope.row.defaultServer" type="success">默认</el-tag>
-              <el-tag v-else type="info">否</el-tag>
+              <el-tag v-if="scope.row.defaultServer" type="success">{{ $tp('默认') }}</el-tag>
+              <el-tag v-else type="info">{{ $tp('否') }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column :label="$tp('操作')" align="right" fixed="right" :width="clacPXToVW(200)">
             <template #default="scope">
               <div class="operateAppBox flexRowAC" @click.stop>
                 <div class="new_table_svg_group" @click="handleView(scope.row)" v-hasPermi="['wvp:server:view']">
-                  <span>查看</span>
+                  <span>{{ $tp('查看') }}</span>
                 </div>
                 <div v-if="!scope.row.defaultServer" class="new_table_svg_group" @click="handleUpdate(scope.row)" v-hasPermi="['wvp:server:edit']">
-                  <span>编辑</span>
+                  <span>{{ $tp('编辑') }}</span>
                 </div>
                 <div v-if="!scope.row.defaultServer" class="new_table_svg_group" @click="handleDelete(scope.row)" v-hasPermi="['wvp:server:delete']">
-                  <span>移除</span>
+                  <span>{{ $tp('移除') }}</span>
                 </div>
               </div>
             </template>
           </el-table-column>
         </TableSelf>
 
-    <el-dialog title="媒体节点" v-model="openView" width="60%" append-to-body>
+    <el-dialog :title="$tp('媒体节点')" v-model="openView" width="60%" append-to-body>
       <el-descriptions border>
-        <el-descriptions-item label="媒体服务IP">
+        <el-descriptions-item :label="$tp('媒体服务IP')">
           {{ rowData.ip }}
         </el-descriptions-item>
-        <el-descriptions-item label="HTTP端口">
+        <el-descriptions-item :label="$tp('HTTP端口')">
           {{ rowData.httpPort }}
         </el-descriptions-item>
         <el-descriptions-item label="SECRET">
           {{ rowData.secret }}
         </el-descriptions-item>
-        <el-descriptions-item label="类型">
+        <el-descriptions-item :label="$tp('类型')">
           <el-tag type="primary" v-if="rowData.type === 'zlm'">ZLMediaKit</el-tag>
           <el-tag type="primary" v-if="rowData.type === 'abl'">ABLMediaServer</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="媒体服务RTMP_PORT">
+        <el-descriptions-item :label="$tp('媒体服务RTMP_PORT')">
           {{ rowData.rtmpPort }}
         </el-descriptions-item>
-        <el-descriptions-item label="媒体服务RTMPS_PORT">
+        <el-descriptions-item :label="$tp('媒体服务RTMPS_PORT')">
           {{ rowData.rtmpSSlPort }}
         </el-descriptions-item>
-        <el-descriptions-item label="媒体服务HOOK_IP">
+        <el-descriptions-item :label="$tp('媒体服务HOOK_IP')">
           {{ rowData.hookIp }}
         </el-descriptions-item>
-        <el-descriptions-item label="媒体服务SDP_IP">
+        <el-descriptions-item :label="$tp('媒体服务SDP_IP')">
           {{ rowData.sdpIp }}
         </el-descriptions-item>
-        <el-descriptions-item label="自动配置媒体服务">
-          <el-tag type="primary" v-if="rowData.autoConfig === 1">是</el-tag>
-          <el-tag type="primary" v-if="rowData.autoConfig === 0">否</el-tag>
+        <el-descriptions-item :label="$tp('自动配置媒体服务')">
+          <el-tag type="primary" v-if="rowData.autoConfig === 1">{{ $tp('是') }}</el-tag>
+          <el-tag type="primary" v-if="rowData.autoConfig === 0">{{ $tp('否') }}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="媒体服务流IP">
+        <el-descriptions-item :label="$tp('媒体服务流IP')">
           {{ rowData.streamIp }}
         </el-descriptions-item>
-        <el-descriptions-item label="收流端口模式">
-          <el-tag type="primary" v-if="rowData.rtpEnable === 1">多端口</el-tag>
-          <el-tag type="primary" v-if="rowData.rtpEnable === 0">单端口</el-tag>
+        <el-descriptions-item :label="$tp('收流端口模式')">
+          <el-tag type="primary" v-if="rowData.rtpEnable === 1">{{ $tp('多端口') }}</el-tag>
+          <el-tag type="primary" v-if="rowData.rtpEnable === 0">{{ $tp('单端口') }}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="媒体服务HTTPS_PORT">
+        <el-descriptions-item :label="$tp('媒体服务HTTPS_PORT')">
           {{ rowData.httpSSlPort }}
         </el-descriptions-item>
-        <el-descriptions-item label="收流端口">
+        <el-descriptions-item :label="$tp('收流端口')">
           {{ rowData.rtpPortRange }}
         </el-descriptions-item>
-        <el-descriptions-item label="媒体服务RTSP_PORT">
+        <el-descriptions-item :label="$tp('媒体服务RTSP_PORT')">
           {{ rowData.rtspPort }}
         </el-descriptions-item>
-        <el-descriptions-item label="录像管理服务端口">
+        <el-descriptions-item :label="$tp('录像管理服务端口')">
           {{ rowData.recordAssistPort }}
         </el-descriptions-item>
-        <el-descriptions-item label="媒体服务RTSPS_PORT">
+        <el-descriptions-item :label="$tp('媒体服务RTSPS_PORT')">
           {{ rowData.rtspSSLPort }}
         </el-descriptions-item>
       </el-descriptions>
