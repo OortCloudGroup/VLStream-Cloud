@@ -10,6 +10,7 @@ package com.ruoyi.vlstream.test.vlstream.service;
 
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
+import com.ruoyi.vlstream.test.vlstream.config.VlsDeviceMediaProperties;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceMediaUpload;
@@ -38,6 +39,9 @@ public class DeviceEventMqttHandler {
 
 	@Resource
 	private DeviceMediaUploadService mediaUploadService;
+
+	@Resource
+	private VlsDeviceMediaProperties deviceMediaProperties;
 
 	@Resource
 	private ActiveSafetyEventReportService activeSafetyEventReportService;
@@ -96,7 +100,9 @@ public class DeviceEventMqttHandler {
 			if (StringUtils.isAnyBlank(mediaId, objectKey, sha256)) {
 				throw new IllegalArgumentException("mediaId、objectKey、sha256 均不能为空");
 			}
-			DeviceMediaUpload upload = mediaUploadService.validateAndBind(
+			boolean externalMedia = Boolean.TRUE.equals(deviceMediaProperties.getAllowExternalEventMedia())
+				&& mediaUploadService.getByMediaId(mediaId) == null;
+			DeviceMediaUpload upload = externalMedia ? null : mediaUploadService.validateAndBind(
 				mediaId, deviceId, objectKey, sha256, sourceMessageId);
 			String eventType = StringUtils.defaultIfBlank(payload.getStr("eventType"),
 				defaultEventType(subBizType, payload));
@@ -112,12 +118,12 @@ public class DeviceEventMqttHandler {
 				EventManagement event = new EventManagement();
 				event.setMqttMessageId(sourceMessageId);
 				event.setDeviceEventId(eventId);
-				event.setMediaId(upload.getMediaId());
+				event.setMediaId(mediaId);
 				event.setEventDesc(description);
 				event.setEventType(eventType);
 				event.setReportLocation(device.getAddress());
 				event.setReportDevice(deviceId);
-				event.setReportImg(VlsEventReportApplicationService.mediaReference(upload.getMediaId()));
+				event.setReportImg(externalMedia ? null : VlsEventReportApplicationService.mediaReference(mediaId));
 				event.setReportTime(eventTime);
 				event.setEventData(payload.toString());
 				event.setHandleResult(description);
@@ -133,7 +139,9 @@ public class DeviceEventMqttHandler {
 						.eventType(eventType)
 						.description(description)
 						.eventTime(eventTime)
-						.mediaId(upload.getMediaId())
+						.mediaId(mediaId)
+						.externalMedia(externalMedia)
+						.mqttPayloadJson(payload.toString())
 						.address(device.getAddress())
 						.longitude(device.getLongitude())
 						.latitude(device.getLatitude())

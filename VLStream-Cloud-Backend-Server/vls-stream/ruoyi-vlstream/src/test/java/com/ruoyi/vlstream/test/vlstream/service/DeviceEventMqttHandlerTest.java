@@ -11,6 +11,7 @@ package com.ruoyi.vlstream.test.vlstream.service;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.vlstream.test.vlstream.config.VlsDeviceMediaProperties;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceMediaUpload;
@@ -41,6 +42,7 @@ class DeviceEventMqttHandlerTest {
 	private VlsEventReportApplicationService eventReportApplicationService;
 	private LlmReviewTaskService llmReviewTaskService;
 	private DeviceEventMqttHandler handler;
+	private VlsDeviceMediaProperties mediaProperties;
 
 	@BeforeEach
 	void setUp() throws Exception {
@@ -50,6 +52,8 @@ class DeviceEventMqttHandlerTest {
 		eventReportApplicationService = mock(VlsEventReportApplicationService.class);
 		llmReviewTaskService = mock(LlmReviewTaskService.class);
 		handler = new DeviceEventMqttHandler();
+		mediaProperties = new VlsDeviceMediaProperties();
+		setField(handler, "deviceMediaProperties", mediaProperties);
 		setField(handler, "mediaUploadService", mediaUploadService);
 		setField(handler, "activeSafetyEventReportService", activeSafetyEventReportService);
 		setField(handler, "wvpDeviceResolver", wvpDeviceResolver);
@@ -184,6 +188,46 @@ class DeviceEventMqttHandlerTest {
 		assertEquals("SUCCESS", reply.getByPath("payload.bizData.status"));
 		assertEquals("事件已处理，重复消息已忽略", reply.getByPath("payload.msg"));
 		verify(mediaUploadService, never()).validateAndBind(any(), any(), any(), any(), any());
+		verify(activeSafetyEventReportService, never()).report(any());
+	}
+
+	@Test
+	void storesExternalEventDataWithoutInventingAnUpload() {
+		mediaProperties.setAllowExternalEventMedia(true);
+		DeviceInfo device = new DeviceInfo();
+		device.setDeviceId("CAM-1");
+		device.setTenantId("000000");
+		when(wvpDeviceResolver.resolve("CAM-1")).thenReturn(device);
+		when(activeSafetyEventReportService.report(any())).thenReturn(
+			ActiveSafetyEventReportResult.builder().activeSafetyEventId("event-row-1").build());
+
+		JSONObject reply = handler.handle(eventMessage());
+
+		assertEquals("SUCCESS", reply.getByPath("payload.bizData.status"));
+		ArgumentCaptor<ActiveSafetyEventReport> captor = ArgumentCaptor.forClass(ActiveSafetyEventReport.class);
+		verify(activeSafetyEventReportService).report(captor.capture());
+		assertTrue(captor.getValue().isExternalMedia());
+		assertEquals("media-1", captor.getValue().getMediaId());
+		assertEquals("device-event-1", JSONUtil.parseObj(captor.getValue().getMqttPayloadJson()).getStr("eventId"));
+		verify(mediaUploadService, never()).validateAndBind(any(), any(), any(), any(), any());
+		assertNull(com.ruoyi.common.helper.TenantContextHolder.getTenantId());
+	}
+
+	@Test
+	void stillRejectsInvalidLocalMediaWhenExternalMediaIsAllowed() {
+		mediaProperties.setAllowExternalEventMedia(true);
+		DeviceInfo device = new DeviceInfo();
+		device.setDeviceId("CAM-1");
+		device.setTenantId("000000");
+		when(wvpDeviceResolver.resolve("CAM-1")).thenReturn(device);
+		when(mediaUploadService.getByMediaId("media-1")).thenReturn(new DeviceMediaUpload());
+		when(mediaUploadService.validateAndBind(any(), any(), any(), any(), any()))
+			.thenThrow(new ServiceException("MinIO 图片 SHA-256 校验失败"));
+
+		JSONObject reply = handler.handle(eventMessage());
+
+		assertEquals("FAILED", reply.getByPath("payload.bizData.status"));
+		assertEquals("MinIO 图片 SHA-256 校验失败", reply.getByPath("payload.errDetail"));
 		verify(activeSafetyEventReportService, never()).report(any());
 	}
 

@@ -45,4 +45,7 @@ public class VlsDeviceMediaProperties {
 	 * Temporary LAN-only switch. Production must set this to false and enable device authentication.
 	 */
 	private Boolean allowUnauthenticated = false;
+
+	/** Receive event data from a shared broker when another environment owns the image. */
+	private Boolean allowExternalEventMedia = false;
 }

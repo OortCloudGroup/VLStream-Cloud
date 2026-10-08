@@ -256,6 +256,14 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
             data.put("mqtt_message_id", mqttReport.getSourceMessageId());
             data.put("device_event_id", mqttReport.getDeviceEventId());
             data.put("media_id", mqttReport.getMediaId());
+            data.put("external_media", mqttReport.isExternalMedia());
+            if (!string(mqttReport.getMqttPayloadJson()).isEmpty()) {
+                try {
+                    data.put("mqtt_payload", objectMapper.readValue(mqttReport.getMqttPayloadJson(), MAP_TYPE));
+                } catch (JsonProcessingException exception) {
+                    throw new IllegalArgumentException("MQTT 事件负载格式不正确", exception);
+                }
+            }
             data.put("event_time", mqttReport.getEventTime() == null
                 ? "" : new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ROOT)
                     .format(mqttReport.getEventTime()));
@@ -982,7 +990,8 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         body.put("name", limitCodePoints(eventType, 20));
         body.put("describe", string(report.getDescription()));
         body.put("point", point);
-        body.put("pics", Collections.singletonList(VLS_MEDIA_PREFIX + report.getMediaId()));
+        body.put("pics", report.isExternalMedia() ? Collections.emptyList()
+            : Collections.singletonList(VLS_MEDIA_PREFIX + report.getMediaId()));
         body.put("video", Collections.emptyList());
 
         EventKey key = insertCameraEvent(body, report);

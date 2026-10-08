@@ -30,6 +30,8 @@ public class ActiveSafetyEventReport {
 	private String description;
 	private Date eventTime;
 	private String mediaId;
+	private boolean externalMedia;
+	private String mqttPayloadJson;
 	private String address;
 	private BigDecimal longitude;
 	private BigDecimal latitude;

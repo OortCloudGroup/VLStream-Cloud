@@ -77,6 +77,9 @@ public class LlmReviewTaskService {
 		if (config == null) {
 			return false;
 		}
+		if (upload == null) {
+			throw new ServiceException("当前算法要求图片复核，但媒体属于其他环境，无法在本机读取");
+		}
 		LlmProvider provider = providerForUse(config.getProviderId(), false);
 		if (provider == null) {
 			log.warn("算法选择的大模型当前不可用，事件保持原安全事件链路: tenantId={}, algorithmId={}, providerId={}, messageId={}",

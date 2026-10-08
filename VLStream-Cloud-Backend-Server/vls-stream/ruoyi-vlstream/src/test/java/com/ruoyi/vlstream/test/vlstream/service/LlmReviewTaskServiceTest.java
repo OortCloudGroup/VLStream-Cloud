@@ -3,6 +3,7 @@ package com.ruoyi.vlstream.test.vlstream.service;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.vlstream.test.vlstream.config.VlsLlmReviewProperties;
 import com.ruoyi.vlstream.test.vlstream.mapper.AlgorithmLlmReviewConfigMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.LlmProviderMapper;
@@ -22,6 +23,7 @@ import java.util.Date;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
@@ -93,6 +95,21 @@ class LlmReviewTaskServiceTest {
 			fixture.upload(), "event-1", "person_detected", "检测到人员", new Date());
 
 		assertFalse(queued);
+		verify(fixture.taskMapper, never()).insertIgnore(any());
+	}
+
+	@Test
+	void doesNotBypassRequiredImageReviewForAnExternalEvent() {
+		Fixture fixture = new Fixture(true);
+		AlgorithmLlmReviewConfig config = new AlgorithmLlmReviewConfig();
+		config.setProviderId(22L);
+		config.setEnabled(true);
+		when(fixture.configMapper.selectOne(any())).thenReturn(config);
+
+		ServiceException error = assertThrows(ServiceException.class, () -> fixture.service.enqueueIfRequired(
+			fixture.envelope(), fixture.device(), null, "event-1", "person_detected", "检测到人员", new Date()));
+
+		assertEquals("当前算法要求图片复核，但媒体属于其他环境，无法在本机读取", error.getMessage());
 		verify(fixture.taskMapper, never()).insertIgnore(any());
 	}
 
