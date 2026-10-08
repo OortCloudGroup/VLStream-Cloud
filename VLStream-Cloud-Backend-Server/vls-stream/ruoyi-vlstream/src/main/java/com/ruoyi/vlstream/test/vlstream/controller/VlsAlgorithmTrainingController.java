@@ -145,6 +145,11 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	public R<IPage<AlgorithmTrainingVO>> page(AlgorithmTrainingVO vlsAlgorithmTraining, Query query) {
 		IPage<AlgorithmTrainingVO> pages = vlsAlgorithmTrainingService.selectVlsAlgorithmTrainingPage(Condition.getPage(query), vlsAlgorithmTraining);
 		for (AlgorithmTrainingVO training : pages.getRecords()) {
+			if (com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService.isCloud(training)) {
+				com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingJob job = cloudTrainingService.current(training);
+				training.setExecutionStage(job.getJobState());
+				training.setExecutionMessage(job.getMessage());
+			}
 			Algorithm algorithm = training.getAlgorithmId() == null ? null : algorithmService.getById(training.getAlgorithmId());
 			if (algorithm == null) {
 				training.setAlgorithmName("关联算法不存在");

@@ -164,7 +164,7 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 		dataManagementService.beginAnnotationEdit(instance.getAnnotationId());
 		java.util.List<AnnotationInstance> remaining = imageInstances(instance.getAnnotationId(), instance.getImageId());
 		remaining.removeIf(existing -> existing.getId().equals(instanceId));
-		validateTypedAnnotations(instance.getAnnotationId(), instance.getImageId(), remaining);
+		validateTypedAnnotations(instance.getAnnotationId(), instance.getImageId(), remaining, true);
 
 		int result = baseMapper.deleteById(instanceId);
 
@@ -316,8 +316,13 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 	}
 
 	private void validateTypedAnnotations(Long annotationId, Long imageId, java.util.List<AnnotationInstance> values) {
+		validateTypedAnnotations(annotationId, imageId, values, false);
+	}
+
+	private void validateTypedAnnotations(Long annotationId, Long imageId, java.util.List<AnnotationInstance> values, boolean removal) {
 		AlgorithmAnnotation project = dataManagementService.project(annotationId);
-		if (project == null || project.getAnnotationType() == null || "object_detection".equals(project.getAnnotationType()) || values.isEmpty()) return;
+		if (project == null || project.getAnnotationType() == null || values.isEmpty()) return;
+		if (removal && "object_detection".equals(project.getAnnotationType())) return;
 		AnnotationImage image = dataManagementService.sample(annotationId, imageId);
 		if ("video".equals(image.getMediaType())) throw new com.ruoyi.common.exception.ServiceException("视频需先切图后再标注");
 		Integer width = image.getMediaWidth(), height = image.getMediaHeight();
@@ -328,6 +333,10 @@ public class VlsAnnotationInstanceServiceImpl extends BaseServiceImpl<VlsAnnotat
 				com.ruoyi.vlstream.test.vlstream.data.SampleMediaInspector.Inspection inspected = sampleMediaInspector.inspect(image.getOriginalName(), output.toByteArray());
 				width = inspected.getWidth(); height = inspected.getHeight();
 			} catch (Exception ex) { throw new com.ruoyi.common.exception.ServiceException("无法校验图片尺寸"); }
+		}
+		if ("object_detection".equals(project.getAnnotationType())) {
+			new com.ruoyi.vlstream.test.vlstream.data.YoloDatasetWriter(objectMapper).validateForSave(values, width, height);
+			return;
 		}
 		com.ruoyi.vlstream.test.vlstream.data.AnnotationPayloads.validate(project.getAnnotationType(),
 			com.ruoyi.vlstream.test.vlstream.data.AnnotationPayloads.read(project.getAnnotationType(), values, objectMapper), width, height);

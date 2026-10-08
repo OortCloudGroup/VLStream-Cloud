@@ -78,7 +78,7 @@ public class CloudTrainingWorker {
                     // A broken connection does not prove that a remote process has stopped.
                     jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?",
                         "连接、数据传输或产物回存暂未完成，将自动重试；请检查实例和对象存储", job.getTenantId(), job.getId());
-                    log.warn("Cloud training awaiting retry: job={}, stage={}, error={}", job.getId(), job.getJobState(), e.getClass().getSimpleName());
+                    log.warn("Cloud training awaiting retry: job={}, stage={}, error={}", job.getId(), job.getJobState(), e.getClass().getSimpleName(), e);
                 }
             } finally { lock(db, "SELECT RELEASE_LOCK(?)", lock); }
         } catch (Exception e) { log.warn("Cloud training queue unavailable: {}", e.getClass().getSimpleName()); }

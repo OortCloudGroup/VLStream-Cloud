@@ -46,4 +46,10 @@ public class AlgorithmTrainingVO extends AlgorithmTraining {
 
 	@Schema(description = "训练状态描述")
 	private String trainStatusDesc;
+
+	@Schema(description = "算力任务执行阶段")
+	private String executionStage;
+
+	@Schema(description = "算力任务状态说明")
+	private String executionMessage;
 }

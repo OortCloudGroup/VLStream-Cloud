@@ -399,6 +399,23 @@ public class DataManagementService {
         return saveVersion(projectId, request.getName(), request.getDescription(), snapshot(projectId));
     }
 
+    /** Freeze verified metadata and content-group partitions without altering source annotations or the published pointer. */
+    @Transactional(rollbackFor = Exception.class)
+    public DatasetVersion savePreparedTrainingVersion(Long projectId, DatasetGenerationReport report) {
+        lock(projectId);
+        if (!writeJson(snapshot(projectId)).equals(report.getOriginalJson()))
+            throw new ServiceException("检查期间样本或标注发生变化，请重新生成");
+        DatasetSnapshot prepared = report.getPrepared();
+        // Keep an explicit rollback snapshot before automatic partition repair.
+        if (report.isRepartitioned()) saveVersion(projectId, "生成前划分备份", "按图片内容重新划分前保留原状态", readSnapshot(report.getOriginalJson()));
+        for (AnnotationImage sample : prepared.getSamples()) {
+            if (samples.update(null, new UpdateWrapper<AnnotationImage>().eq("tenant_id", tenant()).eq("annotation_id", projectId).eq("id", sample.getId())
+                .set("content_sha256", sample.getContentSha256()).set("media_width", sample.getMediaWidth()).set("media_height", sample.getMediaHeight())
+                .set("dataset_split", sample.getDatasetSplit())) != 1) throw new ServiceException("样本状态已改变，请重新生成");
+        }
+        return saveVersion(projectId, "MinIO 训练快照", "原始标注保留；训练框取图片边界交集；相同内容不跨训练/验证", prepared);
+    }
+
     private DatasetVersion saveVersion(Long projectId, String name, String description, DatasetSnapshot snapshot) {
         DatasetVersion latest = versions.selectOne(this.<DatasetVersion>scope(projectId).orderByDesc("version_number").last("LIMIT 1"));
         DatasetVersion version = new DatasetVersion();

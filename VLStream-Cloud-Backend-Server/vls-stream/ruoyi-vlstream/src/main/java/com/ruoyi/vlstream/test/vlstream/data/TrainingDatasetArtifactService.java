@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import java.util.zip.ZipFile;
 
 /** Builds portable data only; execution scripts and compute-machine paths never enter the archive. */
 @Service
@@ -66,6 +67,47 @@ public class TrainingDatasetArtifactService {
             mapper(), tenant(), referenceId(ref));
         if (rows.isEmpty()) throw new ServiceException("训练数据集制品不存在、未就绪或不属于当前租户");
         return rows.get(0);
+    }
+
+    public TrainingDatasetArtifact latestReady(Long datasetId) {
+        List<TrainingDatasetArtifact> rows = jdbc.query("SELECT " + COLUMNS + " FROM vls_training_dataset_artifact WHERE tenant_id=? AND dataset_id=? AND storage_state='READY' ORDER BY version_id DESC LIMIT 1",
+            mapper(), tenant(), datasetId);
+        if (rows.isEmpty()) throw new ServiceException("暂无已保存的生成检查清单，请先生成训练数据集");
+        return rows.get(0);
+    }
+
+    /** Restore a fixed report, not a new dataset. Verified download and temporary file cleanup are reused. */
+    public DatasetGenerationReport readGenerationReport(Long datasetId, String ref) throws IOException {
+        TrainingDatasetArtifact saved = require(datasetId, ref);
+        Path file = download(saved);
+        try (ZipFile zip = new ZipFile(file.toFile())) {
+            com.fasterxml.jackson.databind.JsonNode details = reportJson(zip, "generation-report.json");
+            com.fasterxml.jackson.databind.JsonNode version = reportJson(zip, "version.json");
+            if (!details.path("corrections").isArray() || !datasetId.toString().equals(version.path("datasetId").asText())
+                || !saved.getVersionId().toString().equals(version.path("versionId").asText())) throw new IOException("生成检查清单与版本不一致");
+            DatasetGenerationReport report = new DatasetGenerationReport();
+            report.setDatasetId(datasetId.toString()); report.setReference(saved.getReference()); report.setStatus("READY");
+            report.setCheckedImages(version.path("train").asInt() + version.path("val").asInt());
+            for (com.fasterxml.jackson.databind.JsonNode correction : details.path("corrections")) {
+                if (!correction.path("imageId").isTextual() || !correction.path("imageId").asText().matches("[0-9]+")) throw new IOException("检查清单图片编号无效");
+                Map<String, Object> row = json.convertValue(correction, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() { });
+                row.put("reason", "训练包按图片边界裁剪，原标注保留"); report.getCorrections().add(row);
+            }
+            return report;
+        } finally { Files.deleteIfExists(file); }
+    }
+
+    private com.fasterxml.jackson.databind.JsonNode reportJson(ZipFile zip, String name) throws IOException {
+        java.util.zip.ZipEntry entry = zip.getEntry(name);
+        if (entry == null) throw new ServiceException("该历史版本未保存生成检查清单，原训练包仍保留");
+        try (InputStream input = zip.getInputStream(entry); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[32768]; int count;
+            while ((count = input.read(buffer)) != -1) {
+                if ((long) output.size() + count > 16 * 1024 * 1024) throw new IOException("检查清单超过读取限制");
+                output.write(buffer, 0, count);
+            }
+            return json.readTree(output.toByteArray());
+        }
     }
 
     /** Includes failed uploads so cleanup can remove every tracked object. */
@@ -117,7 +159,8 @@ public class TrainingDatasetArtifactService {
             return require(datasetId, reference(id));
         } catch (Exception ex) {
             jdbc.update("UPDATE vls_training_dataset_artifact SET storage_state='FAILED',lease_owner=NULL,lease_until=NULL,retry_after=DATE_ADD(NOW(),INTERVAL 1 MINUTE),error_message=? WHERE tenant_id=? AND id=? AND lease_owner=? AND storage_state='BUILDING'",
-                "训练数据包生成或回读校验失败：" + ex.getClass().getSimpleName(), tenant, id, owner);
+                "训练数据包生成或回读校验失败：" + (ex instanceof ServiceException ? ex.getMessage() : ex.getClass().getSimpleName()), tenant, id, owner);
+            if (ex instanceof ServiceException) throw (ServiceException) ex;
             if (ex instanceof IOException) throw (IOException) ex;
             throw new IOException("训练数据包归档失败", ex);
         } finally { if (zip != null) Files.deleteIfExists(zip); }
@@ -183,11 +226,14 @@ public class TrainingDatasetArtifactService {
         Map<Long, List<AnnotationInstance>> annotations = snapshot.getInstances().stream().collect(Collectors.groupingBy(AnnotationInstance::getImageId));
         List<Map<String, Object>> manifest = new ArrayList<>();
         List<String> calibration = new ArrayList<>();
+        List<Map<String, Object>> corrections = new ArrayList<>();
+        YoloDatasetWriter detection = new YoloDatasetWriter(json);
         Map<String, String> hashes = new HashMap<>();
         try (ZipOutputStream zip = new BoundedZipOutputStream(new BufferedOutputStream(Files.newOutputStream(target)))) {
             for (String directory : layout.directories()) entry(zip, directory + "/", new byte[0]);
             for (AnnotationImage sample : samples) {
                 renew(tenant, id, owner);
+                try {
                 byte[] bytes;
                 try (InputStream input = media.read(sample.getLocalPath()); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
                     byte[] buffer = new byte[32768]; int count;
@@ -206,13 +252,25 @@ public class TrainingDatasetArtifactService {
                 checkHash(hashes, inspection.getSha256(), sample.getDatasetSplit());
                 String extension = sample.getOriginalName().substring(sample.getOriginalName().lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
                 List<AnnotationInstance> labels = annotations.get(sample.getId());
+                if ("object_detection".equals(snapshot.getAnnotationType())) for (AnnotationInstance instance : labels) {
+                    double[] original = detection.box(instance, inspection.getWidth(), inspection.getHeight());
+                    double[] clipped = YoloDatasetWriter.intersect(original[0], original[1], original[2], original[3], inspection.getWidth(), inspection.getHeight());
+                    boolean changed = false;
+                    for (int i = 0; i < 4; i++) changed |= Math.abs(original[i] - clipped[i]) > 1e-8;
+                    if (changed) corrections.add(DataManagementService.map("imageId", sample.getId().toString(), "name", sample.getOriginalName(),
+                        "annotationId", instance.getId() == null ? null : instance.getId().toString(), "originalBox", original, "exportBox", clipped));
+                }
                 String image = layout.imagePath(sample.getId(), extension, sample.getDatasetSplit(), labels);
                 entry(zip, image, bytes);
                 for (Map.Entry<String, byte[]> file : layout.annotations(sample.getId(), sample.getDatasetSplit(), labels, inspection.getWidth(), inspection.getHeight()).entrySet()) entry(zip, file.getKey(), file.getValue());
                 manifest.add(layout.sample(sample.getId(), image, sample.getDatasetSplit(), inspection.getWidth(), inspection.getHeight(), inspection.getSha256()));
                 if ("train".equals(sample.getDatasetSplit()) && calibration.size() < 20) calibration.add(image);
+                } catch (ServiceException ex) {
+                    throw new ServiceException("样本 " + sample.getId() + "：" + ex.getMessage());
+                }
             }
             text(zip, "dataset.yaml", yaml);
+            text(zip, "generation-report.json", json.writeValueAsString(DataManagementService.map("sourceAnnotationsPreserved", true, "corrections", corrections)));
             text(zip, "vls-dataset.json", layout.manifest(datasetId, tenant, manifest));
             text(zip, "coco_subset_20.txt", String.join("\n", calibration));
             text(zip, "version.json", json.writeValueAsString(DataManagementService.map("versionId", versionId.toString(), "versionNumber", versionNumber,

@@ -2,40 +2,37 @@ package com.ruoyi.vlstream.test.vlstream.data;
 
 import com.ruoyi.common.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 import java.io.IOException;
-import java.util.Arrays;
 
 /** Publishes a portable frozen version to object storage without connecting to a compute host. */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DataTrainingPublisher {
     private final DataManagementService data;
     private final TrainingDatasetArtifactService artifacts;
-    private final PlatformTransactionManager transactions;
+    private final DatasetGenerationPreflight preflight;
 
     public boolean publish(Long projectId) {
-        DatasetVersion version = new TransactionTemplate(transactions).execute(tx -> {
-            data.lockDatasetForTask(projectId);
-            DatasetSnapshot current = data.snapshot(projectId);
-            AnnotationTaskType taskType = AnnotationTaskType.of(current.getAnnotationType());
-            if (current.getSamples().stream().noneMatch(sample -> Arrays.asList("train", "val").contains(sample.getDatasetSplit()))) {
-                DataRequests.Split split = new DataRequests.Split();
-                if (taskType == AnnotationTaskType.CLASSIFICATION) split.setMode("stratified");
-                data.split(projectId, split);
-            }
-            DataRequests.Version request = new DataRequests.Version();
-            request.setName("MinIO 训练快照");
-            request.setDescription("完整图片、标注、类别和训练划分的固定版本");
-            return data.saveVersion(projectId, request);
-        });
+        DatasetGenerationReport report = generate(projectId);
+        if ("BLOCKED".equals(report.getStatus())) throw new ServiceException("数据集检查发现" + report.getErrors().size() + "项问题，请从算法标注页生成并查看问题清单");
+        return "READY".equals(report.getStatus());
+    }
+
+    public DatasetGenerationReport generate(Long projectId) {
+        DatasetGenerationReport report;
         try {
+            report = preflight.check(projectId, data.snapshot(projectId));
+            if ("BLOCKED".equals(report.getStatus())) return report;
+            DatasetVersion version = data.savePreparedTrainingVersion(projectId, report);
             TrainingDatasetArtifact artifact = artifacts.ensure(projectId, version);
             data.recordPublishedDataset(projectId, version.getId(), artifact.getReference());
-            return true;
+            report.setStatus("READY"); report.setReference(artifact.getReference());
+            return report;
         } catch (IOException e) {
+            log.error("训练数据包生成失败 datasetId={}", projectId, e);
             throw new ServiceException("训练数据包保存失败，请检查 MinIO 与样本内容；原有已生成版本未覆盖");
         }
     }

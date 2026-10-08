@@ -486,16 +486,37 @@ public class VlsAlgorithmAnnotationController extends BladeController {
 	 */
 	@PostMapping("/{id}/save-dataset")
 	@Operation(summary = "保存标注数据到数据集", description = "将标注数据保存到数据集文件并更新数据库路径")
-	public R<String> saveAnnotationToDataset(@Parameter(description = "标注ID", example = "1") @PathVariable @NotNull Long id) {
+	public R<com.ruoyi.vlstream.test.vlstream.data.DatasetGenerationReport> saveAnnotationToDataset(@Parameter(description = "标注ID", example = "1") @PathVariable @NotNull Long id) {
 
 		log.info("保存标注数据到数据集：ID={}", id);
 
-		boolean success = vlsAlgorithmAnnotationService.saveAnnotationToDataset(id);
-		if (success) {
-			return R.success("标注数据保存到数据集成功");
-		} else {
-			return R.fail("标注数据保存到数据集失败");
+		com.ruoyi.vlstream.test.vlstream.data.DatasetGenerationReport report = datasetPublisher.generate(id);
+		R<com.ruoyi.vlstream.test.vlstream.data.DatasetGenerationReport> result = R.data(report);
+		if ("BLOCKED".equals(report.getStatus())) {
+			result.setCode(400); result.setSuccess(false); result.setMsg("发现无效样本，请查看问题图片清单");
 		}
+		return result;
+	}
+
+	@javax.annotation.Resource
+	private com.ruoyi.vlstream.test.vlstream.data.DataTrainingPublisher datasetPublisher;
+
+	@javax.annotation.Resource
+	private com.ruoyi.vlstream.test.vlstream.data.DatasetGenerationJobs datasetGenerationJobs;
+
+	@PostMapping("/{id}/save-dataset-async")
+	public R<com.ruoyi.vlstream.test.vlstream.data.DatasetGenerationReport> generateAsync(@PathVariable Long id) {
+		return R.data(datasetGenerationJobs.submit(id));
+	}
+
+	@GetMapping("/{id}/dataset-generation/{jobId}")
+	public R<com.ruoyi.vlstream.test.vlstream.data.DatasetGenerationReport> generationStatus(@PathVariable Long id, @PathVariable String jobId) {
+		return R.data(datasetGenerationJobs.get(id, jobId));
+	}
+
+	@GetMapping("/{id}/dataset-generation-report")
+	public R<com.ruoyi.vlstream.test.vlstream.data.DatasetGenerationReport> reviewGeneration(@PathVariable Long id) {
+		return R.data(datasetGenerationJobs.review(id));
 	}
 
 }

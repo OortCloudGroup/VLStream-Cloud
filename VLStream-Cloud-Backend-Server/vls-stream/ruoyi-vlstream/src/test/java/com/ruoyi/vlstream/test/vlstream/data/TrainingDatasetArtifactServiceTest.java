@@ -124,6 +124,18 @@ class TrainingDatasetArtifactServiceTest {
         assertEquals(sha(uploaded.get()), artifact.getSha256());
     }
 
+    @Test void restoresClippingReportFromVerifiedPackageWithoutRebuildingOrChangingSource() throws Exception {
+        snapshot.getInstances().get(0).setAnnotationData("{\"x\":1,\"y\":0,\"width\":2,\"height\":1}"); freeze();
+        String original=snapshot.getInstances().get(0).getAnnotationData();
+        service.ensure(20L,version);
+        clearInvocations(storage,media,jdbc);
+        DatasetGenerationReport report=service.readGenerationReport(20L,row.getReference());
+        assertEquals("READY",report.getStatus()); assertEquals(2,report.getCheckedImages()); assertEquals(1,report.getCorrections().size());
+        assertEquals("1",report.getCorrections().get(0).get("imageId")); assertEquals(original,snapshot.getInstances().get(0).getAnnotationData());
+        verify(storage,never()).uploadFile(any(File.class),anyString(),anyString()); verifyNoInteractions(media);
+        verify(jdbc,never()).update(anyString(),org.mockito.ArgumentMatchers.<Object>any());
+    }
+
     @Test void persistedFrozenSnapshotOverridesCallerSuppliedChanges() throws Exception {
         version.setSnapshotJson("{}");
         service.ensure(20L, version);
@@ -174,7 +186,10 @@ class TrainingDatasetArtifactServiceTest {
     @Test void decodedDuplicateContentCannotBypassMissingHistoricalHashes() throws Exception {
         snapshot.getSamples().forEach(image -> { image.setContentSha256(null); image.setFileSize(null); });
         source.put("source-2", source.get("source-1")); freeze();
-        assertThrows(IOException.class, () -> service.ensure(20L, version));
+        ServiceException failure = assertThrows(ServiceException.class, () -> service.ensure(20L, version));
+        assertTrue(failure.getMessage().contains("样本 2"));
+        assertEquals("FAILED", row.getState());
+        verify(jdbc).update(contains("SET storage_state='FAILED'"), contains(failure.getMessage()), eq("tenant-a"), eq(row.getId()), anyString());
         assertNull(uploaded.get());
     }
 

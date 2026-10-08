@@ -19,23 +19,27 @@ class DataTrainingPublisherObjectStoreTest {
     DatasetVersion version;
     TrainingDatasetArtifact artifact;
     DataTrainingPublisher publisher;
+    DatasetGenerationPreflight preflight;
+    DatasetGenerationReport report;
     @BeforeEach void setUp() throws Exception {
         data = mock(DataManagementService.class); storage = mock(TrainingDatasetArtifactService.class); transactions = mock(PlatformTransactionManager.class);
         when(transactions.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
         DatasetSnapshot snapshot = new DatasetSnapshot(); snapshot.setAnnotationType("object_detection"); snapshot.setSamples(java.util.Collections.emptyList());
         when(data.snapshot(1L)).thenReturn(snapshot);
         version = new DatasetVersion(); version.setId(2L);
-        when(data.saveVersion(eq(1L), any(DataRequests.Version.class))).thenReturn(version);
+        when(data.savePreparedTrainingVersion(eq(1L), any(DatasetGenerationReport.class))).thenReturn(version);
         artifact = new TrainingDatasetArtifact(); artifact.setId("11111111-1111-1111-1111-111111111111");
         when(storage.ensure(1L, version)).thenReturn(artifact);
-        publisher = new DataTrainingPublisher(data, storage, transactions);
+        preflight = mock(DatasetGenerationPreflight.class); report = new DatasetGenerationReport();
+        when(preflight.check(eq(1L), any())).thenReturn(report);
+        publisher = new DataTrainingPublisher(data, storage, preflight);
     }
     @Test void publishesReferenceOnlyAfterFrozenVersionCommittedAndObjectVerified() throws Exception {
         assertTrue(publisher.publish(1L));
-        org.mockito.InOrder order = inOrder(data, transactions, storage);
-        order.verify(data).lockDatasetForTask(1L);
-        order.verify(data).saveVersion(eq(1L), any(DataRequests.Version.class));
-        order.verify(transactions).commit(any());
+        org.mockito.InOrder order = inOrder(data, preflight, storage);
+        order.verify(data).snapshot(1L);
+        order.verify(preflight).check(eq(1L), any());
+        order.verify(data).savePreparedTrainingVersion(1L, report);
         order.verify(storage).ensure(1L, version);
         order.verify(data).recordPublishedDataset(1L, 2L, artifact.getReference());
     }
@@ -48,5 +52,11 @@ class DataTrainingPublisherObjectStoreTest {
         doThrow(new ServiceException("changed working set")).when(data).recordPublishedDataset(1L, 2L, artifact.getReference());
         assertThrows(ServiceException.class, () -> publisher.publish(1L));
         verify(storage, never()).listForDataset(anyLong());
+    }
+    @Test void blockedPreflightReturnsAllIssuesWithoutFreezingOrUploading() throws Exception {
+        report.setStatus("BLOCKED"); report.getErrors().add(DataManagementService.map("imageId", "2096777217777467393"));
+        assertEquals("BLOCKED", publisher.generate(1L).getStatus());
+        verify(data, never()).savePreparedTrainingVersion(anyLong(), any());
+        verify(storage, never()).ensure(anyLong(), any());
     }
 }

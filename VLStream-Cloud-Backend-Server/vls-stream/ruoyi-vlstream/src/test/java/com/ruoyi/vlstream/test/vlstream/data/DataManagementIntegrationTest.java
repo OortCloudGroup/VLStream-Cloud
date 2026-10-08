@@ -50,6 +50,33 @@ class DataManagementIntegrationTest {
         data.saveProject(10L, edit); assertEquals(edit.getAnnotationRules(), data.project(10L).getAnnotationRules());
     }
 
+    @Test void preparedTrainingVersionPreservesPublishedPointerAndStoresVerifiedMetadata() throws Exception {
+        org.springframework.jdbc.core.JdbcTemplate jdbc = new org.springframework.jdbc.core.JdbcTemplate(context.getBean(DataSource.class));
+        jdbc.update("UPDATE vls_algorithm_annotation SET dataset_path=? WHERE id=10", "vls-dataset://previous-ready");
+        com.fasterxml.jackson.databind.ObjectMapper json = context.getBean(com.fasterxml.jackson.databind.ObjectMapper.class);
+        DatasetGenerationReport report = new DatasetGenerationReport(); report.setOriginalJson(json.writeValueAsString(data.snapshot(10L)));
+        report.setPrepared(data.readSnapshot(report.getOriginalJson())); report.setRepartitioned(true);
+        AnnotationImage sample = report.getPrepared().getSamples().get(0);
+        sample.setContentSha256(String.join("", Collections.nCopies(64, "a"))); sample.setMediaWidth(100); sample.setMediaHeight(80); sample.setDatasetSplit("train");
+        DatasetVersion version = data.savePreparedTrainingVersion(10L, report);
+        assertEquals(sample.getContentSha256(), data.sample(10L,15L).getContentSha256());
+        assertEquals(100, data.sample(10L,15L).getMediaWidth());
+        assertEquals("vls-dataset://previous-ready", data.project(10L).getDatasetPath());
+        assertEquals(2, data.versions(10L).size());
+        assertEquals("train", data.readSnapshot(data.version(10L,version.getId()).getSnapshotJson()).getSamples().get(0).getDatasetSplit());
+    }
+
+    @Test void preparedTrainingVersionRejectsConcurrentChangesWithoutPartialUpdates() throws Exception {
+        com.fasterxml.jackson.databind.ObjectMapper json = context.getBean(com.fasterxml.jackson.databind.ObjectMapper.class);
+        DatasetGenerationReport report = new DatasetGenerationReport(); report.setOriginalJson(json.writeValueAsString(data.snapshot(10L)));
+        report.setPrepared(data.readSnapshot(report.getOriginalJson()));
+        report.getPrepared().getSamples().get(0).setMediaWidth(100);
+        AnnotationLabel label = new AnnotationLabel(); label.setAnnotationId(10L); label.setTenantId("tenant-a"); label.setName("concurrent label");
+        sql.getMapper(VlsAnnotationLabelMapper.class).insert(label);
+        assertThrows(ServiceException.class, () -> data.savePreparedTrainingVersion(10L, report));
+        assertEquals(0, data.versions(10L).size()); assertNotEquals(100, data.sample(10L,15L).getMediaWidth());
+    }
+
     @Test void rejectsCrossTenantProjectsSamplesAndVersions() {
         Long project = data.saveProject(null, request("A")).getId();
         DataRequests.Version request = new DataRequests.Version(); request.setName("empty"); Long version = data.saveVersion(project, request).getId();
