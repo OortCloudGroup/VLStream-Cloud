@@ -10,11 +10,37 @@
 ## 使用前准备
 
 1. 更新后端和前端，按既有 Flyway 流程执行 `V1_2_0_025__autodl_ssh_compute.sql`。不要手工修改已执行的迁移。模型回存还依赖此前的模型存储迁移与可用 MinIO。
-2. 在后端部署环境持久配置独立的 `VLSTREAM_COMPUTE_ENCRYPTION_KEY`，值为随机生成的 16、24 或 32 字节密钥。也可配置 `vlstream.compute.encryption-key`。没有默认密钥；重启须保留同一值，否则已有 SSH 密码无法解密。不要写入 Git、截图或日志。
+2. 新部署无需填写加密密钥。应用迁移028后，首次保存实例时自动生成密钥并持久保存；发布Compose已使用现有`backend-data`卷。已有显式密钥的部署继续保留原值，不要更换或删除。
 3. 在 AutoDL 控制台有卡开机，按新接入指南选择 `standard` 或 `blackwell` 配置，执行初始化安装固定核心依赖并预下载四类基础权重。
 4. 确认 VLS 后端可以访问实例的公网 SSH 地址及端口，实例目录可写、磁盘足够。Python 路径填写初始化脚本输出值（standard 默认为 `/root/autodl-tmp/vlstream/envs/vls-standard/bin/python`），默认工作目录为 `/root/autodl-tmp/vlstream`。AutoDL 容器内直接运行 Python，不启动嵌套 Docker。
 
 ## 接入和训练
+
+### 凭据密钥自动管理
+
+后端 `ruoyi-admin/src/main/resources/application.yml` 中已明确声明：
+
+```yaml
+vlstream:
+  compute:
+    encryption-key: ${VLSTREAM_COMPUTE_ENCRYPTION_KEY:}
+    encryption-key-file: ${VLSTREAM_COMPUTE_ENCRYPTION_KEY_FILE:${user.dir}/data/security/compute-credential.key}
+```
+
+`encryption-key`默认留空即可。第一次使用线上算力凭据时自动生成32字节随机密钥，写入持久文件；以后重启或升级读取同一文件。
+数据库的`vls_compute_key_registry`只保存SHA-256指纹，不保存密钥原文。密钥用于VLS后台加密SSH密码，不需要填到AutoDL实例。
+
+- **标准Compose部署：**自动文件位于`/app/data/security/compute-credential.key`，由现有`backend-data`数据卷持久保存；用户不用生成或填写密钥。
+- **直接运行JAR：**默认位于进程工作目录的`data/security/compute-credential.key`。升级时保留该目录，也可用文件路径配置指向已有持久目录。
+- **多副本：**必须挂载同一个支持文件锁的持久目录。同一主机的发布Compose使用同一命名卷；跨主机部署需要共享卷，不能让各主机分别创建独立本地卷。数据库指纹会拒绝使用不同密钥的副本，避免写入无法互相解密的凭据。
+- **已有部署：**原`VLSTREAM_COMPUTE_ENCRYPTION_KEY`或`vlstream.compute.encryption-key`优先使用（16/24/32字节），保持原值即可，不要求新增可写密钥文件。首次登记指纹前会校验已有凭据，原`v1:`密文格式保持兼容。
+- **备份恢复：**自动模式同时备份数据库与密钥目录；显式配置模式保留原部署密钥。文件丢失、损坏或指纹不一致时拒绝生成替代密钥；需恢复原文件/配置，而不是清除记录后重试。
+
+首次文件写入使用进程文件锁和原子替换，Linux新建密钥目录/文件权限分别为700/600。数据库登记指纹使用独立事务，后续保存实例失败不会撤销密钥指纹。
+目录不可写、迁移028未应用或旧凭据缺少原密钥时，会提示管理员检查部署存储；普通租户无需管理这些参数。
+源码和模板更新不会自动修改已部署服务，需部署含此功能的新后端并让Flyway正常升级。
+
+### 操作步骤
 
 1. 点击“接入实例”，粘贴 `ssh -p 端口 用户名@主机` 或逐项填写，输入 SSH 密码、Python 路径、工作目录和 GPU 编号。
 2. 保存后检查连接与环境。检查读取 CUDA/GPU、库版本和可用磁盘；通过后实例显示“可训练”。这是环境检查，不是训练成功证明。

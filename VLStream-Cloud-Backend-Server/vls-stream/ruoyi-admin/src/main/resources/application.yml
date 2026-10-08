@@ -135,6 +135,14 @@ sa-token:
 
 vlstream:
 
+  # 线上算力 SSH 密码的加密密钥，在 VLS 后端配置，不在 GPU 实例上配置。
+  # 默认无需填写：首次使用自动生成随机密钥并保存到下方持久化文件。
+  # 已配置的旧密钥优先使用，仍需保持原值；不要提交真实密钥。
+  compute:
+    encryption-key: ${VLSTREAM_COMPUTE_ENCRYPTION_KEY:}
+    # 多副本必须共享这个文件所在的数据目录；备份数据库时一起备份该目录。
+    encryption-key-file: ${VLSTREAM_COMPUTE_ENCRYPTION_KEY_FILE:${user.dir}/data/security/compute-credential.key}
+
   # Browser-facing, same-origin endpoint used only when signing private annotation images.
   # The configured OSS endpoint remains the internal Docker route used by service uploads.
   annotation-media:

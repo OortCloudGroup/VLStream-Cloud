@@ -318,6 +318,9 @@ sequenceDiagram
 用户接入自己购买的 AutoDL GPU 前，请按[新 GPU 接入指南](./docs/NEW_GPU_ONBOARDING.md)选择固定核心版本并执行
 [`bootstrap-autodl.sh`](./tools/compute/bootstrap-autodl.sh)。平台提供环境检查及基础模型缓存检查；项目团队的 P100 仅用于开发测试，不是用户部署依赖。
 
+新部署无需手工填写SSH凭据加密密钥：首次使用时自动生成并保存在后端数据卷。升级时保留数据卷，多副本共享该目录；
+已有显式密钥的部署继续保留原值。备份恢复和兼容说明见[算力接入文档](./docs/AI_COMPUTE_AUTODL.md)。
+
 以下版本优先取当前发布 Compose 或项目配置。标记为“未固定”的组件，
 正式发布前需要在部署清单中锁定版本。
 

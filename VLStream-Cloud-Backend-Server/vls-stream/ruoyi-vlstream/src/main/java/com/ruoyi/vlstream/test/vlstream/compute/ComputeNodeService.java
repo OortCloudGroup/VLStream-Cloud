@@ -54,7 +54,7 @@ public class ComputeNodeService {
         String secret = before == null ? null : before.getPasswordCipher();
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
             try { secret = cipher.encrypt(request.getPassword()); }
-            catch (RuntimeException e) { throw new ServiceException("请先配置服务端凭据加密密钥，再保存实例"); }
+            catch (RuntimeException e) { throw new ServiceException("算力凭据保存失败，请联系管理员检查后端持久化目录、原密钥及数据库升级状态"); }
         }
         if (secret == null) throw new ServiceException("请输入 SSH 密码");
         Long key = id == null ? IdWorker.getId() : id;

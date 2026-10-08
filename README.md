@@ -316,6 +316,10 @@ Before connecting a newly rented AutoDL GPU, follow the [new GPU onboarding guid
 and run [`bootstrap-autodl.sh`](./tools/compute/bootstrap-autodl.sh) to install the fixed core versions and cache preset weights.
 The platform checks the environment and weights. The project team's P100 is a development/test machine, not a deployment dependency.
 
+New deployments automatically generate the SSH credential encryption key on first use and retain it in the backend data volume.
+No key entry is required. Preserve this volume across upgrades and share it across backend replicas; deployments with an existing
+explicit key must keep that original key. See [credential storage and recovery](./docs/AI_COMPUTE_AUTODL.md).
+
 The following versions are taken from the current release Compose or project
 configuration. A version marked **not pinned** must be fixed in the formal
 deployment manifest before production release.
