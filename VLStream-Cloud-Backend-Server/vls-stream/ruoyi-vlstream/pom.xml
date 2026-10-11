@@ -16,6 +16,10 @@
     </description>
 
     <dependencies>
+        <!-- Reuse the Java 8 compatible official RPC SDK; request signing is SDK-owned. -->
+        <dependency>
+            <groupId>com.aliyun</groupId><artifactId>aliyun-java-sdk-core</artifactId><version>4.5.30</version>
+        </dependency>
         <!-- Match the JavaCV 1.5.10 FFmpeg binding already used by SmartJavaAI. -->
         <dependency>
             <groupId>org.bytedeco</groupId><artifactId>ffmpeg</artifactId><version>6.1.1-1.5.10</version>

@@ -9,6 +9,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Layout from '@/layout/index.vue'
 import { AuthManager } from '@/utils/auth'
 import { consumeCapturedModelHubCallback } from '@/utils/modelHubAuth'
+import { stripAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
+import { logSafeRequestError } from '@/utils/safeRequestError.mjs'
 
 const authManager = new AuthManager()
 
@@ -347,8 +349,18 @@ const routes = [
       {
         path: '/container-instances',
         name: 'ContainerInstances',
-        component: () => import('@/views/AIComputingScheduling/ContainerInstances.vue'),
-        meta: { title: '容器实例', icon: '容器实例' }
+        component: () => import('@/views/AIComputingScheduling/MyTrainingTasks.vue'),
+        meta: { title: '训练任务', icon: '容器实例' }
+      },
+      {
+        path: '/compute-market', name: 'ComputeMarket',
+        component: () => import('@/views/AIComputingScheduling/ComputeMarket.vue'),
+        meta: { title: '算力市场', icon: '容器实例' }
+      },
+      {
+        path: '/compute-management', name: 'ComputeManagement',
+        component: () => import('@/views/AIComputingScheduling/AutoDlNodes.vue'),
+        meta: { title: '算力管理', icon: '容器实例' }
       },
       {
         path: '/user-profile',
@@ -476,12 +488,23 @@ const router = createRouter({
 
 //
 router.beforeEach(async (to, from, next) => {
-  console.log('路由跳转:', to.path)
+  console.log('路由跳转')
 
   try {
+  const cleanRoute = router.resolve(stripAuthCallbackParams(to.fullPath))
+  const finishRoute = () => next(to.fullPath === cleanRoute.fullPath ? undefined : {
+    path: cleanRoute.path, query: cleanRoute.query, hash: cleanRoute.hash, replace: true
+  })
   // need to token Validate .
   if (to.path === '/login') {
-    next()
+    if (authManager.hasPlatformCallbackToken()) {
+      const userInfo = await authManager.checkUrlToken() // consumes URL before lazy-loading/async authentication
+      if (userInfo) next({ path: String(cleanRoute.query.redirect || '/workspace'), replace: true })
+      else next({ path: cleanRoute.path, query: { ...cleanRoute.query, platformCallbackError: '1' }, hash: cleanRoute.hash, replace: true })
+    } else {
+      authManager.cleanUrlToken()
+      finishRoute()
+    }
     return
   }
 
@@ -498,20 +521,14 @@ router.beforeEach(async (to, from, next) => {
     const consumedOortCloudCallback = consumeCapturedModelHubCallback()
     if (consumedOortCloudCallback) {
       authManager.cleanUrlToken()
-      const cleanQuery = { ...to.query }
-      delete cleanQuery.accessToken
-      delete cleanQuery.access_token
-      delete cleanQuery.token
-      delete cleanQuery.tenantId
-      delete cleanQuery.tenant_id
-      next({ path: to.path, query: cleanQuery, hash: to.hash, replace: true })
+      finishRoute()
       return
     }
     const hasPlatformCallbackToken = authManager.hasPlatformCallbackToken()
     const userInfo = await authManager.checkExternalPlatformLogin()
     if (userInfo) {
       console.log('登录验证成功，用户:', userInfo.userName || userInfo.loginId)
-      next()
+      finishRoute()
       return
     }
 
@@ -520,7 +537,7 @@ router.beforeEach(async (to, from, next) => {
     const tenantMode = await authManager.getTenantMode()
     if (tenantMode === 'multi' && !hasPlatformCallbackToken) {
       next(false)
-      authManager.redirectToPlatformLogin(to.fullPath)
+      authManager.redirectToPlatformLogin(cleanRoute.fullPath)
       return
     }
 
@@ -531,14 +548,16 @@ router.beforeEach(async (to, from, next) => {
     // ; only prompt / tip, .
     next({
       path: '/login',
-      query: { redirect: to.path }
+      query: { redirect: cleanRoute.fullPath }
     })
   } else {
-    next()
+    authManager.cleanUrlToken()
+    finishRoute()
   }
   } catch (error) {
-    console.error('路由守卫发生严重错误:', error)
-    next({ path: '/login', query: { redirect: to.fullPath } })
+    logSafeRequestError('路由认证检查失败', error)
+    authManager.cleanUrlToken()
+    next({ path: '/login', query: { redirect: stripAuthCallbackParams(to.fullPath) } })
   }
 })
 

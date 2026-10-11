@@ -576,7 +576,9 @@ const menuRoutesMap = {
     },
   ],
   'ai-computing': [
-    { path: '/container-instances', meta: { title: '容器实例', icon: '容器实例' } }
+    { path: '/container-instances', meta: { title: '训练任务', icon: '容器实例' } },
+    { path: '/compute-market', meta: { title: '算力市场', icon: '容器实例' } },
+    { path: '/compute-management', meta: { title: '算力管理', icon: '容器实例' } }
   ],
   'system-management': [
     { path: '/system/users', meta: { title: '用户管理', icon: '用户管理' } },

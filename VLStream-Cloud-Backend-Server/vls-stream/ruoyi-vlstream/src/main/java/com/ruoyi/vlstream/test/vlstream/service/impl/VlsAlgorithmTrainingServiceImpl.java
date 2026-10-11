@@ -32,10 +32,15 @@ public class VlsAlgorithmTrainingServiceImpl extends BaseServiceImpl<VlsAlgorith
 
 	@Resource
 	private VlsAlgorithmTrainingMapper algorithmTrainingMapper;
+	@Resource private com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess publicAccess;
+	@Override public AlgorithmTraining getById(java.io.Serializable id) {
+		if(publicAccess!=null && id!=null)publicAccess.trainingFromHttp(Long.valueOf(id.toString()));
+		return super.getById(id);
+	}
 
 	@Override
 	public IPage<AlgorithmTrainingVO> selectVlsAlgorithmTrainingPage(IPage<AlgorithmTrainingVO> page, AlgorithmTrainingVO vlsAlgorithmTraining) {
-		return page.setRecords(baseMapper.selectVlsAlgorithmTrainingPage(page, vlsAlgorithmTraining));
+		return page.setRecords(baseMapper.selectVlsAlgorithmTrainingPage(page, vlsAlgorithmTraining, publicAccess==null?"":publicAccess.viewer()));
 	}
 
 	@Override
@@ -55,6 +60,7 @@ public class VlsAlgorithmTrainingServiceImpl extends BaseServiceImpl<VlsAlgorith
 	 */
 	@Override
 	public AlgorithmTraining selectAlgorithmTrainingById(Long id) {
+		if(publicAccess!=null)publicAccess.trainingFromHttp(id);
 		return algorithmTrainingMapper.selectAlgorithmTrainingById(id);
 	}
 

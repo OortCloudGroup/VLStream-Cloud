@@ -43,13 +43,14 @@ import java.util.Map;
  * @since 2025-12-23
  */
 @RestController
-@AllArgsConstructor
+@lombok.RequiredArgsConstructor
 @RequestMapping("/vlsContainerInstance")
 @Tag(name = "容器实例表", description = "容器实例表接口")
 public class VlsContainerInstanceController extends BladeController {
 
 	private final IVlsContainerInstanceService vlsContainerInstanceService;
 	private final GpuTrainingSchedulerService gpuTrainingSchedulerService;
+	@javax.annotation.Resource private com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess publicAccess;
 
 	@GetMapping("/resources")
 	@Operation(summary = "GPU服务器资源", description = "读取当前SSH训练服务器和GPU实时资源")
@@ -60,6 +61,7 @@ public class VlsContainerInstanceController extends BladeController {
 	@GetMapping("/{id}")
 	@Operation(summary = "容器任务详情")
 	public R<ContainerInstance> getById(@PathVariable Long id) {
+		if(publicAccess!=null)publicAccess.container(id);
 		return R.data(vlsContainerInstanceService.getById(id));
 	}
 
@@ -67,10 +69,12 @@ public class VlsContainerInstanceController extends BladeController {
 	@Operation(summary = "训练容器日志")
 	public R<String> logs(@PathVariable Long id,
 						  @RequestParam(defaultValue = "500") Integer lines) {
+		if(publicAccess!=null)publicAccess.container(id);
 		return R.data(gpuTrainingSchedulerService.getContainerLogs(id, lines));
 	}
 
 	private void guardCloudRecord(ContainerInstance input) {
+		if(publicAccess!=null){publicAccess.container(input.getId());publicAccess.training(input.getTrainingTaskId());}
 		ContainerInstance existing = input.getId() == null ? null : vlsContainerInstanceService.getById(input.getId());
 		if ("cloud_training".equals(input.getInstanceType()) || (existing != null && "cloud_training".equals(existing.getInstanceType()))) {
 			throw new com.ruoyi.common.exception.ServiceException("线上训练记录由后台维护，请从算法训练页面管理任务");
@@ -84,7 +88,9 @@ public class VlsContainerInstanceController extends BladeController {
 	@ApiOperationSupport(order = 1)
 	@Operation(summary = "详情", description  = "传入vlsContainerInstance")
 	public R<ContainerInstanceVO> detail(ContainerInstance vlsContainerInstance) {
-		ContainerInstance detail = vlsContainerInstanceService.getOne(Condition.getQueryWrapper(vlsContainerInstance));
+		QueryWrapper<ContainerInstance> wrapper=Condition.getQueryWrapper(vlsContainerInstance);
+		if(publicAccess!=null)publicAccess.filterContainers(wrapper);
+		ContainerInstance detail = vlsContainerInstanceService.getOne(wrapper);
 		return R.data(VlsContainerInstanceWrapper.build().entityVO(detail));
 	}
 
@@ -95,7 +101,9 @@ public class VlsContainerInstanceController extends BladeController {
 	@ApiOperationSupport(order = 2)
 	@Operation(summary = "分页", description  = "传入vlsContainerInstance")
 	public R<IPage<ContainerInstanceVO>> list(@Parameter(hidden = true) @RequestParam Map<String, Object> vlsContainerInstance, Query query) {
-		IPage<ContainerInstance> pages = vlsContainerInstanceService.page(Condition.getPage(query), Condition.getQueryWrapper(vlsContainerInstance, ContainerInstance.class));
+		QueryWrapper<ContainerInstance> wrapper=Condition.getQueryWrapper(vlsContainerInstance,ContainerInstance.class);
+		if(publicAccess!=null)publicAccess.filterContainers(wrapper);
+		IPage<ContainerInstance> pages = vlsContainerInstanceService.page(Condition.getPage(query),wrapper);
 		return R.data(VlsContainerInstanceWrapper.build().pageVO(pages));
 	}
 
@@ -165,6 +173,7 @@ public class VlsContainerInstanceController extends BladeController {
 	@Operation(summary = "导出数据", description  = "传入vlsContainerInstance")
 	public void exportVlsContainerInstance(@Parameter(hidden = true) @RequestParam Map<String, Object> vlsContainerInstance, BladeUser bladeUser, HttpServletResponse response) {
 		QueryWrapper<ContainerInstance> queryWrapper = Condition.getQueryWrapper(vlsContainerInstance, ContainerInstance.class);
+		if(publicAccess!=null)publicAccess.filterContainers(queryWrapper);
 		//if (!AuthUtil.isAdministrator()) {
 		//	queryWrapper.lambda().eq(VlsContainerInstanceEntity::getTenantId, bladeUser.getTenantId());
 		//}

@@ -17,6 +17,10 @@
         LEFT JOIN vls_algorithm a ON a.id = m.algorithm_id AND a.is_deleted = 0
             AND a.tenant_id COLLATE utf8mb4_unicode_ci = m.tenant_id COLLATE utf8mb4_unicode_ci
         WHERE m.is_deleted = 0 AND m.training_id IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM vls_cloud_training_job pj JOIN vls_compute_node pn ON pn.id=pj.node_id
+            WHERE pj.training_id=m.training_id
+            AND (pj.public_instance_key IS NOT NULL OR pn.public_instance_key IS NOT NULL OR pn.resource_scope='PLATFORM')
+            AND (pj.public_owner_subject IS NULL OR pj.public_owner_subject &lt;&gt; #{publicOwner}))
         <if test="keyword != null and keyword != ''">
             AND (m.model_name LIKE CONCAT('%', #{keyword}, '%') OR a.name LIKE CONCAT('%', #{keyword}, '%'))
         </if>
@@ -69,7 +73,12 @@
     <select id="selectVlsAlgorithmModelPage" resultMap="vlsAlgorithmModelResultMap">
         select *
         from vls_algorithm_model
-        where is_deleted = 0 order by create_time desc
+        where is_deleted = 0
+        AND NOT EXISTS (SELECT 1 FROM vls_cloud_training_job pj JOIN vls_compute_node pn ON pn.id=pj.node_id
+            WHERE pj.training_id=vls_algorithm_model.training_id
+            AND (pj.public_instance_key IS NOT NULL OR pn.public_instance_key IS NOT NULL OR pn.resource_scope='PLATFORM')
+            AND (pj.public_owner_subject IS NULL OR pj.public_owner_subject &lt;&gt; #{publicOwner}))
+        order by create_time desc
     </select>
 
     <select id="exportVlsAlgorithmModel" resultType="com.ruoyi.vlstream.test.vlstream.excel.VlsAlgorithmModelExcel">

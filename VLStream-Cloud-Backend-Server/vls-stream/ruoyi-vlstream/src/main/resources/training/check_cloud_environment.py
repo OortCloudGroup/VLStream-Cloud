@@ -94,12 +94,16 @@ def inspect_environment(work_dir, gpu_index=0):
         def gpu():
             torch = modules['torch']
             if not torch.cuda.is_available() or gpu_index < 0 or gpu_index >= torch.cuda.device_count():
+                result['gpuAvailable'] = False
                 raise ValueError('未发现所选 GPU，请确认有卡开机及 CUDA 版 PyTorch')
+            result['gpuAvailable'] = True
             result['gpu'] = torch.cuda.get_device_name(gpu_index)
             result['capability'] = list(torch.cuda.get_device_capability(gpu_index))
             busy = subprocess.run(['nvidia-smi', '-i', str(gpu_index), '--query-compute-apps=pid', '--format=csv,noheader,nounits'], capture_output=True, text=True, timeout=15, check=True).stdout.strip()
             if busy:
+                result['gpuBusy'] = True
                 raise ValueError('GPU 正被计算任务使用，请空闲后进行运算检查')
+            result['gpuBusy'] = False
             device = 'cuda:' + str(gpu_index)
             with torch.cuda.device(gpu_index):
                 network = torch.nn.Conv2d(3, 4, 3).to(device)

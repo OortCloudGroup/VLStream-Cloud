@@ -142,6 +142,19 @@ vlstream:
     encryption-key: ${VLSTREAM_COMPUTE_ENCRYPTION_KEY:}
     # 多副本必须共享这个文件所在的数据目录；备份数据库时一起备份该目录。
     encryption-key-file: ${VLSTREAM_COMPUTE_ENCRYPTION_KEY_FILE:${user.dir}/data/security/compute-credential.key}
+    # VLS 风控初值，非供应商固定阈值；不启用收费、通知或自动停机执行器。
+    billing-policy:
+      opening-reserve-seconds: 3600
+      early-reminder-seconds: 7200
+      urgent-reminder-seconds: 1800
+      stop-budget-seconds: 300
+      polling-safety-seconds: 60
+      # 安全闭环未接入，其他完成动作/自动删除配置将被拒绝。
+      training-completion-action: KEEP_RUNNING
+      automatic-deletion-enabled: false
+      # 用户已确认的产品边界；不是实际退款执行授权。用户磁盘租用策略暂停设计。
+      fault-compensation-enabled: false
+      supplier-minimum-cost-bearer: PLATFORM
 
   # Browser-facing, same-origin endpoint used only when signing private annotation images.
   # The configured OSS endpoint remains the internal Docker route used by service uploads.

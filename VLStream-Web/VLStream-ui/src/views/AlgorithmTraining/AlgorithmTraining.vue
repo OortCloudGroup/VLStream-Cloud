@@ -96,11 +96,12 @@
         @row-click="handleRowClick"
       >
         <el-table-column type="selection" :width="clacPXToVW(55)" align="center" />
-        <el-table-column prop="modelId" :label="$tp('模型ID')" align="center" />
-        <el-table-column prop="algorithmName" :label="$tp('算法名称')" show-overflow-tooltip />
-        <el-table-column prop="trainAlgorithm" :label="$tp('训练算法')" show-overflow-tooltip />
-        <el-table-column prop="trainStatus" :label="$tp('训练状态')" align="center">
+        <el-table-column prop="modelId" :label="$tp('模型ID')" min-width="180" align="center" />
+        <el-table-column prop="algorithmName" :label="$tp('算法名称')" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="trainAlgorithm" :label="$tp('训练算法')" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="trainStatus" :label="$tp('训练状态')" min-width="180" align="center">
           <template #default="scope">
+            <div class="training-status-cell">
             <el-tag
               :type="getStatusType(scope.row.trainStatus)"
               size="small"
@@ -110,6 +111,7 @@
             </el-tag>
             <div v-if="scope.row.originalData.executionMessage || scope.row.originalData.errorMessage" class="training-status-message">
               {{ scope.row.originalData.executionMessage || scope.row.originalData.errorMessage }}
+            </div>
             </div>
           </template>
         </el-table-column>
@@ -478,9 +480,11 @@
         <div class="config-sidebar">
           <div class="config-section">
             <h3 class="section-title">{{ $tp('训练算力') }}</h3>
-            <el-select v-model="computeNodeId" :placeholder="$tp('平台默认 GPU 服务器')" :disabled="isTraining" class="config-select" @visible-change="visible => visible && loadComputeNodes()">
+            <el-select v-model="computeNodeId" :placeholder="$tp('平台默认 GPU 服务器')" :disabled="isTraining" class="config-select" @change="selectCompute" @visible-change="visible => visible && loadComputeNodes()">
               <el-option :label="$tp('平台默认 GPU 服务器')" value="" />
-              <el-option v-for="node in computeNodes" :key="node.id" :value="String(node.id)" :label="`AutoDL · ${node.name}`" :disabled="!node.enabled || node.probeState !== 'READY'" />
+              <el-option-group v-for="group in computeGroups" :key="group.label" :label="$tp(group.label)">
+                <el-option v-for="node in group.nodes" :key="node.id" :value="String(node.id)" :label="computeLabel(node)" :disabled="['OTHER','ISOLATED'].includes(node.claimState) || (!node.schedulable && !node.stopped && !node.canClaim)" />
+              </el-option-group>
             </el-select>
             <div v-if="computeNodeId" class="config-tip">{{ $tp('使用已标注并划分的数据集，自动上传到所选实例；本期输出 PT 和类别文件。') }}</div>
             <template v-if="computeNodeId">
@@ -490,7 +494,8 @@
                 <el-option :label="$tp('算法指定模型（必须已存入 MinIO）')" value="algorithm" />
               </el-select>
             </template>
-            <el-button link type="primary" @click="router.push({ path: '/container-instances', query: { tab: 'cloud' } })">{{ $tp('管理线上算力') }}</el-button>
+            <el-button link type="primary" @click="goCompute('/compute-market')">{{ $tp('算力市场') }}</el-button>
+            <el-button link type="primary" @click="goCompute('/compute-management')">{{ $tp('算力管理') }}</el-button>
           </div>
           <!-- training -->
           <div class="config-section">
@@ -1126,7 +1131,7 @@ import {createModel, getModelPage} from '@/api/algorithmModel.js'
 import {getAlgorithmAnnotationPage, getAlgorithmAnnotationById} from '@/api/algorithmAnnotation.js'
 import {getAlgorithmPage} from '@/api/algorithmManagement.js'
 import CollapseToggle from '@/components/CollapseToggle.vue'
-import { listComputeNodes, startCloudTraining } from '@/api/compute'
+import { listComputeSelection, startCloudTraining } from '@/api/compute'
 
 // Import
 import trainIcon from '@/assets/start-training@3x.png'
@@ -1134,6 +1139,9 @@ import selectDatasetIcon from '@/assets/select-dataset@3x.png'
 import evaluateIcon from '@/assets/validation@3x.png'
 import publishModelIcon from '@/assets/publish-model@3x.png'
 import request, {getBaseURL} from "@/utils/request";
+import { getLocalSessionToken } from '@/utils/request'
+import SHA256 from 'crypto-js/sha256'
+import { requireComputePlatformAuthorization, isComputeAuthorizationCurrent, bindComputeDraftToActor, canRestoreComputeDraft } from '@/utils/computePlatformAuth'
 
 // form
 const router = useRouter()
@@ -1147,7 +1155,32 @@ const isCloudTrainingRow = row => {
   } catch { return false }
 }
 const loadComputeNodes = async () => {
-  try { computeNodes.value = (await listComputeNodes()).data || [] } catch { computeNodes.value = [] }
+  try { computeNodes.value = (await listComputeSelection()).data || [] } catch { computeNodes.value = [] }
+}
+const computeGroups = computed(() => [
+  { label: '免费', nodes: computeNodes.value.filter(n => n.billingType === 'FREE') },
+  { label: '收费', nodes: computeNodes.value.filter(n => n.billingType === 'POINTS') },
+  { label: '自接算力', nodes: computeNodes.value.filter(n => n.billingType === 'EXTERNAL') }
+])
+const computeClaimLabels = { FREE: '空闲，请先占用整实例', MINE: '我的占用', OTHER: '他人占用', ISOLATED: '隔离' }
+const computeLabel = node => `${node.name} · GPU ${node.gpuIndex} · ${node.requiresClaim ? uiText(computeClaimLabels[node.claimState] || '隔离') + ' · ' : ''}${node.stopped ? uiText('已关机，请先开机') : node.billingType === 'POINTS' ? `${node.pointsPerHour ?? '—'} ${uiText('额度参考值/小时')} · ${uiText('结算待接入')}` : node.taskCount == null ? '' : `${uiText('当前任务数')} ${node.taskCount} · ${uiText('预计排队')} ${uiText(node.waitingEstimate)}`}`
+const computeDraftKey = 'vls-training-compute-return'
+const saveComputeDraft = () => {
+  sessionStorage.setItem(computeDraftKey, JSON.stringify({ session: SHA256(getLocalSessionToken() || '').toString(), savedAt: Date.now(), task: currentTrainingItem.value, computeNodeId: computeNodeId.value, cloudModelSource: cloudModelSource.value,
+    epochTotal: epochTotal.value, batchSize: batchSize.value, trainImgSize: trainImgSize.value, trainingMode: trainingMode.value,
+    autoPublish: autoPublish.value, selectedDatasets: selectedDatasets.value, selectedDatasetIds: selectedDatasetIds.value,
+    dataStrategy: dataStrategy.value, resolution: resolution.value, epochMode: epochMode.value, customValidation: customValidation.value }))
+}
+const goCompute = path => { saveComputeDraft(); router.push({ path, query: { returnTo: 'training', nodeId: computeNodeId.value } }) }
+const selectCompute = async id => {
+  const node = computeNodes.value.find(n => n.id === id)
+  if (node?.requiresClaim && node.claimState !== 'MINE') {
+    try { await ElMessageBox.confirm(uiText('请先到算力市场占用整实例。当前训练配置将保留。'), uiText('整实例占用')) } catch { return }
+    goCompute('/compute-market'); return
+  }
+  if (!node?.stopped) return
+  try { await ElMessageBox.confirm(uiText('此实例已关机，请先前往算力市场开机。当前训练配置将保留。'), uiText('算力未就绪')) } catch { return }
+  goCompute(node.scope === 'PLATFORM' ? '/compute-market' : '/compute-management')
 }
 const hasGeneratedDataset = dataset => typeof dataset?.datasetPath === 'string' && !!dataset.datasetPath.trim()
 const isDatasetReady = dataset => (computeNodeId.value || showAddDialog.value || showEditDialog.value)
@@ -1607,6 +1640,24 @@ const handleStartTraining = async () => {
   if (isTraining.value) return
   if (!trainingBackendReady.value) { ElMessage.warning(uiText('训练服务尚未就绪，请更新后端后重试')); return }
   try {
+    let platformProof
+    if (computeNodeId.value) {
+      await loadComputeNodes()
+      let resource = computeNodes.value.find(node => node.id === computeNodeId.value)
+      if (resource?.requiresClaim && resource.billingType !== 'POINTS') {
+        platformProof = await requireComputePlatformAuthorization(context => { saveComputeDraft(); bindComputeDraftToActor(context) })
+        if (!platformProof) return
+        await loadComputeNodes(); resource = computeNodes.value.find(node => node.id === computeNodeId.value)
+      }
+      if (resource?.billingType === 'POINTS') {
+        platformProof = await requireComputePlatformAuthorization(context => { saveComputeDraft(); bindComputeDraftToActor(context) })
+        if (!platformProof) return
+        // Authorization is a prerequisite, not a completed accounting contract.
+        ElMessage.warning(uiText('平台身份已校验，个人余额扣款、GPU计量与产物安全回存清理尚未接入，收费训练仍阻断；工作空间成本由平台承担'))
+        return
+      }
+      if (!resource?.schedulable) throw new Error(uiText('所选算力状态已变化或检查已过期，请刷新并检查后重试'))
+    }
     const original = currentTrainingItem.value?.originalData
     if (original?.modelOutputPath) {
       await ElMessageBox.confirm(uiText('该任务已有训练结果。重新训练会更新任务状态和产物路径，已保存到算法模型的记录保留。确认重新训练？'), uiText('重新训练'), { type: 'warning' })
@@ -1641,7 +1692,8 @@ const handleStartTraining = async () => {
     appendLogLines('[INFO] 正在向后端提交训练请求...')
 
     if (computeNodeId.value) {
-      await startCloudTraining(taskId, { ...params, nodeId: computeNodeId.value, modelSource: cloudModelSource.value })
+      if (platformProof && !isComputeAuthorizationCurrent(platformProof)) throw new Error(uiText('登录账户已变化，请重新选择操作'))
+      await startCloudTraining(taskId, { ...params, nodeId: computeNodeId.value, modelSource: cloudModelSource.value }, platformProof?.platformToken)
     } else {
       await startTrainingWithParams(taskId, params)
     }
@@ -2388,7 +2440,7 @@ const stopAllPolling = () => {
 
 const isConversionTerminal = (status) => ['completed', 'failed', 'not_required'].includes(status)
 
-const startConversionPolling = (taskId, trainingStatus, displayStatus) => {
+const startConversionPolling = (taskId, trainingStatus, displayStatus, automaticCloud = false) => {
   stopConversionPolling()
   let polling = false
   let attempts = 0
@@ -2403,6 +2455,8 @@ const startConversionPolling = (taskId, trainingStatus, displayStatus) => {
       const data = payload?.data ?? payload
       const onnxStatus = data?.onnxConversionStatus
       const omStatus = data?.omConversionStatus
+      // Give the durable backend scanner time to discover a newly completed cloud job.
+      if (automaticCloud && omStatus === 'not_required' && attempts < 6) return
       if (!isConversionTerminal(onnxStatus) || !isConversionTerminal(omStatus)) {
         if (attempts >= MODEL_CONVERSION_MAX_POLLS) {
           stopConversionPolling()
@@ -2420,12 +2474,12 @@ const startConversionPolling = (taskId, trainingStatus, displayStatus) => {
       }
       if (onnxStatus === 'completed') {
         appendTerminalInfo(`ONNX转换完成: ${data.onnxModelOutputPath}`)
-      } else {
+      } else if (onnxStatus === 'failed') {
         appendLogLines(`[ERROR] ONNX转换失败: ${data.onnxConversionError || '未返回失败原因'}`)
       }
       if (omStatus === 'completed') {
         appendTerminalInfo(`OM转换完成: ${data.omModelOutputPath}`)
-      } else {
+      } else if (omStatus === 'failed') {
         appendLogLines(`[ERROR] OM转换失败: ${data.omConversionError || '未返回失败原因'}`)
       }
       await refreshPublication(taskId)
@@ -2459,6 +2513,11 @@ const handleTrainingFinished = async (taskId, statusValue) => {
   }
 
   try {
+    if (isCloudTrainingRow(currentTrainingItem.value)) {
+      appendTerminalInfo(uiText('PT已回存，已启用的 OM 服务会由后台自动处理。'))
+      startConversionPolling(taskId, statusValue, displayStatus, true)
+      return
+    }
     const conversion = await convertModel(taskId)
     appendTerminalInfo(conversion?.msg || '训练完成，正在查询模型产物处理状态...')
     startConversionPolling(taskId, statusValue, displayStatus)
@@ -2756,10 +2815,28 @@ const handleBatchOperation = () => {
 }
 
 // page Load data
-onMounted(() => {
+onMounted(async () => {
   loadTrainingData()
   loadAlgorithmOptions()
   loadComputeNodes()
+  try {
+    const draft = JSON.parse(sessionStorage.getItem(computeDraftKey) || 'null')
+    sessionStorage.removeItem(computeDraftKey)
+    if (await canRestoreComputeDraft(draft)) {
+      currentTrainingItem.value = draft.task; showTrainingConfig.value = true
+      computeNodeId.value = draft.computeNodeId; cloudModelSource.value = draft.cloudModelSource
+      epochTotal.value = draft.epochTotal; batchSize.value = draft.batchSize; trainImgSize.value = draft.trainImgSize
+      trainingMode.value = draft.trainingMode; autoPublish.value = draft.autoPublish
+      dataStrategy.value = draft.dataStrategy; resolution.value = draft.resolution; epochMode.value = draft.epochMode; customValidation.value = draft.customValidation
+      selectedDatasets.value = draft.selectedDatasets; selectedDatasetIds.value = draft.selectedDatasetIds
+      if (draft.authorizationActor) {
+        // Server paths are never persisted across platform authorization; reload the current dataset by its selection ID.
+        await loadDatasetOptions()
+        selectedDatasets.value = datasetOptions.value.filter(dataset => (draft.selectedDatasetIds || []).includes(dataset.value))
+      }
+      refreshPublication(draft.task.originalData?.id || draft.task.id).catch(() => {})
+    }
+  } catch { sessionStorage.removeItem(computeDraftKey) }
 })
 
 onUnmounted(() => {
@@ -3044,6 +3121,12 @@ const openDatasetSelector = async () => {
 </script>
 
 <style scoped lang="scss">
+.training-status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
 .training-status-message {
   margin-top: 6px;
   font-size: 12px;

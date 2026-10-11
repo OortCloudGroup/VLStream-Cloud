@@ -56,7 +56,7 @@ public interface VlsContainerInstanceMapper extends BaseMapper<ContainerInstance
 	 * @return List<VlsContainerInstanceVO>
 	 */
 	List<ContainerInstanceVO> selectVlsContainerInstancePage(IPage page,
-															 @Param("query") ContainerInstanceVO vlsContainerInstance);
+															 @Param("query") ContainerInstanceVO vlsContainerInstance,@Param("publicOwner") String publicOwner);
 
 	/**
 	 * Get Export data

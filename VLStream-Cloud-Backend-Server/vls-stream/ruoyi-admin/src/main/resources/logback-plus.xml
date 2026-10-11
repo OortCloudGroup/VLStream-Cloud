@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <!-- Supplier HTTP headers/payloads can contain API and workspace secrets even at DEBUG. -->
+    <logger name="org.apache.http.wire" level="OFF"/>
+    <logger name="org.apache.http.headers" level="OFF"/>
     <property name="log.path" value="./logs"/>
     <property name="console.log.pattern"
               value="%red(%d{yyyy-MM-dd HH:mm:ss}) %green([%thread]) %highlight(%-5level) %boldMagenta(%logger{36}%n) - %msg%n"/>

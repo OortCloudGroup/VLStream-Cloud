@@ -31,6 +31,7 @@ import java.util.Date;
  */
 @Data
 @TableName("vls_algorithm_training")
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(value = {"createUser", "tenantId"}, allowGetters = true)
 @Schema(description = "VlsAlgorithmTrainingEntity对象")
 @EqualsAndHashCode(callSuper = true)
 public class AlgorithmTraining extends TenantEntity {

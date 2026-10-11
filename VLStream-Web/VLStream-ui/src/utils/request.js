@@ -8,6 +8,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { currentLocale, translateUiMessage } from '@/i18n'
+import { logSafeRequestError } from '@/utils/safeRequestError.mjs'
 
 export const BLADE_CLIENT_AUTH_HEADER = import.meta.env.VITE_BLADE_CLIENT_AUTH_HEADER || 'Basic c2FiZXI6c2FiZXJfc2VjcmV0'
 const PLATFORM_APP_ID = import.meta.env.VITE_PLATFORM_APP_ID || ''
@@ -66,9 +67,10 @@ export const applyPlatformGatewayHeaders = (config) => {
 // only , Authorization/authorization token.
 export const applyAuthHeaders = (config) => {
   const localToken = config.localAuthToken || getLocalSessionToken()
-  const platformToken = getPlatformAccessToken()
+  const platformToken = config.platformAuthToken !== undefined ? config.platformAuthToken : getPlatformAccessToken()
   const authToken = localToken
-  const gatewayToken = platformToken || localToken
+  const gatewayToken = config.requirePlatformIdentity ? platformToken : (platformToken || localToken)
+  if (config.requirePlatformIdentity) { delete config.headers.AccessToken; delete config.headers.accesstoken }
 
   if (authToken) {
     const authValue = authToken.toLowerCase().startsWith('bearer ') ? authToken : `Bearer ${authToken}`
@@ -167,7 +169,7 @@ authRequest.interceptors.request.use(
     return config
   },
   error => {
-    console.error('认证请求错误:', error)
+    logSafeRequestError('认证请求未能发送', error)
     return Promise.reject(error)
   }
 )
@@ -181,8 +183,7 @@ request.interceptors.request.use(
     return config
   },
   error => {
-    if (error.config?.sensitiveData) console.error('敏感请求未能发送')
-    else console.error('请求错误:', error)
+    logSafeRequestError('请求未能发送', error)
     return Promise.reject(error)
   }
 )
@@ -195,7 +196,7 @@ imageUploadRequest.interceptors.request.use(
     return config
   },
   error => {
-    console.error('图片上传请求错误:', error)
+    logSafeRequestError('图片上传请求未能发送', error)
     return Promise.reject(error)
   }
 )
@@ -209,8 +210,7 @@ request.interceptors.response.use(
   },
   error => {
     if (axios.isCancel(error)) return Promise.reject(error)
-    if (error.config?.sensitiveData) console.error('敏感请求失败', error.response?.status || 'network')
-    else console.error('响应错误:', error)
+    logSafeRequestError('请求失败', error)
 
     // video-recordrelated API, prompt / tip, Process
     if (error.config && error.config.url && error.config.url.includes('/video-record/')) {
@@ -269,7 +269,7 @@ imageUploadRequest.interceptors.response.use(
     return handleBusinessError(data, response, '图片上传失败')
   },
   error => {
-    console.error('图片上传响应错误:', error)
+    logSafeRequestError('图片上传请求失败', error)
 
     let message = '图片上传失败'
     if (error.response) {
@@ -320,11 +320,7 @@ authRequest.interceptors.response.use(
     return handleBusinessError(data, response, '认证请求失败', !shouldLetCallerHandle)
   },
   error => {
-    console.error('认证响应错误:', error)
-
-    if (error.response) {
-      console.error('认证请求失败:', error.response.status, error.response.config?.url)
-    }
+    logSafeRequestError('认证请求失败', error)
 
     // related API, prompt / tip, Process
     if (error.config && error.config.url && (error.config.url.includes('/auth/') || error.config.url.includes('/blade-auth/'))) {

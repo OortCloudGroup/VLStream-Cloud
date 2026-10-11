@@ -39,6 +39,8 @@ public class ModelDispatchService {
 
 	@Resource
 	private IVlsAlgorithmTrainingService trainingService;
+	@Resource
+	private com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess publicAccess;
 
     @Resource
     private IVlsAlgorithmModelService modelService;
@@ -64,7 +66,8 @@ public class ModelDispatchService {
             String path = artifactService.resolvePath(snapshot, "om");
             RemoteModelArtifactService.ArtifactMetadata metadata = artifactService.inspect(path);
             ModelClassFileService.ClassFile classes = classFileService.prepare(snapshot);
-            return dispatchToDevice(model.getAlgorithmId(), snapshot, "om", path, metadata, classes, device);
+            return dispatchToDevice(model.getAlgorithmId(), snapshot, "om", path, metadata, classes, device,
+                deploymentFileName(model.getModelName(), "om", metadata.getFileName()));
         } catch (Exception ex) {
             throw new ServiceException("模型下发失败：" + rootMessage(ex));
         }
@@ -123,7 +126,7 @@ public class ModelDispatchService {
 				String deviceId = deviceIdText.trim();
 				DeviceInfo device = wvpDeviceResolver.resolve(deviceId);
 				dispatchToDevice(algorithmId, preparedArtifact.training, normalizedType,
-					preparedArtifact.remotePath, preparedArtifact.metadata, classFile, device);
+					preparedArtifact.remotePath, preparedArtifact.metadata, classFile, device, preparedArtifact.metadata.getFileName());
 				publishedCount++;
 			} catch (Exception ex) {
 				allSucceeded = false;
@@ -145,7 +148,7 @@ public class ModelDispatchService {
 								  String remotePath,
 								  RemoteModelArtifactService.ArtifactMetadata metadata,
 								  ModelClassFileService.ClassFile classFile,
-								  DeviceInfo device) {
+								  DeviceInfo device, String fileName) {
 		String requestId = UUID.randomUUID().toString();
 		String mqttMessageId = UUID.randomUUID().toString();
 		long ttl = dispatchProperties.getDownloadUrlTtlSeconds() == null
@@ -164,7 +167,7 @@ public class ModelDispatchService {
 		task.setTrainingId(training.getId());
 		task.setModelType(modelType);
 		task.setRemotePath(remotePath);
-		task.setFileName(metadata.getFileName());
+		task.setFileName(fileName);
 		task.setFileSize(metadata.getFileSize());
 		task.setSha256(metadata.getSha256());
 		task.setClassFileName(classFile.getFileName());
@@ -182,7 +185,7 @@ public class ModelDispatchService {
 		modelPayload.put("trainingId", String.valueOf(training.getId()));
 		modelPayload.put("modelType", modelType);
 		modelPayload.put("modelUrl", downloadUrl);
-		modelPayload.put("fileName", metadata.getFileName());
+		modelPayload.put("fileName", fileName);
 		modelPayload.put("fileSize", metadata.getFileSize());
 		modelPayload.put("sha256", metadata.getSha256());
 		String classSignature = signatureService.sign(requestId + ":classes", expiresAt);
@@ -215,20 +218,32 @@ public class ModelDispatchService {
 		}
 	}
 
+	/** Business-facing download name; archive keys and byte identity remain unchanged. */
+	static String deploymentFileName(String name, String modelType, String fallback) {
+		String base = StringUtils.defaultIfBlank(name, fallback);
+		base = StringUtils.defaultIfBlank(base, "model").trim();
+		base = base.replaceAll("[\\p{Cntrl}\\\\/:*?\"<>|]", "_");
+		base = base.replaceAll("(?i)\\.(pt|onnx|om|rknn)$", "").replaceAll("^[. ]+|[. ]+$", "");
+		if (base.isEmpty()) base = "model";
+		// Keep Unicode business names, with a portable UTF-8 filename length.
+		while (base.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 220) {
+			base = base.substring(0, base.offsetByCodePoints(base.length(), -1));
+		}
+		return base + "." + modelType;
+	}
+
 	private PreparedArtifact prepareLatestArtifact(Long algorithmId, String modelType) {
-		List<AlgorithmTraining> candidates = trainingService.list(
-			Wrappers.<AlgorithmTraining>lambdaQuery()
-				.eq(AlgorithmTraining::getAlgorithmId, algorithmId)
-				.eq(AlgorithmTraining::getTrainStatus, AlgorithmTrainingStatusEnum.completed)
-				.orderByDesc(AlgorithmTraining::getUpdateTime)
-				.orderByDesc(AlgorithmTraining::getId)
-				.last("limit 20"));
+		com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AlgorithmTraining> query=new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
+		query.eq("algorithm_id",algorithmId).eq("train_status",AlgorithmTrainingStatusEnum.completed.getCode()).orderByDesc("update_time","id").last("limit 20");
+		if(publicAccess!=null)publicAccess.filter(query,"vls_algorithm_training.id");
+		List<AlgorithmTraining> candidates = trainingService.list(query);
 		if (candidates == null || candidates.isEmpty()) {
 			throw new ServiceException("算法 " + algorithmId
 				+ " 没有已完成的训练任务，无法下发 " + modelType.toUpperCase() + " 模型");
 		}
 		String lastFailure = null;
 		for (AlgorithmTraining candidate : candidates) {
+			if(publicAccess!=null)publicAccess.training(candidate.getId());
 			try {
 				String remotePath = artifactService.resolvePath(candidate, modelType);
 				RemoteModelArtifactService.ArtifactMetadata metadata = artifactService.inspect(remotePath);

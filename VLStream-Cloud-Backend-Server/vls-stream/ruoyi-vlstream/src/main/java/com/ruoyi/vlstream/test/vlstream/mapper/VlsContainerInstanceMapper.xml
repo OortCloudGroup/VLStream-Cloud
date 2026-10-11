@@ -46,6 +46,10 @@
         from vls_container_instance
         where is_deleted = 0
           and instance_type = 'training'
+          AND NOT EXISTS (SELECT 1 FROM vls_cloud_training_job pj JOIN vls_compute_node pn ON pn.id=pj.node_id
+              WHERE (pj.container_record_id=vls_container_instance.id OR pj.training_id=vls_container_instance.training_task_id)
+              AND (pj.public_instance_key IS NOT NULL OR pn.public_instance_key IS NOT NULL OR pn.resource_scope='PLATFORM')
+              AND (pj.public_owner_subject IS NULL OR pj.public_owner_subject &lt;&gt; #{publicOwner}))
         <if test="query != null and query.instanceName != null and query.instanceName != ''">
             and instance_name like concat('%', #{query.instanceName}, '%')
         </if>

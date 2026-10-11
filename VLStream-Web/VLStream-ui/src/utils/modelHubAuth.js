@@ -20,7 +20,7 @@
  * @returns {string} 统一平台的基础 Origin 地址（不带末尾斜杠）
  */
 
-import { extractAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
+import { extractAuthCallbackParams, stripAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
 export function getPlatformOrigin(fallback = 'https://workup.oortcloudsmart.com:2443') {
   const loginUrl = import.meta.env.VITE_PLATFORM_LOGIN_URL
   if (loginUrl) {
@@ -87,7 +87,7 @@ export function startModelHubLogin(pendingPayload, options = {}) {
   sessionStorage.setItem(AUTH_PENDING_KEY, String(Date.now()))
   sessionStorage.setItem(
     RETURN_LOCATION_KEY,
-    `${window.location.pathname}${window.location.search}${window.location.hash}`
+    stripAuthCallbackParams(`${window.location.pathname}${window.location.search}${window.location.hash}`)
   )
   const redirectUri = options.returnToCurrent ? getCurrentModelHubRedirectUri() : getModelHubRedirectUri()
   sessionStorage.setItem(AUTH_CALLBACK_PATH_KEY, new URL(redirectUri).pathname)
@@ -112,8 +112,14 @@ function isPendingModelHubCallback() {
   }
 
   const pendingAt = Number(sessionStorage.getItem(AUTH_PENDING_KEY))
-  if (!pendingAt || Date.now() - pendingAt > AUTH_PENDING_MAX_AGE) {
+  if (!pendingAt || pendingAt > Date.now() || Date.now() - pendingAt > AUTH_PENDING_MAX_AGE) {
+    const hadPending = sessionStorage.getItem(AUTH_PENDING_KEY) !== null
+    const returnLocation = getSafeReturnLocation()
     clearPendingModelHubAuth()
+    if (hadPending) {
+      sessionStorage.setItem(AUTH_CALLBACK_CONSUMED_AT_KEY, String(Date.now()))
+      window.history.replaceState({}, '', returnLocation)
+    }
     return false
   }
   return true
@@ -133,7 +139,7 @@ function getSafeReturnLocation() {
       returnUrl.origin === window.location.origin &&
       returnUrl.pathname.startsWith(appBasePath)
     ) {
-      return `${returnUrl.pathname}${returnUrl.search}${returnUrl.hash}`
+      return stripAuthCallbackParams(`${returnUrl.pathname}${returnUrl.search}${returnUrl.hash}`)
     }
   } catch {
     // ignore invalid or unsafe return location
@@ -151,22 +157,18 @@ export function capturePendingModelHubCallback() {
     return null
   }
 
-  const { accessToken, tenantId } = extractAuthCallbackParams(window.location.href)
-  if (!accessToken) {
-    return null
-  }
-
+  const href = window.location.href
+  const { accessToken, tenantId } = extractAuthCallbackParams(href)
   const returnLocation = getSafeReturnLocation()
+  sessionStorage.setItem(AUTH_CALLBACK_CONSUMED_AT_KEY, String(Date.now()))
+  clearPendingModelHubAuth()
+  window.history.replaceState({}, '', returnLocation)
+  if (!accessToken || new URL(href).searchParams.get('error')) return null // Includes canceled/failed callbacks.
   saveModelHubAccessToken(accessToken)
   if (tenantId) {
     sessionStorage.setItem('modelHubTenantId', tenantId)
     localStorage.setItem('modelHubTenantId', tenantId)
   }
-  sessionStorage.setItem(AUTH_CALLBACK_CONSUMED_AT_KEY, String(Date.now()))
-  clearPendingModelHubAuth()
-
-  // before , Token.
-  window.history.replaceState({}, '', returnLocation)
   return accessToken
 }
 
@@ -186,6 +188,7 @@ export function consumeCapturedModelHubCallback() {
 export function captureModelHubTokenFromUrl() {
   const href = window.location.href
   const { accessToken, tenantId } = extractAuthCallbackParams(href)
+  window.history.replaceState({}, '', stripAuthCallbackParams(href))
 
   if (!accessToken) {
     return null

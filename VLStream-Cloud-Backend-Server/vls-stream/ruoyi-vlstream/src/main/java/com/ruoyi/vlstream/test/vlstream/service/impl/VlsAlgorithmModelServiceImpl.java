@@ -43,10 +43,15 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 
 	@Resource
 	private VlsAlgorithmTrainingMapper trainingMapper;
+	@Resource private com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess publicAccess;
+	@Override public AlgorithmModel getById(java.io.Serializable id) {
+		if(publicAccess!=null && id!=null)publicAccess.modelFromHttp(Long.valueOf(id.toString()));
+		return super.getById(id);
+	}
 
 	@Override
 	public IPage<AlgorithmModelVO> selectVlsAlgorithmModelPage(IPage<AlgorithmModelVO> page, AlgorithmModelVO vlsAlgorithmModel) {
-		return page.setRecords(baseMapper.selectVlsAlgorithmModelPage(page, vlsAlgorithmModel));
+		return page.setRecords(baseMapper.selectVlsAlgorithmModelPage(page, vlsAlgorithmModel, publicAccess==null?"":publicAccess.viewer()));
 	}
 
 	@Override
@@ -60,6 +65,7 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 
 	@Override
 	public AlgorithmModel getModelById(Long id) {
+		if(publicAccess!=null)publicAccess.modelFromHttp(id);
 		if (id == null) {
 			log.warn("获取模型详情时，ID为空");
 			return null;
@@ -70,6 +76,7 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public AlgorithmModel createModel(AlgorithmModelVO createDTO) {
+		if(publicAccess!=null)publicAccess.trainingFromHttp(createDTO.getTrainingId());
 		log.info("创建算法模型：{}", createDTO.getModelName());
 
 		// model and whether in
@@ -162,6 +169,7 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 		}
 
 		// all modelwhether Delete
+		if(publicAccess!=null)ids.forEach(publicAccess::modelFromHttp);
 		List<AlgorithmModel> models = listByIds(ids);
 		for (AlgorithmModel model : models) {
 			if (model.getStatus().equals(2)) {
@@ -182,17 +190,24 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 
 	@Override
 	public List<AlgorithmModel> getModelsByAlgorithmId(Long algorithmId) {
-		return baseMapper.selectByAlgorithmId(algorithmId);
+		com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AlgorithmModel> query=new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
+		query.eq("algorithm_id",algorithmId).orderByDesc("create_time");
+		if(publicAccess!=null)publicAccess.filter(query,"vls_algorithm_model.training_id");
+		return baseMapper.selectList(query);
 	}
 
 	@Override
 	public List<AlgorithmModel> getModelsByTrainingId(Long trainingId) {
+		if(publicAccess!=null)publicAccess.trainingFromHttp(trainingId);
 		return baseMapper.selectByTrainingId(trainingId);
 	}
 
 	@Override
 	public List<AlgorithmModel> getModelsByStatus(String status) {
-		return baseMapper.selectByStatus(status);
+		com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AlgorithmModel> query=new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
+		query.eq("status",status).orderByDesc("create_time");
+		if(publicAccess!=null)publicAccess.filter(query,"vls_algorithm_model.training_id");
+		return baseMapper.selectList(query);
 	}
 
 	@Override
@@ -274,6 +289,7 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 		}
 
 		// all modelwhether
+		if(publicAccess!=null)ids.forEach(publicAccess::modelFromHttp);
 		List<AlgorithmModel> models = listByIds(ids);
 		for (AlgorithmModel model : models) {
 			if (model.getStatus().equals(2)) {
@@ -376,17 +392,24 @@ public class VlsAlgorithmModelServiceImpl extends BaseServiceImpl<VlsAlgorithmMo
 
 	@Override
 	public AlgorithmModel getModelByAlgorithmIdAndVersion(Long algorithmId, Integer version) {
-		return baseMapper.selectByAlgorithmIdAndVersion(algorithmId, version);
+		return baseMapper.selectOne(publicModels().eq("algorithm_id",algorithmId).eq("version",version));
 	}
 
 	@Override
 	public AlgorithmModel getLatestModelByAlgorithmId(Long algorithmId) {
-		return baseMapper.selectLatestByAlgorithmId(algorithmId);
+		return baseMapper.selectOne(publicModels().eq("algorithm_id",algorithmId).orderByDesc("create_time").last("LIMIT 1"));
 	}
 
 	@Override
 	public List<AlgorithmModel> getPopularModels(Integer limit) {
-		return baseMapper.selectPopularModels(limit);
+		com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AlgorithmModel> query=publicModels().eq("status","published").orderByDesc("download_count");
+		if(limit!=null){if(limit<1 || limit>100)throw new com.ruoyi.common.exception.ServiceException("热门模型数量应为1到100");query.last("LIMIT "+limit);}
+		return baseMapper.selectList(query);
+	}
+	private com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AlgorithmModel> publicModels() {
+		com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AlgorithmModel> query=new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();query.eq("is_deleted",0);
+		if(publicAccess!=null)publicAccess.filter(query,"vls_algorithm_model.training_id");
+		return query;
 	}
 
 	@Override

@@ -95,6 +95,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import smCrypto from 'sm-crypto'
 import { AuthManager } from '@/utils/auth'
+import { extractAuthCallbackParams, stripAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
+import { logSafeRequestError } from '@/utils/safeRequestError.mjs'
 import { loginUser } from '@/api/auth'
 import loginLogo from '@/assets/img/img.png'
 import { currentLocale, localeOptions, setLocale } from '@/i18n'
@@ -158,8 +160,6 @@ const handleLogin = async () => {
       password: encryptPassword(loginForm.password)
     }
 
-    console.log('登录数据:', loginData)
-
     // interface
     const response = await loginUser(loginData)
 
@@ -190,7 +190,7 @@ const handleLogin = async () => {
     }
 
   } catch (error) {
-    console.error('登录失败:', error)
+    logSafeRequestError('登录失败', error)
     // will failed in error.data in ; , to .
     const errorData = error.response?.data || error.data
     const errorMsg = errorData?.msg || errorData?.message || (typeof errorData === 'string' && errorData) || error.message || '网络错误'
@@ -202,14 +202,19 @@ const handleLogin = async () => {
 
 // pageLoad whether already
 onMounted(async () => {
+  const callbackHref = window.location.href
+  const { accessToken: token } = extractAuthCallbackParams(callbackHref)
+  authManager.cleanUrlToken()
+  const cleanRoute = router.resolve(stripAuthCallbackParams(route.fullPath))
+  if (cleanRoute.fullPath !== route.fullPath) {
+    await router.replace({ path: cleanRoute.path, query: cleanRoute.query, hash: cleanRoute.hash })
+  }
   tenantMode.value = await authManager.getTenantMode()
-  // URL in token ( )
-  const urlParams = new URLSearchParams(window.location.search)
-  const token = urlParams.get('accessToken') || urlParams.get('access_token') || urlParams.get('token')
+  if (route.query.platformCallbackError === '1') platformLoginError.value = '平台登录凭证校验失败，请返回统一平台重新进入。'
 
   if (token) {
     try {
-      const userInfo = await authManager.checkUrlToken()
+      const userInfo = await authManager.checkUrlToken(callbackHref)
       if (userInfo) {
         ElMessage.success(uiText('自动登录成功'))
         const redirect = route.query.redirect || '/workspace'
@@ -220,8 +225,8 @@ onMounted(async () => {
         platformLoginError.value = '平台登录凭证校验失败，请返回统一平台重新进入。'
       }
     } catch (error) {
-      console.error('URL token验证失败:', error)
-      platformLoginError.value = error?.response?.data?.msg || error?.message || '平台登录失败'
+      logSafeRequestError('平台回调校验失败', error)
+      platformLoginError.value = '平台登录失败，请重新授权或稍后重试'
     }
   }
 
@@ -240,7 +245,7 @@ onMounted(async () => {
         return
       }
     } catch (error) {
-      console.error('本地token验证失败:', error)
+      logSafeRequestError('本地会话验证失败', error)
     }
   }
 })

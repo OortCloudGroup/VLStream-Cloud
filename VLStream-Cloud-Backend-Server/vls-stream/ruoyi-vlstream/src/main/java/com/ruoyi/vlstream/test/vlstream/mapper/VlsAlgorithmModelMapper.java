@@ -28,7 +28,7 @@ public interface VlsAlgorithmModelMapper extends BaseMapper<AlgorithmModel> {
 
     IPage<com.ruoyi.vlstream.test.vlstream.pojo.vo.DeviceModelCandidate> selectDeviceCandidates(
         IPage<com.ruoyi.vlstream.test.vlstream.pojo.vo.DeviceModelCandidate> page,
-        @Param("keyword") String keyword, @Param("category") String category);
+        @Param("keyword") String keyword, @Param("category") String category, @Param("publicOwner") String publicOwner);
 
 	/**
 	 * Custom
@@ -37,7 +37,7 @@ public interface VlsAlgorithmModelMapper extends BaseMapper<AlgorithmModel> {
 	 * @param vlsAlgorithmModel Query parameter
 	 * @return List<VlsAlgorithmModelVO>
 	 */
-	List<AlgorithmModelVO> selectVlsAlgorithmModelPage(IPage page, AlgorithmModelVO vlsAlgorithmModel);
+	List<AlgorithmModelVO> selectVlsAlgorithmModelPage(IPage page, AlgorithmModelVO vlsAlgorithmModel, @Param("publicOwner") String publicOwner);
 
 	/**
 	 * Get Export data

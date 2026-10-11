@@ -84,6 +84,16 @@ class ModelDispatchServiceTest {
 		assertEquals("算法 2079813710632751106 没有已完成的训练任务，无法下发 OM 模型",
 			exception.getMessage());
 	}
+	@Test
+	void legacyAlgorithmDispatchCannotIssueDownloadAuthorizationForAnotherUsersPublicTraining() throws Exception {
+		com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess access=mock(com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess.class);
+		setField(service,"publicAccess",access);AlgorithmTraining training=new AlgorithmTraining();training.setId(42L);
+		when(trainingService.list(any())).thenReturn(Collections.singletonList(training));
+		org.mockito.Mockito.doThrow(new ServiceException("other public owner")).when(access).training(42L);
+		assertThrows(ServiceException.class,()->service.dispatch(10L,"mock-device","om"));
+		verify(access).filter(any(),eq("vls_algorithm_training.id"));verify(access).training(42L);
+		verify(artifactService,org.mockito.Mockito.never()).inspect(any());org.mockito.Mockito.verifyNoInteractions(signatureService,taskService,mqttService);
+	}
 
 	@Test
 	void reportsMissingSigningSecretBeforePublishing() throws Exception {
@@ -105,6 +115,7 @@ class ModelDispatchServiceTest {
 	void resolvesWvpBusinessDeviceIdsAndPublishesWithoutLegacyDeviceRows() throws Exception {
 		AlgorithmTraining training = new AlgorithmTraining();
 		training.setId(10L);
+		training.setTaskName("违规抽烟");
 		when(trainingService.list(any())).thenReturn(Collections.singletonList(training));
 		when(artifactService.resolvePath(training, "om")).thenReturn("/data/work/model.om");
 		when(artifactService.inspect("/data/work/model.om"))
@@ -129,11 +140,13 @@ class ModelDispatchServiceTest {
 		verify(mqttService).publish(eq("vlstream/v2.2/dev/CAM-A/bus"), envelope.capture());
 		java.util.Map payload = (java.util.Map) envelope.getValue().get("payload");
 		assertEquals("dataset.yaml", payload.get("classFileName"));
+		assertEquals("model.om", payload.get("fileName")); // Legacy algorithm dispatch keeps its existing name.
 		assertEquals(repeat("b", 64), payload.get("classFileSha256"));
 		org.junit.jupiter.api.Assertions.assertTrue(payload.get("classFileUrl").toString().contains("/classes?"));
 		org.mockito.ArgumentCaptor<ModelDispatchTask> tasks = org.mockito.ArgumentCaptor.forClass(ModelDispatchTask.class);
 		verify(taskService, org.mockito.Mockito.times(2)).create(tasks.capture());
 		assertEquals("names: [person]\n", tasks.getAllValues().get(0).getClassFileContent());
+		assertEquals("model.om", tasks.getAllValues().get(0).getFileName());
 	}
 
 	@Test
@@ -159,10 +172,12 @@ class ModelDispatchServiceTest {
 		return device;
 	}
 
-    @Test
-    void selectedVersionUsesSavedPathsWithoutLookingUpLatestTraining() throws Exception {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"智慧工地（攀高）", "违规抽烟"})
+    void selectedVersionUsesSavedPathsWithoutLookingUpLatestTraining(String modelName) throws Exception {
         AlgorithmModel model = new AlgorithmModel();
         model.setId(9001L); model.setAlgorithmId(1L); model.setTrainingId(10L); model.setTenantId("000000");
+        model.setModelName(modelName);
         model.setModelPath("/old/weights/best.pt"); model.setOmModelOutputPath("/old/weights/best.om");
         when(modelService.getById(9001L)).thenReturn(model);
         properties.setSigningSecret("test-signing-secret");
@@ -170,7 +185,7 @@ class ModelDispatchServiceTest {
         when(artifactService.resolvePath(any(AlgorithmTraining.class), eq("om"))).thenAnswer(call ->
             ((AlgorithmTraining) call.getArgument(0)).getOmModelOutputPath());
         when(artifactService.inspect("/old/weights/best.om")).thenReturn(
-            new RemoteModelArtifactService.ArtifactMetadata("best.om", 10L, repeat("a", 64)));
+            new RemoteModelArtifactService.ArtifactMetadata("model.om", 10L, repeat("a", 64)));
         when(signatureService.sign(any(), anyLong())).thenReturn("signature");
 
         String requestId = service.dispatchModel(9001L, "CAM-A");
@@ -185,6 +200,12 @@ class ModelDispatchServiceTest {
         verify(taskService).create(task.capture());
         assertEquals("/old/weights/best.om", task.getValue().getRemotePath());
         assertEquals(requestId, task.getValue().getRequestId());
+        assertEquals(modelName + ".om", task.getValue().getFileName());
+        assertEquals(10L, task.getValue().getFileSize());
+        assertEquals(repeat("a",64), task.getValue().getSha256());
+        org.mockito.ArgumentCaptor<java.util.Map> envelope = org.mockito.ArgumentCaptor.forClass(java.util.Map.class);
+        verify(mqttService).publish(eq("vlstream/v2.2/dev/CAM-A/bus"), envelope.capture());
+        assertEquals(modelName + ".om", ((java.util.Map)envelope.getValue().get("payload")).get("fileName"));
     }
 
     @Test
@@ -196,6 +217,15 @@ class ModelDispatchServiceTest {
         assertThrows(ServiceException.class, () -> service.dispatchModel(9001L, "CAM-A"));
         org.mockito.Mockito.verifyNoInteractions(trainingService, mqttService, wvpDeviceResolver);
     }
+
+	@Test void deploymentNamesKeepBusinessUnicodeAndRemoveUnsafePathCharacters() {
+		assertEquals("智慧工地（攀高）.om", ModelDispatchService.deploymentFileName("智慧工地（攀高）", "om", "model.om"));
+		assertEquals("抽烟.om", ModelDispatchService.deploymentFileName("抽烟.OM", "om", "model.om"));
+		assertEquals("目录_抽_烟_尾.om", ModelDispatchService.deploymentFileName("目录/抽\r烟\n尾", "om", "model.om"));
+		assertEquals("best.om", ModelDispatchService.deploymentFileName(null, "om", "best.om"));
+		assertEquals("model.om", ModelDispatchService.deploymentFileName("...", "om", null));
+		org.junit.jupiter.api.Assertions.assertTrue(ModelDispatchService.deploymentFileName(repeat("模",100), "om", null).getBytes(java.nio.charset.StandardCharsets.UTF_8).length <= 223);
+	}
 
 	private String repeat(String value, int count) {
 		StringBuilder builder = new StringBuilder();

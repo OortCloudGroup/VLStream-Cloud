@@ -48,7 +48,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@AllArgsConstructor
+@lombok.RequiredArgsConstructor
 @RequestMapping("/vlsAlgorithmModel")
 @Tag(name = "算法模型表", description = "算法模型表接口")
 public class VlsAlgorithmModelController extends BladeController {
@@ -56,6 +56,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	private final IVlsAlgorithmModelService vlsAlgorithmModelService;
 	private final ModelFileDownloadService modelFileDownloadService;
 	private final ImportedAlgorithmModelService importedAlgorithmModelService;
+	@javax.annotation.Resource private com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess publicAccess;
 
 	/**
 	 * algorithmmodel
@@ -64,7 +65,9 @@ public class VlsAlgorithmModelController extends BladeController {
 	@ApiOperationSupport(order = 1)
 	@Operation(summary = "详情", description = "传入vlsAlgorithmModel")
 	public R<AlgorithmModelVO> detail(AlgorithmModel vlsAlgorithmModel) {
-		AlgorithmModel detail = vlsAlgorithmModelService.getOne(Condition.getQueryWrapper(vlsAlgorithmModel));
+		QueryWrapper<AlgorithmModel> wrapper=Condition.getQueryWrapper(vlsAlgorithmModel);
+		if(publicAccess!=null)publicAccess.filter(wrapper,"vls_algorithm_model.training_id");
+		AlgorithmModel detail = vlsAlgorithmModelService.getOne(wrapper);
 		return R.data(VlsAlgorithmModelWrapper.build().entityVO(detail));
 	}
 
@@ -75,7 +78,9 @@ public class VlsAlgorithmModelController extends BladeController {
 	@ApiOperationSupport(order = 2)
 	@Operation(summary = "分页", description = "传入vlsAlgorithmModel")
 	public R<IPage<AlgorithmModelVO>> list(@Parameter(hidden = true) @RequestParam Map<String, Object> vlsAlgorithmModel, Query query) {
-		IPage<AlgorithmModel> pages = vlsAlgorithmModelService.page(Condition.getPage(query), Condition.getQueryWrapper(vlsAlgorithmModel, AlgorithmModel.class));
+		QueryWrapper<AlgorithmModel> wrapper=Condition.getQueryWrapper(vlsAlgorithmModel,AlgorithmModel.class);
+		if(publicAccess!=null)publicAccess.filter(wrapper,"vls_algorithm_model.training_id");
+		IPage<AlgorithmModel> pages = vlsAlgorithmModelService.page(Condition.getPage(query),wrapper);
 		return R.data(VlsAlgorithmModelWrapper.build().pageVO(pages));
 	}
 
@@ -98,6 +103,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	@ApiOperationSupport(order = 4)
 	@Operation(summary = "新增", description = "传入vlsAlgorithmModel")
 	public R save(@Valid @RequestBody AlgorithmModel vlsAlgorithmModel) {
+		if(publicAccess!=null)publicAccess.training(vlsAlgorithmModel.getTrainingId());
 		return R.status(vlsAlgorithmModelService.save(vlsAlgorithmModel));
 	}
 
@@ -108,6 +114,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	@ApiOperationSupport(order = 5)
 	@Operation(summary = "修改", description = "传入vlsAlgorithmModel")
 	public R update(@Valid @RequestBody AlgorithmModel vlsAlgorithmModel) {
+		if(publicAccess!=null){publicAccess.model(vlsAlgorithmModel.getId());publicAccess.training(vlsAlgorithmModel.getTrainingId());}
 		return R.status(vlsAlgorithmModelService.updateById(vlsAlgorithmModel));
 	}
 
@@ -118,6 +125,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	@ApiOperationSupport(order = 6)
 	@Operation(summary = "新增或修改", description = "传入vlsAlgorithmModel")
 	public R submit(@Valid @RequestBody AlgorithmModel vlsAlgorithmModel) {
+		if(publicAccess!=null){publicAccess.model(vlsAlgorithmModel.getId());publicAccess.training(vlsAlgorithmModel.getTrainingId());}
 		return R.status(vlsAlgorithmModelService.saveOrUpdate(vlsAlgorithmModel));
 	}
 
@@ -128,6 +136,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	@ApiOperationSupport(order = 7)
 	@Operation(summary = "逻辑删除", description = "传入ids")
 	public R remove(@Parameter(description = "主键集合", required = true) @RequestParam String ids) {
+		if(publicAccess!=null)Func.toLongList(ids).forEach(publicAccess::model);
 		return R.status(vlsAlgorithmModelService.deleteLogic(Func.toLongList(ids)));
 	}
 
@@ -139,6 +148,7 @@ public class VlsAlgorithmModelController extends BladeController {
 	@Operation(summary = "导出数据", description = "传入vlsAlgorithmModel")
 	public void exportVlsAlgorithmModel(@Parameter(hidden = true) @RequestParam Map<String, Object> vlsAlgorithmModel, BladeUser bladeUser, HttpServletResponse response) {
 		QueryWrapper<AlgorithmModel> queryWrapper = Condition.getQueryWrapper(vlsAlgorithmModel, AlgorithmModel.class);
+		if(publicAccess!=null)publicAccess.filter(queryWrapper,"vls_algorithm_model.training_id");
 		//if (!AuthUtil.isAdministrator()) {
 		//	queryWrapper.lambda().eq(VlsAlgorithmModelEntity::getTenantId, bladeUser.getTenantId());
 		//}

@@ -78,6 +78,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 
 	@Resource
 	private com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService cloudTrainingService;
+	@Resource private com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess publicAccess;
 	@Resource
 	private com.ruoyi.vlstream.test.vlstream.data.TrainingDatasetRuntimeService trainingDatasetRuntime;
 
@@ -120,7 +121,9 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	@ApiOperationSupport(order = 1)
 	@Operation(summary = "详情", description = "传入vlsAlgorithmTraining")
 	public R<AlgorithmTrainingVO> detail(AlgorithmTraining vlsAlgorithmTraining) {
-		AlgorithmTraining detail = vlsAlgorithmTrainingService.getOne(Condition.getQueryWrapper(vlsAlgorithmTraining));
+		QueryWrapper<AlgorithmTraining> wrapper=Condition.getQueryWrapper(vlsAlgorithmTraining);
+		if(publicAccess!=null)publicAccess.filter(wrapper,"vls_algorithm_training.id");
+		AlgorithmTraining detail = vlsAlgorithmTrainingService.getOne(wrapper);
 		return R.data(VlsAlgorithmTrainingWrapper.build().entityVO(detail));
 	}
 
@@ -131,7 +134,9 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	@ApiOperationSupport(order = 2)
 	@Operation(summary = "分页", description = "传入vlsAlgorithmTraining")
 	public R<IPage<AlgorithmTrainingVO>> list(@Parameter(hidden = true) @RequestParam Map<String, Object> vlsAlgorithmTraining, Query query) {
-		IPage<AlgorithmTraining> pages = vlsAlgorithmTrainingService.page(Condition.getPage(query), Condition.getQueryWrapper(vlsAlgorithmTraining, AlgorithmTraining.class));
+		QueryWrapper<AlgorithmTraining> wrapper=Condition.getQueryWrapper(vlsAlgorithmTraining, AlgorithmTraining.class);
+		if(publicAccess!=null)publicAccess.filter(wrapper,"vls_algorithm_training.id");
+		IPage<AlgorithmTraining> pages = vlsAlgorithmTrainingService.page(Condition.getPage(query),wrapper);
 		return R.data(VlsAlgorithmTrainingWrapper.build().pageVO(pages));
 	}
 
@@ -215,6 +220,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	@Operation(summary = "导出数据", description = "传入vlsAlgorithmTraining")
 	public void exportVlsAlgorithmTraining(@Parameter(hidden = true) @RequestParam Map<String, Object> vlsAlgorithmTraining, BladeUser bladeUser, HttpServletResponse response) {
 		QueryWrapper<AlgorithmTraining> queryWrapper = Condition.getQueryWrapper(vlsAlgorithmTraining, AlgorithmTraining.class);
+		if(publicAccess!=null)publicAccess.filter(queryWrapper,"vls_algorithm_training.id");
 		//if (!AuthUtil.isAdministrator()) {
 		//	queryWrapper.lambda().eq(VlsAlgorithmTrainingEntity::getTenantId, bladeUser.getTenantId());
 		//}

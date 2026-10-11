@@ -4,6 +4,9 @@ import lombok.Data;
 
 @Data
 public class CloudTrainingJob {
+    @com.fasterxml.jackson.annotation.JsonIgnore private String publicInstanceKey;
+    @com.fasterxml.jackson.annotation.JsonIgnore private String publicClaimId;
+    @com.fasterxml.jackson.annotation.JsonIgnore private String publicOwnerSubject;
     private String id;
     private String tenantId;
     private Long trainingId;

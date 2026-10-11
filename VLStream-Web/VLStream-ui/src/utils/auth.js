@@ -7,7 +7,8 @@
 
 import { verifyToken } from '@/api/auth'
 import { exchangePlatformToken, getTenantMode, validatePlatformSession } from '@/api/system/localAuth'
-import { extractAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
+import { extractAuthCallbackParams, stripAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
+import { logSafeRequestError } from '@/utils/safeRequestError.mjs'
 import {
   clearPlatformAccessToken,
   clearPlatformLoginPending,
@@ -49,7 +50,7 @@ export class AuthManager {
       clearPlatformLoginPending()
       return userInfo
     } catch (error) {
-      console.warn('多租户平台会话校验失败:', error?.response?.data?.msg || error?.message)
+      logSafeRequestError('多租户平台会话校验失败', error)
       return null
     }
   }
@@ -60,9 +61,10 @@ export class AuthManager {
   }
 
   /* * Validate URL in token, successfully after Query parameter. */
-  async checkUrlToken() {
-    const url = new URL(window.location.href)
+  async checkUrlToken(href = window.location.href) {
+    const url = new URL(href)
     const { accessToken: token, tenantId } = extractAuthCallbackParams(url.toString())
+    this.cleanUrlToken() // Strip before any request; failure/cancellation must not leave URL/history credentials.
     if (!token) return null
 
     // URL 传入的是统一平台令牌；无论单租户还是多租户，都必须先换取 VLS 本地会话。
@@ -91,7 +93,7 @@ export class AuthManager {
         tenantId: user.tenantId || data.tenantId || '000000'
       }
     } catch (error) {
-      console.warn('本地 token 验证失败:', error)
+      logSafeRequestError('本地会话验证失败', error)
       return null
     }
   }
@@ -116,13 +118,8 @@ export class AuthManager {
 
   /* * URL in token parameter. */
   cleanUrlToken() {
-    const url = new URL(window.location.href)
-    url.searchParams.delete('accessToken')
-    url.searchParams.delete('access_token')
-    url.searchParams.delete('token')
-    url.searchParams.delete('tenantId')
-    url.searchParams.delete('tenant_id')
-    window.history.replaceState({}, '', url.toString())
+    const current = window.location.href, clean = stripAuthCallbackParams(current)
+    if (clean !== current) window.history.replaceState({}, '', clean)
   }
 
   /* * will info. */
@@ -186,12 +183,13 @@ export class AuthManager {
       const response = normalizeApiResponse(await getTenantMode())
       return saveTenantMode(response?.data?.tenantType === 'multi' ? 'multi' : 'single')
     } catch (error) {
-      console.warn('获取租户模式失败，按单租户处理:', error?.message)
+      logSafeRequestError('获取租户模式失败，按既有单租户处理', error)
       return saveTenantMode('single')
     }
   }
 
   async exchangePlatformToken(platformToken, tenantId) {
+    this.cleanUrlToken()
     try {
       const response = normalizeApiResponse(await exchangePlatformToken(platformToken, tenantId))
       if (response?.code !== 200 || !response?.data?.accessToken) return null
@@ -213,7 +211,7 @@ export class AuthManager {
       this.cleanUrlToken()
       return userInfo
     } catch (error) {
-      console.warn('平台 token 换票失败:', error?.response?.data?.msg || error?.message)
+      logSafeRequestError('平台换票失败', error)
       this.validatedPlatformToken = ''
       clearPlatformAccessToken()
       clearPlatformLoginPending()
@@ -256,7 +254,7 @@ export class AuthManager {
       const value = sessionStorage.getItem('userInfo') || localStorage.getItem('userInfo')
       return value ? JSON.parse(value) : null
     } catch (error) {
-      console.warn('解析本地用户信息失败:', error)
+      logSafeRequestError('解析本地用户信息失败', error)
       return null
     }
   }

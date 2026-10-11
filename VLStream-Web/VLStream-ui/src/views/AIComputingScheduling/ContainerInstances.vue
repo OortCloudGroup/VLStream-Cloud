@@ -9,10 +9,7 @@
   <div class="container-instances tenant_Page draHeaPB">
     <div class="tenant_content">
     <div style="padding: 16px 20px 0">
-      <el-radio-group v-model="computeTab">
-        <el-radio-button label="tasks">{{ $tp('训练任务') }}</el-radio-button>
-        <el-radio-button label="cloud">{{ $tp('线上算力') }}</el-radio-button>
-      </el-radio-group>
+      <h3>{{ $tp('训练任务') }}</h3>
     </div>
     <AutoDlNodes v-if="computeTab === 'cloud'" />
     <template v-else>
@@ -1215,6 +1212,10 @@ watch(computeTab, value => {
 watch(() => route.query.tab, value => { computeTab.value = value === 'cloud' ? 'cloud' : 'tasks' })
 
 onMounted(() => {
+  if (computeTab.value === 'cloud') {
+    router.replace({ path: '/compute-management', query: { returnTo: route.query.returnTo, nodeId: route.query.nodeId } })
+    return
+  }
   refreshInstances()
   refreshTimer = window.setInterval(refreshInstances, 5000)
 })

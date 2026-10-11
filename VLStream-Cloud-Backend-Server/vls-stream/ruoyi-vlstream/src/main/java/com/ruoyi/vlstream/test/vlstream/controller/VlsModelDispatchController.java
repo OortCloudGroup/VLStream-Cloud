@@ -52,6 +52,9 @@ public class VlsModelDispatchController extends BladeController {
     @Resource
     private ModelDispatchService dispatchService;
 
+    @Resource
+    private com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess publicAccess;
+
     @GetMapping("/models")
     @Operation(summary = "查询自主训练模型下发候选")
     public R<IPage<DeviceModelCandidate>> models(
@@ -60,7 +63,7 @@ public class VlsModelDispatchController extends BladeController {
         @RequestParam(defaultValue = "") String keyword,
         @RequestParam(defaultValue = "") String category) {
         return R.data(modelMapper.selectDeviceCandidates(new Page<>(Math.max(1, current), Math.max(1, Math.min(48, size))),
-            StringUtils.trimToEmpty(keyword), StringUtils.trimToEmpty(category)));
+            StringUtils.trimToEmpty(keyword), StringUtils.trimToEmpty(category), publicAccess == null ? "" : publicAccess.viewer()));
     }
 
     @PostMapping("/models/{modelId}/dispatch")

@@ -5,6 +5,8 @@
  * Updated by: ChaoQun Lei
  */
 
+import { stripAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
+
 const PLATFORM_LOGIN_URL = import.meta.env.VITE_PLATFORM_LOGIN_URL || '/bus/apaas-web/loginPage/index.html'
 const PLATFORM_APP_NAME = import.meta.env.VITE_PLATFORM_APP_NAME || 'VLStream'
 const TENANT_MODE_KEY = 'vlsTenantMode'
@@ -40,11 +42,8 @@ export const buildPlatformLoginUrl = (returnPath = window.location.pathname + wi
   const redirectUrl = rawReturnPath.startsWith(appBaseUrl.pathname)
     ? new URL(rawReturnPath, window.location.origin)
     : new URL(rawReturnPath.replace(/^\/+/, ''), appBaseUrl)
-  redirectUrl.searchParams.delete('accessToken')
-  redirectUrl.searchParams.delete('access_token')
-  redirectUrl.searchParams.delete('token')
   loginUrl.searchParams.set('appname', PLATFORM_APP_NAME)
-  loginUrl.searchParams.set('redirect_uri', redirectUrl.toString())
+  loginUrl.searchParams.set('redirect_uri', stripAuthCallbackParams(redirectUrl.toString()))
   if (!loginUrl.hash) loginUrl.hash = '/'
   return loginUrl.toString()
 }

@@ -35,10 +35,15 @@ import java.util.Map;
 @Slf4j
 @Service
 public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContainerInstanceMapper, ContainerInstance> implements IVlsContainerInstanceService {
+	@javax.annotation.Resource private com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess publicAccess;
+	@Override public ContainerInstance getById(java.io.Serializable id) {
+		if(publicAccess!=null && id!=null)publicAccess.containerFromHttp(Long.valueOf(id.toString()));
+		return super.getById(id);
+	}
 
 	@Override
 	public IPage<ContainerInstanceVO> selectVlsContainerInstancePage(IPage<ContainerInstanceVO> page, ContainerInstanceVO vlsContainerInstance) {
-		return page.setRecords(baseMapper.selectVlsContainerInstancePage(page, vlsContainerInstance));
+		return page.setRecords(baseMapper.selectVlsContainerInstancePage(page, vlsContainerInstance,publicAccess==null?"":publicAccess.viewer()));
 	}
 
 	@Override
@@ -74,6 +79,7 @@ public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContaine
 		log.info("批量删除容器实例，数量: {}", ids.size());
 
 		// whether in instance
+		if(publicAccess!=null)ids.forEach(publicAccess::containerFromHttp);
 		List<ContainerInstance> instances = listByIds(ids);
 		for (ContainerInstance instance : instances) {
 			if ("running".equals(instance.getInstanceStatus()) || "starting".equals(instance.getInstanceStatus())) {
@@ -86,17 +92,19 @@ public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContaine
 
 	@Override
 	public ContainerInstance getByContainerId(String containerId) {
-		return baseMapper.selectByContainerId(containerId);
+		ContainerInstance row=baseMapper.selectByContainerId(containerId);
+		if(publicAccess!=null && row!=null)publicAccess.containerFromHttp(row.getId());
+		return row;
 	}
 
 	@Override
 	public List<ContainerInstance> getByAlgorithmId(Long algorithmId) {
-		return baseMapper.selectByAlgorithmId(algorithmId);
+		return baseMapper.selectList(visibleContainers().eq("algorithm_id",algorithmId).orderByDesc("create_time"));
 	}
 
 	@Override
 	public List<ContainerInstance> getByStatus(String instanceStatus) {
-		return baseMapper.selectByStatus(instanceStatus);
+		return baseMapper.selectList(visibleContainers().eq("instance_status",instanceStatus));
 	}
 
 	@Override
@@ -166,6 +174,7 @@ public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContaine
 	@Override
 	public boolean updateInstanceStatus(Long id, String instanceStatus, String healthStatus,
 										String containerId, Date startTime, Date stopTime) {
+		if(publicAccess!=null)publicAccess.containerFromHttp(id);
 		ContainerInstance instance = new ContainerInstance();
 		instance.setId(id);
 		instance.setInstanceStatus(instanceStatus);
@@ -178,6 +187,7 @@ public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContaine
 
 	@Override
 	public boolean updateMonitoringData(Long id, BigDecimal cpuUsage, BigDecimal memoryUsage, BigDecimal gpuUsage) {
+		if(publicAccess!=null)publicAccess.containerFromHttp(id);
 		ContainerInstance instance = new ContainerInstance();
 		instance.setId(id);
 		instance.setCpuUsage(cpuUsage);
@@ -188,6 +198,7 @@ public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContaine
 
 	@Override
 	public boolean increaseRestartCount(Long id) {
+		if(publicAccess!=null)publicAccess.containerFromHttp(id);
 		UpdateWrapper<ContainerInstance> wrapper = new UpdateWrapper<>();
 		wrapper.eq("id", id).setSql("restart_count = restart_count + 1");
 		return update(new ContainerInstance(), wrapper);
@@ -212,6 +223,12 @@ public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContaine
 	@Override
 	public List<ContainerInstance> getErrorInstances() {
 		return getByStatus("error");
+	}
+	private com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<ContainerInstance> visibleContainers() {
+		com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<ContainerInstance> query=new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
+		query.eq("is_deleted",0);
+		if(publicAccess!=null && org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()!=null)publicAccess.filterContainers(query);
+		return query;
 	}
 
 }
