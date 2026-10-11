@@ -166,7 +166,8 @@
     <!-- dialog -->
     <el-dialog :title="title" v-model="showPaly" width="45%">
       <div>
-        <Hikvision :rtsp="rtspURL" v-if="showPaly && (playType === '1' || playType === '3') "/>
+        <RtspDevicePlayer :device-id="previewDeviceId" v-if="showPaly && playType === '1'" />
+        <Hikvision :rtsp="rtspURL" v-if="showPaly && playType === '3'" />
 
         <el-row :gutter="10" style="margin-top: 20px" v-if="showPaly && (playType === '1' || playType === '3') ">
           <el-col :span="4"><span style="width: 100px; line-height: 40px; text-align: right;">{{ $tp('播放地址：') }}</span></el-col>
@@ -315,6 +316,7 @@ import {
   updateRtspDevice
 } from "@/api/rtsp/RtspDevice";
 import Hikvision from "@/components/Hikvision/index.vue";
+import RtspDevicePlayer from '@/components/RtspDevicePlayer.vue';
 import CusPlayer from "@/components/flv/CusPlayer.vue";
 import {ElLoading, ElMessage} from "element-plus";
 import MapGaoDe from "@/components/MapGaoDe/index.vue";
@@ -346,6 +348,7 @@ const total = ref(0);
 const title = ref("");
 const rtspURL = ref("");
 const showPaly = ref(false);
+const previewDeviceId = ref(null);
 const showAIPaly = ref(false);
 const showAI = ref(false);
 const showMap = ref(false);
@@ -601,6 +604,7 @@ const handleView = async (row) => {
     wsUrl.value = ans.data.ws_flv;
     showPaly.value = true;
   } else if (row.playType === '1') {
+    previewDeviceId.value = row.id;
     rtspURL.value = row.url;
     title.value = row.name;
     showPaly.value = true;

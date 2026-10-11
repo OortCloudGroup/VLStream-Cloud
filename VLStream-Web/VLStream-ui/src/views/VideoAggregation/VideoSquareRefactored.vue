@@ -53,6 +53,7 @@
             :device-count="deviceList.length"
             :online-count="onlineDeviceCount"
             :offline-count="offlineDeviceCount"
+            :unknown-count="unknownDeviceCount"
             @layout-select="handleLayoutSelect"
             @extended-layout="showExtendedLayoutDialog"
             @custom-layout="openCustomVideoDialogs"
@@ -113,13 +114,20 @@
       </div>
 
                 <!-- device - in -->
-          <DeviceListPanel
+          <VideoSquareDevicePanel
             :devices="deviceList"
-            :tree-data="createVlsDeviceTree(deviceList)"
-            :display-settings="displaySettings"
+            :visible-devices="visibleDevices"
+            :protocols="availableProtocols"
+            :selected-protocols="displaySettings.deviceTypes"
+            :selected-status="selectedStatus"
+            :keyword="mapSearchKeyword"
+            :loading="loading"
+            :error="catalogError"
             @settings="handleSettings"
+            @protocols-change="displaySettings.deviceTypes = $event"
+            @status-change="selectedStatus = $event"
             @device-click="handleCameraClick"
-            @search="handleMapSearch"
+            @search="mapSearchKeyword = $event"
           />
     </div>
 
@@ -163,7 +171,8 @@
           <div class="video-player">
             <!--  -->
             <div class="video-placeholder-player">
-              <VlsDevicePlayer v-if="dialog.camera.deviceData?.catalogSource === 'VLSTREAM'" :device="dialog.camera.deviceData" />
+              <VideoSquareDevicePlayer v-if="dialog.camera.deviceData?.catalogSource === 'VIDEO_SQUARE'" :device="dialog.camera.deviceData" />
+              <VlsDevicePlayer v-else-if="dialog.camera.deviceData?.catalogSource === 'VLSTREAM'" :device="dialog.camera.deviceData" />
               <div
                 v-else-if="dialog.camera.deviceData && dialog.camera.deviceData.streamUrl"
                 :ref="element => setDialogOPlayerContainer(dialog.id, element)"
@@ -334,7 +343,7 @@
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
 
-import {computed, nextTick, onMounted, onUnmounted, ref} from 'vue'
+import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue'
 import {ElMessage} from 'element-plus'
 import {Close} from '@element-plus/icons-vue'
 import L from 'leaflet'
@@ -348,8 +357,10 @@ import VideoLayoutDialog from '@/components/VideoLayoutDialog.vue'
 
 // Import PTZcontrolcomponent
 // Import device component
-import DeviceListPanel from '@/components/DeviceListPanel.vue'
-import { getVlsDeviceCatalog, createVlsDeviceTree } from '@/api/vlsDeviceCatalog';
+import VideoSquareDevicePanel from './components/VideoSquareDevicePanel.vue'
+import VideoSquareDevicePlayer from './components/VideoSquareDevicePlayer.vue'
+import { getVideoDeviceCatalog } from '@/api/videoDeviceCatalog'
+import { VIDEO_PROTOCOLS, videoDeviceCoordinates, matchesVideoDevice } from '@/utils/videoSquareCatalog'
 import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
 import {ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL} from "@/api/webrtc";
 import { ensureOPlayer, isCameraRtcStream, parseCameraRtcConfig } from '@/utils/oplayer'
@@ -376,6 +387,10 @@ const mapViewMode = ref('normal') // 'normal' | 'satellite'
 const deviceList = ref([])
 const realCameraStreams = ref([])
 const mapSearchKeyword = ref('')
+const selectedStatus = ref('')
+const availableProtocols = ref([])
+const catalogError = ref('')
+let catalogGeneration = 0
 
 
 // dialog
@@ -480,7 +495,7 @@ const createDialogOPlayerOptions = async (streamUrl) => {
  */
 const playDialogOPlayer = async (dialog) => {
   const deviceData = dialog?.camera?.deviceData
-  if (deviceData?.catalogSource === 'VLSTREAM') return
+  if (['VLSTREAM', 'VIDEO_SQUARE'].includes(deviceData?.catalogSource)) return
   if (!deviceData?.streamUrl) {
     ElMessage.warning(uiText('缺少流地址'))
     return
@@ -516,56 +531,30 @@ const playDialogOPlayer = async (dialog) => {
 
 const showSettingsDialog = ref(false)
 const displaySettings = ref({
-  deviceTypes: ['bulletCamera', 'ballCamera'],
+  deviceTypes: [],
   showOnline: true,
   showOffline: true
 })
 
-const allDeviceTypeOptions = ref([
-  { value: 'bulletCamera', label: '枪机' },
-  { value: 'ballCamera', label: '球机' }
-])
+const allDeviceTypeOptions = computed(() => VIDEO_PROTOCOLS.filter(protocol => availableProtocols.value.includes(protocol.value)))
 
-const parseCoordinateValue = (value) => {
-  if (value === null || value === undefined || value === '') return null
-  const parsed = Number.parseFloat(value)
-  return Number.isFinite(parsed) ? parsed : null
-}
-
-const getDeviceCoordinates = (device) => {
-  if (!device) return null
-  const lat = parseCoordinateValue(
-    device.latitude ?? device.lat ?? device.location?.lat ?? device.location?.latitude ?? device.position?.lat ?? device.position?.latitude
-  )
-  const lng = parseCoordinateValue(
-    device.longitude ?? device.lng ?? device.location?.lng ?? device.location?.longitude ?? device.position?.lng ?? device.position?.longitude
-  )
-  if (lat === null || lng === null) return null
-  return { lat, lng }
-}
-
-const isDeviceOnline = (status) => {
-  if (status === null || status === undefined) return false
-  if (typeof status === 'number') return status === 1
-  const normalized = String(status).trim().toLowerCase()
-  if (!normalized) return false
-  return normalized === uiText('在线') || normalized === 'online' || normalized === '1' || normalized === 'true'
-}
-
-// property
-const onlineDeviceCount = computed(() => {
-  return deviceList.value.filter(device => isDeviceOnline(device.status)).length
-})
-
-const offlineDeviceCount = computed(() => {
-  return deviceList.value.filter(device => !isDeviceOnline(device.status)).length
-})
+const getDeviceCoordinates = videoDeviceCoordinates
+const isDeviceOnline = status => status === 'ONLINE'
+const onlineDeviceCount = computed(() => deviceList.value.filter(device => device.status === 'ONLINE').length)
+const offlineDeviceCount = computed(() => deviceList.value.filter(device => device.status === 'OFFLINE').length)
+const unknownDeviceCount = computed(() => deviceList.value.filter(device => device.status === 'UNKNOWN').length)
+const visibleDevices = computed(() => deviceList.value.filter(device =>
+  (!displaySettings.value.deviceTypes.length || device.protocols.some(protocol => displaySettings.value.deviceTypes.includes(protocol))) &&
+  (!selectedStatus.value || device.status === selectedStatus.value) &&
+  matchesVideoDevice(device, mapSearchKeyword.value)
+))
+watch(visibleDevices, () => updateMapMarkers())
 
 const deviceMapMarkers = computed(() => {
   const markers = []
   const { showOnline, showOffline } = displaySettings.value
 
-  deviceList.value.forEach(device => {
+  visibleDevices.value.forEach(device => {
     const coords = getDeviceCoordinates(device)
     if (!coords) return
 
@@ -574,7 +563,7 @@ const deviceMapMarkers = computed(() => {
       return
     }
 
-    const hasStream = device.catalogSource === 'VLSTREAM' || !!(device.streamUrl || device.originalRtspUrl || device.rtspUrl)
+    const hasStream = !!device.sources?.length
 
     markers.push({
       id: device.id,
@@ -590,15 +579,7 @@ const deviceMapMarkers = computed(() => {
   return markers
 })
 
-const filteredCameraMarkers = computed(() => {
-  if (!mapSearchKeyword.value.trim()) {
-    return deviceMapMarkers.value
-  }
-
-  return deviceMapMarkers.value.filter(marker =>
-    marker.name.toLowerCase().includes(mapSearchKeyword.value.toLowerCase())
-  )
-})
+const filteredCameraMarkers = computed(() => deviceMapMarkers.value)
 
 // devicedata
 const getFixedRealDevices = () => {
@@ -854,16 +835,15 @@ const updateMapMarkers = () => {
   })
 
   // device
-  filteredCameraMarkers.value.forEach((markerData, index) => {
+  filteredCameraMarkers.value.forEach(markerData => {
+    const popup = document.createElement('div')
+    for (const value of [markerData.name, markerData.lng.toFixed(6) + ', ' + markerData.lat.toFixed(6)]) {
+      const line = document.createElement('div')
+      line.textContent = value
+      popup.appendChild(line)
+    }
     const marker = L.marker([markerData.lat, markerData.lng], { icon: deviceIcon })
-      .bindPopup(`
-        <div style="text-align: center; min-width: 150px;">
-          <strong>📹 ${markerData.name}</strong><br>
-          <small style="color: #666;">经度: ${markerData.lng.toFixed(6)}</small><br>
-          <small style="color: #666;">纬度: ${markerData.lat.toFixed(6)}</small><br>
-          <small style="color: #666;">点击查看视频</small>
-        </div>
-      `)
+      .bindPopup(popup)
       .on('click', () => handleCameraClick(markerData))
       .addTo(mapInstance)
 
@@ -872,34 +852,25 @@ const updateMapMarkers = () => {
 }
 
 const loadDeviceList = async () => {
+  const generation = ++catalogGeneration
   loading.value = true
+  catalogError.value = ''
   try {
-    deviceList.value = await getVlsDeviceCatalog()
-    realCameraStreams.value = deviceList.value
-
-    // new (if already Initialize )
-    if (mapInstance && mapInitialized) {
-      await nextTick(() => {
-        updateMapMarkers()
-        // full
-        if (filteredCameraMarkers.value.length > 0) {
-          setTimeout(() => {
-            fitBounds()
-          }, 300) // already
-        }
-      })
-    }
-
-    // ElMessage.success(` already Load ${realCameraStreams.value.length} device, full `)
-
+    const catalog = await getVideoDeviceCatalog()
+    if (generation !== catalogGeneration || !isComponentMounted) return
+    deviceList.value = catalog.devices
+    realCameraStreams.value = catalog.devices
+    availableProtocols.value = catalog.protocols
+    updateMapMarkers()
   } catch (error) {
+    if (generation !== catalogGeneration || !isComponentMounted) return
     deviceList.value = []
     realCameraStreams.value = []
-    if (mapInstance && mapInitialized) updateMapMarkers()
-    console.error('视频广场：加载设备列表失败:', error)
-    ElMessage.error(uiText('加载设备列表失败'))
+    availableProtocols.value = []
+    catalogError.value = error?.message || '加载设备列表失败'
+    updateMapMarkers()
   } finally {
-    loading.value = false
+    if (generation === catalogGeneration && isComponentMounted) loading.value = false
   }
 }
 
@@ -946,7 +917,7 @@ const openVideoDialogs = async (count) => {
         delete deviceData.webrtcUrl
       }
 
-      const coords = getDeviceCoordinates(device) || { lat: 39.9042, lng: 116.4074 }
+      const coords = getDeviceCoordinates(device) || {}
 
       const cameraData = {
         id: device.id,
@@ -1391,7 +1362,7 @@ const handleCameraClick = async (deviceData) => {
   let processedCameraData = { ...cameraData }
 
   // if streamUrl, from fieldGet
-  if (processedCameraData.catalogSource !== 'VLSTREAM' && !processedCameraData.streamUrl) {
+  if (!['VLSTREAM', 'VIDEO_SQUARE'].includes(processedCameraData.catalogSource) && !processedCameraData.streamUrl) {
     processedCameraData.streamUrl = processedCameraData.rtspUrl ||
                                    processedCameraData.originalRtspUrl ||
                                    processedCameraData.url ||
@@ -1415,7 +1386,6 @@ const handleCameraClick = async (deviceData) => {
   videoDialogs.value.push(dialog)
   await nextTick()
   await playDialogOPlayer(dialog)
-  ElMessage.success(uiText('正在播放: {value0}', { value0: deviceName }))
 }
 
 const handleTreeNodeClick = (node) => {
@@ -1426,7 +1396,7 @@ const handleTreeNodeClick = (node) => {
     if (node.id === 14 || node.id === 13) {
       const deviceData = deviceList.value.find(device => device.id === node.id)
       if (deviceData) {
-        const coords = getDeviceCoordinates(deviceData) || { lat: 39.9042, lng: 116.4074 }
+        const coords = getDeviceCoordinates(deviceData) || {}
         const cameraMarker = {
           id: deviceData.id,
           name: deviceData.deviceName,
@@ -1507,10 +1477,7 @@ const toggleMapView = () => {
   ElMessage.success(uiText('已切换到{value0}地图', { value0: mapViewMode.value === 'normal' ? uiText('标准') : uiText('卫星') }))
 }
 
-const refreshCameraLocations = () => {
-  updateMapMarkers()
-  // ElMessage.success(`device already new , ${filteredCameraMarkers.value.length} device`)
-}
+const refreshCameraLocations = () => loadDeviceList()
 
 const toggleDarkMode = () => {
   isDarkMode.value = !isDarkMode.value
@@ -2208,6 +2175,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  catalogGeneration += 1
   console.log('VideoSquareRefactored组件开始卸载')
   isComponentMounted = false
   mapInitialized = false

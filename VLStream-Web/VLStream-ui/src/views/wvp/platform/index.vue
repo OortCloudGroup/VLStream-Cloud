@@ -561,7 +561,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.gb-dialog-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-right: 28px; }
+.gb-dialog-heading { width: 100%; min-width: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-right: 28px; text-align: left; }
 .gb-help-icon { margin-right: 4px; font-size: 14px; }
 
 

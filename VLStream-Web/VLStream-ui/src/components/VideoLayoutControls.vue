@@ -129,6 +129,12 @@
           <span class="stat-value">{{ offlineCount }}</span>
         </div>
       </div>
+      <div v-if="unknownCount" class="stat-item">
+        <div class="stat-content">
+          <span class="stat-label">{{ $tp('未知状态') }}：</span>
+          <span class="stat-value">{{ unknownCount }}</span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -166,6 +172,10 @@ const props = defineProps({
     default: 0
   },
   offlineCount: {
+    type: Number,
+    default: 0
+  },
+  unknownCount: {
     type: Number,
     default: 0
   }

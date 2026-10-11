@@ -1,3 +1,4 @@
+import { addZlmLanCandidate } from '@/utils/zlmPlaybackUrl';
 /*
  * SPDX-FileCopyrightText: 2026 OortCloud (https://vls.oortcloudsmart.com/en/)
  * SPDX-License-Identifier: MIT
@@ -7917,7 +7918,7 @@ var ZLMRTCClient = (function (exports) {
                             return;
                         }
                         let anwser = {};
-                        anwser.sdp = ret.sdp;
+                        anwser.sdp = addZlmLanCandidate(ret.sdp);
                         anwser.type = 'answer';
                         log(this.TAG, 'answer:', ret.sdp);
                         this.pc.setRemoteDescription(anwser).then(() => {
@@ -8022,7 +8023,7 @@ var ZLMRTCClient = (function (exports) {
                                 return;
                             }
                             let anwser = {};
-                            anwser.sdp = ret.sdp;
+                            anwser.sdp = addZlmLanCandidate(ret.sdp);
                             anwser.type = 'answer';
                             log(this.TAG, 'answer:', ret.sdp);
                             this.pc.setRemoteDescription(anwser).then(() => {

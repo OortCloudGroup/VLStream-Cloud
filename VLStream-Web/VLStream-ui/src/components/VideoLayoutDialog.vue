@@ -80,7 +80,8 @@
                   <!-- if data, -->
                   <template v-if="dialog.cameras[index - 1]">
                     <!-- OPlayer -->
-                    <VlsDevicePlayer v-if="dialog.cameras[index - 1].deviceData?.catalogSource === 'VLSTREAM'" :key="dialog.cameras[index - 1].id" :device="dialog.cameras[index - 1].deviceData" />
+                    <VideoSquareDevicePlayer v-if="dialog.cameras[index - 1].deviceData?.catalogSource === 'VIDEO_SQUARE'" :key="dialog.cameras[index - 1].id" :device="dialog.cameras[index - 1].deviceData" />
+                    <VlsDevicePlayer v-else-if="dialog.cameras[index - 1].deviceData?.catalogSource === 'VLSTREAM'" :key="dialog.cameras[index - 1].id" :device="dialog.cameras[index - 1].deviceData" />
                     <div
                       v-else-if="dialog.cameras[index - 1].deviceData && dialog.cameras[index - 1].deviceData.streamUrl"
                       :ref="el => setOPlayerContainer(index - 1, el)"
@@ -170,6 +171,7 @@
 import { translatePhrase as uiText } from '@/i18n'
 
 import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
+import VideoSquareDevicePlayer from '@/views/VideoAggregation/components/VideoSquareDevicePlayer.vue'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import PTZControl from './PTZControl.vue'
 import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'

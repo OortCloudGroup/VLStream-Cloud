@@ -32,6 +32,7 @@
         playsinline
         @loadstart="onLoadStart"
         @loadeddata="onLoadedData"
+        @playing="onPlaying"
         @error="onVideoError"
         @click="togglePlay"
       ></video>
@@ -50,7 +51,7 @@
       </div>
 
       <!-- control -->
-      <div class="controls-overlay" :class="{ 'visible': showControls }">
+      <div class="controls-overlay" :class="{ 'visible': controlsVisible }">
         <div class="controls-bar">
           <!-- / button -->
           <button v-if="!isYouTubeStream" class="control-button" @click="togglePlay" :disabled="!isReady">
@@ -93,6 +94,8 @@
 
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
+import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
+import { WebrtcPreviewSession } from '@/utils/webrtcPreviewSession'
 
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 
@@ -116,12 +119,12 @@ const props = defineProps({
   },
   webrtcServer: {
     type: String,
-    default: 'http://localhost:8000'
+    default: ''
   },
   // after
   webrtcServerUrl: {
     type: String,
-    default: 'http://localhost:8000'
+    default: ''
   },
   width: {
     type: Number,
@@ -149,16 +152,16 @@ const isFullscreen = ref(false)
 const connectionState = ref('new')
 const streamId = ref('')
 const videoResolution = ref('')
-const showControls = ref(true)
+const controlsVisible = ref(true)
 
 // WebRTC related
 let webrtcStreamer = null
-let pc = null
+let generation = 0
 
 // property
 const webrtcServerUrlComputed = computed(() => {
   // webrtcServer, after is webrtcServerUrl, after is value
-  return props.webrtcServer || props.webrtcServerUrl || 'http://localhost:8000'
+  return props.webrtcServer || props.webrtcServerUrl || WEBRTC_SERVER_BASE_URL
 })
 
 // whether to YouTube
@@ -231,136 +234,42 @@ const containerStyle = computed(() => {
 })
 
 // method
-const initWebRTCStreamer = () => {
-  try {
-    // WebRTC configuration
-    const pcConfig = {
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-    }
-
-    pc = new RTCPeerConnection(pcConfig)
-
-    // Process
-    pc.ontrack = (event) => {
-      console.log('Received remote stream:', event.streams[0])
-      if (videoElement.value) {
-        videoElement.value.srcObject = event.streams[0]
-        isReady.value = true
-        hasError.value = false
-        emit('ready')
-      }
-    }
-
-    // Process
-    pc.onconnectionstatechange = () => {
-      connectionState.value = pc.connectionState
-      console.log('WebRTC connection state:', pc.connectionState)
-
-      if (pc.connectionState === 'connected') {
-        isConnecting.value = false
-        isPlaying.value = true
-        emit('play')
-      } else if (pc.connectionState === 'failed') {
-        handleError('WebRTC 连接失败')
-      }
-    }
-
-    // Process ICE
-    pc.oniceconnectionstatechange = () => {
-      console.log('ICE connection state:', pc.iceConnectionState)
-      if (pc.iceConnectionState === 'new') {
-        // Get ICE ( webrtc-streamer.js to )
-        getIceCandidates()
-      }
-    }
-
-    // Process ICE
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        console.log('ICE candidate:', event.candidate)
-      }
-    }
-
-  } catch (error) {
-    console.error('Failed to initialize WebRTC:', error)
-    handleError('WebRTC 初始化失败: ' + error.message)
-  }
-}
-
 const connectToWebRTCStreamer = async () => {
   if (!props.rtspUrl) {
     handleError('RTSP URL 不能为空')
     return
   }
-
+  const current = ++generation
+  isConnecting.value = true
+  hasError.value = false
+  connectionState.value = 'connecting'
+  emit('connecting')
   try {
-    isConnecting.value = true
-    hasError.value = false
-    emit('connecting')
-
-    // Generate peer ID ( )
-    const peerid = Math.random().toString()
-    streamId.value = peerid
-
-    // offer
-    const offer = await pc.createOffer()
-    await pc.setLocalDescription(offer)
-
-    // Build Query parameter ( )
-    const params = new URLSearchParams({
-      peerid: peerid,
-      url: props.rtspUrl,
-      options: 'rtptransport=tcp&timeout=60'
-    })
-
-    // offer WebRTC-streamer ( POST + query params + SDP body)
-    const response = await fetch(`${webrtcServerUrlComputed.value}/api/call?${params}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/sdp',
+    if (!props.webrtcServer && !props.webrtcServerUrl) await ensureWebRTCBackendConfig()
+    if (current !== generation || !videoElement.value) return
+    const session = new WebrtcPreviewSession({
+      video: videoElement.value,
+      serverUrl: webrtcServerUrlComputed.value,
+      onState: state => {
+        if (current !== generation) return
+        connectionState.value = state
+        if (state === 'connected') isConnecting.value = false
       },
-      body: offer.sdp
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    console.log('WebRTC-streamer response:', data)
-
-    if (data.type === 'answer' && data.sdp) {
-      await pc.setRemoteDescription(new RTCSessionDescription(data))
-    } else {
-      throw new Error('Invalid response from WebRTC streamer: ' + JSON.stringify(data))
-    }
-
-  } catch (error) {
-    console.error('WebRTC connection error:', error)
-    handleError('连接失败: ' + error.message)
-  }
-}
-
-const getIceCandidates = async () => {
-  if (!streamId.value) return
-
-  try {
-    const response = await fetch(`${webrtcServerUrlComputed.value}/api/getIceCandidate?peerid=${streamId.value}`)
-    if (response.ok) {
-      const candidates = await response.json()
-      console.log('Received ICE candidates:', candidates)
-
-      // Process ICE
-      if (Array.isArray(candidates)) {
-        for (const candidate of candidates) {
-          if (candidate && pc) {
-            await pc.addIceCandidate(new RTCIceCandidate(candidate))
-          }
-        }
+      onReady: () => {
+        if (current !== generation) return
+        isReady.value = true
+        hasError.value = false
+        emit('ready')
+      },
+      onError: message => {
+        if (current === generation) handleError('连接失败: ' + message)
       }
-    }
+    })
+    webrtcStreamer = session
+    await session.start(props.rtspUrl)
+    if (current === generation) streamId.value = session.peerId
   } catch (error) {
-    console.warn('Failed to get ICE candidates:', error)
+    if (current === generation) handleError('连接失败: ' + error.message)
   }
 }
 
@@ -392,54 +301,26 @@ const connect = async () => {
     return
   }
 
-  // Initialize WebRTC
-  initWebRTCStreamer()
-
   // WebRTC-streamer
   await connectToWebRTCStreamer()
 }
 
 const disconnect = async () => {
-  // if is YouTube ,
-  if (isYouTubeStream.value) {
-    isConnecting.value = false
-    isPlaying.value = false
-    isReady.value = false
-    connectionState.value = 'closed'
-    return
-  }
-
-  // hangup API ( )
-  if (streamId.value) {
-    try {
-      await fetch(`${webrtcServerUrlComputed.value}/api/hangup?peerid=${streamId.value}`, {
-        method: 'GET'
-      })
-      console.log('WebRTC stream hangup called for peerid:', streamId.value)
-    } catch (error) {
-      console.warn('Failed to call hangup API:', error)
-    }
-  }
-
-  if (pc) {
-    pc.close()
-    pc = null
-  }
-
-  if (videoElement.value) {
-    videoElement.value.srcObject = null
-  }
-
+  generation += 1
+  const previous = webrtcStreamer
+  webrtcStreamer = null
+  const released = previous?.disconnect()
+  if (videoElement.value) videoElement.value.srcObject = null
   isConnecting.value = false
   isPlaying.value = false
   isReady.value = false
   connectionState.value = 'closed'
   streamId.value = ''
+  await released
 }
 
 const reconnect = async () => {
-  disconnect()
-  await new Promise(resolve => setTimeout(resolve, 1000)) // etc. 1
+  await disconnect()
   await connect()
 }
 
@@ -492,6 +373,12 @@ const onLoadedData = () => {
   }
 }
 
+const onPlaying = () => {
+  isConnecting.value = false
+  isPlaying.value = true
+  emit('play')
+}
+
 const onVideoError = (event) => {
   console.error('Video error:', event)
   handleError('视频播放错误')
@@ -500,11 +387,11 @@ const onVideoError = (event) => {
 // control
 let controlsTimeout = null
 const handleMouseMove = () => {
-  showControls.value = true
+  controlsVisible.value = true
   clearTimeout(controlsTimeout)
   controlsTimeout = setTimeout(() => {
     if (isPlaying.value) {
-      showControls.value = false
+      controlsVisible.value = false
     }
   }, 3000)
 }
@@ -517,7 +404,7 @@ onMounted(async () => {
     container.addEventListener('mousemove', handleMouseMove)
     container.addEventListener('mouseleave', () => {
       if (isPlaying.value) {
-        showControls.value = false
+        controlsVisible.value = false
       }
     })
   }

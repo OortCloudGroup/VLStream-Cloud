@@ -12,7 +12,7 @@ export const getCustomDevice = id => request({ url: `/custom/device/${id}`, meth
 export const addCustomDevice = data => request({ url: '/custom/device', method: 'post', data })
 export const updateCustomDevice = data => request({ url: '/custom/device', method: 'put', data })
 export const deleteCustomDevices = ids => request({ url: `/custom/device/${ids}`, method: 'delete' })
-export const previewCustomDevice = id => request({ url: `/custom/device/${id}/preview`, method: 'post' })
+export const previewCustomDevice = id => request({ url: `/custom/device/${id}/preview`, method: 'post', timeout: 35000 })
 export const getCustomMediaStatus = () => request({ url: '/custom/device/media/status', method: 'get' })
 export const startCustomRecord = id => request({ url: `/custom/device/${id}/record/start`, method: 'post' })
 export const stopCustomRecord = id => request({ url: `/custom/device/${id}/record/stop`, method: 'post' })

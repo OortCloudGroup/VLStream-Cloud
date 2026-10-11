@@ -15,6 +15,7 @@
 
 <script>
 import {ZLMRTCClient} from './js/ZLMRTCClient';
+import { resolveZlmPlaybackUrl } from '@/utils/zlmPlaybackUrl';
 
 export default {
   name: 'rtcPlayer',
@@ -48,7 +49,7 @@ export default {
       this.webrtcPlayer = new ZLMRTCClient.Endpoint({
         element: this.$refs.videoElement,// video
         debug: true,// whether log
-        zlmsdpUrl: url,//
+        zlmsdpUrl: resolveZlmPlaybackUrl(url),//
         simulecast: false,
         useCamera: false,
         audioEnable: true,
