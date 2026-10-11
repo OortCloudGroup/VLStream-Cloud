@@ -30,9 +30,11 @@ class CloudTrainingControllerRoutingTest {
         IVlsAlgorithmTrainingService tasks = mock(IVlsAlgorithmTrainingService.class);
         CloudTrainingService cloud = mock(CloudTrainingService.class);
         RemoteTrainingService local = mock(RemoteTrainingService.class);
+        OmConversionService om = mock(OmConversionService.class);
         ReflectionTestUtils.setField(controller, "vlsAlgorithmTrainingService", tasks);
         ReflectionTestUtils.setField(controller, "cloudTrainingService", cloud);
         ReflectionTestUtils.setField(controller, "remoteTrainingService", local);
+        ReflectionTestUtils.setField(controller, "omConversionService", om);
         AlgorithmTraining task = new AlgorithmTraining(); task.setId(1L); task.setConfigParams("{\"cloudJobId\":\"test\"}");
         when(tasks.selectAlgorithmTrainingById(1L)).thenReturn(task);
         RemoteTrainingService.LogResult logs = new RemoteTrainingService.LogResult(); logs.setServerManaged(true);
@@ -44,6 +46,7 @@ class CloudTrainingControllerRoutingTest {
         assertEquals("stop_requested", controller.stopTraining(1L).getData());
         verify(cloud).stop(task);
         assertTrue(controller.convertModel(1L).isSuccess());
+        verify(om).enqueue(1L, true);
         verifyNoInteractions(local);
     }
 }

@@ -333,7 +333,7 @@ deployment manifest before production release.
 | MySQL | Business database | `8.4.10-oraclelinux9` | [GitHub Repository](https://github.com/mysql/mysql-server) | [GPLv2 or commercial license](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |
 | Redis | Cache, sessions, online state, and runtime state | `7.4.9-alpine` | [GitHub Repository](https://github.com/redis/redis) | [RSALv2 or SSPLv1](https://redis.io/legal/licenses/) |
 | MinIO / S3 | Event media, model files, and object storage | `RELEASE.2025-09-07T16-13-09Z` | [GitHub Repository](https://github.com/minio/minio) | [AGPLv3 or commercial license](https://min.io/compliance) |
-| HiSilicon OM conversion worker / tool environment **(optional)** | Required only when generating `.om` models for Hi3519DV500; not a prerequisite for starting VLS or using PT models | Target-compatible SVP/ATC SDK, supplied separately | [Conversion configuration](./VLStream-Cloud-Backend-Server/vls-stream/ruoyi-vlstream/src/main/java/com/ruoyi/vlstream/test/vlstream/config/VlsModelConversionProperties.java) | Subject to the vendor SDK license; not bundled with VLS |
+| HiSilicon OM conversion worker / tool environment **(optional)** | Required only when generating `.om` models for Hi3519DV500; not a prerequisite for starting VLS or using PT models | Target-compatible SVP/ATC SDK, supplied separately | [Optional conversion worker setup](./docs/OM_CONVERSION.md) | Subject to the vendor SDK license; not bundled with VLS |
 
 Nginx or an equivalent gateway is normally required for frontend static files
 and reverse proxying. WebRTC Streamer `v0.8.16` is optional for the VLS direct
@@ -342,10 +342,11 @@ helper, not another standalone media platform.
 
 **Optional model conversion dependencies:** VLS coordinates conversion tasks,
 but the Java application does not include the Python or vendor conversion tools.
-The existing ONNX/RKNN path invokes tools on a configured remote host over SSH;
-a standalone platform-side conversion service has not yet been implemented.
-The current AutoDL training flow produces PT models and class files only and
-does not invoke ONNX/OM/RKNN conversion.
+The existing default-GPU ONNX/RKNN path invokes remote tools over SSH.
+AutoDL detection training can enable an optional standalone CPU worker: after PT
+archival, VLS converts it to Hi3519DV500 OM, archives the result in MinIO and
+updates the same model version. Without the worker, PT and class files remain
+available. AutoDL needs no ATC installation or development-P100 connection.
 
 Deploy the OM conversion environment only if HiSilicon OM output is needed. It
 requires an SDK/toolchain matching the target chip, the HiSilicon YOLO exporter,
@@ -355,14 +356,12 @@ the SVP/ATC environment, AIPP configuration, and calibration images. Configure
 `VLSTREAM_ATC_CALIBRATION_IMAGE_COUNT` for that environment. These paths refer to
 the host executing conversion, not automatically to the VLS application host.
 
-The intended standalone deployment is an optional conversion worker that reads
-the model and calibration data from MinIO and writes the converted artifacts
-back to MinIO. This worker is not currently provided as a ready-to-run service or
-Compose component. The existing default-host detection conversion chain still
-attempts OM conversion and has no separate OM enable/disable switch: missing
-tools result in an OM conversion failure, while the PT model and other
-successfully generated formats remain available. Marking this dependency as
-optional does not mean that chain already skips OM automatically.
+Use `deploy/release/compose.om.yaml` and `VLSTREAM_OM_CONVERSION_ENABLED` for the
+standalone worker, with a separately supplied licensed SVP/ATC toolkit mounted
+read-only. See [automatic OM conversion](./docs/OM_CONVERSION.md) for setup,
+supported models and recovery. The legacy SSH settings above apply only to the
+default-host chain; they do not configure the standalone container. Legacy
+conversion failures continue to preserve PT output.
 
 ### Repository layers
 

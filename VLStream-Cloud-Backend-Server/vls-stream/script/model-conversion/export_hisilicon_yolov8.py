@@ -3,6 +3,8 @@
 import argparse
 import shutil
 import types
+import os
+import inspect
 
 import torch
 from torch.onnx.symbolic_helper import parse_args
@@ -108,14 +110,42 @@ def parse_arguments():
     parser.add_argument("--model", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--imgsz", type=int, default=640)
+    parser.add_argument("--classes")
+    parser.add_argument("--safe-load", action="store_true")
     return parser.parse_args()
 
 
 def main():
     """Patch only the loaded Detect head and export a fixed-shape opset-13 ONNX file."""
     args = parse_arguments()
+    if args.imgsz != 640:
+        raise ValueError("Hi3519DV500 requires fixed 640x640 input")
+    if args.safe_load:
+        # Only library-owned model classes; never allow classes named by the checkpoint.
+        import ultralytics.nn.modules as modules
+        from ultralytics.nn.tasks import DetectionModel
+        from torch.torch_version import TorchVersion
+        os.environ['TORCH_FORCE_WEIGHTS_ONLY_LOAD'] = '1'
+        allowed = [DetectionModel, TorchVersion, set]
+        for namespace in (torch.nn, modules):
+            allowed += [value for _, value in inspect.getmembers(namespace, inspect.isclass)
+                        if issubclass(value, torch.nn.Module)]
+        torch.serialization.add_safe_globals(allowed)
     yolo = YOLO(args.model)
     detect = next(module for module in yolo.model.modules() if isinstance(module, Detect))
+    if type(detect) is not Detect or getattr(detect, 'end2end', False) or detect.nl != 3:
+        raise ValueError("Only compatible YOLOv8 detection heads are supported")
+    if args.classes:
+        import yaml
+        with open(args.classes, encoding='utf-8') as stream:
+            expected = yaml.safe_load(stream)['names']
+        if isinstance(expected, dict):
+            expected = [expected[index] for index in range(len(expected))]
+        actual = yolo.names
+        if isinstance(actual, dict):
+            actual = [actual[index] for index in range(len(actual))]
+        if expected != actual or len(expected) != detect.nc:
+            raise ValueError("PT classes do not match the frozen category file")
     detect._inference = types.MethodType(hisilicon_inference, detect)
     exported_path = yolo.export(
         format="onnx",

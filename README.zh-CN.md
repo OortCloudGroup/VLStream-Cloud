@@ -333,15 +333,16 @@ sequenceDiagram
 | MySQL | 业务数据库 | `8.4.10-oraclelinux9` | [GitHub 仓库](https://github.com/mysql/mysql-server) | [GPLv2 或商业许可](https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html) |
 | Redis | 缓存、会话、在线状态和运行态数据 | `7.4.9-alpine` | [GitHub 仓库](https://github.com/redis/redis) | [RSALv2 或 SSPLv1](https://redis.io/legal/licenses/) |
 | MinIO / S3 | 事件媒体、模型文件和对象存储 | `RELEASE.2025-09-07T16-13-09Z` | [GitHub 仓库](https://github.com/minio/minio) | [AGPLv3 或商业许可](https://min.io/compliance) |
-| 海思 OM 转换工作进程 / 工具环境 **（可选）** | 仅生成 Hi3519DV500 的 `.om` 模型时需要；不是 VLS 启动或使用 PT 模型的前提 | 与目标芯片匹配的 SVP/ATC SDK，单独提供 | [转换配置](./VLStream-Cloud-Backend-Server/vls-stream/ruoyi-vlstream/src/main/java/com/ruoyi/vlstream/test/vlstream/config/VlsModelConversionProperties.java) | 遵循厂商 SDK 授权协议，VLS 不随包分发 |
+| 海思 OM 转换工作进程 / 工具环境 **（可选）** | 仅生成 Hi3519DV500 的 `.om` 模型时需要；不是 VLS 启动或使用 PT 模型的前提 | 与目标芯片匹配的 SVP/ATC SDK，单独提供 | [可选转换容器部署](./docs/OM_CONVERSION.md) | 遵循厂商 SDK 授权协议，VLS 不随包分发 |
 
 前端部署通常还需要 Nginx 或等价网关，用于静态文件和反向代理。WebRTC
 Streamer `v0.8.16` 仅用于 VLS 直连 RTSP 转 WebRTC 的可选链路；FFmpeg 是
 WVP/ZLMediaKit 的按需拉流和格式转换辅助程序，不是另一套独立流媒体平台。
 
 **可选模型转换依赖：** VLS 负责转换任务的编排，Java 应用本身不包含 Python 或厂商转换工具。
-现有 ONNX/RKNN 链路通过 SSH 调用已配置远端主机上的工具；平台侧独立转换服务尚未实现。
-当前 AutoDL 训练流程只输出 PT 模型和类别文件，不调用 ONNX/OM/RKNN 转换。
+现有默认 GPU 的 ONNX/RKNN 链路通过 SSH 调用远端工具。AutoDL 目标检测训练可选启用
+VLS 独立 CPU 转换容器，PT 回存后自动生成 Hi3519DV500 OM，回存 MinIO 并补齐同一模型版本。
+未启用时仍仅输出 PT 和类别文件；不要求 AutoDL 安装工具链，也不依赖开发 P100。
 
 只有需要生成海思 OM 时，才需要部署对应转换环境。依赖包括与目标芯片匹配的 SDK/工具链、海思 YOLO
 导出脚本、SVP/ATC 环境、AIPP 配置和校准图片。请按该环境设置
@@ -349,10 +350,10 @@ WVP/ZLMediaKit 的按需拉流和格式转换辅助程序，不是另一套独�
 `VLSTREAM_ATC_SOC_VERSION` 和 `VLSTREAM_ATC_CALIBRATION_IMAGE_COUNT`。这些路径属于实际执行转换的主机，
 不会自动指向 VLS 应用服务器。
 
-独立部署的目标方案是可选的转换工作进程：从 MinIO 读取模型和校准数据，完成后把转换产物回存 MinIO。
-目前尚未提供开箱即用的独立服务或 Compose 组件。现有默认主机的检测模型转换链仍会尝试 OM 转换，
-尚无单独的 OM 启停开关；缺少工具时会记录 OM 转换失败，PT 和其他已成功生成的格式仍保留可用。
-因此，依赖标为“可选”不代表当前转换链已经会自动跳过 OM。
+独立容器使用 `deploy/release/compose.om.yaml`，通过 `VLSTREAM_OM_CONVERSION_ENABLED` 启用，
+需要单独挂载合法取得的 SVP/ATC 工具包。完整前置条件、启动命令、支持的模型及故障恢复见
+[自动 OM 转换指南](./docs/OM_CONVERSION.md)。上述旧 SSH 路径配置只用于默认主机转换链，
+不会代替独立容器配置；旧链仍会尝试 OM 转换，失败不删除 PT。
 
 ### 仓库分层
 

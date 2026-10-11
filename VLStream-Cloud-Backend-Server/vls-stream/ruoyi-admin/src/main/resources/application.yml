@@ -134,6 +134,10 @@ sa-token:
   jwt-secret-key: abcdefghijklmnopqrstuvwxyz
 
 vlstream:
+  # Optional CPU sidecar. Enable only with the shared work volume and matching SVP toolkit.
+  om-conversion:
+    enabled: ${VLSTREAM_OM_CONVERSION_ENABLED:false}
+    work-dir: ${VLSTREAM_OM_WORK_DIR:/app/om-work}
 
   # 线上算力 SSH 密码的加密密钥，在 VLS 后端配置，不在 GPU 实例上配置。
   # 默认无需填写：首次使用自动生成随机密钥并保存到下方持久化文件。

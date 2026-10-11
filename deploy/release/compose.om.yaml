@@ -1,0 +1,29 @@
+# Add with: docker compose -f compose.yaml -f compose.om.yaml up -d backend om-converter
+# Build image from the repository root before enabling; vendor tools are mounted separately.
+services:
+  backend:
+    environment:
+      VLSTREAM_OM_CONVERSION_ENABLED: "true"
+      VLSTREAM_OM_WORK_DIR: /app/om-work
+    volumes:
+      - om-work:/app/om-work
+  om-converter:
+    image: ${OM_CONVERTER_IMAGE:-vlstream-om-converter:hi3519dv500}
+    restart: unless-stopped
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 6g
+    cpus: 2
+    pids_limit: 256
+    environment:
+      OM_WORK_DIR: /work
+      SVP_ROOT: /opt/svp
+    volumes:
+      - om-work:/work
+      - ${VLSTREAM_SVP_DIR:?Set the installed SVP toolkit directory}:/opt/svp:ro
+    tmpfs:
+      - /tmp:size=512m,mode=1777
+volumes:
+  om-work:

@@ -95,6 +95,8 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	private com.ruoyi.vlstream.test.vlstream.service.TrainingDatasetPreflight trainingDatasetPreflight;
 	@Resource
 	private com.ruoyi.vlstream.test.vlstream.service.TrainingPublicationService trainingPublicationService;
+	@javax.annotation.Resource
+	private com.ruoyi.vlstream.test.vlstream.compute.OmConversionService omConversionService;
 
 	@Resource
 	private IVlsAlgorithmService algorithmService;
@@ -489,7 +491,8 @@ public class VlsAlgorithmTrainingController extends BladeController {
 			return R.fail("找不到模型训练");
 		}
 		if (com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService.isCloud(training)) {
-			return R.success("线上训练仅输出 PT 和类别文件，本期不执行格式转换");
+			omConversionService.enqueue(id, true);
+			return R.success("已提交 Hi3519DV500 OM 转换；完成后自动回存并更新同一模型版本");
 		}
 		dataManagementService.lockDatasetForTask(training.getDatasetId());
 		String ptModelPath = training.getModelOutputPath();

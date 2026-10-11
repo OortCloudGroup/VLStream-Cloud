@@ -1,0 +1,10 @@
+**
+!deploy/
+!deploy/om-converter/
+!deploy/om-converter/Dockerfile
+!deploy/om-converter/worker.py
+!VLStream-Cloud-Backend-Server/
+!VLStream-Cloud-Backend-Server/vls-stream/
+!VLStream-Cloud-Backend-Server/vls-stream/script/
+!VLStream-Cloud-Backend-Server/vls-stream/script/model-conversion/
+!VLStream-Cloud-Backend-Server/vls-stream/script/model-conversion/export_hisilicon_yolov8.py
