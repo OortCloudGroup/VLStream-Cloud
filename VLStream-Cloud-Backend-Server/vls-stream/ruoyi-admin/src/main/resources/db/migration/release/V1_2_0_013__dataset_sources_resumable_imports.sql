@@ -1,0 +1,61 @@
+CREATE TABLE vls_dataset_source (
+    id BIGINT NOT NULL PRIMARY KEY,
+    tenant_id VARCHAR(64) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    source_type VARCHAR(24) NOT NULL,
+    endpoint VARCHAR(1000) NULL,
+    region VARCHAR(100) NULL,
+    bucket_name VARCHAR(255) NULL,
+    key_prefix VARCHAR(1000) NOT NULL DEFAULT '',
+    credentials_cipher TEXT NULL,
+    description VARCHAR(1000) NOT NULL DEFAULT '',
+    create_user VARCHAR(64) NULL, create_dept VARCHAR(64) NULL, create_time DATETIME NULL,
+    update_user VARCHAR(64) NULL, update_time DATETIME NULL,
+    status INT NOT NULL DEFAULT 1, is_deleted INT NOT NULL DEFAULT 0,
+    INDEX idx_dataset_source_tenant (tenant_id, is_deleted, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE vls_dataset_import_job (
+    id BIGINT NOT NULL PRIMARY KEY,
+    tenant_id VARCHAR(64) NOT NULL,
+    dataset_id BIGINT NOT NULL,
+    source_id BIGINT NULL,
+    source_name VARCHAR(128) NOT NULL DEFAULT 'local',
+    import_type VARCHAR(24) NOT NULL,
+    annotation_format VARCHAR(24) NOT NULL DEFAULT 'none',
+    filename VARCHAR(200) NOT NULL,
+    file_size BIGINT NOT NULL DEFAULT 0,
+    expected_sha256 VARCHAR(64) NOT NULL DEFAULT '',
+    storage_config VARCHAR(100) NULL,
+    storage_bucket VARCHAR(255) NULL,
+    object_key VARCHAR(1000) NULL,
+    multipart_id VARCHAR(1000) NULL,
+    remote_path TEXT NULL,
+    chunk_size INT NOT NULL DEFAULT 8388608,
+    job_state VARCHAR(24) NOT NULL,
+    transferred_bytes BIGINT NOT NULL DEFAULT 0,
+    total_files INT NOT NULL DEFAULT 0,
+    imported_files INT NOT NULL DEFAULT 0,
+    skipped_files INT NOT NULL DEFAULT 0,
+    failed_files INT NOT NULL DEFAULT 0,
+    result_json MEDIUMTEXT NULL,
+    error_message VARCHAR(1000) NOT NULL DEFAULT '',
+    worker_id VARCHAR(64) NULL,
+    heartbeat_at DATETIME NULL,
+    expires_at DATETIME NOT NULL,
+    create_user VARCHAR(64) NULL, create_dept VARCHAR(64) NULL, create_time DATETIME NULL,
+    update_user VARCHAR(64) NULL, update_time DATETIME NULL,
+    status INT NOT NULL DEFAULT 1, is_deleted INT NOT NULL DEFAULT 0,
+    INDEX idx_import_resume (tenant_id, dataset_id, expected_sha256, job_state),
+    INDEX idx_import_worker (job_state, heartbeat_at),
+    INDEX idx_import_dataset (tenant_id, dataset_id, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE vls_dataset_upload_part (
+    job_id BIGINT NOT NULL,
+    part_number INT NOT NULL,
+    part_size BIGINT NOT NULL,
+    sha256 VARCHAR(64) NOT NULL,
+    etag VARCHAR(255) NOT NULL,
+    PRIMARY KEY (job_id, part_number)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

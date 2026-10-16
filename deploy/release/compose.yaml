@@ -65,7 +65,7 @@ services:
       - "50000-50010:50000-50010/udp"
 
   backend:
-    image: ${BACKEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-backend:1.1.2}
+    image: ${BACKEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-backend:1.2.7}
     restart: unless-stopped
     logging:
       driver: local
@@ -103,7 +103,7 @@ services:
       VLSTREAM_ZLM_PUBLIC_URL: /bus/zlm-server
       ZLMEDIAKIT_SECRET: ${ZLMEDIAKIT_SECRET:-change-this-zlmediakit-secret}
       VLSTREAM_WVP_INTERNAL_BASE_URL: ${VLSTREAM_WVP_INTERNAL_BASE_URL:-http://wvp-backend:8080}
-      VLSTREAM_WVP_DEVICE_BASE_URL: ${VLSTREAM_WVP_DEVICE_BASE_URL:-http://wvp-backend:8080}
+      VLSTREAM_WVP_DEVICE_BASE_URL: ${VLSTREAM_WVP_DEVICE_BASE_URL:-http://host.docker.internal:9080}
       VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED: "false"
       VLSTREAM_TUNNEL_ENABLED: ${VLSTREAM_TUNNEL_ENABLED:-false}
       VLSTREAM_TUNNEL_REMOTE_ADDRESS: ${VLSTREAM_TUNNEL_REMOTE_ADDRESS:-}
@@ -122,7 +122,7 @@ services:
       - backend-logs:/app/logs
 
   frontend:
-    image: ${FRONTEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-frontend:1.1.2}
+    image: ${FRONTEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-frontend:1.2.7}
     restart: unless-stopped
     depends_on:
       - backend

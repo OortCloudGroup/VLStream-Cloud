@@ -19,12 +19,17 @@ docker compose up -d
 Change every password in `.env` before startup and change the application
 password immediately after the first sign-in.
 
-WVP is a required dependency and the sole video-device center. This package
-does not bundle a second WVP copy; deploy `apaas-wvp-server` first and set
+WVP is a required dependency and the sole video-device center. Deploy
+[VLStream WVP Lite v1.0.8](https://github.com/OortCloudGroup/VLStream-Cloud-Lite/releases/tag/v1.0.8)
+first; its public image is `ghcr.io/oortcloudgroup/vlstream-cloud-lite:1.0.8`.
+This package does not bundle a second WVP copy. On the same host, configure
+WVP's HTTP host port as `9080` to avoid the VLS port, and set
 `VLSTREAM_WVP_INTERNAL_BASE_URL` to an address reachable from the backend
 container, such as `http://host.docker.internal:9080` for a separate service on
 the same host. The read-only device lookup uses no additional shared secret;
 keep the internal path reachable only through the backend service network.
+WVP remains responsible for ZLMediaKit; `ZLMEDIAKIT_SECRET` must match WVP's
+`ZLM_SECRET`.
 
 The default Compose file starts MySQL, Redis, MinIO, WebRTC-streamer, the
 backend, and the frontend. To use existing MySQL and Redis services, provide
@@ -41,6 +46,9 @@ initial installation, Flyway applies new migration files automatically whenever
 the backend starts. Back up the database before upgrading, and never edit a
 migration that has already run.
 
+Production uses the `release` Flyway history to continue upgrades from v1.2.6;
+do not switch an existing database between `release` and `mainline` locations.
+
 Update images in `.env`, then run:
 
 ```powershell
@@ -54,6 +62,15 @@ Check status and logs with:
 docker compose ps
 docker compose logs -f backend frontend
 ```
+
+## Optional Hi3519DV500 OM conversion
+
+The archive includes `compose.om.yaml` and `docs/OM_CONVERSION.md` for the
+isolated CPU conversion worker. It requires a matching worker image built from
+the v1.2.7 source and a separately licensed SVP/ATC toolkit mounted read-only.
+No vendor toolkit is included. Follow the guide, then add `-f compose.om.yaml`
+to the existing Compose files when enabling it; the worker is not started by
+default.
 
 ## Optional IPC Remote Management
 

@@ -17,10 +17,14 @@ docker compose up -d
 
 启动前请修改 `.env` 中的所有密码，首次登录后请立即修改系统默认密码。
 
-WVP 是 VLStream 的必选依赖和唯一视频设备中心。本部署包当前不重复打包 WVP；请先部署
-`apaas-wvp-server`。`VLSTREAM_WVP_INTERNAL_BASE_URL` 必须是 backend 容器可访问的 WVP
+WVP 是 VLStream 的必选依赖和唯一视频设备中心。请先部署
+[VLStream WVP Lite v1.0.8](https://github.com/OortCloudGroup/VLStream-Cloud-Lite/releases/tag/v1.0.8)，
+其公开镜像为 `ghcr.io/oortcloudgroup/vlstream-cloud-lite:1.0.8`。本部署包不重复启动 WVP。
+同机部署时，请将 WVP 的 HTTP 主机端口配置为 `9080`，避免与 VLS 端口冲突。
+`VLSTREAM_WVP_INTERNAL_BASE_URL` 必须是 backend 容器可访问的 WVP
 地址，例如同机独立部署时使用 `http://host.docker.internal:9080`。VLS 调用的设备查询接口
 不使用额外共享密钥，应仅通过后端服务网络访问，不要单独暴露该内部路径。
+WVP 仍负责 ZLMediaKit，`.env` 中的 `ZLMEDIAKIT_SECRET` 必须与 WVP 的 `ZLM_SECRET` 一致。
 
 默认 Compose 会启动 MySQL、Redis、MinIO、WebRTC-streamer、后端和前端。如果使用
 已有的 MySQL 与 Redis，请填写外部服务连接变量后执行：
@@ -33,6 +37,7 @@ docker compose -f compose.external.yaml up -d
 
 MySQL 仅在数据卷为空时导入 `sql/init/*.sql`。完成首次安装后，每次后端启动都会由
 Flyway 自动执行尚未运行的新迁移文件。升级前请备份数据库，已经运行过的迁移文件不能修改。
+生产环境使用 `release` Flyway 历史以延续 v1.2.6；已有数据库不能在 `release` 与 `mainline` 之间切换。
 
 在 `.env` 中更新镜像版本后执行：
 
@@ -47,6 +52,13 @@ docker compose up -d
 docker compose ps
 docker compose logs -f backend frontend
 ```
+
+## 可选的 Hi3519DV500 OM 转换
+
+压缩包附带 `compose.om.yaml` 和 `docs/OM_CONVERSION.md`，用于独立、隔离的 CPU 转换服务。
+启用前需使用 v1.2.7 对应源码构建转换镜像，并自行合法准备 SVP/ATC 工具链并只读挂载；
+压缩包不包含厂商工具或其许可证。按指南配置后，在现有 Compose 文件后追加
+`-f compose.om.yaml`；默认部署不会启动该服务。
 
 ## 可选的 IPC 远程管理
 

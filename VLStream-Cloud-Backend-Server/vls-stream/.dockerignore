@@ -1,0 +1,7 @@
+**/target/
+**/src/test/
+**/src/test/resources/
+.git/
+codex/
+.idea/
+*.iml

@@ -12,7 +12,7 @@ services:
       - "50000-50010:50000-50010/udp"
 
   backend:
-    image: ${BACKEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-backend:1.1.2}
+    image: ${BACKEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-backend:1.2.7}
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -37,7 +37,7 @@ services:
       VLSTREAM_WEBRTC_PUBLIC_URL: /bus/webrtc-streamer-server
       VLSTREAM_WEBRTC_INTERNAL_URL: http://webrtc-streamer:8000
       VLSTREAM_WVP_INTERNAL_BASE_URL: ${VLSTREAM_WVP_INTERNAL_BASE_URL}
-      VLSTREAM_WVP_DEVICE_BASE_URL: ${VLSTREAM_WVP_DEVICE_BASE_URL}
+      VLSTREAM_WVP_DEVICE_BASE_URL: ${VLSTREAM_WVP_DEVICE_BASE_URL:-http://host.docker.internal:9080}
       VLSTREAM_NATIVE_DEVICE_LEGACY_ENABLED: "false"
       VLSTREAM_TUNNEL_ENABLED: ${VLSTREAM_TUNNEL_ENABLED:-false}
       VLSTREAM_TUNNEL_REMOTE_ADDRESS: ${VLSTREAM_TUNNEL_REMOTE_ADDRESS:-}
@@ -56,7 +56,7 @@ services:
       - backend-logs:/app/logs
 
   frontend:
-    image: ${FRONTEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-frontend:1.1.2}
+    image: ${FRONTEND_IMAGE:-ghcr.io/oortcloudgroup/vlstream-frontend:1.2.7}
     restart: unless-stopped
     depends_on:
       - backend
