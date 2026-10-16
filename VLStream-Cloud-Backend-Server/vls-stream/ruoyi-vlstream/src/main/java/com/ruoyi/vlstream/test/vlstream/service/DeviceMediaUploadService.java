@@ -23,6 +23,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceMediaUpload;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 import java.io.InputStream;
@@ -31,7 +32,14 @@ import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 
@@ -39,6 +47,7 @@ import java.util.UUID;
  * Issues and validates direct-to-MinIO uploads for device event images.
  */
 @Service
+@Slf4j
 public class DeviceMediaUploadService {
 
 	private static final String STATUS_ISSUED = "ISSUED";
@@ -168,9 +177,44 @@ public class DeviceMediaUploadService {
 			throw new ServiceException("事件图片不存在或尚未绑定");
 		}
 		int safeSeconds = Math.max(60, Math.min(seconds, 3600));
-		return generatePrivateViewUrl(OssFactory.instance(upload.getOssConfigKey()),
-			upload.getObjectKey(), safeSeconds);
+        return signViewUrl(upload, safeSeconds);
 	}
+
+    /** Resolve one page's distinct media references with one tenant-scoped query. */
+    public Map<String, String> getPrivateViewUrls(String tenantId, Collection<String> mediaIds, int seconds) {
+        if (StringUtils.isBlank(tenantId) || mediaIds == null || mediaIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Set<String> distinctIds = new LinkedHashSet<String>();
+        for (String mediaId : mediaIds) {
+            if (StringUtils.isNotBlank(mediaId)) {
+                distinctIds.add(mediaId);
+            }
+        }
+        if (distinctIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<DeviceMediaUpload> uploads = uploadMapper.selectList(new LambdaQueryWrapper<DeviceMediaUpload>()
+            .eq(DeviceMediaUpload::getTenantId, tenantId)
+            .in(DeviceMediaUpload::getMediaId, distinctIds));
+        int safeSeconds = Math.max(60, Math.min(seconds, 3600));
+        Map<String, String> urls = new LinkedHashMap<String, String>();
+        for (DeviceMediaUpload upload : uploads) {
+            if (!tenantId.equals(upload.getTenantId()) || !STATUS_BOUND.equals(upload.getUploadStatus())) {
+                continue;
+            }
+            try {
+                urls.put(upload.getMediaId(), signViewUrl(upload, safeSeconds));
+            } catch (RuntimeException exception) {
+                log.warn("Could not sign private VLS event media {}", upload.getMediaId(), exception);
+            }
+        }
+        return urls;
+    }
+
+    String signViewUrl(DeviceMediaUpload upload, int seconds) {
+        return generatePrivateViewUrl(OssFactory.instance(upload.getOssConfigKey()), upload.getObjectKey(), seconds);
+    }
 
 	String generateUploadUrl(OssClient client, String objectKey, String contentType, int ttlSeconds) {
 		return client.getPresignedPutUrl(objectKey, contentType, ttlSeconds, properties.getPublicEndpoint());

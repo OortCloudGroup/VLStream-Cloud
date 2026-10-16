@@ -48,6 +48,14 @@ public class SmartAnnotationService {
         return task;
     }
 
+    /** Public controls need a creator proof; the trusted worker has no HTTP request context. */
+    private SmartAnnotationTask controlTask(Long id) {
+        SmartAnnotationTask task=task(id);
+        if(org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()!=null)
+            requireCancellationCreator(task);
+        return task;
+    }
+
     public SmartAnnotationRound round(Long id) {
         SmartAnnotationRound round = rounds.selectOne(this.<SmartAnnotationRound>scope().eq("id", id));
         if (round == null) throw new ServiceException("智能标注轮次不存在或无权访问");
@@ -236,7 +244,7 @@ public class SmartAnnotationService {
 
     @Transactional(rollbackFor = Exception.class)
     public void review(Long id, Long candidateId, SmartAnnotationRequests.Review request) {
-        SmartAnnotationTask task = task(id); data.lockDatasetForTask(task.getDatasetId()); task = task(id);
+        SmartAnnotationTask task = controlTask(id); data.lockDatasetForTask(task.getDatasetId()); task = controlTask(id);
         if (!Arrays.asList("REVIEW", "CONFIRMING").contains(task.getTaskState())) throw new ServiceException("当前任务不可确认标注");
         if (!task.getAnnotationType().equals(data.project(task.getDatasetId()).getAnnotationType())) throw new ServiceException("数据集类型已变更，请取消旧任务后重新发起");
         SmartAnnotationCandidate candidate = candidates.selectOne(this.<SmartAnnotationCandidate>scope().eq("id", candidateId)
@@ -282,7 +290,7 @@ public class SmartAnnotationService {
 
     @Transactional(rollbackFor = Exception.class)
     public void confirmBatch(Long id, List<Long> ids) {
-        SmartAnnotationTask task = task(id);
+        SmartAnnotationTask task = controlTask(id);
         for (Long candidateId : new LinkedHashSet<>(ids)) {
             SmartAnnotationCandidate candidate = candidates.selectOne(this.<SmartAnnotationCandidate>scope().eq("id", candidateId).eq("round_id", current(task).getId()));
             if (candidate == null) throw new ServiceException("选中的结果不属于当前轮次");
@@ -295,7 +303,7 @@ public class SmartAnnotationService {
 
     @Transactional(rollbackFor = Exception.class)
     public void next(Long id) {
-        SmartAnnotationTask task = task(id); data.lockDatasetForTask(task.getDatasetId()); task = task(id);
+        SmartAnnotationTask task = controlTask(id); data.lockDatasetForTask(task.getDatasetId()); task = controlTask(id);
         if (!"active".equals(task.getMode()) || !"REVIEW".equals(task.getTaskState()) || task.getRoundNumber() >= maxRounds)
             throw new ServiceException("当前任务不能启动下一轮");
         SmartAnnotationRound round = current(task);
@@ -310,7 +318,7 @@ public class SmartAnnotationService {
 
     @Transactional(rollbackFor = Exception.class)
     public void finish(Long id) {
-        SmartAnnotationTask task = task(id); data.lockDatasetForTask(task.getDatasetId()); task = task(id);
+        SmartAnnotationTask task = controlTask(id); data.lockDatasetForTask(task.getDatasetId()); task = controlTask(id);
         if (!"REVIEW".equals(task.getTaskState())) throw new ServiceException("当前任务不可完成");
         DataRequests.Version version = new DataRequests.Version(); version.setName("智能标注结果 · " + shortName(task.getTaskName()));
         version.setDescription("仅包含已确认标注，未确认预标注不会进入训练"); data.saveVersion(task.getDatasetId(), version);
@@ -319,7 +327,7 @@ public class SmartAnnotationService {
 
     @Transactional(rollbackFor = Exception.class)
     public void retry(Long id) {
-        SmartAnnotationTask task = task(id); data.lockDatasetForTask(task.getDatasetId()); task = task(id);
+        SmartAnnotationTask task = controlTask(id); data.lockDatasetForTask(task.getDatasetId()); task = controlTask(id);
         if (!"FAILED".equals(task.getTaskState())) throw new ServiceException("只有失败任务可以重试");
         SmartAnnotationRound round = current(task);
         rounds.update(null, new UpdateWrapper<SmartAnnotationRound>().eq("id", round.getId()).eq("tenant_id", data.tenant()).set("round_state", "QUEUED").set("error_message", null));
@@ -329,17 +337,28 @@ public class SmartAnnotationService {
 
     @Transactional(rollbackFor = Exception.class)
     public void cancel(Long id) {
-        SmartAnnotationTask task = task(id); data.lockDatasetForTask(task.getDatasetId()); task = task(id);
+        SmartAnnotationTask task = task(id); requireCancellationCreator(task);
+        data.lockDatasetForTask(task.getDatasetId()); task = task(id); requireCancellationCreator(task);
         if (Arrays.asList("COMPLETED", "CANCELLED").contains(task.getTaskState())) return;
         String state = Arrays.asList("FAILED", "REVIEW", "CONFIRMING").contains(task.getTaskState()) ? "CANCELLED" : "CANCEL_REQUESTED";
         task.setTaskState(state); tasks.updateById(task);
+    }
+
+    private void requireCancellationCreator(SmartAnnotationTask task) {
+        String user;
+        try { user=com.ruoyi.common.helper.LoginHelper.getUserId(); }
+        catch(Exception error) { throw new ServiceException("缺少可信任务操作身份"); }
+        if(user==null || user.isEmpty() || task.getCreateUser()==null
+            || !Objects.equals(data.tenant(),task.getTenantId())
+            || !Objects.equals(user,String.valueOf(task.getCreateUser())))
+            throw new ServiceException("只能操作当前租户中自己创建的智能标注任务");
     }
 
     private String shortName(String name) { return name.substring(0, Math.min(70, name.length())); }
 
     @Transactional(rollbackFor = Exception.class)
     public void confirmAll(Long id) {
-        SmartAnnotationTask task = task(id); data.lockDatasetForTask(task.getDatasetId()); task = task(id);
+        SmartAnnotationTask task = controlTask(id); data.lockDatasetForTask(task.getDatasetId()); task = controlTask(id);
         if ("CONFIRMING".equals(task.getTaskState())) return;
         if (!"REVIEW".equals(task.getTaskState())) throw new ServiceException("当前任务不可批量确认");
         int total = candidates.selectCount(this.<SmartAnnotationCandidate>scope().eq("round_id", current(task).getId()).eq("review_state", "PENDING")).intValue();

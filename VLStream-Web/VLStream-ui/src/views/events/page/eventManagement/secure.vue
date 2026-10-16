@@ -61,14 +61,18 @@
               <export-excel-pdf />
             </div>
           </div>
-          <TableSelf
+          <el-table
+            ref="eventTableRef"
+            v-loading="listLoading"
             class="new_table vertically-centered-actions"
             scrollbar-always-on
             header-cell-class-name="header_tenant_cell"
             stripe
             :row-class-name="tableRowClassName"
             :data="tableData"
-            current-row-key="user_id"
+            row-key="id"
+            highlight-current-row
+            @row-click="handleRowClick"
             @selection-change="handleSelectionChange"
           >
             <el-table-column type="selection" width="48" />
@@ -174,7 +178,7 @@
                 </div>
               </template>
             </el-table-column>
-          </TableSelf>
+          </el-table>
           <div class="paginationBox flexRowAC">
             <el-pagination
               background
@@ -257,6 +261,10 @@ const eventDetailsVis = ref(false)
 const videoDialogVisible = ref(false)
 const currentVideoUrl = ref<string>('')
 const selectedRows = ref<any[]>([])
+const eventTableRef = ref()
+const deleting = ref(false)
+const listLoading = ref(false)
+let listRequestId = 0
 const eventItemList = ref<any[]>([]) // event
 const itemTemp = ref<any>('') // event value
 const tableRowClassName = ({ row }) => {
@@ -356,6 +364,10 @@ const handleClassificationFilter = async(filter: { categoryType?: string, catego
 }
 
 const getList = async() => {
+  const requestId = ++listRequestId
+  listLoading.value = true
+  selectedRows.value = []
+  eventTableRef.value?.clearSelection()
   try {
     let data = {
       ...params,
@@ -368,12 +380,18 @@ const getList = async() => {
       data['end_at'] = dayjs(datePickerTime.value[1]).format('YYYY-MM-DD 23:59:59')
     }
     const res:any = await eventList(data)
+    if (requestId !== listRequestId) return
     if (res.code === 200) {
       tableData.value = res.data.list
       count.value = res.data.count
+    } else {
+      ElMessage.error(res.msg || uiText('获取数据失败'))
     }
   } catch (error: any) {
+    if (requestId !== listRequestId) return
     ElMessage.error(error.message || uiText('获取数据失败'))
+  } finally {
+    if (requestId === listRequestId) listLoading.value = false
   }
 }
 const handleSizeChange = (val: number) => {
@@ -394,40 +412,56 @@ const _editTask = (data) => {
 
 // Process table
 const handleSelectionChange = (selection: any[]) => {
-  selectedRows.value = selection
+  selectedRows.value = listLoading.value ? [] : selection
+}
+
+const handleRowClick = (row: any) => {
+  if (listLoading.value || deleting.value) return
+  eventTableRef.value?.toggleRowSelection(row)
 }
 
 const deleteTask = async() => {
+  if (deleting.value) return
   if (selectedRows.value.length === 0) {
     ElMessage.warning(uiText('请选择要删除的事件'))
     return
   }
 
-  // Delete
-  await ElMessageBox.confirm(
-    translatePhrase('确定删除所选事件吗？'),
-    translatePhrase('删除确认'),
-    {
-      confirmButtonText: uiText('确定'),
-      cancelButtonText: uiText('取消'),
-      type: 'warning'
+  const ids = [...new Set(selectedRows.value.map(row => row.id))]
+  deleting.value = true
+  try {
+    try {
+      await ElMessageBox.confirm(
+        translatePhrase('确定删除所选事件吗？'),
+        translatePhrase('删除确认'),
+        {
+          confirmButtonText: uiText('确定'),
+          cancelButtonText: uiText('取消'),
+          type: 'warning'
+        }
+      )
+    } catch {
+      return
     }
-  )
 
-  // Batch delete
-  const deletePromises = selectedRows.value.map(row => {
-    const params = {
-      accessToken: store.token,
-      id: row.id
+    const results = await Promise.allSettled(ids.map(id =>
+      Promise.resolve().then(() => delEvent({ id }))
+    ))
+    const succeeded = results.filter(result =>
+      result.status === 'fulfilled' && result.value?.code === 200
+    ).length
+    const failed = results.length - succeeded
+    if (failed === 0) {
+      ElMessage.success(uiText('已删除 {count} 条事件', { count: succeeded }))
+    } else if (succeeded > 0) {
+      ElMessage.warning(uiText('已删除 {success} 条事件，{failed} 条删除失败，请重试', { success: succeeded, failed }))
+    } else {
+      ElMessage.error(uiText('{count} 条事件删除失败，请重试', { count: failed }))
     }
-    return delEvent(params)
-  })
-
-  await Promise.all(deletePromises)
-
-  ElMessage.success(uiText('删除成功'))
-  // new Get
-  getList()
+    await getList()
+  } finally {
+    deleting.value = false
+  }
 }
 
 // event

@@ -40,6 +40,7 @@
       v-if="modelValue.length < maxCount"
       :action="uploadURL"
       :headers="headers"
+      :http-request="uploadTrustedApi"
       :accept="accept"
       :show-file-list="false"
       :multiple="false"
@@ -70,6 +71,8 @@ import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, CircleCloseFilled, Download, View } from '@element-plus/icons-vue'
 import Config from '@/config'
+import { uploadTrustedApi } from '@/utils/trustedUpload'
+import { apaasServiceUrl } from '@/utils/apaasApiBase'
 
 const props = defineProps({
   modelValue: {
@@ -96,7 +99,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
-const uploadURL = ref(Config.URL + Config.gateWay + 'apaas-fastdfsservice/fastdfs/v1/uploadFile')
+const uploadURL = ref(apaasServiceUrl('apaas-fastdfsservice', 'fastdfs/v1/uploadFile'))
 const headers = ref(Config.headers)
 
 const previewVisible = ref(false)

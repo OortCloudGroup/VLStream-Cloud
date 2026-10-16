@@ -441,7 +441,7 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
             where.add("te.item LIKE ?");
             args.add("%" + keyword + "%");
         }
-        return LocationTaskResult.success(pagedEvents(from.toString(), where, args, page, pageSize));
+        return LocationTaskResult.success(pagedEvents(from.toString(), where, args, page, pageSize, user.getTenantId()));
     }
 
     /**
@@ -618,15 +618,26 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         if (eventId.isEmpty()) {
             return parameterError("参数错误 id不能为空");
         }
-        Map<String, Object> event = findEventRaw(eventId);
+        // The tenant event list is available to authenticated tenant users. Keep
+        // that scope; camera events are owned by a device, not the deleting user.
+        if (user == null || string(user.getTenantId()).isEmpty() || string(user.getUserId()).isEmpty()) {
+            return error(NOT_FOUND, "没找到记录");
+        }
+        Map<String, Object> event = findEventRaw(eventId, user.getTenantId());
         if (event == null) {
             return error(NOT_FOUND, "没找到记录");
         }
         EventKey key = EventKey.parse(eventId);
-        jdbc.update("UPDATE " + EVENT + " SET deleted_at = ?, updated_at = NOW() WHERE id = ? AND `no` = ?",
-            System.currentTimeMillis(), key.getId(), key.getNo());
-        jdbc.update("DELETE FROM " + EVENT_USER + " WHERE task_event_id = ?", eventId);
-        jdbc.update("DELETE FROM " + EVENT_BACK + " WHERE task_event_id = ?", eventId);
+        int updated = jdbc.update("UPDATE " + EVENT
+                + " SET deleted_at = ?, updated_at = NOW() WHERE id = ? AND `no` = ? AND tenant_id = ? AND deleted_at = 0",
+            System.currentTimeMillis(), key.getId(), key.getNo(), user.getTenantId());
+        if (updated == 0) {
+            return error(NOT_FOUND, "没找到记录");
+        }
+        jdbc.update("DELETE FROM " + EVENT_USER + " WHERE task_event_id = ? AND tenant_id = ?",
+            eventId, user.getTenantId());
+        jdbc.update("DELETE FROM " + EVENT_BACK + " WHERE task_event_id = ? AND tenant_id = ?",
+            eventId, user.getTenantId());
         return LocationTaskResult.success();
     }
 
@@ -687,7 +698,7 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         appendPositiveEquals(where, args, body, "status", "te.status");
         appendEquals(where, args, body, "item", "te.item");
         appendPictureFilter(where, body, "te.pic_len");
-        return LocationTaskResult.success(pagedEvents(from.toString(), where, args, page, pageSize));
+        return LocationTaskResult.success(pagedEvents(from.toString(), where, args, page, pageSize, user.getTenantId()));
     }
 
     /**
@@ -2213,6 +2224,10 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
      * Convert one event database row and expand its JSON and executor relations.
      */
     private Map<String, Object> toEvent(Map<String, Object> row) {
+        return toEvent(row, null);
+    }
+
+    private Map<String, Object> toEvent(Map<String, Object> row, Map<String, String> pictureUrls) {
         String rawId = string(row.get("id"));
         long no = number(row.get("no")).longValue();
         String externalId = no == 0L ? rawId : rawId + "-" + no;
@@ -2226,7 +2241,9 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         Map<String, Object> data = jsonMap(row.get("data"));
         value.put("describe", string(data.get("describe")));
         value.put("point", pointValue(data.get("point")));
-        value.put("pics", resolveEventPictures(distinctStrings(data.get("pics"), true)));
+        List<String> pictures = distinctStrings(data.get("pics"), true);
+        value.put("pics", pictureUrls == null ? resolveEventPictures(pictures)
+            : resolveEventPictures(pictures, pictureUrls));
         value.put("send_pics", distinctStrings(data.get("send_pics"), false));
         value.put("video", data.containsKey("video") ? data.get("video") : null);
         if (data.get("work_order_data") instanceof Map && !((Map<?, ?>) data.get("work_order_data")).isEmpty()) {
@@ -2291,6 +2308,36 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         return resolved;
     }
 
+    private List<String> resolveEventPictures(List<String> pictures, Map<String, String> pictureUrls) {
+        List<String> resolved = new ArrayList<String>(pictures.size());
+        for (String picture : pictures) {
+            String url = picture.startsWith(VLS_MEDIA_PREFIX)
+                ? pictureUrls.get(picture.substring(VLS_MEDIA_PREFIX.length())) : null;
+            resolved.add(url == null ? picture : url);
+        }
+        return resolved;
+    }
+
+    private Map<String, String> pagePictureUrls(List<Map<String, Object>> rows, String tenantId) {
+        Set<String> mediaIds = new LinkedHashSet<String>();
+        for (Map<String, Object> row : rows) {
+            for (String picture : distinctStrings(jsonMap(row.get("data")).get("pics"), true)) {
+                if (picture.startsWith(VLS_MEDIA_PREFIX)) {
+                    mediaIds.add(picture.substring(VLS_MEDIA_PREFIX.length()));
+                }
+            }
+        }
+        if (mediaIds.isEmpty() || deviceMediaUploadService == null) {
+            return Collections.emptyMap();
+        }
+        try {
+            return deviceMediaUploadService.getPrivateViewUrls(tenantId, mediaIds, 3600);
+        } catch (RuntimeException exception) {
+            LOGGER.warn("Could not resolve private VLS event media for tenant {}", tenantId, exception);
+            return Collections.emptyMap();
+        }
+    }
+
     /**
      * Append a non-empty string field to an output map.
      */
@@ -2344,11 +2391,18 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
             key.getId(), key.getNo());
     }
 
+    private Map<String, Object> findEventRaw(String externalId, String tenantId) {
+        EventKey key = EventKey.parse(externalId);
+        return firstRow("SELECT * FROM " + EVENT
+                + " WHERE id = ? AND `no` = ? AND tenant_id = ? AND deleted_at = 0 LIMIT 1",
+            key.getId(), key.getNo(), tenantId);
+    }
+
     /**
      * Build a page payload and expand every event row.
      */
     private Map<String, Object> pagedEvents(String from, List<String> where, List<Object> args,
-                                             int page, int pageSize) {
+                                             int page, int pageSize, String tenantId) {
         String condition = where.isEmpty() ? "" : " WHERE " + join(where, " AND ");
         Long count = jdbc.queryForObject("SELECT COUNT(*)" + from + condition, Long.class, args.toArray());
         List<Object> queryArgs = new ArrayList<Object>(args);
@@ -2358,8 +2412,9 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
             "SELECT te.*" + from + condition + " ORDER BY te.created_at DESC LIMIT ? OFFSET ?",
             queryArgs.toArray());
         List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+        Map<String, String> pictureUrls = pagePictureUrls(rows, tenantId);
         for (Map<String, Object> row : rows) {
-            list.add(toEvent(row));
+            list.add(toEvent(row, pictureUrls));
         }
         return pagePayload(page, pageSize, count == null ? 0L : count, list);
     }

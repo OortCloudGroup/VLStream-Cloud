@@ -34,6 +34,7 @@
             class="avatar-uploader"
             :action="upfileURL"
             :headers="headers"
+            :http-request="uploadTrustedApi"
             accept=".png, .jpg, .jpeg"
             :show-file-list="false"
             :multiple="false"
@@ -90,12 +91,14 @@ import { addModel, copyModel, processCategoryList, updateModel } from '@/api/pro
 import { ElMessage } from 'element-plus'
 import { onMounted, reactive, ref } from 'vue'
 import Config from '@/config'
+import { uploadTrustedApi } from '@/utils/trustedUpload'
+import { apaasServiceUrl } from '@/utils/apaasApiBase'
 import { getStoredWorkOrderAppContext } from '@/utils/workOrderAppContext'
 
 const props = defineProps(['item', 'type', 'app', 'isType'])/* type:0新增 1copy 2编辑 isType:工单1 流程0 */
 const emits: any = defineEmits(['handle', 'close'])
 const headers = ref(Config.headers)
-const upfileURL = ref(Config.URL + Config.gateWay + 'apaas-fastdfsservice/fastdfs/v1/uploadFile')
+const upfileURL = ref(apaasServiceUrl('apaas-fastdfsservice', 'fastdfs/v1/uploadFile'))
 let ruleFormRef = ref(null)
 const iconId = ref('')
 const addModelType = ref(props.type || 0) // 0 Add 、1, copy , 2
