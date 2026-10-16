@@ -82,6 +82,7 @@ class GpuTrainingSchedulerServiceTest {
 		active.setId(10L);
 		active.setTenantId("tenant-a");
 		active.setInstanceName("vls-training-10");
+		active.setInstanceType("training");active.setTrainingTaskId(10L);active.setCreateUser("101");
 		active.setInstanceStatus("running");
 		when(mapper.selectActiveTrainingForScheduler()).thenReturn(Collections.singletonList(active));
 		when(sshService.executeCommand(anyString(), anyInt(), anyString(), anyString(), anyString()))
@@ -178,7 +179,7 @@ class GpuTrainingSchedulerServiceTest {
 		VlsContainerInstanceMapper mapper = mock(VlsContainerInstanceMapper.class);
 		IVlsContainerInstanceService containers = mock(IVlsContainerInstanceService.class);
 		SSHService ssh = mock(SSHService.class);
-		ContainerInstance instance = new ContainerInstance(); instance.setId(8L); instance.setTenantId("tenant-a"); instance.setInstanceType("smart_annotation"); instance.setInstanceStatus("queued");
+		ContainerInstance instance = new ContainerInstance(); instance.setId(8L); instance.setTenantId("tenant-a"); instance.setInstanceType("smart_annotation"); instance.setInstanceStatus("queued");instance.setTrainingTaskId(30L);instance.setCreateUser("101");instance.setInstanceName("vls-annotation-30-12345678");
 		when(mapper.selectActiveTrainingForScheduler()).thenReturn(Collections.emptyList()); when(mapper.selectNextQueuedTrainingForScheduler()).thenReturn(instance);
 		when(worker.cancelRequested(instance)).thenReturn(true);
 		setField(scheduler, "smartAnnotationWorker", worker); setField(scheduler, "containerInstanceMapper", mapper); setField(scheduler, "containerInstanceService", containers); setField(scheduler, "sshService", ssh);
@@ -203,6 +204,11 @@ class GpuTrainingSchedulerServiceTest {
 	}
 
 	private void invokeSchedule(GpuTrainingSchedulerService scheduler) throws Exception {
+        if(org.springframework.test.util.ReflectionTestUtils.getField(scheduler,"sshProperties")==null) {
+            com.ruoyi.vlstream.test.vlstream.config.VlsSshProperties sshProperties=mock(com.ruoyi.vlstream.test.vlstream.config.VlsSshProperties.class);
+            when(sshProperties.getHost()).thenReturn("scheduler-fixture.invalid");when(sshProperties.getPort()).thenReturn(22);
+            setField(scheduler,"sshProperties",sshProperties);
+        }
 		Method method = GpuTrainingSchedulerService.class.getDeclaredMethod("scheduleSafely");
 		method.setAccessible(true);
 		method.invoke(scheduler);
