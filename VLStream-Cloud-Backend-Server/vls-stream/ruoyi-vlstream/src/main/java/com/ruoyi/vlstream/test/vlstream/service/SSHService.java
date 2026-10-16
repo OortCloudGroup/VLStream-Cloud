@@ -11,11 +11,16 @@ package com.ruoyi.vlstream.test.vlstream.service;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
+import com.jcraft.jsch.HostKey;
+import com.ruoyi.vlstream.test.vlstream.compute.ComputeSsh;
+import com.ruoyi.vlstream.test.vlstream.compute.ComputeTrustedSelfPolicy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Properties;
+import java.util.Base64;
 
 /**
  * SSH service
@@ -23,6 +28,30 @@ import java.util.Properties;
 @Slf4j
 @Service
 public class SSHService {
+    @Autowired(required = false)
+    private ComputeTrustedSelfPolicy trustedSelfPolicy;
+
+    Session session(JSch jsch, String host, int port, String username, String password) throws Exception {
+        // An approved private endpoint must be pinned even when reached through this legacy service.
+        ComputeTrustedSelfPolicy.Target target = null;
+        if ("192.168.88.173".equals(host) || "192.168.88.99".equals(host)) {
+            if (trustedSelfPolicy == null) throw new IllegalStateException("受信资产主机指纹未配置");
+            target = trustedSelfPolicy.resolveLegacy(host, port, username);
+        }
+        String alias = host + ":" + port;
+        if (target != null) jsch.getHostKeyRepository().add(new HostKey(alias, Base64.getDecoder().decode(target.hostKey())), null);
+        Session result = jsch.getSession(username, host, port);
+        if (target != null) {
+            result.setSocketFactory(ComputeSsh.verifiedSockets(target.addresses()));
+            result.setHostKeyAlias(alias);
+            result.setConfig("server_host_key", target.requiredAlgorithm());
+        }
+        result.setPassword(password);
+        Properties config = new Properties();
+        config.put("StrictHostKeyChecking", target == null ? "no" : "yes");
+        result.setConfig(config);
+        return result;
+    }
 
     /**
      * SSH configuration
@@ -43,13 +72,7 @@ public class SSHService {
             JSch jsch = new JSch();
 
             // will
-            session = jsch.getSession(username, host, port);
-            session.setPassword(password);
-
-            // Set property
-            Properties config = new Properties();
-            config.put("StrictHostKeyChecking", "no");
-            session.setConfig(config);
+            session = session(jsch, host, port, username, password);
 
             //
             session.connect(CONNECT_TIMEOUT);
@@ -69,7 +92,7 @@ public class SSHService {
 
             // Execute
             channel.connect(SESSION_TIMEOUT);
-            log.debug("SSH命令执行: {}", command);
+            log.debug("SSH命令执行，命令长度: {}", command == null ? 0 : command.length());
 
             // etc. Execute
             while (!channel.isClosed()) {
@@ -124,12 +147,7 @@ public class SSHService {
         Session session = null;
         try {
             JSch jsch = new JSch();
-            session = jsch.getSession(username, host, port);
-            session.setPassword(password);
-
-            Properties config = new Properties();
-            config.put("StrictHostKeyChecking", "no");
-            session.setConfig(config);
+            session = session(jsch, host, port, username, password);
 
             session.connect(CONNECT_TIMEOUT);
             log.info("SSH连接测试成功: {}@{}:{}", username, host, port);

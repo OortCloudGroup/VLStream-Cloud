@@ -49,6 +49,8 @@ public class CloudTrainingWorker {
         Thread thread = new Thread(runnable, "autodl-training-worker"); thread.setDaemon(true); return thread;
     });
     @Value("${vlstream.model-storage.temp-dir:${java.io.tmpdir}/vls-model-storage}") private String tempDir;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ComputeSharedQueueService sharedQueue;
 
     @Scheduled(fixedDelay = 5000, initialDelay = 20000)
     public void scan() {
@@ -72,8 +74,18 @@ public class CloudTrainingWorker {
                 if (jobs.isEmpty()) return;
                 CloudTrainingJob job = jobs.get(0);
                 TenantContextHolder.setTenantId(job.getTenantId());
-                try { process(job); }
-                catch (ServiceException e) { finish(job, "FAILED", limited(e.getMessage()), null); }
+                try {
+                    if (sharedQueue!=null && sharedQueue.isSharedJob(job)) {
+                        ComputeNode node=nodes.get(nodeId);
+                        List<CloudTrainingJob> queue=jdbc.query("SELECT id,tenant_id,node_id,public_owner_subject,options_json,run_dir,job_state,cancel_requested FROM vls_cloud_training_job WHERE node_id=? AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED') ORDER BY create_time,container_record_id",new BeanPropertyRowMapper<>(CloudTrainingJob.class),nodeId);
+                        try(ComputeSsh.Connection connection=ssh.open(node)) { sharedQueue.register(connection,node,queue); }
+                    }
+                    process(job);
+                }
+                catch (ServiceException e) {
+                    if(sharedQueue!=null && sharedQueue.isSharedJob(job)) jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?","共享任务等待节点确认，租约未释放；请管理员核对配置/队列",job.getTenantId(),job.getId());
+                    else finish(job, "FAILED", limited(e.getMessage()), null);
+                }
                 catch (Exception e) {
                     // A broken connection does not prove that a remote process has stopped.
                     jdbc.update("UPDATE vls_cloud_training_job SET message=?,update_time=NOW() WHERE tenant_id=? AND id=?",
@@ -93,8 +105,13 @@ public class CloudTrainingWorker {
     }
 
     private void process(CloudTrainingJob job) throws Exception {
-        if (job.isCancelRequested() && "QUEUED".equals(job.getJobState())) { finish(job, "CANCELLED", "训练已取消", null); return; }
         ComputeNode node = nodes.get(job.getNodeId());
+        boolean company=sharedQueue!=null && sharedQueue.isSharedJob(job);
+        if(nodes.isCompanyShared(node)!=company)throw new IOException("节点调度类型与本轮冻结配置不一致，不能切换执行路径");
+        if (job.isCancelRequested() && "QUEUED".equals(job.getJobState())) {
+            if(company)try(ComputeSsh.Connection connection=ssh.open(node)){sharedQueue.release(connection,node,job,json.readTree("{\"state\":\"CANCELLED\"}"),null);}
+            finish(job, "CANCELLED", "训练已取消", null); return;
+        }
         if (!node.isEnabled()) return;
         if ("QUEUED".equals(job.getJobState())) phase(job, "PREPARING", "正在上传固定版本的数据集", 0, 0);
         if ("PREPARING".equals(job.getJobState()) && !cancelled(job)) persistDatasetReference(job, datasets.ensureArtifact(job));
@@ -102,26 +119,34 @@ public class CloudTrainingWorker {
             String configPath = job.getRunDir() + "/job.json";
             String prepared = connection.execute("test -s " + quote(configPath) + " && echo READY || echo MISSING", 20).trim();
             if (!"READY".equals(prepared)) {
-                if (cancelled(job)) { finish(job, "CANCELLED", "训练已取消", null); return; }
+                if (cancelled(job)) {
+                    if(company)sharedQueue.release(connection,node,job,json.readTree("{\"state\":\"CANCELLED\"}"),null);
+                    finish(job, "CANCELLED", "训练已取消", null); return;
+                }
                 if (!"PREPARING".equals(job.getJobState())) throw new ServiceException("实例中的本轮任务文件已缺失，无法恢复运行状态");
                 connection.mkdir(job.getRunDir());
                 datasets.upload(job, data.readSnapshot(job.getSnapshotJson()), connection);
                 Map<String, Object> config = json.readValue(job.getOptionsJson(), new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() { });
                 config.put("annotationType", job.getAnnotationType()); config.put("datasetId", String.valueOf(job.getDatasetId()));
-                config.put("workDir", node.getWorkDir()); config.put("gpuIndex", node.getGpuIndex());
+                config.put("workDir", node.getWorkDir()); config.put("gpuIndex", company ? json.readTree(job.getOptionsJson()).path("sharedQueue").path("gpuIndex").asInt(-1) : node.getGpuIndex());
                 config.put("model", prepareBaseModel(job, connection));
                 connection.putText(configPath + ".tmp", json.writeValueAsString(config));
                 connection.execute("mv -- " + quote(configPath + ".tmp") + " " + quote(configPath), 20);
             }
-            String command = quote(node.getPythonPath()) + " " + quote(job.getRunDir() + "/cloud_training_runner.py");
+            String command = (company?sharedQueue.pythonCommand(node):quote(node.getPythonPath())) + " " + quote(job.getRunDir() + "/cloud_training_runner.py");
             JsonNode result = remoteStatus(connection.execute(command + (cancelled(job) ? " cancel " : " status ") + quote(configPath), 45));
             jdbc.update("UPDATE vls_cloud_training_job SET log_tail=? WHERE tenant_id=? AND id=?", result.path("logs").asText(""), job.getTenantId(), job.getId());
             String state = result.path("state").asText();
             if ("SUCCEEDED".equals(state)) {
                 phase(job, "ARCHIVING", "训练已完成，正在校验并回存 PT 和类别文件", 99, result.path("epoch").asInt());
                 archive(job, connection, result);
+                if(company) {
+                    String classes=new TrainingDatasetLayout(job.getAnnotationType(),data.readSnapshot(job.getSnapshotJson()).getLabels()).yaml(job.getRunDir()+"/dataset");
+                    sharedQueue.release(connection,node,job,result,ModelArtifactObjectStore.hash(classes));
+                }
                 finish(job, "COMPLETED", "PT 和类别文件已校验并回存平台", job.modelKey());
             } else if ("FAILED".equals(state) || "CANCELLED".equals(state)) {
+                if(company)sharedQueue.release(connection,node,job,result,null);
                 finish(job, state, limited(result.path("message").asText("训练进程结束")), null);
             } else if ("NOT_STARTED".equals(state) || "WAITING".equals(state)) {
                 phase(job, "PREPARING", result.path("message").asText("等待 GPU 资源"), 0, 0);

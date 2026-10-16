@@ -26,6 +26,30 @@ public class ComputeNodeService {
     private ComputePlatformAuthorization platformAuthorization;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ComputePublicInventoryService publicInventory;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ComputeNodeOwnershipService ownership;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ComputeSharedQueueService sharedQueue;
+    public boolean isCompanyShared(ComputeNode node){return sharedQueue!=null && sharedQueue.isShared(node);}
+    ComputeNodeOwnershipService ownership(){if(ownership==null)throw new ServiceException("算力归属服务未就绪，不能管理个人资源");return ownership;}
+    public void requireManagement(ComputeNode node){ownership().requireManagement(node);}
+    public boolean canManage(ComputeNode node){return ownership().canManage(node);}
+    public boolean canUsePrivate(ComputeNode node){return ownership().owns(node);}
+    public String trainingSubject(ComputeNode node,String creator){
+        if(isCompanyShared(node))return sharedQueue.requireCreator(creator);
+        if(!"PLATFORM".equals(node.getResourceScope()) && node.getPublicInstanceKey()==null
+            && ownership().isLocalOwner(node)) {
+            ownership().requirePrivateUse(node);
+            ownership().requireCreator(creator);
+            // Private jobs use the established tenant + immutable local creator access path.
+            // Never mint a public platform identity from a local VLS login.
+            return null;
+        }
+        ComputePlatformAuthorization.Context actor=ownership().identity();
+        if(!java.util.Objects.equals(actor.getVlsUserId(),creator))throw new ServiceException("只能提交当前用户自己的训练任务");
+        if(!"PLATFORM".equals(node.getResourceScope()) && node.getPublicInstanceKey()==null)ownership().requirePrivateUse(node);
+        return ComputePublicInventoryService.subject(actor);
+    }
     ComputePublicInventoryService publicInventory() {
         if (publicInventory == null) throw new ServiceException("公共实例占用服务未就绪，不能操作或训练");
         return publicInventory;
@@ -42,9 +66,47 @@ public class ComputeNodeService {
     }
 
     public List<ComputeNode> list() {
-        return jdbc.query("SELECT * FROM vls_compute_node WHERE tenant_id=? ORDER BY create_time DESC", mapper(), tenant());
+        boolean administrator=ownership().administrator();
+        String viewer=ownership().viewer(), legacy=ownership().legacyViewer();
+        if(!administrator && viewer==null)ownership().requireViewer();
+        List<ComputeNode> rows=jdbc.query("SELECT * FROM vls_compute_node WHERE BINARY tenant_id=BINARY ?"+(administrator?"":" AND management_owner_subject IN (?,?)")+" ORDER BY create_time DESC",
+            mapper(),administrator?new Object[]{tenant()}:new Object[]{tenant(),viewer,legacy});
+        for(ComputeNode node:rows)node.setManagementOwnership(node.getManagementOwnerSubject()==null?"UNASSIGNED":java.util.Objects.equals(viewer,node.getManagementOwnerSubject()) || java.util.Objects.equals(legacy,node.getManagementOwnerSubject())?"MINE":"ADMIN");
+        return rows;
     }
     public ComputeNode get(Long id) { return get(id, false); }
+    public ComputeNode getManaged(Long id){ComputeNode node=get(id);requireManagement(node);return node;}
+    public ComputeNode getOwned(Long id){
+        return requireOwned(get(id));
+    }
+    private ComputeNode requireOwned(ComputeNode node) {
+        if (!node.isSelfServiceNode())
+            throw new ServiceException("自助接入仅管理本人的私人SSH节点；公共供给请使用原管理权限",403);
+        ownership().requirePrivateUse(node);return node;
+    }
+    @Transactional(rollbackFor = Exception.class)
+    public ComputeNode probeOwn(Long id) {
+        requireOwned(lockServer(id));
+        return probe(id);
+    }
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteOwn(Long id) {
+        requireOwned(lockServer(id));
+        delete(id);
+    }
+    @Transactional(rollbackFor = Exception.class)
+    public ComputeNode saveOwn(Long id, ComputeRequests.Node request) {
+        ownership().requireViewer();
+        if (id != null) requireOwned(lockServer(id));
+        if (!ComputeDeploymentSshIdentity.PASSWORD.equals(request.getAuthMode()))
+            throw new ServiceException("自助接入使用SSH密码；后台部署身份须由有权限的管理员单独配置",403);
+        List<ComputeNode> publicAliases = jdbc.query("SELECT * FROM vls_compute_node WHERE "
+            + "(resource_scope='PLATFORM' OR public_instance_key IS NOT NULL OR scheduling_mode='SHARED_GPU_QUEUE') "
+            + "AND ((host=? AND port=?) OR (tenant_id=? AND server_group IS NOT NULL AND server_group<>'' AND server_group=?)) FOR UPDATE",
+            mapper(), request.getHost().trim().toLowerCase(Locale.ROOT), request.getPort(), tenant(), request.getServerGroup());
+        if (!publicAliases.isEmpty()) throw new ServiceException("不能通过自助接入绑定公共算力或其别名",403);
+        return save(id, request);
+    }
     ComputeNode current(Long id) {
         List<ComputeNode> rows = jdbc.query("SELECT * FROM vls_compute_node WHERE (tenant_id=? OR resource_scope='PLATFORM') AND id=? FOR UPDATE", mapper(), tenant(), id);
         if (rows.isEmpty()) throw new ServiceException("算力实例不存在或无权访问");
@@ -57,12 +119,19 @@ public class ComputeNodeService {
     }
     public ComputeNode requireReady(Long id) {
         ComputeNode node = current(id);
+        if(isCompanyShared(node)) {
+            if(!sharedQueue.ready(node))throw new ServiceException("公司共享GPU未完成可信环境/身份检查或已撤下，请管理员核对");
+            if(serverRows(node).stream().anyMatch(n->n.getPowerOperationId()!=null))throw new ServiceException("服务器仍有挂起维护操作，不能提交共享GPU任务");
+            return node;
+        }
+        if(sharedQueue!=null && sharedQueue.declaredCompany(node))throw new ServiceException("公司GPU须通过共享任务队列使用，不能作为私人或整机独占实例训练");
         if (node.getPublicInstanceKey()==null) {
             List<ComputeNode> publicAliases=jdbc.query("SELECT * FROM vls_compute_node WHERE public_instance_key IS NOT NULL AND host=? AND port=? ORDER BY id FOR UPDATE",mapper(),node.getHost(),node.getPort());
             if(!publicAliases.isEmpty()) node.setPublicInstanceKey(publicAliases.get(0).getPublicInstanceKey());
         }
         if ("PLATFORM".equals(node.getResourceScope()) || node.getPublicInstanceKey()!=null)
             publicInventory().requireOwner(node);
+        else ownership().requirePrivateUse(node);
         if (serverRows(node).stream().anyMatch(n -> n.getPowerOperationId() != null))
             throw new ServiceException("服务器开关机操作尚未确认，不能调度 GPU 训练");
         if (!ComputeAvailability.ready(node, System.currentTimeMillis())) throw new ServiceException("算力状态已过期或未就绪，请刷新并检查连接；关机实例请先到算力市场开机");
@@ -84,10 +153,13 @@ public class ComputeNodeService {
         if ("/".equals(request.getWorkDir())) throw new ServiceException("请使用专用工作目录");
         if (id != null) lockServer(id);
         ComputeNode before = id == null ? null : get(id, true);
+        if(before!=null)requireManagement(before);
+        String owner=before==null?ownership().requireViewer():before.getManagementOwnerSubject();
         if (before != null) assertIdle(id);
         List<ComputeNode> aliases=jdbc.query("SELECT * FROM vls_compute_node WHERE id<>? AND public_instance_key IS NOT NULL AND ((host=? AND port=?) OR (tenant_id=? AND server_group IS NOT NULL AND server_group<>'' AND server_group=?)) ORDER BY id FOR UPDATE",mapper(),id==null?-1L:id,host,request.getPort(),tenant(),request.getServerGroup());
         if(aliases.stream().anyMatch(n -> !tenant().equals(n.getTenantId()))) throw new ServiceException("该端点已登记为其他管理方的公共实例，不能创建或改址为私有别名");
-        for(ComputeNode alias:aliases) publicInventory().requireEditable(alias);
+        for(ComputeNode alias:jdbc.query("SELECT * FROM vls_compute_node WHERE id<>? AND public_instance_key IS NULL AND ((host=? AND port=?) OR (tenant_id=? AND server_group IS NOT NULL AND server_group<>'' AND server_group=?)) ORDER BY id FOR UPDATE",mapper(),id==null?-1L:id,host,request.getPort(),tenant(),request.getServerGroup()))requireManagement(alias);
+        for(ComputeNode alias:aliases) {requireManagement(alias);publicInventory().requireEditable(alias);}
         if(aliases.stream().map(ComputeNode::getPublicInstanceKey).distinct().count()>1
             || aliases.stream().anyMatch(n->!java.util.Objects.equals(request.getProvider(),n.getProvider())))
             throw new ServiceException("目标端点的公共身份或厂商不一致，请先核对物理实例");
@@ -101,19 +173,46 @@ public class ComputeNodeService {
             throw new ServiceException("目标端点属于不同公共实例，不能保留旧身份改址");
         if (before != null && !request.getProvider().equals(before.getProvider()) && before.isProviderCredentialConfigured())
             throw new ServiceException("请先停用厂商 API 并清除凭据，再更换厂商");
+        String mode = request.getAuthMode();
+        if (!ComputeDeploymentSshIdentity.PASSWORD.equals(mode) && !ComputeDeploymentSshIdentity.KEY.equals(mode))
+            throw new ServiceException("SSH认证模式无效");
+        if (ComputeDeploymentSshIdentity.KEY.equals(mode)) {
+            if (!ownership().administrator()) throw new ServiceException("只有资源管理员可以绑定后台部署SSH身份");
+            if (request.getPassword() != null && !request.getPassword().isEmpty())
+                throw new ServiceException("后台部署SSH身份模式不能提交密码");
+            ComputeNode candidate = new ComputeNode();
+            candidate.setTenantId(tenant()); candidate.setProvider(request.getProvider());
+            candidate.setHost(host); candidate.setPort(request.getPort()); candidate.setUsername(request.getUsername());
+            candidate.setAuthMode(mode);
+            candidate.setManagementOwnerSubject(owner);
+            candidate.setResourceScope(before == null ? "PRIVATE" : before.getResourceScope());
+            candidate.setBillingType(before == null ? "EXTERNAL" : before.getBillingType());
+            candidate.setSchedulingMode(before == null ? "INSTANCE_EXCLUSIVE" : before.getSchedulingMode());
+            candidate.setProviderProduct(before == null ? null : before.getProviderProduct());
+            candidate.setProviderInstanceId(before == null ? null : before.getProviderInstanceId());
+            candidate.setHostKey(before == null || !host.equals(before.getHost()) || request.getPort() != before.getPort()
+                ? null : before.getHostKey());
+            candidate.setPublicInstanceKey(before != null && before.getPublicInstanceKey() != null ? before.getPublicInstanceKey()
+                : aliases.isEmpty() ? null : aliases.get(0).getPublicInstanceKey());
+            try { ssh.requireDeploymentIdentity(candidate); }
+            catch (IOException e) { throw new ServiceException("后台部署SSH身份尚未匹配管理员明确授权的实例配置"); }
+        }
         String secret = before == null ? null : before.getPasswordCipher();
-        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+        if (ComputeDeploymentSshIdentity.PASSWORD.equals(mode) && request.getPassword() != null && !request.getPassword().isEmpty()) {
             try { secret = cipher.encrypt(request.getPassword()); }
             catch (RuntimeException e) { throw new ServiceException("算力凭据保存失败，请联系管理员检查后端持久化目录、原密钥及数据库升级状态"); }
         }
-        if (secret == null) throw new ServiceException("请输入 SSH 密码");
+        if (ComputeDeploymentSshIdentity.PASSWORD.equals(mode)
+            && (secret == null || (before != null && ComputeDeploymentSshIdentity.KEY.equals(before.getAuthMode())
+                && (request.getPassword() == null || request.getPassword().isEmpty()))))
+            throw new ServiceException("请输入新的 SSH 密码");
         Long key = id == null ? IdWorker.getId() : id;
         boolean sameEndpoint = before != null && host.equals(before.getHost()) && request.getPort() == before.getPort() && request.getUsername().equals(before.getUsername());
         try {
-            if (before == null) jdbc.update("INSERT INTO vls_compute_node(id,tenant_id,name,host,port,username,password_cipher,python_path,work_dir,gpu_index,enabled) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
-                key, tenant(), request.getName().trim(), host, request.getPort(), request.getUsername(), secret, request.getPythonPath(), request.getWorkDir(), request.getGpuIndex(), request.isEnabled());
-            else jdbc.update("UPDATE vls_compute_node SET name=?,host=?,port=?,username=?,password_cipher=?,host_key=?,python_path=?,work_dir=?,gpu_index=?,enabled=?,probe_state='UNTESTED',probe_json=NULL,probe_time=NULL,update_time=NOW() WHERE tenant_id=? AND id=?",
-                request.getName().trim(), host, request.getPort(), request.getUsername(), secret, sameEndpoint ? before.getHostKey() : null,
+            if (before == null) jdbc.update("INSERT INTO vls_compute_node(id,tenant_id,name,host,port,username,auth_mode,password_cipher,python_path,work_dir,gpu_index,enabled,management_owner_subject) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                key, tenant(), request.getName().trim(), host, request.getPort(), request.getUsername(), mode, secret, request.getPythonPath(), request.getWorkDir(), request.getGpuIndex(), request.isEnabled(),owner);
+            else jdbc.update("UPDATE vls_compute_node SET name=?,host=?,port=?,username=?,auth_mode=?,password_cipher=?,host_key=?,python_path=?,work_dir=?,gpu_index=?,enabled=?,probe_state='UNTESTED',probe_json=NULL,probe_time=NULL,update_time=NOW() WHERE tenant_id=? AND id=?",
+                request.getName().trim(), host, request.getPort(), request.getUsername(), mode, secret, sameEndpoint ? before.getHostKey() : null,
                 request.getPythonPath(), request.getWorkDir(), request.getGpuIndex(), request.isEnabled(), tenant(), key);
         } catch (org.springframework.dao.DuplicateKeyException e) { throw new ServiceException("此 SSH 实例已接入，请使用现有记录"); }
         jdbc.update("UPDATE vls_compute_node SET provider=?,server_group=?,gpu_model=? WHERE tenant_id=? AND id=?", request.getProvider(), request.getServerGroup(), request.getGpuModel(), tenant(), key);
@@ -125,10 +224,11 @@ public class ComputeNodeService {
 
     public ComputeNode probe(Long id) {
         ComputeNode node = get(id, true);
+        requireManagement(node);
         if (node.getPublicInstanceKey()!=null) publicInventory().requireEditable(node);
         if (serverRows(node).stream().anyMatch(n -> n.getPowerOperationId() != null)) throw new ServiceException("实例启停尚未确认，请先刷新厂商状态");
         probeSnapshot(node);
-        return get(id);
+        return getManaged(id);
     }
 
     /** Fixed environment check; callers must first authorize and reserve the immutable snapshot. */
@@ -141,27 +241,29 @@ public class ComputeNodeService {
                 encoded = java.util.Base64.getEncoder().encodeToString(org.springframework.util.StreamUtils.copyToByteArray(input));
             }
             String script = "import base64;exec(compile(base64.b64decode('" + encoded + "'),'vls-environment-check','exec'))";
-            String output = connection.execute(quote(node.getPythonPath()) + " -c " + quote(script)
+            String output = connection.execute((sharedQueue==null?quote(node.getPythonPath()):sharedQueue.pythonCommand(node)) + " -c " + quote(script)
                 + " --work-dir " + quote(node.getWorkDir()) + " --gpu " + node.getGpuIndex(), 180);
             int marker = output.lastIndexOf("VLS_PROBE=");
             if (marker < 0) throw new IOException("环境检查无有效结果");
             JsonNode result = json.readTree(output.substring(marker + "VLS_PROBE=".length()).trim());
+            if(sharedQueue!=null && sharedQueue.retainBusyProof(node,result))return true;
             details = json.writeValueAsString(result);
             if (result.path("contractVersion").asInt() == 1 && result.path("ready").asBoolean()) state = "READY";
         } catch (Exception e) { details = "{\"message\":\"无法完成环境检查，请先按接入指南初始化实例，并核对 SSH 和初始化脚本输出的 Python 路径\"}"; }
         // A probe from an older edit must never mark a different connection ready.
-        return jdbc.update("UPDATE vls_compute_node SET probe_state=?,probe_json=?,host_key=?,probe_time=NOW(),power_state=IF(?='READY','RUNNING',power_state),power_checked_at=IF(?='READY',NOW(),power_checked_at) WHERE tenant_id=? AND id=? AND host=? AND port=? AND username=? AND password_cipher=? AND python_path=? AND work_dir=? AND gpu_index=? AND power_operation_id IS NULL AND lifecycle_revision=? AND resource_scope=? AND enabled=?",
-            state, details, key, state, state, node.getTenantId(), node.getId(), node.getHost(), node.getPort(), node.getUsername(), node.getPasswordCipher(), node.getPythonPath(), node.getWorkDir(), node.getGpuIndex(), node.getLifecycleRevision(), node.getResourceScope(), node.isEnabled()) == 1;
+        return jdbc.update("UPDATE vls_compute_node SET probe_state=?,probe_json=?,host_key=?,probe_time=NOW(),power_state=IF(?='READY','RUNNING',power_state),power_checked_at=IF(?='READY',NOW(),power_checked_at) WHERE tenant_id=? AND id=? AND host=? AND port=? AND username=? AND auth_mode=? AND password_cipher <=> ? AND python_path=? AND work_dir=? AND gpu_index=? AND power_operation_id IS NULL AND lifecycle_revision=? AND resource_scope=? AND enabled=? AND management_owner_subject <=> ?",
+            state, details, key, state, state, node.getTenantId(), node.getId(), node.getHost(), node.getPort(), node.getUsername(), node.getAuthMode(), node.getPasswordCipher(), node.getPythonPath(), node.getWorkDir(), node.getGpuIndex(), node.getLifecycleRevision(), node.getResourceScope(), node.isEnabled(),node.getManagementOwnerSubject()) == 1;
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void delete(Long id) {
-        lockServer(id); get(id, true); assertIdle(id);
+        lockServer(id); requireManagement(get(id, true)); assertIdle(id);
         jdbc.update("DELETE FROM vls_compute_node WHERE tenant_id=? AND id=?", tenant(), id);
     }
     void assertIdle(Long id) {
         assertNoActiveJobs(id);
         ComputeNode node = current(id);
+        if(sharedQueue!=null)sharedQueue.assertHostIdle(ssh,node);
         if (node.getPublicInstanceKey()!=null) publicInventory().requireEditable(node);
         if (serverRows(node).stream().anyMatch(n -> n.getPowerOperationId() != null))
             throw new ServiceException("服务器开关机结果尚未确认，不能修改或移除");

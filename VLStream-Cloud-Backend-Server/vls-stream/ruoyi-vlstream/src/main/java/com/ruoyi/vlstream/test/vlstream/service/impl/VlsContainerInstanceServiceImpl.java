@@ -40,6 +40,30 @@ public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContaine
 		if(publicAccess!=null && id!=null)publicAccess.containerFromHttp(Long.valueOf(id.toString()));
 		return super.getById(id);
 	}
+	@Override public boolean save(ContainerInstance row) {
+		if(publicAccess!=null && org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()!=null)
+			publicAccess.prepareContainerCreate(row);
+		return super.save(row);
+	}
+	@Override public boolean saveTaskRecord(ContainerInstance row) {
+		if(publicAccess==null)throw new com.ruoyi.common.exception.ServiceException("缺少可信任务记录创建上下文");
+		publicAccess.prepareTaskRecord(row);
+		// The three schedulers construct this record, after persisted owner/type validation.
+		// Do not clear HTTP context or route this through manual DTO creation.
+		return super.save(row);
+	}
+	@Override public void requireTaskExecution(ContainerInstance row) {
+		if(publicAccess==null)throw new com.ruoyi.common.exception.ServiceException("缺少可信调度上下文");
+		publicAccess.requireTaskExecution(row);
+	}
+	@Override public boolean updateById(ContainerInstance row) {
+		if(publicAccess!=null && org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()!=null) {
+			if(row.getId()==null)throw new com.ruoyi.common.exception.ServiceException("缺少容器记录身份");
+			publicAccess.container(row.getId());
+			com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess.protectContainerUpdate(super.getById(row.getId()),row);
+		}
+		return super.updateById(row);
+	}
 
 	@Override
 	public IPage<ContainerInstanceVO> selectVlsContainerInstancePage(IPage<ContainerInstanceVO> page, ContainerInstanceVO vlsContainerInstance) {
@@ -182,7 +206,10 @@ public class VlsContainerInstanceServiceImpl extends BaseServiceImpl<VlsContaine
 		instance.setContainerId(containerId);
 		instance.setStartTime(startTime);
 		instance.setStopTime(stopTime);
-		return updateById(instance);
+		if(publicAccess!=null && org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()!=null)
+			com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess.protectContainerExecution(super.getById(id),instance);
+		// Explicit owned lifecycle operations are distinct from generic client DTO updates.
+		return super.updateById(instance);
 	}
 
 	@Override

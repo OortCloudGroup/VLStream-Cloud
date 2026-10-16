@@ -8,6 +8,7 @@ import lombok.ToString;
 
 @Data
 public class ComputeNode {
+    private String schedulingMode = "INSTANCE_EXCLUSIVE";
     @JsonSerialize(using = ToStringSerializer.class) private Long id;
     @JsonIgnore private String tenantId;
     private String name;
@@ -24,6 +25,8 @@ public class ComputeNode {
     private java.util.Date powerCheckedAt;
     private String providerInstanceId;
     @JsonIgnore private String publicInstanceKey;
+    @JsonIgnore @ToString.Exclude private String managementOwnerSubject;
+    private String managementOwnership;
     private String controlMode;
     private String providerProduct;
     private String providerRegion;
@@ -44,6 +47,7 @@ public class ComputeNode {
     private String host;
     private int port;
     private String username;
+    private String authMode = "PASSWORD";
     @JsonIgnore @ToString.Exclude private String passwordCipher;
     @JsonIgnore @ToString.Exclude private String hostKey;
     private String pythonPath;
@@ -56,4 +60,7 @@ public class ComputeNode {
     private java.util.Date probeRequestedAt;
     public boolean isPasswordConfigured() { return passwordCipher != null && !passwordCipher.isEmpty(); }
     public boolean isProviderCredentialConfigured() { return providerCredentialCipher != null && !providerCredentialCipher.isEmpty(); }
+    public boolean isSelfServiceNode() {
+        return "PRIVATE".equals(resourceScope) && publicInstanceKey == null && "INSTANCE_EXCLUSIVE".equals(schedulingMode);
+    }
 }

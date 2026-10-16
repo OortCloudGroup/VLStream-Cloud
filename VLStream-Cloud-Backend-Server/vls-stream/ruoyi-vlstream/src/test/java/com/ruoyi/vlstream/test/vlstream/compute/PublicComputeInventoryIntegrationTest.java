@@ -175,7 +175,9 @@ class PublicComputeInventoryIntegrationTest {
         assertDoesNotThrow(()->access.training(1L));assertDoesNotThrow(()->access.model(10L));
         platformUser.set("platform-b");assertEquals(1,jdbc.queryForObject(sql,Integer.class,access.viewer()));
         assertEquals(1,mine.query("tenant-a","vls-user",1,10,null,null,null,null).getTotal());
-        assertThrows(ServiceException.class,()->access.training(1L));assertThrows(ServiceException.class,()->access.model(10L));assertDoesNotThrow(()->access.training(2L));
+        assertThrows(ServiceException.class,()->access.training(1L));assertThrows(ServiceException.class,()->access.model(10L));
+        // This fixture has SSO proof but no local LoginHelper actor. A stored creator alone is not authorization.
+        assertThrows(ServiceException.class,()->access.training(2L));
         org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(new org.springframework.web.context.request.ServletRequestAttributes(new org.springframework.mock.web.MockHttpServletRequest()));
         try {
             com.ruoyi.vlstream.test.vlstream.service.impl.VlsAlgorithmModelServiceImpl models=new com.ruoyi.vlstream.test.vlstream.service.impl.VlsAlgorithmModelServiceImpl();
@@ -187,6 +189,19 @@ class PublicComputeInventoryIntegrationTest {
         } finally {org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();}
         TenantContextHolder.setTenantId("tenant-b");platformUser.set("platform-a");assertThrows(ServiceException.class,()->access.training(1L));
         verifyNoInteractions(fixture.ssh);
+    }
+    @Test void personalStatisticsBindDistinctRegularAndSharedSubjectsInSqlOrder() {
+        bind(fixture.nodeId,"account-a","instance-a");tx(()->market.claim(fixture.nodeId));fixture.task.setCreateUser("vls-user");
+        ComputeRequests.Start request=new ComputeRequests.Start();request.setNodeId(fixture.nodeId);request.setDatasetId(3L);tx(()->fixture.training.start(1L,request));
+        org.springframework.jdbc.core.JdbcTemplate jdbc=CloudComputeIntegrationTest.jdbc;jdbc.update("UPDATE vls_algorithm_training SET create_user='vls-user' WHERE id=1");
+        ComputePublicTaskAccess access=new ComputePublicTaskAccess(jdbc,inventory);ComputeSharedQueueService shared=mock(ComputeSharedQueueService.class);
+        when(shared.viewer()).thenReturn("synthetic-distinct-shared-owner-a");ReflectionTestUtils.setField(access,"sharedQueue",shared);
+        MyTrainingTasksService mine=new MyTrainingTasksService(jdbc);ReflectionTestUtils.setField(mine,"publicAccess",access);
+        assertEquals(1,mine.query("tenant-a","vls-user",1,10,null,null,null,null).getTotal());
+        platformUser.set("platform-b");assertEquals(0,mine.query("tenant-a","vls-user",1,10,null,null,null,null).getTotal());
+        jdbc.update("UPDATE vls_cloud_training_job SET public_owner_subject='synthetic-distinct-shared-owner-a',options_json='{\"sharedQueue\":{\"mode\":\"SHARED_GPU_QUEUE\"}}'");
+        assertEquals(1,mine.query("tenant-a","vls-user",1,10,null,null,null,null).getTotal());
+        when(shared.viewer()).thenReturn("synthetic-distinct-shared-owner-b");assertEquals(0,mine.query("tenant-a","vls-user",1,10,null,null,null,null).getTotal());
     }
     @Test void unknownOwnerOfHistoricalPublicJobIsHiddenWithoutGuessingUserMapping() {
         bind(fixture.nodeId,"account-a","instance-a");tx(()->market.claim(fixture.nodeId));
@@ -340,7 +355,7 @@ class PublicComputeInventoryIntegrationTest {
         verifyNoInteractions(records,scheduler,fixture.ssh);
         org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(new org.springframework.web.context.request.ServletRequestAttributes(new org.springframework.mock.web.MockHttpServletRequest()));
         try{com.ruoyi.vlstream.test.vlstream.service.impl.VlsContainerInstanceServiceImpl service=new com.ruoyi.vlstream.test.vlstream.service.impl.VlsContainerInstanceServiceImpl();ReflectionTestUtils.setField(service,"publicAccess",access);assertThrows(ServiceException.class,()->service.getById(id));assertThrows(ServiceException.class,()->service.updateMonitoringData(id,null,null,null));}finally{org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();}
-        assertDoesNotThrow(()->access.container(999L));
+        assertThrows(ServiceException.class,()->access.container(999L)); // Missing records cannot establish an owner.
     }
     @Test void providerQueryAndRecoveryBelongToTheVerifiedClaimantRatherThanTheConfigurationRole() {
         bind(fixture.nodeId,"account-a","instance-a");assertFalse(market.list(false).get(0).isCanQueryProvider());assertTrue(market.list(false).get(0).isCanManage());tx(()->market.claim(fixture.nodeId));

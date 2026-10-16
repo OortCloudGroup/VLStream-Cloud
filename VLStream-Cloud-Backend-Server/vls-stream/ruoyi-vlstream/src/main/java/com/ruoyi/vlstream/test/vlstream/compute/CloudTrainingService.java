@@ -27,6 +27,14 @@ public class CloudTrainingService {
     private final ObjectMapper json;
     @javax.annotation.Resource
     private ModelArtifactObjectStore modelObjects;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ComputeSharedQueueService sharedQueue;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ComputePublicTaskAccess publicAccess;
+
+    private ComputePublicTaskAccess access() {
+        return publicAccess==null?ComputePublicTaskAccess.forCompute(jdbc,nodes.publicInventory(),sharedQueue):publicAccess;
+    }
 
     @Transactional(rollbackFor = Exception.class)
     public RemoteTrainingService.StartResult start(Long trainingId, ComputeRequests.Start request) {
@@ -39,8 +47,10 @@ public class CloudTrainingService {
         AlgorithmTraining training = trainings.selectAlgorithmTrainingById(trainingId);
         AlgorithmAnnotation dataset = data.project(request.getDatasetId());
         if (training == null) throw new ServiceException("训练任务不存在");
+        String taskOwner=nodes.trainingSubject(node,training.getCreateUser());
         ComputePublicInventoryService.Instance claim=null;
-        if ("PLATFORM".equals(node.getResourceScope()) || node.getPublicInstanceKey()!=null) {
+        boolean companyShared=nodes.isCompanyShared(node);
+        if (!companyShared && ("PLATFORM".equals(node.getResourceScope()) || node.getPublicInstanceKey()!=null)) {
             ComputePublicInventoryService inventory=nodes.publicInventory();
             if (!Objects.equals(training.getCreateUser(),inventory.identity().getVlsUserId()))
                 throw new ServiceException("只能在公共实例提交当前用户自己的训练任务");
@@ -50,6 +60,7 @@ public class CloudTrainingService {
         AnnotationTaskType type = AnnotationTaskType.of(dataset.getAnnotationType());
         if (algorithm == null || !tenant.equals(algorithm.getTenantId()) || algorithm.getCategory() == null || !type.getModelTask().equals(algorithm.getCategory().getCode())) throw new ServiceException("算法不存在、无权访问或与数据集标注类型不匹配");
         String baseModel = resolveBaseModel(request.getModelSource(), algorithm.getPtModelFilePath(), type.getModelTask());
+        if(companyShared)baseModel=sharedQueue.verifyBaseModel(baseModel,type.getCode(),taskOwner);
         DatasetSnapshot snapshot = data.snapshot(request.getDatasetId());
         CloudTrainingDatasetWriter.members(snapshot);
         DataRequests.Version versionRequest = new DataRequests.Version();
@@ -65,10 +76,15 @@ public class CloudTrainingService {
         instance.setTrainingTaskId(trainingId); instance.setServerId(node.getId()); instance.setServerIp(node.getHost());
         instance.setGpuIndex(node.getGpuIndex()); instance.setGpuLimit("GPU " + node.getGpuIndex());
         instance.setLogsPath(runDir + "/training.log"); instance.setQueueTime(new Date()); instance.setRestartCount(0);
-        if (!containers.save(instance)) throw new ServiceException("保存线上训练队列失败");
+        if (!containers.saveTaskRecord(instance)) throw new ServiceException("保存线上训练队列失败");
+        String durableOptions=options.toJson();
+        if(companyShared)try {
+            Map<String,Object> configured=json.readValue(durableOptions,new com.fasterxml.jackson.core.type.TypeReference<Map<String,Object>>(){});
+            configured.put("sharedQueue",sharedQueue.configuration(node,jobId,taskOwner));durableOptions=json.writeValueAsString(configured);
+        } catch(java.io.IOException error){throw new ServiceException("共享GPU任务快照保存失败");}
         jdbc.update("INSERT INTO vls_cloud_training_job(id,tenant_id,training_id,node_id,container_record_id,dataset_id,version_id,annotation_type,snapshot_json,base_model,options_json,run_dir,public_instance_key,public_claim_id,public_owner_subject) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            jobId, tenant, trainingId, node.getId(), instance.getId(), request.getDatasetId(), version.getId(), type.getCode(), version.getSnapshotJson(), baseModel, options.toJson(), runDir,
-            claim==null?null:claim.getInstanceKey(),claim==null?null:claim.getClaimId(),claim==null?null:claim.getOwnerSubject());
+            jobId, tenant, trainingId, node.getId(), instance.getId(), request.getDatasetId(), version.getId(), type.getCode(), version.getSnapshotJson(), baseModel, durableOptions, runDir,
+            claim==null?null:claim.getInstanceKey(),claim==null?null:claim.getClaimId(),taskOwner);
         publication.configure(trainingId, options.isAutoPublish());
         try {
             Map<String, Object> config = json.readValue(options.toJson(), new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() { });
@@ -108,24 +124,42 @@ public class CloudTrainingService {
         catch (java.io.IOException e) { return false; }
     }
     public CloudTrainingJob current(AlgorithmTraining training) {
+        if(training==null || !Objects.equals(ComputeNodeService.tenant(),training.getTenantId()))
+            throw new ServiceException("线上训练记录不存在或无权访问");
         try {
             String jobId = json.readTree(training.getConfigParams()).path("cloudJobId").asText();
-            List<CloudTrainingJob> rows = jdbc.query("SELECT * FROM vls_cloud_training_job WHERE tenant_id=? AND training_id=? AND id=?", new BeanPropertyRowMapper<>(CloudTrainingJob.class), ComputeNodeService.tenant(), training.getId(), jobId);
+            List<CloudTrainingJob> rows = jdbc.query("SELECT * FROM vls_cloud_training_job WHERE BINARY tenant_id=BINARY ? AND training_id=? AND BINARY id=BINARY ?", new BeanPropertyRowMapper<>(CloudTrainingJob.class), ComputeNodeService.tenant(), training.getId(), jobId);
             if (!rows.isEmpty()) {
                 CloudTrainingJob job=rows.get(0);
-                if(job.getPublicInstanceKey()==null && jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_node WHERE id=? AND (public_instance_key IS NOT NULL OR resource_scope='PLATFORM')",Integer.class,job.getNodeId())>0)
-                    throw new ServiceException("历史公共任务缺少可信用户归属，暂不开放读取与操作");
-                if (job.getPublicInstanceKey()!=null && (!Objects.equals(training.getCreateUser(),nodes.publicInventory().identity().getVlsUserId())
-                    || !Objects.equals(job.getPublicOwnerSubject(),ComputePublicInventoryService.subject(nodes.publicInventory().identity()))))
-                    throw new ServiceException("无权读取或控制其他用户的公共算力任务");
+                authorize(job,training);
                 return job;
             }
         } catch (java.io.IOException e) { throw new ServiceException("线上训练配置无效"); }
         throw new ServiceException("线上训练记录不存在或无权访问");
     }
+    private void authorize(CloudTrainingJob job,AlgorithmTraining training) {
+        if(training==null || !Objects.equals(job.getTrainingId(),training.getId()) || !Objects.equals(ComputeNodeService.tenant(),training.getTenantId()))
+            throw new ServiceException("线上训练记录不存在或无权访问");
+        access().training(training.getId());
+        boolean shared=false;
+        try { shared=ComputeSharedQueueService.MODE.equals(json.readTree(job.getOptionsJson()).path("sharedQueue").path("mode").asText()); }
+        catch(Exception ignored) { }
+        if(shared) {
+            if(sharedQueue==null || !Objects.equals(job.getPublicOwnerSubject(),sharedQueue.requireCreator(training.getCreateUser())))
+                throw new ServiceException("无权读取或控制其他用户的共享GPU任务");
+        } else if(job.getPublicOwnerSubject()!=null) {
+            ComputePlatformAuthorization.Context actor=nodes.publicInventory().identity();
+            if(!Objects.equals(training.getCreateUser(),actor.getVlsUserId()) || !Objects.equals(job.getPublicOwnerSubject(),ComputePublicInventoryService.subject(actor)))
+                throw new ServiceException("无权读取或控制其他用户的算力任务");
+        } else {
+            String user=com.ruoyi.common.helper.LoginHelper.getUserId();
+            if(user==null || user.isEmpty() || !Objects.equals(user,training.getCreateUser()))
+                throw new ServiceException("历史私人训练归属未确认或不属于当前用户");
+        }
+    }
     public void stop(AlgorithmTraining training) {
         CloudTrainingJob job = current(training);
-        jdbc.update("UPDATE vls_cloud_training_job SET cancel_requested=1,message='停止请求已记录，等待实例确认',update_time=NOW() WHERE tenant_id=? AND id=? AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED')", ComputeNodeService.tenant(), job.getId());
+        jdbc.update("UPDATE vls_cloud_training_job SET cancel_requested=1,message='停止请求已记录，等待实例确认',update_time=NOW() WHERE BINARY tenant_id=BINARY ? AND BINARY id=BINARY ? AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED')", ComputeNodeService.tenant(), job.getId());
     }
     public void assertInactive(AlgorithmTraining training) {
         CloudTrainingJob job = current(training);
@@ -145,11 +179,11 @@ public class CloudTrainingService {
         } catch (java.io.IOException e) { throw new ServiceException("训练配置格式无效"); }
     }
     public String containerLogs(Long containerId) {
-        List<Long> shared=jdbc.queryForList("SELECT j.training_id FROM vls_cloud_training_job j JOIN vls_compute_node n ON n.id=j.node_id WHERE j.tenant_id=? AND j.container_record_id=? AND (j.public_instance_key IS NOT NULL OR n.public_instance_key IS NOT NULL OR n.resource_scope='PLATFORM')",Long.class,ComputeNodeService.tenant(),containerId);
-        if(!shared.isEmpty()) new ComputePublicTaskAccess(jdbc,nodes.publicInventory()).container(containerId);
-        List<String> rows = jdbc.queryForList("SELECT log_tail FROM vls_cloud_training_job WHERE tenant_id=? AND container_record_id=?", String.class, ComputeNodeService.tenant(), containerId);
+        access().container(containerId);
+        List<CloudTrainingJob> rows = jdbc.query("SELECT * FROM vls_cloud_training_job WHERE BINARY tenant_id=BINARY ? AND container_record_id=?",new BeanPropertyRowMapper<>(CloudTrainingJob.class),ComputeNodeService.tenant(),containerId);
         if (rows.isEmpty()) throw new ServiceException("线上训练记录不存在或无权访问");
-        return rows.get(0) == null ? "" : rows.get(0);
+        for(CloudTrainingJob job:rows)authorize(job,trainings.selectAlgorithmTrainingById(job.getTrainingId()));
+        return rows.get(0).getLogTail()==null?"":rows.get(0).getLogTail();
     }
     public RemoteTrainingService.TrainingProgress progress(AlgorithmTraining training) {
         CloudTrainingJob job = current(training);

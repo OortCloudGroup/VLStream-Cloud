@@ -23,8 +23,8 @@ public class ComputeProviderSettingsService {
     @Transactional(rollbackFor = Exception.class)
     public void save(Long id, ComputeRequests.ProviderSettings request) {
         ComputeNode before = nodes.lockServer(id);
+        nodes.requireManagement(before);
         if (!ComputeNodeService.tenant().equals(before.getTenantId())) throw new ServiceException("无权配置平台算力厂商接口");
-        nodes.assertIdle(id);
         boolean api = "API".equals(request.getControlMode());
         if (api && !("autodl".equals(before.getProvider()) && "AUTODL_PRO".equals(request.getProviderProduct())
             || "aliyun".equals(before.getProvider()) && "ECS".equals(request.getProviderProduct())))
@@ -41,17 +41,20 @@ public class ComputeProviderSettingsService {
         // Replacing credentials cannot authorize rebinding a different vendor instance.
         if (before.getPublicInstanceKey() != null && changedIdentity)
             throw new ServiceException("公共实例身份已绑定，不能通过厂商配置修改实例ID、产品或区域；请保留已登记身份");
-        // Current reads also lock another owner's claimed instance; never share its credential/configuration.
-        if (api) {
+        // A vendor ID groups control aliases even in MANUAL mode. Authorize every locked target
+        // before checking its activity, encrypting credentials or changing the source binding.
+        if (instance != null) {
             List<ComputeNode> claimed = jdbc.query("SELECT * FROM vls_compute_node WHERE provider=? AND provider_instance_id=? ORDER BY id FOR UPDATE",
                 new org.springframework.jdbc.core.BeanPropertyRowMapper<>(ComputeNode.class), before.getProvider(), instance);
             for (ComputeNode node : claimed) {
                 if (!before.getTenantId().equals(node.getTenantId())) throw new ServiceException("厂商实例已归其他租户管理");
+                nodes.requireManagement(node);
                 if (node.getPublicInstanceKey()!=null && !Objects.equals(before.getPublicInstanceKey(),node.getPublicInstanceKey()))
                     throw new ServiceException("目标已登记为另一公共实例，不能通过不同身份或私有配置控制其厂商实例");
-                if (!Objects.equals(node.getId(), id)) nodes.assertIdle(node.getId());
             }
+            for (ComputeNode node : claimed) if (!Objects.equals(node.getId(), id)) nodes.assertIdle(node.getId());
         }
+        nodes.assertIdle(id);
         String encrypted = request.isClearCredentials() ? null : before.getProviderCredentialCipher();
         if (changedIdentity) encrypted = null;
         Map<String,String> secret = new LinkedHashMap<>();

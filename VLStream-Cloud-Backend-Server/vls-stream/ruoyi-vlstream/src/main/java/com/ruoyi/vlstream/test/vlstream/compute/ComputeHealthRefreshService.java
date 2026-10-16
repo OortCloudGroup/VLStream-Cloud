@@ -18,6 +18,8 @@ public class ComputeHealthRefreshService {
     private final JdbcTemplate jdbc;
     private final ComputeNodeService nodes;
     private final PlatformTransactionManager transactions;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ComputeSharedQueueService sharedQueue;
 
     public String refresh(Long id) {
         if (TransactionSynchronizationManager.isActualTransactionActive()) throw new IllegalStateException("Health refresh requires its own committed reservation");
@@ -30,7 +32,10 @@ public class ComputeHealthRefreshService {
             try {
                 ComputeNode snapshot = new TransactionTemplate(transactions).execute(tx -> {
                     ComputeNode node = nodes.lockServer(id);
-                    nodes.publicInventory().requireOwner(node);
+                    if(nodes.isCompanyShared(node)) {
+                        if(sharedQueue==null || !sharedQueue.authenticated())throw new ServiceException("请登录后刷新共享GPU环境");
+                        sharedQueue.requireTarget(node);
+                    } else nodes.publicInventory().requireOwner(node);
                     if (!"PLATFORM".equals(node.getResourceScope()) || !node.isEnabled()) throw new ServiceException("算力已停止发布或停用，请刷新列表");
                     if (nodes.serverRows(node).stream().anyMatch(n -> n.getPowerOperationId() != null) || !"RUNNING".equals(node.getPowerState()))
                         throw new ServiceException("仅可检查明确运行且无挂起启停操作的实例；请先开机或确认厂商状态");
@@ -41,7 +46,7 @@ public class ComputeHealthRefreshService {
                         throw new ServiceException("此服务器检查请求过于频繁，请一分钟后重试");
                     nodes.assertNoActiveJobs(id);
                     jdbc.update("UPDATE vls_compute_node SET probe_requested_at=NOW() WHERE " + ComputeNodeService.SERVER_WHERE, ComputeNodeService.serverArgs(node));
-                    jdbc.update("UPDATE vls_compute_node SET probe_state='CHECKING',probe_time=NULL WHERE id=?", id);
+                    if(!nodes.isCompanyShared(node))jdbc.update("UPDATE vls_compute_node SET probe_state='CHECKING',probe_time=NULL WHERE id=?", id);
                     return node;
                 });
                 if (snapshot == null) return "已使用五分钟内的环境检查结果，请刷新列表查看";

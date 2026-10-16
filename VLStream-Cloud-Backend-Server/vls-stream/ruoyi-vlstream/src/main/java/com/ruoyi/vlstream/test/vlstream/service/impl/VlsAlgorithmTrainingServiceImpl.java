@@ -9,7 +9,10 @@
 package com.ruoyi.vlstream.test.vlstream.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.helper.LoginHelper;
 import javax.annotation.Resource;
 import org.springblade.core.mp.base.BaseServiceImpl;
 import com.ruoyi.vlstream.test.vlstream.excel.VlsAlgorithmTrainingExcel;
@@ -17,6 +20,7 @@ import com.ruoyi.vlstream.test.vlstream.mapper.VlsAlgorithmTrainingMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsAlgorithmTrainingService;
+import com.ruoyi.vlstream.test.vlstream.service.ModelArtifactObjectStore;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -37,10 +41,39 @@ public class VlsAlgorithmTrainingServiceImpl extends BaseServiceImpl<VlsAlgorith
 		if(publicAccess!=null && id!=null)publicAccess.trainingFromHttp(Long.valueOf(id.toString()));
 		return super.getById(id);
 	}
+	@Override public boolean updateById(AlgorithmTraining row) {
+		if(publicAccess!=null && org.springframework.web.context.request.RequestContextHolder.getRequestAttributes()!=null) {
+			if(row.getId()==null)throw new ServiceException("缺少训练记录身份");
+			publicAccess.training(row.getId());
+			com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess.protectTrainingUpdate(algorithmTrainingMapper.selectAlgorithmTrainingById(row.getId()),row);
+		}
+		return super.updateById(row);
+	}
+	@Override public boolean recordQueuedLog(Long trainingId,Long containerRecordId) {
+		if(publicAccess==null)throw new ServiceException("缺少可信排队日志上下文");
+		String logPath=publicAccess.queuedTrainingLog(trainingId,containerRecordId);
+		AlgorithmTraining update=new AlgorithmTraining();update.setId(trainingId);update.setLogPath(logPath);
+		return super.updateById(update);
+	}
 
 	@Override
 	public IPage<AlgorithmTrainingVO> selectVlsAlgorithmTrainingPage(IPage<AlgorithmTrainingVO> page, AlgorithmTrainingVO vlsAlgorithmTraining) {
-		return page.setRecords(baseMapper.selectVlsAlgorithmTrainingPage(page, vlsAlgorithmTraining, publicAccess==null?"":publicAccess.viewer()));
+		String user=LoginHelper.getUserId();
+		if(user==null || user.trim().isEmpty() || publicAccess==null)
+			throw new ServiceException("缺少可信训练访问上下文");
+		QueryWrapper<AlgorithmTraining> query=new QueryWrapper<>();
+		query.eq("vls_algorithm_training.is_deleted",0)
+			.apply("CAST(vls_algorithm_training.tenant_id AS BINARY)=CAST({0} AS BINARY)",ModelArtifactObjectStore.tenant())
+			.apply("CAST(vls_algorithm_training.create_user AS BINARY)=CAST({0} AS BINARY)",user);
+		publicAccess.filter(query,"vls_algorithm_training.id");
+		if(vlsAlgorithmTraining!=null) {
+			if(vlsAlgorithmTraining.getTaskName()!=null && !vlsAlgorithmTraining.getTaskName().trim().isEmpty())query.like("task_name",vlsAlgorithmTraining.getTaskName().trim());
+			if(vlsAlgorithmTraining.getAlgorithmId()!=null)query.eq("algorithm_id",vlsAlgorithmTraining.getAlgorithmId());
+			if(vlsAlgorithmTraining.getDatasetId()!=null)query.eq("dataset_id",vlsAlgorithmTraining.getDatasetId());
+			if(vlsAlgorithmTraining.getTrainStatus()!=null)query.eq("train_status",vlsAlgorithmTraining.getTrainStatus().getCode());
+		}
+		query.orderByDesc("create_time","id");
+		return page.setRecords(baseMapper.selectVlsAlgorithmTrainingPage(page,vlsAlgorithmTraining,query));
 	}
 
 	@Override
@@ -105,6 +138,7 @@ public class VlsAlgorithmTrainingServiceImpl extends BaseServiceImpl<VlsAlgorith
 	 */
 	@Override
 	public int deleteAlgorithmTrainingByIds(Long[] ids) {
+		if(publicAccess!=null)java.util.Arrays.asList(ids).forEach(publicAccess::trainingFromHttp);
 		return algorithmTrainingMapper.deleteAlgorithmTrainingByIds(ids);
 	}
 
@@ -116,6 +150,7 @@ public class VlsAlgorithmTrainingServiceImpl extends BaseServiceImpl<VlsAlgorith
 	 */
 	@Override
 	public int deleteAlgorithmTrainingById(Long id) {
+		if(publicAccess!=null)publicAccess.trainingFromHttp(id);
 		return algorithmTrainingMapper.deleteAlgorithmTrainingById(id);
 	}
 

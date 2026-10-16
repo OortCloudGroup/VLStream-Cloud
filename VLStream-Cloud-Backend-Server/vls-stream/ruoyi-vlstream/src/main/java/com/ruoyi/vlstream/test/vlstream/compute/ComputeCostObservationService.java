@@ -18,6 +18,7 @@ public class ComputeCostObservationService {
     @Transactional(rollbackFor=Exception.class)
     public ComputeCostProvider.Observation query(Long id) {
         ComputeNode node=nodes.lockServer(id);
+        nodes.requireManagement(node);
         if (!ComputeNodeService.tenant().equals(node.getTenantId())) throw new ServiceException("无权查询资源成本");
         ComputeCostProvider provider=providers.stream().filter(p->p.supports(node)).findFirst().orElseThrow(()->new ServiceException("普通实例或厂商接口未启用，需要人工核对实际算力成本"));
         try {

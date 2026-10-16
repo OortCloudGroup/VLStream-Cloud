@@ -41,9 +41,14 @@
         </dependency>
 
         <dependency>
-            <groupId>com.jcraft</groupId>
+            <groupId>com.github.mwiede</groupId>
             <artifactId>jsch</artifactId>
-            <version>0.1.55</version>
+            <version>2.28.0</version>
+        </dependency>
+
+        <!-- The runtime already contains this version; use its NTFS handle API on Java 8. -->
+        <dependency>
+            <groupId>net.java.dev.jna</groupId><artifactId>jna</artifactId><version>5.17.0</version>
         </dependency>
 
         <dependency>

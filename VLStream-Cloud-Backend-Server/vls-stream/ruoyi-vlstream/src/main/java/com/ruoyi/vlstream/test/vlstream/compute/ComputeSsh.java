@@ -1,8 +1,8 @@
 package com.ruoyi.vlstream.test.vlstream.compute;
 
 import com.jcraft.jsch.*;
-import com.ruoyi.vlstream.test.vlstream.data.PublicDatasetDownloader;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -22,34 +22,70 @@ import java.util.concurrent.atomic.AtomicReference;
 @RequiredArgsConstructor
 public class ComputeSsh {
     private final ComputeCredentialCipher cipher;
+    private final ComputeTrustedSelfPolicy trustedSelfPolicy;
+    @Autowired(required = false)
+    private ComputeDeploymentSshIdentity deploymentIdentity;
+    @Autowired(required = false)
+    private ComputeApprovedAutoDlSshIdentity approvedAutoDlIdentity;
+
+    /** Validate the administrator-owned key reference without reading private material. */
+    public void requireDeploymentIdentity(ComputeNode node) throws IOException {
+        if ("autodl".equals(node.getProvider())) {
+            if (approvedAutoDlIdentity == null) throw new IOException("AutoDL本地部署身份未配置");
+            approvedAutoDlIdentity.requireConfigured(node);
+            return;
+        }
+        if (deploymentIdentity == null) throw new IOException("后台部署SSH身份未配置");
+        deploymentIdentity.requireConfigured(node);
+    }
 
     public Connection open(ComputeNode node) throws IOException {
         Session session = null;
+        JSch jsch = null;
         try {
-            InetAddress[] addresses = PublicDatasetDownloader.publicAddresses(node.getHost());
-            JSch jsch = new JSch();
+            ComputeTrustedSelfPolicy.Target target = trustedSelfPolicy.resolve(node);
+            boolean keyMode = ComputeDeploymentSshIdentity.KEY.equals(node.getAuthMode());
+            ComputeApprovedAutoDlSshIdentity.Reference autoDlReference = null;
+            if (keyMode && "autodl".equals(node.getProvider())) {
+                if (approvedAutoDlIdentity == null) throw new IOException("AutoDL本地部署身份未配置");
+                autoDlReference = approvedAutoDlIdentity.resolve(node);
+                target = autoDlReference.bind(target);
+            }
+            InetAddress[] addresses = target.addresses();
+            jsch = new JSch();
             String alias = node.getHost() + ":" + node.getPort();
-            boolean pinned = node.getHostKey() != null && !node.getHostKey().isEmpty();
-            if (pinned) jsch.getHostKeyRepository().add(new HostKey(alias, Base64.getDecoder().decode(node.getHostKey())), null);
+            boolean pinned = target.hostKey() != null && !target.hostKey().isEmpty();
+            if (pinned) jsch.getHostKeyRepository().add(new HostKey(alias, Base64.getDecoder().decode(target.hostKey())), null);
+            if (keyMode) {
+                requireDeploymentIdentity(node);
+                if (!pinned) throw new IOException("后台部署SSH身份必须绑定已核验主机公钥");
+                if (autoDlReference != null) autoDlReference.addIdentity(jsch);
+                else deploymentIdentity.addIdentity(node, jsch);
+            } else if (!ComputeDeploymentSshIdentity.PASSWORD.equals(node.getAuthMode())) {
+                throw new IOException("SSH认证模式无效");
+            }
             session = jsch.getSession(node.getUsername(), node.getHost(), node.getPort());
             session.setSocketFactory(verifiedSockets(addresses));
             session.setHostKeyAlias(alias);
             session.setConfig("StrictHostKeyChecking", pinned ? "yes" : "no");
-            session.setConfig("PreferredAuthentications", "password,keyboard-interactive");
-            session.setPassword(cipher.decrypt(node.getPasswordCipher()));
+            if (target.requiredAlgorithm() != null) session.setConfig("server_host_key", target.requiredAlgorithm());
+            session.setConfig("PreferredAuthentications", keyMode ? "publickey" : "password,keyboard-interactive");
+            if (!keyMode) session.setPassword(cipher.decrypt(node.getPasswordCipher()));
             session.setTimeout(30000);
             session.connect(20000);
-            return new Connection(session);
+            return new Connection(session, jsch);
         } catch (Exception e) {
             if (session != null) session.disconnect();
-            throw new IOException("SSH 连接失败，请检查实例开机状态、地址、密码和主机指纹", e);
+            if (jsch != null) try { jsch.removeAllIdentity(); } catch (Exception ignored) { }
+            // An exception cause from a key parser may contain a private file path.
+            throw new IOException("SSH 连接失败，请检查实例、认证模式和主机指纹");
         }
     }
 
     public static String quote(String text) { return "'" + text.replace("'", "'\"'\"'") + "'"; }
 
     /** Preserve hostname routing (including local DNS proxies), checking the connected address before SSH sends credentials. */
-    static SocketFactory verifiedSockets(InetAddress[] validated) {
+    public static SocketFactory verifiedSockets(InetAddress[] validated) {
         final InetAddress[] allowed = validated.clone();
         return new SocketFactory() {
             @Override public Socket createSocket(String host, int port) throws IOException {
@@ -82,8 +118,10 @@ public class ComputeSsh {
 
     public static class Connection implements AutoCloseable {
         private final Session session;
+        private final JSch identityOwner;
         private ChannelSftp sftp;
-        public Connection(Session session) { this.session = session; }
+        public Connection(Session session) { this(session, null); }
+        Connection(Session session, JSch identityOwner) { this.session = session; this.identityOwner = identityOwner; }
         public String hostKey() { return session.getHostKey().getKey(); }
 
         public String execute(String command, int timeoutSeconds) throws IOException {
@@ -143,6 +181,6 @@ public class ComputeSsh {
             try (OutputStream output = Files.newOutputStream(target)) { sftp().get(path, output); }
             catch (Exception e) { throw new IOException("实例产物下载失败", e); }
         }
-        @Override public void close() { if (sftp != null) sftp.disconnect(); session.disconnect(); }
+        @Override public void close() { if (sftp != null) sftp.disconnect(); session.disconnect(); if (identityOwner != null) try { identityOwner.removeAllIdentity(); } catch (Exception ignored) { } }
     }
 }

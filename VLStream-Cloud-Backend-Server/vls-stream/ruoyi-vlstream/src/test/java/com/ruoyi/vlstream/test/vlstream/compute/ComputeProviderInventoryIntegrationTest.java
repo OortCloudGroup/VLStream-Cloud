@@ -92,6 +92,13 @@ class ComputeProviderInventoryIntegrationTest {
         mock.expect(requestTo(AutoDlProPowerProvider.BASE+"list")).andRespond(request->{CloudComputeIntegrationTest.jdbc.update("UPDATE vls_compute_node SET provider_credential_cipher=? WHERE id=?",cipher.encrypt("{\"token\":\"fake-rotated\"}"),fixture.nodeId);return withSuccess(page(1,1,1,item("pro-a")),MediaType.APPLICATION_JSON).createResponse(request);});
         assertThrows(ServiceException.class,()->inventory.sync(fixture.nodeId));assertTrue(inventory.list(fixture.nodeId).isEmpty());
     }
+    @Test void managementOwnerChangeDuringHttpDiscardsEvenAdministratorSnapshot() {
+        mock.expect(requestTo(AutoDlProPowerProvider.BASE+"list")).andRespond(request->{
+            CloudComputeIntegrationTest.jdbc.update("UPDATE vls_compute_node SET management_owner_subject=? WHERE id=?",String.join("",Collections.nCopies(64,"b")),fixture.nodeId);
+            return withSuccess(page(1,1,1,item("pro-a")),MediaType.APPLICATION_JSON).createResponse(request);
+        });
+        assertThrows(ServiceException.class,()->inventory.sync(fixture.nodeId));assertTrue(inventory.list(fixture.nodeId).isEmpty());
+    }
     @Test void allDiscoveryEndpointsRequireExistingConfigurePermission()throws Exception {
         Class<?> type=com.ruoyi.vlstream.test.vlstream.controller.VlsComputeController.class;
         for(String method:Arrays.asList("inventory","syncInventory","refreshInventory")) {

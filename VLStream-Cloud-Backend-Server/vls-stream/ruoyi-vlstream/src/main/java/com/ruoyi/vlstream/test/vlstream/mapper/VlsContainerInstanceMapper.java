@@ -30,13 +30,21 @@ import java.util.Map;
  * @since 2025-12-23
  */
 public interface VlsContainerInstanceMapper extends BaseMapper<ContainerInstance> {
+	String TRUSTED_TASK_ASSOCIATION = " AND training_task_id IS NOT NULL AND create_user IS NOT NULL AND create_user<>'' AND ("
+		+ "(CAST(instance_type AS BINARY)=CAST('training' AS BINARY) AND EXISTS (SELECT 1 FROM vls_algorithm_training t WHERE t.id=vls_container_instance.training_task_id"
+		+ " AND CAST(t.tenant_id AS BINARY)=CAST(vls_container_instance.tenant_id AS BINARY) AND t.create_user IS NOT NULL AND t.create_user<>''"
+		+ " AND CAST(t.create_user AS BINARY)=CAST(vls_container_instance.create_user AS BINARY) AND COALESCE(t.is_deleted,0)=0))"
+		+ " OR (CAST(instance_type AS BINARY)=CAST('smart_annotation' AS BINARY) AND EXISTS (SELECT 1 FROM vls_smart_annotation_round r JOIN vls_smart_annotation_task t ON t.id=r.task_id"
+		+ " WHERE r.id=vls_container_instance.training_task_id AND CAST(r.tenant_id AS BINARY)=CAST(vls_container_instance.tenant_id AS BINARY)"
+		+ " AND CAST(t.tenant_id AS BINARY)=CAST(r.tenant_id AS BINARY) AND t.create_user IS NOT NULL AND t.create_user<>''"
+		+ " AND CAST(t.create_user AS BINARY)=CAST(vls_container_instance.create_user AS BINARY) AND COALESCE(r.is_deleted,0)=0 AND COALESCE(t.is_deleted,0)=0))) ";
 
 	/**
 	 * Scheduler-only cross-tenant scan for active training containers.
 	 */
 	@InterceptorIgnore(tenantLine = "true")
 	@Select("SELECT * FROM vls_container_instance WHERE is_deleted = 0 "
-		+ "AND instance_type IN ('training', 'smart_annotation') AND instance_status IN ('starting', 'running') ORDER BY id")
+		+ "AND instance_type IN ('training', 'smart_annotation') AND instance_status IN ('starting', 'running')" + TRUSTED_TASK_ASSOCIATION + "ORDER BY id")
 	List<ContainerInstance> selectActiveTrainingForScheduler();
 
 	/**
@@ -44,7 +52,7 @@ public interface VlsContainerInstanceMapper extends BaseMapper<ContainerInstance
 	 */
 	@InterceptorIgnore(tenantLine = "true")
 	@Select("SELECT * FROM vls_container_instance WHERE is_deleted = 0 "
-		+ "AND instance_type IN ('training', 'smart_annotation') AND instance_status = 'queued' "
+		+ "AND instance_type IN ('training', 'smart_annotation') AND instance_status = 'queued' " + TRUSTED_TASK_ASSOCIATION
 		+ "ORDER BY queue_time ASC, id ASC LIMIT 1")
 	ContainerInstance selectNextQueuedTrainingForScheduler();
 

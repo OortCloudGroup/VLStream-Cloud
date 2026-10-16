@@ -380,6 +380,7 @@
                 class="algorithm-image-uploader"
                 :action="algorithmImageUploadUrl"
                 :headers="algorithmImageUploadHeaders"
+                :http-request="uploadTrustedApi"
                 accept="image/jpeg,image/png,image/webp"
                 :show-file-list="false"
                 :multiple="false"
@@ -558,6 +559,8 @@ import { clacPXToVW } from '@/utils/index'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import AlgorithmCatalogView from './components/AlgorithmCatalogView.vue'
 import Config from '@/config'
+import { uploadTrustedApi } from '@/utils/trustedUpload'
+import { apaasServiceUrl } from '@/utils/apaasApiBase'
 import {
   getCloudPlatformUserPath,
   getModelHubAccessToken,
@@ -594,7 +597,7 @@ const algorithmsLoading = ref(false)
 const submitting = ref(false)
 const imageUploading = ref(false)
 
-const algorithmImageUploadUrl = `${Config.URL}${Config.gateWay}apaas-fastdfsservice/fastdfs/v1/uploadFile`
+const algorithmImageUploadUrl = apaasServiceUrl('apaas-fastdfsservice', 'fastdfs/v1/uploadFile')
 const algorithmImageUploadHeaders = Config.headers
 
 // current menu

@@ -21,6 +21,8 @@ public class ComputeMarketService {
     private List<ComputePowerProvider> powerProviders = new ArrayList<>();
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ComputePublicInventoryService publicInventory;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ComputeSharedQueueService sharedQueue;
     private ComputePublicInventoryService inventory() {
         if (publicInventory==null) throw new ServiceException("公共整实例占用服务未就绪");
         return publicInventory;
@@ -28,13 +30,15 @@ public class ComputeMarketService {
     @Transactional(rollbackFor = Exception.class)
     public void publicIdentity(Long id, ComputeRequests.PublicIdentity request) {
         ComputeNode node=nodes.lockServer(id);
+        nodes.requireManagement(node);
+        if(nodes.isCompanyShared(node))throw new ServiceException("公司共享GPU使用任务租约，不绑定个人整实例身份");
         if (!ComputeNodeService.tenant().equals(node.getTenantId())) throw new ServiceException("无权登记公共实例身份");
         nodes.assertIdle(id); inventory().bind(node,request);
     }
     @Transactional(rollbackFor = Exception.class)
-    public String claim(Long id) { return inventory().claim(nodes.lockServer(id)); }
+    public String claim(Long id) { ComputeNode node=nodes.lockServer(id);if(nodes.isCompanyShared(node))throw new ServiceException("公司共享GPU无需占用整实例，请在训练时选择并排队");return inventory().claim(node); }
     @Transactional(rollbackFor = Exception.class)
-    public String release(Long id) { return inventory().release(nodes.lockServer(id)); }
+    public String release(Long id) { ComputeNode node=nodes.lockServer(id);if(nodes.isCompanyShared(node))throw new ServiceException("公司共享GPU在任务归档或取消确认后自动释放租约");return inventory().release(node); }
 
     @Data
     public static class Resource {
@@ -58,6 +62,8 @@ public class ComputeMarketService {
         private boolean canClaim;
         private boolean canOperate;
         private boolean canQueryProvider;
+        private boolean canRefreshEnvironment;
+        private String schedulingMode;
         private String waitingEstimate = "暂不可估算";
         private boolean schedulable;
         private boolean stopped;
@@ -78,14 +84,18 @@ public class ComputeMarketService {
         long now = System.currentTimeMillis();
         String viewer = publicInventory==null ? null : publicInventory.viewer();
         for (ComputeNode node : rows) {
+            if(selection && !"PLATFORM".equals(node.getResourceScope()) && !nodes.canUsePrivate(node))continue;
             if (selection && (!node.isEnabled() || ComputeAvailability.noCapacity(node, now) || ComputeAvailability.noGpu(node, now))) continue;
             Resource resource = new Resource();
+            boolean company=nodes.isCompanyShared(node);
             boolean shared="PLATFORM".equals(node.getResourceScope()) || node.getPublicInstanceKey()!=null;
             String claim=shared ? publicInventory==null ? "ISOLATED" : publicInventory.state(node,viewer) : null;
             resource.setRequiresClaim(shared); resource.setClaimState(claim);
+            resource.setSchedulingMode(node.getSchedulingMode());
             resource.setCanClaim(shared && "FREE".equals(claim) && "FREE".equals(node.getBillingType()) && node.isEnabled());
             resource.setCanOperate(shared ? "MINE".equals(claim) : ComputeNodeService.tenant().equals(node.getTenantId()));
             resource.setCanQueryProvider(shared ? "MINE".equals(claim) : ComputeNodeService.tenant().equals(node.getTenantId()));
+            resource.setCanRefreshEnvironment(resource.isCanOperate());
             resource.setId(String.valueOf(node.getId())); resource.setName(node.getName());
             resource.setProvider(node.getProvider()); resource.setScope(node.getResourceScope());
             resource.setServerGroup(node.getServerGroup()); resource.setGpuModel(node.getGpuModel()); resource.setGpuIndex(node.getGpuIndex());
@@ -99,7 +109,15 @@ public class ComputeMarketService {
             resource.setStopped("STOPPED".equals(node.getPowerState()));
             resource.setSchedulable(ComputeAvailability.ready(node, now) && (!shared || "MINE".equals(claim) && "FREE".equals(node.getBillingType())));
             resource.setMessage(shared && !"MINE".equals(claim) ? null : node.getLifecycleMessage()); result.add(resource);
-            resource.setCanManage(ComputeNodeService.tenant().equals(node.getTenantId()) && (!shared || "FREE".equals(claim)));
+            resource.setCanManage(nodes.canManage(node) && (!shared || "FREE".equals(claim)));
+            if(company) {
+                boolean admitted=sharedQueue!=null && sharedQueue.authenticated();
+                resource.setRequiresClaim(false);resource.setClaimState("SHARED_QUEUE");resource.setCanClaim(false);
+                resource.setCanOperate(false);resource.setCanQueryProvider(false);resource.setCanRefreshEnvironment(admitted);
+                resource.setCanManage(nodes.canManage(node));resource.setMessage(null);
+                resource.setSchedulable(admitted && sharedQueue.ready(node));
+                resource.setHealthState(sharedQueue!=null && sharedQueue.ready(node)?"READY":resource.getHealthState());
+            }
             List<ComputeNode> server = jdbc.query("SELECT * FROM vls_compute_node WHERE " + ComputeNodeService.SERVER_WHERE, new BeanPropertyRowMapper<>(ComputeNode.class), ComputeNodeService.serverArgs(node));
             resource.setApiControl(server.stream().anyMatch(n -> powerProviders.stream().anyMatch(p -> p.supports(n))));
             resource.setOperationPending(server.stream().anyMatch(n -> n.getPowerOperationId() != null));
@@ -114,20 +132,26 @@ public class ComputeMarketService {
         List<ComputeNode> rows = jdbc.query("SELECT * FROM vls_compute_node WHERE tenant_id=? AND id=? FOR UPDATE",
             new BeanPropertyRowMapper<>(ComputeNode.class), ComputeNodeService.tenant(), id);
         if (rows.isEmpty()) throw new ServiceException("算力实例不存在或无权管理");
+        nodes.requireManagement(rows.get(0));
         nodes.assertIdle(id);
+        ComputeNode offered=rows.get(0);
+        String scheduling=request.getSchedulingMode()==null?offered.getSchedulingMode():request.getSchedulingMode();
+        if(sharedQueue!=null)sharedQueue.requireOffering(offered,request,scheduling);
+        else if(ComputeSharedQueueService.MODE.equals(scheduling))throw new ServiceException("共享GPU调度未配置");
         if (request.isPublished() && "POINTS".equals(request.getBillingType()))
             ComputeBillingPolicy.requireEconomicalPaidOffer(rows.get(0), System.currentTimeMillis());
         if ("POINTS".equals(request.getBillingType()) && request.getPointsPerHour() == null)
             throw new ServiceException("请配置价格；积分结算未接入前收费资源仅展示");
-        jdbc.update("UPDATE vls_compute_node SET resource_scope=?,billing_type=?,points_per_hour=? WHERE tenant_id=? AND id=?",
+        jdbc.update("UPDATE vls_compute_node SET resource_scope=?,billing_type=?,points_per_hour=?,scheduling_mode=? WHERE tenant_id=? AND id=?",
             request.isPublished() ? "PLATFORM" : "PRIVATE", request.getBillingType(),
-            "POINTS".equals(request.getBillingType()) ? request.getPointsPerHour() : null, ComputeNodeService.tenant(), id);
+            "POINTS".equals(request.getBillingType()) ? request.getPointsPerHour() : null, scheduling, ComputeNodeService.tenant(), id);
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void observe(Long id, ComputeRequests.Observation request) {
         nodes.lockServer(id);
         List<ComputeNode> rows = jdbc.query("SELECT * FROM vls_compute_node WHERE tenant_id=? AND id=? FOR UPDATE", new BeanPropertyRowMapper<>(ComputeNode.class), ComputeNodeService.tenant(), id);
+        if(!rows.isEmpty())nodes.requireManagement(rows.get(0));
         if (rows.isEmpty()) throw new ServiceException("算力实例不存在或无权管理");
         if (rows.get(0).getPublicInstanceKey()!=null) inventory().requireEditable(rows.get(0));
         if (nodes.serverRows(rows.get(0)).stream().anyMatch(n -> n.getPowerOperationId()!=null)) throw new ServiceException("厂商异步操作尚未确认，不能覆盖运行状态");
@@ -145,6 +169,7 @@ public class ComputeMarketService {
         ComputePlatformAuthorization.Context authorization="start".equals(action)?nodes.authorizePaidOperation(id):null;
         ComputeNode node = nodes.lockServer(id);
         boolean shared="PLATFORM".equals(node.getResourceScope()) || node.getPublicInstanceKey()!=null;
+        if(!shared)nodes.requireManagement(node);
         if (shared && !("start".equals(action) && "POINTS".equals(node.getBillingType()))) inventory().requireOwner(node);
         if ("start".equals(action) && "PLATFORM".equals(node.getResourceScope()) && "POINTS".equals(node.getBillingType()) && authorization==null)
             throw new ServiceException("算力计费配置已变化，请刷新后授权登录平台",47001);

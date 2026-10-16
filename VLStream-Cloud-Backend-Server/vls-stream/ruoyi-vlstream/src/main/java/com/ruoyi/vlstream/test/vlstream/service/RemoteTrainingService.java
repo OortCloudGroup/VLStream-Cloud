@@ -650,24 +650,9 @@ public class RemoteTrainingService {
 	}
 
 	public boolean stopTraining(Long taskId, String logPath) {
-		try {
-			RemoteServers server = remoteServerMapper.selectActiveServer();
-			if (server == null) {
-				return false;
-			}
-			String resolvedLogPath = (logPath == null || logPath.isEmpty())
-				? server.getWorkDir() + "/" + DEFAULT_LOG_DIR + "/training_" + taskId + ".log"
-				: logPath;
-			String stopCmd = wrapWithBash(
-				"ps -ef | grep '" + resolvedLogPath + "' | grep -v grep | awk '{print $2}' | xargs -r kill -9"
-			);
-			SSHService.SSHExecutionResult result = executeWithFallback(server, stopCmd);
-			log.info("停止训练任务{}: {}", taskId, result.getOutput());
-			return result.isSuccess();
-		} catch (Exception e) {
-			log.error("处理训练结果失败: {}", e.getMessage(), e);
-			return false;
-		}
+		// Legacy launches did not persist a PID plus start identity or a verified container identity.
+		// A log path (even a server-generated one) is not proof of process ownership.
+		throw new com.ruoyi.common.exception.ServiceException("旧训练缺少可信进程身份，平台无法安全停止；请由服务器管理员核对具体进程后处理");
 	}
 
 	/**

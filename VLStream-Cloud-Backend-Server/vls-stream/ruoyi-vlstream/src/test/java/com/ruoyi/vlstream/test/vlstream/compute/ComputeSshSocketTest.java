@@ -1,12 +1,14 @@
 package com.ruoyi.vlstream.test.vlstream.compute;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import static org.junit.jupiter.api.Assertions.*;
 
+@Tag("dev")
 class ComputeSshSocketTest {
     @Test void connectsOnlyToValidatedAddress() throws Exception {
         InetAddress loopback = InetAddress.getByName("127.0.0.1");

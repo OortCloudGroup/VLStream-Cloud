@@ -35,7 +35,7 @@ public class VlsComputeController {
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:compute:configure")
     @PutMapping("/nodes/{id}/provider-settings") public R<String> providerSettings(@PathVariable Long id, @Valid @RequestBody ComputeRequests.ProviderSettings request) { providerSettings.save(id,request); return R.data("厂商配置已保存；未执行云端调用，总开关默认关闭"); }
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:compute:power")
-    @PostMapping("/nodes/{id}/provider-state") public R<String> providerState(@PathVariable Long id, @RequestParam(defaultValue="false") boolean recover) { return R.data(providerState.refresh(id,recover)); }
+    @PostMapping("/nodes/{id}/provider-state") public R<String> providerState(@PathVariable Long id, @RequestParam(defaultValue="false") boolean recover) { nodes.getManaged(id); return R.data(providerState.refresh(id,recover)); }
     @GetMapping("/my-trainings") public R<MyTrainingTasksService.Page> myTrainings(@RequestParam(defaultValue="1") int current,
         @RequestParam(defaultValue="20") int size, @RequestParam(required=false) String name, @RequestParam(required=false) String state,
         @RequestParam(required=false) String start, @RequestParam(required=false) String end) { return R.data(myTasks.page(current,size,name,state,start,end)); }
@@ -56,11 +56,33 @@ public class VlsComputeController {
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:compute:publish")
     @PutMapping("/nodes/{id}/offer") public R<String> publish(@PathVariable Long id, @Valid @RequestBody ComputeRequests.Offer request) { market.publish(id, request); return R.data("算力供给已更新"); }
     @cn.dev33.satoken.annotation.SaCheckPermission("vls:compute:power")
-    @PostMapping("/nodes/{id}/power/{action}") public R<String> power(@PathVariable Long id, @PathVariable String action) { if ("start".equals(action)) nodes.authorizePaidOperation(id); return R.data(market.power(id, action)); }
+    @PostMapping("/nodes/{id}/power/{action}") public R<String> power(@PathVariable Long id, @PathVariable String action) { nodes.getManaged(id); if ("start".equals(action)) nodes.authorizePaidOperation(id); return R.data(market.power(id, action)); }
     @GetMapping("/nodes") public R<List<ComputeNode>> list() { return R.data(nodes.list()); }
+    @GetMapping("/nodes/{id}") public R<ComputeNode> detail(@PathVariable Long id) { return R.data(nodes.getManaged(id)); }
+    // Self-service SSH is separate from provider administration and public-market identity.
+    @cn.dev33.satoken.annotation.SaCheckLogin
+    @PostMapping("/my-nodes") public R<ComputeNode> connectOwn(@Valid @RequestBody ComputeRequests.Node request) {
+        return R.data(nodes.saveOwn(null, request));
+    }
+    @cn.dev33.satoken.annotation.SaCheckLogin
+    @PutMapping("/my-nodes/{id}") public R<ComputeNode> updateOwn(@PathVariable Long id, @Valid @RequestBody ComputeRequests.Node request) {
+        return R.data(nodes.saveOwn(id, request));
+    }
+    @cn.dev33.satoken.annotation.SaCheckLogin
+    @PostMapping("/my-nodes/{id}/probe") public R<ComputeNode> probeOwn(@PathVariable Long id) {
+        return R.data(nodes.probeOwn(id));
+    }
+    @cn.dev33.satoken.annotation.SaCheckLogin
+    @DeleteMapping("/my-nodes/{id}") public R<String> deleteOwn(@PathVariable Long id) {
+        nodes.deleteOwn(id); return R.data("实例接入记录已移除");
+    }
+    @cn.dev33.satoken.annotation.SaCheckPermission("vls:compute:configure")
     @PostMapping("/nodes") public R<ComputeNode> create(@Valid @RequestBody ComputeRequests.Node request) { return R.data(nodes.save(null, request)); }
+    @cn.dev33.satoken.annotation.SaCheckPermission("vls:compute:configure")
     @PutMapping("/nodes/{id}") public R<ComputeNode> update(@PathVariable Long id, @Valid @RequestBody ComputeRequests.Node request) { return R.data(nodes.save(id, request)); }
+    @cn.dev33.satoken.annotation.SaCheckPermission("vls:compute:configure")
     @PostMapping("/nodes/{id}/probe") public R<ComputeNode> probe(@PathVariable Long id) { return R.data(nodes.probe(id)); }
+    @cn.dev33.satoken.annotation.SaCheckPermission("vls:compute:configure")
     @DeleteMapping("/nodes/{id}") public R<String> delete(@PathVariable Long id) { nodes.delete(id); return R.data("实例接入记录已移除"); }
     @PostMapping("/trainings/{id}/start") public R<RemoteTrainingService.StartResult> start(@PathVariable Long id, @Valid @RequestBody ComputeRequests.Start request) { nodes.authorizePaidOperation(request.getNodeId()); return R.data(training.start(id, request)); }
 }

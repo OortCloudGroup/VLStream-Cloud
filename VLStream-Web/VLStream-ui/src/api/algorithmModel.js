@@ -5,7 +5,7 @@
  * Updated by: ChaoQun Lei
  */
 
-import request from '@/utils/request'
+import { currentIdentityRequest, computePathPart } from '@/utils/computeIdentityRequest'
 
 // algorithmmodelAPIservice
 
@@ -14,7 +14,7 @@ import request from '@/utils/request'
  * @param {Object} params Query parameter
  */
 export function getModelPage(params) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsAlgorithmModel/page',
     method: 'get',
     data: params
@@ -26,8 +26,8 @@ export function getModelPage(params) {
  * @param {Number} id modelID
  */
 export function getModelById(id) {
-  return request({
-    url: `/vlsAlgorithmModel/${id}`,
+  return currentIdentityRequest({
+    url: `/vlsAlgorithmModel/${computePathPart(id)}`,
     method: 'get'
   })
 }
@@ -37,7 +37,7 @@ export function getModelById(id) {
  * @param {Object} data modeldata
  */
 export function createModel(data) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsAlgorithmModel/create',
     method: 'post',
     data
@@ -46,7 +46,7 @@ export function createModel(data) {
 
 /** Import an externally trained YOLOv8 PT and its matching data.yaml. */
 export function importModelFiles(formData, onUploadProgress) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsAlgorithmModel/import',
     method: 'post',
     data: formData,
@@ -57,7 +57,7 @@ export function importModelFiles(formData, onUploadProgress) {
 
 /** Import one PT and its class YAML from a ZIP archive. */
 export function importModelArchive(formData, onUploadProgress) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsAlgorithmModel/import-zip',
     method: 'post',
     data: formData,
@@ -71,7 +71,7 @@ export function importModelArchive(formData, onUploadProgress) {
  * @param {Object} data modeldata
  */
 export function updateModel(data) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsAlgorithmModel/update',
     method: 'post',
     data
@@ -83,8 +83,8 @@ export function updateModel(data) {
  * @param {Number} id modelID
  */
 export function deleteModel(id) {
-  return request({
-    url: `/vlsAlgorithmModel/${id}`,
+  return currentIdentityRequest({
+    url: `/vlsAlgorithmModel/${computePathPart(id)}`,
     method: 'delete'
   })
 }
@@ -94,7 +94,7 @@ export function deleteModel(id) {
  * @param {Array} ids modelID
  */
 export function batchDeleteModel(ids) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsAlgorithmModel/batch',
     method: 'delete',
     data: ids
@@ -106,8 +106,8 @@ export function batchDeleteModel(ids) {
  * @param {Number} algorithmId algorithmID
  */
 export function getModelsByAlgorithmId(algorithmId) {
-  return request({
-    url: `/vlsAlgorithmModel/algorithm/${algorithmId}`,
+  return currentIdentityRequest({
+    url: `/vlsAlgorithmModel/algorithm/${computePathPart(algorithmId)}`,
     method: 'get'
   })
 }
@@ -117,8 +117,8 @@ export function getModelsByAlgorithmId(algorithmId) {
  * @param {Number} trainingId trainingtaskID
  */
 export function getModelsByTrainingId(trainingId) {
-  return request({
-    url: `/vlsAlgorithmModel/training/${trainingId}`,
+  return currentIdentityRequest({
+    url: `/vlsAlgorithmModel/training/${computePathPart(trainingId)}`,
     method: 'get'
   })
 }
@@ -128,8 +128,8 @@ export function getModelsByTrainingId(trainingId) {
  * @param {String} status
  */
 export function getModelsByStatus(status) {
-  return request({
-    url: `/vlsAlgorithmModel/status/${status}`,
+  return currentIdentityRequest({
+    url: `/vlsAlgorithmModel/status/${computePathPart(status)}`,
     method: 'get'
   })
 }
@@ -139,8 +139,8 @@ export function getModelsByStatus(status) {
  * @param {Number} id modelID
  */
 export function publishModel(id) {
-  return request({
-    url: `/vlsAlgorithmModel/publish/${id}`,
+  return currentIdentityRequest({
+    url: `/vlsAlgorithmModel/publish/${computePathPart(id)}`,
     method: 'post'
   })
 }
@@ -150,8 +150,8 @@ export function publishModel(id) {
  * @param {Number} id modelID
  */
 export function unpublishModel(id) {
-  return request({
-    url: `/vlsAlgorithmModel/unpublish/${id}`,
+  return currentIdentityRequest({
+    url: `/vlsAlgorithmModel/unpublish/${computePathPart(id)}`,
     method: 'post'
   })
 }
@@ -161,7 +161,7 @@ export function unpublishModel(id) {
  * @param {Array} ids modelID
  */
 export function batchPublishModel(ids) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsAlgorithmModel/batch-publish',
     method: 'post',
     data: ids
@@ -173,19 +173,24 @@ export function batchPublishModel(ids) {
  * @param {Number} id modelID
  */
 export function downloadModel(id) {
-  return request({
-    url: `/vlsAlgorithmModel/download/${id}`,
+  return currentIdentityRequest({
+    url: `/vlsAlgorithmModel/download/${computePathPart(id)}`,
     method: 'get'
   })
 }
+
+export const downloadModelFile = (id, type) => currentIdentityRequest({
+  url: `/vlsAlgorithmModel/${computePathPart(id)}/download-file`, method: 'get',
+  params: { type }, responseType: 'blob'
+})
 
 /**
  * model
  * @param {Number} id modelID
  */
 export function deployModel(id) {
-  return request({
-    url: `/vlsAlgorithmModel/deploy/${id}`,
+  return currentIdentityRequest({
+    url: `/vlsAlgorithmModel/deploy/${computePathPart(id)}`,
     method: 'post'
   })
 }
@@ -194,7 +199,7 @@ export function deployModel(id) {
  * Get model info
  */
 export function getModelStatistics() {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsAlgorithmModel/statistics',
     method: 'get'
   })
@@ -207,7 +212,7 @@ export function getModelStatistics() {
  * @param {Number} excludeId ID
  */
 export function checkModelNameAndVersion(modelName, version, excludeId) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsAlgorithmModel/check-name-version',
     method: 'get',
     params: {
@@ -224,8 +229,8 @@ export function checkModelNameAndVersion(modelName, version, excludeId) {
  * @param {String} version
  */
 export function getModelByAlgorithmIdAndVersion(algorithmId, version) {
-  return request({
-    url: `/vlsAlgorithmModel/algorithm/${algorithmId}/version/${version}`,
+  return currentIdentityRequest({
+    url: `/vlsAlgorithmModel/algorithm/${computePathPart(algorithmId)}/version/${computePathPart(version)}`,
     method: 'get'
   })
 }
@@ -235,8 +240,8 @@ export function getModelByAlgorithmIdAndVersion(algorithmId, version) {
  * @param {Number} algorithmId algorithmID
  */
 export function getLatestModelByAlgorithmId(algorithmId) {
-  return request({
-    url: `/vlsAlgorithmModel/algorithm/${algorithmId}/latest`,
+  return currentIdentityRequest({
+    url: `/vlsAlgorithmModel/algorithm/${computePathPart(algorithmId)}/latest`,
     method: 'get'
   })
 }
@@ -246,7 +251,7 @@ export function getLatestModelByAlgorithmId(algorithmId) {
  * @param {Number} limit
  */
 export function getPopularModels(limit = 10) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsAlgorithmModel/popular',
     method: 'get',
     params: { limit }
@@ -258,8 +263,8 @@ export function getPopularModels(limit = 10) {
  * @param {Number} createdBy ID
  */
 export function countModelsByCreatedBy(createdBy) {
-  return request({
-    url: `/vlsAlgorithmModel/count/creator/${createdBy}`,
+  return currentIdentityRequest({
+    url: `/vlsAlgorithmModel/count/creator/${computePathPart(createdBy)}`,
     method: 'get'
   })
 }
@@ -268,7 +273,7 @@ export function countModelsByCreatedBy(createdBy) {
  * Get algorithmmodel
  */
 export function getTotalModelSize() {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsAlgorithmModel/total-size',
     method: 'get'
   })

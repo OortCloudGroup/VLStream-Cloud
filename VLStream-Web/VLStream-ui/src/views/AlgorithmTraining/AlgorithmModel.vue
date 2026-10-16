@@ -281,7 +281,7 @@
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
 
-import {computed, h, onMounted, ref} from 'vue'
+import {computed, h, onMounted, onUnmounted, ref} from 'vue'
 import { clacPXToVW } from '@/utils/index'
 import {Delete, Edit, Plus} from '@element-plus/icons-vue'
 import {ElMessage, ElMessageBox, ElRadio, ElRadioGroup} from 'element-plus'
@@ -289,6 +289,7 @@ import {
   batchDeleteModel,
   createModel,
   deleteModel,
+  downloadModelFile as downloadModelArtifact,
   getModelById,
   getModelPage,
   importModelArchive,
@@ -296,7 +297,7 @@ import {
   updateModel
 } from '@/api/algorithmModel'
 import { getAlgorithmPage } from '@/api/algorithmManagement'
-import request from "@/utils/request";
+import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 
 // form
 const searchForm = ref({
@@ -777,6 +778,7 @@ const promptDownloadModelType = async (modelRow) => {
 
 const downloadModelFile = async (modelRow) => {
   try {
+    const identity = captureComputeIdentity()
     console.log('下载模型文件 - 模型数据:', modelRow)
 
     const originalData = modelRow?.originalData || modelRow
@@ -792,6 +794,7 @@ const downloadModelFile = async (modelRow) => {
     }
 
     const downloadType = await promptDownloadModelType(modelRow)
+    identity.assertCurrent()
     if (!downloadType) {
       return
     }
@@ -799,15 +802,12 @@ const downloadModelFile = async (modelRow) => {
     const fallbackName = modelRow?.name || originalData?.modelName || 'model'
     const fileName = `${fallbackName}.${downloadType === 'classes' ? 'classes.yaml' : downloadType}`
 
-    const blob = await request({
-      url: `/vlsAlgorithmModel/${modelId}/download-file`,
-      method: 'get',
-      params: { type: downloadType },
-      responseType: 'blob'
-    })
+    const blob = await downloadModelArtifact(modelId, downloadType)
+    identity.assertCurrent()
 
     if (blob instanceof Blob && blob.type && blob.type.includes('application/json')) {
       const text = await blob.text()
+      identity.assertCurrent()
       let message = 'Failed to download model file'
       try {
         const payload = JSON.parse(text)
@@ -818,6 +818,7 @@ const downloadModelFile = async (modelRow) => {
       throw new Error(message)
     }
 
+    identity.assertCurrent()
     const blobUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = blobUrl
@@ -966,9 +967,19 @@ const handleSubmitModel = async () => {
 }
 
 // page Load data
+const onModelIdentityChanged = () => {
+  tableData.value = []; total.value = 0; selectedRows.value = []; selectedRow.value = null
+  currentModel.value = null; versionData.value = []; showDetailView.value = false
+  showModelDialog.value = false; showImportDialog.value = false
+  loadModelData()
+}
+
 onMounted(() => {
+  window.addEventListener('modelHubAuthChanged', onModelIdentityChanged)
   loadModelData()
 })
+
+onUnmounted(() => window.removeEventListener('modelHubAuthChanged', onModelIdentityChanged))
 </script>
 
 <style scoped lang="scss">

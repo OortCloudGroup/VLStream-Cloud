@@ -602,7 +602,7 @@
     <!-- log -->
     <el-dialog
       v-model="showLogsDialog"
-      :title="$tp('{value0} - 运行日志', { value0: currentContainer?.instanceName })"
+      :title="currentContainer ? $tp('{value0} - 运行日志', { value0: currentContainer.instanceName }) : ''"
       width="80%"
     >
       <div class="logs-container">
@@ -638,6 +638,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import AutoDlNodes from './AutoDlNodes.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { createDefaultGpuResourceRequest } from '@/utils/defaultGpuResourceRequest'
+import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 const route = useRoute()
 const router = useRouter()
 const computeTab = ref(route.query.tab === 'cloud' ? 'cloud' : 'tasks')
@@ -676,6 +677,21 @@ const activeTimeFilter = ref('实时')
 const gpuResource = ref(null)
 const defaultGpuError = ref('')
 let refreshTimer = null
+let viewRevision = 0
+let listSequence = 0
+let detailsSequence = 0
+let logsSequence = 0
+let disposed = false
+
+// Pin the whole view operation, including confirmation dialogs and follow-up reads.
+const captureViewRequest = () => {
+  const revision = viewRevision
+  const identity = captureComputeIdentity()
+  return () => {
+    if (disposed || revision !== viewRevision) return false
+    try { identity.assertCurrent(); return true } catch { return false }
+  }
+}
 
 // item
 const timeFilters = ref([
@@ -771,6 +787,10 @@ const totalInstances = ref(0) // to ref, from APIGet
 
 // API method
 const loadContainerInstances = async () => {
+  if (disposed) return
+  const identityCurrent = captureViewRequest()
+  const sequence = ++listSequence
+  const current = () => identityCurrent() && sequence === listSequence
   try {
     loading.value = true
     const params = {
@@ -782,6 +802,7 @@ const loadContainerInstances = async () => {
     }
 
     const response = await getContainerInstancePage(params)
+    if (!current()) return
     if (response.code === 200) {
       containers.value = response.data.records || []
       totalInstances.value = response.data.total || 0
@@ -789,10 +810,11 @@ const loadContainerInstances = async () => {
       ElMessage.error(response.message || uiText('获取容器实例列表失败'))
     }
   } catch (error) {
+    if (!current()) return
     console.error('加载容器实例失败:', error)
     ElMessage.error(uiText('获取容器实例列表失败'))
   } finally {
-    loading.value = false
+    if (current()) loading.value = false
   }
 }
 
@@ -858,14 +880,19 @@ const resetFilter = () => {
 }
 
 const refreshInstances = () => {
-  if (computeTab.value !== 'tasks') return
+  if (disposed || computeTab.value !== 'tasks') return
   loadContainerInstances()
   loadGpuResource()
 }
 
 const defaultGpuRequest = createDefaultGpuResourceRequest({
-  active: () => computeTab.value === 'tasks',
-  fetchSnapshot: getGpuResourceSnapshot,
+  active: () => !disposed && computeTab.value === 'tasks',
+  fetchSnapshot: async options => {
+    const identity = captureComputeIdentity()
+    const response = await getGpuResourceSnapshot(options)
+    identity.assertCurrent()
+    return response
+  },
   onSnapshot: response => {
     if (response.code === 200) {
       gpuResource.value = response.data
@@ -894,8 +921,10 @@ const handleCurrentChange = (page) => {
 }
 
 const startContainer = async (container) => {
+  const current = captureViewRequest()
   try {
     const response = await startContainerInstance(container.id)
+    if (!current()) return
     if (response.code === 200) {
       ElMessage.success(uiText('容器 {value0} 启动成功', { value0: container.name }))
       await loadContainerInstances() // new
@@ -903,15 +932,19 @@ const startContainer = async (container) => {
       ElMessage.error(response.message || uiText('启动容器失败'))
     }
   } catch (error) {
+    if (!current()) return
     console.error('启动容器失败:', error)
     ElMessage.error(uiText('启动容器失败'))
   }
 }
 
 const stopContainer = async (container) => {
+  const current = captureViewRequest()
   try {
     await ElMessageBox.confirm(uiText('确定要停止此容器吗？'), uiText('确认操作'))
+    if (!current()) return
     const response = await stopContainerInstance(container.id)
+    if (!current()) return
     if (response.code === 200) {
       ElMessage.success(uiText('容器 {value0} 已停止', { value0: container.name }))
       await loadContainerInstances() // new
@@ -919,6 +952,7 @@ const stopContainer = async (container) => {
       ElMessage.error(response.message || uiText('停止容器失败'))
     }
   } catch (error) {
+    if (!current()) return
     if (error === 'cancel') {
       ElMessage.info(uiText('操作已取消'))
     } else {
@@ -929,8 +963,10 @@ const stopContainer = async (container) => {
 }
 
 const restartContainer = async (container) => {
+  const current = captureViewRequest()
   try {
     const response = await restartContainerInstance(container.id)
+    if (!current()) return
     if (response.code === 200) {
       ElMessage.success(uiText('容器 {value0} 重启成功', { value0: container.name }))
       await loadContainerInstances() // new
@@ -938,30 +974,43 @@ const restartContainer = async (container) => {
       ElMessage.error(response.message || uiText('重启容器失败'))
     }
   } catch (error) {
+    if (!current()) return
     console.error('重启容器失败:', error)
     ElMessage.error(uiText('重启容器失败'))
   }
 }
 
 const viewLogs = async (container) => {
+  const identityCurrent = captureViewRequest()
+  const sequence = ++logsSequence
+  const current = () => identityCurrent() && sequence === logsSequence
   currentContainer.value = container
+  displayLogs.value = []
+  showLogsDialog.value = true
   try {
     const response = await getContainerInstanceLogs(container.id)
+    if (!current()) return
     displayLogs.value = (response.data || '').split('\n').filter(Boolean).map(message => ({
       time: '',
       level: message.includes('ERROR') || message.includes('failed') ? 'ERROR' : 'INFO',
       message
     }))
   } catch (error) {
+    if (!current()) return
     displayLogs.value = []
     ElMessage.error(uiText('读取训练日志失败'))
   }
-  showLogsDialog.value = true
 }
 
 const viewDetails = async (container) => {
+  const identityCurrent = captureViewRequest()
+  const sequence = ++detailsSequence
+  const current = () => identityCurrent() && sequence === detailsSequence
+  detailsForm.value = {}
+  showDetailsView.value = false
   try {
     const response = await getContainerInstanceById(container.id)
+    if (!current()) return
     if (response.code === 200) {
       detailsForm.value = response.data
       detailsTitle.value = `容器详情 - ${container.instanceName}`
@@ -970,6 +1019,7 @@ const viewDetails = async (container) => {
       ElMessage.error(response.message || uiText('获取容器详情失败'))
     }
   } catch (error) {
+    if (!current()) return
     console.error('获取容器详情失败:', error)
     ElMessage.error(uiText('获取容器详情失败'))
   }
@@ -986,6 +1036,7 @@ const viewMonitoring = (container) => {
 }
 
 const backToList = () => {
+  detailsSequence++
   showMonitoringView.value = false
   showCreateView.value = false
   showDetailsView.value = false
@@ -1004,6 +1055,7 @@ const decreaseQuantity = () => {
 }
 
 const confirmCreate = async () => {
+  const current = captureViewRequest()
   try {
     // form
     if (!createInstanceForm.value.name.trim()) {
@@ -1023,6 +1075,7 @@ const confirmCreate = async () => {
     }
 
     const response = await createContainerInstance(createData)
+    if (!current()) return
     if (response.code === 200) {
       ElMessage.success(uiText('容器实例创建成功'))
       showCreateView.value = false
@@ -1032,6 +1085,7 @@ const confirmCreate = async () => {
       ElMessage.error(response.message || uiText('创建容器实例失败'))
     }
   } catch (error) {
+    if (!current()) return
     console.error('创建容器实例失败:', error)
     ElMessage.error(uiText('创建容器实例失败'))
   }
@@ -1054,9 +1108,12 @@ const resetCreateInstanceForm = () => {
 }
 
 const deleteContainer = async (container) => {
+  const current = captureViewRequest()
   try {
     await ElMessageBox.confirm(uiText('确定要删除此容器吗？此操作不可恢复。'), uiText('确认删除'))
+    if (!current()) return
     const response = await deleteContainerInstance(container.id)
+    if (!current()) return
     if (response.code === 200) {
       ElMessage.success(uiText('删除成功'))
       await loadContainerInstances() // new
@@ -1064,6 +1121,7 @@ const deleteContainer = async (container) => {
       ElMessage.error(response.message || uiText('删除失败'))
     }
   } catch (error) {
+    if (!current()) return
     if (error === 'cancel') {
       ElMessage.info(uiText('已取消删除'))
     } else {
@@ -1080,6 +1138,7 @@ const refreshLogs = () => {
 }
 
 const clearLogs = () => {
+  logsSequence++
   displayLogs.value = []
 }
 
@@ -1098,6 +1157,7 @@ const resetCreateForm = () => {
 }
 
 const createContainer = async () => {
+  const current = captureViewRequest()
   try {
     // form
     if (!createForm.value.name.trim()) {
@@ -1106,6 +1166,7 @@ const createContainer = async () => {
     }
 
     const response = await createContainerInstance(createForm.value)
+    if (!current()) return
     if (response.code === 200) {
       ElMessage.success(uiText('容器实例创建成功'))
       showCreateDialog.value = false
@@ -1115,6 +1176,7 @@ const createContainer = async () => {
       ElMessage.error(response.message || uiText('创建容器实例失败'))
     }
   } catch (error) {
+    if (!current()) return
     console.error('创建容器实例失败:', error)
     ElMessage.error(uiText('创建容器实例失败'))
   }
@@ -1210,8 +1272,23 @@ watch(computeTab, value => {
   if (route.query.tab !== value) router.replace({ query: { ...route.query, tab: value } })
 })
 watch(() => route.query.tab, value => { computeTab.value = value === 'cloud' ? 'cloud' : 'tasks' })
+watch(showLogsDialog, visible => { if (!visible) { logsSequence++; displayLogs.value = [] } })
+
+const onContainerIdentityChanged = () => {
+  viewRevision++; listSequence++; detailsSequence++; logsSequence++
+  defaultGpuRequest.cancel()
+  containers.value = []; totalInstances.value = 0; selectedRows.value = []
+  detailsForm.value = {}; detailsTitle.value = '容器详情'
+  currentContainer.value = null; displayLogs.value = []
+  showDetailsView.value = false; showLogsDialog.value = false; showMonitoringView.value = false
+  showCreateView.value = false; showCreateDialog.value = false
+  resetCreateForm(); resetCreateInstanceForm()
+  loading.value = false; gpuResource.value = null; defaultGpuError.value = ''
+  searchKeyword.value = ''; createTimeRange.value = null; currentPage.value = 1
+}
 
 onMounted(() => {
+  window.addEventListener('modelHubAuthChanged', onContainerIdentityChanged)
   if (computeTab.value === 'cloud') {
     router.replace({ path: '/compute-management', query: { returnTo: route.query.returnTo, nodeId: route.query.nodeId } })
     return
@@ -1221,6 +1298,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  disposed = true
+  onContainerIdentityChanged()
+  window.removeEventListener('modelHubAuthChanged', onContainerIdentityChanged)
   defaultGpuRequest.cancel()
   if (refreshTimer) window.clearInterval(refreshTimer)
 })

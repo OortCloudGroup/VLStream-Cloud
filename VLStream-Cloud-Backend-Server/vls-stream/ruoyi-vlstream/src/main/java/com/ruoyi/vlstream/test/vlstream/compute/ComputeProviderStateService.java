@@ -22,7 +22,7 @@ public class ComputeProviderStateService {
         ComputeNode node = nodes.lockServer(id);
         boolean shared=node.getPublicInstanceKey()!=null || "PLATFORM".equals(node.getResourceScope());
         if (shared) nodes.publicInventory().requireOwner(node);
-        else if (!ComputeNodeService.tenant().equals(node.getTenantId())) throw new ServiceException("请由算力资源管理员刷新厂商状态");
+        else nodes.requireManagement(node);
         List<ComputeNode> server = nodes.serverRows(node);
         ComputeNode control = server.stream().filter(n -> providers.stream().anyMatch(p -> p.supports(n))).findFirst().orElseThrow(() -> new ServiceException("厂商 API 未启用或未配置；请登记控制台观察"));
         ComputeNode pending = server.stream().filter(n -> n.getPowerOperationId()!=null).findFirst().orElse(null);

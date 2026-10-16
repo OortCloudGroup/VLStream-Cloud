@@ -5,11 +5,11 @@
  * Updated by: ChaoQun Lei
  */
 
-import request from '@/utils/request'
+import { currentIdentityRequest, computePathPart } from '@/utils/computeIdentityRequest'
 
 // Query trainingtask
 export function getTrainingPage(params) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsAlgorithmTraining/page',
     method: 'get',
     params: params
@@ -18,15 +18,15 @@ export function getTrainingPage(params) {
 
 // Query trainingtask
 export function getTrainingTask(id) {
-  return request({
-    url: '/vlsAlgorithmTraining/' + id,
+  return currentIdentityRequest({
+    url: '/vlsAlgorithmTraining/' + computePathPart(id),
     method: 'get'
   })
 }
 
 // Add trainingtask
 export function addTrainingTask(data) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsAlgorithmTraining',
     method: 'post',
     data: data
@@ -35,8 +35,8 @@ export function addTrainingTask(data) {
 
 // Update trainingtask
 export function updateTrainingTask(data) {
-  return request({
-    url: '/vlsAlgorithmTraining/' + data.id,
+  return currentIdentityRequest({
+    url: '/vlsAlgorithmTraining/' + computePathPart(data.id),
     method: 'put',
     data: data
   })
@@ -44,24 +44,24 @@ export function updateTrainingTask(data) {
 
 // Delete trainingtask
 export function delTrainingTask(id) {
-  return request({
-    url: '/vlsAlgorithmTraining/' + id,
+  return currentIdentityRequest({
+    url: '/vlsAlgorithmTraining/' + computePathPart(id),
     method: 'delete'
   })
 }
 
 // starttrainingtask
 export function startTraining(id) {
-  return request({
-    url: '/vlsAlgorithmTraining/' + id + '/start',
+  return currentIdentityRequest({
+    url: '/vlsAlgorithmTraining/' + computePathPart(id) + '/start',
     method: 'post'
   })
 }
 
 // starttrainingtask ( parameter)
 export function startTrainingWithParams(id, params) {
-  return request({
-    url: '/vlsAlgorithmTraining/' + id + '/start',
+  return currentIdentityRequest({
+    url: '/vlsAlgorithmTraining/' + computePathPart(id) + '/start',
     method: 'post',
     params: params
   })
@@ -69,31 +69,31 @@ export function startTrainingWithParams(id, params) {
 
 // trainingtask
 export function stopTraining(id) {
-  return request({
-    url: '/vlsAlgorithmTraining/' + id + '/stop',
+  return currentIdentityRequest({
+    url: '/vlsAlgorithmTraining/' + computePathPart(id) + '/stop',
     method: 'post'
   })
 }
 
 // Get traininglog
 export function getTrainingLogs(id) {
-  return request({
-    url: '/vlsAlgorithmTraining/' + id + '/logs',
+  return currentIdentityRequest({
+    url: '/vlsAlgorithmTraining/' + computePathPart(id) + '/logs',
     method: 'get'
   })
 }
 
 // Get training
 export function getTrainingStatus(id) {
-  return request({
-    url: '/vlsAlgorithmTraining/' + id + '/status',
+  return currentIdentityRequest({
+    url: '/vlsAlgorithmTraining/' + computePathPart(id) + '/status',
     method: 'get'
   })
 }
 
 // Batch delete trainingtask
 export function batchDeleteTraining(ids) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsAlgorithmTraining/batch',
     method: 'delete',
     data: ids
@@ -102,7 +102,7 @@ export function batchDeleteTraining(ids) {
 
 // trainingtask
 export function createTraining(data) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsAlgorithmTraining',
     method: 'post',
     data: data
@@ -111,8 +111,8 @@ export function createTraining(data) {
 
 // new trainingtask
 export function updateTraining(data) {
-  return request({
-    url: '/vlsAlgorithmTraining/' + data.id,
+  return currentIdentityRequest({
+    url: '/vlsAlgorithmTraining/' + computePathPart(data.id),
     method: 'put',
     data: data
   })
@@ -120,16 +120,29 @@ export function updateTraining(data) {
 
 // Delete trainingtask
 export function deleteTraining(id) {
-  return request({
-    url: '/vlsAlgorithmTraining/' + id,
+  return currentIdentityRequest({
+    url: '/vlsAlgorithmTraining/' + computePathPart(id),
     method: 'delete'
   })
 }
 
 // Convert model
 export function convertModel(id) {
-  return request({
-    url: '/vlsAlgorithmTraining/' + id + '/convert-model',
+  return currentIdentityRequest({
+    url: '/vlsAlgorithmTraining/' + computePathPart(id) + '/convert-model',
     method: 'post'
   })
 }
+
+export const getTrainingPublication = id => currentIdentityRequest({
+  url: `/vlsAlgorithmTraining/${computePathPart(id)}/publication`, method: 'get'
+})
+
+export const retryTrainingPublication = id => currentIdentityRequest({
+  url: `/vlsAlgorithmTraining/${computePathPart(id)}/publication/retry`, method: 'post'
+})
+
+export const downloadTrainingModel = (id, type) => currentIdentityRequest({
+  url: `/vlsAlgorithmTraining/${computePathPart(id)}/download-model`, method: 'get',
+  params: { type }, responseType: 'blob'
+})

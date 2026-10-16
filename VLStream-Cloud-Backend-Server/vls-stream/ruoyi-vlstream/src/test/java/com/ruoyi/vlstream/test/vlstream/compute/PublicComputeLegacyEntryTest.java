@@ -2,6 +2,7 @@ package com.ruoyi.vlstream.test.vlstream.compute;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsAlgorithmModelMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmModel;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.ContainerInstance;
@@ -10,6 +11,8 @@ import com.ruoyi.vlstream.test.vlstream.service.GpuTrainingSchedulerService;
 import com.ruoyi.vlstream.test.vlstream.service.impl.VlsAlgorithmModelServiceImpl;
 import java.util.Arrays;
 import java.util.Collections;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -20,6 +23,8 @@ import static org.mockito.Mockito.*;
 
 @Tag("dev")
 class PublicComputeLegacyEntryTest {
+    @BeforeEach void tenantContext() { TenantContextHolder.setTenantId("tenant-a"); }
+    @AfterEach void clearTenantContext() { TenantContextHolder.clear(); }
     private ComputePublicTaskAccess access() {
         ComputePublicInventoryService inventory=mock(ComputePublicInventoryService.class);when(inventory.viewer()).thenReturn("verified-subject");
         return new ComputePublicTaskAccess(mock(JdbcTemplate.class),inventory);

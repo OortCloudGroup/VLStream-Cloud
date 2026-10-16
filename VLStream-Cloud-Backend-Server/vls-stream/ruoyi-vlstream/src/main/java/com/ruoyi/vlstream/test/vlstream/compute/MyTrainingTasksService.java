@@ -21,7 +21,7 @@ public class MyTrainingTasksService {
         "CASE WHEN j.id IS NOT NULL THEN j.job_state WHEN t.train_status='completed' THEN 'COMPLETED' WHEN t.train_status='failed' THEN 'FAILED' WHEN t.train_status IN ('stop','stopped','cancelled') THEN 'STOPPED' WHEN c.instance_status='queued' THEN 'QUEUED' WHEN c.instance_status='starting' THEN 'PREPARING' WHEN t.train_status='training' THEN 'RUNNING' ELSE 'PENDING' END AS executionState " +
         "FROM vls_algorithm_training t LEFT JOIN vls_cloud_training_job j ON j.tenant_id=t.tenant_id AND j.training_id=t.id AND j.id=JSON_UNQUOTE(JSON_EXTRACT(IF(JSON_VALID(t.config_params),t.config_params,'{}'),'$.cloudJobId')) " +
         "LEFT JOIN vls_compute_node n ON n.id=j.node_id LEFT JOIN vls_container_instance c ON c.tenant_id=t.tenant_id AND c.training_task_id=t.id AND c.id=(SELECT MAX(c2.id) FROM vls_container_instance c2 WHERE c2.tenant_id=t.tenant_id AND c2.training_task_id=t.id) " +
-        "WHERE t.tenant_id=? AND t.create_user=? AND t.is_deleted=0";
+        "WHERE BINARY t.tenant_id=BINARY ? AND BINARY t.create_user=BINARY ? AND t.is_deleted=0";
 
     @Data
     public static class Page {
@@ -42,8 +42,8 @@ public class MyTrainingTasksService {
         if (state != null && !state.isEmpty() && !STATES.contains(state)) throw new ServiceException("无效的训练阶段");
         List<Object> params = new ArrayList<>(Arrays.asList(tenant,user));
         StringBuilder filter = new StringBuilder(BASE);
-        filter.append(" AND ").append(ComputePublicTaskAccess.predicate("t.id").replace("{0}","?"));
-        params.add(publicAccess==null?"":publicAccess.viewer());
+        filter.append(" AND ").append(ComputePublicTaskAccess.jdbcPredicate("t.id",params,
+            publicAccess==null?"":publicAccess.viewer(),publicAccess==null?"":publicAccess.sharedViewer(),tenant));
         if (name != null && !name.trim().isEmpty()) {
             if (name.length() > 100) throw new ServiceException("任务名称筛选过长");
             filter.append(" AND LOCATE(?,t.task_name)>0"); params.add(name.trim());

@@ -11,6 +11,8 @@ import com.ruoyi.web.controller.compat.BladeTokenUserStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
+import javax.servlet.ServletRequest;
 import java.util.Objects;
 
 /** Reuses the existing gateway and bound multi-tenant session. No new token/user persistence. */
@@ -35,7 +37,7 @@ public class ComputePlatformAuthorizationService implements ComputePlatformAutho
         result.setVlsUserId(local.getUserId()); result.setVlsTenantId(local.getTenantId());
         Object cached=request.getAttribute(ATTRIBUTE);
         if (cached instanceof Context) return (Context)cached; // only this authenticated HTTP request
-        String supplied=TokenHeaderResolver.normalize(request.getHeader("accesstoken"));
+        String supplied=originalPlatformToken(request);
         if (supplied==null || supplied.equals(localToken)) return deny(result,"REQUIRED","收费算力需要独立的平台授权，本地登录令牌不能代替");
         PlatformGatewayHeaders headers; String token=supplied; PlatformTenantSession bound=null;
         if (multi) {
@@ -62,6 +64,18 @@ public class ComputePlatformAuthorizationService implements ComputePlatformAutho
     }
     protected HttpServletRequest currentRequest() { return ServletUtils.getRequest(); }
     protected String currentUserId() { return LoginHelper.getUserId(); }
+    /** Compatibility wrappers normalize all auth headers to the local session.
+     * Keep platform proof separate by reading the original inbound header;
+     * it still requires the authenticated local actor and gateway verification. */
+    private static String originalPlatformToken(HttpServletRequest request) {
+        HttpServletRequest original=request;
+        while(original instanceof HttpServletRequestWrapper) {
+            ServletRequest nested=((HttpServletRequestWrapper)original).getRequest();
+            if(!(nested instanceof HttpServletRequest) || nested==original)return null;
+            original=(HttpServletRequest)nested;
+        }
+        return TokenHeaderResolver.normalize(original.getHeader("accesstoken"));
+    }
     private static boolean blank(String value) { return value==null || value.trim().isEmpty(); }
     private Context deny(Context result,String reason,String message) { result.setReason(reason);result.setMessage(message);return result; }
 }

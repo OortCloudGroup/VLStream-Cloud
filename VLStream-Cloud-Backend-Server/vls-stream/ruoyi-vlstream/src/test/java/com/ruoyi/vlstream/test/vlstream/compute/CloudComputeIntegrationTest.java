@@ -46,11 +46,17 @@ class CloudComputeIntegrationTest {
         for (String table : Arrays.asList("vls_compute_provider_inventory","vls_compute_public_instance","vls_compute_charge","vls_compute_usage","vls_compute_billing_remainder","vls_cloud_training_job", "vls_compute_node", "vls_training_publication", "vls_algorithm_training", "vls_container_instance", "vls_dataset_conversion_guard", "sys_menu")) jdbc.execute("DROP TABLE IF EXISTS " + table);
         jdbc.execute("CREATE TABLE sys_menu(menu_id BIGINT PRIMARY KEY,menu_name VARCHAR(100),parent_id BIGINT,order_num INT,path VARCHAR(200),component VARCHAR(200),query_param VARCHAR(200),is_frame INT,is_cache INT,menu_type CHAR(1),visible CHAR(1),status CHAR(1),perms VARCHAR(100),icon VARCHAR(100),create_by VARCHAR(100),create_time DATETIME,update_by VARCHAR(100),update_time DATETIME,remark VARCHAR(500))");
         jdbc.execute("CREATE TABLE vls_algorithm_training(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),create_user VARCHAR(64),task_name VARCHAR(100),create_time DATETIME DEFAULT CURRENT_TIMESTAMP,is_deleted INT DEFAULT 0,dataset_id BIGINT,train_status VARCHAR(20),progress INT,epoch_total INT,epoch_current INT,config_params TEXT,log_path TEXT,error_message TEXT,model_output_path TEXT,onnx_model_output_path TEXT,om_model_output_path TEXT,rknn_model_output_path TEXT,int8_rknn_model_output_path TEXT,onnx_conversion_status VARCHAR(20),om_conversion_status VARCHAR(20),start_time DATETIME,end_time DATETIME,update_time DATETIME)");
-        jdbc.execute("CREATE TABLE vls_container_instance(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),training_task_id BIGINT,instance_status VARCHAR(20),error_message TEXT,stop_time DATETIME)");
+        jdbc.execute("CREATE TABLE vls_container_instance(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),create_user BIGINT,instance_type VARCHAR(64),training_task_id BIGINT,instance_status VARCHAR(20),error_message TEXT,stop_time DATETIME)");
         jdbc.execute("CREATE TABLE vls_dataset_conversion_guard(tenant_id VARCHAR(64),training_id BIGINT)");
-        for (String file : Arrays.asList("V1_2_0_018__training_auto_publish.sql", "V1_2_0_025__autodl_ssh_compute.sql", "V1_2_0_030__compute_market.sql", "V1_2_0_031__compute_operator_permissions.sql", "V1_2_0_032__training_owner_query_index.sql", "V1_2_0_033__compute_provider_control.sql", "V1_2_0_034__compute_lifecycle_revision.sql", "V1_2_0_035__compute_usage_accounting_contract.sql", "V1_2_0_036__compute_cost_observation.sql", "V1_2_0_037__compute_health_refresh_throttle.sql", "V1_2_0_038__compute_usage_opening_user.sql", "V1_2_0_039__public_compute_instance_claim.sql", "V1_2_0_040__compute_provider_inventory_drafts.sql")) {
+        // Container access now also validates smart-annotation associations, even for training rows.
+        jdbc.execute("CREATE TABLE IF NOT EXISTS vls_smart_annotation_task(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),create_user VARCHAR(64),is_deleted INT DEFAULT 0)");
+        jdbc.execute("CREATE TABLE IF NOT EXISTS vls_smart_annotation_round(id BIGINT PRIMARY KEY,tenant_id VARCHAR(64),task_id BIGINT,is_deleted INT DEFAULT 0)");
+        for (String file : Arrays.asList("V1_2_0_018__training_auto_publish.sql", "V1_2_0_025__autodl_ssh_compute.sql", "V1_2_0_030__compute_market.sql", "V1_2_0_031__compute_operator_permissions.sql", "V1_2_0_032__training_owner_query_index.sql", "V1_2_0_033__compute_provider_control.sql", "V1_2_0_034__compute_lifecycle_revision.sql", "V1_2_0_035__compute_usage_accounting_contract.sql", "V1_2_0_036__compute_cost_observation.sql", "V1_2_0_037__compute_health_refresh_throttle.sql", "V1_2_0_038__compute_usage_opening_user.sql", "V1_2_0_039__public_compute_instance_claim.sql", "V1_2_0_040__compute_provider_inventory_drafts.sql", "V1_2_0_041__compute_node_management_owner.sql", "V1_2_0_042__company_shared_gpu_task_queue.sql", "V1_2_0_043__compute_deployment_ssh_identity.sql")) {
             String sql = new String(Files.readAllBytes(root.resolve("VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/main/resources/db/migration/" + file)), StandardCharsets.UTF_8);
-            for (String statement : sql.split(";")) if (!statement.trim().isEmpty()) jdbc.execute(statement);
+            try (java.sql.Connection connection=source.getConnection()) {
+                org.springframework.jdbc.datasource.init.ScriptUtils.executeSqlScript(connection,
+                    new org.springframework.core.io.support.EncodedResource(new org.springframework.core.io.ByteArrayResource(sql.getBytes(StandardCharsets.UTF_8)),StandardCharsets.UTF_8));
+            }
         }
     }
     @BeforeEach void setup() throws Exception {
@@ -60,9 +66,21 @@ class CloudComputeIntegrationTest {
         ComputeCredentialCipher cipher = mock(ComputeCredentialCipher.class); when(cipher.encrypt(anyString())).thenReturn("encrypted-test-secret");
         ssh = mock(ComputeSsh.class); connection = mock(ComputeSsh.Connection.class); when(ssh.open(any())).thenReturn(connection); when(connection.hostKey()).thenReturn("test-key");
         nodes = new ComputeNodeService(jdbc, cipher, ssh, json);
+        ComputePlatformAuthorization fallback=mock(ComputePlatformAuthorization.class);
+        when(fallback.requireIdentity()).thenAnswer(call->{ComputePlatformAuthorization.Context actor=new ComputePlatformAuthorization.Context();actor.setAuthorized(true);actor.setPlatformUserId("fake-platform");actor.setVlsUserId("fake-user");actor.setVlsTenantId(ComputeNodeService.tenant());return actor;});
+        ComputePublicInventoryService defaultInventory=new ComputePublicInventoryService(jdbc);
+        org.springframework.test.util.ReflectionTestUtils.setField(defaultInventory,"authorization",fallback);
+        org.springframework.test.util.ReflectionTestUtils.setField(nodes,"publicInventory",defaultInventory);
+        ComputePlatformAuthorization current=mock(ComputePlatformAuthorization.class);
+        when(current.requireIdentity()).thenAnswer(call->nodes.publicInventory().identity());
+        // These pre-existing contract fixtures represent a resource administrator. Owner isolation uses its own ordinary-user fixture.
+        org.springframework.test.util.ReflectionTestUtils.setField(nodes,"ownership",new ComputeNodeOwnershipService(current){
+            @Override public boolean administrator(){return true;}
+            @Override public String viewer(){return ComputePublicInventoryService.subject(identity());}
+        });
         nodeId = nodes.save(null, request()).getId();
         jdbc.update("UPDATE vls_compute_node SET probe_state='READY',probe_time=NOW(),power_state='RUNNING',probe_json='{\"contractVersion\":1,\"ready\":true}',host_key='test-key' WHERE id=?", nodeId);
-        task = new AlgorithmTraining(); task.setId(1L); task.setTenantId("tenant-a"); task.setAlgorithmId(2L); task.setTaskName("cloud-test"); task.setTrainStatus(AlgorithmTrainingStatusEnum.pending); task.setEpochTotal(1);
+        task = new AlgorithmTraining(); task.setId(1L); task.setTenantId("tenant-a"); task.setCreateUser("fake-user"); task.setAlgorithmId(2L); task.setTaskName("cloud-test"); task.setTrainStatus(AlgorithmTrainingStatusEnum.pending); task.setEpochTotal(1);
         IVlsAlgorithmTrainingService trainings = mock(IVlsAlgorithmTrainingService.class); when(trainings.selectAlgorithmTrainingById(1L)).thenReturn(task);
         VlsAlgorithmMapper algorithms = mock(VlsAlgorithmMapper.class); Algorithm algorithm = new Algorithm(); algorithm.setCategory(AlgorithmCategoryEnum.detect); algorithm.setTenantId("tenant-a"); when(algorithms.selectById(2L)).thenReturn(algorithm);
         DataManagementService data = mock(DataManagementService.class);
@@ -71,7 +89,7 @@ class CloudComputeIntegrationTest {
         DatasetVersion version = new DatasetVersion(); version.setId(4L); version.setSnapshotJson(json.writeValueAsString(snapshot)); when(data.saveVersion(eq(3L), any(DataRequests.Version.class))).thenReturn(version);
         TrainingPublicationService publication = new TrainingPublicationService(jdbc, transactions, mock(VlsAlgorithmTrainingMapper.class), mock(VlsAlgorithmModelMapper.class), mock(IVlsAlgorithmModelService.class));
         IVlsContainerInstanceService containers = mock(IVlsContainerInstanceService.class);
-        when(containers.save(any())).thenAnswer(call -> { ContainerInstance instance = call.getArgument(0); instance.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getId()); jdbc.update("INSERT INTO vls_container_instance(id,tenant_id,training_task_id,instance_status) VALUES(?,?,?,?)", instance.getId(), instance.getTenantId(), instance.getTrainingTaskId(), instance.getInstanceStatus()); return true; });
+        when(containers.saveTaskRecord(any())).thenAnswer(call -> { ContainerInstance instance = call.getArgument(0); instance.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getId()); jdbc.update("INSERT INTO vls_container_instance(id,tenant_id,training_task_id,instance_status) VALUES(?,?,?,?)", instance.getId(), instance.getTenantId(), instance.getTrainingTaskId(), instance.getInstanceStatus()); return true; });
         training = new CloudTrainingService(jdbc, nodes, data, publication, trainings, containers, algorithms, json);
         storage = mock(ModelArtifactObjectStore.class);
         CloudTrainingDatasetWriter writer = mock(CloudTrainingDatasetWriter.class);
@@ -92,6 +110,8 @@ class CloudComputeIntegrationTest {
     }
     @Test void myTasksCountAllNodesAndOwnedDefaultGpuHistoryWithTheSameFiltersAsPagination() {
         start(); jdbc.update("UPDATE vls_algorithm_training SET create_user='alice',task_name='cloud one' WHERE id=1");
+        // Explicit legacy-local-author fixture: no historical SSO ownership is inferred.
+        jdbc.update("UPDATE vls_cloud_training_job SET public_owner_subject=NULL");
         ComputeRequests.Node second = request(); second.setGpuIndex(1); second.setName("second node");
         Long secondNode = nodes.save(null, second).getId();
         jdbc.update("INSERT INTO vls_algorithm_training(id,tenant_id,create_user,task_name,train_status,config_params) VALUES(2,'tenant-a','alice','old P100','completed','{}'),(3,'tenant-a','bob','bob task','pending','{}'),(4,'tenant-a',NULL,'owner unknown','completed','{}'),(5,'tenant-b','alice','other tenant','pending','{}'),(6,'tenant-a','alice','cloud two','pending','{\"cloudJobId\":\"second-job\"}')");
@@ -109,7 +129,7 @@ class CloudComputeIntegrationTest {
         TenantContextHolder.setTenantId("tenant-b"); assertEquals(1,alice.page(1,20,null,null,null,null).getTotal());
     }
     @Test void operatorPermissionCatalogueIsRegisteredWithoutChangingResourceOwnership() {
-        assertEquals(4, jdbc.queryForObject("SELECT COUNT(*) FROM sys_menu WHERE perms LIKE 'vls:compute:%'", Integer.class));
+        assertEquals(5, jdbc.queryForObject("SELECT COUNT(*) FROM sys_menu WHERE perms LIKE 'vls:compute:%'", Integer.class));
         assertEquals("PRIVATE", nodes.get(nodeId).getResourceScope());
     }
     @Test void multipleGpuQuotasShareOneServerWithoutDuplicatingTheSameCard() {

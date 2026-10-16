@@ -76,6 +76,8 @@ public class VlsContainerInstanceController extends BladeController {
 	private void guardCloudRecord(ContainerInstance input) {
 		if(publicAccess!=null){publicAccess.container(input.getId());publicAccess.training(input.getTrainingTaskId());}
 		ContainerInstance existing = input.getId() == null ? null : vlsContainerInstanceService.getById(input.getId());
+		if(input.getId()!=null)com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess.protectContainerUpdate(existing,input);
+		else if(publicAccess!=null)publicAccess.prepareContainerCreate(input);
 		if ("cloud_training".equals(input.getInstanceType()) || (existing != null && "cloud_training".equals(existing.getInstanceType()))) {
 			throw new com.ruoyi.common.exception.ServiceException("线上训练记录由后台维护，请从算法训练页面管理任务");
 		}

@@ -55,7 +55,7 @@ public class CloudTrainingDatasetWriter {
         TrainingDatasetArtifact artifact = artifacts.require(job.getDatasetId(), ensureArtifact(job));
         runtime.upload(artifact, job.getRunDir() + "/dataset", connection);
         TrainingDatasetRuntimeService.copyScripts(connection, job.getRunDir(), "four_task_runtime.py",
-            "validate_detection_dataset.py", "validate_typed_dataset.py", "cloud_training_runner.py", "check_cloud_environment.py");
+            "validate_detection_dataset.py", "validate_typed_dataset.py", "cloud_training_runner.py", "check_cloud_environment.py", "gpu_shared_queue.py");
         return artifact.getReference();
     }
 }

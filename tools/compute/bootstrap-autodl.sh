@@ -16,14 +16,15 @@ while (($#)); do
         --conda) conda_bin="${2:?missing conda path}"; shift 2 ;;
         --gpu) gpu="${2:?missing GPU index}"; shift 2 ;;
         --dry-run) dry_run=true; shift ;;
-        --help) printf '%s\n' 'Usage: bash tools/compute/bootstrap-autodl.sh --profile standard|blackwell [--work-dir /absolute/path] [--conda /path/to/conda] [--gpu 0] [--dry-run]'; exit 0 ;;
+        --help) printf '%s\n' 'Usage: bash tools/compute/bootstrap-autodl.sh --profile standard|blackwell|blackwell28 [--work-dir /absolute/path] [--conda /path/to/conda] [--gpu 0] [--dry-run]'; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 2 ;;
     esac
 done
 case "$profile" in
     standard) torch=2.5.1; vision=0.20.1; cuda=cu124 ;;
     blackwell) torch=2.7.1; vision=0.22.1; cuda=cu128 ;;
-    *) echo 'Choose standard or blackwell; do not guess a CUDA combination.' >&2; exit 2 ;;
+    blackwell28) torch=2.8.0; vision=0.23.0; cuda=cu128 ;;
+    *) echo 'Choose standard, blackwell or blackwell28; do not guess a CUDA combination.' >&2; exit 2 ;;
 esac
 [[ "$work_dir" =~ ^/[A-Za-z0-9_./-]+$ && "$work_dir" != / && "$work_dir" != *..* && "$work_dir" != *//* ]] || { echo 'Use a dedicated absolute work directory.' >&2; exit 2; }
 [[ "$gpu" =~ ^[0-9]+$ ]] || { echo 'GPU index must be numeric.' >&2; exit 2; }
@@ -51,17 +52,22 @@ fi
 mkdir -p "$work_dir/models" "$work_dir/config/ultralytics"
 export TORCH_HOME="$work_dir/models/torch"
 export YOLO_CONFIG_DIR="$work_dir/config/ultralytics"
+export MPLCONFIGDIR="$work_dir/config/matplotlib" XDG_CACHE_HOME="$work_dir/cache"
+# A new Conda prefix still enables ~/.local by default. Isolate installation and
+# execution so pip cannot uninstall an existing user's packages outside this prefix.
+export PYTHONNOUSERSITE=1 PYTHONPATH='' PIP_CONFIG_FILE=/dev/null PIP_USER=0
+unset PYTHONHOME
 # Constraints preserve the torch/CUDA pair when the training tools resolve dependencies.
 constraints="$work_dir/.vls-constraints-$profile.txt"
 printf 'torch==%s\ntorchvision==%s\nnumpy==1.26.4\nopencv-python==4.11.0.86\nultralytics==8.3.240\n' "$torch" "$vision" > "$constraints"
 # Fetch only the CUDA-specific wheels here. Resolve their dependencies in the
 # next command using the instance's configured PyPI index instead of forcing
 # every large NVIDIA library through the PyTorch wheel host.
-"$prefix/bin/python" -m pip install --no-deps "torch==$torch+$cuda" "torchvision==$vision+$cuda" --index-url "https://download.pytorch.org/whl/$cuda"
-"$prefix/bin/python" -m pip install --constraint "$constraints" "ultralytics==8.3.240" "numpy==1.26.4" "opencv-python==4.11.0.86"
+"$prefix/bin/python" -s -m pip install --prefix "$prefix" --no-deps "torch==$torch+$cuda" "torchvision==$vision+$cuda" --index-url "https://download.pytorch.org/whl/$cuda"
+"$prefix/bin/python" -s -m pip install --prefix "$prefix" --constraint "$constraints" "ultralytics==8.3.240" "numpy==1.26.4" "opencv-python==4.11.0.86"
 "$prefix/bin/python" -m pip check
 "$prefix/bin/python" "$script_dir/prepare-presets.py" --work-dir "$work_dir"
-"$prefix/bin/python" "$resources/check_cloud_environment.py" --work-dir "$work_dir" --gpu "$gpu" | tee "$work_dir/environment-check.jsonl"
+VLS_GPU_LOCK_FD=8 "$prefix/bin/python" "$resources/check_cloud_environment.py" --work-dir "$work_dir" --gpu "$gpu" | tee "$work_dir/environment-check.jsonl"
 "$prefix/bin/python" - "$work_dir/environment-check.jsonl" <<'PY'
 import json, sys
 rows = [line.split('VLS_PROBE=', 1)[1] for line in open(sys.argv[1]) if line.startswith('VLS_PROBE=')]

@@ -85,8 +85,8 @@ class ComputeMarketTest {
         ComputeRequests.Offer offer=new ComputeRequests.Offer(); offer.setPublished(false); offer.setBillingType("POINTS"); offer.setPointsPerHour(java.math.BigDecimal.ONE);
         ComputeMarketService market=new ComputeMarketService(jdbc,nodes); assertDoesNotThrow(()->market.publish(1L,offer));
         offer.setPublished(true); offer.setBillingType("FREE"); assertDoesNotThrow(()->market.publish(1L,offer));
-        verify(jdbc).update(contains("SET resource_scope"),eq("PRIVATE"),eq("POINTS"),eq(java.math.BigDecimal.ONE),eq("operator"),eq(1L));
-        verify(jdbc).update(contains("SET resource_scope"),eq("PLATFORM"),eq("FREE"),isNull(),eq("operator"),eq(1L));
+        verify(jdbc).update(contains("SET resource_scope"),eq("PRIVATE"),eq("POINTS"),eq(java.math.BigDecimal.ONE),eq("INSTANCE_EXCLUSIVE"),eq("operator"),eq(1L));
+        verify(jdbc).update(contains("SET resource_scope"),eq("PLATFORM"),eq("FREE"),isNull(),eq("INSTANCE_EXCLUSIVE"),eq("operator"),eq(1L));
     }
     @Test void unconfiguredPaidSupplyCannotStartCloudPowerEvenWithAPermissionAndDisplayedReferencePrice() {
         TenantContextHolder.setTenantId("operator"); JdbcTemplate jdbc=mock(JdbcTemplate.class); ComputeNodeService nodes=mock(ComputeNodeService.class);

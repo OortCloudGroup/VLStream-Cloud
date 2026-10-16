@@ -466,11 +466,13 @@ public class VlsAlgorithmTrainingController extends BladeController {
 
 	@GetMapping("/{id}/publication")
 	public R<Map<String,Object>> publicationStatus(@PathVariable Long id) {
+		publicAccess.training(id);
 		return R.data(trainingPublicationService.status(id));
 	}
 
 	@PostMapping("/{id}/publication/retry")
 	public R<String> retryPublication(@PathVariable Long id) {
+		publicAccess.training(id);
 		trainingPublicationService.retry(id);
 		return R.success("已提交发布重试");
 	}
@@ -868,6 +870,7 @@ public class VlsAlgorithmTrainingController extends BladeController {
 	private void guardCloudUpdate(AlgorithmTraining update) {
 		if (update.getId() == null) return;
 		AlgorithmTraining existing = vlsAlgorithmTrainingService.selectAlgorithmTrainingById(update.getId());
+		com.ruoyi.vlstream.test.vlstream.compute.ComputePublicTaskAccess.protectTrainingUpdate(existing,update);
 		if (com.ruoyi.vlstream.test.vlstream.compute.CloudTrainingService.isCloud(existing)) {
 			protectDatasetRelation(existing, update);
 			cloudTrainingService.preserveExecutionConfig(existing, update);

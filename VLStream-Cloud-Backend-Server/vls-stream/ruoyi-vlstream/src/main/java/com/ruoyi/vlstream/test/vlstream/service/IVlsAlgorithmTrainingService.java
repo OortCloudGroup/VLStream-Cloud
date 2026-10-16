@@ -24,6 +24,8 @@ import java.util.List;
  * @since 2025-12-23
  */
 public interface IVlsAlgorithmTrainingService extends BaseService<AlgorithmTraining> {
+	/** Persist only the log identity of an already saved, owned ordinary-training queue record. */
+	boolean recordQueuedLog(Long trainingId,Long containerRecordId);
 	/**
 	 * Custom
 	 *

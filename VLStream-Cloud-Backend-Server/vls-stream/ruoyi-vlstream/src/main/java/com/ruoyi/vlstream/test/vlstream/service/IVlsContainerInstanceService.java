@@ -27,6 +27,10 @@ import java.util.Map;
  * @since 2025-12-23
  */
 public interface IVlsContainerInstanceService extends BaseService<ContainerInstance> {
+	/** Backend-generated task records only; validates the persisted task/round before insertion. */
+	boolean saveTaskRecord(ContainerInstance instance);
+	/** Validate a worker's typed persisted task association before any remote operation. */
+	void requireTaskExecution(ContainerInstance instance);
 	/**
 	 * Custom
 	 *

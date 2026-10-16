@@ -196,6 +196,9 @@
 
               <!-- training : model、 new training、 to model、Validate and -->
               <template v-else-if="scope.row.trainStatus === '训练完成'">
+                <div class="new_table_svg_group" @click="handleViewTrainingLogs(scope.row)">
+                  <span>{{ $tp('查看日志') }}</span>
+                </div>
                 <div class="new_table_svg_group" @click="handleDownloadModel(scope.row)">
                   <span>{{ $tp('下载模型') }}</span>
                 </div>
@@ -480,18 +483,18 @@
         <div class="config-sidebar">
           <div class="config-section">
             <h3 class="section-title">{{ $tp('训练算力') }}</h3>
-            <el-select v-model="computeNodeId" :placeholder="$tp('平台默认 GPU 服务器')" :disabled="isTraining" class="config-select" @change="selectCompute" @visible-change="visible => visible && loadComputeNodes()">
-              <el-option :label="$tp('平台默认 GPU 服务器')" value="" />
-              <el-option-group v-for="group in computeGroups" :key="group.label" :label="$tp(group.label)">
-                <el-option v-for="node in group.nodes" :key="node.id" :value="String(node.id)" :label="computeLabel(node)" :disabled="['OTHER','ISOLATED'].includes(node.claimState) || (!node.schedulable && !node.stopped && !node.canClaim)" />
-              </el-option-group>
+            <el-select :model-value="selectedCompute ? computeNodeId : ''" :placeholder="$tp('请选择 GPU 设备')" :disabled="isTraining || trainingSubmitting" :loading="computeNodesLoading" :no-data-text="$tp('暂无可用 GPU 设备')" class="config-select" @update:model-value="computeNodeId = $event" @change="selectCompute" @visible-change="visible => visible && loadComputeNodes()">
+              <el-option v-for="node in computeNodes" :key="node.id" :value="String(node.id)" :label="computeLabel(node)" :disabled="['OTHER','ISOLATED'].includes(node.claimState) || (!node.schedulable && !node.stopped && !node.canClaim)" />
             </el-select>
+            <div v-if="computeSelectionHint" class="config-tip" role="status">{{ computeSelectionHint }}</div>
+            <el-button v-if="computeNodesError" link type="primary" :disabled="computeNodesLoading || trainingSubmitting || isTraining" @click="loadComputeNodes">{{ $tp('重新加载') }}</el-button>
             <div v-if="computeNodeId" class="config-tip">{{ $tp('使用已标注并划分的数据集，自动上传到所选实例；本期输出 PT 和类别文件。') }}</div>
+            <div v-if="selectedSharedCompute" class="config-tip">{{ $tp('免费共享GPU按任务排队，本地与线上共用同一物理GPU队列；本轮模型和类别文件归档确认后释放资源。任务、日志和模型仅本人可访问。') }}</div>
             <template v-if="computeNodeId">
               <p>{{ $tp('起始模型') }}</p>
               <el-select v-model="cloudModelSource" :disabled="isTraining" class="config-select">
                 <el-option :label="$tp('系统基础模型（新实例已预下载）')" value="preset" />
-                <el-option :label="$tp('算法指定模型（必须已存入 MinIO）')" value="algorithm" />
+                <el-option :label="$tp(selectedSharedCompute ? '算法指定模型（须为本人共享池归档模型）' : '算法指定模型（必须已存入 MinIO）')" value="algorithm" />
               </el-select>
             </template>
             <el-button link type="primary" @click="goCompute('/compute-market')">{{ $tp('算力市场') }}</el-button>
@@ -669,30 +672,14 @@
           </div>
 
           <!-- training -->
-          <div v-if="!computeNodeId" class="config-section">
-            <h3 class="section-title">{{ $tp('训练环境') }}</h3>
-            <el-button type="text" class="detail-link">{{ $tp('了解详情') }}</el-button>
-
-            <div class="environment-info">
-              <div class="env-item">
-                <span class="env-label">{{ $tp('名称') }}</span>
-                <span class="env-value">{{ $tp('规格') }}</span>
-              </div>
-              <div class="env-item">
-                <span class="env-label">CPU</span>
-                <span class="env-value">Intel (R) Xeon (R) CPU E5-2698</span>
-              </div>
-            </div>
-          </div>
-
           <!-- starttrainingbutton -->
           <div class="training-actions">
             <el-button
               type="primary"
               @click="handleStartTraining"
               class="start-training-btn"
-              :disabled="!trainingBackendReady || selectedDatasets.length !== 1 || !isDatasetReady(selectedDatasets[0])"
-              :loading="isTraining"
+              :disabled="!trainingBackendReady || computeNodesLoading || computeNodesError || !selectedCompute?.schedulable || selectedDatasets.length !== 1 || !isDatasetReady(selectedDatasets[0])"
+              :loading="isTraining || trainingSubmitting"
             >
               {{ isTraining ? $tp('训练中...') : $tp('开始训练') }}
             </el-button>
@@ -1041,7 +1028,7 @@
     :before-close="handleCloseDatasetSelector"
   >
     <div class="dataset-selector-content">
-      <p>{{ showAddDialog || showEditDialog ? $tp('请选择与算法类型一致的数据集，训练前需准备好标注和训练/验证集划分。') : computeNodeId ? $tp('请选择已标注并划分训练集、验证集的数据集。开始训练时，平台会自动生成训练数据包并传到所选算力实例，无需提前手动生成。') : $tp('当前选择默认 GPU，需要先生成训练数据包。请在算法标注页面点击“生成”，将已有图片、标注、类别和训练/验证划分打包，不是新建数据集。') }}</p>
+      <p>{{ showAddDialog || showEditDialog ? $tp('请选择与算法类型一致的数据集，训练前需准备好标注和训练/验证集划分。') : $tp('请选择已标注并划分训练集、验证集的数据集。开始训练时，平台会自动生成训练数据包并传到所选算力实例，无需提前手动生成。') }}</p>
       <!--  -->
       <div class="dataset-search">
         <el-input
@@ -1119,11 +1106,13 @@ import {
   convertModel,
   createTraining,
   deleteTraining,
+  downloadTrainingModel,
   getTrainingTask,
   getTrainingLogs,
   getTrainingPage,
   getTrainingStatus,
-  startTrainingWithParams,
+  getTrainingPublication,
+  retryTrainingPublication,
   stopTraining,
   updateTraining
 } from '@/api/algorithmTraining.js'
@@ -1138,16 +1127,34 @@ import trainIcon from '@/assets/start-training@3x.png'
 import selectDatasetIcon from '@/assets/select-dataset@3x.png'
 import evaluateIcon from '@/assets/validation@3x.png'
 import publishModelIcon from '@/assets/publish-model@3x.png'
-import request, {getBaseURL} from "@/utils/request";
+import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 import { getLocalSessionToken } from '@/utils/request'
 import SHA256 from 'crypto-js/sha256'
 import { requireComputePlatformAuthorization, isComputeAuthorizationCurrent, bindComputeDraftToActor, canRestoreComputeDraft } from '@/utils/computePlatformAuth'
 
 // form
 const router = useRouter()
+const normalizeComputeNodeId = value => typeof value === 'string' && /^\d+$/.test(value) ? value : Number.isSafeInteger(value) && value > 0 ? String(value) : ''
 const computeNodeId = ref('')
 const cloudModelSource = ref('preset')
 const computeNodes = ref([])
+const computeNodesLoading = ref(false)
+const computeNodesError = ref(false)
+const trainingSubmitting = ref(false)
+let computeRequestGeneration = 0
+let trainingConfigGeneration = 0
+let trainingSubmitGeneration = 0
+const selectedCompute = computed(() => computeNodes.value.find(node => String(node.id) === computeNodeId.value))
+const selectedSharedCompute = computed(() => selectedCompute.value?.schedulingMode === 'SHARED_GPU_QUEUE')
+const computeSelectionHint = computed(() => {
+  if (computeNodesLoading.value) return uiText('正在加载 GPU 设备')
+  if (computeNodesError.value) return uiText('GPU 设备加载失败，请重新加载后再试')
+  if (computeNodeId.value && !selectedCompute.value) return uiText('原选 GPU 设备已不可用或无权访问，请重新选择')
+  if (!computeNodes.value.length) return uiText('暂无可用 GPU 设备，请前往算力市场或算力管理查看')
+  if (!computeNodeId.value) return uiText('请选择实际 GPU 设备后开始训练')
+  if (!selectedCompute.value?.schedulable) return uiText('所选 GPU 设备尚不可训练，请检查状态或选择其他设备')
+  return ''
+})
 const isCloudTrainingRow = row => {
   try {
     const value = row?.originalData?.configParams
@@ -1155,15 +1162,39 @@ const isCloudTrainingRow = row => {
   } catch { return false }
 }
 const loadComputeNodes = async () => {
-  try { computeNodes.value = (await listComputeSelection()).data || [] } catch { computeNodes.value = [] }
+  const generation = ++computeRequestGeneration
+  computeNodesLoading.value = true
+  computeNodesError.value = false
+  try {
+    const response = await listComputeSelection()
+    if (generation !== computeRequestGeneration) return false
+    if (!Array.isArray(response.data)) throw new Error('Invalid GPU selection response')
+    computeNodes.value = response.data
+    return true
+  } catch {
+    if (generation !== computeRequestGeneration) return false
+    computeNodes.value = []
+    computeNodesError.value = true
+    return false
+  } finally {
+    if (generation === computeRequestGeneration) computeNodesLoading.value = false
+  }
 }
-const computeGroups = computed(() => [
-  { label: '免费', nodes: computeNodes.value.filter(n => n.billingType === 'FREE') },
-  { label: '收费', nodes: computeNodes.value.filter(n => n.billingType === 'POINTS') },
-  { label: '自接算力', nodes: computeNodes.value.filter(n => n.billingType === 'EXTERNAL') }
-])
 const computeClaimLabels = { FREE: '空闲，请先占用整实例', MINE: '我的占用', OTHER: '他人占用', ISOLATED: '隔离' }
-const computeLabel = node => `${node.name} · GPU ${node.gpuIndex} · ${node.requiresClaim ? uiText(computeClaimLabels[node.claimState] || '隔离') + ' · ' : ''}${node.stopped ? uiText('已关机，请先开机') : node.billingType === 'POINTS' ? `${node.pointsPerHour ?? '—'} ${uiText('额度参考值/小时')} · ${uiText('结算待接入')}` : node.taskCount == null ? '' : `${uiText('当前任务数')} ${node.taskCount} · ${uiText('预计排队')} ${uiText(node.waitingEstimate)}`}`
+const computeLabel = node => {
+  // Presentation only: keep the stored name and submission ID unchanged.
+  const name = String(node.name || node.gpuModel || node.id).replace(/^免费\s*/, '')
+  const model = String(node.gpuModel || '').trim()
+  const namedModel = [...name.matchAll(/[（(]([^）)]+)[）)]/g)].some(([, part]) => model.toLowerCase().includes(part.toLowerCase()))
+  const parts = [name]
+  if (model && !name.includes(model) && !namedModel) parts.push(model)
+  parts.push(`GPU ${node.gpuIndex}`)
+  if (node.requiresClaim) parts.push(uiText(computeClaimLabels[node.claimState] || '隔离'))
+  if (node.stopped) parts.push(uiText(node.schedulingMode === 'SHARED_GPU_QUEUE' ? '请管理员检查共享环境' : '已关机，请先开机'))
+  else if (node.billingType === 'POINTS') parts.push(uiText('结算待接入'))
+  else if (!node.schedulable && !node.canClaim) parts.push(uiText('暂不可训练'))
+  return parts.join(' · ')
+}
 const computeDraftKey = 'vls-training-compute-return'
 const saveComputeDraft = () => {
   sessionStorage.setItem(computeDraftKey, JSON.stringify({ session: SHA256(getLocalSessionToken() || '').toString(), savedAt: Date.now(), task: currentTrainingItem.value, computeNodeId: computeNodeId.value, cloudModelSource: cloudModelSource.value,
@@ -1173,18 +1204,25 @@ const saveComputeDraft = () => {
 }
 const goCompute = path => { saveComputeDraft(); router.push({ path, query: { returnTo: 'training', nodeId: computeNodeId.value } }) }
 const selectCompute = async id => {
-  const node = computeNodes.value.find(n => n.id === id)
+  const identity = captureComputeIdentity()
+  const generation = trainingConfigGeneration
+  const node = computeNodes.value.find(n => String(n.id) === String(id))
+  const stillSelected = () => {
+    try {
+      identity.assertCurrent()
+      return generation === trainingConfigGeneration && computeNodeId.value === String(id) && showTrainingConfig.value
+    } catch { return false }
+  }
   if (node?.requiresClaim && node.claimState !== 'MINE') {
     try { await ElMessageBox.confirm(uiText('请先到算力市场占用整实例。当前训练配置将保留。'), uiText('整实例占用')) } catch { return }
-    goCompute('/compute-market'); return
+    if (stillSelected()) goCompute('/compute-market'); return
   }
   if (!node?.stopped) return
-  try { await ElMessageBox.confirm(uiText('此实例已关机，请先前往算力市场开机。当前训练配置将保留。'), uiText('算力未就绪')) } catch { return }
-  goCompute(node.scope === 'PLATFORM' ? '/compute-market' : '/compute-management')
+  try { await ElMessageBox.confirm(uiText(node.schedulingMode === 'SHARED_GPU_QUEUE' ? '共享GPU尚未就绪，请管理员检查环境。当前训练配置将保留。' : '此实例已关机，请先前往算力市场开机。当前训练配置将保留。'), uiText('算力未就绪')) } catch { return }
+  if (stillSelected()) goCompute(node.scope === 'PLATFORM' ? '/compute-market' : '/compute-management')
 }
 const hasGeneratedDataset = dataset => typeof dataset?.datasetPath === 'string' && !!dataset.datasetPath.trim()
-const isDatasetReady = dataset => (computeNodeId.value || showAddDialog.value || showEditDialog.value)
-  ? Number(dataset?.annotatedCount || 0) > 0 : hasGeneratedDataset(dataset)
+const isDatasetReady = dataset => Number(dataset?.annotatedCount || 0) > 0
 const datasetStateLabel = dataset => hasGeneratedDataset(dataset) ? uiText('训练数据已生成') : Number(dataset?.annotatedCount || 0) > 0 ? uiText('已有标注') : uiText('尚未标注')
 const goToGenerateDataset = () => router.push('/algorithm-standard')
 
@@ -1355,7 +1393,7 @@ const resolution = ref('auto')
 const epochMode = ref('auto')
 const autoPublish = ref('yes')
 const refreshPublication = async (taskId) => {
-  const response = await request({ url: `/vlsAlgorithmTraining/${taskId}/publication`, method: 'get' })
+  const response = await getTrainingPublication(taskId)
   if (String(currentTrainingItem.value?.originalData?.id ?? currentTrainingItem.value?.id) === String(taskId)) {
     trainingBackendReady.value = true
     publicationState.value = response.data?.publication_state || 'DISABLED'
@@ -1370,7 +1408,7 @@ const refreshPublication = async (taskId) => {
 }
 const retryAutoPublication = async () => {
   const taskId = currentTrainingItem.value?.originalData?.id ?? currentTrainingItem.value?.id
-  await request({ url: `/vlsAlgorithmTraining/${taskId}/publication/retry`, method: 'post' })
+  await retryTrainingPublication(taskId)
   await refreshPublication(taskId)
   ElMessage.success(uiText('已提交后台重试'))
 }
@@ -1472,7 +1510,7 @@ const handleConfirmAdd = async () => {
       algorithmId: String(addForm.value.algorithmId),
       datasetId: addForm.value.datasetId ? String(addForm.value.datasetId) : null,
       epochTotal: addForm.value.epochTotal,
-      configParams: parsedConfig,
+      configParams: parsedConfig === null ? null : JSON.stringify(parsedConfig),
       description: addForm.value.description
     }
 
@@ -1561,7 +1599,9 @@ const handleTrain = async (row) => {
 
   showTrainingConfig.value = true
   await restoreTrainingConfig(row.originalData || row)
+  if (currentTrainingItem.value !== row) return
   await refreshPublication(row.originalData?.id || row.id).catch(() => {})
+  if (currentTrainingItem.value !== row) return
 
   // already in training in task, startlog/
   const taskId = row.originalData?.id || row.id
@@ -1599,7 +1639,7 @@ const buildTrainingPayload = async () => {
     throw new Error('无法获取训练任务 ID')
   }
   if (!isDatasetReady(dataset)) {
-    throw new Error(computeNodeId.value ? uiText('请先准备好数据标注和训练/验证集划分') : uiText('训练数据尚未生成，请先到算法标注页面点击“生成”'))
+    throw new Error(uiText('请先准备好数据标注和训练/验证集划分'))
   }
   // Annotation changes invalidate the generated path; do not start from a stale selection.
   const latestDataset = await getAlgorithmAnnotationById(dataset.value)
@@ -1609,7 +1649,7 @@ const buildTrainingPayload = async () => {
   dataset.datasetPath = latestDataset.data.datasetPath
   dataset.annotatedCount = latestDataset.data.annotatedCount
   if (!isDatasetReady(dataset)) {
-    throw new Error(computeNodeId.value ? uiText('数据集标注状态已变化，请核对标注和训练/验证集划分') : uiText('训练数据尚未生成或已失效，请先到算法标注页面重新生成'))
+    throw new Error(uiText('数据集标注状态已变化，请核对标注和训练/验证集划分'))
   }
 
   if (!algorithmOptions.value.length) {
@@ -1637,82 +1677,98 @@ const buildTrainingPayload = async () => {
 
 // starttraining
 const handleStartTraining = async () => {
-  if (isTraining.value) return
+  if (isTraining.value || trainingSubmitting.value) return
   if (!trainingBackendReady.value) { ElMessage.warning(uiText('训练服务尚未就绪，请更新后端后重试')); return }
+  if (!computeNodeId.value) { ElMessage.warning(uiText('请选择实际 GPU 设备后开始训练')); return }
+  const identity = captureComputeIdentity()
+  const generation = trainingConfigGeneration
+  const submission = ++trainingSubmitGeneration
+  const item = currentTrainingItem.value
+  const nodeId = computeNodeId.value
+  const modelSource = cloudModelSource.value
+  const configuration = () => JSON.stringify([selectedDatasetIds.value, trainingMode.value, epochTotal.value, batchSize.value, trainImgSize.value, autoPublish.value])
+  const originalConfiguration = configuration()
+  const assertCurrent = () => {
+    identity.assertCurrent()
+    if (generation !== trainingConfigGeneration || item !== currentTrainingItem.value || !showTrainingConfig.value || nodeId !== computeNodeId.value || modelSource !== cloudModelSource.value || originalConfiguration !== configuration()) {
+      throw new Error(uiText('训练配置已变化，请核对后重新开始'))
+    }
+  }
+  const refreshResource = async () => {
+    const loaded = await loadComputeNodes()
+    assertCurrent()
+    if (!loaded) throw new Error(uiText('GPU 设备加载失败，请重新加载后再试'))
+    const resource = computeNodes.value.find(node => String(node.id) === nodeId)
+    if (!resource) throw new Error(uiText('原选 GPU 设备已不可用或无权访问，请重新选择'))
+    return resource
+  }
+  trainingSubmitting.value = true
+  let submitted = false
   try {
     let platformProof
-    if (computeNodeId.value) {
-      await loadComputeNodes()
-      let resource = computeNodes.value.find(node => node.id === computeNodeId.value)
-      if (resource?.requiresClaim && resource.billingType !== 'POINTS') {
-        platformProof = await requireComputePlatformAuthorization(context => { saveComputeDraft(); bindComputeDraftToActor(context) })
-        if (!platformProof) return
-        await loadComputeNodes(); resource = computeNodes.value.find(node => node.id === computeNodeId.value)
-      }
-      if (resource?.billingType === 'POINTS') {
-        platformProof = await requireComputePlatformAuthorization(context => { saveComputeDraft(); bindComputeDraftToActor(context) })
-        if (!platformProof) return
-        // Authorization is a prerequisite, not a completed accounting contract.
-        ElMessage.warning(uiText('平台身份已校验，个人余额扣款、GPU计量与产物安全回存清理尚未接入，收费训练仍阻断；工作空间成本由平台承担'))
-        return
-      }
-      if (!resource?.schedulable) throw new Error(uiText('所选算力状态已变化或检查已过期，请刷新并检查后重试'))
+    let resource = await refreshResource()
+    if (resource.requiresClaim && resource.billingType !== 'POINTS') {
+      platformProof = await requireComputePlatformAuthorization(context => { saveComputeDraft(); bindComputeDraftToActor(context) })
+      assertCurrent()
+      if (!platformProof) return
+      resource = await refreshResource()
     }
+    if (resource.billingType === 'POINTS') {
+      platformProof = await requireComputePlatformAuthorization(context => { saveComputeDraft(); bindComputeDraftToActor(context) })
+      assertCurrent()
+      if (!platformProof) return
+      // Authorization is a prerequisite, not a completed accounting contract.
+      ElMessage.warning(uiText('平台身份已校验，个人余额扣款、GPU计量与产物安全回存清理尚未接入，收费训练仍阻断；工作空间成本由平台承担'))
+      return
+    }
+    if (!resource.schedulable) throw new Error(uiText('所选算力状态已变化或检查已过期，请刷新并检查后重试'))
     const original = currentTrainingItem.value?.originalData
     if (original?.modelOutputPath) {
       await ElMessageBox.confirm(uiText('该任务已有训练结果。重新训练会更新任务状态和产物路径，已保存到算法模型的记录保留。确认重新训练？'), uiText('重新训练'), { type: 'warning' })
+      assertCurrent()
     }
     stopAllPolling()
     lastModelPath.value = ''
     lastLogPath.value = ''
-    isTraining.value = true
-    const { taskId, dataset, trainType, modelFilePath, params } = await buildTrainingPayload()
-
-
-    if (!modelFilePath && !computeNodeId.value) {
-      isTraining.value = false
-      ElMessage.error(uiText('未找到基础模型路径，请先在算法配置中设置模型文件'))
-      appendLogLines('[WARN] 未找到模型文件路径，无法启动训练')
-      return
-    }
-
-    const commandText = buildTrainCommand({
-      task: trainType,
-      datasetPath: dataset.datasetPath,
-      modelPath: modelFilePath,
-      epochs: params.epochs,
-      imgsz: params.imgSize,
-      batchSize: params.batchSize
-    })
+    const { taskId, params } = await buildTrainingPayload()
+    assertCurrent()
+    // Recheck after dataset loading and confirmations; never replace the selected node.
+    resource = await refreshResource()
+    if (!resource.schedulable || resource.billingType === 'POINTS') throw new Error(uiText('所选算力状态已变化或检查已过期，请刷新并检查后重试'))
 
     appendLogLines(`[INFO] 准备启动训练任务 #${taskId}`)
     // appendLogLines(`[INFO] dataset: ${dataset.annotationName || dataset.label || params.datasetPath}`)
-    if (computeNodeId.value) appendLogLines('[INFO] 将固定本轮数据集版本并上传到所选 AutoDL 实例')
-    else appendLogLines(`[CMD] ${commandText}`)
+    appendLogLines('[INFO] 将固定本轮数据集版本并上传到所选算力实例')
     appendLogLines('[INFO] 正在向后端提交训练请求...')
 
-    if (computeNodeId.value) {
-      if (platformProof && !isComputeAuthorizationCurrent(platformProof)) throw new Error(uiText('登录账户已变化，请重新选择操作'))
-      await startCloudTraining(taskId, { ...params, nodeId: computeNodeId.value, modelSource: cloudModelSource.value }, platformProof?.platformToken)
-    } else {
-      await startTrainingWithParams(taskId, params)
-    }
+    if (platformProof && !isComputeAuthorizationCurrent(platformProof)) throw new Error(uiText('登录账户已变化，请重新选择操作'))
+    await startCloudTraining(taskId, { ...params, nodeId, modelSource }, platformProof?.platformToken)
+    submitted = true
+    assertCurrent()
+    isTraining.value = true
     await refreshPublication(taskId).catch(() => {})
+    assertCurrent()
 
     appendLogLines('[INFO] 训练请求已入队，等待GPU调度；开始监听日志与状态...')
     startPollingForTask(taskId, false)
     await loadTrainingData()
   } catch (error) {
+    if (generation !== trainingConfigGeneration || item !== currentTrainingItem.value) return
     if (error === 'cancel' || error === 'close') return
     console.error('启动训练失败:', error)
     appendLogLines(`[ERROR] 训练启动失败: ${error?.message || error}`)
     ElMessage.error(uiText('训练启动失败：') + (error?.message || uiText('未知错误')))
-    isTraining.value = false
+    if (!submitted) isTraining.value = false
+  } finally {
+    if (submission === trainingSubmitGeneration) trainingSubmitting.value = false
   }
 }
 
 //
 const handleBackToList = () => {
+  trainingConfigGeneration++
+  trainingSubmitGeneration++
+  trainingSubmitting.value = false
   stopAllPolling()
   isTraining.value = false
   showTrainingConfig.value = false
@@ -1756,7 +1812,8 @@ const handleEditRow = async (row) => {
     algorithmId: row.originalData.algorithmId || '',
     datasetId: row.originalData.datasetId || '',
     epochTotal: row.originalData.epochTotal,
-    configParams: JSON.stringify(row.originalData.configParams, null, 2) || '',
+    configParams: typeof row.originalData.configParams === 'string'
+      ? row.originalData.configParams : JSON.stringify(row.originalData.configParams, null, 2) || '',
     description: row.originalData.description || ''
   }
   showEditDialog.value = true
@@ -1961,8 +2018,40 @@ const promptDownloadModelType = async (row) => {
   }
 }
 
+let trainingLogRequestGeneration = 0
+let trainingLogsUnmounted = false
+const handleViewTrainingLogs = async (row) => {
+  const generation = ++trainingLogRequestGeneration
+  try {
+    const identity = captureComputeIdentity()
+    const trainingId = row?.originalData?.id ?? row?.id
+    if (!trainingId) return
+    const [logsResponse, statusResponse] = await Promise.all([
+      getTrainingLogs(trainingId), getTrainingStatus(trainingId)
+    ])
+    if (trainingLogsUnmounted || generation !== trainingLogRequestGeneration) return
+    identity.assertCurrent()
+    const logs = logsResponse?.data ?? logsResponse
+    const status = statusResponse?.data ?? statusResponse
+    await ElMessageBox({
+      title: uiText('训练日志'),
+      message: h('div', [
+        h('p', String(status?.message || status?.status || '')),
+        h('pre', { style: 'max-height:60vh;overflow:auto;white-space:pre-wrap;word-break:break-word' },
+          String(logs?.logContent || uiText('暂无日志')))
+      ]),
+      confirmButtonText: uiText('关闭'),
+      customClass: 'training-log-dialog'
+    })
+  } catch (error) {
+    if (trainingLogsUnmounted || generation !== trainingLogRequestGeneration) return
+    if (error !== 'cancel' && error !== 'close') ElMessage.error(uiText('读取训练日志失败'))
+  }
+}
+
 const handleDownloadModel = async (row) => {
   try {
+    const identity = captureComputeIdentity()
     const trainingId = row?.originalData?.id ?? row?.id
     if (!trainingId) {
       ElMessage.warning(uiText('训练ID'))
@@ -1970,6 +2059,7 @@ const handleDownloadModel = async (row) => {
     }
 
     const downloadType = await promptDownloadModelType(row)
+    identity.assertCurrent()
     if (!downloadType) {
       return
     }
@@ -1977,15 +2067,12 @@ const handleDownloadModel = async (row) => {
     const taskName = row?.originalData?.taskName || row?.algorithmName || 'model'
     const modelFileName = `${taskName}.${downloadType === 'classes' ? 'classes.yaml' : downloadType}`
 
-    const blob = await request({
-      url: `/vlsAlgorithmTraining/${trainingId}/download-model`,
-      method: 'get',
-      params: { type: downloadType },
-      responseType: 'blob'
-    })
+    const blob = await downloadTrainingModel(trainingId, downloadType)
+    identity.assertCurrent()
 
     if (blob instanceof Blob && blob.type && blob.type.includes('application/json')) {
       const text = await blob.text()
+      identity.assertCurrent()
       let message = '下载模型'
       try {
         const payload = JSON.parse(text)
@@ -1996,6 +2083,7 @@ const handleDownloadModel = async (row) => {
       throw new Error(message)
     }
 
+    identity.assertCurrent()
     const blobUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = blobUrl
@@ -2021,6 +2109,8 @@ const handleDownloadModel = async (row) => {
 }
 
 const handleRetrainModel = async (row) => {
+  const identity = captureComputeIdentity()
+  const generation = trainingConfigGeneration
   try {
     console.log('重新训练模型 - 原始数据:', row)
 
@@ -2042,6 +2132,8 @@ const handleRetrainModel = async (row) => {
       }
     )
 
+    identity.assertCurrent()
+    if (generation !== trainingConfigGeneration) return
     // Set current training item
     currentTrainingItem.value = {
       id: originalData.id,
@@ -2051,9 +2143,12 @@ const handleRetrainModel = async (row) => {
       originalData: originalData
     }
 
+    const trainingItem = currentTrainingItem.value
     // trainingconfiguration
     await restoreTrainingConfig(originalData)
+    if (currentTrainingItem.value !== trainingItem) return
     await refreshPublication(originalData.id).catch(() => {})
+    if (currentTrainingItem.value !== trainingItem) return
 
     // trainingconfigurationpage
     showTrainingConfig.value = true
@@ -2082,15 +2177,20 @@ const handleRetrainModel = async (row) => {
 
 // trainingconfiguration
 const restoreTrainingConfig = async (originalData) => {
+  const generation = ++trainingConfigGeneration
+  trainingSubmitting.value = false
+  trainingSubmitGeneration++
+  trainingBackendReady.value = false
+  isTraining.value = false
   computeNodeId.value = ''
   cloudModelSource.value = 'preset'
   try {
     const saved = typeof originalData.configParams === 'string' ? JSON.parse(originalData.configParams) : originalData.configParams
-    computeNodeId.value = saved?.computeNodeId ? String(saved.computeNodeId) : ''
+    computeNodeId.value = normalizeComputeNodeId(saved?.computeNodeId)
     cloudModelSource.value = saved?.modelSource === 'algorithm' ? 'algorithm' : 'preset'
   } catch { /* Historical configuration can be empty. */ }
   await loadComputeNodes()
-  trainingBackendReady.value = false
+  if (generation !== trainingConfigGeneration) return
   epochTotal.value = Number(originalData.epochTotal || 10)
   batchSize.value = 16
   trainImgSize.value = 640
@@ -2104,6 +2204,7 @@ const restoreTrainingConfig = async (originalData) => {
       // Load dataset item (if Load )
       if (datasetOptions.value.length === 0) {
         await loadDatasetOptions()
+        if (generation !== trainingConfigGeneration) return
       }
 
       // find dataset
@@ -2307,13 +2408,6 @@ const executionStatusText = row => {
   const stage = row.originalData?.executionStage
   if (stages[stage]) return uiText(stages[stage])
   return uiText(row.trainStatus === '等待' && !isCloudTrainingRow(row) ? '待启动' : getTrainStatusText(row.trainStatus))
-}
-
-// Generate training ( )
-const buildTrainCommand = ({ task, datasetPath, modelPath, epochs, imgsz, batchSize: batch }) => {
-  const safeModel = modelPath || '<默认模型>'
-  const safeData = datasetPath || '<未配置数据集>'
-  return `yolo ${task} train data=${safeData} model=${safeModel} epochs=${epochs} imgsz=${imgsz} batch=${batch}`
 }
 
 const appendTerminalInfo = (message) => {
@@ -2667,7 +2761,7 @@ const handleConfirmEdit = async () => {
       algorithmId: String(editForm.value.algorithmId),
       datasetId: editForm.value.datasetId ? String(editForm.value.datasetId) : null,
       epochTotal: editForm.value.epochTotal,
-      configParams: editForm.value.configParams ? JSON.parse(editForm.value.configParams) : null,
+      configParams: editForm.value.configParams ? JSON.stringify(JSON.parse(editForm.value.configParams)) : null,
       description: editForm.value.description
     }
 
@@ -2775,13 +2869,13 @@ const handleAdvancedSearch = (searchData) => {
 
   // new form
   if (searchData.keyword) {
-    searchForm.trainName = searchData.keyword
+    searchForm.value.trainName = searchData.keyword
   }
   if (searchData.trainName) {
-    searchForm.trainName = searchData.trainName
+    searchForm.value.trainName = searchData.trainName
   }
   if (searchData.dateRange && searchData.dateRange.length > 0) {
-    searchForm.dateRange = searchData.dateRange
+    searchForm.value.dateRange = searchData.dateRange
   }
 
   handleSearch()
@@ -2789,8 +2883,8 @@ const handleAdvancedSearch = (searchData) => {
 
 const handleAdvancedSearchReset = () => {
   console.log('重置高级搜索')
-  searchForm.trainName = ''
-  searchForm.dateRange = []
+  searchForm.value.trainName = ''
+  searchForm.value.dateRange = []
   handleReset()
 }
 
@@ -2815,7 +2909,28 @@ const handleBatchOperation = () => {
 }
 
 // page Load data
+const onTrainingIdentityChanged = () => {
+  trainingConfigGeneration++
+  trainingSubmitGeneration++
+  trainingSubmitting.value = false
+  trainingLogRequestGeneration++
+  ElMessageBox.close()
+  stopAllPolling()
+  tableData.value = []; total.value = 0; selectedRows.value = []
+  computeNodes.value = []; computeNodeId.value = ''
+  currentTrainingItem.value = null; currentVersionItem.value = null
+  modelHistoryList.value = []; modelHistoryTotal.value = 0; historyTrainingId.value = null
+  currentValidationItem.value = null; currentDeployItem.value = null
+  showTrainingConfig.value = false; showVersionConfig.value = false; showValidationView.value = false
+  showDeployDialog.value = false; showAddDialog.value = false; showEditDialog.value = false; showDatasetSelector.value = false
+  terminalOutput.value = ''; publicationState.value = ''; trainingBackendReady.value = false
+  isTraining.value = false; finalizingTrainingTasks.clear()
+  selectedDatasets.value = []; selectedDatasetIds.value = []
+  loadTrainingData(); loadComputeNodes()
+}
+
 onMounted(async () => {
+  window.addEventListener('modelHubAuthChanged', onTrainingIdentityChanged)
   loadTrainingData()
   loadAlgorithmOptions()
   loadComputeNodes()
@@ -2824,11 +2939,12 @@ onMounted(async () => {
     sessionStorage.removeItem(computeDraftKey)
     if (await canRestoreComputeDraft(draft)) {
       currentTrainingItem.value = draft.task; showTrainingConfig.value = true
-      computeNodeId.value = draft.computeNodeId; cloudModelSource.value = draft.cloudModelSource
+      computeNodeId.value = normalizeComputeNodeId(draft.computeNodeId); cloudModelSource.value = draft.cloudModelSource
       epochTotal.value = draft.epochTotal; batchSize.value = draft.batchSize; trainImgSize.value = draft.trainImgSize
       trainingMode.value = draft.trainingMode; autoPublish.value = draft.autoPublish
       dataStrategy.value = draft.dataStrategy; resolution.value = draft.resolution; epochMode.value = draft.epochMode; customValidation.value = draft.customValidation
       selectedDatasets.value = draft.selectedDatasets; selectedDatasetIds.value = draft.selectedDatasetIds
+      await loadComputeNodes()
       if (draft.authorizationActor) {
         // Server paths are never persisted across platform authorization; reload the current dataset by its selection ID.
         await loadDatasetOptions()
@@ -2840,6 +2956,12 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  trainingConfigGeneration++
+  computeRequestGeneration++
+  trainingLogsUnmounted = true
+  trainingLogRequestGeneration++
+  ElMessageBox.close()
+  window.removeEventListener('modelHubAuthChanged', onTrainingIdentityChanged)
   stopAllPolling()
 })
 

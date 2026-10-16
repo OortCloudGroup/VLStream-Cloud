@@ -37,7 +37,7 @@ public interface VlsAlgorithmTrainingMapper extends BaseMapper<AlgorithmTraining
 	 * @param vlsAlgorithmTraining Query parameter
 	 * @return List<VlsAlgorithmTrainingVO>
 	 */
-	List<AlgorithmTrainingVO> selectVlsAlgorithmTrainingPage(IPage page, AlgorithmTrainingVO vlsAlgorithmTraining, @Param("publicOwner") String publicOwner);
+	List<AlgorithmTrainingVO> selectVlsAlgorithmTrainingPage(IPage page, AlgorithmTrainingVO vlsAlgorithmTraining, @Param("ew") Wrapper<AlgorithmTraining> queryWrapper);
 
 	/**
 	 * Get Export data

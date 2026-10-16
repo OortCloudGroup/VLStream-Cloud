@@ -59,6 +59,8 @@ public class GpuTrainingSchedulerService {
 	@Resource
 	private IVlsAlgorithmTrainingService algorithmTrainingService;
 	@Resource
+	private IVlsAlgorithmService algorithmService;
+	@Resource
 	private VlsRemoteServersMapper remoteServersMapper;
 	@Resource
 	private SSHService sshService;
@@ -78,6 +80,13 @@ public class GpuTrainingSchedulerService {
 	@org.springframework.context.annotation.Lazy
 	private com.ruoyi.vlstream.test.vlstream.data.SmartAnnotationWorker smartAnnotationWorker;
 	private static final String TYPE_SMART_ANNOTATION = "smart_annotation";
+	@org.springframework.beans.factory.annotation.Autowired(required = false)
+	private com.ruoyi.vlstream.test.vlstream.compute.ComputeTrustedSelfPolicy trustedSelfPolicy;
+	private boolean companyPool(String host, int port) { return trustedSelfPolicy!=null && trustedSelfPolicy.companyEndpoint(host,port); }
+	private void requireLegacyExecution() {
+		if(companyPool(sshProperties.getHost(),sshProperties.getPort()))
+			throw new IllegalStateException("公司公共GPU已接入统一任务队列，请在正式训练中选择共享节点；旧默认训练及智能标注路径尚未接入跨环境租约");
+	}
 
 	private ScheduledExecutorService executor;
 
@@ -106,6 +115,7 @@ public class GpuTrainingSchedulerService {
 													 Integer epochs,
 													 Integer batchSize,
 													 Integer imgSize) {
+		requireLegacyExecution();
 		List<ContainerInstance> existing = containerInstanceService.list(
 			new LambdaQueryWrapper<ContainerInstance>()
 				.eq(ContainerInstance::getTrainingTaskId, taskId)
@@ -114,6 +124,7 @@ public class GpuTrainingSchedulerService {
 				.orderByDesc(ContainerInstance::getQueueTime)
 				.last("limit 1"));
 		if (!existing.isEmpty()) {
+			if(!algorithmTrainingService.recordQueuedLog(taskId,existing.get(0).getId()))throw new IllegalStateException("保存排队日志身份失败");
 			RemoteTrainingService.StartResult duplicate = new RemoteTrainingService.StartResult();
 			duplicate.setLogPath(existing.get(0).getLogsPath());
 			duplicate.setDatasetPath(datasetPath);
@@ -137,8 +148,6 @@ public class GpuTrainingSchedulerService {
 		} catch (java.io.IOException e) { throw new IllegalStateException("训练配置无法解析", e); }
 		String logPath = workDir + "/logs/" + runName + ".log";
 		String containerName = "vls-training-" + taskId;
-		String command = buildDockerRunCommand(server, containerName, logPath, taskType,
-			datasetPath, baseModel, epochs, batchSize, imgSize, runName);
 
 		ContainerInstance instance = new ContainerInstance();
 		instance.setInstanceName(containerName);
@@ -152,7 +161,12 @@ public class GpuTrainingSchedulerService {
 		instance.setGpuLimit("GPU " + properties.getGpuIndex() + " (exclusive)");
 		String resolvedTaskType = isBlank(taskType) ? "detect" : taskType.trim();
 		instance.setPortConfig(toJson(singletonMap("trainType", resolvedTaskType)));
-		instance.setEnvConfig(toJson(singletonMap("launchCommand", command)));
+		Map<String,Object> definition=new LinkedHashMap<>();
+		definition.put("version",1);definition.put("taskId",String.valueOf(taskId));definition.put("tenantId",task.getTenantId());definition.put("creator",task.getCreateUser());
+		definition.put("runName",runName);definition.put("trainType",resolvedTaskType);definition.put("datasetPath",datasetPath);definition.put("baseModel",baseModel);
+		definition.put("epochs",epochs);definition.put("batchSize",batchSize);definition.put("imgSize",imgSize);
+		// Persist typed inputs. The worker reconstructs its fixed command; raw shell text is never executed.
+		instance.setEnvConfig(toJson(singletonMap("launchDefinition",definition)));
 		Map<String, Object> volumeConfig = new LinkedHashMap<>();
 		volumeConfig.put("hostPath", properties.getHostDataDir());
 		volumeConfig.put("containerPath", properties.getHostDataDir());
@@ -167,9 +181,10 @@ public class GpuTrainingSchedulerService {
 		instance.setGpuUuid(properties.getGpuUuid());
 		instance.setQueueTime(new Date());
 		instance.setRestartCount(0);
-		if (!containerInstanceService.save(instance)) {
+		if (!containerInstanceService.saveTaskRecord(instance)) {
 			throw new IllegalStateException("保存GPU排队任务失败");
 		}
+		if(!algorithmTrainingService.recordQueuedLog(taskId,instance.getId()))throw new IllegalStateException("保存本轮排队日志身份失败");
 
 		RemoteTrainingService.StartResult result = new RemoteTrainingService.StartResult();
 		result.setLogPath(logPath);
@@ -181,6 +196,7 @@ public class GpuTrainingSchedulerService {
 
 	/** Shares the durable FIFO and exclusive GPU with formal training. No caller-supplied command. */
 	public void enqueueSmartAnnotation(Long roundId) {
+		requireLegacyExecution();
 		if (containerInstanceService.count(new LambdaQueryWrapper<ContainerInstance>()
 			.eq(ContainerInstance::getTrainingTaskId, roundId).eq(ContainerInstance::getInstanceType, TYPE_SMART_ANNOTATION)
 			.in(ContainerInstance::getInstanceStatus, STATUS_QUEUED, STATUS_STARTING, STATUS_RUNNING)) > 0) return;
@@ -193,7 +209,7 @@ public class GpuTrainingSchedulerService {
 		instance.setTrainingTaskId(roundId); instance.setServerId(server.getId()); instance.setServerIp(server.getServerIp());
 		instance.setGpuIndex(properties.getGpuIndex()); instance.setGpuUuid(properties.getGpuUuid()); instance.setGpuLimit("GPU " + properties.getGpuIndex() + " (exclusive)");
 		instance.setInstanceStatus(STATUS_QUEUED); instance.setHealthStatus("unknown"); instance.setQueueTime(new Date()); instance.setRestartCount(0);
-		if (!containerInstanceService.save(instance)) throw new IllegalStateException("智能标注任务入队失败");
+		if (!containerInstanceService.saveTaskRecord(instance)) throw new IllegalStateException("智能标注任务入队失败");
 	}
 
 	public Map<String, Object> getResourceSnapshot() {
@@ -261,8 +277,15 @@ public class GpuTrainingSchedulerService {
 	}
 
 	private synchronized void dispatchNext() {
+		if(companyPool(sshProperties.getHost(),sshProperties.getPort()))return;
 		ContainerInstance instance = containerInstanceMapper.selectNextQueuedTrainingForScheduler();
 		if (instance == null) return;
+		java.util.concurrent.atomic.AtomicReference<String> trustedCommand=new java.util.concurrent.atomic.AtomicReference<>();
+		try {
+			withTenant(instance, () -> { requireSchedulerIdentity(instance);if(TYPE_TRAINING.equals(instance.getInstanceType()))trustedCommand.set(trustedLaunch(instance)); });
+		} catch(RuntimeException invalid) {
+			log.warn("拒绝未确认的GPU执行记录: {}",instance.getId());return;
+		}
 		if (TYPE_SMART_ANNOTATION.equals(instance.getInstanceType()) && withTenant(instance, () -> smartAnnotationWorker.cancelRequested(instance))) {
 			withTenant(instance, () -> { smartAnnotationWorker.cancelled(instance); updateStatus(instance, "cancelled", null, null); });
 			return;
@@ -283,7 +306,7 @@ public class GpuTrainingSchedulerService {
 				} catch (Exception ex) { fail(instance, ex.getMessage() == null ? "智能标注准备失败" : ex.getMessage()); }
 				return;
 			}
-			String launchCommand = readJsonText(instance.getEnvConfig(), "launchCommand");
+			String launchCommand = trustedCommand.get();
 			if (isBlank(launchCommand)) {
 				fail(instance, "训练容器启动命令不存在");
 				return;
@@ -312,6 +335,8 @@ public class GpuTrainingSchedulerService {
 	}
 
 	private boolean reconcileActiveContainer(ContainerInstance instance) {
+		try { requireSchedulerIdentity(instance); }
+		catch(RuntimeException invalid) { log.warn("拒绝未确认的GPU运行记录: {}",instance.getId());return false; }
 		String inspect = "docker inspect -f '{{.State.Status}}|{{.State.ExitCode}}|{{.Id}}' "
 			+ shellQuote(instance.getInstanceName()) + " 2>/dev/null || echo missing";
 		SSHService.SSHExecutionResult stateResult = execute(inspect);
@@ -512,8 +537,61 @@ public class GpuTrainingSchedulerService {
 		String trainType = readJsonText(instance.getPortConfig(), "trainType");
 		return isBlank(trainType) ? "detect" : trainType;
 	}
+	private void requireSchedulerIdentity(ContainerInstance instance) {
+		if(instance.getTrainingTaskId()==null || instance.getCreateUser()==null || isBlank(instance.getTenantId()))
+			throw new IllegalStateException("调度记录缺少任务归属");
+		containerInstanceService.requireTaskExecution(instance);
+		String expected="vls-training-"+instance.getTrainingTaskId();
+		if(TYPE_TRAINING.equals(instance.getInstanceType())) {
+			if(!expected.equals(instance.getInstanceName()))throw new IllegalStateException("训练容器命名与任务不一致");
+		} else if(!TYPE_SMART_ANNOTATION.equals(instance.getInstanceType()) || instance.getInstanceName()==null
+			|| !instance.getInstanceName().matches("vls-annotation-"+instance.getTrainingTaskId()+"-[0-9a-f]{8}"))
+			throw new IllegalStateException("标注容器命名与轮次不一致");
+	}
+	private String trustedLaunch(ContainerInstance instance) {
+		try {
+			RemoteServers server=requireServer();
+			if(!java.util.Objects.equals(server.getId(),instance.getServerId()) || !java.util.Objects.equals(server.getServerIp(),instance.getServerIp())
+				|| !java.util.Objects.equals(properties.getGpuIndex(),instance.getGpuIndex()))throw new IllegalStateException("训练主机/GPU身份不一致");
+			com.fasterxml.jackson.databind.JsonNode env=objectMapper.readTree(instance.getEnvConfig());
+			com.fasterxml.jackson.databind.JsonNode def=env.path("launchDefinition");
+			AlgorithmTraining task=algorithmTrainingService.getById(instance.getTrainingTaskId());
+			if(task==null || !java.util.Objects.equals(task.getTenantId(),instance.getTenantId()) || !java.util.Objects.equals(task.getCreateUser(),String.valueOf(instance.getCreateUser())))
+				throw new IllegalStateException("训练归属不一致");
+			String runName,trainType,dataset,model;Integer epochs,batch,size;
+			if(def.isObject()) {
+				if(!def.path("version").isIntegralNumber() || def.path("version").intValue()!=1 || !String.valueOf(task.getId()).equals(def.path("taskId").asText())
+					|| !task.getTenantId().equals(def.path("tenantId").asText()) || !task.getCreateUser().equals(def.path("creator").asText()))
+					throw new IllegalStateException("执行定义归属不一致");
+				runName=def.path("runName").asText();trainType=def.path("trainType").asText();dataset=def.path("datasetPath").asText();model=def.path("baseModel").asText();
+				epochs=launchInteger(def,"epochs",1,10000);batch=launchInteger(def,"batchSize",1,256);size=launchInteger(def,"imgSize",320,1280);
+			} else {
+				// Compatible old backend-generated queues must match the regenerated fixed definition exactly.
+				com.fasterxml.jackson.databind.JsonNode config=objectMapper.readTree(task.getConfigParams());
+				dataset=config.path("runtimeDatasetPath").asText();trainType=config.path("trainType").asText(resolveTrainType(instance));
+				runName=instance.getLogsPath().substring(instance.getLogsPath().lastIndexOf('/')+1).replaceFirst("\\.log$","");
+				com.ruoyi.vlstream.test.vlstream.pojo.entity.Algorithm algorithm=algorithmService.getById(task.getAlgorithmId());
+				if(algorithm==null || !task.getTenantId().equals(algorithm.getTenantId()) || algorithm.getCategory()==null || !trainType.equals(algorithm.getCategory().getCode()))throw new IllegalStateException("旧执行算法未确认");
+				model=isBlank(algorithm.getPtModelFilePath())?"@preset/"+trainType:algorithm.getPtModelFilePath();
+				epochs=launchInteger(config,"epochs",1,10000);batch=launchInteger(config,"batchSize",1,256);size=launchInteger(config,"imgSize",320,1280);
+				if(!(server.getWorkDir()+"/runs/vls/"+runName).equals(config.path("runDirectory").asText()))throw new IllegalStateException("旧执行目录不一致");
+			}
+			if(!runName.matches("task_"+task.getId()+"_[0-9a-f]{32}") || !(server.getWorkDir()+"/logs/"+runName+".log").equals(instance.getLogsPath())
+				|| !java.util.Arrays.asList("detect","segment","classify","semanticSeg","pose","obb").contains(trainType)
+				|| isBlank(dataset) || dataset.lastIndexOf('/')<=0 || isBlank(model) || (size!=null && size%32!=0))throw new IllegalStateException("执行输入未确认");
+			String rebuilt=buildDockerRunCommand(server,instance.getInstanceName(),instance.getLogsPath(),trainType,dataset,model,epochs,batch,size,runName);
+			if(!def.isObject() && !rebuilt.equals(env.path("launchCommand").asText()))throw new IllegalStateException("旧执行文本与可信输入不一致");
+			return rebuilt;
+		} catch(Exception invalid) { throw new IllegalStateException("无法确认训练执行定义",invalid); }
+	}
+	private Integer launchInteger(com.fasterxml.jackson.databind.JsonNode definition,String key,int min,int max) {
+		com.fasterxml.jackson.databind.JsonNode value=definition.path(key);
+		if(value.isMissingNode() || value.isNull())return null;
+		if(!value.isIntegralNumber() || !value.canConvertToInt() || value.intValue()<min || value.intValue()>max)throw new IllegalStateException("执行参数无效");
+		return value.intValue();
+	}
 
-	private Map<String, Object> singletonMap(String key, String value) {
+	private Map<String, Object> singletonMap(String key, Object value) {
 		Map<String, Object> result = new LinkedHashMap<>();
 		result.put(key, value);
 		return result;
@@ -549,6 +627,7 @@ public class GpuTrainingSchedulerService {
 		if (server == null) {
 			throw new IllegalStateException("未找到启用的GPU训练服务器");
 		}
+		if(companyPool(server.getServerIp(),22))throw new IllegalStateException("该公司GPU必须通过正式训练的共享节点队列执行，保留原默认服务器记录");
 		return server;
 	}
 

@@ -1,5 +1,6 @@
 """Standalone new-node check. No dependency on the development GPU, no package installation."""
 import argparse
+from contextlib import contextmanager
 import hashlib
 import importlib
 import json
@@ -9,12 +10,46 @@ import platform
 import shutil
 import subprocess
 import sys
+import stat
 
 PROFILES = {
     'standard': {'torch': '2.5.1', 'torchvision': '0.20.1', 'cuda': '12.4'},
+    'blackwell28': {'torch': '2.8.0', 'torchvision': '0.23.0', 'cuda': '12.8'},
     'blackwell': {'torch': '2.7.1', 'torchvision': '0.22.1', 'cuda': '12.8'},
 }
 PRESETS = {'detect': 'yolov8m.pt', 'classify': 'yolov8n-cls.pt', 'segment': 'yolov8n-seg.pt'}
+
+
+def _gpu_lock_path(index):
+    return Path('/tmp') / ('.vlstream-gpu-{}.lock'.format(index))
+
+
+@contextmanager
+def gpu_probe_lease(index):
+    """Share the runner's host GPU lock, including an already held bootstrap descriptor."""
+    import fcntl
+    if not isinstance(index, int) or index < 0 or index > 15:
+        raise ValueError('GPU 编号无效')
+    path = _gpu_lock_path(index)
+    inherited = os.environ.get('VLS_GPU_LOCK_FD')
+    if inherited is not None:
+        descriptor = int(inherited)
+        info, expected = os.fstat(descriptor), path.stat()
+        if path.is_symlink() or not stat.S_ISREG(info.st_mode) or (info.st_dev, info.st_ino) != (expected.st_dev, expected.st_ino):
+            raise ValueError('初始化 GPU 锁身份无效')
+        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        yield
+        # The bootstrap owner keeps this same open-file-description locked.
+        return
+    descriptor = os.open(str(path), os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+    try:
+        info = os.fstat(descriptor)
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.geteuid() or info.st_nlink != 1:
+            raise ValueError('GPU 锁文件归属或格式无效，请管理员核对')
+        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        yield
+    finally:
+        os.close(descriptor)
 
 
 def checksum(path):
@@ -41,8 +76,10 @@ def cached_weights(root):
 
 
 def inspect_environment(work_dir, gpu_index=0):
+    import site
     root = Path(work_dir)
-    result = dict(ready=False, contractVersion=1, python=platform.python_version(), checks=[], warnings=[])
+    result = dict(ready=False, contractVersion=1, python=platform.python_version(), pythonIsolated=not site.ENABLE_USER_SITE,
+                  pythonPrefix=sys.prefix, checks=[], warnings=[])
 
     def check(name, action):
         try:
@@ -74,11 +111,15 @@ def inspect_environment(work_dir, gpu_index=0):
     check('工作目录与空间', directory)
     os.environ['TORCH_HOME'] = str(root / 'models/torch')
     os.environ['YOLO_CONFIG_DIR'] = str(root / 'config/ultralytics')
+    os.environ['MPLCONFIGDIR'] = str(root / 'config/matplotlib')
+    os.environ['XDG_CACHE_HOME'] = str(root / 'cache')
     modules = {}
 
     def dependencies():
         for name in ('torch', 'torchvision', 'ultralytics', 'numpy', 'PIL', 'yaml', 'cv2', 'scipy'):
             modules[name] = importlib.import_module(name)
+            if result['pythonIsolated'] and not Path(modules[name].__file__).resolve().is_relative_to(Path(sys.prefix).resolve()):
+                raise ValueError('训练依赖不属于所选独立Python环境：' + name)
         for name in ('torch', 'torchvision', 'ultralytics'):
             result[name] = modules[name].__version__
         result['cudaVersion'] = modules['torch'].version.cuda
@@ -93,27 +134,35 @@ def inspect_environment(work_dir, gpu_index=0):
     if dependencies_ok:
         def gpu():
             torch = modules['torch']
-            if not torch.cuda.is_available() or gpu_index < 0 or gpu_index >= torch.cuda.device_count():
-                result['gpuAvailable'] = False
-                raise ValueError('未发现所选 GPU，请确认有卡开机及 CUDA 版 PyTorch')
-            result['gpuAvailable'] = True
-            result['gpu'] = torch.cuda.get_device_name(gpu_index)
-            result['capability'] = list(torch.cuda.get_device_capability(gpu_index))
-            busy = subprocess.run(['nvidia-smi', '-i', str(gpu_index), '--query-compute-apps=pid', '--format=csv,noheader,nounits'], capture_output=True, text=True, timeout=15, check=True).stdout.strip()
-            if busy:
+            try:
+                with gpu_probe_lease(gpu_index):
+                    if not torch.cuda.is_available() or gpu_index >= torch.cuda.device_count():
+                        result['gpuAvailable'] = False
+                        raise ValueError('未发现所选 GPU，请确认有卡开机及 CUDA 版 PyTorch')
+                    result['gpuAvailable'] = True
+                    result['gpu'] = torch.cuda.get_device_name(gpu_index)
+                    result['capability'] = list(torch.cuda.get_device_capability(gpu_index))
+                    result['gpuUuid'] = subprocess.run(['nvidia-smi', '-i', str(gpu_index), '--query-gpu=uuid', '--format=csv,noheader,nounits'], capture_output=True, text=True, timeout=15, check=True).stdout.strip()
+                    if not result['gpuUuid'].startswith('GPU-'):
+                        raise ValueError('GPU 物理身份读取失败')
+                    busy = subprocess.run(['nvidia-smi', '-i', str(gpu_index), '--query-compute-apps=pid', '--format=csv,noheader,nounits'], capture_output=True, text=True, timeout=15, check=True).stdout.strip()
+                    if busy:
+                        result['gpuBusy'] = True
+                        raise ValueError('GPU 正被计算任务使用，请空闲后进行运算检查')
+                    result['gpuBusy'] = False
+                    device = 'cuda:' + str(gpu_index)
+                    with torch.cuda.device(gpu_index):
+                        network = torch.nn.Conv2d(3, 4, 3).to(device)
+                        value = torch.ones((1, 3, 16, 16), device=device, requires_grad=True)
+                        network(value).square().mean().backward()
+                        boxes = torch.tensor([[0., 0., 10., 10.], [1., 1., 9., 9.]], device=device)
+                        scores = torch.tensor([0.9, 0.8], device=device)
+                        modules['torchvision'].ops.nms(boxes, scores, 0.5)
+                        torch.cuda.synchronize()
+                    result['cuda'] = True
+            except BlockingIOError:
                 result['gpuBusy'] = True
-                raise ValueError('GPU 正被计算任务使用，请空闲后进行运算检查')
-            result['gpuBusy'] = False
-            device = 'cuda:' + str(gpu_index)
-            with torch.cuda.device(gpu_index):
-                network = torch.nn.Conv2d(3, 4, 3).to(device)
-                value = torch.ones((1, 3, 16, 16), device=device, requires_grad=True)
-                network(value).square().mean().backward()
-                boxes = torch.tensor([[0., 0., 10., 10.], [1., 1., 9., 9.]], device=device)
-                scores = torch.tensor([0.9, 0.8], device=device)
-                modules['torchvision'].ops.nms(boxes, scores, 0.5)
-                torch.cuda.synchronize()
-            result['cuda'] = True
+                raise ValueError('GPU 已由其他平台任务或环境初始化占用，请等待空闲再检查')
         check('GPU 前后向运算与 Torchvision 算子', gpu)
         if check('四类基础权重完整性', lambda: cached_weights(root)):
             def models():

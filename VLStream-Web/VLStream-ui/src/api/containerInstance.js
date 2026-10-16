@@ -6,6 +6,7 @@
  */
 
 import request from '@/utils/request'
+import { currentIdentityRequest, computePathPart } from '@/utils/computeIdentityRequest'
 
 /**
  * instance APIinterface
@@ -27,7 +28,7 @@ import request from '@/utils/request'
  * @param {string} params.endTime create timefinish
  */
 export function getContainerInstancePage(params) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsContainerInstance/page',
     method: 'get',
     params
@@ -39,8 +40,8 @@ export function getContainerInstancePage(params) {
  * @param {number} id instanceID
  */
 export function getContainerInstanceById(id) {
-  return request({
-    url: `/vlsContainerInstance/${id}`,
+  return currentIdentityRequest({
+    url: `/vlsContainerInstance/${computePathPart(id)}`,
     method: 'get'
   })
 }
@@ -59,7 +60,7 @@ export function getContainerInstanceById(id) {
  * @param {string} data.portMappings JSON
  */
 export function createContainerInstance(data) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsContainerInstance',
     method: 'post',
     data
@@ -76,7 +77,7 @@ export function createContainerInstance(data) {
  * @param {string} data.portMappings JSON
  */
 export function updateContainerInstance(data) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsContainerInstance',
     method: 'put',
     data
@@ -88,8 +89,8 @@ export function updateContainerInstance(data) {
  * @param {number} id instanceID
  */
 export function deleteContainerInstance(id) {
-  return request({
-    url: `/vlsContainerInstance/${id}`,
+  return currentIdentityRequest({
+    url: `/vlsContainerInstance/${computePathPart(id)}`,
     method: 'delete'
   })
 }
@@ -99,7 +100,7 @@ export function deleteContainerInstance(id) {
  * @param {Array<number>} ids instanceIDarray
  */
 export function batchDeleteContainerInstances(ids) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsContainerInstance/batch',
     method: 'delete',
     data: { ids }
@@ -111,8 +112,8 @@ export function batchDeleteContainerInstances(ids) {
  * @param {number} id instanceID
  */
 export function startContainerInstance(id) {
-  return request({
-    url: `/vlsContainerInstance/${id}/start`,
+  return currentIdentityRequest({
+    url: `/vlsContainerInstance/${computePathPart(id)}/start`,
     method: 'post'
   })
 }
@@ -122,8 +123,8 @@ export function startContainerInstance(id) {
  * @param {number} id instanceID
  */
 export function stopContainerInstance(id) {
-  return request({
-    url: `/vlsContainerInstance/${id}/stop`,
+  return currentIdentityRequest({
+    url: `/vlsContainerInstance/${computePathPart(id)}/stop`,
     method: 'post'
   })
 }
@@ -133,8 +134,8 @@ export function stopContainerInstance(id) {
  * @param {number} id instanceID
  */
 export function restartContainerInstance(id) {
-  return request({
-    url: `/vlsContainerInstance/${id}/restart`,
+  return currentIdentityRequest({
+    url: `/vlsContainerInstance/${computePathPart(id)}/restart`,
     method: 'post'
   })
 }
@@ -143,7 +144,7 @@ export function restartContainerInstance(id) {
  * Get instance info
  */
 export function getContainerInstanceStatistics() {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsContainerInstance/statistics',
     method: 'get'
   })
@@ -159,8 +160,8 @@ export function getContainerInstanceStatistics() {
 }
 
 export function getContainerInstanceLogs(id, lines = 500) {
-  return request({
-    url: `/vlsContainerInstance/${id}/logs`,
+  return currentIdentityRequest({
+    url: `/vlsContainerInstance/${computePathPart(id)}/logs`,
     method: 'get',
     params: { lines }
   })
@@ -170,7 +171,7 @@ export function getContainerInstanceLogs(id, lines = 500) {
  * Get in instance
  */
 export function getRunningContainerInstances() {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsContainerInstance/running',
     method: 'get'
   })
@@ -180,7 +181,7 @@ export function getRunningContainerInstances() {
  * Get instance
  */
 export function getErrorContainerInstances() {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsContainerInstance/error',
     method: 'get'
   })
@@ -190,7 +191,7 @@ export function getErrorContainerInstances() {
  * Get instance
  */
 export function getUnhealthyContainerInstances() {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsContainerInstance/unhealthy',
     method: 'get'
   })
@@ -202,7 +203,7 @@ export function getUnhealthyContainerInstances() {
  * @param {number} excludeId instanceID ( )
  */
 export function checkContainerInstanceName(name, excludeId = null) {
-  return request({
+  return currentIdentityRequest({
     url: '/vlsContainerInstance/check-name',
     method: 'get',
     params: { name, excludeId }
@@ -214,8 +215,8 @@ export function checkContainerInstanceName(name, excludeId = null) {
  * @param {number} algorithmId algorithmID
  */
 export function getContainerInstancesByAlgorithm(algorithmId) {
-  return request({
-    url: `/vlsContainerInstance/algorithm/${algorithmId}`,
+  return currentIdentityRequest({
+    url: `/vlsContainerInstance/algorithm/${computePathPart(algorithmId)}`,
     method: 'get'
   })
 }
@@ -229,8 +230,8 @@ export function getContainerInstancesByAlgorithm(algorithmId) {
  * @param {number} data.gpuUsage GPU
  */
 export function updateContainerInstanceMonitoring(id, data) {
-  return request({
-    url: `/vlsContainerInstance/${id}/monitoring`,
+  return currentIdentityRequest({
+    url: `/vlsContainerInstance/${computePathPart(id)}/monitoring`,
     method: 'put',
     data
   })

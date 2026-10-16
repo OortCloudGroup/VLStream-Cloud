@@ -52,6 +52,7 @@ public class ComputeProviderInventoryService {
     private static class Source { ComputeNode node; String scope; }
     private Source source(Long id,boolean requireApi) {
         ComputeNode node=nodes.get(id);
+        nodes.requireManagement(node);
         if(!ComputeNodeService.tenant().equals(node.getTenantId()))throw new ServiceException("无权同步其他资源管理方库存");
         if(!"autodl".equals(node.getProvider()) || !"AUTODL_PRO".equals(node.getProviderProduct()))throw new ServiceException("仅支持AutoDL容器Pro库存，普通实例和企业弹性接口未接入");
         ComputePublicInventoryService.Instance identity=nodes.publicInventory().read(node,false);
@@ -123,7 +124,9 @@ public class ComputeProviderInventoryService {
     }
     private void validateCurrent(Source source) {
         ComputeNode current=nodes.lockServer(source.node.getId());
-        if(!ComputeNodeService.tenant().equals(current.getTenantId()) || !Objects.equals(current.getPublicInstanceKey(),source.node.getPublicInstanceKey())
+        nodes.requireManagement(current);
+        if(!ComputeNodeService.tenant().equals(current.getTenantId()) || !Objects.equals(current.getManagementOwnerSubject(),source.node.getManagementOwnerSubject())
+            || !Objects.equals(current.getPublicInstanceKey(),source.node.getPublicInstanceKey())
             || !Objects.equals(current.getProviderCredentialCipher(),source.node.getProviderCredentialCipher()) || !provider.supports(current))
             throw new ServiceException("同步期间账号配置或权限已变化，结果未写入，请刷新后重试");
     }

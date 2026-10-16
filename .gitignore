@@ -30,6 +30,9 @@ Thumbs.db
 /VLStream-Cloud-Backend-Server/vls-stream/doc/gpu-training-scheduler.md
 D:\work\ide\WorkSpace\VLStream-Cloud\VLStream-Cloud-Backend-Server\vls-stream\doc
 /tools/*
+!/tools/test-active-safety.mjs
+!/tools/test-training-compute-selection.mjs
+!/tools/test-compute-self-service.mjs
 !/tools/i18n/
 !/tools/i18n/audit-ui.mjs
 !/tools/compute/
@@ -42,5 +45,7 @@ D:\work\ide\WorkSpace\VLStream-Cloud\VLStream-Cloud-Backend-Server\vls-stream\do
 .playwright-mcp
 /Ultralytics/
 **/data/security/
-/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test
+/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/**
+!/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/**/
+!/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/java/com/ruoyi/web/controller/compat/LocationTaskEventDeletionTest.java
 /output

@@ -8,6 +8,9 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="vlsAlgorithmTrainingResultMap" type="com.ruoyi.vlstream.test.vlstream.pojo.vo.AlgorithmTrainingVO">
+        <id column="id" property="id"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="create_user" property="createUser" javaType="java.lang.String"/>
         <result column="task_name" property="taskName"/>
         <result column="algorithm_id" property="algorithmId"/>
         <result column="dataset_id" property="datasetId"/>
@@ -41,12 +44,7 @@
     </resultMap>
 
     <select id="selectVlsAlgorithmTrainingPage" resultMap="vlsAlgorithmTrainingResultMap">
-        select * from vls_algorithm_training where is_deleted = 0
-        AND NOT EXISTS (SELECT 1 FROM vls_cloud_training_job pj JOIN vls_compute_node pn ON pn.id=pj.node_id
-            WHERE pj.training_id=vls_algorithm_training.id
-            AND (pj.public_instance_key IS NOT NULL OR pn.public_instance_key IS NOT NULL OR pn.resource_scope='PLATFORM')
-            AND (pj.public_owner_subject IS NULL OR pj.public_owner_subject &lt;&gt; #{publicOwner}))
-        order by create_time desc
+        SELECT * FROM vls_algorithm_training ${ew.customSqlSegment}
     </select>
 
     <select id="exportVlsAlgorithmTraining" resultType="com.ruoyi.vlstream.test.vlstream.excel.VlsAlgorithmTrainingExcel">
@@ -56,6 +54,8 @@
     <!-- 结果映射 -->
     <resultMap id="BaseResultMap" type="com.ruoyi.vlstream.test.vlstream.pojo.entity.AlgorithmTraining">
         <id column="id" property="id" />
+        <result column="tenant_id" property="tenantId" />
+        <result column="create_user" property="createUser" javaType="java.lang.String" />
         <result column="task_name" property="taskName" />
         <result column="algorithm_id" property="algorithmId" />
         <result column="dataset_id" property="datasetId" />
@@ -92,7 +92,7 @@
 
     <!-- 基础查询字段 -->
     <sql id="Base_Column_List">
-        id, task_name, algorithm_id, dataset_id, train_status, progress,
+        id, tenant_id, task_name, algorithm_id, dataset_id, train_status, progress,
         epoch_current, epoch_total, accuracy, precision_value, recall_value, map_value,
         loss_value, gpu_usage, start_time, end_time, estimated_time, model_output_path,
         onnx_model_output_path, onnx_conversion_status, onnx_conversion_error,

@@ -16,6 +16,7 @@ public final class ComputeRequests {
         @NotBlank @Size(max = 253) private String host;
         @Min(1) @Max(65535) private int port = 22;
         @NotBlank @Pattern(regexp = "[a-zA-Z_][a-zA-Z0-9_-]{0,63}") private String username = "root";
+        @NotNull @Pattern(regexp = "PASSWORD|DEPLOYMENT_KEY") private String authMode = "PASSWORD";
         @Size(max = 1000) @ToString.Exclude private String password;
         @NotBlank @Size(max = 500) private String pythonPath = "/root/autodl-tmp/vlstream/envs/vls-standard/bin/python";
         @NotBlank @Size(max = 500) private String workDir = "/root/autodl-tmp/vlstream";
@@ -36,6 +37,7 @@ public final class ComputeRequests {
 
     @Data
     public static class Offer {
+        @Pattern(regexp = "INSTANCE_EXCLUSIVE|SHARED_GPU_QUEUE") private String schedulingMode;
         private boolean published;
         @NotBlank @Pattern(regexp = "FREE|POINTS") private String billingType;
         @DecimalMin("0.01") private java.math.BigDecimal pointsPerHour;

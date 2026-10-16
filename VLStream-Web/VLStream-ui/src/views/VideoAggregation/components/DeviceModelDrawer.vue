@@ -82,10 +82,11 @@
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
 
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Check, Close, Picture, Search } from '@element-plus/icons-vue'
 import { getDeviceModelCandidates, dispatchSelectedModel } from '@/api/deviceModelCatalog'
+import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 import ModelHubCatalog from './ModelHubCatalog.vue'
 
 const props = defineProps({ modelValue: Boolean, device: { type: Object, default: null } })
@@ -163,6 +164,7 @@ async function submitSelection() {
   if (submitting.value || !props.device?.online || !pendingModels.value.length) return
   const targetDevice = props.device.deviceId
   const currentSession = session
+  const identity = captureComputeIdentity()
   const batch = [...pendingModels.value]
   batchSize.value = batch.length
   submittedIndex.value = 0
@@ -175,18 +177,36 @@ async function submitSelection() {
       submittedIndex.value++
       results.value[model.id] = { state: 'pending', message: '正在提交…' }
       try {
+        identity.assertCurrent()
         const response = await dispatchSelectedModel(model.id, targetDevice)
-        if (response?.code !== 200 || !response?.data) throw new Error(response?.msg || '未收到下发任务编号')
         if (currentSession !== session) break
+        identity.assertCurrent()
+        if (response?.code !== 200 || !response?.data) throw new Error(response?.msg || '未收到下发任务编号')
         results.value[model.id] = { state: 'success', message: '任务已提交，等待设备部署', requestId: response.data }
         submitted++
       } catch (error) {
         if (currentSession !== session) break
+        try { identity.assertCurrent() } catch { onDeviceModelIdentityChanged(); break }
+        if (error?.code === 'COMPUTE_IDENTITY_CHANGED') { onDeviceModelIdentityChanged(); break }
         results.value[model.id] = { state: 'uncertain', message: error?.response?.data?.msg || error?.message || '提交结果未确认，请核实任务' }
       }
     }
-    if (submitted) { ElMessage.success(uiText('已提交 {value0} 个模型下发任务', { value0: submitted })); emit('submitted') }
-  } finally { submitting.value = false; emit('busy', false) }
+    if (submitted && currentSession === session) { ElMessage.success(uiText('已提交 {value0} 个模型下发任务', { value0: submitted })); emit('submitted') }
+  } finally {
+    if (currentSession === session) { submitting.value = false; emit('busy', false) }
+  }
+}
+
+function onDeviceModelIdentityChanged() {
+  session++
+  requestSequence++
+  clearTimeout(searchTimer)
+  models.value = []; selected.value = []; results.value = {}
+  total.value = 0; sourceTotal.value = null; hubTotal.value = null
+  submittedIndex.value = 0; batchSize.value = 0; submitting.value = false; loading.value = false
+  keyword.value = ''; category.value = ''; page.value = 1; source.value = 'local'
+  loadError.value = props.modelValue ? '登录身份已变化，请刷新模型列表并重新选择；已发送的任务请在原账号下核实' : ''
+  emit('busy', false)
 }
 
 watch(() => props.modelValue, visible => {
@@ -198,7 +218,11 @@ watch(() => props.modelValue, visible => {
     loadModels()
   }
 })
-onBeforeUnmount(() => { session++; requestSequence++; clearTimeout(searchTimer) })
+onMounted(() => { window.addEventListener('modelHubAuthChanged', onDeviceModelIdentityChanged) })
+onBeforeUnmount(() => {
+  session++; requestSequence++; clearTimeout(searchTimer)
+  window.removeEventListener('modelHubAuthChanged', onDeviceModelIdentityChanged)
+})
 </script>
 
 <style scoped>
