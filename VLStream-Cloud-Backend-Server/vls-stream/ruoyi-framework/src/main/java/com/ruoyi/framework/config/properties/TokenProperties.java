@@ -8,6 +8,7 @@
 
 package com.ruoyi.framework.config.properties;
 
+import com.ruoyi.common.constant.UserConstants;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -22,9 +23,9 @@ public class TokenProperties {
     private String multiTenantAdminUserUrl;
     private String multiTenantUserTenantsUrl;
     private String multiTenantLoginUrl;
-    private String multiTenantRoleKey = "tenant_admin";
-    private String multiTenantRoleName = "租户管理员";
-    private String multiTenantRoleTemplateKey = "admin";
+    private String multiTenantRoleKey = UserConstants.DEFAULT_MEMBER_ROLE_KEY;
+    private String multiTenantRoleName = UserConstants.DEFAULT_MEMBER_ROLE_NAME;
+    private String multiTenantRoleTemplateKey = UserConstants.DEFAULT_MEMBER_ROLE_KEY;
     private int multiTenantConnectTimeoutMillis = 3000;
     private int multiTenantReadTimeoutMillis = 5000;
 }

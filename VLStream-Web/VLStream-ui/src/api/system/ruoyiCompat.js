@@ -7,7 +7,6 @@
  */
 
 export const SINGLE_TENANT_ID = '000000'
-export const DEFAULT_USER_PASSWORD = 'Codex@123456'
 
 /**
  * Reads the business payload from either RuoYi R<T> or a direct response object.
@@ -173,7 +172,7 @@ export function mapBladeUserToRuoyi(data = {}) {
     phonenumber: data.phone || data.phonenumber || '',
     sex: data.sex === undefined || data.sex === null || data.sex === '' ? '0' : String(data.sex),
     status: toRuoyiStatus(data.status),
-    password: userId ? data.password : data.password || DEFAULT_USER_PASSWORD,
+    password: userId ? undefined : data.password,
     roleIds,
     postIds
   }

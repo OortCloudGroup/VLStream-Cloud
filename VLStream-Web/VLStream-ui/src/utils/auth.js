@@ -6,7 +6,8 @@
  */
 
 import { verifyToken } from '@/api/auth'
-import { exchangePlatformToken, getTenantMode, validatePlatformSession } from '@/api/system/localAuth'
+import { sessionValue } from '@/utils/requestIdentity.mjs'
+import { exchangePlatformToken, getTenantMode, switchTenant, validatePlatformSession } from '@/api/system/localAuth'
 import { extractAuthCallbackParams, stripAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
 import { logSafeRequestError } from '@/utils/safeRequestError.mjs'
 import {
@@ -22,9 +23,32 @@ const normalizeApiResponse = (response) => {
   return response?.data || response
 }
 
+// All AuthManager instances share identity changes (layout, router and login).
+let identityRevision = 0
+
 export class AuthManager {
   constructor() {
     this.validatedPlatformToken = ''
+  }
+
+  invalidatePendingIdentity() {
+    identityRevision++
+    this.validatedPlatformToken = ''
+  }
+
+  getIdentitySnapshot() {
+    return {
+      revision: identityRevision,
+      token: this.getCurrentToken(),
+      platformToken: this.getPlatformToken(),
+      tenantId: sessionValue(['tenantId', 'tenant_id'])
+    }
+  }
+
+  isIdentityCurrent(identity, allowCleared = false) {
+    const current = this.getIdentitySnapshot()
+    return current.revision === identity.revision && ['token', 'platformToken', 'tenantId']
+      .every(key => current[key] === identity[key] || (allowCleared && !current[key]))
   }
 
   /* * after Process token Validate . */
@@ -33,10 +57,12 @@ export class AuthManager {
     if (urlToken) {
       return this.checkUrlToken()
     }
+    const identity = this.getIdentitySnapshot()
     const userInfo = await this.checkLocalToken()
-    if (!userInfo) return null
+    if (!userInfo || !this.isIdentityCurrent(identity)) return null
 
     const tenantMode = await this.getTenantMode()
+    if (!this.isIdentityCurrent(identity)) return null
     if (tenantMode !== 'multi') return userInfo
 
     const platformToken = this.getPlatformToken()
@@ -45,6 +71,7 @@ export class AuthManager {
 
     try {
       const response = normalizeApiResponse(await validatePlatformSession())
+      if (!this.isIdentityCurrent(identity)) return null
       if (response?.code !== 200 && response?.success !== true) return null
       this.validatedPlatformToken = platformToken
       clearPlatformLoginPending()
@@ -66,12 +93,13 @@ export class AuthManager {
     const { accessToken: token, tenantId } = extractAuthCallbackParams(url.toString())
     this.cleanUrlToken() // Strip before any request; failure/cancellation must not leave URL/history credentials.
     if (!token) return null
+    this.clearAllTokens()
+    this.validatedPlatformToken = ''
 
     // URL 传入的是统一平台令牌；无论单租户还是多租户，都必须先换取 VLS 本地会话。
     // single 仅禁止租户切换，不应禁止平台账号授权登录。
     const userInfo = await this.exchangePlatformToken(token, tenantId || undefined)
     if (!userInfo) return null
-    await this.saveUserToLocal(userInfo)
     this.cleanUrlToken()
     return userInfo
   }
@@ -99,8 +127,12 @@ export class AuthManager {
   }
 
   /* * already item after user and token. */
-  async saveUserToLocal(userInfo) {
+  saveUserToLocal(userInfo) {
     if (!userInfo?.accessToken) return
+    const current = this.getIdentitySnapshot()
+    if (current.token !== userInfo.accessToken || current.platformToken !== (userInfo.platformAccessToken || '')
+      || current.tenantId !== String(userInfo.tenantId || '')) this.invalidatePendingIdentity()
+    ;['wvpAccessToken'].forEach(key => { sessionStorage.removeItem(key); localStorage.removeItem(key) })
     const serialized = JSON.stringify(userInfo)
     sessionStorage.setItem('userInfo', serialized)
     sessionStorage.setItem('accessToken', userInfo.accessToken)
@@ -109,6 +141,8 @@ export class AuthManager {
     if (userInfo.platformAccessToken) {
       sessionStorage.setItem('platformAccessToken', userInfo.platformAccessToken)
       localStorage.setItem('platformAccessToken', userInfo.platformAccessToken)
+    } else {
+      clearPlatformAccessToken()
     }
     if (userInfo.tenantId) {
       sessionStorage.setItem('tenantId', userInfo.tenantId)
@@ -124,37 +158,46 @@ export class AuthManager {
 
   /* * will info. */
   clearSessionTokens() {
-    ;['accessToken', 'access_token', 'token', 'userCenterToken', 'userInfo', 'platformAccessToken', 'tenantId', 'tenant_id']
+    ;['accessToken', 'access_token', 'token', 'userCenterToken', 'userInfo', 'platformAccessToken', 'wvpAccessToken', 'tenantId', 'tenant_id']
       .forEach((key) => sessionStorage.removeItem(key))
+    // Keep this tab explicitly signed out; another tab's persisted login must not become its fallback.
+    sessionStorage.setItem('userInfo', 'null')
   }
 
   /* * info. */
   clearLocalTokens() {
-    ;['accessToken', 'access_token', 'token', 'userCenterToken', 'userInfo', 'platformAccessToken', 'apaas_token', 'tenantId', 'tenant_id']
+    ;['accessToken', 'access_token', 'token', 'userCenterToken', 'userInfo', 'platformAccessToken', 'wvpAccessToken', 'apaas_token', 'tenantId', 'tenant_id']
       .forEach((key) => localStorage.removeItem(key))
   }
 
   /* * full info. */
   clearAllTokens() {
+    this.invalidatePendingIdentity()
     this.clearSessionTokens()
     this.clearLocalTokens()
   }
 
+  clearIdentityTokens(identity) {
+    if (!this.isIdentityCurrent(identity, true)) return
+    const matches = storage => [
+      [storage.getItem('accessToken') || storage.getItem('token'), identity.token],
+      [storage.getItem('platformAccessToken'), identity.platformToken],
+      [storage.getItem('tenantId') || storage.getItem('tenant_id'), identity.tenantId]
+    ].every(([value, expected]) => !value || value === expected)
+    const clearSession = matches(sessionStorage), clearLocal = matches(localStorage)
+    this.invalidatePendingIdentity()
+    if (clearSession) this.clearSessionTokens()
+    if (clearLocal) this.clearLocalTokens()
+  }
+
   /* * Validate will in token. */
   async checkLocalToken() {
-    const sessionToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token')
-    if (sessionToken) {
-      const userInfo = await this.verifyToken(sessionToken)
-      if (userInfo) return userInfo
-      this.clearSessionTokens()
-    }
-
-    const localToken = localStorage.getItem('accessToken') || localStorage.getItem('token')
-    if (localToken) {
-      const userInfo = await this.verifyToken(localToken)
-      if (userInfo) return userInfo
-      this.clearLocalTokens()
-    }
+    const identity = this.getIdentitySnapshot()
+    const token = this.getCurrentToken()
+    if (!token) return null
+    const userInfo = await this.verifyToken(token)
+    if (userInfo) return this.isIdentityCurrent(identity) ? userInfo : null
+    this.clearIdentityTokens(identity)
     return null
   }
 
@@ -165,17 +208,45 @@ export class AuthManager {
   }
 
   /* * new token. */
-  async setNewToken(token) {
+  async setNewToken(token, session = {}, identity = this.getIdentitySnapshot()) {
+    if (!this.isIdentityCurrent(identity)) return false
+    // Use the identity returned by the trusted switch endpoint, including a rotated platform token.
+    const platformToken = session.platformAccessToken || this.getPlatformToken()
+    const tenantId = session.tenantId ? String(session.tenantId) : ''
     this.clearAllTokens()
+    this.validatedPlatformToken = ''
+    if (platformToken) {
+      sessionStorage.setItem('platformAccessToken', platformToken)
+      localStorage.setItem('platformAccessToken', platformToken)
+    }
     sessionStorage.setItem('accessToken', token)
     localStorage.setItem('accessToken', token)
+    if (tenantId) {
+      sessionStorage.setItem('tenantId', tenantId)
+      localStorage.setItem('tenantId', tenantId)
+    }
+    const pendingIdentity = this.getIdentitySnapshot()
     const userInfo = await this.verifyToken(token)
-    if (!userInfo) {
-      this.clearAllTokens()
+    if (!userInfo || (tenantId && String(userInfo.tenantId) !== tenantId)) {
+      // A current 401 interceptor may already have removed some of this identity.
+      this.clearIdentityTokens(pendingIdentity)
       return false
     }
-    await this.saveUserToLocal(userInfo)
+    if (!this.isIdentityCurrent(pendingIdentity)) return false
+    this.saveUserToLocal({ ...userInfo, platformAccessToken: platformToken || undefined })
     return true
+  }
+
+  async switchTenant(tenantId, identity = this.getIdentitySnapshot()) {
+    if (!this.isIdentityCurrent(identity)) return false
+    this.invalidatePendingIdentity()
+    const pendingIdentity = this.getIdentitySnapshot()
+    const response = normalizeApiResponse(await switchTenant(tenantId))
+    if (!this.isIdentityCurrent(pendingIdentity)) return false
+    if (response?.code !== 200 || !response?.data?.accessToken) {
+      throw new Error(response?.msg || '新租户会话校验失败')
+    }
+    return this.setNewToken(response.data.accessToken, response.data, pendingIdentity)
   }
 
   async getTenantMode() {
@@ -190,8 +261,11 @@ export class AuthManager {
 
   async exchangePlatformToken(platformToken, tenantId) {
     this.cleanUrlToken()
+    this.invalidatePendingIdentity()
+    const identity = this.getIdentitySnapshot()
     try {
       const response = normalizeApiResponse(await exchangePlatformToken(platformToken, tenantId))
+      if (!this.isIdentityCurrent(identity)) return null
       if (response?.code !== 200 || !response?.data?.accessToken) return null
       const data = response.data
       const user = data.user || {}
@@ -199,21 +273,22 @@ export class AuthManager {
         ...user,
         ...data,
         accessToken: data.accessToken,
-        platformAccessToken: platformToken,
+        platformAccessToken: data.platformAccessToken || platformToken,
         userName: data.userName || user.nickName || user.userName,
         loginId: data.account || user.loginId || user.userName,
         tenantId: data.tenantId || user.tenantId
       }
       this.clearAllTokens()
-      await this.saveUserToLocal(userInfo)
-      this.validatedPlatformToken = platformToken
+      this.saveUserToLocal(userInfo)
+      this.validatedPlatformToken = userInfo.platformAccessToken
       clearPlatformLoginPending()
       this.cleanUrlToken()
       return userInfo
     } catch (error) {
+      if (!this.isIdentityCurrent(identity, true)) return null
       logSafeRequestError('平台换票失败', error)
       this.validatedPlatformToken = ''
-      clearPlatformAccessToken()
+      this.clearIdentityTokens(identity)
       clearPlatformLoginPending()
       return null
     }
@@ -221,19 +296,12 @@ export class AuthManager {
 
   /* * Get current VLS local session token. Platform tokens must never authenticate VLS APIs. */
   getCurrentToken() {
-    return sessionStorage.getItem('accessToken')
-      || sessionStorage.getItem('token')
-      || localStorage.getItem('accessToken')
-      || localStorage.getItem('token')
-      || localStorage.getItem('apaas_token')
+    return sessionValue(['accessToken', 'token'])
   }
 
   /* * Get the OortCloud platform token used only for platform APIs and token exchange. */
   getPlatformToken() {
-    const { accessToken } = extractAuthCallbackParams(window.location.href)
-    return accessToken
-      || sessionStorage.getItem('platformAccessToken')
-      || localStorage.getItem('platformAccessToken')
+    return sessionValue(['platformAccessToken'])
   }
 
   getUrlTenantId(url = new URL(window.location.href)) {

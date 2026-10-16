@@ -13,6 +13,7 @@ import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.config.properties.TokenProperties;
@@ -20,6 +21,7 @@ import com.ruoyi.system.domain.SysRoleMenu;
 import com.ruoyi.system.mapper.SysRoleMenuMapper;
 import com.ruoyi.system.mapper.SysRoleMapper;
 import com.ruoyi.system.service.ISysUserService;
+import com.ruoyi.system.service.DefaultMemberRoleService;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,15 +41,18 @@ public class MultiTenantShadowUserService {
     private final SysRoleMapper roleMapper;
     private final SysRoleMenuMapper roleMenuMapper;
     private final TokenProperties tokenProperties;
+    private final DefaultMemberRoleService defaultMemberRoles;
 
     public MultiTenantShadowUserService(ISysUserService userService,
                                         SysRoleMapper roleMapper,
                                         SysRoleMenuMapper roleMenuMapper,
-                                        TokenProperties tokenProperties) {
+                                        TokenProperties tokenProperties,
+                                        DefaultMemberRoleService defaultMemberRoles) {
         this.userService = userService;
         this.roleMapper = roleMapper;
         this.roleMenuMapper = roleMenuMapper;
         this.tokenProperties = tokenProperties;
+        this.defaultMemberRoles = defaultMemberRoles;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -104,11 +109,15 @@ public class MultiTenantShadowUserService {
     }
 
     private SysRole loadOrCreateTenantRole(String tenantId) {
+        if (DefaultMemberRoleService.isAdministratorKey(tokenProperties.getMultiTenantRoleKey())) {
+            throw new ServiceException("新成员默认角色不能使用 admin 或 tenant_admin，请配置普通用户角色");
+        }
         SysRole existing = roleMapper.selectOne(new LambdaQueryWrapper<SysRole>()
             .eq(SysRole::getTenantId, tenantId)
             .eq(SysRole::getRoleKey, tokenProperties.getMultiTenantRoleKey())
             .last("LIMIT 1"));
         if (existing != null) {
+            defaultMemberRoles.requireOrdinaryRole(existing);
             return existing;
         }
 
@@ -121,8 +130,10 @@ public class MultiTenantShadowUserService {
             throw new IllegalStateException("未找到租户角色模板: " + tokenProperties.getMultiTenantRoleTemplateKey());
         }
 
-        List<SysRoleMenu> templateMenus = inTenant(tokenProperties.getSingleTenantId(), () -> roleMenuMapper.selectList(
-            new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, template.getRoleId())));
+        List<SysRoleMenu> templateMenus = inTenant(tokenProperties.getSingleTenantId(), () -> {
+            defaultMemberRoles.requireOrdinaryRole(template);
+            return roleMenuMapper.selectList(new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, template.getRoleId()));
+        });
 
         SysRole role = new SysRole();
         role.setRoleId(String.valueOf(IdUtil.getSnowflakeNextId()));
@@ -136,7 +147,7 @@ public class MultiTenantShadowUserService {
         role.setStatus("0");
         role.setDelFlag("0");
         role.setCreateBy("platform-sso");
-        role.setRemark("统一平台多租户影子用户默认角色");
+        role.setRemark("仅用于后续新增统一平台成员的普通角色；不重映射既有用户");
         roleMapper.insert(role);
 
         for (SysRoleMenu templateMenu : templateMenus) {

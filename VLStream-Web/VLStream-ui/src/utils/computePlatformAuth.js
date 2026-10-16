@@ -54,7 +54,7 @@ export async function requireComputePlatformAuthorization(beforeRedirect = () =>
   catch { ElMessage.warning(uiText('平台身份校验暂不可用，请稍后重试')); return null }
   if (!isComputeAuthorizationCurrent(proof)) { ElMessage.warning(uiText('登录账户已变化，请重新选择操作')); return null }
   if (context?.authorized && context.mode === mode) return { ...proof, context }
-  const confirmed = await ElMessageBox.confirm(uiText('收费算力需要授权登录平台账户；返回后只恢复配置，不会自动购买、开机或训练。取消可保留当前配置。'), uiText('平台授权'),
+  const confirmed = await ElMessageBox.confirm(uiText('算力资源归属与操作需要授权登录平台账户；返回后只恢复配置，不会自动购买、开机或训练。取消可保留当前配置。'), uiText('平台授权'),
     { confirmButtonText: uiText('前往授权'), cancelButtonText: uiText('取消'), type: 'warning' }).then(() => true).catch(() => false)
   if (!confirmed || !isComputeAuthorizationCurrent(proof)) return null
   // The context contains only the backend-authenticated local actor, no credential.

@@ -123,7 +123,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { AuthManager } from '@/utils/auth'
 import { getUserInfo, logoutUser } from '@/api/auth'
 import { logoutModelHubSession } from '@/api/modelHubUser'
-import { getTenantMode, getUserTenants, switchTenant as switchTenantApi } from '@/api/system/localAuth'
+import { getTenantMode, getUserTenants } from '@/api/system/localAuth'
 import { getCurrentPlatformLogo } from '@/api/platformLogo'
 import {
   User,
@@ -215,7 +215,8 @@ const tenantMode = ref('loading')
 
 // SpringBlade current userinterface new user and info.
 const loadBladeUserInfo = async () => {
-  const token = authManager.getCurrentToken()
+  const identity = authManager.getIdentitySnapshot()
+  const token = identity.token
   if (!token) {
     currentTenant.value = {
       id: '',
@@ -225,6 +226,7 @@ const loadBladeUserInfo = async () => {
   }
 
   const response = await getUserInfo()
+  if (!authManager.isIdentityCurrent(identity)) return false
   const user = response?.data || {}
   if (response?.code !== 200 || !user) {
     currentTenant.value = {
@@ -240,7 +242,8 @@ const loadBladeUserInfo = async () => {
     userId: user.id || user.userId || '',
     loginId: user.account || user.loginId || '',
     tenantId: user.tenantId || '',
-    accessToken: token
+    accessToken: token,
+    platformAccessToken: identity.platformToken || undefined
   }
   const tenant = {
     id: userInfo.tenantId,
@@ -262,6 +265,7 @@ const loadBladeUserInfo = async () => {
 
 // Load info
 const loadTenantInfo = async () => {
+  const identity = authManager.getIdentitySnapshot()
   console.log('🚀 loadTenantInfo函数开始执行...')
   try {
     console.log('🔍 loadTenantInfo函数开始执行...')
@@ -272,12 +276,7 @@ const loadTenantInfo = async () => {
     console.log('开始调用getUserTenants API获取用户和租户信息...')
 
     // : Get token getUserTenants
-    const urlParams = new URLSearchParams(window.location.search)
-    const urlToken = urlParams.get('accessToken') || urlParams.get('token')
-    const sessionToken = sessionStorage.getItem('accessToken') || sessionStorage.getItem('token')
-    const localToken = localStorage.getItem('accessToken') || localStorage.getItem('token')
-
-    const token = urlToken || sessionToken || localToken
+    const token = identity.token
 
     if (!token) {
       console.log('❌ loadTenantInfo: 没有找到有效的token')
@@ -289,6 +288,7 @@ const loadTenantInfo = async () => {
 
     // : correct parameter, accessToken
     const response = await getUserTenants({ accessToken: token })
+    if (!authManager.isIdentityCurrent(identity)) return
 
     console.log('getUserTenants API响应:', response)
 
@@ -323,8 +323,9 @@ const loadTenantInfo = async () => {
           userName: responseUser.nickName || responseUser.userName || firstTenant.user_name || '管理员',
           userId: responseUser.userId || firstTenant.user_id || '',
           loginId: responseUser.loginId || responseUser.userName || firstTenant.user_name || '',
-          tenantId: responseUser.tenantId || firstTenant.tenant_id || '',
-          accessToken: token // current token
+          tenantId: responseUser.tenantId || identity.tenantId || firstTenant.tenant_id || '',
+          accessToken: token,
+          platformAccessToken: identity.platformToken || undefined
         }
 
         console.log('✅ 从getUserTenants API获取到用户信息:', userInfo)
@@ -398,6 +399,7 @@ const loadTenantInfo = async () => {
       console.log('🚫 loadTenantInfo函数结束 - API调用失败')
     }
   } catch (error) {
+    if (!authManager.isIdentityCurrent(identity, true)) return
     console.error('加载租户信息失败:', error)
     // Set info
     currentTenant.value = {
@@ -410,25 +412,27 @@ const loadTenantInfo = async () => {
 }
 
 //
+const switchingTenant = ref(false)
 const switchTenant = async (tenant) => {
-  if (!tenant?.id || tenant.id === currentTenant.value.id) return
+  if (switchingTenant.value || !tenant?.id || tenant.id === currentTenant.value.id) return
+  switchingTenant.value = true
+  const identity = authManager.getIdentitySnapshot()
   try {
     await ElMessageBox.confirm(uiText('确认切换到租户“{value0}”吗？', { value0: tenant.name }), uiText('切换租户'), {
       confirmButtonText: uiText('切换'),
       cancelButtonText: uiText('取消'),
       type: 'warning'
     })
-    const response = await switchTenantApi(tenant.id)
-    const newToken = response?.data?.accessToken
-    if (response?.code !== 200 || !newToken || !(await authManager.setNewToken(newToken))) {
-      throw new Error(response?.msg || '新租户会话校验失败')
-    }
+    if (!authManager.isIdentityCurrent(identity)) return
+    if (!(await authManager.switchTenant(tenant.id, identity))) return
     ElMessage.success(uiText('租户切换成功'))
     window.location.reload()
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
       ElMessage.error(error?.response?.data?.msg || error?.message || uiText('租户切换失败'))
     }
+  } finally {
+    switchingTenant.value = false
   }
 }
 
@@ -444,10 +448,13 @@ const handleLogout = async () => {
     return
   }
 
+  authManager.invalidatePendingIdentity()
+  const identity = authManager.getIdentitySnapshot()
   const [oortCloudLogout, vlstreamLogout] = await Promise.allSettled([
     logoutModelHubSession(),
     logoutUser()
   ])
+  if (!authManager.isIdentityCurrent(identity, true)) return
   if (oortCloudLogout.status === 'rejected') {
     console.warn('OortCloud 远端登出接口调用失败，已清理本地登录状态:', oortCloudLogout.reason)
   }

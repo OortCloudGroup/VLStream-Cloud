@@ -40,6 +40,7 @@ import com.ruoyi.system.domain.SysUserPost;
 import com.ruoyi.system.domain.SysUserRoleView;
 import com.ruoyi.system.mapper.*;
 import com.ruoyi.system.service.ISysUserService;
+import com.ruoyi.system.service.DefaultMemberRoleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -71,6 +72,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     private final SysPostMapper postMapper;
     private final SysUserRoleViewMapper userRoleMapper;
     private final SysUserPostMapper userPostMapper;
+    private final DefaultMemberRoleService defaultMemberRoles;
 
     @Override
     public TableDataInfo<SysUser> selectPageUserList(SysUser user, PageQuery pageQuery) {
@@ -292,12 +294,16 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int insertUser(SysUser user) {
+        defaultMemberRoles.assignIfMissing(user);
         // Add userinfo
         int rows = baseMapper.insert(user);
+        if (rows <= 0) {
+            return rows;
+        }
         // Add user
         insertUserPost(user);
         // Add user and role
-        insertUserRole(user);
+        insertCreationRoles(user);
         return rows;
     }
 
@@ -308,10 +314,31 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean registerUser(SysUser user) {
+        defaultMemberRoles.assignIfMissing(user);
         user.setCreateBy(user.getUserName());
         user.setUpdateBy(user.getUserName());
-        return baseMapper.insert(user) > 0;
+        if (baseMapper.insert(user) <= 0) {
+            return false;
+        }
+        insertCreationRoles(user);
+        return true;
+    }
+
+    private void insertCreationRoles(SysUser user) {
+        if (StringUtils.isBlank(user.getUserId()) || ArrayUtil.isEmpty(user.getRoleIds())) {
+            throw new ServiceException("新增用户角色绑定信息不完整");
+        }
+        List<SysUserRoleView> rows = StreamUtils.toList(Arrays.asList(user.getRoleIds()), roleId -> {
+            SysUserRoleView binding = new SysUserRoleView();
+            binding.setUserId(user.getUserId());
+            binding.setRoleId(roleId);
+            return binding;
+        });
+        if (!userRoleMapper.insertBatch(rows)) {
+            throw new ServiceException("新增用户角色绑定失败");
+        }
     }
 
     /**

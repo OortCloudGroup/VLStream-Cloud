@@ -147,4 +147,7 @@ public interface UserConstants {
      */
     Long COMMON_ID = 2L;
 
+    String DEFAULT_MEMBER_ROLE_KEY = "vls_member";
+    String DEFAULT_MEMBER_ROLE_NAME = "普通用户";
+
 }

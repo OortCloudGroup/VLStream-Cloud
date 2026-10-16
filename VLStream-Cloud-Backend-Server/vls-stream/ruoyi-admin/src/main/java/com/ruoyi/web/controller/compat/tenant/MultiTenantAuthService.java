@@ -209,6 +209,7 @@ public class MultiTenantAuthService {
 
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("accessToken", localToken);
+        result.put("platformAccessToken", platformToken);
         result.put("token", localToken);
         result.put("tokenType", "Bearer");
         result.put("expiresIn", tokenTimeout);

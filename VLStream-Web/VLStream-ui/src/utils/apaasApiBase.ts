@@ -9,7 +9,7 @@
  * apaas interface , Vite /oort
  */
 import config from '@/config'
-import { getToken } from '@/utils/cache/cookies'
+import { getStoredToken } from '@/utils/request'
 
 function getLocalBackendPrefix(): string {
   const configuredBase = import.meta.env.VITE_API_BASE_URL
@@ -27,9 +27,7 @@ export function getApaasGatewayPrefix(): string {
   if (import.meta.env.DEV) {
     return '/oort'
   }
-  const url = String(config.URL || '').replace(/\/$/, '')
-  const gateWay = String(config.gateWay || '').replace(/^\/+|\/+$/g, '')
-  const prodBase = import.meta.env.VITE_APAAS_API_BASE || `${url}/${gateWay}`
+  const prodBase = import.meta.env.VITE_APAAS_API_BASE || '/bus'
   return String(prodBase).replace(/\/$/, '')
 }
 
@@ -58,19 +56,7 @@ export function apaasServiceUrl(service: string, path = ''): string {
 }
 
 function resolveAuthToken(): string {
-  const urlParams = new URLSearchParams(window.location.search)
-  return (
-    urlParams.get('accessToken')
-    || urlParams.get('accesstoken')
-    || sessionStorage.getItem('platformAccessToken')
-    || localStorage.getItem('platformAccessToken')
-    || getToken()
-    || localStorage.getItem('accessToken')
-    || localStorage.getItem('apaas_token')
-    || sessionStorage.getItem('token')
-    || sessionStorage.getItem('accessToken')
-    || ''
-  )
+  return getStoredToken()
 }
 
 export const apaasRequestHeaders: Record<string, any> = {

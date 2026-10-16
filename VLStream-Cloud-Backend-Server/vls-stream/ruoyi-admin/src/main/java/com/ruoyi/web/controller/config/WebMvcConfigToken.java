@@ -37,10 +37,19 @@ public class WebMvcConfigToken implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new SaInterceptor(handler -> StpUtil.checkLogin()))
+        registry.addInterceptor(new SaInterceptor(handler -> requireLoginUnlessPublicRead()))
             .addPathPatterns("/**")
             .excludePathPatterns(securityProperties.getExcludes());
         registry.addInterceptor(tenantContextInterceptor).addPathPatterns("/**");
         registry.addInterceptor(authorizationInterceptor).addPathPatterns("/**");
+    }
+
+    static boolean isPublicMarketRead(String method, String path) {
+        return "GET".equals(method) && "/vlsCompute/public-market".equals(path);
+    }
+
+    static void requireLoginUnlessPublicRead() {
+        if (!isPublicMarketRead(cn.dev33.satoken.context.SaHolder.getRequest().getMethod(),
+            cn.dev33.satoken.context.SaHolder.getRequest().getRequestPath())) StpUtil.checkLogin();
     }
 }

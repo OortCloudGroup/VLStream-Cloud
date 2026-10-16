@@ -96,12 +96,24 @@ export function grantUserRoles(userIds, roleIds) {
  * @param {String} userIds user ID
  * @return s {Promise} operation of the Promise object
  */
-export function resetUserPassword(userIds) {
+export function resetUserPassword(userIds, password) {
   const userId = toStringIds(userIds)[0]
   return request({
     url: '/system/user/resetPwd',
     method: 'put',
-    data: { userId, password: 'Codex@123456' }
+    data: { userId, password }
+  })
+}
+
+export function getPasswordCapability() {
+  return request({ url: '/system/user/profile/passwordCapability', method: 'get' })
+}
+
+export function changeOwnPassword(oldPassword, newPassword) {
+  return request({
+    url: '/system/user/profile/updatePwd',
+    method: 'put',
+    data: { oldPassword, newPassword }
   })
 }
 

@@ -11,7 +11,13 @@
     <div class="page-header">
       <h2 class="page-title">{{ $tp('个人设置') }}</h2>
       <p class="page-subtitle">{{ $tp('查看和管理您的个人信息') }}</p>
+      <el-button v-if="passwordCapability === true" type="primary" @click="passwordVisible = true">{{ $tp('修改密码') }}</el-button>
+      <el-alert v-else-if="passwordCapability === false" type="info" :closable="false"
+        :title="$tp('SSO 账号的创建和密码由统一身份平台管理')">
+        <el-link :href="platformLoginUrl">{{ $tp('前往统一身份平台') }}</el-link>
+      </el-alert>
     </div>
+    <LocalPasswordDialog v-model="passwordVisible" own />
 
     <!-- userinfo -->
     <div class="profile-card">
@@ -270,6 +276,9 @@ import {
 } from '@element-plus/icons-vue'
 import { AuthManager } from '@/utils/auth'
 import { getUserInfo } from '@/api/system/localAuth'
+import { getPasswordCapability } from '@/api/system/user'
+import { buildPlatformLoginUrl } from '@/utils/platformSession'
+import LocalPasswordDialog from '@/components/LocalPasswordDialog.vue'
 
 //
 const authManager = new AuthManager()
@@ -279,6 +288,18 @@ const userInfo = ref({})
 const isEditing = ref(false)
 const saving = ref(false)
 const loginHistory = ref([])
+const passwordVisible = ref(false)
+const passwordCapability = ref(null)
+const platformLoginUrl = buildPlatformLoginUrl()
+
+async function loadPasswordCapability() {
+  try {
+    const response = await getPasswordCapability()
+    if (response?.code === 200) passwordCapability.value = response.data?.localPassword === true
+  } catch {
+    ElMessage.error(uiText('获取密码管理能力失败'))
+  }
+}
 
 const getUserSourceLabel = (value) => ({
   1: uiText('系统创建'),
@@ -478,6 +499,7 @@ const loadLoginHistory = () => {
 
 // pageLoad Execute
 onMounted(async () => {
+  await loadPasswordCapability()
   await loadUserInfo()
   loadLoginHistory()
 })

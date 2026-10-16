@@ -105,7 +105,7 @@ export function fastLogin(data: Record<string, any>) {
 
 /* * user in Update . */
 export function resetPassword(data: Record<string, any>) {
-  return authRequest.put('/system/user/profile/updatePwd', null, {
-    params: { oldPassword: data.oldPassword, newPassword: data.password }
+  return authRequest.put('/system/user/profile/updatePwd', {
+    oldPassword: data.oldPassword, newPassword: data.password
   })
 }

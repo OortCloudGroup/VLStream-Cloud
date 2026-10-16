@@ -7,13 +7,17 @@
 
 <template>
   <div class="user-management tenant_Page draHeaPB">
+    <el-alert v-if="tenantMode === 'multi'" type="info" :closable="false"
+      :title="$tp('SSO 账号的创建和密码由统一身份平台管理')">
+      <el-link :href="platformLoginUrl">{{ $tp('前往统一身份平台') }}</el-link>
+    </el-alert>
     <div class="tenant_content">
       <div class="tableTenBox flexRowAC">
         <div class="tableTenItU">
           <div class="depNameBox_out flexRowAC">
             <div class="depNameBox flexRowAC">
               <div class="exportBtnBox flexRowAC">
-                <button type="button" class="exportBtn newBtn flexRowAC" @click="handleCreate">
+                <button v-if="tenantMode === 'single'" type="button" class="exportBtn newBtn flexRowAC" @click="handleCreate">
                   <el-icon class="BtnImg">
                     <Plus />
                   </el-icon> {{ $tp('新建') }} </button>
@@ -58,13 +62,16 @@
             <el-table-column prop="roleName" :label="$tp('角色')" show-overflow-tooltip />
             <el-table-column prop="deptName" :label="$tp('部门')" show-overflow-tooltip />
             <el-table-column prop="postName" :label="$tp('岗位')" show-overflow-tooltip />
-            <el-table-column :label="$tp('操作')" :width="clacPXToVW(220)" fixed="right" align="right">
+            <el-table-column :label="$tp('操作')" :width="clacPXToVW(310)" fixed="right" align="right">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC" @click.stop>
                   <div class="new_table_svg_group" @click="handleEdit(scope.row)">
                     <oort-svg-icon width="14" height="14" name="edit_icon" class="new_table_svg_group_svg" />
                     <span>{{ $tp('编辑') }}</span>
                   </div>
+                  <el-button v-if="tenantMode === 'single' && !scope.row.platformUserId && String(scope.row.id) !== '1'"
+                    link type="primary" @click="handleResetPassword(scope.row)">{{ $tp('重置密码') }}</el-button>
+                  <span v-if="scope.row.platformUserId">{{ $tp('SSO 账号') }}</span>
                   <div class="new_table_svg_group" @click="handleSingleRemove(scope.row)">
                     <oort-svg-icon color="red" width="14" height="14" name="delete_icon" class="new_table_svg_group_svg" />
                     <span>{{ $tp('删除') }}</span>
@@ -76,7 +83,6 @@
                     </div>
                     <template #dropdown>
                       <el-dropdown-menu>
-                        <el-dropdown-item @click="handleResetPassword(scope.row)">{{ $tp('重置密码') }}</el-dropdown-item>
                         <el-dropdown-item @click="handleUnlock(scope.row)">{{ $tp('解锁账号') }}</el-dropdown-item>
                         <el-dropdown-item @click="handleOpenGrant(scope.row)">{{ $tp('分配角色') }}</el-dropdown-item>
                       </el-dropdown-menu>
@@ -110,6 +116,7 @@
     :title="dialogTitle"
     width="40%"
     destroy-on-close
+    @closed="clearCreationPassword"
   >
     <el-form
       ref="formRef"
@@ -118,6 +125,18 @@
       label-width="100px"
       style="padding: 10px 20px"
     >
+      <el-row :gutter="20">
+        <el-col v-if="!form.id" :span="12">
+          <el-form-item :label="$tp('密码')" prop="password">
+            <el-input v-model="form.password" type="password" show-password autocomplete="new-password" maxlength="20" />
+          </el-form-item>
+        </el-col>
+        <el-col v-if="!form.id" :span="12">
+          <el-form-item :label="$tp('确认密码')" prop="confirmPassword">
+            <el-input v-model="form.confirmPassword" type="password" show-password autocomplete="new-password" maxlength="20" />
+          </el-form-item>
+        </el-col>
+      </el-row>
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item :label="$tp('用户账号')" prop="account">
@@ -217,6 +236,7 @@
               clearable
             />
           </el-form-item>
+          <p v-if="!form.id">{{ $tp('未选择角色时默认分配普通用户，管理和公司发布权限需单独授权。') }}</p>
         </el-col>
       </el-row>
     </el-form>
@@ -226,6 +246,8 @@
       <el-button type="primary" :loading="saving" @click="handleSaveSubmit" class="common_btn">{{ $tp('确定') }}</el-button>
     </template>
   </el-dialog>
+
+  <LocalPasswordDialog v-model="passwordVisible" :user-id="String(passwordUser.id || '')" :account="passwordUser.account" />
 
   <!-- role -->
   <el-dialog
@@ -277,15 +299,22 @@ import {
   updateUser,
   removeUsers,
   grantUserRoles,
-  resetUserPassword,
   unlockUsers
 } from '@/api/system/user'
 import { getRoleTree } from '@/api/system/role'
 import { getDeptTree } from '@/api/system/dept'
 import { getPostSelect } from '@/api/system/post'
 import { getPayload, getRecords, getTotal, normalizeTree, joinIds, isSuccess } from './utils/response'
+import { getTenantMode } from '@/api/system/localAuth'
+import { buildPlatformLoginUrl } from '@/utils/platformSession'
+import { localPasswordRules } from '@/utils/localPassword'
+import LocalPasswordDialog from '@/components/LocalPasswordDialog.vue'
 
 const SINGLE_TENANT_ID = '000000'
+const tenantMode = ref('')
+const platformLoginUrl = buildPlatformLoginUrl()
+const passwordVisible = ref(false)
+const passwordUser = ref({})
 
 // and Load
 const loading = ref(false)
@@ -322,6 +351,8 @@ const queryParams = reactive({
 // formobject and formValidate
 const formRef = ref()
 const form = ref({
+  password: '',
+  confirmPassword: '',
   account: '',
   name: '',
   realName: '',
@@ -335,10 +366,11 @@ const form = ref({
   roleId: ''
 })
 
-const rules = {
+const rules = computed(() => ({
+  ...(!form.value.id ? localPasswordRules(() => form.value.password, uiText) : {}),
   account: [{ required: true, message: '请输入用户账号', trigger: 'blur' }],
   realName: [{ required: true, message: '请输入真实姓名', trigger: 'blur' }]
-}
+}))
 
 // item data
 const options = reactive({
@@ -474,8 +506,11 @@ function handleSelectionChange(rows) {
  * Add userdialog
  */
 function handleCreate() {
+  if (tenantMode.value !== 'single') return
   dialogTitle.value = '新增用户'
   form.value = {
+    password: '',
+    confirmPassword: '',
     account: '',
     name: '',
     realName: '',
@@ -489,6 +524,11 @@ function handleCreate() {
     roleId: ''
   }
   dialogVisible.value = true
+}
+
+function clearCreationPassword() {
+  form.value.password = ''
+  form.value.confirmPassword = ''
 }
 
 /**
@@ -534,12 +574,13 @@ async function handleSaveSubmit() {
         if (isSuccess(res)) {
           ElMessage.success(uiText('保存成功'))
           dialogVisible.value = false
+          form.value.password = ''
+          form.value.confirmPassword = ''
           loadData()
         } else {
           ElMessage.error(res?.msg || uiText('保存失败'))
         }
       } catch (error) {
-        console.error('提交用户信息失败:', error)
         ElMessage.error(uiText('网络或服务器异常，提交失败'))
       } finally {
         saving.value = false
@@ -634,23 +675,9 @@ async function handleGrantSubmit() {
  * @param {Object} row userdata
  */
 function handleResetPassword(row) {
-  ElMessageBox.confirm(uiText('确定重置用户 [{value0}] 的密码为默认密码吗？', { value0: row.realName || row.account }), uiText('提示'), {
-    confirmButtonText: uiText('确定'),
-    cancelButtonText: uiText('取消'),
-    type: 'warning'
-  }).then(async () => {
-    try {
-      const res = await resetUserPassword(String(row.id))
-      if (isSuccess(res)) {
-        ElMessage.success(uiText('重置密码成功'))
-      } else {
-        ElMessage.error(res?.msg || uiText('重置密码失败'))
-      }
-    } catch (error) {
-      console.error('重置密码操作异常:', error)
-      ElMessage.error(uiText('重置密码操作异常'))
-    }
-  }).catch(() => {})
+  if (tenantMode.value !== 'single' || row.platformUserId || String(row.id) === '1') return
+  passwordUser.value = row
+  passwordVisible.value = true
 }
 
 /**
@@ -678,7 +705,14 @@ function handleUnlock(row) {
 }
 
 // Load dict/configuration item user data
-onMounted(() => {
+onMounted(async () => {
+  try {
+    const response = await getTenantMode()
+    const payload = getPayload(response)
+    tenantMode.value = payload?.tenantType || ''
+  } catch {
+    ElMessage.error(uiText('获取认证模式失败'))
+  }
   loadOptions()
   loadData()
 })

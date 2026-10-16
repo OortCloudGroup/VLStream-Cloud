@@ -8,7 +8,7 @@
 
 package com.ruoyi.web.controller.system;
 
-import cn.dev33.satoken.secure.BCrypt;
+import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.hutool.core.io.FileUtil;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.constant.UserConstants;
@@ -16,13 +16,15 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.common.helper.LoginHelper;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.file.MimeTypeUtils;
 import com.ruoyi.system.domain.SysOss;
 import com.ruoyi.system.domain.vo.SysOssVo;
 import com.ruoyi.system.service.ISysOssService;
 import com.ruoyi.system.service.ISysUserService;
+import com.ruoyi.web.service.LocalAccountPasswordService;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
@@ -46,6 +48,15 @@ public class SysProfileController extends BaseController {
 
     private final ISysUserService userService;
     private final ISysOssService iSysOssService;
+    private final LocalAccountPasswordService localPasswords;
+
+    @SaCheckLogin
+    @GetMapping("/passwordCapability")
+    public R<Map<String, Object>> passwordCapability() {
+        Map<String, Object> capability = new HashMap<>();
+        capability.put("localPassword", localPasswords.isLocalAccount(userService.selectUserById(getUserId())));
+        return R.ok(capability);
+    }
 
     /**
      * info
@@ -75,6 +86,7 @@ public class SysProfileController extends BaseController {
         user.setUserId(getUserId());
         user.setUserName(null);
         user.setPassword(null);
+        user.setPlatformUserId(null);
         user.setAvatar(null);
         user.setDeptId(null);
         if (userService.updateUserProfile(user) > 0) {
@@ -89,23 +101,28 @@ public class SysProfileController extends BaseController {
      * @param newPassword old
      * @param oldPassword new
      */
-    @Log(title = "个人信息", businessType = BusinessType.UPDATE)
+    @SaCheckLogin
+    @Log(title = "个人信息", businessType = BusinessType.UPDATE, isSaveRequestData = false)
     @PutMapping("/updatePwd")
     public R<Void> updatePwd(String oldPassword, String newPassword) {
-        SysUser user = userService.selectUserById(LoginHelper.getUserId());
-        String userName = user.getUserName();
-        String password = user.getPassword();
-        if (!BCrypt.checkpw(oldPassword, password)) {
-            return R.fail("修改密码失败，旧密码错误");
-        }
-        if (BCrypt.checkpw(newPassword, password)) {
-            return R.fail("新密码不能与旧密码相同");
-        }
-
-        if (userService.resetUserPwd(userName, BCrypt.hashpw(newPassword)) > 0) {
+        if (localPasswords.changeOwnPassword(getUserId(), oldPassword, newPassword)) {
             return R.ok();
         }
         return R.fail("修改密码异常，请联系管理员");
+    }
+
+    @SaCheckLogin
+    @Log(title = "个人信息", businessType = BusinessType.UPDATE, isSaveRequestData = false)
+    @PutMapping(value = "/updatePwd", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public R<Void> updatePwdJson(@RequestBody PasswordChangeRequest request) {
+        return updatePwd(request.getOldPassword(), request.getNewPassword());
+    }
+
+    @Getter
+    @Setter
+    public static class PasswordChangeRequest {
+        private String oldPassword;
+        private String newPassword;
     }
 
     /**

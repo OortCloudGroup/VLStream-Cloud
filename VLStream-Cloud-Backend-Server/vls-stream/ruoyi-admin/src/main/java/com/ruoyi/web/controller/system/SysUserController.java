@@ -37,6 +37,7 @@ import com.ruoyi.system.service.ISysDeptService;
 import com.ruoyi.system.service.ISysPostService;
 import com.ruoyi.system.service.ISysRoleService;
 import com.ruoyi.system.service.ISysUserService;
+import com.ruoyi.web.service.LocalAccountPasswordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
@@ -65,6 +66,7 @@ public class SysUserController extends BaseController {
     private final ISysRoleService roleService;
     private final ISysPostService postService;
     private final ISysDeptService deptService;
+    private final LocalAccountPasswordService localPasswords;
 
     /**
      * Get user
@@ -156,6 +158,8 @@ public class SysUserController extends BaseController {
     @Log(title = "用户管理", businessType = BusinessType.INSERT)
     @PostMapping
     public R<Void> add(@Validated @RequestBody SysUser user) {
+        localPasswords.requireLocalAccount(user);
+        localPasswords.validateNewPassword(user.getPassword());
         if (!userService.checkUserNameUnique(user)) {
             return R.fail("新增用户'" + user.getUserName() + "'失败，登录账号已存在");
         } else if (StringUtils.isNotEmpty(user.getPhonenumber()) && !userService.checkPhoneUnique(user)) {
@@ -183,6 +187,9 @@ public class SysUserController extends BaseController {
         } else if (StringUtils.isNotEmpty(user.getEmail()) && !userService.checkEmailUnique(user)) {
             return R.fail("修改用户'" + user.getUserName() + "'失败，邮箱账号已存在");
         }
+        // Credentials have dedicated endpoints with independent authorization and validation.
+        user.setPassword(null);
+        user.setPlatformUserId(null);
         return toAjax(userService.updateUser(user));
     }
 
@@ -205,13 +212,20 @@ public class SysUserController extends BaseController {
      *
      */
     @SaCheckPermission("system:user:resetPwd")
-    @Log(title = "用户管理", businessType = BusinessType.UPDATE)
+    @Log(title = "用户管理", businessType = BusinessType.UPDATE, isSaveRequestData = false)
     @PutMapping("/resetPwd")
     public R<Void> resetPwd(@RequestBody SysUser user) {
+        if (StringUtils.isBlank(user.getUserId())) {
+            return R.fail("用户 ID 不能为空");
+        }
         userService.checkUserAllowed(user);
         userService.checkUserDataScope(user.getUserId());
-        user.setPassword(BCrypt.hashpw(user.getPassword()));
-        return toAjax(userService.resetPwd(user));
+        localPasswords.requireLocalAccount(userService.selectUserById(user.getUserId()));
+        localPasswords.validateNewPassword(user.getPassword());
+        SysUser passwordUpdate = new SysUser();
+        passwordUpdate.setUserId(user.getUserId());
+        passwordUpdate.setPassword(BCrypt.hashpw(user.getPassword()));
+        return toAjax(userService.resetPwd(passwordUpdate));
     }
 
     /**
