@@ -37,6 +37,9 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" :width="clacPXToVW(55)" />
+      <el-table-column :label="$tp('状态')" fixed="left" width="110">
+        <template #default="scope"><ProtocolAvailabilityBadge :availability="scope.row.availability" /></template>
+      </el-table-column>
       <el-table-column label="ip" prop="ip" show-overflow-tooltip />
       <el-table-column :label="$tp('摄像头名称')" prop="name" show-overflow-tooltip />
       <el-table-column :label="$tp('地址')" prop="addressMap" show-overflow-tooltip />
@@ -302,6 +305,7 @@
 </template>
 
 <script setup name="RtspDevice">
+import ProtocolAvailabilityBadge from '@/components/ProtocolAvailabilityBadge.vue'
 import { translatePhrase as uiText } from '@/i18n'
 
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'

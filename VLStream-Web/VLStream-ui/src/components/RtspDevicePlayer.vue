@@ -14,7 +14,7 @@ import request from '@/utils/wvpRequest'
 import { ZLMRTCClient } from '@/components/rtcPlayer/js/ZLMRTCClient'
 import { resolveZlmPlaybackUrl } from '@/utils/zlmPlaybackUrl'
 
-const props = defineProps({ deviceId: { type: [Number, String], required: true } })
+const props = defineProps({ deviceId: { type: [Number, String], required: true }, protocol: { type: String, default: 'RTSP' } })
 const video = ref(null)
 const loading = ref(false)
 const error = ref('')
@@ -26,7 +26,7 @@ let connectionTimeout = null
 
 function release(session) {
   if (!session) return
-  return request({ url: `/rtsp/RtspDevice/${session.deviceId}/preview/${session.id}`, method: 'delete' })
+  return request({ url: `${session.base}/${session.deviceId}/preview/${session.id}`, method: 'delete' })
     .catch(() => { /* The backend lease retries cleanup if the browser loses connectivity. */ })
 }
 
@@ -49,13 +49,14 @@ function onPlaying() {
 
 async function connect(deviceId) {
   const current = ++generation
+  const base = props.protocol === 'ONVIF' ? '/onvif/device' : '/rtsp/RtspDevice'
   await disconnect()
   if (current !== generation) return
   loading.value = true
   error.value = ''
   try {
-    const result = (await request({ url: `/rtsp/RtspDevice/${deviceId}/preview`, method: 'post', timeout: 35000 })).data
-    const session = { deviceId, id: result.sessionId }
+    const result = (await request({ url: `${base}/${deviceId}/preview`, method: 'post', timeout: 35000 })).data
+    const session = { deviceId, base, id: result.sessionId }
     if (current !== generation) { await release(session); return }
     activeSession = session
     const info = result.streamInfo || {}
@@ -76,7 +77,7 @@ async function connect(deviceId) {
     connectionTimeout = setTimeout(fail, 15000)
     heartbeat = setInterval(async () => {
       try {
-        await request({ url: `/rtsp/RtspDevice/${deviceId}/preview/${session.id}`, method: 'put' })
+        await request({ url: `${base}/${deviceId}/preview/${session.id}`, method: 'put' })
       } catch (cause) {
         if (current === generation) fail()
       }
@@ -89,7 +90,7 @@ async function connect(deviceId) {
   }
 }
 
-watch(() => props.deviceId, id => connect(id), { immediate: true, flush: 'post' })
+watch(() => [props.deviceId, props.protocol], ([id]) => connect(id), { immediate: true, flush: 'post' })
 onBeforeUnmount(() => { generation += 1; disconnect() })
 </script>
 

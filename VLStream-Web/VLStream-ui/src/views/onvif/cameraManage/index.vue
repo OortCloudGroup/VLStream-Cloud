@@ -39,6 +39,9 @@
     >
       <el-table-column type="selection" :width="clacPXToVW(55)" />
       <el-table-column :label="$tp('名称')" prop="name" show-overflow-tooltip />
+      <el-table-column :label="$tp('状态')" fixed="left" width="110">
+        <template #default="scope"><ProtocolAvailabilityBadge :availability="scope.row.availability" /></template>
+      </el-table-column>
       <el-table-column label="ip" prop="ip" show-overflow-tooltip />
       <el-table-column :label="$tp('地址')" prop="addressMap" show-overflow-tooltip />
       <el-table-column :label="$tp('设备厂商')" prop="firm" show-overflow-tooltip />
@@ -239,7 +242,8 @@
     <!-- dialog -->
     <el-dialog :title="title" v-model="showPaly" width="45%" @opened="openedPaly" @close="closePaly">
       <div style="background: #000000">
-        <Hikvision :rtsp="rtspUrl" v-if="showPaly && (playType === '1' || playType === '3') "/>
+        <RtspDevicePlayer :device-id="onvifDeviceId" protocol="ONVIF" v-if="showPaly && playType === '1'" />
+        <Hikvision :rtsp="rtspUrl" v-if="showPaly && playType === '3'"/>
       </div>
       <div>
         <el-tabs v-if="playType === '2'" v-model="activeName" type="card" :stretch="true">
@@ -519,7 +523,10 @@
         <el-step :title="$tp('添加设备')" />
       </el-steps>
       <el-table :data="listWS" border v-if="stepsName === 0">
-        <el-table-column label="ip" align="center" prop="ip" show-overflow-tooltip/>
+        <el-table-column :label="$tp('状态')" fixed="left" width="110">
+        <template #default="scope"><ProtocolAvailabilityBadge :availability="scope.row.availability" /></template>
+      </el-table-column>
+      <el-table-column label="ip" align="center" prop="ip" show-overflow-tooltip/>
         <el-table-column :label="$tp('访问地址')" align="center" prop="hostName" show-overflow-tooltip />
         <el-table-column :label="$tp('用户名')" align="center">
           <template #default="{ row }">
@@ -641,6 +648,7 @@
 </template>
 
 <script setup name="CameraManage">
+import ProtocolAvailabilityBadge from '@/components/ProtocolAvailabilityBadge.vue'
 import { prepareOnvifAuthentication } from '@/utils/onvifAuthentication'
 import { onBeforeUnmount } from 'vue'
 import { createPtzHoldController } from '@/utils/onvifPtzHold'
@@ -661,6 +669,7 @@ import {
   updateDevice, WSDiscovery
 } from "@/api/onvif/device";
 import Hikvision from "@/components/Hikvision/index.vue";
+import RtspDevicePlayer from "@/components/RtspDevicePlayer.vue";
 import {computed, ref} from "vue";
 import {probe} from "../../../api/onvif/addCamera.js";
 import MapGaoDe from "@/components/MapGaoDe/index.vue";

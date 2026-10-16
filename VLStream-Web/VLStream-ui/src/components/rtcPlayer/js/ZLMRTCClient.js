@@ -7918,7 +7918,7 @@ var ZLMRTCClient = (function (exports) {
                             return;
                         }
                         let anwser = {};
-                        anwser.sdp = addZlmLanCandidate(ret.sdp);
+                        anwser.sdp = addZlmLanCandidate(ret.sdp, undefined, this.options.zlmsdpUrl);
                         anwser.type = 'answer';
                         log(this.TAG, 'answer:', ret.sdp);
                         this.pc.setRemoteDescription(anwser).then(() => {
@@ -8023,7 +8023,7 @@ var ZLMRTCClient = (function (exports) {
                                 return;
                             }
                             let anwser = {};
-                            anwser.sdp = addZlmLanCandidate(ret.sdp);
+                            anwser.sdp = addZlmLanCandidate(ret.sdp, undefined, this.options.zlmsdpUrl);
                             anwser.type = 'answer';
                             log(this.TAG, 'answer:', ret.sdp);
                             this.pc.setRemoteDescription(anwser).then(() => {

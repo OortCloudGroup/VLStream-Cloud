@@ -66,15 +66,15 @@ export const ensureOPlayer = async () => {
 /** Parse the CameraRTC camera ID and WebSocket signaling endpoint from its HTTP URL. */
 export const parseCameraRtcConfig = (streamUrl) => {
   const url = new URL(String(streamUrl || '').trim())
-  if (!['http:', 'https:'].includes(url.protocol)) {
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.hash) {
     throw new Error('CameraRTC requires an HTTP(S) URL')
   }
   const segments = url.pathname.split('/').filter(Boolean)
   const markerIndex = segments.findIndex(segment => segment.toLowerCase() === 'videocall')
   const cameraId = markerIndex >= 0 ? segments[markerIndex + 1] : ''
-  if (!cameraId) throw new Error('CameraRTC URL is missing camera ID')
+  if (!/^[A-Za-z0-9_-]{1,100}$/.test(cameraId)) throw new Error('CameraRTC URL is missing a valid camera ID')
   return {
-    cameraId: decodeURIComponent(cameraId),
+    cameraId,
     socketUrl: CAMERA_RTC_SOCKET_URL
   }
 }

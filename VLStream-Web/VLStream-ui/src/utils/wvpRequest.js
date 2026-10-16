@@ -8,7 +8,9 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { saveAs } from 'file-saver'
-import { applyPlatformGatewayHeaders, getStoredToken } from '@/utils/request'
+import { applyPlatformGatewayHeaders, getStoredToken, getPlatformAccessToken, getLocalSessionToken, isTrustedApiRequest, invalidateApiResponse } from '@/utils/request'
+import { isMultiTenantMode } from '@/utils/platformSession'
+import { replaceHeader, sessionValue, clearIdentityHeaders } from '@/utils/requestIdentity.mjs'
 
 export const getWvpBaseURL = () => {
   const configuredBaseURL = import.meta.env.VITE_WVP_API_BASE_URL
@@ -17,19 +19,17 @@ export const getWvpBaseURL = () => {
 }
 
 export const getWvpToken = () => {
+  // An old WVP-local token must never replace the current platform identity in multi mode.
+  if (isMultiTenantMode()) return getPlatformAccessToken()
   const urlParams = new URLSearchParams(window.location.search)
   return urlParams.get('wvpAccessToken')
-    || sessionStorage.getItem('wvpAccessToken')
-    || localStorage.getItem('wvpAccessToken')
+    || sessionValue(['wvpAccessToken'])
     || getStoredToken()
 }
 
 // WVP VLStream Validate after .
 // token accessToken , can .
-export const getVlstreamFederatedToken = () => sessionStorage.getItem('accessToken')
-  || sessionStorage.getItem('token')
-  || localStorage.getItem('accessToken')
-  || localStorage.getItem('token')
+export const getVlstreamFederatedToken = getLocalSessionToken
 
 const wvpRequest = axios.create({
   baseURL: getWvpBaseURL(),
@@ -40,15 +40,23 @@ const wvpRequest = axios.create({
 })
 
 export const applyWvpHeaders = (config) => {
+  config.headers = config.headers || {}
+  if (!isTrustedApiRequest(config)) { clearIdentityHeaders(config.headers); return config }
   const token = getWvpToken()
   const federatedToken = getVlstreamFederatedToken()
-  const tenantId = sessionStorage.getItem('tenantId') || localStorage.getItem('tenantId')
-  if (token) config.headers.accessToken = token.replace(/^Bearer\s+/i, '')
-  if (federatedToken) config.headers['X-VLStream-Token'] = federatedToken.replace(/^Bearer\s+/i, '')
-  if (tenantId) config.headers.tenantid = tenantId
+  const tenantId = sessionValue(['tenantId'])
+  ;['accesstoken', 'X-VLStream-Token', 'tenantid', 'Authorization', 'blade-auth'].forEach(name => replaceHeader(config.headers, name))
+  if (isMultiTenantMode() && (!token || !federatedToken)) {
+    const error = new Error('平台登录会话已失效，请重新登录')
+    error.code = 'PLATFORM_AUTH_REQUIRED'
+    throw error
+  }
+  replaceHeader(config.headers, 'accesstoken', token ? token.replace(/^Bearer\s+/i, '') : undefined)
+  replaceHeader(config.headers, 'X-VLStream-Token', federatedToken ? federatedToken.replace(/^Bearer\s+/i, '') : undefined)
+  replaceHeader(config.headers, 'tenantid', tenantId || undefined)
 
   applyPlatformGatewayHeaders(config)
-  config.headers['X-WVP-Auth-Source'] = 'vlstream'
+  replaceHeader(config.headers, 'X-WVP-Auth-Source', 'vlstream')
   return config
 }
 
@@ -56,6 +64,7 @@ wvpRequest.interceptors.request.use(applyWvpHeaders)
 
 wvpRequest.interceptors.response.use(
   (response) => {
+    invalidateApiResponse(response)
     if (response.config.responseType === 'blob' || response.config.responseType === 'arraybuffer') {
       return response.data
     }
@@ -74,6 +83,7 @@ wvpRequest.interceptors.response.use(
     return Promise.reject(new Error(message))
   },
   (error) => {
+    invalidateApiResponse(error.response)
     const message = error.response?.data?.msg
       || (error.code === 'ECONNABORTED' ? 'WVP 接口请求超时' : 'WVP 服务连接失败')
     ElMessage.error(message)

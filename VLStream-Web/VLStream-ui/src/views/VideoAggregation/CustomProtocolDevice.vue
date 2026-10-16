@@ -37,9 +37,10 @@
         </div>
 
         <el-table v-loading="loading" :data="devices" stripe @selection-change="handleSelectionChange">
-          <el-table-column type="selection" width="48" />
-          <el-table-column type="index" :label="$tp('序号')" width="70" />
-          <el-table-column prop="deviceName" :label="$tp('设备名称')" min-width="140" show-overflow-tooltip />
+          <el-table-column type="selection" width="42" />
+          <el-table-column type="index" :label="$tp('序号')" width="50" />
+          <el-table-column prop="deviceName" :label="$tp('设备名称')" min-width="120" show-overflow-tooltip />
+          <el-table-column :label="$tp('源状态')" width="110"><template #default="{ row }"><CustomAvailabilityBadge :device="row" :now="statusClock" show-reason /></template></el-table-column>
           <el-table-column prop="deviceCode" :label="$tp('设备 ID')" min-width="150" show-overflow-tooltip />
           <el-table-column prop="deviceType" :label="$tp('设备类型')" width="110" />
           <el-table-column :label="$tp('区域')" min-width="100"><template #default="{ row }">{{ row.regionName || $tp('未设置') }}</template></el-table-column>
@@ -51,9 +52,8 @@
             </template>
           </el-table-column>
           <el-table-column prop="streamUrl" :label="$tp('视频流路径')" min-width="220" show-overflow-tooltip />
-          <el-table-column :label="$tp('状态')" width="85"><template #default="{ row }"><el-tag :type="statusType(row.status)">{{ statusText(row.status) }}</el-tag></template></el-table-column>
           <el-table-column prop="createTime" :label="$tp('创建时间')" width="165" />
-          <el-table-column :label="$tp('操作')" width="220" fixed="right">
+          <el-table-column :label="$tp('操作')" width="180" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" @click="preview(row)">{{ $tp('预览') }}</el-button>
               <el-button link type="primary" @click="openRecord(row)">{{ $tp('录像') }}</el-button>
@@ -75,7 +75,7 @@
             <el-col :span="12"><el-form-item :label="$tp('设备名称')" prop="deviceName"><el-input v-model="form.deviceName" /></el-form-item></el-col>
             <el-col :span="12"><el-form-item :label="$tp('设备 ID')" prop="deviceCode"><el-input v-model="form.deviceCode" /></el-form-item></el-col>
             <el-col :span="12"><el-form-item :label="$tp('设备类型')" prop="deviceType"><el-select v-model="form.deviceType" style="width:100%"><el-option v-for="type in deviceTypes" :key="type" :label="type" :value="type" /></el-select></el-form-item></el-col>
-            <el-col :span="12"><el-form-item :label="$tp('状态')" prop="status"><el-select v-model="form.status" style="width:100%"><el-option :label="$tp('在线')" value="ONLINE" /><el-option :label="$tp('离线')" value="OFFLINE" /><el-option :label="$tp('未知')" value="UNKNOWN" /></el-select></el-form-item></el-col>
+            <el-col :span="12"><el-form-item :label="$tp('配置状态')" prop="status"><el-select v-model="form.status" style="width:100%"><el-option :label="$tp('在线')" value="ONLINE" /><el-option :label="$tp('离线')" value="OFFLINE" /><el-option :label="$tp('未知')" value="UNKNOWN" /></el-select></el-form-item></el-col>
             <el-col :span="24"><el-form-item :label="$tp('视频流路径')" prop="streamUrl"><el-input v-model="form.streamUrl" :placeholder="$tp('rtsp://、rtmp:// 或 http(s)://')" /></el-form-item></el-col>
             <el-col :span="12"><el-form-item :label="$tp('经度')" prop="longitude"><el-input-number v-model="form.longitude" :precision="7" :min="-180" :max="180" style="width:100%" /></el-form-item></el-col>
             <el-col :span="12"><el-form-item :label="$tp('纬度')" prop="latitude"><el-input-number v-model="form.latitude" :precision="7" :min="-90" :max="90" style="width:100%" /></el-form-item></el-col>
@@ -86,10 +86,10 @@
         <template #footer><el-button @click="formVisible=false">{{ $tp('取消') }}</el-button><el-button type="primary" :loading="saving" @click="saveDevice">{{ $tp('保存') }}</el-button></template>
       </el-dialog>
 
-      <el-dialog v-model="previewVisible" :title="previewTitle" width="900px" destroy-on-close @closed="cleanupPlayer">
-        <div v-loading="previewLoading" class="player">
-          <rtc-player v-if="webrtcUrl" :video-url="webrtcUrl" :hasaudio="true" />
-          <div v-else ref="oplayerContainer" class="oplayer-container" />
+      <el-dialog v-model="previewVisible" :title="previewTitle" width="900px" destroy-on-close>
+        <div class="player">
+          <SquareProtocolDevicePlayer v-if="previewVisible" :key="previewDevice.id"
+            :source="previewSource" :device-name="previewDevice.deviceName" />
         </div>
       </el-dialog>
 
@@ -114,21 +114,29 @@
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
 
-import { nextTick, onMounted, reactive, ref, shallowRef } from 'vue'
+import { nextTick, onMounted, onBeforeUnmount, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
-import RtcPlayer from '@/components/rtcPlayer/index.vue'
+import SquareProtocolDevicePlayer from './components/SquareProtocolDevicePlayer.vue'
+import { stampCustomStatus } from '@/utils/customDeviceState'
+import { useCustomAvailabilityClock } from '@/utils/useCustomAvailabilityClock'
+import CustomAvailabilityBadge from '@/components/CustomAvailabilityBadge.vue'
 import {
   addCustomDevice, deleteCustomDevices, exportCustomDevices, getCustomDevice, getCustomMediaStatus,
-  getCustomRecordPlan, getCustomRecordStatus, listCustomDevices, previewCustomDevice,
+  getCustomRecordPlan, getCustomRecordStatus, listCustomDevices,
   saveCustomRecordPlan, startCustomRecord, stopCustomRecord, updateCustomDevice
 } from '@/api/customDevice'
-import { createOPlayerOptions, ensureOPlayer, getCustomStreamType } from '@/utils/customPlayer'
 
 const loading = ref(false), devices = ref([]), total = ref(0), mediaAvailable = ref(false), serviceError = ref('')
 const selectedIds = ref([]), classificationDeviceKeys = ref([]), formVisible = ref(false), formRef = ref(), saving = ref(false)
-const previewVisible = ref(false), previewLoading = ref(false), previewTitle = ref('视频预览'), webrtcUrl = ref('')
-const oplayerContainer = ref(null), oplayerInstance = shallowRef(null)
+const previewVisible = ref(false), previewTitle = ref('视频预览'), previewDevice = ref({})
+const previewSource = ref({})
+const statusClock = useCustomAvailabilityClock(() => devices.value)
+let statusTimer, disposed = false, listGeneration = 0
+const refreshPresence = () => {
+  statusClock.value = Date.now()
+  if (!document.hidden && !loading.value && !disposed) loadDevices()
+}
 const recordVisible = ref(false), recording = ref(false), recordDevice = ref({}), selectedDays = ref([]), timeRange = ref(['00:00', '23:59'])
 const query = reactive({ pageNum: 1, pageSize: 10, deviceName: '', deviceCode: '', status: undefined })
 const emptyForm = () => ({ id: undefined, deviceName: '', deviceCode: '', streamUrl: '', deviceType: '摄像头', status: 'UNKNOWN', longitude: undefined, latitude: undefined, address: '', remark: '' })
@@ -144,14 +152,18 @@ const weekOptions = [['1','周一'],['2','周二'],['3','周三'],['4','周四']
 
 function errorMessage(error, fallback) { return error?.response?.data?.msg || error?.message || fallback }
 async function loadDevices() {
+  const generation = ++listGeneration, requestedAt = Date.now()
   loading.value = true; serviceError.value = ''
   try {
     const [list, media] = await Promise.all([listCustomDevices(query), getCustomMediaStatus()])
-    devices.value = list?.rows || []; total.value = Number(list?.total || 0); mediaAvailable.value = Boolean(media?.data?.available)
+    if (disposed || generation !== listGeneration) return
+    statusClock.value = Date.now()
+    devices.value = (list?.rows || []).map(row => stampCustomStatus(row, requestedAt)); total.value = Number(list?.total || 0); mediaAvailable.value = Boolean(media?.data?.available)
   } catch (error) {
+    if (disposed || generation !== listGeneration) return
     devices.value = []; total.value = 0; mediaAvailable.value = false
     serviceError.value = errorMessage(error, 'WVP 服务不可用，无法加载自定义协议设备')
-  } finally { loading.value = false }
+  } finally { if (generation === listGeneration) loading.value = false }
 }
 function search() { query.pageNum = 1; loadDevices() }
 function resetQuery() { Object.assign(query, { pageNum: 1, pageSize: 10, deviceName: '', deviceCode: '', status: undefined, categoryType: undefined, categoryId: undefined, unclassified: undefined }); loadDevices() }
@@ -159,7 +171,11 @@ function handleClassificationFilter(filter) { Object.assign(query, filter, { pag
 function handleSelectionChange(rows) { selectedIds.value = rows.map(row => String(row.id)); classificationDeviceKeys.value = [...selectedIds.value] }
 function resetForm() { Object.assign(form, emptyForm()); nextTick(() => formRef.value?.clearValidate()) }
 function openAdd() { resetForm(); formVisible.value = true }
-async function openEdit(row) { resetForm(); const id = row?.id || selectedIds.value[0]; Object.assign(form, (await getCustomDevice(id))?.data || {}); formVisible.value = true }
+async function openEdit(row) {
+  resetForm(); const id = row?.id || selectedIds.value[0]
+  const device = (await getCustomDevice(id))?.data || {}
+  Object.assign(form, device, { status: device.configuredStatus ?? device.status ?? 'UNKNOWN' }); formVisible.value = true
+}
 async function saveDevice() {
   await formRef.value.validate(); saving.value = true
   try { form.id ? await updateCustomDevice({ ...form }) : await addCustomDevice({ ...form }); ElMessage.success(form.id ? uiText('修改成功') : uiText('新增成功')); formVisible.value = false; loadDevices() }
@@ -175,28 +191,10 @@ async function removeDevices(row) {
 }
 async function exportDevices() { await exportCustomDevices({ ...query }); ElMessage.success(uiText('导出任务已完成')) }
 
-function cleanupPlayer() {
-  if (oplayerInstance.value?.compInstance?.$destroy) oplayerInstance.value.compInstance.$destroy()
-  oplayerInstance.value = null; if (oplayerContainer.value) oplayerContainer.value.innerHTML = ''; webrtcUrl.value = ''
-}
-async function preview(row) {
+function preview(row) {
   if (!row.streamUrl) return ElMessage.warning(uiText('设备未配置视频流地址'))
-  cleanupPlayer(); previewTitle.value = `${row.deviceName} - 视频预览`; previewVisible.value = true; previewLoading.value = true
-  try {
-    if (['rtsp', 'rtmp'].includes(getCustomStreamType(row.streamUrl))) {
-      if (!mediaAvailable.value) throw new Error('RTSP/RTMP 预览需要可用的 WVP ZLM 媒体服务器')
-      const stream = (await previewCustomDevice(row.id))?.data || {}
-      webrtcUrl.value = location.protocol === 'https:' ? stream.rtcs : stream.rtc
-      if (!webrtcUrl.value) throw new Error('WVP ZLM 未返回 WebRTC 播放地址')
-    } else {
-      await Promise.all([ensureOPlayer(), nextTick()])
-      if (!oplayerContainer.value) throw new Error('播放器容器未准备好')
-      const { playerConfig, playConfig } = createOPlayerOptions(row.streamUrl)
-      const player = new window.OToolBox.OPlayer(oplayerContainer.value, playerConfig)
-      oplayerInstance.value = player; player.play({ ...playConfig, name: row.deviceName || '' })
-    }
-  } catch (error) { ElMessage.error(errorMessage(error, uiText('视频预览失败'))); previewVisible.value = false }
-  finally { previewLoading.value = false }
+  previewDevice.value = row; previewSource.value = { protocol: 'CUSTOM', rowId: String(row.id) }
+  previewTitle.value = `${row.deviceName} - 视频预览`; previewVisible.value = true
 }
 
 async function openRecord(row) {
@@ -212,9 +210,16 @@ async function saveRecordPlanForm() {
   Object.assign(recordPlan, { weekDays: selectedDays.value.join(','), startTime: timeRange.value[0], endTime: timeRange.value[1] })
   await saveCustomRecordPlan(recordDevice.value.id, { ...recordPlan }); ElMessage.success(uiText('录像计划已保存')); recordVisible.value = false
 }
-function statusType(status) { return status === 'ONLINE' ? 'success' : status === 'OFFLINE' ? 'info' : 'warning' }
-function statusText(status) { return status === 'ONLINE' ? uiText('在线') : status === 'OFFLINE' ? uiText('离线') : uiText('未知') }
-onMounted(loadDevices)
+onMounted(() => {
+  loadDevices(); statusTimer = window.setInterval(refreshPresence, 30000)
+  window.addEventListener('focus', refreshPresence)
+  document.addEventListener('visibilitychange', refreshPresence)
+})
+onBeforeUnmount(() => {
+  disposed = true; previewVisible.value = false; window.clearInterval(statusTimer)
+  window.removeEventListener('focus', refreshPresence)
+  document.removeEventListener('visibilitychange', refreshPresence)
+})
 </script>
 
 <style scoped>

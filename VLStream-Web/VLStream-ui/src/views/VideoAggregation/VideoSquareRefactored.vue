@@ -115,7 +115,8 @@
 
                 <!-- device - in -->
           <VideoSquareDevicePanel
-            :devices="deviceList"
+            :devices="currentDevices"
+            :now="statusClock"
             :visible-devices="visibleDevices"
             :protocols="availableProtocols"
             :selected-protocols="displaySettings.deviceTypes"
@@ -140,9 +141,11 @@
     >
       <div
         class="video-dialog draggable-dialog"
+        :data-video-dialog-id="dialog.id"
         :style="{
           left: dialog.position.x + 'px',
           top: dialog.position.y + 'px',
+          '--video-aspect': dialog.videoAspect || 16 / 9,
           position: 'fixed',
           transform: 'none'
         }"
@@ -167,7 +170,8 @@
           </div>
         </div>
 
-        <div class="video-dialog-content" v-show="!dialog.minimized">
+        <div class="video-dialog-content" v-show="!dialog.minimized"
+          @loadedmetadata.capture="updateVideoAspect(dialog, $event)" @resize.capture="updateVideoAspect(dialog, $event)">
           <div class="video-player">
             <!--  -->
             <div class="video-placeholder-player">
@@ -358,9 +362,10 @@ import VideoLayoutDialog from '@/components/VideoLayoutDialog.vue'
 // Import PTZcontrolcomponent
 // Import device component
 import VideoSquareDevicePanel from './components/VideoSquareDevicePanel.vue'
+import { useCustomAvailabilityClock } from '@/utils/useCustomAvailabilityClock'
 import VideoSquareDevicePlayer from './components/VideoSquareDevicePlayer.vue'
 import { getVideoDeviceCatalog } from '@/api/videoDeviceCatalog'
-import { VIDEO_PROTOCOLS, videoDeviceCoordinates, matchesVideoDevice } from '@/utils/videoSquareCatalog'
+import { VIDEO_PROTOCOLS, videoDeviceCoordinates, matchesVideoDevice, normalizeVideoDevice, videoDeviceForProtocols } from '@/utils/videoSquareCatalog'
 import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
 import {ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL} from "@/api/webrtc";
 import { ensureOPlayer, isCameraRtcStream, parseCameraRtcConfig } from '@/utils/oplayer'
@@ -391,6 +396,12 @@ const selectedStatus = ref('')
 const availableProtocols = ref([])
 const catalogError = ref('')
 let catalogGeneration = 0
+const statusClock = useCustomAvailabilityClock(() => deviceList.value)
+let statusTimer
+const refreshPresence = () => {
+  statusClock.value = Date.now()
+  if (!document.hidden && !loading.value && isComponentMounted) loadDeviceList()
+}
 
 
 // dialog
@@ -540,11 +551,12 @@ const allDeviceTypeOptions = computed(() => VIDEO_PROTOCOLS.filter(protocol => a
 
 const getDeviceCoordinates = videoDeviceCoordinates
 const isDeviceOnline = status => status === 'ONLINE'
-const onlineDeviceCount = computed(() => deviceList.value.filter(device => device.status === 'ONLINE').length)
-const offlineDeviceCount = computed(() => deviceList.value.filter(device => device.status === 'OFFLINE').length)
-const unknownDeviceCount = computed(() => deviceList.value.filter(device => device.status === 'UNKNOWN').length)
-const visibleDevices = computed(() => deviceList.value.filter(device =>
-  (!displaySettings.value.deviceTypes.length || device.protocols.some(protocol => displaySettings.value.deviceTypes.includes(protocol))) &&
+const currentDevices = computed(() => deviceList.value.map(device => normalizeVideoDevice(device, statusClock.value)))
+const onlineDeviceCount = computed(() => currentDevices.value.filter(device => device.status === 'ONLINE').length)
+const offlineDeviceCount = computed(() => currentDevices.value.filter(device => device.status === 'OFFLINE').length)
+const unknownDeviceCount = computed(() => currentDevices.value.filter(device => device.status === 'UNKNOWN').length)
+const visibleDevices = computed(() => currentDevices.value.map(device =>
+  videoDeviceForProtocols(device, displaySettings.value.deviceTypes, statusClock.value)).filter(device => device &&
   (!selectedStatus.value || device.status === selectedStatus.value) &&
   matchesVideoDevice(device, mapSearchKeyword.value)
 ))
@@ -859,6 +871,7 @@ const loadDeviceList = async () => {
     const catalog = await getVideoDeviceCatalog()
     if (generation !== catalogGeneration || !isComponentMounted) return
     deviceList.value = catalog.devices
+    statusClock.value = Date.now()
     realCameraStreams.value = catalog.devices
     availableProtocols.value = catalog.protocols
     updateMapMarkers()
@@ -1351,6 +1364,28 @@ const handleMapSearch = () => {
 
 
 
+function fitVideoDialog(dialog, element) {
+  if (!element?.isConnected) return
+  const bounds = element.getBoundingClientRect()
+  dialog.position.x = Math.max(16, Math.min(dialog.position.x, window.innerWidth - bounds.width - 16))
+  dialog.position.y = Math.max(16, Math.min(dialog.position.y, window.innerHeight - bounds.height - 16))
+}
+
+async function updateVideoAspect(dialog, event) {
+  const video = event.target
+  if (video?.tagName !== 'VIDEO' || !video.videoWidth || !video.videoHeight) return
+  const element = event.currentTarget.closest('.video-dialog')
+  dialog.videoAspect = video.videoWidth / video.videoHeight
+  await nextTick()
+  fitVideoDialog(dialog, element)
+}
+
+const resizeVideoDialogs = () => {
+  for (const dialog of videoDialogs.value) {
+    fitVideoDialog(dialog, document.querySelector(`[data-video-dialog-id="${dialog.id}"]`))
+  }
+}
+
 const handleCameraClick = async (deviceData) => {
   // data : (markerData) and device (device)
   const deviceName = deviceData.name || deviceData.deviceName || '未知设备'
@@ -1385,6 +1420,7 @@ const handleCameraClick = async (deviceData) => {
 
   videoDialogs.value.push(dialog)
   await nextTick()
+  fitVideoDialog(dialog, document.querySelector(`[data-video-dialog-id="${dialog.id}"]`))
   await playDialogOPlayer(dialog)
 }
 
@@ -2036,11 +2072,7 @@ const startDrag = (event, id) => {
     dialog.position.y = e.clientY - startY
 
     // in
-    const maxX = window.innerWidth - 400  // dialog 400px
-    const maxY = window.innerHeight - 300  // dialog 300px
-
-    dialog.position.x = Math.max(0, Math.min(dialog.position.x, maxX))
-    dialog.position.y = Math.max(0, Math.min(dialog.position.y, maxY))
+    fitVideoDialog(dialog, document.querySelector(`[data-video-dialog-id="${dialog.id}"]`))
   }
 
   const handleMouseUp = () => {
@@ -2140,6 +2172,10 @@ onMounted(async () => {
 
     // Load device
     await loadDeviceList()
+    statusTimer = window.setInterval(refreshPresence, 30000)
+    window.addEventListener('focus', refreshPresence)
+    window.addEventListener('resize', resizeVideoDialogs)
+    document.addEventListener('visibilitychange', refreshPresence)
 
     // afterInitialize
     initMap()
@@ -2175,6 +2211,10 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  window.clearInterval(statusTimer)
+  window.removeEventListener('focus', refreshPresence)
+  window.removeEventListener('resize', resizeVideoDialogs)
+  document.removeEventListener('visibilitychange', refreshPresence)
   catalogGeneration += 1
   console.log('VideoSquareRefactored组件开始卸载')
   isComponentMounted = false
@@ -2945,7 +2985,7 @@ body::-webkit-scrollbar {
 /* control */
 .map-controls {
   position: absolute;
-  top: 200px;
+  top: 235px;
   left: 20px;
   display: flex;
   flex-direction: column;
@@ -2956,7 +2996,7 @@ body::-webkit-scrollbar {
 /* controlbutton */
 .zoom-controls {
   position: absolute;
-  top: 120px;
+  top: 160px;
   left: 20px;
   display: flex;
   flex-direction: column;
@@ -3022,8 +3062,8 @@ body::-webkit-scrollbar {
   background: white;
   border-radius: 8px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  min-width: 400px;
-  min-height: 300px;
+  min-width: 0;
+  min-height: 0;
   pointer-events: all;
   overflow: hidden;
 }
@@ -3074,24 +3114,35 @@ body::-webkit-scrollbar {
 }
 
 .video-dialog-content {
-  width: 860px;
-  height: 540px;
+  width: min(860px, calc(100vw - 32px), calc((100dvh - 136px) * var(--video-aspect, 1.777778)));
+  height: auto;
 }
 
 .video-player {
   width: 100%;
-  height: 100%;
+  height: auto;
 }
 
 .video-placeholder-player {
   width: 100%;
-  height: 100%;
+  height: auto;
   position: relative;
   background: #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
 }
+
+.video-dialog-content :deep(.square-device-player) { height: auto; }
+.video-dialog-content :deep(.vls-device-player),
+.video-dialog-content :deep(.rtsp-device-player),
+.video-dialog-content :deep(.square-protocol-player),
+.video-dialog-content > .video-player > .video-placeholder-player > .oplayer-container {
+  height: auto;
+  min-height: 0;
+  aspect-ratio: var(--video-aspect, 1.777778);
+  flex: none;
+}
+.video-dialog-content :deep(video) { width: 100%; height: 100%; max-height: none; object-fit: contain; }
+.video-dialog-content :deep(.camera-rtc-player) { min-height: 0; }
 
 .oplayer-container {
   width: 100%;

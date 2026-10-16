@@ -5,7 +5,7 @@
  * Updated by: ChaoQun Lei
  */
 
-import { parseCameraRtcConfig } from './oplayer'
+import { parseCameraRtcConfig, isCameraRtcStream } from './oplayer'
 
 const OPLAYER_SCRIPT_URL = `${import.meta.env.BASE_URL}OPlayer.min.js`
 
@@ -45,9 +45,9 @@ export async function ensureOPlayer() {
 export function getCustomStreamType(streamUrl) {
   if (!streamUrl) return 'unknown'
   const url = String(streamUrl).trim().toLowerCase()
-  if (url.includes('/videocall/') || url.includes('/aety-')) return 'cameraRTC'
   if (url.startsWith('rtsp://')) return 'rtsp'
   if (url.startsWith('rtmp://')) return 'rtmp'
+  if (isCameraRtcStream(streamUrl)) return 'cameraRTC'
   if (/\.m3u8($|[?#])/i.test(url)) return 'hls'
   if (/\.flv($|[?#])/i.test(url)) return 'flv'
   if (/\.(mp4|avi|mov|wmv|mkv)($|[?#])/i.test(url)) return 'video'

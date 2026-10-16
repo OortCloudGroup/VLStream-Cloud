@@ -34,7 +34,7 @@
       <el-empty v-if="!visibleDevices.length && !loading" :description="$tp('暂无数据')" :image-size="55" />
       <template v-for="group in groups" :key="group.id">
         <button v-if="treeView" class="tree-group-header" @click="toggleGroup(group.id)">
-          <span>{{ collapsed.has(group.id) ? '▸' : '▾' }} {{ $tp(group.label) }}</span>
+          <span>{{ collapsed.has(group.id) ? '▸' : '▾' }} {{ $tp(group.label) }} · {{ $tp(statusLabel(group.status)) }}</span>
           <span>({{ group.children.length }})</span>
         </button>
         <template v-if="!treeView || !collapsed.has(group.id)">
@@ -46,6 +46,16 @@
               <el-tag v-for="protocol in device.protocols" :key="protocol" size="small">{{ $tp(protocolLabel(protocol)) }}</el-tag>
               <span class="device-status" :class="device.status.toLowerCase()">{{ $tp(statusLabel(device.status)) }}</span>
             </div>
+            <small v-if="device.sources?.length > 1 || device.protocols?.includes('CUSTOM')" class="source-statuses">
+              <span v-for="source in device.sources" :key="source.protocol + ':' + source.rowId">
+                {{ $tp(protocolLabel(source.protocol)) }} ·
+                <CustomAvailabilityBadge v-if="source.protocol === 'CUSTOM'" :device="source" :now="now" :show-reason="device.status === 'UNKNOWN'" />
+                <template v-else>{{ $tp(statusLabel(source.state)) }}</template>
+              </span>
+            </small>
+            <small v-if="device.status === 'UNKNOWN' && !device.protocols?.includes('CUSTOM')" class="unknown-reason">
+              {{ $tp(unknownReason(device)) }}
+            </small>
             <small v-if="!videoDeviceCoordinates(device)">{{ $tp('未上报位置') }}</small>
           </button>
         </template>
@@ -58,9 +68,11 @@
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { translatePhrase } from '@/i18n'
-import { VIDEO_PROTOCOLS, videoDeviceCoordinates, videoDeviceGroups } from '@/utils/videoSquareCatalog'
+import { VIDEO_PROTOCOLS, videoDeviceCoordinates, videoDeviceGroups, sortVideoDevices } from '@/utils/videoSquareCatalog'
+import CustomAvailabilityBadge from '@/components/CustomAvailabilityBadge.vue'
 
 const props = defineProps({
+  now: { type: Number, default: () => Date.now() },
   devices: { type: Array, default: () => [] },
   visibleDevices: { type: Array, default: () => [] },
   protocols: { type: Array, default: () => [] },
@@ -75,7 +87,8 @@ const treeView = ref(false)
 const toggleTreeView = () => { treeView.value = true; ElMessage.success(translatePhrase('已切换到树形结构')) }
 const toggleListView = () => { treeView.value = false; ElMessage.success(translatePhrase('已切换到列表结构')) }
 const collapsed = ref(new Set())
-const groups = computed(() => videoDeviceGroups(props.visibleDevices))
+const groups = computed(() => treeView.value ? videoDeviceGroups(props.visibleDevices) :
+  [{ id: 'list', children: sortVideoDevices(props.visibleDevices) }])
 const availableProtocols = computed(() => VIDEO_PROTOCOLS.filter(protocol => props.protocols.includes(protocol.value)))
 const locatedCount = computed(() => props.devices.filter(videoDeviceCoordinates).length)
 const statuses = [
@@ -83,6 +96,8 @@ const statuses = [
 ]
 const protocolLabel = value => VIDEO_PROTOCOLS.find(protocol => protocol.value === value)?.label || value
 const statusLabel = value => statuses.find(status => status.value === value)?.label || '未知状态'
+const unknownReason = device => device.protocols?.includes('DAHUA')
+  ? '暂无可靠的在线状态上报' : '暂无有效的在线探测证据'
 function toggleGroup(id) {
   if (collapsed.value.has(id)) collapsed.value.delete(id)
   else collapsed.value.add(id)
@@ -154,6 +169,7 @@ function toggleGroup(id) {
 .device-name { font-weight: 600; overflow-wrap: anywhere; }
 .square-device-item small { color: var(--el-text-color-secondary); overflow-wrap: anywhere; }
 .device-details { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.source-statuses { display: flex; flex-wrap: wrap; gap: 8px; }
 .device-status { margin-inline-start: auto; font-size: 12px; }
 .online { color: #269528; } .offline { color: #c33; } .unknown { color: #996800; }
 </style>

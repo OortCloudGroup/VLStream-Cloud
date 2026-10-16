@@ -129,7 +129,7 @@
           <span class="stat-value">{{ offlineCount }}</span>
         </div>
       </div>
-      <div v-if="unknownCount" class="stat-item">
+      <div class="stat-item unknown">
         <div class="stat-content">
           <span class="stat-label">{{ $tp('未知状态') }}：</span>
           <span class="stat-value">{{ unknownCount }}</span>
@@ -206,10 +206,13 @@ const handleLayoutSelect = (count) => {
   left: 0;
   right: 0;
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
+  gap: 8px;
   padding: 0 20px;
   z-index: 1500;
+  pointer-events: none;
 }
 
 .layout-button-group {
@@ -220,10 +223,9 @@ const handleLayoutSelect = (count) => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  /* in */
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  flex: 0 0 auto;
+  margin-inline: auto;
+  pointer-events: auto;
 }
 
 /* button */
@@ -319,12 +321,16 @@ const handleLayoutSelect = (count) => {
 .device-stats {
   display: flex;
   align-items: center;
-  gap: 16px;
-  width: 420px;
-  height: 36px;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  width: max-content;
+  max-width: 100%;
+  min-height: 36px;
+  margin-right: auto;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 8px;
-  padding: 6px 16px;
+  padding: 6px 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
