@@ -1,173 +1,222 @@
-# 从全新 AutoDL 普通容器实例接入 VLStream
+# 用户自接 GPU 服务器指南
 
-本期仅对接 AutoDL 普通容器实例，不扩展到其他云算力平台。适用：自行私有化部署 VLStream 的用户，以及使用多租户平台、自己在 AutoDL 租用 GPU 的租户。
-**项目团队的 P100 仅是开发测试设备。用户不需要、也不应连接它。** 新实例的地址、账号、环境和文件均属于用户自己。
+入口：**AI 算力调度 → 算力管理 → 接入服务器**。从本页“接入指南”也能进入同一配置表单。
+你可以接入自己购买的 AutoDL、其他云 GPU 或自建服务器。正常 VLS 登录用户可登记自己的 SSH 节点；
+节点归当前用户和当前租户，不要求先购买公共算力、授权平台市场账户或持有厂商 API Token。
+厂商 API、公共供给与收费实例在“算力市场”另行管理；接入自有服务器不会向市场发布它。
 
-## 先按这一条路线完成验收
+## 1. 先准备什么
 
-本轮验收使用 **当前本地平台 `http://localhost:3000` + 用户购买的 AutoDL 实例**，实际探测报告为 RTX 4080 SUPER（计算能力8.9）。
-平台不限定3090或其他单一型号；按GPU代际、驱动和所需显存选择合适环境，再通过检查及实际训练确认。型号示例不是白名单。
-2026-09-30已在本地平台与用户的AutoDL vGPU-32GB实例完成本期四类训练、PT/类别回存下载、指定PT再训练及停止验收。
-这不代表所有显卡已实测，也不包含线上智能标注、模型转换、设备部署或完整精度评估。
+| 项目 | 用户需要准备 |
+| --- | --- |
+| 服务器 | 已开机的 Linux x86_64 + NVIDIA GPU；当前标准训练接入不支持 Windows、macOS、ARM 或 AMD/CPU 节点 |
+| 驱动 | GPU 厂商支持的 NVIDIA 驱动，`nvidia-smi` 正常，容器内也能看到所选 GPU；平台不安装驱动 |
+| SSH | 后端可达的主机名/IPv4、端口、账号和密码；账号可执行命令并使用 SFTP，无须是 root |
+| 目录 | 专用、可读写的持久目录；建议空闲 30 GiB 起，另计数据集、依赖、临时副本和模型产物 |
+| 环境 | Miniconda/Conda 可执行文件，初始化包或同平台版本的 VLStream 源码；脚本创建独立 Python 环境 |
+| 网络 | 后端到 SSH/SFTP 的连通；安装时节点能访问 Conda/PyPI、PyTorch 和官方权重来源 |
 
-| 步骤 | 在哪里操作 | 做什么 | 完成标志 |
+在云控制台按实际 GPU 选择 Linux GPU 镜像、开机并取得 SSH 信息；自建服务器由服务器管理员安装 Linux、
+NVIDIA 驱动和 OpenSSH Server，启用 SFTP，并仅向所需后端来源开放实际 SSH 端口。GPU 服务器不需要安装 VLS、
+MySQL、Redis、MinIO、Java 或嵌套 Docker。平台不会因点击“保存并检查”而自动安装训练软件。
+
+**网络边界：** 能从自己电脑 SSH 不等于 VLS 后端可以连接。请管理员从后端所在主机/容器网络验证。
+普通自助接入只接受公网地址；任意内网、回环或云元数据地址不会因选择“自有服务器”就获得放行。
+只有当前部署已单独批准的受信内网资产能走其专用规则，通用内网接入尚未提供自助配置。
+如果你的服务器只有内网地址，先由部署管理员确认受支持的接入方案，不要关闭地址校验。
+
+## 2. 核对 GPU、驱动和版本组合
+
+在 GPU 服务器终端执行：
+
+```bash
+uname -srm
+nvidia-smi
+nvidia-smi --query-gpu=index,name,driver_version,memory.total --format=csv
+command -v nohup flock
+```
+
+应看到 Linux、x86_64、真实 GPU/驱动/显存及命令路径。`nvidia-smi` 的“CUDA Version”表示驱动支持上限，
+不是已安装 PyTorch 的 CUDA 运行库版本。平台探针还会实际执行 GPU 前后向和 Torchvision NMS，不能仅凭版本号判定可训练。
+
+当前初始化脚本和环境检查接受以下组合，全部使用 **Python 3.10、Ultralytics 8.3.240**：
+
+| 初始化配置 | PyTorch / Torchvision | PyTorch CUDA 运行库 | 选择依据 |
 | --- | --- | --- | --- |
-| 0. 平台准备 | VLS 管理员 | 更新前后端、执行所需 Flyway 迁移（含028）、确认 MinIO 和后端持久数据目录可用；新部署密钥自动生成 | 能打开线上算力页面，后台可正常保存实例；不能只看见页面就算完成 |
-| 1. 购买并开机 | AutoDL 控制台 | 普通容器、按需选择GPU；兼容standard组合的实例可选 **PyTorch 2.5.1 / Python 3.12 / CUDA 12.4**，有卡开机；Blackwell等需选择对应组合 | 实例运行，复制得到 SSH 命令和密码 |
-| 2. 初始化 | AutoDL 实例终端 | 上传与 VLS 匹配的初始化包或源码，运行下方 standard 命令 | 最后一条 `VLS_PROBE` 的 `ready` 为 `true`，记录输出的 Python 路径 |
-| 3. 接入 | VLS → AI 算力调度 → 线上算力 | 接入实例，填写 SSH、Python、工作目录、GPU=0，保存并检查 | 每一项检查通过；保存记录或SSH连通本身不算训练就绪 |
-| 4. 准备数据 | VLS → 算法仓库 → 数据集管理 | 先建一个“物体检测”测试数据集，导入图片、建类别、人工画框、保存标注，划分训练/验证集 | 两个集合都有有效标注，图片不能重复出现在两边 |
-| 5. 建立算法任务 | VLS → 算法管理 / 算法训练 | 建立或选用“物体检测”算法，新建训练任务并关联相同类型数据集 | 任务和数据集类型匹配 |
-| 6. 执行训练 | VLS → 算法训练 → 训练 | 算力选择刚接入的 **AutoDL实例**，起始模型选择“系统基础模型”；首轮用自定义参数：1轮、batch=2、输入尺寸320，开启完成后保存模型 | 请求入队，准备数据后出现真实训练日志；不要选“平台默认 GPU 服务器” |
-| 7. 等待结果 | VLS → 算法训练 | 观察排队、训练、回存状态；可关闭页面再打开验证任务仍在运行 | PT和类别文件都校验回存后才显示完成，模型保存状态为已保存 |
-| 8. 下载验收 | VLS → 算法模型 / 训练结果 | 下载PT，核对关联类别文件与本次数据；检查MinIO中对应产物 | 文件可读取、哈希一致、类别与本轮数据集对应 |
-| 9. 继续覆盖其他类型 | 相同 VLS 流程 | 分别准备图像分类、实例分割、语义分割测试数据，再各跑一次；再测停止确认、重新训练、指定模型 | 每项有任务ID、日志、产物与结果记录，不用检测训练一次成功代替其他类型 |
+| `standard` | 2.5.1 / 0.20.1 | 12.4 (`cu124`) | 包含该 GPU 架构的较旧运行栈；已用于 P100、RTX 4080 SUPER 的独立环境，3090/4090 等仍须现场检查 |
+| `blackwell28` | 2.8.0 / 0.23.0 | 12.8 (`cu128`) | 新 Blackwell GPU 的候选配置；已有独立真实 GPU 四类训练记录，全新安装仍须验证 |
+| `blackwell` | 2.7.1 / 0.22.1 | 12.8 (`cu128`) | 保留的既有配置，按实际硬件/依赖验证后使用 |
 
-首次联调建议每类至少准备 4 张训练图和 2 张验证图，确保内容不同；这只用于验证功能，不能评价模型效果。
-分类需要整图类别；实例分割需要逐对象掩膜；语义分割需要完整像素类别，不能用检测框直接替代。
-若希望先确认持久数据包，可在算法标注页点击“生成”并导出检查 MinIO ZIP；AutoDL 提交训练时也会固定版本并生成训练包。
+“6000D”或“6000”商品名称不足以确定架构，先看真实型号及后续 `get_device_capability()`。
+旧 P100 不应照搬 Blackwell 环境；已有旧 Python/CUDA 环境也不会自动满足此表，需另建兼容环境。
+不要把所有卡统一升级到最新 Torch/CUDA，也不要把示例机型视为通用实测承诺。
 
-本轮由开发侧执行联调时，用户购买并开机后提供 **SSH 登录命令和密码** 即可，开发侧负责上传初始化文件、执行检查和测试数据流程。
-测试只新增专门的数据集/任务，不覆盖既有业务数据。完成后告知哪些已通过、哪些仍有问题，用户再决定是否关机；平台不会自动停止计费。
+驱动须同时支持 GPU 与选定运行库。NVIDIA 的 CUDA 12.4 GA 工具包对应 Linux 驱动为 550.54.14 起，
+12.8 GA 对应 570.26 起；CUDA 12.x 的有限次版本兼容还可能允许部分旧驱动，但有功能和 PTX 限制，
+不能将兼容性最低值当作所有新卡的驱动要求。云镜像优先使用供应商为该 GPU 验证的驱动。
+PyTorch CUDA wheel 自带运行库，当前训练不要求另装系统 `nvcc`/CUDA Toolkit，安装 Toolkit 也不能替代驱动。
 
-**本期“走完流程”的终点是模型 PT 和类别文件在平台可下载。** AutoDL 线上智能标注、ONNX/OM/RKNN转换和设备部署不在这一期的已接通范围，不能承诺买一张GPU就覆盖所有平台业务。
+官方依据：[PyTorch 历史版本配对](https://pytorch.org/get-started/previous-versions/)、
+[NVIDIA CUDA 12.8 驱动表](https://docs.nvidia.com/cuda/archive/12.8.0/cuda-toolkit-release-notes/index.html)、
+[CUDA 次版本兼容限制](https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html)。
 
-## 1. 购买时选择什么
+## 3. 安装基础工具并选好工作目录
 
-购买页面的基础镜像与脚本建立的运行环境是两件事。AutoDL 当前官方列表中的 PyTorch 2.5.1 配的是 Python 3.12 / CUDA 12.4，
-不是此前指南误写成的购买页 Python 3.10。初始化脚本会另外创建 Python 3.10 环境，因此选3.12基础镜像并不矛盾。
+以下 Ubuntu/Debian 示例由你或服务器管理员在自己的服务器操作；云 GPU 镜像已有工具就跳过。
+驱动应按供应商/NVIDIA 对实际 GPU 和系统的说明安装，勿盲目套用固定驱动包。
 
-下面是**初始化后**的固定核心软件配置，不是购买页可选镜像清单，也不是已经逐款 GPU 实测认证的列表。
-最终需环境检查和真实小样本训练验收；不要把购买页显示的框架版本直接当成已完成平台接入。
+```bash
+# 需要管理员权限；云容器没有 sudo 时请由供应商/管理员准备，已有包无需重装
+sudo apt-get update
+sudo apt-get install -y openssh-server ca-certificates curl unzip util-linux coreutils libgl1 libglib2.0-0
+```
 
-| 使用配置 | GPU 示例 | 框架名称 | 框架版本 | Python | CUDA | 配套 Torchvision |
-| --- | --- | --- | --- | --- | --- | --- |
-| `standard` | RTX 3090、4090、4090D | PyTorch | 2.5.1 | 3.10 | 12.4 | 0.20.1 |
-| `blackwell` | RTX 5090、RTX PRO 6000 Blackwell | PyTorch | 2.7.1 | 3.10 | 12.8 | 0.22.1 |
+SSH 服务应支持当前账号的密码认证、非交互命令和 SFTP。可在**后端所在网络**测试（替换账号、端口和域名）：
 
-两套都使用 **Ultralytics 8.3.240、NumPy 1.26.4、OpenCV 4.11.0.86**。实例分割依赖该 Ultralytics 版本内部接口。
-型号名称相近不代表架构相同，例如 RTX PRO 6000 Blackwell 与旧 RTX 6000 不应混用判断。
-其他 GPU、ARM、AMD、Windows 不是这份初始化脚本的标准适配范围，需另行验证；不要拿此表改动开发 P100 的现有环境。
+```bash
+ssh -p 22 trainer@gpu.example.com 'id; command -v nvidia-smi nohup flock'
+sftp -P 22 trainer@gpu.example.com
+```
 
-如果 AutoDL 没有完全对应的四项组合，可选择支持该 GPU 的 Linux x86_64 Miniconda 镜像，再执行本项目初始化脚本。
-脚本创建独立 Python 3.10 环境，安装明确 CUDA 构建的 PyTorch，不沿用基础镜像中不确定的框架版本。
-AutoDL 宿主机驱动由服务商管理；这里选择 CUDA 运行环境，不在容器中安装或升级 NVIDIA 驱动。
-`nvidia-smi` 显示的 CUDA 数字是驱动支持上限，不是当前 PyTorch 使用的 CUDA 版本。
+SSH 应返回账号及命令路径，SFTP 应进入交互提示符，输入 `quit` 退出。首次连接先向服务器控制台核对主机指纹。
+自助表单当前支持 SSH 密码，不支持浏览器上传私钥、SSH Agent、跳板机、交互 MFA 或任意 `-i` 参数。
+仅密钥登录的机器需由部署管理员评估现有“管理员部署身份”能力；它只适用于明确批准、后端已绑定的特定资产，
+默认关闭，不能在本页填一个私钥路径就启用。无需交出云厂商 Token。
 
-依据：[PyTorch 官方组合](https://pytorch.org/get-started/previous-versions/)、
-[Blackwell/CUDA 12.8 支持](https://pytorch.org/blog/pytorch-2-7/)、
-[AutoDL Miniconda](https://api.autodl.com/docs/miniconda/)、[AutoDL CUDA 说明](https://www.autodl.com/docs/cuda/)。
+若尚无 Conda，从 [Miniconda 官方下载页](https://repo.anaconda.com/miniconda/)取得 Linux x86_64 安装器并按该页校验 SHA-256，
+用当前训练账号安装到自己的目录。例如已下载且校验过安装器后：
 
-## 2. 谁准备哪些东西
+```bash
+bash Miniconda3-latest-Linux-x86_64.sh -b -p "$HOME/miniconda3"
+"$HOME/miniconda3/bin/conda" --version
+mkdir -p "$HOME/vlstream"
+test -w "$HOME/vlstream" && df -h "$HOME/vlstream"
+```
 
-| 项目 | 由谁准备 | 是否依赖开发 P100 |
+应输出 Conda 版本、工作目录磁盘余量，且 `test` 成功。后续以当前账号的 `~/vlstream` 为例；命令会展开 `$HOME`，
+**表单要填展开后的绝对路径**，不能填 `$HOME`、`~` 或相对路径。路径仅用英文字母、数字、`_`、`-`、`.`、`/`，
+不含空格、`..` 或根目录 `/`。也可用管理员分配且归训练账号可写的持久数据盘目录。
+30 GiB 只是起点，探针的 5 GiB 最低线不代表大数据集可训练；云临时盘的关机保留策略自行向供应商确认。
+
+## 4. 准备四类训练环境和基础模型
+
+从平台管理员取得**与部署版本一致**的 VLStream 初始化包或源码，上传并解压到 GPU 服务器。
+若使用源码，进入仓库根目录；精简包至少应保留 `tools/compute/` 和训练资源目录的原相对结构。
+旧版公开发布包未必包含当前三套配置，不要混用不同版本的初始化脚本与后端探针。
+
+```bash
+cd /path/to/VLStream-Cloud
+# 先查看计划，不安装；路径改为你实际准备的目录和 Conda 路径
+bash tools/compute/bootstrap-autodl.sh --profile standard \
+  --conda "$HOME/miniconda3/bin/conda" --work-dir "$HOME/vlstream" --gpu 0 --dry-run
+# 确认无误再执行。新 Blackwell 按上表将 standard 改为 blackwell28；三套选一套即可
+bash tools/compute/bootstrap-autodl.sh --profile standard \
+  --conda "$HOME/miniconda3/bin/conda" --work-dir "$HOME/vlstream" --gpu 0
+```
+
+脚本名称沿用 AutoDL，但通过 `--conda`、`--work-dir` 可用于满足条件的自建/其他云 Linux GPU 服务器。
+不传参数的默认路径是 AutoDL 的 `/root/miniconda3/bin/conda`、`/root/autodl-tmp/vlstream`；普通账号不要照抄默认值。
+脚本创建 `工作目录/envs/vls-配置名/`，不覆盖基础镜像的 base Python。
+GPU 正在计算时会拒绝初始化，等待自己的任务完成，勿结束其他人的进程。
+
+四类任务共用 PyTorch/Torchvision，分类、检测、实例分割使用 Ultralytics YOLOv8，语义分割使用 Torchvision DeepLabV3：
+
+| 训练类型 | 运行框架 | 初始化准备的官方基础权重 |
 | --- | --- | --- |
-| GPU、驱动、公网 SSH、有卡开机 | 用户与 AutoDL | 否 |
-| Python、PyTorch/Torchvision、Ultralytics 和辅助库 | 用户在新实例执行初始化脚本 | 否 |
-| 四类系统基础权重 | 初始化从官方来源下载到新实例并缓存 | 否 |
-| 图片、标注、固定版本训练包 | VLS 存 MinIO，训练时上传工作副本 | 否 |
-| 平台训练脚本 | VLS 从自身资源包上传 | 否 |
-| 用户指定 PT | 必须先在当前租户 MinIO 中就绪，VLS 校验后上传 | 否，不回退旧 SSH |
-| 训练结果 PT/类别文件 | 新实例产生，VLS 校验后回存 MinIO | 否 |
-| OM/RKNN 等部署格式工具链 | 可选、单独的转换环境 | 不包含在本次初始化中 |
+| 物体检测 | Ultralytics YOLOv8 | `models/yolov8m.pt` |
+| 图像分类 | Ultralytics YOLOv8 | `models/yolov8n-cls.pt` |
+| 实例分割 | Ultralytics YOLOv8 | `models/yolov8n-seg.pt` |
+| 语义分割 | Torchvision DeepLabV3 ResNet50 | `models/torch/hub/checkpoints/deeplabv3_resnet50_coco-cd0a2569.pth` |
 
-`ptModelFilePath` 是算法记录中 `pt_model_file_path` 的 Java/API 字段，**不是环境变量**。
-历史配置可能写着 `/data/work/.../model.pt`，该路径不代表新实例也有文件。新云训练可显式选择“系统基础模型”，
-即使算法历史路径非空也不会使用它；选择“算法指定模型”时，必须先在当前租户 MinIO 中找到 READY 对象。
-仅仅在字段中填写文件名、旧服务器路径或导入模型记录，并不等于该算法已经绑定了可读取的起始权重。
+脚本固定 NumPy 1.26.4、opencv-python 4.11.0.86、Ultralytics 8.3.240 和所选 Torch 配对；
+同时解析 Pillow、PyYAML、SciPy、Matplotlib、tqdm 等依赖。探针实际导入 `torch/torchvision/ultralytics/numpy/PIL/yaml/cv2/scipy`。
+初始化会运行 `pip check`、下载并加载四类权重，保存 `models/presets.json` SHA-256 清单，
+最后保存 `requirements-resolved-配置名.txt` 供复现。间接依赖并非全部预先锁死，不承诺任意时间/镜像完全一致。
 
-系统基础模型当前为检测 `yolov8m.pt`、分类 `yolov8n-cls.pt`、实例分割 `yolov8n-seg.pt`，以及语义分割
-DeepLabV3 ResNet50。用户自有模型必须能被对应运行时加载并与任务类型匹配；任意自定义网络结构不能仅凭 `.pt` 后缀直接训练。
+网络需允许 Conda/PyPI 源、`download.pytorch.org`、`download.pytorch.org/models`、GitHub 官方 Ultralytics 权重与其重定向域名。
+首次训练可能下载 Ultralytics 字体等资源；限制出网时需提前准备相同版本的资源。
+离线环境由管理员在相同 Linux x86_64/Python/CUDA 配对环境准备完整依赖和模型缓存，核对 SHA-256 后搬运；
+不能直接用 Windows wheel，也不能只复制三份 YOLO 权重而漏掉 DeepLab 权重和清单。
+重复初始化只复用脚本管理的环境；未知同名目录会拒绝，失败后检查错误或另选工作目录，不删除已有用户数据。
 
-## 3. 新实例的前置条件
+**训练脚本由 VLS 提供。** 正式训练时后端通过 SSH/SFTP 下发本平台版本的训练执行器、任务配置及冻结数据包，
+无需用户编写训练脚本或从公司测试机复制文件。用户自行准备的是服务器、依赖、权重缓存与 SSH 连接。
+系统基础模型来自上述缓存；“算法指定模型”必须已在当前租户平台存储中就绪且与任务类型匹配，
+仅填旧服务器的 `.pt` 路径不等于已准备模型，也不会回退到其他 GPU 读取文件。
 
-- 有卡开机，Linux x86_64，能运行 `nvidia-smi`，SSH/SFTP 可从 **VLS 后端所在网络**访问。
-  多租户用户自己的电脑能 SSH，不代表平台后端也能连通。
-- 已有 Miniconda，AutoDL 通常位于 `/root/miniconda3/bin/conda`；具有写工作目录和创建环境的权限。
-- 预留依赖、四类基础权重、数据集和训练输出空间。建议至少 30 GiB 空闲作为起点，真实需求随数据集增长；
-  环境检查的 5 GiB 是最低拒绝线，不是训练容量承诺。
-- 初始化期间需要 HTTPS 访问软件源、`download.pytorch.org` 和官方 YOLO 权重下载来源（GitHub/其重定向下载域名）。
-  网络受限时先在同环境下载缓存，再搬运完整 `models/`；不要使用另一版本或不同来源的同名文件冒充。
-- 环境需提供 `nohup`、`flock` 等标准 Linux 工具。若导入 OpenCV 报缺少 `libGL.so.1` 或 GLib，Ubuntu 管理员可安装
-  `libgl1`、`libglib2.0-0` 后重试；脚本不隐式修改系统驱动或全局软件包。
-- 私有化管理员先部署 VLS、MySQL、MinIO、相关迁移，并保留后端持久数据卷。新部署的算力密钥自动生成；已有显式密钥继续沿用。
-  租户使用托管平台时不需要自己部署数据库、MinIO，也不需要把它们的密钥交给 GPU 实例。
+## 5. 本机环境检查：看什么才算通过
 
-## 4. 初始化命令
-
-先从平台管理员取得**与平台部署版本一致的初始化包**，或使用包含本脚本的 VLStream 源码。
-当前开发联调包由开发侧提供；这些改动发布前，不要假定旧版公开 Release 已包含脚本。
-
-初始化包方式（不用把 VLS 后端、MySQL 或 MinIO 安装到 GPU 实例）：
-
-1. 在 AutoDL 实例卡片打开 JupyterLab，进入 `/root/autodl-tmp`，上传 `vlstream-autodl-setup.zip`。
-2. 打开该实例的终端，执行下方命令。也可通过 SSH/SFTP 上传到同一目录。
+以下仍在 GPU 服务器的源码/初始化包根目录执行，选择刚创建的 Python：
 
 ```bash
-cd /root/autodl-tmp
-/root/miniconda3/bin/python -m zipfile -e vlstream-autodl-setup.zip .
-cd vlstream-autodl-setup
-bash tools/compute/bootstrap-autodl.sh --profile standard
+PY="$HOME/vlstream/envs/vls-standard/bin/python"
+"$PY" -m pip check
+"$PY" -c 'import torch,torchvision; print(torch.__version__,torchvision.__version__,torch.version.cuda); print(torch.cuda.is_available()); print(torch.cuda.get_arch_list()); print(torch.cuda.get_device_name(0),torch.cuda.get_device_capability(0))'
+"$PY" VLStream-Cloud-Backend-Server/vls-stream/ruoyi-vlstream/src/main/resources/training/check_cloud_environment.py \
+  --work-dir "$HOME/vlstream" --gpu 0
 ```
 
-如果使用完整源码，则进入解压后的仓库根目录运行相同脚本。以下是可选的预览及配置命令：
+如使用 blackwell28，Python 路径相应改为 `envs/vls-blackwell28/bin/python`。
+预期：`pip check` 无依赖冲突；CUDA 可用为 `True`；架构/真实型号与所选环境一致；
+最后输出 `VLS_PROBE=...`，其中 `ready: true`，所有 `checks` 的 `passed` 均为 `true`。
+探针验证系统/Python、工作目录/空间、依赖版本、GPU 前后向/NMS、四类权重完整性和加载，
+不会安装软件，也不会取消 GPU 上已有任务。探针退出码为 0 仍需读 JSON，不能只看命令退出码。
 
-```bash
-# 先查看计划，不安装软件、不下载权重、不连接 GPU
-bash tools/compute/bootstrap-autodl.sh --profile standard --dry-run
+## 6. 填写连接并保存
 
-# 3090 / 4090 / 4090D
-bash tools/compute/bootstrap-autodl.sh --profile standard
+回到“算力管理 → 接入服务器”：
 
-# 5090 / PRO 6000 Blackwell 则改用这一项，不需要把两项都执行
-bash tools/compute/bootstrap-autodl.sh --profile blackwell
-```
+1. 填名称；按实际选择自有服务器、AutoDL 或阿里云。服务器标识/GPU型号是可选描述，真实资源以检查结果为准。
+2. 填 SSH 主机名或 IPv4（不含 `ssh://`、端口或用户名）、实际端口、账号；也可粘贴 `ssh -p 端口 账号@主机`。
+3. 选择“SSH 密码”并填写。保存后不回显，编辑留空保留原密码；不要把厂商 Token 填入此处。
+4. 填初始化最后打印的 **Python path** 与 **Work directory**，选 `nvidia-smi` 中的 GPU 编号（0–15）。
+5. 点击“保存并检查环境”。保存成功先登记节点，再进行检查；若检查失败，保留记录，可编辑修正后点“检查环境”。
+6. 打开“检查结果”逐项确认，通过才显示“可训练”。修改地址、账号或环境后需重新检查。
 
-可用 `--work-dir /absolute/path`、`--conda /absolute/path/to/conda`、`--gpu 0` 覆盖位置及检查 GPU。
-默认工作目录 `/root/autodl-tmp/vlstream`；两套环境分别放在其 `envs/vls-standard` 与 `envs/vls-blackwell` 中。
-**不会覆盖基础镜像的 base 环境，不使用 `/data/work/anaconda3` 等开发机私有目录。**
+当前用户只能查看、编辑、检查和移除自己的节点；跨租户仍拒绝。资源管理员的既有全租户管理范围由原权限控制，
+这不会授予普通用户厂商 API 配置、公共发布、云端启停或收费能力。历史无主记录不会自动转到当前用户；
+旧版以平台身份登记的记录保留原归属校验；记录未显示时请管理员核对原账户和归属，**新接入无需平台市场授权**。
+移除只删除接入记录，不会删除第三方服务器或其文件；被活动任务引用的节点不能编辑/移除。
 
-重复运行会复用脚本管理的环境，保持核心版本约束、补齐依赖并检查权重；不删除已有数据/任务/模型。
-非本脚本管理的同名环境目录会被拒绝。不同 GPU 配置用不同环境目录。首次 Conda 建环境中断且缺少 Python 时，
-应排查报错后使用新的工作目录，脚本不会为恢复而删除未知目录。
-核心版本固定，依赖解析出的完整版本保存在 `requirements-resolved-standard.txt` 或对应 blackwell 文件；该文件用于留档复现，
-不要声称跨时间安装的所有间接依赖都由此脚本预先锁死。
+## 7. 训练、传输和结果验收
 
-首次安装会下载数GB软件包；PyTorch专用CUDA轮子从官方源获取，其余依赖使用实例配置的软件源。
-网络较慢时，可由管理员提供与所选配置一致的Linux离线依赖包，校验SHA-256后安装，再重复运行初始化脚本。
-不要把Windows依赖包直接放入Linux实例。首次训练还可能下载Ultralytics绘图字体，实例需能访问对应资源。
+在“算法训练”选择已检查就绪的真实节点，选匹配算法类型的数据集，完成标注及训练/验证划分，
+选择系统基础模型或已就绪的算法模型。首次用独立小样本、1 轮、batch=2、尺寸320验证所需任务类型；
+显存不足再降低 batch/尺寸。环境检查并不证明模型精度或任意参数都能训练。
 
-脚本会安装依赖、预下载并加载四类基础模型、记录 SHA-256 清单，然后检查 GPU 前后向运算和 Torchvision NMS。
-检测到 GPU 正在计算时不停止别人的任务，需空闲后再执行。通过后输出供平台填写的路径，例如：
+数据链路为：**平台对象存储 → VLS 后端 → SSH/SFTP 上传 GPU → 训练 → 后端 SFTP 取回 → 平台对象存储**。
+VLS 后端必须能下载数据集和模型对象、读写临时目录并回存 MinIO/S3，GPU 节点无需配置平台存储密钥或回调入口。
+完成依赖/模型/字体缓存后，核心训练数据与产物经 SSH 传输，不要求节点直接访问 MinIO 公网地址。
+网络传输期间应保持实例开机和 SSH/SFTP 可达，并预留本轮独立目录及训练包解压空间。
 
-```text
-Python: /root/autodl-tmp/vlstream/envs/vls-standard/bin/python
-工作目录: /root/autodl-tmp/vlstream
-```
+查看排队、准备、训练、归档状态和日志，等待 PT 及类别文件回存并校验后才算完成。
+下载 PT/类别文件验证可读和模型类型；按需保存到算法模型。浏览器关闭不结束任务。
+回传失败可能停留“归档中”，恢复后端/SSH/存储后重试，不应因为日志写了训练完成就删除远端目录或重训。
+费用、开关机和磁盘保留由你与服务器供应商管理，本页不会自动购买或启动收费实例。
 
-基础模型放在 `models/`，Torchvision 缓存为 `models/torch/`；后续云训练使用同一缓存，不再每轮从开发机取模型。
-离线检查可直接执行：
+## 8. 常见失败处理
 
-```bash
-/root/autodl-tmp/vlstream/envs/vls-standard/bin/python \
-  VLStream-Cloud-Backend-Server/vls-stream/ruoyi-vlstream/src/main/resources/training/check_cloud_environment.py \
-  --work-dir /root/autodl-tmp/vlstream --gpu 0
-```
+| 现象 | 检查与处理 |
+| --- | --- |
+| SSH 超时/拒绝连接 | 核对已开机、地址/端口、安全组和防火墙；从后端网络测试；私网地址受当前接入策略限制 |
+| SSH 登录或 SFTP 失败 | 用同一账号测试密码、命令和 SFTP；密钥/MFA/跳板认证不是自助表单能力，不降低服务器安全设置绕过 |
+| 主机身份变化 | 向供应商控制台核对是否重建/换机；联系管理员确认，勿关闭主机验证或盲目重置指纹 |
+| 找不到 Python/无权限 | 填初始化输出的绝对路径，用相同 SSH 账号执行该 Python；修正专用目录归属，勿改成全局777 |
+| 版本组合不在标准内/NMS报错 | 同一独立环境中配套安装 Torch/Torchvision；勿混用 base、用户site或CPU wheel，按所选profile重新初始化 |
+| `no kernel image`/CUDA不可用 | 检查真实GPU架构、驱动与wheel支持；P100与新Blackwell分别选兼容profile，不盲目安装最新版本 |
+| GPU已占用/锁冲突 | 等当前任务完成后重试，不取消他人的训练或删除未知锁文件 |
+| 权重缺失/校验失败 | 检查下载/磁盘，重新运行初始化的模型准备；离线包须包含四类权重和匹配清单 |
+| `libGL.so.1`/GLib缺失 | 管理员准备 `libgl1`、`libglib2.0-0` 后重试导入OpenCV |
+| 下载失败/证书错误 | 修复软件源、DNS、HTTPS代理或可信CA；按相同profile准备校验过的离线包，勿关闭TLS校验 |
+| 磁盘不足/训练OOM | 清点自己的文件并扩容；5GiB只是环境最低线，显存不足则降低batch/尺寸 |
+| 保存成功但检查未通过 | 连接记录已保留，打开检查结果；按失败项修复后重新检查，无需反复新增 |
+| 训练完成但回存未完成 | 保持实例和SSH可达，检查后端MinIO权限/网络/临时盘及归档日志，待PT与类别都就绪 |
 
-## 5. 平台接入与验收
+## 9. 训练与可选 OM 转换
 
-1. “AI 算力调度 → 线上算力 → 新 GPU 接入指南”可查看组合，再点击“接入实例”。
-2. 填入 AutoDL 的 SSH 地址、端口、账号、密码，以及**初始化最后输出的 Python 路径和工作目录**。
-3. 检查结果逐项显示系统/Python、版本组合、空间、GPU运算及四类权重。旧版只检查import的READY记录需重新检查。
-4. 算法训练选择该实例，再选择“系统基础模型”或“算法指定模型（必须已存入 MinIO）”。
-5. 用独立且正确划分的小数据集分别验收所需训练类型，确认日志、进度、停止确认、PT 和类别文件回存及下载。
-   环境探测包含极小的张量运算，不等同真实训练验收，也不验证模型精度或最大可用 batch。
+这里准备的是四类训练环境，默认产物为 PT 和类别文件。OM 是面向指定设备/芯片的另一步转换，
+需要平台管理员单独准备匹配的转换工具链、目标芯片支持和转换服务；它不是接入 GPU 或开始训练的前提。
+当前可选 CPU OM 服务只覆盖已支持的 Hi3519DV500 目标检测路径，不能推断四类模型均可转 OM，
+也不代表新接入 GPU 已接通 ONNX、OM 或 RKNN 全链路。不要把 OM/Ascend 工具安装成所有训练节点的必需项。
 
-本期 AutoDL 提供四类正式训练。线上智能标注、自动租用/开关机以及 ONNX/OM/RKNN 转换仍不在此初始化范围；
-不能因为依赖安装成功就宣称这些功能已接通。旧默认 GPU、旧模型归档和转换兼容路径依然存在，服务于原部署，
-不是公共接入流程的必需条件。
-
-2026-09-30验收：驱动识别RTX4080SUPER，Python3.10.21、Torch2.5.1+cu124、Torchvision0.20.1+cu124、Ultralytics8.3.240。
-四类各1轮及指定检测PT再次训练均完成；PT/类别从训练与模型入口下载哈希一致，四类PT可重新加载；排队取消和运行中停止通过。
-详细图文和日志位于本地`codex/autodl-acceptance/AutoDL闭环测试图文记录.md`。训练列表详细评估指标尚未接通本轮云训练回写，
-合成小样本不证明业务精度；不把本次结果扩展为所有GPU/模型/故障场景都已验收。
+本指南依据仓库当前初始化脚本、环境探针和正式训练链路核对；新GPU、全新系统镜像及受限网络仍需现场检查和小样本验收。

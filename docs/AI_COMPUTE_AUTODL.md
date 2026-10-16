@@ -1,11 +1,22 @@
-# AutoDL 普通实例接入（第一期）
+# 用户自接 SSH 算力与 AutoDL 接入
 
-入口：**AI 算力调度 → 线上算力**。每个租户登记自己的已开机 AutoDL 普通容器实例，再在算法训练的“训练算力”中选择实例。
+入口：**AI 算力调度 → 算力管理 → 接入服务器**。当前正常 VLS 登录用户可以自行登记个人已开机 GPU 服务器（AutoDL、其他云或自建），按当前租户和本人隔离，再在算法训练中选择该实际节点。
 
-面向首次部署或新购买实例，请先阅读[新 GPU 接入指南](./NEW_GPU_ONBOARDING.md)，运行仓库中的
+面向从新服务器开始配置的用户，请先阅读[用户自接 GPU 服务器指南](./NEW_GPU_ONBOARDING.md)，平台“接入指南”展示同一文档。按实际驱动与GPU选择配置并运行仓库中的
 `tools/compute/bootstrap-autodl.sh`。P100 是项目团队开发测试设备，不是用户运行依赖。
 
 本期范围为图像分类、物体检测、实例分割、语义分割训练，以及 PT 和类别 YAML 回存平台。普通实例通过 SSH 密码接入，不绑定开发者 Token、不自动同步实例。普通实例没有管理 API；PRO 的账号/API 接入是后续能力。官方依据：[普通与 PRO 对比](https://api.autodl.com/docs/instance_pro/)、[普通实例环境](https://api.autodl.com/docs/env/)、[PRO API](https://api.autodl.com/docs/instance_pro_api/)。
+
+## 自接与市场权限边界（2026-10-16）
+
+自接SSH不要求独立平台市场授权或厂商API Token。`/vlsCompute/my-nodes` 的创建/更新/环境检查/移除只面向当前已登录用户的私人节点；
+新归属由后端从可信VLS用户与租户生成，客户端不能指定。只支持自助密码认证，拒绝公共节点/公共别名、公司共享节点和部署密钥创建。
+管理者原`configure/publish/power/manage-all`权限继续用于原管理接口，普通用户不因此获得厂商API、公共发布或启停能力。
+旧平台主体归属保留原证明路径，不自动回填无主记录；新私人训练使用当前租户及持久任务创建者访问路径，公共训练仍核验平台身份/占用/费用。
+
+`保存并检查环境`只登记并探测，不安装依赖。自建服务器先按指南准备驱动、SSH/SFTP、Conda、独立Python3.10及四类模型缓存；
+平台负责下发正式训练脚本、经后端上传训练包并取回PT/类别归档。默认仅普通公网SSH接入，通用私网接入尚无自助配置。
+本地单元/隔离数据库与浏览器模拟验证见`codex/compute-onboarding-20261016/RESULTS.md`；源码修复不表示现有运行JVM已更新。
 
 ## 使用前准备
 
@@ -42,7 +53,7 @@ vlstream:
 
 ### 操作步骤
 
-1. 点击“接入实例”，粘贴 `ssh -p 端口 用户名@主机` 或逐项填写，输入 SSH 密码、Python 路径、工作目录和 GPU 编号。
+1. 点击“接入服务器”，粘贴 `ssh -p 端口 用户名@主机` 或逐项填写，输入 SSH 密码、Python 路径、工作目录和 GPU 编号。
 2. 保存后检查连接与环境。检查读取 CUDA/GPU、库版本和可用磁盘；通过后实例显示“可训练”。这是环境检查，不是训练成功证明。
 3. 数据集先完成标注和训练/验证划分。线上训练不要求默认 GPU 主机上的 `dataset_path`，也不会改变原有数据集发布路径。
 4. 创建训练任务，在训练配置中选择 AutoDL 实例和数据集。四种算法和标注类型必须匹配。提交后固定实例、参数和数据集版本快照，后台先将完整训练包保存并校验到 MinIO，再准备所选实例的本轮独立目录；重试使用同一固定包。该能力还需执行迁移 026，详见 `docs/dataset-import/TRAINING_DATASET_STORAGE.md`。
@@ -75,3 +86,11 @@ vlstream:
 本轮 Java 8 隔离编译与 53 项定向测试、6 项 Linux 进程测试、前端构建及浏览器模拟接口操作通过。隔离 MySQL 中实际执行了新迁移及队列事务；新增页面/API 的 ESLint 通过，既有页面未新增问题。证据保存于 `codex/autodl/RESULTS.md`。Linux 测试中四类训练函数使用可控替身，验证参数、进程、产物及状态协议，不代表真实 GPU 训练或模型精度。
 
 未修改当前业务数据库、未重启用户业务后端、未连接或开机真实 AutoDL 实例。正式验收仍需在用户实例上完成：环境检查 → 真实数据上传 → 四类各一次小规模 GPU 训练 → 停止/断线恢复 → PT 和类别文件回存并下载核验。
+
+### 2026-10-15 本地AutoDL Pro部署身份（源码已接入，默认关闭）
+
+新增配置前缀vlstream.compute.autodl-local-ssh，默认enabled=false、environment-id为空、bindings为空。每条管理员绑定包含id、tenant-id、management-owner-subject、instance-id、host、port、username、host-key、public-key-fingerprint、private-key-file。只允许localhost环境、PRIVATE/EXTERNAL/INSTANCE_EXCLUSIVE、autodl/root，保留公网DNS和严格ED25519 host pin；后台身份模式不能提交密码，浏览器不能提交私钥或路径，公共别名/收费/共享/跨主体均拒绝。
+
+如后续获准启用，本机VLS后端JSch必须读取已批准本地私钥到进程内存；仅文件引用并不免除持续使用授权。私钥不能上传VM、DB或仓库。此前允许给目标root安装SSH公钥，不代表允许启用本机后端持久认证。当前没有填写真实tenant/主体/路径绑定、开启enabled或登记节点；这些具体动作仍须单独批准。原P100固定身份和AutoDL厂商API凭据未更改。
+
+此SSH身份供训练/探针/SFTP；厂商API token另用于Pro status/snapshot/list/电源接口，沿用既有后端加密凭据与总开关，本项不填token、不调用厂商接口或开关机，不改收费门禁。新增blackwell28版本及独立实机证据见NEW_GPU_ONBOARDING.md；完整行为和失败分支见根BUSINESS_PROCESSES.md。平台MinIO/模型/DB队列与重连尚未现场验收，不把离线替身当真实闭环。
