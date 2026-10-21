@@ -225,7 +225,8 @@ Docker Compose 示例里的 MinIO 用户名、密码和 Bucket 都必须替换�
 | `VLSTREAM_MQTT_PORT` | 是 | MQTT 端口 |
 | `VLSTREAM_MQTT_USERNAME` | 是 | MQTT 用户名 |
 | `VLSTREAM_MQTT_PASSWORD` | 是 | MQTT 密码 |
-| `VLSTREAM_MQTT_CLIENT_ID_PREFIX` | 推荐 | 客户端 ID 前缀；多实例部署必须避免冲突 |
+| `VLSTREAM_MODEL_DISPATCH_MQTT_CLIENT_ID` | 是 | VLS 常驻事件/模型总线 ID；同 Broker 内各环境、副本及 WVP 必须唯一 |
+| `VLSTREAM_MQTT_CLIENT_ID_PREFIX` | 推荐 | 临时控制发布连接前缀，实际 ID 追加 UUID；不替代常驻连接 ID |
 | `VLSTREAM_MQTT_QOS` | 按设备协议 | QoS，通常为 `0` 或 `1` |
 | `VLSTREAM_MQTT_KEEP_ALIVE_SECONDS` | 否 | 心跳时间 |
 | `VLSTREAM_MQTT_CONNECTION_TIMEOUT_SECONDS` | 否 | 连接超时 |
@@ -233,7 +234,6 @@ Docker Compose 示例里的 MinIO 用户名、密码和 Bucket 都必须替换�
 Topic 必须与设备固件或边缘端保持一致：
 
 ```text
-VLSTREAM_MQTT_TOPIC_PREFIX
 VLSTREAM_MQTT_DISPATCH_ALGORITHMS_TOPIC
 VLSTREAM_MQTT_TOPIC_CAMERA_DISPLAY
 VLSTREAM_MQTT_TOPIC_CAMERA_OSD
@@ -256,7 +256,6 @@ VLSTREAM_MQTT_TOPIC_RECORD_EVENT
 | `VLSTREAM_RTSP_SEGMENT_SECONDS` | 单个录像切片秒数 |
 | `VLSTREAM_RTSP_PROCESS_STOP_WAIT_SECONDS` | 停止进程等待秒数 |
 | `VLSTREAM_RTSP_STALE_FILE_SECONDS` | 文件稳定后再同步的等待秒数 |
-| `VLSTREAM_RTSP_REFRESH_INTERVAL_MILLIS` | 已完成录像文件扫描与同步的周期，单位毫秒 |
 
 部署前检查：
 
@@ -265,7 +264,7 @@ VLSTREAM_MQTT_TOPIC_RECORD_EVENT
 - 容器部署时已经挂载持久化目录。
 - RTSP 地址能从后端服务器网络访问。
 
-`VLSTREAM_RTSP_REFRESH_INTERVAL_MILLIS` 已绑定到代码实际读取的 `vlstream.rtsp-recording.record-sync-interval-millis`。
+录像文件扫描与同步仍由 `vlstream.rtsp-recording.record-sync-interval-millis` 控制（默认 10000 毫秒），可在外部 YAML 或命令行覆盖。旧 refresh 配置未被运行代码读取，现已移除。
 
 ### 6.6 旧 recording/stream 配置
 
@@ -445,7 +444,6 @@ VLSTREAM_RTSP_RECORDING_ENABLED=true
 VLSTREAM_RTSP_FFMPEG_PATH=/usr/bin/ffmpeg
 VLSTREAM_RTSP_STORAGE_PATH=/srv/vlstream/recordings
 VLSTREAM_RTSP_SEGMENT_SECONDS=300
-VLSTREAM_RTSP_REFRESH_INTERVAL_MILLIS=10000
 
 VLS_SINGLE_TENANT_ID=000000
 VLS_APAAS_SYNC_ENABLED=false
@@ -509,3 +507,10 @@ VITE_BLADE_AUTH_PUBLIC_KEY=<your-sm2-public-key>
 2. 使旧 Token、Access Key、SSH/MQTT 密码失效。
 3. 将新凭据迁移到部署平台 Secret。
 4. 必要时清理 Git 历史，但不能用清理历史代替服务端轮换。
+
+## ZLM 浏览器播放与前端打包
+
+WVP预览授权成功后仍须确认ZLM的ICE候选可达。可选 `VITE_ZLM_API_BASE_URL`、
+`VITE_ZLM_RTC_CAND_TCP`、`VITE_ZLM_RTC_CAND_UDP` 仅由目标部署配置，空值保留原链路；
+在目标构建作业或独立checkout配置后继续使用原 `npm run build`，不把公司内网地址写入通用默认。
+完整变量、production/test隔离、端口映射、后端边界和验收步骤见[ZLM浏览器播放配置](ZLM_BROWSER_PLAYBACK.md)。

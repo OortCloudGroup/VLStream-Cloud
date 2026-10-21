@@ -23,6 +23,11 @@ AI 训练、转换、Hi3519DV500、模型下发和 GPU 调度还须读取本地�
 
 ## 2. 一体化产品边界与运行依赖
 
+**架构约束（2026-10-20 再确认）：VLS 与 WVP 组成一体化系统，VLS 必须依赖 WVP 的设备中心。**
+两个代码仓库不是可以各自定义业务规则的独立产品。设备或协议职责迁移时，必须同步认证、
+单/多租户模式、默认顶级租户、权限与部门范围、设备归属及内部查询契约，并在两个项目验证。
+组件可以保留各自的部署参数，但参数含义和最终业务结果必须一致；不能仅迁移接口而遗漏共通规则。
+
 `VLStream-Cloud` 与相邻的 `apaas-wvp-server` 是同一产品中互相依赖的两个项目。
 VLS 提供业务控制台与 AI/租户业务，WVP 提供权威视频设备中心；两套前端可调用同一 WVP 能力，
 独立 WVP 保留自身登录、部门筛选、导出、分类及协议接入，不因此获得 VLS 专有算法、模型删除或 IPC 隧道能力。
@@ -220,6 +225,35 @@ VLS 本地会话仍用于业务认证及 WVP 联邦验证。大小写别名先�
 
 ### 4.1 初始化、归属和统一目录
 
+2026-10-20 MQTT 归属修复：正式 WVP 已成功订阅并处理状态，设备页实际查询租户为
+`0e391fd7-1033-4f09-88c0-187582fee462`，但三台已登记设备的归属为单租户种子 `000000`，
+导致列表不可见。原 VLS 旧状态链已有多租户默认回退，实际承接状态的 WVP 默认配置仍为
+`000000`，且心跳保留已有归属；这是跨项目共通规则漏接，不能通过放宽查询隔离修复。
+经用户明确授权，重新锁定并校验行 ID 与设备 ID 后，在一个事务中只将设备行 7、8、9 的
+`tenant_id` 从 `000000` 改为上述默认顶级租户；关联源/任务无独立租户列，设备行 ID 及关联保持。
+三台分别为 `AETY-00-89NN-9AO4-00000005`（字母 O）、`AETY-00-2N27-58QA-00000006`、
+`AETY-00-225T-S4AY-00000007`。正式设备页刷新显示 3 条，核验时两台在线、一台离线，未改在线字段、
+权限、其他设备或 Flyway 历史，也未预览或发设备指令。原值保存在本地
+`codex/wvp-tenant-20261020/production-originals.tsv`，复核和事务工具位于同目录。
+本次存量修复已生效；WVP 新设备默认规则的本地修正已通过24项定向测试及13模块编译，尚未发布，
+不代表线上新设备默认值已经改变。WVP与VLS共用业务模式 `token.tenantType` / `SSO_TENANT_TYPE`，
+缺省 `single` 保持默认 `000000`；多租户发布须明确使用 `multi`，按
+`vlstream.device.multi-tenant-default-tenant-id` / `VLSTREAM_DEVICE_MULTI_TENANT_DEFAULT_TENANT_ID`
+选择已确认顶级租户（默认即上述UUID）。这与WVP本地/SSO登录模式独立，不能相互推断。
+`VLSTREAM_DEVICE_MULTI_TENANT_DEFAULT_TENANT_ID` 是可选覆盖；沿用该UUID时无需手动配置，
+只须保证业务模式确为 `multi`，不能把模式要求误写成所有默认值都必须显式设置。
+MQTT写入、列表旧空归属解释与内部设备摘要共用同一默认解析；未知模式、无效默认值或多租户
+误设 `000000` 明确失败。已有其他租户归属和绑定证明要求继续保留，不能批量迁移所有 `000000` 设备。
+
+2026-10-21 本地/VM只读复核：两边实际VLS均为single，使用同一Broker但独立WVP数据库；
+目标00000005在两库均持续接收相同真实心跳，不能把本地列表0条判为MQTT未达。本地WVP当前
+实际使用的库与10月20日归属调整提交回执的服务器标识/库名/行7一致，保留上述顶级租户UUID归属，而当前本地
+会话为000000；VM独立库保留000000。原授权明确针对正式三行，不能为恢复本地测试擅自回滚
+可能仍由正式环境使用的归属或取消查询隔离。18:19:53后该目标正常心跳停止，两库均收离线遗嘱
+并按180秒阈值超时，18:29目标两边均离线；设备掉线原因未由平台证实。本轮无归属/配置/服务
+写操作，未签发激活码；源码级9项规则检查通过，不代表冻结运行工件已加载multi新增分支。
+详细证据与原授权审计见 `codex/ipc-mqtt-diagnosis-20261021/RESULTS.md`，业务规则未改变。
+
 设备出厂写入唯一标识、设备密钥、MQTT 与协议配置；上线后上报状态/能力，平台校验身份与业务绑定，
 视频设备/通道进入 WVP。VLStream 状态快照归 WVP，VLS 保存自身租户/用户关系。
 显式初始化租户使用环境签发的设备/租户 HMAC 绑定凭据，设备不能通过后续心跳改变已有归属。
@@ -239,7 +273,7 @@ WVP 的 VLStream 列表、详情、视频源、预览、固件及分类设备关
 
 细则见 [设备租户绑定契约](../apaas-wvp-server/docs/VLSTREAM_TENANT_BINDING.md)（WVP `V1_2_9`）。
 
-2026-10-16 RTSP/ONVIF 多租户接入修正（本地源码，待发布）：未知归属主动上报的 VLStream
+2026-10-16 RTSP/ONVIF 多租户接入修正（生产 WVP 已由用户更新，浏览器媒体链路待修复）：未知归属主动上报的 VLStream
 设备继续沿上述默认租户初始化规则；VLS 单租户默认设备租户与多租户的
 `vlstream.native-device.multi-tenant-default-tenant-id` 是两项配置。现有多租户代码先保留已知
 设备映射，无法识别时才用多租户默认值；没有从顶级租户标识推导任意跨租户设备权限，
@@ -248,11 +282,10 @@ WVP 的 VLStream 列表、详情、视频源、预览、固件及分类设备关
 认证用户手动创建 RTSP/ONVIF 时，WVP 新增可空逐行 tenant_id，由服务端可信 LoginUser 写入，
 客户端不能指定或改派。列表/地图/总数、详情、改删、预览/续租/停止及适用的分类/广场/云台行读取
 共用该归属和既有部门/接口权限。原生本地无租户会话兼容配置默认设备租户，联邦缺租户拒绝。
-新增 Flyway V1_2_13 补列和索引；用户已确认所有未归属的RTSP/ONVIF历史记录归多租户默认租户。
-已只读核实生产VLS multi默认为0e391fd7-1033-4f09-88c0-187582fee462，WVP旧全局默认000000有差异。
-候选以独立PROTOCOL_DEVICE_LEGACY_TENANT_ID给迁移占位符，只回填两表NULL/精确空串，所有非空值保留，
-不泛扩其他业务表或改WVP全局默认，不根据当前账号/IP分配；single未设置新参数时仍兼容000000。
-12场景标签与13同批已获用户同意，生产迁移仍未执行；本次只需WVP后端，已更新前端和VLS后端无需配套变更。
+新增Flyway V1_2_13只补两协议tenant_id列和索引，保留所有归属及历史空值。用户最终选择普通JAR更新且不新增环境变量，候选已移除临时参数和占位符；缺变量不会自动回填000000，也不在通用代码写死生产租户。
+用户更新 WVP 镜像 261016200721 后，实际 WVP 库 Flyway12/13 均成功。已按授权备份后在一次事务内将 RTSP 4–8、ONVIF 23/24 的 NULL/精确空归属补到核实的多租户默认 UUID；非空归属与原更新时间保留，不改其他业务表或 Flyway 历史。12:43 UTC 独立只读复核两表分别5/2条均匹配批准租户，空归属为0。
+本次归属403修复仅需 WVP 后端且不新增环境变量。生产 ONVIF24、RTSP8 的独立 preview 已实测 HTTP200/业务200，失败清理 DELETE 均200；10月16日当时网页 SDP 请求直接访问集群名 apaas-zlmediakit:4443，浏览器 ERR_NAME_NOT_RESOLVED，未取得 answer，尚未进入 ICE 验证。该历史证据不以心跳/在线或 preview 成功冒称浏览器出画。
+2026-10-19跨用户播放排查（本地候选，未部署）：用户确认更新前端后hjk1可播放，另一账号首次POST /rtsp/RtspDevice/8/preview返回标准HTTP500。生产13:57:06.145异常栈已确认StrictHttpFirewall在CORS枚举请求头时拒绝用户JSON中的U+0088/U+0091控制字符；日志未记录URI或头名，请求关联依据用户13:57:06.146时间。字节形态及合成回归符合中文UTF-8被Latin-1解释；本地平台公共代码明确用户JSON头契约为x-userinfo-kong，但实际网关插件编码位置及该次头名未被直接观测。WVP不消费该头，候选仅在Spring Security之前移除这一个未使用的元数据头，不读取其身份、不放宽防火墙，原令牌、租户、部门及租约校验保持。真实StrictHttpFirewall/CORS、ASCII/中文/乱码、其他头非法控制字符、大小写和多值、默认/自定义Security排序以及原双令牌/跨租户回归累计32项通过（最终仅重跑12项头部回归，其余20项代码未变）。本地Tomcat 9.0.102实际Request.getHeader字节探针复现UTF-8原始JSON头按ISO-8859-1解码产生相同控制字符；不代表已取得线上原始头字节或证明SSO响应有误。WVP候选是防御措施，真正编码责任仍需线上插件的接口及注入代码确定，业务鉴权与租户流程保持。此前独立认证异常候选已归档并撤出应用源码。本次需更新WVP后端，无新环境变量、业务DB变更、发布或重启；部署后的非ASCII用户播放仍须现场验收。证据见codex/wvp-user500-20261019/。
 详见 [协议设备租户说明](../apaas-wvp-server/docs/PROTOCOL_DEVICE_TENANCY.md)。本地验证与部署边界
 见 `codex/wvp-tenant-20261016/`；未以测试替代生产 SSO、媒体或历史归属验收。
 
@@ -491,13 +524,43 @@ ICE 短暂 `disconnected` 保留 8 秒恢复窗口；持续中断、失败、呼
 关闭须释放心跳、重连、信令、DataChannel、PeerConnection 和媒体轨道。
 
 ZLM 健康不代表 CameraRTC 健康；格式化播放 URL 不代表媒体存在。WVP 的 VLStream/自定义目录加载
-不依赖 ZLM 健康查询成功，目录请求自身失败仍需明确错误。VLS `VlsZlmService` 的按需代理能力保留，
+不依赖 ZLM 健康查询成功，目录请求自身失败仍需明确错误。VLS 自有旧预览代理已退役（2026-10-20 本地源码），
 新目录/通道仍以 WVP 为准。出画、播放进度与关闭资源回收须分别验收。
+
+2026-10-21 列表/媒体误报修复（本地源码，未部署）：自定义列表与 WVP 媒体探测独立更新，
+列表的权限/租户失败保留请求失败提示，不再展示持久红色归属告警，也不把成功媒体状态改为不可用。
+自定义与 VLStream 页初始为未知，探测中/探测失败单独显示，仅有效布尔值 false 表示不可用；
+统一解开重复 WVP 响应包装并拒绝内层业务错误，媒体状态不能代替实际出画验收。
+正式默认短测 RTSP/ONVIF 创建与释放均业务 200，SDP code 0，但ICE检查无响应，答案仅含集群内部
+172.20.37.222:8000。后续独立预览仅以本次请求 cand_tcp=192.168.50.14:32742 使用既有NodePort，
+两协议ICE connected、实帧分别1920×1080/704×480、关闭释放200；未修改线上配置。
+该候选仅验当前可达内网的客户端，待审核前端候选工件未部署，不宣称公网路径已验收。
+不修改网络、网关、数据库或线上服务；证据见 `codex/vls-media-regression-20261021/RESULTS.md`。
+标准 `npm run build` 按目标部署注入可选候选配置；通用默认留空，production/test隔离，
+不为VM、本地或开源目标设置公司内网值。说明见 [ZLM浏览器播放配置](docs/ZLM_BROWSER_PLAYBACK.md)。
+
+2026-10-20 旧预览清理：当前 `/custom/device` 与视频广场的自定义来源使用 WVP 查询、预览租约和媒体节点。
+本地移除 VLS `/vlsDeviceInfo/{id}/preview`、legacy `/vlsMqttDevice` 下的创建/关闭预览和媒体状态接口，
+以及其专有 ZLM 客户端、配置和 VLS 容器注入；不保留 Java 默认地址回退。旧 `/device-management` 的
+设备编辑、摄像机设置及录像策略继续保留，RTSP/RTMP 播放只引导至当前自定义页，由用户重新选择 WVP 设备，
+不混用两套行 ID，不自动创建媒体会话。旧地址不再提供 VLS 预览；WVP 创建失败、离线、签名或网络故障
+仍由 WVP 和现有播放器报告，不回退到 VLS 旧代理。事件/模型 MQTT 总线及控制 Topic、事件媒体上传、
+WVP 预览租约与 ZLM 浏览器 URL 处理、VLS FFmpeg 录像均保留。仅移除无消费的 MQTT topic-prefix 和
+已注释调度使用的 RTSP refresh 配置；实际 record-sync 调度仍默认 10 秒，可由外部属性覆盖。
+此项不更改设备/媒体数据归属和数据库，未部署或重启服务；验证证据见
+[配置清理记录](docs/backend-yaml-environment-simplification.md)。
 
 浏览器 ZLM 播放可选 `VITE_ZLM_API_BASE_URL` 将 SDP 请求经已有公网代理；另可选
 `VITE_ZLM_RTC_LAN_HOST` 为同一已发布 UDP 端口补充内网候选并保留原公网候选，缺省保持原直连。
 共享 ZLM 播放器与 RTSP 播放器均支持，不改变设备数据、ZLM 端口/配置或 Nginx。
 2026-10-10 记录 22 项路由回归及实际自定义实播通过，未验 RTSP 推流 `localhost7080` 分支。
+
+2026-10-16 新增可选构建配置 `VITE_ZLM_RTC_CAND_UDP`、`VITE_ZLM_RTC_CAND_TCP`，
+由共享浏览器 URL 处理将已核实的 `IPv4:外部端口` 分别传为 ZLM SDP 请求的 `cand_udp/cand_tcp`；
+已保存生产版本 `1da300c` 支持该参数。仅适用于 ZLM 链路，不改变 CameraRTC、设备归属或预览租约。
+未配置保持原候选；非法地址/端口在请求前明确报错，生产入口尚未验证时不得自动填入 Pod/Node 地址。
+此功能不修改 ZLM 监听、Service、hook 或防火墙；隔离测试与构建证据见 `codex/zlm-signaling-20261016/`，
+线上候选对、端口可达性、真实出画与关闭释放仍须单独验收，源码能力不代表已经发布。
 
 ### 5.2.1 RTSP/ONVIF 协议可用性与本地预览（2026-10-11）
 
@@ -586,7 +649,14 @@ WVP 持有权威 ID/租户/在线，VLS Tunnel 持有绑定、Agent、期望路�
 重启/断网恢复、凭据轮换与 24 小时稳定性。专项交付见 [IPC_BOARD_HANDOFF.md](docs/IPC_BOARD_HANDOFF.md)；
 既有专用 CA、冻结的 AArch64 musl rathole v0.5.0 联调包仅是交付准备，不代表 Agent 已注册。控制面迁移为 `V1_2_0_019`。本机模拟链路已记录 303/Cookie 代理与一次性令牌复用 401，模拟端点已吊销/清理；空路由须包含 `server.services` 表。续期/租户改造的隔离测试不证明运行环境已加载新版本。
 
-## 7. 算法、数据来源与标注
+2026-10-20 本机联调环境修复：用户批准后将平台入口迁移为 `https://192.168.75.11:8444`、Rathole `192.168.75.11:2333`，
+保留原 CA/私钥/Noise/内部凭据，仅补发含新 IP 的服务端证书；8080 保持原 JAR、参数及其他配置重启，3000/9080 不变。
+HTTPS 严格 CA/主机名验证、健康200、Agent无凭据401、内部路径404和浏览器无Cookie401通过；网关仅回环监听，防火墙未变。
+摄像机 `192.168.75.99:8000` 实读编号 `AETY-00-89NN-9AO4-00000005`，与九月旧测试设备不同；板端仍为旧地址、Agent未启动，
+没有保存板端表单、签发/消费激活码或提交注册。真实注册/反向隧道/本地Web仍待单独确认操作及端到端验收，不能用平台健康替代。
+本次复核业务流程不变，未修改设备租户或MQTT配置；备份和证据见本地 `codex/ipc-lan-runtime/REPAIR-20261020.md`。
+
+  ## 7. 算法、数据来源与标注
 
 ### 7.1 算法定义和分类
 
@@ -595,6 +665,15 @@ WVP 持有权威 ID/租户/在线，VLS Tunnel 持有绑定、Agent、期望路�
 可按分类及全部下级、名称筛选，分页接口保留技术类型筛选。
 分类支持同级/下级新增、编辑、排序及租户级树状/平铺设置；平铺可选择或创建直接下级并横向展示，隐藏侧树。
 系统预置、有下级或有关联算法的分类不可删；停用连同下级隐藏但可恢复，不改变 `detect/segment/classify/pose/obb` 技术类型。
+
+2026-10-16 生产数据修复：用户确认多租户默认租户为 `0e391fd7-1033-4f09-88c0-187582fee462`；
+`000000` 是原单租户迁移的固定种子租户。004/005 已执行，但不会随业务租户登录再次初始化。
+经用户批准，仅为该多租户默认租户补齐正式 9 类、111 条算法定义，保留原“测试”分类/算法各 1 条；
+其他租户、权限、数据归属和 Flyway 历史保持不变。真实接口及页面已核对为 10 类、112 条，
+隔离 MySQL 的首次、重复、冲突、关联与回滚 13 项通过。原正式定义有意不含 PT/ONNX 权重，
+目录启用不代表可直接推理或下发；真实模型仍按训练/导入、制品校验和下发流程处理。
+未来新租户的可信登记及版本化默认目录初始化仍待实现，不能据此次修复开放跨租户读取或自动补齐其他既有租户。
+证据与最小后续方案见 `codex/algorithm-prod-20261016/RESULTS.md`、`MYSQL_VALIDATION.md`。
 
 ### 7.2 数据集和导入
 
@@ -1185,9 +1264,41 @@ WVP 不可达、设备/租户失败、已有媒体校验失败仍拒；外部图
 主动安全 `oort_task_event.status` 的 tinyint(1) 值 1/2 为已完成/正在处理；JDBC 必须
 `tinyInt1isBit=false`，避免读为 Boolean 后错误显示未知状态，发布内置/外部 DB 模板都须保留该参数。
 
+### 11.3 主动安全事件 MP4（2026-10-19，本地实现）
+
+入口沿用单租户 VM 的设备 `upload-url → PUT → struct/faceEvent MQTT` 链路，不改为 workup 多租户地址。
+参与方仍为板端、VLS、WVP 设备归属查询和私有 MinIO/S3；WVP 无本次接口变更。
+新增仅 `video/mp4`，每事件一张抓拍图片/一个 MP4 可独立或一起上报，媒体按登记 MIME 分类，
+逐项验证设备/租户、对象 MIME、实际字节数、SHA-256；MP4 另验完整容器、媒体数据和视频轨道，
+不走图片解码。保留原三类图片和 10 MiB 上限，视频独立默认 100 MiB，可由 `max-video-bytes` 调整。
+
+所有媒体的 `ISSUED → BOUND` 与事件入库同事务，任一失败返回 FAILED 并回滚数据库绑定；
+同消息/事件仍幂等，不支持成功后另发同 ID 消息追加视频。启用图片复核时仍须抓拍图片，
+复核只读取图片、正式入库保留视频；缺图片明确失败，不以视频绕过复核。
+视频由校验过的临时文件存服务端证据副本，页面只签证据副本，原 PUT URL 后续覆盖不改变已绑定视频。
+每视频存储约两份对象，校验临时磁盘按并发/文件上限规划，流式读取不把整个 MP4 放入 Java 堆。
+
+主动安全原 JSON `video` 保存稳定媒体引用，列表和详情按可信租户重签，返回既有页面所需 `videoUrl`
+及下载所需 `videoMediaId`；原“录制视频”入口、详情播放与短期附件下载复用现有事件页面。
+签名/存储失败不伪造地址；本次临时文件关闭清理，原上传件、未绑定副本按既有保留策略留存，不新增物理清理。
+主事件逻辑删除、原关系清理和媒体保留规则均未修改。无需新增表列或迁移。
+
+验证使用真实 H.264 MP4、三类图片、专用 loopback MinIO 和 H2 内存库，覆盖非法 MIME/超限/摘要不符、
+伪造或截断视频、跨设备/租户引用、多媒体失败事务回滚和原图片兼容；生产构建及页面隔离验证记录见
+本工作项 `codex/event-mp4-20261019/RESULTS.md`。未部署 VM、未写真实设备/业务库，不代表真实板端上线验收。
+板端步骤及请求见 [DEVICE_EVENT_MP4_UPLOAD.md](docs/DEVICE_EVENT_MP4_UPLOAD.md)。
+
 ## 12. OortCloud 与视觉大模型复核
 
 ### 12.1 会话、账户与 Credits
+
+单租户用户菜单在“个人设置”与“退出登录”之间提供“OortCloud 云账号”，通过现有 Vue Router 跳转
+到 `/cloud-platform?tab=user`，查看“用户信息”或“我上传的模型”。页面沿用独立 OortCloud 会话；
+缺少会话时进入既有平台登录流程，由用户完成授权，不自动绑定或收费。此入口不改变本地 VLS 身份、
+数据归属、后台权限和顶部 OortCloud 额度弹窗，也不新增接口或数据库变更。
+验证（2026-10-21，本地未部署）：生产构建通过；Edge 实测菜单位置、个人设置与菜单收起、返回后重开，
+云账号未登录时进入现有平台登录页，未提交登录或授权。当前未复验云账号已登录分支；
+定向 ESLint 因仓库缺少配置文件未能执行。
 
 顶部 OortCloud 为账户入口，算法仓库“大模型管理”为提供商/测试入口。
 多租户所有已登录工作台用户均可见，单租户保留管理员显示条件；模式由后端 `/sso/v1/mode` 决定，
@@ -1326,7 +1437,7 @@ WVP 协议模块/前端在相邻项目，联动改动需分别确认两项目接
 | 标注/数据/智能标注 | `/algorithm-standard`、`/data-management`、`/dataset-annotation`、`/smart-annotation` | `VlsAlgorithmAnnotationController`、`VlsAnnotationImageController`、`VlsDataManagementController`、`DataManagementService`、`DataTransferService`、`DataTrainingPublisher` |
 | 训练/算力 | `/algorithm-training-platform`、`/algorithm-training`、线上算力、`/container-instances`、`/ssh-connection` | `VlsAlgorithmTrainingController`、`GpuTrainingSchedulerService`、算力/容器服务 |
 | 模型/下发 | `/algorithm-model`、算法下发/设备模型抽屉 | `VlsAlgorithmModelController`、`VlsDeviceInfoController`、`ModelDispatchService`、`OmConversionService` |
-| 视频/固件/设备 | `/vlstream/device`、`/monitoring-alarm`、`/video-playback`、WVP 协议页 | WVP API/OTA、`VlsVideoRecordController`、`VlsZlmService`、对应播放器 |
+| 视频/固件/设备 | `/vlstream/device`、`/monitoring-alarm`、`/video-playback`、WVP 协议页 | WVP API/OTA、`VlsVideoRecordController`、WVP 预览租约、对应播放器 |
 | 媒体/事件 | `/event-management`、安全事件/媒体详情 | `VlsDeviceMediaController`、`DeviceMediaUploadService`、`DeviceEventMqttHandler`、`ActiveSafetyEventReportService` |
 | 大模型 | `/llm-provider-management`、`/llm-review-tasks` | `VlsLlmReviewController`、`OpenAiVisionClient`、`LlmReviewTaskService/Worker` |
 | 场景/分析/工单 | `/scene-governance`、`/intelligent-analysis-request`、`/intelligent-analysis-result`、我的/待办/已办/可认领 | `VlsAnalysisRequestController`、场景服务、`ruoyi-flowable` |
@@ -1433,3 +1544,15 @@ VM Flyway044成功/checksum1152158574，真实公司目录已登记pro-7920a22db
 ### 2026-10-16 公司6000D登录现场只读验收
 用户电脑现有Edge管理员会话已通过原生整页刷新取得可靠真实页面证据：市场三卡实际边界均381×411，完整可访问名称OortCloud RTX 6000D（当前单行视口省略）、收费暂未开放/待配置且只有管理；从该卡管理入口实看四节点列表，公司行只有配置详情。详情确认实例pro-7920a22db144、84GB、已知SSH地址、认证待配置、环境尚未通过平台检查、展示已发布及当前无法检查/启停/训练，已关闭未保存。此前跨屏截图阻塞已解决，不再要求父直接操作Windows；浏览器原窗口位置已恢复，无新身份登录/令牌或存储读取。
 训练任务页8条均已完成、活动阶段0；算法列表8项加载完成，但当前页面及UIAutomation树无可安全打开既有任务配置的操作，未新建任务，实际训练资源下拉框仍未验收。此前服务端selection排除/AOP回归仅为其独立后端证据。专用VM到Pro身份/真实连接、四类平台训练与MinIO归档/回读/清理/租约释放、资金闭环仍待办。本轮只读导航及详情，无部署/重启/配置或业务写入/Pro启停/训练/资金动作；已复核业务流程，流程未变。证据codex/company-pro-20261016/AUTHENTICATED_UI_ACCEPTANCE.md及authenticated-ui-acceptance.json，截图output/playwright/pro-unified-ui-20261016/。
+
+
+### 2026-10-19 6000D 控制台价格核验（只读、本地展示）
+在已登录 AutoDL Pro 实例列表只读查看 pro-7920a22db144：RTX6000D 84GB ×1卡、按量计费；配置费用现价 CNY 6.46/小时，划线原价6.80/小时，磁盘另列日费。该单卡实例当前整台配置小时价按×2为12.92元/小时。仅给市场已有节点792022144331380001及精确serverGroup、provider、GPU数量匹配的空售价记录显示“参考售价”和核验日期；已有额度售价优先，不重复翻倍，零/非法售价不被替换，免费P100不收费。来源为供应商控制台人工观察，不是自动更新或锁价承诺；Pro snapshot原值缩放仍未确认，未变更成本适配器、扣款/启动门禁、数据库、租户/独占/发布规则。使用前仍须重新核验有效成本和收费条件。
+
+### 2026-10-21 VLS个人计费阶段一（本地代码，收费关闭）
+新增compute/billing生产构件：后端可信actor与NewAPI self.id绑定对象、沿用既有报价的不可变快照、BigInteger有理数计量/个人余数、持久会话/连续区间/固定业务号与key/请求快照、租约/CAS发送与查单恢复。充值后统一原key+原业务号+原body；授权或资金失败保留风险/stop_requested，持续记录运行至确认终点。新增048只保存本地用量/指令，旧整周期意图/余数保留，双向模式守卫拒绝同usage重复结算。未对共享库执行迁移或启动/部署服务。
+默认external-billing.enabled=false；真实NewAPI适配器仅只读/查询，缺原子hold capture时硬性拒绝写入，mock成功也不能开启付费准入。没有新收费HTTP入口/定时器；安全停机要求已持久化，现有任务取消/厂商停机执行协调及ledger三方对账尚未接通，不能把stop_requested当已停机。既有付费开机/训练门禁不变。40项当前Java源码JUnit通过（临时H2/MySQL模式事务及本机HTTP假服务），另45项Node契约模型通过；不是MySQL或真实中转站资金验收。实际改动/未完成项见docs/EXTERNAL_BILLING_STAGE1.md，中转站问题集中见docs/NEWAPI_BILLING_BLOCKERS.md。无真实扣款、冻结、退款、充值、授权/凭据变更或收费GPU操作。
+
+### 2026-10-21 个人计费后续开发（当前源码，仍未启用收费）
+补齐默认关闭的ComputeBillingCoordinator周期计量/退避和ComputeBillingReconciliationService固定窗口/持久游标/不可变流水核对；正式GET /vlsCompute/billing/identity与POST /vlsCompute/billing/sessions/{usageId}/bind复用现有本地会话与同一已验证SSO proof，服务端读取NewAPI self.id及持久费率/config，不接客户端付款人或金额。ComputeBillingLifecycleService校验物理控制/占用代次，给本人任务设置既有cancel_requested，等待终态和归档后写已有ComputePowerWorker outbox；不直接杀进程/删数据/释放占用。只有供应商STOPPED观察才确认停止，缺精确事件按最后已证实运行样本保守截止，另存停止观察和不确定区间；请求排队不当成终态。续增049保存本地协调与对账状态，仅临时H2验证，048/049均未应用共享库。
+独立源码副本12模块完整Maven package成功，90项选定回归零失败/错误/跳过（62新增计费、28既有守卫）；包含实际协调器+实际取消/停机桥接+临时H2+mock供应商的连通链路。未覆盖共享target，未重启/部署、未触真实GPU/资金/授权/凭据。enabled与safetyStopEnabled默认false，真实capture仍硬性拒绝，mock成功也不开放付费；稳定hold/capture/撤销善后/纠错退款及真实账本验收仍见同一docs/NEWAPI_BILLING_BLOCKERS.md。当前完整说明见docs/EXTERNAL_BILLING_STAGE1.md，早期“未接周期/停机”的注记已由本条取代。
