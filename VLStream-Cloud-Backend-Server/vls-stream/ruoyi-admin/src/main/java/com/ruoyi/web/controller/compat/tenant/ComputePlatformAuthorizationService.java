@@ -63,6 +63,14 @@ public class ComputePlatformAuthorizationService implements ComputePlatformAutho
         }
     }
     protected HttpServletRequest currentRequest() { return ServletUtils.getRequest(); }
+    /** Same request, same independently verified SSO proof; never accepts a client payer id. */
+    public com.ruoyi.vlstream.test.vlstream.compute.billing.BillingPayer billingPayer(
+            com.ruoyi.vlstream.test.vlstream.compute.billing.NewApiBillingClient billing) {
+        Context actor=requireIdentity();
+        String proof=originalPlatformToken(currentRequest());
+        if(proof==null)throw new com.ruoyi.common.exception.ServiceException("计费身份需要当前已验证的平台会话");
+        return billing.resolveSelf(actor,proof);
+    }
     protected String currentUserId() { return LoginHelper.getUserId(); }
     /** Compatibility wrappers normalize all auth headers to the local session.
      * Keep platform proof separate by reading the original inbound header;

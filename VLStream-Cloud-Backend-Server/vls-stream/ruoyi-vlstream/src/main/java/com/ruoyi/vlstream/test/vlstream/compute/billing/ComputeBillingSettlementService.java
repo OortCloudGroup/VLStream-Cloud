@@ -1,0 +1,261 @@
+package com.ruoyi.vlstream.test.vlstream.compute.billing;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Supplier;
+
+/** Durable VLS-side slice/outbox coordinator. No scheduler, HTTP entrypoint or paid-start enablement.
+ * All external I/O follows a committed local intent. Current real adapter cannot capture held funds. */
+@Service
+public class ComputeBillingSettlementService {
+    private final JdbcTemplate jdbc;
+    private final TransactionTemplate transactions;
+    private final ObjectMapper json;
+    private final ExternalBillingProperties properties;
+    private final Supplier<ExternalBillingGateway> gateways;
+
+    @Autowired
+    public ComputeBillingSettlementService(JdbcTemplate jdbc, PlatformTransactionManager manager, ObjectMapper json,
+                                           ExternalBillingProperties properties, ObjectProvider<ExternalBillingGateway> gateways) {
+        this(jdbc, manager, json, properties, gateways::getIfAvailable);
+    }
+    public ComputeBillingSettlementService(JdbcTemplate jdbc, PlatformTransactionManager manager, ObjectMapper json,
+                                           ExternalBillingProperties properties, Supplier<ExternalBillingGateway> gateways) {
+        this.jdbc = jdbc; this.transactions = new TransactionTemplate(manager); this.json = json;
+        this.properties = properties; this.gateways = gateways;
+    }
+
+    /** Bind only an existing, trusted, started usage. Does not create a grant, hold, wallet or cloud operation. */
+    public void bind(String usageId, BillingPayer payer, BillingSnapshot snapshot) {
+        transactions.execute(tx -> {
+            Map<String, Object> usage = usage(usageId);
+            if (!payer.actorId.equals(usage.get("opening_user_id")) || !payer.tenantId.equals(usage.get("tenant_id"))
+                || !payer.platformSubject.equals(usage.get("payer_account_ref"))) throw new IllegalArgumentException("Usage payer binding mismatch");
+            if (usage.get("billing_start_at") == null) throw new IllegalArgumentException("Confirmed running usage required");
+            try {
+                if (!json.readTree(String.valueOf(usage.get("rate_snapshot"))).equals(json.readTree(snapshot.json).path("accepted_rate")))
+                    throw new IllegalArgumentException("Accepted rate differs from usage snapshot");
+            } catch (java.io.IOException e) { throw new IllegalArgumentException("Invalid usage rate snapshot"); }
+            String merchant = properties.getMerchantId();
+            if (merchant == null || !merchant.matches("[A-Za-z0-9_-]{1,64}")) throw new IllegalArgumentException("Billing merchant required");
+            List<Map<String, Object>> prior = jdbc.queryForList("SELECT * FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE", usageId);
+            if (!prior.isEmpty()) {
+                Map<String, Object> row = prior.get(0);
+                if (!payer.userId.equals(row.get("payer_user_id")) || !snapshot.json.equals(row.get("accepted_snapshot")) || !merchant.equals(row.get("merchant_id")))
+                    throw new IllegalArgumentException("Immutable session binding conflict");
+                return null;
+            }
+            long start = ((Timestamp) usage.get("billing_start_at")).getTime(); snapshot.requireInterval(start, Math.addExact(start, 1));
+            // A legacy whole-period charge must never coexist with slices for the same usage.
+            if (!jdbc.queryForList("SELECT charge_key FROM vls_compute_charge WHERE usage_id=?", usageId).isEmpty())
+                throw new IllegalArgumentException("Legacy intent requires reconciliation before slice billing");
+            jdbc.update("INSERT INTO vls_compute_billing_session(usage_id,tenant_id,opening_user_id,merchant_id,payer_user_id,instance_ref,quota_unit,accepted_snapshot,metered_until_ms,last_running_ms) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                usageId, payer.tenantId, payer.actorId, merchant, payer.userId, usage.get("server_key"), snapshot.quotaUnit, snapshot.json, start, start);
+            jdbc.update("UPDATE vls_compute_usage SET billing_mode='SLICES' WHERE id=?", usageId);
+            return null;
+        });
+    }
+    /** Application binding entry: no client-supplied payer, price, amount or conversion. */
+    public void bindAcceptedUsage(String usageId, BillingPayer payer, JsonNode authoritativeConfig) {
+        Map<String, Object> usage = jdbc.queryForMap("SELECT rate_snapshot,billing_start_at FROM vls_compute_usage WHERE id=?", usageId);
+        try {
+            com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingRate rate = json.readValue(String.valueOf(usage.get("rate_snapshot")), com.ruoyi.vlstream.test.vlstream.compute.ComputeBillingRate.class);
+            Timestamp start = jdbc.queryForObject("SELECT billing_start_at FROM vls_compute_usage WHERE id=?", (rs, index) -> rs.getTimestamp(1), usageId);
+            if (start == null) throw new IllegalArgumentException("Confirmed running usage required");
+            bind(usageId, payer, BillingSnapshot.fromExistingRate(rate, authoritativeConfig, start.toInstant(), json));
+        } catch (java.io.IOException e) { throw new IllegalArgumentException("Invalid accepted usage rate"); }
+    }
+
+    /** No exact provider event is available here: charge only through the last proven running sample.
+     * Retain the later stopped observation independently rather than inventing an actual transition time. */
+    public void confirmPhysicalStop(String usageId, java.time.Instant observedAt) {
+        if (observedAt == null || observedAt.toEpochMilli() > System.currentTimeMillis()) throw new IllegalArgumentException("Invalid stopped observation");
+        transactions.execute(tx -> {
+            Map<String, Object> usage = usage(usageId);
+            Map<String, Object> session = jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE", usageId);
+            long end = number(session, "last_running_ms");
+            if (observedAt.toEpochMilli() < end) throw new IllegalArgumentException("Stopped observation precedes proven runtime");
+            Timestamp priorEnd=(Timestamp)usage.get("billing_end_at");
+            if(priorEnd!=null)end="PROVIDER_EVENT".equals(usage.get("stop_evidence"))?priorEnd.getTime():Math.min(end,priorEnd.getTime());
+            if(end>observedAt.toEpochMilli()||end<number(session,"metered_until_ms"))throw new IllegalStateException("Runtime end conflicts with sealed intervals");
+            jdbc.update("UPDATE vls_compute_usage SET state='STOPPED',billing_end_at=? WHERE id=?",new Timestamp(end),usageId);
+            jdbc.update("UPDATE vls_compute_billing_session SET last_running_ms=?,physical_stop_observed_ms=COALESCE(physical_stop_observed_ms,?),safety_state='STOP_CONFIRMED' WHERE usage_id=?",end,observedAt.toEpochMilli(),usageId);
+            jdbc.update("UPDATE vls_compute_billing_slice SET is_tail=1 WHERE usage_id=? AND interval_end_ms=?", usageId, end);
+            return null;
+        });
+    }
+
+    /** Internal provider-observation hook; a scheduler's wall clock alone is not runtime evidence. */
+    public void recordRunningObservation(String usageId, java.time.Instant observedAt) {
+        if (observedAt == null || observedAt.toEpochMilli() > System.currentTimeMillis()) throw new IllegalArgumentException("Invalid runtime observation");
+        transactions.execute(tx -> {
+            Map<String, Object> usage = usage(usageId);
+            if (usage.get("billing_end_at") != null || !("RUNNING".equals(usage.get("state")) || "RECONCILE".equals(usage.get("state"))))
+                throw new IllegalArgumentException("Running observation cannot extend stopped/unconfirmed usage");
+            jdbc.update("UPDATE vls_compute_billing_session SET last_running_ms=? WHERE usage_id=? AND last_running_ms<?", observedAt.toEpochMilli(), usageId, observedAt.toEpochMilli());
+            return null;
+        });
+    }
+
+    /** Seal contiguous [cursor,end) once. Keep measuring even after authorization/funding failure. */
+    public String prepareInterval(String usageId, long endMillis) {
+        return transactions.execute(tx -> {
+            Map<String, Object> usage = usage(usageId);
+            Map<String, Object> session = jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=? FOR UPDATE", usageId);
+            long start = number(session, "metered_until_ms");
+            if (endMillis <= start) {
+                List<String> existing = jdbc.queryForList("SELECT merchant_charge_id FROM vls_compute_billing_slice WHERE usage_id=? AND interval_end_ms=?", String.class, usageId, endMillis);
+                if (!existing.isEmpty()) return existing.get(0);
+                throw new IllegalArgumentException("Metering cursor cannot move backwards");
+            }
+            Timestamp stopped = (Timestamp) usage.get("billing_end_at");
+            long confirmedUntil = stopped == null ? number(session, "last_running_ms") : stopped.getTime();
+            if (endMillis > System.currentTimeMillis() || endMillis > confirmedUntil)
+                throw new IllegalArgumentException("Cannot bill beyond observed runtime");
+            BillingSnapshot snapshot = BillingSnapshot.read(String.valueOf(session.get("accepted_snapshot")), json);
+            snapshot.requireInterval(start, endMillis);
+            String user = String.valueOf(session.get("payer_user_id")), unit = snapshot.quotaUnit;
+            jdbc.update("INSERT IGNORE INTO vls_compute_account_remainder(payer_user_id,quota_unit,numerator_text,denominator_text) VALUES(?,?,'0','1')", user, unit);
+            Map<String, Object> tail = jdbc.queryForMap("SELECT * FROM vls_compute_account_remainder WHERE payer_user_id=? AND quota_unit=? FOR UPDATE", user, unit);
+            ExactQuota remainder = new ExactQuota(new BigInteger(String.valueOf(tail.get("numerator_text"))), new BigInteger(String.valueOf(tail.get("denominator_text"))));
+            if (remainder.numerator.compareTo(remainder.denominator) >= 0) throw new IllegalStateException("Invalid persisted quota remainder");
+            ExactQuota total = ExactQuota.compute(snapshot.approvedHourlyPrice, Math.subtractExact(endMillis, start), snapshot.numerator, snapshot.denominator).add(remainder);
+            String amount = total.floor(); ExactQuota next = total.remainder();
+            long sequence = number(session, "next_sequence");
+            String reference = "vls:" + usageId + ":" + sequence;
+            String key = "vls-op-" + UUID.randomUUID();
+            ObjectNode body = json.createObjectNode();
+            body.put("merchant_id", String.valueOf(session.get("merchant_id"))); body.put("merchant_charge_id", reference);
+            body.put("user_id", new BigInteger(user)); body.put("business_type", "GPU_COMPUTE"); body.put("usage_session_id", usageId);
+            body.put("charge_quota", amount);
+            body.put("metering_ref", "sha256:" + hash(session.get("instance_ref") + ":" + usageId + ":" + start + ":" + endMillis + ":" + snapshot.json));
+            body.put("price_snapshot_id", snapshot.priceId); body.put("conversion_version", snapshot.conversionVersion);
+            String request = body.toString(); boolean isTail = stopped != null && stopped.getTime() == endMillis;
+            String state = "0".equals(amount) ? "NO_DEBIT" : session.get("risk_code") != null ? "BLOCKED" : "PREPARED";
+            jdbc.update("INSERT INTO vls_compute_billing_slice(merchant_charge_id,usage_id,slice_sequence,interval_start_ms,interval_end_ms,is_tail,idempotency_key,request_json,request_hash,amount_text,remainder_numerator,remainder_denominator,state) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                reference, usageId, sequence, start, endMillis, isTail, key, request, hash(request), amount, next.numerator.toString(), next.denominator.toString(), state);
+            jdbc.update("UPDATE vls_compute_account_remainder SET numerator_text=?,denominator_text=? WHERE payer_user_id=? AND quota_unit=?",
+                next.numerator.toString(), next.denominator.toString(), user, unit);
+            jdbc.update("UPDATE vls_compute_billing_session SET metered_until_ms=?,next_sequence=? WHERE usage_id=?", endMillis, Math.addExact(sequence, 1), usageId);
+            return reference;
+        });
+    }
+
+    /** Off means no I/O at all. Current real client remains unable to authorize a new paid task. */
+    public void requirePaidAdmission(String usageId) {
+        ExternalBillingGateway gateway = properties.isEnabled() ? gateways.get() : null;
+        if (gateway == null || !gateway.supportsAtomicCapture()) throw new IllegalStateException("Paid billing requires verified atomic capture; disabled");
+        Map<String, Object> session = jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?", usageId);
+        if (session.get("risk_code") != null || number(session, "stop_requested") != 0) throw new IllegalStateException("Funding/authorization blocks new work");
+        // Frozen-fund and resource admission are not yet integrated; no fake can enable real paid starts.
+        throw new IllegalStateException("Paid resource admission remains closed pending hold and safety-stop integration");
+    }
+
+    /** Explicit coordinator seam; not registered with any periodic executor in this stage. */
+    public void dispatch(String reference) {
+        if (!properties.isEnabled()) return;
+        ExternalBillingGateway gateway = gateways.get(); if (gateway == null) return;
+        if (org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive())
+            throw new IllegalStateException("External I/O requires a committed intent");
+        String lease = UUID.randomUUID().toString();
+        Map<String, Object> row = transactions.execute(tx -> {
+            Map<String, Object> candidate = jdbc.queryForMap("SELECT * FROM vls_compute_billing_slice WHERE merchant_charge_id=? FOR UPDATE", reference);
+            String state = String.valueOf(candidate.get("state"));
+            if ("SETTLED".equals(state) || "NO_DEBIT".equals(state) || "BLOCKED".equals(state) || number(candidate, "lease_until_ms") > System.currentTimeMillis()) return null;
+            jdbc.update("UPDATE vls_compute_billing_slice SET lease_token=?,lease_until_ms=? WHERE merchant_charge_id=?", lease, System.currentTimeMillis() + 30000, reference);
+            return candidate;
+        });
+        if (row == null) return;
+        try {
+            String body = String.valueOf(row.get("request_json"));
+            if (!hash(body).equals(row.get("request_hash"))) { finish(row, lease, "BLOCKED", "SNAPSHOT_CONFLICT", null, true); return; }
+            JsonNode request = json.readTree(body);
+            ExternalBillingGateway.Result charge = gateway.byReference(reference);
+            if (charge.status == ExternalBillingGateway.Status.SUCCEEDED) {
+                finish(row, lease, matches(request, charge.charge) ? "SETTLED" : "BLOCKED", matches(request, charge.charge) ? null : "BUSINESS_REFERENCE_CONFLICT", charge.charge, !matches(request, charge.charge)); return;
+            }
+            ExternalBillingGateway.Result operation = gateway.byKey(String.valueOf(row.get("idempotency_key")));
+            if (charge.status == ExternalBillingGateway.Status.CONFLICT || operation.status == ExternalBillingGateway.Status.CONFLICT) {
+                finish(row, lease, "BLOCKED", "BUSINESS_REFERENCE_CONFLICT", null, true); return;
+            }
+            if (charge.status == ExternalBillingGateway.Status.NOT_AUTHORIZED || operation.status == ExternalBillingGateway.Status.NOT_AUTHORIZED) {
+                finish(row, lease, "UNKNOWN", "NOT_AUTHORIZED", null, true); return;
+            }
+            if (operation.status == ExternalBillingGateway.Status.PROCESSING) { finish(row, lease, "PROCESSING", null, null, false); return; }
+            if (charge.status != ExternalBillingGateway.Status.NOT_FOUND) { finish(row, lease, "UNKNOWN", "LOOKUP_UNAVAILABLE", null, true); return; }
+            boolean retry = operation.status == ExternalBillingGateway.Status.NOT_FOUND;
+            if (operation.status == ExternalBillingGateway.Status.REJECTED) {
+                if (!"INSUFFICIENT_AVAILABLE_QUOTA".equals(operation.errorCode)) { finish(row, lease, "BLOCKED", operation.errorCode, null, true); return; }
+                ExternalBillingGateway.Result balance = gateway.balance(request.path("user_id").asText());
+                if (balance.status == ExternalBillingGateway.Status.NOT_AUTHORIZED) { finish(row, lease, "UNKNOWN", "NOT_AUTHORIZED", null, true); return; }
+                if (balance.status != ExternalBillingGateway.Status.SUCCEEDED || balance.charge == null) { finish(row, lease, "WAITING_FUNDS", "INSUFFICIENT_AVAILABLE_QUOTA", null, true); return; }
+                BigInteger available = ExactQuota.integer(BillingSnapshot.required(balance.charge, "available_quota"), false);
+                if (available.compareTo(ExactQuota.integer(String.valueOf(row.get("amount_text")), true)) < 0) { finish(row, lease, "WAITING_FUNDS", "INSUFFICIENT_AVAILABLE_QUOTA", null, true); return; }
+                retry = true;
+            }
+            if (!retry) { finish(row, lease, "UNKNOWN", "LOOKUP_UNRESOLVED", null, true); return; }
+            if (!gateway.supportsAtomicCapture()) { finish(row, lease, "BLOCKED", "ATOMIC_CAPTURE_UNAVAILABLE", null, true); return; }
+            Map<String, Object> session = jdbc.queryForMap("SELECT risk_code FROM vls_compute_billing_session WHERE usage_id=?", row.get("usage_id"));
+            if ("NOT_AUTHORIZED".equals(session.get("risk_code"))) { finish(row, lease, "BLOCKED", "NOT_AUTHORIZED", null, true); return; }
+            // CAS records possible submission before any network send; the key and body NEVER change.
+            if (jdbc.update("UPDATE vls_compute_billing_slice SET state='SUBMITTED' WHERE merchant_charge_id=? AND lease_token=?", reference, lease) != 1) return;
+            ExternalBillingGateway.Result result = gateway.capture(String.valueOf(row.get("idempotency_key")), body);
+            if (result.status == ExternalBillingGateway.Status.SUCCEEDED) {
+                // POST acceptance is followed by detail lookup; never settle on an incomplete POST body.
+                finish(row, lease, "UNKNOWN", null, null, false);
+            } else if (result.status == ExternalBillingGateway.Status.REJECTED && "INSUFFICIENT_AVAILABLE_QUOTA".equals(result.errorCode)) {
+                finish(row, lease, "WAITING_FUNDS", result.errorCode, null, true);
+            } else if (result.status == ExternalBillingGateway.Status.NOT_AUTHORIZED) {
+                finish(row, lease, "UNKNOWN", "NOT_AUTHORIZED", null, true);
+            } else { finish(row, lease, "UNKNOWN", "SUBMISSION_UNCERTAIN", null, true); }
+        } catch (Exception e) { finish(row, lease, "UNKNOWN", "SUBMISSION_UNCERTAIN", null, true); }
+    }
+
+    /** Read-only local tail/reconciliation view. Provider and external ledger evidence remain separate. */
+    public List<Map<String, Object>> audit(String usageId) {
+        return jdbc.queryForList("SELECT merchant_charge_id,interval_start_ms,interval_end_ms,is_tail,amount_text,state,charge_id,ledger_entry_id,error_code FROM vls_compute_billing_slice WHERE usage_id=? ORDER BY slice_sequence", usageId);
+    }
+
+    private void finish(Map<String, Object> row, String lease, String state, String error, JsonNode charge, boolean stop) {
+        transactions.execute(tx -> {
+            int changed = jdbc.update("UPDATE vls_compute_billing_slice SET state=?,error_code=?,charge_id=?,ledger_entry_id=?,lease_token=NULL,lease_until_ms=0 WHERE merchant_charge_id=? AND lease_token=?",
+                state, error, charge == null ? null : charge.path("charge_id").asText(null), charge == null ? null : charge.path("ledger_entry_id").asText(null), row.get("merchant_charge_id"), lease);
+            if (changed == 1 && stop) jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1,risk_code=CASE WHEN risk_code='NOT_AUTHORIZED' THEN risk_code ELSE ? END WHERE usage_id=?", error, row.get("usage_id"));
+            return null;
+        });
+    }
+    private boolean matches(JsonNode request, JsonNode charge) {
+        if (charge == null || !"SUCCEEDED".equals(charge.path("status").asText()) || charge.path("charge_id").asText().isEmpty() || charge.path("ledger_entry_id").asText().isEmpty()) return false;
+        if (!charge.path("charged_quota").isTextual()) return false;
+        for (String field : new String[]{"merchant_charge_id", "user_id", "usage_session_id", "metering_ref", "price_snapshot_id", "conversion_version"})
+            if (!request.path(field).asText().equals(charge.path(field).asText())) return false;
+        return request.path("charge_quota").asText().equals(charge.path("charged_quota").asText());
+    }
+    private Map<String, Object> usage(String id) {
+        return jdbc.queryForObject("SELECT * FROM vls_compute_usage WHERE id=? FOR UPDATE", (rs, index) -> {
+            Map<String, Object> row = new org.springframework.jdbc.core.ColumnMapRowMapper().mapRow(rs, index);
+            row.put("billing_start_at", rs.getTimestamp("billing_start_at")); row.put("billing_end_at", rs.getTimestamp("billing_end_at")); return row;
+        }, id);
+    }
+    private static long number(Map<String, Object> row, String key) { return ((Number) row.get(key)).longValue(); }
+    static String hash(String text) {
+        try {
+            byte[] bytes = MessageDigest.getInstance("SHA-256").digest(text.getBytes(StandardCharsets.UTF_8));
+            StringBuilder result = new StringBuilder(); for (byte value : bytes) result.append(String.format("%02x", value & 255)); return result.toString();
+        } catch (java.security.NoSuchAlgorithmException e) { throw new IllegalStateException("SHA-256 unavailable"); }
+    }
+}

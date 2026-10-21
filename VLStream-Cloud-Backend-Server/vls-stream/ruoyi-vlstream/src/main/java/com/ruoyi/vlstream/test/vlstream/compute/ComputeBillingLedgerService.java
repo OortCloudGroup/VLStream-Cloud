@@ -81,6 +81,7 @@ public class ComputeBillingLedgerService {
     @Transactional(rollbackFor=Exception.class)
     public String prepareSettlement(String usageId) {
         Map<String,Object> row=usage(usageId);
+        if ("SLICES".equals(row.get("billing_mode"))) throw new ServiceException("该用量已使用持久计费区间，禁止再生成整周期扣款");
         List<String> existing=jdbc.queryForList("SELECT charge_key FROM vls_compute_charge WHERE usage_id=? FOR UPDATE",String.class,usageId);
         if (!existing.isEmpty()) return existing.get(0);
         if (!"STOPPED".equals(row.get("state"))) throw new ServiceException("实例停止和用量尚未确认，禁止结算");
