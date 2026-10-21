@@ -71,6 +71,7 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item @click="$router.push('/user-profile')">{{ tp('个人设置') }}</el-dropdown-item>
+                <el-dropdown-item @click="$router.push(getCloudPlatformUserPath())">{{ tp('OortCloud 云账号') }}</el-dropdown-item>
                 <el-dropdown-item divided @click="handleLogout">{{ tp('退出登录') }}</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -123,6 +124,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { AuthManager } from '@/utils/auth'
 import { getUserInfo, logoutUser } from '@/api/auth'
 import { logoutModelHubSession } from '@/api/modelHubUser'
+import { getCloudPlatformUserPath } from '@/utils/modelHubAuth'
 import { getTenantMode, getUserTenants } from '@/api/system/localAuth'
 import { getCurrentPlatformLogo } from '@/api/platformLogo'
 import {

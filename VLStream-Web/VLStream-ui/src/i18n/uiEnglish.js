@@ -1,6 +1,14 @@
 // English baseline for complete Vue templates, including nested dialogs.
 // Translate interface phrases only; business data must retain its source value.
 export const uiEnglish = {
+  "OortCloud 云账号": "OortCloud account",
+  "检测中": "Checking",
+  "检测失败": "Check failed",
+  "参考售价": "Reference price",
+  "/小时": "/hour",
+  "售价": "Price",
+  "价格待确认": "Price pending",
+  "额度/小时": "Quota/hour",
   "未选择角色时默认分配普通用户，管理和公司发布权限需单独授权。": "New users receive the ordinary member role unless a role is explicitly selected. Administration and company publication require separate authorization.",
   "密码长度必须为 5 至 20 个字符": "Password must be 5–20 characters",
   "SSO 账号的创建和密码由统一身份平台管理": "SSO accounts and passwords are managed by the identity platform",

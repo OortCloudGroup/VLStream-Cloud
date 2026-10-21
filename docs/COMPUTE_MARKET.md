@@ -148,3 +148,14 @@ ECS 关机后实际 KeepCharging 或未知模式，worker 仍可确认物理关�
 前端 build 通过；仓库默认 lint 缺配置，使用现有 `codex/device-state-eslint.cjs` 对本次页面/API检查通过。浏览器本机 fixture 使用实际登录/训练组件、所有业务和认证接口 mock；验证详情与截图见 `codex/compute-market-reference/RESULTS.md`。
 
 官方契约：[AutoDL Pro](https://www.autodl.com/docs/instance_pro_api/)、[ECS 启动](https://help.aliyun.com/zh/ecs/developer-reference/api-ecs-2014-05-26-startinstance)、[ECS 停止](https://help.aliyun.com/zh/ecs/developer-reference/api-ecs-2014-05-26-stopinstance)、[ECS 参考价格](https://help.aliyun.com/en/ecs/developer-reference/api-ecs-2014-05-26-describeprice)、[BSS 实例账单](https://help.aliyun.com/zh/user-center/developer-reference/api-bssopenapi-2017-12-14-describeinstancebill)。
+
+
+### 2026-10-19 6000D 控制台价格核验（只读、本地展示）
+在已登录 AutoDL Pro 实例列表只读查看 pro-7920a22db144：RTX6000D 84GB ×1卡、按量计费；配置费用现价 CNY 6.46/小时，划线原价6.80/小时，磁盘另列日费。该单卡实例当前整台配置小时价按×2为12.92元/小时。仅给市场已有节点792022144331380001及精确serverGroup、provider、GPU数量匹配的空售价记录显示“参考售价”和核验日期；已有额度售价优先，不重复翻倍，零/非法售价不被替换，免费P100不收费。来源为供应商控制台人工观察，不是自动更新或锁价承诺；Pro snapshot原值缩放仍未确认，未变更成本适配器、扣款/启动门禁、数据库、租户/独占/发布规则。使用前仍须重新核验有效成本和收费条件。
+
+### 2026-10-21 VLS计费阶段一开发（未启用）
+本地新增compute/billing生产构件及048迁移源：固定会话/区间/业务号/key/请求快照、个人余数精确有理数事务、查询补偿与原键充值重试；旧整周期与新区间同usage互斥。现有定价规则和付费门禁不变，真实适配器因缺hold原子capture仅只读，默认关闭；已保存风险/停机要求但未接真实取消/停机执行器或周期调度。40项Java临时H2/本机HTTP契约测试通过，非真库/真实账本证明；另45项Node模型通过。未运行共享库迁移、服务启动/部署、外部资金/授权/凭据写入或GPU操作。详见docs/EXTERNAL_BILLING_STAGE1.md及统一中转站清单docs/NEWAPI_BILLING_BLOCKERS.md。
+
+### 2026-10-21 个人计费后续开发（当前源码，仍未启用收费）
+补齐默认关闭的ComputeBillingCoordinator周期计量/退避和ComputeBillingReconciliationService固定窗口/持久游标/不可变流水核对；正式GET /vlsCompute/billing/identity与POST /vlsCompute/billing/sessions/{usageId}/bind复用现有本地会话与同一已验证SSO proof，服务端读取NewAPI self.id及持久费率/config，不接客户端付款人或金额。ComputeBillingLifecycleService校验物理控制/占用代次，给本人任务设置既有cancel_requested，等待终态和归档后写已有ComputePowerWorker outbox；不直接杀进程/删数据/释放占用。只有供应商STOPPED观察才确认停止，缺精确事件按最后已证实运行样本保守截止，另存停止观察和不确定区间；请求排队不当成终态。续增049保存本地协调与对账状态，仅临时H2验证，048/049均未应用共享库。
+独立源码副本12模块完整Maven package成功，90项选定回归零失败/错误/跳过（62新增计费、28既有守卫）；包含实际协调器+实际取消/停机桥接+临时H2+mock供应商的连通链路。未覆盖共享target，未重启/部署、未触真实GPU/资金/授权/凭据。enabled与safetyStopEnabled默认false，真实capture仍硬性拒绝，mock成功也不开放付费；稳定hold/capture/撤销善后/纠错退款及真实账本验收仍见同一docs/NEWAPI_BILLING_BLOCKERS.md。当前完整说明见docs/EXTERNAL_BILLING_STAGE1.md，早期“未接周期/停机”的注记已由本条取代。

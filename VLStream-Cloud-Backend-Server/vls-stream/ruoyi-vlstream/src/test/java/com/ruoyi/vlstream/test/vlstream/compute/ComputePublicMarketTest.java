@@ -62,4 +62,44 @@ class ComputePublicMarketTest {
             assertEquals("GPU", ComputePublicMarketService.publicText(value, "GPU"));
         assertEquals("公司 P100", ComputePublicMarketService.publicText("公司 P100", "GPU"));
     }
+    private ComputeNode referenceNode() {
+        ComputeNode node = new ComputeNode();
+        node.setId(792022144331380001L); node.setProvider("autodl");
+        node.setServerGroup("autodl-pro-7920a22db144"); node.setProviderGpuAmount(1);
+        node.setBillingType("POINTS");
+        return node;
+    }
+    private ComputePublicMarketService.Offer referenceOffer(ComputeNode node) {
+        ComputePublicMarketService.Offer offer = new ComputePublicMarketService.Offer();
+        offer.setBillingType("POINTS");
+        ComputePublicMarketService.referencePrice(offer, node);
+        return offer;
+    }
+    @Test void referenceRequiresExactTrustedIdentityAndNoConfiguredQuota() {
+        ComputeNode node = referenceNode(); node.setName("Renamed resource");
+        assertEquals(new BigDecimal("12.92"), referenceOffer(node).getReferencePrice());
+        for (Long id : new Long[]{null, 9L}) { node = referenceNode(); node.setId(id); assertNull(referenceOffer(node).getReferencePrice()); }
+        for (String provider : new String[]{null, "aliyun"}) { node = referenceNode(); node.setProvider(provider); assertNull(referenceOffer(node).getReferencePrice()); }
+        for (String group : new String[]{null, "other-instance"}) { node = referenceNode(); node.setServerGroup(group); assertNull(referenceOffer(node).getReferencePrice()); }
+        for (Integer amount : new Integer[]{null, 0, 2}) { node = referenceNode(); node.setProviderGpuAmount(amount); assertNull(referenceOffer(node).getReferencePrice()); }
+        for (BigDecimal quota : new BigDecimal[]{BigDecimal.ZERO, new BigDecimal("-1"), new BigDecimal("6.46")}) {
+            node = referenceNode(); node.setPointsPerHour(quota); assertNull(referenceOffer(node).getReferencePrice());
+        }
+        node = referenceNode(); node.setBillingType("FREE"); assertNull(referenceOffer(node).getReferencePrice());
+        ComputePublicMarketService.Offer free = new ComputePublicMarketService.Offer(); free.setBillingType("FREE");
+        ComputePublicMarketService.referencePrice(free, referenceNode()); assertNull(free.getReferencePrice());
+    }
+    @Test void referenceJsonContainsOnlySafeDatedDisplayFields() throws Exception {
+        String json = new ObjectMapper().writeValueAsString(referenceOffer(referenceNode()));
+        com.fasterxml.jackson.databind.JsonNode body = new ObjectMapper().readTree(json);
+        assertEquals(14, body.size());
+        assertEquals("12.92", body.path("referencePrice").asText());
+        assertEquals("CNY", body.path("referenceCurrency").asText());
+        assertEquals("PER_INSTANCE_HOUR", body.path("referenceUnit").asText());
+        assertEquals("2026-10-19", body.path("referenceDate").asText());
+        for (String forbidden : new String[]{"792022144331380001", "pro-7920a22db144", "provider", "serverGroup", "host", "password", "tenant", "owner", "cost"}) assertFalse(json.contains(forbidden), forbidden);
+        assertNull(referenceOffer(referenceNode()).getPrice());
+        assertFalse(referenceOffer(referenceNode()).isPaidUseEnabled());
+    }
+
 }

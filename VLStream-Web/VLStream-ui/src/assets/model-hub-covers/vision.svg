@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#e6f5f3"/><stop offset="1" stop-color="#b5e4e2"/></linearGradient>
+    <linearGradient id="object" x2=".8" y2="1"><stop stop-color="#89d6cf"/><stop offset="1" stop-color="#3794a5"/></linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0v32" fill="none" stroke="#3794a5" stroke-opacity=".06"/></pattern>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect width="640" height="360" fill="url(#grid)"/>
+  <circle cx="600" cy="30" r="200" fill="white" opacity=".2"/>
+  <circle cx="16" cy="353" r="120" fill="white" opacity=".25"/>
+  <g transform="translate(460 150)"><rect x="-103" y="-79" width="206" height="158" rx="20" fill="white" opacity=".7"/><path d="M-130-42v-52h52M130-42v-52H78M-130 42v52h52M130 42v52H78" fill="none" stroke="#3b9caa" stroke-width="5" stroke-linecap="round"/><path d="M-75 0Q0-87 75 0 0 87-75 0Z" fill="url(#object)"/><circle r="27" fill="white"/><circle r="13" fill="#3595a5"/><path d="M-158 0H158" stroke="#fcaa78" stroke-width="2" opacity=".8"/></g>
+  <g fill="#3794a5" font-family="Arial, sans-serif">
+    <text x="34" y="48" font-size="17" font-weight="700" letter-spacing=".3">VLStream</text>
+    <text x="34" y="299" font-size="10" letter-spacing="2.3" opacity=".8">VISION &amp; INSIGHT</text>
+    <path d="M34 318h30" stroke="#3794a5" stroke-width="2"/>
+  </g>
+</svg>

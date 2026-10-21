@@ -26,6 +26,14 @@ public class ComputePublicMarketService {
         private String healthState;
         private String availability;
         private boolean paidUseEnabled = false;
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+        private BigDecimal referencePrice;
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+        private String referenceCurrency;
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+        private String referenceUnit;
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+        private String referenceDate;
     }
     @Data
     public static class Page {
@@ -71,6 +79,19 @@ public class ComputePublicMarketService {
                 return offer;
             }, size, (page - 1) * size);
         return new Page(items, total == null ? 0 : total, page, size);
+    }
+    // Dated presentation only, never billing or a live supplier quote. Match trusted
+    // persisted identity, not public names/specifications; do not expose that identity.
+    static void referencePrice(Offer offer, ComputeNode node) {
+        if (!"POINTS".equals(offer.getBillingType()) || !"POINTS".equals(node.getBillingType()) || node.getPointsPerHour() != null
+            || !Long.valueOf(792022144331380001L).equals(node.getId())
+            || !"autodl".equals(node.getProvider())
+            || !"autodl-pro-7920a22db144".equals(node.getServerGroup())
+            || !Integer.valueOf(1).equals(node.getProviderGpuAmount())) return;
+        offer.setReferencePrice(new BigDecimal("12.92"));
+        offer.setReferenceCurrency("CNY");
+        offer.setReferenceUnit("PER_INSTANCE_HOUR");
+        offer.setReferenceDate("2026-10-19");
     }
     static String availability(Offer offer, boolean blocked, String instanceState, boolean dirty) {
         if ("POINTS".equals(offer.getBillingType())) return "PAID_DISABLED";

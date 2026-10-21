@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#fff0e6"/><stop offset="1" stop-color="#f5d5b9"/></linearGradient>
+    <linearGradient id="object" x2=".8" y2="1"><stop stop-color="#ffc49e"/><stop offset="1" stop-color="#d88e73"/></linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0v32" fill="none" stroke="#d88e73" stroke-opacity=".06"/></pattern>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect width="640" height="360" fill="url(#grid)"/>
+  <circle cx="600" cy="30" r="200" fill="white" opacity=".2"/>
+  <circle cx="16" cy="353" r="120" fill="white" opacity=".25"/>
+  <g transform="translate(460 160)" stroke-linejoin="round"><path d="m0 54-116-57L0-60 116-3Z" fill="#e8ad85" opacity=".65"/><path d="m0 20-116-57L0-94 116-37Z" fill="#f7c4a5" stroke="white" stroke-width="2"/><path d="m0-14-116-57L0-128 116-71Z" fill="url(#object)" stroke="white" stroke-width="2"/><path d="M-28-70 0-84 28-70 0-56Z" fill="white" opacity=".9"/><path d="M-139 31v47M-163 54h47M141-72v28M127-58h28" stroke="#bc7e64" stroke-width="2"/><circle cx="124" cy="61" r="10" fill="#ad8cf4"/></g>
+  <g fill="#d88e73" font-family="Arial, sans-serif">
+    <text x="34" y="48" font-size="17" font-weight="700" letter-spacing=".3">VLStream</text>
+    <text x="34" y="299" font-size="10" letter-spacing="2.3" opacity=".8">DATA FOUNDATIONS</text>
+    <path d="M34 318h30" stroke="#d88e73" stroke-width="2"/>
+  </g>
+</svg>

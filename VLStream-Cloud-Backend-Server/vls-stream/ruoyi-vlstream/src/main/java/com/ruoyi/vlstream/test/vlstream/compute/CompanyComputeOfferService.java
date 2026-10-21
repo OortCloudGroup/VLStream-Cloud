@@ -2,6 +2,7 @@ package com.ruoyi.vlstream.test.vlstream.compute;
 
 import com.ruoyi.common.exception.ServiceException;
 import java.util.List;
+import java.math.BigDecimal;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -112,6 +113,30 @@ public class CompanyComputeOfferService {
             resource.setMessage(PENDING);
             return resource;
         },limit,offset);
+    }
+
+    /** Anonymous display contract; internal instance identity never leaves this mapper. */
+    public List<ComputePublicMarketService.Offer> publicMarketOffers(int limit, int offset) {
+        if (limit < 1 || limit > 20 || offset < 0) throw new IllegalArgumentException("Invalid public pagination");
+        return jdbc.query("SELECT n.id,n.name,n.gpu_model,n.billing_type,n.points_per_hour,"
+            + "n.provider,n.server_group,n.provider_gpu_amount" + PUBLISHED + " ORDER BY c.offer_code LIMIT ? OFFSET ?", (rs, index) -> {
+                ComputeNode node = new BeanPropertyRowMapper<>(ComputeNode.class).mapRow(rs, index);
+                ComputePublicMarketService.Offer offer = new ComputePublicMarketService.Offer();
+                offer.setName(displayText(node.getName(), "GPU resource"));
+                offer.setGpuModel(displayText(node.getGpuModel(), "GPU"));
+                offer.setBillingType("POINTS");
+                BigDecimal price = node.getPointsPerHour();
+                if ("POINTS".equals(node.getBillingType()) && price != null && price.signum() >= 0) {
+                    offer.setPrice(price);
+                    offer.setPriceUnit("POINTS_PER_HOUR");
+                }
+                offer.setSchedulingMode("INSTANCE_EXCLUSIVE");
+                offer.setPowerState("UNKNOWN");
+                offer.setHealthState("UNKNOWN");
+                offer.setAvailability("PAID_DISABLED");
+                ComputePublicMarketService.referencePrice(offer, node);
+                return offer;
+            }, limit, offset);
     }
 
     static String displayText(String value,String fallback) {

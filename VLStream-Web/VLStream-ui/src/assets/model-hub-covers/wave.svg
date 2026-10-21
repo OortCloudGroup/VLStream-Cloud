@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#eaf3ff"/><stop offset="1" stop-color="#c5d9f1"/></linearGradient>
+    <linearGradient id="object" x2=".8" y2="1"><stop stop-color="#7baee2"/><stop offset="1" stop-color="#4c81b7"/></linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0v32" fill="none" stroke="#4c81b7" stroke-opacity=".06"/></pattern>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect width="640" height="360" fill="url(#grid)"/>
+  <circle cx="600" cy="30" r="200" fill="white" opacity=".2"/>
+  <circle cx="16" cy="353" r="120" fill="white" opacity=".25"/>
+  <g transform="translate(460 150)"><circle r="104" fill="white" opacity=".48"/><circle r="77" fill="none" stroke="#95b7db"/><circle r="127" fill="none" stroke="#a9c5e5" stroke-dasharray="3 9"/><g fill="url(#object)"><rect x="-110" y="-20" width="11" height="40" rx="5.5"/><rect x="-90" y="-37" width="11" height="74" rx="5.5"/><rect x="-70" y="-50" width="11" height="100" rx="5.5"/><rect x="-50" y="-28.5" width="11" height="57" rx="5.5"/><rect x="-30" y="-63" width="11" height="126" rx="5.5"/><rect x="-10" y="-44.5" width="11" height="89" rx="5.5"/><rect x="10" y="-77.5" width="11" height="155" rx="5.5"/><rect x="30" y="-50.5" width="11" height="101" rx="5.5"/><rect x="50" y="-31" width="11" height="62" rx="5.5"/><rect x="70" y="-59" width="11" height="118" rx="5.5"/><rect x="90" y="-39.5" width="11" height="79" rx="5.5"/><rect x="110" y="-22.5" width="11" height="45" rx="5.5"/></g><circle cx="121" cy="-60" r="10" fill="#ffb380"/></g>
+  <g fill="#4c81b7" font-family="Arial, sans-serif">
+    <text x="34" y="48" font-size="17" font-weight="700" letter-spacing=".3">VLStream</text>
+    <text x="34" y="299" font-size="10" letter-spacing="2.3" opacity=".8">SIGNAL &amp; INTELLIGENCE</text>
+    <path d="M34 318h30" stroke="#4c81b7" stroke-width="2"/>
+  </g>
+</svg>

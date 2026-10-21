@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#f2edff"/><stop offset="1" stop-color="#dfd1f8"/></linearGradient>
+    <linearGradient id="object" x2=".8" y2="1"><stop stop-color="#c5adee"/><stop offset="1" stop-color="#8968be"/></linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0v32" fill="none" stroke="#8968be" stroke-opacity=".06"/></pattern>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect width="640" height="360" fill="url(#grid)"/>
+  <circle cx="600" cy="30" r="200" fill="white" opacity=".2"/>
+  <circle cx="16" cy="353" r="120" fill="white" opacity=".25"/>
+  <g transform="translate(460 148)"><path d="M-116-47-37-91 62-55 117 44 20 96-84 62-116-47 20 6-37-91M62-55 20 6 117 44M-84 62 20 6 20 96" fill="none" stroke="#a48bd7" stroke-width="2"/><circle cx="-116" cy="-47" r="15" fill="url(#object)" stroke="white" stroke-width="3"/><circle cx="-37" cy="-91" r="21" fill="url(#object)" stroke="white" stroke-width="3"/><circle cx="62" cy="-55" r="15" fill="url(#object)" stroke="white" stroke-width="3"/><circle cx="117" cy="44" r="23" fill="url(#object)" stroke="white" stroke-width="3"/><circle cx="20" cy="96" r="16" fill="url(#object)" stroke="white" stroke-width="3"/><circle cx="-84" cy="62" r="20" fill="url(#object)" stroke="white" stroke-width="3"/><circle cx="20" cy="6" r="35" fill="white" stroke="#c7b6e8" stroke-width="2"/><path d="m6 6 10 10 20-20" fill="none" stroke="#9b78ce" stroke-width="4" stroke-linecap="round"/></g>
+  <g fill="#8968be" font-family="Arial, sans-serif">
+    <text x="34" y="48" font-size="17" font-weight="700" letter-spacing=".3">VLStream</text>
+    <text x="34" y="299" font-size="10" letter-spacing="2.3" opacity=".8">CONNECTED KNOWLEDGE</text>
+    <path d="M34 318h30" stroke="#8968be" stroke-width="2"/>
+  </g>
+</svg>

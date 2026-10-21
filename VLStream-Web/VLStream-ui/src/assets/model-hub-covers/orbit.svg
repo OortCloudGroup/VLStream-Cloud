@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#eef0ff"/><stop offset="1" stop-color="#ccd9fc"/></linearGradient>
+    <linearGradient id="object" x2=".8" y2="1"><stop stop-color="#a6b6f4"/><stop offset="1" stop-color="#556ace"/></linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0v32" fill="none" stroke="#556ace" stroke-opacity=".06"/></pattern>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect width="640" height="360" fill="url(#grid)"/>
+  <circle cx="600" cy="30" r="200" fill="white" opacity=".2"/>
+  <circle cx="16" cy="353" r="120" fill="white" opacity=".25"/>
+  <g transform="translate(460 150)"><ellipse rx="160" ry="59" transform="rotate(-30)" fill="none" stroke="#7d8de0" stroke-width="2"/><ellipse rx="160" ry="59" transform="rotate(30)" fill="none" stroke="#7d8de0" stroke-width="2"/><circle r="66" fill="url(#object)"/><path d="M-25-15 0-30 25-15v30L0 30-25 15Z" fill="none" stroke="white" stroke-width="3"/><path d="M0 0v30M-25-15 0 0 25-15" fill="none" stroke="white" stroke-width="3"/><circle cx="-131" cy="64" r="10" fill="#fc9874"/><circle cx="113" cy="89" r="7" fill="#7484d8"/></g>
+  <g fill="#556ace" font-family="Arial, sans-serif">
+    <text x="34" y="48" font-size="17" font-weight="700" letter-spacing=".3">VLStream</text>
+    <text x="34" y="299" font-size="10" letter-spacing="2.3" opacity=".8">MODEL EXPLORER</text>
+    <path d="M34 318h30" stroke="#556ace" stroke-width="2"/>
+  </g>
+</svg>
