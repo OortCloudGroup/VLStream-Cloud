@@ -63,6 +63,13 @@
           />
         </div>
       </div>
+      <div v-if="eventDetailData.videoUrl" class="detailsBox">
+        <div class="details_row_box">{{ $tp('录制视频') }}</div>
+        <div class="d_r_content">
+          <video :src="eventDetailData.videoUrl" controls preload="metadata" style="width: 100%; max-height: 360px;" />
+          <el-button @click="downloadEventVideo(eventDetailData)">{{ $tp('下载') }}</el-button>
+        </div>
+      </div>
       <div class="detailsBox">
         <div class="details_row_box">
           <img src="@/assets/img/maintenance/staff.png" :alt="$tp('巡查详情')" />
@@ -211,6 +218,7 @@
 </template>
 <script setup lang="ts">
 import { translatePhrase as uiText } from '@/i18n'
+import { downloadEventVideo } from '@/api/eventMedia'
 
 import { ref, computed, watch } from 'vue'
 import MultiImageUpload from '../multiImageUpload.vue'
@@ -236,6 +244,9 @@ interface EventDetailData {
   item?: string
   name?: string
   pics?: string[]
+  video?: string[]
+  videoUrl?: string
+  videoMediaId?: string
   point?: {
     address?: string
     lat?: number

@@ -30,6 +30,10 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Consumes VLS 2.2 faceEvent/struct messages after MQTT routing validation.
@@ -90,20 +94,44 @@ public class DeviceEventMqttHandler {
 				}
 			}
 
-			JSONObject media = firstMedia(payload);
-			if (media == null) {
-				throw new IllegalArgumentException("事件必须包含已上传的 media 图片信息");
+			JSONArray mediaList = payload.getJSONArray("media");
+			if (mediaList == null || mediaList.isEmpty()) {
+				JSONObject legacy = firstMedia(payload);
+				if (legacy == null) throw new IllegalArgumentException("事件必须包含已上传的 media 媒体信息");
+				mediaList = new JSONArray();
+				mediaList.add(legacy);
 			}
-			mediaId = media.getStr("mediaId");
-			String objectKey = media.getStr("objectKey");
-			String sha256 = media.getStr("sha256");
-			if (StringUtils.isAnyBlank(mediaId, objectKey, sha256)) {
-				throw new IllegalArgumentException("mediaId、objectKey、sha256 均不能为空");
+			if (mediaList.size() > 2) throw new IllegalArgumentException("每次事件最多上报一张抓拍图片和一个 MP4");
+			List<String> imageIds = new ArrayList<String>();
+			List<String> videoIds = new ArrayList<String>();
+			Set<String> uniqueIds = new HashSet<String>();
+			boolean externalMedia = false;
+			DeviceMediaUpload upload = null;
+			for (int index = 0; index < mediaList.size(); index++) {
+				JSONObject media = mediaList.getJSONObject(index);
+				String currentId = media == null ? null : media.getStr("mediaId");
+				String objectKey = media == null ? null : media.getStr("objectKey");
+				String sha256 = media == null ? null : media.getStr("sha256");
+				if (StringUtils.isAnyBlank(currentId, objectKey, sha256) || !uniqueIds.add(currentId)) {
+					throw new IllegalArgumentException("mediaId、objectKey、sha256 均不能为空且媒体不得重复");
+				}
+				if (mediaId == null) mediaId = currentId;
+				boolean external = Boolean.TRUE.equals(deviceMediaProperties.getAllowExternalEventMedia())
+					&& mediaUploadService.getByMediaId(currentId) == null;
+				if (external) { externalMedia = true; continue; }
+				DeviceMediaUpload validated = mediaUploadService.validateAndBind(
+					currentId, deviceId, objectKey, sha256, sourceMessageId);
+				if (DeviceMediaUploadService.isVideoType(validated.getContentType())) {
+					videoIds.add(currentId);
+					if (upload == null) upload = validated;
+				} else {
+					imageIds.add(currentId);
+					upload = validated;
+				}
 			}
-			boolean externalMedia = Boolean.TRUE.equals(deviceMediaProperties.getAllowExternalEventMedia())
-				&& mediaUploadService.getByMediaId(mediaId) == null;
-			DeviceMediaUpload upload = externalMedia ? null : mediaUploadService.validateAndBind(
-				mediaId, deviceId, objectKey, sha256, sourceMessageId);
+			if (imageIds.size() > 1 || videoIds.size() > 1) {
+				throw new IllegalArgumentException("每次事件最多上报一张抓拍图片和一个 MP4");
+			}
 			String eventType = StringUtils.defaultIfBlank(payload.getStr("eventType"),
 				defaultEventType(subBizType, payload));
 			String description = StringUtils.defaultIfBlank(payload.getStr("eventDesc"),
@@ -123,7 +151,7 @@ public class DeviceEventMqttHandler {
 				event.setEventType(eventType);
 				event.setReportLocation(device.getAddress());
 				event.setReportDevice(deviceId);
-				event.setReportImg(externalMedia ? null : VlsEventReportApplicationService.mediaReference(mediaId));
+				event.setReportImg(imageIds.isEmpty() ? null : VlsEventReportApplicationService.mediaReference(imageIds.get(0)));
 				event.setReportTime(eventTime);
 				event.setEventData(payload.toString());
 				event.setHandleResult(description);
@@ -140,6 +168,8 @@ public class DeviceEventMqttHandler {
 						.description(description)
 						.eventTime(eventTime)
 						.mediaId(mediaId)
+						.imageMediaIds(imageIds)
+						.videoMediaIds(videoIds)
 						.externalMedia(externalMedia)
 						.mqttPayloadJson(payload.toString())
 						.address(device.getAddress())

@@ -18,8 +18,8 @@
           <div class="header">
             <div class="header-title">
               <span class="title">{{ $tp('VLStream 设备') }}</span>
-              <el-tag :type="mediaAvailable ? 'success' : 'danger'" size="small">
-                WVP ZLM {{ mediaAvailable ? $tp('可用') : $tp('不可用') }}
+              <el-tag :type="mediaTagType" size="small" :title="mediaError">
+                WVP ZLM {{ $tp(mediaLabel) }}
               </el-tag>
             </div>
             <div class="filters">
@@ -233,6 +233,7 @@
 
 <script setup>
 import { translatePhrase as uiText } from '@/i18n'
+import { useWvpMediaStatus } from '@/utils/useWvpMediaStatus'
 
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { monitorDevicePreview } from '@/utils/devicePreviewGuard'
@@ -265,7 +266,7 @@ const loading = ref(false)
 const devices = ref([])
 const hasDeviceSerial = computed(() => devices.value.some(device => String(device.deviceSerial ?? '').trim().length > 0))
 const total = ref(0)
-const mediaAvailable = ref(false)
+const { mediaLabel, mediaTagType, mediaError, loadMediaStatus } = useWvpMediaStatus(getMqttDeviceMediaStatus)
 const serviceError = ref('')
 const classificationDeviceKeys = ref([])
 const previewVisible = ref(false)
@@ -399,11 +400,6 @@ async function loadDevices() {
     total.value = 0
     serviceError.value = errorMessage(error, 'WVP 服务不可用，无法加载 VLStream 设备')
   } finally { loading.value = false }
-}
-
-async function loadMediaStatus() {
-  try { mediaAvailable.value = Boolean((await getMqttDeviceMediaStatus())?.data?.available) }
-  catch { mediaAvailable.value = false }
 }
 
 function search() { query.pageNum = 1; loadDevices() }

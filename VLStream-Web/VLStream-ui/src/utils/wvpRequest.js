@@ -10,6 +10,7 @@ import { ElMessage } from 'element-plus'
 import { saveAs } from 'file-saver'
 import { applyPlatformGatewayHeaders, getStoredToken, getPlatformAccessToken, getLocalSessionToken, isTrustedApiRequest, invalidateApiResponse } from '@/utils/request'
 import { isMultiTenantMode } from '@/utils/platformSession'
+import { normalizeWvpResponse } from '@/utils/wvpResponse.mjs'
 import { replaceHeader, sessionValue, clearIdentityHeaders } from '@/utils/requestIdentity.mjs'
 
 export const getWvpBaseURL = () => {
@@ -69,18 +70,15 @@ wvpRequest.interceptors.response.use(
       return response.data
     }
 
-    const data = response.data
-    const code = data?.code ?? 200
-    if (code === 200) {
-      if (data && Object.prototype.hasOwnProperty.call(data, 'total')) {
-        data.total = Number(data.total)
-      }
-      return data
+    try {
+      return normalizeWvpResponse(response.data)
+    } catch (error) {
+      // Preserve the business body and request context for callers and identity checks.
+      error.response = { ...response, data: error.data || response.data }
+      invalidateApiResponse(error.response)
+      ElMessage.error(error.message)
+      return Promise.reject(error)
     }
-
-    const message = data?.msg || `WVP 接口返回异常（${code}）`
-    ElMessage.error(message)
-    return Promise.reject(new Error(message))
   },
   (error) => {
     invalidateApiResponse(error.response)

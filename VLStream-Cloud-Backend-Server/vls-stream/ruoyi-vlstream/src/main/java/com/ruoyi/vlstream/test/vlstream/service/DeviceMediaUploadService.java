@@ -44,7 +44,7 @@ import java.util.TimeZone;
 import java.util.UUID;
 
 /**
- * Issues and validates direct-to-MinIO uploads for device event images.
+ * Issues and validates direct-to-MinIO uploads for device event images and MP4 clips.
  */
 @Service
 @Slf4j
@@ -116,8 +116,12 @@ public class DeviceMediaUploadService {
 			throw new ServiceException("mediaId 不存在：" + mediaId);
 		}
 		if (!StringUtils.equals(upload.getDeviceId(), deviceId)
+			|| !StringUtils.equals(upload.getTenantId(), TenantContextHolder.getTenantId())
 			|| !StringUtils.equals(upload.getObjectKey(), objectKey)) {
 			throw new ServiceException("媒体对象与设备或 objectKey 不匹配");
+		}
+		if (!StringUtils.equalsIgnoreCase(upload.getSha256(), sha256)) {
+			throw new ServiceException("事件中的媒体 SHA-256 与申请上传时不一致");
 		}
 		if (STATUS_BOUND.equals(upload.getUploadStatus())) {
 			if (StringUtils.equals(upload.getBoundEventMessageId(), eventMessageId)) {
@@ -125,25 +129,27 @@ public class DeviceMediaUploadService {
 			}
 			throw new ServiceException("媒体对象已经绑定其他事件");
 		}
-		if (!StringUtils.equalsIgnoreCase(upload.getSha256(), sha256)) {
-			throw new ServiceException("事件中的图片 SHA-256 与申请上传时不一致");
+		if (!STATUS_ISSUED.equals(upload.getUploadStatus())) {
+			throw new ServiceException("媒体上传状态不允许绑定");
 		}
 
-		OssClient client = OssFactory.instance(upload.getOssConfigKey());
+		OssClient client = storedClient(upload);
 		if (!client.doesObjectExist(upload.getObjectKey())) {
-			throw new ServiceException("MinIO 图片尚未上传");
+			throw new ServiceException("MinIO 媒体尚未上传");
 		}
 		ObjectMetadata metadata = client.getObjectMetadata(upload.getObjectKey());
 		if (metadata.getContentLength() != upload.getFileSize()) {
-			throw new ServiceException("MinIO 图片大小不匹配");
+			throw new ServiceException("MinIO 媒体大小不匹配");
 		}
-		String actualSha256 = calculateSha256(client, upload.getObjectKey());
-		if (!StringUtils.equalsIgnoreCase(upload.getSha256(), actualSha256)) {
-			throw new ServiceException("MinIO 图片 SHA-256 校验失败");
+		if (!StringUtils.equalsIgnoreCase(upload.getContentType(), metadata.getContentType())) {
+			throw new ServiceException("对象 Content-Type 与申请上传时不一致");
 		}
+		DeviceEventMediaInspector.validate(client, upload, maxBytes(upload.getContentType()));
 
 		Date now = new Date();
 		int updated = uploadMapper.update(null, new LambdaUpdateWrapper<DeviceMediaUpload>()
+			.eq(DeviceMediaUpload::getTenantId, upload.getTenantId())
+			.eq(DeviceMediaUpload::getDeviceId, deviceId)
 			.eq(DeviceMediaUpload::getMediaId, mediaId)
 			.eq(DeviceMediaUpload::getUploadStatus, STATUS_ISSUED)
 			.set(DeviceMediaUpload::getUploadStatus, STATUS_BOUND)
@@ -151,7 +157,8 @@ public class DeviceMediaUploadService {
 			.set(DeviceMediaUpload::getUpdateTime, now));
 		if (updated == 0) {
 			DeviceMediaUpload current = getByMediaId(mediaId);
-			if (current == null || !StringUtils.equals(current.getBoundEventMessageId(), eventMessageId)) {
+			if (current == null || !STATUS_BOUND.equals(current.getUploadStatus())
+				|| !StringUtils.equals(current.getBoundEventMessageId(), eventMessageId)) {
 				throw new ServiceException("媒体对象绑定事件失败");
 			}
 			return current;
@@ -163,20 +170,27 @@ public class DeviceMediaUploadService {
 	}
 
 	public DeviceMediaUpload getByMediaId(String mediaId) {
-		if (StringUtils.isBlank(mediaId)) {
+		if (StringUtils.isBlank(mediaId) || StringUtils.isBlank(TenantContextHolder.getTenantId())) {
 			return null;
 		}
 		return uploadMapper.selectOne(new LambdaQueryWrapper<DeviceMediaUpload>()
+			.eq(DeviceMediaUpload::getTenantId, TenantContextHolder.getTenantId())
 			.eq(DeviceMediaUpload::getMediaId, mediaId)
 			.last("limit 1"));
 	}
 
 	public String getPrivateViewUrl(String mediaId, int seconds) {
+		return getPrivateViewUrl(mediaId, seconds, false);
+	}
+
+	public String getPrivateViewUrl(String mediaId, int seconds, boolean download) {
 		DeviceMediaUpload upload = getByMediaId(mediaId);
 		if (upload == null || !STATUS_BOUND.equals(upload.getUploadStatus())) {
-			throw new ServiceException("事件图片不存在或尚未绑定");
+			throw new ServiceException("事件媒体不存在或尚未绑定");
 		}
 		int safeSeconds = Math.max(60, Math.min(seconds, 3600));
+        if (download) return storedClient(upload).getPrivateUrl(viewObjectKey(upload), safeSeconds,
+            properties.getPublicEndpoint(), true);
         return signViewUrl(upload, safeSeconds);
 	}
 
@@ -213,7 +227,19 @@ public class DeviceMediaUploadService {
     }
 
     String signViewUrl(DeviceMediaUpload upload, int seconds) {
-        return generatePrivateViewUrl(OssFactory.instance(upload.getOssConfigKey()), upload.getObjectKey(), seconds);
+        return generatePrivateViewUrl(storedClient(upload), viewObjectKey(upload), seconds);
+    }
+
+    static String verifiedVideoKey(DeviceMediaUpload upload) {
+        return upload.getObjectKey() + ".verified.mp4";
+    }
+
+    private String viewObjectKey(DeviceMediaUpload upload) {
+        return isVideoType(upload.getContentType()) ? verifiedVideoKey(upload) : upload.getObjectKey();
+    }
+
+    OssClient storedClient(DeviceMediaUpload upload) {
+        return OssFactory.instance(upload.getOssConfigKey());
     }
 
 	String generateUploadUrl(OssClient client, String objectKey, String contentType, int ttlSeconds) {
@@ -228,7 +254,10 @@ public class DeviceMediaUploadService {
 	public byte[] readBoundImage(String mediaId, int maxBytes) {
 		DeviceMediaUpload upload = getByMediaId(mediaId);
 		if (upload == null || !STATUS_BOUND.equals(upload.getUploadStatus())) {
-			throw new ServiceException("事件图片不存在或尚未绑定");
+			throw new ServiceException("事件媒体不存在或尚未绑定");
+		}
+		if (!isSupportedImageType(upload.getContentType())) {
+			throw new ServiceException("视频不能作为图片复核，请同时上报抓拍图片");
 		}
 		int safeMax = Math.max(1024, maxBytes);
 		try (InputStream input = OssFactory.instance(upload.getOssConfigKey())
@@ -259,20 +288,30 @@ public class DeviceMediaUploadService {
 		if (request == null) {
 			throw new ServiceException("上传参数不能为空");
 		}
-		if (!request.getDeviceId().matches("[A-Za-z0-9._-]{1,100}")) {
+		if (!StringUtils.defaultString(request.getDeviceId()).matches("[A-Za-z0-9._-]{1,100}")) {
 			throw new ServiceException("deviceId 格式不合法");
 		}
-		if (!isSupportedImageType(request.getContentType())) {
-			throw new ServiceException("仅支持 image/jpeg、image/png、image/webp");
+		if (!isSupportedImageType(request.getContentType()) && !isVideoType(request.getContentType())) {
+			throw new ServiceException("仅支持 image/jpeg、image/png、image/webp、video/mp4");
 		}
-		long maxBytes = properties.getMaxImageBytes() == null
-			? 10L * 1024L * 1024L : properties.getMaxImageBytes();
+		request.setContentType(request.getContentType().toLowerCase(Locale.ROOT));
+		long maxBytes = maxBytes(request.getContentType());
 		if (request.getFileSize() == null || request.getFileSize() <= 0 || request.getFileSize() > maxBytes) {
-			throw new ServiceException("图片大小不合法，最大允许 " + maxBytes + " 字节");
+			throw new ServiceException("媒体大小不合法，最大允许 " + maxBytes + " 字节");
 		}
 		if (!StringUtils.defaultString(request.getSha256()).matches("(?i)[0-9a-f]{64}")) {
 			throw new ServiceException("sha256 必须是 64 位十六进制字符串");
 		}
+	}
+
+	static boolean isVideoType(String contentType) {
+		return "video/mp4".equalsIgnoreCase(contentType);
+	}
+
+	private long maxBytes(String contentType) {
+		Long configured = isVideoType(contentType) ? properties.getMaxVideoBytes() : properties.getMaxImageBytes();
+		long fallback = (isVideoType(contentType) ? 100L : 10L) * 1024L * 1024L;
+		return configured == null || configured <= 0 ? fallback : configured;
 	}
 
 	private boolean isSupportedImageType(String contentType) {
@@ -289,6 +328,9 @@ public class DeviceMediaUploadService {
 	}
 
 	private String extension(String contentType) {
+		if (isVideoType(contentType)) {
+			return ".mp4";
+		}
 		if ("image/png".equalsIgnoreCase(contentType)) {
 			return ".png";
 		}
@@ -298,27 +340,7 @@ public class DeviceMediaUploadService {
 		return ".jpg";
 	}
 
-	private String calculateSha256(OssClient client, String objectKey) {
-		try (InputStream inputStream = client.getObjectContent(objectKey)) {
-			MessageDigest digest = MessageDigest.getInstance("SHA-256");
-			byte[] buffer = new byte[8192];
-			int length;
-			while ((length = inputStream.read(buffer)) >= 0) {
-				if (length > 0) {
-					digest.update(buffer, 0, length);
-				}
-			}
-			StringBuilder hex = new StringBuilder(64);
-			for (byte value : digest.digest()) {
-				hex.append(String.format("%02x", value & 0xff));
-			}
-			return hex.toString();
-		} catch (Exception ex) {
-			throw new ServiceException("读取 MinIO 图片进行 SHA-256 校验失败：" + ex.getMessage());
-		}
-	}
-
-	private OssClient ossClient() {
+	OssClient ossClient() {
 		return StringUtils.isBlank(properties.getOssConfigKey())
 			? OssFactory.instance()
 			: OssFactory.instance(properties.getOssConfigKey());

@@ -247,11 +247,19 @@ public class OssClient {
      * publicEndpoint is empty after OSS endpoint.
      */
     public String getPrivateUrl(String objectKey, Integer second, String publicEndpoint) {
+        return getPrivateUrl(objectKey, second, publicEndpoint, false);
+    }
+
+    public String getPrivateUrl(String objectKey, Integer second, String publicEndpoint, boolean download) {
         AmazonS3 signingClient = signingClient(publicEndpoint);
         GeneratePresignedUrlRequest generatePresignedUrlRequest =
             new GeneratePresignedUrlRequest(properties.getBucketName(), objectKey)
                 .withMethod(HttpMethod.GET)
                 .withExpiration(new Date(System.currentTimeMillis() + 1000L * second));
+        if (download) {
+            generatePresignedUrlRequest.setResponseHeaders(new com.amazonaws.services.s3.model.ResponseHeaderOverrides()
+                .withContentDisposition("attachment"));
+        }
         try {
             URL url = signingClient.generatePresignedUrl(generatePresignedUrlRequest);
             return url.toString();

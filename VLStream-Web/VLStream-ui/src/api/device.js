@@ -241,14 +241,3 @@ export function dispatchAlgorithmToDevices(algorithmId, deviceIdsStr, modelType 
     params: { deviceIds: deviceIdsStr, modelType }
   })
 }
-
-/**
- * VLS after ZLMediaKit .
- * RTSP/RTMP after from devicerecord , service.
- */
-export function createDevicePreview(id) {
-  return request({
-    url: `/vlsDeviceInfo/${id}/preview`,
-    method: 'post'
-  })
-}

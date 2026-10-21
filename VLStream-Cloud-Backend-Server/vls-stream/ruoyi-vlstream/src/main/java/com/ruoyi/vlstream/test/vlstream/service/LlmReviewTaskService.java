@@ -80,6 +80,9 @@ public class LlmReviewTaskService {
 		if (upload == null) {
 			throw new ServiceException("当前算法要求图片复核，但媒体属于其他环境，无法在本机读取");
 		}
+		if (DeviceMediaUploadService.isVideoType(upload.getContentType())) {
+			throw new ServiceException("当前算法要求图片复核，请同时上报抓拍图片和视频");
+		}
 		LlmProvider provider = providerForUse(config.getProviderId(), false);
 		if (provider == null) {
 			log.warn("算法选择的大模型当前不可用，事件保持原安全事件链路: tenantId={}, algorithmId={}, providerId={}, messageId={}",
@@ -224,10 +227,31 @@ public class LlmReviewTaskService {
 			.description(event.getStr("description"))
 			.eventTime(new Date(event.getLong("eventTime")))
 			.mediaId(event.getStr("mediaId"))
+			.imageMediaIds(boundMediaIds(event.getJSONObject("mqttPayload"), false, task))
+			.videoMediaIds(boundMediaIds(event.getJSONObject("mqttPayload"), true, task))
 			.address(event.getStr("address"))
 			.longitude(event.getBigDecimal("longitude"))
 			.latitude(event.getBigDecimal("latitude"))
 			.build());
+	}
+
+	private List<String> boundMediaIds(JSONObject payload, boolean video, LlmReviewTask task) {
+		List<String> ids = new ArrayList<String>();
+		cn.hutool.json.JSONArray media = payload == null ? null : payload.getJSONArray("media");
+		if (media == null || media.isEmpty()) {
+			if (!video) ids.add(task.getMediaId());
+			return ids;
+		}
+		for (int index = 0; index < media.size(); index++) {
+			DeviceMediaUpload item = mediaUploadService.getByMediaId(media.getJSONObject(index).getStr("mediaId"));
+			if (item == null || !"BOUND".equals(item.getUploadStatus())
+				|| !task.getDeviceId().equals(item.getDeviceId())
+				|| !task.getSourceMessageId().equals(item.getBoundEventMessageId())) {
+				throw new ServiceException("复核事件媒体关联无效");
+			}
+			if (DeviceMediaUploadService.isVideoType(item.getContentType()) == video) ids.add(item.getMediaId());
+		}
+		return ids;
 	}
 
 	private List<byte[]> selectImages(byte[] full, JSONObject payload, String mode) throws Exception {

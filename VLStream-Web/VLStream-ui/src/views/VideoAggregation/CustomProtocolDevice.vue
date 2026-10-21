@@ -14,7 +14,7 @@
           <div class="custom-device-header">
             <div class="custom-device-header-title">
               <span class="title">{{ $tp('自定义协议设备') }}</span>
-              <el-tag :type="mediaAvailable ? 'success' : 'danger'" size="small">WVP ZLM {{ mediaAvailable ? $tp('可用') : $tp('不可用') }}</el-tag>
+              <el-tag :type="mediaTagType" size="small" :title="mediaError">WVP ZLM {{ $tp(mediaLabel) }}</el-tag>
             </div>
             <div class="custom-device-filters">
               <el-input v-model="query.deviceName" clearable :placeholder="$tp('设备名称')" @keyup.enter="search" />
@@ -26,8 +26,6 @@
             </div>
           </div>
         </template>
-
-        <el-alert v-if="serviceError" :title="serviceError" type="error" :closable="false" show-icon class="service-alert" />
 
         <div class="custom-device-actions">
           <el-button type="primary" @click="openAdd">{{ $tp('新增') }}</el-button>
@@ -120,6 +118,7 @@ import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/
 import SquareProtocolDevicePlayer from './components/SquareProtocolDevicePlayer.vue'
 import { stampCustomStatus } from '@/utils/customDeviceState'
 import { useCustomAvailabilityClock } from '@/utils/useCustomAvailabilityClock'
+import { useWvpMediaStatus } from '@/utils/useWvpMediaStatus'
 import CustomAvailabilityBadge from '@/components/CustomAvailabilityBadge.vue'
 import {
   addCustomDevice, deleteCustomDevices, exportCustomDevices, getCustomDevice, getCustomMediaStatus,
@@ -127,7 +126,8 @@ import {
   saveCustomRecordPlan, startCustomRecord, stopCustomRecord, updateCustomDevice
 } from '@/api/customDevice'
 
-const loading = ref(false), devices = ref([]), total = ref(0), mediaAvailable = ref(false), serviceError = ref('')
+const loading = ref(false), devices = ref([]), total = ref(0)
+const { mediaAvailable, mediaLabel, mediaTagType, mediaError, loadMediaStatus } = useWvpMediaStatus(getCustomMediaStatus)
 const selectedIds = ref([]), classificationDeviceKeys = ref([]), formVisible = ref(false), formRef = ref(), saving = ref(false)
 const previewVisible = ref(false), previewTitle = ref('视频预览'), previewDevice = ref({})
 const previewSource = ref({})
@@ -135,7 +135,7 @@ const statusClock = useCustomAvailabilityClock(() => devices.value)
 let statusTimer, disposed = false, listGeneration = 0
 const refreshPresence = () => {
   statusClock.value = Date.now()
-  if (!document.hidden && !loading.value && !disposed) loadDevices()
+  if (!document.hidden && !loading.value && !disposed) { loadDevices(); loadMediaStatus() }
 }
 const recordVisible = ref(false), recording = ref(false), recordDevice = ref({}), selectedDays = ref([]), timeRange = ref(['00:00', '23:59'])
 const query = reactive({ pageNum: 1, pageSize: 10, deviceName: '', deviceCode: '', status: undefined })
@@ -153,16 +153,17 @@ const weekOptions = [['1','周一'],['2','周二'],['3','周三'],['4','周四']
 function errorMessage(error, fallback) { return error?.response?.data?.msg || error?.message || fallback }
 async function loadDevices() {
   const generation = ++listGeneration, requestedAt = Date.now()
-  loading.value = true; serviceError.value = ''
+  loading.value = true
   try {
-    const [list, media] = await Promise.all([listCustomDevices(query), getCustomMediaStatus()])
+    const list = await listCustomDevices({ ...query })
     if (disposed || generation !== listGeneration) return
     statusClock.value = Date.now()
-    devices.value = (list?.rows || []).map(row => stampCustomStatus(row, requestedAt)); total.value = Number(list?.total || 0); mediaAvailable.value = Boolean(media?.data?.available)
-  } catch (error) {
+    devices.value = (list?.rows || []).map(row => stampCustomStatus(row, requestedAt)); total.value = Number(list?.total || 0)
+  } catch {
     if (disposed || generation !== listGeneration) return
-    devices.value = []; total.value = 0; mediaAvailable.value = false
-    serviceError.value = errorMessage(error, 'WVP 服务不可用，无法加载自定义协议设备')
+    devices.value = []; total.value = 0
+    selectedIds.value = []; classificationDeviceKeys.value = []
+    // The request layer reports the actual list error; media status is independent.
   } finally { if (generation === listGeneration) loading.value = false }
 }
 function search() { query.pageNum = 1; loadDevices() }
@@ -211,7 +212,7 @@ async function saveRecordPlanForm() {
   await saveCustomRecordPlan(recordDevice.value.id, { ...recordPlan }); ElMessage.success(uiText('录像计划已保存')); recordVisible.value = false
 }
 onMounted(() => {
-  loadDevices(); statusTimer = window.setInterval(refreshPresence, 30000)
+  loadDevices(); loadMediaStatus(); statusTimer = window.setInterval(refreshPresence, 30000)
   window.addEventListener('focus', refreshPresence)
   document.addEventListener('visibilitychange', refreshPresence)
 })
@@ -259,7 +260,7 @@ onBeforeUnmount(() => {
   margin-bottom: 14px;
 }
 .custom-device-actions :deep(.el-button + .el-button) { margin-left: 0; }
-.service-alert { margin-bottom: 14px; }.pagination { display: flex; justify-content: center; padding-top: 20px; }
+.pagination { display: flex; justify-content: center; padding-top: 20px; }
 .tag-item { margin-right: 4px; }.player { min-height: 480px; background: #000; display: flex; align-items: center; justify-content: center; }
 .oplayer-container { width: 100%; height: 480px; }.player :deep(#webRtcPlayerBox), .player :deep(#rtcPlayer) { width: 100%; max-height: 520px; }
 .record-alert { margin-bottom: 16px; }

@@ -231,6 +231,43 @@ class DeviceEventMqttHandlerTest {
 		verify(activeSafetyEventReportService, never()).report(any());
 	}
 
+	@Test
+	void bindsImageAndVideoAndUsesImageForReviewRegardlessOfOrder() {
+		DeviceInfo device = new DeviceInfo(); device.setDeviceId("CAM-1"); device.setTenantId("tenant-a");
+		when(wvpDeviceResolver.resolve("CAM-1")).thenReturn(device);
+		JSONObject message = eventMessage();
+		JSONObject video = new JSONObject().set("mediaId", "video-1").set("objectKey", "events/CAM-1/video.mp4").set("sha256", sha256());
+		message.getJSONObject("payload").getJSONArray("media").add(0, video);
+		DeviceMediaUpload imageUpload = new DeviceMediaUpload(); imageUpload.setMediaId("media-1"); imageUpload.setContentType("image/jpeg");
+		DeviceMediaUpload videoUpload = new DeviceMediaUpload(); videoUpload.setMediaId("video-1"); videoUpload.setContentType("video/mp4");
+		when(mediaUploadService.validateAndBind("video-1", "CAM-1", "events/CAM-1/video.mp4", sha256(), "event-message-1")).thenReturn(videoUpload);
+		when(mediaUploadService.validateAndBind("media-1", "CAM-1", "events/CAM-1/2026/07/29/media-1.jpg", sha256(), "event-message-1")).thenReturn(imageUpload);
+		when(activeSafetyEventReportService.report(any())).thenReturn(ActiveSafetyEventReportResult.builder().activeSafetyEventId("synthetic").build());
+		assertEquals("SUCCESS", handler.handle(message).getByPath("payload.bizData.status"));
+		ArgumentCaptor<ActiveSafetyEventReport> captor = ArgumentCaptor.forClass(ActiveSafetyEventReport.class);
+		verify(activeSafetyEventReportService).report(captor.capture());
+		assertEquals(java.util.Collections.singletonList("media-1"), captor.getValue().getImageMediaIds());
+		assertEquals(java.util.Collections.singletonList("video-1"), captor.getValue().getVideoMediaIds());
+		verify(llmReviewTaskService).enqueueIfRequired(any(), any(), org.mockito.ArgumentMatchers.same(imageUpload), any(), any(), any(), any());
+	}
+
+	@Test
+	void secondMediaFailurePreventsEventPersistence() {
+		DeviceInfo device = new DeviceInfo(); device.setDeviceId("CAM-1"); device.setTenantId("tenant-a");
+		when(wvpDeviceResolver.resolve("CAM-1")).thenReturn(device);
+		JSONObject message = eventMessage();
+		message.getJSONObject("payload").getJSONArray("media").add(new JSONObject().set("mediaId", "foreign-video")
+			.set("objectKey", "events/OTHER/video.mp4").set("sha256", sha256()));
+		when(mediaUploadService.validateAndBind("media-1", "CAM-1", "events/CAM-1/2026/07/29/media-1.jpg", sha256(), "event-message-1"))
+			.thenReturn(new DeviceMediaUpload());
+		when(mediaUploadService.validateAndBind("foreign-video", "CAM-1", "events/OTHER/video.mp4", sha256(), "event-message-1"))
+			.thenThrow(new ServiceException("媒体对象与设备或 objectKey 不匹配"));
+		assertEquals("FAILED", handler.handle(message).getByPath("payload.bizData.status"));
+		verify(activeSafetyEventReportService, never()).report(any());
+		verify(llmReviewTaskService, never()).enqueueIfRequired(any(), any(), any(), any(), any(), any(), any());
+		assertNull(com.ruoyi.common.helper.TenantContextHolder.getTenantId());
+	}
+
 	private JSONObject eventMessage() {
 		return JSONUtil.parseObj("{"
 			+ "\"protocolVersion\":\"2.2\","

@@ -7,6 +7,14 @@
 
 <template>
   <div class="device-management tenant_Page draHeaPB">
+    <el-alert type="info" :closable="false" show-icon>
+      <template #title>
+        <el-button link type="primary" @click="router.push('/custom/device')">
+          {{ $tp('自定义协议设备') }}
+        </el-button>
+        {{ $tp('视频预览') }}
+      </template>
+    </el-alert>
     <div class="tenant_content">
       <div class="tableTenBox flexRowAC">
         <!-- device -->
@@ -306,17 +314,9 @@
 <!-- <div v-if="currentVideoDevice.playMode"> : {{ getPlayModeText(currentVideoDevice.playMode) }}</div> -->
 <!--              </div>-->
 
-              <!-- RTSP ZLMediaKit to WebRTC -->
-              <RtcPlayer
-                v-if="zlmWebrtcUrl"
-                :key="zlmWebrtcUrl"
-                :video-url="zlmWebrtcUrl"
-                class="zlm-rtc-player"
-              />
-
               <!-- non-RTSP OPlayer -->
               <div
-                v-else-if="currentVideoDevice.streamUrl"
+                v-if="currentVideoDevice.streamUrl"
                 ref="oplayerContainer"
                 class="oplayer-container"
               />
@@ -484,14 +484,12 @@ import Hls from 'hls.js'
 import PTZControl from '@/components/PTZControl.vue'
 import CollapseToggle from '@/components/CollapseToggle.vue'
 import RtspPlayer from '@/components/RtspPlayer.vue'
-import RtcPlayer from '@/components/rtcPlayer/index.vue'
 import DeviceEditForm from './DeviceEditForm.vue'
 
 // Import API
 import {
   batchDeleteDevices,
   createDevice,
-  createDevicePreview,
   deleteDevice,
   getDeviceById,
   getDeviceList,
@@ -620,7 +618,6 @@ const cameraRtcContainer = ref(null)
 const cameraRtcPlayer = shallowRef(null)
 const oplayerContainer = ref(null)
 const oplayerInstance = shallowRef(null)
-const zlmWebrtcUrl = ref('')
 let activeOPlayerTask = null
 const converting = ref(false)
 
@@ -1100,7 +1097,7 @@ const createDeviceOPlayerOptions = async (streamUrl) => {
   }
 
   if (streamType === 'rtsp') {
-    throw new Error('RTSP视频流必须通过ZLMediaKit预览接口播放')
+    throw new Error('请在自定义协议设备页预览RTSP视频流')
   }
 
   const playTypeMap = { flv: 'flv', hls: 'm3u8', video: 'mp4', http: 'mp4' }
@@ -1112,7 +1109,11 @@ const createDeviceOPlayerOptions = async (streamUrl) => {
 
 // device
 const handlePlay = async (row) => {
-  console.log('点击播放设备:', row)
+  // Legacy device rows do not share WVP row IDs; let the user choose the WVP device.
+  if (/^\s*rt(?:sp|mp):\/\//i.test(row.streamUrl || '')) {
+    await router.push('/custom/device')
+    return
+  }
   playStatistics.value.totalAttempts++
   const deviceForPlay = { ...row }
 
@@ -1122,7 +1123,6 @@ const handlePlay = async (row) => {
   }
 
   cleanupDeviceOPlayer()
-  zlmWebrtcUrl.value = ''
   const playbackTask = Symbol('device-oplayer')
   activeOPlayerTask = playbackTask
   currentVideoDevice.value = deviceForPlay
@@ -1136,23 +1136,6 @@ const handlePlay = async (row) => {
   })
 
   try {
-    if (getStreamType(deviceForPlay.streamUrl) === 'rtsp') {
-      const response = await createDevicePreview(deviceForPlay.id)
-      const preview = response?.data ?? response
-      const webrtcUrl = preview?.webrtcUrl
-      if (!webrtcUrl) throw new Error('后端未返回ZLM WebRTC播放地址')
-      if (activeOPlayerTask !== playbackTask) return
-
-      zlmWebrtcUrl.value = webrtcUrl
-      currentVideoDevice.value.playMode = 'zlm-webrtc'
-      await nextTick()
-      playStatus.value.isConnecting = false
-      playStatus.value.isPlaying = true
-      playStatus.value.hasError = false
-      playStatus.value.connectionState = 'connected'
-      return
-    }
-
     await Promise.all([ensureOPlayer(), nextTick()])
     const { playerConfig, playConfig } = await createDeviceOPlayerOptions(deviceForPlay.streamUrl)
     const container = oplayerContainer.value
@@ -1696,7 +1679,6 @@ const isCameraRtcDevice = (device) => {
 
 
 const handleVideoClose = () => {
-  zlmWebrtcUrl.value = ''
   // HLS
   if (simpleHlsPlayer.value && simpleHlsPlayer.value.hlsInstance) {
     simpleHlsPlayer.value.hlsInstance.destroy()
@@ -2017,7 +1999,6 @@ const cleanupWebRTCStream = async () => {
 const getPlayModeTagType = (playMode) => {
   switch (playMode) {
     case 'webrtc':
-    case 'zlm-webrtc':
       return 'success'
     case 'hls':
       return 'warning'
@@ -2037,8 +2018,6 @@ const getPlayModeText = (playMode) => {
   switch (playMode) {
     case 'webrtc':
       return 'WebRTC'
-    case 'zlm-webrtc':
-      return 'ZLM WebRTC'
     case 'hls':
       return 'HLS'
     case 'native':

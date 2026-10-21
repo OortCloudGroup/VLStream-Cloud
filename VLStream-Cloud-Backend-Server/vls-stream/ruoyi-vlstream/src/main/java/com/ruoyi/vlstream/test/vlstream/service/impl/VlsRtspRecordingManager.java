@@ -76,11 +76,6 @@ public class VlsRtspRecordingManager {
 	private final AtomicBoolean refreshInProgress = new AtomicBoolean(false);
 	private final AtomicBoolean recordSyncInProgress = new AtomicBoolean(false);
 
-//	@Scheduled(fixedDelayString = "${vlstream.rtsp-recording.refresh-interval-millis:10000}")
-//	public void scheduledRefresh() {
-//		refreshNow();
-//	}
-
 	@Scheduled(fixedDelayString = "${vlstream.rtsp-recording.record-sync-interval-millis:10000}")
 	public void scheduledSyncRecords() {
 		syncRecordsNow();

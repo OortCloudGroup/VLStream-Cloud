@@ -644,7 +644,7 @@ VITE_DEV_PROXY_TARGET=http://127.0.0.1:8080
 VITE_APAAS_PROXY_TARGET=http://apaas-gateway.example.internal:21410
 ```
 
-Use `npm run build` to create a production frontend bundle.
+Use `npm run build` to create a production frontend bundle. For deployment-specific ZLM signaling and RTC candidate configuration, see [browser playback configuration](docs/ZLM_BROWSER_PLAYBACK.md). Empty candidate settings preserve the existing VM/local/self-hosted playback behavior.
 
 #### Post-Startup Acceptance
 

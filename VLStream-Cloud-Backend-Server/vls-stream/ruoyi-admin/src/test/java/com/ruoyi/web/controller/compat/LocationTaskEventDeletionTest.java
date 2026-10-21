@@ -152,6 +152,24 @@ class LocationTaskEventDeletionTest {
         verify(media, never()).getPrivateViewUrl(anyString(), anyInt());
     }
 
+    @Test
+    void signsVideoAlongWithPicturesAndPreservesSoftDeletedMedia() {
+        addEvent("clip", "tenant-a", "camera", "{\"pics\":[],\"video\":[\"vls-media://video-1\"]}");
+        addEvent("foreign-clip", "tenant-b", "camera", "{\"video\":[\"vls-media://foreign\"]}");
+        when(media.getPrivateViewUrls(eq("tenant-a"), anyCollection(), eq(3600)))
+            .thenReturn(Collections.singletonMap("video-1", "https://example.invalid/clip.mp4"));
+        Map<?, ?> page = (Map<?, ?>) service.eventList(body("mod_type", 2), user).getData();
+        List<?> rows = (List<?>) page.get("list");
+        assertEquals(1, rows.size());
+        Map<?, ?> row = (Map<?, ?>) rows.get(0);
+        assertEquals("https://example.invalid/clip.mp4", row.get("videoUrl"));
+        assertEquals(Collections.singletonList("https://example.invalid/clip.mp4"), row.get("video"));
+        verify(media).getPrivateViewUrls(eq("tenant-a"), eq(Collections.singleton("video-1")), eq(3600));
+        assertEquals(200, service.eventDelete(body("id", "clip-20261015-1"), user).getCode());
+        assertTrue(jdbc.queryForObject("SELECT data FROM oort_task_event WHERE tenant_id='tenant-a'", String.class)
+            .contains("vls-media://video-1"));
+    }
+
     private void addEvent(String id, String tenant, String owner, String data) {
         jdbc.update("INSERT INTO oort_task_event (id,`no`,tenant_id,uuid,data,item) VALUES (?,1,?,?,?,'synthetic')",
             id + "-20261015", tenant, owner, data);

@@ -8,7 +8,7 @@
 const OPLAYER_SCRIPT_URL = `${import.meta.env.BASE_URL}OPlayer.min.js`
 
 const cameraRtcSocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-export const CAMERA_RTC_SOCKET_URL = `${cameraRtcSocketProtocol}//${window.location.host}/bus/camera-rtc`
+export const CAMERA_RTC_SOCKET_URL = `${cameraRtcSocketProtocol}//vlstream.oortcloudsmart.com:2443/bus/camera-rtc`
 
 let oplayerScriptLoader = null
 

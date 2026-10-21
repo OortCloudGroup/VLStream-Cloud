@@ -1109,8 +1109,8 @@ const startLayoutDrag = (event, dialogId) => {
     const newY = e.clientY - offsetY
 
     // , dialog will
-    const maxX = window.innerWidth - 200 // to 200px
-    const maxY = window.innerHeight - 100 // to 100px
+    const maxX = Math.max(0, window.innerWidth - rect.width)
+    const maxY = Math.max(0, window.innerHeight - rect.height)
 
     dialog.position.x = Math.max(0, Math.min(newX, maxX))
     dialog.position.y = Math.max(0, Math.min(newY, maxY))

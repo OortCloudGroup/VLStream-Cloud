@@ -43,7 +43,7 @@ public class VlsDeviceMediaController {
 	 */
 	@SaIgnore
 	@PostMapping("/public/upload-url")
-	@Operation(summary = "申请事件图片预签名 PUT 地址")
+	@Operation(summary = "申请事件图片或 MP4 预签名 PUT 地址")
 	public R<DeviceMediaUploadResponse> issueUploadUrl(
 		@Valid @RequestBody DeviceMediaUploadRequest request) {
 		return R.data(uploadService.issueUploadUrl(request));
@@ -55,5 +55,11 @@ public class VlsDeviceMediaController {
 							 @RequestParam(defaultValue = "300") Integer seconds) {
 		return R.data(uploadService.getPrivateViewUrl(
 			mediaId, seconds == null ? 300 : seconds));
+	}
+
+	@GetMapping("/{mediaId}/download-url")
+	@Operation(summary = "获取已绑定事件媒体短期下载地址")
+	public R<String> downloadUrl(@PathVariable String mediaId) {
+		return R.data(uploadService.getPrivateViewUrl(mediaId, 300, true));
 	}
 }

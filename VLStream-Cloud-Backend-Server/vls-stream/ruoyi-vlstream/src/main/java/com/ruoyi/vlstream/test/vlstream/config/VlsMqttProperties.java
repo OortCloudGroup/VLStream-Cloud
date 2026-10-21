@@ -40,11 +40,6 @@ public class VlsMqttProperties {
 	 */
 	private String password;
 
-	/**
-	 * main before
-	 */
-	private String topicPrefix = "oortcloud";
-
     /**
 	 * Set main
 	 */

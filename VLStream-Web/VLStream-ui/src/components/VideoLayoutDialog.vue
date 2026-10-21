@@ -11,10 +11,12 @@
     :style="{ zIndex: 3000 + dialog.id }"
   >
     <div
+      ref="dialogElement"
       class="layout-dialog draggable-dialog"
+      :class="{ 'is-maximized': maximized, 'is-minimized': dialog.minimized }"
       :style="{
-        left: dialog.position.x + 'px',
-        top: dialog.position.y + 'px',
+        left: maximized ? '0px' : dialog.position.x + 'px',
+        top: maximized ? '0px' : dialog.position.y + 'px',
         position: 'fixed',
         transform: 'none'
       }"
@@ -25,7 +27,13 @@
         @mousedown="startDrag"
       >
         <span class="layout-dialog-title">{{ getLayoutTitle(dialog.layoutCount) }} {{ $tp('- 视频播放') }}</span>
-        <div class="dialog-controls">
+        <div class="dialog-controls" @mousedown.stop>
+          <button class="dialog-panel-btn" @click="showPtz = !showPtz" :aria-expanded="showPtz">
+            {{ showPtz ? $tp('收起PTZ') : $tp('显示PTZ') }}
+          </button>
+          <button class="dialog-control-btn" @click="maximized = !maximized" :title="maximized ? $tp('还原') : $tp('最大化')">
+            <span aria-hidden="true">{{ maximized ? '❐' : '□' }}</span>
+          </button>
           <button class="dialog-control-btn minimize-btn" @click="minimize" :title="$tp('最小化')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 13H5v-2h14v2z"/>
@@ -141,7 +149,7 @@
               </div>
 
               <!-- recordingcontrol -->
-              <div class="video-controls">
+              <div v-if="dialog.recording?.isRecording" class="video-controls">
                 <!-- recording -->
                 <div v-if="dialog.recording?.isRecording" class="recording-status">
                   <div class="recording-indicator">
@@ -153,7 +161,7 @@
           </div>
 
           <!-- PTZcontrol -->
-          <div class="ptz-control-section">
+          <div v-show="showPtz" class="ptz-control-section">
             <PTZControl
               :show-camera-management="true"
               @ptz-control="handlePTZControl"
@@ -186,6 +194,32 @@ const props = defineProps({
   }
 })
 
+// Dialog viewport state
+const dialogElement = ref(null)
+const maximized = ref(false)
+const showPtz = ref(true)
+
+// Clamp after viewport changes and native dialog resizing, without restarting streams.
+const fitDialog = () => {
+  if (maximized.value || !dialogElement.value) return
+  const bounds = dialogElement.value.getBoundingClientRect()
+  const position = props.dialog.position
+  position.x = Math.max(0, Math.min(position.x, window.innerWidth - bounds.width))
+  position.y = Math.max(0, Math.min(position.y, window.innerHeight - bounds.height))
+}
+let dialogObserver
+onMounted(() => {
+  dialogObserver = new ResizeObserver(fitDialog)
+  dialogObserver.observe(dialogElement.value)
+  window.addEventListener('resize', fitDialog)
+  fitDialog()
+})
+watch(maximized, () => nextTick(fitDialog))
+onBeforeUnmount(() => {
+  dialogObserver?.disconnect()
+  window.removeEventListener('resize', fitDialog)
+})
+
 // Emits
 const emit = defineEmits([
   'close',
@@ -204,6 +238,7 @@ const emit = defineEmits([
   'copy-stream-url',
   'open-in-vlc',
   'add-device',
+  'video-window-click',
   'video-window-double-click',
   'video-window-swap'
 ])
@@ -217,9 +252,9 @@ const getLayoutClass = (count) => {
     8: '4x4',
     9: '5x5',
     16: '6x6',
-    22: '6x6', // 6x6
-    24: '6x6', // 6x6
-    25: '6x6'  // 6x6
+    22: 'extended',
+    24: 'extended',
+    25: 'extended'
   }
   return classes[count] || '1x1'
 }
@@ -254,6 +289,7 @@ const bringToFront = () => {
 }
 
 const startDrag = (event) => {
+  if (maximized.value) return
   emit('start-drag', event, props.dialog.id)
 }
 
@@ -589,16 +625,47 @@ const handleDrop = (event, targetWindowIndex) => {
   border-radius: 8px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   border: 1px solid #e4e7ed;
-  min-width: 1400px;
-  min-height: 900px;
-  max-height: 95vh;
+  box-sizing: border-box;
+  width: min(1530px, calc(100vw - 32px));
+  height: min(900px, calc(100dvh - 32px));
+  min-width: min(480px, calc(100vw - 32px));
+  min-height: min(280px, calc(100dvh - 32px));
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 32px);
+  resize: both;
   pointer-events: auto;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
+.layout-dialog.is-maximized,
+.layout-dialog.fullscreen-active {
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: 100vw !important;
+  max-height: 100dvh !important;
+  resize: none;
+  border-radius: 0;
+}
+
+.layout-dialog.is-minimized {
+  height: auto !important;
+  min-height: 0 !important;
+  resize: none;
+}
+
+.dialog-panel-btn {
+  border: 0;
+  background: transparent;
+  color: #606266;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 .layout-dialog-header {
+  flex: 0 0 auto;
+  gap: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -646,16 +713,20 @@ const handleDrop = (event, targetWindowIndex) => {
 
 .layout-dialog-content {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   overflow: hidden;
 }
 
 .dialog-main-content {
   display: flex;
-  gap: 20px;
-  padding: 24px;
-  height: calc(100% - 60px);
-  align-items: flex-start;
-  min-width: 1200px;
+  gap: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+  height: 100%;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -665,7 +736,7 @@ const handleDrop = (event, targetWindowIndex) => {
   background: transparent;
   border-radius: 8px;
   overflow: hidden;
-  width: 1140px;
+  min-width: 0;
   flex: 1;
   min-height: 0;
 }
@@ -676,7 +747,7 @@ const handleDrop = (event, targetWindowIndex) => {
   background: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 16px;
+  padding: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -688,28 +759,28 @@ const handleDrop = (event, targetWindowIndex) => {
 
 .video-grid {
   display: grid;
-  gap: 8px;
+  gap: 4px;
   width: 100%;
   flex: 1;
-  min-height: 762px;
-  height: calc(100% - 48px);
+  min-width: 0;
+  min-height: 0;
 }
 
 /*  */
 .video-grid.layout-1x1 {
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .video-grid.layout-2x2 {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
 }
 
 /* 6 L : main 4 , 5 in and */
 .video-grid.layout-3x3 {
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
 }
 
 .video-grid.layout-3x3 .video-window:nth-child(1) {
@@ -744,8 +815,8 @@ const handleDrop = (event, targetWindowIndex) => {
 
 /* 8 L : 3×3 main + 4 + 4 , 5 */
 .video-grid.layout-4x4 {
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr 1fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
 }
 
 .video-grid.layout-4x4 .video-window:nth-child(1) {
@@ -789,17 +860,25 @@ const handleDrop = (event, targetWindowIndex) => {
 }
 
 .video-grid.layout-5x5 {
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
 }
 
 .video-grid.layout-6x6 {
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+}
+
+.video-grid.layout-extended {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(0, 1fr));
 }
 
 .video-window {
-  background: transparent;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  background: #000;
   border: 1px solid #ddd;
   border-radius: 0;
   overflow: hidden;
@@ -820,7 +899,7 @@ const handleDrop = (event, targetWindowIndex) => {
   width: 100%;
   height: 100%;
   z-index: 10;
-  pointer-events: auto;
+  pointer-events: none;
   background: transparent;
 }
 
@@ -1321,10 +1400,98 @@ const handleDrop = (event, targetWindowIndex) => {
   border-radius: 8px;
   border: 1px solid #e4e7ed;
   padding: 0;
-  overflow: hidden;
+  overflow: auto;
+  min-height: 0;
+  min-width: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+.ptz-control-section :deep(.ptz-control-panel) {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+/* Every player gets the cell's available height, including the source selector.
+   Native media then contains the complete frame with centered letterboxing. */
+.video-window :deep(.square-device-player),
+.video-window :deep(.vls-device-player),
+.video-window :deep(.rtsp-device-player),
+.video-window :deep(.square-protocol-player),
+.video-window :deep(.camera-rtc-player),
+.video-window :deep(.direct-player),
+.video-window :deep(#rtcPlayer),
+.video-window :deep(.rtsp-player-container),
+.video-window :deep(.video-container:not(.fullscreen)),
+.video-window :deep(.o-player),
+.video-window :deep(.o-player-item) {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-height: none;
+  box-sizing: border-box;
+}
+
+/* RtspPlayer receives legacy pixel props; constrain its outer box to the cell.
+   Its inner fullscreen container keeps its own viewport sizing. */
+.video-window :deep(.rtsp-player-container) {
+  width: 100% !important;
+  height: 100% !important;
+}
+.video-window :deep(#webRtcPlayerBox) { max-height: none; }
+
+.video-window :deep(.square-device-player) { overflow: hidden; }
+.video-window :deep(.source-selector) { flex: 0 0 auto; }
+.video-window :deep(.square-device-player > .vls-device-player),
+.video-window :deep(.square-device-player > .rtsp-device-player),
+.video-window :deep(.square-device-player > .square-protocol-player) {
+  height: 0;
+  flex: 1 1 0;
+}
+
+.video-window :deep(video),
+.video-window :deep(canvas),
+.video-window :deep(iframe) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-height: none;
+  object-fit: contain;
+  object-position: center;
+  background: #000;
+}
+
+.video-window :deep(.preview-error),
+.video-window :deep(.camera-rtc-status),
+.video-window :deep(.protocol-preview-entry) {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 8px;
+  overflow: auto;
+  box-sizing: border-box;
+  font-size: 12px;
+}
+
+.video-window :deep(.camera-rtc-status) { justify-content: safe center; }
+.video-window :deep(.camera-rtc-status > *) { flex-shrink: 0; }
+.video-window :deep(.camera-rtc-controls) { flex-wrap: wrap; }
+.video-window .video-placeholder {
+  overflow: auto;
+  align-items: safe center;
+  justify-content: safe center;
+}
+
+@media (max-width: 900px) {
+  .dialog-main-content { gap: 6px; padding: 6px; }
+  .ptz-control-section { flex-basis: min(320px, 35%); }
 }
 
 /*  */

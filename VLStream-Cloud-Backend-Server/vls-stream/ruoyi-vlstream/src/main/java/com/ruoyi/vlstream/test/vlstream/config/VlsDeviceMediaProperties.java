@@ -41,6 +41,9 @@ public class VlsDeviceMediaProperties {
 	 */
 	private Long maxImageBytes = 10L * 1024L * 1024L;
 
+	/** Maximum complete MP4 event clip size; independent from the image limit. */
+	private Long maxVideoBytes = 100L * 1024L * 1024L;
+
 	/**
 	 * Temporary LAN-only switch. Production must set this to false and enable device authentication.
 	 */

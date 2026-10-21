@@ -30,6 +30,9 @@ public class ActiveSafetyEventReport {
 	private String description;
 	private Date eventTime;
 	private String mediaId;
+	/** Validated local references, split by their registered MIME rather than device hints. */
+	private java.util.List<String> imageMediaIds;
+	private java.util.List<String> videoMediaIds;
 	private boolean externalMedia;
 	private String mqttPayloadJson;
 	private String address;

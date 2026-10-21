@@ -1001,9 +1001,11 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         body.put("name", limitCodePoints(eventType, 20));
         body.put("describe", string(report.getDescription()));
         body.put("point", point);
-        body.put("pics", report.isExternalMedia() ? Collections.emptyList()
-            : Collections.singletonList(VLS_MEDIA_PREFIX + report.getMediaId()));
-        body.put("video", Collections.emptyList());
+        body.put("pics", report.getImageMediaIds() == null
+            ? (report.isExternalMedia() ? Collections.emptyList()
+                : Collections.singletonList(VLS_MEDIA_PREFIX + report.getMediaId()))
+            : mediaReferences(report.getImageMediaIds()));
+        body.put("video", mediaReferences(report.getVideoMediaIds()));
 
         EventKey key = insertCameraEvent(body, report);
         return ActiveSafetyEventReportResult.builder()
@@ -2245,7 +2247,14 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         value.put("pics", pictureUrls == null ? resolveEventPictures(pictures)
             : resolveEventPictures(pictures, pictureUrls));
         value.put("send_pics", distinctStrings(data.get("send_pics"), false));
-        value.put("video", data.containsKey("video") ? data.get("video") : null);
+        List<String> videos = distinctStrings(data.get("video"), true);
+        List<String> videoUrls = pictureUrls == null ? resolveEventPictures(videos)
+            : resolveEventPictures(videos, pictureUrls);
+        value.put("video", videoUrls);
+        value.put("videoMediaId", !videos.isEmpty() && videos.get(0).startsWith(VLS_MEDIA_PREFIX)
+            ? videos.get(0).substring(VLS_MEDIA_PREFIX.length()) : null);
+        value.put("videoUrl", videoUrls.isEmpty() || !videoUrls.get(0).matches("(?i)^https?://.*")
+            ? null : videoUrls.get(0));
         if (data.get("work_order_data") instanceof Map && !((Map<?, ?>) data.get("work_order_data")).isEmpty()) {
             value.put("work_order_data", data.get("work_order_data"));
         }
@@ -2321,7 +2330,9 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
     private Map<String, String> pagePictureUrls(List<Map<String, Object>> rows, String tenantId) {
         Set<String> mediaIds = new LinkedHashSet<String>();
         for (Map<String, Object> row : rows) {
-            for (String picture : distinctStrings(jsonMap(row.get("data")).get("pics"), true)) {
+            List<String> references = distinctStrings(jsonMap(row.get("data")).get("pics"), true);
+            references.addAll(distinctStrings(jsonMap(row.get("data")).get("video"), true));
+            for (String picture : references) {
                 if (picture.startsWith(VLS_MEDIA_PREFIX)) {
                     mediaIds.add(picture.substring(VLS_MEDIA_PREFIX.length()));
                 }
@@ -2341,6 +2352,12 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
     /**
      * Append a non-empty string field to an output map.
      */
+    private static List<String> mediaReferences(List<String> ids) {
+        List<String> refs = new ArrayList<String>();
+        if (ids != null) for (String id : ids) refs.add(VLS_MEDIA_PREFIX + id);
+        return refs;
+    }
+
     private static void appendIfNotEmpty(Map<String, Object> target, String key, Object value) {
         String text = string(value);
         if (!text.isEmpty()) {

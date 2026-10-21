@@ -1,0 +1,8 @@
+**
+!dist/
+!dist/**
+!deploy/
+!deploy/test/
+!deploy/test/Dockerfile
+!deploy/test/Dockerfile.dockerignore
+!deploy/test/nginx-webrtc-sdp.inc

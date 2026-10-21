@@ -30,6 +30,8 @@ Thumbs.db
 /VLStream-Cloud-Backend-Server/vls-stream/doc/gpu-training-scheduler.md
 D:\work\ide\WorkSpace\VLStream-Cloud\VLStream-Cloud-Backend-Server\vls-stream\doc
 /tools/*
+!/tools/test-wvp-media-status.mjs
+!/tools/test-zlm-candidates.mjs
 !/tools/test-active-safety.mjs
 !/tools/test-training-compute-selection.mjs
 !/tools/test-compute-self-service.mjs

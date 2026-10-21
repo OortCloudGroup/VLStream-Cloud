@@ -121,7 +121,9 @@
             </el-table-column>
             <el-table-column prop="fileUrl" :label="$tp('录制视频')" min-width="130">
               <template #default="scope">
-                <div v-if="scope.row.videoUrl" class="video-container" @click="openVideoDialog(scope.row)">
+                <div v-if="scope.row.videoUrl" class="video-container" role="button" tabindex="0" :aria-label="$tp('播放视频')"
+                  @click.stop="openVideoDialog(scope.row)" @keydown.enter="openVideoDialog(scope.row)" @keydown.space.prevent="openVideoDialog(scope.row)">
+                  <span aria-hidden="true">▶</span>
                 </div>
                 <div v-else class="no-video">
                   <span>{{ $tp('暂无视频') }}</span>
@@ -218,6 +220,7 @@
       <div class="video-dialog-container">
         <OortVideoPlayer v-if="currentVideoUrl" :video="{ url: currentVideoUrl }" />
       </div>
+      <el-button v-if="currentVideoUrl" @click="downloadEventVideo(currentVideo)">{{ $tp('下载') }}</el-button>
     </el-dialog>
     <!-- task -->
     <SchedulingDialog
@@ -230,6 +233,7 @@
 
 <script setup lang="ts">
 import { translatePhrase as uiText } from '@/i18n'
+import { downloadEventVideo } from '@/api/eventMedia'
 
 import { ref, onMounted, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -259,6 +263,7 @@ const tabActive = ref('0')
 const currentItem = ref<any>(null)
 const eventDetailsVis = ref(false)
 const videoDialogVisible = ref(false)
+const currentVideo = ref<any>({})
 const currentVideoUrl = ref<string>('')
 const selectedRows = ref<any[]>([])
 const eventTableRef = ref()
@@ -481,6 +486,7 @@ const confirmAlert = (data, type = 'confirm') => {
 }
 
 const openVideoDialog = (data) => {
+  currentVideo.value = data
   if (data.videoUrl) {
     currentVideoUrl.value = data.videoUrl
     videoDialogVisible.value = true
@@ -867,6 +873,10 @@ onMounted(() => {
 }
 
 .video-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
   width: 48px;
   height: 48px;
   border-radius: 4px;
