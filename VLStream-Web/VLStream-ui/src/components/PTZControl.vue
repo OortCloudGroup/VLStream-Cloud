@@ -27,22 +27,30 @@
               <!--  -->
               <div class="ptz-direction-arrows">
                 <!--  -->
-                <div class="ptz-arrow ptz-arrow-up" @click="ptzControl('up')">
+                <div class="ptz-arrow ptz-arrow-up" role="button" :tabindex="movementEnabled ? 0 : -1" :aria-disabled="!movementEnabled"
+                  @click="ptzControl('up')" @pointerdown="startMovement('up', $event)" @pointerup="stopMovement" @pointercancel="stopMovement" @pointerleave="stopMovement"
+                  @keydown="startMovement('up', $event)" @keyup="stopMovement">
                   <img :src="directionUpIcon" :alt="$tp('上')" class="ptz-direction-icon" />
                 </div>
 
                 <!--  -->
-                <div class="ptz-arrow ptz-arrow-right" @click="ptzControl('right')">
+                <div class="ptz-arrow ptz-arrow-right" role="button" :tabindex="movementEnabled ? 0 : -1" :aria-disabled="!movementEnabled"
+                  @click="ptzControl('right')" @pointerdown="startMovement('right', $event)" @pointerup="stopMovement" @pointercancel="stopMovement" @pointerleave="stopMovement"
+                  @keydown="startMovement('right', $event)" @keyup="stopMovement">
                   <img :src="directionUpIcon" :alt="$tp('右')" class="ptz-direction-icon ptz-rotate-90" />
                 </div>
 
                 <!--  -->
-                <div class="ptz-arrow ptz-arrow-down" @click="ptzControl('down')">
+                <div class="ptz-arrow ptz-arrow-down" role="button" :tabindex="movementEnabled ? 0 : -1" :aria-disabled="!movementEnabled"
+                  @click="ptzControl('down')" @pointerdown="startMovement('down', $event)" @pointerup="stopMovement" @pointercancel="stopMovement" @pointerleave="stopMovement"
+                  @keydown="startMovement('down', $event)" @keyup="stopMovement">
                   <img :src="directionUpIcon" :alt="$tp('下')" class="ptz-direction-icon ptz-rotate-180" />
                 </div>
 
                 <!--  -->
-                <div class="ptz-arrow ptz-arrow-left" @click="ptzControl('left')">
+                <div class="ptz-arrow ptz-arrow-left" role="button" :tabindex="movementEnabled ? 0 : -1" :aria-disabled="!movementEnabled"
+                  @click="ptzControl('left')" @pointerdown="startMovement('left', $event)" @pointerup="stopMovement" @pointercancel="stopMovement" @pointerleave="stopMovement"
+                  @keydown="startMovement('left', $event)" @keyup="stopMovement">
                   <img :src="directionUpIcon" :alt="$tp('左')" class="ptz-direction-icon ptz-rotate-270" />
                 </div>
               </div>
@@ -59,7 +67,7 @@
         <div class="zoom-control-area">
           <div class="zoom-background-container">
             <div class="zoom-control-bar">
-              <button class="zoom-control-btn zoom-out" @click="zoomControl('out')" :title="$tp('缩小')">
+              <button class="zoom-control-btn zoom-out" :disabled="!zoomEnabled" @click="zoomControl('out')" :title="$tp('缩小')">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 13H5v-2h14v2z"/>
                 </svg>
@@ -67,7 +75,7 @@
               <div class="zoom-indicator">
                 <span>{{ $tp('变倍') }}</span>
               </div>
-              <button class="zoom-control-btn zoom-in" @click="zoomControl('in')" :title="$tp('放大')">
+              <button class="zoom-control-btn zoom-in" :disabled="!zoomEnabled" @click="zoomControl('in')" :title="$tp('放大')">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
                 </svg>
@@ -83,30 +91,30 @@
       <div class="control-layout">
         <!-- control -->
         <div class="focus-control-group">
-          <button class="focus-btn" @click="controlAction('focus-plus')" :title="$tp('调焦+')">
+          <button class="focus-btn" :disabled="!supportsAction('focus-plus')" @click="controlAction('focus-plus')" :title="$tp('调焦+')">
             <img :src="focusPlusIcon" :alt="$tp('调焦+')" class="function-icon" />
           </button>
-          <button class="focus-btn" @click="controlAction('focus-minus')" :title="$tp('调焦-')">
+          <button class="focus-btn" :disabled="!supportsAction('focus-minus')" @click="controlAction('focus-minus')" :title="$tp('调焦-')">
             <img :src="focusMinusIcon" :alt="$tp('调焦-')" class="function-icon" />
           </button>
         </div>
 
         <!-- control -->
         <div class="zoom-control-group">
-          <button class="zoom-btn" @click="controlAction('zoom-plus')" :title="$tp('聚集+')">
+          <button class="zoom-btn" :disabled="!supportsAction('zoom-plus')" @click="controlAction('zoom-plus')" :title="$tp('聚集+')">
             <img :src="zoomPlusIcon" :alt="$tp('聚集+')" class="function-icon" />
           </button>
-          <button class="zoom-btn" @click="controlAction('zoom-minus')" :title="$tp('聚集-')">
+          <button class="zoom-btn" :disabled="!supportsAction('zoom-minus')" @click="controlAction('zoom-minus')" :title="$tp('聚集-')">
             <img :src="zoomMinusIcon" :alt="$tp('聚集-')" class="function-icon" />
           </button>
         </div>
 
         <!-- control -->
         <div class="iris-control-group">
-          <button class="iris-btn" @click="controlAction('iris-plus')" :title="$tp('光圈+')">
+          <button class="iris-btn" :disabled="!supportsAction('iris-plus')" @click="controlAction('iris-plus')" :title="$tp('光圈+')">
             <img :src="irisPlusIcon" :alt="$tp('光圈+')" class="function-icon" />
           </button>
-          <button class="iris-btn" @click="controlAction('iris-minus')" :title="$tp('光圈-')">
+          <button class="iris-btn" :disabled="!supportsAction('iris-minus')" @click="controlAction('iris-minus')" :title="$tp('光圈-')">
             <img :src="irisMinusIcon" :alt="$tp('光圈-')" class="function-icon" />
           </button>
         </div>
@@ -117,32 +125,32 @@
         <div class="function-buttons-container">
           <!-- : 、 、 Initialize 、menu -->
           <div class="function-row four-cols">
-            <button class="function-btn" @click="controlAction('light')" :title="$tp('灯光')">
+            <button class="function-btn" :disabled="!supportsAction('light')" @click="controlAction('light')" :title="$tp('灯光')">
               <img :src="lightIcon" :alt="$tp('灯光')" class="function-icon" />
             </button>
-            <button class="function-btn" @click="controlAction('assist-focus')" :title="$tp('辅助聚集')">
+            <button class="function-btn" :disabled="!supportsAction('assist-focus')" @click="controlAction('assist-focus')" :title="$tp('辅助聚集')">
               <img :src="assistFocusIcon" :alt="$tp('辅助聚集')" class="function-icon" />
             </button>
-            <button class="function-btn" @click="controlAction('lens-init')" :title="$tp('镜头初始化')">
+            <button class="function-btn" :disabled="!supportsAction('lens-init')" @click="controlAction('lens-init')" :title="$tp('镜头初始化')">
               <img :src="lensInitIcon" :alt="$tp('镜头初始化')" class="function-icon" />
             </button>
-            <button class="function-btn" @click="controlAction('menu')" :title="$tp('菜单')">
+            <button class="function-btn" :disabled="!supportsAction('menu')" @click="controlAction('menu')" :title="$tp('菜单')">
               <img :src="menuIcon" :alt="$tp('菜单')" class="function-icon" />
             </button>
           </div>
 
           <!-- : 、 3D 、 、 -->
           <div class="function-row four-cols">
-            <button class="function-btn" @click="controlAction('manual-track')" :title="$tp('开启手动跟踪')">
+            <button class="function-btn" :disabled="!supportsAction('manual-track')" @click="controlAction('manual-track')" :title="$tp('开启手动跟踪')">
               <img :src="manualTrackIcon" :alt="$tp('开启手动跟踪')" class="function-icon" />
             </button>
-            <button class="function-btn" @click="controlAction('3d-position')" :title="$tp('开启3D定位')">
+            <button class="function-btn" :disabled="!supportsAction('3d-position')" @click="controlAction('3d-position')" :title="$tp('开启3D定位')">
               <img :src="position3dIcon" :alt="$tp('开启3D定位')" class="function-icon" />
             </button>
-            <button class="function-btn" @click="controlAction('auto-cruise')" :title="$tp('一键巡航')">
+            <button class="function-btn" :disabled="!supportsAction('auto-cruise')" @click="controlAction('auto-cruise')" :title="$tp('一键巡航')">
               <img :src="autoCruiseIcon" :alt="$tp('一键巡航')" class="function-icon" />
             </button>
-            <button class="function-btn" @click="controlAction('auto-watch')" :title="$tp('一键守望')">
+            <button class="function-btn" :disabled="!supportsAction('auto-watch')" @click="controlAction('auto-watch')" :title="$tp('一键守望')">
               <img :src="autoWatchIcon" :alt="$tp('一键守望')" class="function-icon" />
             </button>
           </div>
@@ -150,7 +158,7 @@
 
         <!-- : after button -->
         <div class="function-row camera-management-row" v-if="showCameraManagement">
-          <button class="function-btn camera-management" @click="controlAction('camera-management')" :title="$tp('摄像机管理后台')">
+          <button class="function-btn camera-management" :disabled="!supportsAction('camera-management')" @click="controlAction('camera-management')" :title="$tp('摄像机管理后台')">
             <img :src="cameraManagementIcon" :alt="$tp('摄像机管理后台')" class="function-icon" />
             <span class="camera-text">{{ $tp('摄像机管理后台') }}</span>
           </button>
@@ -184,6 +192,10 @@ import rotateIcon from '@/assets/rotateIcon.png'
 
 // props
 const props = defineProps({
+  holdControls: Boolean,
+  movementEnabled: { type: Boolean, default: true },
+  zoomEnabled: { type: Boolean, default: true },
+  supportedActions: { type: Array, default: null },
   showCameraManagement: {
     type: Boolean,
     default: false
@@ -191,22 +203,31 @@ const props = defineProps({
 })
 
 // emits
-const emit = defineEmits(['ptz-control', 'zoom-control', 'control-action'])
+const emit = defineEmits(['ptz-control', 'zoom-control', 'control-action', 'movement-start', 'movement-stop'])
 
 // PTZcontrol method
 const ptzControl = (direction) => {
-  emit('ptz-control', direction)
+  if (!props.holdControls && props.movementEnabled) emit('ptz-control', direction)
 }
 
 // control method
 const zoomControl = (action) => {
-  emit('zoom-control', action)
+  if (props.zoomEnabled) emit('zoom-control', action)
 }
 
 // can control method
 const controlAction = (action) => {
-  emit('control-action', action)
+  if (supportsAction(action)) emit('control-action', action)
 }
+const supportsAction = action => props.supportedActions === null || props.supportedActions.includes(action)
+const startMovement = (direction, event) => {
+  if (!props.holdControls || !props.movementEnabled || event.repeat) return
+  if (event.type === 'keydown' && !['Enter', ' '].includes(event.key)) return
+  if (event.type === 'pointerdown' && event.button !== 0) return
+  event.preventDefault()
+  emit('movement-start', direction)
+}
+const stopMovement = () => { if (props.holdControls) emit('movement-stop') }
 </script>
 
 <style scoped>
@@ -769,4 +790,8 @@ const controlAction = (action) => {
   white-space: nowrap;
   font-size: 12px;
 }
+</style>
+<style scoped>
+.ptz-arrow[aria-disabled="true"], button:disabled { opacity: .4; cursor: not-allowed; }
+.ptz-arrow { touch-action: none; }
 </style>

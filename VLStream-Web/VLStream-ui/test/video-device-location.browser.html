@@ -1,0 +1,43 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>视频广场地址本地夹具验收</title>
+<style>body{font:14px sans-serif;background:#eef2f6;padding:24px}section{background:white;padding:16px;margin:16px 0;width:320px;border-radius:12px}.result{font-weight:bold;color:green}</style>
+<h1>本地布局与异步回归夹具</h1>
+<p>仅测试 DOM 和受控返回，不连接设备接口、不保存设备地址。</p>
+<div id="results"></div><main id="samples"></main>
+<script type="module">
+import '/src/views/VideoAggregation/VideoSquareRefactored.vue'
+import L from 'leaflet'
+import {createVideoAddressResolver,createVideoDeviceLocationPopup} from '/src/utils/videoDeviceAddress.mjs'
+const results=document.querySelector('#results')
+const samples=document.querySelector('#samples')
+const check=(ok,label)=>{const p=document.createElement('p');p.className='result';p.textContent=(ok?'PASS ':'FAIL ')+label;results.append(p);if(!ok)throw Error(label)}
+const add=(label,data,resolver)=>{const section=document.createElement('section');const h=document.createElement('h2');h.textContent=label;section.append(h);const p=createVideoDeviceLocationPopup({name:'本地夹具',lng:0,lat:0,deviceData:data},resolver,s=>s);section.append(p.element);samples.append(section);return p}
+const long='【布局测试文本，不代表设备地址】'+ '广东省/深圳市/福田区华富街道/莲花路88号'.repeat(16)
+const saved=add('长地址与安全文本',{address:long},createVideoAddressResolver(()=>{throw Error('已有地址不应解析')}))
+await saved.resolve(()=>true)
+check(saved.element.children[1].textContent===long,'长地址完整保留')
+check(saved.element.children[2].hidden,'已有地址时不显示经纬度')
+check(saved.element.scrollWidth<=saved.element.clientWidth,'长地址换行且不横向溢出')
+const mapSection=document.createElement('section');mapSection.style.cssText='width:380px;height:360px';samples.prepend(mapSection)
+const map=L.map(mapSection).setView([0,0],10)
+const leafletPopup=L.popup({maxWidth:320,maxHeight:220}).setLatLng([0,0]).setContent(saved.element.cloneNode(true)).openOn(map)
+const content=leafletPopup.getElement().querySelector('.leaflet-popup-content')
+check(content.clientHeight<=220 && content.scrollHeight>content.clientHeight,'Leaflet长地址限制高度并可滚动')
+check(content.scrollWidth<=content.clientWidth,'Leaflet长地址无横向溢出')
+let done
+const stale=add('切换后的旧结果不覆盖',{},()=>new Promise(r=>done=r))
+const pending=stale.resolve(()=>false)
+done({status:'resolved',address:'【旧回调测试文本】'})
+check(await pending===false && !stale.element.textContent.includes('旧回调'),'关闭或切换后拒绝旧回调')
+const failed=add('解析失败保留经纬度',{longitude:0,latitude:0},createVideoAddressResolver(()=>Promise.reject(Error('fixture'))))
+await failed.resolve(()=>true)
+check(failed.element.textContent.includes('地址解析失败，显示经纬度') && !failed.element.children[2].hidden && failed.element.textContent.includes('0.000000, 0.000000'),'失败显示及零坐标')
+const resolved=add('受控成功状态',{longitude:0,latitude:0},createVideoAddressResolver(()=>Promise.resolve('【受控解析结果，非实际设备地址】')))
+await resolved.resolve(()=>true)
+check(resolved.element.children[2].hidden && resolved.element.children[1].textContent==='【受控解析结果，非实际设备地址】','解析成功时不显示经纬度')
+const unsafe=add('文本安全',{address:'<img src=x onerror=alert(1)>'},createVideoAddressResolver(()=>''))
+await unsafe.resolve(()=>true)
+check(unsafe.element.querySelector('img')===null,'地址按文本展示')
+document.body.dataset.complete='true'
+</script>

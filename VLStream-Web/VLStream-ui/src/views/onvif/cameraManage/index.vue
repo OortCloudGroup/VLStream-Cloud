@@ -492,8 +492,9 @@
       </el-row>
     </el-dialog>
 
-    <el-dialog :title="$tp('修改地址')" v-model="showMap" width="45%" append-to-body>
-      <MapGaoDe ref="MapContainer" @update-value="updateDialogMap" :position="position" :toponym="form.address"/>
+    <el-dialog :title="$tp('修改地址')" v-model="showMap" width="45%" append-to-body
+      destroy-on-close @opened="Create" @close="Destruction">
+      <MapGaoDe ref="MapContainer" :auto-initialize="false" @update-value="updateDialogMap" :position="position" :toponym="toponym"/>
     </el-dialog>
 
     <!-- device -->
@@ -915,7 +916,6 @@ function handleMap(row) {
   position.value = [form.value.lng, form.value.lat];
   toponym.value = form.value.addressMap;
   showMap.value = true;
-  Create();
 }
 
 const Create = () => {

@@ -1,5 +1,6 @@
 <template>
   <aside v-loading="loading" class="device-list-panel square-device-panel">
+    <slot name="views" />
     <div class="device-list-header">
       <strong class="device-list-title">{{ $tp('设备列表') }}</strong>
       <div class="device-list-actions">
@@ -16,6 +17,7 @@
         </button>
       </div>
     </div>
+    <VideoSquareClassificationTree v-if="classificationEnabled" :devices="classificationDevices || devices" :show-tree="treeView" @filter-change="$emit('classification-change', $event)" />
     <el-alert v-if="error" type="error" :title="$tp(error)" :closable="false" />
     <div class="square-filters">
       <el-select :model-value="selectedProtocols" multiple collapse-tags :placeholder="$tp('全部')"
@@ -56,6 +58,7 @@
             <small v-if="device.status === 'UNKNOWN' && !device.protocols?.includes('CUSTOM')" class="unknown-reason">
               {{ $tp(unknownReason(device)) }}
             </small>
+            <small v-if="savedVideoDeviceAddress(device)" class="saved-device-address" :title="savedVideoDeviceAddress(device)" data-i18n-ignore>{{ savedVideoDeviceAddress(device) }}</small>
             <small v-if="!videoDeviceCoordinates(device)">{{ $tp('未上报位置') }}</small>
           </button>
         </template>
@@ -70,10 +73,14 @@ import { ElMessage } from 'element-plus'
 import { translatePhrase } from '@/i18n'
 import { VIDEO_PROTOCOLS, videoDeviceCoordinates, videoDeviceGroups, sortVideoDevices } from '@/utils/videoSquareCatalog'
 import CustomAvailabilityBadge from '@/components/CustomAvailabilityBadge.vue'
+import { savedVideoDeviceAddress } from '@/utils/videoDeviceAddress.mjs'
+import VideoSquareClassificationTree from './VideoSquareClassificationTree.vue'
 
 const props = defineProps({
   now: { type: Number, default: () => Date.now() },
   devices: { type: Array, default: () => [] },
+  classificationDevices: { type: Array, default: undefined },
+  classificationEnabled: { type: Boolean, default: true },
   visibleDevices: { type: Array, default: () => [] },
   protocols: { type: Array, default: () => [] },
   selectedProtocols: { type: Array, default: () => [] },
@@ -82,8 +89,8 @@ const props = defineProps({
   loading: Boolean,
   error: { type: String, default: '' },
 })
-defineEmits(['device-click', 'settings', 'search', 'protocols-change', 'status-change'])
-const treeView = ref(false)
+defineEmits(['device-click', 'settings', 'search', 'protocols-change', 'status-change', 'classification-change'])
+const treeView = ref(true)
 const toggleTreeView = () => { treeView.value = true; ElMessage.success(translatePhrase('已切换到树形结构')) }
 const toggleListView = () => { treeView.value = false; ElMessage.success(translatePhrase('已切换到列表结构')) }
 const collapsed = ref(new Set())
@@ -105,30 +112,31 @@ function toggleGroup(id) {
 </script>
 
 <style scoped>
+.saved-device-address { white-space: normal; overflow-wrap: anywhere; }
 .square-device-panel {
-  position: fixed;
-  top: 130px;
-  right: 50px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  width: 300px;
-  height: 600px;
+  position: relative;
+  order: -1;
+  background: #fff;
+  border-inline-end: 1px solid #e4e7ed;
+  width: 340px;
+  flex: 0 0 340px;
+  min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  z-index: 1001;
+  z-index: 2;
 }
 .device-list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  background: rgba(248, 249, 250, 0.8);
+  padding: 14px 20px;
+  background: #fff;
   border-bottom: 1px solid #e4e7ed;
   flex-shrink: 0;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .device-list-title {
   font-size: 16px;
@@ -164,12 +172,21 @@ function toggleGroup(id) {
 .square-location-summary { font-size: 12px; color: var(--el-text-color-secondary); }
 .device-list-items { overflow: auto; flex: 1; padding: 0 16px 16px; }
 .tree-group-header { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 14px 6px; color: inherit; background: transparent; border: 0; font-size: 15px; font-weight: 600; cursor: pointer; }
-.square-device-item { text-align: start; width: 100%; padding: 12px; display: grid; gap: 5px; color: inherit; background: transparent; border: 1px solid var(--el-border-color-lighter); border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
-.square-device-item:hover { border-color: var(--el-color-primary); }
+.square-device-item { text-align: start; width: 100%; padding: 12px 8px; display: grid; gap: 5px; color: inherit; background: transparent; border: 0; border-bottom: 1px solid #eef0f4; border-radius: 0; cursor: pointer; }
+.square-device-item:hover { background: #e3eeff; }
 .device-name { font-weight: 600; overflow-wrap: anywhere; }
 .square-device-item small { color: var(--el-text-color-secondary); overflow-wrap: anywhere; }
 .device-details { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
 .source-statuses { display: flex; flex-wrap: wrap; gap: 8px; }
 .device-status { margin-inline-start: auto; font-size: 12px; }
 .online { color: #269528; } .offline { color: #c33; } .unknown { color: #996800; }
+@media (max-width: 1280px) {
+  .square-device-panel { width: 280px; flex-basis: 280px; }
+}
+@media (max-width: 700px) {
+  .square-device-panel { width: 100%; flex: 0 0 380px; border-inline-end: 0; border-bottom: 1px solid #e4e7ed; }
+  .square-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 8px 16px; }
+  .square-location-summary { align-self: center; }
+  .device-list-header { padding: 8px 16px; }
+}
 </style>

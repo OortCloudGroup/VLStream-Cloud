@@ -127,6 +127,7 @@ export class CameraRtcSession {
     this.maxRetryDelayMs = options.maxRetryDelayMs ?? DEFAULT_MAX_RETRY_DELAY_MS
     this.maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES
     this.heartbeatIntervalMs = options.heartbeatIntervalMs ?? DEFAULT_HEARTBEAT_INTERVAL_MS
+    this.nativeControlsOnAutoplayFailure = options.nativeControlsOnAutoplayFailure !== false
     this.onStatus = options.onStatus || (() => {})
     this.onDiagnostic = options.onDiagnostic || (() => {})
 
@@ -337,8 +338,14 @@ export class CameraRtcSession {
           .then(() => {
             this.videoElement.muted = false
           })
-          .catch(() => {
-            this.videoElement.controls = true
+          .catch((error) => {
+            if (!this.isCurrentPeer(peerConnection, generation)) return
+            if (this.nativeControlsOnAutoplayFailure) this.videoElement.controls = true
+            this.emitDiagnostic('autoplay-rejected', {
+              name: error?.name || 'Error',
+              message: error?.message || String(error),
+              nativeControlsEnabled: this.nativeControlsOnAutoplayFailure,
+            })
           })
       }
       this.setStatus('playing', '播放中')

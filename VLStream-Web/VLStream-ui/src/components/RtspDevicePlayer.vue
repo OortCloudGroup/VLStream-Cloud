@@ -1,9 +1,9 @@
 <template>
-  <div v-loading="loading" class="rtsp-device-player">
-    <video v-show="!error" ref="video" autoplay muted playsinline controls @playing="onPlaying" />
+  <div v-loading="loading" class="rtsp-device-player" :class="{ 'is-compact-status': compactStatus }">
+    <video v-show="!error" ref="video" autoplay muted playsinline :controls="!compactStatus" @playing="onPlaying" />
     <div v-if="error" class="preview-error">
-      <p>{{ $tp(error) }}</p>
-      <el-button @click="connect(deviceId)">{{ $tp('重新连接') }}</el-button>
+      <p role="status">{{ $tp(compactStatus ? '无信号' : error) }}</p>
+      <el-button v-if="!compactStatus" @click="connect(deviceId)">{{ $tp('重新连接') }}</el-button>
     </div>
   </div>
 </template>
@@ -14,7 +14,7 @@ import request from '@/utils/wvpRequest'
 import { ZLMRTCClient } from '@/components/rtcPlayer/js/ZLMRTCClient'
 import { resolveZlmPlaybackUrl } from '@/utils/zlmPlaybackUrl'
 
-const props = defineProps({ deviceId: { type: [Number, String], required: true }, protocol: { type: String, default: 'RTSP' } })
+const props = defineProps({ deviceId: { type: [Number, String], required: true }, protocol: { type: String, default: 'RTSP' }, compactStatus: { type: Boolean, default: false } })
 const video = ref(null)
 const loading = ref(false)
 const error = ref('')
@@ -98,4 +98,6 @@ onBeforeUnmount(() => { generation += 1; disconnect() })
 .rtsp-device-player { width: 100%; min-height: 240px; background: #000; }
 video { display: block; width: 100%; max-height: 65vh; }
 .preview-error { padding: 40px 16px; text-align: center; color: #fff; }
+.rtsp-device-player.is-compact-status { position: relative; height: 100%; min-height: 0; }
+.is-compact-status .preview-error { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
 </style>

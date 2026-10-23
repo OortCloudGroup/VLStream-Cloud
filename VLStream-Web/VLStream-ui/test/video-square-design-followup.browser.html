@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><title>视频广场设计缺项独立验收</title>
+<style>html,body,#app{margin:0;width:100%;height:100%;font-family:Arial,'Microsoft YaHei',sans-serif}*{box-sizing:border-box}main{height:100%;display:flex;flex-direction:column;padding:12px;gap:8px;overflow:hidden}h1{font-size:15px;margin:0}p{margin:0;font-size:12px;color:#66798c}.stage{display:flex;flex:1;min-height:0;min-width:0}.map-top-controls{position:relative!important;top:auto!important;padding:0!important;gap:8px!important}.layout-button-group{flex-wrap:wrap;max-width:100%;padding:4px!important;background:#f2f7ff!important}.device-stats{display:none!important}.layout-btn{min-width:30px!important;padding:5px!important}.layout-btn img{max-width:24px;max-height:24px}</style>
+<body><div id="app"></div><script type="module">
+import{createApp,h,reactive,ref}from'vue'
+import ElementPlus from'element-plus'
+import'element-plus/dist/index.css'
+import{createRouter,createMemoryHistory}from'vue-router'
+import LayoutControls from'../src/components/VideoLayoutControls.vue'
+import LayoutDialog from'../src/components/VideoLayoutDialog.vue'
+import DesignSurface from'./VideoSquareDesignFollowupSurface.vue'
+import{applyVideoPresentation}from'../src/utils/videoSquarePresentation.mjs'
+const app=createApp({setup(){
+ const mode=ref('default'),devices=[1,2,3,4].map(i=>({id:`controlled-${i}`,deviceName:`受控测试设备 ${i}`,status:'UNKNOWN'}))
+ const dialog=reactive({id:1,position:{x:0,y:0},layoutCount:1,layoutVariant:'grid',minimized:false,cameras:[{id:devices[0].id,name:devices[0].deviceName,deviceData:{}}]})
+ const select=modeValue=>{mode.value=modeValue;applyVideoPresentation(dialog,modeValue)}
+ const thumbnail=id=>{const device=devices.find(item=>item.id===id);if(device&&dialog.cameras[0]?.id!==id)dialog.cameras[0]={id:device.id,name:device.deviceName,deviceData:{}}}
+ return()=>h(DesignSurface,null,{default:()=>h('main',[
+   h('h1','设计缺项独立夹具（不连接真实设备）'),h('p','受控名称、无真实设备权限；只验证模式、PTZ浮层、7按钮和无信号。'),
+   h(LayoutControls,{showPresentation:true,presentationMode:mode.value,layoutMode:'1x1',onPresentationSelect:select,onLayoutSelect:()=>{mode.value='grid'}}),
+   h('div',{class:'stage'},[h(LayoutDialog,{dialog,embedded:true,presentationMode:mode.value,thumbnailDevices:devices,onSelectThumbnail:thumbnail,onRemoveDevice:(_,i)=>{dialog.cameras[i]=null}})])
+ ])})
+}})
+app.config.globalProperties.$tp=x=>x
+app.use(createRouter({history:createMemoryHistory(),routes:[{path:'/',component:{render:()=>null}}]}))
+app.use(ElementPlus).mount('#app')
+</script></body></html>

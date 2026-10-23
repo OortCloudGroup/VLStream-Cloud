@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PTZ悬浮隔离交互测试</title>
+<style>
+    body { margin: 12px; font: 14px system-ui,sans-serif; }
+    .stage { position: relative; width: min(900px,100%); height: min(680px,75vh); min-height: 180px; margin-top: 12px; background: #17232d; border: 1px solid #435565; box-sizing: border-box; overflow: hidden; }
+    .stage-label { margin: 16px; color: #d8e2ed; }
+</style>
+<body><div id="app"></div><script type="module">
+import {createApp,h,ref} from 'vue'
+import {createRouter,createMemoryHistory} from 'vue-router'
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+import FloatingPtz from '../src/views/VideoAggregation/components/VideoSquareFloatingPtz.vue'
+const app=createApp({setup(){const visible=ref(true);return()=>h('main',[
+    h('h1','PTZ悬浮隔离交互测试'),
+    h('p','使用实际组件与静态空来源；不会向真实设备发送控制或能力请求。'),
+    h('button',{onClick:()=>{visible.value=!visible.value}},visible.value?'隐藏PTZ':'显示PTZ'),
+    h('section',{class:'stage'},[
+        h('p',{class:'stage-label'},'拖动标题手柄；控制器须保持在此深色内容区内。'),
+        h(FloatingPtz,{visible:visible.value,source:null,viewOnly:true,onClose:()=>{visible.value=false}}),
+    ]),
+])}})
+app.config.globalProperties.$tp=value=>value
+app.use(createRouter({history:createMemoryHistory(),routes:[]}))
+app.use(ElementPlus).mount('#app')
+</script></body></html>

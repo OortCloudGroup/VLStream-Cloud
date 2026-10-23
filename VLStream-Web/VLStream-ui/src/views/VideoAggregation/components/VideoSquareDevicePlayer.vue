@@ -5,26 +5,21 @@
       <el-option v-for="source in device.sources" :key="sourceKey(source)" :value="sourceKey(source)"
         :label="sourceLabel(source)" />
     </el-select>
-    <VlsDevicePlayer v-if="selected?.protocol === 'VLSTREAM' && canPreviewVideoSource(selected)" :key="selectedKey"
-      :device="{ id: selected.rowId, online: videoSourceOnline(selected) }" />
+    <VlsDevicePlayer v-if="selected?.protocol === 'VLSTREAM' && canPreviewVideoSource(selected)" :key="`vls:${selectedKey}`"
+      :device="{ id: selected.rowId, online: videoSourceOnline(selected) }" compact-status />
     <RtspDevicePlayer v-else-if="['RTSP', 'ONVIF'].includes(selected?.protocol) && (!selected.playType || selected.playType === '1')"
-      :key="selectedKey" :device-id="selected.rowId" :protocol="selected.protocol" />
+      :key="`rtsp:${selectedKey}`" :device-id="selected.rowId" :protocol="selected.protocol" compact-status />
     <SquareProtocolDevicePlayer v-else-if="selected?.protocol === 'CUSTOM' ||
       (selected?.protocol === 'ONVIF' && ['2', '3'].includes(selected.playType))"
-      :key="selectedKey" :source="selected" :device-name="device.deviceName" />
+      :key="`protocol:${selectedKey}`" :source="selected" :device-name="device.deviceName" compact-status />
     <div v-else class="protocol-preview-entry">
-      <span data-i18n-ignore>{{ device.deviceName }}</span>
-      <p v-if="!selected" role="status">{{ $tp('暂无可播放来源') }}</p>
-      <p v-else-if="selected.protocol === 'VLSTREAM'" role="status">{{ $tp('VLStream 来源离线或状态未知，无法直接播放') }}</p>
-      <p v-else>{{ $tp('通过协议设备页选择通道并播放') }}</p>
-      <el-button v-if="selected" type="primary" @click="openProtocol">{{ $tp('前往设备页') }}</el-button>
+      <p role="status">{{ $tp('无信号') }}</p>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
 import RtspDevicePlayer from '@/components/RtspDevicePlayer.vue'
 import SquareProtocolDevicePlayer from './SquareProtocolDevicePlayer.vue'
@@ -32,10 +27,11 @@ import { translatePhrase } from '@/i18n'
 import { customStatusDetail } from '@/utils/customDeviceState'
 import { VIDEO_PROTOCOLS, videoSourceKey, defaultVideoSource, canPreviewVideoSource, videoSourceOnline, videoSourceState } from '@/utils/videoSquareCatalog'
 const props = defineProps({ device: { type: Object, required: true } })
-const router = useRouter()
+const emit = defineEmits(['source-change'])
 const selectedKey = ref('')
 const sourceKey = videoSourceKey
 const selected = computed(() => props.device.sources?.find(source => sourceKey(source) === selectedKey.value))
+watch(selected, source => emit('source-change', source || null), { immediate: true })
 const protocolLabel = value => VIDEO_PROTOCOLS.find(protocol => protocol.value === value)?.label || value
 const sourceLabel = source => [protocolLabel(source.protocol), source.deviceName || source.deviceId,
   source.channel ? `${translatePhrase('通道')} ${source.channel}` : null, source.rowId,
@@ -47,10 +43,6 @@ watch(() => props.device, () => {
   const source = sources?.find(item => sourceKey(item) === selectedKey.value) || defaultVideoSource(sources)
   selectedKey.value = source ? sourceKey(source) : ''
 }, { immediate: true })
-function openProtocol() {
-  const protocol = VIDEO_PROTOCOLS.find(item => item.value === selected.value?.protocol)
-  if (protocol) router.push(protocol.path)
-}
 </script>
 
 <style scoped>

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><title>截屏下载独立验收</title>
+<style>body{font-family:Arial,'Microsoft YaHei',sans-serif;padding:20px}video{display:block;width:400px;max-width:100%;margin-block:16px}button{padding:8px 16px}output{display:block;margin-block:12px}</style>
+<body><h1>截屏下载独立验收</h1><p>仅本地Canvas合成测试帧；不连接摄像机、不访问后端、不使用登录态。</p><video id="preview" autoplay muted playsinline></video><button id="capture" disabled>下载受控PNG</button><output id="state" role="status">准备本地帧</output>
+<script type="module">
+import{captureVideoFrame}from'../src/utils/videoSquareCapture.mjs'
+const canvas=document.createElement('canvas'),video=document.querySelector('video'),button=document.querySelector('button'),state=document.querySelector('output')
+canvas.width=400;canvas.height=224
+const context=canvas.getContext('2d')
+context.fillStyle='#1955a5';context.fillRect(0,0,400,224);context.fillStyle='#fff';context.font='22px sans-serif';context.fillText('本地合成帧 · 独立测试',30,110)
+video.srcObject=canvas.captureStream(1)
+video.addEventListener('loadeddata',()=>{button.disabled=false;state.textContent='已解码本地帧'},{once:true})
+await video.play()
+button.addEventListener('click',async()=>{
+ button.disabled=true;state.textContent='截取并编码中'
+ try{
+  const result=await captureVideoFrame(video,{fileName:'controlled-video-frame.png'})
+  state.textContent=`已返回下载触发：${result.fileName}，${result.width}×${result.height}，${result.blob.size} bytes（不代表已落盘）`
+  state.dataset.stage='download-trigger-returned';state.dataset.size=String(result.blob.size)
+ }catch(error){state.textContent=`失败：${error.name}: ${error.message}`;state.dataset.stage='failed'}
+ finally{button.disabled=false}
+})
+addEventListener('pagehide',()=>video.srcObject?.getTracks().forEach(track=>track.stop()))
+</script></body></html>

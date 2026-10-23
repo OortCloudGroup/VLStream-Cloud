@@ -9,8 +9,19 @@
   <div class="map-top-controls">
     <!-- controlbutton - in -->
     <div class="layout-button-group">
+      <template v-if="showPresentation">
+        <el-button class="layout-btn presentation-btn" :type="presentationMode === 'default' ? 'primary' : 'default'"
+          :title="$tp('默认展示')" :aria-label="$tp('默认展示')" :aria-pressed="presentationMode === 'default'" @click="$emit('presentation-select', 'default')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1.5" stroke="currentColor" stroke-width="1.7"/><path d="M8 3v18M3 8h5M3 13h5M3 18h5" stroke="currentColor" stroke-width="1.7"/></svg>
+        </el-button>
+        <el-button class="layout-btn presentation-btn" :type="presentationMode === 'bottom' ? 'primary' : 'default'"
+          :title="$tp('底部排列')" :aria-label="$tp('底部排列')" :aria-pressed="presentationMode === 'bottom'" @click="$emit('presentation-select', 'bottom')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1.5" stroke="currentColor" stroke-width="1.7"/><path d="M3 15h18M8 15v6M15 15v6" stroke="currentColor" stroke-width="1.7"/><path d="M5 5v2m0 3v2m14-7v2m0 3v2" stroke="currentColor" stroke-width="1.5"/></svg>
+        </el-button>
+        <span class="presentation-divider" aria-hidden="true"></span>
+      </template>
       <el-button
-        :type="layoutMode === '1x1' ? 'primary' : 'default'"
+        :type="presentationMode === 'grid' && layoutMode === '1x1' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(1)"
         :title="$tp('单画面视频播放')"
@@ -19,7 +30,7 @@
         <img :src="mode1Icon" alt="1x1" class="layout-mode-icon" />
       </el-button>
       <el-button
-        :type="layoutMode === '2x2' ? 'primary' : 'default'"
+        :type="presentationMode === 'grid' && layoutMode === '2x2' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(4)"
         :title="$tp('四分屏视频播放')"
@@ -33,7 +44,7 @@
         </div>
       </el-button>
       <el-button
-        :type="layoutMode === '3x3' ? 'primary' : 'default'"
+        :type="presentationMode === 'grid' && layoutMode === '3x3' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(6)"
         :title="$tp('六分屏视频播放')"
@@ -42,7 +53,7 @@
         <img :src="mode3Icon" :alt="$tp('六分屏')" class="layout-mode-icon" />
       </el-button>
       <el-button
-        :type="layoutMode === '4x4' ? 'primary' : 'default'"
+        :type="presentationMode === 'grid' && layoutMode === '4x4' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(8)"
         :title="$tp('八分屏视频播放')"
@@ -51,7 +62,7 @@
         <img :src="mode4Icon" :alt="$tp('八分屏')" class="layout-mode-icon" />
       </el-button>
       <el-button
-        :type="layoutMode === '5x5' ? 'primary' : 'default'"
+        :type="presentationMode === 'grid' && layoutMode === '5x5' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(9)"
         :title="$tp('九分屏视频播放')"
@@ -60,7 +71,7 @@
         <img :src="mode5Icon" :alt="$tp('九分屏')" class="layout-mode-icon" />
       </el-button>
       <el-button
-        :type="layoutMode === '6x6' ? 'primary' : 'default'"
+        :type="presentationMode === 'grid' && layoutMode === '6x6' ? 'primary' : 'default'"
         size="small"
         @click="handleLayoutSelect(16)"
         :title="$tp('十六分屏视频播放')"
@@ -151,6 +162,8 @@ import mode6Icon from '@/assets/mode6_default.png'
 
 // props
 const props = defineProps({
+  showPresentation: Boolean,
+  presentationMode: { type: String, default: 'grid' },
   layoutMode: {
     type: String,
     default: '2x2'
@@ -186,7 +199,8 @@ const emit = defineEmits([
   'layout-select',
   'extended-layout',
   'custom-layout',
-  'toggle-fullscreen'
+  'toggle-fullscreen',
+  'presentation-select'
 ])
 
 // Process
@@ -199,6 +213,7 @@ const handleLayoutSelect = (count) => {
 </script>
 
 <style scoped>
+.presentation-divider { width: 1px; height: 22px; margin: auto 5px; background: #d6deeb; }
 /* control - button in , device */
 .map-top-controls {
   position: absolute;

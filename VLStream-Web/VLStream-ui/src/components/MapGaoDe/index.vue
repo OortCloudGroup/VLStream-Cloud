@@ -9,7 +9,7 @@
   <el-row :gutter="20">
     <el-col :span="12">
       <div style="display:flex;align-items: center">
-        <el-input v-model="site" clearable id="searchInput" :placeholder="$tp('请输入地址')">
+        <el-input ref="addressInput" v-model="site" clearable :placeholder="$tp('请输入地址')">
           <template #prefix>
             <el-icon class="el-input__icon">
               <search />
@@ -20,15 +20,19 @@
       </div>
     </el-col>
     <el-col :span="12">
-      <el-button style="float: right" type="primary" @click="onConfirm">{{ $tp('确定') }}</el-button>
+      <el-button style="float: right" type="primary" :disabled="mapLoading || !!mapError || MapLng === '' || MapLat === ''" @click="onConfirm">{{ $tp('确定') }}</el-button>
     </el-col>
   </el-row>
-  <div id="container" style="margin-top: 20px" class="map"></div>
+  <el-alert v-if="mapError" :title="$tp(mapError)" type="error" :closable="false" style="margin-top: 12px">
+    <el-button size="small" @click="inGaDeMap">{{ $tp('重试') }}</el-button>
+  </el-alert>
+  <div ref="mapContainer" v-loading="mapLoading" style="margin-top: 20px" class="map"
+    role="region" :aria-label="$tp('位置选择地图')"></div>
 </template>
 
 <script setup name="MapGaoDe">
-import AMapLoader from "@amap/amap-jsapi-loader";
-import { onMounted, defineExpose, defineEmits } from 'vue';
+import { loadAMap } from '@/utils/amap';
+import { ref, getCurrentInstance, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import {getConfigKey} from "@/api/wvp/systemConfig";
 
 const { proxy } = getCurrentInstance();
@@ -37,6 +41,13 @@ const keyword = ref('');
 const site = ref('');
 const searchBox = ref(null);
 let map = null;
+const mapContainer = ref(null);
+const addressInput = ref(null);
+const mapLoading = ref(false);
+const mapError = ref('');
+let initialization = null;
+let generation = 0;
+let selectionGeneration = 0;
 
 const lng = ref(116.3912757);
 const lat = ref(39.906217);
@@ -48,6 +59,7 @@ const address = ref('');
 const detailedStreet = ref('');
 
 const props = defineProps({
+  autoInitialize: { type: Boolean, default: true },
   position: {
     type: null,
     default: () => {}
@@ -59,51 +71,36 @@ const props = defineProps({
 });
 
 let coordinate = null;
-const map_key = ref();
 
 const inGaDeMap = async () => {
-  await getConfigKey("amap.security.key").then(response => {
-    AMapSecurityConfig.value = response.msg;
-  });
+  const requestedGeneration = generation;
+  await nextTick();
+  if (requestedGeneration !== generation || !mapContainer.value?.isConnected) return;
+  if (map) return;
+  if (initialization) return initialization;
+  const current = ++generation;
+  const isCurrent = () => current === generation && mapContainer.value?.isConnected;
+  mapLoading.value = true;
+  mapError.value = '';
 
-  await getConfigKey("amap.key").then(response => {
-    map_key.value = response.msg;
-  });
-
-  await getConfigKey("map_center").then(response => {
-    if (response.msg != ""){
-      const coordStr = response.msg;
-      const [latitude, longitude] = coordStr.split(",").map(item => parseFloat(item.trim()));
-      lat.value = latitude;
-      lng.value = longitude;
+  let centerTimer;
+  const centerConfig = Promise.race([
+    getConfigKey("map_center").catch(() => null),
+    new Promise(resolve => { centerTimer = setTimeout(() => resolve(null), 2000); })
+  ]).finally(() => clearTimeout(centerTimer));
+  initialization = Promise.all([loadAMap(), centerConfig]).then(async ([AMap, response]) => {
+    if (!isCurrent()) return;
+    const center = typeof response?.msg === 'string' ? response.msg.split(',').map(Number) : [];
+    if (center.length === 2 && response.msg.split(',').every(value => value.trim() !== '') &&
+      center.every(Number.isFinite) && Math.abs(center[0]) <= 90 && Math.abs(center[1]) <= 180) {
+      [lat.value, lng.value] = center;
     }
-  });
-
-  AMapLoader.load({
-    key: map_key.value,
-    version: '2.0',
-    plugins: [
-      'AMap.AutoComplete',
-      'AMap.PlaceSearch',
-      "AMap.Geolocation",
-      "AMap.Geocoder",
-      "AMap.Marker",
-      'AMap.ToolBar',
-      'AMap.Scale',
-      'AMap.HawkEye',
-      'AMap.MapType',
-      'AMap.Geolocation',
-    ],
-    AMapUI: {
-      version: '1.1',
-      plugins: []
-    },
-  }).then(async (AMap) => {
     const position = ref(props.position);
     const toponym = ref(props.toponym);
 
     if (typeof toponym.value !== 'undefined') {
       site.value = toponym.value;
+      address.value = toponym.value;
     }
 
     var geocoder = new AMap.Geocoder({
@@ -111,10 +108,15 @@ const inGaDeMap = async () => {
       extensions: "all"
     });
 
-    if (typeof position.value !== 'undefined') {
-      if (position.value[0] != "" && position.value[1] != "" && position.value[0] != undefined && position.value[1] != undefined) {
-        coordinate = await [position.value[0], position.value[1]];
+    coordinate = [lng.value, lat.value];
+    if (Array.isArray(position.value)) {
+      if (position.value.length === 2 && position.value.every(value => ['string', 'number'].includes(typeof value) && String(value).trim() !== '' && Number.isFinite(Number(value))) &&
+        Math.abs(Number(position.value[0])) <= 180 && Math.abs(Number(position.value[1])) <= 90) {
+        coordinate = position.value.map(Number);
+        [MapLng.value, MapLat.value] = coordinate;
+        const selection = ++selectionGeneration;
         geocoder.getAddress(coordinate, function (status, result) {
+          if (!isCurrent() || selection !== selectionGeneration) return;
           if (status === 'complete' && result.info === 'OK') {
             address.value = result.regeocode.addressComponent.province + '/' + result.regeocode.addressComponent.city + '/' + result.regeocode.addressComponent.district;
             detailedStreet.value = result.regeocode.addressComponent.township + '/' + result.regeocode.addressComponent.street + result.regeocode.addressComponent.streetNumber;
@@ -127,14 +129,17 @@ const inGaDeMap = async () => {
           enableHighAccuracy: true,
           timeout: 10000
         });
+        const selection = ++selectionGeneration;
 
         location.getCurrentPosition(async (status, result) => {
+          if (!isCurrent() || selection !== selectionGeneration) return;
           if (status === 'complete') {
-            const res = await result.position;
+            const res = result.position;
             lng.value = res.lng;
             lat.value = res.lat;
 
             geocoder.getAddress(res, function (status, result) {
+              if (!isCurrent() || selection !== selectionGeneration) return;
               if (status === 'complete' && result.info === 'OK') {
                 address.value = result.regeocode.addressComponent.province + result.regeocode.addressComponent.city + result.regeocode.addressComponent.district;
                 detailedStreet.value = result.regeocode.addressComponent.township + result.regeocode.addressComponent.street + result.regeocode.addressComponent.streetNumber;
@@ -149,7 +154,7 @@ const inGaDeMap = async () => {
     }
 
     /* * Initialize */
-    map = new AMap.Map('container', {
+    map = new AMap.Map(mapContainer.value, {
       resizeEnable: true,
       zoom: 11,
       center: coordinate
@@ -159,6 +164,7 @@ const inGaDeMap = async () => {
     map.addControl(new AMap.Scale());
 
     AMapUI.loadUI(['control/BasicControl'], function (BasicControl) {
+      if (!isCurrent()) return;
       //
       map.addControl(new BasicControl.Zoom({
         position: 'lt'
@@ -182,12 +188,14 @@ const inGaDeMap = async () => {
 
     /* * */
     searchBox.value = new AMap.AutoComplete({
-      input: document.getElementById('searchInput'),
+      input: addressInput.value?.input,
     });
 
     // event
     if (searchBox.value) {
       searchBox.value.on('select', (status, result) => {
+        if (!isCurrent() || !status.poi?.location) return;
+        selectionGeneration++;
         MapLng.value = status.poi.location.lng;
         MapLat.value = status.poi.location.lat;
         address.value = status.poi.district;
@@ -208,11 +216,16 @@ const inGaDeMap = async () => {
 
     /* * event */
     map.on('click', (e) => {
+      if (!isCurrent()) return;
+      const selection = ++selectionGeneration;
       map.clearMap();
       var lnglat = e.lnglat;
 
       MapLng.value = lnglat.lng;
       MapLat.value = lnglat.lat;
+      site.value = '';
+      address.value = '';
+      detailedStreet.value = '';
 
       map.setCenter([lnglat.lng, lnglat.lat]);
       map.setZoom(15);
@@ -223,6 +236,7 @@ const inGaDeMap = async () => {
       });
 
       geocoder.getAddress(lnglat, function (status, result) {
+        if (!isCurrent() || selection !== selectionGeneration) return;
         if (status === 'complete' && result.info === 'OK') {
           address.value = result.regeocode.addressComponent.province + result.regeocode.addressComponent.city + result.regeocode.addressComponent.district;
           detailedStreet.value = result.regeocode.addressComponent.township + result.regeocode.addressComponent.street + result.regeocode.addressComponent.streetNumber;
@@ -236,14 +250,27 @@ const inGaDeMap = async () => {
 
       map.add(marker);
     });
+  }).catch(() => {
+    if (!isCurrent()) return;
+    map?.destroy();
+    map = null;
+    mapError.value = '地图加载失败，请检查地图配置或网络后重试';
+  }).finally(() => {
+    if (current === generation) {
+      initialization = null;
+      mapLoading.value = false;
+    }
   });
+  return initialization;
 };
 
 var emit = defineEmits(['update-value']);
 
 /* * sub component component value */
 const onConfirm = () => {
-  if (site.value.length <= 0) {
+  if (mapLoading.value || mapError.value || !map) return;
+  if (site.value.length <= 0 || (!address.value && !detailedStreet.value) ||
+    [MapLng.value, MapLat.value].some(value => value === '' || value == null || !Number.isFinite(Number(value)))) {
     proxy?.$modal.msgWarning("未选择任何地址");
   } else {
     emit('update-value', {
@@ -258,8 +285,18 @@ const onConfirm = () => {
 
 /* * */
 const Destruction = () => {
+  generation++;
+  selectionGeneration++;
+  initialization = null;
+  mapLoading.value = false;
   site.value = '';
-  map.destroy();
+  MapLng.value = '';
+  MapLat.value = '';
+  address.value = '';
+  detailedStreet.value = '';
+  map?.destroy();
+  map = null;
+  searchBox.value = null;
 };
 
 defineExpose({
@@ -271,6 +308,9 @@ defineExpose({
 const poiS = ref(null);
 
 const onSearch = () => {
+  if (!map || mapLoading.value) return;
+  const current = generation;
+  const selection = ++selectionGeneration;
   if (site.value.length <= 0) {
     proxy?.$modal.msgError("没有输入搜索内容");
   } else {
@@ -281,6 +321,7 @@ const onSearch = () => {
     });
 
     placeSearch.search(site.value, function (status, result) {
+      if (current !== generation || selection !== selectionGeneration || !map) return;
       if (status === 'complete' && result.info === 'OK') {
         map.clearMap();
         poiS.value = result.poiList.pois;
@@ -297,6 +338,8 @@ const onSearch = () => {
 
           /* * event */
           marker.on('click', (e) => {
+            if (current !== generation || !map) return;
+            const selected = ++selectionGeneration;
             var geocoder = new AMap.Geocoder({
               radius: 1000,
               extensions: "all"
@@ -306,6 +349,7 @@ const onSearch = () => {
             MapLat.value = e.lnglat.lat;
 
             geocoder.getAddress(e.lnglat, function (status, result) {
+              if (current !== generation || selected !== selectionGeneration || !map) return;
               if (status === 'complete' && result.info === 'OK') {
                 site.value = result.regeocode.formattedAddress;
                 address.value = result.regeocode.addressComponent.province + '/' + result.regeocode.addressComponent.city + '/' + result.regeocode.addressComponent.district;
@@ -322,23 +366,10 @@ const onSearch = () => {
   }
 };
 
-const AMapSecurityConfig = ref();
-
 onMounted(async () => {
-  await getConfigKey("amap.security.key").then(response => {
-    AMapSecurityConfig.value = response.msg;
-
-    getConfigKey("amap.key").then(response => {
-      map_key.value = response.msg;
-      inGaDeMap();
-    });
-  });
-
-  /* * full */
-  window._AMapSecurityConfig = {
-    securityJsCode: AMapSecurityConfig.value,
-  };
+  if (props.autoInitialize) await inGaDeMap();
 });
+onBeforeUnmount(Destruction);
 
 
 </script>

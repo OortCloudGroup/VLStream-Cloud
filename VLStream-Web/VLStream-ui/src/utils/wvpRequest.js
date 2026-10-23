@@ -12,6 +12,7 @@ import { applyPlatformGatewayHeaders, getStoredToken, getPlatformAccessToken, ge
 import { isMultiTenantMode } from '@/utils/platformSession'
 import { normalizeWvpResponse } from '@/utils/wvpResponse.mjs'
 import { replaceHeader, sessionValue, clearIdentityHeaders } from '@/utils/requestIdentity.mjs'
+import { SHARED_CAMERA_RTC_AUTH_HEADERS } from '@/utils/sharedCameraRtc.mjs'
 
 export const getWvpBaseURL = () => {
   const configuredBaseURL = import.meta.env.VITE_WVP_API_BASE_URL
@@ -61,6 +62,19 @@ export const applyWvpHeaders = (config) => {
   return config
 }
 
+// Read the current identity through the same WVP/gateway path at the moment the socket opens.
+export const getSharedCameraRtcAuthHeaders = () => {
+  const currentToken = getVlstreamFederatedToken()
+  if (typeof currentToken !== 'string' || !currentToken.trim().replace(/^Bearer(?:\s+|$)/i, '').trim()) {
+    const error = new Error('登录会话已失效，请重新登录')
+    error.code = 'PLATFORM_AUTH_REQUIRED'
+    throw error
+  }
+  const config = applyWvpHeaders({ baseURL: getWvpBaseURL(), url: '/vlstream/device/shared/camera-rtc', headers: {} })
+  const allowed = new Set(SHARED_CAMERA_RTC_AUTH_HEADERS.map(name => name.toLowerCase()))
+  return Object.fromEntries(Object.entries(config.headers).filter(([name]) => allowed.has(name.toLowerCase())))
+}
+
 wvpRequest.interceptors.request.use(applyWvpHeaders)
 
 wvpRequest.interceptors.response.use(
@@ -76,7 +90,7 @@ wvpRequest.interceptors.response.use(
       // Preserve the business body and request context for callers and identity checks.
       error.response = { ...response, data: error.data || response.data }
       invalidateApiResponse(error.response)
-      ElMessage.error(error.message)
+      if (!response.config?.silentError) ElMessage.error(error.message)
       return Promise.reject(error)
     }
   },
@@ -84,7 +98,7 @@ wvpRequest.interceptors.response.use(
     invalidateApiResponse(error.response)
     const message = error.response?.data?.msg
       || (error.code === 'ECONNABORTED' ? 'WVP 接口请求超时' : 'WVP 服务连接失败')
-    ElMessage.error(message)
+    if (!error.config?.silentError) ElMessage.error(message)
     return Promise.reject(error)
   }
 )

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>共享功能隔离交互验收</title>
+<body><div id="app"></div><script type="module">
+import {createApp,h,ref} from 'vue'
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+import Panel from '../src/views/VideoAggregation/components/VideoSquareSharingPanel.vue'
+const state={request:'NONE',pending:true,visibility:'PRIVATE',reason:'',grant:null}
+const deviceRef='b'.repeat(32)
+const api={
+  directory:async()=>({data:{rows:[{id:`VLSTREAM:${deviceRef}`,deviceName:'受控测试设备（非真实设备）',visibility:'PRIVATE',viewerAccess:state.request==='APPROVED'?'GRANTED':state.request==='PENDING'?'PENDING':'NONE',myAccessRequestStatus:state.request==='NONE'?null:state.request}],total:1}}),
+  streams:async()=>({data:[]}),
+  apply:async(_,reason)=>{state.reason=reason;state.request='PENDING';return {data:{requestId:'101',status:'PENDING'}}},
+  mine:async()=>({data:state.request==='NONE'?[]:[{deviceRef,deviceName:'受控测试设备（非真实设备）',reason:state.reason,status:state.request==='PENDING'?'PENDING':state.request,updatedAt:'受控测试时间'}]}),
+  owner:async()=>({data:{device:{visibility:state.visibility}}}),
+  requests:async()=>({data:state.pending?[{requestId:'101',requesterTenantId:'受控测试租户',requesterUserId:'受控用户',status:'PENDING',reason:state.reason||'受控申请理由'}]:[]}),
+  grants:async(_,query)=>{const rows=state.grant && (query.status==='ALL'||query.status===state.grant.status)?[state.grant]:[];return {data:{rows,total:rows.length,asOf:'2026-10-22 08:30:00'}}},
+  approve:async(_,days)=>{state.pending=false;state.request='APPROVED';state.grant={requestId:'101',grantId:'201',requesterTenantId:'受控测试租户',requesterUserId:'受控用户',status:'ACTIVE',canRevoke:true,approvedAt:'2026-10-22 08:30:00',expiresAt:'2026-10-29 08:30:00'};return {data:{requestId:'101',grantId:'201',status:'APPROVED',expiresInDays:days||7}}},
+  reject:async()=>{state.pending=false;state.request='REJECTED';return {data:{status:'REJECTED'}}},
+  visibility:async(_,visibility)=>{state.visibility=visibility;return {data:{visibility}}},
+  revoke:async id=>{state.request='REVOKED';state.grant={...state.grant,status:'REVOKED',canRevoke:false,revokedAt:'2026-10-22 08:35:00'};return {data:{grantId:id,status:'REVOKED'}}},
+}
+const app=createApp({setup(){const open=ref(false);const owned=[{deviceName:'受控所属设备',sources:[{protocol:'VLSTREAM',rowId:'1'}]}];return()=>h('main',[
+  h('h1','隔离共享交互测试'),h('p','这里使用受控响应，不连接真实共享服务，也不授予任何真实权限。'),
+  h('button',{onClick:()=>{open.value=true}},'打开共享测试'),h(Panel,{modelValue:open.value,'onUpdate:modelValue':value=>{open.value=value},api,ownedDevices:owned})
+])}})
+app.config.globalProperties.$tp=text=>text
+app.use(ElementPlus).mount('#app')
+</script></body></html>

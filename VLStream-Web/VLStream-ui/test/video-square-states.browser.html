@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>视频广场组件状态验收</title>
+<style>body{margin:0;padding:20px;font:14px sans-serif;background:#f0f4f9}main{display:flex;height:620px;background:white;margin-top:16px}button{margin-right:12px}h1{font-size:20px}</style>
+<h1>组件状态夹具，不代表设备运行状态</h1>
+<p>不连接设备接口，不创建模拟设备。只验证空数据、加载遮罩和可见错误。</p>
+<div id="app"></div>
+<script type="module">
+import { createApp, h, ref } from 'vue'
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+import DevicePanel from '/src/views/VideoAggregation/components/VideoSquareDevicePanel.vue'
+import CatalogTable from '/src/views/VideoAggregation/components/VideoSquareCatalogTable.vue'
+const app=createApp({setup(){
+  const state=ref('empty')
+  return ()=>h('div',[
+    ...['empty','loading','error'].map(mode=>h('button',{onClick:()=>state.value=mode},mode)),
+    h('main',[
+      h(DevicePanel,{classificationEnabled:false,loading:state.value==='loading',error:state.value==='error'?'受控错误（仅组件验收）':''}),
+      h(CatalogTable,{loading:state.value==='loading',error:state.value==='error'?'受控错误（仅组件验收）':''}),
+    ])
+  ])
+}})
+app.config.globalProperties.$tp=text=>text
+app.use(ElementPlus).mount('#app')
+</script>
+</html>

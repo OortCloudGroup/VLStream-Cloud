@@ -6,7 +6,8 @@
 -->
 
 <template>
-  <div class="video-square">
+  <div class="video-square" :class="{ 'is-dark': isDarkMode }">
+    <VideoSquareSharingPanel v-model="showSharing" :initial-owner-id="sharingOwnerId" :owned-devices="currentDevices" />
     <!-- main need to -->
     <div class="main-content">
       <!-- info -->
@@ -47,6 +48,8 @@
         <div class="map-area fullscreen-map">
           <!-- controlcomponent -->
           <VideoLayoutControls
+            show-presentation
+            :presentation-mode="presentationMode"
             :layout-mode="layoutMode"
             :show-extended-layout="showExtendedLayout"
             :is-fullscreen="isFullscreen"
@@ -58,10 +61,48 @@
             @extended-layout="showExtendedLayoutDialog"
             @custom-layout="openCustomVideoDialogs"
             @toggle-fullscreen="toggleFullscreen"
+            @presentation-select="selectPresentation"
           />
+          <div class="square-sharing-entry"><el-button @click="openSharing()">{{ $tp('设备共享') }}</el-button></div>
 
           <!-- main -->
-          <div class="map-container">
+          <section v-show="viewMode === 'video'" class="square-video-stage">
+            <el-empty v-if="!layoutDialogs.length" :description="$tp('请选择设备播放视频')">
+              <el-button type="primary" @click="openVideoDialogs(1)">{{ $tp('添加视频') }}</el-button>
+            </el-empty>
+            <VideoLayoutDialog
+              v-for="dialog in layoutDialogs"
+              :key="'layout-' + dialog.id"
+              :dialog="dialog"
+              :active="viewMode === 'video'"
+              :presentation-mode="presentationMode"
+              :thumbnail-devices="visibleDevices"
+              embedded
+              @close="closeLayoutDialog"
+              @minimize="minimizeLayoutDialog"
+              @bring-to-front="bringLayoutToFront"
+              @start-drag="startLayoutDrag"
+              @webrtc-load="handleWebRTCSuccess"
+              @webrtc-error="handleWebRTCError"
+              @rtsp-connected="handleDialogRtspConnected"
+              @rtsp-disconnected="handleDialogRtspDisconnected"
+              @rtsp-error="handleDialogRtspError"
+              @ptz-control="handlePTZControl"
+              @zoom-control="handleZoomControl"
+              @control-action="handleControlAction"
+              @retry-webrtc="retryWebRTCConnection"
+              @copy-stream-url="copyStreamUrl"
+              @open-in-vlc="openInVlc"
+              @add-device="addDeviceToWindow"
+              @remove-device="removeDeviceFromWindow"
+              @video-window-click="handleVideoWindowClick"
+              @video-window-double-click="handleVideoWindowDoubleClick"
+              @video-window-swap="handleVideoWindowSwap"
+              @select-thumbnail="selectThumbnail(dialog.id, $event)"
+            />
+          </section>
+          <VideoSquareCatalogTable v-if="viewMode === 'list'" :devices="visibleDevices" :keyword="mapSearchKeyword" :loading="loading" :error="catalogError" @search="mapSearchKeyword = $event" @play="handleCameraClick" @sharing="openSharing" />
+          <div v-show="viewMode === 'map'" class="map-container">
 
             <!-- Leaflet -->
             <div id="video-square-map" class="leaflet-map-container"></div>
@@ -116,6 +157,7 @@
                 <!-- device - in -->
           <VideoSquareDevicePanel
             :devices="currentDevices"
+            :classification-devices="classificationCandidates"
             :now="statusClock"
             :visible-devices="visibleDevices"
             :protocols="availableProtocols"
@@ -127,9 +169,19 @@
             @settings="handleSettings"
             @protocols-change="displaySettings.deviceTypes = $event"
             @status-change="selectedStatus = $event"
-            @device-click="handleCameraClick"
+            @classification-change="classificationDeviceIds = $event"
+            @device-click="handleDeviceSelect"
             @search="mapSearchKeyword = $event"
-          />
+          >
+            <template #views>
+              <nav class="square-view-switch" :aria-label="$tp('视图')">
+                <button v-for="view in squareViews" :key="view.value" :class="{ active: viewMode === view.value }"
+                  :title="$tp(view.label)" :aria-label="$tp(view.label)" :aria-pressed="viewMode === view.value" @click="setSquareView(view.value)">
+                  <el-icon :size="22"><component :is="view.icon" /></el-icon>
+                </button>
+              </nav>
+            </template>
+          </VideoSquareDevicePanel>
     </div>
 
     <!-- dialog -->
@@ -213,36 +265,13 @@
     </div>
 
     <!-- dialog -->
-    <VideoLayoutDialog
-      v-for="dialog in layoutDialogs"
-      :key="'layout-' + dialog.id"
-      :dialog="dialog"
-      @close="closeLayoutDialog"
-      @minimize="minimizeLayoutDialog"
-      @bring-to-front="bringLayoutToFront"
-      @start-drag="startLayoutDrag"
-      @webrtc-load="handleWebRTCSuccess"
-      @webrtc-error="handleWebRTCError"
-      @rtsp-connected="handleDialogRtspConnected"
-      @rtsp-disconnected="handleDialogRtspDisconnected"
-      @rtsp-error="handleDialogRtspError"
-      @ptz-control="handlePTZControl"
-      @zoom-control="handleZoomControl"
-      @control-action="handleControlAction"
-      @retry-webrtc="retryWebRTCConnection"
-      @copy-stream-url="copyStreamUrl"
-      @open-in-vlc="openInVlc"
-      @add-device="addDeviceToWindow"
-      @video-window-click="handleVideoWindowClick"
-      @video-window-double-click="handleVideoWindowDoubleClick"
-      @video-window-swap="handleVideoWindowSwap"
-    />
+
 
     <!-- device Set dialog -->
     <el-dialog
       v-model="showSettingsDialog"
       :title="$tp('显示设置')"
-      width="25%"
+      width="min(480px, calc(100vw - 32px))"
       center
       :close-on-click-modal="true"
       :show-close="true"
@@ -276,72 +305,24 @@
   <div v-if="showExtendedLayout" class="extended-layout-overlay" @click="hideExtendedLayoutDialog">
     <div class="extended-layout-dialog" :style="extendedLayoutPosition" @click.stop>
       <div class="extended-layout-content">
-        <div class="extended-layout-option" @click="handleExtendedLayoutSelect(22)">
-          <div class="layout-option-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="2" y="2" width="4" height="4" rx="1"/>
-              <rect x="8" y="2" width="4" height="4" rx="1"/>
-              <rect x="14" y="2" width="4" height="4" rx="1"/>
-              <rect x="20" y="2" width="2" height="4" rx="1"/>
-              <rect x="2" y="8" width="4" height="4" rx="1"/>
-              <rect x="8" y="8" width="4" height="4" rx="1"/>
-              <rect x="14" y="8" width="4" height="4" rx="1"/>
-              <rect x="20" y="8" width="2" height="4" rx="1"/>
-              <rect x="2" y="14" width="4" height="4" rx="1"/>
-              <rect x="8" y="14" width="4" height="4" rx="1"/>
-              <rect x="14" y="14" width="4" height="4" rx="1"/>
-              <rect x="20" y="14" width="2" height="4" rx="1"/>
-              <rect x="2" y="20" width="4" height="4" rx="1"/>
-              <rect x="8" y="20" width="4" height="4" rx="1"/>
-              <rect x="14" y="20" width="4" height="4" rx="1"/>
-              <rect x="20" y="20" width="2" height="4" rx="1"/>
-            </svg>
-        </div>
-          <span class="layout-option-text">{{ $tp('二十二画面') }}</span>
-      </div>
-        <div class="extended-layout-option" @click="handleExtendedLayoutSelect(24)">
-          <div class="layout-option-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="2" y="2" width="6" height="6" rx="1"/>
-              <rect x="10" y="2" width="6" height="6" rx="1"/>
-              <rect x="18" y="2" width="4" height="6" rx="1"/>
-              <rect x="2" y="10" width="6" height="6" rx="1"/>
-              <rect x="10" y="10" width="6" height="6" rx="1"/>
-              <rect x="18" y="10" width="4" height="6" rx="1"/>
-              <rect x="2" y="18" width="6" height="4" rx="1"/>
-              <rect x="10" y="18" width="6" height="4" rx="1"/>
-              <rect x="18" y="18" width="4" height="4" rx="1"/>
-            </svg>
-          </div>
-          <span class="layout-option-text">{{ $tp('二十四画面') }}</span>
-        </div>
-        <div class="extended-layout-option" @click="handleExtendedLayoutSelect(25)">
-          <div class="layout-option-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="2" y="2" width="4" height="4" rx="1"/>
-              <rect x="8" y="2" width="4" height="4" rx="1"/>
-              <rect x="14" y="2" width="4" height="4" rx="1"/>
-              <rect x="20" y="2" width="2" height="4" rx="1"/>
-              <rect x="2" y="8" width="4" height="4" rx="1"/>
-              <rect x="8" y="8" width="4" height="4" rx="1"/>
-              <rect x="14" y="8" width="4" height="4" rx="1"/>
-              <rect x="20" y="8" width="2" height="4" rx="1"/>
-              <rect x="2" y="14" width="4" height="4" rx="1"/>
-              <rect x="8" y="14" width="4" height="4" rx="1"/>
-              <rect x="14" y="14" width="4" height="4" rx="1"/>
-              <rect x="20" y="14" width="2" height="4" rx="1"/>
-              <rect x="2" y="20" width="4" height="4" rx="1"/>
-              <rect x="8" y="20" width="4" height="4" rx="1"/>
-              <rect x="14" y="20" width="4" height="4" rx="1"/>
-              <rect x="20" y="20" width="2" height="4" rx="1"/>
-              <rect x="26" y="2" width="2" height="22" rx="1"/>
-            </svg>
-          </div>
-          <span class="layout-option-text">{{ $tp('二十五画面') }}</span>
-        </div>
+        <button v-for="option in extendedLayouts" :key="`${option.count}-${option.variant}`" class="extended-layout-option" @click="handleExtendedLayoutSelect(option.count, option.variant)">
+          <span class="layout-option-icon" aria-hidden="true">▦</span>
+          <span class="layout-option-text">{{ option.label ? $tp(option.label) : uiText('{value0}画面', { value0: option.count }) }}</span>
+        </button>
+        <button class="extended-layout-option" @click="hideExtendedLayoutDialog(); openCustomVideoDialogs()">{{ $tp('自定义') }}</button>
       </div>
     </div>
   </div>
+  <VideoSquareDevicePicker v-model="showDevicePicker" :devices="visibleDevices" :loading="loading" :error="catalogError" @select="assignSelectedDevice" />
+  <el-dialog v-model="showCustomLayout" :title="$tp('自定义布局')" width="400px" class="square-custom-layout">
+    <el-form label-position="top">
+      <el-form-item :label="$tp('画面数量')"><el-input-number v-model="customWindowCount" :min="1" :max="25" :precision="0" /></el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="showCustomLayout = false">{{ $tp('取消') }}</el-button>
+      <el-button type="primary" :disabled="!customWindowCount" @click="showCustomLayout = false; handleLayoutSelect(customWindowCount)">{{ $tp('确定') }}</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
@@ -349,12 +330,14 @@ import { translatePhrase as uiText } from '@/i18n'
 
 import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue'
 import {ElMessage} from 'element-plus'
-import {Close} from '@element-plus/icons-vue'
+import {Close, VideoCamera, MapLocation, List} from '@element-plus/icons-vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 // Import controlcomponent
 import VideoLayoutControls from '@/components/VideoLayoutControls.vue'
+import { applyVideoPresentation } from '@/utils/videoSquarePresentation.mjs'
+import { toggleVideoFullscreen, videoFullscreenContext } from '@/utils/videoSquareFullscreen.mjs'
 
 // Import dialogcomponent
 import VideoLayoutDialog from '@/components/VideoLayoutDialog.vue'
@@ -362,6 +345,10 @@ import VideoLayoutDialog from '@/components/VideoLayoutDialog.vue'
 // Import PTZcontrolcomponent
 // Import device component
 import VideoSquareDevicePanel from './components/VideoSquareDevicePanel.vue'
+import VideoSquareCatalogTable from './components/VideoSquareCatalogTable.vue'
+import VideoSquareSharingPanel from './components/VideoSquareSharingPanel.vue'
+import VideoSquareDevicePicker from './components/VideoSquareDevicePicker.vue'
+import { catalogVideoCamera, assignVideoWindow, resizeVideoLayout, videoGridStyle } from '@/utils/videoSquareLayout.mjs'
 import { useCustomAvailabilityClock } from '@/utils/useCustomAvailabilityClock'
 import VideoSquareDevicePlayer from './components/VideoSquareDevicePlayer.vue'
 import { getVideoDeviceCatalog } from '@/api/videoDeviceCatalog'
@@ -370,6 +357,10 @@ import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
 import {ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL} from "@/api/webrtc";
 import { ensureOPlayer, isCameraRtcStream, parseCameraRtcConfig } from '@/utils/oplayer'
 import { getStreamType } from './deviceUtils.js'
+import { reverseGeocode } from '@/utils/amap'
+import { createVideoAddressResolver, createVideoDeviceLocationPopup } from '@/utils/videoDeviceAddress.mjs'
+
+const resolveDeviceAddress = createVideoAddressResolver(reverseGeocode)
 
 // related
 const currentPage = ref(1)
@@ -381,6 +372,62 @@ const showDebugInfo = ref(false)
 const isDarkMode = ref(false)
 const isFullscreen = ref(false)
 const layoutMode = ref('2x2')
+const viewMode = ref('map')
+const showSharing = ref(false)
+const sharingOwnerId = ref('')
+const openSharing = device => {
+  sharingOwnerId.value = String(device?.sources?.find(source=>source.protocol==='VLSTREAM')?.rowId || '')
+  showSharing.value = true
+}
+const squareViews = [
+  { value: 'video', label: '视频', icon: VideoCamera },
+  { value: 'map', label: '地图', icon: MapLocation },
+  { value: 'list', label: '列表', icon: List },
+]
+const setSquareView = async value => {
+  viewMode.value = value
+  await nextTick()
+  if (value === 'map') mapInstance?.invalidateSize()
+}
+const handleDeviceSelect = device => {
+  if (viewMode.value !== 'video') return handleCameraClick(device)
+  layoutDialogs.value = [{
+    id: nextLayoutDialogId.value++, cameras: [catalogVideoCamera(device)], layoutCount: 1,
+    position: { x: 0, y: 0 }, minimized: false, zIndex: ++maxLayoutZIndex.value,
+  }]
+  layoutMode.value = '1x1'
+}
+const showDevicePicker = ref(false)
+const presentationMode = ref('default')
+const selectPresentation = mode => {
+  if (!['default', 'bottom'].includes(mode)) return
+  presentationMode.value = mode
+  viewMode.value = 'video'
+  const dialog = layoutDialogs.value[0]
+  if (dialog) applyVideoPresentation(dialog, mode)
+  else openVideoDialogs(1)
+}
+const selectThumbnail = (dialogId, deviceId) => {
+  const device = currentDevices.value.find(item => item.id === deviceId)
+  if(layoutDialogs.value.find(item=>item.id===dialogId)?.cameras[0]?.id===deviceId)return
+  if (device) assignVideoWindow(layoutDialogs.value, {dialogId, windowIndex:0}, device, currentDevices.value)
+}
+const devicePickerTarget = ref(null)
+const showCustomLayout = ref(false)
+const customWindowCount = ref(4)
+const extendedLayouts = [
+  { count: 2, variant: 'grid', label: '二画面（等大）' },
+  { count: 2, variant: 'two-overlay', label: '二画面（一大一小）' },
+  { count: 3, variant: 'three-top', label: '三画面（一上二下）' },
+  { count: 3, variant: 'three-left', label: '三画面（一左二右）' },
+  ...[5, 7, ...Array.from({ length: 16 }, (_, index) => index + 10)].map(count => ({ count, variant: 'grid' })),
+]
+const assignSelectedDevice = device => {
+  if (!assignVideoWindow(layoutDialogs.value, devicePickerTarget.value, device, currentDevices.value)) {
+    ElMessage.warning(uiText('设备或窗口已变化，请重新选择'))
+  }
+  devicePickerTarget.value = null
+}
 const showExtendedLayout = ref(false)
 const extendedLayoutPosition = ref({
   top: '0px',
@@ -552,11 +599,14 @@ const allDeviceTypeOptions = computed(() => VIDEO_PROTOCOLS.filter(protocol => a
 const getDeviceCoordinates = videoDeviceCoordinates
 const isDeviceOnline = status => status === 'ONLINE'
 const currentDevices = computed(() => deviceList.value.map(device => normalizeVideoDevice(device, statusClock.value)))
+const classificationDeviceIds = ref(null)
+const classificationCandidates = computed(() => currentDevices.value.map(device =>
+  videoDeviceForProtocols(device, displaySettings.value.deviceTypes, statusClock.value)).filter(Boolean))
 const onlineDeviceCount = computed(() => currentDevices.value.filter(device => device.status === 'ONLINE').length)
 const offlineDeviceCount = computed(() => currentDevices.value.filter(device => device.status === 'OFFLINE').length)
 const unknownDeviceCount = computed(() => currentDevices.value.filter(device => device.status === 'UNKNOWN').length)
-const visibleDevices = computed(() => currentDevices.value.map(device =>
-  videoDeviceForProtocols(device, displaySettings.value.deviceTypes, statusClock.value)).filter(device => device &&
+const visibleDevices = computed(() => classificationCandidates.value.filter(device =>
+  (classificationDeviceIds.value === null || classificationDeviceIds.value.includes(device.id)) &&
   (!selectedStatus.value || device.status === selectedStatus.value) &&
   matchesVideoDevice(device, mapSearchKeyword.value)
 ))
@@ -848,14 +898,13 @@ const updateMapMarkers = () => {
 
   // device
   filteredCameraMarkers.value.forEach(markerData => {
-    const popup = document.createElement('div')
-    for (const value of [markerData.name, markerData.lng.toFixed(6) + ', ' + markerData.lat.toFixed(6)]) {
-      const line = document.createElement('div')
-      line.textContent = value
-      popup.appendChild(line)
-    }
+    const popup = createVideoDeviceLocationPopup(markerData, resolveDeviceAddress, uiText)
     const marker = L.marker([markerData.lat, markerData.lng], { icon: deviceIcon })
-      .bindPopup(popup)
+      .bindPopup(popup.element, { maxWidth: 320, maxHeight: 220 })
+      .on('popupopen', async () => {
+        // A refresh/filter/unmount may have removed this marker while resolving.
+        if (await popup.resolve(() => mapInstance?.hasLayer(marker) && marker.isPopupOpen())) marker.getPopup().update()
+      })
       .on('click', () => handleCameraClick(markerData))
       .addTo(mapInstance)
 
@@ -887,17 +936,20 @@ const loadDeviceList = async () => {
   }
 }
 
-const openVideoDialogs = async (count) => {
+const openVideoDialogs = async (count, variant = 'grid') => {
+  if(count>1)presentationMode.value='grid'
+  videoGridStyle(count, variant)
+  const active = layoutDialogs.value[0]
+  if (active) {
+    resizeVideoLayout(active, count, variant)
+    layoutMode.value = ({ 1: '1x1', 4: '2x2', 6: '3x3', 8: '4x4', 9: '5x5', 16: '6x6' })[count] || `custom-${count}`
+    return
+  }
   console.log(`打开${count}画面视频播放，count:`, count)
   console.log('realCameraStreams.value:', realCameraStreams.value)
 
   // Get device
-  const availableDevices = realCameraStreams.value.slice(0, count)
-
-  if (availableDevices.length === 0) {
-    ElMessage.warning(uiText('暂无可用设备'))
-    return
-  }
+  const availableDevices = visibleDevices.value.slice(0, count)
 
   // Load prompt / tip
   const loading = ElMessage({
@@ -958,6 +1010,7 @@ const openVideoDialogs = async (count) => {
       id: dialogId,
       cameras: cameras, // all , null / empty
       layoutCount: count, //
+      layoutVariant: variant,
       position: {
         x: 50,
         y: 50
@@ -977,10 +1030,10 @@ const openVideoDialogs = async (count) => {
     layoutDialogs.value = [newDialog]
 
     // new
-    layoutMode.value = count === 1 ? '1x1' : count === 4 ? '2x2' : count === 6 ? '3x3' : count === 8 ? '4x4' : count === 9 ? '5x5' : '6x6'
+    layoutMode.value = ({ 1: '1x1', 4: '2x2', 6: '3x3', 8: '4x4', 9: '5x5', 16: '6x6' })[count] || `custom-${count}`
 
     loading.close()
-    ElMessage.success(uiText('已打开{value0}画面视频播放', { value0: count }))
+    ElMessage.success(uiText('已切换为{value0}画面布局', { value0: count }))
 
   } catch (error) {
     console.error('创建布局弹窗失败:', error)
@@ -990,7 +1043,7 @@ const openVideoDialogs = async (count) => {
 }
 
 const openCustomVideoDialogs = () => {
-  ElMessage.info(uiText('自定义视频播放功能'))
+  showCustomLayout.value = true
 }
 
 const showExtendedLayoutDialog = () => {
@@ -1006,10 +1059,10 @@ const showExtendedLayoutDialog = () => {
     const button = document.querySelector('.extended-layout-btn')
     if (button) {
       const rect = button.getBoundingClientRect()
-      const dialogWidth = 200 // dialog
+      const dialogWidth = Math.min(400, window.innerWidth - 24)
 
       // dialog : button , in
-      const left = rect.left + (rect.width / 2) - (dialogWidth / 2)
+      const left = Math.max(12, Math.min(window.innerWidth - dialogWidth - 12, rect.right - dialogWidth))
       const top = rect.bottom + 8 // button 8px
 
       extendedLayoutPosition.value = {
@@ -1036,12 +1089,13 @@ const hideExtendedLayoutDialog = () => {
 }
 
 // Process item
-const handleExtendedLayoutSelect = (count) => {
+const handleExtendedLayoutSelect = (count, variant = 'grid') => {
+  viewMode.value = 'video'
   // dialog
   showExtendedLayout.value = false
 
   // after dialog
-  openVideoDialogs(count)
+  openVideoDialogs(count, variant)
 
   console.log('选择扩展布局:', count)
 }
@@ -1153,6 +1207,7 @@ const closeLayoutDialog = (dialogId) => {
 const handleVideoWindowClick = (dialogId, windowIndex) => {
   const dialog = layoutDialogs.value.find(d => d.id === dialogId)
   if (!dialog) return
+  dialog.activeWindowIndex = windowIndex
 
   console.log('点击视频窗口:', dialogId, '窗口索引:', windowIndex)
 }
@@ -1200,6 +1255,8 @@ const handleVideoWindowDoubleClick = (dialogId, windowIndex) => {
 
 // Process
 const handleLayoutSelect = (count) => {
+  presentationMode.value = 'grid'
+  viewMode.value = 'video'
   console.log('主文件收到布局选择事件，count:', count)
   openVideoDialogs(count)
 }
@@ -1250,7 +1307,7 @@ const toggleFullscreen = () => {
 }
 
 // full
-const enterVideoPlayerFullscreen = () => {
+const enterVideoPlayerFullscreen = async () => {
   // find all dialog
   const videoDialogs = document.querySelectorAll('.video-dialog, .layout-dialog')
 
@@ -1259,47 +1316,26 @@ const enterVideoPlayerFullscreen = () => {
     return
   }
 
-  // to each full
-  videoDialogs.forEach(dialog => {
-    dialog.classList.add('fullscreen-active')
-  })
-
-  isFullscreen.value = true
-  ElMessage.success(uiText('视频播放器已进入全屏模式'))
-
-  // ESC
-  document.addEventListener('keydown', handleEscKey)
-
-  // full API
   const firstDialog = videoDialogs[0]
-  if (firstDialog && firstDialog.requestFullscreen) {
-    firstDialog.requestFullscreen().catch(err => {
-      console.log('浏览器全屏API失败，使用自定义全屏:', err)
-    })
+  const context = videoFullscreenContext(firstDialog)
+  try {
+    await toggleVideoFullscreen(firstDialog)
+    handleFullscreenChange()
+  } catch (cause) {
+    console.warn('视频广场全屏失败',{name:cause?.name,message:cause?.message,...context})
+    ElMessage.warning(uiText('当前无法进入全屏'))
   }
 }
 
 // exit full
-const exitVideoPlayerFullscreen = () => {
-  // find all dialog
-  const videoDialogs = document.querySelectorAll('.video-dialog, .layout-dialog')
-
-  // full class
-  videoDialogs.forEach(dialog => {
-    dialog.classList.remove('fullscreen-active')
-  })
-
-  isFullscreen.value = false
-  ElMessage.info(uiText('已退出全屏模式'))
-
-  // ESC
-  document.removeEventListener('keydown', handleEscKey)
-
-  // exit full API (if in )
-  if (document.exitFullscreen && document.fullscreenElement) {
-    document.exitFullscreen().catch(err => {
-      console.log('退出浏览器全屏失败:', err)
-    })
+const exitVideoPlayerFullscreen = async () => {
+  const context = videoFullscreenContext(document.fullscreenElement)
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen()
+    handleFullscreenChange()
+  } catch (cause) {
+    console.warn('视频广场退出全屏失败',{name:cause?.name,message:cause?.message,...context})
+    ElMessage.warning(uiText('当前无法退出全屏'))
   }
 }
 
@@ -1320,7 +1356,9 @@ const handleFullscreenChange = () => {
     document.msFullscreenElement
   )
 
-  if (!isCurrentlyFullscreen && isFullscreen.value) {
+  const current = document.fullscreenElement
+  isFullscreen.value = !!current?.closest('.video-dialog, .layout-dialog')
+  if (!isCurrentlyFullscreen) {
     // user ESC exit full
     const videoDialogs = document.querySelectorAll('.video-dialog, .layout-dialog')
     videoDialogs.forEach(dialog => {
@@ -2151,8 +2189,13 @@ const openInVlc = (url) => {
 }
 
 const addDeviceToWindow = (dialogId, windowIndex) => {
-  console.log('添加设备到窗口:', dialogId, windowIndex)
-  ElMessage.info(uiText('添加设备功能'))
+  devicePickerTarget.value = { dialogId, windowIndex }
+  showDevicePicker.value = true
+}
+
+const removeDeviceFromWindow = (dialogId, windowIndex) => {
+  const dialog = layoutDialogs.value.find(item => item.id === dialogId)
+  if (dialog && windowIndex >= 0 && windowIndex < dialog.layoutCount) dialog.cameras[windowIndex] = null
 }
 
 //
@@ -2249,6 +2292,9 @@ onUnmounted(() => {
 </script>
 
 <style>
+.video-device-location { overflow-wrap: anywhere; line-height: 1.6; }
+.video-device-location > :first-child { font-weight: 600; }
+.video-device-location > :last-child { color: #606266; font-size: 12px; }
 /* full */
 html, body {
   overflow-x: hidden !important;
@@ -4358,3 +4404,5 @@ body.dark-mode .tree-group-label,
   color: rgba(255, 255, 255, 0.6) !important;
 }
 </style>
+
+<style scoped src="./video-square-design.css"></style>

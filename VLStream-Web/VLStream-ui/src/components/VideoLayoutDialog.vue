@@ -8,7 +8,8 @@
 <template>
   <div
     class="layout-dialog-overlay"
-    :style="{ zIndex: 3000 + dialog.id }"
+    :class="{ 'is-embedded': embedded }"
+    :style="{ zIndex: embedded ? 'auto' : 3000 + dialog.id }"
   >
     <div
       ref="dialogElement"
@@ -34,7 +35,7 @@
           <button class="dialog-control-btn" @click="maximized = !maximized" :title="maximized ? $tp('还原') : $tp('最大化')">
             <span aria-hidden="true">{{ maximized ? '❐' : '□' }}</span>
           </button>
-          <button class="dialog-control-btn minimize-btn" @click="minimize" :title="$tp('最小化')">
+          <button v-if="!embedded" class="dialog-control-btn minimize-btn" @click="minimize" :title="$tp('最小化')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 13H5v-2h14v2z"/>
             </svg>
@@ -51,14 +52,19 @@
         <div class="dialog-main-content">
           <!--  -->
           <div class="video-player-section">
-            <div class="video-area">
+            <div class="video-area" :class="`presentation-${presentationMode}`" @playing.capture="rememberFrame" @loadeddata.capture="rememberFrame"
+              @loadedmetadata.capture="refreshMediaState" @emptied.capture="refreshMediaState" @volumechange.capture="refreshMediaState">
+              <VideoSquareThumbnailStrip v-if="presentationMode !== 'grid'" :devices="thumbnailDevices" :selected-id="activeCamera?.id || ''"
+                :frames="thumbnailFrames" @select="$emit('select-thumbnail', $event)" />
               <!--  -->
-              <div class="video-grid" :class="`layout-${getLayoutClass(dialog.layoutCount)}`">
+              <div class="video-grid" :class="[`layout-${getLayoutClass(dialog.layoutCount)}`, `variant-${dialog.layoutVariant || 'grid'}`]"
+                :style="getLayoutClass(dialog.layoutCount) === 'custom' ? videoGridStyle(dialog.layoutCount, dialog.layoutVariant || 'grid') : undefined">
                 <div
                   v-for="index in dialog.layoutCount"
                   :key="`window-${index}`"
                   class="video-window"
                   :class="{
+                    'active': activeWindowIndex === index - 1,
                     'dragging': draggedWindowIndex === index - 1,
                     'drag-over': dragOverWindowIndex === index - 1
                   }"
@@ -74,6 +80,10 @@
                   @drop="handleDrop($event, index - 1)"
                   @dragend="handleDragEnd"
                 >
+                  <div v-if="dialog.cameras[index - 1]" class="window-titlebar" @click.stop>
+                    <span data-i18n-ignore>{{ dialog.cameras[index - 1].name }}</span>
+                    <button :title="$tp('关闭视频')" :aria-label="$tp('关闭视频')" @click.stop="$emit('remove-device', dialog.id, index - 1)">×</button>
+                  </div>
                   <!-- layer - all can in and -->
                   <div class="drag-overlay"
                        @click.stop="handleVideoWindowClick(index - 1)"
@@ -88,39 +98,16 @@
                   <!-- if data, -->
                   <template v-if="dialog.cameras[index - 1]">
                     <!-- OPlayer -->
-                    <VideoSquareDevicePlayer v-if="dialog.cameras[index - 1].deviceData?.catalogSource === 'VIDEO_SQUARE'" :key="dialog.cameras[index - 1].id" :device="dialog.cameras[index - 1].deviceData" />
-                    <VlsDevicePlayer v-else-if="dialog.cameras[index - 1].deviceData?.catalogSource === 'VLSTREAM'" :key="dialog.cameras[index - 1].id" :device="dialog.cameras[index - 1].deviceData" />
+                    <VideoSquareDevicePlayer v-if="dialog.cameras[index - 1].deviceData?.catalogSource === 'VIDEO_SQUARE'" :key="dialog.cameras[index - 1].id" :device="dialog.cameras[index - 1].deviceData" @source-change="selectedSources[index - 1] = $event" />
+                    <VlsDevicePlayer v-else-if="dialog.cameras[index - 1].deviceData?.catalogSource === 'VLSTREAM'" :key="dialog.cameras[index - 1].id" :device="dialog.cameras[index - 1].deviceData" compact-status />
                     <div
                       v-else-if="dialog.cameras[index - 1].deviceData && dialog.cameras[index - 1].deviceData.streamUrl"
                       :ref="el => setOPlayerContainer(index - 1, el)"
                       class="oplayer-container"
                     />
 
-                    <div v-else class="video-placeholder">
-                      <div class="placeholder-content">
-                        <div class="placeholder-icon">📹</div>
-                        <div class="placeholder-text">{{ $tp('暂无视频流') }}</div>
-                        <div class="placeholder-details">
-                          <div>{{ $tp('设备:') }} {{ dialog.cameras[index - 1].name }}</div>
-                          <div>{{ $tp('状态: 在线') }}</div>
-                        </div>
-
-                        <!-- operation item -->
-                        <div class="placeholder-actions">
-                          <button class="action-btn primary" @click="retryWebRTCConnection(dialog.cameras[index - 1])">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-                            </svg> {{ $tp('重试连接') }} </button>
-                          <button class="action-btn secondary" @click="copyStreamUrl(dialog.cameras[index - 1].deviceData?.streamUrl)">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                            </svg> {{ $tp('复制地址') }} </button>
-                          <button class="action-btn secondary" @click="openInVlc(dialog.cameras[index - 1].deviceData?.streamUrl)">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
-                            </svg> {{ $tp('VLC播放') }} </button>
-                        </div>
-                      </div>
+                    <div v-else class="video-placeholder no-signal-placeholder" role="status">
+                      <div class="placeholder-text">{{ $tp('无信号') }}</div>
                     </div>
                   </template>
 
@@ -157,17 +144,14 @@
                   </div>
                 </div>
               </div>
+              <VideoSquarePlaybackControls :ptz-open="showPtz" :muted="mediaState.muted" :can-mute="mediaState.canMute"
+                :can-screenshot="mediaState.canScreenshot" :can-close="!!activeCamera" :fullscreen="playerFullscreen" :busy="capturing"
+                @toggle-mute="toggleSpeaker" @screenshot="captureActiveFrame" @toggle-ptz="showPtz = !showPtz"
+                @toggle-fullscreen="togglePlayerFullscreen" @close-video="$emit('remove-device', dialog.id, activeWindowIndex)" />
+              <VideoSquareFloatingPtz :source="activeSource" :visible="showPtz && active && !dialog.minimized"
+                :view-only="activeCamera?.deviceData?.access?.readOnly === true || activeCamera?.deviceData?.access?.canControl === false || activeCamera?.deviceData?.shared === true"
+                @close="showPtz = false" />
             </div>
-          </div>
-
-          <!-- PTZcontrol -->
-          <div v-show="showPtz" class="ptz-control-section">
-            <PTZControl
-              :show-camera-management="true"
-              @ptz-control="handlePTZControl"
-              @zoom-control="handleZoomControl"
-              @control-action="handleControlAction"
-            />
           </div>
         </div>
       </div>
@@ -180,14 +164,26 @@ import { translatePhrase as uiText } from '@/i18n'
 
 import VlsDevicePlayer from '@/components/VlsDevicePlayer.vue'
 import VideoSquareDevicePlayer from '@/views/VideoAggregation/components/VideoSquareDevicePlayer.vue'
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import PTZControl from './PTZControl.vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import VideoSquareFloatingPtz from '@/views/VideoAggregation/components/VideoSquareFloatingPtz.vue'
+import VideoSquareThumbnailStrip from '@/views/VideoAggregation/components/VideoSquareThumbnailStrip.vue'
+import VideoSquarePlaybackControls from '@/views/VideoAggregation/components/VideoSquarePlaybackControls.vue'
+import { captureThumbnailFrame } from '@/utils/videoSquarePresentation.mjs'
+import { canCaptureVideoFrame, captureVideoFrame } from '@/utils/videoSquareCapture.mjs'
+import { isVideoFullscreen, toggleVideoFullscreen, videoFullscreenContext } from '@/utils/videoSquareFullscreen.mjs'
+import { ElMessage } from 'element-plus'
+import { videoSourceKey } from '@/utils/videoSquareCatalog'
 import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
 import { ensureOPlayer, parseCameraRtcConfig } from '@/utils/oplayer'
 import { getStreamType } from '@/views/VideoAggregation/deviceUtils.js'
+import { videoGridStyle } from '@/utils/videoSquareLayout.mjs'
 
 // Props
 const props = defineProps({
+  presentationMode: { type: String, default: 'grid' },
+  thumbnailDevices: { type: Array, default: () => [] },
+  embedded: Boolean,
+  active: { type: Boolean, default: true },
   dialog: {
     type: Object,
     required: true
@@ -198,6 +194,65 @@ const props = defineProps({
 const dialogElement = ref(null)
 const maximized = ref(false)
 const showPtz = ref(true)
+const activeWindowIndex = ref(0)
+const selectedSources = ref({})
+const thumbnailFrames = ref({})
+const mediaState = ref({muted:true,canMute:false,canScreenshot:false})
+const capturing = ref(false)
+const playerFullscreen = ref(false)
+const getActiveVideo = () => dialogElement.value?.querySelector(`[data-window-index="${activeWindowIndex.value}"] video`)
+const refreshMediaState = () => {
+  const video = getActiveVideo()
+  mediaState.value = {muted:video?.muted ?? true,canMute:!!video,canScreenshot:canCaptureVideoFrame(video)}
+}
+const rememberFrame = event => {
+  refreshMediaState()
+  const windowElement = event.target?.closest?.('.video-window')
+  const camera = props.dialog.cameras[Number(windowElement?.dataset.windowIndex)]
+  if (!camera || event.target?.tagName !== 'VIDEO') return
+  if (!event.target.paused) event.target.controls=false
+  const frame = captureThumbnailFrame(event.target)
+  if (frame) thumbnailFrames.value = {...thumbnailFrames.value, [camera.id]:frame}
+}
+const toggleSpeaker = async () => {
+  const video = getActiveVideo()
+  if (!video) return
+  video.muted = !video.muted
+  if (!video.muted && video.paused) {
+    try { await video.play() } catch (cause) { console.warn('视频广场音频播放失败',cause); ElMessage.warning(uiText('当前视频无法播放声音')) }
+  }
+  if (!video.paused) video.controls=false
+  refreshMediaState()
+}
+const captureActiveFrame = async () => {
+  if (capturing.value) return
+  capturing.value = true
+  try { await captureVideoFrame(getActiveVideo(), {fileName:`video-frame-${Date.now()}.png`}) }
+  catch (cause) { console.warn('视频广场截屏失败',cause); ElMessage.warning(uiText('当前视频无法截屏')) }
+  finally { capturing.value=false; refreshMediaState() }
+}
+const fullscreenChanged = () => { playerFullscreen.value=isVideoFullscreen(dialogElement.value?.querySelector('.video-area')) }
+const togglePlayerFullscreen = async () => {
+  const area = dialogElement.value?.querySelector('.video-area')
+  const context = videoFullscreenContext(area)
+  try {
+    await toggleVideoFullscreen(area)
+    fullscreenChanged()
+  } catch(cause) {
+    console.warn('视频广场全屏失败',{name:cause?.name,message:cause?.message,...context})
+    ElMessage.warning(uiText('当前无法进入全屏'))
+  }
+}
+watch(() => [activeWindowIndex.value, props.dialog.cameras[activeWindowIndex.value]?.id], () => nextTick(refreshMediaState))
+watch(() => props.dialog.layoutCount, count => { if(activeWindowIndex.value>=count)activeWindowIndex.value=0 })
+onMounted(() => { document.addEventListener('fullscreenchange',fullscreenChanged); nextTick(refreshMediaState) })
+onBeforeUnmount(() => document.removeEventListener('fullscreenchange',fullscreenChanged))
+const activeCamera = computed(() => props.dialog.cameras[activeWindowIndex.value])
+const activeSource = computed(() => {
+  const sources = activeCamera.value?.deviceData?.sources || []
+  const selected = selectedSources.value[activeWindowIndex.value]
+  return sources.find(source => selected && videoSourceKey(source) === videoSourceKey(selected)) || null
+})
 
 // Clamp after viewport changes and native dialog resizing, without restarting streams.
 const fitDialog = () => {
@@ -222,6 +277,7 @@ onBeforeUnmount(() => {
 
 // Emits
 const emit = defineEmits([
+  'select-thumbnail',
   'close',
   'minimize',
   'bring-to-front',
@@ -238,6 +294,7 @@ const emit = defineEmits([
   'copy-stream-url',
   'open-in-vlc',
   'add-device',
+  'remove-device',
   'video-window-click',
   'video-window-double-click',
   'video-window-swap'
@@ -256,7 +313,7 @@ const getLayoutClass = (count) => {
     24: 'extended',
     25: 'extended'
   }
-  return classes[count] || '1x1'
+  return classes[count] || 'custom'
 }
 
 // Get
@@ -272,7 +329,7 @@ const getLayoutTitle = (count) => {
     24: '二十四画面',
     25: '二十五画面'
   }
-  return titleMap[count] || uiText('视频播放')
+  return titleMap[count] || uiText('{value0}画面', { value0: count })
 }
 
 // eventProcess
@@ -289,7 +346,7 @@ const bringToFront = () => {
 }
 
 const startDrag = (event) => {
-  if (maximized.value) return
+  if (props.embedded || maximized.value) return
   emit('start-drag', event, props.dialog.id)
 }
 
@@ -501,6 +558,7 @@ const dragOverWindowIndex = ref(null)
 
 // Process
 const handleVideoWindowClick = (windowIndex) => {
+  activeWindowIndex.value = windowIndex
   emit('video-window-click', props.dialog.id, windowIndex)
 }
 
@@ -742,6 +800,7 @@ const handleDrop = (event, targetWindowIndex) => {
 }
 
 .video-area {
+  position: relative;
   width: 100%;
   height: 100%;
   background: #ffffff;
@@ -756,8 +815,20 @@ const handleDrop = (event, targetWindowIndex) => {
   min-height: 0;
   max-height: none;
 }
+.video-area > .square-thumbnail-strip { order: 0; }
+.video-area > .video-grid { order: 1; }
+.video-area > .video-controls { order: 2; }
+.video-area > :deep(.square-playback-controls) { order: 2; }
+.video-area.presentation-bottom > .square-thumbnail-strip { order: 3; padding: 12px 2px 4px; }
+.video-area.presentation-bottom > .square-thumbnail-strip :deep(.square-thumbnail) { flex-basis: clamp(140px, 20vw, 280px); width: clamp(140px, 20vw, 280px); aspect-ratio: 16 / 9; }
+.video-area.presentation-default .window-titlebar,
+.video-area.presentation-bottom .window-titlebar { display: none; }
+.video-area.presentation-default .video-window,
+.video-area.presentation-bottom .video-window { border-color: transparent; }
+.video-area:fullscreen { width: 100vw; height: 100vh; padding: 12px; border-radius: 0; background: #111; }
 
 .video-grid {
+  position: relative;
   display: grid;
   gap: 4px;
   width: 100%;
@@ -1173,6 +1244,9 @@ const handleDrop = (event, targetWindowIndex) => {
   border: 2px dashed #404040;
 }
 
+.video-placeholder.no-signal-placeholder { background: #111; }
+.video-placeholder.no-signal-placeholder .placeholder-text { margin: 0; color: #cbd5e1; }
+
 .video-placeholder.empty-placeholder .placeholder-icon {
   color: #666666;
   font-size: 36px;
@@ -1393,28 +1467,6 @@ const handleDrop = (event, targetWindowIndex) => {
   height: 40px;
 }
 
-/* PTZcontrol */
-.ptz-control-section {
-  flex: 0 0 320px;
-  background: #ffffff;
-  border-radius: 8px;
-  border: 1px solid #e4e7ed;
-  padding: 0;
-  overflow: auto;
-  min-height: 0;
-  min-width: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.ptz-control-section :deep(.ptz-control-panel) {
-  height: auto;
-  min-height: 100%;
-  overflow: visible;
-  flex-shrink: 0;
-}
-
 /* Every player gets the cell's available height, including the source selector.
    Native media then contains the complete frame with centered letterboxing. */
 .video-window :deep(.square-device-player),
@@ -1491,7 +1543,6 @@ const handleDrop = (event, targetWindowIndex) => {
 
 @media (max-width: 900px) {
   .dialog-main-content { gap: 6px; padding: 6px; }
-  .ptz-control-section { flex-basis: min(320px, 35%); }
 }
 
 /*  */
@@ -1597,4 +1648,26 @@ const handleDrop = (event, targetWindowIndex) => {
   border-radius: 4px;
   font-size: 10px;
 }
+</style>
+
+<style scoped>
+.layout-dialog-overlay.is-embedded { position: relative; inset: auto; width: 100%; height: 100%; min-height: 0; }
+.is-embedded .layout-dialog:not(.is-maximized):not(.fullscreen-active) { position: relative !important; inset: auto !important; width: 100%; height: 100%; min-width: 0; min-height: 0; max-width: none; max-height: none; border: 0; border-radius: 0; box-shadow: none; resize: none; }
+.is-embedded .layout-dialog-header { display: none; }
+.is-embedded .layout-dialog-header { background: #fff; cursor: default; }
+.is-embedded .dialog-main-content { padding: 0; gap: 0; }
+.is-embedded .video-area { box-shadow: none; border-radius: 0; }
+</style>
+
+<style scoped>
+.window-titlebar { position: absolute; inset: 0 0 auto; z-index: 12; display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; gap: 8px; background: #2278ff; color: #fff; font-size: 12px; }
+.window-titlebar span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.window-titlebar button { flex: none; background: transparent; color: #fff; border: 0; cursor: pointer; font-size: 20px; line-height: 20px; }
+.video-window:has(.window-titlebar) { padding-top: 28px; }
+</style>
+
+<style scoped>
+.video-grid.variant-two-overlay .video-window:nth-child(2) { position: absolute; width: 30%; height: 30%; right: 12px; bottom: 12px; z-index: 15; border: 2px solid #2278ff; }
+.video-grid.variant-three-top .video-window:first-child { grid-column: span 2; }
+.video-grid.variant-three-left .video-window:first-child { grid-row: span 2; }
 </style>

@@ -1,8 +1,9 @@
 <template>
-  <div v-loading="loading" class="vls-device-player">
-    <CameraRtcPlayer v-if="cameraConfig" :device-id="cameraConfig.cameraId" :socket-url="cameraConfig.socketUrl" />
-    <RtcPlayer v-else-if="rtcUrl" :video-url="rtcUrl" />
-    <el-empty v-else-if="!loading" :description="error || $tp('设备没有上报可用视频流')" />
+  <div v-loading="loading" class="vls-device-player" :class="{ 'is-compact-status': compactStatus }">
+    <CameraRtcPlayer v-if="cameraConfig" :device-id="cameraConfig.cameraId" :socket-url="cameraConfig.socketUrl" :compact-status="compactStatus" />
+    <RtcPlayer v-else-if="rtcUrl" :video-url="rtcUrl" :compact-status="compactStatus" @status-change="handleRtcStatus" />
+    <el-empty v-else-if="!loading" :description="compactStatus ? $tp('无信号') : error || $tp('设备没有上报可用视频流')" />
+    <div v-if="compactStatus && rtcUrl && rtcStatus === 'failed'" class="rtc-no-signal" role="status">{{ $tp('无信号') }}</div>
   </div>
 </template>
 
@@ -14,11 +15,13 @@ import { getMqttDeviceStreams, getMqttDeviceDetail, createMqttDevicePreview } fr
 import { monitorDevicePreview } from '@/utils/devicePreviewGuard'
 import { parseCameraRtcConfig } from '@/utils/oplayer'
 
-const props = defineProps({ device: { type: Object, required: true } })
+const props = defineProps({ device: { type: Object, required: true }, compactStatus: { type: Boolean, default: false } })
 const loading = ref(false)
 const error = ref('')
 const cameraConfig = ref(null)
 const rtcUrl = ref('')
+const rtcStatus = ref('')
+const handleRtcStatus = status => { if (['playing', 'failed'].includes(status?.state)) rtcStatus.value = status.state }
 let generation = 0
 let stopMonitor = () => {}
 watch(() => [props.device.id, props.device.online], async ([id, online]) => {
@@ -26,6 +29,7 @@ watch(() => [props.device.id, props.device.online], async ([id, online]) => {
   const current = ++generation
   cameraConfig.value = null
   rtcUrl.value = ''
+  rtcStatus.value = ''
   error.value = ''
   loading.value = true
   try {
@@ -43,6 +47,7 @@ watch(() => [props.device.id, props.device.online], async ([id, online]) => {
       generation += 1
       cameraConfig.value = null
       rtcUrl.value = ''
+      rtcStatus.value = ''
       loading.value = false
       error.value = '设备离线或状态无法确认，已停止播放'
     })
@@ -69,4 +74,8 @@ onBeforeUnmount(() => { generation += 1; stopMonitor() })
 
 <style scoped>
 .vls-device-player { width: 100%; height: 100%; min-height: 180px; background: #000; }
+.vls-device-player.is-compact-status { position: relative; min-height: 0; }
+.is-compact-status :deep(.el-empty) { height: 100%; box-sizing: border-box; }
+.is-compact-status :deep(.el-empty__image) { display: none; }
+.rtc-no-signal { position: absolute; inset: 0; display: grid; place-items: center; background: #000; color: #fff; pointer-events: none; }
 </style>

@@ -1,12 +1,12 @@
 <template>
-  <div v-loading="loading" class="square-protocol-player">
-    <video v-show="!error && !directUrl" ref="video" autoplay muted playsinline controls @playing="onPlaying" />
+  <div v-loading="loading" class="square-protocol-player" :class="{ 'is-compact-status': compactStatus }">
+    <video v-show="!error && !directUrl" ref="video" autoplay muted playsinline :controls="!compactStatus" @playing="onPlaying" />
     <Hikvision v-if="directRtsp" :rtsp="directRtsp" />
-    <CameraRtcPlayer v-if="directCamera" :device-id="directCamera.cameraId" :socket-url="directCamera.socketUrl" />
+    <CameraRtcPlayer v-if="directCamera" :device-id="directCamera.cameraId" :socket-url="directCamera.socketUrl" :compact-status="compactStatus" />
     <div v-show="directUrl && !directRtsp && !directCamera" ref="directContainer" class="direct-player" />
     <div v-if="error" class="preview-error" role="status">
-      <p>{{ $tp(error) }}</p>
-      <el-button @click="connect">{{ $tp('重新连接') }}</el-button>
+      <p>{{ $tp(compactStatus ? '无信号' : error) }}</p>
+      <el-button v-if="!compactStatus" @click="connect">{{ $tp('重新连接') }}</el-button>
     </div>
   </div>
 </template>
@@ -23,7 +23,7 @@ import Hikvision from '@/components/Hikvision/index.vue'
 import CameraRtcPlayer from '@/components/CameraRtcPlayer.vue'
 import { parseCameraRtcConfig } from '@/utils/oplayer'
 
-const props = defineProps({ source: { type: Object, required: true }, deviceName: { type: String, default: '' } })
+const props = defineProps({ source: { type: Object, required: true }, deviceName: { type: String, default: '' }, compactStatus: { type: Boolean, default: false } })
 const video = ref(null), directContainer = ref(null), directUrl = ref(''), directRtsp = ref('')
 const directCamera = ref(null)
 const loading = ref(false), error = ref('')
@@ -133,4 +133,6 @@ onBeforeUnmount(() => { generation += 1; disconnect() })
 video { display: block; width: 100%; max-height: 65vh; }
 .direct-player { width: 100%; min-height: 240px; }
 .preview-error { color: white; padding: 40px 16px; text-align: center; }
+.square-protocol-player.is-compact-status { position: relative; height: 100%; min-height: 0; }
+.is-compact-status .preview-error { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
 </style>

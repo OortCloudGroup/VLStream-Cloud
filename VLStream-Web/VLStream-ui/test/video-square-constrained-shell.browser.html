@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><title>视频广场固定侧栏约束夹具</title>
+<style>
+html,body,#app{margin:0;width:100%;height:100%;font-family:Arial,'Microsoft YaHei',sans-serif}*{box-sizing:border-box}
+.test-shell{height:100%;display:grid;grid-template:72px minmax(0,1fr)/260px minmax(0,1fr);overflow:hidden}
+.reserved-header{grid-column:1/-1;background:#e8edf3;padding:12px;font-size:12px}.reserved-sidebar{background:#f1f5fa;padding:12px;font-size:12px;overflow:hidden}
+.test-workspace{min-width:0;min-height:0;padding:0 12px 0 0;overflow:hidden}
+</style><body><div id="app"></div><script type="module">
+import{createApp,h,reactive,ref}from'vue'
+import ElementPlus from'element-plus'
+import'element-plus/dist/index.css'
+import{createRouter,createMemoryHistory}from'vue-router'
+import DesignSurface from'./VideoSquareDesignFollowupSurface.vue'
+import LayoutControls from'../src/components/VideoLayoutControls.vue'
+import LayoutDialog from'../src/components/VideoLayoutDialog.vue'
+import DevicePanel from'../src/views/VideoAggregation/components/VideoSquareDevicePanel.vue'
+import{applyVideoPresentation}from'../src/utils/videoSquarePresentation.mjs'
+const app=createApp({setup(){
+ const mode=ref('default'),devices=[1,2].map(i=>({id:`controlled-${i}`,deviceName:`受控设备 ${i}`,status:'UNKNOWN',protocols:[],sources:[]}))
+ const dialog=reactive({id:1,position:{x:0,y:0},layoutCount:1,layoutVariant:'grid',minimized:false,cameras:[{id:devices[0].id,name:devices[0].deviceName,deviceData:{}}]})
+ const select=value=>{mode.value=value;applyVideoPresentation(dialog,value)}
+ return()=>h('div',{class:'test-shell'},[
+  h('header',{class:'reserved-header'},'受控壳约束：保留72px顶栏和260px侧栏占位，不连接真实设备'),
+  h('aside',{class:'reserved-sidebar'},'全局侧栏占位260px；不修改真实菜单'),
+  h('div',{class:'test-workspace'},[h(DesignSurface,{structured:true},{
+   controls:()=>h(LayoutControls,{showPresentation:true,presentationMode:mode.value,layoutMode:'1x1',deviceCount:2,unknownCount:2,onPresentationSelect:select}),
+   sharing:()=>h('button','设备共享（受控）'),
+   video:()=>h(LayoutDialog,{dialog,embedded:true,presentationMode:mode.value,thumbnailDevices:devices,onRemoveDevice:(_,i)=>{dialog.cameras[i]=null}}),
+   catalog:()=>h(DevicePanel,{devices,visibleDevices:devices,classificationEnabled:false},{views:()=>h('nav',{class:'square-view-switch'},['视频','地图','列表','拓扑','BIM'].map(name=>h('button',name)))})
+  })])
+ ])
+}})
+app.config.globalProperties.$tp=x=>x
+app.use(createRouter({history:createMemoryHistory(),routes:[{path:'/',component:{render:()=>null}}]}))
+app.use(ElementPlus).mount('#app')
+</script></body></html>

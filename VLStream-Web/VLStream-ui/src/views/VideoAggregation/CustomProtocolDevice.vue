@@ -67,7 +67,7 @@
         </div>
       </el-card>
 
-      <el-dialog v-model="formVisible" :title="form.id ? $tp('修改设备') : $tp('新增设备')" width="680px" destroy-on-close>
+      <el-dialog v-model="formVisible" :title="form.id ? $tp('修改设备') : $tp('新增设备')" width="680px" destroy-on-close @close="closeLocationPicker">
         <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
           <el-row :gutter="16">
             <el-col :span="12"><el-form-item :label="$tp('设备名称')" prop="deviceName"><el-input v-model="form.deviceName" /></el-form-item></el-col>
@@ -77,11 +77,17 @@
             <el-col :span="24"><el-form-item :label="$tp('视频流路径')" prop="streamUrl"><el-input v-model="form.streamUrl" :placeholder="$tp('rtsp://、rtmp:// 或 http(s)://')" /></el-form-item></el-col>
             <el-col :span="12"><el-form-item :label="$tp('经度')" prop="longitude"><el-input-number v-model="form.longitude" :precision="7" :min="-180" :max="180" style="width:100%" /></el-form-item></el-col>
             <el-col :span="12"><el-form-item :label="$tp('纬度')" prop="latitude"><el-input-number v-model="form.latitude" :precision="7" :min="-90" :max="90" style="width:100%" /></el-form-item></el-col>
-            <el-col :span="24"><el-form-item :label="$tp('地址')" prop="address"><el-input v-model="form.address" /></el-form-item></el-col>
+            <el-col :span="24"><el-form-item :label="$tp('地址')" prop="address"><el-input v-model="form.address"><template v-if="!form.id" #append><el-button @click="openLocationPicker">{{ $tp('地图选点') }}</el-button></template></el-input></el-form-item></el-col>
             <el-col :span="24"><el-form-item :label="$tp('备注')" prop="remark"><el-input v-model="form.remark" type="textarea" :rows="3" /></el-form-item></el-col>
           </el-row>
         </el-form>
         <template #footer><el-button @click="formVisible=false">{{ $tp('取消') }}</el-button><el-button type="primary" :loading="saving" @click="saveDevice">{{ $tp('保存') }}</el-button></template>
+      </el-dialog>
+
+      <el-dialog v-model="locationVisible" :title="$tp('地图选点')" width="45%" append-to-body
+        destroy-on-close @opened="initializeLocationPicker" @close="closeLocationPicker">
+        <MapGaoDe ref="locationMap" :auto-initialize="false" :position="locationPosition"
+          :toponym="form.address || ''" @update-value="confirmLocation" />
       </el-dialog>
 
       <el-dialog v-model="previewVisible" :title="previewTitle" width="900px" destroy-on-close>
@@ -120,6 +126,7 @@ import { stampCustomStatus } from '@/utils/customDeviceState'
 import { useCustomAvailabilityClock } from '@/utils/useCustomAvailabilityClock'
 import { useWvpMediaStatus } from '@/utils/useWvpMediaStatus'
 import CustomAvailabilityBadge from '@/components/CustomAvailabilityBadge.vue'
+import MapGaoDe from '@/components/MapGaoDe/index.vue'
 import {
   addCustomDevice, deleteCustomDevices, exportCustomDevices, getCustomDevice, getCustomMediaStatus,
   getCustomRecordPlan, getCustomRecordStatus, listCustomDevices,
@@ -141,6 +148,7 @@ const recordVisible = ref(false), recording = ref(false), recordDevice = ref({})
 const query = reactive({ pageNum: 1, pageSize: 10, deviceName: '', deviceCode: '', status: undefined })
 const emptyForm = () => ({ id: undefined, deviceName: '', deviceCode: '', streamUrl: '', deviceType: '摄像头', status: 'UNKNOWN', longitude: undefined, latitude: undefined, address: '', remark: '' })
 const form = reactive(emptyForm())
+const locationVisible = ref(false), locationMap = ref(null), locationPosition = ref(null)
 const recordPlan = reactive({ enabled: false, weekDays: '1,2,3,4,5,6,7', startTime: '00:00', endTime: '23:59' })
 const rules = {
   deviceName: [{ required: true, message: '设备名称不能为空', trigger: 'blur' }],
@@ -170,7 +178,27 @@ function search() { query.pageNum = 1; loadDevices() }
 function resetQuery() { Object.assign(query, { pageNum: 1, pageSize: 10, deviceName: '', deviceCode: '', status: undefined, categoryType: undefined, categoryId: undefined, unclassified: undefined }); loadDevices() }
 function handleClassificationFilter(filter) { Object.assign(query, filter, { pageNum: 1 }); loadDevices() }
 function handleSelectionChange(rows) { selectedIds.value = rows.map(row => String(row.id)); classificationDeviceKeys.value = [...selectedIds.value] }
-function resetForm() { Object.assign(form, emptyForm()); nextTick(() => formRef.value?.clearValidate()) }
+function closeLocationPicker() { locationVisible.value = false; locationMap.value?.Destruction(); locationPosition.value = null }
+function initializeLocationPicker() { if (locationVisible.value && formVisible.value && !form.id) locationMap.value?.inGaDeMap() }
+function validCoordinate(value, limit) {
+  return ['number', 'string'].includes(typeof value) && String(value).trim() !== '' && Number.isFinite(Number(value)) && Math.abs(Number(value)) <= limit
+}
+function openLocationPicker() {
+  if (!formVisible.value || form.id) return
+  // As in ONVIF, MapGaoDe coordinates are passed through without another conversion.
+  locationPosition.value = validCoordinate(form.longitude, 180) && validCoordinate(form.latitude, 90)
+    ? [Number(form.longitude), Number(form.latitude)] : null
+  locationVisible.value = true
+}
+function confirmLocation(value) {
+  if (!locationVisible.value || !formVisible.value || form.id ||
+    !validCoordinate(value?.lng, 180) || !validCoordinate(value?.lat, 90)) return
+  form.longitude = Number(value.lng); form.latitude = Number(value.lat)
+  const address = [value.address, value.detailedStreet].filter(part => typeof part === 'string').join('').trim()
+  if (address) form.address = address
+  closeLocationPicker()
+}
+function resetForm() { closeLocationPicker(); Object.assign(form, emptyForm()); nextTick(() => formRef.value?.clearValidate()) }
 function openAdd() { resetForm(); formVisible.value = true }
 async function openEdit(row) {
   resetForm(); const id = row?.id || selectedIds.value[0]
@@ -217,6 +245,7 @@ onMounted(() => {
   document.addEventListener('visibilitychange', refreshPresence)
 })
 onBeforeUnmount(() => {
+  closeLocationPicker()
   disposed = true; previewVisible.value = false; window.clearInterval(statusTimer)
   window.removeEventListener('focus', refreshPresence)
   document.removeEventListener('visibilitychange', refreshPresence)

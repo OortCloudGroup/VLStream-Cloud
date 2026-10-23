@@ -6,14 +6,14 @@
 -->
 
 <template>
-  <div ref="playerElement" class="camera-rtc-player">
-    <video ref="videoElement" class="camera-rtc-video" autoplay muted playsinline @play="updateControls" @pause="updateControls" @volumechange="updateControls" />
+  <div ref="playerElement" class="camera-rtc-player" :class="{ 'is-compact-status': compactStatus }">
+    <video ref="videoElement" class="camera-rtc-video" :controls="false" autoplay muted playsinline @play="updateControls" @pause="updateControls" @volumechange="updateControls" />
     <div v-if="status.state !== 'playing'" class="camera-rtc-status" :class="`is-${status.state}`">
-      <span v-if="isPending" class="camera-rtc-spinner" />
-      <span class="camera-rtc-message">{{ translateUiMessage(status.message) }}</span>
-      <el-button v-if="status.state === 'failed'" type="primary" size="small" @click="retryNow"> {{ $tp('重新连接') }} </el-button>
+      <span v-if="isPending && (!compactStatus || ['connecting', 'negotiating'].includes(status.state))" class="camera-rtc-spinner" />
+      <span class="camera-rtc-message">{{ displayStatus }}</span>
+      <el-button v-if="status.state === 'failed' && !compactStatus" type="primary" size="small" @click="retryNow"> {{ $tp('重新连接') }} </el-button>
     </div>
-    <div v-if="status.state === 'playing'" class="camera-rtc-controls" role="group" :aria-label="$tp('播放控制')">
+    <div v-if="status.state === 'playing' && !compactStatus" class="camera-rtc-controls" role="group" :aria-label="$tp('播放控制')">
       <el-button size="small" @click="togglePlayback">{{ $tp(paused ? '播放' : '暂停') }}</el-button>
       <el-button size="small" @click="toggleMute">{{ $tp(muted ? '取消静音' : '静音') }}</el-button>
       <input class="camera-rtc-volume" type="range" min="0" max="1" step="0.05" :value="volume" :aria-label="$tp('音量')" @input="setVolume" />
@@ -32,6 +32,7 @@ const props = defineProps({
   socketUrl: { type: String, required: true },
   disconnectGraceMs: { type: Number, default: 8000 },
   maxRetries: { type: Number, default: -1 },
+  compactStatus: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['status-change', 'diagnostic'])
@@ -47,6 +48,8 @@ const status = reactive({
   retryCount: 0,
 })
 const isPending = computed(() => ['connecting', 'negotiating', 'recovering', 'retrying'].includes(status.state))
+const displayStatus = computed(() => translateUiMessage(props.compactStatus ?
+  (['connecting', 'negotiating'].includes(status.state) ? '正在连接…' : '无信号') : status.message))
 const extraTurnUrls = parseCameraRtcTurnUrls(import.meta.env.VITE_CAMERA_RTC_TURN_URLS)
 let session = null
 
@@ -96,6 +99,7 @@ function createSession() {
     socketUrl: props.socketUrl,
     disconnectGraceMs: props.disconnectGraceMs,
     maxRetries: props.maxRetries,
+    nativeControlsOnAutoplayFailure: !props.compactStatus,
     extraTurnUrls,
     onStatus(nextStatus) {
       Object.assign(status, nextStatus)
@@ -113,6 +117,10 @@ function retryNow() {
 }
 
 watch(() => [props.deviceId, props.socketUrl], createSession)
+watch(() => props.compactStatus, compact => {
+  if (session) session.nativeControlsOnAutoplayFailure = !compact
+  if (compact && videoElement.value) videoElement.value.controls = false
+})
 onMounted(() => {
   document.addEventListener('fullscreenchange', updateFullscreen)
   createSession()
@@ -133,6 +141,8 @@ onBeforeUnmount(() => {
   overflow: hidden;
   background: #000;
 }
+.camera-rtc-player.is-compact-status { min-height: 0; }
+.is-compact-status .camera-rtc-status.is-failed { color: #fff; }
 
 .camera-rtc-video {
   width: 100%;

@@ -7,7 +7,7 @@
 
 <template>
   <div id="rtcPlayer">
-    <video id='webRtcPlayerBox' ref="videoElement" controls autoplay style="text-align:left;">
+    <video id='webRtcPlayerBox' ref="videoElement" :controls="!compactStatus" autoplay style="text-align:left;">
       Your browser is too old which doesn't support HTML5 video.
     </video>
   </div>
@@ -19,13 +19,14 @@ import { resolveZlmPlaybackUrl } from '@/utils/zlmPlaybackUrl';
 
 export default {
   name: 'rtcPlayer',
+  emits: ['status-change'],
   data() {
     return {
       timer: null,
       webrtcPlayer: null
     };
   },
-  props: ['videoUrl', 'error', 'hasaudio'],
+  props: ['videoUrl', 'error', 'hasaudio', 'compactStatus'],
   mounted () {
     let paramUrl = decodeURIComponent(this.$route.params.url)
     this.$nextTick(() =>{
@@ -98,6 +99,9 @@ export default {
       console.log("player 事件回调")
       console.log(type)
       console.log(message)
+      const eventType = String(type).trim()
+      if (eventType === 'playing') this.$emit('status-change', { state: 'playing', message })
+      else if (['ICE ERROR', 'OFFER ANSWER ERROR'].includes(eventType)) this.$emit('status-change', { state: 'failed', message })
     }
   },
   beforeUnmount() {
