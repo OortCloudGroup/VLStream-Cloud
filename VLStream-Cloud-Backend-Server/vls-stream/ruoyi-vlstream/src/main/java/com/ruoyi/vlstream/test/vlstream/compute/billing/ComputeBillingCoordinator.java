@@ -39,6 +39,15 @@ public class ComputeBillingCoordinator {
             long cursor = ((Number) session.get("metered_until_ms")).longValue();
             long proven = ((Number) session.get("last_running_ms")).longValue();
             long interval = Math.multiplyExact((long) properties.getSettlementIntervalSeconds(), 1000L);
+            // Topup never extends this original expiry. Request a safe stop early enough to begin
+            // shutdown, while continuing to meter actual runtime until a stopped observation.
+            if (session.get("funding_expires_at_ms") != null && !"STOPPED".equals(observation.snapshot.power)) {
+                long expires = ((Number) session.get("funding_expires_at_ms")).longValue();
+                if (properties.getHoldStopLeadSeconds() < 1 || properties.getHoldStopLeadSeconds() > 3600)
+                    throw new IllegalStateException("Invalid hold stop lead time");
+                long warning = Math.max(Math.multiplyExact((long) properties.getHoldStopLeadSeconds(), 1000L), interval);
+                if (expires <= Math.addExact(System.currentTimeMillis(), warning)) risk(usageId, "HOLD_EXPIRING");
+            }
             int sealed = 0;
             while (proven - cursor >= interval && sealed++ < 100) { cursor = Math.addExact(cursor, interval); settlements.prepareInterval(usageId, cursor); }
             if ("STOPPED".equals(observation.snapshot.power) && proven > cursor && sealed < 100) settlements.prepareInterval(usageId, proven);
@@ -61,6 +70,6 @@ public class ComputeBillingCoordinator {
         jdbc.update("UPDATE vls_compute_billing_session SET next_poll_ms=? WHERE usage_id=?",System.currentTimeMillis()+15000,usageId);
     }
     private void risk(String usageId, String code) {
-        jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1,risk_code=CASE WHEN risk_code='NOT_AUTHORIZED' THEN risk_code ELSE ? END WHERE usage_id=?", code, usageId);
+        jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1,risk_code=CASE WHEN risk_code='NOT_AUTHORIZED' THEN risk_code WHEN ?='HOLD_EXPIRING' AND risk_code IS NOT NULL THEN risk_code ELSE ? END WHERE usage_id=?", code, code, usageId);
     }
 }

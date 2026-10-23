@@ -18,8 +18,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-/** Durable VLS-side slice/outbox coordinator. No scheduler, HTTP entrypoint or paid-start enablement.
- * All external I/O follows a committed local intent. Current real adapter cannot capture held funds. */
+/** Durable VLS-side slice/outbox coordinator. No paid-start enablement.
+ * All external I/O follows a committed local intent, preserving its original funding association. */
 @Service
 public class ComputeBillingSettlementService {
     private final JdbcTemplate jdbc;
@@ -144,10 +144,27 @@ public class ComputeBillingSettlementService {
             body.put("charge_quota", amount);
             body.put("metering_ref", "sha256:" + hash(session.get("instance_ref") + ":" + usageId + ":" + start + ":" + endMillis + ":" + snapshot.json));
             body.put("price_snapshot_id", snapshot.priceId); body.put("conversion_version", snapshot.conversionVersion);
+            // Funding may only be bound by the backend's verified hold-detail journal. Never rewrite
+            // a previously sealed interval when funding is bound, topped up, or recovered later.
+            if (session.get("funding_hold_id") != null) {
+                if (session.get("funding_hold_intent_id") == null || session.get("funding_expires_at_ms") == null)
+                    throw new IllegalStateException("Incomplete persisted capture binding");
+                body.put("hold_id", ExactQuota.integer(String.valueOf(session.get("funding_hold_id")), true));
+            }
             String request = body.toString(); boolean isTail = stopped != null && stopped.getTime() == endMillis;
-            String state = "0".equals(amount) ? "NO_DEBIT" : session.get("risk_code") != null ? "BLOCKED" : "PREPARED";
+            boolean missingFunding = session.get("funding_required") != null && number(session, "funding_required") != 0 && session.get("funding_hold_id") == null;
+            boolean expiredFunding = session.get("funding_expires_at_ms") != null && number(session, "funding_expires_at_ms") <= System.currentTimeMillis();
+            // An advance expiry warning requests shutdown, but a still-valid hold may settle the
+            // actual stop tail. Authorization/conflict risks and actual expiry remain fail-closed.
+            boolean blockingRisk = session.get("risk_code") != null && !"HOLD_EXPIRING".equals(session.get("risk_code"));
+            String state = "0".equals(amount) ? "NO_DEBIT" : blockingRisk || missingFunding || expiredFunding ? "BLOCKED" : "PREPARED";
             jdbc.update("INSERT INTO vls_compute_billing_slice(merchant_charge_id,usage_id,slice_sequence,interval_start_ms,interval_end_ms,is_tail,idempotency_key,request_json,request_hash,amount_text,remainder_numerator,remainder_denominator,state) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 reference, usageId, sequence, start, endMillis, isTail, key, request, hash(request), amount, next.numerator.toString(), next.denominator.toString(), state);
+            if (!"0".equals(amount) && (missingFunding || expiredFunding)) {
+                String error = missingFunding ? "HOLD_BINDING_UNAVAILABLE" : "HOLD_EXPIRED";
+                jdbc.update("UPDATE vls_compute_billing_slice SET error_code=? WHERE merchant_charge_id=?", error, reference);
+                jdbc.update("UPDATE vls_compute_billing_session SET stop_requested=1,risk_code=COALESCE(risk_code,?) WHERE usage_id=?", error, usageId);
+            }
             jdbc.update("UPDATE vls_compute_account_remainder SET numerator_text=?,denominator_text=? WHERE payer_user_id=? AND quota_unit=?",
                 next.numerator.toString(), next.denominator.toString(), user, unit);
             jdbc.update("UPDATE vls_compute_billing_session SET metered_until_ms=?,next_sequence=? WHERE usage_id=?", endMillis, Math.addExact(sequence, 1), usageId);
@@ -186,7 +203,10 @@ public class ComputeBillingSettlementService {
             JsonNode request = json.readTree(body);
             ExternalBillingGateway.Result charge = gateway.byReference(reference);
             if (charge.status == ExternalBillingGateway.Status.SUCCEEDED) {
-                finish(row, lease, matches(request, charge.charge) ? "SETTLED" : "BLOCKED", matches(request, charge.charge) ? null : "BUSINESS_REFERENCE_CONFLICT", charge.charge, !matches(request, charge.charge)); return;
+                boolean verified = matches(request, charge.charge);
+                String error = verified ? null : request.has("hold_id") && (charge.charge == null || !charge.charge.has("hold_id"))
+                    ? "CAPTURE_DETAIL_UNVERIFIED" : "BUSINESS_REFERENCE_CONFLICT";
+                finish(row, lease, verified ? "SETTLED" : "BLOCKED", error, charge.charge, !verified); return;
             }
             ExternalBillingGateway.Result operation = gateway.byKey(String.valueOf(row.get("idempotency_key")));
             if (charge.status == ExternalBillingGateway.Status.CONFLICT || operation.status == ExternalBillingGateway.Status.CONFLICT) {
@@ -199,28 +219,62 @@ public class ComputeBillingSettlementService {
             if (charge.status != ExternalBillingGateway.Status.NOT_FOUND) { finish(row, lease, "UNKNOWN", "LOOKUP_UNAVAILABLE", null, true); return; }
             boolean retry = operation.status == ExternalBillingGateway.Status.NOT_FOUND;
             if (operation.status == ExternalBillingGateway.Status.REJECTED) {
-                if (!"INSUFFICIENT_AVAILABLE_QUOTA".equals(operation.errorCode)) { finish(row, lease, "BLOCKED", operation.errorCode, null, true); return; }
-                ExternalBillingGateway.Result balance = gateway.balance(request.path("user_id").asText());
-                if (balance.status == ExternalBillingGateway.Status.NOT_AUTHORIZED) { finish(row, lease, "UNKNOWN", "NOT_AUTHORIZED", null, true); return; }
-                if (balance.status != ExternalBillingGateway.Status.SUCCEEDED || balance.charge == null) { finish(row, lease, "WAITING_FUNDS", "INSUFFICIENT_AVAILABLE_QUOTA", null, true); return; }
-                BigInteger available = ExactQuota.integer(BillingSnapshot.required(balance.charge, "available_quota"), false);
-                if (available.compareTo(ExactQuota.integer(String.valueOf(row.get("amount_text")), true)) < 0) { finish(row, lease, "WAITING_FUNDS", "INSUFFICIENT_AVAILABLE_QUOTA", null, true); return; }
+                if ("INSUFFICIENT_HELD_QUOTA".equals(operation.errorCode)) {
+                    if (!request.has("hold_id")) { finish(row, lease, "BLOCKED", "HOLD_MISMATCH", null, true); return; }
+                    ExternalBillingGateway.Result hold = gateway.holdById(request.path("hold_id").asText());
+                    if (hold.status == ExternalBillingGateway.Status.NOT_AUTHORIZED) { finish(row, lease, "UNKNOWN", "NOT_AUTHORIZED", null, true); return; }
+                    if (hold.status != ExternalBillingGateway.Status.SUCCEEDED || hold.charge == null) { finish(row, lease, "WAITING_FUNDS", operation.errorCode, null, true); return; }
+                    FundingContracts.HoldDetail detail = FundingContracts.holdDetail(hold.charge);
+                    if (!matchesHold(request, detail)) { finish(row, lease, "BLOCKED", "HOLD_MISMATCH", null, true); return; }
+                    long expires = ExactQuota.integer(detail.expiresAt, true).longValueExact();
+                    if (expires <= System.currentTimeMillis() || "EXPIRED".equals(detail.holdStatus)) { finish(row, lease, "BLOCKED", "HOLD_EXPIRED", null, true); return; }
+                    if (ExactQuota.integer(detail.remainingQuota, false)
+                        .compareTo(ExactQuota.integer(String.valueOf(row.get("amount_text")), true)) < 0) { finish(row, lease, "WAITING_FUNDS", operation.errorCode, null, true); return; }
+                } else if ("INSUFFICIENT_AVAILABLE_QUOTA".equals(operation.errorCode) && !request.has("hold_id")) {
+                    // Historical ordinary-charge snapshots retain their original recovery semantics.
+                    ExternalBillingGateway.Result balance = gateway.balance(request.path("user_id").asText());
+                    if (balance.status == ExternalBillingGateway.Status.NOT_AUTHORIZED) { finish(row, lease, "UNKNOWN", "NOT_AUTHORIZED", null, true); return; }
+                    if (balance.status != ExternalBillingGateway.Status.SUCCEEDED || balance.charge == null) { finish(row, lease, "WAITING_FUNDS", operation.errorCode, null, true); return; }
+                    BigInteger available = ExactQuota.integer(BillingSnapshot.required(balance.charge, "available_quota"), false);
+                    if (available.compareTo(ExactQuota.integer(String.valueOf(row.get("amount_text")), true)) < 0) { finish(row, lease, "WAITING_FUNDS", operation.errorCode, null, true); return; }
+                } else { finish(row, lease, "BLOCKED", operation.errorCode, null, true); return; }
                 retry = true;
             }
             if (!retry) { finish(row, lease, "UNKNOWN", "LOOKUP_UNRESOLVED", null, true); return; }
             if (!gateway.supportsAtomicCapture()) { finish(row, lease, "BLOCKED", "ATOMIC_CAPTURE_UNAVAILABLE", null, true); return; }
-            Map<String, Object> session = jdbc.queryForMap("SELECT risk_code FROM vls_compute_billing_session WHERE usage_id=?", row.get("usage_id"));
+            Map<String, Object> session = jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?", row.get("usage_id"));
             if ("NOT_AUTHORIZED".equals(session.get("risk_code"))) { finish(row, lease, "BLOCKED", "NOT_AUTHORIZED", null, true); return; }
+            if ("FUNDING_OPERATION_CONFLICT".equals(session.get("risk_code"))) {
+                // Preserve the trusted parent hold for read recovery and restricted cleanup, while
+                // refusing another debit after contradictory topup/release evidence.
+                finish(row, lease, "BLOCKED", "FUNDING_OPERATION_CONFLICT", null, true); return;
+            }
+            if (session.get("funding_required") != null && number(session, "funding_required") != 0 && !request.has("hold_id")) {
+                finish(row, lease, "BLOCKED", "HISTORICAL_FUNDING_UNBOUND", null, true); return;
+            }
+            if (request.has("hold_id")) {
+                if (session.get("funding_hold_intent_id") == null || !request.path("hold_id").asText().equals(String.valueOf(session.get("funding_hold_id")))) {
+                    finish(row, lease, "BLOCKED", "HOLD_MISMATCH", null, true); return;
+                }
+                if (session.get("funding_expires_at_ms") == null || number(session, "funding_expires_at_ms") <= System.currentTimeMillis()) {
+                    finish(row, lease, "BLOCKED", "HOLD_EXPIRED", null, true); return;
+                }
+            }
             // CAS records possible submission before any network send; the key and body NEVER change.
             if (jdbc.update("UPDATE vls_compute_billing_slice SET state='SUBMITTED' WHERE merchant_charge_id=? AND lease_token=?", reference, lease) != 1) return;
             ExternalBillingGateway.Result result = gateway.capture(String.valueOf(row.get("idempotency_key")), body);
             if (result.status == ExternalBillingGateway.Status.SUCCEEDED) {
                 // POST acceptance is followed by detail lookup; never settle on an incomplete POST body.
                 finish(row, lease, "UNKNOWN", null, null, false);
-            } else if (result.status == ExternalBillingGateway.Status.REJECTED && "INSUFFICIENT_AVAILABLE_QUOTA".equals(result.errorCode)) {
+            } else if (result.status == ExternalBillingGateway.Status.REJECTED
+                && ((request.has("hold_id") && "INSUFFICIENT_HELD_QUOTA".equals(result.errorCode))
+                || (!request.has("hold_id") && "INSUFFICIENT_AVAILABLE_QUOTA".equals(result.errorCode)))) {
                 finish(row, lease, "WAITING_FUNDS", result.errorCode, null, true);
             } else if (result.status == ExternalBillingGateway.Status.NOT_AUTHORIZED) {
                 finish(row, lease, "UNKNOWN", "NOT_AUTHORIZED", null, true);
+            } else if (result.status == ExternalBillingGateway.Status.REJECTED || result.status == ExternalBillingGateway.Status.CONFLICT) {
+                // Explicit errors (including expired conversion versions) cannot change the saved rate/body.
+                finish(row, lease, "BLOCKED", result.errorCode, null, true);
             } else { finish(row, lease, "UNKNOWN", "SUBMISSION_UNCERTAIN", null, true); }
         } catch (Exception e) { finish(row, lease, "UNKNOWN", "SUBMISSION_UNCERTAIN", null, true); }
     }
@@ -243,7 +297,20 @@ public class ComputeBillingSettlementService {
         if (!charge.path("charged_quota").isTextual()) return false;
         for (String field : new String[]{"merchant_charge_id", "user_id", "usage_session_id", "metering_ref", "price_snapshot_id", "conversion_version"})
             if (!request.path(field).asText().equals(charge.path(field).asText())) return false;
+        // The published detail example omits hold_id. Such a response remains unverified rather
+        // than inferring that a successful ordinary debit consumed the intended hold.
+        if (request.has("hold_id") && !request.path("hold_id").asText().equals(charge.path("hold_id").asText())) return false;
         return request.path("charge_quota").asText().equals(charge.path("charged_quota").asText());
+    }
+    private boolean matchesHold(JsonNode request, FundingContracts.HoldDetail hold) {
+        Map<String, Object> session = jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?", request.path("usage_session_id").asText());
+        String status = hold.holdStatus;
+        return session.get("funding_expires_at_ms") != null
+            && String.valueOf(session.get("funding_expires_at_ms")).equals(hold.expiresAt)
+            && ("ACTIVE".equals(status) || "PARTIALLY_CAPTURED".equals(status) || "EXPIRED".equals(status))
+            && request.path("hold_id").asText().equals(hold.holdId)
+            && request.path("user_id").asText().equals(hold.userId)
+            && ("vls-hold:" + request.path("usage_session_id").asText() + ":initial").equals(hold.merchantHoldId);
     }
     private Map<String, Object> usage(String id) {
         return jdbc.queryForObject("SELECT * FROM vls_compute_usage WHERE id=? FOR UPDATE", (rs, index) -> {

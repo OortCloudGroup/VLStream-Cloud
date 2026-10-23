@@ -1,0 +1,30 @@
+-- Local corrective-refund journal only. No funds, authorizations or existing requests are changed.
+-- UNKNOWN refunds cannot be resent until the upstream refund-recovery response is specified.
+CREATE TABLE vls_compute_refund_intent (
+    refund_intent_id VARCHAR(36) NOT NULL PRIMARY KEY,
+    merchant_charge_id VARCHAR(120) NOT NULL,
+    correction_reference VARCHAR(128) NOT NULL,
+    merchant_refund_id VARCHAR(128) NOT NULL,
+    usage_id VARCHAR(36) NOT NULL,
+    merchant_id VARCHAR(64) NOT NULL,
+    payer_user_id VARCHAR(32) NOT NULL,
+    charge_id VARCHAR(100) NOT NULL,
+    original_ledger_entry_id VARCHAR(100) NOT NULL,
+    original_request_hash CHAR(64) NOT NULL,
+    original_hold_id VARCHAR(32) NULL,
+    idempotency_key VARCHAR(80) NOT NULL,
+    request_path VARCHAR(200) NOT NULL,
+    request_json TEXT NOT NULL,
+    request_hash CHAR(64) NOT NULL,
+    refund_quota VARCHAR(32) NOT NULL,
+    state VARCHAR(32) NOT NULL DEFAULT 'PREPARED',
+    error_code VARCHAR(64) NULL,
+    receipt_json TEXT NULL,
+    receipt_observed_at_ms BIGINT NULL,
+    conflicting_receipt_json TEXT NULL,
+    create_time DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    UNIQUE KEY uk_compute_refund_correction (merchant_charge_id, correction_reference),
+    UNIQUE KEY uk_compute_refund_reference (merchant_id, merchant_refund_id),
+    UNIQUE KEY uk_compute_refund_key (idempotency_key),
+    KEY idx_compute_refund_usage (usage_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

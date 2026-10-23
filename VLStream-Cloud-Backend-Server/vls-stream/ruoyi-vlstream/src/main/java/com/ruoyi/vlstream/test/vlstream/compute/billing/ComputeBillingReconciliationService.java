@@ -72,18 +72,28 @@ public class ComputeBillingReconciliationService {
         String delta=BillingSnapshot.required(entry,"quota_delta");
         boolean negative=delta.startsWith("-"); String absolute=negative?delta.substring(1):delta;
         ExactQuota.integer(absolute,true);
-        if (!("CHARGE".equals(type)&&negative) && !("REFUND".equals(type)&&!negative)) throw new IllegalArgumentException("Invalid ledger amount/type");
+        boolean debit = "CHARGE".equals(type) || "CAPTURE".equals(type);
+        boolean refund = "REFUND".equals(type) || "CAPTURE_REFUND".equals(type);
+        if (!(debit && negative) && !(refund && !negative)) throw new IllegalArgumentException("Invalid ledger amount/type");
         ObjectNode canonical=json.createObjectNode();
         for (String field : new String[]{"ledger_entry_id","merchant_ref","entry_type","quota_delta","user_id","reference_id","related_entry_id","balance_before","balance_after","created_at"}) canonical.put(field,entry.path(field).asText());
+        // Preserve the historical canonical hash when no hold field was supplied.
+        if (entry.has("hold_id")) canonical.put("hold_id", entry.path("hold_id").asText());
         String hash=ComputeBillingSettlementService.hash(canonical.toString());
         List<Map<String,Object>> old=jdbc.queryForList("SELECT entry_hash FROM vls_compute_billing_ledger_seen WHERE merchant_id=? AND ledger_entry_id=?",merchant,id);
         if (!old.isEmpty()) {if(!hash.equals(old.get(0).get("entry_hash")))throw new IllegalArgumentException("Immutable ledger changed");return;}
         String state="UNMATCHED";
         List<Map<String,Object>> charges=jdbc.queryForList("SELECT s.*,u.payer_user_id FROM vls_compute_billing_slice s JOIN vls_compute_billing_session u ON u.usage_id=s.usage_id WHERE s.merchant_charge_id=? AND u.merchant_id=?",ref,merchant);
-        if ("REFUND".equals(type)) state="REFUND_REVIEW";
+        if (refund) state="CAPTURE_REFUND".equals(type)?"CAPTURE_REFUND_REVIEW":"REFUND_REVIEW";
         else if (!charges.isEmpty()) {
             Map<String,Object> charge=charges.get(0);
-            if (absolute.equals(charge.get("amount_text")) && entry.path("user_id").asText().equals(charge.get("payer_user_id")))
+            JsonNode request;
+            try { request = json.readTree(String.valueOf(charge.get("request_json"))); }
+            catch (java.io.IOException e) { throw new IllegalArgumentException("Invalid saved charge snapshot"); }
+            boolean capture = request.has("hold_id");
+            if (capture != "CAPTURE".equals(type)) state="CHARGE_TYPE_MISMATCH";
+            else if (entry.has("hold_id") && (!capture || !request.path("hold_id").asText().equals(entry.path("hold_id").asText()))) state="HOLD_MISMATCH";
+            else if (absolute.equals(charge.get("amount_text")) && entry.path("user_id").asText().equals(charge.get("payer_user_id")))
                 state="SETTLED".equals(charge.get("state"))&&id.equals(charge.get("ledger_entry_id"))?"MATCHED":"AWAITING_CHARGE_QUERY";
         }
         jdbc.update("INSERT INTO vls_compute_billing_ledger_seen(merchant_id,ledger_entry_id,entry_hash,merchant_ref,entry_type,quota_delta,match_state) VALUES(?,?,?,?,?,?,?)",merchant,id,hash,ref,type,delta,state);

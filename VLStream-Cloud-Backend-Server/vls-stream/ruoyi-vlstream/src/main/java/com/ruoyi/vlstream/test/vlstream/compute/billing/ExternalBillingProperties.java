@@ -12,9 +12,12 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "vlstream.compute.external-billing")
 public class ExternalBillingProperties {
     private boolean enabled = false;
+    /** Enabling read access alone must never enable funds movement. */
+    private boolean allowWrites = false;
     private String baseUrl;
     private String merchantId;
     private String apiKey;
     private boolean safetyStopEnabled = false;
     private int settlementIntervalSeconds = 60;
+    private int holdStopLeadSeconds = 60;
 }
