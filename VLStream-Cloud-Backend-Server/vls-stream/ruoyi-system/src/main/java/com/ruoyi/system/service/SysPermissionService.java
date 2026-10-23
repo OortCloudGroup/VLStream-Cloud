@@ -56,8 +56,13 @@ public class SysPermissionService {
         if (user.isAdmin()) {
             perms.add("*:*:*");
         } else {
-            perms.addAll(menuService.selectMenuPermsByUserId(user.getUserId()));
+            perms.addAll(getExplicitMenuPermission(user));
         }
         return perms;
+    }
+
+    /** Reads actual enabled menu assignments, including for administrators, without expanding wildcards. */
+    public Set<String> getExplicitMenuPermission(SysUser user) {
+        return new HashSet<>(menuService.selectMenuPermsByUserId(user.getUserId()));
     }
 }

@@ -19,12 +19,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 @RestController
 @RequestMapping("/blade-system/user")
 public class BladeSystemUserCompatController {
+    private static final Set<String> WVP_SHARING_PERMISSIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+        "vlstream:device:share:manage", "vlstream:device:share:approve"
+    )));
 
     private final BladeTokenUserStore tokenUserStore;
     private final SysPermissionService permissionService;
@@ -51,7 +57,15 @@ public class BladeSystemUserCompatController {
         }
 
         Set<String> roles = permissionService.getRolePermission(user);
-        Set<String> permissions = permissionService.getMenuPermission(user);
+        Set<String> permissions = new HashSet<>(permissionService.getMenuPermission(user));
+        if (user.isAdmin()) {
+            // The generic administrator wildcard does not grant sharing powers in WVP.
+            // Export only separately assigned exact menu permissions from the trusted store.
+            Set<String> explicitPermissions = permissionService.getExplicitMenuPermission(user);
+            for (String permission : WVP_SHARING_PERMISSIONS) {
+                if (explicitPermissions.contains(permission)) permissions.add(permission);
+            }
+        }
         return BladeResult.success(userInfoBuilder.build(token, user, roles, permissions));
     }
 }
