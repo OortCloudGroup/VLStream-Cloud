@@ -3,10 +3,6 @@
     append-to-body :before-close="closeDrawer" :show-close="!submitting"
     modal-class="device-model-mask" :close-on-click-modal="!submitting" :close-on-press-escape="!submitting" @update:model-value="emit('update:modelValue', $event)">
     <div class="picker-shell">
-      <el-tabs v-if="source === 'local'" v-model="source" class="source-tabs">
-        <el-tab-pane :disabled="submitting" :label="$tp('自主训练的模型{value0}', { value0: sourceTotal === null ? '' : ` (${sourceTotal})` })" name="local" />
-        <el-tab-pane :label="`Model Hub${hubTotal === null ? '' : ` (${hubTotal})`}`" name="hub" :disabled="submitting" />
-      </el-tabs>
       <ModelHubCatalog v-if="source === 'hub' && modelValue" @count="hubTotal = $event" @busy="submitting = $event; emit('busy', $event)">
         <template #tabs>
           <el-tabs v-model="source" class="source-tabs">
@@ -16,10 +12,16 @@
         </template>
       </ModelHubCatalog>
       <template v-if="source === 'local'">
-      <div class="picker-toolbar">
-        <el-input v-model="keyword" :placeholder="$tp('搜索模型或算法名称')" :prefix-icon="Search" clearable
-          :disabled="submitting" @input="scheduleSearch" @keyup.enter="searchNow" />
-        <span class="target-device">{{ $tp('下发至') }} {{ device?.deviceName || device?.deviceId }} · OM</span>
+      <div class="picker-header">
+        <el-tabs v-model="source" class="source-tabs">
+          <el-tab-pane :disabled="submitting" :label="$tp('自主训练的模型{value0}', { value0: sourceTotal === null ? '' : ` (${sourceTotal})` })" name="local" />
+          <el-tab-pane :label="`Model Hub${hubTotal === null ? '' : ` (${hubTotal})`}`" name="hub" :disabled="submitting" />
+        </el-tabs>
+        <div class="picker-toolbar">
+          <el-input v-model="keyword" :placeholder="$tp('搜索模型或算法名称')" :prefix-icon="Search" clearable
+            :disabled="submitting" @input="scheduleSearch" @keyup.enter="searchNow" />
+          <span class="target-device">{{ $tp('下发至') }} {{ device?.deviceName || device?.deviceId }} · OM</span>
+        </div>
       </div>
       <div class="category-tabs" role="tablist" :aria-label="$tp('模型分类')">
         <button v-for="item in categories" :key="item.value" role="tab" :aria-selected="category === item.value"
@@ -244,11 +246,14 @@ onBeforeUnmount(() => {
 .source-tabs :deep(.el-tabs__item) { height: 42px; font-size: 14px; padding: 0 22px; }
 .source-tabs :deep(.el-tabs__nav-wrap::after) { height: 1px; background: #e4eaf2; }
 .source-tabs :deep(.el-tabs__active-bar) { height: 3px; border-radius: 3px; }
-.picker-toolbar { display: flex; gap: 20px; justify-content: space-between; align-items: center; margin: 4px 0 18px; }
-.picker-toolbar .el-input { width: 340px; max-width: 55%; }
-.picker-toolbar :deep(.el-input__wrapper) { min-height: 38px; border-radius: 8px; }
-.target-device { font-size: 12px; color: #7c889a; padding: 8px 12px; background: #eaf0f8; border-radius: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.category-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.picker-header { display: flex; align-items: center; justify-content: space-between; gap: 32px; flex: none; padding-bottom: 16px; border-bottom: 1px solid #e5eaf2; }
+.picker-header :deep(.el-tabs__header) { margin-bottom: 0; }
+.picker-toolbar { display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.picker-toolbar .el-input { width: 340px; min-width: 0; flex: 1; max-width: 340px; }
+.picker-toolbar :deep(.el-input__wrapper) { min-height: 38px; border-radius: 8px; background: #fff; box-shadow: 0 0 0 1px #dfe5ee inset; }
+.picker-toolbar :deep(.el-input__wrapper.is-focus) { box-shadow: 0 0 0 1px #307bff inset; }
+.target-device { display: block; height: 38px; line-height: 38px; padding: 0 12px; font-size: 12px; color: #7b8799; background: #fff; border-radius: 8px; box-shadow: 0 0 0 1px #dfe5ee inset; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.category-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 20px; }
 .category-tabs button { border: 1px solid transparent; border-radius: 7px; background: transparent; padding: 7px 10px; cursor: pointer; color: #7b8799; font-size: 13px; }
 .category-tabs button.active { color: #307bff; font-weight: 500; background: #e9f1ff; border-color: #d6e5ff; }
 .category-tabs button:focus-visible { outline: 2px solid #307bff; outline-offset: 2px; }
@@ -298,6 +303,7 @@ onBeforeUnmount(() => {
 .catalog-pagination { flex: none; max-width: 100%; }
 .el-pagination { justify-content: center; }
 @media (max-width: 1200px) { .model-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .picker-columns { grid-template-columns: minmax(0, 1fr) 250px; gap: 20px; } }
+@media (max-width: 1000px) { .picker-header { flex-wrap: wrap; gap: 8px; } .picker-toolbar { flex-basis: 100%; justify-content: flex-start; } .picker-toolbar .el-input { max-width: none; } }
 @media (max-width: 760px) { .picker-columns { display: flex; flex-direction: column; overflow-y: auto; } .model-catalog { flex: none; } .selection-panel { flex: none; max-height: 250px; } .target-device { display: none; } .picker-toolbar .el-input { max-width: 100%; width: 100%; } .category-tabs { gap: 4px; } .catalog-content { overflow: visible; } }
 @media (max-width: 540px) { .model-grid { grid-template-columns: minmax(0, 1fr); } .category-tabs { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; flex-shrink: 0; padding-bottom: 6px; } .category-tabs button { flex: none; } .catalog-pagination :deep(.el-pagination) { flex-wrap: wrap; gap: 6px; } .catalog-pagination :deep(.el-pagination__total) { flex-basis: 100%; margin: 0; text-align: center; } .drawer-footer .el-button { min-width: 92px; } }
 </style>
