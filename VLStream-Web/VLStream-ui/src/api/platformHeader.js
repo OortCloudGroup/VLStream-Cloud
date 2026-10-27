@@ -68,15 +68,36 @@ export async function getPlatformHeaderUser() {
   return payload.userInfo || payload.user || payload
 }
 
-export async function getPlatformApps(userId = '') {
+export async function getPlatformAppModules(userId = '') {
   const accessToken = getPlatformAccessToken()
+  if (!accessToken) return []
   const response = await platformRequest.post(
-    platformServiceUrl('apaas-admin-platform', 'client/module/mypclist'),
-    { accessToken, uuid: userId, pageNum: 1, pageSize: 999 },
+    platformServiceUrl('apaas-admin-platform', 'client/module/list'),
+    { accessToken, befrom: 3, homepageType: 1, pageNum: 1, pageSize: 999, uuid: userId },
     { headers: platformHeaders(), timeout: 10000 }
   )
   const payload = responseData(response) || {}
-  return (payload.list || []).flatMap(item => item.app_list || [])
+  const modules = payload.list || []
+  const appUids = [...new Set(
+    modules.flatMap(module => (module.app_list || []).map(app => app?.uid).filter(Boolean))
+  )]
+  if (!appUids.length) return []
+  const statusResponse = await platformRequest.post(
+    platformServiceUrl('apaas-admin-platform', 'client/getAppApplyStatusList'),
+    { accessToken, uids: appUids },
+    { headers: platformHeaders(), timeout: 10000 }
+  )
+  const accessibleApps = new Map(
+    ((responseData(statusResponse) || {}).list || [])
+      .filter(app => app?.uid)
+      .map(app => [app.uid, app])
+  )
+  return modules
+    .map(module => ({
+      ...module,
+      apps: (module.app_list || []).map(app => accessibleApps.get(app?.uid)).filter(Boolean)
+    }))
+    .filter(module => module.apps.length)
 }
 
 export async function getPlatformAccounts(isMoreAccount = 0) {

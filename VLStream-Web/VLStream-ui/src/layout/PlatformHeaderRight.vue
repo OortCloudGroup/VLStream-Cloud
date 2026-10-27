@@ -354,7 +354,7 @@ const ensurePlatformSession = async() => {
 }
 const platformQuery = () => `accessToken=${encodeURIComponent(getPlatformAccessToken() || '')}&fromWhere=console_manage`
 const openApp = async app => {
-  const path = app.apk_url || app.url || app.path
+  const path = app.apk_url || app.appweburl || app.url || app.path
   if (!path || !(await ensurePlatformSession())) return
   sessionStorage.setItem('tempObj', JSON.stringify({ accessToken: getPlatformAccessToken(), fromWhere: 'console_manage' }))
   const query = platformQuery()

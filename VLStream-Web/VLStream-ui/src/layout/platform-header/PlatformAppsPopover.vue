@@ -7,15 +7,19 @@
 
 <template>
   <div class="pover_right">
-    <div class="app_pover_apps">
-      <div v-for="(item, index) in appList" :key="item.id || item.app_id || index" class="app_pover_apps_item" @click="emit('open-app', item)">
-        <img v-if="item.icon_url" :src="platformImageUrl(item.icon_url)" alt="" @error="useDefaultIcon">
-        <img v-else :src="defaultAppIcon" alt="">
-        <div class="app_pover_apps_item_name">
-          {{ item.applabel }}
+    <div class="app_pover_groups">
+      <section v-for="(module, moduleIndex) in moduleList" :key="module.module_id || moduleIndex" class="app_pover_group">
+        <div v-if="showModuleName(module)" class="app_pover_group_name">{{ module.module_name }}</div>
+        <div class="app_pover_apps">
+          <div v-for="item in module.apps" :key="item.uid" class="app_pover_apps_item" @click="emit('open-app', item)">
+            <img :src="platformImageUrl(item.icon_url)" alt="" @error="useDefaultIcon">
+            <div class="app_pover_apps_item_name">
+              {{ item.applabel }}
+            </div>
+          </div>
         </div>
-      </div>
-      <div v-if="appList.length === 0" class="no_data">
+      </section>
+      <div v-if="loaded && moduleList.length === 0" class="no_data">
         <img :src="noAppImage" alt="">
         <span>{{ $tp('暂无应用') }}</span>
       </div>
@@ -30,7 +34,8 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { getPlatformApps } from '@/api/platformHeader'
+import { getPlatformAppModules } from '@/api/platformHeader'
+import { getPlatformAccessToken } from '@/utils/request'
 import defaultAppIcon from '@/assets/img/login/icon_user.png'
 import noAppImage from '@/assets/img/no_app_list.png'
 
@@ -38,7 +43,8 @@ const props = defineProps({
   userId: { type: String, default: '' }
 })
 const emit = defineEmits(['open-app', 'more-apps'])
-const appList = ref([])
+const moduleList = ref([])
+const loaded = ref(false)
 
 const platformOrigin = () => {
   const loginUrl = import.meta.env.VITE_PLATFORM_LOGIN_URL
@@ -62,13 +68,21 @@ const useDefaultIcon = event => {
   if (event?.target && event.target.src !== defaultAppIcon) event.target.src = defaultAppIcon
 }
 
+const showModuleName = module => Number(module?.is_show_name) === 1 && Boolean(module?.module_name)
+
 onMounted(async() => {
+  if (!getPlatformAccessToken()) {
+    moduleList.value = []
+    loaded.value = true
+    return
+  }
   try {
-    appList.value = await getPlatformApps(props.userId)
+    moduleList.value = await getPlatformAppModules(props.userId)
   } catch (error) {
-    appList.value = []
+    moduleList.value = []
     console.warn('加载平台应用失败', error)
   }
+  loaded.value = true
 })
 </script>
 
@@ -81,13 +95,10 @@ onMounted(async() => {
   background-color: #edf3f9;
 }
 
-.app_pover_apps {
+.app_pover_groups {
   width: 98%;
   max-height: 50vh;
   margin: 0 auto;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
   overflow: auto;
   border-radius: var(--common-border-radius);
   scrollbar-width: thin;
@@ -96,6 +107,24 @@ onMounted(async() => {
   &::-webkit-scrollbar { width: 6px; height: 6px; }
   &::-webkit-scrollbar-track { background: transparent; }
   &::-webkit-scrollbar-thumb { border-radius: 3px; background: #dde3ea; }
+}
+
+.app_pover_group {
+  padding: 4px 0;
+}
+
+.app_pover_group_name {
+  padding: 6px 8px 0;
+  color: #575656;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.app_pover_apps {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
 .app_pover_apps_item {
