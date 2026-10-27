@@ -12,7 +12,7 @@ const component = new Function(script)()
 const render = compile(descriptor.template.content)
 
 function toolbar(values = {}) {
-  const props = reactive({ ptzOpen: false, muted: true, canMute: false, canScreenshot: false, canClose: false, fullscreen: false, busy: false, ...values })
+  const props = reactive({ compact: false, overlay: false, ptzOpen: false, muted: true, canMute: false, canScreenshot: false, canClose: false, fullscreen: false, busy: false, ...values })
   const events = []
   const setup = component.setup(props, { expose() {}, emit: (...args) => events.push(args) })
   const context = proxyRefs({ ...setup, $tp: value => value })

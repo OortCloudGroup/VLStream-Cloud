@@ -6,14 +6,16 @@
 .video-square .map-container { min-height: 0; overflow: hidden; }
 .video-square .map-controls { top: 20px; }
 .video-square :deep(.square-device-panel) { margin: 0; }
-.square-view-switch { display: flex; gap: 4px; align-items: center; margin: 20px 20px 6px; padding: 6px 10px; width: fit-content; border-radius: 4px; background: #f2f6ff; }
-.square-view-switch button { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 30px; border: 0; border-radius: 2px; background: transparent; color: #778da2; cursor: pointer; }
+/* MasterGo 257:28183 — 视图切换：232×42 @20,20，gap20，图标 24×24，激活 #2278FF */
+.square-view-switch { display: flex; gap: 20px; align-items: center; margin: 20px 20px 20px; padding: 9px 16px; width: fit-content; border-radius: 4px; background: #f2f7ff; }
+.square-view-switch button { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding:0; border: 0; border-radius: 2px; background: transparent; color: #778da2; cursor: pointer; }
+.square-view-icon { display:block; width:24px; height:24px; background:currentColor; mask-size:contain; mask-repeat:no-repeat; mask-position:center; }
 .square-view-switch button.active { color: #2278ff; }
 .square-view-switch button:focus-visible { outline: 2px solid #2278ff; outline-offset: 2px; }
 .video-square :deep(.map-top-controls) { position: relative; top: auto; padding: 20px; gap: 10px; flex: 0 0 auto; z-index: 3; }
-.video-square :deep(.layout-button-group) { background: #f2f6ff; border: 0; border-radius: 4px; padding: 5px 8px; box-shadow: none; backdrop-filter: none; max-width: 100%; flex-wrap: wrap; justify-content: center; }
-.video-square :deep(.layout-button-group .layout-btn) { min-width: 30px; width: auto; height: 30px; padding: 6px; background: transparent; border: 0; color: #778da2; box-shadow: none; transform: none; }
-.video-square :deep(.layout-button-group .layout-btn.el-button--primary) { color: #2278ff; background: #e3eeff; }
+/* 工具栏几何由 VideoLayoutControls 组件自身按设计稿实现，此处仅保留窄屏换行兜底 */
+.video-square :deep(.layout-button-group) { max-width: 100%; flex-wrap: wrap; justify-content: center; }
+.video-square :deep(.layout-button-group .layout-btn.el-button--primary) { color: #2278ff; background: transparent; }
 .video-square :deep(.layout-button-group .layout-btn.el-button--primary .grid-cell) { background: currentColor; }
 .video-square :deep(.device-stats) { width: 100%; min-height: 0; padding: 0; background: transparent; border: 0; box-shadow: none; backdrop-filter: none; gap: 8px 20px; }
 .video-square :deep(.stat-icon) { width: 20px; height: 20px; }
@@ -29,7 +31,12 @@
 .video-square.is-dark { background: #282c34; }
 .video-square.is-dark :deep(.square-device-panel), .video-square.is-dark :deep(.device-list-header) { background: #282c34; color: #e8f4fd; border-color: #4b5563; }
 .video-square.is-dark :deep(.device-list-title) { color: #e8f4fd; }
-.video-square .square-sharing-entry { display: flex; justify-content: flex-end; padding: 0 20px 10px; }
+@media (min-width: 1800px) {
+  /* Keep the design's centered layout selector; existing totals fit beside it. */
+  .video-square.is-default-video :deep(.map-top-controls) { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  .video-square.is-default-video :deep(.layout-button-group) { grid-column: 2; margin: 0; }
+  .video-square.is-default-video :deep(.device-stats) { grid-column: 3; width: auto; min-width: 0; margin: 0; justify-content: flex-end; gap: 8px 12px; }
+}
 @media (max-width: 700px) {
   /* The global sidebar stays intact; the content owns both scroll axes. */
   .video-square { overflow: auto; overscroll-behavior: contain; }
@@ -41,5 +48,28 @@
   .square-view-switch { margin: 10px 16px 0; }
   .video-square :deep(.map-top-controls) { padding: 12px; }
   .video-square :deep(.layout-button-group) { margin: 0; }
-  .video-square .square-sharing-entry { justify-content: flex-start; padding-inline: 12px; }
 }
+
+/* MasterGo 257:28891 / 309:30754 — 地图/列表与视频展示的区别只有「内容区背景」：背景层（地图或设备表格）
+   铺满整块内容区，画面层仍按原来的流式布局占位，所以工具栏、缩略图行、播放窗口的位置尺寸一动不动；
+   画面层自身透明并让空白处点击穿透给背景，窗口、缩略图、控制栏、PTZ 浮层仍可交互。 */
+.video-square.is-bg-swap .map-container,
+.video-square.is-bg-swap :deep(.square-catalog-table) { position: absolute; inset: 0; z-index: 0; }
+.video-square.is-bg-swap .square-video-stage { position: relative; z-index: 1; background: transparent; }
+.video-square.is-bg-swap :deep(.map-top-controls) { position: relative; z-index: 2; }
+.video-square.is-bg-swap .square-video-stage,
+.video-square.is-bg-swap :deep(.layout-dialog),
+.video-square.is-bg-swap :deep(.layout-dialog-content),
+.video-square.is-bg-swap :deep(.dialog-main-content),
+.video-square.is-bg-swap :deep(.video-player-section),
+.video-square.is-bg-swap :deep(.video-area),
+.video-square.is-bg-swap :deep(.video-grid) { background: transparent; pointer-events: none; }
+.video-square.is-bg-swap :deep(.video-area) { box-shadow: none; }
+.video-square.is-bg-swap :deep(.video-grid > *),
+.video-square.is-bg-swap :deep(.square-thumbnail-strip),
+.video-square.is-bg-swap :deep(.square-thumbnail-strip *),
+.video-square.is-bg-swap :deep(.square-playback-controls),
+.video-square.is-bg-swap :deep(.square-playback-controls *),
+.video-square.is-bg-swap :deep(.square-floating-ptz) { pointer-events: auto; }
+/* 地图/列表下不放「请选择设备播放视频」空态，避免压在背景之上；要加画面用工具栏布局按钮即可 */
+.video-square.is-bg-swap .square-video-stage > .el-empty { display: none; }

@@ -113,11 +113,12 @@ function toggleGroup(id) {
 
 <style scoped>
 .saved-device-address { white-space: normal; overflow-wrap: anywhere; }
+/* MasterGo 257:28228 — 面板列 340 = 20 + 300 + 20，分隔线 #E8E8E8 */
 .square-device-panel {
   position: relative;
   order: -1;
   background: #fff;
-  border-inline-end: 1px solid #e4e7ed;
+  border-inline-end: 1px solid #e8e8e8;
   width: 340px;
   flex: 0 0 340px;
   min-height: 0;
@@ -167,10 +168,13 @@ function toggleGroup(id) {
 .device-action-btn.active {
   background: rgba(24, 144, 255, 0.8);
 }
-.square-filters { padding: 12px 18px; display: grid; gap: 10px; }
+/* MasterGo 309:33869 — 搜索框 r4 + 1px #C6CBD4，占位文字 12px #808695 */
+.square-filters { padding: 12px 20px; display: grid; gap: 10px; }
 .square-filters .el-select { width: 100%; }
+.square-filters :deep(.el-input__wrapper) { border-radius: 4px; box-shadow: 0 0 0 1px #c6cbd4 inset; }
+.square-filters :deep(.el-input__inner::placeholder) { color: #808695; font-size: 12px; }
 .square-location-summary { font-size: 12px; color: var(--el-text-color-secondary); }
-.device-list-items { overflow: auto; flex: 1; padding: 0 16px 16px; }
+.device-list-items { overflow: auto; flex: 1; padding: 0 20px 20px; }
 .tree-group-header { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 14px 6px; color: inherit; background: transparent; border: 0; font-size: 15px; font-weight: 600; cursor: pointer; }
 .square-device-item { text-align: start; width: 100%; padding: 12px 8px; display: grid; gap: 5px; color: inherit; background: transparent; border: 0; border-bottom: 1px solid #eef0f4; border-radius: 0; cursor: pointer; }
 .square-device-item:hover { background: #e3eeff; }

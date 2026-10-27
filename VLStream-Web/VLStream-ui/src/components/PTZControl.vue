@@ -6,7 +6,7 @@
 -->
 
 <template>
-  <div class="ptz-control-panel">
+  <div class="ptz-control-panel" :class="{ 'ptz-control-panel--square': isSquare }">
     <!-- PTZcontrol -->
     <div class="ptz-section">
       <h4 class="section-title ptz-title">PTZ</h4>
@@ -30,29 +30,36 @@
                 <div class="ptz-arrow ptz-arrow-up" role="button" :tabindex="movementEnabled ? 0 : -1" :aria-disabled="!movementEnabled"
                   @click="ptzControl('up')" @pointerdown="startMovement('up', $event)" @pointerup="stopMovement" @pointercancel="stopMovement" @pointerleave="stopMovement"
                   @keydown="startMovement('up', $event)" @keyup="stopMovement">
-                  <img :src="directionUpIcon" :alt="$tp('上')" class="ptz-direction-icon" />
+                  <img :src="isSquare ? ptzArrowIcon : directionUpIcon" :alt="$tp('上')" class="ptz-direction-icon" />
                 </div>
 
                 <!--  -->
                 <div class="ptz-arrow ptz-arrow-right" role="button" :tabindex="movementEnabled ? 0 : -1" :aria-disabled="!movementEnabled"
                   @click="ptzControl('right')" @pointerdown="startMovement('right', $event)" @pointerup="stopMovement" @pointercancel="stopMovement" @pointerleave="stopMovement"
                   @keydown="startMovement('right', $event)" @keyup="stopMovement">
-                  <img :src="directionUpIcon" :alt="$tp('右')" class="ptz-direction-icon ptz-rotate-90" />
+                  <img :src="isSquare ? ptzArrowIcon : directionUpIcon" :alt="$tp('右')" class="ptz-direction-icon ptz-rotate-90" />
                 </div>
 
                 <!--  -->
                 <div class="ptz-arrow ptz-arrow-down" role="button" :tabindex="movementEnabled ? 0 : -1" :aria-disabled="!movementEnabled"
                   @click="ptzControl('down')" @pointerdown="startMovement('down', $event)" @pointerup="stopMovement" @pointercancel="stopMovement" @pointerleave="stopMovement"
                   @keydown="startMovement('down', $event)" @keyup="stopMovement">
-                  <img :src="directionUpIcon" :alt="$tp('下')" class="ptz-direction-icon ptz-rotate-180" />
+                  <img :src="isSquare ? ptzArrowIcon : directionUpIcon" :alt="$tp('下')" class="ptz-direction-icon ptz-rotate-180" />
                 </div>
 
                 <!--  -->
                 <div class="ptz-arrow ptz-arrow-left" role="button" :tabindex="movementEnabled ? 0 : -1" :aria-disabled="!movementEnabled"
                   @click="ptzControl('left')" @pointerdown="startMovement('left', $event)" @pointerup="stopMovement" @pointercancel="stopMovement" @pointerleave="stopMovement"
                   @keydown="startMovement('left', $event)" @keyup="stopMovement">
-                  <img :src="directionUpIcon" :alt="$tp('左')" class="ptz-direction-icon ptz-rotate-270" />
+                  <img :src="isSquare ? ptzArrowIcon : directionUpIcon" :alt="$tp('左')" class="ptz-direction-icon ptz-rotate-270" />
                 </div>
+              </div>
+
+              <div v-if="isSquare" class="ptz-grid" aria-hidden="true">
+                <span class="ptz-grid-line ptz-grid-h ptz-grid-line-1"></span>
+                <span class="ptz-grid-line ptz-grid-h ptz-grid-line-2"></span>
+                <span class="ptz-grid-line ptz-grid-v ptz-grid-line-3"></span>
+                <span class="ptz-grid-line ptz-grid-v ptz-grid-line-4"></span>
               </div>
             </div>
           </div>
@@ -169,7 +176,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue'
+import { computed, defineProps, defineEmits } from 'vue'
 
 // Import PNG
 import focusPlusIcon from '@/assets/调焦+.png'
@@ -189,6 +196,7 @@ import autoWatchIcon from '@/assets/一键守望.png'
 import cameraManagementIcon from '@/assets/摄像机管理后台.png'
 import directionUpIcon from '@/assets/directionUpIcon.png'
 import rotateIcon from '@/assets/rotateIcon.png'
+import ptzArrowIcon from '@/assets/mastergo/video-square/ptz-arrow.svg'
 
 // props
 const props = defineProps({
@@ -199,8 +207,12 @@ const props = defineProps({
   showCameraManagement: {
     type: Boolean,
     default: false
-  }
+  },
+  variant: { type: String, default: 'default' }
 })
+
+// 视频广场浮层使用 MasterGo 设计稿布局
+const isSquare = computed(() => props.variant === 'square')
 
 // emits
 const emit = defineEmits(['ptz-control', 'zoom-control', 'control-action', 'movement-start', 'movement-stop'])
@@ -789,6 +801,299 @@ const stopMovement = () => { if (props.holdControls) emit('movement-stop') }
 .camera-text {
   white-space: nowrap;
   font-size: 12px;
+}
+
+/* 视频广场浮层：MasterGo 设计稿 (309:26907) 像素级布局 */
+.ptz-control-panel--square {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  width: 100%;
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* 摇杆区 240x240 */
+.ptz-control-panel--square .ptz-section {
+  margin: 0 0 4px 0;
+  align-items: center;
+}
+
+.ptz-control-panel--square .ptz-title {
+  display: none;
+}
+
+.ptz-control-panel--square .ptz-wrapper {
+  padding: 0;
+  justify-content: center;
+}
+
+.ptz-control-panel--square .ptz-outer-ring {
+  background: rgba(34, 120, 255, 0.12);
+}
+
+.ptz-control-panel--square .ptz-inner-circle {
+  width: 102px;
+  height: 102px;
+  box-shadow: none;
+}
+
+.ptz-control-panel--square .ptz-center-rotate-icon {
+  width: 38px;
+  height: 38px;
+}
+
+/* 4 个方向按钮 48x48：上(96,10) 下(96,182) 左(10,96) 右(182,96) */
+.ptz-control-panel--square .ptz-arrow,
+.ptz-control-panel--square .ptz-direction-icon {
+  width: 48px;
+  height: 48px;
+}
+
+.ptz-control-panel--square .ptz-arrow {
+  transform: none;
+}
+
+.ptz-control-panel--square .ptz-arrow-up {
+  top: 10px;
+  left: 96px;
+}
+
+.ptz-control-panel--square .ptz-arrow-right {
+  top: 96px;
+  right: auto;
+  left: 182px;
+}
+
+.ptz-control-panel--square .ptz-arrow-down {
+  top: 182px;
+  bottom: auto;
+  left: 96px;
+}
+
+.ptz-control-panel--square .ptz-arrow-left {
+  top: 96px;
+  left: 10px;
+}
+
+/* 摇杆网格线：y=82.5 / y=154.5 横线，x=84 / x=156 竖线 */
+.ptz-control-panel--square .ptz-grid {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ptz-control-panel--square .ptz-grid-line {
+  position: absolute;
+  background: rgba(34, 120, 255, 0.12);
+}
+
+.ptz-control-panel--square .ptz-grid-h {
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+
+.ptz-control-panel--square .ptz-grid-v {
+  top: 0;
+  width: 1px;
+  height: 100%;
+}
+
+.ptz-control-panel--square .ptz-grid-line-1 { top: 82.5px; }
+
+.ptz-control-panel--square .ptz-grid-line-2 { top: 154.5px; }
+
+.ptz-control-panel--square .ptz-grid-line-3 { left: 84px; }
+
+.ptz-control-panel--square .ptz-grid-line-4 { left: 156px; }
+
+/* 光学变倍控制 296x76 */
+.ptz-control-panel--square .zoom-section {
+  width: 100%;
+  margin: 0;
+  align-items: flex-start;
+}
+
+.ptz-control-panel--square .zoom-section .section-title {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #000000;
+}
+
+.ptz-control-panel--square .zoom-wrapper {
+  width: 100%;
+  padding: 0;
+  justify-content: flex-start;
+}
+
+.ptz-control-panel--square .zoom-control-area {
+  width: 100%;
+}
+
+.ptz-control-panel--square .zoom-background-container {
+  position: relative;
+  width: 100%;
+  height: 40px;
+  padding: 0;
+  margin-left: 0;
+  border-radius: 20px;
+  background: rgba(34, 120, 255, 0.12);
+}
+
+.ptz-control-panel--square .zoom-control-bar {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ptz-control-panel--square .zoom-control-btn {
+  position: absolute;
+  top: 8px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* 16x2.4 横杠 / 16x16 加号：24 视口内的 14 单位图形按 16px 呈现 */
+.ptz-control-panel--square .zoom-control-btn svg {
+  width: 27.4286px;
+  height: 27.4286px;
+}
+
+.ptz-control-panel--square .zoom-out { left: 26px; }
+
+.ptz-control-panel--square .zoom-in { left: 248px; }
+
+.ptz-control-panel--square .zoom-indicator {
+  position: absolute;
+  top: 11px;
+  left: 133px;
+  height: 19px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 19px;
+  color: #2278FF;
+}
+
+/* 三张功能小卡 92x137 */
+.ptz-control-panel--square .function-section {
+  width: 100%;
+  margin: 0;
+  gap: 10px;
+}
+
+.ptz-control-panel--square .control-layout {
+  width: 100%;
+  gap: 10px;
+}
+
+.ptz-control-panel--square .focus-control-group,
+.ptz-control-panel--square .zoom-control-group,
+.ptz-control-panel--square .iris-control-group {
+  position: relative;
+  padding: 0;
+  gap: 0;
+  background: #FFFFFF;
+}
+
+.ptz-control-panel--square .focus-control-group::after,
+.ptz-control-panel--square .zoom-control-group::after,
+.ptz-control-panel--square .iris-control-group::after {
+  content: '';
+  position: absolute;
+  top: 68px;
+  left: 22px;
+  width: 48px;
+  height: 1px;
+  background: #F0F2F5;
+}
+
+.ptz-control-panel--square .focus-btn,
+.ptz-control-panel--square .iris-btn,
+.ptz-control-panel--square .zoom-btn {
+  position: absolute;
+  left: 22px;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 0;
+}
+
+.ptz-control-panel--square .focus-control-group > :first-child,
+.ptz-control-panel--square .zoom-control-group > :first-child,
+.ptz-control-panel--square .iris-control-group > :first-child {
+  top: 12px;
+}
+
+.ptz-control-panel--square .focus-control-group > :last-child,
+.ptz-control-panel--square .zoom-control-group > :last-child,
+.ptz-control-panel--square .iris-control-group > :last-child {
+  top: 77px;
+}
+
+/* 八图标卡 & 摄像机管理后台卡 */
+.ptz-control-panel--square .function-grid {
+  width: 100%;
+  margin: 0;
+  gap: 10px;
+}
+
+.ptz-control-panel--square .function-icon {
+  width: 48px;
+  height: 48px;
+}
+
+.ptz-control-panel--square .function-buttons-container {
+  width: 100%;
+  height: 148px;
+  padding: 16px 22px;
+  gap: 20px;
+  justify-content: flex-start;
+  background: #FFFFFF;
+}
+
+.ptz-control-panel--square .function-buttons-container .function-row.four-cols {
+  grid-template-columns: repeat(4, 48px);
+  gap: 20px;
+}
+
+.ptz-control-panel--square .function-buttons-container .function-btn {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+}
+
+.ptz-control-panel--square .camera-management-row {
+  width: 100%;
+  margin: 0;
+}
+
+.ptz-control-panel--square .camera-management {
+  width: 100% !important;
+  height: 53px !important;
+  padding: 0 !important;
+  gap: 8px !important;
+  background: #FFFFFF !important;
+}
+
+.ptz-control-panel--square .camera-text {
+  font-size: 16px;
+  font-weight: 400;
+  color: #333333;
 }
 </style>
 <style scoped>

@@ -96,12 +96,20 @@ onBeforeUnmount(() => { mounted = false; generation++; treeGeneration++; reader.
 </script>
 
 <style scoped>
+/* MasterGo 257:28769 — 区域/分组/标签 等宽页签，高 32，字号 16，激活 #2278FF + 2px 下划线 */
 .square-classification { padding-inline: 20px; flex-shrink: 0; }
-.square-classification :deep(.el-tabs__header) { margin: 0 0 8px; }
-.classification-tree { max-height: 200px; overflow: auto; padding-bottom: 8px; }
+.square-classification :deep(.el-tabs__header) { margin: 0 0 16px; }
+.square-classification :deep(.el-tabs__item) { height: 32px; line-height: 32px; font-size: 16px; color: #3d3d3d; }
+.square-classification :deep(.el-tabs__item.is-active) { color: #2278ff; }
+.square-classification :deep(.el-tabs__nav-wrap::after) { height: 1px; background: #e8e8e8; }
+.square-classification :deep(.el-tabs__active-bar) { height: 2px; background-color: #2278ff; }
+/* MasterGo 257:28614 — 目录树 7 行 × 32px，选中行 rgba(34,120,255,.12) */
+.classification-tree { max-height: 224px; overflow: auto; padding-bottom: 8px; }
+.classification-tree :deep(.el-tree-node__content) { height: 32px; }
+.classification-tree :deep(.el-tree-node.is-current > .el-tree-node__content) { background: rgba(34, 120, 255, 0.12); }
 .classification-node { display: flex; gap: 8px; justify-content: space-between; width: 100%; padding-inline-end: 8px; overflow: hidden; }
-.classification-node > span { overflow: hidden; text-overflow: ellipsis; }
-.classification-node small { color: #999; }
+.classification-node > span { overflow: hidden; text-overflow: ellipsis; font-size: 14px; color: #333333; }
+.classification-node small { font-size: 14px; color: #999999; }
 .classification-error { color: #c33; display: flex; gap: 8px; align-items: center; overflow-wrap: anywhere; }
 .classification-loading { color: #778da2; font-size: 12px; padding-bottom: 8px; }
 </style>

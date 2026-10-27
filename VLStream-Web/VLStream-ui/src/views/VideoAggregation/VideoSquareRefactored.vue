@@ -6,7 +6,7 @@
 -->
 
 <template>
-  <div class="video-square" :class="{ 'is-dark': isDarkMode }">
+  <div class="video-square" :class="{ 'is-dark': isDarkMode, 'is-default-video': viewMode === 'video' && presentationMode === 'default', 'is-bg-swap': viewMode === 'map' || viewMode === 'list' }">
     <VideoSquareSharingPanel v-model="showSharing" :initial-owner-id="sharingOwnerId" :owned-devices="currentDevices" />
     <!-- main need to -->
     <div class="main-content">
@@ -63,10 +63,10 @@
             @toggle-fullscreen="toggleFullscreen"
             @presentation-select="selectPresentation"
           />
-          <div class="square-sharing-entry"><el-button @click="openSharing()">{{ $tp('设备共享') }}</el-button></div>
-
           <!-- main -->
-          <section v-show="viewMode === 'video'" class="square-video-stage">
+          <!-- MasterGo 257:28891 / 309:30754 — 画面层在三种视图下都常驻：地图/列表只是把背景换成地图/表格，
+               工具栏、缩略图行、播放窗口的位置与尺寸与视频展示完全一致，窗口仍可点选 -->
+          <section class="square-video-stage">
             <el-empty v-if="!layoutDialogs.length" :description="$tp('请选择设备播放视频')">
               <el-button type="primary" @click="openVideoDialogs(1)">{{ $tp('添加视频') }}</el-button>
             </el-empty>
@@ -177,96 +177,25 @@
               <nav class="square-view-switch" :aria-label="$tp('视图')">
                 <button v-for="view in squareViews" :key="view.value" :class="{ active: viewMode === view.value }"
                   :title="$tp(view.label)" :aria-label="$tp(view.label)" :aria-pressed="viewMode === view.value" @click="setSquareView(view.value)">
-                  <el-icon :size="22"><component :is="view.icon" /></el-icon>
+                  <span class="square-view-icon" :style="{ maskImage: `url(${view.icon})`, WebkitMaskImage: `url(${view.icon})` }" aria-hidden="true"></span>
                 </button>
               </nav>
             </template>
           </VideoSquareDevicePanel>
     </div>
 
-    <!-- dialog -->
-    <div
-      v-for="dialog in videoDialogs"
-      :key="dialog.id"
-      class="video-dialog-overlay"
-      :style="{ zIndex: 2000 + dialog.id }"
-    >
-      <div
-        class="video-dialog draggable-dialog"
-        :data-video-dialog-id="dialog.id"
-        :style="{
-          left: dialog.position.x + 'px',
-          top: dialog.position.y + 'px',
-          '--video-aspect': dialog.videoAspect || 16 / 9,
-          position: 'fixed',
-          transform: 'none'
-        }"
+    <!-- Map/list previews reuse the video-mode player and transparent controls. -->
+    <div v-for="dialog in videoDialogs" :key="dialog.id" class="video-dialog-overlay" :style="{zIndex:2000 + dialog.id}">
+      <div class="video-dialog square-unified-preview" :data-video-dialog-id="dialog.id"
+        :style="{left:dialog.position.x + 'px', top:dialog.position.y + 'px', width:dialog.previewWidth ? dialog.previewWidth + 'px' : undefined, height:dialog.previewWidth ? (dialog.previewWidth / (dialog.videoAspect || 16 / 9) + 32) + 'px' : undefined, '--video-aspect':dialog.videoAspect || 16 / 9}"
         @mousedown="bringToFront(dialog.id)"
-      >
-        <div
-          class="video-dialog-header draggable-handle"
-          @mousedown="startDrag($event, dialog.id)"
-        >
-          <span class="video-dialog-title"><span data-i18n-ignore>{{ dialog.camera.name }}</span> - {{ $tp('视频播放') }}</span>
-          <div class="dialog-controls">
-            <button class="dialog-control-btn minimize-btn" @click="minimizeDialog(dialog.id)" :title="$tp('最小化')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 13H5v-2h14v2z"/>
-              </svg>
-            </button>
-            <button class="dialog-control-btn close-btn" @click="closeVideoDialog(dialog.id)" :title="$tp('关闭')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div class="video-dialog-content" v-show="!dialog.minimized"
-          @loadedmetadata.capture="updateVideoAspect(dialog, $event)" @resize.capture="updateVideoAspect(dialog, $event)">
-          <div class="video-player">
-            <!--  -->
-            <div class="video-placeholder-player">
-              <VideoSquareDevicePlayer v-if="dialog.camera.deviceData?.catalogSource === 'VIDEO_SQUARE'" :device="dialog.camera.deviceData" />
-              <VlsDevicePlayer v-else-if="dialog.camera.deviceData?.catalogSource === 'VLSTREAM'" :device="dialog.camera.deviceData" />
-              <div
-                v-else-if="dialog.camera.deviceData && dialog.camera.deviceData.streamUrl"
-                :ref="element => setDialogOPlayerContainer(dialog.id, element)"
-                class="oplayer-container"
-              />
-
-              <!--  -->
-              <div v-else class="video-placeholder">
-                <div class="placeholder-content">
-                  <div class="placeholder-icon">📹</div>
-                  <div class="placeholder-text">{{ $tp('暂无视频流') }}</div>
-                  <div class="placeholder-details">
-                    <div>{{ $tp('设备:') }} {{ dialog.camera.name }}</div>
-                    <div>{{ $tp('状态: 在线') }}</div>
-                  </div>
-
-                  <!-- operation item -->
-                  <div class="placeholder-actions">
-                    <button class="action-btn primary" @click="retryWebRTCConnection(dialog.camera)">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-                      </svg> {{ $tp('重试连接') }} </button>
-                    <button class="action-btn secondary" @click="copyStreamUrl(dialog.camera.deviceData?.streamUrl)">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                      </svg> {{ $tp('复制地址') }} </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        @loadedmetadata.capture="updateVideoAspect(dialog, $event)" @resize.capture="updateVideoAspect(dialog, $event)">
+        <VideoLayoutDialog :dialog="{id:dialog.id, cameras:[dialog.camera], layoutCount:1, position:dialog.position, minimized:false}"
+          presentation-mode="grid" embedded :active="viewMode !== 'video'"
+          @remove-device="closeVideoDialog(dialog.id)" />
+        <div class="preview-drag-handle" @mousedown="startDrag($event, dialog.id)" data-i18n-ignore>{{ dialog.camera.name }}</div>
       </div>
     </div>
-
-    <!-- dialog -->
-
-
     <!-- device Set dialog -->
     <el-dialog
       v-model="showSettingsDialog"
@@ -330,7 +259,12 @@ import { translatePhrase as uiText } from '@/i18n'
 
 import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue'
 import {ElMessage} from 'element-plus'
-import {Close, VideoCamera, MapLocation, List} from '@element-plus/icons-vue'
+import {Close} from '@element-plus/icons-vue'
+import videoViewIcon from '@/assets/mastergo/video-square/view-video.svg'
+import mapViewIcon from '@/assets/mastergo/video-square/view-map.svg'
+import listViewIcon from '@/assets/mastergo/video-square/view-list.svg'
+import topologyViewIcon from '@/assets/mastergo/video-square/view-topology.svg'
+import bimViewIcon from '@/assets/mastergo/video-square/view-bim.svg'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -372,25 +306,44 @@ const showDebugInfo = ref(false)
 const isDarkMode = ref(false)
 const isFullscreen = ref(false)
 const layoutMode = ref('2x2')
-const viewMode = ref('map')
+// MasterGo 257:28183 默认态为「视频展示」
+const viewMode = ref('video')
 const showSharing = ref(false)
 const sharingOwnerId = ref('')
 const openSharing = device => {
   sharingOwnerId.value = String(device?.sources?.find(source=>source.protocol==='VLSTREAM')?.rowId || '')
   showSharing.value = true
 }
+// MasterGo 257:28183 — 视图切换 5 项，默认选中「视频展示」
 const squareViews = [
-  { value: 'video', label: '视频', icon: VideoCamera },
-  { value: 'map', label: '地图', icon: MapLocation },
-  { value: 'list', label: '列表', icon: List },
+  { value: 'video', label: '视频展示', icon: videoViewIcon },
+  { value: 'map', label: '地图模式', icon: mapViewIcon },
+  { value: 'list', label: '列表', icon: listViewIcon },
+  { value: 'topology', label: '拓扑视图', icon: topologyViewIcon, placeholder: true },
+  { value: 'bim', label: 'BIM视图', icon: bimViewIcon, placeholder: true },
 ]
 const setSquareView = async value => {
+  const view = squareViews.find(item => item.value === value)
+  if (view?.placeholder) {
+    ElMessage.info(uiText(view.label) + uiText('功能开发中'))
+    return
+  }
   viewMode.value = value
   await nextTick()
   if (value === 'map') mapInstance?.invalidateSize()
 }
 const handleDeviceSelect = device => {
   if (viewMode.value !== 'video') return handleCameraClick(device)
+  if (presentationMode.value === 'bottom' && layoutDialogs.value[0]) {
+    const dialog = layoutDialogs.value[0]
+    const existing = dialog.cameras.findIndex(camera => camera?.id === device.id)
+    if (existing >= 0) { dialog.activeWindowIndex = existing; return }
+    const empty = dialog.cameras.findIndex(camera => !camera)
+    if (empty >= 0) dialog.cameras[empty] = catalogVideoCamera(device)
+    else if (dialog.layoutCount < 25) { dialog.cameras.push(catalogVideoCamera(device)); dialog.layoutCount++ }
+    else ElMessage.warning(uiText('最多支持25个视频窗口，请先关闭一个视频'))
+    return
+  }
   layoutDialogs.value = [{
     id: nextLayoutDialogId.value++, cameras: [catalogVideoCamera(device)], layoutCount: 1,
     position: { x: 0, y: 0 }, minimized: false, zIndex: ++maxLayoutZIndex.value,
@@ -402,9 +355,13 @@ const presentationMode = ref('default')
 const selectPresentation = mode => {
   if (!['default', 'bottom'].includes(mode)) return
   presentationMode.value = mode
+  // 布局/显示模式按钮的作用是「按该方式看视频」，地图/列表下点它必须给出可见结果
   viewMode.value = 'video'
   const dialog = layoutDialogs.value[0]
-  if (dialog) applyVideoPresentation(dialog, mode)
+  if (dialog) {
+    if (presentationMode.value === dialog.presentationMode && mode === 'bottom') return
+    applyVideoPresentation(dialog, mode)
+  }
   else openVideoDialogs(1)
 }
 const selectThumbnail = (dialogId, deviceId) => {
@@ -1090,6 +1047,7 @@ const hideExtendedLayoutDialog = () => {
 
 // Process item
 const handleExtendedLayoutSelect = (count, variant = 'grid') => {
+  // 地图/列表下点布局按钮切到视频展示并按该布局播放
   viewMode.value = 'video'
   // dialog
   showExtendedLayout.value = false
@@ -1256,6 +1214,7 @@ const handleVideoWindowDoubleClick = (dialogId, windowIndex) => {
 // Process
 const handleLayoutSelect = (count) => {
   presentationMode.value = 'grid'
+  // 地图/列表下点布局按钮切到视频展示并按该布局播放
   viewMode.value = 'video'
   console.log('主文件收到布局选择事件，count:', count)
   openVideoDialogs(count)
@@ -1311,15 +1270,19 @@ const enterVideoPlayerFullscreen = async () => {
   // find all dialog
   const videoDialogs = document.querySelectorAll('.video-dialog, .layout-dialog')
 
-  if (videoDialogs.length === 0) {
+  // 地图/列表视图下播放窗口被 v-show 隐藏，全屏隐藏节点会黑屏，改为全屏当前可见的内容区
+  const target = viewMode.value === 'video'
+    ? videoDialogs[0]
+    : document.querySelector('.video-square .map-area') || videoDialogs[0]
+
+  if (!target) {
     ElMessage.error(uiText('未找到视频播放器'))
     return
   }
 
-  const firstDialog = videoDialogs[0]
-  const context = videoFullscreenContext(firstDialog)
+  const context = videoFullscreenContext(target)
   try {
-    await toggleVideoFullscreen(firstDialog)
+    await toggleVideoFullscreen(target)
     handleFullscreenChange()
   } catch (cause) {
     console.warn('视频广场全屏失败',{name:cause?.name,message:cause?.message,...context})
@@ -1404,9 +1367,14 @@ const handleMapSearch = () => {
 
 function fitVideoDialog(dialog, element) {
   if (!element?.isConnected) return
-  const bounds = element.getBoundingClientRect()
-  dialog.position.x = Math.max(16, Math.min(dialog.position.x, window.innerWidth - bounds.width - 16))
-  dialog.position.y = Math.max(16, Math.min(dialog.position.y, window.innerHeight - bounds.height - 16))
+  const area = document.querySelector(viewMode.value === 'map' ? '.video-square .map-container' : '.video-square .map-area')?.getBoundingClientRect()
+  const left = Math.max(0,area?.left || 0), top = Math.max(80,area?.top || 80)
+  const width = Math.min(window.innerWidth - left, area?.width || window.innerWidth)
+  const height = Math.min(window.innerHeight - top, area?.height || window.innerHeight)
+  const ratio = dialog.videoAspect || 16 / 9
+  dialog.previewWidth = Math.max(1,Math.min(480,width - 16,(height - 16) * ratio))
+  dialog.position.x = Math.max(left + 8,Math.min(dialog.position.x,left + width - dialog.previewWidth - 8))
+  dialog.position.y = Math.max(top + 8,Math.min(dialog.position.y,top + height - dialog.previewWidth / ratio - 8))
 }
 
 async function updateVideoAspect(dialog, event) {
@@ -3114,6 +3082,10 @@ body::-webkit-scrollbar {
   overflow: hidden;
 }
 
+.video-dialog-overlay:has(.square-unified-preview) { backdrop-filter:none !important; background:transparent !important; }
+.square-unified-preview { width:min(480px, calc(100vw - 32px), calc((100dvh - 100px) * var(--video-aspect))); aspect-ratio:var(--video-aspect); height:auto; background:transparent; }
+.square-unified-preview > :deep(.layout-dialog-overlay) { height:100%; }
+.preview-drag-handle { position:absolute; inset:auto 8px 6px; width:fit-content; max-width:80%; color:white; background:transparent; text-shadow:0 1px 3px #000; cursor:move; font-size:12px; }
 .video-dialog-header {
   display: flex;
   justify-content: space-between;

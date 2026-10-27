@@ -3,6 +3,7 @@
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
     <div class="table-tools">
       <el-input :model-value="keyword" :placeholder="$tp('搜索设备...')" clearable @update:model-value="$emit('search', $event)" />
+      <el-button @click="$emit('sharing')">{{ $tp('设备共享') }}</el-button>
       <el-dropdown @command="exportRows">
         <el-button :disabled="!devices.length">{{ $tp('导出') }}</el-button>
         <template #dropdown>
@@ -78,7 +79,7 @@ function exportRows(mode) {
 .square-catalog-table :deep(th.el-table__cell) { background: #f7f8fa; color: #606775; font-weight: 400; }
 .square-catalog-table :deep(td.el-table__cell) { padding-block: 16px; }
 .square-catalog-table :deep(.el-tag) { margin-inline-end: 4px; }
-.table-tools { display: flex; justify-content: flex-end; gap: 20px; }
+.table-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 20px; }
 .table-tools .el-input { width: min(340px, 100%); }
 .square-catalog-table .el-pagination { align-self: flex-end; max-width: 100%; overflow-x: auto; flex-shrink: 0; }
 </style>

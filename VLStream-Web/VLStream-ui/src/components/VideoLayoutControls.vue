@@ -9,6 +9,12 @@
   <div class="map-top-controls">
     <!-- controlbutton - in -->
     <div class="layout-button-group">
+      <!-- MasterGo 309:32968 / 309:32903 — 视频徽标 + 分隔线 -->
+      <span class="video-badge" aria-hidden="true">
+        <span class="video-badge-icon"></span>
+        <span class="video-badge-text">{{ $tp('视频') }}</span>
+      </span>
+      <span class="toolbar-divider" aria-hidden="true"></span>
       <template v-if="showPresentation">
         <el-button class="layout-btn presentation-btn" :type="presentationMode === 'default' ? 'primary' : 'default'"
           :title="$tp('默认展示')" :aria-label="$tp('默认展示')" :aria-pressed="presentationMode === 'default'" @click="$emit('presentation-select', 'default')">
@@ -18,7 +24,6 @@
           :title="$tp('底部排列')" :aria-label="$tp('底部排列')" :aria-pressed="presentationMode === 'bottom'" @click="$emit('presentation-select', 'bottom')">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1.5" stroke="currentColor" stroke-width="1.7"/><path d="M3 15h18M8 15v6M15 15v6" stroke="currentColor" stroke-width="1.7"/><path d="M5 5v2m0 3v2m14-7v2m0 3v2" stroke="currentColor" stroke-width="1.5"/></svg>
         </el-button>
-        <span class="presentation-divider" aria-hidden="true"></span>
       </template>
       <el-button
         :type="presentationMode === 'grid' && layoutMode === '1x1' ? 'primary' : 'default'"
@@ -96,8 +101,9 @@
         size="small"
         @click="$emit('custom-layout')"
         :title="$tp('自定义视频播放')"
-        class="layout-btn"
+        class="layout-btn custom-layout-btn"
       > {{ $tp('自定义') }} </el-button>
+      <span class="toolbar-divider" aria-hidden="true"></span>
       <el-button
         size="small"
         @click="$emit('toggle-fullscreen')"
@@ -213,7 +219,31 @@ const handleLayoutSelect = (count) => {
 </script>
 
 <style scoped>
-.presentation-divider { width: 1px; height: 22px; margin: auto 5px; background: #d6deeb; }
+/* MasterGo 309:32968 — 绿色「视频」徽标：高 24、r4、padding 0 8、gap 4、文字 12px 白 */
+.video-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 4px;
+  background: #36D94B;
+  color: #FFFFFF;
+}
+.video-badge-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+  background: currentColor;
+  mask: url('@/assets/mastergo/video-square/view-video.svg') center / contain no-repeat;
+  -webkit-mask: url('@/assets/mastergo/video-square/view-video.svg') center / contain no-repeat;
+}
+.video-badge-text { font-size: 12px; line-height: 18px; }
+
+/* MasterGo 309:32903 — 1×21.5 rgba(0,0,0,.2) 竖分隔线 */
+.toolbar-divider { flex: 0 0 auto; width: 1px; height: 21.5px; background: rgba(0, 0, 0, 0.2); }
+
 /* control - button in , device */
 .map-top-controls {
   position: absolute;
@@ -230,14 +260,17 @@ const handleLayoutSelect = (count) => {
   pointer-events: none;
 }
 
+/* MasterGo 309:30012 — bg #F2F7FF / r4 / padding 9 16 / gap 10 / 无边框阴影 */
 .layout-button-group {
   display: flex;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 8px;
-  padding: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  align-items: center;
+  gap: 10px;
+  background: #F2F7FF;
+  border-radius: 4px;
+  padding: 9px 16px;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
   flex: 0 0 auto;
   margin-inline: auto;
   pointer-events: auto;
@@ -252,30 +285,46 @@ const handleLayoutSelect = (count) => {
   backdrop-filter: blur(8px) !important;
 }
 
+/* MasterGo 303:30018 等 — 布局图标统一 24×24，色值 #718096 */
 .layout-btn {
-  margin: 0 2px;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  min-width: 40px;
-  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: #718096;
+  box-shadow: none;
+  transition: color 0.2s ease;
+  min-width: 24px;
+  width: 24px;
+  height: 24px;
 }
 
-.layout-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+.layout-btn:hover,
+.layout-btn:focus {
+  background: transparent;
+  border-color: transparent;
+  color: #2278FF;
+  box-shadow: none;
+  transform: none;
 }
 
-.layout-btn:first-child {
-  margin-left: 0;
-}
-
+.layout-btn:first-child,
 .layout-btn:last-child {
-  margin-right: 0;
+  margin: 0;
 }
 
 .layout-mode-icon {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+}
+
+/* 文字按钮不套用图标按钮的 24px 固定宽度，避免文字被裁切 */
+.layout-btn.custom-layout-btn {
+  width: auto;
+  min-width: 24px;
+  padding: 0 6px;
+  font-size: 12px;
 }
 
 .vertical-dots {

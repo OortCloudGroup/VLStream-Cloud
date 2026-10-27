@@ -2,7 +2,7 @@
   <section class="square-ptz">
     <el-alert v-if="notice" :title="$tp(notice)" :type="capability.status === 'checking' ? 'info' : 'warning'" :closable="false" />
     <el-button v-if="source?.protocol === 'ONVIF' && visible && !viewOnly" text size="small" @click="retry">{{ $tp('重新检查云台能力') }}</el-button>
-    <PTZControl show-camera-management hold-controls :movement-enabled="canMove" :zoom-enabled="false"
+    <PTZControl show-camera-management hold-controls variant="square" :movement-enabled="canMove" :zoom-enabled="false"
       :supported-actions="source && !viewOnly ? ['camera-management'] : []"
       @movement-start="move" @movement-stop="stop" @control-action="openManagement" />
   </section>

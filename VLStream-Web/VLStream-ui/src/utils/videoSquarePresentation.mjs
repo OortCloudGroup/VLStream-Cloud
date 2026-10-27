@@ -2,7 +2,7 @@ export const VIDEO_PRESENTATIONS = ['default', 'bottom', 'grid']
 
 export function applyVideoPresentation(dialog, mode) {
     if (!VIDEO_PRESENTATIONS.includes(mode)) throw new RangeError('Invalid video presentation')
-    if (mode !== 'grid' && dialog.layoutCount > 1) {
+    if (mode === 'default' && dialog.layoutCount > 1) {
         const selected = dialog.cameras[dialog.activeWindowIndex || 0] || dialog.cameras.find(Boolean) || null
         dialog.cameras = [selected]
         dialog.layoutCount = 1
