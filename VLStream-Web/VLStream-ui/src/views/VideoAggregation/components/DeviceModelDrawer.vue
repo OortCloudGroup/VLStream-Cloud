@@ -21,6 +21,7 @@
           <el-input v-model="keyword" :placeholder="$tp('搜索模型或算法名称')" :prefix-icon="Search" clearable
             :disabled="submitting" @input="scheduleSearch" @keyup.enter="searchNow" />
           <span class="target-device">{{ $tp('下发至') }} {{ device?.deviceName || device?.deviceId }} · OM</span>
+          <el-button link :disabled="submitting" @click="restoreLatestDeployment">{{ $tp('恢复最近下发') }}</el-button>
         </div>
       </div>
       <div class="category-tabs" role="tablist" :aria-label="$tp('模型分类')">
@@ -70,6 +71,7 @@
             </div>
             <span class="selected-version">{{ model.version == null ? $tp('未标版本') : `V${model.version}` }} · OM</span>
             <p v-if="results[model.id]" class="submission-result" :class="results[model.id].state">{{ results[model.id].message }}</p>
+            <el-button v-if="results[model.id]?.operationId" link type="primary" @click="openDeploymentResult(model)">{{ $tp('查看部署结果') }}</el-button>
           </div>
           <p v-if="hasResults" class="result-note">{{ $tp('任务提交后由设备下载并部署，最终结果以设备回执为准。结果未确认的项目请先核实下发任务，避免重复提交。') }}</p>
         </aside>
@@ -83,7 +85,7 @@
             :disabled="submitting || loading" layout="total, prev, pager, next" background @current-change="loadModels" />
         </div>
         <div class="drawer-footer">
-          <span>{{ submitting ? $tp('正在提交 {value0} / {value1}', { value0: submittedIndex, value1: batchSize }) : $tp('已选择 {value0} 个模型', { value0: selected.length }) }}</span>
+          <span>{{ $tp('每次选择一个模型，确认后切换当前推理模型及类别；不修改独立的运行参数。') }}</span>
           <div class="drawer-footer-actions">
             <el-button :disabled="submitting" @click="closeDrawer()">{{ hasResults ? $tp('关闭') : $tp('取消') }}</el-button>
             <el-button type="primary" :loading="submitting" :disabled="!pendingModels.length || !device?.online" @click="submitSelection">{{ $tp('确定') }}{{ pendingModels.length ? ` (${pendingModels.length})` : '' }}</el-button>
@@ -92,6 +94,7 @@
       </div>
     </template>
   </el-drawer>
+  <ModelDeploymentDialog v-model="deploymentVisible" :devices="device ? [device] : []" :model="deploymentModel" :existing-operation-id="deploymentOperationId" @busy="submitting = $event; emit('busy', $event)" @submitted="deploymentSubmitted" />
 </template>
 
 <script setup>
@@ -100,9 +103,11 @@ import { translatePhrase as uiText } from '@/i18n'
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Check, Close, Picture, Search } from '@element-plus/icons-vue'
-import { getDeviceModelCandidates, dispatchSelectedModel } from '@/api/deviceModelCatalog'
+import { getDeviceModelCandidates } from '@/api/deviceModelCatalog'
+import { getRecentModelBatches } from '@/api/modelDispatchBatch'
 import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 import ModelHubCatalog from './ModelHubCatalog.vue'
+import ModelDeploymentDialog from '@/views/DecisionAI/components/ModelDeploymentDialog.vue'
 
 const props = defineProps({ modelValue: Boolean, device: { type: Object, default: null } })
 const emit = defineEmits(['update:modelValue', 'busy', 'submitted'])
@@ -127,18 +132,18 @@ const loadError = ref('')
 const selected = ref([])
 const results = ref({})
 const submitting = ref(false)
-const submittedIndex = ref(0)
-const batchSize = ref(0)
+const deploymentVisible = ref(false), deploymentModel = ref(null), deploymentOperationId = ref('')
 const hasResults = computed(() => Object.keys(results.value).length > 0)
 const pendingModels = computed(() => selected.value.filter(model => !results.value[model.id]))
 const isSelected = id => selected.value.some(model => model.id === id)
 let searchTimer
 let requestSequence = 0
 let session = 0
+let identityTimer, drawerIdentity
 
 function toggleModel(model) {
   if (submitting.value || !model.deployable || results.value[model.id]) return
-  selected.value = isSelected(model.id) ? selected.value.filter(item => item.id !== model.id) : [...selected.value, model]
+  selected.value = isSelected(model.id) ? [] : [model]
 }
 
 async function loadModels() {
@@ -175,41 +180,32 @@ function closeDrawer(done) {
   emit('update:modelValue', false)
 }
 
-async function submitSelection() {
-  if (submitting.value || !props.device?.online || !pendingModels.value.length) return
-  const targetDevice = props.device.deviceId
-  const currentSession = session
-  const identity = captureComputeIdentity()
-  const batch = [...pendingModels.value]
-  batchSize.value = batch.length
-  submittedIndex.value = 0
-  submitting.value = true
-  emit('busy', true)
-  let submitted = 0
+function submitSelection() {
+  try { drawerIdentity?.assertCurrent() } catch { onDeviceModelIdentityChanged(); return }
+  if (!props.device?.online || pendingModels.value.length !== 1) return
+  deploymentModel.value = { ...pendingModels.value[0] }
+  deploymentOperationId.value = ''
+  deploymentVisible.value = true
+}
+function deploymentSubmitted(batch) {
+  if (deploymentModel.value) results.value[deploymentModel.value.id] = { state: 'pending', message: uiText('批次已建立，请查看设备部署结果'), operationId: batch.operationId }
+  emit('submitted')
+}
+function openDeploymentResult(model) {
+  deploymentModel.value = model
+  deploymentOperationId.value = results.value[model.id].operationId
+  deploymentVisible.value = true
+}
+async function restoreLatestDeployment() {
+  try { drawerIdentity?.assertCurrent() } catch { onDeviceModelIdentityChanged(); return }
+  const version = session
   try {
-    for (const model of batch) {
-      if (currentSession !== session) break
-      submittedIndex.value++
-      results.value[model.id] = { state: 'pending', message: '正在提交…' }
-      try {
-        identity.assertCurrent()
-        const response = await dispatchSelectedModel(model.id, targetDevice)
-        if (currentSession !== session) break
-        identity.assertCurrent()
-        if (response?.code !== 200 || !response?.data) throw new Error(response?.msg || '未收到下发任务编号')
-        results.value[model.id] = { state: 'success', message: '任务已提交，等待设备部署', requestId: response.data }
-        submitted++
-      } catch (error) {
-        if (currentSession !== session) break
-        try { identity.assertCurrent() } catch { onDeviceModelIdentityChanged(); break }
-        if (error?.code === 'COMPUTE_IDENTITY_CHANGED') { onDeviceModelIdentityChanged(); break }
-        results.value[model.id] = { state: 'uncertain', message: error?.response?.data?.msg || error?.message || '提交结果未确认，请核实任务' }
-      }
-    }
-    if (submitted && currentSession === session) { ElMessage.success(uiText('已提交 {value0} 个模型下发任务', { value0: submitted })); emit('submitted') }
-  } finally {
-    if (currentSession === session) { submitting.value = false; emit('busy', false) }
-  }
+    const response = await getRecentModelBatches()
+    if (version !== session || !props.modelValue) return
+    const batch = (response?.data || []).find(item => item.items?.some(target => target.deviceId === props.device?.deviceId))
+    if (!batch) { ElMessage.info(uiText('最近10个批次中没有该设备的下发记录')); return }
+    deploymentModel.value = null; deploymentOperationId.value = batch.operationId; deploymentVisible.value = true
+  } catch (ex) { if (version === session) ElMessage.error(uiText('读取下发记录失败，请核对当前身份和权限')) }
 }
 
 function onDeviceModelIdentityChanged() {
@@ -218,24 +214,28 @@ function onDeviceModelIdentityChanged() {
   clearTimeout(searchTimer)
   models.value = []; selected.value = []; results.value = {}
   total.value = 0; sourceTotal.value = null; hubTotal.value = null
-  submittedIndex.value = 0; batchSize.value = 0; submitting.value = false; loading.value = false
+  deploymentVisible.value = false; deploymentModel.value = null; deploymentOperationId.value = ''; submitting.value = false; loading.value = false
   keyword.value = ''; category.value = ''; page.value = 1; source.value = 'local'
   loadError.value = props.modelValue ? '登录身份已变化，请刷新模型列表并重新选择；已发送的任务请在原账号下核实' : ''
   emit('busy', false)
+  emit('update:modelValue', false)
 }
 
-watch(() => props.modelValue, visible => {
+watch([() => props.modelValue, () => props.device?.deviceId], ([visible]) => {
   session++
   requestSequence++
-  clearTimeout(searchTimer)
+  clearTimeout(searchTimer); clearInterval(identityTimer)
+  deploymentVisible.value = false
   if (visible) {
     keyword.value = ''; category.value = ''; page.value = 1; selected.value = []; results.value = {}; sourceTotal.value = null
+    drawerIdentity = captureComputeIdentity()
+    identityTimer = setInterval(() => { try { drawerIdentity.assertCurrent() } catch { clearInterval(identityTimer); onDeviceModelIdentityChanged() } }, 500)
     loadModels()
   }
 })
 onMounted(() => { window.addEventListener('modelHubAuthChanged', onDeviceModelIdentityChanged) })
 onBeforeUnmount(() => {
-  session++; requestSequence++; clearTimeout(searchTimer)
+  session++; requestSequence++; clearTimeout(searchTimer); clearInterval(identityTimer)
   window.removeEventListener('modelHubAuthChanged', onDeviceModelIdentityChanged)
 })
 </script>

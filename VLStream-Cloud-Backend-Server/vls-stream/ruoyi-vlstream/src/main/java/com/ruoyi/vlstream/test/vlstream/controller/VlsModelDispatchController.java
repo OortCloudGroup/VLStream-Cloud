@@ -47,6 +47,33 @@ import java.util.List;
 public class VlsModelDispatchController extends BladeController {
 
     @Resource
+    private com.ruoyi.vlstream.test.vlstream.service.ModelDispatchBatchService batches;
+
+    @PostMapping("/batches")
+    @com.ruoyi.common.annotation.Log(title = "模型批量部署", businessType = com.ruoyi.common.enums.BusinessType.INSERT)
+    public R<com.ruoyi.vlstream.test.vlstream.service.ModelDispatchBatchService.View> submitBatch(
+        @org.springframework.web.bind.annotation.RequestBody com.ruoyi.vlstream.test.vlstream.service.ModelDispatchBatchService.Submit request) {
+        return R.data(batches.submit(request));
+    }
+
+    @GetMapping("/batches")
+    public R<List<com.ruoyi.vlstream.test.vlstream.service.ModelDispatchBatchService.View>> recentBatches() {
+        return R.data(batches.recent());
+    }
+
+    @GetMapping("/batches/{operationId}")
+    public R<com.ruoyi.vlstream.test.vlstream.service.ModelDispatchBatchService.View> batch(@PathVariable String operationId) {
+        return R.data(batches.get(operationId));
+    }
+
+    @PostMapping("/batches/{operationId}/retry")
+    @com.ruoyi.common.annotation.Log(title = "模型批量部署失败重试", businessType = com.ruoyi.common.enums.BusinessType.UPDATE)
+    public R<com.ruoyi.vlstream.test.vlstream.service.ModelDispatchBatchService.View> retryBatch(@PathVariable String operationId,
+        @org.springframework.web.bind.annotation.RequestBody com.ruoyi.vlstream.test.vlstream.service.ModelDispatchBatchService.Retry request) {
+        return R.data(batches.retry(operationId, request));
+    }
+
+    @Resource
     private VlsAlgorithmModelMapper modelMapper;
 
     @Resource
@@ -136,7 +163,7 @@ public class VlsModelDispatchController extends BladeController {
 			taskService.markDownloadCompleted(requestId);
 		} catch (Exception ex) {
 			log.error("Hardware model download failed: requestId={}", requestId, ex);
-			taskService.markFailed(requestId, "Download failed: " + ex.getMessage());
+			taskService.markUncertain(requestId, "Model download transport interrupted; awaiting device result");
 			if (!response.isCommitted()) {
 				writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Model download failed");
 			}

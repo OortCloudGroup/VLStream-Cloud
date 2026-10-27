@@ -70,6 +70,13 @@ class ModelDispatchServiceTest {
 		setField(service, "mqttService", mqttService);
 		setField(service, "signatureService", signatureService);
 		setField(service, "dispatchProperties", properties);
+        ModelDispatchAccess access = mock(ModelDispatchAccess.class);
+        when(access.tenant()).thenReturn("000000");
+        when(access.requireDevice(any(), any(), org.mockito.ArgumentMatchers.anyBoolean())).thenAnswer(call -> wvpDevice(101L, call.getArgument(0)));
+        setField(service, "dispatchAccess", access);
+        ModelDispatchLocks locks = mock(ModelDispatchLocks.class);
+        when(locks.run(any(), any())).thenAnswer(call -> ((java.util.function.Supplier<?>) call.getArgument(1)).get());
+        setField(service, "dispatchLocks", locks);
 
 		when(artifactService.normalizeType("om")).thenReturn("om");
 	}
@@ -169,6 +176,7 @@ class ModelDispatchServiceTest {
 		device.setId(id);
 		device.setDeviceId(deviceId);
 		device.setDeviceName(deviceId);
+        device.setTenantId("000000");
 		return device;
 	}
 
@@ -226,6 +234,72 @@ class ModelDispatchServiceTest {
 		assertEquals("model.om", ModelDispatchService.deploymentFileName("...", "om", null));
 		org.junit.jupiter.api.Assertions.assertTrue(ModelDispatchService.deploymentFileName(repeat("模",100), "om", null).getBytes(java.nio.charset.StandardCharsets.UTF_8).length <= 223);
 	}
+
+    private ModelDispatchService.DeploymentSnapshot lockedSnapshot() throws Exception {
+        ModelDispatchService.DeploymentSnapshot snapshot = new ModelDispatchService.DeploymentSnapshot();
+        snapshot.setTenantId("000000"); snapshot.setAlgorithmId(1L); snapshot.setTrainingId(10L);
+        snapshot.setModelType("om"); snapshot.setRemotePath("fixture/model.om"); snapshot.setFileName("指定版本.om");
+        snapshot.setTrainType("detect");
+        snapshot.setFileSize(10L); snapshot.setSha256(repeat("a", 64)); snapshot.setClassFileName("data.yaml");
+        snapshot.setClassContent("names: [person]\n"); snapshot.setClassFileSize(16L); snapshot.setClassSha256(repeat("b", 64));
+        properties.setSigningSecret("fixture-secret");
+        when(artifactService.inspect("fixture/model.om")).thenReturn(new RemoteModelArtifactService.ArtifactMetadata("model.om", 10L, repeat("a", 64)));
+        when(signatureService.sign(any(), anyLong())).thenReturn("fixture-signature");
+        return snapshot;
+    }
+    @Test void snapshotDispatchReusesExactTaskIdBytesAndClasses() throws Exception {
+        ModelDispatchService.DeploymentSnapshot snapshot = lockedSnapshot();
+        assertEquals("fixed-request", service.dispatchSnapshot(snapshot, "CAM-A", "fixed-request"));
+        verifyNoMoreInteractions(trainingService, classFileService);
+        org.mockito.ArgumentCaptor<ModelDispatchTask> captor = org.mockito.ArgumentCaptor.forClass(ModelDispatchTask.class);
+        verify(taskService).create(captor.capture());
+        assertEquals("fixed-request", captor.getValue().getRequestId());
+        assertEquals("000000", captor.getValue().getTenantId());
+        assertEquals("指定版本.om", captor.getValue().getFileName());
+        assertEquals(snapshot.getClassSha256(), captor.getValue().getClassFileSha256());
+        verify(taskService).requireNoActiveTask("CAM-A");
+    }
+    @Test void changedSnapshotBytesNeverPublish() throws Exception {
+        ModelDispatchService.DeploymentSnapshot snapshot = lockedSnapshot();
+        when(artifactService.inspect(snapshot.getRemotePath())).thenReturn(new RemoteModelArtifactService.ArtifactMetadata("model.om", 11L, repeat("c", 64)));
+        assertThrows(ServiceException.class, () -> service.dispatchSnapshot(snapshot, "CAM-A", "fixed-request"));
+        org.mockito.Mockito.verifyNoInteractions(mqttService);
+        verify(taskService, org.mockito.Mockito.never()).create(any());
+    }
+    @Test void activeDeviceAndRevokedPermissionNeverPublish() throws Exception {
+        ModelDispatchService.DeploymentSnapshot snapshot = lockedSnapshot();
+        org.mockito.Mockito.doThrow(new ServiceException("进行中的任务")).when(taskService).requireNoActiveTask("CAM-A");
+        assertThrows(ServiceException.class, () -> service.dispatchSnapshot(snapshot, "CAM-A", "fixed-request"));
+        verify(taskService, org.mockito.Mockito.never()).create(any());
+        org.mockito.Mockito.verifyNoInteractions(mqttService);
+        Field field = service.getClass().getDeclaredField("dispatchAccess"); field.setAccessible(true);
+        ModelDispatchAccess access = (ModelDispatchAccess)field.get(service);
+        org.mockito.Mockito.doThrow(new ServiceException("权限撤销")).when(access).requireDevice("CAM-B", "om", true);
+        assertThrows(ServiceException.class, () -> service.dispatchSnapshot(snapshot, "CAM-B", "other-request"));
+        org.mockito.Mockito.verifyNoInteractions(mqttService);
+    }
+    @Test void mqttExceptionKeepsDurableTaskUncertainRatherThanRetryableFailure() throws Exception {
+        ModelDispatchService.DeploymentSnapshot snapshot = lockedSnapshot();
+        org.mockito.Mockito.doThrow(new RuntimeException("timeout")).when(mqttService).publish(any(), any());
+        assertThrows(RuntimeException.class, () -> service.dispatchSnapshot(snapshot, "CAM-A", "fixed-request"));
+        verify(taskService).create(any()); verify(taskService).markUncertain(eq("fixed-request"), any());
+        verify(taskService, org.mockito.Mockito.never()).markFailed(any(), any());
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"detect", "classify", "segment", "unknown"})
+    void batchPreparationChecksFrozenTrainingType(String type) throws Exception {
+        properties.setSigningSecret("fixture-secret");
+        AlgorithmTraining training = new AlgorithmTraining(); training.setId(10L); training.setAlgorithmId(1L); training.setTenantId("000000");
+        training.setConfigParams("{\"trainType\":\"" + type + "\"}");
+        when(trainingService.list(any())).thenReturn(Collections.singletonList(training));
+        when(artifactService.resolvePath(training, "om")).thenReturn("fixture/model.om");
+        when(artifactService.inspect("fixture/model.om")).thenReturn(new RemoteModelArtifactService.ArtifactMetadata("model.om", 10L, repeat("a",64)));
+        if ("detect".equals(type)) {
+            ModelDispatchService.DeploymentSnapshot snapshot = service.prepare(1L, null, "om");
+            assertEquals("detect", snapshot.getTrainType()); assertEquals(10L, snapshot.getTrainingId()); assertEquals(repeat("b",64), snapshot.getClassSha256());
+        } else assertThrows(ServiceException.class, () -> service.prepare(1L, null, "om"));
+        org.mockito.Mockito.verifyNoInteractions(mqttService);
+    }
 
 	private String repeat(String value, int count) {
 		StringBuilder builder = new StringBuilder();

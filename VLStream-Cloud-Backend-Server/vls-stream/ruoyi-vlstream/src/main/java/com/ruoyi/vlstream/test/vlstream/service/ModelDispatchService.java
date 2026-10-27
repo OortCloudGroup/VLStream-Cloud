@@ -54,6 +54,8 @@ public class ModelDispatchService {
         if (StringUtils.isBlank(model.getModelPath()) || StringUtils.isBlank(model.getOmModelOutputPath())) {
             throw new ServiceException("该模型尚无可下发的 OM 产物或原始 PT 信息");
         }
+        if (!dispatchAccess.tenant().equals(model.getTenantId())) throw new ServiceException("模型不存在或无权访问");
+        if (publicAccess != null) publicAccess.training(model.getTrainingId());
         DeviceInfo device = wvpDeviceResolver.resolveOnline(deviceId);
         validateConfiguration();
         AlgorithmTraining snapshot = new AlgorithmTraining();
@@ -93,6 +95,108 @@ public class ModelDispatchService {
 
 	@Resource
 	private VlsModelDispatchProperties dispatchProperties;
+
+    @Resource
+    private ModelDispatchAccess dispatchAccess;
+    @Resource
+    private ModelDispatchLocks dispatchLocks;
+
+    /** Immutable artifact selection shared by all batch devices and every explicit retry. */
+    @lombok.Data
+    public static class DeploymentSnapshot {
+        private Long algorithmId;
+        private Long trainingId;
+        private Long modelId;
+        private String tenantId;
+        private String modelType;
+        private String trainType;
+        private String remotePath;
+        private String fileName;
+        private Long fileSize;
+        private String sha256;
+        private String classFileName;
+        private String classContent;
+        private Long classFileSize;
+        private String classSha256;
+    }
+
+    public DeploymentSnapshot prepare(Long algorithmId, Long modelId, String type) {
+        validateConfiguration();
+        String normalized;
+        try { normalized = artifactService.normalizeType(type); }
+        catch (IllegalArgumentException ex) { throw new ServiceException("不支持的模型格式"); }
+        AlgorithmTraining training;
+        String path;
+        String fileName = null;
+        if (modelId != null) {
+            AlgorithmModel model = modelService.getById(modelId);
+            if (model == null || model.getTrainingId() == null || model.getAlgorithmId() == null
+                || !dispatchAccess.tenant().equals(model.getTenantId())) throw new ServiceException("模型不存在或无权访问");
+            if (!"om".equals(normalized) || StringUtils.isAnyBlank(model.getModelPath(), model.getOmModelOutputPath())) {
+                throw new ServiceException("自主训练模型必须具备原始 PT 和 OM 产物");
+            }
+            if (publicAccess != null) publicAccess.training(model.getTrainingId());
+            training = new AlgorithmTraining();
+            training.setId(model.getTrainingId()); training.setAlgorithmId(model.getAlgorithmId());
+            training.setTenantId(model.getTenantId()); training.setModelOutputPath(model.getModelPath());
+            training.setOmModelOutputPath(model.getOmModelOutputPath());
+            AlgorithmTraining source = trainingService.getById(model.getTrainingId());
+            if (source == null || !dispatchAccess.tenant().equals(source.getTenantId())) throw new ServiceException("模型训练来源不存在或无权访问");
+            training.setConfigParams(source.getConfigParams());
+            try { path = artifactService.resolvePath(training, normalized); }
+            catch (java.io.FileNotFoundException ex) { throw new ServiceException("所选模型产物不存在"); }
+            fileName = deploymentFileName(model.getModelName(), normalized, "model.om");
+        } else {
+            PreparedArtifact artifact = prepareLatestArtifact(algorithmId, normalized);
+            training = artifact.training; path = artifact.remotePath;
+        }
+        if (!dispatchAccess.tenant().equals(training.getTenantId())) throw new ServiceException("训练产物不属于当前租户");
+        String trainType;
+        try { trainType = cn.hutool.json.JSONUtil.parseObj(training.getConfigParams()).getStr("trainType"); }
+        catch (RuntimeException ex) { throw new ServiceException("训练类型未确认，不能批量部署"); }
+        if (!"detect".equals(trainType)) throw new ServiceException("当前设备部署入口仅支持已确认的 detect 目标检测训练，请先核实训练类型和设备后处理");
+        try {
+            RemoteModelArtifactService.ArtifactMetadata metadata = artifactService.inspect(path);
+            ModelClassFileService.ClassFile classes = classFileService.prepare(training);
+            DeploymentSnapshot snapshot = new DeploymentSnapshot();
+            snapshot.setAlgorithmId(training.getAlgorithmId()); snapshot.setTrainingId(training.getId());
+            snapshot.setModelId(modelId); snapshot.setTenantId(training.getTenantId());
+            snapshot.setTrainType(trainType);
+            snapshot.setModelType(normalized); snapshot.setRemotePath(path);
+            snapshot.setFileName(fileName == null ? metadata.getFileName() : fileName);
+            snapshot.setFileSize(metadata.getFileSize()); snapshot.setSha256(metadata.getSha256());
+            snapshot.setClassFileName(classes.getFileName()); snapshot.setClassContent(classes.getContent());
+            snapshot.setClassFileSize(classes.getFileSize()); snapshot.setClassSha256(classes.getSha256());
+            return snapshot;
+        } catch (Exception ex) { throw new ServiceException("模型或类别文件不可用：" + rootMessage(ex)); }
+    }
+
+    public String dispatchSnapshot(DeploymentSnapshot snapshot, String deviceId, String requestId) {
+        if (!dispatchAccess.tenant().equals(snapshot.getTenantId())) throw new ServiceException("无权访问该批次产物");
+        if (!"detect".equals(snapshot.getTrainType())) throw new ServiceException("该批次的训练类型不兼容当前板端部署");
+        if (snapshot.getModelId() != null) {
+            AlgorithmModel current = modelService.getById(snapshot.getModelId());
+            if (current == null || !dispatchAccess.tenant().equals(current.getTenantId())) throw new ServiceException("锁定模型已删除或无权访问，不能重试");
+        }
+        if (publicAccess != null) publicAccess.training(snapshot.getTrainingId());
+        return dispatchLocks.run("device:" + snapshot.getTenantId() + ":" + deviceId, () -> {
+            DeviceInfo device = dispatchAccess.requireDevice(deviceId, snapshot.getModelType(), true);
+            taskService.requireNoActiveTask(deviceId);
+            // A retry never silently selects a newer training or mutable file.
+            try {
+                RemoteModelArtifactService.ArtifactMetadata now = artifactService.inspect(snapshot.getRemotePath());
+                if (!snapshot.getSha256().equalsIgnoreCase(now.getSha256()) || !snapshot.getFileSize().equals(now.getFileSize())) {
+                    throw new ServiceException("批次锁定的模型产物已变化，不能安全重试，请重新选择模型");
+                }
+                AlgorithmTraining training = new AlgorithmTraining();
+                training.setId(snapshot.getTrainingId()); training.setTenantId(snapshot.getTenantId());
+                return dispatchToDevice(snapshot.getAlgorithmId(), training, snapshot.getModelType(), snapshot.getRemotePath(),
+                    now, new ModelClassFileService.ClassFile(snapshot.getClassFileName(), snapshot.getClassContent(),
+                        snapshot.getClassFileSize(), snapshot.getClassSha256()), device, snapshot.getFileName(), requestId, true);
+            } catch (RuntimeException ex) { throw ex; }
+            catch (Exception ex) { throw new ServiceException("锁定模型读取失败：" + rootMessage(ex)); }
+        });
+    }
 
 	public boolean dispatch(Long algorithmId, String deviceIds, String modelType) {
 		if (algorithmId == null || StringUtils.isBlank(deviceIds)) {
@@ -149,7 +253,17 @@ public class ModelDispatchService {
 								  RemoteModelArtifactService.ArtifactMetadata metadata,
 								  ModelClassFileService.ClassFile classFile,
 								  DeviceInfo device, String fileName) {
-		String requestId = UUID.randomUUID().toString();
+        return dispatchLocks.run("device:" + dispatchAccess.tenant() + ":" + device.getDeviceId(), () -> {
+            DeviceInfo authorized = dispatchAccess.requireDevice(device.getDeviceId(), modelType, false);
+            taskService.requireNoActiveTask(device.getDeviceId());
+            return dispatchToDevice(algorithmId, training, modelType, remotePath, metadata, classFile,
+                authorized, fileName, UUID.randomUUID().toString(), false);
+        });
+    }
+
+    private String dispatchToDevice(Long algorithmId, AlgorithmTraining training, String modelType,
+        String remotePath, RemoteModelArtifactService.ArtifactMetadata metadata,
+        ModelClassFileService.ClassFile classFile, DeviceInfo device, String fileName, String requestId, boolean uncertainPublish) {
 		String mqttMessageId = UUID.randomUUID().toString();
 		long ttl = dispatchProperties.getDownloadUrlTtlSeconds() == null
 			? 1800L : Math.max(60L, dispatchProperties.getDownloadUrlTtlSeconds());
@@ -159,6 +273,7 @@ public class ModelDispatchService {
 		String topic = VlsMqttProtocol.deviceBusTopic(device.getDeviceId());
 
 		ModelDispatchTask task = new ModelDispatchTask();
+		task.setTenantId(device.getTenantId());
 		task.setRequestId(requestId);
 		task.setMqttMessageId(mqttMessageId);
 		task.setDeviceRowId(device.getId());
@@ -213,7 +328,8 @@ public class ModelDispatchService {
 			taskService.markPublished(requestId, topic);
 			return requestId;
 		} catch (RuntimeException ex) {
-			taskService.markFailed(requestId, ex.getMessage());
+            if (uncertainPublish) taskService.markUncertain(requestId, "MQTT 发布结果未确认，请等待回执并核实设备");
+            else taskService.markUncertain(requestId, "MQTT 发布结果未确认，请核实设备和下发任务");
 			throw ex;
 		}
 	}

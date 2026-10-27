@@ -36,6 +36,10 @@ public class ModelDeployReplyMqttMessageHandler implements VlsMqttMessageHandler
 		String requestId = bizData == null ? null : bizData.getStr("requestId");
 		String deviceId = envelope.getStr("deviceId");
 		String status = bizData == null ? null : bizData.getStr("status");
+        if (reply != null && (reply.getInt("code") == null || reply.getInt("code") != 200
+            || (reply.getInt("errCode") != null && reply.getInt("errCode") != 0))) {
+            status = "FAILED";
+        }
 		String fileSha256 = bizData == null ? null : bizData.getStr("fileSha256");
 		String classFileSha256 = bizData == null ? null : bizData.getStr("classFileSha256");
 		String message = reply == null ? null : reply.getStr("msg");

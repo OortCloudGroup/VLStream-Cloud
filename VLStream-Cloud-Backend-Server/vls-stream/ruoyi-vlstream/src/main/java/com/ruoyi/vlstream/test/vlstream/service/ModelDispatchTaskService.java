@@ -70,6 +70,17 @@ public class ModelDispatchTaskService {
 		updateStatus(requestId, "FAILED", reason, null, null, null, null);
 	}
 
+    public void markUncertain(String requestId, String reason) {
+        updateStatus(requestId, "UNKNOWN", reason, null, null, null, null);
+    }
+
+    public void requireNoActiveTask(String deviceId) {
+        Long count = taskMapper.selectCount(new LambdaQueryWrapper<ModelDispatchTask>()
+            .eq(ModelDispatchTask::getDeviceId, deviceId)
+            .notIn(ModelDispatchTask::getDispatchStatus, "SUCCESS", "FAILED"));
+        if (count != null && count > 0) throw new com.ruoyi.common.exception.ServiceException("设备存在进行中或结果未确认的模型任务，请先核实");
+    }
+
 	public boolean applyHardwareReply(String sourceMsgId, String requestId, String deviceId,
 									 String status, String fileSha256,
 									 String message, String rawPayload) {
@@ -103,9 +114,11 @@ public class ModelDispatchTaskService {
 		if (!canApplyHardwareStatus(task.getDispatchStatus(), normalizedStatus)) {
 			return true;
 		}
+        if ("SUCCESS".equals(task.getDispatchStatus()) || "FAILED".equals(task.getDispatchStatus())) return true;
 		Date now = new Date();
 		LambdaUpdateWrapper<ModelDispatchTask> update = new LambdaUpdateWrapper<ModelDispatchTask>()
 			.eq(ModelDispatchTask::getRequestId, requestId)
+			.eq(ModelDispatchTask::getDispatchStatus, task.getDispatchStatus())
 			.set(ModelDispatchTask::getDispatchStatus, normalizedStatus)
 			.set(ModelDispatchTask::getLastReplyAt, now)
 			.set(ModelDispatchTask::getReplyPayload, StringUtils.abbreviate(rawPayload, 8000))
@@ -136,6 +149,13 @@ public class ModelDispatchTaskService {
 		} else {
 			update.notIn(ModelDispatchTask::getDispatchStatus, "SUCCESS", "FAILED");
 		}
+        if ("PUBLISHED".equals(status) || "UNKNOWN".equals(status)) {
+            update.in(ModelDispatchTask::getDispatchStatus, "CREATED", "PUBLISHED", "UNKNOWN");
+        } else if ("DOWNLOADING".equals(status)) {
+            update.in(ModelDispatchTask::getDispatchStatus, "CREATED", "PUBLISHED", "UNKNOWN", "RECEIVED", "DOWNLOADING");
+        } else if ("DOWNLOADED".equals(status)) {
+            update.in(ModelDispatchTask::getDispatchStatus, "CREATED", "PUBLISHED", "UNKNOWN", "RECEIVED", "DOWNLOADING", "DOWNLOADED");
+        }
 		if (replyPayload != null) {
 			update.set(ModelDispatchTask::getReplyPayload, StringUtils.abbreviate(replyPayload, 8000));
 		}
