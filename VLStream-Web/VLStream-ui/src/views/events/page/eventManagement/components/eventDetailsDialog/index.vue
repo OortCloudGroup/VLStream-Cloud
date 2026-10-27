@@ -63,11 +63,10 @@
           />
         </div>
       </div>
-      <div v-if="eventDetailData.videoUrl" class="detailsBox">
+      <div class="detailsBox">
         <div class="details_row_box">{{ $tp('录制视频') }}</div>
         <div class="d_r_content">
-          <video :src="eventDetailData.videoUrl" controls preload="metadata" style="width: 100%; max-height: 360px;" />
-          <el-button @click="downloadEventVideo(eventDetailData)">{{ $tp('下载') }}</el-button>
+          <EventRecordedVideos :event-id="props.data?.id" :active="dialogVisible" />
         </div>
       </div>
       <div class="detailsBox">
@@ -218,9 +217,9 @@
 </template>
 <script setup lang="ts">
 import { translatePhrase as uiText } from '@/i18n'
-import { downloadEventVideo } from '@/api/eventMedia'
 
 import { ref, computed, watch } from 'vue'
+import EventRecordedVideos from '../EventRecordedVideos.vue'
 import MultiImageUpload from '../multiImageUpload.vue'
 import CommonExpressions from '@/components/commonExpressions.vue'
 import FeedbackRecord from './feedbackRecord.vue'
@@ -302,31 +301,20 @@ const selectContent = (content) => {
 
 const eventDetailData = ref<EventDetailData>({})
 
-const getEventDetail = async() => {
-  const params = {
-    id: props.data.id,
-    accessToken: store.token
-  }
-  const res: any = await eventDetail(params)
-  if (res.code === 200) {
-    eventDetailData.value = res.data
+let detailGeneration = 0
+const currentDetailIdentity = () => `${store.token || ''}:${store.tenantId || store.userInfo?.tenantId || store.userInfo?.tenant_id || ''}:${store.userInfo?.user_id || store.userInfo?.userId || store.userInfo?.id || ''}`
+const isCurrentDetail = (generation, id, identity) => generation === detailGeneration && props.visible && String(props.data?.id) === String(id) && identity === currentDetailIdentity()
+const getEventDetail = async(id = props.data?.id, generation = detailGeneration, identity = currentDetailIdentity()) => {
+  try {
+    const res: any = await eventDetail({ id })
+    if (!isCurrentDetail(generation, id, identity)) return
+    if (res.code === 200 && String(res.data?.id) === String(id)) eventDetailData.value = res.data
+    else ElMessage.error(uiText('加载事件详情失败'))
+  } catch {
+    if (isCurrentDetail(generation, id, identity)) ElMessage.error(uiText('加载事件详情失败'))
   }
 }
 
-// dataInitialize
-watch([() => props.visible, () => props.data], ([newVisible, newData]) => {
-  if (newVisible && newData) {
-    formData.value = initFormData()
-    formData.value.id = newData.id
-    formData.value.point = newData.point
-    eventDetailData.value = {}
-    feedbackListData.value = []
-    activeIndex.value = '1'
-    harvest.value = false
-    getEventDetail()
-    getFeedbackList()
-  }
-}, { immediate: true })
 const initFormData = () => ({
   accessToken: store.token,
   id: undefined,
@@ -411,18 +399,29 @@ const addFeedbackForm = async() => {
 }
 const feedbackListData = ref<FeedbackItem[]>([])
 //
-const getFeedbackList = async() => {
-  const params = {
-    accessToken: store.token,
-    page: 1,
-    pagesize: 9999,
-    task_event_id: formData.value.id
-  }
-  const res: any = await feedbackList(params)
-  if (res.code === 200) {
-    feedbackListData.value = res.data.list
+const getFeedbackList = async(id = props.data?.id, generation = detailGeneration, identity = currentDetailIdentity()) => {
+  try {
+    const res: any = await feedbackList({ page: 1, pagesize: 9999, task_event_id: id })
+    if (isCurrentDetail(generation, id, identity) && res.code === 200) feedbackListData.value = res.data.list
+  } catch {
+    if (isCurrentDetail(generation, id, identity)) ElMessage.error(uiText('加载反馈记录失败'))
   }
 }
+watch([() => props.visible, () => props.data?.id, currentDetailIdentity], ([visible, id]) => {
+  const generation = ++detailGeneration
+  eventDetailData.value = {}
+  feedbackListData.value = []
+  if (!visible || !id) return
+  formData.value = initFormData()
+  formData.value.id = id
+  formData.value.point = props.data?.point
+  activeIndex.value = '1'
+  harvest.value = false
+  codeAct.value = true
+  const identity = currentDetailIdentity()
+  getEventDetail(id, generation, identity)
+  getFeedbackList(id, generation, identity)
+}, { immediate: true, flush: 'sync' })
 </script>
 
 <style scoped lang="scss">

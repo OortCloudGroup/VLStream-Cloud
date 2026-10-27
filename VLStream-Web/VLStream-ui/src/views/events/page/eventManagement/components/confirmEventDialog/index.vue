@@ -54,12 +54,7 @@
             <div>{{ $tp('录制视频') }}</div>
           </div>
           <div class="d_r_content">
-            <div v-if="eventDetailData.videoUrl" class="video-container" @click="openVideoDialog(eventDetailData)">
-            <!-- <oort-video-player :video="{ url: scope.row.videoUrl }" /> -->
-            </div>
-            <div v-else class="no-video">
-              <span>{{ $tp('暂无视频') }}</span>
-            </div>
+            <EventRecordedVideos :event-id="props.data?.id" :active="dialogVisible" />
           </div>
         </div>
         <!-- <div class="detailsBox">
@@ -225,22 +220,14 @@
       <el-button @click="handleClose" class="common_btn"> {{ $tp('取消') }} </el-button>
       <el-button v-if="eventDetailData.status !== 1 && eventDetailData.mod_status === 0" v-preReClick type="primary" :disabled="formLoading" @click="addFeedbackForm" class="common_btn"> {{ $tp('确定') }} </el-button>
     </div>
-    <!-- dialog -->
-    <el-dialog
-      v-model="videoDialogVisible"
-      :title="$tp('视频播放')"
-      width="80%"
-    >
-      <div class="video-dialog-container">
-        <oort-video-player v-if="currentVideoUrl" :video="{ url: currentVideoUrl }" />
-      </div>
-    </el-dialog>
+
   </el-dialog>
 </template>
 <script setup lang="ts">
 import { translatePhrase as uiText } from '@/i18n'
 
 import { ref, computed, watch } from 'vue'
+import EventRecordedVideos from '../EventRecordedVideos.vue'
 import MultiImageUpload from '../multiImageUpload.vue'
 import CommonExpressions from '@/components/commonExpressions.vue'
 import FeedbackRecord from '../eventDetailsDialog/feedbackRecord.vue'
@@ -320,40 +307,22 @@ const selectContent = (content) => {
   formData.value.describe = content
 }
 
-const eventDetailData = ref<EventDetailData>(null)
+const eventDetailData = ref<EventDetailData>({})
 
-const getEventDetail = async() => {
-  const params = {
-    id: props.data.id,
-    accessToken: store.token
-  }
-  const res: any = await eventDetail(params)
-  if (res.code === 200) {
-    eventDetailData.value = res.data
+let detailGeneration = 0
+const currentDetailIdentity = () => `${store.token || ''}:${store.tenantId || store.userInfo?.tenantId || store.userInfo?.tenant_id || ''}:${store.userInfo?.user_id || store.userInfo?.userId || store.userInfo?.id || ''}`
+const isCurrentDetail = (generation, id, identity) => generation === detailGeneration && props.visible && String(props.data?.id) === String(id) && identity === currentDetailIdentity()
+const getEventDetail = async(id = props.data?.id, generation = detailGeneration, identity = currentDetailIdentity()) => {
+  try {
+    const res: any = await eventDetail({ id })
+    if (!isCurrentDetail(generation, id, identity)) return
+    if (res.code === 200 && String(res.data?.id) === String(id)) eventDetailData.value = res.data
+    else ElMessage.error(uiText('加载事件详情失败'))
+  } catch {
+    if (isCurrentDetail(generation, id, identity)) ElMessage.error(uiText('加载事件详情失败'))
   }
 }
 
-const videoDialogVisible = ref(false)
-const currentVideoUrl = ref<string>('')
-const openVideoDialog = (data) => {
-  if (data.videoUrl) {
-    currentVideoUrl.value = data.videoUrl
-    videoDialogVisible.value = true
-  }
-}
-
-// dataInitialize
-watch([() => props.visible, () => props.data], async([newVisible, newData]) => {
-  if (newVisible && newData) {
-    formData.value = initFormData()
-    eventDetailData.value = {}
-    feedbackListData.value = []
-    activeIndex.value = '1'
-    harvest.value = false
-    await getEventDetail()
-    await getFeedbackList()
-  }
-}, { immediate: true })
 const initFormData = () => ({
   id: eventDetailData.value?.id,
   mod_status: null,
@@ -411,21 +380,32 @@ const addFeedbackForm = async() => {
 }
 const feedbackListData = ref<FeedbackItem[]>([])
 //
-const getFeedbackList = async() => {
-  const params = {
-    accessToken: store.token,
-    page: 1,
-    pagesize: 9999,
-    task_event_id: eventDetailData.value?.id
-  }
-  const res: any = await feedbackList(params)
-  if (res.code === 200) {
-    feedbackListData.value = res.data.list
+const getFeedbackList = async(id = props.data?.id, generation = detailGeneration, identity = currentDetailIdentity()) => {
+  try {
+    const res: any = await feedbackList({ page: 1, pagesize: 9999, task_event_id: id })
+    if (isCurrentDetail(generation, id, identity) && res.code === 200) feedbackListData.value = res.data.list
+  } catch {
+    if (isCurrentDetail(generation, id, identity)) ElMessage.error(uiText('加载反馈记录失败'))
   }
 }
 const handleSelect = (_key: string) => {
   activeIndex.value = _key
 }
+watch([() => props.visible, () => props.data?.id, currentDetailIdentity], ([visible, id]) => {
+  const generation = ++detailGeneration
+  eventDetailData.value = {}
+  feedbackListData.value = []
+  if (!visible || !id) return
+  formData.value = initFormData()
+  formData.value.id = id
+  formData.value.point = props.data?.point
+  activeIndex.value = '1'
+  harvest.value = false
+  codeAct.value = true
+  const identity = currentDetailIdentity()
+  getEventDetail(id, generation, identity)
+  getFeedbackList(id, generation, identity)
+}, { immediate: true, flush: 'sync' })
 </script>
 
 <style scoped lang="scss">

@@ -58,11 +58,13 @@
             </div>
             <div class="searchHeight_out flexRowAC">
               <search-height-box keyword="keyword" :placeholder="$tp('搜索')" :data="searchData" @handle="searchResetFn" />
+              <EventColumnSettings v-model="eventColumns" @reset="resetEventColumns" />
               <export-excel-pdf />
             </div>
           </div>
           <el-table
             ref="eventTableRef"
+            :key="columnLayoutKey"
             v-loading="listLoading"
             class="new_table vertically-centered-actions"
             scrollbar-always-on
@@ -81,31 +83,15 @@
                 {{ scope.$index + (page - 1) * pagesize + 1 }}
               </template>
             </el-table-column>
-            <el-table-column prop="completionTime" :label="$tp('事件时间')" min-width="150">
+            <el-table-column v-for="column in visibleEventColumns" :key="column.key"
+              :prop="column.key" :label="$tp(column.label)" :min-width="column.width"
+              :show-overflow-tooltip="!['pics', 'video', 'status'].includes(column.key)">
               <template #default="scope">
-                {{ scope.row.created_at }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="status" :label="$tp('状态')" min-width="120">
-              <template #default="scope">
-                <el-tag :type="getStatusType(scope.row.status)">
+                <el-tag v-if="column.key === 'status'" :type="getStatusType(scope.row.status)">
                   {{ getStatusText(scope.row.status) }}
                 </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="position" :label="$tp('事件位置')" min-width="140" show-overflow-tooltip>
-              <template #default="scope">
-                {{ scope.row.point?.address }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="item" :label="$tp('事件类型')" min-width="130" :show-overflow-tooltip="true" />
-            <el-table-column prop="pics" :label="$tp('抓拍照片')" min-width="120">
-              <template #default="scope">
-                <!-- <div v-if="scope.row.pics.length > 0">
-                  <img :src="scope.row.pics[0]" alt="抓拍照片" class="eventImg" />
-                  <span class="eventImgText">+{{ scope.row.pics.length }}</span>
-                </div> -->
-                <div v-if="scope.row.pics.length > 0">
+                <template v-else-if="column.key === 'pics'">
+                <div v-if="scope.row.pics?.length > 0">
                   <el-image
                     :src="covertCurrentLocationURL(scope.row.pics[0])"
                     :preview-src-list="scope.row.pics.map((pic: any) => covertCurrentLocationURL(pic))"
@@ -114,34 +100,23 @@
                     fit="cover"
                     :preview-teleported="true"
                   />
-                  <span class="eventImgText">+{{ scope.row.pics.length }}</span>
+                  <span class="eventImgText">+{{ scope.row.pics?.length }}</span>
                 </div>
                 <span v-else>{{ $tp('暂无图片') }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="fileUrl" :label="$tp('录制视频')" min-width="130">
-              <template #default="scope">
-                <div v-if="scope.row.videoUrl" class="video-container" role="button" tabindex="0" :aria-label="$tp('播放视频')"
+                </template>
+                <template v-else-if="column.key === 'video'">
+                <div v-if="hasEventVideoReferences(scope.row)" class="video-container" role="button" tabindex="0" :aria-label="$tp('播放视频')"
                   @click.stop="openVideoDialog(scope.row)" @keydown.enter="openVideoDialog(scope.row)" @keydown.space.prevent="openVideoDialog(scope.row)">
                   <span aria-hidden="true">▶</span>
                 </div>
                 <div v-else class="no-video">
                   <span>{{ $tp('暂无视频') }}</span>
                 </div>
+                </template>
+                <template v-else-if="column.key === 'position'">{{ scope.row.point?.address }}</template>
+                <template v-else>{{ scope.row[column.key] }}</template>
               </template>
             </el-table-column>
-            <el-table-column prop="device_name" :label="$tp('设备名称')" min-width="150" :show-overflow-tooltip="true" />
-            <el-table-column prop="device_id" :label="$tp('设备编号')" min-width="190" show-overflow-tooltip />
-            <el-table-column prop="describe" :label="$tp('事件描述')" min-width="160" :show-overflow-tooltip="true" />
-            <el-table-column prop="device_tag" :label="$tp('标签')" min-width="130" :show-overflow-tooltip="true" />
-            <el-table-column v-if="false" prop="status" :label="$tp('告警状态')" :width="clacPXToVW(140)">
-              <template #default="scope">
-                <el-tag :type="getStatusType2(scope.row.mod_status)">
-                  {{ getStatusText2(scope.row.mod_status) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="finish_at" :label="$tp('完成时间')" min-width="150" />
             <el-table-column fixed="right" align="right" :label="$tp('操作')" width="120">
               <template #default="scope">
                 <div class="operateAppBox flexRowAC">
@@ -159,7 +134,7 @@
                       <oort-svg-icon width="14" height="14" name="table_incoming" class="new_table_svg_group_svg" />
                       <span>{{ $tp('反馈') }}</span>
                     </div>
-                    <div class="new_table_svg_group" @click="confirmAlert(scope.row, 'ignore')">
+                    <div class="new_table_svg_group" role="button" tabindex="0" :aria-label="$tp('详情')" :title="$tp('详情')" @click.stop="confirmAlert(scope.row, 'ignore')" @keydown.enter.stop="confirmAlert(scope.row, 'ignore')" @keydown.space.prevent.stop="confirmAlert(scope.row, 'ignore')">
                       <oort-svg-icon
                         width="14"
                         height="14"
@@ -217,10 +192,7 @@
       :title="$tp('视频播放')"
       :before-close="closeVideoDialog"
     >
-      <div class="video-dialog-container">
-        <OortVideoPlayer v-if="currentVideoUrl" :video="{ url: currentVideoUrl }" />
-      </div>
-      <el-button v-if="currentVideoUrl" @click="downloadEventVideo(currentVideo)">{{ $tp('下载') }}</el-button>
+      <EventRecordedVideos :event-id="currentVideo.id" :active="videoDialogVisible" />
     </el-dialog>
     <!-- task -->
     <SchedulingDialog
@@ -233,15 +205,17 @@
 
 <script setup lang="ts">
 import { translatePhrase as uiText } from '@/i18n'
-import { downloadEventVideo } from '@/api/eventMedia'
+import EventRecordedVideos from './components/EventRecordedVideos.vue'
+import { hasEventVideoReferences } from './components/eventVideos.mjs'
 
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed, watch } from 'vue'
+import EventColumnSettings from './components/EventColumnSettings.vue'
+import { normalizeEventColumns } from './components/eventColumns.mjs'
 import { ElMessage, ElMessageBox } from 'element-plus'
 // import { Delete } from '@element-plus/icons-vue'
 import SchedulingDialog from './components/schedulingDialog.vue'
 import ConfirmEventDialog from './components/confirmEventDialog/index.vue'
 import eventDetailsDialog from './components/eventDetailsDialog/index.vue'
-import OortVideoPlayer from '@/components/oortVideoPlayer.vue'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import { getClassificationDeviceIds } from '@/api/device/classification'
 import { delEvent, eventList, event_item_list } from '@/api/smartCity/events'
@@ -255,6 +229,29 @@ import { translatePhrase } from '@/i18n'
 
 const store = useUserStore()
 const getAccessToken = () => store.userInfo?.accessToken || store.token || sessionStorage.getItem('token') || sessionStorage.getItem('accessToken') || localStorage.getItem('apaas_token') || localStorage.getItem('accessToken') || ''
+// Match existing browser-local UI preferences, scoped to the signed-in tenant/user.
+const columnStorageKey = computed(() => `vls:event-columns:v1:${store.tenantId || store.userInfo?.tenantId || store.userInfo?.tenant_id || 'default'}:${store.userInfo?.user_id || store.userInfo?.userId || store.userInfo?.id || 'anonymous'}`)
+const eventColumns = ref(normalizeEventColumns())
+const visibleEventColumns = computed(() => eventColumns.value.filter(column => column.visible))
+const columnLayoutKey = computed(() => visibleEventColumns.value.map(column => column.key).join(','))
+watch(columnStorageKey, key => {
+  try {
+    eventColumns.value = normalizeEventColumns(JSON.parse(localStorage.getItem(key) || 'null'))
+  } catch {
+    eventColumns.value = normalizeEventColumns()
+  }
+}, { immediate: true })
+const resetEventColumns = () => {
+  eventColumns.value = normalizeEventColumns()
+}
+watch(eventColumns, columns => {
+  selectedRows.value = []
+  try {
+    localStorage.setItem(columnStorageKey.value, JSON.stringify(columns.map(({ key, visible }) => ({ key, visible }))))
+  } catch {
+    ElMessage.warning(uiText('列设置无法保存，刷新后将恢复默认'))
+  }
+}, { deep: true })
 const editShow = ref(false)
 const showMoreDelete = ref(false)
 const eventDetailsFBVis = ref(false) // event
@@ -264,7 +261,6 @@ const currentItem = ref<any>(null)
 const eventDetailsVis = ref(false)
 const videoDialogVisible = ref(false)
 const currentVideo = ref<any>({})
-const currentVideoUrl = ref<string>('')
 const selectedRows = ref<any[]>([])
 const eventTableRef = ref()
 const deleting = ref(false)
@@ -487,15 +483,12 @@ const confirmAlert = (data, type = 'confirm') => {
 
 const openVideoDialog = (data) => {
   currentVideo.value = data
-  if (data.videoUrl) {
-    currentVideoUrl.value = data.videoUrl
-    videoDialogVisible.value = true
-  }
+  if (hasEventVideoReferences(data)) videoDialogVisible.value = true
 }
 
 const closeVideoDialog = () => {
   videoDialogVisible.value = false
-  currentVideoUrl.value = ''
+  currentVideo.value = {}
 }
 
 // related
