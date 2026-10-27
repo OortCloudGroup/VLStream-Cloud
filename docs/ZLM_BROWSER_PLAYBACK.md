@@ -56,6 +56,19 @@ RTSP1920×1080和ONVIF704×480，并确认ICE connected、真实解码帧和关�
 公网客户端不能据此假定能访问192.168.*。若需公网播放，应由部署方先确认已存在且批准的媒体公网映射，
 填写其实际可达IP/端口并实播验收；HTTP网关域名可访问不代表其承载了RTC媒体端口。
 
+## VM 独立构建
+
+既有 VM 的独立源码副本继续使用其 `.env.production.local` 保存已确认的 API/SDP 路由和 LAN host，
+改用 `npm run build:vm`。该入口以子进程环境明确清空 `VITE_ZLM_RTC_CAND_TCP/UDP`，
+防止 `.env.production`、`.env.local` 或调用进程的公司集群候选覆盖 VM；不修改这些共用环境文件。
+标准 `npm run build` / `build:prod` / `build:test` 的行为保持，公司的明确候选配置仍有效。
+
+该入口不猜测 VM RTC 映射端口：空候选保留 ZLM 原候选，既有 LAN host 仍只补 IP、保留原端口。
+真实 VM 监听/映射和公网可达性须单独核实，构建通过不等于出画。若该 VM 后续确实需要显式外部候选，
+须先核实目标映射，再单独审核其构建输入；不要将公司集群 NodePort 套入 VM。
+
+构建验证可用 `npm run build:vm -- --outDir <独立输出目录>`，避免覆盖另一会话的 dist。
+
 ## 为什么WVP返回可用URL，ZLM仍返回Pod候选
 
 WVP的 `MediaServerServiceImpl.getStreamInfoByAppAndStream` 已使用所选媒体节点的 `streamIp`、

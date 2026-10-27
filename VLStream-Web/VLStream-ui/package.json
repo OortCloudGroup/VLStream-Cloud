@@ -7,6 +7,7 @@
     "build": "vite build",
     "build:test": "vite build --mode test",
     "build:prod": "vite build --mode production",
+    "build:vm": "node scripts/build-vm.mjs",
     "preview": "vite preview",
     "lint:i18n": "node ../../codex/i18n-normalize-table-labels.mjs && node ../../codex/i18n-catalog-check.mjs && node ../../codex/i18n-shell-coverage-check.mjs",
     "audit:i18n": "node ../../tools/i18n/audit-ui.mjs",

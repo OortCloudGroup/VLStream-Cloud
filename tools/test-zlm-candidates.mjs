@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { tmpdir } from 'node:os'
 import { pathToFileURL, fileURLToPath } from 'node:url'
+import { vmBuildEnvironment } from '../VLStream-Web/VLStream-ui/scripts/build-vm.mjs'
 
 const source = fs.readFileSync(new URL('../VLStream-Web/VLStream-ui/src/utils/zlmPlaybackUrl.js', import.meta.url), 'utf8')
   .replace(/import\.meta\.env\.VITE_ZLM_[A-Z_]+/g, 'undefined')
@@ -78,6 +79,33 @@ try {
   url = new URL(output.resolveZlmPlaybackUrl(sourceUrl))
   assert.equal(url.searchParams.get('cand_tcp'), '192.0.2.30:32742', 'deployment job env must override production.local')
   console.log('Vite production defaults, production.local, test isolation and build-job precedence checks passed')
+
+  // Reproduce a VM snapshot inheriting a cluster-specific production default.
+  // Both file and parent-process candidates must be cleared only for build:vm.
+  fs.writeFileSync(path.join(fixture, '.env.production'),
+    'VITE_ZLM_API_BASE_URL=/cluster-zlm\nVITE_ZLM_RTC_CAND_TCP=192.0.2.10:32742\nVITE_ZLM_RTC_CAND_UDP=192.0.2.10:30017\n')
+  fs.writeFileSync(path.join(fixture, '.env.production.local'),
+    'VITE_ZLM_API_BASE_URL=/bus/zlm-server\nVITE_ZLM_RTC_LAN_HOST=192.0.2.200\n')
+  const clusterEnvironment = { ...process.env, VITE_ZLM_RTC_CAND_UDP: '192.0.2.30:30017' }
+  const vmEnvironment = vmBuildEnvironment(clusterEnvironment)
+  assert.equal(clusterEnvironment.VITE_ZLM_RTC_CAND_TCP, '192.0.2.30:32742')
+  assert.equal(vmEnvironment.VITE_ZLM_API_BASE_URL, clusterEnvironment.VITE_ZLM_API_BASE_URL)
+  for (const key of ['VITE_ZLM_RTC_CAND_TCP', 'VITE_ZLM_RTC_CAND_UDP']) process.env[key] = vmEnvironment[key]
+  output = await compiled('production')
+  url = new URL(output.resolveZlmPlaybackUrl(sourceUrl))
+  assert.equal(url.pathname, '/bus/zlm-server/index/api/webrtc')
+  assert.equal(url.searchParams.has('cand_tcp'), false)
+  assert.equal(url.searchParams.has('cand_udp'), false)
+  const answer = output.addZlmLanCandidate('a=candidate:fixture 1 udp 120 198.51.100.1 8000 typ host\r\n')
+  assert.ok(answer.includes('192.0.2.200 8000 typ host'))
+  assert.ok(answer.includes('198.51.100.1 8000 typ host'))
+  // The normal company production build remains able to use its explicit inputs.
+  for (const key of ['VITE_ZLM_RTC_CAND_TCP', 'VITE_ZLM_RTC_CAND_UDP']) process.env[key] = clusterEnvironment[key]
+  output = await compiled('production')
+  url = new URL(output.resolveZlmPlaybackUrl(sourceUrl))
+  assert.equal(url.searchParams.get('cand_tcp'), '192.0.2.30:32742')
+  assert.equal(url.searchParams.get('cand_udp'), '192.0.2.30:30017')
+  console.log('VM build isolation clears file/process candidates while preserving routes, LAN ports and company production inputs')
 } finally {
   for (const key of keys) {
     if (previous[key] === undefined) delete process.env[key]
