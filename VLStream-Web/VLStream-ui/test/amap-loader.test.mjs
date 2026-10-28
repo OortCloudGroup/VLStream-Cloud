@@ -57,3 +57,22 @@ test('reverse geocoder uses the original SDK and accepts zero coordinates', asyn
   assert.deepEqual(coordinates, [0, 0])
   assert.equal(h.timers.size, 0)
 })
+
+test('WGS84 and BD09 convert once before geocoding, existing GCJ02 callers never convert', async () => {
+  const calls = []
+  const h = fixture(async () => ({
+    convertFrom(value, source, callback) {
+      calls.push(['convert', value, source]); callback('complete', { info: 'ok', locations: [[114.12, 22.55]] })
+    },
+    Geocoder: class { getAddress(value, callback) {
+      calls.push(['address', value]); callback('complete', { info: 'OK', regeocode: { formattedAddress: 'fixture' } })
+    } }
+  }))
+  await h.api.reverseGeocode({ lng: 114.1177, lat: 22.5543, coordinateSystem: 'WGS84' })
+  await h.api.reverseGeocode({ lng: 114.1177, lat: 22.5543, coordinateSystem: 'BD09' })
+  await h.api.reverseGeocode({ lng: 0, lat: 0 })
+  assert.deepEqual(calls.map(item => item[0]), ['convert', 'address', 'convert', 'address', 'address'])
+  assert.equal(calls[0][2], 'gps'); assert.equal(calls[2][2], 'baidu')
+  assert.deepEqual(calls[1][1], [114.12, 22.55]); assert.deepEqual(calls[4][1], [0, 0])
+  assert.equal(h.timers.size, 0)
+})
