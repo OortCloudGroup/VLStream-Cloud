@@ -20,7 +20,7 @@ defineEmits(['select'])
 .square-thumbnail-strip { display: flex; flex: 0 0 auto; min-width: 0; max-width: 100%; gap: 16px; padding: 4px 2px 12px; overflow-x: auto; overscroll-behavior: contain; }
 .square-thumbnail { position: relative; flex: 0 0 clamp(90px, 12vw, 140px); width: clamp(90px, 12vw, 140px); aspect-ratio: 1; overflow: hidden; padding: 0; border: 2px solid transparent; border-radius: 8px; background: #171b22; cursor: pointer; color: #a7b0bd; }
 .square-thumbnail.active { border-color: #026fff; }
-.square-thumbnail:focus-visible { outline: 2px solid #026fff; outline-offset: -4px; }
+.square-thumbnail:hover,.square-thumbnail:focus-visible { outline: 2px solid #f5222d; outline-offset: -2px; }
 .square-thumbnail img { width: 100%; height: 100%; display: block; object-fit: contain; }
 .thumbnail-unavailable { font-size: 12px; }
 .thumbnail-name { position: absolute; inset: auto 0 0; padding: 5px 6px; background: rgb(0 0 0 / 55%); color: #fff; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }

@@ -6,10 +6,12 @@
 -->
 
 <template>
-  <div class="video-square" :class="{ 'is-dark': isDarkMode, 'is-default-video': viewMode === 'video' && presentationMode === 'default', 'is-bg-swap': viewMode === 'map' || viewMode === 'list', 'is-map-mode': viewMode === 'map' }">
+  <div class="video-square" :class="{ 'is-dark': isDarkMode, 'is-default-video': viewMode === 'video' && presentationMode === 'default', 'is-bg-swap': viewMode === 'map' || viewMode === 'list' }">
     <VideoSquareSharingPanel v-model="showSharing" :initial-owner-id="sharingOwnerId" :owned-devices="currentDevices" />
     <!-- main need to -->
-    <div class="main-content">
+    <div class="main-content" :style="{ '--toolbar-inset': toolbarInset + 'px' }">
+      <div ref="bottomWorkspace" class="square-bottom-workspace" :class="{ 'is-bottom': presentationMode === 'bottom' }"
+        :style="{ '--toolbar-inset': toolbarInset + 'px', zIndex:devicePanelFront ? 5 : 7 }" @pointerdown.capture="devicePanelFront = false"></div>
       <!-- info -->
       <div v-if="showDebugInfo" class="debug-panel">
         <div class="debug-header">
@@ -47,7 +49,22 @@
       <div class="main-layout">
         <div class="map-area fullscreen-map">
           <!-- controlcomponent -->
-          <VideoLayoutControls
+          <div ref="floatingTools" class="square-floating-tools">
+            <div class="square-view-tools">
+              <nav class="square-view-switch" :aria-label="$tp('视图')">
+                <button v-for="view in squareViews" :key="view.value" :class="{ active: viewMode === view.value }"
+                  :title="$tp(view.label)" :aria-label="$tp(view.label)" :aria-pressed="viewMode === view.value" @click="setSquareView(view.value)">
+                  <span class="square-view-icon" :style="{ maskImage: `url(${view.icon})`, WebkitMaskImage: `url(${view.icon})` }" aria-hidden="true"></span>
+                </button>
+              </nav>
+              <button class="square-device-toggle" type="button" :aria-expanded="!devicePanelCollapsed" aria-controls="square-device-catalog"
+                :aria-label="$tp(devicePanelCollapsed ? '展开设备列表' : '收起设备列表')" :title="$tp(devicePanelCollapsed ? '展开设备列表' : '收起设备列表')" @click="toggleDevicePanel">
+                <svg viewBox="0 0 24 24" aria-hidden="true" :style="{ transform: devicePanelCollapsed ? 'none' : 'rotate(180deg)' }">
+                  <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" fill="currentColor"/>
+                </svg>
+              </button>
+            </div>
+            <VideoLayoutControls
             show-presentation
             :presentation-mode="presentationMode"
             :layout-mode="layoutMode"
@@ -62,19 +79,19 @@
             @custom-layout="openCustomVideoDialogs"
             @toggle-fullscreen="toggleFullscreen"
             @presentation-select="selectPresentation"
-          />
+            />
+          </div>
           <!-- main -->
           <!-- MasterGo 257:28891 / 309:30754 — 画面层在三种视图下都常驻：地图/列表只是把背景换成地图/表格，
                工具栏、缩略图行、播放窗口的位置与尺寸与视频展示完全一致，窗口仍可点选 -->
           <section class="square-video-stage">
-            <el-empty v-if="!layoutDialogs.length" :description="$tp('请选择设备播放视频')">
-              <el-button type="primary" @click="openVideoDialogs(1)">{{ $tp('添加视频') }}</el-button>
-            </el-empty>
+            <!-- 列表视图：设备表格作为画面区背景，视频窗口浮在表格之上 -->
+            <VideoSquareCatalogTable v-if="viewMode === 'list'" :devices="visibleDevices" :keyword="mapSearchKeyword" :loading="loading" :error="catalogError" @search="mapSearchKeyword = $event" @play="handleCameraClick" @sharing="openSharing" />
+            <Teleport v-for="dialog in layoutDialogs" :key="'layout-' + dialog.id"
+              :to="bottomWorkspace || 'body'" :disabled="!bottomWorkspace">
             <VideoLayoutDialog
-              v-for="dialog in layoutDialogs"
-              :key="'layout-' + dialog.id"
               :dialog="dialog"
-              :active="viewMode === 'video'"
+              active
               :presentation-mode="presentationMode"
               :thumbnail-devices="visibleDevices"
               embedded
@@ -95,13 +112,14 @@
               @open-in-vlc="openInVlc"
               @add-device="addDeviceToWindow"
               @remove-device="removeDeviceFromWindow"
+              @restore-windows="restoreLayoutWindows"
               @video-window-click="handleVideoWindowClick"
               @video-window-double-click="handleVideoWindowDoubleClick"
               @video-window-swap="handleVideoWindowSwap"
               @select-thumbnail="selectThumbnail(dialog.id, $event)"
             />
+            </Teleport>
           </section>
-          <VideoSquareCatalogTable v-if="viewMode === 'list'" :devices="visibleDevices" :keyword="mapSearchKeyword" :loading="loading" :error="catalogError" @search="mapSearchKeyword = $event" @play="handleCameraClick" @sharing="openSharing" />
           <div v-show="viewMode === 'map'" class="map-container">
 
             <!-- Leaflet -->
@@ -156,6 +174,9 @@
 
                 <!-- device - in -->
           <VideoSquareDevicePanel
+            v-show="!devicePanelCollapsed"
+            id="square-device-catalog"
+            :style="{ top: toolbarInset + 'px' }"
             :devices="currentDevices"
             :classification-devices="classificationCandidates"
             :now="statusClock"
@@ -173,14 +194,6 @@
             @device-click="handleDeviceSelect"
             @search="mapSearchKeyword = $event"
           >
-            <template #views>
-              <nav class="square-view-switch" :aria-label="$tp('视图')">
-                <button v-for="view in squareViews" :key="view.value" :class="{ active: viewMode === view.value }"
-                  :title="$tp(view.label)" :aria-label="$tp(view.label)" :aria-pressed="viewMode === view.value" @click="setSquareView(view.value)">
-                  <span class="square-view-icon" :style="{ maskImage: `url(${view.icon})`, WebkitMaskImage: `url(${view.icon})` }" aria-hidden="true"></span>
-                </button>
-              </nav>
-            </template>
           </VideoSquareDevicePanel>
     </div>
 
@@ -271,6 +284,7 @@ import 'leaflet/dist/leaflet.css'
 // Import controlcomponent
 import VideoLayoutControls from '@/components/VideoLayoutControls.vue'
 import { applyVideoPresentation } from '@/utils/videoSquarePresentation.mjs'
+import { readVideoSquarePreferences, saveVideoSquarePreferences } from '@/utils/videoSquareWorkspacePreferences.mjs'
 import { toggleVideoFullscreen, videoFullscreenContext } from '@/utils/videoSquareFullscreen.mjs'
 
 // Import dialogcomponent
@@ -282,7 +296,7 @@ import VideoSquareDevicePanel from './components/VideoSquareDevicePanel.vue'
 import VideoSquareCatalogTable from './components/VideoSquareCatalogTable.vue'
 import VideoSquareSharingPanel from './components/VideoSquareSharingPanel.vue'
 import VideoSquareDevicePicker from './components/VideoSquareDevicePicker.vue'
-import { catalogVideoCamera, assignVideoWindow, resizeVideoLayout, videoGridStyle } from '@/utils/videoSquareLayout.mjs'
+import { catalogVideoCamera, assignVideoWindow, resizeVideoLayout, videoGridStyle, createEmptyVideoLayout, closeVideoWindow, fillLayoutWindows } from '@/utils/videoSquareLayout.mjs'
 import { useCustomAvailabilityClock } from '@/utils/useCustomAvailabilityClock'
 import VideoSquareDevicePlayer from './components/VideoSquareDevicePlayer.vue'
 import { getVideoDeviceCatalog } from '@/api/videoDeviceCatalog'
@@ -305,9 +319,11 @@ const loading = ref(false)
 const showDebugInfo = ref(false)
 const isDarkMode = ref(false)
 const isFullscreen = ref(false)
-const layoutMode = ref('2x2')
+const workspacePreferences = readVideoSquarePreferences()
+const layoutChoice = ref(workspacePreferences.layout)
+const layoutMode = ref(({1:'1x1',4:'2x2',6:'3x3',8:'4x4',9:'5x5',16:'6x6'})[layoutChoice.value.count] || `custom-${layoutChoice.value.count}`)
 // MasterGo 257:28183 默认态为「视频展示」
-const viewMode = ref('video')
+const viewMode = ref(workspacePreferences.view)
 const showSharing = ref(false)
 const sharingOwnerId = ref('')
 const openSharing = device => {
@@ -332,39 +348,68 @@ const setSquareView = async value => {
   await nextTick()
   if (value === 'map') mapInstance?.invalidateSize()
 }
+const bottomWorkspace = ref(null)
+const floatingTools = ref(null)
+const toolbarInset = ref(82)
+const devicePanelCollapsed = ref(true)
+const devicePanelFront = ref(false)
+const toggleDevicePanel = () => {
+  devicePanelCollapsed.value = !devicePanelCollapsed.value
+  devicePanelFront.value = !devicePanelCollapsed.value
+}
+let toolbarObserver
+onMounted(() => {
+  toolbarObserver = new ResizeObserver(() => {
+    toolbarInset.value = Math.ceil(floatingTools.value?.offsetHeight || 0) + 40
+  })
+  if (floatingTools.value) toolbarObserver.observe(floatingTools.value)
+})
+onUnmounted(() => toolbarObserver?.disconnect())
 const handleDeviceSelect = device => {
-  if (viewMode.value !== 'video') return handleCameraClick(device)
+  const active = layoutDialogs.value[0]?.layoutCount ? layoutDialogs.value[0] : restoreLayoutWindows(undefined, 1)
+  const existing = active?.cameras.findIndex(camera => camera?.id === device.id) ?? -1
+  if (existing >= 0) { active.activeWindowIndex = existing; return }
   if (presentationMode.value === 'bottom' && layoutDialogs.value[0]) {
     const dialog = layoutDialogs.value[0]
-    const existing = dialog.cameras.findIndex(camera => camera?.id === device.id)
-    if (existing >= 0) { dialog.activeWindowIndex = existing; return }
     const empty = dialog.cameras.findIndex(camera => !camera)
-    if (empty >= 0) dialog.cameras[empty] = catalogVideoCamera(device)
-    else if (dialog.layoutCount < 25) { dialog.cameras.push(catalogVideoCamera(device)); dialog.layoutCount++ }
+    if (empty >= 0) { dialog.cameras[empty] = catalogVideoCamera(device); dialog.activeWindowIndex = empty }
+    else if (dialog.layoutCount < 25) {
+      resizeVideoLayout(dialog, dialog.layoutCount + 1, 'grid', {resetPositions:false})
+      dialog.cameras[dialog.layoutCount - 1] = catalogVideoCamera(device)
+      dialog.activeWindowIndex = dialog.layoutCount - 1
+    }
     else ElMessage.warning(uiText('最多支持25个视频窗口，请先关闭一个视频'))
     return
   }
-  layoutDialogs.value = [{
-    id: nextLayoutDialogId.value++, cameras: [catalogVideoCamera(device)], layoutCount: 1,
-    position: { x: 0, y: 0 }, minimized: false, zIndex: ++maxLayoutZIndex.value,
-  }]
-  layoutMode.value = '1x1'
+  if (presentationMode.value === 'grid' && active) {
+    const empty = active.cameras.findIndex(camera => !camera)
+    const index = empty >= 0 ? empty : (active.activeWindowIndex || 0)
+    active.cameras[index] = catalogVideoCamera(device)
+    active.activeWindowIndex = index
+    return
+  }
+  active.cameras[0] = catalogVideoCamera(device)
+  active.activeWindowIndex = 0
 }
 const showDevicePicker = ref(false)
-const presentationMode = ref('default')
+const presentationMode = ref(workspacePreferences.presentation)
+const layoutClosed = ref(workspacePreferences.closed === true)
+watch([viewMode, presentationMode, layoutChoice, layoutClosed], ([view, presentation, layout, closed]) => {
+  saveVideoSquarePreferences({view, presentation, layout, closed})
+}, {deep:true, flush:'sync'})
+const BOTTOM_DEFAULT_WINDOW_COUNT = 4
 const selectPresentation = mode => {
   if (!['default', 'bottom'].includes(mode)) return
   presentationMode.value = mode
-  // 地图/列表模式也直接在当前模式显示视频，不再切回视频展示
-  const dialog = layoutDialogs.value[0]
-  if (dialog) {
-    if (presentationMode.value === dialog.presentationMode && mode === 'bottom') return
-    applyVideoPresentation(dialog, mode)
-  }
-  else openVideoDialogs(1)
+  if (!layoutDialogs.value[0]?.layoutCount) restoreLayoutWindows()
+  const dialog = layoutDialogs.value[0] || ensureLayoutDialog()
+  if (dialog.presentationMode !== mode) applyVideoPresentation(dialog, mode)
+  // 底部排列默认四个窗口：保留已有画面，空位按在线优先自动补设备
+  if (mode === 'bottom') fillLayoutWindows(dialog, currentDevices.value, BOTTOM_DEFAULT_WINDOW_COUNT)
 }
 const selectThumbnail = (dialogId, deviceId) => {
   const device = currentDevices.value.find(item => item.id === deviceId)
+  if (device && !layoutDialogs.value[0]?.layoutCount) restoreLayoutWindows(dialogId, 1)
   if(layoutDialogs.value.find(item=>item.id===dialogId)?.cameras[0]?.id===deviceId)return
   if (device) assignVideoWindow(layoutDialogs.value, {dialogId, windowIndex:0}, device, currentDevices.value)
 }
@@ -412,9 +457,31 @@ const videoDialogs = ref([])
 const nextDialogId = ref(1)
 
 // dialog
-const layoutDialogs = ref([])
-const nextLayoutDialogId = ref(1000)
-const maxLayoutZIndex = ref(3000)
+const initialLayoutCount = workspacePreferences.presentation === 'default' ? 1 : workspacePreferences.layout.count
+const initialLayoutVariant = workspacePreferences.presentation === 'default' ? 'grid' : workspacePreferences.layout.variant
+const layoutDialogs = ref([createEmptyVideoLayout({id:1000,count:initialLayoutCount,variant:initialLayoutVariant,zIndex:3001,closed:layoutClosed.value})])
+const nextLayoutDialogId = ref(1001)
+const maxLayoutZIndex = ref(3001)
+const ensureLayoutDialog = () => {
+  if (!layoutDialogs.value.length) {
+    const count = presentationMode.value === 'default' ? 1 : layoutChoice.value.count
+    const variant = presentationMode.value === 'default' ? 'grid' : layoutChoice.value.variant
+    layoutDialogs.value = [createEmptyVideoLayout({id:nextLayoutDialogId.value++,count,variant,zIndex:++maxLayoutZIndex.value,closed:layoutClosed.value})]
+  }
+  return layoutDialogs.value[0]
+}
+const restoreLayoutWindows = (dialogId, requestedCount) => {
+  const dialog = layoutDialogs.value.find(item => item.id === dialogId) || ensureLayoutDialog()
+  const count = requestedCount || (presentationMode.value === 'default' ? 1 : layoutChoice.value.count)
+  const variant = count === layoutChoice.value.count && presentationMode.value !== 'default' ? layoutChoice.value.variant : 'grid'
+  resizeVideoLayout(dialog, count, variant)
+  if (requestedCount && presentationMode.value !== 'default') {
+    layoutChoice.value = {count,variant}
+    layoutMode.value = ({1:'1x1',4:'2x2',6:'3x3',8:'4x4',9:'5x5',16:'6x6'})[count] || `custom-${count}`
+  }
+  layoutClosed.value = false
+  return dialog
+}
 
 // service
 const webrtcConfig = ref({
@@ -892,110 +959,13 @@ const loadDeviceList = async () => {
   }
 }
 
-const openVideoDialogs = async (count, variant = 'grid') => {
-  if(count>1)presentationMode.value='grid'
+const openVideoDialogs = (count, variant = 'grid') => {
   videoGridStyle(count, variant)
-  const active = layoutDialogs.value[0]
-  if (active) {
-    resizeVideoLayout(active, count, variant)
-    layoutMode.value = ({ 1: '1x1', 4: '2x2', 6: '3x3', 8: '4x4', 9: '5x5', 16: '6x6' })[count] || `custom-${count}`
-    return
-  }
-  console.log(`打开${count}画面视频播放，count:`, count)
-  console.log('realCameraStreams.value:', realCameraStreams.value)
-
-  // Get device
-  const availableDevices = visibleDevices.value.slice(0, count)
-
-  // Load prompt / tip
-  const loading = ElMessage({
-    message: `正在准备 ${availableDevices.length} 个视频播放窗口...`,
-    type: 'info',
-    duration: 0
-  })
-
-  try {
-    // to each device WebRTC URL
-    const preparedDevices = []
-
-    for (const device of availableDevices) {
-      const streamUrl = device.streamUrl ||
-        device.originalRtspUrl ||
-        device.rtspUrl ||
-        device.url
-
-      const isCameraRtc = isCameraRtcStream(streamUrl)
-
-      const deviceData = {
-        ...device,
-        streamUrl,
-        // Use direct WebRTC playback like handleCameraClick (no iframe HTML)
-        playMode: isCameraRtc ? 'cameraRTC' : 'webrtc'
-      }
-
-      // Force direct WebRTC player by removing iframe url if present
-      if (deviceData.webrtcUrl) {
-        delete deviceData.webrtcUrl
-      }
-
-      const coords = getDeviceCoordinates(device) || {}
-
-      const cameraData = {
-        id: device.id,
-        name: device.deviceName,
-        lat: coords.lat,
-        lng: coords.lng,
-        hasVideo: true,
-        deviceData
-      }
-
-      preparedDevices.push(cameraData)
-    }
-
-    // dialog
-    const dialogId = nextLayoutDialogId.value++
-    maxLayoutZIndex.value++
-
-    // cameras array and layoutCount , null fill null / empty
-    const cameras = [...preparedDevices]
-    while (cameras.length < count) {
-      cameras.push(null)
-    }
-
-    const newDialog = {
-      id: dialogId,
-      cameras: cameras, // all , null / empty
-      layoutCount: count, //
-      layoutVariant: variant,
-      position: {
-        x: 50,
-        y: 50
-      },
-      minimized: false,
-      zIndex: maxLayoutZIndex.value,
-      recording: {
-        isRecording: false,
-        recordId: null,
-        startTime: null,
-        timer: null,
-        currentRecordTime: '00:00'
-      }
-    }
-
-    // null / empty dialog new dialog
-    layoutDialogs.value = [newDialog]
-
-    // new
-    layoutMode.value = ({ 1: '1x1', 4: '2x2', 6: '3x3', 8: '4x4', 9: '5x5', 16: '6x6' })[count] || `custom-${count}`
-
-    loading.close()
-    ElMessage.success(uiText('已切换为{value0}画面布局', { value0: count }))
-
-  } catch (error) {
-    console.error('创建布局弹窗失败:', error)
-    loading.close()
-    ElMessage.error(uiText('创建视频播放窗口失败'))
-  }
+  if (count > 1) presentationMode.value = 'grid'
+  layoutChoice.value = {count, variant}
+  resizeVideoLayout(ensureLayoutDialog(), count, variant)
+  layoutClosed.value = false
+  layoutMode.value = ({1:'1x1',4:'2x2',6:'3x3',8:'4x4',9:'5x5',16:'6x6'})[count] || `custom-${count}`
 }
 
 const openCustomVideoDialogs = () => {
@@ -1046,7 +1016,6 @@ const hideExtendedLayoutDialog = () => {
 
 // Process item
 const handleExtendedLayoutSelect = (count, variant = 'grid') => {
-  // 地图/列表模式也直接在当前模式显示视频，不再切回视频展示
   // dialog
   showExtendedLayout.value = false
 
@@ -1155,7 +1124,12 @@ const closeLayoutDialog = (dialogId) => {
   //   clearInterval(dialog.recording.timer)
   // }
 
-  layoutDialogs.value.splice(dialogIndex, 1)
+  const dialog = layoutDialogs.value[dialogIndex]
+  dialog.cameras = []
+  dialog.windowIds = []
+  dialog.layoutCount = 0
+  dialog.activeWindowIndex = 0
+  layoutClosed.value = true
   console.log('关闭布局弹窗:', dialogId)
 }
 
@@ -1170,49 +1144,22 @@ const handleVideoWindowClick = (dialogId, windowIndex) => {
 
 // Process
 const handleVideoWindowDoubleClick = (dialogId, windowIndex) => {
-  const dialog = layoutDialogs.value.find(d => d.id === dialogId)
-  if (!dialog) return
-
-  console.log('双击视频窗口:', dialogId, '窗口索引:', windowIndex)
-
-  const clickedCamera = dialog.cameras[windowIndex]
-
-  if (clickedCamera) {
-    // - dialog,
-    console.log(`双击布局弹窗中的摄像头: ${clickedCamera.name}，准备打开单画面播放`)
-
-    // current dialog
-    closeLayoutDialog(dialogId)
-
-    // deviceSet to device, after
-    const availableDevices = realCameraStreams.value
-    if (availableDevices.length > 0) {
-      // current in device in
-      const deviceIndex = availableDevices.findIndex(device => device.id === clickedCamera.id)
-      if (deviceIndex !== -1) {
-        // device
-        const device = availableDevices.splice(deviceIndex, 1)[0]
-        availableDevices.unshift(device)
-        console.log('已将设备移到第一位:', device.deviceName)
-      }
-    }
-
-    //
-    openVideoDialogs(1)
-
-    // operationprompt / tip
-    ElMessage.success(uiText('{value0} 已切换到单画面播放', { value0: clickedCamera.name }))
-  } else {
-    // null / empty
-    console.log(`双击空白窗口: ${windowIndex}`)
-    ElMessage.info(uiText('空白窗口，请先添加设备'))
-  }
+  const dialog = layoutDialogs.value.find(item => item.id === dialogId)
+  const camera = dialog?.cameras[windowIndex]
+  if (!camera) return
+  // The double-click explicitly selects this source; never replace it with the first catalog row.
+  presentationMode.value = 'grid'
+  layoutChoice.value = {count:1,variant:'grid'}
+  layoutMode.value = '1x1'
+  dialog.cameras = [camera]
+  dialog.windowIds = [dialog.windowIds[windowIndex]]
+  dialog.layoutCount = 1
+  dialog.layoutVariant = 'grid'
+  dialog.activeWindowIndex = 0
 }
 
-// Process
 const handleLayoutSelect = (count) => {
   presentationMode.value = 'grid'
-  // 地图/列表模式也直接在当前模式显示视频，不再切回视频展示
   console.log('主文件收到布局选择事件，count:', count)
   openVideoDialogs(count)
 }
@@ -1389,43 +1336,8 @@ const resizeVideoDialogs = () => {
   }
 }
 
-const handleCameraClick = async (deviceData) => {
-  // data : (markerData) and device (device)
-  const deviceName = deviceData.name || deviceData.deviceName || '未知设备'
-  const cameraData = deviceData.deviceData || deviceData
-
-  console.log('点击摄像头:', deviceName, '设备数据:', cameraData)
-
-  // devicedata URLinfo
-  let processedCameraData = { ...cameraData }
-
-  // if streamUrl, from fieldGet
-  if (!['VLSTREAM', 'VIDEO_SQUARE'].includes(processedCameraData.catalogSource) && !processedCameraData.streamUrl) {
-    processedCameraData.streamUrl = processedCameraData.rtspUrl ||
-                                   processedCameraData.originalRtspUrl ||
-                                   processedCameraData.url ||
-                                   ''
-  }
-
-  processedCameraData.playMode = 'oplayer'
-
-  //
-  const dialog = {
-    id: nextDialogId.value++,
-    camera: {
-      name: deviceName,
-      deviceData: processedCameraData
-    },
-    position: { x: 150 + (videoDialogs.value.length * 50), y: 150 + (videoDialogs.value.length * 50) },
-    minimized: false,
-    isDraggable: true  // dialog
-  }
-
-  videoDialogs.value.push(dialog)
-  await nextTick()
-  fitVideoDialog(dialog, document.querySelector(`[data-video-dialog-id="${dialog.id}"]`))
-  await playDialogOPlayer(dialog)
-}
+// All view backgrounds share one window collection, selection and playback path.
+const handleCameraClick = device => handleDeviceSelect(device.deviceData || device)
 
 const handleTreeNodeClick = (node) => {
   if (node.type === 'device') {
@@ -2154,13 +2066,19 @@ const openInVlc = (url) => {
 }
 
 const addDeviceToWindow = (dialogId, windowIndex) => {
-  devicePickerTarget.value = { dialogId, windowIndex }
+  devicePickerTarget.value = { dialogId, windowIndex, windowId:layoutDialogs.value.find(item => item.id === dialogId)?.windowIds[windowIndex] }
   showDevicePicker.value = true
 }
 
-const removeDeviceFromWindow = (dialogId, windowIndex) => {
+const removeDeviceFromWindow = (dialogId, windowIndex, windowId) => {
   const dialog = layoutDialogs.value.find(item => item.id === dialogId)
-  if (dialog && windowIndex >= 0 && windowIndex < dialog.layoutCount) dialog.cameras[windowIndex] = null
+  if (!closeVideoWindow(dialog, windowIndex, windowId)) return
+  layoutClosed.value = dialog.layoutCount === 0
+  if (!dialog.layoutCount) dialog.activeWindowIndex = 0
+  else if (presentationMode.value !== 'default') {
+    layoutChoice.value = {count:dialog.layoutCount, variant:'grid'}
+    layoutMode.value = ({1:'1x1',4:'2x2',6:'3x3',8:'4x4',9:'5x5',16:'6x6'})[dialog.layoutCount] || `custom-${dialog.layoutCount}`
+  }
 }
 
 //

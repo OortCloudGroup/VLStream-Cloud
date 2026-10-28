@@ -19,8 +19,18 @@ function toolbar(values = {}) {
   Object.defineProperties(context, Object.fromEntries(Object.keys(props).map(name => [name, { get: () => props[name], configurable: true }])))
   const vnode = () => render(context, [])
   const buttons = () => vnode().children.filter(child => child.type === 'button')
-  return { props, events, setup, buttons, html: () => renderToString(createSSRApp({ render: vnode })) }
+  return { props, events, setup, buttons, root:vnode, html: () => renderToString(createSSRApp({ render: vnode })) }
 }
+
+test('toolbar pointer handler keeps button clicks isolated and lets header gaps reach window dragging', () => {
+  const h = toolbar()
+  let stopped = 0
+  h.root().props.onPointerdown({target:{closest:()=>null},stopPropagation:()=>stopped++})
+  assert.equal(stopped, 0)
+  h.root().props.onPointerdown({target:{closest:()=>({tagName:'BUTTON'})},stopPropagation:()=>stopped++})
+  assert.equal(stopped, 1)
+  assert.deepEqual(h.events, [])
+})
 
 test('actual toolbar renders all seven design controls in order and leaves unknown capabilities static', async () => {
   const h = toolbar()
@@ -131,4 +141,10 @@ test('default download removes its temporary anchor and object URL on success an
     assert.equal(link.download, 'frame.png')
     assert.deepEqual(calls, ['create', 'append', 'click', 'remove', 'revoke'])
   }
+})
+
+test('close ignores the second click of a double click',()=>{
+  const h=toolbar({canClose:true})
+  h.setup.dispatch('close-video',{detail:1});h.setup.dispatch('close-video',{detail:2})
+  assert.deepEqual(h.events,[['close-video']])
 })

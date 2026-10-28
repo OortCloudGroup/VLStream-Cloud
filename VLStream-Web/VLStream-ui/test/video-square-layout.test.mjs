@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { videoGridStyle, assignVideoWindow, resizeVideoLayout } from '../src/utils/videoSquareLayout.mjs'
+import { videoGridStyle, assignVideoWindow, resizeVideoLayout, fillLayoutWindows } from '../src/utils/videoSquareLayout.mjs'
 
 test('all supported custom counts fit in finite nonzero grid tracks', () => {
   for (let count = 1; count <= 25; count++) {
@@ -48,4 +48,32 @@ test('resizing preserves existing camera objects, fills only new slots and valid
   assert.throws(() => resizeVideoLayout(dialog, 2, 'three-top'), RangeError)
   assert.equal(dialog.layoutCount, 2)
   assert.throws(() => videoGridStyle(3, 'unsupported'), RangeError)
+})
+
+test('bottom default keeps playing cameras and fills empty slots with online devices first', () => {
+  const playing = { id: 'playing' }
+  const dialog = { id: 1, layoutCount: 1, cameras: [playing], layoutVariant: 'grid' }
+  const devices = [
+    { id: 'offline', deviceName: 'offline cam', status: 'OFFLINE' },
+    { id: 'online-1', deviceName: 'online 1', status: 'ONLINE' },
+    { id: 'online-2', deviceName: 'online 2', status: 'ONLINE' },
+  ]
+  assert.equal(fillLayoutWindows(dialog, devices, 4), 3)
+  assert.equal(dialog.layoutCount, 4)
+  assert.equal(dialog.cameras[0], playing)
+  assert.deepEqual(dialog.cameras.slice(1).map(camera => camera.id), ['online-1', 'online-2', 'offline'])
+  assert.notEqual(dialog.cameras[1].deviceData, devices[1])
+})
+
+test('an empty bottom layout shrinks to the default count and never reuses a device', () => {
+  const dialog = { id: 2, layoutCount: 9, cameras: Array.from({ length: 9 }, () => null), layoutVariant: 'grid' }
+  const devices = [{ id: 'a', deviceName: 'A', status: 'OFFLINE' }, { id: 'b', deviceName: 'B', status: 'ONLINE' }]
+  assert.equal(fillLayoutWindows(dialog, devices, 4), 2)
+  assert.equal(dialog.layoutCount, 4)
+  assert.deepEqual(dialog.cameras.map(camera => camera?.id || null), ['b', 'a', null, null])
+  const filled = { id: 3, layoutCount: 6, cameras: [null, { id: 'b' }, null, null, null, null], layoutVariant: 'grid' }
+  assert.equal(fillLayoutWindows(filled, devices, 4), 1)
+  assert.equal(filled.layoutCount, 6)
+  assert.equal(filled.cameras[0].id, 'a')
+  assert.equal(filled.cameras[1].id, 'b')
 })

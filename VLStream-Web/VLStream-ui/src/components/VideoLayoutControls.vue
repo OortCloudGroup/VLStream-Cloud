@@ -244,20 +244,26 @@ const handleLayoutSelect = (count) => {
 /* MasterGo 309:32903 — 1×21.5 rgba(0,0,0,.2) 竖分隔线 */
 .toolbar-divider { flex: 0 0 auto; width: 1px; height: 21.5px; background: rgba(0, 0, 0, 0.2); }
 
-/* control - button in , device */
+/* 视频/地图/列表 三种模式统一为一条工具栏：按钮组居中、设备统计靠右，不再换行成两行 */
 .map-top-controls {
   position: absolute;
   top: 20px;
   left: 0;
   right: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 8px;
   padding: 0 20px;
   z-index: 1500;
   pointer-events: none;
+}
+
+/* 窄屏兜底：放不下时退回换行，避免统计条被压出内容区 */
+@media (max-width: 900px) {
+  .map-top-controls { display: flex; flex-wrap: wrap; justify-content: center; }
+  .layout-button-group { grid-column: auto; margin-inline: auto; }
+  .device-stats { grid-column: auto; margin-right: auto; }
 }
 
 /* MasterGo 309:30012 — bg #F2F7FF / r4 / padding 9 16 / gap 10 / 无边框阴影 */
@@ -272,7 +278,9 @@ const handleLayoutSelect = (count) => {
   box-shadow: none;
   backdrop-filter: none;
   flex: 0 0 auto;
-  margin-inline: auto;
+  grid-column: 2;
+  justify-self: center;
+  margin-inline: 0;
   pointer-events: auto;
 }
 
@@ -385,13 +393,15 @@ const handleLayoutSelect = (count) => {
 .device-stats {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px 14px;
   width: max-content;
   max-width: 100%;
   min-height: 36px;
-  margin-right: auto;
+  grid-column: 3;
+  justify-self: end;
+  margin-right: 0;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 8px;
   padding: 6px 12px;

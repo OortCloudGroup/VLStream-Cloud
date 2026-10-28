@@ -9,7 +9,7 @@
                 <span>PTZ</span>
             </button>
             <button type="button" class="floating-ptz-close" :title="$tp('关闭PTZ控制器')"
-                :aria-label="$tp('关闭PTZ控制器')" @click="close">
+                :aria-label="$tp('关闭PTZ控制器')" @pointerdown.stop @mousedown.stop @click.stop="close">
                 <img :src="ptzCloseIcon" alt="" class="floating-ptz-close-icon" />
             </button>
         </header>
@@ -79,6 +79,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .square-floating-ptz {
     position: absolute;
+    pointer-events: auto;
     z-index: 20;
     width: 320px;
     max-width: max(0px, calc(100% - 16px));

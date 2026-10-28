@@ -67,6 +67,7 @@
       </div>
     </div>
 
+    <slot name="movement-settings"></slot>
     <!-- control -->
     <div class="zoom-section">
       <h4 class="section-title">{{ $tp('光学变倍控制') }}</h4>

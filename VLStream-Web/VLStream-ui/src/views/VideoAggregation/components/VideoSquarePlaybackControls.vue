@@ -1,5 +1,5 @@
 <template>
-  <div class="square-playback-controls" :class="{ 'is-compact': compact, 'is-overlay': overlay }" role="toolbar" :aria-label="$tp('视频控制')" @pointerdown.stop @dblclick.stop @click.stop>
+  <div class="square-playback-controls" :class="{ 'is-compact': compact, 'is-overlay': overlay }" role="toolbar" :aria-label="$tp('视频控制')" @pointerdown="handlePointerDown" @dblclick.stop @click.stop>
     <button type="button" class="playback-control" data-action="microphone" disabled
       :aria-label="$tp('麦克风')" :title="$tp('当前预览未开放对讲')">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="2" width="8" height="13" rx="4" /><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8" /></svg>
@@ -26,7 +26,7 @@
       <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" /></svg>
     </button>
     <button type="button" class="playback-control close-control" data-action="close" :disabled="!canClose || busy"
-      :aria-label="$tp('关闭当前视频')" :title="$tp('关闭当前视频')" @click="dispatch('close-video')">
+      :aria-label="$tp('关闭当前视频')" :title="$tp('关闭当前视频')" @click="dispatch('close-video', $event)" @dblclick.stop.prevent>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 14c5-5 13-5 18 0l-2 4-4-2v-3a10 10 0 0 0-6 0v3l-4 2z" /></svg>
     </button>
   </div>
@@ -45,7 +45,11 @@ const props = defineProps({
   busy: Boolean,
 })
 const emit = defineEmits(['toggle-mute', 'screenshot', 'toggle-ptz', 'toggle-fullscreen', 'close-video'])
-function dispatch(action) {
+function handlePointerDown(event) {
+  if (event.target.closest('button, input, select, textarea, a')) event.stopPropagation()
+}
+function dispatch(action, event) {
+  if (action === 'close-video' && event?.detail > 1) return
   if (props.busy || (action === 'toggle-mute' && !props.canMute) ||
     (action === 'screenshot' && !props.canScreenshot) || (action === 'close-video' && !props.canClose)) return
   if (['toggle-mute', 'screenshot', 'toggle-ptz', 'toggle-fullscreen', 'close-video'].includes(action)) emit(action)

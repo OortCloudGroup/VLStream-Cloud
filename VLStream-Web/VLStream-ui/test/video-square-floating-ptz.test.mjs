@@ -83,7 +83,14 @@ const source = readFileSync(new URL('../src/views/VideoAggregation/components/Vi
 const descriptor = parse(source).descriptor
 const compiled = compileScript(descriptor, { id: 'floating-ptz-test' })
 const executable = compiled.content.replace(/^import\s+.*?from\s+['"].*?['"];?\s*$/gm, '').replace('export default', 'return')
-const component = new Function('__deps', `const {nextTick,onBeforeUnmount,onMounted,ref,watch,VideoSquarePtzControls,clampFloatingPanelPosition,createFloatingPanelDrag,window,ResizeObserver}=__deps;${executable}`)
+const component = new Function('__deps', `const {nextTick,onBeforeUnmount,onMounted,ref,watch,VideoSquarePtzControls,ptzCloseIcon='test-close.svg',clampFloatingPanelPosition,createFloatingPanelDrag,window,ResizeObserver}=__deps;${executable}`)
+
+function wrapperRender() {
+    const template = compileTemplate({ source: descriptor.template.content, filename: 'VideoSquareFloatingPtz.vue', id: 'floating-ptz-test', compilerOptions: { bindingMetadata: compiled.bindings } })
+    assert.deepEqual(template.errors, [])
+    const renderSource = template.code.replace(/import\s*\{([^}]+)\}\s*from\s*['"]vue['"]/g, (_, names) => `const {${names.replace(/\bas\b/g, ':')}}=__vue`).replace('export function render', 'return function render')
+    return new Function('__vue', renderSource)(Vue)
+}
 
 function componentHarness(visible = true) {
     const mounted = [], unmounts = [], observed = [], observers = [], emitted = [], target = eventTarget()
@@ -141,15 +148,27 @@ test('initial hidden wrapper waits for measurable bounds before first right-side
     t.close()
 })
 
+test('actual X template emits close, cancels dragging and isolates its pointer press from the title', () => {
+    const t = componentHarness()
+    const tree = wrapperRender()({$tp:value=>value}, [], t.props, Vue.proxyRefs(t.instance))
+    const closeButton = tree.children[0].children[1]
+    let stopped = 0
+    closeButton.props.onPointerdown({stopPropagation:()=>{stopped++}})
+    assert.equal(t.instance.dragging.value, false)
+    t.instance.startDrag({pointerId:1,button:0,isPrimary:true,clientX:20,clientY:20,currentTarget:{},preventDefault(){}})
+    closeButton.props.onClick({stopPropagation:()=>{stopped++}})
+    assert.equal(stopped, 2)
+    assert.equal(t.instance.dragging.value, false)
+    assert.deepEqual(t.emitted, [['close']])
+    t.close()
+})
+
 test('actual wrapper template forwards the exact source, visibility and read-only props without PTZ commands', async () => {
     const received = []
     const controls = { props: ['source', 'visible', 'viewOnly'], setup(props) { received.push(props); return () => h('div', 'existing PTZ') } }
     const options = component({ ...Vue, ref, watch, onBeforeUnmount, onMounted, VideoSquarePtzControls: controls,
         clampFloatingPanelPosition, createFloatingPanelDrag, window: {}, ResizeObserver: undefined })
-    const template = compileTemplate({ source: descriptor.template.content, filename: 'VideoSquareFloatingPtz.vue', id: 'floating-ptz-test', compilerOptions: { bindingMetadata: compiled.bindings } })
-    assert.deepEqual(template.errors, [])
-    const renderSource = template.code.replace(/import\s*\{([^}]+)\}\s*from\s*['"]vue['"]/g, (_, names) => `const {${names.replace(/\bas\b/g, ':')}}=__vue`).replace('export function render', 'return function render')
-    options.render = new Function('__vue', renderSource)(Vue)
+    options.render = wrapperRender()
     const device = { protocol: 'ONVIF', rowId: 11 }
     const app = createSSRApp(options, { source: device, visible: true, viewOnly: true })
     app.config.globalProperties.$tp = value => value
