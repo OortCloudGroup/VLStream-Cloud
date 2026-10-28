@@ -42,7 +42,7 @@ function fixture() {
     ElMessage: Object.fromEntries(['warning', 'error'].map(key => [key, text => calls.messages.push(text)])),
     module: { exports: {} }
   }
-  const names = ['access', 'permissionError', 'capabilities', 'capabilitiesCheckedAt', 'hasPermission', 'ownNode', 'canEditNode', 'canBindDeployment',
+  const names = ['access', 'permissionError', 'capabilities', 'capabilitiesCheckedAt', 'hasPermission', 'ownNode', 'canRemoveNode', 'canEditNode', 'canBindDeployment',
     'nodes', 'loading', 'managementError', 'nodeLoadEpoch', 'nodeIdentityRetry', 'managementFailure', 'visible', 'saving', 'probing', 'editingId', 'editingAuthMode',
     'sshCommand', 'formRef', 'showProbe', 'probeResult', 'defaults', 'form', 'rules', 'clearPassword', 'load', 'edit', 'parseSsh', 'probe', 'save']
   for (const name of names) assert.ok(declarations.has(name), name)
@@ -53,6 +53,17 @@ function fixture() {
 }
 const tests = []
 const test = (name, run) => tests.push([name, run])
+
+test('configured resources cannot be edited and legacy entries expose only authorized removal', async () => {
+  const { api } = fixture(); await api.load(); api.access.value = { permissions: ['*:*:*'] }
+  assert.equal(api.canEditNode({ configurationManaged: true }), false)
+  assert.equal(api.canRemoveNode({ configurationManaged: true }), false)
+  assert.equal(api.canEditNode({ configurationReplaced: true }), false)
+  assert.equal(api.canRemoveNode({ configurationReplaced: true }), true)
+  assert.equal(api.canRemoveNode({ configurationMigrationPending: true }), false)
+  assert.equal(api.canEditNode({ configurationMigrationPending: true }), false)
+  assert.match(descriptor.template.content, /v-else-if="!row.configurationReplaced && !row.configurationManaged"/)
+})
 test('normal login with no provider role loads and opens SSH form without market proof', async () => {
   const { api, calls } = fixture(); await api.load(); await api.edit()
   assert.equal(api.visible.value, true); assert.equal(calls.auth, 0); assert.equal(api.form.provider, 'self')

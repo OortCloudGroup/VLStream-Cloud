@@ -23,6 +23,15 @@ public class ComputeNodeService {
     private final ComputeSsh ssh;
     private final ObjectMapper json;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ConfiguredComputeRegistry configured;
+    boolean configured(Long id) { return configured != null && configured.contains(id); }
+    void requireMutable(Long id) { if (configured != null) configured.requireMutable(id); }
+    List<Long> queueIds(Long id) { return configured == null ? java.util.Collections.singletonList(id) : configured.queueIds(id); }
+    Long queueId(Long id) { return configured == null ? id : configured.canonicalId(id); }
+    void verifyJob(CloudTrainingJob job, ComputeNode node) throws IOException { if (configured != null) configured.verifyJob(job, node); }
+    java.util.Map<String,Object> configurationSnapshot(ComputeNode node) { return configured.snapshot(node); }
+    void requestedProbe(ComputeNode node) { configured.requestedProbe(node); }
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ComputePlatformAuthorization platformAuthorization;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ComputePublicInventoryService publicInventory;
@@ -30,10 +39,11 @@ public class ComputeNodeService {
     private ComputeNodeOwnershipService ownership;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ComputeSharedQueueService sharedQueue;
+    @org.springframework.beans.factory.annotation.Autowired private org.springframework.beans.factory.ObjectProvider<ComputePaidRunService> paidRuns;
     public boolean isCompanyShared(ComputeNode node){return sharedQueue!=null && sharedQueue.isShared(node);}
     ComputeNodeOwnershipService ownership(){if(ownership==null)throw new ServiceException("算力归属服务未就绪，不能管理个人资源");return ownership;}
-    public void requireManagement(ComputeNode node){ownership().requireManagement(node);}
-    public boolean canManage(ComputeNode node){return ownership().canManage(node);}
+    public void requireManagement(ComputeNode node){if(node.isConfigurationManaged() || configured!=null && configured.migrationPending(node))throw new ServiceException("平台自有算力由服务配置管理；旧记录身份须先核对",403);ownership().requireManagement(node);}
+    public boolean canManage(ComputeNode node){return !node.isConfigurationManaged() && (configured==null || !configured.migrationPending(node)) && ownership().canManage(node);}
     public boolean canUsePrivate(ComputeNode node){return ownership().owns(node);}
     public String trainingSubject(ComputeNode node,String creator){
         if(isCompanyShared(node))return sharedQueue.requireCreator(creator);
@@ -71,7 +81,13 @@ public class ComputeNodeService {
         if(!administrator && viewer==null)ownership().requireViewer();
         List<ComputeNode> rows=jdbc.query("SELECT * FROM vls_compute_node WHERE BINARY tenant_id=BINARY ?"+(administrator?"":" AND management_owner_subject IN (?,?)")+" ORDER BY create_time DESC",
             mapper(),administrator?new Object[]{tenant()}:new Object[]{tenant(),viewer,legacy});
-        for(ComputeNode node:rows)node.setManagementOwnership(node.getManagementOwnerSubject()==null?"UNASSIGNED":java.util.Objects.equals(viewer,node.getManagementOwnerSubject()) || java.util.Objects.equals(legacy,node.getManagementOwnerSubject())?"MINE":"ADMIN");
+        for(ComputeNode node:rows) {
+            node.setManagementOwnership(node.getManagementOwnerSubject()==null?"UNASSIGNED":java.util.Objects.equals(viewer,node.getManagementOwnerSubject()) || java.util.Objects.equals(legacy,node.getManagementOwnerSubject())?"MINE":"ADMIN");
+            if(configured!=null) {
+                node.setConfigurationMigrationPending(configured.migrationPending(node));
+                node.setConfigurationReplaced(!node.isConfigurationMigrationPending() && configured.replaces(node));
+            }
+        }
         return rows;
     }
     public ComputeNode get(Long id) { return get(id, false); }
@@ -108,11 +124,16 @@ public class ComputeNodeService {
         return save(id, request);
     }
     ComputeNode current(Long id) {
+        if(configured(id))return configured.resolve(id);
         List<ComputeNode> rows = jdbc.query("SELECT * FROM vls_compute_node WHERE (tenant_id=? OR resource_scope='PLATFORM') AND id=? FOR UPDATE", mapper(), tenant(), id);
         if (rows.isEmpty()) throw new ServiceException("算力实例不存在或无权访问");
         return rows.get(0);
     }
     private ComputeNode get(Long id, boolean lock) {
+        if(configured(id))return configured.resolve(id);
+        return stored(id,lock);
+    }
+    private ComputeNode stored(Long id, boolean lock) {
         List<ComputeNode> rows = jdbc.query("SELECT * FROM vls_compute_node WHERE (tenant_id=?" + (lock ? "" : " OR resource_scope='PLATFORM'") + ") AND id=?" + (lock ? " FOR UPDATE" : ""), mapper(), tenant(), id);
         if (rows.isEmpty()) throw new ServiceException("算力实例不存在或无权访问");
         return rows.get(0);
@@ -135,8 +156,11 @@ public class ComputeNodeService {
         if (serverRows(node).stream().anyMatch(n -> n.getPowerOperationId() != null))
             throw new ServiceException("服务器开关机操作尚未确认，不能调度 GPU 训练");
         if (!ComputeAvailability.ready(node, System.currentTimeMillis())) throw new ServiceException("算力状态已过期或未就绪，请刷新并检查连接；关机实例请先到算力市场开机");
-        if ("PLATFORM".equals(node.getResourceScope()) && !"FREE".equals(node.getBillingType()))
-            throw new ServiceException("收费算力尚未接入积分结算，暂不能启动训练");
+        if ("PLATFORM".equals(node.getResourceScope()) && !"FREE".equals(node.getBillingType())) {
+            ComputePaidRunService paid=paidRuns==null?null:paidRuns.getIfAvailable();
+            if(paid==null)throw new ServiceException("付费开机服务暂不可用");
+            paid.requireTraining(node);
+        }
         try {
             JsonNode check = json.readTree(node.getProbeJson() == null ? "{}" : node.getProbeJson());
             if (check.path("contractVersion").asInt() != 1 || !check.path("ready").asBoolean())
@@ -147,7 +171,9 @@ public class ComputeNodeService {
 
     @Transactional(rollbackFor = Exception.class)
     public ComputeNode save(Long id, ComputeRequests.Node request) {
+        requireMutable(id);
         String host = request.getHost().trim().toLowerCase(Locale.ROOT);
+        if(configured!=null)configured.requireUnconfiguredEndpoint(host,request.getPort());
         if (!host.matches("[a-z0-9][a-z0-9.-]{0,252}") || host.contains("..")) throw new ServiceException("SSH 地址仅填写主机名或 IPv4 地址");
         validatePath(request.getPythonPath()); validatePath(request.getWorkDir());
         if ("/".equals(request.getWorkDir())) throw new ServiceException("请使用专用工作目录");
@@ -223,6 +249,7 @@ public class ComputeNodeService {
     }
 
     public ComputeNode probe(Long id) {
+        requireMutable(id);
         ComputeNode node = get(id, true);
         requireManagement(node);
         if (node.getPublicInstanceKey()!=null) publicInventory().requireEditable(node);
@@ -250,6 +277,7 @@ public class ComputeNodeService {
             details = json.writeValueAsString(result);
             if (result.path("contractVersion").asInt() == 1 && result.path("ready").asBoolean()) state = "READY";
         } catch (Exception e) { details = "{\"message\":\"无法完成环境检查，请先按接入指南初始化实例，并核对 SSH 和初始化脚本输出的 Python 路径\"}"; }
+        if(node.isConfigurationManaged())return configured.recordProbe(node,state,details,key);
         // A probe from an older edit must never mark a different connection ready.
         return jdbc.update("UPDATE vls_compute_node SET probe_state=?,probe_json=?,host_key=?,probe_time=NOW(),power_state=IF(?='READY','RUNNING',power_state),power_checked_at=IF(?='READY',NOW(),power_checked_at) WHERE tenant_id=? AND id=? AND host=? AND port=? AND username=? AND auth_mode=? AND password_cipher <=> ? AND python_path=? AND work_dir=? AND gpu_index=? AND power_operation_id IS NULL AND lifecycle_revision=? AND resource_scope=? AND enabled=? AND management_owner_subject <=> ?",
             state, details, key, state, state, node.getTenantId(), node.getId(), node.getHost(), node.getPort(), node.getUsername(), node.getAuthMode(), node.getPasswordCipher(), node.getPythonPath(), node.getWorkDir(), node.getGpuIndex(), node.getLifecycleRevision(), node.getResourceScope(), node.isEnabled(),node.getManagementOwnerSubject()) == 1;
@@ -257,6 +285,16 @@ public class ComputeNodeService {
 
     @Transactional(rollbackFor = Exception.class)
     public void delete(Long id) {
+        if(configured!=null)configured.requireRemovableAlias(id);
+        if(configured(id)) {
+            if(configured.canonical(id))throw new ServiceException("配置算力不能从页面删除",403);
+            ComputeNode legacy=stored(id,true); ownership().requireManagement(legacy);
+            configured.replaces(legacy); configured.resolve(id);
+            assertNoActiveJobs(id);
+            if(sharedQueue!=null)sharedQueue.assertHostIdle(ssh,configured.resolve(id));
+            jdbc.update("DELETE FROM vls_compute_node WHERE tenant_id=? AND id=?",tenant(),id);
+            return;
+        }
         lockServer(id); requireManagement(get(id, true)); assertIdle(id);
         jdbc.update("DELETE FROM vls_compute_node WHERE tenant_id=? AND id=?", tenant(), id);
     }
@@ -269,11 +307,18 @@ public class ComputeNodeService {
             throw new ServiceException("服务器开关机结果尚未确认，不能修改或移除");
     }
     void assertNoActiveJobs(Long id) {
+        if(configured(id)) {
+            List<Long> ids=queueIds(id);
+            if(!jdbc.queryForList("SELECT id FROM vls_cloud_training_job WHERE node_id IN ("+ConfiguredComputeRegistry.placeholders(ids.size())+") AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED') FOR UPDATE",String.class,ids.toArray()).isEmpty())
+                throw new ServiceException("该配置算力仍有排队、运行或回存任务，请结束后再移除旧记录");
+            return;
+        }
         // A locking current read sees jobs committed while we waited for the server lock, even at RR.
         if (!jdbc.queryForList("SELECT j.id FROM vls_cloud_training_job j JOIN vls_compute_node n ON n.id=j.node_id JOIN vls_compute_node target ON target.id=? WHERE (n.id=target.id OR (target.public_instance_key IS NOT NULL AND (n.public_instance_key=target.public_instance_key OR j.public_instance_key=target.public_instance_key)) OR (target.public_instance_key IS NULL AND n.public_instance_key IS NULL AND ((n.host=target.host AND n.port=target.port) OR (target.server_group IS NOT NULL AND target.server_group<>'' AND n.server_group=target.server_group AND n.tenant_id=target.tenant_id) OR (target.provider_instance_id IS NOT NULL AND target.provider_instance_id<>'' AND n.provider=target.provider AND n.provider_instance_id=target.provider_instance_id)))) AND j.job_state NOT IN ('COMPLETED','FAILED','CANCELLED') FOR UPDATE", id).isEmpty())
             throw new ServiceException("实例仍有排队、运行或回存任务，请结束后再修改或移除");
     }
     ComputeNode lockServer(Long id) {
+        if(configured(id))return configured.resolve(id);
         ComputeNode node = get(id);
         List<ComputeNode> rows = serverRows(node);
         ComputeNode locked = rows.stream().filter(n -> id.equals(n.getId())).findFirst().orElseThrow(() -> new ServiceException("实例已移除，请刷新"));
@@ -292,7 +337,7 @@ public class ComputeNodeService {
         Object[] result = java.util.Arrays.copyOf(values, values.length + 9);
         System.arraycopy(serverArgs(n), 0, result, values.length, 9); return result;
     }
-    List<ComputeNode> serverRows(ComputeNode node) { return jdbc.query("SELECT * FROM vls_compute_node WHERE " + SERVER_WHERE + " ORDER BY id FOR UPDATE", mapper(), serverArgs(node)); }
+    List<ComputeNode> serverRows(ComputeNode node) { return node.isConfigurationManaged()?java.util.Collections.singletonList(node):jdbc.query("SELECT * FROM vls_compute_node WHERE " + SERVER_WHERE + " ORDER BY id FOR UPDATE", mapper(), serverArgs(node)); }
     public static void validatePath(String path) {
         if (path == null || !path.matches("/[A-Za-z0-9_./-]+") || path.contains("..") || path.contains("//")) throw new ServiceException("请填写不含空格和特殊字符的 Linux 绝对路径");
     }

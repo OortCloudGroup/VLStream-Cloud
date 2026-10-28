@@ -8,6 +8,10 @@ import lombok.ToString;
 
 @Data
 public class ComputeNode {
+    private boolean configurationManaged;
+    private boolean configurationReplaced;
+    private boolean configurationMigrationPending;
+    private String configurationCode;
     private String schedulingMode = "INSTANCE_EXCLUSIVE";
     @JsonSerialize(using = ToStringSerializer.class) private Long id;
     @JsonIgnore private String tenantId;

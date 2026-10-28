@@ -31,6 +31,7 @@ public class ComputeBillingCoordinator {
     public void tick(String usageId, BillingLifecycleGateway lifecycle) {
         if (!properties.isEnabled()) return;
         try {
+            if(jdbc.queryForList("SELECT id FROM vls_compute_usage WHERE id=? AND billing_start_at IS NOT NULL",usageId).isEmpty())return;
             BillingLifecycleGateway.Observation observation = lifecycle.observe(usageId);
             if ("RUNNING".equals(observation.snapshot.power)) settlements.recordRunningObservation(usageId, observation.observedAt);
             else if ("STOPPED".equals(observation.snapshot.power)) settlements.confirmPhysicalStop(usageId, observation.observedAt);

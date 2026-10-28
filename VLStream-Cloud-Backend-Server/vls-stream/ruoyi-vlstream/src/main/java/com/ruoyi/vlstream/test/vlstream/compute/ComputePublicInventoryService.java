@@ -104,10 +104,22 @@ public class ComputePublicInventoryService {
 
     public String claim(ComputeNode node) {
         ComputePlatformAuthorization.Context proof = identity();
+        return claim(node,proof,false);
+    }
+
+    /** Backend paid-run transaction only; no public claim endpoint can opt into this path. */
+    String claimPaid(ComputeNode node,ComputePlatformAuthorization.Context proof) {
+        ComputePlatformAuthorization.Context current=identity();
+        if(!Objects.equals(current.getPlatformUserId(),proof.getPlatformUserId())||!Objects.equals(current.getVlsTenantId(),proof.getVlsTenantId())
+            ||!Objects.equals(current.getVlsUserId(),proof.getVlsUserId()))throw new ServiceException("付款身份已变化");
+        return claim(node,current,true);
+    }
+
+    private String claim(ComputeNode node,ComputePlatformAuthorization.Context proof,boolean paid) {
         if (!"PLATFORM".equals(node.getResourceScope()) || !node.isEnabled()) throw new ServiceException("公共算力已撤下或停用");
-        if (!"FREE".equals(node.getBillingType())) throw new ServiceException("收费租用尚未接通个人余额与资金保护，不能占用收费实例");
+        if (!(paid?"POINTS":"FREE").equals(node.getBillingType())) throw new ServiceException("此入口不接受当前计费类型");
         List<ComputeNode> members=jdbc.query("SELECT * FROM vls_compute_node WHERE public_instance_key=? ORDER BY id FOR UPDATE",new BeanPropertyRowMapper<>(ComputeNode.class),node.getPublicInstanceKey());
-        if (members.stream().anyMatch(n->!"FREE".equals(n.getBillingType())))
+        if (members.stream().anyMatch(n->!(paid?"POINTS":"FREE").equals(n.getBillingType())))
             throw new ServiceException("整实例含收费供给，资金保护未接通，不能通过免费GPU绕过");
         Instance row = read(node,true);
         if (members.stream().anyMatch(n->n.getPowerOperationId()!=null || "CHECKING".equals(n.getProbeState())))
@@ -143,6 +155,8 @@ public class ComputePublicInventoryService {
 
     public String release(ComputeNode node) {
         Instance row = requireOwner(node);
+        if("POINTS".equals(node.getBillingType())&&!jdbc.queryForList("SELECT run_id FROM vls_compute_paid_run WHERE active_instance_key=? FOR UPDATE",row.getInstanceKey()).isEmpty())
+            throw new ServiceException("付费开机、计费或余额释放尚未完成，请先停止并等待对账");
         if (!jdbc.queryForList("SELECT id FROM vls_compute_node WHERE public_instance_key=? AND (power_operation_id IS NOT NULL OR probe_state='CHECKING') ORDER BY id FOR UPDATE",Long.class,node.getPublicInstanceKey()).isEmpty())
             throw new ServiceException("实例仍有启停或环境检查操作，不能解除占用");
         List<String> active = jdbc.queryForList("SELECT j.id FROM vls_cloud_training_job j JOIN vls_compute_node n ON n.id=j.node_id WHERE (j.public_instance_key=? OR n.public_instance_key=?) AND j.job_state NOT IN ('COMPLETED','FAILED','CANCELLED') FOR UPDATE",String.class,row.getInstanceKey(),row.getInstanceKey());

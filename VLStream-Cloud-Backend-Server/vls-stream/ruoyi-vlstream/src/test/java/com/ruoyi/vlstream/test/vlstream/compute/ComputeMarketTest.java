@@ -119,7 +119,7 @@ class ComputeMarketTest {
         when(provider.status(node)).thenReturn(new ComputePowerProvider.Snapshot("FAILED", "UNAVAILABLE", "GPU 无库存"));
         new ComputePowerWorker(jdbc).poll(node, provider);
         verify(provider).submit(node, "start", "op");
-        verify(jdbc).update(contains("power_operation_id=IF"), eq("FAILED"), eq("UNAVAILABLE"), isNull(), isNull(), isNull(), isNull(), eq("GPU 无库存"), eq(true), eq(1L), eq("op"));
+        verify(jdbc).update(contains("power_operation_id=CASE WHEN"), eq("FAILED"), eq("UNAVAILABLE"), isNull(), isNull(), isNull(), isNull(), eq("GPU 无库存"), eq(true), eq(1L), eq("op"));
     }
     @Test void submittedOperationIsPolledWithoutDuplicateSubmission() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class); ComputePowerProvider provider = mock(ComputePowerProvider.class);
@@ -127,7 +127,7 @@ class ComputeMarketTest {
         when(provider.status(node)).thenReturn(new ComputePowerProvider.Snapshot("UNKNOWN", "UNKNOWN", "查询失败"));
         new ComputePowerWorker(jdbc).poll(node, provider);
         verify(provider, never()).submit(any(), anyString(), anyString());
-        verify(jdbc).update(contains("power_operation_id=IF"), eq("STARTING"), eq("UNKNOWN"), isNull(), isNull(), isNull(), isNull(), eq("查询失败"), eq(false), eq(1L), eq("op"));
+        verify(jdbc).update(contains("power_operation_id=CASE WHEN"), eq("STARTING"), eq("UNKNOWN"), isNull(), isNull(), isNull(), isNull(), eq("查询失败"), eq(false), eq(1L), eq("op"));
     }
     @Test void onlyDocumentedNoStockCodesBecomeUnavailableNotSaleHintsOrUnrelatedErrors() {
         assertEquals(ComputeProviderException.Kind.NO_STOCK, ComputeProviderException.aliyunKind("OperationDenied.NoStock"));
@@ -137,6 +137,6 @@ class ComputeMarketTest {
         JdbcTemplate jdbc = mock(JdbcTemplate.class); ComputeNode node = ready(); node.setPowerOperationId("op");
         ComputeProviderException error = new ComputeProviderException(ComputeProviderException.Kind.NO_STOCK);
         new ComputePowerWorker(jdbc).recordFailure(node, error);
-        verify(jdbc).update(contains("power_operation_id=IF"), eq("UNAVAILABLE"), eq(error.getMessage()), eq(true), eq(1L), eq("op"));
+        verify(jdbc).update(contains("power_operation_id=CASE WHEN"), eq("UNAVAILABLE"), eq(error.getMessage()), eq(true), eq(1L), eq("op"));
     }
 }

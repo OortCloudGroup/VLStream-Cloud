@@ -70,7 +70,7 @@ public class ComputePowerWorker {
         String message = done ? snapshot.message : expired
             ? "操作超过确认时限，继续只读查询；未再次启停。管理员可查询厂商终态后恢复本地挂起记录" : snapshot.message;
         withServerLock(node, () -> {
-            int changed = jdbc.update("UPDATE vls_compute_node SET power_state=?,capacity_state=?,capacity_source='PROVIDER_API',capacity_checked_at=NOW(),power_checked_at=NOW(),provider_gpu_amount=?,provider_locked=?,actual_stopped_mode=?,provider_charge_type=?,lifecycle_message=?,power_operation_id=IF(?,NULL,power_operation_id) WHERE id=? AND power_operation_id=?",
+            int changed = jdbc.update("UPDATE vls_compute_node SET power_state=?,capacity_state=?,capacity_source='PROVIDER_API',capacity_checked_at=NOW(),power_checked_at=NOW(),provider_gpu_amount=?,provider_locked=?,actual_stopped_mode=?,provider_charge_type=?,lifecycle_message=?,power_operation_id=CASE WHEN ? THEN NULL ELSE power_operation_id END WHERE id=? AND power_operation_id=?",
                 state, snapshot.capacity, snapshot.gpuAmount, snapshot.locked, snapshot.stoppedMode, snapshot.chargeType, message, done, node.getId(), node.getPowerOperationId());
             if (changed > 0) {
                 jdbc.update("UPDATE vls_compute_node SET provider_gpu_amount=?,provider_locked=?,actual_stopped_mode=?,provider_charge_type=? WHERE " + ComputeNodeService.SERVER_WHERE,
@@ -90,7 +90,7 @@ public class ComputePowerWorker {
     void recordFailure(ComputeNode node, ComputeProviderException exception) {
         boolean known = exception.getKind() != ComputeProviderException.Kind.UNKNOWN;
         withServerLock(node, () -> {
-            int changed = jdbc.update("UPDATE vls_compute_node SET power_state='UNKNOWN',capacity_state=?,capacity_source='PROVIDER_API',capacity_checked_at=NOW(),probe_state='UNTESTED',probe_time=NULL,lifecycle_message=?,power_operation_id=IF(?,NULL,power_operation_id) WHERE id=? AND power_operation_id=?",
+            int changed = jdbc.update("UPDATE vls_compute_node SET power_state='UNKNOWN',capacity_state=?,capacity_source='PROVIDER_API',capacity_checked_at=NOW(),probe_state='UNTESTED',probe_time=NULL,lifecycle_message=?,power_operation_id=CASE WHEN ? THEN NULL ELSE power_operation_id END WHERE id=? AND power_operation_id=?",
                 exception.getKind() == ComputeProviderException.Kind.NO_STOCK ? "UNAVAILABLE" : "UNKNOWN", exception.getMessage(), known, node.getId(), node.getPowerOperationId());
             if (changed > 0) {
                 resetServer(node, "UNKNOWN");

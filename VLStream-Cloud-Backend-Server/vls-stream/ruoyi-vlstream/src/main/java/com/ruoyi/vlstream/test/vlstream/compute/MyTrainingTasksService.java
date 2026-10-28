@@ -17,7 +17,7 @@ public class MyTrainingTasksService {
     private ComputePublicTaskAccess publicAccess;
     private static final Set<String> STATES = new HashSet<>(Arrays.asList("PENDING", "QUEUED", "PREPARING", "RUNNING", "ARCHIVING", "COMPLETED", "FAILED", "CANCELLED", "STOPPED"));
     private static final String BASE = "SELECT CAST(t.id AS CHAR) AS id,t.task_name AS taskName,t.progress,DATE_FORMAT(t.create_time,'%Y-%m-%d %H:%i:%s') AS createTime," +
-        "CASE WHEN j.id IS NOT NULL THEN COALESCE(n.name,'已移除线上节点') ELSE '默认算力/历史任务' END AS computeName," +
+        "CASE WHEN j.id IS NOT NULL THEN COALESCE(JSON_UNQUOTE(JSON_EXTRACT(IF(JSON_VALID(t.config_params),t.config_params,'{}'),'$.computeNodeName')),n.name,'已移除线上节点') ELSE '默认算力/历史任务' END AS computeName," +
         "CASE WHEN j.id IS NOT NULL THEN j.job_state WHEN t.train_status='completed' THEN 'COMPLETED' WHEN t.train_status='failed' THEN 'FAILED' WHEN t.train_status IN ('stop','stopped','cancelled') THEN 'STOPPED' WHEN c.instance_status='queued' THEN 'QUEUED' WHEN c.instance_status='starting' THEN 'PREPARING' WHEN t.train_status='training' THEN 'RUNNING' ELSE 'PENDING' END AS executionState " +
         "FROM vls_algorithm_training t LEFT JOIN vls_cloud_training_job j ON j.tenant_id=t.tenant_id AND j.training_id=t.id AND j.id=JSON_UNQUOTE(JSON_EXTRACT(IF(JSON_VALID(t.config_params),t.config_params,'{}'),'$.cloudJobId')) " +
         "LEFT JOIN vls_compute_node n ON n.id=j.node_id LEFT JOIN vls_container_instance c ON c.tenant_id=t.tenant_id AND c.training_task_id=t.id AND c.id=(SELECT MAX(c2.id) FROM vls_container_instance c2 WHERE c2.tenant_id=t.tenant_id AND c2.training_task_id=t.id) " +

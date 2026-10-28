@@ -81,6 +81,7 @@ public class CloudTrainingService {
         if(companyShared)try {
             Map<String,Object> configured=json.readValue(durableOptions,new com.fasterxml.jackson.core.type.TypeReference<Map<String,Object>>(){});
             configured.put("sharedQueue",sharedQueue.configuration(node,jobId,taskOwner));durableOptions=json.writeValueAsString(configured);
+            if(node.isConfigurationManaged()) { configured.put("configuredResource",nodes.configurationSnapshot(node));durableOptions=json.writeValueAsString(configured); }
         } catch(java.io.IOException error){throw new ServiceException("共享GPU任务快照保存失败");}
         jdbc.update("INSERT INTO vls_cloud_training_job(id,tenant_id,training_id,node_id,container_record_id,dataset_id,version_id,annotation_type,snapshot_json,base_model,options_json,run_dir,public_instance_key,public_claim_id,public_owner_subject) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             jobId, tenant, trainingId, node.getId(), instance.getId(), request.getDatasetId(), version.getId(), type.getCode(), version.getSnapshotJson(), baseModel, durableOptions, runDir,

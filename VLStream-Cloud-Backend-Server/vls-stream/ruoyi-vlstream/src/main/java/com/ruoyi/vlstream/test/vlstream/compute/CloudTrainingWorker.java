@@ -59,25 +59,31 @@ public class CloudTrainingWorker {
         catch (RuntimeException e) { log.debug("Cloud training migrations not available"); return; }
         for (Long id : ids) {
             if (inFlight.size() >= 2) break;
-            if (inFlight.add(id)) executor.submit(() -> { try { tick(id); } finally { inFlight.remove(id); } });
+            Long resolved=nodes.queueId(id);
+            Long queueId=resolved==null?id:resolved;
+            if (inFlight.add(queueId)) executor.submit(() -> { try { tick(queueId); } finally { inFlight.remove(queueId); } });
         }
     }
     @PreDestroy public void shutdown() { executor.shutdownNow(); }
 
     void tick(Long nodeId) {
         String previous = TenantContextHolder.getTenantId();
-        String lock = "vls-cloud-node-" + nodeId;
+        List<Long> queueIds=nodes.queueIds(nodeId);
+        if(queueIds==null || queueIds.isEmpty())queueIds=Collections.singletonList(nodeId);
+        String queueFilter="node_id IN ("+ConfiguredComputeRegistry.placeholders(queueIds.size())+")";
+        String lock = "vls-cloud-node-" + nodes.queueId(nodeId);
         try (Connection db = Objects.requireNonNull(jdbc.getDataSource()).getConnection()) {
             if (!lock(db, "SELECT GET_LOCK(?,0)", lock)) return;
             try {
-                List<CloudTrainingJob> jobs = jdbc.query("SELECT * FROM vls_cloud_training_job WHERE node_id=? AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED') ORDER BY create_time,container_record_id LIMIT 1", new BeanPropertyRowMapper<>(CloudTrainingJob.class), nodeId);
+                List<CloudTrainingJob> jobs = jdbc.query("SELECT * FROM vls_cloud_training_job WHERE "+queueFilter+" AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED') ORDER BY create_time,container_record_id LIMIT 1", new BeanPropertyRowMapper<>(CloudTrainingJob.class), queueIds.toArray());
                 if (jobs.isEmpty()) return;
                 CloudTrainingJob job = jobs.get(0);
                 TenantContextHolder.setTenantId(job.getTenantId());
                 try {
                     if (sharedQueue!=null && sharedQueue.isSharedJob(job)) {
                         ComputeNode node=nodes.get(nodeId);
-                        List<CloudTrainingJob> queue=jdbc.query("SELECT id,tenant_id,node_id,public_owner_subject,options_json,run_dir,job_state,cancel_requested FROM vls_cloud_training_job WHERE node_id=? AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED') ORDER BY create_time,container_record_id",new BeanPropertyRowMapper<>(CloudTrainingJob.class),nodeId);
+                        List<CloudTrainingJob> queue=jdbc.query("SELECT id,tenant_id,node_id,public_owner_subject,options_json,run_dir,job_state,cancel_requested FROM vls_cloud_training_job WHERE "+queueFilter+" AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED') ORDER BY create_time,container_record_id",new BeanPropertyRowMapper<>(CloudTrainingJob.class),queueIds.toArray());
+                        for(CloudTrainingJob queued:queue)nodes.verifyJob(queued,node);
                         try(ComputeSsh.Connection connection=ssh.open(node)) { sharedQueue.register(connection,node,queue); }
                     }
                     process(job);
@@ -106,13 +112,14 @@ public class CloudTrainingWorker {
 
     private void process(CloudTrainingJob job) throws Exception {
         ComputeNode node = nodes.get(job.getNodeId());
+        nodes.verifyJob(job,node);
         boolean company=sharedQueue!=null && sharedQueue.isSharedJob(job);
         if(nodes.isCompanyShared(node)!=company)throw new IOException("节点调度类型与本轮冻结配置不一致，不能切换执行路径");
         if (job.isCancelRequested() && "QUEUED".equals(job.getJobState())) {
             if(company)try(ComputeSsh.Connection connection=ssh.open(node)){sharedQueue.release(connection,node,job,json.readTree("{\"state\":\"CANCELLED\"}"),null);}
             finish(job, "CANCELLED", "训练已取消", null); return;
         }
-        if (!node.isEnabled()) return;
+        if (!node.isEnabled() && (!node.isConfigurationManaged() || "QUEUED".equals(job.getJobState()) && !cancelled(job))) return;
         if ("QUEUED".equals(job.getJobState())) phase(job, "PREPARING", "正在上传固定版本的数据集", 0, 0);
         if ("PREPARING".equals(job.getJobState()) && !cancelled(job)) persistDatasetReference(job, datasets.ensureArtifact(job));
         try (ComputeSsh.Connection connection = ssh.open(node)) {
@@ -219,9 +226,9 @@ public class CloudTrainingWorker {
         new TransactionTemplate(transactions).execute(tx -> {
             boolean success = "COMPLETED".equals(state);
             String trainingState = success ? "completed" : "CANCELLED".equals(state) ? "stop" : "failed";
-            jdbc.update("UPDATE vls_cloud_training_job SET job_state=?,message=?,progress=IF(?='COMPLETED',100,progress),update_time=NOW() WHERE tenant_id=? AND id=?", state, message, state, job.getTenantId(), job.getId());
+            jdbc.update("UPDATE vls_cloud_training_job SET job_state=?,message=?,progress=CASE WHEN ?='COMPLETED' THEN 100 ELSE progress END,update_time=NOW() WHERE tenant_id=? AND id=?", state, message, state, job.getTenantId(), job.getId());
             jdbc.update("UPDATE vls_container_instance SET instance_status=?,stop_time=NOW(),error_message=? WHERE tenant_id=? AND id=?", success ? "completed" : "CANCELLED".equals(state) ? "cancelled" : "error", success ? null : message, job.getTenantId(), job.getContainerRecordId());
-            jdbc.update("UPDATE vls_algorithm_training SET train_status=?,model_output_path=?,progress=IF(?='completed',100,progress),error_message=?,end_time=NOW() WHERE tenant_id=? AND id=?", trainingState, model, trainingState, success ? null : message, job.getTenantId(), job.getTrainingId());
+            jdbc.update("UPDATE vls_algorithm_training SET train_status=?,model_output_path=?,progress=CASE WHEN ?='completed' THEN 100 ELSE progress END,error_message=?,end_time=NOW() WHERE tenant_id=? AND id=?", trainingState, model, trainingState, success ? null : message, job.getTenantId(), job.getTrainingId());
             return null;
         });
     }

@@ -59,6 +59,22 @@ function fixture(nodes = [gpu]) {
 }
 const tests = []
 const test = (name, fn) => tests.push([name, fn])
+
+test('configured company GPU IDs survive refresh and submit without a database node', async () => {
+  const device = { ...gpu, id: '-173' }
+  const f = fixture([device]); f.api.computeNodeId.value = '-173'
+  await f.api.loadComputeNodes(); await f.api.handleStartTraining()
+  assert.equal(f.api.computeNodeId.value, '-173')
+  assert.equal(f.calls.starts[0][1].nodeId, '-173'); assert.equal(f.calls.auth, 0)
+  assert.equal(f.api.normalizeComputeNodeId(-99), '-99')
+  assert.equal(f.api.normalizeComputeNodeId('../173'), '')
+})
+test('saved configured GPU IDs restore as strings from historical training configuration', async () => {
+  const device = { ...gpu, id: '-99' }
+  const f = fixture([device]); await f.api.restoreTrainingConfig({ configParams: JSON.stringify({ computeNodeId: '-99', modelSource: 'preset' }) })
+  assert.equal(f.api.computeNodeId.value, '-99'); assert.equal(f.api.selectedCompute.value.id, '-99')
+  assert.equal(f.calls.starts.length, 0)
+})
 test('selector contains no virtual default resource or legacy submission', () => {
   assert.doesNotMatch(source, /平台默认 GPU 服务器|startTrainingWithParams|当前选择默认 GPU|Intel \(R\) Xeon/)
   assert.match(source, /:loading="computeNodesLoading"/)

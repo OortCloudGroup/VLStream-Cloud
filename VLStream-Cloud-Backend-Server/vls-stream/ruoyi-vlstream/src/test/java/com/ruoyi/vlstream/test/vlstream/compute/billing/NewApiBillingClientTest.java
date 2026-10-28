@@ -225,6 +225,36 @@ class NewApiBillingClientTest {
         assertEquals("REFUND_EXCEEDED", client.refund("2", "new-refund-key", body).errorCode);
     }
 
+    @Test void refundLedgerAndAmountsStayStringsAboveJavascriptPrecisionAndNumericInputIsNotRewritten() {
+        WriteFixture client = new WriteFixture();
+        String body = RefundContracts.request("test-only-merchant", "refund-wide", "9007199254740993",
+            "9223372036854775807", "OVERCHARGED").toString();
+        client.response = "{\"status\":\"SUCCEEDED\",\"operation_id\":\"10\",\"refund_id\":\"20\",\"ledger_entry_id\":\"30\","
+            + "\"refunded_quota\":\"9223372036854775807\",\"available_quota\":\"0\",\"balance_version\":11}";
+        assertEquals(ExternalBillingGateway.Status.SUCCEEDED, client.refund("9007199254740993", "refund-wide-key", body).status);
+        assertEquals(body, client.original);
+        assertTrue(body.contains("\"original_ledger_entry_id\":\"9007199254740993\""));
+        assertTrue(body.contains("\"refund_quota\":\"9223372036854775807\""));
+        String numericId = body.replace("\"original_ledger_entry_id\":\"9007199254740993\"", "\"original_ledger_entry_id\":9007199254740993");
+        String numericQuota = body.replace("\"refund_quota\":\"9223372036854775807\"", "\"refund_quota\":9223372036854775807");
+        assertThrows(IllegalArgumentException.class, () -> client.refund("9007199254740993", "refund-wide-key", numericId));
+        assertThrows(IllegalArgumentException.class, () -> client.refund("9007199254740993", "refund-wide-key", numericQuota));
+        assertEquals(1, client.writes);
+    }
+
+    @Test void missingZeroOverflowOrFloatingReceiptIdsRemainUnknownWithoutResendingCapture() {
+        WriteFixture client = new WriteFixture();
+        for (String field : new String[]{"operation_id", "charge_id", "ledger_entry_id"}) {
+            for (String value : new String[]{"0", "9223372036854775808", "1.5"}) {
+                client.response = captureReceipt().replaceAll("\\\"" + field + "\\\":\\\"[0-9]+\\\"", "\"" + field + "\":\"" + value + "\"");
+                assertEquals(ExternalBillingGateway.Status.UNKNOWN, client.capture("original-capture-key", captureBody()).status);
+            }
+        }
+        client.response = captureReceipt().replace("\"operation_id\":\"1\",", "");
+        assertEquals(ExternalBillingGateway.Status.UNKNOWN, client.capture("original-capture-key", captureBody()).status);
+        assertEquals(10, client.writes); assertEquals(0, client.reads);
+    }
+
     @Test void loopbackCapturePostsExactBodyAndIdempotencyHeaderWithoutReleaseIntermediate() throws Exception {
         com.sun.net.httpserver.HttpServer server = com.sun.net.httpserver.HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);
         java.util.List<String> bodies = new java.util.ArrayList<>(), keys = new java.util.ArrayList<>();

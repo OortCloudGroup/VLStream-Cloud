@@ -1134,7 +1134,7 @@ import { requireComputePlatformAuthorization, isComputeAuthorizationCurrent, bin
 
 // form
 const router = useRouter()
-const normalizeComputeNodeId = value => typeof value === 'string' && /^\d+$/.test(value) ? value : Number.isSafeInteger(value) && value > 0 ? String(value) : ''
+const normalizeComputeNodeId = value => typeof value === 'string' && /^(?:\d+|-[1-9]\d*)$/.test(value) ? value : Number.isSafeInteger(value) && value !== 0 ? String(value) : ''
 const computeNodeId = ref('')
 const cloudModelSource = ref('preset')
 const computeNodes = ref([])
@@ -1191,7 +1191,7 @@ const computeLabel = node => {
   parts.push(`GPU ${node.gpuIndex}`)
   if (node.requiresClaim) parts.push(uiText(computeClaimLabels[node.claimState] || '隔离'))
   if (node.stopped) parts.push(uiText(node.schedulingMode === 'SHARED_GPU_QUEUE' ? '请管理员检查共享环境' : '已关机，请先开机'))
-  else if (node.billingType === 'POINTS') parts.push(uiText('结算待接入'))
+  else if (node.billingType === 'POINTS') parts.push(uiText(node.schedulable ? '付费实例运行中' : '请先完成付费开机与环境检查'))
   else if (!node.schedulable && !node.canClaim) parts.push(uiText('暂不可训练'))
   return parts.join(' · ')
 }
@@ -1717,9 +1717,8 @@ const handleStartTraining = async () => {
       platformProof = await requireComputePlatformAuthorization(context => { saveComputeDraft(); bindComputeDraftToActor(context) })
       assertCurrent()
       if (!platformProof) return
-      // Authorization is a prerequisite, not a completed accounting contract.
-      ElMessage.warning(uiText('平台身份已校验，个人余额扣款、GPU计量与产物安全回存清理尚未接入，收费训练仍阻断；工作空间成本由平台承担'))
-      return
+      resource = await refreshResource()
+      if (!resource.paidAdmissionEnabled || !resource.schedulable) throw new Error(uiText('请先在算力市场完成本次付费开机与环境检查'))
     }
     if (!resource.schedulable) throw new Error(uiText('所选算力状态已变化或检查已过期，请刷新并检查后重试'))
     const original = currentTrainingItem.value?.originalData
@@ -1734,7 +1733,7 @@ const handleStartTraining = async () => {
     assertCurrent()
     // Recheck after dataset loading and confirmations; never replace the selected node.
     resource = await refreshResource()
-    if (!resource.schedulable || resource.billingType === 'POINTS') throw new Error(uiText('所选算力状态已变化或检查已过期，请刷新并检查后重试'))
+    if (!resource.schedulable || resource.billingType === 'POINTS' && !resource.paidAdmissionEnabled) throw new Error(uiText('所选算力状态已变化或检查已过期，请刷新并检查后重试'))
 
     appendLogLines(`[INFO] 准备启动训练任务 #${taskId}`)
     // appendLogLines(`[INFO] dataset: ${dataset.annotationName || dataset.label || params.datasetPath}`)

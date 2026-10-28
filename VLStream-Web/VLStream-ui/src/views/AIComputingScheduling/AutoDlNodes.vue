@@ -11,10 +11,12 @@
     </header>
     <el-alert v-if="managementError" class="management-notice" show-icon type="warning" :closable="false" :title="managementError" />
     <el-alert v-if="permissionError" class="management-notice" show-icon type="warning" :closable="false" :title="$tp('权限信息未就绪，请刷新重试')" />
-    <p class="management-intro">{{ $tp('接入你自行购买或搭建的 GPU 服务器；平台公共资源请前往算力市场。') }}</p>
+    <p class="management-intro">{{ $tp('接入你自行购买或搭建的 GPU 服务器；平台统一供给请在算力市场和训练配置中选择。移除旧自有记录前，须确认其已转为平台统一供给。') }}</p>
     <el-table :data="nodes" class="cloud-table" :empty-text="$tp(loading ? '加载中' : '暂无接入实例')">
       <el-table-column :label="$tp('实例')" min-width="210"><template #default="{ row }">
         <div class="instance-name">{{ row.name }}</div>
+        <div v-if="row.configurationMigrationPending" class="instance-meta">{{ $tp('旧记录身份尚未核对，暂不可移除') }}</div>
+        <div v-if="row.configurationReplaced" class="instance-meta">{{ $tp('已转为平台统一供给，可移除旧接入记录') }}</div>
         <div class="instance-meta">{{ $tp(providerLabels[row.provider] || row.provider) }}<span v-if="row.resourceScope === 'PLATFORM'"> · {{ $tp('平台供给') }}</span><span v-else-if="row.companyManaged"> · {{ $tp('公司算力') }}</span></div>
       </template></el-table-column>
       <el-table-column :label="$tp('SSH 地址')" min-width="180"><template #default="{ row }"><span class="connection-address">{{ row.host }}:{{ row.port }}</span></template></el-table-column>
@@ -24,7 +26,7 @@
         <div v-if="details(row).diskFreeGb != null" class="instance-meta">{{ $tp('可用磁盘') }} {{ details(row).diskFreeGb }} GB</div>
       </template></el-table-column>
       <el-table-column :label="$tp('使用状态')" width="100"><template #default="{ row }"><span class="enabled-state" :class="{ muted: !row.enabled }">{{ $tp(row.companyManaged ? '待配置' : row.enabled ? '已启用' : '已停用') }}</span></template></el-table-column>
-      <el-table-column :label="$tp('操作')" min-width="285"><template #default="{ row }"><el-button v-if="row.companyManaged" link type="primary" @click="companyConfigurationRow = row">{{ $tp('配置详情') }}</el-button><template v-else><div class="row-actions">
+      <el-table-column :label="$tp('操作')" min-width="285"><template #default="{ row }"><span v-if="row.configurationMigrationPending">{{ $tp('请管理员核对节点身份') }}</span><el-button v-else-if="row.configurationReplaced && canRemoveNode(row)" link type="danger" @click="remove(row)">{{ $tp('移除旧接入记录') }}</el-button><el-button v-else-if="row.companyManaged" link type="primary" @click="companyConfigurationRow = row">{{ $tp('配置详情') }}</el-button><template v-else-if="!row.configurationReplaced && !row.configurationManaged"><div class="row-actions">
         <el-button v-if="canEditNode(row)" link type="primary" :loading="probing === row.id" @click="probe(row)">{{ $tp('检查环境') }}</el-button>
         <el-button v-if="canEditNode(row)" link @click="edit(row)">{{ $tp('编辑') }}</el-button>
         <el-button v-if="row.probeJson" link @click="viewProbe(row)">{{ $tp('检查结果') }}</el-button>
@@ -136,9 +138,10 @@ const access = ref(null), permissionError = ref(false), capabilities = ref([]), 
 const providerLabels = { self: '自有服务器', autodl: 'AutoDL', aliyun: '阿里云 EGS' }
 const hasPermission = permission => hasComputePermission(access.value, permission)
 const ownNode = row => row?.managementOwnership === 'MINE' && row.selfServiceNode === true
-const canEditNode = row => Boolean(access.value) && (ownNode(row) || hasPermission('vls:compute:configure'))
+const canRemoveNode = row => Boolean(access.value) && !row?.configurationManaged && !row?.configurationMigrationPending && (ownNode(row) || hasPermission('vls:compute:configure'))
+const canEditNode = row => !row?.configurationReplaced && canRemoveNode(row)
 const canBindDeployment = computed(() => hasPermission('vls:compute:configure') && (access.value?.isAdmin === true || hasPermission('vls:compute:manage-all')))
-const canManageSupply = row => nodes.value.includes(row) && canManageComputeSupply(access.value, row)
+const canManageSupply = row => !row?.configurationMigrationPending && !row?.configurationReplaced && !row?.configurationManaged && nodes.value.includes(row) && canManageComputeSupply(access.value, row)
 const providerActions = row => computeProviderActions(row, Date.now() - capabilitiesCheckedAt.value < 60000 ? capabilities.value.find(item => item.id === row?.id) : null, access.value)
 const showAdvanced = row => canManageSupply(row) || providerActions(row).supported && (hasPermission('vls:compute:configure') || hasPermission('vls:compute:power'))
 let pageActive = true, advancedEpoch = 0
@@ -331,8 +334,8 @@ const save = async () => {
   } finally { saving.value = false }
 }
 const remove = async row => {
-  if (!canEditNode(row)) return
-  try { await ElMessageBox.confirm(uiText('移除此接入记录？服务器及其文件仍保留。'), uiText('移除实例'), { type: 'warning' }) } catch { return }
+  if (!canRemoveNode(row)) return
+  try { await ElMessageBox.confirm(uiText(row.configurationReplaced ? '移除旧接入记录？平台统一供给和历史任务仍保留；有排队、训练或回存任务时不能移除。' : '移除此接入记录？服务器及其文件仍保留。'), uiText('移除实例'), { type: 'warning' }) } catch { return }
   try { await (ownNode(row) ? deleteOwnComputeNode : deleteComputeNode)(row.id); await load() } catch (error) { ElMessage.error(managementFailure(error)) }
 }
 onMounted(() => { window.addEventListener('modelHubAuthChanged', managementIdentityChanged); window.addEventListener('storage', managementStorageChanged); load() })

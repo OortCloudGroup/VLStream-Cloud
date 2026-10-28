@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ComputePublicMarketService {
     private final JdbcTemplate jdbc;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ConfiguredComputeRegistry configured;
     static final String FILTER = " FROM vls_compute_node n WHERE n.resource_scope='PLATFORM' AND n.enabled=1";
     @Data
     public static class Offer {
@@ -44,14 +46,16 @@ public class ComputePublicMarketService {
     }
     public Page list(int page, int size) {
         if (page < 1 || page > 100 || size < 1 || size > 20) throw new IllegalArgumentException("Invalid pagination");
-        Long total = jdbc.queryForObject("SELECT COUNT(*)" + FILTER, Long.class);
+        String filter=FILTER;
+        if(configured!=null && !configured.allIds().isEmpty())filter+=" AND n.id NOT IN ("+configured.allIds().stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","))+")";
+        Long total = jdbc.queryForObject("SELECT COUNT(*)" + filter, Long.class);
         long now = System.currentTimeMillis();
         List<Offer> items = jdbc.query("SELECT n.name,n.gpu_model,n.billing_type,n.points_per_hour,n.scheduling_mode,"
             + "n.power_state,n.power_checked_at,n.probe_state,n.probe_time,n.capacity_state,n.capacity_checked_at,"
             + "n.provider_locked,n.power_operation_id,n.gpu_index,n.provider_gpu_amount,n.probe_json,"
             + "(SELECT p.public_state FROM vls_compute_public_instance p WHERE p.instance_key=n.public_instance_key) AS instance_state,"
             + "(SELECT p.workspace_dirty FROM vls_compute_public_instance p WHERE p.instance_key=n.public_instance_key) AS workspace_dirty"
-            + FILTER + " ORDER BY n.id LIMIT ? OFFSET ?", (rs, index) -> {
+            + filter + " ORDER BY n.id LIMIT ? OFFSET ?", (rs, index) -> {
                 Offer offer = new Offer();
                 offer.setName(publicText(rs.getString("name"), "GPU resource"));
                 offer.setGpuModel(publicText(rs.getString("gpu_model"), "GPU"));
@@ -78,7 +82,18 @@ public class ComputePublicMarketService {
                 offer.setAvailability(availability(offer, capacityBlocked, rs.getString("instance_state"), rs.getBoolean("workspace_dirty")));
                 return offer;
             }, size, (page - 1) * size);
-        return new Page(items, total == null ? 0 : total, page, size);
+        long databaseTotal=total==null?0:total;
+        List<Offer> configuration=new java.util.ArrayList<>();
+        if(configured!=null)for(ComputeNode node:configured.published()) {
+            Offer offer=new Offer();offer.setName(publicText(node.getName(),"GPU resource"));offer.setGpuModel(publicText(node.getGpuModel(),"GPU"));
+            offer.setBillingType("FREE");offer.setSchedulingMode(ComputeSharedQueueService.MODE);
+            offer.setPowerState(ComputeAvailability.fresh(node.getPowerCheckedAt(),now)?oneOf(node.getPowerState(),"RUNNING"):"UNKNOWN");
+            offer.setHealthState(ComputeAvailability.fresh(node.getProbeTime(),now)?oneOf(node.getProbeState(),"READY","ERROR"):"UNKNOWN");
+            offer.setAvailability(availability(offer,false,null,false));configuration.add(offer);
+        }
+        int offset=(int)Math.max(0,(long)(page-1)*size-databaseTotal);
+        if(items.size()<size && offset<configuration.size())items.addAll(configuration.subList(offset,Math.min(configuration.size(),offset+size-items.size())));
+        return new Page(items, databaseTotal+configuration.size(), page, size);
     }
     // Dated presentation only, never billing or a live supplier quote. Match trusted
     // persisted identity, not public names/specifications; do not expose that identity.

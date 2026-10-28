@@ -51,8 +51,11 @@ public class ComputeBillingLifecycleService implements BillingLifecycleGateway {
         ComputePowerProvider provider=provider(node);
         ComputePowerProvider.Snapshot result=provider.status(node);
         Instant now=Instant.now();transaction.execute(tx->{control(usageId);return null;});
+        if("STOPPED".equals(result.power)&&!ComputeBillingPolicy.computeStopConfirmed(node,result))
+            return new Observation(new ComputePowerProvider.Snapshot("UNKNOWN",result.capacity,"停机模式尚未证实停止计算收费"),now);
         return new Observation(result,now);
     }
+    ComputeNode controlledNode(String usageId){return control(usageId);}
     @Override public void requestSafeStop(String usageId) {
         if(!properties.isEnabled()||!properties.isSafetyStopEnabled())return;
         transaction.execute(tx->{

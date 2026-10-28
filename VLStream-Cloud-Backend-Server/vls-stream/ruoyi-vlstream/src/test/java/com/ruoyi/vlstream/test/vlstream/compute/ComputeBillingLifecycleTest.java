@@ -105,11 +105,19 @@ class ComputeBillingLifecycleTest {
         coordinator.scan();assertEquals(1,jdbc.queryForObject("SELECT cancel_requested FROM vls_cloud_training_job",Integer.class));assertEquals("CANCEL_REQUESTED",phase());
         assertNull(jdbc.queryForObject("SELECT billing_end_at FROM vls_compute_usage",java.sql.Timestamp.class));
         jdbc.update("UPDATE vls_cloud_training_job SET job_state='CANCELLED'");coordinator.scan();assertEquals("STOP_REQUESTED",phase());assertNotNull(jdbc.queryForObject("SELECT power_operation_id FROM vls_compute_node",String.class));
-        when(provider.status(any())).thenReturn(new ComputePowerProvider.Snapshot("STOPPED","UNKNOWN","TEST_ONLY_STOPPED"));coordinator.scan();
+        ComputePowerProvider.Snapshot stopped=new ComputePowerProvider.Snapshot("STOPPED","UNKNOWN","TEST_ONLY_STOPPED");
+        stopped.stoppedMode="StopCharging";stopped.chargeType="PostPaid";
+        when(provider.status(any())).thenReturn(stopped);coordinator.scan();
         assertEquals("STOP_CONFIRMED",phase());assertNotNull(jdbc.queryForObject("SELECT billing_end_at FROM vls_compute_usage",java.sql.Timestamp.class));
         assertEquals(1,jdbc.queryForObject("SELECT COUNT(*) FROM vls_compute_billing_slice WHERE is_tail=1",Integer.class));
         assertEquals("RETRY",jdbc.queryForObject("SELECT state FROM vls_compute_billing_reconciliation",String.class));
         assertEquals("OCCUPIED",claim.getPublicState());verify(provider,never()).submit(any(),anyString(),anyString());
         assertThrows(IllegalStateException.class,()->settlements.requirePaidAdmission("usage-test"));
+    }
+
+    @Test void plainStoppedWithoutEconomicalStopEvidenceCannotEndPaidMetering() {
+        when(provider.status(any())).thenReturn(new ComputePowerProvider.Snapshot("STOPPED","UNKNOWN","TEST_ONLY_WITHOUT_STOP_MODE"));
+        assertEquals("UNKNOWN",service.observe("usage-test").snapshot.power);
+        assertNotEquals("STOP_CONFIRMED",phase());
     }
 }

@@ -61,7 +61,7 @@ public class NewApiBillingClient implements ExternalBillingGateway {
         ExactQuota.integer(chargeId, true);
         JsonNode body = checkedWrite(originalKey, immutableBody);
         text(body, "merchant_refund_id");
-        exactId(body.get("original_ledger_entry_id"));
+        ExactQuota.integer(text(body, "original_ledger_entry_id"), true);
         ExactQuota.integer(text(body, "refund_quota"), true);
         text(body, "reason_code");
         if (body.size() != 5) throw new IllegalArgumentException("Unexpected refund request fields");

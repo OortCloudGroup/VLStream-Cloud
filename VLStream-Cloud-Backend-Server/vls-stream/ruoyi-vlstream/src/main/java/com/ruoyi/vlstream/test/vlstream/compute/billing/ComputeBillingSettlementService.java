@@ -41,11 +41,21 @@ public class ComputeBillingSettlementService {
 
     /** Bind only an existing, trusted, started usage. Does not create a grant, hold, wallet or cloud operation. */
     public void bind(String usageId, BillingPayer payer, BillingSnapshot snapshot) {
+        bind(usageId,payer,snapshot,false);
+    }
+
+    /** Pre-start binding for a committed RESERVED usage; no fabricated running timestamp. */
+    public void bindReserved(String usageId, BillingPayer payer, BillingSnapshot snapshot) {
+        if(!properties.isPaidAdmissionEnabled())throw new IllegalStateException("Paid admission disabled");
+        bind(usageId,payer,snapshot,true);
+    }
+
+    private void bind(String usageId, BillingPayer payer, BillingSnapshot snapshot, boolean reserved) {
         transactions.execute(tx -> {
             Map<String, Object> usage = usage(usageId);
             if (!payer.actorId.equals(usage.get("opening_user_id")) || !payer.tenantId.equals(usage.get("tenant_id"))
                 || !payer.platformSubject.equals(usage.get("payer_account_ref"))) throw new IllegalArgumentException("Usage payer binding mismatch");
-            if (usage.get("billing_start_at") == null) throw new IllegalArgumentException("Confirmed running usage required");
+            if (usage.get("billing_start_at") == null && !(reserved&&"RESERVED".equals(usage.get("state")))) throw new IllegalArgumentException("Confirmed running or reserved usage required");
             try {
                 if (!json.readTree(String.valueOf(usage.get("rate_snapshot"))).equals(json.readTree(snapshot.json).path("accepted_rate")))
                     throw new IllegalArgumentException("Accepted rate differs from usage snapshot");
@@ -59,7 +69,8 @@ public class ComputeBillingSettlementService {
                     throw new IllegalArgumentException("Immutable session binding conflict");
                 return null;
             }
-            long start = ((Timestamp) usage.get("billing_start_at")).getTime(); snapshot.requireInterval(start, Math.addExact(start, 1));
+            long start = usage.get("billing_start_at")==null?0:((Timestamp) usage.get("billing_start_at")).getTime();
+            if(start!=0)snapshot.requireInterval(start, Math.addExact(start, 1));
             // A legacy whole-period charge must never coexist with slices for the same usage.
             if (!jdbc.queryForList("SELECT charge_key FROM vls_compute_charge WHERE usage_id=?", usageId).isEmpty())
                 throw new IllegalArgumentException("Legacy intent requires reconciliation before slice billing");
@@ -106,6 +117,9 @@ public class ComputeBillingSettlementService {
             Map<String, Object> usage = usage(usageId);
             if (usage.get("billing_end_at") != null || !("RUNNING".equals(usage.get("state")) || "RECONCILE".equals(usage.get("state"))))
                 throw new IllegalArgumentException("Running observation cannot extend stopped/unconfirmed usage");
+            Timestamp started=(Timestamp)usage.get("billing_start_at");
+            if(started==null||observedAt.isBefore(started.toInstant()))throw new IllegalArgumentException("Confirmed start required");
+            jdbc.update("UPDATE vls_compute_billing_session SET metered_until_ms=?,last_running_ms=? WHERE usage_id=? AND metered_until_ms=0 AND last_running_ms=0",started.getTime(),started.getTime(),usageId);
             jdbc.update("UPDATE vls_compute_billing_session SET last_running_ms=? WHERE usage_id=? AND last_running_ms<?", observedAt.toEpochMilli(), usageId, observedAt.toEpochMilli());
             return null;
         });
@@ -178,8 +192,17 @@ public class ComputeBillingSettlementService {
         if (gateway == null || !gateway.supportsAtomicCapture()) throw new IllegalStateException("Paid billing requires verified atomic capture; disabled");
         Map<String, Object> session = jdbc.queryForMap("SELECT * FROM vls_compute_billing_session WHERE usage_id=?", usageId);
         if (session.get("risk_code") != null || number(session, "stop_requested") != 0) throw new IllegalStateException("Funding/authorization blocks new work");
-        // Frozen-fund and resource admission are not yet integrated; no fake can enable real paid starts.
-        throw new IllegalStateException("Paid resource admission remains closed pending hold and safety-stop integration");
+        if(!properties.isPaidAdmissionEnabled()||!properties.isSafetyStopEnabled()||session.get("control_snapshot")==null)
+            throw new IllegalStateException("Paid resource admission requires armed funding and safety-stop integration");
+        if(session.get("funding_hold_intent_id")==null||session.get("funding_hold_id")==null||session.get("funding_expires_at_ms")==null
+            ||number(session,"funding_expires_at_ms")<=System.currentTimeMillis()+properties.getHoldStopLeadSeconds()*1000L)
+            throw new IllegalStateException("Unexpired verified hold required");
+        List<Map<String,Object>> observations=jdbc.queryForList("SELECT * FROM vls_compute_funding_hold_observation WHERE hold_intent_id=?",session.get("funding_hold_intent_id"));
+        if(observations.size()!=1||!String.valueOf(session.get("funding_hold_id")).equals(String.valueOf(observations.get(0).get("hold_id")))
+            ||ExactQuota.integer(String.valueOf(observations.get(0).get("remaining_quota")),false).signum()<=0)
+            throw new IllegalStateException("Verified available held quota required");
+        if(System.currentTimeMillis()-number(observations.get(0),"observed_at_ms")>30000)
+            throw new IllegalStateException("Fresh hold observation required");
     }
 
     /** Explicit coordinator seam; not registered with any periodic executor in this stage. */

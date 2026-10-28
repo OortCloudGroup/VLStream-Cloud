@@ -18,11 +18,15 @@ public class ComputeMarketService {
     private final JdbcTemplate jdbc;
     private final ComputeNodeService nodes;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ConfiguredComputeRegistry configured;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
     private List<ComputePowerProvider> powerProviders = new ArrayList<>();
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ComputePublicInventoryService publicInventory;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ComputeSharedQueueService sharedQueue;
+    @org.springframework.beans.factory.annotation.Autowired private org.springframework.beans.factory.ObjectProvider<ComputePaidRunService> paidRuns;
+    @org.springframework.beans.factory.annotation.Autowired private com.ruoyi.vlstream.test.vlstream.compute.billing.ExternalBillingProperties billingProperties;
     private ComputePublicInventoryService inventory() {
         if (publicInventory==null) throw new ServiceException("公共整实例占用服务未就绪");
         return publicInventory;
@@ -74,6 +78,7 @@ public class ComputeMarketService {
         private Integer providerGpuAmount;
         private String actualStoppedMode;
         private String providerChargeType;
+        private boolean paidAdmissionEnabled;
     }
 
     public List<Resource> list(boolean selection) {
@@ -81,6 +86,10 @@ public class ComputeMarketService {
             (selection ? " OR (tenant_id=? AND resource_scope='PRIVATE')" : "") + " ORDER BY name,id",
             new BeanPropertyRowMapper<>(ComputeNode.class), selection ? new Object[]{ComputeNodeService.tenant()} : new Object[]{});
         List<Resource> result = new ArrayList<>();
+        if(configured!=null) {
+            rows.removeIf(configured::replaces);
+            rows.addAll(configured.published());
+        }
         long now = System.currentTimeMillis();
         String viewer = publicInventory==null ? null : publicInventory.viewer();
         for (ComputeNode node : rows) {
@@ -104,10 +113,19 @@ public class ComputeMarketService {
             resource.setCapacityState(ComputeAvailability.fresh(node.getCapacityCheckedAt(), now) ? node.getCapacityState() : "UNKNOWN");
             resource.setCapacitySource(node.getCapacitySource()); resource.setCapacityCheckedAt(node.getCapacityCheckedAt());
             resource.setHealthState("CHECKING".equals(node.getProbeState()) && node.getProbeRequestedAt()!=null && now-node.getProbeRequestedAt().getTime()<240000L ? "CHECKING" : ComputeAvailability.fresh(node.getProbeTime(), now) ? node.getProbeState() : "STALE");
-            resource.setTaskCount(jdbc.queryForObject("SELECT COUNT(*) FROM vls_cloud_training_job WHERE node_id=? AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED')", Integer.class, node.getId()));
+            List<Long> queueIds=nodes.queueIds(node.getId());
+            if(queueIds==null || queueIds.isEmpty())queueIds=java.util.Collections.singletonList(node.getId());
+            resource.setTaskCount(jdbc.queryForObject("SELECT COUNT(*) FROM vls_cloud_training_job WHERE node_id IN ("+ConfiguredComputeRegistry.placeholders(queueIds.size())+") AND job_state NOT IN ('COMPLETED','FAILED','CANCELLED')", Integer.class, queueIds.toArray()));
             if (shared && !"MINE".equals(claim)) resource.setTaskCount(null);
             resource.setStopped("STOPPED".equals(node.getPowerState()));
             resource.setSchedulable(ComputeAvailability.ready(node, now) && (!shared || "MINE".equals(claim) && "FREE".equals(node.getBillingType())));
+            if("POINTS".equals(node.getBillingType())) {
+                boolean configured=billingProperties!=null&&billingProperties.isEnabled()&&billingProperties.isAllowWrites()&&billingProperties.isSafetyStopEnabled()&&billingProperties.isPaidAdmissionEnabled()
+                    &&billingProperties.getRates().containsKey(String.valueOf(node.getId()));
+                resource.setPaidAdmissionEnabled(configured);
+                ComputePaidRunService paid=paidRuns==null?null:paidRuns.getIfAvailable();
+                resource.setSchedulable(configured&&paid!=null&&"MINE".equals(claim)&&ComputeAvailability.ready(node,now)&&paid.trainingAvailable(node));
+            }
             resource.setMessage(shared && !"MINE".equals(claim) ? null : node.getLifecycleMessage()); result.add(resource);
             resource.setCanManage(nodes.canManage(node) && (!shared || "FREE".equals(claim)));
             if(company) {
@@ -118,7 +136,7 @@ public class ComputeMarketService {
                 resource.setSchedulable(admitted && sharedQueue.ready(node));
                 resource.setHealthState(sharedQueue!=null && sharedQueue.ready(node)?"READY":resource.getHealthState());
             }
-            List<ComputeNode> server = jdbc.query("SELECT * FROM vls_compute_node WHERE " + ComputeNodeService.SERVER_WHERE, new BeanPropertyRowMapper<>(ComputeNode.class), ComputeNodeService.serverArgs(node));
+            List<ComputeNode> server = node.isConfigurationManaged()?java.util.Collections.singletonList(node):jdbc.query("SELECT * FROM vls_compute_node WHERE " + ComputeNodeService.SERVER_WHERE, new BeanPropertyRowMapper<>(ComputeNode.class), ComputeNodeService.serverArgs(node));
             resource.setApiControl(server.stream().anyMatch(n -> powerProviders.stream().anyMatch(p -> p.supports(n))));
             resource.setOperationPending(server.stream().anyMatch(n -> n.getPowerOperationId() != null));
             resource.setProviderGpuAmount(node.getProviderGpuAmount()); resource.setActualStoppedMode(node.getActualStoppedMode()); resource.setProviderChargeType(node.getProviderChargeType());
@@ -128,6 +146,7 @@ public class ComputeMarketService {
 
     @Transactional(rollbackFor = Exception.class)
     public void publish(Long id, ComputeRequests.Offer request) {
+        nodes.requireMutable(id);
         nodes.lockServer(id);
         List<ComputeNode> rows = jdbc.query("SELECT * FROM vls_compute_node WHERE tenant_id=? AND id=? FOR UPDATE",
             new BeanPropertyRowMapper<>(ComputeNode.class), ComputeNodeService.tenant(), id);
@@ -149,6 +168,7 @@ public class ComputeMarketService {
 
     @Transactional(rollbackFor = Exception.class)
     public void observe(Long id, ComputeRequests.Observation request) {
+        nodes.requireMutable(id);
         nodes.lockServer(id);
         List<ComputeNode> rows = jdbc.query("SELECT * FROM vls_compute_node WHERE tenant_id=? AND id=? FOR UPDATE", new BeanPropertyRowMapper<>(ComputeNode.class), ComputeNodeService.tenant(), id);
         if(!rows.isEmpty())nodes.requireManagement(rows.get(0));
@@ -165,6 +185,7 @@ public class ComputeMarketService {
 
     @Transactional(rollbackFor = Exception.class)
     public String power(Long id, String action) {
+        nodes.requireMutable(id);
         if (!"start".equals(action) && !"stop".equals(action)) throw new ServiceException("无效的实例操作");
         ComputePlatformAuthorization.Context authorization="start".equals(action)?nodes.authorizePaidOperation(id):null;
         ComputeNode node = nodes.lockServer(id);
