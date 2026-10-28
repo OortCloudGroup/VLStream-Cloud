@@ -70,7 +70,28 @@ class ThirdPartyEventReportClientTest {
 		IllegalStateException exception = assertThrows(IllegalStateException.class,
 			() -> client.report(new JSONObject(), "event-1"));
 
-		assertEquals("rejected", exception.getMessage());
+		assertEquals("第三方事件接口业务失败(code=500): rejected", exception.getMessage());
+	}
+
+	@Test
+	void rejectsHtmlAndEmptyBodiesInsteadOfAcknowledgingDelivery() throws Exception {
+		AtomicReference<String> body = new AtomicReference<>("<html>gateway login</html>");
+		startServer(exchange -> respond(exchange, 200, body.get()));
+		ThirdPartyEventReportClient client = new ThirdPartyEventReportClient(properties());
+		for (String invalid : new String[]{"<html>gateway login</html>", "", "{}", "{\"success\":true}"}) {
+			body.set(invalid);
+			assertThrows(IllegalStateException.class, () -> client.report(new JSONObject(), "event-1"));
+		}
+	}
+
+	@Test
+	void rejectsFalseSuccessAndHttpFailures() throws Exception {
+		AtomicReference<String> body = new AtomicReference<>("{\"code\":200,\"success\":false}");
+		startServer(exchange -> respond(exchange, body.get() == null ? 502 : 200, body.get() == null ? "gateway" : body.get()));
+		ThirdPartyEventReportClient client = new ThirdPartyEventReportClient(properties());
+		assertThrows(IllegalStateException.class, () -> client.report(new JSONObject(), "event-1"));
+		body.set(null);
+		assertThrows(IllegalStateException.class, () -> client.report(new JSONObject(), "event-1"));
 	}
 
 	private VlsEventReportProperties properties() {

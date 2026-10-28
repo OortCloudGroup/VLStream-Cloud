@@ -42,7 +42,7 @@
           <div>{{ $tp('事件位置') }}</div>
         </div>
         <div class="d_r_content">
-          {{ eventDetailData.point?.address }}
+          <EventLocation :event="eventDetailData" />
         </div>
       </div>
       <div class="detailsBox">
@@ -216,6 +216,7 @@
   </el-dialog>
 </template>
 <script setup lang="ts">
+import EventLocation from '../EventLocation.vue'
 import { translatePhrase as uiText } from '@/i18n'
 
 import { ref, computed, watch } from 'vue'

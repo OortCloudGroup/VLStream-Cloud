@@ -85,7 +85,7 @@
             </el-table-column>
             <el-table-column v-for="column in visibleEventColumns" :key="column.key"
               :prop="column.key" :label="$tp(column.label)" :min-width="column.width"
-              :show-overflow-tooltip="!['pics', 'video', 'status'].includes(column.key)">
+              :show-overflow-tooltip="!['pics', 'video', 'status', 'position'].includes(column.key)">
               <template #default="scope">
                 <el-tag v-if="column.key === 'status'" :type="getStatusType(scope.row.status)">
                   {{ getStatusText(scope.row.status) }}
@@ -113,7 +113,7 @@
                   <span>{{ $tp('暂无视频') }}</span>
                 </div>
                 </template>
-                <template v-else-if="column.key === 'position'">{{ scope.row.point?.address }}</template>
+                <EventLocation v-else-if="column.key === 'position'" :event="scope.row" />
                 <template v-else>{{ scope.row[column.key] }}</template>
               </template>
             </el-table-column>
@@ -204,6 +204,7 @@
 </template>
 
 <script setup lang="ts">
+import EventLocation from './components/EventLocation.vue'
 import { translatePhrase as uiText } from '@/i18n'
 import EventRecordedVideos from './components/EventRecordedVideos.vue'
 import { hasEventVideoReferences } from './components/eventVideos.mjs'

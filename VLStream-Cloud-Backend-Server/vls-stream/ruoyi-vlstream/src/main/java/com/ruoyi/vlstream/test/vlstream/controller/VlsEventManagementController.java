@@ -32,6 +32,7 @@ import com.ruoyi.vlstream.test.vlstream.pojo.vo.EventManagementVO;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsDeviceInfoService;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsEventManagementService;
 import com.ruoyi.vlstream.test.vlstream.service.VlsEventReportApplicationService;
+import com.ruoyi.vlstream.test.vlstream.service.VlsDeviceEventReportService;
 import com.ruoyi.vlstream.test.vlstream.wrapper.VlsEventManagementWrapper;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -54,6 +55,7 @@ public class VlsEventManagementController extends BladeController {
 	private final IVlsEventManagementService vlsEventManagementService;
 	private final IVlsDeviceInfoService deviceInfoService;
 	private final VlsEventReportApplicationService eventReportApplicationService;
+	private final VlsDeviceEventReportService deviceEventReportService;
 
 	/**
 	 * event
@@ -172,6 +174,10 @@ public class VlsEventManagementController extends BladeController {
 		}
 		if (file == null || file.isEmpty()) {
 			return R.fail("File is required");
+		}
+		if (eventReportApplicationService.isMultiTenant()) {
+			return deviceEventReportService.reportMultipart(eventManagement, file)
+				? R.data(true) : R.fail("Event report failed");
 		}
 		DeviceInfo device = deviceInfoService.getByDeviceId(eventManagement.getReportDevice());
 		if (device == null) {

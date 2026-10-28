@@ -71,7 +71,12 @@ public class EventReportOutboxWorker {
 		TenantContextHolder.setTenantId(task.getTenantId());
 		try {
 			JSONObject payload = JSONUtil.parseObj(task.getPayloadJson());
-			resolveMediaReferences(payload);
+			if (StringUtils.isBlank(task.getTenantId())
+				|| !StringUtils.equals(task.getTenantId(), payload.getStr("device_tenant_id"))) {
+				throw new IllegalStateException("事件上报任务与报文租户不一致");
+			}
+			resolveMediaReferences(payload.getJSONArray("pics"));
+			resolveMediaReferences(payload.getJSONArray("video"));
 			reportClient.report(payload, task.getIdempotencyKey());
 			stateService.markSuccess(task, workerId, new Date());
 			log.info("第三方事件上报成功: eventId={}, tenantId={}", task.getEventId(), task.getTenantId());
@@ -82,8 +87,7 @@ public class EventReportOutboxWorker {
 		}
 	}
 
-	private void resolveMediaReferences(JSONObject payload) {
-		JSONArray pics = payload.getJSONArray("pics");
+	private void resolveMediaReferences(JSONArray pics) {
 		if (pics == null) {
 			return;
 		}

@@ -49,7 +49,7 @@ public class ThirdPartyEventReportClient {
 
 	private void validateBusinessResponse(String body) {
 		if (StringUtils.isBlank(body) || !JSONUtil.isTypeJSONObject(body)) {
-			return;
+			throw new IllegalStateException("第三方事件接口未返回有效JSON业务回执");
 		}
 		JSONObject result = JSONUtil.parseObj(body);
 		Boolean success = result.getBool("success");
@@ -57,13 +57,17 @@ public class ThirdPartyEventReportClient {
 			throw new IllegalStateException(message(result));
 		}
 		Integer code = result.getInt("code");
-		if (code != null && code.intValue() != 0 && code.intValue() != 200) {
+		if (code == null) {
+			throw new IllegalStateException("第三方事件接口回执缺少业务码");
+		}
+		if (code.intValue() != 0 && code.intValue() != 200) {
 			throw new IllegalStateException(message(result));
 		}
 	}
 
 	private String message(JSONObject result) {
-		return StringUtils.defaultIfBlank(result.getStr("msg"),
-			StringUtils.defaultIfBlank(result.getStr("message"), "第三方事件接口业务处理失败"));
+		return "第三方事件接口业务失败(code=" + result.getStr("code") + "): "
+			+ StringUtils.defaultIfBlank(result.getStr("msg"),
+				StringUtils.defaultIfBlank(result.getStr("message"), "业务处理失败"));
 	}
 }

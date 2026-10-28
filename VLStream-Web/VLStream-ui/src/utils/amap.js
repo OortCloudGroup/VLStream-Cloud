@@ -25,11 +25,26 @@ export function loadAMap() {
   return apiPromise
 }
 
-export async function reverseGeocode({ lng, lat }) {
+export async function reverseGeocode({ lng, lat, coordinateSystem = 'GCJ02' }) {
   const AMap = await loadAMap()
+  let position = [lng, lat]
+  if (coordinateSystem !== 'GCJ02') {
+    const source = { WGS84: 'gps', BD09: 'baidu' }[coordinateSystem]
+    if (!source) throw new Error('坐标系未知')
+    position = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('坐标转换超时')), 10000)
+      AMap.convertFrom([lng, lat], source, (status, result) => {
+        clearTimeout(timer)
+        const converted = result?.locations?.[0]
+        if (status === 'complete' && result?.info === 'ok' && converted) resolve(converted)
+        else if (status === 'complete' && result?.info === 'OK' && converted) resolve(converted)
+        else reject(new Error('坐标转换失败'))
+      })
+    })
+  }
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('地址解析超时')), 10000)
-    new AMap.Geocoder({ radius: 1000, extensions: 'all' }).getAddress([lng, lat], (status, result) => {
+    new AMap.Geocoder({ radius: 1000, extensions: 'all' }).getAddress(position, (status, result) => {
       clearTimeout(timer)
       const address = result?.regeocode?.formattedAddress?.trim()
       if (status === 'complete' && result?.info === 'OK' && address) resolve(address)

@@ -21,6 +21,7 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -44,6 +45,9 @@ public class VlsMqttBusService {
 
 	@Resource
 	private VlsMqttInboundDispatcher inboundDispatcher;
+
+	@Autowired(required = false)
+	private DeviceEventFlowDiagnostics diagnostics;
 
 	private final Object clientMonitor = new Object();
 	private final ExecutorService inboundExecutor = Executors.newFixedThreadPool(2, runnable -> {
@@ -140,6 +144,7 @@ public class VlsMqttBusService {
 	}
 
 	void handleIncomingMessage(String topic, String payload) {
+		if (diagnostics != null) diagnostics.record(DeviceEventFlowDiagnostics.Counter.MQTT_RECEIVED);
 		JSONObject reply = inboundDispatcher.dispatch(topic, payload);
 		if (reply != null) {
 			publish(topic, reply);

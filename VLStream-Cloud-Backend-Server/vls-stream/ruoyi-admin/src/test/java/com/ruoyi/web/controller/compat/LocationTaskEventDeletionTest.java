@@ -85,6 +85,49 @@ class LocationTaskEventDeletionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void eventListBatchesLocationProjectionAfterTrustedTenantQueryAndPreservesMissingCoordinates() {
+        addEvent("local", "tenant-a", "camera", "{\"point\":{\"address\":\"\"}}");
+        addEvent("foreign", "tenant-b", "camera", "{}");
+        EventLocationService locations = mock(EventLocationService.class);
+        ReflectionTestUtils.setField(service, "eventLocationService", locations);
+        service.eventList(body("mod_type", 2), user);
+        org.mockito.ArgumentCaptor<List<Map<String, Object>>> captured = org.mockito.ArgumentCaptor.forClass(List.class);
+        verify(locations, times(1)).enrich(captured.capture(), eq("tenant-a"), eq("synthetic-token"));
+        assertEquals(1, captured.getValue().size());
+        assertEquals("tenant-a", captured.getValue().get(0).get("tenant_id"));
+        Map<String, Object> point = (Map<String, Object>) captured.getValue().get(0).get("point");
+        assertNull(point.get("lng"));
+        assertNull(point.get("lat"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void eventListConnectsDatabaseAndDeviceBatchWithoutWritingHistoricalPoint() {
+        addEvent("position", "tenant-a", "camera", "{\"point\":{\"lng\":0,\"lat\":0,\"coord_system_type\":0}}");
+        jdbc.update("UPDATE oort_task_event SET device_id='BUSINESS-CAM' WHERE tenant_id='tenant-a'");
+        addEvent("foreign-position", "tenant-b", "camera", "{}");
+        org.springframework.web.client.RestTemplate http = new org.springframework.web.client.RestTemplate();
+        org.springframework.test.web.client.MockRestServiceServer server = org.springframework.test.web.client.MockRestServiceServer.bindTo(http).build();
+        server.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("http://127.0.0.1:9080/internal/vlstream/device/locations"))
+            .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                "{\"code\":200,\"data\":[{\"deviceId\":\"BUSINESS-CAM\",\"tenantId\":\"tenant-a\",\"longitude\":114.1177,\"latitude\":22.5543,\"heartbeatAt\":1793000000000,\"status\":\"FRESH\"}]}", org.springframework.http.MediaType.APPLICATION_JSON));
+        com.ruoyi.vlstream.test.vlstream.config.WvpVlStreamDeviceProperties properties = new com.ruoyi.vlstream.test.vlstream.config.WvpVlStreamDeviceProperties();
+        ReflectionTestUtils.setField(service, "eventLocationService", new EventLocationService(properties, new ObjectMapper(), http));
+        Map<?, ?> page = (Map<?, ?>) service.eventList(body("mod_type", 2), user).getData();
+        List<Map<String, Object>> rows = (List<Map<String, Object>>) page.get("list");
+        assertEquals(1, rows.size());
+        Map<String, Object> display = (Map<String, Object>) rows.get(0).get("display_location");
+        assertEquals("", display.get("address"));
+        assertEquals(114.1177, ((Number) display.get("longitude")).doubleValue());
+        assertEquals(1, display.get("coordinate_system"));
+        assertEquals("DEVICE_HEARTBEAT", display.get("source"));
+        assertEquals("{\"point\":{\"lng\":0,\"lat\":0,\"coord_system_type\":0}}",
+            jdbc.queryForObject("SELECT data FROM oort_task_event WHERE tenant_id='tenant-a'", String.class));
+        server.verify();
+    }
+
+    @Test
     void rejectsOtherTenantEvenWhenIdIsKnownAndRequestClaimsThatTenant() {
         addEvent("foreign", "tenant-b", "viewer", "{}");
         addRelations("foreign-20261015-1", "tenant-b");
@@ -97,6 +140,15 @@ class LocationTaskEventDeletionTest {
         assertEquals(1, relationCount("oort_task_event_user", "tenant-b"));
         assertEquals(1, relationCount("oort_task_event_back", "tenant-b"));
         verifyNoInteractions(media, workflows);
+    }
+
+    @Test
+    void eventDetailsRejectForeignTenantBeforeLocationLookup() {
+        addEvent("foreign-detail", "tenant-b", "camera", "{\"point\":{\"lng\":114,\"lat\":22,\"coord_system_type\":1}}");
+        EventLocationService locations = mock(EventLocationService.class);
+        ReflectionTestUtils.setField(service, "eventLocationService", locations);
+        assertEquals(40001, service.eventInfo(body("id", "foreign-detail-20261015-1"), user).getCode());
+        verifyNoInteractions(locations);
     }
 
     @Test

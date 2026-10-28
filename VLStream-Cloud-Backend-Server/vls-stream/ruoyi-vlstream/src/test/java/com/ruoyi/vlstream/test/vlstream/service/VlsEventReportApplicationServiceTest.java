@@ -71,6 +71,8 @@ class VlsEventReportApplicationServiceTest {
 		assertEquals("vls-event:tenant-a:99", outbox.getIdempotencyKey());
 		JSONObject payload = JSONUtil.parseObj(outbox.getPayloadJson());
 		assertEquals("vls-media://media-1", payload.getJSONArray("pics").getStr(0));
+		assertEquals("faceEvent", payload.getStr("item"));
+		assertEquals("face detected", payload.getStr("describe"));
 	}
 
 	private void setField(Object target, String name, Object value) throws Exception {

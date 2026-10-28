@@ -21,9 +21,13 @@ import com.ruoyi.vlstream.test.vlstream.enums.EventStatusEnum;
 import com.ruoyi.vlstream.test.vlstream.excel.VlsEventManagementExcel;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsEventManagementMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
+import com.ruoyi.vlstream.test.vlstream.service.VlsDeviceEventReportService;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.EventManagementVO;
 import com.ruoyi.vlstream.test.vlstream.service.IVlsEventManagementService;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -40,6 +44,14 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class VlsEventManagementServiceImpl extends BaseServiceImpl<VlsEventManagementMapper, EventManagement> implements IVlsEventManagementService {
+
+	@Autowired
+	private ObjectProvider<VlsDeviceEventReportService> deviceEventReporter;
+
+	@Override
+	public boolean reportDeviceEvent(EventManagement event, DeviceInfo device) {
+		return deviceEventReporter.getObject().reportDetection(event, device, this);
+	}
 
 	@Override
 	public IPage<EventManagementVO> selectVlsEventManagementPage(IPage<EventManagementVO> page, EventManagementVO vlsEventManagement) {

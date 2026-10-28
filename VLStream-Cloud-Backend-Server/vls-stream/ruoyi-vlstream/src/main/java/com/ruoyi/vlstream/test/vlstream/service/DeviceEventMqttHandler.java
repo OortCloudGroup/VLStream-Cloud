@@ -15,10 +15,10 @@ import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceMediaUpload;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
-import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement;
 import com.ruoyi.common.helper.TenantContextHolder;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -59,6 +59,9 @@ public class DeviceEventMqttHandler {
 	@Resource
 	private LlmReviewTaskService llmReviewTaskService;
 
+	@Autowired(required = false)
+	private DeviceEventFlowDiagnostics diagnostics;
+
 	@Transactional(rollbackFor = Exception.class)
 	public JSONObject handle(JSONObject envelope) {
 		String sourceMessageId = envelope.getStr("messageId");
@@ -69,31 +72,28 @@ public class DeviceEventMqttHandler {
 			: StringUtils.defaultIfBlank(payload.getStr("eventId"), sourceMessageId);
 		String mediaId = null;
 		String previousTenant = TenantContextHolder.getTenantId();
+		DeviceEventFlowDiagnostics.Counter rejectionStage = DeviceEventFlowDiagnostics.Counter.EVENT_REJECT_ENVELOPE;
 		try {
 			if (StringUtils.isAnyBlank(sourceMessageId, deviceId, eventId) || payload == null) {
 				throw new IllegalArgumentException("事件 messageId、deviceId、eventId 和 payload 均不能为空");
 			}
 			boolean multiTenant = eventReportApplicationService.isMultiTenant();
 			boolean platformFaceEvent = multiTenant && VlsMqttProtocol.FACE_EVENT.equals(subBizType);
-			DeviceInfo device = wvpDeviceResolver.resolve(deviceId);
+			rejectionStage = DeviceEventFlowDiagnostics.Counter.EVENT_REJECT_DEVICE;
+			DeviceInfo device = multiTenant ? wvpDeviceResolver.resolveEventDevice(deviceId)
+				: wvpDeviceResolver.resolve(deviceId);
 			TenantContextHolder.setTenantId(device.getTenantId());
 
-			if (platformFaceEvent) {
-				EventManagement duplicate = eventReportApplicationService.findDuplicate(
-					sourceMessageId, deviceId, eventId);
-				if (duplicate != null) {
-					return buildReply(envelope, eventId, duplicate.getMediaId(), true,
-						"事件已处理，重复消息已忽略");
-				}
-			} else {
-				ActiveSafetyEventReportResult duplicate = activeSafetyEventReportService.findDuplicate(
-					sourceMessageId, deviceId, eventId);
-				if (duplicate != null) {
-					return buildReply(envelope, eventId, duplicate.getMediaId(), true,
-						"事件已处理，重复消息已忽略");
-				}
+			rejectionStage = DeviceEventFlowDiagnostics.Counter.EVENT_REJECT_PERSIST;
+			ActiveSafetyEventReportResult duplicate = activeSafetyEventReportService.findDuplicate(
+				sourceMessageId, deviceId, eventId);
+			if (duplicate != null) {
+				committed(DeviceEventFlowDiagnostics.Counter.EVENT_DUPLICATE);
+				return buildReply(envelope, eventId, duplicate.getMediaId(), true,
+					"事件已处理，重复消息已忽略");
 			}
 
+			rejectionStage = DeviceEventFlowDiagnostics.Counter.EVENT_REJECT_MEDIA;
 			JSONArray mediaList = payload.getJSONArray("media");
 			if (mediaList == null || mediaList.isEmpty()) {
 				JSONObject legacy = firstMedia(payload);
@@ -137,27 +137,15 @@ public class DeviceEventMqttHandler {
 			String description = StringUtils.defaultIfBlank(payload.getStr("eventDesc"),
 				defaultDescription(subBizType, payload));
 			Date eventTime = parseEventTime(envelope, payload);
+			rejectionStage = DeviceEventFlowDiagnostics.Counter.EVENT_REJECT_REVIEW;
 			if (!platformFaceEvent && llmReviewTaskService != null
 				&& llmReviewTaskService.enqueueIfRequired(envelope, device, upload,
 					eventId, eventType, description, eventTime)) {
+				committed(DeviceEventFlowDiagnostics.Counter.EVENT_REVIEW_QUEUED);
 				return buildReply(envelope, eventId, mediaId, true, "事件已接收，等待大模型复核");
 			}
-			if (platformFaceEvent) {
-				EventManagement event = new EventManagement();
-				event.setMqttMessageId(sourceMessageId);
-				event.setDeviceEventId(eventId);
-				event.setMediaId(mediaId);
-				event.setEventDesc(description);
-				event.setEventType(eventType);
-				event.setReportLocation(device.getAddress());
-				event.setReportDevice(deviceId);
-				event.setReportImg(imageIds.isEmpty() ? null : VlsEventReportApplicationService.mediaReference(imageIds.get(0)));
-				event.setReportTime(eventTime);
-				event.setEventData(payload.toString());
-				event.setHandleResult(description);
-				eventReportApplicationService.persistDeviceEvent(event, device);
-			} else {
-				ActiveSafetyEventReportResult result = activeSafetyEventReportService.report(
+			rejectionStage = DeviceEventFlowDiagnostics.Counter.EVENT_REJECT_PERSIST;
+			ActiveSafetyEventReportResult result = activeSafetyEventReportService.report(
 					ActiveSafetyEventReport.builder()
 						.sourceMessageId(sourceMessageId)
 						.deviceEventId(eventId)
@@ -176,12 +164,14 @@ public class DeviceEventMqttHandler {
 						.longitude(device.getLongitude())
 						.latitude(device.getLatitude())
 						.build());
-				if (result == null) {
-					throw new IllegalStateException("事件写入数据库失败");
-				}
+			if (result == null) {
+				throw new IllegalStateException("事件写入数据库失败");
 			}
-			return buildReply(envelope, eventId, mediaId, true, "事件已接收并入库");
+			committed(DeviceEventFlowDiagnostics.Counter.EVENT_BUSINESS_COMMITTED);
+			return buildReply(envelope, eventId, mediaId, true, multiTenant
+				? "事件已接收，等待外部业务处理" : "事件已接收并入库");
 		} catch (Exception ex) {
+			if (diagnostics != null) diagnostics.record(rejectionStage);
 			if (TransactionSynchronizationManager.isActualTransactionActive()) {
 				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			}
@@ -190,6 +180,10 @@ public class DeviceEventMqttHandler {
 		} finally {
 			TenantContextHolder.setTenantId(previousTenant);
 		}
+	}
+
+	private void committed(DeviceEventFlowDiagnostics.Counter counter) {
+		if (diagnostics != null) diagnostics.afterCommit(counter);
 	}
 
 	private JSONObject firstMedia(JSONObject payload) {

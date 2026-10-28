@@ -42,6 +42,7 @@ public class LocationTaskCompatController {
 
     private final LocationTaskCompatService taskService;
     private final BladeTokenUserStore tokenUserStore;
+    private final CameraDeviceEventReportService cameraEventReports;
 
     @Value("${vls.tenant.id:000000}")
     private String singleTenantId = "000000";
@@ -50,9 +51,11 @@ public class LocationTaskCompatController {
      * Create the compatibility controller with its task and token dependencies.
      */
     public LocationTaskCompatController(LocationTaskCompatService taskService,
-                                        BladeTokenUserStore tokenUserStore) {
+                                        BladeTokenUserStore tokenUserStore,
+                                        CameraDeviceEventReportService cameraEventReports) {
         this.taskService = taskService;
         this.tokenUserStore = tokenUserStore;
+        this.cameraEventReports = cameraEventReports;
     }
 
     /**
@@ -92,7 +95,7 @@ public class LocationTaskCompatController {
             /** Delegate the public device request to the migrated single-report logic. */
             @Override
             public LocationTaskResult<?> execute(Map<String, Object> request) {
-                return taskService.reportCameraEvent(request);
+                return cameraEventReports.reportSingle(request);
             }
         });
     }
@@ -120,7 +123,7 @@ public class LocationTaskCompatController {
             /** Delegate the public device request to the migrated batch-report logic. */
             @Override
             public LocationTaskResult<?> execute(Map<String, Object> request) {
-                return taskService.reportCameraEvents(request);
+                return cameraEventReports.reportBatch(request);
             }
         });
     }

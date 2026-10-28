@@ -312,7 +312,9 @@ public final class DetectionSessionSupport {
         eventManagement.setEventStatus(EventStatusEnum.pending);
         eventManagement.setEventData(ai.djl.util.JsonUtils.toJson(eventData));
         eventManagement.setHandleResult("算法: " + algorithm.getName());
-        eventManagementService.createEvent(eventManagement);
+        if (!eventManagementService.reportDeviceEvent(eventManagement, deviceInfo)) {
+            throw new IllegalStateException("设备检测事件保存失败");
+        }
     }
 
     private static boolean isOnnxModelPath(String modelPath) {

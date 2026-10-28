@@ -104,6 +104,9 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
     @Autowired
     private DeviceMediaUploadService deviceMediaUploadService;
 
+    @Autowired
+    private EventLocationService eventLocationService;
+
     @Value("${vls.tenant.id:000000}")
     private String singleTenantId = "000000";
 
@@ -441,7 +444,7 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
             where.add("te.item LIKE ?");
             args.add("%" + keyword + "%");
         }
-        return LocationTaskResult.success(pagedEvents(from.toString(), where, args, page, pageSize, user.getTenantId()));
+        return LocationTaskResult.success(pagedEvents(from.toString(), where, args, page, pageSize, user.getTenantId(), user.getToken()));
     }
 
     /**
@@ -528,10 +531,12 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         if (id.isEmpty()) {
             return parameterError("参数错误 id不能为空");
         }
-        Map<String, Object> event = findEvent(id);
+        Map<String, Object> raw = findEventRaw(id, user.getTenantId());
+        Map<String, Object> event = raw == null ? null : toEvent(raw);
         if (event == null) {
             return error(NOT_FOUND, "没找到记录");
         }
+        if (eventLocationService != null) eventLocationService.enrich(Collections.singletonList(event), user.getTenantId(), user.getToken());
         return LocationTaskResult.success(event);
     }
 
@@ -698,7 +703,7 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         appendPositiveEquals(where, args, body, "status", "te.status");
         appendEquals(where, args, body, "item", "te.item");
         appendPictureFilter(where, body, "te.pic_len");
-        return LocationTaskResult.success(pagedEvents(from.toString(), where, args, page, pageSize, user.getTenantId()));
+        return LocationTaskResult.success(pagedEvents(from.toString(), where, args, page, pageSize, user.getTenantId(), user.getToken()));
     }
 
     /**
@@ -2419,7 +2424,7 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
      * Build a page payload and expand every event row.
      */
     private Map<String, Object> pagedEvents(String from, List<String> where, List<Object> args,
-                                             int page, int pageSize, String tenantId) {
+                                             int page, int pageSize, String tenantId, String verifiedToken) {
         String condition = where.isEmpty() ? "" : " WHERE " + join(where, " AND ");
         Long count = jdbc.queryForObject("SELECT COUNT(*)" + from + condition, Long.class, args.toArray());
         List<Object> queryArgs = new ArrayList<Object>(args);
@@ -2433,6 +2438,7 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
         for (Map<String, Object> row : rows) {
             list.add(toEvent(row, pictureUrls));
         }
+        if (eventLocationService != null) eventLocationService.enrich(list, tenantId, verifiedToken);
         return pagePayload(page, pageSize, count == null ? 0L : count, list);
     }
 
@@ -2734,17 +2740,17 @@ public class LocationTaskCompatService implements ActiveSafetyEventReportService
     private static Map<String, Object> pointValue(Object raw) {
         Map<?, ?> source = raw instanceof Map ? (Map<?, ?>) raw : Collections.emptyMap();
         LinkedHashMap<String, Object> point = new LinkedHashMap<String, Object>();
-        point.put("lng", number(source.get("lng")).doubleValue());
-        point.put("lat", number(source.get("lat")).doubleValue());
+        point.put("lng", EventLocationService.decimal(source.get("lng")));
+        point.put("lat", EventLocationService.decimal(source.get("lat")));
         point.put("address", string(source.get("address")));
         point.put("coord_system_type", number(source.get("coord_system_type")).intValue());
-        double lngChange = number(source.get("lng_change")).doubleValue();
-        double latChange = number(source.get("lat_change")).doubleValue();
+        BigDecimal lngChange = EventLocationService.decimal(source.get("lng_change"));
+        BigDecimal latChange = EventLocationService.decimal(source.get("lat_change"));
         int coordChange = number(source.get("coord_system_type_change")).intValue();
-        if (lngChange != 0D) {
+        if (lngChange != null) {
             point.put("lng_change", lngChange);
         }
-        if (latChange != 0D) {
+        if (latChange != null) {
             point.put("lat_change", latChange);
         }
         if (coordChange != 0) {

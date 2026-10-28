@@ -15,6 +15,9 @@ import com.ruoyi.vlstream.test.modules.system.service.IFileUploadService;
 import com.ruoyi.vlstream.test.vlstream.mapper.EventReportOutboxMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsEventManagementMapper;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.FileResponseDto;
+import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
+import com.ruoyi.vlstream.test.vlstream.pojo.dto.ResolvedCameraEvent;
+import com.ruoyi.common.helper.TenantContextHolder;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventReportOutbox;
@@ -28,6 +31,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 /** Shared application boundary used by HTTP and MQTT event ingestion. */
 @Service
@@ -62,6 +68,57 @@ public class VlsEventReportApplicationService {
 
 	@Transactional(rollbackFor = Exception.class)
 	public EventManagement persistDeviceEvent(EventManagement event, DeviceInfo device) {
+		return persistDeviceEvent(event, device, null, null);
+	}
+
+	/** The same multi-tenant sink is used before and after optional LLM review. */
+	@Transactional(rollbackFor = Exception.class)
+	public EventManagement persistActiveSafetyEvent(ActiveSafetyEventReport report, DeviceInfo device) {
+		if (report == null || StringUtils.isAnyBlank(report.getSourceMessageId(),
+			report.getDeviceEventId(), report.getDeviceId(), report.getMediaId())
+			|| device == null || !StringUtils.equals(report.getDeviceId(), device.getDeviceId())) {
+			throw new ServiceException("MQTT 事件或设备身份不完整");
+		}
+		EventManagement event = new EventManagement();
+		event.setMqttMessageId(report.getSourceMessageId());
+		event.setDeviceEventId(report.getDeviceEventId());
+		event.setMediaId(report.getMediaId());
+		event.setEventDesc(report.getDescription());
+		event.setHandleResult(report.getDescription());
+		event.setEventType(report.getEventType());
+		event.setReportDevice(report.getDeviceId());
+		event.setReportLocation(report.getAddress());
+		event.setReportTime(report.getEventTime());
+		event.setEventData(report.getMqttPayloadJson());
+		List<String> pictures = mediaReferences(report.getImageMediaIds());
+		event.setReportImg(pictures.isEmpty() ? null : pictures.get(0));
+		return persistDeviceEvent(event, device, report, null);
+	}
+
+	/** All ownership lookups are complete before this database-only transaction starts. */
+	@Transactional(rollbackFor = Exception.class)
+	public List<EventManagement> persistCameraEvents(List<ResolvedCameraEvent> reports) {
+		if (!isMultiTenant() || reports == null || reports.isEmpty()) {
+			throw new ServiceException("多租户设备事件不能为空");
+		}
+		String previous = TenantContextHolder.getTenantId();
+		try {
+			List<EventManagement> result = new ArrayList<>();
+			for (ResolvedCameraEvent report : reports) {
+				if (report == null || report.getDevice() == null || StringUtils.isBlank(report.getDevice().getTenantId())) {
+					throw new ServiceException("设备事件缺少可信归属");
+				}
+				TenantContextHolder.setTenantId(report.getDevice().getTenantId());
+				result.add(persistDeviceEvent(report.getEvent(), report.getDevice(), null, report.getPayload()));
+			}
+			return result;
+		} finally {
+			TenantContextHolder.setTenantId(previous);
+		}
+	}
+
+	private EventManagement persistDeviceEvent(EventManagement event, DeviceInfo device,
+											  ActiveSafetyEventReport report, JSONObject cameraPayload) {
 		if (event == null || device == null || StringUtils.isBlank(device.getTenantId())) {
 			throw new ServiceException("事件和设备租户信息不能为空");
 		}
@@ -71,7 +128,7 @@ public class VlsEventReportApplicationService {
 			throw new ServiceException("事件写入数据库失败");
 		}
 		if (isMultiTenant()) {
-			enqueue(event, device);
+			enqueue(event, device, report, cameraPayload);
 		}
 		return event;
 	}
@@ -90,17 +147,33 @@ public class VlsEventReportApplicationService {
 			throw new ServiceException("事件文件上传失败");
 		}
 		event.setReportImg(uploaded.getUrl());
-		persistDeviceEvent(event, device);
+		JSONObject payload = null;
+		if (isMultiTenant()) {
+			payload = buildPayload(event, device, null);
+			if (StringUtils.startsWithIgnoreCase(multipartFile.getContentType(), "video/")) {
+				payload.set("pics", Collections.emptyList());
+				payload.set("video", Collections.singletonList(uploaded.getUrl()));
+				event.setReportImg(null);
+			}
+		}
+		persistDeviceEvent(event, device, null, payload);
 		return true;
 	}
 
-	private void enqueue(EventManagement event, DeviceInfo device) {
+	private void enqueue(EventManagement event, DeviceInfo device, ActiveSafetyEventReport report, JSONObject cameraPayload) {
 		Date now = new Date();
 		EventReportOutbox outbox = new EventReportOutbox();
 		outbox.setTenantId(event.getTenantId());
 		outbox.setEventId(event.getId());
 		outbox.setIdempotencyKey("vls-event:" + event.getTenantId() + ":" + event.getId());
-		outbox.setPayloadJson(buildPayload(event, device).toString());
+		JSONObject payload = cameraPayload == null ? buildPayload(event, device, report)
+			: new JSONObject(cameraPayload.toString());
+		payload.set("device_id", event.getReportDevice());
+		payload.set("device_tenant_id", event.getTenantId());
+		payload.set("source_event_id", event.getId());
+		payload.set("source_message_id", event.getMqttMessageId());
+		payload.set("device_event_id", event.getDeviceEventId());
+		outbox.setPayloadJson(payload.toString());
 		outbox.setStatus("PENDING");
 		outbox.setRetryCount(0);
 		outbox.setNextRetryTime(now);
@@ -111,32 +184,42 @@ public class VlsEventReportApplicationService {
 		}
 	}
 
-	private JSONObject buildPayload(EventManagement event, DeviceInfo device) {
+	private JSONObject buildPayload(EventManagement event, DeviceInfo device, ActiveSafetyEventReport report) {
 		String description = StringUtils.defaultIfBlank(event.getHandleResult(), event.getEventDesc());
 		JSONObject point = new JSONObject();
-		point.set("address", StringUtils.defaultString(device.getAddress()));
+		point.set("address", StringUtils.defaultIfBlank(event.getReportLocation(), device.getAddress()));
 		point.set("coord_system_type", null);
 		point.set("coord_system_type_change", null);
-		point.set("lat", device.getLatitude());
+		point.set("lat", report == null ? device.getLatitude() : report.getLatitude());
 		point.set("lat_change", null);
-		point.set("lng", device.getLongitude());
+		point.set("lng", report == null ? device.getLongitude() : report.getLongitude());
 		point.set("lng_change", null);
 
 		JSONObject payload = new JSONObject();
 		payload.set("describe", description);
 		payload.set("device_id", event.getReportDevice());
-		payload.set("device_name", StringUtils.defaultIfBlank(device.getDeviceName(), event.getReportDevice()));
-		payload.set("device_tag", StringUtils.defaultString(device.getTag()));
+		payload.set("device_name", StringUtils.defaultIfBlank(report == null ? device.getDeviceName()
+			: report.getDeviceName(), event.getReportDevice()));
+		payload.set("device_tag", StringUtils.defaultString(report == null ? device.getTag() : report.getDeviceTag()));
 		payload.set("device_tenant_id", event.getTenantId());
 		payload.set("name", StringUtils.defaultIfBlank(event.getEventType(), description));
-		payload.set("pics", StringUtils.isBlank(event.getReportImg())
-			? Collections.emptyList() : Collections.singletonList(event.getReportImg()));
+		// Without item the location service treats the entire description as its event type.
+		payload.set("item", event.getEventType());
+		payload.set("pics", report == null ? (StringUtils.isBlank(event.getReportImg())
+			? Collections.emptyList() : Collections.singletonList(event.getReportImg()))
+			: mediaReferences(report.getImageMediaIds()));
 		payload.set("point", point);
-		payload.set("video", Collections.emptyList());
+		payload.set("video", report == null ? Collections.emptyList() : mediaReferences(report.getVideoMediaIds()));
 		payload.set("source_event_id", event.getId());
 		payload.set("source_message_id", event.getMqttMessageId());
 		payload.set("device_event_id", event.getDeviceEventId());
 		return payload;
+	}
+
+	private List<String> mediaReferences(List<String> mediaIds) {
+		return mediaIds == null ? Collections.emptyList() : mediaIds.stream()
+			.filter(StringUtils::isNotBlank).map(VlsEventReportApplicationService::mediaReference)
+			.collect(Collectors.toList());
 	}
 
 	public static String mediaReference(String mediaId) {

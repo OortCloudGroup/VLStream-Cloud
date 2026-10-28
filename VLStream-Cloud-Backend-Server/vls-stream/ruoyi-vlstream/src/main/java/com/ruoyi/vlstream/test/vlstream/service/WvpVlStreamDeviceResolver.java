@@ -60,14 +60,23 @@ public class WvpVlStreamDeviceResolver {
 		return resolve(deviceId, true);
 	}
 
+	/** Event ingestion must never infer ownership from a local/default tenant. */
+	public DeviceInfo resolveEventDevice(String deviceId) {
+		return resolve(deviceId, false, true);
+	}
+
 	private DeviceInfo resolve(String deviceId, boolean requireOnline) {
+		return resolve(deviceId, requireOnline, false);
+	}
+
+	private DeviceInfo resolve(String deviceId, boolean requireOnline, boolean requireOwner) {
 		if (StringUtils.isBlank(deviceId)) {
 			throw new ServiceException("设备编号不能为空");
 		}
 		URI uri = deviceUri(deviceId);
 		try {
 			ResponseEntity<String> response = restTemplate.getForEntity(uri, String.class);
-			DeviceInfo device = mapResponse(deviceId, response.getBody());
+			DeviceInfo device = mapResponse(deviceId, response.getBody(), requireOwner);
 			if (requireOnline && !Boolean.TRUE.equals(JSONUtil.parseObj(response.getBody()).getJSONObject("data").getBool("online"))) {
 				throw new ServiceException("设备离线，无法操作模型");
 			}
@@ -78,7 +87,7 @@ public class WvpVlStreamDeviceResolver {
 		}
 	}
 
-	private DeviceInfo mapResponse(String requestedDeviceId, String body) {
+	private DeviceInfo mapResponse(String requestedDeviceId, String body, boolean requireOwner) {
 		JSONObject result;
 		try {
 			result = JSONUtil.parseObj(body);
@@ -106,7 +115,15 @@ public class WvpVlStreamDeviceResolver {
 		device.setId(deviceRowId);
 		device.setDeviceId(returnedDeviceId);
 		device.setDeviceName(StringUtils.defaultIfBlank(data.getStr("deviceName"), returnedDeviceId));
-		device.setTenantId(StringUtils.defaultIfBlank(data.getStr("tenantId"), resolveTenantId()));
+		String owner = data.getStr("tenantId");
+		if (requireOwner && StringUtils.isBlank(owner)) {
+			throw new ServiceException("WVP设备未返回可信租户归属，拒绝事件上报");
+		}
+		device.setTenantId(StringUtils.isNotBlank(owner) ? owner : resolveTenantId());
+		device.setLongitude(data.getBigDecimal("longitude"));
+		device.setLatitude(data.getBigDecimal("latitude"));
+		device.setAddress(data.getStr("address"));
+		device.setTag(data.getStr("tag"));
 		return device;
 	}
 

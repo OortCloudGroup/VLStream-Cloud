@@ -33,6 +33,20 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 class WvpVlStreamDeviceResolverTest {
 
 	@Test
+	void eventIngestionRejectsMissingOwnerEvenWhenADefaultIsConfigured() {
+		RestTemplate rest = new RestTemplate();
+		MockRestServiceServer server = MockRestServiceServer.createServer(rest);
+		server.expect(requestTo("http://127.0.0.1:9080/internal/vlstream/device/CAM-1"))
+			.andRespond(withSuccess("{\"code\":200,\"data\":{\"id\":101,\"deviceId\":\"CAM-1\"}}", MediaType.APPLICATION_JSON));
+		VlsNativeDeviceProperties props = new VlsNativeDeviceProperties();
+		props.setMultiTenantDefaultTenantId("ui-tenant");
+		ServiceException error = assertThrows(ServiceException.class, () -> new WvpVlStreamDeviceResolver(properties(), props,
+			mock(VlsEventReportApplicationService.class), rest).resolveEventDevice("CAM-1"));
+		assertEquals("WVP设备未返回可信租户归属，拒绝事件上报", error.getMessage());
+		server.verify();
+	}
+
+	@Test
 	void springSelectsTheProductionConstructor() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 		context.getBeanFactory().registerSingleton("wvpVlStreamDeviceProperties", properties());

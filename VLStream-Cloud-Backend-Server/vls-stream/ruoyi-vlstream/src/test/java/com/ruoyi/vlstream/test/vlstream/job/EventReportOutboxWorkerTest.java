@@ -33,6 +33,8 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @Tag("dev")
 class EventReportOutboxWorkerTest {
@@ -57,7 +59,7 @@ class EventReportOutboxWorkerTest {
 		task.setEventId(2L);
 		task.setTenantId("tenant-a");
 		task.setIdempotencyKey("event-2");
-		task.setPayloadJson("{\"pics\":[]}");
+		task.setPayloadJson("{\"device_tenant_id\":\"tenant-a\",\"pics\":[]}");
 		task.setRetryCount(0);
 		when(mapper.claimBatch(anyString(), any(Date.class), any(Date.class), anyInt())).thenReturn(1);
 		when(mapper.selectClaimed(anyString())).thenReturn(Collections.singletonList(task));
@@ -76,6 +78,57 @@ class EventReportOutboxWorkerTest {
 		assertEquals(1, retryCaptor.getValue());
 		assertEquals("RETRY", statusCaptor.getValue());
 		assertNull(TenantContextHolder.getTenantId());
+	}
+
+	@Test
+	void resolvesImagesAndVideoInTaskTenantAndRestoresPreviousContext() throws Exception {
+		EventReportOutboxMapper mapper = mock(EventReportOutboxMapper.class);
+		EventReportDeliveryStateService state = mock(EventReportDeliveryStateService.class);
+		ThirdPartyEventReportClient client = mock(ThirdPartyEventReportClient.class);
+		DeviceMediaUploadService media = mock(DeviceMediaUploadService.class);
+		EventReportOutbox task = task("tenant-a");
+		when(mapper.claimBatch(anyString(), any(), any(), anyInt())).thenReturn(1);
+		when(mapper.selectClaimed(anyString())).thenReturn(Collections.singletonList(task));
+		when(media.getPrivateViewUrl(anyString(), anyInt())).thenAnswer(call -> {
+			assertEquals("tenant-a", TenantContextHolder.getTenantId());
+			return "https://media.invalid/" + call.getArgument(0);
+		});
+		EventReportOutboxWorker worker = new EventReportOutboxWorker(mapper, state, client, media, new VlsEventReportProperties());
+		setField(worker, "tenantType", "multi");
+		TenantContextHolder.setTenantId("previous");
+		worker.deliverPendingEvents();
+		ArgumentCaptor<cn.hutool.json.JSONObject> payload = ArgumentCaptor.forClass(cn.hutool.json.JSONObject.class);
+		verify(client).report(payload.capture(), anyString());
+		assertEquals("https://media.invalid/image-1", payload.getValue().getJSONArray("pics").getStr(0));
+		assertEquals("https://media.invalid/video-1", payload.getValue().getJSONArray("video").getStr(0));
+		verify(state).markSuccess(any(), anyString(), any());
+		assertEquals("previous", TenantContextHolder.getTenantId());
+	}
+
+	@Test
+	void rejectsPayloadTenantMismatchBeforeAnyExternalCall() throws Exception {
+		EventReportOutboxMapper mapper = mock(EventReportOutboxMapper.class);
+		EventReportDeliveryStateService state = mock(EventReportDeliveryStateService.class);
+		ThirdPartyEventReportClient client = mock(ThirdPartyEventReportClient.class);
+		DeviceMediaUploadService media = mock(DeviceMediaUploadService.class);
+		EventReportOutbox task = task("tenant-b");
+		when(mapper.claimBatch(anyString(), any(), any(), anyInt())).thenReturn(1);
+		when(mapper.selectClaimed(anyString())).thenReturn(Collections.singletonList(task));
+		EventReportOutboxWorker worker = new EventReportOutboxWorker(mapper, state, client, media, new VlsEventReportProperties());
+		setField(worker, "tenantType", "multi");
+		worker.deliverPendingEvents();
+		verifyNoInteractions(client, media);
+		verify(state, never()).markSuccess(any(), anyString(), any());
+		verify(state).markFailure(any(), anyString(), anyInt(), anyString(), any(), anyString(), any());
+		assertNull(TenantContextHolder.getTenantId());
+	}
+
+	private EventReportOutbox task(String tenantId) {
+		EventReportOutbox task = new EventReportOutbox();
+		task.setId(1L); task.setEventId(2L); task.setTenantId(tenantId); task.setRetryCount(0);
+		task.setIdempotencyKey("event-2");
+		task.setPayloadJson("{\"device_tenant_id\":\"tenant-a\",\"pics\":[\"vls-media://image-1\"],\"video\":[\"vls-media://video-1\"]}");
+		return task;
 	}
 
 	private void setField(Object target, String name, Object value) throws Exception {

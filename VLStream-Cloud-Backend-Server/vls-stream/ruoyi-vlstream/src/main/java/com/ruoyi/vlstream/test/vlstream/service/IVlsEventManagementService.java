@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springblade.core.mp.base.BaseService;
 import com.ruoyi.vlstream.test.vlstream.excel.VlsEventManagementExcel;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement;
+import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.EventManagementVO;
 
 import java.time.LocalDateTime;
@@ -63,6 +64,9 @@ public interface IVlsEventManagementService extends BaseService<EventManagement>
 	 * Create a new event.
 	 */
 	boolean createEvent(EventManagement eventManagement);
+
+	/** Report a device-generated detection result through the configured business mode. */
+	boolean reportDeviceEvent(EventManagement eventManagement, DeviceInfo device);
 
 	/**
 	 * Update an existing event.

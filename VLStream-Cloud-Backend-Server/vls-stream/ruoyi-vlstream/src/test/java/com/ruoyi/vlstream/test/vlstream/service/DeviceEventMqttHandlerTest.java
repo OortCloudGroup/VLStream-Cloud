@@ -16,7 +16,6 @@ import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReport;
 import com.ruoyi.vlstream.test.vlstream.pojo.dto.ActiveSafetyEventReportResult;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceMediaUpload;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
-import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -72,20 +71,24 @@ class DeviceEventMqttHandlerTest {
 		upload.setObjectKey("events/CAM-1/2026/07/29/media-1.jpg");
 		when(eventReportApplicationService.isMultiTenant()).thenReturn(true);
 		when(wvpDeviceResolver.resolve("CAM-1")).thenReturn(device);
+		when(wvpDeviceResolver.resolveEventDevice("CAM-1")).thenReturn(device);
 		when(mediaUploadService.validateAndBind(
 			"media-1", "CAM-1", upload.getObjectKey(), sha256(), "event-message-1"))
 			.thenReturn(upload);
+		when(activeSafetyEventReportService.report(any())).thenReturn(
+			ActiveSafetyEventReportResult.builder().activeSafetyEventId("99").mediaId("media-1").build());
 
 		JSONObject reply = handler.handle(faceEventMessage());
 
 		assertEquals("SUCCESS", reply.getByPath("payload.bizData.status"));
-		ArgumentCaptor<EventManagement> eventCaptor = ArgumentCaptor.forClass(EventManagement.class);
-		verify(eventReportApplicationService).persistDeviceEvent(eventCaptor.capture(), any(DeviceInfo.class));
-		EventManagement event = eventCaptor.getValue();
-		assertEquals("event-message-1", event.getMqttMessageId());
+		ArgumentCaptor<ActiveSafetyEventReport> eventCaptor = ArgumentCaptor.forClass(ActiveSafetyEventReport.class);
+		verify(activeSafetyEventReportService).report(eventCaptor.capture());
+		ActiveSafetyEventReport event = eventCaptor.getValue();
+		assertEquals("event-message-1", event.getSourceMessageId());
 		assertEquals("device-event-1", event.getDeviceEventId());
-		assertEquals("vls-media://media-1", event.getReportImg());
-		verify(activeSafetyEventReportService, never()).report(any());
+		assertEquals(java.util.Collections.singletonList("media-1"), event.getImageMediaIds());
+		assertEquals("事件已接收，等待外部业务处理", reply.getByPath("payload.msg"));
+		verify(llmReviewTaskService, never()).enqueueIfRequired(any(), any(), any(), any(), any(), any(), any());
 		assertNull(com.ruoyi.common.helper.TenantContextHolder.getTenantId());
 	}
 
