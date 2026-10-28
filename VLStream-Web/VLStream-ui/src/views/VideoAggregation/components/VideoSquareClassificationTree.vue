@@ -3,6 +3,8 @@
     <el-tabs v-model="activeType" stretch @tab-change="changeType">
       <el-tab-pane v-for="tab in tabs" :key="tab.value" :name="tab.value" :label="$tp(tab.label)" />
     </el-tabs>
+    <!-- MasterGo 257:28769 / 309:33869 — 页签 → 搜索框 → 目录树 -->
+    <slot name="toolbar" />
     <div v-if="error" class="classification-error" role="alert">
       <span>{{ error }}</span><el-button text size="small" @click="refresh">{{ $tp('重试') }}</el-button>
     </div>

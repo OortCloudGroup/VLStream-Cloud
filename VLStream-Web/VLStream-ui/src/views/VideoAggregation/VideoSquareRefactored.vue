@@ -6,7 +6,7 @@
 -->
 
 <template>
-  <div class="video-square" :class="{ 'is-dark': isDarkMode, 'is-default-video': viewMode === 'video' && presentationMode === 'default', 'is-bg-swap': viewMode === 'map' || viewMode === 'list' }">
+  <div class="video-square" :class="{ 'is-dark': isDarkMode, 'is-default-video': viewMode === 'video' && presentationMode === 'default', 'is-bg-swap': viewMode === 'map' || viewMode === 'list', 'is-map-mode': viewMode === 'map' }">
     <VideoSquareSharingPanel v-model="showSharing" :initial-owner-id="sharingOwnerId" :owned-devices="currentDevices" />
     <!-- main need to -->
     <div class="main-content">
@@ -355,8 +355,7 @@ const presentationMode = ref('default')
 const selectPresentation = mode => {
   if (!['default', 'bottom'].includes(mode)) return
   presentationMode.value = mode
-  // 布局/显示模式按钮的作用是「按该方式看视频」，地图/列表下点它必须给出可见结果
-  viewMode.value = 'video'
+  // 地图/列表模式也直接在当前模式显示视频，不再切回视频展示
   const dialog = layoutDialogs.value[0]
   if (dialog) {
     if (presentationMode.value === dialog.presentationMode && mode === 'bottom') return
@@ -1047,8 +1046,7 @@ const hideExtendedLayoutDialog = () => {
 
 // Process item
 const handleExtendedLayoutSelect = (count, variant = 'grid') => {
-  // 地图/列表下点布局按钮切到视频展示并按该布局播放
-  viewMode.value = 'video'
+  // 地图/列表模式也直接在当前模式显示视频，不再切回视频展示
   // dialog
   showExtendedLayout.value = false
 
@@ -1214,8 +1212,7 @@ const handleVideoWindowDoubleClick = (dialogId, windowIndex) => {
 // Process
 const handleLayoutSelect = (count) => {
   presentationMode.value = 'grid'
-  // 地图/列表下点布局按钮切到视频展示并按该布局播放
-  viewMode.value = 'video'
+  // 地图/列表模式也直接在当前模式显示视频，不再切回视频展示
   console.log('主文件收到布局选择事件，count:', count)
   openVideoDialogs(count)
 }
