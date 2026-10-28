@@ -51,6 +51,7 @@
 
         <div class="header-right">
           <LocaleSwitcher />
+          <PlatformAppsEntry v-if="tenantMode !== 'multi'" :user-id="currentUser.userId || ''" />
           <OortCloudPopover v-if="tenantMode === 'multi' || isSuperAdmin" :tenant-mode="tenantMode" />
 
           <PlatformHeaderRight
@@ -155,6 +156,7 @@ import CollapseToggle from '@/components/CollapseToggle.vue'
 import SidebarMenuNode from './SidebarMenuNode.vue'
 import OortCloudPopover from './OortCloudPopover.vue'
 import PlatformHeaderRight from './PlatformHeaderRight.vue'
+import PlatformAppsEntry from './platform-header/PlatformAppsEntry.vue'
 import LocaleSwitcher from './LocaleSwitcher.vue'
 import { translatePhrase } from '@/i18n'
 import deviceManagementIcon from '@/assets/img/svg/device-management.svg'
