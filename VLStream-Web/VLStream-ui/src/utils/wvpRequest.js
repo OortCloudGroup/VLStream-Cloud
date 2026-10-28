@@ -8,11 +8,13 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { saveAs } from 'file-saver'
-import { applyPlatformGatewayHeaders, getStoredToken, getPlatformAccessToken, getLocalSessionToken, isTrustedApiRequest, invalidateApiResponse } from '@/utils/request'
+import { applyPlatformGatewayHeaders, getStoredToken, getPlatformAccessToken, getLocalSessionToken, isTrustedApiRequest, handleSessionFailureAsync } from '@/utils/request'
+import { captureRequestIdentity, isSessionRedirecting, sessionExpiryError } from '@/utils/sessionExpiry'
 import { isMultiTenantMode } from '@/utils/platformSession'
 import { normalizeWvpResponse } from '@/utils/wvpResponse.mjs'
 import { replaceHeader, sessionValue, clearIdentityHeaders } from '@/utils/requestIdentity.mjs'
 import { SHARED_CAMERA_RTC_AUTH_HEADERS } from '@/utils/sharedCameraRtc.mjs'
+import { isLocalEventClassificationRead } from '@/utils/localEventAccess.mjs'
 
 export const getWvpBaseURL = () => {
   const configuredBaseURL = import.meta.env.VITE_WVP_API_BASE_URL
@@ -21,6 +23,9 @@ export const getWvpBaseURL = () => {
 }
 
 export const getWvpToken = () => {
+  // The VLS console uses one active identity in both tenant modes.
+  // An obsolete independent WVP token must not override a live VLS federation session.
+  if (getLocalSessionToken()) return getPlatformAccessToken() || (isMultiTenantMode() ? '' : getLocalSessionToken())
   // An old WVP-local token must never replace the current platform identity in multi mode.
   if (isMultiTenantMode()) return getPlatformAccessToken()
   const urlParams = new URLSearchParams(window.location.search)
@@ -44,13 +49,18 @@ const wvpRequest = axios.create({
 export const applyWvpHeaders = (config) => {
   config.headers = config.headers || {}
   if (!isTrustedApiRequest(config)) { clearIdentityHeaders(config.headers); return config }
-  const token = getWvpToken()
+  captureRequestIdentity(config)
+  if (isSessionRedirecting() && !getLocalSessionToken()) throw sessionExpiryError()
+  const localRead = isLocalEventClassificationRead(config, getWvpBaseURL(), window.location.origin)
+  config.vlsLocalSessionOnly = localRead
+  const token = localRead ? getLocalSessionToken() : getWvpToken()
   const federatedToken = getVlstreamFederatedToken()
-  const tenantId = sessionValue(['tenantId'])
+  const tenantId = sessionValue(['tenantId', 'tenant_id'])
   ;['accesstoken', 'X-VLStream-Token', 'tenantid', 'Authorization', 'blade-auth'].forEach(name => replaceHeader(config.headers, name))
   if (isMultiTenantMode() && (!token || !federatedToken)) {
     const error = new Error('平台登录会话已失效，请重新登录')
     error.code = 'PLATFORM_AUTH_REQUIRED'
+    error.config = config
     throw error
   }
   replaceHeader(config.headers, 'accesstoken', token ? token.replace(/^Bearer\s+/i, '') : undefined)
@@ -78,8 +88,9 @@ export const getSharedCameraRtcAuthHeaders = () => {
 wvpRequest.interceptors.request.use(applyWvpHeaders)
 
 wvpRequest.interceptors.response.use(
-  (response) => {
-    invalidateApiResponse(response)
+  async (response) => {
+    const sessionError = await handleSessionFailureAsync(response)
+    if (sessionError) return Promise.reject(sessionError)
     if (response.config.responseType === 'blob' || response.config.responseType === 'arraybuffer') {
       return response.data
     }
@@ -89,13 +100,16 @@ wvpRequest.interceptors.response.use(
     } catch (error) {
       // Preserve the business body and request context for callers and identity checks.
       error.response = { ...response, data: error.data || response.data }
-      invalidateApiResponse(error.response)
+      const sessionError = await handleSessionFailureAsync(error)
+      if (sessionError) return Promise.reject(sessionError)
       if (!response.config?.silentError) ElMessage.error(error.message)
       return Promise.reject(error)
     }
   },
-  (error) => {
-    invalidateApiResponse(error.response)
+  async (error) => {
+    if (axios.isCancel(error)) return Promise.reject(error)
+    const sessionError = await handleSessionFailureAsync(error)
+    if (sessionError) return Promise.reject(sessionError)
     const message = error.response?.data?.msg
       || (error.code === 'ECONNABORTED' ? 'WVP 接口请求超时' : 'WVP 服务连接失败')
     if (!error.config?.silentError) ElMessage.error(message)

@@ -11,7 +11,7 @@ const LOCAL_TENANT_ID = '000000'
 
 /* * Get after current . */
 export function getTenantMode() {
-  return authRequest.get('/sso/v1/mode')
+  return authRequest.get('/sso/v1/mode', { skipTokenAuth: true } as any)
 }
 
 /* * token Sa-Token. */

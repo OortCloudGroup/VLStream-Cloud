@@ -94,6 +94,8 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import smCrypto from 'sm-crypto'
+import { safeAuthReturnPath } from '@/utils/authRedirect.mjs'
+import { isSessionExpiryError } from '@/utils/sessionExpiry'
 import { AuthManager } from '@/utils/auth'
 import { extractAuthCallbackParams, stripAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
 import { logSafeRequestError } from '@/utils/safeRequestError.mjs'
@@ -139,7 +141,7 @@ const encryptPassword = (password) => {
 }
 
 const handlePlatformLogin = () => {
-  authManager.redirectToPlatformLogin(route.query.redirect || '/')
+  authManager.redirectToPlatformLogin(safeAuthReturnPath(route.query.redirect, import.meta.env.BASE_URL))
 }
 
 // Process
@@ -171,25 +173,21 @@ const handleLogin = async () => {
         userName: authInfo.userName || authInfo.account
       }
 
-      // userinfo and token
-      localStorage.setItem('userInfo', JSON.stringify(userData))
-      localStorage.setItem('accessToken', userData.accessToken)
-      sessionStorage.setItem('userInfo', JSON.stringify(userData))
-      sessionStorage.setItem('accessToken', userData.accessToken)
-
       // userinfo data
+      authManager.invalidatePendingIdentity()
       await authManager.saveUserToLocal(userData)
 
       ElMessage.success(uiText('登录成功'))
 
       // successfully after , redirect .
-      await router.replace(route.query.redirect || '/')
+      await router.replace(safeAuthReturnPath(route.query.redirect, import.meta.env.BASE_URL))
 
     } else {
       ElMessage.error(response.msg || uiText('登录失败'))
     }
 
   } catch (error) {
+    if (isSessionExpiryError(error)) return
     logSafeRequestError('登录失败', error)
     // will failed in error.data in ; , to .
     const errorData = error.response?.data || error.data
@@ -216,8 +214,7 @@ onMounted(async () => {
     try {
       const userInfo = await authManager.checkUrlToken(callbackHref)
       if (userInfo) {
-        ElMessage.success(uiText('自动登录成功'))
-        const redirect = route.query.redirect || '/workspace'
+        const redirect = safeAuthReturnPath(route.query.redirect, import.meta.env.BASE_URL)
         await router.replace(redirect)
         return
       }
@@ -235,13 +232,12 @@ onMounted(async () => {
   }
 
   // token
-  const localToken = localStorage.getItem('accessToken')
+  const localToken = authManager.getCurrentToken()
   if (localToken) {
     try {
       const userInfo = await authManager.checkLocalToken()
       if (userInfo) {
-        ElMessage.success(uiText('自动登录成功'))
-        router.push('/')
+        await router.replace(safeAuthReturnPath(route.query.redirect, import.meta.env.BASE_URL))
         return
       }
     } catch (error) {

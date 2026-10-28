@@ -23,6 +23,7 @@ export function getEventPage(params) {
   return request({
     url: '/vlsEventManagement/page',
     method: 'get',
+    localSessionOnly: true,
     params
   })
 }
@@ -34,7 +35,8 @@ export function getEventPage(params) {
 export function getEventById(id) {
   return request({
     url: `/vlsEventManagement/${id}`,
-    method: 'get'
+    method: 'get',
+    localSessionOnly: true
   })
 }
 

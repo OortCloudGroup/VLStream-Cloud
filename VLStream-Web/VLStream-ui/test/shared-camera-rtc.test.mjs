@@ -181,6 +181,8 @@ test('WVP auth getter reuses current REST header generation and projects only ha
   let identity={platform:'platform-one',local:'local-one',tenant:'tenant-one'},gatewayCalls=0
   let requestInterceptor
   const scope={env:{DEV:true},window:{location:{search:''}},SHARED_CAMERA_RTC_AUTH_HEADERS,replaceHeader,clearIdentityHeaders,
+    captureRequestIdentity:config=>config,isSessionRedirecting:()=>false,sessionExpiryError:()=>Object.assign(new Error('expired'),{code:'SESSION_EXPIRED'}),
+    isLocalEventClassificationRead:()=>false,
     axios:{create:()=>({interceptors:{request:{use:fn=>{requestInterceptor=fn}},response:{use(){}}}})},
     getPlatformAccessToken:()=>identity.platform,getLocalSessionToken:()=>identity.local,
     getStoredToken:()=>{throw new Error('unexpected fallback')},isMultiTenantMode:()=>true,
@@ -211,6 +213,8 @@ function actualWvpIdentity({multi=false,local='current-local-token',platform='cu
     .replace(/^export default wvpRequest$/m,'').replace(/^export /gm,'')
   let requestInterceptor
   const scope={env:{DEV:true},window:{location:{search}},URLSearchParams,SHARED_CAMERA_RTC_AUTH_HEADERS,replaceHeader,clearIdentityHeaders,
+    captureRequestIdentity:config=>config,isSessionRedirecting:()=>false,sessionExpiryError:()=>Object.assign(new Error('expired'),{code:'SESSION_EXPIRED'}),
+    isLocalEventClassificationRead:()=>false,
     axios:{create:()=>({interceptors:{request:{use:fn=>{requestInterceptor=fn}},response:{use(){}}}})},
     getPlatformAccessToken:()=>platform,getLocalSessionToken:()=>local,getStoredToken:()=>platform||local,isMultiTenantMode:()=>multi,
     sessionValue:keys=>keys.includes('wvpAccessToken')?storedWvp:keys.includes('tenantId')?'current-tenant':'',
@@ -256,7 +260,7 @@ test('actual shared getter preserves current single-mode VLS and existing multi-
     const h=harness({getAuthHeaders:actual.getAuthHeaders});h.session.start()
     assert.equal(h.sockets.length,1)
     const headers=decodeAuth(h.sockets[0].protocols)
-    assert.deepEqual(headers,{accesstoken:multi?'current-platform-token':'previous-wvp-token','X-VLStream-Token':'current-local-token',tenantid:'current-tenant',requesttype:'app',appid:'current-app',secretkey:'current-secret','X-WVP-Auth-Source':'vlstream'})
+    assert.deepEqual(headers,{accesstoken:'current-platform-token','X-VLStream-Token':'current-local-token',tenantid:'current-tenant',requesttype:'app',appid:'current-app',secretkey:'current-secret','X-WVP-Auth-Source':'vlstream'})
     assert.equal(h.sockets[0].url.includes('token'),false)
     h.session.stop()
     assert.equal(h.timers.size,0)

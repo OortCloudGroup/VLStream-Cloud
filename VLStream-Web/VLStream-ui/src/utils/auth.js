@@ -5,6 +5,8 @@
  * Updated by: ChaoQun Lei
  */
 
+import { getIdentityRevision, advanceIdentityRevision, isSessionExpiryError } from '@/utils/sessionExpiry'
+import { appLoginUrl } from '@/utils/authRedirect.mjs'
 import { verifyToken } from '@/api/auth'
 import { sessionValue } from '@/utils/requestIdentity.mjs'
 import { exchangePlatformToken, getTenantMode, switchTenant, validatePlatformSession } from '@/api/system/localAuth'
@@ -24,21 +26,19 @@ const normalizeApiResponse = (response) => {
 }
 
 // All AuthManager instances share identity changes (layout, router and login).
-let identityRevision = 0
-
 export class AuthManager {
   constructor() {
     this.validatedPlatformToken = ''
   }
 
   invalidatePendingIdentity() {
-    identityRevision++
+    advanceIdentityRevision()
     this.validatedPlatformToken = ''
   }
 
   getIdentitySnapshot() {
     return {
-      revision: identityRevision,
+      revision: getIdentityRevision(),
       token: this.getCurrentToken(),
       platformToken: this.getPlatformToken(),
       tenantId: sessionValue(['tenantId', 'tenant_id'])
@@ -52,17 +52,23 @@ export class AuthManager {
   }
 
   /* * after Process token Validate . */
+  async checkLocalEventLogin() {
+    if (this.hasPlatformCallbackToken()) return this.checkUrlToken()
+    await this.getTenantMode()
+    return this.checkLocalToken({ localSessionOnly: true })
+  }
+
   async checkExternalPlatformLogin() {
     const { accessToken: urlToken } = extractAuthCallbackParams(window.location.href)
     if (urlToken) {
       return this.checkUrlToken()
     }
+    // Mode must be known before user/info: an empty new tab must never default a multi identity to 000000.
+    const tenantMode = await this.getTenantMode()
     const identity = this.getIdentitySnapshot()
     const userInfo = await this.checkLocalToken()
     if (!userInfo || !this.isIdentityCurrent(identity)) return null
 
-    const tenantMode = await this.getTenantMode()
-    if (!this.isIdentityCurrent(identity)) return null
     if (tenantMode !== 'multi') return userInfo
 
     const platformToken = this.getPlatformToken()
@@ -77,8 +83,8 @@ export class AuthManager {
       clearPlatformLoginPending()
       return userInfo
     } catch (error) {
-      logSafeRequestError('多租户平台会话校验失败', error)
-      return null
+      if (isSessionExpiryError(error)) return null
+      throw error
     }
   }
 
@@ -105,24 +111,28 @@ export class AuthManager {
   }
 
   /* * item after userinterface token userfield. */
-  async verifyToken(token) {
+  async verifyToken(token, options = {}) {
     if (!token) return null
     try {
-      const apiResponse = normalizeApiResponse(await verifyToken(token))
+      const apiResponse = normalizeApiResponse(await verifyToken(token, options))
       if (!apiResponse || (apiResponse.code !== 200 && apiResponse.success !== true)) return null
       const data = apiResponse.data || {}
       const user = data.user || data
+      const tenantId = user.tenantId || data.tenantId
+      if (!tenantId && sessionStorage.getItem('vlsTenantMode') === 'multi') {
+        throw new Error('会话校验未返回可信租户')
+      }
       return {
         ...user,
         ...data,
         accessToken: token,
         userName: user.realName || user.nickName || user.name || user.account || user.userName,
         loginId: user.account || user.loginId || user.userName,
-        tenantId: user.tenantId || data.tenantId || '000000'
+        tenantId: tenantId || '000000'
       }
     } catch (error) {
-      logSafeRequestError('本地会话验证失败', error)
-      return null
+      if (isSessionExpiryError(error)) return null
+      throw error
     }
   }
 
@@ -191,11 +201,11 @@ export class AuthManager {
   }
 
   /* * Validate will in token. */
-  async checkLocalToken() {
+  async checkLocalToken(options = {}) {
     const identity = this.getIdentitySnapshot()
     const token = this.getCurrentToken()
     if (!token) return null
-    const userInfo = await this.verifyToken(token)
+    const userInfo = await this.verifyToken(token, options)
     if (userInfo) return this.isIdentityCurrent(identity) ? userInfo : null
     this.clearIdentityTokens(identity)
     return null
@@ -204,7 +214,7 @@ export class AuthManager {
   /* * item . */
   logout() {
     this.clearAllTokens()
-    window.location.href = '/bus/vls-ui/login'
+    window.location.replace(appLoginUrl('/workspace', import.meta.env.BASE_URL, window.location.origin))
   }
 
   /* * new token. */
@@ -252,10 +262,13 @@ export class AuthManager {
   async getTenantMode() {
     try {
       const response = normalizeApiResponse(await getTenantMode())
-      return saveTenantMode(response?.data?.tenantType === 'multi' ? 'multi' : 'single')
+      const mode = response?.data?.tenantType
+      if (mode !== 'single' && mode !== 'multi') throw new Error('服务未返回有效租户模式')
+      return saveTenantMode(mode)
     } catch (error) {
-      logSafeRequestError('获取租户模式失败，按既有单租户处理', error)
-      return saveTenantMode('single')
+      const cached = sessionStorage.getItem('vlsTenantMode')
+      if (cached === 'single' || cached === 'multi') return cached
+      throw error
     }
   }
 

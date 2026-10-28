@@ -70,6 +70,14 @@ public class PlatformAccessTokenExchangeFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
+        String localPath = request.getServletPath();
+        if (StringUtils.isBlank(localPath)) {
+            localPath = request.getRequestURI().substring(request.getContextPath().length());
+        }
+        if ("/vlsEventManagement".equals(localPath) || localPath.startsWith("/vlsEventManagement/")) {
+            writeUnauthorized(response, "本地会话无效或已过期，请重新登录");
+            return;
+        }
 
         try {
             String tenantId = firstHeader(request, "tenantId", "tenantid", "Tenant-Id");

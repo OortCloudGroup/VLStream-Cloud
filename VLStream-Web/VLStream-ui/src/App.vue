@@ -8,13 +8,17 @@
 <template>
   <el-config-provider :locale="elementLocale">
     <div id="app">
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <component :is="Component" v-if="Component" />
+        <AuthCheckFallback v-else />
+      </router-view>
     </div>
   </el-config-provider>
 </template>
 
 <script setup>
 import { elementLocale } from '@/i18n'
+import AuthCheckFallback from '@/components/AuthCheckFallback.vue'
 </script>
 
 <style scoped>

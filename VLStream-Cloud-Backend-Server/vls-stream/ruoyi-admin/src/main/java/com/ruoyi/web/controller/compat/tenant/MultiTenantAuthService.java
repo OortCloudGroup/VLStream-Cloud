@@ -149,7 +149,7 @@ public class MultiTenantAuthService {
     public PlatformTenantSession requireSession(String localToken) {
         PlatformTenantSession session = platformSessionStore.get(localToken);
         if (session == null) {
-            throw new IllegalStateException("多租户平台会话不存在或已过期");
+            throw new PlatformSessionValidationException(PlatformSessionValidationException.Reason.SESSION_NOT_BOUND);
         }
         return session;
     }
@@ -162,9 +162,11 @@ public class MultiTenantAuthService {
         PlatformTenantSession session = requireSession(localToken);
         PlatformIdentity identity = platformClient.verifyToken(
             session.getPlatformAccessToken(), session.getGatewayHeaders());
-        if (!Objects.equals(session.getPlatformUserId(), identity.getUserId())
-            || !Objects.equals(session.getTenantId(), identity.getTenantId())) {
-            throw new IllegalStateException("平台会话身份已变更，请重新登录");
+        if (!Objects.equals(session.getPlatformUserId(), identity.getUserId())) {
+            throw new PlatformSessionValidationException(PlatformSessionValidationException.Reason.PLATFORM_USER_CHANGED);
+        }
+        if (!Objects.equals(session.getTenantId(), identity.getTenantId())) {
+            throw new PlatformSessionValidationException(PlatformSessionValidationException.Reason.PLATFORM_TENANT_CHANGED);
         }
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("valid", true);

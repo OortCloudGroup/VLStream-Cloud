@@ -8,7 +8,9 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import ElementPlus from 'element-plus'
+import ElementPlus, { ElMessage } from 'element-plus'
+import { installSessionMessageGuard } from '@/utils/sessionExpiry'
+import { bootstrapRequestIdentity } from '@/utils/requestIdentity.mjs'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { createPinia } from 'pinia'
@@ -36,11 +38,10 @@ window.$crudCommon = crudCommon;
 capturePendingModelHubCallback()
 
 // VLStream token apaas
-const vlsAccessToken = localStorage.getItem('accessToken')
-if (vlsAccessToken) {
-  localStorage.setItem('apaas_token', vlsAccessToken)
-  sessionStorage.setItem('token', vlsAccessToken)
-}
+installSessionMessageGuard(ElMessage)
+// Revalidate a restored Back/Forward cache document through the route guard.
+window.addEventListener('pageshow', event => { if (event.persisted) window.location.reload() })
+bootstrapRequestIdentity()
 
 const app = createApp(App)
 app.config.globalProperties.$tp = translatePhrase

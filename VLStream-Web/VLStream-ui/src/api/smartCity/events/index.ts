@@ -21,6 +21,7 @@ function commonFuncB<T, K>(interfaceName: string, data: T, method = 'post') {
   return request<K>({
     url: `/${normalizedPath}`,
     method: method,
+    localSessionOnly: method.toLowerCase() === 'post' && ['task/v1/event_list', 'task/v1/event_item_list'].includes(normalizedPath),
     data: removeLegacyAccessToken(data)
   })
 }

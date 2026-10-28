@@ -50,4 +50,16 @@ D:\work\ide\WorkSpace\VLStream-Cloud\VLStream-Cloud-Backend-Server\vls-stream\do
 /VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/**
 !/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/**/
 !/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/java/com/ruoyi/web/controller/compat/LocationTaskEventDeletionTest.java
+!/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/java/com/ruoyi/web/controller/compat/EventLocationServiceTest.java
+!/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/java/com/ruoyi/web/controller/compat/TenantActiveSafetyEventReportServiceTest.java
+!/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/java/com/ruoyi/web/controller/compat/VlsMqttClientIdConfigTest.java
+!/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/java/com/ruoyi/web/controller/compat/MultiTenantEventPersistenceTest.java
+!/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/java/com/ruoyi/web/controller/compat/CameraDeviceEventReportServiceTest.java
+!/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/java/com/ruoyi/web/controller/compat/LocationTaskCompatControllerTest.java
+!/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/java/com/ruoyi/web/controller/compat/PlatformSessionValidationDiagnosticsTest.java
+!/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/java/com/ruoyi/web/controller/compat/tenant/PlatformTenantFailureClassificationTest.java
+!/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/java/com/ruoyi/web/controller/compat/tenant/PlatformSessionValidationServiceTest.java
 /output
+!/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/java/com/ruoyi/web/controller/config/LocalEventSessionSecurityTest.java
+!/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/java/com/ruoyi/web/filter/PlatformAccessTokenExchangeFilterTest.java
+!/VLStream-Cloud-Backend-Server/vls-stream/ruoyi-admin/src/test/java/com/ruoyi/web/controller/compat/tenant/ComputeBillingProductControllerTest.java

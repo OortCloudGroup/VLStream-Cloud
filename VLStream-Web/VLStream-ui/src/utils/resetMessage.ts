@@ -5,10 +5,12 @@
  * Updated by: ChaoQun Lei
  */
 
+import { isSessionRedirecting } from '@/utils/sessionExpiry'
 import { ElMessage } from 'element-plus' // message
 
 let messageDom = null
 const resetMessage = (options) => {
+  if (isSessionRedirecting()) return { close() {} }
   if (messageDom) messageDom.close() // Check dialogwhether already in , in
   messageDom = ElMessage(options)
 }

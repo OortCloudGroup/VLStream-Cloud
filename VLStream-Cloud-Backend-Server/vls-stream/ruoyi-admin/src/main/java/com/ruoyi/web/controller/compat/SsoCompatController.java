@@ -15,6 +15,9 @@ import com.ruoyi.framework.config.properties.TokenProperties;
 import com.ruoyi.vlstream.test.compat.BladeResult;
 import com.ruoyi.web.controller.compat.tenant.MultiTenantAuthService;
 import com.ruoyi.web.controller.compat.tenant.PlatformTenantSession;
+import com.ruoyi.web.controller.compat.tenant.PlatformTenantCallException;
+import com.ruoyi.web.controller.compat.tenant.PlatformSessionValidationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,8 +29,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
+@Slf4j
 @RequestMapping("/sso/v1")
 public class SsoCompatController {
 
@@ -142,13 +147,60 @@ public class SsoCompatController {
         }
         String localToken = TokenHeaderResolver.resolve(request);
         if (localToken == null) {
-            return BladeResult.fail("缺少本地访问令牌");
+            return validationFailure(401, "缺少本地访问令牌", "LOCAL_TOKEN_MISSING", null, null, null);
         }
         try {
             return BladeResult.success(multiTenantAuthService.validatePlatformSession(localToken));
+        } catch (PlatformSessionValidationException exception) {
+            boolean missingBinding = exception.getReason() == PlatformSessionValidationException.Reason.SESSION_NOT_BOUND;
+            return validationFailure(missingBinding ? 503 : 401,
+                missingBinding ? "本地平台会话绑定不可用，请稍后重试" : exception.getMessage(),
+                exception.getReason().name(), null, null, exception);
+        } catch (PlatformTenantCallException exception) {
+            int code = exception.responseCode();
+            String message = code == 401 || code == 4004 || code == 4444 ? "平台登录凭据校验失败，请重新登录"
+                : code == 403 ? "平台拒绝校验当前会话" : "平台身份校验服务暂不可用，请稍后重试";
+            return validationFailure(code, message, exception.getKind().name(),
+                exception.getHttpStatus(), exception.getBusinessCode(), exception);
         } catch (Exception exception) {
-            return BladeResult.fail("平台会话已失效，请重新登录");
+            return validationFailure(500, "平台会话校验发生服务异常，请稍后重试", "UNEXPECTED", null, null, exception);
         }
+    }
+
+    private BladeResult<Map<String, Object>> validationFailure(int code, String message, String kind,
+                                                               Integer upstreamHttp, Integer upstreamCode,
+                                                               Exception exception) {
+        String traceId = UUID.randomUUID().toString();
+        log.warn("平台会话校验失败: traceId={}, kind={}, upstreamHttp={}, upstreamCode={}, exceptionType={}, throwSite={}, causeTypes={}",
+            traceId, kind, upstreamHttp, upstreamCode,
+            exception == null ? "none" : exception.getClass().getName(), throwSite(exception), causeTypes(exception));
+        BladeResult<Map<String, Object>> result = BladeResult.fail(message);
+        result.setCode(code);
+        Map<String, Object> data = new LinkedHashMap<String, Object>();
+        data.put("traceId", traceId);
+        result.setData(data);
+        return result;
+    }
+
+    private static String throwSite(Throwable exception) {
+        if (exception != null) {
+            for (StackTraceElement frame : exception.getStackTrace()) {
+                if (frame.getClassName().startsWith("com.ruoyi.")) {
+                    return frame.getClassName() + "." + frame.getMethodName() + ":" + frame.getLineNumber();
+                }
+            }
+        }
+        return "unknown";
+    }
+
+    private static String causeTypes(Throwable exception) {
+        StringBuilder names = new StringBuilder();
+        Throwable cause = exception == null ? null : exception.getCause();
+        for (int depth = 0; cause != null && depth < 4; depth++, cause = cause.getCause()) {
+            if (names.length() > 0) names.append('>');
+            names.append(cause.getClass().getName());
+        }
+        return names.toString();
     }
 
     /**

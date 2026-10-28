@@ -56,7 +56,7 @@ public class PlatformTenantClient {
             identity.setAccessToken(platformToken);
         }
         if (StringUtils.isBlank(identity.getUserId()) || StringUtils.isBlank(identity.getTenantId())) {
-            throw new IllegalStateException("平台 verifyToken 未返回 userId 或 tenantId");
+            throw new PlatformTenantCallException(PlatformTenantCallException.Kind.RESPONSE_FORMAT, 200, 200, null);
         }
         return identity;
     }
@@ -115,7 +115,10 @@ public class PlatformTenantClient {
 
     private JSONObject post(String url, JSONObject body, String platformToken, PlatformGatewayHeaders headers) {
         if (StringUtils.isBlank(url)) {
-            throw new IllegalStateException("多租户平台接口地址未配置");
+            throw new PlatformTenantCallException(PlatformTenantCallException.Kind.CONFIGURATION, null, null, null);
+        }
+        if (headers == null) {
+            throw new PlatformTenantCallException(PlatformTenantCallException.Kind.CONFIGURATION, null, null, null);
         }
         int timeout = Math.max(tokenProperties.getMultiTenantConnectTimeoutMillis(),
             tokenProperties.getMultiTenantReadTimeoutMillis());
@@ -129,19 +132,31 @@ public class PlatformTenantClient {
             .timeout(timeout)
             .execute()) {
             if (!httpResponse.isOk()) {
-                throw new IllegalStateException("平台接口 HTTP 状态异常: " + httpResponse.getStatus() + ", url=" + url);
+                throw new PlatformTenantCallException(PlatformTenantCallException.Kind.HTTP_STATUS,
+                    httpResponse.getStatus(), null, null);
             }
-            JSONObject response = JSONUtil.parseObj(httpResponse.body());
-            Integer code = response.getInt("code");
+            JSONObject response;
+            Integer code;
+            try {
+                String responseBody = httpResponse.body();
+                if (StringUtils.isBlank(responseBody) || !JSONUtil.isTypeJSONObject(responseBody)) {
+                    throw new IllegalArgumentException("Expected a JSON object");
+                }
+                response = JSONUtil.parseObj(responseBody);
+                code = response.getInt("code");
+            } catch (Exception exception) {
+                throw new PlatformTenantCallException(PlatformTenantCallException.Kind.RESPONSE_FORMAT,
+                    httpResponse.getStatus(), null, exception);
+            }
             if (code == null || code.intValue() != 200) {
-                String message = firstValue(response, "msg", "message");
-                throw new IllegalStateException((StringUtils.isBlank(message) ? "平台接口校验失败" : message) + ", url=" + url);
+                throw new PlatformTenantCallException(code == null ? PlatformTenantCallException.Kind.RESPONSE_FORMAT
+                    : PlatformTenantCallException.Kind.BUSINESS_CODE, httpResponse.getStatus(), code, null);
             }
             return response;
-        } catch (IllegalStateException exception) {
+        } catch (PlatformTenantCallException exception) {
             throw exception;
         } catch (Exception exception) {
-            throw new IllegalStateException("调用多租户平台失败: " + exception.getMessage(), exception);
+            throw new PlatformTenantCallException(PlatformTenantCallException.Kind.TRANSPORT, null, null, exception);
         }
     }
 

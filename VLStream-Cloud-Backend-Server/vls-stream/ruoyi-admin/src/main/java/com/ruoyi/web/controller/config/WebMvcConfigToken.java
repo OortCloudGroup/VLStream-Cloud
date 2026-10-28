@@ -29,6 +29,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebMvcConfigToken implements WebMvcConfigurer {
     private final SecurityProperties securityProperties;
     private final TenantContextInterceptor tenantContextInterceptor;
+    private final LocalSessionLifetimeInterceptor localSessionLifetimeInterceptor;
     @Autowired
     private AuthorizationInterceptor authorizationInterceptor;
 
@@ -40,6 +41,8 @@ public class WebMvcConfigToken implements WebMvcConfigurer {
         registry.addInterceptor(new SaInterceptor(handler -> requireLoginUnlessPublicRead()))
             .addPathPatterns("/**")
             .excludePathPatterns(securityProperties.getExcludes());
+        registry.addInterceptor(localSessionLifetimeInterceptor).addPathPatterns("/**")
+            .excludePathPatterns(securityProperties.getExcludes()).order(-10);
         registry.addInterceptor(tenantContextInterceptor).addPathPatterns("/**");
         registry.addInterceptor(authorizationInterceptor).addPathPatterns("/**");
     }

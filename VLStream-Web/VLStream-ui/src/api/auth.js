@@ -17,15 +17,16 @@ export function loginUser(params) {
 }
 
 // VLS will token Get after userinfo.
-export function getUserInfo(localToken) {
+export function getUserInfo(localToken, options = {}) {
   return authRequest.get('/blade-system/user/info', {
+    ...options,
     ...(localToken ? { localAuthToken: localToken } : {})
   })
 }
 
 // Validate token current userinterface, old user in .
-export function verifyToken(localToken) {
-  return getUserInfo(localToken)
+export function verifyToken(localToken, options = {}) {
+  return getUserInfo(localToken, options)
 }
 
 // SpringBlade interface, current after to .

@@ -9,8 +9,10 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { currentLocale, translateUiMessage } from '@/i18n'
 import { logSafeRequestError } from '@/utils/safeRequestError.mjs'
-import { isMultiTenantMode, isPlatformTokenFailure } from '@/utils/platformSession'
+import { isMultiTenantMode } from '@/utils/platformSession'
+import { captureRequestIdentity, expireRequestIdentity, isLoginFailureResponse, isLoginEntryRequest, hasRequestIdentity, sessionExpiryError, isSessionExpiryError, isSessionRedirecting } from '@/utils/sessionExpiry'
 import { sessionValue, replaceHeader, isTrustedBusinessRequest, clearIdentityHeaders } from '@/utils/requestIdentity.mjs'
+import { isLocalEventReadRequest, isLocalEventScopeActive } from '@/utils/localEventAccess.mjs'
 
 export const BLADE_CLIENT_AUTH_HEADER = import.meta.env.VITE_BLADE_CLIENT_AUTH_HEADER || 'Basic c2FiZXI6c2FiZXJfc2VjcmV0'
 const PLATFORM_APP_ID = import.meta.env.VITE_PLATFORM_APP_ID || ''
@@ -68,14 +70,19 @@ export const applyPlatformGatewayHeaders = (config) => {
 export const applyAuthHeaders = (config) => {
   config.headers = config.headers || {}
   if (!isTrustedApiRequest(config)) { clearIdentityHeaders(config.headers); return '' }
+  captureRequestIdentity(config)
+  if (isSessionRedirecting() && !getLocalSessionToken()) throw sessionExpiryError()
   const localToken = config.localAuthToken || getLocalSessionToken()
   const platformToken = config.platformAuthToken !== undefined ? config.platformAuthToken : getPlatformAccessToken()
+  const localRead = isLocalEventReadRequest(config, getBaseURL(), window.location.origin)
+  config.vlsLocalSessionOnly = localRead
   const authToken = localToken
-  const gatewayToken = (config.requirePlatformIdentity || isMultiTenantMode()) ? platformToken : (platformToken || localToken)
+  const gatewayToken = localRead ? localToken : (config.requirePlatformIdentity || isMultiTenantMode()) ? platformToken : (platformToken || localToken)
   ;['Authorization', 'blade-auth', 'accesstoken', 'tenantid', 'X-VLStream-Token', 'X-WVP-Auth-Source'].forEach(name => replaceHeader(config.headers, name))
-  if (isMultiTenantMode() && authToken && !platformToken) {
+  if (isMultiTenantMode() && authToken && !platformToken && !localRead) {
     const error = new Error('平台登录会话已失效，请重新登录')
     error.code = 'PLATFORM_AUTH_REQUIRED'
+    error.config = config
     throw error
   }
 
@@ -86,10 +93,12 @@ export const applyAuthHeaders = (config) => {
   }
   if (gatewayToken) {
     replaceHeader(config.headers, 'accesstoken', gatewayToken.replace(/^Bearer\s+/i, ''))
-    const tenantId = sessionValue(['tenantId']) || (isMultiTenantMode() ? '' : '000000')
+    const tenantId = sessionValue(['tenantId', 'tenant_id']) || (isMultiTenantMode() ? '' : '000000')
     // Before a new multi-tenant session is verified, let the server derive its tenant from that session.
     replaceHeader(config.headers, 'tenantId', tenantId || undefined)
   }
+  config.vlsIdentity.token = String(authToken || '').replace(/^Bearer\s+/i, '')
+  config.vlsIdentity.platformToken = String(platformToken || '').replace(/^Bearer\s+/i, '')
   return authToken
 }
 
@@ -117,40 +126,45 @@ export const getResponseMessage = (data, fallback) => {
   return data?.msg || data?.message || fallback
 }
 
-// A late response from a previous identity must not invalidate a newer login/tenant session.
+// Only authenticated requests to our configured APIs can invalidate the current application session.
 export const invalidateApiResponse = response => {
-  if (!response?.config) return false
-  const headers = response.config.headers || {}
-  const header = name => Object.entries(headers).find(([key]) => key.toLowerCase() === name.toLowerCase())?.[1]
-  const normalize = value => String(value || '').replace(/^Bearer\s+/i, '')
-  const currentPlatform = normalize(getPlatformAccessToken())
-  const currentLocal = normalize(getLocalSessionToken())
-  const usedLocal = normalize(header('X-VLStream-Token') || header('Authorization') || header('blade-auth'))
-  const usedTenant = normalize(header('tenantid'))
-  const defaultTenant = isMultiTenantMode() ? '' : '000000'
-  const currentTenant = normalize(sessionValue(['tenantId', 'tenant_id'])) || defaultTenant
-  const matchesCurrent = usedLocal === currentLocal && usedTenant === currentTenant
-  const matchesStorage = storage => normalize(storage.getItem('accessToken') || storage.getItem('token')) === usedLocal
-    && (normalize(storage.getItem('tenantId') || storage.getItem('tenant_id')) || defaultTenant) === usedTenant
-  if (isPlatformTokenFailure(response.data) && currentPlatform && matchesCurrent && normalize(header('accesstoken')) === currentPlatform) {
-    for (const storage of [sessionStorage, localStorage]) {
-      if (matchesStorage(storage) && normalize(storage.getItem('platformAccessToken')) === currentPlatform) storage.removeItem('platformAccessToken')
-    }
-    return true
+  if (!response?.config || !isTrustedApiRequest(response.config) || isLoginEntryRequest(response.config)
+    || !isLoginFailureResponse(response)) return false
+  return expireRequestIdentity(response.config)
+}
+
+export const handleSessionFailure = value => {
+  if (isSessionExpiryError(value)) return value
+  const response = value?.response || value
+  const config = response?.config || value?.config
+  if (!config || !isTrustedApiRequest(config) || isLoginEntryRequest(config) || !hasRequestIdentity(config)) return null
+  if (value?.code === 'PLATFORM_AUTH_REQUIRED') {
+    expireRequestIdentity(config)
+    return sessionExpiryError()
   }
-  if ((response.status === 401 || Number(response.data?.code) === 401) && currentLocal && matchesCurrent) {
-    for (const storage of [sessionStorage, localStorage]) {
-      if (!matchesStorage(storage)) continue
-      ;['accessToken', 'token', 'userInfo', 'tenantId', 'tenant_id', 'wvpAccessToken'].forEach(key => storage.removeItem(key))
-    }
-    return true
+  if (!isLoginFailureResponse(response)) return null
+  // An optional platform widget cannot invalidate a local event-reading session.
+  if (config.platformIdentityOnly && isLocalEventScopeActive()) return sessionExpiryError(response)
+  // A stale failure is silent but cannot clear or redirect a newer identity.
+  invalidateApiResponse(response)
+  return sessionExpiryError(response)
+}
+
+// Export/download endpoints may return the same JSON authentication envelope as a Blob.
+export const handleSessionFailureAsync = async value => {
+  const response = value?.response || value
+  const body = response?.data
+  if (typeof Blob !== 'undefined' && body instanceof Blob && body.size <= 65536
+    && /json/i.test(body.type || response.headers?.['content-type'] || '')) {
+    try { return handleSessionFailure({ ...response, data: JSON.parse(await body.text()) }) } catch { /* preserve non-JSON files */ }
   }
-  return false
+  return handleSessionFailure(value)
 }
 
 // Process HTTP 200 failed SpringBlade .
-export const handleBusinessError = (data, response, fallback = '请求失败', showMessage = true) => {
-  invalidateApiResponse(response)
+export const handleBusinessError = async (data, response, fallback = '请求失败', showMessage = true) => {
+  const sessionError = await handleSessionFailureAsync(response)
+  if (sessionError) return Promise.reject(sessionError)
   const code = Number(data?.code)
   if (data?.success === false || (Number.isFinite(code) && code >= 400)) {
     const message = getResponseMessage(data, fallback)
@@ -211,8 +225,10 @@ authRequest.interceptors.request.use(
 
     return config
   },
-  error => {
-    invalidateApiResponse(error.response)
+  async error => {
+    if (axios.isCancel(error)) return Promise.reject(error)
+    const sessionError = await handleSessionFailureAsync(error)
+    if (sessionError) return Promise.reject(sessionError)
     logSafeRequestError('认证请求未能发送', error)
     return Promise.reject(error)
   }
@@ -226,8 +242,10 @@ request.interceptors.request.use(
 
     return config
   },
-  error => {
-    invalidateApiResponse(error.response)
+  async error => {
+    if (axios.isCancel(error)) return Promise.reject(error)
+    const sessionError = await handleSessionFailureAsync(error)
+    if (sessionError) return Promise.reject(sessionError)
     logSafeRequestError('请求未能发送', error)
     return Promise.reject(error)
   }
@@ -240,8 +258,10 @@ imageUploadRequest.interceptors.request.use(
     applyAuthHeaders(config)
     return config
   },
-  error => {
-    invalidateApiResponse(error.response)
+  async error => {
+    if (axios.isCancel(error)) return Promise.reject(error)
+    const sessionError = await handleSessionFailureAsync(error)
+    if (sessionError) return Promise.reject(sessionError)
     logSafeRequestError('图片上传请求未能发送', error)
     return Promise.reject(error)
   }
@@ -254,8 +274,10 @@ request.interceptors.response.use(
 
     return handleBusinessError(data, response, '请求失败', !response.config?.silentError)
   },
-  error => {
-    invalidateApiResponse(error.response)
+  async error => {
+    if (axios.isCancel(error)) return Promise.reject(error)
+    const sessionError = await handleSessionFailureAsync(error)
+    if (sessionError) return Promise.reject(sessionError)
     if (axios.isCancel(error)) return Promise.reject(error)
     logSafeRequestError('请求失败', error)
 
@@ -313,10 +335,12 @@ imageUploadRequest.interceptors.response.use(
   response => {
     const { data } = response
 
-    return handleBusinessError(data, response, '图片上传失败')
+    return handleBusinessError(data, response, '图片上传失败', !response.config?.silentError)
   },
-  error => {
-    invalidateApiResponse(error.response)
+  async error => {
+    if (axios.isCancel(error)) return Promise.reject(error)
+    const sessionError = await handleSessionFailureAsync(error)
+    if (sessionError) return Promise.reject(sessionError)
     logSafeRequestError('图片上传请求失败', error)
 
     let message = '图片上传失败'
@@ -367,8 +391,10 @@ authRequest.interceptors.response.use(
 
     return handleBusinessError(data, response, '认证请求失败', !shouldLetCallerHandle)
   },
-  error => {
-    invalidateApiResponse(error.response)
+  async error => {
+    if (axios.isCancel(error)) return Promise.reject(error)
+    const sessionError = await handleSessionFailureAsync(error)
+    if (sessionError) return Promise.reject(sessionError)
     logSafeRequestError('认证请求失败', error)
 
     // related API, prompt / tip, Process

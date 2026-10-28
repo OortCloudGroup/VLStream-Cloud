@@ -5,6 +5,9 @@
  * Updated by: ChaoQun Lei
  */
 
+import { safeAuthReturnPath } from '@/utils/authRedirect.mjs'
+import { beginAuthCheck, failAuthCheck } from '@/utils/authCheckState'
+import { LOCAL_EVENT_AUTH_SCOPE, isLocalEventRoute, selectRouteAuthScope } from '@/utils/localEventAccess.mjs'
 import { createRouter, createWebHistory } from 'vue-router'
 import Layout from '@/layout/index.vue'
 import { AuthManager } from '@/utils/auth'
@@ -223,7 +226,7 @@ const routes = [
         path: '/event-management',
         name: 'EventManagement',
         component: () => import('@/views/DecisionAI/TenantEventManagement.vue'),
-        meta: { title: '事件管理', icon: '事件' }
+        meta: { title: '事件管理', icon: '事件', authScope: LOCAL_EVENT_AUTH_SCOPE }
       },
       {
         path: '/algorithm-management',
@@ -482,12 +485,14 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory('/bus/vls-ui/'),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
 
 //
 router.beforeEach(async (to, from, next) => {
+  selectRouteAuthScope(to.meta)
+  beginAuthCheck()
   console.log('路由跳转')
 
   try {
@@ -499,21 +504,13 @@ router.beforeEach(async (to, from, next) => {
   if (to.path === '/login') {
     if (authManager.hasPlatformCallbackToken()) {
       const userInfo = await authManager.checkUrlToken() // consumes URL before lazy-loading/async authentication
-      if (userInfo) next({ path: String(cleanRoute.query.redirect || '/workspace'), replace: true })
+      if (userInfo) next({ path: safeAuthReturnPath(cleanRoute.query.redirect, import.meta.env.BASE_URL), replace: true })
       else next({ path: cleanRoute.path, query: { ...cleanRoute.query, platformCallbackError: '1' }, hash: cleanRoute.hash, replace: true })
     } else {
       authManager.cleanUrlToken()
       finishRoute()
     }
     return
-  }
-
-  // old token
-  const oldTestToken = 'c0c81bef2c934f829df667a202c99d1e'
-  if (localStorage.getItem('accessToken') === oldTestToken) {
-    console.log('检测到旧测试token，正在清除...')
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('userInfo')
   }
 
   // whether need to
@@ -525,17 +522,24 @@ router.beforeEach(async (to, from, next) => {
       return
     }
     const hasPlatformCallbackToken = authManager.hasPlatformCallbackToken()
-    const userInfo = await authManager.checkExternalPlatformLogin()
+    const checkingIdentity = authManager.getIdentitySnapshot()
+    const userInfo = await (isLocalEventRoute(to.meta)
+      ? authManager.checkLocalEventLogin()
+      : authManager.checkExternalPlatformLogin())
+    if (!hasPlatformCallbackToken && !authManager.isIdentityCurrent(checkingIdentity)) {
+      selectRouteAuthScope(from.meta)
+      next(false)
+      return
+    }
     if (userInfo) {
       console.log('登录验证成功，用户:', userInfo.userName || userInfo.loginId)
       finishRoute()
       return
     }
 
-    // multi 模式必须同时具备有效的 VLS 本地会话和平台会话。
-    // 本地 Token 仍有效但平台 Token 缺失/失效时，回统一平台重新授权并返回原页面。
+    // Other multi-tenant routes retain platform validation; local event reads use the VLS session.
     const tenantMode = await authManager.getTenantMode()
-    if (tenantMode === 'multi' && !hasPlatformCallbackToken) {
+    if (tenantMode === 'multi' && !hasPlatformCallbackToken && !isLocalEventRoute(to.meta)) {
       next(false)
       authManager.redirectToPlatformLogin(cleanRoute.fullPath)
       return
@@ -555,9 +559,12 @@ router.beforeEach(async (to, from, next) => {
     finishRoute()
   }
   } catch (error) {
+    selectRouteAuthScope(from.meta)
     logSafeRequestError('路由认证检查失败', error)
     authManager.cleanUrlToken()
-    next({ path: '/login', query: { redirect: stripAuthCallbackParams(to.fullPath) } })
+    // Transport, server and permission failures preserve the login. The request layer reports them.
+    failAuthCheck(error, stripAuthCallbackParams(to.fullPath))
+    next(false)
   }
 })
 

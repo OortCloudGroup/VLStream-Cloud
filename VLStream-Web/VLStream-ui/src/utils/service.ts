@@ -16,154 +16,11 @@ interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
 }
 import { message } from '@/utils/resetMessage'
 import { get } from 'lodash-es'
-import { getToken, removeToken, getRefreshToken, setRefreshToken } from './cache/cookies'
+import { getToken } from './cache/cookies'
 import Config from '@/config'
 import { useErrorMsgStoreHook } from '@/store/modules/useErrorMsg'
-import useGoWhere  from '@/hooks/useGoWhere'
 import { ElMessageBox } from 'element-plus'
-import { refreshToken } from '@/api/system/localAuth'
-import { applyAuthHeaders, applyPlatformGatewayHeaders, getStoredToken } from '@/utils/request'
-import {
-  isMultiTenantMode,
-  isPlatformTokenFailure,
-  redirectToPlatformLogin
-} from '@/utils/platformSession'
-
-
-import { useUserStoreHook } from '@/store/modules/useraPaas'
-
-
-// and new
-let isRefreshing = false;
-let requestsQueue: Array<{
-  resolve: (value: any) => void,
-  reject: (reason?: any) => void,
-  config: AxiosRequestConfig
-}> = [];
-
-// token new Process method
-const handleTokenRefresh = (originalResponse: any, originalConfig?: AxiosRequestConfig) => {
-  return new Promise((resolve, reject) => {
-    // if in new token, current
-    if (isRefreshing) {
-      requestsQueue.push({ resolve, reject, config: originalConfig || originalResponse.config });
-      return;
-    }
-
-    isRefreshing = true;
-
-    // new token Get new
-    const refreshTokenValue = getRefreshToken();
-    let params = { refreshToken: '' }
-    if (!!refreshTokenValue) {
-      params.refreshToken = refreshTokenValue;
-    }
-    refreshToken(params)
-      .then((res: any) => {
-        const refreshRes = res as { code: number, data: { accessToken: string, refreshToken?: string }, msg: string };
-        if (refreshRes.code === 200 && refreshRes.data && refreshRes.data.accessToken) {
-          // new new token
-          if(refreshRes.data.refreshToken) {
-            setRefreshToken(refreshRes.data.refreshToken);
-          }
-          // new token
-          const setToken = useUserStoreHook().setStoreToken
-          setToken(refreshRes.data.accessToken);
-          // new in token
-          const updateTokenInRequest = (requestConfig: AxiosRequestConfig) => {
-            // axios 1.x
-            const headers = requestConfig.headers as Record<string, any> || {};
-            // new in accesstoken
-            requestConfig.headers = { ...headers, accesstoken: refreshRes.data.accessToken };
-            // if URL in tokenparameter, also need to new
-            if (requestConfig.params) {
-              requestConfig.params = { ...requestConfig.params };
-              if (requestConfig.params.accessToken) {
-                requestConfig.params.accessToken = refreshRes.data.accessToken;
-              }
-            }
-            // if URL in accessTokenQuery parameter, also need to new
-            if (requestConfig.url && requestConfig.url.includes('accessToken=')) {
-              requestConfig.url = requestConfig.url.replace(/accessToken=[^&]*/g, `accessToken=${encodeURIComponent(refreshRes.data.accessToken)}`);
-            }
-            if(requestConfig.data) {
-              try {
-                // if is data ( is JSON )
-                if (typeof requestConfig.data === 'string') {
-                  let tempData = JSON.parse(requestConfig.data);
-                  if (tempData.accessToken) {
-                    tempData.accessToken = res.data.accessToken;
-                    requestConfig.data = JSON.stringify(tempData);
-                  }
-                } else if (typeof requestConfig.data === 'object') {
-                  // if is object data
-                  requestConfig.data = { ...requestConfig.data };
-                  if (requestConfig.data.accessToken) {
-                    requestConfig.data.accessToken = res.data.accessToken;
-                  }
-                }
-              } catch (e) {
-                // if Parse JSONfailed,
-                console.warn('Failed to parse request data:', e);
-              }
-            }
-            console.log('---00', requestConfig)
-            return requestConfig;
-          };
-
-          // new in
-          const tokenRefreshed = () => {
-            requestsQueue.forEach(request => {
-              const newRequest = { ...request.config };
-              updateTokenInRequest(newRequest);
-              service(newRequest).then(resp => {
-                request.resolve(resp);
-              }).catch(err => {
-                request.reject(err);
-              });
-            });
-            requestsQueue = [];
-          };
-
-          tokenRefreshed();
-
-          // new current
-          if (originalConfig) {
-            // Process
-            updateTokenInRequest(originalConfig);
-            service(originalConfig).then(resp => {
-              resolve(resp);
-            }).catch(err => {
-              reject(err);
-            });
-          } else {
-            // successfully
-            const originalRequest = originalResponse.config;
-            updateTokenInRequest(originalRequest);
-            service(originalRequest).then(resp => {
-              resolve(resp);
-            }).catch(err => {
-              reject(err);
-            });
-          }
-        } else {
-          // new failed,
-          removeToken();
-          useGoWhere().goWhere();
-          reject(originalResponse);
-        }
-      })
-      .catch(error => {
-        // new failed,
-        removeToken();
-        useGoWhere().goWhere();
-        reject(error);
-      })
-      .finally(() => {
-        isRefreshing = false;
-      });
-  });
-};
+import { applyAuthHeaders, applyPlatformGatewayHeaders, getStoredToken, handleSessionFailureAsync } from '@/utils/request'
  //
 const whiteApi = ['/menu/v1/myAuth','sso/v1/getUserList', 'sso/v1/getDeptUser']
 function includeApi(url) {
@@ -172,43 +29,6 @@ function includeApi(url) {
 const noWarningApi = ['im-api']
 function shouldShowWarningByApi(url = '') {
   return !noWarningApi.some(item => url.includes(item))
-}
-
-/**
- * Check whether to already item after 、only taskinterface.
- */
-function isLocalTaskApi(url = '') {
-  return /^\/?task\//.test(url)
-}
-
-function isDirectPlatformApi(url = '') {
-  try {
-    const parsed = new URL(String(url), window.location.origin)
-    return parsed.pathname.startsWith('/bus/apaas-')
-      && !parsed.pathname.startsWith('/bus/apaas-vls-server')
-  } catch (error) {
-    return false
-  }
-}
-
-function rejectExpiredPlatformSession(originalResponse: any) {
-  redirectToPlatformLogin()
-  return Promise.reject({
-    isInterceptorDetour: true,
-    message: originalResponse?.data?.msg || originalResponse?.response?.data?.msg || '平台登录信息已过期'
-  })
-}
-
-/**
- * finish will , old SSO new interface .
- */
-function rejectExpiredLocalSession(originalResponse: any) {
-  removeToken()
-  useGoWhere().goWhere()
-  return Promise.reject({
-    isInterceptorDetour: true,
-    message: originalResponse?.data?.msg || originalResponse?.response?.data?.msg || '当前用户登录信息已过期'
-  })
 }
 
 /* * instance */
@@ -282,34 +102,14 @@ function createService() {
   )
   // ( )
   service.interceptors.response.use(
-    (response) => {
-      console.log('response-----------------', response)
+    async (response) => {
+      const sessionError = await handleSessionFailureAsync(response)
+      if (sessionError) return Promise.reject(sessionError)
       // console.log(apiData)
       // if to 200, interface successfully, data
       // and after interface respone
       if (response.status === 200) {
         if (response.data.code !== 200) {
-          if (isMultiTenantMode() && isDirectPlatformApi(response.config?.url || '')
-            && isPlatformTokenFailure(response.data)) {
-            return rejectExpiredPlatformSession(response)
-          }
-          // Check response.data.code === 4004 then new token
-          if (response.data.code === 4004) {
-            if (isLocalTaskApi(response.config?.url || '')) {
-              return rejectExpiredLocalSession(response)
-            }
-            return handleTokenRefresh(response);
-          }
-          // new interface and msginterface Process
-          if(response.data?.code === 4444 || response.data?.msg === '无效的accesstoken') {
-            // new failed,
-            removeToken();
-            useGoWhere().goWhere();
-            return Promise.reject({
-              isInterceptorDetour: true, // Custom , in
-              message: '当前用户登录信息已过期'
-            });
-          } else {
             if (response.data.msg){
               const url = response.config?.url || ''
               // Check current whether in page
@@ -325,7 +125,6 @@ function createService() {
                 startTime:  (response.config as ExtendedAxiosRequestConfig).metadata!.startTime, endTime: new Date().getTime()
               })
             }
-          }
         }
       }
       if ((response.config as ExtendedAxiosRequestConfig).returnFullResponse) {
@@ -333,32 +132,21 @@ function createService() {
       }
       return response.data
     },
-    (error) => {
+    async (error) => {
+      if (axios.isCancel(error)) return Promise.reject(error)
+      const sessionError = await handleSessionFailureAsync(error)
+      if (sessionError) return Promise.reject(sessionError)
       const httpStatusCode = error.response?.status
       let errMessage = error.message
       const errorBody = error.response?.data
       if(errorBody && errorBody.code ) {
-        if (isMultiTenantMode() && isDirectPlatformApi(error.config?.url || '')
-          && isPlatformTokenFailure(errorBody)) {
-          return rejectExpiredPlatformSession(error)
-        }
-        // whether need to new token
-        if (errorBody.code === 4004) {
-          if (isLocalTaskApi(error.config?.url || '')) {
-            return rejectExpiredLocalSession(error)
-          }
-          return handleTokenRefresh(error, error.config);
-        }
         errMessage = errorBody.code +  errorBody.msg
-        errorBody.msg = errorBody.msg || errorBody.message
+        errorBody.msg = errorBody.msg || errorBody.message || error.message
         errorBody.msg && (message as any).error(errorBody.msg)
         store.addErrorMsg({
           msg: errorBody.msg,interfaceName: error.config.url,
           startTime:  (error.config as ExtendedAxiosRequestConfig).metadata!.startTime, endTime: new Date().getTime()
         })
-        if(errorBody.msg?.includes('accessToken无效') || errorBody.msg?.includes('无效的accesstoken') || errorBody.msg?.includes('token失效')) {
-          useGoWhere().goWhere()
-        }
       } else if(errMessage) {
         (message as any).error(errMessage)
       }

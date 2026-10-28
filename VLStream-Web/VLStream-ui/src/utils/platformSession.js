@@ -5,6 +5,7 @@
  * Updated by: ChaoQun Lei
  */
 
+import { safeAuthReturnPath } from '@/utils/authRedirect.mjs'
 import { stripAuthCallbackParams } from '@/utils/authCallbackParams.mjs'
 
 const PLATFORM_LOGIN_URL = import.meta.env.VITE_PLATFORM_LOGIN_URL || '/bus/apaas-web/loginPage/index.html'
@@ -38,10 +39,8 @@ export const isPlatformTokenFailure = data => {
 export const buildPlatformLoginUrl = (returnPath = window.location.pathname + window.location.search + window.location.hash) => {
   const loginUrl = new URL(PLATFORM_LOGIN_URL, window.location.origin)
   const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.origin)
-  const rawReturnPath = String(returnPath || '/')
-  const redirectUrl = rawReturnPath.startsWith(appBaseUrl.pathname)
-    ? new URL(rawReturnPath, window.location.origin)
-    : new URL(rawReturnPath.replace(/^\/+/, ''), appBaseUrl)
+  const safePath = safeAuthReturnPath(returnPath, import.meta.env.BASE_URL, window.location.origin)
+  const redirectUrl = new URL(safePath.replace(/^\/+/, ''), appBaseUrl)
   loginUrl.searchParams.set('appname', PLATFORM_APP_NAME)
   loginUrl.searchParams.set('redirect_uri', stripAuthCallbackParams(redirectUrl.toString()))
   if (!loginUrl.hash) loginUrl.hash = '/'
@@ -53,7 +52,6 @@ export const redirectToPlatformLogin = returnPath => {
   const pendingAt = Number(sessionStorage.getItem(PLATFORM_LOGIN_PENDING_KEY) || 0)
   if (pendingAt > 0 && now - pendingAt < LOGIN_PENDING_MAX_AGE) return false
   sessionStorage.setItem(PLATFORM_LOGIN_PENDING_KEY, String(now))
-  clearPlatformAccessToken()
   window.location.replace(buildPlatformLoginUrl(returnPath))
   return true
 }
