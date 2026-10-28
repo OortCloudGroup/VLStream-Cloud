@@ -67,6 +67,15 @@ export function configInfo() {
   })
 }
 
+// Update SIP service identity
+export function updateSipIdentity(data) {
+  return request({
+    url: '/api/server/system/sipIdentity',
+    method: 'post',
+    data: data
+  })
+}
+
 // Get stream mediaservice
 export function getOnlineMediaServerList() {
   return request({

@@ -190,7 +190,14 @@
 <template #header>
         <div class="gb-dialog-heading">
           <span>{{ $tp('国标服务信息') }}</span>
-          <el-button link type="primary" @click="showHelp = true"><el-icon class="gb-help-icon"><QuestionFilled /></el-icon>{{ $tp('帮助说明') }}</el-button>
+          <div class="gb-dialog-actions">
+            <el-button v-if="checkPermi(['wvp:server:configInfo'])" link type="primary" @click="openSipIdentityEdit">
+              <el-icon class="gb-help-icon"><EditPen /></el-icon>{{ $tp('编辑') }}
+            </el-button>
+            <el-button link type="primary" @click="showHelp = true">
+              <el-icon class="gb-help-icon"><QuestionFilled /></el-icon>{{ $tp('帮助说明') }}
+            </el-button>
+          </div>
         </div>
       </template>
       <div id="shared" style="margin-top: 1rem;margin-right: 100px;">
@@ -204,6 +211,33 @@
           </el-descriptions-item>
         </el-descriptions>
       </div>
+    </el-dialog>
+
+    <el-dialog
+        :title="$tp('修改国标服务身份')"
+        width="520px"
+        v-model="showSipIdentityEdit"
+        append-to-body
+    >
+      <el-form ref="sipIdentityFormRef" :model="sipIdentityForm" :rules="sipIdentityRules" label-width="80px">
+        <el-form-item :label="$tp('编号')" prop="id">
+          <el-input v-model="sipIdentityForm.id" maxlength="20" clearable @input="syncSipDomain" />
+        </el-form-item>
+        <el-form-item :label="$tp('域')" prop="domain">
+          <el-input v-model="sipIdentityForm.domain" maxlength="10" clearable />
+        </el-form-item>
+        <el-alert type="warning" :closable="false" show-icon>
+          <template #title>
+            {{ $tp('保存后立即生效：设备上配置的 SIP 服务器编号/域必须同步修改，上级平台会使用新身份重新注册，期间可能出现短暂注册中断。') }}
+          </template>
+        </el-alert>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitSipIdentity" class="common_btn">{{ $tp('确 定') }}</el-button>
+          <el-button @click="showSipIdentityEdit = false" class="common_btn">{{ $tp('取 消') }}</el-button>
+        </div>
+      </template>
     </el-dialog>
 
     <el-dialog
@@ -231,7 +265,7 @@
 
 <script setup name="Device">
 import GbHelpDialog from '@/components/GbHelpDialog.vue'
-import { QuestionFilled } from '@element-plus/icons-vue'
+import { EditPen, QuestionFilled } from '@element-plus/icons-vue'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
 import {checkPermi} from "@/utils/wvpPermission";
 import MapGaoDe from "@/components/MapGaoDe/index.vue";
@@ -247,7 +281,7 @@ import {
   updateDevice,
   updateTransport,
 } from "../../../api/wvp/device.js";
-import {configInfo, getOnlineMediaServerList} from "../../../api/wvp/wvpMediaServer.js";
+import {configInfo, getOnlineMediaServerList, updateSipIdentity} from "../../../api/wvp/wvpMediaServer.js";
 import router from "@/router";
 import {guardApi} from "../../../api/wvp/control.js";
 import {ElMessage} from 'element-plus'
@@ -269,6 +303,20 @@ const percentage = ref(0)
 
 const showDialog = ref(false);
 const showProgress = ref(false);
+
+const showSipIdentityEdit = ref(false);
+const sipIdentityFormRef = ref(null);
+const sipIdentityForm = ref({id: '', domain: ''});
+const sipIdentityRules = {
+  id: [
+    {required: true, message: '请输入 SIP 编号', trigger: 'blur'},
+    {pattern: /^\d{20}$/, message: 'SIP 编号必须为 20 位数字', trigger: 'blur'},
+  ],
+  domain: [
+    {required: true, message: '请输入 SIP 域', trigger: 'blur'},
+    {pattern: /^\d{10}$/, message: 'SIP 域必须为 10 位数字', trigger: 'blur'},
+  ],
+};
 
 const ids = ref([]);
 const multiple = ref(true);
@@ -474,6 +522,51 @@ function showInfo() {
 }
 
 /**
+ * Open SIP identity edit dialog
+ */
+function openSipIdentityEdit() {
+  sipIdentityForm.value = {
+    id: configInfoData.value?.sip?.id || '',
+    domain: configInfoData.value?.sip?.domain || '',
+  }
+  showSipIdentityEdit.value = true
+  nextTick(() => sipIdentityFormRef.value?.clearValidate())
+}
+
+/**
+ * Derive domain from the first 10 digits of the SIP id
+ */
+function syncSipDomain(value) {
+  if (value && value.length >= 10) {
+    sipIdentityForm.value.domain = value.substring(0, 10)
+  }
+}
+
+/**
+ * Save SIP identity and apply immediately
+ */
+async function submitSipIdentity() {
+  const valid = await sipIdentityFormRef.value.validate().catch(() => false)
+  if (!valid) return
+  try {
+    await proxy.$modal.confirm('确认修改国标服务身份？设备上的 SIP 服务器编号/域需要同步修改，上级平台将重新注册。')
+  } catch (e) {
+    return
+  }
+  try {
+    await updateSipIdentity({sipId: sipIdentityForm.value.id, sipDomain: sipIdentityForm.value.domain})
+  } catch (e) {
+    return
+  }
+  proxy.$modal.msgSuccess('已保存并生效，上级平台正在重新注册')
+  if (configInfoData.value?.sip) {
+    configInfoData.value.sip.id = sipIdentityForm.value.id
+    configInfoData.value.sip.domain = sipIdentityForm.value.domain
+  }
+  showSipIdentityEdit.value = false
+}
+
+/**
  * new device percentage
  *
  * @param itemData
@@ -638,6 +731,8 @@ getList();
 
 <style scoped>
 .gb-dialog-heading { width: 100%; min-width: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-right: 28px; text-align: left; }
+.gb-dialog-actions { display: flex; align-items: center; gap: 16px; margin-left: auto; }
+.gb-dialog-actions .el-button + .el-button { margin-left: 0; }
 .gb-help-icon { margin-right: 4px; font-size: 14px; }
 
 .example-showcase .el-dropdown-link {

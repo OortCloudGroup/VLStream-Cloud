@@ -1524,6 +1524,8 @@ export const uiEnglish = {
   "作为消息通道": "Use as messaging channel",
   "收到ACK后发流": "Send stream after ACK",
   "国标服务信息": "GB28181 service information",
+  "修改国标服务身份": "Edit GB28181 service identity",
+  "保存后立即生效：设备上配置的 SIP 服务器编号/域必须同步修改，上级平台会使用新身份重新注册，期间可能出现短暂注册中断。": "Takes effect immediately after saving: the SIP server ID/domain configured on devices must be updated accordingly. Upper-level platforms will re-register with the new identity, which may briefly interrupt registration.",
   "域": "Domain",
   "刷新设备": "Refresh device",
   "总条数：": "Total records:",
