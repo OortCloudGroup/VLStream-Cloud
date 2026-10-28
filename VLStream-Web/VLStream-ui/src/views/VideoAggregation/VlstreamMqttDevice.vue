@@ -144,12 +144,20 @@
         </el-descriptions>
 
         <div class="model-heading">
-          <h4>{{ $tp('设备运行模型') }}</h4>
+          <div class="model-heading-title"><h4>{{ $tp('设备运行模型') }}</h4><span class="snapshot-note">{{ $tp('每 5 秒自动刷新') }}</span></div>
           <div>
             <el-button size="small" type="primary" :disabled="Boolean(modelBusy)" @click="openModelDeploy">{{ detailDevice?.online ? $tp('模型下发') : $tp('查看模型') }}</el-button>
-            <el-button size="small" :loading="modelBusy === 'query'" :disabled="!detailDevice?.online || Boolean(modelBusy)" @click="refreshModels">{{ $tp('刷新') }}</el-button>
+            <el-button size="small" :loading="modelBusy === 'query'" :disabled="Boolean(modelBusy)" @click="refreshModelSection">{{ $tp('刷新') }}</el-button>
           </div>
         </div>
+        <div v-if="deploymentRows.length" class="device-deployment-status" aria-live="polite">
+          <div v-for="task in deploymentRows" :key="task.requestId" class="device-deployment-row">
+            <span class="deployment-model-name">{{ task.modelName }}</span>
+            <el-tag :type="task.type" size="small">{{ $tp(task.label) }}</el-tag>
+            <span v-if="task.reason" class="snapshot-note">{{ task.reason }}</span>
+          </div>
+        </div>
+        <el-alert v-if="modelTasksError" :title="modelTasksError" type="warning" :closable="false" show-icon />
         <el-alert v-if="modelError" :title="modelError" type="warning" :closable="false" show-icon />
         <el-table :data="reportedModels" border scrollbar-always-on :empty-text="liveModels !== null ? $tp('设备当前无模型') : detailDevice?.modelsJson == null ? $tp('设备尚未上报模型信息') : $tp('设备上报的模型列表为空')">
           <el-table-column prop="modelId" :label="$tp('模型 ID')" min-width="140" show-overflow-tooltip />
@@ -163,7 +171,7 @@
             </template>
           </el-table-column>
         </el-table>
-        <p class="snapshot-note">{{ liveModels === null ? $tp('当前显示设备最近一次上报的模型，点击刷新查询设备。') : $tp('当前显示本次设备查询结果。') }}{{ $tp('离线时仅供查看。') }}</p>
+        <p class="snapshot-note">{{ $tp('每 5 秒更新下发状态和设备模型；离线时仅更新平台记录，运行模型以设备上报为准。') }}</p>
 
         <h4>{{ $tp('视频源') }}</h4>
         <el-table :data="detailStreams" border scrollbar-always-on :empty-text="$tp('设备没有上报视频源')">
@@ -178,7 +186,7 @@
         </div>
       </el-dialog>
       <DeviceModelDrawer v-model="modelDeployVisible" :device="detailDevice"
-        @busy="modelBusy = $event ? 'deploy' : ''" />
+        @busy="modelBusy = $event ? 'deploy' : ''" @submitted="refreshModelTasks" />
       <el-dialog v-model="enrollmentVisible" class="locale-dialog" :title="$tp('IPC Agent 激活信息')"
         destroy-on-close>
         <el-alert :title="$tp('激活码只在本次显示。请通过安全渠道交给设备端，设备注册成功后立即失效。')"
@@ -244,6 +252,9 @@ import RtcPlayer from '@/components/rtcPlayer/index.vue'
 import { capabilityText, deviceBootTimeText, deviceOnlineDurationText, deviceLocationText, formatDeviceTime, modelStatusText, parseSnapshot } from '@/utils/deviceStateDisplay'
 import { parseCameraRtcConfig } from '@/utils/oplayer'
 import { queryDeviceModels, deleteDeviceModel } from '@/api/deviceModels'
+import { getDeviceModelTasks } from '@/api/deviceModelCatalog'
+import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
+import { deviceDeploymentRows } from '@/utils/deviceModelDeployment.mjs'
 import {
   changeIpcTunnelDesiredState,
   createIpcTunnelAccessSession,
@@ -312,6 +323,12 @@ const modelBusy = ref('')
 const modelError = ref('')
 const modelDeployVisible = ref(false)
 let modelSession = 0
+let modelPollTimer, detailIdentity
+const modelTasks = ref([])
+const modelTasksError = ref('')
+let tasksRefreshing = false
+let snapshotRefreshing = false
+const deploymentRows = computed(() => deviceDeploymentRows(modelTasks.value, detailDevice.value?.deviceId, detailClock.value))
 const reportedModels = computed(() => liveModels.value ?? parseSnapshot(detailDevice.value?.modelsJson) ?? [])
 const remoteManagementReady = computed(() => {
   const status = remoteManagementStatus.value
@@ -337,8 +354,58 @@ const remoteManagementBlockReason = computed(() => {
 })
 
 watch(detailVisible, visible => {
-  if (!visible) { modelSession++; modelDeployVisible.value = false }
+  clearInterval(modelPollTimer)
+  if (!visible) { modelSession++; modelDeployVisible.value = false; modelTasks.value = [] }
+  else modelPollTimer = setInterval(() => refreshModelSection(), 5000)
 })
+
+function modelSessionCurrent(session) {
+  if (session !== modelSession || !detailVisible.value) return false
+  try { detailIdentity?.assertCurrent(); return true } catch {
+    modelSession++
+    modelTasks.value = []; liveModels.value = null; firmwareDetail.value = null
+    currentDevice.value = null; detailVisible.value = false
+    return false
+  }
+}
+
+async function refreshModelTasks() {
+  const session = modelSession
+  if (tasksRefreshing || !modelSessionCurrent(session) || !detailDevice.value?.deviceId) return
+  tasksRefreshing = true
+  try {
+    const result = await getDeviceModelTasks(detailDevice.value.deviceId)
+    if (!modelSessionCurrent(session)) return
+    if (!Array.isArray(result?.data)) throw new Error(uiText('设备下发状态返回无效'))
+    modelTasks.value = result.data
+    modelTasksError.value = ''
+  } catch (error) {
+    if (modelSessionCurrent(session)) modelTasksError.value = uiText('下发状态刷新失败，当前显示上次结果，将在 5 秒后重试')
+  } finally { if (session === modelSession) tasksRefreshing = false }
+}
+
+async function refreshModelSnapshot() {
+  const session = modelSession
+  if (snapshotRefreshing || detailLoading.value || !modelSessionCurrent(session) || !currentDevice.value) return
+  snapshotRefreshing = true
+  try {
+    const result = await getMqttDeviceDetail(currentDevice.value.id, { silentError: true })
+    if (!modelSessionCurrent(session)) return
+    if (result?.data?.device) {
+      if (result.data.device.modelsJson !== detailDevice.value?.modelsJson) liveModels.value = null
+      firmwareDetail.value = result.data
+    }
+  } catch { /* Preserve the last snapshot; the next tick retries. */ }
+  finally { if (session === modelSession) snapshotRefreshing = false }
+}
+
+async function refreshModelSection() {
+  const session = modelSession
+  if (!modelSessionCurrent(session)) return
+  // Each channel has its own in-flight guard: a slow device reply must not delay task progress.
+  await Promise.allSettled([refreshModelTasks(), refreshModelSnapshot()])
+  if (modelSessionCurrent(session) && !modelDeployVisible.value) await refreshModels()
+}
 
 async function refreshModels() {
   if (modelBusy.value || !detailDevice.value?.online) return
@@ -347,12 +414,12 @@ async function refreshModels() {
   modelBusy.value = 'query'
   modelError.value = ''
   try {
-    const result = await queryDeviceModels(deviceId)
-    if (session !== modelSession) return
+    const result = await queryDeviceModels(deviceId, { silentError: true })
+    if (!modelSessionCurrent(session)) return
     if (!Array.isArray(result?.data)) throw new Error('设备未返回有效模型列表')
     liveModels.value = result.data
   } catch (error) {
-    if (session === modelSession) modelError.value = modelErrorMessage(error, '查询设备模型失败')
+    if (modelSessionCurrent(session)) modelError.value = modelErrorMessage(error, '查询设备模型失败')
   } finally { if (session === modelSession) modelBusy.value = '' }
 }
 
@@ -412,6 +479,8 @@ function handleClassificationFilter(filter) { Object.assign(query, filter, { pag
 
 async function openDetail(device) {
   const session = ++modelSession
+  detailIdentity = captureComputeIdentity()
+  modelTasks.value = []; modelTasksError.value = ''; tasksRefreshing = false; snapshotRefreshing = false
   liveModels.value = null
   modelError.value = ''
   modelBusy.value = ''
@@ -429,13 +498,14 @@ async function openDetail(device) {
       getMqttDeviceStreams(device.id),
       getMqttDeviceDetail(device.id)
     ])
-    if (session !== modelSession) return
+    if (!modelSessionCurrent(session)) return
     detailStreams.value = streamsResult?.data || []
     firmwareDetail.value = detailResult?.data || null
+    refreshModelTasks()
     await loadRemoteManagementStatus(device.deviceId)
   }
   catch (error) {
-    if (session !== modelSession) return
+    if (!modelSessionCurrent(session)) return
     detailStreams.value = []
     firmwareDetail.value = null
     ElMessage.error(errorMessage(error, uiText('加载设备详情失败')))
@@ -637,6 +707,7 @@ function releasePreview() {
 
 onMounted(() => { loadDevices(); loadMediaStatus() })
 onBeforeUnmount(releasePreview)
+onBeforeUnmount(() => { modelSession++; clearInterval(modelPollTimer) })
 </script>
 
 <style scoped>
@@ -657,6 +728,10 @@ onBeforeUnmount(releasePreview)
 .player :deep(#webRtcPlayerBox), .player :deep(#rtcPlayer) { width: 100%; max-height: 520px; }
 .camera-rtc-player { width: 100%; height: 480px; }
 .model-heading { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
+.model-heading-title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; }
+.device-deployment-status { max-height: 160px; overflow-y: auto; margin-bottom: 12px; padding: 10px 12px; background: #f5f7fa; border-radius: 4px; }
+.device-deployment-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 4px 0; }
+.deployment-model-name { overflow-wrap: anywhere; }
 .firmware-version-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .remote-management-entry { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .enrollment-details { margin-top: 16px; }

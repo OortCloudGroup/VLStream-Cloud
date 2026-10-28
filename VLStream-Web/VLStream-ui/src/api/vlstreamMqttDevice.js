@@ -23,9 +23,10 @@ export const getMqttDeviceStreams = deviceRowId => request({
   method: 'get'
 })
 
-export const getMqttDeviceDetail = deviceRowId => request({
+export const getMqttDeviceDetail = (deviceRowId, options = {}) => request({
   url: `/vlstream/device/${deviceRowId}/detail`,
-  method: 'get'
+  method: 'get',
+  silentError: options.silentError === true
 })
 
 export const deployMqttDeviceFirmware = (deviceRowId, firmwareId) => request({

@@ -2656,5 +2656,9 @@ export const uiEnglish = {
   "创建远程管理会话失败": "Failed to create remote access session",
   "固件升级指令下发失败": "Failed to send firmware upgrade command",
   "加载视频源失败": "Failed to load video sources",
-  "创建预览失败": "Failed to create preview"
+  "创建预览失败": "Failed to create preview",
+  "每 5 秒自动刷新": "Refreshes automatically every 5 seconds",
+  "每 5 秒更新下发状态和设备模型；离线时仅更新平台记录，运行模型以设备上报为准。": "Deployment status and device models refresh every 5 seconds. While offline, only platform records refresh; running models reflect device reports.",
+  "设备下发状态返回无效": "Invalid device deployment status response",
+  "下发状态刷新失败，当前显示上次结果，将在 5 秒后重试": "Deployment status could not refresh. Showing the previous result; retrying in 5 seconds."
 }

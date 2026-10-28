@@ -4,6 +4,10 @@ export const getDeviceModelCandidates = params => currentIdentityRequest({
   url: '/vlsModelDispatch/models', method: 'get', params
 })
 
+export const getDeviceModelTasks = deviceId => currentIdentityRequest({
+  url: '/vlsModelDispatch/tasks', method: 'get', params: { deviceId, limit: 20 }
+})
+
 export const dispatchSelectedModel = (modelId, deviceId) => currentIdentityRequest({
   url: `/vlsModelDispatch/models/${computePathPart(modelId)}/dispatch`,
   method: 'post', params: { deviceId }, timeout: 120000

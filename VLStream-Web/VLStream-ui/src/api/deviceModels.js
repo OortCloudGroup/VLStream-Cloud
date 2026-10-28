@@ -1,7 +1,7 @@
 import request from '@/utils/request'
 
-export const queryDeviceModels = deviceId => request({
-  url: '/vlsDeviceModels', method: 'get', params: { deviceId }, timeout: 35000
+export const queryDeviceModels = (deviceId, options = {}) => request({
+  url: '/vlsDeviceModels', method: 'get', params: { deviceId }, timeout: 35000, silentError: options.silentError === true
 })
 
 export const deleteDeviceModel = (deviceId, modelId) => request({
