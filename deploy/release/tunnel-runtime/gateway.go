@@ -149,7 +149,13 @@ func (gateway *tunnelGateway) proxy(response http.ResponseWriter, request *http.
 	gateway.mu.RLock()
 	cached, found := gateway.sessions[cookie.Value]
 	gateway.mu.RUnlock()
-	if !found || cached.route.SessionID != sessionID || !cached.route.ExpiresAt.After(gateway.now()) {
+	if !found || cached.route.SessionID != sessionID {
+		// A request on another host is unauthorized, but must not invalidate
+		// the owner's independent session merely by presenting its Cookie.
+		http.Error(response, "remote-management browser session does not match host", http.StatusUnauthorized)
+		return
+	}
+	if !cached.route.ExpiresAt.After(gateway.now()) {
 		gateway.removeSession(cookie.Value)
 		http.Error(response, "remote-management browser session expired", http.StatusUnauthorized)
 		return

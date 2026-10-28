@@ -211,6 +211,9 @@ func TestGatewayRejectsCookieOnDifferentSessionHostBeforeRenewing(t *testing.T) 
 	if response.Code != http.StatusUnauthorized {
 		t.Fatal("a cookie from another host must not reach the renewal API")
 	}
+	if gateway.cachedSessionCount() != 1 {
+		t.Fatal("a rejected request on another host must preserve the owner's session")
+	}
 }
 
 func TestValidateSessionRouteRejectsNonLoopbackUpstream(t *testing.T) {
