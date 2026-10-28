@@ -102,7 +102,12 @@
       </div>
     </el-popover>
 
-    <PlatformAppsEntry :user-id="userId" />
+    <el-popover v-model:visible="appsVisible" placement="bottom" :width="pxToVw(380)" trigger="hover" popper-class="popover_panel">
+      <template #reference>
+        <button type="button" class="right_info_nine platform-header-icon" :aria-label="text.apps"><img :src="nineIcon" alt=""></button>
+      </template>
+      <PlatformAppsPopover v-if="appsVisible" :user-id="userId" @open-app="openApp" @more-apps="openAppMarket" />
+    </el-popover>
 
     <el-popover v-model:visible="moreVisible" placement="bottom" :width="pxToVw(260)" trigger="hover" popper-class="popover_panel_more">
       <template #reference>
@@ -192,14 +197,17 @@ import { translatePhrase as uiText } from '@/i18n'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight, Check, Close } from '@element-plus/icons-vue'
-import { getPlatformAccounts, getPlatformHeaderUser, getPlatformMessageInfo, getPlatformMessages, logoutPlatform, markPlatformMessageRead, markPlatformMessagesRead, switchPlatformAccount } from '@/api/platformHeader'
-import PlatformAppsEntry from './platform-header/PlatformAppsEntry.vue'
+import { getPlatformAccounts, getPlatformHeaderUser, getPlatformMessageInfo, getPlatformMessages, logoutPlatform, markPlatformMessageRead, markPlatformMessagesRead, switchPlatformAccount, verifyPlatformToken } from '@/api/platformHeader'
+import { getPlatformAccessToken } from '@/utils/request'
+import { openApaasWebPage } from '@/utils/apaasApiBase'
+import PlatformAppsPopover from './platform-header/PlatformAppsPopover.vue'
 import PlatformMorePopover from './platform-header/PlatformMorePopover.vue'
 import PlatformTenantDialog from './platform-header/PlatformTenantDialog.vue'
 import PlatformIndustryDialog from './platform-header/PlatformIndustryDialog.vue'
 import fullscreenIcon from '@/assets/img/svg/platform-fullscreen.svg'
 import exitFullscreenIcon from '@/assets/img/svg/platform-exit-fullscreen.svg'
 import noticeIcon from '@/assets/img/svg/platform-notice.svg'
+import nineIcon from '@/assets/img/svg/platform-nine.svg'
 import nineMoreIcon from '@/assets/img/svg/platform-nine-more.svg'
 import upArrowIcon from '@/assets/img/login/up_arrow.png'
 import downArrowIcon from '@/assets/img/login/down_arrow.png'
@@ -227,6 +235,7 @@ const accountDialogVisible = ref(false)
 const industryDialogVisible = ref(false)
 const activeNotice = ref({})
 const userVisible = ref(false)
+const appsVisible = ref(false)
 const moreVisible = ref(false)
 const showAccountList = ref(false)
 const isFullscreen = ref(Boolean(document.fullscreenElement))
@@ -334,6 +343,31 @@ const markRead = async() => {
     await loadNotices()
     ElMessage.success(text.value.operationSuccess)
   } catch (error) { ElMessage.error(error?.message || uiText('操作失败')) }
+}
+const ensurePlatformSession = async() => {
+  try {
+    const result = await verifyPlatformToken()
+    if (Number(result?.code ?? 200) === 200) return true
+  } catch (error) { console.warn('平台令牌校验失败', error) }
+  ElMessage.warning(text.value.sessionExpired)
+  return false
+}
+const platformQuery = () => `accessToken=${encodeURIComponent(getPlatformAccessToken() || '')}&fromWhere=console_manage`
+const openApp = async app => {
+  const path = app.apk_url || app.appweburl || app.url || app.path
+  if (!path || !(await ensurePlatformSession())) return
+  sessionStorage.setItem('tempObj', JSON.stringify({ accessToken: getPlatformAccessToken(), fromWhere: 'console_manage' }))
+  const query = platformQuery()
+  const target = Number(app.open_mod) === 2 ? '_self' : Number(app.open_mod) === 3 ? (app.applabel || '_blank') : '_blank'
+  const features = Number(app.open_mod) === 1 ? '' : 'popup,location=no'
+  if (/^https?:\/\//i.test(path) || path.startsWith('//')) window.open(`${path}${path.includes('?') ? '&' : '?'}${query}`, target, features)
+  else openApaasWebPage(path, query, target, features)
+  appsVisible.value = false
+}
+const openAppMarket = async() => {
+  if (!(await ensurePlatformSession())) return
+  openApaasWebPage('/app_market/index.html#/moreApp', platformQuery())
+  appsVisible.value = false
 }
 const accountTenantName = account => {
   const tenant = account?.user?.tenant || {}

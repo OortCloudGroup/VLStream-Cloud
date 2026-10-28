@@ -34,6 +34,7 @@
             :is-expanded="!sidebarCollapsed"
             @toggle="toggleSidebar"
           />
+          <PlatformAppsEntry v-if="!localEventRoute" />
         </div>
 
         <!-- menu -->
@@ -50,12 +51,13 @@
         </div>
 
         <div class="header-right">
-          <LocaleSwitcher />
-          <PlatformAppsEntry v-if="tenantMode !== 'multi'" :user-id="currentUser.userId || ''" />
-          <OortCloudPopover v-if="tenantMode === 'multi' || isSuperAdmin" :tenant-mode="tenantMode" />
+          <LocaleSwitcher v-if="localEventRoute || tenantMode !== 'multi' || !rightInfoReady" />
+          <OortCloudPopover v-if="!localEventRoute && ((tenantMode === 'multi' && !rightInfoReady) || (tenantMode !== 'multi' && isSuperAdmin))" :tenant-mode="tenantMode" />
+
+          <RightInfoBar v-if="!localEventRoute && tenantMode === 'multi'" @ready-change="rightInfoReady = $event" @admin-status-change="platformSuperAdmin = $event" />
 
           <PlatformHeaderRight
-            v-if="tenantMode === 'multi'"
+            v-if="!localEventRoute && tenantMode === 'multi' && !rightInfoReady"
             :fallback-user="currentUser"
             :fallback-tenant="currentTenant"
             @admin-status-change="platformSuperAdmin = $event"
@@ -63,7 +65,7 @@
           />
 
           <!-- userinfo -->
-          <el-dropdown v-if="tenantMode !== 'multi'">
+          <el-dropdown v-if="localEventRoute || tenantMode !== 'multi'">
             <span class="user-info">
               <el-icon><User /></el-icon>
               {{ currentUser.userName }}
@@ -128,6 +130,7 @@ import { logoutModelHubSession } from '@/api/modelHubUser'
 import { getCloudPlatformUserPath } from '@/utils/modelHubAuth'
 import { getTenantMode, getUserTenants } from '@/api/system/localAuth'
 import { getCurrentPlatformLogo } from '@/api/platformLogo'
+import { isLocalEventRoute } from '@/utils/localEventAccess.mjs'
 import {
   User,
   ArrowDown,
@@ -156,6 +159,7 @@ import CollapseToggle from '@/components/CollapseToggle.vue'
 import SidebarMenuNode from './SidebarMenuNode.vue'
 import OortCloudPopover from './OortCloudPopover.vue'
 import PlatformHeaderRight from './PlatformHeaderRight.vue'
+import RightInfoBar from './RightInfoBar.vue'
 import PlatformAppsEntry from './platform-header/PlatformAppsEntry.vue'
 import LocaleSwitcher from './LocaleSwitcher.vue'
 import { translatePhrase } from '@/i18n'
@@ -170,6 +174,7 @@ import dahuaIcon from '@/assets/img/svg/dahua.svg'
 
 const route = useRoute()
 const router = useRouter()
+const localEventRoute = computed(() => isLocalEventRoute(route.meta))
 
 //
 const authManager = new AuthManager()
@@ -191,6 +196,7 @@ const resolveAdminFlag = userInfo => Boolean(
   userInfo?.user?.admin
 )
 const platformSuperAdmin = ref(false)
+const rightInfoReady = ref(false)
 const platformLogo = ref(null)
 const customLogoFailed = ref(false)
 const isSuperAdmin = computed(() => tenantMode.value === 'multi'
@@ -229,7 +235,7 @@ const loadBladeUserInfo = async () => {
     return false
   }
 
-  const response = await getUserInfo()
+  const response = await getUserInfo(undefined, { localSessionOnly: localEventRoute.value })
   if (!authManager.isIdentityCurrent(identity)) return false
   const user = response?.data || {}
   if (response?.code !== 200 || !user) {
@@ -269,6 +275,7 @@ const loadBladeUserInfo = async () => {
 
 // Load info
 const loadTenantInfo = async () => {
+  if (localEventRoute.value) return loadBladeUserInfo()
   const identity = authManager.getIdentitySnapshot()
   console.log('🚀 loadTenantInfo函数开始执行...')
   try {
@@ -742,7 +749,7 @@ watch(() => route.path, (newPath) => {
 const forceLoadUserAndTenantInfo = async () => {
   console.log('🚀 forceLoadUserAndTenantInfo函数开始执行...')
   const loaded = await loadBladeUserInfo()
-  if (loaded) {
+  if (loaded && !localEventRoute.value) {
     await loadTenantInfo()
   }
   return
@@ -907,7 +914,7 @@ const handleAutoCrossSystemTokenInvalid = () => {
 const loadPlatformLogo = async () => {
   customLogoFailed.value = false
   try {
-    const response = await getCurrentPlatformLogo()
+    const response = await getCurrentPlatformLogo({ localSessionOnly: localEventRoute.value })
     platformLogo.value = response?.data?.systemDefault ? null : response?.data
   } catch (error) {
     platformLogo.value = null

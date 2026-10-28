@@ -7,7 +7,7 @@ import request from '@/utils/request'
 
 export const getPlatformLogos = () => request.get('/system/platform-logo')
 
-export const getCurrentPlatformLogo = () => request.get('/system/platform-logo/current')
+export const getCurrentPlatformLogo = (options = {}) => request.get('/system/platform-logo/current', options)
 
 export const createPlatformLogo = (file, description) => {
   const data = new FormData()

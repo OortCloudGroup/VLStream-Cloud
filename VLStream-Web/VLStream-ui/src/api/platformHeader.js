@@ -6,27 +6,24 @@
  */
 
 import axios from 'axios'
-import { getPlatformAccessToken } from '@/utils/request'
-import {
-  isMultiTenantMode,
-  isPlatformTokenFailure,
-  redirectToPlatformLogin
-} from '@/utils/platformSession'
-
+import { captureRequestIdentity } from '@/utils/sessionExpiry'
+import { sessionValue } from '@/utils/requestIdentity.mjs'
+import { getPlatformAccessToken, handleSessionFailureAsync } from '@/utils/request'
+import { isMultiTenantMode } from '@/utils/platformSession'
 const PLATFORM_APP_ID = import.meta.env.VITE_PLATFORM_APP_ID || ''
 const PLATFORM_SECRET_KEY = import.meta.env.VITE_PLATFORM_SECRET_KEY || ''
 
 const platformRequest = axios.create()
-platformRequest.interceptors.response.use(response => {
-  if (isMultiTenantMode() && (!getPlatformAccessToken() || isPlatformTokenFailure(response?.data))) {
-    redirectToPlatformLogin()
-  }
-  return response
-}, error => {
-  if (isMultiTenantMode() && (!getPlatformAccessToken() || isPlatformTokenFailure(error?.response?.data))) {
-    redirectToPlatformLogin()
-  }
-  return Promise.reject(error)
+platformRequest.interceptors.request.use(config => {
+  config.platformIdentityOnly = true
+  return captureRequestIdentity(config)
+})
+platformRequest.interceptors.response.use(async response => {
+  const sessionError = await handleSessionFailureAsync(response)
+  return sessionError ? Promise.reject(sessionError) : response
+}, async error => {
+  if (axios.isCancel(error)) return Promise.reject(error)
+  return Promise.reject(await handleSessionFailureAsync(error) || error)
 })
 
 function platformServiceUrl(service, path = '') {
@@ -44,37 +41,37 @@ function responseData(response) {
   return body.data ?? body
 }
 
-function platformHeaders() {
+function platformHeaders(tenantId = '') {
   const accessToken = getPlatformAccessToken()
-  const tenantId = sessionStorage.getItem('tenantId') || localStorage.getItem('tenantId') || ''
+  const resolvedTenantId = tenantId || (isMultiTenantMode() ? sessionValue(['tenantId', 'tenant_id']) : '')
   return {
     Accept: 'application/json, text/plain, */*',
     requesttype: 'app',
     ...(accessToken ? { accesstoken: accessToken, Authorization: `Bearer ${accessToken}` } : {}),
     ...(PLATFORM_APP_ID ? { appid: PLATFORM_APP_ID } : {}),
     ...(PLATFORM_SECRET_KEY ? { secretkey: PLATFORM_SECRET_KEY } : {}),
-    ...(tenantId ? { tenantid: tenantId } : {})
+    ...(resolvedTenantId ? { tenantid: resolvedTenantId } : {})
   }
 }
 
 /* * Get userinfo, VLS sub user . */
-export async function getPlatformHeaderUser() {
+export async function getPlatformHeaderUser(tenantId = '') {
   const response = await platformRequest.post(
     platformServiceUrl('apaas-sso', 'sso/v1/getUserInfo'),
     { accessToken: getPlatformAccessToken() },
-    { headers: platformHeaders(), timeout: 10000 }
+    { headers: platformHeaders(tenantId), timeout: 10000 }
   )
   const payload = responseData(response) || {}
   return payload.userInfo || payload.user || payload
 }
 
-export async function getPlatformAppModules(userId = '') {
+export async function getPlatformAppModules(userId = '', tenantId = '') {
   const accessToken = getPlatformAccessToken()
   if (!accessToken) return []
   const response = await platformRequest.post(
     platformServiceUrl('apaas-admin-platform', 'client/module/list'),
     { accessToken, befrom: 3, homepageType: 1, pageNum: 1, pageSize: 999, uuid: userId },
-    { headers: platformHeaders(), timeout: 10000 }
+    { headers: platformHeaders(tenantId), timeout: 10000 }
   )
   const payload = responseData(response) || {}
   const modules = payload.list || []
@@ -85,7 +82,7 @@ export async function getPlatformAppModules(userId = '') {
   const statusResponse = await platformRequest.post(
     platformServiceUrl('apaas-admin-platform', 'client/getAppApplyStatusList'),
     { accessToken, uids: appUids },
-    { headers: platformHeaders(), timeout: 10000 }
+    { headers: platformHeaders(tenantId), timeout: 10000 }
   )
   const accessibleApps = new Map(
     ((responseData(statusResponse) || {}).list || [])
@@ -98,6 +95,17 @@ export async function getPlatformAppModules(userId = '') {
       apps: (module.app_list || []).map(app => accessibleApps.get(app?.uid)).filter(Boolean)
     }))
     .filter(module => module.apps.length)
+}
+
+export async function getPlatformApps(userId = '') {
+  const accessToken = getPlatformAccessToken()
+  const response = await platformRequest.post(
+    platformServiceUrl('apaas-admin-platform', 'client/module/mypclist'),
+    { accessToken, uuid: userId, pageNum: 1, pageSize: 999 },
+    { headers: platformHeaders(), timeout: 10000 }
+  )
+  const payload = responseData(response) || {}
+  return (payload.list || []).flatMap(item => item.app_list || [])
 }
 
 export async function getPlatformAccounts(isMoreAccount = 0) {
@@ -124,7 +132,7 @@ export async function switchPlatformAccount(account) {
 }
 
 export async function getPlatformTenant() {
-  const tenantId = sessionStorage.getItem('tenantId') || localStorage.getItem('tenantId') || ''
+  const tenantId = sessionValue(['tenantId', 'tenant_id'])
   const response = await platformRequest.post(
     platformServiceUrl('apaas-sso', 'sso/v1/getTenant'),
     { accessToken: getPlatformAccessToken(), tenant_id: tenantId },
