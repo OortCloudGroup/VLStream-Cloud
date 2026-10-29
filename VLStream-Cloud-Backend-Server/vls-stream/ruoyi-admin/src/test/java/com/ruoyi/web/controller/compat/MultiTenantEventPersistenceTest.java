@@ -12,6 +12,9 @@ import com.ruoyi.framework.config.CustomTenantLineHandler;
 import com.ruoyi.framework.config.properties.TokenProperties;
 import com.ruoyi.vlstream.test.modules.system.service.IFileUploadService;
 import com.ruoyi.vlstream.test.vlstream.config.VlsEventReportProperties;
+import com.ruoyi.vlstream.test.vlstream.controller.VlsEventManagementController;
+import com.ruoyi.vlstream.test.vlstream.service.IVlsDeviceInfoService;
+import com.ruoyi.vlstream.test.vlstream.service.VlsDeviceEventReportService;
 import com.ruoyi.vlstream.test.vlstream.job.EventReportOutboxWorker;
 import com.ruoyi.vlstream.test.vlstream.mapper.EventReportOutboxMapper;
 import com.ruoyi.vlstream.test.vlstream.mapper.VlsEventManagementMapper;
@@ -34,6 +37,8 @@ import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.AnnotationTransactionAttributeSource;
 import org.springframework.transaction.interceptor.TransactionInterceptor;
 
@@ -47,6 +52,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /** Real tenant SQL, transactions, outbox worker and loopback HTTP; no shared database or MQTT broker. */
 @Tag("dev")
@@ -56,6 +63,7 @@ class MultiTenantEventPersistenceTest {
     private VlsEventManagementMapper eventMapper;
     private EventReportOutboxMapper outboxMapper;
     private VlsEventReportApplicationService application;
+    private VlsEventManagementServiceImpl events;
     private HttpServer server;
 
     @BeforeEach void setup() throws Exception {
@@ -66,7 +74,7 @@ class MultiTenantEventPersistenceTest {
         jdbc.execute("CREATE TABLE vls_event_management (id BIGINT PRIMARY KEY, tenant_id VARCHAR(64), mqtt_message_id VARCHAR(128), "
             + "device_event_id VARCHAR(128), media_id VARCHAR(64), event_desc VARCHAR(1000), event_type VARCHAR(100), "
             + "report_location VARCHAR(255), report_device VARCHAR(100), report_img VARCHAR(1000), report_time TIMESTAMP, "
-            + "event_level VARCHAR(30), event_status VARCHAR(30), event_data VARCHAR(4000), handle_result VARCHAR(1000), "
+            + "event_level VARCHAR(30), event_status VARCHAR(30), executor VARCHAR(100), executor_ids VARCHAR(255), event_data VARCHAR(4000), handle_result VARCHAR(1000), "
             + "feedback_info VARCHAR(1000), feedback_img VARCHAR(1000), feedback_status INT, is_report INT, create_user VARCHAR(64), "
             + "create_dept VARCHAR(64), create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, update_user VARCHAR(64), "
             + "update_time TIMESTAMP, status INT DEFAULT 1, is_deleted INT DEFAULT 0)");
@@ -89,7 +97,7 @@ class MultiTenantEventPersistenceTest {
         SqlSessionTemplate session = new SqlSessionTemplate(built);
         eventMapper = session.getMapper(VlsEventManagementMapper.class);
         outboxMapper = session.getMapper(EventReportOutboxMapper.class);
-        VlsEventManagementServiceImpl events = new VlsEventManagementServiceImpl();
+        events = new VlsEventManagementServiceImpl();
         ReflectionTestUtils.setField(events, "baseMapper", eventMapper);
         VlsEventReportApplicationService target = new VlsEventReportApplicationService(events, eventMapper, outboxMapper, mock(IFileUploadService.class));
         ReflectionTestUtils.setField(target, "tenantType", "multi");
@@ -98,6 +106,59 @@ class MultiTenantEventPersistenceTest {
     }
 
     @AfterEach void cleanup() { if (server != null) server.stop(0); TenantContextHolder.clear(); }
+
+    @Test void feedbackPatchUpdatesOnlyDispositionAndKeepsOmittedExecutorAndDeliveryState() throws Exception {
+        Long id = createStatusFixture();
+        jdbc.update("UPDATE vls_event_management SET executor='existing-handler' WHERE id=?", id);
+        statusHttp().perform(patch("/vlsEventManagement/{id}/status", id)
+                .param("status", "processing").param("handleResult", "checked locally"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data").value(true));
+        assertEquals("processing", jdbc.queryForObject("SELECT event_status FROM vls_event_management WHERE id=?", String.class, id));
+        assertEquals("checked locally", jdbc.queryForObject("SELECT handle_result FROM vls_event_management WHERE id=?", String.class, id));
+        assertEquals("existing-handler", jdbc.queryForObject("SELECT executor FROM vls_event_management WHERE id=?", String.class, id));
+        assertEquals("{}", jdbc.queryForObject("SELECT event_data FROM vls_event_management WHERE id=?", String.class, id));
+        assertEquals("message-1", jdbc.queryForObject("SELECT mqtt_message_id FROM vls_event_management WHERE id=?", String.class, id));
+        assertEquals(0, jdbc.queryForObject("SELECT is_report FROM vls_event_management WHERE id=?", Integer.class, id));
+        assertEquals("PENDING", jdbc.queryForObject("SELECT status FROM vls_event_report_outbox WHERE event_id=?", String.class, id));
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM vls_event_report_outbox", Integer.class));
+    }
+
+    @Test void feedbackPatchCannotChangeAnotherTenantDeletedOrMissingEvent() throws Exception {
+        Long id = createStatusFixture();
+        TenantContextHolder.setTenantId("tenant-b");
+        statusHttp().perform(patch("/vlsEventManagement/{id}/status", id).param("status", "completed"))
+            .andExpect(jsonPath("$.code").value(404));
+        TenantContextHolder.clear();
+        statusHttp().perform(patch("/vlsEventManagement/{id}/status", id).param("status", "completed"))
+            .andExpect(jsonPath("$.code").value(404));
+        TenantContextHolder.setTenantId("tenant-a");
+        jdbc.update("UPDATE vls_event_management SET is_deleted=1 WHERE id=?", id);
+        statusHttp().perform(patch("/vlsEventManagement/{id}/status", id).param("status", "completed"))
+            .andExpect(jsonPath("$.code").value(404));
+        statusHttp().perform(patch("/vlsEventManagement/1/status").param("status", "completed"))
+            .andExpect(jsonPath("$.code").value(404));
+        assertEquals("pending", jdbc.queryForObject("SELECT event_status FROM vls_event_management WHERE id=?", String.class, id));
+    }
+
+    @Test void feedbackPatchRejectsInvalidOrMissingStatusWithoutChangingTheEvent() throws Exception {
+        Long id = createStatusFixture();
+        statusHttp().perform(patch("/vlsEventManagement/{id}/status", id).param("status", "invalid"))
+            .andExpect(status().isBadRequest());
+        statusHttp().perform(patch("/vlsEventManagement/{id}/status", id))
+            .andExpect(status().isBadRequest());
+        assertEquals("pending", jdbc.queryForObject("SELECT event_status FROM vls_event_management WHERE id=?", String.class, id));
+    }
+
+    private Long createStatusFixture() {
+        DeviceInfo device = new DeviceInfo(); device.setDeviceId("CAM-1"); device.setTenantId("tenant-a");
+        return application.persistActiveSafetyEvent(report(), device).getId();
+    }
+
+    private MockMvc statusHttp() {
+        return MockMvcBuilders.standaloneSetup(new VlsEventManagementController(events,
+            mock(IVlsDeviceInfoService.class), application, mock(VlsDeviceEventReportService.class))).build();
+    }
 
     @Test void persistsVisibleTenantEventThenRecordsOnlyBusinessConfirmedDelivery() throws Exception {
         DeviceInfo device = new DeviceInfo(); device.setDeviceId("CAM-1"); device.setTenantId("tenant-a");

@@ -26,6 +26,7 @@ import org.springblade.core.tool.api.R;
 import org.springblade.core.tool.utils.DateUtil;
 import org.springblade.core.tool.utils.Func;
 import com.ruoyi.vlstream.test.vlstream.excel.VlsEventManagementExcel;
+import com.ruoyi.vlstream.test.vlstream.enums.EventStatusEnum;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.DeviceInfo;
 import com.ruoyi.vlstream.test.vlstream.pojo.entity.EventManagement;
 import com.ruoyi.vlstream.test.vlstream.pojo.vo.EventManagementVO;
@@ -163,6 +164,23 @@ public class VlsEventManagementController extends BladeController {
 			return R.data(true);
 		}
 		return R.fail("Create event failed");
+	}
+
+	@PatchMapping("/{id}/status")
+	@Operation(summary = "更新事件处置状态", description = "仅更新当前租户事件的状态和处理结果")
+	public R<Boolean> updateEventStatus(@PathVariable Long id,
+			@RequestParam EventStatusEnum status,
+			@RequestParam(required = false) String handleResult) {
+		EventManagement update = new EventManagement();
+		update.setId(id);
+		update.setEventStatus(status);
+		update.setHandleResult(handleResult);
+		if (!vlsEventManagementService.updateEvent(update)) {
+			R<Boolean> result = R.fail("Event not found in current tenant");
+			result.setCode(404);
+			return result;
+		}
+		return R.data(true);
 	}
 
 	@PostMapping(value = "/report", consumes = "multipart/form-data")
