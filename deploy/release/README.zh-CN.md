@@ -50,6 +50,10 @@ docker compose logs -f backend frontend
 
 ## 可选的 IPC 远程管理
 
+跨机器局域网验收、公开配置生成器、无凭据客户端探针与线上检查清单见
+[IPC网关部署指南](../../docs/IPC_GATEWAY_DEPLOYMENT.md)。`.ipc.localhost`仅适合开发机，
+分享最终页面URL不能转移浏览器会话。生成模板不修改DNS、证书信任或正在运行的服务。
+
 `tunnel-runtime` profile 将固定版本的 rathole Server 与受限的
 HTTP/WebSocket 网关放在同一容器中，默认不启用。
 

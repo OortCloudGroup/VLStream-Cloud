@@ -128,6 +128,23 @@ public class TunnelAccessService {
 
     @Transactional(rollbackFor = Exception.class)
     public TunnelDtos.SessionRouteView renewSession(String sessionId) {
+        CheckedSession checked = requireOpenedSession(sessionId);
+        TunnelAccessSession session = checked.session;
+        Date now = Date.from(clock.instant());
+        session.setExpiresAt(new Date(now.getTime() + normalizedSessionTtl() * 1000L));
+        session.setUpdateTime(now);
+        TunnelTenantScope.run(session.getTenantId(), () -> sessionMapper.updateById(session));
+        return toRoute(session, checked.endpoint);
+    }
+
+    /** Recheck an upgraded connection without turning WS frames/polls into activity. */
+    @Transactional(readOnly = true)
+    public TunnelDtos.SessionRouteView validateSession(String sessionId) {
+        CheckedSession checked = requireOpenedSession(sessionId);
+        return toRoute(checked.session, checked.endpoint);
+    }
+
+    private CheckedSession requireOpenedSession(String sessionId) {
         if (StringUtils.isBlank(sessionId) || sessionId.length() > 64) {
             throw new TunnelApiException(401, "缺少或无效的远程访问会话标识");
         }
@@ -147,10 +164,17 @@ public class TunnelAccessService {
         } catch (ServiceException exception) {
             throw new TunnelApiException(503, exception.getMessage());
         }
-        session.setExpiresAt(new Date(now.getTime() + normalizedSessionTtl() * 1000L));
-        session.setUpdateTime(now);
-        TunnelTenantScope.run(session.getTenantId(), () -> sessionMapper.updateById(session));
-        return toRoute(session, endpoint);
+        return new CheckedSession(session, endpoint);
+    }
+
+    private static final class CheckedSession {
+        private final TunnelAccessSession session;
+        private final TunnelEndpoint endpoint;
+
+        private CheckedSession(TunnelAccessSession session, TunnelEndpoint endpoint) {
+            this.session = session;
+            this.endpoint = endpoint;
+        }
     }
 
     private TunnelDtos.SessionRouteView toRoute(TunnelAccessSession session, TunnelEndpoint endpoint) {

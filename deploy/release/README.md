@@ -57,6 +57,13 @@ docker compose logs -f backend frontend
 
 ## Optional IPC Remote Management
 
+For LAN acceptance from another computer, public configuration generation, the
+credential-free client probe, and production prerequisites, see the
+[IPC gateway deployment guide](../../docs/IPC_GATEWAY_DEPLOYMENT.md).
+`.ipc.localhost` is for the developer machine; sharing a final page URL does not
+transfer its browser session. Generating templates does not apply DNS, trust,
+or runtime changes.
+
 The `tunnel-runtime` profile combines a pinned rathole Server with a
 host-isolated HTTP/WebSocket gateway. It is disabled by default.
 

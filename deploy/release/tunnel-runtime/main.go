@@ -42,6 +42,7 @@ func main() {
 	}
 	go func() {
 		<-ctx.Done()
+		gateway.closeAllUpgrades()
 		shutdownContext, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer shutdownCancel()
 		_ = server.Shutdown(shutdownContext)

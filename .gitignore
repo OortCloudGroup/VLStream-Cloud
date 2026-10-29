@@ -34,6 +34,9 @@ D:\work\ide\WorkSpace\VLStream-Cloud\VLStream-Cloud-Backend-Server\vls-stream\do
 !/tools/test-zlm-candidates.mjs
 !/tools/test-active-safety.mjs
 !/tools/test-training-compute-selection.mjs
+!/tools/test-training-compute-queue.mjs
+!/tools/test-training-queue-selector.mjs
+!/tools/test-gpu-queue-snapshot.py
 !/tools/test-compute-self-service.mjs
 !/tools/i18n/
 !/tools/i18n/audit-ui.mjs
@@ -41,6 +44,11 @@ D:\work\ide\WorkSpace\VLStream-Cloud\VLStream-Cloud-Backend-Server\vls-stream\do
 /tools/compute/*
 !/tools/compute/bootstrap-autodl.sh
 !/tools/compute/prepare-presets.py
+!/tools/ipc/
+/tools/ipc/*
+!/tools/ipc/prepare_gateway_deployment.py
+!/tools/ipc/test_prepare_gateway_deployment.py
+!/tools/ipc/verify_gateway_public.py
 /AGENTS.md
 /Antigravity
 .playwright-cli

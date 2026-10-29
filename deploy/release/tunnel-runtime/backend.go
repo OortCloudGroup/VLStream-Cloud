@@ -36,6 +36,8 @@ type sessionRoute struct {
 	ExpiresAt    time.Time
 }
 
+var errSessionRouteExpired = errors.New("backend route has already expired")
+
 type backendClient struct {
 	baseURL      string
 	controlToken string
@@ -99,6 +101,13 @@ func (client *backendClient) resolveSession(ctx context.Context, token string) (
 
 func (client *backendClient) renewSession(ctx context.Context, sessionID string) (sessionRoute, error) {
 	return client.requestSession(ctx, "/vlsTunnel/internal/access-sessions/renew", map[string]string{
+		"X-Tunnel-Gateway-Token": client.gatewayToken,
+		"X-Tunnel-Session-Id":    sessionID,
+	})
+}
+
+func (client *backendClient) validateSession(ctx context.Context, sessionID string) (sessionRoute, error) {
+	return client.requestSession(ctx, "/vlsTunnel/internal/access-sessions/validate", map[string]string{
 		"X-Tunnel-Gateway-Token": client.gatewayToken,
 		"X-Tunnel-Session-Id":    sessionID,
 	})
@@ -188,7 +197,7 @@ func validateSessionRoute(route sessionRoute) error {
 		return errors.New("backend route port is outside 1-65535")
 	}
 	if !route.ExpiresAt.After(time.Now()) {
-		return errors.New("backend route has already expired")
+		return errSessionRouteExpired
 	}
 	return nil
 }

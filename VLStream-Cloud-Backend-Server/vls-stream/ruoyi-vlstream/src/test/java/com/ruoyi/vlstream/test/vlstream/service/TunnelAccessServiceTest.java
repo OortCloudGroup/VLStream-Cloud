@@ -32,6 +32,109 @@ import static org.mockito.Mockito.when;
 @Tag("dev")
 class TunnelAccessServiceTest {
     @Test
+    void upgradedValidationDoesNotRenewSessionOrWriteAnything() {
+        Instant now = Instant.parse("2026-10-28T14:00:00Z");
+        VlsTunnelProperties properties = new VlsTunnelProperties();
+        properties.setEnabled(true);
+        TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
+        TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
+        TunnelAccessService service = new TunnelAccessService(endpoints, sessions,
+            new TunnelTokenService(properties), properties, Clock.fixed(now, ZoneOffset.UTC));
+        TunnelAccessSession session = openedSession(now);
+        Date expires = session.getExpiresAt();
+        Date opened = session.getOpenedAt();
+        TunnelEndpoint endpoint = readyEndpoint();
+        endpoint.setLastHeartbeatAt(Date.from(now));
+        when(sessions.selectBySessionId("session-1")).thenReturn(session);
+        when(endpoints.selectByIdGlobal(1L)).thenReturn(endpoint);
+        for (int i = 0; i < 3; i++) {
+            TunnelDtos.SessionRouteView route = service.validateSession("session-1");
+            assertEquals(expires, route.getExpiresAt());
+            assertEquals(opened, session.getOpenedAt());
+            assertEquals(null, session.getUpdateTime());
+        }
+        verify(sessions, never()).updateById(any(TunnelAccessSession.class));
+        verify(sessions, never()).selectByTokenHash(any());
+    }
+
+    @Test
+    void upgradedValidationRejectsExpiredRevokedUnopenedAndMissingSessions() {
+        Instant now = Instant.parse("2026-10-28T14:00:00Z");
+        for (String state : new String[]{"expired", "revoked", "unopened", "missing"}) {
+            VlsTunnelProperties properties = new VlsTunnelProperties();
+            properties.setEnabled(true);
+            TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
+            TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
+            TunnelAccessService service = new TunnelAccessService(endpoints, sessions,
+                new TunnelTokenService(properties), properties, Clock.fixed(now, ZoneOffset.UTC));
+            TunnelAccessSession session = openedSession(now);
+            if ("expired".equals(state)) session.setExpiresAt(Date.from(now));
+            if ("revoked".equals(state)) session.setRevokedAt(Date.from(now));
+            if ("unopened".equals(state)) session.setOpenedAt(null);
+            when(sessions.selectBySessionId("session-1")).thenReturn("missing".equals(state) ? null : session);
+            assertEquals(401, assertThrows(TunnelApiException.class,
+                () -> service.validateSession("session-1")).getStatus(), state);
+            verify(sessions, never()).updateById(any(TunnelAccessSession.class));
+            verify(endpoints, never()).selectByIdGlobal(any());
+        }
+    }
+
+    @Test
+    void upgradedValidationRejectsChangedOwnershipAndUnavailableDevices() {
+        Instant now = Instant.parse("2026-10-28T14:00:00Z");
+        for (String state : new String[]{"other-tenant", "other-device", "disabled", "stale-heartbeat",
+            "tunnel-offline", "web-unavailable", "route-generation", "feature-disabled"}) {
+            VlsTunnelProperties properties = new VlsTunnelProperties();
+            properties.setEnabled(!"feature-disabled".equals(state));
+            TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
+            TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
+            TunnelAccessService service = new TunnelAccessService(endpoints, sessions,
+                new TunnelTokenService(properties), properties, Clock.fixed(now, ZoneOffset.UTC));
+            TunnelEndpoint endpoint = readyEndpoint();
+            endpoint.setLastHeartbeatAt(Date.from(now));
+            if ("other-tenant".equals(state)) endpoint.setTenantId("another-tenant");
+            if ("other-device".equals(state)) endpoint.setDeviceId("another-device");
+            if ("disabled".equals(state)) endpoint.setDesiredState("DISABLED");
+            if ("stale-heartbeat".equals(state)) endpoint.setLastHeartbeatAt(Date.from(now.minusSeconds(300)));
+            if ("tunnel-offline".equals(state)) endpoint.setTunnelStatus("OFFLINE");
+            if ("web-unavailable".equals(state)) endpoint.setLocalWebStatus("UNAVAILABLE");
+            if ("route-generation".equals(state)) endpoint.setRouteAppliedGeneration(99L);
+            when(sessions.selectBySessionId("session-1")).thenReturn(openedSession(now));
+            when(endpoints.selectByIdGlobal(1L)).thenReturn(endpoint);
+            int expected = state.startsWith("other-") ? 401 : 503;
+            assertEquals(expected, assertThrows(TunnelApiException.class,
+                () -> service.validateSession("session-1")).getStatus(), state);
+            verify(sessions, never()).updateById(any(TunnelAccessSession.class));
+        }
+    }
+
+    @Test
+    void upgradedValidationControllerRequiresExistingGatewayCredential() {
+        Instant now = Instant.parse("2026-10-28T14:00:00Z");
+        VlsTunnelProperties properties = new VlsTunnelProperties();
+        properties.setEnabled(true);
+        properties.setGatewayApiToken("fixture-gateway-012345678901234567890123456789");
+        properties.setControlApiToken("fixture-control-012345678901234567890123456789");
+        TunnelAccessSessionMapper sessions = mock(TunnelAccessSessionMapper.class);
+        TunnelEndpointMapper endpoints = mock(TunnelEndpointMapper.class);
+        TunnelAccessService access = new TunnelAccessService(endpoints, sessions,
+            new TunnelTokenService(properties), properties, Clock.fixed(now, ZoneOffset.UTC));
+        com.ruoyi.vlstream.test.vlstream.controller.VlsTunnelInternalController controller =
+            new com.ruoyi.vlstream.test.vlstream.controller.VlsTunnelInternalController(
+                mock(TunnelControlService.class), access);
+        assertEquals(401, controller.validateSession(null, "session-1").getStatusCodeValue());
+        assertEquals(401, controller.validateSession(properties.getControlApiToken(), "session-1").getStatusCodeValue());
+        verify(sessions, never()).selectBySessionId(any());
+        TunnelAccessSession session = openedSession(now);
+        TunnelEndpoint endpoint = readyEndpoint();
+        endpoint.setLastHeartbeatAt(Date.from(now));
+        when(sessions.selectBySessionId("session-1")).thenReturn(session);
+        when(endpoints.selectByIdGlobal(1L)).thenReturn(endpoint);
+        assertEquals(200, controller.validateSession(properties.getGatewayApiToken(), "session-1").getStatusCodeValue());
+        verify(sessions, never()).updateById(any(TunnelAccessSession.class));
+    }
+
+    @Test
     void gatewayExpiryHasExplicitUtcOffsetDespiteLocalJacksonDefaults() throws Exception {
         com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         mapper.setDateFormat(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));

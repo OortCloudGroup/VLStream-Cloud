@@ -44,16 +44,23 @@ type tunnelGateway struct {
 	backend *backendClient
 	now     func() time.Time
 
-	mu       sync.RWMutex
-	sessions map[string]cachedGatewaySession
+	mu                       sync.RWMutex
+	sessions                 map[string]cachedGatewaySession
+	upgrades                 map[string]map[uint64]context.CancelFunc
+	upgradeSequence          uint64
+	upgradeRecheckInterval   time.Duration
+	upgradeValidationTimeout time.Duration
 }
 
 func newTunnelGateway(cfg runtimeConfig, backend *backendClient) *tunnelGateway {
 	return &tunnelGateway{
-		cfg:      cfg,
-		backend:  backend,
-		now:      time.Now,
-		sessions: make(map[string]cachedGatewaySession),
+		cfg:                      cfg,
+		backend:                  backend,
+		now:                      time.Now,
+		sessions:                 make(map[string]cachedGatewaySession),
+		upgrades:                 make(map[string]map[uint64]context.CancelFunc),
+		upgradeRecheckInterval:   5 * time.Second,
+		upgradeValidationTimeout: 3 * time.Second,
 	}
 }
 
@@ -204,6 +211,18 @@ func (gateway *tunnelGateway) proxy(response http.ResponseWriter, request *http.
 		Host: net.JoinHostPort(netIP(cached.route.UpstreamHost),
 			strconv.Itoa(cached.route.UpstreamPort)),
 	}
+	upgrading := isProtocolUpgrade(request)
+	var upgradeID uint64
+	var upgradeCancel context.CancelFunc
+	if upgrading {
+		var upgradeContext context.Context
+		upgradeContext, upgradeCancel = context.WithCancel(request.Context())
+		request = request.WithContext(upgradeContext)
+		defer func() {
+			upgradeCancel()
+			gateway.unregisterUpgrade(cookie.Value, upgradeID)
+		}()
+	}
 	proxy := httputil.NewSingleHostReverseProxy(target)
 	proxy.Transport = headerStrippingTransport{base: http.DefaultTransport}
 	originalDirector := proxy.Director
@@ -233,6 +252,17 @@ func (gateway *tunnelGateway) proxy(response http.ResponseWriter, request *http.
 		http.Error(writer, "IPC management backend is unavailable", http.StatusBadGateway)
 	}
 	proxy.ModifyResponse = func(upstreamResponse *http.Response) error {
+		if upgrading && upstreamResponse.StatusCode == http.StatusSwitchingProtocols {
+			var err error
+			upgradeID, err = gateway.startUpgradeGuard(request.Context(), upgradeCancel,
+				cookie.Value, cached.route)
+			if err != nil {
+				if request.Context().Err() == nil {
+					gateway.removeSession(cookie.Value)
+				}
+				return errors.New("remote-management upgraded session is unavailable")
+			}
+		}
 		rewriteLocation(upstreamResponse, originalHost, publicScheme(gateway.cfg), target.Host)
 		rewriteCookies(upstreamResponse, true)
 		upstreamResponse.Header.Set("Referrer-Policy", "no-referrer")
@@ -265,15 +295,23 @@ func (gateway *tunnelGateway) sessionIDFromHost(rawHost string) (string, error) 
 
 func (gateway *tunnelGateway) removeSession(cookieToken string) {
 	gateway.mu.Lock()
-	delete(gateway.sessions, cookieToken)
+	gateway.removeSessionLocked(cookieToken)
 	gateway.mu.Unlock()
+}
+
+func (gateway *tunnelGateway) removeSessionLocked(cookieToken string) {
+	delete(gateway.sessions, cookieToken)
+	for _, cancel := range gateway.upgrades[cookieToken] {
+		cancel()
+	}
+	delete(gateway.upgrades, cookieToken)
 }
 
 func (gateway *tunnelGateway) removeExpiredLocked() {
 	now := gateway.now()
 	for token, session := range gateway.sessions {
 		if !session.route.ExpiresAt.After(now) {
-			delete(gateway.sessions, token)
+			gateway.removeSessionLocked(token)
 		}
 	}
 }

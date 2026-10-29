@@ -101,4 +101,20 @@ public class VlsTunnelInternalController {
                     exception.getStatus(), exception.getMessage()));
         }
     }
+
+    @SaIgnore
+    @PostMapping("/access-sessions/validate")
+    @Operation(summary = "HTTPS网关只读复核已升级连接的会话，不续期")
+    public ResponseEntity<TunnelDtos.ApiResponse<TunnelDtos.SessionRouteView>> validateSession(
+        @RequestHeader(value = "X-Tunnel-Gateway-Token", required = false) String token,
+        @RequestHeader(value = "X-Tunnel-Session-Id", required = false) String sessionId) {
+        try {
+            accessService.verifyGatewayToken(token);
+            return ResponseEntity.ok(TunnelDtos.ApiResponse.success(accessService.validateSession(sessionId)));
+        } catch (TunnelApiException exception) {
+            return ResponseEntity.status(exception.getStatus())
+                .body(TunnelDtos.ApiResponse.<TunnelDtos.SessionRouteView>error(
+                    exception.getStatus(), exception.getMessage()));
+        }
+    }
 }
