@@ -217,6 +217,63 @@ class ModelDispatchServiceTest {
     }
 
     @Test
+    void devicePickerCanSubmitSeveralSavedModelsWithoutTheBatchActiveTaskGate() throws Exception {
+        properties.setSigningSecret("test-signing-secret");
+        when(wvpDeviceResolver.resolveOnline("CAM-A")).thenReturn(wvpDevice(101L, "CAM-A"));
+        when(artifactService.resolvePath(any(AlgorithmTraining.class), eq("om"))).thenReturn("/saved/best.om");
+        when(artifactService.inspect("/saved/best.om")).thenReturn(
+            new RemoteModelArtifactService.ArtifactMetadata("best.om", 10L, repeat("a", 64)));
+        when(signatureService.sign(any(), anyLong())).thenReturn("signature");
+        org.mockito.Mockito.doThrow(new ServiceException("active batch task")).when(taskService).requireNoActiveTask("CAM-A");
+        for (long id : new long[] {9001L, 9002L}) {
+            AlgorithmModel model = new AlgorithmModel();
+            model.setId(id); model.setAlgorithmId(1L); model.setTrainingId(id); model.setTenantId("000000");
+            model.setModelName("saved-" + id); model.setModelPath("/saved/best.pt"); model.setOmModelOutputPath("/saved/best.om");
+            when(modelService.getById(id)).thenReturn(model);
+            org.junit.jupiter.api.Assertions.assertNotNull(service.dispatchModel(id, "CAM-A"));
+        }
+        verify(taskService, org.mockito.Mockito.never()).requireNoActiveTask(any());
+        verify(taskService, org.mockito.Mockito.times(2)).create(any(ModelDispatchTask.class));
+        verify(mqttService, org.mockito.Mockito.times(2)).publish(eq("vlstream/v2.2/dev/CAM-A/bus"), any());
+        ModelDispatchAccess access = (ModelDispatchAccess) getField(service, "dispatchAccess");
+        verify(access, org.mockito.Mockito.times(2)).requireDevice("CAM-A", "om", false);
+    }
+
+    private Object getField(Object target, String name) throws Exception {
+        Field field = target.getClass().getDeclaredField(name);
+        field.setAccessible(true);
+        return field.get(target);
+    }
+
+    @Test
+    void savedModelRecoveryWithStableRequestIdPublishesAndPersistsOnlyOnce() throws Exception {
+        properties.setSigningSecret("test-signing-secret");
+        AlgorithmModel model = new AlgorithmModel();
+        model.setId(9001L); model.setAlgorithmId(1L); model.setTrainingId(10L); model.setTenantId("000000");
+        model.setModelName("保存模型"); model.setModelPath("/saved/best.pt"); model.setOmModelOutputPath("/saved/best.om");
+        when(modelService.getById(9001L)).thenReturn(model);
+        when(artifactService.resolvePath(any(AlgorithmTraining.class), eq("om"))).thenReturn("/saved/best.om");
+        when(artifactService.inspect("/saved/best.om")).thenReturn(
+            new RemoteModelArtifactService.ArtifactMetadata("best.om", 10L, repeat("a", 64)));
+        when(signatureService.sign(any(), anyLong())).thenReturn("signature");
+        java.util.Map<String, ModelDispatchTask> persisted = new java.util.HashMap<>();
+        org.mockito.Mockito.doAnswer(call -> {
+            ModelDispatchTask task = call.getArgument(0); persisted.put(task.getRequestId(), task); return null;
+        }).when(taskService).create(any());
+        when(taskService.getByRequestId(any())).thenAnswer(call -> persisted.get(call.getArgument(0)));
+        assertEquals("stable-request", service.dispatchSavedModel(9001L, "CAM-A", "stable-request"));
+        assertEquals("stable-request", service.dispatchSavedModel(9001L, "CAM-A", "stable-request"));
+        verify(taskService).create(any());
+        verify(mqttService).publish(eq("vlstream/v2.2/dev/CAM-A/bus"), any());
+        ModelDispatchTask task = persisted.get("stable-request");
+        assertEquals("/saved/best.om", task.getRemotePath());
+        assertEquals(repeat("a", 64), task.getSha256());
+        assertEquals(repeat("b", 64), task.getClassFileSha256());
+        ModelDispatchAccess access = (ModelDispatchAccess) getField(service, "dispatchAccess");
+        verify(access, org.mockito.Mockito.times(2)).requireDevice("CAM-A", "om", false);
+    }
+
+    @Test
     void missingSelectedModelOrOmNeverFallsBackOrPublishes() {
         assertThrows(ServiceException.class, () -> service.dispatchModel(9001L, "CAM-A"));
         AlgorithmModel model = new AlgorithmModel();

@@ -11,13 +11,10 @@ test('device deployment status is scoped to the selected device and expires to u
     { requestId:'other-device', deviceId:18, fileName:'model-c', dispatchStatus:'SUCCESS' }
   ], '17', now)
 
-  assert.equal(rows.length, 2)
+  assert.equal(rows.length, 1)
   assert.equal(rows[0].requestId, 'pending')
   assert.equal(rows[0].modelName, 'model-a')
   assert.equal(rows[0].label, deploymentStatus({ state:'PUBLISHED' }))
   assert.equal(rows[0].type, deploymentTag({ state:'PUBLISHED' }))
-  assert.equal(rows[1].requestId, 'expired')
-  assert.equal(rows[1].modelName, 'training-b')
-  assert.equal(rows[1].label, deploymentStatus({ state:'UNKNOWN' }))
-  assert.equal(rows[1].type, deploymentTag({ state:'UNKNOWN' }))
+  assert.equal(rows.some(row => row.requestId === 'expired'), false)
 })

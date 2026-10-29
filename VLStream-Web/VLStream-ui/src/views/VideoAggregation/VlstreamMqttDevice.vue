@@ -144,17 +144,17 @@
         </el-descriptions>
 
         <div class="model-heading">
-          <div class="model-heading-title"><h4>{{ $tp('设备运行模型') }}</h4><span class="snapshot-note">{{ $tp('每 5 秒自动刷新') }}</span></div>
+          <div class="model-heading-title"><h4>{{ $tp('设备运行模型') }}</h4>
+            <span v-if="deploymentRows.length" class="device-deployment-status" aria-live="polite">
+              <span v-for="task in deploymentRows" :key="task.requestId" class="device-deployment-row">
+                {{ task.modelName }} · {{ $tp(task.label) }}
+              </span>
+            </span>
+            <span class="snapshot-note">{{ $tp('每 5 秒自动刷新') }}</span>
+          </div>
           <div>
             <el-button size="small" type="primary" :disabled="Boolean(modelBusy)" @click="openModelDeploy">{{ detailDevice?.online ? $tp('模型下发') : $tp('查看模型') }}</el-button>
-            <el-button size="small" :loading="modelBusy === 'query'" :disabled="Boolean(modelBusy)" @click="refreshModelSection">{{ $tp('刷新') }}</el-button>
-          </div>
-        </div>
-        <div v-if="deploymentRows.length" class="device-deployment-status" aria-live="polite">
-          <div v-for="task in deploymentRows" :key="task.requestId" class="device-deployment-row">
-            <span class="deployment-model-name">{{ task.modelName }}</span>
-            <el-tag :type="task.type" size="small">{{ $tp(task.label) }}</el-tag>
-            <span v-if="task.reason" class="snapshot-note">{{ task.reason }}</span>
+            <el-button size="small" :loading="modelBusy === 'query'" :disabled="Boolean(modelBusy)" @click="refreshModelSection(true)">{{ $tp('刷新') }}</el-button>
           </div>
         </div>
         <el-alert v-if="modelTasksError" :title="modelTasksError" type="warning" :closable="false" show-icon />
@@ -171,7 +171,6 @@
             </template>
           </el-table-column>
         </el-table>
-        <p class="snapshot-note">{{ $tp('每 5 秒更新下发状态和设备模型；离线时仅更新平台记录，运行模型以设备上报为准。') }}</p>
 
         <h4>{{ $tp('视频源') }}</h4>
         <el-table :data="detailStreams" border scrollbar-always-on :empty-text="$tp('设备没有上报视频源')">
@@ -392,31 +391,45 @@ async function refreshModelSnapshot() {
     const result = await getMqttDeviceDetail(currentDevice.value.id, { silentError: true })
     if (!modelSessionCurrent(session)) return
     if (result?.data?.device) {
-      if (result.data.device.modelsJson !== detailDevice.value?.modelsJson) liveModels.value = null
-      firmwareDetail.value = result.data
+      const device = { ...result.data.device }
+      // Missing/invalid model telemetry is not an explicit empty inventory report.
+      if (parseSnapshot(device.modelsJson) === null) device.modelsJson = detailDevice.value?.modelsJson
+      if (device.modelsJson !== detailDevice.value?.modelsJson) {
+        liveModels.value = null
+        modelError.value = ''
+      }
+      firmwareDetail.value = { ...result.data, device }
     }
   } catch { /* Preserve the last snapshot; the next tick retries. */ }
   finally { if (session === modelSession) snapshotRefreshing = false }
 }
 
-async function refreshModelSection() {
+async function refreshModelSection(queryDevice = false) {
   const session = modelSession
   if (!modelSessionCurrent(session)) return
   // Each channel has its own in-flight guard: a slow device reply must not delay task progress.
   await Promise.allSettled([refreshModelTasks(), refreshModelSnapshot()])
-  if (modelSessionCurrent(session) && !modelDeployVisible.value) await refreshModels()
+  if (queryDevice && modelSessionCurrent(session) && !modelDeployVisible.value) await refreshModels()
 }
 
 async function refreshModels() {
   if (modelBusy.value || !detailDevice.value?.online) return
   const session = modelSession
   const deviceId = detailDevice.value.deviceId
+  const snapshotVersion = detailDevice.value.modelsJson
   modelBusy.value = 'query'
   modelError.value = ''
   try {
     const result = await queryDeviceModels(deviceId, { silentError: true })
     if (!modelSessionCurrent(session)) return
     if (!Array.isArray(result?.data)) throw new Error('设备未返回有效模型列表')
+    // A query started against an older heartbeat must not replace a newer report.
+    if (snapshotVersion !== detailDevice.value?.modelsJson) return
+    if (!result.data.length && parseSnapshot(snapshotVersion)?.length) {
+      liveModels.value = null
+      modelError.value = ''
+      return
+    }
     liveModels.value = result.data
   } catch (error) {
     if (modelSessionCurrent(session)) modelError.value = modelErrorMessage(error, '查询设备模型失败')
@@ -728,10 +741,11 @@ onBeforeUnmount(() => { modelSession++; clearInterval(modelPollTimer) })
 .player :deep(#webRtcPlayerBox), .player :deep(#rtcPlayer) { width: 100%; max-height: 520px; }
 .camera-rtc-player { width: 100%; height: 480px; }
 .model-heading { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
-.model-heading-title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; }
-.device-deployment-status { max-height: 160px; overflow-y: auto; margin-bottom: 12px; padding: 10px 12px; background: #f5f7fa; border-radius: 4px; }
-.device-deployment-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 4px 0; }
-.deployment-model-name { overflow-wrap: anywhere; }
+.model-heading-title { display: flex; flex: 1; min-width: 0; align-items: baseline; flex-wrap: wrap; gap: 12px; }
+.model-heading { gap: 12px; }
+.model-heading > div:last-child { flex-shrink: 0; }
+.device-deployment-status { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; color: #e6a23c; font-size: 12px; }
+.device-deployment-row { overflow-wrap: anywhere; }
 .firmware-version-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .remote-management-entry { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .enrollment-details { margin-top: 16px; }

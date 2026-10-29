@@ -20,8 +20,7 @@
         <div class="picker-toolbar">
           <el-input v-model="keyword" :placeholder="$tp('搜索模型或算法名称')" :prefix-icon="Search" clearable
             :disabled="submitting" @input="scheduleSearch" @keyup.enter="searchNow" />
-          <span class="target-device">{{ $tp('下发至') }} {{ device?.deviceName || device?.deviceId }} · OM</span>
-          <el-button link :disabled="submitting" @click="restoreLatestDeployment">{{ $tp('恢复最近下发') }}</el-button>
+          <span class="target-device" :title="targetNames">{{ $tp('下发至') }} {{ targetDevices.length > 1 ? `${targetDevices.length} 台设备` : targetNames }} · OM</span>
         </div>
       </div>
       <div class="category-tabs" role="tablist" :aria-label="$tp('模型分类')">
@@ -40,7 +39,7 @@
               <button v-for="model in models" :key="model.id" type="button" class="model-card"
                 :class="{ selected: isSelected(model.id), unavailable: !model.deployable }"
                 :aria-label="$tp('{value0}，版本 {value1}{value2}', { value0: model.modelName, value1: model.version ?? '-', value2: model.deployable ? '' : $tp('，暂无可用 OM') })"
-                :aria-pressed="isSelected(model.id)" :disabled="submitting || !model.deployable || Boolean(results[model.id])"
+                :aria-pressed="isSelected(model.id)" :disabled="submitting || !model.deployable || modelHasResults(model.id)"
                 @click="toggleModel(model)">
                 <div class="model-cover">
                   <el-image v-if="model.imageUrl" :src="model.imageUrl" fit="cover" loading="lazy">
@@ -67,13 +66,16 @@
           <p v-if="!selected.length" class="selection-empty">{{ $tp('点击左侧模型卡片进行选择') }}</p>
           <div v-for="model in selected" :key="model.id" class="selected-model">
             <div class="selected-title"><strong>{{ model.modelName }}</strong>
-              <el-button v-if="!results[model.id]" link :icon="Close" :disabled="submitting" :aria-label="$tp('移除 {value0}', { value0: model.modelName })" @click="toggleModel(model)" />
+              <el-button v-if="!modelHasResults(model.id)" link :icon="Close" :disabled="submitting" :aria-label="$tp('移除 {value0}', { value0: model.modelName })" @click="toggleModel(model)" />
             </div>
             <span class="selected-version">{{ model.version == null ? $tp('未标版本') : `V${model.version}` }} · OM</span>
-            <p v-if="results[model.id]" class="submission-result" :class="results[model.id].state">{{ results[model.id].message }}</p>
-            <el-button v-if="results[model.id]?.operationId" link type="primary" @click="openDeploymentResult(model)">{{ $tp('查看部署结果') }}</el-button>
+            <p v-for="item in modelResults(model.id)" :key="item.deviceId" class="submission-result" :class="item.state">
+              <span v-if="targetDevices.length > 1" class="result-device">{{ item.deviceName }} · {{ item.deviceId }}<br /></span>{{ $tp(item.message) }}
+            </p>
           </div>
           <p v-if="hasResults" class="result-note">{{ $tp('任务提交后由设备下载并部署，最终结果以设备回执为准。结果未确认的项目请先核实下发任务，避免重复提交。') }}</p>
+          <el-button v-if="retryablePairs.length" link type="primary" :disabled="submitting" @click="retryFailed">{{ $tp('重试失败项') }} ({{ retryablePairs.length }})</el-button>
+          <el-button v-if="uncertainPairs.length" link type="primary" :disabled="submitting" @click="recoverUncertain">{{ $tp('核实提交结果') }} ({{ uncertainPairs.length }})</el-button>
         </aside>
       </div>
       </template>
@@ -85,16 +87,15 @@
             :disabled="submitting || loading" layout="total, prev, pager, next" background @current-change="loadModels" />
         </div>
         <div class="drawer-footer">
-          <span>{{ $tp('每次选择一个模型，确认后切换当前推理模型及类别；不修改独立的运行参数。') }}</span>
+          <span>{{ submitting ? $tp('正在提交 {value0} / {value1}', { value0: submittedIndex, value1: batchSize }) : $tp('已选择 {value0} 个模型', { value0: selected.length }) }}<template v-if="targetDevices.length > 1"> · {{ targetDevices.length }} 台设备 · {{ selected.length * targetDevices.length }} 个下发任务</template></span>
           <div class="drawer-footer-actions">
             <el-button :disabled="submitting" @click="closeDrawer()">{{ hasResults ? $tp('关闭') : $tp('取消') }}</el-button>
-            <el-button type="primary" :loading="submitting" :disabled="!pendingModels.length || !device?.online" @click="submitSelection">{{ $tp('确定') }}{{ pendingModels.length ? ` (${pendingModels.length})` : '' }}</el-button>
+            <el-button type="primary" :loading="submitting" :disabled="!pendingModels.length || !targetDevices.length || targetDevices.length > 20 || (targetDevices.length === 1 && !targetDevices[0].online)" @click="submitSelection">{{ $tp('确定') }}{{ pendingModels.length ? ` (${pendingModels.length})` : '' }}</el-button>
           </div>
         </div>
       </div>
     </template>
   </el-drawer>
-  <ModelDeploymentDialog v-model="deploymentVisible" :devices="device ? [device] : []" :model="deploymentModel" :existing-operation-id="deploymentOperationId" @busy="submitting = $event; emit('busy', $event)" @submitted="deploymentSubmitted" />
 </template>
 
 <script setup>
@@ -103,13 +104,12 @@ import { translatePhrase as uiText } from '@/i18n'
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Check, Close, Picture, Search } from '@element-plus/icons-vue'
-import { getDeviceModelCandidates } from '@/api/deviceModelCatalog'
-import { getRecentModelBatches } from '@/api/modelDispatchBatch'
+import { getDeviceModelCandidates, submitSavedModelAttempt, getSavedModelAttempt } from '@/api/deviceModelCatalog'
+import { pairKey, attemptResult } from '@/utils/savedModelDispatch.mjs'
 import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 import ModelHubCatalog from './ModelHubCatalog.vue'
-import ModelDeploymentDialog from '@/views/DecisionAI/components/ModelDeploymentDialog.vue'
 
-const props = defineProps({ modelValue: Boolean, device: { type: Object, default: null } })
+const props = defineProps({ modelValue: Boolean, device: { type: Object, default: null }, devices: { type: Array, default: null } })
 const emit = defineEmits(['update:modelValue', 'busy', 'submitted'])
 const source = ref('local')
 const hubTotal = ref(null)
@@ -132,18 +132,25 @@ const loadError = ref('')
 const selected = ref([])
 const results = ref({})
 const submitting = ref(false)
-const deploymentVisible = ref(false), deploymentModel = ref(null), deploymentOperationId = ref('')
+const submittedIndex = ref(0)
+const batchSize = ref(0)
+const targetDevices = ref([])
+const targetNames = computed(() => targetDevices.value.map(device => device.deviceName || device.deviceId).join('、'))
 const hasResults = computed(() => Object.keys(results.value).length > 0)
-const pendingModels = computed(() => selected.value.filter(model => !results.value[model.id]))
+const modelHasResults = id => Object.values(results.value).some(item => item.modelId === String(id))
+const modelResults = id => Object.values(results.value).filter(item => item.modelId === String(id))
+const pendingModels = computed(() => selected.value.filter(model => !modelHasResults(model.id)))
+const retryablePairs = computed(() => Object.values(results.value).filter(item => item.retryable))
+const uncertainPairs = computed(() => Object.values(results.value).filter(item => item.state === 'uncertain'))
 const isSelected = id => selected.value.some(model => model.id === id)
 let searchTimer
 let requestSequence = 0
 let session = 0
-let identityTimer, drawerIdentity
+let identityTimer, drawerIdentity, resultTimer, polling = false, activeTargets = ''
 
 function toggleModel(model) {
-  if (submitting.value || !model.deployable || results.value[model.id]) return
-  selected.value = isSelected(model.id) ? [] : [model]
+  if (submitting.value || !model.deployable || modelHasResults(model.id)) return
+  selected.value = isSelected(model.id) ? selected.value.filter(item => item.id !== model.id) : [...selected.value, model]
 }
 
 async function loadModels() {
@@ -180,62 +187,123 @@ function closeDrawer(done) {
   emit('update:modelValue', false)
 }
 
-function submitSelection() {
+async function submitSelection() {
   try { drawerIdentity?.assertCurrent() } catch { onDeviceModelIdentityChanged(); return }
-  if (!props.device?.online || pendingModels.value.length !== 1) return
-  deploymentModel.value = { ...pendingModels.value[0] }
-  deploymentOperationId.value = ''
-  deploymentVisible.value = true
+  if (submitting.value || !pendingModels.value.length || !targetDevices.value.length || targetDevices.value.length > 20) return
+  const operationId = crypto.randomUUID()
+  const batch = pendingModels.value.flatMap(model => targetDevices.value.map(device => ({
+    modelId: String(model.id), deviceId: device.deviceId, deviceName: device.deviceName || device.deviceId, operationId
+  })))
+  await submitPairs(batch)
 }
-function deploymentSubmitted(batch) {
-  if (deploymentModel.value) results.value[deploymentModel.value.id] = { state: 'pending', message: uiText('批次已建立，请查看设备部署结果'), operationId: batch.operationId }
-  emit('submitted')
+
+async function retryFailed() {
+  if (submitting.value) return
+  const operationId = crypto.randomUUID()
+  await submitPairs(retryablePairs.value.map(item => ({ ...item, operationId })))
 }
-function openDeploymentResult(model) {
-  deploymentModel.value = model
-  deploymentOperationId.value = results.value[model.id].operationId
-  deploymentVisible.value = true
+
+async function recoverUncertain() {
+  if (!submitting.value) await submitPairs(uncertainPairs.value.map(item => ({ ...item })))
 }
-async function restoreLatestDeployment() {
-  try { drawerIdentity?.assertCurrent() } catch { onDeviceModelIdentityChanged(); return }
-  const version = session
+
+async function submitPairs(batch) {
+  if (submitting.value || !batch.length) return
+  const currentSession = session
+  const identity = captureComputeIdentity()
+  batchSize.value = batch.length
+  submittedIndex.value = 0
+  submitting.value = true
+  emit('busy', true)
+  let submitted = 0
   try {
-    const response = await getRecentModelBatches()
-    if (version !== session || !props.modelValue) return
-    const batch = (response?.data || []).find(item => item.items?.some(target => target.deviceId === props.device?.deviceId))
-    if (!batch) { ElMessage.info(uiText('最近10个批次中没有该设备的下发记录')); return }
-    deploymentModel.value = null; deploymentOperationId.value = batch.operationId; deploymentVisible.value = true
-  } catch (ex) { if (version === session) ElMessage.error(uiText('读取下发记录失败，请核对当前身份和权限')) }
+    for (const item of batch) {
+      if (currentSession !== session) break
+      submittedIndex.value++
+      const key = pairKey(item.modelId, item.deviceId)
+      results.value[key] = { ...item, state: 'pending', retryable: false, message: '正在提交…' }
+      try {
+        identity.assertCurrent()
+        const response = await submitSavedModelAttempt(item.modelId, item.deviceId, item.operationId)
+        if (currentSession !== session) break
+        identity.assertCurrent()
+        if (response?.code !== 200) throw new Error(response?.msg || '提交结果未确认')
+        results.value[key] = { ...item, ...attemptResult(response.data) }
+        if (results.value[key].state !== 'failed' && results.value[key].state !== 'uncertain') submitted++
+      } catch (error) {
+        if (currentSession !== session) break
+        try { identity.assertCurrent() } catch { onDeviceModelIdentityChanged(); break }
+        if (error?.code === 'COMPUTE_IDENTITY_CHANGED') { onDeviceModelIdentityChanged(); break }
+        results.value[key] = { ...item, state: 'uncertain', retryable: false, message: error?.data?.msg || error?.response?.data?.msg || error?.message || '提交结果未确认，请核实任务' }
+      }
+    }
+    if (submitted && currentSession === session) { ElMessage.success(uiText('已提交 {value0} 个模型下发任务', { value0: submitted })); emit('submitted') }
+  } finally {
+    if (currentSession === session) { submitting.value = false; emit('busy', false) }
+  }
+}
+
+async function refreshResults() {
+  if (submitting.value || polling || !props.modelValue) return
+  polling = true
+  const currentSession = session
+  try {
+    for (const item of Object.values(results.value).filter(item => item.requestId && ['pending', 'uncertain'].includes(item.state))) {
+      try {
+        drawerIdentity.assertCurrent()
+        const response = await getSavedModelAttempt(item.modelId, item.deviceId, item.operationId)
+        if (currentSession !== session) return
+        drawerIdentity.assertCurrent()
+        if (response?.code === 200) results.value[pairKey(item.modelId, item.deviceId)] = { ...item, ...attemptResult(response.data) }
+      } catch (error) {
+        if (currentSession !== session) return
+        try { drawerIdentity.assertCurrent() } catch { onDeviceModelIdentityChanged(); return }
+        results.value[pairKey(item.modelId, item.deviceId)] = { ...item, state: 'uncertain', retryable: false,
+          message: `无法刷新任务状态：${error?.data?.msg || error?.message || '请核实原任务'}` }
+      }
+    }
+  } finally { if (currentSession === session) polling = false }
 }
 
 function onDeviceModelIdentityChanged() {
   session++
   requestSequence++
   clearTimeout(searchTimer)
+  clearInterval(identityTimer); clearInterval(resultTimer)
   models.value = []; selected.value = []; results.value = {}
+  targetDevices.value = []; activeTargets = ''; polling = false; drawerIdentity = null
   total.value = 0; sourceTotal.value = null; hubTotal.value = null
-  deploymentVisible.value = false; deploymentModel.value = null; deploymentOperationId.value = ''; submitting.value = false; loading.value = false
+  submittedIndex.value = 0; batchSize.value = 0; submitting.value = false; loading.value = false
   keyword.value = ''; category.value = ''; page.value = 1; source.value = 'local'
   loadError.value = props.modelValue ? '登录身份已变化，请刷新模型列表并重新选择；已发送的任务请在原账号下核实' : ''
   emit('busy', false)
   emit('update:modelValue', false)
 }
 
-watch([() => props.modelValue, () => props.device?.deviceId], ([visible]) => {
+watch([() => props.modelValue, () => (props.devices || [props.device]).map(item => item?.deviceId).join('|')], async ([visible, targetKey]) => {
   session++
   requestSequence++
-  clearTimeout(searchTimer); clearInterval(identityTimer)
-  deploymentVisible.value = false
+  clearTimeout(searchTimer)
+  clearInterval(identityTimer)
+  clearInterval(resultTimer)
+  submitting.value = false; polling = false; emit('busy', false)
   if (visible) {
-    keyword.value = ''; category.value = ''; page.value = 1; selected.value = []; results.value = {}; sourceTotal.value = null
+    try { drawerIdentity?.assertCurrent() } catch { onDeviceModelIdentityChanged(); return }
+    if (activeTargets !== targetKey || !hasResults.value) {
+      keyword.value = ''; category.value = ''; page.value = 1; selected.value = []; results.value = {}; sourceTotal.value = null
+    }
+    targetDevices.value = [...new Map((props.devices || [props.device]).filter(item => item?.deviceId).map(item => [item.deviceId, { ...item }])).values()]
+    activeTargets = targetKey
     drawerIdentity = captureComputeIdentity()
     identityTimer = setInterval(() => { try { drawerIdentity.assertCurrent() } catch { clearInterval(identityTimer); onDeviceModelIdentityChanged() } }, 500)
+    resultTimer = setInterval(refreshResults, 5000)
     loadModels()
+    await refreshResults()
   }
 })
 onMounted(() => { window.addEventListener('modelHubAuthChanged', onDeviceModelIdentityChanged) })
 onBeforeUnmount(() => {
-  session++; requestSequence++; clearTimeout(searchTimer); clearInterval(identityTimer)
+  session++; requestSequence++; clearTimeout(searchTimer); clearInterval(identityTimer); clearInterval(resultTimer)
   window.removeEventListener('modelHubAuthChanged', onDeviceModelIdentityChanged)
 })
 </script>
@@ -289,6 +357,9 @@ onBeforeUnmount(() => {
 .selected-version { font-size: 11px; color: #9098a5; }
 .submission-result { font-size: 12px; line-height: 1.5; margin: 8px 0 0; overflow-wrap: anywhere; }
 .submission-result.success { color: #389768; }
+.submission-result.failed { color: #d34545; }
+.submission-result.pending { color: #307bff; }
+.result-device { color: #65738b; }
 .submission-result.uncertain { color: #ba792c; }
 .result-note { font-size: 12px; color: #9098a5; line-height: 1.7; }
 .picker-footer { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid #dfe7f2; }

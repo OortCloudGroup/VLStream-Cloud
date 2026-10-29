@@ -12,3 +12,13 @@ export const dispatchSelectedModel = (modelId, deviceId) => currentIdentityReque
   url: `/vlsModelDispatch/models/${computePathPart(modelId)}/dispatch`,
   method: 'post', params: { deviceId }, timeout: 120000
 })
+
+export const submitSavedModelAttempt = (modelId, deviceId, operationId) => currentIdentityRequest({
+  url: `/vlsModelDispatch/models/${computePathPart(modelId)}/attempt`,
+  method: 'post', params: { deviceId, operationId }, timeout: 120000
+})
+
+export const getSavedModelAttempt = (modelId, deviceId, operationId) => currentIdentityRequest({
+  url: `/vlsModelDispatch/models/${computePathPart(modelId)}/attempt`,
+  method: 'get', params: { deviceId, operationId }
+})

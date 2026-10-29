@@ -6,14 +6,11 @@
           <div><strong>{{ $tp('算法配置') }}</strong><span>{{ $tp('选择摄像机，统一部署算法模型') }}</span></div>
           <el-button type="primary" :disabled="!selectedDevices.length || selectedDevices.length > 20" @click="configure(selectedDevices)">{{ $tp('批量配置') }} ({{ selectedDevices.length }}/20)</el-button>
         </div>
-        <el-alert :title="$tp('本页使用 WVP 的 VLStream 设备目录。其他协议、离线、能力未知或不兼容的设备不会下发；每台最终结果以设备回执为准。')" type="info" :closable="false" show-icon />
+        <el-alert :title="$tp('选择设备后，使用设备详情相同的模型选择页。选中的每个模型均下发到每台设备，逐项校验权限及在线状态，最终结果以设备回执为准。')" type="info" :closable="false" show-icon />
         <div class="arrangement-filters">
           <el-input v-model="query.keyword" clearable :placeholder="$tp('设备名称 / ID / 序列号')" @keyup.enter="search" />
           <el-button @click="search">{{ $tp('搜索') }}</el-button>
           <el-button @click="reset">{{ $tp('重置') }}</el-button>
-          <el-select v-model="recentId" :placeholder="$tp('恢复最近批次')" @visible-change="$event && loadRecent()" @change="restoreBatch">
-            <el-option v-for="item in recent" :key="item.operationId" :value="item.operationId" :label="`${item.createdAt || ''} · ${item.items.length}台 · ${item.fileName}`" />
-          </el-select>
           <span>{{ $tp('翻页或筛选会清空本页选择') }}</span>
         </div>
         <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon />
@@ -33,7 +30,7 @@
         <div class="paginationBox"><el-pagination v-model:current-page="query.pageNum" v-model:page-size="query.pageSize" :page-sizes="[10,20,50]" :total="total" layout="total, prev, pager, next, sizes" @current-change="loadDevices" @size-change="search" /></div>
       </div>
     </div>
-    <ModelDeploymentDialog v-model="showDeployment" :devices="targets" :existing-operation-id="operationId" @submitted="loadRecent" />
+    <DeviceModelDrawer v-model="showDeployment" :devices="targets" />
     <el-dialog
       v-model="videoDialogVisible"
       :title="$tp('视频播放')"
@@ -102,9 +99,8 @@ import { ElMessage } from 'element-plus'
 import Hls from 'hls.js'
 import { translatePhrase as uiText } from '@/i18n'
 import DeviceClassificationLayout from '@/components/DeviceClassificationLayout/index.vue'
-import ModelDeploymentDialog from './components/ModelDeploymentDialog.vue'
+import DeviceModelDrawer from '@/views/VideoAggregation/components/DeviceModelDrawer.vue'
 import { getMqttDevicePage, getMqttDeviceStreams } from '@/api/vlstreamMqttDevice'
-import { getRecentModelBatches } from '@/api/modelDispatchBatch'
 import { captureComputeIdentity } from '@/utils/computeIdentityRequest'
 import { ensureWebRTCBackendConfig, WEBRTC_SERVER_BASE_URL } from '@/api/webrtc'
 import { getStreamType, getYouTubeEmbedUrl } from '@/views/VideoAggregation/deviceUtils.js'
@@ -112,9 +108,8 @@ import { CAMERA_RTC_SOCKET_URL, ensureOPlayer } from '@/utils/oplayer'
 
 const query = ref({ pageNum: 1, pageSize: 10, keyword: '', protocolType: 'VLSTREAM' })
 const devices = ref([]), selectedDevices = ref([]), total = ref(0), loading = ref(false), loadError = ref('')
-const deviceTable = ref(null), showDeployment = ref(false), targets = ref([]), operationId = ref('')
-const recent = ref([]), recentId = ref('')
-let listSequence = 0, recentSequence = 0, identityTimer
+const deviceTable = ref(null), showDeployment = ref(false), targets = ref([])
+let listSequence = 0, identityTimer
 let identity = captureComputeIdentity()
 const errorMessage = ex => ex?.data?.msg || ex?.response?.data?.msg || ex?.message || uiText('设备服务不可用')
 function identityCurrent() { try { identity.assertCurrent(); return true } catch { return false } }
@@ -138,19 +133,10 @@ async function loadDevices() {
   } catch (ex) { if (sequence === listSequence && identityCurrent()) { devices.value = []; total.value = 0; loadError.value = errorMessage(ex) } }
   finally { if (sequence === listSequence) loading.value = false }
 }
-async function loadRecent() {
-  const sequence = ++recentSequence
-  try {
-    const response = await getRecentModelBatches()
-    if (sequence !== recentSequence || !identityCurrent()) return
-    recent.value = response?.data || []
-  } catch (ex) { if (sequence === recentSequence && identityCurrent()) loadError.value = errorMessage(ex) }
-}
 function search() { query.value.pageNum = 1; loadDevices() }
 function reset() { query.value = { pageNum: 1, pageSize: 10, keyword: '', protocolType: 'VLSTREAM' }; loadDevices() }
 function classificationFilter(filter) { Object.assign(query.value, filter, { pageNum: 1 }); loadDevices() }
-function configure(rows) { if (!identityCurrent()) return; targets.value = rows.map(row => ({ ...row })); operationId.value = ''; showDeployment.value = true }
-function restoreBatch(id) { operationId.value = id; targets.value = []; showDeployment.value = true }
+function configure(rows) { if (!identityCurrent() || !rows.length || rows.length > 20) return; targets.value = rows.map(row => ({ ...row })); showDeployment.value = true }
 async function playDevice(device) {
   const requestIdentity = captureComputeIdentity()
   try {
@@ -429,16 +415,16 @@ const handleVideoClose = async () => {
 
 watch(videoDialogVisible, visible => { if (!visible) stopPlayback() })
 onMounted(() => {
-  loadDevices(); loadRecent()
+  loadDevices()
   identityTimer = setInterval(() => {
     if (identityCurrent()) return
-    listSequence++; recentSequence++; devices.value = []; selectedDevices.value = []; recent.value = []
-    recentId.value = ''; targets.value = []; operationId.value = ''; total.value = 0; loading.value = false; showDeployment.value = false
+    listSequence++; devices.value = []; selectedDevices.value = []
+    targets.value = []; total.value = 0; loading.value = false; showDeployment.value = false
     videoDialogVisible.value = false; stopPlayback(); identity = captureComputeIdentity()
     loadError.value = uiText('登录身份或租户已变化，请重新加载设备；已发送任务请回原账号核实')
   }, 500)
 })
-onUnmounted(() => { listSequence++; recentSequence++; clearInterval(identityTimer); stopPlayback() })
+onUnmounted(() => { listSequence++; clearInterval(identityTimer); stopPlayback() })
 </script>
 <style scoped>
 .algorithm-arrangement { padding:20px; }

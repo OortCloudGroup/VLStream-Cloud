@@ -99,6 +99,24 @@ public class VlsModelDispatchController extends BladeController {
         return R.data(dispatchService.dispatchModel(modelId, deviceId));
     }
 
+    @Resource
+    private com.ruoyi.vlstream.test.vlstream.service.SavedModelDispatchService savedDispatch;
+
+    @PostMapping("/models/{modelId}/attempt")
+    @Operation(summary = "幂等提交保存模型到指定设备，逐组合返回结果")
+    @com.ruoyi.common.annotation.Log(title = "保存模型下发", businessType = com.ruoyi.common.enums.BusinessType.INSERT)
+    public R<com.ruoyi.vlstream.test.vlstream.service.SavedModelDispatchService.Result> attemptModel(
+        @PathVariable Long modelId, @RequestParam String deviceId, @RequestParam String operationId) {
+        return R.data(savedDispatch.submit(modelId, deviceId, operationId));
+    }
+
+    @GetMapping("/models/{modelId}/attempt")
+    @Operation(summary = "按原操作查询设备模型下发结果")
+    public R<com.ruoyi.vlstream.test.vlstream.service.SavedModelDispatchService.Result> modelAttempt(
+        @PathVariable Long modelId, @RequestParam String deviceId, @RequestParam String operationId) {
+        return R.data(savedDispatch.get(modelId, deviceId, operationId));
+    }
+
 	@Resource
 	private ModelDispatchTaskService taskService;
 

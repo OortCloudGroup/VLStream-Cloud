@@ -47,6 +47,10 @@ public class ModelDispatchService {
 
     /** Deploy precisely the saved model version, even if its training task was rerun. */
     public String dispatchModel(Long modelId, String deviceId) {
+        return dispatchSavedModel(modelId, deviceId, UUID.randomUUID().toString());
+    }
+
+    AlgorithmModel requireSavedModelAccess(Long modelId, String deviceId) {
         AlgorithmModel model = modelService.getById(modelId);
         if (model == null || model.getTrainingId() == null || model.getAlgorithmId() == null) {
             throw new ServiceException("自主训练模型不存在或缺少训练来源");
@@ -56,7 +60,12 @@ public class ModelDispatchService {
         }
         if (!dispatchAccess.tenant().equals(model.getTenantId())) throw new ServiceException("模型不存在或无权访问");
         if (publicAccess != null) publicAccess.training(model.getTrainingId());
-        DeviceInfo device = wvpDeviceResolver.resolveOnline(deviceId);
+        return model;
+    }
+
+    /** A caller-owned stable request ID recovers a lost HTTP response without publishing again. */
+    String dispatchSavedModel(Long modelId, String deviceId, String requestId) {
+        AlgorithmModel model = requireSavedModelAccess(modelId, deviceId);
         validateConfiguration();
         AlgorithmTraining snapshot = new AlgorithmTraining();
         snapshot.setId(model.getTrainingId());
@@ -68,8 +77,14 @@ public class ModelDispatchService {
             String path = artifactService.resolvePath(snapshot, "om");
             RemoteModelArtifactService.ArtifactMetadata metadata = artifactService.inspect(path);
             ModelClassFileService.ClassFile classes = classFileService.prepare(snapshot);
-            return dispatchToDevice(model.getAlgorithmId(), snapshot, "om", path, metadata, classes, device,
-                deploymentFileName(model.getModelName(), "om", metadata.getFileName()));
+            // The device-details picker supports several saved models, each with its own task.
+            // Keep authorization and serialized publishing without blocking the next selected model.
+            return dispatchLocks.run("device:" + dispatchAccess.tenant() + ":" + deviceId, () -> {
+                DeviceInfo authorized = dispatchAccess.requireDevice(deviceId, "om", false);
+                if (taskService.getByRequestId(requestId) != null) return requestId;
+                return dispatchToDevice(model.getAlgorithmId(), snapshot, "om", path, metadata, classes, authorized,
+                    deploymentFileName(model.getModelName(), "om", metadata.getFileName()), requestId, false);
+            });
         } catch (Exception ex) {
             throw new ServiceException("模型下发失败：" + rootMessage(ex));
         }
